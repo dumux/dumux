@@ -1,0 +1,17 @@
+/** \mainpage DuMuX Automatic Documentation
+
+\section intro Introduction
+
+Welcome to the %DuMuX documentation pages. This documentation has been
+generated using Doxygen, a free source code documentation system for
+documenting C/C++ code.
+
+\section mods Modules
+
+The best way to start is from the page \subpage modules which gives
+you access to the documentation by category.
+
+*/
+
+/** \page modules Modules
+*/

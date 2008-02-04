@@ -1,0 +1,131 @@
+#!/usr/bin/perl -w
+
+use strict;
+use English;
+use IO::Handle;
+
+# OPTIONS
+my $defaulttarget = "doxygen-tag";
+my $USAGE = "Doxydep <DOXYFILE> <DEPFILE> [TARGET]".
+    "\tDOXYFILE: Configuration file for Doxygen\n".
+    "\tDEPFILE: Outfile for the dependencies\n".
+    "\tTARGT: Target for the Makefile (default=$defaulttarget)";
+my $doxyname = shift || die $USAGE;
+my $depfile = shift || die $USAGE;
+my $target;
+$target = shift;
+if (! $target) { $target = $defaulttarget };
+
+# write an entry for DEPFILE
+sub addDep ($) {
+	my $dep = shift;
+	if (defined($dep) && ! $dep eq "") {
+		print DEPFILE "$target: $dep\n\n";
+		print DEPFILE "$dep:\n\n";
+	}
+}
+
+# get all files in a directory, except . and ..
+sub readDir ($) {
+    my $dir = shift;
+	$dir =~ s/\/$//;
+	$dir = $dir."/";
+
+	my @entries;
+    opendir DIR, $dir;
+	while (my $f = readdir DIR) { 
+		if ($f !~ /^\.\.?$/) {
+			push (@entries, $dir.$f);
+		}
+	}
+	close DIR;
+
+	return @entries;
+}
+
+# find file matching the pattern
+sub findFiles ($$$) {
+    my $dir = shift;
+	my $pattern = shift;
+	my $recursive  = shift;
+
+	$pattern =~ s/\*/\\w*/g;
+	$pattern =~ s/\?/\\w/g;
+
+	my @entries;
+	push (@entries, readDir($dir));
+
+    my @existing;
+    while (my $file = pop(@entries)) {
+		if (( -d $file ) && ( $recursive eq "YES" )) {
+			push (@entries, readDir($file));
+		}
+		next unless -f $file;
+		next if ($file !~ /[\/^]$pattern$/);
+		if (( -f $file ) && ( -r $file )) {
+			push @existing, $file;
+		} else {
+			# warnen (nur nicht bei . und ..)
+			print "Warnung: ignoriere $file!\n";
+		}
+    }
+
+    return @existing;
+};
+
+# read all options from the Doxyfile into a hash
+sub parseDoxyfile ($)
+{
+	my $doxyname = shift;
+	my %doxyfile = ();
+	open DOXYFILE, $doxyname || die "Could not open $doxyname\n";
+
+	while (<DOXYFILE>) {
+		chomp;
+		next if (/^\s*\#/);
+		my $input =$_;
+		my $tag;
+		if ($input=~/^\s*(\S+)\s*=/) {	
+			$tag = $1;
+			$doxyfile{$tag} = "";
+			while ($input=~/\\\s*$/) {
+				$input =~ s/\\\s*$//;
+				$doxyfile{$tag} = $doxyfile{$tag}.$input;
+				$input = DOXYFILE->getline();
+			};
+			$input =~ s/\\\s*$//;
+			$doxyfile{$tag} = $doxyfile{$tag}.$input;
+			$doxyfile{$tag} =~ s/\s+/ /g;
+			$doxyfile{$tag} =~ s/^\s*$tag\s*=\s*//;
+		}
+	}
+	close DOXYFILE;
+	return %doxyfile;
+}
+
+# WRITE DEPFILE
+my %doxyfile = parseDoxyfile($doxyname);
+open DEPFILE, ">$depfile" || die "Could not open $depfile\n";
+# foreach input defined in INPUT = ...
+foreach my $input (split(/ /, $doxyfile{"INPUT"})) {
+	next if (! defined($input));
+	next if ( $input eq "" );
+	if ( -f $input ) {
+		addDep($input);
+	}
+	else {
+        # foreach pattern defined in FILE_PATTERNS = ...
+		foreach my $pattern (split(/ /, $doxyfile{"FILE_PATTERNS"})) {
+			next if (! defined($pattern));
+			next if ( $pattern eq "" );
+			my @files = findFiles($input, $pattern, $doxyfile{"RECURSIVE"});
+			foreach my $f (@files) {
+				addDep($f);
+			}
+		}
+	}
+}
+addDep($doxyfile{"HTML_HEADER"});
+addDep($doxyfile{"HTML_FOOTER"});
+addDep($doxyfile{"LATEX_HEADER"});
+close DEPFILE;

@@ -1,0 +1,533 @@
+#ifndef DUNE_MIMETICGROUNDWATER_HH
+#define DUNE_MIMETICGROUNDWATER_HH
+
+#include<map>
+#include<iostream>
+#include<iomanip>
+#include<fstream>
+#include<vector>
+#include<sstream>
+
+#include<dune/common/exceptions.hh>
+#include<dune/grid/common/grid.hh>
+#include<dune/grid/common/referenceelements.hh>
+#include<dune/common/geometrytype.hh>
+#include<dune/grid/common/quadraturerules.hh>
+
+#include<dune/disc/operators/boundaryconditions.hh>
+#include<dune/disc/groundwater/groundwater.hh>
+#include"dumux/shapefunctions/CRshapefunctions.hh"
+#include"dumux/operators/localstiffnessext.hh"
+
+/**
+ * @file
+ * @brief  compute local stiffness matrix for conforming finite elements for diffusion equation
+ * @author Peter Bastian
+ */
+
+
+namespace Dune
+{
+  /** @addtogroup DISC_Disc
+   *
+   * @{
+   */
+  /**
+   * @brief compute local stiffness matrix for conforming finite elements for diffusion equation
+   *
+   */
+
+
+  //! A class for computing local stiffness matrices
+  /*! A class for computing local stiffness matrix for the 
+	diffusion equation
+
+	    div j = q; j = -K grad u; in Omega
+
+		u = g on Gamma1; j*n = J on Gamma2.
+
+	Uses conforming finite elements with the CR shape functions.
+	It should work for all dimensions and element types.
+	All the numbering is with respect to the reference element and the
+	CR shape functions
+
+	Template parameters are:
+
+	- Grid  a DUNE grid type
+	- RT    type used for return values 
+  */
+  template<class G, class RT>
+  class MimeticGroundwaterEquationLocalStiffness 
+    : public LocalStiffnessExt<MimeticGroundwaterEquationLocalStiffness<G,RT>,G,RT,1>
+  {
+    template<int dim>
+    struct ElementLayout
+    {
+      bool contains (Dune::GeometryType gt)
+      {
+	return gt.dim() == dim;
+      }
+    }; 
+  
+    // grid types
+    enum {n=G::dimension};
+    typedef typename G::ctype DT;
+    typedef typename G::Traits::template Codim<0>::Entity Entity;
+    typedef Dune::LevelP0Function<G,DT,(int)(0.5*n*(n+1))> KType;
+    typedef typename G::Traits::LevelIndexSet IS;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout> EM;
+    typedef Dune::BlockVector< Dune::FieldVector<double,1> > SatType; 
+
+  public:
+	// define the number of components of your system, this is used outside
+	// to allocate the correct size of (dense) blocks with a FieldMatrix
+	enum {m=1};
+	enum {SIZE=CRShapeFunctionSetContainer<DT,RT,n>::maxsize};
+
+	//! Constructor
+	MimeticGroundwaterEquationLocalStiffness (DiffusionProblem<G,RT>& params,
+						  bool levelBoundaryAsDirichlet_, const G& grid, int level=0, 
+						  const SatType& sat = 0, bool procBoundaryAsDirichlet_=true)
+	  : problem(params),levelBoundaryAsDirichlet(levelBoundaryAsDirichlet_),
+	    procBoundaryAsDirichlet(procBoundaryAsDirichlet_), 
+	    elementmapper(grid, grid.levelIndexSet(level)), saturation(sat) 
+	{	}
+
+
+	//! assemble local stiffness matrix for given element and order
+	/*! On exit the following things have been done:
+	  - The stiffness matrix for the given entity and polynomial degree has been assembled and is
+        accessible with the mat() method.
+	  - The boundary conditions have been evaluated and are accessible with the bc() method
+	  - The right hand side has been assembled. It contains either the value of the essential boundary
+        condition or the assembled source term and neumann boundary condition. It is accessible via the rhs() method.
+	  @param[in]  e    a codim 0 entity reference
+	  @param[in]  k    order of CR basis
+	 */
+    template<class TypeTag>
+	void assemble (const Entity& e, int k=1)
+	{
+	  // extract some important parameters
+	  Dune::GeometryType gt = e.geometry().type();
+	  const typename Dune::CRShapeFunctionSetContainer<DT,RT,n>::value_type& 
+		sfs=Dune::CRShapeFunctions<DT,RT,n>::general(gt,k);
+	  setcurrentsize(sfs.size());
+
+	  // clear assemble data
+	  for (int i=0; i<sfs.size(); i++)
+		{
+		  this->b[i] = 0;
+		  this->bctype[i][0] = BoundaryConditions::neumann;
+		  for (int j=0; j<sfs.size(); j++) 
+			this->A[i][j] = 0;
+		}
+
+	  assembleV<TypeTag>(e,k);
+	  assembleBC<TypeTag>(e,k);
+	}
+
+	//! assemble only boundary conditions for given element 
+	/*! On exit the following things have been done:
+	  - The boundary conditions have been evaluated and are accessible with the bc() method
+	  - The right hand side contains either the value of the essential boundary
+        condition or the assembled neumann boundary condition. It is accessible via the rhs() method.
+	  @param[in]  e    a codim 0 entity reference
+	  @param[in]  k    order of CR basis
+	 */
+    template<typename TypeTag>
+	void assembleBoundaryCondition (const Entity& e, int k=1)
+	{
+	  // extract some important parameters
+	  Dune::GeometryType gt = e.geometry().type();
+	  const typename Dune::CRShapeFunctionSetContainer<DT,RT,n>::value_type& 
+		sfs=Dune::CRShapeFunctions<DT,RT,n>::general(gt,k);
+	  setcurrentsize(sfs.size());
+
+	  // clear assemble data
+	  for (int i=0; i<sfs.size(); i++)
+		{
+		  this->b[i] = 0;
+		  this->bctype[i][0] = BoundaryConditions::neumann;
+		}
+
+	  this->template assembleBC<TypeTag>(e,k);
+	}
+
+    template<typename TypeTag>
+    void assembleElementMatrices(const Entity& e, Dune::FieldVector<DT,2*n>& faceVol, 
+				 Dune::FieldMatrix<RT,2*n,2*n>& W, Dune::FieldVector<DT,2*n>& c, 
+				 Dune::FieldMatrix<RT,2*n,2*n>& Pi, RT& dinv, Dune::FieldVector<DT,2*n>& F, RT& qmean)
+    {
+      // extract some important parameters
+      Dune::GeometryType gt = e.geometry().type();
+      const typename Dune::CRShapeFunctionSetContainer<DT,RT,n>::value_type& 
+	sfs=Dune::CRShapeFunctions<DT,RT,n>::general(gt,1);
+      setcurrentsize(sfs.size());
+      
+      // cell center in reference element
+      const Dune::FieldVector<DT,n>& local = Dune::ReferenceElements<DT,n>::general(gt).position(0,0);
+      
+      // get global coordinate of cell center
+      Dune::FieldVector<DT,n> global = e.geometry().global(local);
+      
+      // eval diffusion tensor, ASSUMING to be constant over each cell
+      Dune::FieldMatrix<DT,n,n> K(0);
+      K = problem.K(global,e,local);
+//   	std::cout << "elemId = " << elemId << ", permvec = " << permvec << std::endl << "K = " << std::endl << K;
+      int elemId = elementmapper.map(e);
+      if(saturation.size())
+    	  K *= problem.materialLaw.mobTotal(saturation[elemId]);
+    
+
+      // cell volume, ASSUME linear map here
+      DT volume = e.geometry().integrationElement(local)
+	*Dune::ReferenceElements<DT,n>::general(gt).volume();
+      
+      Dune::FieldMatrix<DT,2*n,n> R, N;
+      
+      typedef typename IntersectionIteratorGetter<G,TypeTag>::IntersectionIterator
+	IntersectionIterator;
+      
+      IntersectionIterator endit = IntersectionIteratorGetter<G,TypeTag>::end(e);
+      for (IntersectionIterator it = IntersectionIteratorGetter<G,TypeTag>::begin(e); it!=endit; ++it)
+	{
+	  // get geometry type of face
+	  Dune::GeometryType gtf = it.intersectionSelfLocal().type();
+	  
+	  // local number of facet 
+	  int i = it.numberInSelf();
+	  
+	  const Dune::FieldVector<DT,n>& local = sfs[i].position();
+	  Dune::FieldVector<DT,n> global = e.geometry().global(local);
+	  faceVol[i] = it.intersectionGlobal().volume();
+	  
+	  // center in face's reference element
+	  const Dune::FieldVector<DT,n-1>& 
+	    facelocal = Dune::ReferenceElements<DT,n-1>::general(gtf).position(0,0);
+	  
+	  // get normal vector 
+	  Dune::FieldVector<DT,n> unitOuterNormal = it.unitOuterNormal(facelocal);
+	  
+	  // 	      std::cout << "local = " << local << ", facelocal = " << facelocal << ", global = " << global << ", n = " << unitOuterNormal << std::endl;
+	  
+	  for (int k = 0; k < n; k++) {
+	    R[i][k] = faceVol[i]*global[k];
+	    N[i][k] = 0;
+	    for (int j = 0; j < n; j++)
+	      N[i][k] += K[j][k]*unitOuterNormal[j];
+	  }
+	}
+      
+//       std::cout << "R = " << R << ", N = " << N << std::endl;
+      
+      // proceed along the lines of Algorithm 1 from 
+      // Brezzi/Lipnikov/Simonicini M3AS 2005
+      // (1) orthonormalize columns of the matrix R
+      RT norm = R[0][0]*R[0][0];
+      for (int i = 1; i < sfs.size(); i++)
+	norm += R[i][0]*R[i][0];
+      norm = sqrt(norm);
+      for (int i = 0; i < sfs.size(); i++)
+	R[i][0] /= norm;
+      RT weight = R[0][1]*R[0][0];
+      for (int i = 1; i < sfs.size(); i++)
+	weight += R[i][1]*R[i][0];
+      for (int i = 0; i < sfs.size(); i++)
+	R[i][1] -= weight*R[i][0];
+      norm = R[0][1]*R[0][1];
+      for (int i = 1; i < sfs.size(); i++)
+	norm += R[i][1]*R[i][1];
+      norm = sqrt(norm);
+      for (int i = 0; i < sfs.size(); i++)
+	R[i][1] /= norm;
+      if (n == 3) {
+	RT weight1 = R[0][2]*R[0][0];
+	RT weight2 = R[0][2]*R[0][1];
+	for (int i = 1; i < sfs.size(); i++) {
+	  weight1 += R[i][2]*R[i][0];
+	  weight2 += R[i][2]*R[i][1];
+	}
+	for (int i = 0; i < sfs.size(); i++)
+	  R[i][1] -= weight1*R[i][0] + weight2*R[i][1];
+	norm = R[0][2]*R[0][2];
+	for (int i = 1; i < sfs.size(); i++)
+	  norm += R[i][2]*R[i][2];
+	norm = sqrt(norm);
+	for (int i = 0; i < sfs.size(); i++)
+	  R[i][2] /= norm;
+      }
+      // std::cout << "after Gram-Schmidt: R = " << std::endl; 
+      // std::cout << R << std::endl;
+      
+      // (2) Build the matrix ~D
+      FieldMatrix<DT,2*n,2*n> D;
+      for (int s = 0; s < sfs.size(); s++) {
+	Dune::FieldVector<DT,2*n> es(0);
+	es[s] = 1;
+	for (int k = 0; k < sfs.size(); k++) {
+	  D[k][s] = es[k];
+	  for (int i = 0; i < n; i++) {
+	    D[k][s] -= R[s][i]*R[k][i];
+	  }
+	}
+      }
+      // std::cout << "~D = " << std::endl << D << std::endl;
+      
+      // (3) Build the matrix W = Minv
+      FieldMatrix<DT,n,n> Kinv;
+      FMatrixHelp::invertMatrix<DT> (K, Kinv);
+//       std::cout << "Kinv = " << std::endl << Kinv << std::endl;
+      FieldMatrix<DT,2*n,n> NKinv(N);
+      NKinv.rightmultiply (Kinv);
+      for (int i = 0; i < sfs.size(); i++) {
+	for (int j = 0; j < sfs.size(); j++) {
+	  W[i][j] = NKinv[i][0]*N[j][0];
+	  for (int k = 1; k < n; k++)
+	    W[i][j] += NKinv[i][k]*N[j][k];
+	}
+      }
+      DT traceK = K[0][0];
+      for (int i = 1; i < n; i++)
+	traceK += K[i][i];
+      D *= traceK;
+      W += D;
+      W /= volume;
+
+      // std::cout << "W = " << std::endl << W << std::endl;
+      
+      // Now the notation is borrowed from Aarnes/Krogstadt/Lie 2006, Section 3.4. 
+      // The matrix W developed so far corresponds to one element-associated   
+      // block of the matrix B^{-1} there.
+      
+      // Corresponding to the element under consideration, 
+      // calculate the part of the matrix C coupling velocities and element pressures.
+      // This is just a row vector of size sfs.size(). 
+      for (int i = 0; i < sfs.size(); i++) {
+	c[i] = faceVol[i]/volume;
+      }	  
+      
+      // Set up the element part of the matrix \Pi coupling velocities 
+      // and pressure-traces. This is a diagonal matrix with entries given by faceVol.
+      for (int i = 0; i < sfs.size(); i++)
+	Pi[i][i] = faceVol[i];
+      
+      // Calculate the element part of the matrix D^{-1} = (c W c^T)^{-1} which is just a scalar value. 
+      Dune::FieldVector<DT,2*n> Wc(0);
+      W.umv(c, Wc);
+      dinv = 1.0/(c*Wc);
+      
+      // Calculate the element part of the matrix F = Pi W c^T which is a column vector. 
+      Pi.umv(Wc, F);
+
+      // Calculate the source f
+      int p = 2;
+      qmean = 0;
+      for (size_t g=0; g<Dune::QuadratureRules<DT,n>::rule(gt,p).size(); ++g) // run through all quadrature points
+	{
+	  const Dune::FieldVector<DT,n>& 
+	    local = Dune::QuadratureRules<DT,n>::rule(gt,p)[g].position(); // pos of integration point
+	  Dune::FieldVector<DT,n> global = e.geometry().global(local);     // ip in global coordinates
+	  double weight = Dune::QuadratureRules<DT,n>::rule(gt,p)[g].weight();// weight of quadrature point
+	  DT detjac = e.geometry().integrationElement(local);              // determinant of jacobian
+	  RT factor = weight*detjac;
+	  RT q = problem.q(global,e,local);
+	  qmean += q*factor;
+	}
+      qmean /= volume;
+    }
+
+  private:
+
+        template<class TypeTag>
+	void assembleV (const Entity& e, int k=1)
+	{
+	  // extract some important parameters
+	  Dune::GeometryType gt = e.geometry().type();
+	  const typename Dune::CRShapeFunctionSetContainer<DT,RT,n>::value_type& 
+	    sfs=Dune::CRShapeFunctions<DT,RT,n>::general(gt,1);
+	  setcurrentsize(sfs.size());
+      
+	  // The notation is borrowed from Aarnes/Krogstadt/Lie 2006, Section 3.4. 
+	  // The matrix W developed here corresponds to one element-associated   
+	  // block of the matrix B^{-1} there.
+	  Dune::FieldVector<DT,2*n> faceVol(0);
+	  Dune::FieldMatrix<DT,2*n,2*n> W(0);
+	  Dune::FieldVector<DT,2*n> c(0);
+	  Dune::FieldMatrix<DT,2*n,2*n> Pi(0);
+	  Dune::FieldVector<RT,2*n> F(0);
+	  RT dinv;
+	  RT qmean;
+	  this->template assembleElementMatrices<TypeTag>(e, faceVol, W, c, Pi, dinv, F, qmean);
+// 	  std::cout << "faceVol = " << faceVol << std::endl << "W = " << std::endl << W << std::endl 
+// 		    << "c = " << c << std::endl << "Pi = " << std::endl << Pi << std::endl 
+// 		    << "dinv = " << dinv << std::endl << "F = " << F << std::endl; 
+	  
+	  // Calculate the element part of the matrix Pi W Pi^T.
+	  Dune::FieldMatrix<RT,2*n,2*n> PiWPiT(W);
+	  PiWPiT.rightmultiply(Pi);
+	  PiWPiT.leftmultiply(Pi);
+
+	  // Calculate the element part of the matrix F D^{-1} F^T.
+	  Dune::FieldMatrix<RT,2*n,2*n> FDinvFT;
+	  for (int i = 0; i < sfs.size(); i++) 
+	    for (int j = 0; j < sfs.size(); j++) 
+	      FDinvFT[i][j] = dinv*F[i]*F[j];
+
+	  // Calculate the element part of the matrix S = Pi W Pi^T - F D^{-1} F^T.
+	  for (int i = 0; i < sfs.size(); i++) 
+	    for (int j = 0; j < sfs.size(); j++) 
+	      this->A[i][j] = PiWPiT[i][j] - FDinvFT[i][j];
+
+	  // Calculate the source term F D^{-1} f
+	  // NOT WORKING AT THE MOMENT
+// 	  RT factor = dinv*qmean;
+// 	  for (int i = 0; i < sfs.size(); i++) 
+// 	    this->b[i] = F[i]*factor;
+
+
+	  // ASSUMING ~u = 2*traceK and uniform grid 
+	  RT q;
+	  for (int i = 0; i < sfs.size(); i++) {
+	    const Dune::FieldVector<DT,n>& local = sfs[i].position();
+	    Dune::FieldVector<DT,n> global = e.geometry().global(local);
+	    q = problem.q(global,e,local);
+	    this->b[i] = q*0.25*faceVol[i]*faceVol[i];
+	  }
+
+// 	  std::cout << "q = " << q << ", volume = " << volume << ", dinv = " << dinv 
+// 		    << ", F = " << F << ", b = " << this->b[0] << ", " << this->b[1] << ", " << this->b[2] << ", " << this->b[3] << std::endl;
+	}
+
+        template<class TypeTag>
+	void assembleBC (const Entity& e, int k=1)
+	{
+	  // extract some important parameters
+	  Dune::GeometryType gt = e.geometry().type();
+	  const typename Dune::CRShapeFunctionSetContainer<DT,RT,n>::value_type& 
+		sfs=Dune::CRShapeFunctions<DT,RT,n>::general(gt,k);
+	  setcurrentsize(sfs.size());
+
+	  // determine quadrature order
+	  int p=2;
+	  if (gt.isSimplex()) p=1;
+	  if (k>1) p=2*(k-1);
+
+	  // evaluate boundary conditions via intersection iterator
+	  typedef typename IntersectionIteratorGetter<G,TypeTag>::IntersectionIterator
+	    IntersectionIterator;
+	  
+	  //std::cout << "new element." << std::endl;
+	  IntersectionIterator endit = IntersectionIteratorGetter<G,TypeTag>::end(e);
+	  for (IntersectionIterator it = IntersectionIteratorGetter<G,TypeTag>::begin(e); 
+	       it!=endit; ++it)
+		{
+		  //std::cout << "\tnew intersection iterator." << std::endl;
+		  
+		  // if we have a neighbor then we assume there is no boundary (forget interior boundaries)
+		  // in level assemble treat non-level neighbors as boundary
+		  if (it.neighbor())
+			{
+			  if (levelBoundaryAsDirichlet && it.outside()->level()==e.level()) 
+				continue;
+			  if (!levelBoundaryAsDirichlet)
+				continue;
+			}
+
+		  //std::cout << "\t\tsurvived first if statements" << std::endl;
+
+		  // determine boundary condition type for this face, initialize with processor boundary
+		  typename BoundaryConditions::Flags bctypeface = BoundaryConditions::process;
+
+		  // handle face on exterior boundary, this assumes there are no interior boundaries
+		  if (it.boundary())
+			{
+			  //std::cout << "\t\t\tsurvived second if-statements." << std::endl;
+			  Dune::GeometryType gtface = it.intersectionSelfLocal().type();
+			  for (size_t g = 0; g < Dune::QuadratureRules<DT,n-1>::rule(gtface,p).size(); ++g)
+				{
+				  const Dune::FieldVector<DT,n-1>& facelocal = Dune::QuadratureRules<DT,n-1>::rule(gtface,p)[g].position();
+				  FieldVector<DT,n> local = it.intersectionSelfLocal().global(facelocal);
+				  FieldVector<DT,n> global = it.intersectionGlobal().global(facelocal);
+				  bctypeface = problem.bctype(global,e,local); // eval bctype
+ 				  //std::cout << "\t\t\tlocal = " << local << ", global = " << global << ", bctypeface = " << bctypeface 
+ 				//	    << ", size = " << Dune::QuadratureRules<DT,n-1>::rule(gtface,p).size() << std::endl;
+
+
+				  if (bctypeface!=BoundaryConditions::neumann) break;
+
+				  RT J = problem.J(global,e,local);
+				  double weightface = Dune::QuadratureRules<DT,n-1>::rule(gtface,p)[g].weight();
+				  DT detjacface = it.intersectionGlobal().integrationElement(facelocal);
+				  for (int i=0; i<sfs.size(); i++) // loop over test function number
+					if (this->bctype[i][0]==BoundaryConditions::neumann)
+					  {
+						this->b[i] -= J*sfs[i].evaluateFunction(0,local)*weightface*detjacface;
+					  }
+				}
+			  if (bctypeface==BoundaryConditions::neumann) continue; // was a neumann face, go to next face
+			}
+
+		  // If we are here, then it is 
+		  // (i)   an exterior boundary face with Dirichlet condition, or
+		  // (ii)  a processor boundary (i.e. neither boundary() nor neighbor() was true), or
+		  // (iii) a level boundary in case of level-wise assemble
+		  // How processor boundaries are handled depends on the processor boundary mode
+		  if (bctypeface==BoundaryConditions::process && procBoundaryAsDirichlet==false 
+			  && levelBoundaryAsDirichlet==false) 
+			continue; // then it acts like homogeneous Neumann
+
+		  // now handle exterior or interior Dirichlet boundary
+		  for (int i=0; i<sfs.size(); i++) // loop over test function number
+			{
+			  if (sfs[i].codim()==0) continue; // skip interior dof
+			  if (sfs[i].codim()==1) // handle face dofs
+				{
+				  if (sfs[i].entity()==it.numberInSelf())
+					{
+					  if (this->bctype[i][0]<bctypeface)
+						{
+						  this->bctype[i][0] = bctypeface;
+						  if (bctypeface==BoundaryConditions::process)
+							this->b[i] = 0;
+						  if (bctypeface==BoundaryConditions::dirichlet)
+							{
+							  Dune::FieldVector<DT,n> global = e.geometry().global(sfs[i].position());
+ 							  //std::cout << "i = " << i << ", loop 1, global = " << global << std::endl;
+							  this->b[i] = problem.g(global,e,sfs[i].position());
+							}
+						}
+					}
+				  continue;
+				}
+			  // handle subentities of this face
+			  for (int j=0; j<ReferenceElements<DT,n>::general(gt).size(it.numberInSelf(),1,sfs[i].codim()); j++)
+				if (sfs[i].entity()==ReferenceElements<DT,n>::general(gt).subEntity(it.numberInSelf(),1,j,sfs[i].codim()))
+				  {
+					if (this->bctype[i][0]<bctypeface)
+					  {
+						this->bctype[i][0] = bctypeface;
+						if (bctypeface==BoundaryConditions::process)
+						  this->b[i] = 0;
+						if (bctypeface==BoundaryConditions::dirichlet)
+						  {
+							Dune::FieldVector<DT,n> global = e.geometry().global(sfs[i].position());
+ 							//std::cout << "loop 2, global = " << global << std::endl;
+							this->b[i] = problem.g(global,e,sfs[i].position());
+						  }
+					  }
+				  }
+			}
+		}
+	}
+
+    // parameters given in constructor
+    DiffusionProblem<G,RT>& problem;
+    bool levelBoundaryAsDirichlet;
+    bool procBoundaryAsDirichlet;
+    EM elementmapper;
+    const SatType& saturation;
+  };
+
+  /** @} */
+}
+#endif

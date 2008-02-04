@@ -1,0 +1,8 @@
+
+#dune module information file#
+##############################
+
+#Name of the module
+Module:dune-mux
+#depending on 
+Depends:dune-common dune-disc dune-fem dune-grid dune-istl

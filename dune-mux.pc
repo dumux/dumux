@@ -1,0 +1,14 @@
+prefix=/usr/local
+exec_prefix=${prefix}
+libdir=${exec_prefix}/lib
+includedir=${prefix}/include
+CXX=g++
+CC=gcc
+
+Name: DUMUX
+Version: 0
+Description: the DUMUX Module 
+URL: http://www.dune-project.org/
+Requires:
+Libs: 
+Cflags: -I${includedir}

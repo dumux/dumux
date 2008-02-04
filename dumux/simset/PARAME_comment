@@ -1,0 +1,6 @@
+ 0 1 012 6 2   10.    .5      .5
+ 3  geostatistisches Modell (5 = Gauss) 120.0 Korrelationslänge in x-Richtung    0.1 Varianzanteil
+ 0.0        1.0
+ 3  geostatistisches Modell (5 = Gauss) 10.0 Korrelationslänge in y-Richtung   0.2 Varianzanteil
+ 0.0 Drehung Koordinatensystem     0.05 1 1
+-10.0 Mittelwert    5.25 Varianz

@@ -1,0 +1,71 @@
+Geostatistisches Simulationsprogramm von A. Bardossy
+
+* Programmname	: 	SIMSET
+
+* Programmaufruf:	simset
+			"RANDOM .."	: eine Zahl ungleich Null eingeben
+			"ENTER NUMBER..": 5 oder 36 eingeben
+
+DATEXP3		:	Numerische Loesungsverfahren
+DATGAU2		:	Numerische Loesungsverfahren
+FURA		:	fuer Fixpunkte
+PARAME		:	Parameter Eingabe
+SIMNAM		:	Name der Ausgabe-Files eingeben
+			n* Namen = n* Realisationen mit der gleichen
+			Verteilung (i.a. n = 10 - 100)
+SIMKOR		:	Dateneingabe x-, y- Koordinaten
+
+
+simset.f	:	source file
+simset.o	:	object file
+
+
+=====================================================================
+===========================  PARAME Eingabe  ========================
+=====================================================================
+
+*IKS,IVS,KR,NK,NPO,NST,DMAX,HSX,HSY
+
+IKS	:	=0
+		=1 conditional simulation , Fixpunkte ???
+IVS	: 	=1 simulated points from file
+KR	: 	=0
+		=1 block simulation
+NK	:	max. number of points in kriging system
+NPO	:	
+NST	:	# of variogram structures
+DMAX	:	search radius
+HSX	:	block size
+HSY	:	block size
+
+---------------------------------------------------------------------
+
+*ITY(I),DH(I),C(I) : DH(I) bei ITY(I)=1 ist dummy-wert
+
+ITY(I)	:	=1 nugget effect  (Nullvarianz)
+		=2 spherical 
+		=3 exponential
+		=4 polinomial 
+		=5 gauss  (bei sehr glatten Flaechen ??)
+DH(I)	:	Korrelationslaenge   ,  DH bei ITY=1 ist dummy-wert !!
+C(I)	:	Varianzanteil
+
+---------------------------------------------------------------------
+
+*FI,ALAM,ATZ,SRZ	: ATZ, SRZ egal
+
+FI	:	Drehung des Koordinatensystems  (Bogenmass)
+ALAM	:	A(y-achse) / a(x-achse) = lambda   ,  Anisotropie
+		(Koordinatenachsen dehnen/stauchen)
+
+---------------------------------------------------------------------
+
+*Mittelwert , Varianz                             <<<< wo eingelesen ????
+
+Mittelwert : 	
+Varianz	:	= Summe( DH(1)+DH(2)+ ... DH(I))
+
+
+=====================================================================
+=====================================================================
+

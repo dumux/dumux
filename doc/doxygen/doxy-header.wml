@@ -1,0 +1,16 @@
+# -*- html -*-
+# $Id: doxy-header.wml 131 2005-10-14 13:08:07Z christi $
+
+## praktische Tags
+#use wml::std::tags
+
+#use wml::layout::header title="$projectname - $title"
+#use wml::layout::navigation
+
+<enter STYLESHEETS>
+  <link rel="stylesheet" type="text/css" href="./dune-doxy.css">
+  <link rel="stylesheet" type="text/css" href="./tabs.css">
+<leave>
+
+<div class="main">
+<div class="doxygen">

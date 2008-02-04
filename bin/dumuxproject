@@ -1,0 +1,589 @@
+#!/bin/bash
+
+#
+# TODO:
+#
+# * In case of an installed Dune, it should not be necessary to pass the
+#   dune-common dir to autogen.sh.
+# * Check module names entered as dependencies.
+
+set -e
+
+canonicalname(){
+  if test $# -ne 1; then
+     echo Usage: canonicalname path > /dev/stderr
+     return 1
+  fi
+  readlink $1 || echo "$(dirname $1)/$(basename $1)"
+}
+
+canonicalpath(){
+  if test $# -ne 1; then
+     echo Usage: canonicalpath path > /dev/stderr
+     return 1
+  fi
+  (cd $(dirname $(canonicalname $1)) && pwd)
+}
+
+modulesexist(){
+  allfound=0
+
+  for dep in $1; do
+      found=0
+      for module in $2; do
+	  if [ "$dep" = "$module" ]; then
+	      found=1
+	      break
+	  fi
+      done
+      if [ "$found" = "0" ]; then
+	  echo "ERROR:">/dev/stderr
+	  echo "Module with name $dep was not found" > /dev/stderr
+	  echo "Did you forget to specify it's location" > /dev/stderr
+	  echo "in the DUNE_CONTROL_PATH variable?"> /dev/stderr
+	  echo >/dev/stderr
+	  allfound=1
+      fi
+  done
+  return $allfound
+}
+
+make_unique(){
+  if [ "$#" = "1" ]; then
+      # take first word
+      for exclude_word in $1; do
+	  break;
+      done
+      make_unique $exclude_word "$1" 0
+  else
+      local exclude_word="$1"
+      local words="$2"
+      local pos="$3"
+      local length=0
+      local i=0
+      local new_words=""
+      local cur=0
+      for word in $words; do
+	  if [ $i -le $pos ]; then
+	      i=$((i+1))
+	      length=$((length+1))
+	      new_words="$new_words $word"
+	      continue
+	  fi
+	  if [ "$word" != "$exclude_word" ]; then
+	      new_words="$new_words $word"
+	      if [ "$((length-1))" = "$pos" ]; then
+		  next_word="$word"
+	      fi
+	      length=$((length+1))
+	  fi
+      done
+      if [ "$pos" -lt "$length" ]; then
+       # process next word
+	  make_unique "$next_word" "$new_words" $((pos+1))
+      else
+	  export UNIQUE_WORDS="$new_words"
+      fi
+  fi
+}
+       
+echo
+echo == Dune project/module generator ==
+echo
+echo duneproject will assist you in the creation of a new Dune application.
+echo During this process a new directory with the name of your project will be
+echo created. This directory will hold all configuration and Makefiles and a
+echo simple example application.
+echo
+
+################## FIND AVAILABLE MODULES ##################
+
+. $(canonicalpath $0)/../../dune-common/bin/dunemodules.inc
+
+# create PKG_CONFIG_PATH for installed dune modules
+export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$(canonicalpath $0)/../lib/pkgconfig"
+
+if [ "$MODULES" = "" ]; then
+  find_modules_in_path
+fi
+
+if [ "$MODULES" = "" ]; then
+  echo "ERROR">/dev/stderr
+  echo "No dune modules were found!">/dev/stderr
+  echo "Did you forget to specify the places where ">/dev/stderr
+  echo "you installed your modules in the ">/dev/stderr
+  echo "DUNE_CONTROL_PATH environment variable?" >/dev/stderr
+  exit 1;
+fi
+
+# get the real module names
+SRC_MODULES=""
+for i in $MODULES; do
+  mod=$(eval echo \$NAME_$i)
+  SRC_MODULES="$SRC_MODULES $mod"
+done
+
+# get installed modules
+PKG_MODULES="`pkg-config --list-all | grep dune | cut -d' ' -f1`"
+
+# merge lists
+ALL_MODULES="`echo $SRC_MODULES $PKG_MODULES | tr ' ' '\n' | sort | uniq`"
+
+################## READ OPTIONS ##################
+
+while [ "$DATACORRECT" != "y" -a "$DATACORRECT" != "Y" ]; do
+  PROJECT=""
+  while [ -z $PROJECT ]; do
+    read -p "1) Name of your new Project? (e.g.: dune-grid): " PROJECT
+    if echo "$ALL_MODULES" | grep -q ^$PROJECT$; then
+      read -p "   A module named $PROJECT already exists. Continue anyway? [y/N] " CONT
+      if test x$DELETE = xy -o x$DELETE = xY; then
+        PROJECT=""
+      fi
+    fi
+  done
+  MODULE="$PROJECT"
+
+  DEP_OK=1
+
+  while [ "$DEPOK" != 0 ]; do
+  DEPENDENCIES="dune-common dune-disc dune-grid dune-istl"
+  echo "2) The new project automatically depends on dune-common, dune-disc, dune-grid, dune-istl."
+  set +e
+  modulesexist "$DEPENDENCIES" "$ALL_MODULES"
+  DEPOK=$?
+  set -e
+  done
+
+  VERSION=""
+  while [ -z $VERSION ]; do
+    read -p "3) Project/Module version? " VERSION
+  done
+  MAINTAINER=""
+  while [ -z $MAINTAINER ]; do
+    read -p "4) Maintainers email address? " MAINTAINER
+  done
+
+  echo
+  echo "creating Project \"$PROJECT\", version $VERSION "
+  echo "which depends on \"$DEPENDENCIES\""
+  echo "with maintainer \"$MAINTAINER\""
+  read -p "Are these informations correct? [y/N] " DATACORRECT
+done
+
+echo
+echo "A sample code $MODULE.cc is generated in the \"$PROJECT\" directory."
+echo "Look at the README and dune.module files there."
+echo "Now you can run dunecontrol script which will setup the new module."
+echo "Sometimes you may have to tweak configure.ac a bit."
+
+if test -d $PROJECT; then
+  echo WARNING:
+  echo "A directory with the name $PROJECT already exists."
+  echo "Do you want to continue anyway?"
+  read -p "Type Y to overwrite the old directory, N to abort. [y/N] " DELETE
+  if test x$DELETE != xy -a x$DELETE != xY; then
+    echo Abort...
+    exit 1
+  fi
+  rm -rf "$PROJECT"
+fi
+mkdir "$PROJECT"
+
+################## dune.module ##################
+cat > "$PROJECT/dune.module" <<C_DELIM
+
+#dune module information file#
+##############################
+
+#Name of the module
+Module:$MODULE
+#depending on 
+Depends:$DEPENDENCIES
+C_DELIM
+
+################## CONFIGURE.AC ##################
+
+## Create the parameters passed to DUNE_CHECK_ALL
+
+# save module list of dunemodules.inc
+save_MODULES=$MODULES
+for name in $DEPENDENCIES; do
+  mod="`fix_variable_name $name`"
+  if test "x$(eval echo \$HAVE_$mod)" != "x"; then
+    # found via dunemodules.inc
+    sort_modules "$mod"
+    for mod in $MODULES; do
+      M_DEPS="$M_DEPS $(eval echo \$NAME_$mod)"
+    done
+    MODULES=$save_MODULES
+  else
+    # found via pkg-config
+    M_DEPS="`pkg-config --variable=Requires $name`"
+  fi
+  for dep in $M_DEPS; do
+      CHECK="$CHECK [$dep]"
+  done
+done
+
+make_unique "$CHECK"
+
+# insert , between modules
+j=0
+for dep in $UNIQUE_WORDS; do
+if [ "$j" = "0" ]; then
+      CHECK="$dep"
+      j=1
+    else
+      CHECK="$CHECK, $dep"
+    fi
+done
+
+# we need the module with _ instead of - to not confuse automake
+fix_and_assign CMODULE $MODULE
+
+cat > "$PROJECT/configure.ac" <<C_DELIM
+# -*- Autoconf -*-
+# Process this file with autoconf to produce a configure script.
+AC_PREREQ(2.50)
+AC_INIT(dune-mux, 0.1, bernd@iws.uni-stuttgart.de)
+AM_INIT_AUTOMAKE(dune-mux, 0.1, bernd@iws.uni-stuttgart.de)
+AC_CONFIG_SRCDIR([test/diffusion/test_diffusion.cc])
+AM_CONFIG_HEADER([config.h])
+#AC_SUBST([LOCAL_LIBS], '$(top_srcdir)/lib/libdunemux.la')
+AC_SUBST([LOCAL_LIBS], '$(top_srcdir)/dumux/libdumux.la')
+
+# we need no more than the standard DE-stuff
+# this module depends on dune-common dune-disc dune-fem dune-grid dune-istl
+# this implies checking for [dune-common], [dune-istl], [dune-grid], [dune-disc]
+DUNE_CHECK_ALL([dune-common], [dune-istl], [dune-grid], [dune-disc])
+
+AC_DEFUN([SET_PARDISO], [
+AC_PREREQ(2.50)
+AC_REQUIRE([AC_F77_LIBRARY_LDFLAGS])
+acx_pardiso_ok=no
+
+AC_ARG_WITH(pardiso,
+	[AC_HELP_STRING([--with-pardiso=<lib>], [use PARDISO library <lib>])])
+case $with_pardiso in
+	yes | "") ;;
+	no) acx_pardiso_ok=disable ;;
+	-* | */* | *.a | *.so | *.so.* | *.o) PARDISO_LIBS="$with_pardiso" ;;
+	*) PARDISO_LIBS="-l$with_pardiso" ;;
+esac
+
+# Get fortran linker names of PARDISO functions to check for.
+AC_F77_FUNC(pardisoinit)
+
+acx_pardiso_save_LIBS="$LIBS"
+LIBS="$BLAS_LIBS -llapack -lg2c $LIBS $FLIBS"
+
+# First, check PARDISO_LIBS environment variable
+if test $acx_pardiso_ok = no; then
+if test "x$PARDISO_LIBS" != x; then
+	save_LIBS="$LIBS"; LIBS="$PARDISO_LIBS $LIBS"
+	AC_MSG_CHECKING([for $pardisoinit in $PARDISO_LIBS])
+	AC_TRY_LINK_FUNC($pardisoinit, [acx_pardiso_ok=yes], [PARDISO_LIBS=""])
+	AC_MSG_RESULT($acx_pardiso_ok)
+	LIBS="$save_LIBS"
+fi
+fi
+
+AC_SUBST(PARDISO_LIBS)
+
+LIBS="$acx_pardiso_save_LIBS"
+
+# Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
+if test x"$acx_pardiso_ok" = xyes; then
+        ifelse([$1],,AC_DEFINE(HAVE_PARDISO,1,[Define if you have a PARDISO library.]),[$1])
+        :
+else
+        acx_pardiso_ok=no
+        $2
+fi
+])dnl SET_PARDISO
+
+SET_PARDISO
+
+# implicitly set the Dune-flags everywhere
+AC_SUBST(AM_CPPFLAGS, $ALL_PKG_CPPFLAGS)
+AC_SUBST(AM_LDFLAGS, $ALL_PKG_LDFLAGS)
+LIBS="$DUNE_LIBS $ALL_PKG_LIBS $PARDISO_LIBS $BLAS_LIBS"
+
+AC_CONFIG_FILES([Makefile])
+AC_OUTPUT
+# finally print the summary information
+DUNE_SUMMARY_ALL
+echo "Pardiso..........: $acx_pardiso_ok"
+echo 
+C_DELIM
+
+################## AUTOGEN.SH ##################
+cat > "$PROJECT/autogen.sh" <<A_DELIM
+#!/bin/sh
+# $Id: duneproject 4887 2007-04-02 10:06:45Z christi $
+
+# barf on errors
+set -e
+
+usage () {
+    echo "Usage: ./autogen.sh DUNE_COMMON_DIR [options]"
+    echo "  --ac=, --acversion=VERSION   use a specific VERSION of autoconf"
+    echo "  --am=, --amversion=VERSION   use a specific VERSION of automake"
+    echo "  -h,    --help                you already found this :-)"
+}
+
+for OPT in "\$@"; do
+    set +e
+    # stolen from configure...
+    # when no option is set, this returns an error code
+    arg=\`expr "x\$OPT" : 'x[^=]*=\(.*\)'\`
+    set -e
+
+    case "\$OPT" in
+	--ac=*|--acversion=*)
+			if test "x\$arg" = "x"; then
+				usage; 
+				exit 1;
+			fi
+			ACVERSION=\$arg
+			;;
+	--am=*|--amversion=*)
+			if test "x\$arg" = "x"; then
+				usage; 
+				exit 1;
+			fi
+			AMVERSION=\$arg
+			;;
+	-h|--help) usage ; exit 0 ;;
+	*)
+            if test -d "\$OPT/m4"; then
+              ACLOCAL_FLAGS="\$ACLOCAL_FLAGS -I \$OPT/m4"
+            fi
+            if test -d "\$OPT/am"; then
+              am_dir="\$OPT/am"
+            fi
+            if test -d "\$OPT/share/aclocal"; then
+              ACLOCAL_FLAGS="\$ACLOCAL_FLAGS -I \$OPT/share/aclocal"
+            fi
+            if test -d "\$OPT/share/dune-common/am"; then
+              am_dir="\$OPT/share/dune-common/am"
+            fi
+            ;;
+    esac
+done
+
+## report parameters
+if test "x\$ACVERSION" != "x"; then
+	echo "Forcing autoconf version �\$ACVERSION�"
+	if ! which autoconf\$ACVERSION > /dev/null; then
+		echo
+		echo "Error: Could not find autoconf\$ACVERSION"
+		echo "       Did you specify a wrong version?"
+		exit 1
+	fi
+fi
+if test "x\$AMVERSION" != "x"; then
+	echo "Forcing automake version �\$AMVERSION�"
+	if ! which automake\$AMVERSION > /dev/null; then
+		echo
+		echo "Error: Could not find automake\$AMVERSION"
+		echo "       Did you specify a wrong version?"
+		exit 1
+	fi
+fi
+
+
+## run autotools
+
+echo "--> libtoolize..."
+# this script won't rewrite the files if they already exist. This is a
+# PITA when you want to upgrade libtool, thus I'm setting --force
+libtoolize --force
+
+# prepare everything
+echo "--> aclocal..."
+aclocal\$AMVERSION \$ACLOCAL_FLAGS
+
+# applications should provide a config.h for now
+echo "--> autoheader..."
+autoheader\$ACVERSION
+
+# create a link to the dune-common am directory
+if [ -n "\$am_dir" ] && [ -d \$am_dir ]; then
+  echo "--> linking dune-common/am..."
+  rm -f am
+  ln -s \$am_dir am
+else
+  echo
+  echo "Error: Could not find dune-common/am!"
+  usage
+  exit 1
+fi
+
+# call automake/conf
+echo "--> automake..."
+automake\$AMVERSION --add-missing
+
+echo "--> autoconf..."
+autoconf\$ACVERSION
+
+## tell the user what to do next
+echo "Now run ./configure "
+
+A_DELIM
+
+chmod +x "$PROJECT/autogen.sh"
+
+################## README ##################
+cat > "$PROJECT/README" <<R_DELIM
+Preparing the Sources
+=========================
+
+Additional to the software mentioned in README you'll need the
+following programs installed on your system:
+
+  automake >= 1.5
+
+  autoconf >= 2.50
+
+  libtool
+
+Getting started
+---------------
+
+If these preliminaries are met, you should run 
+
+  dunecontrol all
+
+which will find all installed dune modules as well as all dune modules 
+(not installed) which sources reside in a subdirectory of the current 
+directory. Note that if dune is not installed properly you will either
+have to add the directory where the dunecontrol script resides (probably 
+./dune-common/bin) to your path or specify the relative path of the script.
+
+On your project and all uninstalled DUNE source modules found the script 
+will then calls the GNU autoconf/automake to create a ./configure-script 
+and the Makefiles. Afterwards that configure script will be called and the
+modules will be build using make all
+
+Most probably you'll have to provide additional information to dunecontrol 
+(e. g. compilers, configure options) and/or make options. 
+
+The most convenient way is to use options files in this case. The files
+defining three variables:
+
+AUTOGEN_FLAGS    flags passed to autogen
+CONFIGURE_FLAGS  flags passed to configure
+MAKE_FLAGS       flags passed to make
+
+An example options file might look like this:
+
+#use this options to autogen, configure and make if no other options are given
+AUTOGEN_FLAGS="--ac=2.50 --ac=1.8" #Forces automake 2,50 and autoconf 1.8
+CONFIGURE_FLAGS="CXX=g++-3.4 --prefix=/install/path" #force g++-3.4 as compiler
+MAKE_FLAGS=install #Per default run make install instead of simply make
+
+If you save this information into example.opts you can path the opts file to
+dunecontrol via the --opts option, e. g.
+
+  dunecontrol --opts=example.opts all
+
+To get a full list of available configure flags just run
+
+  dunecontrol configure --help
+
+after running at least 
+  dunecontrol autogen
+
+More info
+---------
+
+See
+
+     dunecontrol --help
+   
+for further options.
+
+
+The full build-system is described in the dune-common/doc/buildsystem (SVN version) or under share/doc/dune-common/buildsystem if you installed DUNE!
+
+\$Id: duneproject 4887 2007-04-02 10:06:45Z christi $
+
+R_DELIM
+
+################## MAKEFILE.AM ##################
+cat> "$PROJECT/Makefile.am" << M_DELIM
+# \$Id: duneproject 4887 2007-04-02 10:06:45Z christi $
+
+# we need the module file to be able to build via dunecontrol
+EXTRA_DIST=dune.module
+
+# possible options
+#LDADD = \$(UG_LDFLAGS) \$(AMIRAMESH_LDFLAGS) \$(UG_LIBS) \$(AMIRAMESH_LIBS)
+#AM_CPPFLAGS = \$(UG_CPPFLAGS) \$(AMIRAMESH_CPPFLAGS)
+
+noinst_PROGRAMS = ${CMODULE}
+
+${CMODULE}_SOURCES = $CMODULE.cc
+
+${CMODULE}_CXXFLAGS = \$(MPI_CPPFLAGS) \$(UG_CPPFLAGS) \$(AMIRAMESH_CPPFLAGS) \$(ALBERTA_CPPFLAGS) -I\$(top_srcdir)/../dune-mux
+${CMODULE}_LDADD = \$(MPI_LDFLAGS) \$(ALBERTA_LDFLAGS) \$(ALBERTA_LIBS) \$(AMIRAMESH_LDFLAGS) \$(AMIRAMESH_LIBS) \$(UG_LDFLAGS) \$(UG_LIBS) \$(MPI_LDFLAGS) \$(DUNE_LDFLAGS) \$(DUNE_LIBS) -L\$(top_srcdir)/../dune-mux/dumux -ldumux
+
+# don't follow the full GNU-standard
+# we need automake 1.5
+AUTOMAKE_OPTIONS = foreign 1.5
+# pass most important options when "make distcheck" is used
+DISTCHECK_CONFIGURE_FLAGS = --with-dune=\$(DUNEROOT) CXX="\$(CXX)" CC="\$(CC)"
+M_DELIM
+
+################## PROJECT.CC ##################
+cat> "$PROJECT/$CMODULE.cc" << CC_DELIM
+#ifdef HAVE_CONFIG_H
+# include "config.h"     
+#endif
+#include <iostream>
+#include"dune/common/mpihelper.hh" // An initializer of MPI
+#include"dune/common/exceptions.hh" // We use exceptions
+#include <dune/grid/sgrid.hh> // load sgrid definition
+#include <dumux/diffusion/fv/fvdiffusion.hh>
+#include <dumux/diffusion/problems/uniformproblem.hh>
+
+int main(int argc, char** argv)
+{
+  try{
+    // set up the grid
+    const int dim = 2;
+    typedef double NumberType; 
+    typedef Dune::SGrid<dim,dim> GridType; 
+    typedef Dune::FieldVector<GridType::ctype,dim> FieldVector; 
+    Dune::FieldVector<int,dim> N(1); N[0] = 2;                   
+    FieldVector L(0); 
+    FieldVector H(300); H[0] = 600; 
+    GridType grid(N,L,H);  
+ 
+    // declare boundary value problem 
+    Dune::UniformProblem<GridType, NumberType> problem(grid);
+
+    // initialize diffusion object
+    Dune::FVDiffusion<GridType, NumberType> diffusion(grid, problem);
+
+    std::cout << "Solving diffusion problem with " << grid.size(0) << " elements." << std::endl;
+
+    // solve for the pressure
+    diffusion.pressure();
+
+    // print the solution vector
+    printvector(std::cout, *diffusion, "pressure", "row", 200, 1, 3);
+
+    return 0;
+  }
+  catch (Dune::Exception &e){
+    std::cerr << "Dune reported error: " << e << std::endl;
+  }
+  catch (...){
+    std::cerr << "Unknown exception thrown!" << std::endl;
+  }
+}
+CC_DELIM
+
