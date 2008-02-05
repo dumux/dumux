@@ -1,8 +1,5 @@
 #include "config.h"
-#include <iostream>
-#ifdef HAVE_UG
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
-#include <dune/grid/io/file/dgfparser/dgfug.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
@@ -10,72 +7,7 @@
 #include "dumux/diffusion/fe/fediffusion.hh"
 #include "dumux/diffusion/mimetic/mimeticdiffusion.hh"
 #include "fvca5test1problem.hh"
- 
-namespace Dune
-{
-
-template<int dim>
-struct ElementLayout
-{
-	bool contains (GeometryType gt)
-	{
-		return gt.dim() == dim;
-	}
-}; 
-	  
-template<class GridType, class ProblemType, class SolutionType>
-double relativeL2Error(const GridType& grid, const ProblemType& problem, 
-						const SolutionType& solution)
-{
-    typedef typename GridType::Traits::template Codim<0>::Entity Entity;
-    typedef typename GridType::Traits::LevelIndexSet IS;
-    typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator Iterator;
-    typedef MultipleCodimMultipleGeomTypeMapper<GridType,IS,ElementLayout> EM;
-    typedef typename GridType::ctype ct; 
-    
-    enum{dim = GridType::dimension};
-
-    const IS& indexset(grid.levelIndexSet(grid.maxLevel()));
-    EM elementmapper(grid, grid.levelIndexSet(grid.maxLevel()));
-    
-    double numerator = 0; 
-    double denominator = 0;
-    Iterator eendit = indexset.template end<0,All_Partition>();
-    for (Iterator it = indexset.template begin<0,All_Partition>(); it != eendit; ++it)
-      {
-    	// get entity 
-    	const Entity& element = *it; 
-    	
-    	// cell geometry type
-		GeometryType gt = element.geometry().type();
-		
-		// cell center in reference element
-		const FieldVector<ct,dim>& 
-		  local = ReferenceElements<ct,dim>::general(gt).position(0,0);
-		
-		// get global coordinate of cell center
-		FieldVector<ct,dim> global = element.geometry().global(local);
-		
-		// get exact solution value 
-		double exactValue = problem.exact(global);
-		
-		// cell index
-		int indexi = elementmapper.map(element);
-		
-		// get approximate solution value 
-		double approximateValue = solution[indexi];
-		
-		// cell volume, assume linear map here
-		double volume = element.geometry().integrationElement(local)
-			*ReferenceElements<ct,dim>::general(gt).volume();
-
-		numerator += volume*(exactValue - approximateValue)*(exactValue - approximateValue);
-		denominator += volume*exactValue*exactValue;
-      }
-    
-    return sqrt(numerator/denominator);
-}
-}
+#include "../benchmarkresult.hh"
 
 int main(int argc, char** argv) 
 {
@@ -87,25 +19,68 @@ int main(int argc, char** argv)
     typedef double NumberType; 
     typedef Dune::UGGrid<dim> GridType; 
 
+    if (argc != 2 && argc != 3) {
+    	std::cout << "Usage: fvca5_test1 dgffilename [refinementsteps]" << std::endl;
+    	return (1);
+    }
+    int refinementSteps = 0;
+    if (argc == 3) {
+    	std::string arg2(argv[2]);
+    	std::istringstream is2(arg2);
+    	is2 >> refinementSteps;
+    }
+    
     // create grid pointer, GridType is defined by gridtype.hh
     Dune::GridPtr<GridType> gridPtr( argv[1] );
 
     // grid reference 
     GridType& grid = *gridPtr;
 
-    Dune::FVCA5Test1Problem<GridType, NumberType> problem;
+    if (refinementSteps)
+    	grid.globalRefine(refinementSteps);
+
+	Dune::FVCA5Test1Problem<GridType, NumberType> problem;
+    Dune::SimpleProblem<GridType, NumberType> satprob;
 
     Dune::Timer timer;
     timer.reset();
     //Dune::FEDiffusion<GridType, NumberType> diffusion(grid, problem);
     //Dune::FVDiffusion<GridType, NumberType> diffusion(grid, problem);
-    Dune::MimeticDiffusion<GridType, NumberType> diffusion(grid, problem);
+    Dune::MimeticDiffusion<GridType, NumberType> diffusion(grid, problem, satprob, grid.maxLevel());
     
     diffusion.pressure();
     std::cout << "pressure calculation took " << timer.elapsed() << " seconds" << std::endl;
     //printvector(std::cout, *diffusion, "pressure", "row", 200, 1, 3);
     
-    std::cout << "relative discrete L2 error erl2 = " << relativeL2Error(grid, problem, *diffusion) << std::endl;
+    Dune::BenchmarkResult result;
+    result.evaluate(grid, problem, diffusion);  
+    std::cout.setf(std::ios_base::scientific, std::ios_base::floatfield);
+    std::cout.setf(std::ios_base::uppercase);
+    std::cout.precision(2);
+    
+    std::cout << "sumflux = flux0 + flux1 + fluy0 + fluy1 - sumf \n        = " 
+    	<< result.flux0 << " + " << result.flux1 << " + " 
+    	<< result.fluy0 << " + " << result.fluy1 << " - " 
+    	<< result.sumf << "\n        = " << result.sumflux << std::endl;
+    std::cout << "relative discrete L2 error erl2 = " << result.relativeL2Error << std::endl;
+    std::cout << "relative discrete L2 error ergrad = " << result.ergrad << std::endl;
+    std::cout << "errflx0 = abs((flux0 + exactflux0)/exactflux0) = abs((" 
+    	<< result.flux0 << " + " << result.exactflux0 << ")/" << result.exactflux0 
+    	<< ") = " << result.errflx0 << std::endl;
+    std::cout << "errflx1 = abs((flux1 + exactflux1)/exactflux1) = abs((" 
+    	<< result.flux1 << " + " << result.exactflux1 << ")/" << result.exactflux1 
+    	<< ") = " << result.errflx1 << std::endl;
+    std::cout << "errfly0 = abs((fluy0 + exactfluy0)/exactfluy0) = abs((" 
+    	<< result.fluy0 << " + " << result.exactfluy0 << ")/" << result.exactfluy0 
+    	<< ") = " << result.errfly0 << std::endl;
+    std::cout << "errfly1 = abs((fluy1 + exactfluy1)/exactfluy1) = abs((" 
+    	<< result.fluy1 << " + " << result.exactfluy1 << ")/" << result.exactfluy1 
+    	<< ") = " << result.errfly1 << std::endl;
+    std::cout << "mean value error erflm = " << result.erflm << std::endl;
+    std::cout << "energy ener2 = " << result.ener2 << std::endl;
+    std::cout << "umin = " << result.uMin << std::endl;
+    std::cout << "umax = " << result.uMax << std::endl;
+    
     
     diffusion.vtkout("fvca5_test1", 0);
 
@@ -120,17 +95,3 @@ int main(int argc, char** argv)
     std::cerr << "Unknown exception thrown!" << std::endl;
   }
 }
-#else 
-
-int main (int argc , char **argv) try
-{
-  std::cout << "Please install the Alberta library." << std::endl;
-
-  return 1;
-}
-catch (...) 
-{
-    std::cerr << "Generic exception!" << std::endl;
-    return 2;
-}
-#endif 
