@@ -179,7 +179,7 @@ namespace Dune
 	  
     	// set to Zero 
     	for (int i=0; i < SIZE; i++) {
-    		this->bctype[i] = BoundaryConditions::neumann;
+	  this->bctype[i].assign(BoundaryConditions::neumann);
     		this->b[i] = 0;
     		this->def[i] = 0;
     	}

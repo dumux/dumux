@@ -28,7 +28,9 @@ namespace Dune
 	  
 	virtual RT S0 (const FieldVector<DT,n>& x, const Entity& e, 
 			const FieldVector<DT,n>& xi) const
-	{}
+        { 
+	  return 0;
+	}
 	
 	virtual RT C1_0 (const FieldVector<DT,n>& x, const Entity& e, 
 			const FieldVector<DT,n>& xi) const = 0;

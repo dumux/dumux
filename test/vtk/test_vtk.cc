@@ -5,6 +5,7 @@
 #include <dune/grid/utility/gridtype.hh>
 #include <dune/grid/common/gridinfo.hh>
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
+#include <dune/grid/io/file/dgfparser/dgfug.hh>
 #include "dumux/io/vtkwriterextended.hh"
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>

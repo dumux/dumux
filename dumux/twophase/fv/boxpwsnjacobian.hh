@@ -583,7 +583,7 @@ namespace Dune
 
 		  for (int i = 0; i < sfs.size(); i++) {
 			  this->b[i] = 0;
-			  this->bctype[i] = BoundaryConditions::neumann;
+			  this->bctype[i].assign(BoundaryConditions::neumann);
 		  }
 		  
 		  // determine quadrature order
@@ -664,7 +664,7 @@ namespace Dune
 						{
 						  if (this->bctype[i][0]<bctypeface[0])
 							{
-							  this->bctype[i] = bctypeface[0];
+							  this->bctype[i].assign(bctypeface[0]);
 							  if (bctypeface[0]==BoundaryConditions::process)
 								this->b[i] = 0;
 							  if (bctypeface[0]==BoundaryConditions::dirichlet)
@@ -681,7 +681,7 @@ namespace Dune
 					  {
 						if (this->bctype[i][0]<bctypeface[0])
 						  {
-							this->bctype[i] = bctypeface[0];
+						    this->bctype[i].assign(bctypeface[0]);
 							if (bctypeface[0]==BoundaryConditions::process)
 							  this->b[i] = 0;
 							if (bctypeface[0]==BoundaryConditions::dirichlet)

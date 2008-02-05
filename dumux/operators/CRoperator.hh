@@ -315,7 +315,7 @@ namespace Dune
 	  // allocate flag vector to hold flags for essential boundary conditions
 	  std::vector<BCBlockType> essential(this->edgemapper.size());
 	  for (typename std::vector<BCBlockType>::size_type i=0; i<essential.size(); i++)
-		essential[i] = BoundaryConditions::neumann;
+	    essential[i].assign(BoundaryConditions::neumann);
 
 	  // local to global id mapping (do not ask vertex mapper repeatedly
 	  int local2Global[Dune::CRShapeFunctionSetContainer<DT,RT,n>::maxsize];

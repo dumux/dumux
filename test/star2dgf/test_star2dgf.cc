@@ -4,6 +4,7 @@
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/bvector.hh>
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
+#include <dune/grid/io/file/dgfparser/dgfalu.hh>
 
 #include "gridcheck.cc"
 #include "checkgeometryinfather.cc"

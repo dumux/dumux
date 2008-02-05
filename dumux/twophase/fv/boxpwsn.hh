@@ -5,7 +5,7 @@
 #include<dune/istl/solvers.hh>
 #include<dune/istl/preconditioners.hh>
 
-#include <dune/common/array.hh>        // defines simple array class
+//#include <dune/common/array.hh>        // defines simple array class
 #include <dune/common/fixedarray.hh>   // defines simple array classes
 #include <dune/common/geometrytype.hh>
 #include <dune/grid/sgrid.hh>          // a complete structured grid

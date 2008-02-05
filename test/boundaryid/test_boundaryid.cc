@@ -3,10 +3,12 @@
 #ifdef HAVE_ALBERTA
 #include <dune/grid/uggrid.hh>
 #include <dune/grid/albertagrid.hh>
+#include <dune/grid/alugrid.hh>
 #include "gridcheck.cc"
 #include "checkgeometryinfather.cc"
 #include "checkintersectionit.cc"
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
+#include <dune/grid/io/file/dgfparser/dgfalu.hh>
 #include "dumux/twophase/problems/lensproblem.hh"
 #include "lensproblemwithid.hh"
 #include "dumux/twophase/fv/boxpwsn.hh"
@@ -40,8 +42,8 @@ int main (int argc , char **argv) try
 
 
     // create a grid object
-	typedef Dune::AlbertaGrid<dim,dim> GridType; 
-	//typedef Dune::ALUSimplexGrid<dim,dim> GridType; 
+	//typedef Dune::AlbertaGrid<dim,dim> GridType; 
+	typedef Dune::ALUSimplexGrid<dim,dim> GridType; 
 
     typedef Dune::BoxPwSn<GridType, NumberType> TwoPhase;
     DNAPL dnapl;

@@ -24,7 +24,6 @@ namespace Dune
 				  typedef typename Model::RepresentationType RepresentationType;
 				  RepresentationType k1(*model);                                                            
 				  RepresentationType help(*model);                               
-				  double dummy;
 
 				  // obtain the first update and the time step size 
 				  model.update(t, dt, k1);
