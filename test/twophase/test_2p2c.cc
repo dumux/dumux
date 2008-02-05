@@ -1,5 +1,6 @@
 #include "config.h"
 #include <iostream>
+#ifdef HAVE_UG
 #include <iomanip>
 #include <dune/grid/utility/gridtype.hh>
 #include <dune/grid/common/gridinfo.hh>
@@ -41,9 +42,9 @@ int main(int argc, char** argv)
 
 
     // create a grid object
-    typedef Dune::SGrid<dim,dim> GridType; 
+    //typedef Dune::SGrid<dim,dim> GridType; 
     //typedef Dune::YaspGrid<dim,dim> GridType; 
-    //typedef Dune::UGGrid<dim> GridType; 
+    typedef Dune::UGGrid<dim> GridType; 
 
     // use unitcube from grids 
     std::stringstream dgfFileName;
@@ -84,3 +85,17 @@ int main(int argc, char** argv)
     std::cerr << "Unknown exception thrown!" << std::endl;
   }
 }
+#else 
+
+int main (int argc , char **argv) try
+{
+  std::cout << "Please install the UG library." << std::endl;
+
+  return 1;
+}
+catch (...) 
+{
+    std::cerr << "Generic exception!" << std::endl;
+    return 2;
+}
+#endif 

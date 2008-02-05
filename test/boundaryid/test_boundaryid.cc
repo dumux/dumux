@@ -1,5 +1,6 @@
 #include <config.h>
 #include <iostream>
+#ifdef HAVE_ALBERTA
 #include <dune/grid/uggrid.hh>
 #include <dune/grid/albertagrid.hh>
 #include "gridcheck.cc"
@@ -97,3 +98,18 @@ catch (...)
     std::cerr << "Generic exception!" << std::endl;
     return 2;
 }
+
+#else 
+
+int main (int argc , char **argv) try
+{
+  std::cout << "Please install the Alberta library." << std::endl;
+
+  return 1;
+}
+catch (...) 
+{
+    std::cerr << "Generic exception!" << std::endl;
+    return 2;
+}
+#endif 
