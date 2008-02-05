@@ -96,12 +96,11 @@ namespace Dune
 	enum {n=G::dimension};
 	typedef typename G::template Codim<0>::Entity Entity;
 	typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator Iterator;
-	typedef typename IS::template Codim<n>::template Partition<All_Partition>::Iterator VIterator;
 	typedef typename G::template Codim<0>::EntityPointer EEntityPointer;
 	typedef typename G::Traits::GlobalIdSet IDS;
 	typedef typename IDS::IdType IdType;
 	typedef std::set<IdType> GIDSet;
-	typedef MultipleCodimMultipleGeomTypeMapper<G,IS,CRLayout> VM;
+	typedef MultipleCodimMultipleGeomTypeMapper<G,IS,CRLayout> EM;
 	typedef MultipleCodimMultipleGeomTypeMapper<G,IS,AllLayout> AM;
 
   private:
@@ -116,7 +115,7 @@ namespace Dune
 	// return number of rows/columns
 	int size () const
 	{
-	  return edgemapper.size();
+	  return facemapper.size();
 	}
 
 	struct MatEntry
@@ -130,7 +129,7 @@ namespace Dune
   public:
 
 	CROperatorBase (const G& g, const IS& indexset, LC lcomm) 
-	  : grid(g), is(indexset), lc(lcomm), edgemapper(g,indexset), allmapper(g,indexset),
+	  : grid(g), is(indexset), lc(lcomm), facemapper(g,indexset), allmapper(g,indexset),
 	    A(size(), size(), nnz(indexset), RepresentationType::random)
 	{
 	  // Check for the TypeTag
@@ -162,8 +161,8 @@ namespace Dune
 		  for (int i = 0; i < refelem.size(1); i++)
 		    {
 		      int index = allmapper.template map<1>(*it, i);
-		      int alpha = edgemapper.template map<1>(*it, i);
-		      //std::cout << "index=" << index << " alpha=" << alpha << std::endl;
+		      int alpha = facemapper.template map<1>(*it, i);
+		      //std::cout << "index = " << index << ", alpha = " << alpha << std::endl;
 		      if (!visited[index]) 
 			{
 			  A.incrementrowsize(alpha);
@@ -200,7 +199,7 @@ namespace Dune
 		  for (int i = 0; i < refelem.size(1); i++)
 			{
 			  int index = allmapper.template map<1>(*it, i);
-			  int alpha = edgemapper.template map<1>(*it, i);
+			  int alpha = facemapper.template map<1>(*it, i);
 			  if (!visited[index]) 
 				{
 				  A.addindex(alpha,alpha);
@@ -208,8 +207,9 @@ namespace Dune
 				}
 			  for (int k = 0; k < refelem.size(1); k++)
 			    if (k != i) {
-			      int beta = edgemapper.template map<1>(*it, k);
+			      int beta = facemapper.template map<1>(*it, k);
 			      A.addindex(alpha, beta);
+			      //std::cout << "alpha = " << alpha << ", added beta = " << beta << std::endl;
 			    }
 
 			}
@@ -238,7 +238,7 @@ namespace Dune
 	const G& grid;	
 	const IS& is;
 	LC lc;
-	VM edgemapper;
+	EM facemapper;
 	AM allmapper;
 	RepresentationType A;
   };
@@ -260,7 +260,6 @@ namespace Dune
 	enum {n=G::dimension};
 	typedef typename G::template Codim<0>::Entity Entity;
 	typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator Iterator;
-	typedef typename IS::template Codim<n>::template Partition<All_Partition>::Iterator VIterator;
 	typedef typename G::template Codim<0>::HierarchicIterator HierarchicIterator;
 	typedef typename G::template Codim<0>::EntityPointer EEntityPointer;
 	typedef typename CRFunction<G,RT,IS,LC,m>::RepresentationType VectorType;
@@ -269,7 +268,6 @@ namespace Dune
 	typedef typename MatrixType::block_type MBlockType;
 	typedef typename MatrixType::RowIterator rowiterator;
 	typedef typename MatrixType::ColIterator coliterator;
-	typedef typename CROperatorBase<TypeTag,G,RT,IS,LC,m>::VM VM;
 	typedef FixedArray<BoundaryConditions::Flags,m> BCBlockType;     // componentwise boundary conditions
     typedef Dune::BlockVector< Dune::FieldVector<double,1> > SatType; 
 
@@ -313,7 +311,7 @@ namespace Dune
 	  *f = 0;
 // 	  std::cout << "=== CROperatorBase clear matrix " <<  this->watch.elapsed() << std::endl;
 	  // allocate flag vector to hold flags for essential boundary conditions
-	  std::vector<BCBlockType> essential(this->edgemapper.size());
+	  std::vector<BCBlockType> essential(this->facemapper.size());
 	  for (typename std::vector<BCBlockType>::size_type i=0; i<essential.size(); i++)
 	    essential[i].assign(BoundaryConditions::neumann);
 
@@ -329,13 +327,14 @@ namespace Dune
 		  const typename Dune::CRShapeFunctionSetContainer<DT,RT,n>::value_type& 
 			sfs = Dune::CRShapeFunctions<DT,RT,n>::general(gt,1);
 
-
 		  // get local to global id map
 		  for (int k = 0; k < sfs.size(); k++)
 			{
 			  if (sfs[k].codim() != 1) DUNE_THROW(MathError, "expected codim == dim");
-			  int alpha = this->edgemapper.template map<1>(*it,sfs[k].entity());
+			  int alpha = this->facemapper.template map<1>(*it, k);
 			  local2Global[k] = alpha;
+		      //FieldVector<double,n> global = (*it).geometry().global(sfs[k].position());
+		      //std::cout << "local = " << sfs[k].position() << ", global = " << global << " -> " << alpha << std::endl;
 			}
 
 		  // build local stiffness matrix for CR elements
@@ -373,7 +372,7 @@ namespace Dune
 	  for (rowiterator i=this->A.begin(); i!=endi; ++i)
 		{
 		  // muck up extra rows
-		  if (i.index()>=this->edgemapper.size())
+		  if (i.index()>=this->facemapper.size())
 			{
 			  coliterator endj=(*i).end();
 			  for (coliterator j=(*i).begin(); j!=endj; ++j)
@@ -413,7 +412,7 @@ namespace Dune
 
 	void preMark ()
 	{
-	  marked.resize(this->edgemapper.size());
+	  marked.resize(this->facemapper.size());
 	  for (std::size_t i=0; i<marked.size(); i++) marked[i] = false;
 	  return;
 	}
@@ -436,7 +435,7 @@ namespace Dune
 		  int count=0;
 		  for (int k=0; k<sfs.size(); k++)
 			{
-			  int alpha = this->edgemapper.template map<n>(*it,sfs[k].entity());
+			  int alpha = this->facemapper.template map<n>(*it, k);
 			  if (marked[alpha]) count++;
 			}
 

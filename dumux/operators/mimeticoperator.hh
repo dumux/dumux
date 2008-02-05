@@ -79,13 +79,16 @@ namespace Dune
 	  const typename Dune::CRShapeFunctionSetContainer<DT,RT,n>::value_type& 
 	    sfs = Dune::CRShapeFunctions<DT,RT,n>::general(gt,1);
 	  
+	  // cell volume
+	  DT volume = it->geometry().volume();
+
 	  int elemId = elementmapper.map(*it);
 
 	  // get local to global id map and pressure traces
-	  Dune::FieldVector<DT,2*n> pressTrace;
+	  Dune::FieldVector<DT,2*n> pressTrace(0);
 	  for (int k = 0; k < sfs.size(); k++)
 	    {
-	      pressTrace[k] = (*u)[this->edgemapper.template map<1>(*it,sfs[k].entity())];
+	      pressTrace[k] = (*u)[this->facemapper.template map<1>(*it, k)];
 	    }
 
 	  // The notation is borrowed from Aarnes/Krogstadt/Lie 2006, Section 3.4. 
@@ -96,31 +99,22 @@ namespace Dune
 	  Dune::FieldVector<DT,2*n> c(0);
 	  Dune::FieldMatrix<DT,2*n,2*n> Pi(0);
 	  Dune::FieldVector<RT,2*n> F(0);
-	  RT dinv;
-	  RT qmean;
+	  RT dinv = 0;
+	  RT qmean = 0;
 	  loc.template assembleElementMatrices<LevelTag>(*it, faceVol, W, c, Pi, dinv, F, qmean);
-	  
-	  pressure[elemId] = pressTrace[0];
-	  for (int k = 1; k < sfs.size(); k++) 
-	    pressure[elemId] += pressTrace[k];
-	  pressure[elemId] /= sfs.size();
 
-	  RT p = dinv*(qmean/3.0 + F*pressTrace); // CAREFUL: here p does not correspond to an elementwise pressure 
+	  // NOT UNDERSTOOD: one has to divide by the volume
+	  pressure[elemId] = dinv*(qmean + (F*pressTrace)/volume);
+		  
 	  Dune::FieldVector<RT,2*n> Pitpi(0);
 	  Pi.umv(pressTrace, Pitpi); 
 	  Dune::FieldVector<RT,2*n> ctp(c);
-	  ctp *= p;
+	  // NOT UNDERSTOOD: one has to multiply by the volume
+	  ctp *= pressure[elemId]*volume;
 	  ctp -= Pitpi;
 	  Dune::FieldVector<RT,2*n> v(0);
 	  W.umv(ctp, v);
-	  for (int k = 0; k < sfs.size(); k++)
-	    {
-	      // STRANGE: the resulting ordering of the velocities is WRONG!!!!
-	      (*velocity)[elemId][k] = (1 + (qmean ? 2 : 0))*v[k];//k%2 ? -v[k-1] : -v[k+1];
-	    }	  
-//  	  std::cout << "p = " << p << ", qmean = " << qmean << ", dinv = " << dinv << std::endl << "W = " << std::endl << W  
-//  		    << "presstrace = " << pressTrace << ", Pitpi = " << Pitpi << std::endl 
-//  		    << "ctp = " << ctp << ", v = " << v << std::endl; 
+	  (*velocity)[elemId] = v;
 	}
     }
 

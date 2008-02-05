@@ -55,7 +55,7 @@ namespace Dune
 	  
 	  typedef BlockVector< Dune::FieldVector<RT,1> > SatType;
 	  typedef Dune::LevelCRFunction<G,RT,1> TraceType;
-	  typedef Dune::LevelP0Function<G,RT,2*G::dimension> normalVelType;
+	  typedef Dune::LevelP0Function<G,RT,2*G::dimension> NormalVelType;
 	  typedef Dune::MimeticOperatorAssembler<G,RT,1> LevelOperatorAssembler; 
 
   public:
@@ -76,15 +76,17 @@ namespace Dune
 		typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator; 
 		
 		//printmatrix(std::cout, *A, "global stiffness matrix", "row", 11, 3);
-		//printvector(std::cout, *f, "right hand side", "row", 200, 1, 3);
-		Operator op(*A);  // make operator out of matrix
-		double red=1E-14;
+		//printvector(std::cout, *f, "right hand side", "row", 200, 1, 5);
+		Operator op(*A);  // make operator out of matrix 
+		double red=1E-12;
 		//SeqILU0<MatrixType,VectorType,VectorType> ilu0(*A,1.0);// a precondtioner
+		//SeqJac<MatrixType,VectorType,VectorType> ilu0(*A,1,0.9);// a precondtioner
 		SeqPardiso<MatrixType,VectorType,VectorType> ilu0(*A);// a precondtioner
-		BiCGSTABSolver<VectorType> solver(op,ilu0,red,10000,0);         // an inverse operator 
+		//BiCGSTABSolver<VectorType> solver(op,ilu0,red,10000,1);         // an inverse operator 
+		CGSolver<VectorType> solver(op,ilu0,red,10000,1);         // an inverse operator 
 		InverseOperatorResult r;
 		solver.apply(*pressTrace, *f, r);
-		//printvector(std::cout, *pressTrace, "solution", "row", 200, 1, 3);
+		//printvector(std::cout, *pressTrace, "solution", "row", 200, 1, 5);
 		return;		
 	}
 	
@@ -105,6 +107,7 @@ namespace Dune
 	
 	void totalVelocity(VelType& velocity, const SatType& saturation=0, const RT t=0) const
 	{
+		// ASSUMES axiparallel grids in 2D
 		for (int i = 0; i < this->grid.size(levell, 0); i++) {
 			velocity[i][0][0] = -(*normalVelocity)[i][0]; 
 		    velocity[i][0][1] = 0; 
@@ -140,10 +143,10 @@ namespace Dune
 		*f = 0;
 	}
 
-  private:
-          int levell;
+//  private:
+      int levell;
 	  TraceType pressTrace;         //!< vector of pressure traces
-	  normalVelType normalVelocity;
+	  NormalVelType normalVelocity;
 	  TraceType f;         
 	  LevelOperatorAssembler A;
   };

@@ -13,7 +13,7 @@ CONFIGURE_FLAGS=" CXXFLAGS=\"-Wall -g\" \
   --with-alugrid=$MODDIR/ALUGrid-1.0 \
   --with-ug=$MODDIR/ug \
   --with-blas='-lpthread -L$MODDIR/GotoBLAS -lgoto -llapack -lg2c' \
-  --with-pardiso='-L$MODDIR/pardiso/lib -lpardiso_GNU_IA32' \
+  --with-pardiso='-L$MODDIR/pardiso/lib -lpardiso_GNU_AMD64' \
   --enable-parallel"
 
 # optional 

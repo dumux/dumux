@@ -1,5 +1,8 @@
 #include "config.h"
+#include <iostream>
+#ifdef HAVE_UG
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
+#include <dune/grid/io/file/dgfparser/dgfug.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
@@ -97,3 +100,17 @@ int main(int argc, char** argv)
     std::cerr << "Unknown exception thrown!" << std::endl;
   }
 }
+#else 
+
+int main (int argc , char **argv) try
+{
+  std::cout << "Please install the UG library." << std::endl;
+
+  return 1;
+}
+catch (...) 
+{
+    std::cerr << "Generic exception!" << std::endl;
+    return 2;
+}
+#endif 

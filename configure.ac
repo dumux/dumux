@@ -9,10 +9,9 @@ AM_CONFIG_HEADER([config.h])
 AC_SUBST([LOCAL_LIBS], '$(top_srcdir)/dumux/libdumux.la')
 
 # we need no more than the standard DE-stuff
-# this module depends on dune-common dune-disc dune-grid dune-istl
-# this implies checking for [dune-common], [dune-istl], [dune-grid], [dune-disc]
-# DUNE_CHECK_ALL([dune-common], [dune-istl], [dune-grid], [dune-disc])
-DUNE_CHECK_ALL_M
+# this module depends on dune-common dune-disc dune-fem dune-grid dune-istl
+# this implies checking for [dune-common], [dune-istl], [dune-grid], [dune-disc], [dune-fem]
+DUNE_CHECK_ALL([dune-common], [dune-istl], [dune-grid], [dune-disc], [dune-fem])
 
 AC_DEFUN([SET_PARDISO], [
 AC_PREREQ(2.50)
@@ -115,6 +114,14 @@ AC_CONFIG_FILES([Makefile
     dumux/fractionalflow/impes/Makefile 
     dumux/shapefunctions/cr/Makefile
     test/fvca5/test1/Makefile
+    test/fvca5/test2/Makefile
+    test/fvca5/test3/Makefile
+    test/fvca5/test4/Makefile
+    test/fvca5/test5/Makefile
+    test/fvca5/test6/Makefile
+    test/fvca5/test7/Makefile
+    test/fvca5/test8/Makefile
+    test/fvca5/test9/Makefile
     dune-mux.pc])
 
 AC_OUTPUT

@@ -161,140 +161,143 @@ namespace Dune
       // extract some important parameters
       Dune::GeometryType gt = e.geometry().type();
       const typename Dune::CRShapeFunctionSetContainer<DT,RT,n>::value_type& 
-	sfs=Dune::CRShapeFunctions<DT,RT,n>::general(gt,1);
+      	sfs=Dune::CRShapeFunctions<DT,RT,n>::general(gt,1);
       setcurrentsize(sfs.size());
       
       // cell center in reference element
-      const Dune::FieldVector<DT,n>& local = Dune::ReferenceElements<DT,n>::general(gt).position(0,0);
+      const Dune::FieldVector<DT,n>& centerLocal = Dune::ReferenceElements<DT,n>::general(gt).position(0,0);
       
       // get global coordinate of cell center
-      Dune::FieldVector<DT,n> global = e.geometry().global(local);
+      Dune::FieldVector<DT,n> centerGlobal = e.geometry().global(centerLocal);
       
       // eval diffusion tensor, ASSUMING to be constant over each cell
       Dune::FieldMatrix<DT,n,n> K(0);
-      K = problem.K(global,e,local);
-//   	std::cout << "elemId = " << elemId << ", permvec = " << permvec << std::endl << "K = " << std::endl << K;
-      int elemId = elementmapper.map(e);
-      if(saturation.size())
-    	  K *= problem.materialLaw.mobTotal(saturation[elemId]);
-    
+      K = problem.K(centerGlobal,e,centerLocal);
 
-      // cell volume, ASSUME linear map here
-      DT volume = e.geometry().integrationElement(local)
-	*Dune::ReferenceElements<DT,n>::general(gt).volume();
+      int elemId = elementmapper.map(e);
       
-      Dune::FieldMatrix<DT,2*n,n> R, N;
+      if(saturation.size()) {
+     	  K *= problem.materialLaw.mobTotal(saturation[elemId]);
+      }
+    
+      // cell volume
+      DT volume = e.geometry().volume();
       
-      typedef typename IntersectionIteratorGetter<G,TypeTag>::IntersectionIterator
-	IntersectionIterator;
+      Dune::FieldMatrix<DT,2*n,n> R(0), N(0);
+      
+      std::cout << "element " << elemId << ": center " << centerGlobal << std::endl;;
+      
+      typedef typename IntersectionIteratorGetter<G,TypeTag>::IntersectionIterator IntersectionIterator;
       
       IntersectionIterator endit = IntersectionIteratorGetter<G,TypeTag>::end(e);
       for (IntersectionIterator it = IntersectionIteratorGetter<G,TypeTag>::begin(e); it!=endit; ++it)
-	{
-	  // get geometry type of face
-	  Dune::GeometryType gtf = it.intersectionSelfLocal().type();
+      {
+    	  // get geometry type of face
+    	  Dune::GeometryType gtf = it.intersectionSelfLocal().type();
 	  
-	  // local number of facet 
-	  int i = it.numberInSelf();
+    	  // local number of facet 
+    	  int i = it.numberInSelf();
 	  
-	  const Dune::FieldVector<DT,n>& local = sfs[i].position();
-	  Dune::FieldVector<DT,n> global = e.geometry().global(local);
-	  faceVol[i] = it.intersectionGlobal().volume();
+    	  const Dune::FieldVector<DT,n>& faceLocal = sfs[i].position();
+    	  Dune::FieldVector<DT,n> faceGlobal = e.geometry().global(faceLocal);
+    	  faceVol[i] = it.intersectionGlobal().volume();
+
+    	  std::cout << "  face " << i << ": local = " << faceLocal << ", global = " << faceGlobal << std::endl;
+    	  std::cout << "    boundary = " << it.boundary() << ", neighbor = " << it.neighbor() << std::endl;//", outside elemId = " << elementmapper.map(*(it.outside())) << std::endl;
+   	  
+    	  // center in face's reference element
+    	  const Dune::FieldVector<DT,n-1>& 
+    	  faceLocalNm1 = Dune::ReferenceElements<DT,n-1>::general(gtf).position(0,0);
 	  
-	  // center in face's reference element
-	  const Dune::FieldVector<DT,n-1>& 
-	    facelocal = Dune::ReferenceElements<DT,n-1>::general(gtf).position(0,0);
+    	  // get normal vector 
+    	  Dune::FieldVector<DT,n> unitOuterNormal = it.unitOuterNormal(faceLocalNm1);
 	  
-	  // get normal vector 
-	  Dune::FieldVector<DT,n> unitOuterNormal = it.unitOuterNormal(facelocal);
-	  
-	  // 	      std::cout << "local = " << local << ", facelocal = " << facelocal << ", global = " << global << ", n = " << unitOuterNormal << std::endl;
-	  
-	  for (int k = 0; k < n; k++) {
-	    R[i][k] = faceVol[i]*global[k];
-	    N[i][k] = 0;
-	    for (int j = 0; j < n; j++)
-	      N[i][k] += K[j][k]*unitOuterNormal[j];
-	  }
-	}
+    	  for (int k = 0; k < n; k++) {
+    		  // move origin to the center of gravity
+    		  R[i][k] = faceVol[i]*(faceGlobal[k] - centerGlobal[k]);
+    		  N[i][k] = 0;
+    		  for (int j = 0; j < n; j++)
+    			  N[i][k] += K[j][k]*unitOuterNormal[j];
+    	  }
+      }
       
-//       std::cout << "R = " << R << ", N = " << N << std::endl;
-      
+//      std::cout << "N =\n" << N;
+//      std::cout << "R =\n" << R;
+
       // proceed along the lines of Algorithm 1 from 
       // Brezzi/Lipnikov/Simonicini M3AS 2005
       // (1) orthonormalize columns of the matrix R
       RT norm = R[0][0]*R[0][0];
       for (int i = 1; i < sfs.size(); i++)
-	norm += R[i][0]*R[i][0];
+    	  norm += R[i][0]*R[i][0];
       norm = sqrt(norm);
       for (int i = 0; i < sfs.size(); i++)
-	R[i][0] /= norm;
+    	  R[i][0] /= norm;
       RT weight = R[0][1]*R[0][0];
       for (int i = 1; i < sfs.size(); i++)
-	weight += R[i][1]*R[i][0];
+    	  weight += R[i][1]*R[i][0];
       for (int i = 0; i < sfs.size(); i++)
-	R[i][1] -= weight*R[i][0];
+    	  R[i][1] -= weight*R[i][0];
       norm = R[0][1]*R[0][1];
       for (int i = 1; i < sfs.size(); i++)
-	norm += R[i][1]*R[i][1];
+    	  norm += R[i][1]*R[i][1];
       norm = sqrt(norm);
       for (int i = 0; i < sfs.size(); i++)
-	R[i][1] /= norm;
+    	  R[i][1] /= norm;
       if (n == 3) {
-	RT weight1 = R[0][2]*R[0][0];
-	RT weight2 = R[0][2]*R[0][1];
-	for (int i = 1; i < sfs.size(); i++) {
-	  weight1 += R[i][2]*R[i][0];
-	  weight2 += R[i][2]*R[i][1];
-	}
-	for (int i = 0; i < sfs.size(); i++)
-	  R[i][1] -= weight1*R[i][0] + weight2*R[i][1];
-	norm = R[0][2]*R[0][2];
-	for (int i = 1; i < sfs.size(); i++)
-	  norm += R[i][2]*R[i][2];
-	norm = sqrt(norm);
-	for (int i = 0; i < sfs.size(); i++)
-	  R[i][2] /= norm;
+    	  RT weight1 = R[0][2]*R[0][0];
+    	  RT weight2 = R[0][2]*R[0][1];
+    	  for (int i = 1; i < sfs.size(); i++) {
+    		  weight1 += R[i][2]*R[i][0];
+    		  weight2 += R[i][2]*R[i][1];
+    	  }
+    	  for (int i = 0; i < sfs.size(); i++)
+    		  R[i][1] -= weight1*R[i][0] + weight2*R[i][1];
+    	  norm = R[0][2]*R[0][2];
+    	  for (int i = 1; i < sfs.size(); i++)
+    		  norm += R[i][2]*R[i][2];
+    	  norm = sqrt(norm);
+    	  for (int i = 0; i < sfs.size(); i++)
+    		  R[i][2] /= norm;
       }
-      // std::cout << "after Gram-Schmidt: R = " << std::endl; 
-      // std::cout << R << std::endl;
+//      std::cout << "~R =\n" << R;
       
       // (2) Build the matrix ~D
-      FieldMatrix<DT,2*n,2*n> D;
+      FieldMatrix<DT,2*n,2*n> D(0);
       for (int s = 0; s < sfs.size(); s++) {
-	Dune::FieldVector<DT,2*n> es(0);
-	es[s] = 1;
-	for (int k = 0; k < sfs.size(); k++) {
-	  D[k][s] = es[k];
-	  for (int i = 0; i < n; i++) {
-	    D[k][s] -= R[s][i]*R[k][i];
-	  }
-	}
-      }
-      // std::cout << "~D = " << std::endl << D << std::endl;
-      
-      // (3) Build the matrix W = Minv
-      FieldMatrix<DT,n,n> Kinv;
-      FMatrixHelp::invertMatrix<DT> (K, Kinv);
-//       std::cout << "Kinv = " << std::endl << Kinv << std::endl;
-      FieldMatrix<DT,2*n,n> NKinv(N);
-      NKinv.rightmultiply (Kinv);
-      for (int i = 0; i < sfs.size(); i++) {
-	for (int j = 0; j < sfs.size(); j++) {
-	  W[i][j] = NKinv[i][0]*N[j][0];
-	  for (int k = 1; k < n; k++)
-	    W[i][j] += NKinv[i][k]*N[j][k];
-	}
+    	  Dune::FieldVector<DT,2*n> es(0);
+    	  es[s] = 1;
+    	  for (int k = 0; k < sfs.size(); k++) {
+    		  D[k][s] = es[k];
+    		  for (int i = 0; i < n; i++) {
+    			  D[k][s] -= R[s][i]*R[k][i];
+    		  }
+    	  }
       }
       DT traceK = K[0][0];
       for (int i = 1; i < n; i++)
-	traceK += K[i][i];
-      D *= traceK;
-      W += D;
-      W /= volume;
-
-      // std::cout << "W = " << std::endl << W << std::endl;
+    	  traceK += K[i][i];
+      D *= 2*traceK/volume;
+//      std::cout << "u~D =\n" << D;
       
+      // (3) Build the matrix W = Minv
+      FieldMatrix<DT,n,n> Kinv(0);
+      FMatrixHelp::invertMatrix<DT> (K, Kinv);
+
+      FieldMatrix<DT,2*n,n> NKinv(N);
+      NKinv.rightmultiply (Kinv);
+      for (int i = 0; i < sfs.size(); i++) {
+    	  for (int j = 0; j < sfs.size(); j++) {
+    		  W[i][j] = NKinv[i][0]*N[j][0];
+    		  for (int k = 1; k < n; k++)
+    			  W[i][j] += NKinv[i][k]*N[j][k];
+    	  }
+      }
+      W /= volume;
+      W += D;
+//      std::cout << "W = \n" << W;
+     
+
       // Now the notation is borrowed from Aarnes/Krogstadt/Lie 2006, Section 3.4. 
       // The matrix W developed so far corresponds to one element-associated   
       // block of the matrix B^{-1} there.
@@ -302,14 +305,13 @@ namespace Dune
       // Corresponding to the element under consideration, 
       // calculate the part of the matrix C coupling velocities and element pressures.
       // This is just a row vector of size sfs.size(). 
-      for (int i = 0; i < sfs.size(); i++) {
-	c[i] = faceVol[i]/volume;
-      }	  
+      for (int i = 0; i < sfs.size(); i++) 
+    	  c[i] = faceVol[i]/volume;
       
       // Set up the element part of the matrix \Pi coupling velocities 
       // and pressure-traces. This is a diagonal matrix with entries given by faceVol.
       for (int i = 0; i < sfs.size(); i++)
-	Pi[i][i] = faceVol[i];
+    	  Pi[i][i] = faceVol[i];
       
       // Calculate the element part of the matrix D^{-1} = (c W c^T)^{-1} which is just a scalar value. 
       Dune::FieldVector<DT,2*n> Wc(0);
@@ -317,28 +319,30 @@ namespace Dune
       dinv = 1.0/(c*Wc);
       
       // Calculate the element part of the matrix F = Pi W c^T which is a column vector. 
+      F = 0;
       Pi.umv(Wc, F);
-
+//      std::cout << "Pi = \n" << Pi << "c = " << c << ", F = " << F << std::endl;
+      
       // Calculate the source f
-      int p = 2;
+      int p = 0;
       qmean = 0;
       for (size_t g=0; g<Dune::QuadratureRules<DT,n>::rule(gt,p).size(); ++g) // run through all quadrature points
-	{
-	  const Dune::FieldVector<DT,n>& 
-	    local = Dune::QuadratureRules<DT,n>::rule(gt,p)[g].position(); // pos of integration point
-	  Dune::FieldVector<DT,n> global = e.geometry().global(local);     // ip in global coordinates
-	  double weight = Dune::QuadratureRules<DT,n>::rule(gt,p)[g].weight();// weight of quadrature point
-	  DT detjac = e.geometry().integrationElement(local);              // determinant of jacobian
-	  RT factor = weight*detjac;
-	  RT q = problem.q(global,e,local);
-	  qmean += q*factor;
-	}
+      {
+    	  const Dune::FieldVector<DT,n>& local = Dune::QuadratureRules<DT,n>::rule(gt,p)[g].position(); // pos of integration point
+		  Dune::FieldVector<DT,n> global = e.geometry().global(local);     // ip in global coordinates
+		  double weight = Dune::QuadratureRules<DT,n>::rule(gt,p)[g].weight();// weight of quadrature point
+		  DT detjac = e.geometry().integrationElement(local);              // determinant of jacobian
+		  RT factor = weight*detjac;
+		  RT q = problem.q(global,e,local);
+		  qmean += q*factor;
+      }
       qmean /= volume;
+      
     }
 
   private:
 
-        template<class TypeTag>
+	template<class TypeTag>
 	void assembleV (const Entity& e, int k=1)
 	{
 	  // extract some important parameters
@@ -358,9 +362,6 @@ namespace Dune
 	  RT dinv;
 	  RT qmean;
 	  this->template assembleElementMatrices<TypeTag>(e, faceVol, W, c, Pi, dinv, F, qmean);
-// 	  std::cout << "faceVol = " << faceVol << std::endl << "W = " << std::endl << W << std::endl 
-// 		    << "c = " << c << std::endl << "Pi = " << std::endl << Pi << std::endl 
-// 		    << "dinv = " << dinv << std::endl << "F = " << F << std::endl; 
 	  
 	  // Calculate the element part of the matrix Pi W Pi^T.
 	  Dune::FieldMatrix<RT,2*n,2*n> PiWPiT(W);
@@ -368,7 +369,7 @@ namespace Dune
 	  PiWPiT.leftmultiply(Pi);
 
 	  // Calculate the element part of the matrix F D^{-1} F^T.
-	  Dune::FieldMatrix<RT,2*n,2*n> FDinvFT;
+	  Dune::FieldMatrix<RT,2*n,2*n> FDinvFT(0);
 	  for (int i = 0; i < sfs.size(); i++) 
 	    for (int j = 0; j < sfs.size(); j++) 
 	      FDinvFT[i][j] = dinv*F[i]*F[j];
@@ -380,25 +381,27 @@ namespace Dune
 
 	  // Calculate the source term F D^{-1} f
 	  // NOT WORKING AT THE MOMENT
-// 	  RT factor = dinv*qmean;
-// 	  for (int i = 0; i < sfs.size(); i++) 
-// 	    this->b[i] = F[i]*factor;
+ 	  RT factor = dinv*qmean;
+ 	  for (int i = 0; i < sfs.size(); i++) 
+ 	    this->b[i] = F[i]*factor;
 
 
 	  // ASSUMING ~u = 2*traceK and uniform grid 
-	  RT q;
-	  for (int i = 0; i < sfs.size(); i++) {
-	    const Dune::FieldVector<DT,n>& local = sfs[i].position();
-	    Dune::FieldVector<DT,n> global = e.geometry().global(local);
-	    q = problem.q(global,e,local);
-	    this->b[i] = q*0.25*faceVol[i]*faceVol[i];
-	  }
+//	  RT q;
+//	  for (int i = 0; i < sfs.size(); i++) {
+//	    const Dune::FieldVector<DT,n>& local = sfs[i].position();
+//	    Dune::FieldVector<DT,n> global = e.geometry().global(local);
+//	    q = problem.q(global,e,local);
+//	    this->b[i] = q*0.25*faceVol[i]*faceVol[i];
+//	  }
 
-// 	  std::cout << "q = " << q << ", volume = " << volume << ", dinv = " << dinv 
-// 		    << ", F = " << F << ", b = " << this->b[0] << ", " << this->b[1] << ", " << this->b[2] << ", " << this->b[3] << std::endl;
+// 	  std::cout << "faceVol = " << faceVol << std::endl << "W = " << std::endl << W << std::endl 
+// 		    << "c = " << c << std::endl << "Pi = " << std::endl << Pi << std::endl 
+// 		    << "dinv = " << dinv << std::endl << "F = " << F << std::endl; 
+// 	  std::cout << "q = " << qmean << ", b = " << this->b[0] << ", " << this->b[1] << ", " << this->b[2] << ", " << this->b[3] << std::endl;
 	}
 
-        template<class TypeTag>
+	template<class TypeTag>
 	void assembleBC (const Entity& e, int k=1)
 	{
 	  // extract some important parameters
@@ -408,9 +411,7 @@ namespace Dune
 	  setcurrentsize(sfs.size());
 
 	  // determine quadrature order
-	  int p=2;
-	  if (gt.isSimplex()) p=1;
-	  if (k>1) p=2*(k-1);
+	  int p=0;
 
 	  // evaluate boundary conditions via intersection iterator
 	  typedef typename IntersectionIteratorGetter<G,TypeTag>::IntersectionIterator
@@ -445,9 +446,9 @@ namespace Dune
 			  Dune::GeometryType gtface = it.intersectionSelfLocal().type();
 			  for (size_t g = 0; g < Dune::QuadratureRules<DT,n-1>::rule(gtface,p).size(); ++g)
 				{
-				  const Dune::FieldVector<DT,n-1>& facelocal = Dune::QuadratureRules<DT,n-1>::rule(gtface,p)[g].position();
-				  FieldVector<DT,n> local = it.intersectionSelfLocal().global(facelocal);
-				  FieldVector<DT,n> global = it.intersectionGlobal().global(facelocal);
+				  const Dune::FieldVector<DT,n-1>& faceLocalNm1 = Dune::QuadratureRules<DT,n-1>::rule(gtface,p)[g].position();
+				  FieldVector<DT,n> local = it.intersectionSelfLocal().global(faceLocalNm1);
+				  FieldVector<DT,n> global = it.intersectionGlobal().global(faceLocalNm1);
 				  bctypeface = problem.bctype(global,e,local); // eval bctype
  				  //std::cout << "\t\t\tlocal = " << local << ", global = " << global << ", bctypeface = " << bctypeface 
  				//	    << ", size = " << Dune::QuadratureRules<DT,n-1>::rule(gtface,p).size() << std::endl;
@@ -457,7 +458,7 @@ namespace Dune
 
 				  RT J = problem.J(global,e,local);
 				  double weightface = Dune::QuadratureRules<DT,n-1>::rule(gtface,p)[g].weight();
-				  DT detjacface = it.intersectionGlobal().integrationElement(facelocal);
+				  DT detjacface = it.intersectionGlobal().integrationElement(faceLocalNm1);
 				  for (int i=0; i<sfs.size(); i++) // loop over test function number
 					if (this->bctype[i][0]==BoundaryConditions::neumann)
 					  {

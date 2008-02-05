@@ -18,9 +18,10 @@ fvca5_test1.o fvca5_test1.o: fvca5_test1.cc ../../../config.h \
   /usr/include/bits/wchar.h /usr/include/gconv.h \
   /usr/lib64/gcc/x86_64-suse-linux/4.1.2/include/stdarg.h \
   /usr/include/bits/stdio_lim.h /usr/include/bits/sys_errlist.h \
-  /usr/include/c++/4.1.2/clocale /usr/include/locale.h \
-  /usr/include/bits/locale.h /usr/include/langinfo.h \
-  /usr/include/nl_types.h /usr/include/iconv.h /usr/include/libintl.h \
+  /usr/include/bits/stdio.h /usr/include/c++/4.1.2/clocale \
+  /usr/include/locale.h /usr/include/bits/locale.h \
+  /usr/include/langinfo.h /usr/include/nl_types.h /usr/include/iconv.h \
+  /usr/include/libintl.h \
   /usr/include/c++/4.1.2/x86_64-suse-linux/bits/c++io.h \
   /usr/include/c++/4.1.2/x86_64-suse-linux/bits/gthr.h \
   /usr/include/c++/4.1.2/x86_64-suse-linux/bits/gthr-default.h \
@@ -108,7 +109,8 @@ fvca5_test1.o fvca5_test1.o: fvca5_test1.cc ../../../config.h \
   /usr/include/bits/huge_val.h /usr/include/bits/huge_valf.h \
   /usr/include/bits/huge_vall.h /usr/include/bits/inf.h \
   /usr/include/bits/nan.h /usr/include/bits/mathdef.h \
-  /usr/include/bits/mathcalls.h /usr/include/c++/4.1.2/bits/cmath.tcc \
+  /usr/include/bits/mathcalls.h /usr/include/bits/mathinline.h \
+  /usr/include/c++/4.1.2/bits/cmath.tcc \
   /temp/bernd/NEWDUMUX/dune-common/dune/common/mpihelper.hh \
   /usr/include/c++/4.1.2/cassert \
   /temp/bernd/NEWDUMUX/dune-common/dune/common/stdstreams.hh \
@@ -328,7 +330,8 @@ fvca5_test1.o fvca5_test1.o: fvca5_test1.cc ../../../config.h \
   ../../../dumux/operators/localstiffnessext.hh \
   ../../../dumux/transport/problems/simpleproblem.hh \
   ../../../dumux/diffusion/problems/uniformproblem.hh \
-  fvca5test1problem.hh ../../../dumux/diffusion/diffusionproblem.hh
+  fvca5test1problem.hh ../../../dumux/diffusion/diffusionproblem.hh \
+  ../benchmarkresult.hh
 
 ../../../config.h:
 
@@ -391,6 +394,8 @@ fvca5_test1.o fvca5_test1.o: fvca5_test1.cc ../../../config.h \
 /usr/include/bits/stdio_lim.h:
 
 /usr/include/bits/sys_errlist.h:
+
+/usr/include/bits/stdio.h:
 
 /usr/include/c++/4.1.2/clocale:
 
@@ -649,6 +654,8 @@ fvca5_test1.o fvca5_test1.o: fvca5_test1.cc ../../../config.h \
 /usr/include/bits/mathdef.h:
 
 /usr/include/bits/mathcalls.h:
+
+/usr/include/bits/mathinline.h:
 
 /usr/include/c++/4.1.2/bits/cmath.tcc:
 
@@ -1115,3 +1122,5 @@ fvca5_test1.o fvca5_test1.o: fvca5_test1.cc ../../../config.h \
 fvca5test1problem.hh:
 
 ../../../dumux/diffusion/diffusionproblem.hh:
+
+../benchmarkresult.hh:
