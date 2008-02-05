@@ -3,6 +3,6 @@
 ##############################
 
 #Name of the module
-Module:dune-mux
+Module: dune-mux
 #depending on 
-Depends:dune-common dune-disc dune-fem dune-grid dune-istl
+Depends: dune-common dune-disc dune-grid dune-istl

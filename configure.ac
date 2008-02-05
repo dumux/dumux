@@ -9,9 +9,10 @@ AM_CONFIG_HEADER([config.h])
 AC_SUBST([LOCAL_LIBS], '$(top_srcdir)/dumux/libdumux.la')
 
 # we need no more than the standard DE-stuff
-# this module depends on dune-common dune-disc dune-fem dune-grid dune-istl
+# this module depends on dune-common dune-disc dune-grid dune-istl
 # this implies checking for [dune-common], [dune-istl], [dune-grid], [dune-disc]
-DUNE_CHECK_ALL([dune-common], [dune-istl], [dune-grid], [dune-disc])
+# DUNE_CHECK_ALL([dune-common], [dune-istl], [dune-grid], [dune-disc])
+DUNE_CHECK_ALL_M
 
 AC_DEFUN([SET_PARDISO], [
 AC_PREREQ(2.50)
