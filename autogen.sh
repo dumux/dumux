@@ -1,5 +1,5 @@
 #!/bin/sh
-# : duneproject 4887 2007-04-02 10:06:45Z christi $
+# : duneproject 5060 2008-01-23 13:00:56Z sander $
 
 # barf on errors
 set -e
@@ -47,6 +47,7 @@ for OPT in "$@"; do
             if test -d "$OPT/share/dune-common/am"; then
               am_dir="$OPT/share/dune-common/am"
             fi
+            PATH="$PATH:$OPT/bin"
             ;;
     esac
 done
