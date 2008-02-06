@@ -183,9 +183,10 @@ namespace Dune
       // cell volume
       DT volume = e.geometry().volume();
       
+      // build the matrices R and ~N
       Dune::FieldMatrix<DT,2*n,n> R(0), N(0);
       
-      std::cout << "element " << elemId << ": center " << centerGlobal << std::endl;;
+//       std::cout << "element " << elemId << ": center " << centerGlobal << std::endl;;
       
       typedef typename IntersectionIteratorGetter<G,TypeTag>::IntersectionIterator IntersectionIterator;
       
@@ -202,8 +203,9 @@ namespace Dune
     	  Dune::FieldVector<DT,n> faceGlobal = e.geometry().global(faceLocal);
     	  faceVol[i] = it.intersectionGlobal().volume();
 
-    	  std::cout << "  face " << i << ": local = " << faceLocal << ", global = " << faceGlobal << std::endl;
-    	  std::cout << "    boundary = " << it.boundary() << ", neighbor = " << it.neighbor() << std::endl;//", outside elemId = " << elementmapper.map(*(it.outside())) << std::endl;
+//     	  std::cout << "  face " << i << ": local = " << faceLocal << ", global = " << faceGlobal << std::endl;
+//     	  std::cout << "    boundary = " << it.boundary() << ", neighbor = " << it.neighbor() << std::endl;
+	  //", outside elemId = " << elementmapper.map(*(it.outside())) << std::endl;
    	  
     	  // center in face's reference element
     	  const Dune::FieldVector<DT,n-1>& 
@@ -212,13 +214,11 @@ namespace Dune
     	  // get normal vector 
     	  Dune::FieldVector<DT,n> unitOuterNormal = it.unitOuterNormal(faceLocalNm1);
 	  
-    	  for (int k = 0; k < n; k++) {
+	  N[i] = unitOuterNormal;
+
+    	  for (int k = 0; k < n; k++)
     		  // move origin to the center of gravity
     		  R[i][k] = faceVol[i]*(faceGlobal[k] - centerGlobal[k]);
-    		  N[i][k] = 0;
-    		  for (int j = 0; j < n; j++)
-    			  N[i][k] += K[j][k]*unitOuterNormal[j];
-    	  }
       }
       
 //      std::cout << "N =\n" << N;
@@ -281,16 +281,13 @@ namespace Dune
 //      std::cout << "u~D =\n" << D;
       
       // (3) Build the matrix W = Minv
-      FieldMatrix<DT,n,n> Kinv(0);
-      FMatrixHelp::invertMatrix<DT> (K, Kinv);
-
-      FieldMatrix<DT,2*n,n> NKinv(N);
-      NKinv.rightmultiply (Kinv);
+      FieldMatrix<DT,2*n,n> NK(N);
+      NK.rightmultiply (K);
       for (int i = 0; i < sfs.size(); i++) {
     	  for (int j = 0; j < sfs.size(); j++) {
-    		  W[i][j] = NKinv[i][0]*N[j][0];
+    		  W[i][j] = NK[i][0]*N[j][0];
     		  for (int k = 1; k < n; k++)
-    			  W[i][j] += NKinv[i][k]*N[j][k];
+    			  W[i][j] += NK[i][k]*N[j][k];
     	  }
       }
       W /= volume;
@@ -305,8 +302,9 @@ namespace Dune
       // Corresponding to the element under consideration, 
       // calculate the part of the matrix C coupling velocities and element pressures.
       // This is just a row vector of size sfs.size(). 
+      // scale with volume
       for (int i = 0; i < sfs.size(); i++) 
-    	  c[i] = faceVol[i]/volume;
+	c[i] = faceVol[i];
       
       // Set up the element part of the matrix \Pi coupling velocities 
       // and pressure-traces. This is a diagonal matrix with entries given by faceVol.
@@ -336,7 +334,6 @@ namespace Dune
 		  RT q = problem.q(global,e,local);
 		  qmean += q*factor;
       }
-      qmean /= volume;
       
     }
 
@@ -386,19 +383,11 @@ namespace Dune
  	    this->b[i] = F[i]*factor;
 
 
-	  // ASSUMING ~u = 2*traceK and uniform grid 
-//	  RT q;
-//	  for (int i = 0; i < sfs.size(); i++) {
-//	    const Dune::FieldVector<DT,n>& local = sfs[i].position();
-//	    Dune::FieldVector<DT,n> global = e.geometry().global(local);
-//	    q = problem.q(global,e,local);
-//	    this->b[i] = q*0.25*faceVol[i]*faceVol[i];
-//	  }
-
-// 	  std::cout << "faceVol = " << faceVol << std::endl << "W = " << std::endl << W << std::endl 
-// 		    << "c = " << c << std::endl << "Pi = " << std::endl << Pi << std::endl 
-// 		    << "dinv = " << dinv << std::endl << "F = " << F << std::endl; 
-// 	  std::cout << "q = " << qmean << ", b = " << this->b[0] << ", " << this->b[1] << ", " << this->b[2] << ", " << this->b[3] << std::endl;
+//  	  std::cout << "faceVol = " << faceVol << std::endl << "W = " << std::endl << W << std::endl 
+//  		    << "c = " << c << std::endl << "Pi = " << std::endl << Pi << std::endl 
+//  		    << "dinv = " << dinv << std::endl << "F = " << F << std::endl; 
+//  	  std::cout << "dinvF = " << dinvF << ", q = " << qmean 
+// 		    << ", b = " << this->b[0] << ", " << this->b[1] << ", " << this->b[2] << ", " << this->b[3] << std::endl;
 	}
 
 	template<class TypeTag>

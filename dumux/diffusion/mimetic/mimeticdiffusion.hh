@@ -94,6 +94,8 @@ namespace Dune
 	{
 		LocalStiffnessType lstiff(this->problem, false, this->grid, levell, saturation);
 		A.calculatePressure(lstiff, pressTrace, normalVelocity, this->press);
+		//printvector(std::cout, this->press, "element pressures", "row", 200, 1, 5);
+		//printvector(std::cout, *normalVelocity, "normal velocities", "row", 200, 1, 5);
 		return;
 	}
 	

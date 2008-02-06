@@ -60,7 +60,7 @@ namespace Dune
 	enum { dim=d };    // maps from R^d
 	enum { comps=1 };      // to R^1
 
-	enum { m=1<<dim }; // total number of basis functions
+	enum { m=1+dim }; // total number of basis functions
 
 	// export types
 	typedef C CoordType;
@@ -77,15 +77,15 @@ namespace Dune
 	  switch (dim) {
 	  case 2:
 	    switch (i) {
-	    case 0: 
+	    case 2: 
 	      pos[0] = 0.5; pos[1] = 0;
 	      a[0] = 1; a[1] = 0; a[2] = -2;
 	      break;
-	    case 1: 
+	    case 0: 
 	      pos[0] = 0.5; pos[1] = 0.5;
 	      a[0] = -1; a[1] = 2; a[2] = 2;
 	      break;
-	    case 2: 
+	    case 1: 
 	      pos[0] = 0; pos[1] = 0.5;
 	      a[0] = 1; a[1] = -2; a[2] = 0;
 	      break;
@@ -184,7 +184,7 @@ namespace Dune
 	enum { dim=d };    // maps from R^d
 	enum { comps=1 };      // to R^1
 
-	enum { m=1<<dim }; // total number of basis functions
+	enum { m=1+dim }; // total number of basis functions
 
 	// export types
 	typedef C CoordType;
@@ -244,7 +244,7 @@ namespace Dune
     // compile time sizes
     enum { dim=d };       
     enum { comps=1 };
-    enum { maxsize=1<<dim };
+    enum { maxsize=dim+1 };
     
     // exported types
     typedef C CoordType; 

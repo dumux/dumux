@@ -142,6 +142,8 @@ namespace Dune
 	  case 3:
 	    return(a[0] + a[1]*x[0] + a[2]*x[1] + a[3]*x[2] 
 		   + a[4]*(x[0]*x[0] - x[1]*x[1]) + a[5]*(x[1]*x[1] - x[2]*x[2]));
+	  default:
+		  DUNE_THROW(NotImplemented, "CRCubeShapeFunction for dim = " << dim);
 	  }
 	}
 
@@ -165,6 +167,8 @@ namespace Dune
 	    case 2:
 	      return(a[3] - 2*a[5]*x[2]);
 	    }
+	  default:
+		  DUNE_THROW(NotImplemented, "CRCubeShapeFunction for dim = " << dim);
 	  }
 	}
 
