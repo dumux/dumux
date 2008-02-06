@@ -21,14 +21,15 @@ namespace Dune
 	
 	  UniformProblem()
 	    : DiffusionProblem<G,RT>()
-	  { }
+	  {
+	    permloc = 0; 
+	    for (int k = 0; k < n; k++)
+	      permloc[k][k] = 1e-10;
+	  }
 	
 	  const Dune::FieldMatrix<DT,n,n>& K (const Dune::FieldVector<DT,n>& x, const Entity& e, 
 					  const Dune::FieldVector<DT,n>& xi) 
 	  {
-		  permloc[0][0] = permloc[1][1] = 1e-10;
-		  permloc[0][1] = permloc[1][0] = 0;
-		  
 		  return permloc;
 	  }
 	
@@ -41,7 +42,7 @@ namespace Dune
 	  typename Dune::BoundaryConditions::Flags bctype (const Dune::FieldVector<DT,n>& x, const Entity& e, 
 						   const Dune::FieldVector<DT,n>& xi) const
 	  {
-	    if (x[0] > 600-1E-6 || x[0] < 1e-6) 
+	    if (x[0] > 10-1E-6 || x[0] < 1e-6) 
 	      return Dune::BoundaryConditions::dirichlet;
 	    // all other boundaries
 	    return Dune::BoundaryConditions::neumann;
