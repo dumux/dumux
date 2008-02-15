@@ -12,6 +12,7 @@
 #include "dumux/twophase/problems/lensproblem.hh"
 #include "dumux/twophase/problems/uniformtwophaseproblem.hh"
 #include "dumux/2p2c/fv/box2p2c.hh"
+#include "dumux/twophase/fv/boxpwsn.hh"
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/material/vangenuchtenlaw.hh"
 
@@ -34,11 +35,11 @@ int main(int argc, char** argv)
     }
     	std::string arg1(argv[1]);
 	std::istringstream is1(arg1);
-	int tEnd;
+	double tEnd;
 	is1 >> tEnd;
 	std::string arg2(argv[2]);
 	std::istringstream is2(arg2);
-	int dt;
+	double dt;
 	is2 >> dt;
 
 
@@ -49,7 +50,7 @@ int main(int argc, char** argv)
 
     // use unitcube from grids 
     std::stringstream dgfFileName;
-    dgfFileName << "grids/unitcube" << GridType :: dimension << ".dgf";
+    dgfFileName << "two-comp/grids/unitcube" << GridType :: dimension << ".dgf";
 
     // create grid pointer, GridType is defined by gridtype.hh
     Dune::GridPtr<GridType> gridPtr( dgfFileName.str() );
@@ -75,6 +76,18 @@ int main(int argc, char** argv)
     timeloop.execute(twoPhase);
     std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
      
+    typedef Dune::BoxPwSn<GridType, NumberType> TwoPhaseOld;
+    TwoPhaseOld twoPhaseOld(grid, problem);
+    
+    Dune::TimeLoop<GridType, TwoPhaseOld> timeloopOld(0, tEnd, dt, "lensOld", 1);
+    
+    timer.reset();
+    timeloopOld.execute(twoPhaseOld);
+    std::cout << "timeloopOld.execute took " << timer.elapsed() << " seconds" << std::endl;
+     
+    *twoPhase.u -= *twoPhaseOld.u; 
+    std::cout << "difference = " << (*twoPhase.u).two_norm()/(*twoPhaseOld.u).two_norm() << std::endl;
+    
     //printvector(std::cout, *twoPhase.u, "u", "row", 2, 1, 3);
 
     return 0;
