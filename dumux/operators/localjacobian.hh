@@ -77,7 +77,7 @@ namespace Dune
 	typedef FieldVector<RT,m> VBlockType;                        // one entry in the global vectors
 	typedef FixedArray<BoundaryConditions::Flags,m> BCBlockType; // componentwise boundary conditions
 	typedef FVElementGeometry<G> FVElementGeometry;
-    enum {SIZE=4};
+    enum {SIZE=8};
 
 	//! print contents of local stiffness matrix
 	void printbla (std::ostream& s, int width, int precision)
@@ -177,11 +177,13 @@ namespace Dune
 	}
 
 	template<class TypeTag>
-    void assemble (const Entity& e, int k = 1){
+    void assemble (const Entity& e, int k = 1)
+	{
+	  int size = e.template count<n>();
 	  
     	// set to Zero 
-    	for (int i=0; i < SIZE; i++) {
-	  this->bctype[i].assign(BoundaryConditions::neumann);
+    	for (int i=0; i < size; i++) {
+    		this->bctype[i].assign(BoundaryConditions::neumann);
     		this->b[i] = 0;
     		this->def[i] = 0;
     	}
@@ -194,48 +196,59 @@ namespace Dune
     	
     	localDefect<TypeTag>(e, fvGeom, u);
 
-    	VBlockType bTemp[SIZE];
-    	for (int i=0; i<SIZE; i++) 
+    	VBlockType bTemp[size];
+    	for (int i=0; i<size; i++) 
       	  if (this->bctype[i][0]==BoundaryConditions::neumann) 
       		  bTemp[i] = this->def[i];
       	  else
       		  bTemp[i] = 0;
         
 
-	if (analytic) {
-	  analyticJacobian<TypeTag>(e, u);
-	}
-	else {
-	  VBlockType defu[SIZE];
-	  for (int i = 0; i < SIZE; i++) 
-	    defu[i] = def[i];    	
-	  VBlockType uPlusEps[SIZE];
-	  
-	  for (int j = 0; j < SIZE; j++) 
-	    for (int comp = 0; comp < m; comp++) 
-	      {
-		RT eps = std::max(fabs(1e-3*u[j][comp]), 1e-3);
-		for (int i = 0; i < SIZE; i++) 
-		  uPlusEps[i] = u[i];
-		uPlusEps[j][comp] += eps;
-		localDefect<TypeTag>(e, fvGeom, uPlusEps);
-		RT oneByEps = 1.0/eps;
-		for (int i = 0; i < SIZE; i++) 
-		  for (int compi = 0; compi < m; compi++)
-		    this->A[i][j][compi][comp] = oneByEps*(def[i][compi] - defu[i][compi]);
-	      }
-	}
+    	if (analytic) {
+    		analyticJacobian<TypeTag>(e, u);
+    	}
+    	else {
+    		VBlockType defu[size];
+    		for (int i = 0; i < size; i++) 
+    			defu[i] = def[i];    	
+    		VBlockType uPlusEps[size];
+    		VBlockType uMinusEps[size];
+    		
+    		for (int j = 0; j < size; j++) 
+    			for (int comp = 0; comp < m; comp++) 
+    			{
+    				RT eps = std::max(fabs(1e-3*u[j][comp]), 1e-3);
+    				for (int i = 0; i < size; i++) {
+    					uPlusEps[i] = u[i];
+    					uMinusEps[i] = u[i];
+    				}
+    				uPlusEps[j][comp] += eps;
+    				uMinusEps[j][comp] -= eps;
 
-	for (int i=0; i<SIZE; i++) 
-	  if (this->bctype[i][0]==BoundaryConditions::neumann) {
-	    this->b[i] = bTemp[i];
-	  }
-	
-	//printbla(std::cout, 12, 3);
-	//this->print(std::cout, 12, 3);
-	
-	return;
-    }
+    				localDefect<TypeTag>(e, fvGeom, uPlusEps);
+    				VBlockType defuPlusEps[size];
+    				for (int i = 0; i < size; i++) 
+    					defuPlusEps[i] = def[i];
+
+    				localDefect<TypeTag>(e, fvGeom, uMinusEps);
+    				
+    				RT oneByEps = 0.5/eps;
+    				for (int i = 0; i < size; i++) 
+    					for (int compi = 0; compi < m; compi++)
+    						this->A[i][j][compi][comp] = oneByEps*(defuPlusEps[i][compi] - def[i][compi]);
+    			}
+    	}
+    	
+    	for (int i=0; i<size; i++) 
+    		if (this->bctype[i][0]==BoundaryConditions::neumann) {
+    			this->b[i] = bTemp[i];
+    		}
+    	
+    	//printbla(std::cout, 12, 3);
+    	//this->print(std::cout, 12, 3);
+    	
+    	return;
+	}
     
     template<class TypeTag>
     void localDefect (const Entity& e, const FVElementGeometry& fvGeom, const VBlockType* sol)

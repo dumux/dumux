@@ -129,6 +129,9 @@ namespace Dune
       computeA();	// DUMMY
       
 	  
+	  // ASSUMING constant element mapping jacobian
+	  FieldMatrix<DT,n,n> jacobianInverseTransposed = geometry.jacobianInverseTransposed(fvGeom.cellLocal);
+
 	  for (int i=0; i < size; i++) // begin loop over vertices / sub control volumes
 	  {
 		  // implicit Euler
@@ -175,22 +178,37 @@ namespace Dune
 			  // normalize edge vector 
 			  edgeVector *= oneByDistanceGlobal; 
 			  
+			  // get the local edge center 
+			  FieldVector<DT,n> edgeLocal = fvGeom.subContVol[i].local + neighborLocal;
+			  edgeLocal *= 0.5;
+			  
 			  // permeability in edge direction 
 			  FieldVector<DT,n> Kij(0);
 			  elData.K.umv(edgeVector, Kij);
 			  
 			  // calculate pressure differences 
-			  VBlockType pDiff;
-			  pDiff[pWIdx] = sol[j][pWIdx] - sol[i][pWIdx];
-			  pDiff[satNIdx] = pDiff[pWIdx] + varNData[j].pC - varNData[i].pC;
+//			  VBlockType pDiff;
+//			  pDiff[pWIdx] = sol[j][pWIdx] - sol[i][pWIdx];
+//			  pDiff[satNIdx] = pDiff[pWIdx] + varNData[j].pC - varNData[i].pC;
 			  
 			  VBlockType flux;
 			  for (int comp = 0; comp < m; comp++) {
-				  // calculate pressure component gradient
-				  FieldVector<RT, n> pGrad(edgeVector);
-				  pGrad *= oneByDistanceGlobal*pDiff[comp];
+//				  // calculate pressure component gradient
+//				  FieldVector<RT, n> pGrad(edgeVector);
+//				  pGrad *= oneByDistanceGlobal*pDiff[comp];
 				  
-				  // adjust by gravity 
+		          // calculate FE gradient
+		          FieldVector<RT, n> pGrad(0);
+		          for (int k = 0; k < size; k++) {
+		        	  FieldVector<DT,n> grad(0),temp;
+		        	  for (int l = 0; l < n; l++) 
+		        		  temp[l] = sfs[k].evaluateDerivative(0, l, edgeLocal);
+		        	  jacobianInverseTransposed.umv(temp, grad);
+		        	  grad *= (comp) ? varNData[k].pN : sol[k][pWIdx];
+		        	  pGrad += grad;
+		          }
+
+		          // adjust by gravity 
 				  FieldVector<RT, n> gravity = problem.gravity();
 				  gravity *= varNData[i].density[comp];
 				  pGrad -= gravity;
@@ -202,10 +220,6 @@ namespace Dune
 				  else 
 					  flux[comp] = varNData[j].mobility[comp]*outward;
 			  }
-			  
-			  // get the local edge center 
-			  FieldVector<DT,n> edgeLocal = fvGeom.subContVol[i].local + neighborLocal;
-			  edgeLocal *= 0.5;
 			  
 			  // get global coordinate of edge center
 			  const FieldVector<DT,n> edgeGlobal = geometry.global(edgeLocal);
@@ -409,6 +423,7 @@ namespace Dune
     {
        RT saturationW;
        RT pC;
+       RT pN;
        VBlockType mobility;  //Vector with the number of phases
        VBlockType density;
     };
@@ -437,6 +452,7 @@ namespace Dune
          FieldVector<RT, 4> parameters = problem.materialLawParameters(fvGeom.cellGlobal, e, fvGeom.cellLocal);
 
          varNData[i].pC = problem.materialLaw().pC(varNData[i].saturationW, parameters);
+         varNData[i].pN = sol[i][pWIdx] + varNData[i].pC;
          varNData[i].mobility[pWIdx] = problem.materialLaw().mobW(varNData[i].saturationW, parameters);
          varNData[i].mobility[satNIdx] = problem.materialLaw().mobN(sol[i][satNIdx], parameters);
          varNData[i].density[pWIdx] = problem.materialLaw().wettingPhase.density();
@@ -499,6 +515,7 @@ namespace Dune
 						  continue;
 					  double weightface = Dune::QuadratureRules<DT,n-1>::rule(gtface,p)[g].weight();
 					  DT detjacface = it.intersectionGlobal().integrationElement(facelocal);
+					  J *= 1.0/(pow(2.0, n-1))*weightface*detjacface;
 					  for (int i=0; i<sfs.size(); i++) // loop over test function number
 						if (this->bctype[i][0]==BoundaryConditions::neumann)
 						  {
@@ -507,10 +524,10 @@ namespace Dune
 							// works only if exactly one quadrature point is located within each dual 
 							// cell boundary (which should be the case for p = 2)
 							//////////////////////////////////////////////////////////////////////////
-							if (sfs[i].evaluateFunction(0,local) > 0.5) {
-								J *= weightface*detjacface;
+//							if (sfs[i].evaluateFunction(0,local) > 0.5) {
+//								J *= weightface*detjacface;
 								this->b[i] -= J;
-							}
+//							}
 						  }
 					}
 				  if (bctypeface[0]==BoundaryConditions::neumann) continue; // was a neumann face, go to next face

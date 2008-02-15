@@ -27,7 +27,7 @@ namespace Dune {
 				model.solve();
 				error = oneByMagnitude*((*u).two_norm());
 				//printvector(std::cout, *u, "update", "row", 200, 1, 3);
-				*u *= -1;
+				*u *= -0.25;
 				*u += *uOldNewtonStep;
 				//printvector(std::cout, *u, "u", "row", 200, 1, 3);
 				if (verbose)
@@ -44,12 +44,12 @@ namespace Dune {
 			return;
 		}
 		
-		NewtonMethod(const G& g, Model& mod, double tol = 1e-5, int maxIt = 30)
+		NewtonMethod(const G& g, Model& mod, double tol = 1e-3, int maxIt = 30)
 		: grid(g), model(mod), u(mod.u), f(mod.f), A(mod.A), localJacobian(mod.localJacobian), 
 		  uOldNewtonStep(g), tolerance(tol), maxIter(maxIt)
 		{ }
 		
-		NewtonMethod(const G& g, Model& mod, int level, double tol = 1e-5, int maxIt = 30)
+		NewtonMethod(const G& g, Model& mod, int level, double tol = 1e-3, int maxIt = 30)
 		: grid(g), model(mod), u(mod.u), f(mod.f), A(mod.A), localJacobian(mod.localJacobian), 
 		  uOldNewtonStep(g, level), tolerance(tol), maxIter(maxIt)
 		{ }

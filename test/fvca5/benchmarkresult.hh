@@ -211,23 +211,24 @@ struct BenchmarkResult
 				approximateFlux *= faceVol;
 				fluxVector[i] = approximateFlux;
 				
-				if (is.boundary()) {
-					if (fabs(faceGlobal[1]) < 1e-8) {
+				//if (is.boundary()) {
+				if (!is.neighbor()) {
+					if (fabs(faceGlobal[1]) < 1e-6) {
 						fluy0 += approximateFlux;
 						exactfluy0 += exactFlux;
 						ener2 += -approximateFlux*approximateFace;
 					}
-					else if (fabs(faceGlobal[1] - 1.0) < 1e-8) {
+					else if (fabs(faceGlobal[1] - 1.0) < 1e-6) {
 						fluy1 += approximateFlux;
 						exactfluy1 += exactFlux;
 						ener2 += -approximateFlux*approximateFace;
 					}
-					else if (faceGlobal[0] < 1e-8) {
+					else if (faceGlobal[0] < 1e-6) {
 						flux0 += approximateFlux;
 						exactflux0 += exactFlux;
 						ener2 += -approximateFlux*approximateFace;
 					}
-					else if (fabs(faceGlobal[0] - 1.0) < 1e-8) {
+					else if (fabs(faceGlobal[0] - 1.0) < 1e-6) {
 						flux1 += approximateFlux;
 						exactflux1 += exactFlux;
 						ener2 += -approximateFlux*approximateFace;
@@ -262,11 +263,6 @@ struct BenchmarkResult
 			
 			// get the exact gradient
 			exactGradient = problem.exactGrad(global);
-			
-//			std::cout << "element " << indexi << ", ^v = " << refVelocity 
-//				<< "\njacobianT = \n" << jacobianT << "v = " << elementVelocity 
-//				<< ", grad = " << approximateGradient 
-//				<< ", global = " << global << ", exactGrad = " << exactGradient << std::endl;
 			
 			// the difference between exact and approximate gradient 
 			FieldVector<ct,dim> gradDiff(exactGradient);

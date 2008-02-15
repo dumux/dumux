@@ -30,7 +30,7 @@ int main(int argc, char** argv)
     Dune::FieldVector<NumberType, dim> innerUpperRight(4);
     innerUpperRight[1] = 3;
     if (argc != 3) {
-      std::cout << "usage: test_twophase tEnd dt" << std::endl;
+      std::cout << "usage: test_2p2c tEnd dt" << std::endl;
       return 0;
     }
     	std::string arg1(argv[1]);
@@ -50,7 +50,7 @@ int main(int argc, char** argv)
 
     // use unitcube from grids 
     std::stringstream dgfFileName;
-    dgfFileName << "two-comp/grids/unitcube" << GridType :: dimension << ".dgf";
+    dgfFileName << "grids/unitcube" << GridType :: dimension << ".dgf";
 
     // create grid pointer, GridType is defined by gridtype.hh
     Dune::GridPtr<GridType> gridPtr( dgfFileName.str() );

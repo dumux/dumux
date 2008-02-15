@@ -39,6 +39,42 @@ namespace Dune
    *
    */
 
+int edgeToFaceHex[8][8] = {
+		{9, 2, 0, 9, 0, 9, 9, 9}, 
+		{4, 9, 9, 4, 9, 2, 9, 9}, 
+		{4, 9, 9, 3, 9, 9, 0, 9}, 
+		{9, 1, 4, 9, 9, 9, 9, 1}, 
+		{2, 9, 9, 9, 9, 5, 0, 9}, 
+		{9, 1, 9, 9, 2, 9, 9, 5}, 
+		{9, 9, 3, 9, 5, 9, 9, 3}, 
+		{9, 9, 9, 3, 9, 1, 5, 9}
+};
+
+// ASSUME planar element faces
+template <class CoordVec> 
+double quadrilateralArea(const CoordVec& node0, const CoordVec& node1, 
+							const CoordVec& node2, const CoordVec& node3)
+{
+	CoordVec distVec(node0);
+	distVec -= node1;
+	double a = distVec.two_norm();
+	
+	distVec = node1; 
+	distVec -= node2;
+	double b = distVec.two_norm();
+	
+	distVec = node2; 
+	distVec -= node3;
+	double c = distVec.two_norm();
+	
+	distVec = node3; 
+	distVec -= node0;
+	double d = distVec.two_norm();
+	
+	double s = 0.5*(a + b+ c + d);
+	
+	return sqrt((s - a)*(s - b)*(s - c)*(s - d));
+}
 
   //! A class for computing local jacobian matrices
   /*! A class for computing local jacobian matrix for the 
@@ -95,9 +131,9 @@ namespace Dune
     {
       // extract some important parameters
       const Geometry& geometry = e.geometry();
-      Dune::GeometryType gt = geometry.type();
-      const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::value_type& 
-      	sfs=Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt, 1);
+      GeometryType gt = geometry.type();
+      const typename LagrangeShapeFunctionSetContainer<DT,RT,n>::value_type& 
+      	sfs=LagrangeShapeFunctions<DT,RT,n>::general(gt, 1);
       int size = sfs.size();
       this->setcurrentsize(size);
       
@@ -105,18 +141,19 @@ namespace Dune
       DT cellVolume = geometry.volume();
       
       // assuming rectangular grids:
-      cellVolume /= 4.0;
+      cellVolume /= pow(2.0, n);
       
       // cell center in reference element
-      const Dune::FieldVector<DT,n> 
-		  cellLocal = Dune::ReferenceElements<DT,n>::general(gt).position(0,0);
+      const FieldVector<DT,n> 
+		  cellLocal = ReferenceElements<DT,n>::general(gt).position(0,0);
 		
 	  // get global coordinate of cell center
-	  const Dune::FieldVector<DT,n> cellGlobal = geometry.global(cellLocal);
+	  const FieldVector<DT,n> cellGlobal = geometry.global(cellLocal);
       
 	  // calculate secondary variables and set defect to zero 
       RT saturationW[size];
       RT pC[size];
+      RT pN[size];
       VBlockType mobility[size];
       VBlockType density;
       // ASSUME element-wise constant parameters for the material law 
@@ -126,6 +163,7 @@ namespace Dune
 		  this->def[i] = 0;
 		  saturationW[i] = 1.0 - sol[i][satNIdx];
 		  pC[i] = problem.materialLaw().pC(saturationW[i], parameters);
+		  pN[i] = sol[i][pWIdx] + pC[i];
 		  mobility[i][pWIdx] = problem.materialLaw().mobW(saturationW[i], parameters);
 		  mobility[i][satNIdx] = problem.materialLaw().mobN(sol[i][satNIdx], parameters);
       }
@@ -133,8 +171,11 @@ namespace Dune
       density[satNIdx] = problem.materialLaw().nonwettingPhase.density();
       
 	  // ASSUMING element-wise constant permeability, evaluate K at the cell center 
-	  const Dune::FieldMatrix<DT,n,n> K = problem.K(cellGlobal, e, cellLocal);  
+	  const FieldMatrix<DT,n,n> K = problem.K(cellGlobal, e, cellLocal);  
 	  
+	  // ASSUMING constant element mapping jacobian
+	  FieldMatrix<DT,n,n> jacobianInverseTransposed = geometry.jacobianInverseTransposed(cellLocal);
+
 	  // ASSUMING element-wise constant porosity, evaluate at the cell center 
 	  double volumeFactor = problem.porosity(cellGlobal, e, cellLocal)*cellVolume;
 	  for (int i=0; i < size; i++) // begin loop over vertices
@@ -175,6 +216,10 @@ namespace Dune
 					  continue;
 			  }
 			  
+			  // get the local edge center 
+			  FieldVector<DT,n> edgeLocal = vertexLocal + neighborLocal;
+			  edgeLocal *= 0.5;
+			  
 			  // get global coordinate of neighbor
 			  const FieldVector<DT,n> neighborGlobal = geometry.global(neighborLocal);
 			  
@@ -192,15 +237,26 @@ namespace Dune
 			  K.umv(edgeVector, Kij);
 			  
 			  // calculate pressure differences 
-			  VBlockType pDiff;
-			  pDiff[pWIdx] = sol[j][pWIdx] - sol[i][pWIdx];
-			  pDiff[satNIdx] = pDiff[pWIdx] + pC[j] - pC[i];
+//			  VBlockType pDiff;
+//			  pDiff[pWIdx] = sol[j][pWIdx] - sol[i][pWIdx];
+//			  pDiff[satNIdx] = pDiff[pWIdx] + pC[j] - pC[i];
 			  
 			  VBlockType flux;
 			  for (int comp = 0; comp < m; comp++) {
 				  // calculate pressure component gradient
-				  FieldVector<RT, n> pGrad(edgeVector);
-				  pGrad *= oneByDistanceGlobal*pDiff[comp];
+//				  FieldVector<RT, n> pGrad(edgeVector);
+//				  pGrad *= oneByDistanceGlobal*pDiff[comp];
+				  
+		          // calculate FE gradient
+		          FieldVector<RT, n> pGrad(0);
+		          for (int k = 0; k < size; k++) {
+		        	  FieldVector<DT,n> grad(0),temp;
+		        	  for (int l = 0; l < n; l++) 
+		        		  temp[l] = sfs[k].evaluateDerivative(0, l, edgeLocal);
+		        	  jacobianInverseTransposed.umv(temp, grad);
+		        	  grad *= (comp) ? pN[k] : sol[k][pWIdx];
+		        	  pGrad += grad;
+		          }
 				  
 				  // adjust by gravity 
 				  FieldVector<RT, n> gravity = problem.gravity();
@@ -215,21 +271,50 @@ namespace Dune
 					  flux[comp] = mobility[j][comp]*outward;
 			  }
 			  
-			  // get the local edge center 
-			  FieldVector<DT,n> edgeLocal = vertexLocal + neighborLocal;
-			  edgeLocal *= 0.5;
-			  
 			  // get global coordinate of edge center
 			  const FieldVector<DT,n> edgeGlobal = geometry.global(edgeLocal);
 			  
-			  // distance between cell center and edge center
-			  DT distanceEdgeCell = (cellGlobal - edgeGlobal).two_norm();
+			  DT dualFaceArea; 
+			  FieldVector<DT,n> leftFaceLocal, leftFaceGlobal, rightFaceLocal, rightFaceGlobal;
+			  int leftFaceIdx; 
+			  int rightFaceIdx; 
 			  
-			  ////////////////////////////////////////////////////////////
-			  // CAREFUL: only valid in 2D 
-			  ////////////////////////////////////////////////////////////
+			  switch (n) {
+			  case 1:
+				  dualFaceArea = 1.0;
+				  break;
+			  case 2:
+				  // distance between cell center and edge center
+				  dualFaceArea = (cellGlobal - edgeGlobal).two_norm();
+				  break;
+			  case 3: 
+				  switch (size) {
+				  case 8:
+					  leftFaceIdx = edgeToFaceHex[i][j];
+					  rightFaceIdx = edgeToFaceHex[j][i];
+					  break;
+				  default:
+					  DUNE_THROW(NotImplemented, "BoxPwSnJacobian :: localDefect for dim = " << n 
+							  << " and sfs.size = " << size); 
+					  break;
+				  }
+
+				  // get global coordinates of face centers
+			      leftFaceLocal = ReferenceElements<DT,n>::general(gt).position(leftFaceIdx,1);
+				  leftFaceGlobal = geometry.global(leftFaceLocal);
+			      rightFaceLocal = ReferenceElements<DT,n>::general(gt).position(rightFaceIdx,1);
+				  rightFaceGlobal = geometry.global(rightFaceLocal);
+				  
+				  // calculate area of dual face
+				  dualFaceArea = quadrilateralArea(edgeGlobal, rightFaceGlobal, cellGlobal, leftFaceGlobal);
+				  break;
+			  default:
+				  DUNE_THROW(NotImplemented, "BoxPwSnJacobian :: localDefect for dim = " << n); 
+				  break;
+			  }
+
 			  // obtain integrated Flux 
-			  flux *= distanceEdgeCell; 
+			  flux *= dualFaceArea; 
 			  
 			  // add to defect 
 			  flux *= dt;
@@ -263,9 +348,9 @@ namespace Dune
     
     void setLocalSolution (const Entity& e)
     {
-        Dune::GeometryType gt = e.geometry().type();
-        const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::value_type& 
-        	sfs=Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt, 1);
+        GeometryType gt = e.geometry().type();
+        const typename LagrangeShapeFunctionSetContainer<DT,RT,n>::value_type& 
+        	sfs=LagrangeShapeFunctions<DT,RT,n>::general(gt, 1);
         int size = sfs.size();
         this->setcurrentsize(size);
         
@@ -293,9 +378,9 @@ namespace Dune
     {
       // extract some important parameters
       const Geometry& geometry = e.geometry();
-      Dune::GeometryType gt = geometry.type();
-      const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::value_type& 
-      	sfs=Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt, 1);
+      GeometryType gt = geometry.type();
+      const typename LagrangeShapeFunctionSetContainer<DT,RT,n>::value_type& 
+      	sfs=LagrangeShapeFunctions<DT,RT,n>::general(gt, 1);
       int size = sfs.size();
       this->setcurrentsize(size);
       
@@ -307,11 +392,11 @@ namespace Dune
       cellVolume /= 4.0;
       
       // cell center in reference element
-      const Dune::FieldVector<DT,n> 
-		  cellLocal = Dune::ReferenceElements<DT,n>::general(gt).position(0,0);
+      const FieldVector<DT,n> 
+		  cellLocal = ReferenceElements<DT,n>::general(gt).position(0,0);
 		
 	  // get global coordinate of cell center
-	  const Dune::FieldVector<DT,n> cellGlobal = geometry.global(cellLocal);
+	  const FieldVector<DT,n> cellGlobal = geometry.global(cellLocal);
       
 	  // calculate secondary variables and set defect to zero 
       RT saturationW[size];
@@ -355,7 +440,7 @@ namespace Dune
 
 
 	  // ASSUMING element-wise constant permeability, evaluate K at the cell center 
-	  const Dune::FieldMatrix<DT,n,n> K = problem.K(cellGlobal, e, cellLocal);  
+	  const FieldMatrix<DT,n,n> K = problem.K(cellGlobal, e, cellLocal);  
 	  
 	  // ASSUMING element-wise constant porosity, evaluate at the cell center 
 	  double volumeFactor = problem.porosity(cellGlobal, e, cellLocal)*cellVolume;
@@ -577,9 +662,9 @@ namespace Dune
     void assembleBC (const Entity& e)
 		{
 		  // extract some important parameters
-		  Dune::GeometryType gt = e.geometry().type();
-		  const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::value_type& 
-			sfs=Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt,1);
+		  GeometryType gt = e.geometry().type();
+		  const typename LagrangeShapeFunctionSetContainer<DT,RT,n>::value_type& 
+			sfs=LagrangeShapeFunctions<DT,RT,n>::general(gt,1);
 		  setcurrentsize(sfs.size());
 
 		  for (int i = 0; i < sfs.size(); i++) {
@@ -588,7 +673,7 @@ namespace Dune
 		  }
 		  
 		  // determine quadrature order
-		  int p=2;
+		  int p=0;
 		  // evaluate boundary conditions via intersection iterator
 		  typedef typename IntersectionIteratorGetter<G,TypeTag>::IntersectionIterator
 		    IntersectionIterator;
@@ -613,10 +698,10 @@ namespace Dune
 			  // handle face on exterior boundary, this assumes there are no interior boundaries
 			  if (it.boundary())
 				{
-				  Dune::GeometryType gtface = it.intersectionSelfLocal().type();
-				  for (size_t g=0; g<Dune::QuadratureRules<DT,n-1>::rule(gtface,p).size(); ++g)
+				  GeometryType gtface = it.intersectionSelfLocal().type();
+				  for (size_t g=0; g<QuadratureRules<DT,n-1>::rule(gtface,p).size(); ++g)
 					{
-					  const Dune::FieldVector<DT,n-1>& facelocal = Dune::QuadratureRules<DT,n-1>::rule(gtface,p)[g].position();
+					  const FieldVector<DT,n-1>& facelocal = QuadratureRules<DT,n-1>::rule(gtface,p)[g].position();
 					  FieldVector<DT,n> local = it.intersectionSelfLocal().global(facelocal);
 					  FieldVector<DT,n> global = it.intersectionGlobal().global(facelocal);
 					  bctypeface = problem.bctype(global,e,it,local); // eval bctype
@@ -627,8 +712,9 @@ namespace Dune
 					  VBlockType J = problem.J(global,e,it,local);
 					  if (J.two_norm() < 1e-10) 
 						  continue;
-					  double weightface = Dune::QuadratureRules<DT,n-1>::rule(gtface,p)[g].weight();
+					  double weightface = QuadratureRules<DT,n-1>::rule(gtface,p)[g].weight();
 					  DT detjacface = it.intersectionGlobal().integrationElement(facelocal);
+					  J *= 1.0/(pow(2.0, n-1))*weightface*detjacface;
 					  for (int i=0; i<sfs.size(); i++) // loop over test function number
 						if (this->bctype[i][0]==BoundaryConditions::neumann)
 						  {
@@ -637,10 +723,9 @@ namespace Dune
 							// works only if exactly one quadrature point is located within each dual 
 							// cell boundary (which should be the case for p = 2)
 							//////////////////////////////////////////////////////////////////////////
-							if (sfs[i].evaluateFunction(0,local) > 0.5) {
-								J *= weightface*detjacface;
+							//if (sfs[i].evaluateFunction(0,local) > 0.5) {
 								this->b[i] -= J;
-							}
+							//}
 						  }
 					}
 				  if (bctypeface[0]==BoundaryConditions::neumann) continue; // was a neumann face, go to next face

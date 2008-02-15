@@ -86,26 +86,11 @@ public:
  		 }
 
  		 int faces = e.template count<dim-1>();
- 		 
- 		 switch (faces) {
- 		 case 3: 
- 			 subContVolFace[0].i = 1;
- 			 subContVolFace[0].j = 2;
- 			 subContVolFace[1].i = 0;
- 			 subContVolFace[1].j = 2;
- 			 subContVolFace[2].i = 0;
- 			 subContVolFace[2].j = 1;
- 			 break;
- 		 case 4: 
- 			 subContVolFace[0].i = 0;
- 			 subContVolFace[0].j = 2;
- 			 subContVolFace[1].i = 1;
- 			 subContVolFace[1].j = 3;
- 			 subContVolFace[2].i = 0;
- 			 subContVolFace[2].j = 1;
- 			 subContVolFace[3].i = 2;
- 			 subContVolFace[3].j = 3;
- 			 break;
+ 		 for (int k = 0; k < faces; k++) {
+ 			 int idx0 = ReferenceElements<DT,dim>::general(gt).subEntity(k, dim-1, 0, dim);
+ 			 int idx1 = ReferenceElements<DT,dim>::general(gt).subEntity(k, dim-1, 1, dim);
+ 			 subContVolFace[k].i = std::min(idx0, idx1);
+ 			 subContVolFace[k].j = std::max(idx0, idx1); 
  		 }
  		 
 	}

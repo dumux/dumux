@@ -47,9 +47,6 @@ namespace Dune
 	virtual const FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x, const Entity& e, 
 					const FieldVector<DT,n>& xi)
 	{
-		permloc[0][0] = permloc[1][1] = 1;
-		permloc[0][1] = permloc[1][0] = 0;
-		  
 		return permloc;
 	}
 
@@ -67,8 +64,8 @@ namespace Dune
 	{
 		FieldVector<BoundaryConditions::Flags, m> values(Dune::BoundaryConditions::neumann); 
 
-		//if (x[0] > 600-1E-6 || x[0] < 1e-6) 
-		if (x[0] > 600-1E-6) 
+		if (x[0] > 600-1E-6)// || x[0] < 1e-6) 
+		//if (x[0] < 1E-6) 
 			values = Dune::BoundaryConditions::dirichlet;
 		
 		return values;
@@ -97,7 +94,7 @@ namespace Dune
 	{
 		FieldVector<RT,m> values(0);
 		if (x[0] < 1e-6) 
-			values[1] = -1;
+			values[0] = 1;
 		
 		return values;
 	}
@@ -106,9 +103,10 @@ namespace Dune
 				  const FieldVector<DT,n>& xi) const 
 	{
 		FieldVector<RT,m> values(0);
-		//values[0] = 1e6 - 1.0/600.0*1e6*x[0];
+		values[0] = 1e6 - 1.0/600.0*1e6*x[0];
+		//values[1] = 1 - 1.0/600.0*x[0];
 		if (x[0] < 1e-6) {
-			values[1] = 1; 
+			values[1] = 1e3; 
 		}
 	
 		return values;
@@ -137,7 +135,12 @@ namespace Dune
 
 	UniformTwoPhaseProblem(TwoPhaseRelations& law = *(new LinearLaw)) 
 	: TwoPhaseProblem<G, RT>(law) 
-	{	}
+	{	
+		permloc = 0; 
+		
+		for (int i = 0; i < n; i++)
+			permloc[i][i] = 1.0;
+	}
 	
 	private:
 		Dune::FieldMatrix<DT,n,n> permloc;

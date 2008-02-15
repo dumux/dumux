@@ -429,7 +429,8 @@ namespace Dune
 		  typename BoundaryConditions::Flags bctypeface = BoundaryConditions::process;
 
 		  // handle face on exterior boundary, this assumes there are no interior boundaries
-		  if (it.boundary())
+		  //if (it.boundary())
+		  if (!it.neighbor())
 			{
 			  //std::cout << "\t\t\tsurvived second if-statements." << std::endl;
 			  Dune::GeometryType gtface = it.intersectionSelfLocal().type();

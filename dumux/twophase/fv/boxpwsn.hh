@@ -74,22 +74,8 @@ namespace Dune
 		
 		Operator op(*(this->A));  // make operator out of matrix
 		double red=1E-8;
-		//SeqILUn<MatrixType,VectorType,VectorType> ilu0(*(this->A),3,1.0);// a precondtioner
 		SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A),1.0);// a precondtioner
-		BiCGSTABSolver<VectorType> solver(op,ilu0,red,100,1);         // an inverse operator 
-// 	  typedef Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<MatrixType,
-// 		Dune::Amg::FirstDiagonal> > Criterion;
-// 	  //typedef Dune::SeqILUn<MatrixType,VectorType,VectorType> Smoother;
-// 	  typedef Dune::SeqSSOR<MatrixType,VectorType,VectorType> Smoother;
-// 	  typedef typename Dune::Amg::SmootherTraits<Smoother>::Arguments SmootherArgs;
-// 	  SmootherArgs smootherArgs;
-// 	  smootherArgs.iterations = 2;
-// 	  int maxlevel = 20, coarsenTarget = 100;
-// 	  Criterion criterion(maxlevel, coarsenTarget);
-// 	  criterion.setMaxDistance(2);
-// 	  typedef Dune::Amg::AMG<Operator,VectorType,Smoother> AMG;
-// 	  AMG amg(op,criterion,smootherArgs,1,1);								       
-// 	  BiCGSTABSolver<VectorType> solver(op,amg,red,100,0);         // an inverse operator 
+		BiCGSTABSolver<VectorType> solver(op,ilu0,red,10000,1);         // an inverse operator 
 		InverseOperatorResult r;
 		solver.apply(*(this->u), *(this->f), r);
 		
