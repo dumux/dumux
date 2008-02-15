@@ -67,7 +67,8 @@ namespace Dune
     typedef typename Entity::Geometry Geometry;
     typedef typename LocalJacobian<BoxPwSnLocalJacobian<G,RT>,G,RT,2>::VBlockType VBlockType;
     typedef typename LocalJacobian<BoxPwSnLocalJacobian<G,RT>,G,RT,2>::MBlockType MBlockType;
-	enum {pWIdx = 0, satNIdx = 1};
+ 	typedef FVElementGeometry<G> FVElementGeometry;
+  	enum {pWIdx = 0, satNIdx = 1};
 	
   public:
     // define the number of components of your system, this is used outside
@@ -85,12 +86,12 @@ namespace Dune
     procBoundaryAsDirichlet(procBoundaryAsDirichlet_), 
       currentSolution(sol), oldSolution(grid), dt(1)
     {
-      this->analytic = true;
+      this->analytic = false;
     }
     
 
     template<class TypeTag>
-    void localDefect (const Entity& e, const VBlockType* sol)
+    void localDefect (const Entity& e, const FVElementGeometry& fvGeom, const VBlockType* sol)
     {
       // extract some important parameters
       const Geometry& geometry = e.geometry();
