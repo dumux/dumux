@@ -1,5 +1,5 @@
-#ifndef DUNE_BOXPWSN_HH
-#define DUNE_BOXPWSN_HH
+#ifndef DUNE_BOX2P2C_HH
+#define DUNE_BOX2P2C_HH
 
 #include<dune/istl/operators.hh>
 #include<dune/istl/solvers.hh>

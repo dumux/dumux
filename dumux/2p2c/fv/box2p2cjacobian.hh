@@ -28,6 +28,7 @@
  */
 
 
+
 namespace Dune
 {
   /** @addtogroup DISC_Disc
@@ -97,12 +98,18 @@ namespace Dune
     : problem(params),levelBoundaryAsDirichlet(levelBoundaryAsDirichlet_), 
       procBoundaryAsDirichlet(procBoundaryAsDirichlet_), 
       currentSolution(sol), oldSolution(grid), 
-      vertexMapper(grid, grid.leafIndexSet()), nodeData(vertexMapper.size()), dt(1)
+      vertexMapper(grid, grid.leafIndexSet()), statNData(vertexMapper.size()), varNData(), elData(), dt(1)
     {
       this->analytic = false;
     }
     
 
+    //**********************************************************
+    //*																			*
+    //*	Computation of the local defect								*
+    //*																			*
+    //**********************************************************
+    
     template<class TypeTag>
     void localDefect (const Entity& e, const VBlockType* sol)
     {
@@ -113,8 +120,18 @@ namespace Dune
       	sfs=Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt, 1);
       int size = sfs.size();
       this->setcurrentsize(size);
+      varNData.resize(size);
+      updateVariableData(e, sol);
+
+      computeM(); // DUMMY
+
+
+      computeA();	// DUMMY
       
-      // get cell volume
+  
+      computeElementData(e);
+      
+/*      // get cell volume
       DT cellVolume = geometry.volume();
       
       // assuming rectangular grids:
@@ -125,31 +142,42 @@ namespace Dune
 		  cellLocal = Dune::ReferenceElements<DT,n>::general(gt).position(0,0);
 		
 	  // get global coordinate of cell center
-	  const Dune::FieldVector<DT,n> cellGlobal = geometry.global(cellLocal);
+	  const Dune::FieldVector<DT,n> cellGlobal = geometry.global(cellLocal);*/
       
-	  // calculate secondary variables and set defect to zero 
-      RT saturationW[size];
-      RT pC[size];
-      VBlockType mobility[size];
-      VBlockType density;
+	  //*********************************************************
+	  //*																			*
+	  //*	Calculation of the secondary variables					 	*
+	  //*	Set defect to zero											 	*
+	  //*																		 	*
+	  //*********************************************************
+
+	   // Variable declaration
+//	   RT saturationW[size];
+//      RT pC[size];
+//      VBlockType mobility[size];
+//      VBlockType density;
+
+      
       // ASSUME element-wise constant parameters for the material law 
-      FieldVector<RT, 4> parameters = problem.materialLawParameters(cellGlobal, e, cellLocal);
+//      FieldVector<RT, 4> parameters = problem.materialLawParameters(cellGlobal, e, cellLocal);
       
-      for (int i=0; i < size; i++) {
-		  this->def[i] = 0;
-		  saturationW[i] = 1.0 - sol[i][satNIdx];
-		  pC[i] = problem.materialLaw().pC(saturationW[i], parameters);
-		  mobility[i][pWIdx] = problem.materialLaw().mobW(saturationW[i], parameters);
-		  mobility[i][satNIdx] = problem.materialLaw().mobN(sol[i][satNIdx], parameters);
-      }
-      density[pWIdx] = problem.materialLaw().wettingPhase.density();
-      density[satNIdx] = problem.materialLaw().nonwettingPhase.density();
+//      for (int i=0; i < size; i++) {
+//		  this->def[i] = 0;
+//		  saturationW[i] = 1.0 - sol[i][satNIdx];
+//		  pC[i] = problem.materialLaw().pC(saturationW[i], parameters);
+//		  mobility[i][pWIdx] = problem.materialLaw().mobW(saturationW[i], parameters);
+//		  mobility[i][satNIdx] = problem.materialLaw().mobN(sol[i][satNIdx], parameters);
+//     }
+//      density[pWIdx] = problem.materialLaw().wettingPhase.density();
+//      density[satNIdx] = problem.materialLaw().nonwettingPhase.density();
       
 	  // ASSUMING element-wise constant permeability, evaluate K at the cell center 
-	  const Dune::FieldMatrix<DT,n,n> K = problem.K(cellGlobal, e, cellLocal);  
+//	  const Dune::FieldMatrix<DT,n,n> K = problem.K(cellGlobal, e, cellLocal);  
 	  
 	  // ASSUMING element-wise constant porosity, evaluate at the cell center 
-	  double volumeFactor = problem.porosity(cellGlobal, e, cellLocal)*cellVolume;
+//	  double volumeFactor = problem.porosity(cellGlobal, e, cellLocal)*cellVolume;
+
+	  
 	  for (int i=0; i < size; i++) // begin loop over vertices
 	  {
 		  // current nonwetting phase saturation 
@@ -157,12 +185,12 @@ namespace Dune
 		  RT satNOld = uold[i][satNIdx];
 		  
 		  // time derivative
-		  RT diffSatN = volumeFactor*(satNI - satNOld);
+		  RT diffSatN = elData.volumeFactor*(satNI - satNOld);
 		  this->def[i][pWIdx] -= diffSatN;
 		  this->def[i][satNIdx] += diffSatN;
 
 		  // local coordinate of vertex 
-	      const FieldVector<DT,n> vertexLocal = sfs[i].position();
+	     const FieldVector<DT,n> vertexLocal = sfs[i].position();
 	      
 		  // get global coordinate of vertex
 		  const FieldVector<DT,n> vertexGlobal = geometry.global(vertexLocal);
@@ -171,7 +199,7 @@ namespace Dune
 		  FieldVector<RT, m> q = problem.q(vertexGlobal, e, vertexLocal);
 		  
 		  // add source to defect 
-		  q *= dt*cellVolume;
+		  q *= dt*elData.cellVolume;
 		  this->def[i] -= q;
 		  
 		  for (int j=i+1; j < size; j++) // begin loop over neighboring vertices 
@@ -202,12 +230,12 @@ namespace Dune
 			  
 			  // permeability in edge direction 
 			  FieldVector<DT,n> Kij(0);
-			  K.umv(edgeVector, Kij);
+			  elData.K.umv(edgeVector, Kij);
 			  
 			  // calculate pressure differences 
 			  VBlockType pDiff;
 			  pDiff[pWIdx] = sol[j][pWIdx] - sol[i][pWIdx];
-			  pDiff[satNIdx] = pDiff[pWIdx] + pC[j] - pC[i];
+			  pDiff[satNIdx] = pDiff[pWIdx] + varNData[j].pC - varNData[i].pC;
 			  
 			  VBlockType flux;
 			  for (int comp = 0; comp < m; comp++) {
@@ -217,15 +245,15 @@ namespace Dune
 				  
 				  // adjust by gravity 
 				  FieldVector<RT, n> gravity = problem.gravity();
-				  gravity *= density[comp];
+				  gravity *= varNData[i].density[comp];
 				  pGrad -= gravity;
 				  
 				  // calculate the flux using upwind
 				  RT outward = pGrad*Kij;
 				  if (outward < 0)
-					  flux[comp] = mobility[i][comp]*outward;
+					  flux[comp] = varNData[i].mobility[comp]*outward;
 				  else 
-					  flux[comp] = mobility[j][comp]*outward;
+					  flux[comp] = varNData[j].mobility[comp]*outward;
 			  }
 			  
 			  // get the local edge center 
@@ -236,7 +264,7 @@ namespace Dune
 			  const FieldVector<DT,n> edgeGlobal = geometry.global(edgeLocal);
 			  
 			  // distance between cell center and edge center
-			  DT distanceEdgeCell = (cellGlobal - edgeGlobal).two_norm();
+			  DT distanceEdgeCell = (elData.cellGlobal - edgeGlobal).two_norm();
 			  
 			  ////////////////////////////////////////////////////////////
 			  // CAREFUL: only valid in 2D 
@@ -253,8 +281,8 @@ namespace Dune
 
 	  // adjust by density 
 	  for (int i=0; i < size; i++) {
-		  this->def[i][pWIdx] *= density[pWIdx];
-		  this->def[i][satNIdx] *= density[satNIdx];
+		  this->def[i][pWIdx] *= varNData[i].density[pWIdx];
+		  this->def[i][satNIdx] *= varNData[i].density[satNIdx];
 	  }
 	  
 	  // assemble boundary conditions 
@@ -284,8 +312,8 @@ namespace Dune
         
         for (int i = 0; i < size; i++) 
         	for (int comp = 0; comp < m; comp++) {
-        		this->u[i][comp] = currentSolution.evallocal(comp, e, sfs[i].position());
-        		uold[i][comp] = oldSolution.evallocal(comp, e, sfs[i].position());
+        		this->u[i][comp]= currentSolution.evallocal(comp, e, sfs[i].position());
+        		uold[i][comp]= oldSolution.evallocal(comp, e, sfs[i].position());
         }
         
     	return;
@@ -301,14 +329,87 @@ namespace Dune
     	*oldSolution = *uOld;
     }
   
-    struct NodeData 
+    virtual void clearVisited ()
+    {
+    	for (int i = 0; i < vertexMapper.size(); i++)
+    		statNData[i].visited = false;
+    		
+    	return;
+    }
+
+    virtual void computeM ()
+    {
+   	 
+    };
+    
+    virtual void computeA ()
+    {
+   	 
+    };
+
+    
+    
+    struct ElementData {
+   	 RT cellVolume;
+    	 RT porosity;
+   	 RT gravity;
+   	 Dune::FieldVector<DT,n> cellGlobal;
+   	 Dune::FieldVector<DT,n> cellLocal;   	    	 
+//   	 const Dune::FieldVector<DT,n> cellLocal;
+   	 double volumeFactor;
+   	 Dune::FieldVector<RT, 4> parameters;
+   	 Dune::FieldMatrix<DT,n,n> Help;
+   	 Dune::FieldMatrix<DT,n,n> K;
+   	 } elData;
+    
+    virtual void computeElementData (const Entity& e)
+    {
+       const Geometry& geometry = e.geometry();
+       Dune::GeometryType gt = geometry.type();
+       
+       // get cell volume
+       elData.cellVolume = geometry.volume();
+       
+       // assuming rectangular grids:
+       elData.cellVolume /= 4.0;
+       
+       // cell center in reference element
+ 		 elData.cellLocal = Dune::ReferenceElements<DT,n>::general(gt).position(0,0);
+ 		
+ 	  // get global coordinate of cell center
+ 	  elData.cellGlobal = geometry.global(elData.cellLocal);
+   	 
+     // ASSUME element-wise constant parameters for the material law 
+     elData.parameters = problem.materialLawParameters(elData.cellGlobal, e, elData.cellLocal);
+   	 
+
+	  // ASSUMING element-wise constant permeability, evaluate K at the cell center 
+     elData.Help = problem.K(elData.cellGlobal, e, elData.cellLocal);
+     elData.K = problem.K(elData.cellGlobal, e, elData.cellLocal);  
+	  
+	  // ASSUMING element-wise constant porosity, evaluate at the cell center 
+	  elData.volumeFactor = problem.porosity(elData.cellGlobal, e, elData.cellLocal)*elData.cellVolume;
+  };
+
+    
+	  //*********************************************************
+	  //*																			*
+	  //*	Calculation of Data at Nodes that has to be			 	*
+	  //*	determined only once	(statNData)							 	*
+	  //*																		 	*
+	  //*********************************************************
+
+    
+    struct StaticNodeData 
     {
     	bool visited;
     	
     	int phaseState[numberOfComponents];
     };
     
-    virtual void updateData (const Entity& e, const VBlockType* sol)
+    
+    // analog to EvalStaticData in MUFTE
+    virtual void updateStaticData (const Entity& e, const VBlockType* sol)
     {
   	  // local to global id mapping (do not ask vertex mapper repeatedly
   	  //int localToGlobal[Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::maxsize];
@@ -316,40 +417,92 @@ namespace Dune
   	  // get access to shape functions for P1 elements
   	  GeometryType gt = e.geometry().type();
   	  const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::value_type& 
-  	  	sfs=Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt,1);
+  	  sfs=Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt,1);
 
   	  // get local to global id map
   	  for (int k = 0; k < sfs.size(); k++) {
   		  int globalId = vertexMapper.template map<n>(e, sfs[k].entity());
   		  
-  		  if (!nodeData[globalId].visited) 
+  		  // if nodes are not already visited
+  		  if (!statNData[globalId].visited) 
   		  {
+  			  // phase state
   			  if (1)
   			  {
-  				nodeData[globalId].phaseState[0] = gaseous;
+  				statNData[globalId].phaseState[0] = gaseous;
   			  }
   			  else 
   			  {
   				  
   			  }
   			  
-  			  nodeData[globalId].visited = true;
+  			  // absolute permeability
+  			  //statNData[globalId].absolutePermeability = ;  // siehe oben!!
+
+  			  
+  			  // mark elements that were already visited
+  			  statNData[globalId].visited = true;
   		  }
   	  }
   	  
 	  return;
     }
 
-    virtual void clearVisited ()
+
+	  //*********************************************************
+	  //*																			*
+	  //*	Calculation of variable Data at Nodes					 	*
+	  //*	(varNData)														 	*
+	  //*																		 	*
+	  //*********************************************************
+   
+
+    // the members of the struct are defined here
+    struct VariableNodeData  
     {
-    	for (int i = 0; i < vertexMapper.size(); i++)
-    		nodeData[i].visited = false;
-    		
-    	return;
+       RT saturationW;
+       RT pC;
+       VBlockType mobility;  //Vector with the number of phases
+       VBlockType density;
+    };
+    
+
+    // analog to EvalPrimaryData in MUFTE, uses members of varNData
+    virtual void updateVariableData (const Entity& e, const VBlockType* sol)
+    {
+   	  int size = varNData.size();
+     	  GeometryType gt = e.geometry().type();
+        const Geometry& geometry = e.geometry();
+
+     	  
+     // cell center in reference element
+     const Dune::FieldVector<DT,n> 
+ 	  cellLocal = Dune::ReferenceElements<DT,n>::general(gt).position(0,0);
+  		
+  	  // get global coordinate of cell center
+  	  const Dune::FieldVector<DT,n> cellGlobal = geometry.global(cellLocal);
+   	  
+        // ASSUME element-wise constant parameters for the material law 
+        FieldVector<RT, 4> parameters = problem.materialLawParameters(cellGlobal, e, cellLocal);
+
+   	 
+   	 for (int i = 0; i < size; i++) {
+   		this->def[i] = 0;
+   		varNData[i].saturationW = 1.0 - sol[i][satNIdx];
+
+   		// ASSUME element-wise constant parameters for the material law 
+         FieldVector<RT, 4> parameters = problem.materialLawParameters(cellGlobal, e, cellLocal);
+
+         varNData[i].pC = problem.materialLaw().pC(varNData[i].saturationW, parameters);
+         varNData[i].mobility[pWIdx] = problem.materialLaw().mobW(varNData[i].saturationW, parameters);
+         varNData[i].mobility[satNIdx] = problem.materialLaw().mobN(sol[i][satNIdx], parameters);
+         varNData[i].density[pWIdx] = problem.materialLaw().wettingPhase.density();
+         varNData[i].density[satNIdx] = problem.materialLaw().nonwettingPhase.density();
+   	 }   	 
     }
+    
 
-
-	    template<class TypeTag>
+    template<class TypeTag>
 		void assembleBC (const Entity& e)
 		{
 		  // extract some important parameters
@@ -476,7 +629,10 @@ namespace Dune
     const BoxFunction& currentSolution;
     BoxFunction oldSolution;
     VertexMapper vertexMapper;
-    std::vector<NodeData> nodeData;
+    std::vector<StaticNodeData> statNData;
+    std::vector<VariableNodeData> varNData;
+//    std::vector<ElementData> elData;
+    
   public:
     double dt;
     VBlockType uold[SIZE];
