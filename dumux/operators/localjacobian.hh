@@ -20,6 +20,7 @@
 #include<dune/istl/operators.hh>
 #include<dune/disc/operators/localstiffness.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
+#include"dumux/fvgeometry/fvelementgeometry.hh"
 
 /**
  * @file
@@ -75,6 +76,7 @@ namespace Dune
 	typedef FieldMatrix<RT,m,m> MBlockType;                      // one entry in the stiffness matrix
 	typedef FieldVector<RT,m> VBlockType;                        // one entry in the global vectors
 	typedef FixedArray<BoundaryConditions::Flags,m> BCBlockType; // componentwise boundary conditions
+	typedef FVElementGeometry<G> FVElementGeometry;
     enum {SIZE=4};
 
 	//! print contents of local stiffness matrix
@@ -186,9 +188,11 @@ namespace Dune
   	  
     	setLocalSolution(e);
     	
-    	updateData(e, u);
+      FVElementGeometry fvGeom(e);
+
+      updateStaticData(e, fvGeom, u);
     	
-    	localDefect<TypeTag>(e, u);
+    	localDefect<TypeTag>(e, fvGeom, u);
 
     	VBlockType bTemp[SIZE];
     	for (int i=0; i<SIZE; i++) 
@@ -214,7 +218,7 @@ namespace Dune
 		for (int i = 0; i < SIZE; i++) 
 		  uPlusEps[i] = u[i];
 		uPlusEps[j][comp] += eps;
-		localDefect<TypeTag>(e, uPlusEps);
+		localDefect<TypeTag>(e, fvGeom, uPlusEps);
 		RT oneByEps = 1.0/eps;
 		for (int i = 0; i < SIZE; i++) 
 		  for (int compi = 0; compi < m; compi++)
@@ -234,9 +238,9 @@ namespace Dune
     }
     
     template<class TypeTag>
-    void localDefect (const Entity& e, const VBlockType* sol)
+    void localDefect (const Entity& e, const FVElementGeometry& fvGeom, const VBlockType* sol)
     {
-      this->getImp().template localDefect<TypeTag>(e, sol);
+      this->getImp().template localDefect<TypeTag>(e, fvGeom, sol);
     }
     
     void setLocalSolution (const Entity& e)
@@ -256,7 +260,7 @@ namespace Dune
 	  this->getImp().template analyticJacobian<TypeTag>(e, sol);
     }
 
-    virtual void updateData (const Entity& e, const VBlockType* sol)
+    virtual void updateStaticData (const Entity& e, const FVElementGeometry& fvGeom, const VBlockType* sol)
     {
 	  return;
     }
