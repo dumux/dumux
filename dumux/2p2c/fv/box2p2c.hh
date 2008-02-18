@@ -49,14 +49,14 @@ namespace Dune
   template<class G, class RT>
   class Box2P2C 
   : public LeafP1TwoPhaseModel<G, RT, TwoPhaseProblem<G, RT>, 
-                                 Box2P2CLocalJacobian<G, RT> >
+                                 Box2P2CJacobian<G, RT> >
   {
   public:
 	// define the problem type (also change the template argument above)
 	typedef TwoPhaseProblem<G, RT> ProblemType;
 	
 	// define the local Jacobian (also change the template argument above)
-	typedef Box2P2CLocalJacobian<G, RT> LocalJacobian;
+	typedef Box2P2CJacobian<G, RT> LocalJacobian;
 	
 	typedef LeafP1TwoPhaseModel<G, RT, ProblemType, LocalJacobian> LeafP1TwoPhaseModel;
 

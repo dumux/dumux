@@ -38,7 +38,8 @@ public:
 		FieldVector<DT, dim> ip_local;                 /* integration point in local coords    */
 		FieldVector<DT, dim> ip_global;                    /* integration point in global coords       */
 		FieldVector<DT, dim> normal;                   /* normal on face at ip pointing to CV j*/
-		SDValues sdv;                                  /* shape fcts, deriv. etc. at scv-faces */
+		FieldVector<FieldVector<DT, dim>, maxNC> grad;              /* derivatives of shape functions at ip */
+		DT area;
 	};
 
 	struct BoundaryFace {
@@ -56,6 +57,7 @@ public:
    DT cellVolume;
    SubControlVolume subContVol[maxNC];
    SubControlVolumeFace subContVolFace[maxNF];
+   int nodes;
     
 	FVElementGeometry<G>(const Entity& e)
 	{
@@ -75,7 +77,10 @@ public:
  		 // get global coordinate of cell center
  		 cellGlobal = geometry.global(cellLocal);
    	 
- 		 int nodes = sfs.size();
+ 		  // ASSUMING constant element mapping jacobian
+ 		  FieldMatrix<DT,dim,dim> jacobianInverseTransposed = geometry.jacobianInverseTransposed(cellLocal);
+
+ 		 nodes = sfs.size();
  		 for (int i = 0; i < nodes; i++) {
  			 // assuming rectangular grids:
  			 subContVol[i].volume = 0.25*cellVolume;
@@ -89,9 +94,40 @@ public:
  		 for (int k = 0; k < faces; k++) {
  			 int idx0 = ReferenceElements<DT,dim>::general(gt).subEntity(k, dim-1, 0, dim);
  			 int idx1 = ReferenceElements<DT,dim>::general(gt).subEntity(k, dim-1, 1, dim);
- 			 subContVolFace[k].i = std::min(idx0, idx1);
- 			 subContVolFace[k].j = std::max(idx0, idx1); 
- 		 }
+ 			 int i = std::min(idx0, idx1);
+ 			 int j = std::max(idx0, idx1);
+ 			 subContVolFace[k].i = i;
+ 			 subContVolFace[k].j = j; 
+ 			 
+			  // compute the edge vector
+			  FieldVector<DT,dim>  edgeVector = subContVol[j].global - subContVol[i].global;
+			  
+			  // get distance between neighbors 
+			  DT oneByDistanceGlobal = 1.0/edgeVector.two_norm(); 
+			  
+			  // normalize edge vector 
+			  edgeVector *= oneByDistanceGlobal;
+			  subContVolFace[k].normal = edgeVector;
+			  
+			  // get the local edge center 
+			  FieldVector<DT,dim> edgeLocal = subContVol[i].local + subContVol[j].local;
+			  edgeLocal *= 0.5;
+			  subContVolFace[k].ip_local = edgeLocal;
+			  
+			  // get global coordinate of edge center
+			  const FieldVector<DT,dim> edgeGlobal = geometry.global(edgeLocal);
+			  
+			  // distance between cell center and edge center
+			  subContVolFace[k].area = (cellGlobal - edgeGlobal).two_norm();
+			  
+			  for (int node = 0; node < nodes; node++) {
+	        	  FieldVector<DT,dim> grad(0),temp;
+	        	  for (int l = 0; l < dim; l++) 
+	        		  temp[l] = sfs[node].evaluateDerivative(0, l, subContVolFace[k].ip_local);
+	        	  jacobianInverseTransposed.umv(temp, grad);
+	        	  subContVolFace[k].grad[node] = grad;
+	          }
+		 }
  		 
 	}
 
