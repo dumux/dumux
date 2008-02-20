@@ -80,9 +80,9 @@ namespace Dune
     typedef typename LocalJacobian<ThisType,G,RT,2>::VBlockType VBlockType;
     typedef typename LocalJacobian<ThisType,G,RT,2>::MBlockType MBlockType;
  	typedef FVElementGeometry<G> FVElementGeometry;
-	enum {pWIdx = 0, satNIdx = 1, numberOfComponents = 2};
-	enum {gaseous = 0, liquid = 1, solid = 2};
-	
+	enum {pWIdx = 0, satNIdx = 1, numberOfComponents = 2};	// Phase index
+	enum {gaseous = 0, liquid = 1, solid = 2};					// Phase state
+	enum {water = 0, air = 1};										// Component index					
 	
   public:
     // define the number of components of your system, this is used outside
@@ -116,6 +116,9 @@ namespace Dune
     {
    	 VBlockType result; 
    	 
+   	 
+//   	 result[0] = -elData.porosity*(varNData[node].density[pWIdx]*sol[node][satNIdx]*varNData[node].massfrac[water][pWIdx]
+//                   + varNData[node].density[satNIdx]*sol[node][satNIdx]*varNData[node].massfrac[water][satNIdx]);
    	 result[0] = -varNData[node].density[pWIdx]*elData.porosity*sol[node][satNIdx];
    	 result[1] = varNData[node].density[satNIdx]*elData.porosity*sol[node][satNIdx];
    	 
@@ -249,16 +252,18 @@ namespace Dune
    	 for (int i = 0; i < size; i++) {
    		this->def[i] = 0;
    		varNData[i].saturationW = 1.0 - sol[i][satNIdx];
-
-   		// ASSUME element-wise constant parameters for the material law 
-         FieldVector<RT, 4> parameters = problem.materialLawParameters(fvGeom.cellGlobal, e, fvGeom.cellLocal);
-
-         varNData[i].pC = problem.materialLaw().pC(varNData[i].saturationW, parameters);
+         varNData[i].pC = problem.materialLaw().pC(varNData[i].saturationW, elData.parameters);
          varNData[i].pN = sol[i][pWIdx] + varNData[i].pC;
-         varNData[i].mobility[pWIdx] = problem.materialLaw().mobW(varNData[i].saturationW, parameters);
-         varNData[i].mobility[satNIdx] = problem.materialLaw().mobN(sol[i][satNIdx], parameters);
+         // Mobilities & densities
+         varNData[i].mobility[pWIdx] = problem.materialLaw().mobW(varNData[i].saturationW, elData.parameters);
+         varNData[i].mobility[satNIdx] = problem.materialLaw().mobN(sol[i][satNIdx], elData.parameters);
          varNData[i].density[pWIdx] = problem.materialLaw().wettingPhase.density();
          varNData[i].density[satNIdx] = problem.materialLaw().nonwettingPhase.density();
+         // Solubilities
+         varNData[i].massfrac[water][pWIdx] = 1;	//problem.materialLaw().water.solubility();
+         varNData[i].massfrac[air][pWIdx] = 	1 - varNData[i].massfrac[water][pWIdx];
+         varNData[i].massfrac[satNIdx][water] = 1;	//problem.materialLaw().air.solubility();
+         varNData[i].massfrac[satNIdx][air] = 1 - varNData[i].massfrac[satNIdx][water];
    	 }   	 
     }
     
@@ -278,6 +283,7 @@ namespace Dune
        RT pN;
        VBlockType mobility;  //Vector with the number of phases
        VBlockType density;
+       MBlockType massfrac;
     };
     
     struct ElementData {
