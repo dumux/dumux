@@ -177,8 +177,10 @@ namespace Dune
 	}
 
 	template<class TypeTag>
-    void assemble (const Entity& e, int k = 1)
+    void assemble (const Entity& e, bool itIsThis, int k = 1)
 	{
+		fvGeom.update(e);
+		
 	  int size = e.template count<n>();
 	  
     	// set to Zero 
@@ -190,11 +192,11 @@ namespace Dune
   	  
     	setLocalSolution(e);
     	
-      FVElementGeometry fvGeom(e);
+      //FVElementGeometry fvGeom(e);
 
-      updateStaticData(e, fvGeom, u);
+      updateStaticData(e, u);
     	
-    	localDefect<TypeTag>(e, fvGeom, u);
+    	localDefect<TypeTag>(e, u);
 
     	VBlockType bTemp[size];
     	for (int i=0; i<size; i++) 
@@ -225,12 +227,19 @@ namespace Dune
     				uPlusEps[j][comp] += eps;
     				uMinusEps[j][comp] -= eps;
 
-    				localDefect<TypeTag>(e, fvGeom, uPlusEps);
+    				localDefect<TypeTag>(e, uPlusEps);
     				VBlockType defuPlusEps[size];
     				for (int i = 0; i < size; i++) 
     					defuPlusEps[i] = def[i];
 
-    				localDefect<TypeTag>(e, fvGeom, uMinusEps);
+    				localDefect<TypeTag>(e, uMinusEps);
+    				/*if (itIsThis) {
+    					std::cout << "defuPlusEps\tdefuMinusEps" << std::endl;
+    					for (int k = 0; k < 4; k++) {
+    						std::cout << defuPlusEps[k] << ", " << def[k] << std::endl;
+    					}
+    				}
+    				*/	
     				
     				RT oneByEps = 0.5/eps;
     				for (int i = 0; i < size; i++) 
@@ -251,9 +260,9 @@ namespace Dune
 	}
     
     template<class TypeTag>
-    void localDefect (const Entity& e, const FVElementGeometry& fvGeom, const VBlockType* sol)
+    void localDefect (const Entity& e, const VBlockType* sol)
     {
-      this->getImp().template localDefect<TypeTag>(e, fvGeom, sol);
+      this->getImp().template localDefect<TypeTag>(e, sol);
     }
     
     void setLocalSolution (const Entity& e)
@@ -264,7 +273,7 @@ namespace Dune
     template<class TypeTag>
     void assembleBC (const Entity& e)
     {
-      this->getImp().assembleBC(e);
+      this->getImp().template assembleBC<TypeTag>(e);
     }
     
     template<class TypeTag>
@@ -273,7 +282,7 @@ namespace Dune
 	  this->getImp().template analyticJacobian<TypeTag>(e, sol);
     }
 
-    virtual void updateStaticData (const Entity& e, const FVElementGeometry& fvGeom, const VBlockType* sol)
+    virtual void updateStaticData (const Entity& e, const VBlockType* sol)
     {
 	  return;
     }
@@ -296,6 +305,7 @@ namespace Dune
     VBlockType def[SIZE];
     VBlockType u[SIZE];
     bool analytic;
+    FVElementGeometry fvGeom;
   };
 
 

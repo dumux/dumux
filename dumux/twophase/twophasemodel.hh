@@ -179,8 +179,6 @@ namespace Dune
 				satW[i] = 1 - satN[i];
 			}
 			vtkwriter.addVertexData(pW,"wetting phase pressure");
-			//vtkwriter.addVertexData(pN,"nonwetting phase pressure");
-			//vtkwriter.addVertexData(pC,"capillary pressure");
 			vtkwriter.addVertexData(satW,"wetting phase saturation");
 			vtkwriter.addVertexData(satN,"nonwetting phase saturation");
 			vtkwriter.write(fname, VTKOptions::ascii);		

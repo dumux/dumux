@@ -18,7 +18,8 @@
 #include<dune/disc/shapefunctions/lagrangeshapefunctions.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
 #include<dune/disc/functions/p1function.hh>
-#include "dumux/operators/localjacobian.hh"
+
+#include "localjacobian.hh"
 
 /**
  * @file
@@ -72,7 +73,7 @@ namespace Dune
 		  }
 	  }; 
 
-    typedef typename G::ctype DT;
+	typedef typename G::ctype DT;
     typedef typename G::Traits::template Codim<0>::Entity Entity;
     typedef typename Entity::Geometry Geometry;
     typedef typename LocalJacobian<Imp,G,RT,m>::VBlockType VBlockType;
@@ -104,47 +105,51 @@ namespace Dune
     //**********************************************************
     
     template<class TypeTag>
-    void localDefect (const Entity& e, const FVElementGeometry& fvGeom, const VBlockType* sol)
+    void localDefect (const Entity& e, const VBlockType* sol)
     {
-      computeElementData(e, fvGeom);
-      updateVariableData(e, fvGeom, sol);
+      computeElementData(e);
+      updateVariableData(e, sol);
 
-	  for (int i=0; i < fvGeom.nodes; i++) // begin loop over vertices / sub control volumes
+	  for (int i=0; i < this->fvGeom.nNodes; i++) // begin loop over vertices / sub control volumes
 	  {
 		  // implicit Euler
-		  VBlockType massContrib = computeM(e, fvGeom, sol, i);
-		  massContrib -= computeM(e, fvGeom, uold, i);
-		  massContrib *= fvGeom.subContVol[i].volume/dt;
+		  VBlockType massContrib = computeM(e, sol, i);
+		  massContrib -= computeM(e, uold, i);
+		  massContrib *= this->fvGeom.subContVol[i].volume/dt;
 		  this->def[i] += massContrib;
+		    std::cout.setf(std::ios_base::scientific, std::ios_base::floatfield);
+		    std::cout.setf(std::ios_base::uppercase);
+		    std::cout.precision(3);
+		  //std::cout << "i = " << i << ", massContrib = " << massContrib << std::endl;
 		  
 		  // get source term 
-		  VBlockType q = computeQ(e, fvGeom, sol, i);
-		  q *= fvGeom.subContVol[i].volume;
+		  VBlockType q = computeQ(e, sol, i);
+		  q *= this->fvGeom.subContVol[i].volume;
 		  this->def[i] -= q;
 	  } // end loop over vertices / sub control volumes
 	  
-	  for (int face = 0; face < e.template count<n-1>(); face++) // begin loop over edges / sub control volume faces
+	  for (int k = 0; k < this->fvGeom.nEdges; k++) // begin loop over edges / sub control volume faces
 	  {
-		  int i = fvGeom.subContVolFace[face].i;
-		  int j = fvGeom.subContVolFace[face].j;
+		  int i = this->fvGeom.subContVolFace[k].i;
+		  int j = this->fvGeom.subContVolFace[k].j;
 		  
-		  VBlockType flux = computeA(e, fvGeom, sol, face);
-		  
-		  // obtain integrated Flux 
-		  flux *= fvGeom.subContVolFace[face].area; 
-			  
+		  VBlockType flux = computeA(e, sol, k);
+
 		  // add to defect 
 		  this->def[i] -= flux;
 		  this->def[j] += flux;
+		  //std::cout << "i = " << i << ", j = " << j << ", flux = " << flux << std::endl;
 	  } // end loop over edges / sub control volume faces
-
+	  
 	  // assemble boundary conditions 
 	  assembleBC<TypeTag> (e); 
 	  
 	  // add to defect 
-	  for (int i=0; i < fvGeom.nodes; i++) {
-		  this->def[i] -= this->b[i];
+	  for (int i=0; i < this->fvGeom.nNodes; i++) {
+		  this->def[i] += this->b[i];
+		  //std::cout << "i = " << ", b[i] = " << this->b[i] << std::endl;
 	  }
+		//std::cout << std::endl;
 
       return;
     }
@@ -176,53 +181,52 @@ namespace Dune
     	*oldSolution = *uOld;
     }
   
-    VBlockType computeM (const Entity& e, const FVElementGeometry& fvGeom, const VBlockType* sol, int node)
+    VBlockType computeM (const Entity& e, const VBlockType* sol, int node)
     {
-   	 return this->getImp().computeM(e, fvGeom, sol, node);
-    };
+   	 return this->getImp().computeM(e, sol, node);
+    }
     
-    VBlockType computeQ (const Entity& e, const FVElementGeometry& fvGeom, const VBlockType* sol, int node)
+    VBlockType computeQ (const Entity& e, const VBlockType* sol, int node)
     {
-   	 return this->getImp().computeQ(e, fvGeom, sol, node);
-    };
+   	 return this->getImp().computeQ(e, sol, node);
+    }
     
-    VBlockType computeA (const Entity& e, const FVElementGeometry& fvGeom, const VBlockType* sol, int face)
+    VBlockType computeA (const Entity& e, const VBlockType* sol, int face)
     {
-   	 return this->getImp().computeA(e, fvGeom, sol, face);
-    };
+   	 return this->getImp().computeA(e, sol, face);
+    }
 
-    void computeElementData (const Entity& e, const FVElementGeometry& fvGeom)
+    void computeElementData (const Entity& e)
     {
-   	 return this->getImp().computeElementData(e, fvGeom);
-    };
+   	 return this->getImp().computeElementData(e);
+    }
 
     // analog to EvalStaticData in MUFTE
-    virtual void updateStaticData (const Entity& e, const FVElementGeometry& fvGeom, const VBlockType* sol)
+    virtual void updateStaticData (const Entity& e, const VBlockType* sol)
     {
-   	 return this->getImp().updateStaticData(e, fvGeom, sol);
+   	 return this->getImp().updateStaticData(e, sol);
     }
 
     // analog to EvalPrimaryData in MUFTE, uses members of varNData
-    virtual void updateVariableData (const Entity& e, const FVElementGeometry& fvGeom, const VBlockType* sol)
+    virtual void updateVariableData (const Entity& e, const VBlockType* sol)
     {
-   	 return this->getImp().updateVariableData(e, fvGeom, sol);
+   	 return this->getImp().updateVariableData(e, sol);
     }
     
-
     template<class TypeTag>
 		void assembleBC (const Entity& e)
 		{
-		  // extract some important parameters
 		  Dune::GeometryType gt = e.geometry().type();
 		  const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::value_type& 
 			sfs=Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt,1);
 		  setcurrentsize(sfs.size());
 
+		  const typename ReferenceElementContainer<DT,n>::value_type& 
+	      	referenceElement = ReferenceElements<DT,n>::general(gt);
+
 		  for (int i = 0; i < sfs.size(); i++)
 			  this->b[i] = 0;
 		  
-		  // determine quadrature order
-		  int p=2;
 		  // evaluate boundary conditions via intersection iterator
 		  typedef typename IntersectionIteratorGetter<G,TypeTag>::IntersectionIterator
 		    IntersectionIterator;
@@ -247,37 +251,26 @@ namespace Dune
 			  // handle face on exterior boundary, this assumes there are no interior boundaries
 			  if (it.boundary())
 				{
-				  Dune::GeometryType gtface = it.intersectionSelfLocal().type();
-				  for (size_t g=0; g<Dune::QuadratureRules<DT,n-1>::rule(gtface,p).size(); ++g)
-					{
-					  const Dune::FieldVector<DT,n-1>& facelocal = Dune::QuadratureRules<DT,n-1>::rule(gtface,p)[g].position();
-					  FieldVector<DT,n> local = it.intersectionSelfLocal().global(facelocal);
-					  FieldVector<DT,n> global = it.intersectionGlobal().global(facelocal);
-					  bctypeface = this->getImp().problem.bctype(global,e,it,local); // eval bctype
+	       			int faceIdx = it.numberInSelf();
+	       			int nNodesOfFace = referenceElement.size(faceIdx, 1, n);
+	       			for (int nodeInFace = 0; nodeInFace < nNodesOfFace; nodeInFace++)
+	       			{
+	       				int nodeInElement = referenceElement.subEntity(faceIdx, 1, nodeInFace, n);
 
-
-					  if (bctypeface[0]!=BoundaryConditions::neumann) break;
-
-					  VBlockType J = this->getImp().problem.J(global,e,it,local);
-					  if (J.two_norm() < 1e-10) 
-						  continue;
-					  double weightface = Dune::QuadratureRules<DT,n-1>::rule(gtface,p)[g].weight();
-					  DT detjacface = it.intersectionGlobal().integrationElement(facelocal);
-					  J *= 1.0/(pow(2.0, n-1))*weightface*detjacface;
-					  for (int i=0; i<sfs.size(); i++) // loop over test function number
-						if (this->bctype[i][0]==BoundaryConditions::neumann)
-						  {
-							//////////////////////////////////////////////////////////////////////////
-							// HACK: piecewise constants with respect to dual grid not implemented yet 
-							// works only if exactly one quadrature point is located within each dual 
-							// cell boundary (which should be the case for p = 2)
-							//////////////////////////////////////////////////////////////////////////
-//							if (sfs[i].evaluateFunction(0,local) > 0.5) {
-//								J *= weightface*detjacface;
-								this->b[i] -= J;
-//							}
-						  }
-					}
+	       				if (this->bctype[nodeInElement][0] == BoundaryConditions::neumann) {
+	       					int bfIdx = this->fvGeom.boundaryFaceIndex(faceIdx, nodeInFace);
+	       					FieldVector<DT,n> local = this->fvGeom.boundaryFace[bfIdx].ipLocal;
+	       					FieldVector<DT,n> global = this->fvGeom.boundaryFace[bfIdx].ipGlobal;
+	        			
+	       					bctypeface = this->getImp().problem.bctype(global,e,it,local); // eval bctype
+	       					if (bctypeface[0]!=BoundaryConditions::neumann) 
+	       						break;
+	       					VBlockType J = this->getImp().problem.J(global,e,it,local);
+	       					J *= this->fvGeom.boundaryFace[bfIdx].area;
+							this->b[nodeInElement] += J;
+	       				}
+	       			}
+				  
 				  if (bctypeface[0]==BoundaryConditions::neumann) continue; // was a neumann face, go to next face
 				}
 
@@ -328,20 +321,19 @@ namespace Dune
 					  }
 				}
 			}
+
 		}
 
     // parameters given in constructor
+    VertexMapper vertexMapper;
     bool levelBoundaryAsDirichlet;
     bool procBoundaryAsDirichlet;
     const BoxFunction& currentSolution;
     BoxFunction oldSolution;
-    VertexMapper vertexMapper;
     
   public:
     double dt;
     VBlockType uold[SIZE];
   };
-
-  /** @} */
 }
 #endif

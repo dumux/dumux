@@ -65,8 +65,9 @@ int main(int argc, char** argv)
     	<< result.flux0 << " + " << result.flux1 << " + " 
     	<< result.fluy0 << " + " << result.fluy1 << " - " 
     	<< result.sumf << "\n        = " << result.sumflux << std::endl;
-    std::cout << "relative discrete L2 error erl2 = " << result.relativeL2Error << std::endl;
-    std::cout << "relative discrete L2 error ergrad = " << result.ergrad << std::endl;
+    std::cout << "error erl2 = " << result.relativeL2Error << std::endl;
+    std::cout << "error ergrad (reconstructed gradient) = " << result.ergrad << std::endl;
+    std::cout << "error ervell2 (edge normal vel. difference times volume) = " << result.ervell2 << std::endl;
     std::cout << "errflx0 = abs((flux0 + exactflux0)/exactflux0) = abs((" 
     	<< result.flux0 << " + " << result.exactflux0 << ")/" << result.exactflux0 
     	<< ") = " << result.errflx0 << std::endl;

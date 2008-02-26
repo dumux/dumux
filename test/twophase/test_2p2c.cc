@@ -6,12 +6,13 @@
 #include <dune/grid/common/gridinfo.hh>
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
+#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
 #include "dumux/twophase/problems/lensproblem.hh"
 #include "dumux/twophase/problems/uniformtwophaseproblem.hh"
-#include "dumux/2p2c/fv/box2p2c.hh"
+#include "dumux/twophase/fv/boxpwsnold.hh"
 #include "dumux/twophase/fv/boxpwsn.hh"
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/material/vangenuchtenlaw.hh"
@@ -66,7 +67,7 @@ int main(int argc, char** argv)
     Dune::LensProblem<GridType, NumberType> problem(law, outerLowerLeft, outerUpperRight, 
     		innerLowerLeft, innerUpperRight);
 
-    typedef Dune::Box2P2C<GridType, NumberType> TwoPhase;
+    typedef Dune::BoxPwSn<GridType, NumberType> TwoPhase;
     TwoPhase twoPhase(grid, problem);
     
     Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt, "lens", 1);
@@ -76,17 +77,17 @@ int main(int argc, char** argv)
     timeloop.execute(twoPhase);
     std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
      
-    typedef Dune::BoxPwSn<GridType, NumberType> TwoPhaseOld;
-    TwoPhaseOld twoPhaseOld(grid, problem);
-    
-    Dune::TimeLoop<GridType, TwoPhaseOld> timeloopOld(0, tEnd, dt, "lensOld", 1);
-    
-    timer.reset();
-    timeloopOld.execute(twoPhaseOld);
-    std::cout << "timeloopOld.execute took " << timer.elapsed() << " seconds" << std::endl;
-     
-    *twoPhase.u -= *twoPhaseOld.u; 
-    std::cout << "difference = " << (*twoPhase.u).two_norm()/(*twoPhaseOld.u).two_norm() << std::endl;
+//    typedef Dune::BoxPwSnOld<GridType, NumberType> TwoPhaseOld;
+//    TwoPhaseOld twoPhaseOld(grid, problem);
+//    
+//    Dune::TimeLoop<GridType, TwoPhaseOld> timeloopOld(0, tEnd, dt, "lensOld", 1);
+//    
+//    timer.reset();
+//    timeloopOld.execute(twoPhaseOld);
+//    std::cout << "timeloopOld.execute took " << timer.elapsed() << " seconds" << std::endl;
+//     
+//    *twoPhase.u -= *twoPhaseOld.u; 
+//    std::cout << "difference = " << (*twoPhase.u).two_norm()/(*twoPhaseOld.u).two_norm() << std::endl;
     
     //printvector(std::cout, *twoPhase.u, "u", "row", 2, 1, 3);
 

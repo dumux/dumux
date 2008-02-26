@@ -63,16 +63,6 @@ namespace Dune
   class Box2P2CJacobian 
     : public BoxJacobian<Box2P2CJacobian<G,RT,BoxFunction>,G,RT,2,BoxFunction>
   {
-	  // mapper: one data element per vertex
-	  template<int dim>
-	  struct P1Layout
-	  {
-		  bool contains (Dune::GeometryType gt)
-		  {
-			  return gt.dim() == 0;
-		  }
-	  }; 
-
     typedef typename G::ctype DT;
     typedef typename G::Traits::template Codim<0>::Entity Entity;
     typedef typename Entity::Geometry Geometry;
@@ -144,7 +134,7 @@ namespace Dune
 		  for (int comp = 0; comp < m; comp++) {
 	          // calculate FE gradient
 	          FieldVector<RT, n> pGrad(0);
-	          for (int k = 0; k < fvGeom.nodes; k++) {
+	          for (int k = 0; k < fvGeom.nNodes; k++) {
 	        	  FieldVector<DT,n> grad(fvGeom.subContVolFace[face].grad[k]);
 	        	  grad *= (comp) ? varNData[k].pN : sol[k][pWIdx];
 	        	  pGrad += grad;
@@ -246,7 +236,7 @@ namespace Dune
     // analog to EvalPrimaryData in MUFTE, uses members of varNData
     virtual void updateVariableData (const Entity& e, const FVElementGeometry& fvGeom, const VBlockType* sol)
     {
-   	 varNData.resize(fvGeom.nodes);
+   	 varNData.resize(fvGeom.nNodes);
    	 int size = varNData.size();
 
    	 for (int i = 0; i < size; i++) {

@@ -39,6 +39,8 @@
 #include <dune/disc/groundwater/p1groundwaterestimator.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/paamg/amg.hh>
+#include "dumux/pardiso/pardiso.hh"
+#include "dumux/pardiso/identity.hh"
 #include "dumux/nonlinear/newtonmethod.hh"
 #include "dumux/twophase/twophasemodel.hh"
 #include "dumux/twophase/twophaseproblem.hh"
@@ -49,14 +51,14 @@ namespace Dune
   template<class G, class RT>
   class BoxPwSn 
   : public LeafP1TwoPhaseModel<G, RT, TwoPhaseProblem<G, RT>, 
-                                 BoxPwSnLocalJacobian<G, RT> >
+                                 BoxPwSnJacobian<G, RT> >
   {
   public:
 	// define the problem type (also change the template argument above)
 	typedef TwoPhaseProblem<G, RT> ProblemType;
 	
 	// define the local Jacobian (also change the template argument above)
-	typedef BoxPwSnLocalJacobian<G, RT> LocalJacobian;
+	typedef BoxPwSnJacobian<G, RT> LocalJacobian;
 	
 	typedef LeafP1TwoPhaseModel<G, RT, ProblemType, LocalJacobian> LeafP1TwoPhaseModel;
 
@@ -74,8 +76,13 @@ namespace Dune
 		
 		Operator op(*(this->A));  // make operator out of matrix
 		double red=1E-8;
-		SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A),1.0);// a precondtioner
-		BiCGSTABSolver<VectorType> solver(op,ilu0,red,10000,1);         // an inverse operator 
+
+
+		SeqPardiso<MatrixType,VectorType,VectorType> ilu0(*(this->A));
+		//LoopSolver<VectorType> solver(op, ilu0, red, 10, 2);
+		//SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A),1.0);// a precondtioner
+		//SeqIdentity<MatrixType,VectorType,VectorType> ilu0(*(this->A));// a precondtioner
+		BiCGSTABSolver<VectorType> solver(op,ilu0,red,10000,2);         // an inverse operator 
 		InverseOperatorResult r;
 		solver.apply(*(this->u), *(this->f), r);
 		

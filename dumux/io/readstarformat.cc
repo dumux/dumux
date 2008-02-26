@@ -63,10 +63,15 @@ void readStarFormat(Dune::UGGrid<dim>& grid, const std::string& fileName, bool v
 		numberOfVertices++;
 		
 		Dune::FieldVector<double,dim> position;
+
+		char buffer[301];
+		vertexFile.get(buffer, 300, '\n');
+		std::string str(buffer);
+		std::istringstream iStream(str);
 		
 		for (int k = 0; k < dim; k++)
-			vertexFile >> position[k];
-		
+			iStream >> position[k];
+
 		grid.insertVertex(position);
 	}
 	if (verbose)

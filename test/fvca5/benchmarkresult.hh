@@ -26,6 +26,7 @@ struct BenchmarkResult
 {
 	double relativeL2Error;
 	double ergrad;
+	double ervell2;
 	double uMin; 
 	double uMax;
 	double flux0;
@@ -114,6 +115,8 @@ struct BenchmarkResult
 	    double denominator = 0;
 	    double numeratorGrad = 0; 
 	    double denominatorGrad = 0;
+	    double numeratorFlux = 0; 
+	    double denominatorFlux = 0;
 	    for (Iterator it = indexset.template begin<0,All_Partition>(); it != eendit; ++it)
 	      {
 	    	// get entity 
@@ -206,6 +209,9 @@ struct BenchmarkResult
 				// update mean value error 
 				erflm = std::max(erflm, fabs(fluxDiff));
 				
+				numeratorFlux += volume*fluxDiff*fluxDiff;
+				denominatorFlux += volume*exactFlux*exactFlux;
+				
 				// calculate the fluxes through the element faces 
 				exactFlux *= faceVol;
 				approximateFlux *= faceVol;
@@ -277,6 +283,7 @@ struct BenchmarkResult
 	    
 	    relativeL2Error = sqrt(numerator/denominator);
 	    ergrad = sqrt(numeratorGrad/denominatorGrad);
+	    ervell2 = sqrt(numeratorFlux/denominatorFlux);
 	    sumflux = flux0 + flux1 + fluy0 + fluy1 - sumf;
 	    errflx0 = fabs((flux0 + exactflux0)/exactflux0);
 	    errflx1 = fabs((flux1 + exactflux1)/exactflux1);

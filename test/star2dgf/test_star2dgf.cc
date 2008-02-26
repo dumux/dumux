@@ -4,6 +4,8 @@
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/bvector.hh>
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
+#include <dune/grid/io/file/dgfparser/dgfug.hh>
+#include <dune/grid/io/file/dgfparser/dgfalberta.hh>
 #include <dune/grid/io/file/dgfparser/dgfalu.hh>
 
 #include "gridcheck.cc"
@@ -13,7 +15,7 @@
 int main (int argc , char **argv) try
 {
     // define the problem dimensions  
-    const int dim = 2;
+    const int dim = 3;
     typedef double NumberType; 
     //typedef Dune::UGGrid<dim> GridType;
     typedef Dune::ALUSimplexGrid<dim,dim> GridType;
@@ -32,34 +34,48 @@ int main (int argc , char **argv) try
     }
     
     // create grid pointer, GridType is defined by gridtype.hh
-    //Dune::GridPtr<GridType> gridPtr(argv[1]);
+    Dune::GridPtr<GridType> gridPtr(argv[1]);
 
     // grid reference 
-    GridType grid(argv[1]);// = *gridPtr;
+    GridType& grid = *gridPtr;
 
     std::cout << "Starting grid tests ." << std::flush;
-    // check macro grid 
-    gridcheck(grid);
-    std::cout << "." << std::flush;
-
-    // check the intersection iterator
-    checkIntersectionIterator(grid);
-    std::cout << "." << std::flush;
-
-    if (refinementSteps) {
-    	grid.globalRefine(refinementSteps);
-        std::cout << "." << std::flush;
-    	
-    	gridcheck(grid);
-        std::cout << "." << std::flush;
-    	
-    	// check the method geometryInFather()
-    	checkGeometryInFather(grid);
-        std::cout << "." << std::flush;
-    }
+//    // check macro grid 
+//    gridcheck(grid);
+//    std::cout << "." << std::flush;
+//
+//    // check the intersection iterator
+//    checkIntersectionIterator(grid);
+//    std::cout << "." << std::flush;
+//
+//    if (refinementSteps) {
+//    	grid.globalRefine(refinementSteps);
+//        std::cout << "." << std::flush;
+//    	
+//    	gridcheck(grid);
+//        std::cout << "." << std::flush;
+//    	
+//    	// check the method geometryInFather()
+//    	checkGeometryInFather(grid);
+//        std::cout << "." << std::flush;
+//    }
     std::cout << " passed." << std::endl;
 
-    int numberOfVertices = grid.size(dim);
+//	  typedef GridType::Traits::LeafIndexSet IS;
+//	  typedef IS::Codim<dim>::Partition<Dune::All_Partition>::Iterator VertexIterator;
+//	  
+//	  VertexIterator endIt = grid.leafIndexSet().end<dim,Dune::All_Partition>();
+//	  VertexIterator it = grid.leafIndexSet().begin<dim,Dune::All_Partition>();
+//	  for (int k = 0; k < 4 && it != endIt; ++it, k++)
+//	  {
+//		  // get exact solution at vertex
+//		  Dune::FieldVector<double,dim> globalCoord = (*it).geometry()[0];
+//		  
+//		  std::cout << "k = " << k << ", coord = " << globalCoord << std::endl;
+//	  }
+//	  return 1;
+	  
+	int numberOfVertices = grid.size(dim);
     Dune::BlockVector<Dune::FieldVector<NumberType, 1> > indexVector(numberOfVertices);
     for (int i = 0; i < numberOfVertices; i++)
     	indexVector[i] = i;
