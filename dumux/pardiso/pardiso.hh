@@ -66,10 +66,10 @@ namespace Dune {
     	
     	mtype_ = 11;
     	nrhs_ = 1;
-    	num_procs_ = 2;
+    	num_procs_ = 1;
         maxfct_ = 1;	
         mnum_   = 1;         
-        msglvl_ = 1;        
+        msglvl_ = 0;        
         error_  = 0;        
 
 	systemsize_ = A_.rowdim(0);
