@@ -90,7 +90,7 @@ namespace Dune {
     		}
     	}
 		  //std::cout << "rows = " << rows;
-    	std::cout << "dimension = " << n_ << ", number of nonzeros = " << nnz << std::endl;
+    	std::cout << "SeqPardiso: dimension = " << n_ << ", number of nonzeros = " << nnz << std::endl;
     	
     	a_ = new double[nnz];
     	ia_ = new int[n_+1];
@@ -140,8 +140,7 @@ namespace Dune {
         if (error_ != 0) 
         	DUNE_THROW(MathError, "Constructor SeqPardiso: Reordering failed. Error code " << error_);
  
-        std::cout << "Constructor SeqPardiso: Reordering completed. \n" << std::endl; 
-        std::cout << "Number of nonzeros in factors  = " << iparm_[17] << std::endl;
+        std::cout << "  Reordering completed. Number of nonzeros in factors  = " << iparm_[17] << std::endl;
 
         phase = 22; 
         
@@ -152,7 +151,7 @@ namespace Dune {
         if (error_ != 0) 
         	DUNE_THROW(MathError, "Constructor SeqPardiso: Factorization failed. Error code " << error_);
         
-        std::cout << "Constructor SeqPardiso: Factorization completed." << std::endl;
+        std::cout << "  Factorization completed." << std::endl;
         
 #else
         DUNE_THROW(NotImplemented, "no Pardiso library available, reconfigure with correct --with-pardiso options");
@@ -200,7 +199,7 @@ namespace Dune {
         		v[i][comp] = x[i*systemsize_ + comp];
         	
         
-        std::cout << "SeqPardiso: Backsolve completed." << std::endl;
+        //std::cout << "SeqPardiso: Backsolve completed." << std::endl;
 #endif
     }
 

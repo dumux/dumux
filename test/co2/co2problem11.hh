@@ -67,9 +67,8 @@ namespace Dune
 	{
 		FieldVector<BoundaryConditions::Flags, m> values(Dune::BoundaryConditions::neumann); 
 
-	        //if (x[0] < -500+1e-3 || x[0] > 500-1e-3 || x[1] < -500+1e-3 || x[1] > 500-1e-3) 
-		
-			values = Dune::BoundaryConditions::dirichlet;
+	        if (x[0] < -500+1e-3 || x[0] > 500-1e-3 || x[1] < -500+1e-3 || x[1] > 500-1e-3) 
+	        	values = Dune::BoundaryConditions::dirichlet;
 		
 		return values;
 	}
@@ -79,16 +78,8 @@ namespace Dune
 				  const FieldVector<DT,n>& xi) const 
 	{
 		FieldVector<RT,m> values(0);
-
-		
 		values[0] = 1.0/160.0*(p1 - p0)*x[2] + p0; 
-		 
-		
-		
-		 
-		
-		
-		
+
 		return values;
 	}
 	  
@@ -108,10 +99,6 @@ namespace Dune
 	{
 		FieldVector<RT,m> values(0);
 		values[0] = 1.0/160.0*(p1 - p0)*x[2] + p0;
-		//values[1] = 1 - 1.0/600.0*x[0];
-		
-		 
-		
 	
 		return values;
 	}

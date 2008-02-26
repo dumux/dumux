@@ -77,10 +77,12 @@ namespace Dune
 		Operator op(*(this->A));  // make operator out of matrix
 		double red=1E-8;
 
-
+#ifdef HAVE_PARDISO 
 		SeqPardiso<MatrixType,VectorType,VectorType> ilu0(*(this->A));
 		//LoopSolver<VectorType> solver(op, ilu0, red, 10, 2);
-		//SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A),1.0);// a precondtioner
+#else
+		SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A),1.0);// a precondtioner
+#endif
 		//SeqIdentity<MatrixType,VectorType,VectorType> ilu0(*(this->A));// a precondtioner
 		BiCGSTABSolver<VectorType> solver(op,ilu0,red,10000,2);         // an inverse operator 
 		InverseOperatorResult r;
