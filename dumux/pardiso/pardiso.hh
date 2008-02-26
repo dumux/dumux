@@ -128,7 +128,7 @@ namespace Dune {
     	
         F77_FUNC(pardisoinit) (pt_,  &mtype_, iparm_); 
 
-        int phase = 12;
+        int phase = 11;
         int idum;
         double ddum;
         iparm_[2]  = num_procs_;
