@@ -31,7 +31,7 @@ esac
 AC_F77_FUNC(pardisoinit)
 
 acx_pardiso_save_LIBS="$LIBS"
-LIBS="$BLAS_LIBS -llapack -lg2c $LIBS $FLIBS"
+LIBS="$BLAS_LIBS -lg2c $LIBS $FLIBS"
 
 # First, check PARDISO_LIBS environment variable
 if test $acx_pardiso_ok = no; then

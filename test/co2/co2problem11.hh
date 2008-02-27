@@ -47,8 +47,8 @@ namespace Dune
 	virtual const FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x, const Entity& e, 
 					const FieldVector<DT,n>& xi)
 	{
-		if (x[0] > -0.1060660171779821287 && x[0] < 0.1060660171779821287
-				&& x[1] > -0.1060660171779821287 && x[1] < 0.1060660171779821287)
+		if (x[0] > -0.132934 && x[0] < 0.132934
+				&& x[1] > -0.132934 && x[1] < 0.132934)
 			return permlocWell;
 	
 		return permloc;
@@ -91,7 +91,7 @@ namespace Dune
 	{
 		FieldVector<RT,m> values(0);
 		if ((x[0]+100.0)*(x[0]+100.0) + x[1]*x[1] < 0.3 && x[2] < 30.0-1e-3 && x[2] > 1e-3) 
-			values[1] = -0.3484465082847042523;
+			values[1] = -0.27802;
 		
 		return values;
 	}
@@ -115,6 +115,8 @@ namespace Dune
 	virtual FieldVector<RT,n> gravity () const 
 	{
 		FieldVector<RT,n> values(0);
+		
+		values[2] = -9.81;
 		
 		return values;
 	}

@@ -43,9 +43,9 @@ int main(int argc, char** argv)
 
 
     // create a grid object
-    //typedef Dune::SGrid<dim,dim> GridType; 
+    typedef Dune::SGrid<dim,dim> GridType; 
     //typedef Dune::YaspGrid<dim,dim> GridType; 
-    typedef Dune::UGGrid<dim> GridType; 
+    //typedef Dune::UGGrid<dim> GridType; 
 
     // use unitcube from grids 
     std::stringstream dgfFileName;

@@ -69,7 +69,7 @@ int main(int argc, char** argv)
 
 
     
-    Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt, "co2", 1);
+    Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt, "co2", 100);
     
     Dune::Timer timer;
     timer.reset();
