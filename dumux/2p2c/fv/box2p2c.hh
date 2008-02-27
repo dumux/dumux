@@ -75,7 +75,7 @@ namespace Dune
 		Operator op(*(this->A));  // make operator out of matrix
 		double red=1E-8;
 		SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A),1.0);// a precondtioner
-		BiCGSTABSolver<VectorType> solver(op,ilu0,red,100,1);         // an inverse operator 
+		BiCGSTABSolver<VectorType> solver(op,ilu0,red,10000,1);         // an inverse operator 
 		InverseOperatorResult r;
 		solver.apply(*(this->u), *(this->f), r);
 		

@@ -75,10 +75,10 @@ namespace Dune
 	enum {water = 0, air = 1};										// Component index					
 	
   public:
-    // define the number of components of your system, this is used outside
+    // define the number of phases (m) and components (c) of your system, this is used outside
     // to allocate the correct size of (dense) blocks with a FieldMatrix
     enum {n=G::dimension};
-    enum {m=2};
+    enum {m=2, c=2}; 
     enum {SIZE=LagrangeShapeFunctionSetContainer<DT,RT,n>::maxsize};
     
     //! Constructor
@@ -102,78 +102,120 @@ namespace Dune
     	return;
     }
 
-    virtual VBlockType computeM (const Entity& e, const FVElementGeometry& fvGeom, const VBlockType* sol, int node)
+    // Compute time dependent terms
+    // ACHTUNG varNData always contains values from the NEW timestep
+    virtual VBlockType computeM (const Entity& e, const VBlockType* sol, int node)
     {
    	 VBlockType result; 
    	 
+   	 RT satN = sol[node][satNIdx];
+   	 RT satW = 1.0 - satN;  
    	 
-//   	 result[0] = -elData.porosity*(varNData[node].density[pWIdx]*sol[node][satNIdx]*varNData[node].massfrac[water][pWIdx]
-//                   + varNData[node].density[satNIdx]*sol[node][satNIdx]*varNData[node].massfrac[water][satNIdx]);
-   	 result[0] = -varNData[node].density[pWIdx]*elData.porosity*sol[node][satNIdx];
-   	 result[1] = varNData[node].density[satNIdx]*elData.porosity*sol[node][satNIdx];
+   	                  
+   	 // Water Phase
+   	 result[0] = elData.porosity*(varNData[node].density[pWIdx]*satW*varNData[node].massfrac[water][pWIdx]
+                   + varNData[node].density[satNIdx]*satN*varNData[node].massfrac[water][satNIdx]);
+   	 // Gas Phase
+   	 result[1] = elData.porosity*(varNData[node].density[satNIdx]*satN*varNData[node].massfrac[air][satNIdx]
+   	             + varNData[node].density[pWIdx]*satW*varNData[node].massfrac[air][pWIdx]);   
    	 
+   	 //std::cout << result << std::endl;
    	 return result;
     };
     
-    virtual VBlockType computeQ (const Entity& e, const FVElementGeometry& fvGeom, const VBlockType* sol, const int& node)
-    {
-   	 // ASSUME problem.q already contains \rho.q
-   	 return problem.q(fvGeom.subContVol[node].global, e, fvGeom.subContVol[node].local);
-    };
-    
-    virtual VBlockType computeA (const Entity& e, const FVElementGeometry& fvGeom, const VBlockType* sol, int face)
-    {
-   	 int i = fvGeom.subContVolFace[face].i;
-     	 int j = fvGeom.subContVolFace[face].j;
-     	 
-		  // permeability in edge direction 
-		  FieldVector<DT,n> Kij(0);
-		  elData.K.umv(fvGeom.subContVolFace[face].normal, Kij);
-		  
-		  VBlockType flux;
-		  for (int comp = 0; comp < m; comp++) {
-	          // calculate FE gradient
-	          FieldVector<RT, n> pGrad(0);
-	          for (int k = 0; k < fvGeom.nNodes; k++) {
-	        	  FieldVector<DT,n> grad(fvGeom.subContVolFace[face].grad[k]);
-	        	  grad *= (comp) ? varNData[k].pN : sol[k][pWIdx];
-	        	  pGrad += grad;
-	          }
+    // Compute the Fluxes
+    virtual VBlockType computeA (const Entity& e, const VBlockType* sol, int face)
+   {
+   	 int i = this->fvGeom.subContVolFace[face].i;
+     	 int j = this->fvGeom.subContVolFace[face].j;
+   	 
+		 // permeability in edge direction 
+		 FieldVector<DT,n> Kij(0);
+		 elData.K.umv(this->fvGeom.subContVolFace[face].normal, Kij);  // K*n
+		 
+		 VBlockType flux;
+		 FieldMatrix<RT,m,n> pGrad(0); 
+		 FieldVector<RT,n> temp(0);
+		 // calculate FE gradient (grad p for each phase)
+		 for (int k = 0; k < this->fvGeom.nNodes; k++) // loop over nodes
+       {	 
+      	 FieldVector<DT,n> grad(this->fvGeom.subContVolFace[face].grad[k]); // receives the FEGradient at node k
+      	 FieldVector<DT,m> pressure(0);
+      	 pressure[pWIdx] = sol[k][pWIdx];
+      	 pressure[satNIdx] = varNData[k].pN;
 
-	          // adjust by gravity 
-			  FieldVector<RT, n> gravity = problem.gravity();
-			  gravity *= varNData[i].density[comp];
-			  pGrad -= gravity;
-			  
-			  // calculate the flux using upwind
-			  RT outward = pGrad*Kij;
-			  if (outward < 0)
-				  flux[comp] = varNData[i].density[comp]*varNData[i].mobility[comp]*outward;
-			  else 
-				  flux[comp] = varNData[j].density[comp]*varNData[j].mobility[comp]*outward;
-		  }
-		  
-		  return flux;
+      	 // compute sum of pressure gradients for each phase
+      	 for (int d = 0; d < m; d++)
+      	 {	      		 
+      		 temp = grad;
+      		 temp *= pressure[d];
+      		 pGrad[d] += temp;
+      	 }
+       }
+
+       // deduce gravity*density of each phase
+		 FieldMatrix<RT,m,n> contribComp(0);
+		 for (int d=0; d<m; d++)
+		 {
+			 contribComp[d] = problem.gravity();
+			 contribComp[d] *= varNData[i].density[d];  
+			 pGrad[d] -= contribComp[d]; // grad p -rho*g
+		 }
+	 	 
+		 // calculate the flux using upwind
+		 FieldVector<RT,m> outward(0);  // Darcy velocity of each phase
+		 FieldVector<RT,4> massfraction;
+		 massfraction[0] = varNData[i].massfrac[water][pWIdx];
+		 massfraction[1] = varNData[i].massfrac[water][satNIdx];
+		 massfraction[2] = varNData[i].massfrac[air][pWIdx];
+		 massfraction[3] = varNData[i].massfrac[air][satNIdx];
+
+		 for (int d=0; d<m; d++)
+		 {
+			 outward[d] = pGrad[d]*Kij;  //K*n(grad p -rho*g)  
+
+			 if (outward[d] < 0)
+			 {
+		  			temp[d] = varNData[i].density[d]*varNData[i].mobility[d]*outward[d];
+			 }
+			 else
+			 { 
+		  			temp[d] = varNData[j].density[d]*varNData[j].mobility[d]*outward[d];
+			 }
+		 }
+		 // water conservation
+		 flux[water] = massfraction[pWIdx]*temp[pWIdx]+massfraction[satNIdx]*temp[satNIdx];
+		 // air conservation
+		 flux[air] = massfraction[pWIdx+c]*temp[pWIdx]+massfraction[satNIdx+c]*temp[satNIdx];
+
+		 return flux;
+  };
+
+   // Integrate sources / sinks
+   virtual VBlockType computeQ (const Entity& e, const VBlockType* sol, const int& node)
+   {
+  	 // ASSUME problem.q already contains \rho.q
+  	 return problem.q(this->fvGeom.subContVol[node].global, e, this->fvGeom.subContVol[node].local);
    };
-
-    
+       
     
 	  //*********************************************************
 	  //*																			*
-	  //*	Calculation of Data at Elements			 					*
+	  //*	Calculation of Data at Elements (elData) 					*
 	  //*						 													*
 	  //*																		 	*
 	  //*********************************************************
 
-    virtual void computeElementData (const Entity& e, const FVElementGeometry& fvGeom)
+    virtual void computeElementData (const Entity& e)
     {
   		 // ASSUME element-wise constant parameters for the material law 
- 		 elData.parameters = problem.materialLawParameters(fvGeom.cellGlobal, e, fvGeom.cellLocal);
+ 		 elData.parameters = problem.materialLawParameters(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
    	 
 		 // ASSUMING element-wise constant permeability, evaluate K at the cell center 
- 		 elData.K = problem.K(fvGeom.cellGlobal, e, fvGeom.cellLocal);  
+ 		 elData.K = problem.K(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);  
 
- 		 elData.porosity = problem.porosity(fvGeom.cellGlobal, e, fvGeom.cellLocal);
+		 // ASSUMING element-wise constant porosity 
+ 		 elData.porosity = problem.porosity(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
     };
 
     
@@ -185,7 +227,7 @@ namespace Dune
 	  //*********************************************************
 
     // analog to EvalStaticData in MUFTE
-    virtual void updateStaticData (const Entity& e, const FVElementGeometry& fvGeom, const VBlockType* sol)
+    virtual void updateStaticData (const Entity& e, const VBlockType* sol)
     {
   	  // local to global id mapping (do not ask vertex mapper repeatedly
   	  //int localToGlobal[Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::maxsize];
@@ -234,9 +276,9 @@ namespace Dune
    
 
     // analog to EvalPrimaryData in MUFTE, uses members of varNData
-    virtual void updateVariableData (const Entity& e, const FVElementGeometry& fvGeom, const VBlockType* sol)
+    virtual void updateVariableData (const Entity& e, const VBlockType* sol)
     {
-   	 varNData.resize(fvGeom.nNodes);
+   	 varNData.resize(this->fvGeom.nNodes);
    	 int size = varNData.size();
 
    	 for (int i = 0; i < size; i++) {
@@ -250,10 +292,10 @@ namespace Dune
          varNData[i].density[pWIdx] = problem.materialLaw().wettingPhase.density();
          varNData[i].density[satNIdx] = problem.materialLaw().nonwettingPhase.density();
          // Solubilities
-         varNData[i].massfrac[water][pWIdx] = 1;	//problem.materialLaw().water.solubility();
-         varNData[i].massfrac[air][pWIdx] = 	1 - varNData[i].massfrac[water][pWIdx];
-         varNData[i].massfrac[satNIdx][water] = 1;	//problem.materialLaw().air.solubility();
-         varNData[i].massfrac[satNIdx][air] = 1 - varNData[i].massfrac[satNIdx][water];
+         varNData[i].massfrac[water][pWIdx] = 1.0;	//problem.materialLaw().water.solubility();
+         varNData[i].massfrac[air][pWIdx] = 	1.0 - varNData[i].massfrac[water][pWIdx];
+         varNData[i].massfrac[water][satNIdx] = 0.0;	//problem.materialLaw().air.solubility();
+         varNData[i].massfrac[air][satNIdx] = 1.0 - varNData[i].massfrac[water][satNIdx];
    	 }   	 
     }
     
