@@ -197,6 +197,14 @@ namespace Dune
       updateStaticData(e, u);
     	
     	localDefect<TypeTag>(e, u);
+  	  // assemble boundary conditions 
+  	  assembleBC<TypeTag> (e); 
+  	  
+  	  // add to defect 
+  	  for (int i=0; i < this->fvGeom.nNodes; i++) {
+  		  this->def[i] += this->b[i];
+  		  //std::cout << "i = " << ", b[i] = " << this->b[i] << std::endl;
+  	  }
 
     	VBlockType bTemp[size];
     	for (int i=0; i<size; i++) 

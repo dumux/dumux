@@ -12,7 +12,6 @@
 #include <dune/common/timer.hh>
 #include "dumux/twophase/problems/lensproblem.hh"
 #include "dumux/twophase/problems/uniformtwophaseproblem.hh"
-#include "dumux/twophase/fv/boxpwsnold.hh"
 #include "dumux/twophase/fv/boxpwsn.hh"
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/material/vangenuchtenlaw.hh"

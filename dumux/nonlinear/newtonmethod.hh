@@ -23,6 +23,7 @@ namespace Dune {
 				localJacobian.clearVisited();
 				A.assemble(localJacobian, u, f);
 				//printmatrix(std::cout, *A, "global stiffness matrix", "row", 11, 3);
+				std::cout << "matrix norm: " << (*A).infinity_norm() << std::endl;
 				//printvector(std::cout, *f, "right hand side", "row", 200, 1, 3);
 				model.solve();
 				error = oneByMagnitude*((*u).two_norm());

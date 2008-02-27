@@ -47,7 +47,8 @@ namespace Dune
 	virtual const FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x, const Entity& e, 
 					const FieldVector<DT,n>& xi)
 	{
-		if (x[0]*x[0] + x[1]*x[1] < 0.15*0.15)
+		if (x[0] > -0.1060660171779821287 && x[0] < 0.1060660171779821287
+				&& x[1] > -0.1060660171779821287 && x[1] < 0.1060660171779821287)
 			return permlocWell;
 	
 		return permloc;
@@ -78,7 +79,8 @@ namespace Dune
 				  const FieldVector<DT,n>& xi) const 
 	{
 		FieldVector<RT,m> values(0);
-		values[0] = 1.0/160.0*(p1 - p0)*x[2] + p0; 
+		values[0] = p0 - 1045.0*9.81*x[2]; 
+		values[1] = 0.0;
 
 		return values;
 	}
@@ -89,7 +91,7 @@ namespace Dune
 	{
 		FieldVector<RT,m> values(0);
 		if ((x[0]+100.0)*(x[0]+100.0) + x[1]*x[1] < 0.3 && x[2] < 30.0-1e-3 && x[2] > 1e-3) 
-			values[1] = 0.0;
+			values[1] = -0.3484465082847042523;
 		
 		return values;
 	}
@@ -98,7 +100,8 @@ namespace Dune
 				  const FieldVector<DT,n>& xi) const 
 	{
 		FieldVector<RT,m> values(0);
-		values[0] = 1.0/160.0*(p1 - p0)*x[2] + p0;
+		values[0] = p0 - 1045.0*9.81*x[2];
+		values[1] = 0.0;
 	
 		return values;
 	}
@@ -124,10 +127,9 @@ namespace Dune
 		return values;
 	}
 
-	CO2Problem11(TwoPhaseRelations& law = *(new LinearLaw), RT pupp = 2.923e7, RT pdown = 3.086e7) 
+	CO2Problem11(TwoPhaseRelations& law = *(new LinearLaw), RT pdown = 3.086e7) 
 	: TwoPhaseProblem<G, RT>(law) 
 	{	
-		p1 = pupp;
 		p0 = pdown;
 		permloc = 0; 
 		permlocWell = 0;
@@ -143,7 +145,6 @@ namespace Dune
 	private:
 		Dune::FieldMatrix<DT,n,n> permloc;
 		Dune::FieldMatrix<DT,n,n> permlocWell;
-		RT p1;
 		RT p0;
   };
 

@@ -61,7 +61,7 @@ int main(int argc, char** argv)
     Brine brine;
     CO2 co2;
     Dune::LinearLaw law(brine, co2);
-    Dune::CO2Problem11<GridType, NumberType> problem(law, 2.923e7, 3.086e7); 
+    Dune::CO2Problem11<GridType, NumberType> problem(law, 3.086e7); 
     		
 
     typedef Dune::BoxPwSn<GridType, NumberType> TwoPhase;
@@ -76,6 +76,8 @@ int main(int argc, char** argv)
     timeloop.execute(twoPhase);
     std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
      
+	std::cout << twoPhase.injected() << " kg CO2 injected." << std::endl;
+
     return 0;
   }
   catch (Dune::Exception &e){

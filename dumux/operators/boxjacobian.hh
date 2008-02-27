@@ -141,14 +141,14 @@ namespace Dune
 		  //std::cout << "i = " << i << ", j = " << j << ", flux = " << flux << std::endl;
 	  } // end loop over edges / sub control volume faces
 	  
-	  // assemble boundary conditions 
-	  assembleBC<TypeTag> (e); 
-	  
-	  // add to defect 
-	  for (int i=0; i < this->fvGeom.nNodes; i++) {
-		  this->def[i] += this->b[i];
-		  //std::cout << "i = " << ", b[i] = " << this->b[i] << std::endl;
-	  }
+//	  // assemble boundary conditions 
+//	  assembleBC<TypeTag> (e); 
+//	  
+//	  // add to defect 
+//	  for (int i=0; i < this->fvGeom.nNodes; i++) {
+//		  this->def[i] += this->b[i];
+//		  //std::cout << "i = " << ", b[i] = " << this->b[i] << std::endl;
+//	  }
 		//std::cout << std::endl;
 
       return;

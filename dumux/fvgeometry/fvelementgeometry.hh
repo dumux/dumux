@@ -283,72 +283,72 @@ public:
        	} 
  		 
        	// fill sub control volume data:
-//       	switch (nEdges) {
-//       	case 1: // 1D
-//       		subContVol[0].volume = 0.5*cellVolume;
-//       		break;
-//       	case 3: // 2D, triangle 
-//       		subContVol[0].volume = quadrilateralArea(subContVol[0].global, edgeCoord[2], cellGlobal, edgeCoord[1]);
-//       		subContVol[1].volume = quadrilateralArea(subContVol[1].global, edgeCoord[0], cellGlobal, edgeCoord[2]);
-//       		subContVol[2].volume = quadrilateralArea(subContVol[2].global, edgeCoord[1], cellGlobal, edgeCoord[0]);
-//       		break;
-//       	case 4: // 2D, quadrilateral
+       	switch (nEdges) {
+       	case 1: // 1D
+       		subContVol[0].volume = 0.5*cellVolume;
+       		break;
+       	case 3: // 2D, triangle 
+       		subContVol[0].volume = quadrilateralArea(subContVol[0].global, edgeCoord[2], cellGlobal, edgeCoord[1]);
+       		subContVol[1].volume = quadrilateralArea(subContVol[1].global, edgeCoord[0], cellGlobal, edgeCoord[2]);
+       		subContVol[2].volume = quadrilateralArea(subContVol[2].global, edgeCoord[1], cellGlobal, edgeCoord[0]);
+       		break;
+       	case 4: // 2D, quadrilateral
        		subContVol[0].volume = quadrilateralArea(subContVol[0].global, edgeCoord[2], cellGlobal, edgeCoord[0]);
        		subContVol[1].volume = quadrilateralArea(subContVol[1].global, edgeCoord[1], cellGlobal, edgeCoord[2]);
        		subContVol[2].volume = quadrilateralArea(subContVol[2].global, edgeCoord[0], cellGlobal, edgeCoord[3]);
        		subContVol[3].volume = quadrilateralArea(subContVol[3].global, edgeCoord[3], cellGlobal, edgeCoord[1]);
-//       		break;
-//       	case 6: // 3D, tetrahedron
-//       		for (int k = 0; k < nNodes; k++)
-//       			subContVol[k].volume = 0.25*cellVolume;
-//       		break;
-//       	case 8: // 3D, pyramid
-//       		subContVol[0].volume = hexahedronVolume(subContVol[0].global, edgeCoord[0], faceCoord[0], edgeCoord[3], 
-//       												edgeCoord[4], faceCoord[1], cellGlobal, faceCoord[4]);
-//       		subContVol[1].volume = hexahedronVolume(subContVol[1].global, edgeCoord[1], faceCoord[0], edgeCoord[0], 
-//       												edgeCoord[5], faceCoord[2], cellGlobal, faceCoord[1]);
-//      		subContVol[2].volume = hexahedronVolume(subContVol[2].global, edgeCoord[2], faceCoord[0], edgeCoord[1], 
-//       												edgeCoord[6], faceCoord[3], cellGlobal, faceCoord[2]);
-//      		subContVol[3].volume = hexahedronVolume(subContVol[3].global, edgeCoord[3], faceCoord[0], edgeCoord[2], 
-//       												edgeCoord[7], faceCoord[4], cellGlobal, faceCoord[3]);
-//      		subContVol[4].volume = cellVolume - subContVol[0].volume - subContVol[1].volume 
-//      								- subContVol[2].volume - subContVol[3].volume;
-//       		break;
-//      	case 9: // 3D, prism
-//       		subContVol[0].volume = hexahedronVolume(subContVol[0].global, edgeCoord[0], faceCoord[0], edgeCoord[2], 
-//       												edgeCoord[3], faceCoord[1], cellGlobal, faceCoord[3]);
-//       		subContVol[1].volume = hexahedronVolume(subContVol[1].global, edgeCoord[1], faceCoord[0], edgeCoord[0], 
-//       												edgeCoord[4], faceCoord[2], cellGlobal, faceCoord[1]);
-//       		subContVol[2].volume = hexahedronVolume(subContVol[2].global, edgeCoord[2], faceCoord[0], edgeCoord[1], 
-//       												edgeCoord[5], faceCoord[3], cellGlobal, faceCoord[2]);
-//       		subContVol[3].volume = hexahedronVolume(edgeCoord[3], faceCoord[1], cellGlobal, faceCoord[3], subContVol[3].global, 
-//       												edgeCoord[6], faceCoord[4], edgeCoord[8]);
-//       		subContVol[4].volume = hexahedronVolume(edgeCoord[4], faceCoord[2], cellGlobal, faceCoord[1], subContVol[4].global, 
-//       												edgeCoord[7], faceCoord[4], edgeCoord[6]);
-//       		subContVol[5].volume = hexahedronVolume(edgeCoord[5], faceCoord[3], cellGlobal, faceCoord[2], subContVol[5].global, 
-//       												edgeCoord[8], faceCoord[4], edgeCoord[7]);
-//       		break;
-//       	case 12: // 3D, hexahedron
-//       		subContVol[0].volume = hexahedronVolume(subContVol[0].global, edgeCoord[8], faceCoord[4], edgeCoord[4], 
-//       												edgeCoord[0], faceCoord[2], cellGlobal, faceCoord[0]);
-//       		subContVol[1].volume = hexahedronVolume(subContVol[1].global, edgeCoord[5], faceCoord[4], edgeCoord[8], 
-//       												edgeCoord[1], faceCoord[1], cellGlobal, faceCoord[2]);
-//       		subContVol[2].volume = hexahedronVolume(subContVol[2].global, edgeCoord[4], faceCoord[4], edgeCoord[9], 
-//       												edgeCoord[2], faceCoord[0], cellGlobal, faceCoord[3]);
-//       		subContVol[3].volume = hexahedronVolume(subContVol[3].global, edgeCoord[9], faceCoord[4], edgeCoord[5], 
-//       												edgeCoord[3], faceCoord[3], cellGlobal, faceCoord[1]);
-//       		subContVol[4].volume = hexahedronVolume(edgeCoord[0], faceCoord[2], cellGlobal, faceCoord[0], 
-//       												subContVol[4].global, edgeCoord[10], faceCoord[5], edgeCoord[6]);
-//       		subContVol[5].volume = hexahedronVolume(edgeCoord[1], faceCoord[1], cellGlobal, faceCoord[2], 
-//       												subContVol[5].global, edgeCoord[7], faceCoord[5], edgeCoord[10]);
-//       		subContVol[6].volume = hexahedronVolume(edgeCoord[2], faceCoord[0], cellGlobal, faceCoord[3], 
-//       												subContVol[6].global, edgeCoord[6], faceCoord[5], edgeCoord[11]);
-//       		subContVol[7].volume = hexahedronVolume(edgeCoord[3], faceCoord[3], cellGlobal, faceCoord[1], 
-//       												subContVol[7].global, edgeCoord[11], faceCoord[5], edgeCoord[7]);
-//       		break;
-//       	default:
-//       		DUNE_THROW(NotImplemented, "FVElementGeometry for nEdges = " << nEdges);
-//       	}
+       		break;
+       	case 6: // 3D, tetrahedron
+       		for (int k = 0; k < nNodes; k++)
+       			subContVol[k].volume = 0.25*cellVolume;
+       		break;
+       	case 8: // 3D, pyramid
+       		subContVol[0].volume = hexahedronVolume(subContVol[0].global, edgeCoord[0], faceCoord[0], edgeCoord[3], 
+       												edgeCoord[4], faceCoord[1], cellGlobal, faceCoord[4]);
+       		subContVol[1].volume = hexahedronVolume(subContVol[1].global, edgeCoord[1], faceCoord[0], edgeCoord[0], 
+       												edgeCoord[5], faceCoord[2], cellGlobal, faceCoord[1]);
+      		subContVol[2].volume = hexahedronVolume(subContVol[2].global, edgeCoord[2], faceCoord[0], edgeCoord[1], 
+       												edgeCoord[6], faceCoord[3], cellGlobal, faceCoord[2]);
+      		subContVol[3].volume = hexahedronVolume(subContVol[3].global, edgeCoord[3], faceCoord[0], edgeCoord[2], 
+       												edgeCoord[7], faceCoord[4], cellGlobal, faceCoord[3]);
+      		subContVol[4].volume = cellVolume - subContVol[0].volume - subContVol[1].volume 
+      								- subContVol[2].volume - subContVol[3].volume;
+       		break;
+      	case 9: // 3D, prism
+       		subContVol[0].volume = hexahedronVolume(subContVol[0].global, edgeCoord[0], faceCoord[0], edgeCoord[2], 
+       												edgeCoord[3], faceCoord[1], cellGlobal, faceCoord[3]);
+       		subContVol[1].volume = hexahedronVolume(subContVol[1].global, edgeCoord[1], faceCoord[0], edgeCoord[0], 
+       												edgeCoord[4], faceCoord[2], cellGlobal, faceCoord[1]);
+       		subContVol[2].volume = hexahedronVolume(subContVol[2].global, edgeCoord[2], faceCoord[0], edgeCoord[1], 
+       												edgeCoord[5], faceCoord[3], cellGlobal, faceCoord[2]);
+       		subContVol[3].volume = hexahedronVolume(edgeCoord[3], faceCoord[1], cellGlobal, faceCoord[3], subContVol[3].global, 
+       												edgeCoord[6], faceCoord[4], edgeCoord[8]);
+       		subContVol[4].volume = hexahedronVolume(edgeCoord[4], faceCoord[2], cellGlobal, faceCoord[1], subContVol[4].global, 
+       												edgeCoord[7], faceCoord[4], edgeCoord[6]);
+       		subContVol[5].volume = hexahedronVolume(edgeCoord[5], faceCoord[3], cellGlobal, faceCoord[2], subContVol[5].global, 
+       												edgeCoord[8], faceCoord[4], edgeCoord[7]);
+       		break;
+       	case 12: // 3D, hexahedron
+       		subContVol[0].volume = hexahedronVolume(subContVol[0].global, edgeCoord[8], faceCoord[4], edgeCoord[4], 
+       												edgeCoord[0], faceCoord[2], cellGlobal, faceCoord[0]);
+       		subContVol[1].volume = hexahedronVolume(subContVol[1].global, edgeCoord[5], faceCoord[4], edgeCoord[8], 
+       												edgeCoord[1], faceCoord[1], cellGlobal, faceCoord[2]);
+       		subContVol[2].volume = hexahedronVolume(subContVol[2].global, edgeCoord[4], faceCoord[4], edgeCoord[9], 
+       												edgeCoord[2], faceCoord[0], cellGlobal, faceCoord[3]);
+       		subContVol[3].volume = hexahedronVolume(subContVol[3].global, edgeCoord[9], faceCoord[4], edgeCoord[5], 
+       												edgeCoord[3], faceCoord[3], cellGlobal, faceCoord[1]);
+       		subContVol[4].volume = hexahedronVolume(edgeCoord[0], faceCoord[2], cellGlobal, faceCoord[0], 
+       												subContVol[4].global, edgeCoord[10], faceCoord[5], edgeCoord[6]);
+       		subContVol[5].volume = hexahedronVolume(edgeCoord[1], faceCoord[1], cellGlobal, faceCoord[2], 
+       												subContVol[5].global, edgeCoord[7], faceCoord[5], edgeCoord[10]);
+       		subContVol[6].volume = hexahedronVolume(edgeCoord[2], faceCoord[0], cellGlobal, faceCoord[3], 
+       												subContVol[6].global, edgeCoord[6], faceCoord[5], edgeCoord[11]);
+       		subContVol[7].volume = hexahedronVolume(edgeCoord[3], faceCoord[3], cellGlobal, faceCoord[1], 
+       												subContVol[7].global, edgeCoord[11], faceCoord[5], edgeCoord[7]);
+       		break;
+       	default:
+       		DUNE_THROW(NotImplemented, "FVElementGeometry for nEdges = " << nEdges);
+       	}
        	
 //       	for (int k = 0; k < nNodes; k++)
 //       		std::cout << "node " << k << ", volume = " << subContVol[k].volume 
@@ -366,32 +366,32 @@ public:
  			 // calculate the local integration point and the face normal
  			 FV ipLocal;
  			 FV diffVec;
-// 			 switch (dim) {
-//			  case 1:
-//				  subContVolFace[k].ipLocal = 0.5;
-//				  subContVolFace[k].normal = 1.0;
-//				  break;
-//			  case 2:
+ 			 switch (dim) {
+			  case 1:
+				  subContVolFace[k].ipLocal = 0.5;
+				  subContVolFace[k].normal = 1.0;
+				  break;
+			  case 2:
 				  ipLocal = referenceElement.position(k, dim-1) + cellLocal;
 				  ipLocal *= 0.5;
 				  subContVolFace[k].ipLocal = ipLocal;
 				  diffVec = cellGlobal - edgeCoord[k];
 				  subContVolFace[k].normal[0] = diffVec[1];
 				  subContVolFace[k].normal[1] = -diffVec[0];
-//				  break;
-//			  case 3: 
-//				  int leftFace; 
-//				  int rightFace; 
-//				  getFaceIndices(nNodes, k, leftFace, rightFace);
-//				  ipLocal = referenceElement.position(k, dim-1) + cellLocal 
-//				  				+ referenceElement.position(leftFace, 1)
-//				  				+ referenceElement.position(rightFace, 1);
-//				  ipLocal *= 0.25;
-//				  subContVolFace[k].ipLocal = ipLocal;
-//				  subContVolFace[k].normal = normalOfQuadrilateral3D(edgeCoord[k], faceCoord[rightFace], 
-//						  											cellGlobal, faceCoord[leftFace]);
-//				  break;
-//			  }
+				  break;
+			  case 3: 
+				  int leftFace; 
+				  int rightFace; 
+				  getFaceIndices(nNodes, k, leftFace, rightFace);
+				  ipLocal = referenceElement.position(k, dim-1) + cellLocal 
+				  				+ referenceElement.position(leftFace, 1)
+				  				+ referenceElement.position(rightFace, 1);
+				  ipLocal *= 0.25;
+				  subContVolFace[k].ipLocal = ipLocal;
+				  subContVolFace[k].normal = normalOfQuadrilateral3D(edgeCoord[k], faceCoord[rightFace], 
+						  											cellGlobal, faceCoord[leftFace]);
+				  break;
+			  }
 
  			 // get the global integration point and the Jacobian inverse
  			 subContVolFace[k].ipGlobal = geometry.global(ipLocal);
@@ -423,34 +423,33 @@ public:
        			{
        				int nodeInElement = referenceElement.subEntity(face, 1, nodeInFace, dim);
         			int bfIndex = boundaryFaceIndex(face, nodeInFace);
-//           			switch (dim) {
-//           			case 1: 
-//           				boundaryFace[bfIndex].ipLocal = referenceElement.position(nodeInElement, dim);
-//           				boundaryFace[bfIndex].area = 1.0;
-//           				break;
-//           			case 2: 
+           			switch (dim) {
+           			case 1: 
+           				boundaryFace[bfIndex].ipLocal = referenceElement.position(nodeInElement, dim);
+           				boundaryFace[bfIndex].area = 1.0;
+           				break;
+           			case 2: 
            				boundaryFace[bfIndex].ipLocal = referenceElement.position(nodeInElement, dim) 
            							+ referenceElement.position(face, 1);
            				boundaryFace[bfIndex].ipLocal *= 0.5;
            				//! \todo should be 0.5 instead of 0.25
            				boundaryFace[bfIndex].area = 0.25*it.intersectionGlobal().volume(); 
-//           				break;
-//           			case 3:
-//           				int leftEdge;
-//           				int rightEdge;
-//           				getEdgeIndices(nNodes, face, nodeInElement, leftEdge, rightEdge);
-//           				boundaryFace[bfIndex].ipLocal = referenceElement.position(nodeInElement, dim) 
-//           												+ referenceElement.position(face, 1) 
-//           												+ referenceElement.position(leftEdge, dim-1)
-//           												+ referenceElement.position(rightEdge, dim-1);
-//           				boundaryFace[bfIndex].ipLocal *= 0.25;
-//           				//! \todo should be 1.0 instead of 0.5
-//           				boundaryFace[bfIndex].area = 0.5*quadrilateralArea3D(subContVol[nodeInElement].global, 
-//           												edgeCoord[rightEdge], faceCoord[face], edgeCoord[leftEdge]);
-//           				break;
-//           	       	default:
-//           	       		DUNE_THROW(NotImplemented, "FVElementGeometry for dim = " << dim);
-//           			}       				
+           				break;
+           			case 3:
+           				int leftEdge;
+           				int rightEdge;
+           				getEdgeIndices(nNodes, face, nodeInElement, leftEdge, rightEdge);
+           				boundaryFace[bfIndex].ipLocal = referenceElement.position(nodeInElement, dim) 
+           												+ referenceElement.position(face, 1) 
+           												+ referenceElement.position(leftEdge, dim-1)
+           												+ referenceElement.position(rightEdge, dim-1);
+           				boundaryFace[bfIndex].ipLocal *= 0.25;
+           				boundaryFace[bfIndex].area = quadrilateralArea3D(subContVol[nodeInElement].global, 
+           												edgeCoord[rightEdge], faceCoord[face], edgeCoord[leftEdge]);
+           				break;
+           	       	default:
+           	       		DUNE_THROW(NotImplemented, "FVElementGeometry for dim = " << dim);
+           			}       				
        				boundaryFace[bfIndex].ipGlobal = geometry.global(boundaryFace[bfIndex].ipLocal);
        				
 //      			  std::cout << "boundary face " << face << ", node = " << nodeInElement << ", ipLocal = " 

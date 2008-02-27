@@ -79,6 +79,7 @@ namespace Dune
 
 #ifdef HAVE_PARDISO 
 		SeqPardiso<MatrixType,VectorType,VectorType> ilu0(*(this->A));
+		//SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A),1.0);// a precondtioner
 		//LoopSolver<VectorType> solver(op, ilu0, red, 10, 2);
 #else
 		SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A),1.0);// a precondtioner

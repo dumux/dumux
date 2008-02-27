@@ -5,6 +5,7 @@
 #include<dune/disc/functions/p1function.hh>
 #include<dune/disc/operators/p1operator.hh>
 #include"dumux/nonlinear/nonlinearmodel.hh"
+#include "dumux/fvgeometry/fvelementgeometry.hh"
 
 namespace Dune
 {
@@ -164,36 +165,87 @@ namespace Dune
 		  return;
 	  }
 
-		virtual void vtkout (const char* name, int k) 
-		{
-			VTKWriter<G> vtkwriter(this->grid);
-			char fname[128];	
-			sprintf(fname,"%s-%05d",name,k);
-			for (int i = 0; i < size; i++) {
-				pW[i] = (*(this->u))[i][0];
-				//pN[i] = (*(this->u))[i][1];
-				//pC[i] = pN[i] - pW[i];
-				//satW[i] = this->problem.materialLaw().saturationW(pC[i]);
-				//satN[i] = 1 - satW[i];
-				satN[i] = (*(this->u))[i][1];
-				satW[i] = 1 - satN[i];
-			}
-			vtkwriter.addVertexData(pW,"wetting phase pressure");
-			vtkwriter.addVertexData(satW,"wetting phase saturation");
-			vtkwriter.addVertexData(satN,"nonwetting phase saturation");
-			vtkwriter.write(fname, VTKOptions::ascii);		
-		}
+	  virtual double injected() 
+	  {
+		  typedef typename G::Traits::template Codim<0>::Entity Entity;
+		  typedef typename G::ctype DT;
+		  typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator Iterator;
+		  enum{dim = G::dimension};
+		  enum{dimworld = G::dimensionworld};
+		  
+		  const IS& indexset(grid.leafIndexSet());
+		  double result = 0;
+		  // iterate through leaf grid an evaluate c0 at cell center
+		  Iterator eendit = indexset.template end<0, All_Partition>();
+		  for (Iterator it = indexset.template begin<0, All_Partition>(); it != eendit; ++it)
+		  {
+			  // get geometry type
+			  Dune::GeometryType gt = it->geometry().type();
 
-  protected:
-	  const G& grid;
-	  VertexMapper vertexmapper;
-	  int size;
-	  BlockVector<FieldVector<RT, 1> > pW; 
-	  BlockVector<FieldVector<RT, 1> > pN; 
-	  BlockVector<FieldVector<RT, 1> > pC; 
-	  BlockVector<FieldVector<RT, 1> > satW; 
-	  BlockVector<FieldVector<RT, 1> > satN; 
-  };
+			  // get entity 
+			  const Entity& entity = *it;
+				
+			FVElementGeometry<G> fvGeom;
+		fvGeom.update(entity);
+
+		  const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type& 
+		sfs=Dune::LagrangeShapeFunctions<DT,RT,dim>::general(gt, 1);
+	      int size = sfs.size();
+
+	      for (int i = 0; i < size; i++) {
+		  // get cell center in reference element
+		  const Dune::FieldVector<DT,dim>& 
+				  local = sfs[i].position();
+
+		  // get global coordinate of cell center
+		  Dune::FieldVector<DT,dimworld> global = it->geometry().global(local);
+
+		  int globalId = vertexmapper.template map<dim>(entity, sfs[i].entity());
+
+		double volume = fvGeom.subContVol[i].volume;
+
+		double porosity = this->problem.porosity(global, entity, local);
+
+
+		double density = this->problem.materialLaw().nonwettingPhase.density();
+
+		result += volume*porosity*density*((*(this->u))[globalId][1]);
+		}
+	}
+	return result;
+}
+
+
+	virtual void vtkout (const char* name, int k) 
+	{
+		VTKWriter<G> vtkwriter(this->grid);
+		char fname[128];	
+		sprintf(fname,"%s-%05d",name,k);
+		for (int i = 0; i < size; i++) {
+			pW[i] = (*(this->u))[i][0];
+			//pN[i] = (*(this->u))[i][1];
+			//pC[i] = pN[i] - pW[i];
+			//satW[i] = this->problem.materialLaw().saturationW(pC[i]);
+			//satN[i] = 1 - satW[i];
+			satN[i] = (*(this->u))[i][1];
+			satW[i] = 1 - satN[i];
+		}
+		vtkwriter.addVertexData(pW,"wetting phase pressure");
+		vtkwriter.addVertexData(satW,"wetting phase saturation");
+		vtkwriter.addVertexData(satN,"nonwetting phase saturation");
+		vtkwriter.write(fname, VTKOptions::ascii);		
+	}
+
+protected:
+  const G& grid;
+  VertexMapper vertexmapper;
+  int size;
+  BlockVector<FieldVector<RT, 1> > pW; 
+  BlockVector<FieldVector<RT, 1> > pN; 
+  BlockVector<FieldVector<RT, 1> > pC; 
+  BlockVector<FieldVector<RT, 1> > satW; 
+  BlockVector<FieldVector<RT, 1> > satN; 
+};
 
 }
 #endif
