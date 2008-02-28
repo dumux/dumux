@@ -131,12 +131,12 @@ namespace Dune {
        	F77_FUNC(pardisoinit) (pt_,  &mtype_, iparm_); 
          
 
-        int phase = 11;
+        phase_ = 11;
         int idum;
         double ddum;
         iparm_[2]  = num_procs_;
         
-        F77_FUNC(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase,
+        F77_FUNC(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase_,
     		       &n_, a_, ia_, ja_, &idum, &nrhs_,
     		       iparm_, &msglvl_, &ddum, &ddum, &error_);
       
@@ -145,9 +145,9 @@ namespace Dune {
  
         std::cout << "  Reordering completed. Number of nonzeros in factors  = " << iparm_[17] << std::endl;
 
-        phase = 22; 
+        phase_ = 22; 
         
-        F77_FUNC(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase,
+        F77_FUNC(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase_,
     		       &n_, a_, ia_, ja_, &idum, &nrhs_,
     		       iparm_, &msglvl_, &ddum, &ddum, &error_);
       
@@ -238,12 +238,12 @@ namespace Dune {
     	
         F77_FUNC(pardisoinit) (pt_,  &mtype_, iparm_); 
 
-        int phase = 11;
+        phase_ = 11;
         int idum;
         double ddum;
         iparm_[2]  = num_procs_;
         
-        F77_FUNC(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase,
+        F77_FUNC(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase_,
     		       &n_, a_, ia_, ja_, &idum, &nrhs_,
     		       iparm_, &msglvl_, &ddum, &ddum, &error_);
       
@@ -252,9 +252,9 @@ namespace Dune {
  
         std::cout << "  Reordering completed. Number of nonzeros in factors  = " << iparm_[17] << std::endl;
 
-        phase = 22; 
+        phase_ = 22; 
         
-        F77_FUNC(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase,
+        F77_FUNC(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase_,
     		       &n_, a_, ia_, ja_, &idum, &nrhs_,
     		       iparm_, &msglvl_, &ddum, &ddum, &error_);
       
@@ -283,11 +283,10 @@ namespace Dune {
     virtual void apply (X& v, const Y& d)
     {
 #ifdef HAVE_PARDISO
-    	int phase = 33;
+    	phase_ = 33;
 
         iparm_[7] = 1;       /* Max numbers of iterative refinement steps. */
         int idum;
-	double ddum;
         double x[2*n_];
         double b[2*n_];
         for (int i = 0; i < v.size(); i++) {
@@ -297,7 +296,7 @@ namespace Dune {
 		}
         }
  
-        F77_FUNC(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase,
+        F77_FUNC(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase_,
     		       &n_, a_, ia_, ja_, &idum, &nrhs_,
     		       //&n_, &ddum, &idum, &idum, &idum, &nrhs_,
     		       iparm_, &msglvl_, b, x, &error_);
@@ -310,11 +309,11 @@ namespace Dune {
         		v[i][comp] = x[i*systemsize_ + comp];
         	
         
-        //phase = -1;                 // Release internal memory. 
+        //phase_ = -1;                 // Release internal memory. 
         //int idum;
         //double ddum;
 
-        //F77_FUNC(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase,
+        //F77_FUNC(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase_,
     	//	       &n_, &ddum, ia_, ja_, &idum, &nrhs_,
     	//	       iparm_, &msglvl_, &ddum, &ddum, &error_);
 	//delete a_;
@@ -331,11 +330,11 @@ namespace Dune {
     */
     virtual void post (X& x)
 	{ 
-        int phase = -1;                 // Release internal memory. 
+        phase_ = -1;                 // Release internal memory. 
         int idum;
         double ddum;
 
-        F77_FUNC(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase,
+        F77_FUNC(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase_,
     		       &n_, &ddum, ia_, ja_, &idum, &nrhs_,
     		       iparm_, &msglvl_, &ddum, &ddum, &error_);
 	delete a_;
@@ -346,16 +345,18 @@ namespace Dune {
     ~SeqPardiso() 
     {
 #ifdef HAVE_PARDISO
-        int phase = -1;                 // Release internal memory. 
-        int idum;
-        double ddum;
+    	if (phase_ != -1) {
+    		phase_ = -1;                 // Release internal memory. 
+    		int idum;
+    		double ddum;
 
-        F77_FUNC(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase,
-    		       &n_, &ddum, ia_, ja_, &idum, &nrhs_,
-    		       iparm_, &msglvl_, &ddum, &ddum, &error_);
-	//delete a_;
-	//delete ia_;
-	//delete ja_;
+    		F77_FUNC(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase_,
+    				&n_, &ddum, ia_, ja_, &idum, &nrhs_,
+    				iparm_, &msglvl_, &ddum, &ddum, &error_);
+    		delete a_;
+    		delete ia_;
+    		delete ja_;
+    	}
 #endif
     }
   
@@ -375,6 +376,7 @@ namespace Dune {
     int error_;      //!< error flag 
     int num_procs_; //!< number of processors.
 	int systemsize_;
+	int phase_;
   };
 
 }

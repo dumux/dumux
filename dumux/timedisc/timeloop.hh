@@ -40,17 +40,43 @@ namespace Dune {
 				  
 		  // now do the time steps
 		  double t = tStart;
-		  double dtOriginal;
-		  if (fixed)
-			  dtOriginal = dt;
+//		  double dtOriginal;
+//		  if (fixed)
+//			  dtOriginal = dt;
 		  while (t < tEnd) {
 		    k++;
+		    double dtOld = dt;
+
 		    if (t == tStart) 
 		    	timeStep.execute(model, t, dt, firstDt, tEnd, cFLFactor);
 		    else
 		    	timeStep.execute(model, t, dt, maxDt, tEnd, cFLFactor);
 		    
-		    std::cout << "timestep: " << k << "\t t=" << t+dt << "\t dt=" << dt << std::endl;
+		    if (fixed) {
+		    	if (dt > dtOld) {
+		    		std::cout << "Here " << std::endl;
+		    		t += dtOld;
+				    t = std::min(t, tEnd);
+				    std::cout << "\t" << k << "\t" << t << "\t" << dt 
+				    	<< "\t # totalMass, upperMass, oldUpperMass, k, t, dt" << std::endl;
+				    std::cout << ", timestep: " << k << "\t t=" << t << "\t dt=" << dtOld << std::endl;
+		    	}
+		    	else {
+		    		t += dt;
+				    t = std::min(t, tEnd);
+				    std::cout << "\t" << k << "\t" << t << "\t" << dt 
+				    	<< "\t # totalMass, upperMass, oldUpperMass, k, t, dt" << std::endl;
+				    std::cout << ", timestep: " << k << "\t t=" << t << "\t dt=" << dt << std::endl;
+		    	}		    		
+ 		    }
+		    else {
+		    	t += dt;
+			    t = std::min(t, tEnd);
+			    std::cout << "\t" << k << "\t" << t << "\t" << dt 
+			    	<< "\t # totalMass, upperMass, oldUpperMass, k, t, dt" << std::endl;
+			    std::cout << ", timestep: " << k << "\t t=" << t << "\t dt=" << dt << std::endl;
+		    }		    
+		    
 		    //printvector(std::cout, *model, "saturation", "row", 200, 1);    
 
 		    // generate output
@@ -65,13 +91,11 @@ namespace Dune {
 		    		sprintf(fileNameVTK,"%s-%05d.vtu", fileName, k/modulo);
 		    		break;
 		    	}
-		    	multiFile << "   <DataSet timestep=\"" << t+dt << "\" file=\"" 
+		    	multiFile << "   <DataSet timestep=\"" << t << "\" file=\"" 
 		    	<< fileNameVTK << "\"/>" << std::endl;
 		    }
-		    
-		    t += dt;
-		    if (fixed)
-		    	dt = dtOriginal;
+//		    if (fixed)
+//		    	dt = dtOriginal;
 		  }    
 		  // finalize output
 		  multiFile << " </Collection>" << std::endl << "</VTKFile>" << std::endl;

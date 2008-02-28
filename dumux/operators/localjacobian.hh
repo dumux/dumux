@@ -309,6 +309,16 @@ namespace Dune
       return def[i];
     }
     
+    void setDt(double d)
+    {
+    	this->getImp().setDt(d);
+    }
+    
+    virtual double getDt()
+    {
+    	return this->getImp().getDt();
+    }
+    
   protected:
     VBlockType def[SIZE];
     VBlockType u[SIZE];

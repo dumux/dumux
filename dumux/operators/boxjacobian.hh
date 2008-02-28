@@ -91,10 +91,10 @@ namespace Dune
     BoxJacobian (bool levelBoundaryAsDirichlet_, const G& grid, 
 			      BoxFunction& sol, 
 			      bool procBoundaryAsDirichlet_=true)
-    : levelBoundaryAsDirichlet(levelBoundaryAsDirichlet_), 
+    : vertexMapper(grid, grid.leafIndexSet()), 
+      levelBoundaryAsDirichlet(levelBoundaryAsDirichlet_), 
       procBoundaryAsDirichlet(procBoundaryAsDirichlet_), 
-      currentSolution(sol), oldSolution(grid), 
-      vertexMapper(grid, grid.leafIndexSet()), dt(1)
+      currentSolution(sol), oldSolution(grid), dt(1)
     {    }
     
 
@@ -174,6 +174,13 @@ namespace Dune
     void setDt (double d) 
     {
     	dt = d;
+    	
+    	return;
+    }
+  
+    double getDt () 
+    {
+    	return dt;
     }
   
     void setOldSolution (BoxFunction& uOld) 

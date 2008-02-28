@@ -113,8 +113,14 @@ namespace Dune
 		this->localJacobian.setOldSolution(this->uOldTimeStep);
 		NewtonMethod<G, ThisType> newtonMethod(this->grid, *this);
 		newtonMethod.execute();
-		*(this->uOldTimeStep) = *(this->u);
+		dt = this->localJacobian.getDt();
+		double upperMass, oldUpperMass;
+		double totalMass = this->injected(upperMass, oldUpperMass);
+		std::cout << totalMass << "\t" << upperMass 
+			<< "\t" << oldUpperMass;
 		
+		*(this->uOldTimeStep) = *(this->u);
+
 		return;
 	}
 

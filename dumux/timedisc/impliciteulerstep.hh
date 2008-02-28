@@ -16,7 +16,9 @@ namespace Dune {
 			
 			model.update(dt);
 
-			return;			
+		    dt = std::min(dt, tEnd - t);
+
+		    return;			
 		}
 		
 	};

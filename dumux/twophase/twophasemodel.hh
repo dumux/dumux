@@ -165,7 +165,7 @@ namespace Dune
 		  return;
 	  }
 
-	  virtual double injected() 
+	  virtual double injected(double& upperMass, double& oldUpperMass) 
 	  {
 		  typedef typename G::Traits::template Codim<0>::Entity Entity;
 		  typedef typename G::ctype DT;
@@ -174,7 +174,9 @@ namespace Dune
 		  enum{dimworld = G::dimensionworld};
 		  
 		  const IS& indexset(grid.leafIndexSet());
-		  double result = 0;
+		  double totalMass = 0;
+		  upperMass = 0;
+		  oldUpperMass = 0;
 		  // iterate through leaf grid an evaluate c0 at cell center
 		  Iterator eendit = indexset.template end<0, All_Partition>();
 		  for (Iterator it = indexset.template begin<0, All_Partition>(); it != eendit; ++it)
@@ -184,35 +186,43 @@ namespace Dune
 
 			  // get entity 
 			  const Entity& entity = *it;
-				
-			FVElementGeometry<G> fvGeom;
-		fvGeom.update(entity);
-
-		  const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type& 
-		sfs=Dune::LagrangeShapeFunctions<DT,RT,dim>::general(gt, 1);
-	      int size = sfs.size();
+					
+				FVElementGeometry<G> fvGeom;
+			fvGeom.update(entity);
+	
+			  const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type& 
+			sfs=Dune::LagrangeShapeFunctions<DT,RT,dim>::general(gt, 1);
+		      int size = sfs.size();
 
 	      for (int i = 0; i < size; i++) {
-		  // get cell center in reference element
-		  const Dune::FieldVector<DT,dim>& 
-				  local = sfs[i].position();
-
-		  // get global coordinate of cell center
-		  Dune::FieldVector<DT,dimworld> global = it->geometry().global(local);
-
-		  int globalId = vertexmapper.template map<dim>(entity, sfs[i].entity());
-
-		double volume = fvGeom.subContVol[i].volume;
-
-		double porosity = this->problem.porosity(global, entity, local);
-
-
-		double density = this->problem.materialLaw().nonwettingPhase.density();
-
-		result += volume*porosity*density*((*(this->u))[globalId][1]);
+			  // get cell center in reference element
+			  const Dune::FieldVector<DT,dim>& 
+					  local = sfs[i].position();
+	
+			  // get global coordinate of cell center
+			  Dune::FieldVector<DT,dimworld> global = it->geometry().global(local);
+	
+			  int globalId = vertexmapper.template map<dim>(entity, sfs[i].entity());
+	
+			double volume = fvGeom.subContVol[i].volume;
+	
+			double porosity = this->problem.porosity(global, entity, local);
+	
+	
+			double density = this->problem.materialLaw().nonwettingPhase.density();
+			
+			double mass = volume*porosity*density*((*(this->u))[globalId][1]);
+	
+			totalMass += mass;
+			
+			if (global[2] > 80.0) {
+				upperMass += mass;
+				oldUpperMass += volume*porosity*density*((*(this->uOldTimeStep))[globalId][1]);
+			}
 		}
 	}
-	return result;
+		  
+	return totalMass;
 }
 
 
