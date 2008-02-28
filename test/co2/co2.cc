@@ -69,14 +69,14 @@ int main(int argc, char** argv)
 
 
     
-    Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt, "co2", 100);
+    Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt, "co2", 50);
     
     Dune::Timer timer;
     timer.reset();
     timeloop.execute(twoPhase);
     std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
      
-	std::cout << twoPhase.injected() << " kg CO2 injected." << std::endl;
+	//std::cout << twoPhase.injected() << " kg CO2 injected." << std::endl;
 
     return 0;
   }
