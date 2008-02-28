@@ -52,32 +52,33 @@ namespace Dune {
 		    else
 		    	timeStep.execute(model, t, dt, maxDt, tEnd, cFLFactor);
 		    
-//		    if (fixed) {
+
 		    	if (dt > dtOld) {
-		    		// std::cout << "Here " << std::endl;
 		    		t += dtOld;
 				    t = std::min(t, tEnd);
+				    if(dt > tEnd-t)
+				    {
+					    std::cout << "\t" << k << "\t" << t << "\t" << dtOld 
+					    	<< "\t # totalMass, upperMass, oldUpperMass, k, t, dt" << std::endl;
+					    std::cout << ", timestep: " << k << "\t t=" << t << "\t dt=" << (tEnd-t) << std::endl;	
+				    }
+				    else
+				    {
 				    std::cout << "\t" << k << "\t" << t << "\t" << dtOld 
 				    	<< "\t # totalMass, upperMass, oldUpperMass, k, t, dt" << std::endl;
 				    std::cout << ", timestep: " << k << "\t t=" << t << "\t dt=" << dt << std::endl;
+				    }
 		    	}
-		    	else  if   (dt > tEnd-t)
-		    		
-		    	else {
+
+				    else {
 		    		t += dt;
 				    t = std::min(t, tEnd);
 				    std::cout << "\t" << k << "\t" << t << "\t" << dt 
 				    	<< "\t # totalMass, upperMass, oldUpperMass, k, t, dt" << std::endl;
 				    std::cout << ", timestep: " << k << "\t t=" << t << "\t dt=" << dt << std::endl;
+
 		    	}		    		
-//		    }
-//		    else {
-//		    	t += dt;
-//			    t = std::min(t, tEnd);
-//			    std::cout << "\t" << k << "\t" << t << "\t" << dt 
-//			    	<< "\t # totalMass, upperMass, oldUpperMass, k, t, dt" << std::endl;
-//			    std::cout << ", timestep: " << k << "\t t=" << t << "\t dt=" << dt << std::endl;
-//		    }		    
+
 		    
 		    //printvector(std::cout, *model, "saturation", "row", 200, 1);    
 
