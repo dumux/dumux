@@ -52,39 +52,41 @@ namespace Dune {
       category=SolverCategory::sequential
     };
 
-    /*! \brief Constructor.
 
-    Constructor gets all parameters to operate the prec.
-    \param A The matrix to operate on.
-    \param n The number of iterations to perform.
-    \param w The relaxation factor.
-    */
-    SeqPardiso (const M& A)
-      : A_(A)
-    {
+	SeqPardiso() 
+	{
+		
 #ifdef HAVE_PARDISO
-    	
-    	mtype_ = 11;
-    	nrhs_ = 1;
-    	num_procs_ = 1;
-        maxfct_ = 1;	
-        mnum_   = 1;         
-        msglvl_ = 0;        
-        error_  = 0;        
+	    	mtype_ = 11;
+    		nrhs_ = 1;
+    		num_procs_ = 1;
+        	maxfct_ = 1;	
+        	mnum_   = 1;         
+        	msglvl_ = 0;        
+        	error_  = 0;
 
-	systemsize_ = A_.rowdim(0);
-    	n_ = A_.rowdim();
+        	//F77_FUNC(pardisoinit) (pt_,  &mtype_, iparm_); 
+#else
+        DUNE_THROW(NotImplemented, "no Pardiso library available, reconfigure with correct --with-pardiso options");
+#endif
+        }
+
+	void factorize (M& A)
+	{
+
+	systemsize_ = A.rowdim(0);
+    	n_ = A.rowdim();
     	int nnz = 0;
-    	RowIterator endi = A_.end();
+    	RowIterator endi = A.end();
 	int rows = 0;
-    	for (RowIterator i = A_.begin(); i != endi; ++i)
+    	for (RowIterator i = A.begin(); i != endi; ++i)
     	{
 		rows++;
-    		//if (A_.rowdim(i.index()) != 1)
+    		//if (A.rowdim(i.index()) != 1)
     		//	DUNE_THROW(NotImplemented, "SeqPardiso: row blocksize != 1.");
     		ColIterator endj = (*i).end();
     		for (ColIterator j = (*i).begin(); j != endj; ++j) {
-    			//if (A_.coldim(j.index()) != 1)
+    			//if (A.coldim(j.index()) != 1)
     			//	DUNE_THROW(NotImplemented, "SeqPardiso: column blocksize != 1.");
     			nnz += systemsize_*systemsize_;
     		}
@@ -97,7 +99,115 @@ namespace Dune {
     	ja_ = new int[nnz];
     	
     	int count = 0;
-    	for (RowIterator i = A_.begin(); i != endi; ++i)
+    	for (RowIterator i = A.begin(); i != endi; ++i)
+    	{
+		for (int iComp = 0; iComp < systemsize_; iComp++) {
+    		ia_[i.index()*systemsize_ + iComp] = count+1;
+    		ColIterator endj = (*i).end();
+    		for (ColIterator j = (*i).begin(); j != endj; ++j) {
+			for (int jComp = 0; jComp < systemsize_; jComp++) {
+    			a_[count] = (*j)[iComp][jComp];
+    			ja_[count] = j.index()*systemsize_ + jComp + 1;
+    			
+    			count++;
+		}
+    		}
+		}
+    	}
+    	ia_[n_] = count+1;
+
+	/*std::cout << "systemsize_ =" << systemsize_ << ", n_ = " << n_ << ", nnz_ = " << nnz << std::endl; 
+	for (int i = 0; i <= n_; i++) 
+		std::cout << ia_[i] << std::endl; 
+	*/
+	/*std::cout << "ja_:" << std::endl; 
+	for (int i = 0; i <= nnz; i++) 
+		std::cout << ja_[i] << std::endl; 
+	std::cout << "a_:" << std::endl; 
+	for (int i = 0; i <= nnz; i++) 
+		std::cout << a_[i] << std::endl; 
+	*/
+    	
+       	F77_FUNC(pardisoinit) (pt_,  &mtype_, iparm_); 
+         
+
+        int phase = 11;
+        int idum;
+        double ddum;
+        iparm_[2]  = num_procs_;
+        
+        F77_FUNC(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase,
+    		       &n_, a_, ia_, ja_, &idum, &nrhs_,
+    		       iparm_, &msglvl_, &ddum, &ddum, &error_);
+      
+        if (error_ != 0) 
+        	DUNE_THROW(MathError, "Constructor SeqPardiso: Reordering failed. Error code " << error_);
+ 
+        std::cout << "  Reordering completed. Number of nonzeros in factors  = " << iparm_[17] << std::endl;
+
+        phase = 22; 
+        
+        F77_FUNC(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase,
+    		       &n_, a_, ia_, ja_, &idum, &nrhs_,
+    		       iparm_, &msglvl_, &ddum, &ddum, &error_);
+      
+        if (error_ != 0) 
+        	DUNE_THROW(MathError, "Constructor SeqPardiso: Factorization failed. Error code " << error_);
+        
+        std::cout << "  Factorization completed." << std::endl;
+        
+
+
+
+
+	}
+
+    /*! \brief Constructor.
+
+    Constructor gets all parameters to operate the prec.
+    \param A The matrix to operate on.
+    \param n The number of iterations to perform.
+    \param w The relaxation factor.
+    */
+    SeqPardiso (M& A)
+ 
+    {
+#ifdef HAVE_PARDISO
+    	
+    	mtype_ = 11;
+    	nrhs_ = 1;
+    	num_procs_ = 1;
+        maxfct_ = 1;	
+        mnum_   = 1;         
+        msglvl_ = 0;        
+        error_  = 0;        
+
+	systemsize_ = A.rowdim(0);
+    	n_ = A.rowdim();
+    	int nnz = 0;
+    	RowIterator endi = A.end();
+	int rows = 0;
+    	for (RowIterator i = A.begin(); i != endi; ++i)
+    	{
+		rows++;
+    		//if (A.rowdim(i.index()) != 1)
+    		//	DUNE_THROW(NotImplemented, "SeqPardiso: row blocksize != 1.");
+    		ColIterator endj = (*i).end();
+    		for (ColIterator j = (*i).begin(); j != endj; ++j) {
+    			//if (A.coldim(j.index()) != 1)
+    			//	DUNE_THROW(NotImplemented, "SeqPardiso: column blocksize != 1.");
+    			nnz += systemsize_*systemsize_;
+    		}
+    	}
+		  //std::cout << "rows = " << rows;
+    	std::cout << "SeqPardiso: dimension = " << n_ << ", number of nonzeros = " << nnz << std::endl;
+    	
+    	a_ = new double[nnz];
+    	ia_ = new int[n_+1];
+    	ja_ = new int[nnz];
+    	
+    	int count = 0;
+    	for (RowIterator i = A.begin(); i != endi; ++i)
     	{
 		for (int iComp = 0; iComp < systemsize_; iComp++) {
     		ia_[i.index()*systemsize_ + iComp] = count+1;
@@ -177,7 +287,7 @@ namespace Dune {
 
         iparm_[7] = 1;       /* Max numbers of iterative refinement steps. */
         int idum;
-
+	double ddum;
         double x[2*n_];
         double b[2*n_];
         for (int i = 0; i < v.size(); i++) {
@@ -189,6 +299,7 @@ namespace Dune {
  
         F77_FUNC(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase,
     		       &n_, a_, ia_, ja_, &idum, &nrhs_,
+    		       //&n_, &ddum, &idum, &idum, &idum, &nrhs_,
     		       iparm_, &msglvl_, b, x, &error_);
         
         if (error_ != 0) 
@@ -199,6 +310,16 @@ namespace Dune {
         		v[i][comp] = x[i*systemsize_ + comp];
         	
         
+        //phase = -1;                 // Release internal memory. 
+        //int idum;
+        //double ddum;
+
+        //F77_FUNC(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase,
+    	//	       &n_, &ddum, ia_, ja_, &idum, &nrhs_,
+    	//	       iparm_, &msglvl_, &ddum, &ddum, &error_);
+	//delete a_;
+	//delete ia_;
+	//delete ja_;
         //std::cout << "SeqPardiso: Backsolve completed." << std::endl;
 #endif
     }
@@ -208,7 +329,19 @@ namespace Dune {
       
       \copydoc Preconditioner::post(X&)
     */
-    virtual void post (X& x) {}
+    virtual void post (X& x)
+	{ 
+        int phase = -1;                 // Release internal memory. 
+        int idum;
+        double ddum;
+
+        F77_FUNC(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase,
+    		       &n_, &ddum, ia_, ja_, &idum, &nrhs_,
+    		       iparm_, &msglvl_, &ddum, &ddum, &error_);
+	delete a_;
+	delete ia_;
+	delete ja_;
+	}
 
     ~SeqPardiso() 
     {
@@ -220,11 +353,14 @@ namespace Dune {
         F77_FUNC(pardiso) (pt_, &maxfct_, &mnum_, &mtype_, &phase,
     		       &n_, &ddum, ia_, ja_, &idum, &nrhs_,
     		       iparm_, &msglvl_, &ddum, &ddum, &error_);
+	//delete a_;
+	//delete ia_;
+	//delete ja_;
 #endif
     }
   
   private:
-    M A_; //!< The matrix we operate on.
+    //M A_; //!< The matrix we operate on.
     int n_; //!< dimension of the system
     double *a_; //!< matrix values 
     int *ia_; //!< indices to rows 

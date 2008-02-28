@@ -53,6 +53,12 @@ namespace Dune
   : public LeafP1TwoPhaseModel<G, RT, TwoPhaseProblem<G, RT>, 
                                  BoxPwSnJacobian<G, RT> >
   {
+		
+		
+		 
+
+ 
+
   public:
 	// define the problem type (also change the template argument above)
 	typedef TwoPhaseProblem<G, RT> ProblemType;
@@ -63,6 +69,12 @@ namespace Dune
 	typedef LeafP1TwoPhaseModel<G, RT, ProblemType, LocalJacobian> LeafP1TwoPhaseModel;
 
 	typedef BoxPwSn<G, RT> ThisType;
+		typedef typename LeafP1TwoPhaseModel::FunctionType::RepresentationType VectorType;
+		typedef typename LeafP1TwoPhaseModel::OperatorAssembler::RepresentationType MatrixType;
+		typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator; 
+#ifdef HAVE_PARDISO
+	SeqPardiso<MatrixType,VectorType,VectorType> pardiso; 
+#endif
 	
 	BoxPwSn(const G& g, ProblemType& prob) 
 	: LeafP1TwoPhaseModel(g, prob)
@@ -70,22 +82,25 @@ namespace Dune
 
 	void solve() 
 	{
-		typedef typename LeafP1TwoPhaseModel::FunctionType::RepresentationType VectorType;
-		typedef typename LeafP1TwoPhaseModel::OperatorAssembler::RepresentationType MatrixType;
-		typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator; 
+		
+		
+		 
 		
 		Operator op(*(this->A));  // make operator out of matrix
 		double red=1E-8;
 
 #ifdef HAVE_PARDISO 
-		SeqPardiso<MatrixType,VectorType,VectorType> ilu0(*(this->A));
-		//SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A),1.0);// a precondtioner
+//	SeqPardiso<MatrixType,VectorType,VectorType> ilu0(*(this->A)); 
+		pardiso.factorize(*(this->A));
+		BiCGSTABSolver<VectorType> solver(op,pardiso,red,100,2);         // an inverse operator 
+	//	SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A),1.0);// a precondtioner
 		//LoopSolver<VectorType> solver(op, ilu0, red, 10, 2);
 #else
 		SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A),1.0);// a precondtioner
-#endif
+
 		//SeqIdentity<MatrixType,VectorType,VectorType> ilu0(*(this->A));// a precondtioner
 		BiCGSTABSolver<VectorType> solver(op,ilu0,red,10000,2);         // an inverse operator 
+#endif
 		InverseOperatorResult r;
 		solver.apply(*(this->u), *(this->f), r);
 		
