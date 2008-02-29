@@ -52,7 +52,8 @@ namespace Dune {
 		    else
 		    	timeStep.execute(model, t, dt, maxDt, tEnd, cFLFactor);
 		    
-
+		    if(fixed)
+		    {
 		    	if (dt > dtOld) {
 		    		t += dtOld;
 				    t = std::min(t, tEnd);
@@ -78,8 +79,14 @@ namespace Dune {
 				    std::cout << ", timestep: " << k << "\t t=" << t << "\t dt=" << dt << std::endl;
 
 		    	}		    		
-
-		    
+		    }
+		    else
+		    {
+	    		t += dt;
+			    t = std::min(t, tEnd);
+			    std::cout << ", timestep: " << k << "\t t=" << t << "\t dt=" << dt << std::endl;
+	
+		    }
 		    //printvector(std::cout, *model, "saturation", "row", 200, 1);    
 
 		    // generate output
