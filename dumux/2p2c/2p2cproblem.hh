@@ -13,6 +13,7 @@
 #include<dune/disc/operators/boundaryconditions.hh>
 #include<dumux/material/twophaserelations.hh>
 #include<dumux/material/linearlaw.hh>
+#include<dumux/material/constrel.hh>
 
 /**
  * @file
@@ -37,7 +38,7 @@ namespace Dune
    *	- RT    type used for return values 
    */
   template<class G, class RT>
-  class 2P2CProblem {
+  class TwoPTwoCProblem {
 	typedef typename G::ctype DT;
 	enum {n=G::dimension, m=2};
 	typedef typename G::Traits::template Codim<0>::Entity Entity;
@@ -111,16 +112,23 @@ namespace Dune
 	{
 		return materialLaw_;
 	}
+
+	Solubility& constrel ()
+	{
+		return constrel_;
+	}
 	
-	2P2CProblem(TwoPhaseRelations& law = *(new LinearLaw)) 
-	: materialLaw_(law) 
+	
+	TwoPTwoCProblem(TwoPhaseRelations& law = *(new LinearLaw), Solubility& solu = *(new Solubility)) 
+	: materialLaw_(law), constrel_(solu)
 	{	}
 	
 	//! always define virtual destructor in abstract base class
-	virtual ~2P2CProblem () {}
+	virtual ~TwoPTwoCProblem () {}
 	
   protected:
 	TwoPhaseRelations& materialLaw_;
+	Solubility& constrel_;
   };
 
 }

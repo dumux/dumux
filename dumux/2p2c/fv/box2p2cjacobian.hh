@@ -19,7 +19,7 @@
 #include<dune/disc/operators/boundaryconditions.hh>
 #include<dune/disc/functions/p1function.hh>
 #include "dumux/operators/boxjacobian.hh"
-#include "dumux/twophase/twophaseproblem.hh"
+#include "dumux/2p2c/2p2cproblem.hh"
 
 /**
  * @file
@@ -72,7 +72,7 @@ namespace Dune
  	typedef FVElementGeometry<G> FVElementGeometry;
 	enum {pWIdx = 0, satNIdx = 1, numberOfComponents = 2};	// Phase index
 	enum {gaseous = 0, liquid = 1, solid = 2};					// Phase state
-	enum {water = 0, air = 1};										// Component index					
+ 	enum {water = 0, air = 1};										// Component index					
 	
   public:
     // define the number of phases (m) and components (c) of your system, this is used outside
@@ -82,7 +82,7 @@ namespace Dune
     enum {SIZE=LagrangeShapeFunctionSetContainer<DT,RT,n>::maxsize};
     
     //! Constructor
-    Box2P2CJacobian (TwoPhaseProblem<G,RT>& params,
+    Box2P2CJacobian (TwoPTwoCProblem<G,RT>& params,
 			      bool levelBoundaryAsDirichlet_, const G& grid, 
 			      BoxFunction& sol, 
 			      bool procBoundaryAsDirichlet_=true)
@@ -92,7 +92,7 @@ namespace Dune
     {
       this->analytic = false;
     }
-    
+
 
     virtual void clearVisited ()
     {
@@ -286,15 +286,16 @@ namespace Dune
    		varNData[i].saturationW = 1.0 - sol[i][satNIdx];
          varNData[i].pC = problem.materialLaw().pC(varNData[i].saturationW, elData.parameters);
          varNData[i].pN = sol[i][pWIdx] + varNData[i].pC;
+         varNData[i].temperature = 283.15; // in [K]
          // Mobilities & densities
          varNData[i].mobility[pWIdx] = problem.materialLaw().mobW(varNData[i].saturationW, elData.parameters);
          varNData[i].mobility[satNIdx] = problem.materialLaw().mobN(sol[i][satNIdx], elData.parameters);
          varNData[i].density[pWIdx] = problem.materialLaw().wettingPhase.density();
          varNData[i].density[satNIdx] = problem.materialLaw().nonwettingPhase.density();
-         // Solubilities
-         varNData[i].massfrac[water][pWIdx] = 1.0;	//problem.materialLaw().water.solubility();
-         varNData[i].massfrac[air][pWIdx] = 	1.0 - varNData[i].massfrac[water][pWIdx];
-         varNData[i].massfrac[water][satNIdx] = 0.0;	//problem.materialLaw().air.solubility();
+         // Solubilities of components in phases
+         varNData[i].massfrac[air][pWIdx] = 	0;//problem.constrel().Xaw(sol[i][pWIdx], varNData[i].temperature);
+         varNData[i].massfrac[water][pWIdx] = 1.0 - varNData[i].massfrac[air][pWIdx];
+         varNData[i].massfrac[water][satNIdx] = 0;//problem.constrel().Xwg(varNData[i].pN, varNData[i].temperature);
          varNData[i].massfrac[air][satNIdx] = 1.0 - varNData[i].massfrac[water][satNIdx];
    	 }   	 
     }
@@ -313,6 +314,7 @@ namespace Dune
        RT saturationW;
        RT pC;
        RT pN;
+       RT temperature;
        VBlockType mobility;  //Vector with the number of phases
        VBlockType density;
        MBlockType massfrac;
@@ -327,7 +329,7 @@ namespace Dune
    	 } elData;
     
     // parameters given in constructor
-    TwoPhaseProblem<G,RT>& problem;
+    TwoPTwoCProblem<G,RT>& problem;
     std::vector<StaticNodeData> statNData;
     std::vector<VariableNodeData> varNData;
   };
