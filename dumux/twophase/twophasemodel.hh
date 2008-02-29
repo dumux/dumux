@@ -1,10 +1,10 @@
 #ifndef DUNE_TWOPHASEMODEL_HH
 #define DUNE_TWOPHASEMODEL_HH
 
-#include<dune/disc/shapefunctions/lagrangeshapefunctions.hh>
-#include<dune/disc/functions/p1function.hh>
-#include<dune/disc/operators/p1operator.hh>
-#include"dumux/nonlinear/nonlinearmodel.hh"
+#include <dune/disc/shapefunctions/lagrangeshapefunctions.hh>
+#include <dune/disc/functions/p1function.hh>
+#include <dune/disc/operators/p1operator.hh>
+#include "dumux/nonlinear/nonlinearmodel.hh"
 #include "dumux/fvgeometry/fvelementgeometry.hh"
 
 namespace Dune

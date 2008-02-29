@@ -73,6 +73,7 @@ namespace Dune {
 
 	void factorize (M& A)
 	{
+#ifdef HAVE_PARDISO
 
 	systemsize_ = A.rowdim(0);
     	n_ = A.rowdim();
@@ -159,7 +160,7 @@ namespace Dune {
 
 
 
-
+#endif
 	}
 
     /*! \brief Constructor.
@@ -330,7 +331,8 @@ namespace Dune {
     */
     virtual void post (X& x)
 	{ 
-        phase_ = -1;                 // Release internal memory. 
+#ifdef HAVE_PARDISO
+       phase_ = -1;                 // Release internal memory. 
         int idum;
         double ddum;
 
@@ -340,6 +342,7 @@ namespace Dune {
 	delete a_;
 	delete ia_;
 	delete ja_;
+#endif
 	}
 
     ~SeqPardiso() 

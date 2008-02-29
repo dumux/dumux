@@ -105,7 +105,7 @@ namespace Dune
 		SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A),1.0);// a precondtioner
 
 		//SeqIdentity<MatrixType,VectorType,VectorType> ilu0(*(this->A));// a precondtioner
-		BiCGSTABSolver<VectorType> solver(op,ilu0,red,10000,2);         // an inverse operator 
+		BiCGSTABSolver<VectorType> solver(op,ilu0,red,10000,1);         // an inverse operator 
 #endif
 		InverseOperatorResult r;
 		solver.apply(*(this->u), *(this->f), r);
