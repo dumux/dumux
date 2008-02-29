@@ -67,6 +67,12 @@ namespace Dune
 	typedef BoxPwSnJacobian<G, RT> LocalJacobian;
 	
 	typedef LeafP1TwoPhaseModel<G, RT, ProblemType, LocalJacobian> LeafP1TwoPhaseModel;
+	
+    typedef typename LeafP1TwoPhaseModel::FunctionType FunctionType;
+
+    typedef typename G::Traits::LeafIndexSet IS;
+
+    enum{m = 2};
 
 	typedef BoxPwSn<G, RT> ThisType;
 		typedef typename LeafP1TwoPhaseModel::FunctionType::RepresentationType VectorType;
@@ -124,6 +130,44 @@ namespace Dune
 		return;
 	}
 
+    void globalDefect(FunctionType& defectGlobal)
+    {   
+      typedef typename G::Traits::template Codim<0>::Entity Entity;
+      typedef typename G::ctype DT;
+      typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator Iterator;
+      enum{dim = G::dimension};
+      
+      const IS& indexset(this->grid.leafIndexSet());
+      (*defectGlobal)=0;
+           
+      // iterate through leaf grid 
+      Iterator eendit = indexset.template end<0, All_Partition>();
+      for (Iterator it = indexset.template begin<0, All_Partition>(); it != eendit; ++it)
+	{
+	  // get geometry type
+	  Dune::GeometryType gt = it->geometry().type();
+	  
+	  const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type& 
+	    sfs=Dune::LagrangeShapeFunctions<DT,RT,dim>::general(gt, 1);
+	  int size = sfs.size();
+	  Dune::FieldVector<RT,2> defhelp[size];
+	  
+	  // get entity 
+	  const Entity& entity = *it;
+	  
+	  this->localJacobian.fvGeom.update(entity);
+	  
+	  this->localJacobian.getLocalDefect(entity,defhelp);
+	  //std::cout<<" defhelp: "<<*defhelp<<std::endl;
+	  // begin loop over vertices
+	  for(int i=0; i < size; i++)
+	    {
+	      int globalId = this->vertexmapper.template map<dim>(entity, sfs[i].entity());
+	    
+	      (*defectGlobal)[globalId]+= defhelp[i]; //(*defhelp)[i];
+	    }
+	}
+    }
   };
 
 }

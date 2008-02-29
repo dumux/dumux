@@ -48,7 +48,7 @@ namespace Dune
 					const FieldVector<DT,n>& xi)
 	{
 		if (x[0] > -0.132934 && x[0] < 0.132934
-				&& x[1] > -0.132934 && x[1] < 0.132934 && x[2] > 0.5  && x[2] < 159.5)
+				&& x[1] > -0.132934 && x[1] < 0.132934 && x[2] > 1  && x[2] < 159.0)
 			return permlocWell;
 	
 		return permloc;

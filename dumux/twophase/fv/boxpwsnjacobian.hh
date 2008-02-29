@@ -215,6 +215,27 @@ namespace Dune
     }
     
     
+    void getLocalDefect(const Entity& entity,VBlockType *defhelp)
+    { 
+      setLocalSolution(entity);
+
+      // set to Zero 
+  	for (int i=0; i < this->fvGeom.nNodes; i++) {
+  		this->bctype[i].assign(BoundaryConditions::neumann);
+  		this->b[i] = 0;
+  		this->def[i] = 0;
+  	}
+     
+  	this->template localDefect<LeafTag>(entity,this->u);
+	  this->template assembleBC<LeafTag> (entity); 
+	  
+	  // add to defect 
+	  for (int i=0; i < this->fvGeom.nNodes; i++) {
+		  this->def[i] += this->b[i];
+		  defhelp[i]=this->def[i];
+      }
+    }
+
     struct StaticNodeData 
     {
     	bool visited;

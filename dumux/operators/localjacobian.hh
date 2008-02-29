@@ -319,11 +319,11 @@ namespace Dune
     	return this->getImp().getDt();
     }
     
+    FVElementGeometry fvGeom;
   protected:
     VBlockType def[SIZE];
     VBlockType u[SIZE];
     bool analytic;
-    FVElementGeometry fvGeom;
   };
 
 
