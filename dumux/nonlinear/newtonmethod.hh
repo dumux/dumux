@@ -34,7 +34,10 @@ namespace Dune {
 					error = oneByMagnitude*((*u).two_norm());
 					//printvector(std::cout, *u, "update", "row", 200, 1, 3);
 					*u *= -1.0;
-					*u += *uOldNewtonStep;
+					*u += *uOldNewtonStep; 
+					for (int idx = 0; idx < (*u).size(); idx++) 
+						if ((*u)[idx][1] < -1.0 || (*u)[idx][1] > 2.0) 
+							error = 1e100;
 					//printvector(std::cout, *u, "u", "row", 200, 1, 3);
 					if (verbose)
 						std::cout << "Newton step " << iter << ", defect = " << error << std::endl;
@@ -68,12 +71,12 @@ namespace Dune {
 			return;
 		}
 		
-		NewtonMethod(const G& g, Model& mod, double tol = 1e-5, int maxIt = 20, double mind = 1e-5, int goodIt = 6)
+		NewtonMethod(const G& g, Model& mod, double tol = 1e-6, int maxIt = 12, double mind = 1e-5, int goodIt = 5)
 		: grid(g), model(mod), u(mod.u), f(mod.f), A(mod.A), localJacobian(mod.localJacobian), 
 		  uOldNewtonStep(g), tolerance(tol), maxIter(maxIt), minDt(mind), goodIter(goodIt)
 		{ }
 		
-		NewtonMethod(const G& g, Model& mod, int level, double tol = 1e-5, int maxIt = 20, double mind = 1e-5, int goodIt = 6)
+		NewtonMethod(const G& g, Model& mod, int level, double tol = 1e-6, int maxIt = 12, double mind = 1e-5, int goodIt = 5)
 		: grid(g), model(mod), u(mod.u), f(mod.f), A(mod.A), localJacobian(mod.localJacobian), 
 		  uOldNewtonStep(g, level), tolerance(tol), maxIter(maxIt), minDt(mind), goodIter(goodIt)
 		{ }

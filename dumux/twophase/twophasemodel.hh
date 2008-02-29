@@ -230,7 +230,9 @@ namespace Dune
 	{
 		VTKWriter<G> vtkwriter(this->grid);
 		char fname[128];	
-		sprintf(fname,"%s-%05d",name,k);
+		sprintf(fname,"%s-%05d",name,k); 
+		double minSat = 1e100;
+		double maxSat = -1e100;
 		for (int i = 0; i < size; i++) {
 			pW[i] = (*(this->u))[i][0];
 			//pN[i] = (*(this->u))[i][1];
@@ -239,11 +241,17 @@ namespace Dune
 			//satN[i] = 1 - satW[i];
 			satN[i] = (*(this->u))[i][1];
 			satW[i] = 1 - satN[i];
+			double satNI = satN[i];
+			minSat = std::min(minSat, satNI);
+			maxSat = std::max(maxSat, satNI);
 		}
 		vtkwriter.addVertexData(pW,"wetting phase pressure");
 		vtkwriter.addVertexData(satW,"wetting phase saturation");
 		vtkwriter.addVertexData(satN,"nonwetting phase saturation");
-		vtkwriter.write(fname, VTKOptions::ascii);		
+		vtkwriter.write(fname, VTKOptions::ascii);
+		std::cout << "nonwetting phase saturation: min = " << minSat << ", max = " << maxSat << std::endl;
+		if (minSat < -0.5 || maxSat > 1.5)
+			DUNE_THROW(MathError, "Saturation exceeds range.");	
 	}
 
 protected:
