@@ -48,19 +48,15 @@ namespace Dune
 {
   template<class G, class RT>
   class Box2P2C 
-  : public LeafP1TwoPhaseModel<G, RT, TwoPTwoCProblem<G, RT>, 
-                                 Box2P2CJacobian<G, RT> >
+  : public LeafP1TwoPhaseModel<G, RT, TwoPTwoCProblem<G, RT>, Box2P2CJacobian<G, RT> >
   {
   public:
 	// define the problem type (also change the template argument above)
-	//typedef TwoPhaseProblem<G, RT> ProblemType;
 	typedef TwoPTwoCProblem<G, RT> ProblemType;
-	
+
 	// define the local Jacobian (also change the template argument above)
 	typedef Box2P2CJacobian<G, RT> LocalJacobian;
-	
 	typedef LeafP1TwoPhaseModel<G, RT, ProblemType, LocalJacobian> LeafP1TwoPhaseModel;
-
 	typedef Box2P2C<G, RT> ThisType;
 	
 	Box2P2C(const G& g, ProblemType& prob) 
@@ -103,8 +99,8 @@ namespace Dune
 			this->pW[i] = (*(this->u))[i][0];
 			this->satN[i] = (*(this->u))[i][1];
 			this->satW[i] = 1 - this->satN[i];
-			xWG[i] = this->problem.constrel().Xaw(this->pW[i], 283.15);
-			xAW[i] = this->problem.constrel().Xaw(this->pW[i], 283.15);
+			//xWG[i] = this->problem.constrel().Xaw(this->pW[i], 283.15);
+			//xAW[i] = this->problem.constrel().Xaw(this->pW[i], 283.15);
 		}
 		vtkwriter.addVertexData(this->pW,"wetting phase pressure");
 		vtkwriter.addVertexData(this->satW,"wetting phase saturation");

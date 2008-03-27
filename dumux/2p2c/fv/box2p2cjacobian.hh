@@ -71,8 +71,8 @@ namespace Dune
     typedef typename LocalJacobian<ThisType,G,RT,2>::MBlockType MBlockType;
  	typedef FVElementGeometry<G> FVElementGeometry;
 	enum {pWIdx = 0, satNIdx = 1, numberOfComponents = 2};	// Phase index
-	enum {gaseous = 0, liquid = 1, solid = 2};					// Phase state
- 	enum {water = 0, air = 1};										// Component index					
+ 	enum {gaseous = 0, liquid = 1, solid = 2};					// Phase state
+	enum {water = 0, air = 1};										// Component index					
 	
   public:
     // define the number of phases (m) and components (c) of your system, this is used outside
@@ -102,28 +102,28 @@ namespace Dune
     	return;
     }
 
-    // Compute time dependent terms
+    // Compute time dependent terms (storage)
     // ACHTUNG varNData always contains values from the NEW timestep
     virtual VBlockType computeM (const Entity& e, const VBlockType* sol, int node)
     {
    	 VBlockType result; 
-   	 
    	 RT satN = sol[node][satNIdx];
    	 RT satW = 1.0 - satN;  
-   	 
-   	                  
-   	 // Water Phase
-   	 result[0] = elData.porosity*(varNData[node].density[pWIdx]*satW*varNData[node].massfrac[water][pWIdx]
-                   + varNData[node].density[satNIdx]*satN*varNData[node].massfrac[water][satNIdx]);
-   	 // Gas Phase
-   	 result[1] = elData.porosity*(varNData[node].density[satNIdx]*satN*varNData[node].massfrac[air][satNIdx]
-   	             + varNData[node].density[pWIdx]*satW*varNData[node].massfrac[air][pWIdx]);   
+   	    	                  
+   	 // wetting phase
+   	 result[0] = 
+   		 elData.porosity*(varNData[node].density[pWIdx]*satW*varNData[node].massfrac[water][pWIdx]
+          +varNData[node].density[satNIdx]*satN*varNData[node].massfrac[water][satNIdx]);
+   	 // non-wetting phase
+   	 result[1] = 
+   		 elData.porosity*(varNData[node].density[satNIdx]*satN*varNData[node].massfrac[air][satNIdx]
+   	    +varNData[node].density[pWIdx]*satW*varNData[node].massfrac[air][pWIdx]);   
    	 
    	 //std::cout << result << std::endl;
    	 return result;
     };
     
-    // Compute the Fluxes
+    // Compute advective and diffusive fluxes
     virtual VBlockType computeA (const Entity& e, const VBlockType* sol, int face)
    {
    	 int i = this->fvGeom.subContVolFace[face].i;
@@ -139,27 +139,27 @@ namespace Dune
 		 // calculate FE gradient (grad p for each phase)
 		 for (int k = 0; k < this->fvGeom.nNodes; k++) // loop over nodes
        {	 
-      	 FieldVector<DT,n> grad(this->fvGeom.subContVolFace[face].grad[k]); // receives the FEGradient at node k
+      	 FieldVector<DT,n> grad(this->fvGeom.subContVolFace[face].grad[k]); // FEGradient at node k
       	 FieldVector<DT,m> pressure(0);
       	 pressure[pWIdx] = sol[k][pWIdx];
       	 pressure[satNIdx] = varNData[k].pN;
 
       	 // compute sum of pressure gradients for each phase
-      	 for (int d = 0; d < m; d++)
+      	 for (int phase = 0; phase < m; phase++)
       	 {	      		 
       		 temp = grad;
-      		 temp *= pressure[d];
-      		 pGrad[d] += temp;
+      		 temp *= pressure[phase];
+      		 pGrad[phase] += temp;
       	 }
        }
 
        // deduce gravity*density of each phase
 		 FieldMatrix<RT,m,n> contribComp(0);
-		 for (int d=0; d<m; d++)
+		 for (int phase=0; phase<m; phase++)
 		 {
-			 contribComp[d] = problem.gravity();
-			 contribComp[d] *= varNData[i].density[d];  
-			 pGrad[d] -= contribComp[d]; // grad p -rho*g
+			 contribComp[phase] = problem.gravity();
+			 contribComp[phase] *= varNData[i].density[phase];  
+			 pGrad[phase] -= contribComp[phase]; // grad p -rho*g
 		 }
 	 	 
 		 // calculate the flux using upwind
@@ -170,17 +170,17 @@ namespace Dune
 		 massfraction[2] = varNData[i].massfrac[air][pWIdx];
 		 massfraction[3] = varNData[i].massfrac[air][satNIdx];
 
-		 for (int d=0; d<m; d++)
+		 for (int phase=0; phase<m; phase++)
 		 {
-			 outward[d] = pGrad[d]*Kij;  //K*n(grad p -rho*g)  
+			 outward[phase] = pGrad[phase]*Kij;  //K*n(grad p -rho*g)  
 
-			 if (outward[d] < 0)
+			 if (outward[phase] < 0)
 			 {
-		  			temp[d] = varNData[i].density[d]*varNData[i].mobility[d]*outward[d];
+		  			temp[phase] = varNData[i].density[phase]*varNData[i].mobility[phase]*outward[phase];
 			 }
 			 else
 			 { 
-		  			temp[d] = varNData[j].density[d]*varNData[j].mobility[d]*outward[d];
+		  			temp[phase] = varNData[j].density[phase]*varNData[j].mobility[phase]*outward[phase];
 			 }
 		 }
 		 // water conservation
@@ -209,7 +209,8 @@ namespace Dune
     virtual void computeElementData (const Entity& e)
     {
   		 // ASSUME element-wise constant parameters for the material law 
- 		 elData.parameters = problem.materialLawParameters(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+ 		 elData.parameters = problem.materialLawParameters
+ 		 (this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
    	 
 		 // ASSUMING element-wise constant permeability, evaluate K at the cell center 
  		 elData.K = problem.K(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);  
@@ -293,9 +294,9 @@ namespace Dune
          varNData[i].density[pWIdx] = problem.materialLaw().wettingPhase.density();
          varNData[i].density[satNIdx] = problem.materialLaw().nonwettingPhase.density();
          // Solubilities of components in phases
-         varNData[i].massfrac[air][pWIdx] = 	0;//problem.constrel().Xaw(sol[i][pWIdx], varNData[i].temperature);
+         varNData[i].massfrac[air][pWIdx] = 	problem.constrel().Xaw(sol[i][pWIdx], varNData[i].temperature);
          varNData[i].massfrac[water][pWIdx] = 1.0 - varNData[i].massfrac[air][pWIdx];
-         varNData[i].massfrac[water][satNIdx] = 0;//problem.constrel().Xwg(varNData[i].pN, varNData[i].temperature);
+         varNData[i].massfrac[water][satNIdx] = problem.constrel().Xwg(varNData[i].pN, varNData[i].temperature);
          varNData[i].massfrac[air][satNIdx] = 1.0 - varNData[i].massfrac[water][satNIdx];
    	 }   	 
     }
@@ -317,7 +318,7 @@ namespace Dune
        RT temperature;
        VBlockType mobility;  //Vector with the number of phases
        VBlockType density;
-       MBlockType massfrac;
+       FieldMatrix<DT,n,n> massfrac;
     };
     
     struct ElementData {

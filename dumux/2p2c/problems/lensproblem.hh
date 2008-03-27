@@ -47,6 +47,7 @@ namespace Dune
 	enum {pWIdx = 0, sNIdx = 1};
 	enum {swrIdx = 0, snrIdx = 1, alphaIdx = 2, nIdx = 3};
 
+	// permeabilities
 	virtual const FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x, const Entity& e, 
 					const FieldVector<DT,n>& xi)
 	{
@@ -57,6 +58,7 @@ namespace Dune
 			return outerK_;
 	}
 
+	// sources and sinks
 	virtual FieldVector<RT,m> q (const FieldVector<DT,n>& x, const Entity& e, 
 					const FieldVector<DT,n>& xi) const
 	{
@@ -65,6 +67,7 @@ namespace Dune
 		return values;
 	}
 
+	// type of the boundary conditions
 	virtual FieldVector<BoundaryConditions::Flags, m> bctype (const FieldVector<DT,n>& x, const Entity& e, 
 					const IntersectionIterator& intersectionIt, 
 					   const FieldVector<DT,n>& xi) const 
@@ -83,6 +86,7 @@ namespace Dune
 		return values;
 	}
 
+	// DIRICHLET boundaries
 	virtual FieldVector<RT,m> g (const FieldVector<DT,n>& x, const Entity& e, 
 				const IntersectionIterator& intersectionIt, 
 				  const FieldVector<DT,n>& xi) const 
@@ -104,7 +108,8 @@ namespace Dune
 		
 		return values;
 	}
-	  
+
+	// NEUMANN boundaries
 	virtual FieldVector<RT,m> J (const FieldVector<DT,n>& x, const Entity& e, 
 				const IntersectionIterator& intersectionIt, 
 				  const FieldVector<DT,n>& xi) const 
@@ -119,6 +124,7 @@ namespace Dune
 		return values;
 	}
 	  
+	// INITIAL values
 	virtual FieldVector<RT,m> initial (const FieldVector<DT,n>& x, const Entity& e, 
 				  const FieldVector<DT,n>& xi) const 
 	{
