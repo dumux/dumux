@@ -228,7 +228,6 @@ namespace Dune
     	*oldSolution = *uOld;
     }
   
-  private:
 	    template<class TypeTag>
 		void assembleBC (const Entity& e)
 		{

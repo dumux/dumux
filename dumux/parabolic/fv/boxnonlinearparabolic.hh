@@ -28,6 +28,8 @@ namespace Dune
 
 	typedef BoxNonlinearParabolic<G, RT> ThisType;
 	
+        typedef typename LeafP1NonlinearParabolic::FunctionType FunctionType;
+
 	BoxNonlinearParabolic(const G& g, ProblemType& prob) 
 	: LeafP1NonlinearParabolic(g, prob)
 	{ 	}
@@ -47,6 +49,10 @@ namespace Dune
 		
 		return;		
 	}
+
+    void globalDefect(FunctionType& defectGlobal)
+    {   
+    }
 
 	void update (double& dt)
 	{
