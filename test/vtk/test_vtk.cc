@@ -19,7 +19,7 @@
 #include "dumux/diffusion/mimetic/mimeticdiffusion.hh"
 #include "dumux/diffusion/problems/heterogeneousproblem.hh"
 #include "dumux/diffusion/problems/uniformproblem.hh"
-#include "annikaproblem.hh" 
+//#include "annikaproblem.hh" 
  
 int main(int argc, char** argv) 
 {
@@ -54,7 +54,8 @@ int main(int argc, char** argv)
     
     // Dune::HeterogeneousProblem<GridType, NumberType> problem(grid, "permeab.dat", true);
     //printvector(std::cout, *(problem.permeability), "permeability", "row", 200, 1);
-    Dune::AnnikaProblem<GridType, NumberType> problem;
+    Dune::UniformProblem<GridType, NumberType> problem;
+    //Dune::AnnikaProblem<GridType, NumberType> problem;
     //problem.permeability.vtkout("permeability", grid);
 
     Dune::Timer timer;
