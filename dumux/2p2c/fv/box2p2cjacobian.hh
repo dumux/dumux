@@ -72,17 +72,17 @@ namespace Dune
     typedef typename LocalJacobian<ThisType,G,RT,2>::VBlockType VBlockType;
     typedef typename LocalJacobian<ThisType,G,RT,2>::MBlockType MBlockType;
  	typedef FVElementGeometry<G> FVElementGeometry;
-	enum {pWIdx = 0, satNIdx = 1, numberOfComponents = 2};	// Phase index
-	enum {wPhase = 0, nPhase=1};										// Phase index
+	enum {pWIdx = 0, satNIdx = 1, numberOfComponents = 2};	// Solution vector index
+	enum {wPhase = 0, nPhase = 1};									// Phase index
 	enum {gasPhase = 0, waterPhase = 1, bothPhases = 2};		// Phase state
 	enum {water = 0, air = 1};										// Component index					
 	
   public:
     // define the number of phases (m) and components (c) of your system, this is used outside
     // to allocate the correct size of (dense) blocks with a FieldMatrix
-    enum {n=G::dimension};
-    enum {m=2, c=2}; 
-    enum {SIZE=LagrangeShapeFunctionSetContainer<DT,RT,n>::maxsize};
+    enum {dim=G::dimension};
+    enum {m=2, c=2};
+    enum {SIZE=LagrangeShapeFunctionSetContainer<DT,RT,dim>::maxsize};
     
     //! Constructor
     Box2P2CJacobian (TwoPTwoCProblem<G,RT>& params,
@@ -98,12 +98,12 @@ namespace Dune
 
 
     virtual void primaryVarSwitch (const VBlockType* sol, const Entity& e, int i, 
-   		 FieldMatrix<DT,n,n>& massfrac, int state)
+   		 FieldMatrix<RT,m,c>& massfrac, int state)
     {
-        double Sw, Xaw, Xwg, Xamax;
+        RT Sw, Xaw, Xwg, Xamax;
 
         Sw      = sol[i][satNIdx];
-        Xamax = 0.5;
+        Xamax = 0.5; // Needs to be changed !!!
 
 //        state   = statNData[globalId].phaseState[0];
         Xaw   	 = massfrac[air][wPhase];
@@ -194,12 +194,12 @@ namespace Dune
    	    	                  
    	 // wetting phase
    	 result[0] = 
-   		 elData.porosity*(varNData[node].density[wPhase]*  satW*varNData[node].massfrac[water][wPhase]
+   		 elData.porosity*(varNData[node].density[wPhase]*satW*varNData[node].massfrac[water][wPhase]
    		                 +varNData[node].density[nPhase]*satN*varNData[node].massfrac[water][nPhase]);
    	 // non-wetting phase
    	 result[1] = 
    		 elData.porosity*(varNData[node].density[nPhase]*satN*varNData[node].massfrac[air][nPhase]
-   	                    +varNData[node].density[wPhase]*  satW*varNData[node].massfrac[air][wPhase]);   
+   	                    +varNData[node].density[wPhase]*satW*varNData[node].massfrac[air][wPhase]);   
    	 
    	 //std::cout << result << " " << node << std::endl;
    	 return result;
@@ -210,21 +210,21 @@ namespace Dune
     {
    	 int i = this->fvGeom.subContVolFace[face].i;
      	 int j = this->fvGeom.subContVolFace[face].j;
-     	 FieldVector<RT,n> normal(this->fvGeom.subContVolFace[face].normal);
+     	 FieldVector<RT,dim> normal(this->fvGeom.subContVolFace[face].normal);
 
      	 VBlockType flux;
-		 FieldMatrix<RT,m,n> pGrad(0); 
-		 FieldVector<RT,n> xGrad(0), temp(0); 
+		 FieldMatrix<RT,m,dim> pGrad(0); 
+		 FieldVector<RT,dim> xGrad(0), temp(0); 
      	 
 		 // permeability in edge direction 
-     	 FieldVector<DT,n> Kij(0);
+     	 FieldVector<RT,dim> Kij(0);
 		 elData.K.umv(normal, Kij);  // K*n
 		 
 		 // calculate FE gradient (grad p for each phase)
 		 for (int k = 0; k < this->fvGeom.nNodes; k++) // loop over adjacent nodes
        {	 
-      	 FieldVector<DT,n> feGrad(this->fvGeom.subContVolFace[face].grad[k]); // FEGradient at node k
-       	 FieldVector<DT,m> pressure(0), massfrac(0);
+      	 FieldVector<DT,dim> feGrad(this->fvGeom.subContVolFace[face].grad[k]); // FEGradient at node k
+       	 FieldVector<RT,m> pressure(0), massfrac(0);
 
       	 pressure[wPhase] = sol[k][pWIdx];
       	 pressure[nPhase] = varNData[k].pN;
@@ -248,7 +248,7 @@ namespace Dune
        }
 
        // deduce gravity*density of each phase
-		 FieldMatrix<RT,m,n> contribComp(0);
+		 FieldMatrix<RT,m,dim> contribComp(0);
 		 for (int phase=0; phase<m; phase++)
 		 {
 			 contribComp[phase] = problem.gravity();
@@ -256,7 +256,7 @@ namespace Dune
 			 pGrad[phase] -= contribComp[phase]; // grad p -rho*g
 		 }
 	 	 
-		 FieldVector<RT,m> outward(0);  // Darcy velocity of each phase
+		 VBlockType outward(0);  // Darcy velocity of each phase
 		 FieldVector<RT,4> massfraction;
 		 massfraction[0] = varNData[i].massfrac[water][wPhase];
 		 massfraction[1] = varNData[i].massfrac[water][nPhase];
@@ -276,8 +276,8 @@ namespace Dune
 		 
 		 // DIFFUSION
 		 RT normDiffGrad, diffusionWG;
-		 FieldVector<RT,m> avgDensity, avgDpm(0);
-		 avgDpm[wPhase]=1e-9;
+		 VBlockType avgDensity, avgDpm(0);
+		 avgDpm[wPhase]=1e-9; // needs to be changed !!!
 		 
 		 normDiffGrad = xGrad*normal;
 		 avgDensity[wPhase] = 0.5*(varNData[i].density[wPhase] + varNData[j].density[wPhase]);
@@ -339,12 +339,12 @@ namespace Dune
 
   	  // get access to shape functions for P1 elements
   	  GeometryType gt = e.geometry().type();
-  	  const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::value_type& 
-  	  sfs=Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt,1);
+  	  const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type& 
+  	  sfs=Dune::LagrangeShapeFunctions<DT,RT,dim>::general(gt,1);
 
   	  // get local to global id map
   	  for (int k = 0; k < sfs.size(); k++) {
-  		  int globalId = this->vertexMapper.template map<n>(e, sfs[k].entity());
+  		  int globalId = this->vertexMapper.template map<dim>(e, sfs[k].entity());
   		  
   		  // if nodes are not already visited
   		  if (!statNData[globalId].visited) 
@@ -432,7 +432,7 @@ namespace Dune
        RT temperature;
        VBlockType mobility;  //Vector with the number of phases
        VBlockType density;
-       FieldMatrix<DT,n,n> massfrac;
+       FieldMatrix<RT,dim,dim> massfrac;
     };
     
     struct ElementData {
@@ -440,7 +440,7 @@ namespace Dune
     	 RT porosity;
    	 RT gravity;
    	 FieldVector<RT, 4> parameters;
-   	 FieldMatrix<DT,n,n> K;
+   	 FieldMatrix<RT,dim,dim> K;
    	 } elData;
     
     // parameters given in constructor
