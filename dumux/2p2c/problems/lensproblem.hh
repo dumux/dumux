@@ -44,7 +44,7 @@ namespace Dune
 	typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
 
   public:
-	enum {pWIdx = 0, sNIdx = 1};
+	enum {pWIdx = 0, satNIdx = 1};
 	enum {swrIdx = 0, snrIdx = 1, alphaIdx = 2, nIdx = 3};
 
 	// permeabilities
@@ -72,12 +72,15 @@ namespace Dune
 					const IntersectionIterator& intersectionIt, 
 					   const FieldVector<DT,n>& xi) const 
 	{
-		FieldVector<BoundaryConditions::Flags, m> values(BoundaryConditions::neumann); 
+//		FieldVector<BoundaryConditions::Flags, m> values(BoundaryConditions::neumann); 
+		FieldVector<BoundaryConditions::Flags, m> values(BoundaryConditions::dirichlet); 
 
-		if (x[0] < outerLowerLeft_[0] + eps_ || x[0] > outerUpperRight_[0] - eps_) {
-			//std::cout << "Dirichlet: " << x << std::endl;
-			values = BoundaryConditions::dirichlet;
-		}
+
+//		if (x[0] < outerLowerLeft_[0] + eps_ || x[0] > outerUpperRight_[0] - eps_) {
+//			//std::cout << "Dirichlet: " << x << std::endl;
+//			values = BoundaryConditions::dirichlet;
+//		}
+		
 //		if (values[0] == BoundaryConditions::dirichlet)
 //			std::cout << "Dirichlet: " << x[0] << ", " << x[1] << std::endl;
 //		else 
@@ -93,18 +96,21 @@ namespace Dune
 	{
 		FieldVector<RT,m> values(0);
 
-		if (x[0] < outerLowerLeft_[0] + eps_) {
-			RT a = -(1 + 0.5/height_);
-			RT b = -a*outerUpperRight_[1];
-			values[pWIdx] = -densityW_*gravity_[1]*(a*x[1] + b);
-			values[sNIdx] = outerSnr_;
-		}
-		else {
-			RT a = -1;
-			RT b = outerUpperRight_[1];
-			values[pWIdx] = -densityW_*gravity_[1]*(a*x[1] + b);
-			values[sNIdx] = outerSnr_;			
-		}
+		values[pWIdx] = -densityW_*gravity_[1]*x[1];	//(a*x[1] + b);
+		values[satNIdx] = outerSnr_;
+
+//		if (x[0] < outerLowerLeft_[0] + eps_) {
+//			RT a = -(1 + 0.5/height_);
+//			RT b = -a*outerUpperRight_[1];
+//			values[pWIdx] = -densityW_*gravity_[1]*x[1];	//(a*x[1] + b);
+//			values[satNIdx] = outerSnr_;
+//		}
+//		else {
+//			RT a = -1;
+//			RT b = outerUpperRight_[1];
+//			values[pWIdx] = -densityW_*gravity_[1]*(a*x[1] + b);
+//			values[satNIdx] = outerSnr_;			
+//		}
 		
 		return values;
 	}
@@ -118,7 +124,7 @@ namespace Dune
 
 		RT lambda = (outerUpperRight_[0] - x[0])/width_;
 		if (lambda > 0.5 && lambda < 2.0/3.0 && x[1] > outerUpperRight_[1] - eps_) {
-			values[sNIdx] = -0.04;
+			values[satNIdx] = -0.01; //0.04
 		}
 		
 		return values;
@@ -134,16 +140,16 @@ namespace Dune
 		values[pWIdx] = -densityW_*gravity_[1]*(height_ - x[1]);
 		
 		if (x[0] < outerLowerLeft_[0] + eps_) {
-			RT a = -(1 + 0.5/height_);
-			RT b = -a*outerUpperRight_[1];
-			values[pWIdx] = -densityW_*gravity_[1]*(a*x[1] + b);
+//			RT a = -(1 + 0.5/height_);
+//			RT b = -a*outerUpperRight_[1];
+//			values[pWIdx] = -densityW_*gravity_[1]*(a*x[1] + b);
 		}
 		
 		if (x[0] > innerLowerLeft_[0] && x[0] < innerUpperRight_[0] 
 		    && x[1] > innerLowerLeft_[1] && x[1] < innerUpperRight_[1])
-			values[sNIdx] = innerSnr_;
+			values[satNIdx] = innerSnr_;
 		else
-			values[sNIdx] = outerSnr_;
+			values[satNIdx] = outerSnr_;
 	
 		return values;
 	}
@@ -188,11 +194,11 @@ namespace Dune
 	LensProblem(TwoPhaseRelations& law = *(new LinearLaw), 
 			const FieldVector<DT,n> outerLowerLeft = 0, const FieldVector<DT,n> outerUpperRight = 0, 
 			const FieldVector<DT,n> innerLowerLeft = 0, const FieldVector<DT,n> innerUpperRight = 0, 
-			RT outerK = 4.6e-10, RT innerK = 9.05e-13, 
-			RT outerSwr = 0.05, RT outerSnr = 0, RT innerSwr = 0.18, RT innerSnr = 0, 
+			RT outerK = 4.6e-10, RT innerK = 4.6e-10,		//9.05e-13, 
+			RT outerSwr = 0.05, RT outerSnr = 0.0, RT innerSwr = 0.05, RT innerSnr = 0.0, 
 			RT outerPorosity = 0.4, RT innerPorosity = 0.4, 
-			RT outerAlpha = 0.0037, RT innerAlpha = 0.00045, 
-			RT outerN = 4.7, RT innerN = 7.3)
+			RT outerAlpha = 0.0037, RT innerAlpha = 0.0037,	//0.00045, 
+			RT outerN = 4.7, RT innerN = 4.7)  //7.3
 	: TwoPTwoCProblem<G, RT>(law), 
 	  outerLowerLeft_(outerLowerLeft), outerUpperRight_(outerUpperRight), 
 	  innerLowerLeft_(innerLowerLeft), innerUpperRight_(innerUpperRight), 
