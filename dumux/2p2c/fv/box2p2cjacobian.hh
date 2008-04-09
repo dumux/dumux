@@ -218,7 +218,7 @@ namespace Dune
      	 
 		 // permeability in edge direction 
      	 FieldVector<RT,dim> Kij(0);
-		 elData.K.umv(normal, Kij);  // K*n
+		 elData.K.umv(normal, Kij);  // Kij=K*n
 		 
 		 // calculate FE gradient (grad p for each phase)
 		 for (int k = 0; k < this->fvGeom.nNodes; k++) // loop over adjacent nodes
@@ -229,8 +229,8 @@ namespace Dune
       	 pressure[wPhase] = sol[k][pWIdx];
       	 pressure[nPhase] = varNData[k].pN;
       	 
-      	 massfrac[wPhase] = varNData[i].massfrac[water][nPhase]; // water in gas phase
-      	 massfrac[nPhase] = varNData[i].massfrac[air][wPhase];	// air in water phase
+      	 massfrac[wPhase] = varNData[k].massfrac[water][nPhase]; // water in gas phase
+      	 massfrac[nPhase] = varNData[k].massfrac[air][wPhase];	// air in water phase
       	 
       	 // compute sum of pressure gradients for each phase
       	 for (int phase = 0; phase < m; phase++)
@@ -253,7 +253,7 @@ namespace Dune
 		 {
 			 contribComp[phase] = problem.gravity();
 			 contribComp[phase] *= varNData[i].density[phase];  
-			 pGrad[phase] -= contribComp[phase]; // grad p -rho*g
+			 pGrad[phase] -= contribComp[phase]; // grad p - rho*g
 		 }
 	 	 
 		 VBlockType outward(0);  // Darcy velocity of each phase
@@ -283,11 +283,11 @@ namespace Dune
 		 avgDensity[wPhase] = 0.5*(varNData[i].density[wPhase] + varNData[j].density[wPhase]);
 		 
 		 diffusionWG = avgDpm[wPhase] * avgDensity[wPhase] * normDiffGrad;
-		 std::cout << "Diffusive Flux: " << diffusionWG << std::endl; 
+//		 std::cout << "Diffusive Flux: " << diffusionWG << std::endl; 
 		 
 		 
 		 // water conservation
-		 flux[water] = diffusionWG + massfraction[wPhase]*temp[wPhase]+massfraction[nPhase]*temp[nPhase];
+		 flux[water] = /*diffusionWG +*/ massfraction[wPhase]*temp[wPhase]+massfraction[nPhase]*temp[nPhase];
 		 // air conservation
 		 flux[air] = massfraction[wPhase+c]*temp[wPhase]+massfraction[nPhase+c]*temp[nPhase];
 
@@ -408,14 +408,17 @@ namespace Dune
          varNData[i].density[wPhase] = problem.materialLaw().wettingPhase.density();
          varNData[i].density[nPhase] = problem.materialLaw().nonwettingPhase.density();
          // Solubilities of components in phases
-         varNData[i].massfrac[air][wPhase] = 	problem.constrel().Xaw(varNData[i].pN, varNData[i].temperature);
+         varNData[i].massfrac[air][wPhase] = problem.constrel().Xaw(varNData[i].pN, varNData[i].temperature);
          varNData[i].massfrac[water][wPhase] = 1.0 - varNData[i].massfrac[air][wPhase];
          varNData[i].massfrac[water][nPhase] = problem.constrel().Xwg(varNData[i].pN, varNData[i].temperature);
          varNData[i].massfrac[air][nPhase] = 1.0 - varNData[i].massfrac[water][nPhase];
+         std::cout << "water in gasphase: " << varNData[i].massfrac[water][nPhase] << std::endl;
+         std::cout << "air in waterphase: " << varNData[i].massfrac[air][wPhase] << std::endl;
    	 }   	 
     }
     
     
+    // the members of the structs are defined here
     struct StaticNodeData 
     {
     	bool visited;
@@ -423,7 +426,6 @@ namespace Dune
     	int phaseState[numberOfComponents];
     };
     
-       // the members of the struct are defined here
     struct VariableNodeData  
     {
        RT saturationW;
