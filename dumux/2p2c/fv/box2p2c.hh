@@ -99,8 +99,8 @@ namespace Dune
 			this->pW[i] = (*(this->u))[i][0];
 			this->satN[i] = (*(this->u))[i][1];
 			this->satW[i] = 1 - this->satN[i];
-			//xWG[i] = this->problem.constrel().Xaw(this->pW[i], 283.15);
-			//xAW[i] = this->problem.constrel().Xaw(this->pW[i], 283.15);
+			xWG[i] = this->problem.constrel().Xwg(this->pW[i], 283.15);
+			xAW[i] = this->problem.constrel().Xaw(this->pW[i], 283.15);
 		}
 		vtkwriter.addVertexData(this->pW,"wetting phase pressure");
 		vtkwriter.addVertexData(this->satW,"wetting phase saturation");

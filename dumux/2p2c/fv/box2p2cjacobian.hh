@@ -208,76 +208,88 @@ namespace Dune
     // Compute advective and diffusive fluxes
     virtual VBlockType computeA (const Entity& e, const VBlockType* sol, int face)
     {
+     	 enum {iNode=0, jNode=1};
+
    	 int i = this->fvGeom.subContVolFace[face].i;
      	 int j = this->fvGeom.subContVolFace[face].j;
-     	 FieldVector<RT,dim> normal(this->fvGeom.subContVolFace[face].normal);
 
+     	 FieldVector<RT,dim> normal(this->fvGeom.subContVolFace[face].normal);
      	 VBlockType flux;
 		 FieldMatrix<RT,m,dim> pGrad(0); 
-		 FieldVector<RT,dim> xGrad(0), temp(0); 
-     	 
+		 FieldVector<RT,dim> xGrad(0); 
+    	 FieldVector<RT,m> deltaP(0); 
+    	 FieldVector<RT,m> massfrac(0); 
+    	 FieldVector<RT,m> potGrad(0); 
+    	 FieldVector<RT,m> zCoord(0);
+    	 FieldMatrix<RT,m,dim> globalCoord(0);
+ 		 FieldVector<DT,dim> gravity = problem.gravity();
+   		 
+ 		 zCoord[iNode] = (4 - this->fvGeom.subContVol[i].global[dim-1]);
+ 		 zCoord[jNode] = (4 - this->fvGeom.subContVol[j].global[dim-1]);
+		 
+		 FieldVector<DT,dim> solution;
+		 solution[iNode] = sol[i][satNIdx];
+		 solution[jNode] = sol[j][satNIdx];
+
+		 // calculate potentials at nodes i and j
+		 FieldMatrix<RT,m,2> potential(0);   		 
+		 
+		 potential[iNode][wPhase] = sol[i][pWIdx] - varNData[i].density[wPhase]*gravity[dim-1]*zCoord[iNode];
+		 potential[iNode][nPhase] = varNData[i].pN - varNData[i].density[nPhase]*gravity[dim-1]*zCoord[iNode];
+
+		 potential[jNode][wPhase] = sol[j][pWIdx] - varNData[j].density[wPhase]*gravity[dim-1]*zCoord[jNode];
+		 potential[jNode][nPhase] = varNData[j].pN - varNData[j].density[nPhase]*gravity[dim-1]*zCoord[jNode];
+
+		 potGrad = potential[iNode]-potential[jNode];
+
+		 // evaluate upwind nodes
+		 int up_w, dn_w, up_n, dn_n;
+		 if (potGrad[wPhase] <= 0) {up_w = i; dn_w = j;}
+		 else {up_w = j; dn_w = i;};
+		 if (potGrad[nPhase] <= 0) {up_n = i; dn_n = j;}
+		 else {up_n = j; dn_n = i;};
+
+    	 FieldMatrix<RT,m,dim> contribComp(0); 
+		 // compute fvGrad * (Potential[j]-Potential[i])
+   	 for (int phase = 0; phase < m; phase++)
+   	 {	      		 
+   		 FieldVector<RT,dim> feGrad(this->fvGeom.subContVolFace[face].grad[j]);   		 
+   		 feGrad *= potGrad[phase];
+   		 contribComp[phase] += feGrad;
+   	 }
+
+	 	 
+		 VBlockType outward(0);  // Darcy velocity of each phase
+
 		 // permeability in edge direction 
      	 FieldVector<RT,dim> Kij(0);
 		 elData.K.umv(normal, Kij);  // Kij=K*n
-		 
-		 // calculate FE gradient (grad p for each phase)
-		 for (int k = 0; k < this->fvGeom.nNodes; k++) // loop over adjacent nodes
-       {	 
-      	 FieldVector<DT,dim> feGrad(this->fvGeom.subContVolFace[face].grad[k]); // FEGradient at node k
-       	 FieldVector<RT,m> pressure(0), massfrac(0);
 
-      	 pressure[wPhase] = sol[k][pWIdx];
-      	 pressure[nPhase] = varNData[k].pN;
-      	 
-      	 massfrac[wPhase] = varNData[k].massfrac[water][nPhase]; // water in gas phase
-      	 massfrac[nPhase] = varNData[k].massfrac[air][wPhase];	// air in water phase
-      	 
-      	 // compute sum of pressure gradients for each phase
-      	 for (int phase = 0; phase < m; phase++)
-      	 {	      		 
-      		 temp = feGrad;
-      		 temp *= pressure[phase];
-      		 pGrad[phase] += temp;
-      	 }
+		 // calculate the ADVECTIVE flux using upwind
+		 outward[wPhase] = contribComp[wPhase]*Kij;  //K*n(grad p -rho*g)  
+		 outward[nPhase] = contribComp[nPhase]*Kij;  //K*n(grad p -rho*g)  
 
-      	 // compute sum of concentration gradient
-      	 // only water diffusion in the gas phase considered !!!
-      	 temp = feGrad;
-      	 temp *= massfrac[water];
-      	 xGrad += temp;
-       }
-
-       // deduce gravity*density of each phase
-		 FieldMatrix<RT,m,dim> contribComp(0);
-		 for (int phase=0; phase<m; phase++)
-		 {
-			 contribComp[phase] = problem.gravity();
-			 contribComp[phase] *= varNData[i].density[phase];  
-			 pGrad[phase] -= contribComp[phase]; // grad p - rho*g
-		 }
-	 	 
-		 VBlockType outward(0);  // Darcy velocity of each phase
-		 FieldVector<RT,4> massfraction;
-		 massfraction[0] = varNData[i].massfrac[water][wPhase];
-		 massfraction[1] = varNData[i].massfrac[water][nPhase];
-		 massfraction[2] = varNData[i].massfrac[air][wPhase];
-		 massfraction[3] = varNData[i].massfrac[air][nPhase];
-
-		 // calculate the advective flux using upwind
-		 for (int phase=0; phase<m; phase++)
-		 {
-			 outward[phase] = pGrad[phase]*Kij;  //K*n(grad p -rho*g)  
-
-			 if (outward[phase] <= 0)
-				 temp[phase] = varNData[i].density[phase]*varNData[i].mobility[phase]*outward[phase];
-			 else
-				 temp[phase] = varNData[j].density[phase]*varNData[j].mobility[phase]*outward[phase];
-		 }
-		 
+		 // Water conservation
+		 flux[water] = varNData[up_w].density[wPhase]*varNData[up_w].mobility[wPhase]
+				               * varNData[up_w].massfrac[water][wPhase] * outward[wPhase] 
+				               + varNData[up_n].density[nPhase]*varNData[up_n].mobility[nPhase]
+				               * varNData[up_n].massfrac[water][nPhase] * outward[nPhase];
+		 // air conservation
+		 flux[air]   = varNData[up_n].density[nPhase]*varNData[up_n].mobility[nPhase]
+				               * varNData[up_n].massfrac[air][nPhase] * outward[nPhase]
+				               + varNData[up_w].density[wPhase]*varNData[up_w].mobility[wPhase]
+				               * varNData[up_w].massfrac[air][wPhase] * outward[wPhase];
+			 		 
 		 // DIFFUSION
+   	 // compute sum of concentration gradient
+   	 // only water diffusion in the gas phase considered !!!
+		 FieldVector<RT,dim> feGrad(this->fvGeom.subContVolFace[face].grad[j]);   		 
+   	 feGrad *= (varNData[j].massfrac[water][nPhase] - varNData[i].massfrac[water][nPhase]);
+   	 xGrad += feGrad;
+
 		 RT normDiffGrad, diffusionWG;
 		 VBlockType avgDensity, avgDpm(0);
-		 avgDpm[wPhase]=1e-9; // needs to be changed !!!
+		 avgDpm[wPhase] = 1e-9; // needs to be changed !!!
 		 
 		 normDiffGrad = xGrad*normal;
 		 avgDensity[wPhase] = 0.5*(varNData[i].density[wPhase] + varNData[j].density[wPhase]);
@@ -287,9 +299,9 @@ namespace Dune
 		 
 		 
 		 // water conservation
-		 flux[water] = /*diffusionWG +*/ massfraction[wPhase]*temp[wPhase]+massfraction[nPhase]*temp[nPhase];
+//		 flux[water] += diffusionWG;
 		 // air conservation
-		 flux[air] = massfraction[wPhase+c]*temp[wPhase]+massfraction[nPhase+c]*temp[nPhase];
+		 flux[air] = flux[air];
 
 
 		 return flux;
@@ -404,7 +416,7 @@ namespace Dune
          varNData[i].temperature = 283.15; // in [K]
          // Mobilities & densities
          varNData[i].mobility[wPhase] = problem.materialLaw().mobW(varNData[i].saturationW, elData.parameters);
-         varNData[i].mobility[nPhase] = problem.materialLaw().mobN(sol[i][nPhase], elData.parameters);
+         varNData[i].mobility[nPhase] = problem.materialLaw().mobN(sol[i][satNIdx], elData.parameters);
          varNData[i].density[wPhase] = problem.materialLaw().wettingPhase.density();
          varNData[i].density[nPhase] = problem.materialLaw().nonwettingPhase.density();
          // Solubilities of components in phases
@@ -412,8 +424,8 @@ namespace Dune
          varNData[i].massfrac[water][wPhase] = 1.0 - varNData[i].massfrac[air][wPhase];
          varNData[i].massfrac[water][nPhase] = problem.constrel().Xwg(varNData[i].pN, varNData[i].temperature);
          varNData[i].massfrac[air][nPhase] = 1.0 - varNData[i].massfrac[water][nPhase];
-         std::cout << "water in gasphase: " << varNData[i].massfrac[water][nPhase] << std::endl;
-         std::cout << "air in waterphase: " << varNData[i].massfrac[air][wPhase] << std::endl;
+         //std::cout << "water in gasphase: " << varNData[i].massfrac[water][nPhase] << std::endl;
+         //std::cout << "air in waterphase: " << varNData[i].massfrac[air][wPhase] << std::endl;
    	 }   	 
     }
     

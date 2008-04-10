@@ -40,7 +40,7 @@ namespace Dune
   template<class G, class RT>
   class TwoPTwoCProblem {
 	typedef typename G::ctype DT;
-	enum {n=G::dimension, m=2};
+	enum {dim=G::dimension, m=2};
 	typedef typename G::Traits::template Codim<0>::Entity Entity;
 	typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
 
@@ -52,8 +52,8 @@ namespace Dune
 	  @param[in]  xi   position in reference element of e
 	  @param[out] D    diffusion tensor to be filled
 	 */
-	virtual const FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x, const Entity& e, 
-					const FieldVector<DT,n>& xi) = 0;
+	virtual const FieldMatrix<DT,dim,dim>& K (const FieldVector<DT,dim>& x, const Entity& e, 
+					const FieldVector<DT,dim>& xi) = 0;
 
 	//! evaluate source term
 	/*! evaluate source term at given location
@@ -62,51 +62,51 @@ namespace Dune
 	  @param[in]  xi   position in reference element of e
 	  \return     value of source term
 	 */
-	virtual FieldVector<RT,m> q (const FieldVector<DT,n>& x, const Entity& e, 
-					const FieldVector<DT,n>& xi) const = 0;
+	virtual FieldVector<RT,m> q (const FieldVector<DT,dim>& x, const Entity& e, 
+					const FieldVector<DT,dim>& xi) const = 0;
 
 	//! return type of boundary condition at the given global coordinate
 	/*! return type of boundary condition at the given global coordinate
 	  @param[in]  x    position in global coordinates
 	  \return     boundary condition type given by enum in this class
 	 */
-	virtual FieldVector<BoundaryConditions::Flags, m> bctype (const FieldVector<DT,n>& x, const Entity& e, 
+	virtual FieldVector<BoundaryConditions::Flags, m> bctype (const FieldVector<DT,dim>& x, const Entity& e, 
 					const IntersectionIterator& intersectionIt, 
-					   const FieldVector<DT,n>& xi) const = 0;
+					   const FieldVector<DT,dim>& xi) const = 0;
 
 	//! evaluate Dirichlet boundary condition at given position
 	/*! evaluate Dirichlet boundary condition at given position
 	  @param[in]  x    position in global coordinates
 	  \return     boundary condition value
 	 */
-	virtual FieldVector<RT,m> g (const FieldVector<DT,n>& x, const Entity& e, 
+	virtual FieldVector<RT,m> g (const FieldVector<DT,dim>& x, const Entity& e, 
 				const IntersectionIterator& intersectionIt, 
-				  const FieldVector<DT,n>& xi) const = 0;
+				  const FieldVector<DT,dim>& xi) const = 0;
 	  
 	//! evaluate Neumann boundary condition at given position
 	/*! evaluate Neumann boundary condition at given position
 	  @param[in]  x    position in global coordinates
 	  \return     boundary condition value
 	 */
-	virtual FieldVector<RT,m> J (const FieldVector<DT,n>& x, const Entity& e, 
+	virtual FieldVector<RT,m> J (const FieldVector<DT,dim>& x, const Entity& e, 
 				const IntersectionIterator& intersectionIt, 
-				  const FieldVector<DT,n>& xi) const = 0;
+				  const FieldVector<DT,dim>& xi) const = 0;
 	  
 	//! evaluate initial condition at given position
 	/*! evaluate initial boundary condition at given position
 	  @param[in]  x    position in global coordinates
 	  \return     boundary condition value
 	 */
-	virtual FieldVector<RT,m> initial (const FieldVector<DT,n>& x, const Entity& e, 
-				  const FieldVector<DT,n>& xi) const = 0;
+	virtual FieldVector<RT,m> initial (const FieldVector<DT,dim>& x, const Entity& e, 
+				  const FieldVector<DT,dim>& xi) const = 0;
 	  
-	virtual double porosity(const FieldVector<DT,n>& x, const Entity& e, 
-			  const FieldVector<DT,n>& xi) const = 0;
+	virtual double porosity(const FieldVector<DT,dim>& x, const Entity& e, 
+			  const FieldVector<DT,dim>& xi) const = 0;
 	
-	virtual FieldVector<RT,n> gravity () const = 0;
+	virtual FieldVector<RT,dim> gravity () const = 0;
 
-	virtual FieldVector<RT,4> materialLawParameters (const FieldVector<DT,n>& x, const Entity& e, 
-			  const FieldVector<DT,n>& xi) const = 0;
+	virtual FieldVector<RT,4> materialLawParameters (const FieldVector<DT,dim>& x, const Entity& e, 
+			  const FieldVector<DT,dim>& xi) const = 0;
 	
 	TwoPhaseRelations& materialLaw ()  
 	{
