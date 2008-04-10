@@ -79,7 +79,8 @@ public:
         return sons_[0]==NULL && sons_[1]==NULL;
     }
 
-    FixedArray<OneDInNDEntityImp<1, dimworld>*, 2> sons_;
+    array<OneDInNDEntityImp<1, dimworld>*, 2> sons_;
+    //FixedArray<OneDInNDEntityImp<1, dimworld>*, 2> sons_;
 
     OneDInNDEntityImp<1, dimworld>* father_;
 

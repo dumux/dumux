@@ -163,10 +163,15 @@ public:
     because the const class is not instatiated yet.
   */
   template<int cd>
-  int index (const typename RemoveConst<GridImp>::Type::Traits::template Codim<cd>::Entity& e) const 
+  int index (const typename remove_const<GridImp>::type::Traits::template Codim<cd>::Entity& e) const 
   {
       return grid_.getRealImplementation(e).leafIndex(); 
   }
+//  template<int cd>
+//  int index (const typename RemoveConst<GridImp>::Type::Traits::template Codim<cd>::Entity& e) const 
+//  {
+//      return grid_.getRealImplementation(e).leafIndex(); 
+//  }
 
   //! get index of subentity of a codim 0 entity
   /*
@@ -174,10 +179,15 @@ public:
     because the const class is not instatiated yet.
   */
   template<int cc>
-  int subIndex (const typename RemoveConst<GridImp>::Type::Traits::template Codim<0>::Entity& e, int i) const
+  int subIndex (const typename remove_const<GridImp>::type::Traits::template Codim<0>::Entity& e, int i) const
   {
       return grid_.getRealImplementation(e).template subLeafIndex<cc>(i);
   }
+//  template<int cc>
+//  int subIndex (const typename RemoveConst<GridImp>::Type::Traits::template Codim<0>::Entity& e, int i) const
+//  {
+//      return grid_.getRealImplementation(e).template subLeafIndex<cc>(i);
+//  }
 
   //! get number of entities of given codim, type on the leaf level
   int size (GeometryType type) const
@@ -303,10 +313,15 @@ public:
     because the const class is not instatiated yet.
   */
   template<int cd>
-  GlobalIdType id (const typename RemoveConst<GridImp>::Type::Traits::template Codim<cd>::Entity& e) const 
+  GlobalIdType id (const typename remove_const<GridImp>::type::Traits::template Codim<cd>::Entity& e) const 
   {
       return grid_.getRealImplementation(e).globalId();
   }
+//  template<int cd>
+//  GlobalIdType id (const typename RemoveConst<GridImp>::Type::Traits::template Codim<cd>::Entity& e) const 
+//  {
+//      return grid_.getRealImplementation(e).globalId();
+//  }
 
   //! get id of subentity
   /*
@@ -314,10 +329,15 @@ public:
     because the const class is not instatiated yet.
   */
   template<int cd>
-  GlobalIdType subId (const typename RemoveConst<GridImp>::Type::Traits::template Codim<0>::Entity& e, int i) const
+  GlobalIdType subId (const typename remove_const<GridImp>::type::Traits::template Codim<0>::Entity& e, int i) const
   {
       return grid_.template getRealImplementation(e).template subId<cd>(i);
   }
+//  template<int cd>
+//  GlobalIdType subId (const typename RemoveConst<GridImp>::Type::Traits::template Codim<0>::Entity& e, int i) const
+//  {
+//      return grid_.template getRealImplementation(e).template subId<cd>(i);
+//  }
 
     /** \todo Should be private */
     void update() {}

@@ -162,6 +162,8 @@ struct OneDInNDGridFamily
                          OneDInNDGridLevelIterator,
                          OneDInNDGridLeafIntersectionIterator, // leaf  intersection iter 
                          OneDInNDGridLevelIntersectionIterator, // level intersection iter 
+                         OneDInNDGridLeafIntersectionIterator, // leaf  intersection iter 
+                         OneDInNDGridLevelIntersectionIterator, // level intersection iter 
                          OneDInNDGridHierarchicIterator,
                          OneDInNDGridLeafIterator,
                          OneDInNDGridLevelIndexSet<const OneDInNDGrid<dimw> >,
