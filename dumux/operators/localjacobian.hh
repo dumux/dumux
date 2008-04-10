@@ -75,7 +75,7 @@ namespace Dune
 	typedef LocalStiffness<Imp, G, RT, m> LocalStiffness;
 	typedef FieldMatrix<RT,m,m> MBlockType;                      // one entry in the stiffness matrix
 	typedef FieldVector<RT,m> VBlockType;                        // one entry in the global vectors
-	typedef FixedArray<BoundaryConditions::Flags,m> BCBlockType; // componentwise boundary conditions
+	typedef array<BoundaryConditions::Flags,m> BCBlockType; // componentwise boundary conditions
 	typedef FVElementGeometry<G> FVElementGeometry;
     enum {SIZE=8};
 

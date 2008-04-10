@@ -133,7 +133,9 @@ namespace Dune
 	    A(size(), size(), nnz(indexset), RepresentationType::random)
 	{
 	  // Check for the TypeTag
-	  IsTrue<SameType<TypeTag,LeafTag>::value || SameType<TypeTag,LevelTag>::value>::yes();
+        dune_static_assert((is_same<TypeTag,LeafTag>::value 
+                            || is_same<TypeTag,LevelTag>::value), "TypeTag must be LeafTag or LevelTag");
+//	  IsTrue<SameType<TypeTag,LeafTag>::value || SameType<TypeTag,LevelTag>::value>::yes();
 
 	  // be verbose
  	  std::cout << g.comm().rank() << ": " << "making " << size() << "x" 
@@ -268,7 +270,7 @@ namespace Dune
 	typedef typename MatrixType::block_type MBlockType;
 	typedef typename MatrixType::RowIterator rowiterator;
 	typedef typename MatrixType::ColIterator coliterator;
-	typedef FixedArray<BoundaryConditions::Flags,m> BCBlockType;     // componentwise boundary conditions
+	typedef array<BoundaryConditions::Flags,m> BCBlockType;     // componentwise boundary conditions
     typedef Dune::BlockVector< Dune::FieldVector<double,1> > SatType; 
 
   public:
