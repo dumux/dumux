@@ -114,7 +114,7 @@ namespace Dune
 
 		RT lambda = (outerUpperRight_[0] - x[0])/width_;
 		if (lambda > 1.4/3.0 && lambda < 1.6/3.0 && x[1] > outerUpperRight_[1] - eps_) {
-			values[satNIdx] = -0.001; //-0.04
+			values[satNIdx] = -0.01; //-0.04
 		}
 		
 		return values;
@@ -128,8 +128,9 @@ namespace Dune
 	{
 
 		FieldVector<RT,m> values;
+		RT BOR = 5;
 		
-		values[pWIdx] = -densityW_*gravity_[1]*(height_ - x[1]) + 1000;
+		values[pWIdx] = -densityW_*gravity_[1]*(BOR - x[1]);
 				
 		if (x[0] > innerLowerLeft_[0] && x[0] < innerUpperRight_[0] 
 		    && x[1] > innerLowerLeft_[1] && x[1] < innerUpperRight_[1])
@@ -182,7 +183,7 @@ namespace Dune
 	LensProblem(TwoPhaseRelations& law = *(new LinearLaw), 
 			const FieldVector<DT,dim> outerLowerLeft = 0, const FieldVector<DT,dim> outerUpperRight = 0, 
 			const FieldVector<DT,dim> innerLowerLeft = 0, const FieldVector<DT,dim> innerUpperRight = 0, 
-			RT outerK = 4.6e-10, RT innerK = 4.6e-10,		//9.05e-13, 
+			RT outerK = 4.6e-10, RT innerK = 4.6e-13,		//9.05e-13, 
 			RT outerSwr = 0.05, RT outerSnr = 0.01, RT innerSwr = 0.05, RT innerSnr = 0.01, 
 			RT outerPorosity = 0.4, RT innerPorosity = 0.4, 
 			RT outerAlpha = 0.0037, RT innerAlpha = 0.0037,	//0.00045, 
