@@ -97,7 +97,7 @@ namespace Dune
 	{
 		FieldVector<RT,m> values(0);
 
-		values[pWIdx] = -densityW_*gravity_[1]*(height_ - x[1]) + 1000;
+		values[pWIdx] = -densityW_*gravity_[1]*(depthBOR_ - x[1]);
 		values[satNIdx] = outerSnr_;
 		
 		return values;
@@ -128,9 +128,8 @@ namespace Dune
 	{
 
 		FieldVector<RT,m> values;
-		RT BOR = 5;
 		
-		values[pWIdx] = -densityW_*gravity_[1]*(BOR - x[1]);
+		values[pWIdx] = -densityW_*gravity_[1]*(depthBOR_ - x[1]);
 				
 		if (x[0] > innerLowerLeft_[0] && x[0] < innerUpperRight_[0] 
 		    && x[1] > innerLowerLeft_[1] && x[1] < innerUpperRight_[1])
@@ -156,6 +155,11 @@ namespace Dune
 	virtual FieldVector<RT,dim> gravity () const 
 	{
 		return gravity_;
+	}
+	
+	double depthBOR () const
+	{
+		return depthBOR_;
 	}
 	  
 	virtual FieldVector<RT,4> materialLawParameters (const FieldVector<DT,dim>& x, const Entity& e, 
@@ -183,7 +187,7 @@ namespace Dune
 	LensProblem(TwoPhaseRelations& law = *(new LinearLaw), 
 			const FieldVector<DT,dim> outerLowerLeft = 0, const FieldVector<DT,dim> outerUpperRight = 0, 
 			const FieldVector<DT,dim> innerLowerLeft = 0, const FieldVector<DT,dim> innerUpperRight = 0, 
-			RT outerK = 4.6e-10, RT innerK = 4.6e-13,		//9.05e-13, 
+			const RT depthBOR = 0, RT outerK = 4.6e-12, RT innerK = 4.6e-13,		//9.05e-13, 
 			RT outerSwr = 0.05, RT outerSnr = 0.01, RT innerSwr = 0.05, RT innerSnr = 0.01, 
 			RT outerPorosity = 0.4, RT innerPorosity = 0.4, 
 			RT outerAlpha = 0.0037, RT innerAlpha = 0.0037,	//0.00045, 
@@ -191,7 +195,7 @@ namespace Dune
 	: TwoPTwoCProblem<G, RT>(law), 
 	  outerLowerLeft_(outerLowerLeft), outerUpperRight_(outerUpperRight), 
 	  innerLowerLeft_(innerLowerLeft), innerUpperRight_(innerUpperRight), 
-	  eps_(1e-8*outerUpperRight[0]), 
+	  depthBOR_(depthBOR),eps_(1e-8*outerUpperRight[0]), 
 	  densityW_(law.wettingPhase.density()), densityN_(law.nonwettingPhase.density()), 
 	  outerSwr_(outerSwr), outerSnr_(outerSnr), innerSwr_(innerSwr), innerSnr_(innerSnr), 
 	  outerPorosity_(outerPorosity), innerPorosity_(innerPorosity), 
@@ -206,6 +210,7 @@ namespace Dune
 		
 		height_ = outerUpperRight[1] - outerLowerLeft[1];
 		width_ = outerUpperRight[0] - outerLowerLeft[0];
+		 
 		
 		gravity_[0] = 0;
 		gravity_[1] = -9.81;
@@ -219,7 +224,7 @@ namespace Dune
 		FieldVector<DT,dim> innerLowerLeft_;
 		FieldVector<DT,dim> innerUpperRight_;
 		DT width_, height_;
-		DT eps_;
+		DT depthBOR_, eps_;
 		RT densityW_, densityN_;
 		FieldVector<DT,dim> gravity_;
 		RT outerSwr_, outerSnr_, innerSwr_, innerSnr_;

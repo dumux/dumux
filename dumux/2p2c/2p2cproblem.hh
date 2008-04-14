@@ -105,6 +105,8 @@ namespace Dune
 	
 	virtual FieldVector<RT,dim> gravity () const = 0;
 
+	virtual double depthBOR () const = 0;
+	
 	virtual FieldVector<RT,4> materialLawParameters (const FieldVector<DT,dim>& x, const Entity& e, 
 			  const FieldVector<DT,dim>& xi) const = 0;
 	

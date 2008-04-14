@@ -60,7 +60,7 @@ namespace Dune
 	typedef Box2P2C<G, RT> ThisType;
 	
 	Box2P2C(const G& g, ProblemType& prob) 
-	: LeafP1TwoPhaseModel(g, prob), xWG(this->size), xAW(this->size)
+	: LeafP1TwoPhaseModel(g, prob), Xwn(this->size), Xaw(this->size)
 	{ 	}
 
 	void solve() 
@@ -99,20 +99,25 @@ namespace Dune
 			this->pW[i] = (*(this->u))[i][0];
 			this->satN[i] = (*(this->u))[i][1];
 			this->satW[i] = 1 - this->satN[i];
-			xWG[i] = this->problem.constrel().Xwg(this->pW[i], 283.15);
-			xAW[i] = this->problem.constrel().Xaw(this->pW[i], 283.15);
+			//			const FieldVector<RT, 4> parameters(this->problem.materialLawParameters
+			//	 		 (this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal));
+			//			parameters = problem.materialLawParameters
+			//			 		 (this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+			//			pC[i] = this->problem.materialLaw().pC(varNData[i].saturationW, parameters);			
+			Xwn[i] = this->problem.constrel().Xwn(this->pW[i], 283.15);
+			Xaw[i] = this->problem.constrel().Xaw(this->pW[i], 283.15);
 		}
 		vtkwriter.addVertexData(this->pW,"wetting phase pressure");
 		vtkwriter.addVertexData(this->satW,"wetting phase saturation");
 		vtkwriter.addVertexData(this->satN,"nonwetting phase saturation");
-		vtkwriter.addVertexData(xWG, "water in air");
-		vtkwriter.addVertexData(xAW, "dissolved air");
+		vtkwriter.addVertexData(Xwn, "water in air");
+		vtkwriter.addVertexData(Xaw, "dissolved air");
 		vtkwriter.write(fname, VTKOptions::ascii);		
 	}
 
   protected:
-	  BlockVector<FieldVector<RT, 1> > xWG;
-	  BlockVector<FieldVector<RT, 1> > xAW;
+	  BlockVector<FieldVector<RT, 1> > Xwn;
+	  BlockVector<FieldVector<RT, 1> > Xaw;
   };
 
 }

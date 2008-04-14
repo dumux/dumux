@@ -185,7 +185,7 @@ namespace Dune
    	 return;
     }
 
-    // Compute time dependent terms (storage)
+    // Compute time dependent term (storage)
     // ACHTUNG varNData always contains values from the NEW timestep
     virtual VBlockType computeM (const Entity& e, const VBlockType* sol, int node)
     {
@@ -218,13 +218,12 @@ namespace Dune
      	 VBlockType flux;
 		 FieldVector<RT,dim> xGrad(0); 
     	 FieldVector<RT,m> deltaP(0); 
-    	 FieldVector<RT,m> massfrac(0); 
     	 FieldVector<RT,m> potDiff(0); 
-    	 FieldVector<RT,m> xCoord(0);
     	 FieldVector<RT,m> zCoord(0);
 		 FieldMatrix<RT,m,dim> pGrad(0); 
     	 FieldMatrix<RT,2,dim> globalCoord(0);
  		 FieldVector<DT,dim> gravity = problem.gravity();
+ 		 double depthBOR = problem.depthBOR();
 
  		// Coordinates for 2D
  		 zCoord[iNode] = this->fvGeom.subContVol[i].global[dim-1];
@@ -233,27 +232,30 @@ namespace Dune
  		 globalCoord[jNode] = this->fvGeom.subContVol[j].global; 
 		 
 		 FieldVector<DT,dim> solution;
-		 solution[iNode] = varNData[i].density[wPhase]*gravity[dim-1]*(zCoord[iNode]);
-		 solution[jNode] = varNData[i].density[nPhase]*gravity[dim-1]*(zCoord[jNode]);
-//		 std::cout << solution[iNode] << std::endl;
-//		 std::cout << solution[jNode] << std::endl;
+		 solution[iNode] = sol[i][pWIdx];
+		 solution[jNode] = sol[j][pWIdx];
+//		 std::cout << "solutionI: " <<solution[iNode] << std::endl;
+//		 std::cout << "solutionJ: "<< solution[jNode] << std::endl;
 		 		 
 		 // calculate potentials at nodes i and j
 		 FieldMatrix<RT,m,2> potential(0);
-		 RT BOR = 5;
 		 
-		 potential[iNode][wPhase] = sol[i][pWIdx] + varNData[i].density[wPhase]*gravity[dim-1]*(BOR - zCoord[iNode]);
-		 potential[iNode][nPhase] = varNData[i].pN + varNData[i].density[nPhase]*gravity[dim-1]*(BOR - zCoord[iNode]);
+		 potential[iNode][wPhase] = sol[i][pWIdx] + 
+		 	varNData[i].density[wPhase]*gravity[dim-1]*(depthBOR - zCoord[iNode]);
+		 potential[iNode][nPhase] = varNData[i].pN + 
+		 	varNData[i].density[nPhase]*gravity[dim-1]*(depthBOR - zCoord[iNode]);
 
-		 potential[jNode][wPhase] = sol[j][pWIdx] + varNData[j].density[wPhase]*gravity[dim-1]*(BOR - zCoord[jNode]);
-		 potential[jNode][nPhase] = varNData[j].pN + varNData[j].density[nPhase]*gravity[dim-1]*(BOR - zCoord[jNode]);
+		 potential[jNode][wPhase] = sol[j][pWIdx] + 
+		 	varNData[j].density[wPhase]*gravity[dim-1]*(depthBOR - zCoord[jNode]);
+		 potential[jNode][nPhase] = varNData[j].pN + 
+		 	varNData[j].density[nPhase]*gravity[dim-1]*(depthBOR - zCoord[jNode]);
 
 		 potDiff = potential[jNode]-potential[iNode];
 
 		 FieldVector<DT,dim> distance;
 		 distance = globalCoord[jNode] - globalCoord[iNode];
-		 if (distance[0]<0) distance[0] *(-1);
-		 if (distance[dim-1]<0) distance[dim-1] *(-1);
+		 if (distance[0] < 0) distance[0] *(-1);
+		 if (distance[dim-1] < 0) distance[dim-1] *(-1);
 		        		                                      
 		 // evaluate upwind nodes
 		 int up_w, dn_w, up_n, dn_n;
@@ -268,7 +270,7 @@ namespace Dune
    	 {	      		 
    		 if (distance[0]>0)
    		 contribComp[phase][0] = potDiff[phase]/distance[0];
-   		 if (distance[1]>0)
+   		 if (distance[dim-1]>0)
    		 contribComp[phase][dim-1] = potDiff[phase]/distance[dim-1];
    		    		 
 //   		 FieldVector<RT,dim> feGrad(this->fvGeom.subContVolFace[face].grad[j]);   		 
@@ -311,7 +313,7 @@ namespace Dune
 //		 FieldVector<RT,dim> feGrad(this->fvGeom.subContVolFace[face].grad[j]);   		 
 //   	 feGrad *= (varNData[j].massfrac[water][nPhase] - varNData[i].massfrac[water][nPhase]);
    	 xGrad = (varNData[j].massfrac[water][nPhase] - varNData[i].massfrac[water][nPhase])
-   	 		/(distance[0]+distance[1]);
+   	 		/(distance[0]+distance[dim-1]);
    	 
 //   	 xGrad += feGrad;
 
@@ -440,18 +442,20 @@ namespace Dune
    			std::cout << "negative wetting saturation!!"; 
    		}
    		
-         varNData[i].pC = problem.materialLaw().pC(varNData[i].saturationW, elData.parameters);
+         varNData[i].pC = problem.materialLaw().pC(varNData[i].saturationW);//, elData.parameters);
+         std::cout << "Capillary pressure: " << varNData[i].pC << " Corresponding Sw: "<< varNData[i].saturationW << std::endl;
          varNData[i].pN = sol[i][pWIdx] + varNData[i].pC;
+         //std::cout << "PressureN: " << sol[i][pWIdx] << std::endl;
          varNData[i].temperature = 283.15; // in [K]
          // Mobilities & densities
-         varNData[i].mobility[wPhase] = problem.materialLaw().mobW(varNData[i].saturationW, elData.parameters);
-         varNData[i].mobility[nPhase] = problem.materialLaw().mobN(sol[i][satNIdx], elData.parameters);
+         varNData[i].mobility[wPhase] = problem.materialLaw().mobW(varNData[i].saturationW);//, elData.parameters);
+         varNData[i].mobility[nPhase] = problem.materialLaw().mobN(sol[i][satNIdx]);//, elData.parameters);
          varNData[i].density[wPhase] = problem.materialLaw().wettingPhase.density();
          varNData[i].density[nPhase] = problem.materialLaw().nonwettingPhase.density();
          // Solubilities of components in phases
          varNData[i].massfrac[air][wPhase] = problem.constrel().Xaw(varNData[i].pN, varNData[i].temperature);
          varNData[i].massfrac[water][wPhase] = 1.0 - varNData[i].massfrac[air][wPhase];
-         varNData[i].massfrac[water][nPhase] = problem.constrel().Xwg(varNData[i].pN, varNData[i].temperature);
+         varNData[i].massfrac[water][nPhase] = problem.constrel().Xwn(varNData[i].pN, varNData[i].temperature);
          varNData[i].massfrac[air][nPhase] = 1.0 - varNData[i].massfrac[water][nPhase];
          //std::cout << "water in gasphase: " << varNData[i].massfrac[water][nPhase] << std::endl;
          //std::cout << "air in waterphase: " << varNData[i].massfrac[air][wPhase] << std::endl;
