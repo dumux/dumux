@@ -75,8 +75,11 @@ namespace Dune {
 	{
 #ifdef HAVE_PARDISO
 
-	systemsize_ = A.rowdim(0);
-    	n_ = A.rowdim();
+	RowIterator i0 = A.begin();
+	ColIterator j0 = (*i0).begin();
+
+	systemsize_ = (*j0).N();
+    	n_ = A.N()*systemsize_;
     	int nnz = 0;
     	RowIterator endi = A.end();
 	int rows = 0;
@@ -183,8 +186,14 @@ namespace Dune {
         msglvl_ = 0;        
         error_  = 0;        
 
-	systemsize_ = A.rowdim(0);
-    	n_ = A.rowdim();
+	RowIterator i0 = A.begin();
+	ColIterator j0 = (*i0).begin();
+
+	systemsize_ = (*j0).N();
+    	n_ = A.N()*systemsize_;
+	
+	
+    	
     	int nnz = 0;
     	RowIterator endi = A.end();
 	int rows = 0;

@@ -432,8 +432,7 @@ public:
            				boundaryFace[bfIndex].ipLocal = referenceElement.position(nodeInElement, dim) 
            							+ referenceElement.position(face, 1);
            				boundaryFace[bfIndex].ipLocal *= 0.5;
-           				//! \todo should be 0.5 instead of 0.25
-           				boundaryFace[bfIndex].area = 0.25*it.intersectionGlobal().volume(); 
+           				boundaryFace[bfIndex].area = 0.5*it.intersectionGlobal().volume(); 
            				break;
            			case 3:
            				int leftEdge;

@@ -44,7 +44,7 @@ int main(int argc, char** argv)
 
     // grid reference 
     GridType& grid = *gridPtr;
-    grid.globalRefine(1);
+    //grid.globalRefine(1);
     
 	Dune::FVCA5Test3Problem<GridType, NumberType> problem(delta, theta);
     Dune::SimpleProblem<GridType, NumberType> satprob;

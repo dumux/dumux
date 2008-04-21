@@ -69,9 +69,15 @@ int main(int argc, char** argv)
     std::cout << "umin = " << result.uMin << std::endl;
     std::cout << "umax = " << result.uMax << std::endl;
     
-    
+    for (int i = 0; i < 11; i++) {
+      std::cout << i+1 << " & ";
+      for (int j = 0; j < 11; j++)
+	std::cout << (*diffusion)[i*11 + j] << " & ";
+      std::cout << std::endl;
+    }
+ 
     diffusion.vtkout("fvca5_test8", 0);
-
+    
 
     
     return 0;

@@ -74,6 +74,28 @@ int main(int argc, char** argv)
     
     
     diffusion.vtkout("fvca5_test9", 0);
+    
+    for (int i = 0; i < 11; i++) {
+      std::cout << i+1 << " & ";
+      for (int j = 0; j < 11; j++) {
+	int fullIdx = i*11 + j;
+	int realIdx;
+	if (fullIdx < 58)
+	  realIdx = fullIdx;
+	else if (fullIdx < 63)
+	  realIdx = fullIdx - 1;
+	else 
+	  realIdx = fullIdx - 2;
+	if (fullIdx == 58)
+	  std::cout << "0.00E+00 & ";
+	else if (fullIdx == 62) 
+	  std::cout << "1.00E+00 & ";
+	else 
+	  std::cout << (*diffusion)[realIdx] << " & ";
+      }
+      std::cout << std::endl;
+    }
+ 
 
 
     

@@ -107,6 +107,9 @@ namespace Dune
     template<class TypeTag>
     void localDefect (const Entity& e, const VBlockType* sol)
     {
+      for (int i=0; i < this->fvGeom.nNodes; i++) 
+	this->def[i] = 0;
+
       computeElementData(e);
       updateVariableData(e, sol);
 
@@ -141,15 +144,15 @@ namespace Dune
 		  //std::cout << "i = " << i << ", j = " << j << ", flux = " << flux << std::endl;
 	  } // end loop over edges / sub control volume faces
 	  
-//	  // assemble boundary conditions 
-//	  assembleBC<TypeTag> (e); 
-//	  
-//	  // add to defect 
-//	  for (int i=0; i < this->fvGeom.nNodes; i++) {
-//		  this->def[i] += this->b[i];
-//		  //std::cout << "i = " << ", b[i] = " << this->b[i] << std::endl;
-//	  }
-		//std::cout << std::endl;
+	  // assemble boundary conditions 
+	  assembleBC<TypeTag> (e); 
+	  
+	  // add to defect 
+	  for (int i=0; i < this->fvGeom.nNodes; i++) {
+		  this->def[i] += this->b[i];
+// 		  std::cout << ", b[" << i << "] = " << this->b[i] << std::endl;
+	  }
+// 		std::cout << std::endl;
 
       return;
     }
@@ -231,8 +234,10 @@ namespace Dune
 		  const typename ReferenceElementContainer<DT,n>::value_type& 
 	      	referenceElement = ReferenceElements<DT,n>::general(gt);
 
-		  for (int i = 0; i < sfs.size(); i++)
-			  this->b[i] = 0;
+		  for (int i = 0; i < sfs.size(); i++) {
+		    this->bctype[i].assign(BoundaryConditions::neumann);
+		    this->b[i] = 0;
+		  }
 		  
 		  // evaluate boundary conditions via intersection iterator
 		  typedef typename IntersectionIteratorGetter<G,TypeTag>::IntersectionIterator
@@ -257,8 +262,12 @@ namespace Dune
 
 			  // handle face on exterior boundary, this assumes there are no interior boundaries
 			  if (it.boundary())
-				{
+			    {
 	       			int faceIdx = it.numberInSelf();
+// 				std::cout << "faceIdx = " << faceIdx << ", beginning: " << std::endl;
+// 				for (int i = 0; i < 4; i++) 
+// 				  std::cout << "bctype[" << i << "] = " << this->bctype[i] << std::endl; 
+
 	       			int nNodesOfFace = referenceElement.size(faceIdx, 1, n);
 	       			for (int nodeInFace = 0; nodeInFace < nNodesOfFace; nodeInFace++)
 	       			{
@@ -270,6 +279,9 @@ namespace Dune
 	       					FieldVector<DT,n> global = this->fvGeom.boundaryFace[bfIdx].ipGlobal;
 	        			
 	       					bctypeface = this->getImp().problem.bctype(global,e,it,local); // eval bctype
+// 						std::cout << "faceIdx = " << faceIdx << ", nodeInElement = " << nodeInElement 
+// 							  << ", bfIdx = " << bfIdx << ", local = " << local << ", global = " << global 
+// 							  << ", bctypeface = " << bctypeface << std::endl; 
 	       					if (bctypeface[0]!=BoundaryConditions::neumann) 
 	       						break;
 	       					VBlockType J = this->getImp().problem.J(global,e,it,local);
@@ -277,9 +289,10 @@ namespace Dune
 							this->b[nodeInElement] += J;
 	       				}
 	       			}
-				  
-				  if (bctypeface[0]==BoundaryConditions::neumann) continue; // was a neumann face, go to next face
-				}
+  
+				if (bctypeface[0]==BoundaryConditions::neumann) 
+				  continue; // was a neumann face, go to next face
+			    }
 
 			  // If we are here, then it is 
 			  // (i)   an exterior boundary face with Dirichlet condition, or
@@ -317,6 +330,8 @@ namespace Dune
 					  {
 						if (this->bctype[i][0]<bctypeface[0])
 						  {
+// 						    std::cout << "i = " << i << ", bctype = " << this->bctype[i] 
+// 							      << ", bctypeface = " << bctypeface << std::endl;
 						    this->bctype[i].assign(bctypeface[0]);
 							if (bctypeface[0]==BoundaryConditions::process)
 							  this->b[i] = 0;

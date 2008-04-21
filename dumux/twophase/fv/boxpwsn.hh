@@ -164,7 +164,10 @@ namespace Dune
 	    {
 	      int globalId = this->vertexmapper.template map<dim>(entity, sfs[i].entity());
 	    
-	      (*defectGlobal)[globalId]+= defhelp[i]; //(*defhelp)[i];
+	      if (this->localJacobian.bc(i)[0] == BoundaryConditions::neumann)
+		(*defectGlobal)[globalId] += defhelp[i];
+	      else 
+		(*defectGlobal)[globalId] = 0;
 	    }
 	}
     }

@@ -23,7 +23,7 @@ namespace Dune
 					  const FieldVector<DT,n>& xi) 
 	  {
 		  if (x[0] < 0.5) {
-		     int inty = (int)(10.0*(x[1] - 0.05));
+		     int inty = (int)(10.0*(x[1] + 0.15));
 		     if (inty - 2*(int)(inty/2) == 0) {	
 		        permloc_[0][0] = 100.0;
 		        permloc_[0][1] = permloc_[1][0] = 0.0;

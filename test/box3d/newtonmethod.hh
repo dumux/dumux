@@ -11,21 +11,19 @@ namespace Dune {
 	public:
 		void execute(bool verbose = true)
 		{
-			double oneByMagnitude = 1.0/std::max((*u).two_norm(), 1.0);
-			double error = 1e100;
-			double residual = 1e100;
+			double oneByMagnitude = 1.0/std::max((*u).two_norm(), 1e-5);
+			double error = 1e100;			
 			double dt = localJacobian.getDt();
 			bool divided = false;
 			
-			while (dt > minDt && error > tolerance && residual > tolerance) {
+			while (dt > minDt && error > tolerance) {
 				double error = 1e100;
 				int iter = 0;
 				model.globalDefect(defectGlobal);
 				double oldResidual = (*defectGlobal).two_norm();
-				std::cout << "initial residual = " << oldResidual << std::endl;
-				while (error > tolerance && residual > tolerance && iter < maxIter) {
+				std::cout << "old residual = " << oldResidual << std::endl;
+				while (error > tolerance && iter < maxIter) {
 					iter ++;
-					residual = oldResidual;
 					*uOldNewtonStep = *u;
 					//printvector(std::cout, *uOldNewtonStep, "uOldNewtonStep", "row", 200, 1, 3);
 					//printvector(std::cout, *(model.uOldTimeStep), "uOldTimeStep", "row", 200, 1, 3);
@@ -33,7 +31,7 @@ namespace Dune {
 					localJacobian.clearVisited();
 					A.assemble(localJacobian, u, f);
 					//printmatrix(std::cout, *A, "global stiffness matrix", "row", 11, 3);
-					//std::cout << "matrix norm: " << (*A).infinity_norm() << std::endl;
+					std::cout << "matrix norm: " << (*A).infinity_norm() << std::endl;
 					//printvector(std::cout, *f, "right hand side", "row", 200, 1, 3);
 					model.solve();
 					error = oneByMagnitude*((*u).two_norm());
@@ -41,18 +39,17 @@ namespace Dune {
 					*u *= -1.0;
 					*u += *uOldNewtonStep; 
 					model.globalDefect(defectGlobal);
-					//printvector(std::cout, *defectGlobal, "defect", "row", 200, 1, 3);
-					residual = (*defectGlobal).two_norm();
+					double residual = (*defectGlobal).two_norm();
 					//for (int idx = 0; idx < (*u).size(); idx++) 
 					//	if ((*u)[idx][1] < -1.0 || (*u)[idx][1] > 2.0) 
 					//		error = 1e100;
-
 					//printvector(std::cout, *u, "u", "row", 200, 1, 3);
 					if (verbose)
-						std::cout << "Newton step " << iter << ", residual = " << residual << ", difference = " << error << std::endl;
+						std::cout << "Newton step " << iter << ", residual = " << residual << ", defect = " << error << std::endl;
+						//std::cout << "Newton step " << iter << " defect = " << error << std::endl;
 				}
 				
-				if (error > tolerance && residual > tolerance) {
+				if (error > tolerance) {
 					std::cout << "NewtonMethod::execute(), tolerance = " << tolerance 
 						<< ": did not converge in " << iter << " iterations" << std::endl; 
 					dt  = 0.5*dt;
@@ -62,9 +59,10 @@ namespace Dune {
 					divided = true;
 				}
 				else { 
+					*defectGlobal = 0;
 					model.globalDefect(defectGlobal);
 					double residual = (*defectGlobal).two_norm();
-					std::cout << "Converged. Residual = " << residual << ", difference = " << error << std::endl;
+					std::cout << "Converged. Residual = " << residual << std::endl;
 					if (!divided && iter < goodIter) {
 						dt = 2.0*dt;
 						std::cout << "Below " << goodIter 

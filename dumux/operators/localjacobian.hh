@@ -71,201 +71,100 @@ namespace Dune
     enum {n=G::dimension};
 
   public:
-	// types for matrics, vectors and boundary conditions
-	typedef LocalStiffness<Imp, G, RT, m> LocalStiffness;
-	typedef FieldMatrix<RT,m,m> MBlockType;                      // one entry in the stiffness matrix
-	typedef FieldVector<RT,m> VBlockType;                        // one entry in the global vectors
-	typedef array<BoundaryConditions::Flags,m> BCBlockType; // componentwise boundary conditions
-	typedef FVElementGeometry<G> FVElementGeometry;
+    // types for matrics, vectors and boundary conditions
+    typedef LocalStiffness<Imp, G, RT, m> LocalStiffness;
+    typedef FieldMatrix<RT,m,m> MBlockType;                      // one entry in the stiffness matrix
+    typedef FieldVector<RT,m> VBlockType;                        // one entry in the global vectors
+    typedef array<BoundaryConditions::Flags,m> BCBlockType; // componentwise boundary conditions
+    typedef FVElementGeometry<G> FVElementGeometry;
     enum {SIZE=8};
 
-	//! print contents of local stiffness matrix
-	void printbla (std::ostream& s, int width, int precision)
-	{
-	  // set the output format
-	  s.setf(std::ios_base::scientific, std::ios_base::floatfield);
-	  int oldprec = s.precision();
-	  s.precision(precision);
 
-	  for (int I=0; I<this->currentsize_; I++)
-		{
-		  int i = I;
-		  if (I == 2) 
-		    i = 3;
-		  else if (I == 3) 
-		    i = 2;
-		  s << "pW  ";    // start a new row
-		  s << " ";      // space in front of each entry
-		  s.width(4);    // set width for counter
-		  s << i;        // number of first entry in a line
-		  for (int J=0; J<this->currentsize_; J++)
-			{
-		  int j = J;
-		  if (J == 2) 
-		    j = 3;
-		  else if (J == 3) 
-		    j = 2;
-			  s << " ";         // space in front of each entry
-			  s.width(width);   // set width for each entry anew
-			  s << this->A[i][j][0][0];     // yeah, the number !
-			}
-		  for (int J=0; J<this->currentsize_; J++)
-			{
-		  int j = J;
-		  if (J == 2) 
-		    j = 3;
-		  else if (J == 3) 
-		    j = 2;
-			  s << " ";         // space in front of each entry
-			  s.width(width);   // set width for each entry anew
-			  s << this->A[i][j][0][1];     // yeah, the number !
-			}
-		  s << " ";         // space in front of each entry
-		  s.width(width);   // set width for each entry anew
-		  s << this->b[i][0];
-		  s << " ";         // space in front of each entry
-		  s.width(width);   // set width for each entry anew
-		  s << this->bctype[i][0];
-		  s << std::endl;// start a new line
-		}
-	  for (int I=0; I<this->currentsize_; I++)
-		{
-		  int i = I;
-		  if (I == 2) 
-		    i = 3;
-		  else if (I == 3) 
-		    i = 2;
-		  s << "satN";    // start a new row
-		  s << " ";      // space in front of each entry
-		  s.width(4);    // set width for counter
-		  s << i;        // number of first entry in a line
-		  for (int J=0; J<this->currentsize_; J++)
-			{
-		  int j = J;
-		  if (J == 2) 
-		    j = 3;
-		  else if (J == 3) 
-		    j = 2;
-			  s << " ";         // space in front of each entry
-			  s.width(width);   // set width for each entry anew
-			  s << this->A[i][j][1][0];     // yeah, the number !
-			}
-		  for (int J=0; J<this->currentsize_; J++)
-			{
-			  s << " ";         // space in front of each entry
-		  int j = J;
-		  if (J == 2) 
-		    j = 3;
-		  else if (J == 3) 
-		    j = 2;
-			  s.width(width);   // set width for each entry anew
-			  s << this->A[i][j][1][1];     // yeah, the number !
-			}
-		  s << " ";         // space in front of each entry
-		  s.width(width);   // set width for each entry anew
-		  s << this->b[i][1];
-		  s << " ";         // space in front of each entry
-		  s.width(width);   // set width for each entry anew
-		  s << this->bctype[i][1];
-		  s << std::endl;// start a new line
-		}
-	  s << std::endl;
-
-	  // reset the output format
-	  s.precision(oldprec);
-	  s.setf(std::ios_base::fixed, std::ios_base::floatfield);
-	}
-
-	template<class TypeTag>
+    template<class TypeTag>
     void assemble (const Entity& e, bool itIsThis, int k = 1)
-	{
-		fvGeom.update(e);
+    {
+      fvGeom.update(e);
 		
-	  int size = e.template count<n>();
+      int size = e.template count<n>();
 	  
-    	// set to Zero 
-    	for (int i=0; i < size; i++) {
-    		this->bctype[i].assign(BoundaryConditions::neumann);
-    		this->b[i] = 0;
-    		this->def[i] = 0;
-    	}
+      // set to Zero 
+      for (int i=0; i < size; i++) {
+	this->bctype[i].assign(BoundaryConditions::neumann);
+	this->b[i] = 0;
+	this->def[i] = 0;
+      }
   	  
-    	setLocalSolution(e);
+      setLocalSolution(e);
     	
-      //FVElementGeometry fvGeom(e);
-
       updateStaticData(e, u);
     	
-    	localDefect<TypeTag>(e, u);
-  	  // assemble boundary conditions 
-  	  assembleBC<TypeTag> (e); 
+      localDefect<TypeTag>(e, u);
+      // assemble boundary conditions 
+      assembleBC<TypeTag> (e); 
   	  
-  	  // add to defect 
-  	  for (int i=0; i < this->fvGeom.nNodes; i++) {
-  		  this->def[i] += this->b[i];
-  		  //std::cout << "i = " << ", b[i] = " << this->b[i] << std::endl;
-  	  }
+      // add to defect 
+//       for (int i=0; i < size; i++) {
+// 	this->def[i] += this->b[i];
+// 	//std::cout << "i = " << ", b[i] = " << this->b[i] << std::endl;
+//       }
 
-    	VBlockType bTemp[size];
-    	for (int i=0; i<size; i++) 
-      	  if (this->bctype[i][0]==BoundaryConditions::neumann) 
-      		  bTemp[i] = this->def[i];
-      	  else
-      		  bTemp[i] = 0;
-        
-
-    	if (analytic) {
-    		analyticJacobian<TypeTag>(e, u);
-    	}
-    	else {
-    		VBlockType defu[size];
-    		for (int i = 0; i < size; i++) 
-    			defu[i] = def[i];    	
-    		VBlockType uPlusEps[size];
-    		VBlockType uMinusEps[size];
-    		
-    		for (int j = 0; j < size; j++) 
-    			for (int comp = 0; comp < m; comp++) 
-    			{
-    				RT eps = std::max(fabs(1e-3*u[j][comp]), 1e-3);
-    				for (int i = 0; i < size; i++) {
-    					uPlusEps[i] = u[i];
-    					uMinusEps[i] = u[i];
-    				}
-    				uPlusEps[j][comp] += eps;
-    				uMinusEps[j][comp] -= eps;
-
-    				localDefect<TypeTag>(e, uPlusEps);
-    				VBlockType defuPlusEps[size];
-    				for (int i = 0; i < size; i++) 
-    					defuPlusEps[i] = def[i];
-
-    				localDefect<TypeTag>(e, uMinusEps);
-    				/*if (itIsThis) {
-    					std::cout << "defuPlusEps\tdefuMinusEps" << std::endl;
-    					for (int k = 0; k < 4; k++) {
-    						std::cout << defuPlusEps[k] << ", " << def[k] << std::endl;
-    					}
-    				}
-    				*/	
-    				
-    				RT oneByEps = 0.5/eps;
-    				for (int i = 0; i < size; i++) 
-    					for (int compi = 0; compi < m; compi++)
-    						this->A[i][j][compi][comp] = oneByEps*(defuPlusEps[i][compi] - def[i][compi]);
-    			}
-    	}
+      VBlockType bTemp[size];
+      for (int i=0; i<size; i++) 
+	if (this->bctype[i][0]==BoundaryConditions::neumann) 
+	  bTemp[i] = this->def[i];
+	else
+	  bTemp[i] = 0;
+      
+// 	std::cout << "defu         = " << this->def[0] << ", "  << this->def[1] 
+// 		  << ", "  << this->def[2] << ", "  << this->def[3] << std::endl;
+      
+      if (analytic) {
+	analyticJacobian<TypeTag>(e, u);
+      }
+      else {
+	VBlockType defu[size];
+	for (int i = 0; i < size; i++) 
+	  defu[i] = def[i];    	
+	VBlockType uPlusEps[size];
+	VBlockType uMinusEps[size];
     	
-    	for (int i=0; i<size; i++) 
-    		if (this->bctype[i][0]==BoundaryConditions::neumann) {
-    			this->b[i] = bTemp[i];
-    		}
-    	
-    	//printbla(std::cout, 12, 3);
-    	//this->print(std::cout, 12, 3);
-    	
-    	return;
+	for (int j = 0; j < size; j++) 
+	  for (int comp = 0; comp < m; comp++) 
+	    {
+	      RT eps = std::max(fabs(1e-3*u[j][comp]), 1e-3);
+	      for (int i = 0; i < size; i++) {
+		uPlusEps[i] = u[i];
+		uMinusEps[i] = u[i];
+	      }
+	      uPlusEps[j][comp] += eps;
+	      uMinusEps[j][comp] -= eps;
+	      
+	      localDefect<TypeTag>(e, uPlusEps);
+	      VBlockType defuPlusEps[size];
+	      for (int i = 0; i < size; i++) 
+		defuPlusEps[i] = def[i];
+	      
+	      localDefect<TypeTag>(e, uMinusEps);
+	      
+// 		std::cout << "defuPlusEps  = " << defuPlusEps[0] << ", "  << defuPlusEps[1] 
+// 			  << ", "  << defuPlusEps[2] << ", "  << defuPlusEps[3] << std::endl;
+// 		std::cout << "defuMinusEps = " << this->def[0] << ", "  << this->def[1] 
+// 			  << ", "  << this->def[2] << ", "  << this->def[3] << std::endl;
+
+	      RT oneByEps = 0.5/eps;
+	      for (int i = 0; i < size; i++) 
+		for (int compi = 0; compi < m; compi++)
+		  this->A[i][j][compi][comp] = oneByEps*(defuPlusEps[i][compi] - def[i][compi]);
+	    }
+      }
+      
+      for (int i=0; i<size; i++) 
+	if (this->bctype[i][0]==BoundaryConditions::neumann) {
+	  this->b[i] = bTemp[i];
 	}
+      
+      return;
+    }
     
     template<class TypeTag>
     void localDefect (const Entity& e, const VBlockType* sol)
