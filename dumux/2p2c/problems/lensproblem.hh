@@ -187,7 +187,7 @@ namespace Dune
 	LensProblem(TwoPhaseRelations& law = *(new LinearLaw), 
 			const FieldVector<DT,dim> outerLowerLeft = 0, const FieldVector<DT,dim> outerUpperRight = 0, 
 			const FieldVector<DT,dim> innerLowerLeft = 0, const FieldVector<DT,dim> innerUpperRight = 0, 
-			const RT depthBOR = 0, RT outerK = 4.6e-12, RT innerK = 4.6e-13,		//9.05e-13, 
+			const RT depthBOR = 0, RT outerK = 4.6e-12, RT innerK = 4.6e-15,		//9.05e-13, 
 			RT outerSwr = 0.05, RT outerSnr = 0.01, RT innerSwr = 0.05, RT innerSnr = 0.01, 
 			RT outerPorosity = 0.4, RT innerPorosity = 0.4, 
 			RT outerAlpha = 0.0037, RT innerAlpha = 0.0037,	//0.00045, 
