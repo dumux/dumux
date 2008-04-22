@@ -49,8 +49,8 @@ namespace Dune
 	enum {gasPhase = 0, waterPhase = 1, bothPhases = 2};
 
 	// permeabilities
-	virtual const FieldMatrix<DT,dim,dim>& K (const FieldVector<DT,dim>& x, const Entity& e, 
-					const FieldVector<DT,dim>& xi)
+	virtual const FieldMatrix<DT,dim,dim>& K (const FieldVector<DT,dim>& x)
+	//, const Entity& e, const FieldVector<DT,dim>& xi)
 	{
 		if (x[0] > innerLowerLeft_[0] && x[0] < innerUpperRight_[0] 
 		    && x[1] > innerLowerLeft_[1] && x[1] < innerUpperRight_[1])

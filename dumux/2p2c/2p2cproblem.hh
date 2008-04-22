@@ -52,8 +52,7 @@ namespace Dune
 	  @param[in]  xi   position in reference element of e
 	  @param[out] D    diffusion tensor to be filled
 	 */
-	virtual const FieldMatrix<DT,dim,dim>& K (const FieldVector<DT,dim>& x, const Entity& e, 
-					const FieldVector<DT,dim>& xi) = 0;
+	virtual const FieldMatrix<DT,dim,dim>& K (const FieldVector<DT,dim>& x) = 0;
 
 	//! evaluate source term
 	/*! evaluate source term at given location

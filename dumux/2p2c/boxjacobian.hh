@@ -214,6 +214,11 @@ namespace Dune
    	 return this->getImp().updateStaticData(e, sol);
     }
 
+    virtual void updateStaticIPData (const Entity& e, const VBlockType* sol)
+    {
+   	 return this->getImp().updateStaticIPData(e, sol);
+    }
+    
     // analog to EvalPrimaryData in MUFTE, uses members of varNData
     virtual void updateVariableData (const Entity& e, const VBlockType* sol)
     {
