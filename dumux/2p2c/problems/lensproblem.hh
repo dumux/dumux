@@ -211,7 +211,6 @@ namespace Dune
 		height_ = outerUpperRight[1] - outerLowerLeft[1];
 		width_ = outerUpperRight[0] - outerLowerLeft[0];
 		 
-		
 		gravity_[0] = 0;
 		gravity_[1] = -9.81;
 	}

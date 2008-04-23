@@ -93,7 +93,8 @@ namespace Dune
 			      bool procBoundaryAsDirichlet_=true)
     : BoxJacobian<ThisType,G,RT,2,BoxFunction>(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_), 
       problem(params), 
-      statNData(this->vertexMapper.size())
+      statNData(this->vertexMapper.size()),
+      statIPData(this->vertexMapper.size())
     {
       this->analytic = false;
     }
@@ -211,10 +212,10 @@ namespace Dune
     virtual void clearVisited ()
     {
    	 for (int i = 0; i < this->vertexMapper.size(); i++)
-   	 {
-   		//statNData[i].visited = false;
-   	 	//statIPData[i].visited = false;
-   	 }
+   		statNData[i].visited = false;
+   	 
+//   	 for (int j = 0; j < this->fvGeom.nEdges; j++)
+//   		 statIPData[j].visited = false;
    	 
    	 return;
     }
@@ -270,7 +271,7 @@ namespace Dune
 		 FieldVector<RT,dim> xGrad(0), temp(0); 
      	 
 		 // permeability in edge direction 
-     	 RT Kij = 1e-12;//statIPData[j].K_eff; 
+     	 RT Kij = statIPData[j].K_eff[0]; 
      	 
      	 // calculate harmonic mean of permeabilities of nodes i and j
      	 //harmonicMeanK(face, global_i, global_j);
@@ -382,7 +383,7 @@ namespace Dune
    {
   	 // ASSUME problem.q already contains \rho.q
   	 return problem.q(this->fvGeom.subContVol[node].global, e, this->fvGeom.subContVol[node].local);
-   };
+   }
        
     
 	  //*********************************************************
@@ -404,7 +405,7 @@ namespace Dune
 //		 // ASSUMING element-wise constant porosity 
 // 		 elData.porosity = problem.porosity(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
    	 return;
-    };
+    }
 
     
 	  //*********************************************************
@@ -417,8 +418,7 @@ namespace Dune
     // analog to EvalStaticData in MUFTE
     virtual void updateStaticData (const Entity& e, const VBlockType* sol)
     {
-   	 //statNData.resize(this->fvGeom.nNodes);
-
+   	 // size is determined in the constructor
    	 
    	 // local to global id mapping (do not ask vertex mapper repeatedly
    	 //int localToGlobal[Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::maxsize];
@@ -467,17 +467,17 @@ namespace Dune
     
     virtual void updateStaticIPData (const Entity& e, const VBlockType* sol)
     {
-   	 //statNData.resize(this->fvGeom.nEdges);
-   	 
-    	  // get access to shape functions for P1 elements
-    	  //GeometryType gt = e.geometry().type();
-    	  //const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type& 
-    	  //sfs=Dune::LagrangeShapeFunctions<DT,RT,dim>::general(gt,1);
+  	  // size is determined in the constructor
+  	  
+  	  	// get access to shape functions for P1 elements
+    	  GeometryType gt = e.geometry().type();
+    	  const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type& 
+    	  sfs=Dune::LagrangeShapeFunctions<DT,RT,dim>::general(gt,1);
 
     	  for (int k = 0; k < this->fvGeom.nEdges; ++k) // begin loop over edges / sub control volume faces
     	  {
     		  // get local to global id map
-    		  //int globalIdx = this->vertexMapper.template map<dim>(e, sfs[face].entity());
+//    		  int globalIdx = this->vertexMapper.template map<dim>(e, sfs[k].entity());
 
     		  // if edge is not already visited
     		  //if (!statIPData[globalIdx].visited)
@@ -485,14 +485,14 @@ namespace Dune
     			  int i = this->fvGeom.subContVolFace[k].i;
     			  int j = this->fvGeom.subContVolFace[k].j;
 //
-//    			  int globalIdx = this->vertexMapper.template map<dim>(e, sfs[j].entity());
+    			  int globalIdx = this->vertexMapper.template map<dim>(e, sfs[j].entity());
 
     			  //FieldVector<DT,dim> global_i = this->fvGeom.subContVol[i].global;
     			  //FieldVector<DT,dim> global_j = this->fvGeom.subContVol[j].global;
     			  //int local_i = this->fvGeom.subContVol[i].local;
     			  //int local_j = this->fvGeom.subContVol[j].local;
     			     			 
-    			  //statIPData[k].K_eff = 1e-12;//harmonicMeanK(face, global_i,global_j); 
+    			  statIPData[globalIdx].K_eff[0] = 1e-12;//harmonicMeanK(face, global_i,global_j); 
 
     			  // mark elements that were already visited
      			  //statIPData[globalIdx].visited = true;
@@ -558,13 +558,12 @@ namespace Dune
     
     struct StaticNodeData 
     {
-    	//bool visited;
-    	
-    	int phaseState;//[numberOfComponents];
-    	RT cellVolume;
-   	RT porosity;
-    	FieldVector<RT, 4> parameters;
-    	//FieldMatrix<RT,dim,dim> K;
+   	 bool visited;
+   	 int phaseState;//[numberOfComponents];
+   	 RT cellVolume;
+   	 RT porosity;
+   	 FieldVector<RT, 4> parameters;
+   	 //FieldMatrix<RT,dim,dim> K;
     };
     
     struct VariableNodeData  
@@ -583,8 +582,8 @@ namespace Dune
 
 	 struct StaticIPData
 	 {
-		 //bool visited;
-		 RT K_eff;
+		 bool visited;
+		 FieldVector<RT, 4> K_eff;
 	 };
     
     

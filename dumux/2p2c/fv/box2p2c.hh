@@ -60,7 +60,7 @@ namespace Dune
 	typedef Box2P2C<G, RT> ThisType;
 	
 	Box2P2C(const G& g, ProblemType& prob) 
-	: LeafP1TwoPhaseModel(g, prob), Xwn(this->size), Xaw(this->size)
+	: LeafP1TwoPhaseModel(g, prob), Xwn(this->size), Xaw(this->size) // (this->size) vectors
 	{ 	}
 
 	void solve() 
