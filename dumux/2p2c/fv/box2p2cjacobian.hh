@@ -72,7 +72,7 @@ namespace Dune
     typedef Box2P2CJacobian<G,RT,BoxFunction> ThisType;
     typedef typename LocalJacobian<ThisType,G,RT,2>::VBlockType VBlockType;
     typedef typename LocalJacobian<ThisType,G,RT,2>::MBlockType MBlockType;
- 	typedef FVElementGeometry<G> FVElementGeometry;
+    typedef FVElementGeometry<G> FVElementGeometry;
 
  	enum {pWIdx = 0, satNIdx = 1, numberOfComponents = 2};	// Solution vector index
 	enum {wPhase = 0, nPhase = 1};									// Phase index
@@ -176,30 +176,44 @@ namespace Dune
     }
     
     // calculates the harmonic mean of K, if values are different
-    virtual double harmonicMeanK (FieldVector<DT,dim> global_i, FieldVector<DT,dim> global_j)
+    virtual double harmonicMeanK (int face, FieldVector<DT,dim> global_i, FieldVector<DT,dim> global_j)
     {
-     	 RT eps = 1e-20;
-     	 FieldMatrix<DT,dim,dim> Ki = problem.K(global_i);
-   	 FieldMatrix<DT,dim,dim> Kj = problem.K(global_j);
+     	 RT auxPerm_i, auxPerm_j;
+     	 FieldVector<RT,dim> normal(this->fvGeom.subContVolFace[face].normal);
+   	 FieldVector<DT,dim> Ki, Kj;
+   	 FieldMatrix<DT,dim,dim> K;
    	 
+   	 K = problem.K(global_i);
+   	 K.umv(normal, Ki);  // Kij=K*n
+   	 auxPerm_i = Ki*normal/(normal*normal);
    	 
-   	 for (int kx=0; kx<dim; kx++){
-      	 for (int ky=0; ky<dim; ky++){
-      		 if (Ki[kx][ky] != Kj[kx][ky])
-      			 {
-      				 Ki[kx][ky] = 2 / (1/(Ki[kx][ky]+eps) + (1/(Kj[kx][ky]+eps)));
-      			 }
-      	 }
-		 }
-   	 return 0.;
+   	 K = problem.K(global_j);
+   	 K.umv(normal, Kj);  // Kij=K*n
+   	 auxPerm_j = Ki*normal/(normal*normal);   	 
+
+     	 if (auxPerm_i != auxPerm_j){
+     		 if (auxPerm_i==0.0 || auxPerm_j==0.0)
+     			 auxPerm_i = 0.0;
+     		 else 
+     			 auxPerm_i = 2 / ((1/auxPerm_i)+(1/auxPerm_j));
+   	 }
+//   	 for (int kx=0; kx<dim; kx++){
+//      	 for (int ky=0; ky<dim; ky++){
+//      		 if (Ki[kx][ky] != Kj[kx][ky])
+//      			 {
+//      				 Ki[kx][ky] = 2 / (1/(Ki[kx][ky]+eps) + (1/(Kj[kx][ky]+eps)));
+//      			 }
+//      	 }
+//		 }
+   	 return auxPerm_i;
     }
     
     virtual void clearVisited ()
     {
    	 for (int i = 0; i < this->vertexMapper.size(); i++)
    	 {
-   		 statNData[i].visited = false;
-   	 	statIPData[i].visited = false;
+   		//statNData[i].visited = false;
+   	 	//statIPData[i].visited = false;
    	 }
    	 
    	 return;
@@ -242,25 +256,26 @@ namespace Dune
      	 int j = this->fvGeom.subContVolFace[face].j;
 
     	 GeometryType gt = e.geometry().type();
+
     	 const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type& 
-     	 sfs=Dune::LagrangeShapeFunctions<DT,RT,dim>::general(gt,1);
+    	 sfs=Dune::LagrangeShapeFunctions<DT,RT,dim>::general(gt,1);
 
-     	 FieldVector<RT,dim> normal(this->fvGeom.subContVolFace[face].normal);
+    	 FieldVector<RT,dim> normal(this->fvGeom.subContVolFace[face].normal);
 
-     	 int global_i = this->vertexMapper.template map<dim>(e, sfs[i].entity());
-     	 int global_j = this->vertexMapper.template map<dim>(e, sfs[j].entity());
+     	 //int global_face = this->vertexMapper.template map<dim>(e, sfs[face].entity());
+     	 //int global_j = this->vertexMapper.template map<dim>(e, sfs[j].entity());
 
      	 VBlockType flux;
 		 FieldMatrix<RT,m,dim> pGrad(0); 
 		 FieldVector<RT,dim> xGrad(0), temp(0); 
      	 
 		 // permeability in edge direction 
-     	 FieldVector<RT,dim> Kij(0);
+     	 RT Kij = 1e-12;//statIPData[j].K_eff; 
      	 
      	 // calculate harmonic mean of permeabilities of nodes i and j
-     	 FieldMatrix<RT,dim,dim> K(0);
+     	 //harmonicMeanK(face, global_i, global_j);
      	 //FieldMatrix<RT,dim,dim> K = harmonicMeanK(global_i, global_j);		  
-     	 K.umv(normal, Kij);  // Kij=K*n
+     	 //K.umv(normal, Kij);  // Kij=K*n
 		 
 		 // calculate FE gradient (grad p for each phase)
 		 for (int k = 0; k < this->fvGeom.nNodes; k++) // loop over adjacent nodes
@@ -301,7 +316,11 @@ namespace Dune
 		 VBlockType outward(0);  // Darcy velocity of each phase
 
 		 // calculate the advective flux using upwind: K*n(grad p -rho*g)
-		 for (int phase=0; phase<m; phase++) outward[phase] = pGrad[phase] *Kij;
+		 for (int phase=0; phase<m; phase++) 
+		 	{
+			 pGrad[phase] *= Kij;
+			 outward[phase] = pGrad[phase] * normal;
+			}
 		 
 		 // evaluate upwind nodes
 		 int up_w, dn_w, up_n, dn_n;
@@ -384,6 +403,7 @@ namespace Dune
 //
 //		 // ASSUMING element-wise constant porosity 
 // 		 elData.porosity = problem.porosity(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+   	 return;
     };
 
     
@@ -397,21 +417,24 @@ namespace Dune
     // analog to EvalStaticData in MUFTE
     virtual void updateStaticData (const Entity& e, const VBlockType* sol)
     {
-  	  // local to global id mapping (do not ask vertex mapper repeatedly
-  	  //int localToGlobal[Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::maxsize];
+   	 //statNData.resize(this->fvGeom.nNodes);
 
-  	  // get access to shape functions for P1 elements
-  	  GeometryType gt = e.geometry().type();
-  	  const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type& 
-  	  sfs=Dune::LagrangeShapeFunctions<DT,RT,dim>::general(gt,1);
+   	 
+   	 // local to global id mapping (do not ask vertex mapper repeatedly
+   	 //int localToGlobal[Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::maxsize];
 
-  	  // get local to global id map
-  	  for (int k = 0; k < sfs.size(); k++) {
-  		  int globalIdx = this->vertexMapper.template map<dim>(e, sfs[k].entity());
-  		  //int globalCoord = fvGeom.subContVol[node].cellGlobal; 
+   	 // get access to shape functions for P1 elements
+   	 GeometryType gt = e.geometry().type();
+   	 const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type& 
+   	 sfs=Dune::LagrangeShapeFunctions<DT,RT,dim>::general(gt,1);
+
+   	 // get local to global id map
+   	 for (int k = 0; k < sfs.size(); k++) {
+  		 int globalIdx = this->vertexMapper.template map<dim>(e, sfs[k].entity());
+  		 //int globalCoord = fvGeom.subContVol[node].cellGlobal; 
   		  
-  		  // if nodes are not already visited
-  		  if (!statNData[globalIdx].visited) 
+  		 // if nodes are not already visited
+  		 // if (!statNData[globalIdx].visited) 
   		  {
   			  // phase state
   			  if (1)
@@ -435,45 +458,48 @@ namespace Dune
 
   			  
   			  // mark elements that were already visited
-  			  statNData[globalIdx].visited = true;
+  			  //statNData[globalIdx].visited = true;
   		  }
   	  }
   	  
-	  return;
+	  //return;
     }
     
     virtual void updateStaticIPData (const Entity& e, const VBlockType* sol)
     {
+   	 //statNData.resize(this->fvGeom.nEdges);
    	 
     	  // get access to shape functions for P1 elements
-    	  GeometryType gt = e.geometry().type();
-    	  const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type& 
-    	  sfs=Dune::LagrangeShapeFunctions<DT,RT,dim>::general(gt,1);
+    	  //GeometryType gt = e.geometry().type();
+    	  //const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type& 
+    	  //sfs=Dune::LagrangeShapeFunctions<DT,RT,dim>::general(gt,1);
 
-    	  for (int k = 0; k < this->fvGeom.nEdges; k++) // begin loop over edges / sub control volume faces
+    	  for (int k = 0; k < this->fvGeom.nEdges; ++k) // begin loop over edges / sub control volume faces
     	  {
     		  // get local to global id map
-    		  int globalIdx = this->vertexMapper.template map<dim>(e, sfs[k].entity());
+    		  //int globalIdx = this->vertexMapper.template map<dim>(e, sfs[face].entity());
 
     		  // if edge is not already visited
-    		  if (!statIPData[globalIdx].visited)
+    		  //if (!statIPData[globalIdx].visited)
     		  {
     			  int i = this->fvGeom.subContVolFace[k].i;
     			  int j = this->fvGeom.subContVolFace[k].j;
+//
+//    			  int globalIdx = this->vertexMapper.template map<dim>(e, sfs[j].entity());
 
-    			  FieldVector<DT,dim> global_i = this->fvGeom.subContVol[i].global;
-    			  FieldVector<DT,dim> global_j = this->fvGeom.subContVol[j].global;
+    			  //FieldVector<DT,dim> global_i = this->fvGeom.subContVol[i].global;
+    			  //FieldVector<DT,dim> global_j = this->fvGeom.subContVol[j].global;
     			  //int local_i = this->fvGeom.subContVol[i].local;
     			  //int local_j = this->fvGeom.subContVol[j].local;
     			     			 
-    			  statIPData[globalIdx].K_eff = harmonicMeanK(global_i,global_j); 
+    			  //statIPData[k].K_eff = 1e-12;//harmonicMeanK(face, global_i,global_j); 
 
     			  // mark elements that were already visited
-     			  statIPData[globalIdx].visited = true;
+     			  //statIPData[globalIdx].visited = true;
     		  }
     	  }
    	 
-   	 return;
+   	 //return;
     }
 
 
@@ -525,107 +551,20 @@ namespace Dune
          //std::cout << "water in gasphase: " << varNData[i].massfrac[water][nPhase] << std::endl;
          //std::cout << "air in waterphase: " << varNData[i].massfrac[air][wPhase] << std::endl;
    	 }   	 
+   	 return;
     }
     
-//    virtual VBlockType computeA (const Entity& e, const VBlockType* sol, int face)
-//    {
-//   	 int i = this->fvGeom.subContVolFace[face].i;
-//     	 int j = this->fvGeom.subContVolFace[face].j;
-//     	 FieldVector<RT,dim> normal(this->fvGeom.subContVolFace[face].normal);
-//
-//     	 VBlockType flux;
-//		 FieldMatrix<RT,m,dim> pGrad(0); 
-//		 FieldVector<RT,dim> xGrad(0), temp(0); 
-//     	 
-//		 // permeability in edge direction 
-//     	 FieldVector<RT,dim> Kij(0);
-//		 elData.K.umv(normal, Kij);  // Kij=K*n
-//		 
-//		 // calculate FE gradient (grad p for each phase)
-//		 for (int k = 0; k < this->fvGeom.nNodes; k++) // loop over adjacent nodes
-//       {	 
-//      	 FV feGrad(this->fvGeom.subContVolFace[face].grad[k]); // FEGradient at node k
-//       	 FieldVector<RT,m> pressure(0), massfrac(0);
-//
-//      	 pressure[wPhase] = sol[k][pWIdx];
-//      	 pressure[nPhase] = varNData[k].pN;
-//      	 
-//      	 massfrac[wPhase] = varNData[k].massfrac[water][nPhase]; // water in gas phase
-//      	 massfrac[nPhase] = varNData[k].massfrac[air][wPhase];	// air in water phase
-//      	 
-//      	 // compute sum of pressure gradients for each phase
-//      	 for (int phase = 0; phase < m; phase++)
-//      	 {	      		 
-//      		 temp = feGrad;
-//      		 temp *= pressure[phase];
-//      		 pGrad[phase] += temp;
-//      	 }
-//
-//      	 // compute sum of concentration gradient
-//      	 // only water diffusion in the gas phase considered !!!
-//      	 temp = feGrad;
-//      	 temp *= massfrac[water];
-//      	 xGrad += temp;
-//       }
-//
-//       // deduce gravity*density of each phase
-//		 FieldMatrix<RT,m,dim> contribComp(0);
-//		 for (int phase=0; phase<m; phase++)
-//		 {
-//			 contribComp[phase] = problem.gravity();
-//			 contribComp[phase] *= varNData[i].density[phase];  
-//			 pGrad[phase] -= contribComp[phase]; // grad p - rho*g
-//		 }
-//	 	 
-//		 VBlockType outward(0);  // Darcy velocity of each phase
-//		 FieldVector<RT,4> massfraction;
-//		 massfraction[0] = varNData[i].massfrac[water][wPhase];
-//		 massfraction[1] = varNData[i].massfrac[water][nPhase];
-//		 massfraction[2] = varNData[i].massfrac[air][wPhase];
-//		 massfraction[3] = varNData[i].massfrac[air][nPhase];
-//
-//		 // calculate the advective flux using upwind
-//		 for (int phase=0; phase<m; phase++)
-//		 {
-//			 outward[phase] = pGrad[phase]*Kij;  //K*n(grad p -rho*g)  
-//
-//			 if (outward[phase] <= 0)
-//				 temp[phase] = varNData[i].density[phase]*varNData[i].mobility[phase]*outward[phase];
-//			 else
-//				 temp[phase] = varNData[j].density[phase]*varNData[j].mobility[phase]*outward[phase];
-//		 }
-//		 
-//		 // DIFFUSION
-//		 RT normDiffGrad, diffusionWG;
-//		 VBlockType avgDensity, avgDpm(0);
-//		 avgDpm[wPhase]=1e-9; // needs to be changed !!!
-//		 
-//		 normDiffGrad = xGrad*normal;
-//		 avgDensity[wPhase] = 0.5*(varNData[i].density[wPhase] + varNData[j].density[wPhase]);
-//		 
-//		 diffusionWG = avgDpm[wPhase] * avgDensity[wPhase] * normDiffGrad;
-////		 std::cout << "Diffusive Flux: " << diffusionWG << std::endl; 
-//		 
-//		 
-//		 // water conservation
-//		 flux[water] = /*diffusionWG +*/ massfraction[wPhase]*temp[wPhase]+massfraction[nPhase]*temp[nPhase];
-//		 // air conservation
-//		 flux[air] = massfraction[wPhase+c]*temp[wPhase]+massfraction[nPhase+c]*temp[nPhase];
-//
-//
-//		 return flux;
-//  };
 
     
     struct StaticNodeData 
     {
-    	bool visited;
+    	//bool visited;
     	
     	int phaseState;//[numberOfComponents];
     	RT cellVolume;
    	RT porosity;
     	FieldVector<RT, 4> parameters;
-    	FieldMatrix<RT,dim,dim> K;
+    	//FieldMatrix<RT,dim,dim> K;
     };
     
     struct VariableNodeData  
@@ -644,7 +583,7 @@ namespace Dune
 
 	 struct StaticIPData
 	 {
-		 bool visited;
+		 //bool visited;
 		 RT K_eff;
 	 };
     
@@ -665,138 +604,5 @@ namespace Dune
     std::vector<VariableNodeData> varNData;
   };
 
-  //    // Compute advective and diffusive fluxes
-  //    virtual VBlockType computeA (const Entity& e, const VBlockType* sol, int face)
-  //    {
-  //     	 enum {iNode=0, jNode=1};
-  //
-  //   	 int i = this->fvGeom.subContVolFace[face].i;
-  //     	 int j = this->fvGeom.subContVolFace[face].j;
-  //
-  //     	 FieldVector<RT,dim> normal(this->fvGeom.subContVolFace[face].normal);
-  //     	 VBlockType flux;
-  //		 FieldVector<RT,dim> xGrad(0); 
-  //    	 FieldVector<RT,m> deltaP(0); 
-  //    	 FieldVector<RT,m> potDiff(0); 
-  //    	 FieldVector<RT,m> zCoord(0);
-  //		 FieldMatrix<RT,m,dim> pGrad(0); 
-  //    	 FieldMatrix<RT,2,dim> globalCoord(0);
-  // 		 FV gravity = problem.gravity();
-  // 		 double depthBOR = problem.depthBOR();
-  //
-  // 		// Get Coordinates
-  // 		 zCoord[iNode] = this->fvGeom.subContVol[i].global[dim-1];
-  // 		 zCoord[jNode] = this->fvGeom.subContVol[j].global[dim-1];
-  // 		 globalCoord[iNode] = this->fvGeom.subContVol[i].global; 
-  // 		 globalCoord[jNode] = this->fvGeom.subContVol[j].global; 
-  //		 
-  //		 FV solution;
-  //		 solution[iNode] = varNData[i].pW;
-  //		 solution[jNode] = varNData[j].pW;
-  ////		 std::cout << "solutionI: " <<solution[iNode] << std::endl;
-  ////		 std::cout << "solutionJ: "<< solution[jNode] << std::endl;
-  //		 		 
-  //		 // calculate potential difference  (j - i)
-  //		 FieldMatrix<RT,m,2> potential(0);
-  //		 potential[iNode][wPhase] = varNData[i].pW + 
-  //		 	varNData[i].density[wPhase]*gravity[dim-1]*(depthBOR - zCoord[iNode]);
-  //		 potential[iNode][nPhase] = varNData[i].pN + 
-  //		 	varNData[i].density[nPhase]*gravity[dim-1]*(depthBOR - zCoord[iNode]);
-  //
-  //		 potential[jNode][wPhase] = varNData[j].pW + 
-  //		 	varNData[j].density[wPhase]*gravity[dim-1]*(depthBOR - zCoord[jNode]);
-  //		 potential[jNode][nPhase] = varNData[j].pN + 
-  //		 	varNData[j].density[nPhase]*gravity[dim-1]*(depthBOR - zCoord[jNode]);
-  //
-  //		 potDiff = potential[jNode]-potential[iNode];
-  //
-  //		 FV distance;
-  //		 distance = globalCoord[jNode] - globalCoord[iNode];
-  //		 if (distance[0] < 0) distance[0] *(-1);
-  //		 if (distance[dim-1] < 0) distance[dim-1] *(-1);
-  //		        		                                      
-  //		 // evaluate upwind nodes
-  //		 int up_w, dn_w, up_n, dn_n;
-  //		 if (potDiff[wPhase] <= 0) {up_w = i; dn_w = j;}
-  //		 else {up_w = j; dn_w = i;};
-  //		 if (potDiff[nPhase] <= 0) {up_n = i; dn_n = j;}
-  //		 else {up_n = j; dn_n = i;};
-  //
-  //    	 FieldMatrix<RT,m,dim> contribComp(0); 
-  //		 // compute fvGrad * (Potential[j]-Potential[i])
-  //   	 for (int phase = 0; phase < m; phase++)
-  //   	 {	      		 
-  //   		 if (distance[0]>0)
-  //   		 contribComp[phase][0] = potDiff[phase]/distance[0];
-  //   		 if (distance[dim-1]>0)
-  //   		 contribComp[phase][dim-1] = potDiff[phase]/distance[dim-1];
-  //   	 }
-  //
-  // 	 	 
-  //		 VBlockType outward(0);  // Darcy velocity of each phase
-  //
-  //		 // permeability in edge direction 
-  //     	 FieldVector<RT,dim> Kij(0);
-  //		 elData.K.umv(normal, Kij);  // Kij=K*n
-  //
-  //		 // calculate the ADVECTIVE flux using upwind
-  //		 outward[wPhase] = contribComp[wPhase]*Kij;  //K*n(pot_j-pot_i)  
-  //		 outward[nPhase] = contribComp[nPhase]*Kij;  //K*n(grad p -rho*g)  
-  //
-  //		 RT alpha = 1.0;  // Upwind parameter
-  //		 
-  //		 // Water conservation
-  //		 flux[water] = (alpha* varNData[up_w].density[wPhase]*varNData[up_w].mobility[wPhase]
-  //				               * varNData[up_w].massfrac[water][wPhase] * outward[wPhase] 
-  //				               + varNData[up_n].density[nPhase]*varNData[up_n].mobility[nPhase]
-  //				               * varNData[up_n].massfrac[water][nPhase] * outward[nPhase]);
-  //		 if (alpha != 1.0){flux[water]+= 
-  //			 		((1-alpha)* varNData[dn_w].density[wPhase]*varNData[dn_w].mobility[wPhase]
-  //				               * varNData[dn_w].massfrac[water][wPhase] * outward[wPhase] 
-  //				               + varNData[dn_n].density[nPhase]*varNData[dn_n].mobility[nPhase]
-  //				               * varNData[dn_n].massfrac[water][nPhase] * outward[nPhase]);}
-  //		 // Air conservation
-  //		 flux[air]   = (alpha* varNData[up_n].density[nPhase]*varNData[up_n].mobility[nPhase]
-  //				               * varNData[up_n].massfrac[air][nPhase] * outward[nPhase]
-  //				               + varNData[up_w].density[wPhase]*varNData[up_w].mobility[wPhase]
-  //				               * varNData[up_w].massfrac[air][wPhase] * outward[wPhase]);
-  //		 if (alpha != 1.0){flux[air]+= 
-  //			 		((1-alpha)* varNData[dn_n].density[nPhase]*varNData[dn_n].mobility[nPhase]
-  //				               * varNData[dn_n].massfrac[air][nPhase] * outward[nPhase]
-  //				               + varNData[dn_w].density[wPhase]*varNData[dn_w].mobility[wPhase]
-  //				               * varNData[dn_w].massfrac[air][wPhase] * outward[wPhase]);}
-  //			 		 
-  //		 // DIFFUSION
-  //   	 // compute sum of concentration gradient
-  //   	 // only water diffusion in the gas phase considered !!!
-  ////		 FieldVector<RT,dim> feGrad(this->fvGeom.subContVolFace[face].grad[j]);   		 
-  ////   	 feGrad *= (varNData[j].massfrac[water][nPhase] - varNData[i].massfrac[water][nPhase]);
-  //   	 xGrad = (varNData[j].massfrac[water][nPhase] - varNData[i].massfrac[water][nPhase])
-  //   	 		/distance.two_norm();
-  //   	 
-  ////   	 xGrad += feGrad;
-  //
-  //		 RT normDiffGrad, diffusionWG;
-  //		 FieldVector<RT,m> avgDensity, avgDpm(0);
-  //		 avgDpm[wPhase] = 1e-9; // needs to be changed !!!
-  //		 
-  //		 normDiffGrad = xGrad*normal;
-  //		 avgDensity[wPhase] = 0.5*(varNData[i].density[wPhase] + varNData[j].density[wPhase]);
-  //		 
-  //		 diffusionWG = avgDpm[wPhase] * avgDensity[wPhase] * normDiffGrad;
-  ////		 std::cout << "Diffusive Flux: " << xGrad << std::endl; 
-  //		 
-  //		 
-  //		 // water conservation
-  //		 flux[water] = flux[water];// + diffusionWG;
-  //		 // air conservation
-  //		 flux[air] = flux[air];
-  //
-  //
-  //		 return flux;
-  //  };
-  
-  
-  /** @} */
 }
 #endif

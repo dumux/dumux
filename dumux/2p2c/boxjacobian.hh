@@ -74,10 +74,10 @@ namespace Dune
 	  }; 
 
 	typedef typename G::ctype DT;
-    typedef typename G::Traits::template Codim<0>::Entity Entity;
-    typedef typename Entity::Geometry Geometry;
-    typedef typename LocalJacobian<Imp,G,RT,m>::VBlockType VBlockType;
-    typedef typename LocalJacobian<Imp,G,RT,m>::MBlockType MBlockType;
+   typedef typename G::Traits::template Codim<0>::Entity Entity;
+   typedef typename Entity::Geometry Geometry;
+   typedef typename LocalJacobian<Imp,G,RT,m>::VBlockType VBlockType;
+   typedef typename LocalJacobian<Imp,G,RT,m>::MBlockType MBlockType;
  	typedef FVElementGeometry<G> FVElementGeometry;
 	typedef MultipleCodimMultipleGeomTypeMapper<G, typename G::Traits::LeafIndexSet, P1Layout> VertexMapper;	
 	
