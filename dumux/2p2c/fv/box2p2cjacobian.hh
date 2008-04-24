@@ -85,6 +85,9 @@ namespace Dune
     enum {dim=G::dimension};
     enum {m=2, c=2};
     enum {SIZE=LagrangeShapeFunctionSetContainer<DT,RT,dim>::maxsize};
+
+    typedef FieldMatrix<RT,dim,dim> FMatrix;
+    typedef FieldVector<RT,dim> FVector;
     
     //! Constructor
     Box2P2CJacobian (TwoPTwoCProblem<G,RT>& params,
@@ -159,7 +162,7 @@ namespace Dune
     		}
     	break;
       }
-
+        
 //      if (statNData[i].phaseState == gasPhase)  
 //       {
 //          sol[i][satNIdx] = dat->co_Xwg[i];
@@ -177,36 +180,50 @@ namespace Dune
     }
     
     // calculates the harmonic mean of K, if values are different
-    virtual double harmonicMeanK (int face, FieldVector<DT,dim> global_i, FieldVector<DT,dim> global_j)
-    {
-     	 RT auxPerm_i, auxPerm_j;
-     	 FieldVector<RT,dim> normal(this->fvGeom.subContVolFace[face].normal);
-   	 FieldVector<DT,dim> Ki, Kj;
-   	 FieldMatrix<DT,dim,dim> K;
-   	 
-   	 K = problem.K(global_i);
-   	 K.umv(normal, Ki);  // Kij=K*n
-   	 auxPerm_i = Ki*normal/(normal*normal);
-   	 
-   	 K = problem.K(global_j);
-   	 K.umv(normal, Kj);  // Kij=K*n
-   	 auxPerm_j = Ki*normal/(normal*normal);   	 
+//    virtual double harmonicMeanK (int face, FieldVector<DT,dim> global_i, FieldVector<DT,dim> global_j)
+//    {
+//     	 RT auxPerm_i, auxPerm_j;
+//     	 FieldVector<RT,dim> normal(this->fvGeom.subContVolFace[face].normal);
+//   	 FieldVector<DT,dim> Ki, Kj;
+//   	 FieldMatrix<DT,dim,dim> K;
+//   	 
+//   	 K = problem.K(global_i);
+//   	 K.umv(normal, Ki);  // Kij=K*n
+//   	 auxPerm_i = Ki*normal/(normal*normal);
+//   	 
+//   	 K = problem.K(global_j);
+//   	 K.umv(normal, Kj);  // Kij=K*n
+//   	 auxPerm_j = Ki*normal/(normal*normal);   	 
+//
+//     	 if (auxPerm_i != auxPerm_j){
+//     		 if (auxPerm_i==0.0 || auxPerm_j==0.0)
+//     			 auxPerm_i = 0.0;
+//     		 else 
+//     			 auxPerm_i = 2 / ((1/auxPerm_i)+(1/auxPerm_j));
+//   	 }
+//
+//   	 return auxPerm_i;
+//    }
 
-     	 if (auxPerm_i != auxPerm_j){
-     		 if (auxPerm_i==0.0 || auxPerm_j==0.0)
-     			 auxPerm_i = 0.0;
-     		 else 
-     			 auxPerm_i = 2 / ((1/auxPerm_i)+(1/auxPerm_j));
-   	 }
-//   	 for (int kx=0; kx<dim; kx++){
-//      	 for (int ky=0; ky<dim; ky++){
-//      		 if (Ki[kx][ky] != Kj[kx][ky])
-//      			 {
-//      				 Ki[kx][ky] = 2 / (1/(Ki[kx][ky]+eps) + (1/(Kj[kx][ky]+eps)));
-//      			 }
-//      	 }
-//		 }
-   	 return auxPerm_i;
+    virtual FMatrix harmonicMeanK (FVector global_i, FVector global_j)//FMatrix Ki, FMatrix Kj)
+    {
+   	 double eps = 1e-20;
+
+   	 FMatrix Ki, Kj;
+   	 
+   	 Ki = this->problem.K(global_i);
+   	 Kj = this->problem.K(global_j);
+   	 
+   	 
+   	 for (int kx=0; kx<dim; kx++){
+      	 for (int ky=0; ky<dim; ky++){
+      		 if (Ki[kx][ky] != Kj[kx][ky])
+      			 {
+      				 Ki[kx][ky] = 2 / (1/(Ki[kx][ky]+eps) + (1/(Kj[kx][ky]+eps)));
+      			 }
+      	 }
+		 }
+   	 return Ki;
     }
     
     virtual void clearVisited ()
@@ -256,27 +273,23 @@ namespace Dune
    	 int i = this->fvGeom.subContVolFace[face].i;
      	 int j = this->fvGeom.subContVolFace[face].j;
 
-    	 GeometryType gt = e.geometry().type();
-
-    	 const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type& 
-    	 sfs=Dune::LagrangeShapeFunctions<DT,RT,dim>::general(gt,1);
-
     	 FieldVector<RT,dim> normal(this->fvGeom.subContVolFace[face].normal);
 
-     	 //int global_face = this->vertexMapper.template map<dim>(e, sfs[face].entity());
-     	 //int global_j = this->vertexMapper.template map<dim>(e, sfs[j].entity());
+    	 // get global coordinates of nodes i,j
+    	 FieldVector<DT,dim> global_i = this->fvGeom.subContVol[i].global;
+		 FieldVector<DT,dim> global_j = this->fvGeom.subContVol[j].global;
 
      	 VBlockType flux;
 		 FieldMatrix<RT,m,dim> pGrad(0); 
 		 FieldVector<RT,dim> xGrad(0), temp(0); 
-     	 
-		 // permeability in edge direction 
-     	 RT Kij = statIPData[j].K_eff[0]; 
+		 FieldVector<RT,dim> Kij(0);
+		 
+		 // effective permeability in edge direction 
+     	 // RT Kij = statIPData[global_j].K_eff[face]; 
      	 
      	 // calculate harmonic mean of permeabilities of nodes i and j
-     	 //harmonicMeanK(face, global_i, global_j);
-     	 //FieldMatrix<RT,dim,dim> K = harmonicMeanK(global_i, global_j);		  
-     	 //K.umv(normal, Kij);  // Kij=K*n
+     	 FieldMatrix<RT,dim,dim> K = harmonicMeanK(global_i, global_j);		  
+     	 K.umv(normal, Kij);  // Kij=K*n
 		 
 		 // calculate FE gradient (grad p for each phase)
 		 for (int k = 0; k < this->fvGeom.nNodes; k++) // loop over adjacent nodes
@@ -319,8 +332,8 @@ namespace Dune
 		 // calculate the advective flux using upwind: K*n(grad p -rho*g)
 		 for (int phase=0; phase<m; phase++) 
 		 	{
-			 pGrad[phase] *= Kij;
-			 outward[phase] = pGrad[phase] * normal;
+			 //pGrad[phase] *= Kij;
+			 outward[phase] = Kij * pGrad[phase];// * normal;
 			}
 		 
 		 // evaluate upwind nodes
@@ -418,7 +431,7 @@ namespace Dune
     // analog to EvalStaticData in MUFTE
     virtual void updateStaticData (const Entity& e, const VBlockType* sol)
     {
-   	 // size is determined in the constructor
+   	 // size of the statNData vector is determined in the constructor
    	 
    	 // local to global id mapping (do not ask vertex mapper repeatedly
    	 //int localToGlobal[Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::maxsize];
@@ -434,7 +447,7 @@ namespace Dune
   		 //int globalCoord = fvGeom.subContVol[node].cellGlobal; 
   		  
   		 // if nodes are not already visited
-  		 // if (!statNData[globalIdx].visited) 
+  		 if (!statNData[globalIdx].visited) 
   		  {
   			  // phase state
   			  if (1)
@@ -458,7 +471,7 @@ namespace Dune
 
   			  
   			  // mark elements that were already visited
-  			  //statNData[globalIdx].visited = true;
+  			  statNData[globalIdx].visited = true;
   		  }
   	  }
   	  
@@ -487,12 +500,13 @@ namespace Dune
 //
     			  int globalIdx = this->vertexMapper.template map<dim>(e, sfs[j].entity());
 
-    			  //FieldVector<DT,dim> global_i = this->fvGeom.subContVol[i].global;
-    			  //FieldVector<DT,dim> global_j = this->fvGeom.subContVol[j].global;
+    			  FieldVector<DT,dim> global_i = this->fvGeom.subContVol[i].global;
+    			  FieldVector<DT,dim> global_j = this->fvGeom.subContVol[j].global;
     			  //int local_i = this->fvGeom.subContVol[i].local;
     			  //int local_j = this->fvGeom.subContVol[j].local;
     			     			 
-    			  statIPData[globalIdx].K_eff[0] = 1e-12;//harmonicMeanK(face, global_i,global_j); 
+    			  //statIPData[globalIdx].K_eff[k] = harmonicMeanK(k, global_i,global_j); 
+    			  statIPData[globalIdx].K = harmonicMeanK(global_i,global_j); 
 
     			  // mark elements that were already visited
      			  //statIPData[globalIdx].visited = true;
@@ -563,7 +577,7 @@ namespace Dune
    	 RT cellVolume;
    	 RT porosity;
    	 FieldVector<RT, 4> parameters;
-   	 //FieldMatrix<RT,dim,dim> K;
+   	 FMatrix K;
     };
     
     struct VariableNodeData  
@@ -583,7 +597,7 @@ namespace Dune
 	 struct StaticIPData
 	 {
 		 bool visited;
-		 FieldVector<RT, 4> K_eff;
+		 FMatrix K;
 	 };
     
     
