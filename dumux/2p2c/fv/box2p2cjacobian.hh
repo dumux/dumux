@@ -103,44 +103,44 @@ namespace Dune
     }
 
 
-    virtual void primaryVarSwitch (const VBlockType* sol, const Entity& e, int i, 
-   		 FieldMatrix<RT,m,c>& massfrac)
+    virtual void primaryVarSwitch (const Entity& e, VBlockType* sol, int i)
     {
-        RT Sw, Xaw, Xwg, Xamax;
+   	 RT Sw, Xaw, Xwg;
+        //int i = this->fvGeom.cellLocal;
 
         // neue Variable in SOL schreiben. Da Zeiger auf sol, sollte das funktionieren
         // Achtung: alte Lösung beibebehalten, falls Newton den Zeitschritt nicht schafft
 
-        Sw      = varNData[i].saturationN;
-        Xamax = 0.1; // Needs to be changed/specified !!!
-
-        Xaw   	 = massfrac[air][wPhase];
-        Xwg     = massfrac[water][nPhase];;
+        Sw      = varNData[i].saturationW;
+        const RT Xaw_max = 0.1; // Needs to be changed/specified !!!
+        const RT Xwg_max = 0.1; // Needs to be changed/specified !!!
+        
+        Xaw   	 = varNData[i].massfrac[air][wPhase];
+        Xwg     = varNData[i].massfrac[water][nPhase];;
      
         //std::cout << "negative non-wetting saturation!! --> Switsching Variables" << std::endl;
        
-        
         switch(statNData[i].phaseState) 
         {
         case 0 : // GasPhase
 
-            if (varNData[i].saturationN > 0.001)
+            if (sol[i][satNIdx] > 1.01*Xwg_max)
             {
             	// appearance of water phase
             	std::cout << "Water appears" << std::endl;
             	statNData[i].phaseState = bothPhases;
-            	varNData[i].saturationW = 1.E-6;
+            	sol[i][satNIdx] = 1.E-6;
             }
             break;
 
         case 1 : // WaterPhase
 
-            if (sol[i][satNIdx] > Xamax)
+            if (sol[i][satNIdx] > 1.01*Xaw_max)
             {
             	// appearance of gas phase
-            	std::cout << "Gas appears" << std::endl;
+            	std::cout << "Gas appears at node " << i << std::endl;
             	statNData[i].phaseState = bothPhases;
-            	varNData[i].saturationW = 1.0 - 1.E-6;  /* Initialisierung */
+            	sol[i][satNIdx] = 1.0 - 1.E-6;  // Initialisierung
             }
             break;
 
@@ -151,14 +151,14 @@ namespace Dune
       		  	// disappearance of gas phase
       		  	std::cout << "gas disappears" << std::endl;
       		  	statNData[i].phaseState = waterPhase;
-//    			*var_wc = 1.E-6;  /* Initialisierung */
+      		  	sol[i][satNIdx] = 1.E-6;  // Initialisierung
     		}
     		if ( 1 - sol[i][satNIdx] < 0.0 ) 
     		{
     				// disappearance of water phase
     				std::cout << "Water disappears" << std::endl;
     				statNData[i].phaseState = gasPhase;
-//    			*var_wc = 1.E-6;  /* Initialisierung */
+    				sol[i][satNIdx] = 1.E-6;  // Initialisierung
     		}
     	break;
       }
@@ -205,16 +205,16 @@ namespace Dune
 //   	 return auxPerm_i;
 //    }
 
-    virtual FMatrix harmonicMeanK (FVector global_i, FVector global_j)//FMatrix Ki, FMatrix Kj)
+    // harmonic mean computed directly
+    virtual FMatrix harmonicMeanK (const FVector global_i, const FVector global_j)
     {
    	 double eps = 1e-20;
 
    	 FMatrix Ki, Kj;
    	 
-   	 Ki = this->problem.K(global_i);
+   	 Ki = this->problem.K(global_i); 
    	 Kj = this->problem.K(global_j);
-   	 
-   	 
+
    	 for (int kx=0; kx<dim; kx++){
       	 for (int ky=0; ky<dim; ky++){
       		 if (Ki[kx][ky] != Kj[kx][ky])
@@ -226,13 +226,42 @@ namespace Dune
    	 return Ki;
     }
     
+    // or from the staticNode Vector
+    virtual FMatrix harmonicMeanK (const Entity& e, int k)
+    {
+	 FMatrix Ki, Kj;
+	 const RT eps = 1e-20;
+	 
+    GeometryType gt = e.geometry().type();
+    const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type& 
+    sfs=Dune::LagrangeShapeFunctions<DT,RT,dim>::general(gt,1);
+
+     int i = this->fvGeom.subContVolFace[k].i;
+	  int j = this->fvGeom.subContVolFace[k].j;
+
+	  int global_i = this->vertexMapper.template map<dim>(e, sfs[i].entity());
+	  int global_j = this->vertexMapper.template map<dim>(e, sfs[j].entity());
+    
+    
+
+       	 Ki = statNData[global_i].K;
+       	 Kj = statNData[global_j].K;
+       	 
+       	 for (int kx=0; kx<dim; kx++){
+          	 for (int ky=0; ky<dim; ky++){
+          		 if (Ki[kx][ky] != Kj[kx][ky])
+          			 {
+          				 Ki[kx][ky] = 2 / (1/(Ki[kx][ky]+eps) + (1/(Kj[kx][ky]+eps)));
+          			 }
+          	 }
+    		 }
+       	 return Ki;
+    }
+    
     virtual void clearVisited ()
     {
    	 for (int i = 0; i < this->vertexMapper.size(); i++)
    		statNData[i].visited = false;
-   	 
-//   	 for (int j = 0; j < this->fvGeom.nEdges; j++)
-//   		 statIPData[j].visited = false;
    	 
    	 return;
     }
@@ -246,13 +275,11 @@ namespace Dune
      	 sfs=Dune::LagrangeShapeFunctions<DT,RT,dim>::general(gt,1);
     	 
    	 int globalIdx = this->vertexMapper.template map<dim>(e, sfs[node].entity());
+   	 //int globalCoord = this->fvGeom.subContVol[node].global;
 
-   	 //int globalID = this->fvGeom.subContVol[node].global;
    	 VBlockType result; 
      	 RT satN = sol[node][satNIdx];
    	 RT satW = 1.0 - satN;  
-   	 //RT control = varNData[node].saturationN - sol[node][satNIdx];
-   	 //std::cout << control << std::endl;
    	    	                  
    	 // storage of component water
    	 result[water] = 
@@ -272,23 +299,25 @@ namespace Dune
     {
    	 int i = this->fvGeom.subContVolFace[face].i;
      	 int j = this->fvGeom.subContVolFace[face].j;
-
-    	 FieldVector<RT,dim> normal(this->fvGeom.subContVolFace[face].normal);
+     	 
+     	 // normal vector, value of the area of the scvf
+    	 const FieldVector<RT,dim> normal(this->fvGeom.subContVolFace[face].normal);
 
     	 // get global coordinates of nodes i,j
-    	 FieldVector<DT,dim> global_i = this->fvGeom.subContVol[i].global;
-		 FieldVector<DT,dim> global_j = this->fvGeom.subContVol[j].global;
+    	 const FieldVector<DT,dim> global_i = this->fvGeom.subContVol[i].global;
+		 const FieldVector<DT,dim> global_j = this->fvGeom.subContVol[j].global;
 
-     	 VBlockType flux;
 		 FieldMatrix<RT,m,dim> pGrad(0); 
 		 FieldVector<RT,dim> xGrad(0), temp(0); 
 		 FieldVector<RT,dim> Kij(0);
+     	 VBlockType flux;
 		 
 		 // effective permeability in edge direction 
      	 // RT Kij = statIPData[global_j].K_eff[face]; 
      	 
      	 // calculate harmonic mean of permeabilities of nodes i and j
-     	 FieldMatrix<RT,dim,dim> K = harmonicMeanK(global_i, global_j);		  
+		 const FMatrix K = harmonicMeanK(global_i, global_j);
+		 //const FMatrix K = harmonicMeanK(e, face);		  
      	 K.umv(normal, Kij);  // Kij=K*n
 		 
 		 // calculate FE gradient (grad p for each phase)
@@ -444,27 +473,22 @@ namespace Dune
    	 // get local to global id map
    	 for (int k = 0; k < sfs.size(); k++) {
   		 int globalIdx = this->vertexMapper.template map<dim>(e, sfs[k].entity());
-  		 //int globalCoord = fvGeom.subContVol[node].cellGlobal; 
   		  
   		 // if nodes are not already visited
   		 if (!statNData[globalIdx].visited) 
   		  {
-  			  // phase state
-  			  if (1)
-  			  {
-  				statNData[globalIdx].phaseState = gasPhase;
-  			  }
-  			  else 
-  			  {
-  				  
-  			  }
+  			  // initial phase state
+  			 	statNData[globalIdx].phaseState = waterPhase;
 
   			  // ASSUME parameters defined at the node/subcontrol volume for the material law 
   			  statNData[globalIdx].parameters = problem.materialLawParameters
   			  (this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
-  	   	 
+
+ 			  // global coordinates
+ 			  FieldVector<DT,dim> global_i = this->fvGeom.subContVol[k].global;
+  			  
   			  // ASSUME permeability defined at nodes, evaluate harmonic mean of K 
-  			  //statNData[globalIdx].K = problem.K(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);  
+  			  //statNData[globalIdx].K = problem.K(global_i);  
 
   			  // ASSUME porosity defined at nodes
   			  statNData[globalIdx].porosity = problem.porosity(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
@@ -500,13 +524,14 @@ namespace Dune
 //
     			  int globalIdx = this->vertexMapper.template map<dim>(e, sfs[j].entity());
 
+    			  // global coordinates
     			  FieldVector<DT,dim> global_i = this->fvGeom.subContVol[i].global;
     			  FieldVector<DT,dim> global_j = this->fvGeom.subContVol[j].global;
     			  //int local_i = this->fvGeom.subContVol[i].local;
     			  //int local_j = this->fvGeom.subContVol[j].local;
     			     			 
     			  //statIPData[globalIdx].K_eff[k] = harmonicMeanK(k, global_i,global_j); 
-    			  statIPData[globalIdx].K = harmonicMeanK(global_i,global_j); 
+    			  //statIPData[globalIdx].K = harmonicMeanK(global_i,global_j); 
 
     			  // mark elements that were already visited
      			  //statIPData[globalIdx].visited = true;

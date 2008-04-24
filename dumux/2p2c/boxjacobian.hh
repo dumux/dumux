@@ -107,8 +107,9 @@ namespace Dune
     template<class TypeTag>
     void localDefect (const Entity& e, const VBlockType* sol)
     {
-      computeElementData(e);
-      updateVariableData(e, sol);
+   	 computeElementData(e);
+   	 updateVariableData(e, sol);
+
 
 	  for (int i=0; i < this->fvGeom.nNodes; i++) // begin loop over vertices / sub control volumes
 	  {
@@ -188,6 +189,11 @@ namespace Dune
     	*oldSolution = *uOld;
     }
   
+    virtual void primaryVarSwitch(const Entity& e, VBlockType* sol, int i)
+    {
+   	 return this->getImp().primaryVarSwitch(e, sol, i);
+    }
+
     VBlockType computeM (const Entity& e, const VBlockType* sol, int node)
     {
    	 return this->getImp().computeM(e, sol, node);
