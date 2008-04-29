@@ -114,14 +114,14 @@ namespace Dune
 		return materialLaw_;
 	}
 
-	Solubility& constrel ()
+	Solubility& solu ()
 	{
-		return constrel_;
+		return solu_;
 	}
 	
 	
 	TwoPTwoCProblem(TwoPhaseRelations& law = *(new LinearLaw), Solubility& solu = *(new Solubility)) 
-	: materialLaw_(law), constrel_(solu)
+	: materialLaw_(law), solu_(solu)
 	{	}
 	
 	//! always define virtual destructor in abstract base class
@@ -129,7 +129,7 @@ namespace Dune
 	
   protected:
 	TwoPhaseRelations& materialLaw_;
-	Solubility& constrel_;
+	Solubility& solu_;
   };
 
 }

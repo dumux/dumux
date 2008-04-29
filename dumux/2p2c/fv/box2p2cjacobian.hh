@@ -206,7 +206,7 @@ namespace Dune
 //    }
 
     // harmonic mean computed directly
-    virtual FMatrix harmonicMeanK (const FVector global_i, const FVector global_j)
+    virtual FMatrix harmonicMeanK (const FVector global_i, const FVector global_j) const
     {
    	 double eps = 1e-20;
 
@@ -227,7 +227,7 @@ namespace Dune
     }
     
     // or from the staticNode Vector
-    virtual FMatrix harmonicMeanK (const Entity& e, int k)
+    virtual FMatrix harmonicMeanK (const Entity& e, int k) const
     {
 	 FMatrix Ki, Kj;
 	 const RT eps = 1e-20;
@@ -266,7 +266,7 @@ namespace Dune
    	 return;
     }
 
-    // Compute time dependent term (storage)
+    // Compute time dependent term (storage), loop over nodes / subcontrol volumes
     // ACHTUNG varNData always contains values from the NEW timestep
     virtual VBlockType computeM (const Entity& e, const VBlockType* sol, int node)
     {
@@ -294,7 +294,7 @@ namespace Dune
    	 return result;
     };
 
-
+    // loop over subcontrol volume faces
     virtual VBlockType computeA (const Entity& e, const VBlockType* sol, int face)
     {
    	 int i = this->fvGeom.subContVolFace[face].i;
@@ -309,7 +309,7 @@ namespace Dune
 
 		 FieldMatrix<RT,m,dim> pGrad(0); 
 		 FieldVector<RT,dim> xGrad(0), temp(0); 
-		 FieldVector<RT,dim> Kij(0);
+//		 FieldVector<RT,dim> Kij(0);
      	 VBlockType flux;
 		 
 		 // effective permeability in edge direction 
@@ -318,19 +318,16 @@ namespace Dune
      	 // calculate harmonic mean of permeabilities of nodes i and j
 		 const FMatrix K = harmonicMeanK(global_i, global_j);
 		 //const FMatrix K = harmonicMeanK(e, face);		  
-     	 K.umv(normal, Kij);  // Kij=K*n
+     	 //K.umv(normal, Kij);  // Kij=K*n
 		 
 		 // calculate FE gradient (grad p for each phase)
 		 for (int k = 0; k < this->fvGeom.nNodes; k++) // loop over adjacent nodes
        {	 
       	 FieldVector<DT,dim> feGrad(this->fvGeom.subContVolFace[face].grad[k]); // FEGradient at node k
-       	 FieldVector<RT,m> pressure(0), massfrac(0);
+       	 FieldVector<RT,m> pressure(0.0), massfrac(0.0);
 
       	 pressure[wPhase] = sol[k][pWIdx];
       	 pressure[nPhase] = varNData[k].pN;
-      	 
-      	 massfrac[0] = varNData[k].massfrac[water][nPhase]; // water in gas phase
-      	 massfrac[1] = varNData[k].massfrac[air][wPhase];	// air in water phase
       	 
       	 // compute sum of pressure gradients for each phase
       	 for (int phase = 0; phase < m; phase++)
@@ -343,7 +340,7 @@ namespace Dune
       	 // compute sum of concentration gradient
       	 // only water diffusion in the gas phase considered !!!
       	 temp = feGrad;
-      	 temp *= varNData[k].massfrac[water][nPhase];
+      	 temp *= varNData[k].massfrac[air][wPhase];
       	 xGrad += temp;
        }
 
@@ -357,13 +354,16 @@ namespace Dune
 		 }
 	 	 
 		 VBlockType outward(0);  // Darcy velocity of each phase
+		 FieldVector<RT,dim> v_tilde(0);
 
 		 // calculate the advective flux using upwind: K*n(grad p -rho*g)
 		 for (int phase=0; phase<m; phase++) 
 		 	{
 			 //pGrad[phase] *= Kij;
-			 outward[phase] = Kij * pGrad[phase];// * normal;
-			}
+			 //outward[phase] = Kij * pGrad[phase];// * normal;
+	     	 K.umv(pGrad[phase], v_tilde);  // Kij=K*n
+	     	 outward[phase] = v_tilde*normal;
+		 	}
 		 
 		 // evaluate upwind nodes
 		 int up_w, dn_w, up_n, dn_n;
@@ -375,44 +375,45 @@ namespace Dune
 
 		 RT alpha = 1.0;  // Upwind parameter
  		 
- 		 // Water conservation
+		 // Water conservation
  		 flux[water] = (alpha* varNData[up_w].density[wPhase]*varNData[up_w].mobility[wPhase]
- 				               * varNData[up_w].massfrac[water][wPhase] * outward[wPhase] 
- 				               + varNData[up_n].density[nPhase]*varNData[up_n].mobility[nPhase]
- 				               * varNData[up_n].massfrac[water][nPhase] * outward[nPhase]);
- 		 if (alpha != 1.0){flux[water]+= 
- 			 		((1-alpha)* varNData[dn_w].density[wPhase]*varNData[dn_w].mobility[wPhase]
- 				               * varNData[dn_w].massfrac[water][wPhase] * outward[wPhase] 
- 				               + varNData[dn_n].density[nPhase]*varNData[dn_n].mobility[nPhase]
- 				               * varNData[dn_n].massfrac[water][nPhase] * outward[nPhase]);}
+ 				               * varNData[up_w].massfrac[water][wPhase] 
+ 				    + (1-alpha)* varNData[dn_w].density[wPhase]*varNData[dn_w].mobility[wPhase]
+ 				               * varNData[dn_w].massfrac[water][wPhase])* outward[wPhase] 		 		
+ 				       + (alpha* varNData[up_n].density[nPhase]*varNData[up_n].mobility[nPhase]
+ 				               * varNData[up_n].massfrac[water][nPhase] 
+ 				    + (1-alpha)* varNData[dn_n].density[nPhase]*varNData[dn_n].mobility[nPhase]
+ 				               * varNData[dn_n].massfrac[water][nPhase])* outward[nPhase];
  		 // Air conservation
  		 flux[air]   = (alpha* varNData[up_n].density[nPhase]*varNData[up_n].mobility[nPhase]
- 				               * varNData[up_n].massfrac[air][nPhase] * outward[nPhase]
- 				               + varNData[up_w].density[wPhase]*varNData[up_w].mobility[wPhase]
- 				               * varNData[up_w].massfrac[air][wPhase] * outward[wPhase]);
- 		 if (alpha != 1.0){flux[air]+= 
- 			 		((1-alpha)* varNData[dn_n].density[nPhase]*varNData[dn_n].mobility[nPhase]
- 				               * varNData[dn_n].massfrac[air][nPhase] * outward[nPhase]
- 				               + varNData[dn_w].density[wPhase]*varNData[dn_w].mobility[wPhase]
- 				               * varNData[dn_w].massfrac[air][wPhase] * outward[wPhase]);}
+ 				               * varNData[up_n].massfrac[air][nPhase] 
+ 				    + (1-alpha)* varNData[dn_n].density[nPhase]*varNData[dn_n].mobility[nPhase]
+ 				               * varNData[dn_n].massfrac[air][nPhase])* outward[nPhase]
+ 			 			 + (alpha* varNData[up_w].density[wPhase]*varNData[up_w].mobility[wPhase]
+ 				               * varNData[up_w].massfrac[air][wPhase]
+ 				    + (1-alpha)* varNData[dn_w].density[wPhase]*varNData[dn_w].mobility[wPhase]
+ 				               * varNData[dn_w].massfrac[air][wPhase])* outward[wPhase];
 		 
 		 // DIFFUSION
-		 RT normDiffGrad, diffusionWG;
-		 VBlockType avgDensity, avgDpm(0);
+		 RT normDiffGrad;
+		 //FieldMatrix<DT,m,c> diffusionW;
+		 RT diffusionGW, diffusionWW;
+		 VBlockType avgDensity, avgDpm;
 		 avgDpm[wPhase]=1e-9; // needs to be changed !!!
 		 
-		 normDiffGrad = xGrad*normal;
+		 normDiffGrad = -(xGrad*normal);
 		 // calculate the arithmetic mean of densities
 		 avgDensity[wPhase] = 0.5*(varNData[i].density[wPhase] + varNData[j].density[wPhase]);
 		 
-		 diffusionWG = avgDpm[wPhase] * avgDensity[wPhase] * normDiffGrad;
+		 diffusionGW = avgDpm[wPhase] * avgDensity[wPhase] * normDiffGrad;
+		 diffusionWW = - diffusionGW;
 //		 std::cout << "Diffusive Flux: " << diffusionWG << std::endl; 
 		 
 
-//		 // add water diffusion to flux
-		 flux[water] += diffusionWG;
-//		 // air diffusion not implemeted
-//		 flux[air] = flux[air];
+		 // add water diffusion to flux
+		 //flux[water] += diffusionWW;
+		 // air diffusion not implemeted
+		 //flux[air] += diffusionGW;
 
 
 		 return flux;
@@ -518,24 +519,24 @@ namespace Dune
 
     		  // if edge is not already visited
     		  //if (!statIPData[globalIdx].visited)
-    		  {
-    			  int i = this->fvGeom.subContVolFace[k].i;
-    			  int j = this->fvGeom.subContVolFace[k].j;
+//    		  {
+//    			  int i = this->fvGeom.subContVolFace[k].i;
+//    			  int j = this->fvGeom.subContVolFace[k].j;
 //
-    			  int globalIdx = this->vertexMapper.template map<dim>(e, sfs[j].entity());
-
-    			  // global coordinates
-    			  FieldVector<DT,dim> global_i = this->fvGeom.subContVol[i].global;
-    			  FieldVector<DT,dim> global_j = this->fvGeom.subContVol[j].global;
-    			  //int local_i = this->fvGeom.subContVol[i].local;
-    			  //int local_j = this->fvGeom.subContVol[j].local;
-    			     			 
-    			  //statIPData[globalIdx].K_eff[k] = harmonicMeanK(k, global_i,global_j); 
-    			  //statIPData[globalIdx].K = harmonicMeanK(global_i,global_j); 
-
-    			  // mark elements that were already visited
-     			  //statIPData[globalIdx].visited = true;
-    		  }
+//    			  int globalIdx = this->vertexMapper.template map<dim>(e, sfs[j].entity());
+//
+//    			  // global coordinates
+//    			  FieldVector<DT,dim> global_i = this->fvGeom.subContVol[i].global;
+//    			  FieldVector<DT,dim> global_j = this->fvGeom.subContVol[j].global;
+//    			  //int local_i = this->fvGeom.subContVol[i].local;
+//    			  //int local_j = this->fvGeom.subContVol[j].local;
+//    			     			 
+//    			  //statIPData[globalIdx].K_eff[k] = harmonicMeanK(k, global_i,global_j); 
+//    			  //statIPData[globalIdx].K = harmonicMeanK(global_i,global_j); 
+//
+//    			  // mark elements that were already visited
+//     			  //statIPData[globalIdx].visited = true;
+//    		  }
     	  }
    	 
    	 //return;
@@ -578,10 +579,10 @@ namespace Dune
          varNData[i].density[wPhase] = problem.materialLaw().wettingPhase.density();
          varNData[i].density[nPhase] = problem.materialLaw().nonwettingPhase.density();
          // Solubilities of components in phases
-         varNData[i].massfrac[air][wPhase] = problem.constrel().Xaw(varNData[i].pN, varNData[i].temperature);
-         varNData[i].massfrac[water][wPhase] = 1.0 - varNData[i].massfrac[air][wPhase];
-         varNData[i].massfrac[water][nPhase] = problem.constrel().Xwn(varNData[i].pN, varNData[i].temperature);
-         varNData[i].massfrac[air][nPhase] = 1.0 - varNData[i].massfrac[water][nPhase];
+         varNData[i].massfrac[air][wPhase] = 0; //problem.solu().Xaw(varNData[i].pN, varNData[i].temperature);
+         varNData[i].massfrac[water][wPhase] = 1.0; // - varNData[i].massfrac[air][wPhase];
+         varNData[i].massfrac[water][nPhase] = 0;//problem.solu().Xwn(varNData[i].pN, varNData[i].temperature);
+         varNData[i].massfrac[air][nPhase] = 1.0;// - varNData[i].massfrac[water][nPhase];
 
          // CONSTANT solubility (for comparison with twophase)
 //         varNData[i].massfrac[air][wPhase] = 0; varNData[i].massfrac[water][wPhase] = 1;
@@ -637,6 +638,7 @@ namespace Dune
     
     // parameters given in constructor
     TwoPTwoCProblem<G,RT>& problem;
+    Solubility solub;
     std::vector<StaticNodeData> statNData;
     std::vector<StaticIPData> statIPData;
     std::vector<VariableNodeData> varNData;
