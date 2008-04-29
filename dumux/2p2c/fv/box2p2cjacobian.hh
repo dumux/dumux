@@ -579,14 +579,14 @@ namespace Dune
          varNData[i].density[wPhase] = problem.materialLaw().wettingPhase.density();
          varNData[i].density[nPhase] = problem.materialLaw().nonwettingPhase.density();
          // Solubilities of components in phases
-         varNData[i].massfrac[air][wPhase] = 0; //problem.solu().Xaw(varNData[i].pN, varNData[i].temperature);
-         varNData[i].massfrac[water][wPhase] = 1.0; // - varNData[i].massfrac[air][wPhase];
-         varNData[i].massfrac[water][nPhase] = 0;//problem.solu().Xwn(varNData[i].pN, varNData[i].temperature);
-         varNData[i].massfrac[air][nPhase] = 1.0;// - varNData[i].massfrac[water][nPhase];
+//         varNData[i].massfrac[air][wPhase] = problem.solu().Xaw(varNData[i].pN, varNData[i].temperature);
+//         varNData[i].massfrac[water][wPhase] = 1.0 - varNData[i].massfrac[air][wPhase];
+//         varNData[i].massfrac[water][nPhase] = problem.solu().Xwn(varNData[i].pN, varNData[i].temperature);
+//         varNData[i].massfrac[air][nPhase] = 1.0 - varNData[i].massfrac[water][nPhase];
 
          // CONSTANT solubility (for comparison with twophase)
-//         varNData[i].massfrac[air][wPhase] = 0; varNData[i].massfrac[water][wPhase] = 1;
-//         varNData[i].massfrac[water][nPhase] = 0; varNData[i].massfrac[air][nPhase] = 1;
+         varNData[i].massfrac[air][wPhase] = 0; varNData[i].massfrac[water][wPhase] = 1;
+         varNData[i].massfrac[water][nPhase] = 0; varNData[i].massfrac[air][nPhase] = 1;
 
          //std::cout << "water in gasphase: " << varNData[i].massfrac[water][nPhase] << std::endl;
          //std::cout << "air in waterphase: " << varNData[i].massfrac[air][wPhase] << std::endl;

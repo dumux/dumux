@@ -104,14 +104,14 @@ namespace Dune
 			//			parameters = problem.materialLawParameters
 			//			 		 (this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
 			//			pC[i] = this->problem.materialLaw().pC(varNData[i].saturationW, parameters);			
-//			Xwn[i] = this->problem.constrel().Xwn(this->pW[i], 283.15);
-//			Xaw[i] = this->problem.constrel().Xaw(this->pW[i], 283.15);
+//			Xwn[i] = this->problem.solu().Xwn(this->pW[i], 283.15); //Achtung!! pW instead of pN!!!
+//			Xaw[i] = this->problem.solu().Xaw(this->pW[i], 283.15); //Achtung!! pW instead of pN!!!
 		}
 		vtkwriter.addVertexData(this->pW,"wetting phase pressure");
 		vtkwriter.addVertexData(this->satW,"wetting phase saturation");
 		vtkwriter.addVertexData(this->satN,"nonwetting phase saturation");
-		vtkwriter.addVertexData(Xwn, "water in air");
-		vtkwriter.addVertexData(Xaw, "dissolved air");
+//		vtkwriter.addVertexData(Xwn, "water in air");
+//		vtkwriter.addVertexData(Xaw, "dissolved air");
 		vtkwriter.write(fname, VTKOptions::ascii);		
 	}
 
