@@ -43,9 +43,6 @@ namespace Dune {
 					model.globalDefect(defectGlobal);
 					//printvector(std::cout, *defectGlobal, "defect", "row", 200, 1, 3);
 					residual = (*defectGlobal).two_norm();
-					//for (int idx = 0; idx < (*u).size(); idx++) 
-					//	if ((*u)[idx][1] < -1.0 || (*u)[idx][1] > 2.0) 
-					//		error = 1e100;
 
 					//printvector(std::cout, *u, "u", "row", 200, 1, 3);
 					if (verbose)
@@ -56,7 +53,7 @@ namespace Dune {
 					std::cout << "NewtonMethod::execute(), tolerance = " << tolerance 
 						<< ": did not converge in " << iter << " iterations" << std::endl; 
 					dt  = 0.5*dt;
-					std::cout << "retry with reduced time step size of " << dt << std::endl;
+					std::cout << "Retry same time step with reduced size of " << dt << std::endl;
 					localJacobian.setDt(dt);
 					*u = *(model.uOldTimeStep);
 					divided = true;
@@ -68,7 +65,7 @@ namespace Dune {
 					if (!divided && iter < goodIter) {
 						dt = 2.0*dt;
 						std::cout << "Below " << goodIter 
-							<< " Newton iterations. Time step size doubled to " << dt << std::endl;
+							<< " Newton iterations. Initial size for the next time step doubled to " << dt << std::endl;
 					}
 					localJacobian.setDt(dt);
 						
