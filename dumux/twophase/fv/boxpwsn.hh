@@ -123,7 +123,7 @@ namespace Dune
 		double upperMass, oldUpperMass;
 		double totalMass = this->injected(upperMass, oldUpperMass);
 		std::cout << totalMass << "\t" << upperMass 
-			<< "\t" << oldUpperMass;
+			  << "\t" << oldUpperMass << "\t# totalMass, upperMass, oldUpperMass" << std::endl;
 		
 		*(this->uOldTimeStep) = *(this->u);
 
