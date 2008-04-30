@@ -60,7 +60,7 @@ namespace Dune
 	- RT    type used for return values 
   */
   template<class Imp, class G, class RT, int m, class BoxFunction = LeafP1Function<G, RT, m> >
-  class BoxJacobian 
+  class BoxJacobian2p2c 
     : public LocalJacobian<Imp,G,RT,m>
   {
 	  // mapper: one data element per vertex
@@ -88,7 +88,7 @@ namespace Dune
     enum {SIZE=LagrangeShapeFunctionSetContainer<DT,RT,dim>::maxsize};
     
     //! Constructor
-    BoxJacobian (bool levelBoundaryAsDirichlet_, const G& grid, 
+    BoxJacobian2p2c (bool levelBoundaryAsDirichlet_, const G& grid, 
 			      BoxFunction& sol, 
 			      bool procBoundaryAsDirichlet_=true)
     : vertexMapper(grid, grid.leafIndexSet()), 
