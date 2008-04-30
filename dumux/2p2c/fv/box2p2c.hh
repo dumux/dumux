@@ -58,21 +58,43 @@ namespace Dune
 	typedef Box2P2CJacobian<G, RT> LocalJacobian;
 	typedef LeafP1TwoPhaseModel<G, RT, ProblemType, LocalJacobian> LeafP1TwoPhaseModel;
 	typedef Box2P2C<G, RT> ThisType;
-	
-	Box2P2C(const G& g, ProblemType& prob) 
-	: LeafP1TwoPhaseModel(g, prob), Xwn(this->size), Xaw(this->size) // (this->size) vectors
-	{ 	}
 
-	void solve() 
-	{
+	typedef typename LeafP1TwoPhaseModel::FunctionType FunctionType;
+
+   typedef typename G::Traits::LeafIndexSet IS;
+
+    enum{m = 2};
+
 		typedef typename LeafP1TwoPhaseModel::FunctionType::RepresentationType VectorType;
 		typedef typename LeafP1TwoPhaseModel::OperatorAssembler::RepresentationType MatrixType;
 		typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator; 
+
+	
+	Box2P2C(const G& g, ProblemType& prob) 
+	: LeafP1TwoPhaseModel(g, prob) //, Xwn(this->size), Xaw(this->size) // (this->size) vectors
+	{ 	}
+	
+	void solve() 
+	{
+		
+		
+		 
 		
 		Operator op(*(this->A));  // make operator out of matrix
 		double red=1E-8;
+
+#ifdef HAVE_PARDISO 
+//	SeqPardiso<MatrixType,VectorType,VectorType> ilu0(*(this->A)); 
+		pardiso.factorize(*(this->A));
+		BiCGSTABSolver<VectorType> solver(op,pardiso,red,100,2);         // an inverse operator 
+	//	SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A),1.0);// a precondtioner
+		//LoopSolver<VectorType> solver(op, ilu0, red, 10, 2);
+#else
 		SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A),1.0);// a precondtioner
-		BiCGSTABSolver<VectorType> solver(op,ilu0,red,100,1);         // an inverse operator 
+
+		//SeqIdentity<MatrixType,VectorType,VectorType> ilu0(*(this->A));// a precondtioner
+		BiCGSTABSolver<VectorType> solver(op,ilu0,red,10000,1);         // an inverse operator 
+#endif
 		InverseOperatorResult r;
 		solver.apply(*(this->u), *(this->f), r);
 		
@@ -85,11 +107,89 @@ namespace Dune
 		this->localJacobian.setOldSolution(this->uOldTimeStep);
 		NewtonMethod<G, ThisType> newtonMethod(this->grid, *this);
 		newtonMethod.execute();
-		*(this->uOldTimeStep) = *(this->u);
+		dt = this->localJacobian.getDt();
+		double upperMass, oldUpperMass;
+		double totalMass = this->injected(upperMass, oldUpperMass);
+		std::cout << totalMass << "\t" << upperMass 
+			  << "\t" << oldUpperMass << "\t# totalMass, upperMass, oldUpperMass" << std::endl;
 		
+		*(this->uOldTimeStep) = *(this->u);
+
 		return;
 	}
+//
+//
+//	void solve() 
+//	{
+//		typedef typename LeafP1TwoPhaseModel::FunctionType::RepresentationType VectorType;
+//		typedef typename LeafP1TwoPhaseModel::OperatorAssembler::RepresentationType MatrixType;
+//		typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator; 
+//		
+//		Operator op(*(this->A));  // make operator out of matrix
+//		double red=1E-8;
+//		SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A),1.0);// a precondtioner
+//		BiCGSTABSolver<VectorType> solver(op,ilu0,red,100,1);         // an inverse operator 
+//		InverseOperatorResult r;
+//		solver.apply(*(this->u), *(this->f), r);
+//		
+//		return;		
+//	}
+//
+//	void update (double& dt)
+//	{
+//		this->localJacobian.setDt(dt);
+//		this->localJacobian.setOldSolution(this->uOldTimeStep);
+//		NewtonMethod<G, ThisType> newtonMethod(this->grid, *this);
+//		newtonMethod.execute();
+//		*(this->uOldTimeStep) = *(this->u);
+//		
+//		return;
+//	}
 
+   void globalDefect(FunctionType& defectGlobal)
+   {   
+     typedef typename G::Traits::template Codim<0>::Entity Entity;
+     typedef typename G::ctype DT;
+     typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator Iterator;
+     enum{dim = G::dimension};
+     
+     const IS& indexset(this->grid.leafIndexSet());
+     (*defectGlobal)=0;
+          
+     // iterate through leaf grid 
+     Iterator eendit = indexset.template end<0, All_Partition>();
+     for (Iterator it = indexset.template begin<0, All_Partition>(); it != eendit; ++it)
+	{
+	  // get geometry type
+	  Dune::GeometryType gt = it->geometry().type();
+	  
+	  const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type& 
+	    sfs=Dune::LagrangeShapeFunctions<DT,RT,dim>::general(gt, 1);
+	  int size = sfs.size();
+	  Dune::FieldVector<RT,2> defhelp[size];
+	  
+	  // get entity 
+	  const Entity& entity = *it;
+	  
+	  this->localJacobian.fvGeom.update(entity);
+	  
+	  this->localJacobian.getLocalDefect(entity,defhelp);
+	  //std::cout<<" defhelp: "<<*defhelp<<std::endl;
+	  // begin loop over vertices
+	  for(int i=0; i < size; i++)
+	    {
+	      int globalId = this->vertexmapper.template map<dim>(entity, sfs[i].entity());
+	    
+	      if (this->localJacobian.bc(i)[0] == BoundaryConditions::neumann)
+		(*defectGlobal)[globalId] += defhelp[i];
+	      else 
+		(*defectGlobal)[globalId] = 0;
+	    }
+	}
+   }
+ 
+
+	
 	void vtkout (const char* name, int k) 
 	{
 		VTKWriter<G> vtkwriter(this->grid);

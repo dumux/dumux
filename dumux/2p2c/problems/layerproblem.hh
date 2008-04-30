@@ -112,7 +112,7 @@ namespace Dune
 
 		RT lambda = (x[1])/height_;
 		if (lambda < 0.1/6.0 && x[1] > outerLowerLeft_[1] + eps_) {
-			values[satNIdx] = -0.000005; //-0.04
+			values[satNIdx] = -0.00001; //-0.000005,-0.04
 		}
 		
 		return values;
@@ -185,7 +185,7 @@ namespace Dune
 	LayerProblem(TwoPhaseRelations& law = *(new LinearLaw), 
 			const FieldVector<DT,dim> outerLowerLeft = 0, const FieldVector<DT,dim> outerUpperRight = 0, 
 			const FieldVector<DT,dim> innerLowerLeft = 0, const FieldVector<DT,dim> innerUpperRight = 0, 
-			const RT depthBOR = 0, RT outerK = 2.3e-10, RT innerK = 4.6e-14,		//9.05e-13, 
+			const RT depthBOR = 0, RT outerK = 2.3e-10, RT innerK = 4.6e-12,		//9.05e-13, 
 			RT outerSwr = 0.05, RT outerSnr = 0.01, RT innerSwr = 0.05, RT innerSnr = 0.01, 
 			RT outerPorosity = 0.4, RT innerPorosity = 0.4, 
 			RT outerAlpha = 0.0037, RT innerAlpha = 0.0037,	//0.00045, 

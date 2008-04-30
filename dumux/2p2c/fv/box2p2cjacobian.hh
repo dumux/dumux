@@ -266,6 +266,28 @@ namespace Dune
    	 return;
     }
 
+    void getLocalDefect(const Entity& entity,VBlockType *defhelp)
+    { 
+      setLocalSolution(entity);
+
+      // set to Zero 
+	  	for (int i=0; i < this->fvGeom.nNodes; i++) {
+	  		this->bctype[i].assign(BoundaryConditions::neumann);
+	  		this->b[i] = 0;
+	  		this->def[i] = 0;
+	  	}
+	     
+	  	this->template localDefect<LeafTag>(entity,this->u);
+		  this->template assembleBC<LeafTag> (entity); 
+		  
+		  // add to defect 
+		  for (int i=0; i < this->fvGeom.nNodes; i++) {
+			  this->def[i] += this->b[i];
+			  defhelp[i]=this->def[i];
+      }
+    }
+
+    
     // Compute time dependent term (storage), loop over nodes / subcontrol volumes
     // ACHTUNG varNData always contains values from the NEW timestep
     virtual VBlockType computeM (const Entity& e, const VBlockType* sol, int node)
@@ -411,9 +433,9 @@ namespace Dune
 		 
 
 		 // add water diffusion to flux
-		 //flux[water] += diffusionWW;
+		 flux[water] += diffusionWW;
 		 // air diffusion not implemeted
-		 //flux[air] += diffusionGW;
+		 flux[air] += diffusionGW;
 
 
 		 return flux;
@@ -508,11 +530,11 @@ namespace Dune
   	  // size is determined in the constructor
   	  
   	  	// get access to shape functions for P1 elements
-    	  GeometryType gt = e.geometry().type();
-    	  const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type& 
-    	  sfs=Dune::LagrangeShapeFunctions<DT,RT,dim>::general(gt,1);
-
-    	  for (int k = 0; k < this->fvGeom.nEdges; ++k) // begin loop over edges / sub control volume faces
+//    	  GeometryType gt = e.geometry().type();
+//    	  const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type& 
+//    	  sfs=Dune::LagrangeShapeFunctions<DT,RT,dim>::general(gt,1);
+//
+//    	  for (int k = 0; k < this->fvGeom.nEdges; ++k) // begin loop over edges / sub control volume faces
     	  {
     		  // get local to global id map
 //    		  int globalIdx = this->vertexMapper.template map<dim>(e, sfs[k].entity());
@@ -579,14 +601,14 @@ namespace Dune
          varNData[i].density[wPhase] = problem.materialLaw().wettingPhase.density();
          varNData[i].density[nPhase] = problem.materialLaw().nonwettingPhase.density();
          // Solubilities of components in phases
-//         varNData[i].massfrac[air][wPhase] = problem.solu().Xaw(varNData[i].pN, varNData[i].temperature);
-//         varNData[i].massfrac[water][wPhase] = 1.0 - varNData[i].massfrac[air][wPhase];
-//         varNData[i].massfrac[water][nPhase] = problem.solu().Xwn(varNData[i].pN, varNData[i].temperature);
-//         varNData[i].massfrac[air][nPhase] = 1.0 - varNData[i].massfrac[water][nPhase];
+         varNData[i].massfrac[air][wPhase] = problem.solu().Xaw(varNData[i].pN, varNData[i].temperature);
+         varNData[i].massfrac[water][wPhase] = 1.0 - varNData[i].massfrac[air][wPhase];
+         varNData[i].massfrac[water][nPhase] = problem.solu().Xwn(varNData[i].pN, varNData[i].temperature);
+         varNData[i].massfrac[air][nPhase] = 1.0 - varNData[i].massfrac[water][nPhase];
 
          // CONSTANT solubility (for comparison with twophase)
-         varNData[i].massfrac[air][wPhase] = 0; varNData[i].massfrac[water][wPhase] = 1;
-         varNData[i].massfrac[water][nPhase] = 0; varNData[i].massfrac[air][nPhase] = 1;
+//         varNData[i].massfrac[air][wPhase] = 0; varNData[i].massfrac[water][wPhase] = 1;
+//         varNData[i].massfrac[water][nPhase] = 0; varNData[i].massfrac[air][nPhase] = 1;
 
          //std::cout << "water in gasphase: " << varNData[i].massfrac[water][nPhase] << std::endl;
          //std::cout << "air in waterphase: " << varNData[i].massfrac[air][wPhase] << std::endl;
