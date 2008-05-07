@@ -16,7 +16,7 @@ namespace Dune
 	
 	public:
 	  GravityProblem(G& g, TwoPhaseRelations& law = *(new LinearLaw), FieldVector<DT,n> gravity = *(new FieldVector<DT,n>(0)))
-	    : DiffusionProblem<G,RT>(law, false, gravity)
+	    : grid(g), DiffusionProblem<G,RT>(law, false, gravity)
 	  { }
 	
 	  GravityProblem()
@@ -30,6 +30,12 @@ namespace Dune
 		  permloc[0][1] = permloc[1][0] = 0;
 		  
 		  return permloc;
+	  }
+	  
+	  RT sat (const Dune::FieldVector<DT,n>& x, const Entity& e, 
+					  const Dune::FieldVector<DT,n>& xi)
+	  {
+			  return (*saturation)[grid->levelIndexSet(e.level()).index(e)];
 	  }
 	
 	  RT q   (const FieldVector<DT,n>& x, const Entity& e, 
@@ -66,6 +72,9 @@ namespace Dune
 		  
 	private:
 		FieldMatrix<DT,n,n> permloc;
+		G* grid;
+	public:
+		Dune::BlockVector<Dune::FieldVector<RT,1> >* saturation;
 	};
 }
 

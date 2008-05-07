@@ -28,11 +28,10 @@ namespace Dune
 	- Grid      a DUNE grid type
 	- RT        type used for return values 
 	- RepresentationType type of the vector holding the pressure values 
-	- SatType   type of the vector holding the saturation values 
 	- VelType   type of the vector holding the velocity values 
 
    */
-  template<class G, class RT, class RepresentationType, class SatType, class VelType>
+  template<class G, class RT, class RepresentationType, class VelType>
   class Diffusion {
   public:
 	RepresentationType press; //!< vector of pressure values
@@ -48,11 +47,10 @@ namespace Dune
 	 *  \f[ - \text{div}\, (\lambda K \text{grad}\, p ) = 0, \f]
 	 *  subject to appropriate boundary and initial conditions. 
 	 */
-	virtual void pressure(const SatType& saturation=0, const RT t=0) = 0;  
+	virtual void pressure(const RT t=0) = 0;  
 	
 	//! \brief Calculate the total velocity.
 	/*!
-	 *  \param saturation vector containing the saturation values 
 	 *  \param t time 
 	 * 
 	 *  \return block vector to store the total velocity 
@@ -62,7 +60,7 @@ namespace Dune
 	 *  \f$\boldsymbol{v}_\text{t} = - \lambda K \text{grad}\, p\f$. 
 	 *  The method is used in FractionalFlow to provide the velocity field required for the saturation equation. 
 	 */
-	virtual void totalVelocity(VelType& velocity, const SatType& saturation=0, const RT t=0) const = 0;  
+	virtual void totalVelocity(VelType& velocity,  const RT t=0) const = 0;  
 	
 	//! generate vtk output
 	virtual void vtkout (const char* name, int k) const = 0;
@@ -82,15 +80,28 @@ namespace Dune
 	//! always define virtual destructor in abstract base class
 	virtual ~Diffusion () {}
 	
+	//! without specification of a level, the class works on the leaf grid.
+	/**
+	 * \param g grid object of type G
+	 * \param prob a problem class object derived from DiffusionProblem
+	*/
 	Diffusion(const G& g, DiffusionProblem<G, RT>& prob) 
 	: grid(g), problem(prob), level_(g.maxLevel())
 	{ 
 	}
+	
+	//! Constructor with possibility to specify a level for the diffusion class to work on.
+	/**
+	 * \param g grid object of type G
+	 * \param prob a problem class object derived from DiffusionProblem
+	 * \param lev the grid level to work on
+	 */
 	Diffusion(const G& g, DiffusionProblem<G, RT>& prob, int lev) 
 	: problem(prob), grid(g), level_(lev)
 	{ 
 	}
 	
+	//! Returns the grid level on which the class works
 	int level() const
 	{
 		return level_;

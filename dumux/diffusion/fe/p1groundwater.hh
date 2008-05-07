@@ -1,22 +1,22 @@
 #ifndef DUNE_P1GROUNDWATER_HH
 #define DUNE_P1GROUNDWATER_HH
 
-#include<map>
-#include<iostream>
-#include<iomanip>
-#include<fstream>
-#include<vector>
-#include<sstream>
+#include <map>
+#include <iostream>
+#include <iomanip>
+#include <fstream>
+#include <vector>
+#include <sstream> 
 
-#include<dune/common/exceptions.hh>
-#include<dune/grid/common/grid.hh>
-#include<dune/grid/common/referenceelements.hh>
-#include<dune/common/geometrytype.hh>
-#include<dune/grid/common/quadraturerules.hh>
+#include <dune/common/exceptions.hh>
+#include <dune/grid/common/grid.hh>
+#include <dune/grid/common/referenceelements.hh>
+#include <dune/common/geometrytype.hh>
+#include <dune/grid/common/quadraturerules.hh>
 
-#include<dune/disc/shapefunctions/lagrangeshapefunctions.hh>
-#include<dune/disc/operators/boundaryconditions.hh>
-#include<dune/disc/operators/localstiffness.hh>
+#include <dune/disc/shapefunctions/lagrangeshapefunctions.hh>
+#include <dune/disc/operators/boundaryconditions.hh>
+#include <dune/disc/operators/localstiffness.hh>
 
 /**
  * @file
@@ -71,7 +71,6 @@ namespace Dune
 	// grid types
 	typedef typename G::ctype DT;
 	typedef typename G::Traits::template Codim<0>::Entity Entity;
-    typedef Dune::BlockVector< Dune::FieldVector<double,1> > SatType; 
     typedef typename G::Traits::LevelIndexSet IS;
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout> EM;
 
@@ -85,11 +84,10 @@ namespace Dune
 	//! Constructor
 	GroundwaterEquationLocalStiffness (DiffusionProblem<G,RT>& params,
 									   bool levelBoundaryAsDirichlet_, const G& grid, 
-									   int level = 0, const SatType& sat = 0, 
+									   int level = 0, 
 									   bool procBoundaryAsDirichlet_=true)
 	  : problem(params),levelBoundaryAsDirichlet(levelBoundaryAsDirichlet_), 
-	    procBoundaryAsDirichlet(procBoundaryAsDirichlet_), elementmapper(grid, grid.levelIndexSet(level)), 
-	    saturation(sat) 
+	    procBoundaryAsDirichlet(procBoundaryAsDirichlet_), elementmapper(grid, grid.levelIndexSet(level))
 	{}
 
 
@@ -175,8 +173,7 @@ namespace Dune
 		  const Dune::FieldMatrix<DT,n,n> 
 			jac = e.geometry().jacobianInverseTransposed(local);           // eval jacobian inverse
 		  Dune::FieldMatrix<DT,n,n> K = problem.K(global,e,local);   // eval diffusion tensor
-	      if(saturation.size())
-	    	  K *= problem.materialLaw.mobTotal(saturation[elemId]);
+	    	  K *= problem.materialLaw.mobTotal(problem.sat(global,e,local));
 		  double weight = Dune::QuadratureRules<DT,n>::rule(gt,p)[g].weight();// weight of quadrature point
 		  DT detjac = e.geometry().integrationElement(local);              // determinant of jacobian
 		  RT q = problem.q(global,e,local);                                // source term
@@ -327,7 +324,6 @@ namespace Dune
 	bool levelBoundaryAsDirichlet;
 	bool procBoundaryAsDirichlet;
     EM elementmapper;
-    const SatType& saturation;
   };
 
   /** @} */

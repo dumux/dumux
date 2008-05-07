@@ -3,6 +3,7 @@
 
 #include "dumux/diffusion/diffusionproblem.hh"
 #include "dumux/material/randompermeability.hh"
+#include <dune/istl/bvector.hh>
 
 namespace Dune
 {
@@ -18,7 +19,7 @@ namespace Dune
 	public:
 	  LevelHetProblem(G& g, const int level, const char* name = "permeab.dat", const bool create = true, 
 			  				TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false)
-	    : DiffusionProblem<G,RT>(law, cap), permeability(g, level, name, create)
+	    : grid(g), DiffusionProblem<G,RT>(law, cap), permeability(g, level, name, create)
 	  { }
 	
 	  const Dune::FieldMatrix<DT,n,n>& K (const Dune::FieldVector<DT,n>& x, const Entity& e, 
@@ -26,6 +27,12 @@ namespace Dune
 	  {
 
 		  return permeability.K(e);
+	  }
+	  
+	  RT sat (const Dune::FieldVector<DT,n>& x, const Entity& e, 
+					  const Dune::FieldVector<DT,n>& xi)
+	  {
+		  return (*saturation)[grid.levelIndexSet(e.level()).index(e)];
 	  }
 	
 	  RT q   (const Dune::FieldVector<DT,n>& x, const Entity& e, 
@@ -58,6 +65,9 @@ namespace Dune
 		  
 		LevelRandomPermeability<G> permeability;
 	private:
+		G& grid;
+	public:
+		Dune::BlockVector<Dune::FieldVector<RT,1> >* saturation;
 	};
 }
 

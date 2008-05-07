@@ -1,11 +1,11 @@
 #include "config.h"
 #include <iostream>
 #include <iomanip>
-#ifdef HAVE_UG
+//#ifdef HAVE_UG
 #include <dune/grid/utility/gridtype.hh>
 #include <dune/grid/common/gridinfo.hh>
 #include <dune/grid/sgrid.hh>
-#include <dune/grid/uggrid.hh>
+//#include <dune/grid/uggrid.hh>
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
@@ -17,8 +17,8 @@
 #include "dumux/material/vangenuchtenlaw.hh"
 #include "dumux/material/randompermeability.hh"
 #include "dumux/diffusion/fv/fvdiffusion.hh"
-#include "dumux/diffusion/fe/fediffusion.hh"
-#include "dumux/diffusion/mimetic/mimeticdiffusion.hh"
+//#include "dumux/diffusion/fe/fediffusion.hh"
+//#include "dumux/diffusion/mimetic/mimeticdiffusion.hh"
 #include "dumux/diffusion/problems/heterogeneousproblem.hh"
 #include "dumux/diffusion/problems/uniformproblem.hh"
  
@@ -30,10 +30,10 @@ int main(int argc, char** argv)
 
     // create a grid object
     typedef double NumberType; 
-    //typedef Dune::SGrid<dim,dim> GridType; 
+    typedef Dune::SGrid<dim,dim> GridType; 
     //typedef Dune::ALUSimplexGrid<dim,dim> GridType; 
     //typedef Dune::YaspGrid<dim,dim> GridType; 
-    typedef Dune::UGGrid<dim> GridType; 
+    //typedef Dune::UGGrid<dim> GridType; 
 
     // use unitcube from grids 
     std::stringstream dgfFileName;
@@ -44,7 +44,11 @@ int main(int argc, char** argv)
     Dune::GridPtr<GridType> gridPtr( argv[1] );
 
     // grid reference 
-    GridType& grid = *gridPtr;
+    //GridType& grid = *gridPtr;
+    Dune::FieldVector<GridType::ctype,dim> L(0);
+    Dune::FieldVector<GridType::ctype,dim> R(300);
+    Dune::FieldVector<int,dim> N(10);           
+    GridType grid(N,L,R);
 
     grid.globalRefine(3);
 
@@ -89,17 +93,17 @@ int main(int argc, char** argv)
     std::cerr << "Unknown exception thrown!" << std::endl;
   }
 }
-#else 
-
-int main (int argc , char **argv) try
-{
-  std::cout << "Please install the UG library." << std::endl;
-
-  return 1;
-}
-catch (...) 
-{
-    std::cerr << "Generic exception!" << std::endl;
-    return 2;
-}
-#endif 
+//#else 
+//
+//int main (int argc , char **argv) try
+//{
+//  std::cout << "Please install the UG library." << std::endl;
+//
+//  return 1;
+//}
+//catch (...) 
+//{
+//    std::cerr << "Generic exception!" << std::endl;
+//    return 2;
+//}
+//#endif 

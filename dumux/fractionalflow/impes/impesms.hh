@@ -20,58 +20,25 @@ namespace Dune
 	  typedef typename Diffusion::NumberType RT;
 
   public:
-		
 	typedef typename G::ctype ct;
 	typedef typename Transport::RepresentationType RepresentationType;
 
-	virtual void totalVelocity(const RepresentationType& saturation, const RT t=0) 
+	virtual void totalVelocity(const RT t=0) 
 	{
 	  if ( this->level() == this->diffusion.level() )
-		  this->diffusion.totalVelocity(this->problem.velocity,saturation,t);
+		  this->diffusion.totalVelocity(this->problem.velocity,t);
 	  else
-		  this->diffusion.totalVelocity(this->problem.velocity,saturation,t,this->level());
+		  this->diffusion.totalVelocity(this->problem.velocity,t,this->level());
 	}
 
-	virtual void totalVelocity(const RT t=0)
-	{
-	  totalVelocity(this->sat, t);
-	}
 	
 	virtual void initial()
 	{
 		double t = 0;
 		Transport::initial();
 
-		typedef typename G::template Codim<0>::LevelIterator ElementLevelIterator;
-		typedef typename G::template Codim<0>::HierarchicIterator HierarchicIterator;
-		const typename G::Traits::LevelIndexSet& isetC ( this->grid.levelIndexSet(this->level()) );
-		const typename G::Traits::LevelIndexSet& isetF ( this->grid.levelIndexSet(this->diffusion.level()) );
-		  
-		RepresentationType saturation(isetF.size(0));
-		// entity pointer type
-		typedef typename G::template Codim<0>::EntityPointer ElementEntityPointer;
-		int maxlevel = this->grid.maxLevel();
-		 
-		ElementLevelIterator endcit = this->grid.template lend<0>(0);
-		for (ElementLevelIterator cit = this->grid.template lbegin<0>(0); cit != endcit; ++cit)
-		{
-		  int coarse_index = isetC.index(*cit);
-		  if (cit->isLeaf())
-		  {
-		    int index = isetC.index(*cit);
-		    saturation[index] = this->sat[coarse_index]; 
-		  }
-		  else for (HierarchicIterator it=cit->hbegin(maxlevel); it!= cit->hend(maxlevel); ++it)
-		  {
-		    if (isetF.contains(*it))
-		    {
-		      int index = isetF.index(*it);
-		      saturation[index] = this->sat[coarse_index];
-		    }
-		  }
-		}
-		pressure(saturation,t);		
-		totalVelocity(saturation,t);
+		this->pressure(t);		
+		totalVelocity(t);
 	}
 	
 		
@@ -82,29 +49,10 @@ namespace Dune
 		  const typename G::Traits::LevelIndexSet& isetC ( this->grid.levelIndexSet(this->level()) );
 		  const typename G::Traits::LevelIndexSet& isetF ( this->grid.levelIndexSet(this->diffusion.level()) );
 		  
-		  RepresentationType saturation(isetF.size(0));
+//		  RepresentationType saturation(isetF.size(0));
 		  // entity pointer type
 		  typedef typename G::template Codim<0>::EntityPointer ElementEntityPointer;
 		  int maxlevel = this->grid.maxLevel();
-		  
-		  ElementLevelIterator endcit = this->grid.template lend<0>(0);
-		  for (ElementLevelIterator cit = this->grid.template lbegin<0>(0); cit != endcit; ++cit)
-		  {
-		    int coarse_index = isetC.index(*cit);
-		    if (isetF.contains(*cit))
-		    {
-		      int index = isetC.index(*cit);
-		      saturation[index] = this->sat[coarse_index]; 
-		    }
-		    else for (HierarchicIterator it=cit->hbegin(maxlevel); it!= cit->hend(maxlevel); ++it)
-		    {
-		      if (isetF.contains(*it))
-		      {
-		        int index = isetF.index(*it);
-		        saturation[index] = this->sat[coarse_index];
-		      }
-		    }
-		  }
 		
 		  int pressSize = (*(this->diffusion)).size();
 		  int satSize = saturation.size();
@@ -127,8 +75,8 @@ namespace Dune
 		    	iterTot++;
 		    	if (!(this->diffusion).problem.materialLaw.isLinear()) 
 		    	{ // update pressure 
-		    		pressure(saturation, t);
-		    		totalVelocity(saturation, t);
+		    		pressure(t);
+		    		totalVelocity(t);
 		    	}
 		    	Transport::update(t, dt, updateVec);
 		    	if (this->iterFlag)
@@ -194,8 +142,12 @@ namespace Dune
 	IMPESMS (Diffusion& diff, Transport& trans, int flag = 1, int nIt = 2, double maxDef = 1e-5, 
 			double om = 1)
 	: IMPES<G, Diffusion, Transport>(diff, trans, flag, nIt, maxDef, om)
-	{  }
+	{  
+		saturation.resize(trans.grid.size(0));
+	}
 	  
+  private:
+	  RepresentationType saturation;
   };
 }
 #endif

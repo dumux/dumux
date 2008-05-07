@@ -50,13 +50,9 @@ namespace Dune
 	 */
 	void pressure(const RT t=0)
 	{
-		diffusion.pressure(this->sat, t);
+		diffusion.pressure(t);
 	}
 	
-	void pressure(const RepresentationType& saturation, const RT t=0)
-	{
-		diffusion.pressure(saturation, t);
-	}
 	
 	//! \brief Calculate the total velocity.
 	/*!
@@ -68,8 +64,6 @@ namespace Dune
 	 *  Employ the method \a totalVelocity of Diffusion. 
 	 */
 	virtual void totalVelocity(const RT t=0) = 0;
-	
-	virtual void totalVelocity(const RepresentationType& saturation, const RT t=0) = 0;
 	
 	//! \brief Calculate the update vector.
 	/*!

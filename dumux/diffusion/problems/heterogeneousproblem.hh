@@ -18,14 +18,19 @@ namespace Dune
 	public:
 	  HeterogeneousProblem(G& g, const char* name = "permeab.dat", const bool create = true, 
 			  				TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false)
-	    : DiffusionProblem<G,RT>(law, cap), permeability(g, name, create)
+	    : grid(g), DiffusionProblem<G,RT>(law, cap), permeability(g, name, create)
 	  { }
 	
 	  const Dune::FieldMatrix<DT,n,n>& K (const Dune::FieldVector<DT,n>& x, const Entity& e, 
 					  const Dune::FieldVector<DT,n>& xi) 
 	  {
-
 		  return permeability.K(e);
+	  }
+	  
+	  RT sat (const Dune::FieldVector<DT,n>& x, const Entity& e, 
+					  const Dune::FieldVector<DT,n>& xi)
+	  {
+		  return (*saturation)[grid.levelIndexSet(e.level()).index(e)];
 	  }
 	
 	  RT q   (const Dune::FieldVector<DT,n>& x, const Entity& e, 
@@ -37,7 +42,7 @@ namespace Dune
 	  typename Dune::BoundaryConditions::Flags bctype (const Dune::FieldVector<DT,n>& x, const Entity& e, 
 						   const Dune::FieldVector<DT,n>& xi) const
 	  {
-	    if (x[0] > 600-1E-6 || x[0] < 1e-6) 
+	    if (x[0] > 300-1E-6 || x[0] < 1e-6) 
 	      return Dune::BoundaryConditions::dirichlet;
 	    // all other boundaries
 	    return Dune::BoundaryConditions::neumann;
@@ -57,6 +62,9 @@ namespace Dune
 		  
 		RandomPermeability<G> permeability;
 	private:
+			G& grid;
+	public:
+		Dune::BlockVector<Dune::FieldVector<RT,1> >* saturation;
 	};
 }
 

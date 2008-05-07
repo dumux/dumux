@@ -29,22 +29,18 @@ namespace Dune
 
 	virtual void totalVelocity(const RT t=0)
 	{
-		this->diffusion.totalVelocity(this->problem.velocity, this->sat, t);
-	}
-	
-	virtual void totalVelocity(const RepresentationType& saturation, const RT t=0) 
-	{
-		this->diffusion.totalVelocity(this->problem.velocity, saturation, t);
+		this->diffusion.totalVelocity(this->problem.velocity, t);
 	}
 
 	virtual void initial()
 	{
 		double t = 0;
 		Transport::initial();
-		pressure(this->sat,t);
-		totalVelocity(this->sat,t);
+		this->pressure(t);
+		totalVelocity(t);
 
 	}
+	
 	
 	virtual int update(const RT t, RT& dt, RepresentationType& updateVec, RT cFLFactor = 1) 
 	{
@@ -69,8 +65,8 @@ namespace Dune
         	iter++;
             iterTot++;
             if (!(this->diffusion).problem.materialLaw.isLinear()) { // update pressure 
-            	pressure(saturation, t);
-            	totalVelocity(saturation, t);
+            	pressure(t);
+            	totalVelocity(t);
             }
             Transport::update(t, dt, updateVec);
             if (iterFlag)
@@ -115,12 +111,19 @@ namespace Dune
 		
 	virtual void vtkout (const char* name, int k) const 
 	{
-		Dune::VTKWriter<G, typename G::template Codim<0>::LevelIndexSet> vtkwriter(this->grid, this->grid.levelIndexSet(this->level()));
-		char fname[128];	
-		sprintf(fname,"%s-%05d",name,k);
-		vtkwriter.addCellData(this->sat,"saturation");
-		vtkwriter.addCellData(*(this->diffusion),"total pressure p~");
-		vtkwriter.write(fname,Dune::VTKOptions::ascii);		
+	  char fname[128];	
+
+	  Transport::vtkout (name,k);
+	  
+//	  Dune::VTKWriter<G, typename G::template Codim<0>::LevelIndexSet> vtkWriterSat(this->grid, this->grid.levelIndexSet(this->level()));
+//	  sprintf(fname,"%s-%05d",name,k);
+//	  vtkWriterSat.addCellData(this->sat,"saturation");
+//	  vtkWriterSat.write(fname,Dune::VTKOptions::ascii);		
+
+	  Dune::VTKWriter<G, typename G::template Codim<0>::LevelIndexSet> vtkWriterPress(this->grid, this->grid.levelIndexSet(this->diffusion.level()));
+	  sprintf(fname,"%s-press.%05d",name,k);
+	  vtkWriterPress.addCellData(*(this->diffusion),"total pressure p~");
+	  vtkWriterPress.write(fname,Dune::VTKOptions::ascii);		
 	}
 	
 	//! Construct an IMPES object.

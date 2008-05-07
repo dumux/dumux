@@ -6,9 +6,9 @@
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/grid/utility/intersectiongetter.hh>
-#include<dune/istl/operators.hh>
-#include<dune/istl/solvers.hh>
-#include<dune/istl/preconditioners.hh>
+#include <dune/istl/operators.hh>
+#include <dune/istl/solvers.hh>
+#include <dune/istl/preconditioners.hh>
 #include "dumux/diffusion/diffusion.hh"
 #include "dumux/operators/mimeticoperator.hh"
 #include "dumux/diffusion/mimetic/mimeticgroundwater.hh"
@@ -41,7 +41,6 @@ namespace Dune
   template<class G, class RT, class LocalStiffnessType = Dune::MimeticGroundwaterEquationLocalStiffness<G,RT> >
   class MimeticDiffusion 
   : public Diffusion< G, RT, BlockVector< Dune::FieldVector<RT,1> >,
-  					   BlockVector< Dune::FieldVector<RT,1> >,
   					   BlockVector< Dune::FieldVector<Dune::FieldVector<RT, G::dimension>, 2*G::dimension> > > 
   {
 	  template<int dim>
@@ -53,7 +52,6 @@ namespace Dune
 	      }
 	  }; 
 	  
-	  typedef BlockVector< Dune::FieldVector<RT,1> > SatType;
 	  typedef Dune::LevelCRFunction<G,RT,1> TraceType;
 	  typedef Dune::LevelP0Function<G,RT,2*G::dimension> NormalVelType;
 	  typedef Dune::MimeticOperatorAssembler<G,RT,1> LevelOperatorAssembler; 
@@ -62,9 +60,9 @@ namespace Dune
 	typedef BlockVector< FieldVector<FieldVector<RT, G::dimension>, 2*G::dimension> > VelType;
 	typedef BlockVector< Dune::FieldVector<RT,1> > RepresentationType;
 
-	void assemble(const SatType& saturation=0, const RT t=0) 
+	void assemble(const RT t=0) 
 	{
-		LocalStiffnessType lstiff(this->problem, false, this->grid, levell, saturation);
+		LocalStiffnessType lstiff(this->problem, false, this->grid, levell);
 		A.assemble(lstiff, pressTrace, f);		
 		return;
 	}
@@ -79,35 +77,35 @@ namespace Dune
 		//printvector(std::cout, *f, "right hand side", "row", 200, 1, 5);
 		Operator op(*A);  // make operator out of matrix 
 		double red=1E-12;
-		//SeqILU0<MatrixType,VectorType,VectorType> ilu0(*A,1.0);// a precondtioner
+		SeqILU0<MatrixType,VectorType,VectorType> ilu0(*A,1.0);// a precondtioner
 		//SeqJac<MatrixType,VectorType,VectorType> ilu0(*A,1,0.9);// a precondtioner
-		SeqPardiso<MatrixType,VectorType,VectorType> ilu0(*A);// a precondtioner
-		//BiCGSTABSolver<VectorType> solver(op,ilu0,red,10000,1);         // an inverse operator 
-		CGSolver<VectorType> solver(op,ilu0,red,10000,1);         // an inverse operator 
+		//SeqPardiso<MatrixType,VectorType,VectorType> ilu0(*A);// a precondtioner
+		BiCGSTABSolver<VectorType> solver(op,ilu0,red,10000,1);         // an inverse operator 
+		//CGSolver<VectorType> solver(op,ilu0,red,10000,1);         // an inverse operator 
 		InverseOperatorResult r;
 		solver.apply(*pressTrace, *f, r);
 		//printvector(std::cout, *pressTrace, "solution", "row", 200, 1, 5);
 		return;		
 	}
 	
-	void postprocess(const SatType& saturation=0)
+	void postprocess()
 	{
-		LocalStiffnessType lstiff(this->problem, false, this->grid, levell, saturation);
+		LocalStiffnessType lstiff(this->problem, false, this->grid, levell);
 		A.calculatePressure(lstiff, pressTrace, normalVelocity, this->press);
 		//printvector(std::cout, this->press, "element pressures", "row", 200, 1, 5);
 		//printvector(std::cout, *normalVelocity, "normal velocities", "row", 200, 1, 5);
 		return;
 	}
 	
-	void pressure(const SatType& saturation=0, const RT t=0) 
+	void pressure(const RT t=0) 
 	{
-		assemble(saturation, t);
+		assemble(t);
 		solve();
-		postprocess(saturation);
+		postprocess();
 		return;
 	}	
 	
-	void totalVelocity(VelType& velocity, const SatType& saturation=0, const RT t=0) const
+	void totalVelocity(VelType& velocity, const RT t=0) const
 	{
 		// ASSUMES axiparallel grids in 2D
 		for (int i = 0; i < this->grid.size(levell, 0); i++) {
@@ -121,6 +119,11 @@ namespace Dune
 		    velocity[i][3][1] = (*normalVelocity)[i][3]; 
 		}
 		return;
+	}
+	
+	void totalVelocity(VelType& velocity, const RT t, double lev) const
+	{
+		DUNE_THROW(Dune::NotImplemented, "upscaled velocities only implemented in FVDiffusion");
 	}
 
 	void vtkout (const char* name, int k) const 
@@ -136,7 +139,7 @@ namespace Dune
     MimeticDiffusion(G& g, DiffusionProblem<G, RT>& prob, 
 		     TransportProblem<G, RT, VelType>& satprob = *(new typename Dune::SimpleProblem<G, RT>), 
 		     int lev = 0)
-      : Diffusion<G, RT, RepresentationType, SatType, VelType>(g, prob, lev), levell(lev), 
+      : Diffusion<G, RT, RepresentationType, VelType>(g, prob, lev), levell(lev), 
 	  pressTrace(g, levell), normalVelocity(g, levell), f(g, levell), A(g, levell)
 	{
 		this->press.resize(this->grid.size(levell, 0));

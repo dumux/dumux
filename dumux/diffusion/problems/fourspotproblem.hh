@@ -20,20 +20,26 @@ namespace Dune
 	public:
 	  FourSpotProblem(G& g, const int level, const char* name = "permeab.dat", const bool create = true, 
 			  				TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false)
-	    : DiffusionProblem<G,RT>(law, cap), permeability(g, level, name, create)
+	    : grid(g), DiffusionProblem<G,RT>(law, cap), permeability(g, level, name, create)
 	  { }
 	
 	  const Dune::FieldMatrix<DT,n,n>& K (const Dune::FieldVector<DT,n>& x, const Entity& e, 
 					  const Dune::FieldVector<DT,n>& xi) 
 	  {
-//		  K_[0][0] = K_[1][1] = 1e-10;
+		  K_[0][0] = K_[1][1] = 1e-10;
 //		  Dune::FieldVector<DT,n> center(155);
 //		  double radius = 50;
 //		  if ((x-center).two_norm()<radius) K_[0][0] = K_[1][1] = 1e-6;
 //		  if (x[0]>150 && x[0]<200 && x[1]<145 || x[1]>150 && x[1]<200 && x[0]<145) K_[0][0] = K_[1][1] = 1e-14;
-//		  return K_;
+		  return K_;
 		  return permeability.K(e);
 	  }
+	  
+	  RT sat (const Dune::FieldVector<DT,n>& x, const Entity& e, 
+	  					  const Dune::FieldVector<DT,n>& xi)
+  	  {
+		  (*saturation)[grid.levelIndexSet(e.level()).index(e)];
+  	  }
 	
 	  RT q   (const Dune::FieldVector<DT,n>& x, const Entity& e, 
 					  const Dune::FieldVector<DT,n>& xi)
@@ -64,6 +70,9 @@ namespace Dune
 		  
 		LevelRandomPermeability<G> permeability;
 	private:
+		G& grid;
+	public:
+		Dune::BlockVector<Dune::FieldVector<RT,1> >* saturation;
 	};
 }
 

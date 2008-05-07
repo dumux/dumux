@@ -6,9 +6,9 @@
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/grid/utility/intersectiongetter.hh>
-#include<dune/istl/operators.hh>
-#include<dune/istl/solvers.hh>
-#include<dune/istl/preconditioners.hh>
+#include <dune/istl/operators.hh>
+#include <dune/istl/solvers.hh>
+#include <dune/istl/preconditioners.hh>
 #include "dumux/diffusion/diffusion.hh"
 #include "dune/disc/operators/p1operator.hh"
 #include "dumux/diffusion/fe/p1groundwater.hh"
@@ -43,7 +43,6 @@ namespace Dune
   template<class G, class RT, class LocalStiffnessType = GroundwaterEquationLocalStiffness<G,RT> >
   class FEDiffusion 
   : public Diffusion< G, RT, BlockVector< FieldVector<RT,1> >,
-  					   BlockVector< FieldVector<RT,1> >,
   					   BlockVector< FieldVector<FieldVector<RT, G::dimension>, 2*G::dimension> > > 
   {
 	  template<int dim>
@@ -55,7 +54,6 @@ namespace Dune
 	      }
 	  }; 
 	  
-	  typedef BlockVector< FieldVector<RT,1> > SatType;
 	  typedef LevelP1Function<G,RT,1> PressP1Type;
 	  typedef LevelP1OperatorAssembler<G,RT,1> LevelOperatorAssembler; 
 
@@ -63,9 +61,9 @@ namespace Dune
         typedef BlockVector< FieldVector<FieldVector<RT, G::dimension>, 2*G::dimension> > VelType;
 	typedef BlockVector< FieldVector<RT,1> > RepresentationType;
 
-	void assemble(const SatType& saturation=0, const RT t=0) 
+	void assemble(const RT t=0) 
 	{
-		LocalStiffnessType lstiff(this->problem, false, this->grid, this->level(), saturation);
+		LocalStiffnessType lstiff(this->problem, false, this->grid, this->level());
 		A.assemble(lstiff, pressP1, f);		
 		return;
 	}
@@ -87,14 +85,14 @@ namespace Dune
 		return;		
 	}
 	
-	void pressure(const SatType& saturation=0, const RT t=0) 
+	void pressure(const RT t=0) 
 	{
-		assemble(saturation, t);
+		assemble(t);
 		solve();
 		return;
 	}	
 	
-	void totalVelocity(VelType& velocity, const SatType& saturation=0, const RT t=0) const
+	void totalVelocity(VelType& velocity, const RT t=0) const
 	{
 		DUNE_THROW(NotImplemented,"FEDiffusion :: totalVelocity");	
 		return;
@@ -113,7 +111,7 @@ namespace Dune
 	FEDiffusion(G& g, DiffusionProblem<G, RT>& prob, 
 		    TransportProblem<G, RT, VelType>& satprob = *(new typename Dune::SimpleProblem<G, RT>), 
 		    int lev = 0)
-	  : Diffusion<G, RT, RepresentationType, SatType, VelType>(g, prob, lev), 
+	  : Diffusion<G, RT, RepresentationType, VelType>(g, prob, lev), 
 	  pressP1(g, this->level()), f(g, this->level()), A(g, this->level())
 	{ 
 		this->press.resize(g.size(this->level(), G::dimension));

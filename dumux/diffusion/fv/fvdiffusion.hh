@@ -11,21 +11,21 @@
 #include <dune/istl/preconditioners.hh>
 #include "dumux/diffusion/diffusion.hh"
 #include "dumux/pardiso/pardiso.hh"
-#include "dumux/transport/problems/simpleproblem.hh"
 #include "dumux/diffusion/problems/uniformproblem.hh"
+#include "dumux/transport/problems/simpleproblem.hh"
 
 /**
  * @file
- * @brief  Base class for defining an instance of a numerical diffusion model
- * @author Bernd Flemisch
+ * @brief  Finite Volume Diffusion Model
+ * @author Bernd Flemisch, Jochen Fritz
  */
 
 namespace Dune
 {
   //! \ingroup diffusion
-  //! Base class for defining an instance of a numerical diffusion model.
-  /*! An interface for defining a numerical diffusion model for the 
-   *  solution of equations of the form 
+  //! Finite Volume Diffusion Model
+  /*! Provides a Finite Volume implementation for the evaluation 
+   * of equations of the form 
    * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = q, \f$, 
    * \f$p = g\f$ on \f$\Gamma_1\f$, and 
    * \f$\lambda K \text{grad}\, p \cdot \mathbf{n} = J\f$ 
@@ -35,13 +35,12 @@ namespace Dune
    * saturation, \f$q\f$ the source term.
 	Template parameters are:
 
-	- Grid      a DUNE grid type
+	- G         a DUNE grid type
 	- RT        type used for return values 
    */
   template<class G, class RT>
   class FVDiffusion 
   : public Diffusion< G, RT, BlockVector< FieldVector<RT,1> >,
-  					   BlockVector< FieldVector<RT,1> >,
   					   BlockVector< FieldVector<FieldVector<RT, G::dimension>, 2*G::dimension> > > 
   {
 	  template<int dim>
@@ -55,7 +54,7 @@ namespace Dune
 	  
 	  enum{dim = G::dimension};	
 	  enum{dimworld = G::dimensionworld};
-	  typedef BlockVector< FieldVector<RT,1> > SatType;
+	  
 	  typedef typename G::Traits::template Codim<0>::Entity Entity;
 	  typedef typename G::Traits::LevelIndexSet IS;
 	  typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator Iterator;
@@ -68,7 +67,6 @@ namespace Dune
 	  typedef BCRSMatrix<MB> MatrixType;
 	  typedef FieldVector<double, 1> VB;
 	  typedef BlockVector<VB> Vector;
-	  typedef BCRSMatrix<MB> Matrix;
 	  typedef FieldVector<double,dim> R2;
 	  typedef BlockVector<R2> R3;
 	  typedef BlockVector<R3> LocVelType;
@@ -77,20 +75,20 @@ namespace Dune
 	typedef BlockVector< FieldVector<FieldVector<RT, G::dimension>, 2*G::dimension> > VelType;
 	typedef BlockVector< FieldVector<RT,1> > RepresentationType;
 
-	void assemble(const SatType& saturation, const RT t); 
+	void assemble(const RT t); 
 
 	void solve(); 
 
-	void pressure(const SatType& saturation=0, const RT t=0)
+	void pressure(const RT t=0)
 	{
-		assemble(saturation, t);
+		assemble(t);
 		solve();
 		return;
 	}
 
-	void totalVelocity(VelType& velocity, const SatType& saturation, const RT t) const;
+	void totalVelocity(VelType& velocity, const RT t) const;
 	
-    void totalVelocity(VelType& velocity, const SatType& saturation, const RT t, const int level) const;
+    void totalVelocity(VelType& velocity, const RT t, const int level) const;
 		
 	void vtkout (const char* name, int k) const 
 	{
@@ -105,30 +103,34 @@ namespace Dune
 	
 	void initializeMatrix();
 	
-	FVDiffusion(G& g, DiffusionProblem<G, RT>& prob, 
+	FVDiffusion(G& g, 
+			    DiffusionProblem<G, RT>& prob, 
 				TransportProblem<G, RT, VelType>& satprob = *(new SimpleProblem<G, RT>), 
 				int lev = -1)
-	  : Diffusion<G, RT, RepresentationType, SatType, VelType>(g, prob, lev == -1 ? g.maxLevel() : lev), 
-	  satProblem(satprob), 
-	  elementmapper(g, g.levelIndexSet(this->level())), 
-	  indexset(g.levelIndexSet(this->level())), 
-	  A(g.size(this->level(), 0), g.size(this->level(), 0), (2*dim+1)*g.size(this->level(), 0), BCRSMatrix<MB>::random), 
-	    f(g.size(this->level(), 0)) , solverName_("BiCGSTAB"), preconditionerName_("SeqILU0")
+	            : Diffusion<G, RT, RepresentationType, VelType>(g, prob, lev == -1 ? g.maxLevel() : lev), 
+	              satProblem(satprob), 
+	              elementmapper(g, g.levelIndexSet(this->level())), 
+	              indexset(g.levelIndexSet(this->level())), 
+	              A(g.size(this->level(), 0), g.size(this->level(), 0), (2*dim+1)*g.size(this->level(), 0), BCRSMatrix<MB>::random), 
+	              f(g.size(this->level(), 0)) , solverName_("BiCGSTAB"), preconditionerName_("SeqILU0")
 	{
 		this->press.resize(g.size(this->level(), 0));
 		this->press = 0;
 		initializeMatrix();
 	}
 	
-	FVDiffusion(G& g, DiffusionProblem<G, RT>& prob, std::string solverName, std::string preconditionerName, 
+	FVDiffusion(G& g, 
+			    DiffusionProblem<G, RT>& prob, 
+			    std::string solverName, 
+			    std::string preconditionerName, 
 				TransportProblem<G, RT, VelType>& satprob = *(new SimpleProblem<G, RT>), 
 				int lev = -1)
-	  : Diffusion<G, RT, RepresentationType, SatType, VelType>(g, prob, lev == -1 ? g.maxLevel() : lev), 
-	  satProblem(satprob), 
-	  elementmapper(g, g.levelIndexSet(this->level())), 
-	  indexset(g.levelIndexSet(this->level())), 
-	  A(g.size(this->level(), 0), g.size(this->level(), 0), (2*dim+1)*g.size(this->level(), 0), BCRSMatrix<MB>::random), 
-	    f(g.size(this->level(), 0)), solverName_(solverName), preconditionerName_(preconditionerName)
+	            : Diffusion<G, RT, RepresentationType, VelType>(g, prob, lev == -1 ? g.maxLevel() : lev), 
+	              satProblem(satprob), 
+	              elementmapper(g, g.levelIndexSet(this->level())), 
+	              indexset(g.levelIndexSet(this->level())), 
+	              A(g.size(this->level(), 0), g.size(this->level(), 0), (2*dim+1)*g.size(this->level(), 0), BCRSMatrix<MB>::random), 
+	              f(g.size(this->level(), 0)), solverName_(solverName), preconditionerName_(preconditionerName)
 	{
 		this->press.resize(g.size(this->level(), 0));
 		this->press = 0;
@@ -199,7 +201,7 @@ namespace Dune
   }
   
   template<class G, class RT>
-  void FVDiffusion<G, RT>::assemble(const SatType& saturation=0, const RT t=0)
+  void FVDiffusion<G, RT>::assemble(const RT t=0)
 	{
 	    // initialization: set matrix A to zero	   
         A = 0;
@@ -240,11 +242,11 @@ namespace Dune
 	
 			//compute total mobility
 			double lambdaI, fractionalWI;
-			if (saturation.size()) {
-				lambdaI = this->problem.materialLaw.mobTotal(saturation[indexi]);
-				if (hasGravity) 
-					fractionalWI = this->problem.materialLaw.fractionalW(saturation[indexi]);
-			}
+			double sati = this->problem.sat(global, *it, local);
+			lambdaI = this->problem.materialLaw.mobTotal(sati);
+			if (hasGravity) 
+				fractionalWI = this->problem.materialLaw.fractionalW(sati);
+			
 
 			IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
 			for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it); 
@@ -332,22 +334,19 @@ namespace Dune
 	
 					//compute total mobility
 					double lambdaJ, fractionalWJ;
-					if (saturation.size()) {
-						lambdaJ = this->problem.materialLaw.mobTotal(saturation[indexj]);
-						if (hasGravity) 
-							fractionalWJ = this->problem.materialLaw.fractionalW(saturation[indexj]);
-					}
+					double satj = this->problem.sat(nbglobal, *outside, nblocal);
+					lambdaJ = this->problem.materialLaw.mobTotal(satj);
+					if (hasGravity) 
+						fractionalWJ = this->problem.materialLaw.fractionalW(satj);
 					
 					// compute averaged total mobility
 					// CAREFUL: Harmonic weightig can generate zero matrix entries, 
 			                // use arithmetic weighting instead: 
-					double lambda = 1;
 					double fractionalW;
-					if (saturation.size()) {
-						lambda = 0.5*(lambdaI + lambdaJ);
-						if (hasGravity) 
-							fractionalW = 0.5*(fractionalWI + fractionalWJ);
-					}
+					double lambda = 0.5*(lambdaI + lambdaJ);
+					if (hasGravity) 
+						fractionalW = 0.5*(fractionalWI + fractionalWJ);
+						
 					// update diagonal entry 
 					double entry = fabs(lambda*faceVol*(K*distVec)/(dist*dist));
 					A[indexi][indexi] += entry;
@@ -362,22 +361,20 @@ namespace Dune
 					}
 					
 					if (this->problem.capillary) {
-					  double satI = saturation[indexi];
-					  double satJ = saturation[indexj];
 					  // calculate saturation gradient
 					  FieldVector<ct,dim> satGradient = distVec;		
-					  satGradient *= (satJ - satI)/(dist*dist);
+					  satGradient *= (satj - sati)/(dist*dist);
 		
 					  // arithmetic average of the permeability
 					  K = ((Kni + Knj) *= 0.5);
 					  
 					  // capillary pressure w.r.t. saturation 
-					  double pCI = this->problem.materialLaw.pC(satI);
-					  double pCJ = this->problem.materialLaw.pC(satJ);
+					  double pCI = this->problem.materialLaw.pC(sati);
+					  double pCJ = this->problem.materialLaw.pC(satj);
 		
 					  // mobility of the nonwetting phase 
-					  double lambdaN = 0.5*(this->problem.materialLaw.mobN(1 - satI) 
-							  				+ this->problem.materialLaw.mobN(1 - satJ));
+					  double lambdaN = 0.5*(this->problem.materialLaw.mobN(1 - sati) 
+							  				+ this->problem.materialLaw.mobN(1 - satj));
 		
 		
 					  // calculate capillary pressure gradient
@@ -395,15 +392,9 @@ namespace Dune
 					  faceglobal = is.intersectionGlobal().global(facelocal);
 					  
 					// compute total mobility
-					double lambda = 1.;
 					double fractionalW = 1.;
-					if (saturation.size()) 
-					{  
-						lambda = lambdaI;
-						if (hasGravity) {
-							fractionalW = fractionalWI;
-						}
-					}
+					double lambda = lambdaI;
+						if (hasGravity) fractionalW = fractionalWI;
 		
 					//get boundary condition for boundary face center
 					BoundaryConditions::Flags bctype = this->problem.bctype(faceglobal, *it, facelocalDim);
@@ -429,8 +420,7 @@ namespace Dune
 					}
 		
 					if (this->problem.capillary) {
-					  double satI = saturation[indexi];
-					  double satJ = satProblem.g(faceglobal, *it, facelocalDim);
+					  double satj = satProblem.g(faceglobal, *it, facelocalDim);
 					  
 					  // distance vector between barycenters
 					  FieldVector<ct,dimworld> 
@@ -441,15 +431,15 @@ namespace Dune
 					  
 					  // calculate saturation gradient
 					  FieldVector<ct,dim> satGradient = distVec;		
-					  satGradient *= (satJ - satI)/(dist*dist);
+					  satGradient *= (satj - sati)/(dist*dist);
 					  
 					  // capillary pressure w.r.t. saturation 
-					  double pCI = this->problem.materialLaw.pC(satI);
-					  double pCJ = this->problem.materialLaw.pC(satJ);
+					  double pCI = this->problem.materialLaw.pC(sati);
+					  double pCJ = this->problem.materialLaw.pC(satj);
 					  
 					  // mobility of the nonwetting phase 
-					  double lambdaN = 0.5*(this->problem.materialLaw.mobN(1 - satI)
-							  				+ this->problem.materialLaw.mobN(1 - satJ));
+					  double lambdaN = 0.5*(this->problem.materialLaw.mobN(1 - sati)
+							  				+ this->problem.materialLaw.mobN(1 - satj));
 					  
 					  
 					  // calculate capillary pressure gradient
@@ -469,11 +459,11 @@ namespace Dune
   template<class G, class RT>
   void FVDiffusion<G, RT>::solve()
   {
-	  MatrixAdapter<Matrix,Vector,Vector> op(A); 
+	  MatrixAdapter<MatrixType,Vector,Vector> op(A); 
 	  InverseOperatorResult r;
 	  
 	  if (preconditionerName_ == "SeqILU0") {
-	      SeqILU0<Matrix,Vector,Vector> preconditioner(A, 1.0);
+	      SeqILU0<MatrixType,Vector,Vector> preconditioner(A, 1.0);
 	      if (solverName_ == "CG") {
 	    	  CGSolver<Vector> solver(op, preconditioner, 1E-14, 10000, 1);
 	    	  solver.apply(this->press, f, r);
@@ -487,7 +477,7 @@ namespace Dune
 					  << " and " << solverName_ << ".");
 	  }
 	  else if (preconditionerName_ == "SeqPardiso") {
-	      SeqPardiso<Matrix,Vector,Vector> preconditioner(A);
+	      SeqPardiso<MatrixType,Vector,Vector> preconditioner(A);
 	      if (solverName_ == "Loop") {
 	    	  LoopSolver<Vector> solver(op, preconditioner, 1E-14, 10000, 1);
 	    	  solver.apply(this->press, f, r);
@@ -503,7 +493,7 @@ namespace Dune
   }
 	
   template<class G, class RT>
-  void FVDiffusion<G, RT>::totalVelocity(VelType& velocity, const SatType& saturation=0, const RT t=0) const
+  void FVDiffusion<G, RT>::totalVelocity(VelType& velocity, const RT t=0) const
 	{
       // find out whether gravity effects are relevant
       bool hasGravity = false;
@@ -537,11 +527,10 @@ namespace Dune
 	
 			//compute total mobility
 			double lambdaI, fractionalWI;
-			if (saturation.size()) {
-				lambdaI = this->problem.materialLaw.mobTotal(saturation[indexi]);
-				if (hasGravity) 
-					fractionalWI = this->problem.materialLaw.fractionalW(saturation[indexi]);
-			}
+			double sati = this->problem.sat(global, *it, local);
+			lambdaI = this->problem.materialLaw.mobTotal(sati);
+			if (hasGravity) 
+				fractionalWI = this->problem.materialLaw.fractionalW(sati);
 			
 			double faceVol[2*dim];
 
@@ -625,22 +614,19 @@ namespace Dune
 
 			      //compute total mobility
 			      double lambdaJ, fractionalWJ;
-			      if (saturation.size()) {
-			    	  lambdaJ = this->problem.materialLaw.mobTotal(saturation[indexj]);
+			      double satj = this->problem.sat(nbglobal, *outside, nblocal);
+			    	  lambdaJ = this->problem.materialLaw.mobTotal(satj);
 			    	  if (hasGravity) 	
-			    		  fractionalWJ = this->problem.materialLaw.fractionalW(saturation[indexj]);
-			      }
+			    		  fractionalWJ = this->problem.materialLaw.fractionalW(satj);
 			      
 			      // compute averaged total mobility
 			      // CAREFUL: Harmonic weightig can generate zero matrix entries, 
 			      // use arithmetic weighting instead: 
 			      double lambda = 1;
 			      double fractionalW;
-			      if (saturation.size()) {
-			    	  lambda = 0.5*(lambdaI + lambdaJ); 
-			    	  if (hasGravity) 
-			    		  fractionalW = 0.5*(fractionalWI + fractionalWJ);
-			      }
+			      lambda = 0.5*(lambdaI + lambdaJ); 
+			      if (hasGravity) 
+			    	  fractionalW = 0.5*(fractionalWI + fractionalWJ);
 			      
 			      FieldVector<ct,dimworld> vTotal(K);
 			      vTotal *= lambda*(pressi - pressj)/dist;
@@ -675,13 +661,9 @@ namespace Dune
 					  // compute averaged total mobility
 					  double lambda = 1.;
 					  double fractionalW = 1.;
-					  if (saturation.size()) 
-					  {
 						  lambda = lambdaI;
-						  if (hasGravity) {
-							  fractionalW = fractionalWI;
-						  }
-					  }
+						  if (hasGravity) fractionalW = fractionalWI;
+						  
 					  double g = this->problem.g(faceglobal, *it, facelocalDim);
 					  
 					  FieldVector<ct,dim> vTotal(Kni);
@@ -734,9 +716,15 @@ namespace Dune
 	}
 
 
-  // CAUTION: works for axisymetric grids only!
+  //! Returns the velocities on the edges of the grid ofthe specified level.
+  /**CAUTION: works for axisymetric grids only!
+   * CAUTION: specified level must be lower than level of the class!
+   * \param velocity the return vector
+   * \param t simulation time
+   * \param lev the grid level on which the velocity is to be calculated. Must be lower than the level of the class!
+  */
   template<class G, class RT>
-  void FVDiffusion<G, RT>::totalVelocity(VelType& velocity, const SatType& saturation, const RT t, const int lev) const
+  void FVDiffusion<G, RT>::totalVelocity(VelType& velocity, const RT t, const int lev) const
   {
     if (lev >= this->level())
       DUNE_THROW(NotImplemented,
@@ -779,7 +767,8 @@ namespace Dune
           // get pressure and permeability and total mobility in fine-scale element
           double pressi = this->press[indexi];
           FieldMatrix<ct,dim,dim> Ki =  this->problem.K(global,*it,local);
-          double lambdaI = this->problem.materialLaw.mobTotal(saturation[indexi]);
+          double sati = this->problem.sat(global, *it, local);
+          double lambdaI = this->problem.materialLaw.mobTotal(sati);
 
 	      double faceVol[2*dim];
           // run through all intersections with neighbors and boundary
@@ -837,7 +826,8 @@ namespace Dune
                   distVec = global - nbglobal;
               double dist = distVec.two_norm();
               // get averaged total mobility
-              double lambdaJ = this->problem.materialLaw.mobTotal(saturation[indexj]);
+              double satj = this->problem.sat(nbglobal,*outside,nblocal);
+              double lambdaJ = this->problem.materialLaw.mobTotal(satj);
               double mob = 0.5 * (lambdaI + lambdaJ);
               // compute total velocity with Darcy's Law
               fineVelocity[numberInSelf] = K;		
@@ -862,11 +852,7 @@ namespace Dune
                 Ki.umv(distVec, Kni);
 
                 // compute averaged total mobility
-                double lambda = 1;
-                if (saturation.size()) 
-                {
-                  lambda = lambdaI;
-                }
+                double lambda = lambdaI;
                
                 double g = this->problem.g(faceglobal, *it, facelocalDim);
             					  

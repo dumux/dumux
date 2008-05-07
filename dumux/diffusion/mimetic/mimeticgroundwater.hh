@@ -76,7 +76,6 @@ namespace Dune
     typedef Dune::LevelP0Function<G,DT,(int)(0.5*n*(n+1))> KType;
     typedef typename G::Traits::LevelIndexSet IS;
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout> EM;
-    typedef Dune::BlockVector< Dune::FieldVector<double,1> > SatType; 
 
   public:
 	// define the number of components of your system, this is used outside
@@ -87,10 +86,10 @@ namespace Dune
 	//! Constructor
 	MimeticGroundwaterEquationLocalStiffness (DiffusionProblem<G,RT>& params,
 						  bool levelBoundaryAsDirichlet_, const G& grid, int level=0, 
-						  const SatType& sat = 0, bool procBoundaryAsDirichlet_=true)
+						  bool procBoundaryAsDirichlet_=true)
 	  : problem(params),levelBoundaryAsDirichlet(levelBoundaryAsDirichlet_),
 	    procBoundaryAsDirichlet(procBoundaryAsDirichlet_), 
-	    elementmapper(grid, grid.levelIndexSet(level)), saturation(sat) 
+	    elementmapper(grid, grid.levelIndexSet(level)) 
 	{	}
 
 
@@ -176,9 +175,7 @@ namespace Dune
 
       int elemId = elementmapper.map(e);
       
-      if(saturation.size()) {
-     	  K *= problem.materialLaw.mobTotal(saturation[elemId]);
-      }
+     	  K *= problem.materialLaw.mobTotal(problem.sat(centerGlobal,e,centerLocal));
     
       // cell volume
       DT volume = e.geometry().volume();
@@ -516,7 +513,6 @@ namespace Dune
     bool levelBoundaryAsDirichlet;
     bool procBoundaryAsDirichlet;
     EM elementmapper;
-    const SatType& saturation;
   };
 
   /** @} */

@@ -2,6 +2,7 @@
 #define UNIFORMPROBLEM_HH
 
 #include "dumux/diffusion/diffusionproblem.hh"
+#include <dune/istl/bvector.hh>
 
 namespace Dune
 {
@@ -15,9 +16,14 @@ namespace Dune
 	  typedef typename G::Traits::template Codim<0>::Entity Entity;
 	
 	public:
-	  UniformProblem(G& g, TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false)
-	    : DiffusionProblem<G,RT>(law, cap)
-	  { }
+	  UniformProblem(G& g, const bool sflag = true, TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false)
+	    : DiffusionProblem<G,RT>(law, cap), saturationflag(sflag), grid(&g) 
+	  { 
+		permloc = 0;
+	    for (int k = 0; k < n; k++)
+	      permloc[k][k] = 1e-10;
+	    
+	    }
 	
 	  UniformProblem()
 	    : DiffusionProblem<G,RT>()
@@ -25,6 +31,8 @@ namespace Dune
 	    permloc = 0; 
 	    for (int k = 0; k < n; k++)
 	      permloc[k][k] = 1e-10;
+	    
+	    saturationflag = false;
 	  }
 	
 	  const Dune::FieldMatrix<DT,n,n>& K (const Dune::FieldVector<DT,n>& x, const Entity& e, 
@@ -32,17 +40,27 @@ namespace Dune
 	  {
 		  return permloc;
 	  }
+	  
+	  RT sat (const Dune::FieldVector<DT,n>& x, const Entity& e, 
+					  const Dune::FieldVector<DT,n>& xi)
+	  {
+		  if (saturationflag)
+			  return (*saturation)[grid->levelIndexSet(e.level()).index(e)];
+		  return 0;
+	  }
 	
 	  RT q   (const Dune::FieldVector<DT,n>& x, const Entity& e, 
 					  const Dune::FieldVector<DT,n>& xi)
 	  {
+//		Dune::FieldVector<DT,n> m(150);
+//		if ((x-m).two_norm()<1) return 1e-6;
 		return 0;
 	  }
 	
 	  typename Dune::BoundaryConditions::Flags bctype (const Dune::FieldVector<DT,n>& x, const Entity& e, 
 						   const Dune::FieldVector<DT,n>& xi) const
 	  {
-	    if (x[0] > 10-1E-6 || x[0] < 1e-6) 
+	    if (x[0] > 300-1E-6 || x[0] < 1e-6) 
 	      return Dune::BoundaryConditions::dirichlet;
 	    // all other boundaries
 	    return Dune::BoundaryConditions::neumann;
@@ -51,7 +69,7 @@ namespace Dune
 	  RT g (const Dune::FieldVector<DT,n>& x, const Entity& e, 
 					const Dune::FieldVector<DT,n>& xi) const
 	  {
-		  return (x[0] < 1e-6) ? 1.1e6 : 1e6;
+		  return (x[0] < 1e-6) ? 2e5 : 1e5;
 	  }
 		  
 		
@@ -61,8 +79,13 @@ namespace Dune
 		return 0;
 	  }
 		  
+	  
 	private:
 		Dune::FieldMatrix<DT,n,n> permloc;
+		bool saturationflag;
+		G* grid;
+	public:
+		Dune::BlockVector<Dune::FieldVector<RT,1> >* saturation;
 	};
 }
 

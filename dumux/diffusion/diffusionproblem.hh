@@ -43,11 +43,15 @@ namespace Dune
    */
   template<class G, class RT>
   class DiffusionProblem {
+  protected:
 	typedef typename G::ctype DT;
-	enum {n=G::dimension, m=1};
 	typedef typename G::Traits::template Codim<0>::Entity Entity;
 
   public:
+	  typedef G GridType;
+	  typedef RT ReturnType;
+	  enum {n=G::dimension, m=1};
+	  
 	//! evaluate diffusion tensor
 	/*! Evaluate the diffusion tensor at given location
 	  @param[in]  x    position in global coordinates
@@ -57,6 +61,15 @@ namespace Dune
 	 */
 	virtual const FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x, const Entity& e, 
 					const FieldVector<DT,n>& xi) = 0;
+	
+	//! evaluate saturation
+	/*! Evaluate the saturation at given location
+	  @param[in]  x    position in global coordinates
+	  @param[in]  e    entity of codim 0
+	  @param[in]  xi   position in reference element of e
+	 */
+	virtual RT sat  (const FieldVector<DT,n>& x, const Entity& e, 
+					 const FieldVector<DT,n>& xi) = 0;
 
 	//! evaluate source term
 	/*! evaluate source term at given location
