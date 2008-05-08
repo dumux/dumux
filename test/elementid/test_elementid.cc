@@ -31,43 +31,41 @@ int main(int argc, char** argv)
     innerLowerLeft[1] = 2;
     Dune::FieldVector<NumberType, dim> innerUpperRight(4);
     innerUpperRight[1] = 3;
-    if (argc != 3) {
-      std::cout << "usage: test_elementid tEnd dt" << std::endl;
+    if (argc != 4) {
+      std::cout << "usage: test_elementid basefilename tEnd dt" << std::endl;
       return 0;
     }
-    	std::string arg1(argv[1]);
+    	std::string arg1(argv[2]);
 	std::istringstream is1(arg1);
 	double tEnd;
 	is1 >> tEnd;
-	std::string arg2(argv[2]);
+	std::string arg2(argv[3]);
 	std::istringstream is2(arg2);
 	double dt;
 	is2 >> dt;
 
 
     // create a grid object
-    typedef Dune::SGrid<dim,dim> GridType; 
+    //typedef Dune::SGrid<dim,dim> GridType; 
     //typedef Dune::ALUSimplexGrid<dim,dim> GridType; 
     //typedef Dune::AlbertaGrid<dim,dim> GridType; 
     //typedef Dune::YaspGrid<dim,dim> GridType; 
-    //typedef Dune::UGGrid<dim> GridType; 
-
-    // use unitcube from grids 
-    std::stringstream dgfFileName;
-    dgfFileName << "grids/unitcube" << GridType :: dimension << ".dgf";
+    typedef Dune::UGGrid<dim> GridType; 
 
     // create grid pointer, GridType is defined by gridtype.hh
-    Dune::GridPtr<GridType> gridPtr( dgfFileName.str() );
+    Dune::GridPtr<GridType> gridPtr( argv[1] );
 
     // grid reference 
     GridType& grid = *gridPtr;
+
+    grid.globalRefine(3); 
 
     Dune::gridinfo(grid);
     
     DNAPL dnapl;
     Water water;
     Dune::VanGenuchtenLaw law(water, dnapl);
-    Dune::LensWithElementID<GridType, NumberType> problem(law, outerLowerLeft, outerUpperRight, 
+    Dune::LensWithElementID<GridType, NumberType> problem(gridPtr, law, outerLowerLeft, outerUpperRight, 
     		innerLowerLeft, innerUpperRight);
 
     typedef Dune::BoxPwSn<GridType, NumberType> TwoPhase;

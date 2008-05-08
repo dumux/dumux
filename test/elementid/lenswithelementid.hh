@@ -42,6 +42,7 @@ namespace Dune
 	enum {n=G::dimension, m=2};
 	typedef typename G::Traits::template Codim<0>::Entity Entity;
 	typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
+    typedef GridPtr<G> GridPtr;
 
   public:
 	enum {pWIdx = 0, sNIdx = 1};
@@ -50,11 +51,20 @@ namespace Dune
 	virtual const FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x, const Entity& e, 
 					const FieldVector<DT,n>& xi)
 	{
-		if (x[0] > innerLowerLeft_[0] && x[0] < innerUpperRight_[0] 
-		    && x[1] > innerLowerLeft_[1] && x[1] < innerUpperRight_[1])
-			return innerK_;
-		else
-			return outerK_;
+	  if (numberOfParameters_) { 
+	    std::vector<double>& parameters = gridPtr.parameters(e);
+	    if (parameters[0]) 
+	      return innerK_;
+	    else
+	      return outerK_;
+	  }
+	  else {
+	    if (x[0] > innerLowerLeft_[0] && x[0] < innerUpperRight_[0] 
+		&& x[1] > innerLowerLeft_[1] && x[1] < innerUpperRight_[1])
+	      return innerK_;
+	    else
+	      return outerK_;
+	  }
 	}
 
 	virtual FieldVector<RT,m> q (const FieldVector<DT,n>& x, const Entity& e, 
@@ -179,7 +189,7 @@ namespace Dune
 		return values;
 	}
 
-	LensWithElementID(TwoPhaseRelations& law = *(new LinearLaw), 
+    LensWithElementID(GridPtr& gP, TwoPhaseRelations& law = *(new LinearLaw), 
 			const FieldVector<DT,n> outerLowerLeft = 0, const FieldVector<DT,n> outerUpperRight = 0, 
 			const FieldVector<DT,n> innerLowerLeft = 0, const FieldVector<DT,n> innerUpperRight = 0, 
 			RT outerK = 4.6e-10, RT innerK = 9.05e-13, 
@@ -187,7 +197,8 @@ namespace Dune
 			RT outerPorosity = 0.4, RT innerPorosity = 0.4, 
 			RT outerAlpha = 0.0037, RT innerAlpha = 0.00045, 
 			RT outerN = 4.7, RT innerN = 7.3)
-	: TwoPhaseProblem<G, RT>(law), 
+      : gridPtr(gP), numberOfParameters_(gridPtr.nofParameters(0)), 
+	TwoPhaseProblem<G, RT>(law), 
 	  outerLowerLeft_(outerLowerLeft), outerUpperRight_(outerUpperRight), 
 	  innerLowerLeft_(innerLowerLeft), innerUpperRight_(innerUpperRight), 
 	  eps_(1e-8*outerUpperRight[0]), 
@@ -211,6 +222,8 @@ namespace Dune
 	}
 	
 	private:
+                GridPtr& gridPtr; 
+                int numberOfParameters_;
 		FieldMatrix<DT,n,n> outerK_;
 		FieldMatrix<DT,n,n> innerK_;
 		FieldVector<DT,n> outerLowerLeft_;
