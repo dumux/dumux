@@ -56,7 +56,7 @@ int main(int argc, char** argv)
 
     typedef Dune::FVTransport<GridType, NumberType> Transport;
     //Dune::DiffusivePart<GridType, NumberType> diffPart;
-    Dune::UniformProblem<GridType, NumberType> diffusionProblem(grid, materialLaw);
+    Dune::UniformProblem<GridType, NumberType> diffusionProblem(grid, true, materialLaw);
     //Dune::DiffusivePart<GridType, NumberType> diffPart;
     Dune::CapillaryDiffusion<GridType, NumberType> diffPart(diffusionProblem); 
     Transport transport(grid, problem, grid.maxLevel(), diffPart, reconstruct, alphaMax, cFLFactor);

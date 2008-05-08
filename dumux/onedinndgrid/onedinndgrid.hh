@@ -186,7 +186,7 @@ struct OneDInNDGridFamily
 //**********************************************************************
 
 /**
- \brief [<em> provides \ref Dune::Grid </em>]
+ \brief [<em> provides Grid </em>]
  Onedimensional adaptive grid
  \ingroup GridImplementations
  

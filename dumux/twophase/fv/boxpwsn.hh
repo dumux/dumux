@@ -48,6 +48,12 @@
 
 namespace Dune
 {
+
+/**
+ \brief Two phase model with Pw and Sn as primary unknowns
+ 
+ This implements a two phase model with Pw and Sn as primary unknowns.
+ */
   template<class G, class RT>
   class BoxPwSn 
   : public LeafP1TwoPhaseModel<G, RT, TwoPhaseProblem<G, RT>, 
@@ -136,10 +142,16 @@ namespace Dune
       typedef typename G::ctype DT;
       typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator Iterator;
       enum{dim = G::dimension};
+      typedef array<BoundaryConditions::Flags, m> BCBlockType;     
       
       const IS& indexset(this->grid.leafIndexSet());
       (*defectGlobal)=0;
            
+      // allocate flag vector to hold flags for essential boundary conditions
+      std::vector<BCBlockType> essential(this->vertexmapper.size());
+      for (typename std::vector<BCBlockType>::size_type i=0; i<essential.size(); i++)
+	essential[i].assign(BoundaryConditions::neumann);
+
       // iterate through leaf grid 
       Iterator eendit = indexset.template end<0, All_Partition>();
       for (Iterator it = indexset.template begin<0, All_Partition>(); it != eendit; ++it)
@@ -150,26 +162,30 @@ namespace Dune
 	  const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type& 
 	    sfs=Dune::LagrangeShapeFunctions<DT,RT,dim>::general(gt, 1);
 	  int size = sfs.size();
-	  Dune::FieldVector<RT,2> defhelp[size];
 	  
 	  // get entity 
 	  const Entity& entity = *it;
 	  
 	  this->localJacobian.fvGeom.update(entity);
 	  
-	  this->localJacobian.getLocalDefect(entity,defhelp);
-	  //std::cout<<" defhelp: "<<*defhelp<<std::endl;
+	  this->localJacobian.setLocalSolution(entity);
+	  this->localJacobian.template localDefect<LeafTag>(entity,this->localJacobian.u);
+
 	  // begin loop over vertices
 	  for(int i=0; i < size; i++)
 	    {
 	      int globalId = this->vertexmapper.template map<dim>(entity, sfs[i].entity());
 	    
 	      if (this->localJacobian.bc(i)[0] == BoundaryConditions::neumann)
-		(*defectGlobal)[globalId] += defhelp[i];
+		(*defectGlobal)[globalId] += this->localJacobian.def[i];
 	      else 
-		(*defectGlobal)[globalId] = 0;
+		essential[globalId].assign(BoundaryConditions::dirichlet);
 	    }
 	}
+
+      for (typename std::vector<BCBlockType>::size_type i=0; i<essential.size(); i++)
+	if (essential[i][0] == BoundaryConditions::dirichlet)
+	  (*defectGlobal)[i] = 0;
     }
   };
 

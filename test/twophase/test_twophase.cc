@@ -7,6 +7,9 @@
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
+#include <dune/grid/io/file/dgfparser/dgfalu.hh>
+#include <dune/grid/io/file/dgfparser/dgfalberta.hh>
+#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
@@ -45,6 +48,8 @@ int main(int argc, char** argv)
 
     // create a grid object
     typedef Dune::SGrid<dim,dim> GridType; 
+    //typedef Dune::ALUSimplexGrid<dim,dim> GridType; 
+    //typedef Dune::AlbertaGrid<dim,dim> GridType; 
     //typedef Dune::YaspGrid<dim,dim> GridType; 
     //typedef Dune::UGGrid<dim> GridType; 
 

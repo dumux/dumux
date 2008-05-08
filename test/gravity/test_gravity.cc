@@ -71,7 +71,7 @@ int main(int argc, char** argv)
     Dune::InitialBallProblem<GridType, NumberType> transportProblem(grid, materialLaw);
     FieldVector gravity(0);
     gravity[dim-1] = -9.81;
-    Dune::GravityProblem<GridType, NumberType> diffusionProblem(grid, materialLaw, gravity);
+    Dune::GravityProblem<GridType, NumberType> diffusionProblem(&grid, materialLaw, gravity);
     //Dune::HeterogeneousProblem<GridType, NumberType> diffusionProblem(grid, "permeab.dat", false, materialLaw);
     //diffusionProblem.permeability.vtkout("permeability", grid);
 

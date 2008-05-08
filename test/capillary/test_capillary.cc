@@ -62,7 +62,7 @@ int main(int argc, char** argv)
     //Dune::VanGenuchtenLaw materialLaw(mat, mat);
     
     Dune::BuckleyLeverettProblem<GridType, NumberType> transportProblem(grid, materialLaw);
-    Dune::UniformProblem<GridType, NumberType> diffusionProblem(grid, materialLaw);
+    Dune::UniformProblem<GridType, NumberType> diffusionProblem(grid, false, materialLaw);
     //Dune::HeterogeneousProblem<GridType, NumberType> diffusionProblem(grid, "permeab.dat", false, materialLaw);
     //diffusionProblem.permeability.vtkout("permeability", grid);
 

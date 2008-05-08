@@ -389,7 +389,7 @@ public:
 				  ipLocal *= 0.25;
 				  subContVolFace[k].ipLocal = ipLocal;
 				  subContVolFace[k].normal = normalOfQuadrilateral3D(edgeCoord[k], faceCoord[rightFace], 
-						  											cellGlobal, faceCoord[leftFace]);
+										     cellGlobal, faceCoord[leftFace]);
 				  break;
 			  }
 
@@ -420,42 +420,42 @@ public:
        			int face = it.numberInSelf();
        			int nNodesOfFace = referenceElement.size(face, 1, dim);
        			for (int nodeInFace = 0; nodeInFace < nNodesOfFace; nodeInFace++)
-       			{
-       				int nodeInElement = referenceElement.subEntity(face, 1, nodeInFace, dim);
-        			int bfIndex = boundaryFaceIndex(face, nodeInFace);
-           			switch (dim) {
-           			case 1: 
-           				boundaryFace[bfIndex].ipLocal = referenceElement.position(nodeInElement, dim);
-           				boundaryFace[bfIndex].area = 1.0;
-           				break;
-           			case 2: 
-           				boundaryFace[bfIndex].ipLocal = referenceElement.position(nodeInElement, dim) 
-           							+ referenceElement.position(face, 1);
-           				boundaryFace[bfIndex].ipLocal *= 0.5;
-           				boundaryFace[bfIndex].area = 0.5*it.intersectionGlobal().volume(); 
-           				break;
-           			case 3:
-           				int leftEdge;
-           				int rightEdge;
-           				getEdgeIndices(nNodes, face, nodeInElement, leftEdge, rightEdge);
-           				boundaryFace[bfIndex].ipLocal = referenceElement.position(nodeInElement, dim) 
-           												+ referenceElement.position(face, 1) 
-           												+ referenceElement.position(leftEdge, dim-1)
-           												+ referenceElement.position(rightEdge, dim-1);
-           				boundaryFace[bfIndex].ipLocal *= 0.25;
-           				boundaryFace[bfIndex].area = quadrilateralArea3D(subContVol[nodeInElement].global, 
-           												edgeCoord[rightEdge], faceCoord[face], edgeCoord[leftEdge]);
-           				break;
-           	       	default:
-           	       		DUNE_THROW(NotImplemented, "FVElementGeometry for dim = " << dim);
-           			}       				
-       				boundaryFace[bfIndex].ipGlobal = geometry.global(boundaryFace[bfIndex].ipLocal);
-       				
-//      			  std::cout << "boundary face " << face << ", node = " << nodeInElement << ", ipLocal = " 
-//      			  	<< boundaryFace[bfIndex].ipLocal << ", ipGlobal = " << boundaryFace[bfIndex].ipGlobal 
-//      			  	<< ", area = " << boundaryFace[bfIndex].area << std::endl;
-
-       			}
+			  {
+			    int nodeInElement = referenceElement.subEntity(face, 1, nodeInFace, dim);
+			    int bfIndex = boundaryFaceIndex(face, nodeInFace);
+			    switch (dim) {
+			    case 1: 
+			      boundaryFace[bfIndex].ipLocal = referenceElement.position(nodeInElement, dim);
+			      boundaryFace[bfIndex].area = 1.0;
+			      break;
+			    case 2: 
+			      boundaryFace[bfIndex].ipLocal = referenceElement.position(nodeInElement, dim) 
+				+ referenceElement.position(face, 1);
+			      boundaryFace[bfIndex].ipLocal *= 0.5;
+			      boundaryFace[bfIndex].area = 0.5*it.intersectionGlobal().volume(); 
+			      break;
+			    case 3:
+			      int leftEdge;
+			      int rightEdge;
+			      getEdgeIndices(nNodes, face, nodeInElement, leftEdge, rightEdge);
+			      boundaryFace[bfIndex].ipLocal = referenceElement.position(nodeInElement, dim) 
+				+ referenceElement.position(face, 1) 
+				+ referenceElement.position(leftEdge, dim-1)
+				+ referenceElement.position(rightEdge, dim-1);
+			      boundaryFace[bfIndex].ipLocal *= 0.25;
+			      boundaryFace[bfIndex].area = quadrilateralArea3D(subContVol[nodeInElement].global, 
+									       edgeCoord[rightEdge], faceCoord[face], edgeCoord[leftEdge]);
+			      break;
+			    default:
+			      DUNE_THROW(NotImplemented, "FVElementGeometry for dim = " << dim);
+			    }       				
+			    boundaryFace[bfIndex].ipGlobal = geometry.global(boundaryFace[bfIndex].ipLocal);
+			    
+			    //      			  std::cout << "boundary face " << face << ", node = " << nodeInElement << ", ipLocal = " 
+			    //      			  	<< boundaryFace[bfIndex].ipLocal << ", ipGlobal = " << boundaryFace[bfIndex].ipGlobal 
+			    //      			  	<< ", area = " << boundaryFace[bfIndex].area << std::endl;
+			    
+			  }
        		}
 	}
 

@@ -142,7 +142,7 @@ namespace Dune
 		    << size() << " matrix with " << nnz(indexset) << " nonzeros" << std::endl;
    
 	  // set size of all rows to zero
-	  for (int i = 0; i < is.size(n); i++)
+	  for (unsigned int i = 0; i < is.size(n); i++)
 		A.setrowsize(i,0); 
 
 	  // build needs a flag for all entities of all codims

@@ -69,7 +69,10 @@ namespace Dune
 	  @param[in]  xi   position in reference element of e
 	 */
 	virtual RT sat  (const FieldVector<DT,n>& x, const Entity& e, 
-					 const FieldVector<DT,n>& xi) = 0;
+					 const FieldVector<DT,n>& xi)
+        { 
+	  return 1.0;
+	}
 
 	//! evaluate source term
 	/*! evaluate source term at given location

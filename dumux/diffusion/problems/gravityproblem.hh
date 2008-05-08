@@ -15,7 +15,7 @@ namespace Dune
 	  typedef typename G::Traits::template Codim<0>::Entity Entity;
 	
 	public:
-	  GravityProblem(G& g, TwoPhaseRelations& law = *(new LinearLaw), FieldVector<DT,n> gravity = *(new FieldVector<DT,n>(0)))
+	  GravityProblem(G* g, TwoPhaseRelations& law = *(new LinearLaw), FieldVector<DT,n> gravity = *(new FieldVector<DT,n>(0)))
 	    : grid(g), DiffusionProblem<G,RT>(law, false, gravity)
 	  { }
 	

@@ -80,7 +80,8 @@ namespace Dune
 	FractionalFlow (Diffusion& diff, Transport& trans)
 	: Transport(trans), diffusion(diff)
 	{ 
-		if (trans.level() > diff.level()) DUNE_THROW(Exception,"from class Twophase (or derived): transport class level is higher than diffusion class level!");
+		if (trans.level() > diff.level()) 
+		  DUNE_THROW(Exception,"from class Twophase (or derived): transport class level is higher than diffusion class level!");
 	}
 
 	//! always define virtual destructor in abstract base class

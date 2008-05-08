@@ -62,7 +62,7 @@ int main(int argc, char** argv)
 {
   try{
     // define the problem dimensions  
-    const int dim=3;
+    const int dim=2;
     typedef double NumberType; 
     if (argc != 2 && argc != 3) {
       std::cout << "usage: box3d dgffilename/basefilename [refinementsteps]" << std::endl;
@@ -76,10 +76,10 @@ int main(int argc, char** argv)
     }
     
     // create a grid object
-    //typedef Dune::SGrid<dim,dim> GridType; 
+    typedef Dune::SGrid<dim,dim> GridType; 
     //typedef Dune::YaspGrid<dim,dim> GridType; 
     //typedef Dune::UGGrid<dim> GridType; 
-    typedef Dune::ALUCubeGrid<dim,dim> GridType; 
+    //typedef Dune::ALUCubeGrid<dim,dim> GridType; 
 
 #ifdef DGF
     // create grid pointer

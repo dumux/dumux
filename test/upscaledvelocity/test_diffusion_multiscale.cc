@@ -59,7 +59,7 @@ int main(int argc, char** argv)
     typedef Dune::FieldVector<double, dim> R1;
     typedef Dune::BlockVector< Dune::FieldVector<R1, blocksize> > VType;
     VType velocity(grid.size(0));
-    diffusion.totalVelocity(velocity, sat, 0, 0);
+    diffusion.totalVelocity(velocity, 0);
     printvector(std::cout, velocity, "velocity", "row", 4, 1, 3);
     
     return 0;

@@ -219,7 +219,6 @@ namespace Dune
     }
     
     FVElementGeometry fvGeom;
-  protected:
     VBlockType def[SIZE];
     VBlockType u[SIZE];
     bool analytic;

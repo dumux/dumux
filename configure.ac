@@ -31,7 +31,7 @@ esac
 AC_F77_FUNC(pardisoinit)
 
 acx_pardiso_save_LIBS="$LIBS"
-LIBS="$BLAS_LIBS -lg2c $LIBS $FLIBS"
+LIBS="$BLAS_LIBS $LIBS $FLIBS"
 
 # First, check PARDISO_LIBS environment variable
 if test $acx_pardiso_ok = no; then
@@ -89,6 +89,7 @@ AC_CONFIG_FILES([Makefile
     test/co2/Makefile
     test/diffusion/Makefile
     test/dimltdimworld/Makefile
+    test/elementid/Makefile
     test/fractionalflow/Makefile
     test/fvca5/Makefile
     test/gravity/Makefile
