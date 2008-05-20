@@ -3,10 +3,243 @@
 
 namespace Dune
 {
+    /////////////////////
+    // HACK: Functions to initialize the subcontrol volume data
+    // structures of FVElementGeomerty.
+    //
+    // this is a work around to be able to to use specialization for
+    // doing this.  it is required since it is not possible to
+    // specialize member functions of template classes because of some
+    // weird reason I didn't really get...
+    template <typename FVElementGeometry, int dim>
+    class _FVElemGeomHelper
+    {
+        static void fillSubContVolData(FVElementGeometry &eg, int nEdges)
+            {
+                DUNE_THROW(NotImplemented, "FVElementGeometry :: getFaceIndices for dim = " << dim); 
+            };
+    };
+
+    template <typename FVElementGeometry>
+    class _FVElemGeomHelper<FVElementGeometry, 1>
+    {
+        enum { dim = 1 };
+        static void fillSubContVolData(FVElementGeometry &eg, int nEdges)
+            {
+                // 1D
+                eg.subContVol[0].volume = 0.5*eg.cellVolume;
+            }
+    };
+
+    template <typename FVElementGeometry>
+    class _FVElemGeomHelper<FVElementGeometry, 2>
+    {
+    public:
+        enum { dim = 2 };
+
+        static void fillSubContVolData(FVElementGeometry &eg, int nEdges)
+        {
+        switch (nEdges) {
+        case 3: // 2D, triangle 
+            eg.subContVol[0].volume = eg.quadrilateralArea(eg.subContVol[0].global, eg.edgeCoord[2], eg.cellGlobal, eg.edgeCoord[1]);
+            eg.subContVol[1].volume = eg.quadrilateralArea(eg.subContVol[1].global, eg.edgeCoord[0], eg.cellGlobal, eg.edgeCoord[2]);
+            eg.subContVol[2].volume = eg.quadrilateralArea(eg.subContVol[2].global, eg.edgeCoord[1], eg.cellGlobal, eg.edgeCoord[0]);
+            break;
+        case 4: // 2D, quadrilinear
+            eg.subContVol[0].volume = eg.quadrilateralArea(eg.subContVol[0].global, eg.edgeCoord[2], eg.cellGlobal, eg.edgeCoord[0]);
+            eg.subContVol[1].volume = eg.quadrilateralArea(eg.subContVol[1].global, eg.edgeCoord[1], eg.cellGlobal, eg.edgeCoord[2]);
+            eg.subContVol[2].volume = eg.quadrilateralArea(eg.subContVol[2].global, eg.edgeCoord[0], eg.cellGlobal, eg.edgeCoord[3]);
+            eg.subContVol[3].volume = eg.quadrilateralArea(eg.subContVol[3].global, eg.edgeCoord[3], eg.cellGlobal, eg.edgeCoord[1]);
+            break;
+        default:
+            DUNE_THROW(NotImplemented, "FVElementGeometry :: getFaceIndices for dim = " << dim << ", nNodes = " << eg.nNodes); 
+        }
+        } 
+    };
+
+    template <typename FVElementGeometry>
+    class _FVElemGeomHelper<FVElementGeometry, 3>
+    {
+    public:
+        enum { dim = 3 };
+
+        void fillSubContVolData(FVElementGeometry &eg, int nEdges)
+        {
+        switch (nEdges) {
+        case 6: // 3D, tetrahedron
+            for (int k = 0; k < eg.nNodes; k++)
+                eg.subContVol[k].volume = 0.25*eg.cellVolume;
+            break;
+        case 8: // 3D, pyramid
+            eg.subContVol[0].volume = eg.hexahedronVolume(eg.subContVol[0].global,
+                                                          eg.edgeCoord[0],
+                                                          eg.faceCoord[0],
+                                                          eg.edgeCoord[3], 
+                                                          eg.edgeCoord[4],
+                                                          eg.faceCoord[1],
+                                                          eg.cellGlobal,
+                                                          eg.faceCoord[4]);
+            eg.subContVol[1].volume = eg.hexahedronVolume(eg.subContVol[1].global,
+                                                          eg.edgeCoord[1],
+                                                          eg.faceCoord[0],
+                                                          eg.edgeCoord[0], 
+                                                          eg.edgeCoord[5],
+                                                          eg.faceCoord[2], 
+                                                          eg.cellGlobal, 
+                                                          eg.faceCoord[1]);
+            eg.subContVol[2].volume = eg.hexahedronVolume(eg.subContVol[2].global,
+                                                          eg.edgeCoord[2],
+                                                          eg.faceCoord[0],
+                                                          eg.edgeCoord[1], 
+                                                          eg.edgeCoord[6],
+                                                          eg.faceCoord[3],
+                                                          eg.cellGlobal,
+                                                          eg.faceCoord[2]);
+            eg.subContVol[3].volume = eg.hexahedronVolume(eg.subContVol[3].global,
+                                                          eg.edgeCoord[3],
+                                                          eg.faceCoord[0],
+                                                          eg.edgeCoord[2], 
+                                                          eg.edgeCoord[7],
+                                                          eg.faceCoord[4], 
+                                                          eg.cellGlobal, 
+                                                          eg.faceCoord[3]);
+            eg.subContVol[4].volume = eg.cellVolume - 
+                                      eg.subContVol[0].volume - 
+                                      eg.subContVol[1].volume -
+                                      eg.subContVol[2].volume - 
+                                      eg.subContVol[3].volume;
+            break;
+        case 9: // 3D, prism
+            eg.subContVol[0].volume = eg.hexahedronVolume(eg.subContVol[0].global,
+                                                          eg.edgeCoord[0],
+                                                          eg.faceCoord[0],
+                                                          eg.edgeCoord[2], 
+                                                          eg.edgeCoord[3], 
+                                                          eg.faceCoord[1], 
+                                                          eg.cellGlobal, 
+                                                          eg.faceCoord[3]);
+            eg.subContVol[1].volume = eg.hexahedronVolume(eg.subContVol[1].global,
+                                                          eg.edgeCoord[1],
+                                                          eg.faceCoord[0],
+                                                          eg.edgeCoord[0], 
+                                                          eg.edgeCoord[4],
+                                                          eg.faceCoord[2], 
+                                                          eg.cellGlobal, 
+                                                          eg.faceCoord[1]);
+            eg.subContVol[2].volume = eg.hexahedronVolume(eg.subContVol[2].global,
+                                                          eg.edgeCoord[2],
+                                                          eg.faceCoord[0],
+                                                          eg.edgeCoord[1], 
+                                                          eg.edgeCoord[5], 
+                                                          eg.faceCoord[3], 
+                                                          eg.cellGlobal, 
+                                                          eg.faceCoord[2]);
+            eg.subContVol[3].volume = eg.hexahedronVolume(eg.edgeCoord[3],
+                                                          eg.faceCoord[1],
+                                                          eg.cellGlobal, 
+                                                          eg.faceCoord[3],
+                                                          eg.subContVol[3].global, 
+                                                          eg.edgeCoord[6], 
+                                                          eg.faceCoord[4],
+                                                          eg.edgeCoord[8]);
+            eg.subContVol[4].volume = eg.hexahedronVolume(eg.edgeCoord[4],
+                                                          eg.faceCoord[2], 
+                                                          eg.cellGlobal, 
+                                                          eg.faceCoord[1],
+                                                          eg.subContVol[4].global, 
+                                                          eg.edgeCoord[7],
+                                                          eg.faceCoord[4],
+                                                          eg.edgeCoord[6]);
+            eg.subContVol[5].volume = eg.hexahedronVolume(eg.edgeCoord[5],
+                                                          eg.faceCoord[3],
+                                                          eg.cellGlobal, 
+                                                          eg.faceCoord[2], 
+                                                          eg.subContVol[5].global, 
+                                                          eg.edgeCoord[8], 
+                                                          eg.faceCoord[4], 
+                                                          eg.edgeCoord[7]);
+            break;
+        case 12: // 3D, hexahedron
+            eg.subContVol[0].volume = eg.hexahedronVolume(eg.subContVol[0].global, 
+                                                          eg.edgeCoord[8],
+                                                          eg.faceCoord[4],
+                                                          eg.edgeCoord[4], 
+                                                          eg.edgeCoord[0], 
+                                                          eg.faceCoord[2], 
+                                                          eg.cellGlobal, 
+                                                          eg.faceCoord[0]);
+            eg.subContVol[1].volume = eg.hexahedronVolume(eg.subContVol[1].global,
+                                                          eg.edgeCoord[5],
+                                                          eg.faceCoord[4], 
+                                                          eg.edgeCoord[8], 
+                                                          eg.edgeCoord[1],
+                                                          eg.faceCoord[1], 
+                                                          eg.cellGlobal, 
+                                                          eg.faceCoord[2]);
+            eg.subContVol[2].volume = eg.hexahedronVolume(eg.subContVol[2].global,
+                                                          eg.edgeCoord[4],
+                                                          eg.faceCoord[4], 
+                                                          eg.edgeCoord[9], 
+                                                          eg.edgeCoord[2], 
+                                                          eg.faceCoord[0], 
+                                                          eg.cellGlobal, 
+                                                          eg.faceCoord[3]);
+            eg.subContVol[3].volume = eg.hexahedronVolume(eg.subContVol[3].global, 
+                                                          eg.edgeCoord[9],
+                                                          eg.faceCoord[4], 
+                                                          eg.edgeCoord[5], 
+                                                          eg.edgeCoord[3], 
+                                                          eg.faceCoord[3],
+                                                          eg.cellGlobal, 
+                                                          eg.faceCoord[1]);
+            eg.subContVol[4].volume = eg.hexahedronVolume(eg.edgeCoord[0], 
+                                                          eg.faceCoord[2], 
+                                                          eg.cellGlobal, 
+                                                          eg.faceCoord[0], 
+                                                          eg.subContVol[4].global,
+                                                          eg.edgeCoord[10],
+                                                          eg.faceCoord[5],
+                                                          eg.edgeCoord[6]);
+            eg.subContVol[5].volume = eg.hexahedronVolume(eg.edgeCoord[1], 
+                                                          eg.faceCoord[1], 
+                                                          eg.cellGlobal, 
+                                                          eg.faceCoord[2], 
+                                                          eg.subContVol[5].global,
+                                                          eg.edgeCoord[7],
+                                                          eg.faceCoord[5], 
+                                                          eg.edgeCoord[10]);
+            eg.subContVol[6].volume = eg.hexahedronVolume(eg.edgeCoord[2], 
+                                                          eg.faceCoord[0], 
+                                                          eg.cellGlobal, 
+                                                          eg.faceCoord[3], 
+                                                          eg.subContVol[6].global, 
+                                                          eg.edgeCoord[6], 
+                                                          eg.faceCoord[5], 
+                                                          eg.edgeCoord[11]);
+            eg.subContVol[7].volume = eg.hexahedronVolume(eg.edgeCoord[3], 
+                                                          eg.faceCoord[3], 
+                                                          eg.cellGlobal, 
+                                                          eg.faceCoord[1], 
+                                                          eg.subContVol[7].global,
+                                                          eg.edgeCoord[11],
+                                                          eg.faceCoord[5],
+                                                          eg.edgeCoord[7]);
+            break;
+         default:
+             DUNE_THROW(NotImplemented, "FVElementGeometry for nEdges = " << nEdges);
+       	}
+    }
+    };
+    // END HACK
+    /////////////////////
 
 template<class G>
 class FVElementGeometry  
 {
+    friend class _FVElemGeomHelper<FVElementGeometry<G>, G::dimension>;
+
+    typedef _FVElemGeomHelper<FVElementGeometry<G>, G::dimension> _FVElemGeomHelper;
+    
 	enum{dim = G::dimension};
 	enum{maxNC = (dim < 3 ? 4 : 8)};
 	enum{maxNE = (dim < 3 ? 4 : 12)};
@@ -282,74 +515,13 @@ public:
  			 faceCoord[face] = geometry.global(referenceElement.position(face, 1));
        	} 
  		 
-       	// fill sub control volume data:
-       	switch (nEdges) {
-       	case 1: // 1D
-       		subContVol[0].volume = 0.5*cellVolume;
-       		break;
-       	case 3: // 2D, triangle 
-       		subContVol[0].volume = quadrilateralArea(subContVol[0].global, edgeCoord[2], cellGlobal, edgeCoord[1]);
-       		subContVol[1].volume = quadrilateralArea(subContVol[1].global, edgeCoord[0], cellGlobal, edgeCoord[2]);
-       		subContVol[2].volume = quadrilateralArea(subContVol[2].global, edgeCoord[1], cellGlobal, edgeCoord[0]);
-       		break;
-       	case 4: // 2D, quadrilateral
-       		subContVol[0].volume = quadrilateralArea(subContVol[0].global, edgeCoord[2], cellGlobal, edgeCoord[0]);
-       		subContVol[1].volume = quadrilateralArea(subContVol[1].global, edgeCoord[1], cellGlobal, edgeCoord[2]);
-       		subContVol[2].volume = quadrilateralArea(subContVol[2].global, edgeCoord[0], cellGlobal, edgeCoord[3]);
-       		subContVol[3].volume = quadrilateralArea(subContVol[3].global, edgeCoord[3], cellGlobal, edgeCoord[1]);
-       		break;
-       	case 6: // 3D, tetrahedron
-       		for (int k = 0; k < nNodes; k++)
-       			subContVol[k].volume = 0.25*cellVolume;
-       		break;
-       	case 8: // 3D, pyramid
-       		subContVol[0].volume = hexahedronVolume(subContVol[0].global, edgeCoord[0], faceCoord[0], edgeCoord[3], 
-       												edgeCoord[4], faceCoord[1], cellGlobal, faceCoord[4]);
-       		subContVol[1].volume = hexahedronVolume(subContVol[1].global, edgeCoord[1], faceCoord[0], edgeCoord[0], 
-       												edgeCoord[5], faceCoord[2], cellGlobal, faceCoord[1]);
-      		subContVol[2].volume = hexahedronVolume(subContVol[2].global, edgeCoord[2], faceCoord[0], edgeCoord[1], 
-       												edgeCoord[6], faceCoord[3], cellGlobal, faceCoord[2]);
-      		subContVol[3].volume = hexahedronVolume(subContVol[3].global, edgeCoord[3], faceCoord[0], edgeCoord[2], 
-       												edgeCoord[7], faceCoord[4], cellGlobal, faceCoord[3]);
-      		subContVol[4].volume = cellVolume - subContVol[0].volume - subContVol[1].volume 
-      								- subContVol[2].volume - subContVol[3].volume;
-       		break;
-      	case 9: // 3D, prism
-       		subContVol[0].volume = hexahedronVolume(subContVol[0].global, edgeCoord[0], faceCoord[0], edgeCoord[2], 
-       												edgeCoord[3], faceCoord[1], cellGlobal, faceCoord[3]);
-       		subContVol[1].volume = hexahedronVolume(subContVol[1].global, edgeCoord[1], faceCoord[0], edgeCoord[0], 
-       												edgeCoord[4], faceCoord[2], cellGlobal, faceCoord[1]);
-       		subContVol[2].volume = hexahedronVolume(subContVol[2].global, edgeCoord[2], faceCoord[0], edgeCoord[1], 
-       												edgeCoord[5], faceCoord[3], cellGlobal, faceCoord[2]);
-       		subContVol[3].volume = hexahedronVolume(edgeCoord[3], faceCoord[1], cellGlobal, faceCoord[3], subContVol[3].global, 
-       												edgeCoord[6], faceCoord[4], edgeCoord[8]);
-       		subContVol[4].volume = hexahedronVolume(edgeCoord[4], faceCoord[2], cellGlobal, faceCoord[1], subContVol[4].global, 
-       												edgeCoord[7], faceCoord[4], edgeCoord[6]);
-       		subContVol[5].volume = hexahedronVolume(edgeCoord[5], faceCoord[3], cellGlobal, faceCoord[2], subContVol[5].global, 
-       												edgeCoord[8], faceCoord[4], edgeCoord[7]);
-       		break;
-       	case 12: // 3D, hexahedron
-       		subContVol[0].volume = hexahedronVolume(subContVol[0].global, edgeCoord[8], faceCoord[4], edgeCoord[4], 
-       												edgeCoord[0], faceCoord[2], cellGlobal, faceCoord[0]);
-       		subContVol[1].volume = hexahedronVolume(subContVol[1].global, edgeCoord[5], faceCoord[4], edgeCoord[8], 
-       												edgeCoord[1], faceCoord[1], cellGlobal, faceCoord[2]);
-       		subContVol[2].volume = hexahedronVolume(subContVol[2].global, edgeCoord[4], faceCoord[4], edgeCoord[9], 
-       												edgeCoord[2], faceCoord[0], cellGlobal, faceCoord[3]);
-       		subContVol[3].volume = hexahedronVolume(subContVol[3].global, edgeCoord[9], faceCoord[4], edgeCoord[5], 
-       												edgeCoord[3], faceCoord[3], cellGlobal, faceCoord[1]);
-       		subContVol[4].volume = hexahedronVolume(edgeCoord[0], faceCoord[2], cellGlobal, faceCoord[0], 
-       												subContVol[4].global, edgeCoord[10], faceCoord[5], edgeCoord[6]);
-       		subContVol[5].volume = hexahedronVolume(edgeCoord[1], faceCoord[1], cellGlobal, faceCoord[2], 
-       												subContVol[5].global, edgeCoord[7], faceCoord[5], edgeCoord[10]);
-       		subContVol[6].volume = hexahedronVolume(edgeCoord[2], faceCoord[0], cellGlobal, faceCoord[3], 
-       												subContVol[6].global, edgeCoord[6], faceCoord[5], edgeCoord[11]);
-       		subContVol[7].volume = hexahedronVolume(edgeCoord[3], faceCoord[3], cellGlobal, faceCoord[1], 
-       												subContVol[7].global, edgeCoord[11], faceCoord[5], edgeCoord[7]);
-       		break;
-       	default:
-       		DUNE_THROW(NotImplemented, "FVElementGeometry for nEdges = " << nEdges);
-       	}
-       	
+       	// fill sub control volume data use specialization for this
+        // \todo maybe it would be a good idea to migrate everything
+        // which is dependend of the grid's dimension to
+        // _FVElemGeomHelper in order to benefit from more aggressive
+        // compiler optimizations...
+        _FVElemGeomHelper::fillSubContVolData(*this, nEdges);
+        
 //       	for (int k = 0; k < nNodes; k++)
 //       		std::cout << "node " << k << ", volume = " << subContVol[k].volume 
 //       			<< ", local = " << subContVol[k].local << ", global = " << subContVol[k].global << std::endl;
@@ -363,23 +535,26 @@ public:
  			 subContVolFace[k].i = i;
  			 subContVolFace[k].j = j; 
  			 
- 			 // calculate the local integration point and the face normal
+ 			 // calculate the local integration point and
+                         // the face normal. note that since dim is a
+                         // constant which is known at compile time
+                         // the compiler can optimize away all if
+                         // cases which don't apply.
  			 FV ipLocal;
  			 FV diffVec;
- 			 switch (dim) {
-			  case 1:
+                         if (dim==1) {
 				  subContVolFace[k].ipLocal = 0.5;
 				  subContVolFace[k].normal = 1.0;
-				  break;
-			  case 2:
+                         }
+                         else if (dim==2) {
 				  ipLocal = referenceElement.position(k, dim-1) + cellLocal;
 				  ipLocal *= 0.5;
 				  subContVolFace[k].ipLocal = ipLocal;
 				  diffVec = cellGlobal - edgeCoord[k];
 				  subContVolFace[k].normal[0] = diffVec[1];
 				  subContVolFace[k].normal[1] = -diffVec[0];
-				  break;
-			  case 3: 
+                         }
+                         else if (dim==3) {
 				  int leftFace; 
 				  int rightFace; 
 				  getFaceIndices(nNodes, k, leftFace, rightFace);
@@ -390,8 +565,7 @@ public:
 				  subContVolFace[k].ipLocal = ipLocal;
 				  subContVolFace[k].normal = normalOfQuadrilateral3D(edgeCoord[k], faceCoord[rightFace], 
 										     cellGlobal, faceCoord[leftFace]);
-				  break;
-			  }
+                         }
 
  			 // get the global integration point and the Jacobian inverse
  			 subContVolFace[k].ipGlobal = geometry.global(ipLocal);
@@ -465,6 +639,3 @@ public:
 
 
 #endif
-
-
-
