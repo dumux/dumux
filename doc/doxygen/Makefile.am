@@ -2,7 +2,7 @@
 
 if BUILD_DOCS
   DOXYGENTAG = doxygen-tag 
-  WHAT = bestpractice.html 
+#  WHAT = bestpractice.html 
   DOXYGEN_HTML = html
   DOXYGEN_DIST = html-dist
 endif
