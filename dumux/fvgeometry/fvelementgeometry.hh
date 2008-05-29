@@ -14,6 +14,7 @@ namespace Dune
     template <typename FVElementGeometry, int dim>
     class _FVElemGeomHelper
     {
+    public:
         static void fillSubContVolData(FVElementGeometry &eg, int nEdges)
             {
                 DUNE_THROW(NotImplemented, "FVElementGeometry :: getFaceIndices for dim = " << dim); 
@@ -23,11 +24,13 @@ namespace Dune
     template <typename FVElementGeometry>
     class _FVElemGeomHelper<FVElementGeometry, 1>
     {
+    public:
         enum { dim = 1 };
         static void fillSubContVolData(FVElementGeometry &eg, int nEdges)
             {
                 // 1D
                 eg.subContVol[0].volume = 0.5*eg.cellVolume;
+                eg.subContVol[1].volume = 0.5*eg.cellVolume;
             }
     };
 
@@ -545,6 +548,7 @@ public:
                          if (dim==1) {
 				  subContVolFace[k].ipLocal = 0.5;
 				  subContVolFace[k].normal = 1.0;
+                                  ipLocal = subContVolFace[k].ipLocal;
                          }
                          else if (dim==2) {
 				  ipLocal = referenceElement.position(k, dim-1) + cellLocal;
