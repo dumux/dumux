@@ -65,8 +65,8 @@ namespace Dune
     {
     public:
         enum { dim = 3 };
-
-        void fillSubContVolData(FVElementGeometry &eg, int nEdges)
+        
+        static void fillSubContVolData(FVElementGeometry &eg, int nEdges)
         {
         switch (nEdges) {
         case 6: // 3D, tetrahedron
