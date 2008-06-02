@@ -11,7 +11,9 @@ namespace Dune {
 	public:
 	  void execute(bool verbose = true)
 	  {
-	    double oneByMagnitude = 1.0/std::max((*u).two_norm(), 1.0);
+	    double uNorm = std::max((*u).two_norm(), 1.0);
+	    grid.comm().sum(&uNorm, 1);
+	    double oneByMagnitude = 1.0/uNorm;
 	    double error = 1e100;
 	    double residual = 1e100;
 	    double dt = localJacobian.getDt();
@@ -22,7 +24,12 @@ namespace Dune {
 	      int iter = 0;
 	      model.globalDefect(defectGlobal);
 	      double oldResidual = (*defectGlobal).two_norm();
-	      std::cout << "initial residual = " << oldResidual << std::endl;
+	      grid.comm().sum(&oldResidual, 1);
+	      if (grid.comm().rank() == 0)
+		std::cout << "initial residual = " << oldResidual << std::endl;
+// 	      int debugWait = 1; 
+// 	      while (debugWait) ;
+
 	      while (error > tolerance && residual > tolerance && iter < maxIter) {
 		iter ++;
 		residual = oldResidual;
@@ -37,23 +44,27 @@ namespace Dune {
 		//printvector(std::cout, *f, "right hand side", "f row", 200, 1, 3);
 		model.solve();
 		error = oneByMagnitude*((*u).two_norm());
+		grid.comm().sum(&error, 1); 
 		//printvector(std::cout, *u, "update", "up row", 200, 1, 3);
 		*u *= -1.0;
 		*u += *uOldNewtonStep; 
 		model.globalDefect(defectGlobal);
 		//printvector(std::cout, *defectGlobal, "defect", "d row", 200, 1, 3);
 		residual = (*defectGlobal).two_norm();
+		grid.comm().sum(&residual, 1);
 		
 		//printvector(std::cout, *u, "u", "u row", 200, 1, 3);
-		if (verbose)
+		if (verbose && grid.comm().rank() == 0)
 		  std::cout << "Newton step " << iter << ", residual = " << residual << ", difference = " << error << std::endl;
 	      }
 	      
 	      if (error > tolerance && residual > tolerance) {
-		std::cout << "NewtonMethod::execute(), tolerance = " << tolerance 
-			  << ": did not converge in " << iter << " iterations" << std::endl; 
+		if (grid.comm().rank() == 0)
+		  std::cout << "NewtonMethod::execute(), tolerance = " << tolerance 
+			    << ": did not converge in " << iter << " iterations" << std::endl; 
 		dt *= 0.5;
-		std::cout << "Retry same time step with reduced size of " << dt << std::endl;
+		if (grid.comm().rank() == 0)
+		  std::cout << "Retry same time step with reduced size of " << dt << std::endl;
 		localJacobian.setDt(dt);
 		*u = *(model.uOldTimeStep);
 		divided = true;
@@ -61,11 +72,14 @@ namespace Dune {
 	      else { 
 		model.globalDefect(defectGlobal);
 		double residual = (*defectGlobal).two_norm();
-		std::cout << "Converged. Residual = " << residual << ", difference = " << error << std::endl;
+		grid.comm().sum(&residual, 1); 
+		if (grid.comm().rank() == 0)
+		  std::cout << "Converged. Residual = " << residual << ", difference = " << error << std::endl;
 		if (!divided && iter < goodIter) {
 		  dt *= 2.0;
-		  std::cout << "Below " << goodIter 
-			    << " Newton iterations. Initial size for the next time step doubled to " << dt << std::endl;
+		  if (grid.comm().rank() == 0)
+		    std::cout << "Below " << goodIter 
+			      << " Newton iterations. Initial size for the next time step doubled to " << dt << std::endl;
 		}
 		localJacobian.setDt(dt);
 		

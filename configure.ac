@@ -95,6 +95,7 @@ AC_CONFIG_FILES([Makefile
     test/gravity/Makefile
     test/multigrid/Makefile
     test/newton/Makefile
+    test/parallel/Makefile
     test/pardiso/Makefile
     test/splitting/Makefile
     test/star2dgf/Makefile
