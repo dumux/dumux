@@ -1,5 +1,5 @@
-#ifndef DUNE_BOXPWSNJACOBIAN_HH
-#define DUNE_BOXPWSNJACOBIAN_HH
+#ifndef DUNE_BOXPNSWJACOBIAN_HH
+#define DUNE_BOXPNSWJACOBIAN_HH
 
 #include<map>
 #include<iostream>
@@ -21,55 +21,21 @@
 #include"dumux/operators/boxjacobian.hh"
 #include"dumux/twophase/twophaseproblem.hh"
 
-/**
- * @file
- * @brief  compute local jacobian matrix for conforming finite elements for diffusion equation
- * @author Peter Bastian
- */
-
-
 
 namespace Dune
 {
-  /** @addtogroup DISC_Disc
-   *
-   * @{
-   */
-  /**
-   * @brief compute local jacobian matrix for conforming finite elements for diffusion equation
-   *
-   */
 
-
-  //! A class for computing local jacobian matrices
-  /*! A class for computing local jacobian matrix for the 
-	diffusion equation
-
-	    div j = q; j = -K grad u; in Omega
-
-		u = g on Gamma1; j*n = J on Gamma2.
-
-	Uses conforming finite elements with the Lagrange shape functions.
-	It should work for all dimensions and element types.
-	All the numbering is with respect to the reference element and the
-	Lagrange shape functions
-
-	Template parameters are:
-
-	- Grid  a DUNE grid type
-	- RT    type used for return values 
-  */
-  template<class G, class RT, class BoxFunction = LeafP1Function<G, RT, 2> > class BoxPwSnJacobian 
-    : public BoxJacobian<BoxPwSnJacobian<G,RT,BoxFunction>,G,RT,2,BoxFunction>
+  template<class G, class RT, class BoxFunction = LeafP1Function<G, RT, 2> > class BoxPnSwJacobian 
+    : public BoxJacobian<BoxPnSwJacobian<G,RT,BoxFunction>,G,RT,2,BoxFunction>
   {
     typedef typename G::ctype DT;
     typedef typename G::Traits::template Codim<0>::Entity Entity;
     typedef typename Entity::Geometry Geometry;
-    typedef BoxPwSnJacobian<G,RT,BoxFunction> ThisType;
+    typedef BoxPnSwJacobian<G,RT,BoxFunction> ThisType;
     typedef typename LocalJacobian<ThisType,G,RT,2>::VBlockType VBlockType;
     typedef typename LocalJacobian<ThisType,G,RT,2>::MBlockType MBlockType;
  	typedef FVElementGeometry<G> FVElementGeometry;
-	enum {pWIdx = 0, satNIdx = 1};
+	enum {pNIdx = 0, satWIdx = 1};
 	
 	
   public:
@@ -80,7 +46,7 @@ namespace Dune
     enum {SIZE=LagrangeShapeFunctionSetContainer<DT,RT,n>::maxsize};
     
     //! Constructor
-    BoxPwSnJacobian (TwoPhaseProblem<G,RT>& params,
+    BoxPnSwJacobian (TwoPhaseProblem<G,RT>& params,
 			      bool levelBoundaryAsDirichlet_, const G& grid, 
 			      BoxFunction& sol, 
 			      bool procBoundaryAsDirichlet_=true)
@@ -101,8 +67,8 @@ namespace Dune
     {
    	 VBlockType result; 
    	 
-   	 result[0] = -varNData[node].density[pWIdx]*elData.porosity*sol[node][satNIdx];
-   	 result[1] = varNData[node].density[satNIdx]*elData.porosity*sol[node][satNIdx];
+   	 result[0] = varNData[node].density[pNIdx]*elData.porosity*sol[node][satWIdx];
+   	 result[1] = -varNData[node].density[satWIdx]*elData.porosity*sol[node][satWIdx];
    	 
    	 return result;
     };
@@ -128,7 +94,7 @@ namespace Dune
 	          FieldVector<RT, n> pGrad(0);
 	          for (int k = 0; k < this->fvGeom.nNodes; k++) {
 	        	  FieldVector<DT,n> grad(this->fvGeom.subContVolFace[face].grad[k]);
-	        	  grad *= (comp) ? varNData[k].pN : sol[k][pWIdx];
+	        	  grad *= (comp) ? sol[k][pNIdx] : varNData[k].pW;
 	        	  pGrad += grad;
 	          }
 
@@ -184,10 +150,10 @@ namespace Dune
 
 
 	  //*********************************************************
-	  //*														*
-	  //*	Calculation of variable Data at Nodes			 	*
-	  //*	(varNData)										 	*
-	  //*													 	*
+	  //*																			*
+	  //*	Calculation of variable Data at Nodes					 	*
+	  //*	(varNData)														 	*
+	  //*																		 	*
 	  //*********************************************************
    
 
@@ -199,17 +165,17 @@ namespace Dune
 
    	 for (int i = 0; i < size; i++) {
    		this->def[i] = 0;
-   		varNData[i].saturationW = 1.0 - sol[i][satNIdx];
+   		varNData[i].saturationN = 1.0 - sol[i][satWIdx];
 
    		// ASSUME element-wise constant parameters for the material law 
          FieldVector<RT, 4> parameters = problem.materialLawParameters(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
 
-         varNData[i].pC = problem.materialLaw().pC(varNData[i].saturationW, parameters);
-         varNData[i].pN = sol[i][pWIdx] + varNData[i].pC;
-         varNData[i].mobility[pWIdx] = problem.materialLaw().mobW(varNData[i].saturationW, parameters);
-         varNData[i].mobility[satNIdx] = problem.materialLaw().mobN(sol[i][satNIdx], parameters);
-         varNData[i].density[pWIdx] = problem.materialLaw().wettingPhase.density();
-         varNData[i].density[satNIdx] = problem.materialLaw().nonwettingPhase.density();
+         varNData[i].pC = problem.materialLaw().pC(sol[i][satWIdx], parameters);
+         varNData[i].pW = sol[i][pNIdx] - varNData[i].pC;
+         varNData[i].mobility[pNIdx] = problem.materialLaw().mobW(sol[i][satWIdx], parameters);
+         varNData[i].mobility[satWIdx] = problem.materialLaw().mobN(varNData[i].saturationN, parameters);
+         varNData[i].density[pNIdx] = problem.materialLaw().wettingPhase.density();
+         varNData[i].density[satWIdx] = problem.materialLaw().nonwettingPhase.density();
    	 }   	 
     }
     
@@ -222,9 +188,9 @@ namespace Dune
        // the members of the struct are defined here
     struct VariableNodeData  
     {
-       RT saturationW;
+       RT saturationN;
        RT pC;
-       RT pN;
+       RT pW;
        VBlockType mobility;  //Vector with the number of phases
        VBlockType density;
     };
