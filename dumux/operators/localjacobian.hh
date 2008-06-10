@@ -18,7 +18,7 @@
 #include<dune/common/geometrytype.hh>
 #include<dune/grid/common/grid.hh>
 #include<dune/istl/operators.hh>
-#include<dune/disc/operators/localstiffness.hh>
+#include"dumux/operators/localstiffnessextended.hh"
 #include<dune/disc/operators/boundaryconditions.hh>
 #include"dumux/fvgeometry/fvelementgeometry.hh"
 
