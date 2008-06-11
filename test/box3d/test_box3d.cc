@@ -9,7 +9,7 @@
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/solvers.hh>
 
-#include <dune/disc/operators/p1operator.hh>
+#include "dumux/operators/p1operatorextended.hh"
 #include <dune/disc/groundwater/p1groundwater.hh>
 
 #include <dumux/io/readstarformat.cc>
