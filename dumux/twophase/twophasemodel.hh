@@ -62,7 +62,7 @@ public:
 			IntersectionIterator;
 
 	LeafP1TwoPhaseModel(const G& g, ProblemType& prob) :
-		TwoPhaseModel(g, prob), grid(g), problem(prob), vertexmapper(g,
+		TwoPhaseModel(g, prob), problem(prob), grid(g), vertexmapper(g,
 				g.leafIndexSet()), size((*(this->u)).size()), pW(size), pN(size), pC(size),
 				satW(size), satN(size), satEx(0), pEx(0), satError(0) {
 	}

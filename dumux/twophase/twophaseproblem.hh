@@ -145,7 +145,7 @@ public:
 
 	TwoPhaseProblem(TwoPhaseRelations& law = *(new
 			LinearLaw), const bool exsol = false) :
-		materialLaw_(law), exsolution(exsol) {
+	  exsolution(exsol),  materialLaw_(law) {
 	}
 
 	//! always define virtual destructor in abstract base class

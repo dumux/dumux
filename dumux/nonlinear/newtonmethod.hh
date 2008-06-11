@@ -125,7 +125,7 @@ public:
 		grid(g), model(mod), u(mod.u), f(mod.f), A(mod.A),
 				localJacobian(mod.localJacobian), uOldNewtonStep(g),
 				difftolerance(dtol), restolerance(rtol), maxIter(maxIt),
-				minDt(mindt), goodIter(goodIt), defectGlobal(g), num(0) {
+		                defectGlobal(g), num(0), minDt(mindt), goodIter(goodIt) {
 	}
 
 	NewtonMethod(const G& g, Model& mod, int level, double dtol = 1e-8,

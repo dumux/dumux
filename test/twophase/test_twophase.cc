@@ -1,6 +1,6 @@
 #include "config.h"
 #include <iostream>
-#ifdef HAVE_UG
+//#ifdef HAVE_UG
 #include <iomanip>
 #include <dune/grid/utility/gridtype.hh>
 #include <dune/grid/common/gridinfo.hh>
@@ -45,7 +45,7 @@ int main(int argc, char** argv)
 	double dt;
 	is2 >> dt;
 
-
+ 
     // create a grid object
     typedef Dune::SGrid<dim,dim> GridType; 
     //typedef Dune::ALUSimplexGrid<dim,dim> GridType; 
@@ -55,7 +55,7 @@ int main(int argc, char** argv)
 
     // use unitcube from grids 
     std::stringstream dgfFileName;
-    dgfFileName << "grids/unitcube" << GridType :: dimension << ".dgf";
+    dgfFileName << "/temp/hussam/DUMUX/dune-mux/test/twophase/grids/unitcube" << GridType :: dimension << ".dgf";
 
     // create grid pointer, GridType is defined by gridtype.hh
     Dune::GridPtr<GridType> gridPtr( dgfFileName.str() );
@@ -91,18 +91,14 @@ int main(int argc, char** argv)
   catch (...){
     std::cerr << "Unknown exception thrown!" << std::endl;
   }
-}
-#else 
+} 
+//#else 
+//
+//int main (int argc , char **argv) try
+//{
+//  std::cout << "Please install the UG library." << std::endl;
+//
+//  return 1;
+//}
 
-int main (int argc , char **argv) try
-{
-  std::cout << "Please install the UG library." << std::endl;
-
-  return 1;
-}
-catch (...) 
-{
-    std::cerr << "Generic exception!" << std::endl;
-    return 2;
-}
-#endif 
+//#endif 

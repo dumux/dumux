@@ -210,6 +210,7 @@ public:
 		const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::value_type
 				&sfs=Dune::LagrangeShapeFunctions<DT, RT, n>::general(gt, 1);
 		setcurrentsize(sfs.size());
+		this->fvGeom.update(e);
 
 		const typename ReferenceElementContainer<DT,n>::value_type
 				&referenceElement = ReferenceElements<DT, n>::general(gt);

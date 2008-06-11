@@ -3,6 +3,7 @@
 
 #include<iostream>
 #include<iomanip>
+#include<algorithm>
 
 #include<dune/common/fvector.hh>
 #include<dune/common/fmatrix.hh>
@@ -50,10 +51,10 @@ namespace Dune
 
 	virtual const FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x, const Entity& e, 
 					const FieldVector<DT,n>& xi)
-	{
+	{		// case abfrage
 	  if (numberOfParameters_) { 
 	    std::vector<double>& parameters = gridPtr.parameters(e);
-	    if (parameters[0]) 
+	    if (parameters[0]==1) 
 	      return innerK_;
 	    else
 	      return outerK_;
@@ -75,56 +76,97 @@ namespace Dune
 		return values;
 	}
 
+	// TYPE OF BOUNDARY CONDITION
 	virtual FieldVector<BoundaryConditions::Flags, m> bctype (const FieldVector<DT,n>& x, const Entity& e, 
 					const IntersectionIterator& intersectionIt, 
 					   const FieldVector<DT,n>& xi) const 
 	{
 		FieldVector<BoundaryConditions::Flags, m> values(BoundaryConditions::neumann); 
 
-		if (x[0] < outerLowerLeft_[0] + eps_ || x[0] > outerUpperRight_[0] - eps_) {
-			//std::cout << "Dirichlet: " << x << std::endl;
+//		std::cout << "boundaryId" << intersectionIt.boundaryId() << std::endl;
+		switch (intersectionIt.boundaryId()) {
+		case 2:
 			values = BoundaryConditions::dirichlet;
+			break;
+
+		case 4:
+			values = BoundaryConditions::dirichlet;
+			break;
 		}
-//		if (values[0] == BoundaryConditions::dirichlet)
-//			std::cout << "Dirichlet: " << x[0] << ", " << x[1] << std::endl;
-//		else 
-//			std::cout << "Neumann: " << x[0] << ", " << x[1] << std::endl;
 		
 		return values;
 	}
 
+	// DIRICHLET
 	virtual FieldVector<RT,m> g (const FieldVector<DT,n>& x, const Entity& e, 
 				const IntersectionIterator& intersectionIt, 
 				  const FieldVector<DT,n>& xi) const 
 	{
 		FieldVector<RT,m> values(0);
 
-		if (x[0] < outerLowerLeft_[0] + eps_) {
-			RT a = -(1 + 0.5/height_);
-			RT b = -a*outerUpperRight_[1];
-			values[pWIdx] = -densityW_*gravity_[1]*(a*x[1] + b);
-			values[sNIdx] = outerSnr_;
-		}
-		else {
-			RT a = -1;
-			RT b = outerUpperRight_[1];
-			values[pWIdx] = -densityW_*gravity_[1]*(a*x[1] + b);
-			values[sNIdx] = outerSnr_;			
-		}
+//		if (x[0] < outerLowerLeft_[0] + eps_) {
+//			RT a = -(1 + 0.5/height_);
+//			RT b = -a*outerUpperRight_[1];
+//			values[pWIdx] = -densityW_*gravity_[1]*(a*x[1] + b);
+//			values[sNIdx] = outerSnr_;
+//		}
+//		else {
+//			RT a = -1;
+//			RT b = outerUpperRight_[1];
+//			values[pWIdx] = -densityW_*gravity_[1]*(a*x[1] + b);
+//			values[sNIdx] = outerSnr_;			
+//		}
 		
+//		RT a, b;
+		switch (intersectionIt.boundaryId()) {
+		case 4:
+//			a = -(1 + 0.5/height_);
+//			b = -a*outerUpperRight_[1];
+			values[pWIdx] = -densityW_*gravity_[1]*(20-x[1])+1e5;
+			values[sNIdx] = 1e-5;
+			break;
+		case 2:
+//			a = -1;
+//			b = outerUpperRight_[1];
+			values[pWIdx] = 1.0e+5; //-densityW_*gravity_[1]*(a*x[1] + b);
+			values[sNIdx] = 1e-5;			
+			break;
+		}
+
 		return values;
-	}
+	} 
 	  
+	// NEUMANN
 	virtual FieldVector<RT,m> J (const FieldVector<DT,n>& x, const Entity& e, 
 				const IntersectionIterator& intersectionIt, 
 				  const FieldVector<DT,n>& xi) const 
 	{
 		FieldVector<RT,m> values(0);
-
-		RT lambda = (outerUpperRight_[0] - x[0])/width_;
-		if (lambda > 0.5 && lambda < 2.0/3.0 && x[1] > outerUpperRight_[1] - eps_) {
-			values[sNIdx] = -0.04;
+//
+//		RT lambda = (outerUpperRight_[0] - x[0])/width_;
+//		if (lambda > 0.5 && lambda < 2.0/3.0 && x[1] > outerUpperRight_[1] - eps_) {
+//			values[sNIdx] = -0.04;
+//		}
+		
+//		switch (intersectionIt.boundaryId() ) {
+		int ret;
+		ret = (intersectionIt.boundaryId());
+//		case 1:
+		if (intersectionIt.boundaryId() == 1)
+		{
+			if(x[0] < 10 + eps_ &&  x[0] > 5 - eps_)
+			{
+//				values[pWIdx] = 0;
+//				values[sNIdx] = 0;
+//			}
+//			else
+//			{
+				values[pWIdx] = 0;
+				values[sNIdx] = -4.8e-9;
+			}
 		}
+			//	break;
+
 		
 		return values;
 	}
@@ -135,19 +177,19 @@ namespace Dune
 
 		FieldVector<RT,m> values;
 		
-		values[pWIdx] = -densityW_*gravity_[1]*(height_ - x[1]);
+		values[pWIdx] = -densityW_*gravity_[1]*(20-x[1])+1e5;
 		
-		if (x[0] < outerLowerLeft_[0] + eps_) {
+		/*if (x[0] < outerLowerLeft_[0] + eps_) {
 			RT a = -(1 + 0.5/height_);
 			RT b = -a*outerUpperRight_[1];
-			values[pWIdx] = -densityW_*gravity_[1]*(a*x[1] + b);
-		}
+			values[pWIdx] = -densityW_*gravity_[1]*(-x[1]);
+		}*/
 		
-		if (x[0] > innerLowerLeft_[0] && x[0] < innerUpperRight_[0] 
+		/*if (x[0] > innerLowerLeft_[0] && x[0] < innerUpperRight_[0] 
 		    && x[1] > innerLowerLeft_[1] && x[1] < innerUpperRight_[1])
 			values[sNIdx] = innerSnr_;
-		else
-			values[sNIdx] = outerSnr_;
+		else*/
+			values[sNIdx] = 1e-5;
 	
 		return values;
 	}
@@ -155,11 +197,13 @@ namespace Dune
 	double porosity (const FieldVector<DT,n>& x, const Entity& e, 
 			  const FieldVector<DT,n>& xi) const 
 	{
-		if (x[0] > innerLowerLeft_[0] && x[0] < innerUpperRight_[0] 
-		    && x[1] > innerLowerLeft_[1] && x[1] < innerUpperRight_[1])
-			return innerPorosity_;
-		else 
-			return outerPorosity_;
+
+		return 0.3;
+		//		if (x[0] > innerLowerLeft_[0] && x[0] < innerUpperRight_[0] 
+//		    && x[1] > innerLowerLeft_[1] && x[1] < innerUpperRight_[1])
+//			return innerPorosity_;
+//		else 
+//			return outerPorosity_;
 	}
 	
 	virtual FieldVector<RT,n> gravity () const 
@@ -172,19 +216,19 @@ namespace Dune
 	{
 		FieldVector<RT,4> values;
 		
-		if (x[0] > innerLowerLeft_[0] && x[0] < innerUpperRight_[0] 
-		    && x[1] > innerLowerLeft_[1] && x[1] < innerUpperRight_[1]) {
+		/*if (x[0] > innerLowerLeft_[0] && x[0] < innerUpperRight_[0] 
+		    && x[1] > innerLowerLeft_[1] && x[1] < innerUpperRight_[1]) {*/
 			values[swrIdx] = innerSwr_;
 			values[snrIdx] = innerSnr_;
 			values[alphaIdx] = innerAlpha_;
 			values[nIdx] = innerN_;
-		}
+	/*	}
 		else {
 			values[swrIdx] = outerSwr_;
 			values[snrIdx] = outerSnr_;
 			values[alphaIdx] = outerAlpha_;
 			values[nIdx] = outerN_;
-		}
+		}*/
 		
 		return values;
 	}
@@ -192,13 +236,14 @@ namespace Dune
     LensWithElementID(GridPtr& gP, TwoPhaseRelations& law = *(new LinearLaw), 
 			const FieldVector<DT,n> outerLowerLeft = 0, const FieldVector<DT,n> outerUpperRight = 0, 
 			const FieldVector<DT,n> innerLowerLeft = 0, const FieldVector<DT,n> innerUpperRight = 0, 
-			RT outerK = 4.6e-10, RT innerK = 9.05e-13, 
+			RT outerK = 1e-15, RT innerK = 5e-12, 
 			RT outerSwr = 0.05, RT outerSnr = 0, RT innerSwr = 0.18, RT innerSnr = 0, 
 			RT outerPorosity = 0.4, RT innerPorosity = 0.4, 
 			RT outerAlpha = 0.0037, RT innerAlpha = 0.00045, 
 			RT outerN = 4.7, RT innerN = 7.3)
-      : gridPtr(gP), numberOfParameters_(gridPtr.nofParameters(0)), 
-	TwoPhaseProblem<G, RT>(law), 
+      : TwoPhaseProblem<G, RT>(law), 
+	gridPtr(gP), numberOfParameters_(gridPtr.nofParameters(0)), 
+	
 	  outerLowerLeft_(outerLowerLeft), outerUpperRight_(outerUpperRight), 
 	  innerLowerLeft_(innerLowerLeft), innerUpperRight_(innerUpperRight), 
 	  eps_(1e-8*outerUpperRight[0]), 
@@ -208,6 +253,7 @@ namespace Dune
 	  outerAlpha_(outerAlpha), innerAlpha_(innerAlpha), 
 	  outerN_(outerN), innerN_(innerN)
 	{	
+	  std::cerr << "EPS::::::::::::::::::::::::: " << eps_ << "\n";
 		outerK_[0][0] = outerK_[1][1] = outerK;
 		outerK_[0][1] = outerK_[1][0] = 0;
 		
