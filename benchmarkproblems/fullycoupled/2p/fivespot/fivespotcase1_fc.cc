@@ -62,7 +62,7 @@ int main(int argc, char** argv) {
 
 		Dune::gridinfo(grid);
 
-		OiL oil(0.2);
+		Oil oil(0.2);
 		Water water(0.2);
 		//    Dune::LinearLaw law (water, oil);
 		Dune::BrooksCoreyLaw law(water, oil,2.0,0);
