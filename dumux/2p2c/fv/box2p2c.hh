@@ -32,7 +32,7 @@
 #include <dune/disc/functions/functions.hh>
 #include <dune/disc/functions/p0function.hh>
 #include <dune/disc/functions/p1function.hh>
-#include <dune/disc/operators/p1operator.hh>
+#include "dumux/operators/p1operatorextended.hh"
 #include <dune/disc/operators/boundaryconditions.hh>
 #include <dune/disc/groundwater/groundwater.hh>
 #include <dune/disc/groundwater/p1groundwater.hh>
@@ -71,15 +71,12 @@ namespace Dune
 
 	
 	Box2P2C(const G& g, ProblemType& prob) 
-	: LeafP1TwoPhaseModel(g, prob) //, Xwn(this->size), Xaw(this->size) // (this->size) vectors
+	: LeafP1TwoPhaseModel(g, prob), Xwn(this->size), Xaw(this->size) // (this->size) vectors
 	{ 	}
 	
+
 	void solve() 
 	{
-		
-		
-		 
-		
 		Operator op(*(this->A));  // make operator out of matrix
 		double red=1E-8;
 
@@ -101,6 +98,7 @@ namespace Dune
 		return;		
 	}
 
+
 	void update (double& dt)
 	{
 		this->localJacobian.setDt(dt);
@@ -117,36 +115,9 @@ namespace Dune
 
 		return;
 	}
-//
-//
-//	void solve() 
-//	{
-//		typedef typename LeafP1TwoPhaseModel::FunctionType::RepresentationType VectorType;
-//		typedef typename LeafP1TwoPhaseModel::OperatorAssembler::RepresentationType MatrixType;
-//		typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator; 
-//		
-//		Operator op(*(this->A));  // make operator out of matrix
-//		double red=1E-8;
-//		SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A),1.0);// a precondtioner
-//		BiCGSTABSolver<VectorType> solver(op,ilu0,red,100,1);         // an inverse operator 
-//		InverseOperatorResult r;
-//		solver.apply(*(this->u), *(this->f), r);
-//		
-//		return;		
-//	}
-//
-//	void update (double& dt)
-//	{
-//		this->localJacobian.setDt(dt);
-//		this->localJacobian.setOldSolution(this->uOldTimeStep);
-//		NewtonMethod<G, ThisType> newtonMethod(this->grid, *this);
-//		newtonMethod.execute();
-//		*(this->uOldTimeStep) = *(this->u);
-//		
-//		return;
-//	}
 
-   void globalDefect(FunctionType& defectGlobal)
+	
+	void globalDefect(FunctionType& defectGlobal)
    {   
      typedef typename G::Traits::template Codim<0>::Entity Entity;
      typedef typename G::ctype DT;
@@ -172,7 +143,7 @@ namespace Dune
 	  const Entity& entity = *it;
 	  
 	  this->localJacobian.fvGeom.update(entity);
-	  
+
 	  this->localJacobian.getLocalDefect(entity,defhelp);
 	  //std::cout<<" defhelp: "<<*defhelp<<std::endl;
 	  // begin loop over vertices
@@ -199,19 +170,19 @@ namespace Dune
 			this->pW[i] = (*(this->u))[i][0];
 			this->satN[i] = (*(this->u))[i][1];
 			this->satW[i] = 1 - this->satN[i];
-			//			const FieldVector<RT, 4> parameters(this->problem.materialLawParameters
+			//const FieldVector<RT, 4> parameters(this->problem.materialLawParameters
 			//	 		 (this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal));
 			//			parameters = problem.materialLawParameters
 			//			 		 (this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
-			//			pC[i] = this->problem.materialLaw().pC(varNData[i].saturationW, parameters);			
-//			Xwn[i] = this->problem.solu().Xwn(this->pW[i], 283.15); //Achtung!! pW instead of pN!!!
-//			Xaw[i] = this->problem.solu().Xaw(this->pW[i], 283.15); //Achtung!! pW instead of pN!!!
+			//			this->pC[i] = this->problem.materialLaw().pC(this->satW[i], parameters);			
+			Xwn[i] = this->problem.solu().Xwn(this->pW[i], 283.15); //Achtung!! pW instead of pN!!!
+			Xaw[i] = this->problem.solu().Xaw(this->pW[i], 283.15); //Achtung!! pW instead of pN!!!
 		}
 		vtkwriter.addVertexData(this->pW,"wetting phase pressure");
 		vtkwriter.addVertexData(this->satW,"wetting phase saturation");
 		vtkwriter.addVertexData(this->satN,"nonwetting phase saturation");
-//		vtkwriter.addVertexData(Xwn, "water in air");
-//		vtkwriter.addVertexData(Xaw, "dissolved air");
+		vtkwriter.addVertexData(Xwn, "water in air");
+		vtkwriter.addVertexData(Xaw, "dissolved air");
 		vtkwriter.write(fname, VTKOptions::ascii);		
 	}
 
