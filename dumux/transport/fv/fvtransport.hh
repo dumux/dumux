@@ -183,10 +183,10 @@ namespace Dune
 				  is!=endit; ++is)
 			{
 				// local number of facet 
-				int numberInSelf = is.numberInSelf();
+				int numberInSelf = is->numberInSelf();
 
 				// get geometry type of face
-				Dune::GeometryType gtf = is.intersectionSelfLocal().type();
+				Dune::GeometryType gtf = is->intersectionSelfLocal().type();
 				  
 				// center in face's reference element
 				const Dune::FieldVector<ct,dim-1>& 
@@ -194,11 +194,11 @@ namespace Dune
 
 				// center of face inside volume reference element
 				const Dune::FieldVector<ct,dim>& 
-					facelocalDim = Dune::ReferenceElements<ct,dim>::general(gtf).position(is.numberInSelf(),1);
+					facelocalDim = Dune::ReferenceElements<ct,dim>::general(gtf).position(is->numberInSelf(),1);
 					    
 				// get normal vector scaled with volume
 				Dune::FieldVector<ct,dimworld> integrationOuterNormal 
-					= is.integrationOuterNormal(facelocal);
+					= is->integrationOuterNormal(facelocal);
 				integrationOuterNormal 
 					*= Dune::ReferenceElements<ct,dim-1>::general(gtf).volume();
 
@@ -207,10 +207,10 @@ namespace Dune
 				double factor, diffFactor, totfactor;
 
 				// handle interior face
-				if (is.neighbor())
+				if (is->neighbor())
 				{
 					// access neighbor
-					EntityPointer outside = is.outside();
+					EntityPointer outside = is->outside();
 					int indexj = elementmapper.map(*outside);
 					  
 					// compute flux from one side only
@@ -278,14 +278,14 @@ namespace Dune
 				}
 				  
 				// handle boundary face
-				if (is.boundary()) 
+				if (is->boundary()) 
 				{
 					// get saturation value at cell center
 					double satI = this->sat[indexi];
 
 					double velocityJI = std::max(-(this->problem.vTotal(*it, numberInSelf)*integrationOuterNormal/volume), 0.0);
 					// center of face in global coordinates
-					Dune::FieldVector<ct,dimworld> faceglobal = is.intersectionGlobal().global(facelocal);
+					Dune::FieldVector<ct,dimworld> faceglobal = is->intersectionGlobal().global(facelocal);
 					double satBound = this->problem.g(faceglobal, *it, facelocalDim);
 
 					// cell center in global coordinates
@@ -418,13 +418,13 @@ namespace Dune
   	  	  for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it); is!=isend; ++is)
   	  		{
   	  		  // local number of facet 
-  	  		  int numberInSelf = is.numberInSelf();
+  	  		  int numberInSelf = is->numberInSelf();
 
   	  		  // handle interior face
-  	  		  if (is.neighbor())
+  	  		  if (is->neighbor())
   	  		    {
   	  		      // access neighbor
-  	  		      EntityPointer outside = is.outside();
+  	  		      EntityPointer outside = is->outside();
   	  		      int indexj = elementmapper.map(*outside);
   	  		      
   	  		      // get saturation value 
@@ -458,10 +458,10 @@ namespace Dune
   	  		    }
   	  		  
   	  		  // handle boundary face
-  	  		  if (is.boundary()) 
+  	  		  if (is->boundary()) 
   	  		  {
   	  		      // get geometry type of face
-  	  		      Dune::GeometryType gtf = is.intersectionSelfLocal().type();
+  	  		      Dune::GeometryType gtf = is->intersectionSelfLocal().type();
   	  		      
   	  		      // center in face's reference element
   	  		      const Dune::FieldVector<ct,dim-1>& 
@@ -469,7 +469,7 @@ namespace Dune
 
   	  		      // center of face in global coordinates
   	  		      Dune::FieldVector<ct,dimworld> 
-  	  			  faceglobal = is.intersectionGlobal().global(facelocal);
+  	  			  faceglobal = is->intersectionGlobal().global(facelocal);
   	  			
   	  		      // get saturation value 
   	  		      saturation[numberInSelf] = this->sat[indexi];//this->problem.g(faceglobal, *it, facelocalDim);

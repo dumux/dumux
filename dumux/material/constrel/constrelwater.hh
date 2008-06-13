@@ -1,3 +1,7 @@
+#ifndef DUNE_CONSTRELWATER_HH
+#define DUNE_CONSTRELWATER_HH
+
+
 /************************************************************************/
 /*									*/
 /*	Calculation of the mass density of pure water                   */
@@ -449,3 +453,4 @@ public:
 
 
 };
+#endif

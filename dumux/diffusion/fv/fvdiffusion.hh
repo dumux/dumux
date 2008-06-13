@@ -166,7 +166,7 @@ namespace Dune
 			IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
 			for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it); 
 				  is!=endit; ++is)
-			    if (is.neighbor()) 
+			    if (is->neighbor()) 
 			      rowSize++;
 			A.setrowsize(indexi, rowSize);
 	      }
@@ -185,10 +185,10 @@ namespace Dune
 			IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
 			for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it); 
 			  	  is!=endit; ++is)
-			    if (is.neighbor()) 
+			    if (is->neighbor()) 
 			      {
 					// access neighbor
-					EntityPointer outside = is.outside();
+					EntityPointer outside = is->outside();
 					int indexj = elementmapper.map(*outside);
 		
 					// add off diagonal index
@@ -202,8 +202,8 @@ namespace Dune
   
   template<class G, class RT>
   void FVDiffusion<G, RT>::assemble(const RT t=0)
-	{
-	    // initialization: set matrix A to zero	   
+  {
+        // initialization: set matrix A to zero	   
         A = 0;
 
         // find out whether gravity effects are relevant
@@ -214,245 +214,245 @@ namespace Dune
         		hasGravity = true;
         
         Iterator eendit = indexset.template end<0,All_Partition>();
-	    for (Iterator it = indexset.template begin<0,All_Partition>(); it != eendit; ++it)
-	      {	
-			// cell geometry type
-			GeometryType gt = it->geometry().type();
-			
-			// cell center in reference element
-			const FieldVector<ct,dim>& 
-			  local = ReferenceElements<ct,dim>::general(gt).position(0,0);
-			
-			// get global coordinate of cell center
-			FieldVector<ct,dim> global = it->geometry().global(local);
-			
-			// cell index
-			int indexi = elementmapper.map(*it);
-			
-
-			// cell volume, assume linear map here
-			double volume = it->geometry().integrationElement(local)
-				*ReferenceElements<ct,dim>::general(gt).volume();
-
-			// set right side to zero
-			f[indexi] = volume*this->problem.q(global,*it,local);
-	
-			// get absolute permeability 
-			FieldMatrix<ct,dim,dim> Ki(this->problem.K(global,*it,local));
-	
-			//compute total mobility
-			double lambdaI, fractionalWI;
-			double sati = this->problem.sat(global, *it, local);
-			lambdaI = this->problem.materialLaw.mobTotal(sati);
-			if (hasGravity) 
-				fractionalWI = this->problem.materialLaw.fractionalW(sati);
-			
-
-			IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
-			for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it); 
-				  is!=endit; ++is)
-			  {
+	for (Iterator it = indexset.template begin<0,All_Partition>(); it != eendit; ++it)
+	  {	
+	    // cell geometry type
+	    GeometryType gt = it->geometry().type();
+	    
+	    // cell center in reference element
+	    const FieldVector<ct,dim>& 
+	      local = ReferenceElements<ct,dim>::general(gt).position(0,0);
+	    
+	    // get global coordinate of cell center
+	    FieldVector<ct,dim> global = it->geometry().global(local);
+	    
+	    // cell index
+	    int indexi = elementmapper.map(*it);
+	    
+	    
+	    // cell volume, assume linear map here
+	    double volume = it->geometry().integrationElement(local)
+	      *ReferenceElements<ct,dim>::general(gt).volume();
+	    
+	    // set right side to zero
+	    f[indexi] = volume*this->problem.q(global,*it,local);
+	    
+	    // get absolute permeability 
+	    FieldMatrix<ct,dim,dim> Ki(this->problem.K(global,*it,local));
+	    
+	    //compute total mobility
+	    double lambdaI, fractionalWI;
+	    double sati = this->problem.sat(global, *it, local);
+	    lambdaI = this->problem.materialLaw.mobTotal(sati);
+	    if (hasGravity) 
+	      fractionalWI = this->problem.materialLaw.fractionalW(sati);
+	    
+	    
+	    IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
+	    for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it); 
+		 is!=endit; ++is)
+	      {
+		
+		// get geometry type of face
+		GeometryType gtf = is->intersectionSelfLocal().type();
+		
+		// center in face's reference element
+		const FieldVector<ct,dim-1>& 
+		  facelocal = ReferenceElements<ct,dim-1>::general(gtf).position(0,0);
+		
+		// center of face inside volume reference element
+		const FieldVector<ct,dim>& 
+		  facelocalDim = ReferenceElements<ct,dim>::general(gtf).position(is->numberInSelf(),1);
+		
+		// get normal vector 
+		FieldVector<ct,dimworld> unitOuterNormal 
+		  = is->unitOuterNormal(facelocal);
+		
+		// get normal vector scaled with volume
+		FieldVector<ct,dimworld> integrationOuterNormal 
+		  = is->integrationOuterNormal(facelocal);
+		integrationOuterNormal 
+		  *= ReferenceElements<ct,dim-1>::general(gtf).volume();
+		
+		// get face volume 
+		// double faceVol = ReferenceElements<ct,dim-1>::general(gtf).volume();
+		double faceVol = is->intersectionGlobal().volume();
+		
+		// compute directed permeability vector Ki.n
+		FieldVector<ct,dim> Kni(0);
+		Ki.umv(unitOuterNormal, Kni);
+		
+		// handle interior face
+		if (is->neighbor()) 
+		  {
+		    // access neighbor
+		    EntityPointer outside = is->outside();
+		    int indexj = elementmapper.map(*outside);
 		    
-			    // get geometry type of face
-			    GeometryType gtf = is.intersectionSelfLocal().type();
-			    
-			    // center in face's reference element
-			    const FieldVector<ct,dim-1>& 
-			      facelocal = ReferenceElements<ct,dim-1>::general(gtf).position(0,0);
-			    
-				// center of face inside volume reference element
-			    const FieldVector<ct,dim>& 
-			      facelocalDim = ReferenceElements<ct,dim>::general(gtf).position(is.numberInSelf(),1);
-				    
-			    // get normal vector 
-			    FieldVector<ct,dimworld> unitOuterNormal 
-			      = is.unitOuterNormal(facelocal);
-			    
-			    // get normal vector scaled with volume
-			    FieldVector<ct,dimworld> integrationOuterNormal 
-			      = is.integrationOuterNormal(facelocal);
-			    integrationOuterNormal 
-			      *= ReferenceElements<ct,dim-1>::general(gtf).volume();
-	
-			    // get face volume 
-			    // double faceVol = ReferenceElements<ct,dim-1>::general(gtf).volume();
-			    double faceVol = is.intersectionGlobal().volume();
-			    
-				// compute directed permeability vector Ki.n
-				FieldVector<ct,dim> Kni(0);
-				Ki.umv(unitOuterNormal, Kni);
-
-				// handle interior face
-			    if (is.neighbor()) 
-			    {
-					// access neighbor
-					EntityPointer outside = is.outside();
-					int indexj = elementmapper.map(*outside);
-					
-					// compute factor in neighbor
-					GeometryType nbgt = outside->geometry().type();
-					const FieldVector<ct,dim>& 
-					  nblocal = ReferenceElements<ct,dim>::general(nbgt).position(0,0);
-		
-					// neighbor cell center in global coordinates
-					FieldVector<ct,dimworld> 
-					  nbglobal = outside->geometry().global(nblocal);
-		
-					// distance vector between barycenters
-					FieldVector<ct,dimworld> 
-					  distVec = global - nbglobal;
-		
-					// compute distance between cell centers
-					double dist = distVec.two_norm();
-		
-					// get absolute permeability 
-					FieldMatrix<ct,dim,dim> Kj(this->problem.K(nbglobal, *outside, nblocal));
-						
-					// compute vectorized permeabilities
-	                FieldVector<ct,dim> Knj(0);
-	                Kj.umv(unitOuterNormal, Knj);
-	                // compute permeability normal to intersection and take harmonic mean
-//					FieldVector<ct,dim> K(0);
-//					for (int l = 0; l < dim; l++) {
-//						double factor = (Kni[l] + Knj[l]);
-//						if (factor)
-//							K[l] = 2*Kni[l]*Knj[l]/factor;
-//					}
- 	                double K_n_i = Kni * unitOuterNormal;
- 	                double K_n_j = Knj * unitOuterNormal;
- 	                double Kn    = 2 * K_n_i * K_n_j / (K_n_i + K_n_j);
- 	                // compute permeability tangential to intersection and take arithmetic mean
- 	                FieldVector<ct,dim> uON = unitOuterNormal;
- 	                FieldVector<ct,dim> K_t_i = Kni - (uON *= K_n_i);
- 	                uON = unitOuterNormal;
- 	                FieldVector<ct,dim> K_t_j = Knj - (uON *= K_n_j);
- 	                FieldVector<ct,dim> Kt = (K_t_i += K_t_j);
- 	                Kt *= 0.5;
- 	                // Build vectorized averaged permeability
- 	                uON = unitOuterNormal;
- 	                FieldVector<ct,dim> K = (Kt += (uON *=Kn));
-	
-					//compute total mobility
-					double lambdaJ, fractionalWJ;
-					double satj = this->problem.sat(nbglobal, *outside, nblocal);
-					lambdaJ = this->problem.materialLaw.mobTotal(satj);
-					if (hasGravity) 
-						fractionalWJ = this->problem.materialLaw.fractionalW(satj);
-					
-					// compute averaged total mobility
-					// CAREFUL: Harmonic weightig can generate zero matrix entries, 
-			                // use arithmetic weighting instead: 
-					double fractionalW;
-					double lambda = 0.5*(lambdaI + lambdaJ);
-					if (hasGravity) 
-						fractionalW = 0.5*(fractionalWI + fractionalWJ);
-						
-					// update diagonal entry 
-					double entry = fabs(lambda*faceVol*(K*distVec)/(dist*dist));
-					A[indexi][indexi] += entry;
-		
-					// set off-diagonal entry 
-					A[indexi][indexj] = -entry;
-		
-					if (hasGravity) {
-						double factor = fractionalW*(this->problem.materialLaw.wettingPhase.density()) 
-							+ (1 - fractionalW)*(this->problem.materialLaw.nonwettingPhase.density());
-						f[indexi] += factor*lambda*faceVol*(K*gravity);
-					}
-					
-					if (this->problem.capillary) {
-					  // calculate saturation gradient
-					  FieldVector<ct,dim> satGradient = distVec;		
-					  satGradient *= (satj - sati)/(dist*dist);
-		
-					  // arithmetic average of the permeability
-					  K = ((Kni + Knj) *= 0.5);
-					  
-					  // capillary pressure w.r.t. saturation 
-					  double pCI = this->problem.materialLaw.pC(sati);
-					  double pCJ = this->problem.materialLaw.pC(satj);
-		
-					  // mobility of the nonwetting phase 
-					  double lambdaN = 0.5*(this->problem.materialLaw.mobN(1 - sati) 
-							  				+ this->problem.materialLaw.mobN(1 - satj));
-		
-		
-					  // calculate capillary pressure gradient
-					  FieldVector<ct,dim> pCGradient = distVec;		
-					  pCGradient *= -(pCJ - pCI)/(dist*dist);
-		
-					  f[indexi] += lambdaN*faceVol*(K*pCGradient);
-					}
-			    }
-			    // boundary face 
-			    else 
-			      { 
-					// center of face in global coordinates
-					FieldVector<ct,dimworld> 
-					  faceglobal = is.intersectionGlobal().global(facelocal);
-					  
-					// compute total mobility
-					double fractionalW = 1.;
-					double lambda = lambdaI;
-						if (hasGravity) fractionalW = fractionalWI;
-		
-					//get boundary condition for boundary face center
-					BoundaryConditions::Flags bctype = this->problem.bctype(faceglobal, *it, facelocalDim);
-					if (bctype == BoundaryConditions::dirichlet) 
-					{ 
-						FieldVector<ct,dimworld> distVec(global - faceglobal);
-						double dist = distVec.two_norm();
-						A[indexi][indexi] -= lambda*faceVol*(Kni*distVec)/(dist*dist);
-						double g = this->problem.g(faceglobal, *it, facelocalDim);
-						f[indexi] -= lambda*faceVol*g*(Kni*distVec)/(dist*dist);
-		
-						if (hasGravity) {
-							double factor = fractionalW*(this->problem.materialLaw.wettingPhase.density()) 
-								+ (1 - fractionalW)*(this->problem.materialLaw.nonwettingPhase.density());
-							f[indexi] += factor*lambda*faceVol*(Kni*gravity);
-						}
-
-					} 
-					else
-					{
-						double J = this->problem.J(faceglobal, *it, facelocalDim);
-						f[indexi] += faceVol*J;
-					}
-		
-					if (this->problem.capillary) {
-					  double satj = satProblem.g(faceglobal, *it, facelocalDim);
-					  
-					  // distance vector between barycenters
-					  FieldVector<ct,dimworld> 
-					    distVec = global - faceglobal;
-					  
-					  // compute distance between cell centers
-					  double dist = distVec.two_norm();
-					  
-					  // calculate saturation gradient
-					  FieldVector<ct,dim> satGradient = distVec;		
-					  satGradient *= (satj - sati)/(dist*dist);
-					  
-					  // capillary pressure w.r.t. saturation 
-					  double pCI = this->problem.materialLaw.pC(sati);
-					  double pCJ = this->problem.materialLaw.pC(satj);
-					  
-					  // mobility of the nonwetting phase 
-					  double lambdaN = 0.5*(this->problem.materialLaw.mobN(1 - sati)
-							  				+ this->problem.materialLaw.mobN(1 - satj));
-					  
-					  
-					  // calculate capillary pressure gradient
-					  FieldVector<ct,dim> pCGradient = distVec;		
-					  pCGradient *= -(pCJ - pCI)/(dist*dist);
-					  
-					  f[indexi] += lambdaN*faceVol*(Kni*pCGradient);
-					}
-			      }
-			  } // end all intersections         
+		    // compute factor in neighbor
+		    GeometryType nbgt = outside->geometry().type();
+		    const FieldVector<ct,dim>& 
+		      nblocal = ReferenceElements<ct,dim>::general(nbgt).position(0,0);
+		    
+		    // neighbor cell center in global coordinates
+		    FieldVector<ct,dimworld> 
+		      nbglobal = outside->geometry().global(nblocal);
+		    
+		    // distance vector between barycenters
+		    FieldVector<ct,dimworld> 
+		      distVec = global - nbglobal;
+		    
+		    // compute distance between cell centers
+		    double dist = distVec.two_norm();
+		    
+		    // get absolute permeability 
+		    FieldMatrix<ct,dim,dim> Kj(this->problem.K(nbglobal, *outside, nblocal));
+		    
+		    // compute vectorized permeabilities
+		    FieldVector<ct,dim> Knj(0);
+		    Kj.umv(unitOuterNormal, Knj);
+		    // compute permeability normal to intersection and take harmonic mean
+		    //					FieldVector<ct,dim> K(0);
+		    //					for (int l = 0; l < dim; l++) {
+		    //						double factor = (Kni[l] + Knj[l]);
+		    //						if (factor)
+		    //							K[l] = 2*Kni[l]*Knj[l]/factor;
+		    //					}
+		    double K_n_i = Kni * unitOuterNormal;
+		    double K_n_j = Knj * unitOuterNormal;
+		    double Kn    = 2 * K_n_i * K_n_j / (K_n_i + K_n_j);
+		    // compute permeability tangential to intersection and take arithmetic mean
+		    FieldVector<ct,dim> uON = unitOuterNormal;
+		    FieldVector<ct,dim> K_t_i = Kni - (uON *= K_n_i);
+		    uON = unitOuterNormal;
+		    FieldVector<ct,dim> K_t_j = Knj - (uON *= K_n_j);
+		    FieldVector<ct,dim> Kt = (K_t_i += K_t_j);
+		    Kt *= 0.5;
+		    // Build vectorized averaged permeability
+		    uON = unitOuterNormal;
+		    FieldVector<ct,dim> K = (Kt += (uON *=Kn));
+		    
+		    //compute total mobility
+		    double lambdaJ, fractionalWJ;
+		    double satj = this->problem.sat(nbglobal, *outside, nblocal);
+		    lambdaJ = this->problem.materialLaw.mobTotal(satj);
+		    if (hasGravity) 
+		      fractionalWJ = this->problem.materialLaw.fractionalW(satj);
+		    
+		    // compute averaged total mobility
+		    // CAREFUL: Harmonic weightig can generate zero matrix entries, 
+		    // use arithmetic weighting instead: 
+		    double fractionalW;
+		    double lambda = 0.5*(lambdaI + lambdaJ);
+		    if (hasGravity) 
+		      fractionalW = 0.5*(fractionalWI + fractionalWJ);
+		    
+		    // update diagonal entry 
+		    double entry = fabs(lambda*faceVol*(K*distVec)/(dist*dist));
+		    A[indexi][indexi] += entry;
+		    
+		    // set off-diagonal entry 
+		    A[indexi][indexj] = -entry;
+		    
+		    if (hasGravity) {
+		      double factor = fractionalW*(this->problem.materialLaw.wettingPhase.density()) 
+			+ (1 - fractionalW)*(this->problem.materialLaw.nonwettingPhase.density());
+		      f[indexi] += factor*lambda*faceVol*(K*gravity);
+		    }
+		    
+		    if (this->problem.capillary) {
+		      // calculate saturation gradient
+		      FieldVector<ct,dim> satGradient = distVec;		
+		      satGradient *= (satj - sati)/(dist*dist);
+		      
+		      // arithmetic average of the permeability
+		      K = ((Kni + Knj) *= 0.5);
+		      
+		      // capillary pressure w.r.t. saturation 
+		      double pCI = this->problem.materialLaw.pC(sati);
+		      double pCJ = this->problem.materialLaw.pC(satj);
+		      
+		      // mobility of the nonwetting phase 
+		      double lambdaN = 0.5*(this->problem.materialLaw.mobN(1 - sati) 
+					    + this->problem.materialLaw.mobN(1 - satj));
+		      
+		      
+		      // calculate capillary pressure gradient
+		      FieldVector<ct,dim> pCGradient = distVec;		
+		      pCGradient *= -(pCJ - pCI)/(dist*dist);
+		      
+		      f[indexi] += lambdaN*faceVol*(K*pCGradient);
+		    }
+		  }
+		// boundary face 
+		else 
+		  { 
+		    // center of face in global coordinates
+		    FieldVector<ct,dimworld> 
+		      faceglobal = is->intersectionGlobal().global(facelocal);
+		    
+		    // compute total mobility
+		    double fractionalW = 1.;
+		    double lambda = lambdaI;
+		    if (hasGravity) fractionalW = fractionalWI;
+		    
+		    //get boundary condition for boundary face center
+		    BoundaryConditions::Flags bctype = this->problem.bctype(faceglobal, *it, facelocalDim);
+		    if (bctype == BoundaryConditions::dirichlet) 
+		      { 
+			FieldVector<ct,dimworld> distVec(global - faceglobal);
+			double dist = distVec.two_norm();
+			A[indexi][indexi] -= lambda*faceVol*(Kni*distVec)/(dist*dist);
+			double g = this->problem.g(faceglobal, *it, facelocalDim);
+			f[indexi] -= lambda*faceVol*g*(Kni*distVec)/(dist*dist);
 			
-	      } // end grid traversal 
-	    return;
+			if (hasGravity) {
+			  double factor = fractionalW*(this->problem.materialLaw.wettingPhase.density()) 
+			    + (1 - fractionalW)*(this->problem.materialLaw.nonwettingPhase.density());
+			  f[indexi] += factor*lambda*faceVol*(Kni*gravity);
+			}
+			
+		      } 
+		    else
+		      {
+			double J = this->problem.J(faceglobal, *it, facelocalDim);
+			f[indexi] += faceVol*J;
+		      }
+		    
+		    if (this->problem.capillary) {
+		      double satj = satProblem.g(faceglobal, *it, facelocalDim);
+		      
+		      // distance vector between barycenters
+		      FieldVector<ct,dimworld> 
+			distVec = global - faceglobal;
+		      
+		      // compute distance between cell centers
+		      double dist = distVec.two_norm();
+		      
+		      // calculate saturation gradient
+		      FieldVector<ct,dim> satGradient = distVec;		
+		      satGradient *= (satj - sati)/(dist*dist);
+		      
+		      // capillary pressure w.r.t. saturation 
+		      double pCI = this->problem.materialLaw.pC(sati);
+		      double pCJ = this->problem.materialLaw.pC(satj);
+		      
+		      // mobility of the nonwetting phase 
+		      double lambdaN = 0.5*(this->problem.materialLaw.mobN(1 - sati)
+					    + this->problem.materialLaw.mobN(1 - satj));
+		      
+		      
+		      // calculate capillary pressure gradient
+		      FieldVector<ct,dim> pCGradient = distVec;		
+		      pCGradient *= -(pCJ - pCI)/(dist*dist);
+		      
+		      f[indexi] += lambdaN*faceVol*(Kni*pCGradient);
+		    }
+		  }
+	      } // end all intersections         
+	    
+	  } // end grid traversal 
+	return;
 	}
 	
 	
@@ -540,13 +540,13 @@ namespace Dune
 				  is!=endit; ++is)
 			{
 			  // get geometry type of face
-			  GeometryType gtf = is.intersectionSelfLocal().type();
+			  GeometryType gtf = is->intersectionSelfLocal().type();
 
-			  //Geometry dg = is.intersectionSelfLocal();
+			  //Geometry dg = is->intersectionSelfLocal();
 			  // local number of facet 
-			  int numberInSelf = is.numberInSelf();
+			  int numberInSelf = is->numberInSelf();
 
-			  faceVol[numberInSelf] = is.intersectionGlobal().volume();
+			  faceVol[numberInSelf] = is->intersectionGlobal().volume();
 			    
 			  // center in face's reference element
 			  const FieldVector<ct,dim-1>& 
@@ -558,17 +558,17 @@ namespace Dune
 				    
 			  // get normal vector
 			  FieldVector<ct,dimworld> unitOuterNormal 
-			    = is.unitOuterNormal(facelocal);
+			    = is->unitOuterNormal(facelocal);
 			  
 			  // center of face in global coordinates
 			  FieldVector<ct,dimworld> 
-			    faceglobal = is.intersectionGlobal().global(facelocal);
+			    faceglobal = is->intersectionGlobal().global(facelocal);
 			  
 			  // handle interior face
-			  if (is.neighbor()) 
+			  if (is->neighbor()) 
 			    {
 			      // access neighbor
-			      EntityPointer outside = is.outside();
+			      EntityPointer outside = is->outside();
 			      int indexj = elementmapper.map(*outside);
 			      
 			      // get neighbor pressure and permeability
@@ -682,7 +682,7 @@ namespace Dune
 			      {		  
 			    	  double J = this->problem.J(faceglobal, *it, facelocalDim);
 			    	  FieldVector<ct,dimworld> unitOuterNormal 
-			    	  	= is.unitOuterNormal(facelocal);
+			    	  	= is->unitOuterNormal(facelocal);
 			    	  velocity[indexi][numberInSelf] = unitOuterNormal; 
 			    	  velocity[indexi][numberInSelf] *= -J; 
 			      }
@@ -776,20 +776,20 @@ namespace Dune
           for (IntersectionIterator is = it->ilevelbegin(); is!=isend; ++is)
           {
             // get some face properties
-            GeometryType gtf = is.intersectionSelfLocal().type();
-            int numberInSelf = is.numberInSelf();
-	        faceVol[numberInSelf] = is.intersectionGlobal().volume();       // volume of face
+            GeometryType gtf = is->intersectionSelfLocal().type();
+            int numberInSelf = is->numberInSelf();
+	        faceVol[numberInSelf] = is->intersectionGlobal().volume();       // volume of face
             const FieldVector<ct,dim-1>&  facelocal       
               = ReferenceElements<ct,dim-1>::general(gtf).position(0,0);
             FieldVector<ct,dim> unitOuterNormal 
-              = is.unitOuterNormal(facelocal);                              // normal vector of unit length
+              = is->unitOuterNormal(facelocal);                              // normal vector of unit length
             FieldVector<ct,dim> faceglobal      
-              = is.intersectionGlobal().global(facelocal);                  // global coordinate of face center
+              = is->intersectionGlobal().global(facelocal);                  // global coordinate of face center
              // handle interior face
-            if (is.neighbor()) 
+            if (is->neighbor()) 
             {
               // neighbor's properties
-              EntityPointer outside = is.outside();
+              EntityPointer outside = is->outside();
               int indexj = indexset.index(*outside);                        // neigbor's fine-scale cell index   
               GeometryType nbgt = outside->geometry().type();
               const FieldVector<ct,dim>& 
@@ -864,7 +864,7 @@ namespace Dune
               {		  
                 double J = this->problem.J(faceglobal, *it, facelocalDim);
 	    	    FieldVector<ct,dimworld> unitOuterNormal 
-	    	  	  = is.unitOuterNormal(facelocal);
+	    	  	  = is->unitOuterNormal(facelocal);
 	    	    fineVelocity[numberInSelf] = unitOuterNormal; 
 	    	    fineVelocity[numberInSelf] *= -J; 
               }			      
@@ -875,27 +875,27 @@ namespace Dune
             for (IntersectionIterator cis = cit->ilevelbegin(); cis != cisend;  ++cis)
             {
               // checking if fine scale element face *is lies on coarse-scale element face *cis
-              GeometryType cgtf = cis.intersectionSelfLocal().type();
+              GeometryType cgtf = cis->intersectionSelfLocal().type();
               FieldVector<ct,dim-1> cfacelocal = ReferenceElements<ct,dim-1>::general(cgtf).position(0,0);
               bool isInCis;
-              if ( cis.neighbor() ) 
+              if ( cis->neighbor() ) 
               {
                 /* if face *is lies in face *cis, *is must be defined both in the inside and outside
                    element of *cis! for the inside element this is true anyway, because of the hierarchic 
                    Iteration. */
-                isInCis = cis.outside()->geometry().checkInside( cis.outside()->geometry().local(faceglobal));
+                isInCis = cis->outside()->geometry().checkInside( cis->outside()->geometry().local(faceglobal));
               }
-              else if (cis.boundary() && is.boundary())
+              else if (cis->boundary() && is->boundary())
               {
                 /* if face *is lies in face *cis and
                  *cis lies on a boundary, *is must lie on a boundry too!
                  to be sure, that it is the same boundary, check if the normals are the same. */
-                isInCis = ( cis.unitOuterNormal(cfacelocal) * is.unitOuterNormal(facelocal) ) > 0.999; 
+                isInCis = ( cis->unitOuterNormal(cfacelocal) * is->unitOuterNormal(facelocal) ) > 0.999; 
               }
               else isInCis = false;
               if ( isInCis )
               {
-                int coarseNumberInSelf = cis.numberInSelf();
+                int coarseNumberInSelf = cis->numberInSelf();
                 int hits =  hitcount[coarseNumberInSelf];
                 fineOnCoarse[coarseNumberInSelf][hits] = fineVelocity[numberInSelf];
                 // DEBUG--->

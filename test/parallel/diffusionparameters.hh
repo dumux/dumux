@@ -5,7 +5,7 @@ template<class G, class RT>
 class DiffusionParameters 
 {
   typedef typename G::ctype DT;
-  enum {n=G::dimension};
+  enum {n=G::dimension, m=1};
   typedef typename G::Traits::template Codim<0>::Entity Entity;
   typedef typename Dune::IntersectionIteratorGetter<G,Dune::LeafTag>::IntersectionIterator IntersectionIterator;
 
@@ -42,6 +42,15 @@ public:
 	return Dune::BoundaryConditions::neumann;
   }
 
+  virtual void dirichletIndex(const Dune::FieldVector<DT,n>& x, const Entity& e,
+			      const IntersectionIterator& intersectionIt,
+			      const Dune::FieldVector<DT,n>& xi, Dune::FieldVector<int,m>& dirichletIdx) const 
+  {
+    for (int i = 0; i < m; i++)
+      dirichletIdx[i]=i;
+    return;
+  }
+
   RT exact(const Dune::FieldVector<DT,n>& x) const
   {
 		return (x[0]);//1.0 - x[0] + 2.0*x[1] - 3.0*x[2]);	  
@@ -74,7 +83,7 @@ public:
 	  
 	  // ASSUMING face-wise constant normal 
 	  Dune::FieldVector<DT, n-1> localDimM1(0);
-	  return (KGradU*intersectionIt.unitOuterNormal(localDimM1));
+	  return (KGradU*intersectionIt->unitOuterNormal(localDimM1));
   }
 	  
 private:

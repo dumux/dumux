@@ -78,7 +78,8 @@ int main(int argc, char** argv)
     Dune::ExplicitEulerStep<GridType, IMPESMS> timestep;
     
     transport.initialguess();
-    diffusion.pressure(transport.sat);
+    //diffusion.pressure(transport.sat);
+    diffusion.pressure();
     
     Dune::TimeLoop<GridType, IMPESMS > timeloop(tStart, tEnd, fileName, modulo, cFLFactor, 1e100, 1e100, timestep);
     

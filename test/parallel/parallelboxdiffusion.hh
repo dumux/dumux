@@ -3,7 +3,7 @@
 
 #include <dune/disc/shapefunctions/lagrangeshapefunctions.hh>
 #include <dune/disc/functions/p1function.hh>
-#include <dune/disc/operators/p1operator.hh>
+//#include <dune/disc/operators/p1operator.hh>
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
 #include <dune/istl/bvector.hh>
@@ -17,6 +17,7 @@
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/scalarproducts.hh>
 #include <dune/istl/paamg/amg.hh>
+#include <dune/istl/owneroverlapcopy.hh>
 #include "dumux/nonlinear/nonlinearmodel.hh"
 #include "dumux/fvgeometry/fvelementgeometry.hh"
 #include "dumux/nonlinear/newtonmethod.hh"
@@ -153,12 +154,12 @@ namespace Dune
 			  IntersectionIterator endit = IntersectionIteratorGetter<G,LeafTag>::end(entity);
 			  for (IntersectionIterator is = IntersectionIteratorGetter<G,LeafTag>::begin(entity); 
 			       is!=endit; ++is)
-				  if (is.boundary())
+				  if (is->boundary())
 				  {
 				    for (int i = 0; i < size; i++) 
 					  // handle subentities of this face
-					  for (int j = 0; j < ReferenceElements<DT,dim>::general(gt).size(is.numberInSelf(), 1, sfs[i].codim()); j++)
-						if (sfs[i].entity() == ReferenceElements<DT,dim>::general(gt).subEntity(is.numberInSelf(), 1, j, sfs[i].codim()))
+					  for (int j = 0; j < ReferenceElements<DT,dim>::general(gt).size(is->numberInSelf(), 1, sfs[i].codim()); j++)
+						if (sfs[i].entity() == ReferenceElements<DT,dim>::general(gt).subEntity(is->numberInSelf(), 1, j, sfs[i].codim()))
 						{
 							if (this->localJacobian.bc(i)[0] == BoundaryConditions::dirichlet) 
 							{
@@ -209,6 +210,7 @@ namespace Dune
 	  Dune::SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A),1.0);
 	  //Dune::SeqSSOR<MatrixType,VectorType,VectorType> ssor(*(this->A),1,1.0);
 	  
+#if HAVE_MPI
 	  // set up parallel solvers
 	  Dune::IndexInfoFromGrid<GlobalIdType,int> indexinfo; 
 	  (this->u).fillIndexInfoFromGrid(indexinfo);
@@ -225,7 +227,7 @@ namespace Dune
 	  // solve system
 	  Dune::InverseOperatorResult r;	
 	  parcg.apply(*(this->u), *(this->f), r);
-
+#endif
 	  return;				
 	}
 

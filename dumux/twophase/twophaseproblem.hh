@@ -6,6 +6,7 @@
 
 #include<dune/common/fvector.hh>
 #include<dune/common/fmatrix.hh>
+#include<dune/istl/bvector.hh>
 #include<dune/common/exceptions.hh>
 #include<dune/grid/common/grid.hh>
 #include<dune/grid/common/referenceelements.hh>
@@ -85,10 +86,10 @@ public:
 	
 	virtual void dirichletIndex(const FieldVector<DT,n>& x, const Entity& e,
 			const IntersectionIterator& intersectionIt,
-			const FieldVector<DT,n>& xi, FieldVector<int,m>& dirichletIndex) const 
+			const FieldVector<DT,n>& xi, FieldVector<int,m>& dirichletIdx) const 
 	{
 		for (int i = 0; i < m; i++)
-			dirichletIndex[i]=i;
+			dirichletIdx[i]=i;
 		return;
 	}
 

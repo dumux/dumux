@@ -32,28 +32,11 @@ int main(int argc, char** argv)
     // create a grid object
     typedef double NumberType; 
     typedef Dune::SGrid<dim,dim> GridType; 
-    //typedef Dune::ALUSimplexGrid<dim,dim> GridType; 
-    //typedef Dune::YaspGrid<dim,dim> GridType; 
-    //typedef Dune::UGGrid<dim> GridType; 
 
-    // use unitcube from grids 
-    std::stringstream dgfFileName;
-    //dgfFileName << "grids/skew.dgf";
-    dgfFileName << "grids/unitcube" << GridType :: dimension << ".dgf";
-
-    // create grid pointer, GridType is defined by gridtype.hh
-    Dune::GridPtr<GridType> gridPtr( argv[1] );
-
-    // grid reference 
-    //GridType& grid = *gridPtr;
     Dune::FieldVector<GridType::ctype,dim> L(0);
     Dune::FieldVector<GridType::ctype,dim> R(300);
     Dune::FieldVector<int,dim> N(10);           
     GridType grid(N,L,R);
-
-    grid.globalRefine(3);
-
-    Dune::gridinfo(grid);
 
     Dune::SimpleProblem<GridType, NumberType> satprob;
     //Uniform mat;

@@ -83,8 +83,8 @@ namespace Dune
 	{
 		FieldVector<BoundaryConditions::Flags, m> values(BoundaryConditions::neumann); 
 
-//		std::cout << "boundaryId" << intersectionIt.boundaryId() << std::endl;
-		switch (intersectionIt.boundaryId()) {
+//		std::cout << "boundaryId" << intersectionIt->boundaryId() << std::endl;
+		switch (intersectionIt->boundaryId()) {
 		case 2:
 			values = BoundaryConditions::dirichlet;
 			break;
@@ -118,7 +118,7 @@ namespace Dune
 //		}
 		
 //		RT a, b;
-		switch (intersectionIt.boundaryId()) {
+		switch (intersectionIt->boundaryId()) {
 		case 4:
 //			a = -(1 + 0.5/height_);
 //			b = -a*outerUpperRight_[1];
@@ -148,11 +148,11 @@ namespace Dune
 //			values[sNIdx] = -0.04;
 //		}
 		
-//		switch (intersectionIt.boundaryId() ) {
+//		switch (intersectionIt->boundaryId() ) {
 		int ret;
-		ret = (intersectionIt.boundaryId());
+		ret = (intersectionIt->boundaryId());
 //		case 1:
-		if (intersectionIt.boundaryId() == 1)
+		if (intersectionIt->boundaryId() == 1)
 		{
 			if(x[0] < 10 + eps_ &&  x[0] > 5 - eps_)
 			{

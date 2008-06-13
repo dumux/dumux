@@ -83,7 +83,7 @@ public:
 	  
 	  // ASSUMING face-wise constant normal 
 	  Dune::FieldVector<DT, n-1> localDimM1(0);
-	  return (KGradU*intersectionIt.unitOuterNormal(localDimM1));
+	  return (KGradU*intersectionIt->unitOuterNormal(localDimM1));
   }
 	  
 private:

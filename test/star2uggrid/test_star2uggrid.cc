@@ -6,9 +6,9 @@
 #include <dune/istl/bvector.hh>
 
 #include "dumux/io/readstarformat.cc"
-#include "gridcheck.cc"
-#include "checkgeometryinfather.cc"
-#include "checkintersectionit.cc"
+//#include "gridcheck.cc"
+//#include "checkgeometryinfather.cc"
+//#include "checkintersectionit.cc"
 
 int main (int argc , char **argv) try
 {
@@ -34,22 +34,22 @@ int main (int argc , char **argv) try
     
     std::cout << "Starting grid tests ." << std::flush;
     // check macro grid 
-    gridcheck(grid);
+    //gridcheck(grid);
     std::cout << "." << std::flush;
 
     // check the intersection iterator
-    checkIntersectionIterator(grid);
+    //checkIntersectionIterator(grid);
     std::cout << "." << std::flush;
 
     if (refinementSteps) {
     	grid.globalRefine(refinementSteps);
         std::cout << "." << std::flush;
     	
-    	gridcheck(grid);
+    	//gridcheck(grid);
         std::cout << "." << std::flush;
     	
     	// check the method geometryInFather()
-    	checkGeometryInFather(grid);
+    	//checkGeometryInFather(grid);
         std::cout << "." << std::flush;
     }
     std::cout << " passed." << std::endl;

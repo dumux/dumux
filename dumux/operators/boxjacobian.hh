@@ -232,8 +232,8 @@ public:
 				!=endit; ++it) {
 			// if we have a neighbor then we assume there is no boundary (forget interior boundaries)
 			// in level assemble treat non-level neighbors as boundary
-			if (it.neighbor()) {
-				if (levelBoundaryAsDirichlet && it.outside()->level()==e.level())
+			if (it->neighbor()) {
+				if (levelBoundaryAsDirichlet && it->outside()->level()==e.level())
 					continue;
 				if (!levelBoundaryAsDirichlet)
 					continue;
@@ -244,8 +244,8 @@ public:
 			FieldVector<int,m> dirichletIdx;
 
 			// handle face on exterior boundary, this assumes there are no interior boundaries
-			if (it.boundary()) {
-				int faceIdx = it.numberInSelf();
+			if (it->boundary()) {
+				int faceIdx = it->numberInSelf();
 				// 				std::cout << "faceIdx = " << faceIdx << ", beginning: " << std::endl;
 				// 				for (int i = 0; i < 4; i++) 
 				// 				  std::cout << "bctype[" << i << "] = " << this->bctype[i] << std::endl; 
@@ -307,7 +307,7 @@ public:
 						continue; // skip interior dof
 					if (sfs[i].codim()==1) // handle face dofs
 					{
-						if (sfs[i].entity()==it.numberInSelf()) {
+						if (sfs[i].entity()==it->numberInSelf()) {
 							if (this->bctype[i][equationNumber]
 									<bctypeface[equationNumber]) {
 								this->bctype[i][equationNumber]
@@ -326,8 +326,8 @@ public:
 						continue;
 					}
 					// handle subentities of this face
-					for (int j=0; j<ReferenceElements<DT,n>::general(gt).size(it.numberInSelf(), 1, sfs[i].codim()); j++)
-						if (sfs[i].entity()==ReferenceElements<DT,n>::general(gt).subEntity(it.numberInSelf(), 1, j,
+					for (int j=0; j<ReferenceElements<DT,n>::general(gt).size(it->numberInSelf(), 1, sfs[i].codim()); j++)
+						if (sfs[i].entity()==ReferenceElements<DT,n>::general(gt).subEntity(it->numberInSelf(), 1, j,
 								sfs[i].codim())) {
 							if (this->bctype[i][equationNumber]
 									<bctypeface[equationNumber]) {

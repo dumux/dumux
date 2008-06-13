@@ -13,7 +13,7 @@
 #include<dune/disc/operators/boundaryconditions.hh>
 #include<dumux/material/twophaserelations.hh>
 #include<dumux/material/linearlaw.hh>
-#include<dumux/material/constrel.hh>
+#include<dumux/material/solubilities.hh>
 
 /**
  * @file
@@ -73,6 +73,15 @@ namespace Dune
 					const IntersectionIterator& intersectionIt, 
 					   const FieldVector<DT,dim>& xi) const = 0;
 
+	virtual void dirichletIndex(const FieldVector<DT,dim>& x, const Entity& e,
+			const IntersectionIterator& intersectionIt,
+			const FieldVector<DT,dim>& xi, FieldVector<int,m>& dirichletIdx) const 
+	{
+		for (int i = 0; i < m; i++)
+			dirichletIdx[i]=i;
+		return;
+	}
+
 	//! evaluate Dirichlet boundary condition at given position
 	/*! evaluate Dirichlet boundary condition at given position
 	  @param[in]  x    position in global coordinates
@@ -120,13 +129,28 @@ namespace Dune
 	}
 	
 	
-	TwoPTwoCProblem(TwoPhaseRelations& law = *(new LinearLaw), Solubility& solu = *(new Solubility)) 
-	: materialLaw_(law), solu_(solu)
+	//element-wise return of the values of an Exact solution
+	virtual RT uExOutVertex(int &ElementIndex, int VariableIndex) const {
+		DUNE_THROW(NotImplemented, "Ex(akt) Solution");
+		return 0;
+	}
+	
+	//updates an exact/analytic solution
+	virtual void updateExSol(double &dt,
+			BlockVector<FieldVector<RT, m> > &approxSol) {
+		DUNE_THROW(NotImplemented, "Ex(akt) Solution");
+		return;
+	}
+
+	TwoPTwoCProblem(TwoPhaseRelations& law = *(new LinearLaw), 
+			Solubility& solu = *(new Solubility), const bool exsol = false) 
+	: exsolution(exsol), materialLaw_(law), solu_(solu)
 	{	}
 	
 	//! always define virtual destructor in abstract base class
 	virtual ~TwoPTwoCProblem () {}
 	
+	const bool exsolution;
   protected:
 	TwoPhaseRelations& materialLaw_;
 	Solubility& solu_;

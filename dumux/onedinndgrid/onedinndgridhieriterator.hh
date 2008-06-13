@@ -5,7 +5,8 @@
  * \brief The OneDInNDGridHierarchicIterator class
  */
 
-#include <dune/common/stack.hh>
+//#include <dune/common/stack.hh>
+#include <stack>
 
 namespace Dune {
 
@@ -85,7 +86,7 @@ private:
   //! max level to go down 
   int maxlevel_;
 
-    Stack<StackEntry> elemStack;
+  std::stack<StackEntry> elemStack;
 
 };
 

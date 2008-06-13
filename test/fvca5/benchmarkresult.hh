@@ -169,23 +169,23 @@ struct BenchmarkResult
 			for (IntersectionIterator is = IntersectionIteratorGetter<GridType,LeafTag>::begin(element); is!=endis; ++is)
 			{
 				// get geometry type of face
-				GeometryType gtf = is.intersectionSelfLocal().type();
+				GeometryType gtf = is->intersectionSelfLocal().type();
 			  
 				// local number of facet 
-				int i = is.numberInSelf();
+				int i = is->numberInSelf();
 
 				// global number of face 
 			    int faceIndex = facemapper.template map<1>(element, i);
 
 			    const FieldVector<double,dim>& faceLocal = sfs[i].position();
 				FieldVector<double,dim> faceGlobal = geometry.global(faceLocal);
-				double faceVol = is.intersectionGlobal().volume();
+				double faceVol = is->intersectionGlobal().volume();
 			  
 				// center in face's reference element
 				const FieldVector<double,dim-1>& faceLocalNm1 = ReferenceElements<double,dim-1>::general(gtf).position(0,0);
 				
 				// get normal vector 
-				FieldVector<double,dim> unitOuterNormal = is.unitOuterNormal(faceLocalNm1);
+				FieldVector<double,dim> unitOuterNormal = is->unitOuterNormal(faceLocalNm1);
 				
 				// get the approximate solution on the face
 				double approximateFace = (*solution.pressTrace)[faceIndex];
@@ -218,7 +218,7 @@ struct BenchmarkResult
 				fluxVector[i] = approximateFlux;
 				
 				//if (is.boundary()) {
-				if (!is.neighbor()) {
+				if (!is->neighbor()) {
 					if (fabs(faceGlobal[1]) < 1e-6) {
 						fluy0 += approximateFlux;
 						exactfluy0 += exactFlux;

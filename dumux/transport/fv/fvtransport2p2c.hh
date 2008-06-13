@@ -215,10 +215,10 @@ namespace Dune
 				  is!=endit; ++is)
 			{
 				// local number of facet 
-				int numberInSelf = is.numberInSelf();
+				int numberInSelf = is->numberInSelf();
 
 				// get geometry type of face
-				Dune::GeometryType gtf = is.intersectionSelfLocal().type();
+				Dune::GeometryType gtf = is->intersectionSelfLocal().type();
 				  
 				// center in face's reference element
 				const Dune::FieldVector<ct,dim-1>& 
@@ -226,11 +226,11 @@ namespace Dune
 
 				// center of face inside volume reference element
 				const Dune::FieldVector<ct,dim>& 
-					facelocalDim = Dune::ReferenceElements<ct,dim>::general(gtf).position(is.numberInSelf(),1);
+					facelocalDim = Dune::ReferenceElements<ct,dim>::general(gtf).position(is->numberInSelf(),1);
 					    
 				// get normal vector scaled with volume
 				Dune::FieldVector<ct,dimworld> integrationOuterNormal 
-					= is.integrationOuterNormal(facelocal);
+					= is->integrationOuterNormal(facelocal);
 				integrationOuterNormal 
 					*= Dune::ReferenceElements<ct,dim-1>::general(gtf).volume();
 
@@ -239,10 +239,10 @@ namespace Dune
 				double factor, diffFactor, factorC1;
 
 				// handle interior face
-				if (is.neighbor())
+				if (is->neighbor())
 				{
 					// access neighbor
-					EntityPointer outside = is.outside();
+					EntityPointer outside = is->outside();
 					int indexj = elementmapper.map(*outside);
 					  
 					// compute flux from one side only
@@ -318,7 +318,7 @@ namespace Dune
 					    		+ velocityJI * cn1_J */*fnJ*/ numFlux(1.0-satJ, 1.0-satI, fnJ, fnI)
 					    		- velocityIJ * cn1_I */*fnI;*/ numFlux(1.0-satI, 1.0-satJ, fnI, fnJ); 
 					    
-					    Dune::FieldVector<ct,dimworld> faceglobal = is.intersectionGlobal().global(facelocal);
+					    Dune::FieldVector<ct,dimworld> faceglobal = is->intersectionGlobal().global(facelocal);
 					    if (line1(faceglobal)) flux1 += factorC1 * volume;
 					    if (line2(faceglobal)) flux2 += factorC1 * volume;
 					    
@@ -326,12 +326,12 @@ namespace Dune
 				}
 				  
 				// handle boundary face
-				if (is.boundary()) 
+				if (is->boundary()) 
 				{
 					// cell center in global coordinates
 					Dune::FieldVector<ct,dimworld> global = it->geometry().global(local);
 				    
-					Dune::FieldVector<ct,dim> faceglobal = is.intersectionGlobal().global(facelocal);
+					Dune::FieldVector<ct,dim> faceglobal = is->intersectionGlobal().global(facelocal);
 					
 					// distance vector between barycenters
 					Dune::FieldVector<ct,dimworld> distVec = global - faceglobal;
@@ -542,13 +542,13 @@ namespace Dune
   	  	  for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it); is!=isend; ++is)
   	  		{
   	  		  // local number of facet 
-  	  		  int numberInSelf = is.numberInSelf();
+  	  		  int numberInSelf = is->numberInSelf();
 
   	  		  // handle interior face
-  	  		  if (is.neighbor())
+  	  		  if (is->neighbor())
   	  		    {
   	  		      // access neighbor
-  	  		      EntityPointer outside = is.outside();
+  	  		      EntityPointer outside = is->outside();
   	  		      int indexj = elementmapper.map(*outside);
   	  		      
   	  		      // get saturation value 
@@ -582,10 +582,10 @@ namespace Dune
   	  		    }
   	  		  
   	  		  // handle boundary face
-  	  		  if (is.boundary()) 
+  	  		  if (is->boundary()) 
   	  		  {
   	  		      // get geometry type of face
-  	  		      Dune::GeometryType gtf = is.intersectionSelfLocal().type();
+  	  		      Dune::GeometryType gtf = is->intersectionSelfLocal().type();
   	  		      
   	  		      // center in face's reference element
   	  		      const Dune::FieldVector<ct,dim-1>& 
@@ -593,11 +593,11 @@ namespace Dune
 
   	  			  // center of face inside volume reference element
   	  			  const Dune::FieldVector<ct,dim>& 
-  	  				facelocalDim = Dune::ReferenceElements<ct,dim>::general(gtf).position(is.numberInSelf(),1);
+  	  				facelocalDim = Dune::ReferenceElements<ct,dim>::general(gtf).position(is->numberInSelf(),1);
   	  			  
   	  		      // center of face in global coordinates
   	  		      Dune::FieldVector<ct,dimworld> 
-  	  			  faceglobal = is.intersectionGlobal().global(facelocal);
+  	  			  faceglobal = is->intersectionGlobal().global(facelocal);
   	  			
   	  		      // get saturation value 
   	  		      bool dir;

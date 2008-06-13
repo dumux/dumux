@@ -15,9 +15,10 @@
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/solvers.hh>
+#include <dune/istl/owneroverlapcopy.hh>
 
-#include <dune/disc/operators/p1operator.hh>
-#include <dune/disc/groundwater/p1groundwater.hh>
+//#include <dune/disc/operators/p1operator.hh>
+//#include <dune/disc/groundwater/p1groundwater.hh>
 
 #include <dumux/io/readstarformat.cc>
 #include <dumux/timedisc/timeloop.hh>
@@ -92,7 +93,11 @@ int main(int argc, char** argv)
     int overlap = 1;
     typedef Dune::YaspGrid<dim,dim> GridType;
 
+#if HAVE_MPI
     GridType grid(MPI_COMM_WORLD, length, size, periodic, overlap);
+#else 
+    GridType grid(length, size, periodic, overlap);
+#endif
 
     // create a grid object
 //      typedef Dune::ALUCubeGrid<dim,dim> GridType; 

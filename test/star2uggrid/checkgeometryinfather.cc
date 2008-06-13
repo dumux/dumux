@@ -109,17 +109,6 @@ void checkGeometryInFather(const GridType& grid) {
 //              typename Geometry::ctype,
 //              typename GridType::ctype>::value == true >::yes();
 
-            IsTrue<static_cast<int>(Geometry::dimension)
-              == static_cast<int>(GridType::dimension)>::yes();
-
-            IsTrue<static_cast<int>(Geometry::mydimension)
-              == static_cast<int>(GridType::dimension)>::yes();
-
-            IsTrue<static_cast<int>(Geometry::coorddimension)
-              == static_cast<int>(GridType::dimensionworld)>::yes();
-
-            IsTrue<static_cast<int>(Geometry::dimensionworld)
-              == static_cast<int>(GridType::dimensionworld)>::yes();
 
             // ///////////////////////////////////////////////////////
             //   Check the different methods

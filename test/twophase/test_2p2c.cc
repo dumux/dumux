@@ -18,7 +18,8 @@
 #include "dumux/material/vangenuchtenlaw.hh"
 #include "dumux/material/solubilities.hh"
 #include "dumux/material/properties.hh"
-#include "dumux/material/water_props.hh"
+#include "dumux/material/constrel/constrelwater.hh"
+//#include "dumux/material/water_props.hh"
 
 
 int main(int argc, char** argv) 

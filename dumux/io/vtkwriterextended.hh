@@ -757,9 +757,9 @@ namespace Dune
 	IntersectionIterator endit = IntersectionIteratorGetter<GridImp,LeafTag>::end(*cit);
 	for (IntersectionIterator it = IntersectionIteratorGetter<GridImp,LeafTag>::begin(*cit); it!=endit; ++it)
 	{
-	  int indexi=it.numberInSelf();
-          faceVolume[indexi] = it.intersectionGlobal().volume();
-	  outernormal[indexi]=it.unitOuterNormal(loc);
+	  int indexi=it->numberInSelf();
+          faceVolume[indexi] = it->intersectionGlobal().volume();
+	  outernormal[indexi]=it->unitOuterNormal(loc);
 	}
 
 	Dune::ReferenceCube<DT,n> referencecube;

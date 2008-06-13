@@ -589,9 +589,9 @@ namespace Dune
                 // fill boundary face data:
                 IntersectionIterator endit = e.ileafend();
                 for (IntersectionIterator it = e.ileafbegin(); it != endit; ++it)
-                    if (it.boundary())
+                    if (it->boundary())
                     {
-                        int face = it.numberInSelf();
+                        int face = it->numberInSelf();
                         int nNodesOfFace = referenceElement.size(face, 1, dim);
                         for (int nodeInFace = 0; nodeInFace < nNodesOfFace; nodeInFace++)
                         {
@@ -606,7 +606,7 @@ namespace Dune
                                     boundaryFace[bfIndex].ipLocal = referenceElement.position(nodeInElement, dim)
                                         + referenceElement.position(face, 1);
                                     boundaryFace[bfIndex].ipLocal *= 0.5;
-                                    boundaryFace[bfIndex].area = 0.5*it.intersectionGlobal().volume();
+                                    boundaryFace[bfIndex].area = 0.5*it->intersectionGlobal().volume();
                                     break;
                                 case 3:
                                     int leftEdge;
