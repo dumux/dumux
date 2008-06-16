@@ -21,7 +21,7 @@
 #include <Stupid/Material/ParkerLenhard.hh>
 #include <Stupid/Material/PlayType.hh>
 
-#include <Stupid/Material/VanGenuchten.hh>
+#include <Stupid/Material/RegularizedVanGenuchten.hh>
 #include <Stupid/Material/BrooksCorey.hh>
 
 #include <Stupid/Material/TwophaseSat.hh>
@@ -164,8 +164,6 @@ void printCurve(const std::string &title,
 {
     typedef typename HystModel::Scalar Scalar;
 
-    cerr << "curve: " << title << "\n";
-
     Scalar inc = (a1 - a0)/n;
     int i = 0;
     for (; i <= n; ++i) {
@@ -195,6 +193,7 @@ void printCurve(const std::string &title,
 
 //        cout << HystModel::SwToSwapp(state, absSat) << "  " << HystModel::krn(state, absSat) << endl;
     }
+    cout << "snap\n";
 }
 
 template <class HystModel, class State>
@@ -205,18 +204,18 @@ void printCycle(State &state, int n)
     HystModel::reset(state);
     printCurve<HystModel, State>("mdc", state, 1, 0, n);
 
-/*    
-//    printCurve<HystModel, State>("imbib-18->75", state, 0.187665, 0.753720, n);
-    printCurve<HystModel, State>("imbib-54->75", state, 0.5465, 0.753720, n);
-    printCurve<HystModel, State>("drain-75->25", state, 0.753720, 0.258657, n);
-    printCurve<HystModel, State>("imbib-25->60", state, 0.258657, 0.60, n);
-*/
-
+#if 0
+    typedef typename HystModel::Scalar Scalar;
+    for (Scalar bla = 1.0; bla > 0.0; bla -= 0.01) {
+        printCurve<HystModel, State>((boost::format("curve-%02.0f")%(bla*100)).str(), state, bla, 1.0, 100);
+    }
+#else
     printCurve<HystModel, State>("imbib-50->100", state, 0.5, 1.0, n);
-    printCurve<HystModel, State>("drain-80->0", state,   0.8, 0.0, n);
+    printCurve<HystModel, State>("drain-80->0", state,   0.80, 0.0, n);
     printCurve<HystModel, State>("imbib-60->100", state, 0.6, 1.0, n);
     printCurve<HystModel, State>("drain-75->0", state,   0.75, 0.0, n);
     printCurve<HystModel, State>("imbib-30->100", state, 0.30, 1.0, n);
+#endif
 }
 
 void printVanGenuchtenMain()
@@ -224,8 +223,8 @@ void printVanGenuchtenMain()
     ////////////////////
     // Some type definitions
     ////////////////////
-    typedef VanGenuchtenState<Scalar> VanGenuchtenState;
-    typedef VanGenuchten<VanGenuchtenState>  VanGenuchten;
+    typedef RegularizedVanGenuchtenState<Scalar> VanGenuchtenState;
+    typedef RegularizedVanGenuchten<VanGenuchtenState>  VanGenuchten;
 
     typedef MyGlobalState<VanGenuchtenState> PLVGGlobalState;
     typedef MyPLState<PLVGGlobalState>         PLVGState;

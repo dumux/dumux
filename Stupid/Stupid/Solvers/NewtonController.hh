@@ -52,15 +52,19 @@ namespace Stupid
         typedef typename ModelNewtonTraits::OperatorAssembler     OperatorAssembler;
         typedef typename OperatorAssembler::RepresentationType    OpAsmRep;
 
-        NewtonControllerBase(Scalar tolerance = 1e-5, // maximum tolerated defect
-                             int targetSteps = 10,
-                             int maxSteps = 20)
+        NewtonControllerBase(Scalar tolerance, // maximum tolerated defect
+                             int targetSteps,
+                             int maxSteps)
             {
                 assert(maxSteps > targetSteps + 3);
                 _numSteps = 0;
                 _tolerance = tolerance;
                 _targetSteps = targetSteps;
                 _maxSteps = maxSteps;
+
+                _curPhysicalness = 0;
+                _maxPhysicalness = 0;
+                _defect = 0;
             };
 
         //! Returns true iff another iteration should be done.
@@ -128,6 +132,7 @@ namespace Stupid
                 _probationCount = 0;
                 _maxPhysicalness = 0;
                 _oneByMagnitude = 1.0/std::max((*u).two_norm(), 1e-5);
+                _defect = 1e100;
             }
 
         //! indidicates the beginning of a newton iteration
@@ -207,14 +212,26 @@ namespace Stupid
         //! Called when the newton method broke down.
         void newtonFail()
             { 
-                _defect = 1e100; _numSteps = _maxSteps; 
+                _defect = 1e100; _numSteps = _targetSteps*2; 
             }
 
         //! Suggest a new time stepsize based on the number of newton
         //! iterations required.
         Scalar suggestTimeStepSize(Scalar oldTimeStep) const
             {
-                return oldTimeStep*_targetSteps / _numSteps;
+                // be agressive reducing the timestep size but
+                // conservative when increasing it. the rationale is
+                // that we want to avoid failing in the next newton
+                // iteration which would require another linerization
+                // of the problem.
+                if (_numSteps > _targetSteps) {
+                    Scalar percent = ((Scalar) _numSteps - _targetSteps)/_targetSteps;
+                    return oldTimeStep/(1 + percent);
+                }
+                else {
+                    Scalar percent = ((Scalar) _targetSteps - _numSteps)/_targetSteps;
+                    return oldTimeStep*(1 + percent/1.2);
+                }
             }
         
 

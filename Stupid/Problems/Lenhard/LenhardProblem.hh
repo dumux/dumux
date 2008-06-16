@@ -411,7 +411,7 @@ namespace Lenhard
                     // for 10 minutes
                     _curHydraulicHead -= 0.05;
                     _timeManager.startNextEpisode(10*60);
-                    _timeManager.setStepSize(60);
+                    _timeManager.setStepSize(1);
                     return;
                 };
                 i += k;
@@ -419,7 +419,7 @@ namespace Lenhard
                 if (epiIndex == i) {
                     // wait until we reach simulation time t=53 hours
                     _timeManager.startNextEpisode(53*60*60 - _timeManager.time());
-                    _timeManager.setStepSize(60);
+                    _timeManager.setStepSize(1);
                     return;
                 }
                 ++i;
@@ -429,14 +429,14 @@ namespace Lenhard
                     // for 10 minutes
                     _curHydraulicHead += 0.05;
                     _timeManager.startNextEpisode(10*60);
-                    _timeManager.setStepSize(60);
+                    _timeManager.setStepSize(1);
                     return;
                 }
                 i += k;
                 
                 if (epiIndex == i) {
                     _timeManager.startNextEpisode(20*60*60);
-                    _timeManager.setStepSize(60);
+                    _timeManager.setStepSize(1);
                     return;
                 }
                 
@@ -452,8 +452,8 @@ namespace Lenhard
                 if (epiIndex == i) {
                     // initial episode, we start at t=-3hours
                     _curHydraulicHead = 0.72;
-                    _timeManager.setTime(-3*60*60, 0);
-                    _timeManager.startNextEpisode(3*60*60);
+                    _timeManager.setTime(-10*60*60, 0);
+                    _timeManager.startNextEpisode(10*60*60);
                     _timeManager.setStepSize(_initialTimeStepSize);
                     return;
                 }
@@ -691,7 +691,7 @@ namespace Lenhard
                         std::cout << boost::format("snip: pC_pos=%.02f\n")%points[curI];
                         std::cout << 1.0 - Sn << " " << ParkerLenhard::pC(vs, 1.0 - Sn) << "\n"; 
                         std::cout << "snap\n";
-
+                        
                         ++curI;
                     }
                 }

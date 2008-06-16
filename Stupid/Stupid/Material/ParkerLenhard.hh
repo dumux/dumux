@@ -25,10 +25,16 @@
 #include <Stupid/Material/VanGenuchten.hh>
 #include <Stupid/Material/ParkerLenhardState.hh>
 
+#include <Stupid/Auxilary/Spline.hh>
+#include <Stupid/Auxilary/ExpSpline.hh>
+
 #include <math.h>
 #include <assert.h>
 
 #include <algorithm>
+
+#include <iostream>
+#include <boost/format.hpp>
 
 //#define PL_STRICT_ASSERTS
 
@@ -57,6 +63,8 @@ namespace Stupid
     {
     public:
         typedef ScalarT Scalar;
+        typedef Stupid::ExpSpline<Scalar> Spline;
+//        typedef Stupid::Spline<Scalar> Spline;
 
         /*!
          * \brief Constructs main imbibtion curve.
@@ -82,6 +90,8 @@ namespace Stupid
             _Sw_app = 1.0;
             _SwMic = 1.0;
             _SwMdc = 1.0;
+            
+            _spline = NULL;
         }
 
     protected:
@@ -102,6 +112,8 @@ namespace Stupid
             _Sw_app = Sw_app;
             _SwMic = SwMic;
             _SwMdc = SwMdc;
+           
+            _spline = NULL;
         }
 
     public:
@@ -112,10 +124,11 @@ namespace Stupid
          */
         ~PLScanningCurve()
         {
-                if (_loopNum == 0)
-                    delete _prev;
-                if (_loopNum >= 0)
-                    delete _next;
+            if (_loopNum == 0)
+                delete _prev;
+            if (_loopNum >= 0)
+                delete _next;
+            delete _spline;
         }
 
         /*!
@@ -161,15 +174,28 @@ namespace Stupid
             }
 
         /*!
-         * \brief Erase all curves with higher loop number than the
-         *        this one.
+         * \brief Set the spline used for regularization.
          */
-        void eraseHigher()
+        void setSpline(Spline *spline)
             {
-                delete _next;
-                _next = NULL;
-            }
+                delete _spline;
+                _spline = spline;
+            };
         
+        /*!
+         * \brief Returns true if the spline shall be used for an
+         *        absolute saturation.
+         */
+        bool useSpline(Scalar Sw)
+            { return _spline && _spline->applies(Sw); }
+        
+        /*!
+         * \brief Returns the spline to be used for regularization
+         *        of the current reversal point.
+         */
+        Spline *spline() 
+            { return _spline; }
+
         /*!
          * \brief Returns true iff the given effective saturation
          *        Swei is within the scope of the curve, i.e.
@@ -274,6 +300,8 @@ namespace Stupid
 
         Scalar _SwMdc;
         Scalar _SwMic;
+
+        Spline *_spline;
     };
 
     /*!
@@ -291,6 +319,8 @@ namespace Stupid
 
         typedef typename State::Scalar Scalar;
         typedef Stupid::PLScanningCurve<Scalar> ScanningCurve;
+        typedef typename ScanningCurve::Spline Spline;
+        
         typedef Stupid::TwophaseSat<State> TwophaseSat;
 
         /*!
@@ -307,6 +337,9 @@ namespace Stupid
             state.setCsc(state.mdc());
             state.setPisc(NULL);
             state.setSnrei(0.0);
+
+//            _addSpline(state, state.mdc()->prev());
+//            _addSpline(state, state.mdc());
         };
 
         /*!
@@ -343,9 +376,11 @@ namespace Stupid
             }
 
             Scalar Swe = TwophaseSat::Swe(state, Sw);
-            if (state.pisc() == NULL && Swe > 0.97) {
+//            if (Swe > 1 - state.Snre()/5) {
+            if (_Snrei(state, Swe) < state.Snre()/6 + 1e-4) {
                 // for numeric reasons don't start a PISC if the
-                // wetting saturation is still higher than 97%
+                // non-wetting phase saturation is lower than a third
+                // of it's residual saturation.
                 return;
             }
             ASSERT_RANGE(Swe, 0, 1);
@@ -354,41 +389,38 @@ namespace Stupid
             // given effective saturation
             ScanningCurve *curve = _findScanningCurve_Swe(state, Swe);
             
-            // make sure that the distance between two consecutive
-            // curves is large enough in order to avoid too steep
-            // capillary pressure curves
-            if (fabs(curve->Swe() - Swe) < 10e-2)
-            {
-                if (curve != state.mdc()) {
-                    curve->eraseHigher();
-                }
-                return;
-            }
-            else if (curve != state.mdc() && 
-                     fabs(curve->prev()->Swe() - Swe) < 10e-2)
+            // check whether the new reversal point is still in the
+            // range where we use a spline instead of the actual 
+            // material law.
+            if (curve->useSpline(Sw))
             {
                 return;
             }
-            
+            if (fabs(curve->Swe() - curve->prev()->Swe()) < 10e-2 && curve != state.mdc())
+                return;
 
             Scalar Sw_app = _Swapp(state, Swe);
-
+                        
             // calculate the apparent saturation on the MIC and MDC
             // which yield the same capillary pressure as the
             // Sw at the current scanning curve
             Scalar pc = pC(state, Sw);
             Scalar Sw_mic = CapPressure::Sw(state.micParams(), pc);
             Scalar Sw_mdc = CapPressure::Sw(state.mdcParams(), pc);
+
             curve->setNext(Swe, pc, Sw_app,
                            Sw_mic, Sw_mdc);
-
+            
             state.setCsc(curve);
 
             // if we're back on the MDC, we also have a new PISC!
             if (state.csc() == state.mdc()) {
                 state.setPisc(state.mdc()->next());
-                _calcSnrei(state, Swe);
+                state.setSnrei(_Snrei(state, Swe));
             }
+            
+            // add a spline to the newly created reversal point
+            _addSpline(state, curve->next());
         }
 
 
@@ -411,6 +443,15 @@ namespace Stupid
 
             // calculate the current apparent saturation
             ScanningCurve *sc = _findScanningCurve_Swe(state, Swe);
+
+            // check whether we are too close to the reveersal point
+            // that we a spline to get a C1 continous function
+            if (sc == state.mdc() && sc->prev()->useSpline(Sw))
+                return sc->prev()->spline()->eval(Sw);
+            if (sc->useSpline(Sw))
+                return sc->spline()->eval(Sw);
+            
+            // calculate the apparant saturation
             Scalar Sw_app = _Swapp(state, Swe);
 
             // if the apparent saturation exceeds the 'legal' limits,
@@ -496,6 +537,9 @@ namespace Stupid
 
             // calculate the current apparent saturation
             ScanningCurve *sc = _findScanningCurve_Swe(state, Swe);
+            if (sc->useSpline(Sw))
+                return sc->spline()->evalDerivative(Sw);
+            
             Scalar Sw_app = _Swapp(state, Swe);
             ASSERT_RANGE(Sw_app, 0, 1);
 
@@ -604,12 +648,11 @@ namespace Stupid
             // to invert the krw-Sw realtion effectivly.)
             Scalar Swe = TwophaseSat::Swe(state, Sw);
 
-            return CapPressure::krw(state.mdcParams(), Swe);
-            
-#if 0 // TODO: saturation-permebility hysteresis
             Scalar Sw_app = _Swapp(state, Swe);
             ASSERT_RANGE(Sw_app, 0, 1);
-
+            return CapPressure::krw(state.mdcParams(), Sw_app);
+            
+#if 0 // TODO: saturation-permebility hysteresis
             if (state.pisc() && Swe > state.csc()->Swe()) {
                 return CapPressure::krw(state.micParams(), Sw_app);
             }
@@ -635,12 +678,11 @@ namespace Stupid
             // to invert the krw-Sw realtion effectivly.)
             Scalar Swe = TwophaseSat::Swe(state, Sw);
 
-            return CapPressure::krn(state.mdcParams(), Swe);
-
-#if 0 // TODO: saturation-permebility hysteresis
             Scalar Sw_app = _Swapp(state, Swe);
             ASSERT_RANGE(Sw_app, 0, 1);
+            return CapPressure::krn(state.mdcParams(), Sw_app);
 
+#if 0 // TODO: saturation-permebility hysteresis
             if (state.pisc() && Swe > state.csc()->Swe()) {
                 return CapPressure::krn(state.micParams(), Sw_app);
             }
@@ -706,21 +748,34 @@ namespace Stupid
         }
 
         // calculate and save _Snrei
-        static void _calcSnrei(State &state, Scalar Swei)
+        static Scalar _Snrei(State &state, Scalar Swei)
         {
+            if (Swei > 1 || Swei < 0)
+                return state.Snrei();
+            
+            Scalar Snrei;
             if (state.Snre() == 0.0) {
-                state.setSnrei(0.0);
+                return 0.0;
             }
             else {
                 // use Land's law
                 Scalar R = 1.0/state.Snre() - 1;
-                state.setSnrei((1 - Swei)/(1 + R*(1 - Swei)));
+                Snrei = (1 - Swei)/(1 + R*(1 - Swei));
             }
 
             // if the effective saturation is smaller or equal 100%,
             // the current trapped saturation must be smaller than the
             // residual saturation
-            assert(Swei > 1 || state.Snrei() <= state.Snre());
+            assert(state.Snrei() <= state.Snre());
+                       
+            // we need to make sure that there is sufficent "distance"
+            // between Swei and 1-Snei in order not to get very steep
+            // slopes which cause terrible nummeric headaches
+            if (fabs((1 - Snrei) - Swei) < state.Snre()/4) {
+                Snrei = std::max((Scalar) 0.0, 1 - (Swei + state.Snre()/4));
+            }
+
+            return Snrei;
         };
 
         // returns the trapped effective saturation at j
@@ -786,7 +841,66 @@ namespace Stupid
                 return (1 - state.Snrei() - state.pisc()->Swe())
                      / (1 - state.pisc()->Swe());
             }
+
+        // calculate a spline for the reversal point of the curve 
+        // in order to get a C1 steady function
+        static void _addSpline(State &state, ScanningCurve *curve)
+            {
+                Scalar Sw = TwophaseSat::Sw(state, curve->Swe());
+                if (Sw < 0.20)
+                    return;
+                Scalar x1;
+                Scalar x2;
+                if (!curve->prev()) {
+                    x1 = 0.0;
+                    x2 = 8e-2;
+                }
+                else {
+                    Scalar deltaSwe = std::min(8e-2,
+                                               fabs(curve->Swe() - curve->prev()->Swe())/3);
+                    if (curve->isImbib()) {
+                        x1 = Sw;
+                        Scalar SweTmp = TwophaseSat::Swe(state, Sw + deltaSwe);
+                        Scalar bla = (1.0 - state.Snrei()) - curve->Swe();
+                        SweTmp = std::min(SweTmp, curve->Swe() + bla/2);
+                        SweTmp = std::min(SweTmp, 1.0 - state.Snrei());
+                        x2 = TwophaseSat::Sw(state, SweTmp);
+                    }
+                    else {
+                        Scalar SweTmp = TwophaseSat::Swe(state, Sw - deltaSwe);
+//                        SweTmp = std::max(SweTmp, curve->prev()->Swe());
+                        x1 = TwophaseSat::Sw(state, SweTmp);
+                        x2 = Sw;
+                    }
+                }
+                
+                if (fabs(x2 - x1) < 2e-2 ||
+                    curve->prev()->useSpline(x1) ||
+                    curve->prev()->useSpline(x2))
+                    return;
+
+                Scalar y1 = pC(state, x1);
+                Scalar y2 = pC(state, x2);
+                Scalar m1 = dpC_dSw(state, x1);
+                Scalar m2 = dpC_dSw(state, x2);
+                Spline *spline = new Spline(x1, x2, y1, y2, m1, m2);
+                curve->setSpline(spline);
+
+                /*
+                if (spline->p() > 2000) {
+                    std::cerr << boost::format("BLA: p: %f, x1: %f, x2: %f, y1: %f, y2: %f, m1: %f, m2: %f\n")
+                        %spline->p()%x1%x2%y1%y2%m1%m2;
+
+                    while (curve) {
+                        std::cerr << "loopnum:" << curve->loopNum() << ", Sw:" << TwophaseSat::Sw(state, curve->Swe()) << "\n";
+                        curve = curve->prev();
+                    }
+//                    exit(1);
+                };
+                */                
+            };
     };
+
 
 #undef ASSERT_RANGE
 }; // namespace Stupid

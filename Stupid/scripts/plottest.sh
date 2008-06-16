@@ -2,7 +2,7 @@
 
 SNIPSNAP=`dirname $0`/snipsnap.py
 
-rm stream*_*.csv
+rm *stream*_*.csv
 cat test.csv | $SNIPSNAP
 
 BLA=""

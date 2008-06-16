@@ -49,8 +49,9 @@ namespace Lens {
 
         LensNewtonController(Simulation &sim,
                              Scalar tolerance = 1e-5,
+                             int targetSteps = 8,
                              int maxSteps = 12)
-            : ParentType(tolerance, maxSteps), _sim(sim)
+            : ParentType(tolerance, targetSteps, maxSteps), _sim(sim)
             {};
 
         //! Indicates that the newton method is started.

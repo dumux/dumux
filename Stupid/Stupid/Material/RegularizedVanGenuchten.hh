@@ -150,11 +150,19 @@ namespace Stupid
         {
             Api::require<Api::RegularizedVanGenuchtenParams>(state);
 
-            if (Swe < state.vgMinSw()) {
-                Swe = state.vgMinSw();
+            // derivative of the regualarization
+            if (Swe <= _SweLow) {
+                // calculate the slope of the straight line used in pC()
+                Scalar pC_SweLow = VanGenuchten::pC(state, _SweLow);
+                Scalar m = (state.vgMaxPC() - pC_SweLow)
+                         / (state.vgMinSw() - _SweLow);
+                return m;
             }
-            else if (Swe > 1 - state.vgMinSw()) {
-                Swe = 1 - state.vgMinSw();
+            else if (Swe >= _SweHigh) {
+                // calculate the slope of the straight line used in pC()
+                Scalar pC_SweHigh = VanGenuchten::pC(state, _SweHigh);
+                Scalar m = (pC_SweHigh - 0)/(_SweHigh - 1.0);
+                return m;
             }
 
             return VanGenuchten::dpC_dSw(state, Swe);
@@ -168,14 +176,29 @@ namespace Stupid
         {
             Api::require<Api::RegularizedVanGenuchtenParams>(state);
 
-            if (pC > state.vgMaxPC() || pC < 0) {
-                // We return constant pC for Swe < state.vgMinSw() and
-                // Swe > 1
-                return 0;
-            }
+            // calculate the saturation which corrosponds to the
+            // saturation in the non-regularized verision of van
+            // Genuchten's law
+            Scalar Swe;
+            if (pC < 0)
+                Swe = 1.5; // make sure we regularize below
+            else
+                Swe = VanGenuchten::Sw(state, pC);
 
-            if (pC < state.vgMinPC())
-                pC = state.vgMinPC();
+            // derivative of the regularization
+            if (Swe <= _SweLow) {
+                // same as in dpC_dSw() but inverted
+                Scalar pC_SweLow = VanGenuchten::pC(state, _SweLow);
+                Scalar m = (state.vgMaxPC() - pC_SweLow)
+                         / (state.vgMinSw() - _SweLow);
+                return 1/m;
+            }
+            else if (Swe >= _SweHigh) {
+                // same as in dpC_dSw() but inverted
+                Scalar pC_SweHigh = VanGenuchten::pC(state, _SweHigh);
+                Scalar m = (pC_SweHigh - 0)/(_SweHigh - 1.0);
+                return 1/m;
+            }
 
             return VanGenuchten::dpC_dSw(state, pC);
         }
@@ -224,9 +247,9 @@ namespace Stupid
     };
 
     template <class StateT>
-    const typename StateT::Scalar RegularizedVanGenuchten<StateT>::_SweLow(0.05);
+    const typename StateT::Scalar RegularizedVanGenuchten<StateT>::_SweLow(0.03);
     template <class StateT>
-    const typename StateT::Scalar RegularizedVanGenuchten<StateT>::_SweHigh(0.95);
+    const typename StateT::Scalar RegularizedVanGenuchten<StateT>::_SweHigh(0.97);
 }
 
 #endif

@@ -36,6 +36,6 @@
 
 // use parker-lenhard hysteresis for the simulation. if undefined only
 // van-genuchten without hysteresis is used.
-//#define USE_HYSTERESIS
+#define USE_HYSTERESIS
 
 #endif

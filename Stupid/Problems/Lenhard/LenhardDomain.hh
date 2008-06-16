@@ -16,6 +16,13 @@
  * \file
  * \brief Manages the domain for the lenhard problem. The domain consists of a
  *        grid and the states for the given entities.
+ *
+ * This has been modeled to match as closely as possible to the one
+ * described at:
+ *
+ * Sheta, Hussam: "Simulation von Mehrphasenvorgaengen in poroesen
+ *     Medien unter Einbeziehung von Hystereseeffekten", PhD theses,
+ *     Braunschweig 1999, pp. 112
  */
 #ifndef STUPID_LENHARD_DOMAIN_HH
 #define STUPID_LENHARD_DOMAIN_HH
@@ -31,6 +38,8 @@
 #include <dumux/material/properties.hh>
 
 #include <dune/grid/sgrid.hh>
+#include <dune/grid/onedgrid.hh>
+#include <dune/grid/yaspgrid.hh>
 //#include <dumux/onedinndgrid/onedinndgrid.hh>
 //#include <dumux/onedinndgrid/onedinndgrid.cc>
 
@@ -39,8 +48,8 @@ namespace Stupid
 namespace Lenhard
 {
     typedef Dune::SGrid<1, 1> LenhardGrid;
-//  typedef Dune::YaspGrid<1, 1> LenhardGrid;
-//  typedef Dune::OneDInNDGrid<1> LenhardGrid;
+//    typedef Dune::YaspGrid<1, 1> LenhardGrid;
+//    typedef Dune::OneDGrid       LenhardGrid;
 
     /*!
      * \brief The domain for the Pw-Sn lenhard problem
@@ -359,7 +368,7 @@ namespace Lenhard
                 // column was 72 cm high, but we need some additional
                 // space so that the boundary condition at the upper
                 // boundary doesn't destroy the experiment
-                _gridUpperRight[0] = 1.0;
+                _gridUpperRight[0] = 0.75;
 
 
                 // the epsilon constant
@@ -367,7 +376,7 @@ namespace Lenhard
 
                 // create the grid
                 Dune::FieldVector<int, GridDim> cellRes;
-                cellRes[0] = 30;
+                cellRes[0] = 150;
 
                 Grid *grid = new Grid(cellRes,
                                       _gridLowerLeft,

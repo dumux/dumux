@@ -43,10 +43,10 @@ rm -f stream*_*.csv
 cat $SIMOUTPUT | $SNIPSNAP > /dev/null
 
 echo "Generating SVG files.."
-plotAtPos "exp1_67cm.svg" "Experiment I, pos=67cm" "$EXPDATADIR/67cm_exp1.csv" "stream_pos=0.67.csv"
-plotAtPos "exp1_57cm.svg" "Experiment I, pos=57cm" "$EXPDATADIR/57cm_exp1.csv" "stream_pos=0.57.csv"
-plotAtPos "exp1_47cm.svg" "Experiment I, pos=47cm" "$EXPDATADIR/47cm_exp1.csv" "stream_pos=0.47.csv"
-plotAtPos "exp1_37cm.svg" "Experiment I, pos=37cm" "$EXPDATADIR/37cm_exp1.csv" "stream_pos=0.37.csv"
-plotAtPos "exp1_27cm.svg" "Experiment I, pos=27cm" "$EXPDATADIR/27cm_exp1.csv" "stream_pos=0.27.csv"
+plotAtPos "exp1_67cm.svg" "Experiment I, pos=67cm" "$EXPDATADIR/67cm_exp1.csv" *"stream_pos=0.67.csv"
+plotAtPos "exp1_57cm.svg" "Experiment I, pos=57cm" "$EXPDATADIR/57cm_exp1.csv" *"stream_pos=0.57.csv"
+plotAtPos "exp1_47cm.svg" "Experiment I, pos=47cm" "$EXPDATADIR/47cm_exp1.csv" *"stream_pos=0.47.csv"
+plotAtPos "exp1_37cm.svg" "Experiment I, pos=37cm" "$EXPDATADIR/37cm_exp1.csv" *"stream_pos=0.37.csv"
+plotAtPos "exp1_27cm.svg" "Experiment I, pos=27cm" "$EXPDATADIR/27cm_exp1.csv" *"stream_pos=0.27.csv"
 
 rm *.csv

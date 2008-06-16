@@ -71,7 +71,7 @@ namespace Api
 
         RegularizedVanGenuchtenState(Scalar vgAlpha,
                                      Scalar vgN,
-                                     Scalar minSw = 0.02)
+                                     Scalar minSw = 0.01)
             {
                 setVgAlpha(vgAlpha);
                 setVgN(vgN);

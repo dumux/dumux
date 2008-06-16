@@ -42,6 +42,8 @@ make $SIMNAME
 
 echo "Separating output.."
 rm -f stream*_*.csv
+rm exp2_*.svg
+rm *stream_*.csv
 cat $SIMOUTPUT | $SNIPSNAP > /dev/null
 
 echo "Generating SVG files.."
@@ -49,19 +51,18 @@ XRANGE="set xrange[0:10.0]"
 YRANGE="set yrange[0:1]"
 XLABEL="Time [h]"
 YLABEL="Water saturation"
-plotAtPos "exp2_70cm.svg" "Experiment II, pos=70cm" "$EXPDATADIR/70cm_exp2.csv" *stream_pos=0.70.csv
-plotAtPos "exp2_60cm.svg" "Experiment II, pos=60cm" "$EXPDATADIR/60cm_exp2.csv" *stream_pos=0.60.csv
-plotAtPos "exp2_50cm.svg" "Experiment II, pos=50cm" "$EXPDATADIR/50cm_exp2.csv" *stream_pos=0.50.csv
-plotAtPos "exp2_40cm.svg" "Experiment II, pos=40cm" "$EXPDATADIR/40cm_exp2.csv" *stream_pos=0.40.csv
-plotAtPos "exp2_30cm.svg" "Experiment II, pos=30cm" "$EXPDATADIR/30cm_exp2.csv" *stream_pos=0.30.csv
+plotAtPos "exp2_70cm.svg" "Experiment II, pos=70cm" "$EXPDATADIR/70cm_exp2.csv" *"stream_pos=0.70.csv"
+plotAtPos "exp2_60cm.svg" "Experiment II, pos=60cm" "$EXPDATADIR/60cm_exp2.csv" *"stream_pos=0.60.csv"
+plotAtPos "exp2_50cm.svg" "Experiment II, pos=50cm" "$EXPDATADIR/50cm_exp2.csv" *"stream_pos=0.50.csv"
+plotAtPos "exp2_40cm.svg" "Experiment II, pos=40cm" "$EXPDATADIR/40cm_exp2.csv" *"stream_pos=0.40.csv"
+plotAtPos "exp2_30cm.svg" "Experiment II, pos=30cm" "$EXPDATADIR/30cm_exp2.csv" *"stream_pos=0.30.csv"
 
 XRANGE="set xrange[0:1.0]"
 YRANGE=""
 XLABEL="Water saturation"
 YLABEL="Capillary pressure [Pa]"
-plotAtPos "exp2_pC_70cm.svg" "Experiment II, pC at 70cm" "$EXPDATADIR/pC_70cm_exp2.csv" *stream_pC_pos=0.70.csv 
-plotAtPos "exp2_pC_60cm.svg" "Experiment II, pC at 60cm" "$EXPDATADIR/pC_60cm_exp2.csv" *stream_pC_pos=0.60.csv 
-plotAtPos "exp2_pC_50cm.svg" "Experiment II, pC at 50cm" "$EXPDATADIR/pC_50cm_exp2.csv" *stream_pC_pos=0.50.csv 
-plotAtPos "exp2_pC_40cm.svg" "Experiment II, pC at 40cm" "$EXPDATADIR/pC_40cm_exp2.csv" *stream_pC_pos=0.40.csv
+plotAtPos "exp2_pC_70cm.svg" "Experiment II, pC at 70cm" "$EXPDATADIR/pC_70cm_exp2.csv" *"stream_pC_pos=0.70.csv" 
+plotAtPos "exp2_pC_60cm.svg" "Experiment II, pC at 60cm" "$EXPDATADIR/pC_60cm_exp2.csv" *"stream_pC_pos=0.60.csv" 
+plotAtPos "exp2_pC_50cm.svg" "Experiment II, pC at 50cm" "$EXPDATADIR/pC_50cm_exp2.csv" *"stream_pC_pos=0.50.csv" 
+plotAtPos "exp2_pC_40cm.svg" "Experiment II, pC at 40cm" "$EXPDATADIR/pC_40cm_exp2.csv" *"stream_pC_pos=0.40.csv"
 
-rm *.csv

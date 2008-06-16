@@ -46,8 +46,8 @@ namespace Stupid {
         typedef typename ParentType::OperatorAssembler OperatorAssembler;
 
         PwSnNewtonController(Scalar tolerance = 1e-5, 
-                             int targetSteps = 10,
-                             int maxSteps = 20)
+                             int targetSteps = 8,
+                             int maxSteps = 12)
             : ParentType(tolerance, targetSteps, maxSteps)
             {};
 

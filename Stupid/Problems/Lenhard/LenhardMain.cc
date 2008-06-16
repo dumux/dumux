@@ -15,6 +15,13 @@
 /*!
  * \file
  * \brief Solves the "lenhard problem" using a fully coupled Pw-Sn formulation.
+ *
+ * This has been modeled to match as closely as possible to the one
+ * described at:
+ *
+ * Sheta, Hussam: "Simulation von Mehrphasenvorgaengen in poroesen
+ *     Medien unter Einbeziehung von Hystereseeffekten", PhD theses,
+ *     Braunschweig 1999, pp. 112
  */
 
 #include "StupidConfig.hh"

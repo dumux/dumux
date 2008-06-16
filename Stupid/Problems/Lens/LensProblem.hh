@@ -80,8 +80,7 @@ namespace Lens
         typedef typename BoxTraits::UnknownsVector                UnknownsVector;
         typedef typename BoxTraits::BoundaryTypeVector            BoundaryTypeVector;
 
-//        typedef typename ProblemTraits::ParkerLenhard                ParkerLenhard;
-        typedef int                ParkerLenhard;
+        typedef typename MaterialTraits::ParkerLenhard            ParkerLenhard;
 
         // episode control stuff
         enum Episode {
