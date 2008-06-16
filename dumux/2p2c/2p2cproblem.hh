@@ -69,16 +69,27 @@ namespace Dune
 	  @param[in]  x    position in global coordinates
 	  \return     boundary condition type given by enum in this class
 	 */
-	virtual FieldVector<BoundaryConditions::Flags, m> bctype (const FieldVector<DT,dim>& x, const Entity& e, 
-					const IntersectionIterator& intersectionIt, 
-					   const FieldVector<DT,dim>& xi) const = 0;
+	//	virtual FieldVector<BoundaryConditions::Flags, m> bctype (const FieldVector<DT,n>& x, const Entity& e, 
+	//			const IntersectionIterator& intersectionIt, 
+	//			const FieldVector<DT,n>& xi) const = 0;
 
+	virtual FieldVector<BoundaryConditions::Flags, m>bctype(
+			const FieldVector<DT,dim>& x, const Entity& e,
+			const IntersectionIterator& intersectionIt,
+			const FieldVector<DT,dim>& xi) const = 0;
+
+	//! returns index of the primary variable corresponding to the dirichlet boundary condition at the given global coordinate
+		/*! returns index of the primary variable corresponding to the dirichlet boundary condition at the given global coordinate
+		 @param[in]  x    position in global coordinates
+		 \return     index of the primary variable
+		 */
+	
 	virtual void dirichletIndex(const FieldVector<DT,dim>& x, const Entity& e,
 			const IntersectionIterator& intersectionIt,
-			const FieldVector<DT,dim>& xi, FieldVector<int,m>& dirichletIdx) const 
+			const FieldVector<DT,dim>& xi, FieldVector<int,m>& dirichletIndex) const 
 	{
 		for (int i = 0; i < m; i++)
-			dirichletIdx[i]=i;
+			dirichletIndex[i]=i;
 		return;
 	}
 
@@ -105,30 +116,24 @@ namespace Dune
 	  @param[in]  x    position in global coordinates
 	  \return     boundary condition value
 	 */
-	virtual FieldVector<RT,m> initial (const FieldVector<DT,dim>& x, const Entity& e, 
-				  const FieldVector<DT,dim>& xi) const = 0;
-	  
-	virtual double porosity(const FieldVector<DT,dim>& x, const Entity& e, 
-			  const FieldVector<DT,dim>& xi) const = 0;
-	
-	virtual FieldVector<RT,dim> gravity () const = 0;
+	virtual FieldVector<RT,m> initial(const FieldVector<DT,dim>& x,
+			const Entity& e, const FieldVector<DT,dim>& xi) const = 0;
+
+	virtual double porosity(const FieldVector<DT,dim>& x, const Entity& e,
+			const FieldVector<DT,dim>& xi) const = 0;
+
+	virtual FieldVector<RT,dim> gravity() const = 0;
+
+	virtual FieldVector<RT,4> materialLawParameters(const FieldVector<DT,dim>& x,
+			const Entity& e, const FieldVector<DT,dim>& xi) const = 0;
 
 	virtual double depthBOR () const = 0;
-	
-	virtual FieldVector<RT,4> materialLawParameters (const FieldVector<DT,dim>& x, const Entity& e, 
-			  const FieldVector<DT,dim>& xi) const = 0;
-	
+		
 	TwoPhaseRelations& materialLaw ()  
 	{
 		return materialLaw_;
 	}
 
-	Solubility& solu ()
-	{
-		return solu_;
-	}
-	
-	
 	//element-wise return of the values of an Exact solution
 	virtual RT uExOutVertex(int &ElementIndex, int VariableIndex) const {
 		DUNE_THROW(NotImplemented, "Ex(akt) Solution");
@@ -142,15 +147,21 @@ namespace Dune
 		return;
 	}
 
-	TwoPTwoCProblem(TwoPhaseRelations& law = *(new LinearLaw), 
-			Solubility& solu = *(new Solubility), const bool exsol = false) 
-	: exsolution(exsol), materialLaw_(law), solu_(solu)
+	Solubility& solu ()
+	{
+		return solu_;
+	}
+	
+	
+	TwoPTwoCProblem(TwoPhaseRelations& law = *(new LinearLaw), Solubility& solu = *(new Solubility), const bool exsol = false) 
+	: materialLaw_(law), solu_(solu), exsolution(exsol)
 	{	}
 	
 	//! always define virtual destructor in abstract base class
 	virtual ~TwoPTwoCProblem () {}
 	
 	const bool exsolution;
+		
   protected:
 	TwoPhaseRelations& materialLaw_;
 	Solubility& solu_;
