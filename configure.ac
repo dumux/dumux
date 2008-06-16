@@ -85,6 +85,7 @@ AC_CONFIG_FILES([Makefile
     dumux/nonlinear/Makefile 
     test/boundaryid/Makefile
     test/box3d/Makefile
+    test/brinkman/Makefile
     test/capillary/Makefile
     test/co2/Makefile
     test/diffusion/Makefile

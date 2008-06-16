@@ -52,7 +52,7 @@ namespace Dune
 	  enum{dimworld = G::dimensionworld};
 	  
 	  typedef typename G::Traits::template Codim<0>::Entity Entity;
-	  typedef typename G::Traits::LevelIndexSet IS;
+	  typedef typename G::Traits::LeafIndexSet IS;
 	  typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator Iterator;
 	  typedef typename G::template Codim<0>::HierarchicIterator HierarchicIterator;
 	  typedef MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout> EM;
@@ -65,19 +65,22 @@ namespace Dune
 	  typedef BCRSMatrix<MBV> VelocityMatrixType;
 	  typedef FieldVector<double, 1> VB;
 	  typedef BlockVector<VB> Vector;
+	  typedef BlockVector< FieldVector<double, dim> > VelType;
 	  
   public:
-	typedef BlockVector< FieldVector<FieldVector<RT, G::dimension>, 2*G::dimension> > VelType;
 	typedef BlockVector< FieldVector<RT,1> > RepresentationType;
 
-	void updateVelocityRHS(); 
+	void updateVelocityRHS()
+	{
+		;
+	}
 
-	void solveVelocitySytem(); 
+	void solveVelocitySystem(); 
 
 	void computeVelocity()
 	{
 		updateVelocityRHS();
-		solveVelocitySytem();
+		solveVelocitySystem();
 		return;
 	}
 
@@ -98,9 +101,9 @@ namespace Dune
 	            : Brinkman<G, RT, RepresentationType, VelType>(g, prob), 
 	              elementmapper(g, g.leafIndexSet()), 
 	              indexset(g.leafIndexSet()), 
-	              AV(g.size(0), g.size(0), (2*dim+1)*g.size(0), BCRSMatrix<MB>::random), 
+	              AV(g.size(0), g.size(0), (2*dim+1)*g.size(0), BCRSMatrix<MBV>::random), 
 	              AP(g.size(0), g.size(0), (2*dim+1)*g.size(0), BCRSMatrix<MB>::random), 
-	              f(g.size(0))
+	              fP(g.size(0)), fV(g.size(0))
 	{
 		this->pressure.resize(g.size(0));
 		this->pressure = 0;
@@ -114,12 +117,13 @@ namespace Dune
 		assembleMatrices();
 	}
 	
-  private:
+  //private:
 	  EM elementmapper;
 	  const IS& indexset;
 	  VelocityMatrixType AV;
 	  PressureMatrixType AP;
-	  RepresentationType f;
+	  RepresentationType fP;
+	  VelType fV;
   };
 
   
@@ -208,7 +212,7 @@ namespace Dune
 	      *ReferenceElements<ct,dim>::general(gt).volume();
 	    
 	    // get absolute permeability 
-	    FieldMatrix<ct,dim,dim> Kinv(this->problem.K(global,*it,local));
+	    FieldMatrix<ct,dim,dim> Kinv(this->problem.Kinv(global,*it,local));
 	    
 	    // get effective viscosity
 	    RT muEffI = this->problem.muEff(global,*it,local);
@@ -288,7 +292,7 @@ namespace Dune
 		    AV[indexi][indexi] += gradUn;
 		    
 		    // set off-diagonal entry 
-		    AV[indexi][indexj] = -gradUn;
+		    AV[indexi][indexj] = (gradUn *= -1.0);
 		  }
 		// boundary face 
 		else 
@@ -315,12 +319,9 @@ namespace Dune
 			    // update diagonal entry 
 			    AV[indexi][indexi] += gradUn;
 			    
-			    // set off-diagonal entry 
-			    AV[indexi][indexj] = -gradUn;
-
-		    	A[indexi][indexi] -= lambda*faceVol*(Kni*distVec)/(dist*dist);
-		    	double g = this->problem.g(faceglobal, *it, facelocalDim);
-		    	f[indexi] -= lambda*faceVol*g*(Kni*distVec)/(dist*dist);
+		    	//double g = this->problem.g(faceglobal, *it, facelocalDim);
+		    	//FieldVector<RT,dim> ;
+		    	//f[indexi] -= ;
 			
 		      } 
 		    else
@@ -337,37 +338,14 @@ namespace Dune
 	
 	
   template<class G, class RT>
-  void FVBrinkman<G, RT>::solve()
+  void FVBrinkman<G, RT>::solveVelocitySystem()
   {
-	  MatrixAdapter<MatrixType,Vector,Vector> op(A); 
+	  MatrixAdapter<VelocityMatrixType,VelType,VelType> op(AV); 
 	  InverseOperatorResult r;
 	  
-	  if (preconditionerName_ == "SeqILU0") {
-	      SeqILU0<MatrixType,Vector,Vector> preconditioner(A, 1.0);
-	      if (solverName_ == "CG") {
-	    	  CGSolver<Vector> solver(op, preconditioner, 1E-14, 10000, 1);
-	    	  solver.apply(this->press, f, r);
-	      }
-	      else if (solverName_ == "BiCGSTAB") {
-	    	  BiCGSTABSolver<Vector> solver(op, preconditioner, 1E-14, 10000, 1);
-	    	  solver.apply(this->press, f, r);
-	      }
-	      else 
-			  DUNE_THROW(NotImplemented, "FVBrinkman :: solve : combination " << preconditionerName_ 
-					  << " and " << solverName_ << ".");
-	  }
-	  else if (preconditionerName_ == "SeqPardiso") {
-	      SeqPardiso<MatrixType,Vector,Vector> preconditioner(A);
-	      if (solverName_ == "Loop") {
-	    	  LoopSolver<Vector> solver(op, preconditioner, 1E-14, 10000, 1);
-	    	  solver.apply(this->press, f, r);
-	      }
-	      else 
-	    	  DUNE_THROW(NotImplemented, "FVBrinkman :: solve : combination " << preconditionerName_ 
-	    			  << " and " << solverName_ << ".");
-	  }
-	  else 
-		  DUNE_THROW(NotImplemented, "FVBrinkman :: solve : preconditioner " << preconditionerName_ << ".");
+	  SeqILU0<VelocityMatrixType,VelType,VelType> preconditioner(AV, 1.0);
+	  BiCGSTABSolver<VelType> solver(op, preconditioner, 1E-14, 10000, 1);
+	  solver.apply(this->velocity, fV, r);
 
 	  return;
   }

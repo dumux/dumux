@@ -45,6 +45,8 @@ namespace Dune
 	
 	void SIMPLE() 
 	{
+		double tolerance = 1e-5; 
+		int maxIter = 10;
 		double error = 1e100;
 		int iter = 0;
 		while (error > tolerance && iter <= maxIter)

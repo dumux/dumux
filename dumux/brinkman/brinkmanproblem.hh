@@ -106,9 +106,8 @@ namespace Dune
 	/** @param law implementation of Material laws. Class TwoPhaseRelations or derived.
 	 *  @param cap flag to include capillary forces. 
 	 */
-	BrinkmanProblem(TwoPhaseRelations& law = *(new LinearLaw), 
-			const bool cap = false, FieldVector<DT,n> g = *(new FieldVector<DT,n>(0))) 
-	: materialLaw(law), capillary(cap), gravity_(g)
+	BrinkmanProblem(TwoPhaseRelations& law = *(new LinearLaw)) 
+	: materialLaw(law)
 	{	}
 	
 	//! always define virtual destructor in abstract base class
@@ -116,7 +115,6 @@ namespace Dune
 	
 	//! a class describing relations between two phases and the porous medium
 	TwoPhaseRelations& materialLaw;
-	const bool capillary;
   };
 
 }
