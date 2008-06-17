@@ -26,8 +26,8 @@ public:
 			model.globalDefect(defectGlobal);
 			double globalResiduum = 0.5*(*defectGlobal).two_norm();
 			double globalResiduumOld=globalResiduum;
-		    grid.comm().sum(&globalResiduum, 1);	    
-		    if (grid.comm().rank() == 0)
+			grid.comm().sum(&globalResiduum, 1);	    
+			if (grid.comm().rank() == 0)
 				std::cout << "initial residual = " << globalResiduum << std::endl;		    	
 			while ((error > difftolerance || globalResiduum > restolerance) && iter < maxIter) {
 				iter ++;
@@ -55,8 +55,8 @@ public:
 				grid.comm().sum(&globalResiduum, 1);
 				//printvector(std::cout, *defectGlobal, "global Defect", "row", 200, 1, 3);
 
-				while (globalResiduum >= globalResiduumOld && iiter < (maxIter
-						/2)) {
+				while (globalResiduum >= globalResiduumOld 
+						&& iiter < (maxIter/2)) {
 					iiter++;
 					*uOldNewtonStep = *u;
 					globalResiduumOld=globalResiduum;
@@ -80,31 +80,31 @@ public:
 				}
 				if (verbose && grid.comm().rank() == 0)
 					std::cout << "Newton step "<< iter << ", residual = "
-							<< globalResiduum << ", difference = "<< error
-							<< std::endl;
+					<< globalResiduum << ", difference = "<< error
+					<< std::endl;
 			}
 			if (error > difftolerance || globalResiduum > restolerance) {
 				if (grid.comm().rank() == 0)
 					std::cout << "NewtonMethod::execute(), tolerances = "
-							<< difftolerance << " , " << restolerance << ": did not converge in "<< iter
-							<< " iterations"<< std::endl;
+					<< difftolerance << " , " << restolerance << ": did not converge in "<< iter
+					<< " iterations"<< std::endl;
 				dt *= 0.5;
 				if (grid.comm().rank() == 0)
 					std::cout << "Retry same time step with reduced size of "
-							<< dt << std::endl;
+					<< dt << std::endl;
 				localJacobian.setDt(dt);
 				*u = *(model.uOldTimeStep);
 				divided = true;
 			} else {
 				if (grid.comm().rank() == 0)
 					std::cout << "Converged. Residual = "<< globalResiduum
-							<< ", difference = "<< error << std::endl;
+					<< ", difference = "<< error << std::endl;
 				if ((!divided) && iter < goodIter) {
 					dt *= 2;
 					if (grid.comm().rank() == 0)
 						std::cout << "Below "<< goodIter
-								<< " Newton iterations. Initial size for the next time step doubled to "
-								<< dt << std::endl;
+						<< " Newton iterations. Initial size for the next time step doubled to "
+						<< dt << std::endl;
 				}
 				localJacobian.setDt(dt);
 
@@ -115,29 +115,29 @@ public:
 		if (dt <= minDt)
 			DUNE_THROW(MathError,
 					"NewtonMethod:: time step size below minimum " << minDt
-							<< ".");
+					<< ".");
 		return;
 	}
 
 	NewtonMethod(const G& g, Model& mod, double dtol = 1e-8,
 			double rtol = 1e-2, int maxIt = 20, double mindt = 1e-5,
 			int goodIt = 3) :
-		grid(g), model(mod), u(mod.u), f(mod.f), A(mod.A),
+				grid(g), model(mod), u(mod.u), f(mod.f), A(mod.A),
 				localJacobian(mod.localJacobian), uOldNewtonStep(g),
 				difftolerance(dtol), restolerance(rtol), maxIter(maxIt),
-		                defectGlobal(g), num(0), minDt(mindt), goodIter(goodIt) {
+				defectGlobal(g), num(0), minDt(mindt), goodIter(goodIt) {
 	}
 
 	NewtonMethod(const G& g, Model& mod, int level, double dtol = 1e-8,
 			double rtol = 1e-5, int maxIt = 12, double mindt = 1e-5,
 			int goodIt = 3) :
-		grid(g), model(mod), u(mod.u), f(mod.f), A(mod.A),
+				grid(g), model(mod), u(mod.u), f(mod.f), A(mod.A),
 				localJacobian(mod.localJacobian), uOldNewtonStep(g, level),
 				difftolerance(dtol), restolerance(rtol), maxIter(maxIt),
 				minDt(mindt), goodIter(goodIt), defectGlobal(g, level), num(0)
 
-	{
-	}
+				{
+				}
 
 private:
 	const G& grid;

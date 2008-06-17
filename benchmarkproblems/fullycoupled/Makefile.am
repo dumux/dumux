@@ -1,3 +1,3 @@
-SUBDIRS = .2p
+SUBDIRS = 2p
 
 include $(top_srcdir)/am/global-rules

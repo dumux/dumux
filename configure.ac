@@ -127,6 +127,9 @@ AC_CONFIG_FILES([Makefile
     test/fvca5/test7/Makefile
     test/fvca5/test8/Makefile
     test/fvca5/test9/Makefile
+    benchmarkproblems/Makefile
+    benchmarkproblems/fullycoupled/Makefile
+    benchmarkproblems/fullycoupled/2p/Makefile
     benchmarkproblems/fullycoupled/2p/buckleyleverett/Makefile
     benchmarkproblems/fullycoupled/2p/fivespot/Makefile
     benchmarkproblems/fullycoupled/2p/convectiondiffusion/Makefile   

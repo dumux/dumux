@@ -56,8 +56,8 @@ namespace Dune {
  - RT    type used for return values 
  */
 template<class Imp, class G, class RT, int m,
-		class BoxFunction = LeafP1Function<G, RT, m> > class BoxJacobian :
-	public LocalJacobian<Imp,G,RT,m> {
+class BoxFunction = LeafP1Function<G, RT, m> > class BoxJacobian :
+public LocalJacobian<Imp,G,RT,m> {
 	// mapper: one data element per vertex
 	template<int dim> struct P1Layout {
 		bool contains(Dune::GeometryType gt) {
@@ -72,7 +72,7 @@ template<class Imp, class G, class RT, int m,
 	typedef typename LocalJacobian<Imp,G,RT,m>::MBlockType MBlockType;
 	typedef FVElementGeometry<G> FVElementGeometry;
 	typedef MultipleCodimMultipleGeomTypeMapper<G, typename G::Traits::LeafIndexSet, P1Layout>
-			VertexMapper;
+	VertexMapper;
 
 public:
 	// define the number of components of your system, this is used outside
@@ -83,7 +83,7 @@ public:
 	//! Constructor
 	BoxJacobian(bool levelBoundaryAsDirichlet_, const G& grid,
 			BoxFunction& sol, bool procBoundaryAsDirichlet_=true) :
-		vertexMapper(grid, grid.leafIndexSet()),
+				vertexMapper(grid, grid.leafIndexSet()),
 				levelBoundaryAsDirichlet(levelBoundaryAsDirichlet_),
 				procBoundaryAsDirichlet(procBoundaryAsDirichlet_),
 				currentSolution(sol), oldSolution(grid), dt(1) {
@@ -100,66 +100,64 @@ public:
 		for (int i=0; i < this->fvGeom.nNodes; i++)
 			this->def[i] = 0;
 
-		computeElementData(e);
-		updateVariableData(e, sol);
+			computeElementData(e);
+			updateVariableData(e, sol);
 
-		for (int i=0; i < this->fvGeom.nNodes; i++) // begin loop over vertices / sub control volumes
-		{
-			// implicit Euler
-			VBlockType massContrib = computeM(e, sol, i);
-			massContrib -= computeM(e, uold, i);
-			massContrib *= this->fvGeom.subContVol[i].volume/dt;
-			this->def[i] += massContrib;
-			std::cout.setf(std::ios_base::scientific, std::ios_base::floatfield);
-			std::cout.setf(std::ios_base::uppercase);
-			std::cout.precision(3);
-			//std::cout << "i = " << i << ", massContrib = " << massContrib << std::endl;
+			for (int i=0; i < this->fvGeom.nNodes; i++) // begin loop over vertices / sub control volumes
+			{
+				// implicit Euler
+				VBlockType massContrib = computeM(e, sol, i);
+				massContrib -= computeM(e, uold, i);
+				massContrib *= this->fvGeom.subContVol[i].volume/dt;
+				this->def[i] += massContrib;
+				std::cout.setf(std::ios_base::scientific, std::ios_base::floatfield);
+				std::cout.setf(std::ios_base::uppercase);
+				std::cout.precision(3);
+				//std::cout << "i = " << i << ", massContrib = " << massContrib << std::endl;
 
-			// get source term 
-			VBlockType q = computeQ(e, sol, i);
-			q *= this->fvGeom.subContVol[i].volume;
-			this->def[i] -= q;
-		} // end loop over vertices / sub control volumes
+				// get source term 
+				VBlockType q = computeQ(e, sol, i);
+				q *= this->fvGeom.subContVol[i].volume;
+				this->def[i] -= q;
+			} // end loop over vertices / sub control volumes
 
-		for (int k = 0; k < this->fvGeom.nEdges; k++) // begin loop over edges / sub control volume faces
-		{
-			int i = this->fvGeom.subContVolFace[k].i;
-			int j = this->fvGeom.subContVolFace[k].j;
+			for (int k = 0; k < this->fvGeom.nEdges; k++) // begin loop over edges / sub control volume faces
+			{
+				int i = this->fvGeom.subContVolFace[k].i;
+				int j = this->fvGeom.subContVolFace[k].j;
 
-			VBlockType flux = computeA(e, sol, k);
+				VBlockType flux = computeA(e, sol, k);
+
+				// add to defect 
+				this->def[i] -= flux;
+				this->def[j] += flux;
+				//std::cout << "i = " << i << ", j = " << j << ", flux = " << flux << std::endl;
+			} // end loop over edges / sub control volume faces
+
+			// assemble boundary conditions 
+			assembleBC<TypeTag> (e);
 
 			// add to defect 
-			this->def[i] -= flux;
-			this->def[j] += flux;
-			//std::cout << "i = " << i << ", j = " << j << ", flux = " << flux << std::endl;
-		} // end loop over edges / sub control volume faces
+			for (int i=0; i < this->fvGeom.nNodes; i++) {
+				this->def[i] += this->b[i];
+				//			 		  std::cout << ", b[" << i << "] = " << this->b[i] << std::endl;
+			}
+			// 		std::cout << std::endl;
 
-		// assemble boundary conditions 
-		assembleBC<TypeTag> (e);
-
-		// add to defect 
-		for (int i=0; i < this->fvGeom.nNodes; i++) {
-			this->def[i] += this->b[i];
-//			 		  std::cout << ", b[" << i << "] = " << this->b[i] << std::endl;
-		}
-		// 		std::cout << std::endl;
-
-		return;
+			return;
 	}
 
 	void setLocalSolution(const Entity& e) {
 		Dune::GeometryType gt = e.geometry().type();
 		const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::value_type
-				&sfs=Dune::LagrangeShapeFunctions<DT, RT, n>::general(gt, 1);
+		&sfs=Dune::LagrangeShapeFunctions<DT, RT, n>::general(gt, 1);
 		int size = sfs.size();
 		this->setcurrentsize(size);
 
 		for (int i = 0; i < size; i++)
 			for (int comp = 0; comp < m; comp++) {
-				this->u[i][comp]= currentSolution.evallocal(comp, e,
-						sfs[i].position());
-				uold[i][comp]
-						= oldSolution.evallocal(comp, e, sfs[i].position());
+				this->u[i][comp] = currentSolution.evallocal(comp, e, sfs[i].position());
+				uold[i][comp] = oldSolution.evallocal(comp, e, sfs[i].position());
 			}
 
 		return;
@@ -208,12 +206,12 @@ public:
 	template<class TypeTag> void assembleBC(const Entity& e) {
 		Dune::GeometryType gt = e.geometry().type();
 		const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::value_type
-				&sfs=Dune::LagrangeShapeFunctions<DT, RT, n>::general(gt, 1);
+		&sfs=Dune::LagrangeShapeFunctions<DT, RT, n>::general(gt, 1);
 		setcurrentsize(sfs.size());
 		this->fvGeom.update(e);
 
 		const typename ReferenceElementContainer<DT,n>::value_type
-				&referenceElement = ReferenceElements<DT, n>::general(gt);
+		&referenceElement = ReferenceElements<DT, n>::general(gt);
 
 		for (int i = 0; i < sfs.size(); i++) {
 			this->bctype[i].assign(BoundaryConditions::neumann);
@@ -223,10 +221,10 @@ public:
 
 		// evaluate boundary conditions via intersection iterator
 		typedef typename IntersectionIteratorGetter<G,TypeTag>::IntersectionIterator
-				IntersectionIterator;
+		IntersectionIterator;
 
 		IntersectionIterator
-				endit = IntersectionIteratorGetter<G, TypeTag>::end(e);
+		endit = IntersectionIteratorGetter<G, TypeTag>::end(e);
 		for (IntersectionIterator
 				it = IntersectionIteratorGetter<G, TypeTag>::begin(e); it
 				!=endit; ++it) {
@@ -256,32 +254,32 @@ public:
 							nodeInFace, n);
 					for (int equationNumber = 0; equationNumber < m; equationNumber++) {
 						if (this->bctype[nodeInElement][equationNumber]
-								== BoundaryConditions::neumann) {
+						                                == BoundaryConditions::neumann) {
 							int bfIdx = this->fvGeom.boundaryFaceIndex(faceIdx,
 									nodeInFace);
 							FieldVector<DT,n>
-									local = this->fvGeom.boundaryFace[bfIdx].ipLocal;
+							local = this->fvGeom.boundaryFace[bfIdx].ipLocal;
 							FieldVector<DT,n>
-									global = this->fvGeom.boundaryFace[bfIdx].ipGlobal;
+							global = this->fvGeom.boundaryFace[bfIdx].ipGlobal;
 							bctypeface = this->getImp().problem.bctype(global, e, it, local); // eval bctype
 							this->getImp().problem.dirichletIndex(global, e, it, local, dirichletIdx); // eval bctype
-//							 						std::cout << "faceIdx = " << faceIdx << ", nodeInElement = " << nodeInElement 
-//							 							  << ", bfIdx = " << bfIdx << ", local = " << local << ", global = " << global 
-//							 							  << ", bctypeface = " << bctypeface << std::endl; 
+							//							 						std::cout << "faceIdx = " << faceIdx << ", nodeInElement = " << nodeInElement 
+							//							 							  << ", bfIdx = " << bfIdx << ", local = " << local << ", global = " << global 
+							//							 							  << ", bctypeface = " << bctypeface << std::endl; 
 							if (bctypeface[equationNumber]
-									!=BoundaryConditions::neumann)
+							               !=BoundaryConditions::neumann)
 								break;
 							VBlockType J = this->getImp().problem.J(global, e, it, local);
 							J[equationNumber]
-									*= this->fvGeom.boundaryFace[bfIdx].area;
-							this->b[nodeInElement][equationNumber]
-									+= J[equationNumber];
+							  *= this->fvGeom.boundaryFace[bfIdx].area;
+							  this->b[nodeInElement][equationNumber]
+							                         += J[equationNumber];
 						}
 					}
 				}
 
 				if (bctypeface[0]==BoundaryConditions::neumann && bctypeface[1]
-						==BoundaryConditions::neumann)
+				                                                             ==BoundaryConditions::neumann)
 					continue; // was a neumann face, go to next face
 			}
 
@@ -309,18 +307,18 @@ public:
 					{
 						if (sfs[i].entity()==it->numberInSelf()) {
 							if (this->bctype[i][equationNumber]
-									<bctypeface[equationNumber]) {
+							                    <bctypeface[equationNumber]) {
 								this->bctype[i][equationNumber]
-										= bctypeface[equationNumber];
+								                = bctypeface[equationNumber];
 								this->dirichletIndex[i][equationNumber]
-										= dirichletIdx[equationNumber];
+								                        = dirichletIdx[equationNumber];
 								if (bctypeface[equationNumber]
-										==BoundaryConditions::process)
+								               ==BoundaryConditions::process)
 									this->b[i][equationNumber] = 0;
-								if (bctypeface[equationNumber]
-										==BoundaryConditions::dirichlet) {
-									this->b[i][equationNumber] = 0;
-								}
+									if (bctypeface[equationNumber]
+									               ==BoundaryConditions::dirichlet) {
+										this->b[i][equationNumber] = 0;
+									}
 							}
 						}
 						continue;
@@ -330,18 +328,18 @@ public:
 						if (sfs[i].entity()==ReferenceElements<DT,n>::general(gt).subEntity(it->numberInSelf(), 1, j,
 								sfs[i].codim())) {
 							if (this->bctype[i][equationNumber]
-									<bctypeface[equationNumber]) {
+							                    <bctypeface[equationNumber]) {
 								this->bctype[i][equationNumber]
-										= bctypeface[equationNumber];
+								                = bctypeface[equationNumber];
 								this->dirichletIndex[i][equationNumber]
-										= dirichletIdx[equationNumber];
+								                        = dirichletIdx[equationNumber];
 								if (bctypeface[equationNumber]
-										==BoundaryConditions::process)
+								               ==BoundaryConditions::process)
 									this->b[i][equationNumber] = 0;
-								if (bctypeface[equationNumber]
-										==BoundaryConditions::dirichlet) {
-									this->b[i][equationNumber] = 0;
-								}
+									if (bctypeface[equationNumber]
+									               ==BoundaryConditions::dirichlet) {
+										this->b[i][equationNumber] = 0;
+									}
 							}
 						}
 				}
