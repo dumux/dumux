@@ -17,7 +17,6 @@
 #include "dumux/twophase/fv/boxpwsn.hh"
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/material/vangenuchtenlaw.hh"
-#include "dumux/material/properties.hh"
 
 int main(int argc, char** argv) 
 {
@@ -26,8 +25,8 @@ int main(int argc, char** argv)
     const int dim=2;
     typedef double NumberType; 
     Dune::FieldVector<NumberType, dim> outerLowerLeft(0);
-    Dune::FieldVector<NumberType, dim> outerUpperRight(6);
-    outerUpperRight[1] = 4;
+    Dune::FieldVector<NumberType, dim> outerUpperRight(500);
+    outerUpperRight[1] = 1000;
     Dune::FieldVector<NumberType, dim> innerLowerLeft(1);
     innerLowerLeft[1] = 2;
     Dune::FieldVector<NumberType, dim> innerUpperRight(4);
@@ -44,6 +43,7 @@ int main(int argc, char** argv)
 	std::istringstream is2(arg2);
 	double dt;
 	is2 >> dt;
+     
 
 
     // create a grid object
@@ -51,28 +51,28 @@ int main(int argc, char** argv)
     //typedef Dune::ALUSimplexGrid<dim,dim> GridType; 
     //typedef Dune::AlbertaGrid<dim,dim> GridType; 
     //typedef Dune::YaspGrid<dim,dim> GridType; 
-    typedef Dune::UGGrid<dim> GridType; 
-
+//    typedef Dune::UGGrid<dim> GridType; 
+//      typedef Dune::ALUCubeGrid<dim,dim> GridType;
+	  typedef Dune::ALUSimplexGrid<dim,dim> GridType; 
     // create grid pointer, GridType is defined by gridtype.hh
     Dune::GridPtr<GridType> gridPtr( argv[1] );
 
     // grid reference 
     GridType& grid = *gridPtr;
 
-    grid.globalRefine(3); 
+// hussam   grid.globalRefine(1); //3 
 
     Dune::gridinfo(grid);
     
-    Dune::DNAPL dnapl;
-    Dune::Water water;
-    Dune::VanGenuchtenLaw law(water, dnapl);
-    Dune::LensWithElementID<GridType, NumberType> problem(gridPtr, law, outerLowerLeft, outerUpperRight, 
-    		innerLowerLeft, innerUpperRight);
+    Air air;
+    Water water;
+    Dune::VanGenuchtenLaw law(water, air);
+    Dune::LensWithElementID<GridType, NumberType> problem(gridPtr, law, outerLowerLeft, outerUpperRight, innerLowerLeft, innerUpperRight);
 
     typedef Dune::BoxPwSn<GridType, NumberType> TwoPhase;
     TwoPhase twoPhase(grid, problem);
     
-    Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt, "lens", 1);
+    Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt, "layers", 1);
     
     Dune::Timer timer;
     timer.reset();
