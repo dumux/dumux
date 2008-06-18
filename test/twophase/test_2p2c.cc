@@ -2,8 +2,8 @@
 #include <iostream>
 #ifdef HAVE_UG
 #include <iomanip>
-#include <dune/grid/utility/gridtype.hh>
 #include <dune/grid/common/gridinfo.hh>
+#include <dune/grid/uggrid.hh>
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>

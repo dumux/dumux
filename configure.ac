@@ -1,8 +1,8 @@
 # -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.50)
-AC_INIT(dune-mux, 0.1, bernd@iws.uni-stuttgart.de)
-AM_INIT_AUTOMAKE(dune-mux, 0.1, bernd@iws.uni-stuttgart.de)
+DUNE_AC_INIT # gets module version from dune.module file
+AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([test/diffusion/test_diffusion.cc])
 AM_CONFIG_HEADER([config.h])
 #AC_SUBST([LOCAL_LIBS], '$(top_srcdir)/lib/libdunemux.la')
@@ -63,7 +63,7 @@ SET_PARDISO
 # implicitly set the Dune-flags everywhere
 AC_SUBST(AM_CPPFLAGS, $ALL_PKG_CPPFLAGS)
 AC_SUBST(AM_LDFLAGS, $ALL_PKG_LDFLAGS)
-LIBS="$DUNE_LIBS $ALL_PKG_LIBS $PARDISO_LIBS $BLAS_LIBS"
+LIBS="$DUNE_LIBS $ALL_PKG_LIBS $PARDISO_LIBS"
 
 AC_CONFIG_FILES([Makefile
     doc/Makefile 

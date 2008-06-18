@@ -39,6 +39,7 @@
 #include <dune/disc/groundwater/p1groundwaterestimator.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/paamg/amg.hh>
+#include "dumux/pardiso/pardiso.hh"
 #include "dumux/nonlinear/newtonmethod.hh"
 #include "dumux/twophase/twophasemodel.hh"
 #include "dumux/2p2c/2p2cproblem.hh"
@@ -68,6 +69,9 @@ namespace Dune
 		typedef typename LeafP1TwoPhaseModel::FunctionType::RepresentationType VectorType;
 		typedef typename LeafP1TwoPhaseModel::OperatorAssembler::RepresentationType MatrixType;
 		typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator; 
+#ifdef HAVE_PARDISO
+	SeqPardiso<MatrixType,VectorType,VectorType> pardiso;
+#endif
 
 	
 	Box2P2C(const G& g, ProblemType& prob) 
