@@ -231,9 +231,9 @@ namespace Dune
 		{
 		  // if we have a neighbor then we assume there is no boundary (forget interior boundaries)
 		  // in level assemble treat non-level neighbors as boundary
-		  if (it.neighbor())
+		  if (it->neighbor())
 			{
-			  if (levelBoundaryAsDirichlet && it.outside()->level()==e.level()) 
+			  if (levelBoundaryAsDirichlet && it->outside()->level()==e.level()) 
 				continue;
 			  if (!levelBoundaryAsDirichlet)
 				continue;
@@ -243,14 +243,14 @@ namespace Dune
 		  typename BoundaryConditions::Flags bctypeface = BoundaryConditions::process;
 
 		  // handle face on exterior boundary, this assumes there are no interior boundaries
-		  if (it.boundary())
+		  if (it->boundary())
 			{
-			  Dune::GeometryType gtface = it.intersectionSelfLocal().type();
+			  Dune::GeometryType gtface = it->intersectionSelfLocal().type();
 			  for (size_t g=0; g<Dune::QuadratureRules<DT,n-1>::rule(gtface,p).size(); ++g)
 				{
 				  const Dune::FieldVector<DT,n-1>& facelocal = Dune::QuadratureRules<DT,n-1>::rule(gtface,p)[g].position();
-				  FieldVector<DT,n> local = it.intersectionSelfLocal().global(facelocal);
-				  FieldVector<DT,n> global = it.intersectionGlobal().global(facelocal);
+				  FieldVector<DT,n> local = it->intersectionSelfLocal().global(facelocal);
+				  FieldVector<DT,n> global = it->intersectionGlobal().global(facelocal);
 				  bctypeface = problem.bctype(global,e,local); // eval bctype
 
 
@@ -258,7 +258,7 @@ namespace Dune
 
 				  RT J = problem.J(global,e,local);
 				  double weightface = Dune::QuadratureRules<DT,n-1>::rule(gtface,p)[g].weight();
-				  DT detjacface = it.intersectionGlobal().integrationElement(facelocal);
+				  DT detjacface = it->intersectionGlobal().integrationElement(facelocal);
 				  for (int i=0; i<sfs.size(); i++) // loop over test function number
 					if (this->bctype[i][0]==BoundaryConditions::neumann)
 					  {
@@ -283,7 +283,7 @@ namespace Dune
 			  if (sfs[i].codim()==0) continue; // skip interior dof
 			  if (sfs[i].codim()==1) // handle face dofs
 				{
-				  if (sfs[i].entity()==it.numberInSelf())
+				  if (sfs[i].entity()==it->numberInSelf())
 					{
 					  if (this->bctype[i][0]<bctypeface)
 						{
@@ -300,8 +300,8 @@ namespace Dune
 				  continue;
 				}
 			  // handle subentities of this face
-			  for (int j=0; j<ReferenceElements<DT,n>::general(gt).size(it.numberInSelf(),1,sfs[i].codim()); j++)
-				if (sfs[i].entity()==ReferenceElements<DT,n>::general(gt).subEntity(it.numberInSelf(),1,j,sfs[i].codim()))
+			  for (int j=0; j<ReferenceElements<DT,n>::general(gt).size(it->numberInSelf(),1,sfs[i].codim()); j++)
+				if (sfs[i].entity()==ReferenceElements<DT,n>::general(gt).subEntity(it->numberInSelf(),1,j,sfs[i].codim()))
 				  {
 					if (this->bctype[i][0]<bctypeface)
 					  {

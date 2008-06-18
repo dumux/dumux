@@ -110,8 +110,8 @@ namespace Dune
 	
 	FEDiffusion(G& g, DiffusionProblem<G, RT>& prob, 
 		    TransportProblem<G, RT, VelType>& satprob = *(new typename Dune::SimpleProblem<G, RT>), 
-		    int lev = 0)
-	  : Diffusion<G, RT, RepresentationType, VelType>(g, prob, lev), 
+		    int lev = -1)
+	  : Diffusion<G, RT, RepresentationType, VelType>(g, prob, lev == -1 ? g.maxLevel() : lev), 
 	  pressP1(g, this->level()), f(g, this->level()), A(g, this->level())
 	{ 
 		this->press.resize(g.size(this->level(), G::dimension));
