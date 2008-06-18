@@ -78,6 +78,116 @@ namespace Dune
 	: LeafP1TwoPhaseModel(g, prob), Xwn(this->size), Xaw(this->size) // (this->size) vectors
 	{ 	}
 	
+	void initial() {
+		typedef typename G::Traits::template Codim<0>::Entity Entity;
+		typedef typename G::ctype DT;
+		typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator
+				Iterator;
+		typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
+
+		enum {dim = G::dimension};
+		enum {dimworld = G::dimensionworld};
+
+		const IS& indexset(this->grid.leafIndexSet());
+
+		// iterate through leaf grid an evaluate c0 at cell center
+		Iterator eendit = indexset.template end<0, All_Partition>();
+		for (Iterator it = indexset.template begin<0, All_Partition>(); it
+				!= eendit; ++it) {
+			// get geometry type
+			Dune::GeometryType gt = it->geometry().type();
+
+			// get entity 
+			const Entity& entity = *it;
+
+			const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type
+					&sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(gt,1);
+			int size = sfs.size();
+
+			for (int i = 0; i < size; i++) {
+				// get cell center in reference element
+				const Dune::FieldVector<DT,dim>&local = sfs[i].position();
+
+				// get global coordinate of cell center
+				Dune::FieldVector<DT,dimworld> global = it->geometry().global(local);
+
+				int globalId = this->vertexmapper.template map<dim>(entity,
+						sfs[i].entity());
+
+				// initialize cell concentration
+				(*(this->u))[globalId] = this->problem.initial(
+						global, entity, local);
+			}
+		}
+
+		// set Dirichlet boundary conditions
+		for (Iterator it = indexset.template begin<0, All_Partition>(); it
+				!= eendit; ++it) {
+			// get geometry type
+			Dune::GeometryType gt = it->geometry().type();
+
+			// get entity 
+			const Entity& entity = *it;
+
+			const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type
+					&sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(gt,
+							1);
+			int size = sfs.size();
+
+			// set type of boundary conditions 
+			this->localJacobian.template assembleBC<LeafTag>(entity);
+
+			IntersectionIterator
+					endit = IntersectionIteratorGetter<G, LeafTag>::end(entity);
+			for (IntersectionIterator is = IntersectionIteratorGetter<G,
+					LeafTag>::begin(entity); is!=endit; ++is)
+				if (is->boundary()) {
+					for (int i = 0; i < size; i++)
+						// handle subentities of this face
+						for (int j = 0; j < ReferenceElements<DT,dim>::general(gt).size(is->numberInSelf(), 1, sfs[i].codim()); j++)
+							if (sfs[i].entity()
+									== ReferenceElements<DT,dim>::general(gt).subEntity(is->numberInSelf(), 1,
+											j, sfs[i].codim())) {
+								for (int equationNumber = 0; equationNumber<m; equationNumber++) {
+									if (this->localJacobian.bc(i)[equationNumber]
+											== BoundaryConditions::dirichlet) {
+										// get cell center in reference element
+										Dune::FieldVector<DT,dim>
+												local = sfs[i].position();
+
+										// get global coordinate of cell center
+										Dune::FieldVector<DT,dimworld>
+												global = it->geometry().global(local);
+
+										int
+												globalId = this->vertexmapper.template map<dim>(
+														entity, sfs[i].entity());
+										FieldVector<int,m> dirichletIndex;
+										FieldVector<BoundaryConditions::Flags, m>
+												bctype = this->problem.bctype(
+														global, entity, is,
+														local);
+												this->problem.dirichletIndex(global, entity, is,
+														local, dirichletIndex);	
+
+										if (bctype[equationNumber]
+												== BoundaryConditions::dirichlet) {
+											FieldVector<RT,m>
+													ghelp = this->problem.g(
+															global, entity, is,
+															local);
+											(*(this->u))[globalId][dirichletIndex[equationNumber]]
+													= ghelp[dirichletIndex[equationNumber]];
+										}
+									}
+								}
+							}
+				}
+		}
+
+		*(this->uOldTimeStep) = *(this->u);
+		return;
+	}
 
 	void solve() 
 	{

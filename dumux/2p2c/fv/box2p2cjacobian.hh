@@ -18,8 +18,8 @@
 #include<dune/disc/shapefunctions/lagrangeshapefunctions.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
 #include<dune/disc/functions/p1function.hh>
-#include"dumux/operators/boxjacobian.hh"
-//#include"dumux/2p2c/boxjacobian_2p2c.hh"
+//#include"dumux/operators/boxjacobian.hh"
+#include"dumux/2p2c/boxjacobian_2p2c.hh"
 #include"dumux/2p2c/2p2cproblem.hh"
 //#include "varswitch.hh"
 
@@ -118,20 +118,19 @@ namespace Dune
         int state = statNData[i].phaseState;
         bool switched = false;
         
-    	 GeometryType gt = e.geometry().type();
-    	 const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type& 
-    	 sfs=Dune::LagrangeShapeFunctions<DT,RT,dim>::general(gt,1);
+        GeometryType gt = e.geometry().type();
+    	const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type& 
+    	sfs=Dune::LagrangeShapeFunctions<DT,RT,dim>::general(gt,1);
 
-    	 // get local to global id map
-  		 int globalIdx = this->vertexMapper.template map<dim>(e, sfs[i].entity());
+    	// get local to global id map
+  		int globalIdx = this->vertexMapper.template map<dim>(e, sfs[i].entity());
 
         //std::cout << "negative non-wetting saturation!! --> Switsching Variables" << std::endl;
        
         switch(state) 
         {
         case gasPhase :
-
-            if (varNData[i].massfrac[water][nPhase] > 1.01*Xwg_max && switched == false)
+            if (sol[i][satNIdx] > 1.01*Xwg_max && switched == false) //varNData[i].massfrac[water][nPhase]
             {
             	// appearance of water phase
             	std::cout << "Water appears at node " << globalIdx << std::endl;
@@ -142,8 +141,7 @@ namespace Dune
             break;
 
         case waterPhase :
-
-            if (varNData[i].massfrac[air][wPhase] > 1.01*Xaw_max && switched == false)
+            if (sol[i][satNIdx] > 1.01*Xaw_max && switched == false) //varNData[i].massfrac[air][wPhase]
             {
             	// appearance of gas phase
             	std::cout << "Gas appears at node " << globalIdx << std::endl;
@@ -154,8 +152,7 @@ namespace Dune
             break;
 
         case bothPhases :
-
-      	  	if ( varNData[i].saturationN < 0.0  && switched == false) 
+      	  	if (sol[i][satNIdx] < 0.0  && switched == false) //varNData[i].saturationN 
       	  	{
       		  	// disappearance of gas phase
       		  	std::cout << "Gas disappears" << globalIdx << std::endl;
@@ -163,14 +160,14 @@ namespace Dune
       		  	varNData[i].massfrac[air][wPhase] = 1.E-6;  // Initialisierung
             	switched = true;
             }
-      	  	else if ( varNData[i].saturationW < 0.0  && switched == false) 
+      	  	else if (sol[i][satNIdx] < 0.0  && switched == false) //varNData[i].saturationW 
       	  	{
       	  		// disappearance of water phase
       	  		std::cout << "Water disappears" << globalIdx << std::endl;
       	  		statNData[i].phaseState = gasPhase;
       	  		varNData[i].massfrac[water][nPhase] = 1.E-6;  // Initialisierung
             	switched = true;
-      	   }
+      	  	}
       	  	break;
         }
         
@@ -275,12 +272,21 @@ namespace Dune
     
     virtual void clearVisited ()
     {
-   	 for (int i = 0; i < this->vertexMapper.size(); i++)
+    	for (int i = 0; i < this->vertexMapper.size(); i++)
    		statNData[i].visited = false;
    	 
    	 return;
-    }
+   	}
 
+    virtual void setPhaseState ()
+    {
+    	for (int i = 0; i < this->vertexMapper.size(); i++)
+    	statNData[i].phaseState = waterPhase;
+    	
+    	return;
+    }
+    
+    
     void getLocalDefect(const Entity& entity,VBlockType *defhelp)
     { 
       setLocalSolution(entity);
@@ -484,15 +490,15 @@ namespace Dune
        
     
 	  //*********************************************************
-	  //*																			*
-	  //*	Calculation of Data at Elements (elData) 					*
-	  //*						 													*
-	  //*																		 	*
+	  //*														*
+	  //*	Calculation of Data at Elements (elData) 			*
+	  //*						 								*
+	  //*														*
 	  //*********************************************************
 
     virtual void computeElementData (const Entity& e)
     {
-//  		 // ASSUME element-wise constant parameters for the material law 
+//  	 // ASSUME element-wise constant parameters for the material law 
 // 		 elData.parameters = problem.materialLawParameters
 // 		 (this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
 //   	 
@@ -506,10 +512,10 @@ namespace Dune
 
     
 	  //*********************************************************
-	  //*																			*
-	  //*	Calculation of Data at Nodes that has to be			 	*
-	  //*	determined only once	(statNData)							 	*
-	  //*																		 	*
+	  //*														*
+	  //*	Calculation of Data at Nodes that has to be			*
+	  //*	determined only once	(statNData)					*
+	  //*														*
 	  //*********************************************************
 
     // analog to EvalStaticData in MUFTE
@@ -533,7 +539,7 @@ namespace Dune
   		 if (!statNData[globalIdx].visited) 
   		  {
   			  // initial phase state
-  			 	statNData[globalIdx].phaseState = waterPhase;
+  			  //statNData[globalIdx].phaseState = waterPhase;
 
   			  // ASSUME parameters defined at the node/subcontrol volume for the material law 
   			  statNData[globalIdx].parameters = problem.materialLawParameters
@@ -547,7 +553,6 @@ namespace Dune
 
   			  // ASSUME porosity defined at nodes
   			  statNData[globalIdx].porosity = problem.porosity(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
-
   			  
   			  // mark elements that were already visited
   			  statNData[globalIdx].visited = true;
@@ -559,10 +564,10 @@ namespace Dune
     
 
 	  //*********************************************************
-	  //*																			*
-	  //*	Calculation of variable Data at Nodes					 	*
-	  //*	(varNData)														 	*
-	  //*																		 	*
+	  //*														*
+	  //*	Calculation of variable Data at Nodes				*
+	  //*	(varNData)											*
+	  //*														*
 	  //*********************************************************
    
 
@@ -644,7 +649,7 @@ namespace Dune
     
     struct ElementData {
 //   	 RT cellVolume;
-//     RT porosity;
+//     	 RT porosity;
 //   	 RT gravity;
 //   	 FieldVector<RT, 4> parameters;
 //   	 FieldMatrix<RT,dim,dim> K;
