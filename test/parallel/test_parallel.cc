@@ -88,7 +88,7 @@ int main(int argc, char** argv)
     
     // instantiate a distributed grid with overlap
     Dune::FieldVector<double,dim> length(1.0);
-    Dune::FieldVector<int,dim> size(256);
+    Dune::FieldVector<int,dim> size(16);
     Dune::FieldVector<bool,dim> periodic(false);
     int overlap = 1;
     typedef Dune::YaspGrid<dim,dim> GridType;
