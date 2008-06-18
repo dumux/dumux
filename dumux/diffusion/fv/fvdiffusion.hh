@@ -525,7 +525,11 @@ namespace Dune
 			// get absolute permeability 
 			FieldMatrix<ct,dim,dim> Ki(this->problem.K(global,*it,local));
 	
-			//compute total mobility
+		    double volume = it->geometry().integrationElement(local)
+		      *ReferenceElements<ct,dim>::general(gt).volume();
+		    RT q = volume*this->problem.q(global,*it,local);
+
+		    //compute total mobility
 			double lambdaI, fractionalWI;
 			double sati = this->problem.sat(global, *it, local);
 			lambdaI = this->problem.materialLaw.mobTotal(sati);
@@ -699,7 +703,7 @@ namespace Dune
 			  double diff = fabs(velocity[indexi][0][0]*faceVol[0] 
 					     - velocity[indexi][1][0]*faceVol[1]
 					     + velocity[indexi][2][1]*faceVol[2] 
-					     - velocity[indexi][3][1]*faceVol[3])
+					     - velocity[indexi][3][1]*faceVol[3] + q)
 			              /sum;
 				if (diff > 1e-6 && sum > 1e-9) 
 				{

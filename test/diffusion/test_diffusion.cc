@@ -35,7 +35,7 @@ int main(int argc, char** argv)
 
     Dune::FieldVector<GridType::ctype,dim> L(0);
     Dune::FieldVector<GridType::ctype,dim> R(300);
-    Dune::FieldVector<int,dim> N(10);           
+    Dune::FieldVector<int,dim> N(2);           
     GridType grid(N,L,R);
 
     Dune::SimpleProblem<GridType, NumberType> satprob;
@@ -61,12 +61,12 @@ int main(int argc, char** argv)
     printvector(std::cout, *diffusion, "pressure", "row", 200, 1, 3);
     diffusion.vtkout("fv", 0);
     
-    //const int blocksize = 2*dim;
-    //typedef Dune::FieldVector<double, dim> R1;
-    //typedef Dune::BlockVector< Dune::FieldVector<R1, blocksize> > VType;
-    //VType velocity(grid.size(0));
-    //diffusion.totalVelocity(velocity);
-    //printvector(std::cout, velocity, "velocity", "row", 4, 1, 3);
+    const int blocksize = 2*dim;
+    typedef Dune::FieldVector<double, dim> R1;
+    typedef Dune::BlockVector< Dune::FieldVector<R1, blocksize> > VType;
+    VType velocity(grid.size(0));
+    diffusion.totalVelocity(velocity);
+    printvector(std::cout, velocity, "velocity", "row", 4, 1, 3);
     
     return 0;
   }
