@@ -63,7 +63,7 @@ namespace Dune
   */
   template<class G, class RT, class BoxFunction = LeafP1Function<G, RT, 2> >
   class Box2P2CJacobian 
-    : public BoxJacobian<Box2P2CJacobian<G,RT,BoxFunction>,G,RT,2,BoxFunction>
+    : public BoxJacobian2p2c<Box2P2CJacobian<G,RT,BoxFunction>,G,RT,2,BoxFunction>
   {
     typedef typename G::ctype DT;
     typedef typename G::Traits::template Codim<0>::Entity Entity;
@@ -93,7 +93,7 @@ namespace Dune
 			      bool levelBoundaryAsDirichlet_, const G& grid, 
 			      BoxFunction& sol, 
 			      bool procBoundaryAsDirichlet_=true)
-    : BoxJacobian<ThisType,G,RT,2,BoxFunction>(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_), 
+    : BoxJacobian2p2c<ThisType,G,RT,2,BoxFunction>(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_), 
       problem(params), 
       statNData(this->vertexMapper.size()),
       statIPData(this->vertexMapper.size())

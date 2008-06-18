@@ -188,7 +188,7 @@ namespace Dune
   template<class G, class RT>
   void FVBrinkman<G, RT>::assembleMatrices()
   {
-	  // initialization: set matrix A to zero	   
+	  // initialization: set matrices to zero	   
 	  AV = 0;
 	  AP = 0;
 
