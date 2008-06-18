@@ -32,7 +32,7 @@ namespace Dune
 	  virtual RT muEff   (const FieldVector<DT,n>& x, const Entity& e, 
 			  const FieldVector<DT,n>& xi) 
 	  {
-		  return 1.0;
+		  return 0.0;
 	  }
 	  
 	  virtual RT mu   (const FieldVector<DT,n>& x, const Entity& e, 
@@ -50,23 +50,30 @@ namespace Dune
 	  typename Dune::BoundaryConditions::Flags bctype (const Dune::FieldVector<DT,n>& x, const Entity& e, 
 						   const Dune::FieldVector<DT,n>& xi) const
 	  {
-	    if (x[0] > 2-1E-6 || x[0] < 1e-6) 
-	      return Dune::BoundaryConditions::dirichlet;
+	    if (x[0] > 1-1E-6) 
+	      return Dune::BoundaryConditions::neumann;
 
-	    return Dune::BoundaryConditions::neumann;
+	    return Dune::BoundaryConditions::dirichlet;
 	  }
 	
-	  RT g (const Dune::FieldVector<DT,n>& x, const Entity& e, 
+	  virtual FieldVector<RT, n> g (const Dune::FieldVector<DT,n>& x, const Entity& e, 
 					const Dune::FieldVector<DT,n>& xi) const
 	  {
-		  return (x[0] < 1e-6) ? 2e5 : 1e5;
+		  FieldVector<RT, n> values(0);
+		  
+		  if (x[0] < 1e-6)
+			  values[0] = 1;
+		  
+		  return values;
 	  }
 		  
 		
-	  RT J (const Dune::FieldVector<DT,n>& x, const Entity& e, 
+	  virtual FieldVector<RT, n> J (const Dune::FieldVector<DT,n>& x, const Entity& e, 
 					const Dune::FieldVector<DT,n>& xi) const
 	  {
-		return 0;
+		FieldVector<RT, n> values(0);
+		
+		return values;
 	  }
 		  
 	  
