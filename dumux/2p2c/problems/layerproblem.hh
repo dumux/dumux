@@ -138,6 +138,18 @@ namespace Dune
 		return values;
 	}
 
+	
+	int initialPhaseState (const FieldVector<DT,dim>& x, const Entity& e, 
+				  const FieldVector<DT,dim>& xi) const 
+	{
+
+		enum {gasPhase = 0, waterPhase = 1, bothPhases = 2}; // Phase state
+
+		int state = waterPhase;
+			
+		return state;
+	}
+	
 ///////////////////////////////
 	
 	double porosity (const FieldVector<DT,dim>& x, const Entity& e, 
@@ -182,15 +194,15 @@ namespace Dune
 		return values;
 	}
 
-	LayerProblem(TwoPhaseRelations& law = *(new LinearLaw), 
+	LayerProblem(TwoPhaseRelations& law = *(new LinearLaw), MultiComp& multicomp = *(new CWaterAir), 
 			const FieldVector<DT,dim> outerLowerLeft = 0, const FieldVector<DT,dim> outerUpperRight = 0, 
 			const FieldVector<DT,dim> innerLowerLeft = 0, const FieldVector<DT,dim> innerUpperRight = 0, 
-			const RT depthBOR = 0, RT outerK = 2.3e-10, RT innerK = 4.6e-14,		//9.05e-13, 
+			const RT depthBOR = 0, RT outerK = 8.3e-10, RT innerK = 3.0e-13,
 			RT outerSwr = 0.05, RT outerSnr = 0.1, RT innerSwr = 0.05, RT innerSnr = 0.1, 
 			RT outerPorosity = 0.4, RT innerPorosity = 0.4, 
 			RT outerAlpha = 0.0037, RT innerAlpha = 0.0037,	//0.00045, 
 			RT outerN = 4.7, RT innerN = 4.7)  //7.3
-	: TwoPTwoCProblem<G, RT>(law), 
+	: TwoPTwoCProblem<G, RT>(law, multicomp), 
 	  outerLowerLeft_(outerLowerLeft), outerUpperRight_(outerUpperRight), 
 	  innerLowerLeft_(innerLowerLeft), innerUpperRight_(innerUpperRight), 
 	  depthBOR_(depthBOR),eps_(1e-8*outerUpperRight[0]), 
