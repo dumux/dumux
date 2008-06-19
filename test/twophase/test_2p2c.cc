@@ -16,7 +16,8 @@
 //#include "dumux/twophase/fv/boxpwsn.hh"
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/material/vangenuchtenlaw.hh"
-#include "dumux/material/solubilities.hh"
+#include "dumux/material/multicomponentrelations.hh"
+//#include "dumux/material/solubilities.hh"
 #include "dumux/material/properties.hh"
 #include "dumux/material/constrel/constrelwater.hh"
 //#include "dumux/material/water_props.hh"
@@ -73,10 +74,11 @@ int main(int argc, char** argv)
     // choose fluids and properties
     Air air; Water water;
     Dune::VanGenuchtenLaw law(water, air);
+    Dune::CWaterAir multicomp(water, air);
     //Dune::LinearLaw law(water, air);
     
     // create problem properties and geometry
-    Dune::LayerProblem<GridType, NumberType> problem(law, outerLowerLeft, outerUpperRight, 
+    Dune::LayerProblem<GridType, NumberType> problem(law, multicomp, outerLowerLeft, outerUpperRight, 
     		innerLowerLeft, innerUpperRight, depthBOR);
 
     // create two-phase two-component problem
