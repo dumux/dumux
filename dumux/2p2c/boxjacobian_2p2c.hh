@@ -19,7 +19,7 @@
 #include<dune/disc/operators/boundaryconditions.hh>
 #include<dune/disc/functions/p1function.hh>
 
-#include"localjacobian.hh"
+#include"localjacobian_2p2c.hh"
 
 /**
  * @file
@@ -56,8 +56,8 @@ namespace Dune {
  - RT    type used for return values 
  */
 template<class Imp, class G, class RT, int m,
-		class BoxFunction = LeafP1Function<G, RT, m> > class BoxJacobian :
-	public LocalJacobian<Imp,G,RT,m> {
+		class BoxFunction = LeafP1Function<G, RT, m> > class BoxJacobian2p2c :
+	public LocalJacobian2p2c<Imp,G,RT,m> {
 	// mapper: one data element per vertex
 	template<int dim> struct P1Layout {
 		bool contains(Dune::GeometryType gt) {
@@ -68,8 +68,8 @@ template<class Imp, class G, class RT, int m,
 	typedef typename G::ctype DT;
 	typedef typename G::Traits::template Codim<0>::Entity Entity;
 	typedef typename Entity::Geometry Geometry;
-	typedef typename LocalJacobian<Imp,G,RT,m>::VBlockType VBlockType;
-	typedef typename LocalJacobian<Imp,G,RT,m>::MBlockType MBlockType;
+	typedef typename LocalJacobian2p2c<Imp,G,RT,m>::VBlockType VBlockType;
+	typedef typename LocalJacobian2p2c<Imp,G,RT,m>::MBlockType MBlockType;
 	typedef FVElementGeometry<G> FVElementGeometry;
 	typedef MultipleCodimMultipleGeomTypeMapper<G, typename G::Traits::LeafIndexSet, P1Layout>
 			VertexMapper;
@@ -81,7 +81,7 @@ public:
 	enum {SIZE=LagrangeShapeFunctionSetContainer<DT,RT,n>::maxsize};
 
 	//! Constructor
-	BoxJacobian(bool levelBoundaryAsDirichlet_, const G& grid,
+	BoxJacobian2p2c(bool levelBoundaryAsDirichlet_, const G& grid,
 			BoxFunction& sol, bool procBoundaryAsDirichlet_=true) :
 		vertexMapper(grid, grid.leafIndexSet()),
 				levelBoundaryAsDirichlet(levelBoundaryAsDirichlet_),

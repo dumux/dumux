@@ -69,8 +69,8 @@ namespace Dune
     typedef typename G::Traits::template Codim<0>::Entity Entity;
     typedef typename Entity::Geometry Geometry;
     typedef Box2P2CJacobian<G,RT,BoxFunction> ThisType;
-    typedef typename LocalJacobian<ThisType,G,RT,2>::VBlockType VBlockType;
-    typedef typename LocalJacobian<ThisType,G,RT,2>::MBlockType MBlockType;
+    typedef typename LocalJacobian2p2c<ThisType,G,RT,2>::VBlockType VBlockType;
+    typedef typename LocalJacobian2p2c<ThisType,G,RT,2>::MBlockType MBlockType;
     typedef FVElementGeometry<G> FVElementGeometry;
 
  	enum {pWIdx = 0, satNIdx = 1, numberOfComponents = 2};	// Solution vector index

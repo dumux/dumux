@@ -12,8 +12,8 @@
 #include<dune/grid/utility/intersectiongetter.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
 #include<dumux/material/twophaserelations.hh>
+#include<dumux/material/multicomponentrelations.hh>
 #include<dumux/material/linearlaw.hh>
-#include<dumux/material/solubilities.hh>
 
 /**
  * @file
@@ -118,6 +118,14 @@ namespace Dune
 	 */
 	virtual FieldVector<RT,m> initial(const FieldVector<DT,dim>& x,
 			const Entity& e, const FieldVector<DT,dim>& xi) const = 0;
+	
+	//! initiate phase state at given position
+	/*! initiate phase state at given position
+	  @param[in]  x    position in global coordinates
+	  \return     initial phase state
+	 */
+	virtual int initialPhaseState(const FieldVector<DT,dim>& x,
+			const Entity& e, const FieldVector<DT,dim>& xi) const = 0;
 
 	virtual double porosity(const FieldVector<DT,dim>& x, const Entity& e,
 			const FieldVector<DT,dim>& xi) const = 0;
@@ -147,14 +155,16 @@ namespace Dune
 		return;
 	}
 
-	Solubility& solu ()
+	MultiComp& multicomp ()
 	{
-		return solu_;
+		return multicomp_;
 	}
 	
+
 	
-	TwoPTwoCProblem(TwoPhaseRelations& law = *(new LinearLaw), Solubility& solu = *(new Solubility), const bool exsol = false) 
-	: materialLaw_(law), solu_(solu), exsolution(exsol)
+	TwoPTwoCProblem(TwoPhaseRelations& law = *(new LinearLaw), 
+			MultiComp& multicomp = *(new CWaterAir), const bool exsol = false) 
+	: materialLaw_(law), multicomp_(multicomp), exsolution(exsol)
 	{	}
 	
 	//! always define virtual destructor in abstract base class
@@ -164,7 +174,7 @@ namespace Dune
 		
   protected:
 	TwoPhaseRelations& materialLaw_;
-	Solubility& solu_;
+	MultiComp& multicomp_;
   };
 
 }
