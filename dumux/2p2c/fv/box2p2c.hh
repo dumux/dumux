@@ -75,7 +75,7 @@ namespace Dune
 
 	
 	Box2P2C(const G& g, ProblemType& prob) 
-	: LeafP1TwoPhaseModel(g, prob), Xwn(this->size), Xaw(this->size) // (this->size) vectors
+	: LeafP1TwoPhaseModel(g, prob), xWN(this->size), xAW(this->size) // (this->size) vectors
 	{ 	}
 	
 	void initial() {
@@ -116,6 +116,11 @@ namespace Dune
 
 				// initialize cell concentration
 				(*(this->u))[globalId] = this->problem.initial(
+						global, entity, local);
+				
+				// initialize phase state
+				//const Dune::FieldVector<DT,dim> 
+				this->localJacobian.statNData[globalId].phaseState = this->problem.initialPhaseState(
 						global, entity, local);
 			}
 		}
@@ -289,20 +294,20 @@ namespace Dune
 			//			parameters = problem.materialLawParameters
 			//			 		 (this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
 			//			this->pC[i] = this->problem.materialLaw().pC(this->satW[i], parameters);			
-			Xwn[i] = this->problem.solu().Xwn(this->pW[i], 283.15); //Achtung!! pW instead of pN!!!
-			Xaw[i] = this->problem.solu().Xaw(this->pW[i], 283.15); //Achtung!! pW instead of pN!!!
+			xWN[i] = this->problem.multicomp().xWN(this->pW[i], 283.15); //Achtung!! pW instead of pN!!!
+			xAW[i] = this->problem.multicomp().xAW(this->pW[i], 283.15); //Achtung!! pW instead of pN!!!
 		}
 		vtkwriter.addVertexData(this->pW,"wetting phase pressure");
 		vtkwriter.addVertexData(this->satW,"wetting phase saturation");
 		vtkwriter.addVertexData(this->satN,"nonwetting phase saturation");
-		vtkwriter.addVertexData(Xwn, "water in air");
-		vtkwriter.addVertexData(Xaw, "dissolved air");
+		vtkwriter.addVertexData(xWN, "water in air");
+		vtkwriter.addVertexData(xAW, "dissolved air");
 		vtkwriter.write(fname, VTKOptions::ascii);		
 	}
 
   protected:
-	  BlockVector<FieldVector<RT, 1> > Xwn;
-	  BlockVector<FieldVector<RT, 1> > Xaw;
+	  BlockVector<FieldVector<RT, 1> > xWN;
+	  BlockVector<FieldVector<RT, 1> > xAW;
   };
 
 }

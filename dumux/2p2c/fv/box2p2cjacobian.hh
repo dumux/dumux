@@ -104,7 +104,6 @@ namespace Dune
 
     virtual void primaryVarSwitch (const Entity& e, VBlockType* sol, int i)
     {
-   	 RT Xaw, Xwg;
         //int i = this->fvGeom.cellLocal;
 
         // neue Variable in SOL schreiben. Da Zeiger auf sol, sollte das funktionieren
@@ -113,17 +112,17 @@ namespace Dune
         const RT Xaw_max = 1.E-5; // Needs to be changed/specified !!!
         const RT Xwg_max = 2.E-1; // Needs to be changed/specified !!!
         
-        Xaw   	 = varNData[i].massfrac[air][wPhase];
-        Xwg     = varNData[i].massfrac[water][nPhase];;
         int state = statNData[i].phaseState;
         bool switched = false;
+    	RT pWSat = varNData[i].pWSat;
+    	RT henry = varNData[i].henry;
         
-        GeometryType gt = e.geometry().type();
-    	const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type& 
-    	sfs=Dune::LagrangeShapeFunctions<DT,RT,dim>::general(gt,1);
-
-    	// get local to global id map
-  		int globalIdx = this->vertexMapper.template map<dim>(e, sfs[i].entity());
+//        GeometryType gt = e.geometry().type();
+//    	const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type& 
+//    	sfs=Dune::LagrangeShapeFunctions<DT,RT,dim>::general(gt,1);
+//
+//    	// get local to global id map
+//  		int globalIdx = this->vertexMapper.template map<dim>(e, sfs[i].entity());
 
         //std::cout << "negative non-wetting saturation!! --> Switsching Variables" << std::endl;
        
@@ -133,7 +132,7 @@ namespace Dune
             if (sol[i][satNIdx] > 1.01*Xwg_max && switched == false) //varNData[i].massfrac[water][nPhase]
             {
             	// appearance of water phase
-            	std::cout << "Water appears at node " << globalIdx << std::endl;
+            	std::cout << "Water appears at node " << i << std::endl;
             	statNData[i].phaseState = bothPhases;
             	varNData[i].saturationN = 1 - 1.E-6; // initialize
             	switched = true;
@@ -144,7 +143,7 @@ namespace Dune
             if (sol[i][satNIdx] > 1.01*Xaw_max && switched == false) //varNData[i].massfrac[air][wPhase]
             {
             	// appearance of gas phase
-            	std::cout << "Gas appears at node " << globalIdx << std::endl;
+            	std::cout << "Gas appears at node " << i << std::endl;
             	statNData[i].phaseState = bothPhases;
             	varNData[i].saturationN = 1.E-6;  // Initialisierung
             	switched = true;
@@ -155,15 +154,15 @@ namespace Dune
       	  	if (sol[i][satNIdx] < 0.0  && switched == false) //varNData[i].saturationN 
       	  	{
       		  	// disappearance of gas phase
-      		  	std::cout << "Gas disappears" << globalIdx << std::endl;
+      		  	std::cout << "Gas disappears" << i << std::endl;
       		  	statNData[i].phaseState = waterPhase;
       		  	varNData[i].massfrac[air][wPhase] = 1.E-6;  // Initialisierung
             	switched = true;
             }
-      	  	else if (sol[i][satNIdx] < 0.0  && switched == false) //varNData[i].saturationW 
+      	  	else if ((1-sol[i][satNIdx]) < 0.0  && switched == false) //varNData[i].saturationW 
       	  	{
       	  		// disappearance of water phase
-      	  		std::cout << "Water disappears" << globalIdx << std::endl;
+      	  		std::cout << "Water disappears" << i << std::endl;
       	  		statNData[i].phaseState = gasPhase;
       	  		varNData[i].massfrac[water][nPhase] = 1.E-6;  // Initialisierung
             	switched = true;
@@ -173,18 +172,18 @@ namespace Dune
         
         if (switched == true)
         {
-	        // update primary variable
+	        // initiate primary variable (pW-sN formulation!)
 	        if (statNData[i].phaseState == gasPhase)  
 	        {
-	      	  sol[i][satNIdx] = varNData[i].massfrac[water][nPhase];
+	      	  sol[i][satNIdx] = 1 - 1e-9;
 	        }
 	        if (statNData[i].phaseState == waterPhase)  
 	        {
-	      	  sol[i][satNIdx] = varNData[i].massfrac[air][wPhase];
+	      	  sol[i][satNIdx] = 1e-9;
 	        }
 	        if (statNData[i].phaseState == bothPhases)  
 	        {
-	      	  sol[i][satNIdx] = varNData[i].saturationN;
+	      	  sol[i][satNIdx] = 1e-9;
 	        }
         }
 
@@ -277,15 +276,6 @@ namespace Dune
    	 
    	 return;
    	}
-
-    virtual void setPhaseState ()
-    {
-    	for (int i = 0; i < this->vertexMapper.size(); i++)
-    	statNData[i].phaseState = waterPhase;
-    	
-    	return;
-    }
-    
     
     void getLocalDefect(const Entity& entity,VBlockType *defhelp)
     { 
@@ -538,9 +528,6 @@ namespace Dune
   		 // if nodes are not already visited
   		 if (!statNData[globalIdx].visited) 
   		  {
-  			  // initial phase state
-  			  //statNData[globalIdx].phaseState = waterPhase;
-
   			  // ASSUME parameters defined at the node/subcontrol volume for the material law 
   			  statNData[globalIdx].parameters = problem.materialLawParameters
   			  (this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
@@ -589,21 +576,24 @@ namespace Dune
    		varNData[i].saturationW = 1.0 - sol[i][satNIdx];
    		varNData[i].pW = sol[i][pWIdx];
    		varNData[i].pC = problem.materialLaw().pC(varNData[i].saturationW, statNData[globalIdx].parameters);
-         //std::cout << "Capillary pressure: " << varNData[i].pC << " Corresponding Sw: "<< varNData[i].saturationW << std::endl;
-         varNData[i].pN = sol[i][pWIdx] + varNData[i].pC;
-         //std::cout << "PressureN: " << sol[i][pWIdx] << std::endl;
-         varNData[i].temperature = 283.15; // in [K]
-         // Mobilities & densities
-         varNData[i].mobility[wPhase] = problem.materialLaw().mobW(varNData[i].saturationW, statNData[globalIdx].parameters);
-         varNData[i].mobility[nPhase] = problem.materialLaw().mobN(sol[i][satNIdx], statNData[globalIdx].parameters);
-         varNData[i].density[wPhase] = problem.materialLaw().wettingPhase.density();
-         varNData[i].density[nPhase] = problem.materialLaw().nonwettingPhase.density();
-         // Solubilities of components in phases
-         varNData[i].massfrac[air][wPhase] = problem.solu().Xaw(varNData[i].pN, varNData[i].temperature);
-         varNData[i].massfrac[water][wPhase] = 1.0 - varNData[i].massfrac[air][wPhase];
-         varNData[i].massfrac[water][nPhase] = problem.solu().Xwn(varNData[i].pN, varNData[i].temperature);
-         varNData[i].massfrac[air][nPhase] = 1.0 - varNData[i].massfrac[water][nPhase];
+   		//std::cout << "Capillary pressure: " << varNData[i].pC << " Corresponding Sw: "<< varNData[i].saturationW << std::endl;
+   		varNData[i].pN = sol[i][pWIdx] + varNData[i].pC;
+   		//std::cout << "PressureN: " << sol[i][pWIdx] << std::endl;
+   		varNData[i].temperature = 283.15; // in [K]
+   		// Mobilities & densities
+   		varNData[i].mobility[wPhase] = problem.materialLaw().mobW(varNData[i].saturationW, statNData[globalIdx].parameters);
+   		varNData[i].mobility[nPhase] = problem.materialLaw().mobN(sol[i][satNIdx], statNData[globalIdx].parameters);
+   		varNData[i].density[wPhase] = problem.materialLaw().wettingPhase.density();
+   		varNData[i].density[nPhase] = problem.materialLaw().nonwettingPhase.density();
+   		// Solubilities of components in phases
+   		varNData[i].massfrac[air][wPhase] = problem.multicomp().xAW(varNData[i].pN, varNData[i].temperature);
+   		varNData[i].massfrac[water][wPhase] = 1.0 - varNData[i].massfrac[air][wPhase];
+   		varNData[i].massfrac[water][nPhase] = problem.multicomp().xWN(varNData[i].pN, varNData[i].temperature);
+   		varNData[i].massfrac[air][nPhase] = 1.0 - varNData[i].massfrac[water][nPhase];
+   		varNData[i].pWSat = problem.multicomp().vaporPressure(varNData[i].temperature);
+   		varNData[i].henry = problem.multicomp().henry(varNData[i].temperature);
 
+   		
          // CONSTANT solubility (for comparison with twophase)
 //         varNData[i].massfrac[air][wPhase] = 0.1; varNData[i].massfrac[water][wPhase] = 0.9;
 //         varNData[i].massfrac[water][nPhase] = 0.1; varNData[i].massfrac[air][nPhase] = 0.9;
@@ -619,7 +609,7 @@ namespace Dune
     struct StaticNodeData 
     {
    	 bool visited;
-   	 int phaseState;//[numberOfComponents];
+   	 int phaseState;
    	 RT cellVolume;
    	 RT porosity;
    	 FieldVector<RT, 4> parameters;
@@ -638,6 +628,8 @@ namespace Dune
      VBlockType mobility;  //Vector with the number of phases
      VBlockType density;
      FieldMatrix<RT,c,m> massfrac;
+     RT pWSat;
+     RT henry;
     };
 
 	 struct StaticIPData
@@ -658,7 +650,7 @@ namespace Dune
     
     // parameters given in constructor
     TwoPTwoCProblem<G,RT>& problem;
-    Solubility solub;
+    CWaterAir multicomp;
     std::vector<StaticNodeData> statNData;
     std::vector<StaticIPData> statIPData;
     std::vector<VariableNodeData> varNData;
