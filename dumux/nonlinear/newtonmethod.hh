@@ -57,14 +57,10 @@ public:
 				model.globalDefect(defectGlobal);
 				globalResiduum=0.5*(*defectGlobal).two_norm();
 				grid.comm().sum(&globalResiduum, 1);
-				printvector(std::cout, *defectGlobal, "global Defect", "rank", 200, 1, 3);
+//				printvector(std::cout, *defectGlobal, "global Defect", "rank", 200, 1, 3);
 
 				while (globalResiduum >= globalResiduumOld 
 						&& iiter < (maxIter/2) && globalResiduum*oneByMagnitude > 1e-12) {
-					if (verbose && grid.comm().rank() == 0)
-						std::cout << "Newton step "<< iter << ", residual = "
-						<< globalResiduum << ", difference = "<< error
-						<< std::endl;
 					iiter++;
 					*uOldNewtonStep = *u;
 					globalResiduumOld=globalResiduum;
