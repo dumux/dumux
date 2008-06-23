@@ -41,24 +41,30 @@ public:
 				*f = 0;
 				localJacobian.clearVisited();
 				A.assemble(localJacobian, u, f);
-//				if (grid.comm().rank() == 1) {
-//					printmatrix(std::cout, *A, "global stiffness matrix", "row", 11, 3);
-//					printvector(std::cout, *f, "right hand side", "row", 200, 1, 3);
-//				}
-
+				if (grid.comm().rank() == 10) {
+					printmatrix(std::cout, *A, "global stiffness matrix", "row", 11, 3);
+					printvector(std::cout, *uOldNewtonStep, "uOldNewtonStep", "row", 200, 1, 3);
+					printvector(std::cout, *f, "right hand side", "row", 200, 1, 3);
+				}
+				
 				model.solve();
 				error = oneByMagnitude*((*u).two_norm());
 				//printvector(std::cout, *u, "update", "row", 200, 1, 3);
 				*u *= -lambda;
 				*u += *uOldNewtonStep;
-				//printvector(std::cout, *u, "u", "row", 200, 1, 3);
+				if (grid.comm().rank() == 10) 
+					printvector(std::cout, *u, "u", "row", 200, 1, 3);
 				model.globalDefect(defectGlobal);
 				globalResiduum=0.5*(*defectGlobal).two_norm();
 				grid.comm().sum(&globalResiduum, 1);
-				//printvector(std::cout, *defectGlobal, "global Defect", "row", 200, 1, 3);
+				printvector(std::cout, *defectGlobal, "global Defect", "rank", 200, 1, 3);
 
 				while (globalResiduum >= globalResiduumOld 
-						&& iiter < (maxIter/2)) {
+						&& iiter < (maxIter/2) && globalResiduum*oneByMagnitude > 1e-12) {
+					if (verbose && grid.comm().rank() == 0)
+						std::cout << "Newton step "<< iter << ", residual = "
+						<< globalResiduum << ", difference = "<< error
+						<< std::endl;
 					iiter++;
 					*uOldNewtonStep = *u;
 					globalResiduumOld=globalResiduum;
@@ -122,7 +128,7 @@ public:
 	}
 
 	NewtonMethod(const G& g, Model& mod, double dtol = 1e-8,
-			double rtol = 1e-2, int maxIt = 20, double mindt = 1e-5,
+			double rtol = 1e-2, int maxIt = 20, double mindt = 1e0,
 			int goodIt = 3) :
 				grid(g), model(mod), u(mod.u), f(mod.f), A(mod.A),
 				localJacobian(mod.localJacobian), uOldNewtonStep(g),

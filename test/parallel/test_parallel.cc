@@ -68,7 +68,7 @@ int main(int argc, char** argv)
     Dune::MPIHelper::instance(argc, argv);
 
     // define the problem dimensions  
-    const int dim=2;
+    const int dim=3;
     typedef double NumberType; 
     if (argc != 2 && argc != 3) {
       std::cout << "usage: test_parallel dgffilename/basefilename [refinementsteps]" << std::endl;
@@ -82,33 +82,27 @@ int main(int argc, char** argv)
     }
     
     // instantiate a distributed grid with overlap
-    Dune::FieldVector<double,dim> length(1.0);
-    Dune::FieldVector<int,dim> size(4);
-    //size[0] = 2;
-    Dune::FieldVector<bool,dim> periodic(false);
-    int overlap = 1;
-    typedef Dune::YaspGrid<dim,dim> GridType;
-
-#if HAVE_MPI
-    GridType grid(MPI_COMM_WORLD, length, size, periodic, overlap);
-#else 
-    GridType grid(length, size, periodic, overlap);
-#endif
+//    Dune::FieldVector<double,dim> length(1.0);
+//    Dune::FieldVector<int,dim> size(64);
+//    Dune::FieldVector<bool,dim> periodic(false);
+//    int overlap = 1;
+//    typedef Dune::YaspGrid<dim,dim> GridType;
+//
+//#if HAVE_MPI
+//    GridType grid(MPI_COMM_WORLD, length, size, periodic, overlap);
+//#else 
+//    GridType grid(length, size, periodic, overlap);
+//#endif
 
     // create a grid object
-//      typedef Dune::ALUCubeGrid<dim,dim> GridType; 
+    typedef Dune::ALUCubeGrid<dim,dim> GridType; 
 
-// #ifdef DGF
-//     // create grid pointer
-//     Dune::GridPtr<GridType> gridPtr( argv[1] );
-//     // grid reference 
-//     GridType& grid = *gridPtr;
-// #else
-//     GridType grid;
-//     readStarFormat(grid, argv[1]);
-// #endif
+    // create grid pointer
+    Dune::GridPtr<GridType> gridPtr( argv[1] );
+    // grid reference 
+    GridType& grid = *gridPtr;
 
-//     grid.loadBalance();
+    grid.loadBalance();
 
     if (refinementSteps)
     	grid.globalRefine(refinementSteps);

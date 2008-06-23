@@ -239,7 +239,7 @@ public:
 
 			// determine boundary condition type for this face, initialize with processor boundary
 			FieldVector<typename BoundaryConditions::Flags, m> bctypeface(BoundaryConditions::process);
-			FieldVector<int,m> dirichletIdx;
+			FieldVector<int,m> dirichletIdx(0);
 
 			// handle face on exterior boundary, this assumes there are no interior boundaries
 			if (it->boundary()) {
@@ -300,7 +300,7 @@ public:
 			for (int equationNumber=0; equationNumber<m; equationNumber++) {
 				for (int i=0; i<sfs.size(); i++) // loop over test function number
 				{
-					this->dirichletIndex[i][equationNumber] = equationNumber; 
+					//this->dirichletIndex[i][equationNumber] = equationNumber; 
 					
 					//std::cout<<"i = "<<i<<std::endl;
 					if (sfs[i].codim()==0)
@@ -314,6 +314,7 @@ public:
 								                = bctypeface[equationNumber];
 								this->dirichletIndex[i][equationNumber]
 								                        = dirichletIdx[equationNumber];
+								
 								if (bctypeface[equationNumber]
 								               ==BoundaryConditions::process)
 									this->b[i][equationNumber] = 0;

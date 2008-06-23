@@ -1295,8 +1295,8 @@ namespace Dune
 					  if (j.index()==i.index())
 						{
 						for (int jcomp=0; jcomp<m; jcomp++)
-							//if (jcomp==dirichletIndexGlobal[i.index()][icomp])
-							if (icomp == jcomp)
+							if (jcomp==dirichletIndexGlobal[i.index()][icomp])
+							//if (icomp == jcomp)
 								(*j)[icomp][jcomp] = 1;
 							else
 								(*j)[icomp][jcomp] = 0;									  
