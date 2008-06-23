@@ -29,6 +29,7 @@ public:
 			grid.comm().sum(&globalResiduum, 1);	    
 			if (grid.comm().rank() == 0)
 				std::cout << "initial residual = " << globalResiduum << std::endl;	
+			//printvector(std::cout, *defectGlobal, "global Defect", "row", 200, 1, 3);
 			while ((error > difftolerance || globalResiduum > restolerance) && iter < maxIter) {
 				iter ++;
 				iiter=0;
@@ -57,7 +58,7 @@ public:
 				model.globalDefect(defectGlobal);
 				globalResiduum=0.5*(*defectGlobal).two_norm();
 				grid.comm().sum(&globalResiduum, 1);
-//				printvector(std::cout, *defectGlobal, "global Defect", "rank", 200, 1, 3);
+				//printvector(std::cout, *defectGlobal, "global Defect", "row", 200, 1, 3);
 
 				while (globalResiduum >= globalResiduumOld 
 						&& iiter < (maxIter/2) && globalResiduum*oneByMagnitude > 1e-12) {
@@ -124,7 +125,7 @@ public:
 	}
 
 	NewtonMethod(const G& g, Model& mod, double dtol = 1e-8,
-			double rtol = 1e-2, int maxIt = 20, double mindt = 1e0,
+			double rtol = 1e-2, int maxIt = 20, double mindt = 1e-5,
 			int goodIt = 3) :
 				grid(g), model(mod), u(mod.u), f(mod.f), A(mod.A),
 				localJacobian(mod.localJacobian), uOldNewtonStep(g),
