@@ -50,12 +50,12 @@ namespace Dune {
 
 /**
  \brief Two phase model with Pn and Sw as primary unknowns
- 
+
  This implements a two phase model with Pn and Sw as primary unknowns.
  */
 template<class G, class RT> class BoxPnSw :
-	public LeafP1TwoPhaseModel<G, RT, TwoPhaseProblem<G, RT>,
-		BoxPnSwJacobian<G, RT> > {
+public LeafP1TwoPhaseModel<G, RT, TwoPhaseProblem<G, RT>,
+BoxPnSwJacobian<G, RT> > {
 
 public:
 	// define the problem type (also change the template argument above)
@@ -65,7 +65,7 @@ public:
 	typedef BoxPnSwJacobian<G, RT> LocalJacobian;
 
 	typedef LeafP1TwoPhaseModel<G, RT, ProblemType, LocalJacobian>
-			LeafP1TwoPhaseModel;
+	LeafP1TwoPhaseModel;
 
 	typedef typename LeafP1TwoPhaseModel::FunctionType FunctionType;
 
@@ -74,10 +74,8 @@ public:
 	enum {m = 2};
 
 	typedef BoxPnSw<G, RT> ThisType;
-	typedef typename LeafP1TwoPhaseModel::FunctionType::RepresentationType
-			VectorType;
-	typedef typename LeafP1TwoPhaseModel::OperatorAssembler::RepresentationType
-			MatrixType;
+	typedef typename LeafP1TwoPhaseModel::FunctionType::RepresentationType VectorType;
+	typedef typename LeafP1TwoPhaseModel::OperatorAssembler::RepresentationType MatrixType;
 	typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator;
 #ifdef HAVE_PARDISO
 	SeqPardiso<MatrixType,VectorType,VectorType> pardiso;
@@ -119,13 +117,13 @@ public:
 		double upperMass, oldUpperMass;
 		double totalMass = this->injected(upperMass, oldUpperMass);
 		std::cout << totalMass << "\t"<< upperMass<< "\t"<< oldUpperMass
-				<< "\t# totalMass, upperMass, oldUpperMass"<< std::endl;
+		<< "\t# totalMass, upperMass, oldUpperMass"<< std::endl;
 
 		*(this->uOldTimeStep) = *(this->u);
-		
+
 		if (this->problem.exsolution)
 			this->problem.updateExSol(dt, *(this->u));
-			
+
 		return;
 	}
 
@@ -133,7 +131,7 @@ public:
 		typedef typename G::Traits::template Codim<0>::Entity Entity;
 		typedef typename G::ctype DT;
 		typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator
-				Iterator;
+		Iterator;
 		enum {dim = G::dimension};
 		typedef array<BoundaryConditions::Flags, m> BCBlockType;
 
@@ -143,19 +141,18 @@ public:
 		// allocate flag vector to hold flags for essential boundary conditions
 		std::vector<BCBlockType> essential(this->vertexmapper.size());
 		for (typename std::vector<BCBlockType>::size_type i=0; i
-				<essential.size(); i++)
+		<essential.size(); i++)
 			essential[i].assign(BoundaryConditions::neumann);
 
 		// iterate through leaf grid 
 		Iterator eendit = indexset.template end<0, All_Partition>();
 		for (Iterator it = indexset.template begin<0, All_Partition>(); it
-				!= eendit; ++it) {
+		!= eendit; ++it) {
 			// get geometry type
 			Dune::GeometryType gt = it->geometry().type();
 
 			const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type
-					&sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(gt,
-							1);
+			&sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(gt,	1);
 			int size = sfs.size();
 
 			// get entity 
@@ -175,21 +172,21 @@ public:
 				for (int equationnumber = 0; equationnumber < m; equationnumber++) {
 					if (this->localJacobian.bc(i)[equationnumber] == BoundaryConditions::neumann)
 						(*defectGlobal)[globalId][equationnumber]
-								+= this->localJacobian.def[i][equationnumber];
-					else
-						essential[globalId].assign(BoundaryConditions::dirichlet);
+						                          += this->localJacobian.def[i][equationnumber];
+						                          else
+						                        	  essential[globalId].assign(BoundaryConditions::dirichlet);
 				}
 			}
 		}
 
 		for (typename std::vector<BCBlockType>::size_type i=0; i
-				<essential.size(); i++)
+		<essential.size(); i++)
 			for (int equationnumber = 0; equationnumber < m; equationnumber++) {
-			if (essential[i][equationnumber] == BoundaryConditions::dirichlet)
-				(*defectGlobal)[i][equationnumber] = 0;
+				if (essential[i][equationnumber] == BoundaryConditions::dirichlet)
+					(*defectGlobal)[i][equationnumber] = 0;
 			}
 	}
-	
+
 	//overwrite vtkout for pnSw formulation
 	virtual void vtkout(const char* name, int k) {
 		int size=this->vertexmapper.size();
@@ -203,12 +200,12 @@ public:
 			this->satError.resize(size);
 		}
 		for (int i = 0; i < size; i++) {
-				this->pN[i] = (*(this->u))[i][0];
-				this->satW[i] = (*(this->u))[i][1];
-				this->satN[i] = 1 - this->satW[i];
-				double satWI = this->satW[i];
-				minSat = std::min(minSat, satWI);
-				maxSat = std::max(maxSat, satWI);
+			this->pN[i] = (*(this->u))[i][0];
+			this->satW[i] = (*(this->u))[i][1];
+			this->satN[i] = 1 - this->satW[i];
+			double satWI = this->satW[i];
+			minSat = std::min(minSat, satWI);
+			maxSat = std::max(maxSat, satWI);
 			if (this->problem.exsolution){
 				this->satEx[i]=this->problem.uExOutVertex(i, 1);
 				this->satError[i]=this->problem.uExOutVertex(i, 2);
@@ -223,10 +220,10 @@ public:
 		}
 		vtkwriter.write(fname, VTKOptions::ascii);
 		std::cout << "nonwetting phase saturation: min = "<< minSat
-				<< ", max = "<< maxSat << std::endl;
+		<< ", max = "<< maxSat << std::endl;
 		if (minSat< -0.5 || maxSat > 1.5)DUNE_THROW(MathError, "Saturation exceeds range.");
 	}
-	
+
 };
 
 }

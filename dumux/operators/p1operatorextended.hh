@@ -1,7 +1,7 @@
-// $Id: p1operator.hh 470 2008-04-06 11:58:39Z sander $
+// $Id: p1operator.hh 485 2008-06-12 20:47:53Z christi $
 
-#ifndef DUNE_P1OPERATOREXTENDED_HH
-#define DUNE_P1OPERATOREXTENDED_HH
+#ifndef DUNE_P1OPERATOR_HH
+#define DUNE_P1OPERATOR_HH
 
 #include<iostream>
 #include<vector>
@@ -33,153 +33,161 @@
  */
 
 /*! @defgroup DISC_Operators Operators
- @ingroup DISC
- @brief
- 
- @section D1 Introduction
- <!--=================-->
- 
- To be written
- */
+  @ingroup DISC
+  @brief
+  
+  @section D1 Introduction
+  <!--=================-->
+  
+  To be written
+*/
 
-namespace Dune {
-/** @addtogroup DISC_Operators
- *
- * @{
- */
-/**
- * @brief defines a class for piecewise linear finite element functions
- *
- */
+namespace Dune
+{
+  /** @addtogroup DISC_Operators
+   *
+   * @{
+   */
+  /**
+   * @brief defines a class for piecewise linear finite element functions
+   *
+   */
 
-// make a type to sort matrix entries
-typedef std::pair<int,int> P1OperatorLink;
+  // make a type to sort matrix entries
+  typedef std::pair<int,int> P1OperatorLink;
 
-// template meta program for inserting indices
-template<int n, int c> struct P1Operator_meta {
-	template<class Entity, class VMapper, class AMapper, class Refelem,
-			class Matrix> static void addrowscube(const Entity& e,
-			const VMapper& vertexmapper, const AMapper& allmapper,
-			const Refelem& refelem, Matrix& A, std::vector<bool>& visited,
-			int hangingnodes, std::set<P1OperatorLink>& links) {
-		if (refelem.type(0,0).isCube()) {
-			for (int i=0; i<refelem.size(c); i++) // loop over subentities of codim c of e
+  // template meta program for inserting indices
+  template<int n, int c>
+  struct P1Operator_meta {
+	template<class Entity, class VMapper, class AMapper, class Refelem, class Matrix>
+	static void addrowscube (const Entity& e, const VMapper& vertexmapper, const AMapper& allmapper, 
+							 const Refelem& refelem, Matrix& A, std::vector<bool>& visited, 
+							 int hangingnodes, std::set<P1OperatorLink>& links)
+	{
+	  if (refelem.type(0,0).isCube())
+		{
+		  for (int i=0; i<refelem.size(c); i++) // loop over subentities of codim c of e
 			{
-				int index = allmapper.template map<c>(e, i);
-				if (!visited[index]) {
-					int corners = refelem.size(i, c, n);
-					for (int j=0; j<corners/2; j++) // uses fact that diagonals are (0,corners-1), (1,corners-2) ...
+			  int index = allmapper.template map<c>(e,i);
+			  if (!visited[index]) 
+				{
+				  int corners = refelem.size(i,c,n);
+				  for (int j=0; j<corners/2; j++) // uses fact that diagonals are (0,corners-1), (1,corners-2) ...
 					{
-						int alpha = vertexmapper.template map<n>(e,
-								refelem.subEntity(i, c, j, n));
-						int beta = vertexmapper.template map<n>(e,
-								refelem.subEntity(i, c, corners-1-j, n));
-						A.incrementrowsize(alpha);
-						A.incrementrowsize(beta);
-						if (hangingnodes>0) // delete standard links
+					  int alpha = vertexmapper.template map<n>(e,refelem.subEntity(i,c,j,n));
+					  int beta = vertexmapper.template map<n>(e,refelem.subEntity(i,c,corners-1-j,n));
+					  A.incrementrowsize(alpha);
+					  A.incrementrowsize(beta);
+					  if (hangingnodes>0) // delete standard links
 						{
-							links.erase(P1OperatorLink(alpha, beta));
-							links.erase(P1OperatorLink(beta, alpha));
+						  links.erase(P1OperatorLink(alpha,beta));
+						  links.erase(P1OperatorLink(beta,alpha));
 						}
 					}
-					visited[index] = true;
+				  visited[index] = true;
 				}
 			}
 		}
-		if (refelem.type(0,0).isPyramid() && c==1) {
-			int index = allmapper.template map<c>(e, 0);
-			if (!visited[index]) {
-				int alpha = vertexmapper.template map<n>(e, 0);
-				int beta = vertexmapper.template map<n>(e, 2);
-				A.incrementrowsize(alpha);
-				A.incrementrowsize(beta);
-				if (hangingnodes>0) // delete standard links
+	  if (refelem.type(0,0).isPyramid() && c==1)
+		{
+		  int index = allmapper.template map<c>(e,0);
+		  if (!visited[index]) 
+			{
+			  int alpha = vertexmapper.template map<n>(e,0);
+			  int beta = vertexmapper.template map<n>(e,2);
+			  A.incrementrowsize(alpha);
+			  A.incrementrowsize(beta);
+			  if (hangingnodes>0) // delete standard links
 				{
-					links.erase(P1OperatorLink(alpha, beta));
-					links.erase(P1OperatorLink(beta, alpha));
+				  links.erase(P1OperatorLink(alpha,beta));
+				  links.erase(P1OperatorLink(beta,alpha));
 				}
-				alpha = vertexmapper.template map<n>(e, 1);
-				beta = vertexmapper.template map<n>(e, 3);
-				A.incrementrowsize(alpha);
-				A.incrementrowsize(beta);
-				if (hangingnodes>0) // delete standard links
+			  alpha = vertexmapper.template map<n>(e,1);
+			  beta = vertexmapper.template map<n>(e,3);
+			  A.incrementrowsize(alpha);
+			  A.incrementrowsize(beta);
+			  if (hangingnodes>0) // delete standard links
 				{
-					links.erase(P1OperatorLink(alpha, beta));
-					links.erase(P1OperatorLink(beta, alpha));
+				  links.erase(P1OperatorLink(alpha,beta));
+				  links.erase(P1OperatorLink(beta,alpha));
 				}
-				visited[index] = true;
+			  visited[index] = true;
 			}
-		}
-		if (refelem.type(0,0).isPrism() && c==1) {
-			int index = allmapper.template map<c>(e, 1);
-			if (!visited[index]) {
-				int alpha = vertexmapper.template map<n>(e, 0);
-				int beta = vertexmapper.template map<n>(e, 4);
-				A.incrementrowsize(alpha);
-				A.incrementrowsize(beta);
-				if (hangingnodes>0) // delete standard links
+		}	  
+	  if (refelem.type(0,0).isPrism() && c==1)
+		{
+		  int index = allmapper.template map<c>(e,1);
+		  if (!visited[index]) 
+			{
+			  int alpha = vertexmapper.template map<n>(e,0);
+			  int beta = vertexmapper.template map<n>(e,4);
+			  A.incrementrowsize(alpha);
+			  A.incrementrowsize(beta);
+			  if (hangingnodes>0) // delete standard links
 				{
-					links.erase(P1OperatorLink(alpha, beta));
-					links.erase(P1OperatorLink(beta, alpha));
+				  links.erase(P1OperatorLink(alpha,beta));
+				  links.erase(P1OperatorLink(beta,alpha));
 				}
-				alpha = vertexmapper.template map<n>(e, 1);
-				beta = vertexmapper.template map<n>(e, 3);
-				A.incrementrowsize(alpha);
-				A.incrementrowsize(beta);
-				if (hangingnodes>0) // delete standard links
+			  alpha = vertexmapper.template map<n>(e,1);
+			  beta = vertexmapper.template map<n>(e,3);
+			  A.incrementrowsize(alpha);
+			  A.incrementrowsize(beta);
+			  if (hangingnodes>0) // delete standard links
 				{
-					links.erase(P1OperatorLink(alpha, beta));
-					links.erase(P1OperatorLink(beta, alpha));
+				  links.erase(P1OperatorLink(alpha,beta));
+				  links.erase(P1OperatorLink(beta,alpha));
 				}
-				visited[index] = true;
+			  visited[index] = true;
 			}
-			index = allmapper.template map<c>(e, 2);
-			if (!visited[index]) {
-				int alpha = vertexmapper.template map<n>(e, 1);
-				int beta = vertexmapper.template map<n>(e, 5);
-				A.incrementrowsize(alpha);
-				A.incrementrowsize(beta);
-				if (hangingnodes>0) // delete standard links
+		  index = allmapper.template map<c>(e,2);
+		  if (!visited[index]) 
+			{
+			  int alpha = vertexmapper.template map<n>(e,1);
+			  int beta = vertexmapper.template map<n>(e,5);
+			  A.incrementrowsize(alpha);
+			  A.incrementrowsize(beta);
+			  if (hangingnodes>0) // delete standard links
 				{
-					links.erase(P1OperatorLink(alpha, beta));
-					links.erase(P1OperatorLink(beta, alpha));
+				  links.erase(P1OperatorLink(alpha,beta));
+				  links.erase(P1OperatorLink(beta,alpha));
 				}
-				alpha = vertexmapper.template map<n>(e, 2);
-				beta = vertexmapper.template map<n>(e, 4);
-				A.incrementrowsize(alpha);
-				A.incrementrowsize(beta);
-				if (hangingnodes>0) // delete standard links
+			  alpha = vertexmapper.template map<n>(e,2);
+			  beta = vertexmapper.template map<n>(e,4);
+			  A.incrementrowsize(alpha);
+			  A.incrementrowsize(beta);
+			  if (hangingnodes>0) // delete standard links
 				{
-					links.erase(P1OperatorLink(alpha, beta));
-					links.erase(P1OperatorLink(beta, alpha));
+				  links.erase(P1OperatorLink(alpha,beta));
+				  links.erase(P1OperatorLink(beta,alpha));
 				}
-				visited[index] = true;
+			  visited[index] = true;
 			}
-			index = allmapper.template map<c>(e, 3);
-			if (!visited[index]) {
-				int alpha = vertexmapper.template map<n>(e, 0);
-				int beta = vertexmapper.template map<n>(e, 5);
-				A.incrementrowsize(alpha);
-				A.incrementrowsize(beta);
-				if (hangingnodes>0) // delete standard links
+		  index = allmapper.template map<c>(e,3);
+		  if (!visited[index]) 
+			{
+			  int alpha = vertexmapper.template map<n>(e,0);
+			  int beta = vertexmapper.template map<n>(e,5);
+			  A.incrementrowsize(alpha);
+			  A.incrementrowsize(beta);
+			  if (hangingnodes>0) // delete standard links
 				{
-					links.erase(P1OperatorLink(alpha, beta));
-					links.erase(P1OperatorLink(beta, alpha));
+				  links.erase(P1OperatorLink(alpha,beta));
+				  links.erase(P1OperatorLink(beta,alpha));
 				}
-				alpha = vertexmapper.template map<n>(e, 2);
-				beta = vertexmapper.template map<n>(e, 3);
-				A.incrementrowsize(alpha);
-				A.incrementrowsize(beta);
-				if (hangingnodes>0) // delete standard links
+			  alpha = vertexmapper.template map<n>(e,2);
+			  beta = vertexmapper.template map<n>(e,3);
+			  A.incrementrowsize(alpha);
+			  A.incrementrowsize(beta);
+			  if (hangingnodes>0) // delete standard links
 				{
-					links.erase(P1OperatorLink(alpha, beta));
-					links.erase(P1OperatorLink(beta, alpha));
+				  links.erase(P1OperatorLink(alpha,beta));
+				  links.erase(P1OperatorLink(beta,alpha));
 				}
-				visited[index] = true;
+			  visited[index] = true;
 			}
-		}
-		P1Operator_meta<n, c-1>::addrowscube(e,vertexmapper,allmapper,refelem,A,visited,hangingnodes,links);
-		return;
+		}	  
+	  P1Operator_meta<n,c-1>::addrowscube(e,vertexmapper,allmapper,refelem,A,visited,hangingnodes,links);
+	  return;
 	}
 	template<class Entity, class VMapper, class AMapper, class Refelem, class Matrix>
 	static void addindicescube (const Entity& e, const VMapper& vertexmapper, const AMapper& allmapper, 
@@ -697,8 +705,8 @@ template<int n, int c> struct P1Operator_meta {
 		
 	{
 	  // Check for the TypeTag
-            dune_static_assert((is_same<TypeTag,LeafTag>::value 
-                                || is_same<TypeTag,LevelTag>::value), "TypeTag must be LeafTag or LevelTag");
+      dune_static_assert((is_same<TypeTag,LeafTag>::value 
+              || is_same<TypeTag,LevelTag>::value), "TypeTag must be LeafTag or LevelTag");
 
 	  // be verbose
 //  	  std::cout << g.comm().rank() << ": " << "vector size = " << vertexmapper.size() << " + " << extraDOFs << std::endl;
@@ -709,7 +717,7 @@ template<int n, int c> struct P1Operator_meta {
 //  	  std::cout << g.comm().rank() << ": " << "hanging nodes=" << hangingnodes << " links=" << links.size() << std::endl;
    
 	  // set size of all rows to zero
-	  for (int i=0; i<is.size(n); i++)
+	  for (size_t i=0; i<is.size(n); i++)
 		A.setrowsize(i,0); 
 
 	  // build needs a flag for all entities of all codims
@@ -905,7 +913,7 @@ template<int n, int c> struct P1Operator_meta {
 	typedef typename MatrixType::RowIterator rowiterator;
 	typedef typename MatrixType::ColIterator coliterator;
 	typedef typename P1OperatorBase<TypeTag,G,RT,IS,LC,m>::VM VM;
-	typedef array<BoundaryConditions::Flags,m> BCBlockType;     // componentwise boundary conditions
+    typedef array<BoundaryConditions::Flags,m> BCBlockType;     // componentwise boundary conditions
 
 
 	// A DataHandle class to exchange border rows
@@ -1019,9 +1027,9 @@ template<int n, int c> struct P1Operator_meta {
 	  // allocate flag vector to hold flags for essential boundary conditions
 	  std::vector<BCBlockType> essential(this->vertexmapper.size());
 	  std::vector<VBlockType> dirichletIndexGlobal(this->vertexmapper.size());
-	  for (typename std::vector<BCBlockType>::size_type i=0; i<essential.size(); i++){
+	  for (typename std::vector<BCBlockType>::size_type i=0; i<essential.size(); i++) {
 		essential[i].assign(BoundaryConditions::neumann);
-	  	dirichletIndexGlobal[i] = 0;
+		dirichletIndexGlobal[i] = 0;
 	  }
 
 	  // allocate flag vector to note hanging nodes whose row has been assembled
@@ -1287,7 +1295,8 @@ template<int n, int c> struct P1Operator_meta {
 					  if (j.index()==i.index())
 						{
 						for (int jcomp=0; jcomp<m; jcomp++)
-							if (jcomp==dirichletIndexGlobal[i.index()][icomp])
+							//if (jcomp==dirichletIndexGlobal[i.index()][icomp])
+							if (icomp == jcomp)
 								(*j)[icomp][jcomp] = 1;
 							else
 								(*j)[icomp][jcomp] = 0;									  
@@ -1487,4 +1496,4 @@ template<int n, int c> struct P1Operator_meta {
   /** @} */
 
 }
-#endif									
+#endif

@@ -28,7 +28,7 @@ public:
 			double globalResiduumOld=globalResiduum;
 			grid.comm().sum(&globalResiduum, 1);	    
 			if (grid.comm().rank() == 0)
-				std::cout << "initial residual = " << globalResiduum << std::endl;		    	
+				std::cout << "initial residual = " << globalResiduum << std::endl;	
 			while ((error > difftolerance || globalResiduum > restolerance) && iter < maxIter) {
 				iter ++;
 				iiter=0;
@@ -41,8 +41,10 @@ public:
 				*f = 0;
 				localJacobian.clearVisited();
 				A.assemble(localJacobian, u, f);
-				//printmatrix(std::cout, *A, "global stiffness matrix", "row", 11, 3);
-				//printvector(std::cout, *f, "right hand side", "row", 200, 1, 3);
+//				if (grid.comm().rank() == 1) {
+//					printmatrix(std::cout, *A, "global stiffness matrix", "row", 11, 3);
+//					printvector(std::cout, *f, "right hand side", "row", 200, 1, 3);
+//				}
 
 				model.solve();
 				error = oneByMagnitude*((*u).two_norm());

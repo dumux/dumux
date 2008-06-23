@@ -27,27 +27,27 @@
 
 int main(int argc, char** argv)
 {
-    try{
-        typedef double Scalar;
+	try{
+		typedef double Scalar;
 
-        if (argc != 3) {
-            std::cout << boost::format("usage: %s tEnd dt\n")%argv[0];
-            return 1;
-        }
-    double tEnd, dt;
-    std::istringstream(argv[1]) >> tEnd;
-    std::istringstream(argv[2]) >> dt;
+		if (argc != 3) {
+			std::cout << boost::format("usage: %s tEnd dt\n")%argv[0];
+			return 1;
+		}
+		double tEnd, dt;
+		std::istringstream(argv[1]) >> tEnd;
+		std::istringstream(argv[2]) >> dt;
 
-        Stupid::Lens::PwSnLensProblem<Scalar> problem(dt, tEnd);
-        if (!problem.simulate())
-            return 2;
-        return 0;
-    }
-    catch (Dune::Exception &e){
-        std::cerr << "Dune reported error: " << e << std::endl;
-    }
-    catch (...){
-        std::cerr << "Unknown exception thrown!\n";
-    }
-    return 3;
+		Stupid::Lens::PwSnLensProblem<Scalar> problem(dt, tEnd);
+		if (!problem.simulate())
+			return 2;
+		return 0;
+	}
+	catch (Dune::Exception &e){
+		std::cerr << "Dune reported error: " << e << std::endl;
+	}
+	catch (...){
+		std::cerr << "Unknown exception thrown!\n";
+	}
+	return 3;
 }

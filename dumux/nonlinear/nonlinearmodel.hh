@@ -2,6 +2,7 @@
 #define DUNE_NONLINEARMODEL_HH
 
 #include<dune/disc/functions/p1function.hh>
+//#include<dune/disc/operators/p1operator.hh>
 #include"dumux/operators/p1operatorextended.hh"
 
 namespace Dune

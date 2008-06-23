@@ -16,11 +16,6 @@
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/solvers.hh>
 #include <dune/istl/owneroverlapcopy.hh>
-
-//#include <dune/disc/operators/p1operator.hh>
-//#include <dune/disc/groundwater/p1groundwater.hh>
-
-#include <dumux/io/readstarformat.cc>
 #include <dumux/timedisc/timeloop.hh>
 #include "parallelboxdiffusion.hh"
 
@@ -88,7 +83,8 @@ int main(int argc, char** argv)
     
     // instantiate a distributed grid with overlap
     Dune::FieldVector<double,dim> length(1.0);
-    Dune::FieldVector<int,dim> size(16);
+    Dune::FieldVector<int,dim> size(4);
+    //size[0] = 2;
     Dune::FieldVector<bool,dim> periodic(false);
     int overlap = 1;
     typedef Dune::YaspGrid<dim,dim> GridType;
@@ -151,25 +147,3 @@ int main(int argc, char** argv)
   }
 }
 
-/*
-
-Dune::Amg::Transfer<int, 
-		    Dune::BlockVector<Dune::FieldVector<double, 1>, Dune::ISTLAllocator>, 
-		    LeafP1OverlappingSchwarzCommunication<Dune::ALUCubeGrid<3, 3> > >::
-prolongate(Dune::Amg::AggregatesMap<int>&, 
-	   Dune::BlockVector<Dune::FieldVector<double, 1>, Dune::ISTLAllocator>&, 
-	   Dune::BlockVector<Dune::FieldVector<double, 1>, Dune::ISTLAllocator>&, 
-	   double, 
-	   LeafP1OverlappingSchwarzCommunication<Dune::ALUCubeGrid<3, 3> >&)
-
-
-Dune::Amg::Transfer<int, 
-		    Dune::BlockVector<Dune::FieldVector<double, 1>, Dune::ISTLAllocator>, 
-		    LeafP1OverlappingSchwarzCommunication<Dune::ALUCubeGrid<3, 3> > >::
-prolongate(const Dune::Amg::AggregatesMap<V>&, 
-	   Dune::BlockVector<Dune::FieldVector<double, 1>, Dune::ISTLAllocator>&, 
-	   Dune::BlockVector<Dune::FieldVector<double, 1>, Dune::ISTLAllocator>&, 
-	   typename V2::field_type) 
-
-[with V1 = int, V2 = Dune::BlockVector<Dune::FieldVector<double, 1>, Dune::ISTLAllocator>, T = LeafP1OverlappingSchwarzCommunication<Dune::ALUCubeGrid<3, 3> >]
-*/

@@ -300,6 +300,8 @@ public:
 			for (int equationNumber=0; equationNumber<m; equationNumber++) {
 				for (int i=0; i<sfs.size(); i++) // loop over test function number
 				{
+					this->dirichletIndex[i][equationNumber] = equationNumber; 
+					
 					//std::cout<<"i = "<<i<<std::endl;
 					if (sfs[i].codim()==0)
 						continue; // skip interior dof
