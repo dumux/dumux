@@ -91,7 +91,10 @@ namespace Dune
 	  @param[in]  x    position in global coordinates
 	  \return     boundary condition value
 	 */
-	virtual FieldVector<RT, n> g (const FieldVector<DT,n>& x, const Entity& e, 
+	virtual FieldVector<RT, n> gVelocity (const FieldVector<DT,n>& x, const Entity& e, 
+				  const FieldVector<DT,n>& xi) const = 0;
+	  
+	virtual RT gPressure (const FieldVector<DT,n>& x, const Entity& e, 
 				  const FieldVector<DT,n>& xi) const = 0;
 	  
 	//! evaluate Neumann boundary condition at given position
@@ -99,7 +102,10 @@ namespace Dune
 	  @param[in]  x    position in global coordinates
 	  \return     boundary condition value
 	 */
-	virtual FieldVector<RT, n> J (const FieldVector<DT,n>& x, const Entity& e, 
+	virtual FieldVector<RT, n> JVelocity (const FieldVector<DT,n>& x, const Entity& e, 
+				  const FieldVector<DT,n>& xi) const = 0;
+	  
+	virtual RT JPressure (const FieldVector<DT,n>& x, const Entity& e, 
 				  const FieldVector<DT,n>& xi) const = 0;
 	  
 	//! constructor

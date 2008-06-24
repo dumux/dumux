@@ -43,21 +43,33 @@ namespace Dune
 	
 	virtual void computeVelocity() = 0;
 	
+	virtual void computePressureCorrection() = 0;
+	
+	virtual void computeVelocityCorrection() = 0;
+	
 	void SIMPLE() 
 	{
 		double tolerance = 1e-5; 
 		int maxIter = 10;
 		double error = 1e100;
 		int iter = 0;
-		while (error > tolerance && iter <= maxIter)
-		{
+		double dampV = 1.0; 
+		double dampP = 0.35;
+		
+//		while (error > tolerance && iter <= maxIter)
+//		{
 			iter++;
 			computeVelocity();
-			//computePressureCorrection();
-			//computeVelocityCorrection();
+			computePressureCorrection();
+			computeVelocityCorrection();
+			pressureCorrection *= dampP;
+			velocityCorrection *= dampV;
+			pressure += pressureCorrection; 
+			velocity += velocityCorrection; 
+			
 			//correctVelocityAndPressure();
 			error = pressureCorrection.two_norm()/pressure.two_norm();
-		}
+//		}
 	}
 	
 	//! generate vtk output

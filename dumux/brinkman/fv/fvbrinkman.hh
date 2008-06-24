@@ -72,15 +72,462 @@ namespace Dune
 
 	void updateVelocityRHS()
 	{
-		;
+		fV = fVBound; 
+		
+		Iterator eendit = indexset.template end<0,All_Partition>();
+		  for (Iterator it = indexset.template begin<0,All_Partition>(); it != eendit; ++it)
+		  {		
+			  // cell geometry type
+			  GeometryType gt = it->geometry().type();
+
+			  // cell center in reference element
+			  const FieldVector<ct,dim>& 
+			  local = ReferenceElements<ct,dim>::general(gt).position(0,0);
+
+			  // get global coordinate of cell center
+			  FieldVector<ct,dim> global = it->geometry().global(local);
+
+			  // cell index
+			  int indexi = elementmapper.map(*it);
+
+			  RT pI = this->pressure[indexi];
+			  
+			  IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
+			  for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it); 
+			  is!=endit; ++is)
+			  {
+
+				  // get geometry type of face
+				  GeometryType gtf = is->intersectionSelfLocal().type();
+
+				  // center in face's reference element
+				  const FieldVector<ct,dim-1>& 
+				  facelocal = ReferenceElements<ct,dim-1>::general(gtf).position(0,0);
+
+				  // get normal vector scaled with volume
+				  FieldVector<ct,dimworld> integrationOuterNormal 
+				  = is->integrationOuterNormal(facelocal);
+
+				  FieldVector<ct,dimworld> entry(integrationOuterNormal); 
+
+				  // handle interior face
+				  if (is->neighbor()) 
+				  {
+					  // access neighbor
+					  EntityPointer outside = is->outside();
+					  int indexj = elementmapper.map(*outside);
+					  
+					  RT pJ = this->pressure[indexj];
+					  
+					  entry *= 0.5*(pI + pJ);
+				  }
+				  else 
+				  {
+					  // get geometry type of face
+					  GeometryType gtf = is->intersectionSelfLocal().type();
+
+					  // center in face's reference element
+					  const FieldVector<ct,dim-1>& 
+					  facelocal = ReferenceElements<ct,dim-1>::general(gtf).position(0,0);
+
+					  // center of face inside volume reference element
+					  const FieldVector<ct,dim>& 
+					  facelocalDim = ReferenceElements<ct,dim>::general(gtf).position(is->numberInSelf(),1);
+
+					  // center of face in global coordinates
+					  FieldVector<ct,dimworld> 
+					  faceglobal = is->intersectionGlobal().global(facelocal);
+
+					  //get boundary condition for boundary face center
+					  BoundaryConditions::Flags bctype = this->problem.bctype(faceglobal, *it, facelocalDim);
+
+					  // Dirichlet for velocity is Neumann for pressure and vice versa 
+					  if (bctype == BoundaryConditions::dirichlet) 
+					  { 
+						  FieldVector<ct,dimworld> distVec(global - faceglobal);
+						  double dist = distVec.two_norm();
+
+						  RT dPdn = this->problem.JPressure(faceglobal, *it, facelocalDim);
+						  std::cout << "normal = " << entry << ", pI = " << pI << 
+						  ", dist = " << dist << ", dPdN = " << dPdn << std::endl;
+						  entry *= (pI + dist*dPdn);
+					  }
+					  else
+					  {
+						  RT pB = this->problem.gPressure(faceglobal, *it, facelocalDim);
+						  
+						  entry *= pB;
+					  }
+					  
+				  }
+			  
+				  fV[indexi] -= entry;
+			  }
+		  }
+	}
+
+	template<class IFPressure>
+	void calculateInterfacePressures(IFPressure& ifPressure)
+	{
+		Iterator eendit = indexset.template end<0,All_Partition>();
+		  for (Iterator it = indexset.template begin<0,All_Partition>(); it != eendit; ++it)
+		  {		
+			  // cell geometry type
+			  GeometryType gt = it->geometry().type();
+
+			  // cell center in reference element
+			  const FieldVector<ct,dim>& 
+			  local = ReferenceElements<ct,dim>::general(gt).position(0,0);
+
+			  // get global coordinate of cell center
+			  FieldVector<ct,dim> global = it->geometry().global(local);
+
+			  // cell index
+			  int indexi = elementmapper.map(*it);
+
+			  RT pI = this->pressure[indexi];
+
+			  IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
+			  for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it); 
+			  is!=endit; ++is)
+			  {
+				  int faceIdx = is->numberInSelf();
+				  
+				  // handle interior face
+				  if (is->neighbor()) 
+				  {
+					  // access neighbor
+					  EntityPointer outside = is->outside();
+					  int indexj = elementmapper.map(*outside);
+					  
+					  RT pJ = this->pressure[indexj];
+					  
+					  ifPressure[indexi][faceIdx] = 0.5*(pI + pJ);
+				  }
+				  else 
+				  {
+					  // get geometry type of face
+					  GeometryType gtf = is->intersectionSelfLocal().type();
+
+					  // center in face's reference element
+					  const FieldVector<ct,dim-1>& 
+					  facelocal = ReferenceElements<ct,dim-1>::general(gtf).position(0,0);
+
+					  // center of face inside volume reference element
+					  const FieldVector<ct,dim>& 
+					  facelocalDim = ReferenceElements<ct,dim>::general(gtf).position(is->numberInSelf(),1);
+
+					  // center of face in global coordinates
+					  FieldVector<ct,dimworld> 
+					  faceglobal = is->intersectionGlobal().global(facelocal);
+
+					  //get boundary condition for boundary face center
+					  BoundaryConditions::Flags bctype = this->problem.bctype(faceglobal, *it, facelocalDim);
+
+					  // Dirichlet for velocity is Neumann for pressure and vice versa 
+					  if (bctype == BoundaryConditions::dirichlet) 
+					  { 
+						  FieldVector<ct,dimworld> distVec(global - faceglobal);
+						  double dist = distVec.two_norm();
+
+						  RT dPdn = this->problem.JPressure(faceglobal, *it, facelocalDim);
+
+						  ifPressure[indexi][faceIdx] = (pI + dist*dPdn);
+					  }
+					  else
+					  {
+						  RT pB = this->problem.gPressure(faceglobal, *it, facelocalDim);
+						  
+						  ifPressure[indexi][faceIdx] = pB;
+					  }
+					  
+				  }
+			  }
+		  }
+	}
+	
+	void updatePressureRHS()
+	{
+	    const int blocksize = 2*dim;
+	    typedef BlockVector< FieldVector<RT, blocksize> > IFPressure;
+	    IFPressure ifPressure(this->grid.size(0));
+	    calculateInterfacePressures(ifPressure);
+	    
+		fP = 0; 
+		
+		Iterator eendit = indexset.template end<0,All_Partition>();
+		  for (Iterator it = indexset.template begin<0,All_Partition>(); it != eendit; ++it)
+		  {		
+			  // cell geometry type
+			  GeometryType gt = it->geometry().type();
+
+			  // cell center in reference element
+			  const FieldVector<ct,dim>& 
+			  local = ReferenceElements<ct,dim>::general(gt).position(0,0);
+
+			  // cell volume 
+			  double volume = it->geometry().integrationElement(local)
+			  *ReferenceElements<ct,dim>::general(gt).volume();
+
+			  // get global coordinate of cell center
+			  FieldVector<ct,dim> global = it->geometry().global(local);
+
+			  // cell index
+			  int indexi = elementmapper.map(*it);
+
+			  RT pI = this->pressure[indexi];
+			  FieldVector<RT,dim> velI = this->velocity[indexi];
+			  
+			  IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
+			  for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it); 
+			  is!=endit; ++is)
+			  {
+				  // eastIndex for 0,1: 0, for 2,3: 2, for 4,5: 4
+				  int faceIdx = is->numberInSelf(); 
+				  int eastIndex = faceIdx/2; 
+				  eastIndex *= 2; 
+				  int westIndex = eastIndex + 1;
+
+				  // get geometry type of face
+				  GeometryType gtf = is->intersectionSelfLocal().type();
+
+				  // center in face's reference element
+				  const FieldVector<ct,dim-1>& 
+				  facelocal = ReferenceElements<ct,dim-1>::general(gtf).position(0,0);
+
+				  // get normal vector scaled with volume
+				  FieldVector<ct,dimworld> integrationOuterNormal 
+				  = is->integrationOuterNormal(facelocal);
+
+				  FieldVector<ct,dimworld> velFace; 
+
+				  // handle interior face
+				  if (is->neighbor()) 
+				  {
+					  // access neighbor
+					  EntityPointer outside = is->outside();
+					  int indexj = elementmapper.map(*outside);
+					  
+					  // compute factor in neighbor
+					  GeometryType nbgt = outside->geometry().type();
+					  const FieldVector<ct,dim>& 
+					  nblocal = ReferenceElements<ct,dim>::general(nbgt).position(0,0);
+
+					  // neighbor cell center in global coordinates
+					  FieldVector<ct,dimworld> 
+					  nbglobal = outside->geometry().global(nblocal);
+
+					  // distance vector between barycenters
+					  FieldVector<ct,dimworld> 
+					  distVec = global - nbglobal;
+
+					  // compute distance between cell centers
+					  double dist = distVec.two_norm();
+
+					  RT pJ = this->pressure[indexj];
+					  FieldVector<RT,dim> velJ = this->velocity[indexj];
+					  
+					  RT pDiff;
+					  if (faceIdx%2) 
+						  pDiff = pJ - pI;
+					  else 
+						  pDiff = pI - pJ;						  
+					  
+					  for (int comp = 0; comp < dim; comp++)
+						  velFace[comp] = 0.5*(velI[comp] + volume/(dist*AV[indexi][indexi][comp][comp])*(ifPressure[indexi][eastIndex] - ifPressure[indexi][westIndex]))
+							  + 0.5*(velJ[comp] + volume/(dist*AV[indexj][indexj][comp][comp])*(ifPressure[indexj][eastIndex] - ifPressure[indexj][westIndex]))
+							  - 0.5*volume/dist*pDiff*(1.0/AV[indexi][indexi][comp][comp] + 1.0/AV[indexj][indexj][comp][comp]);
+				  }
+				  else 
+				  {
+					  // get geometry type of face
+					  GeometryType gtf = is->intersectionSelfLocal().type();
+
+					  // center in face's reference element
+					  const FieldVector<ct,dim-1>& 
+					  facelocal = ReferenceElements<ct,dim-1>::general(gtf).position(0,0);
+
+					  // center of face inside volume reference element
+					  const FieldVector<ct,dim>& 
+					  facelocalDim = ReferenceElements<ct,dim>::general(gtf).position(is->numberInSelf(),1);
+
+					  // center of face in global coordinates
+					  FieldVector<ct,dimworld> 
+					  faceglobal = is->intersectionGlobal().global(facelocal);
+
+					  //get boundary condition for boundary face center
+					  BoundaryConditions::Flags bctype = this->problem.bctype(faceglobal, *it, facelocalDim);
+
+					  // Dirichlet for velocity is Neumann for pressure and vice versa 
+					  if (bctype == BoundaryConditions::neumann) 
+					  { 
+						  velFace = velI;
+					  }
+					  else
+					  {
+						  velFace = this->problem.gVelocity(faceglobal, *it, facelocalDim);
+					  }
+				  }
+			  
+				  fP[indexi] -= velFace*integrationOuterNormal;
+			  }
+		  }
+	}
+
+	void computeVelocityCorrection()
+	{
+		this->velocityCorrection = 0;
+		
+		Iterator eendit = indexset.template end<0,All_Partition>();
+		  for (Iterator it = indexset.template begin<0,All_Partition>(); it != eendit; ++it)
+		  {		
+			  // cell geometry type
+			  GeometryType gt = it->geometry().type();
+
+			  // cell center in reference element
+			  const FieldVector<ct,dim>& 
+			  local = ReferenceElements<ct,dim>::general(gt).position(0,0);
+
+			  // cell volume 
+			  double volume = it->geometry().integrationElement(local)
+			  *ReferenceElements<ct,dim>::general(gt).volume();
+
+			  // get global coordinate of cell center
+			  FieldVector<ct,dim> global = it->geometry().global(local);
+
+			  // cell index
+			  int indexi = elementmapper.map(*it);
+
+			  RT pCI = this->pressureCorrection[indexi];
+
+			  IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
+			  for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it); 
+			  is!=endit; ++is)
+			  {
+				  int faceIdx = is->numberInSelf(); 
+
+				  // get geometry type of face
+				  GeometryType gtf = is->intersectionSelfLocal().type();
+
+				  // center in face's reference element
+				  const FieldVector<ct,dim-1>& 
+				  facelocal = ReferenceElements<ct,dim-1>::general(gtf).position(0,0);
+
+				  // handle interior face
+				  if (is->neighbor()) 
+				  {
+					  // access neighbor
+					  EntityPointer outside = is->outside();
+					  int indexj = elementmapper.map(*outside);
+					  
+					  // compute factor in neighbor
+					  GeometryType nbgt = outside->geometry().type();
+					  const FieldVector<ct,dim>& 
+					  nblocal = ReferenceElements<ct,dim>::general(nbgt).position(0,0);
+
+					  // neighbor cell center in global coordinates
+					  FieldVector<ct,dimworld> 
+					  nbglobal = outside->geometry().global(nblocal);
+
+					  // distance vector between barycenters
+					  FieldVector<ct,dimworld> 
+					  distVec = global - nbglobal;
+
+					  // compute distance between cell centers
+					  double dist = distVec.two_norm();
+
+					  RT pCJ = this->pressureCorrection[indexj];
+					  
+					  RT pCAvg = 0.5*(pCJ + pCI);
+
+					  switch (faceIdx) {
+					  case 0: 
+						  this->velocityCorrection[indexi][0] += volume/(dist*AV[indexi][indexi][0][0])*pCAvg;
+						  break;
+					  case 1: 
+						  this->velocityCorrection[indexi][0] -= volume/(dist*AV[indexi][indexi][0][0])*pCAvg;
+						  break;
+					  case 2: 
+						  this->velocityCorrection[indexi][1] += volume/(dist*AV[indexi][indexi][1][1])*pCAvg;
+						  break;
+					  case 3: 
+						  this->velocityCorrection[indexi][1] -= volume/(dist*AV[indexi][indexi][1][1])*pCAvg;
+						  break;
+					  case 4: 
+						  this->velocityCorrection[indexi][2] += volume/(dist*AV[indexi][indexi][2][2])*pCAvg;
+						  break;
+					  case 5: 
+						  this->velocityCorrection[indexi][2] -= volume/(dist*AV[indexi][indexi][2][2])*pCAvg;
+						  break;
+					  }
+				  }
+				  else 
+				  {
+					  // get geometry type of face
+					  GeometryType gtf = is->intersectionSelfLocal().type();
+
+					  // center in face's reference element
+					  const FieldVector<ct,dim-1>& 
+					  facelocal = ReferenceElements<ct,dim-1>::general(gtf).position(0,0);
+
+					  // center of face inside volume reference element
+					  const FieldVector<ct,dim>& 
+					  facelocalDim = ReferenceElements<ct,dim>::general(gtf).position(is->numberInSelf(),1);
+
+					  // center of face in global coordinates
+					  FieldVector<ct,dimworld> 
+					  faceglobal = is->intersectionGlobal().global(facelocal);
+
+					  //get boundary condition for boundary face center
+					  BoundaryConditions::Flags bctype = this->problem.bctype(faceglobal, *it, facelocalDim);
+
+					  // Dirichlet for velocity is Neumann for pressure and vice versa 
+					  if (bctype == BoundaryConditions::dirichlet) 
+					  { 
+						  FieldVector<ct,dimworld> distVec(global - faceglobal);
+						  double dist = distVec.two_norm();
+
+						  switch (faceIdx) {
+						  case 0: 
+							  this->velocityCorrection[indexi][0] += volume/(2.0*dist*AV[indexi][indexi][0][0])*pCI;
+							  break;
+						  case 1: 
+							  this->velocityCorrection[indexi][0] -= volume/(2.0*dist*AV[indexi][indexi][0][0])*pCI;
+							  break;
+						  case 2: 
+							  this->velocityCorrection[indexi][1] += volume/(2.0*dist*AV[indexi][indexi][1][1])*pCI;
+							  break;
+						  case 3: 
+							  this->velocityCorrection[indexi][1] -= volume/(2.0*dist*AV[indexi][indexi][1][1])*pCI;
+							  break;
+						  case 4: 
+							  this->velocityCorrection[indexi][2] += volume/(2.0*dist*AV[indexi][indexi][2][2])*pCI;
+							  break;
+						  case 5: 
+							  this->velocityCorrection[indexi][2] -= volume/(2.0*dist*AV[indexi][indexi][2][2])*pCI;
+							  break;
+						  }
+					  }
+				  }
+			  }
+		  }
 	}
 
 	void solveVelocitySystem(); 
+
+	void solvePressureSystem(); 
 
 	void computeVelocity()
 	{
 		updateVelocityRHS();
 		solveVelocitySystem();
+		return;
+	}
+
+	void computePressureCorrection()
+	{
+		updatePressureRHS();
+		solvePressureSystem();
 		return;
 	}
 
@@ -103,7 +550,7 @@ namespace Dune
 	              indexset(g.leafIndexSet()), 
 	              AV(g.size(0), g.size(0), (2*dim+1)*g.size(0), BCRSMatrix<MBV>::random), 
 	              AP(g.size(0), g.size(0), (2*dim+1)*g.size(0), BCRSMatrix<MB>::random), 
-	              fP(g.size(0)), fV(g.size(0))
+	              fP(g.size(0)), fV(g.size(0)), fVBound(g.size(0))
 	{
 		this->pressure.resize(g.size(0));
 		this->pressure = 0;
@@ -114,6 +561,7 @@ namespace Dune
 		this->velocityCorrection.resize(g.size(0));
 		this->velocityCorrection = 0;
 		fV = 0;
+		fVBound = 0;
 		initializeMatrices();
 		assembleMatrices();
 	}
@@ -125,6 +573,7 @@ namespace Dune
 	  PressureMatrixType AP;
 	  RepresentationType fP;
 	  VelType fV;
+	  VelType fVBound;
   };
 
   
@@ -188,7 +637,7 @@ namespace Dune
   template<class G, class RT>
   void FVBrinkman<G, RT>::assembleMatrices()
   {
-	  // initialization: set matrices to zero	   
+	  // initialization: set matrix A to zero	   
 	  AV = 0;
 	  AP = 0;
 
@@ -316,15 +765,15 @@ namespace Dune
 						  AV[indexi][indexi][k][k] += entry;
 					  }
 
-					  FieldVector<RT, dim> g = this->problem.g(faceglobal, *it, facelocalDim);
+					  FieldVector<RT, dim> g = this->problem.gVelocity(faceglobal, *it, facelocalDim);
 					  g *= entry;
-					  fV[indexi] += g;
+					  fVBound[indexi] += g;
 				  } 
 				  else
 				  {
-					  FieldVector<RT, dim> J = this->problem.J(faceglobal, *it, facelocalDim);
+					  FieldVector<RT, dim> J = this->problem.JVelocity(faceglobal, *it, facelocalDim);
 					  J *= faceVol;
-					  fV[indexi] += J;
+					  fVBound[indexi] += J;
 				  }
 
 			  }
@@ -341,21 +790,76 @@ namespace Dune
 		  for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it); 
 		  is!=endit; ++is)
 		  {
+			  // cell geometry type
+			  GeometryType gt = it->geometry().type();
+
+			  
+			  // cell center in reference element
+			  const FieldVector<ct,dim>& 
+			  local = ReferenceElements<ct,dim>::general(gt).position(0,0);
+
+			  // get global coordinate of cell center
+			  FieldVector<ct,dim> global = it->geometry().global(local);				  // compute factor in neighbor
+
+			  // get geometry type of face
+			  GeometryType gtf = is->intersectionSelfLocal().type();
+
+			  // center in face's reference element
+			  const FieldVector<ct,dim-1>& 
+			  facelocal = ReferenceElements<ct,dim-1>::general(gtf).position(0,0);
+
+			  // center of face inside volume reference element
+			  const FieldVector<ct,dim>& 
+			  facelocalDim = ReferenceElements<ct,dim>::general(gtf).position(is->numberInSelf(),1);
+
 			  if (is->neighbor()) 
 			  {
 				  EntityPointer outside = is->outside();
 				  int indexj = elementmapper.map(*outside);
 
 				  double AVJ = AV[indexj][indexj][0][0];
+
+				  // changes
+
+
+				  GeometryType nbgt = outside->geometry().type();
 				  
-				  double averageEntry = 2.0/(AVI + AVJ);
+				  const FieldVector<ct,dim>& 
+				  nblocal = ReferenceElements<ct,dim>::general(nbgt).position(0,0);
+
+				  // neighbor cell center in global coordinates
+				  FieldVector<ct,dimworld> 
+				  nbglobal = outside->geometry().global(nblocal);
+	
+				  // distance vector between barycenters
+				  FieldVector<ct,dimworld> 
+				  distVec = global - nbglobal;
+	
+				  // compute distance between cell centers
+				  double dist = distVec.two_norm();
+				  //CHANGES UNTIL HERE
+				  
+				  double averageEntry = 2.0/(AVI + AVJ)*dist*dist;
 				  
 				  AP[indexi][indexi] += averageEntry;
 				  AP[indexi][indexj] -= averageEntry;
 			  }
 			  else 
 			  {
-				  AP[indexi][indexi] += 1.0/AVI;
+				  // center of face in global coordinates
+				  FieldVector<ct,dimworld> 
+				  faceglobal = is->intersectionGlobal().global(facelocal);
+
+				  //get boundary condition for boundary face center
+				  BoundaryConditions::Flags bctype = this->problem.bctype(faceglobal, *it, facelocalDim);
+
+				  // Neumann for velocity means Dirichlet for pressure correction and vice versa
+				  if (bctype == BoundaryConditions::neumann) 
+				  { 
+					  FieldVector<ct,dimworld> distVec(global - faceglobal);
+					  double dist = 2.0*distVec.two_norm();
+					  AP[indexi][indexi] += 1.0/AVI*dist*dist;
+				  }
 			  }
 		  }
 	  }
@@ -373,6 +877,19 @@ namespace Dune
 	  SeqILU0<VelocityMatrixType,VelType,VelType> preconditioner(AV, 1.0);
 	  BiCGSTABSolver<VelType> solver(op, preconditioner, 1E-14, 10000, 1);
 	  solver.apply(this->velocity, fV, r);
+
+	  return;
+  }
+	
+  template<class G, class RT>
+  void FVBrinkman<G, RT>::solvePressureSystem()
+  {
+	  MatrixAdapter<PressureMatrixType, RepresentationType,RepresentationType> op(AP); 
+	  InverseOperatorResult r;
+	  
+	  SeqILU0<PressureMatrixType,RepresentationType,RepresentationType> preconditioner(AP, 1.0);
+	  BiCGSTABSolver<RepresentationType> solver(op, preconditioner, 1E-14, 10000, 1);
+	  solver.apply(this->pressureCorrection, fP, r);
 
 	  return;
   }
