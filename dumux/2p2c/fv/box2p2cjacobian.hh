@@ -295,7 +295,8 @@ namespace Dune
 
    	 VBlockType result; 
    	 RT satN = sol[node][satNIdx];
-   	 RT satW = 1.0 - satN;
+   	 RT satW = 1-satN;//varNData[node].saturationW;
+ //  	 statNData[globalIdx].porosity=0.1;
    	    	    	                  
    	 // storage of component water
    	 result[water] = 
@@ -554,8 +555,6 @@ namespace Dune
 
    	 for (int i = 0; i < size; i++) 
    	 {
-   		this->def[i] = 0;
-   	 
    		varNData[i].saturationN = sol[i][satNIdx];
    		varNData[i].saturationW = 1.0 - sol[i][satNIdx];
    		varNData[i].pW = sol[i][pWIdx];
