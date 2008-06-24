@@ -101,13 +101,20 @@ public:
 			this->def[i] = 0;
 
 			computeElementData(e);
+			updateVariableData(e, uold);
+			VBlockType massContrib(0);
+
+			// OLD timestep
+			for (int i=0; i < this->fvGeom.nNodes; i++) // begin loop over vertices / sub control volumes
+				massContrib -= computeM(e, uold, i);
+
 			updateVariableData(e, sol);
 
+			// NEW timestep
 			for (int i=0; i < this->fvGeom.nNodes; i++) // begin loop over vertices / sub control volumes
 			{
 				// implicit Euler
-				VBlockType massContrib = computeM(e, sol, i);
-				massContrib -= computeM(e, uold, i);
+				massContrib += computeM(e, sol, i);
 				massContrib *= this->fvGeom.subContVol[i].volume/dt;
 				this->def[i] += massContrib;
 				std::cout.setf(std::ios_base::scientific, std::ios_base::floatfield);
