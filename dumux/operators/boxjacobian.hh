@@ -97,37 +97,38 @@ public:
 
 	template<class TypeTag> void localDefect(const Entity& e,
 			const VBlockType* sol) {
+
 		for (int i=0; i < this->fvGeom.nNodes; i++)
 			this->def[i] = 0;
 
 			computeElementData(e);
 			updateVariableData(e, uold);
-			VBlockType massContrib(0);
 
-			// OLD timestep
-			for (int i=0; i < this->fvGeom.nNodes; i++) // begin loop over vertices / sub control volumes
-				massContrib -= computeM(e, uold, i);
-
-			updateVariableData(e, sol);
-
-			// NEW timestep
 			for (int i=0; i < this->fvGeom.nNodes; i++) // begin loop over vertices / sub control volumes
 			{
 				// implicit Euler
-				massContrib += computeM(e, sol, i);
-				massContrib *= this->fvGeom.subContVol[i].volume/dt;
+				VBlockType massContrib = computeM(e, uold, i);
+				this->def[i] -= massContrib;
+			}
+				
+			updateVariableData(e, sol);
+			for (int i=0; i < this->fvGeom.nNodes; i++) // begin loop over vertices / sub control volumes
+			{
+				VBlockType 
+				massContrib = computeM(e, sol, i);
 				this->def[i] += massContrib;
+				this->def[i] *= this->fvGeom.subContVol[i].volume/dt;
+				
 				std::cout.setf(std::ios_base::scientific, std::ios_base::floatfield);
 				std::cout.setf(std::ios_base::uppercase);
 				std::cout.precision(3);
-				//std::cout << "i = " << i << ", massContrib = " << massContrib << std::endl;
 
 				// get source term 
 				VBlockType q = computeQ(e, sol, i);
 				q *= this->fvGeom.subContVol[i].volume;
 				this->def[i] -= q;
 			} // end loop over vertices / sub control volumes
-
+						
 			for (int k = 0; k < this->fvGeom.nEdges; k++) // begin loop over edges / sub control volume faces
 			{
 				int i = this->fvGeom.subContVolFace[k].i;
