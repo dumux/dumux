@@ -122,6 +122,8 @@ namespace Dune
 				//const Dune::FieldVector<DT,dim> 
 				this->localJacobian.statNData[globalId].phaseState = this->problem.initialPhaseState(
 						global, entity, local);
+//				const LocalJacobian::VBlockType sol = this->u;
+//				this->localJacobian.updateStaticData(entity, sol);
 			}
 		}
 
@@ -235,47 +237,64 @@ namespace Dune
 		return;
 	}
 
-	
-	void globalDefect(FunctionType& defectGlobal)
-   {   
-     typedef typename G::Traits::template Codim<0>::Entity Entity;
-     typedef typename G::ctype DT;
-     typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator Iterator;
-     enum{dim = G::dimension};
-     
-     const IS& indexset(this->grid.leafIndexSet());
-     (*defectGlobal)=0;
-          
-     // iterate through leaf grid 
-     Iterator eendit = indexset.template end<0, All_Partition>();
-     for (Iterator it = indexset.template begin<0, All_Partition>(); it != eendit; ++it)
-	{
-	  // get geometry type
-	  Dune::GeometryType gt = it->geometry().type();
-	  
-	  const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type& 
-	    sfs=Dune::LagrangeShapeFunctions<DT,RT,dim>::general(gt, 1);
-	  int size = sfs.size();
-	  Dune::FieldVector<RT,2> defhelp[size];
-	  
-	  // get entity 
-	  const Entity& entity = *it;
-	  
-	  this->localJacobian.fvGeom.update(entity);
+	void globalDefect(FunctionType& defectGlobal) {
+		typedef typename G::Traits::template Codim<0>::Entity Entity;
+		typedef typename G::ctype DT;
+		typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator
+		Iterator;
+		enum {dim = G::dimension};
+		typedef array<BoundaryConditions::Flags, m> BCBlockType;
 
-	  this->localJacobian.getLocalDefect(entity,defhelp);
-	  //std::cout<<" defhelp: "<<*defhelp<<std::endl;
-	  // begin loop over vertices
-	  for(int i=0; i < size; i++)
-	    {
-	      int globalId = this->vertexmapper.template map<dim>(entity, sfs[i].entity());
-	    
-	      if (this->localJacobian.bc(i)[0] == BoundaryConditions::neumann)
-		(*defectGlobal)[globalId] += defhelp[i];
-	      else 
-		(*defectGlobal)[globalId] = 0;
-	    }
-	}
+		const IS& indexset(this->grid.leafIndexSet());
+		(*defectGlobal)=0;
+
+		// allocate flag vector to hold flags for essential boundary conditions
+		std::vector<BCBlockType> essential(this->vertexmapper.size());
+		for (typename std::vector<BCBlockType>::size_type i=0; i
+		<essential.size(); i++)
+			essential[i].assign(BoundaryConditions::neumann);
+
+		// iterate through leaf grid 
+		Iterator eendit = indexset.template end<0, All_Partition>();
+		for (Iterator it = indexset.template begin<0, All_Partition>(); it
+		!= eendit; ++it) {
+			// get geometry type
+			Dune::GeometryType gt = it->geometry().type();
+
+			const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type
+			&sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(gt,	1);
+			int size = sfs.size();
+
+			// get entity 
+			const Entity& entity = *it;
+
+			this->localJacobian.fvGeom.update(entity);
+
+			this->localJacobian.setLocalSolution(entity);
+			this->localJacobian.template localDefect<LeafTag>(entity,
+					this->localJacobian.u);
+
+			// begin loop over vertices
+			for (int i=0; i < size; i++) {
+				int globalId = this->vertexmapper.template map<dim>(entity,
+						sfs[i].entity());
+
+				for (int equationnumber = 0; equationnumber < m; equationnumber++) {
+					if (this->localJacobian.bc(i)[equationnumber] == BoundaryConditions::neumann)
+						(*defectGlobal)[globalId][equationnumber]
+						                          += this->localJacobian.def[i][equationnumber];
+						                          else
+						                        	  essential[globalId].assign(BoundaryConditions::dirichlet);
+				}
+			}
+		}
+
+		for (typename std::vector<BCBlockType>::size_type i=0; i
+		<essential.size(); i++)
+			for (int equationnumber = 0; equationnumber < m; equationnumber++) {
+				if (essential[i][equationnumber] == BoundaryConditions::dirichlet)
+					(*defectGlobal)[i][equationnumber] = 0;
+			}
    }
  
 
