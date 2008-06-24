@@ -30,11 +30,18 @@ int main(int argc, char** argv)
     Dune::BrinkmanTestProblem<GridType, NumberType> problem;
 
     Dune::FVBrinkman<GridType, NumberType> brinkman(grid, problem);
-    
-    printmatrix(std::cout, brinkman.AV, "velocity matrix", "row", 11, 3);
-    printvector(std::cout, brinkman.fV, "velocity right hand side", "row", 200, 1, 3);
-    printmatrix(std::cout, brinkman.AP, "pressure matrix", "row", 11, 3);
+    /*brinkman.pressure[0] = 0.75;
+    brinkman.pressure[1] = 0.25;
+     brinkman.pressure[2] = 0.75;
+     brinkman.pressure[3] = 0.25;*/
+     
+     brinkman.SIMPLE();
+     
     printvector(std::cout, *brinkman, "pressure", "row", 200, 1, 3);
+    printvector(std::cout, brinkman.pressureCorrection, "pressure correction", "row", 200, 1, 3);
+   printvector(std::cout, brinkman.velocity, "velocity", "row", 2, 1, 3);
+    printvector(std::cout, brinkman.velocityCorrection, "velocity correction", "row", 2, 1, 3);
+    
     brinkman.vtkout("brinkman", 0);
     
     return 0;

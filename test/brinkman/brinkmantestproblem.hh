@@ -32,7 +32,7 @@ namespace Dune
 	  virtual RT muEff   (const FieldVector<DT,n>& x, const Entity& e, 
 			  const FieldVector<DT,n>& xi) 
 	  {
-		  return 0.0;
+		  return 1.0;
 	  }
 	  
 	  virtual RT mu   (const FieldVector<DT,n>& x, const Entity& e, 
@@ -56,7 +56,7 @@ namespace Dune
 	    return Dune::BoundaryConditions::dirichlet;
 	  }
 	
-	  virtual FieldVector<RT, n> g (const Dune::FieldVector<DT,n>& x, const Entity& e, 
+	  virtual FieldVector<RT, n> gVelocity (const Dune::FieldVector<DT,n>& x, const Entity& e, 
 					const Dune::FieldVector<DT,n>& xi) const
 	  {
 		  FieldVector<RT, n> values(0);
@@ -67,8 +67,13 @@ namespace Dune
 		  return values;
 	  }
 		  
-		
-	  virtual FieldVector<RT, n> J (const Dune::FieldVector<DT,n>& x, const Entity& e, 
+	  virtual RT gPressure (const FieldVector<DT,n>& x, const Entity& e, 
+					  const FieldVector<DT,n>& xi) const
+	  {
+		  return 0;
+	  }
+
+	  virtual FieldVector<RT, n> JVelocity (const Dune::FieldVector<DT,n>& x, const Entity& e, 
 					const Dune::FieldVector<DT,n>& xi) const
 	  {
 		FieldVector<RT, n> values(0);
@@ -76,6 +81,14 @@ namespace Dune
 		return values;
 	  }
 		  
+	  virtual RT JPressure (const FieldVector<DT,n>& x, const Entity& e, 
+					  const FieldVector<DT,n>& xi) const
+	  {
+//		  if (x[0] < 1e-6)
+//			  return 1;
+		  
+		  return 0;
+	  }
 	  
 	private:
 		Dune::FieldMatrix<DT,n,n> permloc;
