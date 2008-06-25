@@ -76,8 +76,6 @@ namespace Dune
 					   const FieldVector<DT,dim>& xi) const 
 	{
 		FieldVector<BoundaryConditions::Flags, m> values(BoundaryConditions::neumann); 
-//		FieldVector<BoundaryConditions::Flags, m> values(BoundaryConditions::dirichlet); 
-
 
 		if (x[0] < outerLowerLeft_[0] + eps_)
 			values = BoundaryConditions::dirichlet;
@@ -143,7 +141,7 @@ namespace Dune
 				  const FieldVector<DT,dim>& xi) const 
 	{
 
-		enum {gasPhase = 0, waterPhase = 1, bothPhases = 2}; // Phase state
+		enum {gasPhase = 0, waterPhase = 1, bothPhases = 2}; // Phase states
 
 		int state = waterPhase;
 			
@@ -195,17 +193,17 @@ namespace Dune
 	}
 
 	LayerProblem(TwoPhaseRelations& law = *(new LinearLaw), MultiComp& multicomp = *(new CWaterAir), 
-			const FieldVector<DT,dim> outerLowerLeft = 0, const FieldVector<DT,dim> outerUpperRight = 0, 
-			const FieldVector<DT,dim> innerLowerLeft = 0, const FieldVector<DT,dim> innerUpperRight = 0, 
-			const RT depthBOR = 0, RT outerK = 8.3e-10, RT innerK = 3.0e-13,
+			const FieldVector<DT,dim> outerLowerLeft = 0., const FieldVector<DT,dim> outerUpperRight = 0., 
+			const FieldVector<DT,dim> innerLowerLeft = 0., const FieldVector<DT,dim> innerUpperRight = 0., 
+			const RT depthBOR = 0, RT outerK = 8.3e-10, RT innerK = 2.3e-13,
 			RT outerSwr = 0.05, RT outerSnr = 0.1, RT innerSwr = 0.05, RT innerSnr = 0.1, 
-			RT outerPorosity = 0.4, RT innerPorosity = 0.4, 
-			RT outerAlpha = 0.0037, RT innerAlpha = 0.0037,	//0.00045, 
-			RT outerN = 4.7, RT innerN = 4.7)  //7.3
+			RT outerPorosity = 0.4, RT innerPorosity = 0.3, 
+			RT outerAlpha = 0.0037, RT innerAlpha = 0.00045, 
+			RT outerN = 4.7, RT innerN = 7.3)
 	: TwoPTwoCProblem<G, RT>(law, multicomp), 
 	  outerLowerLeft_(outerLowerLeft), outerUpperRight_(outerUpperRight), 
 	  innerLowerLeft_(innerLowerLeft), innerUpperRight_(innerUpperRight), 
-	  depthBOR_(depthBOR),eps_(1e-8*outerUpperRight[0]), 
+	  depthBOR_(depthBOR), eps_(1e-8*outerUpperRight[0]), 
 	  densityW_(law.wettingPhase.density()), densityN_(law.nonwettingPhase.density()), 
 	  outerSwr_(outerSwr), outerSnr_(outerSnr), innerSwr_(innerSwr), innerSnr_(innerSnr), 
 	  outerPorosity_(outerPorosity), innerPorosity_(innerPorosity), 

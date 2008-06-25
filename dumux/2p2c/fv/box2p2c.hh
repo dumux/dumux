@@ -120,10 +120,8 @@ namespace Dune
 				
 				// initialize phase state
 				//const Dune::FieldVector<DT,dim> 
-				this->localJacobian.statNData[globalId].phaseState = this->problem.initialPhaseState(
-						global, entity, local);
-//				const LocalJacobian::VBlockType sol = this->u;
-//				this->localJacobian.updateStaticData(entity, sol);
+				this->localJacobian.sNDat[globalId].phaseState = 
+					this->problem.initialPhaseState(global, entity, local);
 			}
 		}
 
