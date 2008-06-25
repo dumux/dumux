@@ -302,8 +302,8 @@ namespace Dune
             {
             	// appearance of water phase
             	std::cout << "Water appears at node " << global << std::endl;
-            	sNDat[global].phaseState = bothPhases;
-            	vNDat[local].saturationN = 1 - 1.E-6; // initialize
+//            	sNDat[global].phaseState = bothPhases;
+            	vNDat[local].saturationN = 1.0 - 1.E-6; // initialize
             	sol[global][satNIdx] = vNDat[local].saturationN;
             	switched = true;
             }
@@ -324,21 +324,23 @@ namespace Dune
             break;
 
         case bothPhases :
-      	  	if (sol[global][satNIdx] < 0.0  && switched == false)
+      	  	if (vNDat[local].saturationN < 0.0  && switched == false)
       	  	{
       		  	// disappearance of gas phase
       		  	std::cout << "Gas disappears " << global << std::endl;
       		  	sNDat[global].phaseState = waterPhase;
-      		  	//vNDat[local].saturationN = ;  // Initialisierung
+//      		  	vNDat[local].saturationN = 0.0;  
+//      		  	vNDat[local].saturationW = 1.0;  
       		  	sol[global][satNIdx] = vNDat[local].massfrac[air][wPhase];
       		  	switched = true;
             }
-      	  	else if ((1-sol[global][satNIdx]) < 0.0  && switched == false) //vNDat[i].saturationW 
+      	  	else if (vNDat[local].saturationW < 0.0  && switched == false)
       	  	{
       	  		// disappearance of water phase
       	  		std::cout << "Water disappears " << global << std::endl;
       	  		sNDat[global].phaseState = gasPhase;
-      	  		//vNDat[local].massfrac[water][nPhase] = 1.E-6;  // Initialisierung
+//      		  	vNDat[local].saturationN = 1.0;
+//      	  		vNDat[local].saturationW = 0.0;
       	  		sol[global][satNIdx] = vNDat[local].massfrac[water][nPhase];
             	switched = true;
       	  	}
@@ -504,39 +506,40 @@ namespace Dune
    	 for (int i = 0; i < size; i++) 
    	 {
    	   	 const int global = this->vertexMapper.template map<dim>(e, sfs[i].entity());
+   		 int state = sNDat[global].phaseState;
 
-   	   	 if (sNDat[global].phaseState == bothPhases){
-   			 vNDat[i].saturationN = sol[i][satNIdx];
-   			 vNDat[i].saturationW = 1.0 - sol[i][satNIdx];
-   	   		 // Solubilities of components in phases
-   	   		 vNDat[i].massfrac[air][wPhase] = problem.multicomp().xAW(vNDat[i].pN, vNDat[i].temperature);
-   	   		 vNDat[i].massfrac[water][wPhase] = 1.0 - vNDat[i].massfrac[air][wPhase];
-   	   		 vNDat[i].massfrac[water][nPhase] = problem.multicomp().xWN(vNDat[i].pN, vNDat[i].temperature);
-   	   		 vNDat[i].massfrac[air][nPhase] = 1.0 - vNDat[i].massfrac[water][nPhase];
-   		 }
-   		 else{
-   	   		 vNDat[i].massfrac[air][wPhase] = sol[i][satNIdx];
-   	   		 vNDat[i].massfrac[water][wPhase] = 1.0 - vNDat[i].massfrac[air][wPhase];
-   	   		 vNDat[i].massfrac[water][nPhase] = problem.multicomp().xWN(vNDat[i].pN, vNDat[i].temperature);
-   	   		 vNDat[i].massfrac[air][nPhase] = 1.0 - vNDat[i].massfrac[water][nPhase];
-   			 
-   		 }
-   		 
    		 vNDat[i].pW = sol[i][pWIdx];
+   		 if (state == bothPhases) vNDat[i].saturationN = sol[i][satNIdx];
+   		 if (state == waterPhase) vNDat[i].saturationN = 0.0;
+   		 if (state == gasPhase) vNDat[i].saturationN = 1.0;
+		 vNDat[i].saturationW = 1.0 - vNDat[i].saturationN;
+
    		 vNDat[i].pC = problem.materialLaw().pC(vNDat[i].saturationW, parameters);
    		 vNDat[i].pN = sol[i][pWIdx] + vNDat[i].pC;
    		 vNDat[i].temperature = 283.15; // in [K]
+
+   		 // Solubilities of components in phases
+   		 if (state == bothPhases){
+   	   		 vNDat[i].massfrac[air][wPhase] = problem.multicomp().xAW(vNDat[i].pN, vNDat[i].temperature);
+   	   		 vNDat[i].massfrac[water][nPhase] = problem.multicomp().xWN(vNDat[i].pN, vNDat[i].temperature);
+   		 }
+   		 else if (state == waterPhase){
+   	   		 vNDat[i].massfrac[water][nPhase] = 0.0;
+   	   		 vNDat[i].massfrac[air][wPhase] =  problem.multicomp().xAW(vNDat[i].pN, vNDat[i].temperature);
+   		 }
+   		 else if (state == gasPhase){
+   	   		 vNDat[i].massfrac[water][nPhase] = problem.multicomp().xWN(vNDat[i].pN, vNDat[i].temperature);
+   	   		 vNDat[i].massfrac[air][wPhase] = 0.0;
+   		 }
+   	   	 vNDat[i].massfrac[water][wPhase] = 1.0 - vNDat[i].massfrac[air][wPhase];
+   	   	 vNDat[i].massfrac[air][nPhase] = 1.0 - vNDat[i].massfrac[water][nPhase];
+   		 
    		 // Mobilities & densities
    		 vNDat[i].mobility[wPhase] = problem.materialLaw().mobW(vNDat[i].saturationW, parameters);
    		 vNDat[i].mobility[nPhase] = problem.materialLaw().mobN(sol[i][satNIdx], parameters);
    		 vNDat[i].density[wPhase] = problem.materialLaw().wettingPhase.density();
    		 vNDat[i].density[nPhase] = problem.materialLaw().nonwettingPhase.density();
-   		 // Solubilities of components in phases
-   		 vNDat[i].massfrac[air][wPhase] = problem.multicomp().xAW(vNDat[i].pN, vNDat[i].temperature);
-   		 vNDat[i].massfrac[water][wPhase] = 1.0 - vNDat[i].massfrac[air][wPhase];
-   		 vNDat[i].massfrac[water][nPhase] = problem.multicomp().xWN(vNDat[i].pN, vNDat[i].temperature);
-   		 vNDat[i].massfrac[air][nPhase] = 1.0 - vNDat[i].massfrac[water][nPhase];
-   		
+
          // CONSTANT solubility (for comparison with twophase)
 //         vNDat[i].massfrac[air][wPhase] = 0.1; vNDat[i].massfrac[water][wPhase] = 0.9;
 //         vNDat[i].massfrac[water][nPhase] = 0.1; vNDat[i].massfrac[air][nPhase] = 0.9;

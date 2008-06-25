@@ -119,7 +119,6 @@ namespace Dune
 						global, entity, local);
 				
 				// initialize phase state
-				//const Dune::FieldVector<DT,dim> 
 				this->localJacobian.sNDat[globalId].phaseState = 
 					this->problem.initialPhaseState(global, entity, local);
 			}
@@ -267,8 +266,9 @@ namespace Dune
 			const Entity& entity = *it;
 
 			this->localJacobian.fvGeom.update(entity);
-
+			
 			this->localJacobian.setLocalSolution(entity);
+//			this->localJacobian.updateStaticData(entity,this->localJacobian.u);
 			this->localJacobian.template localDefect<LeafTag>(entity,
 					this->localJacobian.u);
 
