@@ -202,7 +202,7 @@ public:
 	}
 
 	// analog to EvalStaticData in MUFTE
-	virtual void updateStaticData(const Entity& e, const VBlockType* sol) {
+	virtual void updateStaticData(const Entity& e, VBlockType* sol) {
 		return this->getImp().updateStaticData(e, sol);
 	}
 

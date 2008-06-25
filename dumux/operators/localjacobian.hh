@@ -189,7 +189,7 @@ namespace Dune
 	  this->getImp().template analyticJacobian<TypeTag>(e, sol);
     }
 
-    virtual void updateStaticData (const Entity& e, const VBlockType* sol)
+    virtual void updateStaticData (const Entity& e, VBlockType* sol)
     {
 	  return;
     }
