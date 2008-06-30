@@ -7,7 +7,7 @@
 /**
  * @file
  * @brief  Base class for defining an instance of a numerical two phase flow model
- * @author Bernd Flemisch
+ * @author Bernd Flemisch, last changed by Markus Wolff
  */
 
 /**
@@ -29,16 +29,15 @@ namespace Dune
 	 * supplemented by appropriate initial and boundary conditions. 
 	 */
 
-  template<class G, class Diffusion, class Transport>
-  class FractionalFlow : public Transport {
+  template<class G, class Diffusion, class Transport, class VC>
+  class FractionalFlow  : public Transport, public Diffusion {
   public:
 	  typedef typename Transport::RepresentationType RepresentationType;
 	  typedef typename Diffusion::RepresentationType PressType;
-	  typedef typename Diffusion::VelType VelType;
 	  typedef typename Diffusion::NumberType RT;
 	  
-	  Diffusion& diffusion;
-	  
+//	  Diffusion& diffusion;
+  
 	//! \brief Calculate the pressure.
 	/*!
 	 *  \param t time 
@@ -48,12 +47,27 @@ namespace Dune
 	 *  subject to appropriate boundary and initial conditions. 
 	 *  Employ the method \a pressure of Diffusion. 
 	 */
-	void pressure(const RT t=0)
-	{
-		diffusion.pressure(t);
-	}
+//	void pressure(const RT t=0)
+//	{
+//		Diffusion::pressure(t);
+//	}
 	
-	
+	  
+		virtual void initial() = 0;
+		
+		//! return const reference to saturation vector
+		const RepresentationType& operator* () const
+		{
+		  return this->transproblem.variables.saturation;
+		}
+
+		//! return reference to saturation vector
+		RepresentationType& operator* ()
+		{
+		  return this->transproblem.variables.saturation;
+		}
+
+	 
 	//! \brief Calculate the total velocity.
 	/*!
 	 *  \param t time 
@@ -75,10 +89,12 @@ namespace Dune
 	 *  of \f$\text{div}\, (f_\text{w}(S) \boldsymbol{v}_t)\f$.
 	 */
 	virtual int update(const RT t, RT& dt, RepresentationType& updateVec, RT cFLFactor = 1) = 0;  
+	
+	virtual void vtkout (const char* name, int k) const = 0;
 		
 	//! Construct a FractionalFlow object.
 	FractionalFlow (Diffusion& diff, Transport& trans)
-	: Transport(trans), diffusion(diff)
+	: Diffusion(diff), Transport(trans)
 	{ 
 		if (trans.level() > diff.level()) 
 		  DUNE_THROW(Exception,"from class Twophase (or derived): transport class level is higher than diffusion class level!");
