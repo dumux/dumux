@@ -128,19 +128,18 @@ AC_CONFIG_FILES([Makefile
     test/fvca5/test8/Makefile
     test/fvca5/test9/Makefile
     benchmarkproblems/Makefile
+    benchmarkproblems/fractionalflow/Makefile
     benchmarkproblems/fullycoupled/Makefile
     benchmarkproblems/fullycoupled/2p/Makefile
-    benchmarkproblems/fullycoupled/2p/buckleyleverett/Makefile
-    benchmarkproblems/fullycoupled/2p/fivespot/Makefile
-    benchmarkproblems/fullycoupled/2p/convectiondiffusion/Makefile   
-    benchmarkproblems/fullycoupled/2p/mcwhorter/Makefile
-    benchmarkproblems/fractionalflow/Makefile
     benchmarkproblems/fractionalflow/2p/Makefile
+    benchmarkproblems/fullycoupled/2p/buckleyleverett/Makefile
     benchmarkproblems/fractionalflow/2p/buckleyleverett/Makefile
-    benchmarkproblems/fractionalflow/2p/fivespot/Makefile
-    benchmarkproblems/fractionalflow/2p/convectiondiffusion/Makefile   
+    benchmarkproblems/fullycoupled/2p/fivespot/Makefile
+    benchmarkproblems/fractionalflow/2p/fivespot/Makefile    
+    benchmarkproblems/fullycoupled/2p/convectiondiffusion/Makefile  
+    benchmarkproblems/fractionalflow/2p/convectiondiffusion/Makefile      
+    benchmarkproblems/fullycoupled/2p/mcwhorter/Makefile
     benchmarkproblems/fractionalflow/2p/mcwhorter/Makefile
-
     dune-mux.pc])
 
 AC_OUTPUT
