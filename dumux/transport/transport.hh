@@ -28,11 +28,12 @@ namespace Dune
 	- VelType   type of the vector holding the velocity values 
 
    */
-  template<class G, class RT, class RepresentationType, class VelType>
+  template<class G, class RT, class VC>
   class Transport {
   public:
-	RepresentationType sat; //!< vector of saturation values
-	TransportProblem<G, RT, VelType>& problem; //!< problem data
+	  
+	typedef BlockVector< Dune::FieldVector<RT,1> > RepresentationType; 
+	TransportProblem<G, RT, VC>& transproblem; //!< problem data
 	  
 	//! \brief Calculate the update vector.
 	/*!
@@ -46,22 +47,7 @@ namespace Dune
 	virtual int update(const RT t, RT& dt, RepresentationType& updateVec) = 0;  
 		
 	//! \brief Sets the initial solution \f$S_0\f$.
-	virtual void initial() = 0;  
-		
-	//! generate vtk output
-	virtual void vtkout (const char* name, int k) const = 0;
-	
-	//! return const reference to saturation vector
-	const RepresentationType& operator* () const
-	{
-	  return sat;
-	}
-
-	//! return reference to saturation vector
-	RepresentationType& operator* ()
-	{
-	  return sat;
-	}
+	virtual void initialTransport() = 0;  
 
 	//! always define virtual destructor in abstract base class
 	virtual ~Transport () {}
@@ -70,8 +56,8 @@ namespace Dune
 	 *  @param g a DUNE grid object
 	 *  @param prob an object of class TransportProblem or derived
 	 */
-	Transport(const G& g, TransportProblem<G, RT, VelType>& prob) 
-	: grid(g), problem(prob), level_(g.maxLevel())
+	Transport(const G& g, TransportProblem<G, RT, VC>& prob) 
+	: grid(g), transproblem(prob), level_(g.maxLevel())
 	{ }
 	
 	/*! @brief constructor
@@ -82,8 +68,8 @@ namespace Dune
 	 *  @param prob an object of class TransportProblem or derived
 	 *  @param lev the grid level on which the Transport equation is to be solved.
 	 */
-	Transport(const G& g, TransportProblem<G, RT, VelType>& prob, int lev) 
-	: problem(prob), grid(g), level_(lev)
+	Transport(const G& g, TransportProblem<G, RT, VC>& prob, int lev) 
+	: transproblem(prob), grid(g), level_(lev)
 	{ }
 	
 	//! returns the level on which the transport eqution is solved.
