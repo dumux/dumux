@@ -38,7 +38,7 @@ namespace Dune
    *	- Grid  a DUNE grid type
    *	- RT    type used for return values 
    */
-  template<class G, class RT, class VelType>
+  template<class G, class RT, class VC>
   class TransportProblem {
 	typedef typename G::ctype DT;
 	enum {n=G::dimension, m=1, blocksize=2*G::dimension};
@@ -68,6 +68,15 @@ namespace Dune
 	 */
 	virtual RT S0 (const FieldVector<DT,n>& x, const Entity& e, 
 				  const FieldVector<DT,n>& xi) const = 0;
+	
+	const FieldVector<DT,n>& gravity()
+	{	  
+		FieldVector<DT,n> gravity_ = 0;
+		return gravity_;
+	}
+	
+//	virtual const FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x, const Entity& e, 
+//					const FieldVector<DT,n>& xi) = 0;
 	  
 	//! evaluate velocity 
 	/*! Evaluate the velocity at the element faces
@@ -75,11 +84,10 @@ namespace Dune
 	  @param[in]  numberInSelf   local index of element face
 	  @param[out] vTotal         velocity vector to be filled
 	 */
-	virtual const FieldVector<DT,n>& vTotal (const Entity& e, const int numberInSelf) = 0;
 
 
 	//! Returns the porosity of the porous medium
-	virtual RT porosity () 
+	virtual RT porosity () const
 	{
 		return 1.0;
 	}
@@ -89,8 +97,8 @@ namespace Dune
 	 *  @param cap flag for including capillary forces.
 	 */
 
-	TransportProblem(TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false) 
-	: capillary(cap), materialLaw(law)
+	TransportProblem(VC& variableobject, TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false) 
+	: variables(variableobject), capillary(cap), materialLaw(law)
 	{	}
 	
 	//! always define virtual destructor in abstract base class
@@ -98,7 +106,7 @@ namespace Dune
 	
 	const bool capillary;
 	TwoPhaseRelations& materialLaw;
-	VelType velocity;
+	VC& variables;
   };
 
 }
