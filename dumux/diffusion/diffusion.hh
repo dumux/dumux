@@ -31,11 +31,10 @@ namespace Dune
 	- VelType   type of the vector holding the velocity values 
 
    */
-  template<class G, class RT, class RepresentationType, class VelType>
+  template<class G, class RT,class CV>
   class Diffusion {
   public:
-	RepresentationType press; //!< vector of pressure values
-	DiffusionProblem<G, RT>& problem; //!< problem data
+	DiffusionProblem<G, RT, CV>& diffproblem; //!< problem data
 	typedef RT NumberType;
 	
 	//! \brief Calculate the pressure.
@@ -60,21 +59,9 @@ namespace Dune
 	 *  \f$\boldsymbol{v}_\text{t} = - \lambda K \text{grad}\, p\f$. 
 	 *  The method is used in FractionalFlow to provide the velocity field required for the saturation equation. 
 	 */
-	virtual void totalVelocity(VelType& velocity,  const RT t=0) const = 0;  
 	
-	//! generate vtk output
-	virtual void vtkout (const char* name, int k) const = 0;
-	
-	//! return const reference to pressure vector
-	const RepresentationType& operator* () const
-	{
-	  return press;
-	}
-
-	//! return reference to permeability vector
-	RepresentationType& operator* ()
-	{
-	  return press;
+	virtual void calcTotalVelocity(const RT t=0) const {
+		return;
 	}
 
 	//! always define virtual destructor in abstract base class
@@ -85,8 +72,8 @@ namespace Dune
 	 * \param g grid object of type G
 	 * \param prob a problem class object derived from DiffusionProblem
 	*/
-	Diffusion(const G& g, DiffusionProblem<G, RT>& prob) 
-	: grid(g), problem(prob), level_(g.maxLevel())
+	Diffusion(const G& g, DiffusionProblem<G, RT, CV>& prob) 
+	: grid(g), diffproblem(prob), level_(g.maxLevel())
 	{ 
 	}
 	
@@ -96,8 +83,8 @@ namespace Dune
 	 * \param prob a problem class object derived from DiffusionProblem
 	 * \param lev the grid level to work on
 	 */
-	Diffusion(const G& g, DiffusionProblem<G, RT>& prob, int lev) 
-	: problem(prob), grid(g), level_(lev)
+	Diffusion(const G& g, DiffusionProblem<G, RT, CV>& prob, int lev, bool calcPressure) 
+	: diffproblem(prob), grid(g), level_(lev), calcpressure(calcPressure)
 	{ 
 	}
 	
@@ -106,9 +93,9 @@ namespace Dune
 	{
 		return level_;
 	}
-	
-  protected:
 	  const G& grid;
+  protected:
+	  bool calcpressure;
 	  const int level_;
   };
 

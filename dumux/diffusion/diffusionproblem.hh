@@ -41,7 +41,7 @@ namespace Dune
    *	- Grid  a DUNE grid type
    *	- RT    type used for return values 
    */
-  template<class G, class RT>
+  template<class G, class RT, class VC>
   class DiffusionProblem {
   protected:
 	typedef typename G::ctype DT;
@@ -59,7 +59,7 @@ namespace Dune
 	  @param[in]  xi   position in reference element of e
 	  @param[out] D    diffusion tensor to be filled
 	 */
-	virtual const FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x, const Entity& e, 
+	virtual FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x, const Entity& e, 
 					const FieldVector<DT,n>& xi) = 0;
 	
 	//! evaluate saturation
@@ -68,11 +68,6 @@ namespace Dune
 	  @param[in]  e    entity of codim 0
 	  @param[in]  xi   position in reference element of e
 	 */
-	virtual RT sat  (const FieldVector<DT,n>& x, const Entity& e, 
-					 const FieldVector<DT,n>& xi)
-        { 
-	  return 1.0;
-	}
 
 	//! evaluate source term
 	/*! evaluate source term at given location
@@ -99,6 +94,9 @@ namespace Dune
 	 */
 	virtual RT g (const FieldVector<DT,n>& x, const Entity& e, 
 				  const FieldVector<DT,n>& xi) const = 0;
+	
+	virtual RT gSat (const FieldVector<DT,n>& x, const Entity& e, 
+					  const FieldVector<DT,n>& xi) const = 0;
 	  
 	//! evaluate Neumann boundary condition at given position
 	/*! evaluate Neumann boundary condition at given position
@@ -108,7 +106,7 @@ namespace Dune
 	virtual RT J (const FieldVector<DT,n>& x, const Entity& e, 
 				  const FieldVector<DT,n>& xi) const = 0;
 	  
-	const FieldVector<DT,n>& gravity()
+	const FieldVector<DT,n>& gravity() const
 	{
 		return gravity_;
 	}
@@ -117,9 +115,9 @@ namespace Dune
 	/** @param law implementation of Material laws. Class TwoPhaseRelations or derived.
 	 *  @param cap flag to include capillary forces. 
 	 */
-	DiffusionProblem(TwoPhaseRelations& law = *(new LinearLaw), 
+	DiffusionProblem(VC& variableobject, TwoPhaseRelations& law = *(new LinearLaw), 
 			const bool cap = false, FieldVector<DT,n> g = *(new FieldVector<DT,n>(0))) 
-	: materialLaw(law), capillary(cap), gravity_(g)
+	: variables(variableobject), materialLaw(law), capillary(cap), gravity_(g)
 	{	}
 	
 	//! always define virtual destructor in abstract base class
@@ -128,6 +126,7 @@ namespace Dune
 	//! a class describing relations between two phases and the porous medium
 	TwoPhaseRelations& materialLaw;
 	const bool capillary;
+	VC& variables;
   protected:
 	  FieldVector<DT,n> gravity_;
   };
