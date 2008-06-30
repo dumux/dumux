@@ -11,7 +11,7 @@ AC_SUBST([LOCAL_LIBS], '$(top_srcdir)/dumux/libdumux.la')
 # we need no more than the standard DE-stuff
 # this module depends on dune-common dune-disc dune-fem dune-grid dune-istl
 # this implies checking for [dune-common], [dune-istl], [dune-grid], [dune-disc], [dune-fem]
-DUNE_CHECK_ALL([dune-common], [dune-istl], [dune-grid], [dune-disc], [dune-fem])
+DUNE_CHECK_ALL([dune-common], [dune-istl], [dune-grid], [dune-disc])
 
 AC_DEFUN([SET_PARDISO], [
 AC_PREREQ(2.50)
@@ -133,7 +133,14 @@ AC_CONFIG_FILES([Makefile
     benchmarkproblems/fullycoupled/2p/buckleyleverett/Makefile
     benchmarkproblems/fullycoupled/2p/fivespot/Makefile
     benchmarkproblems/fullycoupled/2p/convectiondiffusion/Makefile   
-    benchmarkproblems/fullycoupled/2p/mcwhorter/Makefile    
+    benchmarkproblems/fullycoupled/2p/mcwhorter/Makefile
+    benchmarkproblems/fractionalflow/Makefile
+    benchmarkproblems/fractionalflow/2p/Makefile
+    benchmarkproblems/fractionalflow/2p/buckleyleverett/Makefile
+    benchmarkproblems/fractionalflow/2p/fivespot/Makefile
+    benchmarkproblems/fractionalflow/2p/convectiondiffusion/Makefile   
+    benchmarkproblems/fractionalflow/2p/mcwhorter/Makefile
+
     dune-mux.pc])
 
 AC_OUTPUT
