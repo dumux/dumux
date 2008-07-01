@@ -95,7 +95,7 @@ namespace Dune
 		FieldVector<RT,m> values(0);
 
 		values[pWIdx] = -densityW_*gravity_[1]*(depthBOR_ - x[1]);
-		values[satNIdx] = 0.01;
+		values[satNIdx] = 0.1;
 		
 		return values;
 	}
@@ -111,7 +111,7 @@ namespace Dune
 
 		//RT lambda = (x[1])/height_;
 		if (x[1] < 0.25 && x[1] > outerLowerLeft_[0] + eps_)
-			values[satNIdx] = -0.00001; //-0.000005,-0.04
+			values[satNIdx] = -5e-7;
 		
 		return values;
 	}
@@ -129,9 +129,9 @@ namespace Dune
 				
 		if (x[0] > innerLowerLeft_[0] && x[0] < innerUpperRight_[0] 
 		    && x[1] > innerLowerLeft_[1] && x[1] < innerUpperRight_[1])
-			values[satNIdx] = 0.01;
+			values[satNIdx] = 0.1;
 		else
-			values[satNIdx] = 0.01;
+			values[satNIdx] = 0.1;
 	
 		return values;
 	}
@@ -195,9 +195,9 @@ namespace Dune
 	LayerProblem(TwoPhaseRelations& law = *(new LinearLaw), MultiComp& multicomp = *(new CWaterAir), 
 			const FieldVector<DT,dim> outerLowerLeft = 0., const FieldVector<DT,dim> outerUpperRight = 0., 
 			const FieldVector<DT,dim> innerLowerLeft = 0., const FieldVector<DT,dim> innerUpperRight = 0., 
-			const RT depthBOR = 0, RT outerK = 5.3e-10, RT innerK = 1.3e-13,
-			RT outerSwr = 0.005, RT outerSnr = 0.01, RT innerSwr = 0.005, RT innerSnr = 0.01, 
-			RT outerPorosity = 0.4, RT innerPorosity = 0.3, 
+			const RT depthBOR = 0., RT outerK = 2.3e-10, RT innerK = 1.1e-13,
+			RT outerSwr = 0.05, RT outerSnr = 0.1, RT innerSwr = 0.05, RT innerSnr = 0.1, 
+			RT outerPorosity = 0.4, RT innerPorosity = 0.4, 
 			RT outerAlpha = 0.0037, RT innerAlpha = 0.00045, 
 			RT outerN = 4.7, RT innerN = 7.3)
 	: TwoPTwoCProblem<G, RT>(law, multicomp), 

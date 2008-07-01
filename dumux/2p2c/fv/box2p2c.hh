@@ -47,7 +47,7 @@
 
 namespace Dune
 {
-  template<class G, class RT>
+  template<class G, class RT, class VtkMultiWriter>
   class Box2P2C 
   : public LeafP1TwoPhaseModel<G, RT, TwoPTwoCProblem<G, RT>, Box2P2CJacobian<G, RT> >
   {
@@ -58,7 +58,7 @@ namespace Dune
 	// define the local Jacobian (also change the template argument above)
 	typedef Box2P2CJacobian<G, RT> LocalJacobian;
 	typedef LeafP1TwoPhaseModel<G, RT, ProblemType, LocalJacobian> LeafP1TwoPhaseModel;
-	typedef Box2P2C<G, RT> ThisType;
+	typedef Box2P2C<G, RT, VtkMultiWriter> ThisType;
 
 	typedef typename LeafP1TwoPhaseModel::FunctionType FunctionType;
 
@@ -75,9 +75,9 @@ namespace Dune
 
 	
 	Box2P2C(const G& g, ProblemType& prob) 
-	: LeafP1TwoPhaseModel(g, prob), xWN(this->size), xAW(this->size) // (this->size) vectors
-	{ 	}
-	
+	: LeafP1TwoPhaseModel(g, prob)// (this->size) vectors
+	{ }
+
 	void initial() {
 		typedef typename G::Traits::template Codim<0>::Entity Entity;
 		typedef typename G::ctype DT;
@@ -88,6 +88,9 @@ namespace Dune
 		enum {dim = G::dimension};
 		enum {dimworld = G::dimensionworld};
 
+		this->localJacobian.hackyMassFracAir = hackyVtkWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.hackyMassFracWater = hackyVtkWriter->template createField<RT, 1>(this->size);
+		
 		const IS& indexset(this->grid.leafIndexSet());
 
 		// iterate through leaf grid an evaluate c0 at cell center
@@ -190,6 +193,7 @@ namespace Dune
 		}
 
 		*(this->uOldTimeStep) = *(this->u);
+		
 		return;
 	}
 
@@ -219,9 +223,14 @@ namespace Dune
 
 	void update (double& dt)
 	{
+		this->localJacobian.hackyMassFracAir = hackyVtkWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.hackyMassFracWater = hackyVtkWriter->template createField<RT, 1>(this->size);
+
 		this->localJacobian.setDt(dt);
 		this->localJacobian.setOldSolution(this->uOldTimeStep);
-		NewtonMethod<G, ThisType> newtonMethod(this->grid, *this);
+		RT absTol = 2e-7;
+		RT relTol = 1e-5;
+		NewtonMethod<G, ThisType> newtonMethod(this->grid, *this, relTol, absTol);
 		newtonMethod.execute();
 		dt = this->localJacobian.getDt();
 		double upperMass, oldUpperMass;
@@ -294,38 +303,77 @@ namespace Dune
 					(*defectGlobal)[i][equationnumber] = 0;
 			}
    }
- 
+
+	const G& getGrid() const
+	{
+		return this->grid;
+	}
+	
+	template<class MultiWriter>
+	void addvtkfields (MultiWriter& writer) 
+	{
+//		BlockVector<FieldVector<RT, 1> > &xWN = *writer.template createField<RT, 1>(this->size);
+//		BlockVector<FieldVector<RT, 1> > &xAW = *writer.template createField<RT, 1>(this->size);
+		BlockVector<FieldVector<RT, 1> > &satW = *writer.template createField<RT, 1>(this->size);
+
+		for (int i = 0; i < this->size; i++) {
+//			RT pW = (*(this->u))[i][0];
+			RT satN = (*(this->u))[i][1];
+			satW[i] = 1 - satN;
+//			xWN[i] = this->problem.multicomp().xWN(pW, 283.15); //Achtung!! pW instead of pN!!!
+//			xAW[i] = this->problem.multicomp().xAW(pW, 283.15); //Achtung!! pW instead of pN!!!
+		}
+
+		writer.addScalarVertexFunction("nonwetting phase saturation", 
+										this->u, 
+										1);
+		writer.addScalarVertexFunction("wetting phase pressure", 
+										this->u, 
+										0);
+		writer.addVertexData(&satW,"wetting phase saturation");
+		writer.addVertexData(this->localJacobian.hackyMassFracAir,"Air in water");
+		writer.addVertexData(this->localJacobian.hackyMassFracWater,"Water in Gasphase");
+//		writer.addVertexData(&xWN, "water in air");
+//		writer.addVertexData(&xAW, "dissolved air");
+	}
 
 	
 	void vtkout (const char* name, int k) 
 	{
-		VTKWriter<G> vtkwriter(this->grid);
-		char fname[128];	
-		sprintf(fname,"%s-%05d",name,k);
-		for (int i = 0; i < this->size; i++) {
-			this->pW[i] = (*(this->u))[i][0];
-			this->satN[i] = (*(this->u))[i][1];
-			this->satW[i] = 1 - this->satN[i];
-			//const FieldVector<RT, 4> parameters(this->problem.materialLawParameters
-			//	 		 (this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal));
-			//			parameters = problem.materialLawParameters
-			//			 		 (this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
-			//			this->pC[i] = this->problem.materialLaw().pC(this->satW[i], parameters);			
-			xWN[i] = this->problem.multicomp().xWN(this->pW[i], 283.15); //Achtung!! pW instead of pN!!!
-			xAW[i] = this->problem.multicomp().xAW(this->pW[i], 283.15); //Achtung!! pW instead of pN!!!
-		}
-		vtkwriter.addVertexData(this->pW,"wetting phase pressure");
-		vtkwriter.addVertexData(this->satW,"wetting phase saturation");
-		vtkwriter.addVertexData(this->satN,"nonwetting phase saturation");
-		vtkwriter.addVertexData(xWN, "water in air");
-		vtkwriter.addVertexData(xAW, "dissolved air");
-		vtkwriter.write(fname, VTKOptions::ascii);		
+		
 	}
 
+//	void vtkout (const char* name, int k) 
+//	{
+//		VTKWriter<G> vtkwriter(this->grid);
+//		char fname[128];	
+//		sprintf(fname,"%s-%05d",name,k);
+//	  BlockVector<FieldVector<RT, 1> > xWN(this->size);
+//	  BlockVector<FieldVector<RT, 1> > xAW(this->size);
+//		for (int i = 0; i < this->size; i++) {
+//			this->pW[i] = (*(this->u))[i][0];
+//			this->satN[i] = (*(this->u))[i][1];
+//			this->satW[i] = 1 - this->satN[i];
+//			//const FieldVector<RT, 4> parameters(this->problem.materialLawParameters
+//			//	 		 (this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal));
+//			//			this->pC[i] = this->problem.materialLaw().pC(this->satW[i], parameters);			
+//			xWN[i] = this->problem.multicomp().xWN(this->pW[i], 283.15); //Achtung!! pW instead of pN!!!
+//			xAW[i] = this->problem.multicomp().xAW(this->pW[i], 283.15); //Achtung!! pW instead of pN!!!
+//		}
+//		vtkwriter.addVertexData(this->pW,"wetting phase pressure");
+//		vtkwriter.addVertexData(this->satW,"wetting phase saturation");
+//		vtkwriter.addVertexData(this->satN,"nonwetting phase saturation");
+//		vtkwriter.addVertexData(xWN, "water in air");
+//		vtkwriter.addVertexData(xAW, "dissolved air");
+//		vtkwriter.write(fname, VTKOptions::ascii);		
+//	}
+//
+	
+	void setHackyVtkMultiWriter(VtkMultiWriter *writer)
+	{ hackyVtkWriter = writer; }
   protected:
-	  BlockVector<FieldVector<RT, 1> > xWN;
-	  BlockVector<FieldVector<RT, 1> > xAW;
+    VtkMultiWriter *hackyVtkWriter;
+   
   };
-
 }
 #endif

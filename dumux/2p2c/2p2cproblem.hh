@@ -142,6 +142,11 @@ namespace Dune
 		return materialLaw_;
 	}
 
+	MultiComp& multicomp ()
+	{
+		return multicomp_;
+	}
+	
 	//element-wise return of the values of an Exact solution
 	virtual RT uExOutVertex(int &ElementIndex, int VariableIndex) const {
 		DUNE_THROW(NotImplemented, "Ex(akt) Solution");
@@ -155,23 +160,17 @@ namespace Dune
 		return;
 	}
 
-	MultiComp& multicomp ()
-	{
-		return multicomp_;
-	}
-	
-
 	
 	TwoPTwoCProblem(TwoPhaseRelations& law = *(new LinearLaw), 
 			MultiComp& multicomp = *(new CWaterAir), const bool exsol = false) 
-	: materialLaw_(law), multicomp_(multicomp), exsolution(exsol)
+	: materialLaw_(law), exsolution(exsol), multicomp_(multicomp)
 	{	}
 	
 	//! always define virtual destructor in abstract base class
 	virtual ~TwoPTwoCProblem () {}
-	
+
 	const bool exsolution;
-		
+			
   protected:
 	TwoPhaseRelations& materialLaw_;
 	MultiComp& multicomp_;
