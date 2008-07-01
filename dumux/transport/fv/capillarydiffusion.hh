@@ -16,7 +16,7 @@ namespace Dune
   /*!\ingroup diffPart
    * @brief  Base class for defining the diffusive part of an advection-diffusion equation 
    */
-  template<class G, class RT>
+  template<class G, class RT, class VC>
   class CapillaryDiffusion : public DiffusivePart<G,RT>
   {
     enum{dim = G::dimension};	
@@ -104,7 +104,7 @@ namespace Dune
       return result;
     }
 		
-    CapillaryDiffusion (DiffusionProblem<G, RT>& prob)
+    CapillaryDiffusion (DiffusionProblem<G, RT, VC>& prob)
       : problem(prob), constRel(problem.materialLaw), wettingPhase(constRel.wettingPhase), 
 	nonwettingPhase(constRel.nonwettingPhase)
     { 
@@ -114,7 +114,7 @@ namespace Dune
     }
 
   private:
-    DiffusionProblem<G, RT>& problem;
+    DiffusionProblem<G, RT, VC>& problem;
     TwoPhaseRelations& constRel;
     const Medium& wettingPhase;
     const Medium& nonwettingPhase;
