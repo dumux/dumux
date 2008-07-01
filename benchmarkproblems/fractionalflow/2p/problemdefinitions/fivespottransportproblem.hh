@@ -19,7 +19,6 @@ namespace Dune
   private:
     FieldVector<DT,n>  LowerLeft_;
     FieldVector<DT,n> UpperRight_;
-    EM elementmapper;
     RT eps_;
     RT bcf_;
     RT poro_;
@@ -63,8 +62,8 @@ namespace Dune
     Fivespotcase1TransportProblem(VC& variableobj, TwoPhaseRelations& law = *(new LinearLaw), RT bcf = 11, 
 			 const int level = 0, const bool cap =
 			 false) 
-      : TransportProblem<G, RT, VC>(variableobj,law, cap), LowerLeft_(g.lowerLeft()), UpperRight_(g.upperRight()), 
-	eps_(1e-8*(g.upperRight())[0]),poro_(0.2),bcf_(bcf)
+      : TransportProblem<G, RT, VC>(variableobj,law, cap), LowerLeft_(variableobj.grid.lowerLeft()), UpperRight_(variableobj.grid.upperRight()), 
+	eps_(1e-8*(variableobj.grid.upperRight())[0]),poro_(0.2),bcf_(bcf)
     {}
   };
   template<class G, class RT,class VC>
@@ -79,7 +78,6 @@ namespace Dune
   private:
     FieldVector<DT,n>  LowerLeft_;
     FieldVector<DT,n> UpperRight_;
-    EM elementmapper;
     RT eps_;
     RT bcf_;
     RT poro_;
@@ -129,8 +127,8 @@ namespace Dune
     Fivespotcase2TransportProblem(VC& variableobj, TwoPhaseRelations& law = *(new LinearLaw), RT bcf = 11,
 			 const int level = 0, const bool cap =
 			 false) 
-      : TransportProblem<G, RT, VC>(variableobj,law, cap), LowerLeft_(g.lowerLeft()), UpperRight_(g.upperRight()), 
-	eps_(1e-8*(g.upperRight())[0]),poro_(0.2),bcf_(bcf)
+      : TransportProblem<G, RT, VC>(variableobj,law, cap), LowerLeft_(variableobj.grid.lowerLeft()), UpperRight_(variableobj.grid.upperRight()), 
+	eps_(1e-8*(variableobj.grid.upperRight())[0]),poro_(0.2),bcf_(bcf)
     {}
   }; 
 }

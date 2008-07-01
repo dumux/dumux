@@ -4,6 +4,7 @@
 #include <dune/grid/utility/gridtype.hh>
 #include <dune/grid/common/gridinfo.hh>
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
+#include <dune/grid/io/file/dgfparser/dgfs.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
@@ -16,8 +17,8 @@
 #include "dumux/diffusion/fv/fvdiffusionvelocity.hh"
 //#include "dumux/diffusion/mimetic/mimeticdiffusion.hh"
 #include "dumux/fractionalflow/impes/impes.hh"
-#include "dumux/transport/problems/mcwhortertransportproblem.hh"
-#include "dumux/diffusion/problems/mcwhorterdiffproblem.hh"
+#include "../problemdefinitions/mcwhortertransportproblem.hh"
+#include "../problemdefinitions/mcwhorterdiffproblem.hh"
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/timedisc/rungekuttastep.hh"
 #include "dumux/transport/fv/capillarydiffusion.hh"
@@ -29,9 +30,9 @@ int main(int argc, char** argv)
       // define the problem dimensions  
       const int dim=2;
       typedef double NumberType; 
-     // Dune::FieldVector<NumberType, dim> LowerLeft(0);
-     // Dune::FieldVector<NumberType, dim> UpperRight(300);
-     // UpperRight[1]=70;
+      Dune::FieldVector<NumberType, dim> LowerLeft(0);
+      Dune::FieldVector<NumberType, dim> UpperRight(2.6);
+      UpperRight[1]=1;
       if (argc != 2) {
          std::cout << "usage: tEnd" << std::endl;
          return 0;
@@ -73,24 +74,24 @@ int main(int argc, char** argv)
 
       // plotting parameters 
       char* fileName("mcwhorter");
-      int modulo = 1; 
+      int modulo = 100; 
 
       Oil oil(0.0);
       Water water(0.0);
 
-      Dune::BrooksCoreyLaw materialLaw(water, oil,2.0,100);
+      Dune::BrooksCoreyLaw materialLaw(water, oil,2.0,5000);
       
       typedef Dune::VariableClass<GridType, NumberType> VC;
       
       VC variables(grid);
     
-      Dune::McWhorterTransportProblem<GridType, NumberType, VC> transportProblem(variables, materialLaw);
-      Dune::McWhorterDiffProblem<GridType, NumberType, VC> diffusionProblem(variables, materialLaw);
+      Dune::McWhorterTransportProblem<GridType, NumberType, VC> transportProblem(variables, materialLaw,LowerLeft,UpperRight);
+      Dune::McWhorterDiffProblem<GridType, NumberType, VC> diffusionProblem(variables, materialLaw,LowerLeft,UpperRight);
 
       typedef Dune::FVTransport<GridType, NumberType, VC> Transport;
-      Transport transport(grid, transportProblem, grid.maxLevel());
-//      Dune::CapillaryDiffusion<GridType, NumberType> diffPart(diffusionProblem);
-//      Transport transport(grid, transportProblem, grid.maxLevel(),diffPart,reconstruct, alphaMax, cFLFactor);
+//      Transport transport(grid, transportProblem, grid.maxLevel());
+      Dune::CapillaryDiffusion<GridType, NumberType, VC> diffPart(diffusionProblem);
+      Transport transport(grid, transportProblem, grid.maxLevel(),diffPart,reconstruct, alphaMax, cFLFactor);
         
       typedef Dune::FVDiffusionVelocity<GridType, NumberType, VC> Diffusion;
       Diffusion diffusion(grid, diffusionProblem, grid.maxLevel());

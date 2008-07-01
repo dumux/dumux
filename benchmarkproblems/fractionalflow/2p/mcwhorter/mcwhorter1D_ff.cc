@@ -4,6 +4,7 @@
 #include <dune/grid/utility/gridtype.hh>
 #include <dune/grid/common/gridinfo.hh>
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
+#include <dune/grid/onedgrid.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
@@ -17,8 +18,8 @@
 #include "dumux/diffusion/fv/fvdiffusionvelocity.hh"
 //#include "dumux/diffusion/mimetic/mimeticdiffusion.hh"
 #include "dumux/fractionalflow/impes/impes.hh"
-#include "dumux/transport/problems/mcwhortertransportproblem.hh"
-#include "dumux/diffusion/problems/mcwhorterdiffproblem.hh"
+#include "../problemdefinitions/mcwhortertransportproblem.hh"
+#include "../problemdefinitions/mcwhorterdiffproblem.hh"
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/timedisc/rungekuttastep.hh"
 #include "dumux/fractionalflow/variableclass.hh"
@@ -48,8 +49,6 @@ int main(int argc, char** argv)
     //deffinition of a stretched grid
     const int numberofelements = 56;
     double strfactor = 0;
-
-    double elementsize = Right[0]/numberofelements/Right[0];
       
     //vector with coordinates
     std::vector<ctype> coord;
@@ -77,20 +76,20 @@ int main(int argc, char** argv)
     // time loop parameters
     const double tStart = 0;
     // const double tEnd = 2.5e9;
-    const double cFLFactor = 0.02;//0.3,0.1,0.05    
+    const double cFLFactor = 0.2;  
     // slope limiter parameters
     bool reconstruct = true;
     double alphaMax = 0.8;
     
     // IMPES parameters
     int iterFlag = 2; 
-    int nIter = 100000; 
+    int nIter = 100; 
     double maxDefect = 1e-5;
     double omega=1;
 
     // plotting parameters 
     char* fileName("mcwhorter1D");
-    int modulo = 10; 
+    int modulo = 100; 
 
     Oil oil(0.0);
     Water water(0.0);
@@ -108,7 +107,7 @@ int main(int argc, char** argv)
 
     typedef Dune::FVTransport<GridType, NumberType, VC> Transport;
     //Transport transport(grid, transportProblem, grid.maxLevel());
-    Dune::CapillaryDiffusion<GridType, NumberType> diffPart(diffusionProblem);
+    Dune::CapillaryDiffusion<GridType, NumberType, VC> diffPart(diffusionProblem);
     Transport transport(grid, transportProblem, grid.maxLevel(),diffPart,reconstruct, alphaMax, cFLFactor);
         
     typedef Dune::FVDiffusionVelocity<GridType, NumberType, VC> Diffusion;

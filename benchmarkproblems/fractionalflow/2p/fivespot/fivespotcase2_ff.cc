@@ -4,6 +4,7 @@
 #include <dune/grid/utility/gridtype.hh>
 #include <dune/grid/common/gridinfo.hh>
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
+#include <dune/grid/io/file/dgfparser/dgfs.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
@@ -16,8 +17,8 @@
 #include "dumux/diffusion/fv/fvdiffusionvelocity.hh"
 //#include "dumux/diffusion/mimetic/mimeticdiffusion.hh"
 #include "dumux/fractionalflow/impes/impes.hh"
-#include "dumux/transport/problems/fivespottransportproblem.hh"
-#include "dumux/diffusion/problems/fivespotdiffproblem.hh"
+#include "../problemdefinitions/fivespottransportproblem.hh"
+#include "../problemdefinitions/fivespotdiffproblem.hh"
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/timedisc/rungekuttastep.hh"
 #include "dumux/fractionalflow/variableclass.hh"

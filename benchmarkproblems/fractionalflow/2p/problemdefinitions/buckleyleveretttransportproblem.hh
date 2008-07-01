@@ -65,14 +65,16 @@ namespace Dune
 			   const FieldVector<DT,n> Left = 0, const FieldVector<DT,n> Right = 0,
 			    const int level = 0, const bool cap =
 			   false,RT poro=0.2) 
-      : TransportProblem<G, RT, VC>(variableobj, law, cap, left(Left[0]), right(Right[0]),
+      : TransportProblem<G, RT, VC>(variableobj, law, cap), left(Left[0]), right(Right[0]),
 	eps_(1e-8),
 	poro_(poro)
     { }
+      
       private:
         DT left;
         DT right;
         RT eps_;
         RT poro_;  
+  };
   }
 #endif

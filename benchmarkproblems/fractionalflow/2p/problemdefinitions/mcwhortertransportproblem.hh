@@ -10,10 +10,9 @@ namespace Dune
   template<class G, class RT, class VC>
   class McWhorterTransportProblem 
     : public TransportProblem<G, RT, VC> {
-    template<int dim>
 		  
     typedef typename G::ctype DT;
-    enum {n=G::dimension, m=1, blocksize=2*G::dimension};
+    enum {n=G::dimension, m=1};
     bool analytical_;
     typedef typename G::Traits::template Codim<0>::Entity Entity;
     typedef Dune::FieldVector<double, n> R1;
@@ -54,18 +53,18 @@ namespace Dune
     McWhorterTransportProblem(VC& variableobj, TwoPhaseRelations& law = *(new LinearLaw),
 		     const FieldVector<DT,n> Left = 0, const FieldVector<DT,n> Right = 0,
 		     bool analytic = false, const bool cap = false, const int level = 0, RT poro=0.3,RT Si=0.0) 
-      : TransportProblem<G, RT, VC>(variableobj,law, cap,analytic), left(Left[0]), right(Right[0]),
+      : TransportProblem<G, RT, VC>(variableobj,law, cap), left(Left[0]), right(Right[0]),
 	eps_(1e-8),
 	poro_(poro),
-	Sinit_(Si),
+	Sinit_(Si)
     {}
 		     
   private:
     DT left;
     DT right;
-    EM elementmapper;
     RT eps_;
     RT poro_;
     RT Sinit_;
+  };
 }
 #endif

@@ -16,7 +16,7 @@
 #include "dumux/transport/fv/fvtransport.hh"
 #include "dumux/diffusion/fv/fvdiffusion.hh"
 #include "dumux/diffusion/fv/fvdiffusionvelocity.hh"
-#include "dumux/diffusion/mimetic/mimeticdiffusion.hh"
+//#include "dumux/diffusion/mimetic/mimeticdiffusion.hh"
 #include "dumux/fractionalflow/impes/impes.hh"
 #include "../problemdefinitions/buckleyleveretttransportproblem.hh"
 #include "../problemdefinitions/buckleyleverettdiffproblem.hh"
