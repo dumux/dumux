@@ -111,6 +111,83 @@ namespace Dune {
 
 		  return;
 	  }
+	  
+	  template<class MultiWriter> 
+	  void executeMultiWriter (Model& model, MultiWriter& writer)
+	  {
+		  int k = 0;
+		  
+		  writer.beginTimestep(0, model.getGrid());
+		  // initialize solution with initial values
+		  model.setHackyVtkMultiWriter(&writer);
+		  model.initial();          
+		  model.addvtkfields(writer);
+		  writer.endTimestep();
+		  
+		  // now do the time steps
+		  double t = tStart;
+		  //		  double dtOriginal;
+		  //		  if (fixed)
+		  //			  dtOriginal = dt;
+		  while (t < tEnd) {
+			  k++;
+			  double dtOld = dt;
+
+			  if (t == tStart) 
+				  timeStep.execute(model, t, dt, firstDt, tEnd, cFLFactor);
+			  else
+				  timeStep.execute(model, t, dt, maxDt, tEnd, cFLFactor);
+
+			  if(fixed)
+			  {
+				  if (dt > dtOld) {
+					  t += dtOld;
+					  t = std::min(t, tEnd);
+					  if(dt > tEnd-t)
+					  {
+						  std::cout << "\t" << k << "\t" << t << "\t" << dtOld 
+						  << "\t # timestep number k, time t, timestep size dt" << std::endl;
+						  //std::cout << ", timestep: " << k << "\t t=" << t << "\t dt=" << (tEnd-t) << std::endl;	
+					  }
+					  else
+					  {
+						  std::cout << "\t" << k << "\t" << t << "\t" << dtOld 
+						  << "\t # timestep number k, time t, timestep size dt" << std::endl;
+						  //std::cout << ", timestep: " << k << "\t t=" << t << "\t dt=" << dt << std::endl;
+					  }
+				  }
+
+				  else {
+					  t += dt;
+					  t = std::min(t, tEnd);
+					  std::cout << "\t" << k << "\t" << t << "\t" << dt 
+					  << "\t # timestep number k, time t, timestep size dt" << std::endl;
+					  //std::cout << ", timestep: " << k << "\t t=" << t << "\t dt=" << dt << std::endl;
+				  }		    		
+			  }
+			  else
+			  {
+				  t += dt;
+				  t = std::min(t, tEnd);
+				  std::cout << ", timestep: " << k << "\t t=" << t << "\t dt=" << dt << std::endl;
+
+			  }
+
+			  // generate output
+			  if (k%modulo == 0) 
+			  {
+				  writer.beginTimestep(t, model.getGrid());
+				  model.addvtkfields(writer);
+				  writer.endTimestep();
+			  }
+			  //		    if (fixed)
+			  //		    	dt = dtOriginal;
+		  }    
+		  
+		  return;
+	  }
+	  
+
 
 	  TimeLoop(const double ts, const double te, const char* name = "timeloop", const int mod = 1, 
 			  const double cfl = 1, const double mdt = 1e100, const double fdt = 1e100, 
