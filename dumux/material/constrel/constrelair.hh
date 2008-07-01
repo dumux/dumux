@@ -3,12 +3,17 @@ class ConstrelAir
 {
 	
 public:
-	
-	/*** molar density of gas phase ***/
-	double rho_idGG_mol (double pg,double Temp) const
+		
+	  /** @brief mass density of gas phase, calculated with ideal gas law
+	   * @param T Temperature \f$ \left[ K \right] \f$
+	   * @param p Pressure \f$ \left[ Pa \right] \f$
+	   * @param  x \f$ \left[ - \right] \f$
+	   * @return mass density \f$ \left[ \frac{kg}{m^3} \right] \f$
+	   */
+	double rho_idGG_molar (double Temp, double pg) const
 	{
 	    double value;
-	    const double RU = 8.314; 			// univ. gas constant [J/(mol K)] 
+	    const double RU = 8.31451; 			// univ. gas constant [J/(mol K)] 
 	    const double EPS = 1e-18;
 	    
 	    if(Temp<250.) Temp=250.;    // ACHTUNG Regularisierung
@@ -21,6 +26,24 @@ public:
 	    return(value);
 	} 
 
+	double rho_idGG_mass (double Temp, double pg, const double molarMass) const
+	{
+	    double value;
+	    const double RU = 8.31451; 			// univ. gas constant [J/(mol K)] 
+//	    const double EPS = 1e-18;
+	    
+//	    if(Temp<250.) Temp=250.;    // ACHTUNG Regularisierung
+//	    if(Temp>500.) Temp=500.;    // ACHTUNG Regularisierung
+//	    if(pg<EPS) pg=EPS;          // ACHTUNG Regularisierung
+//	    if(pg>1.E8) pg=1.E8;        // ACHTUNG Regularisierung
+	
+	    value=pg/(RU*Temp);
+	    value*=molarMass;
+	
+	    return(value);
+	} 
+
+	
 	/*** viscosity of air ***/
 	double viscosity_air (double Temp) const
 	{
