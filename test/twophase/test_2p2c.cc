@@ -36,7 +36,7 @@ int main(int argc, char** argv)
     innerLowerLeft[1] = 1;
     Dune::FieldVector<NumberType, dim> innerUpperRight(6);
     innerUpperRight[1] = 1.5;
-    double depthBOR = 5;
+    double depthBOR = 5.;
 
     // count number of arguments
     if (argc != 3) {
@@ -72,7 +72,7 @@ int main(int argc, char** argv)
     Dune::gridinfo(grid);
 
     // choose fluids and properties
-    Air air; Water water;
+    Water water; Air air;//CO2 co2;
     Dune::VanGenuchtenLaw law(water, air);
     Dune::CWaterAir multicomp(water, air);
     //Dune::LinearLaw law(water, air);
@@ -82,14 +82,16 @@ int main(int argc, char** argv)
     		innerLowerLeft, innerUpperRight, depthBOR);
 
     // create two-phase two-component problem
-    typedef Dune::Box2P2C<GridType, NumberType> TwoPhaseTwoComp;
+    typedef Stupid::VtkMultiWriter<GridType> MultiWriter;
+    typedef Dune::Box2P2C<GridType, NumberType, MultiWriter> TwoPhaseTwoComp;
     TwoPhaseTwoComp twoPhasetwoComp(grid, problem);
     
     Dune::TimeLoop<GridType, TwoPhaseTwoComp> timeloop(0, tEnd, dt, "lens", 5);
     
     Dune::Timer timer;
     timer.reset();
-    timeloop.execute(twoPhasetwoComp);
+    Stupid::VtkMultiWriter<GridType> writer("2p2c");
+    timeloop.executeMultiWriter(twoPhasetwoComp, writer);
     std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
 
 // COMPARSION TO TWOPHASE MODEL    
