@@ -1,4 +1,4 @@
-fvdir = $(includedir)/dune/dumux/twophase/fv
-fv_HEADERS = boxpwsn.hh boxpwsnjacobian.hh boxtwophase.hh boxtwophasejacobian.hh
+fvdir = $(includedir)/dune/dumux/2penergy/fv
+fv_HEADERS = boxpwsnte.hh boxpwsntejacobian.hh 
 
 include $(top_srcdir)/am/global-rules
