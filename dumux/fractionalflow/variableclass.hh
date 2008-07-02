@@ -67,12 +67,12 @@ public:
 		return velocity;
 	}
 
-	RT& sat(const Dune::FieldVector<DT,n>& x, const Entity& e,
+	const Dune::FieldVector<RT,1>& sat(const Dune::FieldVector<DT,n>& x, const Entity& e,
 			const Dune::FieldVector<DT,n>& xi) const {
 		return saturation[mapper.map(e)];;
 	}
 
-	RT& press(const Dune::FieldVector<DT,n>& x, const Entity& e,
+	const Dune::FieldVector<RT,1>& press(const Dune::FieldVector<DT,n>& x, const Entity& e,
 			const Dune::FieldVector<DT,n>& xi) const {
 		return pressure[mapper.map(e)];
 	}
@@ -114,6 +114,13 @@ public:
 		}
 		return;
 	}
+	void vtkoutpressure(const char* name, int k) const {
+		VTKWriter<G> vtkwriter(grid);
+		char fname[128];
+		sprintf(fname, "%s-press%05d", name, k);
+		vtkwriter.addCellData(pressure, "total pressure p~");
+		vtkwriter.write(fname, VTKOptions::ascii);
+	}	
 
 	G& grid;
 private:
