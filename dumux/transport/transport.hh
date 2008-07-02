@@ -44,10 +44,33 @@ namespace Dune
 	 *  Calculate the update vector, i.e., the discretization 
 	 *  of \f$\text{div}\, (f_\text{w}(S) \boldsymbol{v}_t)\f$.
 	 */
-	virtual int update(const RT t, RT& dt, RepresentationType& updateVec) = 0;  
+	virtual int update(const RT t, RT& dt, RepresentationType& updateVec) = 0;
+	
+	void initial()
+	{
+		initialTransport();
+		return;
+	}
 		
 	//! \brief Sets the initial solution \f$S_0\f$.
-	virtual void initialTransport() = 0;  
+	virtual void initialTransport() = 0;
+	
+	//! return const reference to saturation vector
+	virtual const RepresentationType& operator* () const
+	{
+	  return transproblem.variables.saturation;
+	}
+
+	//! return reference to saturation vector
+	virtual RepresentationType& operator* ()
+	{
+	  return transproblem.variables.saturation;
+	}
+	
+	virtual void vtkout(const char* name, int k) const {
+		transproblem.variables.vtkout(name, k);
+		return;
+	}
 
 	//! always define virtual destructor in abstract base class
 	virtual ~Transport () {}

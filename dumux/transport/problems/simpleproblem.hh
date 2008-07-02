@@ -7,16 +7,15 @@ namespace Dune
 {
 //! \ingroup transportProblems
 //! @brief example class for a transport problem
-  template<class G, class RT>
-  class SimpleProblem : public TransportProblem<G, RT, Dune::BlockVector< Dune::FieldVector<Dune::FieldVector<double, G::dimension>, 2*G::dimension> > > {
+  template<class G, class RT, class VC>
+  class SimpleProblem : public TransportProblem<G, RT, VC> {
 	  typedef typename G::ctype DT;
 	  enum {n=G::dimension, m=1};
 	  typedef typename G::Traits::template Codim<0>::Entity Entity;
-	  typedef typename Dune::BlockVector< Dune::FieldVector<Dune::FieldVector<double, n>, 2*n> > VelType;
+
   private:
 	  DT left;
 	  DT right;
-	  FieldVector<DT,n> vLoc;
 
   public:
 	BoundaryConditions::Flags bctype (const FieldVector<DT,n>& x, const Entity& e, 
@@ -42,21 +41,13 @@ namespace Dune
 	{
 		return 0;
 	}
-	  
-	const FieldVector<DT,n>& vTotal (const Entity& e, const int numberInSelf)
-	{
-		vLoc[0] = 1.0/6.0*1e-6;
-		vLoc[1] = 0;
-		
-		return vLoc;
-	}
 
-	SimpleProblem(const G& g, TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false) 
-	: TransportProblem<G, RT, VelType>(law, cap), left(0/*(g.lowerLeft())[0]*/), right(600/*(g.upperRight())[0]*/)
+	SimpleProblem(VC& variableobj, TwoPhaseRelations& law = *(new LinearLaw), FieldVector<DT,n>& Left = 0, FieldVector<DT,n>& Right = 1, const bool cap = false) 
+	: TransportProblem<G, RT, VC>(variableobj,law, cap), left(Left[0]), right(Right[0])
 	{	}
 
-	SimpleProblem(TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false) 
-	: TransportProblem<G, RT, VelType>(law, cap), left(0), right(1)
+	SimpleProblem(VC& variableobj, TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false) 
+	: TransportProblem<G, RT, VC>(variableobj,law, cap), left(0), right(1)
 	{	}
   };
 

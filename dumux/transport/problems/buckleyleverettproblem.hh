@@ -7,30 +7,18 @@ namespace Dune
 {
 //! \ingroup transportProblems
 //! @brief example class for a transport problem
-  template<class G, class RT>
+  template<class G, class RT, class VC>
   class BuckleyLeverettProblem 
-  : public TransportProblem<G, RT, Dune::BlockVector< Dune::FieldVector<Dune::FieldVector<double, G::dimension>, 2*G::dimension> > > {
-		template<int dim>
-		struct ElementLayout
-		{
-			bool contains (Dune::GeometryType gt)
-			{
-				return gt.dim() == dim;
-			}
-		}; 
+  : public TransportProblem<G, RT,VC> {
 		  
 	  typedef typename G::ctype DT;
 	  enum {n=G::dimension, m=1, blocksize=2*G::dimension};
 	  typedef typename G::Traits::template Codim<0>::Entity Entity;
 	  typedef Dune::FieldVector<double, n> R1;
-	  typedef Dune::BlockVector< Dune::FieldVector<R1, blocksize> > VelType;
-	  typedef typename G::Traits::LevelIndexSet IS;
-	  typedef Dune::MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout> EM;
 
   private:
 	  DT left;
 	  DT right;
-	  EM elementmapper;
 
   public:
 	BoundaryConditions::Flags bctype (const FieldVector<DT,n>& x, const Entity& e, 
@@ -57,20 +45,11 @@ namespace Dune
 		return 0.2;
 	}
 	  
-	const FieldVector<DT,n>& vTotal (const Entity& e, const int numberInSelf)
-	{
-		int elemId = elementmapper.map(e);
-		
-		return(this->velocity[elemId][numberInSelf]);
-	}
 
-	BuckleyLeverettProblem(const G& g, TwoPhaseRelations& law = *(new LinearLaw), 
+	BuckleyLeverettProblem(VC& variableobj, TwoPhaseRelations& law = *(new LinearLaw), 
 								const int level = 0, const bool cap = false) 
-	: TransportProblem<G, RT, VelType>(law, cap), left((g.lowerLeft())[0]), right((g.upperRight())[0]), 
-	  elementmapper(g, g.levelIndexSet(level))
-	{	
-		this->velocity.resize(elementmapper.size());
-	}
+	: TransportProblem<G, RT, VC>(variableobj,law, cap), left((variableobj.grid.lowerLeft())[0]), right((variableobj.grid.upperRight())[0])
+	{}
   };
 
 }
