@@ -285,10 +285,15 @@ public:
 						}
 					}
 				}
-
-				if (bctypeface[0]==BoundaryConditions::neumann && bctypeface[1]
-				                                                             ==BoundaryConditions::neumann)
-					continue; // was a neumann face, go to next face
+				
+				bool nface(true); // check if face is a neumann face
+				for(int i=0; i<m; i++)
+				{
+					if(bctypeface[i] != BoundaryConditions::neumann)
+						nface = false; // was not a neumann face
+				}
+				if(nface == true)
+				continue; // was a neumann face, go to next face
 			}
 
 			// If we are here, then it is 
@@ -296,14 +301,21 @@ public:
 			// (ii)  a processor boundary (i.e. neither boundary() nor neighbor() was true), or
 			// (iii) a level boundary in case of level-wise assemble
 			// How processor boundaries are handled depends on the processor boundary mode
-			if (bctypeface[0]==BoundaryConditions::process
+			
+			bool pface(false);  // check if face is a process boundary
+			for(int i=0; i<m; i++)
+			{
+				if (bctypeface[i]==BoundaryConditions::process
 					&& procBoundaryAsDirichlet==false
 					&& levelBoundaryAsDirichlet==false)
-				continue; // then it acts like homogeneous Neumann
-			if (bctypeface[1]==BoundaryConditions::process
-					&& procBoundaryAsDirichlet==false
-					&& levelBoundaryAsDirichlet==false)
-				continue; // then it acts like homogeneous Neumann
+				{
+					pface = true;
+					break;
+				}
+			}
+			if(pface == true)
+			continue;   // if face is a process boundary it acts like homogeneous Neumann
+			
 
 			for (int equationNumber=0; equationNumber<m; equationNumber++) {
 				for (int i=0; i<sfs.size(); i++) // loop over test function number
