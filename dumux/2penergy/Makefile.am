@@ -1,4 +1,4 @@
-SUBDIRS = . fv problems
+SUBDIRS = . fv
 
 twophasedir = $(includedir)/dune/dumux/2penergy
 twophase_HEADERS = 2penergymodel.hh 2penergyproblem.hh
