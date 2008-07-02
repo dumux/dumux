@@ -77,8 +77,8 @@ namespace Dune
 //		int l_diffusion;
 //	};
 
-template<class G, class RT>
-	class MultiscaleProblem : public DiffusionProblem<G,RT>
+template<class G, class RT,class VC>
+	class MultiscaleProblem : public DiffusionProblem<G,RT,VC>
 	{
 	  typedef typename G::ctype DT;
 	  enum {n=G::dimension};
@@ -86,7 +86,7 @@ template<class G, class RT>
 	
 	public:
 	  MultiscaleProblem(G& g, DiffusionProblem<G,RT>& p,const int diff_level, const int trans_level, TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false)
-	    : DiffusionProblem<G,RT>(p.materialLaw, p.capillary), l_diffusion(diff_level), l_transport(trans_level)
+	    : DiffusionProblem<G,RT,VC>(p.variabls,p.materialLaw, p.capillary), l_diffusion(diff_level), l_transport(trans_level)
 	  { 
 		  problem = &p;
 	  }
@@ -101,10 +101,10 @@ template<class G, class RT>
 					  const Dune::FieldVector<DT,n>& xi)
 	  {
 		  if (e.level() == l_transport) 
-			  return problem->sat(x, e, xi);
+			  return problem.variables.sat(x, e, xi);
 		  typename Entity::EntityPointer f = e.father();
 		  while (f.level() > l_transport) f = f->father();
-		  return problem->sat(x,*f,xi);
+		  return problem.variables.sat(x,*f,xi);
 	  }
 	
 	  RT q   (const Dune::FieldVector<DT,n>& x, const Entity& e, 
