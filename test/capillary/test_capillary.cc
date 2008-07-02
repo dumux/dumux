@@ -12,6 +12,7 @@
 #include "dumux/transport/fv/fvtransport.hh"
 #include "dumux/transport/fv/capillarydiffusion.hh"
 #include "dumux/diffusion/fv/fvdiffusion.hh"
+#include "dumux/diffusion/fv/fvdiffusionvelocity.hh"
 #include "dumux/diffusion/mimetic/mimeticdiffusion.hh"
 #include "dumux/fractionalflow/impes/impes.hh"
 #include "dumux/transport/problems/buckleyleverettproblem.hh"
@@ -20,6 +21,7 @@
 #include "dumux/diffusion/problems/heterogeneousproblem.hh"
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/timedisc/rungekuttastep.hh"
+#include "dumux/fractionalflow/variableclass.hh"
  
 int main(int argc, char** argv) 
 {
@@ -33,7 +35,7 @@ int main(int argc, char** argv)
 
     // time loop parameters
     const double tStart = 0;
-    const double tEnd = 2.5e9;
+    const double tEnd = 5e9;
     const double cFLFactor = 0.2;
     
     // slope limiter parameters
@@ -58,23 +60,27 @@ int main(int argc, char** argv)
 
     Uniform mat;
     //Dune::LinearLaw materialLaw(mat, mat);
-    Dune::BrooksCoreyLaw materialLaw(mat, mat);
+    Dune::BrooksCoreyLaw materialLaw(mat, mat,2,10000);
     //Dune::VanGenuchtenLaw materialLaw(mat, mat);
     
-    Dune::BuckleyLeverettProblem<GridType, NumberType> transportProblem(grid, materialLaw);
-    Dune::UniformProblem<GridType, NumberType> diffusionProblem(grid, false, materialLaw);
+    typedef Dune::VariableClass<GridType, NumberType> VC;
+    
+    VC variables(grid);
+    
+    Dune::BuckleyLeverettProblem<GridType, NumberType, VC> transportProblem(variables, materialLaw);
+    Dune::UniformProblem<GridType, NumberType,VC> diffusionProblem(variables, materialLaw);
     //Dune::HeterogeneousProblem<GridType, NumberType> diffusionProblem(grid, "permeab.dat", false, materialLaw);
     //diffusionProblem.permeability.vtkout("permeability", grid);
 
-    typedef Dune::FVTransport<GridType, NumberType> Transport;
+    typedef Dune::FVTransport<GridType, NumberType,VC> Transport;
     //Dune::DiffusivePart<GridType, NumberType> diffPart;
-    Dune::CapillaryDiffusion<GridType, NumberType> diffPart(diffusionProblem);
+    Dune::CapillaryDiffusion<GridType, NumberType,VC> diffPart(diffusionProblem);
     Transport transport(grid, transportProblem, grid.maxLevel(), diffPart, reconstruct, alphaMax, cFLFactor);
         
-    typedef Dune::FVDiffusion<GridType, NumberType> Diffusion;
-    Diffusion diffusion(grid, diffusionProblem, transport.problem, grid.maxLevel());
+    typedef Dune::FVDiffusionVelocity<GridType, NumberType,VC> Diffusion;
+    Diffusion diffusion(grid, diffusionProblem, grid.maxLevel());
 
-    typedef Dune::IMPES<GridType, Diffusion, Transport> IMPES;
+    typedef Dune::IMPES<GridType, Diffusion, Transport,VC> IMPES;
     IMPES fractionalflow(diffusion, transport, iterFlag, nIter, maxDefect);
     
     Dune::TimeLoop<GridType, IMPES > timeloop(tStart, tEnd, fileName, modulo, cFLFactor);

@@ -15,6 +15,7 @@
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/timedisc/rungekuttastep.hh"
 #include "dumux/diffusion/problems/uniformproblem.hh"
+#include "dumux/fractionalflow/variableclass.hh"
 
 int main(int argc, char** argv) 
 {
@@ -52,20 +53,30 @@ int main(int argc, char** argv)
     Dune::BrooksCoreyLaw materialLaw(mat, mat);
     //Dune::LinearLaw materialLaw(mat, mat);
     
-    Dune::SimpleProblem<GridType, NumberType> problem(grid, materialLaw);
+    typedef Dune::VariableClass<GridType, NumberType> VC;
+    
+	double initsat=0;
+    double initpress=0;
+    Dune::FieldVector<double,dim>vel(0);
+    vel[0] = 1.0/6.0*1e-6;  
+	
+    VC variables(grid,initsat,initpress,vel);
+    
+    Dune::SimpleProblem<GridType, NumberType, VC> problem(variables, materialLaw,L,H);
 
-    typedef Dune::FVTransport<GridType, NumberType> Transport;
+    typedef Dune::FVTransport<GridType, NumberType, VC> Transport;
     //Dune::DiffusivePart<GridType, NumberType> diffPart;
-    Dune::UniformProblem<GridType, NumberType> diffusionProblem(grid, true, materialLaw);
+    Dune::UniformProblem<GridType, NumberType, VC> diffusionProblem(variables, materialLaw);
     //Dune::DiffusivePart<GridType, NumberType> diffPart;
-    Dune::CapillaryDiffusion<GridType, NumberType> diffPart(diffusionProblem); 
+    Dune::CapillaryDiffusion<GridType, NumberType, VC> diffPart(diffusionProblem); 
     Transport transport(grid, problem, grid.maxLevel(), diffPart, reconstruct, alphaMax, cFLFactor);
+    
     
     Dune::TimeLoop<GridType, Transport > timeloop(tStart, tEnd, "timeloop", modulo, cFLFactor, maxDT, maxDT);
     
     timeloop.execute(transport);
     
-    printvector(std::cout, *transport, "saturation", "row", 200, 1);    
+    printvector(std::cout, variables.saturation, "saturation", "row", 200, 1);    
     
     return 0;
   }

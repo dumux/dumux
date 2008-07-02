@@ -50,12 +50,11 @@ int main(int argc, char** argv)
 //    Dune::UniformProblem<GridType, NumberType> diffusionProblem(grid, true, materialLaw);
     Dune::LevelHetProblem<GridType, NumberType> diffusionProblem(grid, finelevel, "permeab.dat", false, materialLaw);
 //    diffusionProblem.permeability.vtkout("permeability", grid);
-    Dune::MultiscaleProblem<GridType, NumberType > diffProb(grid,diffusionProblem,finelevel,coarselevel);
+//    Dune::MultiscaleProblem<GridType, NumberType > diffProb(grid,diffusionProblem,finelevel,coarselevel, materialLaw);
     
     typedef Dune::FVTransport<GridType, NumberType> Transport;
     Transport transport(grid, transportProblem, coarselevel);
         
-    diffusionProblem.saturation = &(*transport);
     
     typedef Dune::MimeticDiffusion<GridType, NumberType> Diffusion;
     Diffusion diffusion(grid, diffProb, transportProblem, finelevel);
