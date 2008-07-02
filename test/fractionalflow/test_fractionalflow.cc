@@ -11,17 +11,19 @@
 #include "dumux/material/vangenuchtenlaw.hh"
 #include "dumux/transport/fv/fvtransport.hh"
 #include "dumux/diffusion/fv/fvdiffusion.hh"
+#include "dumux/diffusion/fv/fvdiffusionvelocity.hh"
 #include "dumux/diffusion/mimetic/mimeticdiffusion.hh"
-#include "dumux/fractionalflow/impes/impesms.hh"
+//#include "dumux/fractionalflow/impes/impesms.hh"
 #include "dumux/fractionalflow/impes/impes.hh"
 #include "dumux/transport/problems/buckleyleverettproblem.hh"
 #include "dumux/transport/problems/simpleproblem.hh"
 #include "dumux/diffusion/problems/uniformproblem.hh"
 #include "dumux/diffusion/problems/heterogeneousproblem.hh"
 #include "dumux/diffusion/problems/levelhetproblem.hh"
-#include "dumux/diffusion/problems/multiscaleproblem.hh"
+//#include "dumux/diffusion/problems/multiscaleproblem.hh"
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/timedisc/rungekuttastep.hh"
+#include "dumux/fractionalflow/variableclass.hh"
  
 int main(int argc, char** argv) 
 {
@@ -46,31 +48,41 @@ int main(int argc, char** argv)
     Uniform mat;
     Dune::BrooksCoreyLaw materialLaw(mat, mat);
     
-    Dune::BuckleyLeverettProblem<GridType, NumberType> transportProblem(grid, materialLaw);
-//    Dune::UniformProblem<GridType, NumberType> diffusionProblem(grid, true, materialLaw);
-    Dune::LevelHetProblem<GridType, NumberType> diffusionProblem(grid, finelevel, "permeab.dat", false, materialLaw);
-//    diffusionProblem.permeability.vtkout("permeability", grid);
-//    Dune::MultiscaleProblem<GridType, NumberType > diffProb(grid,diffusionProblem,finelevel,coarselevel, materialLaw);
+    typedef Dune::VariableClass<GridType, NumberType> VC;
     
-    typedef Dune::FVTransport<GridType, NumberType> Transport;
+    VC variables(grid);
+    
+    Dune::BuckleyLeverettProblem<GridType, NumberType,VC> transportProblem(variables, materialLaw);
+    Dune::UniformProblem<GridType, NumberType,VC> diffusionProblem(variables, materialLaw);
+//    Dune::LevelHetProblem<GridType, NumberType,VC> diffusionProblem(variables, finelevel, "permeab.dat", false, materialLaw);
+//    diffusionProblem.permeability.vtkout("permeability", grid);
+//    Dune::MultiscaleProblem<GridType, NumberType , VC> diffProb(grid,diffusionProblem,finelevel,coarselevel, materialLaw);
+    
+    typedef Dune::FVTransport<GridType, NumberType,VC> Transport;
     Transport transport(grid, transportProblem, coarselevel);
         
+ 
+    typedef Dune::FVDiffusionVelocity<GridType, NumberType, VC> Diffusion;
+    Diffusion diffusion(grid, diffusionProblem, finelevel);
     
-    typedef Dune::MimeticDiffusion<GridType, NumberType> Diffusion;
-    Diffusion diffusion(grid, diffProb, transportProblem, finelevel);
+//    typedef Dune::MimeticDiffusion<GridType, NumberType> Diffusion;
+//    Diffusion diffusion(grid, diffProb, finelevel);
 
     int iterFlag = 0; 
     int nIter = 1; 
     double maxDefect = 1e-5;
-    typedef Dune::IMPESMS<GridType, Diffusion, Transport> IMPESMS;
-    IMPESMS fractionalflow(diffusion, transport, iterFlag, nIter, maxDefect);
+    typedef Dune::IMPES<GridType, Diffusion, Transport,VC> IMPES;
+    IMPES fractionalflow(diffusion, transport, iterFlag, nIter, maxDefect);
+           
+//    typedef Dune::IMPESMS<GridType, Diffusion, Transport,VC> IMPESMS;
+//    IMPESMS fractionalflow(diffusion, transport, iterFlag, nIter, maxDefect);
      
     double tStart = 0; 
     double tEnd = 2.5e9;
     char* fileName("timeloop");
     int modulo = 1; 
     double cFLFactor = 0.7;
-    Dune::TimeLoop<GridType, IMPESMS > timeloop(tStart, tEnd, fileName, modulo, cFLFactor);
+    Dune::TimeLoop<GridType, IMPES > timeloop(tStart, tEnd, fileName, modulo, cFLFactor);
     
     Dune::Timer timer;
     timer.reset();
