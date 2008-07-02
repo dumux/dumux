@@ -56,9 +56,9 @@ namespace Dune
 	- Grid  a DUNE grid type
 	- RT    type used for return values 
   */
-  template<class G, class RT>
+  template<class G, class RT, class VC>
   class MimeticGroundwaterEquationLocalStiffness 
-    : public LocalStiffnessExt<MimeticGroundwaterEquationLocalStiffness<G,RT>,G,RT,1>
+    : public LocalStiffnessExt<MimeticGroundwaterEquationLocalStiffness<G,RT,VC>,G,RT,1>
   {
     template<int dim>
     struct ElementLayout
@@ -84,7 +84,7 @@ namespace Dune
 	enum {SIZE=CRShapeFunctionSetContainer<DT,RT,n>::maxsize};
 
 	//! Constructor
-	MimeticGroundwaterEquationLocalStiffness (DiffusionProblem<G,RT>& params,
+	MimeticGroundwaterEquationLocalStiffness (DiffusionProblem<G,RT,VC>& params,
 						  bool levelBoundaryAsDirichlet_, const G& grid, int level=0, 
 						  bool procBoundaryAsDirichlet_=true)
 	  : problem(params),levelBoundaryAsDirichlet(levelBoundaryAsDirichlet_),
@@ -175,7 +175,7 @@ namespace Dune
 
       int elemId = elementmapper.map(e);
       
-     	  K *= problem.materialLaw.mobTotal(problem.sat(centerGlobal,e,centerLocal));
+     	  K *= problem.materialLaw.mobTotal(problem.variables.sat(centerGlobal,e,centerLocal));
     
       // cell volume
       DT volume = e.geometry().volume();
@@ -509,7 +509,7 @@ namespace Dune
 	}
 
     // parameters given in constructor
-    DiffusionProblem<G,RT>& problem;
+    DiffusionProblem<G,RT,VC>& problem;
     bool levelBoundaryAsDirichlet;
     bool procBoundaryAsDirichlet;
     EM elementmapper;

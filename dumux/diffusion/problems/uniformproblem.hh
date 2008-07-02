@@ -8,17 +8,17 @@ namespace Dune
 {
 //! \ingroup diffusionProblems
 //! example class for diffusion problems
-	template<class G, class RT>
-	class UniformProblem : public DiffusionProblem<G,RT>
+	template<class G, class RT, class VC>
+	class UniformProblem : public DiffusionProblem<G,RT,VC>
 	{
 	  typedef typename G::ctype DT;
 	  enum {n=G::dimension};
 	  typedef typename G::Traits::template Codim<0>::Entity Entity;
 	
 	public:
-	  UniformProblem(G& g, const bool sflag = true, TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false)
-	    : DiffusionProblem<G,RT>(law, cap), saturationflag(sflag), grid(&g) 
-	  { 
+	  UniformProblem(VC& variableobj, TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false)
+	    : DiffusionProblem<G,RT,VC>(variableobj,law, cap)
+	    {
 		permloc = 0;
 	    for (int k = 0; k < n; k++)
 	      permloc[k][k] = 1e-10;
@@ -26,28 +26,19 @@ namespace Dune
 	    }
 	
 	  UniformProblem()
-	    : DiffusionProblem<G,RT>()
+	    : DiffusionProblem<G,RT,VC>()
 	  {
 	    permloc = 0; 
 	    for (int k = 0; k < n; k++)
-	      permloc[k][k] = 1e-10;
-	    
-	    saturationflag = false;
+	      permloc[k][k] = 1e-10;    
 	  }
 	
-	  const Dune::FieldMatrix<DT,n,n>& K (const Dune::FieldVector<DT,n>& x, const Entity& e, 
+	  Dune::FieldMatrix<DT,n,n>& K (const Dune::FieldVector<DT,n>& x, const Entity& e, 
 					  const Dune::FieldVector<DT,n>& xi) 
 	  {
 		  return permloc;
 	  }
 	  
-	  RT sat (const Dune::FieldVector<DT,n>& x, const Entity& e, 
-					  const Dune::FieldVector<DT,n>& xi)
-	  {
-		  if (saturationflag)
-			  return (*saturation)[grid->levelIndexSet(e.level()).index(e)];
-		  return 0;
-	  }
 	
 	  RT q   (const Dune::FieldVector<DT,n>& x, const Entity& e, 
 					  const Dune::FieldVector<DT,n>& xi)
@@ -72,6 +63,14 @@ namespace Dune
 		  return (x[0] < 1e-6) ? 2e5 : 1e5;
 	  }
 		  
+		RT gSat (const FieldVector<DT,n>& x, const Entity& e, 
+			   const FieldVector<DT,n>& xi) const 
+		{
+			if (x[0] < 1e-6) 
+				return 0.8;
+			else
+				return 0.2;
+		}
 		
 	  RT J (const Dune::FieldVector<DT,n>& x, const Entity& e, 
 					const Dune::FieldVector<DT,n>& xi) const
@@ -82,10 +81,6 @@ namespace Dune
 	  
 	private:
 		Dune::FieldMatrix<DT,n,n> permloc;
-		bool saturationflag;
-		G* grid;
-	public:
-		Dune::BlockVector<Dune::FieldVector<RT,1> >* saturation;
 	};
 }
 
