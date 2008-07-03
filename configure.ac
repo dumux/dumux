@@ -89,7 +89,6 @@ AC_CONFIG_FILES([Makefile
     test/brinkman/Makefile
     test/capillary/Makefile
     test/co2/Makefile
-    test/co2_ni/Makefile
     test/diffusion/Makefile
     test/dimltdimworld/Makefile
     test/elementid/Makefile
