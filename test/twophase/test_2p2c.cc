@@ -32,10 +32,10 @@ int main(int argc, char** argv)
     Dune::FieldVector<NumberType, dim> outerLowerLeft(0);
     Dune::FieldVector<NumberType, dim> outerUpperRight(6);
     outerUpperRight[1] = 4;
-    Dune::FieldVector<NumberType, dim> innerLowerLeft(0);
-    innerLowerLeft[1] = 1;
+    Dune::FieldVector<NumberType, dim> innerLowerLeft(3);
+    innerLowerLeft[1] = 0.0;
     Dune::FieldVector<NumberType, dim> innerUpperRight(6);
-    innerUpperRight[1] = 1.5;
+    innerUpperRight[1] = 0.5;
     double depthBOR = 5.;
 
     // count number of arguments
@@ -72,9 +72,9 @@ int main(int argc, char** argv)
     Dune::gridinfo(grid);
 
     // choose fluids and properties
-    Water water; Air air;//CO2 co2;
-    Dune::VanGenuchtenLaw law(water, air);
-    Dune::CWaterAir multicomp(water, air);
+    Water wPhase; CO2 nPhase;//Air air;
+    Dune::VanGenuchtenLaw law(wPhase, nPhase);
+    Dune::CWaterAir multicomp(wPhase, nPhase);
     //Dune::LinearLaw law(water, air);
     
     // create problem properties and geometry
@@ -86,7 +86,7 @@ int main(int argc, char** argv)
     typedef Dune::Box2P2C<GridType, NumberType, MultiWriter> TwoPhaseTwoComp;
     TwoPhaseTwoComp twoPhasetwoComp(grid, problem);
     
-    Dune::TimeLoop<GridType, TwoPhaseTwoComp> timeloop(0, tEnd, dt, "lens", 5);
+    Dune::TimeLoop<GridType, TwoPhaseTwoComp> timeloop(0, tEnd, dt, "lens", 1);
     
     Dune::Timer timer;
     timer.reset();
