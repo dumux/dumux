@@ -88,6 +88,7 @@ namespace Dune
 		enum {dim = G::dimension};
 		enum {dimworld = G::dimensionworld};
 
+		this->localJacobian.hackySaturationN = hackyVtkWriter->template createField<RT, 1>(this->size);
 		this->localJacobian.hackyMassFracAir = hackyVtkWriter->template createField<RT, 1>(this->size);
 		this->localJacobian.hackyMassFracWater = hackyVtkWriter->template createField<RT, 1>(this->size);
 		
@@ -223,13 +224,47 @@ namespace Dune
 
 	void update (double& dt)
 	{
+		this->localJacobian.hackySaturationN = hackyVtkWriter->template createField<RT, 1>(this->size);
 		this->localJacobian.hackyMassFracAir = hackyVtkWriter->template createField<RT, 1>(this->size);
 		this->localJacobian.hackyMassFracWater = hackyVtkWriter->template createField<RT, 1>(this->size);
 
 		this->localJacobian.setDt(dt);
 		this->localJacobian.setOldSolution(this->uOldTimeStep);
+
+		///////////////////////////////////
+		// define solver tolerances here
+		///////////////////////////////////
 		RT absTol = 2e-7;
 		RT relTol = 1e-5;
+////////////////
+//		typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator
+//		Iterator;
+//		typedef typename G::Traits::template Codim<0>::Entity Entity;
+//		typedef typename G::ctype DT;
+//		enum {dim = G::dimension};
+//
+//		const IS& indexset(this->grid.leafIndexSet());
+//
+//		Iterator eendit = indexset.template end<0, All_Partition>();
+//		for (Iterator it = indexset.template begin<0, All_Partition>(); 
+//				it != eendit; ++it) 
+//		{
+//			const Entity& e = *it;
+//			Dune::GeometryType gt = it->geometry().type();
+//
+//			const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type
+//			&sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(gt,	1);
+//
+//			int size = sfs.size();
+//			this->localJacobian.updateVariableData(e, this->localJacobian.u);
+//			for (int i=0; i < size; i++)
+//			{	
+//				int globalId = this->vertexmapper.template map<dim>(e,
+//						sfs[i].entity());
+//				this->localJacobian.primaryVarSwitch(e, globalId, this->localJacobian.u, i);
+//			}
+//		}
+/////////////////////		
 		NewtonMethod<G, ThisType> newtonMethod(this->grid, *this, relTol, absTol);
 		newtonMethod.execute();
 		dt = this->localJacobian.getDt();
@@ -314,25 +349,26 @@ namespace Dune
 	{
 //		BlockVector<FieldVector<RT, 1> > &xWN = *writer.template createField<RT, 1>(this->size);
 //		BlockVector<FieldVector<RT, 1> > &xAW = *writer.template createField<RT, 1>(this->size);
-		BlockVector<FieldVector<RT, 1> > &satW = *writer.template createField<RT, 1>(this->size);
+//		BlockVector<FieldVector<RT, 1> > &satW = *writer.template createField<RT, 1>(this->size);
 
 		for (int i = 0; i < this->size; i++) {
 //			RT pW = (*(this->u))[i][0];
-			RT satN = (*(this->u))[i][1];
-			satW[i] = 1 - satN;
+//			RT satN = (*(this->u))[i][1];
+//			satW[i] = 1 - satN;
 //			xWN[i] = this->problem.multicomp().xWN(pW, 283.15); //Achtung!! pW instead of pN!!!
 //			xAW[i] = this->problem.multicomp().xAW(pW, 283.15); //Achtung!! pW instead of pN!!!
 		}
 
-		writer.addScalarVertexFunction("nonwetting phase saturation", 
-										this->u, 
-										1);
+//		writer.addScalarVertexFunction("nonwetting phase saturation", 
+//										this->u, 
+//										1);
 		writer.addScalarVertexFunction("wetting phase pressure", 
 										this->u, 
 										0);
-		writer.addVertexData(&satW,"wetting phase saturation");
-		writer.addVertexData(this->localJacobian.hackyMassFracAir,"Air in water");
-		writer.addVertexData(this->localJacobian.hackyMassFracWater,"Water in Gasphase");
+//		writer.addVertexData(&satW,"wetting phase saturation");
+		writer.addVertexData(this->localJacobian.hackySaturationN,"nonwetting phase saturation");
+		writer.addVertexData(this->localJacobian.hackyMassFracAir,"air in water");
+		writer.addVertexData(this->localJacobian.hackyMassFracWater,"water in Gasphase");
 //		writer.addVertexData(&xWN, "water in air");
 //		writer.addVertexData(&xAW, "dissolved air");
 	}

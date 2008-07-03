@@ -182,12 +182,20 @@ namespace Dune
 		  		 pGrad[phase] += temp;
 		
 		      	 // compute sum of concentration gradient
-		     	 temp = feGrad;
-		     	 temp *= vNDat[k].massfrac[air][phase];
-		     	 xGrad[phase] += temp;
-      	 }
+//		     	 temp = feGrad;
+//		     	 temp *= vNDat[k].massfrac[air][phase];
+//		     	 xGrad[phase] += temp;
+		  	 }
+		  	 // for diffusion of air in wetting phase
+		  	 temp = feGrad;
+	     	 temp *= vNDat[k].massfrac[air][wPhase];
+	     	 xGrad[wPhase] += temp;
 
-       }
+		  	 // for diffusion of water in nonwetting phase
+	     	 temp = feGrad;
+	     	 temp *= vNDat[k].massfrac[water][nPhase];
+	     	 xGrad[nPhase] += temp;
+		 }
 
        // deduce gravity*density of each phase
 		 FieldMatrix<RT,m,dim> contribComp(0);
@@ -246,12 +254,11 @@ namespace Dune
 		 // DIFFUSION
 		 VBlockType normDiffGrad;
 
-		 //FieldMatrix<DT,m,c> diffusionW;
-		 RT diffusionAW, diffusionWW; // Diffusion in the water phase
-		 RT diffusionWN, diffusionAN; // Diffusion in the non-wetting phase
+		 RT diffusionWW, diffusionWN; // diffusion of water
+		 RT diffusionAW, diffusionAN; // diffusion of air
 		 VBlockType avgDensity, avgDpm;
 		 avgDpm[wPhase]=1e-9; // needs to be changed !!!
-		 avgDpm[nPhase]=1e-9;
+		 avgDpm[nPhase]=1e-9; // water in the gasphase
 		 
 		 normDiffGrad[wPhase] = -(xGrad[wPhase]*normal);
 		 normDiffGrad[nPhase] = -(xGrad[nPhase]*normal);
@@ -270,10 +277,10 @@ namespace Dune
 		 
 
 		 // add water diffusion to flux
-		 flux[water] -= (diffusionWW + diffusionWN);
+		 flux[water] += (diffusionWW + diffusionWN); 
 //		 std::cout << "Water Flux: " << flux[water] << std::endl; 
 		 // air diffusion not implemeted
-		 flux[air] -= (diffusionAW + diffusionAN);
+		 flux[air] += (diffusionAN + diffusionAW);
 //		 std::cout << "Air Flux: " << flux[air] << std::endl; 
 
 
@@ -297,10 +304,9 @@ namespace Dune
 	 *  @param sol solution vector
 	 *  @param local local node id
 	 */
-   	virtual void primaryVarSwitch (const Entity& e, const int global, VBlockType* sol, const int local)
+//   	virtual void primaryVarSwitch (const Entity& e, const int global, VBlockType* sol, const int local)
+   	virtual void primaryVarSwitch (const Entity& e, int global, VBlockType* sol, int local)
     {
-        //int k = this->fvGeom.cellLocal;
-
         // neue Variable in SOL schreiben. Da Zeiger auf sol, sollte das funktionieren
         // Achtung: alte Loesung beibebehalten, falls Newton den Zeitschritt nicht schafft
    		// 1=gas, 2=water, 3=both
@@ -309,7 +315,7 @@ namespace Dune
    		int state = sNDat[global].phaseState;
         bool switched = false;
     	RT pWSat = problem.multicomp().vaporPressure(vNDat[local].temperature);
-    	RT henry = problem.multicomp().henry(vNDat[local].temperature);
+    	RT henryInv = problem.multicomp().henry(vNDat[local].temperature);
     	RT xWNmolar = problem.multicomp().xWNmolar(vNDat[local].pN, vNDat[local].temperature);
     	RT xAWmolar = problem.multicomp().xAWmolar(vNDat[local].pN, vNDat[local].temperature);
 //    	double satControl = vNDat[local].saturationW;
@@ -320,30 +326,38 @@ namespace Dune
         switch(state) 
         {
         case gasPhase :
-        	RT pwn;
-        	pwn = xWNmolar * vNDat[local].pN;
+        	RT xWNmass, pwn; 
+        	xWNmass = sol[local][satNIdx];
+        	xWNmolar = problem.multicomp().conversionMassToMoleFraction(xWNmass, gasPhase);
+           	pwn = xWNmolar * vNDat[local].pN;
   
         	if (pwn > 1.01*pWSat && switched == false)
             {
             	// appearance of water phase
             	std::cout << "Water appears at node " << global << "  Coordinates: " << Coordinates << std::endl;
-            	vNDat[local].saturationN = 1.0 - 1.E-6; // initialize
-            	sol[local][satNIdx] = vNDat[local].saturationN;
+            	vNDat[local].saturationN = 1.0 - 1.e-6; // initialize
             	sNDat[global].phaseState = bothPhases;
+//      		  	sNDat[global].switched = true;
+            	sol[local][satNIdx] = vNDat[local].saturationN;
             	switched = true;
             }
             break;
 
         case waterPhase :
-        	RT pbub;
-        	pbub = pWSat + xAWmolar*henry;
-        	if (pbub > vNDat[local].pN && switched == false)
+        	RT pbub, pNint, xAWmass;
+         	xAWmass = sol[local][satNIdx];
+         	xAWmolar = problem.multicomp().conversionMassToMoleFraction(xAWmass, waterPhase);
+        	pbub = pWSat + xAWmolar/henryInv;
+        	pNint = vNDat[local].pN;
+        	
+        	if (pbub > pNint && switched == false)
             {
             	// appearance of gas phase
             	std::cout << "Gas appears at node " << global << "  Coordinates: " << Coordinates << std::endl;
-            	vNDat[local].saturationN = 1.E-6;  // initialize
-            	sol[local][satNIdx] = vNDat[local].saturationN;
+            	vNDat[local].saturationN = 1.e-6;  // initialize
             	sNDat[global].phaseState = bothPhases;
+//      		  	sNDat[global].switched = true;
+            	sol[local][satNIdx] = vNDat[local].saturationN;
             	switched = true;
             }
             break;
@@ -355,8 +369,10 @@ namespace Dune
       		  	std::cout << "Gas disappears at node " << global << "  Coordinates: " << Coordinates << std::endl;
       		  	vNDat[local].saturationN = 0.0;  
       		  	vNDat[local].saturationW = 1.0;  
-      		  	sol[local][satNIdx] = vNDat[local].massfrac[air][wPhase];
       		  	sNDat[global].phaseState = waterPhase;
+//      		  	sNDat[global].switched = true;
+      		  	vNDat[local].massfrac[air][wPhase] = 1e-6;
+      		  	sol[local][satNIdx] = vNDat[local].massfrac[air][wPhase];
       		  	switched = true;
             }
       	  	else if (vNDat[local].saturationW < 0.0  && switched == false)
@@ -365,8 +381,10 @@ namespace Dune
       	  		std::cout << "Water disappears at node " << global << "  Coordinates: " << Coordinates << std::endl;
       		  	vNDat[local].saturationN = 1.0;
       	  		vNDat[local].saturationW = 0.0;
-      	  		sol[local][satNIdx] = vNDat[local].massfrac[water][nPhase];
       	  		sNDat[global].phaseState = gasPhase;
+//      		  	sNDat[global].switched = true;
+      		  	vNDat[local].massfrac[water][nPhase] = 1e-6;
+      	  		sol[local][satNIdx] = vNDat[local].massfrac[water][nPhase];
             	switched = true;
       	  	}
       	  	break;
@@ -401,9 +419,10 @@ namespace Dune
     
     virtual void clearVisited ()
     {
-    	for (int i = 0; i < this->vertexMapper.size(); i++)
+    	for (int i = 0; i < this->vertexMapper.size(); i++){
    		sNDat[i].visited = false;
-   	 
+//   	 	sNDat[i].switched = false;
+    	}
    	 return;
    	}
          
@@ -489,6 +508,7 @@ namespace Dune
     // for output files
     BlockVector<FieldVector<RT, 1> > *hackyMassFracAir;
     BlockVector<FieldVector<RT, 1> > *hackyMassFracWater;
+    BlockVector<FieldVector<RT, 1> > *hackySaturationN;
 
     // analog to EvalPrimaryData in MUFTE, uses members of vNDat
     virtual void updateVariableData (const Entity& e, const VBlockType* sol)
@@ -512,7 +532,8 @@ namespace Dune
    		 if (state == bothPhases) vNDat[i].saturationN = sol[i][satNIdx];
    		 if (state == waterPhase) vNDat[i].saturationN = 0.0;
    		 if (state == gasPhase) vNDat[i].saturationN = 1.0;
-		 vNDat[i].saturationW = 1.0 - vNDat[i].saturationN;
+
+   		 vNDat[i].saturationW = 1.0 - vNDat[i].saturationN;
 
    		 vNDat[i].pC = problem.materialLaw().pC(vNDat[i].saturationW, parameters);
    		 vNDat[i].pN = vNDat[i].pW + vNDat[i].pC;
@@ -523,16 +544,18 @@ namespace Dune
    	   		 vNDat[i].massfrac[air][wPhase] = problem.multicomp().xAW(vNDat[i].pN, vNDat[i].temperature);
    	   		 vNDat[i].massfrac[water][nPhase] = problem.multicomp().xWN(vNDat[i].pN, vNDat[i].temperature);
    		 }
-   		 else if (state == waterPhase){
+   		 if (state == waterPhase){
    	   		 vNDat[i].massfrac[water][nPhase] = 0.0;
    	   		 vNDat[i].massfrac[air][wPhase] =  sol[i][satNIdx];
    		 }
-   		 else if (state == gasPhase){
+   		 if (state == gasPhase){
    	   		 vNDat[i].massfrac[water][nPhase] = sol[i][satNIdx];
    	   		 vNDat[i].massfrac[air][wPhase] = 0.0;
    		 }
    	   	 vNDat[i].massfrac[water][wPhase] = 1.0 - vNDat[i].massfrac[air][wPhase];
    	   	 vNDat[i].massfrac[air][nPhase] = 1.0 - vNDat[i].massfrac[water][nPhase];
+   	   	 // for output
+   	   	 (*hackySaturationN)[global] = vNDat[i].saturationN;
    	   	 (*hackyMassFracAir)[global] = vNDat[i].massfrac[air][wPhase];
    	   	 (*hackyMassFracWater)[global] = vNDat[i].massfrac[water][nPhase];
    	   	 
@@ -544,8 +567,8 @@ namespace Dune
    				 vNDat[i].massfrac[air][nPhase]);
 
          // CONSTANT solubility (for comparison with twophase)
-//         vNDat[i].massfrac[air][wPhase] = 0.1; vNDat[i].massfrac[water][wPhase] = 0.9;
-//         vNDat[i].massfrac[water][nPhase] = 0.1; vNDat[i].massfrac[air][nPhase] = 0.9;
+//         vNDat[i].massfrac[air][wPhase] = 0.0; vNDat[i].massfrac[water][wPhase] = 1.0;
+//         vNDat[i].massfrac[water][nPhase] = 0.0; vNDat[i].massfrac[air][nPhase] = 1.0;
 
          //std::cout << "water in gasphase: " << vNDat[i].massfrac[water][nPhase] << std::endl;
          //std::cout << "air in waterphase: " << vNDat[i].massfrac[air][wPhase] << std::endl;
@@ -557,6 +580,7 @@ namespace Dune
     struct StaticNodeData 
     {
    	 bool visited;
+//   	 bool switched;
    	 int phaseState;
    	 RT cellVolume;
    	 RT porosity;

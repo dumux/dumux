@@ -79,8 +79,8 @@ namespace Dune
 
 		if (x[0] < outerLowerLeft_[0] + eps_)
 			values = BoundaryConditions::dirichlet;
-		if (x[1] < outerLowerLeft_[1] + eps_)
-			values = BoundaryConditions::dirichlet;
+//		if (x[1] < outerLowerLeft_[1] + eps_)
+//			values = BoundaryConditions::dirichlet;
 
 		return values;
 	}
@@ -95,7 +95,11 @@ namespace Dune
 		FieldVector<RT,m> values(0);
 
 		values[pWIdx] = -densityW_*gravity_[1]*(depthBOR_ - x[1]);
-		values[satNIdx] = 0.1;
+//		if (x[1] >= innerLowerLeft_[1] && x[1] <= innerUpperRight_[1])
+		if (x[0] >= innerLowerLeft_[0])
+			values[satNIdx] = 0.2;
+		else
+			values[satNIdx] = 1e-6;
 		
 		return values;
 	}
@@ -111,7 +115,7 @@ namespace Dune
 
 		//RT lambda = (x[1])/height_;
 		if (x[1] < 0.25 && x[1] > outerLowerLeft_[0] + eps_)
-			values[satNIdx] = -5e-7;
+			values[satNIdx] = 0.0;//-5e-7;
 		
 		return values;
 	}
@@ -127,11 +131,11 @@ namespace Dune
 		
 		values[pWIdx] = -densityW_*gravity_[1]*(depthBOR_ - x[1]);
 				
-		if (x[0] > innerLowerLeft_[0] && x[0] < innerUpperRight_[0] 
-		    && x[1] > innerLowerLeft_[1] && x[1] < innerUpperRight_[1])
-			values[satNIdx] = 0.1;
+		if (x[1] >= innerLowerLeft_[1] && x[1] <= innerUpperRight_[1]
+		      && x[0] >= innerLowerLeft_[0])
+			values[satNIdx] = 0.2;
 		else
-			values[satNIdx] = 0.1;
+			values[satNIdx] = 1e-6;
 	
 		return values;
 	}
@@ -142,8 +146,13 @@ namespace Dune
 	{
 
 		enum {gasPhase = 0, waterPhase = 1, bothPhases = 2}; // Phase states
+		int state;
 
-		int state = bothPhases;
+		if (x[1] >= innerLowerLeft_[1] && x[1] <= innerUpperRight_[1]
+		      && x[0] >= innerLowerLeft_[0])
+			state = bothPhases;
+		else
+			state = waterPhase;
 			
 		return state;
 	}
@@ -195,11 +204,11 @@ namespace Dune
 	LayerProblem(TwoPhaseRelations& law = *(new LinearLaw), MultiComp& multicomp = *(new CWaterAir), 
 			const FieldVector<DT,dim> outerLowerLeft = 0., const FieldVector<DT,dim> outerUpperRight = 0., 
 			const FieldVector<DT,dim> innerLowerLeft = 0., const FieldVector<DT,dim> innerUpperRight = 0., 
-			const RT depthBOR = 0., RT outerK = 2.3e-10, RT innerK = 1.1e-13,
+			const RT depthBOR = 0., RT outerK = 1.2e-12, RT innerK = 1.2e-12,
 			RT outerSwr = 0.05, RT outerSnr = 0.1, RT innerSwr = 0.05, RT innerSnr = 0.1, 
 			RT outerPorosity = 0.4, RT innerPorosity = 0.4, 
-			RT outerAlpha = 0.0037, RT innerAlpha = 0.00045, 
-			RT outerN = 4.7, RT innerN = 7.3)
+			RT outerAlpha = 0.0037, RT innerAlpha = 0.0037,  //0.00045
+			RT outerN = 4.7, RT innerN = 4.7)	//7.3
 	: TwoPTwoCProblem<G, RT>(law, multicomp), 
 	  outerLowerLeft_(outerLowerLeft), outerUpperRight_(outerUpperRight), 
 	  innerLowerLeft_(innerLowerLeft), innerUpperRight_(innerUpperRight), 
