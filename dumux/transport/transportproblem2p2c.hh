@@ -14,6 +14,7 @@
 #include <dumux/material/linearlaw.hh>
 
 #include <dumux/transport/transportproblem.hh>
+#include <dumux/diffusion/diffusionproblem.hh>
 #include <dumux/material/properties.hh>
 #include <dumux/operators/boundaryconditions2p2c.hh>
 
@@ -21,7 +22,7 @@ namespace Dune
 {
 
   template<class G, class RT>
-  class TransportProblem2p2c
+  class TransportProblem2p2c : 
   {
 
 	typedef typename G::ctype DT;
@@ -57,13 +58,11 @@ namespace Dune
 			   const FieldVector<DT,n>& xi) const = 0;
 	  
 	virtual RT S0 (const FieldVector<DT,n>& x, const Entity& e, 
-			const FieldVector<DT,n>& xi) const;
+			const FieldVector<DT,n>& xi) const = 0;
 	
 	virtual RT Z1_0 (const FieldVector<DT,n>& x, const Entity& e, 
-				const FieldVector<DT,n>& xi) const
-        {
-	  return 0;
-	}
+				const FieldVector<DT,n>& xi) const = 0;
+
 		
 	virtual RT porosity ()
 	{
