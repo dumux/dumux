@@ -556,9 +556,9 @@ namespace Dune
 	  //*********************************************************
 
     // for output files
-    BlockVector<FieldVector<RT, 1> > *hackyMassFracAir;
-    BlockVector<FieldVector<RT, 1> > *hackyMassFracWater;
-    BlockVector<FieldVector<RT, 1> > *hackySaturationN;
+//    BlockVector<FieldVector<RT, 1> > *hackyMassFracAir;
+//    BlockVector<FieldVector<RT, 1> > *hackyMassFracWater;
+//    BlockVector<FieldVector<RT, 1> > *hackySaturationN;
 
     // analog to EvalPrimaryData in MUFTE, uses members of vNDat
     virtual void updateVariableData (const Entity& e, const VBlockType* sol)
@@ -605,9 +605,9 @@ namespace Dune
    	   	 vNDat[i].massfrac[water][wPhase] = 1.0 - vNDat[i].massfrac[air][wPhase];
    	   	 vNDat[i].massfrac[air][nPhase] = 1.0 - vNDat[i].massfrac[water][nPhase];
    	   	 // for output
-   	   	 (*hackySaturationN)[global] = vNDat[i].satN;
-   	   	 (*hackyMassFracAir)[global] = vNDat[i].massfrac[air][wPhase];
-   	   	 (*hackyMassFracWater)[global] = vNDat[i].massfrac[water][nPhase];
+//   	   	 (*hackySaturationN)[global] = vNDat[i].satN;
+//   	   	 (*hackyMassFracAir)[global] = vNDat[i].massfrac[air][wPhase];
+//   	   	 (*hackyMassFracWater)[global] = vNDat[i].massfrac[water][nPhase];
    	   	 
    		 // Mobilities & densities
    		 vNDat[i].mobility[wPhase] = problem.materialLaw().mobW(vNDat[i].satW, parameters, vNDat[i].temperature, vNDat[i].pW);

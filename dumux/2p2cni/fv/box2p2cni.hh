@@ -93,9 +93,9 @@ namespace Dune
 		enum {dim = G::dimension};
 		enum {dimworld = G::dimensionworld};
 
-		this->localJacobian.hackySaturationN = hackyVtkWriter->template createField<RT, 1>(this->size);
-		this->localJacobian.hackyMassFracAir = hackyVtkWriter->template createField<RT, 1>(this->size);
-		this->localJacobian.hackyMassFracWater = hackyVtkWriter->template createField<RT, 1>(this->size);
+//		this->localJacobian.hackySaturationN = hackyVtkWriter->template createField<RT, 1>(this->size);
+//		this->localJacobian.hackyMassFracAir = hackyVtkWriter->template createField<RT, 1>(this->size);
+//		this->localJacobian.hackyMassFracWater = hackyVtkWriter->template createField<RT, 1>(this->size);
 		
 		const IS& indexset(this->grid.leafIndexSet());
 
@@ -229,9 +229,9 @@ namespace Dune
 
 	void update (double& dt)
 	{
-		this->localJacobian.hackySaturationN = hackyVtkWriter->template createField<RT, 1>(this->size);
-		this->localJacobian.hackyMassFracAir = hackyVtkWriter->template createField<RT, 1>(this->size);
-		this->localJacobian.hackyMassFracWater = hackyVtkWriter->template createField<RT, 1>(this->size);
+//		this->localJacobian.hackySaturationN = hackyVtkWriter->template createField<RT, 1>(this->size);
+//		this->localJacobian.hackyMassFracAir = hackyVtkWriter->template createField<RT, 1>(this->size);
+//		this->localJacobian.hackyMassFracWater = hackyVtkWriter->template createField<RT, 1>(this->size);
 
 		this->localJacobian.setDt(dt);
 		this->localJacobian.setOldSolution(this->uOldTimeStep);
