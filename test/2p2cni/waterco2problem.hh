@@ -95,9 +95,9 @@ namespace Dune
 	{
 		FieldVector<RT,m> values(0);
 		
-		values[0] = p0_;//p0_ - x[0] * 1070 * 9.81; 
+		values[0] = p0_ - x[1] * 1070 * 9.81; 
 		values[1] = 0.3;
-		values[2] = 311.; //311. - x[0]*0.03;
+		values[2] = 311. - x[1]*0.03;
 		
 //		if(x[0]>4-1.e-2 && x[1] > 1. && x[1] < 3.)
 //		{
@@ -112,9 +112,9 @@ namespace Dune
 	{
 		FieldVector<RT,m> values(0);
 
-		values[0] = 0.;//1.e-3;
-		values[1] = 0.;//2.692798e-4;
-		values[2] = 10000.77;
+		values[0] = -1.e-3;
+		values[1] = -2.692798e-4;
+		values[2] = 0.0;//10000.77;
 		
 
 //		if(x<1.e-2)
@@ -132,9 +132,9 @@ namespace Dune
 	{
 		FieldVector<RT,m> values(0);
 
-		values[0] = p0_;// - x[1] * 1070 * 9.81; 
+		values[0] = p0_ - x[1] * 1070 * 9.81; 
 		values[1] = 0.3;
-		values[2] = 311.;// - x[1]*0.03;
+		values[2] = 311.- x[1]*0.03;
 	
 		return values;
 	}
