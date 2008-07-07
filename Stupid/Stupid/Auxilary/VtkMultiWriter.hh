@@ -121,10 +121,9 @@ namespace Stupid {
          * \brief Evaluates a single component of a function defined on the grid at the
          *        vertices and appends it to the writer.
          */
-        template <class Function, class VertexMap>
+        template <class Function>
         void addScalarVertexFunction(const char *name,
                                      const Function &fn,
-                                     const VertexMap &vertexMap,
                                      int comp)
             {
                 /*
