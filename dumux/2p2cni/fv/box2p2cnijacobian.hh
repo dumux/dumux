@@ -170,8 +170,8 @@ namespace Dune
 		 //const FMatrix K = harmonicMeanK(e, face);		  
      	 //K.umv(normal, Kij);  // Kij=K*n
 
-	  // Harmonic mean:
-       // Heat Conductivity
+	 // Harmonic mean:
+		// Heat Conductivity
      	RT lambda;
      	lambda = 2./((1./vNDat[i].lambda) + (1./vNDat[j].lambda));
   	  
@@ -200,19 +200,12 @@ namespace Dune
 		  		 temp = feGrad;
 		  		 temp *= pressure[phase];
 		  		 pGrad[phase] += temp;
-		
-		      	 // compute sum of concentration gradient
-//		     	 temp = feGrad;
-//		     	 temp *= vNDat[k].massfrac[air][phase];
-//		     	 xGrad[phase] += temp;
 		  	 }
 		  	 // Temperature gradient
 		  	 temp = feGrad;
 	     	 temp *= vNDat[k].temperature;
 	     	 teGrad += temp;
 	     	 
-	     	 
-
 		  	 // for diffusion of air in wetting phase
 		  	 temp = feGrad;
 	     	 temp *= vNDat[k].massfrac[air][wPhase];
@@ -239,8 +232,6 @@ namespace Dune
 		 // calculate the advective flux using upwind: K*n(grad p -rho*g)
 		 for (int phase=0; phase<2; phase++) 
 		 	{
-			 //pGrad[phase] *= Kij;
-			 //outward[phase] = Kij * pGrad[phase];// * normal;
 	     	 K.umv(pGrad[phase], v_tilde);  // v_tilde=K*gradP
 	     	 outward[phase] = v_tilde*normal;
 		 	}
@@ -282,15 +273,11 @@ namespace Dune
  		 // Heat conservation
  		 	  // flux term of energy balance equation
  		 flux[heat]   =  (alpha* vNDat[up_n].density[nPhase]*vNDat[up_n].mobility[nPhase]
- 				               * enthCO2 
- 				    + (1-alpha)* vNDat[dn_n].density[nPhase]*vNDat[dn_n].mobility[nPhase]
- 				               * enthCO2)
- 				               * outward[nPhase];
- 		 flux[heat]  +=   (alpha* vNDat[up_w].density[wPhase]*vNDat[up_w].mobility[wPhase]
- 				               * enthW
- 				    + (1-alpha)* vNDat[dn_w].density[wPhase]*vNDat[dn_w].mobility[wPhase]
- 				               * enthW)
- 				               * outward[wPhase];
+ 				    + (1-alpha)* vNDat[dn_n].density[nPhase]*vNDat[dn_n].mobility[nPhase])
+ 				               * enthCO2 * outward[nPhase];
+ 		 flux[heat]  +=  (alpha* vNDat[up_w].density[wPhase]*vNDat[up_w].mobility[wPhase]
+ 				    + (1-alpha)* vNDat[dn_w].density[wPhase]*vNDat[dn_w].mobility[wPhase])
+ 				    		   * enthW * outward[wPhase];
  		 flux[heat]	+=	outward[heat];
 
 		 
@@ -655,8 +642,8 @@ namespace Dune
      VBlockType mobility;  //Vector with the number of phases
      VBlockType density;
      FieldMatrix<RT,c,m> massfrac;
-       VBlockType enthalpy;
-       VBlockType intenergy;
+     FieldVector<RT,2> enthalpy;
+     FieldVector<RT,2> intenergy;
     };
 
 	 struct StaticIPData
