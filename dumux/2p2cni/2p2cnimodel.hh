@@ -63,7 +63,7 @@ public:
 
 	LeafP1TwoPhaseModel(const G& g, ProblemType& prob) :
 		TwoPhaseHeatModel(g, prob), problem(prob), grid(g), vertexmapper(g,	g.leafIndexSet()), size((*(this->u)).size()), pW(size), pN(size), pC(size),
-				satW(size), satN(size) , Temp(size){
+				satW(size), satN(size) , Temp(size), xAW(size), xWN(size){
 	}
 
 	virtual void initial() {
@@ -289,7 +289,8 @@ public:
 										Temp[i] = (*(this->u))[i][2];
 										pC[i] = this->problem.materialLaw().pC(satW[i], parameters);
 										pN[i] = pW[i] + pC[i];
-
+										xAW[i] = problem.multicomp().xAW(pN[i], Temp[i]);
+										xWN[i] = problem.multicomp().xWN(pN[i], Temp[i]);
 										double satNI = satN[i];
 										double pWI = pW[i];
 										double TempI = Temp[i];
@@ -313,6 +314,8 @@ public:
 		vtkwriter.addVertexData(satW, "wetting phase saturation");
 		vtkwriter.addVertexData(satN, "nonwetting phase saturation");
 		vtkwriter.addVertexData(Temp, "temperature");
+		vtkwriter.addVertexData(xAW, "mass fraction air in water");
+		vtkwriter.addVertexData(xWN, "mass fraction water in air");
 		vtkwriter.write(fname, VTKOptions::ascii);
 		std::cout << "nonwetting phase saturation: min = "<< minSat
 				<< ", max = "<< maxSat << "\n"
@@ -335,6 +338,8 @@ protected:
   BlockVector<FieldVector<RT, 1> > satW; 
   BlockVector<FieldVector<RT, 1> > satN;
   BlockVector<FieldVector<RT, 1> > Temp;
+  BlockVector<FieldVector<RT, 1> > xAW;
+  BlockVector<FieldVector<RT, 1> > xWN;
 };
 
 }

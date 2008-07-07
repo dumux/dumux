@@ -268,7 +268,7 @@ namespace Dune
 //			}
 //		}
 /////////////////////		
-		RT absTol = 2e-7;
+		RT absTol = 2e+7;
 		RT relTol = 1e-5;
 		NewtonMethod<G, ThisType> newtonMethod(this->grid, *this, relTol, absTol);
 		newtonMethod.execute();
@@ -379,11 +379,11 @@ namespace Dune
 	}
 
 	
-	void vtkout (const char* name, int k) 
-	{
-		
-	}
-
+//	void vtkout (const char* name, int k) 
+//	{
+//		
+//	}
+//
 //	void vtkout (const char* name, int k) 
 //	{
 //		VTKWriter<G> vtkwriter(this->grid);

@@ -639,9 +639,9 @@ namespace Dune
      RT pN;
      RT temperature;
      RT lambda;
-     VBlockType mobility;  //Vector with the number of phases
-     VBlockType density;
-     FieldMatrix<RT,c,m> massfrac;
+     FieldVector<RT,2> mobility;  //Vector with the number of phases
+     FieldVector<RT,2> density;
+     FieldMatrix<RT,c,2> massfrac;
      FieldVector<RT,2> enthalpy;
      FieldVector<RT,2> intenergy;
     };
