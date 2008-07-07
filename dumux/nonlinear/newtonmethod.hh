@@ -124,7 +124,7 @@ public:
 		return;
 	}
 
-	NewtonMethod(const G& g, Model& mod, double dtol = 1e-8,
+	NewtonMethod(const G& g, Model& mod, double dtol = 1e-5,
 			double rtol = 1e-2, int maxIt = 20, double mindt = 1e-5,
 			int goodIt = 3) :
 				grid(g), model(mod), u(mod.u), f(mod.f), A(mod.A),

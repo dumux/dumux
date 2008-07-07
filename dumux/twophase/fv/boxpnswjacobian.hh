@@ -164,7 +164,6 @@ namespace Dune
    	 int size = varNData.size();
 
    	 for (int i = 0; i < size; i++) {
-   		this->def[i] = 0;
    		varNData[i].saturationN = 1.0 - sol[i][satWIdx];
 
    		// ASSUME element-wise constant parameters for the material law 

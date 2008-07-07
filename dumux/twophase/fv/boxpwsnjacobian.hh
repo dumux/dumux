@@ -198,7 +198,6 @@ namespace Dune
    	 int size = varNData.size();
 
    	 for (int i = 0; i < size; i++) {
-   		this->def[i] = 0;
    		varNData[i].saturationW = 1.0 - sol[i][satNIdx];
 
    		// ASSUME element-wise constant parameters for the material law 
@@ -241,6 +240,7 @@ namespace Dune
     TwoPhaseProblem<G,RT>& problem;
     std::vector<StaticNodeData> statNData;
     std::vector<VariableNodeData> varNData;
+    //std::vector<VariableNodeData> oldVarNData;
   };
 
   /** @} */
