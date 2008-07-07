@@ -56,8 +56,8 @@ int main(int argc, char** argv)
 
      Dune::gridinfo(grid);
     
-    Water wPhase;
-    Air nPhase;
+    Brine wPhase;
+    CO2 nPhase;
 
 //     Dune::LinearLaw law(brine, co2);
 //     Dune::CO2Problem2D<GridType, NumberType> problem(law, 1.e7); 
