@@ -313,10 +313,8 @@ namespace Dune
          varData[i].pN = sol[i][pWIdx] + varData[i].pC;
          varData[i].density[pWIdx] = problem.materialLaw().wettingPhase.density(varData[i].temp,varData[i].pW);
          varData[i].density[satNIdx] = problem.materialLaw().nonwettingPhase.density(varData[i].temp,varData[i].pN);
-         varData[i].viscosity[pWIdx] = problem.materialLaw().wettingPhase.viscosity(varData[i].temp,sol[i][pWIdx]);
-         varData[i].viscosity[satNIdx] = problem.materialLaw().nonwettingPhase.viscosity(varData[i].temp,varData[i].pN,varData[i].density[satNIdx]);
-         varData[i].mobility[pWIdx] = problem.materialLaw().mobW(varData[i].saturationW, parameters, varData[i].viscosity[pWIdx]);
-         varData[i].mobility[satNIdx] = problem.materialLaw().mobN(sol[i][satNIdx], parameters, varData[i].viscosity[satNIdx]);
+         varData[i].mobility[pWIdx] = problem.materialLaw().mobW(varData[i].saturationW, parameters, varData[i].temp, varData[i].pW);
+         varData[i].mobility[satNIdx] = problem.materialLaw().mobN(sol[i][satNIdx], parameters, varData[i].temp, varData[i].pN);
          varData[i].enthalpy[pWIdx] = problem.materialLaw().wettingPhase.enthalpy(varData[i].temp,varData[i].pW);
          varData[i].enthalpy[satNIdx] = problem.materialLaw().nonwettingPhase.enthalpy(varData[i].temp,varData[i].pN);
          varData[i].intenergy[pWIdx] = problem.materialLaw().wettingPhase.intEnergy(varData[i].temp,varData[i].pW);
