@@ -103,36 +103,22 @@ namespace Dune
     	elData.K = problem.K(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);  
     };
 
-    void updateStaticData (const Entity& e, const VBlockType* sol)
-    {
-    	return;
-    }
+ 	virtual void updateVariableData(const Entity& e, const VBlockType* sol, int i, bool old = false) 
+	{
+ 		return;
+	}
 
-    void updateVariableData (const Entity& e, const VBlockType* sol)
-    {
-    	return;
-    }
+	void updateVariableData(const Entity& e, const VBlockType* sol, bool old = false)
+	{
+		return;
+	}
     
-    void getLocalDefect(const Entity& entity,VBlockType *defhelp)
-    { 
-      setLocalSolution(entity);
+	virtual void updateStaticData (const Entity& e, const VBlockType* sol)
+	{
+		return;
+	}
 
-      // set to Zero 
-  	for (int i=0; i < this->fvGeom.nNodes; i++) {
-  		this->bctype[i].assign(BoundaryConditions::neumann);
-  		this->b[i] = 0;
-  		this->def[i] = 0;
-  	}
-     
-  	this->template localDefect<LeafTag>(entity,this->u);
-	  
-	  // add to defect 
-	  for (int i=0; i < this->fvGeom.nNodes; i++) {
-		  defhelp[i]=this->def[i];
-      }
-    }
-
-    struct ElementData {
+	struct ElementData {
     	FieldMatrix<DT,n,n> K;
    	};
    	

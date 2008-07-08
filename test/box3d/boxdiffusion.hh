@@ -207,21 +207,71 @@ namespace Dune
 		double red=1E-8;
 
 #ifdef HAVE_PARDISO 
-//	SeqPardiso<MatrixType,VectorType,VectorType> ilu0(*(this->A)); 
 		pardiso.factorize(*(this->A));
-		BiCGSTABSolver<VectorType> solver(op,pardiso,red,100,2);         // an inverse operator 
-	//	SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A),1.0);// a precondtioner
-		//LoopSolver<VectorType> solver(op, ilu0, red, 10, 2);
+		LoopSolver<VectorType> solver(op, pardiso, red, 10, 2);
 #else
 		SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A),1.0);// a precondtioner
-
-		//SeqIdentity<MatrixType,VectorType,VectorType> ilu0(*(this->A));// a precondtioner
 		BiCGSTABSolver<VectorType> solver(op,ilu0,red,10000,1);         // an inverse operator 
 #endif
 		InverseOperatorResult r;
 		solver.apply(*(this->u), *(this->f), r);
 		
 		return;				
+	}
+
+	virtual void globalDefect(FunctionType& defectGlobal) {
+		typedef typename G::Traits::template Codim<0>::Entity Entity;
+		typedef typename G::ctype DT;
+		typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator
+				Iterator;
+		enum {dim = G::dimension};
+		typedef array<BoundaryConditions::Flags, m> BCBlockType;
+
+		const IS& indexset(this->grid.leafIndexSet());
+		(*defectGlobal)=0;
+
+		// allocate flag vector to hold flags for essential boundary conditions
+		std::vector<BCBlockType> essential(this->vertexmapper.size());
+		for (typename std::vector<BCBlockType>::size_type i=0; i
+				<essential.size(); i++)
+			essential[i].assign(BoundaryConditions::neumann);
+
+		// iterate through leaf grid 
+		Iterator eendit = indexset.template end<0, All_Partition>();
+		for (Iterator it = indexset.template begin<0, All_Partition>(); it
+				!= eendit; ++it) {
+			// get geometry type
+			Dune::GeometryType gt = it->geometry().type();
+
+			// get entity 
+			const Entity& entity = *it;
+			this->localJacobian.fvGeom.update(entity);
+			int size = this->localJacobian.fvGeom.nNodes;
+			
+			this->localJacobian.setLocalSolution(entity);
+			this->localJacobian.computeElementData(entity); 
+			this->localJacobian.updateVariableData(entity, this->localJacobian.u);
+			this->localJacobian.template localDefect<LeafTag>(entity, this->localJacobian.u);
+
+			// begin loop over vertices
+			for (int i=0; i < size; i++) {
+				int globalId = this->vertexmapper.template map<dim>(entity,i);
+				for (int equationnumber = 0; equationnumber < m; equationnumber++) {
+					if (this->localJacobian.bc(i)[equationnumber] == BoundaryConditions::neumann)
+						(*defectGlobal)[globalId][equationnumber]
+								+= this->localJacobian.def[i][equationnumber];
+					else
+						essential[globalId].assign(BoundaryConditions::dirichlet);
+				}
+			}
+		}
+
+		for (typename std::vector<BCBlockType>::size_type i=0; i
+				<essential.size(); i++)
+			for (int equationnumber = 0; equationnumber < m; equationnumber++) {
+			if (essential[i][equationnumber] == BoundaryConditions::dirichlet)
+				(*defectGlobal)[i][equationnumber] = 0;
+			}
 	}
 
 	virtual void vtkout (const char* name, int k) 
@@ -231,48 +281,8 @@ namespace Dune
 		vtkwriter.write(name, VTKOptions::ascii);
 	}
 
-    void globalDefect(FunctionType& defectGlobal)
-    {   
-      typedef typename G::Traits::template Codim<0>::Entity Entity;
-      typedef typename G::ctype DT;
-      typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator Iterator;
-      enum{dim = G::dimension};
-      
-      const IS& indexset(this->grid.leafIndexSet());
-      (*defectGlobal)=0;
-           
-      // iterate through leaf grid 
-      Iterator eendit = indexset.template end<0, All_Partition>();
-      for (Iterator it = indexset.template begin<0, All_Partition>(); it != eendit; ++it)
-	{
-	  // get geometry type
-	  Dune::GeometryType gt = it->geometry().type();
-	  
-	  const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type& 
-	    sfs=Dune::LagrangeShapeFunctions<DT,RT,dim>::general(gt, 1);
-	  int size = sfs.size();
-	  Dune::FieldVector<RT,1> defhelp[size];
-	  
-	  // get entity 
-	  const Entity& entity = *it;
-	  
-	  this->localJacobian.fvGeom.update(entity);
-	  
-	  this->localJacobian.getLocalDefect(entity,defhelp);
-	  //std::cout<<" defhelp: "<<*defhelp<<std::endl;
-	  // begin loop over vertices
-	  for(int i=0; i < size; i++)
-	    {
-	      int globalId = this->vertexmapper.template map<dim>(entity, sfs[i].entity());
-	    
-	      if (this->localJacobian.bc(i)[0] == BoundaryConditions::neumann)
-		(*defectGlobal)[globalId] += defhelp[i];
-	      else 
-		(*defectGlobal)[globalId] = 0;
 
-	    }
-	}
-    }
+  
 protected:
   const G& grid;
   VertexMapper vertexmapper;

@@ -111,7 +111,6 @@ namespace Dune
     	setLocalSolution(e);
     	
     	updateStaticData(e, u);
-    	
     	updateVariableData(e, uold, true);
     	updateVariableData(e, u);
 
