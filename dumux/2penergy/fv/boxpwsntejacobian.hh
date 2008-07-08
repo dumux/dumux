@@ -194,7 +194,7 @@ namespace Dune
 	  RT s_w = pWGrad*Kij;
 	  RT s_g = pCO2Grad*Kij;
 	  RT s_h = teGrad*this->fvGeom.subContVolFace[face].normal;
-	  	 s_h *= -lambda;
+	  	 s_h *= lambda;
 	  
 	  VBlockType flux;
 	  
