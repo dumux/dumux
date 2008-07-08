@@ -108,30 +108,16 @@ namespace Dune
     	return;
     }
 
-    void updateVariableData (const Entity& e, const VBlockType* sol)
+    void updateVariableData (const Entity& e, const VBlockType* sol, int i, bool old = false)
     {
     	return;
     }
     
-    void getLocalDefect(const Entity& entity,VBlockType *defhelp)
-    { 
-      setLocalSolution(entity);
-
-      // set to Zero 
-  	for (int i=0; i < this->fvGeom.nNodes; i++) {
-  		this->bctype[i].assign(BoundaryConditions::neumann);
-  		this->b[i] = 0;
-  		this->def[i] = 0;
-  	}
-     
-  	this->template localDefect<LeafTag>(entity,this->u);
-	  
-	  // add to defect 
-	  for (int i=0; i < this->fvGeom.nNodes; i++) {
-		  defhelp[i]=this->def[i];
-      }
+    void updateVariableData (const Entity& e, const VBlockType* sol, bool old = false)
+    {
+    	return;
     }
-
+    
     struct ElementData {
     	FieldMatrix<DT,n,n> K;
    	};
