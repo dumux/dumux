@@ -84,8 +84,9 @@ AC_CONFIG_FILES([Makefile
     dumux/2penergy/Makefile
     dumux/parabolic/Makefile 
     dumux/nonlinear/Makefile 
-	 dumux/2p2cni/Makefile
-	 test/2p2cni/Makefile
+    dumux/2p2cni/Makefile
+    test/2p2cni/Makefile
+    test/2penergy/Makefile
     test/boundaryid/Makefile
     test/box3d/Makefile
     test/brinkman/Makefile
