@@ -96,7 +96,7 @@ namespace Dune
     : BoxJacobian<ThisType,G,RT,2,BoxFunction>(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_), 
       problem(params), 
       sNDat(this->vertexMapper.size()),
-      sIPDat(this->vertexMapper.size())
+      sIPDat(this->vertexMapper.size()), vNDat(SIZE), oldVNDat(SIZE)
     {
       this->analytic = false;
     }
@@ -505,84 +505,6 @@ namespace Dune
     BlockVector<FieldVector<RT, 1> > *hackyMassFracWater;
     BlockVector<FieldVector<RT, 1> > *hackySaturationN;
 
-    // analog to EvalPrimaryData in MUFTE, uses members of vNDat
-    virtual void updateVariableData (const Entity& e, const VBlockType* sol)
-    {
-   	 vNDat.resize(this->fvGeom.nNodes);
-   	 int size = vNDat.size();
-
-   	 GeometryType gt = e.geometry().type();
-   	 const typename LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type& 
-   	 sfs=LagrangeShapeFunctions<DT,RT,dim>::general(gt,1);
-     
-     FieldVector<RT, 4> parameters = problem.materialLawParameters 
-     (this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
-
-   	 for (int i = 0; i < size; i++) 
-   	 {
-   	   	 const int global = this->vertexMapper.template map<dim>(e, sfs[i].entity());
-   		 int state = sNDat[global].phaseState;
-
-   		 vNDat[i].pW = sol[i][pWIdx];
-   		 if (state == bothPhases) vNDat[i].saturationN = sol[i][satNIdx];
-   		 if (state == waterPhase) vNDat[i].saturationN = 0.0;
-   		 if (state == gasPhase) vNDat[i].saturationN = 1.0;
-
-   		 vNDat[i].saturationW = 1.0 - vNDat[i].saturationN;
-
-   		 vNDat[i].pC = problem.materialLaw().pC(vNDat[i].saturationW, parameters);
-   		 vNDat[i].pN = vNDat[i].pW + vNDat[i].pC;
-   		 vNDat[i].temperature = 283.15; // in [K]
-
-   		 // Solubilities of components in phases
-   		 if (state == bothPhases){
-   	   		 vNDat[i].massfrac[air][wPhase] = problem.multicomp().xAW(vNDat[i].pN, vNDat[i].temperature);
-   	   		 vNDat[i].massfrac[water][nPhase] = problem.multicomp().xWN(vNDat[i].pN, vNDat[i].temperature);
-   		 }
-   		 if (state == waterPhase){
-   	   		 vNDat[i].massfrac[water][nPhase] = 0.0;
-   	   		 vNDat[i].massfrac[air][wPhase] =  sol[i][satNIdx];
-   		 }
-   		 if (state == gasPhase){
-   	   		 vNDat[i].massfrac[water][nPhase] = sol[i][satNIdx];
-   	   		 vNDat[i].massfrac[air][wPhase] = 0.0;
-   		 }
-   	   	 vNDat[i].massfrac[water][wPhase] = 1.0 - vNDat[i].massfrac[air][wPhase];
-   	   	 vNDat[i].massfrac[air][nPhase] = 1.0 - vNDat[i].massfrac[water][nPhase];
-   	   	 // for output
-   	   	 (*hackySaturationN)[global] = vNDat[i].saturationN;
-   	   	 (*hackyMassFracAir)[global] = vNDat[i].massfrac[air][wPhase];
-   	   	 (*hackyMassFracWater)[global] = vNDat[i].massfrac[water][nPhase];
-   	   	 
-   		 // Mobilities & densities
-   		 vNDat[i].mobility[wPhase] = problem.materialLaw().mobW(vNDat[i].saturationW, parameters);
-   		 vNDat[i].mobility[nPhase] = problem.materialLaw().mobN(vNDat[i].saturationN, parameters);
-   		 vNDat[i].density[wPhase] = problem.materialLaw().wettingPhase.density(vNDat[i].temperature, vNDat[i].pN);
-   		 vNDat[i].density[nPhase] = problem.materialLaw().nonwettingPhase.density(vNDat[i].temperature, vNDat[i].pN,
-   				 vNDat[i].massfrac[air][nPhase]);
-
-         // CONSTANT solubility (for comparison with twophase)
-//         vNDat[i].massfrac[air][wPhase] = 0.0; vNDat[i].massfrac[water][wPhase] = 1.0;
-//         vNDat[i].massfrac[water][nPhase] = 0.0; vNDat[i].massfrac[air][nPhase] = 1.0;
-
-         //std::cout << "water in gasphase: " << vNDat[i].massfrac[water][nPhase] << std::endl;
-         //std::cout << "air in waterphase: " << vNDat[i].massfrac[air][wPhase] << std::endl;
-   	 }   	 
-   	 return;
-    }
-
-    
-    struct StaticNodeData 
-    {
-   	 bool visited;
-//   	 bool switched;
-   	 int phaseState;
-   	 RT cellVolume;
-   	 RT porosity;
-   	 FieldVector<RT, 4> parameters;
-   	 FMatrix K;
-    };
-    
     struct VariableNodeData  
     {
    	 RT saturationN;
@@ -596,6 +518,91 @@ namespace Dune
      FieldMatrix<RT,c,m> massfrac;
     };
 
+    // analog to EvalPrimaryData in MUFTE, uses members of vNDat
+	virtual void updateVariableData(const Entity& e, const VBlockType* sol, 
+			int i, std::vector<VariableNodeData>& varData) 
+    {
+     FieldVector<RT, 4> parameters = problem.materialLawParameters 
+     (this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+
+   	   	 const int global = this->vertexMapper.template map<dim>(e, i);
+   		 int state = sNDat[global].phaseState;
+
+   		 varData[i].pW = sol[i][pWIdx];
+   		 if (state == bothPhases) varData[i].saturationN = sol[i][satNIdx];
+   		 if (state == waterPhase) varData[i].saturationN = 0.0;
+   		 if (state == gasPhase) varData[i].saturationN = 1.0;
+
+   		 varData[i].saturationW = 1.0 - varData[i].saturationN;
+
+   		 varData[i].pC = problem.materialLaw().pC(varData[i].saturationW, parameters);
+   		 varData[i].pN = varData[i].pW + varData[i].pC;
+   		 varData[i].temperature = 283.15; // in [K]
+
+   		 // Solubilities of components in phases
+   		 if (state == bothPhases){
+   	   		 varData[i].massfrac[air][wPhase] = problem.multicomp().xAW(varData[i].pN, varData[i].temperature);
+   	   		 varData[i].massfrac[water][nPhase] = problem.multicomp().xWN(varData[i].pN, varData[i].temperature);
+   		 }
+   		 if (state == waterPhase){
+   	   		 varData[i].massfrac[water][nPhase] = 0.0;
+   	   		 varData[i].massfrac[air][wPhase] =  sol[i][satNIdx];
+   		 }
+   		 if (state == gasPhase){
+   	   		 varData[i].massfrac[water][nPhase] = sol[i][satNIdx];
+   	   		 varData[i].massfrac[air][wPhase] = 0.0;
+   		 }
+   	   	 varData[i].massfrac[water][wPhase] = 1.0 - varData[i].massfrac[air][wPhase];
+   	   	 varData[i].massfrac[air][nPhase] = 1.0 - varData[i].massfrac[water][nPhase];
+   	   	 // for output
+   	   	 (*hackySaturationN)[global] = varData[i].saturationN;
+   	   	 (*hackyMassFracAir)[global] = varData[i].massfrac[air][wPhase];
+   	   	 (*hackyMassFracWater)[global] = varData[i].massfrac[water][nPhase];
+   	   	 
+   		 // Mobilities & densities
+   		 varData[i].mobility[wPhase] = problem.materialLaw().mobW(varData[i].saturationW, parameters);
+   		 varData[i].mobility[nPhase] = problem.materialLaw().mobN(varData[i].saturationN, parameters);
+   		 varData[i].density[wPhase] = problem.materialLaw().wettingPhase.density(varData[i].temperature, varData[i].pN);
+   		 varData[i].density[nPhase] = problem.materialLaw().nonwettingPhase.density(varData[i].temperature, varData[i].pN,
+   				 varData[i].massfrac[air][nPhase]);
+
+         // CONSTANT solubility (for comparison with twophase)
+//         varData[i].massfrac[air][wPhase] = 0.0; varData[i].massfrac[water][wPhase] = 1.0;
+//         varData[i].massfrac[water][nPhase] = 0.0; varData[i].massfrac[air][nPhase] = 1.0;
+
+         //std::cout << "water in gasphase: " << varData[i].massfrac[water][nPhase] << std::endl;
+         //std::cout << "air in waterphase: " << varData[i].massfrac[air][wPhase] << std::endl;
+   	 return;
+    }
+
+	virtual void updateVariableData(const Entity& e, const VBlockType* sol, int i, bool old = false) 
+	{
+		if (old)
+			updateVariableData(e, sol, i, oldVNDat);
+		else 
+			updateVariableData(e, sol, i, vNDat);
+	}
+
+	void updateVariableData(const Entity& e, const VBlockType* sol, bool old = false)
+	{
+		int size = this->fvGeom.nNodes;
+			
+		for (int i = 0; i < size; i++) 
+				updateVariableData(e, sol, i, old);
+	}
+    
+    
+    struct StaticNodeData 
+    {
+   	 bool visited;
+//   	 bool switched;
+   	 int phaseState;
+   	 RT cellVolume;
+   	 RT porosity;
+   	 FieldVector<RT, 4> parameters;
+   	 FMatrix K;
+    };
+    
 	 struct StaticIPData
 	 {
 		 bool visited;
@@ -618,6 +625,7 @@ namespace Dune
     std::vector<StaticNodeData> sNDat;
     std::vector<StaticIPData> sIPDat;
     std::vector<VariableNodeData> vNDat;
+    std::vector<VariableNodeData> oldVNDat;
   };  
   
 }

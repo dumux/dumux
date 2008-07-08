@@ -60,7 +60,7 @@ int main(int argc, char** argv)
 
     // use unitcube from grids (UGGrid)
     std::stringstream dgfFileName;
-    dgfFileName << "/temp/klaus/DUMUX/dune-mux/test/twophase/grids/unitcube" 
+    dgfFileName << "grids/unitcube" 
     	<< GridType :: dimension << ".dgf";
 
     // create grid pointer, GridType is defined by gridtype.hh

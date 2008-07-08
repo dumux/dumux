@@ -74,7 +74,7 @@ int main(int argc, char** argv)
     typedef Dune::BoxPwSn<GridType, NumberType> TwoPhase;
     TwoPhase twoPhase(grid, problem);
     
-    Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt, "lens", 1);
+    Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt, "schnell", 1);
     
     Dune::Timer timer;
     timer.reset();

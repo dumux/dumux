@@ -79,91 +79,96 @@ namespace Dune
     typedef FVElementGeometry<G> FVElementGeometry;
     enum {SIZE=8};
 
+	void computeElementData(const Entity& e) {
+		return this->getImp().computeElementData(e);
+	}
 
+	virtual void updateVariableData(const Entity& e, const VBlockType* sol, int i, bool old = false) 
+	{
+		return this->getImp().updateVariableData(e, sol, i, old);
+	}
+
+	void updateVariableData(const Entity& e, const VBlockType* sol, bool old = false)
+	{
+		return this->getImp().updateVariableData(e, sol, old);
+	}
+    
     template<class TypeTag>
     void assemble (const Entity& e, bool itIsThis, int k = 1)
     {
-      fvGeom.update(e);
+    	fvGeom.update(e);
+		computeElementData(e);
 		
-      int size = e.template count<n>();
+    	int size = e.template count<n>();
 	  
-      // set to Zero 
-      for (int i=0; i < size; i++) {
-	this->bctype[i].assign(BoundaryConditions::neumann);
-	this->b[i] = 0;
-	this->def[i] = 0;
-      }
+    	// set to Zero 
+    	for (int i=0; i < size; i++) {
+    		this->bctype[i].assign(BoundaryConditions::neumann);
+    		this->b[i] = 0;
+    		this->def[i] = 0;
+    	}
   	  
-      setLocalSolution(e);
+    	setLocalSolution(e);
     	
-      updateStaticData(e, u);
+    	updateStaticData(e, u);
     	
-      localDefect<TypeTag>(e, u);
-      // assemble boundary conditions 
-      assembleBC<TypeTag> (e); 
-  	  
-      // add to defect 
-//       for (int i=0; i < size; i++) {
-// 	this->def[i] += this->b[i];
-// 	//std::cout << "i = " << ", b[i] = " << this->b[i] << std::endl;
-//       }
+    	updateVariableData(e, uold, true);
+    	updateVariableData(e, u);
 
-      VBlockType bTemp[size];
-      for (int i=0; i<size; i++) 
-	if (this->bctype[i][0]==BoundaryConditions::neumann) 
-	  bTemp[i] = this->def[i];
-	else
-	  bTemp[i] = 0;
-      
-// 	std::cout << "defu         = " << this->def[0] << ", "  << this->def[1] 
-// 		  << ", "  << this->def[2] << ", "  << this->def[3] << std::endl;
-      
-      if (analytic) {
-	analyticJacobian<TypeTag>(e, u);
-      }
-      else {
-	VBlockType defu[size];
-	for (int i = 0; i < size; i++) 
-	  defu[i] = def[i];    	
-	VBlockType uPlusEps[size];
-	VBlockType uMinusEps[size];
-    	
-	for (int j = 0; j < size; j++) 
-	  for (int comp = 0; comp < m; comp++) 
-	    {
-	      RT eps = std::max(fabs(1e-3*u[j][comp]), 1e-3);
-	      for (int i = 0; i < size; i++) {
-		uPlusEps[i] = u[i];
-		uMinusEps[i] = u[i];
-	      }
-	      uPlusEps[j][comp] += eps;
-	      uMinusEps[j][comp] -= eps;
-	      
-	      localDefect<TypeTag>(e, uPlusEps);
-	      VBlockType defuPlusEps[size];
-	      for (int i = 0; i < size; i++) 
-		defuPlusEps[i] = def[i];
-	      
-	      localDefect<TypeTag>(e, uMinusEps);
-	      
-// 		std::cout << "defuPlusEps  = " << defuPlusEps[0] << ", "  << defuPlusEps[1] 
-// 			  << ", "  << defuPlusEps[2] << ", "  << defuPlusEps[3] << std::endl;
-// 		std::cout << "defuMinusEps = " << this->def[0] << ", "  << this->def[1] 
-// 			  << ", "  << this->def[2] << ", "  << this->def[3] << std::endl;
+		localDefect<TypeTag>(e, u);
 
-	      RT oneByEps = 0.5/eps;
-	      for (int i = 0; i < size; i++) 
-		for (int compi = 0; compi < m; compi++)
-		  this->A[i][j][compi][comp] = oneByEps*(defuPlusEps[i][compi] - def[i][compi]);
-	    }
-      }
+		VBlockType bTemp[size];
+		for (int i=0; i<size; i++) 
+			if (this->bctype[i][0]==BoundaryConditions::neumann) 
+				bTemp[i] = this->def[i];
+			else
+				bTemp[i] = 0;
       
-      for (int i=0; i<size; i++) 
-	if (this->bctype[i][0]==BoundaryConditions::neumann) {
-	  this->b[i] = bTemp[i];
-	}
+		if (analytic) {
+			analyticJacobian<TypeTag>(e, u);
+		}
+		else {
+			VBlockType defu[size];
+			for (int i = 0; i < size; i++) 
+				defu[i] = def[i];    	
+			VBlockType uPlusEps[size];
+			VBlockType uMinusEps[size];
+    	
+			for (int j = 0; j < size; j++) 
+				for (int comp = 0; comp < m; comp++) 
+				{
+					RT eps = std::max(fabs(1e-3*u[j][comp]), 1e-3);
+					for (int i = 0; i < size; i++) {
+						uPlusEps[i] = u[i];
+						uMinusEps[i] = u[i];
+					}
+					uPlusEps[j][comp] += eps;
+					uMinusEps[j][comp] -= eps;
+
+					updateVariableData(e, uPlusEps, j);
+					localDefect<TypeTag>(e, uPlusEps);
+					VBlockType defuPlusEps[size];
+					for (int i = 0; i < size; i++) 
+						defuPlusEps[i] = def[i];
+	      
+					updateVariableData(e, uMinusEps, j);
+					localDefect<TypeTag>(e, uMinusEps);
+
+					updateVariableData(e, u, j);
+					
+					RT oneByEps = 0.5/eps;
+					for (int i = 0; i < size; i++) 
+						for (int compi = 0; compi < m; compi++)
+							this->A[i][j][compi][comp] = oneByEps*(defuPlusEps[i][compi] - def[i][compi]);
+				}
+		}
       
-      return;
+		for (int i=0; i<size; i++) 
+			if (this->bctype[i][0]==BoundaryConditions::neumann) {
+				this->b[i] = bTemp[i];
+			}
+      
+		return;
     }
     
     template<class TypeTag>
@@ -221,6 +226,7 @@ namespace Dune
     FVElementGeometry fvGeom;
     VBlockType def[SIZE];
     VBlockType u[SIZE];
+    VBlockType uold[SIZE];
     bool analytic;
   };
 

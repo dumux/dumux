@@ -33,9 +33,11 @@ public:
 	FunctionType uOldTimeStep;
 };
 
-template<class G, class RT, class ProblemType, class LocalJac, int m=2> class LeafP1TwoPhaseModel :
-	public TwoPhaseModel<G, RT, ProblemType, LocalJac,
-		LeafP1Function<G, RT, m>, LeafP1OperatorAssembler<G, RT, m> > {
+template<class G, class RT, class ProblemType, class LocalJac, int m=2> 
+class LeafP1TwoPhaseModel 
+: public TwoPhaseModel<G, RT, ProblemType, LocalJac,
+		LeafP1Function<G, RT, m>, LeafP1OperatorAssembler<G, RT, m> > 
+{
 public:
 	// define the function type:
 	typedef LeafP1Function<G, RT, m> FunctionType;
@@ -176,6 +178,75 @@ public:
 
 		*(this->uOldTimeStep) = *(this->u);
 		return;
+	}
+
+	virtual void update(double& dt) {
+		this->localJacobian.setDt(dt);
+		this->localJacobian.setOldSolution(this->uOldTimeStep);
+		NewtonMethod<G, ThisType> newtonMethod(this->grid, *this);
+		newtonMethod.execute();
+		dt = this->localJacobian.getDt();
+		*(this->uOldTimeStep) = *(this->u);
+		
+		if (this->problem.exsolution)
+			this->problem.updateExSol(dt, *(this->u));
+
+		return;
+	}
+
+	virtual void globalDefect(FunctionType& defectGlobal) {
+		typedef typename G::Traits::template Codim<0>::Entity Entity;
+		typedef typename G::ctype DT;
+		typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator
+				Iterator;
+		enum {dim = G::dimension};
+		typedef array<BoundaryConditions::Flags, m> BCBlockType;
+
+		const IS& indexset(this->grid.leafIndexSet());
+		(*defectGlobal)=0;
+
+		// allocate flag vector to hold flags for essential boundary conditions
+		std::vector<BCBlockType> essential(this->vertexmapper.size());
+		for (typename std::vector<BCBlockType>::size_type i=0; i
+				<essential.size(); i++)
+			essential[i].assign(BoundaryConditions::neumann);
+
+		// iterate through leaf grid 
+		Iterator eendit = indexset.template end<0, All_Partition>();
+		for (Iterator it = indexset.template begin<0, All_Partition>(); it
+				!= eendit; ++it) {
+			// get geometry type
+			Dune::GeometryType gt = it->geometry().type();
+
+			// get entity 
+			const Entity& entity = *it;
+			this->localJacobian.fvGeom.update(entity);
+			int size = this->localJacobian.fvGeom.nNodes;
+			
+			this->localJacobian.setLocalSolution(entity);
+			this->localJacobian.computeElementData(entity); 
+			this->localJacobian.updateVariableData(entity, this->localJacobian.u);
+			this->localJacobian.template localDefect<LeafTag>(entity, this->localJacobian.u);
+
+			// begin loop over vertices
+			for (int i=0; i < size; i++) {
+				int globalId = this->vertexmapper.template map<dim>(entity,i);
+				for (int equationnumber = 0; equationnumber < m; equationnumber++) {
+					if (this->localJacobian.bc(i)[equationnumber] == BoundaryConditions::neumann)
+						(*defectGlobal)[globalId][equationnumber]
+								+= this->localJacobian.def[i][equationnumber];
+					else
+						essential[globalId].assign(BoundaryConditions::dirichlet);
+				}
+			}
+		}
+
+		for (typename std::vector<BCBlockType>::size_type i=0; i
+				<essential.size(); i++)
+			for (int equationnumber = 0; equationnumber < m; equationnumber++) {
+			if (essential[i][equationnumber] == BoundaryConditions::dirichlet)
+				(*defectGlobal)[i][equationnumber] = 0;
+			}
 	}
 
 	virtual double injected(double& upperMass, double& oldUpperMass) {

@@ -59,7 +59,8 @@ namespace Dune
 	- Grid  a DUNE grid type
 	- RT    type used for return values 
   */
-  template<class G, class RT, class BoxFunction = LeafP1Function<G, RT, 2> > class BoxPwSnJacobian 
+  template<class G, class RT, class BoxFunction = LeafP1Function<G, RT, 2> > 
+  class BoxPwSnJacobian 
     : public BoxJacobian<BoxPwSnJacobian<G,RT,BoxFunction>,G,RT,2,BoxFunction>
   {
     typedef typename G::ctype DT;
@@ -68,30 +69,29 @@ namespace Dune
     typedef BoxPwSnJacobian<G,RT,BoxFunction> ThisType;
     typedef typename LocalJacobian<ThisType,G,RT,2>::VBlockType VBlockType;
     typedef typename LocalJacobian<ThisType,G,RT,2>::MBlockType MBlockType;
- 	typedef FVElementGeometry<G> FVElementGeometry;
+	typedef FVElementGeometry<G> FVElementGeometry;
 	enum {pWIdx = 0, satNIdx = 1};
 	
 	
   public:
-    // define the number of components of your system, this is used outside
-    // to allocate the correct size of (dense) blocks with a FieldMatrix
-    enum {n=G::dimension};
-    enum {m=2};
-    enum {SIZE=LagrangeShapeFunctionSetContainer<DT,RT,n>::maxsize};
-    
-    //! Constructor
+	    // define the number of components of your system, this is used outside
+	    // to allocate the correct size of (dense) blocks with a FieldMatrix
+	    enum {n=G::dimension};
+	    enum {m=2};
+	    enum {SIZE=LagrangeShapeFunctionSetContainer<DT,RT,n>::maxsize};
+	    
+	     //! Constructor
     BoxPwSnJacobian (TwoPhaseProblem<G,RT>& params,
 			      bool levelBoundaryAsDirichlet_, const G& grid, 
 			      BoxFunction& sol, 
 			      bool procBoundaryAsDirichlet_=true)
     : BoxJacobian<ThisType,G,RT,2,BoxFunction>(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_), 
       problem(params), 
-      statNData(this->vertexMapper.size())
+      statNData(this->vertexMapper.size()), varNData(SIZE), oldVarNData(SIZE)
     {
       this->analytic = false;
     }
     
-
     virtual void clearVisited ()
     {
     	return;
@@ -150,12 +150,12 @@ namespace Dune
 
     
     
-	  //*********************************************************
-	  //*																			*
-	  //*	Calculation of Data at Elements			 					*
-	  //*						 													*
-	  //*																		 	*
-	  //*********************************************************
+	  // *********************************************************
+	  // *																			*
+	  // *	Calculation of Data at Elements			 					*
+	  // *						 													*
+	  // *																		 	*
+	  // *********************************************************
 
     virtual void computeElementData (const Entity& e)
     {
@@ -169,12 +169,12 @@ namespace Dune
     };
 
     
-	  //*********************************************************
-	  //*																			*
-	  //*	Calculation of Data at Nodes that has to be			 	*
-	  //*	determined only once	(statNData)							 	*
-	  //*																		 	*
-	  //*********************************************************
+	  // *********************************************************
+	  // *																			*
+	  // *	Calculation of Data at Nodes that has to be			 	*
+	  // *	determined only once	(statNData)							 	*
+	  // *																		 	*
+	  // *********************************************************
 
     // analog to EvalStaticData in MUFTE
     virtual void updateStaticData (const Entity& e, const VBlockType* sol)
@@ -191,41 +191,51 @@ namespace Dune
 	  //*********************************************************
    
 
-    // analog to EvalPrimaryData in MUFTE, uses members of varNData
-    virtual void updateVariableData (const Entity& e, const VBlockType* sol)
+    // the members of the struct are defined here
+    struct VariableNodeData  
     {
-   	 varNData.resize(this->fvGeom.nNodes);
-   	 int size = varNData.size();
+    	RT saturationW;
+    	RT pC;
+    	RT pN;
+    	VBlockType mobility;  //Vector with the number of phases
+    	VBlockType density;
+    };
 
-   	 for (int i = 0; i < size; i++) {
-   		varNData[i].saturationW = 1.0 - sol[i][satNIdx];
+    // analog to EvalPrimaryData in MUFTE, uses members of varNData
+	virtual void updateVariableData(const Entity& e, const VBlockType* sol, 
+			int i, std::vector<VariableNodeData>& varData) 
+    {
+		// ASSUME element-wise constant parameters for the material law 
+		FieldVector<RT, 4> parameters = problem.materialLawParameters(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
 
-   		// ASSUME element-wise constant parameters for the material law 
-         FieldVector<RT, 4> parameters = problem.materialLawParameters(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
-
-         varNData[i].pC = problem.materialLaw().pC(varNData[i].saturationW, parameters);
-         varNData[i].pN = sol[i][pWIdx] + varNData[i].pC;
-         varNData[i].mobility[pWIdx] = problem.materialLaw().mobW(varNData[i].saturationW, parameters);
-         varNData[i].mobility[satNIdx] = problem.materialLaw().mobN(sol[i][satNIdx], parameters);
-         varNData[i].density[pWIdx] = problem.materialLaw().wettingPhase.density();
-         varNData[i].density[satNIdx] = problem.materialLaw().nonwettingPhase.density();
-   	 }   	 
+   		varData[i].saturationW = 1.0 - sol[i][satNIdx];
+   		varData[i].pC = problem.materialLaw().pC(varData[i].saturationW, parameters);
+   		varData[i].pN = sol[i][pWIdx] + varData[i].pC;
+   		varData[i].mobility[pWIdx] = problem.materialLaw().mobW(varData[i].saturationW, parameters);
+   		varData[i].mobility[satNIdx] = problem.materialLaw().mobN(sol[i][satNIdx], parameters);
+   		varData[i].density[pWIdx] = problem.materialLaw().wettingPhase.density();
+   		varData[i].density[satNIdx] = problem.materialLaw().nonwettingPhase.density();
     }
-    
+
+	virtual void updateVariableData(const Entity& e, const VBlockType* sol, int i, bool old = false) 
+	{
+		if (old)
+			updateVariableData(e, sol, i, oldVarNData);
+		else 
+			updateVariableData(e, sol, i, varNData);
+	}
+
+	void updateVariableData(const Entity& e, const VBlockType* sol, bool old = false)
+	{
+		int size = this->fvGeom.nNodes;
+			
+		for (int i = 0; i < size; i++) 
+				updateVariableData(e, sol, i, old);
+	}
     
     struct StaticNodeData 
     {
     	bool visited;
-    };
-    
-       // the members of the struct are defined here
-    struct VariableNodeData  
-    {
-       RT saturationW;
-       RT pC;
-       RT pN;
-       VBlockType mobility;  //Vector with the number of phases
-       VBlockType density;
     };
     
     struct ElementData {
@@ -236,11 +246,11 @@ namespace Dune
    	 FieldMatrix<DT,n,n> K;
    	 } elData;
     
-    // parameters given in constructor
-    TwoPhaseProblem<G,RT>& problem;
-    std::vector<StaticNodeData> statNData;
-    std::vector<VariableNodeData> varNData;
-    //std::vector<VariableNodeData> oldVarNData;
+     // parameters given in constructor
+     TwoPhaseProblem<G,RT>& problem;
+     std::vector<StaticNodeData> statNData;
+     std::vector<VariableNodeData> varNData;
+     std::vector<VariableNodeData> oldVarNData;
   };
 
   /** @} */

@@ -53,9 +53,10 @@ namespace Dune {
  
  This implements a two phase model with Pw and Sn as primary unknowns.
  */
-template<class G, class RT> class BoxPwSn :
-	public LeafP1TwoPhaseModel<G, RT, TwoPhaseProblem<G, RT>,
-		BoxPwSnJacobian<G, RT> > {
+template<class G, class RT> 
+class BoxPwSn 
+: public LeafP1TwoPhaseModel<G, RT, TwoPhaseProblem<G, RT>, BoxPwSnJacobian<G, RT> > 
+{
 
 public:
 	// define the problem type (also change the template argument above)
@@ -74,34 +75,28 @@ public:
 	enum {m = 2};
 
 	typedef BoxPwSn<G, RT> ThisType;
-	typedef typename LeafP1TwoPhaseModel::FunctionType::RepresentationType
-			VectorType;
-	typedef typename LeafP1TwoPhaseModel::OperatorAssembler::RepresentationType
-			MatrixType;
+	typedef typename LeafP1TwoPhaseModel::FunctionType::RepresentationType VectorType;
+	typedef typename LeafP1TwoPhaseModel::OperatorAssembler::RepresentationType MatrixType;
 	typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator;
 #ifdef HAVE_PARDISO
 	SeqPardiso<MatrixType,VectorType,VectorType> pardiso;
 #endif
 
-	BoxPwSn(const G& g, ProblemType& prob) :
-		LeafP1TwoPhaseModel(g, prob) {
-	}
 
-	void solve() {
+	BoxPwSn(const G& g, ProblemType& prob) 
+	: LeafP1TwoPhaseModel(g, prob) 
+	{}
+
+	virtual void solve() {
 
 		Operator op(*(this->A)); // make operator out of matrix
 		double red=1E-8;
 
 #ifdef HAVE_PARDISO 
-		//	SeqPardiso<MatrixType,VectorType,VectorType> ilu0(*(this->A)); 
 		pardiso.factorize(*(this->A));
-		BiCGSTABSolver<VectorType> solver(op,pardiso,red,100,2); // an inverse operator 
-		//	SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A),1.0);// a precondtioner
-		//LoopSolver<VectorType> solver(op, ilu0, red, 10, 2);
+		LoopSolver<VectorType> solver(op, pardiso, red, 10, 2);
 #else
 		SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A), 1.0);// a precondtioner
-
-		//SeqIdentity<MatrixType,VectorType,VectorType> ilu0(*(this->A));// a precondtioner
 		BiCGSTABSolver<VectorType> solver(op, ilu0, red, 10000, 1); // an inverse operator 
 #endif
 		InverseOperatorResult r;
@@ -111,82 +106,11 @@ public:
 	}
 
 	void update(double& dt) {
-		this->localJacobian.setDt(dt);
-		this->localJacobian.setOldSolution(this->uOldTimeStep);
-		NewtonMethod<G, ThisType> newtonMethod(this->grid, *this);
-		newtonMethod.execute();
-		dt = this->localJacobian.getDt();
+		LeafP1TwoPhaseModel::update(dt);
 		double upperMass, oldUpperMass;
 		double totalMass = this->injected(upperMass, oldUpperMass);
 		std::cout << totalMass << "\t"<< upperMass<< "\t"<< oldUpperMass
 				<< "\t# totalMass, upperMass, oldUpperMass"<< std::endl;
-
-		*(this->uOldTimeStep) = *(this->u);
-		
-		if (this->problem.exsolution)
-			this->problem.updateExSol(dt, *(this->u));
-
-		return;
-	}
-
-	void globalDefect(FunctionType& defectGlobal) {
-		typedef typename G::Traits::template Codim<0>::Entity Entity;
-		typedef typename G::ctype DT;
-		typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator
-				Iterator;
-		enum {dim = G::dimension};
-		typedef array<BoundaryConditions::Flags, m> BCBlockType;
-
-		const IS& indexset(this->grid.leafIndexSet());
-		(*defectGlobal)=0;
-
-		// allocate flag vector to hold flags for essential boundary conditions
-		std::vector<BCBlockType> essential(this->vertexmapper.size());
-		for (typename std::vector<BCBlockType>::size_type i=0; i
-				<essential.size(); i++)
-			essential[i].assign(BoundaryConditions::neumann);
-
-		// iterate through leaf grid 
-		Iterator eendit = indexset.template end<0, All_Partition>();
-		for (Iterator it = indexset.template begin<0, All_Partition>(); it
-				!= eendit; ++it) {
-			// get geometry type
-			Dune::GeometryType gt = it->geometry().type();
-
-			const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type
-					&sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(gt,
-							1);
-			int size = sfs.size();
-
-			// get entity 
-			const Entity& entity = *it;
-
-			this->localJacobian.fvGeom.update(entity);
-
-			this->localJacobian.setLocalSolution(entity);
-			this->localJacobian.template localDefect<LeafTag>(entity,
-					this->localJacobian.u);
-
-			// begin loop over vertices
-			for (int i=0; i < size; i++) {
-				int globalId = this->vertexmapper.template map<dim>(entity,
-						sfs[i].entity());
-				for (int equationnumber = 0; equationnumber < m; equationnumber++) {
-					if (this->localJacobian.bc(i)[equationnumber] == BoundaryConditions::neumann)
-						(*defectGlobal)[globalId][equationnumber]
-								+= this->localJacobian.def[i][equationnumber];
-					else
-						essential[globalId].assign(BoundaryConditions::dirichlet);
-				}
-			}
-		}
-
-		for (typename std::vector<BCBlockType>::size_type i=0; i
-				<essential.size(); i++)
-			for (int equationnumber = 0; equationnumber < m; equationnumber++) {
-			if (essential[i][equationnumber] == BoundaryConditions::dirichlet)
-				(*defectGlobal)[i][equationnumber] = 0;
-			}
 	}
 };
 

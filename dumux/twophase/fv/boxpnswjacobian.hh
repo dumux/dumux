@@ -52,7 +52,7 @@ namespace Dune
 			      bool procBoundaryAsDirichlet_=true)
     : BoxJacobian<ThisType,G,RT,2,BoxFunction>(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_), 
       problem(params), 
-      statNData(this->vertexMapper.size())
+      statNData(this->vertexMapper.size()), varNData(SIZE), oldVarNData(SIZE)
     {
       this->analytic = false;
     }
@@ -157,41 +157,53 @@ namespace Dune
 	  //*********************************************************
    
 
+    // the members of the struct are defined here
+ struct VariableNodeData  
+ {
+    RT saturationN;
+    RT pC;
+    RT pW;
+    VBlockType mobility;  //Vector with the number of phases
+    VBlockType density;
+ };
+ 
     // analog to EvalPrimaryData in MUFTE, uses members of varNData
-    virtual void updateVariableData (const Entity& e, const VBlockType* sol)
+	virtual void updateVariableData(const Entity& e, const VBlockType* sol, 
+			int i, std::vector<VariableNodeData>& varData) 
     {
-   	 varNData.resize(this->fvGeom.nNodes);
-   	 int size = varNData.size();
-
-   	 for (int i = 0; i < size; i++) {
-   		varNData[i].saturationN = 1.0 - sol[i][satWIdx];
+   		varData[i].saturationN = 1.0 - sol[i][satWIdx];
 
    		// ASSUME element-wise constant parameters for the material law 
          FieldVector<RT, 4> parameters = problem.materialLawParameters(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
 
-         varNData[i].pC = problem.materialLaw().pC(sol[i][satWIdx], parameters);
-         varNData[i].pW = sol[i][pNIdx] - varNData[i].pC;
-         varNData[i].mobility[pNIdx] = problem.materialLaw().mobW(sol[i][satWIdx], parameters);
-         varNData[i].mobility[satWIdx] = problem.materialLaw().mobN(varNData[i].saturationN, parameters);
-         varNData[i].density[pNIdx] = problem.materialLaw().wettingPhase.density();
-         varNData[i].density[satWIdx] = problem.materialLaw().nonwettingPhase.density();
-   	 }   	 
+         varData[i].pC = problem.materialLaw().pC(sol[i][satWIdx], parameters);
+         varData[i].pW = sol[i][pNIdx] - varData[i].pC;
+         varData[i].mobility[pNIdx] = problem.materialLaw().mobW(sol[i][satWIdx], parameters);
+         varData[i].mobility[satWIdx] = problem.materialLaw().mobN(varData[i].saturationN, parameters);
+         varData[i].density[pNIdx] = problem.materialLaw().wettingPhase.density();
+         varData[i].density[satWIdx] = problem.materialLaw().nonwettingPhase.density();
     }
     
+	virtual void updateVariableData(const Entity& e, const VBlockType* sol, int i, bool old = false) 
+	{
+		if (old)
+			updateVariableData(e, sol, i, oldVarNData);
+		else 
+			updateVariableData(e, sol, i, varNData);
+	}
+
+	void updateVariableData(const Entity& e, const VBlockType* sol, bool old = false)
+	{
+		int size = this->fvGeom.nNodes;
+			
+		for (int i = 0; i < size; i++) 
+				updateVariableData(e, sol, i, old);
+	}
     
+   
     struct StaticNodeData 
     {
     	bool visited;
-    };
-    
-       // the members of the struct are defined here
-    struct VariableNodeData  
-    {
-       RT saturationN;
-       RT pC;
-       RT pW;
-       VBlockType mobility;  //Vector with the number of phases
-       VBlockType density;
     };
     
     struct ElementData {
@@ -206,6 +218,8 @@ namespace Dune
     TwoPhaseProblem<G,RT>& problem;
     std::vector<StaticNodeData> statNData;
     std::vector<VariableNodeData> varNData;
+    std::vector<VariableNodeData> oldVarNData;
+    
   };
 
   /** @} */

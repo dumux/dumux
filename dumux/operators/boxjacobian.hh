@@ -55,7 +55,7 @@ namespace Dune {
  - Grid  a DUNE grid type
  - RT    type used for return values 
  */
-template<class Imp, class G, class RT, int m,
+template<class Imp, class G, class RT, int m, 
 class BoxFunction = LeafP1Function<G, RT, m> > class BoxJacobian :
 public LocalJacobian<Imp,G,RT,m> {
 	// mapper: one data element per vertex
@@ -95,27 +95,20 @@ public:
 	//*																			*
 	//**********************************************************
 
-	template<class TypeTag> void localDefect(const Entity& e,
-			const VBlockType* sol) {
-
-		for (int i=0; i < this->fvGeom.nNodes; i++)
-			this->def[i] = 0;
-
-			computeElementData(e);
-			updateVariableData(e, uold);
-
-			for (int i=0; i < this->fvGeom.nNodes; i++) // begin loop over vertices / sub control volumes
+	template<class TypeTag> 
+	void localDefect(const Entity& e, const VBlockType* sol) {
+		for (int i=0; i < this->fvGeom.nNodes; i++) // begin loop over vertices / sub control volumes
 			{
 				// implicit Euler
-				VBlockType massContrib = computeM(e, uold, i);
-				this->def[i] -= massContrib;
+				VBlockType massContrib = computeM(e, this->uold, i);
+				massContrib *= -1.0;
+				this->def[i] = massContrib;
 			}
 				
-			updateVariableData(e, sol);
+			//updateVariableData(e, sol);
 			for (int i=0; i < this->fvGeom.nNodes; i++) // begin loop over vertices / sub control volumes
 			{
-				VBlockType 
-				massContrib = computeM(e, sol, i);
+				VBlockType massContrib = computeM(e, sol, i);
 				this->def[i] += massContrib;
 				this->def[i] *= this->fvGeom.subContVol[i].volume/dt;
 				
@@ -165,7 +158,7 @@ public:
 		for (int i = 0; i < size; i++)
 			for (int comp = 0; comp < m; comp++) {
 				this->u[i][comp] = currentSolution.evallocal(comp, e, sfs[i].position());
-				uold[i][comp] = oldSolution.evallocal(comp, e, sfs[i].position());
+				this->uold[i][comp] = oldSolution.evallocal(comp, e, sfs[i].position());
 			}
 
 		return;
@@ -197,19 +190,14 @@ public:
 		return this->getImp().computeA(e, sol, face);
 	}
 
-	void computeElementData(const Entity& e) {
-		return this->getImp().computeElementData(e);
-	}
-
 	// analog to EvalStaticData in MUFTE
 	virtual void updateStaticData(const Entity& e, VBlockType* sol) {
 		return this->getImp().updateStaticData(e, sol);
 	}
 
-	// analog to EvalPrimaryData in MUFTE, uses members of varNData
-	virtual void updateVariableData(const Entity& e, const VBlockType* sol) {
-		return this->getImp().updateVariableData(e, sol);
-	}
+//	virtual void updateVariableData(const Entity& e, const VBlockType* sol) {
+//		return this->getImp().updateVariableData(e, sol);
+//	}
 
 	template<class TypeTag> void assembleBC(const Entity& e) {
 		Dune::GeometryType gt = e.geometry().type();
@@ -380,7 +368,6 @@ public:
 
 public:
 	double dt;
-	VBlockType uold[SIZE];
 };
 }
 #endif

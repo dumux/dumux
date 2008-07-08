@@ -87,7 +87,7 @@ namespace Dune
 			      bool procBoundaryAsDirichlet_=true)
     : BoxJacobian<ThisType,G,RT,m,BoxFunction>(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_), 
       problem(params), 
-      statNData(this->vertexMapper.size())
+      statNData(this->vertexMapper.size()), varNData(SIZE), oldVarNData(SIZE)
     {
       this->analytic = false;
     }
@@ -278,63 +278,73 @@ namespace Dune
 	  //*********************************************************
    
 
+    // the members of the struct are defined here
+ struct VariableNodeData  
+ {
+    RT saturationW;
+    RT pC;
+    RT pN;
+    RT pW;
+    RT temp;
+    RT satN;
+    RT satW;
+    RT lambda;
+    VBlockType mobility;  //Vector with the number of phases
+    VBlockType density;
+    VBlockType viscosity;
+    VBlockType enthalpy;
+    VBlockType intenergy;
+ };
+ 
     // analog to EvalPrimaryData in MUFTE, uses members of varNData
-    virtual void updateVariableData (const Entity& e, const VBlockType* sol)
+	virtual void updateVariableData(const Entity& e, const VBlockType* sol, 
+			int i, std::vector<VariableNodeData>& varData) 
     {
-     
-   	 varNData.resize(this->fvGeom.nNodes);
-   	 int size = varNData.size();
-
-   	 for (int i = 0; i < size; i++) {
-// 		this->def[i] = 0;
-   		varNData[i].saturationW = 1.0 - sol[i][satNIdx];
+   		varData[i].saturationW = 1.0 - sol[i][satNIdx];
    		// ASSUME element-wise constant parameters for the material law 
          FieldVector<RT, 4> parameters = problem.materialLawParameters(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
 
-         varNData[i].temp = sol[i][teIdx];
-         varNData[i].pW = sol[i][pWIdx];
-         varNData[i].satN = sol[i][satNIdx];
-         varNData[i].satW = 1 - sol[i][satNIdx];
-         varNData[i].lambda = soil.heatConductivity(elData.soilLDry, elData.soilLSw, varNData[i].satW);
-         varNData[i].pC = problem.materialLaw().pC(varNData[i].saturationW,parameters);
-         varNData[i].pN = sol[i][pWIdx] + varNData[i].pC;
-         varNData[i].density[pWIdx] = problem.materialLaw().wettingPhase.density(varNData[i].temp,varNData[i].pW);
-         varNData[i].density[satNIdx] = problem.materialLaw().nonwettingPhase.density(varNData[i].temp,varNData[i].pN);
-         varNData[i].viscosity[pWIdx] = problem.materialLaw().wettingPhase.viscosity(varNData[i].temp,sol[i][pWIdx]);
-         varNData[i].viscosity[satNIdx] = problem.materialLaw().nonwettingPhase.viscosity(varNData[i].temp,varNData[i].pN,varNData[i].density[satNIdx]);
-         varNData[i].mobility[pWIdx] = problem.materialLaw().mobW(varNData[i].saturationW, parameters, varNData[i].viscosity[pWIdx]);
-         varNData[i].mobility[satNIdx] = problem.materialLaw().mobN(sol[i][satNIdx], parameters, varNData[i].viscosity[satNIdx]);
-         varNData[i].enthalpy[pWIdx] = problem.materialLaw().wettingPhase.enthalpy(varNData[i].temp,varNData[i].pW);
-         varNData[i].enthalpy[satNIdx] = problem.materialLaw().nonwettingPhase.enthalpy(varNData[i].temp,varNData[i].pN);
-         varNData[i].intenergy[pWIdx] = problem.materialLaw().wettingPhase.intEnergy(varNData[i].temp,varNData[i].pW);
-         varNData[i].intenergy[satNIdx] = problem.materialLaw().nonwettingPhase.intEnergy(varNData[i].temp,varNData[i].pN);
+         varData[i].temp = sol[i][teIdx];
+         varData[i].pW = sol[i][pWIdx];
+         varData[i].satN = sol[i][satNIdx];
+         varData[i].satW = 1 - sol[i][satNIdx];
+         varData[i].lambda = soil.heatConductivity(elData.soilLDry, elData.soilLSw, varData[i].satW);
+         varData[i].pC = problem.materialLaw().pC(varData[i].saturationW,parameters);
+         varData[i].pN = sol[i][pWIdx] + varData[i].pC;
+         varData[i].density[pWIdx] = problem.materialLaw().wettingPhase.density(varData[i].temp,varData[i].pW);
+         varData[i].density[satNIdx] = problem.materialLaw().nonwettingPhase.density(varData[i].temp,varData[i].pN);
+         varData[i].viscosity[pWIdx] = problem.materialLaw().wettingPhase.viscosity(varData[i].temp,sol[i][pWIdx]);
+         varData[i].viscosity[satNIdx] = problem.materialLaw().nonwettingPhase.viscosity(varData[i].temp,varData[i].pN,varData[i].density[satNIdx]);
+         varData[i].mobility[pWIdx] = problem.materialLaw().mobW(varData[i].saturationW, parameters, varData[i].viscosity[pWIdx]);
+         varData[i].mobility[satNIdx] = problem.materialLaw().mobN(sol[i][satNIdx], parameters, varData[i].viscosity[satNIdx]);
+         varData[i].enthalpy[pWIdx] = problem.materialLaw().wettingPhase.enthalpy(varData[i].temp,varData[i].pW);
+         varData[i].enthalpy[satNIdx] = problem.materialLaw().nonwettingPhase.enthalpy(varData[i].temp,varData[i].pN);
+         varData[i].intenergy[pWIdx] = problem.materialLaw().wettingPhase.intEnergy(varData[i].temp,varData[i].pW);
+         varData[i].intenergy[satNIdx] = problem.materialLaw().nonwettingPhase.intEnergy(varData[i].temp,varData[i].pN);
  
-         // debug: std::cout  << "enthalpy " << varNData[i].enthalpy[satNIdx] << "internal energy " << varNData[i].intenergy[satNIdx] << std::endl;
-   	 }   	 
+         // debug: std::cout  << "enthalpy " << varData[i].enthalpy[satNIdx] << "internal energy " << varData[i].intenergy[satNIdx] << std::endl;
     }
+    
+	virtual void updateVariableData(const Entity& e, const VBlockType* sol, int i, bool old = false) 
+	{
+		if (old)
+			updateVariableData(e, sol, i, oldVarNData);
+		else 
+			updateVariableData(e, sol, i, varNData);
+	}
+
+	void updateVariableData(const Entity& e, const VBlockType* sol, bool old = false)
+	{
+		int size = this->fvGeom.nNodes;
+			
+		for (int i = 0; i < size; i++) 
+				updateVariableData(e, sol, i, old);
+	}
     
     
     struct StaticNodeData 
     {
     	bool visited;
-    };
-    
-       // the members of the struct are defined here
-    struct VariableNodeData  
-    {
-       RT saturationW;
-       RT pC;
-       RT pN;
-       RT pW;
-       RT temp;
-       RT satN;
-       RT satW;
-       RT lambda;
-       VBlockType mobility;  //Vector with the number of phases
-       VBlockType density;
-       VBlockType viscosity;
-       VBlockType enthalpy;
-       VBlockType intenergy;
     };
     
     struct ElementData {
@@ -354,6 +364,7 @@ namespace Dune
     Soil soil;
     std::vector<StaticNodeData> statNData;
     std::vector<VariableNodeData> varNData;
+    std::vector<VariableNodeData> oldVarNData;
   };
 
   /** @} */
