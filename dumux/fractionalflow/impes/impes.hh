@@ -27,6 +27,7 @@ public:
 
 	virtual void totalVelocity(const RT t=0) {
 		this->calcTotalVelocity(t);
+//		std::cout<<"velocity= "<<this->variables().velocity<<std::endl;
 		return;
 	}
 
@@ -37,11 +38,9 @@ public:
 	virtual void initial() {
 		double t = 0;
 		this->initialTransport();
-		if (this->calcpressure) {
-			this->pressure(t);
-			totalVelocity(t);
-		}
-//		return;
+		this->pressure(t);
+		totalVelocity(t);
+		return;
 	}
 
 	virtual int update(const RT t, RT& dt, RepresentationType& updateVec,
@@ -66,22 +65,21 @@ public:
 			iter++;
 			iterTot++;
 			if (!this->diffproblem.materialLaw.isLinear()
-					|| this->diffproblem.capillary|| this->calcpressure) { // update pressure 
+					|| this->diffproblem.capillary) { // update pressure 
 				pressure(t);
 				totalVelocity(t);
 			}
-			Transport::update(t, dt, updateVec);
+			Transport::update(t, dt, updateVec,cFLFactor);
 			if (iterFlag) { // only needed if iteration has to be done
-				if (this->calcpressure) {
-					variables().pressure *= omega;
-					pressHelp = pressOldIter;
-					pressHelp *= (1-omega);
-					variables().pressure += pressHelp;
-					pressOldIter = variables().pressure;
-				}
+				variables().pressure *= omega;
+				pressHelp = pressOldIter;
+				pressHelp *= (1-omega);
+				variables().pressure += pressHelp;
+				pressOldIter = variables().pressure;
+	
 				updateHelp = updateVec;
 				saturation = variables().saturation;
-				saturation += (updateHelp *= dt*cFLFactor);
+				saturation += (updateHelp *= (dt*cFLFactor));
 				saturation *= omega;
 				satHelp = satOldIter;
 				satHelp *= (1-omega);
@@ -107,11 +105,20 @@ public:
 		if (iterFlag==2)
 			std::cout << "Iteration steps: "<< iterTot << std::endl;
 		std::cout.setf(std::ios::scientific, std::ios::floatfield);
+		
+		if (this->transproblem.exsolution){
+			this->transproblem.settime(dt);
+		}
 
 		return 0;
 	}
 
-	virtual void vtkout(const char* name, int k) const {
+	virtual void vtkout(const char* name, int k) const {		
+		if (this->transproblem.exsolution){
+			this->transproblem.updateExSol();
+			variables().vtkout(name, k, this->transproblem.getuEx());
+			return;
+		}
 		variables().vtkout(name, k);
 		return;
 	}
