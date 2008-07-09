@@ -23,8 +23,8 @@ namespace Dune {
 			  dt = cFLFactor;
 
 			  // obtain the first update and the time step size 
-			  model.update(t, dt, k1);
-
+			  model.update(t, dt, k1,cFLFactor);
+		  
 			  // scale dt with safety factor
 			  dt *= cFLFactor;                             
 			  dt = std::min( dt, maxDt );
@@ -40,7 +40,7 @@ namespace Dune {
 			    // second stage: k2 = N(Sat + dt*k1)
 			    help = k1;
 			    *model += (help *= dt);    
-			    model.update(t, dummy, k2);
+			    model.update(t, dummy, k2,cFLFactor);
 
 			    // combine Sat <- Sat + 0.5*dt*(k1 + k2);
 			    *model = k1;
@@ -52,7 +52,7 @@ namespace Dune {
 			    // second stage: k2 = N(Sat + dt*k1)
 			    help = k1;
 			    *model += (help *= dt);    
-			    model.update(t, dummy, k2);
+			    model.update(t, dummy, k2,cFLFactor);
 
 			    // third stage: k3 = N(Sat + 0.5*dt*(k1 + k2))
 			    *model = k0;
@@ -60,7 +60,7 @@ namespace Dune {
 			    *model += (help *= (1.0 - theta)*dt);    
 			    help = k2;
 			    *model += (help *= theta*dt);    
-			    model.update(t, dummy, k3);
+			    model.update(t, dummy, k3,cFLFactor);
 
 			    // combine Sat <- Sat + 0.5*dt*(k1 + k3);
 			    *model = (k1 *= 1.0 -theta);
@@ -72,19 +72,19 @@ namespace Dune {
 			    // second stage: k2 = N(Sat + 0.5*dt*k1)
 			    help = k1;
 			    *model += (help *= 0.5*dt);    
-			    model.update(t, dummy, k2);
+			    model.update(t, dummy, k2,cFLFactor);
 
 			    // third stage: k3 = N(Sat + 0.5*dt*k2)
 			    *model = k0;
 			    help = k2;
 			    *model += (help *= 0.5*dt);    
-			    model.update(t, dummy, k3);
+			    model.update(t, dummy, k3,cFLFactor);
 
 			    // fourth stage: k4 = N(Sat + dt*k3)
 			    *model = k0;
 			    help = k3;
 			    *model += (help *= dt);    
-			    model.update(t, dummy, k4);
+			    model.update(t, dummy, k4,cFLFactor);
 
 			    // combine Sat <- Sat + 1/6*dt*(k1 + 2k2 + 2k3 + k4);
 			    *model = k1;
