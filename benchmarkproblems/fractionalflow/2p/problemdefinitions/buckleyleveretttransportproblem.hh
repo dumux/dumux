@@ -62,10 +62,10 @@ namespace Dune
 //    void updateanalytical (const G& g, BlockVector& satAnalytic, double& dt);
 
     BuckleyLeverettTransportProblem(VC& variableobj, TwoPhaseRelations& law = *(new LinearLaw),
-			   const FieldVector<DT,n> Left = 0, const FieldVector<DT,n> Right = 0,
+			   const FieldVector<DT,n> Left = 0, const FieldVector<DT,n> Right = 0, const bool exsol = false,
 			    const int level = 0, const bool cap =
 			   false,RT poro=0.2) 
-      : TransportProblem<G, RT, VC>(variableobj, law, cap), left(Left[0]), right(Right[0]),
+      : TransportProblem<G, RT, VC>(variableobj, law, cap, exsol), left(Left[0]), right(Right[0]),
 	eps_(1e-8),
 	poro_(poro)
     { }

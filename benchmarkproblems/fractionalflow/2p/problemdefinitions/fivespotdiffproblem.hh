@@ -60,8 +60,8 @@ namespace Dune
     {
       if ((x[0] > UpperRight_[0] - eps_ && x[1] > UpperRight_[1] - bcf_) || 
 	  (x[1] > UpperRight_[1] - eps_ && x[0] > UpperRight_[0] - bcf_))  
-	return 1e-6;//15x15 cells: bcf 21
-	//return 2e-6; //30x30 cells: bcf 11
+	//return 1e-6;//15x15 cells: bcf 21
+	return 2e-6; //30x30 cells: bcf 11
 	//return 4e-6;// 60x60 cells: bcf 6
       //all other boundaries      
       return 0;

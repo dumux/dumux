@@ -19,6 +19,7 @@
 //#include "dumux/diffusion/mimetic/mimeticdiffusion.hh"
 #include "dumux/fractionalflow/impes/impes.hh"
 #include "../problemdefinitions/mcwhortertransportproblem.hh"
+#include "../problemdefinitions/mcwhorteranalytical.hh"
 #include "../problemdefinitions/mcwhorterdiffproblem.hh"
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/timedisc/rungekuttastep.hh"
@@ -102,13 +103,14 @@ int main(int argc, char** argv)
     
     VC variables(grid);
     
-    Dune::McWhorterTransportProblem<GridType, NumberType, VC> transportProblem(variables, materialLaw,Left,Right);//,true,cFLFactor,elementsize);
+    Dune::McWWithAnalytical<GridType, NumberType, VC> transportProblem(variables, materialLaw,Left,Right,cFLFactor);
+//    Dune::McWhorterTransportProblem<GridType, NumberType, VC> transportProblem(variables, materialLaw,Left,Right);
     Dune::McWhorterDiffProblem<GridType, NumberType, VC> diffusionProblem(variables, materialLaw,Left,Right);
 
     typedef Dune::FVTransport<GridType, NumberType, VC> Transport;
     //Transport transport(grid, transportProblem, grid.maxLevel());
     Dune::CapillaryDiffusion<GridType, NumberType, VC> diffPart(diffusionProblem);
-    Transport transport(grid, transportProblem, grid.maxLevel(),diffPart,reconstruct, alphaMax, cFLFactor);
+    Transport transport(grid, transportProblem, grid.maxLevel(),diffPart,reconstruct, alphaMax);
         
     typedef Dune::FVDiffusionVelocity<GridType, NumberType, VC> Diffusion;
     Diffusion diffusion(grid, diffusionProblem, grid.maxLevel());

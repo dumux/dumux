@@ -39,10 +39,11 @@ namespace Dune
     RT S0 (const FieldVector<DT,n>& x, const Entity& e, 
 	   const FieldVector<DT,n>& xi) const 
     {
-      if (x[0]< 0.1)
-      return (1-Sinit_-(1-2*Sinit_)/0.1*x[0]);
+    	const RT initlength = 2.6/this->variables.grid.size(0);
+    	if (x[0]< initlength)
+    		return (1-Sinit_-(1-2*Sinit_)/initlength*x[0]);
        
-      return Sinit_;
+    	return Sinit_;
     }
 
   
@@ -52,8 +53,8 @@ namespace Dune
 
     McWhorterTransportProblem(VC& variableobj, TwoPhaseRelations& law = *(new LinearLaw),
 		     const FieldVector<DT,n> Left = 0, const FieldVector<DT,n> Right = 0,
-		     bool analytic = false, const bool cap = false, const int level = 0, RT poro=0.3,RT Si=0.0) 
-      : TransportProblem<G, RT, VC>(variableobj,law, cap), left(Left[0]), right(Right[0]),
+		     bool exsol = false, const bool cap = false, const int level = 0, RT poro=0.3,RT Si=0.0) 
+      : TransportProblem<G, RT, VC>(variableobj,law, cap, exsol), left(Left[0]), right(Right[0]),
 	eps_(1e-8),
 	poro_(poro),
 	Sinit_(Si)
@@ -64,6 +65,7 @@ namespace Dune
     DT right;
     RT eps_;
     RT poro_;
+  protected:
     RT Sinit_;
   };
 }

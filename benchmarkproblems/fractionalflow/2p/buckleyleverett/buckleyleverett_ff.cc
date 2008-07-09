@@ -64,8 +64,8 @@ int main(int argc, char** argv)
 
       Oil oil(0.2);
       Water water(0.2);
-      Dune::BrooksCoreyLaw law(water, oil,2,0);
-//      Dune::LinearLaw law(water, oil);
+//      Dune::BrooksCoreyLaw law(water, oil,2,0);
+      Dune::LinearLaw law(water, oil);
       
       typedef Dune::VariableClass<GridType, NumberType> VC;
       
@@ -92,7 +92,7 @@ int main(int argc, char** argv)
       //double tEnd = 2.5e9;
       char* fileName("buckleyleverett");
       int modulo = 1; 
-      double cFLFactor = 0.2;
+      double cFLFactor = 1;
       Dune::TimeLoop<GridType, IMPES > timeloop(tStart, tEnd, fileName, modulo, cFLFactor);
     
       Dune::Timer timer;

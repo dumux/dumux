@@ -24,6 +24,7 @@
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/timedisc/rungekuttastep.hh"
 #include "dumux/fractionalflow/variableclass.hh"
+#include "../problemdefinitions/buckleyleverettanalytical.hh"
 
 int main(int argc, char** argv) 
 {
@@ -49,13 +50,11 @@ int main(int argc, char** argv)
      
     //deffinition of a stretched grid
 //    const int numberofelements = 15;
-//     const int numberofelements = 30;
-    //const int numberofelements = 60;
-    const int numberofelements = 120;
+     const int numberofelements = 30;
+//    const int numberofelements = 60;
+//    const int numberofelements = 120;
 
     double strfactor = 0;
-
-    double elementsize =  Right[0]/numberofelements;
       
     //vector with coordinates
     std::vector<ctype> coord;
@@ -88,18 +87,22 @@ int main(int argc, char** argv)
     //double tEnd = 2.5e9;
     char* fileName("buckleyleverett1D");
     int modulo = 1; 
-    double cFLFactor = 0.2;
+    double cFLFactor = 1.0;
 
     Oil oil(0.2);
     Water water(0.2);
-    Dune::BrooksCoreyLaw materialLaw(water, oil,2,0);
-    //Dune::LinearLaw materialLaw(water, oil);
+//    Dune::BrooksCoreyLaw materialLaw(water, oil,2,0);
+    Dune::LinearLaw materialLaw(water, oil);
+    
+    double initpress = 2e5;
+    double initsat = 0.2;
+    Dune::FieldVector<double,dim> initvel(3e-7);
     
     typedef Dune::VariableClass<GridType, NumberType> VC;
     
-    VC variables(grid);
+    VC variables(grid,initsat,initpress,initvel);
    
-    Dune::BuckleyLeverettTransportProblem<GridType, NumberType, VC> transportProblem(variables, materialLaw,Left,Right);//,true,cFLFactor,elementsize);
+    Dune::BLWithAnalytical<GridType, NumberType, VC> transportProblem(variables, materialLaw,Left,Right,cFLFactor);
     Dune::BuckleyLeverettDiffProblem<GridType, NumberType, VC> diffusionProblem(variables, materialLaw,Left,Right);
 
     typedef Dune::FVTransport<GridType, NumberType, VC> Transport;
@@ -113,12 +116,13 @@ int main(int argc, char** argv)
     typedef Dune::IMPES<GridType, Diffusion, Transport, VC> IMPES;
     IMPES fractionalflow(diffusion, transport, iterFlag, nIter, maxDefect);
     
-    
+//    Dune::TimeLoop<GridType, Transport > timeloop(tStart, tEnd, fileName, modulo, cFLFactor);
     Dune::TimeLoop<GridType, IMPES > timeloop(tStart, tEnd, fileName, modulo, cFLFactor);
     
     Dune::Timer timer;
     timer.reset();
     timeloop.execute(fractionalflow);
+//    timeloop.execute(transport);    
     std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
     //printvector(std::cout, *fractionalflow, "saturation", "row", 200, 1);
     
