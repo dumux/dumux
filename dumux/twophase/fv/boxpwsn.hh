@@ -110,7 +110,7 @@ public:
 		double upperMass, oldUpperMass;
 		double totalMass = this->injected(upperMass, oldUpperMass);
 		std::cout << totalMass << "\t"<< upperMass<< "\t"<< oldUpperMass
-				<< "\t# totalMass, upperMass, oldUpperMass"<< std::endl;
+				<< "\t"; //# totalMass, upperMass, oldUpperMass"<< std::endl;
 	}
 };
 

@@ -111,7 +111,8 @@ namespace Dune
     	setLocalSolution(e);
     	
     	updateStaticData(e, u);
-    	updateVariableData(e, uold, true);
+    	bool old = true;
+    	updateVariableData(e, uold, old);
     	updateVariableData(e, u);
 
 		localDefect<TypeTag>(e, u);

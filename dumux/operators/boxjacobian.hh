@@ -100,7 +100,8 @@ public:
 		for (int i=0; i < this->fvGeom.nNodes; i++) // begin loop over vertices / sub control volumes
 			{
 				// implicit Euler
-				VBlockType massContrib = computeM(e, this->uold, i);
+				bool old = true;
+				VBlockType massContrib = computeM(e, this->uold, i, old);
 				massContrib *= -1.0;
 				this->def[i] = massContrib;
 			}
@@ -178,8 +179,8 @@ public:
 		*oldSolution = *uOld;
 	}
 
-	VBlockType computeM(const Entity& e, const VBlockType* sol, int node) {
-		return this->getImp().computeM(e, sol, node);
+	VBlockType computeM(const Entity& e, const VBlockType* sol, int node, bool old = false) {
+		return this->getImp().computeM(e, sol, node, old);
 	}
 
 	VBlockType computeQ(const Entity& e, const VBlockType* sol, int node) {
@@ -194,10 +195,6 @@ public:
 	virtual void updateStaticData(const Entity& e, VBlockType* sol) {
 		return this->getImp().updateStaticData(e, sol);
 	}
-
-//	virtual void updateVariableData(const Entity& e, const VBlockType* sol) {
-//		return this->getImp().updateVariableData(e, sol);
-//	}
 
 	template<class TypeTag> void assembleBC(const Entity& e) {
 		Dune::GeometryType gt = e.geometry().type();

@@ -7,6 +7,7 @@
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
 #include <dune/grid/io/file/dgfparser/dgfalu.hh>
+#include <dune/grid/io/file/dgfparser/dgfalberta.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/io.hh>
@@ -20,7 +21,9 @@
 
 int main(int argc, char** argv) 
 {
-  try{
+    Dune::MPIHelper::instance(argc, argv);
+
+    try{
     // define the problem dimensions  
     const int dim=3;
     typedef double NumberType; 
@@ -40,8 +43,6 @@ int main(int argc, char** argv)
 
 
     // create a grid object
-    //typedef Dune::SGrid<dim,dim> GridType; 
-    //typedef Dune::YaspGrid<dim,dim> GridType; 
     //typedef Dune::UGGrid<dim> GridType; 
 	typedef Dune::ALUSimplexGrid<dim,dim> GridType;
 

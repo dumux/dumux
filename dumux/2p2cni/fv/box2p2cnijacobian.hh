@@ -84,6 +84,7 @@ namespace Dune
     enum {dim=G::dimension};
     enum {m=3, c=2};
     enum {SIZE=LagrangeShapeFunctionSetContainer<DT,RT,dim>::maxsize};
+    struct VariableNodeData;
 
     typedef FieldMatrix<RT,dim,dim> FMatrix;
     typedef FieldVector<RT,dim> FVector;
@@ -106,7 +107,8 @@ namespace Dune
 	 *  @param node local node id
 	 *  @return storage term
 	 */
-    virtual VBlockType computeM (const Entity& e, const VBlockType* sol, int node)
+    virtual VBlockType computeM (const Entity& e, const VBlockType* sol, 
+    		int node, std::vector<VariableNodeData>& varData)
     {
     	 GeometryType gt = e.geometry().type();
     	 const typename LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type&
@@ -116,27 +118,35 @@ namespace Dune
    	 //int globalCoord = this->fvGeom.subContVol[node].global;
 
    	 VBlockType result; 
-   	 RT satN = vNDat[node].satN;
-   	 RT satW = vNDat[node].satW;
+   	 RT satN = varData[node].satN;
+   	 RT satW = varData[node].satW;
    	    	    	                  
    	 // storage of component water
    	 result[water] = 
-   		  sNDat[globalIdx].porosity*(vNDat[node].density[wPhase]*satW*vNDat[node].massfrac[water][wPhase]
-   		                 +vNDat[node].density[nPhase]*satN*vNDat[node].massfrac[water][nPhase]);
+   		  sNDat[globalIdx].porosity*(varData[node].density[wPhase]*satW*varData[node].massfrac[water][wPhase]
+   		                 +varData[node].density[nPhase]*satN*varData[node].massfrac[water][nPhase]);
    	 // storage of component air
    	 result[air] = 
-   		  sNDat[globalIdx].porosity*(vNDat[node].density[nPhase]*satN*vNDat[node].massfrac[air][nPhase]
-   	                    +vNDat[node].density[wPhase]*satW*vNDat[node].massfrac[air][wPhase]);
+   		  sNDat[globalIdx].porosity*(varData[node].density[nPhase]*satN*varData[node].massfrac[air][nPhase]
+   	                    +varData[node].density[wPhase]*satW*varData[node].massfrac[air][wPhase]);
 
    	 // storage term of energy equation
-   	 result[heat] = sNDat[globalIdx].porosity * (vNDat[node].density[wPhase] * vNDat[node].intenergy[wPhase] * satW
-   	             + vNDat[node].density[nPhase] * vNDat[node].intenergy[nPhase] * satN)
-   	             + (1. -  sNDat[globalIdx].porosity) * elData.soilDens * elData.soilCs * vNDat[node].temperature;
+   	 result[heat] = sNDat[globalIdx].porosity * (varData[node].density[wPhase] * varData[node].intenergy[wPhase] * satW
+   	             + varData[node].density[nPhase] * varData[node].intenergy[nPhase] * satN)
+   	             + (1. -  sNDat[globalIdx].porosity) * elData.soilDens * elData.soilCs * varData[node].temperature;
    	  // soil properties defined at the elements!!!               
    	 
    	 //std::cout << result << " " << node << std::endl;
    	 return result;
     };
+
+    virtual VBlockType computeM (const Entity& e, const VBlockType* sol, int node, bool old = false) 
+     {
+     	if (old)
+     		return computeM(e, sol, node, oldVNDat);
+     	else 
+     		return computeM(e, sol, node, vNDat);
+     }
 
     /** @brief compute diffusive/advective fluxes, loop over subcontrol volume faces
 	 *  @param e entity   

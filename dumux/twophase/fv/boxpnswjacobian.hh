@@ -44,6 +44,7 @@ namespace Dune
     enum {n=G::dimension};
     enum {m=2};
     enum {SIZE=LagrangeShapeFunctionSetContainer<DT,RT,n>::maxsize};
+    struct VariableNodeData;
     
     //! Constructor
     BoxPnSwJacobian (TwoPhaseProblem<G,RT>& params,
@@ -63,16 +64,25 @@ namespace Dune
     	return;
     }
 
-    virtual VBlockType computeM (const Entity& e, const VBlockType* sol, int node)
+    virtual VBlockType computeM (const Entity& e, const VBlockType* sol, 
+    		int node, const std::vector<VariableNodeData>& varData)
     {
    	 VBlockType result; 
    	 
-   	 result[0] = varNData[node].density[pNIdx]*elData.porosity*sol[node][satWIdx];
-   	 result[1] = -varNData[node].density[satWIdx]*elData.porosity*sol[node][satWIdx];
+   	 result[0] = varData[node].density[pNIdx]*elData.porosity*sol[node][satWIdx];
+   	 result[1] = -varData[node].density[satWIdx]*elData.porosity*sol[node][satWIdx];
    	 
    	 return result;
     };
     
+    virtual VBlockType computeM (const Entity& e, const VBlockType* sol, int node, bool old = false) 
+    {
+    	if (old)
+    		return computeM(e, sol, node, oldVarNData);
+    	else 
+    		return computeM(e, sol, node, varNData);
+    }
+
     virtual VBlockType computeQ (const Entity& e, const VBlockType* sol, const int& node)
     {
    	 // ASSUME problem.q already contains \rho.q

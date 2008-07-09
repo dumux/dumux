@@ -79,6 +79,7 @@ namespace Dune
     enum {n=G::dimension};
     enum {m=3};
     enum {SIZE=LagrangeShapeFunctionSetContainer<DT,RT,n>::maxsize};
+    struct VariableNodeData;  
     
     //! Constructor
     BoxPwSnTeJacobian (TwoPhaseHeatProblem<G,RT>& params,
@@ -99,24 +100,33 @@ namespace Dune
     }
 
     // Compute Storage Terms
-    virtual VBlockType computeM (const Entity& e, const VBlockType* sol, int node)
+    virtual VBlockType computeM (const Entity& e, const VBlockType* sol, 
+    		int node, const std::vector<VariableNodeData>& varData)
     {
    	 VBlockType result; 
 	 
    	 // storage term of water mass balance 
-   	 result[water] = -varNData[node].density[pWIdx] * elData.porosity * varNData[node].satN;
+   	 result[water] = -varData[node].density[pWIdx] * elData.porosity * varData[node].satN;
    	 
    	 // storage term of CO2 mass balance
-   	 result[co2] = varNData[node].density[satNIdx] * elData.porosity * varNData[node].satN;
+   	 result[co2] = varData[node].density[satNIdx] * elData.porosity * varData[node].satN;
    	 
    	 // storage term of energy equation
-   	 result[heat] = elData.porosity * (varNData[node].density[pWIdx] * varNData[node].intenergy[pWIdx] * varNData[node].satW
-   	             + varNData[node].density[satNIdx] * varNData[node].intenergy[satNIdx] * varNData[node].satN)
-   	             + (1. - elData.porosity) * elData.soilDens * elData.soilCs * varNData[node].temp;
+   	 result[heat] = elData.porosity * (varData[node].density[pWIdx] * varData[node].intenergy[pWIdx] * varData[node].satW
+   	             + varData[node].density[satNIdx] * varData[node].intenergy[satNIdx] * varData[node].satN)
+   	             + (1. - elData.porosity) * elData.soilDens * elData.soilCs * varData[node].temp;
    	 
    	 return result;
     };
     
+    virtual VBlockType computeM (const Entity& e, const VBlockType* sol, int node, bool old = false) 
+    {
+    	if (old)
+    		return computeM(e, sol, node, oldVarNData);
+    	else 
+    		return computeM(e, sol, node, varNData);
+    }
+
     // Get Source/Sink Terms
     virtual VBlockType computeQ (const Entity& e, const VBlockType* sol, const int& node)
     {
@@ -315,6 +325,10 @@ namespace Dune
          varData[i].density[satNIdx] = problem.materialLaw().nonwettingPhase.density(varData[i].temp,varData[i].pN);
          varData[i].mobility[pWIdx] = problem.materialLaw().mobW(varData[i].saturationW, parameters, varData[i].temp, varData[i].pW);
          varData[i].mobility[satNIdx] = problem.materialLaw().mobN(sol[i][satNIdx], parameters, varData[i].temp, varData[i].pN);
+//         varData[i].viscosity[pWIdx] = problem.materialLaw().wettingPhase.viscosity(varData[i].temp,sol[i][pWIdx]);
+//         varData[i].viscosity[satNIdx] = problem.materialLaw().nonwettingPhase.viscosity(varData[i].temp,varData[i].pN,varData[i].density[satNIdx]);
+//         varData[i].mobility[pWIdx] = problem.materialLaw().mobW(varData[i].saturationW, parameters, varData[i].viscosity[pWIdx]);
+//         varData[i].mobility[satNIdx] = problem.materialLaw().mobN(sol[i][satNIdx], parameters, varData[i].viscosity[satNIdx]);
          varData[i].enthalpy[pWIdx] = problem.materialLaw().wettingPhase.enthalpy(varData[i].temp,varData[i].pW);
          varData[i].enthalpy[satNIdx] = problem.materialLaw().nonwettingPhase.enthalpy(varData[i].temp,varData[i].pN);
          varData[i].intenergy[pWIdx] = problem.materialLaw().wettingPhase.intEnergy(varData[i].temp,varData[i].pW);

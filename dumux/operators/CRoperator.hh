@@ -299,10 +299,10 @@ namespace Dune
     Dirichlet value at the \f$i\f$th node.
 
 	 */
-        template<class I>
-	void assemble (LocalStiffness<I,G,RT,m>& loc, CRFunction<G,RT,IS,LC,m>& u, 
-					CRFunction<G,RT,IS,LC,m>& f, const SatType& saturation = 0)
-	{
+      template<class I>
+      void assemble (LocalStiffness<I,G,RT,m>& loc, CRFunction<G,RT,IS,LC,m>& u, 
+    		  CRFunction<G,RT,IS,LC,m>& f)
+      {
 
 	  // check size
  	  if ((*u).N()!=this->A.M() || (*f).N()!=this->A.N())
