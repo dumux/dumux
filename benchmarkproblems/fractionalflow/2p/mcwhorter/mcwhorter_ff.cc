@@ -99,7 +99,7 @@ int main(int argc, char** argv)
       typedef Dune::IMPES<GridType, Diffusion, Transport, VC> IMPES;
       IMPES fractionalflow(diffusion, transport, iterFlag, nIter, maxDefect);
       
-      Dune::TimeLoop<GridType, IMPES > timeloop(tStart, tEnd, fileName, modulo, cFLFactor);
+      Dune::TimeLoop<GridType, IMPES > timeloop(tStart, tEnd, fileName, modulo);
     
       Dune::Timer timer;
       timer.reset();
