@@ -26,7 +26,7 @@ int main(int argc, char** argv)
     // time loop parameters
     const double tStart = 0;
     const double tEnd = 2.5e9;
-    const double cFLFactor = 0.3;
+    const double cFLFactor = 1;
     double maxDT = 1e100;
     int modulo = 10;
     
@@ -48,10 +48,10 @@ int main(int argc, char** argv)
 
     grid.globalRefine(0);
 
-    Uniform mat;
+    Uniform mat(0.2);
     //Dune::VanGenuchtenLaw materialLaw(mat, mat);
-    Dune::BrooksCoreyLaw materialLaw(mat, mat);
-    //Dune::LinearLaw materialLaw(mat, mat);
+    //Dune::BrooksCoreyLaw materialLaw(mat, mat);
+    Dune::LinearLaw materialLaw(mat, mat);
     
     typedef Dune::VariableClass<GridType, NumberType> VC;
     
@@ -65,11 +65,8 @@ int main(int argc, char** argv)
     Dune::SimpleProblem<GridType, NumberType, VC> problem(variables, materialLaw,L,H);
 
     typedef Dune::FVTransport<GridType, NumberType, VC> Transport;
-    //Dune::DiffusivePart<GridType, NumberType> diffPart;
-    Dune::UniformProblem<GridType, NumberType, VC> diffusionProblem(variables, materialLaw);
-    //Dune::DiffusivePart<GridType, NumberType> diffPart;
-    Dune::CapillaryDiffusion<GridType, NumberType, VC> diffPart(diffusionProblem); 
-    Transport transport(grid, problem, grid.maxLevel(), diffPart, reconstruct, alphaMax, cFLFactor);
+
+    Transport transport(grid, problem, grid.maxLevel());
     
     
     Dune::TimeLoop<GridType, Transport > timeloop(tStart, tEnd, "timeloop", modulo, cFLFactor, maxDT, maxDT);
