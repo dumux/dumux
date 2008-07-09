@@ -62,7 +62,7 @@ public:
 	 *  Additionally to the \a update vector, the recommended time step size \a dt is calculated 
 	 *  employing the usual CFL condition. 
 	 */
-	int update(const RT t, RT& dt, RepresentationType& updateVec);
+	int update(const RT t, RT& dt, RepresentationType& updateVec, RT& cFLFac);
 
 	void initialTransport();
 	
@@ -77,20 +77,18 @@ public:
 	 * @param amax alphamax parameter for slope limiter in TVD
 	 * @param numFl an object of class Numerical Flux or derived
 	 */
-	FVTransport(G& g, TransportProblem<G, RT, VC>& prob, int lev = 0,
-			DiffusivePart<G, RT>& diffPart = *(new DiffusivePart<G, RT>), bool rec = false,
-			double amax = 0.8, double cFLFac = 1.0,
-			const NumericalFlux<RT>& numFl = *(new Upwind<RT>)) :
+	FVTransport(G& g, TransportProblem<G, RT, VC>& prob, int lev = 0, 
+			DiffusivePart<G,RT>& diffPart = *(new DiffusivePart<G, RT>), bool rec = false,
+			double amax = 0.8, const NumericalFlux<RT>& numFl = *(new Upwind<RT>)) :
 		Transport<G, RT, VC>(g, prob, lev),
 				elementmapper(g, g.levelIndexSet(lev)),
 				indexset(g.levelIndexSet(lev)), reconstruct(rec),
-				numFlux(numFl), diffusivePart(diffPart), alphamax(amax),
-				cFLFactor(cFLFac) {
-	}
+				numFlux(numFl), diffusivePart(diffPart), alphamax(amax)
+				{}
 
 private:
 
-	void CalculateSlopes(SlopeType& slope, RT t);
+	void CalculateSlopes(SlopeType& slope, RT t, RT& cFLFactor);
 
 private:
 	EM elementmapper;
@@ -99,11 +97,10 @@ private:
 	const NumericalFlux<RT>& numFlux;
 	const DiffusivePart<G, RT>& diffusivePart;
 	double alphamax;
-	double cFLFactor;
 };
 
 template<class G, class RT, class VC> int FVTransport<G, RT, VC>::update(const RT t, RT& dt,
-		RepresentationType& updateVec) {
+		RepresentationType& updateVec, RT& cFLFac = 1) {
 	// initialize dt very large
 	dt = 1E100;
 
@@ -116,7 +113,7 @@ template<class G, class RT, class VC> int FVTransport<G, RT, VC>::update(const R
 	updateVec = 0;
 
 	SlopeType slope(elementmapper.size());
-	CalculateSlopes(slope, t);
+	CalculateSlopes(slope, t,cFLFac);
 
 	// compute update vector 
 	Iterator eendit = indexset.template end<0,All_Partition>();
@@ -333,8 +330,11 @@ template<class G, class RT, class VC> int FVTransport<G, RT, VC>::update(const R
 		maxDiff = std::max(maxDiff, sumDiff);
 		// <---DEBUG
 
-	} // end grid traversal                 
-	dt = dt*this->transproblem.porosity();
+	} // end grid traversal      
+	
+	//Correct maximal available volume in the CFL-Criterium
+	RT ResSaturationFactor = 1-this->transproblem.materialLaw.wettingPhase.Sr()-this->transproblem.materialLaw.nonwettingPhase.Sr();
+	dt = dt*this->transproblem.porosity()*ResSaturationFactor;
 	updateVec /= this->transproblem.porosity();
 
 	//TODO remove DEBUG--->
@@ -366,7 +366,7 @@ template<class G, class RT, class VC> void FVTransport<G, RT, VC>::initialTransp
 }
 
 template<class G, class RT, class VC> void FVTransport<G, RT, VC>::CalculateSlopes(
-		SlopeType& slope, RT t) {
+		SlopeType& slope, RT t, RT& cFLFactor) {
 
 	double stabilityFactor = 1.0 - cFLFactor*sqrt(cFLFactor);
 

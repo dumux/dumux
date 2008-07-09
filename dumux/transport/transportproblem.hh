@@ -91,19 +91,39 @@ namespace Dune
 	{
 		return 1.0;
 	}
+	
+	virtual BlockVector<FieldVector<RT, 2> >& getuEx()
+	{
+		DUNE_THROW(NotImplemented, "Ex(akt) Solution");
+		BlockVector<FieldVector<RT, 2> > uE(0);
+		return uE;
+	}
+	
+	//updates an exact/analytic solution
+	virtual void updateExSol() {
+		DUNE_THROW(NotImplemented, "Ex(akt) Solution");
+		return;
+	}
 
+	virtual void settime(double &dt)
+	{
+		DUNE_THROW(NotImplemented, "Ex(akt) Solution");
+		return;	
+	}
+	
 	//! constructor
 	/** @param law implementation of material laws. Class TwoPhaseRelations or derived.
 	 *  @param cap flag for including capillary forces.
 	 */
 
-	TransportProblem(VC& variableobject, TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false) 
-	: variables(variableobject), capillary(cap), materialLaw(law)
+	TransportProblem(VC& variableobject, TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false, const bool exsol = false) 
+	: variables(variableobject), capillary(cap), materialLaw(law),exsolution(exsol)
 	{	}
 	
 	//! always define virtual destructor in abstract base class
 	virtual ~TransportProblem () {}
 	
+	const bool exsolution;
 	const bool capillary;
 	TwoPhaseRelations& materialLaw;
 	VC& variables;
