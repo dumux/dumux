@@ -91,7 +91,7 @@ int main(int argc, char** argv)
       typedef Dune::FVTransport<GridType, NumberType, VC> Transport;
 //      Transport transport(grid, transportProblem, grid.maxLevel());
       Dune::CapillaryDiffusion<GridType, NumberType, VC> diffPart(diffusionProblem);
-      Transport transport(grid, transportProblem, grid.maxLevel(),diffPart,reconstruct, alphaMax, cFLFactor);
+      Transport transport(grid, transportProblem, grid.maxLevel(),diffPart,reconstruct, alphaMax);
         
       typedef Dune::FVDiffusionVelocity<GridType, NumberType, VC> Diffusion;
       Diffusion diffusion(grid, diffusionProblem, grid.maxLevel());
