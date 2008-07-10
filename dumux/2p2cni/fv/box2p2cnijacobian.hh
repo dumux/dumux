@@ -557,6 +557,21 @@ namespace Dune
 //    BlockVector<FieldVector<RT, 1> > *hackyMassFracWater;
 //    BlockVector<FieldVector<RT, 1> > *hackySaturationN;
 
+//	void printVariableData()
+//	{
+//		for (int i = 0; i < 4; i++)
+//		{
+//			std::cout << "new: i = " << i << ": satN = " << vNDat[i].satN << ", satW = " << vNDat[i].satW 
+//				<< ", pW = " << vNDat[i].pW << ", pC = " << vNDat[i].pC << ", pN = " << vNDat[i].pN 
+//				<< ", T = " << vNDat[i].temperature << ", lambda = " << vNDat[i].lambda << std::endl; 
+//			std::cout << "old: i = " << i << ": satN = " << oldVNDat[i].satN << ", satW = " << oldVNDat[i].satW 
+//				<< ", pW = " << oldVNDat[i].pW << ", pC = " << oldVNDat[i].pC << ", pN = " << oldVNDat[i].pN 
+//				<< ", T = " << oldVNDat[i].temperature << ", lambda = " << oldVNDat[i].lambda << std::endl; 
+//		}
+//	}
+    
+
+    
     struct VariableNodeData  
     {
    	 RT satN;
@@ -638,9 +653,9 @@ namespace Dune
 	virtual void updateVariableData(const Entity& e, const VBlockType* sol, int i, bool old = false) 
 	{
 		if (old)
-			updateVariableData(e, sol, i, vNDat);
-		else 
 			updateVariableData(e, sol, i, oldVNDat);
+		else 
+			updateVariableData(e, sol, i, vNDat);
 	}
 
 	void updateVariableData(const Entity& e, const VBlockType* sol, bool old = false)

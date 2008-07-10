@@ -146,13 +146,17 @@ namespace Dune
 					uMinusEps[j][comp] -= eps;
 
 					updateVariableData(e, uPlusEps, j);
-					localDefect<TypeTag>(e, uPlusEps);
+					
+					// calculate the defect without taking into account BCs 
+					// ASSUMES that BCs do not depend on the solution
+					bool withoutBC = false;
+					localDefect<TypeTag>(e, uPlusEps, withoutBC);
 					VBlockType defuPlusEps[size];
 					for (int i = 0; i < size; i++) 
 						defuPlusEps[i] = def[i];
 	      
 					updateVariableData(e, uMinusEps, j);
-					localDefect<TypeTag>(e, uMinusEps);
+					localDefect<TypeTag>(e, uMinusEps, withoutBC);
 
 					updateVariableData(e, u, j);
 					
@@ -162,7 +166,18 @@ namespace Dune
 							this->A[i][j][compi][comp] = oneByEps*(defuPlusEps[i][compi] - def[i][compi]);
 				}
 		}
-      
+		
+//		for (int i = 0; i < size; i++) 
+//			for (int compi = 0; compi < m; compi++) {
+//				for (int j = 0; j < size; j++) {
+//					for (int compj = 0; compj < m; compj++)
+//						std::cout << std::setw(9) << this->A[i][j][compi][compj] << ", "; 
+//					std::cout << "\t";
+//				}
+//				std::cout << std::endl;
+//			}
+			
+       
 		for (int i=0; i<size; i++) 
 			if (this->bctype[i][0]==BoundaryConditions::neumann) {
 				this->b[i] = bTemp[i];
@@ -172,9 +187,9 @@ namespace Dune
     }
     
     template<class TypeTag>
-    void localDefect (const Entity& e, const VBlockType* sol)
+    void localDefect (const Entity& e, const VBlockType* sol, bool withBC = true)
     {
-      this->getImp().template localDefect<TypeTag>(e, sol);
+      this->getImp().template localDefect<TypeTag>(e, sol, withBC);
     }
     
     void setLocalSolution (const Entity& e)

@@ -96,8 +96,8 @@ public:
 	//**********************************************************
 
 	template<class TypeTag> 
-	void localDefect(const Entity& e, const VBlockType* sol) {
-		for (int i=0; i < this->fvGeom.nNodes; i++) // begin loop over vertices / sub control volumes
+	void localDefect(const Entity& e, const VBlockType* sol, bool withBC = true) {
+    	for (int i=0; i < this->fvGeom.nNodes; i++) // begin loop over vertices / sub control volumes
 			{
 				// implicit Euler
 				bool old = true;
@@ -115,7 +115,7 @@ public:
 				
 				std::cout.setf(std::ios_base::scientific, std::ios_base::floatfield);
 				std::cout.setf(std::ios_base::uppercase);
-				std::cout.precision(3);
+				std::cout.precision(4);
 
 				// get source term 
 				VBlockType q = computeQ(e, sol, i);
@@ -133,19 +133,19 @@ public:
 				// add to defect 
 				this->def[i] -= flux;
 				this->def[j] += flux;
-				//std::cout << "i = " << i << ", j = " << j << ", flux = " << flux << std::endl;
+//				std::cout << "i = " << i << ", j = " << j << ", flux = " << flux << std::endl;
 			} // end loop over edges / sub control volume faces
 
-			// assemble boundary conditions 
-			assembleBC<TypeTag> (e);
+			if (withBC) {
+				// assemble boundary conditions 
+				assembleBC<TypeTag> (e);
 
-			// add to defect 
-			for (int i=0; i < this->fvGeom.nNodes; i++) {
-				this->def[i] += this->b[i];
-				//			 		  std::cout << ", b[" << i << "] = " << this->b[i] << std::endl;
+				// add to defect 
+				for (int i=0; i < this->fvGeom.nNodes; i++) {
+					this->def[i] += this->b[i];
+				}
 			}
-			// 		std::cout << std::endl;
-
+			
 			return;
 	}
 

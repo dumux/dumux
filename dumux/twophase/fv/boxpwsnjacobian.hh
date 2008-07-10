@@ -93,12 +93,12 @@ namespace Dune
       this->analytic = false;
     }
     
-    virtual void clearVisited ()
+    void clearVisited ()
     {
     	return;
     }
 
-    virtual VBlockType computeM (const Entity& e, const VBlockType* sol, 
+    VBlockType computeM (const Entity& e, const VBlockType* sol, 
     		int node, const std::vector<VariableNodeData>& varData)
     {
    	 VBlockType result; 
@@ -109,7 +109,7 @@ namespace Dune
    	 return result;
     };
     
-    virtual VBlockType computeM (const Entity& e, const VBlockType* sol, int node, bool old = false) 
+    VBlockType computeM (const Entity& e, const VBlockType* sol, int node, bool old = false) 
     {
     	if (old)
     		return computeM(e, sol, node, oldVarNData);
@@ -117,13 +117,13 @@ namespace Dune
     		return computeM(e, sol, node, varNData);
     }
 
-    virtual VBlockType computeQ (const Entity& e, const VBlockType* sol, const int& node)
+    VBlockType computeQ (const Entity& e, const VBlockType* sol, const int& node)
     {
    	 // ASSUME problem.q already contains \rho.q
    	 return problem.q(this->fvGeom.subContVol[node].global, e, this->fvGeom.subContVol[node].local);
     };
     
-    virtual VBlockType computeA (const Entity& e, const VBlockType* sol, int face)
+    VBlockType computeA (const Entity& e, const VBlockType* sol, int face)
     {
    	 int i = this->fvGeom.subContVolFace[face].i;
      	 int j = this->fvGeom.subContVolFace[face].j;
@@ -131,6 +131,15 @@ namespace Dune
 		  // permeability in edge direction 
 		  FieldVector<DT,n> Kij(0);
 		  elData.K.umv(this->fvGeom.subContVolFace[face].normal, Kij);
+//		  FieldVector<DT,n> Ki(0);
+//		  varNData[i].K.umv(this->fvGeom.subContVolFace[face].normal, Ki);
+//		  FieldVector<DT,n> Kj(0);
+//		  varNData[j].K.umv(this->fvGeom.subContVolFace[face].normal, Kj);
+//		  FieldVector<DT,n> Kij(0);
+//		  for (int k = 0; k < n; k++)
+//			  if (fabs(Ki[k] + Kj[k]) > 1e-15)
+//				  Kij[k] = 2.0*Ki[k]*Kj[k]/(Ki[k] + Kj[k]);
+		  
 		  
 		  VBlockType flux;
 		  for (int comp = 0; comp < m; comp++) {
@@ -167,7 +176,7 @@ namespace Dune
 	  // *																		 	*
 	  // *********************************************************
 
-    virtual void computeElementData (const Entity& e)
+    void computeElementData (const Entity& e)
     {
   		 // ASSUME element-wise constant parameters for the material law 
  		 elData.parameters = problem.materialLawParameters(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
@@ -187,7 +196,7 @@ namespace Dune
 	  // *********************************************************
 
     // analog to EvalStaticData in MUFTE
-    virtual void updateStaticData (const Entity& e, const VBlockType* sol)
+    void updateStaticData (const Entity& e, const VBlockType* sol)
     {
 	  return;
     }
@@ -209,16 +218,20 @@ namespace Dune
     	RT pN;
     	VBlockType mobility;  //Vector with the number of phases
     	VBlockType density;
+    	FieldMatrix<DT,n,n> K;
+    	FieldVector<RT, 4> parameters;
     };
 
     // analog to EvalPrimaryData in MUFTE, uses members of varNData
-	virtual void updateVariableData(const Entity& e, const VBlockType* sol, 
+	void updateVariableData(const Entity& e, const VBlockType* sol, 
 			int i, std::vector<VariableNodeData>& varData) 
     {
 		// ASSUME element-wise constant parameters for the material law 
+		varData[i].K = problem.K(this->fvGeom.subContVol[i].global, e, this->fvGeom.subContVol[i].local);
+		//FieldVector<RT, 4> parameters = problem.materialLawParameters(this->fvGeom.subContVol[i].global, e, this->fvGeom.subContVol[i].local);
 		FieldVector<RT, 4> parameters = problem.materialLawParameters(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
 
-   		varData[i].saturationW = 1.0 - sol[i][satNIdx];
+		varData[i].saturationW = 1.0 - sol[i][satNIdx];
    		varData[i].pC = problem.materialLaw().pC(varData[i].saturationW, parameters);
    		varData[i].pN = sol[i][pWIdx] + varData[i].pC;
    		varData[i].mobility[pWIdx] = problem.materialLaw().mobW(varData[i].saturationW, parameters);
@@ -227,7 +240,7 @@ namespace Dune
    		varData[i].density[satNIdx] = problem.materialLaw().nonwettingPhase.density();
     }
 
-	virtual void updateVariableData(const Entity& e, const VBlockType* sol, int i, bool old = false) 
+	void updateVariableData(const Entity& e, const VBlockType* sol, int i, bool old = false) 
 	{
 		if (old) {
 			updateVariableData(e, sol, i, oldVarNData);

@@ -43,8 +43,8 @@ int main(int argc, char** argv)
 
 
     // create a grid object
-    //typedef Dune::UGGrid<dim> GridType; 
-	typedef Dune::ALUSimplexGrid<dim,dim> GridType;
+    typedef Dune::UGGrid<dim> GridType; 
+	//typedef Dune::ALUSimplexGrid<dim,dim> GridType;
 
     Dune::GridPtr<GridType> gridPointer(argv[1]);
     GridType& grid = *gridPointer;

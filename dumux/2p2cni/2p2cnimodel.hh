@@ -128,12 +128,12 @@ public:
 					endit = IntersectionIteratorGetter<G, LeafTag>::end(entity);
 			for (IntersectionIterator is = IntersectionIteratorGetter<G,
 					LeafTag>::begin(entity); is!=endit; ++is)
-				if (is.boundary()) {
+				if (is->boundary()) {
 					for (int i = 0; i < size; i++)
 						// handle subentities of this face
-						for (int j = 0; j < ReferenceElements<DT,dim>::general(gt).size(is.numberInSelf(), 1, sfs[i].codim()); j++)
+						for (int j = 0; j < ReferenceElements<DT,dim>::general(gt).size(is->numberInSelf(), 1, sfs[i].codim()); j++)
 							if (sfs[i].entity()
-									== ReferenceElements<DT,dim>::general(gt).subEntity(is.numberInSelf(), 1,
+									== ReferenceElements<DT,dim>::general(gt).subEntity(is->numberInSelf(), 1,
 											j, sfs[i].codim())) {
 								for (int equationNumber = 0; equationNumber<m; equationNumber++) {
 									if (this->localJacobian.bc(i)[equationNumber]
@@ -240,7 +240,7 @@ public:
 		typedef typename G::Traits::template Codim<0>::Entity Entity;
 		typedef typename G::ctype DT;
 		typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator
-				Iterator;
+		Iterator;
 		enum {dim = G::dimension};
 		typedef array<BoundaryConditions::Flags, m> BCBlockType;
 
@@ -249,14 +249,12 @@ public:
 
 		// allocate flag vector to hold flags for essential boundary conditions
 		std::vector<BCBlockType> essential(this->vertexmapper.size());
-		for (typename std::vector<BCBlockType>::size_type i=0; i
-				<essential.size(); i++)
+		for (typename std::vector<BCBlockType>::size_type i = 0; i < essential.size(); i++)
 			essential[i].assign(BoundaryConditions::neumann);
 
 		// iterate through leaf grid 
 		Iterator eendit = indexset.template end<0, All_Partition>();
-		for (Iterator it = indexset.template begin<0, All_Partition>(); it
-				!= eendit; ++it) {
+		for (Iterator it = indexset.template begin<0, All_Partition>(); it != eendit; ++it) {
 			// get geometry type
 			Dune::GeometryType gt = it->geometry().type();
 
@@ -264,7 +262,7 @@ public:
 			const Entity& entity = *it;
 			this->localJacobian.fvGeom.update(entity);
 			int size = this->localJacobian.fvGeom.nNodes;
-			
+
 			this->localJacobian.setLocalSolution(entity);
 			this->localJacobian.computeElementData(entity); 
 			this->localJacobian.updateVariableData(entity, this->localJacobian.u);
@@ -275,19 +273,17 @@ public:
 				int globalId = this->vertexmapper.template map<dim>(entity,i);
 				for (int equationnumber = 0; equationnumber < m; equationnumber++) {
 					if (this->localJacobian.bc(i)[equationnumber] == BoundaryConditions::neumann)
-						(*defectGlobal)[globalId][equationnumber]
-								+= this->localJacobian.def[i][equationnumber];
+						(*defectGlobal)[globalId][equationnumber] += this->localJacobian.def[i][equationnumber];
 					else
 						essential[globalId].assign(BoundaryConditions::dirichlet);
 				}
 			}
 		}
 
-		for (typename std::vector<BCBlockType>::size_type i=0; i
-				<essential.size(); i++)
+		for (typename std::vector<BCBlockType>::size_type i = 0; i < essential.size(); i++)
 			for (int equationnumber = 0; equationnumber < m; equationnumber++) {
-			if (essential[i][equationnumber] == BoundaryConditions::dirichlet)
-				(*defectGlobal)[i][equationnumber] = 0;
+				if (essential[i][equationnumber] == BoundaryConditions::dirichlet)
+					(*defectGlobal)[i][equationnumber] = 0;
 			}
 	}
 

@@ -278,10 +278,10 @@ namespace Dune
 		NewtonMethod<G, ThisType> newtonMethod(this->grid, *this, relTol, absTol);
 		newtonMethod.execute();
 		dt = this->localJacobian.getDt();
-		double upperMass, oldUpperMass;
-		double totalMass = this->injected(upperMass, oldUpperMass);
-		std::cout << totalMass << "\t" << upperMass 
-			  << "\t" << oldUpperMass << "\t# totalMass, upperMass, oldUpperMass" << std::endl;
+//		double upperMass, oldUpperMass;
+//		double totalMass = this->injected(upperMass, oldUpperMass);
+//		std::cout << totalMass << "\t" << upperMass 
+//			  << "\t" << oldUpperMass << "\t# totalMass, upperMass, oldUpperMass" << std::endl;
 		
 		*(this->uOldTimeStep) = *(this->u);
 

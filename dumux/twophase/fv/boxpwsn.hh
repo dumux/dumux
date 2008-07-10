@@ -106,11 +106,20 @@ public:
 	}
 
 	void update(double& dt) {
-		LeafP1TwoPhaseModel::update(dt);
+		this->localJacobian.setDt(dt);
+		this->localJacobian.setOldSolution(this->uOldTimeStep);
+		NewtonMethod<G, ThisType> newtonMethod(this->grid, *this);
+		newtonMethod.execute();
+		dt = this->localJacobian.getDt();
 		double upperMass, oldUpperMass;
 		double totalMass = this->injected(upperMass, oldUpperMass);
 		std::cout << totalMass << "\t"<< upperMass<< "\t"<< oldUpperMass
 				<< "\t"; //# totalMass, upperMass, oldUpperMass"<< std::endl;
+		*(this->uOldTimeStep) = *(this->u);
+		
+		if (this->problem.exsolution)
+			this->problem.updateExSol(dt, *(this->u));
+
 	}
 };
 
