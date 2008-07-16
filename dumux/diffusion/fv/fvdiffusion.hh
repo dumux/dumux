@@ -136,7 +136,7 @@ template<class G, class RT, class VC> void FVDiffusion<G, RT, VC>::initializeMat
 		for (IntersectionIterator
 				is = IntersectionIteratorGetter<G, LevelTag>::begin(*it); is
 				!=endit; ++is)
-			if (is.neighbor())
+			if (is->neighbor())
 				rowSize++;
 		A.setrowsize(indexi, rowSize);
 	}
@@ -156,9 +156,9 @@ template<class G, class RT, class VC> void FVDiffusion<G, RT, VC>::initializeMat
 		for (IntersectionIterator
 				is = IntersectionIteratorGetter<G, LevelTag>::begin(*it); is
 				!=endit; ++is)
-			if (is.neighbor()) {
+			if (is->neighbor()) {
 				// access neighbor
-				EntityPointer outside = is.outside();
+				EntityPointer outside = is->outside();
 				int indexj = elementmapper.map(*outside);
 
 				// add off diagonal index
@@ -218,7 +218,7 @@ template<class G, class RT, class VC> void FVDiffusion<G, RT, VC>::assemble(cons
 				!=endit; ++is) {
 
 			// get geometry type of face
-			GeometryType gtf = is.intersectionSelfLocal().type();
+			GeometryType gtf = is->intersectionSelfLocal().type();
 
 			// center in face's reference element
 			const FieldVector<ct,dim-1>&
@@ -226,15 +226,15 @@ template<class G, class RT, class VC> void FVDiffusion<G, RT, VC>::assemble(cons
 
 			// center of face inside volume reference element
 			const FieldVector<ct,dim>&
-			facelocalDim = ReferenceElements<ct,dim>::general(gtf).position(is.numberInSelf(),1);
+			facelocalDim = ReferenceElements<ct,dim>::general(gtf).position(is->numberInSelf(),1);
 
 			// get normal vector 
 			FieldVector<ct,dimworld> unitOuterNormal
-			= is.unitOuterNormal(facelocal);
+			= is->unitOuterNormal(facelocal);
 
 			// get normal vector scaled with volume
 			FieldVector<ct,dimworld> integrationOuterNormal
-			= is.integrationOuterNormal(facelocal);
+			= is->integrationOuterNormal(facelocal);
 			integrationOuterNormal
 			*= ReferenceElements<ct,dim-1>::general(gtf).volume();
 
@@ -242,7 +242,7 @@ template<class G, class RT, class VC> void FVDiffusion<G, RT, VC>::assemble(cons
 			double faceVol = 1;
 			switch (G::dimension) {
 				case 1: break;
-				default: faceVol = is.intersectionGlobal().volume();
+				default: faceVol = is->intersectionGlobal().volume();
 				break;
 			}
 
@@ -251,10 +251,10 @@ template<class G, class RT, class VC> void FVDiffusion<G, RT, VC>::assemble(cons
 			Ki.umv(unitOuterNormal, Kni);
 
 			// handle interior face
-			if (is.neighbor())
+			if (is->neighbor())
 			{
 				// access neighbor
-				EntityPointer outside = is.outside();
+				EntityPointer outside = is->outside();
 				int indexj = elementmapper.map(*outside);
 
 				// compute factor in neighbor
@@ -350,7 +350,7 @@ template<class G, class RT, class VC> void FVDiffusion<G, RT, VC>::assemble(cons
 			{
 				// center of face in global coordinates
 				FieldVector<ct,dimworld>
-				faceglobal = is.intersectionGlobal().global(facelocal);
+				faceglobal = is->intersectionGlobal().global(facelocal);
 
 				// compute total mobility
 				double fractionalW = 1.;

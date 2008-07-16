@@ -70,17 +70,17 @@ public:
 			for (IntersectionIterator is = IntersectionIteratorGetter<G,
 					LevelTag>::begin(*it); is!=endit; ++is) {
 				// get geometry type of face
-				GeometryType gtf = is.intersectionSelfLocal().type();
+				GeometryType gtf = is->intersectionSelfLocal().type();
 
-				//Geometry dg = is.intersectionSelfLocal();
+				//Geometry dg = is->intersectionSelfLocal();
 				// local number of facet 
-				int numberInSelf = is.numberInSelf();
+				int numberInSelf = is->numberInSelf();
 				
 				switch (G::dimension) {
 							case 1:
 								faceVol[numberInSelf] = 1;
 							default:
-								faceVol[numberInSelf] = is.intersectionGlobal().volume();
+								faceVol[numberInSelf] = is->intersectionGlobal().volume();
 							}
 
 				// center in face's reference element
@@ -93,17 +93,17 @@ public:
 
 				// get normal vector
 				FieldVector<ct,dimworld> unitOuterNormal
-				= is.unitOuterNormal(facelocal);
+				= is->unitOuterNormal(facelocal);
 
 				// center of face in global coordinates
 				FieldVector<ct,dimworld>
-				faceglobal = is.intersectionGlobal().global(facelocal);
+				faceglobal = is->intersectionGlobal().global(facelocal);
 
 				// handle interior face
-				if (is.neighbor())
+				if (is->neighbor())
 				{
 					// access neighbor
-					EntityPointer outside = is.outside();
+					EntityPointer outside = is->outside();
 					int indexj = this->elementmapper.map(*outside);
 
 					// get neighbor pressure and permeability
@@ -217,7 +217,7 @@ public:
 					{
 						double J = this->diffproblem.J(faceglobal, *it, facelocalDim);
 						FieldVector<ct,dimworld> unitOuterNormal
-						= is.unitOuterNormal(facelocal);
+						= is->unitOuterNormal(facelocal);
 						this->diffproblem.variables.velocity[indexi][numberInSelf] = unitOuterNormal;
 						this->diffproblem.variables.velocity[indexi][numberInSelf] *= J;
 					}
