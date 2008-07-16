@@ -41,7 +41,7 @@
 #include <dune/istl/paamg/amg.hh>
 #include "dumux/pardiso/pardiso.hh"
 #include "dumux/nonlinear/newtonmethod.hh"
-#include "dumux/twophase/twophasemodel.hh"
+#include "dumux/2p2c/2p2cmodel.hh"
 #include "dumux/2p2c/2p2cproblem.hh"
 #include "dumux/2p2c/fv/box2p2cjacobian.hh"
 
@@ -49,7 +49,7 @@ namespace Dune
 {
   template<class G, class RT, class VtkMultiWriter>
   class Box2P2C 
-  : public LeafP1TwoPhaseModel<G, RT, TwoPTwoCProblem<G, RT>, Box2P2CJacobian<G, RT> >
+  : public LeafP1TwoPTwoCModel<G, RT, TwoPTwoCProblem<G, RT>, Box2P2CJacobian<G, RT> >
   {
   public:
 	// define the problem type (also change the template argument above)
@@ -57,17 +57,17 @@ namespace Dune
 
 	// define the local Jacobian (also change the template argument above)
 	typedef Box2P2CJacobian<G, RT> LocalJacobian;
-	typedef LeafP1TwoPhaseModel<G, RT, ProblemType, LocalJacobian> LeafP1TwoPhaseModel;
+	typedef LeafP1TwoPTwoCModel<G, RT, ProblemType, LocalJacobian> LeafP1TwoPTwoCModel;
 	typedef Box2P2C<G, RT, VtkMultiWriter> ThisType;
 
-	typedef typename LeafP1TwoPhaseModel::FunctionType FunctionType;
+	typedef typename LeafP1TwoPTwoCModel::FunctionType FunctionType;
 
    typedef typename G::Traits::LeafIndexSet IS;
 
     enum{m = 2};
 
-		typedef typename LeafP1TwoPhaseModel::FunctionType::RepresentationType VectorType;
-		typedef typename LeafP1TwoPhaseModel::OperatorAssembler::RepresentationType MatrixType;
+		typedef typename LeafP1TwoPTwoCModel::FunctionType::RepresentationType VectorType;
+		typedef typename LeafP1TwoPTwoCModel::OperatorAssembler::RepresentationType MatrixType;
 		typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator; 
 #ifdef HAVE_PARDISO
 	SeqPardiso<MatrixType,VectorType,VectorType> pardiso;
@@ -75,7 +75,7 @@ namespace Dune
 
 	
 	Box2P2C(const G& g, ProblemType& prob) 
-	: LeafP1TwoPhaseModel(g, prob)// (this->size) vectors
+	: LeafP1TwoPTwoCModel(g, prob)// (this->size) vectors
 	{ }
 
 	void initial() {
@@ -88,9 +88,17 @@ namespace Dune
 		enum {dim = G::dimension};
 		enum {dimworld = G::dimensionworld};
 
-		this->localJacobian.hackySaturationN = hackyVtkWriter->template createField<RT, 1>(this->size);
-		this->localJacobian.hackyMassFracAir = hackyVtkWriter->template createField<RT, 1>(this->size);
-		this->localJacobian.hackyMassFracWater = hackyVtkWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.outSaturationN = hackyVtkWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.outMassFracAir = hackyVtkWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.outMassFracWater = hackyVtkWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.outSaturationW = hackyVtkWriter->template createField<RT, 1>(this->size);
+  	   	this->localJacobian.outSaturationN = hackyVtkWriter->template createField<RT, 1>(this->size);
+  	   	this->localJacobian.outMassFracAir = hackyVtkWriter->template createField<RT, 1>(this->size);
+  	   	this->localJacobian.outMassFracWater = hackyVtkWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.outDensityW = hackyVtkWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.outDensityN = hackyVtkWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.outMobilityW = hackyVtkWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.outMobilityN = hackyVtkWriter->template createField<RT, 1>(this->size);
 		
 		const IS& indexset(this->grid.leafIndexSet());
 
@@ -224,9 +232,14 @@ namespace Dune
 
 	void update (double& dt)
 	{
-		this->localJacobian.hackySaturationN = hackyVtkWriter->template createField<RT, 1>(this->size);
-		this->localJacobian.hackyMassFracAir = hackyVtkWriter->template createField<RT, 1>(this->size);
-		this->localJacobian.hackyMassFracWater = hackyVtkWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.outSaturationW = hackyVtkWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.outSaturationN = hackyVtkWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.outMassFracAir = hackyVtkWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.outMassFracWater = hackyVtkWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.outDensityW = hackyVtkWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.outDensityN = hackyVtkWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.outMobilityW = hackyVtkWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.outMobilityN = hackyVtkWriter->template createField<RT, 1>(this->size);
 
 		this->localJacobian.setDt(dt);
 		this->localJacobian.setOldSolution(this->uOldTimeStep);
@@ -234,8 +247,8 @@ namespace Dune
 		///////////////////////////////////
 		// define solver tolerances here
 		///////////////////////////////////
-		RT absTol = 2e-7;
-		RT relTol = 1e-5;
+		RT absTol = 1e5;
+		RT relTol = 1e-7;
 ////////////////
 //		typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator
 //		Iterator;
@@ -290,24 +303,19 @@ namespace Dune
 //		BlockVector<FieldVector<RT, 1> > &xAW = *writer.template createField<RT, 1>(this->size);
 //		BlockVector<FieldVector<RT, 1> > &satW = *writer.template createField<RT, 1>(this->size);
 
-		for (int i = 0; i < this->size; i++) {
-//			RT pW = (*(this->u))[i][0];
-//			RT satN = (*(this->u))[i][1];
-//			satW[i] = 1 - satN;
-//			xWN[i] = this->problem.multicomp().xWN(pW, 283.15); //Achtung!! pW instead of pN!!!
-//			xAW[i] = this->problem.multicomp().xAW(pW, 283.15); //Achtung!! pW instead of pN!!!
-		}
+//		writer.addScalarVertexFunction("nonwetting phase saturation", this->u, 1);
+		writer.addScalarVertexFunction("wetting phase pressure", this->u, 0);
 
-//		writer.addScalarVertexFunction("nonwetting phase saturation", 
-//										this->u, 
-//										1);
-		writer.addScalarVertexFunction("wetting phase pressure", 
-										this->u, 
-										0);
 //		writer.addVertexData(&satW,"wetting phase saturation");
-		writer.addVertexData(this->localJacobian.hackySaturationN,"nonwetting phase saturation");
-		writer.addVertexData(this->localJacobian.hackyMassFracAir,"air in water");
-		writer.addVertexData(this->localJacobian.hackyMassFracWater,"water in Gasphase");
+		writer.addVertexData(this->localJacobian.outSaturationW,"wetting phase saturation");
+		writer.addVertexData(this->localJacobian.outSaturationN,"nonwetting phase saturation");
+		writer.addVertexData(this->localJacobian.outMassFracAir,"air in water");
+		writer.addVertexData(this->localJacobian.outMassFracWater,"water in Gasphase");
+		writer.addVertexData(this->localJacobian.outDensityW,"density wetting phase");
+		writer.addVertexData(this->localJacobian.outDensityN,"density non-wetting phase");
+		writer.addVertexData(this->localJacobian.outMobilityW,"mobility wetting phase");
+		writer.addVertexData(this->localJacobian.outMobilityN,"mobility non-wetting phase");
+
 //		writer.addVertexData(&xWN, "water in air");
 //		writer.addVertexData(&xAW, "dissolved air");
 	}
@@ -344,7 +352,7 @@ namespace Dune
 //	}
 //
 	
-	void setHackyVtkMultiWriter(VtkMultiWriter *writer)
+	void setVtkMultiWriter(VtkMultiWriter *writer)
 	{ hackyVtkWriter = writer; }
   protected:
     VtkMultiWriter *hackyVtkWriter;

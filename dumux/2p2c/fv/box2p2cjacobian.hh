@@ -14,11 +14,9 @@
 #include<dune/common/geometrytype.hh>
 #include<dune/grid/common/quadraturerules.hh>
 #include<dune/grid/utility/intersectiongetter.hh>
-
 #include<dune/disc/shapefunctions/lagrangeshapefunctions.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
 #include<dune/disc/functions/p1function.hh>
-//#include"../boxjacobian_2p2c.hh"
 #include"dumux/operators/boxjacobian.hh"
 #include"dumux/2p2c/2p2cproblem.hh"
 //#include "varswitch.hh"
@@ -73,7 +71,7 @@ namespace Dune
     typedef typename LocalJacobian<ThisType,G,RT,2>::MBlockType MBlockType;
     typedef FVElementGeometry<G> FVElementGeometry;
 
- 	enum {pWIdx = 0, satNIdx = 1, numberOfComponents = 2};	// Solution vector index
+ 	enum {pWIdx = 0, switchIdx = 1, numberOfComponents = 2};	// Solution vector index
 	enum {wPhase = 0, nPhase = 1};									// Phase index
 	enum {gasPhase = 0, waterPhase = 1, bothPhases = 2};		// Phase state
 	enum {water = 0, air = 1};										// Component index					
@@ -97,7 +95,7 @@ namespace Dune
     : BoxJacobian<ThisType,G,RT,2,BoxFunction>(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_), 
       problem(params), 
       sNDat(this->vertexMapper.size()),
-      sIPDat(this->vertexMapper.size()), vNDat(SIZE), oldVNDat(SIZE)
+      vNDat(SIZE), oldVNDat(SIZE)
     {
       this->analytic = false;
     }
@@ -163,16 +161,16 @@ namespace Dune
 
 	 FieldMatrix<RT,m,dim> pGrad(0.), xGrad(0.); 
 	 FieldVector<RT,dim> temp(0.); 
-//		 FieldVector<RT,dim> Kij(0);
      VBlockType flux(0.);
-		 
+
+     //	FieldVector<RT,dim> Kij(0); 
 	 // effective permeability in edge direction 
  	 // RT Kij = sIPDat[global_j].K_eff[face]; 
+	 //const FMatrix K = harmonicMeanK(e, face);		  
+ 	 //K.umv(normal, Kij);  // Kij=K*n
  	 
  	 // calculate harmonic mean of permeabilities of nodes i and j
 	 const FMatrix K = harmonicMeanK(global_i, global_j);
-	 //const FMatrix K = harmonicMeanK(e, face);		  
- 	 //K.umv(normal, Kij);  // Kij=K*n
 	 
 	 // calculate FE gradient (grad p for each phase)
 	 for (int k = 0; k < this->fvGeom.nNodes; k++) // loop over adjacent nodes
@@ -262,8 +260,8 @@ namespace Dune
 	 RT diffusionWW, diffusionWN; // diffusion of water
 	 RT diffusionAW, diffusionAN; // diffusion of air
 	 VBlockType avgDensity, avgDpm;
-	 avgDpm[wPhase]=1e-5; // needs to be changed !!!
-	 avgDpm[nPhase]=1e-5; // water in the gasphase
+	 avgDpm[wPhase]=1e-9; // needs to be changed !!!
+	 avgDpm[nPhase]=1e-9; // water in the gasphase
 	 
 	 normDiffGrad[wPhase] = -(xGrad[wPhase]*normal);
 	 normDiffGrad[nPhase] = -(xGrad[nPhase]*normal);
@@ -309,13 +307,11 @@ namespace Dune
 	 *  @param sol solution vector
 	 *  @param local local node id
 	 */
-//   	virtual void primaryVarSwitch (const Entity& e, const int global, VBlockType* sol, const int local)
    	virtual void primaryVarSwitch (const Entity& e, int global, VBlockType* sol, int local)
     {
         // neue Variable in SOL schreiben. Da Zeiger auf sol, sollte das funktionieren
         // Achtung: alte Loesung beibebehalten, falls Newton den Zeitschritt nicht schafft
    		// 1=gas, 2=water, 3=both
-   		
 
    		int state = sNDat[global].phaseState;
         bool switched = false;
@@ -332,7 +328,7 @@ namespace Dune
         {
         case gasPhase :
         	RT xWNmass, pwn; 
-        	xWNmass = sol[local][satNIdx];
+        	xWNmass = sol[local][switchIdx];
         	xWNmolar = problem.multicomp().conversionMassToMoleFraction(xWNmass, gasPhase);
            	pwn = xWNmolar * vNDat[local].pN;
   
@@ -343,14 +339,14 @@ namespace Dune
             	vNDat[local].saturationN = 1.0 - 1.e-6; // initialize
             	sNDat[global].phaseState = bothPhases;
 //      		  	sNDat[global].switched = true;
-            	sol[local][satNIdx] = vNDat[local].saturationN;
+            	sol[local][switchIdx] = vNDat[local].saturationN;
             	switched = true;
             }
             break;
 
         case waterPhase :
         	RT pbub, pNint, xAWmass;
-         	xAWmass = sol[local][satNIdx];
+         	xAWmass = sol[local][switchIdx];
          	xAWmolar = problem.multicomp().conversionMassToMoleFraction(xAWmass, waterPhase);
         	pbub = pWSat + xAWmolar/henryInv; // bubbling pressure
         	pNint = vNDat[local].pN;
@@ -362,7 +358,7 @@ namespace Dune
             	vNDat[local].saturationN = 1.e-6;  // initialize
             	sNDat[global].phaseState = bothPhases;
 //      		  	sNDat[global].switched = true;
-            	sol[local][satNIdx] = vNDat[local].saturationN;
+            	sol[local][switchIdx] = vNDat[local].saturationN;
             	switched = true;
             }
             break;
@@ -377,7 +373,7 @@ namespace Dune
       		  	sNDat[global].phaseState = waterPhase;
 //      		  	sNDat[global].switched = true;
       		  	vNDat[local].massfrac[air][wPhase] = 1e-6;
-      		  	sol[local][satNIdx] = vNDat[local].massfrac[air][wPhase];
+      		  	sol[local][switchIdx] = vNDat[local].massfrac[air][wPhase];
       		  	switched = true;
             }
       	  	else if (vNDat[local].saturationW < 0.0  && switched == false)
@@ -389,7 +385,7 @@ namespace Dune
       	  		sNDat[global].phaseState = gasPhase;
 //      		  	sNDat[global].switched = true;
       		  	vNDat[local].massfrac[water][nPhase] = 1e-6;
-      	  		sol[local][satNIdx] = vNDat[local].massfrac[water][nPhase];
+      	  		sol[local][switchIdx] = vNDat[local].massfrac[water][nPhase];
             	switched = true;
       	  	}
       	  	break;
@@ -492,7 +488,7 @@ namespace Dune
   			  sNDat[globalIdx].porosity = problem.porosity(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
   			  
   			  // evaluate primary variable switch
- 			  primaryVarSwitch(e, globalIdx, sol, k);
+// 			  primaryVarSwitch(e, globalIdx, sol, k);
   			  
   			  // mark elements that were already visited
   			  sNDat[globalIdx].visited = true;
@@ -510,10 +506,6 @@ namespace Dune
 	  //*														*
 	  //*********************************************************
 
-    // for output files
-    BlockVector<FieldVector<RT, 1> > *hackyMassFracAir;
-    BlockVector<FieldVector<RT, 1> > *hackyMassFracWater;
-    BlockVector<FieldVector<RT, 1> > *hackySaturationN;
 
     struct VariableNodeData  
     {
@@ -539,7 +531,7 @@ namespace Dune
    		 int state = sNDat[global].phaseState;
 
    		 varData[i].pW = sol[i][pWIdx];
-   		 if (state == bothPhases) varData[i].saturationN = sol[i][satNIdx];
+   		 if (state == bothPhases) varData[i].saturationN = sol[i][switchIdx];
    		 if (state == waterPhase) varData[i].saturationN = 0.0;
    		 if (state == gasPhase) varData[i].saturationN = 1.0;
 
@@ -556,18 +548,14 @@ namespace Dune
    		 }
    		 if (state == waterPhase){
    	   		 varData[i].massfrac[water][nPhase] = 0.0;
-   	   		 varData[i].massfrac[air][wPhase] =  sol[i][satNIdx];
+   	   		 varData[i].massfrac[air][wPhase] =  sol[i][switchIdx];
    		 }
    		 if (state == gasPhase){
-   	   		 varData[i].massfrac[water][nPhase] = sol[i][satNIdx];
+   	   		 varData[i].massfrac[water][nPhase] = sol[i][switchIdx];
    	   		 varData[i].massfrac[air][wPhase] = 0.0;
    		 }
    	   	 varData[i].massfrac[water][wPhase] = 1.0 - varData[i].massfrac[air][wPhase];
    	   	 varData[i].massfrac[air][nPhase] = 1.0 - varData[i].massfrac[water][nPhase];
-   	   	 // for output
-   	   	 (*hackySaturationN)[global] = varData[i].saturationN;
-   	   	 (*hackyMassFracAir)[global] = varData[i].massfrac[air][wPhase];
-   	   	 (*hackyMassFracWater)[global] = varData[i].massfrac[water][nPhase];
    	   	 
    		 // Mobilities & densities
    		 varData[i].mobility[wPhase] = problem.materialLaw().mobW(varData[i].saturationW, parameters);
@@ -582,7 +570,18 @@ namespace Dune
 
          //std::cout << "water in gasphase: " << varData[i].massfrac[water][nPhase] << std::endl;
          //std::cout << "air in waterphase: " << varData[i].massfrac[air][wPhase] << std::endl;
-   	 return;
+
+   		 // for output
+   	   	 (*outSaturationW)[global] = varData[i].saturationW;
+   	   	 (*outSaturationN)[global] = varData[i].saturationN;
+   	   	 (*outMassFracAir)[global] = varData[i].massfrac[air][wPhase];
+   	   	 (*outMassFracWater)[global] = varData[i].massfrac[water][nPhase];
+   	   	 (*outDensityW)[global] = varData[i].density[wPhase];
+   	   	 (*outDensityN)[global] = varData[i].density[nPhase];
+   	   	 (*outMobilityW)[global] = varData[i].mobility[wPhase];
+   	   	 (*outMobilityN)[global] = varData[i].mobility[nPhase];
+
+   	   	 return;
     }
 
 	virtual void updateVariableData(const Entity& e, const VBlockType* sol, int i, bool old = false) 
@@ -636,6 +635,17 @@ namespace Dune
     std::vector<StaticIPData> sIPDat;
     std::vector<VariableNodeData> vNDat;
     std::vector<VariableNodeData> oldVNDat;
+
+    // for output files
+    BlockVector<FieldVector<RT, 1> > *outMassFracAir;
+    BlockVector<FieldVector<RT, 1> > *outMassFracWater;
+    BlockVector<FieldVector<RT, 1> > *outSaturationN;
+    BlockVector<FieldVector<RT, 1> > *outSaturationW;
+    BlockVector<FieldVector<RT, 1> > *outDensityW;
+    BlockVector<FieldVector<RT, 1> > *outDensityN;
+    BlockVector<FieldVector<RT, 1> > *outMobilityW;
+    BlockVector<FieldVector<RT, 1> > *outMobilityN;
+    
   };  
   
 }

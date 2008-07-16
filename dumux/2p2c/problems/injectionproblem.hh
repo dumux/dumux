@@ -1,5 +1,5 @@
-#ifndef DUNE_LAYERPROBLEM_HH
-#define DUNE_LAYERPROBLEM_HH
+#ifndef DUNE_INJECTIONPROBLEM_HH
+#define DUNE_INJECTIONPROBLEM_HH
 
 #include<iostream>
 #include<iomanip>
@@ -16,8 +16,8 @@
 
 /**
  * @file
- * @brief  Base class for defining an instance of the TwoPhase problem
- * @author Bernd Flemisch
+ * @brief  Base class for defining an instance of the TwoPhaseTwoComponent problem
+ * @author Bernd Flemisch, Klaus Mosthaf
  */
 
 namespace Dune
@@ -37,14 +37,14 @@ namespace Dune
    *	- RT    type used for return values 
    */
   template<class G, class RT>
-  class LayerProblem : public TwoPTwoCProblem<G, RT> {
+  class InjectionProblem : public TwoPTwoCProblem<G, RT> {
 	typedef typename G::ctype DT;
 	enum {dim=G::dimension, m=2};
 	typedef typename G::Traits::template Codim<0>::Entity Entity;
 	typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
 
   public:
-	enum {pWIdx = 0, satNIdx = 1};
+	enum {pWIdx = 0, switchIdx = 1};
 	enum {swrIdx = 0, snrIdx = 1, alphaIdx = 2, nIdx = 3};
 	enum {gasPhase = 0, waterPhase = 1, bothPhases = 2};
 
@@ -69,23 +69,6 @@ namespace Dune
 	}
 
 /////////////////////////////
-// TYPE of the boundaries
-/////////////////////////////
-	virtual FieldVector<BoundaryConditions::Flags, m> bctype (const FieldVector<DT,dim>& x, const Entity& e, 
-					const IntersectionIterator& intersectionIt, 
-					   const FieldVector<DT,dim>& xi) const 
-	{
-		FieldVector<BoundaryConditions::Flags, m> values(BoundaryConditions::neumann); 
-
-		if (x[0] < outerLowerLeft_[0] + eps_)
-			values = BoundaryConditions::dirichlet;
-//		if (x[1] < eps_)
-//			values = BoundaryConditions::dirichlet;
-
-		return values;
-	}
-	
-/////////////////////////////
 // INITIAL values
 /////////////////////////////
 		virtual FieldVector<RT,m> initial (const FieldVector<DT,dim>& x, const Entity& e, 
@@ -95,12 +78,13 @@ namespace Dune
 			FieldVector<RT,m> values;
 			
 			values[pWIdx] = -densityW_*gravity_[1]*(depthBOR_ - x[1]);
-					
-//			if (x[1] >= innerLowerLeft_[1] && x[1] <= innerUpperRight_[1] 
+			values[switchIdx] = 0.2;
+
+			//			if (x[1] >= innerLowerLeft_[1] && x[1] <= innerUpperRight_[1] 
 //			 && x[0] >= innerLowerLeft_[0])
-				values[satNIdx] = 0.2;
+//				values[switchIdx] = 0.2;
 //			else
-//				values[satNIdx] = 1e-6;
+//				values[switchIdx] = 1e-6;
 		
 			return values;
 		}
@@ -117,11 +101,30 @@ namespace Dune
 //			      && x[0] >= innerLowerLeft_[0])
 //				state = 2;
 //			else
-				state = 2;
+
+			state = bothPhases;
 				
 			return state;
 		}
-		
+	
+	
+/////////////////////////////
+// TYPE of the boundaries
+/////////////////////////////
+	virtual FieldVector<BoundaryConditions::Flags, m> bctype (const FieldVector<DT,dim>& x, const Entity& e, 
+					const IntersectionIterator& intersectionIt, 
+					   const FieldVector<DT,dim>& xi) const 
+	{
+		FieldVector<BoundaryConditions::Flags, m> values(BoundaryConditions::neumann); 
+
+		if (x[0] < outerLowerLeft_[0] + eps_)
+			values = BoundaryConditions::dirichlet;
+//		if (x[1] < eps_)
+//			values = BoundaryConditions::dirichlet;
+
+		return values;
+	}
+	
 	
 /////////////////////////////
 // DIRICHLET boundaries
@@ -133,12 +136,13 @@ namespace Dune
 		FieldVector<RT,m> values(0);
 
 		values[pWIdx] = -densityW_*gravity_[1]*(depthBOR_ - x[1]);
-
+		values[switchIdx] = 0.2;
+		
 //		if (x[1] >= innerLowerLeft_[1] && x[1] <= innerUpperRight_[1] 
 //		 && x[0] >= innerLowerLeft_[0])
-			values[satNIdx] = 0.2;
+//			values[switchIdx] = 0.2;
 //		else
-//			values[satNIdx] = 1e-6;
+//			values[switchIdx] = 1e-6;
 		
 		return values;
 	}
@@ -153,8 +157,9 @@ namespace Dune
 		FieldVector<RT,m> values(0);
 
 		//RT lambda = (x[1])/height_;
-//		if (x[1] < 2.0 && x[1] > 1.5)
-			values[satNIdx] = -5e-6;
+
+		if (x[1] < 2.0 && x[1] > 1.0)
+			values[switchIdx] = -5e-5;
 		
 		return values;
 	}
@@ -202,11 +207,11 @@ namespace Dune
 		return values;
 	}
 
-	LayerProblem(TwoPhaseRelations& law = *(new LinearLaw), MultiComp& multicomp = *(new CWaterAir), 
+	InjectionProblem(TwoPhaseRelations& law = *(new LinearLaw), MultiComp& multicomp = *(new CWaterAir), 
 			const FieldVector<DT,dim> outerLowerLeft = 0., const FieldVector<DT,dim> outerUpperRight = 0., 
 			const FieldVector<DT,dim> innerLowerLeft = 0., const FieldVector<DT,dim> innerUpperRight = 0., 
-			const RT depthBOR = 0., RT outerK = 1.2e-12, RT innerK = 1.2e-12,
-			RT outerSwr = 0.05, RT outerSnr = 0.1, RT innerSwr = 0.05, RT innerSnr = 0.1, 
+			const RT depthBOR = 0., RT outerK = 1.2e-13, RT innerK = 1.2e-13,
+			RT outerSwr = 0.2, RT outerSnr = 0.2, RT innerSwr = 0.2, RT innerSnr = 0.2, 
 			RT outerPorosity = 0.4, RT innerPorosity = 0.4, 
 			RT outerAlpha = 0.0037, RT innerAlpha = 0.0037,  //0.00045
 			RT outerN = 4.7, RT innerN = 4.7)	//7.3
