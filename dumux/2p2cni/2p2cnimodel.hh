@@ -240,7 +240,7 @@ public:
 		typedef typename G::Traits::template Codim<0>::Entity Entity;
 		typedef typename G::ctype DT;
 		typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator
-		Iterator;
+				Iterator;
 		enum {dim = G::dimension};
 		typedef array<BoundaryConditions::Flags, m> BCBlockType;
 
@@ -249,12 +249,14 @@ public:
 
 		// allocate flag vector to hold flags for essential boundary conditions
 		std::vector<BCBlockType> essential(this->vertexmapper.size());
-		for (typename std::vector<BCBlockType>::size_type i = 0; i < essential.size(); i++)
+		for (typename std::vector<BCBlockType>::size_type i=0; i
+				<essential.size(); i++)
 			essential[i].assign(BoundaryConditions::neumann);
 
 		// iterate through leaf grid 
 		Iterator eendit = indexset.template end<0, All_Partition>();
-		for (Iterator it = indexset.template begin<0, All_Partition>(); it != eendit; ++it) {
+		for (Iterator it = indexset.template begin<0, All_Partition>(); it
+				!= eendit; ++it) {
 			// get geometry type
 			Dune::GeometryType gt = it->geometry().type();
 
@@ -262,9 +264,11 @@ public:
 			const Entity& entity = *it;
 			this->localJacobian.fvGeom.update(entity);
 			int size = this->localJacobian.fvGeom.nNodes;
-
+			
 			this->localJacobian.setLocalSolution(entity);
 			this->localJacobian.computeElementData(entity); 
+			bool old = true;
+			this->localJacobian.updateVariableData(entity, this->localJacobian.uold, old);
 			this->localJacobian.updateVariableData(entity, this->localJacobian.u);
 			this->localJacobian.template localDefect<LeafTag>(entity, this->localJacobian.u);
 
@@ -273,19 +277,22 @@ public:
 				int globalId = this->vertexmapper.template map<dim>(entity,i);
 				for (int equationnumber = 0; equationnumber < m; equationnumber++) {
 					if (this->localJacobian.bc(i)[equationnumber] == BoundaryConditions::neumann)
-						(*defectGlobal)[globalId][equationnumber] += this->localJacobian.def[i][equationnumber];
+						(*defectGlobal)[globalId][equationnumber]
+								+= this->localJacobian.def[i][equationnumber];
 					else
 						essential[globalId].assign(BoundaryConditions::dirichlet);
 				}
 			}
 		}
 
-		for (typename std::vector<BCBlockType>::size_type i = 0; i < essential.size(); i++)
+		for (typename std::vector<BCBlockType>::size_type i=0; i
+				<essential.size(); i++)
 			for (int equationnumber = 0; equationnumber < m; equationnumber++) {
-				if (essential[i][equationnumber] == BoundaryConditions::dirichlet)
-					(*defectGlobal)[i][equationnumber] = 0;
+			if (essential[i][equationnumber] == BoundaryConditions::dirichlet)
+				(*defectGlobal)[i][equationnumber] = 0;
 			}
 	}
+
 
 	virtual void vtkout(const char* name, int k) {
 		VTKWriter<G> vtkwriter(this->grid);

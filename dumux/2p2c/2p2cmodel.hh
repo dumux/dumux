@@ -224,7 +224,8 @@ public:
 			
 			this->localJacobian.setLocalSolution(entity);
 			this->localJacobian.computeElementData(entity); 
-			this->localJacobian.updateStaticData(entity, this->localJacobian.u);
+			bool old = true;
+			this->localJacobian.updateVariableData(entity, this->localJacobian.uold, old);
 			this->localJacobian.updateVariableData(entity, this->localJacobian.u);
 			this->localJacobian.template localDefect<LeafTag>(entity, this->localJacobian.u);
 
@@ -248,6 +249,7 @@ public:
 				(*defectGlobal)[i][equationnumber] = 0;
 			}
 	}
+
 
 	virtual double injected(double& upperMass, double& oldUpperMass) {
 		typedef typename G::Traits::template Codim<0>::Entity Entity;

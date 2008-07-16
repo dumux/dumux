@@ -207,6 +207,8 @@ public:
 			
 			this->localJacobian.setLocalSolution(entity);
 			this->localJacobian.computeElementData(entity); 
+			bool old = true;
+			this->localJacobian.updateVariableData(entity, this->localJacobian.uold, old);
 			this->localJacobian.updateVariableData(entity, this->localJacobian.u);
 			this->localJacobian.template localDefect<LeafTag>(entity, this->localJacobian.u);
 
@@ -223,14 +225,12 @@ public:
 			}
 		}
 
-		for (typename std::vector<BCBlockType>::size_type i = 0; i < essential.size(); i++)
-		{
-			for (int equationnumber = 0; equationnumber < m; equationnumber++) 
-			{
-				if (essential[i][equationnumber] == BoundaryConditions::dirichlet)
-					(*defectGlobal)[i][equationnumber] = 0;
+		for (typename std::vector<BCBlockType>::size_type i=0; i
+				<essential.size(); i++)
+			for (int equationnumber = 0; equationnumber < m; equationnumber++) {
+			if (essential[i][equationnumber] == BoundaryConditions::dirichlet)
+				(*defectGlobal)[i][equationnumber] = 0;
 			}
-		}
 	}
 
 
