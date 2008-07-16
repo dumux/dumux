@@ -118,8 +118,9 @@ namespace Dune {
 		  int k = 0;
 		  
 		  writer.beginTimestep(0, model.getGrid());
+
 		  // initialize solution with initial values
-		  model.setHackyVtkMultiWriter(&writer);
+		  model.setVtkMultiWriter(&writer);
 		  model.initial();          
 		  model.addvtkfields(writer);
 		  writer.endTimestep();
