@@ -1,5 +1,6 @@
 #include "config.h"
 #include <iostream>
+
 #ifdef HAVE_UG
 #include <iomanip>
 #include <dune/grid/common/gridinfo.hh>
@@ -9,18 +10,15 @@
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
-//#include "dumux/2p2c/problems/lensproblem2p2c.hh"
-#include "dumux/2p2c/problems/layerproblem.hh"
+#include "dumux/2p2c/problems/injectionproblem.hh"
 #include "dumux/2p2c/problems/uniformtwophaseproblem.hh"
 #include "dumux/2p2c/fv/box2p2c.hh"
-//#include "dumux/twophase/fv/boxpwsn.hh"
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/material/vangenuchtenlaw.hh"
 #include "dumux/material/multicomponentrelations.hh"
-//#include "dumux/material/solubilities.hh"
 #include "dumux/material/properties.hh"
-#include "dumux/material/constrel/constrelwater.hh"
-//#include "dumux/material/water_props.hh"
+//#include "dumux/material/constrel/constrelwater.hh"
+//#include "dumux/material/constrel/constrelair.hh"
 
 
 int main(int argc, char** argv) 
@@ -32,11 +30,11 @@ int main(int argc, char** argv)
     Dune::FieldVector<NumberType, dim> outerLowerLeft(0);
     Dune::FieldVector<NumberType, dim> outerUpperRight(6);
     outerUpperRight[1] = 4;
-    Dune::FieldVector<NumberType, dim> innerLowerLeft(3);
+    Dune::FieldVector<NumberType, dim> innerLowerLeft(4);
     innerLowerLeft[1] = 0.0;
     Dune::FieldVector<NumberType, dim> innerUpperRight(6);
     innerUpperRight[1] = 0.5;
-    double depthBOR = 5.;
+    double depthBOR = 500;
 
     // count number of arguments
     if (argc != 3) {
@@ -60,7 +58,7 @@ int main(int argc, char** argv)
 
     // use unitcube from grids (UGGrid)
     std::stringstream dgfFileName;
-    dgfFileName << "grids/unitcube" 
+    dgfFileName << "dune-mux/test/twophase/grids/unitcube" 
     	<< GridType :: dimension << ".dgf";
 
     // create grid pointer, GridType is defined by gridtype.hh
@@ -72,13 +70,13 @@ int main(int argc, char** argv)
     Dune::gridinfo(grid);
 
     // choose fluids and properties
-    Water wPhase; CO2 nPhase;//Air air;
+    Water wPhase; Air nPhase;
     Dune::VanGenuchtenLaw law(wPhase, nPhase);
     Dune::CWaterAir multicomp(wPhase, nPhase);
     //Dune::LinearLaw law(water, air);
     
     // create problem properties and geometry
-    Dune::LayerProblem<GridType, NumberType> problem(law, multicomp, outerLowerLeft, outerUpperRight, 
+    Dune::InjectionProblem<GridType, NumberType> problem(law, multicomp, outerLowerLeft, outerUpperRight, 
     		innerLowerLeft, innerUpperRight, depthBOR);
 
     // create two-phase two-component problem
