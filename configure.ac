@@ -105,6 +105,7 @@ AC_CONFIG_FILES([Makefile
     test/splitting/Makefile
     test/star2dgf/Makefile
     test/star2uggrid/Makefile
+    test/stokes/Makefile
     test/transport/Makefile
     test/twophase/Makefile
     test/upscaledvelocity/Makefile
