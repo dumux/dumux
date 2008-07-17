@@ -4,7 +4,8 @@
 #include <dune/common/helpertemplates.hh>
 #include <dune/common/typetraits.hh>
 #include <dune/grid/common/mcmgmapper.hh>
-#include <dune/grid/io/file/vtk/vtkwriter.hh>
+//#include <dune/grid/io/file/vtk/vtkwriter.hh>
+#include "dumux/io/vtkwriterextended.hh"
 #include <dune/grid/utility/intersectiongetter.hh>
 #include <dune/istl/operators.hh>
 #include <dune/istl/solvers.hh>
@@ -587,9 +588,12 @@ namespace Dune
 	void vtkout (const char* name, int k) const 
 	{
 		VTKWriter<G> vtkwriter(this->grid);
+		BlockVector<FieldVector <RT, dim> > elementvelocity = this->velocity;
+		BlockVector<FieldVector <RT, dim> > nullvector(0);
 		char fname[128];	
 		sprintf(fname,"%s-%05d",name,k);
 		vtkwriter.addCellData(this->pressure,"total pressure p~");
+		vtkwriter.addFaceData(this->velocity, nullvector, "velocity");
 		vtkwriter.write(fname,VTKOptions::ascii);		
 	}
 	
