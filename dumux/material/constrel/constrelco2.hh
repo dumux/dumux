@@ -5275,116 +5275,41 @@ double Interpolate (InterpolationData dat) const
 
 double density(double T, double p) const
 {
-    		
-            if(T > T_vals[66]) T = T_vals[66];
-            if(T < T_vals[0]) T = T_vals[0];
-            if(p > p_vals[109]) p = p_vals[109];
-            if(p < p_vals[0]) p = p_vals[0];
+	// ASSUMES equidistant distribution of temperature and pressure values 
+	int maxTIdx = 66;
+	int maxPIdx = 109;
+	if (T > T_vals[maxTIdx]) 
+		T = T_vals[maxTIdx];
+	else if(T < T_vals[0]) 
+		T = T_vals[0];
+	if (p > p_vals[maxPIdx]) 
+		p = p_vals[maxPIdx];
+	else if(p < p_vals[0]) 
+		p = p_vals[0];
           
-    	    double rho;
-    		int ju, jm, jl, j_p, j_T, j_Tlow, j_plow, j_Tup, j_pup;
-    		bool ascnd, flag1(false), flag2(false);
-    		int n_pvals = 110;
-    		int n_Tvals = 67;
-    		InterpolationData dat;
-    		
-    // Find pressure values 
-    // bisection search algorithm according to "NUMERICAL RECIPES IN C++", William H. Press, page 120 **/
-
-                    jl = 0;
-                    ju = n_pvals - 1;
-                    ascnd = (p_vals[n_pvals - 1] >= p_vals[0]);
-                    while ((ju-jl) > 1)
-                    {
-                     jm = (ju + jl) >> 1;
-                     if (p >= p_vals[jm] == ascnd)
-                        jl = jm;
-                     else
-                        ju = jm;
-                    }
-                    if (p == p_vals[0])  /* pressure equal to lowest pressure value of range */
-                    {
-                      j_p = 0;
-                      flag1 = true;
-                    }
-                    else if (p == p_vals[n_pvals -1])  /* pressure equal to largest pressure value of range */
-                    {
-                      j_p = n_pvals - 1;
-                      flag1 = true;
-                    }
-                    else     /* pressure somewhere within pressure range */
-                    {
-                     j_plow = jl;
-                     j_pup = jl + 1;
-                    }
-                    
-    // Find temperature values ***/
-    // bisection search algorithm according to "NUMERICAL RECIPES IN C", William H. Press, page 117 **/
-
-                    jl = 0;
-                    ju = n_Tvals-1;
-                    ascnd = (T_vals[n_Tvals - 1] >= T_vals[0]);
-                    while ((ju-jl) > 1)
-                    {
-                     jm = (ju + jl) >> 1;
-                     if (T >= T_vals[jm] == ascnd)
-                        jl = jm;
-                     else
-                        ju = jm;
-                    }
-                    if (T == T_vals[0])  /* Temp equal to lowest pressure value of range */
-                    {
-                     j_T = 0;
-                     flag2 = true;
-                    }
-                    else if (T == T_vals[n_Tvals - 1])  /* Temp equal to largest pressure value of range */
-                    {
-                      j_T = n_Tvals - 1;
-                      flag2 = true;
-                    }
-                    else      /* temperature somewhere within temperature range */
-                    {
-                     j_Tlow = jl;
-                     j_Tup = jl + 1;
-                    }
-
-    // 
-                    if (flag1 == true && flag2 == true) rho = rho_vals[j_p][j_T]; /* no interpolation needed */
-
-                    else if (flag1 == true && flag2 == false)     /* 1D interpolation */
-                     {
-                       rho = rho_vals[j_p][j_Tlow] + (rho_vals[j_p][j_Tup]-rho_vals[j_p][j_Tlow]) / (T_vals[j_Tup]-T_vals[j_Tlow]) * (T-T_vals[j_Tlow]);
-
-                     }
-
-                    else if (flag1 == false && flag2 == true)     /* 1D interpolation */
-                     {
-                       rho = rho_vals[j_plow][j_T] + (rho_vals[j_pup][j_T]-rho_vals[j_plow][j_T]) / (p_vals[j_pup]-p_vals[j_plow]) * (p-p_vals[j_plow]);
-                     }
-
-                    else                                   /* 2D interpolation */
-                    {
-                     dat.upper_T = T_vals[j_Tup];
-                     dat.lower_T = T_vals[j_Tlow];
-                     dat.upper_p = p_vals[j_pup];
-                     dat.lower_p = p_vals[j_plow];
-
-                     dat.var_Tlow_plow   = rho_vals[j_plow][j_Tlow];
-                     dat.var_Tlow_phigh  = rho_vals[j_pup][j_Tlow];
-                     dat.var_Thigh_plow  = rho_vals[j_plow][j_Tup];
-                     dat.var_Thigh_phigh = rho_vals[j_pup][j_Tup];
-
-                     dat.var_T = T;
-                     dat.var_p = p;
-                     
-            	     
-            	     /* Variable at low temperature sampling point and pressure that
-            	        is searched for */
-
-            	     rho = Interpolate(dat);
-                    }
-           return (rho);
-			}
+	double h_T = T_vals[2] - T_vals[1];
+	int j_Tlow = (T - T_vals[0])/h_T;
+	int j_Tup = j_Tlow + 1;
+	double h_p = p_vals[2] - p_vals[1];
+	int j_plow = (p - p_vals[0])/h_p;
+	int j_pup = j_plow + 1;
+	
+	InterpolationData dat;
+	dat.upper_T = T_vals[j_Tup];
+	dat.lower_T = T_vals[j_Tlow];
+	dat.upper_p = p_vals[j_pup];
+	dat.lower_p = p_vals[j_plow];
+	dat.var_Tlow_plow   = rho_vals[j_plow][j_Tlow];
+	dat.var_Tlow_phigh  = rho_vals[j_pup][j_Tlow];
+	dat.var_Thigh_plow  = rho_vals[j_plow][j_Tup];
+	dat.var_Thigh_phigh = rho_vals[j_pup][j_Tup];
+	dat.var_T = T;
+	dat.var_p = p;
+	
+	double rho = Interpolate(dat);
+	
+	return (rho);
+}	
            
 
 // from MUFTE:
@@ -5466,112 +5391,42 @@ double enthalpy(double Temp, double pg) const
 	 /********************************************************/ 
  
 	 /*   calculation of upper and lower tabular entry       */ 
- 
-     if(Temp > T_enth[38]) Temp = T_enth[38];
-     if(Temp < T_enth[0]) Temp = T_enth[0];
-     if(pg > p_enth[79]) pg = p_enth[79];
-     if(pg < p_enth[0]) pg = p_enth[0];
+	// ASSUMES equidistant distribution of temperature and pressure values 
+	 int maxTIdx = 38;
+	 int maxPIdx = 79;
+     if(Temp > T_enth[maxTIdx]) 
+    	 Temp = T_enth[maxTIdx];
+     else if(Temp < T_enth[0]) 
+    	 Temp = T_enth[0];
+     if(pg > p_enth[maxPIdx]) 
+    	 pg = p_enth[maxPIdx];
+     else if(pg < p_enth[0]) 
+    	 pg = p_enth[0];
    
-	    double enth_result;
-		int ju, jm, jl, j_p, j_T, j_Tlow, j_plow, j_Tup, j_pup;
-		bool ascnd, flag1(false), flag2(false);
-		int n_pvals = 80;
-		int n_Tvals = 39;
-		InterpolationData dat;
-		
-// Find pressure values 
-// bisection search algorithm according to "NUMERICAL RECIPES IN C++", William H. Press, page 120 **/
+     double h_T = T_enth[2] - T_enth[1];
+     int j_Tlow = (Temp - T_enth[0])/h_T;
+     int j_Tup = j_Tlow + 1;
+     double h_p = p_enth[2] - p_enth[1];
+     int j_plow = (pg - p_enth[0])/h_p;
+     int j_pup = j_plow + 1;
 
-             jl = 0;
-             ju = n_pvals - 1;
-             ascnd = (p_enth[n_pvals - 1] >= p_enth[0]);
-             while ((ju-jl) > 1)
-             {
-              jm = (ju + jl) >> 1;
-              if (pg >= p_enth[jm] == ascnd)
-                 jl = jm;
-              else
-                 ju = jm;
-             }
-             if (pg == p_enth[0])  /* pressure equal to lowest pressure value of range */
-             {
-               j_p = 0;
-               flag1 = true;
-             }
-             else if (pg == p_enth[n_pvals -1])  /* pressure equal to largest pressure value of range */
-             {
-               j_p = n_pvals - 1;
-               flag1 = true;
-             }
-             else     /* pressure somewhere within pressure range */
-             {
-              j_plow = jl;
-              j_pup = jl + 1;
-             }
-             
-// Find temperature values ***/
-// bisection search algorithm according to "NUMERICAL RECIPES IN C", William H. Press, page 117 **/
-
-             jl = 0;
-             ju = n_Tvals-1;
-             ascnd = (T_enth[n_Tvals - 1] >= T_enth[0]);
-             while ((ju-jl) > 1)
-             {
-              jm = (ju + jl) >> 1;
-              if (Temp >= T_enth[jm] == ascnd)
-                 jl = jm;
-              else
-                 ju = jm;
-             }
-             if (Temp == T_enth[0])  /* Temp equal to lowest pressure value of range */
-             {
-              j_T = 0;
-              flag2 = true;
-             }
-             else if (Temp == T_enth[n_Tvals - 1])  /* Temp equal to largest pressure value of range */
-             {
-               j_T = n_Tvals - 1;
-               flag2 = true;
-             }
-             else      /* temperature somewhere within temperature range */
-             {
-              j_Tlow = jl;
-              j_Tup = jl + 1;
-             }
-
-// 
-             if (flag1 == true && flag2 == true) enth_result = enth[j_p][j_T]; /* no interpolation needed */
-
-             else if (flag1 == true && flag2 == false)     /* 1D interpolation */
-              {
-                enth_result = enth[j_p][j_Tlow] + (enth[j_p][j_Tup]-enth[j_p][j_Tlow]) / (T_enth[j_Tup]-T_enth[j_Tlow]) * (Temp-T_enth[j_Tlow]);
-
-              }
-
-             else if (flag1 == false && flag2 == true)     /* 1D interpolation */
-              {
-                enth_result = enth[j_plow][j_T] + (enth[j_pup][j_T]-enth[j_plow][j_T]) / (p_enth[j_pup]-p_enth[j_plow]) * (pg-p_enth[j_plow]);
-              }
-
-             else                                   /* 2D interpolation */
-             {
-              dat.upper_T = T_enth[j_Tup];
-              dat.lower_T = T_enth[j_Tlow];
-              dat.upper_p = p_enth[j_pup];
-              dat.lower_p = p_enth[j_plow];
-
-              dat.var_Tlow_plow   = enth[j_plow][j_Tlow];
-              dat.var_Tlow_phigh  = enth[j_pup][j_Tlow];
-              dat.var_Thigh_plow  = enth[j_plow][j_Tup];
-              dat.var_Thigh_phigh = enth[j_pup][j_Tup];
-
-              dat.var_T = Temp;
-              dat.var_p = pg;
+     InterpolationData dat;
+     dat.upper_T = T_enth[j_Tup];
+     dat.lower_T = T_enth[j_Tlow];
+     dat.upper_p = p_enth[j_pup];
+     dat.lower_p = p_enth[j_plow];
+     dat.var_Tlow_plow   = enth[j_plow][j_Tlow];
+     dat.var_Tlow_phigh  = enth[j_pup][j_Tlow];
+     dat.var_Thigh_plow  = enth[j_plow][j_Tup];
+     dat.var_Thigh_phigh = enth[j_pup][j_Tup];
+     dat.var_T = Temp;
+     dat.var_p = pg;
               
-     	      enth_result = Interpolate (dat); 
-             }
-        return(enth_result);
+     double enth_result = Interpolate (dat); 
+
+     return(enth_result);
 }
+
 double lambda_CO2 (double Temp, double pg) const
 {
 
