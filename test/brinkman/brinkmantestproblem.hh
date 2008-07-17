@@ -18,27 +18,32 @@ namespace Dune
 	  BrinkmanTestProblem()
 	    : BrinkmanProblem<G,RT>()
 	  {
-	    permloc = 0; 
+	    permlocP = 0;
+	    permlocF = 0;
+
 	    for (int k = 0; k < n; k++)
-	      permloc[k][k] = 1e0;
+	      permlocF[k][k] = 1e4;
 	  }
 	
 	  const Dune::FieldMatrix<DT,n,n>& Kinv (const Dune::FieldVector<DT,n>& x, const Entity& e, 
 					  const Dune::FieldVector<DT,n>& xi) 
 	  {
-		  return permloc;
+		  if (x[0]>1)
+			  return permlocP;
+		  else
+			  return permlocF;
 	  }
 	  
 	  virtual RT muEff   (const FieldVector<DT,n>& x, const Entity& e, 
 			  const FieldVector<DT,n>& xi) 
 	  {
-		  return 1.0;
+		  return 0.01;
 	  }
 	  
 	  virtual RT mu   (const FieldVector<DT,n>& x, const Entity& e, 
 						const FieldVector<DT,n>& xi) 
 	  {
-		  return 1.0;
+		  return 0.01;
 	  }
 
 	  RT q   (const Dune::FieldVector<DT,n>& x, const Entity& e, 
@@ -85,13 +90,14 @@ namespace Dune
 					  const FieldVector<DT,n>& xi) const
 	  {
 		  if (x[0] < 1e-6)
-			  return 0;//was=1;
+			  return 0; //was=1;
 		  
 		  return 0;
 	  }
 	  
 	private:
-		Dune::FieldMatrix<DT,n,n> permloc;
+		Dune::FieldMatrix<DT,n,n> permlocF;
+		Dune::FieldMatrix<DT,n,n> permlocP;
 		G* grid;
 	};
 }
