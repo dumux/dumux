@@ -18,17 +18,18 @@ namespace Dune
 	  BrinkmanTestProblem()
 	    : BrinkmanProblem<G,RT>()
 	  {
-	    permlocP = 0;
-	    permlocF = 0;
+	    permlocP = 0.;
+	    permlocF = 0.;
 
 	    for (int k = 0; k < n; k++)
-	      permlocF[k][k] = 1e4;
+	      permlocP[k][k] = 1e3;
 	  }
 	
 	  const Dune::FieldMatrix<DT,n,n>& Kinv (const Dune::FieldVector<DT,n>& x, const Entity& e, 
 					  const Dune::FieldVector<DT,n>& xi) 
 	  {
-		  if (x[0]>1)
+		  if (x[0] > 0.8 && x[0] < 1.2 
+				  && (x[1] < 0.3 || x[1] > 0.7))
 			  return permlocP;
 		  else
 			  return permlocF;
@@ -55,7 +56,7 @@ namespace Dune
 	  typename Dune::BoundaryConditions::Flags bctype (const Dune::FieldVector<DT,n>& x, const Entity& e, 
 						   const Dune::FieldVector<DT,n>& xi) const
 	  {
-	    if (x[0] > 1-1E-6) 
+	    if (x[0] > 2 - 1E-6) 
 	      return Dune::BoundaryConditions::neumann;
 
 	    return Dune::BoundaryConditions::dirichlet;
