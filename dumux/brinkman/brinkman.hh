@@ -49,15 +49,15 @@ namespace Dune
 	
 	void SIMPLE() 
 	{
-		double tolerance = 1e-5; 
-		int maxIter = 10;
+		double tolerance = 1e-3; 
+		int maxIter = 1000;
 		double error = 1e100;
 		int iter = 0;
 		double dampV = 1.0; 
 		double dampP = 0.35;
 		
-//		while (error > tolerance && iter <= maxIter)
-//		{
+		while (error > tolerance && iter <= maxIter)
+		{
 			iter++;
 			computeVelocity();
 			computePressureCorrection();
@@ -69,7 +69,8 @@ namespace Dune
 			
 			//correctVelocityAndPressure();
 			error = pressureCorrection.two_norm()/pressure.two_norm();
-//		}
+			std::cout << "Iter = " << iter << ", \t Error = " << error << std::endl;
+		}
 	}
 	
 	//! generate vtk output

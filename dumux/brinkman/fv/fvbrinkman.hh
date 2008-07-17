@@ -73,6 +73,7 @@ namespace Dune
 	void updateVelocityRHS()
 	{
 		fV = fVBound; 
+		bool pseudoDirichlet = true;
 		
 		Iterator eendit = indexset.template end<0,All_Partition>();
 		  for (Iterator it = indexset.template begin<0,All_Partition>(); it != eendit; ++it)
@@ -148,22 +149,61 @@ namespace Dune
 						  double dist = distVec.two_norm();
 
 						  RT dPdn = this->problem.JPressure(faceglobal, *it, facelocalDim);
-						  std::cout << "normal = " << entry << ", pI = " << pI << 
-						  ", dist = " << dist << ", dPdN = " << dPdn << std::endl;
+//						  std::cout << "normal = " << entry << ", pI = " << pI << 
+//						  ", dist = " << dist << ", dPdN = " << dPdn << std::endl;
 						  entry *= (pI + dist*dPdn);
 					  }
-					  else
+					  else 
 					  {
 						  RT pB = this->problem.gPressure(faceglobal, *it, facelocalDim);
 						  
 						  entry *= pB;
+						  
+						  
+						  ///////////////////////////////////////
+						  if (pseudoDirichlet)
+						  {
+							  // distance vector between barycenters
+							  FieldVector<ct,dimworld> 
+						  	  distVec = global - faceglobal;
+						  		
+						  //							  FieldVector<ct,dimworld> 
+						  //							  faceglobal = is->intersectionGlobal().global(facelocal);
+						  			  				  			  				  
+						  	 // compute distance between cell centers
+						  	  double dist = distVec.two_norm();
+						  		
+						  	// get effective viscosity
+						  	  RT muEffI = this->problem.muEff(global,*it,local);
+						  			  				  
+						  	  double entree = -muEffI*(distVec*integrationOuterNormal)/(dist*dist);
+						  				  
+						  			  
+						  	  FieldVector<RT, dim> g = this->velocity[indexi];
+						  	  g *= entree;
+						  	  entry = entry - g;
+						  }
+						  ///////////////////////////////////////
 					  }
-					  
 				  }
-			  
 				  fV[indexi] -= entry;
 			  }
+  /////////////////////////////////////////////////////			  
+  				  double dampAlpha = 0.75;
+
+  				  double addTerm;
+  				  FieldVector<RT,dim> vI = this->velocity[indexi];
+  				  for (int k = 0; k < dim; k++) {
+  					  addTerm = (1-dampAlpha)*AV[indexi][indexi][k][k];
+  					  vI[k] *= addTerm;
+  	  			  }
+  				  fV[indexi] += vI;
+  				  
+///////////////////////////////////////////////////
 		  }
+//		     printmatrix(std::cout, AV, "velocity matrix", "row", 11, 3);
+//		     printvector(std::cout, fV, "velocity RHS", "row", 200, 1, 3);
+
 	}
 
 	template<class IFPressure>
@@ -331,12 +371,20 @@ namespace Dune
 					  if (faceIdx%2) 
 						  pDiff = pJ - pI;
 					  else 
-						  pDiff = pI - pJ;						  
+						  pDiff = pI - pJ;
 					  
 					  for (int comp = 0; comp < dim; comp++)
+					  {
+/*						  
 						  velFace[comp] = 0.5*(velI[comp] + volume/(dist*AV[indexi][indexi][comp][comp])*(ifPressure[indexi][eastIndex] - ifPressure[indexi][westIndex]))
 							  + 0.5*(velJ[comp] + volume/(dist*AV[indexj][indexj][comp][comp])*(ifPressure[indexj][eastIndex] - ifPressure[indexj][westIndex]))
 							  - 0.5*volume/dist*pDiff*(1.0/AV[indexi][indexi][comp][comp] + 1.0/AV[indexj][indexj][comp][comp]);
+*/				
+						  
+						  velFace[comp] = 0.5*(velI[comp] + volume/(dist*AV[indexi][indexi][comp][comp])*(-ifPressure[indexi][eastIndex] + ifPressure[indexi][westIndex]))
+						  							  + 0.5*(velJ[comp] + volume/(dist*AV[indexj][indexj][comp][comp])*(-ifPressure[indexj][eastIndex] + ifPressure[indexj][westIndex]))
+						  							  - 0.5*volume/dist*pDiff*(1.0/AV[indexi][indexi][comp][comp] + 1.0/AV[indexj][indexj][comp][comp]);
+					  }
 				  }
 				  else 
 				  {
@@ -372,6 +420,10 @@ namespace Dune
 				  fP[indexi] -= velFace*integrationOuterNormal;
 			  }
 		  }
+
+//	     printmatrix(std::cout, AP, "pressure matrix", "row", 11, 3);
+//	     printvector(std::cout, fP, "pressure RHS", "row", 200, 1, 3);
+
 	}
 
 	void computeVelocityCorrection()
@@ -517,6 +569,7 @@ namespace Dune
 
 	void solvePressureSystem(); 
 
+	
 	void computeVelocity()
 	{
 		updateVelocityRHS();
@@ -640,7 +693,8 @@ namespace Dune
 	  // initialization: set matrix A to zero	   
 	  AV = 0;
 	  AP = 0;
-
+	  bool pseudoDirichlet = true;
+	  
 	  Iterator eendit = indexset.template end<0,All_Partition>();
 	  for (Iterator it = indexset.template begin<0,All_Partition>(); it != eendit; ++it)
 	  {		
@@ -768,7 +822,25 @@ namespace Dune
 					  FieldVector<RT, dim> g = this->problem.gVelocity(faceglobal, *it, facelocalDim);
 					  g *= entry;
 					  fVBound[indexi] += g;
-				  } 
+				  }
+//////////////////////////////////////////////				  
+				  else if (pseudoDirichlet)
+				  {
+					  FieldVector<ct,dimworld> distVec(global - faceglobal);
+ 					  double dist = distVec.two_norm();
+
+ 					  double entry = -muEffI*(distVec*integrationOuterNormal)/(dist*dist);
+
+ 					  for (int k = 0; k < dim; k++) {
+ 						  // update diagonal entry 
+ 						  AV[indexi][indexi][k][k] += entry;
+ 					  }
+
+ //					  FieldVector<RT, dim> g = this->velocity[indexi];
+// 					  g *= entry;
+// 					  fVBound[indexi] += g;					  
+				  }
+//////////////////////////////////////////////				  
 				  else
 				  {
 					  FieldVector<RT, dim> J = this->problem.JVelocity(faceglobal, *it, facelocalDim);
@@ -778,13 +850,21 @@ namespace Dune
 
 			  }
 		  } // end all intersections         
+/////////////////////////
+		  double dampAlpha = 0.75;
+
+		  for (int k = 0; k < dim; k++) {
+			  // update diagonal entry 
+			  AV[indexi][indexi][k][k] /= dampAlpha;
+		  }
+////////////////////////////
 	  } // end grid traversal 
 
 	  for (Iterator it = indexset.template begin<0,All_Partition>(); it != eendit; ++it)
 	  {		
 		  int indexi = elementmapper.map(*it);
 		  
-		  double AVI = AV[indexi][indexi][0][0];
+	      double AVI = AV[indexi][indexi][0][0];
 
 		  IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
 		  for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it); 
@@ -875,8 +955,11 @@ namespace Dune
 	  InverseOperatorResult r;
 	  
 	  SeqILU0<VelocityMatrixType,VelType,VelType> preconditioner(AV, 1.0);
-	  BiCGSTABSolver<VelType> solver(op, preconditioner, 1E-14, 10000, 1);
+	  BiCGSTABSolver<VelType> solver(op, preconditioner, 1E-6, 1000, 0);
 	  solver.apply(this->velocity, fV, r);
+	  
+ //   printvector(std::cout, this->velocity, "velocity", "row", 2, 1, 3);
+	  
 
 	  return;
   }
@@ -888,9 +971,11 @@ namespace Dune
 	  InverseOperatorResult r;
 	  
 	  SeqILU0<PressureMatrixType,RepresentationType,RepresentationType> preconditioner(AP, 1.0);
-	  BiCGSTABSolver<RepresentationType> solver(op, preconditioner, 1E-14, 10000, 1);
+	  BiCGSTABSolver<RepresentationType> solver(op, preconditioner, 1E-6, 1000, 0);
 	  solver.apply(this->pressureCorrection, fP, r);
-
+	  
+//	  printvector(std::cout, this->pressureCorrection, "pressureCorrection", "row", 2, 1, 3);
+	  
 	  return;
   }
 	
