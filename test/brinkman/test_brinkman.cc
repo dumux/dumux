@@ -7,7 +7,8 @@
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
-#include <dune/grid/io/file/vtk/vtkwriter.hh>
+//#include <dune/grid/io/file/vtk/vtkwriter.hh>
+#include "dumux/io/vtkwriterextended.hh"
 #include <dune/istl/io.hh>
 #include "dumux/brinkman/fv/fvbrinkman.hh"
 #include "brinkmantestproblem.hh"
@@ -24,7 +25,9 @@ int main(int argc, char** argv)
 
     Dune::FieldVector<GridType::ctype,dim> L(0);
     Dune::FieldVector<GridType::ctype,dim> R(1);
+    R[0]=2;
     Dune::FieldVector<int,dim> N(50);
+    N[0]=100;
     GridType grid(N,L,R);
 
     Dune::BrinkmanTestProblem<GridType, NumberType> problem;
