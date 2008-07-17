@@ -41,7 +41,7 @@
 #include <dune/istl/paamg/amg.hh>
 #include "dumux/pardiso/pardiso.hh"
 #include "dumux/nonlinear/newtonmethod.hh"
-#include "dumux/2p2c/2p2cmodel.hh"
+#include "dumux/twophase/twophasemodel.hh"
 #include "dumux/2p2c/2p2cproblem.hh"
 #include "dumux/2p2c/fv/box2p2cjacobian.hh"
 
@@ -49,7 +49,7 @@ namespace Dune
 {
   template<class G, class RT, class VtkMultiWriter>
   class Box2P2C 
-  : public LeafP1TwoPTwoCModel<G, RT, TwoPTwoCProblem<G, RT>, Box2P2CJacobian<G, RT> >
+  : public LeafP1TwoPhaseModel<G, RT, TwoPTwoCProblem<G, RT>, Box2P2CJacobian<G, RT> >
   {
   public:
 	// define the problem type (also change the template argument above)
@@ -57,17 +57,17 @@ namespace Dune
 
 	// define the local Jacobian (also change the template argument above)
 	typedef Box2P2CJacobian<G, RT> LocalJacobian;
-	typedef LeafP1TwoPTwoCModel<G, RT, ProblemType, LocalJacobian> LeafP1TwoPTwoCModel;
+	typedef LeafP1TwoPhaseModel<G, RT, ProblemType, LocalJacobian> LeafP1TwoPhaseModel;
 	typedef Box2P2C<G, RT, VtkMultiWriter> ThisType;
 
-	typedef typename LeafP1TwoPTwoCModel::FunctionType FunctionType;
+	typedef typename LeafP1TwoPhaseModel::FunctionType FunctionType;
 
    typedef typename G::Traits::LeafIndexSet IS;
 
     enum{m = 2};
 
-		typedef typename LeafP1TwoPTwoCModel::FunctionType::RepresentationType VectorType;
-		typedef typename LeafP1TwoPTwoCModel::OperatorAssembler::RepresentationType MatrixType;
+		typedef typename LeafP1TwoPhaseModel::FunctionType::RepresentationType VectorType;
+		typedef typename LeafP1TwoPhaseModel::OperatorAssembler::RepresentationType MatrixType;
 		typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator; 
 #ifdef HAVE_PARDISO
 	SeqPardiso<MatrixType,VectorType,VectorType> pardiso;
@@ -75,7 +75,7 @@ namespace Dune
 
 	
 	Box2P2C(const G& g, ProblemType& prob) 
-	: LeafP1TwoPTwoCModel(g, prob)// (this->size) vectors
+	: LeafP1TwoPhaseModel(g, prob)// (this->size) vectors
 	{ }
 
 	void initial() {
@@ -126,6 +126,7 @@ namespace Dune
 				int globalId = this->vertexmapper.template map<dim>(entity,
 						sfs[i].entity());
 
+
 				// initialize cell concentration
 				(*(this->u))[globalId] = this->problem.initial(
 						global, entity, local);
@@ -134,6 +135,7 @@ namespace Dune
 				this->localJacobian.sNDat[globalId].phaseState = 
 					this->problem.initialPhaseState(global, entity, local);
 			}
+			this->localJacobian.updateStaticData(entity, this->localJacobian.u);
 		}
 
 		// set Dirichlet boundary conditions
