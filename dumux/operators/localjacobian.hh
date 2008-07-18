@@ -118,11 +118,14 @@ namespace Dune
 		localDefect<TypeTag>(e, u);
 
 		VBlockType bTemp[size];
-		for (int i=0; i<size; i++) 
-			if (this->bctype[i][0]==BoundaryConditions::neumann) 
-				bTemp[i] = this->def[i];
-			else
-				bTemp[i] = 0;
+		for (int i=0; i<size; i++)
+		{
+			for (int equationnumber = 0; equationnumber < m; equationnumber++)
+				if (this->bctype[i][equationnumber]==BoundaryConditions::neumann) 
+					bTemp[i][equationnumber] = this->def[i][equationnumber];
+					else
+						bTemp[i][equationnumber] = 0;
+		}
       
 		if (analytic) {
 			analyticJacobian<TypeTag>(e, u);
@@ -179,9 +182,12 @@ namespace Dune
 			
        
 		for (int i=0; i<size; i++) 
-			if (this->bctype[i][0]==BoundaryConditions::neumann) {
-				this->b[i] = bTemp[i];
+		{
+			for (int equationnumber = 0; equationnumber < m; equationnumber++)
+				if (this->bctype[i][equationnumber]==BoundaryConditions::neumann) {
+					this->b[i][equationnumber] = bTemp[i][equationnumber];
 			}
+		}
       
 		return;
     }
