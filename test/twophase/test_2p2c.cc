@@ -1,6 +1,5 @@
 #include "config.h"
 #include <iostream>
-
 #ifdef HAVE_UG
 #include <iomanip>
 #include <dune/grid/common/gridinfo.hh>
@@ -17,9 +16,6 @@
 #include "dumux/material/vangenuchtenlaw.hh"
 #include "dumux/material/multicomponentrelations.hh"
 #include "dumux/material/properties.hh"
-//#include "dumux/material/constrel/constrelwater.hh"
-//#include "dumux/material/constrel/constrelair.hh"
-
 
 int main(int argc, char** argv) 
 {
@@ -34,7 +30,7 @@ int main(int argc, char** argv)
     innerLowerLeft[1] = 0.0;
     Dune::FieldVector<NumberType, dim> innerUpperRight(6);
     innerUpperRight[1] = 0.5;
-    double depthBOR = 500;
+    double depthBOR = 5.0;
 
     // count number of arguments
     if (argc != 3) {
@@ -72,6 +68,7 @@ int main(int argc, char** argv)
     // choose fluids and properties
     Water wPhase; Air nPhase;
     Dune::VanGenuchtenLaw law(wPhase, nPhase);
+//    Dune::LinearLaw law(wPhase, nPhase);    
     Dune::CWaterAir multicomp(wPhase, nPhase);
     //Dune::LinearLaw law(water, air);
     
