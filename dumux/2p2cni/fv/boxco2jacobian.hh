@@ -594,7 +594,6 @@ namespace Dune
      RT pN;
      RT temperature;
      RT lambda;
-     RT salinity;
      FieldVector<RT,2> mobility;  //Vector with the number of phases
      FieldVector<RT,2> density;
      FieldMatrix<RT,c,2> massfrac;
@@ -653,7 +652,6 @@ namespace Dune
          varData[i].enthalpy[satNIdx] = problem.materialLaw().nonwettingPhase.enthalpy(varData[i].temperature,varData[i].pN);
          varData[i].intenergy[pWIdx] = problem.materialLaw().wettingPhase.intEnergy(varData[i].temperature,varData[i].pW);
          varData[i].intenergy[satNIdx] = problem.materialLaw().nonwettingPhase.intEnergy(varData[i].temperature,varData[i].pN);
-         varData[i].salinity = problem.materialLaw().wettingPhase.salinity();
          // CONSTANT solubility (for comparison with twophase)
 //         varData[i].massfrac[air][wPhase] = 0.0; varData[i].massfrac[water][wPhase] = 1.0;
 //         varData[i].massfrac[water][nPhase] = 0.0; varData[i].massfrac[air][nPhase] = 1.0;
