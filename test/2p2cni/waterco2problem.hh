@@ -43,6 +43,7 @@ namespace Dune
 	typedef typename G::ctype DT;
 	enum {dim=G::dimension, m=3};
 	enum {swrIdx=0, snrIdx=1, lamIdx=2, pbIdx=3};
+	enum {h2o = 0, co2 = 1};
 	typedef typename G::Traits::template Codim<0>::Entity Entity;
 	typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
 
@@ -58,6 +59,14 @@ namespace Dune
 	//, const Entity& e, const FieldVector<DT,dim>& xi)
 	{
 		return permloc_;
+	}
+	
+	virtual FieldVector<RT,2>& D (const FieldVector<DT,dim>& x) const 
+	{
+		FieldVector<RT,2> diff(0);
+		diff[h2o] = 2.0E-5; // diffusion coefficient for water in gas phase
+		diff[co2] = 2.6E-9; // diffusion coefficient for co2 in water phase
+		return diff;
 	}
 		
 	virtual FieldVector<RT,m> q (const FieldVector<DT,dim>& x, const Entity& e, 
@@ -195,11 +204,12 @@ namespace Dune
 	}
 
 	WaterCO2Problem(TwoPhaseRelations& law = *(new BrooksCoreyLaw), 
-			MultiComp& multicomp = *(new CWaterAir), RT pdown = 3.086e5, 
+			MultiComp& multicomp = *(new CWaterAir), RT pdown = 7.449015e6, RT tdown = 304.,
 			RT swr = 0.2, RT snr = 0.05, RT pb = 10000.0, RT lambda = 2.0 ) 
 	: TwoPTwoCNIProblem<G, RT>(law, multicomp) 
 	{	
 		p0_ = pdown;
+		t0_ = tdown;
 		swr_ = swr;
 		snr_ = snr;
 		pb_ = pb;
@@ -209,14 +219,12 @@ namespace Dune
 		for (int i = 0; i < dim; i++)
 			permloc_[i][i] = 1.0e-14;
 
-
 	}
 	
 	private:
 		Dune::FieldMatrix<DT,dim,dim> permloc_;
-		Dune::FieldMatrix<DT,dim,dim> permlocWell_;
-		Dune::FieldMatrix<DT,dim,dim> permlocAquitard_;
-		RT p0_;
+
+		RT p0_, t0_;
 		RT swr_, snr_;
 		RT pb_, lambda_;
 		RT soilDens_, soilHeatCp_, soilLDry_, soilLSw_;
