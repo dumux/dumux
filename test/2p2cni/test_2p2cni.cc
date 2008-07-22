@@ -15,7 +15,7 @@
 //#include "dumux/twophase/problems/uniformtwophaseproblem.hh"
 #include "waterco2problem.hh"
 //#include "dumux/material/properties.hh"
-#include "dumux/2p2cni/fv/box2p2cni.hh"
+#include "dumux/2p2cni/fv/boxco2.hh"
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/io/readstarformat.cc"
 int main(int argc, char** argv) 
@@ -56,23 +56,24 @@ int main(int argc, char** argv)
 
      Dune::gridinfo(grid);
     
-    Brine wPhase;
-    CO2 nPhase;
+    Brine wPhase(0.2);
+    CO2 nPhase(0.05);
 
 //     Dune::LinearLaw law(brine, co2);
 //     Dune::CO2Problem2D<GridType, NumberType> problem(law, 1.e7); 
       Dune::BrooksCoreyLaw law(wPhase, nPhase);
-      Dune::CWaterAir multicomp(wPhase, nPhase);
+      Dune::CBrineCO2 multicomp(wPhase, nPhase);
 
-      Dune::WaterCO2Problem<GridType, NumberType> problem(law, multicomp, 1.e7, 0.2, 0.05, 10000, 2); 
+      Dune::WaterCO2Problem<GridType, NumberType> problem(law, multicomp, 9.548355e6, 310, 0.2, 0.05, 10000, 2); 
 
       typedef Stupid::VtkMultiWriter<GridType> MultiWriter;
-    typedef Dune::Box2P2CNI<GridType, NumberType, MultiWriter> TwoPhase;
+    typedef Dune::BoxCO2<GridType, NumberType, MultiWriter> TwoPhase;
     TwoPhase twoPhase(grid, problem);
 
 
     
-    Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt, "co2", 1);
+//    Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt, 1.e3, "co2", 5);
+    Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt, "co2", 5);
     
     Dune::Timer timer;
     timer.reset();
