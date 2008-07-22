@@ -44,15 +44,24 @@ template<class G, class RT> class TwoPTwoCNIProblem {
 			IntersectionIterator;
 
 public:
-	//! evaluate diffusion tensor
+	//! evaluate intrinsic permeability tensor
 	/*! Evaluate the diffusion tensor at given location
 	 @param[in]  x    position in global coordinates
 	 @param[in]  e    entity of codim 0
 	 @param[in]  xi   position in reference element of e
-	 @param[out] D    diffusion tensor to be filled
+	 @param[out] K    intrinsic permeability tensor to be filled
 	 */
 	virtual const FieldMatrix<DT,dim,dim>& K(const FieldVector<DT,dim>& x,
 			const Entity& e, const FieldVector<DT,dim>& xi) = 0;
+
+	//! evaluate intrinsic permeability tensor
+	/*! Evaluate the diffusion tensor at given location
+	  @param[in]  x    position in global coordinates
+	  @param[in]  e    entity of codim 0
+	  @param[in]  xi   position in reference element of e
+	  @param[out] K    intrinsic permeability tensor to be filled
+	 */
+	virtual const FieldMatrix<DT,dim,dim>& K (const FieldVector<DT,dim>& x) = 0;
 
 	//! evaluate diffusion tensor
 	/*! Evaluate the diffusion tensor at given location
@@ -61,7 +70,7 @@ public:
 	  @param[in]  xi   position in reference element of e
 	  @param[out] D    diffusion tensor to be filled
 	 */
-	virtual const FieldMatrix<DT,dim,dim>& K (const FieldVector<DT,dim>& x) = 0;
+	virtual FieldVector<DT,2>& D (const FieldVector<DT,dim>& x) const = 0;
 
 	//! evaluate source term
 	/*! evaluate source term at given location
