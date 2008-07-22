@@ -72,8 +72,8 @@ int main(int argc, char** argv)
 
 
     
-    Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt, 1.e3, "co2", 5);
-    
+//    Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt, 1.e3, "co2", 5);
+    Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt, "co2", 5);    
     Dune::Timer timer;
     timer.reset();
     timeloop.execute(twoPhase);
