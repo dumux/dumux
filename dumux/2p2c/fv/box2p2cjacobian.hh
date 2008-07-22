@@ -20,7 +20,7 @@
 #include"dumux/operators/boxjacobian.hh"
 #include"dumux/2p2c/2p2cproblem.hh"
 //#include "varswitch.hh"
-#include"dumux/../Stupid/Stupid/Auxilary/VtkMultiWriter.hh"
+#include"dumux/io/vtkmultiwriter.hh"
 
 /**
  * @file
@@ -114,11 +114,10 @@ namespace Dune
      	 sfs=LagrangeShapeFunctions<DT,RT,dim>::general(gt,1);
     	 
    	 int globalIdx = this->vertexMapper.template map<dim>(e, sfs[node].entity());
-   	 //int globalCoord = this->fvGeom.subContVol[node].global;
 
    	 VBlockType result; 
-   	 RT satN = varData[node].saturationN;
-   	 RT satW = varData[node].saturationW;
+   	 RT satN = varData[node].satN;
+   	 RT satW = varData[node].satW;
    	    	    	                  
    	 // storage of component water
    	 result[water] = 
@@ -261,10 +260,10 @@ namespace Dune
 	 RT diffusionAW, diffusionAN; // diffusion of air
 	 VBlockType avgDensity, avgDpm;
 	 avgDpm[wPhase]=1e-9; // needs to be changed !!!
-	 avgDpm[nPhase]=1e-9; // water in the gasphase
+	 avgDpm[nPhase]=1e-5; // water in the gasphase
 	 
-	 normDiffGrad[wPhase] = -(xGrad[wPhase]*normal);
-	 normDiffGrad[nPhase] = -(xGrad[nPhase]*normal);
+	 normDiffGrad[wPhase] = xGrad[wPhase]*normal;
+	 normDiffGrad[nPhase] = xGrad[nPhase]*normal;
 
 	 // calculate the arithmetic mean of densities
 	 avgDensity[wPhase] = 0.5*(vNDat[i].density[wPhase] + vNDat[j].density[wPhase]);
@@ -279,11 +278,11 @@ namespace Dune
 	 
 
 	 // add diffusion of water to flux
-	 flux[water] -= (diffusionWW + diffusionWN); 
+	 flux[water] += (diffusionWW + diffusionWN); 
 	 //	std::cout << "Water Flux: " << flux[water] << std::endl; 
 
 	 // add diffusion of air to flux
-	 flux[air] -= (diffusionAN + diffusionAW);
+	 flux[air] += (diffusionAN + diffusionAW);
 	 // std::cout << "Air Flux: " << flux[air] << std::endl; 
 
 
@@ -319,7 +318,7 @@ namespace Dune
     	RT henryInv = problem.multicomp().henry(vNDat[local].temperature);
     	RT xWNmolar = problem.multicomp().xWNmolar(vNDat[local].pN, vNDat[local].temperature);
     	RT xAWmolar = problem.multicomp().xAWmolar(vNDat[local].pN, vNDat[local].temperature);
-//    	double satControl = vNDat[local].saturationW;
+//    	double satControl = vNDat[local].satW;
 
     	FVector Coordinates = this->fvGeom.cellGlobal;
 
@@ -336,10 +335,10 @@ namespace Dune
             {
             	// appearance of water phase
             	std::cout << "Water appears at node " << global << "  Coordinates: " << Coordinates << std::endl;
-            	vNDat[local].saturationN = 1.0 - 1.e-6; // initialize
+            	vNDat[local].satN = 1.0 - 1.e-6; // initialize
             	sNDat[global].phaseState = bothPhases;
 //      		  	sNDat[global].switched = true;
-            	sol[local][switchIdx] = vNDat[local].saturationN;
+            	sol[local][switchIdx] = vNDat[local].satN;
             	switched = true;
             }
             break;
@@ -355,33 +354,33 @@ namespace Dune
             {
             	// appearance of gas phase
             	std::cout << "Gas appears at node " << global << "  Coordinates: " << Coordinates << std::endl;
-            	vNDat[local].saturationN = 1.e-6;  // initialize
+            	vNDat[local].satN = 1.e-6;  // initialize
             	sNDat[global].phaseState = bothPhases;
 //      		  	sNDat[global].switched = true;
-            	sol[local][switchIdx] = vNDat[local].saturationN;
+            	sol[local][switchIdx] = vNDat[local].satN;
             	switched = true;
             }
             break;
 
         case bothPhases :
-      	  	if (vNDat[local].saturationN < 0.0  && switched == false)
+      	  	if (vNDat[local].satN < 0.0  && switched == false)
       	  	{
       		  	// disappearance of gas phase
       		  	std::cout << "Gas disappears at node " << global << "  Coordinates: " << Coordinates << std::endl;
-      		  	vNDat[local].saturationN = 0.0;  
-      		  	vNDat[local].saturationW = 1.0;  
+      		  	vNDat[local].satN = 0.0;  
+      		  	vNDat[local].satW = 1.0;  
       		  	sNDat[global].phaseState = waterPhase;
 //      		  	sNDat[global].switched = true;
       		  	vNDat[local].massfrac[air][wPhase] = 1e-6;
       		  	sol[local][switchIdx] = vNDat[local].massfrac[air][wPhase];
       		  	switched = true;
             }
-      	  	else if (vNDat[local].saturationW < 0.0  && switched == false)
+      	  	else if (vNDat[local].satW < 0.0  && switched == false)
       	  	{
       	  		// disappearance of water phase
       	  		std::cout << "Water disappears at node " << global << "  Coordinates: " << Coordinates << std::endl;
-      		  	vNDat[local].saturationN = 1.0;
-      	  		vNDat[local].saturationW = 0.0;
+      		  	vNDat[local].satN = 1.0;
+      	  		vNDat[local].satW = 0.0;
       	  		sNDat[global].phaseState = gasPhase;
 //      		  	sNDat[global].switched = true;
       		  	vNDat[local].massfrac[water][nPhase] = 1e-6;
@@ -509,8 +508,8 @@ namespace Dune
 
     struct VariableNodeData  
     {
-   	 RT saturationN;
-     RT saturationW;
+   	 RT satN;
+     RT satW;
      RT pW;
      RT pC;
      RT pN;
@@ -531,13 +530,13 @@ namespace Dune
    		 int state = sNDat[global].phaseState;
 
    		 varData[i].pW = sol[i][pWIdx];
-   		 if (state == bothPhases) varData[i].saturationN = sol[i][switchIdx];
-   		 if (state == waterPhase) varData[i].saturationN = 0.0;
-   		 if (state == gasPhase) varData[i].saturationN = 1.0;
+   		 if (state == bothPhases) varData[i].satN = sol[i][switchIdx];
+   		 if (state == waterPhase) varData[i].satN = 0.0;
+   		 if (state == gasPhase) varData[i].satN = 1.0;
 
-   		 varData[i].saturationW = 1.0 - varData[i].saturationN;
+   		 varData[i].satW = 1.0 - varData[i].satN;
 
-   		 varData[i].pC = problem.materialLaw().pC(varData[i].saturationW, parameters);
+   		 varData[i].pC = 0.0;//problem.materialLaw().pC(varData[i].satW, parameters);
    		 varData[i].pN = varData[i].pW + varData[i].pC;
    		 varData[i].temperature = 283.15; // in [K]
 
@@ -558,8 +557,8 @@ namespace Dune
    	   	 varData[i].massfrac[air][nPhase] = 1.0 - varData[i].massfrac[water][nPhase];
    	   	 
    		 // Mobilities & densities
-   		 varData[i].mobility[wPhase] = problem.materialLaw().mobW(varData[i].saturationW, parameters);
-   		 varData[i].mobility[nPhase] = problem.materialLaw().mobN(varData[i].saturationN, parameters);
+   		 varData[i].mobility[wPhase] = problem.materialLaw().mobW(varData[i].satW, parameters);
+   		 varData[i].mobility[nPhase] = problem.materialLaw().mobN(varData[i].satN, parameters);
    		 varData[i].density[wPhase] = problem.materialLaw().wettingPhase.density(varData[i].temperature, varData[i].pN);
    		 varData[i].density[nPhase] = problem.materialLaw().nonwettingPhase.density(varData[i].temperature, varData[i].pN,
    				 varData[i].massfrac[air][nPhase]);
@@ -572,8 +571,10 @@ namespace Dune
          //std::cout << "air in waterphase: " << varData[i].massfrac[air][wPhase] << std::endl;
 
    		 // for output
-   	   	 (*outSaturationW)[global] = varData[i].saturationW;
-   	   	 (*outSaturationN)[global] = varData[i].saturationN;
+   		 (*outPressureN)[global] = varData[i].pN;
+   		 (*outCapillaryP)[global] = varData[i].pC;
+  	   	 (*outSaturationW)[global] = varData[i].satW;
+   	   	 (*outSaturationN)[global] = varData[i].satN;
    	   	 (*outMassFracAir)[global] = varData[i].massfrac[air][wPhase];
    	   	 (*outMassFracWater)[global] = varData[i].massfrac[water][nPhase];
    	   	 (*outDensityW)[global] = varData[i].density[wPhase];
@@ -637,10 +638,12 @@ namespace Dune
     std::vector<VariableNodeData> oldVNDat;
 
     // for output files
-    BlockVector<FieldVector<RT, 1> > *outMassFracAir;
-    BlockVector<FieldVector<RT, 1> > *outMassFracWater;
+    BlockVector<FieldVector<RT, 1> > *outPressureN;
+    BlockVector<FieldVector<RT, 1> > *outCapillaryP;
     BlockVector<FieldVector<RT, 1> > *outSaturationN;
     BlockVector<FieldVector<RT, 1> > *outSaturationW;
+    BlockVector<FieldVector<RT, 1> > *outMassFracAir;
+    BlockVector<FieldVector<RT, 1> > *outMassFracWater;
     BlockVector<FieldVector<RT, 1> > *outDensityW;
     BlockVector<FieldVector<RT, 1> > *outDensityN;
     BlockVector<FieldVector<RT, 1> > *outMobilityW;

@@ -77,7 +77,7 @@ namespace Dune
 
 			FieldVector<RT,m> values;
 			
-			values[pWIdx] = -densityW_*gravity_[1]*(depthBOR_ - x[1]);
+			values[pWIdx] = 1e5 - densityW_*gravity_[1]*(depthBOR_ - x[1]);
 			values[switchIdx] = 0.2;
 
 			//			if (x[1] >= innerLowerLeft_[1] && x[1] <= innerUpperRight_[1] 
@@ -135,7 +135,7 @@ namespace Dune
 	{
 		FieldVector<RT,m> values(0);
 
-		values[pWIdx] = -densityW_*gravity_[1]*(depthBOR_ - x[1]);
+		values[pWIdx] = 1e5 - densityW_*gravity_[1]*(depthBOR_ - x[1]);
 		values[switchIdx] = 0.2;
 		
 //		if (x[1] >= innerLowerLeft_[1] && x[1] <= innerUpperRight_[1] 
@@ -159,7 +159,7 @@ namespace Dune
 		//RT lambda = (x[1])/height_;
 
 		if (x[1] < 2.0 && x[1] > 1.0)
-			values[switchIdx] = -5e-5;
+			values[switchIdx] = -5e-6;
 		
 		return values;
 	}
@@ -213,7 +213,7 @@ namespace Dune
 			const RT depthBOR = 0., RT outerK = 1.2e-13, RT innerK = 1.2e-13,
 			RT outerSwr = 0.2, RT outerSnr = 0.2, RT innerSwr = 0.2, RT innerSnr = 0.2, 
 			RT outerPorosity = 0.4, RT innerPorosity = 0.4, 
-			RT outerAlpha = 0.0037, RT innerAlpha = 0.0037,  //0.00045
+			RT outerAlpha = 0.00047, RT innerAlpha = 0.00047,  //0.00045
 			RT outerN = 4.7, RT innerN = 4.7)	//7.3
 	: TwoPTwoCProblem<G, RT>(law, multicomp), 
 	  outerLowerLeft_(outerLowerLeft), outerUpperRight_(outerUpperRight), 
