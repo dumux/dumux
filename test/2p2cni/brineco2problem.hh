@@ -61,12 +61,9 @@ namespace Dune
 		return permloc_;
 	}
 		
-	virtual FieldVector<RT,2>& D (const FieldVector<DT,dim>& x) const 
+	virtual const FieldVector<RT,2>& D (const FieldVector<DT,dim>& x) const 
 	{
-		FieldVector<RT,2> diff(0);
-		diff[h2o] = 2.0E-5; // diffusion coefficient for water in gas phase
-		diff[co2] = 2.6E-9; // diffusion coefficient for co2 in water phase
-		return diff;
+		return diffusion_;
 	}
 	
 	virtual FieldVector<RT,m> q (const FieldVector<DT,dim>& x, const Entity& e, 
@@ -211,12 +208,15 @@ namespace Dune
 		
 		for (int i = 0; i < dim; i++)
 			permloc_[i][i] = 1.0e-14;
+		
+		diffusion_[h2o] = 2.0E-5; // diffusion coefficient for water in gas phase
+		diffusion_[co2] = 2.6E-9; // diffusion coefficient for co2 in water phase
 
 	}
 	
 	private:
 		Dune::FieldMatrix<DT,dim,dim> permloc_;
-
+		Dune::FieldVector<RT,2> diffusion_;
 		RT p0_, t0_;
 		RT swr_, snr_;
 		RT pb_, lambda_;
