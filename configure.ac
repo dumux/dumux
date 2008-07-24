@@ -8,6 +8,18 @@ AM_CONFIG_HEADER([config.h])
 #AC_SUBST([LOCAL_LIBS], '$(top_srcdir)/lib/libdunemux.la')
 AC_SUBST([LOCAL_LIBS], '$(top_srcdir)/dumux/libdumux.la')
 
+AC_CHECK_PROGS([TEX], [latex], [true])
+AC_CHECK_PROGS([BIBTEX], [bibtex], [true])
+AC_CHECK_PROGS([DVIPDF], [dvipdf], [true])
+AC_CHECK_PROGS([DVIPS], [dvips], [true])
+AC_CHECK_PROGS([WML], [wml], [true])
+AM_CONDITIONAL([WML], [test "x$WML" != xtrue])
+AC_CHECK_PROGS([TEX4HT], [tex4ht], [true])
+AC_CHECK_PROGS([MK4HT], [mk4ht], [true])
+AC_CHECK_PROGS([T4HT], [t4ht], [true])
+AM_CONDITIONAL([TEX4HT], [test "x$TEX4HT" != xtrue])
+AC_CHECK_PROGS([CONVERT], [convert], [false])
+AM_CONDITIONAL([CONVERT], [test "x$CONVERT" != xfalse])
 # we need no more than the standard DE-stuff
 # this module depends on dune-common dune-disc dune-fem dune-grid dune-istl
 # this implies checking for [dune-common], [dune-istl], [dune-grid], [dune-disc], [dune-fem]
@@ -70,6 +82,7 @@ AC_CONFIG_FILES([Makefile
     dumux/Makefile 
     test/Makefile
     doc/doxygen/Makefile 
+    doc/handbook/Makefile 
     dumux/diffusion/Makefile 
     dumux/functions/Makefile 
     dumux/io/Makefile 
