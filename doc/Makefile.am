@@ -1,4 +1,4 @@
-SUBDIRS = doxygen
+SUBDIRS = doxygen handbook
 
 # setting like in dune-web
 BASEDIR=..
