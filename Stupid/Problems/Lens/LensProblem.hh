@@ -115,14 +115,7 @@ namespace Lens
         //! to the TimeManager here.
         bool simulate()
             {
-                Dune::Timer timer;
-                timer.reset();
-                
                 _timeManager.runSimulation(*this);
-                
-                std::cout <<
-                    boost::format("LensSimulation took %.3f seconds\n")
-                    %timer.elapsed();
                 return true;
             }
 
@@ -135,12 +128,12 @@ namespace Lens
         //! solution
         void init()
             {
-                // set the initial condition
-                _model.initial();
-
                 // start with a drainage for 30 ksec
                 _timeManager.startNextEpisode(DrainEpisode, 30e3);
                 _timeManager.setStepSize(_initialTimeStepSize);
+
+                // set the initial condition
+                _model.initial();
 
                 // write the inital solution to disk
                 _writeCurrentResult();
@@ -262,7 +255,7 @@ namespace Lens
                 {
                     dest[0] = dest[1] = Dune::BoundaryConditions::dirichlet;
 
-#ifndef USE_ORIG_PROB
+#if !USE_ORIG_PROB
                     Scalar relPosY = (pos[1] - ParentType::lowerLeft()[1])/ParentType::height();
                     if (relPosY < 0.80)
                     {
@@ -301,7 +294,7 @@ namespace Lens
 //        WorldCoord &pos = dualCell.boundaryFace[dcBFIndex].ipGlobal;
 
                 if (ParentType::onUpperBoundary(pos)) {
-#ifdef USE_ORIG_PROB
+#if USE_ORIG_PROB
                     Scalar relPosX = (ParentType::upperRight()[0] - pos[0])/ParentType::width();
                     if (0.5 < relPosX && relPosX < 2.0/3.0)
                     {
@@ -309,7 +302,7 @@ namespace Lens
                     }
 #endif
                 }
-#ifndef USE_ORIG_PROB
+#if !USE_ORIG_PROB
                 else if (ParentType::onLowerBoundary(pos)) {
                     dest[SnIndex] = 0.0;
                     if (_timeManager.episode() == DrainEpisode)
@@ -371,7 +364,7 @@ namespace Lens
         ///////////////////////////////////
         // End of problem specific stuff
         ///////////////////////////////////
-
+        
         //! called by the LensNewtonContoller when the newton method
         //! is started.
         void newtonBegin()
@@ -379,7 +372,8 @@ namespace Lens
 #if LENS_WRITE_NEWTON_STEPS
                 _convergenceWriter =
                     new VtkMultiWriter((boost::format("lens-convergence-t=%.2f-dt=%.2f")
-                                         %_curTime%_curTimeStepSize).str());
+                                        %_timeManager.time()
+                                        %_model.localJacobian().getDt()).str());
 #endif // LENS_WRITE_NEWTON_STEPS
             }
 
@@ -390,14 +384,14 @@ namespace Lens
 #if LENS_WRITE_NEWTON_STEPS
                 if (_newtonCtl.newtonNumSteps() == 1) {
                     _convergenceWriter->beginTimestep(0,
-                                                      grid());
+                                                      ParentType::grid());
                     _writeConvergenceFields(uOld, uOld);
                     _convergenceWriter->endTimestep();
                 }
 
 
                 _convergenceWriter->beginTimestep(_newtonCtl.newtonNumSteps(),
-                                                  grid());
+                                                  ParentType::grid());
                 _writeConvergenceFields(u, uOld);
                 _convergenceWriter->endTimestep();
 #endif // LENS_WRITE_NEWTON_STEPS
@@ -426,7 +420,7 @@ namespace Lens
 #if LENS_WRITE_NEWTON_STEPS
         void _writeConvergenceFields(BoxFunction &u, BoxFunction &uOld)
             {
-                PwSnFunction diff(grid());
+                BoxFunction diff(ParentType::grid());
                 for (int i=0; i < (*diff).size(); ++i) {
                     (*diff)[i] = (*u)[i] - (*uOld)[i];
                     if ((*diff)[i][0] > 1e12)
@@ -435,14 +429,14 @@ namespace Lens
                         (*diff)[i][1] = 1e12;
                 }
 
-                _writeScalarVertexField(*_convergenceWriter,
-                                        "reduction Sn",
-                                        diff,
-                                        SnIndex);
-                _writeScalarVertexField(*_convergenceWriter,
-                                        "reduction Pw",
-                                        diff,
-                                        PwIndex);
+                _convergenceWriter->addScalarVertexFunction("reduction Sn",
+                                                            diff,
+                                                            ParentType::vertexMap(),
+                                                            SnIndex);
+                _convergenceWriter->addScalarVertexFunction("reduction Pw",
+                                                            diff,
+                                                            ParentType::vertexMap(),
+                                                            PwIndex);
                 _writeVertexFields(*_convergenceWriter, u);
                 _writeCellFields(*_convergenceWriter, u);
             };
@@ -511,8 +505,8 @@ namespace Lens
         // called whenever a solution for a timestep has been computed.
         void _updateDomain()
             {
-#ifdef USE_HYSTERESIS
-#ifdef USE_VERTEX_PARAMETERS
+#if USE_HYSTERESIS
+#if USE_VERTEX_PARAMETERS
                 VertexIterator it = ParentType::vertexBegin();
                 VertexIterator endit = ParentType::vertexEnd();
                 for (; it != endit; ++it) {
@@ -555,7 +549,7 @@ namespace Lens
                     return;
                 }
                 
-#ifndef USE_ORIG_PROB               
+#if !USE_ORIG_PROB               
                 if (!_timeManager.episodeIsOver())
                     return;
 

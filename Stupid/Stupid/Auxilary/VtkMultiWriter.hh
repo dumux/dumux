@@ -59,6 +59,7 @@ namespace Stupid {
         ~VtkMultiWriter()
             {
                 _endMultiFile();
+                _multiFile.close();
             }
 
         /*!
@@ -229,6 +230,11 @@ namespace Stupid {
                     delete _vectorFields.front();
                     _vectorFields.pop_front();
                 }
+                
+                // temporarily write the closing XML mumbo-jumbo to
+                // the mashup file so that the data set can be loaded
+                // even if the programm is aborted
+                _endMultiFile();
             };
 
 
@@ -248,10 +254,13 @@ namespace Stupid {
 
         void _endMultiFile()
             {
+                // make sure that we always have a working meta file
+                std::ofstream::pos_type pos = _multiFile.tellp();
                 _multiFile <<
                     " </Collection>\n"
                     "</VTKFile>\n";
-                _multiFile.close();
+                _multiFile.seekp(pos);
+                _multiFile.flush();
             }
 
         //////////////////////////////

@@ -23,19 +23,50 @@
 
 // if defined, the boundary conditions and the material parameters are
 // the same as for dumux' orignal lens problem.
-//#define USE_ORIG_PROB
+#ifndef USE_ORIG_PROB
+#define USE_ORIG_PROB 0
+#endif
 
 // if defined, most material parameters (capillary pressure, permeability,
 // etc) are defined on the vertices of FE grid.
-#define USE_VERTEX_PARAMETERS
+#ifndef USE_VERTEX_PARAMETERS 
+#define USE_VERTEX_PARAMETERS 1
+#endif
 
 // if defined, interface conditions of capillary pressure und and
 // relative permeability are used at medium interfaces for cell based
 // material parameters.
-//#define USE_INTERFACE_CONDITION
+#ifndef USE_INTERFACE_CONDITION
+#define USE_INTERFACE_CONDITION 1
+#endif
 
 // use parker-lenhard hysteresis for the simulation. if undefined only
 // van-genuchten without hysteresis is used.
-#define USE_HYSTERESIS
+#ifndef USE_HYSTERESIS
+#define USE_HYSTERESIS 1
+#endif
+
+// use exponential splines to regularize the parker-lenhard hystersis model
+#ifndef USE_SPLINES
+#define USE_SPLINES 1
+#endif
+
+// use different parameters for the main imbibition and main drainage
+// curves. if not set, the parker-lenhard model breaks down to plain
+// van Genuchten with proper handling of the non-wetting phase
+// residual saturation.
+#ifndef USE_DIFFERENT_MAIN_CURVES
+#define USE_DIFFERENT_MAIN_CURVES 1
+#endif
+
+// number of cells into X direction 
+#ifndef CELLRES_X
+#define CELLRES_X 8
+#endif
+
+// number of cells into Y direction 
+#ifndef CELLRES_Y
+#define CELLRES_Y 24
+#endif
 
 #endif

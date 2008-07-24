@@ -71,10 +71,10 @@ namespace Lens
             typedef LensCellState<MediumState>                 CellState;
             
             // The parker-lenhard hysteresis model
-#if !defined USE_VERTEX_PARAMETERS
-            typedef Stupid::ParkerLenhard<CellState, VanGenuchten>     ParkerLenhard;
-#else // defined USE_VERTEX_PARAMETERS
-            typedef Stupid::ParkerLenhard<VertexState, VanGenuchten>   ParkerLenhard;
+#if !USE_VERTEX_PARAMETERS
+            typedef Stupid::ParkerLenhard<CellState, VanGenuchten, USE_SPLINES>     ParkerLenhard;
+#else // USE_VERTEX_PARAMETERS
+            typedef Stupid::ParkerLenhard<VertexState, VanGenuchten, USE_SPLINES>   ParkerLenhard;
 #endif
         };
 
@@ -157,10 +157,10 @@ namespace Lens
                   int globalVertIdx,
                   Scalar Sw) const
             {
-#if defined USE_VERTEX_PARAMETERS
+#if USE_VERTEX_PARAMETERS
                 return ParkerLenhard::pC(vertexState(globalVertIdx), Sw);
-#else // !defined USE_VERTEX_PARAMETERS
-#if defined USE_INTERFACE_CONDITION
+#else // !USE_VERTEX_PARAMETERS
+#if USE_INTERFACE_CONDITION
                 const VertexState &vertState = vertexState(globalVertIdx);
                 if (!vertState.isOnInterface())
                     return ParkerLenhard::pC(cellState(cellIdx),
@@ -252,10 +252,10 @@ namespace Lens
                          int globalVertIdx,
                          Scalar Sw) const
             {
-#if defined USE_VERTEX_PARAMETERS
+#if USE_VERTEX_PARAMETERS
                 return ParkerLenhard::krw(vertexState(globalVertIdx), Sw) / viscosityW();
-#else // !defined USE_VERTEX_PARAMETERS
-#ifdef USE_INTERFACE_CONDITION
+#else // !USE_VERTEX_PARAMETERS
+#if USE_INTERFACE_CONDITION
                 const VertexState &vertState = vertexState(globalVertIdx);
                 if (!vertState.isOnInterface())
                     return ParkerLenhard::krw(cellState(cellIdx), Sw) / viscosityW();
@@ -289,10 +289,10 @@ namespace Lens
                 // mobility!
                 Scalar Sw = 1 - Sn;
 
-#if defined USE_VERTEX_PARAMETERS
+#if USE_VERTEX_PARAMETERS
                 return ParkerLenhard::krn(vertexState(globalVertIdx), Sw) / viscosityN();
-#else // !defined USE_VERTEX_PARAMETERS
-#ifdef USE_INTERFACE_CONDITION
+#else // !USE_VERTEX_PARAMETERS
+#if USE_INTERFACE_CONDITION
                 const VertexState &vertState = vertexState(globalVertIdx);
                 if (!vertState.isOnInterface())
                     return ParkerLenhard::krn(cellState(cellIdx), Sw) / viscosityN();
@@ -400,14 +400,12 @@ namespace Lens
 
                 // create the grid
                 Dune::FieldVector<int, GridDim> cellRes;
-#ifndef USE_ORIG_PROB
-                cellRes[0] = 8;
-                cellRes[1] = 24;
-//                cellRes[0] = 48;
-//                cellRes[1] = 32;
-#else
+#if USE_ORIG_PROB
                 cellRes[0] = 48;
                 cellRes[1] = 32;
+#else
+                cellRes[0] = CELLRES_X;
+                cellRes[1] = CELLRES_Y;
 #endif
 
                 Grid *grid = new Grid(cellRes,
@@ -464,14 +462,18 @@ namespace Lens
                 _lensMedium =  new MediumState();
                 _lensMedium->setGlobalState(_globalState);
                 _lensMedium->setSwr(0.18);
-#ifdef USE_ORIG_PROB
+#if USE_ORIG_PROB
                 _lensMedium->setSnr(0.0);
 #else
                 _lensMedium->setSnr(0.25);
 #endif
                 _lensMedium->setPorosity(0.4);
-                _lensMedium->setMicParams(VanGenuchtenState(0.00045, 7.3));
                 _lensMedium->setMdcParams(VanGenuchtenState(0.00045, 7.3));
+#if USE_DIFFERENT_MAIN_CURVES
+                _lensMedium->setMicParams(VanGenuchtenState(0.00045*2, 7.5));
+#else
+                _lensMedium->setMicParams(VanGenuchtenState(0.00045, 7.3));
+#endif
                 _lensMedium->micParams().setVgMaxPC(_lensMedium->mdcParams().vgMaxPC());
                 _lensMedium->setPermeability(9.05e-13);
 
@@ -479,14 +481,19 @@ namespace Lens
                 _outerMedium =  new MediumState();
                 _outerMedium->setGlobalState(_globalState);
                 _outerMedium->setSwr(0.05);
-#ifdef USE_ORIG_PROB
+#if USE_ORIG_PROB
                 _outerMedium->setSnr(0.0);
 #else
                 _outerMedium->setSnr(0.20);
 #endif
                 _outerMedium->setPorosity(0.4);
-                _outerMedium->setMicParams(VanGenuchtenState(0.0037, 4.7));
                 _outerMedium->setMdcParams(VanGenuchtenState(0.0037, 4.7));
+#if USE_DIFFERENT_MAIN_CURVES
+                _outerMedium->setMicParams(VanGenuchtenState(0.0037*2, 4.8));
+#else
+                _outerMedium->setMicParams(VanGenuchtenState(0.0037, 4.7));
+#endif
+
                 _outerMedium->micParams().setVgMaxPC(_outerMedium->mdcParams().vgMaxPC());
                 _outerMedium->setPermeability(4.6e-10);
 
@@ -524,7 +531,7 @@ namespace Lens
         void _initVertexStates()
             {
                 _vertexStates.resize(ParentType::numVertices());
-#if defined USE_VERTEX_PARAMETERS
+#if USE_VERTEX_PARAMETERS
                 VertexIterator vertIt = ParentType::vertexBegin();
                 const VertexIterator &endVertIt = ParentType::vertexEnd();
                 for (; vertIt != endVertIt; ++vertIt) {
@@ -537,7 +544,7 @@ namespace Lens
                         vertState.setMediumState(_outerMedium);
                 }
 
-#else // ! defined USE_VERTEX_PARAMETERS
+#else // !USE_VERTEX_PARAMETERS
                 // initialize the vertex state objects
 
                 // loop over all cells
@@ -569,7 +576,7 @@ namespace Lens
 #endif
             }
 
-#if !defined USE_VERTEX_PARAMETERS
+#if !USE_VERTEX_PARAMETERS
         //  mark all vertices on a face as as belonging to an
         //  inhomogenity
         void _markInterfaceVertices(IntersectionIterator &interfaceIt)
@@ -593,7 +600,7 @@ namespace Lens
                     vertexState(*interfaceIt.inside(), vertexIdxInElement).addNeighbourCellIdx(outIdx);
                 }
             }
-#endif // !defined USE_VERTEX_PARAMETERS
+#endif // !USE_VERTEX_PARAMETERS
 
 
         // the actual type which stores the cell states.

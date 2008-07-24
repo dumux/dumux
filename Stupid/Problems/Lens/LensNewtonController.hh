@@ -49,7 +49,7 @@ namespace Lens {
 
         LensNewtonController(Simulation &sim,
                              Scalar tolerance = 1e-5,
-                             int targetSteps = 8,
+                             int targetSteps = 6,
                              int maxSteps = 12)
             : ParentType(tolerance, targetSteps, maxSteps), _sim(sim)
             {};

@@ -310,7 +310,7 @@ namespace Stupid
      *        p_c-Sw hysteresis model. This class adheres to the twophase
      *        capillary pressure API.
      */
-    template <class StateT, class CapPressureT>
+    template <class StateT, class CapPressureT, bool useSplines=true>
     class ParkerLenhard
     {
     public:
@@ -376,13 +376,6 @@ namespace Stupid
             }
 
             Scalar Swe = TwophaseSat::Swe(state, Sw);
-//            if (Swe > 1 - state.Snre()/5) {
-            if (_Snrei(state, Swe) < state.Snre()/6 + 1e-4) {
-                // for numeric reasons don't start a PISC if the
-                // non-wetting phase saturation is lower than a third
-                // of it's residual saturation.
-                return;
-            }
             ASSERT_RANGE(Swe, 0, 1);
             
             // find the loop number which corrosponds to the
@@ -393,10 +386,6 @@ namespace Stupid
             // range where we use a spline instead of the actual 
             // material law.
             if (curve->useSpline(Sw))
-            {
-                return;
-            }
-            if (fabs(curve->Swe() - curve->prev()->Swe()) < 10e-2 && curve != state.mdc())
                 return;
 
             Scalar Sw_app = _Swapp(state, Swe);
@@ -410,7 +399,9 @@ namespace Stupid
 
             curve->setNext(Swe, pc, Sw_app,
                            Sw_mic, Sw_mdc);
-            
+            if (!curve->next())
+                return;
+
             state.setCsc(curve);
 
             // if we're back on the MDC, we also have a new PISC!
@@ -420,7 +411,8 @@ namespace Stupid
             }
             
             // add a spline to the newly created reversal point
-            _addSpline(state, curve->next());
+            if (useSplines)
+                _addSpline(state, curve->next());
         }
 
 
@@ -769,11 +761,10 @@ namespace Stupid
             assert(state.Snrei() <= state.Snre());
                        
             // we need to make sure that there is sufficent "distance"
-            // between Swei and 1-Snei in order not to get very steep
+            // between Swei and 1-Snrei in order not to get very steep
             // slopes which cause terrible nummeric headaches
-            if (fabs((1 - Snrei) - Swei) < state.Snre()/4) {
-                Snrei = std::max((Scalar) 0.0, 1 - (Swei + state.Snre()/4));
-            }
+            Snrei = std::min(Snrei, (Scalar) 1 - (Swei + 5e-2));
+            Snrei = std::max(Snrei, (Scalar) 0.0);
 
             return Snrei;
         };
@@ -859,16 +850,21 @@ namespace Stupid
                     Scalar deltaSwe = std::min(8e-2,
                                                fabs(curve->Swe() - curve->prev()->Swe())/3);
                     if (curve->isImbib()) {
-                        x1 = Sw;
                         Scalar SweTmp = TwophaseSat::Swe(state, Sw + deltaSwe);
-                        Scalar bla = (1.0 - state.Snrei()) - curve->Swe();
-                        SweTmp = std::min(SweTmp, curve->Swe() + bla/2);
-                        SweTmp = std::min(SweTmp, 1.0 - state.Snrei());
+//                        Scalar curveRange = (1.0 - state.Snrei()) - curve->Swe();
+//                        SweTmp = std::min(SweTmp, curve->Swe() + curveRange/2);
+                        if (curve == state.pisc())
+                            SweTmp = std::min(SweTmp, 1.0 - state.Snrei());
+                        else
+                            SweTmp = std::min(SweTmp, curve->prev()->Swe());
+
+                        x1 = Sw;
                         x2 = TwophaseSat::Sw(state, SweTmp);
                     }
                     else {
                         Scalar SweTmp = TwophaseSat::Swe(state, Sw - deltaSwe);
-//                        SweTmp = std::max(SweTmp, curve->prev()->Swe());
+                        SweTmp = std::max(SweTmp, curve->prev()->Swe());
+
                         x1 = TwophaseSat::Sw(state, SweTmp);
                         x2 = Sw;
                     }

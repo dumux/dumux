@@ -58,6 +58,7 @@ namespace Stupid {
         //! "completely unphysical"
         Scalar _physicalness(Function &u)
             {
+                return 1.0;
                 const Scalar SnNormFactor = 2.5;
 
                 // the maximum distance of a Sn value to a physically

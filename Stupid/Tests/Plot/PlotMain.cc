@@ -40,10 +40,11 @@ using namespace Stupid;
 // Some global parameters
 ////////////////////
 typedef long double Scalar;
-const   int numSamples = 200;
+const   int numSamples = 1500;
 const   Scalar Swr = 0.17;
 //const   Scalar Swr = 0.0;
-const   Scalar Snr = 0.25;
+const   Scalar Snr = 0.15;
+//const   Scalar Snr = 0.0;
 
 template <class CapPressureParamsT>
 class MyGlobalState
@@ -199,7 +200,6 @@ void printCurve(const std::string &title,
 template <class HystModel, class State>
 void printCycle(State &state, int n)
 {
-    HystModel::reset(state);
     printCurve<HystModel, State>("mic", state, 0, 1, n);
     HystModel::reset(state);
     printCurve<HystModel, State>("mdc", state, 1, 0, n);
@@ -223,8 +223,10 @@ void printVanGenuchtenMain()
     ////////////////////
     // Some type definitions
     ////////////////////
-    typedef RegularizedVanGenuchtenState<Scalar> VanGenuchtenState;
-    typedef RegularizedVanGenuchten<VanGenuchtenState>  VanGenuchten;
+     typedef RegularizedVanGenuchtenState<Scalar> VanGenuchtenState;
+     typedef RegularizedVanGenuchten<VanGenuchtenState>  VanGenuchten;
+//    typedef VanGenuchtenState<Scalar> VanGenuchtenState;
+//    typedef VanGenuchten<VanGenuchtenState>  VanGenuchten;
 
     typedef MyGlobalState<VanGenuchtenState> PLVGGlobalState;
     typedef MyPLState<PLVGGlobalState>         PLVGState;
@@ -234,8 +236,9 @@ void printVanGenuchtenMain()
     // State instantiation
     ////////////////////
     // The two states for the MIC and the MDC required for hystersis
-    VanGenuchtenState vgDrain(0.00042, 5.25);
-    VanGenuchtenState vgImbib(0.00042*2, 5.25);
+    VanGenuchtenState vgDrain(0.00045, 6.3);
+    VanGenuchtenState vgImbib(0.00045*2, 6.5);
+    vgImbib.setVgMaxPC(vgDrain.vgMaxPC());
 
     // For the global state we assume, that the parameters for the MIC
     // and the MDC are constant over the whole domain, as well as

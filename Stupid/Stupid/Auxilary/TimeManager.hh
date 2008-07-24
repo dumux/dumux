@@ -266,6 +266,10 @@ namespace Stupid
         void runSimulation(Problem &problem)
             {
                 typedef typename Problem::DomainTraits::Scalar  Scalar;
+                
+                Dune::Timer timer;
+                timer.reset();
+                
 
                 // reset the time manager
                 _init();
@@ -300,10 +304,14 @@ namespace Stupid
 
                     if (_verbose) {
                         std::cout <<
-                            boost::format("Timestep %d done: Time=%.2f, StepSize=%f, NextStepSize=%f\n")
-                            %stepNum()%time()%curStepSize%stepSize();
+                            boost::format("Timestep %d done: Realtime=%.2f, Simtime=%.2f StepSize=%.2g, NextStepSize=%.2g\n")
+                            %stepNum()%timer.elapsed()%time()%curStepSize%stepSize();
                     }
                 }
+
+                std::cout <<
+                    boost::format("Simulation took %.3f seconds\n")
+                    %timer.elapsed();
             }
 
 

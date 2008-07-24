@@ -368,7 +368,7 @@ namespace Lenhard
                 // column was 72 cm high, but we need some additional
                 // space so that the boundary condition at the upper
                 // boundary doesn't destroy the experiment
-                _gridUpperRight[0] = 0.75;
+                _gridUpperRight[0] = 0.80;
 
 
                 // the epsilon constant
@@ -376,7 +376,7 @@ namespace Lenhard
 
                 // create the grid
                 Dune::FieldVector<int, GridDim> cellRes;
-                cellRes[0] = 150;
+                cellRes[0] = 160;
 
                 Grid *grid = new Grid(cellRes,
                                       _gridLowerLeft,
@@ -420,6 +420,7 @@ namespace Lenhard
                 _coarseSand->setSnr(0.25);
                 _coarseSand->setPorosity(0.36);
                 _coarseSand->setMdcParams(VanGenuchtenState(0.00042, 5.25));
+//                _coarseSand->setMicParams(VanGenuchtenState(0.00042, 5.25));
                 _coarseSand->setMicParams(VanGenuchtenState(0.00042*2, 5.25));
                 _coarseSand->micParams().setVgMaxPC(_coarseSand->mdcParams().vgMaxPC());
                 _coarseSand->setPermeability(3.37e-11);

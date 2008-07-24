@@ -112,7 +112,7 @@ namespace Lens
     };
 
 
-#ifndef USE_VERTEX_PARAMETERS
+#if !USE_VERTEX_PARAMETERS
     // vertex dependend parameters for cell centered parameter storage
     template <class MediumStateT>
     class LensVertexState
@@ -198,7 +198,7 @@ namespace Lens
 
 
     // cell/vertex dependent parameters
-#ifdef USE_VERTEX_PARAMETERS
+#if USE_VERTEX_PARAMETERS
 #define MAIN_STATE_CLASS LensVertexState
 #else
 #define MAIN_STATE_CLASS LensCellState

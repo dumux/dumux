@@ -13,8 +13,13 @@ function plotAtPos()
     FILE_EXP=$3
     FILE_SIM=$4
 
+    SWAPPSIM_CSV=`dirname $FILE_SIM`/VgSwapp_`basename $FILE_SIM`
     BLA=""
-    BLA="\"$FILE_SIM\" using 1:2 with lines title \"Simulation\""
+    BLA="\"$FILE_SIM\" using 1:2 with lines title \"PL Simulation \""
+    if test -r $SWAPPSIM_CSV; then
+        BLA="$BLA, \"$SWAPPSIM_CSV\" using 1:2 with lines title \"VG Simulation w. Snr#\""
+    fi
+
     if test -n "$FILE_EXP"; then
         BLA="$BLA, \"$FILE_EXP\" using 1:2 with dots title \"Experiment\""
     fi
@@ -41,9 +46,9 @@ make $SIMNAME
 ./Problems/Lenhard/$SIMNAME 1e100 10 | tee $SIMOUTPUT | grep -Ei "timestep"
 
 echo "Separating output.."
-rm -f stream*_*.csv
+#rm -f stream*_*.csv
 rm exp2_*.svg
-rm *stream_*.csv
+#rm *stream_*.csv
 cat $SIMOUTPUT | $SNIPSNAP > /dev/null
 
 echo "Generating SVG files.."
