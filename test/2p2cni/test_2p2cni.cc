@@ -15,9 +15,11 @@
 //#include "dumux/twophase/problems/uniformtwophaseproblem.hh"
 #include "waterco2problem.hh"
 //#include "dumux/material/properties.hh"
-#include "dumux/2p2cni/fv/boxco2.hh"
+#include "dumux/2p2cni/fv/box2p2cni.hh"
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/io/readstarformat.cc"
+#include "dumux/io/vtkmultiwriter.hh"
+
 int main(int argc, char** argv) 
 {
   try{
@@ -25,11 +27,14 @@ int main(int argc, char** argv)
     const int dim=2;
     typedef double NumberType; 
     Dune::FieldVector<NumberType, dim> outerLowerLeft(0);
-    Dune::FieldVector<NumberType, dim> outerUpperRight(4);
-    Dune::FieldVector<NumberType, dim> innerLowerLeft(1);
-    innerLowerLeft[1] = 2;
-    Dune::FieldVector<NumberType, dim> innerUpperRight(4);
-    innerUpperRight[1] = 3;
+    Dune::FieldVector<NumberType, dim> outerUpperRight(6);
+    outerUpperRight[1] = 4;
+    Dune::FieldVector<NumberType, dim> innerLowerLeft(4);
+    innerLowerLeft[1] = 0.0;
+    Dune::FieldVector<NumberType, dim> innerUpperRight(6);
+    innerUpperRight[1] = 0.5;
+    double depthBOR = 1000.0;
+
     if (argc != 4) {
       std::cout << "usage: 2p2cni basefilename tEnd dt" << std::endl;
       return 0;
@@ -56,31 +61,30 @@ int main(int argc, char** argv)
 
      Dune::gridinfo(grid);
     
-    Brine wPhase(0.2);
-    CO2 nPhase(0.05);
-
-//     Dune::LinearLaw law(brine, co2);
+     // choose fluids and properties
+     Brine wPhase; CO2 nPhase;
+//     Dune::LinearLaw law(wPhase, nPhase);
 //     Dune::CO2Problem2D<GridType, NumberType> problem(law, 1.e7); 
-      Dune::BrooksCoreyLaw law(wPhase, nPhase);
-      Dune::CBrineCO2 multicomp(wPhase, nPhase);
+     Dune::BrooksCoreyLaw law(wPhase, nPhase);
+     Dune::CBrineCO2 multicomp(wPhase, nPhase);
 
-      Dune::WaterCO2Problem<GridType, NumberType> problem(law, multicomp, 9.548355e6, 310, 0.2, 0.05, 10000, 2); 
+     Dune::WaterCO2Problem<GridType, NumberType> problem(law, multicomp, depthBOR); 
 
-      typedef Stupid::VtkMultiWriter<GridType> MultiWriter;
-    typedef Dune::BoxCO2<GridType, NumberType, MultiWriter> TwoPhase;
-    TwoPhase twoPhase(grid, problem);
+     typedef Dune::VtkMultiWriter<GridType> MultiWriter;
+     typedef Dune::Box2P2CNI<GridType, NumberType, MultiWriter> TwoPhase;
+     TwoPhase twoPhase(grid, problem);
 
-
+     Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt, "out2p2cni", 1);
     
-//    Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt, 1.e3, "co2", 5);
-    Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt, "co2", 5);
-    
-    Dune::Timer timer;
-    timer.reset();
-    timeloop.execute(twoPhase);
-    std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
+     Dune::Timer timer;
+     timer.reset();
+     Dune::VtkMultiWriter<GridType> writer("out2p2cni");
+
+	 //timeloop.execute(twoPhase);
+     timeloop.executeMultiWriter(twoPhase, writer);
+     std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
      
-	//std::cout << twoPhase.injected() << " kg CO2 injected." << std::endl;
+      //std::cout << twoPhase.injected() << " kg CO2 injected." << std::endl;
 
     return 0;
   }

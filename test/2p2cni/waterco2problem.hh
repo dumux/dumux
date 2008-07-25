@@ -19,7 +19,7 @@
 /**
  * @file
  * @brief  Base class for defining an instance of the TwoPhase problem
- * @author Bernd Flemisch
+ * @author Bernd Flemisch, Melanie Darcis, Klaus Mosthaf
  */
 
 namespace Dune
@@ -41,20 +41,23 @@ namespace Dune
   template<class G, class RT>
   class WaterCO2Problem : public TwoPTwoCNIProblem<G, RT> {
 	typedef typename G::ctype DT;
-	enum {dim=G::dimension, m=3};
-	enum {swrIdx=0, snrIdx=1, lamIdx=2, pbIdx=3};
-	enum {h2o = 0, co2 = 1};
 	typedef typename G::Traits::template Codim<0>::Entity Entity;
 	typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
+	enum {dim=G::dimension, m=3};
+	enum {swrIdx=0, snrIdx=1, lamIdx=2, pbIdx=3};
+	enum {wPhase = 0, nPhase = 1};
+	enum {pWIdx = 0, switchIdx = 1, teIdx = 2};
+
 
   public:
+
+	// permeabilities
 	virtual const FieldMatrix<DT,dim,dim>& K (const FieldVector<DT,dim>& x, const Entity& e, 
 					const FieldVector<DT,dim>& xi)
 	{
 		return permloc_;
 	}
 
-	// permeabilities
 	virtual const FieldMatrix<DT,dim,dim>& K (const FieldVector<DT,dim>& x)
 	//, const Entity& e, const FieldVector<DT,dim>& xi)
 	{
@@ -74,15 +77,26 @@ namespace Dune
 		return values;
 	}
 
+/////////////////////////////
+// TYPE of the boundaries
+/////////////////////////////
 	virtual FieldVector<BoundaryConditions::Flags, m> bctype (const FieldVector<DT,dim>& x, const Entity& e, 
 					const IntersectionIterator& intersectionIt, 
 					   const FieldVector<DT,dim>& xi) const 
 	{
-		FieldVector<BoundaryConditions::Flags, m> values(Dune::BoundaryConditions::dirichlet); 
-		if(x[0]<1.e-2 && x[1] > 1. && x[1] < 3.)
+		// initialize all boundaries as Neumann
+		FieldVector<BoundaryConditions::Flags, m> values(Dune::BoundaryConditions::neumann); 
+
+		if(x[0] < 1e-10)
 		{
-			values = Dune::BoundaryConditions::neumann;
+			values = Dune::BoundaryConditions::dirichlet;
 		}
+		
+//		if(x[1] < 1e-10)
+//		{
+//			values = Dune::BoundaryConditions::dirichlet;
+//		}
+
 		return values;
 	}
 	
@@ -95,52 +109,60 @@ namespace Dune
 		return;
 	}
 
+/////////////////////////////
+// DIRICHLET boundaries
+/////////////////////////////
 	virtual FieldVector<RT,m> g (const FieldVector<DT,dim>& x, const Entity& e, 
 				const IntersectionIterator& intersectionIt, 
 				  const FieldVector<DT,dim>& xi) const 
 	{
-		FieldVector<RT,m> values(0);
+		FieldVector<RT,m> values(0.);
 		
-		values[0] = p0_ - x[1] * 1070 * 9.81; 
-		values[1] = 0.3;
-		values[2] = 311. - x[1]*0.03;
-		
-//		if(x[0]>4-1.e-2 && x[1] > 1. && x[1] < 3.)
+		values[pWIdx] = 1e5 + (depthBOR_ - x[1])*1070*9.81; 
+		values[switchIdx] = 0.1;
+		values[teIdx] = 283. + (depthBOR_ - x[1])*0.03;
+
+//		RT pinj = 0.0;	
+//		if (x[0] < 1e-10 && x[1] > 1.0 && x[1] < 2.0)
 //		{
-//		    values[2] = 320;
+//			values[pWIdx] = 1e5 + (depthBOR_ - x[1])*1000*9.81 + pinj; 
+//			values[switchIdx] = 0.3;
+//			values[teIdx] = 283. + (depthBOR_ - x[1])*0.03;	
 //		}
-		
+			
 		return values;
 	}
-	  
+	
+/////////////////////////////
+// NEUMANN boundaries
+/////////////////////////////	  
 	virtual FieldVector<RT,m> J (const FieldVector<DT,dim>& x, const Entity& e, 
 				const IntersectionIterator& intersectionIt, const FieldVector<DT,dim>& xi) const 
 	{
-		FieldVector<RT,m> values(0);
-
-		values[0] = -1.e-3;
-		values[1] = -2.692798e-4;
-		values[2] = 0.0;//10000.77;
+		FieldVector<RT,m> values(0.0);
 		
-
-//		if(x<1.e-2)
-//			values[2] = 312.;
-//				values[0] = -1.29188e-4;//-1.29188e-4; 
-//				values[1] = 0.0;
-//				values[2] = -19.51;//43.24;
+		// negative values for injection		
+		if (x[1] > 1.0 && x[1] < 2.0)
+		{
+			values[pWIdx] = 0.0;
+			values[switchIdx] = -1e-2;
+			values[teIdx] = 0.0;
+		}
 		
 		return values;
 	}
 	
-	// Initial Conditions for global vector x, element e and local vector xi
+/////////////////////////////
+// INITIAL values
+/////////////////////////////
 	virtual FieldVector<RT,m> initial (const FieldVector<DT,dim>& x, const Entity& e, 
 				  const FieldVector<DT,dim>& xi) const 
 	{
 		FieldVector<RT,m> values(0);
 
-		values[0] = p0_ - x[1] * 1070 * 9.81; 
-		values[1] = 0.3;
-		values[2] = 311.- x[1]*0.03;
+		values[pWIdx] = 1e5 + (depthBOR_ - x[1])*1070*9.81; 
+		values[switchIdx] = 0.1;
+		values[teIdx] = 283. + (depthBOR_ - x[1])*0.03;
 	
 		return values;
 	}
@@ -154,10 +176,11 @@ namespace Dune
 
 //		if (x[1] >= innerLowerLeft_[1] && x[1] <= innerUpperRight_[1]
 //		      && x[0] >= innerLowerLeft_[0])
-			state = bothPhases;
+		state = bothPhases;
 			
 		return state;
 	}
+//////////////////////////////	  
 
 	double porosity (const FieldVector<DT,dim>& x, const Entity& e, 
 			  const FieldVector<DT,dim>& xi) const 
@@ -201,12 +224,11 @@ namespace Dune
 	}
 
 	WaterCO2Problem(TwoPhaseRelations& law = *(new BrooksCoreyLaw), 
-			MultiComp& multicomp = *(new CWaterAir), RT pdown = 7.449015e6, RT tdown = 304.,
-			RT swr = 0.2, RT snr = 0.05, RT pb = 10000.0, RT lambda = 2.0 ) 
+			MultiComp& multicomp = *(new CWaterAir), RT depthBOR = 0.0, 
+			RT swr = 0.1, RT snr = 0.1, RT pb = 10000.0, RT lambda = 2.0) 
 	: TwoPTwoCNIProblem<G, RT>(law, multicomp) 
 	{	
-		p0_ = pdown;
-		t0_ = tdown;
+		depthBOR_ = depthBOR;
 		swr_ = swr;
 		snr_ = snr;
 		pb_ = pb;
@@ -214,17 +236,17 @@ namespace Dune
 		permloc_ = 0; 
 		
 		for (int i = 0; i < dim; i++)
-			permloc_[i][i] = 1.0e-14;
+			permloc_[i][i] = 9.2e-12;
 		
-		diffusion_[h2o] = 2.0E-5; // diffusion coefficient for water in gas phase
-		diffusion_[co2] = 2.6E-9; // diffusion coefficient for co2 in water phase
+		diffusion_[wPhase] = 2.0E-5; // diffusion coefficient for water in gas phase
+		diffusion_[nPhase] = 2.6E-9; // diffusion coefficient for co2 in water phase
 
 	}
 	
 	private:
 		Dune::FieldMatrix<DT,dim,dim> permloc_;
 		Dune::FieldVector<RT,2> diffusion_;
-		RT p0_, t0_;
+		RT depthBOR_;
 		RT swr_, snr_;
 		RT pb_, lambda_;
 		RT soilDens_, soilHeatCp_, soilLDry_, soilLSw_;
