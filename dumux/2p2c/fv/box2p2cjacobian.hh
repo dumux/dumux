@@ -487,7 +487,7 @@ namespace Dune
   			  sNDat[globalIdx].porosity = problem.porosity(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
   			  
   			  // evaluate primary variable switch
-// 			  primaryVarSwitch(e, globalIdx, sol, k);
+ 			  primaryVarSwitch(e, globalIdx, sol, k);
   			  
   			  // mark elements that were already visited
   			  sNDat[globalIdx].visited = true;
@@ -528,7 +528,7 @@ namespace Dune
 
    	   	 const int global = this->vertexMapper.template map<dim>(e, i);
    		 int state = sNDat[global].phaseState;
-
+ 
    		 varData[i].pW = sol[i][pWIdx];
    		 if (state == bothPhases) varData[i].satN = sol[i][switchIdx];
    		 if (state == waterPhase) varData[i].satN = 0.0;
@@ -536,7 +536,7 @@ namespace Dune
 
    		 varData[i].satW = 1.0 - varData[i].satN;
 
-   		 varData[i].pC = 0.0;//problem.materialLaw().pC(varData[i].satW, parameters);
+   		 varData[i].pC = problem.materialLaw().pC(varData[i].satW, parameters);
    		 varData[i].pN = varData[i].pW + varData[i].pC;
    		 varData[i].temperature = 283.15; // in [K]
 

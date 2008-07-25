@@ -45,7 +45,8 @@ namespace Dune
 
   public:
 	enum {pWIdx = 0, switchIdx = 1};
-	enum {swrIdx = 0, snrIdx = 1, alphaIdx = 2, nIdx = 3};
+//	enum {swrIdx = 0, snrIdx = 1, alphaIdx = 2, nIdx = 3};
+	enum {swrIdx = 0, snrIdx = 1, lamIdx = 2, pbIdx = 3};
 	enum {gasPhase = 0, waterPhase = 1, bothPhases = 2};
 
 	// permeabilities
@@ -68,44 +69,6 @@ namespace Dune
 		return values;
 	}
 
-/////////////////////////////
-// INITIAL values
-/////////////////////////////
-		virtual FieldVector<RT,m> initial (const FieldVector<DT,dim>& x, const Entity& e, 
-					  const FieldVector<DT,dim>& xi) const 
-		{
-
-			FieldVector<RT,m> values;
-			
-			values[pWIdx] = 1e5 - densityW_*gravity_[1]*(depthBOR_ - x[1]);
-			values[switchIdx] = 0.2;
-
-			//			if (x[1] >= innerLowerLeft_[1] && x[1] <= innerUpperRight_[1] 
-//			 && x[0] >= innerLowerLeft_[0])
-//				values[switchIdx] = 0.2;
-//			else
-//				values[switchIdx] = 1e-6;
-		
-			return values;
-		}
-
-		
-		int initialPhaseState (const FieldVector<DT,dim>& x, const Entity& e, 
-					  const FieldVector<DT,dim>& xi) const 
-		{
-
-			enum {gasPhase = 0, waterPhase = 1, bothPhases = 2}; // Phase states
-			int state;
-
-//			if (x[1] >= innerLowerLeft_[1] && x[1] <= innerUpperRight_[1]
-//			      && x[0] >= innerLowerLeft_[0])
-//				state = 2;
-//			else
-
-			state = bothPhases;
-				
-			return state;
-		}
 	
 	
 /////////////////////////////
@@ -136,7 +99,7 @@ namespace Dune
 		FieldVector<RT,m> values(0);
 
 		values[pWIdx] = 1e5 - densityW_*gravity_[1]*(depthBOR_ - x[1]);
-		values[switchIdx] = 0.2;
+		values[switchIdx] = 0.0;
 		
 //		if (x[1] >= innerLowerLeft_[1] && x[1] <= innerUpperRight_[1] 
 //		 && x[0] >= innerLowerLeft_[0])
@@ -158,12 +121,54 @@ namespace Dune
 
 		//RT lambda = (x[1])/height_;
 
-		if (x[1] < 2.0 && x[1] > 1.0)
-			values[switchIdx] = -5e-6;
+		if (x[1] < 15.0 && x[1] > 5.0)
+			values[switchIdx] = -1e-2;
 		
 		return values;
 	}
+
+/////////////////////////////
+// INITIAL values
+/////////////////////////////
+		virtual FieldVector<RT,m> initial (const FieldVector<DT,dim>& x, const Entity& e, 
+					  const FieldVector<DT,dim>& xi) const 
+		{
+
+			FieldVector<RT,m> values;
+			
+			values[pWIdx] = 1e5 - densityW_*gravity_[1]*(depthBOR_ - x[1]);
+			values[switchIdx] = 0.0;
+
+//			if (x[1] >= innerLowerLeft_[1] && x[1] <= innerUpperRight_[1] 
+//			 && x[0] >= innerLowerLeft_[0])
+//				values[switchIdx] = 0.2;
+//			else
+//				values[switchIdx] = 1e-6;
+		
+			return values;
+		}
+
+		
+		int initialPhaseState (const FieldVector<DT,dim>& x, const Entity& e, 
+					  const FieldVector<DT,dim>& xi) const 
+		{
+
+			enum {gasPhase = 0, waterPhase = 1, bothPhases = 2}; // Phase states
+			int state;
+
+//			if (x[1] >= innerLowerLeft_[1] && x[1] <= innerUpperRight_[1]
+//			      && x[0] >= innerLowerLeft_[0])
+//				state = 2;
+//			else
+
+			state = waterPhase;
+				
+			return state;
+		}
+	
 //////////////////////////////	  
+	
+
 	
 	double porosity (const FieldVector<DT,dim>& x, const Entity& e, 
 			  const FieldVector<DT,dim>& xi) const 
@@ -190,19 +195,17 @@ namespace Dune
 	{
 		FieldVector<RT,4> values;
 		
-		if (x[0] > innerLowerLeft_[0] && x[0] < innerUpperRight_[0] 
-		    && x[1] > innerLowerLeft_[1] && x[1] < innerUpperRight_[1]) {
-			values[swrIdx] = innerSwr_;
-			values[snrIdx] = innerSnr_;
-			values[alphaIdx] = innerAlpha_;
-			values[nIdx] = innerN_;
-		}
-		else {
-			values[swrIdx] = outerSwr_;
-			values[snrIdx] = outerSnr_;
-			values[alphaIdx] = outerAlpha_;
-			values[nIdx] = outerN_;
-		}
+// for BrooksCoreyLaw
+		values[swrIdx] = outerSwr_;
+		values[snrIdx] = outerSnr_;
+		values[lamIdx] = lambda_;
+		values[pbIdx] = pb_;
+
+// for VanGenuchtenLaw
+//		values[swrIdx] = innerSwr_;
+//		values[snrIdx] = innerSnr_;
+//		values[alphaIdx] = innerAlpha_;
+//		values[nIdx] = innerN_;
 		
 		return values;
 	}
@@ -210,11 +213,12 @@ namespace Dune
 	InjectionProblem(TwoPhaseRelations& law = *(new LinearLaw), MultiComp& multicomp = *(new CWaterAir), 
 			const FieldVector<DT,dim> outerLowerLeft = 0., const FieldVector<DT,dim> outerUpperRight = 0., 
 			const FieldVector<DT,dim> innerLowerLeft = 0., const FieldVector<DT,dim> innerUpperRight = 0., 
-			const RT depthBOR = 0., RT outerK = 1.2e-13, RT innerK = 1.2e-13,
-			RT outerSwr = 0.2, RT outerSnr = 0.2, RT innerSwr = 0.2, RT innerSnr = 0.2, 
+			const RT depthBOR = 0., RT outerK = 7.2e-13, RT innerK = 7.2e-13,
+			RT outerSwr = 0.0, RT outerSnr = 0.0, RT innerSwr = 0.2, RT innerSnr = 0.2, 
 			RT outerPorosity = 0.4, RT innerPorosity = 0.4, 
-			RT outerAlpha = 0.00047, RT innerAlpha = 0.00047,  //0.00045
-			RT outerN = 4.7, RT innerN = 4.7)	//7.3
+			RT lambda = 2, RT pb = 10000)
+//			RT outerAlpha = 0.00047, RT innerAlpha = 0.00047,  //0.00045
+//			RT outerN = 4.7, RT innerN = 4.7)	//7.3
 	: TwoPTwoCProblem<G, RT>(law, multicomp), 
 	  outerLowerLeft_(outerLowerLeft), outerUpperRight_(outerUpperRight), 
 	  innerLowerLeft_(innerLowerLeft), innerUpperRight_(innerUpperRight), 
@@ -222,8 +226,10 @@ namespace Dune
 	  densityW_(law.wettingPhase.density()), densityN_(law.nonwettingPhase.density()), 
 	  outerSwr_(outerSwr), outerSnr_(outerSnr), innerSwr_(innerSwr), innerSnr_(innerSnr), 
 	  outerPorosity_(outerPorosity), innerPorosity_(innerPorosity), 
-	  outerAlpha_(outerAlpha), innerAlpha_(innerAlpha), 
-	  outerN_(outerN), innerN_(innerN)
+	  lambda_(lambda), pb_(pb)
+	  
+//	  outerAlpha_(outerAlpha), innerAlpha_(innerAlpha), 
+//	  outerN_(outerN), innerN_(innerN)
 	{	
 		outerK_[0][0] = outerK_[1][1] = outerK;
 		outerK_[0][1] = outerK_[1][0] = 0;
@@ -251,8 +257,9 @@ namespace Dune
 		FieldVector<DT,dim> gravity_;
 		RT outerSwr_, outerSnr_, innerSwr_, innerSnr_;
 		RT outerPorosity_, innerPorosity_;
-		RT outerAlpha_, innerAlpha_;
-		RT outerN_, innerN_;
+		RT lambda_, pb_;
+//		RT outerAlpha_, innerAlpha_;
+//		RT outerN_, innerN_;
   };
 
 }
