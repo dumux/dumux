@@ -302,8 +302,8 @@ namespace Dune
 //			}
 //		}
 		double Flux, Mass;
-		Flux = this->computeFlux();
-		Mass = this->totalCO2Mass();
+//		Flux = this->computeFlux();
+//		Mass = this->totalCO2Mass();
 		dt = this->localJacobian.getDt();
 		std::cout << " Flux: "<< Flux << " " << "Mass: " << Mass << std::endl;
 		
