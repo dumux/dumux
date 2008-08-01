@@ -139,7 +139,7 @@ namespace Dune {
 			  else
 				  timeStep.execute(model, t, dt, maxDt, tEnd, cFLFactor);
 
-			  if(!fixed)
+			  if(fixed)
 			  {
 				  if (dt > dtOld) {
 					  t += dtOld;
@@ -168,7 +168,6 @@ namespace Dune {
 			  }
 			  else
 			  { 
-				  if(dt>dtOld) dt=dtOld; // needed for fixed timestep if timestep is doubled in the newton method
 				  t += dt;
 				  t = std::min(t, tEnd);
 				  std::cout << ", timestep: " << k << "\t t=" << t << "\t dt=" << dt << std::endl;
