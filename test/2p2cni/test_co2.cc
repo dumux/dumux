@@ -66,14 +66,12 @@ int main(int argc, char** argv)
 
       Dune::BrineCO2Problem<GridType, NumberType> problem(law, multicomp, 9.548355e6, 310, 0.2, 0.05, 10000, 2); 
 
-      typedef Stupid::VtkMultiWriter<GridType> MultiWriter;
+      typedef Dune::VtkMultiWriter<GridType> MultiWriter;
     typedef Dune::BoxCO2<GridType, NumberType, MultiWriter> TwoPhase;
     TwoPhase twoPhase(grid, problem);
 
 
-    
-//    Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt, 1.e3, "co2", 5);
-    Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt, "co2", 5);    
+    Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt, "co2", 5);
     Dune::Timer timer;
     timer.reset();
     timeloop.execute(twoPhase);
