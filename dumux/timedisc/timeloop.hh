@@ -11,7 +11,7 @@ namespace Dune {
   {
   public:
 	  void execute(Model& model)
-	  {
+	  { 
 		  // generate one meta vtk-file holding the individual timesteps 
 		  char multiFileName[128];	
 		  char fileNameVTK[128];	
@@ -167,7 +167,7 @@ namespace Dune {
 				  }		    		
 			  }
 			  else
-			  { 
+			  {
 				  t += dt;
 				  t = std::min(t, tEnd);
 				  std::cout << ", timestep: " << k << "\t t=" << t << "\t dt=" << dt << std::endl;
@@ -177,11 +177,10 @@ namespace Dune {
 			  // generate output
 			  if (k%modulo == 0) 
 			  {
-				  std::cout <<"Write output file" << std::endl;
 				  writer.beginTimestep(t, model.getGrid());
 				  model.addvtkfields(writer);
 				  writer.endTimestep();
-			   }
+			  }
 			  //		    if (fixed)
 			  //		    	dt = dtOriginal;
 		  }    
@@ -198,11 +197,11 @@ namespace Dune {
 			  modulo(mod), timeStep(tist), fileName(name), fixed(false)
 			  { }
 
-	  TimeLoop(const double ts, const double te, const double dtime = 1e100, const double mdt = 1e100, 
+	  TimeLoop(const double ts, const double te, const double dtime = 1e100, 
 			  const char* name = "timeloop", const int mod = 1, const double fdt = 1e100, 
 			  TimeStep<G, Model>& tist = *(new ImplicitEulerStep<G, Model>))
-			  : tStart(ts), tEnd(te), dt(dtime), maxDt(mdt), firstDt(fdt), cFLFactor(1), 
-			  modulo(mod), timeStep(tist), fileName(name), fixed(false)
+			  : tStart(ts), tEnd(te), dt(dtime), maxDt(1e100), firstDt(fdt), cFLFactor(1), 
+			  modulo(mod), timeStep(tist), fileName(name), fixed(true)
 			  { }
 
   private: 
