@@ -93,12 +93,21 @@ namespace Dune
 		enum {dim = G::dimension};
 		enum {dimworld = G::dimensionworld};
 
-//		this->localJacobian.hackySaturationN = hackyVtkWriter->template createField<RT, 1>(this->size);
-//		this->localJacobian.hackyMassFracAir = hackyVtkWriter->template createField<RT, 1>(this->size);
-//		this->localJacobian.hackyMassFracWater = hackyVtkWriter->template createField<RT, 1>(this->size);
-		
 		const IS& indexset(this->grid.leafIndexSet());
 
+		this->localJacobian.outPressureN = vtkMultiWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.outCapillaryP = vtkMultiWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.outSaturationW = vtkMultiWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.outSaturationN = vtkMultiWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.outTemperature = vtkMultiWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.outMassFracAir = vtkMultiWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.outMassFracWater = vtkMultiWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.outDensityW = vtkMultiWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.outDensityN = vtkMultiWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.outMobilityW = vtkMultiWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.outMobilityN = vtkMultiWriter->template createField<RT, 1>(this->size);
+
+		
 		// iterate through leaf grid an evaluate c0 at cell center
 		Iterator eendit = indexset.template end<0, All_Partition>();
 		for (Iterator it = indexset.template begin<0, All_Partition>(); it
@@ -131,7 +140,8 @@ namespace Dune
 				this->localJacobian.sNDat[globalId].phaseState = 
 					this->problem.initialPhaseState(global, entity, local);
 					
-
+					this->localJacobian.sNDat[globalId].oldPhaseState = 
+						this->problem.initialPhaseState(global, entity, local);
 					
 			}
                                 this->localJacobian.updateStaticData(entity, this->localJacobian.u);
@@ -200,8 +210,10 @@ namespace Dune
 								}
 							}
 				}
+		this->localJacobian.setLocalSolution(entity);
+		for (int i = 0; i < size; i++) 
+		this->localJacobian.updateVariableData(entity, this->localJacobian.u, i, false);	
 		}
-
 		*(this->uOldTimeStep) = *(this->u);
 		
 		return;
@@ -238,9 +250,17 @@ namespace Dune
 
 	void update (double& dt)
 	{
-//		this->localJacobian.hackySaturationN = hackyVtkWriter->template createField<RT, 1>(this->size);
-//		this->localJacobian.hackyMassFracAir = hackyVtkWriter->template createField<RT, 1>(this->size);
-//		this->localJacobian.hackyMassFracWater = hackyVtkWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.outPressureN = vtkMultiWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.outCapillaryP = vtkMultiWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.outSaturationW = vtkMultiWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.outSaturationN = vtkMultiWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.outTemperature = vtkMultiWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.outMassFracAir = vtkMultiWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.outMassFracWater = vtkMultiWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.outDensityW = vtkMultiWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.outDensityN = vtkMultiWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.outMobilityW = vtkMultiWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.outMobilityN = vtkMultiWriter->template createField<RT, 1>(this->size);
 
 		this->localJacobian.setDt(dt);
 		this->localJacobian.setOldSolution(this->uOldTimeStep);
@@ -256,8 +276,8 @@ namespace Dune
 
 
 ///////////////////		
-		RT absTol = 2e-3;
-		RT relTol = 1e-6;
+		RT absTol = 1e-4;
+		RT relTol = 1e-8;
 		NewtonMethod<G, ThisType> newtonMethod(this->grid, *this, relTol, absTol);
 		newtonMethod.execute();
 		const IS& indexset(this->grid.leafIndexSet());
@@ -281,14 +301,16 @@ namespace Dune
 //				this->localJacobian.primaryVarSwitch(e, globalId, this->localJacobian.u, i);
 //			}
 //		}
+		double Flux, Mass;
+		Flux = this->computeFlux();
+		Mass = this->totalCO2Mass();
 		dt = this->localJacobian.getDt();
-//		double upperMass, oldUpperMass;
-//		double totalMass = this->injected(upperMass, oldUpperMass);
-//		std::cout << totalMass << "\t" << upperMass 
-//			  << "\t" << oldUpperMass << "\t# totalMass, upperMass, oldUpperMass" << std::endl;
+		std::cout << " Flux: "<< Flux << " " << "Mass: " << Mass << std::endl;
 		
 		*(this->uOldTimeStep) = *(this->u);
-
+		
+		// update old phase state for computation of ComputeM(..uold..)
+		this->localJacobian.updatePhaseState();
 		return;
 	}
 
@@ -304,13 +326,8 @@ namespace Dune
 //		BlockVector<FieldVector<RT, 1> > &xAW = *writer.template createField<RT, 1>(this->size);
 //		BlockVector<FieldVector<RT, 1> > &satW = *writer.template createField<RT, 1>(this->size);
 
-		for (int i = 0; i < this->size; i++) {
-//			RT pW = (*(this->u))[i][0];
-//			RT satN = (*(this->u))[i][1];
-//			satW[i] = 1 - satN;
-//			xWN[i] = this->problem.multicomp().xWN(pW, 283.15); //Achtung!! pW instead of pN!!!
-//			xAW[i] = this->problem.multicomp().xAW(pW, 283.15); //Achtung!! pW instead of pN!!!
-		}
+//		writer.addScalarVertexFunction("nonwetting phase saturation", this->u, 1);
+		writer.addScalarVertexFunction("pressure wetting phase", this->u, 0);
 
 //		writer.addScalarVertexFunction("nonwetting phase saturation", 
 //										this->u, 
@@ -319,49 +336,33 @@ namespace Dune
 										this->u, 
 										0);
 //		writer.addVertexData(&satW,"wetting phase saturation");
-		writer.addVertexData(this->localJacobian.hackySaturationN,"nonwetting phase saturation");
-		writer.addVertexData(this->localJacobian.hackyMassFracAir,"air in water");
-		writer.addVertexData(this->localJacobian.hackyMassFracWater,"water in Gasphase");
+		writer.addVertexData(this->localJacobian.outPressureN,"pressure non-wetting phase");
+		writer.addVertexData(this->localJacobian.outCapillaryP,"capillary pressure");
+		writer.addVertexData(this->localJacobian.outTemperature,"temperature");
+		writer.addVertexData(this->localJacobian.outSaturationW,"saturation wetting phase");
+		writer.addVertexData(this->localJacobian.outSaturationN,"saturation non-wetting phase");
+		writer.addVertexData(this->localJacobian.outMassFracAir,"massfraction air in wetting phase");
+		writer.addVertexData(this->localJacobian.outMassFracWater,"massfraction water in non-wetting phase");
+		writer.addVertexData(this->localJacobian.outDensityW,"density wetting phase");
+		writer.addVertexData(this->localJacobian.outDensityN,"density non-wetting phase");
+		writer.addVertexData(this->localJacobian.outMobilityW,"mobility wetting phase");
+		writer.addVertexData(this->localJacobian.outMobilityN,"mobility non-wetting phase");
+
 //		writer.addVertexData(&xWN, "water in air");
 //		writer.addVertexData(&xAW, "dissolved air");
 	}
 
 	
-//	void vtkout (const char* name, int k) 
-//	{
-//		
-//	}
-//
-//	void vtkout (const char* name, int k) 
-//	{
-//		VTKWriter<G> vtkwriter(this->grid);
-//		char fname[128];	
-//		sprintf(fname,"%s-%05d",name,k);
-//	  BlockVector<FieldVector<RT, 1> > xWN(this->size);
-//	  BlockVector<FieldVector<RT, 1> > xAW(this->size);
-//		for (int i = 0; i < this->size; i++) {
-//			this->pW[i] = (*(this->u))[i][0];
-//			this->satN[i] = (*(this->u))[i][1];
-//			this->satW[i] = 1 - this->satN[i];
-//			//const FieldVector<RT, 4> parameters(this->problem.materialLawParameters
-//			//	 		 (this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal));
-//			//			this->pC[i] = this->problem.materialLaw().pC(this->satW[i], parameters);			
-//			xWN[i] = this->problem.multicomp().xWN(this->pW[i], 283.15); //Achtung!! pW instead of pN!!!
-//			xAW[i] = this->problem.multicomp().xAW(this->pW[i], 283.15); //Achtung!! pW instead of pN!!!
-//		}
-//		vtkwriter.addVertexData(this->pW,"wetting phase pressure");
-//		vtkwriter.addVertexData(this->satW,"wetting phase saturation");
-//		vtkwriter.addVertexData(this->satN,"nonwetting phase saturation");
-//		vtkwriter.addVertexData(xWN, "water in air");
-//		vtkwriter.addVertexData(xAW, "dissolved air");
-//		vtkwriter.write(fname, VTKOptions::ascii);		
-//	}
-//
+	void vtkout (const char* name, int k) 
+	{
+		
+	}
+
 	
-	void setHackyVtkMultiWriter(VtkMultiWriter *writer)
-	{ hackyVtkWriter = writer; }
+	void setVtkMultiWriter(VtkMultiWriter *writer)
+	{ vtkMultiWriter = writer; }
   protected:
-    VtkMultiWriter *hackyVtkWriter;
+    VtkMultiWriter *vtkMultiWriter;
    
   };
 }
