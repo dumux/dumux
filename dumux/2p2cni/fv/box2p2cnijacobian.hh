@@ -460,7 +460,15 @@ namespace Dune
     	}
    	 return;
    	}
-         
+    
+    // updates old phase state after each time step
+    virtual void updatePhaseState ()
+    {
+      	for (int i = 0; i < this->vertexMapper.size(); i++){
+       		sNDat[i].oldPhaseState = sNDat[i].phaseState;
+      	 }
+       return;
+    }
     
 	  //*********************************************************
 	  //*														*
@@ -529,7 +537,7 @@ namespace Dune
  			  FieldVector<DT,dim> global_i = this->fvGeom.subContVol[k].global;
   			  
    			  // evaluate primary variable switch
-// 			  primaryVarSwitch(e, globalIdx, sol, k);
+ 			  primaryVarSwitch(e, globalIdx, sol, k);
   			  
   			  // mark elements that were already visited
   			  sNDat[globalIdx].visited = true;
@@ -578,13 +586,13 @@ namespace Dune
 
     // analog to EvalPrimaryData in MUFTE, uses members of vNDat
 	virtual void updateVariableData(const Entity& e, const VBlockType* sol, 
-			int i, std::vector<VariableNodeData>& varData) 
+			int i, std::vector<VariableNodeData>& varData, int state) 
     {
      const FieldVector<RT, 4> parameters = problem.materialLawParameters 
      (this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
 
    	   	 const int global = this->vertexMapper.template map<dim>(e, i);
-   		 int state = sNDat[global].phaseState;
+
 
    		 varData[i].pW = sol[i][pWIdx];
    		 if (state == bothPhases) varData[i].satN = sol[i][switchIdx];
@@ -650,10 +658,18 @@ namespace Dune
 
 	virtual void updateVariableData(const Entity& e, const VBlockType* sol, int i, bool old = false) 
 	{
+		int state;
+		const int global = this->vertexMapper.template map<dim>(e, i);
 		if (old)
-			updateVariableData(e, sol, i, oldVNDat);
+		{
+	   	   	state = sNDat[global].oldPhaseState;
+			updateVariableData(e, sol, i, oldVNDat, state);
+		}
 		else 
-			updateVariableData(e, sol, i, vNDat);
+		{
+		    state = sNDat[global].phaseState;
+			updateVariableData(e, sol, i, vNDat, state);
+		}
 	}
 
 	void updateVariableData(const Entity& e, const VBlockType* sol, bool old = false)
@@ -670,6 +686,7 @@ namespace Dune
    	 bool visited;
 //   	 bool switched;
    	 int phaseState;
+   	 int oldPhaseState;
    	 RT cellVolume;
    	 RT porosity;
    	 FieldVector<RT, 4> parameters;
