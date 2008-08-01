@@ -316,7 +316,9 @@ namespace Dune
 //			  << "\t" << oldUpperMass << "\t# totalMass, upperMass, oldUpperMass" << std::endl;
 		
 		*(this->uOldTimeStep) = *(this->u);
-
+		
+		// update old phase state for computation of ComputeM(..uold..)
+		this->localJacobian.updatePhaseState();
 		return;
 	}
 
