@@ -49,6 +49,7 @@ public:
 
 	// copy rhs because solver overwrites rhs argument
 	Y rhs(d);
+	communication.addOwnerOverlapToAll(rhs,rhs);
 
 	// solve subdomain problem
 // 	char title[32], rowtitle[32];

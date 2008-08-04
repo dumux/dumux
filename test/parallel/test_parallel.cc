@@ -46,7 +46,12 @@ double discreteError(const Grid& grid, const Solution& solution, const Problem& 
 	  VertexIterator it = grid.leafIndexSet().template begin<dim,All_Partition>();
 	  for (; it != endIt; ++it)
 	  {
-		  // get exact solution at vertex
+		const PartitionType& partitionType = (*it).partitionType();
+		//std::cout << "type = " << partitionType << std::endl; 
+
+		if (partitionType != GhostEntity) 
+		{ 
+		// get exact solution at vertex
 		  FieldVector<double,dim> globalCoord = (*it).geometry()[0];
 		  double exact = problem.exact(globalCoord);
 
@@ -54,8 +59,11 @@ double discreteError(const Grid& grid, const Solution& solution, const Problem& 
 		  int globalId = vertexMapper.map(*it);
 		  double approximate = (*solution)[globalId];
 		  
+//		  std::cout << grid.comm().rank() << ": id = " << globalId << ", coord = " << globalCoord << ", type = " << partitionType << std::endl;
+		  
 		  error += (exact - approximate)*(exact - approximate);
-	  }
+		}  
+	}
 		  
 	  return sqrt(error);
 }
@@ -83,9 +91,10 @@ int main(int argc, char** argv)
     
     // instantiate a distributed grid with overlap
     Dune::FieldVector<double,dim> length(1.0);
-    Dune::FieldVector<int,dim> size(16);
+    Dune::FieldVector<int,dim> size(1);
+    size[0] = 2;
     Dune::FieldVector<bool,dim> periodic(false);
-    int overlap = 1;
+    int overlap = 0;
     typedef Dune::YaspGrid<dim,dim> GridType;
 
 #if HAVE_MPI
@@ -116,6 +125,7 @@ int main(int argc, char** argv)
     
     typedef Dune::LeafP1ParallelBoxDiffusion<GridType, NumberType> Diffusion;
     Diffusion diffusion(grid, problem);
+//    discreteError(grid, *diffusion, problem); 
     
     Dune::TimeLoop<GridType, Diffusion> timeloop(0, 1, 1, "test_parallel", 1);
     
@@ -130,6 +140,9 @@ int main(int argc, char** argv)
       std::cout << "discrete error = " << discreteErr << std::endl;    
       std::cout << "Calculation took " << elapsedTime << " seconds." << std::endl;
     }
+    char buffer[128]; 
+    sprintf(buffer, "rank %d :", grid.comm().rank());
+    printvector(std::cout, *(*diffusion), "solution", buffer, 200, 1, 3);
 
     return 0;
   }

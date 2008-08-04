@@ -36,10 +36,13 @@ public:
 			const IntersectionIterator& intersectionIt, 
 					   const Dune::FieldVector<DT,n>& xi) const
   {
-	//if (x[0] < 1e-6) 
-	  return Dune::BoundaryConditions::dirichlet;
+//	if (x[0] < 1e-6 || x[0] > 1.0-1e-6 
+//			|| x[1] < 1e-6 || x[1] > 1.0-1e-6 
+//			|| x[2] < 1e-6 || x[2] > 1.0-1e-6) 
+	  if (x[0] < 1e-6)
+		  return Dune::BoundaryConditions::dirichlet;
 	
-	//return Dune::BoundaryConditions::neumann;
+	return Dune::BoundaryConditions::neumann;
   }
 
   virtual void dirichletIndex(const Dune::FieldVector<DT,n>& x, const Entity& e,

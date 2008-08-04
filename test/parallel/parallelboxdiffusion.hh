@@ -93,6 +93,8 @@ public:
 		typedef typename ThisType::FunctionType::RepresentationType VectorType;
 		typedef typename ThisType::OperatorAssembler::RepresentationType MatrixType;
 		typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator; 
+		typedef typename G::Traits::GlobalIdSet::IdType GlobalIdType;
+		typedef OwnerOverlapCopyCommunication<GlobalIdType,int> CommunicationType;
 
 		LeafP1ParallelBoxDiffusion (const G& g, DiffusionParameters<G, RT>& prob) 
 		: ParallelBoxDiffusion(g, prob), grid(g), vertexmapper(g, g.leafIndexSet())
@@ -225,9 +227,9 @@ public:
 
 		virtual void vtkout (const char* name, int k) 
 		{
-			VTKWriter<G> vtkwriter(this->grid);
-			vtkwriter.addVertexData(*(this->u),"pressure");
-			vtkwriter.write(name, VTKOptions::ascii);
+//			VTKWriter<G> vtkwriter(this->grid);
+//			vtkwriter.addVertexData(*(this->u),"pressure");
+//			vtkwriter.write(name, VTKOptions::ascii);
 		}
 
 		virtual void globalDefect(FunctionType& defectGlobal) {
@@ -240,6 +242,12 @@ public:
 
 			const IS& indexset(this->grid.leafIndexSet());
 			(*defectGlobal)=0;
+
+#if HAVE_MPI
+			IndexInfoFromGrid<GlobalIdType,int> indexinfo;
+			(this->u).fillIndexInfoFromGrid(indexinfo);
+			CommunicationType oocc(indexinfo,grid.comm());
+#endif
 
 			// allocate flag vector to hold flags for essential boundary conditions
 			std::vector<BCBlockType> essential(this->vertexmapper.size());
@@ -283,6 +291,11 @@ public:
 				if (essential[i][equationnumber] == BoundaryConditions::dirichlet)
 					(*defectGlobal)[i][equationnumber] = 0;
 				}
+
+			oocc.addAllToAll(*defectGlobal, *defectGlobal);
+			
+			//std::cout << grid.comm().rank() << ": norm(defect) = " << oocc.norm(*defectGlobal) << std::endl;
+
 		}
 protected:
 	const G& grid;
