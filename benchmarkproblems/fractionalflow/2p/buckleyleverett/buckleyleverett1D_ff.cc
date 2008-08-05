@@ -88,6 +88,9 @@ int main(int argc, char** argv)
     char* fileName("buckleyleverett1D");
     int modulo = 1; 
     double cFLFactor = 1.0;
+    // slope limiter parameters
+    bool reconstruct = true;
+    double alphaMax = 0.8;
 
     Oil oil(0.2);
     Water water(0.2);

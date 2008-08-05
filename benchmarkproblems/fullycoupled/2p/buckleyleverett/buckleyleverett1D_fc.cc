@@ -42,10 +42,10 @@ int main(int argc, char** argv) {
 		// create a grid object
 		typedef Dune::OneDGrid GridType;
 
-		//const int numberofelements = 15;
-		const int numberofelements = 30;
-		//const int numberofelements = 60;
-//		const int numberofelements = 120;
+//		const int numberofelements = 15;
+//		const int numberofelements = 30;
+//		const int numberofelements = 60;
+		const int numberofelements = 120;
 
 		//grid stretching factor:positiv -> smaller elements on the left, negativ -> smaller elements on the right
 		double strfactor = 0.;
@@ -76,8 +76,8 @@ int main(int argc, char** argv) {
 
 		Oil oil(0.2);
 		Water water(0.2);
-		Dune::BrooksCoreyLaw law(water, oil,2,0);
-		//Dune::LinearLaw law(water, oil);
+//		Dune::BrooksCoreyLaw law(water, oil,2,0);
+		Dune::LinearLaw law(water, oil);
 		//Dune::VanGenuchtenLaw law(water, oil);
 
 		//Calculate with analytical solution
