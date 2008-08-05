@@ -17,14 +17,17 @@ template<class G, class RT> class VariableClass
 	{	n=G::dimension};
 	typedef typename G::ctype DT;
 	typedef Dune::BlockVector< Dune::FieldVector<RT,1> > ScalarType;
+	typedef Dune::BlockVector< Dune::FieldVector<RT,n> > SlopeType;	
 	typedef Dune::BlockVector< Dune::FieldVector<Dune::FieldVector<double, n>, 2*n> >
 			VelType;
 	typedef typename G::Traits::template Codim<0>::Entity Entity;
 
 public:
 	ScalarType saturation;
+	SlopeType slope;
 	ScalarType pressure;
 	VelType velocity;
+
 
 	template<int dim> struct ElementLayout
 	{
@@ -45,6 +48,7 @@ public:
 		initsat(initialsat, size);
 		initpress(initalpress, size);
 		initvel(initialvel, size);
+		initslopes(0.0, size);
 	}
 
 	void initsat(RT& initialsat, int size)
@@ -53,6 +57,14 @@ public:
 		saturation=initialsat;
 		return;
 	}
+	
+	void initslopes(RT initialslope, int size)
+		{
+			slope.resize(size);
+			slope=initialslope;
+			return;
+		}
+	
 	void initpress(RT& initialpress, int size)
 	{
 		pressure.resize(size);
