@@ -34,7 +34,7 @@ public:
 			innerK_[0][1] = innerK_[1][0] = 0;
 
 			gravity_[0] = 0;
-			gravity_[1] = 0;//-9.81;
+			gravity_[1] = -9.81;
 		}
 		// permeabilities
 		virtual FieldMatrix<DT,n,n>& K(const FieldVector<DT,n>& x, const Entity& e,
