@@ -83,8 +83,8 @@ namespace Dune
 	 * \param prob a problem class object derived from DiffusionProblem
 	 * \param lev the grid level to work on
 	 */
-	Diffusion(const G& g, DiffusionProblem<G, RT, CV>& prob, int lev, bool calcPressure) 
-	: diffproblem(prob), grid(g), level_(lev), calcpressure(calcPressure)
+	Diffusion(const G& g, DiffusionProblem<G, RT, CV>& prob, int lev) 
+	: diffproblem(prob), grid(g), level_(lev)
 	{ 
 	}
 	
@@ -95,7 +95,6 @@ namespace Dune
 	}
 	  const G& grid;
   protected:
-	  bool calcpressure;
 	  const int level_;
   };
 
