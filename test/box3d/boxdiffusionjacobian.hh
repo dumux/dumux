@@ -69,7 +69,7 @@ namespace Dune
     	return;
     }
 
-    VBlockType computeM (const Entity& e, const VBlockType* sol, int node)
+    VBlockType computeM (const Entity& e, const VBlockType* sol, int node, bool old = false)
     {
    	 VBlockType result(0); 
    	 return result;
