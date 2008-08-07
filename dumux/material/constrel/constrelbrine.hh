@@ -1,3 +1,5 @@
+#ifndef DUNE_CONSTRELBRINE_HH
+#define DUNE_CONSTRELBRINE_HH
 
 class ConstrelBrine {
 public:
@@ -214,3 +216,5 @@ public:
 		return (h_ls);
 	}
 };
+
+#endif

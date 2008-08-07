@@ -1,3 +1,6 @@
+#ifndef DUNE_CONSTRELAIR_HH
+#define DUNE_CONSTRELAIR_HH
+
 //from MUFTE
 class ConstrelAir
 {
@@ -881,4 +884,4 @@ public:
 	}
 };
 
-
+#endif

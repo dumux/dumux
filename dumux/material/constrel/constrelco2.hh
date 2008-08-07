@@ -1,3 +1,5 @@
+#ifndef DUNE_CONSTRELCO2_HH
+#define DUNE_CONSTRELCO2_HH
 
 // from MUFTE
 /****************************************************************/
@@ -5744,3 +5746,5 @@ return(p_s);
 }
 
 };
+
+#endif
