@@ -26,14 +26,15 @@ int main(int argc, char** argv)
     // define the problem dimensions  
     const int dim=2;
     typedef double NumberType; 
+    double depthBOR = 1000.0;  // bottom of reservoir
     Dune::FieldVector<NumberType, dim> outerLowerLeft(0);
-    Dune::FieldVector<NumberType, dim> outerUpperRight(6);
-    outerUpperRight[1] = 4;
+    Dune::FieldVector<NumberType, dim> outerUpperRight(60);
+    outerUpperRight[1] = 40;
+
     Dune::FieldVector<NumberType, dim> innerLowerLeft(4);
     innerLowerLeft[1] = 0.0;
     Dune::FieldVector<NumberType, dim> innerUpperRight(6);
     innerUpperRight[1] = 0.5;
-    double depthBOR = 1000.0;
 
     if (argc != 4) {
       std::cout << "usage: 2p2cni basefilename tEnd dt" << std::endl;
@@ -62,7 +63,7 @@ int main(int argc, char** argv)
      Dune::gridinfo(grid);
     
      // choose fluids and properties
-     Brine wPhase; CO2 nPhase;
+     Water wPhase; Air nPhase;
 //     Dune::LinearLaw law(wPhase, nPhase);
 //     Dune::CO2Problem2D<GridType, NumberType> problem(law, 1.e7); 
      Dune::BrooksCoreyLaw law(wPhase, nPhase);
