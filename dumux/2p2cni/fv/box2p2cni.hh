@@ -106,6 +106,7 @@ namespace Dune
 		this->localJacobian.outDensityN = vtkMultiWriter->template createField<RT, 1>(this->size);
 		this->localJacobian.outMobilityW = vtkMultiWriter->template createField<RT, 1>(this->size);
 		this->localJacobian.outMobilityN = vtkMultiWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.outPhaseState = vtkMultiWriter->template createField<RT, 1>(this->size);
 
 		
 		// iterate through leaf grid an evaluate c0 at cell center
@@ -271,7 +272,8 @@ namespace Dune
 		this->localJacobian.outDensityN = vtkMultiWriter->template createField<RT, 1>(this->size);
 		this->localJacobian.outMobilityW = vtkMultiWriter->template createField<RT, 1>(this->size);
 		this->localJacobian.outMobilityN = vtkMultiWriter->template createField<RT, 1>(this->size);
-
+		this->localJacobian.outPhaseState = vtkMultiWriter->template createField<RT, 1>(this->size);
+		
 		this->localJacobian.setDt(dt);
 		this->localJacobian.setOldSolution(this->uOldTimeStep);
 
@@ -353,6 +355,7 @@ namespace Dune
 		writer.addVertexData(this->localJacobian.outDensityN,"density non-wetting phase");
 		writer.addVertexData(this->localJacobian.outMobilityW,"mobility wetting phase");
 		writer.addVertexData(this->localJacobian.outMobilityN,"mobility non-wetting phase");
+		writer.addVertexData(this->localJacobian.outPhaseState,"phase state");
 
 //		writer.addVertexData(&xWN, "water in air");
 //		writer.addVertexData(&xAW, "dissolved air");

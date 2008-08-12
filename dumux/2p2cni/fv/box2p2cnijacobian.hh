@@ -582,6 +582,7 @@ namespace Dune
      FieldMatrix<RT,c,2> massfrac;
      FieldVector<RT,2> enthalpy;
      FieldVector<RT,2> intenergy;
+     int phasestate;
     };
 
     // analog to EvalPrimaryData in MUFTE, uses members of vNDat
@@ -620,6 +621,7 @@ namespace Dune
    		 }
    	   	 varData[i].massfrac[water][wPhase] = 1.0 - varData[i].massfrac[air][wPhase];
    	   	 varData[i].massfrac[air][nPhase] = 1.0 - varData[i].massfrac[water][nPhase];
+   	   	 varData[i].phasestate = state;
    	   	 
    		 // Mobilities & densities
    		 varData[i].mobility[wPhase] = problem.materialLaw().mobW(varData[i].satW, parameters, varData[i].temperature, varData[i].pW);
@@ -652,6 +654,7 @@ namespace Dune
    	   	 (*outDensityN)[global] = varData[i].density[nPhase];
    	   	 (*outMobilityW)[global] = varData[i].mobility[wPhase];
    	   	 (*outMobilityN)[global] = varData[i].mobility[nPhase];
+   	   	 (*outPhaseState)[global] = varData[i].phasestate;
 
    	   	 return;
     }
@@ -735,6 +738,7 @@ namespace Dune
     BlockVector<FieldVector<RT, 1> > *outDensityN;
     BlockVector<FieldVector<RT, 1> > *outMobilityW;
     BlockVector<FieldVector<RT, 1> > *outMobilityN;
+    BlockVector<FieldVector<RT, 1> > *outPhaseState;
     
   };  
   
