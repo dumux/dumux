@@ -141,6 +141,10 @@ namespace Dune
 				// initialize phase state
 				this->localJacobian.sNDat[globalId].phaseState = 
 					this->problem.initialPhaseState(global, entity, local);
+					
+					this->localJacobian.sNDat[globalId].oldPhaseState = 
+						this->problem.initialPhaseState(global, entity, local);
+					
 			}
 			this->localJacobian.updateStaticData(entity, this->localJacobian.u);
 		}
