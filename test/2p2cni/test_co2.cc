@@ -18,6 +18,8 @@
 #include "dumux/2p2cni/fv/boxco2.hh"
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/io/readstarformat.cc"
+
+
 int main(int argc, char** argv) 
 {
   try{
@@ -74,7 +76,9 @@ int main(int argc, char** argv)
     Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt, "co2", 5);
     Dune::Timer timer;
     timer.reset();
-    timeloop.execute(twoPhase);
+    Dune::VtkMultiWriter<GridType> writer("outco2");
+
+    timeloop.executeMultiWriter(twoPhase, writer);
     std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
      
 	//std::cout << twoPhase.injected() << " kg CO2 injected." << std::endl;
