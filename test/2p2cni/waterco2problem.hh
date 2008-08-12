@@ -87,11 +87,16 @@ namespace Dune
 		// initialize all boundaries as Neumann
 		FieldVector<BoundaryConditions::Flags, m> values(Dune::BoundaryConditions::neumann); 
 
-		if(x[0] < eps_)
+		if(x[0] < 1e-10)
 		{
 			values = Dune::BoundaryConditions::dirichlet;
 		}
 		
+//		if(x[1] < 1e-10)
+//		{
+//			values = Dune::BoundaryConditions::dirichlet;
+//		}
+
 		return values;
 	}
 	
@@ -113,8 +118,8 @@ namespace Dune
 	{
 		FieldVector<RT,m> values(0.);
 		
-		values[pWIdx] = 1e5 + (depthBOR_ - x[1])*1070*9.81; 
-		values[switchIdx] = 0.1;
+		values[pWIdx] = 1e5 + (depthBOR_ - x[1])*1000*9.81; 
+		values[switchIdx] = 0.;
 		values[teIdx] = 283. + (depthBOR_ - x[1])*0.03;
 
 //		RT pinj = 0.0;	
@@ -137,10 +142,10 @@ namespace Dune
 		FieldVector<RT,m> values(0.0);
 		
 		// negative values for injection		
-		if (x[1] > 5.0 && x[1] < 15.0)
+		if (x[1] > 1.0 && x[1] < 5.0)
 		{
 			values[pWIdx] = 0.0;
-			values[switchIdx] = -1e-2;
+			values[switchIdx] = -1e-5;
 			values[teIdx] = 0.0;
 		}
 		
@@ -155,8 +160,8 @@ namespace Dune
 	{
 		FieldVector<RT,m> values(0);
 
-		values[pWIdx] = 1e5 + (depthBOR_ - x[1])*1070*9.81; 
-		values[switchIdx] = 0.1;
+		values[pWIdx] = 1e5 + (depthBOR_ - x[1])*1000*9.81; 
+		values[switchIdx] = 0.;
 		values[teIdx] = 283. + (depthBOR_ - x[1])*0.03;
 	
 		return values;
@@ -171,7 +176,7 @@ namespace Dune
 
 //		if (x[1] >= innerLowerLeft_[1] && x[1] <= innerUpperRight_[1]
 //		      && x[0] >= innerLowerLeft_[0])
-		state = bothPhases;
+		state = waterPhase;
 			
 		return state;
 	}
@@ -224,18 +229,18 @@ namespace Dune
 	: TwoPTwoCNIProblem<G, RT>(law, multicomp) 
 	{	
 		depthBOR_ = depthBOR;
-		swr_ = swr; // use residual satureation defined in properties.hh ?
+		swr_ = swr;
 		snr_ = snr;
 		pb_ = pb;
 		lambda_ = lambda;
-		permloc_ = 0.0;
+		permloc_ = 0; 
 		
 		for (int i = 0; i < dim; i++)
 			permloc_[i][i] = 9.2e-12;
 		
 		diffusion_[wPhase] = 2.0E-5; // diffusion coefficient for water in gas phase
 		diffusion_[nPhase] = 2.6E-9; // diffusion coefficient for co2 in water phase
-		eps_ = 1e-18;
+
 	}
 	
 	private:
@@ -245,7 +250,6 @@ namespace Dune
 		RT swr_, snr_;
 		RT pb_, lambda_;
 		RT soilDens_, soilHeatCp_, soilLDry_, soilLSw_;
-		RT eps_;
 		
   };
 

@@ -31,11 +31,6 @@ int main(int argc, char** argv)
     Dune::FieldVector<NumberType, dim> outerUpperRight(60);
     outerUpperRight[1] = 40;
 
-    Dune::FieldVector<NumberType, dim> innerLowerLeft(4);
-    innerLowerLeft[1] = 0.0;
-    Dune::FieldVector<NumberType, dim> innerUpperRight(6);
-    innerUpperRight[1] = 0.5;
-
     if (argc != 4) {
       std::cout << "usage: 2p2cni basefilename tEnd dt" << std::endl;
       return 0;
@@ -67,7 +62,7 @@ int main(int argc, char** argv)
 //     Dune::LinearLaw law(wPhase, nPhase);
 //     Dune::CO2Problem2D<GridType, NumberType> problem(law, 1.e7); 
      Dune::BrooksCoreyLaw law(wPhase, nPhase);
-     Dune::CBrineCO2 multicomp(wPhase, nPhase);
+     Dune::CWaterAir multicomp(wPhase, nPhase);
 
      Dune::WaterCO2Problem<GridType, NumberType> problem(law, multicomp, depthBOR); 
 
