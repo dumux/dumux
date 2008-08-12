@@ -538,7 +538,7 @@ namespace Dune
 
    		 varData[i].pC = problem.materialLaw().pC(varData[i].satW, parameters);
    		 varData[i].pN = varData[i].pW + varData[i].pC;
-   		 varData[i].temperature = 283.15; // in [K]
+   		 varData[i].temperature = 313.15; // in [K]
 
    		 // Solubilities of components in phases
    		 if (state == bothPhases){

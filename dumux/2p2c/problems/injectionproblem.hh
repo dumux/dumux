@@ -137,7 +137,7 @@ namespace Dune
 			FieldVector<RT,m> values;
 			
 			values[pWIdx] = 1e5 - densityW_*gravity_[1]*(depthBOR_ - x[1]);
-			values[switchIdx] = 0.0;
+			values[switchIdx] = 0.2;
 
 //			if (x[1] >= innerLowerLeft_[1] && x[1] <= innerUpperRight_[1] 
 //			 && x[0] >= innerLowerLeft_[0])
@@ -161,7 +161,7 @@ namespace Dune
 //				state = 2;
 //			else
 
-			state = waterPhase;
+			state = bothPhases;
 				
 			return state;
 		}
@@ -214,7 +214,7 @@ namespace Dune
 			const FieldVector<DT,dim> outerLowerLeft = 0., const FieldVector<DT,dim> outerUpperRight = 0., 
 			const FieldVector<DT,dim> innerLowerLeft = 0., const FieldVector<DT,dim> innerUpperRight = 0., 
 			const RT depthBOR = 0., RT outerK = 7.2e-13, RT innerK = 7.2e-13,
-			RT outerSwr = 0.0, RT outerSnr = 0.0, RT innerSwr = 0.2, RT innerSnr = 0.2, 
+			RT outerSwr = 0.2, RT outerSnr = 0.2, RT innerSwr = 0.2, RT innerSnr = 0.2, 
 			RT outerPorosity = 0.4, RT innerPorosity = 0.4, 
 			RT lambda = 2, RT pb = 10000)
 //			RT outerAlpha = 0.00047, RT innerAlpha = 0.00047,  //0.00045
