@@ -17,6 +17,7 @@
 #include "dumux/material/brookscoreylaw.hh"
 #include "dumux/material/multicomponentrelations.hh"
 #include "dumux/material/properties.hh"
+#include "dumux/io/vtkmultiwriter.hh"
 
 int main(int argc, char** argv) 
 {
@@ -87,7 +88,7 @@ int main(int argc, char** argv)
     typedef Dune::Box2P2C<GridType, NumberType, MultiWriter> TwoPhaseTwoComp;
     TwoPhaseTwoComp twoPhasetwoComp(grid, problem);
     
-    Dune::TimeLoop<GridType, TwoPhaseTwoComp> timeloop(0, tEnd, dt, "lens", 1);
+    Dune::TimeLoop<GridType, TwoPhaseTwoComp> timeloop(0, tEnd, dt, "lens", 5);
     
     Dune::Timer timer;
     timer.reset();
