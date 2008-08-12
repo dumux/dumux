@@ -52,12 +52,12 @@ namespace Dune
 	  typedef RT ReturnType;
 	  enum {n=G::dimension, m=1};
 	  
-	//! evaluate diffusion tensor
-	/*! Evaluate the diffusion tensor at given location
+	//! evaluate permeability tensor
+	/*! Evaluate the permeability tensor at given location
 	  @param[in]  x    position in global coordinates
 	  @param[in]  e    entity of codim 0
 	  @param[in]  xi   position in reference element of e
-	  @param[out] D    diffusion tensor to be filled
+	  @param[out] K    permeability tensor to be filled
 	 */
 	virtual const FieldMatrix<DT,n,n>& Kinv (const FieldVector<DT,n>& x, const Entity& e, 
 					const FieldVector<DT,n>& xi) = 0;
