@@ -123,7 +123,9 @@ namespace Dune
 			const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type
 					&sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(gt,1);
 			int size = sfs.size();
-
+			
+			this->localJacobian.fvGeom.update(entity); 
+			
 			for (int i = 0; i < size; i++) 
 			{
 				// get cell center in reference element
@@ -143,11 +145,11 @@ namespace Dune
 				this->localJacobian.sNDat[globalId].phaseState = 
 					this->problem.initialPhaseState(global, entity, local);
 					
-					this->localJacobian.sNDat[globalId].oldPhaseState = 
-						this->problem.initialPhaseState(global, entity, local);
+				this->localJacobian.sNDat[globalId].oldPhaseState = 
+					this->problem.initialPhaseState(global, entity, local);
 					
 			}
-			this->localJacobian.updateStaticData(entity, this->localJacobian.u);
+			this->localJacobian.initiateStaticData(entity, this->localJacobian.u);
 		}
 
 		// set Dirichlet boundary conditions
@@ -343,7 +345,9 @@ namespace Dune
 //		writer.addScalarVertexFunction("nonwetting phase saturation", this->u, 1);
 		writer.addScalarVertexFunction("pressure wetting phase", this->u, 0);
 
-//		writer.addVertexData(&satW,"wetting phase saturation");
+//		printvector(std::cout, *(this->localJacobian.outPhaseState), "phase state", "row", 200, 1, 3);
+
+		//		writer.addVertexData(&satW,"wetting phase saturation");
 		writer.addVertexData(this->localJacobian.outPressureN,"pressure non-wetting phase");
 		writer.addVertexData(this->localJacobian.outCapillaryP,"capillary pressure");
 		writer.addVertexData(this->localJacobian.outTemperature,"temperature");

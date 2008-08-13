@@ -201,8 +201,6 @@ public:
 					
 				FVElementGeometry<G> fvGeom;
 			    fvGeom.update(entity);
-			    const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type& 
-				sfs=Dune::LagrangeShapeFunctions<DT,RT,dim>::general(gt, 1);			  
 			                
 				for (int k = 0; k < fvGeom.nEdges; k++)
 			     {

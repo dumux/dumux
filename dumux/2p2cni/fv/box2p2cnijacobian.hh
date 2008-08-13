@@ -343,9 +343,6 @@ namespace Dune
 	 */
    	virtual void primaryVarSwitch (const Entity& e, int global, VBlockType* sol, int local)
     {
-        // neue Variable in SOL schreiben. Da Zeiger auf sol, sollte das funktionieren
-        // Achtung: alte Loesung beibebehalten, falls Newton den Zeitschritt nicht schafft
-   		// 1=gas, 2=water, 3=both
 
    		int state = sNDat[global].phaseState;
         bool switched = false;
@@ -353,10 +350,8 @@ namespace Dune
     	RT henryInv = problem.multicomp().henry(vNDat[local].temperature);
     	RT xWNmolar = problem.multicomp().xWNmolar(vNDat[local].pN, vNDat[local].temperature);
     	RT xAWmolar = problem.multicomp().xAWmolar(vNDat[local].pN, vNDat[local].temperature);
-//    	double satControl = vNDat[local].satW;
 
-    	FVector Coordinates = this->fvGeom.cellGlobal;
-
+    	FVector Coordinates = this->fvGeom.subContVol[local].global;
     	
         switch(state) 
         {
@@ -547,7 +542,34 @@ namespace Dune
 	  return;
     }
     
+    // for initialization of the Static Data (sets porosity)
+    virtual void initiateStaticData (const Entity& e, VBlockType* sol)
+    {
+   	 // get access to shape functions for P1 elements
+   	 GeometryType gt = e.geometry().type();
+   	 const typename LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type& 
+   	 sfs=LagrangeShapeFunctions<DT,RT,dim>::general(gt,1);
+   	 
+   	 // get local to global id map
+   	 for (int k = 0; k < sfs.size(); k++) {
+  		 const int globalIdx = this->vertexMapper.template map<dim>(e, sfs[k].entity());
+  		  
+  		 // if nodes are not already visited
+  		 if (!sNDat[globalIdx].visited) 
+  		  {
+  			  // ASSUME porosity defined at nodes
+  			  sNDat[globalIdx].porosity = problem.porosity(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
 
+  			  // mark elements that were already visited
+  			  sNDat[globalIdx].visited = true;
+  		  }
+  	  }
+  	  
+	  return;
+    }
+
+    
+    
 	  //*********************************************************
 	  //*														*
 	  //*	Calculation of variable Data at Nodes				*
