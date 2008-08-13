@@ -19,8 +19,9 @@ namespace Dune {
 			  RepresentationType help(*model);                               
 			  double dummy;
 
-			  // HACK: 
-			  dt = cFLFactor;
+			  // scale dt with safety factor
+			  dt = std::min( dt, maxDt );
+			  dt = std::min( dt, tEnd - t);
 
 			  // obtain the first update and the time step size 
 			  model.update(t, dt, k1,cFLFactor);
