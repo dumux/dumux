@@ -561,7 +561,33 @@ namespace Dune
   	  
 	  return;
     }
+
     
+   // for initialization of the Static Data (sets porosity)
+    virtual void initiateStaticData (const Entity& e)
+    {
+   	 // get access to shape functions for P1 elements
+   	 GeometryType gt = e.geometry().type();
+   	 const typename LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type& 
+   	 sfs=LagrangeShapeFunctions<DT,RT,dim>::general(gt,1);
+   	 
+   	 // get local to global id map
+   	 for (int k = 0; k < sfs.size(); k++) {
+  		 const int globalIdx = this->vertexMapper.template map<dim>(e, sfs[k].entity());
+  		  
+  		 // if nodes are not already visited
+  		 if (!sNDat[globalIdx].visited) 
+  		  {
+  			  // ASSUME porosity defined at nodes
+  			  sNDat[globalIdx].porosity = problem.porosity(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+
+  			  // mark elements that were already visited
+  			  sNDat[globalIdx].visited = true;
+  		  }
+  	  }
+  	  
+	  return;
+    }
 
 	  //*********************************************************
 	  //*														*
