@@ -144,7 +144,7 @@ namespace Dune
 						this->problem.initialPhaseState(global, entity, local);
 					
 			}
-                                this->localJacobian.updateStaticData(entity, this->localJacobian.u);
+		this->localJacobian.initiateStaticData(entity);
 		}
 
 		// set Dirichlet boundary conditions
@@ -210,9 +210,6 @@ namespace Dune
 								}
 							}
 				}
-		this->localJacobian.setLocalSolution(entity);
-		for (int i = 0; i < size; i++) 
-		this->localJacobian.updateVariableData(entity, this->localJacobian.u, i, false);	
 		}
 		*(this->uOldTimeStep) = *(this->u);
 		
