@@ -543,7 +543,7 @@ namespace Dune
     }
     
     // for initialization of the Static Data (sets porosity)
-    virtual void initiateStaticData (const Entity& e, VBlockType* sol)
+    virtual void initiateStaticData (const Entity& e)
     {
    	 // get access to shape functions for P1 elements
    	 GeometryType gt = e.geometry().type();

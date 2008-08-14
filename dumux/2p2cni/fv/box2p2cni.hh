@@ -149,7 +149,7 @@ namespace Dune
 					this->problem.initialPhaseState(global, entity, local);
 					
 			}
-			this->localJacobian.initiateStaticData(entity, this->localJacobian.u);
+			this->localJacobian.initiateStaticData(entity);
 		}
 
 		// set Dirichlet boundary conditions

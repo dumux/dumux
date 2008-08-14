@@ -144,7 +144,8 @@ namespace Dune
 						this->problem.initialPhaseState(global, entity, local);
 					
 			}
-		this->localJacobian.initiateStaticData(entity);
+				this->localJacobian.clearVisited();
+				this->localJacobian.initiateStaticData(entity);
 		}
 
 		// set Dirichlet boundary conditions
@@ -216,6 +217,31 @@ namespace Dune
 		return;
 	}
 
+	void updateState()
+	{
+		typedef typename G::Traits::template Codim<0>::Entity Entity;
+		typedef typename G::ctype DT;
+		typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator
+				Iterator;
+		typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
+
+		enum {dim = G::dimension};
+		enum {dimworld = G::dimensionworld};
+
+		const IS& indexset(this->grid.leafIndexSet());
+		// iterate through leaf grid an evaluate c0 at cell center
+		Iterator eendit = indexset.template end<0, All_Partition>();
+		for (Iterator it = indexset.template begin<0, All_Partition>(); it
+				!= eendit; ++it) {
+			const Entity& entity = *it;
+			this->localJacobian.setLocalSolution(entity);
+			this->localJacobian.computeElementData(entity); 
+			this->localJacobian.updateVariableData(entity, this->localJacobian.u);
+			this->localJacobian.updateStaticData(entity, this->localJacobian.u);
+		}
+		return;
+	}
+	
 	virtual void globalDefect(FunctionType& defectGlobal) 
 	{
 		LeafP1TwoPhaseModel::globalDefect(defectGlobal);
@@ -262,52 +288,35 @@ namespace Dune
 		this->localJacobian.setDt(dt);
 		this->localJacobian.setOldSolution(this->uOldTimeStep);
 
-		///////////////////////////////////
-		// define solver tolerances here
-		///////////////////////////////////
-//////////////
 		typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator
 		Iterator; typedef typename G::Traits::template Codim<0>::Entity Entity;
 		typedef typename G::ctype DT;
 		enum {dim = G::dimension};
 
-
-///////////////////		
-		RT absTol = 1e-4;
+		///////////////////////////////////
+		// define solver tolerances here
+		///////////////////////////////////
+		//////////////		
+		RT absTol = 1;
 		RT relTol = 1e-8;
+		///////////////////		
 		NewtonMethod<G, ThisType> newtonMethod(this->grid, *this, relTol, absTol);
 		newtonMethod.execute();
-		const IS& indexset(this->grid.leafIndexSet());
 
-//		Iterator eendit = indexset.template end<0, All_Partition>();
-//		for (Iterator it = indexset.template begin<0, All_Partition>(); 
-//				it != eendit; ++it) 
-//		{
-//			const Entity& e = *it;
-//			Dune::GeometryType gt = it->geometry().type();
-//
-//			const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type
-//			&sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(gt,	1);
-//
-//			int size = sfs.size();
-//			this->localJacobian.updateVariableData(e, this->localJacobian.u);
-//			for (int i=0; i < size; i++)
-//			{	
-//				int globalId = this->vertexmapper.template map<dim>(e,
-//						sfs[i].entity());
-//				this->localJacobian.primaryVarSwitch(e, globalId, this->localJacobian.u, i);
-//			}
-//		}
-		double Flux, Mass;
-//		Flux = this->computeFlux();
-//		Mass = this->totalCO2Mass();
+		double Flux(0), Mass(0);
+		Flux = this->computeFlux();
+		Mass = this->totalCO2Mass();
 		dt = this->localJacobian.getDt();
-		std::cout << " Flux: "<< Flux << " " << "Mass: " << Mass << std::endl;
+		std::cout << Flux << ", "<< Mass;
 		
+		this->localJacobian.updatePhaseState(); // update variable oldPhaseState
+		this->localJacobian.clearVisited();
+		updateState();							// phase switch after each timestep
+	
 		*(this->uOldTimeStep) = *(this->u);
 		
 		// update old phase state for computation of ComputeM(..uold..)
-		this->localJacobian.updatePhaseState();
+
 		return;
 	}
 
@@ -358,6 +367,7 @@ namespace Dune
 	
 	void setVtkMultiWriter(VtkMultiWriter *writer)
 	{ vtkMultiWriter = writer; }
+	
   protected:
     VtkMultiWriter *vtkMultiWriter;
    
