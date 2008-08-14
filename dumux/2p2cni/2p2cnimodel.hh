@@ -105,6 +105,8 @@ public:
 				(*(this->u))[globalId] = this->problem.initial(
 						global, entity, local);
 			}
+			this->localJacobian.clearVisited();
+			this->localJacobian.initiateStaticData(entity);	
 		}
 
 		// set Dirichlet boundary conditions
@@ -370,7 +372,6 @@ public:
 			const Entity& entity = *it;
 			this->localJacobian.fvGeom.update(entity);
 			int size = this->localJacobian.fvGeom.nNodes;
-
 			this->localJacobian.setLocalSolution(entity);
 			this->localJacobian.computeElementData(entity); 
 			bool old = true;
