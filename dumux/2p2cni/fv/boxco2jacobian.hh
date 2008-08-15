@@ -326,17 +326,35 @@ namespace Dune
  			 
  		 // Diffusive flux
  		 VBlockType normDiffGrad;
-		 RT diffusionAW, diffusionWW, diffusionWN, diffusionAN;
+ 		 
+ 		  // get local to global id map
+		 int state_i = sNDat[globalIdx_i].phaseState;
+		 int state_j = sNDat[globalIdx_j].phaseState;
+		 
+		 RT diffusionAW(0.0), diffusionWW(0.0), diffusionWN(0.0), diffusionAN(0.0);
 		 
 
 		 normDiffGrad[wPhase] = xGrad[wPhase]*normal;
 		 normDiffGrad[nPhase] = xGrad[nPhase]*normal;
 
-		 diffusionAW = Daw * avgDensity[wPhase] * normDiffGrad[wPhase];
-		 diffusionWW = - diffusionAW;
-		 diffusionWN = Dwg * avgDensity[nPhase] * normDiffGrad[nPhase];
-		 diffusionAN = - diffusionWN;
-		 
+		 if (state_i==bothPhases && state_j==bothPhases)
+		 {
+			 diffusionAW = Daw * avgDensity[wPhase] * normDiffGrad[wPhase];
+			 diffusionWW = - diffusionAW;
+			 diffusionWN = Dwg * avgDensity[nPhase] * normDiffGrad[nPhase];
+			 diffusionAN = - diffusionWN;
+		 }
+		 else if (state_i == waterPhase || state_j == waterPhase)
+		 {
+			 diffusionAW = Daw * avgDensity[wPhase] * normDiffGrad[wPhase];
+			 diffusionWW = - diffusionAW;
+		 }
+		 else if (state_i == gasPhase || state_j == gasPhase)
+		 {
+			 diffusionWN = Dwg * avgDensity[nPhase] * normDiffGrad[nPhase];
+			 diffusionAN = - diffusionWN;		 
+		 }
+
 //		 std::cout << "Diffusive Flux: " << diffusionWG << std::endl; 
 		 // Add water diffusion to flux
 		 flux[water] += (diffusionWW + diffusionWN); 
@@ -365,18 +383,26 @@ namespace Dune
 	 *  @param sol solution vector
 	 *  @param local local node id
 	 */
-//   	virtual void primaryVarSwitch (const Entity& e, const int global, VBlockType* sol, const int local)
    	virtual void primaryVarSwitch (const Entity& e, int global, VBlockType* sol, int local)
     {
-        // neue Variable in SOL schreiben. Da Zeiger auf sol, sollte das funktionieren
-        // Achtung: alte Loesung beibebehalten, falls Newton den Zeitschritt nicht schafft
-   		// 1=gas, 2=water, 3=both
-   		
-
+ 		
+   		this->fvGeom.update(e); // if switch is only called from boxco2 after each time step
    		int state = sNDat[global].phaseState;
-        bool switched = false;
+   		bool switched = false;
 
-    	FVector Coordinates = this->fvGeom.cellGlobal;
+        const FieldVector<RT, 4> parameters = problem.materialLawParameters 
+        (this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+        
+        RT pW = sol[local][pWIdx];
+        RT satW = 0.0;
+        if (state == bothPhases) satW = 1.0-sol[local][switchIdx];
+  		if (state == waterPhase) satW = 1.0;
+  		if (state == gasPhase) satW = 0.0;
+
+  		RT pC = problem.materialLaw().pC(satW, parameters);
+  		RT pN = pW + pC;
+
+    	FVector Coordinates = this->fvGeom.subContVol[local].global;
     	
         switch(state) 
         {
@@ -388,10 +414,8 @@ namespace Dune
             {
             	// appearance of water phase
             	std::cout << "Water appears at node " << global << "  Coordinates: " << Coordinates << std::endl;
-            	vNDat[local].satN = 1.0 - 1.e-6; // initialize
             	sNDat[global].phaseState = bothPhases;
-//      		  	sNDat[global].switched = true;
-            	sol[local][switchIdx] = vNDat[local].satN;
+            	sol[local][switchIdx] = 1.0 - 1.e-6; // initialize solution vector
             	switched = true;
             }
             break;
@@ -399,48 +423,37 @@ namespace Dune
         case waterPhase :
         	RT xAWmax, xAWmass;
          	xAWmass = sol[local][switchIdx];
-         	xAWmax = problem.multicomp().xAW(vNDat[local].pN, vNDat[local].temperature);
+         	xAWmax = problem.multicomp().xAW(pN, sol[local][teIdx]);
              	
         	if (xAWmass > xAWmax && switched == false)
             {
             	// appearance of gas phase
             	std::cout << "Gas appears at node " << global << "  Coordinates: " << Coordinates << std::endl;
-            	vNDat[local].satN = 1.e-6;  // initialize
             	sNDat[global].phaseState = bothPhases;
-//      		  	sNDat[global].switched = true;
-            	sol[local][switchIdx] = vNDat[local].satN;
+            	sol[local][switchIdx] = 1.e-6; // initialize solution vector
             	switched = true;
             }
             break;
 
         case bothPhases :
-      	  	if (vNDat[local].satN < 0.0  && switched == false)
+        	RT satN = sol[local][switchIdx];
+      	  	if (satN < 0.0  && switched == false)
       	  	{
       		  	// disappearance of gas phase
       		  	std::cout << "Gas disappears at node " << global << "  Coordinates: " << Coordinates << std::endl;
-      		  	vNDat[local].satN = 0.0;  
-      		  	vNDat[local].satW = 1.0;  
       		  	sNDat[global].phaseState = waterPhase;
-//      		  	sNDat[global].switched = true;
-      		  	vNDat[local].massfrac[air][wPhase] = 1e-6;
-      		  	sol[local][switchIdx] = vNDat[local].massfrac[air][wPhase];
+      		  	sol[local][switchIdx] = 1e-6; // initialize solution vector
       		  	switched = true;
             }
-      	  	else if (vNDat[local].satW < 0.0  && switched == false)
+      	  	else if (satW < 0.0  && switched == false)
       	  	{
       	  		// disappearance of water phase
       	  		std::cout << "Water disappears at node " << global << "  Coordinates: " << Coordinates << std::endl;
-      		  	vNDat[local].satN = 1.0;
-      	  		vNDat[local].satW = 0.0;
       	  		sNDat[global].phaseState = gasPhase;
-//      		  	sNDat[global].switched = true;
-      		  	vNDat[local].massfrac[water][nPhase] = 1e-6;
-      	  		sol[local][switchIdx] = vNDat[local].massfrac[water][nPhase];
+      	  		sol[local][switchIdx] = 1e-6; // initialize solution vector
             	switched = true;
       	  	}
-      	  	break;
-      	  	
-      	  	if (switched == true) updateVariableData(e, sol);
+      	  	break;    	  	
         }
         
    	return;
@@ -497,11 +510,8 @@ namespace Dune
 
  	 
  		 elData.soilDens = problem.soilParameters(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal)[0];
- 		 
  		 elData.soilCs	= problem.soilParameters(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal)[1];
- 		 
  		 elData.soilLDry = problem.soilParameters(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal)[2];
- 		 
  		 elData.soilLSw	= problem.soilParameters(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal)[3];
  		 
  		 
@@ -703,6 +713,7 @@ namespace Dune
    	   	 (*outDensityN)[global] = varData[i].density[nPhase];
    	   	 (*outMobilityW)[global] = varData[i].mobility[wPhase];
    	   	 (*outMobilityN)[global] = varData[i].mobility[nPhase];
+   	   	 (*outPhaseState)[global] = state;
 
    	   	 return;
     }
@@ -786,6 +797,7 @@ namespace Dune
     BlockVector<FieldVector<RT, 1> > *outDensityN;
     BlockVector<FieldVector<RT, 1> > *outMobilityW;
     BlockVector<FieldVector<RT, 1> > *outMobilityN;
+    BlockVector<FieldVector<RT, 1> > *outPhaseState;
     
   };  
   
