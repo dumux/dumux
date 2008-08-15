@@ -9,7 +9,7 @@
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
-#include "dumux/2p2c/problems/injectionproblem.hh"
+#include "injectionproblem.hh"
 #include "dumux/2p2c/problems/uniformtwophaseproblem.hh"
 #include "dumux/2p2c/fv/box2p2c.hh"
 #include "dumux/timedisc/timeloop.hh"
