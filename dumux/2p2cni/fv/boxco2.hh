@@ -106,7 +106,7 @@ namespace Dune
 		this->localJacobian.outDensityN = vtkMultiWriter->template createField<RT, 1>(this->size);
 		this->localJacobian.outMobilityW = vtkMultiWriter->template createField<RT, 1>(this->size);
 		this->localJacobian.outMobilityN = vtkMultiWriter->template createField<RT, 1>(this->size);
-
+		this->localJacobian.outPhaseState = vtkMultiWriter->template createField<RT, 1>(this->size);
 		
 		// iterate through leaf grid an evaluate c0 at cell center
 		Iterator eendit = indexset.template end<0, All_Partition>();
@@ -284,7 +284,8 @@ namespace Dune
 		this->localJacobian.outDensityN = vtkMultiWriter->template createField<RT, 1>(this->size);
 		this->localJacobian.outMobilityW = vtkMultiWriter->template createField<RT, 1>(this->size);
 		this->localJacobian.outMobilityN = vtkMultiWriter->template createField<RT, 1>(this->size);
-
+		this->localJacobian.outPhaseState = vtkMultiWriter->template createField<RT, 1>(this->size);
+		
 		this->localJacobian.setDt(dt);
 		this->localJacobian.setOldSolution(this->uOldTimeStep);
 
@@ -307,11 +308,11 @@ namespace Dune
 		Flux = this->computeFlux();
 		Mass = this->totalCO2Mass();
 		dt = this->localJacobian.getDt();
-		std::cout << Flux << ", "<< Mass;
 		
 		this->localJacobian.updatePhaseState(); // update variable oldPhaseState
 		this->localJacobian.clearVisited();
 		updateState();							// phase switch after each timestep
+                std::cout << Flux << ", "<< Mass;
 	
 		*(this->uOldTimeStep) = *(this->u);
 		
@@ -353,7 +354,8 @@ namespace Dune
 		writer.addVertexData(this->localJacobian.outDensityN,"density non-wetting phase");
 		writer.addVertexData(this->localJacobian.outMobilityW,"mobility wetting phase");
 		writer.addVertexData(this->localJacobian.outMobilityN,"mobility non-wetting phase");
-
+		writer.addVertexData(this->localJacobian.outPhaseState,"phase state");
+		
 //		writer.addVertexData(&xWN, "water in air");
 //		writer.addVertexData(&xAW, "dissolved air");
 	}
