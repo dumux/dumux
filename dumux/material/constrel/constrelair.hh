@@ -154,7 +154,7 @@ public:
 		
 		pwsat = pow (10.0, exponent) *100; /*1mbar = 100Pa*/
 		
-		return(pwsat);
+		return(pwsat); // [Pa]
 	}
 	
 	// Partialdruck von Wasserdampf in der Gasphase
@@ -358,11 +358,11 @@ public:
 	// Enthalpie von stark ueberhitztem Dampf
 	double hsteam(double p_gw, double Temp) const
 	{
-	double A[6];  		/* Data A */
-	double C[7];		/* Data C */
-	double B[3][8];		/* Data B */
-	double SB[5];		/* Data SB */
-	double Z[3][8];		/* Data Z */
+	static double A[6];  		/* Data A */
+	static double C[7];		/* Data C */
+	static double B[3][8];		/* Data B */
+	static double SB[5];		/* Data SB */
+	static double Z[3][8];		/* Data Z */
 	double TK,PK,EL1,X,BEL,BELP,SUM,SC,d__1,S2,v,HK,D,H,U;
 	double S[3],R[3];
 	int j,k;

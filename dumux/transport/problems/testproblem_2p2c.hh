@@ -3,14 +3,16 @@
 
 #include "dumux/transport/transportproblem2p2c.hh"
 #include "dumux/diffusion/diffusion.hh"
+#include <dumux/material/randompermeability.hh>
 
 namespace Dune
 {
 
   template<class G, class RT>
   class Testproblem_2p2c 
-  : public TransportProblem2p2c<G, RT, Dune::BlockVector< Dune::FieldVector<Dune::FieldVector<double, G::dimension>, 2*G::dimension> > > {
-		template<int dim>
+  : public TransportProblem2p2c<G, RT> 
+  {
+  	template<int dim>
 		struct ElementLayout
 		{
 			bool contains (Dune::GeometryType gt)
@@ -23,89 +25,117 @@ namespace Dune
 	  enum {n=G::dimension, m=1, blocksize=2*G::dimension};
 	  typedef typename G::Traits::template Codim<0>::Entity Entity;
 	  typedef Dune::FieldVector<double, n> R1;
-	  typedef Dune::BlockVector< Dune::FieldVector<R1, blocksize> > VelType;
 	  typedef typename G::Traits::LevelIndexSet IS;
 	  typedef Dune::MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout> EM;
 
   private:
-	  DT left;
-	  DT right;
 	  EM elementmapper;
 
-  public:
-	  
-	  const Dune::FVDiffusion<G,RT>* diffusion;  
-	  
-	BoundaryConditions::Flags bctype (const FieldVector<DT,n>& x, const Entity& e, 
-	   const FieldVector<DT,n>& xi) const
-	{
-		return BoundaryConditions::dirichlet;
-	}
-	   
-	  
-	BoundaryConditions2p2c::Flags cbctype (const FieldVector<DT,n>& x, const Entity& e, 
-					   const FieldVector<DT,n>& xi) const
-	{
-		return BoundaryConditions2p2c::concentration;
-	}
-	
-	BoundaryConditions2p2c::Flags ictype (const FieldVector<DT,n>& x, const Entity& e, 
+  public: 
+		 
+		BoundaryConditions2p2c::Flags cbctype (const FieldVector<DT,n>& x, const Entity& e, 
 						   const FieldVector<DT,n>& xi) const
-	{
-		return BoundaryConditions2p2c::concentration;
-	}
-
-	RT g (const FieldVector<DT,n>& x, const Entity& e, 
-		   const FieldVector<DT,n>& xi) const 
-	{
-		if (x[0] < left+1e-8) 
-			return 1000;
-		else
-			return 1000;
-	}
-	  
-	RT S0 (const FieldVector<DT,n>& x, const Entity& e, 
-			const FieldVector<DT,n>& xi) const 
-	{
-		return 1.0;
-	}
-	
-	RT C1_0 (const FieldVector<DT,n>& x, const Entity& e, 
-			const FieldVector<DT,n>& xi) const 
-	{
-		FieldVector<DT,n> center(150); center[1] = 150;
-		double radius = 30;
-		if ((x-center).two_norm() < radius) return 950;
-		return 1000;
-	}
-	  
-	const FieldVector<DT,n>& vTotal (const Entity& e, const int numberInSelf)
-	{
-		int elemId = elementmapper.map(e);
+		{
+			
+			return BoundaryConditions2p2c::concentration;
+		}
 		
-		return(this->velocity[elemId][numberInSelf]);
-	}
+		BoundaryConditions2p2c::Flags ictype (const FieldVector<DT,n>& x, const Entity& e, 
+							   const FieldVector<DT,n>& xi) const
+		{
+			return BoundaryConditions2p2c::concentration;
+		}
+	  
+		Dune::BoundaryConditions::Flags pbctype (const Dune::FieldVector<DT,n>& x, const Entity& e, 
+						   const Dune::FieldVector<DT,n>& xi) const
+	  {
+//	    if (x[0] > 300-1E-6) 
+	      return Dune::BoundaryConditions::dirichlet;
+	    // all other boundaries
+	    return Dune::BoundaryConditions::neumann;
+	  }
+		
+		const Dune::FieldMatrix<DT,n,n>& K (const Dune::FieldVector<DT,n>& x, const Entity& e, 
+							  const Dune::FieldVector<DT,n>& xi) 
+	  {
+		  return permeability.K(e);
+	  }
+		
+	  RT gPress (const Dune::FieldVector<DT,n>& x, const Entity& e, 
+					const Dune::FieldVector<DT,n>& xi) const
+	  {
+		  return (x[0] < 1e-6) ? 1e5 : 1e5;
+	  }
+		
+		RT gZ (const FieldVector<DT,n>& x, const Entity& e, 
+			   const FieldVector<DT,n>& xi) const 
+		{
+			if (x[0] < 15) 
+				return 0;
+			else
+				return 0;
+		}
+		
+		RT gS (const FieldVector<DT,n>& x, const Entity& e, 
+					   const FieldVector<DT,n>& xi) const 
+		{
+			if (x[0] < 15) 
+				return 0;
+			else
+				return 0;
+		}
+		
+		virtual FieldVector<RT,2> J (const FieldVector<DT,n>& x, const Entity& e, 
+				   const FieldVector<DT,n>& xi) const
+		{
+			FieldVector<RT,2> J_(0);
+			if (x[0]<1e-6) J_[0] = 0.;
+			return J_;
+    }
+		
+		virtual FieldVector<RT,2> q (const FieldVector<DT,n>& x, const Entity& e, 
+					   const FieldVector<DT,n>& xi) const 
+		{
+			FieldVector<RT,2> q_(0);
+			FieldVector<DT,n> center(150); //center[1] = 200;
+			if ((x-center).two_norm()<8) q_[1] = 0.001;
+			return q_;
+		}
+		  
+		RT S0 (const FieldVector<DT,n>& x, const Entity& e, 
+				const FieldVector<DT,n>& xi) const 
+		{
+			return 0.999;
+		}
+		
+		RT Z1_0 (const FieldVector<DT,n>& x, const Entity& e, 
+				const FieldVector<DT,n>& xi) const
+		{
+			FieldVector<DT,n> center(110); center[1] = 200;
+//			if ((x-center).two_norm()<30) return 0;
+			if (fabs(x[0]-center[0])<30) return 1;
+			return 1;
+		}
+		  
+		virtual RT porosity ()
+		{
+			return 1.0;
+		}
 	
-	RT press (const FieldVector<DT,n>& x, const Entity& e, 
-			  const FieldVector<DT,n>& xi) const 
-	{
-		int index = elementmapper.map(e);
-		return diffusion->press[index];
-	}
-	
-	RT pressBC (const FieldVector<DT,n>& x, const Entity& e, 
-			  const FieldVector<DT,n>& xi) const
-	{
-		return 2e6 - xi[0] * 1e6 / 300;
-	}
-
-	Testproblem_2p2c(Henry& h, const G& g, TwoPhaseRelations& law /*= *(new LinearLaw)*/, 
-								const int level = 0, const bool cap = false) 
-	: TransportProblem2p2c<G, RT, VelType>(h, law, cap), left((g.lowerLeft())[0]), right((g.upperRight())[0]), 
-	  elementmapper(g, g.levelIndexSet(level))
-	{	
-		this->velocity.resize(elementmapper.size());
-	}
+		Testproblem_2p2c(Henry& h, Dune::VariableClass2p2c<G,RT>& var, G& g, TwoPhaseRelations& law = *(new LinearLaw), 
+				const char* name = "permeab.dat", const bool create = true,
+				const int level = 0, const bool cap = false)
+		: TransportProblem2p2c<G, RT>(h, var, law, cap), 
+		  elementmapper(g, g.levelIndexSet(level)),
+		  grid(g), 
+		  permeability(g, name, create)
+		{	
+		}
+		
+		RandomPermeability<G> permeability;
+		
+  	private:
+  		G& grid;
   };
 
 }

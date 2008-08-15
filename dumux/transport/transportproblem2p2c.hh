@@ -10,19 +10,24 @@
 #include <dune/grid/common/grid.hh>
 #include <dune/grid/common/referenceelements.hh>
 #include <dune/disc/operators/boundaryconditions.hh>
+
 #include <dumux/material/twophaserelations.hh>
 #include <dumux/material/linearlaw.hh>
-
 #include <dumux/transport/transportproblem.hh>
 #include <dumux/diffusion/diffusionproblem.hh>
 #include <dumux/material/properties.hh>
 #include <dumux/operators/boundaryconditions2p2c.hh>
 
+
+//! Base class for the definition of 2p2c problems
+/** This base class defines all boundary and initial functions shich are needed
+ * for a decoupled 2p2c computation.
+ */
 namespace Dune
 {
 
   template<class G, class RT>
-  class TransportProblem2p2c : 
+  class TransportProblem2p2c 
   {
 
 	typedef typename G::ctype DT;
@@ -30,50 +35,121 @@ namespace Dune
 	typedef typename G::Traits::template Codim<0>::Entity Entity;
 	
   public:
+  //! Type of concentration boundary condition.
+  /**	either the concentration or the saturation have to be defined
+   * on boundaries with dirichlet pressure BCs.
+   * @param x global coordinates
+   * @param e reference to the cell for which the function is to be evaluated
+   * @param xi local coordinates inside e
+   */ 
 	virtual BoundaryConditions2p2c::Flags cbctype (const FieldVector<DT,n>& x, const Entity& e, 
 					   const FieldVector<DT,n>& xi) const = 0;
 	
+	//! Type of concentration initisl condition.
+  /**	either the concentration or the saturation have to be defined
+   * as initial condition.
+   * @param x global coordinates
+   * @param e reference to the cell for which the function is to be evaluated
+   * @param xi local coordinates inside e
+   */
 	virtual BoundaryConditions2p2c::Flags ictype (const FieldVector<DT,n>& x, const Entity& e, 
 					   const FieldVector<DT,n>& xi) const = 0;
 	
+	//! Type of pressure boundary condition.
+  /**	Pressure (dirichlet) or flux (neumann) have to be defined on boundaries.
+   * @param x global coordinates
+   * @param e reference to the cell for which the function is to be evaluated
+   * @param xi local coordinates inside e
+   */
 	virtual BoundaryConditions::Flags pbctype (const FieldVector<DT,n>& x, const Entity& e, 
 					   const FieldVector<DT,n>& xi) const = 0;
 
+	//! Permeability tensor \f$ [m^2] \f$
+	/**
+	 * @param x global coordinates
+   * @param e reference to the cell for which the function is to be evaluated
+   * @param xi local coordinates inside e 
+	 */
 	virtual const FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x, const Entity& e, 
 						const FieldVector<DT,n>& xi) = 0;
 	
+	//! Feed concentration boundary condition
+	/** Feed concentration is the (global) mass fraction of component 1 in the mixture
+	 * @param x global coordinates
+   * @param e reference to the cell for which the function is to be evaluated
+   * @param xi local coordinates inside e  
+	 */
 	virtual RT gZ (const FieldVector<DT,n>& x, const Entity& e, 
 		   const FieldVector<DT,n>& xi) const = 0; 
 	
+	//! Saturation boundary condition
+	/** @param x global coordinates
+   * @param e reference to the cell for which the function is to be evaluated
+   * @param xi local coordinates inside e  
+	 */
 	virtual RT gS (const FieldVector<DT,n>& x, const Entity& e, 
 			   const FieldVector<DT,n>& xi) const = 0; 
 	
+	//! Pressure (dirichlet) boundary condition
+	/** @param x global coordinates
+   * @param e reference to the cell for which the function is to be evaluated
+   * @param xi local coordinates inside e  
+	 */
 	virtual RT gPress (const FieldVector<DT,n>& x, const Entity& e, 
 		   const FieldVector<DT,n>& xi) const = 0; 
 	
+	//! Flux (neumann) boundary condition
+	/** @param x global coordinates
+   * @param e reference to the cell for which the function is to be evaluated
+   * @param xi local coordinates inside e  
+	 */
 	virtual FieldVector<RT,2> J (const FieldVector<DT,n>& x, const Entity& e, 
 		   const FieldVector<DT,n>& xi) const = 0;
 	
+	//! Source of components
+	/** Describes the source of the components per unit area 
+	 * @param x global coordinates
+   * @param e reference to the cell for which the function is to be evaluated
+   * @param xi local coordinates inside e  
+	 */
 	virtual FieldVector<RT,2> q (const FieldVector<DT,n>& x, const Entity& e, 
 			   const FieldVector<DT,n>& xi) const = 0;
-	  
+	
+	//! Saturation initial condition
+	/** @param x global coordinates
+   * @param e reference to the cell for which the function is to be evaluated
+   * @param xi local coordinates inside e  
+	 */
 	virtual RT S0 (const FieldVector<DT,n>& x, const Entity& e, 
 			const FieldVector<DT,n>& xi) const = 0;
 	
+	//! Feed concentration initial condition
+	/** @param x global coordinates
+   * @param e reference to the cell for which the function is to be evaluated
+   * @param xi local coordinates inside e  
+	 */
 	virtual RT Z1_0 (const FieldVector<DT,n>& x, const Entity& e, 
 				const FieldVector<DT,n>& xi) const = 0;
 
-		
-	virtual RT porosity ()
-	{
-		return 1.0;
-	}
+	//! Matrix porosity
+	/** @param x global coordinates
+   * @param e reference to the cell for which the function is to be evaluated
+   * @param xi local coordinates inside e  
+	 */
+	virtual RT porosity (const FieldVector<DT,n>& x, const Entity& e, 
+			const FieldVector<DT,n>& xi) const = 0;
 	
+	//! gravity vector
 	const FieldVector<DT,n>& gravity()
 	{
 		return gravity_;
 	}
 
+	
+	//! Constructor
+	/** 
+	 * 
+	 */
 	TransportProblem2p2c(Henry& h, TwoPhaseRelations& law = *(new LinearLaw), 
 								 const bool cap = false) 
 	: capillary(cap), materialLaw(law), henry(h)
