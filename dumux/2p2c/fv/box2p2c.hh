@@ -100,6 +100,7 @@ namespace Dune
 		this->localJacobian.outDensityN = vtkMultiWriter->template createField<RT, 1>(this->size);
 		this->localJacobian.outMobilityW = vtkMultiWriter->template createField<RT, 1>(this->size);
 		this->localJacobian.outMobilityN = vtkMultiWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.outPhaseState = vtkMultiWriter->template createField<RT, 1>(this->size);
 
 		
 		// iterate through leaf grid an evaluate c0 at cell center
@@ -117,8 +118,9 @@ namespace Dune
 					&sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(gt,1);
 
 			int size = sfs.size();
-
-
+			
+			this->localJacobian.fvGeom.update(entity); 
+			
 			for (int i = 0; i < size; i++) 
 			{	
 				// get cell center in reference element
@@ -137,10 +139,12 @@ namespace Dune
 				// initialize phase state
 				this->localJacobian.sNDat[globalId].phaseState = 
 					this->problem.initialPhaseState(global, entity, local);
+					
+				this->localJacobian.sNDat[globalId].oldPhaseState = 
+					this->problem.initialPhaseState(global, entity, local);
 
 			}
-
-		this->localJacobian.updateStaticData(entity, this->localJacobian.u);
+			this->localJacobian.initiateStaticData(entity);
 		}
 
 		// set Dirichlet boundary conditions
@@ -219,6 +223,11 @@ namespace Dune
 		return;
 	}
 
+	virtual void globalDefect(FunctionType& defectGlobal) 
+	{
+		LeafP1TwoPhaseModel::globalDefect(defectGlobal);
+	}
+	
 	void solve() 
 	{
 		Operator op(*(this->A));  // make operator out of matrix
@@ -255,7 +264,8 @@ namespace Dune
 		this->localJacobian.outDensityN = vtkMultiWriter->template createField<RT, 1>(this->size);
 		this->localJacobian.outMobilityW = vtkMultiWriter->template createField<RT, 1>(this->size);
 		this->localJacobian.outMobilityN = vtkMultiWriter->template createField<RT, 1>(this->size);
-
+		this->localJacobian.outPhaseState = vtkMultiWriter->template createField<RT, 1>(this->size);
+		
 		this->localJacobian.setDt(dt);
 		this->localJacobian.setOldSolution(this->uOldTimeStep);
 
@@ -304,7 +314,9 @@ namespace Dune
 //			  << "\t" << oldUpperMass << "\t# totalMass, upperMass, oldUpperMass" << std::endl;
 		
 		*(this->uOldTimeStep) = *(this->u);
-
+		
+		// update old phase state for computation of ComputeM(..uold..)
+		this->localJacobian.updatePhaseState();
 		return;
 	}
 
@@ -334,6 +346,7 @@ namespace Dune
 		writer.addVertexData(this->localJacobian.outDensityN,"density non-wetting phase");
 		writer.addVertexData(this->localJacobian.outMobilityW,"mobility wetting phase");
 		writer.addVertexData(this->localJacobian.outMobilityN,"mobility non-wetting phase");
+		writer.addVertexData(this->localJacobian.outPhaseState,"phase state");
 
 //		writer.addVertexData(&xWN, "water in air");
 //		writer.addVertexData(&xAW, "dissolved air");
