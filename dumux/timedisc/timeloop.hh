@@ -123,6 +123,7 @@ namespace Dune {
 		  model.setVtkMultiWriter(&writer);
 		  model.initial();          
 		  model.addvtkfields(writer);
+		  std::cout << ">>> writing initial output file" << std::endl;
 		  writer.endTimestep();
 		  
 		  // now do the time steps
@@ -179,6 +180,7 @@ namespace Dune {
 			  {
 				  writer.beginTimestep(t, model.getGrid());
 				  model.addvtkfields(writer);
+				  std::cout << ">>> writing output-file at time : " << t << std::endl;
 				  writer.endTimestep();
 			  }
 			  //		    if (fixed)
