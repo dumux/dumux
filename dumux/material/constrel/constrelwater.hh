@@ -391,7 +391,7 @@ public:
 	}
 
 	
-	
+	//! enthalpy of steam according to IAPWS 97
 	double sp_enthalpy_IAPWS2(double Temp, double pg) const
 	{
 		static const double J0[10]={0.,0.,1.,-5.,-4.,-3.,-2.,-1.,2.,3.};
