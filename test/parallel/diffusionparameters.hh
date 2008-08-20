@@ -39,7 +39,7 @@ public:
 //	if (x[0] < 1e-6 || x[0] > 1.0-1e-6 
 //			|| x[1] < 1e-6 || x[1] > 1.0-1e-6 
 //			|| x[2] < 1e-6 || x[2] > 1.0-1e-6) 
-	  if (x[0] < 1e-6)
+	  if (x[2] < 1e-6)
 		  return Dune::BoundaryConditions::dirichlet;
 	
 	return Dune::BoundaryConditions::neumann;

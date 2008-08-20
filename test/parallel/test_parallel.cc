@@ -1,10 +1,8 @@
 // commented lines 1454, 1464-1467 in istl/communicator.hh
-
-#include "config.h"
+#include <config.h>
 #include <iostream>
-#if HAVE_MPI
+#ifdef HAVE_MPI
 #include<mpi.h>
-#endif
 #include <dune/grid/common/gridinfo.hh>
 #include <dune/common/mpihelper.hh>
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
@@ -105,8 +103,8 @@ int main(int argc, char** argv)
 //#endif
 
     // create a grid object
-    //typedef Dune::ALUSimplexGrid<dim,dim> GridType; 
-    typedef Dune::ALUCubeGrid<dim,dim> GridType; 
+    typedef Dune::ALUSimplexGrid<dim,dim> GridType; 
+    //typedef Dune::ALUCubeGrid<dim,dim> GridType; 
 
     // create grid pointer
     Dune::GridPtr<GridType> gridPtr( argv[1] );
@@ -155,4 +153,18 @@ int main(int argc, char** argv)
     std::cerr << "Unknown exception thrown!" << std::endl;
   }
 }
+#else 
+
+int main (int argc , char **argv) try
+{
+  std::cout << "Please install MPI." << std::endl;
+
+  return 1;
+}
+catch (...) 
+{
+    std::cerr << "Generic exception!" << std::endl;
+    return 2;
+}
+#endif 
 
