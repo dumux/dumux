@@ -657,7 +657,9 @@ namespace Dune
 
 		  // compute extension
 		  P1ExtendOverlap<G,GV,VM,LC> extender(lc);
-		  extender.extend(g,gv,vertexmapper,borderlinks,extraDOFs,gid2index,index2gid);
+		  // TO CHANGE FOR PARALLEL
+//		  extender.extend(g,gv,vertexmapper,borderlinks,extraDOFs,gid2index,index2gid);
+		  extender.extend(g,gv,vertexmapper,borderlinks,extraDOFs,gid2index);
 
 		  // put in extra links due to overlap 
 		  // loop over all neighbors of border vertices
