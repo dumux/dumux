@@ -66,7 +66,8 @@ namespace Dune
 		  }
 	  }; 
 
-	  typedef typename G::Traits::LeafIndexSet IS;
+	  typedef typename G::LeafGridView GV;
+	  typedef typename GV::IndexSet IS;
 	  typedef MultipleCodimMultipleGeomTypeMapper<G,IS,P1Layout> VertexMapper;
 
 	  LeafP1NonlinearParabolic (const G& g, ProblemType& prob) 
@@ -77,15 +78,15 @@ namespace Dune
 	  {
 		  typedef typename G::Traits::template Codim<0>::Entity Entity;
 		  typedef typename G::ctype DT;
-		  typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator Iterator;
+			typedef typename GV::template Codim<0>::Iterator Iterator;
 		  enum{dim = G::dimension};
 		  enum{dimworld = G::dimensionworld};
 		  
-		  const IS& indexset(grid.leafIndexSet());
+			const GV& gridview(this->grid.leafView());
 		  
 		  // iterate through leaf grid an evaluate c0 at cell center
-		  Iterator eendit = indexset.template end<0, All_Partition>();
-		  for (Iterator it = indexset.template begin<0, All_Partition>(); it != eendit; ++it)
+		  Iterator eendit = gridview.template end<0>();
+		  for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
 		  {
 			  // get geometry type
 			  Dune::GeometryType gt = it->geometry().type();
@@ -115,8 +116,8 @@ namespace Dune
 
 		void vtkout (const char* name, int k) const 
 		{
-			VTKWriter<G, typename G::template Codim<0>::LeafIndexSet> 
-				vtkwriter(this->grid, this->grid.leafIndexSet());
+			VTKWriter<G, typename G::LeafGridView> 
+				vtkwriter(this->grid.leafView());
 			char fname[128];	
 			sprintf(fname,"%s-%05d",name,k);
 			vtkwriter.addVertexData(*(this->u),"total pressure p~");

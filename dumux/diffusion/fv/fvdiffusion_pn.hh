@@ -49,9 +49,9 @@ template<class G, class RT, class VC> class FVDiffusion :
 	enum {dimworld = G::dimensionworld};
 
 	typedef typename G::Traits::template Codim<0>::Entity Entity;
-	typedef typename G::Traits::LevelIndexSet IS;
-	typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator
-			Iterator;
+	typedef typename G::LevelGridView GV;
+    typedef typename GV::IndexSet IS;
+	typedef typename GV::template Codim<0>::Iterator Iterator;
 	typedef typename G::template Codim<0>::HierarchicIterator
 			HierarchicIterator;
 	typedef MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout> EM;
@@ -86,11 +86,9 @@ public:
 
 	FVDiffusion(G& g, DiffusionProblem<G, RT, VC>& prob, int lev = -1) :
 		Diffusion<G, RT, VC>(g, prob,
-				lev == -1 ? g.maxLevel() : lev),
-				elementmapper(g, g.levelIndexSet(this->level())),
-				indexset(g.levelIndexSet(this->level())), A(g.size(
-						this->level(), 0), g.size(this->level(), 0), (2*dim+1)
-						*g.size(this->level(), 0), BCRSMatrix<MB>::random),
+				lev == -1 ? g.maxLevel() : lev), gridview(g.levelView(this->level())), 
+				indexset(gridview.indexSet()), elementmapper(g, indexset),
+				A(g.size(this->level(), 0), g.size(this->level(), 0), (2*dim+1)*g.size(this->level(), 0), BCRSMatrix<MB>::random),
 				f(g.size(this->level(), 0)), solverName_("BiCGSTAB"),
 				preconditionerName_("SeqILU0") {
 		initializeMatrix();
@@ -99,18 +97,17 @@ public:
 	FVDiffusion(G& g, DiffusionProblem<G, RT, VC>& prob, std::string solverName,
 			std::string preconditionerName, int lev = -1) :
 		Diffusion<G, RT, VC>(g, prob,
-				lev == -1 ? g.maxLevel() : lev),
-				elementmapper(g, g.levelIndexSet(this->level())),
-				indexset(g.levelIndexSet(this->level())), A(g.size(
-						this->level(), 0), g.size(this->level(), 0), (2*dim+1)
-						*g.size(this->level(), 0), BCRSMatrix<MB>::random),
+				lev == -1 ? g.maxLevel() : lev), gridview(g.levelView(this->level())), 
+				indexset(gridview.indexSet()), elementmapper(g, indexset),
+				A(g.size(this->level(), 0), g.size(this->level(), 0), (2*dim+1)*g.size(this->level(), 0), BCRSMatrix<MB>::random),
 				f(g.size(this->level(), 0)), solverName_(solverName),
 				preconditionerName_(preconditionerName) {
 		initializeMatrix();
 	}
 	
-	EM elementmapper;
+	const GV& gridview;
 	const IS& indexset;
+	EM elementmapper;
 
 private:
 

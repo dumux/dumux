@@ -53,8 +53,9 @@ namespace Dune
 	  enum{dimworld = G::dimensionworld};
 	  
 	  typedef typename G::Traits::template Codim<0>::Entity Entity;
-	  typedef typename G::Traits::LeafIndexSet IS;
-	  typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator Iterator;
+	  typedef typename G::LeafGridView GV;
+	  typedef typename GV::IndexSet IS;
+	  typedef typename GV::template Codim<0>::Iterator Iterator;
 	  typedef typename G::template Codim<0>::HierarchicIterator HierarchicIterator;
 	  typedef MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout> EM;
 	  typedef typename G::template Codim<0>::EntityPointer EntityPointer;
@@ -76,8 +77,8 @@ namespace Dune
 		fV = fVBound; 
 		bool pseudoDirichlet = true;
 		
-		Iterator eendit = indexset.template end<0,All_Partition>();
-		  for (Iterator it = indexset.template begin<0,All_Partition>(); it != eendit; ++it)
+		Iterator eendit = gridview.template end<0>();
+		  for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
 		  {		
 			  // cell geometry type
 			  GeometryType gt = it->geometry().type();
@@ -210,8 +211,8 @@ namespace Dune
 	template<class IFPressure>
 	void calculateInterfacePressures(IFPressure& ifPressure)
 	{
-		Iterator eendit = indexset.template end<0,All_Partition>();
-		  for (Iterator it = indexset.template begin<0,All_Partition>(); it != eendit; ++it)
+		Iterator eendit = gridview.template end<0>();
+		  for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
 		  {		
 			  // cell geometry type
 			  GeometryType gt = it->geometry().type();
@@ -296,8 +297,8 @@ namespace Dune
 	    
 		fP = 0; 
 		
-		Iterator eendit = indexset.template end<0,All_Partition>();
-		  for (Iterator it = indexset.template begin<0,All_Partition>(); it != eendit; ++it)
+		Iterator eendit = gridview.template end<0>();
+		  for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
 		  {		
 			  // cell geometry type
 			  GeometryType gt = it->geometry().type();
@@ -431,8 +432,8 @@ namespace Dune
 	{
 		this->velocityCorrection = 0;
 		
-		Iterator eendit = indexset.template end<0,All_Partition>();
-		  for (Iterator it = indexset.template begin<0,All_Partition>(); it != eendit; ++it)
+		Iterator eendit = gridview.template end<0>();
+		  for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
 		  {		
 			  // cell geometry type
 			  GeometryType gt = it->geometry().type();
@@ -604,7 +605,7 @@ namespace Dune
 	FVBrinkman(G& g, BrinkmanProblem<G, RT>& prob)
 	            : Brinkman<G, RT, RepresentationType, VelType>(g, prob), 
 	              elementmapper(g, g.leafIndexSet()), 
-	              indexset(g.leafIndexSet()), 
+	              gridview(g.leafView()), 
 	              AV(g.size(0), g.size(0), (2*dim+1)*g.size(0), BCRSMatrix<MBV>::random), 
 	              AP(g.size(0), g.size(0), (2*dim+1)*g.size(0), BCRSMatrix<MB>::random), 
 	              fP(g.size(0)), fV(g.size(0)), fVBound(g.size(0))
@@ -625,7 +626,7 @@ namespace Dune
 	
   //private:
 	  EM elementmapper;
-	  const IS& indexset;
+	  const GV& gridview;
 	  VelocityMatrixType AV;
 	  PressureMatrixType AP;
 	  RepresentationType fP;
@@ -639,8 +640,8 @@ namespace Dune
   void FVBrinkman<G, RT>::initializeMatrices()
   {
 	    // determine matrix row sizes 
-	    Iterator eendit = indexset.template end<0,All_Partition>();
-	    for (Iterator it = indexset.template begin<0,All_Partition>(); it != eendit; ++it)
+	    Iterator eendit = gridview.template end<0>();
+	    for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
 	      {
 			// cell index
 			int indexi = elementmapper.map(*it);
@@ -661,7 +662,7 @@ namespace Dune
 	    AP.endrowsizes();
 
 	    // determine position of matrix entries 
-	    for (Iterator it = indexset.template begin<0,All_Partition>(); it != eendit; ++it)
+	    for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
 	      {
 			// cell index
 			int indexi = elementmapper.map(*it);
@@ -699,8 +700,8 @@ namespace Dune
 	  AP = 0;
 	  bool pseudoDirichlet = true;
 	  
-	  Iterator eendit = indexset.template end<0,All_Partition>();
-	  for (Iterator it = indexset.template begin<0,All_Partition>(); it != eendit; ++it)
+	  Iterator eendit = gridview.template end<0>();
+	  for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
 	  {		
 		  // cell geometry type
 		  GeometryType gt = it->geometry().type();
@@ -864,7 +865,7 @@ namespace Dune
 ////////////////////////////
 	  } // end grid traversal 
 
-	  for (Iterator it = indexset.template begin<0,All_Partition>(); it != eendit; ++it)
+	  for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
 	  {		
 		  int indexi = elementmapper.map(*it);
 		  

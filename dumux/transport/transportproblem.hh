@@ -10,8 +10,8 @@
 #include<dune/grid/common/grid.hh>
 #include<dune/grid/common/referenceelements.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
-#include<dumux/material/twophaserelations.hh>
-#include<dumux/material/linearlaw.hh>
+#include<dumux/material/twophaserelations_deprecated.hh>
+#include<dumux/material/linearlaw_deprecated.hh>
 
 /**
  * @file
@@ -95,7 +95,6 @@ namespace Dune
 	virtual BlockVector<FieldVector<RT, 2> >& getuEx()
 	{
 		DUNE_THROW(NotImplemented, "Ex(akt) Solution");
-		BlockVector<FieldVector<RT, 2> > uE(0);
 		return uE;
 	}
 	
@@ -117,7 +116,7 @@ namespace Dune
 	 */
 
 	TransportProblem(VC& variableobject, TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false, const bool exsol = false) 
-	: variables(variableobject), capillary(cap), materialLaw(law),exsolution(exsol)
+	: variables(variableobject), capillary(cap), materialLaw(law),exsolution(exsol), uE(0)
 	{	}
 	
 	//! always define virtual destructor in abstract base class
@@ -127,6 +126,7 @@ namespace Dune
 	const bool capillary;
 	TwoPhaseRelations& materialLaw;
 	VC& variables;
+	BlockVector<FieldVector<RT, 2> > uE;
   };
 
 }

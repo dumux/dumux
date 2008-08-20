@@ -7,19 +7,19 @@ namespace Dune
 {
 //! \ingroup diffusionProblems
 //! example class for diffusion problems
-	template<class G, class RT>
-	class FVCA5Test5Problem : public DiffusionProblem<G,RT>
+	template<class G, class RT, class VC>
+	class FVCA5Test5Problem : public DiffusionProblem<G,RT,VC>
 	{
 	  typedef typename G::ctype DT;
 	  enum {n=G::dimension};
 	  typedef typename G::Traits::template Codim<0>::Entity Entity;
 	
 	public:
-	  FVCA5Test5Problem()
-	    : DiffusionProblem<G,RT>()
+	  FVCA5Test5Problem(VC& variables)
+	    : DiffusionProblem<G,RT,VC>(variables)
 	  {  }
 	
-	  const FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x, const Entity& e, 
+	  FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x, const Entity& e, 
 					  const FieldVector<DT,n>& xi) 
 	  {
 		  double delta = 1.0e-3;
@@ -64,7 +64,6 @@ namespace Dune
 		  return (exact(x));
 	  }
 		  
-		
 	  RT J (const FieldVector<DT,n>& x, const Entity& e, 
 					const FieldVector<DT,n>& xi) const
 	  {

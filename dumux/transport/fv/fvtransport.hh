@@ -28,9 +28,9 @@ template<class G, class RT, class VC> class FVTransport :
 	typedef BlockVector< FieldVector<FieldVector<RT, G::dimension>, 2*G::dimension> >
 			VelType;
 	typedef typename G::Traits::template Codim<0>::Entity Entity;
-	typedef typename G::Traits::LevelIndexSet IS;
-	typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator
-			Iterator;
+	typedef typename G::LevelGridView GV;
+    typedef typename GV::IndexSet IS;
+	typedef typename GV::template Codim<0>::Iterator Iterator;
 	typedef Dune::MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout> EM;
 	typedef typename G::template Codim<0>::EntityPointer EntityPointer;
 	typedef typename IntersectionIteratorGetter<G,LevelTag>::IntersectionIterator
@@ -81,8 +81,8 @@ public:
 			DiffusivePart<G,RT>& diffPart = *(new DiffusivePart<G, RT>), bool rec = false,
 			double amax = 0.8, const NumericalFlux<RT>& numFl = *(new Upwind<RT>)) :
 		Transport<G, RT, VC>(g, prob, lev),
-				elementmapper(g, g.levelIndexSet(lev)),
-				indexset(g.levelIndexSet(lev)), reconstruct(rec),
+				elementmapper(g, g.levelIndexSet(lev)), gridview(g.levelView(lev)), 
+				indexset(gridview.indexSet()), reconstruct(rec),
 				numFlux(numFl), diffusivePart(diffPart), alphamax(amax)
 				{}
 
@@ -92,6 +92,7 @@ private:
 
 private:
 	EM elementmapper;
+	const GV& gridview;
 	const IS& indexset;
 	bool reconstruct;
 	const NumericalFlux<RT>& numFlux;
@@ -116,8 +117,8 @@ template<class G, class RT, class VC> int FVTransport<G, RT, VC>::update(const R
 	CalculateSlopes(slope, t,cFLFac);
 
 	// compute update vector 
-	Iterator eendit = indexset.template end<0,All_Partition>();
-	for (Iterator it = indexset.template begin<0,All_Partition>(); it != eendit; ++it) {
+	Iterator eendit = gridview.template end<0>();
+	for (Iterator it = gridview.template begin<0>(); it != eendit; ++it) {
 		// cell geometry type
 		Dune::GeometryType gt = it->geometry().type();
 
@@ -347,8 +348,8 @@ template<class G, class RT, class VC> int FVTransport<G, RT, VC>::update(const R
 template<class G, class RT, class VC> void FVTransport<G, RT, VC>::initialTransport() {
 //	std::cout<<"initsat = "<<&this->transproblem.variables.saturation<<std::endl;	
 	// iterate through leaf grid an evaluate c0 at cell center
-	Iterator eendit = indexset.template end<0,All_Partition>();
-	for (Iterator it = indexset.template begin<0,All_Partition>(); it != eendit; ++it) {
+	Iterator eendit = gridview.template end<0>();
+	for (Iterator it = gridview.template begin<0>(); it != eendit; ++it) {
 		// get geometry type
 		Dune::GeometryType gt = it->geometry().type();
 

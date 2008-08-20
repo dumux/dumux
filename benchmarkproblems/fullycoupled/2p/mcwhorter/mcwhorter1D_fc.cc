@@ -11,8 +11,8 @@
 #include "dumux/twophase/problems/uniformtwophaseproblem.hh"
 #include "dumux/twophase/fv/boxpnsw.hh"
 #include "dumux/timedisc/timeloop.hh"
-#include "dumux/material/brookscoreylaw.hh"
-#include "dumux/material/vangenuchtenlaw.hh"
+#include "dumux/material/brookscoreylaw_deprecated.hh"
+#include "dumux/material/vangenuchtenlaw_deprecated.hh"
 #include"../problemdefinitions/mcwhorteranalytical.hh"
 
 int main(int argc, char** argv)

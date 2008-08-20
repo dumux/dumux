@@ -124,8 +124,18 @@ namespace Dune
 		DUNE_THROW(Dune::NotImplemented, "upscaled velocities only implemented in FVDiffusion");
 	}
 	
+	void vtkout (const char* name, int k) const 
+	{
+		VTKWriter<G, typename G::LevelGridView> 
+			vtkwriter(this->grid.levelView(this->level()));
+		char fname[128];	
+		sprintf(fname,"%s-%05d",name,k);
+		vtkwriter.addCellData(this->diffproblem.variables.pressure,"total pressure p~");
+		vtkwriter.write(fname, VTKOptions::ascii);		
+	}
+	
     MimeticDiffusion(G& g, DiffusionProblem<G, RT,VC>& prob, int lev = 0, bool calcPressure = true)
-      : Diffusion<G, RT, VC>(g, prob, lev, calcPressure), levell(lev), 
+      : Diffusion<G, RT, VC>(g, prob, lev), levell(lev), 
 	  pressTrace(g, levell), normalVelocity(g, levell), f(g, levell), A(g, levell)
 	{
 		*pressTrace = 0;

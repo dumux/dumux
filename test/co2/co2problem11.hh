@@ -10,8 +10,8 @@
 #include<dune/grid/common/grid.hh>
 #include<dune/grid/common/referenceelements.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
-#include<dumux/material/twophaserelations.hh>
-#include<dumux/material/linearlaw.hh>
+#include<dumux/material/twophaserelations_deprecated.hh>
+#include<dumux/material/linearlaw_deprecated.hh>
 #include<dumux/twophase/twophaseproblem.hh>
 
 /**

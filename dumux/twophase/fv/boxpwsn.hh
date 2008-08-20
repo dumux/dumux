@@ -90,7 +90,7 @@ public:
 	virtual void solve() {
 
 		Operator op(*(this->A)); // make operator out of matrix
-		double red=1E-8;
+		double red=1E-12;
 
 #ifdef HAVE_PARDISO 
 		pardiso.factorize(*(this->A));

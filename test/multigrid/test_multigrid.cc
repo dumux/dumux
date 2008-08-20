@@ -29,7 +29,6 @@ double fraction=0.25;
 #include<sys/times.h>            // for timing measurements
 
 // dune headers
-#include <dune/common/array.hh>        // defines simple array class
 #include <dune/common/fixedarray.hh>   // defines simple array classes
 #include <dune/common/geometrytype.hh>
 #include <dune/grid/sgrid.hh>          // a complete structured grid
@@ -70,6 +69,7 @@ double fraction=0.25;
 #include <dune/grid/utility/gridtype.hh>
 #include <dune/grid/common/gridinfo.hh>
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
+#include <dune/grid/io/file/dgfparser/dgfs.hh>
 
 // dd headers
 #include"testproblem.hh"
@@ -79,152 +79,152 @@ double fraction=0.25;
 template<int dim>
 struct P0Layout
 {
-  bool contains (Dune::GeometryType gt)
-  {
-	if (gt.dim()==dim) return true;
-	return false;
-  } 
+	bool contains (Dune::GeometryType gt)
+	{
+		if (gt.dim()==dim) return true;
+		return false;
+	} 
 }; 
 
 template<class G>
 void testadaptivity (G& grid, int maxsteps, int modulo, bool globalrefine=false, bool picture=false)
 {
 
-  // first we extract the dimensions of the grid  
-  const int dim = G::dimension;
+	// first we extract the dimensions of the grid  
+	const int dim = G::dimension;
 
-  // type used for coordinates in the grid
-  // such a type is exported by every grid implementation
-  typedef typename G::ctype ct;
-  typedef double NumberType;
+	// type used for coordinates in the grid
+	// such a type is exported by every grid implementation
+	typedef typename G::ctype ct;
+	typedef double NumberType;
 
-  typedef Dune::LeafP1Function<G,NumberType> LeafFunction;
-  typedef Dune::LeafP1OperatorAssembler<G,NumberType,1> LeafOperatorAssembler; 
-  typedef Dune::GroundwaterEquationLocalStiffness<G,NumberType> LocalStiffnessType;
-  typedef typename Dune::LeafP1Function<G,NumberType>::RepresentationType VectorType;
-  typedef typename Dune::LeafP1OperatorAssembler<G,NumberType,1>::RepresentationType MatrixType;
-  int codim = dim;
+	typedef Dune::LeafP1Function<G,NumberType> LeafFunction;
+	typedef Dune::LeafP1OperatorAssembler<G,NumberType,1> LeafOperatorAssembler; 
+	typedef Dune::GroundwaterEquationLocalStiffness<G,NumberType> LocalStiffnessType;
+	typedef typename Dune::LeafP1Function<G,NumberType>::RepresentationType VectorType;
+	typedef typename Dune::LeafP1OperatorAssembler<G,NumberType,1>::RepresentationType MatrixType;
+	int codim = dim;
 
-  // Get the iterator type
-  // Note the use of the typename and template keywords 
-  typedef typename G::template Codim<0>::LevelIterator ElementLevelIterator;
+	// Get the iterator type
+	// Note the use of the typename and template keywords 
+	typedef typename G::template Codim<0>::LevelIterator ElementLevelIterator;
 
-  Dune::Timer total;
+	Dune::Timer total;
 
-  // iterate through all entities of codim 0 on the given level
-  grid.globalRefine(maxsteps);
-  double distance = 0.50001;
-  double scaling = 0.5;
+	// iterate through all entities of codim 0 on the given level
+	grid.globalRefine(maxsteps);
+	double distance = 0.50001;
+	double scaling = 0.5;
 
-  double totaltime=0;
+	double totaltime=0;
 
-  // adaptation loop
-  for (int step=1; step<=1; step++)
+	// adaptation loop
+	for (int step=1; step<=1; step++)
 	{
 
-	  // make  functions for solution and right hand side
-	  LeafFunction u(grid);
-	  LeafFunction f(grid);
-	  *u = 0;
+		// make  functions for solution and right hand side
+		LeafFunction u(grid);
+		LeafFunction f(grid);
+		*u = 0;
 
-	  std::cout << "=== [ STEP=" << step << " DOF=" <<  (*u).size() << std::endl;
-	  Dune::gridinfo(grid," ");
+		std::cout << "=== [ STEP=" << step << " DOF=" <<  (*u).size() << std::endl;
+		Dune::gridinfo(grid," ");
 
-	  typedef Dune::FieldVector<NumberType, dim> R1;
-	  typedef Dune::LeafMultipleCodimMultipleGeomTypeMapper<G,P0Layout> MapperType;
-	  typedef Dune::LeafP0Function<G,NumberType,(int)(0.5*dim*(dim+1))> KFineType;
-	  typedef Dune::LevelP0Function<G,NumberType,(int)(0.5*dim*(dim+1))> KC;
-	  MapperType mapper(grid); 
-	  TestModelProblem<G,NumberType> mp;
+		typedef Dune::FieldVector<NumberType, dim> R1;
+		typedef Dune::LeafMultipleCodimMultipleGeomTypeMapper<G,P0Layout> MapperType;
+		typedef Dune::LeafP0Function<G,NumberType,(int)(0.5*dim*(dim+1))> KFineType;
+		typedef Dune::LevelP0Function<G,NumberType,(int)(0.5*dim*(dim+1))> KC;
+		MapperType mapper(grid); 
+		TestModelProblem<G,NumberType> mp;
 
-	  // compute total time for each step and accumulate
-	  total.reset();
+		// compute total time for each step and accumulate
+		total.reset();
 
-	  LeafOperatorAssembler A(grid);
+		LeafOperatorAssembler A(grid);
 
-	  LocalStiffnessType lstiff(mp,false);
+		LocalStiffnessType lstiff(mp,false);
 
-	  A.assemble(lstiff,u,f);
+		A.assemble(lstiff,u,f);
 
-	  // prepare solvers
-	  typedef Dune::MatrixAdapter<MatrixType,VectorType,VectorType> Operator; 
-	  Operator op(*A);  // make operator out of matrix
-	  double red=1E-10;
-	  if (step==1) red=1E-14;
+		// prepare solvers
+		typedef Dune::MatrixAdapter<MatrixType,VectorType,VectorType> Operator; 
+		Operator op(*A);  // make operator out of matrix
+		double red=1E-10;
+		if (step==1) red=1E-14;
 
-	  // single level preconditioner
+		// single level preconditioner
 #if CGILU0
- 	  Dune::SeqILU0<MatrixType,VectorType,VectorType> ilu0(*A,1.0);// a precondtioner
-	  Dune::CGSolver<VectorType> solver(op,ilu0,red,10000,1);         // an inverse operator 
-	  //Dune::BiCGSTABSolver<VectorType> solver(op,ilu0,red,10000,1);         // an inverse operator 
+		Dune::SeqILU0<MatrixType,VectorType,VectorType> ilu0(*A,1.0);// a precondtioner
+		Dune::CGSolver<VectorType> solver(op,ilu0,red,10000,1);         // an inverse operator 
+		//Dune::BiCGSTABSolver<VectorType> solver(op,ilu0,red,10000,1);         // an inverse operator 
 #endif
 
-	  // geometric multigrid
+		// geometric multigrid
 #if LOOPMGC
- 	  LocalStiffnessType mglstiff(mp,true); // with level bnd as Dirichlet
-  	  Dune::SeqP1GeomMG<MatrixType,G,LocalStiffnessType,VectorType,VectorType,1> 
-  		mgc(*A,grid,mglstiff,1,0,2,false);
-	  Dune::LoopSolver<VectorType> solver(op,mgc,red,10000,1); 
+		LocalStiffnessType mglstiff(mp,true); // with level bnd as Dirichlet
+		Dune::SeqP1GeomMG<MatrixType,G,LocalStiffnessType,VectorType,VectorType,1> 
+		mgc(*A,grid,mglstiff,1,0,2,false);
+		Dune::LoopSolver<VectorType> solver(op,mgc,red,10000,1); 
 #endif
 
 #if BICGMGC
- 	  LocalStiffnessType mglstiff(mp,true); // with level bnd as Dirichlet
-  	  Dune::SeqP1GeomMG<MatrixType,G,LocalStiffnessType,VectorType,VectorType,1> 
-  		mgc(*A,grid,mglstiff,0,1,1,false);
-	  Dune::CGSolver<VectorType> solver(op,mgc,red,10000,2); 
+		LocalStiffnessType mglstiff(mp,true); // with level bnd as Dirichlet
+		Dune::SeqP1GeomMG<MatrixType,G,LocalStiffnessType,VectorType,VectorType,1> 
+		mgc(*A,grid,mglstiff,0,1,1,false);
+		Dune::CGSolver<VectorType> solver(op,mgc,red,10000,2); 
 #endif
 
 #if CGBPX
- 	  LocalStiffnessType mglstiff(mp,true); // with level bnd as Dirichlet
-  	  Dune::SeqP1GeomMG<MatrixType,G,LocalStiffnessType,VectorType,VectorType,1> 
-  		bpx(*A,grid,mglstiff,1,1,0,true);
-	  Dune::CGSolver<VectorType> solver(op,bpx,red,10000,1);         // an inverse operator 
+		LocalStiffnessType mglstiff(mp,true); // with level bnd as Dirichlet
+		Dune::SeqP1GeomMG<MatrixType,G,LocalStiffnessType,VectorType,VectorType,1> 
+		bpx(*A,grid,mglstiff,1,1,0,true);
+		Dune::CGSolver<VectorType> solver(op,bpx,red,10000,1);         // an inverse operator 
 #endif
 
-	  // algebraic multigrid
+		// algebraic multigrid
 #if CGAMG
-	  typedef Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<MatrixType,
+		typedef Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<MatrixType,
 		Dune::Amg::FirstDiagonal> > Criterion;
-	  typedef Dune::SeqSSOR<MatrixType,VectorType,VectorType> Smoother;
-	  typedef typename Dune::Amg::SmootherTraits<Smoother>::Arguments SmootherArgs;
-	  SmootherArgs smootherArgs;
-	  smootherArgs.iterations = 2;
-	  int maxlevel = 20, coarsenTarget = 100;
-	  Criterion criterion(maxlevel, coarsenTarget);
-	  criterion.setMaxDistance(2);
-	  typedef Dune::Amg::AMG<Operator,VectorType,Smoother> AMG;
-	  AMG amg(op,criterion,smootherArgs,1,1);								       
-	  Dune::CGSolver<VectorType> solver(op,amg,red,10000,1);
+		typedef Dune::SeqSSOR<MatrixType,VectorType,VectorType> Smoother;
+		typedef typename Dune::Amg::SmootherTraits<Smoother>::Arguments SmootherArgs;
+		SmootherArgs smootherArgs;
+		smootherArgs.iterations = 2;
+		int maxlevel = 20, coarsenTarget = 100;
+		Criterion criterion(maxlevel, coarsenTarget);
+		criterion.setMaxDistance(2);
+		typedef Dune::Amg::AMG<Operator,VectorType,Smoother> AMG;
+		AMG amg(op,criterion,smootherArgs,1,1);								       
+		Dune::CGSolver<VectorType> solver(op,amg,red,10000,1);
 #endif
 
-	  // solve the linear system
-	  Dune::InverseOperatorResult r;
-	  //*u = 0;
-	  solver.apply(*u,*f,r);		
+		// solve the linear system
+		Dune::InverseOperatorResult r;
+		//*u = 0;
+		solver.apply(*u,*f,r);		
 
-	  std::cout << "=== TIME for assembly and solve " << total.elapsed() << " second(s)" << std::endl; 
+		std::cout << "=== TIME for assembly and solve " << total.elapsed() << " second(s)" << std::endl; 
 
-// 	  double norm1 = L2Error(grid, u, LinearFunction<G,double,dim>(), 5);
-//  	  double norm2 = H1Error(grid, u, LinearFunction<G,double,dim>(), 5);
-// 	  std::cout << std::setw(8) << grid.size(codim) << "   L2 "
-// 		    << std::scientific << std::showpoint << std::setprecision(10) << " " << norm1;
-// 	  std::cout << std::setw(8) << "H1 " << std::scientific << std::showpoint << std::setprecision(10)
-// 		    << " " << norm2 << "  time  " << watch.elapsed() << std::endl;
+		// 	  double norm1 = L2Error(grid, u, LinearFunction<G,double,dim>(), 5);
+		//  	  double norm2 = H1Error(grid, u, LinearFunction<G,double,dim>(), 5);
+		// 	  std::cout << std::setw(8) << grid.size(codim) << "   L2 "
+		// 		    << std::scientific << std::showpoint << std::setprecision(10) << " " << norm1;
+		// 	  std::cout << std::setw(8) << "H1 " << std::scientific << std::showpoint << std::setprecision(10)
+		// 		    << " " << norm2 << "  time  " << watch.elapsed() << std::endl;
 
-	  if (picture)
-	    {
-	      // graphics output
-	      std::ostringstream os;
-	      os << "u." << grid.name() << "." << dim << "d";
-	      if (globalrefine)
-		os << ".global";
-	      else
-		os << ".local";
-	      Dune::LeafVTKWriter<G> vtkwriter(grid);
-	      vtkwriter.addVertexData(*u,"solution");
-	      std::string s(os.str());
-	      vtkwriter.write(s.c_str(),Dune::VTKOptions::ascii);
-	    }
+		if (picture)
+		{
+			// graphics output
+			std::ostringstream os;
+			os << "u." << grid.name() << "." << dim << "d";
+			if (globalrefine)
+				os << ".global";
+			else
+				os << ".local";
+			Dune::LeafVTKWriter<G> vtkwriter(grid);
+			vtkwriter.addVertexData(*u,"solution");
+			std::string s(os.str());
+			vtkwriter.write(s.c_str(),Dune::VTKOptions::ascii);
+		}
 
 	}
 }
@@ -233,44 +233,44 @@ void testadaptivity (G& grid, int maxsteps, int modulo, bool globalrefine=false,
 // the main program
 int main (int argc , char ** argv)
 {
-  try {
-	if (argc!=2)
-	  {
-		std::cout << "usage: test_multigrid #steps" << std::endl;
-		return 1;
-	  }
-	std::string arg2(argv[1]);
-	
-	std::istringstream is2(arg2);
-	int steps;
-	is2 >> steps;
+	try {
+		if (argc!=2)
+		{
+			std::cout << "usage: test_multigrid #steps" << std::endl;
+			return 1;
+		}
+		std::string arg2(argv[1]);
 
-	bool globalrefine=true;
+		std::istringstream is2(arg2);
+		int steps;
+		is2 >> steps;
 
-	bool picture=false;
+			bool globalrefine=true;
 
-	const int dim = 2;
-	
-	  typedef Dune::SGrid<dim,dim> GridType;
-	  //typedef Dune::UGGrid<dim> GridType;
+			bool picture=false;
 
-	  // use unitcube from grids 
-	  std::stringstream dgfFileName;
-	  dgfFileName << "grids/unitcube" << GridType :: dimension << ".dgf";
+			const int dim = 2;
 
-	  // create grid pointer, GridType is defined by gridtype.hh
-	  Dune::GridPtr<GridType> gridPtr( dgfFileName.str() );
-	  
-	  // grid reference 
-	  GridType& grid = *gridPtr;
+			typedef Dune::SGrid<dim,dim> GridType;
+			//typedef Dune::UGGrid<dim> GridType;
 
-	  testadaptivity(grid, steps, 1, globalrefine, picture);
-  }
-  catch (Dune::Exception& error)
-	{
-	  std::cout << error << std::endl;
+			// use unitcube from grids 
+			std::stringstream dgfFileName;
+			dgfFileName << "grids/unitcube" << GridType :: dimension << ".dgf";
+
+			// create grid pointer, GridType is defined by gridtype.hh
+			Dune::GridPtr<GridType> gridPtr( dgfFileName.str() );
+
+			// grid reference 
+			GridType& grid = *gridPtr;
+
+			testadaptivity(grid, steps, 1, globalrefine, picture);
 	}
-  
-  return 0;
-  
+	catch (Dune::Exception& error)
+	{
+		std::cout << error << std::endl;
+	}
+
+	return 0;
+
 }

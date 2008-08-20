@@ -42,14 +42,16 @@ int main(int argc, char** argv)
     if (refinementSteps)
     	grid.globalRefine(refinementSteps);
 
-	Dune::FVCA5Test8Problem<GridType, NumberType> problem(grid);
-    Dune::SimpleProblem<GridType, NumberType> satprob;
+    typedef Dune::VariableClass<GridType, NumberType> VC;
+    double initsat = 1;
+    VC variables(grid,initsat);
+    Dune::FVCA5Test8Problem<GridType, NumberType, VC> problem(variables,grid);
 
     Dune::Timer timer;
     timer.reset();
     //Dune::FEDiffusion<GridType, NumberType> diffusion(grid, problem);
     //Dune::FVDiffusion<GridType, NumberType> diffusion(grid, problem);
-    Dune::MimeticDiffusion<GridType, NumberType> diffusion(grid, problem, satprob, grid.maxLevel());
+    Dune::MimeticDiffusion<GridType, NumberType, VC> diffusion(grid, problem, grid.maxLevel());
     
     diffusion.pressure();
     std::cout << "pressure calculation took " << timer.elapsed() << " seconds" << std::endl;
@@ -72,7 +74,7 @@ int main(int argc, char** argv)
     for (int i = 0; i < 11; i++) {
       std::cout << i+1 << " & ";
       for (int j = 0; j < 11; j++)
-	std::cout << (*diffusion)[i*11 + j] << " & ";
+	std::cout << (problem.variables.pressure)[i*11 + j] << " & ";
       std::cout << std::endl;
     }
  

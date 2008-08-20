@@ -10,9 +10,9 @@ template<class G, class RT, class VC> class FVDiffusionVelocity :
 	
 	typedef typename G::Traits::template Codim<0>::Entity Entity;
 	typedef typename G::ctype ct;
-	typedef typename G::Traits::LevelIndexSet IS;
-	typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator
-			Iterator;
+	typedef typename G::LevelGridView GV;
+    typedef typename GV::IndexSet IS;
+	typedef typename GV::template Codim<0>::Iterator Iterator;
 	typedef typename IntersectionIteratorGetter<G,LevelTag>::IntersectionIterator
 			IntersectionIterator;
 	typedef typename G::template Codim<0>::EntityPointer EntityPointer;
@@ -34,8 +34,8 @@ public:
 			if (gravity[k] != 0)
 				hasGravity = true;
 
-		Iterator eendit = this->indexset.template end<0,All_Partition>();
-		for (Iterator it = this->indexset.template begin<0,All_Partition>(); it
+		Iterator eendit = this->gridview.template end<0>();
+		for (Iterator it = this->gridview.template begin<0>(); it
 				!= eendit; ++it) {
 			// cell geometry type
 			GeometryType gt = it->geometry().type();

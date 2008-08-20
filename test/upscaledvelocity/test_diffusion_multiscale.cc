@@ -8,14 +8,14 @@
 #include <dune/istl/io.hh>
 #include <dune/istl/bvector.hh>
 #include "dumux/material/properties.hh"
-#include "dumux/material/linearlaw.hh"
-#include "dumux/material/brookscoreylaw.hh"
-#include "dumux/material/vangenuchtenlaw.hh"
+#include "dumux/material/linearlaw_deprecated.hh"
+#include "dumux/material/brookscoreylaw_deprecated.hh"
+#include "dumux/material/vangenuchtenlaw_deprecated.hh"
 #include "dumux/material/randompermeability.hh"
 #include "dumux/diffusion/fv/fvdiffusion.hh"
 #include "dumux/diffusion/problems/heterogeneousproblem.hh"
 #include "dumux/diffusion/problems/uniformproblem.hh"
-#include "testproblem.hh"
+#include "dumux/fractionalflow/variableclass.hh"
  
 int main(int argc, char** argv) 
 {
@@ -39,28 +39,28 @@ int main(int argc, char** argv)
     //Dune::BrooksCoreyLaw materialLaw(mat, mat);
     //Dune::LinearLaw materialLaw(mat, mat);
     
-    Dune::HeterogeneousProblem<GridType, NumberType> problem(grid, "permeab.dat", true);
+    typedef Dune::VariableClass<GridType, NumberType> VC;
+    double initsat = 1;
+    VC variables(grid,initsat);
+
+    Dune::HeterogeneousProblem<GridType, NumberType, VC> problem(variables, grid, "permeab.dat", true);
     //printvector(std::cout, *(problem.permeability), "permeability", "row", 200, 1);
     //Dune::UniformProblem<GridType, NumberType> problem;
     //problem.permeability.vtkout("permeability", grid);
     //Dune::TestProblem<GridType, NumberType> problem;
 
-    Dune::FVDiffusion<GridType, NumberType> diffusion(grid, problem);
+    Dune::FVDiffusion<GridType, NumberType, VC> diffusion(grid, problem);
     typedef Dune::BlockVector< Dune::FieldVector<NumberType,1> > SatType;
     SatType sat(grid.levelIndexSet(0).size(0));
     int e = sat.size();
     for (int i = 0; i<e; i++) sat[i] = 0;
     
     diffusion.pressure();
-    printvector(std::cout, *diffusion, "pressure", "row", 200, 1, 3);
-    diffusion.vtkout("pressure", 0);
+    printvector(std::cout, problem.variables.pressure, "pressure", "row", 200, 1, 3);
+    //diffusion.vtkout("pressure", 0);
     
-    const int blocksize = 2*dim;
-    typedef Dune::FieldVector<double, dim> R1;
-    typedef Dune::BlockVector< Dune::FieldVector<R1, blocksize> > VType;
-    VType velocity(grid.size(0));
-    diffusion.totalVelocity(velocity, 0);
-    printvector(std::cout, velocity, "velocity", "row", 4, 1, 3);
+    diffusion.calcTotalVelocity(0);
+    printvector(std::cout, problem.variables.velocity, "velocity", "row", 4, 1, 3);
     
     return 0;
   }

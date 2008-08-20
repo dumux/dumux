@@ -130,15 +130,15 @@ public:
 		}
 		else
 		{
-			Dune::VTKWriter<G, typename G::template Codim<0>::LevelIndexSet>
-					vtkwriterpressure(grid, grid.levelIndexSet(pressurelevel));
+			Dune::VTKWriter<G, typename G::LevelGridView>
+					vtkwriterpressure(grid.levelView(pressurelevel));
 			char fname[128];
 			sprintf(fname, "%s-%05d", name, k);
 			vtkwriterpressure.addCellData(pressure, "total pressure p~");
 			vtkwriterpressure.write(fname, Dune::VTKOptions::ascii);
 
-			VTKWriter<G, typename G::template Codim<0>::LevelIndexSet>
-					vtkwritersaturation(grid, grid.levelIndexSet(satlevel));
+			VTKWriter<G, typename G::LevelGridView>
+					vtkwritersaturation(grid.levelView(satlevel));
 			sprintf(fname, "%s-press%05d", name, k);
 			vtkwritersaturation.addCellData(saturation, "saturation");
 			vtkwritersaturation.write(fname, VTKOptions::ascii);

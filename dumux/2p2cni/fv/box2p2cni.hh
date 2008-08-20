@@ -67,7 +67,7 @@ namespace Dune
 
 	typedef typename LeafP1TwoPhaseModel::FunctionType FunctionType;
 
-   typedef typename G::Traits::LeafIndexSet IS;
+   typedef typename G::LeafGridView GV;
 
     enum{m = 3};
 
@@ -86,14 +86,13 @@ namespace Dune
 	void initial() {
 		typedef typename G::Traits::template Codim<0>::Entity Entity;
 		typedef typename G::ctype DT;
-		typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator
-				Iterator;
+		typedef typename GV::template Codim<0>::Iterator Iterator;
 		typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
 
 		enum {dim = G::dimension};
 		enum {dimworld = G::dimensionworld};
 
-		const IS& indexset(this->grid.leafIndexSet());
+		const GV& gridview(this->grid.leafView());
 
 		this->localJacobian.outPressureN = vtkMultiWriter->template createField<RT, 1>(this->size);
 		this->localJacobian.outCapillaryP = vtkMultiWriter->template createField<RT, 1>(this->size);
@@ -110,8 +109,8 @@ namespace Dune
 
 		
 		// iterate through leaf grid an evaluate c0 at cell center
-		Iterator eendit = indexset.template end<0, All_Partition>();
-		for (Iterator it = indexset.template begin<0, All_Partition>(); it
+		Iterator eendit = gridview.template end<0>();
+		for (Iterator it = gridview.template begin<0>(); it
 				!= eendit; ++it) 
 		{
 			// get geometry type
@@ -153,7 +152,7 @@ namespace Dune
 		}
 
 		// set Dirichlet boundary conditions
-		for (Iterator it = indexset.template begin<0, All_Partition>(); it
+		for (Iterator it = gridview.template begin<0>(); it
 				!= eendit; ++it) 
 		{
 			// get geometry type
@@ -288,8 +287,8 @@ namespace Dune
 //
 //		const IS& indexset(this->grid.leafIndexSet());
 //
-//		Iterator eendit = indexset.template end<0, All_Partition>();
-//		for (Iterator it = indexset.template begin<0, All_Partition>(); 
+//		Iterator eendit = gridview.template end<0>();
+//		for (Iterator it = gridview.template begin<0>(); 
 //				it != eendit; ++it) 
 //		{
 //			const Entity& e = *it;

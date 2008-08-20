@@ -7,16 +7,16 @@ namespace Dune
 {
 //! \ingroup diffusionProblems
 //! example class for diffusion problems
-	template<class G, class RT>
-	class FVCA5Test3Problem : public DiffusionProblem<G,RT>
+	template<class G, class RT, class VC>
+	class FVCA5Test3Problem : public DiffusionProblem<G,RT,VC>
 	{
 	  typedef typename G::ctype DT;
 	  enum {n=G::dimension};
 	  typedef typename G::Traits::template Codim<0>::Entity Entity;
 	
 	public:
-	  FVCA5Test3Problem(double delta = 1.0e-3, double theta = 0.6981317007977316802)
-	    : DiffusionProblem<G,RT>()
+	  FVCA5Test3Problem(VC& variables, double delta = 1.0e-3, double theta = 0.6981317007977316802)
+	    : DiffusionProblem<G,RT,VC>(variables)
 	  { 
 		  double cost = cos(theta); 
 		  double sint = sqrt(1.0 - cost*cost); 
@@ -26,7 +26,7 @@ namespace Dune
 		  permloc_[0][1] = permloc_[1][0] = cost*sint*(1.0 - delta);
 	  }
 	
-	  const FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x, const Entity& e, 
+	  FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x, const Entity& e, 
 					  const FieldVector<DT,n>& xi) 
 	  {
 		  return permloc_;
@@ -85,7 +85,6 @@ namespace Dune
 		  return (u);
 	  }
 		  
-		
 	  RT J (const FieldVector<DT,n>& x, const Entity& e, 
 					const FieldVector<DT,n>& xi) const
 	  {

@@ -27,6 +27,13 @@ int main(int argc, char** argv)
     // define the problem dimensions  
     const int dim=3;
     typedef double NumberType; 
+    double sRBrine = 0.0; 
+    double densityBrine = 1045.0; 
+    double viscosityBrine = 2.535e-4; 
+    double sRCO2 = 0.0; 
+    double densityCO2 = 479.0; 
+    double viscosityCO2 = 3.95e-5; 
+    
 
     if (argc != 4) {
       std::cout << "usage: co2 basefilename tEnd dt" << std::endl;
@@ -43,8 +50,8 @@ int main(int argc, char** argv)
 
 
     // create a grid object
-    typedef Dune::UGGrid<dim> GridType; 
-	//typedef Dune::ALUSimplexGrid<dim,dim> GridType;
+    //typedef Dune::UGGrid<dim> GridType; 
+	typedef Dune::ALUSimplexGrid<dim,dim> GridType;
 
     Dune::GridPtr<GridType> gridPointer(argv[1]);
     GridType& grid = *gridPointer;
@@ -53,8 +60,8 @@ int main(int argc, char** argv)
 
     Dune::gridinfo(grid);
     
-    Brine brine;
-    CO2 co2;
+    Brine brine(sRBrine, densityBrine, viscosityBrine);
+    CO2 co2(sRCO2, densityCO2, viscosityCO2);
     Dune::LinearLaw law(brine, co2);
     Dune::CO2Problem11<GridType, NumberType> problem(law, 3.086e7); 
     		

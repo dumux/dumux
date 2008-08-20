@@ -113,10 +113,6 @@ public:
 				this->def[i] += massContrib;
 				this->def[i] *= this->fvGeom.subContVol[i].volume/dt;
 				
-				std::cout.setf(std::ios_base::scientific, std::ios_base::floatfield);
-				std::cout.setf(std::ios_base::uppercase);
-				std::cout.precision(4);
-
 				// get source term 
 				VBlockType q = computeQ(e, sol, i);
 				q *= this->fvGeom.subContVol[i].volume;

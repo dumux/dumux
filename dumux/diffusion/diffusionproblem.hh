@@ -10,8 +10,8 @@
 #include<dune/grid/common/grid.hh>
 #include<dune/grid/common/referenceelements.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
-#include<dumux/material/twophaserelations.hh>
-#include<dumux/material/linearlaw.hh>
+#include<dumux/material/twophaserelations_deprecated.hh>
+#include<dumux/material/linearlaw_deprecated.hh>
 
 /**
  * @file
@@ -96,7 +96,10 @@ namespace Dune
 				  const FieldVector<DT,n>& xi) const = 0;
 	
 	virtual RT gSat (const FieldVector<DT,n>& x, const Entity& e, 
-					  const FieldVector<DT,n>& xi) const = 0;
+					  const FieldVector<DT,n>& xi) const 
+	{
+		return 1;
+	}
 	  
 	//! evaluate Neumann boundary condition at given position
 	/*! evaluate Neumann boundary condition at given position

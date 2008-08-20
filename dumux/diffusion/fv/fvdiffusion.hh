@@ -49,9 +49,9 @@ template<class G, class RT, class VC> class FVDiffusion :
 	enum {dimworld = G::dimensionworld};
 
 	typedef typename G::Traits::template Codim<0>::Entity Entity;
-	typedef typename G::Traits::LevelIndexSet IS;
-	typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator
-			Iterator;
+	typedef typename G::LevelGridView GV;
+    typedef typename GV::IndexSet IS;
+	typedef typename GV::template Codim<0>::Iterator Iterator;
 	typedef typename G::template Codim<0>::HierarchicIterator
 			HierarchicIterator;
 	typedef MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout> EM;
@@ -85,10 +85,9 @@ public:
 	void initializeMatrix();
 
 	FVDiffusion(G& g, DiffusionProblem<G, RT, VC>& prob, int lev = -1, bool calcPressure = false) :
-		Diffusion<G, RT, VC>(g, prob,
-				lev == -1 ? g.maxLevel() : lev, calcPressure),
-				elementmapper(g, g.levelIndexSet(this->level())),
-				indexset(g.levelIndexSet(this->level())), A(g.size(
+		Diffusion<G, RT, VC>(g, prob, lev == -1 ? g.maxLevel() : lev),
+				elementmapper(g, g.levelIndexSet(this->level())), gridview(g.levelView(this->level())), 
+				indexset(gridview.indexSet()), A(g.size(
 						this->level(), 0), g.size(this->level(), 0), (2*dim+1)
 						*g.size(this->level(), 0), BCRSMatrix<MB>::random),
 				f(g.size(this->level(), 0)), solverName_("BiCGSTAB"),
@@ -98,10 +97,9 @@ public:
 
 	FVDiffusion(G& g, DiffusionProblem<G, RT, VC>& prob, std::string solverName,
 			std::string preconditionerName, int lev = -1, bool calcPressure = false) :
-		Diffusion<G, RT, VC>(g, prob,
-				lev == -1 ? g.maxLevel() : lev, calcPressure),
-				elementmapper(g, g.levelIndexSet(this->level())),
-				indexset(g.levelIndexSet(this->level())), A(g.size(
+		Diffusion<G, RT, VC>(g, prob, lev == -1 ? g.maxLevel() : lev),
+				elementmapper(g, g.levelIndexSet(this->level())), gridview(g.levelView(this->level())), 
+				indexset(gridview.indexSet()), A(g.size(
 						this->level(), 0), g.size(this->level(), 0), (2*dim+1)
 						*g.size(this->level(), 0), BCRSMatrix<MB>::random),
 				f(g.size(this->level(), 0)), solverName_(solverName),
@@ -110,6 +108,7 @@ public:
 	}
 	
 	EM elementmapper;
+	const GV& gridview;
 	const IS& indexset;
 
 private:
@@ -122,8 +121,8 @@ private:
 
 template<class G, class RT, class VC> void FVDiffusion<G, RT, VC>::initializeMatrix() {
 	// determine matrix row sizes 
-	Iterator eendit = indexset.template end<0,All_Partition>();
-	for (Iterator it = indexset.template begin<0,All_Partition>(); it != eendit; ++it) {
+	Iterator eendit = gridview.template end<0>();
+	for (Iterator it = gridview.template begin<0>(); it != eendit; ++it) {
 		// cell index
 		int indexi = elementmapper.map(*it);
 
@@ -143,7 +142,7 @@ template<class G, class RT, class VC> void FVDiffusion<G, RT, VC>::initializeMat
 	A.endrowsizes();
 
 	// determine position of matrix entries 
-	for (Iterator it = indexset.template begin<0,All_Partition>(); it != eendit; ++it) {
+	for (Iterator it = gridview.template begin<0>(); it != eendit; ++it) {
 		// cell index
 		int indexi = elementmapper.map(*it);
 
@@ -181,8 +180,8 @@ template<class G, class RT, class VC> void FVDiffusion<G, RT, VC>::assemble(cons
 		if (gravity[k] != 0)
 			hasGravity = true;
 
-	Iterator eendit = indexset.template end<0,All_Partition>();
-	for (Iterator it = indexset.template begin<0,All_Partition>(); it != eendit; ++it) {
+	Iterator eendit = gridview.template end<0>();
+	for (Iterator it = gridview.template begin<0>(); it != eendit; ++it) {
 		// cell geometry type
 		GeometryType gt = it->geometry().type();
 

@@ -5,9 +5,9 @@
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/io.hh>
 #include "dumux/material/properties.hh"
-#include "dumux/material/linearlaw.hh"
-#include "dumux/material/brookscoreylaw.hh"
-#include "dumux/material/vangenuchtenlaw.hh"
+#include "dumux/material/linearlaw_deprecated.hh"
+#include "dumux/material/brookscoreylaw_deprecated.hh"
+#include "dumux/material/vangenuchtenlaw_deprecated.hh"
 #include "dumux/transport/fv/fvtransport.hh"
 #include "dumux/transport/fv/capillarydiffusion.hh"
 #include "dumux/transport/problems/buckleyleverettproblem.hh"
@@ -26,12 +26,12 @@ int main(int argc, char** argv)
     // time loop parameters
     const double tStart = 0;
     const double tEnd = 2.5e9;
-    const double cFLFactor = 1;
+    const double cFLFactor = 0.2;
     double maxDT = 1e100;
     int modulo = 10;
     
     // slope limiter parameters
-    bool reconstruct = false;
+    bool reconstruct = true;
     double alphaMax = 0.8;
     
     // create a grid object
@@ -49,9 +49,9 @@ int main(int argc, char** argv)
     grid.globalRefine(0);
 
     Uniform mat(0.2);
-    //Dune::VanGenuchtenLaw materialLaw(mat, mat);
+    Dune::VanGenuchtenLaw materialLaw(mat, mat);
     //Dune::BrooksCoreyLaw materialLaw(mat, mat);
-    Dune::LinearLaw materialLaw(mat, mat);
+    //Dune::LinearLaw materialLaw(mat, mat);
     
     typedef Dune::VariableClass<GridType, NumberType> VC;
     

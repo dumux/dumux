@@ -6,19 +6,20 @@
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
 #include "dumux/material/properties.hh"
-#include "dumux/material/linearlaw.hh"
-#include "dumux/material/brookscoreylaw.hh"
-#include "dumux/material/vangenuchtenlaw.hh"
+#include "dumux/material/linearlaw_deprecated.hh"
+#include "dumux/material/brookscoreylaw_deprecated.hh"
+#include "dumux/material/vangenuchtenlaw_deprecated.hh"
 #include "dumux/transport/fv/fvtransport.hh"
 #include "dumux/diffusion/fv/fvdiffusion.hh"
 #include "dumux/fractionalflow/impes/impesms.hh"
 #include "dumux/transport/problems/buckleyleverettproblem.hh"
 #include "dumux/transport/problems/simpleproblem.hh"
 #include "dumux/diffusion/problems/uniformproblem.hh"
-#include "testproblem.hh"
+//#include "testproblem.hh"
 #include "dumux/diffusion/problems/heterogeneousproblem.hh"
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/timedisc/rungekuttastep.hh"
+#include "dumux/fractionalflow/variableclass.hh"
  
 int main(int argc, char** argv) 
 {
@@ -40,22 +41,29 @@ int main(int argc, char** argv)
     Uniform mat;
     Dune::LinearLaw materialLaw(mat, mat);
     
-    Dune::BuckleyLeverettProblem<GridType, NumberType> transportProblem(grid, materialLaw);
-    Dune::UniformProblem<GridType, NumberType> diffusionProblem(grid, true, materialLaw);
+    typedef Dune::VariableClass<GridType, NumberType> VC;
+    double initsat=0;
+    double initpress=0;
+    Dune::FieldVector<double,dim>vel(0);
+    vel[0] = 1.0/6.0*1e-6;  
+    VC variables(grid,initsat,initpress,vel);
+
+    Dune::BuckleyLeverettProblem<GridType, NumberType, VC> transportProblem(variables, materialLaw, grid.maxLevel());
+    Dune::UniformProblem<GridType, NumberType, VC> diffusionProblem(variables, materialLaw, true);
     //Dune::HeterogeneousProblem<GridType, NumberType> diffusionProblem(grid, "permeab.dat", false, materialLaw);
     //diffusionProblem.permeability.vtkout("permeability", grid);
     //Dune::TestProblem<GridType, NumberType> diffusionProblem(grid, materialLaw);
 
-    typedef Dune::FVTransport<GridType, NumberType> Transport;
+    typedef Dune::FVTransport<GridType, NumberType, VC> Transport;
     Transport transport(grid, transportProblem, 0);
         
-    typedef Dune::FVDiffusion<GridType, NumberType> Diffusion;
-    Diffusion diffusion(grid, diffusionProblem, transport.problem, grid.maxLevel());
+    typedef Dune::FVDiffusion<GridType, NumberType, VC> Diffusion;
+    Diffusion diffusion(grid, diffusionProblem, grid.maxLevel());
 
     int iterFlag = 0; 
     int nIter = 1; 
     double maxDefect = 1e-5;
-    typedef Dune::IMPESMS<GridType, Diffusion, Transport> IMPESMS;
+    typedef Dune::IMPESMS<GridType, Diffusion, Transport, VC> IMPESMS;
     IMPESMS fractionalflow(diffusion, transport, iterFlag, nIter, maxDefect);
     
     double tStart = 0; 
@@ -68,9 +76,9 @@ int main(int argc, char** argv)
     Dune::Timer timer;
     timer.reset();
     timeloop.execute(fractionalflow);
-    printvector(std::cout, *(fractionalflow.diffusion), "pressure", "row", 200, 1);
-    printvector(std::cout, *fractionalflow, "saturation", "row", 200, 1);
-    printvector(std::cout, fractionalflow.problem.velocity, "velocity", "row", 4, 1);
+    printvector(std::cout, fractionalflow.diffproblem.variables.pressure, "pressure", "row", 200, 1);
+    printvector(std::cout, fractionalflow.transproblem.variables.saturation, "saturation", "row", 200, 1);
+    printvector(std::cout, fractionalflow.diffproblem.variables.velocity, "velocity", "row", 4, 1);
     std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
     
     return 0;

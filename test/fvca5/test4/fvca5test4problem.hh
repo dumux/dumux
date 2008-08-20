@@ -7,19 +7,19 @@ namespace Dune
 {
 //! \ingroup diffusionProblems
 //! example class for diffusion problems
-	template<class G, class RT>
-	class FVCA5Test4Problem : public DiffusionProblem<G,RT>
+	template<class G, class RT, class VC>
+	class FVCA5Test4Problem : public DiffusionProblem<G,RT,VC>
 	{
 	  typedef typename G::ctype DT;
 	  enum {n=G::dimension};
 	  typedef typename G::Traits::template Codim<0>::Entity Entity;
 	
 	public:
-	  FVCA5Test4Problem()
-	    : DiffusionProblem<G,RT>()
+	  FVCA5Test4Problem(VC& variables)
+	    : DiffusionProblem<G,RT,VC>(variables)
 	  { }
 	
-	  const FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x, const Entity& e, 
+	  FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x, const Entity& e, 
 					  const FieldVector<DT,n>& xi) 
 	  {
 		  if (x[0] < 0.5) {
@@ -70,7 +70,6 @@ namespace Dune
 		  return (1.0 - x[0]);
 	  }
 		  
-		
 	  RT J (const FieldVector<DT,n>& x, const Entity& e, 
 					const FieldVector<DT,n>& xi) const
 	  {

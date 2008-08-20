@@ -8,8 +8,8 @@ namespace Dune
 {
 	//! \ingroup diffusionProblems
 	//! example class for diffusion problems
-	template<class G, class RT>
-	class FourSpotProblem : public DiffusionProblem<G,RT>
+	template<class G, class RT, class VC>
+	class FourSpotProblem : public DiffusionProblem<G,RT,VC>
 	{
 	  typedef typename G::ctype DT;
 	  enum {n=G::dimension};
@@ -20,7 +20,7 @@ namespace Dune
 	public:
 	  FourSpotProblem(G& g, const int level, const char* name = "permeab.dat", const bool create = true, 
 			  				TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false)
-	    : grid(g), DiffusionProblem<G,RT>(law, cap), permeability(g, level, name, create)
+	    : grid(g), DiffusionProblem<G,RT,VC>(law, cap), permeability(g, level, name, create)
 	  { }
 	
 	  const Dune::FieldMatrix<DT,n,n>& K (const Dune::FieldVector<DT,n>& x, const Entity& e, 

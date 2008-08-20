@@ -19,6 +19,7 @@
 #include <dune/istl/paamg/amg.hh>
 #include <dune/istl/owneroverlapcopy.hh>
 #include "dumux/nonlinear/nonlinearmodel.hh"
+#include "dumux/pardiso/pardiso.hh"
 #include "dumux/fvgeometry/fvelementgeometry.hh"
 #include "dumux/nonlinear/newtonmethod.hh"
 #include "parallelboxdiffusionjacobian.hh"
@@ -87,7 +88,8 @@ public:
 			}
 		}; 
 
-		typedef typename G::Traits::LeafIndexSet IS;
+		typedef typename G::LeafGridView GV;
+	    typedef typename GV::IndexSet IS;
 		typedef MultipleCodimMultipleGeomTypeMapper<G,IS,P1Layout> VertexMapper;
 		typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
 		typedef typename ThisType::FunctionType::RepresentationType VectorType;
@@ -104,15 +106,18 @@ public:
 		{
 			typedef typename G::Traits::template Codim<0>::Entity Entity;
 			typedef typename G::ctype DT;
-			typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator Iterator;
+			typedef typename GV::template Codim<0>::Iterator Iterator;
 			enum{dim = G::dimension};
 			enum{dimworld = G::dimensionworld};
 
-			const IS& indexset(grid.leafIndexSet());
+			*(this->u) = 0;
+			
+			const GV& gridview(this->grid.leafView());
+
 			std::cout << "initializing solution." << std::endl;
 			// iterate through leaf grid an evaluate c0 at cell center
-			Iterator eendit = indexset.template end<0, All_Partition>();
-			for (Iterator it = indexset.template begin<0, All_Partition>(); it != eendit; ++it)
+			Iterator eendit = gridview.template end<0>();
+			for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
 			{
 				// get geometry type
 				Dune::GeometryType gt = it->geometry().type();
@@ -133,7 +138,7 @@ public:
 			}
 
 			// set Dirichlet boundary conditions
-			for (Iterator it = indexset.template begin<0, All_Partition>(); it != eendit; ++it)
+			for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
 			{
 				// get geometry type
 				Dune::GeometryType gt = it->geometry().type();
@@ -201,8 +206,10 @@ public:
 			typedef typename Dune::LeafP1Function<G,RT>::P1IndexInfoFromGrid P1IndexInfoFromGrid;
 
 			Dune::MatrixAdapter<MatrixType,VectorType,VectorType> op(*(this->A));
+			//SeqPardiso<MatrixType,VectorType,VectorType> ilu0;
+			//ilu0.factorize(*(this->A));
 			Dune::SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A),1.0);
-			//Dune::SeqSSOR<MatrixType,VectorType,VectorType> ssor(*(this->A),1,1.0);
+			//Dune::SeqSSOR<MatrixType,VectorType,VectorType> ssor(*(this->A),1,0.8);
 
 #if HAVE_MPI
 			// set up parallel solvers
@@ -216,7 +223,8 @@ public:
 			Dune::OverlappingSchwarzOperator<MatrixType,VectorType,VectorType,CommunicationType> oop(*(this->A),oocc);
 			Dune::OverlappingSchwarzScalarProduct<VectorType,CommunicationType> osp(oocc);
 			Dune::BlockPreconditioner<VectorType,VectorType,CommunicationType> parprec(ilu0,oocc);
-			Dune::CGSolver<VectorType> parcg(oop,osp,parprec,1E-12,1000,verbose);
+			//Dune::LoopSolver<VectorType> parcg(oop,osp,parprec,1E-12,1000,verbose);
+			Dune::CGSolver<VectorType> parcg(oop,osp,parprec,1E-20, 1000,verbose);
 
 			// solve system
 			Dune::InverseOperatorResult r;	
@@ -235,12 +243,11 @@ public:
 		virtual void globalDefect(FunctionType& defectGlobal) {
 			typedef typename G::Traits::template Codim<0>::Entity Entity;
 			typedef typename G::ctype DT;
-			typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator
-					Iterator;
+			typedef typename GV::template Codim<0>::Iterator Iterator;
 			enum {dim = G::dimension};
 			typedef array<BoundaryConditions::Flags, m> BCBlockType;
 
-			const IS& indexset(this->grid.leafIndexSet());
+			const GV& gridview(this->grid.leafView());
 			(*defectGlobal)=0;
 
 #if HAVE_MPI
@@ -256,8 +263,8 @@ public:
 				essential[i].assign(BoundaryConditions::neumann);
 
 			// iterate through leaf grid 
-			Iterator eendit = indexset.template end<0, All_Partition>();
-			for (Iterator it = indexset.template begin<0, All_Partition>(); it
+			Iterator eendit = gridview.template end<0>();
+			for (Iterator it = gridview.template begin<0>(); it
 					!= eendit; ++it) {
 				// get geometry type
 				Dune::GeometryType gt = it->geometry().type();
@@ -297,6 +304,21 @@ public:
 			//std::cout << grid.comm().rank() << ": norm(defect) = " << oocc.norm(*defectGlobal) << std::endl;
 
 		}
+		
+		virtual double residual(FunctionType& defectGlobal) 
+		{
+			globalDefect(defectGlobal); 
+
+#if HAVE_MPI
+			IndexInfoFromGrid<GlobalIdType,int> indexinfo;
+			(this->u).fillIndexInfoFromGrid(indexinfo);
+			CommunicationType oocc(indexinfo,grid.comm());
+			return oocc.norm(*defectGlobal);
+#endif
+			
+			return 1e0;
+		}
+		
 protected:
 	const G& grid;
 	VertexMapper vertexmapper;

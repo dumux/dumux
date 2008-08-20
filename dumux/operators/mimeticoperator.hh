@@ -53,11 +53,12 @@ namespace Dune
 
     enum {n=G::dimension};
     typedef typename G::ctype DT;
-    typedef typename G::Traits::LevelIndexSet IS;
+	typedef typename G::LevelGridView GV;
+    typedef typename GV::IndexSet IS;
     typedef LevelCommunicate<G> LC;
     typedef LevelP0Function<G,RT,2*n> VType;
     typedef BlockVector< FieldVector<RT,1> > PType;
-    typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator Iterator;
+	typedef typename GV::template Codim<0>::Iterator Iterator;
     typedef MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout> EM;
 
   public:
@@ -67,12 +68,12 @@ namespace Dune
     {}
 
     template<class I>
-    void calculatePressure (LocalStiffnessExt<I,G,RT,m>& loc, CRFunction<G,RT,IS,LC,m>& u, 
+    void calculatePressure (LocalStiffnessExt<I,G,RT,m>& loc, CRFunction<G,RT,GV,LC,m>& u, 
 			    VType& velocity, PType& pressure) 
     {
       // run over all level elements
-      Iterator eendit = this->is.template end<0,All_Partition>();
-      for (Iterator it = this->is.template begin<0,All_Partition>(); it!=eendit; ++it)
+      Iterator eendit = this->gridview.template end<0>();
+      for (Iterator it = this->gridview.template begin<0>(); it!=eendit; ++it)
 	{
 	  // get access to shape functions for CR elements
 	  Dune::GeometryType gt = it->geometry().type();

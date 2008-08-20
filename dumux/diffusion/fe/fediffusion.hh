@@ -40,10 +40,9 @@ namespace Dune
 	- Grid      a DUNE grid type
 	- RT        type used for return values 
    */
-  template<class G, class RT, class LocalStiffnessType = GroundwaterEquationLocalStiffness<G,RT> >
+  template<class G, class RT, class VC, class LocalStiffnessType = GroundwaterEquationLocalStiffness<G,RT> >
   class FEDiffusion 
-  : public Diffusion< G, RT, BlockVector< FieldVector<RT,1> >,
-  					   BlockVector< FieldVector<FieldVector<RT, G::dimension>, 2*G::dimension> > > 
+  : public Diffusion< G, RT, VC > 
   {
 	  template<int dim>
 	  struct ElementLayout
@@ -100,18 +99,18 @@ namespace Dune
 
 	void vtkout (const char* name, int k) const 
 	{
-		VTKWriter<G, typename G::template Codim<0>::LevelIndexSet> 
-			vtkwriter(this->grid, this->grid.levelIndexSet(this->level()));
+		VTKWriter<G, typename G::LevelGridView> 
+			vtkwriter(this->grid.levelView(this->level()));
 		char fname[128];	
 		sprintf(fname,"%s-%05d",name,k);
-		vtkwriter.addVertexData(this->press,"total pressure p~");
+		vtkwriter.addVertexData(this->diffproblem.variables.pressure,"total pressure p~");
 		vtkwriter.write(fname, VTKOptions::ascii);		
 	}
 	
-	FEDiffusion(G& g, DiffusionProblem<G, RT>& prob, 
-		    TransportProblem<G, RT, VelType>& satprob = *(new typename Dune::SimpleProblem<G, RT>), 
+	FEDiffusion(G& g, DiffusionProblem<G, RT, VC>& prob, 
+		    TransportProblem<G, RT, VC>& satprob = *(new typename Dune::SimpleProblem<G, RT, VC>), 
 		    int lev = -1)
-	  : Diffusion<G, RT, RepresentationType, VelType>(g, prob, lev == -1 ? g.maxLevel() : lev), 
+	  : Diffusion<G, RT, VC>(g, prob, lev == -1 ? g.maxLevel() : lev), 
 	  pressP1(g, this->level()), f(g, this->level()), A(g, this->level())
 	{ 
 		this->press.resize(g.size(this->level(), G::dimension));

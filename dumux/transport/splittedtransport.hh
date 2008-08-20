@@ -28,16 +28,17 @@ namespace Dune
 	- VelType   type of the vector holding the velocity values 
 
    */
-  template<class G, class RT, class RepresentationType, class VelType, class HyperbolicType, class ParabolicType>
+  template<class G, class RT, class VC, class HyperbolicType, class ParabolicType>
   class SplittedTransport {
   public:
+	  typedef BlockVector< FieldVector<RT,1> > RepresentationType;
+	  typedef typename HyperbolicType::RepresentationType HyperbolicRepresentationType;
+	  typedef typename ParabolicType::RepresentationType ParabolicRepresentationType;
+	    
     const G& grid;
     RepresentationType sat; //!< vector of saturation values
     HyperbolicType& hyperbolicPart; //!< for the hyperbolic part
     ParabolicType& parabolicPart; //!< for the parabolic part
-    
-    typedef typename HyperbolicType::RepresentationType HyperbolicRepresentationType;
-    typedef typename ParabolicType::RepresentationType ParabolicRepresentationType;
     
     virtual void transferHyperbolicToParabolic(const HyperbolicRepresentationType& hyperSat, 
 					       ParabolicRepresentationType& paraSat) = 0;
@@ -61,27 +62,24 @@ namespace Dune
 	 *  Calculate the update vector, i.e., the discretization 
 	 *  of \f$\text{div}\, (f_\text{w}(S) \boldsymbol{v}_t)\f$.
 	 */
-    virtual int update(RT t, RT& dt, RepresentationType& updateVec)
+    virtual int update(RT t, RT& dt, RepresentationType& updateVec, double cFLFactor)
     {
-      // HACK: dt contains cFLFactor 
-      double cFLFactor = dt;
-
       // parabolic part:
-      transferRepresentationTypeToParabolic(sat, parabolicPart.sat);
-      parabolicPart.update(t, dt, updateParabolic);
+      transferRepresentationTypeToParabolic(sat, parabolicPart.transproblem.variables.saturation);
+      parabolicPart.update(t, dt, updateParabolic, cFLFactor);
       ParabolicRepresentationType helpVector1(updateParabolic);
       helpVector1 *= dt*cFLFactor;
-      parabolicPart.sat += helpVector1;
-      transferParabolicToHyperbolic(parabolicPart.sat, hyperbolicPart.sat);
+      parabolicPart.transproblem.variables.saturation += helpVector1;
+      transferParabolicToHyperbolic(parabolicPart.transproblem.variables.saturation, hyperbolicPart.transproblem.variables.saturation);
 
       // hyperbolic part:
       double dummyDT;
-      hyperbolicPart.update(t, dummyDT, updateHyperbolic);
+      hyperbolicPart.update(t, dummyDT, updateHyperbolic, cFLFactor);
       //printvector(std::cout, updateHyperbolic, "updateHyperbolic", "row", 200, 1);    
       //updateHyperbolic = 0;
       
       // combine:
-      ParabolicRepresentationType helpVector2(parabolicPart.sat.size());
+      ParabolicRepresentationType helpVector2(parabolicPart.transproblem.variables.saturation.size());
       transferHyperbolicToParabolic(updateHyperbolic, helpVector2);
       updateParabolic += helpVector2; 
       transferParabolicToRepresentationType(updateParabolic, updateVec);
@@ -94,7 +92,7 @@ namespace Dune
     {
       hyperbolicPart.initial();
       parabolicPart.initial();
-      transferParabolicToRepresentationType(parabolicPart.sat, sat);
+      transferParabolicToRepresentationType(parabolicPart.transproblem.variables.saturation, sat);
       return;
     }
 		
@@ -123,8 +121,8 @@ namespace Dune
     SplittedTransport(const G& g, HyperbolicType& hyper, ParabolicType& para) 
       : grid(g), hyperbolicPart(hyper), parabolicPart(para), level_(g.maxLevel())
     { 
-      updateHyperbolic.resize(hyperbolicPart.sat.size());
-      updateParabolic.resize(parabolicPart.sat.size());
+      updateHyperbolic.resize(hyperbolicPart.transproblem.variables.saturation.size());
+      updateParabolic.resize(parabolicPart.transproblem.variables.saturation.size());
     }
 	
     //! returns the level on which the transport eqution is solved.

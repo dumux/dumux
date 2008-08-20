@@ -55,8 +55,9 @@ struct BenchmarkResult
 	{
 	    typedef typename GridType::Traits::template Codim<0>::Entity Entity;
 	    typedef typename Entity::Geometry Geometry;
-	    typedef typename GridType::Traits::LevelIndexSet IS;
-	    typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator Iterator;
+		typedef typename GridType::LevelGridView GV;
+	    typedef typename GV::IndexSet IS;
+		typedef typename GV::template Codim<0>::Iterator Iterator;
 	    typedef typename IntersectionIteratorGetter<GridType,LeafTag>::IntersectionIterator IntersectionIterator;
 	    typedef MultipleCodimMultipleGeomTypeMapper<GridType,IS,ElementLayout> EM;
 		typedef MultipleCodimMultipleGeomTypeMapper<GridType,IS,FaceLayout> FM;
@@ -64,14 +65,15 @@ struct BenchmarkResult
 	    
 	    enum{dim = GridType::dimension};
 
-	    const IS& indexset(grid.levelIndexSet(grid.maxLevel()));
-	    EM elementmapper(grid, grid.levelIndexSet(grid.maxLevel()));
-	    FM facemapper(grid, grid.levelIndexSet(grid.maxLevel()));
+		const GV& gridview(grid.levelView(grid.maxLevel()));
+	    const IS& indexset(gridview.indexSet());
+	    EM elementmapper(grid,indexset);
+	    FM facemapper(grid,indexset);
 	    
 	    uMean = 0;
 	    double domainVolume = 0;
-	    Iterator eendit = indexset.template end<0,All_Partition>();
-	    for (Iterator it = indexset.template begin<0,All_Partition>(); it != eendit; ++it)
+	    Iterator eendit = gridview.template end<0>();
+	    for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
 	      {
 	    	// get entity 
 	    	const Entity& element = *it; 
@@ -83,7 +85,7 @@ struct BenchmarkResult
 			int indexi = elementmapper.map(element);
 			
 			// get approximate solution value 
-			uMean += volume*(*solution)[indexi];
+			uMean += volume*(problem.variables.pressure)[indexi];
 			
 			// add to domainVolume 
 			domainVolume += volume;
@@ -91,8 +93,8 @@ struct BenchmarkResult
 	    uMean /= domainVolume; 
 	    
 	    if (pureNeumann) {
-	    	for (int i = 0; i < (*solution).size(); i++)
-	    	(*solution)[i] -= uMean;
+	    	for (int i = 0; i < (problem.variables.pressure).size(); i++)
+	    	(problem.variables.pressure)[i] -= uMean;
 	    }
 	    
 	    
@@ -117,7 +119,7 @@ struct BenchmarkResult
 	    double denominatorGrad = 0;
 	    double numeratorFlux = 0; 
 	    double denominatorFlux = 0;
-	    for (Iterator it = indexset.template begin<0,All_Partition>(); it != eendit; ++it)
+	    for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
 	      {
 	    	// get entity 
 	    	const Entity& element = *it; 
@@ -145,7 +147,7 @@ struct BenchmarkResult
 			int indexi = elementmapper.map(element);
 			
 			// get approximate solution value 
-			double approximateValue = (*solution)[indexi];
+			double approximateValue = (problem.variables.pressure)[indexi];
 			
 			// update uMin and uMax
 			uMin = std::min(uMin, approximateValue);

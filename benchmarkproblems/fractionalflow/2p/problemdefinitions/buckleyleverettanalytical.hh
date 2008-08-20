@@ -21,8 +21,9 @@ namespace Dune
 		typedef typename G::ctype DT;
 //		typedef typename G::template Codim <0>:: LeafIterator Iterator;
 		
-		typedef typename G::Traits::LevelIndexSet IS;
-		typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator Iterator;
+		typedef typename G::LevelGridView GV;
+	    typedef typename GV::IndexSet IS;
+		typedef typename GV::template Codim<0>::Iterator Iterator;
 		
 		typedef BlockVector<FieldVector<RT, m> > BVu;
 		typedef BlockVector<FieldVector<RT, 1> > BV;
@@ -159,10 +160,10 @@ public:
 			//		std::cout<<"xf = "<<xf<<std::endl;
 			//iterate over vertices and get analytical saturation solution
 			
-			const IS& indexset(this->grid.levelIndexSet(0));
+			const GV& gridview(this->grid.levelView(0));
 
-			Iterator eendit = indexset.template end<0, All_Partition>();
-			for (Iterator it = indexset.template begin<0, All_Partition>(); it
+			Iterator eendit = gridview.template end<0>();
+			for (Iterator it = gridview.template begin<0>(); it
 					!= eendit; ++it)
 			{
 

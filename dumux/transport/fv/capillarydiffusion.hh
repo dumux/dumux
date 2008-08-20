@@ -47,22 +47,22 @@ namespace Dune
       IntersectionIterator is = entity.ilevelbegin();
       for (; is != endis; ++is)
 	{
-	  if(is.numberInSelf() == numberInSelf)
+	  if(is->numberInSelf() == numberInSelf)
 	    break;
 	}
 			
       // get geometry type of face
-      GeometryType gtf = is.intersectionSelfLocal().type();
+      GeometryType gtf = is->intersectionSelfLocal().type();
 			  
       // center in face's reference element
       const Dune::FieldVector<RT,dim-1>& facelocal = ReferenceElements<RT,dim-1>::general(gtf).position(0,0);
 
-      FieldVector unitOuterNormal = is.unitOuterNormal(facelocal);
+      FieldVector unitOuterNormal = is->unitOuterNormal(facelocal);
       //std::cout<<"unitOuterNormaldiff"<<unitOuterNormal<<std::endl;
 
-      if (is.neighbor()) {
+      if (is->neighbor()) {
 	// access neighbor
-	EntityPointer outside = is.outside();
+	EntityPointer outside = is->outside();
 				
 	// compute factor in neighbor
 	GeometryType nbgt = outside->geometry().type();

@@ -7,8 +7,8 @@ namespace Dune
 {
 //! \ingroup transportProblems
 //! @brief example class for a transport problem
-  template<class G, class RT>
-  class SimpleParabolicProblem : public TransportProblem<G, RT, Dune::BlockVector< Dune::FieldVector<Dune::FieldVector<double, G::dimension>, 2*G::dimension> > > {
+  template<class G, class RT, class VC>
+  class SimpleParabolicProblem : public TransportProblem<G, RT, VC > {
 	  typedef typename G::ctype DT;
 	  enum {n=G::dimension, m=1};
 	  typedef typename G::Traits::template Codim<0>::Entity Entity;
@@ -51,12 +51,12 @@ namespace Dune
 		return vLoc;
 	}
 
-	SimpleParabolicProblem(const G& g, TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false) 
-	: TransportProblem<G, RT, VelType>(law, cap), left((g.lowerLeft())[0]), right((g.upperRight())[0])
+	SimpleParabolicProblem(VC& variables, const G& g, TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false) 
+	: TransportProblem<G, RT, VC>(variables, law, cap), left((g.lowerLeft())[0]), right((g.upperRight())[0])
 	{	}
 
-	SimpleParabolicProblem(TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false) 
-	: TransportProblem<G, RT, VelType>(law, cap), left(0), right(1)
+	SimpleParabolicProblem(VC& variables, TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false) 
+	: TransportProblem<G, RT, VC>(variables, law, cap), left(0), right(1)
 	{	}
   };
 

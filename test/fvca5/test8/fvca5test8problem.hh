@@ -7,8 +7,8 @@ namespace Dune
 {
 //! \ingroup diffusionProblems
 //! example class for diffusion problems
-	template<class G, class RT>
-	class FVCA5Test8Problem : public DiffusionProblem<G,RT>
+	template<class G, class RT, class VC>
+	class FVCA5Test8Problem : public DiffusionProblem<G,RT,VC>
 	{
 		template<int dim>
 	    struct ElementLayout
@@ -26,14 +26,14 @@ namespace Dune
 	  typedef MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout> EM;
 	
 	public:
-	  FVCA5Test8Problem(G& grid)
-	    : DiffusionProblem<G,RT>(), elementmapper(grid, grid.levelIndexSet(grid.maxLevel()))
+	  FVCA5Test8Problem(VC& variables, G& grid)
+	    : DiffusionProblem<G,RT,VC>(variables), elementmapper(grid, grid.levelIndexSet(grid.maxLevel()))
 	  { 
 		  permloc_[0][0] = permloc_[1][1] = 1.0; 
 		  permloc_[0][1] = permloc_[1][0] = 0.0;
 	  }
 	
-	  const FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x, const Entity& e, 
+	  FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x, const Entity& e, 
 					  const FieldVector<DT,n>& xi) 
 	  {
 		  return permloc_;
@@ -64,7 +64,6 @@ namespace Dune
 		  return (0.0);
 	  }
 		  
-		
 	  RT J (const FieldVector<DT,n>& x, const Entity& e, 
 					const FieldVector<DT,n>& xi) const
 	  {

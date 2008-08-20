@@ -7,23 +7,23 @@ namespace Dune
 {
 //! \ingroup diffusionProblems
 //! example class for diffusion problems
-	template<class G, class RT>
-	class GravityProblem : public DiffusionProblem<G,RT>
+	template<class G, class RT, class VC>
+	class GravityProblem : public DiffusionProblem<G,RT,VC>
 	{
 	  typedef typename G::ctype DT;
 	  enum {n=G::dimension};
 	  typedef typename G::Traits::template Codim<0>::Entity Entity;
 	
 	public:
-	  GravityProblem(G* g, TwoPhaseRelations& law = *(new LinearLaw), FieldVector<DT,n> gravity = *(new FieldVector<DT,n>(0)))
-	    : grid(g), DiffusionProblem<G,RT>(law, false, gravity)
+	  GravityProblem(VC& variables, G* g, TwoPhaseRelations& law = *(new LinearLaw), FieldVector<DT,n> gravity = *(new FieldVector<DT,n>(0)))
+	    : grid(g), DiffusionProblem<G,RT,VC>(variables, law, false, gravity)
 	  { }
 	
 	  GravityProblem()
-	    : DiffusionProblem<G,RT>()
+	    : DiffusionProblem<G,RT,VC>()
 	  { }
 	
-	  const FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x, const Entity& e, 
+	  FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x, const Entity& e, 
 					  const FieldVector<DT,n>& xi) 
 	  {
 		  permloc[0][0] = permloc[1][1] = 1e-10;

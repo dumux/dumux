@@ -10,8 +10,8 @@
 #include<dune/grid/common/grid.hh>
 #include<dune/grid/common/referenceelements.hh>
 #include<dune/grid/utility/intersectiongetter.hh>
-#include<dumux/material/twophaserelations.hh>
-#include<dumux/material/linearlaw.hh>
+#include<dumux/material/twophaserelations_deprecated.hh>
+#include<dumux/material/linearlaw_deprecated.hh>
 
 /**
  * @file
@@ -31,9 +31,9 @@ template<class G, class RT> class ExSolution
 	typedef BlockVector<FieldVector<RT, m> > BVu;
 	typedef BlockVector<FieldVector<RT, (m+1)> > BVuEx;
 
-	typedef typename G::Traits::LevelIndexSet IS;
-	typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator
-			Iterator;
+	typedef typename G::LevelGridView GV;
+    typedef typename GV::IndexSet IS;
+	typedef typename GV::template Codim<0>::Iterator Iterator;
 	typedef typename G::Traits::template Codim<0>::Entity Entity;
 
 	template<int dim> struct ElementLayout
@@ -99,10 +99,10 @@ public:
 		error=0;
 		elementvolume=0;
 
-		const IS& indexset(grid.levelIndexSet(0));
+		const GV& gridview(grid.levelView(0));
 
-		Iterator eendit = indexset.template end<0, All_Partition>();
-		for (Iterator it = indexset.template begin<0, All_Partition>(); it
+		Iterator eendit = gridview.template end<0>();
+		for (Iterator it = gridview.template begin<0>(); it
 				!= eendit; ++it)
 		{
 			// get entity 

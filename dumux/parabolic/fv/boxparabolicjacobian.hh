@@ -89,7 +89,7 @@ namespace Dune
     
 
     template<class TypeTag>
-    void localDefect (const Entity& e, const VBlockType* sol)
+    void localDefect (const Entity& e, const VBlockType* sol, bool withBC = true)
     {
       // extract some important parameters
       const Geometry& geometry = e.geometry();
@@ -192,13 +192,16 @@ namespace Dune
 		  } // end loop over neighboring vertices 
 	  } // end loop over vertices
 
-	  // assemble boundary conditions 
-	  assembleBC<TypeTag> (e); 
-	  
-	  // add to defect 
-	  for (int i=0; i < size; i++) 
-		  this->def[i] -= this->b[i];
+	  // assemble boundary conditions
+	  if (withBC) 
+	  {
+		  assembleBC<TypeTag> (e); 
 
+		  // add to defect 
+		  for (int i=0; i < size; i++) 
+			  this->def[i] -= this->b[i];
+	  }
+	  
       return;
     }
     

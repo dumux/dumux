@@ -29,20 +29,16 @@ namespace Dune
 	- VelType   type of the vector holding the velocity values 
 
    */
-  template<class G, class RT>
-  class FVSplittedTransport : public SplittedTransport< 
-                                          G, RT, 
-                                          BlockVector< 
-                                            Dune::FieldVector<RT,1> >,
-							BlockVector< Dune::FieldVector<Dune::FieldVector<RT, G::dimension>, 2*G::dimension> >, 
-							FVTransport<G, RT>, FVTransport<G, RT> > 
+  template<class G, class RT, class VC>
+  class FVSplittedTransport : public SplittedTransport< G, RT, VC, 
+							FVTransport<G, RT, VC>, FVTransport<G, RT, VC> > 
   {
   public:
-    typedef typename FVTransport<G, RT>::RepresentationType HyperbolicRepresentationType;
-    typedef typename FVTransport<G, RT>::RepresentationType ParabolicRepresentationType;
-    typedef typename FVTransport<G, RT>::RepresentationType RepresentationType;
-    typedef FVTransport<G, RT>  HyperbolicType;
-    typedef FVTransport<G, RT>  ParabolicType;
+    typedef typename FVTransport<G, RT, VC>::RepresentationType HyperbolicRepresentationType;
+    typedef typename FVTransport<G, RT, VC>::RepresentationType ParabolicRepresentationType;
+    typedef typename FVTransport<G, RT, VC>::RepresentationType RepresentationType;
+    typedef FVTransport<G, RT, VC>  HyperbolicType;
+    typedef FVTransport<G, RT, VC>  ParabolicType;
    
 
     virtual void transferHyperbolicToParabolic(const HyperbolicRepresentationType& hyperSat, 
@@ -76,10 +72,7 @@ namespace Dune
     //! generate vtk output
     virtual void vtkout (const char* name, int k) const 
     {
-      const typename G::template Codim<0>::LevelIndexSet& iset(this->grid.levelIndexSet(this->parabolicLevel()) );
-      Dune::VTKWriter<G, typename G::template Codim<0>::LevelIndexSet> 
-	vtkwriter(this->grid, 
-		  iset );
+      Dune::VTKWriter<G, typename G::LevelGridView> vtkwriter(this->grid.levelView(this->parabolicLevel()));
       char fname[128];	
       sprintf(fname,"%s-%05d",name,k);
       vtkwriter.addCellData(this->sat,"saturation");
@@ -91,11 +84,9 @@ namespace Dune
      *  @param prob an object of class TransportProblem or derived
      */
     FVSplittedTransport(const G& g, HyperbolicType& hyper, ParabolicType& para) 
-      : SplittedTransport< G, RT, BlockVector< Dune::FieldVector<RT,1> >,
-					BlockVector< Dune::FieldVector<Dune::FieldVector<RT, G::dimension>, 2*G::dimension> >, 
-					FVTransport<G, RT>, FVTransport<G, RT> >(g, hyper, para)
+      : SplittedTransport< G, RT, VC, FVTransport<G, RT, VC>, FVTransport<G, RT, VC> >(g, hyper, para)
     { 
-      this->sat.resize(this->parabolicPart.sat.size());
+      this->sat.resize(this->parabolicPart.transproblem.variables.saturation.size());
     }
   };
 

@@ -11,9 +11,9 @@
 #include<dune/grid/common/referenceelements.hh>
 #include<dune/grid/utility/intersectiongetter.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
-#include<dumux/material/twophaserelations.hh>
+#include<dumux/material/twophaserelations_deprecated.hh>
 #include<dumux/material/multicomponentrelations.hh>
-#include<dumux/material/linearlaw.hh>
+#include<dumux/material/linearlaw_deprecated.hh>
 
 /**
  * @file

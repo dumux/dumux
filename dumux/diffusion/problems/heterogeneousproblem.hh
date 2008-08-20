@@ -16,12 +16,12 @@ namespace Dune
 	  typedef typename G::Traits::template Codim<0>::Entity Entity;
 	
 	public:
-	  HeterogeneousProblem(VC& variableobj, const char* name = "permeab.dat", const bool create = true, 
+	  HeterogeneousProblem(VC& variableobj, const G& g, const char* name = "permeab.dat", const bool create = true, 
 			  				TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false)
 	    : DiffusionProblem<G,RT,VC>(variableobj,law, cap), permeability(g, name, create)
 	  { }
 	
-	  const Dune::FieldMatrix<DT,n,n>& K (const Dune::FieldVector<DT,n>& x, const Entity& e, 
+	  Dune::FieldMatrix<DT,n,n>& K (const Dune::FieldVector<DT,n>& x, const Entity& e, 
 					  const Dune::FieldVector<DT,n>& xi) 
 	  {
 		  return permeability.K(e);

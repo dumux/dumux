@@ -64,7 +64,7 @@ namespace Dune
   <dt>LevelTag</dt> We assemble on a grid level. 
   <dt>LeafTag</dt> We assemble on the leaf entities of the grid 
    */
-  template<typename TypeTag, class G, class RT, class IS, class LC, int m=1>
+  template<typename TypeTag, class G, class RT, class GV, class LC, int m=1>
   class CROperatorBase
   {
   public:    
@@ -94,8 +94,9 @@ namespace Dune
 
 	typedef typename G::ctype DT;
 	enum {n=G::dimension};
+    typedef typename GV::IndexSet IS;
 	typedef typename G::template Codim<0>::Entity Entity;
-	typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator Iterator;
+	typedef typename GV::template Codim<0>::Iterator Iterator;
 	typedef typename G::template Codim<0>::EntityPointer EEntityPointer;
 	typedef typename G::Traits::GlobalIdSet IDS;
 	typedef typename IDS::IdType IdType;
@@ -128,9 +129,9 @@ namespace Dune
 
   public:
 
-	CROperatorBase (const G& g, const IS& indexset, LC lcomm) 
-	  : grid(g), is(indexset), lc(lcomm), facemapper(g,indexset), allmapper(g,indexset),
-	    A(size(), size(), nnz(indexset), RepresentationType::random)
+	CROperatorBase (const G& g, const GV& gv, LC lcomm) 
+	  : grid(g), gridview(gv), is(gv.indexSet()), lc(lcomm), facemapper(g,is), allmapper(g,is),
+	    A(size(), size(), nnz(is), RepresentationType::random)
 	{
 	  // Check for the TypeTag
         dune_static_assert((is_same<TypeTag,LeafTag>::value 
@@ -139,7 +140,7 @@ namespace Dune
 
 	  // be verbose
  	  std::cout << g.comm().rank() << ": " << "making " << size() << "x" 
-		    << size() << " matrix with " << nnz(indexset) << " nonzeros" << std::endl;
+		    << size() << " matrix with " << nnz(is) << " nonzeros" << std::endl;
    
 	  // set size of all rows to zero
 	  for (unsigned int i = 0; i < is.size(n); i++)
@@ -152,8 +153,8 @@ namespace Dune
 
 	  // LOOP 1 : Compute row sizes
 	  watch.reset();
-	  Iterator eendit = is.template end<0,All_Partition>();
-	  for (Iterator it = is.template begin<0,All_Partition>(); it != eendit; ++it)
+	  Iterator eendit = gridview.template end<0>();
+	  for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
 		{
 		  Dune::GeometryType gt = it->geometry().type();
 		  const typename Dune::ReferenceElementContainer<DT,n>::value_type& 
@@ -190,7 +191,7 @@ namespace Dune
 
 	  // LOOP 2 : insert the nonzeros
 	  watch.reset();
-	  for (Iterator it = is.template begin<0,All_Partition>(); it!=eendit; ++it)
+	  for (Iterator it = gridview.template begin<0>(); it!=eendit; ++it)
 		{
 		  Dune::GeometryType gt = it->geometry().type();
 		  const typename Dune::ReferenceElementContainer<DT,n>::value_type&
@@ -239,6 +240,7 @@ namespace Dune
 	Timer watch;
 	const G& grid;	
 	const IS& is;
+	const GV& gridview;
 	LC lc;
 	EM facemapper;
 	AM allmapper;
@@ -255,18 +257,19 @@ namespace Dune
    * <dt>LevelTag</dt> We assemble on a grid level. 
    * <dt>LeafTag</dt> We assemble on the leaf entities of the grid
    */
-  template<typename TypeTag, class G, class RT, class IS, class LC, int m>
-  class CROperatorAssembler : public CROperatorBase<TypeTag,G,RT,IS,LC,m>
+  template<typename TypeTag, class G, class RT, class GV, class LC, int m>
+  class CROperatorAssembler : public CROperatorBase<TypeTag,G,RT,GV,LC,m>
   {
 	typedef typename G::ctype DT;
 	enum {n=G::dimension};
 	typedef typename G::template Codim<0>::Entity Entity;
-	typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator Iterator;
+	typedef typename GV::template Codim<0>::Iterator Iterator;
+    typedef typename GV::IndexSet IS;
 	typedef typename G::template Codim<0>::HierarchicIterator HierarchicIterator;
 	typedef typename G::template Codim<0>::EntityPointer EEntityPointer;
-	typedef typename CRFunction<G,RT,IS,LC,m>::RepresentationType VectorType;
+	typedef typename CRFunction<G,RT,GV,LC,m>::RepresentationType VectorType;
 	typedef typename VectorType::block_type VBlockType;
-	typedef typename CROperatorBase<TypeTag,G,RT,IS,LC,m>::RepresentationType MatrixType;
+	typedef typename CROperatorBase<TypeTag,G,RT,GV,LC,m>::RepresentationType MatrixType;
 	typedef typename MatrixType::block_type MBlockType;
 	typedef typename MatrixType::RowIterator rowiterator;
 	typedef typename MatrixType::ColIterator coliterator;
@@ -274,8 +277,8 @@ namespace Dune
     typedef Dune::BlockVector< Dune::FieldVector<double,1> > SatType; 
 
   public:
-    CROperatorAssembler (const G& g, const IS& indexset, LC lcomm)
-      : CROperatorBase<TypeTag,G,RT,IS,LC,m>(g,indexset,lcomm)
+    CROperatorAssembler (const G& g, const GV& gridview, LC lcomm)
+      : CROperatorBase<TypeTag,G,RT,GV,LC,m>(g,gridview,lcomm)
     {	}
   
 
@@ -300,8 +303,8 @@ namespace Dune
 
 	 */
       template<class I>
-      void assemble (LocalStiffness<I,G,RT,m>& loc, CRFunction<G,RT,IS,LC,m>& u, 
-    		  CRFunction<G,RT,IS,LC,m>& f)
+      void assemble (LocalStiffness<I,G,RT,m>& loc, CRFunction<G,RT,GV,LC,m>& u, 
+    		  CRFunction<G,RT,GV,LC,m>& f)
       {
 
 	  // check size
@@ -321,8 +324,8 @@ namespace Dune
 	  int local2Global[Dune::CRShapeFunctionSetContainer<DT,RT,n>::maxsize];
 
 	  // run over all leaf elements
-	  Iterator eendit = this->is.template end<0,All_Partition>();
-	  for (Iterator it = this->is.template begin<0,All_Partition>(); it!=eendit; ++it)
+	  Iterator eendit = this->gridview.template end<0>();
+	  for (Iterator it = this->gridview.template begin<0>(); it!=eendit; ++it)
 		{
 		  // get access to shape functions for CR elements
 		  Dune::GeometryType gt = it->geometry().type();
@@ -423,8 +426,8 @@ namespace Dune
 	{
 	  // run over all leaf elements
 	  int extra=0;
-	  Iterator eendit = this->is.template end<0,All_Partition>();
-	  for (Iterator it = this->is.template begin<0,All_Partition>(); it!=eendit; ++it)
+	  Iterator eendit = this->gridview.template end<0>();
+	  for (Iterator it = this->gridview.template begin<0>(); it!=eendit; ++it)
 		{
 		  // get access to shape functions for CR elements
 		  Dune::GeometryType gt = it->geometry().type();
@@ -494,11 +497,11 @@ namespace Dune
   - m    number of degrees of freedom per node (system size)
    */
   template<class G, class RT, int m>
-  class LeafCROperatorAssembler : public CROperatorAssembler<LeafTag,G,RT,typename G::Traits::LeafIndexSet,LeafCommunicate<G>,m>
+  class LeafCROperatorAssembler : public CROperatorAssembler<LeafTag,G,RT,typename G::LeafGridView,LeafCommunicate<G>,m>
   {
   public:
 	LeafCROperatorAssembler (const G& grid) 
-	  : CROperatorAssembler<LeafTag,G,RT,typename G::Traits::LeafIndexSet,LeafCommunicate<G>,m>(grid,grid.leafIndexSet(),LeafCommunicate<G>(grid))
+	  : CROperatorAssembler<LeafTag,G,RT,typename G::LeafGridView,LeafCommunicate<G>,m>(grid,grid.leafView(),LeafCommunicate<G>(grid))
 	{}
   };
 
@@ -516,11 +519,11 @@ namespace Dune
   - m    number of degrees of freedom per node (system size)
    */
   template<class G, class RT, int m>
-  class LevelCROperatorAssembler : public CROperatorAssembler<LevelTag,G,RT,typename G::Traits::LevelIndexSet,LevelCommunicate<G>,m>
+  class LevelCROperatorAssembler : public CROperatorAssembler<LevelTag,G,RT,typename G::LevelGridView,LevelCommunicate<G>,m>
   {
   public:
 	LevelCROperatorAssembler (const G& grid, int level) 
-	  : CROperatorAssembler<LevelTag,G,RT,typename G::Traits::LevelIndexSet,LevelCommunicate<G>,m>(grid,grid.levelIndexSet(level),LevelCommunicate<G>(grid,level))
+	  : CROperatorAssembler<LevelTag,G,RT,typename G::LevelGridView,LevelCommunicate<G>,m>(grid,grid.levelView(level),LevelCommunicate<G>(grid,level))
 	{}
   };
 

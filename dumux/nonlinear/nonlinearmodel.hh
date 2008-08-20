@@ -32,13 +32,15 @@ public:
 	virtual ~NonlinearModel () {}
 
 	NonlinearModel(const G& g, ProblemType& prob)
-	: problem(prob), u(g), f(g), A(g), 
-	localJacobian(prob, false, g, u)
+: problem(prob), u(g, g.overlapSize(0)==0), f(g, g.overlapSize(0)==0), A(g, g.overlapSize(0)==0), 
+localJacobian(prob, false, g, u, g.overlapSize(0)>0)
+//: problem(prob), u(g), f(g), A(g), 
+//localJacobian(prob, false, g, u)
 	{ }
 
 	NonlinearModel(const G& g, ProblemType& prob, int level)
-	: problem(prob), u(g, level), f(g, level), A(g, level), 
-	localJacobian(prob, false, g, u)
+	: problem(prob), u(g, level, g.overlapSize(0)==0), f(g, level, g.overlapSize(0)==0), A(g, level, g.overlapSize(0)==0), 
+	localJacobian(prob, false, g, u, g.overlapSize(0)>0)
 	{ }
 };
 

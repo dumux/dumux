@@ -32,15 +32,17 @@ template<class Grid, class Solution, class Problem>
 double discreteError(const Grid& grid, const Solution& solution, const Problem& problem)
 {
 	  enum{dim=Grid::dimension};
-	  typedef typename Grid::Traits::LeafIndexSet IS;
+		typedef typename Grid::LeafGridView GV;
+	    typedef typename GV::IndexSet IS;
 	  typedef MultipleCodimMultipleGeomTypeMapper<Grid,IS,P1Layout> VM;
-	  typedef typename IS::template Codim<dim>::template Partition<All_Partition>::Iterator VertexIterator;
+		typedef typename GV::template Codim<dim>::Iterator VertexIterator;
 	  
 	  VM vertexMapper(grid, grid.leafIndexSet());
 	  double error = 0.0;
+	  const GV& gridview(grid.leafView());
 	  
-	  VertexIterator endIt = grid.leafIndexSet().template end<dim,All_Partition>();
-	  VertexIterator it = grid.leafIndexSet().template begin<dim,All_Partition>();
+	  VertexIterator endIt = gridview.template end<dim>();
+	  VertexIterator it = gridview.template begin<dim>();
 	  for (; it != endIt; ++it)
 	  {
 		  // get exact solution at vertex

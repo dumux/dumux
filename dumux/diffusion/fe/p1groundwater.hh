@@ -17,6 +17,7 @@
 #include <dune/disc/shapefunctions/lagrangeshapefunctions.hh>
 #include <dune/disc/operators/boundaryconditions.hh>
 #include <dune/disc/operators/localstiffness.hh>
+#include "dumux/fractionalflow/variableclass.hh"
 
 /**
  * @file
@@ -73,6 +74,7 @@ namespace Dune
 	typedef typename G::Traits::template Codim<0>::Entity Entity;
     typedef typename G::Traits::LevelIndexSet IS;
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout> EM;
+    typedef Dune::VariableClass<G, RT> VC;
 
   public:
 	// define the number of components of your system, this is used outside
@@ -82,7 +84,7 @@ namespace Dune
 	enum {SIZE=LagrangeShapeFunctionSetContainer<DT,RT,n>::maxsize};
 
 	//! Constructor
-	GroundwaterEquationLocalStiffness (DiffusionProblem<G,RT>& params,
+	GroundwaterEquationLocalStiffness (DiffusionProblem<G,RT,VC>& params,
 									   bool levelBoundaryAsDirichlet_, const G& grid, 
 									   int level = 0, 
 									   bool procBoundaryAsDirichlet_=true)
@@ -320,7 +322,7 @@ namespace Dune
 	}
 
 	// parameters given in constructor
-	DiffusionProblem<G,RT>& problem;
+	DiffusionProblem<G,RT,VC>& problem;
 	bool levelBoundaryAsDirichlet;
 	bool procBoundaryAsDirichlet;
     EM elementmapper;

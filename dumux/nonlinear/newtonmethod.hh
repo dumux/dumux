@@ -8,79 +8,103 @@ template<class G, class Model> class NewtonMethod {
 	typedef typename Model::LocalJacobian LocalJacobian;
 public:
 	void execute(bool verbose = true) {
+		if (verbose)
+			std::cout.setf(std::ios_base::scientific, std::ios_base::floatfield);
+
 		double uNorm = std::max((*u).two_norm(), 1.0);
 		grid.comm().sum(&uNorm, 1);		
 		double oneByMagnitude = 1.0/uNorm;
-		double error = 1e100;
+		double relDiff = 1e100;
 		double globalResiduum = 1e100;
 		bool divided = false;
 		double dt = localJacobian.getDt();
+		char buf[128];
 
-
-		while (dt > minDt && (error > difftolerance || globalResiduum > restolerance)) {
-			double error = 1e100;
+		while (dt > minDt && (relDiff > diffTolerance || globalResiduum > resTolerance)) {
+			relDiff = 1e100;
 			int iter = 0;
-			int iiter =0;
-			double lambda = 1;
-			double lambdaOld=lambda;			
+			int relDiffIncreased = 0;
+			double lambda = 1.0;
+			double lambdaOld = lambda;			
 			model.globalDefect(defectGlobal);
-			double globalResiduum = 0.5*(*defectGlobal).two_norm();
-			double globalResiduumOld=globalResiduum;
+			globalResiduum = 0.5*(*defectGlobal).two_norm();
 			grid.comm().sum(&globalResiduum, 1);	    
+//			globalResiduum = model.residual(defectGlobal);
+			double residuumWeight = 1.0/std::max(globalResiduum, 1.0e-8);
+			globalResiduum *= residuumWeight;
+			double globalResiduumOld = globalResiduum;
 			if (grid.comm().rank() == 0)
 				std::cout << "initial residual = " << globalResiduum << std::endl;	
 			//printvector(std::cout, *defectGlobal, "global Defect", "row", 200, 1, 3);
-			while ((error > difftolerance || globalResiduum > restolerance) && iter < maxIter) {
+			while ((relDiff > diffTolerance || globalResiduum > resTolerance) 
+					&& relDiffIncreased < maxIncreased
+					&& iter < maxIter) 
+			{
 				iter ++;
-				iiter=0;
-				num=0;
+				double relDiffOld = relDiff;
+				int iiter = 0;
+				num = 0;
 				*uOldNewtonStep = *u;
-				globalResiduumOld=globalResiduum;
-				lambda=lambdaOld;
+				globalResiduumOld = globalResiduum;
+				lambda = lambdaOld;
 				//printvector(std::cout, *uOldNewtonStep, "uOldNewtonStep", "row", 200, 1, 3);
 				//printvector(std::cout, *(model.uOldTimeStep), "uOldTimeStep", "row", 200, 1, 3);
 				*f = 0;
 				localJacobian.clearVisited();
 				A.assemble(localJacobian, u, f);
+//				*(uOldNewtonStep) = 0.0; 
+//				*(model.uOldTimeStep) = 1.0; 
+//				(*A).mv(*(model.uOldTimeStep), *uOldNewtonStep);
+//				sprintf(buf, "rank %d, A*1: ", grid.comm().rank());
+//				printvector(std::cout, *uOldNewtonStep, buf, "row", 200, 1, 3);
+				
 				if (grid.comm().rank() == 10) {
-					printmatrix(std::cout, *A, "global stiffness matrix", "row", 11, 3);
+					printmatrix(std::cout, *A, "global stiffness matrix", "row", 11, 4);
 					printvector(std::cout, *uOldNewtonStep, "uOldNewtonStep", "row", 200, 1, 3);
 					printvector(std::cout, *f, "right hand side", "row", 200, 1, 3);
 				}
 				
 				model.solve();
-				error = oneByMagnitude*((*u).two_norm());
+				relDiff = oneByMagnitude*((*u).two_norm());
 				//printvector(std::cout, *u, "update", "row", 200, 1, 3);
 				*u *= -lambda;
 				*u += *uOldNewtonStep;
-				if (grid.comm().rank() == 10) 
-					printvector(std::cout, *u, "u", "row", 200, 1, 3);
+//				sprintf(buf, "rank %d, solution: ", grid.comm().rank());
+//				printvector(std::cout, *u, buf, "row", 200, 1, 3);
 				model.globalDefect(defectGlobal);
-				globalResiduum=0.5*(*defectGlobal).two_norm();
+				globalResiduum = residuumWeight*0.5*(*defectGlobal).two_norm();
 				grid.comm().sum(&globalResiduum, 1);
-				//printvector(std::cout, *defectGlobal, "global Defect", "row", 200, 1, 3);
+//				globalResiduum = residuumWeight*model.residual(defectGlobal);
+//				sprintf(buf, "rank %d, global Defect: ", grid.comm().rank());
+//				printvector(std::cout, *defectGlobal, buf, "row", 200, 1, 3);
 
 				if (verbose && grid.comm().rank() == 0)
 					std::cout << "Newton step "<< iter << ", residual = "
-					<< globalResiduum << ", difference = "<< error
-					<< std::endl;
+					<< globalResiduum << ", difference = "<< relDiff << std::endl;
+				
+				if (relDiff > relDiffOld) 
+					relDiffIncreased++; 
 			}
-			if (error > difftolerance || globalResiduum > restolerance) {
-				if (grid.comm().rank() == 0)
-					std::cout << "NewtonMethod::execute(), tolerances = "
-					<< difftolerance << " , " << restolerance << ": did not converge in "<< iter
-					<< " iterations"<< std::endl;
+			if (relDiff > diffTolerance || globalResiduum > resTolerance) {
 				dt *= 0.5;
-				if (grid.comm().rank() == 0)
-					std::cout << "Retry same time step with reduced size of "
-					<< dt << std::endl;
+				if (grid.comm().rank() == 0) {
+					std::cout << "NewtonMethod::execute(), tolerances = "
+					<< diffTolerance << " , " << resTolerance; 
+					if (relDiffIncreased > 1) 
+						std::cout << ": relative difference increased " << relDiffIncreased 
+							<< " time(s)."<< std::endl;
+					else 
+						std::cout << ": did not converge in "<< iter << " iterations."<< std::endl;
+					std::cout << "Retry same time step with reduced size of " << dt << std::endl;
+				}
 				localJacobian.setDt(dt);
 				*u = *(model.uOldTimeStep);
 				divided = true;
-			} else {
+			} 
+			else {
 				if (grid.comm().rank() == 0)
 					std::cout << "Converged. Residual = "<< globalResiduum
-					<< ", difference = "<< error << std::endl;
+					<< ", difference = "<< relDiff << std::endl;
 				if ((!divided) && iter < goodIter) {
 					dt *= 2;
 					if (grid.comm().rank() == 0)
@@ -99,25 +123,23 @@ public:
 		return;
 	}
 
-	NewtonMethod(const G& g, Model& mod, double dtol = 1e-5,
-			double rtol = 1e-2, int maxIt = 20, double mindt = 1e-5,
-			int goodIt = 5) :
-				grid(g), model(mod), u(mod.u), f(mod.f), A(mod.A),
-				localJacobian(mod.localJacobian), uOldNewtonStep(g),
-				difftolerance(dtol), restolerance(rtol), maxIter(maxIt),
-				defectGlobal(g), num(0), minDt(mindt), goodIter(goodIt) {
-	}
+	NewtonMethod(const G& g, Model& mod, double dtol = 1e-7,
+			double rtol = 1e-3, int maxIt = 10, double mindt = 1e-5,
+			int goodIt = 4, int maxInc = 2) 
+	: grid(g), model(mod), u(mod.u), f(mod.f), A(mod.A),
+	localJacobian(mod.localJacobian), uOldNewtonStep(g, g.overlapSize(0)==0),
+	diffTolerance(dtol), resTolerance(rtol), maxIter(maxIt),
+	defectGlobal(g, g.overlapSize(0)==0), num(0), minDt(mindt), goodIter(goodIt), maxIncreased(maxInc) 
+	{}
 
 	NewtonMethod(const G& g, Model& mod, int level, double dtol = 1e-8,
 			double rtol = 1e-5, int maxIt = 12, double mindt = 1e-5,
-			int goodIt = 3) :
-				grid(g), model(mod), u(mod.u), f(mod.f), A(mod.A),
-				localJacobian(mod.localJacobian), uOldNewtonStep(g, level),
-				difftolerance(dtol), restolerance(rtol), maxIter(maxIt),
-				minDt(mindt), goodIter(goodIt), defectGlobal(g, level), num(0)
-
-				{
-				}
+			int goodIt = 3, int maxInc = 2) 
+	: grid(g), model(mod), u(mod.u), f(mod.f), A(mod.A),
+	localJacobian(mod.localJacobian), uOldNewtonStep(g, level, g.overlapSize(0)==0),
+	diffTolerance(dtol), resTolerance(rtol), maxIter(maxIt),
+	defectGlobal(g, level, g.overlapSize(0)==0), num(0), minDt(mindt), goodIter(goodIt), maxIncreased(maxInc)
+	{}
 
 private:
 	const G& grid;
@@ -127,13 +149,14 @@ private:
 	OperatorAssembler& A;
 	LocalJacobian& localJacobian;
 	FunctionType uOldNewtonStep;
-	double difftolerance;
-	double restolerance;
+	double diffTolerance;
+	double resTolerance;
 	int maxIter;
 	FunctionType defectGlobal;
 	int num;
 	double minDt;
 	int goodIter;
+	int maxIncreased;
 };
 }
 #endif

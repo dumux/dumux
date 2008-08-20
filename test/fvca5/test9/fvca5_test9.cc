@@ -45,14 +45,16 @@ int main(int argc, char** argv)
     // grid reference 
     GridType& grid = *gridPtr;
     
-	Dune::FVCA5Test9Problem<GridType, NumberType> problem(delta, theta);
-    Dune::SimpleProblem<GridType, NumberType> satprob;
+    typedef Dune::VariableClass<GridType, NumberType> VC;
+    double initsat = 1;
+    VC variables(grid,initsat);
+    Dune::FVCA5Test9Problem<GridType, NumberType, VC> problem(variables, delta, theta);
 
     Dune::Timer timer;
     timer.reset();
     //Dune::FEDiffusion<GridType, NumberType> diffusion(grid, problem);
     //Dune::FVDiffusion<GridType, NumberType> diffusion(grid, problem);
-    Dune::MimeticDiffusion<GridType, NumberType> diffusion(grid, problem, satprob, grid.maxLevel());
+    Dune::MimeticDiffusion<GridType, NumberType, VC> diffusion(grid, problem, grid.maxLevel());
     
     diffusion.pressure();
     std::cout << "pressure calculation took " << timer.elapsed() << " seconds" << std::endl;
@@ -91,7 +93,7 @@ int main(int argc, char** argv)
 	else if (fullIdx == 62) 
 	  std::cout << "1.00E+00 & ";
 	else 
-	  std::cout << (*diffusion)[realIdx] << " & ";
+	  std::cout << (problem.variables.pressure)[realIdx] << " & ";
       }
       std::cout << std::endl;
     }

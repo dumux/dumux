@@ -5,9 +5,9 @@
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/io.hh>
 #include "dumux/material/properties.hh"
-#include "dumux/material/linearlaw.hh"
-#include "dumux/material/brookscoreylaw.hh"
-#include "dumux/material/vangenuchtenlaw.hh"
+#include "dumux/material/linearlaw_deprecated.hh"
+#include "dumux/material/brookscoreylaw_deprecated.hh"
+#include "dumux/material/vangenuchtenlaw_deprecated.hh"
 #include "dumux/transport/fv/fvtransport.hh"
 #include "dumux/transport/fv/fvsplittedtransport.hh"
 #include "dumux/transport/fv/capillarydiffusion.hh"
@@ -17,7 +17,8 @@
 #include "dumux/diffusion/problems/uniformproblem.hh"
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/timedisc/rungekuttastep.hh"
- 
+#include "dumux/fractionalflow/variableclass.hh"
+
 int main(int argc, char** argv) 
 {
   try{
@@ -53,18 +54,25 @@ int main(int argc, char** argv)
     Dune::BrooksCoreyLaw materialLaw(mat, mat);
     //Dune::LinearLaw materialLaw(mat, mat);
     
-    typedef Dune::FVTransport<GridType, NumberType> HyperbolicPart;
-    typedef Dune::FVTransport<GridType, NumberType> ParabolicPart;
-    typedef Dune::FVSplittedTransport<GridType, NumberType> SplittedTransport;
+    typedef Dune::VariableClass<GridType, NumberType> VC;
+	double initsat=0;
+    double initpress=0;
+    Dune::FieldVector<double,dim>vel(0);
+    vel[0] = 1.0/6.0*1e-6;  
+    VC variables(grid,initsat,initpress,vel);
+
+    typedef Dune::FVTransport<GridType, NumberType, VC> HyperbolicPart;
+    typedef Dune::FVTransport<GridType, NumberType, VC> ParabolicPart;
+    typedef Dune::FVSplittedTransport<GridType, NumberType, VC> SplittedTransport;
 
     Dune::DiffusivePart<GridType, NumberType> diffPart;
-    Dune::SimpleProblem<GridType, NumberType> hyperbolicProblem(grid, materialLaw);
-    HyperbolicPart hyperbolicPart(grid, hyperbolicProblem, grid.maxLevel(), diffPart, reconstruct, alphaMax, cFLFactor);
+    Dune::SimpleProblem<GridType, NumberType, VC> hyperbolicProblem(variables, materialLaw, true);
+    HyperbolicPart hyperbolicPart(grid, hyperbolicProblem, grid.maxLevel(), diffPart, reconstruct, alphaMax);
 
-    Dune::UniformProblem<GridType, NumberType> diffusionProblem(grid, true, materialLaw);
+    Dune::UniformProblem<GridType, NumberType, VC> diffusionProblem(variables, materialLaw, true);
     //Dune::DiffusivePart<GridType, NumberType> diffPart2;
-    Dune::CapillaryDiffusion<GridType, NumberType> diffPart2(diffusionProblem); // use CapillaryDiffusion
-    Dune::SimpleParabolicProblem<GridType, NumberType> parabolicProblem(grid, materialLaw);
+    Dune::CapillaryDiffusion<GridType, NumberType, VC> diffPart2(diffusionProblem); // use CapillaryDiffusion
+    Dune::SimpleParabolicProblem<GridType, NumberType, VC> parabolicProblem(variables, grid, materialLaw);
     ParabolicPart parabolicPart(grid, parabolicProblem, grid.maxLevel(), diffPart2);
 
     SplittedTransport splittedTransport(grid, hyperbolicPart, parabolicPart);

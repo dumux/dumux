@@ -133,7 +133,7 @@ namespace Dune
    * to a file suitable for easy visualization with 
    * <a href="http://public.kitware.com/VTK/">The Visualization Toolkit (VTK)</a>.
    */
-  template<class GridImp, class IS=typename GridImp::template Codim<0>::LeafIndexSet>
+  template<class GridImp, class GV = typename GridImp :: LeafGridView>
   class VTKWriter {
     template<int dim>
     struct P0Layout
@@ -166,14 +166,15 @@ namespace Dune
     // extract types
     enum {n=GridImp::dimension};
     enum {w=GridImp::dimensionworld};
+    typedef typename GV::IndexSet IS;
     typedef typename GridImp::ctype DT;
     typedef typename GridImp::Traits::template Codim<0>::Entity Entity;
     typedef typename GridImp::Traits::template Codim<0>::Entity Cell;
     typedef typename GridImp::Traits::template Codim<n>::Entity Vertex;
     typedef IS IndexSet;
     static const PartitionIteratorType vtkPartition = InteriorBorder_Partition;
-    typedef typename IS::template Codim<0>::template Partition<vtkPartition>::Iterator GridCellIterator;
-    typedef typename IS::template Codim<n>::template Partition<vtkPartition>::Iterator GridVertexIterator;
+	typedef typename GV::template Codim<0>::Iterator GridCellIterator;
+	typedef typename GV::template Codim<n>::Iterator GridVertexIterator;
 
 
     typedef MultipleCodimMultipleGeomTypeMapper<GridImp,IS,P1Layout> VertexMapper;
@@ -236,11 +237,11 @@ namespace Dune
     };
     CellIterator cellBegin() const
       {
-        return CellIterator(is.template begin<0,vtkPartition>(), is.template end<0,vtkPartition>());
+        return CellIterator(gridview.template begin<0>(), gridview.template end<0>());
       }
     CellIterator cellEnd() const
       {
-        return CellIterator(is.template end<0,vtkPartition>(), is.template end<0,vtkPartition>());
+        return CellIterator(gridview.template end<0>(), gridview.template end<0>());
       }
     
     class VertexIterator :
@@ -330,14 +331,14 @@ namespace Dune
     };    
     VertexIterator vertexBegin() const
       {
-        return VertexIterator(is.template begin<0,vtkPartition>(),
-                              is.template end<0,vtkPartition>(),
+        return VertexIterator(gridview.template begin<0>(),
+                              gridview.template end<0>(),
                               datamode, *vertexmapper, number);
       }
     VertexIterator vertexEnd() const
       {
-        return VertexIterator(is.template end<0,vtkPartition>(),
-                              is.template end<0,vtkPartition>(),
+        return VertexIterator(gridview.template end<0>(),
+                              gridview.template end<0>(),
                               datamode, *vertexmapper, number);
       }    
     
@@ -407,14 +408,14 @@ namespace Dune
     };    
     CornerIterator cornerBegin() const
       {
-        return CornerIterator(is.template begin<0,vtkPartition>(),
-                              is.template end<0,vtkPartition>(),
+        return CornerIterator(gridview.template begin<0>(),
+                              gridview.template end<0>(),
                               datamode, *vertexmapper, number);
       }
     CornerIterator cornerEnd() const
       {
-        return CornerIterator(is.template end<0,vtkPartition>(),
-                              is.template end<0,vtkPartition>(),
+        return CornerIterator(gridview.template end<0>(),
+                              gridview.template end<0>(),
                               datamode, *vertexmapper, number);
       }    
         
@@ -445,8 +446,8 @@ namespace Dune
         }
 
       //! construct from a vector and a name
-      P0VectorWrapper (const GridImp& g_, const IS& is_, const V& v_, std::string s_) 
-        : g(g_), is(is_), v(v_), s(s_), mapper(g_,is_)
+      P0VectorWrapper (const GridImp& g_, const GV& gridview_, const V& v_, std::string s_) 
+        : g(g_), gridview(gridview_), v(v_), s(s_), mapper(g_,gridview_.indexSet())
         {
           if (v.size()!=mapper.size())
             DUNE_THROW(IOError,"VTKWriter::P0VectorWrapper: size mismatch");
@@ -456,7 +457,7 @@ namespace Dune
       
     private:
       const GridImp& g;
-      const IS& is;
+      const GV& gridview;
       const V& v;
       std::string s;
       VM0 mapper;
@@ -503,8 +504,8 @@ namespace Dune
         }
 
       //! construct from a vector and a name
-      P1VectorWrapper (const GridImp& g_, const IS& is_, const V& v_, std::string s_) 
-        : g(g_), is(is_), v(v_), s(s_), mapper(g_,is_)
+      P1VectorWrapper (const GridImp& g_, const GV& gridview_, const V& v_, std::string s_) 
+        : g(g_), gridview(gridview_), v(v_), s(s_), mapper(g_,gridview_.indexSet())
         {
           if ((int)v.size()!=(int)mapper.size())
             DUNE_THROW(IOError,"VTKWriter::P1VectorWrapper: size mismatch");
@@ -514,7 +515,7 @@ namespace Dune
       
     private:
       const GridImp& g;
-      const IS& is;
+      const GV& gridview;
       const V& v;
       std::string s;
       VM1 mapper;
@@ -544,8 +545,8 @@ namespace Dune
         }
 
       //! construct from a vector and a name
-      P2VectorWrapper (const GridImp& g_, const IS& is_, const V& v_, std::string s_) 
-        : g(g_), is(is_), v(v_), s(s_), mapper(g_,is_)
+      P2VectorWrapper (const GridImp& g_, const GV& gridview_, const V& v_, std::string s_) 
+        : g(g_), gridview(gridview_), v(v_), s(s_), mapper(g_,gridview_.indexSet())
         {
 	  if (v.size()!=mapper.size())
 	    DUNE_THROW(IOError,"VTKWriter::P2VectorWrapper: size mismatch");
@@ -555,7 +556,7 @@ namespace Dune
       
     private:
       const GridImp& g;
-      const IS& is;
+      const GV& gridview;
       const V& v;
       std::string s;
       VM2 mapper;
@@ -600,8 +601,8 @@ namespace Dune
         }
 
       //! construct from a vector and a name
-      P3VectorWrapper (const GridImp& g_, const IS& is_, const V& v_, std::string s_) 
-        : g(g_), is(is_), v(v_), s(s_), mapper(g_,is_)
+      P3VectorWrapper (const GridImp& g_, const GV& gridview_, const V& v_, std::string s_) 
+        : g(g_), gridview(gridview_), v(v_), s(s_), mapper(g_,gridview_.indexSet())
         {
           if ((int)v.size()!=(int)mapper.size())
             DUNE_THROW(IOError,"VTKWriter::P3VectorWrapper: size mismatch");
@@ -611,7 +612,7 @@ namespace Dune
       
     private:
       const GridImp& g;
-      const IS& is;
+      const GV& gridview;
       const V& v;
       std::string s;
       VM3 mapper;
@@ -629,7 +630,7 @@ namespace Dune
      * @param dm The data mode??
      */
     VTKWriter (const GridImp& g, VTKOptions::DataMode dm = VTKOptions::conforming) :
-      grid(g), is(grid.leafIndexSet()), datamode(dm)
+      grid(g), gridview(grid.leafView()), is( gridview.indexSet() ), datamode(dm)
       {
         indentCount = 0;
         numPerLine = 4*3; //should be a multiple of 3 !
@@ -643,8 +644,8 @@ namespace Dune
      * @param i The index set the grid functions live on. (E. g. a level index set.)
      * @param dm The data mode.
      */
-    VTKWriter (const GridImp& g, const IndexSet& i, VTKOptions::DataMode dm = VTKOptions::conforming) :
-      grid(g), is(i), datamode(dm)
+    VTKWriter (const GridImp& g, const GV& gridview_, VTKOptions::DataMode dm = VTKOptions::conforming) :
+      grid(g), gridview(gridview_), datamode(dm)
       {
         indentCount = 0;
         numPerLine = 4*3; //should be a multiple of 3 !
@@ -673,7 +674,7 @@ namespace Dune
     template<class V>
     void addCellData (const V& v, std::string name)
       {
-        VTKFunction* p = new P0VectorWrapper<V>(grid,is,v,name);
+        VTKFunction* p = new P0VectorWrapper<V>(grid,gridview,v,name);
         celldata.push_back(p);
       }
 
@@ -700,7 +701,7 @@ namespace Dune
     template<class V>
     void addVertexData (const V& v, std::string name)
       {
-        VTKFunction* p = new P1VectorWrapper<V>(grid,is,v,name);
+        VTKFunction* p = new P1VectorWrapper<V>(grid,gridview,v,name);
         vertexdata.push_back(p);
       }
 
@@ -713,9 +714,9 @@ namespace Dune
     template<class V,class W>
     void addFaceData (const V& v,const W& w, std::string name)
     {
-      VTKFunction* p=new P2VectorWrapper<V>(grid,is,v,name+"(cell-wise)"); 
+      VTKFunction* p=new P2VectorWrapper<V>(grid,gridview,v,name+"(cell-wise)"); 
       celldata.push_back(p);      
-      VTKFunction* q=new P3VectorWrapper<W>(grid,is,w,name+"(vertex-wise)");
+      VTKFunction* q=new P3VectorWrapper<W>(grid,gridview,w,name+"(vertex-wise)");
       vertexdata.push_back(q);
     }
 
@@ -1449,7 +1450,7 @@ namespace Dune
           stream.write(blocklength);
           std::vector<bool> visited(vertexmapper->size(), false);
 #if 0
-          for (CellIterator eit=is.template begin<0,vtkPartition>(); eit!=is.template end<0,vtkPartition>(); ++eit)
+          for (CellIterator eit=gridview.template begin<0>(); eit!=gridview.template end<0>(); ++eit)
             if (eit->partitionType()==InteriorEntity)
               for (int i=0; i<eit->template count<n>(); ++i)
                 if (datamode == VTKOptions::conforming)
@@ -1507,7 +1508,7 @@ namespace Dune
         stream.write(blocklength);
         std::vector<bool> visited(vertexmapper->size(), false);
 #if 0
-        for (CellIterator it=is.template begin<0,vtkPartition>(); it!=is.template end<0,vtkPartition>(); ++it)
+        for (CellIterator it=gridview.template begin<0>(); it!=gridview.template end<0>(); ++it)
           if (it->partitionType()==InteriorEntity)
             for (int i=0; i<it->template count<n>(); ++i)
               if (datamode == VTKOptions::conforming)
@@ -1563,7 +1564,7 @@ namespace Dune
 #if 0
         if (datamode == VTKOptions::conforming)
         {
-          for (CellIterator it=is.template begin<0,vtkPartition>(); it!=is.template end<0,vtkPartition>(); ++it)
+          for (CellIterator it=gridview.template begin<0>(); it!=gridview.template end<0>(); ++it)
             if (it->partitionType()==InteriorEntity)
               for (int i=0; i<it->template count<n>(); ++i)
               {
@@ -1574,7 +1575,7 @@ namespace Dune
         else
         {
           int offset = 0;
-          for (CellIterator it=is.template begin<0,vtkPartition>(); it!=is.template end<0,vtkPartition>(); ++it)
+          for (CellIterator it=gridview.template begin<0>(); it!=gridview.template end<0>(); ++it)
             if (it->partitionType()==InteriorEntity)
             {
               for (int i=0; i<it->template count<n>(); ++i)
@@ -1822,6 +1823,7 @@ namespace Dune
     const GridImp& grid;
 
     // the indexset
+    const GV& gridview;
     const IndexSet& is;
 
     // intend counter
@@ -1848,7 +1850,7 @@ namespace Dune
   public:
       /** \brief Construct a VTK writer for the leaf level of a given grid */
     LeafVTKWriter (const G& grid, VTKOptions::DataMode dm = VTKOptions::conforming)
-      : VTKWriter<G,typename G::template Codim<0>::LeafIndexSet>(grid,grid.leafIndexSet(),dm)
+      : VTKWriter<G,typename G::LeafGridView>(grid,grid.leafView(),dm)
       {}
   };
 
@@ -1861,7 +1863,7 @@ namespace Dune
   public:
       /** \brief Construct a VTK writer for a certain level of a given grid */
     LevelVTKWriter (const G& grid, int level, VTKOptions::DataMode dm = VTKOptions::conforming)
-      : VTKWriter<G,typename G::template Codim<0>::LevelIndexSet>(grid,grid.levelIndexSet(level),dm)
+      : VTKWriter<G,typename G::LevelGridView>(grid,grid.levelView(level),dm)
       {}
   };
 }

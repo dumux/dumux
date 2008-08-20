@@ -10,9 +10,9 @@
 #include <dune/common/timer.hh>
 #include "dumux/io/vtkwriterextended.hh"
 #include "dumux/material/properties.hh"
-#include "dumux/material/linearlaw.hh"
-#include "dumux/material/brookscoreylaw.hh"
-#include "dumux/material/vangenuchtenlaw.hh"
+#include "dumux/material/linearlaw_deprecated.hh"
+#include "dumux/material/brookscoreylaw_deprecated.hh"
+#include "dumux/material/vangenuchtenlaw_deprecated.hh"
 #include "dumux/material/randompermeability.hh"
 #include "dumux/diffusion/fv/fvdiffusion.hh"
 #include "dumux/diffusion/fe/fediffusion.hh"
@@ -52,9 +52,13 @@ int main(int argc, char** argv)
     //Dune::BrooksCoreyLaw materialLaw(mat, mat);
     //Dune::LinearLaw materialLaw(mat, mat);
     
+    typedef Dune::VariableClass<GridType, NumberType> VC;    
+    double initsat = 1;    
+    VC variables(grid,initsat);
+
     // Dune::HeterogeneousProblem<GridType, NumberType> problem(grid, "permeab.dat", true);
     //printvector(std::cout, *(problem.permeability), "permeability", "row", 200, 1);
-    Dune::UniformProblem<GridType, NumberType> problem;
+    Dune::UniformProblem<GridType, NumberType, VC> problem(variables);
     //Dune::AnnikaProblem<GridType, NumberType> problem;
     //problem.permeability.vtkout("permeability", grid);
 
@@ -62,33 +66,29 @@ int main(int argc, char** argv)
     timer.reset();
     //  Dune::FVDiffusion<GridType, NumberType> diffusion(grid, problem);
     // Dune::FEDiffusion<GridType, NumberType> diffusion(grid, problem);
-     Dune::MimeticDiffusion<GridType, NumberType> diffusion(grid, problem);
+     Dune::MimeticDiffusion<GridType, NumberType, VC> diffusion(grid, problem);
     
     
     diffusion.pressure();
     std::cout << "pressure calculation took " << timer.elapsed() << " seconds" << std::endl;
-    printvector(std::cout, *diffusion, "pressure", "row", 200, 1, 3);
+    printvector(std::cout, problem.variables.pressure, "pressure", "row", 200, 1, 3);
     //diffusion.vtkout("pressure", 0);
     
-    const int blocksize = 2*dim;
-    typedef Dune::FieldVector<NumberType, dim> R1;
-    typedef Dune::BlockVector< Dune::FieldVector<R1, blocksize> > VType;
-    VType velocity(grid.size(0));
-    diffusion.totalVelocity(velocity);
-    printvector(std::cout, velocity, "velocity", "row", 2*dim, 1, 3);
+    diffusion.calcTotalVelocity(0);
+    printvector(std::cout, problem.variables.velocity, "velocity", "row", 2*dim, 1, 3);
 
     Dune::VTKWriter<GridType> vtkwriter(grid);
    
-    typedef Dune::BlockVector<R1> WType;
+    typedef Dune::BlockVector<Dune::FieldVector<double, dim> > WType;
     WType cellvelocity(grid.size(0));
 
-    typedef Dune::BlockVector<R1> ZType;
+    typedef Dune::BlockVector<Dune::FieldVector<double, dim> > ZType;
     ZType vertexvelocity(grid.size(dim));
 
-    vtkwriter.faceToCellToVertex(velocity,cellvelocity,vertexvelocity);
+    vtkwriter.faceToCellToVertex(problem.variables.velocity,cellvelocity,vertexvelocity);
     vtkwriter.addFaceData(cellvelocity,vertexvelocity,"velocity");
 
-    vtkwriter.addCellData(*diffusion,"pressure");
+    vtkwriter.addCellData(problem.variables.pressure,"pressure");
   
     vtkwriter.write("test_vtk", Dune::VTKOptions::ascii);		
 

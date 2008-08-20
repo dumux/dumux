@@ -31,10 +31,10 @@ namespace Dune
 	- VelType   type of the vector holding the velocity values 
 
    */
-  template<class G, class RT,class CV>
+  template<class G, class RT,class VC>
   class Diffusion {
   public:
-	DiffusionProblem<G, RT, CV>& diffproblem; //!< problem data
+	DiffusionProblem<G, RT, VC>& diffproblem; //!< problem data
 	typedef RT NumberType;
 	
 	//! \brief Calculate the pressure.
@@ -72,7 +72,7 @@ namespace Dune
 	 * \param g grid object of type G
 	 * \param prob a problem class object derived from DiffusionProblem
 	*/
-	Diffusion(const G& g, DiffusionProblem<G, RT, CV>& prob) 
+	Diffusion(const G& g, DiffusionProblem<G, RT, VC>& prob) 
 	: grid(g), diffproblem(prob), level_(g.maxLevel())
 	{ 
 	}
@@ -83,7 +83,7 @@ namespace Dune
 	 * \param prob a problem class object derived from DiffusionProblem
 	 * \param lev the grid level to work on
 	 */
-	Diffusion(const G& g, DiffusionProblem<G, RT, CV>& prob, int lev) 
+	Diffusion(const G& g, DiffusionProblem<G, RT, VC>& prob, int lev) 
 	: diffproblem(prob), grid(g), level_(lev)
 	{ 
 	}

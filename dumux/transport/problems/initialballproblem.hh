@@ -7,9 +7,9 @@ namespace Dune
 {
 //! \ingroup transportProblems
 //! @brief example class for a transport problem
-  template<class G, class RT>
+  template<class G, class RT, class VC>
   class InitialBallProblem 
-  : public TransportProblem<G, RT, Dune::BlockVector< Dune::FieldVector<Dune::FieldVector<double, G::dimension>, 2*G::dimension> > > {
+  : public TransportProblem<G, RT, VC> {
 		template<int dim>
 		struct ElementLayout
 		{
@@ -69,13 +69,13 @@ namespace Dune
 		return(this->velocity[elemId][numberInSelf]);
 	}
 
-	InitialBallProblem(const G& g, TwoPhaseRelations& law = *(new LinearLaw), 
+	InitialBallProblem(VC& variables, const G& g, TwoPhaseRelations& law = *(new LinearLaw), 
 								const int level = 0) 
-	: TransportProblem<G, RT, VelType>(law), left((g.lowerLeft())[0]), right((g.upperRight())[0]), 
+	: TransportProblem<G, RT, VC>(variables, law), left((g.lowerLeft())[0]), right((g.upperRight())[0]), 
 	  bottom((g.lowerLeft())[1]), top((g.upperRight())[1]),
 	  elementmapper(g, g.levelIndexSet(level))
 	{	
-		this->velocity.resize(elementmapper.size());
+		this->variables.velocity.resize(elementmapper.size());
 	}
   };
 

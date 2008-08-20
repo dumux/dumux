@@ -84,7 +84,8 @@ namespace Dune
 		  }
 	  }; 
 
-	  typedef typename G::Traits::LeafIndexSet IS;
+	   typedef typename G::LeafGridView GV;
+	    typedef typename GV::IndexSet IS;
 	  typedef MultipleCodimMultipleGeomTypeMapper<G,IS,P1Layout> VertexMapper;
 	  typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
 		typedef typename ThisType::FunctionType::RepresentationType VectorType;
@@ -103,15 +104,15 @@ namespace Dune
 	  {
 		  typedef typename G::Traits::template Codim<0>::Entity Entity;
 		  typedef typename G::ctype DT;
-		  typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator Iterator;
+		  typedef typename GV::template Codim<0>::Iterator Iterator;
 		  enum{dim = G::dimension};
 		  enum{dimworld = G::dimensionworld};
 		  
-		  const IS& indexset(grid.leafIndexSet());
+		  const GV& gridview(this->grid.leafView());
 		  std::cout << "initializing solution." << std::endl;
 		  // iterate through leaf grid an evaluate c0 at cell center
-		  Iterator eendit = indexset.template end<0, All_Partition>();
-		  for (Iterator it = indexset.template begin<0, All_Partition>(); it != eendit; ++it)
+		  Iterator eendit = gridview.template end<0>();
+		  for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
 		  {
 			  // get geometry type
 			  Dune::GeometryType gt = it->geometry().type();
@@ -132,7 +133,7 @@ namespace Dune
 		  }
 
 		  // set Dirichlet boundary conditions
-		  for (Iterator it = indexset.template begin<0, All_Partition>(); it != eendit; ++it)
+		  for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
 		  {
 			  // get geometry type
 			  Dune::GeometryType gt = it->geometry().type();
@@ -222,12 +223,11 @@ namespace Dune
 	virtual void globalDefect(FunctionType& defectGlobal) {
 		typedef typename G::Traits::template Codim<0>::Entity Entity;
 		typedef typename G::ctype DT;
-		typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator
-				Iterator;
+		typedef typename GV::template Codim<0>::Iterator Iterator;
 		enum {dim = G::dimension};
 		typedef array<BoundaryConditions::Flags, m> BCBlockType;
 
-		const IS& indexset(this->grid.leafIndexSet());
+		const GV& gridview(this->grid.leafView());
 		(*defectGlobal)=0;
 
 		// allocate flag vector to hold flags for essential boundary conditions
@@ -237,8 +237,8 @@ namespace Dune
 			essential[i].assign(BoundaryConditions::neumann);
 
 		// iterate through leaf grid 
-		Iterator eendit = indexset.template end<0, All_Partition>();
-		for (Iterator it = indexset.template begin<0, All_Partition>(); it
+		Iterator eendit = gridview.template end<0>();
+		for (Iterator it = gridview.template begin<0>(); it
 				!= eendit; ++it) {
 			// get geometry type
 			Dune::GeometryType gt = it->geometry().type();

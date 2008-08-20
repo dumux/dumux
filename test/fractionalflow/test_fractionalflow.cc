@@ -6,9 +6,9 @@
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
 #include "dumux/material/properties.hh"
-#include "dumux/material/linearlaw.hh"
-#include "dumux/material/brookscoreylaw.hh"
-#include "dumux/material/vangenuchtenlaw.hh"
+#include "dumux/material/linearlaw_deprecated.hh"
+#include "dumux/material/brookscoreylaw_deprecated.hh"
+#include "dumux/material/vangenuchtenlaw_deprecated.hh"
 #include "dumux/transport/fv/fvtransport.hh"
 #include "dumux/diffusion/fv/fvdiffusion.hh"
 #include "dumux/diffusion/fv/fvdiffusionvelocity.hh"

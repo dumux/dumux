@@ -140,7 +140,7 @@ namespace Dune
 			for (int j = 0; j < size; j++) 
 				for (int comp = 0; comp < m; comp++) 
 				{
-					RT eps = std::max(fabs(1e-6*u[j][comp]), 1e-6);
+					RT eps = std::max(fabs(1e-5*u[j][comp]), 1e-5);
 					for (int i = 0; i < size; i++) {
 						uPlusEps[i] = u[i];
 						uMinusEps[i] = u[i];

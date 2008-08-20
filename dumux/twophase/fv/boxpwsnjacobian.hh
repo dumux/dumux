@@ -137,7 +137,7 @@ namespace Dune
 //		  varNData[j].K.umv(this->fvGeom.subContVolFace[face].normal, Kj);
 //		  FieldVector<DT,n> Kij(0);
 //		  for (int k = 0; k < n; k++)
-//			  if (fabs(Ki[k] + Kj[k]) > 1e-15)
+//			  if (fabs(Ki[k] + Kj[k]) > 0)
 //				  Kij[k] = 2.0*Ki[k]*Kj[k]/(Ki[k] + Kj[k]);
 		  
 		  

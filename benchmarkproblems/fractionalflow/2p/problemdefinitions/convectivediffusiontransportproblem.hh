@@ -19,7 +19,6 @@ namespace Dune
   private:
     DT left;
     DT right;
-    EM elementmapper;
     RT eps_;
     RT poro_;
       
@@ -58,7 +57,7 @@ namespace Dune
       return poro_;
     }
 
-    ConvectionDiffusionTransport(VC& variableobj, TwoPhaseRelations& law = *(new LinearLaw),
+    ConvectionDiffusionTransportProblem(VC& variableobj, TwoPhaseRelations& law = *(new LinearLaw),
 			   const FieldVector<DT,n> Left = 0, const FieldVector<DT,n> Right = 0,
 			   const int level = 0, const bool cap =
 			   false,RT poro=0.2) 

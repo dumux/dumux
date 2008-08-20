@@ -12,9 +12,9 @@
 #include "dumux/twophase/problems/uniformtwophaseproblem.hh"
 #include "dumux/twophase/fv/boxpwsn.hh"
 #include "dumux/timedisc/timeloop.hh"
-#include "dumux/material/linearlaw.hh"
-#include "dumux/material/brookscoreylaw.hh"
-#include "dumux/material/vangenuchtenlaw.hh"
+#include "dumux/material/linearlaw_deprecated.hh"
+#include "dumux/material/brookscoreylaw_deprecated.hh"
+#include "dumux/material/vangenuchtenlaw_deprecated.hh"
 
 int main(int argc, char** argv) 
 {

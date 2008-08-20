@@ -48,15 +48,16 @@ namespace Dune
    */
 
   //! compute 1-overlap on non-overlapping grid
-  template<class G, class IS, class VM, class LC>
+  template<class G, class GV, class VM, class LC>
   class CRExtendOverlap {
 
 	// types
 	typedef typename G::ctype DT;
 	enum {n=G::dimension};
+    typedef typename GV::IndexSet IS;
 	typedef typename G::template Codim<0>::Entity Entity;
-	typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator Iterator;
-	typedef typename IS::template Codim<n>::template Partition<All_Partition>::Iterator VIterator;
+	typedef typename GV::template Codim<0>::Iterator Iterator;
+	typedef typename GV::template Codim<n>::Iterator VIterator;
 	typedef typename G::template Codim<0>::EntityPointer EEntityPointer;
 	typedef typename G::Traits::GlobalIdSet IDS;
 	typedef typename IDS::IdType IdType;
@@ -219,7 +220,7 @@ namespace Dune
 	typedef IndexInfoFromGrid<IdType,int> CRIndexInfoFromGrid;
 
 	//! fill data structure with information needed by ISTL
-	void fillIndexInfoFromGrid (const G& grid, const IS& indexset, const VM& vertexmapper, CRIndexInfoFromGrid& info)
+	void fillIndexInfoFromGrid (const G& grid, const GV& gridview, const VM& vertexmapper, CRIndexInfoFromGrid& info)
 	{
 	  // build a map of sets where each local index is assigned 
 	  // a set of global ids which are neighbors of this vertex
@@ -228,8 +229,8 @@ namespace Dune
 	  std::map<int,GIDSet> myids;
 	  std::map<int,ProcSet> myprocs;
 	  std::map<IdType,int> owner;
-	  Iterator eendit = indexset.template end<0,All_Partition>();
-	  for (Iterator it = indexset.template begin<0,All_Partition>(); it!=eendit; ++it)
+	  Iterator eendit = gridview.template end<0>();
+	  for (Iterator it = gridview.template begin<0>(); it!=eendit; ++it)
 		{
 		  Dune::GeometryType gt = it->geometry().type();
 		  const typename Dune::ReferenceElementContainer<DT,n>::value_type& 
@@ -258,8 +259,8 @@ namespace Dune
 	  for (typename std::map<int,GIDSet>::iterator i=myids.begin(); i!=myids.end(); ++i)
 		for (typename GIDSet::iterator j=(i->second).begin(); j!=(i->second).end(); ++j)
 		  gid2index[*j] = -1; // indicates "not assigned yet"
-	  VIterator vendit = indexset.template end<n,All_Partition>();
-	  for (VIterator it = indexset.template begin<n,All_Partition>(); it!=indexset.template end<n,All_Partition>(); ++it)
+	  VIterator vendit = gridview.template end<n>();
+	  for (VIterator it = gridview.template begin<n>(); it!=gridview.template end<n>(); ++it)
 		{
 		  IdType beta = grid.globalIdSet().id(*it);
 		  if (gid2index.find(beta)!=gid2index.end())
@@ -333,7 +334,7 @@ namespace Dune
 
 
 	//! fill data structures needed for extension
-	void extend (const G& grid, const IS& indexset, const VM& vertexmapper,
+	void extend (const G& grid, const GV& gridview, const VM& vertexmapper,
 				 std::map<int,GIDSet>& borderlinks, int& extraDOFs, std::map<IdType,int>& gid2index)
 	{
 	  // initialize output parameters
@@ -342,8 +343,8 @@ namespace Dune
 	  gid2index.clear();
 
 	  // build local borderlinks from mesh
-	  Iterator eendit = indexset.template end<0,All_Partition>();
-	  for (Iterator it = indexset.template begin<0,All_Partition>(); it!=eendit; ++it)
+	  Iterator eendit = gridview.template end<0>();
+	  for (Iterator it = gridview.template begin<0>(); it!=eendit; ++it)
 		{
 		  Dune::GeometryType gt = it->geometry().type();
 		  const typename Dune::ReferenceElementContainer<DT,n>::value_type& 
@@ -382,8 +383,8 @@ namespace Dune
 		  gid2index[*j] = -1;
 
 	  // check with ids we already have in the grid to find out extra vertices
-	  VIterator vendit = indexset.template end<n,All_Partition>();
-	  for (VIterator it = indexset.template begin<n,All_Partition>(); it!=indexset.template end<n,All_Partition>(); ++it)
+	  VIterator vendit = gridview.template end<n>();
+	  for (VIterator it = gridview.template begin<n>(); it!=gridview.template end<n>(); ++it)
 		{
 		  IdType beta = grid.globalIdSet().id(*it);
 		  if (gid2index.find(beta)!=gid2index.end())
@@ -426,7 +427,7 @@ namespace Dune
 	from a C0GridFunction via CR interpolation. Dereferencing delivers
 	the coefficient vector.
    */
-  template<class G, class RT, typename IS, class LC, int m=1>
+  template<class G, class RT, class GV, class LC, int m=1>
   class CRFunction : virtual public ElementwiseCInfinityFunction<G,RT,m>,
 		     virtual public H1Function<typename G::ctype,RT,G::dimension,m>,
 		     virtual public C0GridFunction<G,RT,m>
@@ -439,6 +440,7 @@ namespace Dune
 
 	//! get entity from the grid
 	typedef typename G::template Codim<0>::Entity Entity;
+    typedef typename GV::IndexSet IS;
 
 	//! Parameter for mapper class
 	template<int dim>
@@ -462,11 +464,11 @@ namespace Dune
 	typedef FieldVector<RT,m> BlockType;
 	typedef BlockVector<BlockType> RepresentationType;
 	typedef MultipleCodimMultipleGeomTypeMapper<G,IS,CRLayout> VM;
-	typedef typename CRExtendOverlap<G,IS,VM,LC>::CRIndexInfoFromGrid CRIndexInfoFromGrid;
+	typedef typename CRExtendOverlap<G,GV,VM,LC>::CRIndexInfoFromGrid CRIndexInfoFromGrid;
 
 	//! allocate data
-	CRFunction (const G& g,  const IS& indexset, LC lcomm, bool extendoverlap=false) 
-	  : grid_(g), is(indexset), mapper_(g,indexset), lc(lcomm), oldcoeff(0)
+	CRFunction (const G& g, const GV& gv, LC lcomm, bool extendoverlap=false) 
+	  : grid_(g), gridview(gv), is(gv.indexSet()), mapper_(g,is), lc(lcomm), oldcoeff(0)
 	{
 	  // check if overlap extension is possible
 	  if (extendoverlap && g.overlapSize(0)>0)
@@ -484,8 +486,8 @@ namespace Dune
 		  std::map<IdType,int> gid2index;
 
 		  // compute extension
-		  CRExtendOverlap<G,IS,VM,LC> extender(lc);
-		  extender.extend(g,indexset,mapper_,borderlinks,extraDOFs,gid2index);
+		  CRExtendOverlap<G,GV,VM,LC> extender(lc);
+		  extender.extend(g,gridview,mapper_,borderlinks,extraDOFs,gid2index);
 		}
 
 	  // allocate the vector
@@ -653,8 +655,8 @@ namespace Dune
 	//! deliver communication object
 	void fillIndexInfoFromGrid (CRIndexInfoFromGrid& info)
 	{
-	  CRExtendOverlap<G,IS,VM,LC> extender(lc);
-	  extender.fillIndexInfoFromGrid(grid_,is,mapper_,info);
+	  CRExtendOverlap<G,GV,VM,LC> extender(lc);
+	  extender.fillIndexInfoFromGrid(grid_,gridview,mapper_,info);
 	}
 
 
@@ -673,7 +675,8 @@ namespace Dune
 
 	// reference to index set on the grid (might be level or leaf)
 	const IS& is;
-
+	const GV& gridview; 
+	
 	// we need a mapper
 	VM mapper_;
 
@@ -699,14 +702,14 @@ namespace Dune
   \param m Vector-valued functions: number of components
    */
   template<class G, class RT, int m=1>
-  class LeafCRFunction : public CRFunction<G,RT,typename G::template Codim<0>::LeafIndexSet,LeafCommunicate<G>,m>
+  class LeafCRFunction : public CRFunction<G,RT,typename G::LeafGridView,LeafCommunicate<G>,m>
   {
   public:
       /** \brief Constructor for a given grid
           \todo Please doc the second argument 
       */
 	LeafCRFunction (const G& grid, bool extendoverlap=false) 
-	  : CRFunction<G,RT,typename G::template Codim<0>::LeafIndexSet,LeafCommunicate<G>,m>(grid,grid.leafIndexSet(),LeafCommunicate<G>(grid),extendoverlap)
+	  : CRFunction<G,RT,typename G::LeafGridView,LeafCommunicate<G>,m>(grid,grid.leafView(),LeafCommunicate<G>(grid),extendoverlap)
 	{}
   };
 
@@ -718,14 +721,14 @@ namespace Dune
   \param m Vector-valued functions: number of components
    */
   template<class G, class RT, int m=1>
-  class LevelCRFunction : public CRFunction<G,RT,typename G::template Codim<0>::LevelIndexSet,LevelCommunicate<G>,m>
+  class LevelCRFunction : public CRFunction<G,RT,typename G::LevelGridView,LevelCommunicate<G>,m>
   {
   public:
       /** \brief Constructor for a given grid
           \todo Please doc the third argument 
       */
 	LevelCRFunction (const G& grid, int level, bool extendoverlap=false) 
-	  : CRFunction<G,RT,typename G::template Codim<0>::LevelIndexSet,LevelCommunicate<G>,m>(grid,grid.levelIndexSet(level),LevelCommunicate<G>(grid,level),extendoverlap)
+	  : CRFunction<G,RT,typename G::LevelGridView,LevelCommunicate<G>,m>(grid,grid.levelView(level),LevelCommunicate<G>(grid,level),extendoverlap)
 	{}
   };
 

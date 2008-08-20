@@ -13,8 +13,8 @@
 #include "dumux/2p2c/problems/uniformtwophaseproblem.hh"
 #include "dumux/2p2c/fv/box2p2c.hh"
 #include "dumux/timedisc/timeloop.hh"
-#include "dumux/material/vangenuchtenlaw.hh"
-#include "dumux/material/brookscoreylaw.hh"
+#include "dumux/material/vangenuchtenlaw_deprecated.hh"
+#include "dumux/material/brookscoreylaw_deprecated.hh"
 #include "dumux/material/multicomponentrelations.hh"
 #include "dumux/material/properties.hh"
 #include "dumux/io/vtkmultiwriter.hh"
@@ -59,9 +59,7 @@ int main(int argc, char** argv)
 
     // use unitcube from grids (UGGrid)
     std::stringstream dgfFileName;
-    dgfFileName << "dune-mux/test/twophase/grids/unitcube" 
-//    dgfFileName << "grids/unitcube" 
-    	<< GridType :: dimension << ".dgf";
+    dgfFileName << "grids/unitcube" << GridType :: dimension << ".dgf";
 
     // create grid pointer, GridType is defined by gridtype.hh
     Dune::GridPtr<GridType> gridPtr( dgfFileName.str() );

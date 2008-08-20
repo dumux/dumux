@@ -35,15 +35,16 @@ template<class Grid, class Solution, class Problem>
 double discreteError(const Grid& grid, const Solution& solution, const Problem& problem)
 {
 	  enum{dim=Grid::dimension};
-	  typedef typename Grid::Traits::LeafIndexSet IS;
+		typedef typename Grid::LeafGridView GV;
+	    typedef typename GV::IndexSet IS;
+		typedef typename GV::template Codim<dim>::Iterator VertexIterator;
 	  typedef MultipleCodimMultipleGeomTypeMapper<Grid,IS,P1Layout> VM;
-	  typedef typename IS::template Codim<dim>::template Partition<All_Partition>::Iterator VertexIterator;
 	  
 	  VM vertexMapper(grid, grid.leafIndexSet());
 	  double error = 0.0;
 	  
-	  VertexIterator endIt = grid.leafIndexSet().template end<dim,All_Partition>();
-	  VertexIterator it = grid.leafIndexSet().template begin<dim,All_Partition>();
+	  VertexIterator endIt = grid.leafView().template end<dim>();
+	  VertexIterator it = grid.leafView().template begin<dim>();
 	  for (; it != endIt; ++it)
 	  {
 		const PartitionType& partitionType = (*it).partitionType();
@@ -65,7 +66,7 @@ double discreteError(const Grid& grid, const Solution& solution, const Problem& 
 		}  
 	}
 		  
-	  return sqrt(error);
+	  return sqrt(error)/(*solution).two_norm();
 }
 }
 
@@ -76,7 +77,7 @@ int main(int argc, char** argv)
     Dune::MPIHelper::instance(argc, argv);
 
     // define the problem dimensions  
-    const int dim=2;
+    const int dim=3;
     typedef double NumberType; 
     if (argc != 2 && argc != 3) {
       std::cout << "usage: test_parallel dgffilename/basefilename [refinementsteps]" << std::endl;
@@ -90,28 +91,29 @@ int main(int argc, char** argv)
     }
     
     // instantiate a distributed grid with overlap
-    Dune::FieldVector<double,dim> length(1.0);
-    Dune::FieldVector<int,dim> size(1);
-    size[0] = 2;
-    Dune::FieldVector<bool,dim> periodic(false);
-    int overlap = 0;
-    typedef Dune::YaspGrid<dim,dim> GridType;
-
-#if HAVE_MPI
-    GridType grid(MPI_COMM_WORLD, length, size, periodic, overlap);
-#else 
-    GridType grid(length, size, periodic, overlap);
-#endif
+//    Dune::FieldVector<double,dim> length(8.0);
+//    Dune::FieldVector<int,dim> size(2);
+//    size[0] = 2; size[1] = 2;
+//    Dune::FieldVector<bool,dim> periodic(false);
+//    int overlap = 0;
+//    typedef Dune::YaspGrid<dim,dim> GridType;
+//
+//#if HAVE_MPI
+//    GridType grid(MPI_COMM_WORLD, length, size, periodic, overlap);
+//#else 
+//    GridType grid(length, size, periodic, overlap);
+//#endif
 
     // create a grid object
-//    typedef Dune::ALUCubeGrid<dim,dim> GridType; 
-//
-//    // create grid pointer
-//    Dune::GridPtr<GridType> gridPtr( argv[1] );
-//    // grid reference 
-//    GridType& grid = *gridPtr;
-//
-//    grid.loadBalance();
+    //typedef Dune::ALUSimplexGrid<dim,dim> GridType; 
+    typedef Dune::ALUCubeGrid<dim,dim> GridType; 
+
+    // create grid pointer
+    Dune::GridPtr<GridType> gridPtr( argv[1] );
+    // grid reference 
+    GridType& grid = *gridPtr;
+
+    grid.loadBalance();
 
     if (refinementSteps)
     	grid.globalRefine(refinementSteps);
@@ -140,9 +142,9 @@ int main(int argc, char** argv)
       std::cout << "discrete error = " << discreteErr << std::endl;    
       std::cout << "Calculation took " << elapsedTime << " seconds." << std::endl;
     }
-    char buffer[128]; 
-    sprintf(buffer, "rank %d :", grid.comm().rank());
-    printvector(std::cout, *(*diffusion), "solution", buffer, 200, 1, 3);
+//    char buffer[128]; 
+//    sprintf(buffer, "rank %d :", grid.comm().rank());
+//    printvector(std::cout, *(*diffusion), "solution", buffer, 200, 1, 3);
 
     return 0;
   }
