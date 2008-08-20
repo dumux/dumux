@@ -1,4 +1,4 @@
-SUBDIRS = . diffusion fractionalflow functions io material nonlinear onedinndgrid operators parabolic shapefunctions timedisc transport twophase
+SUBDIRS = diffusion fractionalflow functions io material nonlinear onedinndgrid operators parabolic shapefunctions timedisc transport twophase .
 
 # the standard debug streams are put into the libdune
 noinst_LTLIBRARIES = libdumux.la
