@@ -2,8 +2,7 @@
 #define TESTPROBLEM_2P2C_HH
 
 #include "dumux/transport/transportproblem2p2c.hh"
-#include "dumux/diffusion/diffusion.hh"
-#include <dumux/material/randompermeability.hh>
+//#include <dumux/material/randompermeability.hh>
 
 namespace Dune
 {
@@ -15,7 +14,7 @@ namespace Dune
   	template<int dim>
 		struct ElementLayout
 		{
-			bool contains (Dune::GeometryType gt)
+			bool contains (GeometryType gt)
 			{
 				return gt.dim() == dim;
 			}
@@ -24,9 +23,9 @@ namespace Dune
 	  typedef typename G::ctype DT;
 	  enum {n=G::dimension, m=1, blocksize=2*G::dimension};
 	  typedef typename G::Traits::template Codim<0>::Entity Entity;
-	  typedef Dune::FieldVector<double, n> R1;
+	  typedef FieldVector<double, n> R1;
 	  typedef typename G::Traits::LevelIndexSet IS;
-	  typedef Dune::MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout> EM;
+	  typedef MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout> EM;
 
   private:
 	  EM elementmapper;
@@ -46,7 +45,7 @@ namespace Dune
 			return BoundaryConditions2p2c::concentration;
 		}
 	  
-		Dune::BoundaryConditions::Flags pbctype (const Dune::FieldVector<DT,n>& x, const Entity& e, 
+		BoundaryConditions::Flags pbctype (const Dune::FieldVector<DT,n>& x, const Entity& e, 
 						   const Dune::FieldVector<DT,n>& xi) const
 	  {
 //	    if (x[0] > 300-1E-6) 
@@ -55,14 +54,13 @@ namespace Dune
 	    return Dune::BoundaryConditions::neumann;
 	  }
 		
-		const Dune::FieldMatrix<DT,n,n>& K (const Dune::FieldVector<DT,n>& x, const Entity& e, 
-							  const Dune::FieldVector<DT,n>& xi) 
-	  {
-		  return permeability.K(e);
-	  }
+//		const Dune::FieldMatrix<DT,n,n>& K (const Dune::FieldVector<DT,n>& x, const Entity& e, 
+//							  const Dune::FieldVector<DT,n>& xi) 
+//	  {
+//		  return permeability.K(e);
+//	  }
 		
-	  RT gPress (const Dune::FieldVector<DT,n>& x, const Entity& e, 
-					const Dune::FieldVector<DT,n>& xi) const
+	  RT gPress (const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
 	  {
 		  return (x[0] < 1e-6) ? 1e5 : 1e5;
 	  }
@@ -116,23 +114,17 @@ namespace Dune
 			if (fabs(x[0]-center[0])<30) return 1;
 			return 1;
 		}
-		  
-		virtual RT porosity ()
-		{
-			return 1.0;
-		}
 	
-		Testproblem_2p2c(Henry& h, Dune::VariableClass2p2c<G,RT>& var, G& g, TwoPhaseRelations& law = *(new LinearLaw), 
-				const char* name = "permeab.dat", const bool create = true,
-				const int level = 0, const bool cap = false)
-		: TransportProblem2p2c<G, RT>(h, var, law, cap), 
+		Testproblem_2p2c(G& g, Dune::VariableClass2p2c<G, RT> var, liquid_gl& liq, gas_gl& gas, Matrix2p<G, RT> s, int level, TwoPhaseRelations<G, RT>& law = *(new TwoPhaseRelations<G, RT>), 
+				 const bool cap = false)
+		: TransportProblem2p2c<G, RT>(var, liq, gas, s, law, cap), 
 		  elementmapper(g, g.levelIndexSet(level)),
-		  grid(g), 
-		  permeability(g, name, create)
+		  grid(g) 
+//		  permeability(g, name, create)
 		{	
 		}
 		
-		RandomPermeability<G> permeability;
+//		RandomPermeability<G> permeability;
 		
   	private:
   		G& grid;

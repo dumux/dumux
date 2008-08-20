@@ -11,12 +11,10 @@
 #include <dune/grid/common/referenceelements.hh>
 #include <dune/disc/operators/boundaryconditions.hh>
 
+#include <dumux/material/property_baseclasses.hh>
 #include <dumux/material/twophaserelations.hh>
-#include <dumux/material/linearlaw.hh>
-#include <dumux/transport/transportproblem.hh>
-#include <dumux/diffusion/diffusionproblem.hh>
-#include <dumux/material/properties.hh>
 #include <dumux/operators/boundaryconditions2p2c.hh>
+#include <dumux/fractionalflow/variableclass2p2c.hh>
 
 
 //! Base class for the definition of 2p2c problems
@@ -70,8 +68,10 @@ namespace Dune
    * @param e reference to the cell for which the function is to be evaluated
    * @param xi local coordinates inside e 
 	 */
-	virtual const FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x, const Entity& e, 
-						const FieldVector<DT,n>& xi) = 0;
+	virtual const FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
+	{
+		return soil.K(x, e, xi);
+	}
 	
 	//! Feed concentration boundary condition
 	/** Feed concentration is the (global) mass fraction of component 1 in the mixture
@@ -136,8 +136,10 @@ namespace Dune
    * @param e reference to the cell for which the function is to be evaluated
    * @param xi local coordinates inside e  
 	 */
-	virtual RT porosity (const FieldVector<DT,n>& x, const Entity& e, 
-			const FieldVector<DT,n>& xi) const = 0;
+	virtual RT porosity (const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
+	{
+		return soil.porosity(x, e, xi);
+	}
 	
 	//! gravity vector
 	const FieldVector<DT,n>& gravity()
@@ -150,18 +152,21 @@ namespace Dune
 	/** 
 	 * 
 	 */
-	TransportProblem2p2c(Henry& h, TwoPhaseRelations& law = *(new LinearLaw), 
+	TransportProblem2p2c(Dune::VariableClass2p2c<G, RT> var, liquid_gl& liq, gas_gl& gas, Matrix2p<G, RT> s, TwoPhaseRelations<G, RT>& law = *(new TwoPhaseRelations<G,RT>), 
 								 const bool cap = false) 
-	: capillary(cap), materialLaw(law), henry(h)
+	:variables(var), liquidPhase(liq), gasPhase(gas), soil(s), capillary(cap), materialLaw(law)
 	{	
 	}
 	
 	virtual ~TransportProblem2p2c () {}
 	
 	FieldVector<DT,n> gravity_;
-	Henry& henry;
 	const bool capillary;
-	TwoPhaseRelations& materialLaw;
+	TwoPhaseRelations<G, RT>& materialLaw;
+	liquid_gl& liquidPhase;
+	gas_gl& gasPhase;
+	Matrix2p<G, RT>& soil;
+	VariableClass2p2c<G, RT>& variables;
   };
 
 }
