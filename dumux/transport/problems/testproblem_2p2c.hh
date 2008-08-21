@@ -115,7 +115,7 @@ namespace Dune
 			return 1;
 		}
 	
-		Testproblem_2p2c(G& g, Dune::VariableClass2p2c<G, RT> var, liquid_gl& liq, gas_gl& gas, Matrix2p<G, RT> s, int level, TwoPhaseRelations<G, RT>& law = *(new TwoPhaseRelations<G, RT>), 
+		Testproblem_2p2c(G& g, Dune::VariableClass2p2c<G, RT>& var, liquid_gl& liq, gas_gl& gas, Matrix2p<G, RT>& s, int level, TwoPhaseRelations<G, RT>& law = *(new TwoPhaseRelations<G, RT>), 
 				 const bool cap = false)
 		: TransportProblem2p2c<G, RT>(var, liq, gas, s, law, cap), 
 		  elementmapper(g, g.levelIndexSet(level)),

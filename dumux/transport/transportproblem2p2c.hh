@@ -152,7 +152,7 @@ namespace Dune
 	/** 
 	 * 
 	 */
-	TransportProblem2p2c(Dune::VariableClass2p2c<G, RT> var, liquid_gl& liq, gas_gl& gas, Matrix2p<G, RT> s, TwoPhaseRelations<G, RT>& law = *(new TwoPhaseRelations<G,RT>), 
+	TransportProblem2p2c(Dune::VariableClass2p2c<G, RT>& var, liquid_gl& liq, gas_gl& gas, Matrix2p<G, RT>& s, TwoPhaseRelations<G, RT>& law = *(new TwoPhaseRelations<G,RT>), 
 								 const bool cap = false) 
 	:variables(var), liquidPhase(liq), gasPhase(gas), soil(s), capillary(cap), materialLaw(law)
 	{	
