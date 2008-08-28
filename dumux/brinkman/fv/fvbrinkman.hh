@@ -59,7 +59,7 @@ namespace Dune
 	  typedef typename G::template Codim<0>::HierarchicIterator HierarchicIterator;
 	  typedef MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout> EM;
 	  typedef typename G::template Codim<0>::EntityPointer EntityPointer;
-	  typedef typename IntersectionIteratorGetter<G,LevelTag>::IntersectionIterator IntersectionIterator;
+	  typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
 	  typedef typename G::ctype ct; 
 	  typedef FieldMatrix<double,1,1> MB;
 	  typedef BCRSMatrix<MB> PressureMatrixType;
@@ -95,8 +95,8 @@ namespace Dune
 
 			  RT pI = this->pressure[indexi];
 			  
-			  IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
-			  for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it); 
+			  IntersectionIterator endit = IntersectionIteratorGetter<G,LeafTag>::end(*it);
+			  for (IntersectionIterator is = IntersectionIteratorGetter<G,LeafTag>::begin(*it); 
 			  is!=endit; ++is)
 			  {
 
@@ -229,8 +229,8 @@ namespace Dune
 
 			  RT pI = this->pressure[indexi];
 
-			  IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
-			  for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it); 
+			  IntersectionIterator endit = IntersectionIteratorGetter<G,LeafTag>::end(*it);
+			  for (IntersectionIterator is = IntersectionIteratorGetter<G,LeafTag>::begin(*it); 
 			  is!=endit; ++is)
 			  {
 				  int faceIdx = is->numberInSelf();
@@ -320,8 +320,8 @@ namespace Dune
 			  RT pI = this->pressure[indexi];
 			  FieldVector<RT,dim> velI = this->velocity[indexi];
 			  
-			  IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
-			  for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it); 
+			  IntersectionIterator endit = IntersectionIteratorGetter<G,LeafTag>::end(*it);
+			  for (IntersectionIterator is = IntersectionIteratorGetter<G,LeafTag>::begin(*it); 
 			  is!=endit; ++is)
 			  {
 				  // eastIndex for 0,1: 0, for 2,3: 2, for 4,5: 4
@@ -454,8 +454,8 @@ namespace Dune
 
 			  RT pCI = this->pressureCorrection[indexi];
 
-			  IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
-			  for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it); 
+			  IntersectionIterator endit = IntersectionIteratorGetter<G,LeafTag>::end(*it);
+			  for (IntersectionIterator is = IntersectionIteratorGetter<G,LeafTag>::begin(*it); 
 			  is!=endit; ++is)
 			  {
 				  int faceIdx = is->numberInSelf(); 
@@ -650,8 +650,8 @@ namespace Dune
 			int rowSize = 1;
 	
 			// run through all intersections with neighbors 
-			IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
-			for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it); 
+			IntersectionIterator endit = IntersectionIteratorGetter<G,LeafTag>::end(*it);
+			for (IntersectionIterator is = IntersectionIteratorGetter<G,LeafTag>::begin(*it); 
 				  is!=endit; ++is)
 			    if (is->neighbor()) 
 			      rowSize++;
@@ -672,8 +672,8 @@ namespace Dune
 			AP.addindex(indexi, indexi);
 	
 			// run through all intersections with neighbors 
-			IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
-			for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it); 
+			IntersectionIterator endit = IntersectionIteratorGetter<G,LeafTag>::end(*it);
+			for (IntersectionIterator is = IntersectionIteratorGetter<G,LeafTag>::begin(*it); 
 			  	  is!=endit; ++is)
 			    if (is->neighbor()) 
 			      {
@@ -733,8 +733,8 @@ namespace Dune
 
 		  AV[indexi][indexi] = KinvI;
 
-		  IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
-		  for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it); 
+		  IntersectionIterator endit = IntersectionIteratorGetter<G,LeafTag>::end(*it);
+		  for (IntersectionIterator is = IntersectionIteratorGetter<G,LeafTag>::begin(*it); 
 		  is!=endit; ++is)
 		  {
 
@@ -871,8 +871,8 @@ namespace Dune
 		  
 	      double AVI = AV[indexi][indexi][0][0];
 
-		  IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
-		  for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it); 
+		  IntersectionIterator endit = IntersectionIteratorGetter<G,LeafTag>::end(*it);
+		  for (IntersectionIterator is = IntersectionIteratorGetter<G,LeafTag>::begin(*it); 
 		  is!=endit; ++is)
 		  {
 			  // cell geometry type
