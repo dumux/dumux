@@ -645,7 +645,7 @@ namespace Dune
      * @param dm The data mode.
      */
     VTKWriter (const GridImp& g, const GV& gridview_, VTKOptions::DataMode dm = VTKOptions::conforming) :
-      grid(g), gridview(gridview_), datamode(dm)
+      grid(g), gridview(gridview_), is(gridview_.indexSet()), datamode(dm)
       {
         indentCount = 0;
         numPerLine = 4*3; //should be a multiple of 3 !
