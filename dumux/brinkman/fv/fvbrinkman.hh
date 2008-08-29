@@ -4,8 +4,8 @@
 #include <dune/common/helpertemplates.hh>
 #include <dune/common/typetraits.hh>
 #include <dune/grid/common/mcmgmapper.hh>
-//#include <dune/grid/io/file/vtk/vtkwriter.hh>
-#include "dumux/io/vtkwriterextended.hh"
+#include <dune/grid/io/file/vtk/vtkwriter.hh>
+//#include "dumux/io/vtkwriterextended.hh"
 #include <dune/grid/utility/intersectiongetter.hh>
 #include <dune/istl/operators.hh>
 #include <dune/istl/solvers.hh>
@@ -53,13 +53,13 @@ namespace Dune
 	  enum{dimworld = G::dimensionworld};
 	  
 	  typedef typename G::Traits::template Codim<0>::Entity Entity;
-	  typedef typename G::LeafGridView GV;
+	  typedef typename G::LevelGridView GV;
 	  typedef typename GV::IndexSet IS;
 	  typedef typename GV::template Codim<0>::Iterator Iterator;
 	  typedef typename G::template Codim<0>::HierarchicIterator HierarchicIterator;
 	  typedef MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout> EM;
 	  typedef typename G::template Codim<0>::EntityPointer EntityPointer;
-	  typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
+	  typedef typename IntersectionIteratorGetter<G,LevelTag>::IntersectionIterator IntersectionIterator;
 	  typedef typename G::ctype ct; 
 	  typedef FieldMatrix<double,1,1> MB;
 	  typedef BCRSMatrix<MB> PressureMatrixType;
@@ -77,8 +77,8 @@ namespace Dune
 		fV = fVBound; 
 		bool pseudoDirichlet = true;
 		
-		Iterator eendit = gridview.template end<0>();
-		  for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
+		Iterator eendit = this->grid.template lend<0>(0);
+		  for (Iterator it = this->grid.template lbegin<0>(0); it != eendit; ++it)
 		  {		
 			  // cell geometry type
 			  GeometryType gt = it->geometry().type();
@@ -95,8 +95,8 @@ namespace Dune
 
 			  RT pI = this->pressure[indexi];
 			  
-			  IntersectionIterator endit = IntersectionIteratorGetter<G,LeafTag>::end(*it);
-			  for (IntersectionIterator is = IntersectionIteratorGetter<G,LeafTag>::begin(*it); 
+			  IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
+			  for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it); 
 			  is!=endit; ++is)
 			  {
 
@@ -211,8 +211,8 @@ namespace Dune
 	template<class IFPressure>
 	void calculateInterfacePressures(IFPressure& ifPressure)
 	{
-		Iterator eendit = gridview.template end<0>();
-		  for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
+		Iterator eendit = this->grid.template lend<0>(0);
+		  for (Iterator it = this->grid.template lbegin<0>(0); it != eendit; ++it)
 		  {		
 			  // cell geometry type
 			  GeometryType gt = it->geometry().type();
@@ -229,8 +229,8 @@ namespace Dune
 
 			  RT pI = this->pressure[indexi];
 
-			  IntersectionIterator endit = IntersectionIteratorGetter<G,LeafTag>::end(*it);
-			  for (IntersectionIterator is = IntersectionIteratorGetter<G,LeafTag>::begin(*it); 
+			  IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
+			  for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it); 
 			  is!=endit; ++is)
 			  {
 				  int faceIdx = is->numberInSelf();
@@ -297,8 +297,8 @@ namespace Dune
 	    
 		fP = 0; 
 		
-		Iterator eendit = gridview.template end<0>();
-		  for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
+		Iterator eendit = this->grid.template lend<0>(0);
+		  for (Iterator it = this->grid.template lbegin<0>(0); it != eendit; ++it)
 		  {		
 			  // cell geometry type
 			  GeometryType gt = it->geometry().type();
@@ -320,8 +320,8 @@ namespace Dune
 			  RT pI = this->pressure[indexi];
 			  FieldVector<RT,dim> velI = this->velocity[indexi];
 			  
-			  IntersectionIterator endit = IntersectionIteratorGetter<G,LeafTag>::end(*it);
-			  for (IntersectionIterator is = IntersectionIteratorGetter<G,LeafTag>::begin(*it); 
+			  IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
+			  for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it); 
 			  is!=endit; ++is)
 			  {
 				  // eastIndex for 0,1: 0, for 2,3: 2, for 4,5: 4
@@ -432,8 +432,8 @@ namespace Dune
 	{
 		this->velocityCorrection = 0;
 		
-		Iterator eendit = gridview.template end<0>();
-		  for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
+		Iterator eendit = this->grid.template lend<0>(0);
+		  for (Iterator it = this->grid.template lbegin<0>(0); it != eendit; ++it)
 		  {		
 			  // cell geometry type
 			  GeometryType gt = it->geometry().type();
@@ -454,8 +454,8 @@ namespace Dune
 
 			  RT pCI = this->pressureCorrection[indexi];
 
-			  IntersectionIterator endit = IntersectionIteratorGetter<G,LeafTag>::end(*it);
-			  for (IntersectionIterator is = IntersectionIteratorGetter<G,LeafTag>::begin(*it); 
+			  IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
+			  for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it); 
 			  is!=endit; ++is)
 			  {
 				  int faceIdx = is->numberInSelf(); 
@@ -588,13 +588,21 @@ namespace Dune
 
 	void vtkout (const char* name, int k) const 
 	{
-		VTKWriter<G> vtkwriter(this->grid);
-		BlockVector<FieldVector <RT, dim> > elementvelocity = this->velocity;
-		BlockVector<FieldVector <RT, dim> > nullvector(0);
+		VTKWriter<G, GV> vtkwriter(this->grid, this->grid.levelView(0));
+		const BlockVector<FieldVector <RT, dim> >& elementVelocity = this->velocity;
+		BlockVector<FieldVector <RT, 1> > velocityComponent(elementVelocity.size());
 		char fname[128];	
 		sprintf(fname,"%s-%05d",name,k);
 		vtkwriter.addCellData(this->pressure,"total pressure p~");
-		vtkwriter.addFaceData(this->velocity, nullvector, "velocity");
+		for (int i = 0; i < dim; i++)
+		{
+			for (int k = 0; k < velocityComponent.size(); k++)
+				velocityComponent[k] = elementVelocity[k][i];
+			char compName[128];
+			sprintf(compName, "velocity component %d", i);
+			vtkwriter.addCellData(velocityComponent, compName);
+		}
+		//vtkwriter.addFaceData(this->velocity, nullvector, "velocity");
 		vtkwriter.write(fname,VTKOptions::ascii);		
 	}
 	
@@ -604,8 +612,8 @@ namespace Dune
 	
 	FVBrinkman(G& g, BrinkmanProblem<G, RT>& prob)
 	            : Brinkman<G, RT, RepresentationType, VelType>(g, prob), 
-	              elementmapper(g, g.leafIndexSet()), 
-	              gridview(g.leafView()), 
+	              gridview(g.levelView(0)), 
+	              elementmapper(g, gridview.indexSet()), 
 	              AV(g.size(0), g.size(0), (2*dim+1)*g.size(0), BCRSMatrix<MBV>::random), 
 	              AP(g.size(0), g.size(0), (2*dim+1)*g.size(0), BCRSMatrix<MB>::random), 
 	              fP(g.size(0)), fV(g.size(0)), fVBound(g.size(0))
@@ -625,8 +633,8 @@ namespace Dune
 	}
 	
   //private:
-	  EM elementmapper;
 	  const GV& gridview;
+	  EM elementmapper;
 	  VelocityMatrixType AV;
 	  PressureMatrixType AP;
 	  RepresentationType fP;
@@ -640,8 +648,8 @@ namespace Dune
   void FVBrinkman<G, RT>::initializeMatrices()
   {
 	    // determine matrix row sizes 
-	    Iterator eendit = gridview.template end<0>();
-	    for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
+	    Iterator eendit = this->grid.template lend<0>(0);
+	    for (Iterator it = this->grid.template lbegin<0>(0); it != eendit; ++it)
 	      {
 			// cell index
 			int indexi = elementmapper.map(*it);
@@ -650,8 +658,8 @@ namespace Dune
 			int rowSize = 1;
 	
 			// run through all intersections with neighbors 
-			IntersectionIterator endit = IntersectionIteratorGetter<G,LeafTag>::end(*it);
-			for (IntersectionIterator is = IntersectionIteratorGetter<G,LeafTag>::begin(*it); 
+			IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
+			for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it); 
 				  is!=endit; ++is)
 			    if (is->neighbor()) 
 			      rowSize++;
@@ -662,7 +670,7 @@ namespace Dune
 	    AP.endrowsizes();
 
 	    // determine position of matrix entries 
-	    for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
+	    for (Iterator it = this->grid.template lbegin<0>(0); it != eendit; ++it)
 	      {
 			// cell index
 			int indexi = elementmapper.map(*it);
@@ -672,8 +680,8 @@ namespace Dune
 			AP.addindex(indexi, indexi);
 	
 			// run through all intersections with neighbors 
-			IntersectionIterator endit = IntersectionIteratorGetter<G,LeafTag>::end(*it);
-			for (IntersectionIterator is = IntersectionIteratorGetter<G,LeafTag>::begin(*it); 
+			IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
+			for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it); 
 			  	  is!=endit; ++is)
 			    if (is->neighbor()) 
 			      {
@@ -700,8 +708,8 @@ namespace Dune
 	  AP = 0;
 	  bool pseudoDirichlet = true;
 	  
-	  Iterator eendit = gridview.template end<0>();
-	  for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
+	  Iterator eendit = this->grid.template lend<0>(0);
+	  for (Iterator it = this->grid.template lbegin<0>(0); it != eendit; ++it)
 	  {		
 		  // cell geometry type
 		  GeometryType gt = it->geometry().type();
@@ -733,8 +741,8 @@ namespace Dune
 
 		  AV[indexi][indexi] = KinvI;
 
-		  IntersectionIterator endit = IntersectionIteratorGetter<G,LeafTag>::end(*it);
-		  for (IntersectionIterator is = IntersectionIteratorGetter<G,LeafTag>::begin(*it); 
+		  IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
+		  for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it); 
 		  is!=endit; ++is)
 		  {
 
@@ -865,14 +873,14 @@ namespace Dune
 ////////////////////////////
 	  } // end grid traversal 
 
-	  for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
+	  for (Iterator it = this->grid.template lbegin<0>(0); it != eendit; ++it)
 	  {		
 		  int indexi = elementmapper.map(*it);
 		  
 	      double AVI = AV[indexi][indexi][0][0];
 
-		  IntersectionIterator endit = IntersectionIteratorGetter<G,LeafTag>::end(*it);
-		  for (IntersectionIterator is = IntersectionIteratorGetter<G,LeafTag>::begin(*it); 
+		  IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
+		  for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it); 
 		  is!=endit; ++is)
 		  {
 			  // cell geometry type
