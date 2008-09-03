@@ -2,7 +2,7 @@
 #define DUNE_IMPES_HH
 
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
-#include "dumux/fractionalflow/fractionalflow.hh"
+#include "dumux/fractionalflow/fractionalflow_deprecated.hh"
 
 /**
  * @file
@@ -64,10 +64,11 @@ public:
 		while (!converg) {
 			iter++;
 			iterTot++;
-			// update pressure
-			pressure(t);
-			totalVelocity(t);
-
+			if (!this->diffproblem.materialLaw.isLinear()
+					|| this->diffproblem.capillary) { // update pressure
+				pressure(t);
+				totalVelocity(t);
+			}
 			Transport::update(t, dt, updateVec,cFLFactor);
 			if (iterFlag) { // only needed if iteration has to be done
 				variables().pressure *= omega;
@@ -105,19 +106,19 @@ public:
 			std::cout << "Iteration steps: "<< iterTot << std::endl;
 		std::cout.setf(std::ios::scientific, std::ios::floatfield);
 
-//		if (this->transproblem.exsolution){
-//			this->transproblem.settime(dt);
-//		}
+		if (this->transproblem.exsolution){
+			this->transproblem.settime(dt);
+		}
 
 		return 0;
 	}
 
 	virtual void vtkout(const char* name, int k) const {
-//		if (this->transproblem.exsolution){
-//			this->transproblem.updateExSol();
-//			variables().vtkout(name, k, this->transproblem.getuEx());
-//			return;
-//		}
+		if (this->transproblem.exsolution){
+			this->transproblem.updateExSol();
+			variables().vtkout(name, k, this->transproblem.getuEx());
+			return;
+		}
 		variables().vtkout(name, k);
 		return;
 	}
