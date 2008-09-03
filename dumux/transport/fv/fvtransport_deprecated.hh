@@ -1,5 +1,5 @@
-#ifndef DUNE_FVTRANSPORT_HH
-#define DUNE_FVTRANSPORT_HH
+#ifndef DUNE_FVTRANSPORT_DEPRECATED_HH
+#define DUNE_FVTRANSPORT_DEPRECATED_HH
 
 #include <dune/common/helpertemplates.hh>
 #include <dune/common/typetraits.hh>
@@ -7,7 +7,7 @@
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/grid/utility/intersectiongetter.hh>
 #include <dune/istl/bvector.hh>
-#include "dumux/transport/transport.hh"
+#include "dumux/transport/transport_deprecated.hh"
 #include "dumux/transport/fv/numericalflux.hh"
 #include "dumux/transport/fv/diffusivepart.hh"
 
