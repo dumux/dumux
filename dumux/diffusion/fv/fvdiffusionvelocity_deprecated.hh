@@ -21,8 +21,8 @@ template<class G, class RT, class VC> class FVDiffusionVelocity :
 	enum {dimworld = G::dimensionworld};
 
 public:
-	FVDiffusionVelocity(G& g, FractionalFlowProblem<G, RT, VC>& prob, int lev = -1)
-	: FVDiffusion<G,RT,VC>(g, prob, lev)
+	FVDiffusionVelocity(G& g, DiffusionProblem<G, RT, VC>& prob, int lev = -1)
+	: FVDiffusion<G,RT,VC>(g, prob, lev, true)
 	{	}
 
 
@@ -54,14 +54,14 @@ public:
 			double pressi = this->diffproblem.variables.pressure[indexi];
 
 			// get absolute permeability
-			FieldMatrix<ct,dim,dim> Ki(this->diffproblem.soil.K(global, *it, local));
+			FieldMatrix<ct,dim,dim> Ki(this->diffproblem.K(global, *it, local));
 
 			//compute total mobility
 			double lambdaI, fractionalWI;
 			double sati = this->diffproblem.variables.saturation[indexi];
-			lambdaI = this->diffproblem.materialLaw.mobTotal(sati,global, *it, local);
+			lambdaI = this->diffproblem.materialLaw.mobTotal(sati);
 			if (hasGravity)
-				fractionalWI = this->diffproblem.materialLaw.fractionalW(sati,global, *it, local);
+				fractionalWI = this->diffproblem.materialLaw.fractionalW(sati);
 
 			double faceVol[2*dim];
 
@@ -125,7 +125,7 @@ public:
 					double dist = distVec.two_norm();
 
 					// get absolute permeability
-					FieldMatrix<ct,dim,dim> Kj(this->diffproblem.soil.K(nbglobal, *outside, nblocal));
+					FieldMatrix<ct,dim,dim> Kj(this->diffproblem.K(nbglobal, *outside, nblocal));
 
 					// compute vectorized permeabilities
 					FieldVector<ct,dim> Kni(0);
@@ -150,9 +150,9 @@ public:
 					//compute total mobility
 					double lambdaJ, fractionalWJ;
 					double satj = this->diffproblem.variables.saturation[indexj];
-					lambdaJ = this->diffproblem.materialLaw.mobTotal(satj,nbglobal, *outside, nblocal);
+					lambdaJ = this->diffproblem.materialLaw.mobTotal(satj);
 					if (hasGravity)
-					fractionalWJ = this->diffproblem.materialLaw.fractionalW(satj,nbglobal, *outside, nblocal);
+					fractionalWJ = this->diffproblem.materialLaw.fractionalW(satj);
 
 					// compute averaged total mobility
 					// CAREFUL: Harmonic weightig can generate zero matrix entries,
@@ -170,8 +170,8 @@ public:
 						Ki *= 0.5;
 						FieldVector<ct,dimworld> gEffect(0);
 						Ki.umv(gravity, gEffect);
-						double factor = fractionalW*(this->diffproblem.wettingphase.density())
-						+ (1 - fractionalW)*(this->diffproblem.nonwettingphase.density());
+						double factor = fractionalW*(this->diffproblem.materialLaw.wettingPhase.density())
+						+ (1 - fractionalW)*(this->diffproblem.materialLaw.nonwettingPhase.density());
 						gEffect *= lambda*factor;
 						vTotal -= gEffect;
 					}
@@ -181,7 +181,7 @@ public:
 				else
 				{
 					//get boundary condition for boundary face center
-					BoundaryConditions::Flags bctype = this->diffproblem.bctypePress(faceglobal, *it, facelocalDim);
+					BoundaryConditions::Flags bctype = this->diffproblem.bctype(faceglobal, *it, facelocalDim);
 					if (bctype == BoundaryConditions::dirichlet) {
 						// distance vector between barycenters
 						FieldVector<ct,dimworld> distVec = global - faceglobal;
@@ -199,15 +199,15 @@ public:
 						lambda = lambdaI;
 						if (hasGravity) fractionalW = fractionalWI;
 
-						double g = this->diffproblem.gPress(faceglobal, *it, facelocalDim);
+						double g = this->diffproblem.g(faceglobal, *it, facelocalDim);
 
 						FieldVector<ct,dim> vTotal(Kni);
 						vTotal *= lambda*(g-pressi)/dist;
 						if (hasGravity) {
 							FieldVector<ct,dimworld> gEffect(0);
 							Ki.umv(gravity, gEffect);
-							double factor = fractionalW*(this->diffproblem.wettingphase.density())
-							+ (1 - fractionalW)*(this->diffproblem.nonwettingphase.density());
+							double factor = fractionalW*(this->diffproblem.materialLaw.wettingPhase.density())
+							+ (1 - fractionalW)*(this->diffproblem.materialLaw.nonwettingPhase.density());
 							gEffect *= lambda*factor;
 							vTotal -= gEffect;
 						}
@@ -215,7 +215,7 @@ public:
 					}
 					else
 					{
-						double J = this->diffproblem.JPress(faceglobal, *it, facelocalDim);
+						double J = this->diffproblem.J(faceglobal, *it, facelocalDim);
 						FieldVector<ct,dimworld> unitOuterNormal
 						= is->unitOuterNormal(facelocal);
 						this->diffproblem.variables.velocity[indexi][numberInSelf] = unitOuterNormal;

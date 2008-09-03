@@ -84,7 +84,7 @@ public:
 
 	void initializeMatrix();
 
-	FVDiffusion(G& g, FractionalFlowProblem<G, RT, VC>& prob, int lev = -1) :
+	FVDiffusion(G& g, DiffusionProblem<G, RT, VC>& prob, int lev = -1, bool calcPressure = false) :
 		Diffusion<G, RT, VC>(g, prob, lev == -1 ? g.maxLevel() : lev),
 				elementmapper(g, g.levelIndexSet(this->level())), gridview(g.levelView(this->level())),
 				indexset(gridview.indexSet()), A(g.size(
@@ -95,8 +95,8 @@ public:
 		initializeMatrix();
 	}
 
-	FVDiffusion(G& g, FractionalFlowProblem<G, RT, VC>& prob, std::string solverName,
-			std::string preconditionerName, int lev = -1) :
+	FVDiffusion(G& g, DiffusionProblem<G, RT, VC>& prob, std::string solverName,
+			std::string preconditionerName, int lev = -1, bool calcPressure = false) :
 		Diffusion<G, RT, VC>(g, prob, lev == -1 ? g.maxLevel() : lev),
 				elementmapper(g, g.levelIndexSet(this->level())), gridview(g.levelView(this->level())),
 				indexset(gridview.indexSet()), A(g.size(
@@ -198,17 +198,17 @@ template<class G, class RT, class VC> void FVDiffusion<G, RT, VC>::assemble(cons
 		double volume = it->geometry().integrationElement(local)*ReferenceElements<ct,dim>::general(gt).volume();
 
 		// set right side to zero
-		f[indexi] = volume*this->diffproblem.qPress(global, *it, local);
+		f[indexi] = volume*this->diffproblem.q(global, *it, local);
 
 		// get absolute permeability
-		FieldMatrix<ct,dim,dim> Ki(this->diffproblem.soil.K(global, *it, local));
+		FieldMatrix<ct,dim,dim> Ki(this->diffproblem.K(global, *it, local));
 
 		//compute total mobility
 		double lambdaI, fractionalWI;
 		double sati = this->diffproblem.variables.saturation[indexi];
-		lambdaI = this->diffproblem.materialLaw.mobTotal(sati,global, *it, local);
+		lambdaI = this->diffproblem.materialLaw.mobTotal(sati);
 		if (hasGravity)
-			fractionalWI = this->diffproblem.materialLaw.fractionalW(sati,global, *it, local);
+			fractionalWI = this->diffproblem.materialLaw.fractionalW(sati);
 
 		IntersectionIterator
 				endit = IntersectionIteratorGetter<G, LevelTag>::end(*it);
@@ -273,7 +273,7 @@ template<class G, class RT, class VC> void FVDiffusion<G, RT, VC>::assemble(cons
 				double dist = distVec.two_norm();
 
 				// get absolute permeability
-				FieldMatrix<ct,dim,dim> Kj(this->diffproblem.soil.K(nbglobal, *outside, nblocal));
+				FieldMatrix<ct,dim,dim> Kj(this->diffproblem.K(nbglobal, *outside, nblocal));
 
 				// compute vectorized permeabilities
 				FieldVector<ct,dim> Knj(0);
@@ -296,9 +296,9 @@ template<class G, class RT, class VC> void FVDiffusion<G, RT, VC>::assemble(cons
 				double lambdaJ, fractionalWJ;
 				double satj = this->diffproblem.variables.saturation[indexj];
 
-				lambdaJ = this->diffproblem.materialLaw.mobTotal(satj,nbglobal, *outside, nblocal);
+				lambdaJ = this->diffproblem.materialLaw.mobTotal(satj);
 				if (hasGravity)
-				fractionalWJ = this->diffproblem.materialLaw.fractionalW(satj,nbglobal, *outside, nblocal);
+				fractionalWJ = this->diffproblem.materialLaw.fractionalW(satj);
 
 				// compute averaged total mobility
 				// CAREFUL: Harmonic weightig can generate zero matrix entries,
@@ -316,8 +316,8 @@ template<class G, class RT, class VC> void FVDiffusion<G, RT, VC>::assemble(cons
 				A[indexi][indexj] = -entry;
 
 				if (hasGravity) {
-					double factor = fractionalW*(this->diffproblem.wettingphase.density())
-					+ (1 - fractionalW)*(this->diffproblem.nonwettingphase.density());
+					double factor = fractionalW*(this->diffproblem.materialLaw.wettingPhase.density())
+					+ (1 - fractionalW)*(this->diffproblem.materialLaw.nonwettingPhase.density());
 					f[indexi] += factor*lambda*faceVol*(K*gravity);
 				}
 
@@ -330,12 +330,12 @@ template<class G, class RT, class VC> void FVDiffusion<G, RT, VC>::assemble(cons
 					K = ((Kni + Knj) *= 0.5);
 
 					// capillary pressure w.r.t. saturation
-					double pCI = this->diffproblem.materialLaw.pC(sati,global, *it, local);
-					double pCJ = this->diffproblem.materialLaw.pC(satj,nbglobal, *outside, nblocal);
+					double pCI = this->diffproblem.materialLaw.pC(sati);
+					double pCJ = this->diffproblem.materialLaw.pC(satj);
 
 					// mobility of the nonwetting phase
-					double lambdaN = 0.5*(this->diffproblem.materialLaw.mobN(1 - sati,global, *it, local)
-							+ this->diffproblem.materialLaw.mobN(1 - satj,nbglobal, *outside, nblocal));
+					double lambdaN = 0.5*(this->diffproblem.materialLaw.mobN(1 - sati)
+							+ this->diffproblem.materialLaw.mobN(1 - satj));
 
 					// calculate capillary pressure gradient
 					FieldVector<ct,dim> pCGradient = distVec;
@@ -357,18 +357,18 @@ template<class G, class RT, class VC> void FVDiffusion<G, RT, VC>::assemble(cons
 				if (hasGravity) fractionalW = fractionalWI;
 
 				//get boundary condition for boundary face center
-				BoundaryConditions::Flags bctype = this->diffproblem.bctypePress(faceglobal, *it, facelocalDim);
+				BoundaryConditions::Flags bctype = this->diffproblem.bctype(faceglobal, *it, facelocalDim);
 				if (bctype == BoundaryConditions::dirichlet)
 				{
 					FieldVector<ct,dimworld> distVec(global - faceglobal);
 					double dist = distVec.two_norm();
 					A[indexi][indexi] -= lambda*faceVol*(Kni*distVec)/(dist*dist);
-					double g = this->diffproblem.gPress(faceglobal, *it, facelocalDim);
+					double g = this->diffproblem.g(faceglobal, *it, facelocalDim);
 					f[indexi] -= lambda*faceVol*g*(Kni*distVec)/(dist*dist);
 
 					if (hasGravity) {
-						double factor = fractionalW*(this->diffproblem.wettingphase.density())
-						+ (1 - fractionalW)*(this->diffproblem.nonwettingphase.density());
+						double factor = fractionalW*(this->diffproblem.materialLaw.wettingPhase.density())
+						+ (1 - fractionalW)*(this->diffproblem.materialLaw.nonwettingPhase.density());
 						f[indexi] += factor*lambda*faceVol*(Kni*gravity);
 					}
 					if (this->diffproblem.capillary) {
@@ -386,12 +386,12 @@ template<class G, class RT, class VC> void FVDiffusion<G, RT, VC>::assemble(cons
 						satGradient *= (satj - sati)/(dist*dist);
 
 						// capillary pressure w.r.t. saturation
-						double pCI = this->diffproblem.materialLaw.pC(sati,global, *it, local);
-						double pCJ = this->diffproblem.materialLaw.pC(satj,faceglobal, *it, facelocalDim);
+						double pCI = this->diffproblem.materialLaw.pC(sati);
+						double pCJ = this->diffproblem.materialLaw.pC(satj);
 
 						// mobility of the nonwetting phase
-						double lambdaN = 0.5*(this->diffproblem.materialLaw.mobN(1 - sati,global, *it, local)
-								+ this->diffproblem.materialLaw.mobN(1 - satj,faceglobal, *it, facelocalDim));
+						double lambdaN = 0.5*(this->diffproblem.materialLaw.mobN(1 - sati)
+								+ this->diffproblem.materialLaw.mobN(1 - satj));
 
 						// calculate capillary pressure gradient
 						FieldVector<ct,dim> pCGradient = distVec;
@@ -402,7 +402,7 @@ template<class G, class RT, class VC> void FVDiffusion<G, RT, VC>::assemble(cons
 				}
 				else
 				{
-					double J = this->diffproblem.JPress(faceglobal, *it, facelocalDim);
+					double J = this->diffproblem.J(faceglobal, *it, facelocalDim);
 					f[indexi] -= faceVol*J;
 				}
 			}
