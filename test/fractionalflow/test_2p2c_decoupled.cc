@@ -6,7 +6,7 @@
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
 #include "dumux/timedisc/timeloop.hh"
-#include "dumux/material/phaseproperties.hh"
+#include "dumux/material/phaseproperties/phaseproperties_waterair.hh"
 #include <dumux/material/matrixproperties.hh>
 #include <dumux/material/twophaserelations.hh>
 #include "dumux/transport/problems/testproblem_2p2c.hh"
@@ -36,8 +36,8 @@ int main(int argc, char** argv)
     int modulo = 1;
     double cFLFactor = 0.99;
 
-    Dune::L_air_water wetmat;
-    Dune::G_air_water nonwetmat;
+    Dune::Liq_WaterAir wetmat;
+    Dune::Gas_WaterAir nonwetmat;
     Dune::Homogeneoussoil<GridType, NumberType> soil;
     Dune::TwoPhaseRelations<GridType, NumberType> materialLaw(soil, wetmat, nonwetmat);
 
