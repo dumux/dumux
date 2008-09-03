@@ -77,7 +77,7 @@ public:
 	 * @param amax alphamax parameter for slope limiter in TVD
 	 * @param numFl an object of class Numerical Flux or derived
 	 */
-	FVTransport(G& g, FractionalFlowProblem<G, RT, VC>& prob, int lev = 0,
+	FVTransport(G& g, TransportProblem<G, RT, VC>& prob, int lev = 0,
 			DiffusivePart<G,RT>& diffPart = *(new DiffusivePart<G, RT>), bool rec = false,
 			double amax = 0.8, const NumericalFlux<RT>& numFl = *(new Upwind<RT>)) :
 		Transport<G, RT, VC>(g, prob, lev),
@@ -171,7 +171,7 @@ template<class G, class RT, class VC> int FVTransport<G, RT, VC>::update(const R
 			// compute factor occuring in flux formula
 			double velocityIJ = std::max(this->transproblem.variables.vTotal(*it, numberInSelf)*integrationOuterNormal/(volume), 0.0);
 
-			double factor, diffFactor, totfactor;//, volumecorrectionfactor;
+			double factor, diffFactor, totfactor;
 
 			// handle interior face
 			if (is->neighbor())
@@ -229,17 +229,15 @@ template<class G, class RT, class VC> int FVTransport<G, RT, VC>::update(const R
 						}
 					}
 
-					double fI = this->transproblem.materialLaw.fractionalW(satI, global, *it,local);
-					double fJ = this->transproblem.materialLaw.fractionalW(satJ, nbglobal, *outside, nblocal);
+					double fI = this->transproblem.materialLaw.fractionalW(satI);
+					double fJ = this->transproblem.materialLaw.fractionalW(satJ);
 
 					diffFactor = diffPart / volume;
 					factor = diffFactor
 					+ velocityJI*numFlux(satJ, satI, fJ, fI)
 					- velocityIJ*numFlux(satI, satJ, fI, fJ);
-					factor/= this->transproblem.soil.porosity(global, *it,local);
 					totfactor = velocityJI - velocityIJ;
 					totfactor *= (fI-fJ)/(satI-satJ);
-//					volumecorrectionfactor = (1-this->transproblem.materialLaw.soil.Sr_w(global, *it,local)-this->transproblem.materialLaw.soil.Sr_n(global, *it,local))*this->transproblem.porosity(global, *it,local);
 				}
 			}
 
@@ -250,7 +248,7 @@ template<class G, class RT, class VC> int FVTransport<G, RT, VC>::update(const R
 				Dune::FieldVector<ct,dimworld> faceglobal = is->intersectionGlobal().global(facelocal);
 
 				//get boundary type
-				BoundaryConditions::Flags bctype = this->transproblem.bctypeSat(faceglobal, *it, facelocalDim);
+				BoundaryConditions::Flags bctype = this->transproblem.bctype(faceglobal, *it, facelocalDim);
 
 				if (bctype == BoundaryConditions::dirichlet)
 				{
@@ -259,7 +257,7 @@ template<class G, class RT, class VC> int FVTransport<G, RT, VC>::update(const R
 
 					double velocityJI = std::max(-(this->transproblem.variables.vTotal(*it, numberInSelf)*integrationOuterNormal/volume), 0.0);
 
-					double satBound = this->transproblem.gSat(faceglobal, *it, facelocalDim);
+					double satBound = this->transproblem.g(faceglobal, *it, facelocalDim);
 
 					// cell center in global coordinates
 					Dune::FieldVector<ct,dimworld> global = it->geometry().global(local);
@@ -292,16 +290,14 @@ template<class G, class RT, class VC> int FVTransport<G, RT, VC>::update(const R
 						}
 					}
 
-					double fI = this->transproblem.materialLaw.fractionalW(satI, global, *it,local);
-					double fBound = this->transproblem.materialLaw.fractionalW(satBound, faceglobal, *it, facelocalDim);
+					double fI = this->transproblem.materialLaw.fractionalW(satI);
+					double fBound = this->transproblem.materialLaw.fractionalW(satBound);
 					diffFactor = diffPart / volume;
 					factor = diffFactor
 					+ velocityJI*numFlux(satBound, satI, fBound, fI)
 					- velocityIJ*numFlux(satI, satBound, fI, fBound);
-					factor/= this->transproblem.soil.porosity(global, *it,local);
 					totfactor = velocityJI - velocityIJ;
 					totfactor *= (fI-fBound)/(satI-satBound);
-//					volumecorrectionfactor = (1-this->transproblem.materialLaw.soil.Sr_w(global, *it,local)-this->transproblem.materialLaw.soil.Sr_n(global, *it,local))*this->transproblem.porosity(global, *it,local);
 				}
 				else
 				{
@@ -311,7 +307,7 @@ template<class G, class RT, class VC> int FVTransport<G, RT, VC>::update(const R
 					totfactor = 0;
 				}
 			}
-//			volumecorrectionfactor = (1-this->transproblem.materialLaw.soil.Sr_w(global, *it,local)-this->transproblem.materialLaw.soil.Sr_n(global, *it,local))*this->transproblem.porosity(global, *it,local);
+
 			// add to update vector
 			updateVec[indexi] += factor;
 
@@ -325,13 +321,12 @@ template<class G, class RT, class VC> int FVTransport<G, RT, VC>::update(const R
 			else
 			sumDiff += (-diffFactor);
 		}
-		RT volumecorrectionfactor = (1-this->transproblem.soil.Sr_w(global, *it,local)-this->transproblem.soil.Sr_n(global, *it,local))*this->transproblem.soil.porosity(global, *it,local);
 		// end all intersections
 		// compute dt restriction
 		sumfactor = std::max(sumfactor, sumfactor2);
 		sumDiff = std::max(sumDiff, sumDiff2);
 		sumfactor = std::max(sumfactor, 10*sumDiff);
-		dt = std::min(dt, 1.0/sumfactor*volumecorrectionfactor);
+		dt = std::min(dt, 1.0/sumfactor);
 
 		// TODO: remove DEBUG--->
 		maxAd = std::max(maxAd, sumfactor);
@@ -341,9 +336,9 @@ template<class G, class RT, class VC> int FVTransport<G, RT, VC>::update(const R
 	} // end grid traversal
 
 	//Correct maximal available volume in the CFL-Criterium
-//	RT ResSaturationFactor = 1-this->transproblem.materialLaw.soil.Sr_w()-this->transproblem.materialLaw.soil.Sr_n();
-//	dt = dt*this->transproblem.porosity()*ResSaturationFactor;
-//	updateVec /= this->transproblem.porosity();
+	RT ResSaturationFactor = 1-this->transproblem.materialLaw.wettingPhase.Sr()-this->transproblem.materialLaw.nonwettingPhase.Sr();
+	dt = dt*this->transproblem.porosity()*ResSaturationFactor;
+	updateVec /= this->transproblem.porosity();
 
 	//TODO remove DEBUG--->
 	//std::cout<<"maxAd "<< maxAd << "\t maxDiff "<< maxDiff<<std::endl;
