@@ -10,8 +10,8 @@
 #include <dumux/material/twophaserelations.hh>
 #include "heterogeneoussoil_testproblem.hh"
 #include "dumux/timedisc/timeloop.hh"
-#include "dumux/diffusion/fv/fvdiffusion_noGV.hh"
-#include "dumux/diffusion/fv/fvdiffusionvelocity_noGV.hh"
+#include "dumux/diffusion/fv/fvdiffusion.hh"
+#include "dumux/diffusion/fv/fvdiffusionvelocity.hh"
 #include "dumux/transport/fv/fvtransport.hh"
 #include "dumux/fractionalflow/impes/impes.hh"
 #include <dune/disc/operators/boundaryconditions.hh>
