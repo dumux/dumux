@@ -1,5 +1,5 @@
-#ifndef DUNE_FVDIFFUSION_HH
-#define DUNE_FVDIFFUSION_HH
+#ifndef DUNE_FVDIFFUSION_DEPRECATED_HH
+#define DUNE_FVDIFFUSION_DEPRECATED_HH
 
 #include <dune/common/helpertemplates.hh>
 #include <dune/common/typetraits.hh>
@@ -9,7 +9,7 @@
 #include <dune/istl/operators.hh>
 #include <dune/istl/solvers.hh>
 #include <dune/istl/preconditioners.hh>
-#include "dumux/diffusion/diffusion.hh"
+#include "dumux/diffusion/diffusion_deprecated.hh"
 #include "dumux/pardiso/pardiso.hh"
 //#include "dumux/diffusion/problems/uniformproblem.hh"
 //#include "dumux/transport/problems/simpleproblem.hh"

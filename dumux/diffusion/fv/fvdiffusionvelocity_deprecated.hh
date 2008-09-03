@@ -1,7 +1,7 @@
-#ifndef DUNE_DIFFUSIONVELOCITYPROBLEM_HH
-#define DUNE_DIFFUSIONVELOCITYPROBLEM_HH
+#ifndef DUNE_DIFFUSIONVELOCITY_DEPRECATED_HH
+#define DUNE_DIFFUSIONVELOCITY_DEPRECATED_HH
 
-#include "dumux/diffusion/fv/fvdiffusion.hh"
+#include "dumux/diffusion/fv/fvdiffusion_deprecated.hh"
 
 namespace Dune {
 
