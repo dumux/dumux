@@ -8,7 +8,7 @@
 #include "dumux/material/linearlaw_deprecated.hh"
 #include "dumux/material/brookscoreylaw_deprecated.hh"
 #include "dumux/material/vangenuchtenlaw_deprecated.hh"
-#include "dumux/transport/fv/fvtransport_test.hh"
+#include "dumux/transport/fv/fvtransport_deprecated.hh"
 #include "dumux/transport/fv/capillarydiffusion.hh"
 #include "dumux/transport/problems/buckleyleverettproblem.hh"
 #include "dumux/transport/problems/simpleproblem.hh"
