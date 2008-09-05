@@ -12,6 +12,8 @@ class HeterogeneousSoil: public Matrix2p<G, RT>
 public:
 typedef	typename G::Traits::template Codim<0>::Entity Entity;
 	typedef typename G::ctype DT;
+	typedef typename Matrix2p<G, RT>::modelFlag modelFlag;
+	
 	enum
 	{	n=G::dimension, m=1};
 
@@ -72,12 +74,12 @@ typedef	typename G::Traits::template Codim<0>::Entity Entity;
 		return param;
 	}
 
-	virtual int relPermFlag(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
+	virtual modelFlag relPermFlag(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
 	{
 //		if (x[0]<=300)
 //			return 1;
 //		else
-			return 1;
+			return Matrix2p<G, RT>::brooks_corey;
 	}
 
 	HeterogeneousSoil()
