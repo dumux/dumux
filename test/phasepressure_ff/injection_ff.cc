@@ -15,7 +15,7 @@
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/material/vangenuchtenlaw_deprecated.hh"
 #include "dumux/material/brookscoreylaw_deprecated.hh"
-#include "dumux/fractionalflow/impes/impes.hh"
+#include "dumux/fractionalflow/impes/impes_deprecated.hh"
 #include "dumux/material/properties.hh"
 #include "dumux/transport/fv/fvtransport_phase.hh"
 #include "dumux/transport/fv/capillarydiffusion.hh"
@@ -26,14 +26,14 @@
 #include "dumux/timedisc/rungekuttastep.hh"
 #include "dumux/fractionalflow/variableclass.hh"
 
-int main(int argc, char** argv) 
+int main(int argc, char** argv)
 {
   try{
-    // define the problem dimensions (geometry of problem)  
+    // define the problem dimensions (geometry of problem)
     const int dim=2;
     typedef double NumberType;
     typedef GridType::ctype ctype;
-    
+
     Dune::FieldVector<NumberType, dim> outerLowerLeft(0);
     Dune::FieldVector<NumberType, dim> outerUpperRight(60);
     outerUpperRight[1] = 50;
@@ -50,49 +50,49 @@ int main(int argc, char** argv)
       std::cout << "usage: test_twophase tEnd" << std::endl;
       return 0;
     }
-    
-    // define tEnd 
+
+    // define tEnd
     std::string arg1(argv[1]);
     std::istringstream is1(arg1);
     double tEnd; is1 >> tEnd;
 
     // create a grid object
-    typedef Dune::SGrid<dim,dim> GridType; 
-    //typedef Dune::YaspGrid<dim,dim> GridType; 
-//    typedef Dune::UGGrid<dim> GridType; 
+    typedef Dune::SGrid<dim,dim> GridType;
+    //typedef Dune::YaspGrid<dim,dim> GridType;
+//    typedef Dune::UGGrid<dim> GridType;
 
     // use unitcube from grids (UGGrid)
     std::stringstream dgfFileName;
-    dgfFileName << "grids/unitcube" 
-//    dgfFileName << "grids/unitcube" 
+    dgfFileName << "grids/unitcube"
+//    dgfFileName << "grids/unitcube"
     	<< GridType :: dimension << ".dgf";
 
     // create grid pointer, GridType is defined by gridtype.hh
     Dune::GridPtr<GridType> gridPtr( dgfFileName.str() );
 
-    // grid reference 
+    // grid reference
     GridType& grid = *gridPtr;
 
     Dune::gridinfo(grid);
-    
+
     // time loop parameters
     const double tStart = 0;
     // const double tEnd = 2.5e9;
-    const double cFLFactor = 0.01;    
+    const double cFLFactor = 0.01;
     // slope limiter parameters
     bool reconstruct = false;
     double alphaMax = 0.8;
-    
+
     // IMPES parameters
-    int iterFlag = 2; 
-    int nIter = 500; 
+    int iterFlag = 2;
+    int nIter = 500;
     double maxDefect = 1e-5;
     double omega=0.8;
 
-    // plotting parameters 
+    // plotting parameters
     char* fileName("injection");
-    int modulo = 20; 
-    
+    int modulo = 20;
+
     // choose fluids and properties
      Water wPhase(0,1000); CO2 nwPhase(0,630,6e-5);
 
@@ -100,25 +100,25 @@ int main(int argc, char** argv)
     Dune::BrooksCoreyLaw materialLaw(wPhase, nwPhase,2,10000);
 
     typedef Dune::VariableClass<GridType, NumberType> VC;
-    
+
     VC variables(grid);
-      
-    Dune::InjectionTransportProblem<GridType, NumberType, VC> transportProblem(variables, materialLaw, outerLowerLeft, outerUpperRight, 
+
+    Dune::InjectionTransportProblem<GridType, NumberType, VC> transportProblem(variables, materialLaw, outerLowerLeft, outerUpperRight,
     		innerLowerLeft, innerUpperRight);
-    Dune::InjectionDiffProblem<GridType, NumberType, VC> diffusionProblem(variables, materialLaw,outerLowerLeft, outerUpperRight, 
+    Dune::InjectionDiffProblem<GridType, NumberType, VC> diffusionProblem(variables, materialLaw,outerLowerLeft, outerUpperRight,
     		innerLowerLeft, innerUpperRight,depthBOR, true);
- 
+
     typedef Dune::FVTransport<GridType, NumberType, VC> Transport;
     Transport transport(grid, transportProblem, grid.maxLevel(),reconstruct, alphaMax);
-        
+
     typedef Dune::FVDiffusionVelocity<GridType, NumberType, VC> Diffusion;
     Diffusion diffusion(grid, diffusionProblem,  grid.maxLevel());
 
     typedef Dune::IMPES<GridType, Diffusion, Transport, VC> IMPES;
     IMPES fractionalflow(diffusion, transport, iterFlag, nIter, maxDefect,omega);
-      
+
     Dune::TimeLoop<GridType, IMPES > timeloop(tStart, tEnd, fileName, modulo, cFLFactor);
-    
+
     Dune::Timer timer;
     timer.reset();
     timeloop.execute(fractionalflow);
@@ -133,7 +133,7 @@ int main(int argc, char** argv)
     std::cerr << "Unknown exception thrown!" << std::endl;
   }
 }
-//#else 
+//#else
 //
 //int main (int argc , char **argv) try
 //{
@@ -141,9 +141,9 @@ int main(int argc, char** argv)
 //
 //  return 1;
 //}
-//catch (...) 
+//catch (...)
 //{
 //    std::cerr << "Generic exception!" << std::endl;
 //    return 2;
 //}
-//#endif 
+//#endif
