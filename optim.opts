@@ -12,7 +12,8 @@ CONFIGURE_FLAGS=" CXXFLAGS=\"-O3 -DNDEBUG -funroll-loops -finline-functions\" \
   --with-ug=$MODDIR/ug \
   --with-blas='-lpthread -L$MODDIR/GotoBLAS -lgoto -llapack -lg2c' \
   --with-pardiso='-L$MODDIR/pardiso/lib -lpardiso_GNU_AMD64' \
-  --enable-parallel"
+  --enable-parallel
+  --disable-mpiruntest"
 
 # optional 
 # --with-grape=$MODDIR/grape \
