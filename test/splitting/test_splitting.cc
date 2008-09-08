@@ -8,7 +8,7 @@
 #include "dumux/material/linearlaw_deprecated.hh"
 #include "dumux/material/brookscoreylaw_deprecated.hh"
 #include "dumux/material/vangenuchtenlaw_deprecated.hh"
-#include "dumux/transport/fv/fvtransport.hh"
+#include "dumux/transport/fv/fvtransport_deprecated.hh"
 #include "dumux/transport/fv/fvsplittedtransport.hh"
 #include "dumux/transport/fv/capillarydiffusion.hh"
 #include "dumux/transport/problems/buckleyleverettproblem.hh"
@@ -19,10 +19,10 @@
 #include "dumux/timedisc/rungekuttastep.hh"
 #include "dumux/fractionalflow/variableclass.hh"
 
-int main(int argc, char** argv) 
+int main(int argc, char** argv)
 {
   try{
-    // define the problem dimensions  
+    // define the problem dimensions
     const int dim=2;
 
     // time loop parameters
@@ -30,20 +30,20 @@ int main(int argc, char** argv)
     const double tEnd = 2.5e9;
     double cFLFactor = 0.3;
     int modulo = 10;
-    
+
     // slope limiter parameters
     bool reconstruct = false;
     double alphaMax = 0.8;
-    
+
     // create a grid object
-    typedef double NumberType; 
-    typedef Dune::SGrid<dim,dim> GridType; 
-    typedef Dune::FieldVector<GridType::ctype,dim> FieldVector; 
-    Dune::FieldVector<int,dim> N(1); N[0] = 64;                   
-    FieldVector L(0); 
-    FieldVector H(300); H[0] = 600; 
-    GridType grid(N,L,H);  
- 
+    typedef double NumberType;
+    typedef Dune::SGrid<dim,dim> GridType;
+    typedef Dune::FieldVector<GridType::ctype,dim> FieldVector;
+    Dune::FieldVector<int,dim> N(1); N[0] = 64;
+    FieldVector L(0);
+    FieldVector H(300); H[0] = 600;
+    GridType grid(N,L,H);
+
     std::stringstream dgfFileName;
     dgfFileName << "grids/unitcube" << GridType :: dimension << ".dgf";
 
@@ -53,12 +53,12 @@ int main(int argc, char** argv)
     //Dune::VanGenuchtenLaw materialLaw(mat, mat);
     Dune::BrooksCoreyLaw materialLaw(mat, mat);
     //Dune::LinearLaw materialLaw(mat, mat);
-    
+
     typedef Dune::VariableClass<GridType, NumberType> VC;
 	double initsat=0;
     double initpress=0;
     Dune::FieldVector<double,dim>vel(0);
-    vel[0] = 1.0/6.0*1e-6;  
+    vel[0] = 1.0/6.0*1e-6;
     VC variables(grid,initsat,initpress,vel);
 
     typedef Dune::FVTransport<GridType, NumberType, VC> HyperbolicPart;
@@ -78,11 +78,11 @@ int main(int argc, char** argv)
     SplittedTransport splittedTransport(grid, hyperbolicPart, parabolicPart);
 
     Dune::TimeLoop<GridType, SplittedTransport > timeloop(tStart, tEnd, "splitted", modulo, cFLFactor);
-    
+
     timeloop.execute(splittedTransport);
-    
-    printvector(std::cout, *splittedTransport, "saturation", "row", 200, 1);    
-    
+
+    printvector(std::cout, *splittedTransport, "saturation", "row", 200, 1);
+
     return 0;
   }
   catch (Dune::Exception &e){

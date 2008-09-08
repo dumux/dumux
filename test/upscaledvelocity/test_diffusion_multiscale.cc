@@ -12,33 +12,33 @@
 #include "dumux/material/brookscoreylaw_deprecated.hh"
 #include "dumux/material/vangenuchtenlaw_deprecated.hh"
 #include "dumux/material/randompermeability.hh"
-#include "dumux/diffusion/fv/fvdiffusion.hh"
+#include "dumux/diffusion/fv/fvdiffusion_deprecated.hh"
 #include "dumux/diffusion/problems/heterogeneousproblem.hh"
 #include "dumux/diffusion/problems/uniformproblem.hh"
 #include "dumux/fractionalflow/variableclass.hh"
- 
-int main(int argc, char** argv) 
+
+int main(int argc, char** argv)
 {
   try{
-    // define the problem dimensions  
+    // define the problem dimensions
     const int dim=2;
 
     // create a grid object
-    typedef double NumberType; 
-    typedef Dune::SGrid<dim,dim> GridType; 
-    typedef Dune::FieldVector<GridType::ctype,dim> FieldVector; 
-    Dune::FieldVector<int,dim> N(1); N[0] = 3;                   
-    FieldVector L(0); 
-    FieldVector H(300); H[0] = 600; 
-    GridType grid(N,L,H);  
- 
+    typedef double NumberType;
+    typedef Dune::SGrid<dim,dim> GridType;
+    typedef Dune::FieldVector<GridType::ctype,dim> FieldVector;
+    Dune::FieldVector<int,dim> N(1); N[0] = 3;
+    FieldVector L(0);
+    FieldVector H(300); H[0] = 600;
+    GridType grid(N,L,H);
+
     grid.globalRefine(2);
 
     //Uniform mat;
     //Dune::VanGenuchtenLaw materialLaw(mat, mat);
     //Dune::BrooksCoreyLaw materialLaw(mat, mat);
     //Dune::LinearLaw materialLaw(mat, mat);
-    
+
     typedef Dune::VariableClass<GridType, NumberType> VC;
     double initsat = 1;
     VC variables(grid,initsat);
@@ -54,14 +54,14 @@ int main(int argc, char** argv)
     SatType sat(grid.levelIndexSet(0).size(0));
     int e = sat.size();
     for (int i = 0; i<e; i++) sat[i] = 0;
-    
+
     diffusion.pressure();
     printvector(std::cout, problem.variables.pressure, "pressure", "row", 200, 1, 3);
     //diffusion.vtkout("pressure", 0);
-    
+
     diffusion.calcTotalVelocity(0);
     printvector(std::cout, problem.variables.velocity, "velocity", "row", 4, 1, 3);
-    
+
     return 0;
   }
   catch (Dune::Exception &e){

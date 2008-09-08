@@ -6,21 +6,21 @@
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
-#include "dumux/diffusion/fv/fvdiffusion.hh"
+#include "dumux/diffusion/fv/fvdiffusion_deprecated.hh"
 #include "dumux/diffusion/fe/fediffusion.hh"
 #include "dumux/diffusion/mimetic/mimeticdiffusion.hh"
 #include "fvca5test8problem.hh"
 #include "../benchmarkresult.hh"
 
-int main(int argc, char** argv) 
+int main(int argc, char** argv)
 {
   try{
-    // define the problem dimensions  
+    // define the problem dimensions
     const int dim=2;
 
     // create a grid object
-    typedef double NumberType; 
-    typedef Dune::UGGrid<dim> GridType; 
+    typedef double NumberType;
+    typedef Dune::UGGrid<dim> GridType;
 
     if (argc != 2 && argc != 3) {
     	std::cout << "Usage: fvca5_test7 dgffilename [refinementsteps]" << std::endl;
@@ -32,11 +32,11 @@ int main(int argc, char** argv)
     	std::istringstream is2(arg2);
     	is2 >> refinementSteps;
     }
-    
+
     // create grid pointer, GridType is defined by gridtype.hh
     Dune::GridPtr<GridType> gridPtr( argv[1] );
 
-    // grid reference 
+    // grid reference
     GridType& grid = *gridPtr;
 
     if (refinementSteps)
@@ -52,36 +52,36 @@ int main(int argc, char** argv)
     //Dune::FEDiffusion<GridType, NumberType> diffusion(grid, problem);
     //Dune::FVDiffusion<GridType, NumberType> diffusion(grid, problem);
     Dune::MimeticDiffusion<GridType, NumberType, VC> diffusion(grid, problem, grid.maxLevel());
-    
+
     diffusion.pressure();
     std::cout << "pressure calculation took " << timer.elapsed() << " seconds" << std::endl;
     //printvector(std::cout, *diffusion, "pressure", "row", 200, 1, 3);
-    
+
     Dune::BenchmarkResult result;
-    result.evaluate(grid, problem, diffusion);  
+    result.evaluate(grid, problem, diffusion);
     std::cout.setf(std::ios_base::scientific, std::ios_base::floatfield);
     std::cout.setf(std::ios_base::uppercase);
     std::cout.precision(2);
-    
-    std::cout << "sumflux = flux0 + flux1 + fluy0 + fluy1 - sumf \n        = " 
-    	<< result.flux0 << " + " << result.flux1 << " + " 
-    	<< result.fluy0 << " + " << result.fluy1 << " - " 
+
+    std::cout << "sumflux = flux0 + flux1 + fluy0 + fluy1 - sumf \n        = "
+    	<< result.flux0 << " + " << result.flux1 << " + "
+    	<< result.fluy0 << " + " << result.fluy1 << " - "
     	<< result.sumf << "\n        = " << result.sumflux << std::endl;
     std::cout << "energy ener2 = " << result.ener2 << std::endl;
     std::cout << "umin = " << result.uMin << std::endl;
     std::cout << "umax = " << result.uMax << std::endl;
-    
+
     for (int i = 0; i < 11; i++) {
       std::cout << i+1 << " & ";
       for (int j = 0; j < 11; j++)
 	std::cout << (problem.variables.pressure)[i*11 + j] << " & ";
       std::cout << std::endl;
     }
- 
-    diffusion.vtkout("fvca5_test8", 0);
-    
 
-    
+    diffusion.vtkout("fvca5_test8", 0);
+
+
+
     return 0;
   }
   catch (Dune::Exception &e){
@@ -91,7 +91,7 @@ int main(int argc, char** argv)
     std::cerr << "Unknown exception thrown!" << std::endl;
   }
 }
-#else 
+#else
 
 int main (int argc , char **argv) try
 {
@@ -99,9 +99,9 @@ int main (int argc , char **argv) try
 
   return 1;
 }
-catch (...) 
+catch (...)
 {
     std::cerr << "Generic exception!" << std::endl;
     return 2;
 }
-#endif 
+#endif
