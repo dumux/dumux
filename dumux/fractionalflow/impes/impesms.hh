@@ -1,7 +1,7 @@
 #ifndef DUNE_IMPESMS_HH
 #define DUNE_IMPESMS_HH
 
-#include "dumux/fractionalflow/impes/impes.hh"
+#include "dumux/fractionalflow/impes/impes_deprecated.hh"
 #include "dumux/transport/fv/diffusivepart.hh"
 
 /**
@@ -13,7 +13,7 @@
 namespace Dune
 {
   template<class G, class Diffusion, class Transport, class VC>
-  class IMPESMS : public IMPES<G, Diffusion, Transport, VC> 
+  class IMPESMS : public IMPES<G, Diffusion, Transport, VC>
   {
       enum{dim = G::dimension, dimworld = G::dimensionworld};
 	  typedef typename Diffusion::RepresentationType PressType;
@@ -23,43 +23,43 @@ namespace Dune
 	typedef typename G::ctype ct;
 	typedef typename Transport::RepresentationType RepresentationType;
 
-	virtual void totalVelocity(const RT t=0) 
+	virtual void totalVelocity(const RT t=0)
 	{
 		Diffusion::calcTotalVelocity(t);
-		
+
 //	  if ( Transport::level() == Diffusion::level() )
 //		  Diffusion::totalVelocity(this->diffproblem.variables.velocity,t);
 //	  else
 //		  Diffusion::totalVelocity(this->diffproblem.variables.velocity,t,Transport::level());
 	}
 
-	
+
 	virtual void initial()
 	{
 		double t = 0;
 		Transport::initial();
 
-		this->pressure(t);		
+		this->pressure(t);
 		totalVelocity(t);
 	}
-	
-		
+
+
 	int update(const RT t, RT& dt, RepresentationType& updateVec, RT cFLFactor = 1)
 	{
 		  typedef typename G::template Codim<0>::LevelIterator ElementLevelIterator;
 		  typedef typename G::template Codim<0>::HierarchicIterator HierarchicIterator;
 		  const typename G::Traits::LevelIndexSet& isetC ( Transport::grid.levelIndexSet(Transport::level()) );
 		  const typename G::Traits::LevelIndexSet& isetF ( Diffusion::grid.levelIndexSet(Diffusion::level()) );
-		  
+
 //		  RepresentationType saturation(isetF.size(0));
 		  // entity pointer type
 		  typedef typename G::template Codim<0>::EntityPointer ElementEntityPointer;
 		  int maxlevel = Transport::grid.maxLevel();
-		
+
 		  int pressSize = this->diffproblem.variables.pressure.size();
 		  int satSize = saturation.size();
 		  PressType pressOldIter(this->diffproblem.variables.pressure);
-		  PressType pressHelp(pressSize);  
+		  PressType pressHelp(pressSize);
 		  RepresentationType satOldIter(saturation);
 		  RepresentationType satHelp(satSize);
 		  RepresentationType satDiff(satSize);
@@ -75,8 +75,8 @@ namespace Dune
 		    {
 		    	iter++;
 		    	iterTot++;
-		    	if (!this->diffproblem.materialLaw.isLinear()) 
-		    	{ // update pressure 
+		    	if (!this->diffproblem.materialLaw.isLinear())
+		    	{ // update pressure
 		    		pressure(t);
 		    		totalVelocity(t);
 		    	}
@@ -101,53 +101,53 @@ namespace Dune
 		    		updateOldIter = updateVec;
 		    	}
 		    // break criteria for iteration loop
-		    	if ( this->iterFlag==2 && dt*updateDiff.two_norm()/(saturation).two_norm() <= this->maxDefect ) 
+		    	if ( this->iterFlag==2 && dt*updateDiff.two_norm()/(saturation).two_norm() <= this->maxDefect )
 		    		converg = true;
-		    	else if ( this->iterFlag==2 && iter > this->nIter ) 
+		    	else if ( this->iterFlag==2 && iter > this->nIter )
 		    	{
-		    		std::cout << "Nonlinear loop in IMPES.update exceeded nIter = " 
+		    		std::cout << "Nonlinear loop in IMPES.update exceeded nIter = "
 		    		<< this->nIter << " iterations." << std::endl;
 		    	return 1;
 		    	}
-		    	else if ( this->iterFlag==1 && iter > this->nIter ) 
+		    	else if ( this->iterFlag==1 && iter > this->nIter )
 		    		converg = true;
-		    	else if ( this->iterFlag==0 ) 
+		    	else if ( this->iterFlag==0 )
 		    		converg = true;
 		    }
 		    // outputs
-		    if (this->iterFlag==2) 
+		    if (this->iterFlag==2)
 		    	std::cout << "Iteration steps: "<< iterTot << std::endl;
 		    std::cout.setf (std::ios::scientific, std::ios::floatfield);
-  
+
 		    return 0;
-		  
+
 	}
-			
-	virtual void vtkout (const char* name, int k) const 
+
+	virtual void vtkout (const char* name, int k) const
 	{
-	  char fname[128];	
+	  char fname[128];
 
 	  Transport::vtkout (name,k);
-	  
+
 //	  Dune::VTKWriter<G, typename G::template Codim<0>::LevelIndexSet> vtkWriterSat(this->grid, this->grid.levelIndexSet(this->level()));
 //	  sprintf(fname,"%s-%05d",name,k);
 //	  vtkWriterSat.addCellData(this->sat,"saturation");
-//	  vtkWriterSat.write(fname,Dune::VTKOptions::ascii);		
+//	  vtkWriterSat.write(fname,Dune::VTKOptions::ascii);
 
 	  Dune::VTKWriter<G, typename G::LevelGridView> vtkWriterPress(this->Diffusion::grid.levelView(this->Diffusion::level()));
 	  sprintf(fname,"%s-press.%05d",name,k);
 	  vtkWriterPress.addCellData(this->diffproblem.variables.pressure,"total pressure p~");
-	  vtkWriterPress.write(fname,Dune::VTKOptions::ascii);		
+	  vtkWriterPress.write(fname,Dune::VTKOptions::ascii);
 	}
-	
+
 	//! Construct an IMPES object.
-	IMPESMS (Diffusion& diff, Transport& trans, int flag = 1, int nIt = 2, double maxDef = 1e-5, 
+	IMPESMS (Diffusion& diff, Transport& trans, int flag = 1, int nIt = 2, double maxDef = 1e-5,
 			double om = 1)
 	: IMPES<G, Diffusion, Transport, VC>(diff, trans, flag, nIt, maxDef, om)
-	{  
+	{
 		saturation.resize(trans.grid.size(0));
 	}
-	  
+
   private:
 	  RepresentationType saturation;
   };
