@@ -7,7 +7,7 @@
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/grid/utility/intersectiongetter.hh>
 #include <dune/istl/bvector.hh>
-#include "dumux/transport/transport.hh"
+#include "dumux/transport/transport_deprecated.hh"
 #include "dumux/transport/fv/numericalflux.hh"
 #include "dumux/transport/fv/diffusivepart.hh"
 
@@ -40,35 +40,35 @@ template<class G, class RT, class VC> class FVTransport :
 
 public:
 	typedef BlockVector< Dune::FieldVector<RT,1> > RepresentationType;
-	/*! 
-	 *  \param t time 
-	 *  \param dt time step size to estimate 
-	 *  \param update vector to be filled with the update 
+	/*!
+	 *  \param t time
+	 *  \param dt time step size to estimate
+	 *  \param update vector to be filled with the update
 	 *
-	 *  This method calculates the update vector, i.e., the FV discretization 
-	 *  of \f$\text{div}\, (f_\text{w} \boldsymbol{v}_t)\f$. The total velocity 
-	 *  \f$\boldsymbol{v}_t)\f$ has to be given by the block vector \a velocity, 
-	 *  containing values at each cell face. The fractional flow function \f$f_\text{w}\f$ 
-	 *  is realized by the numerical flux function \a numericalFlux such that the \f$i\f$-th entry 
-	 *  of the vector update is obtained by calculating 
+	 *  This method calculates the update vector, i.e., the FV discretization
+	 *  of \f$\text{div}\, (f_\text{w} \boldsymbol{v}_t)\f$. The total velocity
+	 *  \f$\boldsymbol{v}_t)\f$ has to be given by the block vector \a velocity,
+	 *  containing values at each cell face. The fractional flow function \f$f_\text{w}\f$
+	 *  is realized by the numerical flux function \a numericalFlux such that the \f$i\f$-th entry
+	 *  of the vector update is obtained by calculating
 	 *  \f[ \sum_{j \in \mathcal{N}(i)} v_{ij}g(S_i, S_j) - v_{ji}g(S_j, S_i), \f]
-	 *  where \f$\mathcal{N}(i)\f$ denotes the set of neighbors of the cell \f$i\f$ and 
-	 *  \f$g\f$ stands for \a numericalFlux. The normal velocities \f$v_{ij}\f$ and \f$v_{ji}\f$ 
-	 *  are given by 
+	 *  where \f$\mathcal{N}(i)\f$ denotes the set of neighbors of the cell \f$i\f$ and
+	 *  \f$g\f$ stands for \a numericalFlux. The normal velocities \f$v_{ij}\f$ and \f$v_{ji}\f$
+	 *  are given by
 	 *  \f{align*} v_{ij} = \int_{\Gamma_{ij}} \max(\boldsymbol{v}_\text{t}{\cdot}\boldsymbol{n}_{ij}, \, 0), \qquad
 	 *  v_{ji} = \int_{\Gamma_{ij}} \min(\boldsymbol{v}_\text{t}{\cdot}\boldsymbol{n}_{ij}, \, 0), \f}
-	 *  where \f$\boldsymbol{n}_{ij}\f$ denotes the unit normal vector from cell \f$i\f$ towards cell \f$j\f$. 
+	 *  where \f$\boldsymbol{n}_{ij}\f$ denotes the unit normal vector from cell \f$i\f$ towards cell \f$j\f$.
 	 *
-	 *  Additionally to the \a update vector, the recommended time step size \a dt is calculated 
-	 *  employing the usual CFL condition. 
+	 *  Additionally to the \a update vector, the recommended time step size \a dt is calculated
+	 *  employing the usual CFL condition.
 	 */
 	int update(const RT t, RT& dt, RepresentationType& updateVec, RT& cFLFac);
 
 	void initialTransport();
-	
+
 
 	/*! @brief constructor
-	 * 
+	 *
 	 * @param g a DUNE grid object
 	 * @param prob an object of class TransportProblem or derived
 	 * @param lev the grid level on which the Transport equation is to be solved.
@@ -79,7 +79,7 @@ public:
 	 */
 	FVTransport(G& g, TransportProblem<G, RT, VC>& prob, int lev = 0, bool rec = false,
 			double amax = 0.8) :
-				Transport<G, RT, VC>(g, prob, lev), gridview(g.levelView(lev)), 
+				Transport<G, RT, VC>(g, prob, lev), gridview(g.levelView(lev)),
 				indexset(gridview.indexSet()), elementmapper(g, indexset),
 				reconstruct(rec), alphamax(amax)
 				{}
@@ -108,7 +108,7 @@ template<class G, class RT, class VC> int FVTransport<G, RT, VC>::update(const R
 	if (reconstruct)
 		CalculateSlopes(slope, t,cFLFac);
 
-	// compute update vector 
+	// compute update vector
 	Iterator eendit = gridview.template end<0>();
 	for (Iterator it = gridview.template begin<0>(); it != eendit; ++it) {
 		// cell geometry type
@@ -132,7 +132,7 @@ template<class G, class RT, class VC> int FVTransport<G, RT, VC>::update(const R
 		double sumfactor = 0;
 		double sumfactor2 = 0;
 		double diff = 0;
-		
+
 
 		// run through all intersections with neighbors and boundary
 		IntersectionIterator
@@ -140,7 +140,7 @@ template<class G, class RT, class VC> int FVTransport<G, RT, VC>::update(const R
 		for (IntersectionIterator
 				is = IntersectionIteratorGetter<G, LevelTag>::begin(*it); is
 				!=endit; ++is) {
-			// local number of facet 
+			// local number of facet
 			int numberInSelf = is->numberInSelf();
 
 			// get geometry type of face
@@ -160,7 +160,7 @@ template<class G, class RT, class VC> int FVTransport<G, RT, VC>::update(const R
 			integrationOuterNormal
 			*= Dune::ReferenceElements<ct,dim-1>::general(gtf).volume();
 
-			// compute factor occuring in flux formula	
+			// compute factor occuring in flux formula
 			double velocityIJ = std::max(this->transproblem.variables.vTotal(*it, numberInSelf)*integrationOuterNormal/(volume), 0.0);
 //			std::cout<<"velocity IJ = "<<velocityIJ<<std::endl;
 			double factor;
@@ -176,7 +176,7 @@ template<class G, class RT, class VC> int FVTransport<G, RT, VC>::update(const R
 				if ( it->level()>=outside->level() )
 				{
 					double velocityJI = std::max(-(this->transproblem.variables.vTotal(*it, numberInSelf)*integrationOuterNormal/volume), 0.0);
-//					std::cout<<"velocity JI = "<<velocityJI<<std::endl;			
+//					std::cout<<"velocity JI = "<<velocityJI<<std::endl;
 					factor = velocityJI - velocityIJ;
 				}
 			}
@@ -194,7 +194,7 @@ template<class G, class RT, class VC> int FVTransport<G, RT, VC>::update(const R
 				{
 
 					double velocityJI = std::max(-(this->transproblem.variables.vTotal(*it, numberInSelf)*integrationOuterNormal/volume), 0.0);
-			
+
 					factor = velocityJI - velocityIJ;
 				}
 				else
@@ -205,7 +205,7 @@ template<class G, class RT, class VC> int FVTransport<G, RT, VC>::update(const R
 				}
 			}
 
-			// add to update vector 
+			// add to update vector
 			updateVec[indexi] += factor;
 
 			// for time step calculation
@@ -218,7 +218,7 @@ template<class G, class RT, class VC> int FVTransport<G, RT, VC>::update(const R
 			diff +=factor;
 		}
 		diff = fabs(diff);
-		// end all intersections    
+		// end all intersections
 		// compute dt restriction
 		sumfactor = std::max(sumfactor, sumfactor2);
 //		sumfactor = std::max(sumfactor, 10*diff);
@@ -226,7 +226,7 @@ template<class G, class RT, class VC> int FVTransport<G, RT, VC>::update(const R
 //		std::cout<<"diff = "<<diff*10<<std::endl;
 		dt = std::min(dt, 1/sumfactor);
 
-	} // end grid traversal      
+	} // end grid traversal
 	//Correct maximal available volume in the CFL-Criterium
 	RT ResSaturationFactor = 1-this->transproblem.materialLaw.wettingPhase.Sr()-this->transproblem.materialLaw.nonwettingPhase.Sr();
 	dt = dt*this->transproblem.porosity()*ResSaturationFactor;
@@ -241,7 +241,7 @@ template<class G, class RT, class VC> int FVTransport<G, RT, VC>::update(const R
 }
 
 template<class G, class RT, class VC> void FVTransport<G, RT, VC>::initialTransport() {
-//	std::cout<<"initsat = "<<&this->transproblem.variables.saturation<<std::endl;	
+//	std::cout<<"initsat = "<<&this->transproblem.variables.saturation<<std::endl;
 	// iterate through leaf grid an evaluate c0 at cell center
 	Iterator eendit = gridview.template end<0>();
 	for (Iterator it = gridview.template begin<0>(); it != eendit; ++it) {
@@ -281,8 +281,8 @@ template<class G, class RT, class VC> void FVTransport<G, RT, VC>::CalculateSlop
 		// vector containing the saturations of the neighboring cells
 		Dune::FieldVector<double, 2*dim> saturation;
 
-		// location[k], k = 0,...,2dim-1, contains the local index w.r.t. IntersectionIterator, 
-		// i.e. the numberInSelf, which is east, west, north, south, top, bottom to the cell center 
+		// location[k], k = 0,...,2dim-1, contains the local index w.r.t. IntersectionIterator,
+		// i.e. the numberInSelf, which is east, west, north, south, top, bottom to the cell center
 		Dune::FieldVector<int, 2*dim> location;
 
 		// run through all intersections with neighbors and boundary
@@ -291,7 +291,7 @@ template<class G, class RT, class VC> void FVTransport<G, RT, VC>::CalculateSlop
 		for (IntersectionIterator
 				is = IntersectionIteratorGetter<G, LevelTag>::begin(*it); is
 				!=isend; ++is) {
-			// local number of facet 
+			// local number of facet
 			int numberInSelf = is->numberInSelf();
 
 			// handle interior face
@@ -300,7 +300,7 @@ template<class G, class RT, class VC> void FVTransport<G, RT, VC>::CalculateSlop
 				EntityPointer outside = is->outside();
 				int indexj = elementmapper.map(*outside);
 
-				// get saturation value 
+				// get saturation value
 				saturation[numberInSelf] = this->transproblem.variables.saturation[indexj];
 
 				// compute factor in neighbor
@@ -317,7 +317,7 @@ template<class G, class RT, class VC> void FVTransport<G, RT, VC>::CalculateSlop
 				// compute distance between cell centers
 				dist[numberInSelf] = distVec.two_norm();
 
-				// CAREFUL: works only for axiparallel grids 
+				// CAREFUL: works only for axiparallel grids
 				for (int k = 0; k < dim; k++)
 					if (nbglobal[k] - global[k]> 0.5*dist[numberInSelf]) {
 						location[2*k] = numberInSelf;
@@ -339,16 +339,16 @@ template<class G, class RT, class VC> void FVTransport<G, RT, VC>::CalculateSlop
 				Dune::FieldVector<ct,dimworld>
 				faceglobal = is->intersectionGlobal().global(facelocal);
 
-				// get saturation value 
+				// get saturation value
 				saturation[numberInSelf] = this->transproblem.variables.saturation[indexi];//this->transproblem.g(faceglobal, *it, facelocalDim);
 
 				// distance vector between barycenters
 				Dune::FieldVector<ct,dimworld> distVec = global - faceglobal;
 
-				// compute distance 
+				// compute distance
 				dist[numberInSelf] = distVec.two_norm();
 
-				// CAREFUL: works only for axiparallel grids 
+				// CAREFUL: works only for axiparallel grids
 				for (int k = 0; k < dim; k++)
 				if (faceglobal[k] - global[k] > 0.5*dist[numberInSelf])
 				{
@@ -359,7 +359,7 @@ template<class G, class RT, class VC> void FVTransport<G, RT, VC>::CalculateSlop
 					location[2*k + 1] = numberInSelf;
 				}
 			}
-		} // end all intersections 
+		} // end all intersections
 
 		for (int k = 0; k < dim; k++) {
 			double slopeIK = (saturation[location[2*k]]
@@ -383,7 +383,7 @@ template<class G, class RT, class VC> void FVTransport<G, RT, VC>::CalculateSlop
 			this->transproblem.variables.slope[indexi][k]=slope[indexi][k];
 
 		}
-	} // end grid traversal 
+	} // end grid traversal
 
 	return;
 }
