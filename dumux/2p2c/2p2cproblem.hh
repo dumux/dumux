@@ -11,9 +11,7 @@
 #include<dune/grid/common/referenceelements.hh>
 #include<dune/grid/utility/intersectiongetter.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
-#include<dumux/material/twophaserelations_deprecated.hh>
-#include<dumux/material/multicomponentrelations.hh>
-#include<dumux/material/linearlaw_deprecated.hh>
+#include<dumux/material/twophaserelations.hh>
 
 /**
  * @file
@@ -24,18 +22,18 @@
 namespace Dune
 {
   //! base class that defines the parameters of a diffusion equation
-  /*! An interface for defining parameters for the stationary diffusion equation 
-   * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = q, \f$, 
-   * \f$p = g\f$ on \f$\Gamma_1\f$, and \f$\lambda K \text{grad}\, p = J\f$ 
-   * on \f$\Gamma_2\f$. Here, 
-   * \f$p\f$ denotes the pressure, \f$K\f$ the absolute permeability, 
-   * and \f$\lambda\f$ the total mobility, possibly depending on the 
-   * saturation. 
+  /*! An interface for defining parameters for the stationary diffusion equation
+   * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = q, \f$,
+   * \f$p = g\f$ on \f$\Gamma_1\f$, and \f$\lambda K \text{grad}\, p = J\f$
+   * on \f$\Gamma_2\f$. Here,
+   * \f$p\f$ denotes the pressure, \f$K\f$ the absolute permeability,
+   * and \f$\lambda\f$ the total mobility, possibly depending on the
+   * saturation.
    *
    *	Template parameters are:
-   *	
+   *
    *	- Grid  a DUNE grid type
-   *	- RT    type used for return values 
+   *	- RT    type used for return values
    */
   template<class G, class RT>
   class TwoPTwoCProblem {
@@ -61,7 +59,7 @@ namespace Dune
 	  @param[in]  xi   position in reference element of e
 	  \return     value of source term
 	 */
-	virtual FieldVector<RT,m> q (const FieldVector<DT,dim>& x, const Entity& e, 
+	virtual FieldVector<RT,m> q (const FieldVector<DT,dim>& x, const Entity& e,
 					const FieldVector<DT,dim>& xi) const = 0;
 
 	//! return type of boundary condition at the given global coordinate
@@ -69,8 +67,8 @@ namespace Dune
 	  @param[in]  x    position in global coordinates
 	  \return     boundary condition type given by enum in this class
 	 */
-	//	virtual FieldVector<BoundaryConditions::Flags, m> bctype (const FieldVector<DT,n>& x, const Entity& e, 
-	//			const IntersectionIterator& intersectionIt, 
+	//	virtual FieldVector<BoundaryConditions::Flags, m> bctype (const FieldVector<DT,n>& x, const Entity& e,
+	//			const IntersectionIterator& intersectionIt,
 	//			const FieldVector<DT,n>& xi) const = 0;
 
 	virtual FieldVector<BoundaryConditions::Flags, m>bctype(
@@ -83,10 +81,10 @@ namespace Dune
 		 @param[in]  x    position in global coordinates
 		 \return     index of the primary variable
 		 */
-	
+
 	virtual void dirichletIndex(const FieldVector<DT,dim>& x, const Entity& e,
 			const IntersectionIterator& intersectionIt,
-			const FieldVector<DT,dim>& xi, FieldVector<int,m>& dirichletIndex) const 
+			const FieldVector<DT,dim>& xi, FieldVector<int,m>& dirichletIndex) const
 	{
 		for (int i = 0; i < m; i++)
 			dirichletIndex[i]=i;
@@ -98,19 +96,19 @@ namespace Dune
 	  @param[in]  x    position in global coordinates
 	  \return     boundary condition value
 	 */
-	virtual FieldVector<RT,m> g (const FieldVector<DT,dim>& x, const Entity& e, 
-				const IntersectionIterator& intersectionIt, 
+	virtual FieldVector<RT,m> g (const FieldVector<DT,dim>& x, const Entity& e,
+				const IntersectionIterator& intersectionIt,
 				  const FieldVector<DT,dim>& xi) const = 0;
-	  
+
 	//! evaluate Neumann boundary condition at given position
 	/*! evaluate Neumann boundary condition at given position
 	  @param[in]  x    position in global coordinates
 	  \return     boundary condition value
 	 */
-	virtual FieldVector<RT,m> J (const FieldVector<DT,dim>& x, const Entity& e, 
-				const IntersectionIterator& intersectionIt, 
+	virtual FieldVector<RT,m> J (const FieldVector<DT,dim>& x, const Entity& e,
+				const IntersectionIterator& intersectionIt,
 				  const FieldVector<DT,dim>& xi) const = 0;
-	  
+
 	//! evaluate initial condition at given position
 	/*! evaluate initial boundary condition at given position
 	  @param[in]  x    position in global coordinates
@@ -118,7 +116,7 @@ namespace Dune
 	 */
 	virtual FieldVector<RT,m> initial(const FieldVector<DT,dim>& x,
 			const Entity& e, const FieldVector<DT,dim>& xi) const = 0;
-	
+
 	//! initiate phase state at given position
 	/*! initiate phase state at given position
 	  @param[in]  x    position in global coordinates
@@ -132,27 +130,25 @@ namespace Dune
 
 	virtual FieldVector<RT,dim> gravity() const = 0;
 
-	virtual FieldVector<RT,4> materialLawParameters(const FieldVector<DT,dim>& x,
-			const Entity& e, const FieldVector<DT,dim>& xi) const = 0;
-
 	virtual double depthBOR () const = 0;
-		
-	TwoPhaseRelations& materialLaw ()  
-	{
-		return materialLaw_;
-	}
 
 	MultiComp& multicomp ()
 	{
 		return multicomp_;
 	}
-	
+
+	TwoPhaseRelations<G, RT>& materialLaw ()
+	{
+		return materialLaw_;
+	}
+
+
 	//element-wise return of the values of an Exact solution
 	virtual RT uExOutVertex(int &ElementIndex, int VariableIndex) const {
 		DUNE_THROW(NotImplemented, "Ex(akt) Solution");
 		return 0;
 	}
-	
+
 	//updates an exact/analytic solution
 	virtual void updateExSol(double &dt,
 			BlockVector<FieldVector<RT, m> > &approxSol) {
@@ -160,20 +156,21 @@ namespace Dune
 		return;
 	}
 
-	
-	TwoPTwoCProblem(TwoPhaseRelations& law = *(new LinearLaw), 
-			MultiComp& multicomp = *(new CWaterAir), const bool exsol = false) 
-	: materialLaw_(law), exsolution(exsol), multicomp_(multicomp)
+
+	TwoPTwoCProblem(MultiComp& multicomp = *(new CWaterAir),
+			TwoPhaseRelations<G, RT>& materialLaw = *(new TwoPhaseRelations<G, RT>),
+			const bool exsol = false)
+	: exsolution(exsol), multicomp_(multicomp), materialLaw_(materialLaw)
 	{	}
-	
+
 	//! always define virtual destructor in abstract base class
 	virtual ~TwoPTwoCProblem () {}
 
 	const bool exsolution;
-			
+
   protected:
-	TwoPhaseRelations& materialLaw_;
 	MultiComp& multicomp_;
+	TwoPhaseRelations<G, RT>& materialLaw_;
   };
 
 }
