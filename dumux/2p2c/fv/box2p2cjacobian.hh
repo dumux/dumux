@@ -57,10 +57,10 @@ namespace Dune
 	Template parameters are:
 
 	- Grid  a DUNE grid type
-	- RT    type used for return values 
+	- RT    type used for return values
   */
   template<class G, class RT, class BoxFunction = LeafP1Function<G, RT, 2> >
-  class Box2P2CJacobian 
+  class Box2P2CJacobian
     : public BoxJacobian<Box2P2CJacobian<G,RT,BoxFunction>,G,RT,2,BoxFunction>
   {
     typedef typename G::ctype DT;
@@ -74,73 +74,70 @@ namespace Dune
  	enum {pWIdx = 0, switchIdx = 1, numberOfComponents = 2};	// Solution vector index
 	enum {wPhase = 0, nPhase = 1};									// Phase index
 	enum {gasPhase = 0, waterPhase = 1, bothPhases = 2};		// Phase state
-	enum {water = 0, air = 1};										// Component index					
-	
+	enum {water = 0, air = 1};										// Component index
+
   public:
     // define the number of phases (m) and components (c) of your system, this is used outside
     // to allocate the correct size of (dense) blocks with a FieldMatrix
     enum {dim=G::dimension};
     enum {m=2, c=2};
     enum {SIZE=LagrangeShapeFunctionSetContainer<DT,RT,dim>::maxsize};
-    struct VariableNodeData;  
+    struct VariableNodeData;
 
     typedef FieldMatrix<RT,dim,dim> FMatrix;
     typedef FieldVector<RT,dim> FVector;
-    
+
     //! Constructor
-    Box2P2CJacobian (TwoPTwoCProblem<G,RT>& params,
-			      bool levelBoundaryAsDirichlet_, const G& grid, 
-			      BoxFunction& sol, 
-			      bool procBoundaryAsDirichlet_=true)
-    : BoxJacobian<ThisType,G,RT,2,BoxFunction>(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_), 
-      problem(params), 
-      sNDat(this->vertexMapper.size()), vNDat(SIZE), oldVNDat(SIZE)
+    Box2P2CJacobian (TwoPTwoCProblem<G,RT>& params, bool levelBoundaryAsDirichlet_, const G& grid,
+			      BoxFunction& sol, bool procBoundaryAsDirichlet_=true)
+    : BoxJacobian<ThisType,G,RT,2,BoxFunction>(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_),
+      problem(params), sNDat(this->vertexMapper.size()), vNDat(SIZE), oldVNDat(SIZE)
     {
       this->analytic = false;
     }
 
 	/** @brief compute time dependent term (storage), loop over nodes / subcontrol volumes
-	 *  @param e entity   
+	 *  @param e entity
 	 *  @param sol solution vector
 	 *  @param node local node id
 	 *  @return storage term
 	 */
-    virtual VBlockType computeM (const Entity& e, const VBlockType* sol, 
+    virtual VBlockType computeM (const Entity& e, const VBlockType* sol,
     		int node, std::vector<VariableNodeData>& varData)
     {
     	 GeometryType gt = e.geometry().type();
     	 const typename LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type&
      	 sfs=LagrangeShapeFunctions<DT,RT,dim>::general(gt,1);
-    	 
+
    	 int globalIdx = this->vertexMapper.template map<dim>(e, sfs[node].entity());
 
-   	 VBlockType result; 
+   	 VBlockType result;
    	 RT satN = varData[node].satN;
    	 RT satW = varData[node].satW;
-   	    	    	                  
+
    	 // storage of component water
-   	 result[water] = 
+   	 result[water] =
    		 sNDat[globalIdx].porosity*(varData[node].density[wPhase]*satW*varData[node].massfrac[water][wPhase]
    		                 +varData[node].density[nPhase]*satN*varData[node].massfrac[water][nPhase]);
    	 // storage of component air
-   	 result[air] = 
+   	 result[air] =
    		 sNDat[globalIdx].porosity*(varData[node].density[nPhase]*satN*varData[node].massfrac[air][nPhase]
-   	                    +varData[node].density[wPhase]*satW*varData[node].massfrac[air][wPhase]);   
-   	 
+   	                    +varData[node].density[wPhase]*satW*varData[node].massfrac[air][wPhase]);
+
    	 //std::cout << result << " " << node << std::endl;
    	 return result;
     };
 
-    virtual VBlockType computeM (const Entity& e, const VBlockType* sol, int node, bool old = false) 
+    virtual VBlockType computeM (const Entity& e, const VBlockType* sol, int node, bool old = false)
     {
     	if (old)
     		return computeM(e, sol, node, oldVNDat);
-    	else 
+    	else
     		return computeM(e, sol, node, vNDat);
     }
 
     /** @brief compute diffusive/advective fluxes, loop over subcontrol volume faces
-	 *  @param e entity   
+	 *  @param e entity
 	 *  @param sol solution vector
 	 *  @param face face id
 	 *  @return flux term
@@ -149,7 +146,7 @@ namespace Dune
     {
    	 int i = this->fvGeom.subContVolFace[face].i;
  	 int j = this->fvGeom.subContVolFace[face].j;
- 	 
+
  	 // normal vector, value of the area of the scvf
 	 const FieldVector<RT,dim> normal(this->fvGeom.subContVolFace[face].normal);
 
@@ -157,32 +154,32 @@ namespace Dune
 	 const FieldVector<DT,dim> global_i = this->fvGeom.subContVol[i].global;
 	 const FieldVector<DT,dim> global_j = this->fvGeom.subContVol[j].global;
 
-	 FieldMatrix<RT,m,dim> pGrad(0.), xGrad(0.); 
-	 FieldVector<RT,dim> temp(0.); 
+	 FieldMatrix<RT,m,dim> pGrad(0.), xGrad(0.);
+	 FieldVector<RT,dim> temp(0.);
      VBlockType flux(0.);
 
-     //	FieldVector<RT,dim> Kij(0); 
-	 // effective permeability in edge direction 
- 	 // RT Kij = sIPDat[global_j].K_eff[face]; 
-	 //const FMatrix K = harmonicMeanK(e, face);		  
+     //	FieldVector<RT,dim> Kij(0);
+	 // effective permeability in edge direction
+ 	 // RT Kij = sIPDat[global_j].K_eff[face];
+	 //const FMatrix K = harmonicMeanK(e, face);
  	 //K.umv(normal, Kij);  // Kij=K*n
- 	 
+
  	 // calculate harmonic mean of permeabilities of nodes i and j
 	 const FMatrix K = harmonicMeanK(global_i, global_j);
-	 
+
 	 // calculate FE gradient (grad p for each phase)
 	 for (int k = 0; k < this->fvGeom.nNodes; k++) // loop over adjacent nodes
-	 {	 
+	 {
 		 // FEGradient at node k
 		 const FieldVector<DT,dim> feGrad(this->fvGeom.subContVolFace[face].grad[k]);
 		 FieldVector<RT,m> pressure(0.0), massfrac(0.0);
 
 		 pressure[wPhase] = vNDat[k].pW;
 		 pressure[nPhase] = vNDat[k].pN;
-  	 
+
 	  	 // compute sum of pressure gradients for each phase
 	  	 for (int phase = 0; phase < m; phase++)
-	  	 {	      		 
+	  	 {
 	  		 temp = feGrad;
 	  		 temp *= pressure[phase];
 	  		 pGrad[phase] += temp;
@@ -203,20 +200,20 @@ namespace Dune
 	 for (int phase=0; phase<m; phase++)
 	 {
 		 contribComp[phase] = problem.gravity();
-		 contribComp[phase] *= vNDat[i].density[phase];  
+		 contribComp[phase] *= vNDat[i].density[phase];
 		 pGrad[phase] -= contribComp[phase]; // grad p - rho*g
 	 }
- 	 
+
 	 VBlockType outward(0);  // Darcy velocity of each phase
 	 FieldVector<RT,dim> v_tilde(0);
 
 	 // calculate the advective flux using upwind: K*n(grad p -rho*g)
-	 for (int phase=0; phase<m; phase++) 
+	 for (int phase=0; phase<m; phase++)
 	 	{
      	 K.umv(pGrad[phase], v_tilde);  // v_tilde=K*gradP
      	 outward[phase] = v_tilde*normal;
 	 	}
-	 
+
 	 // evaluate upwind nodes
 	 int up_w, dn_w, up_n, dn_n;
 	 if (outward[wPhase] <= 0) {up_w = i; dn_w = j;}
@@ -226,21 +223,21 @@ namespace Dune
 
 
 	 RT alpha = 1.0;  // Upwind parameter
-	 
+
 	 // Water conservation
 	 flux[water] =   (alpha* vNDat[up_w].density[wPhase]*vNDat[up_w].mobility[wPhase]
-			               * vNDat[up_w].massfrac[water][wPhase] 
+			               * vNDat[up_w].massfrac[water][wPhase]
 			    + (1-alpha)* vNDat[dn_w].density[wPhase]*vNDat[dn_w].mobility[wPhase]
 			               * vNDat[dn_w].massfrac[water][wPhase])
-			               * outward[wPhase]; 		 		
+			               * outward[wPhase];
 	 flux[water] +=  (alpha* vNDat[up_n].density[nPhase]*vNDat[up_n].mobility[nPhase]
-			               * vNDat[up_n].massfrac[water][nPhase] 
+			               * vNDat[up_n].massfrac[water][nPhase]
 			    + (1-alpha)* vNDat[dn_n].density[nPhase]*vNDat[dn_n].mobility[nPhase]
 			               * vNDat[dn_n].massfrac[water][nPhase])
 			               * outward[nPhase];
 	 // Air conservation
 	 flux[air]   =   (alpha* vNDat[up_n].density[nPhase]*vNDat[up_n].mobility[nPhase]
-			               * vNDat[up_n].massfrac[air][nPhase] 
+			               * vNDat[up_n].massfrac[air][nPhase]
 			    + (1-alpha)* vNDat[dn_n].density[nPhase]*vNDat[dn_n].mobility[nPhase]
 			               * vNDat[dn_n].massfrac[air][nPhase])
 			               * outward[nPhase];
@@ -249,20 +246,20 @@ namespace Dune
 			    + (1-alpha)* vNDat[dn_w].density[wPhase]*vNDat[dn_w].mobility[wPhase]
 			               * vNDat[dn_w].massfrac[air][wPhase])
 			               * outward[wPhase];
-	 
+
 	 // DIFFUSION
 	 VBlockType normDiffGrad;
 
 	   	 // get local to global id map
 		 int state_i = vNDat[i].phasestate;
 		 int state_j = vNDat[j].phasestate;
-	  	 
+
 	  	 RT diffusionWW(0.0), diffusionWN(0.0); // diffusion of water
 		 RT diffusionAW(0.0), diffusionAN(0.0); // diffusion of air
 		 VBlockType avgDensity, avgDpm;
 		 avgDpm[wPhase]=1e-9; // needs to be changed !!!
 		 avgDpm[nPhase]=1e-5; // water in the gasphase
-		 
+
 		 normDiffGrad[wPhase] = xGrad[wPhase]*normal;
 		 normDiffGrad[nPhase] = xGrad[nPhase]*normal;
 
@@ -270,7 +267,7 @@ namespace Dune
 	 avgDensity[wPhase] = 0.5*(vNDat[i].density[wPhase] + vNDat[j].density[wPhase]);
 	 avgDensity[nPhase] = 0.5*(vNDat[i].density[nPhase] + vNDat[j].density[nPhase]);
 
-		 
+
 		 if (state_i==2 && state_j==2)
 		 {
 			 diffusionAW = avgDpm[wPhase] * avgDensity[wPhase] * normDiffGrad[wPhase];
@@ -286,23 +283,23 @@ namespace Dune
 		 else if ((state_i == 0 || state_j == 0) || (state_i == 0 && state_j == 0))
 		 {
 			 diffusionWN = avgDpm[nPhase] * avgDensity[nPhase] * normDiffGrad[nPhase];
-			 diffusionAN = - diffusionWN;		 
+			 diffusionAN = - diffusionWN;
 		 }
 
 	 // add diffusion of water to flux
-	 flux[water] += (diffusionWW + diffusionWN); 
-	 //	std::cout << "Water Flux: " << flux[water] << std::endl; 
+	 flux[water] += (diffusionWW + diffusionWN);
+	 //	std::cout << "Water Flux: " << flux[water] << std::endl;
 
 	 // add diffusion of air to flux
 	 flux[air] += (diffusionAN + diffusionAW);
-	 // std::cout << "Air Flux: " << flux[air] << std::endl; 
+	 // std::cout << "Air Flux: " << flux[air] << std::endl;
 
 
 	 return flux;
   };
-    
+
   	/** @brief integrate sources / sinks
-  	 *  @param e entity   
+  	 *  @param e entity
 	 *  @param sol solution vector
 	 *  @param node local node id
 	 *  @return source/sink term
@@ -314,7 +311,7 @@ namespace Dune
    	}
 
   	/** @brief perform variable switch
-  	 *  @param global global node id   
+  	 *  @param global global node id
 	 *  @param sol solution vector
 	 *  @param local local node id
 	 */
@@ -324,29 +321,30 @@ namespace Dune
         bool switched = false;
    		int state = sNDat[global].phaseState;
 
-        const FieldVector<RT, 4> parameters = problem.materialLawParameters 
-        (this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
-        
+//        const FieldVector<RT, 4> parameters = problem.materialLawParameters
+//        (this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+
         RT pW = sol[local][pWIdx];
         RT satW = 0.0;
         if (state == bothPhases) satW = 1.0-sol[local][switchIdx];
   		if (state == waterPhase) satW = 1.0;
   		if (state == gasPhase) satW = 0.0;
 
-  		RT pC = problem.materialLaw().pC(satW, parameters);
+    	RT pC = problem.materialLaw().pC(satW, this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
   		RT pN = pW + pC;
 
     	FVector Coordinates = this->fvGeom.subContVol[local].global;
-    	
-        switch(state) 
+
+        switch(state)
         {
         case gasPhase :
-        	RT xWNmass, xWNmolar, pwn, pWSat; 
+        	RT xWNmass, xWNmolar, pwn, pWSat;
         	xWNmass = sol[local][switchIdx];
         	xWNmolar = problem.multicomp().conversionMassToMoleFraction(xWNmass, gasPhase);
+//        	xWNmolar = materialLaw.wettingPhase.X2x(xWNmass);
            	pwn = xWNmolar * pN;
             pWSat = problem.multicomp().vaporPressure(vNDat[local].temperature);
-  
+
         	if (pwn > 1.01*pWSat && switched == false)
             {
             	// appearance of water phase
@@ -364,7 +362,7 @@ namespace Dune
         	henryInv = problem.multicomp().henry(vNDat[local].temperature);
             pWSat = problem.multicomp().vaporPressure(vNDat[local].temperature);
         	pbub = pWSat + xAWmolar/henryInv;
-        	
+
         	if (pbub > pN && switched == false)
             {
             	// appearance of gas phase
@@ -377,7 +375,7 @@ namespace Dune
 
         case bothPhases :
         	RT satN = sol[local][switchIdx];
-        	
+
         	if (satN < 0.0  && switched == false)
       	  	{
       		  	// disappearance of gas phase
@@ -395,21 +393,21 @@ namespace Dune
             	switched = true;
       	  	}
       	  	break;
-      	  	
+
         }
         if (switched == true) updateVariableData(e, sol, local, vNDat, sNDat[global].phaseState);
-        
+
    	return;
     }
-    
+
     // harmonic mean computed directly
     virtual FMatrix harmonicMeanK (const FVector global_i, const FVector global_j) const
     {
     	double eps = 1e-20;
 
     	FMatrix Ki, Kj;
-   	 
-    	Ki = this->problem.K(global_i); 
+
+    	Ki = this->problem.K(global_i);
     	Kj = this->problem.K(global_j);
 
     	for (int kx=0; kx<dim; kx++){
@@ -422,8 +420,8 @@ namespace Dune
     	}
    	 return Ki;
     }
-    
-    
+
+
     virtual void clearVisited ()
     {
     	for (int i = 0; i < this->vertexMapper.size(); i++){
@@ -432,7 +430,7 @@ namespace Dune
     	}
    	 return;
    	}
-    
+
     // updates old phase state after each time step
     virtual void updatePhaseState ()
     {
@@ -441,7 +439,7 @@ namespace Dune
       	 }
        return;
     }
-    
+
 	  //*********************************************************
 	  //*														*
 	  //*	Calculation of Data at Elements (elData) 			*
@@ -451,19 +449,19 @@ namespace Dune
 
     virtual void computeElementData (const Entity& e)
     {
-//  	 // ASSUME element-wise constant parameters for the material law 
+//  	 // ASSUME element-wise constant parameters for the material law
 // 		 elData.parameters = problem.materialLawParameters
 // 		 (this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
-//   	 
-//		 // ASSUMING element-wise constant permeability, evaluate K at the cell center 
-// 		 elData.K = problem.K(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);  
 //
-//		 // ASSUMING element-wise constant porosity 
+//		 // ASSUMING element-wise constant permeability, evaluate K at the cell center
+// 		 elData.K = problem.K(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+//
+//		 // ASSUMING element-wise constant porosity
 // 		 elData.porosity = problem.porosity(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
    	 return;
     }
 
-    
+
 	  //*********************************************************
 	  //*														*
 	  //*	Calculation of Data at Nodes that has to be			*
@@ -475,53 +473,53 @@ namespace Dune
     virtual void updateStaticData (const Entity& e, VBlockType* sol)
     {
    	 // size of the sNDat vector is determined in the constructor
-   	 
+
    	 // local to global id mapping (do not ask vertex mapper repeatedly
    	 //int localToGlobal[LagrangeShapeFunctionSetContainer<DT,RT,n>::maxsize];
 
    	 // get access to shape functions for P1 elements
    	 GeometryType gt = e.geometry().type();
-   	 const typename LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type& 
+   	 const typename LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type&
    	 sfs=LagrangeShapeFunctions<DT,RT,dim>::general(gt,1);
-   	 
+
    	 // get local to global id map
    	 for (int k = 0; k < sfs.size(); k++) {
   		 const int globalIdx = this->vertexMapper.template map<dim>(e, sfs[k].entity());
-  		  
+
   		 // if nodes are not already visited
-  		 if (!sNDat[globalIdx].visited) 
+  		 if (!sNDat[globalIdx].visited)
   		  {
   			  // ASSUME porosity defined at nodes
   			  sNDat[globalIdx].porosity = problem.porosity(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
 
  			  // global coordinates
  			  FieldVector<DT,dim> global_i = this->fvGeom.subContVol[k].global;
-  			  
+
    			  // evaluate primary variable switch
  			  primaryVarSwitch(e, globalIdx, sol, k);
-  			  
+
   			  // mark elements that were already visited
   			  sNDat[globalIdx].visited = true;
   		  }
   	  }
-  	  
+
 	  return;
     }
-    
+
     // for initialization of the Static Data (sets porosity)
     virtual void initiateStaticData (const Entity& e)
     {
    	 // get access to shape functions for P1 elements
    	 GeometryType gt = e.geometry().type();
-   	 const typename LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type& 
+   	 const typename LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type&
    	 sfs=LagrangeShapeFunctions<DT,RT,dim>::general(gt,1);
-   	 
+
    	 // get local to global id map
    	 for (int k = 0; k < sfs.size(); k++) {
   		 const int globalIdx = this->vertexMapper.template map<dim>(e, sfs[k].entity());
-  		  
+
   		 // if nodes are not already visited
-  		 if (!sNDat[globalIdx].visited) 
+  		 if (!sNDat[globalIdx].visited)
   		  {
   			  // ASSUME porosity defined at nodes
   			  sNDat[globalIdx].porosity = problem.porosity(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
@@ -530,12 +528,12 @@ namespace Dune
   			  sNDat[globalIdx].visited = true;
   		  }
   	  }
-  	  
+
 	  return;
     }
 
-    
-    
+
+
 	  //*********************************************************
 	  //*														*
 	  //*	Calculation of variable Data at Nodes				*
@@ -544,7 +542,7 @@ namespace Dune
 	  //*********************************************************
 
 
-    struct VariableNodeData  
+    struct VariableNodeData
     {
    	 RT satN;
      RT satW;
@@ -559,12 +557,9 @@ namespace Dune
     };
 
     // analog to EvalPrimaryData in MUFTE, uses members of vNDat
-	virtual void updateVariableData(const Entity& e, const VBlockType* sol, 
-			int i, std::vector<VariableNodeData>& varData, int state) 
+	virtual void updateVariableData(const Entity& e, const VBlockType* sol,
+			int i, std::vector<VariableNodeData>& varData, int state)
     {
-     const FieldVector<RT, 4> parameters = problem.materialLawParameters 
-     (this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
-
    	   	 const int global = this->vertexMapper.template map<dim>(e, i);
 
    		 varData[i].pW = sol[i][pWIdx];
@@ -574,7 +569,7 @@ namespace Dune
 
    		 varData[i].satW = 1.0 - varData[i].satN;
 
-   		 varData[i].pC = problem.materialLaw().pC(varData[i].satW, parameters);
+   		 varData[i].pC = problem.materialLaw().pC(varData[i].satW, this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
    		 varData[i].pN = varData[i].pW + varData[i].pC;
    		 varData[i].temperature = 313.15; // in [K]
 
@@ -594,10 +589,10 @@ namespace Dune
    	   	 varData[i].massfrac[water][wPhase] = 1.0 - varData[i].massfrac[air][wPhase];
    	   	 varData[i].massfrac[air][nPhase] = 1.0 - varData[i].massfrac[water][nPhase];
    	   	 varData[i].phasestate = state;
-   	   	 
+
    		 // Mobilities & densities
-   		 varData[i].mobility[wPhase] = problem.materialLaw().mobW(varData[i].satW, parameters);
-   		 varData[i].mobility[nPhase] = problem.materialLaw().mobN(varData[i].satN, parameters);
+   		 varData[i].mobility[wPhase] = problem.materialLaw().mobW(varData[i].satW, this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+   		 varData[i].mobility[nPhase] = problem.materialLaw().mobN(varData[i].satN, this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
    		 varData[i].density[wPhase] = problem.materialLaw().wettingPhase.density(varData[i].temperature, varData[i].pN);
    		 varData[i].density[nPhase] = problem.materialLaw().nonwettingPhase.density(varData[i].temperature, varData[i].pN,
    				 varData[i].massfrac[air][nPhase]);
@@ -625,7 +620,7 @@ namespace Dune
    	   	 return;
     }
 
-	virtual void updateVariableData(const Entity& e, const VBlockType* sol, int i, bool old = false) 
+	virtual void updateVariableData(const Entity& e, const VBlockType* sol, int i, bool old = false)
 	{
 		int state;
 		const int global = this->vertexMapper.template map<dim>(e, i);
@@ -634,7 +629,7 @@ namespace Dune
 	   	   	state = sNDat[global].oldPhaseState;
 			updateVariableData(e, sol, i, oldVNDat, state);
 		}
-		else 
+		else
 		{
 		    state = sNDat[global].phaseState;
 			updateVariableData(e, sol, i, vNDat, state);
@@ -644,13 +639,13 @@ namespace Dune
 	void updateVariableData(const Entity& e, const VBlockType* sol, bool old = false)
 	{
 		int size = this->fvGeom.nNodes;
-			
-		for (int i = 0; i < size; i++) 
+
+		for (int i = 0; i < size; i++)
 				updateVariableData(e, sol, i, old);
 	}
-    
-    
-    struct StaticNodeData 
+
+
+    struct StaticNodeData
     {
    	 bool visited;
 //   	 bool switched;
@@ -661,14 +656,14 @@ namespace Dune
    	 FieldVector<RT, 4> parameters;
    	 FMatrix K;
     };
-    
+
 	 struct StaticIPData
 	 {
 		 bool visited;
 		 FMatrix K;
 	 };
-    
-    
+
+
     struct ElementData {
 //   	 RT cellVolume;
 //     	 RT porosity;
@@ -676,10 +671,13 @@ namespace Dune
 //   	 FieldVector<RT, 4> parameters;
 //   	 FieldMatrix<RT,dim,dim> K;
    	 } elData;
-   	    	 
-    
+
+
     // parameters given in constructor
     TwoPTwoCProblem<G,RT>& problem;
+//    TwoPhaseRelations<G,RT>& materialLaw;
+
+
     CWaterAir multicomp;
     std::vector<StaticNodeData> sNDat;
     std::vector<StaticIPData> sIPDat;
@@ -698,9 +696,9 @@ namespace Dune
     BlockVector<FieldVector<RT, 1> > *outMobilityW;
     BlockVector<FieldVector<RT, 1> > *outMobilityN;
     BlockVector<FieldVector<RT, 1> > *outPhaseState;
-    
-  };  
-  
+
+  };
+
 }
 #endif
 
@@ -709,9 +707,9 @@ namespace Dune
 //    {
 //	 FMatrix Ki, Kj;
 //	 const RT eps = 1e-20;
-//	 
+//
 //    GeometryType gt = e.geometry().type();
-//    const typename LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type& 
+//    const typename LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type&
 //    sfs=LagrangeShapeFunctions<DT,RT,dim>::general(gt,1);
 //
 //     int i = this->fvGeom.subContVolFace[k].i;
@@ -719,11 +717,11 @@ namespace Dune
 //
 //     int global_i = this->vertexMapper.template map<dim>(e, sfs[i].entity());
 //     int global_j = this->vertexMapper.template map<dim>(e, sfs[j].entity());
-//    
-//    
+//
+//
 //     	Ki = sNDat[global_i].K;
 //     	Kj = sNDat[global_j].K;
-//       	 
+//
 //     	for (int kx=0; kx<dim; kx++){
 //     		for (int ky=0; ky<dim; ky++){
 //     			if (Ki[kx][ky] != Kj[kx][ky])
