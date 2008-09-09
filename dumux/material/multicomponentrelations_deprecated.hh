@@ -2,7 +2,7 @@
 #define DUNE_MULTICOMPONENTRELATIONS_HH
 
 #include <dumux/material/solubilityco2.hh>
-#include <dumux/material/phaseproperties/phaseproperties_waterair.hh>
+#include <dumux/material/properties.hh>
 
 /**
  * \ingroup material
@@ -18,6 +18,7 @@ namespace Dune
  */
 class MultiComp
 {
+
 
 	public:
 		/*! \brief solubility of a component (water) in the non-wetting phase
@@ -78,16 +79,15 @@ class MultiComp
 		virtual double conversionMassToMoleFraction(double massfrac, int phase) const = 0;
 
 
-		MultiComp(const Liquid_GL& wP = *(new Liq_WaterAir),
-				const Gas_GL& nwP = *(new Gas_WaterAir))
-				//: wettingPhase(wP), nonwettingPhase(nwP)
+		MultiComp(const Medium& wP = *(new Uniform), const MediumNonIsothermal& nwP = *(new Uniform))
+				: wettingPhase(wP), nonwettingPhase(nwP)
 		{	 }
 
 		virtual ~MultiComp()
 		{}
 
-//		const Liquid_GL& wettingPhase; //!< contains properties of the wetting phase
-//		const Gas_GL& nonwettingPhase; //!< contains properties of the nonwetting phase
+		const Medium& wettingPhase; //!< contains the properties of the wetting phase
+		const Medium& nonwettingPhase; //!< contains the properties of the nonwetting phase
 
 };
 
@@ -197,7 +197,6 @@ class CWaterAir : public MultiComp
 
 			exponent = constA - (constB / (celsius + constC));
 
-
 			psat = pow (10.0, exponent) *100; //1mbar = 100Pa
 
 			return(psat);
@@ -213,12 +212,12 @@ class CWaterAir : public MultiComp
 			double molarMass1, molarMass2;
 
 			if (phase == wPhase){
-				molarMass1 = wettingPhase.molarMass_w();
-				molarMass2 = nonwettingPhase.molarMass_a();
+				molarMass1 = this->wettingPhase.molarMass();
+				molarMass2 = this->nonwettingPhase.molarMass();
 			}
 			else if (phase == nPhase){
-				molarMass1 = this->nonwettingPhase.molarMass_a();
-				molarMass2 = this->nonwettingPhase.molarMass_w();
+				molarMass1 = this->nonwettingPhase.molarMass();
+				molarMass2 = this->wettingPhase.molarMass();
 			}
 
 			result = molefrac * molarMass1 / (molarMass1*molefrac + molarMass2*(1-molefrac));
@@ -236,12 +235,12 @@ class CWaterAir : public MultiComp
 			double molarMass1, molarMass2;
 
 			if (phase == wPhase){
-				molarMass1 = wettingPhase.molarMass_w();
-				molarMass2 = nonwettingPhase.molarMass_a();
+				molarMass1 = this->wettingPhase.molarMass();
+				molarMass2 = this->nonwettingPhase.molarMass();
 			}
 			else if (phase == nPhase){
-				molarMass1 = nonwettingPhase.molarMass_a();
-				molarMass2 = wettingPhase.molarMass_w();
+				molarMass1 = this->nonwettingPhase.molarMass();
+				molarMass2 = this->wettingPhase.molarMass();
 			}
 
 			result = massfrac * molarMass2 / (molarMass1*(1-massfrac) + molarMass2*massfrac);
@@ -249,13 +248,9 @@ class CWaterAir : public MultiComp
 			return (result);
 		}
 
-		CWaterAir(Liq_WaterAir& wP = *(new Liq_WaterAir),
-				  Gas_WaterAir& nwP = *(new Gas_WaterAir))
-				: MultiComp(wP, nwP), wettingPhase(wP), nonwettingPhase(nwP)
+		CWaterAir(const Medium& wP = *(new Uniform), const Medium& nwP = *(new Uniform))
+				: MultiComp(wP, nwP)
 		{	 }
-
-		Liq_WaterAir& wettingPhase; //!< contains properties of the wetting phase
-		Gas_WaterAir& nonwettingPhase; //!< contains properties of the nonwetting phase
 
 
 };
@@ -349,8 +344,7 @@ class CBrineCO2 : public MultiComp
 
 
 
-		CBrineCO2(Liq_WaterAir& wP = *(new Liq_WaterAir),
-				  Gas_WaterAir& nwP = *(new Gas_WaterAir))
+		CBrineCO2(const Medium& wP = *(new Uniform), const Medium& nwP = *(new Uniform))
 				: MultiComp(wP, nwP)
 		{	 }
 
