@@ -407,8 +407,10 @@ namespace Dune
 
     	FMatrix Ki, Kj;
 
-    	Ki = this->problem.K(global_i);
-    	Kj = this->problem.K(global_j);
+//    	Ki = this->problem.K(global_i);
+//    	Kj = this->problem.K(global_j);
+    	Ki = 1e-12;//problem.soil().K(global_i);
+    	Kj = 1e-12;//problem.soil().K(global_j);
 
     	for (int kx=0; kx<dim; kx++){
     		for (int ky=0; ky<dim; ky++){
@@ -490,7 +492,7 @@ namespace Dune
   		 if (!sNDat[globalIdx].visited)
   		  {
   			  // ASSUME porosity defined at nodes
-  			  sNDat[globalIdx].porosity = problem.porosity(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+  			  sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
 
  			  // global coordinates
  			  FieldVector<DT,dim> global_i = this->fvGeom.subContVol[k].global;
@@ -522,7 +524,7 @@ namespace Dune
   		 if (!sNDat[globalIdx].visited)
   		  {
   			  // ASSUME porosity defined at nodes
-  			  sNDat[globalIdx].porosity = problem.porosity(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+  			  sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
 
   			  // mark elements that were already visited
   			  sNDat[globalIdx].visited = true;

@@ -12,11 +12,12 @@
 #include<dune/grid/utility/intersectiongetter.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
 #include<dumux/material/twophaserelations.hh>
+#include<dumux/material/property_baseclasses.hh>
 
 /**
  * @file
  * @brief  Base class for defining an instance of the 2P2C problem
- * @author Bernd Flemisch
+ * @author Bernd Flemisch, Klaus Mosthaf
  */
 
 namespace Dune
@@ -43,14 +44,14 @@ namespace Dune
 	typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
 
   public:
-	//! evaluate diffusion tensor
-	/*! Evaluate the diffusion tensor at given location
-	  @param[in]  x    position in global coordinates
-	  @param[in]  e    entity of codim 0
-	  @param[in]  xi   position in reference element of e
-	  @param[out] D    diffusion tensor to be filled
-	 */
-	virtual const FieldMatrix<DT,dim,dim>& K (const FieldVector<DT,dim>& x) = 0;
+//	//! evaluate diffusion tensor
+//	/*! Evaluate the diffusion tensor at given location
+//	  @param[in]  x    position in global coordinates
+//	  @param[in]  e    entity of codim 0
+//	  @param[in]  xi   position in reference element of e
+//	  @param[out] D    diffusion tensor to be filled
+//	 */
+//	virtual const FieldMatrix<DT,dim,dim>& K (const FieldVector<DT,dim>& x) = 0;
 
 	//! evaluate source term
 	/*! evaluate source term at given location
@@ -125,8 +126,8 @@ namespace Dune
 	virtual int initialPhaseState(const FieldVector<DT,dim>& x,
 			const Entity& e, const FieldVector<DT,dim>& xi) const = 0;
 
-	virtual double porosity(const FieldVector<DT,dim>& x, const Entity& e,
-			const FieldVector<DT,dim>& xi) const = 0;
+//	virtual double porosity(const FieldVector<DT,dim>& x, const Entity& e,
+//			const FieldVector<DT,dim>& xi) const = 0;
 
 	virtual FieldVector<RT,dim> gravity() const = 0;
 
@@ -142,6 +143,10 @@ namespace Dune
 		return materialLaw_;
 	}
 
+    Matrix2p<G, RT>& soil ()
+    {
+    	return soil_;
+    }
 
 	//element-wise return of the values of an Exact solution
 	virtual RT uExOutVertex(int &ElementIndex, int VariableIndex) const {
@@ -157,10 +162,10 @@ namespace Dune
 	}
 
 
-	TwoPTwoCProblem(MultiComp& multicomp = *(new CWaterAir),
-			TwoPhaseRelations<G, RT>& materialLaw = *(new TwoPhaseRelations<G, RT>),
+	TwoPTwoCProblem(Matrix2p<G,RT>& soil, MultiComp& multicomp = *(new CWaterAir),
+			TwoPhaseRelations<G,RT>& materialLaw = *(new TwoPhaseRelations<G,RT>),
 			const bool exsol = false)
-	: exsolution(exsol), multicomp_(multicomp), materialLaw_(materialLaw)
+	: exsolution(exsol), multicomp_(multicomp), materialLaw_(materialLaw), soil_(soil)
 	{	}
 
 	//! always define virtual destructor in abstract base class
@@ -171,6 +176,9 @@ namespace Dune
   protected:
 	MultiComp& multicomp_;
 	TwoPhaseRelations<G, RT>& materialLaw_;
+//	Liq_WaterAir wPhase_;
+//  Gas_WaterAir nPhase_;
+    Matrix2p<G, RT>& soil_;
   };
 
 }
