@@ -65,12 +65,12 @@ int main(int argc, char** argv)
      // choose fluids and properties
      Dune::Liq_WaterAir wPhase;
      Dune::Gas_WaterAir nPhase;
-     Dune::Homogeneoussoil<GridType, NumberType> soil;
+     Dune::HomogeneousSoil<GridType, NumberType> soil;
 //     Dune::LinearLaw law(wPhase, nPhase);
 //     Dune::CO2Problem2D<GridType, NumberType> problem(law, 1.e7);
 //     Dune::BrooksCoreyLaw law(wPhase, nPhase);
 
-     Dune::TwoPhaseRelations<GridType, NumberType, Dune::Liq_WaterAir, Dune::Gas_WaterAir>
+     Dune::TwoPhaseRelations<GridType, NumberType>
      materialLaw(soil, wPhase, nPhase);
 
      Dune::CWaterAir multicomp(wPhase, nPhase);
