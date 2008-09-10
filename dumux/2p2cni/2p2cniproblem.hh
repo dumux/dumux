@@ -135,7 +135,7 @@ public:
 		return multicomp_;
 	}
 
-	TwoPhaseRelations<G, RT, Dune::Liq_WaterAir, Dune::Gas_WaterAir>& materialLaw ()
+	TwoPhaseRelations<G, RT>& materialLaw ()
 	{
 		return materialLaw_;
 	}
@@ -159,7 +159,7 @@ public:
 	}
 
 	TwoPTwoCNIProblem(Matrix2p<G,RT>& soil, MultiComp& multicomp = *(new CWaterAir),
-		TwoPhaseRelations<G,RT,Dune::Liq_WaterAir, Dune::Gas_WaterAir>& materialLaw = *(new TwoPhaseRelations<G,RT,Dune::Liq_WaterAir, Dune::Gas_WaterAir>), const bool exsol = false) :
+		TwoPhaseRelations<G,RT>& materialLaw = *(new TwoPhaseRelations<G,RT>), const bool exsol = false) :
 	  exsolution(exsol),  materialLaw_(materialLaw) , multicomp_(multicomp), soil_(soil)
 	  {	}
 
@@ -170,7 +170,7 @@ public:
 	const bool exsolution;
 
 protected:
-	TwoPhaseRelations<G,RT,Dune::Liq_WaterAir, Dune::Gas_WaterAir>& materialLaw_;
+	TwoPhaseRelations<G,RT>& materialLaw_;
 	MultiComp& multicomp_;
     Matrix2p<G, RT>& soil_;
 };

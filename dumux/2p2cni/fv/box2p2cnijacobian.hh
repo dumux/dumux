@@ -201,7 +201,7 @@ namespace Dune
 		 {
 			 // FEGradient at node k
 			 const FieldVector<DT,dim> feGrad(this->fvGeom.subContVolFace[face].grad[k]);
-			 FieldVector<RT,m> pressure(0.0), massfrac(0.0);
+			 FieldVector<RT,2> pressure(0.0), massfrac(0.0);
 
 			 pressure[wPhase] = vNDat[k].pW;
 			 pressure[nPhase] = vNDat[k].pN;
@@ -388,7 +388,7 @@ namespace Dune
         case gasPhase :
         	RT xWNmass, xWNmolar, pwn, pWSat;
         	xWNmass = sol[local][switchIdx];
-        	xWNmolar = problem.multicomp().conversionMassToMoleFraction(xWNmass, gasPhase);
+        	xWNmolar = problem.multicomp().convertMassToMoleFraction(xWNmass, gasPhase);
            	pwn = xWNmolar * pN;
             pWSat = problem.multicomp().vaporPressure(sol[local][teIdx]);
 
@@ -405,7 +405,7 @@ namespace Dune
         case waterPhase :
         	RT pbub, xAWmass, xAWmolar, henryInv;
            	xAWmass = sol[local][switchIdx];
-         	xAWmolar = problem.multicomp().conversionMassToMoleFraction(xAWmass, waterPhase);
+         	xAWmolar = problem.multicomp().convertMassToMoleFraction(xAWmass, waterPhase);
         	henryInv = problem.multicomp().henry(sol[local][teIdx]);
             pWSat = problem.multicomp().vaporPressure(sol[local][teIdx]);
         	pbub = pWSat + xAWmolar/henryInv;
@@ -448,20 +448,20 @@ namespace Dune
     }
 
     // harmonic mean computed directly
-    virtual FMatrix harmonicMeanK (const FMatrix& Ki, const FMatrix& Kj) const
+    virtual FMatrix harmonicMeanK (FMatrix& Ki, const FMatrix& Kj) const
     {
     	double eps = 1e-20;
-    	FMatrix K;
+//    	FMatrix K;
 
     	for (int kx=0; kx<dim; kx++){
     		for (int ky=0; ky<dim; ky++){
     			if (Ki[kx][ky] != Kj[kx][ky])
     			{
-    				K[kx][ky] = 2 / (1/(Ki[kx][ky]+eps) + (1/(Kj[kx][ky]+eps)));
+    				Ki[kx][ky] = 2 / (1/(Ki[kx][ky]+eps) + (1/(Kj[kx][ky]+eps)));
     			}
     		}
     	}
-   	 return K;
+   	 return Ki;
     }
 
 
