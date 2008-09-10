@@ -53,19 +53,6 @@ namespace Dune
 
   public:
 
-//	// permeabilities
-//	virtual const FieldMatrix<DT,dim,dim>& K (const FieldVector<DT,dim>& x, const Entity& e,
-//					const FieldVector<DT,dim>& xi)
-//	{
-//		return permloc_;
-//	}
-
-//	virtual const FieldMatrix<DT,dim,dim>& K (const FieldVector<DT,dim>& x)
-//	//, const Entity& e, const FieldVector<DT,dim>& xi)
-//	{
-//		return permloc_;
-//	}
-
 	virtual const FieldVector<RT,2>& D (const FieldVector<DT,dim>& x) const
 	{
 		return diffusion_;
@@ -184,25 +171,6 @@ namespace Dune
 	}
 //////////////////////////////
 
-//	double porosity (const FieldVector<DT,dim>& x, const Entity& e,
-//			  const FieldVector<DT,dim>& xi) const
-//	{
-//		return 0.2;
-//	}
-//
-//	virtual FieldVector<RT,4> soilParameters (const FieldVector<DT,dim>& x, const Entity& e,
-//			  const FieldVector<DT,dim>& xi) const
-//	{
-//		FieldVector<RT,4> values(0);
-//		enum{soilDensity = 0,soilHeatCap = 1,soilLambdaDry = 2, soilLambdaSw = 3};
-//
-//		values[soilDensity] = 2650.0;
-//		values[soilHeatCap] = 800.0;
-//		values[soilLambdaDry] = 0.32;
-//		values[soilLambdaSw] = 2.7;
-//
-//		return values;
-//	}
 
 	virtual FieldVector<RT,dim> gravity () const
 	{
@@ -214,7 +182,7 @@ namespace Dune
 	}
 
 	WaterCO2Problem(Liquid_GL& liq, Gas_GL& gas, Matrix2p<G, RT>& soil,
-			TwoPhaseRelations<G, RT, Dune::Liq_WaterAir, Dune::Gas_WaterAir>& law = *(new TwoPhaseRelations<G, RT, Dune::Liq_WaterAir, Dune::Gas_WaterAir>),
+			TwoPhaseRelations<G, RT>& law = *(new TwoPhaseRelations<G, RT>),
 			MultiComp& multicomp = *(new CWaterAir), RT depthBOR = 0.0)
 	: TwoPTwoCNIProblem<G, RT>(soil, multicomp, law),  wetPhase_(liq),
 	  nwetPhase_(gas), soil_(soil)
@@ -227,7 +195,6 @@ namespace Dune
 	}
 
 	private:
-//		Dune::FieldMatrix<DT,dim,dim> permloc_;
 		Dune::FieldVector<RT,2> diffusion_;
 		RT depthBOR_;
 		RT soilDens_, soilHeatCp_, soilLDry_, soilLSw_;
