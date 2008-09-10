@@ -121,6 +121,7 @@ AC_CONFIG_FILES([Makefile
     test/star2uggrid/Makefile
     test/stokes/Makefile
     test/transport/Makefile
+    test/tutorial/Makefile
     test/twophase/Makefile
     test/upscaledvelocity/Makefile
     test/vtk/Makefile
