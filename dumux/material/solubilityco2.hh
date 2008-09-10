@@ -1,5 +1,7 @@
-//#ifndef DUNE_SOLUBILITYCO2_HH
-//#define DUNE_SOLUBILITYCO2_HH 
+#ifndef DUNE_SOLUBILITYCO2_HH
+#define DUNE_SOLUBILITYCO2_HH
+
+#include"dumux/material/constrel/constrelco2.hh"
 
 namespace Dune
 {
@@ -19,18 +21,18 @@ public:
 	    double x_CO2w;      /* mole fraction of CO2 in waterphase [-] */
 	    double mol_CO2w;    /* molality of CO2 in the waterphase [mol/kg water] */
 	    double pg_bar;      /* pressure in bar */
-	    double phiCO2;    
-	    double A, B, C, exponent;    
+	    double phiCO2;
+	    double A, B, C, exponent;
 
 	    Mw   = 0.018;         /* molecular weight of water [kg/mol] */
-	    Ms   = 0.0588;        /* molecular weight of NaCl  [kg/mol] */ 
-	    MCO2 = 0.044;        /* molecular weight of CO2  [kg/mol] */ 
+	    Ms   = 0.0588;        /* molecular weight of NaCl  [kg/mol] */
+	    MCO2 = 0.044;        /* molecular weight of CO2  [kg/mol] */
 
 	    x_NaCl   = -Mw*X_NaCl/((Ms-Mw)*X_NaCl - Ms); /* salinity: conversion from mass fraction to mole fraction */
 	    mol_NaCl = -55.56*x_NaCl/(x_NaCl-1);         /* salinity: conversion from mole fraction to molality */
 
-	    pg_bar = pg/1.0E5; 
-	    xCO2g  = xCO2inGasphase(Temp, pg); 
+	    pg_bar = pg/1.0E5;
+	    xCO2g  = xCO2inGasphase(Temp, pg);
 
 	    A = ComputeA(Temp,pg);    /* mu_{CO2}^{l(0)}/RT */
 	    B = ComputeB(Temp,pg);    /* lambda_{CO2-Na+} */
@@ -46,7 +48,7 @@ public:
 
 	    return(X_CO2w);
 	}
-	
+
 	/********************************************************************/
 	/*                                                                  */
 	/*      Solubility of CO2 in brine:                                 */
@@ -175,7 +177,7 @@ public:
 
 	    return dh;
 	}
-	
+
 	/***********************************************************************/
 	/*                                                                      */
 	/* This function computes the mole fraction of CO2 in the gaseous       */
@@ -188,7 +190,7 @@ public:
 
 	double xCO2inGasphase(double Temp, double pg)
 	{
-	    double pH2O;    /* partial pressure of water in the gasphase */	
+	    double pH2O;    /* partial pressure of water in the gasphase */
 	    double xCO2g;   /* mole fraction of CO2 in the gasphase */
 
 	    pH2O = pure_water_pressure (Temp);
@@ -210,7 +212,7 @@ public:
 	    double A;
 
 	    T      = Temp;
-	    pg_bar = pg/1.0E5;   /* conversion from Pa to bar */ 
+	    pg_bar = pg/1.0E5;   /* conversion from Pa to bar */
 	    p      = pg_bar;
 
 	    c1 = 28.9447706;
@@ -226,7 +228,7 @@ public:
 
 	    A = c1+c2*T+c3/T+c4*T*T+c5/(630.0-T)+c6*p+c7*p*log(T)+c8*p/T+c9*p/(630.0-T)+c10*p*p/(pow((630.0-T),2));
 
-	    return(A);    
+	    return(A);
 	}
 
 	double iterateVr(double T, double p)
@@ -238,7 +240,7 @@ public:
 	    double Vc, Vd, Ve, c, d, e, i;
 	    double V1,V2, e1, ps;
 	    int n, n1, n2;
-	    
+
 	    a1  =  8.99288497E-2;
 	    a2  = -4.94783127E-1;
 	    a3  =  4.77922245E-2;
@@ -256,7 +258,7 @@ public:
 	    a15 =  2.96000000E-2;
 
 	    pcrit = 7.3825E6;
-	    Tcrit = 304.2;  
+	    Tcrit = 304.2;
 
 	    Tr = T/Tcrit;    /* reduced temperature */
 	    pr = p/pcrit;    /* reduced pressure */
@@ -296,7 +298,7 @@ public:
 			if ((d*e)<0) Vc=Ve;
 			i=-1.2*i;
 		}
-		
+
 		V2=Ve;n2=n;
 		if (T<=304.0 && ps>p) Vr=V2;
 		else if (T>304.0) Vr=V2;
@@ -314,7 +316,7 @@ public:
 	/*                                                        */
 	/**********************************************************/
 
-	
+
 	double ComputeB(double Temp, double pg)
 	{
 	    double c1,c2,c3,c8,c9,c11;
@@ -329,10 +331,10 @@ public:
 	    c11= 1.41335834E-5;
 
 	    T      = Temp;
-	    pg_bar = pg/1.0E5;   /* conversion from Pa to bar */ 
+	    pg_bar = pg/1.0E5;   /* conversion from Pa to bar */
 	    p      = pg_bar;
 
-	    B = c1+c2*T+c3/T+c8*p/T+c9*p/(630.0-T)+c11*T*log(p);    
+	    B = c1+c2*T+c3/T+c8*p/T+c9*p/(630.0-T)+c11*T*log(p);
 
 	    return(B);
 	}
@@ -348,7 +350,7 @@ public:
 	    c9 = -5.24873303E-3;
 
 	    T      = Temp;
-	    pg_bar = pg/1.0E5;   /* conversion from Pa to bar */ 
+	    pg_bar = pg/1.0E5;   /* conversion from Pa to bar */
 	    p      = pg_bar;
 
 	    C = c1+c2*T+c8*p/T+c9*p/(630.0-T);
@@ -367,8 +369,8 @@ public:
 	{
 	    double pr, pcrit, Tr, Tcrit, Vr, R, Z;
 
-	    pcrit = 7.3825E6; 
-	    Tcrit = 304.2;  
+	    pcrit = 7.3825E6;
+	    Tcrit = 304.2;
 	    R   = 8.314467;   /* universal gas constant [Pa m^3/(K mol)] */
 
 	    pr = pg/pcrit;    /* computation of reduced pressure */
@@ -376,7 +378,7 @@ public:
 
 	    Vr = iterateVr(Temp, pg);
 
-	    Z = pr*Vr/Tr; 
+	    Z = pr*Vr/Tr;
 
 	 /*   printf("p = %.2f bar T = %.2f C \t Vr = %.4f \t Z = %.4f \n", pg/1.0E5, Temp-273.15, Vr, Z);*/
 
@@ -422,13 +424,13 @@ public:
 	    C = a7 + a8/(Tr*Tr) + a9/(Tr*Tr*Tr);
 	    D = a10 + a11/(Tr*Tr) + a12/(Tr*Tr*Tr);
 
-	    lnphiCO2 =  Z - 1 - log(Z) + A/Vr + B/(2*Vr*Vr) + C/(4*Vr*Vr*Vr*Vr) + D/(5*Vr*Vr*Vr*Vr*Vr) 
+	    lnphiCO2 =  Z - 1 - log(Z) + A/Vr + B/(2*Vr*Vr) + C/(4*Vr*Vr*Vr*Vr) + D/(5*Vr*Vr*Vr*Vr*Vr)
 	              + a13/(2*Tr*Tr*Tr*a15) * ( a14 + 1 - (a14+1+a15/(Vr*Vr))*exp(-a15/(Vr*Vr)) );
 
 	    phiCO2 = exp(lnphiCO2);
 
 	    return(phiCO2);
-	} 
+	}
 
 	/**********************************************************************/
 	/* Empirical model for pure water pressure (Duan 2003, Appendix B)    */
@@ -461,4 +463,4 @@ public:
 
 };
 }
-//#endif
+#endif
