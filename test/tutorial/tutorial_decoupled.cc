@@ -67,8 +67,8 @@ int main(int argc, char** argv)
 
     // some parameters needed for the TimeLoop-object
     double tStart = 0;//start simulation at t = tStart
-    double tEnd = 2.9e8;//end simulation at t = tEnd
-    char* fileName("test_upscaledsaturation");//name of the output files
+    double tEnd = 1e8;//end simulation at t = tEnd
+    char* fileName("tutorial_decoupled");//name of the output files
     int modulo = 1;//define time step interval in which output files are generated
     double cFLFactor = 1;//security factor for the Courant-Friedrichs-Lewy-Criterion
 
