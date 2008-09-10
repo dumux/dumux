@@ -48,7 +48,7 @@ public:
 	typedef LeafP1TwoPhaseModel<G, RT, ProblemType, LocalJac, m> ThisType;
 
 	typedef LocalJac LocalJacobian;
-	
+
 	// mapper: one data element per vertex
 	template<int dim> struct P1Layout {
 		bool contains(Dune::GeometryType gt) {
@@ -83,7 +83,7 @@ public:
 			// get geometry type
 			Dune::GeometryType gt = it->geometry().type();
 
-			// get entity 
+			// get entity
 			const Entity& entity = *it;
 
 			const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type
@@ -106,7 +106,7 @@ public:
 						global, entity, local);
 			}
 			this->localJacobian.clearVisited();
-			this->localJacobian.initiateStaticData(entity);	
+			this->localJacobian.initiateStaticData(entity);
 		}
 
 		// set Dirichlet boundary conditions
@@ -115,7 +115,7 @@ public:
 			// get geometry type
 			Dune::GeometryType gt = it->geometry().type();
 
-			// get entity 
+			// get entity
 			const Entity& entity = *it;
 
 			const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type
@@ -123,7 +123,7 @@ public:
 							1);
 			int size = sfs.size();
 
-			// set type of boundary conditions 
+			// set type of boundary conditions
 			this->localJacobian.template assembleBC<LeafTag>(entity);
 
 			IntersectionIterator
@@ -157,7 +157,7 @@ public:
 														global, entity, is,
 														local);
 												this->problem.dirichletIndex(global, entity, is,
-														local, dirichletIndex);	
+														local, dirichletIndex);
 
 										if (bctype[equationNumber]
 												== BoundaryConditions::dirichlet) {
@@ -177,8 +177,8 @@ public:
 		*(this->uOldTimeStep) = *(this->u);
 		return;
 	}
-	
-	
+
+
     virtual double computeFlux ()
      {
 		  typedef typename G::Traits::template Codim<0>::Entity Entity;
@@ -191,68 +191,68 @@ public:
 		  Iterator eendit = gridview.template end<0>();
 		  FieldVector<RT,m> flux(0);
 		  double Flux(0);
-		  
+
 		  for (Iterator it = gridview.template begin<0>(); it != eendit; ++it) // loop over all entities
 		  {
-			  
+
 			  	// get geometry type
 			  	Dune::GeometryType gt = it->geometry().type();
-			  
-			  	// get entity 
+
+			  	// get entity
 			  	const Entity& entity = *it;
-					
+
 				FVElementGeometry<G> fvGeom;
 			    fvGeom.update(entity);
-			                
+
 				for (int k = 0; k < fvGeom.nEdges; k++)
 			     {
 				    int i = fvGeom.subContVolFace[k].i;
-		    		  
+
 				    int j = fvGeom.subContVolFace[k].j;
-		    		 
+
 				    int flag_i, flag_j;
-				    
+
 				    // 2D case: give y or x value of the line over which flux is to be
 				    //			calculated.
-				    // up to now only flux calculation to lines or planes (3D) parallel to 
+				    // up to now only flux calculation to lines or planes (3D) parallel to
 				    // x, y and z axis possible
-				    
+
 				    // Flux across plane with z = 80 m
 				     if(fvGeom.subContVol[i].global[2] < 80.)
 			   			  flag_i = 1;
 			   		  else flag_i = -1;
-			   		  
+
 			   		  if(fvGeom.subContVol[j].global[2] < 80.)
 			   			  flag_j = 1;
 			   		  else flag_j = -1;
-			   		  
+
 			   		  if(flag_i == flag_j)
 			   		   {
 			   			  sign = 0;
 			   		   }
 			   		  else {
 			   			  	if(flag_i > 0)
-			   			  		sign = -1; 
+			   			  		sign = -1;
 			   			  	else sign = 1; }
-			   			  
+
 			   			  // get variables
 
 			   		  if(flag_i != flag_j)
 			   		  {
 						this->localJacobian.setLocalSolution(entity);
-						this->localJacobian.computeElementData(entity); 
+						this->localJacobian.computeElementData(entity);
 						this->localJacobian.updateVariableData(entity, this->localJacobian.u);
-			   			
-						
-						flux = this->localJacobian.computeA(entity, this->localJacobian.u, k);	
+
+
+						flux = this->localJacobian.computeA(entity, this->localJacobian.u, k);
 						Flux += sign*flux[1];
-			   		  }  
+			   		  }
 			     }
- 
+
 		  }
 		  return Flux; // Co2 flux
-     }  
-     
+     }
+
 
 	virtual double totalCO2Mass() {
 		typedef typename G::Traits::template Codim<0>::Entity Entity;
@@ -271,7 +271,7 @@ public:
 		double maxTe = -1e100;
 		double minX = 1e100;
 		double maxX = -1e100;
-		
+
 		// iterate through leaf grid an evaluate c0 at cell center
 		Iterator eendit = gridview.template end<0>();
 		for (Iterator it = gridview.template begin<0>(); it
@@ -279,7 +279,7 @@ public:
 			// get geometry type
 			Dune::GeometryType gt = it->geometry().type();
 
-			// get entity 
+			// get entity
 			const Entity& entity = *it;
 
 			FVElementGeometry<G> fvGeom;
@@ -299,11 +299,11 @@ public:
 
 				int globalId = vertexmapper.template map<dim>(entity,
 						sfs[i].entity());
-				
+
 				int state;
 				state = this->localJacobian.sNDat[globalId].phaseState;
 				RT vol = fvGeom.subContVol[i].volume;
-				RT poro = this->problem.porosity(global, entity, local);
+				RT poro = this->problem.soil().porosity(global, entity, local);
 
 				RT rhoN = (*(this->localJacobian.outDensityN))[globalId];
 				RT rhoW = (*(this->localJacobian.outDensityW))[globalId];
@@ -315,9 +315,9 @@ public:
 				RT pW = (*(this->u))[globalId][0];
 				RT Te = (*(this->u))[globalId][2];
 				RT mass = vol * poro * (satN * rhoN * xAN + satW * rhoW * xAW);
-				
 
-				
+
+
 				minSat = std::min(minSat, satN);
 				maxSat = std::max(maxSat, satN);
 				minP = std::min(minP, pW);
@@ -326,13 +326,13 @@ public:
 				maxX = std::max(maxX, xAW);
 				minTe = std::min(minTe, Te);
 				maxTe = std::max(maxTe, Te);
-				
+
 				totalMass += mass;
 			}
-				
+
 		}
 
-		// print minimum and maximum values 
+		// print minimum and maximum values
 //		std::cout << "nonwetting phase saturation: min = "<< minSat
 //				<< ", max = "<< maxSat << std::endl;
 //		std::cout << "wetting phase pressure: min = "<< minP
@@ -359,19 +359,19 @@ public:
 		for (typename std::vector<BCBlockType>::size_type i=0; i
 				<essential.size(); i++)
 			essential[i].assign(BoundaryConditions::neumann);
-		// iterate through leaf grid 
+		// iterate through leaf grid
 		Iterator eendit = gridview.template end<0>();
 		for (Iterator it = gridview.template begin<0>(); it
 				!= eendit; ++it) {
 			// get geometry type
 			Dune::GeometryType gt = it->geometry().type();
 
-			// get entity 
+			// get entity
 			const Entity& entity = *it;
 			this->localJacobian.fvGeom.update(entity);
 			int size = this->localJacobian.fvGeom.nNodes;
 			this->localJacobian.setLocalSolution(entity);
-			this->localJacobian.computeElementData(entity); 
+			this->localJacobian.computeElementData(entity);
 			bool old = true;
 			this->localJacobian.updateVariableData(entity, this->localJacobian.uold, old);
 			this->localJacobian.updateVariableData(entity, this->localJacobian.u);
