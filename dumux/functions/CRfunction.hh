@@ -674,8 +674,8 @@ namespace Dune
 	const G& grid_;
 
 	// reference to index set on the grid (might be level or leaf)
-	const IS& is;
 	const GV& gridview; 
+	const IS& is;
 	
 	// we need a mapper
 	VM mapper_;

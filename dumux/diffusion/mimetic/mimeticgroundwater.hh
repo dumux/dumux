@@ -173,7 +173,7 @@ namespace Dune
       Dune::FieldMatrix<DT,n,n> K(0);
       K = problem.K(centerGlobal,e,centerLocal);
 
-      int elemId = elementmapper.map(e);
+      //int elemId = elementmapper.map(e);
       
      	  K *= problem.materialLaw.mobTotal(problem.variables.sat(centerGlobal,e,centerLocal));
     

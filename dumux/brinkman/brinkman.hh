@@ -97,7 +97,7 @@ namespace Dune
 	 * \param prob a problem class object derived from BrinkmanProblem
 	*/
 	Brinkman(const G& g, BrinkmanProblem<G, RT>& prob) 
-	: grid(g), problem(prob)
+	: problem(prob), grid(g)
 	{ 
 	}
 	

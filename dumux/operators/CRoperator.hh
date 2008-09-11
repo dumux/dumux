@@ -239,8 +239,8 @@ namespace Dune
   protected:
 	Timer watch;
 	const G& grid;	
-	const IS& is;
 	const GV& gridview;
+	const IS& is;
 	LC lc;
 	EM facemapper;
 	AM allmapper;

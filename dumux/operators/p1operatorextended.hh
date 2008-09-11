@@ -657,10 +657,11 @@ namespace Dune
 
 		  // compute extension
 		  P1ExtendOverlap<G,GV,VM,LC> extender(lc);
-		  // TO CHANGE FOR PARALLEL
-//		  extender.extend(g,gv,vertexmapper,borderlinks,extraDOFs,gid2index,index2gid);
+#if HAVE_MPI
+		  extender.extend(g,gv,vertexmapper,borderlinks,extraDOFs,gid2index,index2gid);
+#else
 		  extender.extend(g,gv,vertexmapper,borderlinks,extraDOFs,gid2index);
-
+#endif
 		  // put in extra links due to overlap 
 		  // loop over all neighbors of border vertices
 		  for (typename std::map<int,GIDSet>::iterator i=borderlinks.begin(); i!=borderlinks.end(); ++i)

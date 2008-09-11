@@ -18,6 +18,7 @@
 #include <dune/disc/operators/boundaryconditions.hh>
 #include <dune/disc/operators/localstiffness.hh>
 #include "dumux/fractionalflow/variableclass.hh"
+#include "dumux/diffusion/diffusionproblem.hh"
 
 /**
  * @file

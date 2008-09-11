@@ -127,9 +127,9 @@ namespace Dune
 	virtual ~DiffusionProblem () {}
 	
 	//! a class describing relations between two phases and the porous medium
+	VC& variables;
 	TwoPhaseRelations& materialLaw;
 	const bool capillary;
-	VC& variables;
   protected:
 	  FieldVector<DT,n> gravity_;
   };

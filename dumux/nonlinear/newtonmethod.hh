@@ -5,7 +5,6 @@ namespace Dune {
 template<class G, class Model> class NewtonMethod {
 	typedef typename Model::FunctionType FunctionType;
 	typedef typename Model::OperatorAssembler OperatorAssembler;
-	typedef typename Model::LocalJacobian LocalJacobian;
 public:
 	void execute(bool verbose = true) {
 		if (verbose)
@@ -17,8 +16,8 @@ public:
 		double relDiff = 1e100;
 		double globalResiduum = 1e100;
 		bool divided = false;
-		double dt = localJacobian.getDt();
-		char buf[128];
+		double dt = model.getDt();
+		//char buf[128];
 
 		while (dt > minDt && (relDiff > diffTolerance || globalResiduum > resTolerance)) {
 			relDiff = 1e100;
@@ -42,16 +41,14 @@ public:
 			{
 				iter ++;
 				double relDiffOld = relDiff;
-				int iiter = 0;
+				//int iiter = 0;
 				num = 0;
 				*uOldNewtonStep = *u;
 				globalResiduumOld = globalResiduum;
 				lambda = lambdaOld;
 				//printvector(std::cout, *uOldNewtonStep, "uOldNewtonStep", "row", 200, 1, 3);
 				//printvector(std::cout, *(model.uOldTimeStep), "uOldTimeStep", "row", 200, 1, 3);
-				*f = 0;
-				localJacobian.clearVisited();
-				A.assemble(localJacobian, u, f);
+				model.assemble();
 //				*(uOldNewtonStep) = 0.0; 
 //				*(model.uOldTimeStep) = 1.0; 
 //				(*A).mv(*(model.uOldTimeStep), *uOldNewtonStep);
@@ -97,7 +94,7 @@ public:
 						std::cout << ": did not converge in "<< iter << " iterations."<< std::endl;
 					std::cout << "Retry same time step with reduced size of " << dt << std::endl;
 				}
-				localJacobian.setDt(dt);
+				model.setDt(dt);
 				*u = *(model.uOldTimeStep);
 				divided = true;
 			} 
@@ -112,7 +109,7 @@ public:
 						<< " Newton iterations. Initial size for the next time step doubled to "
 						<< dt << std::endl;
 				}
-				localJacobian.setDt(dt);
+				model.setDt(dt);
 
 				return;
 			}
@@ -124,10 +121,10 @@ public:
 	}
 
 	NewtonMethod(const G& g, Model& mod, double dtol = 1e-7,
-			double rtol = 1e-3, int maxIt = 10, double mindt = 1e-5,
+			double rtol = 1e3, int maxIt = 10, double mindt = 1,
 			int goodIt = 4, int maxInc = 2) 
 	: grid(g), model(mod), u(mod.u), f(mod.f), A(mod.A),
-	localJacobian(mod.localJacobian), uOldNewtonStep(g, g.overlapSize(0)==0),
+	uOldNewtonStep(g, g.overlapSize(0)==0),
 	diffTolerance(dtol), resTolerance(rtol), maxIter(maxIt),
 	defectGlobal(g, g.overlapSize(0)==0), num(0), minDt(mindt), goodIter(goodIt), maxIncreased(maxInc) 
 	{}
@@ -136,7 +133,7 @@ public:
 			double rtol = 1e-5, int maxIt = 12, double mindt = 1e-5,
 			int goodIt = 3, int maxInc = 2) 
 	: grid(g), model(mod), u(mod.u), f(mod.f), A(mod.A),
-	localJacobian(mod.localJacobian), uOldNewtonStep(g, level, g.overlapSize(0)==0),
+	uOldNewtonStep(g, level, g.overlapSize(0)==0),
 	diffTolerance(dtol), resTolerance(rtol), maxIter(maxIt),
 	defectGlobal(g, level, g.overlapSize(0)==0), num(0), minDt(mindt), goodIter(goodIt), maxIncreased(maxInc)
 	{}
@@ -147,7 +144,6 @@ private:
 	FunctionType& u;
 	FunctionType& f;
 	OperatorAssembler& A;
-	LocalJacobian& localJacobian;
 	FunctionType uOldNewtonStep;
 	double diffTolerance;
 	double resTolerance;

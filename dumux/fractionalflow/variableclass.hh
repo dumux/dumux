@@ -43,7 +43,7 @@ public:
 	ElementMapper mapper;
 
 	VariableClass(G& g, RT& initialsat = *(new RT(0)), RT& initalpress = *(new RT(0)), Dune::FieldVector<RT, n>& initialvel = *(new Dune::FieldVector<RT, n> (0)), int lev = 0) :
-		grid(g), mapper(g, g.levelIndexSet(lev)), size(mapper.size())
+		mapper(g, g.levelIndexSet(lev)), grid(g), size(mapper.size())
 	{
 		initsat(initialsat, size);
 		initpress(initalpress, size);

@@ -28,6 +28,23 @@ public:
 		return u;
 	}
 
+	virtual double getDt() 
+	{
+		return localJacobian.getDt();
+	}
+	
+	virtual void setDt(double& dt) 
+	{
+		localJacobian.setDt(dt);
+	}
+	
+	virtual void assemble() 
+	{
+		*f = 0;
+		localJacobian.clearVisited();
+		A.assemble(localJacobian, u, f);
+	}
+	
 	//! always define virtual destructor in abstract base class
 	virtual ~NonlinearModel () {}
 
