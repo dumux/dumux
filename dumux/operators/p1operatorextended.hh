@@ -1,4 +1,4 @@
-// $Id: p1operator.hh 508 2008-08-15 12:26:33Z mblatt $
+// $Id$ 
 
 #ifndef DUNE_P1OPERATOR_HH
 #define DUNE_P1OPERATOR_HH

@@ -1,3 +1,5 @@
+// $Id$ 
+
 #ifndef DUNE_MIMETICOPERATOR_HH
 #define DUNE_MIMETICOPERATOR_HH
 

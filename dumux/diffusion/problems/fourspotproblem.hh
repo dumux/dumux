@@ -1,3 +1,5 @@
+// $Id$ 
+
 #ifndef FOURSPOTPROBLEM_HH
 #define FOURSPOTPROBLEM_HH
 

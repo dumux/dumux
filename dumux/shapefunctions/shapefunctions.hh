@@ -1,4 +1,4 @@
-// $Id: shapefunctions.hh 337 2006-05-03 13:32:40Z oliver $
+// $Id$ 
 
 #ifndef DUNE_SHAPEFUNCTIONS_HH
 #define DUNE_SHAPEFUNCTIONS_HH

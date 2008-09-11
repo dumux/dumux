@@ -1,4 +1,4 @@
-// $Id: vtkwriter.hh 3809 2007-08-15 13:39:04Z christi $
+// $Id$ 
 
 #ifndef DUNE_VTKWRITER_HH
 #define DUNE_VTKWRITER_HH

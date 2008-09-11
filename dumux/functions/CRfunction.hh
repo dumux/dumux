@@ -1,4 +1,4 @@
-// $Id: p1function.hh 424 2007-02-12 10:51:19Z mblatt $
+// $Id$ 
 
 #ifndef DUNE_CRFUNCTION_HH
 #define DUNE_CRFUNCTION_HH

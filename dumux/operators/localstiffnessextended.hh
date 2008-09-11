@@ -1,4 +1,4 @@
-// $Id: localstiffness.hh 468 2008-03-27 10:35:12Z sander $
+// $Id$ 
 
 #ifndef DUNE_LOCALSTIFFNESS_HH
 #define DUNE_LOCALSTIFFNESS_HH

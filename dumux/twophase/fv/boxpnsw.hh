@@ -1,3 +1,5 @@
+// $Id$ 
+
 #ifndef DUNE_BOXPNSW_HH
 #define DUNE_BOXPNSW_HH
 

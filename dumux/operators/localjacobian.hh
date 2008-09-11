@@ -1,4 +1,6 @@
-// $Id: localjacobian.hh 404 2006-10-04 08:47:06Z oliver $
+// $Id$ 
+
+// $Id$
 
 #ifndef DUNE_LOCALJACOBIAN_HH
 #define DUNE_LOCALJACOBIAN_HH

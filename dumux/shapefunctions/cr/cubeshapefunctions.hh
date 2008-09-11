@@ -1,4 +1,4 @@
-// $Id: cubeshapefunctions.hh 336 2006-05-03 13:09:05Z oliver $
+// $Id$ 
 
 #ifndef DUNE_CRCUBESHAPEFUNCTIONS_HH
 #define DUNE_CRCUBESHAPEFUNCTIONS_HH

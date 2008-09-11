@@ -1,3 +1,5 @@
+// $Id$ 
+
 #ifndef HOMOGENEOUSPROBLEM_HH
 #define HOMOGENEOUSPROBLEM_HH
 
