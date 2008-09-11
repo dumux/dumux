@@ -14,7 +14,7 @@ template<class G, class RT, class VC> class UpsSProblem :
 	typedef typename G::Traits::template Codim<0>::Entity Entity;
 
 public:
-	UpsSProblem(VC& variableobj, MediumNonIsothermal& wp, MediumNonIsothermal& nwp, Matrix2p<G, RT>& s, TwoPhaseRelations<G, RT>& law = *(new TwoPhaseRelations<G,RT>), const FieldVector<DT,n> Left = 0,
+	UpsSProblem(VC& variableobj, Fluid& wp, Fluid& nwp, Matrix2p<G, RT>& s, TwoPhaseRelations<G, RT>& law = *(new TwoPhaseRelations<G,RT>), const FieldVector<DT,n> Left = 0,
 			const FieldVector<DT,n> Right = 0, const bool cap = false) :
 		FractionalFlowProblem<G, RT, VC>(variableobj, wp, nwp, s, law, cap), Left_(Left[0]),
 				Right_(Right[0]), eps_(1e-8)
