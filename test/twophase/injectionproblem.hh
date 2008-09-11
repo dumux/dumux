@@ -48,18 +48,13 @@ namespace Dune
 
   public:
 	enum {pWIdx = 0, switchIdx = 1};
-//	enum {swrIdx = 0, snrIdx = 1, alphaIdx = 2, nIdx = 3};
 	enum {swrIdx = 0, snrIdx = 1, lamIdx = 2, pbIdx = 3};
 	enum {gasPhase = 0, waterPhase = 1, bothPhases = 2};
 
-//	// permeabilities
-//	virtual const FieldMatrix<DT,dim,dim>& K (const FieldVector<DT,dim>& x)
-//	//, const Entity& e, const FieldVector<DT,dim>& xi)
-//	{
-//			return outerK_;
-//	}
 
-	// sources and sinks
+/////////////////////////////
+// sources and sinks
+/////////////////////////////
 	virtual FieldVector<RT,m> q (const FieldVector<DT,dim>& x, const Entity& e,
 					const FieldVector<DT,dim>& xi) const
 	{
@@ -67,8 +62,6 @@ namespace Dune
 
 		return values;
 	}
-
-
 
 /////////////////////////////
 // TYPE of the boundaries
@@ -86,7 +79,6 @@ namespace Dune
 
 		return values;
 	}
-
 
 /////////////////////////////
 // DIRICHLET boundaries
@@ -166,18 +158,6 @@ namespace Dune
 		}
 
 //////////////////////////////
-
-
-
-//	double porosity (const FieldVector<DT,dim>& x, const Entity& e,
-//			  const FieldVector<DT,dim>& xi) const
-//	{
-////		if (x[0] > innerLowerLeft_[0] && x[0] < innerUpperRight_[0]
-////		    && x[1] > innerLowerLeft_[1] && x[1] < innerUpperRight_[1])
-////			return innerPorosity_;
-////		else
-//			return outerPorosity_;
-//	}
 
 	virtual FieldVector<RT,dim> gravity () const
 	{
