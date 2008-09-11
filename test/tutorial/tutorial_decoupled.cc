@@ -45,11 +45,11 @@ int main(int argc, char** argv)
     typedef Dune::TutorialProblemDecoupled<GridType, NumberType, VariableType> Problem;
     Problem problem(variables, wettingfluid, nonwettingfluid, soil, materialLaw,L, H);
 
-    // object including the discretisation of the pressure equation
+    // create object including the discretisation of the pressure equation
     typedef Dune::FVDiffusionVelocity<GridType, NumberType, VariableType> DiffusionType;
     DiffusionType diffusion(grid, problem, grid.maxLevel());
 
-    // object including the space discretisation of the saturation equation
+    // create object including the space discretisation of the saturation equation
     typedef Dune::FVTransport<GridType, NumberType, VariableType> TransportType;
     TransportType transport(grid, problem, grid.maxLevel());
 
@@ -58,7 +58,7 @@ int main(int argc, char** argv)
     int nIter = 30;
     double maxDefect = 1e-5;
 
-    // object including the IMPES (IMplicit Pressure Explicit Saturation) Algorithm
+    // create object including the IMPES (IMplicit Pressure Explicit Saturation) Algorithm
     typedef Dune::IMPES<GridType, DiffusionType, TransportType, VariableType> IMPESType;
     IMPESType impes(diffusion, transport, iterFlag, nIter, maxDefect);
 
