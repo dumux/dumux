@@ -25,13 +25,13 @@ public:
 	ScalarType pressure;
 	VelType velocity;
 	ScalarType totalConcentration;
-	ScalarType wet_c1, nonwet_c1;
-	ScalarType wet_c2, nonwet_c2;
+	ScalarType wet_X1, nonwet_X1;
+	ScalarType wet_X2, nonwet_X2;
 	ScalarType volErr;
 
-	template<int dim> struct ElementLayout 
+	template<int dim> struct ElementLayout
 	{
-		bool contains(Dune::GeometryType gt) 
+		bool contains(Dune::GeometryType gt)
 		{
 			return gt.dim() == dim;
 		}
@@ -39,49 +39,33 @@ public:
 
 	typedef typename G::LevelGridView::IndexSet IS;
 	typedef Dune::MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout>	ElementMapper;
+	G& grid;
 	ElementMapper mapper;
 
-	VariableClass2p2c(G& g, RT& initialsat = *(new RT(0)), RT& initalpress = *(new RT(0)), Dune::FieldVector<RT, n>& initialvel = *(new Dune::FieldVector<RT, n> (0)), int lev = 0) :
-		grid(g), mapper(g, g.levelIndexSet(lev)), size(mapper.size()) 
-	{
-		initsat(initialsat, size);
-		initpress(initalpress, size);
-		initvel(initialvel, size);
-		initC(size);
-	}
+private:
+	int size;
+public:
 
-	void initsat(RT& initialsat, int size) 
+	VariableClass2p2c(G& g, int lev = 0) :
+		grid(g), mapper(g, g.levelIndexSet(lev)), size(mapper.size())
 	{
 		saturation.resize(size);
-		saturation=initialsat;
-		return;
-	}
-	void initpress(RT& initialpress, int size) 
-	{
 		pressure.resize(size);
-		pressure=initialpress;
-		return;
-	}
-	void initvel(Dune::FieldVector<RT, n>& initialvel, int size) 
-	{
 		velocity.resize(size);
-		velocity=initialvel;
-		return;
-	}
-	void initC(int size)
-	{
 		totalConcentration.resize(2*size);
-		wet_c1.resize(size);
-		wet_c2.resize(size);
-		nonwet_c1.resize(size);
-		nonwet_c2.resize(size);
+		wet_X1.resize(size);
+		wet_X2.resize(size);
+		nonwet_X1.resize(size);
+		nonwet_X2.resize(size);
 		volErr.resize(size);
-		
+
+		saturation = 0;
+		pressure = 0;
 		totalConcentration = 0;
-		wet_c1 = 0;
-		wet_c2 = 0; 
-		nonwet_c1 = 0;
-		nonwet_c2 = 0;
+		wet_X1 = 0;
+		wet_X2 = 0;
+		nonwet_X1 = 0;
+		nonwet_X2 = 0;
 		volErr = 0;
 	}
 
@@ -113,14 +97,14 @@ public:
 	}
 
 	/*! @brief writes all variables to a VTK File
-	 * 
+	 *
 	 *  The file name is "<name>-<k>.vtu" where k is an integer number.
 	 *  @param name specifies the name of the VTK file
 	 *  @param k specifies a number
 	 */
-	void vtkout(const char* name, int k, int pressurelevel = 0, int satlevel = 0) const 
+	void vtkout(const char* name, int k, int pressurelevel = 0, int satlevel = 0) const
 	{
-		if (pressurelevel == satlevel) 
+		if (pressurelevel == satlevel)
 		{
 			ScalarType C1, C2;
 			C1.resize(size); C2.resize(size);
@@ -135,15 +119,15 @@ public:
 			vtkwriter.addCellData(saturation, "saturation");
 			vtkwriter.addCellData(pressure, "total pressure p~");
 			vtkwriter.addCellData(C1, "total concentration 1 [kg/m^3]");
-			vtkwriter.addCellData(C2, "total concentration 2 [kg/m^3]");		
+			vtkwriter.addCellData(C2, "total concentration 2 [kg/m^3]");
 			vtkwriter.addCellData(volErr, "volume error [%]");
-			vtkwriter.addCellData(wet_c1, "concentration 1 in wetting phase [kg/m^3]");
-			vtkwriter.addCellData(nonwet_c1, "concentration 1 in non-wetting phase [kg/m^3]");
-			vtkwriter.addCellData(wet_c2, "concentration 2 in wetting phase [kg/m^3]");
-			vtkwriter.addCellData(nonwet_c2, "concentration 2 in non-wetting phase [kg/m^3]");
+			vtkwriter.addCellData(wet_X1, "Mass fraction 1 in wetting phase [kg/m^3]");
+			vtkwriter.addCellData(nonwet_X1, "Mass fraction 1 in non-wetting phase [kg/m^3]");
+			vtkwriter.addCellData(wet_X2, "Mass fraction 2 in wetting phase [kg/m^3]");
+			vtkwriter.addCellData(nonwet_X2, "Mass fraction 2 in non-wetting phase [kg/m^3]");
 			vtkwriter.write(fname, VTKOptions::ascii);
-		} 
-		else 
+		}
+		else
 		{
 			Dune::VTKWriter<G, typename G::LevelGridView>
 					vtkwriterpressure(grid.levelView(pressurelevel));
@@ -166,11 +150,7 @@ public:
 		sprintf(fname, "%s-press%05d", name, k);
 		vtkwriter.addCellData(pressure, "total pressure p~");
 		vtkwriter.write(fname, VTKOptions::ascii);
-	}	
-
-	G& grid;
-private:
-	int size;
+	}
 };
 }
 #endif
