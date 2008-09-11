@@ -1,4 +1,4 @@
-// $Id: p1operator.hh 425 2007-02-21 15:48:26Z sander $
+// $Id$
 
 #ifndef DUNE_CROPERATOR_HH
 #define DUNE_CROPERATOR_HH
