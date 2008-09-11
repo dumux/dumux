@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_FRACTIONALFLOWPROBLEM_HH
 #define DUNE_FRACTIONALFLOWPROBLEM_HH
@@ -130,7 +130,7 @@ namespace Dune
 	/** @param law implementation of Material laws. Class TwoPhaseRelations or derived.
 	 *  @param cap flag to include capillary forces.
 	 */
-	FractionalFlowProblem(VC& variableobject, MediumNonIsothermal& wp, MediumNonIsothermal& nwp, Matrix2p<G, RT>& s, TwoPhaseRelations<G, RT>& law = *(new TwoPhaseRelations<G,RT>), const bool cap = false)
+	FractionalFlowProblem(VC& variableobject, Fluid& wp, Fluid& nwp, Matrix2p<G, RT>& s, TwoPhaseRelations<G, RT>& law = *(new TwoPhaseRelations<G,RT>), const bool cap = false)
 	 : variables(variableobject), wettingphase(wp), nonwettingphase(nwp), soil(s), capillary(cap), materialLaw(law)
 	 {}
 
@@ -139,8 +139,8 @@ namespace Dune
 
 	//! a class describing relations between two phases and the porous medium
 	VC& variables;
-	MediumNonIsothermal& wettingphase;
-	MediumNonIsothermal& nonwettingphase;
+	Fluid& wettingphase;
+	Fluid& nonwettingphase;
 	Matrix2p<G, RT>& soil;
 	TwoPhaseRelations<G, RT>& materialLaw;
 	const bool capillary;
