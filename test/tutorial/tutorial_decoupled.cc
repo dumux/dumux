@@ -1,22 +1,19 @@
-#include "config.h"
 #include <iostream>
 #include <iomanip>
-#include <dune/grid/sgrid.hh> // load sgrid definition
+#include <dune/grid/sgrid.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
+#include "dumux/fractionalflow/variableclass.hh"
 #include "dumux/material/phaseproperties/phaseproperties2p.hh"
-#include <tutorial_soilproperties.hh>
-#include <dumux/material/twophaserelations.hh>
+#include "tutorial_soilproperties.hh"
+#include "dumux/material/twophaserelations.hh"
 #include "tutorialproblem_decoupled.hh"
-#include "dumux/timedisc/timeloop.hh"
 #include "dumux/diffusion/fv/fvdiffusion.hh"
 #include "dumux/diffusion/fv/fvdiffusionvelocity.hh"
 #include "dumux/transport/fv/fvtransport.hh"
 #include "dumux/fractionalflow/impes/impes.hh"
-#include <dune/disc/operators/boundaryconditions.hh>
-#include "dumux/timedisc/expliciteulerstep.hh"
-#include "dumux/fractionalflow/variableclass.hh"
+#include "dumux/timedisc/timeloop.hh"
 
 
 int main(int argc, char** argv)
@@ -66,11 +63,11 @@ int main(int argc, char** argv)
     IMPESType impes(diffusion, transport, iterFlag, nIter, maxDefect);
 
     // some parameters needed for the TimeLoop-object
-    double tStart = 0;//start simulation at t = tStart
-    double tEnd = 1e8;//end simulation at t = tEnd
-    char* fileName("tutorial_decoupled");//name of the output files
-    int modulo = 1;//define time step interval in which output files are generated
-    double cFLFactor = 1;//security factor for the Courant-Friedrichs-Lewy-Criterion
+    double tStart = 0; // start simulation at t = tStart
+    double tEnd = 1e8; // stop simulation at t = tEnd
+    char* fileName("tutorial_decoupled"); // name of the output files
+    int modulo = 1; // define time step interval in which output files are generated
+    double cFLFactor = 1; // security factor for the Courant-Friedrichs-Lewy-Criterion
 
     // create TimeLoop-object
     Dune::TimeLoop<GridType, IMPESType > timeloop(tStart, tEnd, fileName, modulo, cFLFactor);
