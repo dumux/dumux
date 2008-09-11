@@ -21,14 +21,18 @@ int main(int argc, char** argv)
 
     // create a grid object
     typedef double NumberType; 
-    typedef Dune::SGrid<dim,dim> GridType; 
 
+    typedef Dune::SGrid<dim,dim> GridType; 
     Dune::FieldVector<GridType::ctype,dim> L(0);
     Dune::FieldVector<GridType::ctype,dim> R(1);
     R[0]=2;
-    Dune::FieldVector<int,dim> N(50);
-    N[0]=100;
+    Dune::FieldVector<int,dim> N(5);
+    N[0]=10;
     GridType grid(N,L,R);
+
+//    typedef Dune::UGGrid<dim> GridType; 
+//    Dune::GridPtr<GridType> gridPtr( argv[1] );
+//    GridType& grid = *gridPtr;
 
     Dune::BrinkmanTestProblem<GridType, NumberType> problem;
 

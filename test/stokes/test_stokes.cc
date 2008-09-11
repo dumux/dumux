@@ -1,5 +1,7 @@
 #include "config.h"
 #include <iostream>
+#undef DUMMY 
+#ifdef DUMMY 
 #include <iomanip>
 #include <dune/grid/utility/gridtype.hh>
 #include <dune/grid/common/gridinfo.hh>
@@ -67,3 +69,17 @@ int main(int argc, char** argv)
     std::cerr << "Unknown exception thrown!" << std::endl;
   }
 }
+#else 
+
+int main (int argc , char **argv) try
+{
+  std::cout << "This test is not finished yet." << std::endl;
+
+  return 1;
+}
+catch (...) 
+{
+    std::cerr << "Generic exception!" << std::endl;
+    return 2;
+}
+#endif 
