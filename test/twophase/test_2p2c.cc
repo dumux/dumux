@@ -1,9 +1,11 @@
 #include "config.h"
 #include <iostream>
-//#define DUMMY 
-#undef DUMMY 
-#ifdef DUMMY 
+
+#define DUMMY
+//#undef DUMMY
+#ifdef DUMMY
 //#ifdef HAVE_UG
+
 #include <iomanip>
 #include <dune/grid/common/gridinfo.hh>
 #include <dune/grid/uggrid.hh>
@@ -84,7 +86,7 @@ int main(int argc, char** argv)
     typedef Dune::Box2P2C<GridType, NumberType, MultiWriter> TwoPhaseTwoComp;
     TwoPhaseTwoComp twoPhasetwoComp(grid, problem);
 
-    Dune::TimeLoop<GridType, TwoPhaseTwoComp> timeloop(0, tEnd, dt, "lens", 5);
+    Dune::TimeLoop<GridType, TwoPhaseTwoComp> timeloop(0, tEnd, dt, "lens", 1);
 
     Dune::Timer timer;
     timer.reset();
