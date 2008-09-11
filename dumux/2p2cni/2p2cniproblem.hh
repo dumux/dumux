@@ -130,20 +130,18 @@ public:
 
 	virtual FieldVector<RT,dim> gravity() const = 0;
 
-	MultiComp& multicomp ()
+	virtual MultiComp& multicomp ()
 	{
 		return multicomp_;
 	}
 
-	TwoPhaseRelations<G, RT>& materialLaw ()
-	{
-		return materialLaw_;
-	}
+	virtual Liquid_GL& wettingPhase () const = 0;
 
-    Matrix2p<G, RT>& soil ()
-    {
-    	return soil_;
-    }
+	virtual Gas_GL& nonwettingPhase () const = 0;
+
+	virtual TwoPhaseRelations<G, RT>& materialLaw () const = 0;
+
+    virtual Matrix2p<G, RT>& soil () const = 0;
 
 	//element-wise return of the values of an Exact solution
 	virtual RT uExOutVertex(int &ElementIndex, int VariableIndex) const {
