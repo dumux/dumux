@@ -12,9 +12,7 @@
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
-//#include "dumux/twophase/problems/uniformtwophaseproblem.hh"
 #include "waterco2problem.hh"
-//#include "dumux/material/properties.hh"
 
 #include "dumux/material/phaseproperties/phaseproperties_waterair.hh"
 #include "dumux/material/matrixproperties.hh"

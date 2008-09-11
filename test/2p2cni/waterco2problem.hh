@@ -172,7 +172,7 @@ namespace Dune
 //////////////////////////////
 
 
-	virtual FieldVector<RT,dim> gravity () const
+	FieldVector<RT,dim> gravity () const
 	{
 		FieldVector<RT,dim> values(0);
 
@@ -181,11 +181,31 @@ namespace Dune
 		return values;
 	}
 
+	Liquid_GL& wettingPhase () const
+	{
+		return wettingPhase_;
+	}
+
+	Gas_GL& nonwettingPhase () const
+	{
+		return nonwettingPhase_;
+	}
+
+    Matrix2p<G, RT>& soil () const
+    {
+    	return soil_;
+    }
+
+	TwoPhaseRelations<G, RT>& materialLaw () const
+	{
+		return materialLaw_;
+	}
+
 	WaterCO2Problem(Liquid_GL& liq, Gas_GL& gas, Matrix2p<G, RT>& soil,
 			TwoPhaseRelations<G, RT>& law = *(new TwoPhaseRelations<G, RT>),
 			MultiComp& multicomp = *(new CWaterAir), RT depthBOR = 0.0)
-	: TwoPTwoCNIProblem<G, RT>(soil, multicomp, law),  wetPhase_(liq),
-	  nwetPhase_(gas), soil_(soil)
+	: TwoPTwoCNIProblem<G, RT>(soil, multicomp, law),  wettingPhase_(liq),
+	  nonwettingPhase_(gas), soil_(soil), materialLaw_(law)
 	{
 		depthBOR_ = depthBOR;
 
@@ -198,9 +218,10 @@ namespace Dune
 		Dune::FieldVector<RT,2> diffusion_;
 		RT depthBOR_;
 		RT soilDens_, soilHeatCp_, soilLDry_, soilLSw_;
-		Liquid_GL& wetPhase_;
-		Gas_GL& nwetPhase_;
+		Liquid_GL& wettingPhase_;
+		Gas_GL& nonwettingPhase_;
 		Matrix2p<G,RT>& soil_;
+		TwoPhaseRelations<G, RT>& materialLaw_;
   };
 
 }
