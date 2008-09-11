@@ -13,14 +13,14 @@ template<class G, class RT, class ProblemType, class LocalJacobian,
 	public NonlinearModel<G, RT, ProblemType, LocalJacobian, FunctionType, OperatorAssembler> {
 public:
 	typedef NonlinearModel<G, RT, ProblemType, LocalJacobian,
-	FunctionType, OperatorAssembler> NonlinearModel;
+	FunctionType, OperatorAssembler> ThisNonlinearModel;
 
 	TwoPhaseHeatModel(const G& g, ProblemType& prob) :
-		NonlinearModel(g, prob), uOldTimeStep(g) {
+		ThisNonlinearModel(g, prob), uOldTimeStep(g) {
 	}
 
 	TwoPhaseHeatModel(const G& g, ProblemType& prob, int level) :
-		NonlinearModel(g, prob, level), uOldTimeStep(g, level) {
+		ThisNonlinearModel(g, prob, level), uOldTimeStep(g, level) {
 	}
 
 	virtual void initial() = 0;
@@ -43,7 +43,7 @@ public:
 	typedef LeafP1OperatorAssembler<G, RT, m> OperatorAssembler;
 
 	typedef TwoPhaseHeatModel<G, RT, ProblemType, LocalJac,
-	FunctionType, OperatorAssembler> TwoPhaseHeatModel;
+	FunctionType, OperatorAssembler> ThisTwoPhaseHeatModel;
 
 	typedef LeafP1TwoPhaseModel<G, RT, ProblemType, LocalJac, m> ThisType;
 
@@ -63,7 +63,7 @@ public:
 			IntersectionIterator;
 
 	LeafP1TwoPhaseModel(const G& g, ProblemType& prob) :
-		TwoPhaseHeatModel(g, prob), problem(prob), grid(g), vertexmapper(g,	g.leafIndexSet()), size((*(this->u)).size())
+		ThisTwoPhaseHeatModel(g, prob), problem(prob), grid(g), vertexmapper(g,	g.leafIndexSet()), size((*(this->u)).size())
 		{
 	}
 

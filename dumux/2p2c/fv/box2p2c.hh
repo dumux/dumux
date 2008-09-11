@@ -57,18 +57,18 @@ namespace Dune
 
 	// define the local Jacobian (also change the template argument above)
 	typedef Box2P2CJacobian<G, RT> LocalJacobian;
-	typedef LeafP1TwoPhaseModel<G, RT, ProblemType, LocalJacobian> LeafP1TwoPhaseModel;
+	typedef LeafP1TwoPhaseModel<G, RT, ProblemType, LocalJacobian> ThisLeafP1TwoPhaseModel;
 	typedef Box2P2C<G, RT, VtkMultiWriter> ThisType;
 
-	typedef typename LeafP1TwoPhaseModel::FunctionType FunctionType;
+	typedef typename ThisLeafP1TwoPhaseModel::FunctionType FunctionType;
 
 	typedef typename G::LeafGridView GV;
     typedef typename GV::IndexSet IS;
 
     enum{m = 2};
 
-		typedef typename LeafP1TwoPhaseModel::FunctionType::RepresentationType VectorType;
-		typedef typename LeafP1TwoPhaseModel::OperatorAssembler::RepresentationType MatrixType;
+		typedef typename ThisLeafP1TwoPhaseModel::FunctionType::RepresentationType VectorType;
+		typedef typename ThisLeafP1TwoPhaseModel::OperatorAssembler::RepresentationType MatrixType;
 		typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator;
 #ifdef HAVE_PARDISO
 	SeqPardiso<MatrixType,VectorType,VectorType> pardiso;
@@ -76,7 +76,7 @@ namespace Dune
 
 
 	Box2P2C(const G& g, ProblemType& prob)
-	: LeafP1TwoPhaseModel(g, prob)// (this->size) vectors
+	: ThisLeafP1TwoPhaseModel(g, prob)// (this->size) vectors
 	{ }
 
 	void initial() {
@@ -225,7 +225,7 @@ namespace Dune
 
 	virtual void globalDefect(FunctionType& defectGlobal)
 	{
-		LeafP1TwoPhaseModel::globalDefect(defectGlobal);
+		ThisLeafP1TwoPhaseModel::globalDefect(defectGlobal);
 	}
 
 	void solve()

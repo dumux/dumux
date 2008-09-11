@@ -72,11 +72,11 @@ public:
 	// define the operator assembler type:
 	typedef LeafP1OperatorAssembler<G, RT, m> OperatorAssembler;
 
-	typedef NonlinearModel<G, RT, ProblemType, LocalJacobian, 
-	FunctionType, OperatorAssembler> NonlinearModel;
+    typedef NonlinearModel<G, RT, ProblemType, LocalJacobian, 
+    FunctionType, OperatorAssembler> ThisNonlinearModel;
 
 	LeafP1NonlinearModel (const G& g, ProblemType& prob) 
-	: NonlinearModel(g, prob)
+	: ThisNonlinearModel(g, prob)
 	{ }
 };
 

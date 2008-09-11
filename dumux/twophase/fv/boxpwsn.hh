@@ -66,17 +66,17 @@ public:
 	typedef BoxPwSnJacobian<G, RT> LocalJacobian;
 
 	typedef LeafP1TwoPhaseModel<G, RT, ProblemType, LocalJacobian>
-			LeafP1TwoPhaseModel;
+			ThisLeafP1TwoPhaseModel;
 
-	typedef typename LeafP1TwoPhaseModel::FunctionType FunctionType;
+	typedef typename ThisLeafP1TwoPhaseModel::FunctionType FunctionType;
 
 	typedef typename G::Traits::LeafIndexSet IS;
 
 	enum {m = 2};
 
 	typedef BoxPwSn<G, RT> ThisType;
-	typedef typename LeafP1TwoPhaseModel::FunctionType::RepresentationType VectorType;
-	typedef typename LeafP1TwoPhaseModel::OperatorAssembler::RepresentationType MatrixType;
+	typedef typename ThisLeafP1TwoPhaseModel::FunctionType::RepresentationType VectorType;
+	typedef typename ThisLeafP1TwoPhaseModel::OperatorAssembler::RepresentationType MatrixType;
 	typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator;
 #ifdef HAVE_PARDISO
 	SeqPardiso<MatrixType,VectorType,VectorType> pardiso;
@@ -84,7 +84,7 @@ public:
 
 
 	BoxPwSn(const G& g, ProblemType& prob) 
-	: LeafP1TwoPhaseModel(g, prob) 
+	: ThisLeafP1TwoPhaseModel(g, prob) 
 	{}
 
 	virtual void solve() {

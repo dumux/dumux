@@ -69,8 +69,7 @@ namespace Dune
     typedef Box2P2CJacobian<G,RT,BoxFunction> ThisType;
     typedef typename LocalJacobian<ThisType,G,RT,2>::VBlockType VBlockType;
     typedef typename LocalJacobian<ThisType,G,RT,2>::MBlockType MBlockType;
-    typedef FVElementGeometry<G> FVElementGeometry;
-
+ 
  	enum {pWIdx = 0, switchIdx = 1, numberOfComponents = 2};	// Solution vector index
 	enum {wPhase = 0, nPhase = 1};									// Phase index
 	enum {gasPhase = 0, waterPhase = 1, bothPhases = 2};		// Phase state

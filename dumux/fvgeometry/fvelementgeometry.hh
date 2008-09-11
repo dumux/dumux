@@ -241,7 +241,7 @@ namespace Dune
     {
         friend class _FVElemGeomHelper<FVElementGeometry<G>, G::dimension>;
 
-        typedef _FVElemGeomHelper<FVElementGeometry<G>, G::dimension> _FVElemGeomHelper;
+        typedef _FVElemGeomHelper<FVElementGeometry<G>, G::dimension> FVElemGeomHelper;
 
         enum{dim = G::dimension};
         enum{maxNC = (dim < 3 ? 4 : 8)};
@@ -523,7 +523,7 @@ namespace Dune
                 // which is dependend of the grid's dimension to
                 // _FVElemGeomHelper in order to benefit from more aggressive
                 // compiler optimizations...
-                _FVElemGeomHelper::fillSubContVolData(*this, nNodes);
+                FVElemGeomHelper::fillSubContVolData(*this, nNodes);
 
                 // fill sub control volume face data:
                 for (int k = 0; k < nEdges; k++) { // begin loop over edges / sub control volume faces

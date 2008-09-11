@@ -69,7 +69,6 @@ namespace Dune
     typedef BoxPwSnJacobian<G,RT,BoxFunction> ThisType;
     typedef typename LocalJacobian<ThisType,G,RT,2>::VBlockType VBlockType;
     typedef typename LocalJacobian<ThisType,G,RT,2>::MBlockType MBlockType;
-	typedef FVElementGeometry<G> FVElementGeometry;
 	enum {pWIdx = 0, satNIdx = 1};
 	
 	

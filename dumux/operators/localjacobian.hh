@@ -72,11 +72,11 @@ namespace Dune
 
   public:
     // types for matrics, vectors and boundary conditions
-    typedef LocalStiffness<Imp, G, RT, m> LocalStiffness;
+    typedef LocalStiffness<Imp, G, RT, m> ThisLocalStiffness;
     typedef FieldMatrix<RT,m,m> MBlockType;                      // one entry in the stiffness matrix
     typedef FieldVector<RT,m> VBlockType;                        // one entry in the global vectors
     typedef array<BoundaryConditions::Flags,m> BCBlockType; // componentwise boundary conditions
-    typedef FVElementGeometry<G> FVElementGeometry;
+    typedef FVElementGeometry<G> ElementGeometry;
     enum {SIZE=8};
 
 	void computeElementData(const Entity& e) {
@@ -244,7 +244,7 @@ namespace Dune
     	return this->getImp().getDt();
     }
     
-    FVElementGeometry fvGeom;
+    ElementGeometry fvGeom;
     VBlockType def[SIZE];
     VBlockType u[SIZE];
     VBlockType uold[SIZE];

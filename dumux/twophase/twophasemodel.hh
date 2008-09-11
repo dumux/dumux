@@ -14,14 +14,14 @@ template<class G, class RT, class ProblemType, class LocalJacobian,
 	public NonlinearModel<G, RT, ProblemType, LocalJacobian, FunctionType, OperatorAssembler> {
 public:
 	typedef NonlinearModel<G, RT, ProblemType, LocalJacobian,
-	FunctionType, OperatorAssembler> NonlinearModel;
+	FunctionType, OperatorAssembler> ThisNonlinearModel;
 
 	TwoPhaseModel(const G& g, ProblemType& prob) :
-		NonlinearModel(g, prob), uOldTimeStep(g, g.overlapSize(0)==0) {
+		ThisNonlinearModel(g, prob), uOldTimeStep(g, g.overlapSize(0)==0) {
 	}
 
 	TwoPhaseModel(const G& g, ProblemType& prob, int level) :
-		NonlinearModel(g, prob, level), uOldTimeStep(g, level, g.overlapSize(0)==0) {
+		ThisNonlinearModel(g, prob, level), uOldTimeStep(g, level, g.overlapSize(0)==0) {
 	}
 
 	virtual void initial() = 0;
@@ -46,7 +46,7 @@ public:
 	typedef LeafP1OperatorAssembler<G, RT, m> OperatorAssembler;
 
 	typedef TwoPhaseModel<G, RT, ProblemType, LocalJac,
-	FunctionType, OperatorAssembler> TwoPhaseModel;
+	FunctionType, OperatorAssembler> ThisTwoPhaseModel;
 
 	typedef LeafP1TwoPhaseModel<G, RT, ProblemType, LocalJac, m> ThisType;
 
@@ -66,7 +66,7 @@ public:
 			IntersectionIterator;
 
 	LeafP1TwoPhaseModel(const G& g, ProblemType& prob) :
-		TwoPhaseModel(g, prob), problem(prob), grid(g), vertexmapper(g,
+		ThisTwoPhaseModel(g, prob), problem(prob), grid(g), vertexmapper(g,
 				g.leafIndexSet()), size((*(this->u)).size()), pW(size), pN(size), pC(size),
 				satW(size), satN(size), satEx(0), pEx(0), satError(0) {
 	}
