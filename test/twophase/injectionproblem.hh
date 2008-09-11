@@ -163,6 +163,25 @@ namespace Dune
 	{
 		return gravity_;
 	}
+	Liquid_GL& wettingPhase () const
+	{
+		return wettingPhase_;
+	}
+
+	Gas_GL& nonwettingPhase () const
+	{
+		return nonwettingPhase_;
+	}
+
+    Matrix2p<G, RT>& soil () const
+    {
+    	return soil_;
+    }
+
+	TwoPhaseRelations<G, RT>& materialLaw () const
+	{
+		return materialLaw_;
+	}
 
 	double depthBOR () const
 	{
@@ -174,19 +193,10 @@ namespace Dune
 			const FieldVector<DT,dim> innerLowerLeft = 0., const FieldVector<DT,dim> innerUpperRight = 0.,
 			const RT depthBOR = 0., TwoPhaseRelations<G, RT>& law = *(new TwoPhaseRelations<G, RT>),
 			MultiComp& multicomp = *(new CWaterAir))
-//			RT outerK = 7.2e-13, RT innerK = 7.2e-13, RT outerSn = 0.01, RT innerSw = 0.01,
-//			RT outerPorosity = 0.4, RT innerPorosity = 0.4)
 	: TwoPTwoCProblem<G,RT>(soil, multicomp, law),
 	  outerLowerLeft_(outerLowerLeft), outerUpperRight_(outerUpperRight),
-	  depthBOR_(depthBOR), eps_(1e-8*outerUpperRight[0]),
-	  wetPhase_(liq), nwetPhase_(gas), soil_(soil)//, materialLaw(law)
-	{
-//		outerK_[0][0] = outerK_[1][1] = outerK;
-//		outerK_[0][1] = outerK_[1][0] = 0;
-//
-//		innerK_[0][0] = innerK_[1][1] = innerK;
-//		innerK_[0][1] = innerK_[1][0] = 0;
-//
+	  depthBOR_(depthBOR), eps_(1e-8*outerUpperRight[0]), wettingPhase_(liq),
+	  nonwettingPhase_(gas), soil_(soil), materialLaw_(law)	{
 		height_ = outerUpperRight[1] - outerLowerLeft[1];
 		width_ = outerUpperRight[0] - outerLowerLeft[0];
 
@@ -195,23 +205,20 @@ namespace Dune
 	}
 
   private:
-//	FieldMatrix<DT,dim,dim> outerK_, innerK_;
 	FieldVector<DT,dim> outerLowerLeft_, outerUpperRight_;
 	FieldVector<DT,dim> innerLowerLeft_, innerUpperRight_;
 	DT width_, height_;
 	DT depthBOR_, eps_;
 	RT densityW_, densityN_;
 	FieldVector<DT,dim> gravity_;
-//	RT outerSnr_, innerSwr_;
-//	RT outerPorosity_, innerPorosity_;
-	Liquid_GL& wetPhase_;
-	Gas_GL& nwetPhase_;
+	Liquid_GL& wettingPhase_;
+	Gas_GL& nonwettingPhase_;
 	Matrix2p<G,RT>& soil_;
-  };
+	TwoPhaseRelations<G, RT>& materialLaw_;  };
 
 
   template<class G, class RT>
-  class Injectionsoil: public Matrix2p<G,RT>
+  class InjectionSoil: public Matrix2p<G,RT>
   {
   public:
   	typedef typename G::Traits::template Codim<0>::Entity Entity;
@@ -224,17 +231,17 @@ namespace Dune
   	}
   	virtual double porosity(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
   	{
-  		return 0.2;
+  		return 0.3;
   	}
 
   	virtual double Sr_w(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, const double T) const
   	{
-  		return 0.01;
+  		return 0.2;
   	}
 
   	virtual double Sr_n(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, const double T) const
   	{
-  		return 0.01;
+  		return 0.05;
   	}
 
   	/* ATTENTION: define heat capacity per cubic meter! Be sure, that it corresponds to porosity!
@@ -261,10 +268,7 @@ namespace Dune
   		// example for Brooks-Corey parameters
   		std::vector<double> param(2);
   		param[0] = 2.; // lambda
-  		param[1] = 0.; // entry-pressures
-
-  		if (x[0] > 150)
-  			param[0] = 0.5;
+  		param[1] = 1e4; // entry-pressures
 
   		return param;
   	}
@@ -274,13 +278,13 @@ namespace Dune
   		return Matrix2p<G,RT>::brooks_corey;
   	}
 
-  	Injectionsoil():Matrix2p<G,RT>()
+  	InjectionSoil():Matrix2p<G,RT>()
   	{
   		for(int i = 0; i < n; i++)
-  			K_[i][i] = 1e-10;
+  			K_[i][i] = 1e-12;
   	}
 
-  	~Injectionsoil()
+  	~InjectionSoil()
   	{}
 
   private:

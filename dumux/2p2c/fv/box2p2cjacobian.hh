@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_BOX2P2CJACOBIAN_HH
 #define DUNE_BOX2P2CJACOBIAN_HH
@@ -71,7 +71,7 @@ namespace Dune
     typedef Box2P2CJacobian<G,RT,BoxFunction> ThisType;
     typedef typename LocalJacobian<ThisType,G,RT,2>::VBlockType VBlockType;
     typedef typename LocalJacobian<ThisType,G,RT,2>::MBlockType MBlockType;
- 
+
  	enum {pWIdx = 0, switchIdx = 1, numberOfComponents = 2};	// Solution vector index
 	enum {wPhase = 0, nPhase = 1};									// Phase index
 	enum {gasPhase = 0, waterPhase = 1, bothPhases = 2};		// Phase state
@@ -594,11 +594,14 @@ namespace Dune
    	   	 varData[i].phasestate = state;
 
    		 // Mobilities & densities
-   		 varData[i].mobility[wPhase] = problem.materialLaw().mobW(varData[i].satW, this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
-   		 varData[i].mobility[nPhase] = problem.materialLaw().mobN(varData[i].satN, this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
-   		 varData[i].density[wPhase] = problem.materialLaw().wettingPhase.density(varData[i].temperature, varData[i].pN);
-   		 varData[i].density[nPhase] = problem.materialLaw().nonwettingPhase.density(varData[i].temperature, varData[i].pN,
+   		 varData[i].mobility[wPhase] = problem.materialLaw().mobW(varData[i].satW, this->fvGeom.subContVol[i].global, e, this->fvGeom.subContVol[i].local, varData[i].temperature, varData[i].pW);
+   		 varData[i].mobility[nPhase] = problem.materialLaw().mobN(varData[i].satN, this->fvGeom.subContVol[i].global, e, this->fvGeom.subContVol[i].local, varData[i].temperature, varData[i].pN);
+   		 varData[i].density[wPhase] = problem.wettingPhase().density(varData[i].temperature, varData[i].pN);
+   		 varData[i].density[nPhase] = problem.nonwettingPhase().density(varData[i].temperature, varData[i].pN,
    				 varData[i].massfrac[air][nPhase]);
+
+   		 RT enthalpy;
+   		 enthalpy = problem.materialLaw().wettingPhase.enthalpy(283.15,varData[i].pW);
 
          // CONSTANT solubility (for comparison with twophase)
 //         varData[i].massfrac[air][wPhase] = 0.0; varData[i].massfrac[water][wPhase] = 1.0;
@@ -678,9 +681,6 @@ namespace Dune
 
     // parameters given in constructor
     TwoPTwoCProblem<G,RT>& problem;
-//    TwoPhaseRelations<G,RT>& materialLaw;
-
-
     CWaterAir multicomp;
     std::vector<StaticNodeData> sNDat;
     std::vector<StaticIPData> sIPDat;

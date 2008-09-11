@@ -72,7 +72,7 @@ int main(int argc, char** argv)
     // choose fluids and properties
     Dune::Liq_WaterAir wPhase;
     Dune::Gas_WaterAir nPhase;
-    Dune::Injectionsoil<GridType, NumberType> soil;
+    Dune::InjectionSoil<GridType, NumberType> soil;
 
     Dune::TwoPhaseRelations<GridType, NumberType> materialLaw(soil, wPhase, nPhase);
     Dune::CWaterAir multicomp(wPhase, nPhase);
