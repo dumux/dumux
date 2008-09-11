@@ -33,10 +33,10 @@ public:
 	FunctionType uOldTimeStep;
 };
 
-template<class G, class RT, class ProblemType, class LocalJac, int m=2> 
-class LeafP1TwoPhaseModel 
+template<class G, class RT, class ProblemType, class LocalJac, int m=2>
+class LeafP1TwoPhaseModel
 : public TwoPhaseModel<G, RT, ProblemType, LocalJac,
-		LeafP1Function<G, RT, m>, LeafP1OperatorAssembler<G, RT, m> > 
+		LeafP1Function<G, RT, m>, LeafP1OperatorAssembler<G, RT, m> >
 {
 public:
 	// define the function type:
@@ -87,7 +87,7 @@ public:
 			// get geometry type
 			Dune::GeometryType gt = it->geometry().type();
 
-			// get entity 
+			// get entity
 			const Entity& entity = *it;
 
 			const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type
@@ -117,7 +117,7 @@ public:
 			// get geometry type
 			Dune::GeometryType gt = it->geometry().type();
 
-			// get entity 
+			// get entity
 			const Entity& entity = *it;
 
 			const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type
@@ -125,7 +125,7 @@ public:
 							1);
 			int size = sfs.size();
 
-			// set type of boundary conditions 
+			// set type of boundary conditions
 			this->localJacobian.template assembleBC<LeafTag>(entity);
 
 			IntersectionIterator
@@ -159,7 +159,7 @@ public:
 														global, entity, is,
 														local);
 												this->problem.dirichletIndex(global, entity, is,
-														local, dirichletIndex);	
+														local, dirichletIndex);
 
 										if (bctype[equationNumber]
 												== BoundaryConditions::dirichlet) {
@@ -187,7 +187,7 @@ public:
 		newtonMethod.execute();
 		dt = this->localJacobian.getDt();
 		*(this->uOldTimeStep) = *(this->u);
-		
+
 		if (this->problem.exsolution)
 			this->problem.updateExSol(dt, *(this->u));
 
@@ -210,20 +210,20 @@ public:
 				<essential.size(); i++)
 			essential[i].assign(BoundaryConditions::neumann);
 
-		// iterate through leaf grid 
+		// iterate through leaf grid
 		Iterator eendit = gridview.template end<0>();
 		for (Iterator it = gridview.template begin<0>(); it
 				!= eendit; ++it) {
 			// get geometry type
 			Dune::GeometryType gt = it->geometry().type();
 
-			// get entity 
+			// get entity
 			const Entity& entity = *it;
 			this->localJacobian.fvGeom.update(entity);
 			int size = this->localJacobian.fvGeom.nNodes;
-			
+
 			this->localJacobian.setLocalSolution(entity);
-			this->localJacobian.computeElementData(entity); 
+			this->localJacobian.computeElementData(entity);
 			bool old = true;
 			this->localJacobian.updateVariableData(entity, this->localJacobian.uold, old);
 			this->localJacobian.updateVariableData(entity, this->localJacobian.u);
@@ -268,7 +268,7 @@ public:
 			// get geometry type
 			Dune::GeometryType gt = it->geometry().type();
 
-			// get entity 
+			// get entity
 			const Entity& entity = *it;
 
 			FVElementGeometry<G> fvGeom;
@@ -291,7 +291,7 @@ public:
 
 				double volume = fvGeom.subContVol[i].volume;
 
-				double porosity = this->problem.porosity(global, entity, local);
+				double porosity = this->problem.soil().porosity(global, entity, local);
 
 				double density = this->problem.materialLaw().nonwettingPhase.density();
 
