@@ -341,7 +341,7 @@ namespace Dune
         case gasPhase :
         	RT xWNmass, xWNmolar, pwn, pWSat;
         	xWNmass = sol[local][switchIdx];
-        	xWNmolar = problem.multicomp().conversionMassToMoleFraction(xWNmass, gasPhase);
+        	xWNmolar = problem.multicomp().convertMassToMoleFraction(xWNmass, gasPhase);
 //        	xWNmolar = materialLaw.wettingPhase.X2x(xWNmass);
            	pwn = xWNmolar * pN;
             pWSat = problem.multicomp().vaporPressure(vNDat[local].temperature);
@@ -359,7 +359,7 @@ namespace Dune
         case waterPhase :
         	RT pbub, xAWmass, xAWmolar, henryInv;
            	xAWmass = sol[local][switchIdx];
-         	xAWmolar = problem.multicomp().conversionMassToMoleFraction(xAWmass, waterPhase);
+         	xAWmolar = problem.multicomp().convertMassToMoleFraction(xAWmass, waterPhase);
         	henryInv = problem.multicomp().henry(vNDat[local].temperature);
             pWSat = problem.multicomp().vaporPressure(vNDat[local].temperature);
         	pbub = pWSat + xAWmolar/henryInv;
