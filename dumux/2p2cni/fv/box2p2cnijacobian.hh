@@ -657,14 +657,14 @@ namespace Dune
    		 // Mobilities & densities
    		 varData[i].mobility[wPhase] = problem.materialLaw().mobW(varData[i].satW, this->fvGeom.subContVol[i].global, e, this->fvGeom.subContVol[i].local, varData[i].temperature, varData[i].pW);
    		 varData[i].mobility[nPhase] = problem.materialLaw().mobN(varData[i].satN, this->fvGeom.subContVol[i].global, e, this->fvGeom.subContVol[i].local, varData[i].temperature, varData[i].pN);
-   		 varData[i].density[wPhase] = problem.materialLaw().wettingPhase.density(varData[i].temperature, varData[i].pN);
-   		 varData[i].density[nPhase] = problem.materialLaw().nonwettingPhase.density(varData[i].temperature, varData[i].pN,
+   		 varData[i].density[wPhase] = problem.wettingPhase().density(varData[i].temperature, varData[i].pN);
+   		 varData[i].density[nPhase] = problem.nonwettingPhase().density(varData[i].temperature, varData[i].pN,
    				 varData[i].massfrac[air][nPhase]);
          varData[i].lambda = problem.soil().heatCond(this->fvGeom.subContVol[i].global, e, this->fvGeom.subContVol[i].local, varData[i].satW);
-         varData[i].enthalpy[pWIdx] = problem.materialLaw().wettingPhase.enthalpy(varData[i].temperature,varData[i].pW);
-         varData[i].enthalpy[switchIdx] = problem.materialLaw().nonwettingPhase.enthalpy(varData[i].temperature,varData[i].pN);
-         varData[i].intenergy[pWIdx] = problem.materialLaw().wettingPhase.intEnergy(varData[i].temperature,varData[i].pW);
-         varData[i].intenergy[switchIdx] = problem.materialLaw().nonwettingPhase.intEnergy(varData[i].temperature,varData[i].pN);
+         varData[i].enthalpy[pWIdx] = problem.wettingPhase().enthalpy(varData[i].temperature,varData[i].pW);
+         varData[i].enthalpy[switchIdx] = problem.nonwettingPhase().enthalpy(varData[i].temperature,varData[i].pN);
+         varData[i].intenergy[pWIdx] = problem.wettingPhase().intEnergy(varData[i].temperature,varData[i].pW);
+         varData[i].intenergy[switchIdx] = problem.nonwettingPhase().intEnergy(varData[i].temperature,varData[i].pN);
 
          // CONSTANT solubility (for comparison with twophase)
 //         varData[i].massfrac[air][wPhase] = 0.0; varData[i].massfrac[water][wPhase] = 1.0;
