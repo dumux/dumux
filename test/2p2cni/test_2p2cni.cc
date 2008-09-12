@@ -73,7 +73,7 @@ int main(int argc, char** argv)
 
      Dune::CWaterAir multicomp(wPhase, nPhase);
 
-     Dune::WaterCO2Problem<GridType, NumberType> problem(wPhase, nPhase, soil,
+     Dune::WaterAirProblem<GridType, NumberType> problem(wPhase, nPhase, soil,
     		 materialLaw, multicomp, depthBOR);
 
      typedef Dune::VtkMultiWriter<GridType> MultiWriter;
