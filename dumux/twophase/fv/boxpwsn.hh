@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_BOXPWSN_HH
 #define DUNE_BOXPWSN_HH
@@ -44,7 +44,7 @@
 #include "dumux/pardiso/pardiso.hh"
 #include "dumux/pardiso/identity.hh"
 #include "dumux/nonlinear/newtonmethod.hh"
-#include "dumux/twophase/twophasemodel.hh"
+#include "dumux/twophase/twophasemodel_deprecated.hh"
 #include "dumux/twophase/twophaseproblem.hh"
 #include "dumux/twophase/fv/boxpwsnjacobian.hh"
 
@@ -52,12 +52,12 @@ namespace Dune {
 
 /**
  \brief Two phase model with Pw and Sn as primary unknowns
- 
+
  This implements a two phase model with Pw and Sn as primary unknowns.
  */
-template<class G, class RT> 
-class BoxPwSn 
-: public LeafP1TwoPhaseModel<G, RT, TwoPhaseProblem<G, RT>, BoxPwSnJacobian<G, RT> > 
+template<class G, class RT>
+class BoxPwSn
+: public LeafP1TwoPhaseModel<G, RT, TwoPhaseProblem<G, RT>, BoxPwSnJacobian<G, RT> >
 {
 
 public:
@@ -85,8 +85,8 @@ public:
 #endif
 
 
-	BoxPwSn(const G& g, ProblemType& prob) 
-	: ThisLeafP1TwoPhaseModel(g, prob) 
+	BoxPwSn(const G& g, ProblemType& prob)
+	: ThisLeafP1TwoPhaseModel(g, prob)
 	{}
 
 	virtual void solve() {
@@ -94,12 +94,12 @@ public:
 		Operator op(*(this->A)); // make operator out of matrix
 		double red=1E-12;
 
-#ifdef HAVE_PARDISO 
+#ifdef HAVE_PARDISO
 		pardiso.factorize(*(this->A));
 		LoopSolver<VectorType> solver(op, pardiso, red, 10, 2);
 #else
 		SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A), 1.0);// a precondtioner
-		BiCGSTABSolver<VectorType> solver(op, ilu0, red, 10000, 1); // an inverse operator 
+		BiCGSTABSolver<VectorType> solver(op, ilu0, red, 10000, 1); // an inverse operator
 #endif
 		InverseOperatorResult r;
 		solver.apply(*(this->u), *(this->f), r);
@@ -118,7 +118,7 @@ public:
 		std::cout << totalMass << "\t"<< upperMass<< "\t"<< oldUpperMass
 				<< "\t"; //# totalMass, upperMass, oldUpperMass"<< std::endl;
 		*(this->uOldTimeStep) = *(this->u);
-		
+
 		if (this->problem.exsolution)
 			this->problem.updateExSol(dt, *(this->u));
 

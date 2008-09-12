@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_BOXPNSW_HH
 #define DUNE_BOXPNSW_HH
@@ -44,7 +44,7 @@
 #include "dumux/pardiso/pardiso.hh"
 #include "dumux/pardiso/identity.hh"
 #include "dumux/nonlinear/newtonmethod.hh"
-#include "dumux/twophase/twophasemodel.hh"
+#include "dumux/twophase/twophasemodel_deprecated.hh"
 #include "dumux/twophase/twophaseproblem.hh"
 #include "dumux/twophase/fv/boxpnswjacobian.hh"
 
@@ -92,17 +92,17 @@ public:
 		Operator op(*(this->A)); // make operator out of matrix
 		double red=1E-8;
 
-#ifdef HAVE_PARDISO 
-		//	SeqPardiso<MatrixType,VectorType,VectorType> ilu0(*(this->A)); 
+#ifdef HAVE_PARDISO
+		//	SeqPardiso<MatrixType,VectorType,VectorType> ilu0(*(this->A));
 		pardiso.factorize(*(this->A));
-		BiCGSTABSolver<VectorType> solver(op,pardiso,red,100,2); // an inverse operator 
+		BiCGSTABSolver<VectorType> solver(op,pardiso,red,100,2); // an inverse operator
 		//	SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A),1.0);// a precondtioner
 		//LoopSolver<VectorType> solver(op, ilu0, red, 10, 2);
 #else
 		SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A), 1.0);// a precondtioner
 
 		//SeqIdentity<MatrixType,VectorType,VectorType> ilu0(*(this->A));// a precondtioner
-		BiCGSTABSolver<VectorType> solver(op, ilu0, red, 10000, 1); // an inverse operator 
+		BiCGSTABSolver<VectorType> solver(op, ilu0, red, 10000, 1); // an inverse operator
 #endif
 		InverseOperatorResult r;
 		solver.apply(*(this->u), *(this->f), r);

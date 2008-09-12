@@ -118,8 +118,8 @@ namespace Dune
   private:
     DiffusionProblem<G, RT, VC>& problem;
     TwoPhaseRelations& constRel;
-    const Fluid& wettingPhase;
-    const Fluid& nonwettingPhase;
+    const Medium& wettingPhase;
+    const Medium& nonwettingPhase;
     FieldVector gravity;
   };
 }
