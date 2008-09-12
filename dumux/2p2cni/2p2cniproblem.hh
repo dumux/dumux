@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_TWOPTWOCNIPROBLEM_HH
 #define DUNE_TWOPTWOCNIPROBLEM_HH
@@ -129,21 +129,53 @@ public:
 	virtual int initialPhaseState(const FieldVector<DT,dim>& x,
 			const Entity& e, const FieldVector<DT,dim>& xi) const = 0;
 
-
 	virtual FieldVector<RT,dim> gravity() const = 0;
 
+	//! properties of the wetting (liquid) phase
+	/*! properties of the wetting (liquid) phase
+	  \return	wetting phase
+	 */
+	virtual Liquid_GL& wettingPhase () const
+	{
+		return wettingPhase_;
+	}
+
+	//! properties of the nonwetting (liquid) phase
+	/*! properties of the nonwetting (liquid) phase
+	  \return	nonwetting phase
+	 */
+	virtual Gas_GL& nonwettingPhase () const
+	{
+		return nonwettingPhase_;
+	}
+
+	//! properties of the soil
+	/*! properties of the soil
+	  \return	soil
+	 */
+	virtual Matrix2p<G, RT>& soil () const
+    {
+    	return soil_;
+    }
+
+	//! object for multicomponent calculations
+	/*! object for multicomponent calculations including mass fractions,
+	 * mole fractions and some basic laws
+	  \return	multicomponent object
+	 */
 	virtual MultiComp& multicomp ()
 	{
 		return multicomp_;
 	}
 
-	virtual Liquid_GL& wettingPhase () const = 0;
-
-	virtual Gas_GL& nonwettingPhase () const = 0;
-
-	virtual TwoPhaseRelations<G, RT>& materialLaw () const = 0;
-
-    virtual Matrix2p<G, RT>& soil () const = 0;
+	//! object for definition of material law
+	/*! object for definition of material law (e.g. Brooks-Corey, Van Genuchten, ...)
+	  \return	material law
+	 */
+	virtual TwoPhaseRelations<G, RT>& materialLaw () const
+	{
+		return materialLaw_;
+	}
 
 	//element-wise return of the values of an Exact solution
 	virtual RT uExOutVertex(int &ElementIndex, int VariableIndex) const {
@@ -158,21 +190,25 @@ public:
 		return;
 	}
 
-	TwoPTwoCNIProblem(Matrix2p<G,RT>& soil, MultiComp& multicomp = *(new CWaterAir),
-		TwoPhaseRelations<G,RT>& materialLaw = *(new TwoPhaseRelations<G,RT>), const bool exsol = false) :
-	  exsolution(exsol),  materialLaw_(materialLaw) , multicomp_(multicomp), soil_(soil)
+	TwoPTwoCNIProblem(Liquid_GL& liq, Gas_GL& gas, Matrix2p<G, RT>& soil,
+			MultiComp& multicomp = *(new CWaterAir),
+			TwoPhaseRelations<G,RT>& materialLaw = *(new TwoPhaseRelations<G,RT>),
+			const bool exsol = false)
+	: exsolution(exsol), wettingPhase_(liq), nonwettingPhase_(gas), soil_(soil),
+	  multicomp_(multicomp), materialLaw_(materialLaw)
 	  {	}
 
 	//! always define virtual destructor in abstract base class
-	virtual ~TwoPTwoCNIProblem() {
-	}
+	virtual ~TwoPTwoCNIProblem() {}
 
 	const bool exsolution;
 
 protected:
-	TwoPhaseRelations<G,RT>& materialLaw_;
-	MultiComp& multicomp_;
+	Liquid_GL& wettingPhase_;
+	Gas_GL& nonwettingPhase_;
     Matrix2p<G, RT>& soil_;
+	MultiComp& multicomp_;
+	TwoPhaseRelations<G,RT>& materialLaw_;
 };
 
 }
