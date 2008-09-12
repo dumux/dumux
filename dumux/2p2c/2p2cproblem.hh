@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_2P2CPROBLEM_HH
 #define DUNE_2P2CPROBLEM_HH
@@ -131,22 +131,34 @@ namespace Dune
 //	virtual double porosity(const FieldVector<DT,dim>& x, const Entity& e,
 //			const FieldVector<DT,dim>& xi) const = 0;
 
-	virtual FieldVector<RT,dim> gravity() const = 0;
+	virtual FieldVector<RT,dim> gravity() const= 0;
 
 	virtual double depthBOR () const = 0;
 
-	MultiComp& multicomp ()
+	virtual Liquid_GL& wettingPhase () const
+	{
+		return wettingPhase_;
+	}
+
+	virtual Gas_GL& nonwettingPhase () const
+	{
+		return nonwettingPhase_;
+	}
+
+    virtual Matrix2p<G, RT>& soil () const
+    {
+    	return soil_;
+    }
+
+	virtual MultiComp& multicomp () const
 	{
 		return multicomp_;
 	}
 
-	virtual Liquid_GL& wettingPhase () const = 0;
-
-	virtual Gas_GL& nonwettingPhase () const = 0;
-
-	virtual TwoPhaseRelations<G, RT>& materialLaw () const = 0;
-
-    virtual Matrix2p<G, RT>& soil () const = 0;
+    virtual TwoPhaseRelations<G, RT>& materialLaw () const
+	{
+		return materialLaw_;
+	}
 
 	//element-wise return of the values of an Exact solution
 	virtual RT uExOutVertex(int &ElementIndex, int VariableIndex) const {
@@ -156,16 +168,18 @@ namespace Dune
 
 	//updates an exact/analytic solution
 	virtual void updateExSol(double &dt,
-			BlockVector<FieldVector<RT, m> > &approxSol) {
+		BlockVector<FieldVector<RT, m> > &approxSol) {
 		DUNE_THROW(NotImplemented, "Ex(akt) Solution");
 		return;
 	}
 
 
-	TwoPTwoCProblem(Matrix2p<G,RT>& soil, MultiComp& multicomp = *(new CWaterAir),
+	TwoPTwoCProblem(Liquid_GL& liq, Gas_GL& gas, Matrix2p<G, RT>& soil,
+			MultiComp& multicomp = *(new CWaterAir),
 			TwoPhaseRelations<G,RT>& materialLaw = *(new TwoPhaseRelations<G,RT>),
 			const bool exsol = false)
-	: exsolution(exsol), multicomp_(multicomp), materialLaw_(materialLaw), soil_(soil)
+	: exsolution(exsol), wettingPhase_(liq), nonwettingPhase_(gas), soil_(soil),
+	  multicomp_(multicomp), materialLaw_(materialLaw)
 	{	}
 
 	//! always define virtual destructor in abstract base class
@@ -174,11 +188,11 @@ namespace Dune
 	const bool exsolution;
 
   protected:
+	Liquid_GL& wettingPhase_;
+	Gas_GL& nonwettingPhase_;
+    Matrix2p<G, RT>& soil_;
 	MultiComp& multicomp_;
 	TwoPhaseRelations<G, RT>& materialLaw_;
-//	Liq_WaterAir wPhase_;
-//  Gas_WaterAir nPhase_;
-    Matrix2p<G, RT>& soil_;
   };
 
 }

@@ -40,28 +40,17 @@ namespace Dune
    *	- RT    type used for return values
    */
   template<class G, class RT>
-  class InjectionProblem : public TwoPTwoCProblem<G, RT> {
-	typedef typename G::ctype DT;
-	enum {dim=G::dimension, m=2};
-	typedef typename G::Traits::template Codim<0>::Entity Entity;
-	typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
+  class InjectionProblem : public TwoPTwoCProblem<G, RT>
+  {
+	  enum {dim=G::dimension, m=2};
+	  typedef typename G::ctype DT;
+	  typedef typename G::Traits::template Codim<0>::Entity Entity;
+	  typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
 
   public:
-	enum {pWIdx = 0, switchIdx = 1};
-	enum {swrIdx = 0, snrIdx = 1, lamIdx = 2, pbIdx = 3};
-	enum {gasPhase = 0, waterPhase = 1, bothPhases = 2};
+	  enum {pWIdx = 0, switchIdx = 1}; // phase index
+	  enum {gasPhase = 0, waterPhase = 1, bothPhases = 2}; // phase state
 
-
-/////////////////////////////
-// sources and sinks
-/////////////////////////////
-	virtual FieldVector<RT,m> q (const FieldVector<DT,dim>& x, const Entity& e,
-					const FieldVector<DT,dim>& xi) const
-	{
-		FieldVector<RT,m> values(0);
-
-		return values;
-	}
 
 /////////////////////////////
 // TYPE of the boundaries
@@ -90,7 +79,7 @@ namespace Dune
 		FieldVector<RT,m> values(0);
 
 		values[pWIdx] = 1e5 - densityW_*gravity_[1]*(depthBOR_ - x[1]);
-		values[switchIdx] = 0.01;
+		values[switchIdx] = 0.05;
 
 //		if (x[1] >= innerLowerLeft_[1] && x[1] <= innerUpperRight_[1]
 //		 && x[0] >= innerLowerLeft_[0])
@@ -121,14 +110,14 @@ namespace Dune
 /////////////////////////////
 // INITIAL values
 /////////////////////////////
-		virtual FieldVector<RT,m> initial (const FieldVector<DT,dim>& x, const Entity& e,
-					  const FieldVector<DT,dim>& xi) const
-		{
+	virtual FieldVector<RT,m> initial (const FieldVector<DT,dim>& x, const Entity& e,
+				const FieldVector<DT,dim>& xi) const
+	{
 
-			FieldVector<RT,m> values;
+		FieldVector<RT,m> values;
 
-			values[pWIdx] = 1e5 - densityW_*gravity_[1]*(depthBOR_ - x[1]);
-			values[switchIdx] = 0.01;
+		values[pWIdx] = 1e5 - densityW_*gravity_[1]*(depthBOR_ - x[1]);
+		values[switchIdx] = 0.01;
 
 //			if (x[1] >= innerLowerLeft_[1] && x[1] <= innerUpperRight_[1]
 //			 && x[0] >= innerLowerLeft_[0])
@@ -136,51 +125,43 @@ namespace Dune
 //			else
 //				values[switchIdx] = 1e-6;
 
-			return values;
-		}
+		return values;
+	}
 
 
-		int initialPhaseState (const FieldVector<DT,dim>& x, const Entity& e,
-					  const FieldVector<DT,dim>& xi) const
-		{
+	int initialPhaseState (const FieldVector<DT,dim>& x, const Entity& e,
+				  const FieldVector<DT,dim>& xi) const
+	{
 
-			enum {gasPhase = 0, waterPhase = 1, bothPhases = 2}; // Phase states
-			int state;
+		enum {gasPhase = 0, waterPhase = 1, bothPhases = 2}; // Phase states
+		int state;
 
 //			if (x[1] >= innerLowerLeft_[1] && x[1] <= innerUpperRight_[1]
 //			      && x[0] >= innerLowerLeft_[0])
 //				state = 2;
 //			else
 
-			state = bothPhases;
+		state = bothPhases;
 
-			return state;
-		}
+		return state;
+	}
+
+/////////////////////////////
+// sources and sinks
+/////////////////////////////
+	virtual FieldVector<RT,m> q (const FieldVector<DT,dim>& x, const Entity& e,
+					const FieldVector<DT,dim>& xi) const
+	{
+		FieldVector<RT,m> values(0);
+
+		return values;
+	}
 
 //////////////////////////////
 
 	virtual FieldVector<RT,dim> gravity () const
 	{
 		return gravity_;
-	}
-	Liquid_GL& wettingPhase () const
-	{
-		return wettingPhase_;
-	}
-
-	Gas_GL& nonwettingPhase () const
-	{
-		return nonwettingPhase_;
-	}
-
-    Matrix2p<G, RT>& soil () const
-    {
-    	return soil_;
-    }
-
-	TwoPhaseRelations<G, RT>& materialLaw () const
-	{
-		return materialLaw_;
 	}
 
 	double depthBOR () const
@@ -193,67 +174,64 @@ namespace Dune
 			const FieldVector<DT,dim> innerLowerLeft = 0., const FieldVector<DT,dim> innerUpperRight = 0.,
 			const RT depthBOR = 0., TwoPhaseRelations<G, RT>& law = *(new TwoPhaseRelations<G, RT>),
 			MultiComp& multicomp = *(new CWaterAir))
-	: TwoPTwoCProblem<G,RT>(soil, multicomp, law),
+	: TwoPTwoCProblem<G,RT>(liq, gas, soil, multicomp, law),
 	  outerLowerLeft_(outerLowerLeft), outerUpperRight_(outerUpperRight),
-	  depthBOR_(depthBOR), eps_(1e-8*outerUpperRight[0]), wettingPhase_(liq),
-	  nonwettingPhase_(gas), soil_(soil), materialLaw_(law)	{
+	  depthBOR_(depthBOR), eps_(1e-8*outerUpperRight[0])
+	  {
 		height_ = outerUpperRight[1] - outerLowerLeft[1];
 		width_ = outerUpperRight[0] - outerLowerLeft[0];
 
 		gravity_[0] = 0;
 		gravity_[1] = -9.81;
-	}
+	  }
 
   private:
-	FieldVector<DT,dim> outerLowerLeft_, outerUpperRight_;
-	FieldVector<DT,dim> innerLowerLeft_, innerUpperRight_;
-	DT width_, height_;
-	DT depthBOR_, eps_;
-	RT densityW_, densityN_;
-	FieldVector<DT,dim> gravity_;
-	Liquid_GL& wettingPhase_;
-	Gas_GL& nonwettingPhase_;
-	Matrix2p<G,RT>& soil_;
-	TwoPhaseRelations<G, RT>& materialLaw_;  };
+	  FieldVector<DT,dim> outerLowerLeft_, outerUpperRight_;
+	  FieldVector<DT,dim> innerLowerLeft_, innerUpperRight_;
+	  DT width_, height_;
+	  DT depthBOR_, eps_;
+	  RT densityW_, densityN_;
+	  FieldVector<DT,dim> gravity_;
+  };
 
-
+ ////////////////////////////////////////--SOIL--//////////////////////////////////////////////
   template<class G, class RT>
   class InjectionSoil: public Matrix2p<G,RT>
   {
   public:
   	typedef typename G::Traits::template Codim<0>::Entity Entity;
   	typedef typename G::ctype DT;
-  	enum {n=G::dimension, m=1};
+  	enum {dim=G::dimension, m=1};
 
-  	virtual FieldMatrix<DT,n,n> K (const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi)
+  	virtual FieldMatrix<DT,dim,dim> K (const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi)
   	{
   		return K_;
   	}
-  	virtual double porosity(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
+  	virtual double porosity(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi) const
   	{
   		return 0.3;
   	}
 
-  	virtual double Sr_w(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, const double T) const
+  	virtual double Sr_w(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, const double T) const
   	{
   		return 0.2;
   	}
 
-  	virtual double Sr_n(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, const double T) const
+  	virtual double Sr_n(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, const double T) const
   	{
   		return 0.05;
   	}
 
   	/* ATTENTION: define heat capacity per cubic meter! Be sure, that it corresponds to porosity!
   			 * Best thing will be to define heatCap = (specific heatCapacity of material) * density * porosity*/
-  	virtual double heatCap(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
+  	virtual double heatCap(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi) const
   	{
   		return 	790 /* spec. heat cap. of granite */
   						* 2700 /* density of granite */
   						* porosity(x, e, xi);
   	}
 
-  	virtual double heatCond(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, const double sat) const
+  	virtual double heatCond(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, const double sat) const
   	{
   		static const double lWater = 0.6;
   		static const double lGranite = 2.8;
@@ -263,7 +241,7 @@ namespace Dune
   		return ldry + sqrt(sat) * (ldry - lsat);
   	}
 
-  	virtual std::vector<double> paramRelPerm(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, const double T) const
+  	virtual std::vector<double> paramRelPerm(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, const double T) const
   	{
   		// example for Brooks-Corey parameters
   		std::vector<double> param(2);
@@ -273,14 +251,14 @@ namespace Dune
   		return param;
   	}
 
-  	virtual typename Matrix2p<G,RT>::modelFlag relPermFlag(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
+  	virtual typename Matrix2p<G,RT>::modelFlag relPermFlag(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi) const
   	{
   		return Matrix2p<G,RT>::brooks_corey;
   	}
 
   	InjectionSoil():Matrix2p<G,RT>()
   	{
-  		for(int i = 0; i < n; i++)
+  		for(int i = 0; i < dim; i++)
   			K_[i][i] = 1e-12;
   	}
 
@@ -288,7 +266,7 @@ namespace Dune
   	{}
 
   private:
-  	FieldMatrix<DT,n,n> K_;
+  	FieldMatrix<DT,dim,dim> K_;
 
   };
 
