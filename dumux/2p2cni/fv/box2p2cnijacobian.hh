@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_BOX2P2CNIJACOBIAN_HH
 #define DUNE_BOX2P2CNIJACOBIAN_HH
@@ -379,10 +379,11 @@ namespace Dune
   		if (state == waterPhase) satW = 1.0;
   		if (state == gasPhase) satW = 0.0;
 
-    	RT pC = problem.materialLaw().pC(satW, this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+    	RT pC = problem.materialLaw().pC(satW, this->fvGeom.subContVol[local].global, e,
+					this->fvGeom.subContVol[local].local);
   		RT pN = pW + pC;
 
-    	FVector Coordinates = this->fvGeom.subContVol[local].global;
+    	FVector& Coordinates = this->fvGeom.subContVol[local].global;
 
         switch(state)
         {
@@ -624,7 +625,9 @@ namespace Dune
 	virtual void updateVariableData(const Entity& e, const VBlockType* sol,
 			int i, std::vector<VariableNodeData>& varData, int state)
     {
-   	   	 const int global = this->vertexMapper.template map<dim>(e, i);
+   	   	 const int globalIdx = this->vertexMapper.template map<dim>(e, i);
+   	   	 FVector& global = this->fvGeom.subContVol[i].global;
+   	   	 FVector& local = this->fvGeom.subContVol[i].local;
 
    		 varData[i].pW = sol[i][pWIdx];
    		 if (state == bothPhases) varData[i].satN = sol[i][switchIdx];
@@ -633,7 +636,7 @@ namespace Dune
 
    		 varData[i].satW = 1.0 - varData[i].satN;
 
-   		 varData[i].pC = problem.materialLaw().pC(varData[i].satW, this->fvGeom.subContVol[i].global, e, this->fvGeom.subContVol[i].local);
+   		 varData[i].pC = problem.materialLaw().pC(varData[i].satW, global, e, local);
    		 varData[i].pN = varData[i].pW + varData[i].pC;
    		 varData[i].temperature = sol[i][teIdx]; // in [K]
 
@@ -655,12 +658,12 @@ namespace Dune
    	   	 varData[i].phasestate = state;
 
    		 // Mobilities & densities
-   		 varData[i].mobility[wPhase] = problem.materialLaw().mobW(varData[i].satW, this->fvGeom.subContVol[i].global, e, this->fvGeom.subContVol[i].local, varData[i].temperature, varData[i].pW);
-   		 varData[i].mobility[nPhase] = problem.materialLaw().mobN(varData[i].satN, this->fvGeom.subContVol[i].global, e, this->fvGeom.subContVol[i].local, varData[i].temperature, varData[i].pN);
+   		 varData[i].mobility[wPhase] = problem.materialLaw().mobW(varData[i].satW, global, e, local, varData[i].temperature, varData[i].pW);
+   		 varData[i].mobility[nPhase] = problem.materialLaw().mobN(varData[i].satN, global, e, local, varData[i].temperature, varData[i].pN);
    		 varData[i].density[wPhase] = problem.wettingPhase().density(varData[i].temperature, varData[i].pN);
    		 varData[i].density[nPhase] = problem.nonwettingPhase().density(varData[i].temperature, varData[i].pN,
    				 varData[i].massfrac[air][nPhase]);
-         varData[i].lambda = problem.soil().heatCond(this->fvGeom.subContVol[i].global, e, this->fvGeom.subContVol[i].local, varData[i].satW);
+         varData[i].lambda = problem.soil().heatCond(global, e, local, varData[i].satW);
          varData[i].enthalpy[pWIdx] = problem.wettingPhase().enthalpy(varData[i].temperature,varData[i].pW);
          varData[i].enthalpy[switchIdx] = problem.nonwettingPhase().enthalpy(varData[i].temperature,varData[i].pN);
          varData[i].intenergy[pWIdx] = problem.wettingPhase().intEnergy(varData[i].temperature,varData[i].pW);
@@ -674,18 +677,18 @@ namespace Dune
          //std::cout << "air in waterphase: " << varData[i].massfrac[air][wPhase] << std::endl;
 
    		 // for output
-   		 (*outPressureN)[global] = varData[i].pN;
-   		 (*outCapillaryP)[global] = varData[i].pC;
-  	   	 (*outSaturationW)[global] = varData[i].satW;
-   	   	 (*outSaturationN)[global] = varData[i].satN;
-   	   	 (*outTemperature)[global] = varData[i].temperature;
-   	   	 (*outMassFracAir)[global] = varData[i].massfrac[air][wPhase];
-   	   	 (*outMassFracWater)[global] = varData[i].massfrac[water][nPhase];
-   	   	 (*outDensityW)[global] = varData[i].density[wPhase];
-   	   	 (*outDensityN)[global] = varData[i].density[nPhase];
-   	   	 (*outMobilityW)[global] = varData[i].mobility[wPhase];
-   	   	 (*outMobilityN)[global] = varData[i].mobility[nPhase];
-   	   	 (*outPhaseState)[global] = varData[i].phasestate;
+   		 (*outPressureN)[globalIdx] = varData[i].pN;
+   		 (*outCapillaryP)[globalIdx] = varData[i].pC;
+  	   	 (*outSaturationW)[globalIdx] = varData[i].satW;
+   	   	 (*outSaturationN)[globalIdx] = varData[i].satN;
+   	   	 (*outTemperature)[globalIdx] = varData[i].temperature;
+   	   	 (*outMassFracAir)[globalIdx] = varData[i].massfrac[air][wPhase];
+   	   	 (*outMassFracWater)[globalIdx] = varData[i].massfrac[water][nPhase];
+   	   	 (*outDensityW)[globalIdx] = varData[i].density[wPhase];
+   	   	 (*outDensityN)[globalIdx] = varData[i].density[nPhase];
+   	   	 (*outMobilityW)[globalIdx] = varData[i].mobility[wPhase];
+   	   	 (*outMobilityN)[globalIdx] = varData[i].mobility[nPhase];
+   	   	 (*outPhaseState)[globalIdx] = varData[i].phasestate;
 
    	   	 return;
     }
