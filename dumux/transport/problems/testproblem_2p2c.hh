@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef TESTPROBLEM_2P2C_HH
 #define TESTPROBLEM_2P2C_HH
@@ -50,30 +50,25 @@ namespace Dune
 		BoundaryConditions::Flags pbctype (const Dune::FieldVector<DT,n>& x, const Entity& e,
 						   const Dune::FieldVector<DT,n>& xi) const
 	  {
-//	    if (x[0] > 300-1E-6)
+	    if (x[0] > 300-1E-6 || x[0] < 1e-6)
 	      return Dune::BoundaryConditions::dirichlet;
 	    // all other boundaries
 	    return Dune::BoundaryConditions::neumann;
 	  }
 
-//		const Dune::FieldMatrix<DT,n,n>& K (const Dune::FieldVector<DT,n>& x, const Entity& e,
-//							  const Dune::FieldVector<DT,n>& xi)
-//	  {
-//		  return permeability.K(e);
-//	  }
 
 	  RT gPress (const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
 	  {
-		  return (x[0] < 1e-6) ? 1e5 : 1e5;
+		  return (x[0] < 1e-6) ? 2e5 : 1e5;
 	  }
 
 		RT gZ (const FieldVector<DT,n>& x, const Entity& e,
 			   const FieldVector<DT,n>& xi) const
 		{
-			if (x[0] < 15)
+			if (x[0] < 1e-6)
 				return 0;
 			else
-				return 0;
+				return 1;
 		}
 
 		RT gS (const FieldVector<DT,n>& x, const Entity& e,
@@ -89,7 +84,6 @@ namespace Dune
 				   const FieldVector<DT,n>& xi) const
 		{
 			FieldVector<RT,2> J_(0);
-			if (x[0]<1e-6) J_[0] = 0.;
 			return J_;
     }
 
@@ -97,8 +91,8 @@ namespace Dune
 					   const FieldVector<DT,n>& xi) const
 		{
 			FieldVector<RT,2> q_(0);
-			FieldVector<DT,n> center(150); //center[1] = 200;
-			if ((x-center).two_norm()<8) q_[1] = 0.001;
+//			FieldVector<DT,n> center(150); //center[1] = 200;
+//			if ((x-center).two_norm()<8) q_[1] = 0.001;
 			return q_;
 		}
 
@@ -111,23 +105,18 @@ namespace Dune
 		RT Z1_0 (const FieldVector<DT,n>& x, const Entity& e,
 				const FieldVector<DT,n>& xi) const
 		{
-			FieldVector<DT,n> center(110); center[1] = 200;
+//			FieldVector<DT,n> center(110); center[1] = 200;
 //			if ((x-center).two_norm()<30) return 0;
-			if (fabs(x[0]-center[0])<30) return 1;
+//			if (fabs(x[0]-center[0])<30) return 1;
 			return 1;
 		}
 
 		Testproblem_2p2c(G& g, Dune::VariableClass2p2c<G, RT>& var, Liquid_GL& liq, Gas_GL& gas, Matrix2p<G, RT>& s, int level, TwoPhaseRelations<G, RT>& law = *(new TwoPhaseRelations<G, RT>),
 				 const bool cap = false)
 		: TransportProblem2p2c<G, RT>(var, liq, gas, s, law, cap),
-		  elementmapper(g, g.levelIndexSet(level)),
-		  grid(g)
-//		  permeability(g, name, create)
+		  elementmapper(g, g.levelIndexSet(level)), grid(g)
 		{
 		}
-
-//		RandomPermeability<G> permeability;
-
   	private:
   		G& grid;
   };

@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef TRANSPORTPROBLEM2P2C_HH
 #define TRANSPORTPROBLEM2P2C_HH
@@ -19,13 +19,13 @@
 #include <dumux/fractionalflow/variableclass2p2c.hh>
 
 
-//! Base class for the definition of 2p2c problems
-/** This base class defines all boundary and initial functions shich are needed
- * for a decoupled 2p2c computation.
- */
+
 namespace Dune
 {
-
+	//! Base class for the definition of 2p2c problems
+	/** This base class defines all boundary and initial functions which are needed
+	 * for a decoupled 2p2c computation.
+	 */
   template<class G, class RT>
   class TransportProblem2p2c
   {
@@ -160,7 +160,9 @@ namespace Dune
 	{
 	}
 
-	virtual ~TransportProblem2p2c () {}
+	virtual ~TransportProblem2p2c ()
+	{
+	}
 
 	FieldVector<DT,n> gravity_;
 	const bool capillary;
