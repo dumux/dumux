@@ -39,7 +39,7 @@ namespace Dune
   template<class G, class RT>
   class MincLensProblem : public MincProblem<G, RT> {
 	typedef typename G::ctype DT;
-	enum {n=G::dimension, m=4};
+	enum {n=G::dimension, m = 4};
 	typedef typename G::Traits::template Codim<0>::Entity Entity;
 	typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
 
@@ -108,7 +108,7 @@ namespace Dune
 	{
 		FieldVector<BoundaryConditions::Flags, m> values(BoundaryConditions::neumann); 
 
-		if (x[0] < outerLowerLeft_[0] + eps_ || x[0] > outerUpperRight_[0] - eps_) {
+		if (x[0] > outerUpperRight_[0] - eps_) {
 			//std::cout << "Dirichlet: " << x << std::endl;
 			values = BoundaryConditions::dirichlet;
 		}
@@ -126,21 +126,19 @@ namespace Dune
 	{
 		FieldVector<RT,m> values(0);
 
-		if (x[0] < outerLowerLeft_[0] + eps_) {
-			RT a = -(1 + 0.5/height_);
-			RT b = -a*outerUpperRight_[1];
-			values[pWFIdx] = -densityW_*gravity_[1]*(a*x[1] + b);
-			values[sNFIdx] = outerSnrFracture_;
-		}
-		else {
+		if (x[0] > outerUpperRight_[0] - eps_) {
+		
 			RT a = -1;
 			RT b = outerUpperRight_[1];
 			values[pWFIdx] = -densityW_*gravity_[1]*(a*x[1] + b);
 			values[sNFIdx] = outerSnrFracture_;			
 		}
 
-		values[pWMIdx] = values[pWFIdx]; 
+		values[pWMIdx] = values[pWFIdx]*0.9; 
 		
+		values[sNFIdx] = outerSnrFracture_+0.1;
+		values[sNMIdx] = outerSnrMatrix_+0.1;
+
 		return values;
 	}
 	  
@@ -150,9 +148,9 @@ namespace Dune
 	{
 		FieldVector<RT,m> values(0);
 
-		RT lambda = (outerUpperRight_[0] - x[0])/width_;
-		if (lambda > 0.1 && lambda < 0.9 && x[1] > outerUpperRight_[1] - eps_) {
-			values[sNFIdx] = -0.4;
+//		RT lambda = (outerUpperRight_[0] - x[0])/width_;
+		if (x[0] < outerLowerLeft_[0] + eps_) {
+			values[sNFIdx] = -0.5;
 			values[pWFIdx] = -0.0;
 		}
 		
@@ -165,23 +163,11 @@ namespace Dune
 
 		FieldVector<RT,m> values;
 		
-		values[pWFIdx] = -densityW_*gravity_[1]*(height_ - x[1]);
+		values[pWFIdx] = -densityW_*gravity_[1]*(outerUpperRight_[1] - x[1]);
+		values[sNFIdx] = outerSnrFracture_+0.1;
+		values[sNMIdx] = outerSnrMatrix_+0.1;
 		
-		if (x[0] < outerLowerLeft_[0] + eps_) {
-			RT a = -(1 + 0.5/height_);
-			RT b = -a*outerUpperRight_[1];
-			values[pWFIdx] = -densityW_*gravity_[1]*(a*x[1] + b);
-		}
-		
-		if (x[0] > innerLowerLeft_[0] && x[0] < innerUpperRight_[0] 
-		    && x[1] > innerLowerLeft_[1] && x[1] < innerUpperRight_[1])
-			{values[sNFIdx] = innerSnrFracture_;
-			values[sNMIdx] = innerSnrMatrix_;}
-		else
-			{values[sNFIdx] = outerSnrFracture_;
-			values[sNMIdx] = outerSnrMatrix_;}
-		
-		values[pWMIdx] = values[pWFIdx]; 
+		values[pWMIdx] = values[pWFIdx]*0.9; 
 		
 		return values;
 	}

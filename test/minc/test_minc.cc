@@ -66,7 +66,8 @@ int main(int argc, char** argv)
     
     DNAPL dnapl;
     Water water;
-    Dune::VanGenuchtenLaw law(water, dnapl);
+    Dune::LinearLaw law(water, dnapl);
+    //Dune::VanGenuchtenLaw law(water, dnapl);
     Dune::MincLensProblem<GridType, NumberType> problem(law, outerLowerLeft, outerUpperRight, 
     		innerLowerLeft, innerUpperRight);
 
