@@ -1,5 +1,3 @@
-// $Id$ 
-
 #ifndef DUNE_BOXMINCJACOBIAN_HH
 #define DUNE_BOXMINCJACOBIAN_HH
 
@@ -29,8 +27,6 @@
  * @author Peter Bastian
  * @modified Alex Tatomir
  */
-
-
 
 namespace Dune
 {
@@ -73,15 +69,14 @@ namespace Dune
     typedef typename LocalJacobian<ThisType,G,RT,4>::MBlockType MBlockType;
  	typedef FVElementGeometry<G> FVElementGeometry;
  	enum {pWFIdx = 0, satNFIdx = 1, pWMIdx = 2, satNMIdx = 3};
-// 	enum {pWFIdx = 0, satNFIdx = 1};
  	enum {WF = 0, NF = 1, WM = 2, NM = 3};
 	
   public:
     // define the number of components of your system, this is used outside
     // to allocate the correct size of (dense) blocks with a FieldMatrix
 	// m has to be modified minclensproblem, mincproblem, mincmodel  
-    enum {n=G::dimension};
-    enum {m=4};
+    enum {n = G::dimension};
+    enum {m = 4};
     enum {SIZE=LagrangeShapeFunctionSetContainer<DT,RT,n>::maxsize};
     struct VariableNodeData;
     
@@ -100,6 +95,8 @@ namespace Dune
       this->analytic = false;
     }
 /***********************************************************************************************************/
+/*the harmonicMeanKMinc function computes the harmonic mean of the perameabilities of fractures and rock at 
+ * the same global coordinate " i". It is used afterwards in the computation of the interporosity flux */
     virtual FMatrix harmonicMeanKMinc (const FVector global_i) const
      {
     	 double eps = 1e-20;
@@ -119,7 +116,8 @@ namespace Dune
  		 }
     	 return KF;
      }
-    
+/*the harmonicMeanK function computes the harmonic mean of the perameabilities between the two nodes of different
+ *  permeabilities in the fracture domain */    
     virtual FMatrix harmonicMeanK (const FVector global_i, const FVector global_j) const
      {
     	 double eps = 1e-20;
@@ -147,16 +145,24 @@ namespace Dune
     }
 
     virtual VBlockType computeM (const Entity& e, const VBlockType* sol, 
-    		int node, std::vector<VariableNodeData>& varData)
+    		int node, std::vector<VariableNodeData>& vNData)
     {
    	 VBlockType result; 
-   	 double dummy = varData[node].density[pWFIdx];
-   	 result[0] = -varData[node].density[pWFIdx]*elData.porosityFracture*sol[node][satNFIdx];
-   	 result[1] = varData[node].density[satNFIdx]*elData.porosityFracture*sol[node][satNFIdx];
-//   	 result[2] = sol[node][pWMIdx];
-//   	 result[3] = sol[node][satNMIdx];
-   	 result[2] = -varData[node].density[pWMIdx]*elData.porosityMatrix*sol[node][satNMIdx];
-   	 result[3] = varData[node].density[satNMIdx]*elData.porosityMatrix*sol[node][satNMIdx];
+   	 RT satNF = sol[node][satNFIdx];
+   	 RT satNM = sol[node][satNMIdx];
+   	 RT porF = elData.porosityFracture;
+   	 RT porM = elData.porosityMatrix;
+   	 RT densWF = vNData[node].density[pWFIdx];
+   	 RT densNF = vNData[node].density[satNFIdx];
+	 RT densWM = vNData[node].density[pWMIdx];
+   	 RT densNM = vNData[node].density[satNMIdx];
+   	 
+   	 result[pWFIdx] = -densWF*porF*satNF;
+   	 result[satNFIdx] = densNF*porF*satNF;
+//   	 result[pWMIdx] = sol[node][pWMIdx];
+//   	 result[satNMIdx] = sol[node][satNMIdx];
+     result[pWMIdx] = -densWM*porM*satNM;
+     result[satNMIdx] = densNM*porM*satNM;
    	 
    	 return result;
     };
@@ -176,6 +182,7 @@ namespace Dune
    	 // ASSUME problem.q already contains \rho.q
      VBlockType q(0);
 
+     
      q = problem.q(this->fvGeom.subContVol[node].global, e, this->fvGeom.subContVol[node].local);
      const FieldVector<DT,n> global_i=this->fvGeom.subContVol[node].global;
      const FMatrix Kharmonic = harmonicMeanKMinc (global_i);
@@ -186,35 +193,60 @@ namespace Dune
  
      /***********************************************************************************/     
 //// MINC Flux Matrix
-     VBlockType IPFlux;
+     VBlockType IPFlux; //the interporosity flux
      FieldVector<RT,n> MincPWGrad(0);
      FieldVector<RT,n> MincPNGrad(0);
+     double pWF = vNData[i].pWFracture;
+     double pWM = vNData[i].pWMatrix;
+     double pNF = vNData[i].pNFracture;
+     double pNM = vNData[i].pNMatrix;
      MincPWGrad += vNData[i].pWFracture;
      MincPWGrad -= vNData[i].pWMatrix;
      MincPNGrad += vNData[i].pNFracture;
      MincPNGrad -= vNData[i].pNMatrix;
+     //if the normal of the face gives negative numbers it multiplies with -1
      RT inwardW = MincPWGrad*Kharmonicij;
-     RT inwardN = MincPNGrad*Kharmonicij;
+     if (inwardW < 0)
+     {inwardW = inwardW*(-1);}
+     
+     RT inwardN = MincPNGrad*Kharmonicij;	 
+     if (inwardN<0)
+     {inwardN = inwardN*(-1);}
+     
+     RT densWF = vNData[i].density[pWFIdx];
+   	 RT densNF = vNData[i].density[satNFIdx];
+   	 RT densWM = vNData[i].density[pWMIdx];
+   	 RT densNM = vNData[i].density[satNMIdx];
+   	 double mobilityWF = vNData[i].mobility[pWFIdx];
+   	 double mobilityNF = vNData[i].mobility[satNFIdx];
+   	 double mobilityWM = vNData[i].mobility[pWMIdx];
+   	 double mobilityNM = vNData[i].mobility[satNMIdx];
 //// If the pressure in the fracture is bigger than the one in the matrix the flow occurs from fracture to matrix
-       	if (inwardW>0)
-      	{IPFlux[2] = vNData[i].density[pWFIdx]*vNData[i].mobilityMatrix[pWFIdx]*inwardW;
-     	q[0]-=IPFlux[2];
-      	q[2]+=IPFlux[2];
+       	if (pWF>pWM)
+      	{
+       	// wetting interporosity flux calculated with the wetting mobility of the Fracture; 
+       	double IPFluxW = densWF*mobilityWF*inwardW;
+       	q[pWFIdx]-=IPFluxW;
+      	q[pWMIdx]+=IPFluxW;
      	}
      else
-       	{IPFlux[2] = vNData[i].density[pWMIdx]*vNData[i].mobilityFracture[pWMIdx]*inwardW;
-       	q[0]-=IPFlux[2];
-       	q[2]+=IPFlux[2];
+       	{
+    	// wetting interporosity flux calculated with the wetting mobility of the Matrix; 
+    	double IPFluxW = densWM*mobilityWM*inwardW;
+    	q[pWFIdx]-=IPFluxW;
+       	q[pWMIdx]+=IPFluxW;
        	}
-     if (inwardN>0)
-       	{IPFlux[3] = vNData[i].density[satNFIdx]*vNData[i].mobilityMatrix[satNFIdx]*inwardN;
-       	q[1]-=IPFlux[3];
-       	q[3]+=IPFlux[3];
+     if (pNF>pNM)
+       	{
+    	double IPFluxN = densNF*mobilityNF*inwardN;
+    	q[satNFIdx]-=IPFluxN;
+       	q[satNMIdx]+=IPFluxN;
        	}
      else
-       	{IPFlux[3] = vNData[i].density[satNMIdx]*vNData[i].mobilityFracture[satNMIdx]*inwardN;
-       	q[1]-=IPFlux[3];
-       	q[3]+=IPFlux[3];
+       	{
+    	double IPFluxN = densNM*mobilityNM*inwardN;
+    	q[satNFIdx]-=IPFluxN;
+       	q[satNMIdx]+=IPFluxN;
        	}
           
      /************************************************************************************/     
@@ -292,13 +324,13 @@ namespace Dune
 			  else {
 			  up_NF = j; down_NF=i;} 
 		if (out_WF<0)
-		flux[pWFIdx]=vNData[i].density[pWFIdx]*vNData[i].mobilityFracture[pWFIdx]*out_WF;
+		flux[pWFIdx]=vNData[i].density[pWFIdx]*vNData[i].mobility[pWFIdx]*out_WF;
 		else
-		flux[pWFIdx]=vNData[j].density[pWFIdx]*vNData[j].mobilityFracture[pWFIdx]*out_WF;
+		flux[pWFIdx]=vNData[j].density[pWFIdx]*vNData[j].mobility[pWFIdx]*out_WF;
 		if (out_NF<0)
-		flux[satNFIdx]=vNData[i].density[satNFIdx]*vNData[i].mobilityFracture[satNFIdx]*out_NF;
+		flux[satNFIdx]=vNData[i].density[satNFIdx]*vNData[i].mobility[satNFIdx]*out_NF;
 		else
-		flux[satNFIdx]=vNData[j].density[satNFIdx]*vNData[j].mobilityFracture[satNFIdx]*out_NF;
+		flux[satNFIdx]=vNData[j].density[satNFIdx]*vNData[j].mobility[satNFIdx]*out_NF;
 		} 
 
 			return flux;
@@ -318,10 +350,13 @@ namespace Dune
  		 elData.parametersFracture = problem.materialLawParametersFracture(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
  		 elData.parametersMatrix = problem.materialLawParametersMatrix(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
 		 // ASSUMING element-wise constant permeability, evaluate K at the cell center 
- 		 elData.KFracture = problem.KFracture(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);  
+ 		 elData.KFracture = problem.KFracture(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
  		 elData.KMatrix = problem.KMatrix(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+ 		 
  		 elData.porosityFracture = problem.porosityFracture(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+ 		 double porF =  elData.porosityFracture;
  		 elData.porosityMatrix = problem.porosityMatrix(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+ 		 double porM =  elData.porosityMatrix;
  		 
     };
 
@@ -350,15 +385,18 @@ namespace Dune
 
     // analog to EvalPrimaryData in MUFTE, uses members of varNData
 	virtual void updateVariableData(const Entity& e, const VBlockType* sol, 
-			int i, std::vector<VariableNodeData>& varData) 
+			int i, std::vector<VariableNodeData>& vNData) 
     {
-   	 varData.resize(this->fvGeom.nNodes);
+   	 vNData.resize(this->fvGeom.nNodes);
    	 int size = vNData.size();
 
    	 for (int i = 0; i < size; i++) {
 //   		this->def[i] = 0; // it initialize the deffect to 0
-   		varData[i].saturationWFracture = 1.0 - sol[i][satNFIdx];
-   		varData[i].saturationWMatrix = 1.0 - sol[i][satNMIdx];
+   		vNData[i].saturationWFracture = 1.0 - sol[i][satNFIdx];
+   		vNData[i].saturationWMatrix = 1.0 - sol[i][satNMIdx];
+   		double saturWF = vNData[i].saturationWFracture;
+   		double saturWM = vNData[i].saturationWMatrix;
+   		
 //   		   		
 
    		// ASSUME element-wise constant parameters for the material law
@@ -368,25 +406,37 @@ namespace Dune
   		FieldVector<RT, 4> parametersMatrix = problem.materialLawParametersMatrix(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
   	 
 //         varNData[i].pC = problem.materialLaw().pC(varNData[i].saturationW, parameters);
-         varData[i].pCFracture = problem.materialLaw().pC(varData[i].saturationWFracture, parametersFracture);
-         varData[i].pCMatrix = problem.materialLaw().pC(varData[i].saturationWMatrix, parametersMatrix);
-         varData[i].pWFracture = sol[i][pWFIdx];
-//         varData[i].pWMatrix = sol[i][pWMIdx];
-         varData[i].pNFracture = sol[i][pWFIdx] + varData[i].pCFracture;
-         varData[i].pNMatrix = sol[i][pWMIdx] + varData[i].pCMatrix;
+         vNData[i].pCFracture = problem.materialLaw().pC(vNData[i].saturationWFracture, parametersFracture);
+         vNData[i].pCMatrix   = problem.materialLaw().pC(vNData[i].saturationWMatrix, parametersMatrix);
+         vNData[i].pWFracture = sol[i][pWFIdx];
+         vNData[i].pWMatrix   = sol[i][pWMIdx];
+         vNData[i].pNFracture = sol[i][pWFIdx] + vNData[i].pCFracture;
+         vNData[i].pNMatrix   = sol[i][pWMIdx] + vNData[i].pCMatrix;
+         double solutionPWFIdx = sol[i][pWFIdx];
+         double solutionPWMIdx = sol[i][pWMIdx];
+         double solutionPNFIdx = vNData[i].pNFracture;
+         double solutionPNMIdx = vNData[i].pNMatrix;
          
-//         varNData[i].mobility[pWFIdx] = problem.materialLaw().mobW(varNData[i].saturationW, parameters);
-         varData[i].mobilityFracture[pWFIdx] = problem.materialLaw().mobW(varData[i].saturationWFracture, parametersFracture);
-         varData[i].mobilityMatrix[pWMIdx] = problem.materialLaw().mobW(varData[i].saturationWMatrix, parametersMatrix);
+         //Mobilities & densities 
+         vNData[i].mobility[pWFIdx]   = problem.materialLaw().mobW(vNData[i].saturationWFracture, parametersFracture);
+         vNData[i].mobility[pWMIdx]   = problem.materialLaw().mobW(vNData[i].saturationWMatrix, parametersMatrix);
+         vNData[i].mobility[satNFIdx] = problem.materialLaw().mobN(sol[i][satNFIdx], parametersFracture);
+         vNData[i].mobility[satNMIdx] = problem.materialLaw().mobN(sol[i][satNMIdx], parametersMatrix);
+         double mobilWF = vNData[i].mobility[pWFIdx];
+         double mobilWM = vNData[i].mobility[pWMIdx];
+         double mobilNF = vNData[i].mobility[satNFIdx];
+         double mobilNM = vNData[i].mobility[satNMIdx];
          
-//         varNData[i].mobility[satNFIdx] = problem.materialLaw().mobN(sol[i][satNIdx], parameters);
-         varData[i].mobilityFracture[satNFIdx] = problem.materialLaw().mobN(sol[i][satNFIdx], parametersFracture);
-         varData[i].mobilityMatrix[satNMIdx] = problem.materialLaw().mobN(sol[i][satNMIdx], parametersMatrix);
-                  
-         varData[i].density[pWFIdx] = problem.materialLaw().wettingPhase.density();
-         varData[i].density[satNFIdx] = problem.materialLaw().nonwettingPhase.density();
-         varData[i].density[pWMIdx] = problem.materialLaw().wettingPhase.density();
-         varData[i].density[satNMIdx] = problem.materialLaw().nonwettingPhase.density();
+         
+         vNData[i].density[pWFIdx]    = problem.materialLaw().wettingPhase.density();
+         vNData[i].density[satNFIdx]  = problem.materialLaw().nonwettingPhase.density();
+         vNData[i].density[pWMIdx]    = problem.materialLaw().wettingPhase.density();
+         vNData[i].density[satNMIdx]  = problem.materialLaw().nonwettingPhase.density();
+         double densWF =  vNData[i].density[pWFIdx];
+         double densNF =  vNData[i].density[satNFIdx];
+         double densWM =  vNData[i].density[pWMIdx];
+         double densNM =  vNData[i].density[satNMIdx];
+         
    	 }   
 
     }
@@ -431,9 +481,9 @@ namespace Dune
        RT pNMatrix;
        RT pWFracture;
        RT pWMatrix;
-//       VBlockType mobility;  //Vector with the number of phases
-       VBlockType mobilityFracture;  //Vector with the number of phases
-       VBlockType mobilityMatrix;  //Vector with the number of phases
+       VBlockType mobility;  //Vector with the number of phases
+//       VBlockType mobilityFracture;  //Vector with the number of phases
+//       VBlockType mobilityMatrix;  //Vector with the number of phases
        VBlockType density;
     };
         
