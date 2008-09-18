@@ -93,12 +93,18 @@ int main(int argc, char** argv)
     Diffusion diffusion(grid, problem);
     
     typedef Dune::CoupledModel<Diffusion,Diffusion> CoupledModel;
-    CoupledModel coupledModel(grid, diffusion, grid, diffusion);
+    CoupledModel coupledModel(grid, diffusion, grid, diffusion, true);
+    
+    coupledModel.initial();
+    coupledModel.assemble();
+    printmatrix(std::cout, *(diffusion.A), "local stiffness matrix", "row", 11, 4);
+    printmatrix(std::cout, coupledModel.matrix(), "global stiffness matrix", "row", 11, 4);
     
     Dune::TimeLoop<GridType, Diffusion> timeloop(0, 1, 1, "box3d", 1);
     
     timeloop.execute(diffusion);
 
+    printmatrix(std::cout, *(diffusion.A), "local stiffness matrix", "row", 11, 4);
 	std::cout << "discrete error = " << discreteError(grid, *diffusion, problem) << std::endl;
 	return 0;
   }
