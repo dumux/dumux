@@ -135,26 +135,47 @@ namespace Dune
 
 	virtual double depthBOR () const = 0;
 
+	//! properties of the wetting (liquid) phase
+	/*! properties of the wetting (liquid) phase
+	  \return	wetting phase
+	 */
 	virtual Liquid_GL& wettingPhase () const
 	{
 		return wettingPhase_;
 	}
 
+	//! properties of the nonwetting (liquid) phase
+	/*! properties of the nonwetting (liquid) phase
+	  \return	nonwetting phase
+	 */
 	virtual Gas_GL& nonwettingPhase () const
 	{
 		return nonwettingPhase_;
 	}
 
+	//! properties of the soil
+	/*! properties of the soil
+	  \return	soil
+	 */
     virtual Matrix2p<G, RT>& soil () const
     {
     	return soil_;
     }
 
+	//! object for multicomponent calculations
+	/*! object for multicomponent calculations including mass fractions,
+	 * mole fractions and some basic laws
+	  \return	multicomponent object
+	 */
 	virtual MultiComp& multicomp () const
 	{
 		return multicomp_;
 	}
 
+	//! object for definition of material law
+	/*! object for definition of material law (e.g. Brooks-Corey, Van Genuchten, ...)
+	  \return	material law
+	 */
     virtual TwoPhaseRelations<G, RT>& materialLaw () const
 	{
 		return materialLaw_;

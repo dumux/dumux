@@ -61,10 +61,10 @@ namespace Dune
 	{
 		FieldVector<BoundaryConditions::Flags, m> values(BoundaryConditions::neumann);
 
-		if (x[0] < outerLowerLeft_[0] + eps_)
+		if (x[0] < eps_)
 			values = BoundaryConditions::dirichlet;
-		if (x[1] < eps_)
-			values = BoundaryConditions::dirichlet;
+//		if (x[1] < eps_)
+//			values = BoundaryConditions::dirichlet;
 
 		return values;
 	}
@@ -77,9 +77,10 @@ namespace Dune
 				  const FieldVector<DT,dim>& xi) const
 	{
 		FieldVector<RT,m> values(0);
+		RT densityW_ = 1000.0;
 
 		values[pWIdx] = 1e5 - densityW_*gravity_[1]*(depthBOR_ - x[1]);
-		values[switchIdx] = 0.05;
+		values[switchIdx] = 0.05;  // may be Sn, Xaw or Xwn!!
 
 //		if (x[1] >= innerLowerLeft_[1] && x[1] <= innerUpperRight_[1]
 //		 && x[0] >= innerLowerLeft_[0])
@@ -101,8 +102,8 @@ namespace Dune
 
 		//RT lambda = (x[1])/height_;
 
-		if (x[1] < 15.0 && x[1] > 5.0)
-			values[switchIdx] = -1e-2;
+		if (x[1] < 15 && x[1] > 5)
+			values[switchIdx] = -1e-3;
 
 		return values;
 	}
@@ -115,9 +116,10 @@ namespace Dune
 	{
 
 		FieldVector<RT,m> values;
+		RT densityW_ = 1000.0;
 
 		values[pWIdx] = 1e5 - densityW_*gravity_[1]*(depthBOR_ - x[1]);
-		values[switchIdx] = 0.01;
+		values[switchIdx] = 0.05;
 
 //			if (x[1] >= innerLowerLeft_[1] && x[1] <= innerUpperRight_[1]
 //			 && x[0] >= innerLowerLeft_[0])
@@ -190,11 +192,14 @@ namespace Dune
 	  FieldVector<DT,dim> innerLowerLeft_, innerUpperRight_;
 	  DT width_, height_;
 	  DT depthBOR_, eps_;
-	  RT densityW_, densityN_;
+//	  RT densityW_, densityN_;
 	  FieldVector<DT,dim> gravity_;
   };
 
- ////////////////////////////////////////--SOIL--//////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////--SOIL--//////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////
+
   template<class G, class RT>
   class InjectionSoil: public Matrix2p<G,RT>
   {
@@ -258,6 +263,7 @@ namespace Dune
 
   	InjectionSoil():Matrix2p<G,RT>()
   	{
+  		K_ = 0.;
   		for(int i = 0; i < dim; i++)
   			K_[i][i] = 1e-12;
   	}

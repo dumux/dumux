@@ -37,13 +37,13 @@ int main(int argc, char** argv)
     double depthBOR = 1000.0;
 
     // for defining e.g. a lense
-    Dune::FieldVector<NumberType, dim> innerLowerLeft(4);
+    Dune::FieldVector<NumberType, dim> innerLowerLeft(0.0);
     innerLowerLeft[1] = 0.0;
-    Dune::FieldVector<NumberType, dim> innerUpperRight(6);
+    Dune::FieldVector<NumberType, dim> innerUpperRight(0.0);
     innerUpperRight[1] = 0.5;
 
     if (argc != 4) {
-      std::cout << "usage: 2p2cni grid tEnd dt" << std::endl;
+      std::cout << "usage: ./test_2p2c grid tEnd dt" << std::endl;
       return 0;
     }
     // define tEnd

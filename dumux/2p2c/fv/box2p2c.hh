@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_BOX2P2C_HH
 #define DUNE_BOX2P2C_HH
@@ -269,7 +269,7 @@ namespace Dune
 		///////////////////////////////////
 		// define solver tolerances here
 		///////////////////////////////////
-		RT absTol = 1e-5;
+		RT absTol = 1e-4;
 		RT relTol = 1e-7;
 
 		NewtonMethod<G, ThisType> newtonMethod(this->grid, *this, relTol, absTol, 30, 1.0, 3);
