@@ -2,8 +2,6 @@
 #define DUNE_PARALLELBOXDIFFUSION_HH
 
 #include <dune/disc/shapefunctions/lagrangeshapefunctions.hh>
-#include <dune/disc/functions/p1function.hh>
-//#include <dune/disc/operators/p1operator.hh>
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
 #include <dune/istl/bvector.hh>
@@ -17,7 +15,7 @@
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/scalarproducts.hh>
 #include <dune/istl/paamg/amg.hh>
-#include <dune/istl/owneroverlapcopy.hh>
+#include <dumux/operators/owneroverlapcopyextended.hh>
 #include "dumux/nonlinear/nonlinearmodel.hh"
 #include "dumux/pardiso/pardiso.hh"
 #include "dumux/fvgeometry/fvelementgeometry.hh"
@@ -27,6 +25,7 @@
 #include "schwarzcommunication.hh"
 #include "schwarzpreconditioner.hh"
 #include "dumux/pardiso/pardiso.hh"
+#include "dumux/operators/p1operatorextended.hh"
 
 namespace Dune
 {
@@ -62,11 +61,11 @@ public:
 
 template<class G, class RT, int m=1>
 class LeafP1ParallelBoxDiffusion : public ParallelBoxDiffusion<G, RT, DiffusionParameters<G, RT>, ParallelBoxDiffusionJacobian<G, RT>, 
-LeafP1Function<G, RT, m>, LeafP1OperatorAssembler<G, RT, m> >
+LeafP1FunctionExtended<G, RT, m>, LeafP1OperatorAssembler<G, RT, m> >
 {
 public:
 	// define the function type:
-		typedef LeafP1Function<G, RT, m> FunctionType;
+		typedef LeafP1FunctionExtended<G, RT, m> FunctionType;
 
 		// define the operator assembler type:
 		typedef LeafP1OperatorAssembler<G, RT, m> OperatorAssembler;
@@ -96,7 +95,7 @@ public:
 		typedef typename ThisType::OperatorAssembler::RepresentationType MatrixType;
 		typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator; 
 		typedef typename G::Traits::GlobalIdSet::IdType GlobalIdType;
-		typedef OwnerOverlapCopyCommunication<GlobalIdType,int> CommunicationType;
+		typedef OwnerOverlapCopyExtendedCommunication<GlobalIdType,int> CommunicationType;
 
 		LeafP1ParallelBoxDiffusion (const G& g, DiffusionParameters<G, RT>& prob) 
 		: ParallelBoxDiffusion(g, prob), grid(g), vertexmapper(g, g.leafIndexSet())
@@ -203,7 +202,7 @@ public:
 		virtual void solve()
 		{
 			typedef typename G::Traits::GlobalIdSet::IdType GlobalIdType;
-			typedef typename Dune::LeafP1Function<G,RT>::P1IndexInfoFromGrid P1IndexInfoFromGrid;
+			typedef typename Dune::LeafP1FunctionExtended<G,RT>::P1IndexInfoFromGrid P1IndexInfoFromGrid;
 
 			Dune::MatrixAdapter<MatrixType,VectorType,VectorType> op(*(this->A));
 			//SeqPardiso<MatrixType,VectorType,VectorType> ilu0;
@@ -215,7 +214,7 @@ public:
 			// set up parallel solvers
 			Dune::IndexInfoFromGrid<GlobalIdType,int> indexinfo; 
 			(this->u).fillIndexInfoFromGrid(indexinfo);
-			typedef Dune::OwnerOverlapCopyCommunication<GlobalIdType,int> CommunicationType;
+			typedef Dune::OwnerOverlapCopyExtendedCommunication<GlobalIdType,int> CommunicationType;
 			CommunicationType oocc(indexinfo,grid.comm());
 			int verbose=0;
 			if (grid.comm().rank() == 0) 
@@ -299,7 +298,7 @@ public:
 					(*defectGlobal)[i][equationnumber] = 0;
 				}
 
-			oocc.addAllToAll(*defectGlobal, *defectGlobal);
+			//oocc.addAllToAll(*defectGlobal, *defectGlobal);
 			
 			//std::cout << grid.comm().rank() << ": norm(defect) = " << oocc.norm(*defectGlobal) << std::endl;
 

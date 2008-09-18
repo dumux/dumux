@@ -19,7 +19,6 @@
 
 #include<dune/disc/shapefunctions/lagrangeshapefunctions.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
-#include<dune/disc/functions/p1function.hh>
 #include "dumux/operators/localjacobian.hh"
 #include "dumux/twophase/twophaseproblem_deprecated.hh"
 
@@ -60,7 +59,7 @@ namespace Dune
 	- Grid  a DUNE grid type
 	- RT    type used for return values
   */
-  template<class G, class RT, class BoxFunction = LeafP1Function<G, RT, 2> >
+  template<class G, class RT, class BoxFunction = LeafP1FunctionExtended<G, RT, 2> >
   class BoxTwoPhaseLocalJacobian
     : public LocalJacobian<BoxTwoPhaseLocalJacobian<G,RT>,G,RT,2>
   {

@@ -4,8 +4,6 @@
 #define DUNE_NONLINEARPARABOLIC_HH
 
 #include<dune/disc/shapefunctions/lagrangeshapefunctions.hh>
-#include<dune/disc/functions/p1function.hh>
-//#include<dune/disc/operators/p1operator.hh>
 #include"dumux/nonlinear/nonlinearmodel.hh"
 
 namespace Dune
@@ -42,11 +40,11 @@ namespace Dune
   
   template<class G, class RT, class ProblemType, class LocalJac, int m=1>
   class LeafP1NonlinearParabolic : public NonlinearParabolic<G, RT, ProblemType, LocalJac, 
-                                        LeafP1Function<G, RT, m>, LeafP1OperatorAssembler<G, RT, m> >
+                                        LeafP1FunctionExtended<G, RT, m>, LeafP1OperatorAssembler<G, RT, m> >
   {
   public:
 	  // define the function type:
-	  typedef LeafP1Function<G, RT> FunctionType;
+	  typedef LeafP1FunctionExtended<G, RT> FunctionType;
 
 	  // define the operator assembler type:
 	  typedef LeafP1OperatorAssembler<G, RT, m> OperatorAssembler;

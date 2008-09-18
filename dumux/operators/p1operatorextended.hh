@@ -21,10 +21,10 @@
 #include<dune/istl/bvector.hh>
 #include<dune/istl/operators.hh>
 #include<dune/istl/bcrsmatrix.hh>
-#include<dune/disc/functions/p1function.hh> // for parallel extender class
 #include<dune/disc/shapefunctions/lagrangeshapefunctions.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
 #include"localstiffnessextended.hh"
+#include"../functions/p1functionextended.hh" // for parallel extender class
 
 /**
  * @file
@@ -1060,7 +1060,7 @@ namespace Dune
 	typedef typename GV::template Codim<n>::Iterator VIterator;
 	typedef typename G::template Codim<0>::HierarchicIterator HierarchicIterator;
 	typedef typename G::template Codim<0>::EntityPointer EEntityPointer;
-	typedef typename P1Function<GV,RT,LC,m>::RepresentationType VectorType;
+	typedef typename P1FunctionExtended<GV,RT,LC,m>::RepresentationType VectorType;
 	typedef typename VectorType::block_type VBlockType;
 	typedef typename P1OperatorBase<TypeTag,G,RT,GV,LC,m>::RepresentationType MatrixType;
         typedef typename MatrixType::field_type MFieldType;
@@ -1167,7 +1167,7 @@ namespace Dune
 
 	 */
         template<class I>
-	void assemble (LocalStiffness<I,G,RT,m>& loc, P1Function<GV,RT,LC,m>& u, P1Function<GV,RT,LC,m>& f)
+	void assemble (LocalStiffness<I,G,RT,m>& loc, P1FunctionExtended<GV,RT,LC,m>& u, P1FunctionExtended<GV,RT,LC,m>& f)
 	{
 	  // check size
  	  if ((*u).N()!=this->A.M() || (*f).N()!=this->A.N())
@@ -1472,7 +1472,7 @@ namespace Dune
 	} 
 
 	//! assemble operator, rhs and Dirichlet boundary conditions
-	void interpolateHangingNodes (P1Function<GV,RT,LC,m>& u)
+	void interpolateHangingNodes (P1FunctionExtended<GV,RT,LC,m>& u)
 	{
 	  // allocate flag vector to note hanging nodes whose row has been assembled
 	  std::vector<unsigned char> treated(this->vertexmapper.size());

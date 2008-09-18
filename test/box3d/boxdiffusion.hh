@@ -2,7 +2,6 @@
 #define DUNE_BOXDIFFUSION_HH
 
 #include <dune/disc/shapefunctions/lagrangeshapefunctions.hh>
-#include <dune/disc/functions/p1function.hh>
 #include "dumux/operators/p1operatorextended.hh"
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
@@ -58,11 +57,11 @@ namespace Dune
   
   template<class G, class RT, int m=1>
   class LeafP1BoxDiffusion : public BoxDiffusion<G, RT, DiffusionParameters<G, RT>, BoxDiffusionJacobian<G, RT>, 
-                                        LeafP1Function<G, RT, m>, LeafP1OperatorAssembler<G, RT, m> >
+                                        LeafP1FunctionExtended<G, RT, m>, LeafP1OperatorAssembler<G, RT, m> >
   {
   public:
 	  // define the function type:
-	  typedef LeafP1Function<G, RT, m> FunctionType;
+	  typedef LeafP1FunctionExtended<G, RT, m> FunctionType;
 
 	  // define the operator assembler type:
 	  typedef LeafP1OperatorAssembler<G, RT, m> OperatorAssembler;

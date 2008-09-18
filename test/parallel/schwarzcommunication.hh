@@ -4,7 +4,6 @@
 #include<dune/common/exceptions.hh>
 #include<dune/grid/common/grid.hh>
 #include<dune/grid/common/mcmgmapper.hh>
-#include<dune/disc/functions/p1function.hh>
 
 /**
  * @brief A class setting up communication needed for overlapping Schwarz methods

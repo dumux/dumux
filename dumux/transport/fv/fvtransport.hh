@@ -35,8 +35,7 @@ template<class G, class RT, class VC> class FVTransport :
 	typedef typename GV::template Codim<0>::Iterator Iterator;
 	typedef Dune::MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout> EM;
 	typedef typename G::template Codim<0>::EntityPointer EntityPointer;
-	typedef typename IntersectionIteratorGetter<G,LevelTag>::IntersectionIterator
-			IntersectionIterator;
+	typedef typename IntersectionIteratorGetter<G,LevelTag>::IntersectionIterator IntersectionIterator;
 	typedef typename G::ctype ct;
 	typedef BlockVector< Dune::FieldVector<RT,dim> > SlopeType;
 

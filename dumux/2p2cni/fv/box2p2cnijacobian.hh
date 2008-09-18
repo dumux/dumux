@@ -18,7 +18,6 @@
 #include<dune/grid/utility/intersectiongetter.hh>
 #include<dune/disc/shapefunctions/lagrangeshapefunctions.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
-#include<dune/disc/functions/p1function.hh>
 #include"dumux/operators/boxjacobian.hh"
 #include"dumux/2p2cni/2p2cniproblem.hh"
 //#include "varswitch.hh"
@@ -61,7 +60,7 @@ namespace Dune
 	- Grid  a DUNE grid type
 	- RT    type used for return values
   */
-  template<class G, class RT, class BoxFunction = LeafP1Function<G, RT, 3> >
+  template<class G, class RT, class BoxFunction = LeafP1FunctionExtended<G, RT, 3> >
   class Box2P2CNIJacobian
     : public BoxJacobian<Box2P2CNIJacobian<G,RT,BoxFunction>,G,RT,3,BoxFunction>
   {

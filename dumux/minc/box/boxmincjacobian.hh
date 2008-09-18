@@ -17,7 +17,6 @@
 
 #include<dune/disc/shapefunctions/lagrangeshapefunctions.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
-#include<dune/disc/functions/p1function.hh>
 #include"dumux/operators/boxjacobian.hh"
 #include"dumux/minc/mincproblem.hh"
 
@@ -58,7 +57,7 @@ namespace Dune
 	- Grid  a DUNE grid type
 	- RT    type used for return values 
   */
-  template<class G, class RT, class BoxFunction = LeafP1Function<G, RT, 4> > class BoxMincJacobian 
+  template<class G, class RT, class BoxFunction = LeafP1FunctionExtended<G, RT, 4> > class BoxMincJacobian 
     : public BoxJacobian<BoxMincJacobian<G,RT,BoxFunction>,G,RT,4,BoxFunction>
   {
     typedef typename G::ctype DT;

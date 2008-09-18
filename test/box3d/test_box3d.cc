@@ -10,7 +10,7 @@
 #include <dune/istl/solvers.hh>
 
 #include "dumux/operators/p1operatorextended.hh"
-#include <dune/disc/groundwater/p1groundwater.hh>
+//#include <dune/disc/groundwater/p1groundwater.hh>
 
 #include <dumux/io/readstarformat.cc>
 #include <dumux/timedisc/timeloop.hh>
@@ -103,7 +103,7 @@ int main(int argc, char** argv)
     typedef Dune::LeafP1BoxDiffusion<GridType, NumberType> Diffusion;
     Diffusion diffusion(grid, problem);
     
-    Dune::TimeLoop<GridType, Diffusion> timeloop(0, 1, 1, "box3d", 1);
+    Dune::TimeLoop<GridType, Diffusion> timeloop(0, 2, 2, "box3d", 1);
     
     timeloop.execute(diffusion);
 

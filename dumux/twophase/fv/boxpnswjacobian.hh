@@ -19,7 +19,6 @@
 
 #include<dune/disc/shapefunctions/lagrangeshapefunctions.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
-#include<dune/disc/functions/p1function.hh>
 #include"dumux/operators/boxjacobian.hh"
 #include"dumux/twophase/twophaseproblem_deprecated.hh"
 
@@ -27,7 +26,7 @@
 namespace Dune
 {
 
-  template<class G, class RT, class BoxFunction = LeafP1Function<G, RT, 2> > class BoxPnSwJacobian
+  template<class G, class RT, class BoxFunction = LeafP1FunctionExtended<G, RT, 2> > class BoxPnSwJacobian
     : public BoxJacobian<BoxPnSwJacobian<G,RT,BoxFunction>,G,RT,2,BoxFunction>
   {
     typedef typename G::ctype DT;
