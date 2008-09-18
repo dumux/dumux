@@ -47,14 +47,6 @@ template<class G, class RT> class TwoPTwoCNIProblem {
 			IntersectionIterator;
 
 public:
-	//! evaluate diffusion tensor
-	/*! Evaluate the diffusion tensor at given location
-	  @param[in]  x    position in global coordinates
-	  @param[in]  e    entity of codim 0
-	  @param[in]  xi   position in reference element of e
-	  @param[out] D    diffusion tensor to be filled
-	 */
-	virtual const FieldVector<DT,2>& D (const FieldVector<DT,dim>& x) const = 0;
 
 	//! evaluate source term
 	/*! evaluate source term at given location
