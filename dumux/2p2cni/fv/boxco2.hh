@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_BOXCO2_HH
 #define DUNE_BOXCO2_HH
@@ -46,11 +46,11 @@ namespace Dune
 {
 /**
  \brief Non-isothermal two phase two component model with Pw, Sn/X and Temp as primary unknowns
- 
+
  This implements a non-isothermal two phase two component model with Pw, Sn/X and Temp as primary unknowns
- */  
+ */
  template<class G, class RT, class VtkMultiWriter>
-  class BoxCO2 
+  class BoxCO2
   : public LeafP1TwoPhaseModel<G, RT, TwoPTwoCNIProblem<G, RT>, BoxCO2Jacobian<G, RT> >
   {
   public:
@@ -70,13 +70,13 @@ namespace Dune
 
 		typedef typename ThisLeafP1TwoPhaseModel::FunctionType::RepresentationType VectorType;
 		typedef typename ThisLeafP1TwoPhaseModel::OperatorAssembler::RepresentationType MatrixType;
-		typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator; 
+		typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator;
 #ifdef HAVE_PARDISO
 	SeqPardiso<MatrixType,VectorType,VectorType> pardiso;
 #endif
 
-	
-	BoxCO2(const G& g, ProblemType& prob) 
+
+	BoxCO2(const G& g, ProblemType& prob)
 	: ThisLeafP1TwoPhaseModel(g, prob)// (this->size) vectors
 	{ }
 
@@ -103,7 +103,7 @@ namespace Dune
 		this->localJacobian.outMobilityW = vtkMultiWriter->template createField<RT, 1>(this->size);
 		this->localJacobian.outMobilityN = vtkMultiWriter->template createField<RT, 1>(this->size);
 		this->localJacobian.outPhaseState = vtkMultiWriter->template createField<RT, 1>(this->size);
-		
+
 		// iterate through leaf grid an evaluate c0 at cell center
 		Iterator eendit = gridview.template end<0>();
 		for (Iterator it = gridview.template begin<0>(); it
@@ -111,8 +111,10 @@ namespace Dune
 			// get geometry type
 			Dune::GeometryType gt = it->geometry().type();
 
-			// get entity 
+			// get entity
 			const Entity& entity = *it;
+
+			this->localJacobian.fvGeom.update(entity);
 
 			const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type
 					&sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(gt,1);
@@ -131,14 +133,14 @@ namespace Dune
 				// initialize cell concentration
 				(*(this->u))[globalId] = this->problem.initial(
 						global, entity, local);
-				
-				// initialize phase state
-				this->localJacobian.sNDat[globalId].phaseState = 
-					this->problem.initialPhaseState(global, entity, local);
-					
-					this->localJacobian.sNDat[globalId].oldPhaseState = 
-						this->problem.initialPhaseState(global, entity, local);
-					
+
+				// initialize variable phaseState
+				this->localJacobian.sNDat[globalId].phaseState =
+				this->problem.initialPhaseState(global, entity, local);
+				// initialize variable oldPhaseState
+				this->localJacobian.sNDat[globalId].oldPhaseState =
+				this->problem.initialPhaseState(global, entity, local);
+
 			}
 				this->localJacobian.clearVisited();
 				this->localJacobian.initiateStaticData(entity);
@@ -150,15 +152,15 @@ namespace Dune
 			// get geometry type
 			Dune::GeometryType gt = it->geometry().type();
 
-			// get entity 
+			// get entity
 			const Entity& entity = *it;
 
 			const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type
 					&sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(gt,
 							1);
-			int size = sfs.size(); 
+			int size = sfs.size();
 
-			// set type of boundary conditions 
+			// set type of boundary conditions
 			this->localJacobian.template assembleBC<LeafTag>(entity);
 
 			IntersectionIterator
@@ -192,7 +194,7 @@ namespace Dune
 														global, entity, is,
 														local);
 												this->problem.dirichletIndex(global, entity, is,
-														local, dirichletIndex);	
+														local, dirichletIndex);
 
 										if (bctype[equationNumber]
 												== BoundaryConditions::dirichlet) {
@@ -207,9 +209,15 @@ namespace Dune
 								}
 							}
 				}
+		this->localJacobian.setLocalSolution(entity);
+		for (int i = 0; i < size; i++)
+		this->localJacobian.updateVariableData(entity, this->localJacobian.u, i, false);
+
 		}
+
+
 		*(this->uOldTimeStep) = *(this->u);
-		
+
 		return;
 	}
 
@@ -224,45 +232,46 @@ namespace Dune
 		enum {dimworld = G::dimensionworld};
 
 		const GV& gridview(this->grid.leafView());
-		// iterate through leaf grid an evaluate c0 at cell center
+		// iterate through leaf grid and evaluate c0 at cell center
 		Iterator eendit = gridview.template end<0>();
 		for (Iterator it = gridview.template begin<0>(); it
 				!= eendit; ++it) {
+
 			const Entity& entity = *it;
+			this->localJacobian.fvGeom.update(entity);
 			this->localJacobian.setLocalSolution(entity);
-			this->localJacobian.computeElementData(entity); 
-			this->localJacobian.updateVariableData(entity, this->localJacobian.u);
+			this->localJacobian.computeElementData(entity);
 			this->localJacobian.updateStaticData(entity, this->localJacobian.u);
 		}
 		return;
 	}
-	
-	virtual void globalDefect(FunctionType& defectGlobal) 
+
+	virtual void globalDefect(FunctionType& defectGlobal)
 	{
 		ThisLeafP1TwoPhaseModel::globalDefect(defectGlobal);
 	}
-	
-	void solve() 
+
+	void solve()
 	{
 		Operator op(*(this->A));  // make operator out of matrix
 		double red=1E-8;
 
-#ifdef HAVE_PARDISO 
-//	SeqPardiso<MatrixType,VectorType,VectorType> ilu0(*(this->A)); 
+#ifdef HAVE_PARDISO
+//	SeqPardiso<MatrixType,VectorType,VectorType> ilu0(*(this->A));
 		pardiso.factorize(*(this->A));
-		BiCGSTABSolver<VectorType> solver(op,pardiso,red,100,2);         // an inverse operator 
+		BiCGSTABSolver<VectorType> solver(op,pardiso,red,100,2);         // an inverse operator
 	//	SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A),1.0);// a precondtioner
 		//LoopSolver<VectorType> solver(op, ilu0, red, 10, 2);
 #else
 		SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A),1.0);// a precondtioner
 
 		//SeqIdentity<MatrixType,VectorType,VectorType> ilu0(*(this->A));// a precondtioner
-		BiCGSTABSolver<VectorType> solver(op,ilu0,red,10000,1);         // an inverse operator 
+		BiCGSTABSolver<VectorType> solver(op,ilu0,red,10000,1);         // an inverse operator
 #endif
 		InverseOperatorResult r;
 		solver.apply(*(this->u), *(this->f), r);
-		
-		return;		
+
+		return;
 	}
 
 
@@ -280,7 +289,7 @@ namespace Dune
 		this->localJacobian.outMobilityW = vtkMultiWriter->template createField<RT, 1>(this->size);
 		this->localJacobian.outMobilityN = vtkMultiWriter->template createField<RT, 1>(this->size);
 		this->localJacobian.outPhaseState = vtkMultiWriter->template createField<RT, 1>(this->size);
-		
+
 		this->localJacobian.setDt(dt);
 		this->localJacobian.setOldSolution(this->uOldTimeStep);
 
@@ -292,10 +301,10 @@ namespace Dune
 		///////////////////////////////////
 		// define solver tolerances here
 		///////////////////////////////////
-		//////////////		
-		RT absTol = 1;
-		RT relTol = 1e-8;
-		///////////////////		
+		//////////////
+		RT absTol = 1e-1;
+		RT relTol = 1e-9;
+		///////////////////
 		NewtonMethod<G, ThisType> newtonMethod(this->grid, *this, relTol, absTol);
 		newtonMethod.execute();
 
@@ -303,14 +312,14 @@ namespace Dune
 		Flux = this->computeFlux();
 		Mass = this->totalCO2Mass();
 		dt = this->localJacobian.getDt();
-		
+
 		this->localJacobian.updatePhaseState(); // update variable oldPhaseState
 		this->localJacobian.clearVisited();
 		updateState();							// phase switch after each timestep
                 std::cout << Flux << ", "<< Mass;
-	
+
 		*(this->uOldTimeStep) = *(this->u);
-		
+
 		// update old phase state for computation of ComputeM(..uold..)
 
 		return;
@@ -320,9 +329,9 @@ namespace Dune
 	{
 		return this->grid;
 	}
-	
+
 	template<class MultiWriter>
-	void addvtkfields (MultiWriter& writer) 
+	void addvtkfields (MultiWriter& writer)
 	{
 //		BlockVector<FieldVector<RT, 1> > &xWN = *writer.template createField<RT, 1>(this->size);
 //		BlockVector<FieldVector<RT, 1> > &xAW = *writer.template createField<RT, 1>(this->size);
@@ -331,43 +340,42 @@ namespace Dune
 //		writer.addScalarVertexFunction("nonwetting phase saturation", this->u, 1);
 		writer.addScalarVertexFunction("pressure wetting phase", this->u, 0);
 
-//		writer.addScalarVertexFunction("nonwetting phase saturation", 
-//										this->u, 
-//										1);
-		writer.addScalarVertexFunction("wetting phase pressure", 
-										this->u, 
-										0);
-//		writer.addVertexData(&satW,"wetting phase saturation");
+////		writer.addScalarVertexFunction("nonwetting phase saturation",
+////										this->u,
+////										1);
+//		writer.addScalarVertexFunction("wetting phase pressure",
+//										this->u,
+//										0);
+		//		writer.addVertexData(&satW,"wetting phase saturation");
 		writer.addVertexData(this->localJacobian.outPressureN,"pressure non-wetting phase");
 		writer.addVertexData(this->localJacobian.outCapillaryP,"capillary pressure");
 		writer.addVertexData(this->localJacobian.outTemperature,"temperature");
 		writer.addVertexData(this->localJacobian.outSaturationW,"saturation wetting phase");
 		writer.addVertexData(this->localJacobian.outSaturationN,"saturation non-wetting phase");
-		writer.addVertexData(this->localJacobian.outMassFracAir,"massfraction air in wetting phase");
+		writer.addVertexData(this->localJacobian.outMassFracAir,"massfraction co2 in wetting phase");
 		writer.addVertexData(this->localJacobian.outMassFracWater,"massfraction water in non-wetting phase");
 		writer.addVertexData(this->localJacobian.outDensityW,"density wetting phase");
 		writer.addVertexData(this->localJacobian.outDensityN,"density non-wetting phase");
 		writer.addVertexData(this->localJacobian.outMobilityW,"mobility wetting phase");
 		writer.addVertexData(this->localJacobian.outMobilityN,"mobility non-wetting phase");
 		writer.addVertexData(this->localJacobian.outPhaseState,"phase state");
-		
-//		writer.addVertexData(&xWN, "water in air");
-//		writer.addVertexData(&xAW, "dissolved air");
+
+//		writer.addVertexData(&xWN, "water in co2");
+//		writer.addVertexData(&xAW, "dissolved co2");
 	}
 
-	
-	void vtkout (const char* name, int k) 
+
+	void vtkout (const char* name, int k)
 	{
-		
+
 	}
 
-	
+
 	void setVtkMultiWriter(VtkMultiWriter *writer)
 	{ vtkMultiWriter = writer; }
-	
   protected:
     VtkMultiWriter *vtkMultiWriter;
-   
+
   };
 }
 #endif
