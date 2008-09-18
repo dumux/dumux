@@ -14,16 +14,16 @@
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
 #include "lenswithelementid.hh"
-#include "dumux/twophase/fv/boxpwsn.hh"
+#include "dumux/twophase/fv/boxpwsn_deprecated.hh"
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/material/vangenuchtenlaw_deprecated.hh"
 
-int main(int argc, char** argv) 
+int main(int argc, char** argv)
 {
   try{
-    // define the problem dimensions  
+    // define the problem dimensions
     const int dim=2;
-    typedef double NumberType; 
+    typedef double NumberType;
     Dune::FieldVector<NumberType, dim> outerLowerLeft(0);
     Dune::FieldVector<NumberType, dim> outerUpperRight(500);
     outerUpperRight[1] = 1000;
@@ -43,27 +43,27 @@ int main(int argc, char** argv)
 	std::istringstream is2(arg2);
 	double dt;
 	is2 >> dt;
-     
+
 
 
     // create a grid object
-    //typedef Dune::SGrid<dim,dim> GridType; 
-    //typedef Dune::ALUSimplexGrid<dim,dim> GridType; 
-    //typedef Dune::AlbertaGrid<dim,dim> GridType; 
-    //typedef Dune::YaspGrid<dim,dim> GridType; 
-//    typedef Dune::UGGrid<dim> GridType; 
+    //typedef Dune::SGrid<dim,dim> GridType;
+    //typedef Dune::ALUSimplexGrid<dim,dim> GridType;
+    //typedef Dune::AlbertaGrid<dim,dim> GridType;
+    //typedef Dune::YaspGrid<dim,dim> GridType;
+//    typedef Dune::UGGrid<dim> GridType;
 //      typedef Dune::ALUCubeGrid<dim,dim> GridType;
-	  typedef Dune::ALUSimplexGrid<dim,dim> GridType; 
+	  typedef Dune::ALUSimplexGrid<dim,dim> GridType;
     // create grid pointer, GridType is defined by gridtype.hh
     Dune::GridPtr<GridType> gridPtr( argv[1] );
 
-    // grid reference 
+    // grid reference
     GridType& grid = *gridPtr;
 
-// hussam   grid.globalRefine(1); //3 
+// hussam   grid.globalRefine(1); //3
 
     Dune::gridinfo(grid);
-    
+
     Air air;
     Water water;
     Dune::VanGenuchtenLaw law(water, air);
@@ -71,14 +71,14 @@ int main(int argc, char** argv)
 
     typedef Dune::BoxPwSn<GridType, NumberType> TwoPhase;
     TwoPhase twoPhase(grid, problem);
-    
+
     Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt, "layers", 1);
-    
+
     Dune::Timer timer;
     timer.reset();
     timeloop.execute(twoPhase);
     std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
-     
+
     //printvector(std::cout, *twoPhase.u, "u", "row", 2, 1, 3);
 
     return 0;
@@ -90,7 +90,7 @@ int main(int argc, char** argv)
     std::cerr << "Unknown exception thrown!" << std::endl;
   }
 }
-#else 
+#else
 
 int main (int argc , char **argv) try
 {
@@ -98,9 +98,9 @@ int main (int argc , char **argv) try
 
   return 1;
 }
-catch (...) 
+catch (...)
 {
     std::cerr << "Generic exception!" << std::endl;
     return 2;
 }
-#endif 
+#endif

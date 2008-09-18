@@ -11,14 +11,14 @@
 #include <dune/common/timer.hh>
 #include "../problemdefinitions/fivespotproblem.hh"
 #include "dumux/twophase/problems/uniformtwophaseproblem.hh"
-#include "dumux/twophase/fv/boxpwsn.hh"
+#include "dumux/twophase/fv/boxpwsn_deprecated.hh"
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/material/brookscoreylaw_deprecated.hh"
 #include "dumux/material/vangenuchtenlaw_deprecated.hh"
 
 int main(int argc, char** argv) {
 	try {
-		// define the problem dimensions  
+		// define the problem dimensions
 		const int dim=2;
 		enum {BrooksCorey = 0, VanGenuchten = 1};
 		typedef double NumberType;
@@ -50,14 +50,14 @@ int main(int argc, char** argv) {
 		// create a grid object
 		typedef Dune::SGrid<dim,dim> GridType;
 
-		// use unitcube from grids 
+		// use unitcube from grids
 		std::stringstream dgfFileName;
 		dgfFileName << "grids/unitcube" << GridType :: dimension << ".dgf";
 
 		// create grid pointer, GridType is defined by gridtype.hh
 		Dune::GridPtr<GridType> gridPtr( dgfFileName.str() );
 
-		// grid reference 
+		// grid reference
 		GridType& grid = *gridPtr;
 
 		Dune::gridinfo(grid);

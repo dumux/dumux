@@ -10,7 +10,7 @@
 #include <dune/common/timer.hh>
 #include "../problemdefinitions/buckleyleverettproblem.hh"
 #include "dumux/twophase/problems/uniformtwophaseproblem.hh"
-#include "dumux/twophase/fv/boxpwsn.hh"
+#include "dumux/twophase/fv/boxpwsn_deprecated.hh"
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/material/brookscoreylaw_deprecated.hh"
 #include "dumux/material/vangenuchtenlaw_deprecated.hh"
@@ -19,7 +19,7 @@
 
 int main(int argc, char** argv) {
 	try {
-		// define the problem dimensions  
+		// define the problem dimensions
 		const int dim=1;
 		enum {BrooksCorey = 0, VanGenuchten = 1};
 		typedef double NumberType;
@@ -68,7 +68,7 @@ int main(int argc, char** argv) {
 
 		const std::vector<ctype>& coordinates(coord);
 
-		// grid reference 
+		// grid reference
 		//GridType& grid = *gridPtr;
 		GridType grid(coordinates);
 
@@ -82,7 +82,7 @@ int main(int argc, char** argv) {
 
 		//Calculate with analytical solution
 		Dune::BLWithAnalytical<GridType, NumberType> problem(grid,law, Left, Right);
-		
+
 		//Calculate without analytical solution
 //		Dune::BuckleyLeverettProblem<GridType, NumberType> problem(law, Left, Right,/*VanGenuchten*/BrooksCorey);
 

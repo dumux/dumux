@@ -10,20 +10,20 @@
 #include <dune/common/timer.hh>
 #include "../problemdefinitions/convectivediffusionproblem.hh"
 #include "dumux/twophase/problems/uniformtwophaseproblem.hh"
-#include "dumux/twophase/fv/boxpwsn.hh"
+#include "dumux/twophase/fv/boxpwsn_deprecated.hh"
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/material/linearlaw_deprecated.hh"
 #include "dumux/material/brookscoreylaw_deprecated.hh"
 #include "dumux/material/vangenuchtenlaw_deprecated.hh"
 
-int main(int argc, char** argv) 
+int main(int argc, char** argv)
 {
   try{
-    // define the problem dimensions  
+    // define the problem dimensions
     const int dim=2;
     enum {BrooksCorey = 0, VanGenuchten = 1};
 
-    typedef double NumberType; 
+    typedef double NumberType;
     Dune::FieldVector<NumberType, dim> LowerLeft(0);
     Dune::FieldVector<NumberType, dim> UpperRight(800);
     UpperRight[1] = 70;
@@ -42,38 +42,38 @@ int main(int argc, char** argv)
     is2 >> dt;
 
     // create a grid object
-    typedef Dune::SGrid<dim,dim> GridType; 
+    typedef Dune::SGrid<dim,dim> GridType;
 
-    // use unitcube from grids 
+    // use unitcube from grids
     std::stringstream dgfFileName;
     dgfFileName << "grids/unitcube" << GridType :: dimension << ".dgf";
 
     // create grid pointer, GridType is defined by gridtype.hh
     Dune::GridPtr<GridType> gridPtr( dgfFileName.str() );
 
-    // grid reference 
+    // grid reference
     GridType& grid = *gridPtr;
 
     Dune::gridinfo(grid);
-    
+
     Oil oil(0.);
     Water water(0.);
     Dune::BrooksCoreyLaw law(water, oil,2.0,10);
     //Dune::LinearLaw law(water, oil);
 
-    Dune::ConvectiveDiffusionProblem<GridType, NumberType> problem(law, LowerLeft, UpperRight,/*VanGenuchten*/BrooksCorey); 
+    Dune::ConvectiveDiffusionProblem<GridType, NumberType> problem(law, LowerLeft, UpperRight,/*VanGenuchten*/BrooksCorey);
 
     typedef Dune::BoxPwSn<GridType, NumberType> TwoPhase;
     TwoPhase twoPhase(grid, problem);
-    
+
     Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt,
 						"convectiondiffusion", 100);
-    
+
     Dune::Timer timer;
     timer.reset();
     timeloop.execute(twoPhase);
     std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
-     
+
     //printvector(std::cout, *twoPhase.u, "u", "row", 2, 1, 3);
 
     return 0;

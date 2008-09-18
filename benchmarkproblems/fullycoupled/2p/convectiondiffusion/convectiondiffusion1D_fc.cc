@@ -10,18 +10,18 @@
 #include <dune/common/timer.hh>
 #include "../problemdefinitions/convectivediffusionproblem.hh"
 #include "dumux/twophase/problems/uniformtwophaseproblem.hh"
-#include "dumux/twophase/fv/boxpwsn.hh"
+#include "dumux/twophase/fv/boxpwsn_deprecated.hh"
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/material/brookscoreylaw_deprecated.hh"
 #include "dumux/material/vangenuchtenlaw_deprecated.hh"
 
-int main(int argc, char** argv) 
+int main(int argc, char** argv)
 {
   try{
-    // define the problem dimensions  
+    // define the problem dimensions
     const int dim=1;
     enum {BrooksCorey = 0, VanGenuchten = 1};
-    typedef double NumberType; 
+    typedef double NumberType;
     typedef GridType::ctype ctype;
     Dune::FieldVector<NumberType, dim> Left(0);
     Dune::FieldVector<NumberType, dim> Right(800);
@@ -41,14 +41,14 @@ int main(int argc, char** argv)
 
     // create a grid object
     typedef Dune::OneDGrid GridType;
-  
+
 //    const int numberofelements = 25;
     const int numberofelements = 50;
     //const int numberofelements = 100;
     //const int numberofelements = 200;
 
     double strfactor = 0;
-      
+
     //vector with coordinates
     std::vector<ctype> coord;
     coord.resize(numberofelements+1);
@@ -58,21 +58,21 @@ int main(int argc, char** argv)
     for (int i=2;i<numberofelements+1;i++){
       coord[i]=coord[i-1]+(coord[i-1]-coord[i-2])*(1+strfactor);
     }
-      
+
     //scale coordinates to geometry
     for (int i=0;i<numberofelements+1;i++){
       coord[i]*=Right[0]/coord[numberofelements];
       std::cout << "coordinates =  " << coord[i] << std::endl;
     }
-      
+
     const std::vector<ctype>& coordinates(coord);
 
-    // grid reference 
+    // grid reference
     //GridType& grid = *gridPtr;
     GridType grid(coordinates);
 
     Dune::gridinfo(grid);
-    
+
     Oil oil(0);
     Water water(0);
     Dune::BrooksCoreyLaw law(water, oil,2,10);
@@ -83,14 +83,14 @@ int main(int argc, char** argv)
 
     typedef Dune::BoxPwSn<GridType, NumberType> TwoPhase;
     TwoPhase twoPhase(grid, problem);
-    
+
     Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt,"convectiondiffusion1D", 1);
-    
+
     Dune::Timer timer;
     timer.reset();
     timeloop.execute(twoPhase);
     std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
-     
+
     //printvector(std::cout, *twoPhase.u, "u", "row", 2, 1, 3);
 
     return 0;
