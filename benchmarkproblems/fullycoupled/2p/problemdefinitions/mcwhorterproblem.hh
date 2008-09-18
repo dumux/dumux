@@ -12,7 +12,7 @@
 #include<dune/disc/operators/boundaryconditions.hh>
 #include<dumux/material/twophaserelations_deprecated.hh>
 #include<dumux/material/linearlaw_deprecated.hh>
-#include<dumux/twophase/twophaseproblem.hh>
+#include<dumux/twophase/twophaseproblem_deprecated.hh>
 
 /**
  * @file

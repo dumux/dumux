@@ -12,7 +12,7 @@
 #include<dune/disc/operators/boundaryconditions.hh>
 #include<dumux/material/twophaserelations_deprecated.hh>
 #include<dumux/material/linearlaw_deprecated.hh>
-#include<dumux/twophase/twophaseproblem.hh>
+#include<dumux/twophase/twophaseproblem_deprecated.hh>
 
 /**
  * @file
@@ -148,7 +148,7 @@ public:
 			const FieldVector<DT,n> UpperRight = 0, int chooselaw = BrooksCorey,
 			bool calcpeclet = false, bool analyticalsol = false, RT K = 1e-7,
 			RT Swr = 0, RT Snr = 0, RT Si = 0, RT Porosity = 0.2,
-			RT Lambda = 2.0, RT p0 = 10, RT Alpha = 0.1,//1.74e-4, 
+			RT Lambda = 2.0, RT p0 = 10, RT Alpha = 0.1,//1.74e-4,
 			RT N = 3.1257, RT pwleftbc=2e5, RT pwrightbc=2e5) :
 		TwoPhaseProblem<G, RT>(law, analyticalsol),
 				LowerLeft_(LowerLeft), UpperRight_(UpperRight), chooselaw_(chooselaw), K_(K),

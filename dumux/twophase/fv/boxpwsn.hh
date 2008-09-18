@@ -44,7 +44,7 @@
 #include "dumux/pardiso/pardiso.hh"
 #include "dumux/pardiso/identity.hh"
 #include "dumux/nonlinear/newtonmethod.hh"
-#include "dumux/twophase/twophasemodel_deprecated.hh"
+#include "dumux/twophase/twophasemodel.hh"
 #include "dumux/twophase/twophaseproblem.hh"
 #include "dumux/twophase/fv/boxpwsnjacobian.hh"
 

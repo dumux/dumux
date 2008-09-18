@@ -12,7 +12,7 @@
 #include<dune/disc/operators/boundaryconditions.hh>
 #include<dumux/material/twophaserelations_deprecated.hh>
 #include<dumux/material/linearlaw_deprecated.hh>
-#include<dumux/twophase/twophaseproblem.hh>
+#include<dumux/twophase/twophaseproblem_deprecated.hh>
 
 /**
  * @file
@@ -100,7 +100,7 @@ public:
 		//      }
 		if ((x[0] > UpperRight_[0] - eps_ && x[1] > UpperRight_[1] - bcf_)
 				||(x[1] > UpperRight_[1] - eps_ && x[0] > UpperRight_[0] - bcf_)) {
-			values[nwPhaseIdx] = 0.001;//15x15 cells: bcf 21; 
+			values[nwPhaseIdx] = 0.001;//15x15 cells: bcf 21;
 			//	values[nwPhaseIdx] = 0.002;// 30x30 cells: bcf 11
 			//	values[nwPhaseIdx] = 0.004;// 60x60 cells: bcf 6
 		}
@@ -232,8 +232,8 @@ public:
 		if ((x[0] < LowerLeft_[0] + eps_ && x[1] < LowerLeft_[1] + bcf_) || //lower left
 				(x[1] < LowerLeft_[1] + eps_ && x[0] < LowerLeft_[0] + bcf_)|| //lower left
 				(x[0] > UpperRight_[0] - eps_ && x[1] > UpperRight_[1] - bcf_)
-				|| //upper right 
-				(x[1] > UpperRight_[1] - eps_ && x[0] > UpperRight_[0] - bcf_)) { //upper right 
+				|| //upper right
+				(x[1] > UpperRight_[1] - eps_ && x[0] > UpperRight_[0] - bcf_)) { //upper right
 			values[wPhaseIdx] = BoundaryConditions::dirichlet;
 			values[nwPhaseIdx] = BoundaryConditions::dirichlet;
 		}
@@ -254,8 +254,8 @@ public:
 //		}
 		if ((x[0] < LowerLeft_[0] + eps_ && x[1] < LowerLeft_[1] + bcf_) || //lower left
 				(x[1] < LowerLeft_[1] + eps_ && x[0] < LowerLeft_[0] + bcf_)|| //lower left
-				(x[0] > UpperRight_[0] - eps_ && x[1] > UpperRight_[1] - bcf_)|| //upper right 
-				(x[1] > UpperRight_[1] - eps_ && x[0] > UpperRight_[0] - bcf_)) { //upper right 
+				(x[0] > UpperRight_[0] - eps_ && x[1] > UpperRight_[1] - bcf_)|| //upper right
+				(x[1] > UpperRight_[1] - eps_ && x[0] > UpperRight_[0] - bcf_)) { //upper right
 			values[pWIdx] = pwinbc_;
 			values[sNIdx] = Snr_;
 		}
@@ -270,7 +270,7 @@ public:
 				||(x[1] > UpperRight_[1] - eps_ && x[0] < LowerLeft_[0] + bcf_)
 				||(x[0] > UpperRight_[0] - eps_ && x[1] < LowerLeft_[1] + bcf_)
 				||(x[1] < LowerLeft_[1] + eps_ && x[0] > UpperRight_[0] - bcf_)) {
-			values[nwPhaseIdx] = 0.001;//15x15 cells: bcf 21; 
+			values[nwPhaseIdx] = 0.001;//15x15 cells: bcf 21;
 //			values[nwPhaseIdx] = 0.002;// 30x30 cells: bcf 11
 //			values[nwPhaseIdx] = 0.004;// 60x60 cells: bcf 6
 		}

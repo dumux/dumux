@@ -9,7 +9,7 @@
 
 #include "dumux/nonlinear/newtonmethod.hh"
 #include "dumux/twophase/twophasemodel_deprecated.hh"
-#include "dumux/twophase/twophaseproblem.hh"
+#include "dumux/twophase/twophaseproblem_deprecated.hh"
 #include "dumux/twophase/fv/boxtwophasejacobian.hh"
 
 namespace Dune

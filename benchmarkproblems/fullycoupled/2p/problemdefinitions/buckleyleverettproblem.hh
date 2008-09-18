@@ -13,7 +13,7 @@
 #include<dune/disc/operators/boundaryconditions.hh>
 #include<dumux/material/twophaserelations_deprecated.hh>
 #include<dumux/material/linearlaw_deprecated.hh>
-#include<dumux/twophase/twophaseproblem.hh>
+#include<dumux/twophase/twophaseproblem_deprecated.hh>
 
 /**
  * @file
@@ -98,7 +98,7 @@ public:
 		}
 		//if (x[0] > UpperRight_[0] - eps_) {
 		//values[pWIdx] = pwrightbc_;
-		//values[sNIdx] = 1-Swr_;			
+		//values[sNIdx] = 1-Swr_;
 		//}
 
 		return values;

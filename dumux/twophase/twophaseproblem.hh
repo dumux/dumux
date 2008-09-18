@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_TWOPHASEPROBLEM_HH
 #define DUNE_TWOPHASEPROBLEM_HH
@@ -14,8 +14,7 @@
 #include<dune/grid/common/referenceelements.hh>
 #include<dune/grid/utility/intersectiongetter.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
-#include<dumux/material/twophaserelations_deprecated.hh>
-#include<dumux/material/linearlaw_deprecated.hh>
+#include<dumux/material/twophaserelations.hh>
 
 /**
  * @file
@@ -25,18 +24,18 @@
 
 namespace Dune {
 //! base class that defines the parameters of a diffusion equation
-/*! An interface for defining parameters for the stationary diffusion equation 
- * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = q, \f$, 
- * \f$p = g\f$ on \f$\Gamma_1\f$, and \f$\lambda K \text{grad}\, p = J\f$ 
- * on \f$\Gamma_2\f$. Here, 
- * \f$p\f$ denotes the pressure, \f$K\f$ the absolute permeability, 
- * and \f$\lambda\f$ the total mobility, possibly depending on the 
- * saturation. 
+/*! An interface for defining parameters for the stationary diffusion equation
+ * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = q, \f$,
+ * \f$p = g\f$ on \f$\Gamma_1\f$, and \f$\lambda K \text{grad}\, p = J\f$
+ * on \f$\Gamma_2\f$. Here,
+ * \f$p\f$ denotes the pressure, \f$K\f$ the absolute permeability,
+ * and \f$\lambda\f$ the total mobility, possibly depending on the
+ * saturation.
  *
  *	Template parameters are:
- *	
+ *
  *	- Grid  a DUNE grid type
- *	- RT    type used for return values 
+ *	- RT    type used for return values
  */
 template<class G, class RT> class TwoPhaseProblem {
 	typedef typename G::ctype DT;
@@ -46,16 +45,6 @@ template<class G, class RT> class TwoPhaseProblem {
 			IntersectionIterator;
 
 public:
-	//! evaluate diffusion tensor
-	/*! Evaluate the diffusion tensor at given location
-	 @param[in]  x    position in global coordinates
-	 @param[in]  e    entity of codim 0
-	 @param[in]  xi   position in reference element of e
-	 @param[out] D    diffusion tensor to be filled
-	 */
-	virtual const FieldMatrix<DT,n,n>& K(const FieldVector<DT,n>& x,
-			const Entity& e, const FieldVector<DT,n>& xi) = 0;
-
 	//! evaluate source term
 	/*! evaluate source term at given location
 	 @param[in]  x    position in global coordinates
@@ -71,8 +60,8 @@ public:
 	 @param[in]  x    position in global coordinates
 	 \return     boundary condition type given by enum in this class
 	 */
-	//	virtual FieldVector<BoundaryConditions::Flags, m> bctype (const FieldVector<DT,n>& x, const Entity& e, 
-	//			const IntersectionIterator& intersectionIt, 
+	//	virtual FieldVector<BoundaryConditions::Flags, m> bctype (const FieldVector<DT,n>& x, const Entity& e,
+	//			const IntersectionIterator& intersectionIt,
 	//			const FieldVector<DT,n>& xi) const = 0;
 
 	virtual FieldVector<BoundaryConditions::Flags, m>bctype(
@@ -85,10 +74,10 @@ public:
 		 @param[in]  x    position in global coordinates
 		 \return     index of the primary variable
 		 */
-	
+
 	virtual void dirichletIndex(const FieldVector<DT,n>& x, const Entity& e,
 			const IntersectionIterator& intersectionIt,
-			const FieldVector<DT,n>& xi, FieldVector<int,m>& dirichletIdx) const 
+			const FieldVector<DT,n>& xi, FieldVector<int,m>& dirichletIdx) const
 	{
 		for (int i = 0; i < m; i++)
 			dirichletIdx[i]=i;
@@ -121,15 +110,41 @@ public:
 	virtual FieldVector<RT,m> initial(const FieldVector<DT,n>& x,
 			const Entity& e, const FieldVector<DT,n>& xi) const = 0;
 
-	virtual double porosity(const FieldVector<DT,n>& x, const Entity& e,
-			const FieldVector<DT,n>& xi) const = 0;
-
 	virtual FieldVector<RT,n> gravity() const = 0;
 
-	virtual FieldVector<RT,4> materialLawParameters(const FieldVector<DT,n>& x,
-			const Entity& e, const FieldVector<DT,n>& xi) const = 0;
+	//! properties of the wetting (liquid) phase
+	/*! properties of the wetting (liquid) phase
+	  \return	wetting phase
+	 */
+	virtual Fluid& wettingPhase () const
+	{
+		return wettingPhase_;
+	}
 
-	TwoPhaseRelations& materialLaw() {
+	//! properties of the nonwetting (liquid) phase
+	/*! properties of the nonwetting (liquid) phase
+	  \return	nonwetting phase
+	 */
+	virtual Fluid& nonwettingPhase () const
+	{
+		return nonwettingPhase_;
+	}
+
+	//! properties of the soil
+	/*! properties of the soil
+	  \return	soil
+	 */
+    virtual Matrix2p<G, RT>& soil () const
+    {
+    	return soil_;
+    }
+
+	//! object for definition of material law
+	/*! object for definition of material law (e.g. Brooks-Corey, Van Genuchten, ...)
+	  \return	material law
+	 */
+    virtual TwoPhaseRelations<G, RT>& materialLaw () const
+	{
 		return materialLaw_;
 	}
 
@@ -138,7 +153,7 @@ public:
 		DUNE_THROW(NotImplemented, "Ex(akt) Solution");
 		return 0;
 	}
-	
+
 	//updates an exact/analytic solution
 	virtual void updateExSol(double &dt,
 			BlockVector<FieldVector<RT, m> > &approxSol) {
@@ -146,10 +161,12 @@ public:
 		return;
 	}
 
-	TwoPhaseProblem(TwoPhaseRelations& law = *(new
-			LinearLaw), const bool exsol = false) :
-	  exsolution(exsol),  materialLaw_(law) {
-	}
+	TwoPhaseProblem(Fluid& liq1, Fluid& liq2, Matrix2p<G, RT>& soil,
+			TwoPhaseRelations<G,RT>& materialLaw = *(new TwoPhaseRelations<G,RT>),
+			const bool exsol = false)
+	: exsolution(exsol), wettingPhase_(liq1), nonwettingPhase_(liq2), soil_(soil),
+	  materialLaw_(materialLaw)
+	  { 	}
 
 	//! always define virtual destructor in abstract base class
 	virtual ~TwoPhaseProblem() {
@@ -158,7 +175,10 @@ public:
 	const bool exsolution;
 
 protected:
-	TwoPhaseRelations& materialLaw_;
+	Fluid& wettingPhase_;
+	Fluid& nonwettingPhase_;
+    Matrix2p<G, RT>& soil_;
+	TwoPhaseRelations<G, RT>& materialLaw_;
 };
 
 }

@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_UNIFORMTWOPHASEPROBLEM_HH
 #define DUNE_UNIFORMTWOPHASEPROBLEM_HH
@@ -14,7 +14,7 @@
 #include<dune/disc/operators/boundaryconditions.hh>
 #include<dumux/material/twophaserelations.hh>
 #include<dumux/material/linearlaw.hh>
-#include<dumux/twophase/twophaseproblem.hh>
+#include<dumux/twophase/twophaseproblem_deprecated.hh>
 
 /**
  * @file
