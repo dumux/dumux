@@ -16,7 +16,7 @@
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
 #include "brineco2problem.hh"
-#include "benchmarkproblem.hh"
+//#include "benchmarkproblem.hh"
 #include "co2_soilproperties.hh"
 
 #include "dumux/material/phaseproperties/phaseproperties_brineco2.hh"
