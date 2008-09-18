@@ -53,11 +53,6 @@ namespace Dune
 
   public:
 
-	virtual const FieldVector<RT,2>& D (const FieldVector<DT,dim>& x) const
-	{
-		return diffusion_;
-	}
-
 	virtual FieldVector<RT,m> q (const FieldVector<DT,dim>& x, const Entity& e,
 					const FieldVector<DT,dim>& xi) const
 	{
@@ -188,14 +183,9 @@ namespace Dune
 	: TwoPTwoCNIProblem<G, RT>(liq, gas, soil, multicomp, law)
 	{
 		depthBOR_ = depthBOR;
-
-		diffusion_[wPhase] = 2.0E-5; // diffusion coefficient for water in gas phase
-		diffusion_[nPhase] = 2.6E-9; // diffusion coefficient for co2 in water phase
-
 	}
 
 	private:
-		Dune::FieldVector<RT,2> diffusion_;
 		RT depthBOR_;
 		RT soilDens_, soilHeatCp_, soilLDry_, soilLSw_;
   };
