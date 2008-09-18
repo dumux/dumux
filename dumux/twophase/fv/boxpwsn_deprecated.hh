@@ -32,20 +32,15 @@
 #include <dune/grid/common/scsgmapper.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/disc/functions/functions.hh>
-#include <dune/disc/functions/p0function.hh>
-#include <dune/disc/functions/p1function.hh>
 #include "dumux/operators/p1operatorextended.hh"
 #include <dune/disc/operators/boundaryconditions.hh>
-#include <dune/disc/groundwater/groundwater.hh>
-#include <dune/disc/groundwater/p1groundwater.hh>
-#include <dune/disc/groundwater/p1groundwaterestimator.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/paamg/amg.hh>
 #include "dumux/pardiso/pardiso.hh"
 #include "dumux/pardiso/identity.hh"
 #include "dumux/nonlinear/newtonmethod.hh"
 #include "dumux/twophase/twophasemodel_deprecated.hh"
-#include "dumux/twophase/twophaseproblem.hh"
+#include "dumux/twophase/twophaseproblem_deprecated.hh"
 #include "dumux/twophase/fv/boxpwsnjacobian_deprecated.hh"
 
 namespace Dune {
