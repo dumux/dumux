@@ -102,6 +102,11 @@ namespace Dune
 	  : BoxDiffusion(g, prob), grid(g), vertexmapper(g, g.leafIndexSet()), 
 	    size((*(this->u)).size())
 	  { }
+
+	  MatrixType& matrix() 
+	  {
+		  return *(this->A);
+	  }
 	  
 	  virtual void initial() 
 	  {

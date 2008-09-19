@@ -1,6 +1,6 @@
 #include "config.h"
 #include <iostream>
-#undef DUMMY 
+#define DUMMY 
 #ifdef DUMMY 
 #include <iomanip>
 #include <dune/grid/utility/gridtype.hh>

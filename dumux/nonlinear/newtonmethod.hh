@@ -123,7 +123,7 @@ public:
 	}
 
 	NewtonMethod(const G& g, Model& mod, double dtol = 1e-7,
-			double rtol = 1e3, int maxIt = 10, double mindt = 1,
+			double rtol = 1e-2, int maxIt = 10, double mindt = 1e-5,
 			int goodIt = 4, int maxInc = 2) 
 	: grid(g), model(mod), u(mod.u), f(mod.f), A(mod.A),
 	uOldNewtonStep(g, g.overlapSize(0)==0),

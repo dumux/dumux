@@ -8,11 +8,11 @@
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/solvers.hh>
+//#include <../../../dune-subgrid/subgrid/subgrid.hh>
+#include <dune/disc/stokes/dgstokes.hh>
 
 #include "dumux/operators/p1operatorextended.hh"
-#include <dune/disc/groundwater/p1groundwater.hh>
 
-#include <dumux/io/readstarformat.cc>
 #include <dumux/timedisc/timeloop.hh>
 #include <dumux/coupled/coupledmodel.hh>
 #include "boxdiffusion.hh"
@@ -86,14 +86,25 @@ int main(int argc, char** argv)
     	grid.globalRefine(refinementSteps);
 
     Dune::gridinfo(grid);
+
+//    Dune::SubGrid subGrid(grid);
     
     DiffusionParameters<GridType,NumberType> problem;
     
     typedef Dune::LeafP1BoxDiffusion<GridType, NumberType> Diffusion;
     Diffusion diffusion(grid, problem);
     
-    typedef Dune::CoupledModel<Diffusion,Diffusion> CoupledModel;
-    CoupledModel coupledModel(grid, diffusion, grid, diffusion, true);
+    const int vOrder = 2; 
+    const int pOrder = 1; 
+    DGStokesParameters parameters; 
+    Example<dim, NumberType> exactSolution;
+    DirichletBoundary<GridType> dirichletBoundary(exactSolution);
+    RightHandSide<GridType> rightHandSide(exactSolution);
+    typedef Dune::DGStokes<GridType, vOrder, pOrder> DGStokes;
+	DGStokes dGStokes(grid, exactSolution, parameters, dirichletBoundary, rightHandSide, refinementSteps); 
+
+    typedef Dune::CoupledModel<Diffusion,DGStokes> CoupledModel;
+    CoupledModel coupledModel(grid, diffusion, grid, dGStokes, true);
     
     coupledModel.initial();
     coupledModel.assemble();
