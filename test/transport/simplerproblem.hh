@@ -19,43 +19,43 @@ namespace Dune
 	  FieldVector<DT,n> vLoc;
 
   public:
-	BoundaryConditions::Flags bctype (const FieldVector<DT,n>& x, const Entity& e, 
+	BoundaryConditions::Flags bctype (const FieldVector<DT,n>& x, const Entity& e,
 					   const FieldVector<DT,n>& xi) const
 	{
-		if (x[0] > right-1E-8 || x[0] < left+1e-8) 
+		if (x[0] > right-1E-8 || x[0] < left+1e-8)
 			return Dune::BoundaryConditions::dirichlet;
 		else
 			return Dune::BoundaryConditions::neumann;
 	}
 
-	RT g (const FieldVector<DT,n>& x, const Entity& e, 
-		   const FieldVector<DT,n>& xi) const 
+	RT g (const FieldVector<DT,n>& x, const Entity& e,
+		   const FieldVector<DT,n>& xi) const
 	{
-		if (x[0] < left+1e-8) 
+		if (x[0] < left+1e-8)
 			return 1;
 		else
 			return 0;
 	}
-	  
-	RT S0 (const FieldVector<DT,n>& x, const Entity& e, 
-			const FieldVector<DT,n>& xi) const 
+
+	RT initSat (const FieldVector<DT,n>& x, const Entity& e,
+			const FieldVector<DT,n>& xi) const
 	{
 		return 0;
 	}
-	  
+
 	const FieldVector<DT,n>& vTotal (const Entity& e, const int numberInSelf)
 	{
 		vLoc[0] = 1.0/6.0*1e-6;
 		vLoc[1] = 0;
-		
+
 		return vLoc;
 	}
 
-	SimplerProblem(const G& g, TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false) 
+	SimplerProblem(const G& g, TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false)
 	: TransportProblem<G, RT, VelType>(law, cap), left(0), right(600)
 	{	}
 
-	SimplerProblem(TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false) 
+	SimplerProblem(TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false)
 	: TransportProblem<G, RT, VelType>(law, cap), left(0), right(1)
 	{	}
   };
