@@ -114,7 +114,7 @@ namespace Dune
 	  @param[in]  x    position in global coordinates
 	  \return    initial condition value
 	 */
-	virtual RT S0 (const FieldVector<DT,n>& x, const Entity& e,
+	virtual RT initSat (const FieldVector<DT,n>& x, const Entity& e,
 				  const FieldVector<DT,n>& xi) const = 0;
 
 	//! evaluate gravity
