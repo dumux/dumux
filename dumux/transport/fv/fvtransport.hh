@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_FVTRANSPORT_HH
 #define DUNE_FVTRANSPORT_HH
@@ -16,7 +16,6 @@
 namespace Dune {
 //! \ingroup transport
 //! The finite volume model for the solution of the transport equation
-template<class G, class RT, class VC> class FVTransport :
 	public Transport< G, RT, VC> {
 	template<int dim> struct ElementLayout {
 		bool contains(Dune::GeometryType gt) {
@@ -369,7 +368,7 @@ template<class G, class RT, class VC> void FVTransport<G, RT, VC>::initialTransp
 		Dune::FieldVector<ct,dimworld> global = it->geometry().global(local);
 
 		// initialize cell concentration
-		this->transproblem.variables.saturation[elementmapper.map(*it)] = this->transproblem.S0(global, *it, local);
+		this->transproblem.variables.saturation[elementmapper.map(*it)] = this->transproblem.initSat(global, *it, local);
 	}
 	return;
 }
