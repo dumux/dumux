@@ -66,7 +66,7 @@ public:
 		return 0;
 	}
 
-    RT S0 (const FieldVector<DT,n>& x, const Entity& e,
+    RT initSat (const FieldVector<DT,n>& x, const Entity& e,
 	   const FieldVector<DT,n>& xi) const
     {
       if (x[0] < eps_)

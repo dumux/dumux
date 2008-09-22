@@ -64,7 +64,7 @@ int main(int argc, char** argv)
 
     double tStart = 0;
     double tEnd = 2.9e8;
-    char* fileName("test_upscaledsaturation");
+    char* fileName("test_heterogeneoussoil");
     int modulo = 1;
     double cFLFactor = 1;
     Dune::TimeLoop<GridType, IMPESType > timeloop(tStart, tEnd, fileName, modulo, cFLFactor);
