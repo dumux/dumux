@@ -16,6 +16,7 @@
 namespace Dune {
 //! \ingroup transport
 //! The finite volume model for the solution of the transport equation
+template<class G, class RT, class VC> class FVTransport :
 	public Transport< G, RT, VC> {
 	template<int dim> struct ElementLayout {
 		bool contains(Dune::GeometryType gt) {
