@@ -1,5 +1,7 @@
 #include "config.h"
 #include <iostream>
+#undef DUMMY 
+#ifdef DUMMY 
 #include <dune/grid/yaspgrid.hh>
 #include <dune/grid/common/gridinfo.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
@@ -13,8 +15,6 @@
 #include <dumux/timedisc/timeloop.hh>
 #include <dumux/coupled/coupledmodel.hh>
 #include "boxdiffusion.hh"
-
-#define DGF
 
 namespace Dune
 {
@@ -91,17 +91,21 @@ int main(int argc, char** argv)
 
     typedef Dune::CoupledModel<Diffusion,DGStokes> CoupledModel;
     CoupledModel coupledModel(grid, diffusion, grid, dGStokes, true);
+//    typedef Dune::CoupledModel<Diffusion,Diffusion> CoupledModel;
+//    CoupledModel coupledModel(grid, diffusion, grid, diffusion, true);
+//    typedef Dune::CoupledModel<DGStokes,DGStokes> CoupledModel;
+//    CoupledModel coupledModel(grid, dGStokes, grid, dGStokes, true);
 
     coupledModel.initial();
     coupledModel.assemble();
-    printmatrix(std::cout, *(diffusion.A), "local stiffness matrix", "row", 11, 4);
+    printmatrix(std::cout, dGStokes.matrix(), "Stokes local stiffness matrix", "row", 11, 4);
+    printmatrix(std::cout, diffusion.matrix(), "Darcy local stiffness matrix", "row", 11, 4);
     printmatrix(std::cout, coupledModel.matrix(), "global stiffness matrix", "row", 11, 4);
 
     Dune::TimeLoop<GridType, Diffusion> timeloop(0, 1, 1, "box3d", 1);
 
     timeloop.execute(diffusion);
 
-    printmatrix(std::cout, *(diffusion.A), "local stiffness matrix", "row", 11, 4);
 	std::cout << "discrete error = " << discreteError(grid, *diffusion, problem) << std::endl;
 	return 0;
   }
@@ -112,3 +116,17 @@ int main(int argc, char** argv)
     std::cerr << "Unknown exception thrown!" << std::endl;
   }
 }
+#else 
+
+int main (int argc , char **argv) try
+{
+  std::cout << "This test is not finished yet." << std::endl;
+
+  return 1;
+}
+catch (...) 
+{
+    std::cerr << "Generic exception!" << std::endl;
+    return 2;
+}
+#endif 

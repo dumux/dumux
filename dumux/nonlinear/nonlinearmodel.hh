@@ -10,6 +10,8 @@ namespace Dune
 template<class G, class RT, class ProblemType, class LocalJacobian, class FunctionType, class OperatorAssembler>
 class NonlinearModel {
 public:	
+	typedef typename FunctionType::RepresentationType VectorType;
+	typedef typename OperatorAssembler::RepresentationType MatrixType;
 	ProblemType& problem;
 	FunctionType u;
 	FunctionType f;
@@ -45,6 +47,21 @@ public:
 		A.assemble(localJacobian, u, f);
 	}
 	
+	  virtual MatrixType& matrix()
+	  {
+		  return *A;
+	  }
+
+	  virtual VectorType& rhs()
+	  {
+		  return *f;
+	  }
+
+	  virtual VectorType& sol()
+	  {
+		  return *u;
+	  }
+
 	//! always define virtual destructor in abstract base class
 	virtual ~NonlinearModel () {}
 

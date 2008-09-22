@@ -101,6 +101,7 @@ public:
 				{
 					typename GlobalMatrixType::size_type rowSize = nFirst*iBlock->size() + nSecond*A12.getrowsize(iBlock.index());
 					A.setrowsize(iBlock.index()*mFirst + iLocal, rowSize);
+					std::cout << "1: row " << iBlock.index()*mFirst + iLocal << ", size " << rowSize << std::endl;
 				}
 	    	}
 	    	SecondRowIterator endIBlock2 = A22.end();
@@ -110,6 +111,7 @@ public:
 				{
 					typename GlobalMatrixType::size_type rowSize = nSecond*iBlock->size() + nFirst*A21.getrowsize(iBlock.index());
 					A.setrowsize(mFirst*firstMBlock + iBlock.index()*mSecond + iLocal, rowSize);
+					std::cout << "2: row " << mFirst*firstMBlock + iBlock.index()*mSecond + iLocal << ", size " << rowSize << std::endl;
 				}
 	    	}
 	    	A.endrowsizes();
@@ -124,7 +126,6 @@ public:
 					for (typename FirstMatrixType::block_type::size_type iLocal = 0; iLocal < mFirst; iLocal++)
 					{
 						typename GlobalMatrixType::size_type globalRow = iBlock.index()*mFirst + iLocal;
-						f[globalRow] = (*(firstModel_.f))[iBlock.index()][iLocal];
 						for (typename FirstMatrixType::block_type::size_type jLocal = 0; jLocal < nFirst; jLocal++)
 						{
 							typename GlobalMatrixType::size_type globalCol = jBlock.index()*nFirst + jLocal;
@@ -160,7 +161,6 @@ public:
 					for (typename SecondMatrixType::block_type::size_type iLocal = 0; iLocal < mSecond; iLocal++)
 					{
 						typename GlobalMatrixType::size_type globalRow = mFirst*firstMBlock + iBlock.index()*mSecond + iLocal;
-						f[globalRow] = (secondModel_.rhs())[iBlock.index()][iLocal];
 						for (typename SecondMatrixType::block_type::size_type jLocal = 0; jLocal < nSecond; jLocal++)
 						{
 							typename GlobalMatrixType::size_type globalCol = nFirst*firstNBlock + jBlock.index()*nSecond + jLocal;
@@ -197,12 +197,12 @@ public:
 					for (typename FirstMatrixType::block_type::size_type iLocal = 0; iLocal < mFirst; iLocal++)
 					{
 						typename GlobalMatrixType::size_type globalRow = iBlock.index()*mFirst + iLocal;
-						f[globalRow] = (*(firstModel_.f))[iBlock.index()][iLocal];
+						f[globalRow] = (firstModel_.rhs())[iBlock.index()][iLocal];
 						for (typename FirstMatrixType::block_type::size_type jLocal = 0; jLocal < nFirst; jLocal++)
 						{
 							typename GlobalMatrixType::size_type globalCol = jBlock.index()*nFirst + jLocal;
 							A[globalRow][globalCol] = (*jBlock)[iLocal][jLocal];
-							u[globalCol] = (*(firstModel_.u))[jBlock.index()][jLocal];
+							u[globalCol] = (firstModel_.sol())[jBlock.index()][jLocal];
 						}
 					}
 	    		}
