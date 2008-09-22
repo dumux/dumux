@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_SIMPLEPROBLEM_HH
 #define DUNE_SIMPLEPROBLEM_HH
@@ -20,35 +20,35 @@ namespace Dune
 	  DT right;
 
   public:
-	BoundaryConditions::Flags bctype (const FieldVector<DT,n>& x, const Entity& e, 
+	BoundaryConditions::Flags bctype (const FieldVector<DT,n>& x, const Entity& e,
 					   const FieldVector<DT,n>& xi) const
 	{
-		if (x[0] > right-1E-8 || x[0] < left+1e-8) 
+		if (x[0] > right-1E-8 || x[0] < left+1e-8)
 			return Dune::BoundaryConditions::dirichlet;
 		else
 			return Dune::BoundaryConditions::neumann;
 	}
 
-	RT g (const FieldVector<DT,n>& x, const Entity& e, 
-		   const FieldVector<DT,n>& xi) const 
+	RT g (const FieldVector<DT,n>& x, const Entity& e,
+		   const FieldVector<DT,n>& xi) const
 	{
-		if (x[0] < left+1e-8) 
+		if (x[0] < left+1e-8)
 			return 1;
 		else
 			return 0;
 	}
-	  
-	RT S0 (const FieldVector<DT,n>& x, const Entity& e, 
-			const FieldVector<DT,n>& xi) const 
+
+	RT initSat (const FieldVector<DT,n>& x, const Entity& e,
+			const FieldVector<DT,n>& xi) const
 	{
 		return 0;
 	}
 
-	SimpleProblem(VC& variableobj, TwoPhaseRelations& law = *(new LinearLaw), FieldVector<DT,n>& Left = 0, FieldVector<DT,n>& Right = 1, const bool cap = false) 
+	SimpleProblem(VC& variableobj, TwoPhaseRelations& law = *(new LinearLaw), FieldVector<DT,n>& Left = 0, FieldVector<DT,n>& Right = 1, const bool cap = false)
 	: TransportProblem<G, RT, VC>(variableobj,law, cap), left(Left[0]), right(Right[0])
 	{	}
 
-	SimpleProblem(VC& variableobj, TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false) 
+	SimpleProblem(VC& variableobj, TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false)
 	: TransportProblem<G, RT, VC>(variableobj,law, cap), left(0), right(1)
 	{	}
   };
