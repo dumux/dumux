@@ -7,52 +7,82 @@ namespace Dune
 {
 
 template<class G, class RT>
-class TutorialSoil: public HomogeneousSoil<G, RT>
+class TutorialSoil: public HomogeneousSoil<G, RT> /*@\label{tutorial-decoupled:tutorialsoil}@*/
 {
 public:
-typedef	typename G::Traits::template Codim<0>::Entity Entity;
+	typedef	typename G::Traits::template Codim<0>::Entity Entity;
 	typedef typename G::ctype DT;
-	enum
-	{	n=G::dimension, m=1};
 
-	FieldMatrix<DT,n,n> K (const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi)
+	enum{n=G::dimension};
+
+	// function returning the intrinsic permeability tensor K
+	// depending on the position within the domain
+	FieldMatrix<DT,n,n> K (const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-decoupled:permeability}@*/
+			const FieldVector<DT,n>& xi)
 	{
-		return 1e-7;
+		FieldMatrix<DT,n,n> K(0);
+
+		for(int i = 0; i < n; i++)
+			K[i][i] = 1e-7;
+
+		return K;
 	}
-	double porosity(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
+
+	// function returning the porosity of the porous matrix
+	// depending on the position within the domain
+	double porosity(const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-decoupled:porosity}@*/
+			const FieldVector<DT,n>& xi) const
 	{
 		return 0.2;
 	}
 
-	double Sr_w(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, const double T = 283.15) const
+	// function returning the residual saturation of the wetting fluid
+	// depending on the position within the domain and on the temperature
+	double Sr_w(const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-decoupled:srw}@*/
+			const FieldVector<DT,n>& xi, const double T = 283.15) const
 	{
-		return 0.2;
+		return 0;
 	}
 
-	double Sr_n(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, const double T = 283.15) const
+	// function returning the residual saturation of the non-wetting fluid
+	// depending on the position within the domain and on the temperature
+	double Sr_n(const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-decoupled:srn}@*/
+			const FieldVector<DT,n>& xi, const double T = 283.15) const
 	{
-		return 0.2;
+		return 0;
 	}
 
-	std::vector<double> paramRelPerm(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, const double T = 283.15) const
+	// function returning the parameters of the capillary pressure
+	// and the relative permeability functions
+	// depending on the position within the domain and on the temperature
+	std::vector<double> paramRelPerm(const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-decoupled:parameters}@*/
+			const FieldVector<DT,n>& xi, const double T = 283.15) const
 	{
 		std::vector<double> param(2);
 
+		//linear law parameters
+		param[0] = 0; // minimal capillary pressure
+		param[1] = 0; // maximal capillary pressure
+
 		//Brooks-Corey parameters
-		param[0] = 2; // lambda
-		param[1] = 0.; // entry-pressure
+//		param[0] = 2; // lambda
+//		param[1] = 0.; // entry-pressure
 
 		return param;
 	}
 
-	typename Matrix2p<G,RT>::modelFlag relPermFlag(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
+	// function returning the kind of relation used for the calculation of the capillary
+	// pressure and the relative permeabilities depending on the position within the domain
+	typename Matrix2p<G,RT>::modelFlag relPermFlag(const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-decoupled:flags}@*/
+			const FieldVector<DT,n>& xi) const
 	{
-		return Matrix2p<G,RT>::brooks_corey;
-	}
+		return Matrix2p<G,RT>::linear; //flag types defined in
+	}								   //dumux/material/property_baseclasses.hh
 
 	TutorialSoil()
 	:HomogeneousSoil<G,RT>()
 	{}
+
 };
 } // end namespace
 #endif

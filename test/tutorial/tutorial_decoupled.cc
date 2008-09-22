@@ -1,6 +1,6 @@
 #include <iostream>
 #include <iomanip>
-#include <dune/grid/sgrid.hh>
+#include <dune/grid/sgrid.hh> /*@\label{tutorial-decoupled:include-begin}@*/
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
@@ -13,29 +13,29 @@
 #include "dumux/diffusion/fv/fvdiffusionvelocity.hh"
 #include "dumux/transport/fv/fvtransport.hh"
 #include "dumux/fractionalflow/impes/impes.hh"
-#include "dumux/timedisc/timeloop.hh"
+#include "dumux/timedisc/timeloop.hh" /*@\label{tutorial-decoupled:include-end}@*/
 
 
 int main(int argc, char** argv)
 {
   try{
     // define the problem dimensions
-    const int dim=2;
+    const int dim=2; /*@\label{tutorial-decoupled:dim}@*/
 
     // create a grid object
-    typedef double NumberType;
+    typedef double NumberType; /*@\label{tutorial-decoupled:grid-begin}@*/
     typedef Dune::SGrid<dim,dim> GridType;
     typedef Dune::FieldVector<GridType::ctype,dim> FieldVector;
     Dune::FieldVector<int,dim> N(10); N[0] = 30;
     FieldVector L(0);
     FieldVector H(300); H[0] = 600;
-    GridType grid(N,L,H);
+    GridType grid(N,L,H); /*@\label{tutorial-decoupled:grid-end}@*/
 
     // define fluid and solid properties and constitutive relationships
-    Dune::Water wettingfluid;
-    Dune::Oil nonwettingfluid;
-    Dune::TutorialSoil<GridType, NumberType> soil;
-    Dune::TwoPhaseRelations<GridType, NumberType> materialLaw(soil, wettingfluid, nonwettingfluid);
+    Dune::Water wettingfluid; /*@\label{tutorial-decoupled:water}@*/
+    Dune::Oil nonwettingfluid; /*@\label{tutorial-decoupled:oil}@*/
+    Dune::TutorialSoil<GridType, NumberType> soil; /*@\label{tutorial-decoupled:soil}@*/
+    Dune::TwoPhaseRelations<GridType, NumberType> materialLaw(soil, wettingfluid, nonwettingfluid);/*@\label{tutorial-decoupled:twophaserelations}@*/
 
     // create object containing the variables
     typedef Dune::VariableClass<GridType, NumberType> VariableType;
@@ -43,24 +43,24 @@ int main(int argc, char** argv)
 
     // create object including the problem definition
     typedef Dune::TutorialProblemDecoupled<GridType, NumberType, VariableType> Problem;
-    Problem problem(variables, wettingfluid, nonwettingfluid, soil, materialLaw,L, H);
+    Problem problem(variables, wettingfluid, nonwettingfluid, soil, materialLaw,L, H); /*@\label{tutorial-decoupled:problem}@*/
 
     // create object including the discretisation of the pressure equation
     typedef Dune::FVDiffusionVelocity<GridType, NumberType, VariableType> DiffusionType;
-    DiffusionType diffusion(grid, problem, grid.maxLevel());
+    DiffusionType diffusion(grid, problem, grid.maxLevel()); /*@\label{tutorial-decoupled:diffusion}@*/
 
     // create object including the space discretisation of the saturation equation
     typedef Dune::FVTransport<GridType, NumberType, VariableType> TransportType;
-    TransportType transport(grid, problem, grid.maxLevel());
+    TransportType transport(grid, problem, grid.maxLevel()); /*@\label{tutorial-decoupled:transport}@*/
 
     // some parameters used in the IMPES-object
     int iterFlag = 2;
     int nIter = 30;
     double maxDefect = 1e-5;
 
-    // create object including the IMPES (IMplicit Pressure Explicit Saturation) Algorithm
+    // create object including the IMPES (IMplicit Pressure Explicit Saturation) algorithm
     typedef Dune::IMPES<GridType, DiffusionType, TransportType, VariableType> IMPESType;
-    IMPESType impes(diffusion, transport, iterFlag, nIter, maxDefect);
+    IMPESType impes(diffusion, transport, iterFlag, nIter, maxDefect); /*@\label{tutorial-decoupled:impes}@*/
 
     // some parameters needed for the TimeLoop-object
     double tStart = 0; // start simulation at t = tStart
@@ -70,13 +70,13 @@ int main(int argc, char** argv)
     double cFLFactor = 1; // security factor for the Courant-Friedrichs-Lewy-Criterion
 
     // create TimeLoop-object
-    Dune::TimeLoop<GridType, IMPESType > timeloop(tStart, tEnd, fileName, modulo, cFLFactor);
+    Dune::TimeLoop<GridType, IMPESType > timeloop(tStart, tEnd, fileName, modulo, cFLFactor); /*@\label{tutorial-decoupled:timeloop}@*/
 
     Dune::Timer timer;
     timer.reset();
 
     // start simulation
-    timeloop.execute(impes);
+    timeloop.execute(impes); /*@\label{tutorial-decoupled:execute}@*/
 
     return 0;
   }
