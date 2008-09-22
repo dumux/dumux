@@ -20,6 +20,9 @@ public:
 		  large[i][j] = 0;
   }
 
+  virtual ~DiffusionParameters ()
+  {}
+  
   const Dune::FieldMatrix<DT,n,n>& K (const Dune::FieldVector<DT,n>& x, const Entity& e, 
 				  const Dune::FieldVector<DT,n>& xi) const
   {
