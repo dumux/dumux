@@ -12,11 +12,11 @@
 #include "dumux/material/linearlaw_deprecated.hh"
 #include "dumux/material/brookscoreylaw_deprecated.hh"
 #include "dumux/material/vangenuchtenlaw_deprecated.hh"
-#include "dumux/transport/fv/fvtransport.hh"
-#include "dumux/diffusion/fv/fvdiffusion.hh"
-#include "dumux/diffusion/fv/fvdiffusionvelocity.hh"
+#include "dumux/transport/fv/fvtransport_deprecated.hh"
+#include "dumux/diffusion/fv/fvdiffusion_deprecated.hh"
+#include "dumux/diffusion/fv/fvdiffusionvelocity_deprecated.hh"
 //#include "dumux/diffusion/mimetic/mimeticdiffusion.hh"
-#include "dumux/fractionalflow/impes/impes.hh"
+#include "dumux/fractionalflow/impes/impes_deprecated.hh"
 #include "../problemdefinitions/mcwhortertransportproblem.hh"
 #include "../problemdefinitions/mcwhorterdiffproblem.hh"
 #include "dumux/timedisc/timeloop.hh"
@@ -24,12 +24,12 @@
 #include "dumux/transport/fv/capillarydiffusion.hh"
 #include "dumux/fractionalflow/variableclass.hh"
 
-int main(int argc, char** argv) 
+int main(int argc, char** argv)
 {
    try{
-      // define the problem dimensions  
+      // define the problem dimensions
       const int dim=2;
-      typedef double NumberType; 
+      typedef double NumberType;
       Dune::FieldVector<NumberType, dim> LowerLeft(0);
       Dune::FieldVector<NumberType, dim> UpperRight(2.6);
       UpperRight[1]=1;
@@ -41,18 +41,18 @@ int main(int argc, char** argv)
 	   std::istringstream is1(arg1);
 	   double tEnd;
 	   is1 >> tEnd;
-	  
+
       // create a grid object
       typedef Dune::SGrid<dim,dim> GridType;
 
-      // use unitcube from grids 
+      // use unitcube from grids
       std::stringstream dgfFileName;
       dgfFileName << "grids/unitcube" << GridType :: dimension << ".dgf";
 
       // create grid pointer, GridType is defined by gridtype.hh
       Dune::GridPtr<GridType> gridPtr( dgfFileName.str() );
 
-      // grid reference 
+      // grid reference
       GridType& grid = *gridPtr;
 
       Dune::gridinfo(grid);
@@ -62,29 +62,29 @@ int main(int argc, char** argv)
      // const double tEnd = 2.5e9;
     //  const double cFLFactor = 0.01;
       const double cFLFactor = 0.2;
-    
+
       // slope limiter parameters
       bool reconstruct = true;
       double alphaMax = 0.8;
-    
+
       // IMPES parameters
-      int iterFlag = 2; 
-      int nIter = 30; 
+      int iterFlag = 2;
+      int nIter = 30;
       double maxDefect = 1e-5;
 
-      // plotting parameters 
+      // plotting parameters
       char* fileName("mcwhorter");
-      int modulo = 100; 
+      int modulo = 100;
 
       Oil oil(0.0);
       Water water(0.0);
 
       Dune::BrooksCoreyLaw materialLaw(water, oil,2.0,5000);
-      
+
       typedef Dune::VariableClass<GridType, NumberType> VC;
-      
+
       VC variables(grid);
-    
+
       Dune::McWhorterTransportProblem<GridType, NumberType, VC> transportProblem(variables, materialLaw,LowerLeft,UpperRight);
       Dune::McWhorterDiffProblem<GridType, NumberType, VC> diffusionProblem(variables, materialLaw,LowerLeft,UpperRight);
 
@@ -92,21 +92,21 @@ int main(int argc, char** argv)
 //      Transport transport(grid, transportProblem, grid.maxLevel());
       Dune::CapillaryDiffusion<GridType, NumberType, VC> diffPart(diffusionProblem);
       Transport transport(grid, transportProblem, grid.maxLevel(),diffPart,reconstruct, alphaMax);
-        
+
       typedef Dune::FVDiffusionVelocity<GridType, NumberType, VC> Diffusion;
       Diffusion diffusion(grid, diffusionProblem, grid.maxLevel());
 
       typedef Dune::IMPES<GridType, Diffusion, Transport, VC> IMPES;
       IMPES fractionalflow(diffusion, transport, iterFlag, nIter, maxDefect);
-      
+
       Dune::TimeLoop<GridType, IMPES > timeloop(tStart, tEnd, fileName, modulo);
-    
+
       Dune::Timer timer;
       timer.reset();
       timeloop.execute(fractionalflow);
       std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
       //printvector(std::cout, *fractionalflow, "saturation", "row", 200, 1);
-    
+
       return 0;
    }
    catch (Dune::Exception &e){

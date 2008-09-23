@@ -12,12 +12,12 @@
 #include "dumux/material/linearlaw_deprecated.hh"
 #include "dumux/material/brookscoreylaw_deprecated.hh"
 #include "dumux/material/vangenuchtenlaw_deprecated.hh"
-#include "dumux/transport/fv/fvtransport.hh"
+#include "dumux/transport/fv/fvtransport_deprecated.hh"
 #include "dumux/transport/fv/capillarydiffusion.hh"
-#include "dumux/diffusion/fv/fvdiffusion.hh"
-#include "dumux/diffusion/fv/fvdiffusionvelocity.hh"
+#include "dumux/diffusion/fv/fvdiffusion_deprecated.hh"
+#include "dumux/diffusion/fv/fvdiffusionvelocity_deprecated.hh"
 //#include "dumux/diffusion/mimetic/mimeticdiffusion.hh"
-#include "dumux/fractionalflow/impes/impes.hh"
+#include "dumux/fractionalflow/impes/impes_deprecated.hh"
 #include "../problemdefinitions/mcwhortertransportproblem.hh"
 #include "../problemdefinitions/mcwhorteranalytical.hh"
 #include "../problemdefinitions/mcwhorterdiffproblem.hh"
@@ -25,10 +25,10 @@
 #include "dumux/timedisc/rungekuttastep.hh"
 #include "dumux/fractionalflow/variableclass.hh"
 
-int main(int argc, char** argv) 
+int main(int argc, char** argv)
 {
   try{
-    // define the problem dimensions  
+    // define the problem dimensions
     const int dim=1;
     typedef double NumberType;
     typedef GridType::ctype ctype;
@@ -43,14 +43,14 @@ int main(int argc, char** argv)
     std::istringstream is1(arg1);
     double tEnd;
     is1 >> tEnd;
-	  
+
     // create a grid object
     typedef Dune::OneDGrid GridType;
-     
+
     //deffinition of a stretched grid
     const int numberofelements = 56;
     double strfactor = 0;
-      
+
     //vector with coordinates
     std::vector<ctype> coord;
     coord.resize(numberofelements+1);
@@ -60,13 +60,13 @@ int main(int argc, char** argv)
     for (int i=2;i<numberofelements+1;i++){
       coord[i]=coord[i-1]+(coord[i-1]-coord[i-2])*(1+strfactor);
     }
-      
+
     //scale coordinates to geometry
     for (int i=0;i<numberofelements+1;i++){
       coord[i]*=Right[0]/coord[numberofelements];
       std::cout << "coordinates =  " << coord[i] << std::endl;
     }
-      
+
     const std::vector<ctype>& coordinates(coord);
 
     // grid
@@ -77,20 +77,20 @@ int main(int argc, char** argv)
     // time loop parameters
     const double tStart = 0;
     // const double tEnd = 2.5e9;
-    const double cFLFactor = 0.2;  
+    const double cFLFactor = 0.2;
     // slope limiter parameters
     bool reconstruct = true;
     double alphaMax = 0.8;
-    
+
     // IMPES parameters
-    int iterFlag = 2; 
-    int nIter = 100; 
+    int iterFlag = 2;
+    int nIter = 100;
     double maxDefect = 1e-5;
     double omega=1;
 
-    // plotting parameters 
+    // plotting parameters
     char* fileName("mcwhorter1D");
-    int modulo = 100; 
+    int modulo = 100;
 
     Oil oil(0.0);
     Water water(0.0);
@@ -100,9 +100,9 @@ int main(int argc, char** argv)
     //Dune::LinearLaw materialLaw(water,oil);
 
     typedef Dune::VariableClass<GridType, NumberType> VC;
-    
+
     VC variables(grid);
-    
+
     Dune::McWWithAnalytical<GridType, NumberType, VC> transportProblem(variables, materialLaw,Left,Right,cFLFactor);
 //    Dune::McWhorterTransportProblem<GridType, NumberType, VC> transportProblem(variables, materialLaw,Left,Right);
     Dune::McWhorterDiffProblem<GridType, NumberType, VC> diffusionProblem(variables, materialLaw,Left,Right);
@@ -111,21 +111,21 @@ int main(int argc, char** argv)
     //Transport transport(grid, transportProblem, grid.maxLevel());
     Dune::CapillaryDiffusion<GridType, NumberType, VC> diffPart(diffusionProblem);
     Transport transport(grid, transportProblem, grid.maxLevel(),diffPart,reconstruct, alphaMax);
-        
+
     typedef Dune::FVDiffusionVelocity<GridType, NumberType, VC> Diffusion;
     Diffusion diffusion(grid, diffusionProblem, grid.maxLevel());
 
     typedef Dune::IMPES<GridType, Diffusion, Transport, VC> IMPES;
     IMPES fractionalflow(diffusion, transport, iterFlag, nIter, maxDefect,omega);
-      
+
     Dune::TimeLoop<GridType, IMPES > timeloop(tStart, tEnd, fileName, modulo, cFLFactor);
-    
+
     Dune::Timer timer;
     timer.reset();
     timeloop.execute(fractionalflow);
     std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
     //printvector(std::cout, *fractionalflow, "saturation", "row", 200, 1);
-    
+
     return 0;
   }
   catch (Dune::Exception &e){

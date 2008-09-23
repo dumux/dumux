@@ -13,11 +13,11 @@
 #include "dumux/material/linearlaw_deprecated.hh"
 #include "dumux/material/brookscoreylaw_deprecated.hh"
 #include "dumux/material/vangenuchtenlaw_deprecated.hh"
-#include "dumux/transport/fv/fvtransport.hh"
-#include "dumux/diffusion/fv/fvdiffusion.hh"
-#include "dumux/diffusion/fv/fvdiffusionvelocity.hh"
+#include "dumux/transport/fv/fvtransport_deprecated.hh"
+#include "dumux/diffusion/fv/fvdiffusion_deprecated.hh"
+#include "dumux/diffusion/fv/fvdiffusionvelocity_deprecated.hh"
 //#include "dumux/diffusion/mimetic/mimeticdiffusion.hh"
-#include "dumux/fractionalflow/impes/impes.hh"
+#include "dumux/fractionalflow/impes/impes_deprecated.hh"
 #include "../problemdefinitions/buckleyleveretttransportproblem.hh"
 #include "../problemdefinitions/buckleyleverettdiffproblem.hh"
 #include "dumux/diffusion/problems/homogeneousproblem.hh"
@@ -25,12 +25,12 @@
 #include "dumux/timedisc/rungekuttastep.hh"
 #include "dumux/fractionalflow/variableclass.hh"
 
-int main(int argc, char** argv) 
+int main(int argc, char** argv)
 {
    try{
-      // define the problem dimensions  
+      // define the problem dimensions
       const int dim=2;
-      typedef double NumberType; 
+      typedef double NumberType;
       Dune::FieldVector<NumberType, dim> LowerLeft(0);
       Dune::FieldVector<NumberType, dim> UpperRight(300);
       UpperRight[1]=70;
@@ -50,14 +50,14 @@ int main(int argc, char** argv)
       // create a grid object
       typedef Dune::SGrid<dim,dim> GridType;
 
-//      // use unitcube from grids 
+//      // use unitcube from grids
       std::stringstream dgfFileName;
       dgfFileName << "grids/unitcube" << GridType :: dimension << ".dgf";
 //
 //      // create grid pointer, GridType is defined by gridtype.hh
       Dune::GridPtr<GridType> gridPtr( dgfFileName.str() );
 //
-//      // grid reference 
+//      // grid reference
       GridType& grid = *gridPtr;
 
       Dune::gridinfo(grid);
@@ -66,41 +66,41 @@ int main(int argc, char** argv)
       Water water(0.2);
 //      Dune::BrooksCoreyLaw law(water, oil,2,0);
       Dune::LinearLaw law(water, oil);
-      
+
       typedef Dune::VariableClass<GridType, NumberType> VC;
-      
+
       VC variables(grid);
-      
+
       Dune::BuckleyLeverettTransportProblem<GridType, NumberType, VC> transportProblem(variables, law,LowerLeft,UpperRight);
       Dune::BuckleyLeverettDiffProblem<GridType, NumberType, VC> diffusionProblem(variables, law,LowerLeft,UpperRight);
 
       typedef Dune::FVTransport<GridType, NumberType, VC> Transport;
       Transport transport(grid, transportProblem, grid.maxLevel());
-        
+
       typedef Dune::FVDiffusionVelocity<GridType, NumberType, VC> Diffusion;
       Diffusion diffusion(grid, diffusionProblem, grid.maxLevel());
 //      typedef Dune::MimeticDiffusion<GridType, NumberType> Diffusion;
 //          Diffusion diffusion(grid, diffusionProblem, transportProblem);
-          
-      int iterFlag = 2; 
-      int nIter = 30; 
+
+      int iterFlag = 2;
+      int nIter = 30;
       double maxDefect = 1e-5;
       typedef Dune::IMPES<GridType, Diffusion, Transport, VC> IMPES;
       IMPES fractionalflow(diffusion, transport, iterFlag, nIter, maxDefect);
-    
-      double tStart = 0; 
+
+      double tStart = 0;
       //double tEnd = 2.5e9;
       char* fileName("buckleyleverett");
-      int modulo = 1; 
+      int modulo = 1;
       double cFLFactor = 1;
       Dune::TimeLoop<GridType, IMPES > timeloop(tStart, tEnd, fileName, modulo, cFLFactor);
-    
+
       Dune::Timer timer;
       timer.reset();
       timeloop.execute(fractionalflow);
       std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
       //printvector(std::cout, *fractionalflow, "saturation", "row", 200, 1);
-    
+
       return 0;
    }
    catch (Dune::Exception &e){

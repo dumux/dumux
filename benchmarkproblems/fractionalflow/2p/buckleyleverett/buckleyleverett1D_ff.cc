@@ -12,13 +12,12 @@
 #include "dumux/material/linearlaw_deprecated.hh"
 #include "dumux/material/brookscoreylaw_deprecated.hh"
 #include "dumux/material/vangenuchtenlaw_deprecated.hh"
-#include "dumux/transport/fv/fvtransport.hh"
-#include "dumux/diffusion/fv/fvdiffusion.hh"
-#include "dumux/diffusion/fv/fvdiffusionvelocity.hh"
+#include "dumux/transport/fv/fvtransport_deprecated.hh"
+#include "dumux/diffusion/fv/fvdiffusion_deprecated.hh"
 //#include "dumux/diffusion/mimetic/mimeticdiffusion.hh"
 //#include "dumux/diffusion/fe/fediffusion.hh"
-#include "dumux/diffusion/fv/fvdiffusionvelocity.hh"
-#include "dumux/fractionalflow/impes/impes.hh"
+#include "dumux/diffusion/fv/fvdiffusionvelocity_deprecated.hh"
+#include "dumux/fractionalflow/impes/impes_deprecated.hh"
 #include "../problemdefinitions/buckleyleveretttransportproblem.hh"
 #include "../problemdefinitions/buckleyleverettdiffproblem.hh"
 #include "dumux/timedisc/timeloop.hh"
@@ -26,12 +25,12 @@
 #include "dumux/fractionalflow/variableclass.hh"
 #include "../problemdefinitions/buckleyleverettanalytical.hh"
 
-int main(int argc, char** argv) 
+int main(int argc, char** argv)
 {
   try{
-    // define the problem dimensions  
+    // define the problem dimensions
     const int dim=1;
-    typedef double NumberType; 
+    typedef double NumberType;
     typedef GridType::ctype ctype;
 
     Dune::FieldVector<NumberType, dim> Left(0);
@@ -44,10 +43,10 @@ int main(int argc, char** argv)
     std::istringstream is1(arg1);
     double tEnd;
     is1 >> tEnd;
-	  
+
     // create a grid object
     typedef Dune::OneDGrid GridType;
-     
+
     //deffinition of a stretched grid
 //    const int numberofelements = 15;
      const int numberofelements = 30;
@@ -55,7 +54,7 @@ int main(int argc, char** argv)
 //    const int numberofelements = 120;
 
     double strfactor = 0;
-      
+
     //vector with coordinates
     std::vector<ctype> coord;
     coord.resize(numberofelements+1);
@@ -65,13 +64,13 @@ int main(int argc, char** argv)
     for (int i=2;i<numberofelements+1;i++){
       coord[i]=coord[i-1]+(coord[i-1]-coord[i-2])*(1+strfactor);
     }
-      
+
     //scale coordinates to geometry
     for (int i=0;i<numberofelements+1;i++){
       coord[i]*=Right[0]/coord[numberofelements];
       std::cout << "coordinates =  " << coord[i] << std::endl;
     }
-      
+
     const std::vector<ctype>& coordinates(coord);
 
     // grid
@@ -79,14 +78,14 @@ int main(int argc, char** argv)
 
     Dune::gridinfo(grid);
 
-    int iterFlag = 2; 
-    int nIter = 30; 
+    int iterFlag = 2;
+    int nIter = 30;
     double maxDefect = 1e-5;
 
-    double tStart = 0; 
+    double tStart = 0;
     //double tEnd = 2.5e9;
     char* fileName("buckleyleverett1D");
-    int modulo = 1; 
+    int modulo = 1;
     double cFLFactor = 1.0;
     // slope limiter parameters
     bool reconstruct = true;
@@ -96,39 +95,39 @@ int main(int argc, char** argv)
     Water water(0.2);
 //    Dune::BrooksCoreyLaw materialLaw(water, oil,2,0);
     Dune::LinearLaw materialLaw(water, oil);
-    
+
     double initpress = 2e5;
     double initsat = 0.2;
     Dune::FieldVector<double,dim> initvel(3e-7);
-    
+
     typedef Dune::VariableClass<GridType, NumberType> VC;
-    
+
     VC variables(grid,initsat,initpress,initvel);
-   
+
     Dune::BLWithAnalytical<GridType, NumberType, VC> transportProblem(variables, materialLaw,Left,Right,cFLFactor);
     Dune::BuckleyLeverettDiffProblem<GridType, NumberType, VC> diffusionProblem(variables, materialLaw,Left,Right);
 
     typedef Dune::FVTransport<GridType, NumberType, VC> Transport;
     Transport transport(grid, transportProblem, grid.maxLevel());
-    
-//    typedef Dune::FVDiffusion<GridType, NumberType, VC> Diffusion;    
+
+//    typedef Dune::FVDiffusion<GridType, NumberType, VC> Diffusion;
     typedef Dune::FVDiffusionVelocity<GridType, NumberType, VC> Diffusion;
     Diffusion diffusion(grid, diffusionProblem, grid.maxLevel());
 
-    
+
     typedef Dune::IMPES<GridType, Diffusion, Transport, VC> IMPES;
     IMPES fractionalflow(diffusion, transport, iterFlag, nIter, maxDefect);
-    
+
 //    Dune::TimeLoop<GridType, Transport > timeloop(tStart, tEnd, fileName, modulo, cFLFactor);
     Dune::TimeLoop<GridType, IMPES > timeloop(tStart, tEnd, fileName, modulo, cFLFactor);
-    
+
     Dune::Timer timer;
     timer.reset();
     timeloop.execute(fractionalflow);
-//    timeloop.execute(transport);    
+//    timeloop.execute(transport);
     std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
     //printvector(std::cout, *fractionalflow, "saturation", "row", 200, 1);
-    
+
     return 0;
   }
   catch (Dune::Exception &e){

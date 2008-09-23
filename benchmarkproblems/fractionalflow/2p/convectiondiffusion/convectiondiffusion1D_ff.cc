@@ -1,5 +1,5 @@
 #ifdef HAVE_CONFIG_H
-#include "config.h"     
+#include "config.h"
 #endif
 #include <iostream>
 #include"dune/common/mpihelper.hh" // An initializer of MPI
@@ -19,12 +19,12 @@
 #include "dumux/material/linearlaw_deprecated.hh"
 #include "dumux/material/brookscoreylaw_deprecated.hh"
 #include "dumux/material/vangenuchtenlaw_deprecated.hh"
-#include "dumux/transport/fv/fvtransport.hh"
+#include "dumux/transport/fv/fvtransport_deprecated.hh"
 #include "dumux/transport/fv/capillarydiffusion.hh"
-#include "dumux/diffusion/fv/fvdiffusion.hh"
-#include "dumux/diffusion/fv/fvdiffusionvelocity.hh"
+#include "dumux/diffusion/fv/fvdiffusion_deprecated.hh"
+#include "dumux/diffusion/fv/fvdiffusionvelocity_deprecated.hh"
 #include "dumux/diffusion/mimetic/mimeticdiffusion.hh"
-#include "dumux/fractionalflow/impes/impes.hh"
+#include "dumux/fractionalflow/impes/impes_deprecated.hh"
 #include "../problemdefinitions/convectivediffusiontransportproblem.hh"
 #include "../problemdefinitions/convectiondiffusiondiffproblem.hh"
 #include "../problemdefinitions/buckleyleverettdiffproblem.hh"
@@ -32,10 +32,10 @@
 #include "dumux/timedisc/rungekuttastep.hh"
 #include "dumux/fractionalflow/variableclass.hh"
 
-int main(int argc, char** argv) 
+int main(int argc, char** argv)
 {
   try{
-    // define the problem dimensions  
+    // define the problem dimensions
     const int dim=1;
     typedef double NumberType;
     typedef GridType::ctype ctype;
@@ -50,10 +50,10 @@ int main(int argc, char** argv)
     std::istringstream is1(arg1);
     double tEnd;
     is1 >> tEnd;
-	  
+
     // create a grid object
     typedef Dune::OneDGrid GridType;
-     
+
     //deffinition of a stretched grid
     const int numberofelements = 25;//om=0.1,0.05,0.05
     //const int numberofelements = 50;//om=0.05,0.02,0.02
@@ -61,7 +61,7 @@ int main(int argc, char** argv)
     //const int numberofelements = 200;
 
     double strfactor = 0;
-      
+
     //vector with coordinates
     std::vector<ctype> coord;
     coord.resize(numberofelements+1);
@@ -71,13 +71,13 @@ int main(int argc, char** argv)
     for (int i=2;i<numberofelements+1;i++){
       coord[i]=coord[i-1]+(coord[i-1]-coord[i-2])*(1+strfactor);
     }
-      
+
     //scale coordinates to geometry
     for (int i=0;i<numberofelements+1;i++){
       coord[i]*=Right[0]/coord[numberofelements];
       std::cout << "coordinates =  " << coord[i] << std::endl;
     }
-      
+
     const std::vector<ctype>& coordinates(coord);
 
     // grid
@@ -88,21 +88,21 @@ int main(int argc, char** argv)
     // time loop parameters
     const double tStart = 0;
     // const double tEnd = 2.5e9;
-    const double cFLFactor = 1;    
+    const double cFLFactor = 1;
     // slope limiter parameters
     bool reconstruct = true;
     double alphaMax = 0.8;
-    
+
     // IMPES parameters
-    int iterFlag = 2; 
-    int nIter = 500; 
+    int iterFlag = 2;
+    int nIter = 500;
     double maxDefect = 1e-5;
     double omega=0.4;
 
-    // plotting parameters 
+    // plotting parameters
     char* fileName("convectivediffusion");
-    int modulo = 10; 
-    
+    int modulo = 10;
+
     Oil oil(0);
     Water water(0);
     //Dune::LinearLaw materialLaw(water,oil,10);
@@ -110,31 +110,31 @@ int main(int argc, char** argv)
     //Dune::VanGenuchtenLaw materialLaw(water,oil,3.1257,1);
 
     typedef Dune::VariableClass<GridType, NumberType> VC;
-    
+
     VC variables(grid);
-      
+
     Dune::ConvectionDiffusionTransportProblem<GridType, NumberType, VC> transportProblem(variables, materialLaw,Left,Right);
     Dune::BuckleyLeverettDiffProblem<GridType, NumberType, VC> diffusionProblem(variables, materialLaw,Left,Right);
- 
+
     typedef Dune::FVTransport<GridType, NumberType, VC> Transport;
     Transport transport(grid, transportProblem, grid.maxLevel());
     //Dune::CapillaryDiffusion<GridType, NumberType> diffPart(diffusionProblem);
     //Transport transport(grid, transportProblem, grid.maxLevel(),diffPart,reconstruct, alphaMax, cFLFactor,true);
-        
+
     typedef Dune::FVDiffusionVelocity<GridType, NumberType, VC> Diffusion;
     Diffusion diffusion(grid, diffusionProblem,  grid.maxLevel());
 
     typedef Dune::IMPES<GridType, Diffusion, Transport, VC> IMPES;
     IMPES fractionalflow(diffusion, transport, iterFlag, nIter, maxDefect,omega);
-      
+
     Dune::TimeLoop<GridType, IMPES > timeloop(tStart, tEnd, fileName, modulo, cFLFactor);
-    
+
     Dune::Timer timer;
     timer.reset();
     timeloop.execute(fractionalflow);
     std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
     //printvector(std::cout, *fractionalflow, "saturation", "row", 200, 1);
-    
+
     return 0;
   }
   catch (Dune::Exception &e){
