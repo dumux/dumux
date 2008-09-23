@@ -141,7 +141,7 @@ namespace Dune
 					this->problem.initialPhaseState(global, entity, local);
 
 			}
-			this->localJacobian.initiateStaticData(entity);
+				this->localJacobian.initiateStaticData(entity);
 		}
 
 		// set Dirichlet boundary conditions
@@ -248,6 +248,31 @@ namespace Dune
 		return;
 	}
 
+	void updateState()
+	{
+		typedef typename G::Traits::template Codim<0>::Entity Entity;
+		typedef typename G::ctype DT;
+		typedef typename GV::template Codim<0>::Iterator Iterator;
+		typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
+
+		enum {dim = G::dimension};
+		enum {dimworld = G::dimensionworld};
+
+		const GV& gridview(this->grid.leafView());
+		// iterate through leaf grid and evaluate c0 at cell center
+		Iterator eendit = gridview.template end<0>();
+		for (Iterator it = gridview.template begin<0>(); it
+				!= eendit; ++it) {
+
+			const Entity& entity = *it;
+			this->localJacobian.fvGeom.update(entity);
+			this->localJacobian.setLocalSolution(entity);
+			this->localJacobian.computeElementData(entity);
+			this->localJacobian.updateStaticData(entity, this->localJacobian.u);
+		}
+		return;
+	}
+
 
 	void update (double& dt)
 	{
@@ -275,15 +300,14 @@ namespace Dune
 		NewtonMethod<G, ThisType> newtonMethod(this->grid, *this, relTol, absTol, 30, 1.0, 3);
 		newtonMethod.execute();
 		dt = this->localJacobian.getDt();
-//		double upperMass, oldUpperMass;
-//		double totalMass = this->injected(upperMass, oldUpperMass);
-//		std::cout << totalMass << "\t" << upperMass
-//			  << "\t" << oldUpperMass << "\t# totalMass, upperMass, oldUpperMass" << std::endl;
-
-		*(this->uOldTimeStep) = *(this->u);
 
 		// update old phase state for computation of ComputeM(..uold..)
 		this->localJacobian.updatePhaseState();
+		this->localJacobian.clearVisited();
+		updateState();							// phase switch after each timestep
+
+		*(this->uOldTimeStep) = *(this->u);
+
 		return;
 	}
 

@@ -118,7 +118,7 @@ namespace Dune
    	 // storage of component water
    	 result[water] =
    		 sNDat[globalIdx].porosity*(varData[node].density[wPhase]*satW*varData[node].massfrac[water][wPhase]
-   		                 +varData[node].density[nPhase]*satN*varData[node].massfrac[water][nPhase]);
+   		                +varData[node].density[nPhase]*satN*varData[node].massfrac[water][nPhase]);
    	 // storage of component air
    	 result[air] =
    		 sNDat[globalIdx].porosity*(varData[node].density[nPhase]*satN*varData[node].massfrac[air][nPhase]
@@ -262,8 +262,9 @@ namespace Dune
 	 RT diffusionWW(0.0), diffusionWN(0.0); // diffusion of water
 	 RT diffusionAW(0.0), diffusionAN(0.0); // diffusion of air
 	 VBlockType avgDensity, avgDpm;
-	 avgDpm[wPhase]=1e-9; // needs to be changed !!!
-	 avgDpm[nPhase]=1e-5; // water in the gasphase
+
+	 avgDpm[wPhase]=2e-9; // needs to be changed !!!
+	 avgDpm[nPhase]=2.25e-5; // water in the gasphase
 
 	 normDiffGrad[wPhase] = xGrad[wPhase]*normal;
 	 normDiffGrad[nPhase] = xGrad[nPhase]*normal;
@@ -271,7 +272,6 @@ namespace Dune
 	 // calculate the arithmetic mean of densities
 	 avgDensity[wPhase] = 0.5*(vNDat[i].density[wPhase] + vNDat[j].density[wPhase]);
 	 avgDensity[nPhase] = 0.5*(vNDat[i].density[nPhase] + vNDat[j].density[nPhase]);
-
 
 	 if (state_i==2 && state_j==2)
 	 {
@@ -309,7 +309,7 @@ namespace Dune
 	 *  @param node local node id
 	 *  @return source/sink term
 	 */
-   	virtual VBlockType computeQ (const Entity& e, const VBlockType* sol, const int& node)
+   	virtual VBlockType computeQ (const Entity& e, const VBlockType* sol, const int node)
    	{
    		// ASSUME problem.q already contains \rho.q
    		return problem.q(this->fvGeom.subContVol[node].global, e, this->fvGeom.subContVol[node].local);
@@ -325,8 +325,11 @@ namespace Dune
 
         bool switched = false;
    		int state = sNDat[globalIdx].phaseState;
+//   		RT eps = 1e-15;
 
         RT pW = sol[localIdx][pWIdx];
+//        if (pW < 0.) pW = (-1)*pW;
+
         RT satW = 0.0;
         if (state == bothPhases) satW = 1.0-sol[localIdx][switchIdx];
   		if (state == waterPhase) satW = 1.0;
@@ -365,7 +368,7 @@ namespace Dune
             pWSat = problem.multicomp().vaporPressure(vNDat[localIdx].temperature);
         	pbub = pWSat + xAWmolar/henryInv;
 
-        	if (pbub > pN && switched == false)
+        	if (pbub > pN && switched == false && pN > 0.0)
             {
             	// appearance of gas phase
             	std::cout << "Gas appears at node " << globalIdx << "  Coordinates: " << global << std::endl;
@@ -378,7 +381,7 @@ namespace Dune
         case bothPhases :
         	RT satN = sol[localIdx][switchIdx];
 
-        	if (satN < 0.0  && switched == false)
+        	if (satN < 1e-15  && switched == false)
       	  	{
       		  	// disappearance of gas phase
       		  	std::cout << "Gas disappears at node " << globalIdx << "  Coordinates: " << global << std::endl;
@@ -566,7 +569,7 @@ namespace Dune
 
    		 varData[i].pC = problem.materialLaw().pC(varData[i].satW, global, e, local);
    		 varData[i].pN = varData[i].pW + varData[i].pC;
-   		 varData[i].temperature = 313.15; // in [K], constant
+   		 varData[i].temperature = 283.15; // in [K], constant
 
    		 // Solubilities of components in phases
    		 if (state == bothPhases){
@@ -591,7 +594,7 @@ namespace Dune
    		 // Density of Water is set constant here!
    		 varData[i].density[wPhase] = 1000.0;//problem.wettingPhase().density(varData[i].temperature, varData[i].pN);
    		 varData[i].density[nPhase] = problem.nonwettingPhase().density(varData[i].temperature, varData[i].pN,
-   				 varData[i].massfrac[air][nPhase]);
+   				 varData[i].massfrac[water][nPhase]);
 
          // CONSTANT solubility (for comparison with twophase)
 //         varData[i].massfrac[air][wPhase] = 0.0; varData[i].massfrac[water][wPhase] = 1.0;
@@ -652,13 +655,6 @@ namespace Dune
    	 FMatrix K;
     };
 
-	 struct StaticIPData
-	 {
-		 bool visited;
-		 FMatrix K;
-	 };
-
-
     struct ElementData {
 //   	 RT cellVolume;
 //     	 RT porosity;
@@ -672,7 +668,6 @@ namespace Dune
     TwoPTwoCProblem<G,RT>& problem;
     CWaterAir multicomp;
     std::vector<StaticNodeData> sNDat;
-    std::vector<StaticIPData> sIPDat;
     std::vector<VariableNodeData> vNDat;
     std::vector<VariableNodeData> oldVNDat;
 
