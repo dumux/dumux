@@ -634,11 +634,11 @@ namespace Dune
 	  if (preconditionerName_ == "SeqILU0") {
 	      SeqILU0<MatrixType,Vector,Vector> preconditioner(A, 1.0);
 	      if (solverName_ == "CG") {
-	    	  CGSolver<Vector> solver(op, preconditioner, 1E-14, 10000, 1);
+	    	  CGSolver<Vector> solver(op, preconditioner, 1E-14, 10000, 0);
 	    	  solver.apply(problem.variables.pressure, f, r);
 	      }
 	      else if (solverName_ == "BiCGSTAB") {
-	    	  BiCGSTABSolver<Vector> solver(op, preconditioner, 1E-14, 10000, 1);
+	    	  BiCGSTABSolver<Vector> solver(op, preconditioner, 1E-14, 10000, 0);
 	    	  solver.apply(problem.variables.pressure, f, r);
 	      }
 	      else
@@ -648,7 +648,7 @@ namespace Dune
 	  else if (preconditionerName_ == "SeqPardiso") {
 	      SeqPardiso<MatrixType,Vector,Vector> preconditioner(A);
 	      if (solverName_ == "Loop") {
-	    	  LoopSolver<Vector> solver(op, preconditioner, 1E-14, 10000, 1);
+	    	  LoopSolver<Vector> solver(op, preconditioner, 1E-14, 10000, 0);
 	    	  solver.apply(problem.variables.pressure, f, r);
 	      }
 	      else
