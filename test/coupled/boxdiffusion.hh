@@ -158,7 +158,7 @@ namespace Dune
 		      this->localJacobian.template assembleBC<LeafTag>(entity);
 
 // 			  for (int i = 0; i < size; i++) 
-// 			    std::cout << "bc[" << i << "] = " << this->localJacobian.bc(i) << std::endl;
+// 			    std::cout << "bc[" << i << "] = " << (this->localJacobian.bc(i))[0] << std::endl;
 			  
 			  IntersectionIterator endit = IntersectionIteratorGetter<G,LeafTag>::end(entity);
 			  for (IntersectionIterator is = IntersectionIteratorGetter<G,LeafTag>::begin(entity); 

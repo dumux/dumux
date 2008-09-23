@@ -29,7 +29,7 @@ public:
   RT q   (const Dune::FieldVector<DT,n>& x, const Entity& e,
 				  const Dune::FieldVector<DT,n>& xi) const
   {
-	return 0;
+	return (-6.0*x[0] + 8.0);
   }
 
   Dune::BoundaryConditions::Flags bctype (const Dune::FieldVector<DT,n>& x, const Entity& e,
@@ -53,7 +53,7 @@ public:
 
   RT exact(const Dune::FieldVector<DT,n>& x) const
   {
-		return (x[0]);//1.0 - x[0] + 2.0*x[1] - 3.0*x[2]);
+		return (x[0]*x[0]*x[0] - 4*x[1]*x[1]);//1.0 - x[0] + 2.0*x[1] - 3.0*x[2]);
   }
 
   RT g (const Dune::FieldVector<DT,n>& x, const Entity& e,
@@ -67,9 +67,8 @@ public:
   {
 	  Dune::FieldVector<DT,n> grad;
 
-	  grad[0] = -1.0;
-	  grad[1] = 0.0;
-	  grad[2] = 0.0;
+	  grad[0] = -3.0*x[0]*x[0];
+	  grad[1] = 8.0*x[1];
 
 	  return grad;
   }

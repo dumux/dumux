@@ -1,10 +1,13 @@
-dist_noinst_DATA = test_coupled.cc
+dist_noinst_DATA = test_coupled.cc test_stokesdarcy.cc
 
 AM_LDFLAGS = @AM_LDFLAGS@ $(LOCAL_LIBS)
 
-noinst_PROGRAMS = test_coupled
+noinst_PROGRAMS = test_coupled test_stokesdarcy
 
 test_coupled_SOURCES = test_coupled.cc
 test_coupled_DEPENDENCIES = $(LOCAL_LIBS)
+
+test_stokesdarcy_SOURCES = test_stokesdarcy.cc
+test_stokesdarcy_DEPENDENCIES = $(LOCAL_LIBS)
 
 include $(top_srcdir)/am/global-rules

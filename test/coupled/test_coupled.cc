@@ -1,19 +1,19 @@
 #include "config.h"
 #include <iostream>
-#undef DUMMY 
+#define DUMMY 
 #ifdef DUMMY 
 #include <dune/grid/yaspgrid.hh>
 #include <dune/grid/common/gridinfo.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/solvers.hh>
-//#include <../../../dune-subgrid/subgrid/subgrid.hh>
+#include <../../../dune-subgrid/subgrid/subgrid.hh>
 #include <dune/disc/stokes/dgstokes.hh>
 
 #include "dumux/operators/p1operatorextended.hh"
 
 #include <dumux/timedisc/timeloop.hh>
-#include <dumux/coupled/coupledmodel.hh>
+#include <dumux/coupled/coupleddiffusion.hh>
 #include "boxdiffusion.hh"
 
 namespace Dune
@@ -49,12 +49,12 @@ double discreteError(const Grid& grid, const Solution& solution, const Problem& 
 
 		  // get approximate solution at vertex
 		  int globalId = vertexMapper.map(*it);
-		  double approximate = (*solution)[globalId];
+		  double approximate = solution[globalId];
 
-		  error += (exact - approximate)*(exact - approximate);
+		  error = std::max(fabs(exact - approximate), error);
 	  }
 
-	  return sqrt(error);
+	  return (error);
 }
 }
 
@@ -64,50 +64,68 @@ int main(int argc, char** argv)
     // define the problem dimensions
     const int dim=2;
     typedef double NumberType;
-    int refinementSteps = 0;
 
-        Dune::FieldVector<double,dim> length(1.0);
-        Dune::FieldVector<int,dim> size(1);
-        Dune::FieldVector<bool,dim> periodic(false);
-        int overlap = 0;
-        typedef Dune::YaspGrid<dim,dim> GridType;
-        GridType grid(length, size,periodic,overlap);
+    Dune::FieldVector<double,dim> length(1.0);
+    length[0] = 2.0;
+    Dune::FieldVector<int,dim> size(32);
+    size[0] = 2*size[1];
+    Dune::FieldVector<bool,dim> periodic(false);
+    int overlap = 0;
+    typedef Dune::YaspGrid<dim,dim> GridType;
+    GridType grid(length,size,periodic,overlap);
 
-    //    Dune::SubGrid subGrid(grid);
+    typedef Dune::SubGrid<dim,GridType> SubGridType; 
+    SubGridType subGridLeft(grid);
+    SubGridType subGridRight(grid);
+    subGridLeft.createBegin();
+    subGridRight.createBegin();
+	typedef GridType::Codim<0>::LeafIterator Iterator;
+	Iterator eendit = grid.leafend<0>();
+	for (Iterator it = grid.leafbegin<0>(); it != eendit; ++it) {
+		Dune::GeometryType gt = it->geometry().type();
+		const Dune::FieldVector<NumberType,dim>& local = Dune::ReferenceElements<NumberType,dim>::general(gt).position(0, 0);
+		Dune::FieldVector<NumberType,dim> global = it->geometry().global(local);
+		if (global[0] < 1.0)
+			subGridLeft.addPartial(it);
+		else
+			subGridRight.addPartial(it);
+	}
+    subGridLeft.createEnd();
+    subGridRight.createEnd();
 
-    DiffusionParameters<GridType,NumberType> problem;
+    DiffusionParameters<SubGridType,NumberType> problem;
 
-    typedef Dune::LeafP1BoxDiffusion<GridType, NumberType> Diffusion;
-    Diffusion diffusion(grid, problem);
+    typedef Dune::LeafP1BoxDiffusion<SubGridType, NumberType> Diffusion;
+    Diffusion diffusionLeft(subGridLeft, problem);
+    Diffusion diffusionRight(subGridRight, problem);
 
-    const int vOrder = 2;
-    const int pOrder = 1;
-    DGStokesParameters parameters;
-    Example<dim, NumberType> exactSolution;
-    DirichletBoundary<GridType> dirichletBoundary(exactSolution);
-    RightHandSide<GridType> rightHandSide(exactSolution);
-    typedef Dune::DGStokes<GridType, vOrder, pOrder> DGStokes;
-	DGStokes dGStokes(grid, exactSolution, parameters, dirichletBoundary, rightHandSide, refinementSteps);
-
-    typedef Dune::CoupledModel<Diffusion,DGStokes> CoupledModel;
-    CoupledModel coupledModel(grid, diffusion, grid, dGStokes, true);
-//    typedef Dune::CoupledModel<Diffusion,Diffusion> CoupledModel;
-//    CoupledModel coupledModel(grid, diffusion, grid, diffusion, true);
-//    typedef Dune::CoupledModel<DGStokes,DGStokes> CoupledModel;
-//    CoupledModel coupledModel(grid, dGStokes, grid, dGStokes, true);
+    typedef Dune::CoupledDiffusion<Diffusion> CoupledModel;
+    //typedef Dune::CoupledModel<Diffusion,Diffusion> CoupledModel;
+    bool assembleGlobalMatrix = true;
+    bool stationary = true;
+    CoupledModel coupledModel(subGridLeft, diffusionLeft, subGridRight, diffusionRight, assembleGlobalMatrix, stationary);
 
     coupledModel.initial();
     coupledModel.assemble();
-    printmatrix(std::cout, dGStokes.matrix(), "Stokes local stiffness matrix", "row", 11, 4);
-    printmatrix(std::cout, diffusion.matrix(), "Darcy local stiffness matrix", "row", 11, 4);
-    printmatrix(std::cout, coupledModel.matrix(), "global stiffness matrix", "row", 11, 4);
+//    printmatrix(std::cout, coupledModel.matrix(), "global stiffness matrix", "row", 11, 4);
+//	printvector(std::cout, coupledModel.rhs(), "global right hand side", "row", 200, 1, 3);
+//	printvector(std::cout, coupledModel.sol(), "global solution before", "row", 200, 1, 3);
+    coupledModel.solve();
+//	printvector(std::cout, coupledModel.sol(), "global solution", "row", 200, 1, 3);
+	coupledModel.vtkout("test_coupled", 0);
 
-    Dune::TimeLoop<GridType, Diffusion> timeloop(0, 1, 1, "box3d", 1);
+	double errorCoupled = std::max(discreteError(subGridLeft, *(*diffusionLeft), problem), discreteError(subGridRight, *(*diffusionRight), problem));
+	std::cout << "error of coupled solution = " << errorCoupled << std::endl;
 
-    timeloop.execute(diffusion);
+    DiffusionParameters<GridType,NumberType> problemGlobal;
+    typedef Dune::LeafP1BoxDiffusion<GridType, NumberType> DiffusionGlobal;
+    DiffusionGlobal diffusionGlobal(grid, problemGlobal);
+	Dune::TimeLoop<GridType, DiffusionGlobal> timeloop(0, 1, 1, "diffusionGlobal", 1);
+    timeloop.execute(diffusionGlobal);
 
-	std::cout << "discrete error = " << discreteError(grid, *diffusion, problem) << std::endl;
-	return 0;
+	std::cout << "error of original global solution = " << discreteError(grid, *(*diffusionGlobal), problem) << std::endl;
+	
+    return 0;
   }
   catch (Dune::Exception &e){
     std::cerr << "Dune reported error: " << e << std::endl;
