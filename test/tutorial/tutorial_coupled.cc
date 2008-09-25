@@ -39,9 +39,10 @@ int main(int argc, char** argv)
     typedef Dune::TutorialProblemCoupled<GridType, NumberType> Problem;
     Problem problem(wettingfluid, nonwettingfluid, soil, materialLaw, L, H); /*@\label{tutorial-coupled:problem}@*/
 
-    // create object including the discretisation of the coupled system of equations (oil and water mass balances)
-    typedef Dune::BoxPwSn<GridType, NumberType> TwoPhase;
-    TwoPhase twoPhase(grid, problem);
+    // create object including the discretisation of the coupled system of
+    // equations (oil and water mass balances) with the box method
+    typedef Dune::BoxPwSn<GridType, NumberType> boxmethod;
+    TwoPhase boxmethod(grid, problem); /*@\label{tutorial-coupled:boxmethod}@*/
 
     // some parameters needed for the TimeLoop-object
     double tStart = 0; // start simulation at t = tStart
