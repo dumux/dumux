@@ -19,20 +19,16 @@
 
 /**
  * @file
- * @brief  Base class for defining an instance of the TwoPhaseTwoComponent problem
+ * @brief  Definition of a problem, where air is injected under a low permeable layer
  * @author Bernd Flemisch, Klaus Mosthaf
  */
 
 namespace Dune
 {
-  //! base class that defines the parameters of a diffusion equation
-  /*! An interface for defining parameters for the stationary diffusion equation
-   * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = q, \f$,
-   * \f$p = g\f$ on \f$\Gamma_1\f$, and \f$\lambda K \text{grad}\, p = J\f$
-   * on \f$\Gamma_2\f$. Here,
-   * \f$p\f$ denotes the pressure, \f$K\f$ the absolute permeability,
-   * and \f$\lambda\f$ the total mobility, possibly depending on the
-   * saturation.
+  //! class that defines the parameters of an air injection under a low permeable layer
+  /*! Problem definition of an air injection under a low permeable layer. Air enters the domain
+   * at the right boundary and migrates upwards.
+   * Problem was set up using the rect2d.dgf grid.
    *
    *	Template parameters are:
    *
@@ -80,7 +76,7 @@ namespace Dune
 		RT densityW_ = 1000.0;
 
 		values[pWIdx] = 1e5 - densityW_*gravity_[1]*(depthBOR_ - x[1]);
-		values[switchIdx] = 0.05;  // may be Sn, Xaw or Xwn!!
+		values[switchIdx] = 1e-6;  // may be Sn, Xaw or Xwn!!
 
 //		if (x[1] >= innerLowerLeft_[1] && x[1] <= innerUpperRight_[1]
 //		 && x[0] >= innerLowerLeft_[0])
@@ -119,7 +115,10 @@ namespace Dune
 		RT densityW_ = 1000.0;
 
 		values[pWIdx] = 1e5 - densityW_*gravity_[1]*(depthBOR_ - x[1]);
-		values[switchIdx] = 0.05;
+		values[switchIdx] = 1e-6;
+
+//		if ((x[0] > 60.0 - eps_) && (x[1] < 10 && x[1] > 5))
+//			values[switchIdx] = 0.05;
 
 //			if (x[1] >= innerLowerLeft_[1] && x[1] <= innerUpperRight_[1]
 //			 && x[0] >= innerLowerLeft_[0])
@@ -138,12 +137,15 @@ namespace Dune
 		enum {gasPhase = 0, waterPhase = 1, bothPhases = 2}; // Phase states
 		int state;
 
+//		state = bothPhases;
+		state = waterPhase;
+
+//		if ((x[0] > 60.0 - eps_) && (x[1] < 10 && x[1] > 5))
+//			state = bothPhases;
 //			if (x[1] >= innerLowerLeft_[1] && x[1] <= innerUpperRight_[1]
 //			      && x[0] >= innerLowerLeft_[0])
 //				state = 2;
 //			else
-
-		state = bothPhases;
 
 		return state;
 	}
@@ -210,7 +212,10 @@ namespace Dune
 
   	virtual FieldMatrix<DT,dim,dim> K (const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi)
   	{
-  		return K_;
+  		if (x[1] < layerBottom_)
+  			return highK_;
+  		else
+  			return lowK_;
   	}
   	virtual double porosity(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi) const
   	{
@@ -263,16 +268,20 @@ namespace Dune
 
   	InjectionSoil():Matrix2p<G,RT>()
   	{
-  		K_ = 0.;
-  		for(int i = 0; i < dim; i++)
-  			K_[i][i] = 1e-12;
+  		lowK_ = highK_ = 0.;
+  		for(int i = 0; i < dim; i++){
+  			lowK_[i][i] = 5e-14;
+  			highK_[i][i] = 1e-12;
+  		}
+  		layerBottom_ = 22.0;
   	}
 
   	~InjectionSoil()
   	{}
 
   private:
-  	FieldMatrix<DT,dim,dim> K_;
+  	FieldMatrix<DT,dim,dim> lowK_, highK_;
+	double layerBottom_;
 
   };
 

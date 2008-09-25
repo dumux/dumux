@@ -9,6 +9,7 @@
 #include <iomanip>
 #include <dune/grid/common/gridinfo.hh>
 #include <dune/grid/uggrid.hh>
+#include <dune/grid/sgrid.hh>
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
 //#include <dune/grid/io/file/vtk/vtkwriter.hh>
@@ -35,6 +36,14 @@ int main(int argc, char** argv)
     Dune::FieldVector<NumberType, dim> outerUpperRight(60.0);
     outerUpperRight[1] = 40.0;
     double depthBOR = 1000.0;
+
+//	For defining a SGrid ////////////////////////////////////////
+//    typedef Dune::SGrid<dim,dim> GridType;
+//    typedef Dune::FieldVector<GridType::ctype,dim> FieldVector;
+//    Dune::FieldVector<int,dim> N(39);
+//    FieldVector L(0);
+//    FieldVector H(300); H[0] = 300;
+//    GridType grid(N,L,H);
 
     // for defining e.g. a lense
     Dune::FieldVector<NumberType, dim> innerLowerLeft(0.0);
@@ -90,7 +99,7 @@ int main(int argc, char** argv)
 
     Dune::Timer timer;
     timer.reset();
-    Dune::VtkMultiWriter<GridType> writer("out2p2c");
+    Dune::VtkMultiWriter<GridType> writer("out2p2c-1");
     timeloop.executeMultiWriter(twoPhasetwoComp, writer);
     std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
 
