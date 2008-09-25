@@ -159,7 +159,7 @@ namespace Dune
 	 FieldMatrix<RT,m,dim> pGrad(0.), xGrad(0.);
 	 FieldVector<RT,dim> temp(0.);
      VBlockType flux(0.);
-	 FMatrix Ki, Kj;
+	 FMatrix Ki(0), Kj(0);
 
      //	FieldVector<RT,dim> Kij(0);
 	 // effective permeability in edge direction
@@ -210,11 +210,11 @@ namespace Dune
 	 }
 
 	 VBlockType outward(0);  // Darcy velocity of each phase
-	 FieldVector<RT,dim> v_tilde(0);
 
 	 // calculate the advective flux using upwind: K*n(grad p -rho*g)
 	 for (int phase=0; phase<m; phase++)
 	 	{
+		 FieldVector<RT,dim> v_tilde(0);
      	 K.mv(pGrad[phase], v_tilde);  // v_tilde=K*gradP
      	 outward[phase] = v_tilde*normal;
 	 	}
@@ -378,10 +378,10 @@ namespace Dune
             }
             break;
 
-        case bothPhases :
+        case bothPhases:
         	RT satN = sol[localIdx][switchIdx];
 
-        	if (satN < 1e-15  && switched == false)
+        	if (satN < 0.0  && switched == false)
       	  	{
       		  	// disappearance of gas phase
       		  	std::cout << "Gas disappears at node " << globalIdx << "  Coordinates: " << global << std::endl;
@@ -523,6 +523,10 @@ namespace Dune
 
   			 // mark elements that were already visited
   			 sNDat[globalIdx].visited = true;
+//  			for (int h = 0; h<1600; h++)
+//  			{
+//  				(*outPermeability)[h] = Knew[h];
+//  			}
   		 }
    	 }
 
@@ -592,7 +596,7 @@ namespace Dune
    		 varData[i].mobility[wPhase] = problem.materialLaw().mobW(varData[i].satW, global, e, local, varData[i].temperature, varData[i].pW);
    		 varData[i].mobility[nPhase] = problem.materialLaw().mobN(varData[i].satN, global, e, local, varData[i].temperature, varData[i].pN);
    		 // Density of Water is set constant here!
-   		 varData[i].density[wPhase] = 1000.0;//problem.wettingPhase().density(varData[i].temperature, varData[i].pN);
+   		 varData[i].density[wPhase] = 1000;//problem.wettingPhase().density(varData[i].temperature, varData[i].pN);
    		 varData[i].density[nPhase] = problem.nonwettingPhase().density(varData[i].temperature, varData[i].pN,
    				 varData[i].massfrac[water][nPhase]);
 
@@ -683,6 +687,8 @@ namespace Dune
     BlockVector<FieldVector<RT, 1> > *outMobilityW;
     BlockVector<FieldVector<RT, 1> > *outMobilityN;
     BlockVector<FieldVector<RT, 1> > *outPhaseState;
+	BlockVector<FieldVector<RT, 1> > *outPermeability;
+
 
   };
 

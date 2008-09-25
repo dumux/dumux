@@ -98,6 +98,7 @@ namespace Dune
 		this->localJacobian.outMobilityW = vtkMultiWriter->template createField<RT, 1>(this->size);
 		this->localJacobian.outMobilityN = vtkMultiWriter->template createField<RT, 1>(this->size);
 		this->localJacobian.outPhaseState = vtkMultiWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.outPermeability = vtkMultiWriter->template createField<RT, 1>(this->size);
 
 
 		// iterate through leaf grid an evaluate c0 at cell center
@@ -287,6 +288,7 @@ namespace Dune
 		this->localJacobian.outMobilityW = vtkMultiWriter->template createField<RT, 1>(this->size);
 		this->localJacobian.outMobilityN = vtkMultiWriter->template createField<RT, 1>(this->size);
 		this->localJacobian.outPhaseState = vtkMultiWriter->template createField<RT, 1>(this->size);
+		this->localJacobian.outPermeability = vtkMultiWriter->template createField<RT, 1>(this->size);
 
 		this->localJacobian.setDt(dt);
 		this->localJacobian.setOldSolution(this->uOldTimeStep);
@@ -294,10 +296,10 @@ namespace Dune
 		///////////////////////////////////
 		// define solver tolerances here
 		///////////////////////////////////
-		RT absTol = 1e-4;
-		RT relTol = 1e-7;
+		RT absTol = 1e-3;
+		RT relTol = 5e-8;
 
-		NewtonMethod<G, ThisType> newtonMethod(this->grid, *this, relTol, absTol, 30, 1.0, 3);
+		NewtonMethod<G, ThisType> newtonMethod(this->grid, *this, relTol, absTol, 30, 1.0, 5);
 		newtonMethod.execute();
 		dt = this->localJacobian.getDt();
 
@@ -338,7 +340,7 @@ namespace Dune
 		writer.addVertexData(this->localJacobian.outMobilityW,"mobility wetting phase");
 		writer.addVertexData(this->localJacobian.outMobilityN,"mobility non-wetting phase");
 		writer.addVertexData(this->localJacobian.outPhaseState,"phase state");
-
+		writer.addVertexData(this->localJacobian.outPermeability,"permeability");
 //		writer.addVertexData(&xWN, "water in air");
 //		writer.addVertexData(&xAW, "dissolved air");
 	}
