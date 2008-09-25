@@ -50,7 +50,11 @@ int main(int argc, char** argv)
 
     typedef Dune::VariableClass<GridType, NumberType> VC;
 
-    VC variables(grid);
+    double initpress = 0;
+    double initsat = 0;
+    Dune::FieldVector<double, dim> initvel(0);
+
+    VC variables(grid,initpress, initsat,initvel,finelevel);
 
     Dune::BuckleyLeverettProblem<GridType, NumberType,VC> transportProblem(variables, materialLaw);
     Dune::UniformProblem<GridType, NumberType,VC> diffusionProblem(variables, materialLaw);
