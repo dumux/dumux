@@ -12,25 +12,26 @@
 #include <dune/istl/io.hh>
 #include "dumux/brinkman/fv/fvbrinkman.hh"
 #include "brinkmantestproblem.hh"
- 
-int main(int argc, char** argv) 
+//#include "soiltestproblem.hh"
+
+int main(int argc, char** argv)
 {
   try{
-    // define the problem dimensions  
+    // define the problem dimensions
     const int dim=2;
 
     // create a grid object
-    typedef double NumberType; 
+    typedef double NumberType;
 
-    typedef Dune::SGrid<dim,dim> GridType; 
+    typedef Dune::SGrid<dim,dim> GridType;
     Dune::FieldVector<GridType::ctype,dim> L(0);
     Dune::FieldVector<GridType::ctype,dim> R(1);
     R[0]=2;
-    Dune::FieldVector<int,dim> N(5);
-    N[0]=10;
+    Dune::FieldVector<int,dim> N(20);
+    N[0]=40;
     GridType grid(N,L,R);
 
-//    typedef Dune::UGGrid<dim> GridType; 
+//    typedef Dune::UGGrid<dim> GridType;
 //    Dune::GridPtr<GridType> gridPtr( argv[1] );
 //    GridType& grid = *gridPtr;
 
@@ -41,25 +42,25 @@ int main(int argc, char** argv)
 //    brinkman.pressure[1] = 0.25;
 //    brinkman.pressure[2] = 0.75;
 //    brinkman.pressure[3] = 0.25;
-     
+
     brinkman.SIMPLE();
 
-   
+
 //     printmatrix(std::cout, brinkman.AV, "velocity matrix", "row", 11, 3);
 //     printvector(std::cout, brinkman.fV, "velocity RHS", "row", 200, 1, 3);
-     
+
 //     printmatrix(std::cout, brinkman.AP, "pressure matrix", "row", 11, 3);
 //     printvector(std::cout, brinkman.fP, "pressure RHS", "row", 200, 1, 3);
-    
-     
-     
+
+
+
  //    printvector(std::cout, *brinkman, "pressure", "row", 200, 1, 3);
 //     printvector(std::cout, brinkman.pressureCorrection, "pressure correction", "row", 200, 1, 3);
 //     printvector(std::cout, brinkman.velocity, "velocity", "row", 2, 1, 3);
 //     printvector(std::cout, brinkman.velocityCorrection, "velocity correction", "row", 2, 1, 3);
-        
+
      brinkman.vtkout("brinkman", 0);
-    
+
     return 0;
   }
   catch (Dune::Exception &e){
