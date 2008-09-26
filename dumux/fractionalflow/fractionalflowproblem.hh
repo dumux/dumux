@@ -123,6 +123,8 @@ namespace Dune
 	 */
 	const FieldVector<DT,n>& gravity() const
 	{
+		FieldVector<DT,n> gravity_(0);
+
 		return gravity_;
 	}
 
@@ -145,9 +147,6 @@ namespace Dune
 	TwoPhaseRelations<G, RT>& materialLaw;
 	const bool capillary;
 
-
-  protected:
-	  FieldVector<DT,n> gravity_;
   };
 
 }
