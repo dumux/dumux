@@ -1,0 +1,21 @@
+add_definitions(-DYASPGRID -DGRIDDIM=2 -DENABLE_UG)
+
+# add build targets
+#ADD_EXECUTABLE("test_coupled" test_coupled.cc)
+#TARGET_LINK_LIBRARIES("test_coupled" ${DumuxLinkLibraries})
+
+ADD_EXECUTABLE("test_stokesdarcy" test_stokesdarcy.cc)
+TARGET_LINK_LIBRARIES("test_stokesdarcy" ${DumuxLinkLibraries})
+
+# add required libraries and includes to the build flags 
+LINK_DIRECTORIES(${DumuxLinkDirectories})
+INCLUDE_DIRECTORIES(${DumuxIncludeDirectories})
+
+# make sure the grids are present in the build directory
+add_custom_command(TARGET "test_coupled"
+                   POST_BUILD
+                   COMMAND ${CMAKE_COMMAND} -E
+                        copy_directory 
+                           "${CMAKE_CURRENT_SOURCE_DIR}/grids"
+                           "${CMAKE_CURRENT_BINARY_DIR}/grids")
+

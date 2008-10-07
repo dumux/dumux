@@ -1,0 +1,23 @@
+# directories which are commented out do not compile at the moment
+# (they also don't compile if using the old build system)!
+
+add_subdirectory("2p2cni")
+add_subdirectory("2penergy")
+add_subdirectory("boundaryid")
+add_subdirectory("box3d")
+#add_subdirectory("box3d-compressible")
+add_subdirectory("brinkman")
+#add_subdirectory("capillary")
+add_subdirectory("co2")
+#add_subdirectory("coupled")
+#add_subdirectory("diffusion")
+add_subdirectory("dimltdimworld")
+add_subdirectory("elementid")
+add_subdirectory("fractionalflow")
+add_subdirectory("fvca5")
+#add_subdirectory("gravity")
+add_subdirectory("minc")
+#add_subdirectory("multigrid")
+add_subdirectory("newton")
+add_subdirectory("parallel")
+add_subdirectory("twophase")
