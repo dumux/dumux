@@ -113,7 +113,7 @@ public:
 				C1[i] = totalConcentration[i];
 				C2[i] = totalConcentration[i + size];
 			}
-			VTKWriter<G> vtkwriter(grid);
+			VTKWriter<typename G::LeafGridView> vtkwriter(grid.leafGridView());
 			char fname[128];
 			sprintf(fname, "%s-%05d", name, k);
 			vtkwriter.addCellData(saturation, "saturation");
@@ -129,14 +129,14 @@ public:
 		}
 		else
 		{
-			Dune::VTKWriter<G, typename G::LevelGridView>
+			Dune::VTKWriter<typename G::LevelGridView>
 					vtkwriterpressure(grid.levelView(pressurelevel));
 			char fname[128];
 			sprintf(fname, "%s-%05d", name, k);
 			vtkwriterpressure.addCellData(pressure, "total pressure p~");
 			vtkwriterpressure.write(fname, Dune::VTKOptions::ascii);
 
-			VTKWriter<G, typename G::LevelGridView>
+			VTKWriter<typename G::LevelGridView>
 					vtkwritersaturation(grid.levelView(satlevel));
 			sprintf(fname, "%s-press%05d", name, k);
 			vtkwritersaturation.addCellData(saturation, "saturation");
@@ -145,7 +145,7 @@ public:
 		return;
 	}
 	void vtkoutpressure(const char* name, int k) const {
-		VTKWriter<G> vtkwriter(grid);
+                VTKWriter<typename G::LeafGridView> vtkwriter(grid.leafView());
 		char fname[128];
 		sprintf(fname, "%s-press%05d", name, k);
 		vtkwriter.addCellData(pressure, "total pressure p~");

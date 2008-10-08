@@ -291,7 +291,7 @@ namespace Dune
 	{
 		char fname[128];
 		sprintf(fname,"%s-%05d",name,k);
-		VTKWriter<G> vtkwriter(this->grid);
+		VTKWriter<typename G::LeafGridView> vtkwriter(this->grid.leafView());
 		vtkwriter.addVertexData(*(this->u),"pressure");
 		vtkwriter.write(fname, VTKOptions::ascii);
 	}

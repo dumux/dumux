@@ -1845,12 +1845,12 @@ namespace Dune
       \ingroup VTK
    */
   template<class G>
-  class LeafVTKWriter : public VTKWriter<G,typename G::template Codim<0>::LeafIndexSet>
+  class LeafVTKWriter : public VTKWriter<typename G::LeafGridView>
   {
   public:
       /** \brief Construct a VTK writer for the leaf level of a given grid */
     LeafVTKWriter (const G& grid, VTKOptions::DataMode dm = VTKOptions::conforming)
-      : VTKWriter<G,typename G::LeafGridView>(grid,grid.leafView(),dm)
+      : VTKWriter<typename G::LeafGridView>(grid.leafView(),dm)
       {}
   };
 
@@ -1858,12 +1858,12 @@ namespace Dune
       \ingroup VTK
    */
   template<class G>
-  class LevelVTKWriter : public VTKWriter<G, typename G::template Codim<0>::LevelIndexSet>
+  class LevelVTKWriter : public VTKWriter<typename G::LevelGridView>
   {
   public:
       /** \brief Construct a VTK writer for a certain level of a given grid */
     LevelVTKWriter (const G& grid, int level, VTKOptions::DataMode dm = VTKOptions::conforming)
-      : VTKWriter<G,typename G::LevelGridView>(grid,grid.levelView(level),dm)
+      : VTKWriter<typename G::LevelGridView>(grid.levelView(level),dm)
       {}
   };
 }

@@ -4,7 +4,7 @@
 template<class G, class V>
 void vtkout (const G& grid, const V& Sat,const V& press,const V& perm, const char* name, int k)
 {
-  Dune::VTKWriter<G> vtkwriter(grid);
+  Dune::VTKWriter<typename G::LeafGridView> vtkwriter(grid.leafView());
   char fname[128];
   sprintf(fname,"%s-%05d",name,k);
   vtkwriter.addCellData(Sat,"saturation Sw");
@@ -16,7 +16,7 @@ void vtkout (const G& grid, const V& Sat,const V& press,const V& perm, const cha
 template<class G, class V>
 void vtkout_compressible (const G& grid, const V& press, const V& velocX, const V& velocY, const V& perm, const char* name, int k)
 {
-  Dune::VTKWriter<G> vtkwriter(grid);
+  Dune::VTKWriter<typename G::LeafGridView> vtkwriter(grid.leafView());
   char fname[128];
   sprintf(fname,"%s-%05d",name,k);
   vtkwriter.addCellData(press,"pressure p");
@@ -29,7 +29,7 @@ void vtkout_compressible (const G& grid, const V& press, const V& velocX, const 
 template<class G, class V>
 void vtkout_pipeflow (const G& grid, const V& press, const V& velocity, const char* name, int k)
 {
-  Dune::VTKWriter<G> vtkwriter(grid);
+  Dune::VTKWriter<typename G::LeafGridView> vtkwriter(grid.leafView());
   char fname[128];
   sprintf(fname,"%s-%05d",name,k);
   vtkwriter.addCellData(press,"pressure");
@@ -40,7 +40,7 @@ void vtkout_pipeflow (const G& grid, const V& press, const V& velocity, const ch
 template<class G, class V>
 void vtkout2P2C (const G& grid, const V& Sat, const V& totC, const V& Cw, const V& Cn,  const V& press,const V& perm, const char* name, int k)
 {
-  Dune::VTKWriter<G> vtkwriter(grid);
+  Dune::VTKWriter<typename G::LeafGridView> vtkwriter(grid.leafView());
   char fname[128];
   sprintf(fname,"%s-%05d",name,k);
   vtkwriter.addCellData(Sat,"saturation Sw");

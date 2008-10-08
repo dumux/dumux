@@ -42,7 +42,7 @@ namespace Stupid {
     class VtkMultiWriter
     {
     public:
-        typedef Dune::VTKWriter<Grid> VtkWriter;
+        typedef Dune::VTKWriter<typename Grid::LeafView> VtkWriter;
 
         VtkMultiWriter(const std::string &simName = "", std::string multiFileName = "")
             {
@@ -68,7 +68,7 @@ namespace Stupid {
          */
         void beginTimestep(double t, const Grid &grid)
             {
-                _curWriter = new VtkWriter(grid);
+                _curWriter = new VtkWriter(grid.leafView());
                 ++_writerNum;
                 _curTime = t;
                 _curGrid = &grid;

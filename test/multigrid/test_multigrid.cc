@@ -220,7 +220,7 @@ void testadaptivity (G& grid, int maxsteps, int modulo, bool globalrefine=false,
 				os << ".global";
 			else
 				os << ".local";
-			Dune::LeafVTKWriter<G> vtkwriter(grid);
+			Dune::LeafVTKWriter<typename G::LeafGridView> vtkwriter(grid.leafView());
 			vtkwriter.addVertexData(*u,"solution");
 			std::string s(os.str());
 			vtkwriter.write(s.c_str(),Dune::VTKOptions::ascii);

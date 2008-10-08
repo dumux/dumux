@@ -101,7 +101,7 @@ namespace Dune
 
 	void vtkout (const char* name, int k) const
 	{
-		VTKWriter<G, typename G::LevelGridView>
+		VTKWriter<typename G::LevelGridView>
 			vtkwriter(this->grid.levelView(this->level()));
 		char fname[128];
 		sprintf(fname,"%s-%05d",name,k);

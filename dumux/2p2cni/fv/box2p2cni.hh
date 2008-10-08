@@ -369,7 +369,7 @@ namespace Dune
 
 //	void vtkout (const char* name, int k) 
 //	{
-//		VTKWriter<G> vtkwriter(this->grid);
+//		VTKWriter<typename G::LeafGridView> vtkwriter(this->grid.leafView());
 //		char fname[128];	
 //		sprintf(fname,"%s-%05d",name,k);
 //	  BlockVector<FieldVector<RT, 1> > xWN(this->size);

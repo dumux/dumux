@@ -74,7 +74,8 @@ namespace Dune
     //! generate vtk output
     virtual void vtkout (const char* name, int k) const
     {
-      Dune::VTKWriter<G, typename G::LevelGridView> vtkwriter(this->grid.levelView(this->parabolicLevel()));
+      VTKWriter<G, typename G::LevelGridView> vtkwriter(this->grid, this->parabolicLevel());
+
       char fname[128];
       sprintf(fname,"%s-%05d",name,k);
       vtkwriter.addCellData(this->sat,"saturation");

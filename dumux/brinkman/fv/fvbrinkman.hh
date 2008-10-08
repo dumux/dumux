@@ -590,7 +590,7 @@ namespace Dune
 
 	void vtkout (const char* name, int k) const
 	{
-		VTKWriter<G, GV> vtkwriter(this->grid, this->grid.levelView(0));
+                VTKWriter<G, GV> vtkwriter(this->grid, this->grid.levelView(0));
 		const BlockVector<FieldVector <RT, dim> >& elementVelocity = this->velocity;
 		BlockVector<FieldVector <RT, 1> > velocityComponentX(elementVelocity.size());
 		BlockVector<FieldVector <RT, 1> > velocityComponentY(elementVelocity.size());

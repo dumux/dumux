@@ -77,7 +77,7 @@ int main(int argc, char** argv)
     diffusion.calcTotalVelocity(0);
     printvector(std::cout, problem.variables.velocity, "velocity", "row", 2*dim, 1, 3);
 
-    Dune::VTKWriter<GridType> vtkwriter(grid);
+    Dune::VTKWriter<typename G::LeafGridView> vtkwriter(grid.leafView);
 
     typedef Dune::BlockVector<Dune::FieldVector<double, dim> > WType;
     WType cellvelocity(grid.size(0));

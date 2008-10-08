@@ -294,7 +294,7 @@ public:
 	}
 
 	virtual void vtkout(const char* name, int k) {
-		VTKWriter<G> vtkwriter(this->grid);
+                VTKWriter<typename G::LeafGridView> vtkwriter(this->grid.leafView());
 		char fname[128];
 		sprintf(fname, "%s-%05d", name, k);
 		double minSat = 1e100;

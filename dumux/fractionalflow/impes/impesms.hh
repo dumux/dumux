@@ -131,12 +131,12 @@ namespace Dune
 
 	  Transport::vtkout (name,k);
 
-//	  Dune::VTKWriter<G, typename G::template Codim<0>::LevelIndexSet> vtkWriterSat(this->grid, this->grid.levelIndexSet(this->level()));
+//	  Dune::VTKWriter<typename G::LevelGridView> vtkWriterSat(this->grid.levelView(this->level()));
 //	  sprintf(fname,"%s-%05d",name,k);
 //	  vtkWriterSat.addCellData(this->sat,"saturation");
 //	  vtkWriterSat.write(fname,Dune::VTKOptions::ascii);
 
-	  Dune::VTKWriter<G, typename G::LevelGridView> vtkWriterPress(this->Diffusion::grid.levelView(this->Diffusion::level()));
+          VTKWriter<G, typename G::LevelGridView> vtkWriterPress(this->Diffusion::grid.levelView(this->grid, this->Diffusion::level()));
 	  sprintf(fname,"%s-press.%05d",name,k);
 	  vtkWriterPress.addCellData(this->diffproblem.variables.pressure,"total pressure p~");
 	  vtkWriterPress.write(fname,Dune::VTKOptions::ascii);

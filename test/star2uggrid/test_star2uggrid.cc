@@ -59,7 +59,7 @@ int main (int argc , char **argv) try
     for (int i = 0; i < numberOfVertices; i++)
     	indexVector[i] = i;
     
-	Dune::VTKWriter<GridType> vtkwriter(grid);
+        Dune::VTKWriter<typename G::LeafGridView> vtkwriter(grid.leafView());
 	vtkwriter.addVertexData(indexVector, "node indices");
 	vtkwriter.write(argv[1], Dune::VTKOptions::ascii);
 	

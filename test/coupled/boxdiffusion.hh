@@ -284,7 +284,7 @@ namespace Dune
 
 	virtual void vtkout (const char* name, int k) 
 	{
-		VTKWriter<G> vtkwriter(this->grid);
+                VTKWriter<typename G::LeafGridView> vtkwriter(this->grid.leafView());
 		vtkwriter.addVertexData(*(this->u),"pressure");
 		vtkwriter.write(name, VTKOptions::ascii);
 	}
