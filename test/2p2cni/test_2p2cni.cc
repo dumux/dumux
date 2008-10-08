@@ -64,9 +64,6 @@ int main(int argc, char** argv)
      Dune::Liq_WaterAir wPhase;
      Dune::Gas_WaterAir nPhase;
      Dune::HomogeneousSoil<GridType, NumberType> soil;
-//     Dune::LinearLaw law(wPhase, nPhase);
-//     Dune::CO2Problem2D<GridType, NumberType> problem(law, 1.e7);
-//     Dune::BrooksCoreyLaw law(wPhase, nPhase);
 
      Dune::TwoPhaseRelations<GridType, NumberType>
      materialLaw(soil, wPhase, nPhase);
@@ -76,7 +73,7 @@ int main(int argc, char** argv)
      Dune::WaterAirProblem<GridType, NumberType> problem(wPhase, nPhase, soil,
     		 materialLaw, multicomp, depthBOR);
 
-     typedef Dune::VtkMultiWriter<GridType> MultiWriter;
+     typedef Dune::VtkMultiWriter<GridType::LeafGridView> MultiWriter;
      typedef Dune::Box2P2CNI<GridType, NumberType, MultiWriter> TwoPhase;
      TwoPhase twoPhase(grid, problem);
 
@@ -84,7 +81,7 @@ int main(int argc, char** argv)
 
      Dune::Timer timer;
      timer.reset();
-     Dune::VtkMultiWriter<GridType> writer("out2p2cni");
+     Dune::VtkMultiWriter<GridType::LeafGridView> writer("out2p2cni");
 
 	 //timeloop.execute(twoPhase);
      timeloop.executeMultiWriter(twoPhase, writer);
