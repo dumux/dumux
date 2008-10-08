@@ -91,7 +91,7 @@ int main(int argc, char** argv)
     		outerUpperRight, innerLowerLeft, innerUpperRight, depthBOR, materialLaw, multicomp);
 
     // create two-phase two-component problem
-    typedef Dune::VtkMultiWriter<GridType> MultiWriter;
+    typedef Dune::VtkMultiWriter<GridType::LeafGridView> MultiWriter;
     typedef Dune::Box2P2C<GridType, NumberType, MultiWriter> TwoPhaseTwoComp;
     TwoPhaseTwoComp twoPhasetwoComp(grid, problem);
 
@@ -99,7 +99,7 @@ int main(int argc, char** argv)
 
     Dune::Timer timer;
     timer.reset();
-    Dune::VtkMultiWriter<GridType> writer("out2p2c-1");
+    MultiWriter writer("out2p2c-1");
     timeloop.executeMultiWriter(twoPhasetwoComp, writer);
     std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
 

@@ -116,7 +116,7 @@ namespace Dune
 
 		void vtkout (const char* name, int k) const 
 		{
-			VTKWriter<G, typename G::LeafGridView> 
+			VTKWriter<typename G::LeafGridView> 
 				vtkwriter(this->grid.leafView());
 			char fname[128];	
 			sprintf(fname,"%s-%05d",name,k);
