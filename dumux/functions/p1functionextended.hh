@@ -100,7 +100,7 @@ namespace Dune
 	typedef std::set<int> ProcSet;
 
 	// A DataHandle class to exchange border rows
-	class OwnerExchange 
+	class OwnerExchange
 	  : public CommDataHandleIF<OwnerExchange,Pair> {
 	public:
 	  //! export type of data for message buffer
@@ -120,7 +120,7 @@ namespace Dune
 
 	  /*! how many objects of type DataType have to be sent for a given entity
 
-	  Note: Only the sender side needs to know this size. 
+	  Note: Only the sender side needs to know this size.
 	  */
 	  template<class EntityType>
 	  size_t size (EntityType& e) const
@@ -165,10 +165,10 @@ namespace Dune
 	  }
 
 	  //! constructor
-	  OwnerExchange (const G& g, const VM& vm, std::map<int,GIDSet>& ids, std::map<IdType,int>& o, const std::map<int,IdType>& i2g) 
+	  OwnerExchange (const G& g, const VM& vm, std::map<int,GIDSet>& ids, std::map<IdType,int>& o, const std::map<int,IdType>& i2g)
       : grid(g), vertexmapper(vm), myids(ids), owner(o), index2gid(i2g)
 	  {}
- 
+
 	private:
 	  const G& grid;
 	  const VM& vertexmapper;
@@ -178,7 +178,7 @@ namespace Dune
 	};
 
 	// A DataHandle class to exchange border rows
-	class IdExchange 
+	class IdExchange
 	  : public CommDataHandleIF<IdExchange,Pair> {
 	public:
 	  //! export type of data for message buffer
@@ -198,7 +198,7 @@ namespace Dune
 
 	  /*! how many objects of type DataType have to be sent for a given entity
 
-	  Note: Only the sender side needs to know this size. 
+	  Note: Only the sender side needs to know this size.
 	  */
 	  template<class EntityType>
 	  size_t size (EntityType& e) const
@@ -250,14 +250,14 @@ namespace Dune
 			else
 			  owner[x.first] = std::max(owner[x.first],source);
 		  }
-		myprocs[alpha].insert(source);		
+		myprocs[alpha].insert(source);
 	  }
 
 	  //! constructor
-	  IdExchange (const G& g, const GV& gv, const VM& vm, std::map<int,GIDSet>& ids, std::map<int,ProcSet>& procs, 
-				  std::map<IdType,int>& o, const std::map<IdType,int>& g2i, const std::map<int,IdType>& i2g, int eDOFs, 
-				  const std::map<int,int>& d2O) 
-      : grid(g), gridview(gv), vertexmapper(vm), myids(ids), myprocs(procs), owner(o), 
+	  IdExchange (const G& g, const GV& gv, const VM& vm, std::map<int,GIDSet>& ids, std::map<int,ProcSet>& procs,
+				  std::map<IdType,int>& o, const std::map<IdType,int>& g2i, const std::map<int,IdType>& i2g, int eDOFs,
+				  const std::map<int,int>& d2O)
+      : grid(g), gridview(gv), vertexmapper(vm), myids(ids), myprocs(procs), owner(o),
         gid2index(g2i), index2gid(i2g), extraDOFs(eDOFs), doubled2Original(d2O)
 	  {
 		  partitionType.resize(vertexmapper.size()+extraDOFs);
@@ -266,7 +266,7 @@ namespace Dune
 		  {
 			  partitionType[vertexmapper.map(*it)] = it->partitionType();
 		  }
-		  
+
 //		  for (typename std::map<IdType,int>::const_iterator it = gid2index.begin(); it != gid2index.end(); ++it)
 //			  std::cout << grid.comm().rank() << ": global = " << it->first << ", local = " << it->second << std::endl;
 
@@ -276,7 +276,7 @@ namespace Dune
 //		  for (typename std::map<int,int>::const_iterator it = doubled2Original.begin(); it != doubled2Original.end(); ++it)
 //			  std::cout << grid.comm().rank() << ": doubled = " << it->first << ", original = " << it->second << std::endl;
 	  }
- 
+
 	private:
 	  const G& grid;
 	  const GV& gridview;
@@ -292,7 +292,7 @@ namespace Dune
 	};
 
 	// A DataHandle class to exchange border rows
-	class BorderLinksExchange 
+	class BorderLinksExchange
 	  : public CommDataHandleIF<BorderLinksExchange,IdType>{
 	public:
 	  //! export type of data for message buffer
@@ -312,7 +312,7 @@ namespace Dune
 
 	  /*! how many objects of type DataType have to be sent for a given entity
 
-	  Note: Only the sender side needs to know this size. 
+	  Note: Only the sender side needs to know this size.
 	  */
 	  template<class EntityType>
 	  size_t size (EntityType& e) const
@@ -326,7 +326,7 @@ namespace Dune
 	  {
 		GIDSet& myset = borderlinks[vertexmapper.map(e)];
 		for (typename GIDSet::iterator i=myset.begin(); i!=myset.end(); ++i)
-		  buff.write(*i); 
+		  buff.write(*i);
 	  }
 
 	  /*! unpack data from message buffer to user
@@ -346,20 +346,20 @@ namespace Dune
 	  }
 
 	  //! constructor
-	  BorderLinksExchange (const G& g, std::map<int,GIDSet>& bl, const VM& vm) 
-		: grid(g), borderlinks(bl), vertexmapper(vm) 
+	  BorderLinksExchange (const G& g, std::map<int,GIDSet>& bl, const VM& vm)
+		: grid(g), borderlinks(bl), vertexmapper(vm)
 	  {}
- 
+
 	private:
-	  const G& grid;	
+	  const G& grid;
 	  std::map<int,GIDSet>& borderlinks;
 	  const VM& vertexmapper;
 	};
 
   public:
 
-	enum Attributes {slave=OwnerOverlapCopyAttributeSet::copy, 
-					 master=OwnerOverlapCopyAttributeSet::owner, 
+	enum Attributes {slave=OwnerOverlapCopyAttributeSet::copy,
+					 master=OwnerOverlapCopyAttributeSet::owner,
 					 overlap=OwnerOverlapCopyAttributeSet::overlap};
 
 	typedef IndexInfoFromGrid<IdType,int> P1IndexInfoFromGrid;
@@ -367,13 +367,13 @@ namespace Dune
 	//! fill data structure with information needed by ISTL
 	void fillIndexInfoFromGrid (const G& grid, const GV& gridview, const VM& vertexmapper, P1IndexInfoFromGrid& info)
 	{
-	
-		std::map<IdType,int> gid2index;		
+
+		std::map<IdType,int> gid2index;
 		std::map<int,IdType> index2gid;
 		std::map<int,GIDSet> borderlinks;
 		int extraDOFs = 0;
-		extend(grid, gridview, vertexmapper, borderlinks, extraDOFs, gid2index, index2gid);		  
-		
+		extend(grid, gridview, vertexmapper, borderlinks, extraDOFs, gid2index, index2gid);
+
 		std::map<int,int> doubled2Original;
 		VIterator ghostEndIt = gridview.template end<n>();
 		for (VIterator ghostIt = gridview.template begin<n>(); ghostIt!=ghostEndIt; ++ghostIt)
@@ -404,7 +404,7 @@ namespace Dune
 				}
 			}
 		}
-	  // build a map of sets where each local index is assigned 
+	  // build a map of sets where each local index is assigned
 	  // a set of global ids which are neighbors of this vertex
 	  // At the same time assign to each local index to a set of processors
 	  // and at the same time determine the owner of the gid
@@ -415,7 +415,7 @@ namespace Dune
 	  for (Iterator it = gridview.template begin<0>(); it!=eendit; ++it)
 		{
 		  Dune::GeometryType gt = it->type();
-		  const typename Dune::ReferenceElementContainer<DT,n>::value_type& 
+		  const typename Dune::ReferenceElementContainer<DT,n>::value_type&
 			refelem = ReferenceElements<DT,n>::general(gt);
 
 		  if (it->partitionType()==InteriorEntity)
@@ -442,7 +442,7 @@ namespace Dune
 //		for (typename std::map<IdType,int>::iterator i=owner.begin(); i!=owner.end(); ++i)
 //			std::cout << grid.comm().rank() << ": global = " << i->first << ", owner = " << i->second << std::endl;
 
-		
+
 		extraDOFs = 0;
 		for (typename std::map<int,GIDSet>::iterator i=myids.begin(); i!=myids.end(); ++i)
 			for (typename GIDSet::iterator j=(i->second).begin(); j!=(i->second).end(); ++j)
@@ -499,7 +499,7 @@ namespace Dune
 				// do not add double indices
 				if (doubled2Original.find(localIndex) == doubled2Original.end())
 					info.addLocalIndex(Tuple<IdType,int,int>(*j,localIndex,a));
-				else 
+				else
 					info.addLocalIndex(Tuple<IdType,int,int>(*j,doubled2Original[localIndex],a));
 			}
 		std::set< Tuple<int,IdType,int> > remoteindices;
@@ -515,16 +515,16 @@ namespace Dune
 				}
 		}
 
-//		for (typename std::set< Tuple<IdType,int,int> >::const_iterator it = info.localIndices().begin(); 
+//		for (typename std::set< Tuple<IdType,int,int> >::const_iterator it = info.localIndices().begin();
 //			it != info.localIndices().end(); ++it)
-//			std::cout << grid.comm().rank() << ": global = " << Element<0>::get(*it) 
+//			std::cout << grid.comm().rank() << ": global = " << Element<0>::get(*it)
 //				<< ", local = " << Element<1>::get(*it) << ", m = " << Element<2>::get(*it) << std::endl;
-//		
-//		for (typename std::set< Tuple<int,IdType,int> >::const_iterator it = info.remoteIndices().begin(); 
+//
+//		for (typename std::set< Tuple<int,IdType,int> >::const_iterator it = info.remoteIndices().begin();
 //			it != info.remoteIndices().end(); ++it)
-//			std::cout << grid.comm().rank() << ": p = " << Element<0>::get(*it) 
+//			std::cout << grid.comm().rank() << ": p = " << Element<0>::get(*it)
 //				<< ", global = " << Element<1>::get(*it) << ", m = " << Element<2>::get(*it) << std::endl;
-				
+
 		// clear what is not needed anymore to save memory
 		myids.clear();
 		gid2index.clear();
@@ -549,7 +549,7 @@ namespace Dune
 	  for (Iterator it = gridView.template begin<0>(); it!=eendit; ++it)
 		{
 		  Dune::GeometryType gt = it->type();
-		  const typename Dune::ReferenceElementContainer<DT,n>::value_type& 
+		  const typename Dune::ReferenceElementContainer<DT,n>::value_type&
 			refelem = ReferenceElements<DT,n>::general(gt);
 
 		  // generate set of neighbors in global ids for border vertices
@@ -613,7 +613,7 @@ namespace Dune
 
 	//! fill data structures needed for extension
 	void extend (const G& grid, const GV& gridView, const VM& vertexmapper,
-				 std::map<int,GIDSet>& borderlinks, int& extraDOFs, std::map<IdType,int>& gid2index, 
+				 std::map<int,GIDSet>& borderlinks, int& extraDOFs, std::map<IdType,int>& gid2index,
 				std::map<int,IdType>& index2gid)
 	{
 	  // initialize output parameters
@@ -626,7 +626,7 @@ namespace Dune
 	  for (Iterator it = gridView.template begin<0>(); it!=eendit; ++it)
 		{
 		  Dune::GeometryType gt = it->type();
-		  const typename Dune::ReferenceElementContainer<DT,n>::value_type& 
+		  const typename Dune::ReferenceElementContainer<DT,n>::value_type&
 			refelem = ReferenceElements<DT,n>::general(gt);
 
 		  // generate set of neighbors in global ids for border vertices
@@ -707,7 +707,7 @@ namespace Dune
 	using the general shape functions, thus it should work for all element types
 	and dimensions.
 
-	In addition to the DifferentiableGridFunction interface P1 functions can be initialized 
+	In addition to the DifferentiableGridFunction interface P1 functions can be initialized
 	from a C0GridFunction via Lagrange interpolation. Dereferencing delivers
 	the coefficient vector.
 
@@ -741,7 +741,7 @@ namespace Dune
 	  {
               return gt.dim() == 0;
 	  }
-	}; 
+	};
 
     //! make copy constructor private
   	P1FunctionExtended (const P1FunctionExtended&);
@@ -759,7 +759,7 @@ namespace Dune
 	typedef typename P1ExtendOverlap<G,GV,VM,LC>::P1IndexInfoFromGrid P1IndexInfoFromGrid;
 
 	//! allocate data
-	P1FunctionExtended (const GV& gridView, LC lcomm, bool extendoverlap=false) 
+	P1FunctionExtended (const GV& gridView, LC lcomm, bool extendoverlap=false)
 	  : GridFunctionGlobalEvalDefault<GV,RT,m>(gridView)
           , gv(gridView), mapper_(gridView.grid(),gridView.indexSet()), lc(lcomm), oldcoeff(0)
 	{
@@ -842,12 +842,12 @@ namespace Dune
 	}
 
 	//! evaluate all components  in the entity e at local coordinates xi
-	/*! Evaluates all components of a function at once. 
+	/*! Evaluates all components of a function at once.
 	  @param[in]  e      reference to grid entity of codimension 0
 	  @param[in]  xi     point in local coordinates of the reference element of e
 	  @param[out] y      vector with values to be filled
 	 */
-	virtual void evalalllocal (const Entity& e, const Dune::FieldVector<DT,G::dimension>& xi, 
+	virtual void evalalllocal (const Entity& e, const Dune::FieldVector<DT,G::dimension>& xi,
 							   Dune::FieldVector<RT,m>& y) const
 	{
 	  Dune::GeometryType gt = e.type(); // extract type of element
@@ -863,17 +863,17 @@ namespace Dune
 
 	//! evaluate derivative in local coordinates
 	/*! Evaluate the partial derivative a the given position
-	  in local coordinates in an entity. 
+	  in local coordinates in an entity.
 	  @param[in]  comp    number of component that should be differentiated
 	  @param[in]  d       vector giving order of derivative for each variable
 	  @param[in]  e       reference to grid entity of codimension 0
 	  @param[in]  xi      point in local coordinates of the reference element of e
 	  \return             value of the derivative
 	 */
-	virtual RT derivativelocal (int comp, const Dune::FieldVector<int,n>& d, 
+	virtual RT derivativelocal (int comp, const Dune::FieldVector<int,n>& d,
 								const Entity& e, const Dune::FieldVector<DT,n>& xi) const
 	{
-	  int dir=-1; 
+	  int dir=-1;
 	  int order=0;
 	  for (int i=0; i<n; i++)
 		{
@@ -885,13 +885,13 @@ namespace Dune
 
 	  RT value=0;
 	  Dune::GeometryType gt = e.type(); // extract type of element
-	  const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::value_type& 
+	  const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::value_type&
 		sfs=Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt,1);
 	  Dune::FieldMatrix<DT,n,n> jac = e.geometry().jacobianInverseTransposed(xi);
 	  for (int i=0; i<sfs.size(); ++i)
 		{
 		  Dune::FieldVector<DT,n> grad(0),temp;
-		  for (int l=0; l<n; l++) 
+		  for (int l=0; l<n; l++)
 			temp[l] = sfs[i].evaluateDerivative(0,l,xi);
 		  jac.umv(temp,grad); // transform gradient to global ooordinates
 		  value += grad[dir] * (*coeff)[mapper_.template map<n>(e,i)][comp];
@@ -921,7 +921,7 @@ namespace Dune
 			if (!visited[mapper_.template map<n>(*it,i)])
 			  {
 				for (int c=0; c<m; c++)
-				  (*coeff)[mapper_.template map<n>(*it,i)][c] = 
+				  (*coeff)[mapper_.template map<n>(*it,i)][c] =
 					u.evallocal(c,*it,Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt,1)[i].position());
 				visited[mapper_.template map<n>(*it,i)] = true;
 			  }
@@ -944,7 +944,7 @@ namespace Dune
 		  for (int i=0; i<Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt,1).size(); ++i)
 			{
 			  for (int c=0; c<m; c++)
-				(*coeff)[mapper_.template map<n>(*it,i)][c] += 
+				(*coeff)[mapper_.template map<n>(*it,i)][c] +=
 				  u.evallocal(c,*it,Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt,1)[i].position());
 			  counter[mapper_.template map<n>(*it,i)] += 1;
 			}
@@ -991,13 +991,13 @@ namespace Dune
 	{
 	}
 
- 	/** @brief Initiate update process 
+ 	/** @brief Initiate update process
 
 	    Call this method after the grid has been adapted. The representation is
         now updated to the new grid and the finite element function can be used on
         the new grid. However the data is not initialized.
 		The old representation (with respect to the old grid) can still be accessed if
-        it has been saved. It is deleted in endUpdate(). 
+        it has been saved. It is deleted in endUpdate().
 	 */
 	void postAdapt (P1FunctionExtendedManager<G,RT>& manager)
 	{
@@ -1049,7 +1049,7 @@ namespace Dune
 		  int i;
 		  if (manager.savedMap().contains(*it,i))
 			{
-// 			  std::cout << " found vertex=" << it->geometry()[0] 
+// 			  std::cout << " found vertex=" << it->geometry()[0]
 // 						<< " at i=" << i
 // 						<< " oldindex=" << manager.oldIndex()[i]
 // 						<< " newindex=" << mapper_.map(*it)
@@ -1087,13 +1087,13 @@ namespace Dune
 						  RT basefuncvalue = Dune::LagrangeShapeFunctions<DT,RT,n>::general(gtf,1)[j].evaluateFunction(0,pos);
 						  for (int c=0; c<m; c++)
 							(*coeff)[index][c] += basefuncvalue * (*coeff)[mapper_.template map<n>(*father,j)][c];
-						  // 					  std::cout << "  corner=" << i 
+						  // 					  std::cout << "  corner=" << i
 						  // 								<< " cpos=" << father->geometry()[i]
 						  // 								<< " u=" << (*coeff)[mapper_.template map<n>(*father,i)]
 						  // 								<< std::endl;
 						}
 					  // 				  std::cout << "index=" << mapper_.map(*it) << " value=" << value << std::endl;
-					  visited[index] = true;				  
+					  visited[index] = true;
 					}
 				}
 			}
@@ -1110,11 +1110,11 @@ namespace Dune
 	{
 	  return mapper_;
 	}
- 
+
 	//! VTK output
-	void vtkout (VTKWriter<G,GV>& vtkwriter, std::string s) const
+	void vtkout (VTKWriter<GV>& vtkwriter, std::string s) const
 	{
-	  typename VTKWriter<G,GV>::VTKFunction *p = new VTKGridFunctionWrapper<G,GV,RT,m>(*this,s);
+	  typename VTKWriter<GV>::VTKFunction *p = new VTKGridFunctionWrapper<GV,RT,m>(*this,s);
 	  vtkwriter.addVertexData(p);
 	}
 
@@ -1152,9 +1152,9 @@ namespace Dune
   {
   public:
       /** \brief Constructor for a given grid
-          \todo Please doc the second argument 
+          \todo Please doc the second argument
       */
-	LeafP1FunctionExtended (const G& grid, bool extendoverlap=false) 
+	LeafP1FunctionExtended (const G& grid, bool extendoverlap=false)
 	  : GridFunctionGlobalEvalDefault<typename G::LeafGridView,RT,m>(grid.leafView())
           , P1FunctionExtended<typename G::LeafGridView,RT,LeafCommunicate<G>,m>(grid.leafView(),LeafCommunicate<G>(grid),extendoverlap)
 	{}
@@ -1172,9 +1172,9 @@ namespace Dune
   {
   public:
       /** \brief Constructor for a given grid
-          \todo Please doc the third argument 
+          \todo Please doc the third argument
       */
-	LevelP1FunctionExtended (const G& grid, int level, bool extendoverlap=false) 
+	LevelP1FunctionExtended (const G& grid, int level, bool extendoverlap=false)
 	  : GridFunctionGlobalEvalDefault<typename G::LevelGridView,RT,m>(grid.levelView(level))
           , P1FunctionExtended<typename G::LevelGridView,RT,LevelCommunicate<G>,m>(grid.levelView(level),LevelCommunicate<G>(grid,level),extendoverlap)
 	{}
@@ -1204,13 +1204,13 @@ namespace Dune
 	  {
               return gt.dim() == 0;
 	  }
-	}; 
+	};
 
   public:
 
 	//! manages nothing
 	P1FunctionExtendedManager (const G& g) : mapper(g,g.leafIndexSet()), grid(g), savedmap(g)
-	{	
+	{
 	  // allocate index array to correct size (this possible for vertex data)
 	  oldindex.resize(mapper.size());
 
@@ -1242,7 +1242,7 @@ namespace Dune
 	// store a reference to the grid that is managed
 	const G& grid;
 
-	// We need a persistent consecutive enumeration 
+	// We need a persistent consecutive enumeration
 	GlobalUniversalMapper<G> savedmap;
 
 	// The old leaf indices are stored in a dynamically allocated vector

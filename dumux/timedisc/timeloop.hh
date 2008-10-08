@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_TIMELOOP_HH
 #define DUNE_TIMELOOP_HH
@@ -9,35 +9,35 @@
 
 namespace Dune {
   template<class G, class Model>
-  class TimeLoop 
+  class TimeLoop
   {
   public:
 	  void execute(Model& model)
-	  { 
-		  // generate one meta vtk-file holding the individual timesteps 
-		  char multiFileName[128];	
-		  char fileNameVTK[128];	
+	  {
+		  // generate one meta vtk-file holding the individual timesteps
+		  char multiFileName[128];
+		  char fileNameVTK[128];
 		  sprintf(multiFileName,"multi-%s.pvd", fileName);
 		  std::ofstream multiFile(multiFileName);
-		  multiFile << "<?xml version=\"1.0\"?>" << std::endl 
+		  multiFile << "<?xml version=\"1.0\"?>" << std::endl
 		  << "<VTKFile type=\"Collection\" version=\"0.1\" byte_order=\"LittleEndian\" " << std::endl
 		  << "compressor=\"vtkZLibDataCompressor\">"  << std::endl
 		  << " <Collection>" << std::endl;
 
 		  // initialize solution with initial values
-		  model.initial();          
+		  model.initial();
 
 		  int k = 0;
 		  model.vtkout(fileName, k);
 		  switch (G::dimension) {
-		  case 1:	
+		  case 1:
 			  sprintf(fileNameVTK,"%s-%05d.vtp", fileName, k);
 			  break;
 		  default:
 			  sprintf(fileNameVTK,"%s-%05d.vtu", fileName, k);
 			  break;
 		  }
-		  multiFile << "   <DataSet timestep=\"" << k << "\" file=\"" 
+		  multiFile << "   <DataSet timestep=\"" << k << "\" file=\""
 		  << fileNameVTK << "\"/>" << std::endl;
 
 		  // now do the time steps
@@ -49,7 +49,7 @@ namespace Dune {
 			  k++;
 			  double dtOld = dt;
 
-			  if (t == tStart) 
+			  if (t == tStart)
 				  timeStep.execute(model, t, dt, firstDt, tEnd, cFLFactor);
 			  else
 				  timeStep.execute(model, t, dt, maxDt, tEnd, cFLFactor);
@@ -61,13 +61,13 @@ namespace Dune {
 					  t = std::min(t, tEnd);
 					  if(dt > tEnd-t)
 					  {
-						  std::cout << "\t" << k << "\t" << t << "\t" << dtOld 
+						  std::cout << "\t" << k << "\t" << t << "\t" << dtOld
 						  << "\t # timestep number k, time t, timestep size dt" << std::endl;
-						  //std::cout << ", timestep: " << k << "\t t=" << t << "\t dt=" << (tEnd-t) << std::endl;	
+						  //std::cout << ", timestep: " << k << "\t t=" << t << "\t dt=" << (tEnd-t) << std::endl;
 					  }
 					  else
 					  {
-						  std::cout << "\t" << k << "\t" << t << "\t" << dtOld 
+						  std::cout << "\t" << k << "\t" << t << "\t" << dtOld
 						  << "\t # timestep number k, time t, timestep size dt" << std::endl;
 						  //std::cout << ", timestep: " << k << "\t t=" << t << "\t dt=" << dt << std::endl;
 					  }
@@ -76,10 +76,10 @@ namespace Dune {
 				  else {
 					  t += dt;
 					  t = std::min(t, tEnd);
-					  std::cout << "\t" << k << "\t" << t << "\t" << dt 
+					  std::cout << "\t" << k << "\t" << t << "\t" << dt
 					  << "\t # timestep number k, time t, timestep size dt" << std::endl;
 					  //std::cout << ", timestep: " << k << "\t t=" << t << "\t dt=" << dt << std::endl;
-				  }		    		
+				  }
 			  }
 			  else
 			  {
@@ -90,44 +90,44 @@ namespace Dune {
 			  }
 
 			  // generate output
-			  if (k%modulo == 0) 
+			  if (k%modulo == 0)
 			  {
 				  model.vtkout(fileName, k/modulo);
 				  switch (G::dimension) {
-				  case 1:	
+				  case 1:
 					  sprintf(fileNameVTK,"%s-%05d.vtp", fileName, k/modulo);
 					  break;
 				  default:
 					  sprintf(fileNameVTK,"%s-%05d.vtu", fileName, k/modulo);
 					  break;
 				  }
-				  multiFile << "   <DataSet timestep=\"" << t << "\" file=\"" 
+				  multiFile << "   <DataSet timestep=\"" << t << "\" file=\""
 				  << fileNameVTK << "\"/>" << std::endl;
 			  }
 			  //		    if (fixed)
 			  //		    	dt = dtOriginal;
-		  }    
+		  }
 		  // finalize output
 		  multiFile << " </Collection>" << std::endl << "</VTKFile>" << std::endl;
-		  multiFile.close();		
+		  multiFile.close();
 
 		  return;
 	  }
-	  
-	  template<class MultiWriter> 
+
+	  template<class MultiWriter>
 	  void executeMultiWriter (Model& model, MultiWriter& writer)
 	  {
 		  int k = 0;
-		  
-		  writer.beginTimestep(0, model.getGrid());
+
+		  writer.beginTimestep(0, model.getGrid().leafView());
 
 		  // initialize solution with initial values
 		  model.setVtkMultiWriter(&writer);
-		  model.initial();          
+		  model.initial();
 		  model.addvtkfields(writer);
 		  std::cout << ">>> writing initial output file" << std::endl;
-		  writer.endTimestep();
-		  
+		  writer.endTimestep();  // writes output file
+
 		  // now do the time steps
 		  double t = tStart;
 		  //		  double dtOriginal;
@@ -137,7 +137,7 @@ namespace Dune {
 			  k++;
 			  double dtOld = dt;
 
-			  if (t == tStart) 
+			  if (t == tStart)
 				  timeStep.execute(model, t, dt, firstDt, tEnd, cFLFactor);
 			  else
 				  timeStep.execute(model, t, dt, maxDt, tEnd, cFLFactor);
@@ -149,13 +149,13 @@ namespace Dune {
 					  t = std::min(t, tEnd);
 					  if(dt > tEnd-t)
 					  {
-						  std::cout << "\t" << k << "\t" << t << "\t" << dtOld 
+						  std::cout << "\t" << k << "\t" << t << "\t" << dtOld
 						  << "\t # timestep number k, time t, timestep size dt" << std::endl;
-						  //std::cout << ", timestep: " << k << "\t t=" << t << "\t dt=" << (tEnd-t) << std::endl;	
+						  //std::cout << ", timestep: " << k << "\t t=" << t << "\t dt=" << (tEnd-t) << std::endl;
 					  }
 					  else
 					  {
-						  std::cout << "\t" << k << "\t" << t << "\t" << dtOld 
+						  std::cout << "\t" << k << "\t" << t << "\t" << dtOld
 						  << "\t # timestep number k, time t, timestep size dt" << std::endl;
 						  //std::cout << ", timestep: " << k << "\t t=" << t << "\t dt=" << dt << std::endl;
 					  }
@@ -164,10 +164,10 @@ namespace Dune {
 				  else {
 					  t += dt;
 					  t = std::min(t, tEnd);
-					  std::cout << "\t" << k << "\t" << t << "\t" << dt 
+					  std::cout << "\t" << k << "\t" << t << "\t" << dt
 					  << "\t # timestep number k, time t, timestep size dt" << std::endl;
 					  //std::cout << ", timestep: " << k << "\t t=" << t << "\t dt=" << dt << std::endl;
-				  }		    		
+				  }
 			  }
 			  else
 			  {
@@ -178,42 +178,42 @@ namespace Dune {
 			  }
 
 			  // generate output
-			  if (k%modulo == 0) 
+			  if (k%modulo == 0)
 			  {
-				  writer.beginTimestep(t, model.getGrid());
+				  writer.beginTimestep(t, model.getGrid().leafView());
 				  model.addvtkfields(writer);
 				  std::cout << ">>> writing output-file at time : " << t << std::endl;
 				  writer.endTimestep();
 			  }
 			  //		    if (fixed)
 			  //		    	dt = dtOriginal;
-		  }    
-		  
+		  }
+
 		  return;
 	  }
-	  
 
 
-	  TimeLoop(const double ts, const double te, const char* name = "timeloop", const int mod = 1, 
-			  const double cfl = 1, const double mdt = 1e100, const double fdt = 1e100, 
+
+	  TimeLoop(const double ts, const double te, const char* name = "timeloop", const int mod = 1,
+			  const double cfl = 1, const double mdt = 1e100, const double fdt = 1e100,
 			  TimeStep<G, Model>& tist = *(new RungeKuttaStep<G, Model>(1)))
-			  : tStart(ts), tEnd(te), maxDt(mdt), firstDt(fdt), cFLFactor(cfl), 
+			  : tStart(ts), tEnd(te), maxDt(mdt), firstDt(fdt), cFLFactor(cfl),
 			  modulo(mod), timeStep(tist), fileName(name), fixed(false)
 			  { }
 
-	  TimeLoop(const double ts, const double te, const double dtime = 1e100, 
-			  const char* name = "timeloop", const int mod = 1, const double fdt = 1e100, 
+	  TimeLoop(const double ts, const double te, const double dtime = 1e100,
+			  const char* name = "timeloop", const int mod = 1, const double fdt = 1e100,
 			  TimeStep<G, Model>& tist = *(new ImplicitEulerStep<G, Model>))
-			  : tStart(ts), tEnd(te), dt(dtime), maxDt(1e100), firstDt(fdt), cFLFactor(1), 
+			  : tStart(ts), tEnd(te), dt(dtime), maxDt(1e100), firstDt(fdt), cFLFactor(1),
 			  modulo(mod), timeStep(tist), fileName(name), fixed(true)
 			  { }
 
-  private: 
+  private:
 	  const double tStart;
 	  const double tEnd;
 	  double dt;
-	  const double maxDt; 
-	  const double firstDt; 
+	  const double maxDt;
+	  const double firstDt;
 	  const double cFLFactor;
 	  const int modulo;
 	  TimeStep<G, Model>& timeStep;
