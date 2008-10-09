@@ -76,13 +76,13 @@ int main(int argc, char** argv)
 
      Dune::CBrineCO2 multicomp(wPhase, nPhase);
 
-Dune::BrineCO2Problem<GridType, NumberType> problem(wPhase, nPhase, soil,
+     Dune::BrineCO2Problem<GridType, NumberType> problem(wPhase, nPhase, soil,
                  materialLaw, multicomp, depthBOR);
 
  //    Dune::BrineCO2Problem<GridType, NumberType> problem(wPhase, nPhase, soil,
 //    		 materialLaw, multicomp, depthBOR);
 
-     typedef Dune::VtkMultiWriter<GridType::LeafGridView> MultiWriter;
+     typedef Dune::VtkMultiWriter<GridType> MultiWriter;
      typedef Dune::BoxCO2<GridType, NumberType, MultiWriter> TwoPhase;
      TwoPhase twoPhase(grid, problem);
 
@@ -90,7 +90,7 @@ Dune::BrineCO2Problem<GridType, NumberType> problem(wPhase, nPhase, soil,
 
      Dune::Timer timer;
      timer.reset();
-     Dune::VtkMultiWriter<GridType::LeafGridView> writer("co2");
+     Dune::VtkMultiWriter<GridType> writer("co2");
 
 	 //timeloop.execute(twoPhase);
      timeloop.executeMultiWriter(twoPhase, writer);
