@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_VARIABLECLASS_HH
 #define DUNE_VARIABLECLASS_HH
@@ -19,7 +19,7 @@ template<class G, class RT> class VariableClass
 	{	n=G::dimension};
 	typedef typename G::ctype DT;
 	typedef Dune::BlockVector< Dune::FieldVector<RT,1> > ScalarType;
-	typedef Dune::BlockVector< Dune::FieldVector<RT,n> > SlopeType;	
+	typedef Dune::BlockVector< Dune::FieldVector<RT,n> > SlopeType;
 	typedef Dune::BlockVector< Dune::FieldVector<Dune::FieldVector<double, n>, 2*n> >
 			VelType;
 	typedef typename G::Traits::template Codim<0>::Entity Entity;
@@ -59,14 +59,14 @@ public:
 		saturation=initialsat;
 		return;
 	}
-	
+
 	void initslopes(RT initialslope, int size)
 		{
 			slope.resize(size);
 			slope=initialslope;
 			return;
 		}
-	
+
 	void initpress(RT& initialpress, int size)
 	{
 		pressure.resize(size);
@@ -114,7 +114,7 @@ public:
 	}
 
 	/*! @brief prints the saturation to a VTK file
-	 * 
+	 *
 	 *  The file name is "<name>-<k>.vtu" where k is an integer number.
 	 *  @param name specifies the name of the VTK file
 	 *  @param k specifies a number
@@ -123,7 +123,7 @@ public:
 	{
 		if (pressurelevel == satlevel)
 		{
-                        VTKWriter<typename G::LeafGridView> vtkwriter(grid.leafView());
+            LeafVTKWriter<G> vtkwriter(grid);
 			char fname[128];
 			sprintf(fname, "%s-%05d", name, k);
 			vtkwriter.addCellData(saturation, "saturation");
@@ -132,15 +132,13 @@ public:
 		}
 		else
 		{
-			VTKWriter<typename G::LevelGridView>
-                                  vtkwriterpressure(grid.levelView(pressurelevel));
+			LevelVTKWriter<G> vtkwriterpressure(grid, pressurelevel);
 			char fname[128];
 			sprintf(fname, "%s-%05d", name, k);
 			vtkwriterpressure.addCellData(pressure, "total pressure p~");
 			vtkwriterpressure.write(fname, Dune::VTKOptions::ascii);
 
-			VTKWriter<typename G::LevelGridView>
-					vtkwritersaturation(grid.levelView(satlevel));
+			LevelVTKWriter<G> vtkwritersaturation(grid, satlevel);
 			sprintf(fname, "%s-press%05d", name, k);
 			vtkwritersaturation.addCellData(saturation, "saturation");
 			vtkwritersaturation.write(fname, VTKOptions::ascii);
@@ -149,7 +147,7 @@ public:
 	}
 	void vtkoutpressure(const char* name, int k) const
 	{
-                VTKWriter<typename G::LeafGridView> vtkwriter(grid.leafView());
+        LeafVTKWriter<G> vtkwriter(grid);
 		char fname[128];
 		sprintf(fname, "%s-press%05d", name, k);
 		vtkwriter.addCellData(pressure, "total pressure p~");
@@ -165,7 +163,7 @@ public:
 			saturationEx[i] = uEx[i][0];
 			error[i]=uEx[i][1];
 		}
-		VTKWriter<typename G::LeafGridView> vtkwriter(grid.leafView());
+		LeafVTKWriter<G> vtkwriter(grid);
 		char fname[128];
 		sprintf(fname, "%s-%05d", name, k);
 		vtkwriter.addCellData(saturation, "saturation");
