@@ -41,7 +41,7 @@ int main(int argc, char** argv)
 
     // create object including the discretisation of the coupled system of
     // equations (oil and water mass balances) with the box method
-    typedef Dune::BoxPwSn<GridType, NumberType> boxmethod;
+    typedef Dune::BoxPwSn<GridType, NumberType> TwoPhase;
     TwoPhase boxmethod(grid, problem); /*@\label{tutorial-coupled:boxmethod}@*/
 
     // some parameters needed for the TimeLoop-object
@@ -57,7 +57,7 @@ int main(int argc, char** argv)
     timer.reset();
 
     // start simulation
-    timeloop.execute(twoPhase); /*@\label{tutorial-decoupled:execute}@*/
+    timeloop.execute(boxmethod); /*@\label{tutorial-decoupled:execute}@*/
 
     return 0;
   }
