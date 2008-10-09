@@ -119,7 +119,7 @@ namespace Dune {
 	  {
 		  int k = 0;
 
-		  writer.beginTimestep(0, model.getGrid().leafView());
+		  writer.beginTimestep(0, model.getGrid());
 
 		  // initialize solution with initial values
 		  model.setVtkMultiWriter(&writer);
@@ -180,7 +180,7 @@ namespace Dune {
 			  // generate output
 			  if (k%modulo == 0)
 			  {
-				  writer.beginTimestep(t, model.getGrid().leafView());
+				  writer.beginTimestep(t, model.getGrid());
 				  model.addvtkfields(writer);
 				  std::cout << ">>> writing output-file at time : " << t << std::endl;
 				  writer.endTimestep();

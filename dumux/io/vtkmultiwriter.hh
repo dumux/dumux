@@ -18,8 +18,8 @@
  * \file
  * \brief Simplyfies writing multi-file VTK datasets.
  */
-#ifndef STUPID_VTK_MULTI_WRITER_HH
-#define STUPID_VTK_MULTI_WRITER_HH
+#ifndef VTK_MULTI_WRITER_HH
+#define VTK_MULTI_WRITER_HH
 
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 
@@ -40,12 +40,12 @@ namespace Dune {
      * simplifies writing datasets consisting of multiple files. (i.e.
      * multiple timesteps or grid refinements within a timestep.)
      */
-    template<class GridView>
+    template<class Grid>
     class VtkMultiWriter
     {
     public:
 
-        typedef Dune::VTKWriter<GridView> VtkWriter;
+        typedef Dune::LeafVTKWriter<Grid> VtkWriter;
         VtkMultiWriter(const std::string &simName = "", std::string multiFileName = "")
             {
                 _simName = (simName.empty())?"sim":simName;
@@ -68,16 +68,16 @@ namespace Dune {
          * \brief Called when ever a new timestep or a new grid
          *        must be written.
          */
-        void beginTimestep(double t, const GridView &gridView)
+        void beginTimestep(double t, const Grid &grid)
             {
-                _curWriter = new VtkWriter(gridView);
+                _curWriter = new VtkWriter(grid);
                 ++_writerNum;
                 _curTime = t;
-                _curGridView = &gridView;
+                _curGrid = &grid;
 
                 _curOutFileName = (boost::format("%s-%05d")
                                    %_simName%_writerNum).str();
-                const char *suffix = (GridView::dimension == 1)?"vtp":"vtu";
+                const char *suffix = (Grid::dimension == 1)?"vtp":"vtu";
                 _multiFile << boost::format("   <DataSet timestep=\"%lf\" file=\"%s.%s\"/>\n")
                     %_curTime%_curOutFileName%suffix;
             };
@@ -132,11 +132,11 @@ namespace Dune {
                 /*
                 // useful typedefs
                 typedef typename Function::RangeFieldType                      Scalar;
-                typedef typename GridView::Traits::template Codim<GridView::dimension> VertexTraits;
+                typedef typename Grid::Traits::template Codim<Grid::dimension> VertexTraits;
                 typedef typename VertexTraits::Entity                          Vertex;
                 typedef typename VertexTraits::LeafIterator                    VertexIterator;
-                typedef Dune::ReferenceElement<typename GridView::ctype, 0>        VertexReferenceElement;
-                typedef Dune::ReferenceElements<typename GridView::ctype, 0>       VertexReferenceElements;
+                typedef Dune::ReferenceElement<typename Grid::ctype, 0>        VertexReferenceElement;
+                typedef Dune::ReferenceElements<typename Grid::ctype, 0>       VertexReferenceElements;
                 typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> >       ScalarField;
 
                 // create a vertex based scalar field.
@@ -144,8 +144,8 @@ namespace Dune {
                 std::vector<bool> vertexVisited(vertexMap.size(), false);
 
                 // fill the Scalar field
-                VertexIterator it = _curGridView->template leafbegin<GridView::dimension>();
-                VertexIterator endIt = _curGridView->template leafend<GridView::dimension>();
+                VertexIterator it = _curGrid->template leafbegin<Grid::dimension>();
+                VertexIterator endIt = _curGrid->template leafend<Grid::dimension>();
                 for (; it != endIt; ++it) {
                     // extract the current solution's Sn component
                     const VertexReferenceElement &refElem =
@@ -190,18 +190,18 @@ namespace Dune {
                 // some typedefs
 
                 typedef typename Function::RT                                        Scalar;
-                typedef typename GridView::template Codim<0>::Entity                 Cell;
-                typedef typename GridView::template Codim<0>::Iterator               CellIterator;
-                typedef Dune::ReferenceElement<typename GridView::ctype, GridView::dimgrid>  CellReferenceElement;
-                typedef Dune::ReferenceElements<typename GridView::ctype, GridView::dimgrid> CellReferenceElements;
+                typedef typename Grid::template Codim<0>::Entity                 Cell;
+                typedef typename Grid::template Codim<0>::Iterator               CellIterator;
+                typedef Dune::ReferenceElement<typename Grid::ctype, Grid::dimgrid>  CellReferenceElement;
+                typedef Dune::ReferenceElements<typename Grid::ctype, Grid::dimgrid> CellReferenceElements;
                 typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> >             ScalarField;
 
                 // create a cell based scalar field.
                 ScalarField *field = createField<Scalar, 1>(cellMap.size());
 
                 // fill the Scalar field
-                CellIterator it = _curGridView->template begin<0>();
-                CellIterator endIt = _curGridView->template end<0>();
+                CellIterator it = _curGrid->template begin<0>();
+                CellIterator endIt = _curGrid->template end<0>();
                 for (; it != endIt; ++it) {
                     // extract the current solution's Sn component
                     const CellReferenceElement &refElem =
@@ -299,14 +299,14 @@ namespace Dune {
         // end hack
         ////////////////////////////////////
 
-        std::ofstream   _multiFile;
-        std::string     _simName;
+        std::ofstream  _multiFile;
+        std::string    _simName;
 
-        double          _curTime;
-        VtkWriter     * _curWriter;
-        const GridView* _curGridView;
-        std::string     _curOutFileName;
-        int             _writerNum;
+        double         _curTime;
+        VtkWriter     *_curWriter;
+        const Grid    *_curGrid;
+        std::string    _curOutFileName;
+        int            _writerNum;
 
         std::list<_VtkVectorFieldStoreBase*> _vectorFields;
     };
