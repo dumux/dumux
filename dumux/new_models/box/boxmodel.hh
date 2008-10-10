@@ -54,6 +54,7 @@ namespace Dune
             typedef JacobianT                              LocalJacobian;
             typedef typename BoxTraits::BoxFunction        Function;
             typedef typename BoxTraits::OperatorAssembler  OperatorAssembler;
+            typedef typename DomainTraits::Scalar          Scalar;
         };
         
     private:

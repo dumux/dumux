@@ -96,7 +96,7 @@ namespace Dune
 		
 	//! Construct a FractionalFlow object.
 	FractionalFlow (Diffusion& diff, Transport& trans)
-	: Diffusion(diff), Transport(trans)
+            : Transport(trans), Diffusion(diff)
 	{ 
 		if (trans.level() > diff.level()) 
 		  DUNE_THROW(Exception,"from class Twophase (or derived): transport class level is higher than diffusion class level!");

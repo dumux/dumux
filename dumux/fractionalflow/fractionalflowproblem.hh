@@ -121,10 +121,10 @@ namespace Dune
 	/*! evaluate gravity
 	  \return     gravity vector
 	 */
-	const FieldVector<DT,n>& gravity() const
+	const FieldVector<DT,n> gravity() const
 	{
-		FieldVector<DT,n> gravity_(0);
-
+                FieldVector<DT,n> gravity_(0);
+                // TODO: this is pretty hacky!!!
 		return gravity_;
 	}
 
@@ -133,7 +133,7 @@ namespace Dune
 	 *  @param cap flag to include capillary forces.
 	 */
 	FractionalFlowProblem(VC& variableobject, Fluid& wp, Fluid& nwp, Matrix2p<G, RT>& s, TwoPhaseRelations<G, RT>& law = *(new TwoPhaseRelations<G,RT>), const bool cap = false)
-	 : variables(variableobject), wettingphase(wp), nonwettingphase(nwp), soil(s), capillary(cap), materialLaw(law)
+            : variables(variableobject), wettingphase(wp), nonwettingphase(nwp), soil(s), materialLaw(law), capillary(cap)
 	 {}
 
 	//! always define virtual destructor in abstract base class

@@ -21,4 +21,8 @@ add_subdirectory("minc")
 #add_subdirectory("multigrid")
 add_subdirectory("newton")
 add_subdirectory("parallel")
+add_subdirectory("tutorial")
 add_subdirectory("twophase")
+#add_subdirectory("upscaledvelocity")
+#add_subdirectory("vtk")
+

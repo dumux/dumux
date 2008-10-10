@@ -9,6 +9,8 @@
 #include <dumux/material/constrel/constrelbrine.hh>
 #include <dumux/material/constrel/constrelair.hh>
 
+#include <dune/common/exceptions.hh>
+
 namespace Dune
 {
 /** \ingroup properties
@@ -214,6 +216,8 @@ public:
 			return constEnthalpy_;
 		else {
 //			return constRelOil.enthalpy_brine(T,p,S);
+                    // TODO
+                    DUNE_THROW(Dune::NotImplemented, "Non-constant enthalpy of oil");
 		}
 	}
 

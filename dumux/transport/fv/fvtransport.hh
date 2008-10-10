@@ -172,7 +172,7 @@ template<class G, class RT, class VC> int FVTransport<G, RT, VC>::update(const R
 			// compute factor occuring in flux formula
 			double velocityIJ = std::max(this->transproblem.variables.vTotal(*it, numberInSelf)*integrationOuterNormal/(volume), 0.0);
 
-			double factor, diffFactor, totfactor;//, volumecorrectionfactor;
+			double factor = 0, diffFactor = 0, totfactor = 0;//, volumecorrectionfactor;
 
 			// handle interior face
 			if (is->neighbor())
