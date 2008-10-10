@@ -353,10 +353,9 @@ namespace Dune
  		 elData.KMatrix = problem.KMatrix(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
  		 
  		 elData.porosityFracture = problem.porosityFracture(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
- 		 double porF =  elData.porosityFracture;
+// 		 double porF =  elData.porosityFracture;
  		 elData.porosityMatrix = problem.porosityMatrix(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
- 		 double porM =  elData.porosityMatrix;
- 		 
+// 		 double porM =  elData.porosityMatrix;
     };
 
     
@@ -393,8 +392,8 @@ namespace Dune
 //   		this->def[i] = 0; // it initialize the deffect to 0
    		vNData[i].saturationWFracture = 1.0 - sol[i][satNFIdx];
    		vNData[i].saturationWMatrix = 1.0 - sol[i][satNMIdx];
-   		double saturWF = vNData[i].saturationWFracture;
-   		double saturWM = vNData[i].saturationWMatrix;
+//   		double saturWF = vNData[i].saturationWFracture;
+//   		double saturWM = vNData[i].saturationWMatrix;
    		
 //   		   		
 
@@ -411,31 +410,32 @@ namespace Dune
          vNData[i].pWMatrix   = sol[i][pWMIdx];
          vNData[i].pNFracture = sol[i][pWFIdx] + vNData[i].pCFracture;
          vNData[i].pNMatrix   = sol[i][pWMIdx] + vNData[i].pCMatrix;
-         double solutionPWFIdx = sol[i][pWFIdx];
+/*         double solutionPWFIdx = sol[i][pWFIdx];
          double solutionPWMIdx = sol[i][pWMIdx];
          double solutionPNFIdx = vNData[i].pNFracture;
          double solutionPNMIdx = vNData[i].pNMatrix;
+*/
          
          //Mobilities & densities 
          vNData[i].mobility[pWFIdx]   = problem.materialLaw().mobW(vNData[i].saturationWFracture, parametersFracture);
          vNData[i].mobility[pWMIdx]   = problem.materialLaw().mobW(vNData[i].saturationWMatrix, parametersMatrix);
          vNData[i].mobility[satNFIdx] = problem.materialLaw().mobN(sol[i][satNFIdx], parametersFracture);
          vNData[i].mobility[satNMIdx] = problem.materialLaw().mobN(sol[i][satNMIdx], parametersMatrix);
-         double mobilWF = vNData[i].mobility[pWFIdx];
+/*         double mobilWF = vNData[i].mobility[pWFIdx];
          double mobilWM = vNData[i].mobility[pWMIdx];
          double mobilNF = vNData[i].mobility[satNFIdx];
          double mobilNM = vNData[i].mobility[satNMIdx];
-         
+*/         
          
          vNData[i].density[pWFIdx]    = problem.materialLaw().wettingPhase.density();
          vNData[i].density[satNFIdx]  = problem.materialLaw().nonwettingPhase.density();
          vNData[i].density[pWMIdx]    = problem.materialLaw().wettingPhase.density();
          vNData[i].density[satNMIdx]  = problem.materialLaw().nonwettingPhase.density();
-         double densWF =  vNData[i].density[pWFIdx];
+/*         double densWF =  vNData[i].density[pWFIdx];
          double densNF =  vNData[i].density[satNFIdx];
          double densWM =  vNData[i].density[pWMIdx];
          double densNM =  vNData[i].density[satNMIdx];
-         
+*/       
    	 }   
 
     }

@@ -90,7 +90,7 @@ int main(int argc, char** argv)
 
       double tStart = 0;
       //double tEnd = 2.5e9;
-      char* fileName("buckleyleverett");
+      const char* fileName = "buckleyleverett";
       int modulo = 1;
       double cFLFactor = 1;
       Dune::TimeLoop<GridType, IMPES > timeloop(tStart, tEnd, fileName, modulo, cFLFactor);

@@ -206,7 +206,7 @@ template<class G, class RT, class VC> void FVDiffusion<G, RT, VC>::assemble(cons
 		FieldMatrix<ct,dim,dim> Ki(this->diffproblem.K(global, *it, local));
 
 		//compute total mobility
-		double lambdaI, fractionalWI;
+		double lambdaI = 0, fractionalWI = 0;
 		double sati = this->diffproblem.variables.saturation[indexi];
 		lambdaI = this->diffproblem.materialLaw.mobTotal(sati);
 		if (hasGravity)
@@ -305,7 +305,7 @@ template<class G, class RT, class VC> void FVDiffusion<G, RT, VC>::assemble(cons
 				// compute averaged total mobility
 				// CAREFUL: Harmonic weightig can generate zero matrix entries,
 				// use arithmetic weighting instead:
-				double fractionalW;
+				double fractionalW = 0;
 				double lambda = 0.5*(lambdaI + lambdaJ);
 				if (hasGravity)
 				fractionalW = 0.5*(fractionalWI + fractionalWJ);

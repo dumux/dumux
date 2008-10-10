@@ -853,7 +853,7 @@ namespace Dune
 //  	  std::cout << g.comm().rank() << ": " << "hanging nodes=" << hangingnodes << " links=" << links.size() << std::endl;
    
 	  // set size of all rows to zero
-	  for (size_t i=0; i<gv.indexSet().size(n); i++)
+	  for (size_t i=0; (int) i < (int) gv.indexSet().size(n); i++)
 		A.setrowsize(i,0); 
 
 	  // build needs a flag for all entities of all codims

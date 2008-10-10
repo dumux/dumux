@@ -76,8 +76,7 @@ namespace Dune
 	CRSimplexShapeFunction (int i) // make it the i'th shape function
 	{
 	  number = i;
-	  switch (dim) {
-	  case 2:
+	  if (dim == 2) {
 	    switch (i) {
 	    case 2: 
 	      pos[0] = 0.5; pos[1] = 0;
@@ -92,8 +91,8 @@ namespace Dune
 	      a[0] = 1; a[1] = -2; a[2] = 0;
 	      break;
 	    }
-	    break;
-	  case 3:
+          }
+          else if (dim == 3) {              
 	    switch (i) {
 	    case 0: 
 	      pos[0] = 0.5; pos[1] = 0.5; pos[2] = 0;
@@ -112,8 +111,6 @@ namespace Dune
 	      a[0] = -2; a[1] = 2; a[2] = 2; a[3] = 2;
 	      break;
 	    }
-	    break;
-	    
 	  }
 	}
 

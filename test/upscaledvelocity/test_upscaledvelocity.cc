@@ -68,7 +68,7 @@ int main(int argc, char** argv)
 
     double tStart = 0;
     double tEnd = 1;
-    char* fileName("timeloop");
+    const char* fileName = "timeloop";
     int modulo = 1;
     double cFLFactor = 1.0;
     Dune::TimeLoop<GridType, IMPESMS > timeloop(tStart, tEnd, fileName, modulo, cFLFactor);

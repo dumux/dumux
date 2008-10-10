@@ -151,14 +151,24 @@ public:
 			RT Snr = 0.2, RT Porosity = 0.2, RT Lambda = 2.0, RT p0 = 0,
 			RT Alpha = 0.0037, RT N = 4.7, RT pwlowerleftbc=2e5,
 			RT pwupperrightbc=1.999986e5) :
-		TwoPhaseProblem<G, RT>(law), LowerLeft_(LowerLeft),
-				UpperRight_(UpperRight), bcf_(bcf), chooselaw_(chooselaw),
-				eps_(1e-8*UpperRight[0]),
-				densityW_(law.wettingPhase.density()),
-				densityN_(law.nonwettingPhase.density()), Swr_(Swr), Snr_(Snr),
-				Porosity_(Porosity), Lambda_(Lambda), p0_(p0), Alpha_(Alpha),
-				N_(N), pwlowerleftbc_(pwlowerleftbc),
-				pwupperrightbc_(pwupperrightbc) {
+		TwoPhaseProblem<G, RT>(law), 
+                LowerLeft_(LowerLeft),
+                UpperRight_(UpperRight), 
+                eps_(1e-8*UpperRight[0]),
+                bcf_(bcf), 
+                densityW_(law.wettingPhase.density()),
+                densityN_(law.nonwettingPhase.density()), 
+                Swr_(Swr),
+                Snr_(Snr),
+                Porosity_(Porosity), 
+                Lambda_(Lambda),
+                p0_(p0),
+                Alpha_(Alpha),
+                N_(N),
+                pwlowerleftbc_(pwlowerleftbc),
+                pwupperrightbc_(pwupperrightbc),
+                chooselaw_(chooselaw)
+        {
 		K_[0][0]=K_[1][1]=K;
 		K_[1][0]=K_[0][1]=0;
 

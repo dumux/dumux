@@ -319,6 +319,7 @@ public:
 			return constEnthalpy_;
 		else {
 //			return constRelOil.enthalpy_brine(T,p,S);
+                    DUNE_THROW(Dune::NotImplemented, "Non-constant enthalpy of oil");
 		}
 	}
 	double Sr() const

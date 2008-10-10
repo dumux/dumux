@@ -284,6 +284,8 @@ namespace Dune
     {	}
   
 
+      
+
 	/*! @brief Assemble global stiffness matrix 
 
 	This method takes an object that can compute local stiffness matrices and
@@ -304,9 +306,9 @@ namespace Dune
     Dirichlet value at the \f$i\f$th node.
 
 	 */
-      template<class I>
-      void assemble (LocalStiffness<I,G,RT,m>& loc, CRFunction<G,RT,GV,LC,m>& u, 
-    		  CRFunction<G,RT,GV,LC,m>& f)
+      void assemble (LocalStiffness<typename G::LeafGridView,RT,m>& loc,
+                     CRFunction<G,RT,GV,LC,m>& u, 
+                     CRFunction<G,RT,GV,LC,m>& f)
       {
 
 	  // check size
@@ -346,7 +348,7 @@ namespace Dune
 
 		  // build local stiffness matrix for CR elements
 		  // inludes rhs and boundary condition information
-		  loc.template assemble<TypeTag>(*it, 1); // assemble local stiffness matrix
+		  loc.assemble(*it, 1); // assemble local stiffness matrix
 
 
 		  // accumulate local matrix into global matrix for non-hanging nodes

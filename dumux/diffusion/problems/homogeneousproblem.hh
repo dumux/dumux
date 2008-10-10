@@ -21,16 +21,14 @@ namespace Dune
 		       RT K=1e-7)
       : DiffusionProblem<G,RT,VC>(variableobj,law, cap)
     { 
-      switch (n) {
-		case 1:
-			K_=K;
-			break;
-		case 2:
-			K_[0][0]=K_[1][1]=K;
-			K_[0][1]=K_[1][0]=0;
-			break;
-		}
+        if (n == 1) {
+            K_=K;
+        }
+        else if (n == 2) {
+            K_[0][0]=K_[1][1]=K;
+            K_[0][1]=K_[1][0]=0;
 	}
+    }
 
 	virtual FieldMatrix<DT,n,n>& K(const FieldVector<DT,n>& x,
 			const Entity& e, const FieldVector<DT,n>& xi) {
@@ -74,7 +72,7 @@ namespace Dune
   private:
 	FieldMatrix<DT,n,n> K_;		
 //	G& grid;
-  };
+    };
 }
 
 #endif

@@ -10,6 +10,7 @@
 #endif
 #cmakedefine HAVE_UG 1
 #cmakedefine HAVE_ALUGRID 1
+#cmakedefine HAVE_ALBERTA 1
 
 #cmakedefine PROJECT_NAME             "${PROJECT_NAME}"
 #cmakedefine PROJECT_VERSION          "${PROJECT_VERSION}"

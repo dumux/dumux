@@ -23,7 +23,7 @@ namespace Dune
 					  const FieldVector<DT,n>& xi) 
 	  {
 		  double delta = 1.0e-3;
-		  double pi = 4.0*atan(1.0); 
+//		  double pi = M_PI; 
 		  double rt = x[0]*x[0]+x[1]*x[1]; 
 
 		  permloc_[0][0] = (delta*x[0]*x[0] + x[1]*x[1])/rt; 

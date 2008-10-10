@@ -76,8 +76,7 @@ namespace Dune
 	CRCubeShapeFunction (int i) // make it the i'th shape function
 	{
 	  number = i;
-	  switch (dim) {
-	  case 2:
+          if (dim == 2) {
 	    switch (i) {
 	    case 0: 
 	      pos[0] = 0; pos[1] = 0.5;
@@ -96,8 +95,8 @@ namespace Dune
 	      a[0] = -0.25; a[1] = 1; a[2] = 0; a[3] = -1;
 	      break;
 	    }
-	    break;
-	  case 3:
+          }
+          else if (dim == 3) {
 	    switch (i) {
 	    case 0: 
 	      pos[0] = 0.5; pos[1] = 0.5; pos[2] = 0;
@@ -124,8 +123,6 @@ namespace Dune
 	      a[0] = -1.0/3.0; a[1] = 2.0/3.0; a[2] = -1.0/3.0; a[3] = 2.0/3.0; a[4] = -2.0/3.0; a[5] = 2.0/3.0;
 	      break;
 	    }
-	    break;
-	    
 	  }
 	}
 

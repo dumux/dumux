@@ -63,7 +63,7 @@ namespace Dune
 			 const int level = 0, const bool cap =
 			 false)
       : TransportProblem<G, RT, VC>(variableobj,law, cap), LowerLeft_(variableobj.grid.lowerLeft()), UpperRight_(variableobj.grid.upperRight()),
-	eps_(1e-8*(variableobj.grid.upperRight())[0]),poro_(0.2),bcf_(bcf)
+	eps_(1e-8*(variableobj.grid.upperRight())[0]),bcf_(bcf),poro_(0.2)
     {}
   };
   template<class G, class RT,class VC>

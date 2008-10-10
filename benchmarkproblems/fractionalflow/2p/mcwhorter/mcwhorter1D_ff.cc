@@ -89,7 +89,7 @@ int main(int argc, char** argv)
     double omega=1;
 
     // plotting parameters
-    char* fileName("mcwhorter1D");
+    const char* fileName = "mcwhorter1D";
     int modulo = 100;
 
     Oil oil(0.0);

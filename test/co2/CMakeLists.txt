@@ -1,4 +1,4 @@
-add_definitions(-DYASPGRID -DGRIDDIM=2 -DENABLE_UG)
+add_definitions(-DYASPGRID -DGRIDDIM=2 -DENABLE_UG -DENABLE_ALUGRID)
 
 # add build targets
 ADD_EXECUTABLE("test_co2" co2.cc)

@@ -8,9 +8,10 @@ Include(DumuxMacros)
 
 DumuxSetup("ALUGrid" "ALUGrid" "ALUGrid")
 
-# set(MyIncludeSuffixes 
-#     "gm"
-#     "np")
+set(MyIncludeSuffixes 
+    "include/serial"
+    "include/parallel"
+    "include/duneinterface")
 # set(MyLibSuffixes 
 #     "np" 
 #     "np/field"
@@ -89,9 +90,12 @@ DumuxSetup("ALUGrid" "ALUGrid" "ALUGrid")
 # #  "ugui3"
 # )
 
-#DumuxAddPathSuffixes("${MyIncludeSuffixes}" "${MyLibSuffixes}" )
+DumuxAddPathSuffixes("${MyIncludeSuffixes}" "")
 
 DumuxFindIncludeDir("alugrid_2d.h")
+DumuxFindExtraIncludeDir("ALU_SERIAL" "serialize.h")
+DumuxFindExtraIncludeDir("ALU_PARALLEL" "metis.h")
+DumuxFindExtraIncludeDir("ALU_DUNE" "gitter_dune_impl.h")
 DumuxFindLibrary("alugrid")
 
 DumuxRequiredLibsFound("alugrid")

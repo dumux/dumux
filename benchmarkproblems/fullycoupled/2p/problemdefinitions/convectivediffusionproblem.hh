@@ -150,14 +150,26 @@ public:
 			RT Swr = 0, RT Snr = 0, RT Si = 0, RT Porosity = 0.2,
 			RT Lambda = 2.0, RT p0 = 10, RT Alpha = 0.1,//1.74e-4,
 			RT N = 3.1257, RT pwleftbc=2e5, RT pwrightbc=2e5) :
-		TwoPhaseProblem<G, RT>(law, analyticalsol),
-				LowerLeft_(LowerLeft), UpperRight_(UpperRight), chooselaw_(chooselaw), K_(K),
-				Swr_(Swr), Snr_(Snr), Sinit_(Si), Porosity_(Porosity),
-				Lambda_(Lambda), p0_(p0), Alpha_(Alpha), N_(N),
-				pwleftbc_(pwleftbc), pwrightbc_(pwrightbc),
-				eps_(1e-8*UpperRight[0]), densityW_(law.wettingPhase.density()),
-				densityN_(law.nonwettingPhase.density()) {
-		switch (n) {
+            TwoPhaseProblem<G, RT>(law, analyticalsol),
+            K_(K),
+            LowerLeft_(LowerLeft), 
+            UpperRight_(UpperRight),
+            eps_(1e-8*UpperRight[0]), 
+            densityW_(law.wettingPhase.density()),
+            densityN_(law.nonwettingPhase.density()),
+            Swr_(Swr),
+            Snr_(Snr), 
+            Sinit_(Si),
+            Porosity_(Porosity),
+            Lambda_(Lambda), 
+            p0_(p0),
+            Alpha_(Alpha), 
+            N_(N),
+            pwleftbc_(pwleftbc), 
+            pwrightbc_(pwrightbc),
+            chooselaw_(chooselaw)
+        {
+            switch (n) {
 		case 1: //1D
 			width_ = UpperRight[0] - LowerLeft[0];
 			height_=1;

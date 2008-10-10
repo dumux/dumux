@@ -321,6 +321,7 @@ public:
 			return constEnthalpy_;
 		else {
 //			return 1.0;
+                    DUNE_THROW(Dune::NotImplemented, "Non-constant enthalpy for DNAPL");
 		}
 	}
     double intEnergy( double T=283.15, double p=1e5, double X = 1) const

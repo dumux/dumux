@@ -84,12 +84,12 @@ int main(int argc, char** argv)
 
     double tStart = 0;
     //double tEnd = 2.5e9;
-    char* fileName("buckleyleverett1D");
+    const char* fileName = "buckleyleverett1D";
     int modulo = 1;
     double cFLFactor = 1.0;
     // slope limiter parameters
-    bool reconstruct = true;
-    double alphaMax = 0.8;
+//    bool reconstruct = true;
+//    double alphaMax = 0.8;
 
     Oil oil(0.2);
     Water water(0.2);

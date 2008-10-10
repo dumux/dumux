@@ -39,6 +39,7 @@ FIND_PACKAGE(Boost REQUIRED)
 FIND_PACKAGE(MPI)
 FIND_PACKAGE(UG)
 FIND_PACKAGE(ALUGrid)
+#FIND_PACKAGE(Alberta)
 ##############
 
 
@@ -108,7 +109,6 @@ SetConfigHVar(PROJECT_NAME             ProjectName)
 SetConfigHVar(PROJECT_VERSION          ProjectVersion)
 SetConfigHVar(PROJECT_MAINTAINER       ProjectMaintainer)
 SetConfigHVar(PROJECT_MAINTAINER_EMAIL ProjectMaintainerEmail)
-configure_file(config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h )
 ##############
 
 ##############
@@ -132,8 +132,19 @@ if (ALUGrid_FOUND)
 endif(ALUGrid_FOUND)
 SetConfigHVar(HAVE_ALUGRID ALUGrid_FOUND)
 
-
+# deal with Alberta
+if (Alberta_FOUND)
+  set(DumuxLinkLibraries ${DumuxLinkLibraries} 
+      ${Alberta_LIBRARIES})
+  set(DumuxIncludeDirectories ${DumuxIncludeDirectories} 
+      ${Alberta_INCLUDE_DIRS})
+endif(Alberta_FOUND)
+SetConfigHVar(HAVE_ALBERTA Alberta_FOUND)
 ##############
+
+# actually write the config.h file to disk 
+configure_file(config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h )
+
 
 ##############
 # tell cmake that we've got a few subdirectories. (that's the

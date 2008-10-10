@@ -152,7 +152,7 @@ public:
 			//non-linear material law
 			else {
 				//find x_f next to global coordinate of the vertex
-				int xnext;
+				int xnext = 0;
 				for (int i=intervalnum; i>0; i--) {
 					if (global[0]<xf[i]) {
 						xnext = i;

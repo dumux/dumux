@@ -105,7 +105,6 @@ namespace Dune
 	  @param[in]  e    a codim 0 entity reference
 	  @param[in]  k    order of CR basis
 	 */
-    template<class TypeTag>
 	void assemble (const Entity& e, int k=1)
 	{
 	  // extract some important parameters
@@ -123,9 +122,20 @@ namespace Dune
 			this->A[i][j] = 0;
 		}
 
-	  assembleV<TypeTag>(e,k);
-	  assembleBC<TypeTag>(e,k);
+	  assembleV(e,k);
+	  assembleBC(e,k);
 	}
+
+        // TODO/FIXME: this is only valid for linear problems where
+        // the local stiffness matrix is independend of the current
+        // solution. We need to implement this properly, but this
+        // should at least make the thing compile...
+        typedef Dune::FieldVector<RT, m> VBlockType;
+        void assemble(const Entity &cell, const Dune::BlockVector<VBlockType>& localSolution, int orderOfShapeFns = 1)
+            {
+                assemble(cell, orderOfShapeFns);
+            }
+
 
 	//! assemble only boundary conditions for given element 
 	/*! On exit the following things have been done:
@@ -135,7 +145,6 @@ namespace Dune
 	  @param[in]  e    a codim 0 entity reference
 	  @param[in]  k    order of CR basis
 	 */
-    template<typename TypeTag>
 	void assembleBoundaryCondition (const Entity& e, int k=1)
 	{
 	  // extract some important parameters
@@ -151,10 +160,9 @@ namespace Dune
 		  this->bctype[i][0] = BoundaryConditions::neumann;
 		}
 
-	  this->template assembleBC<TypeTag>(e,k);
+	  this->template assembleBC(e,k);
 	}
 
-    template<typename TypeTag>
     void assembleElementMatrices(const Entity& e, Dune::FieldVector<DT,2*n>& faceVol, 
 				 Dune::FieldMatrix<RT,2*n,2*n>& W, Dune::FieldVector<DT,2*n>& c, 
 				 Dune::FieldMatrix<RT,2*n,2*n>& Pi, RT& dinv, Dune::FieldVector<DT,2*n>& F, RT& qmean)
@@ -187,10 +195,10 @@ namespace Dune
       
 //       std::cout << "element " << elemId << ": center " << centerGlobal << std::endl;;
       
-      typedef typename IntersectionIteratorGetter<G,TypeTag>::IntersectionIterator IntersectionIterator;
+      typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
       
-      IntersectionIterator endit = IntersectionIteratorGetter<G,TypeTag>::end(e);
-      for (IntersectionIterator it = IntersectionIteratorGetter<G,TypeTag>::begin(e); it!=endit; ++it)
+      IntersectionIterator endit = IntersectionIteratorGetter<G,LeafTag>::end(e);
+      for (IntersectionIterator it = IntersectionIteratorGetter<G,LeafTag>::begin(e); it!=endit; ++it)
       {
     	  // get geometry type of face
     	  Dune::GeometryType gtf = it->intersectionSelfLocal().type();
@@ -337,8 +345,6 @@ namespace Dune
     }
 
   private:
-
-	template<class TypeTag>
 	void assembleV (const Entity& e, int k=1)
 	{
 	  // extract some important parameters
@@ -357,7 +363,7 @@ namespace Dune
 	  Dune::FieldVector<RT,2*n> F(0);
 	  RT dinv;
 	  RT qmean;
-	  this->template assembleElementMatrices<TypeTag>(e, faceVol, W, c, Pi, dinv, F, qmean);
+	  this->assembleElementMatrices(e, faceVol, W, c, Pi, dinv, F, qmean);
 	  
 	  // Calculate the element part of the matrix Pi W Pi^T.
 	  Dune::FieldMatrix<RT,2*n,2*n> PiWPiT(W);
@@ -389,7 +395,6 @@ namespace Dune
 // 		    << ", b = " << this->b[0] << ", " << this->b[1] << ", " << this->b[2] << ", " << this->b[3] << std::endl;
 	}
 
-	template<class TypeTag>
 	void assembleBC (const Entity& e, int k=1)
 	{
 	  // extract some important parameters
@@ -402,12 +407,12 @@ namespace Dune
 	  int p=0;
 
 	  // evaluate boundary conditions via intersection iterator
-	  typedef typename IntersectionIteratorGetter<G,TypeTag>::IntersectionIterator
+	  typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator
 	    IntersectionIterator;
 	  
 	  //std::cout << "new element." << std::endl;
-	  IntersectionIterator endit = IntersectionIteratorGetter<G,TypeTag>::end(e);
-	  for (IntersectionIterator it = IntersectionIteratorGetter<G,TypeTag>::begin(e); 
+	  IntersectionIterator endit = IntersectionIteratorGetter<G,LeafTag>::end(e);
+	  for (IntersectionIterator it = IntersectionIteratorGetter<G,LeafTag>::begin(e); 
 	       it!=endit; ++it)
 		{
 		  //std::cout << "\tnew intersection iterator." << std::endl;

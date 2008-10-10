@@ -61,7 +61,7 @@ int main(int argc, char** argv)
       const double tStart = 0;
      // const double tEnd = 2.5e9;
     //  const double cFLFactor = 0.01;
-      const double cFLFactor = 0.2;
+    //  const double cFLFactor = 0.2;
 
       // slope limiter parameters
       bool reconstruct = true;
@@ -73,7 +73,7 @@ int main(int argc, char** argv)
       double maxDefect = 1e-5;
 
       // plotting parameters
-      char* fileName("mcwhorter");
+      const char* fileName = "mcwhorter";
       int modulo = 100;
 
       Oil oil(0.0);

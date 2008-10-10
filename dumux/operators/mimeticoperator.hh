@@ -101,7 +101,7 @@ namespace Dune
 	  Dune::FieldVector<RT,2*n> F(0);
 	  RT dinv = 0;
 	  RT qmean = 0;
-	  loc.template assembleElementMatrices<LevelTag>(*it, faceVol, W, c, Pi, dinv, F, qmean);
+	  loc.assembleElementMatrices(*it, faceVol, W, c, Pi, dinv, F, qmean);
 
 	  pressure[elemId] = dinv*(qmean + (F*pressTrace));
 		  

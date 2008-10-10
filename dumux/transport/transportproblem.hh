@@ -124,10 +124,10 @@ namespace Dune
 	//! always define virtual destructor in abstract base class
 	virtual ~TransportProblem () {}
 
-	const bool exsolution;
+	VC& variables;
 	const bool capillary;
 	TwoPhaseRelations& materialLaw;
-	VC& variables;
+	const bool exsolution;
 	BlockVector<FieldVector<RT, 2> > uE;
   };
 

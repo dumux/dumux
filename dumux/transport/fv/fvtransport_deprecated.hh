@@ -173,7 +173,7 @@ template<class G, class RT, class VC> int FVTransport<G, RT, VC>::update(const R
 			// compute factor occuring in flux formula
 			double velocityIJ = std::max(this->transproblem.variables.vTotal(*it, numberInSelf)*integrationOuterNormal/(volume), 0.0);
 
-			double factor, diffFactor, totfactor;
+			double factor=0, diffFactor=0, totfactor=0;
 
 			// handle interior face
 			if (is->neighbor())
@@ -392,7 +392,7 @@ template<class G, class RT, class VC> void FVTransport<G, RT, VC>::CalculateSlop
 
 		// location[k], k = 0,...,2dim-1, contains the local index w.r.t. IntersectionIterator,
 		// i.e. the numberInSelf, which is east, west, north, south, top, bottom to the cell center
-		Dune::FieldVector<int, 2*dim> location;
+		Dune::FieldVector<int, 2*dim> location(0);
 
 		// run through all intersections with neighbors and boundary
 		IntersectionIterator

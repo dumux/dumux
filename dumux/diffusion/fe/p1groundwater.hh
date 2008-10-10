@@ -61,7 +61,7 @@ namespace Dune
   */
   template<class G, class RT>
   class GroundwaterEquationLocalStiffness 
-    : public LocalStiffness<GroundwaterEquationLocalStiffness<G,RT>,G,RT,1>
+      : public LocalStiffness<typename G::LeafGridView,RT,1>
   {
 	    template<int dim>
 	    struct ElementLayout

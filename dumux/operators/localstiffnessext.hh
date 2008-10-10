@@ -8,7 +8,7 @@
 namespace Dune
 {
   template<class Imp, class G, class RT, int m>
-  class LocalStiffnessExt : public LocalStiffness<Imp, G, RT, m> 
+  class LocalStiffnessExt : public LocalStiffness<typename G::LeafGridView, RT, m> 
   {
     // grid types
     typedef typename G::ctype DT;
@@ -16,11 +16,10 @@ namespace Dune
     enum {n=G::dimension};
     
   public:
-    template<class TypeTag>
     void assembleElementMatrices(const Entity& e, Dune::FieldVector<DT,2*n>& faceVol, 
 				 Dune::FieldMatrix<RT,2*n,2*n>& W, Dune::FieldVector<DT,2*n>& c, 
 				 Dune::FieldMatrix<RT,2*n,2*n>& Pi, RT& dinv, Dune::FieldVector<DT,2*n>& F, RT& qmean) {
-      this->getImp().template assembleElementMatrices<TypeTag>(e, faceVol, W, c, Pi, dinv, F, qmean);
+        ((Imp*) this)->assembleElementMatrices(e, faceVol, W, c, Pi, dinv, F, qmean);
     }
   };
 }
