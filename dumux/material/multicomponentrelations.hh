@@ -208,7 +208,7 @@ class CWaterAir : public MultiComp
 			enum {wPhase = 0, nPhase = 1};
 
 			double result;
-			double molarMass1, molarMass2;
+			double molarMass1=0, molarMass2=0;
 
 			if (phase == wPhase){
 				molarMass1 = wettingPhase.molarMass_a();
@@ -231,7 +231,7 @@ class CWaterAir : public MultiComp
 			enum {wPhase = 0, nPhase = 1};
 
 			double result;
-			double molarMass1, molarMass2;
+			double molarMass1 = 0, molarMass2 = 0;
 
 			if (phase == wPhase){
 				molarMass1 = wettingPhase.molarMass_a();

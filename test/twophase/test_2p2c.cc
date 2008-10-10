@@ -91,7 +91,7 @@ int main(int argc, char** argv)
     		outerUpperRight, innerLowerLeft, innerUpperRight, depthBOR, materialLaw, multicomp);
 
     // create two-phase two-component problem
-    typedef Dune::VtkMultiWriter<GridType::LeafGridView> MultiWriter;
+    typedef Dune::VtkMultiWriter<GridType> MultiWriter;
     typedef Dune::Box2P2C<GridType, NumberType, MultiWriter> TwoPhaseTwoComp;
     TwoPhaseTwoComp twoPhasetwoComp(grid, problem);
 
