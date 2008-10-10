@@ -7,7 +7,7 @@ namespace Dune
 {
 
 template<class G, class RT>
-class TutorialSoil: public HomogeneousSoil<G, RT> /*@\label{tutorial-decoupled:tutorialsoil}@*/
+class TutorialSoil: public HomogeneousSoil<G, RT> /*@\label{tutorial-coupled:tutorialsoil}@*/
 {
 public:
 	typedef	typename G::Traits::template Codim<0>::Entity Entity;
@@ -17,7 +17,7 @@ public:
 
 	// function returning the intrinsic permeability tensor K
 	// depending on the position within the domain
-	FieldMatrix<DT,n,n> K (const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-decoupled:permeability}@*/
+	FieldMatrix<DT,n,n> K (const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-coupled:permeability}@*/
 			const FieldVector<DT,n>& xi)
 	{
 		FieldMatrix<DT,n,n> K(0);
@@ -30,7 +30,7 @@ public:
 
 	// function returning the porosity of the porous matrix
 	// depending on the position within the domain
-	double porosity(const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-decoupled:porosity}@*/
+	double porosity(const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-coupled:porosity}@*/
 			const FieldVector<DT,n>& xi) const
 	{
 		return 0.2;
@@ -38,7 +38,7 @@ public:
 
 	// function returning the residual saturation of the wetting fluid
 	// depending on the position within the domain and on the temperature
-	double Sr_w(const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-decoupled:srw}@*/
+	double Sr_w(const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-coupled:srw}@*/
 			const FieldVector<DT,n>& xi, const double T = 283.15) const
 	{
 		return 0;
@@ -46,7 +46,7 @@ public:
 
 	// function returning the residual saturation of the non-wetting fluid
 	// depending on the position within the domain and on the temperature
-	double Sr_n(const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-decoupled:srn}@*/
+	double Sr_n(const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-coupled:srn}@*/
 			const FieldVector<DT,n>& xi, const double T = 283.15) const
 	{
 		return 0;
@@ -55,7 +55,7 @@ public:
 	// function returning the parameters of the capillary pressure
 	// and the relative permeability functions
 	// depending on the position within the domain and on the temperature
-	std::vector<double> paramRelPerm(const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-decoupled:parameters}@*/
+	std::vector<double> paramRelPerm(const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-coupled:parameters}@*/
 			const FieldVector<DT,n>& xi, const double T = 283.15) const
 	{
 		std::vector<double> param(2);
@@ -73,7 +73,7 @@ public:
 
 	// function returning the kind of relation used for the calculation of the capillary
 	// pressure and the relative permeabilities depending on the position within the domain
-	typename Matrix2p<G,RT>::modelFlag relPermFlag(const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-decoupled:flags}@*/
+	typename Matrix2p<G,RT>::modelFlag relPermFlag(const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-coupled:flags}@*/
 			const FieldVector<DT,n>& xi) const
 	{
 		return Matrix2p<G,RT>::linear; //flag types defined in

@@ -6,7 +6,7 @@
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
 #include "dumux/material/phaseproperties/phaseproperties2p.hh"
-#include "tutorial_soilproperties.hh"
+#include "tutorial_soilproperties_coupled.hh"
 #include "dumux/material/twophaserelations.hh"
 #include "tutorialproblem_coupled.hh"
 #include "dumux/twophase/fv/boxpwsn.hh"
@@ -51,13 +51,13 @@ int main(int argc, char** argv)
     int modulo = 1; // define time step interval in which output files are generated
 
 	// create TimeLoop-object
-    Dune::TimeLoop<GridType, TwoPhase> timeloop(tStart, tEnd, 100, fileName, modulo);
+    Dune::TimeLoop<GridType, TwoPhase> timeloop(tStart, tEnd, 100, fileName, modulo); /*@\label{tutorial-coupled:timeloop}@*/
 
     Dune::Timer timer;
     timer.reset();
 
     // start simulation
-    timeloop.execute(boxmethod); /*@\label{tutorial-decoupled:execute}@*/
+    timeloop.execute(boxmethod); /*@\label{tutorial-coupled:execute}@*/
 
     return 0;
   }

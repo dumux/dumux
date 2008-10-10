@@ -6,7 +6,7 @@
 #include <dune/common/timer.hh>
 #include "dumux/fractionalflow/variableclass.hh"
 #include "dumux/material/phaseproperties/phaseproperties2p.hh"
-#include "tutorial_soilproperties.hh"
+#include "tutorial_soilproperties_decoupled.hh"
 #include "dumux/material/twophaserelations.hh"
 #include "tutorialproblem_decoupled.hh"
 #include "dumux/diffusion/fv/fvdiffusion.hh"
