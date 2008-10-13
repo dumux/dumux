@@ -23,7 +23,7 @@ int main (int argc , char **argv) try
     }
     int refinementSteps = 0;
     if (argc == 3) {
-    	std::string arg2(argv[2]);
+    	std::string arg2(argv[2]); 
     	std::istringstream is2(arg2);
     	is2 >> refinementSteps;
     }
@@ -59,7 +59,7 @@ int main (int argc , char **argv) try
     for (int i = 0; i < numberOfVertices; i++)
     	indexVector[i] = i;
     
-        Dune::VTKWriter<typename G::LeafGridView> vtkwriter(grid.leafView());
+        Dune::VTKWriter<GridType::LeafGridView> vtkwriter(grid.leafView());
 	vtkwriter.addVertexData(indexVector, "node indices");
 	vtkwriter.write(argv[1], Dune::VTKOptions::ascii);
 	
