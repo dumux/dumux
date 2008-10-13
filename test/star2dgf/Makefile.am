@@ -4,6 +4,9 @@ AM_LDFLAGS = @AM_LDFLAGS@ $(LOCAL_LIBS)
 
 noinst_PROGRAMS = test_star2dgf
 
+test_star2dgfdir = $(includedir)/dune/dumux/test/star2dgf
+test_star2dgf_HEADERS = checkgeometryinfather.cc checkindexset.cc checkintersectionit.cc \
+	gridcheck.cc
 test_star2dgf_SOURCES = test_star2dgf.cc
 test_star2dgf_DEPENDENCIES = $(LOCAL_LIBS)
 
