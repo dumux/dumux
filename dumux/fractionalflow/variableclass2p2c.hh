@@ -113,7 +113,7 @@ public:
 				C1[i] = totalConcentration[i];
 				C2[i] = totalConcentration[i + size];
 			}
-			VTKWriter<typename G::LeafGridView> vtkwriter(grid.leafGridView());
+			VTKWriter<typename G::LeafGridView> vtkwriter(grid.leafView());
 			char fname[128];
 			sprintf(fname, "%s-%05d", name, k);
 			vtkwriter.addCellData(saturation, "saturation");
