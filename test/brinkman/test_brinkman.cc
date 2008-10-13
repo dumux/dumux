@@ -8,7 +8,7 @@
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
 //#include <dune/grid/io/file/vtk/vtkwriter.hh>
-#include "dumux/io/vtkwriterextended.hh"
+//#include "dumux/io/vtkwriterextended.hh"
 #include <dune/istl/io.hh>
 #include "dumux/brinkman/fv/fvbrinkman.hh"
 #include "brinkmantestproblem.hh"

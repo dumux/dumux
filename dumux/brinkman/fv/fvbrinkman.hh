@@ -466,7 +466,8 @@ namespace Dune
 				  GeometryType gtf = is->intersectionSelfLocal().type();
 
 				  // center in face's reference element
-//				  const FieldVector<ct,dim-1> &facelocal = ReferenceElements<ct,dim-1>::general(gtf).position(0,0);
+				  const FieldVector<ct,dim-1>&
+				  facelocal = ReferenceElements<ct,dim-1>::general(gtf).position(0,0);
 
 				  // handle interior face
 				  if (is->neighbor())
@@ -589,7 +590,7 @@ namespace Dune
 
 	void vtkout (const char* name, int k) const
 	{
-                VTKWriter<G, GV> vtkwriter(this->grid, this->grid.levelView(0));
+		LeafVTKWriter<G> vtkwriter(this->grid);
 		const BlockVector<FieldVector <RT, dim> >& elementVelocity = this->velocity;
 		BlockVector<FieldVector <RT, 1> > velocityComponentX(elementVelocity.size());
 		BlockVector<FieldVector <RT, 1> > velocityComponentY(elementVelocity.size());
