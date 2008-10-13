@@ -6,9 +6,11 @@
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
 #include <dune/grid/io/file/dgfparser/dgfalu.hh>
+#include <dune/grid/io/file/dgfparser/dgfs.hh>
 #include <dune/istl/io.hh>
-#include <dune/common/timer.hh>
+//#include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include "dumux/io/vtkwriterextended.hh"
+#include <dune/common/timer.hh>
 #include "dumux/material/properties.hh"
 #include "dumux/material/linearlaw_deprecated.hh"
 #include "dumux/material/brookscoreylaw_deprecated.hh"
@@ -19,6 +21,7 @@
 #include "dumux/diffusion/mimetic/mimeticdiffusion.hh"
 #include "dumux/diffusion/problems/heterogeneousproblem.hh"
 #include "dumux/diffusion/problems/uniformproblem.hh"
+#include <dune/grid/uggrid.hh>
 //#include "annikaproblem.hh"
 
 int main(int argc, char** argv)
@@ -34,7 +37,7 @@ int main(int argc, char** argv)
     typedef double NumberType;
 
     typedef Dune::UGGrid<dim> GridType;
-    //typedef Dune::ALUSimplexGrid<dim,dim> GridType;
+    //typedef Dune::SGrid<dim,dim> GridType;
 
     // use unitcube from grids
     std::stringstream dgfFileName;
@@ -64,9 +67,9 @@ int main(int argc, char** argv)
 
     Dune::Timer timer;
     timer.reset();
-    //  Dune::FVDiffusion<GridType, NumberType> diffusion(grid, problem);
+    Dune::FVDiffusion<GridType, NumberType, VC> diffusion(grid, problem);
     // Dune::FEDiffusion<GridType, NumberType> diffusion(grid, problem);
-     Dune::MimeticDiffusion<GridType, NumberType, VC> diffusion(grid, problem);
+    // Dune::MimeticDiffusion<GridType, NumberType, VC> diffusion(grid, problem);
 
 
     diffusion.pressure();
@@ -77,7 +80,7 @@ int main(int argc, char** argv)
     diffusion.calcTotalVelocity(0);
     printvector(std::cout, problem.variables.velocity, "velocity", "row", 2*dim, 1, 3);
 
-    Dune::VTKWriter<typename G::LeafGridView> vtkwriter(grid.leafView);
+    Dune::LeafVTKWriter<GridType> vtkwriter(grid);
 
     typedef Dune::BlockVector<Dune::FieldVector<double, dim> > WType;
     WType cellvelocity(grid.size(0));
@@ -85,8 +88,8 @@ int main(int argc, char** argv)
     typedef Dune::BlockVector<Dune::FieldVector<double, dim> > ZType;
     ZType vertexvelocity(grid.size(dim));
 
-    vtkwriter.faceToCellToVertex(problem.variables.velocity,cellvelocity,vertexvelocity);
-    vtkwriter.addFaceData(cellvelocity,vertexvelocity,"velocity");
+     vtkwriter.faceToCellToVertex(problem.variables.velocity,cellvelocity,vertexvelocity);
+     vtkwriter.addFaceData(cellvelocity,vertexvelocity,"velocity");
 
     vtkwriter.addCellData(problem.variables.pressure,"pressure");
 
