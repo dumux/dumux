@@ -219,7 +219,7 @@ class CWaterAir : public MultiComp
 				molarMass2 = nonwettingPhase.molarMass_a();
 			}
 
-			result = molefrac * molarMass2 / (molarMass2*molefrac + molarMass1*(1-molefrac));
+			result = molefrac * molarMass1 / (molarMass1*molefrac + molarMass2*(1-molefrac));
 
 			return (result);
 		}
@@ -242,7 +242,7 @@ class CWaterAir : public MultiComp
 				molarMass2 = nonwettingPhase.molarMass_a();
 			}
 
-			result = massfrac * molarMass1 / (molarMass2*(1-massfrac) + molarMass1*massfrac);
+			result = massfrac * molarMass2 / (molarMass1*(1-massfrac) + molarMass2*massfrac);
 
 			return (result);
 		}
