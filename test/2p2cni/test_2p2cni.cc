@@ -73,7 +73,7 @@ int main(int argc, char** argv)
      Dune::WaterAirProblem<GridType, NumberType> problem(wPhase, nPhase, soil,
     		 materialLaw, multicomp, depthBOR);
 
-     typedef Dune::VtkMultiWriter<GridType> MultiWriter;
+     typedef Dune::VtkMultiWriter<GridType::LeafGridView> MultiWriter;
      typedef Dune::Box2P2CNI<GridType, NumberType, MultiWriter> TwoPhase;
      TwoPhase twoPhase(grid, problem);
 
@@ -81,7 +81,7 @@ int main(int argc, char** argv)
 
      Dune::Timer timer;
      timer.reset();
-     Dune::VtkMultiWriter<GridType> writer("out2p2cni");
+     MultiWriter writer("out2p2cni");
 
 	 //timeloop.execute(twoPhase);
      timeloop.executeMultiWriter(twoPhase, writer);
