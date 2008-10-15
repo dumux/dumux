@@ -66,7 +66,7 @@ public:
 				model.solve();
 				relDiff = oneByMagnitude*((*u).two_norm());
 				//printvector(std::cout, *u, "update", "row", 200, 1, 3);
-				*u *= -lambda;
+				*u *= -lambda; // hm, lambda is always 1.0, right??? 
 				*u += *uOldNewtonStep;
 //				sprintf(buf, "rank %d, solution: ", grid.comm().rank());
 //				printvector(std::cout, *u, buf, "row", 200, 1, 3);
