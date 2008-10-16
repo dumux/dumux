@@ -3,6 +3,7 @@
 #ifdef HAVE_UG
 #include <dune/grid/uggrid.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
+#include <dune/grid/io/file/starcdreader.hh>
 #include <dune/istl/bvector.hh>
 
 #include "dumux/io/readstarformat.cc"
@@ -28,9 +29,11 @@ int main (int argc , char **argv) try
     	is2 >> refinementSteps;
     }
     
-    GridType grid;
+    GridType* grid;
 
-    readStarFormat(grid, argv[1]);
+    //readStarFormat(grid, argv[1]);
+    Dune::StarCDReader<GridType> reader;
+    grid = reader.read(argv[1]);
     
     std::cout << "Starting grid tests ." << std::flush;
     // check macro grid 
@@ -42,7 +45,7 @@ int main (int argc , char **argv) try
     std::cout << "." << std::flush;
 
     if (refinementSteps) {
-    	grid.globalRefine(refinementSteps);
+    	grid->globalRefine(refinementSteps);
         std::cout << "." << std::flush;
     	
     	//gridcheck(grid);
@@ -54,12 +57,12 @@ int main (int argc , char **argv) try
     }
     std::cout << " passed." << std::endl;
 
-    int numberOfVertices = grid.size(dim);
+    int numberOfVertices = grid->size(dim);
     Dune::BlockVector<Dune::FieldVector<NumberType, 1> > indexVector(numberOfVertices);
     for (int i = 0; i < numberOfVertices; i++)
     	indexVector[i] = i;
     
-        Dune::VTKWriter<GridType::LeafGridView> vtkwriter(grid.leafView());
+        Dune::VTKWriter<GridType::LeafGridView> vtkwriter(grid->leafView());
 	vtkwriter.addVertexData(indexVector, "node indices");
 	vtkwriter.write(argv[1], Dune::VTKOptions::ascii);
 	
