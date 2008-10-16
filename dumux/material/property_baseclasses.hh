@@ -270,7 +270,8 @@ public:
 	 */
 	inline FieldVector<double,2> x2X(FieldVector<double,2> x) const
 	{
-		if (x[0]+x[1] != 1.) DUNE_THROW(Dune::MathError, "mole fractions do not sum up to unity!");
+		if (x[0]+x[1] != 1.)
+			DUNE_THROW(Dune::MathError, "mole fractions do not sum up to unity!");
 		FieldVector<double,2> X;
 		X[0] = 1 / (1 + x[1] * M_a / (x[0] * M_w));
 		X[1] = 1 - X[0];
@@ -510,7 +511,8 @@ public:
 	 */
 	inline FieldVector<double,2> X2x(FieldVector<double,2> X) const
 	{
-		if (X[0]+X[1] != 1.) DUNE_THROW(MathError, "mass fractions do not sum up to unity!");
+		if (X[0]+X[1] != 1.)
+			DUNE_THROW(MathError, "mass fractions do not sum up to unity!");
 		FieldVector<double,2> x;
 		x[0] = 1 / (1 + X[1] / M_a / (X[0] / M_w));
 		x[1] = 1 - x[0];
