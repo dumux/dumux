@@ -91,7 +91,7 @@ namespace Lens
 
         typedef TimeManager<Episode>                        TimeManager;
         typedef Dune::ImplicitEulerStep<ThisType>           TimeIntegration;
-        typedef VtkMultiWriter<Grid>                        VtkMultiWriter;
+        typedef VtkMultiWriter<typename Grid::LeafGridView> VtkMultiWriter;
 
         typedef typename Model::NewtonMethod                    NewtonMethod;
         typedef LensNewtonController<NewtonMethod, ThisType>    NewtonController;
@@ -386,14 +386,14 @@ namespace Lens
 #if LENS_WRITE_NEWTON_STEPS
                 if (_newtonCtl.newtonNumSteps() == 1) {
                     _convergenceWriter->beginTimestep(0,
-                                                      ParentType::grid());
+                                                      ParentType::grid().leafView());
                     _writeConvergenceFields(uOld, uOld);
                     _convergenceWriter->endTimestep();
                 }
 
 
                 _convergenceWriter->beginTimestep(_newtonCtl.newtonNumSteps(),
-                                                  ParentType::grid());
+                                                  ParentType::grid().leafView());
                 _writeConvergenceFields(u, uOld);
                 _convergenceWriter->endTimestep();
 #endif // LENS_WRITE_NEWTON_STEPS
@@ -413,7 +413,7 @@ namespace Lens
         void _writeCurrentResult()
             {
                 _resultWriter.beginTimestep(_timeManager.time(),
-                                            ParentType::grid());
+                                            ParentType::grid().leafView());
                 _writeVertexFields(_resultWriter, _model.u());
                 _writeCellFields(_resultWriter, _model.u());
                 _resultWriter.endTimestep();

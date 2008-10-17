@@ -102,7 +102,7 @@ namespace Lenhard
 
         typedef Dune::TimeManager<Episode>        TimeManager;
         typedef Dune::ImplicitEulerStep<ThisType> TimeIntegration;
-        typedef Dune::VtkMultiWriter<Grid> VtkMultiWriter;
+        typedef Dune::VtkMultiWriter<typename Grid::LeafGridView> VtkMultiWriter;
 
 //        typedef PwSnNewtonController<Model>   NewtonController;
         typedef typename Model::NewtonMethod                    NewtonMethod;
@@ -357,14 +357,14 @@ namespace Lenhard
 #if defined LENHARD_WRITE_NEWTON_STEPS
                 if (_newtonCtl.newtonNumSteps() == 1) {
                     _convergenceWriter->beginTimestep(0,
-                                                      ParentType::grid());
+                                                      ParentType::grid().leafView());
                     _writeConvergenceFields(uOld, uOld);
                     _convergenceWriter->endTimestep();
                 }
 
 
                 _convergenceWriter->beginTimestep(_newtonCtl.newtonNumSteps(),
-                                                  ParentType::grid());
+                                                  ParentType::grid().leafView());
                 _writeConvergenceFields(u, uOld);
                 _convergenceWriter->endTimestep();
 #endif // LENHARD_WRITE_NEWTON_STEPS
@@ -558,7 +558,7 @@ namespace Lenhard
                 
                 // write the actual result into a VTK dataset
                 _resultWriter.beginTimestep(_timeManager.time(),
-                                            ParentType::grid());
+                                            ParentType::grid().leafView());
 
                 _resultWriter.addScalarVertexFunction("Sn",
                                                       _model.u(),
