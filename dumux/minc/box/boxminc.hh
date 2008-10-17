@@ -1,5 +1,3 @@
-// $Id$ 
-
 #ifndef DUNE_BOXMINC_HH
 #define DUNE_BOXMINC_HH
 
@@ -7,7 +5,7 @@
 #include<dune/istl/solvers.hh>
 #include<dune/istl/preconditioners.hh>
 
-//#include <dune/common/array.hh>        // defines simple array class
+//#include <dune/common/array.hh>      // defines simple array class
 #include <dune/common/fixedarray.hh>   // defines simple array classes
 #include <dune/common/geometrytype.hh>
 #include <dune/grid/sgrid.hh>          // a complete structured grid
@@ -32,8 +30,14 @@
 #include <dune/grid/common/scsgmapper.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/disc/functions/functions.hh>
+#include <dune/disc/functions/p0function.hh>
+//#include <dune/disc/functions/p1function.hh>
 #include "dumux/operators/p1operatorextended.hh"
 #include <dune/disc/operators/boundaryconditions.hh>
+/* #include <dune/disc/groundwater/groundwater.hh>
+#include <dune/disc/groundwater/p1groundwater.hh>
+#include <dune/disc/groundwater/p1groundwaterestimator.hh>
+*/
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/paamg/amg.hh>
 #include "dumux/pardiso/pardiso.hh"
@@ -50,18 +54,18 @@ namespace Dune {
  
  This implements a two phase model with Pw and Sn as primary unknowns.
  */
-template<class G, class RT> class BoxMinc :
-	public LeafP1MincModel<G, RT, MincProblem<G, RT>,
-		BoxMincJacobian<G, RT> > {
+template<class G, class RT, int m> class BoxMinc :
+	public LeafP1MincModel<G, RT, MincProblem<G, RT, m>,
+		BoxMincJacobian<G, RT, m>, m > {
 
 public:
 	// define the problem type (also change the template argument above)
-	typedef MincProblem<G, RT> ProblemType;
+	typedef MincProblem<G, RT, m> ProblemType;
 
 	// define the local Jacobian (also change the template argument above)
-	typedef BoxMincJacobian<G, RT> LocalJacobian;
+	typedef BoxMincJacobian<G, RT, m> LocalJacobian;
 
-	typedef LeafP1MincModel<G, RT, ProblemType, LocalJacobian>
+	typedef LeafP1MincModel<G, RT, ProblemType, LocalJacobian, m>
 			LeafP1MincModel;
 
 	typedef typename LeafP1MincModel::FunctionType FunctionType;
@@ -69,9 +73,9 @@ public:
 	typedef typename G::LeafGridView GV;
     typedef typename GV::IndexSet IS;
 
-	enum {m = 4};
+//	enum {m = 4};
 
-	typedef BoxMinc<G, RT> ThisType;
+	typedef BoxMinc<G, RT, m> ThisType;
 	typedef typename LeafP1MincModel::FunctionType::RepresentationType
 			VectorType;
 	typedef typename LeafP1MincModel::OperatorAssembler::RepresentationType
