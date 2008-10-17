@@ -102,24 +102,26 @@ namespace Dune
                 *u *= -_lambda;
                 *u += *uOld;
 
-                if (_lambda < 1.0/32) {
+                if (_lambda < 1.0/8) {
                     // if the step size gets too small, cancel the
                     // update
                     return true;
                 }
 
                 Scalar newGlobalResidual = _computeGlobalResidual(u, model);
-                if (newGlobalResidual > _curGlobalResidual) {
+                std::cout << boost::format("Newton lambda: %f, residual ratios: %f\n")%_lambda%(newGlobalResidual/_curGlobalResidual);
+                if (newGlobalResidual > _curGlobalResidual*1.05) {
                     // if the square norm of the new global residual
                     // is bigger than the one of the last iteration,
                     // use a smaller step size lambda for the next
                     // iteration.
-                    *u = *uOld;
                     _lambda /= 2;
+                }
+                else if (newGlobalResidual < _curGlobalResidual/1.5) {
+                    _lambda = std::min(Scalar(1.0), _lambda*2);
                 }
                 
                 _curGlobalResidual = newGlobalResidual;
-                std::cout << boost::format("Newton line search lambda: %f\n")%_lambda;
                 return true;
             };
 
@@ -128,10 +130,9 @@ namespace Dune
             {
                 // calculate global residual of a solution
                 model.evalGlobalDefect(_globalDefect);
-                Scalar globalResidual = (*_globalDefect).two_norm()/2.0;
+                Scalar globalResidual = (*_globalDefect).two_norm2();
 //                globalResidual *= globalResidual;
                 model.grid().comm().sum(&globalResidual, 1);
-                std::cout << boost::format("Newton: globalResidual: %f\n")%globalResidual;
 //                residualWeight = 1.0/std::max(globalResidual, (Scalar) 1.0e-8);
 //                globalResidual *= residualWeight;
                 
@@ -148,13 +149,17 @@ namespace Dune
      *
      * In order to use the method you need a \ref NewtonController.
      */
-    template<class Model, class NewtonController, bool useLineSearch=true>
+    template<class ModelT, bool useLineSearch=false>
     class NewtonMethod
     {
-        typedef typename Model::NewtonTraits::Function          Function;
-        typedef typename Model::NewtonTraits::OperatorAssembler OperatorAssembler;
-        typedef typename Model::NewtonTraits::LocalJacobian     LocalJacobian;
+    public:
+        typedef ModelT Model;
 
+    private:
+        typedef typename Model::NewtonTraits::Function          Function;
+        typedef typename Model::NewtonTraits::LocalJacobian     LocalJacobian;
+        typedef typename Model::NewtonTraits::JacobianAssembler JacobianAssembler;
+        typedef typename Model::NewtonTraits::Scalar            Scalar;
 
     public:
         NewtonMethod(Model &model)
@@ -163,24 +168,22 @@ namespace Dune
             {
             }
 
-    private:
-        Function       uOld;
-        Function       f;
-
-    public:
+        template <class NewtonController>
         bool execute(Model &model, NewtonController &ctl)
             {
+                _defect = 1e100;
+
                 // TODO (?): u shouldn't be hard coded to the model
-                Function      &u = model.u();
-                LocalJacobian &localJacobian = model.localJacobian();
-                OperatorAssembler &opAsm = model.opAsm();
+                Function          &u = model.u();
+                LocalJacobian     &localJacobian = model.localJacobian();
+                JacobianAssembler &jacobianAsm   = model.jacobianAssembler();
                 
                 // method to of how updated are done. (either 
                 // LineSearch or the plain newton-raphson method)
                 Dune::_NewtonUpdateMethod<Model, useLineSearch> updateMethod(u, model);;
 
                 // tell the controller that we begin solving
-                ctl.newtonBegin(u);
+                ctl.newtonBegin(this, u);
 
                 // execute the method as long as the controller thinks
                 // that we should do another iteration
@@ -196,10 +199,12 @@ namespace Dune
 
                     // linearize the problem at the current solution
                     localJacobian.clearVisited();
-                    opAsm.assemble(localJacobian, u, f);
+                    jacobianAsm.assemble(localJacobian, u, f);
 
                     // solve the resultuing linear equation system
-                    if (ctl.newtonSolveLinear(opAsm, u, f)) {
+                    if (ctl.newtonSolveLinear(*jacobianAsm, *u, *f)) {
+                        _defect = (*u).two_norm();
+
                         // update the current solution. We use either
                         // a line search approach or the plain method.
                         if (!updateMethod.update(u, uOld, model)) {
@@ -234,6 +239,14 @@ namespace Dune
                 
                 return true;
             }
+        
+        Scalar defect() const
+            { return _defect; }
+
+    private:
+        Function       uOld;
+        Function       f;
+        Scalar        _defect;
     };
 }
 

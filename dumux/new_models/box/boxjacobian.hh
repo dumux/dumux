@@ -98,7 +98,7 @@ namespace Dune
 
         typedef typename Cell::Geometry                  Geometry;
 
-        typedef typename BoxTraits::BoxFunction          BoxFunction;
+        typedef typename BoxTraits::SpatialFunction      SpatialFunction;
         typedef typename BoxTraits::UnknownsVector       UnknownsVector;
         typedef typename BoxTraits::BoundaryTypeVector   BoundaryTypeVector;
         typedef typename BoxTraits::FVElementGeometry    FVElementGeometry;
@@ -134,12 +134,12 @@ namespace Dune
             { return _dt; }
         // END TODO/HACK
 
-        void setCurrentSolution(BoxFunction *uCur)
+        void setCurrentSolution(SpatialFunction *uCur)
             {
                 _curSolution = uCur;
             }
 
-        void setOldSolution(BoxFunction *uOld)
+        void setOldSolution(SpatialFunction *uOld)
             {
                 _oldSolution = uOld;
             }
@@ -464,7 +464,7 @@ namespace Dune
         // evaluate 'globalFn' for the current cell, save the result
         // to 'dest'
         void evalLocal(LocalFunction &dest,
-                       const BoxFunction &globalFn)
+                       const SpatialFunction &globalFn)
             {
                 Dune::GeometryType geoType = _curCell().geometry().type();
                 const ShapeFnSet &shapeFns = ShapeFnSets::general(geoType, 1);
@@ -585,8 +585,8 @@ namespace Dune
         FVElementGeometry       _curCellGeom;
 
         // global solution of the current and of the last timestep
-        const BoxFunction *_curSolution;
-        const BoxFunction *_oldSolution;
+        const SpatialFunction *_curSolution;
+        const SpatialFunction *_oldSolution;
 
         bool         _levelBoundaryAsDirichlet;
         bool         _processBoundaryAsDirichlet;

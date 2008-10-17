@@ -36,13 +36,13 @@ namespace Dune
     /*!
      * \brief The base class for the BOX hybrid finite element/finite volume discretization model
      */
-    template<class BoxTraitsT, class ProblemT, class JacobianT>
+    template<class BoxTraitsT, class ProblemT, class LocalJacobianT>
     class BoxModel
     {
         // copy the relevant problem specfific types from the problem
         // controller class
-        typedef BoxModel<BoxTraitsT, ProblemT, JacobianT> ThisType;
-        typedef ProblemT                                  Problem;
+        typedef BoxModel<BoxTraitsT, ProblemT, LocalJacobianT> ThisType;
+        typedef ProblemT                                       Problem;
 
     public:
         typedef BoxTraitsT                     BoxTraits;
@@ -51,9 +51,9 @@ namespace Dune
         // required to use the model in conjunction with the newton
         // method
         struct NewtonTraits {
-            typedef JacobianT                              LocalJacobian;
-            typedef typename BoxTraits::BoxFunction        Function;
-            typedef typename BoxTraits::OperatorAssembler  OperatorAssembler;
+            typedef LocalJacobianT                         LocalJacobian;
+            typedef typename BoxTraits::SpatialFunction    Function;
+            typedef typename BoxTraits::JacobianAssembler  JacobianAssembler;
             typedef typename DomainTraits::Scalar          Scalar;
         };
         
@@ -71,9 +71,9 @@ namespace Dune
         typedef typename DomainTraits::WorldCoord                  WorldCoord;
         typedef typename DomainTraits::LocalCoord                  LocalCoord;
 
-        typedef typename BoxTraits::OperatorAssembler      OperatorAssembler;
-        typedef typename BoxTraits::BoxFunction            BoxFunction;
-        typedef typename BoxFunction::RepresentationType   BoxFnRep;
+        typedef typename BoxTraits::JacobianAssembler      JacobianAssembler;
+        typedef typename BoxTraits::SpatialFunction        SpatialFunction;
+        typedef typename SpatialFunction::RepresentationType   BoxFnRep;
         typedef typename BoxTraits::LocalFunction          LocalFunction;
         typedef typename BoxTraits::ShapeFnSets            ShapeFnSets;
         typedef typename BoxTraits::ShapeFnSet             ShapeFnSet;
@@ -81,7 +81,7 @@ namespace Dune
         typedef typename BoxTraits::BoundaryTypeVector  UnknownsVector;
         typedef typename BoxTraits::BoundaryTypeVector  BoundaryTypeVector;
 
-        typedef JacobianT                               LocalJacobian;
+        typedef LocalJacobianT                          LocalJacobian;
 
         // some constants
         enum {
@@ -97,7 +97,7 @@ namespace Dune
               _uCur(prob.grid()),
               _uPrev(prob.grid()),
               _f(prob.grid()),
-              _opAsm(prob.grid()),
+              _jacAsm(prob.grid()),
               _localJacobian(localJac)
             {
                 Api::require<Api::BasicDomainTraits, 
@@ -105,6 +105,9 @@ namespace Dune
 //                Api::require<Api::PwSnBoxDomain>(prob);
             }
 
+        /*!
+         * \brief Apply the initial conditions to the model.
+         */
         void initial()
             {
                 _applyInitialSolution(_uCur);
@@ -114,52 +117,56 @@ namespace Dune
             }
 
         // current solution
-        const BoxFunction &u() const
+        const SpatialFunction &u() const
             { return _uCur; }
 
         // current solution
-        BoxFunction &u()
+        SpatialFunction &u()
             { return _uCur; }
 
         // right hand side (?)
-        BoxFunction &f()
+        SpatialFunction &f()
             { return _f; }
 
         // last timestep's solution
-        BoxFunction &uOldTimeStep()
+        SpatialFunction &uOldTimeStep()
             { return _uPrev; }
 
-        const BoxFunction &uOldTimeStep() const
+        const SpatialFunction &uOldTimeStep() const
             { return _uPrev; }
 
-        // the operator assembler. (linearizes the problem.)
-        OperatorAssembler &opAsm()
-            { return _opAsm; }
+        /*!
+         * \brief Returns the operator assembler for the global jacobian of
+         *        the problem.
+         */
+        JacobianAssembler &jacobianAssembler()
+            { return _jacAsm; }
 
-        // returns the local jacobian which calculates the local
-        // stiffness matrix at an arbitrary location, which is used by
-        // the operator assembler to produce a linerization of the
-        // problem.
+        /*!
+         * \brief Returns the local jacobian which calculates the local
+         *        stiffness matrix for an arbitrary cell.
+         * 
+         * The local stiffness matrices of the cell are used by
+         * the jacobian assembler to produce a global linerization of the
+         * problem.
+         */
         LocalJacobian &localJacobian()
             { return _localJacobian; }
 
         const Grid &grid()
             { return _problem.grid(); }
 
-        // let some time pass.
-        template<class NewtonController>
-        void update(Scalar &dt, Scalar &nextDt, NewtonController &controller)
+        /*!
+         * \brief Try to progress simulation to the next timestep.
+         */
+        template<class NewtonMethod, class NewtonController>
+        void update(Scalar &dt, Scalar &nextDt, NewtonMethod &solver, NewtonController &controller)
             {
-                typedef Dune::NewtonMethod<ThisType, NewtonController> NewtonMethod;
-
                 _localJacobian.setCurrentSolution(&_uCur);
                 _localJacobian.setOldSolution(&_uPrev);
                 
                 _applyDirichletBoundaries(_uCur);
                 
-
-                NewtonMethod solver(*this);
-
                 // TODO/FIXME: timestep control doesn't really belong
                 // here (before it was in the newton solver where it
                 // belongs even less)
@@ -191,9 +198,13 @@ namespace Dune
             }
 
 
-        // calculate the global defect. (difference of the result when
-        // using an approximate solution from the right hand side.)
-        void evalGlobalDefect(BoxFunction &globDefect)
+        /*!
+         * \brief Calculate the global defect.
+         * 
+         * The global difference of the result when
+         * using an approximate solution from the right hand side.
+         */
+        void evalGlobalDefect(SpatialFunction &globDefect)
             {
                 (*globDefect)=0;
 
@@ -235,7 +246,7 @@ namespace Dune
 
 
     private:
-        void _applyInitialSolution(BoxFunction &u)
+        void _applyInitialSolution(SpatialFunction &u)
             {
                 // iterate through leaf grid an evaluate c0 at cell center
                 CellIterator it     = _problem.grid().template leafbegin<0>();
@@ -269,7 +280,7 @@ namespace Dune
             };
 
 
-        void _applyDirichletBoundaries(BoxFunction &u)
+        void _applyDirichletBoundaries(SpatialFunction &u)
             {
                 // set Dirichlet boundary conditions of the grid's
                 // outer boundaries
@@ -333,14 +344,14 @@ namespace Dune
 
         // cur is the current solution, prev the solution of the
         // previous time step
-        BoxFunction _uCur;
-        BoxFunction _uPrev;
+        SpatialFunction _uCur;
+        SpatialFunction _uPrev;
 
         // the right hand side (?)
-        BoxFunction  _f;
+        SpatialFunction  _f;
         // Operator assembler. Linearizes the problem at a specific
         // position using the local jacobian (?)
-        OperatorAssembler _opAsm;
+        JacobianAssembler _jacAsm;
         // calculates the jacobian matrix at a given position
         LocalJacobian    &_localJacobian;
     };

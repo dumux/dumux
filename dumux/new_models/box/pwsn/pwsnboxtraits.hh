@@ -99,27 +99,26 @@ namespace Dune
             CachedSubContVolData  atSubContVol[SIZE];
         };
 
-        //! the BOX function. we use a first order vertex centered FE
-        //! function.
+        //! The function which represents a solution for a fixed time
+        //! step. We use first-order vertex centered FE polynomials.
         typedef Dune::LeafP1Function<Grid, 
                                      Scalar, 
-                                     NumUnknowns> BoxFunction;
+                                     NumUnknowns>   SpatialFunction;
         
         //! The OperatorAssembler which assembles the global stiffness
         //! matrix
         typedef Dune::LeafP1OperatorAssembler<Grid,
                                               Scalar,
-                                              NumUnknowns>  OperatorAssembler;
+                                              NumUnknowns>  JacobianAssembler;
 
-        //! contains all shape functions for any element type and order.
+        //! contains all FE shape functions for any element type and order.
+        //TODO: redunant since ShapeFnSet::value_type is the same
         typedef Dune::LagrangeShapeFunctionSetContainer<CoordScalar,
                                                         Scalar,
                                                         GridDim> ShapeFnSetContainer;
 
-        //! the set of shape functions used for the BoxFunction inside
-        //! cells. (actually this is only dependend on the
-        //! BoxFunction, but dune-disc's LeafP1Function doesn't export
-        //! the shape functions it uses.)
+        //! the set of shape functions used inside FE cells.
+        // TODO: not required??
         typedef Dune::LagrangeShapeFunctions<CoordScalar, 
                                              Scalar,
                                              GridDim>  ShapeFnSets;

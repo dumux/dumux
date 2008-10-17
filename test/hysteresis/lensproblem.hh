@@ -76,7 +76,7 @@ namespace Lens
         typedef typename DomainTraits::WorldCoord                 WorldCoord;
 
         typedef typename BoxTraits::FVElementGeometry             FVElementGeometry;
-        typedef typename BoxTraits::BoxFunction                   BoxFunction;
+        typedef typename BoxTraits::SpatialFunction                   SpatialFunction;
         typedef typename BoxTraits::UnknownsVector                UnknownsVector;
         typedef typename BoxTraits::BoundaryTypeVector            BoundaryTypeVector;
 
@@ -93,11 +93,13 @@ namespace Lens
         typedef Dune::ImplicitEulerStep<ThisType>           TimeIntegration;
         typedef VtkMultiWriter<Grid>                        VtkMultiWriter;
 
-        typedef LensNewtonController<Model, ThisType>    NewtonController;
+        typedef typename Model::NewtonMethod                    NewtonMethod;
+        typedef LensNewtonController<NewtonMethod, ThisType>    NewtonController;
 
     public:
         PwSnLensProblem(Scalar initialTimeStepSize, Scalar endTime)
             : _model(*this),
+              _newtonMethod(_model),
               _newtonCtl(*this),
               _resultWriter("lens")
             {
@@ -174,7 +176,7 @@ namespace Lens
         //! time pass.
         void updateModel(Scalar &dt, Scalar &nextDt)
             {
-                _model.update(dt, nextDt, _newtonCtl);
+                _model.update(dt, nextDt, _newtonMethod, _newtonCtl);
             }
 
         //! called by the TimeManager whenever a solution for a
@@ -379,7 +381,7 @@ namespace Lens
 
         //! called by the LensNewtonContoller when a newton step is
         //! finished.
-        void newtonEndStep(BoxFunction &u, BoxFunction &uOld)
+        void newtonEndStep(SpatialFunction &u, SpatialFunction &uOld)
             {
 #if LENS_WRITE_NEWTON_STEPS
                 if (_newtonCtl.newtonNumSteps() == 1) {
@@ -418,9 +420,9 @@ namespace Lens
             }
 
 #if LENS_WRITE_NEWTON_STEPS
-        void _writeConvergenceFields(BoxFunction &u, BoxFunction &uOld)
+        void _writeConvergenceFields(SpatialFunction &u, SpatialFunction &uOld)
             {
-                BoxFunction diff(ParentType::grid());
+                SpatialFunction diff(ParentType::grid());
                 for (int i=0; i < (*diff).size(); ++i) {
                     (*diff)[i] = (*u)[i] - (*uOld)[i];
                     if ((*diff)[i][0] > 1e12)
@@ -445,7 +447,7 @@ namespace Lens
 
         // appends a cell centered capillary pressure field to the
         // multi writer's current timestep
-        void _writeCellFields(VtkMultiWriter &writer, BoxFunction &u)
+        void _writeCellFields(VtkMultiWriter &writer, SpatialFunction &u)
             {
                 // TODO
                 /*
@@ -479,7 +481,7 @@ namespace Lens
 
         // write the fields current solution into an VTK output
         // file.
-        void _writeVertexFields(VtkMultiWriter &writer, BoxFunction &u)
+        void _writeVertexFields(VtkMultiWriter &writer, SpatialFunction &u)
             {
                 writer.addScalarVertexFunction("Sn",
                                                u,
@@ -488,7 +490,7 @@ namespace Lens
                                                u,
                                                PwIndex);
 
-                BoxFunction globDefect(ParentType::grid());
+                SpatialFunction globDefect(ParentType::grid());
                 _model.evalGlobalDefect(globDefect);
                 writer.addScalarVertexFunction("global defect Sn",
                                                globDefect,
@@ -591,6 +593,7 @@ namespace Lens
         Scalar          _endTime;
 
         Model            _model;
+        NewtonMethod     _newtonMethod;
         NewtonController _newtonCtl;
         VtkMultiWriter   _resultWriter;
 #if LENS_WRITE_NEWTON_STEPS

@@ -38,10 +38,11 @@ namespace Dune
      * controller from this class and simply overload the required
      * methods.
      */
-    template <class Model,
+    template <class NewtonMethod,
               class Implementation>
     class NewtonControllerBase
     {
+        typedef typename NewtonMethod::Model  Model;
         typedef typename Model::DomainTraits  DomainTraits;
         typedef typename Model::NewtonTraits  ModelNewtonTraits;
 
@@ -49,8 +50,8 @@ namespace Dune
         typedef typename DomainTraits::Scalar                     Scalar;
 
         typedef typename ModelNewtonTraits::Function              Function;
-        typedef typename ModelNewtonTraits::OperatorAssembler     OperatorAssembler;
-        typedef typename OperatorAssembler::RepresentationType    OpAsmRep;
+        typedef typename ModelNewtonTraits::JacobianAssembler     JacobianAssembler;
+        typedef typename JacobianAssembler::RepresentationType    JacAsmRep;
 
         NewtonControllerBase(Scalar tolerance, // maximum tolerated defect
                              int targetSteps,
@@ -64,7 +65,6 @@ namespace Dune
 
                 _curPhysicalness = 0;
                 _maxPhysicalness = 0;
-                _defect = 0;
             };
 
         //! Returns true iff another iteration should be done.
@@ -121,18 +121,18 @@ namespace Dune
         //! tolerance
         bool newtonConverged()
             {
-                return _defect <= _tolerance && _curPhysicalness >= 1.0;
+                return _method->defect()*_oneByMagnitude <= _tolerance && _curPhysicalness >= 1.0;
             }
 
         //! called before the newton method is applied to an equation
         //! system.
-        void newtonBegin(Function &u)
+        void newtonBegin(NewtonMethod *method, Function &u)
             {
+                _method = method;
                 _numSteps = 0;
                 _probationCount = 0;
                 _maxPhysicalness = 0;
                 _oneByMagnitude = 1.0/std::max((*u).two_norm(), 1e-5);
-                _defect = 1e100;
             }
 
         //! indidicates the beginning of a newton iteration
@@ -148,16 +148,11 @@ namespace Dune
         //! Solve the linear equation system Ax - b = 0 for the
         //! current iteration.
         //! Returns true iff the equation system could be solved.
-        bool newtonSolveLinear(OperatorAssembler &opAsm,
-                               Function &x,
-                               Function &b)
+        template <class Matrix, class Vector>
+        bool newtonSolveLinear(Matrix &A,
+                               Vector &x,
+                               Vector &b)
             {
-                typedef typename Function::RepresentationType           FnRep;
-                typedef Dune::MatrixAdapter<OpAsmRep,FnRep,FnRep>       Operator;
-
-                // make make a matrix out of the operator
-                Operator A(*opAsm);
-
                 // if the defect of the newton method is large, we do
                 // not need to solve the linear approximation
                 // accurately. On the other hand, if this is the first
@@ -166,7 +161,7 @@ namespace Dune
                 Scalar residTol = _tolerance/10;
 
                 // initialize the preconditioner
-                Dune::SeqILU0<OpAsmRep,FnRep,FnRep> precond(*opAsm,1.0);
+                Dune::SeqILU0<Matrix,Vector,Vector> precond(A, 1.0);
 //                Dune::SeqSSOR<OpAsmRep,FnRep,FnRep> precond(*opAsm, 3, 1.0);
 //                SeqIdentity<OpAsmRep,FnRep,FnRep> precond(*opAsm);
 
@@ -189,11 +184,14 @@ namespace Dune
 */                
 
                 // invert the linear equation system
-                Dune::BiCGSTABSolver<FnRep> solver(A, precond, residTol, 10000, 1);
+                typedef Dune::MatrixAdapter<typename JacobianAssembler::RepresentationType,
+                                            typename Function::RepresentationType,
+                                            typename Function::RepresentationType>  MatrixAdapter;
+                MatrixAdapter opA(A);
+                Dune::BiCGSTABSolver<Vector> solver(opA, precond, residTol, 10000, 1);
                 Dune::InverseOperatorResult result;
-                solver.apply(*x, *b, result);
+                solver.apply(x, b, result);
                 
-                _defect = _oneByMagnitude*((*x).two_norm());
                 return result.converged;
             };
 
@@ -202,7 +200,7 @@ namespace Dune
             {
                 ++_numSteps;
                 std::cout << boost::format("Newton iteration %d done: defect=%g, physicalness: %.3f, maxPhysicalness=%.3f\n")
-                    %_numSteps%_defect%_curPhysicalness%_maxPhysicalness;
+                    %_numSteps%(_method->defect()*_oneByMagnitude)%_curPhysicalness%_maxPhysicalness;
             };
 
         //! Indicates that we're done solving the equation system.
@@ -212,7 +210,7 @@ namespace Dune
         //! Called when the newton method broke down.
         void newtonFail()
             { 
-                _defect = 1e100; _numSteps = _targetSteps*2; 
+                _numSteps = _targetSteps*2; 
             }
 
         //! Suggest a new time stepsize based on the number of newton
@@ -262,7 +260,8 @@ namespace Dune
                 return 1;
             }
 
-        Scalar _defect;
+        NewtonMethod *_method;
+
         Scalar _tolerance;
 
         Scalar _maxPhysicalness;
@@ -282,20 +281,20 @@ namespace Dune
     //!
     //! Basically the only difference to NewtonControllerBase is that
     //! this class can be instanciated more easily.
-    template <class Model>
+    template <class NewtonMethod>
     class NewtonController
-        : public NewtonControllerBase<Model, NewtonController<Model> >
+        : public NewtonControllerBase<NewtonMethod, NewtonController<NewtonMethod> >
     {
     public:
-        typedef NewtonController<Model>               ThisType;
-        typedef NewtonControllerBase<Model, ThisType> ParentType;
+        typedef NewtonController<NewtonMethod>               ThisType;
+        typedef NewtonControllerBase<NewtonMethod, ThisType> ParentType;
 
         typedef typename ParentType::Scalar            Scalar;
         typedef typename ParentType::Function          Function;
         typedef typename ParentType::OperatorAssembler OperatorAssembler;
 
-        NewtonController(Scalar tolerance = 1e-5, int maxSteps = 12)
-            : ParentType(tolerance, maxSteps)
+        NewtonController(NewtonMethod &method, Scalar tolerance = 1e-5, int maxSteps = 12)
+            : ParentType(method, tolerance, maxSteps)
             {};
     };
 }

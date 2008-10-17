@@ -85,7 +85,7 @@ namespace Lenhard
         typedef typename DomainTraits::WorldCoord                 WorldCoord;
 
         typedef typename BoxTraits::FVElementGeometry             FVElementGeometry;
-        typedef typename BoxTraits::BoxFunction                   BoxFunction;
+        typedef typename BoxTraits::SpatialFunction               SpatialFunction;
         typedef typename BoxTraits::UnknownsVector                UnknownsVector;
         typedef typename BoxTraits::BoundaryTypeVector            BoundaryTypeVector;
 
@@ -105,11 +105,13 @@ namespace Lenhard
         typedef Dune::VtkMultiWriter<Grid> VtkMultiWriter;
 
 //        typedef PwSnNewtonController<Model>   NewtonController;
-        typedef LenhardNewtonController<Model, ThisType>   NewtonController;
+        typedef typename Model::NewtonMethod                    NewtonMethod;
+        typedef LenhardNewtonController<NewtonMethod, ThisType> NewtonController;
 
     public:
         PwSnLenhardProblem(Scalar initialTimeStepSize, Scalar endTime)
             : _model(*this),
+              _newtonMethod(_model),
               _newtonCtl(*this),
 #if LENHARD_EXPERIMENT == 1
               _resultWriter("LenhardExp1")
@@ -203,7 +205,7 @@ namespace Lenhard
         //! time pass.
         void updateModel(Scalar &dt, Scalar &nextDt)
             {
-                _model.update(dt, nextDt, _newtonCtl);
+                _model.update(dt, nextDt, _newtonMethod, _newtonCtl);
             }
 
         //! called by the TimeManager whenever a solution for a
@@ -350,7 +352,7 @@ namespace Lenhard
 
         //! called by the LenhardNewtonContoller when a newton step is
         //! finished.
-        void newtonEndStep(BoxFunction &u, BoxFunction &uOld)
+        void newtonEndStep(SpatialFunction &u, SpatialFunction &uOld)
             {
 #if defined LENHARD_WRITE_NEWTON_STEPS
                 if (_newtonCtl.newtonNumSteps() == 1) {
@@ -565,7 +567,7 @@ namespace Lenhard
                                                       _model.u(),
                                                       PwIndex);
 
-                BoxFunction globDefect(ParentType::grid());
+                SpatialFunction globDefect(ParentType::grid());
                 _model.evalGlobalDefect(globDefect);
                 _resultWriter.addScalarVertexFunction("global defect Sn",
                                                       globDefect,
@@ -578,9 +580,9 @@ namespace Lenhard
             }
 
 #if defined LENHARD_WRITE_NEWTON_STEPS
-        void _writeConvergenceFields(BoxFunction &u, BoxFunction &uOld)
+        void _writeConvergenceFields(SpatialFunction &u, SpatialFunction &uOld)
             {
-                BoxFunction diff(ParentType::grid());
+                SpatialFunction diff(ParentType::grid());
                 for (int i=0; i < (*diff).size(); ++i) {
                     (*diff)[i] = (*u)[i] - (*uOld)[i];
                     if ((*diff)[i][0] > 1e12)
@@ -711,6 +713,7 @@ namespace Lenhard
         Scalar _maxPc;
 
         Model            _model;
+        NewtonMethod     _newtonMethod;
         NewtonController _newtonCtl;
         VtkMultiWriter   _resultWriter;
 

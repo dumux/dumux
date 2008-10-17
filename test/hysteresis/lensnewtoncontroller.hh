@@ -36,16 +36,16 @@ namespace Lens {
      * so that  the simulation has the  chance to write  some stuff to
      * disc which aids to analyze the convergence behaviour.
      */
-    template <class Model, class Simulation>
+    template <class NewtonMethod, class Simulation>
     class LensNewtonController
-        : public PwSnNewtonController<Model>
+        : public PwSnNewtonController<NewtonMethod>
     {
     public:
-        typedef PwSnNewtonController<Model>            ParentType;
+        typedef PwSnNewtonController<NewtonMethod>     ParentType;
 
         typedef typename ParentType::Scalar            Scalar;
         typedef typename ParentType::Function          Function;
-        typedef typename ParentType::OperatorAssembler OperatorAssembler;
+        typedef typename ParentType::JacobianAssembler JacobianAssembler;
 
         LensNewtonController(Simulation &sim,
                              Scalar tolerance = 1e-5,
@@ -55,10 +55,10 @@ namespace Lens {
             {};
 
         //! Indicates that the newton method is started.
-        void newtonBegin(Function &u)
+        void newtonBegin(NewtonMethod *method, Function &u)
             {
                 // notify the PwSnNewtonController
-                ParentType::newtonBegin(u);
+                ParentType::newtonBegin(method, u);
 
                 // notify the simulation controller
                 _sim.newtonBegin();

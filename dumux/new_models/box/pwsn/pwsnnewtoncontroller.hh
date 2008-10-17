@@ -33,17 +33,17 @@ namespace Dune {
      * which allows the newton method to abort quicker if the solution is
      * way out of bounds.
      */
-    template <class Model>
+    template <class NewtonMethod>
     class PwSnNewtonController
-        : public NewtonControllerBase<Model, PwSnNewtonController<Model> >
+        : public NewtonControllerBase<NewtonMethod, PwSnNewtonController<NewtonMethod> >
     {
     public:
-        typedef PwSnNewtonController<Model>            ThisType;
-        typedef NewtonControllerBase<Model, ThisType>  ParentType;
+        typedef PwSnNewtonController<NewtonMethod>            ThisType;
+        typedef NewtonControllerBase<NewtonMethod, ThisType>  ParentType;
 
         typedef typename ParentType::Scalar            Scalar;
         typedef typename ParentType::Function          Function;
-        typedef typename ParentType::OperatorAssembler OperatorAssembler;
+        typedef typename ParentType::JacobianAssembler JacobianAssembler;
 
         PwSnNewtonController(Scalar tolerance = 1e-5, 
                              int targetSteps = 8,
@@ -52,7 +52,7 @@ namespace Dune {
             {};
 
     protected:
-        friend class NewtonControllerBase<Model, ThisType>;
+        friend class NewtonControllerBase<NewtonMethod, ThisType>;
         //! called by the base class the get an indication of how physical
         //! an iterative solution is 1 means "completely physical", 0 means
         //! "completely unphysical"
