@@ -1,5 +1,3 @@
-// $Id$ 
-
 #ifndef DUNE_MINCPROBLEM_HH
 #define DUNE_MINCPROBLEM_HH
 
@@ -38,9 +36,9 @@ namespace Dune {
  *	- Grid  a DUNE grid type
  *	- RT    type used for return values 
  */
-template<class G, class RT> class MincProblem {
+template<class G, class RT, int m> class MincProblem {
 	typedef typename G::ctype DT;
-	enum {n=G::dimension, m=4};
+	enum {n=G::dimension};
 	typedef typename G::Traits::template Codim<0>::Entity Entity;
 	typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator
 			IntersectionIterator;
