@@ -10,6 +10,7 @@
 #include<dune/grid/common/grid.hh>
 #include<dune/grid/common/referenceelements.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
+#include<dumux/material/property_baseclasses.hh>
 #include<dumux/material/twophaserelations_deprecated.hh>
 #include<dumux/material/linearlaw_deprecated.hh>
 #include<dumux/minc/mincproblem.hh>
@@ -36,18 +37,19 @@ namespace Dune
    *	- Grid  a DUNE grid type
    *	- RT    type used for return values 
    */
-  template<class G, class RT>
-  class MincLensProblem : public MincProblem<G, RT> {
+  template<class G, class RT, int m>
+  class MincLensProblem : public MincProblem<G, RT, m> {
 	typedef typename G::ctype DT;
-	enum {n=G::dimension, m = 4};
+	enum {n=G::dimension};
 	typedef typename G::Traits::template Codim<0>::Entity Entity;
 	typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
 
   public:
-//	enum {pWIdx = 0, sNIdx = 1};
+	enum {F = 0, M = 1};
 	enum {pWFIdx = 0, sNFIdx = 1, pWMIdx = 2, sNMIdx = 3};
 	enum {swrIdx = 0, snrIdx = 1, alphaIdx = 2, nIdx = 3};
-
+	enum {nCont=10};
+	
 	virtual const FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x)
 	{
 		if (x[0] > innerLowerLeft_[0] && x[0] < innerUpperRight_[0] 
@@ -126,19 +128,22 @@ namespace Dune
 	{
 		FieldVector<RT,m> values(0);
 
-		if (x[0] > outerUpperRight_[0] - eps_) {
-		
+		for (int nC=0; nC < m; nC+=2){
+			
+			if (x[0] > outerUpperRight_[0] - eps_) {
 			RT a = -1;
 			RT b = outerUpperRight_[1];
+			// Fracture domain
+			if (nC<2){
 			values[pWFIdx] = -densityW_*gravity_[1]*(a*x[1] + b);
-			values[sNFIdx] = outerSnrFracture_;			
+			values[sNFIdx] = outerSnrFracture_+0.0;}
+			// Matrix domain
+			else {
+			values[nC] = values[pWFIdx]*1.0;			//pWM = pWF 
+			values[nC+1] = outerSnrMatrix_+0.0;
+			}
+			}
 		}
-
-		values[pWMIdx] = values[pWFIdx]*0.9; 
-		
-		values[sNFIdx] = outerSnrFracture_+0.1;
-		values[sNMIdx] = outerSnrMatrix_+0.1;
-
 		return values;
 	}
 	  
@@ -149,10 +154,10 @@ namespace Dune
 		FieldVector<RT,m> values(0);
 
 //		RT lambda = (outerUpperRight_[0] - x[0])/width_;
-		if (x[0] < outerLowerLeft_[0] + eps_) {
+			if (x[0] < outerLowerLeft_[0] + eps_) {
 			values[sNFIdx] = -0.5;
 			values[pWFIdx] = -0.0;
-		}
+			}
 		
 		return values;
 	}
@@ -162,13 +167,12 @@ namespace Dune
 	{
 
 		FieldVector<RT,m> values;
-		
-		values[pWFIdx] = -densityW_*gravity_[1]*(outerUpperRight_[1] - x[1]);
-		values[sNFIdx] = outerSnrFracture_+0.1;
-		values[sNMIdx] = outerSnrMatrix_+0.1;
-		
-		values[pWMIdx] = values[pWFIdx]*0.9; 
-		
+		for (int nC=0; nC<m; nC+=4){
+		values[nC] = -densityW_*gravity_[1]*(outerUpperRight_[1] - x[1])+0;
+		values[nC+1] = outerSnrFracture_+0.0;
+		values[nC+2] = (-densityW_*gravity_[1]*(outerUpperRight_[1] - x[1])+0)*0.9;
+		values[nC+3] = outerSnrMatrix_+0.0;
+		}
 		return values;
 	}
 
@@ -269,7 +273,7 @@ namespace Dune
 			RT outerNFracture = 4.7, RT innerNFracture = 7.3,
 			RT outerNMatrix = 4.7, RT innerNMatrix = 7.3)
 	
-	: MincProblem<G, RT>(law), 
+	: MincProblem<G, RT, m>(law), 
 	  outerLowerLeft_(outerLowerLeft), outerUpperRight_(outerUpperRight), 
 	  innerLowerLeft_(innerLowerLeft), innerUpperRight_(innerUpperRight), 
 	  eps_(1e-8*outerUpperRight[0]), 
