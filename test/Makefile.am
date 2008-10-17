@@ -1,4 +1,4 @@
-SUBDIRS = . 2p2cni 2penergy boundaryid box3d brinkman capillary co2 coupled diffusion dimltdimworld elementid fractionalflow fvca5 gravity newton parallel pardiso phasepressure_ff splitting star2dgf star2uggrid stokes transport tutorial twophase upscaledvelocity vtk hysteresis
+SUBDIRS = . 2p2cni 2penergy boundaryid box3d brinkman capillary co2 diffusion dimltdimworld elementid fractionalflow fvca5 gravity minc newton parallel pardiso phasepressure_ff splitting star2dgf star2uggrid stokes transport tutorial twophase upscaledvelocity vtk hysteresis
 
 include $(top_srcdir)/am/global-rules
 

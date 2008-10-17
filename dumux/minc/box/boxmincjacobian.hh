@@ -17,7 +17,7 @@
 
 #include<dune/disc/shapefunctions/lagrangeshapefunctions.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
-#include<dune/disc/functions/p1function.hh>
+//#include<dune/disc/functions/p1function.hh>
 #include"dumux/operators/boxjacobian.hh"
 #include"dumux/minc/mincproblem.hh"
 

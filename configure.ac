@@ -112,6 +112,7 @@ AC_CONFIG_FILES([Makefile
     test/fractionalflow/Makefile
     test/fvca5/Makefile
     test/gravity/Makefile
+    test/minc/Makefile
     test/multigrid/Makefile
     test/newton/Makefile
     test/parallel/Makefile
