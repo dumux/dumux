@@ -1,12 +1,13 @@
-// $Id$ 
-
 #ifndef DUNE_MINCMODEL_HH
 #define DUNE_MINCMODEL_HH
 
 #include <dune/disc/shapefunctions/lagrangeshapefunctions.hh>
+//#include <dune/disc/functions/p1function.hh>
 #include "dumux/operators/p1operatorextended.hh"
 #include "dumux/nonlinear/nonlinearmodel.hh"
 #include "dumux/fvgeometry/fvelementgeometry.hh"
+
+#include <boost/format.hpp>
 
 namespace Dune {
 template<class G, class RT, class ProblemType, class LocalJacobian,
@@ -32,10 +33,9 @@ public:
 
 	FunctionType uOldTimeStep;
 };
-
-template<class G, class RT, class ProblemType, class LocalJac, int m=4> class LeafP1MincModel :
+template<class G, class RT, class ProblemType, class LocalJac, int m> class LeafP1MincModel :
 	public MincModel<G, RT, ProblemType, LocalJac,
-		LeafP1FunctionExtended<G, RT, m>, LeafP1OperatorAssembler<G, RT, m> > {
+			 Dune::LeafP1FunctionExtended<G, RT, m>, LeafP1OperatorAssembler<G, RT, m> > {
 public:
 	// define the function type:
 	typedef LeafP1FunctionExtended<G, RT, m> FunctionType;
@@ -65,10 +65,16 @@ public:
 
 	LeafP1MincModel(const G& g, ProblemType& prob) :
 		MincModel(g, prob), problem(prob), grid(g), vertexmapper(g,
-				g.leafIndexSet()), size((*(this->u)).size()), pWFracture(size), pNFracture(size), pCFracture(size),
-				satWFracture(size), satNFracture(size), satExFracture(0), pExFracture(0), satErrorFracture(0) {
+				g.leafIndexSet()), size((*(this->u)).size()), satExFracture(0), pExFracture(0), satErrorFracture(0) {
+		for (int i = 0; i < m/2; ++i) {
+			 pWFracture[i].resize(size);
+			 pNFracture[i].resize(size);
+			 pCFracture[i].resize(size);
+			 satWFracture[i].resize(size);
+			 satNFracture[i].resize(size);
+		}
 	}
-	
+
 	virtual void initial() {
 		typedef typename G::Traits::template Codim<0>::Entity Entity;
 		typedef typename G::ctype DT;
@@ -85,7 +91,7 @@ public:
 			// get geometry type
 			Dune::GeometryType gt = it->geometry().type();
 
-			// get entity 
+			// get entity
 			const Entity& entity = *it;
 
 			const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type
@@ -115,7 +121,7 @@ public:
 			// get geometry type
 			Dune::GeometryType gt = it->geometry().type();
 
-			// get entity 
+			// get entity
 			const Entity& entity = *it;
 
 			const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type
@@ -123,7 +129,7 @@ public:
 							1);
 			int size = sfs.size();
 
-			// set type of boundary conditions 
+			// set type of boundary conditions
 			this->localJacobian.template assembleBC<LeafTag>(entity);
 
 			IntersectionIterator
@@ -157,7 +163,7 @@ public:
 														global, entity, is,
 														local);
 												this->problem.dirichletIndex(global, entity, is,
-														local, dirichletIndex);	
+														local, dirichletIndex);
 
 										if (bctype[equationNumber]
 												== BoundaryConditions::dirichlet) {
@@ -196,7 +202,7 @@ public:
 			// get geometry type
 			Dune::GeometryType gt = it->geometry().type();
 
-			// get entity 
+			// get entity
 			const Entity& entity = *it;
 
 			FVElementGeometry<G> fvGeom;
@@ -240,7 +246,7 @@ public:
 	}
 
 	virtual void vtkout(const char* name, int k) {
-                VTKWriter<typename G::LeafGridView> vtkwriter(this->grid.leafView());
+	        VTKWriter<typename G::LeafGridView> vtkwriter(this->grid.leafView());
 		char fname[128];
 		sprintf(fname, "%s-%05d", name, k);
 		double minSat = 1e100;
@@ -249,11 +255,14 @@ public:
 			satExFracture.resize(size);
 			satErrorFracture.resize(size);
 		}
+		for (int j=0; j<m/2; j++){
 		for (int i = 0; i < size; i++) {
-			pWFracture[i] = (*(this->u))[i][0];
-			satNFracture[i] = (*(this->u))[i][1];
-			satWFracture[i] = 1 - satNFracture[i];
-			double satNI = satNFracture[i];
+
+			pWFracture[j][i] = (*(this->u))[i][j*2 + 0];
+			satNFracture[j][i] = (*(this->u))[i][j*2 + 1];
+			satWFracture[j][i] = 1 - satNFracture[j][i];
+
+			double satNI = satNFracture[j][i];
 			minSat = std::min(minSat, satNI);
 			maxSat = std::max(maxSat, satNI);
 			//pNFracture[i] = (*(this->u))[i][1];
@@ -265,17 +274,20 @@ public:
 				satErrorFracture[i]=problem.uExOutVertex(i, 2);
 			}
 		}
-		vtkwriter.addVertexData(pWFracture, "wetting phase pressure");
-		vtkwriter.addVertexData(satWFracture, "wetting phase saturation");
-		vtkwriter.addVertexData(satNFracture, "nonwetting phase saturation");
+		vtkwriter.addVertexData(pWFracture[j], (boost::format("wetting phase pressure for continuum  %d")%j).str());
+		vtkwriter.addVertexData(satWFracture[j], (boost::format("wetting phase saturation for continuum  %d")%j).str());
+		vtkwriter.addVertexData(satNFracture[j], (boost::format("nonwetting phase saturation for continuum  %d")%j).str());
+//		vtkwriter.addVertexData(pWMatrix, "wetting phase pressure in fracture");
 		if (problem.exsolution) {
 			vtkwriter.addVertexData(satExFracture, "saturation, exact solution");
 			vtkwriter.addVertexData(satErrorFracture, "saturation error");
+		}
 		}
 		vtkwriter.write(fname, VTKOptions::ascii);
 		std::cout << "nonwetting phase saturation: min = "<< minSat
 				<< ", max = "<< maxSat << std::endl;
 		if (minSat< -0.5 || maxSat > 1.5)DUNE_THROW(MathError, "Saturation exceeds range.");
+
 	}
 
 protected:
@@ -284,19 +296,19 @@ protected:
 	VertexMapper vertexmapper;
 	int size;
 //	BlockVector<FieldVector<RT, 1> > pW;
-	BlockVector<FieldVector<RT, 1> > pWFracture;
-//	BlockVector<FieldVector<RT, 1> > pWMatrix;
+	BlockVector<FieldVector<RT, 1> > pWFracture[m/2];
+//	BlockVector<FieldVector<RT, 1> > pWMatrix[m/2];
 //	BlockVector<FieldVector<RT, 1> > pN;
-	BlockVector<FieldVector<RT, 1> > pNFracture;
+	BlockVector<FieldVector<RT, 1> > pNFracture[m/2];
 //	BlockVector<FieldVector<RT, 1> > pNMatrix;
 //	BlockVector<FieldVector<RT, 1> > pC;
-	BlockVector<FieldVector<RT, 1> > pCFracture;
+	BlockVector<FieldVector<RT, 1> > pCFracture[m/2];
 //	BlockVector<FieldVector<RT, 1> > pCMatrix;
 //	BlockVector<FieldVector<RT, 1> > satW;
-	BlockVector<FieldVector<RT, 1> > satWFracture;
+	BlockVector<FieldVector<RT, 1> > satWFracture[m/2];
 //	BlockVector<FieldVector<RT, 1> > satWMatrix;
 //	BlockVector<FieldVector<RT, 1> > satN;
-	BlockVector<FieldVector<RT, 1> > satNFracture;
+	BlockVector<FieldVector<RT, 1> > satNFracture[m/2];
 //	BlockVector<FieldVector<RT, 1> > satNMatrix;
 //	BlockVector<FieldVector<RT, 1> > satEx;
 	BlockVector<FieldVector<RT, 1> > satExFracture;
