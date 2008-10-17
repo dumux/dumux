@@ -387,18 +387,18 @@ namespace Dune
                     UnknownsVector massContrib, tmp;
 
                     // mass balance within the cell
-                    JacobianImp::evalMassBalance(massContrib,
-                                                  _problem,
-                                                  _curCell(),
-                                                  _curCellGeom,
-                                                  solNew,
-                                                  i);
-                    JacobianImp::evalMassBalance(tmp,
-                                                  _problem,
-                                                  _curCell(),
-                                                  _curCellGeom,
-                                                  solOld,
-                                                  i);
+                    JacobianImp::evalLocalRate(massContrib,
+                                               _problem,
+                                               _curCell(),
+                                               _curCellGeom,
+                                               solNew,
+                                               i);
+                    JacobianImp::evalLocalRate(tmp,
+                                               _problem,
+                                               _curCell(),
+                                               _curCellGeom,
+                                               solOld,
+                                               i);
                     
                     massContrib -= tmp;
                     massContrib *= _curCellGeom.subContVol[i].volume/getDt();
@@ -426,13 +426,13 @@ namespace Dune
                     int j = _curCellGeom.subContVolFace[k].j;
 
                     UnknownsVector flux;
-                    JacobianImp::evalMassFlux(flux,
-                                               _problem,
-                                               _curCell(),
-                                               _curCellGeom,
-                                               solNew,
-                                               solNewCache,
-                                               k);
+                    JacobianImp::evalFluxRate(flux,
+                                              _problem,
+                                              _curCell(),
+                                              _curCellGeom,
+                                              solNew,
+                                              solNewCache,
+                                              k);
 
 /*                    if (HACKY_HACK) {
                         std::cout << boost::format("flux: %g/%g\n")%flux[0]%flux[1];

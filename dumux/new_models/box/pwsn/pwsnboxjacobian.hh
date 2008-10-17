@@ -65,23 +65,25 @@ namespace Dune
 
     public:
         /*!
-         * \brief Evaluate the rate of change of mass within a sub
-         *        control volume of a dual cell in the pw-Sn
-         *        formulation.
+         * \brief Evaluate the rate of change of e.g. mass within a
+         *        sub control volume of a finite volume cell in the
+         *        pw-Sn formulation.
+         * 
+         * This function should not include the source and sink terms.
          */
-        static void evalMassBalance(UnknownsVector &result,
-                                    const Problem &problem,
-                                    const Cell &cell,
-                                    const FVElementGeometry &dualCell,
-                                    const LocalFunction &localSol,
-                                    const int scvId)
+        static void evalLocalRate(UnknownsVector &result,
+                                  const Problem &problem,
+                                  const Cell &cell,
+                                  const FVElementGeometry &dualCell,
+                                  const LocalFunction &localSol,
+                                  const int scvId)
             {
                 Scalar porosity = problem.porosity(cell);
-                // derivative of the wetting phase mass regarding time
+                // partial time derivative of the wetting phase mass
                 result[PwIndex] = -problem.densityW()
                                    *porosity
                                    *localSol.atSubContVol[scvId][SnIndex];
-                // derivative of the non-wetting phase mass regarding time
+                // partial time derivative of the non-wetting phase mass
                 result[SnIndex] = problem.densityN()
                                   *porosity
                                   *localSol.atSubContVol[scvId][SnIndex];
@@ -92,7 +94,7 @@ namespace Dune
          * \brief Evaluates the mass flux over a face of a subcontrol
          *        volume.
          */
-        static void evalMassFlux(UnknownsVector &flux,
+        static void evalFluxRate(UnknownsVector &flux,
                                  const Problem &problem,
                                  const Cell& cell,
                                  const FVElementGeometry &dualCell,
@@ -237,22 +239,6 @@ namespace Dune
                                                                   i,
                                                                   iGlobal,
                                                                   curSCVSol[SnIndex]);
-
-/*                if (HACKY_HACK) {
-                    std::cout << boost::format("_partialUpdateCellCache\n");
-                    std::cout << boost::format("cellIndex: %d\n")%cellIndex;
-                    std::cout << boost::format("i: %i\n")%i;
-                    std::cout << boost::format("iGlobal: %i\n")%iGlobal;
-                    std::cout << boost::format("---> pW: %g\n")%curSCVSol[PwIndex];
-                    std::cout << boost::format("---> Sn: %g\n")%curSCVSol[SnIndex];
-                    std::cout << boost::format("Sw: %g\n")%curSCVCache.Sw;
-                    std::cout << boost::format("pC: %g\n")%curSCVCache.pC;
-                    std::cout << boost::format("pN: %g\n")%curSCVCache.pN;
-                    std::cout << boost::format("mobility[PwIndex]: %g\n")%curSCVCache.mobility[PwIndex];
-                    std::cout << boost::format("mobility[SnIndex]: %g\n")%curSCVCache.mobility[SnIndex];
-                    std::cout << boost::format("end _partialUpdateCellCache\n");
-                    }
-*/
             }
 
     };

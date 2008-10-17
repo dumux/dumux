@@ -7,3 +7,4 @@ INCLUDE_DIRECTORIES(${DumuxIncludeDirectories})
 TARGET_LINK_LIBRARIES("test_pc_hysteresis_lenhard1" ${DumuxLinkLibraries})
 TARGET_LINK_LIBRARIES("test_pc_hysteresis_lenhard2" ${DumuxLinkLibraries})
 TARGET_LINK_LIBRARIES("test_pc_hysteresis_lens" ${DumuxLinkLibraries})
+

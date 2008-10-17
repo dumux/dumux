@@ -121,7 +121,7 @@ namespace Dune
         //! tolerance
         bool newtonConverged()
             {
-                return _method->defect()*_oneByMagnitude <= _tolerance && _curPhysicalness >= 1.0;
+                return _method->deflectionTwoNorm()*_oneByMagnitude <= _tolerance && _curPhysicalness >= 1.0;
             }
 
         //! called before the newton method is applied to an equation
@@ -200,7 +200,7 @@ namespace Dune
             {
                 ++_numSteps;
                 std::cout << boost::format("Newton iteration %d done: defect=%g, physicalness: %.3f, maxPhysicalness=%.3f\n")
-                    %_numSteps%(_method->defect()*_oneByMagnitude)%_curPhysicalness%_maxPhysicalness;
+                    %_numSteps%(_method->deflectionTwoNorm()*_oneByMagnitude)%_curPhysicalness%_maxPhysicalness;
             };
 
         //! Indicates that we're done solving the equation system.

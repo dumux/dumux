@@ -35,9 +35,10 @@ namespace Dune
      *
      * This is the version without line search.
      */
-    template <class Model, bool lineSearch=false>
+    template <class NewtonMethod, bool lineSearch=false>
     class _NewtonUpdateMethod
     {
+        typedef typename NewtonMethod::Model Model;
         typedef typename Model::NewtonTraits::Function   Function;
         typedef typename Model::NewtonTraits::Scalar     Scalar;
 
@@ -65,83 +66,47 @@ namespace Dune
      * This is the version with line search. Models using this require
      * an evalGlobalDefect() method.
      */
-    template <class Model>
-    class _NewtonUpdateMethod<Model, true>
+    template <class NewtonMethod>
+    class _NewtonUpdateMethod<NewtonMethod, true>
     {
+        typedef typename NewtonMethod::Model             Model;
         typedef typename Model::NewtonTraits::Function   Function;
         typedef typename Model::NewtonTraits::Scalar     Scalar;
             
     public:
         _NewtonUpdateMethod(Function &uInitial, Model &model)
-            : _globalDefect(model.grid())
             {
-                _lambda = 1.0;
-                _curGlobalResidual = _computeGlobalResidual(uInitial, model);
+//                _oldResidual = ;
             };
 
             
         bool update(Function &u, 
                     Function &uOld,
                     Model &model)
-            {                
-/*
-                if (recursionDepth == 0) {
-                    // if this is the outermost call to this function
-                    // first try to chose step size 1.0 which
-                    // corrosponds to the plain newton-raphson method
-                    _lambda = 1.0;
-                }
-                else if (recursionDepth > 3) {
-                    // if the step size gets too small, cancel the
-                    // update
-                    return true;
-                }
-*/
-
-                // do the actual update
-                *u *= -_lambda;
+            {
+                // First try a normal newton step
+                *u *= - 1;
                 *u += *uOld;
 
-                if (_lambda < 1.0/8) {
-                    // if the step size gets too small, cancel the
-                    // update
-                    return true;
-                }
-
                 Scalar newGlobalResidual = _computeGlobalResidual(u, model);
-                std::cout << boost::format("Newton lambda: %f, residual ratios: %f\n")%_lambda%(newGlobalResidual/_curGlobalResidual);
-                if (newGlobalResidual > _curGlobalResidual*1.05) {
-                    // if the square norm of the new global residual
-                    // is bigger than the one of the last iteration,
-                    // use a smaller step size lambda for the next
-                    // iteration.
-                    _lambda /= 2;
-                }
-                else if (newGlobalResidual < _curGlobalResidual/1.5) {
-                    _lambda = std::min(Scalar(1.0), _lambda*2);
-                }
-                
-                _curGlobalResidual = newGlobalResidual;
+                // if the new global residual is larger than the old
+                // one, do a line search. this is done by assuming
+                // that the square of the residual is a second order
+                // polynomial. The at the current newton step the
+                // derivative (i.e. the jacobian) and the squared
+                // residual are known, and at the next newton
+                // iteration, the square of the residual is known.
+                // for details, see:
+                // J. E. Dennis, R. B. Schnabel: "Numerical methods
+                // for unconstrained optimization and nonlinear
+                // equations", 1, Prentice-Hall, 1983 pp. 126-127.
+
+                // TODO
                 return true;
             };
 
-    protected:
-        Scalar _computeGlobalResidual(Function &u, Model &model)
-            {
-                // calculate global residual of a solution
-                model.evalGlobalDefect(_globalDefect);
-                Scalar globalResidual = (*_globalDefect).two_norm2();
-//                globalResidual *= globalResidual;
-                model.grid().comm().sum(&globalResidual, 1);
-//                residualWeight = 1.0/std::max(globalResidual, (Scalar) 1.0e-8);
-//                globalResidual *= residualWeight;
-                
-                return globalResidual;                
-            }
-
-        Scalar    _curGlobalResidual;
-        Scalar    _lambda; // scaling factor of the step for the update
-        Function  _globalDefect; // temporary variable for _computeGlobalResidual
+    private:
+        Scalar _oldResidual;
     };
 
     /*!
@@ -160,18 +125,29 @@ namespace Dune
         typedef typename Model::NewtonTraits::LocalJacobian     LocalJacobian;
         typedef typename Model::NewtonTraits::JacobianAssembler JacobianAssembler;
         typedef typename Model::NewtonTraits::Scalar            Scalar;
+        typedef NewtonMethod<Model, useLineSearch>              ThisType;
+
+    public:
+        typedef typename JacobianAssembler::RepresentationType  JacobianMatrix;
 
     public:
         NewtonMethod(Model &model)
             : uOld(model.grid()),
               f(model.grid())
             {
+                _residual = NULL;
+                _model = NULL;
+            }
+
+        ~NewtonMethod()
+            {
+                delete _residual;
             }
 
         template <class NewtonController>
         bool execute(Model &model, NewtonController &ctl)
             {
-                _defect = 1e100;
+                _model = &model;
 
                 // TODO (?): u shouldn't be hard coded to the model
                 Function          &u = model.u();
@@ -180,8 +156,11 @@ namespace Dune
                 
                 // method to of how updated are done. (either 
                 // LineSearch or the plain newton-raphson method)
-                Dune::_NewtonUpdateMethod<Model, useLineSearch> updateMethod(u, model);;
+                Dune::_NewtonUpdateMethod<ThisType, useLineSearch> updateMethod(u, model);;
 
+                _residualUpToDate = false;
+                _deflectionTwoNorm = 1e100;
+                
                 // tell the controller that we begin solving
                 ctl.newtonBegin(this, u);
 
@@ -192,7 +171,7 @@ namespace Dune
                     // notify the controller that we're about to start
                     // a new timestep
                     ctl.newtonBeginStep();
-
+                    
                     // make the current soltion to the old one
                     *uOld = *u;
                     *f = 0;
@@ -203,13 +182,15 @@ namespace Dune
 
                     // solve the resultuing linear equation system
                     if (ctl.newtonSolveLinear(*jacobianAsm, *u, *f)) {
-                        _defect = (*u).two_norm();
-
+                        _residualUpToDate = false;
+                        _deflectionTwoNorm = (*u).two_norm();
+                        
                         // update the current solution. We use either
                         // a line search approach or the plain method.
                         if (!updateMethod.update(u, uOld, model)) {
                             ctl.newtonFail();
                             *model.u() = *model.uOldTimeStep();
+                            _model = NULL;
                             return false;
                         }
                     }
@@ -224,6 +205,7 @@ namespace Dune
                         // but we would like to start from something which is
                         // physical.)
                         *model.u() = *model.uOldTimeStep();
+                        _model = NULL;
                         return false;
                     }
 
@@ -234,19 +216,52 @@ namespace Dune
 
                 if (!ctl.newtonConverged()) {
                     ctl.newtonFail();
+                    _model = NULL;
                     return false;
                 }
-                
+
+                _model = NULL;
                 return true;
             }
+
+        /*!
+         * \brief Returns the current Jacobian matrix.
+         */
+        const JacobianMatrix &currentJacobian() const
+            { return *(_model->jacobianAssembler()); }
         
-        Scalar defect() const
-            { return _defect; }
+
+        /*!
+         * \brief Returns the current residual, i.e. the deivation of
+         *        the non-linear function from 0 for the current
+         *        iteration.
+         */
+        const Function &residual()
+            {
+                if (!_residualUpToDate) {
+                    if (!_residual)
+                        _residual = new Function(f);
+                    // update the residual
+                    _model->evalGlobalResidual(*_residual);
+                    _residualUpToDate = true;
+                }
+                return *_residual;
+            }
+
+        /*!
+         * \brief Returns the euclidean norm of the last newton step size.
+         */
+        Scalar deflectionTwoNorm() const
+            { return _deflectionTwoNorm; }
 
     private:
         Function       uOld;
         Function       f;
-        Scalar        _defect;
+
+        bool          _residualUpToDate;
+        Function     *_residual;
+        Scalar        _deflectionTwoNorm;
+        Model        *_model;
     };
 }
 
