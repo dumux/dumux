@@ -205,9 +205,9 @@ namespace Dune
                                                              _curCellGeom,
                                                              uPlusEps,
                                                              j);
-                        evalLocalDefect(defUPlusEps,
-                                        uPlusEps, uPlusMinusEpsCache,
-                                        localOldU);
+                        evalLocalResidual(defUPlusEps,
+                                          uPlusEps, uPlusMinusEpsCache,
+                                          localOldU);
 
 
                         // copy uCache into uPlusMinusEpsCache, but only evaluate
@@ -219,9 +219,9 @@ namespace Dune
                                                              _curCellGeom,
                                                              uMinusEps,
                                                              j);
-                        evalLocalDefect(defUMinusEps,
-                                        uMinusEps, uPlusMinusEpsCache,
-                                        localOldU);
+                        evalLocalResidual(defUMinusEps,
+                                          uMinusEps, uPlusMinusEpsCache,
+                                          localOldU);
                         
                         
 /*                        if (HACKY_HACK) {
@@ -268,9 +268,9 @@ namespace Dune
                 
                 // calculate the right hand side
                 LocalFunction defU;
-                evalLocalDefect(defU,
-                                localU, uCache,
-                                localOldU);
+                evalLocalResidual(defU,
+                                  localU, uCache,
+                                  localOldU);
                 for (int i=0; i < numVertices; i++) {
                     for (int comp=0; comp < NumUnknowns; comp++) {
                         if (this->bctype[i][comp]==Dune::BoundaryConditions::neumann) {
@@ -368,25 +368,30 @@ namespace Dune
             setcurrentsize(_curCellGeom.nNodes);
         }
 
-        // compute the local defect between 'solNew' and 'solOld' at
+        // compute the local residual between 'solNew' and 'solOld' at
         // the vertices of the current cell. solOld must be the local
         // solution of the last time step.
-        void evalLocalDefect(LocalFunction &defect,
+        void evalLocalResidual(LocalFunction &residual,
                              const LocalFunction &solNew,
                              const CachedCellData &solNewCache,
                              const LocalFunction &solOld) const
             {
-                // reset defect
+                // reset residual
                 for (int i = 0; i < _curCellGeom.nNodes; i++) {
-                    defect.atSubContVol[i] = 0;
+                    residual.atSubContVol[i] = 0;
                 }
 
-                // evaluate the defect of the mass balance
+                // evaluate the local rate
                 for (int i=0; i < _curCellGeom.nNodes; i++)
                 {
-                    UnknownsVector massContrib, tmp;
+                    UnknownsVector massContrib(0), tmp(0);
 
-                    // mass balance within the cell
+                    // mass balance within the cell. this is the
+                    // $\frac{m}{\partial t}$ term if using implicit
+                    // euler as time discretization. 
+                    //
+                    // TODO (?): we might need a more explicit way for
+                    // doing the time discretization...
                     JacobianImp::evalLocalRate(massContrib,
                                                _problem,
                                                _curCell(),
@@ -399,27 +404,22 @@ namespace Dune
                                                _curCellGeom,
                                                solOld,
                                                i);
-                    
                     massContrib -= tmp;
                     massContrib *= _curCellGeom.subContVol[i].volume/getDt();
-                    defect.atSubContVol[i] += massContrib;
+                    residual.atSubContVol[i] += massContrib;
 
-                    // calculate the mass which was injected since the last timestep
-                    // and subtract it from the defect due to the mass balance.
+                    // subtract the source term from the local rate
                     UnknownsVector q;
                     _problem.sourceTerm(q,
                                         _curCell(),
                                         _curCellGeom,
                                         i);
                     q *= _curCellGeom.subContVol[i].volume;
-                    defect.atSubContVol[i] -= q;
-
-//                    if (HACKY_HACK) {
-//                        printf("q: %f/%f\n", q[0], q[1]);
-//                    }
+                    residual.atSubContVol[i] -= q;
                 }
 
-                // calculate defect of mass flux over the faces
+                // calculate the mass flux over the faces and subtract
+                // it from the local rates
                 for (int k = 0; k < _curCellGeom.nEdges; k++)
                 {
                     int i = _curCellGeom.subContVolFace[k].i;
@@ -433,22 +433,19 @@ namespace Dune
                                               solNew,
                                               solNewCache,
                                               k);
-
-/*                    if (HACKY_HACK) {
-                        std::cout << boost::format("flux: %g/%g\n")%flux[0]%flux[1];
-                    }
-*/
-
-                    // add to defect
-                    defect.atSubContVol[i] -= flux;
-                    defect.atSubContVol[j] += flux;
+                    
+                    // subtract fluxes from the local mass rates of
+                    // the respective sub control volume adjacent to
+                    // the face.
+                    residual.atSubContVol[i] -= flux;
+                    residual.atSubContVol[j] += flux;
                 }
             }
 
         //! same as above but less efficient if the update of the
         //! entire cell cache is a slow operation. Overloaded for
         //! convenience.
-        void evalLocalDefect(LocalFunction &defect,
+        void evalLocalResidual(LocalFunction &residual,
                              const LocalFunction &solNew,
                              const LocalFunction &solOld) const
             {
@@ -458,7 +455,7 @@ namespace Dune
                                               _curCell(),
                                               _curCellGeom,
                                               solNew);
-                evalLocalDefect(defect, solNew, solNewCache, solOld);
+                evalLocalResidual(residual, solNew, solNewCache, solOld);
             }
 
         // evaluate 'globalFn' for the current cell, save the result
@@ -507,7 +504,8 @@ namespace Dune
                     // TODO: "mixed" boundary conditions are not yet
                     // possible. either it's neumann for all primary
                     // variables or it's dirchlet.
-                    if (this->bctype[vertexInElement][0] == Dune::BoundaryConditions::neumann) {
+                    if (this->bctype[vertexInElement][0] == Dune::BoundaryConditions::neumann) 
+                    {
                         int bfIdx = _curCellGeom.boundaryFaceIndex(faceIdx, vertexInFace);
                         const LocalCoord &local = _curCellGeom.boundaryFace[bfIdx].ipLocal;
                         WorldCoord global = _curCellGeom.boundaryFace[bfIdx].ipGlobal;
@@ -518,7 +516,7 @@ namespace Dune
                                                global,
                                                local);
                         
-
+                        
                         if (faceBCType[0]!=Dune::BoundaryConditions::neumann)
                             break;
                         

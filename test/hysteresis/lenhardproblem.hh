@@ -567,13 +567,13 @@ namespace Lenhard
                                                       _model.u(),
                                                       PwIndex);
 
-                SpatialFunction globDefect(ParentType::grid());
-                _model.evalGlobalDefect(globDefect);
+                SpatialFunction globResidual(ParentType::grid());
+                _model.evalGlobalResidual(globResidual);
                 _resultWriter.addScalarVertexFunction("global defect Sn",
-                                                      globDefect,
+                                                      globResidual,
                                                       SnIndex);
                 _resultWriter.addScalarVertexFunction("global defect Pw",
-                                                      globDefect,
+                                                      globResidual,
                                                       PwIndex);
 
                 _resultWriter.endTimestep();

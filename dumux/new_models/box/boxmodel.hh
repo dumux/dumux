@@ -199,14 +199,14 @@ namespace Dune
 
 
         /*!
-         * \brief Calculate the global defect.
+         * \brief Calculate the global residual.
          * 
          * The global difference of the result when
          * using an approximate solution from the right hand side.
          */
-        void evalGlobalDefect(SpatialFunction &globDefect)
+        void evalGlobalResidual(SpatialFunction &globResidual)
             {
-                (*globDefect)=0;
+                (*globResidual)=0;
 
                 // iterate through leaf grid
                 CellIterator it     = _problem.grid().template leafbegin<0>();
@@ -214,32 +214,32 @@ namespace Dune
                 for (; it != eendit; ++it)
                 {
                     // tell the local jacobian which cell it should
-                    // consider and evaluate the local defect for the
+                    // consider and evaluate the local residual for the
                     // cell. in order to do this we first have to
                     // evaluate the cell's local solutions for the
                     // current and the last timestep.
                     const Cell& cell = *it;
-                    LocalFunction localDefect;
+                    LocalFunction localResidual;
                     LocalFunction localU;
                     LocalFunction localOldU;
                     _localJacobian.setCurrentCell(cell);
                     _localJacobian.evalLocal(localU, u());
                     _localJacobian.evalLocal(localOldU, uOldTimeStep());
-                    _localJacobian.evalLocalDefect(localDefect,
-                                                   localU,
-                                                   localOldU);
+                    _localJacobian.evalLocalResidual(localResidual,
+                                                     localU,
+                                                     localOldU);
 
                     // loop over the cell's vertices, map them to the
                     // corresponding grid's vertex ids and add the
-                    // cell's local defect at a vertex the global
-                    // defect at this vertex.
+                    // cell's local residual at a vertex the global
+                    // residual at this vertex.
                     const ShapeFnSet &shapeFnSet = ShapeFnSets::general(cell.geometry().type(),
                                                                           1);
                     for(int localId=0; localId < shapeFnSet.size(); localId++)
                     {
                         int globalId = _problem.vertexIndex(cell,
                                                             shapeFnSet[localId].entity());
-                        (*globDefect)[globalId] += localDefect.atSubContVol[localId];
+                        (*globResidual)[globalId] += localResidual.atSubContVol[localId];
                     }
                 }
             }

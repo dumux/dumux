@@ -490,13 +490,13 @@ namespace Lens
                                                u,
                                                PwIndex);
 
-                SpatialFunction globDefect(ParentType::grid());
-                _model.evalGlobalDefect(globDefect);
-                writer.addScalarVertexFunction("global defect Sn",
-                                               globDefect,
+                SpatialFunction globResidual(ParentType::grid());
+                _model.evalGlobalResidual(globResidual);
+                writer.addScalarVertexFunction("global residual Sn",
+                                               globResidual,
                                                SnIndex);
-                writer.addScalarVertexFunction("global defect Pw",
-                                               globDefect,
+                writer.addScalarVertexFunction("global residual Pw",
+                                               globResidual,
                                                PwIndex);
             }
 
