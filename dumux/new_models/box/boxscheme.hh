@@ -17,8 +17,8 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
-#ifndef DUMUX_BOX_MODEL_HH
-#define DUMUX_BOX_MODEL_HH
+#ifndef DUMUX_BOX_SCHEME_HH
+#define DUMUX_BOX_SCHEME_HH
 
 #include <dumux/new_models/box/boxjacobian.hh>
 #include <dumux/auxiliary/basicdomain.hh>
@@ -34,22 +34,32 @@ namespace Dune
 {
 
     /*!
-     * \brief The base class for the BOX hybrid finite element/finite volume discretization model
+     * \brief The base class for the BOX hybrid finite element/finite volume discretization scheme
      */
     template<class BoxTraitsT, class ProblemT, class LocalJacobianT>
-    class BoxModel
+    class BoxScheme
     {
         // copy the relevant problem specfific types from the problem
         // controller class
-        typedef BoxModel<BoxTraitsT, ProblemT, LocalJacobianT> ThisType;
+        typedef BoxScheme<BoxTraitsT, ProblemT, LocalJacobianT> ThisType;
         typedef ProblemT                                       Problem;
 
     public:
+        /*!
+         * \brief The traits of the BOX scheme.
+         *
+         * This includes the shape functions to be used, etc.
+         */
         typedef BoxTraitsT                     BoxTraits;
+        /*!
+         * \brief The traits of the spatial domain (grid type, etc)
+         */
         typedef typename Problem::DomainTraits DomainTraits;
         
-        // required to use the model in conjunction with the newton
-        // method
+        /*!
+         *  \brief This structure is Required to use models based on the BOX
+         *         scheme in conjunction with the newton Method.
+         */
         struct NewtonTraits {
             typedef LocalJacobianT                         LocalJacobian;
             typedef typename BoxTraits::SpatialFunction    Function;
@@ -71,12 +81,13 @@ namespace Dune
         typedef typename DomainTraits::WorldCoord                  WorldCoord;
         typedef typename DomainTraits::LocalCoord                  LocalCoord;
 
-        typedef typename BoxTraits::JacobianAssembler      JacobianAssembler;
-        typedef typename BoxTraits::SpatialFunction        SpatialFunction;
+        typedef typename BoxTraits::JacobianAssembler          JacobianAssembler;
+        typedef typename BoxTraits::SpatialFunction            SpatialFunction;
         typedef typename SpatialFunction::RepresentationType   BoxFnRep;
-        typedef typename BoxTraits::LocalFunction          LocalFunction;
-        typedef typename BoxTraits::ShapeFnSets            ShapeFnSets;
-        typedef typename BoxTraits::ShapeFnSet             ShapeFnSet;
+        typedef typename BoxTraits::LocalFunction              LocalFunction;
+
+        typedef typename BoxTraits::ShapeFunctionSetContainer  ShapeFunctionSetContainer;
+        typedef typename ShapeFunctionSetContainer::value_type ShapeFunctionSet;
 
         typedef typename BoxTraits::BoundaryTypeVector  UnknownsVector;
         typedef typename BoxTraits::BoundaryTypeVector  BoundaryTypeVector;
@@ -92,7 +103,7 @@ namespace Dune
         };
         
     public:
-        BoxModel(Problem &prob, LocalJacobian &localJac)
+        BoxScheme(Problem &prob, LocalJacobian &localJac)
             : _problem(prob),
               _uCur(prob.grid()),
               _uPrev(prob.grid()),
@@ -116,23 +127,34 @@ namespace Dune
                 *_uPrev = *_uCur;
             }
 
-        // current solution
+        /*!
+         * \brief Reference to the current solution.
+         */
         const SpatialFunction &currentSolution() const
             { return _uCur; }
 
-        // current solution
+        /*!
+         * \brief Reference to the current solution.
+         */
         SpatialFunction &currentSolution()
             { return _uCur; }
 
-        // right hand side (?)
-        SpatialFunction &f()
+        /*!
+         * \brief Reference to the right hand side.
+         */
+        SpatialFunction &rightHandSide()
             { return _f; }
 
-        // last timestep's solution
-        SpatialFunction &uOldTimeStep()
+        /*!
+         * \brief Reference to solution of the previous time step.
+         */
+        SpatialFunction &previousSolution()
             { return _uPrev; }
 
-        const SpatialFunction &uOldTimeStep() const
+        /*!
+         * \brief Reference to solution of the previous time step.
+         */
+        const SpatialFunction &previousSolution() const
             { return _uPrev; }
 
         /*!
@@ -153,6 +175,9 @@ namespace Dune
         LocalJacobian &getLocalJacobian()
             { return _localJacobian; }
 
+        /*!
+         * \brief Reference to the grid of the spatial domain.
+         */
         const Grid &grid()
             { return _problem.grid(); }
 
@@ -168,7 +193,7 @@ namespace Dune
                 _applyDirichletBoundaries(_uCur);
                 
                 // TODO/FIXME: timestep control doesn't really belong
-                // here (before it was in the newton solver where it
+                // here (previously it was in the newton solver where it
                 // belongs even less)
                 int numRetries = 0;
                 while (true)
@@ -201,8 +226,7 @@ namespace Dune
         /*!
          * \brief Calculate the global residual.
          * 
-         * The global difference of the result when
-         * using an approximate solution from the right hand side.
+         * The global deflection of the mass balance from zero.
          */
         void evalGlobalResidual(SpatialFunction &globResidual)
             {
@@ -224,7 +248,7 @@ namespace Dune
                     LocalFunction localOldU;
                     _localJacobian.setCurrentCell(cell);
                     _localJacobian.evalLocal(localU, currentSolution());
-                    _localJacobian.evalLocal(localOldU, uOldTimeStep());
+                    _localJacobian.evalLocal(localOldU, previousSolution());
                     _localJacobian.evalLocalResidual(localResidual,
                                                      localU,
                                                      localOldU);
@@ -233,12 +257,11 @@ namespace Dune
                     // corresponding grid's vertex ids and add the
                     // cell's local residual at a vertex the global
                     // residual at this vertex.
-                    const ShapeFnSet &shapeFnSet = ShapeFnSets::general(cell.geometry().type(),
-                                                                          1);
-                    for(int localId=0; localId < shapeFnSet.size(); localId++)
+                    const ShapeFunctionSet &shapeFns = BoxTraits::shapeFunctions()(cell.geometry().type(), 1);
+                    for(int localId=0; localId < shapeFns.size(); localId++)
                     {
                         int globalId = _problem.vertexIndex(cell,
-                                                            shapeFnSet[localId].entity());
+                                                            shapeFns[localId].entity());
                         (*globResidual)[globalId] += localResidual.atSubContVol[localId];
                     }
                 }
@@ -255,7 +278,7 @@ namespace Dune
                 {
                     // loop over all shape functions of the current cell
                     const Cell& cell = *it;
-                    const ShapeFnSet &shapeFnSet = ShapeFnSets::general(cell.geometry().type(), 1);
+                    const ShapeFunctionSet &shapeFnSet = BoxTraits::shapeFunctions()(cell.geometry().type(), 1);
                     for (int i = 0; i < shapeFnSet.size(); i++) {
                         // get the local and global coordinates of the
                         // shape function's center (i.e. the vertex
@@ -295,7 +318,7 @@ namespace Dune
                     // functions
                     const Cell& cell = *cellIt;
                     Dune::GeometryType geoType = cell.geometry().type();
-                    const ShapeFnSet &shapeFnSet = ShapeFnSets::general(geoType, 1);
+                    const typename ShapeFunctionSetContainer::value_type &shapeFnSet = BoxTraits::shapeFunctions()(geoType, 1);
 
                     // locally evaluate the cell's boundary condition types
                     _localJacobian.assembleBoundaryCondition(cell);

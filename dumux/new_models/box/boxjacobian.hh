@@ -64,8 +64,8 @@ namespace Dune
 
       Template parameters are:
 
-      - _Problem        The specification of the problem (grid, boundary conditions, ...)
-      - _JacobianImp    The Box model specific part of the Jacobian
+      - Problem        The specification of the problem (grid, boundary conditions, ...)
+      - JacobianImp    The Box model specific part of the Jacobian
     */
     template<class Problem, class BoxTraitsT, class JacobianImp>
     class BoxJacobian : public Dune::LocalStiffness<typename Problem::DomainTraits::Grid::LeafGridView,
@@ -98,15 +98,16 @@ namespace Dune
 
         typedef typename Cell::Geometry                  Geometry;
 
-        typedef typename BoxTraits::SpatialFunction      SpatialFunction;
-        typedef typename BoxTraits::UnknownsVector       UnknownsVector;
-        typedef typename BoxTraits::BoundaryTypeVector   BoundaryTypeVector;
-        typedef typename BoxTraits::FVElementGeometry    FVElementGeometry;
-        typedef typename BoxTraits::ShapeFnSets          ShapeFnSets;
-        typedef typename BoxTraits::ShapeFnSet           ShapeFnSet;
-        typedef typename BoxTraits::LocalFunction        LocalFunction;
-        typedef typename BoxTraits::CachedCellData       CachedCellData;
-        typedef typename BoxTraits::CachedSubContVolData CachedSubContVolData;
+        typedef typename BoxTraits::SpatialFunction            SpatialFunction;
+        typedef typename BoxTraits::UnknownsVector             UnknownsVector;
+        typedef typename BoxTraits::BoundaryTypeVector         BoundaryTypeVector;
+        typedef typename BoxTraits::FVElementGeometry          FVElementGeometry;
+        typedef typename BoxTraits::LocalFunction              LocalFunction;
+        typedef typename BoxTraits::CachedCellData             CachedCellData;
+        typedef typename BoxTraits::CachedSubContVolData       CachedSubContVolData;
+
+        typedef typename BoxTraits::ShapeFunctionSetContainer  ShapeFunctionSetContainer;
+        typedef typename ShapeFunctionSetContainer::value_type ShapeFunctionSet;
 
     public:
         BoxJacobian(Problem &problem,
@@ -222,28 +223,6 @@ namespace Dune
                         evalLocalResidual(defUMinusEps,
                                           uMinusEps, uPlusMinusEpsCache,
                                           localOldU);
-                        
-                        
-/*                        if (HACKY_HACK) {
-                            printf("varying parameter %d at vertex %d of cell %d\n",
-                                   comp, 
-                                   j,
-                                   cellIdx);
-                            printf("node 14: pw:%f/sn:%f vs pw:%f/sn:%f ///// node 1:pw:%f/sn%f vs pw:%f/sn:%f\n", 
-                                   defUPlusEps.atSubContVol[0][0], 
-                                   defUMinusEps.atSubContVol[0][1],
-                                   
-                                   defUPlusEps.atSubContVol[0][0], 
-                                   defUMinusEps.atSubContVol[0][1],
-                                   
-                                   defUPlusEps.atSubContVol[1][0], 
-                                   defUMinusEps.atSubContVol[1][1],
-                                   
-                                   defUPlusEps.atSubContVol[1][0], 
-                                   defUMinusEps.atSubContVol[1][1]);
-                        }
-*/
-
 
                         Scalar deltaX = 2*eps;
                         for (int i = 0; i < numVertices; i++) {
@@ -291,7 +270,7 @@ namespace Dune
                     return;
 
                 Dune::GeometryType      geoType = _curCell().geometry().type();
-                const ShapeFnSet       &shapeFnSet = ShapeFnSets::general(geoType, 1);
+                const ShapeFunctionSet     &shapeFnSet = BoxTraits::shapeFunctions()(geoType, 1);
                 const CellReferenceElement &refElem = CellReferenceElements::general(geoType);
                 
                 // evaluate boundary conditions via intersection iterator
@@ -372,9 +351,9 @@ namespace Dune
         // the vertices of the current cell. solOld must be the local
         // solution of the last time step.
         void evalLocalResidual(LocalFunction &residual,
-                             const LocalFunction &solNew,
-                             const CachedCellData &solNewCache,
-                             const LocalFunction &solOld) const
+                               const LocalFunction &solNew,
+                               const CachedCellData &solNewCache,
+                               const LocalFunction &solOld) const
             {
                 // reset residual
                 for (int i = 0; i < _curCellGeom.nNodes; i++) {
@@ -464,7 +443,7 @@ namespace Dune
                        const SpatialFunction &globalFn)
             {
                 Dune::GeometryType geoType = _curCell().geometry().type();
-                const ShapeFnSet &shapeFns = ShapeFnSets::general(geoType, 1);
+                const ShapeFunctionSet &shapeFns = BoxTraits::shapeFunctions()(geoType, 1);
 
                 int size = shapeFns.size();
 //                dest.resize(size);
@@ -540,7 +519,7 @@ namespace Dune
         void _assembleDirichletBC(const BoundaryTypeVector &faceBCType,
                                   const IntersectionIterator &faceIt,
                                   const CellReferenceElement &refElem,
-                                  const ShapeFnSet &shapeFnSet)
+                                  const ShapeFunctionSet &shapeFnSet)
             {
                 // loop over shape functions
                 for (int i=0; i<shapeFnSet.size(); i++)

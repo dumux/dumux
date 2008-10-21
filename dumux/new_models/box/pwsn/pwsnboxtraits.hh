@@ -111,23 +111,23 @@ namespace Dune
                                               Scalar,
                                               NumUnknowns>  JacobianAssembler;
 
-        //! contains all FE shape functions for any element type and order.
-        //TODO: redunant since ShapeFnSet::value_type is the same
-        typedef Dune::LagrangeShapeFunctionSetContainer<CoordScalar,
-                                                        Scalar,
-                                                        GridDim> ShapeFnSetContainer;
-
-        //! the set of shape functions used inside FE cells.
-        // TODO: not required??
-        typedef Dune::LagrangeShapeFunctions<CoordScalar, 
-                                             Scalar,
-                                             GridDim>  ShapeFnSets;
-
         //! a single of shape function used for the BoxFunction inside
         //! cells.
-        typedef Dune::LagrangeShapeFunctionSet<CoordScalar,
-                                               Scalar,
-                                               GridDim> ShapeFnSet;
+        typedef Dune::LagrangeShapeFunctionSetContainer<CoordScalar,
+                                                        Scalar,
+                                                        GridDim> ShapeFunctionSetContainer;
+        
+        //! The actual shape functions which are being used. If a 
+        //! grid only contains simplices or tetrahedra, it is more
+        //! efficent to use LagrangeShapeFunctions::p1cube, or
+        //! LagrangeShapeFunctions::p1simplex
+        //!
+        //! TODO: Use specialization to take advantage of simplex grids
+        //!       and structured grids.
+        static const ShapeFunctionSetContainer &shapeFunctions()
+            { 
+                return Dune::LagrangeShapeFunctions<CoordScalar, Scalar, GridDim>::general;
+            }
     };
 }
 

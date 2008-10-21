@@ -20,7 +20,7 @@
 #ifndef DUMUX_PWSN_BOX_MODEL_HH
 #define DUMUX_PWSN_BOX_MODEL_HH
 
-#include <dumux/new_models/box/boxmodel.hh>
+#include <dumux/new_models/box/boxscheme.hh>
 #include <dumux/new_models/box/pwsn/pwsnboxjacobian.hh>
 #include <dumux/new_models/box/pwsn/pwsnboxtraits.hh>
 
@@ -38,25 +38,25 @@ namespace Dune
      * \brief The base class for the BOX hybrid finite element/finite volume discretization model
      */
     template<class ProblemT>
-    class PwSnBoxModel : public BoxModel< PwSnBoxTraits<typename ProblemT::DomainTraits::Scalar,
-                                                        typename ProblemT::DomainTraits::Grid>,
-                                          ProblemT, 
-                                          PwSnBoxJacobian<ProblemT, 
+    class PwSnBoxModel : public BoxScheme< PwSnBoxTraits<typename ProblemT::DomainTraits::Scalar,
+                                                         typename ProblemT::DomainTraits::Grid>,
+                                           ProblemT, 
+                                           PwSnBoxJacobian<ProblemT, 
                                                            PwSnBoxTraits<typename ProblemT::DomainTraits::Scalar,
                                                                          typename ProblemT::DomainTraits::Grid> > >
     {
         typedef typename ProblemT::DomainTraits::Grid   Grid;
         typedef typename ProblemT::DomainTraits::Scalar Scalar;
-
+        
     public:
         typedef PwSnBoxTraits<Scalar, Grid>             BoxTraits;
         
     private:
         typedef PwSnBoxJacobian<ProblemT, BoxTraits>    PwSnLocalJacobian;
-        typedef BoxModel<BoxTraits,
-                         ProblemT, 
-                         PwSnLocalJacobian>  ParentType;
-
+        typedef BoxScheme<BoxTraits,
+                          ProblemT, 
+                          PwSnLocalJacobian>  ParentType;
+        
     public:
         typedef NewNewtonMethod<ParentType> NewtonMethod;
 
