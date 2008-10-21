@@ -15,7 +15,6 @@
 #include<dune/disc/operators/boundaryconditions.hh>
 #include<dumux/material/twophaserelations.hh>
 #include<dumux/material/property_baseclasses.hh>
-
 /**
  * @file
  * @brief  Base class for defining an instance of the 2P2C problem

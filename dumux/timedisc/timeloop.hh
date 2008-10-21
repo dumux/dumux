@@ -7,6 +7,9 @@
 #include "dumux/timedisc/rungekuttastep.hh"
 #include "dumux/timedisc/impliciteulerstep.hh"
 
+#include "dumux/nonlinear/new_newtonmethod.hh"
+#include "dumux/timedisc/new_impliciteulerstep.hh"
+
 namespace Dune {
   template<class G, class Model>
   class TimeLoop
@@ -114,12 +117,18 @@ namespace Dune {
 		  return;
 	  }
 
+          // HACK: this function does the same as the execute function
+          // above, but it uses the new newton method and the
+          // vtkMultiWriter. it is a temorary measure to ease the
+          // migration...
 	  template<class MultiWriter>
 	  void executeMultiWriter (Model& model, MultiWriter& writer)
 	  {
+                  typedef NewImplicitEulerStep<Model> NewTimeStep;
+
 		  int k = 0;
 
-		  writer.beginTimestep(0, model.getGrid().leafView());
+		  writer.beginTimestep(0, model.grid().leafView());
 
 		  // initialize solution with initial values
 		  model.setVtkMultiWriter(&writer);
@@ -135,58 +144,27 @@ namespace Dune {
 		  //			  dtOriginal = dt;
 		  while (t < tEnd) {
 			  k++;
-			  double dtOld = dt;
+//			  double dtOld = dt;
 
+                          double nextDt;
 			  if (t == tStart)
-				  timeStep.execute(model, t, dt, firstDt, tEnd, cFLFactor);
+                              NewTimeStep::execute(model, t, dt, nextDt, firstDt, tEnd, cFLFactor);
 			  else
-				  timeStep.execute(model, t, dt, maxDt, tEnd, cFLFactor);
+                              NewTimeStep::execute(model, t, dt, nextDt, maxDt, tEnd, cFLFactor);
 
-			  if(fixed)
-			  {
-				  if (dt > dtOld) {
-					  t += dtOld;
-					  t = std::min(t, tEnd);
-					  if(dt > tEnd-t)
-					  {
-						  std::cout << "\t" << k << "\t" << t << "\t" << dtOld
-						  << "\t # timestep number k, time t, timestep size dt" << std::endl;
-						  //std::cout << ", timestep: " << k << "\t t=" << t << "\t dt=" << (tEnd-t) << std::endl;
-					  }
-					  else
-					  {
-						  std::cout << "\t" << k << "\t" << t << "\t" << dtOld
-						  << "\t # timestep number k, time t, timestep size dt" << std::endl;
-						  //std::cout << ", timestep: " << k << "\t t=" << t << "\t dt=" << dt << std::endl;
-					  }
-				  }
-
-				  else {
-					  t += dt;
-					  t = std::min(t, tEnd);
-					  std::cout << "\t" << k << "\t" << t << "\t" << dt
-					  << "\t # timestep number k, time t, timestep size dt" << std::endl;
-					  //std::cout << ", timestep: " << k << "\t t=" << t << "\t dt=" << dt << std::endl;
-				  }
-			  }
-			  else
-			  {
-				  t += dt;
-				  t = std::min(t, tEnd);
-				  std::cout << ", timestep: " << k << "\t t=" << t << "\t dt=" << dt << std::endl;
-
-			  }
+                          t += dt;
+                          t = std::min(t, tEnd);
+                          dt = nextDt;
+                          std::cout << ", timestep: " << k << "\t t=" << t << "\t dt=" << dt << std::endl;
 
 			  // generate output
 			  if (k%modulo == 0)
 			  {
-				  writer.beginTimestep(t, model.getGrid().leafView());
+				  writer.beginTimestep(t, model.grid().leafView());
 				  model.addvtkfields(writer);
 				  std::cout << ">>> writing output-file at time : " << t << std::endl;
 				  writer.endTimestep();
 			  }
-			  //		    if (fixed)
-			  //		    	dt = dtOriginal;
 		  }
 
 		  return;

@@ -282,7 +282,6 @@ namespace Dune
   private:
   	FieldMatrix<DT,dim,dim> lowK_, highK_;
 	double layerBottom_;
-
   };
 
 

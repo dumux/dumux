@@ -19,8 +19,8 @@
  *
  * In order to use the method you need a \ref NewtonController.
  */
-#ifndef DUNE_NEWTONMETHOD_HH
-#define DUNE_NEWTONMETHOD_HH
+#ifndef DUNE_NEW_NEWTONMETHOD_HH
+#define DUNE_NEW_NEWTONMETHOD_HH
 
 namespace Dune
 {
@@ -169,7 +169,7 @@ namespace Dune
      * In order to use the method you need a \ref NewtonController.
      */
     template<class ModelT, bool useLineSearch=false>
-    class NewtonMethod
+    class NewNewtonMethod
     {
     public:
         typedef ModelT Model;
@@ -179,13 +179,13 @@ namespace Dune
         typedef typename Model::NewtonTraits::LocalJacobian     LocalJacobian;
         typedef typename Model::NewtonTraits::JacobianAssembler JacobianAssembler;
         typedef typename Model::NewtonTraits::Scalar            Scalar;
-        typedef NewtonMethod<Model, useLineSearch>              ThisType;
+        typedef NewNewtonMethod<Model, useLineSearch>              ThisType;
 
     public:
         typedef typename JacobianAssembler::RepresentationType  JacobianMatrix;
 
     public:
-        NewtonMethod(Model &model)
+        NewNewtonMethod(Model &model)
             : uOld(model.grid()),
               f(model.grid())
             {
@@ -194,7 +194,7 @@ namespace Dune
                 _model = NULL;
             }
 
-        ~NewtonMethod()
+        ~NewNewtonMethod()
             {
                 delete _residual;
             }
@@ -205,8 +205,8 @@ namespace Dune
                 _model = &model;
 
                 // TODO (?): u shouldn't be hard coded to the model
-                Function          &u = model.u();
-                LocalJacobian     &localJacobian = model.localJacobian();
+                Function          &u             = model.currentSolution();
+                LocalJacobian     &localJacobian = model.getLocalJacobian();
                 JacobianAssembler &jacobianAsm   = model.jacobianAssembler();
                 
                 // method to of how updated are done. (either 
@@ -242,7 +242,7 @@ namespace Dune
                         // a line search approach or the plain method.
                         if (!updateMethod.update(*this, u, uOld, model)) {
                             ctl.newtonFail();
-                            *model.u() = *model.uOldTimeStep();
+//                            *model.u() = *model.uOldTimeStep();
                             _model = NULL;
                             return false;
                         }
@@ -257,7 +257,7 @@ namespace Dune
                         // which didn't converge might be completely unphysical,
                         // but we would like to start from something which is
                         // physical.)
-                        *model.u() = *model.uOldTimeStep();
+//                        *model.u() = *model.uOldTimeStep();
                         _model = NULL;
                         return false;
                     }

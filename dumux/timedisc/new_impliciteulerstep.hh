@@ -22,8 +22,8 @@
  *
  * \brief Performs integration using implicit euler.
  */
-#ifndef DUMUX_IMPLICITEULERSTEP_HH
-#define DUMUX_IMPLICITEULERSTEP_HH
+#ifndef NEW_DUMUX_IMPLICITEULERSTEP_HH
+#define NEW_DUMUX_IMPLICITEULERSTEP_HH
 
 #include <algorithm>
 
@@ -32,19 +32,19 @@ namespace Dune {
      * \brief Performs integration using implicit euler.
      */
     template<class Problem>
-    class ImplicitEulerStep
+    class NewImplicitEulerStep
     {
         typedef typename Problem::DomainTraits::Scalar Scalar;
 
     public:
         //! excute an implicit euler integration.
-        void execute(Problem &problem,
-                     Scalar t,
-                     Scalar &dt,
-                     Scalar &nextDt,
-                     Scalar maxDt,
-                     Scalar tEnd,
-                     Scalar cFLFactor)
+        static void execute(Problem &problem,
+                            Scalar t,
+                            Scalar &dt,
+                            Scalar &nextDt,
+                            Scalar maxDt,
+                            Scalar tEnd,
+                            Scalar cFLFactor)
             {
                 Scalar eps = 1e-8;
                 dt = std::min( dt, maxDt );

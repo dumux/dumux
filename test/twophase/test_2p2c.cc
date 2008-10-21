@@ -23,7 +23,9 @@
 #include "dumux/material/twophaserelations.hh"
 
 #include "dumux/material/multicomponentrelations.hh"
+
 #include "dumux/io/vtkmultiwriter.hh"
+#include "dumux/auxiliary/timemanager.hh"
 
 int main(int argc, char** argv)
 {
@@ -101,7 +103,6 @@ int main(int argc, char** argv)
     MultiWriter writer("out2p2c-1");
     timeloop.executeMultiWriter(twoPhasetwoComp, writer);
     std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
-
 
     return 0;
   }

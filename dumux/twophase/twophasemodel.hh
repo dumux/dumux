@@ -66,7 +66,7 @@ public:
 			IntersectionIterator;
 
 	LeafP1TwoPhaseModel(const G& g, ProblemType& prob) :
-		ThisTwoPhaseModel(g, prob), problem(prob), grid(g), vertexmapper(g,
+		ThisTwoPhaseModel(g, prob), problem(prob), grid_(g), vertexmapper(g,
 				g.leafIndexSet()), size((*(this->u)).size()), pW(size), pN(size), pC(size),
 				satW(size), satN(size), satEx(0), pEx(0), satError(0) {
 	}
@@ -78,7 +78,7 @@ public:
 		enum {dim = G::dimension};
 		enum {dimworld = G::dimensionworld};
 
-		const GV& gridview(this->grid.leafView());
+		const GV& gridview(this->grid_.leafView());
 
 		// iterate through leaf grid an evaluate c0 at cell center
 		Iterator eendit = gridview.template end<0>();
@@ -183,7 +183,7 @@ public:
 	virtual void update(double& dt) {
 		this->localJacobian.setDt(dt);
 		this->localJacobian.setOldSolution(this->uOldTimeStep);
-		NewtonMethod<G, ThisType> newtonMethod(this->grid, *this);
+		NewtonMethod<G, ThisType> newtonMethod(this->grid_, *this);
 		newtonMethod.execute();
 		dt = this->localJacobian.getDt();
 		*(this->uOldTimeStep) = *(this->u);
@@ -201,7 +201,7 @@ public:
 		enum {dim = G::dimension};
 		typedef array<BoundaryConditions::Flags, m> BCBlockType;
 
-		const GV& gridview(this->grid.leafView());
+		const GV& gridview(this->grid_.leafView());
 		(*defectGlobal)=0;
 
 		// allocate flag vector to hold flags for essential boundary conditions
@@ -257,7 +257,7 @@ public:
 		enum {dim = G::dimension};
 		enum {dimworld = G::dimensionworld};
 
-		const GV& gridview(this->grid.leafView());
+		const GV& gridview(this->grid_.leafView());
 		double totalMass = 0;
 		upperMass = 0;
 		oldUpperMass = 0;
@@ -310,7 +310,7 @@ public:
 	}
 
 	virtual void vtkout(const char* name, int k) {
-		VTKWriter<typename G::LeafGridView> vtkwriter(this->grid.leafView());
+		VTKWriter<typename G::LeafGridView> vtkwriter(this->grid_.leafView());
 		char fname[128];
 		sprintf(fname, "%s-%05d", name, k);
 		double minSat = 1e100;
@@ -348,9 +348,12 @@ public:
 		if (minSat< -0.5 || maxSat > 1.5)DUNE_THROW(MathError, "Saturation exceeds range.");
 	}
 
+    const G &grid() const 
+        { return grid_; }
+
 protected:
 	ProblemType& problem;
-	const G& grid;
+	const G& grid_;
 	VertexMapper vertexmapper;
 	int size;
 	BlockVector<FieldVector<RT, 1> > pW;

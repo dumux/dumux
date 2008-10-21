@@ -34,7 +34,7 @@
 
 #include <dumux/new_material/parkerlenhard.hh>
 #include <dumux/new_material/regularizedvangenuchten.hh>
-#include <dumux/new_timedisc/impliciteulerstep.hh>
+#include <dumux/timedisc/new_impliciteulerstep.hh>
 #include <dumux/io/vtkmultiwriter.hh>
 #include <dumux/auxiliary/timemanager.hh>
 
@@ -100,8 +100,8 @@ namespace Lenhard
             WaitEpisode    // an episode with neither drainage nor imbibition
         };
 
-        typedef Dune::TimeManager<Episode>        TimeManager;
-        typedef Dune::ImplicitEulerStep<ThisType> TimeIntegration;
+        typedef Dune::TimeManager<Episode>           TimeManager;
+        typedef Dune::NewImplicitEulerStep<ThisType> TimeIntegration;
         typedef Dune::VtkMultiWriter<typename Grid::LeafGridView> VtkMultiWriter;
 
 //        typedef PwSnNewtonController<Model>   NewtonController;
@@ -561,10 +561,10 @@ namespace Lenhard
                                             ParentType::grid().leafView());
 
                 _resultWriter.addScalarVertexFunction("Sn",
-                                                      _model.u(),
+                                                      _model.currentSolution(),
                                                       SnIndex);
                 _resultWriter.addScalarVertexFunction("Pw",
-                                                      _model.u(),
+                                                      _model.currentSolution(),
                                                       PwIndex);
 
                 SpatialFunction globResidual(ParentType::grid());
@@ -623,7 +623,7 @@ namespace Lenhard
                 VertexIterator endit = ParentType::vertexEnd();
                 for (; it != endit; ++it) {
                     int vertIdx = ParentType::vertexIndex(*it);
-                    Scalar Sn = (*_model.u())[vertIdx][SnIndex];
+                    Scalar Sn = (*_model.currentSolution())[vertIdx][SnIndex];
                     Scalar Sw = 1 - Sn;
                     ParkerLenhard::updateState(vertexState(*it), Sw);
                 }
@@ -640,7 +640,7 @@ namespace Lenhard
 
                     // evaluate the solution for the non-wetting
                     // saturation at this point
-                    Scalar Sn = _model.u().evallocal(SnIndex,
+                    Scalar Sn = _model.currentSolution().evallocal(SnIndex,
                                                      *it,
                                                      localPos);
                     Scalar Sw = 1 - Sn;
@@ -667,7 +667,7 @@ namespace Lenhard
                     if (0 <= localPos[0] && localPos[0] < 1.0) {
                         // evaluate the solution for the non-wetting
                         // saturation at this point
-                        Scalar Sn = _model.u().evallocal(SnIndex,
+                        Scalar Sn = _model.currentSolution().evallocal(SnIndex,
                                                          *it,
                                                          localPos);
 
@@ -683,9 +683,9 @@ namespace Lenhard
                         // contains the current point of interest
                         const VertexState &vs = ParentType::vertexState(ParentType::cellIndex(*it));
                         localPos[0] = 0;
-                        Sn = _model.u().evallocal(SnIndex,
-                                                  *it,
-                                                  localPos);
+                        Sn = _model.currentSolution().evallocal(SnIndex,
+                                                                *it,
+                                                                localPos);
                         std::cout << boost::format("snip: pC_pos=%.02f\n")%points[curI];
                         std::cout << 1.0 - Sn << " " << ParkerLenhard::pC(vs, 1.0 - Sn) << "\n"; 
                         std::cout << "snap\n";

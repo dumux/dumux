@@ -117,11 +117,11 @@ namespace Dune
             }
 
         // current solution
-        const SpatialFunction &u() const
+        const SpatialFunction &currentSolution() const
             { return _uCur; }
 
         // current solution
-        SpatialFunction &u()
+        SpatialFunction &currentSolution()
             { return _uCur; }
 
         // right hand side (?)
@@ -150,7 +150,7 @@ namespace Dune
          * the jacobian assembler to produce a global linerization of the
          * problem.
          */
-        LocalJacobian &localJacobian()
+        LocalJacobian &getLocalJacobian()
             { return _localJacobian; }
 
         const Grid &grid()
@@ -223,7 +223,7 @@ namespace Dune
                     LocalFunction localU;
                     LocalFunction localOldU;
                     _localJacobian.setCurrentCell(cell);
-                    _localJacobian.evalLocal(localU, u());
+                    _localJacobian.evalLocal(localU, currentSolution());
                     _localJacobian.evalLocal(localOldU, uOldTimeStep());
                     _localJacobian.evalLocalResidual(localResidual,
                                                      localU,

@@ -58,7 +58,7 @@ namespace Dune
                          PwSnLocalJacobian>  ParentType;
 
     public:
-        typedef NewtonMethod<ParentType> NewtonMethod;
+        typedef NewNewtonMethod<ParentType> NewtonMethod;
 
         PwSnBoxModel(ProblemT &prob)
             : ParentType(prob, _pwSnLocalJacobian),

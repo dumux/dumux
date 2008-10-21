@@ -291,10 +291,10 @@ namespace Dune
 
         typedef typename ParentType::Scalar            Scalar;
         typedef typename ParentType::Function          Function;
-        typedef typename ParentType::OperatorAssembler OperatorAssembler;
+        typedef typename ParentType::JacobianAssembler JacobianAssembler;
 
-        NewtonController(NewtonMethod &method, Scalar tolerance = 1e-5, int maxSteps = 12)
-            : ParentType(method, tolerance, maxSteps)
+        NewtonController(Scalar tolerance = 1e-5, int targetSteps=8, int maxSteps = 12)
+            : ParentType(tolerance, targetSteps, maxSteps)
             {};
     };
 }
