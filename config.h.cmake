@@ -5,14 +5,31 @@
 #cmakedefine HAVE_DUNE_DISC 1
 #cmakedefine HAVE_DUNE_FEM 1
 #cmakedefine HAVE_DUNE_ISTL 1
+
 #ifdef ENABLE_MPI
-#define HAVE_MPI 1
+#cmakedefine HAVE_MPI 1
 #endif
+
+#ifdef ENABLE_UG
 #cmakedefine HAVE_UG 1
+#endif
+
+#ifdef ENABLE_ALUGRID
 #cmakedefine HAVE_ALUGRID 1
+#endif
+
+#ifdef ENABLE_ALBERTA
 #cmakedefine HAVE_ALBERTA 1
+#endif
 
 #cmakedefine PROJECT_NAME             "${PROJECT_NAME}"
 #cmakedefine PROJECT_VERSION          "${PROJECT_VERSION}"
 #cmakedefine PROJECT_MAINTAINER       "${PROJECT_MAINTAINER}"
 #cmakedefine PROJECT_MAINTAINER_EMAIL "${PROJECT_MAINTAINER_EMAIL}"
+
+#define DUNE_DEPRECATED __attribute__((deprecated))
+
+/* tr1/array. */
+#cmakedefine HAVE_TR1_ARRAY 1
+/* malloc.h */
+#cmakedefine HAVE_MALLOC_H 1

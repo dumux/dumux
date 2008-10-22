@@ -1,4 +1,4 @@
-add_definitions(-DYASPGRID -DGRIDDIM=2 -DENABLE_UG)
+add_definitions(-DHAVE_CONFIG_H -DYASPGRID -DENABLE_UG -DWORLDDIM=2 -DGRIDDIM=2)
 
 # build target for the twophase-twocomponent test problem
 ADD_EXECUTABLE("test_2p2c" test_2p2c.cc)

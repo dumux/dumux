@@ -42,6 +42,13 @@ FIND_PACKAGE(ALUGrid)
 #FIND_PACKAGE(Alberta)
 ##############
 
+##############
+# Find the required include files
+INCLUDE (CheckIncludeFileCXX)
+CHECK_INCLUDE_FILE_CXX("malloc.h" HAVE_MALLOC_H)
+CHECK_INCLUDE_FILE_CXX("tr1/array" HAVE_TR1_ARRAY)
+##############
+
 
 ##############
 # use this macros in the CMakelists of the subdirectories. 
@@ -81,7 +88,7 @@ set( CMAKE_C_FLAGS_RELEASE "-O3 -Wall -funroll-loops -finline-functions" )
 
 if(CMAKE_BUILD_TYPE STREQUAL "debug")
   # debug mode
-  add_definitions(-DDEBUG -DDUNE_ISTL_WITH_CHECKING)
+  add_definitions(-DDEBUG -DDUNE_DEVEL_MODE=1 -DDUNE_ISTL_WITH_CHECKING)
 else(CMAKE_BUILD_TYPE STREQUAL "debug")
   # Release mode
   add_definitions(-DNDEBUG)

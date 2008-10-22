@@ -1,11 +1,6 @@
 #include "config.h"
 #include <iostream>
 
-#define DUMMY
-//#undef DUMMY
-#ifdef DUMMY
-//#ifdef HAVE_UG
-
 #include <iomanip>
 #include <dune/grid/common/gridinfo.hh>
 #include <dune/grid/uggrid.hh>
@@ -113,18 +108,3 @@ int main(int argc, char** argv)
     std::cerr << "Unknown exception thrown!" << std::endl;
   }
 }
-#else
-
-int main (int argc , char **argv) try
-{
-//  std::cout << "Please install the UG library." << std::endl;
-  std::cout << "Dummy implementation, this test would not compile at the moment." << std::endl;
-
-  return 1;
-}
-catch (...)
-{
-    std::cerr << "Generic exception!" << std::endl;
-    return 2;
-}
-#endif
