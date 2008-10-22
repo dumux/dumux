@@ -57,7 +57,7 @@ namespace Dune
   : public LeafP1TwoPhaseModel<G, RT, TwoPTwoCNIProblem<G, RT>, Box2P2CNIJacobian<G, RT> >
   {
   public:
-	// define the problem type (also change the template argument above)
+        // define the problem type (also change the template argument above)
 	typedef TwoPTwoCNIProblem<G, RT> ProblemType;
 
 	// define the local Jacobian (also change the template argument above)

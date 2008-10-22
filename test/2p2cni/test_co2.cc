@@ -86,7 +86,7 @@ int main(int argc, char** argv)
      typedef Dune::BoxCO2<GridType, NumberType, MultiWriter> TwoPhase;
      TwoPhase twoPhase(grid, problem);
 
-     Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt, "co2", 1);
+     Dune::TimeLoop<GridType, TwoPhase, true> timeloop(0, tEnd, dt, "co2", 1);
 
      Dune::Timer timer;
      timer.reset();

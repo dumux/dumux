@@ -26,44 +26,76 @@
 /**
  * @file
  * @brief  compute local jacobian matrix for box scheme for two-phase two-component flow equation
- * @author Bernd Flemisch, Klaus Mosthaf
+ * @author Bernd Flemisch, Klaus Mosthaf, Andreas Lauser
  */
 
 
 
 namespace Dune
 {
-  /** @addtogroup DISC_Disc
-   *
-   * @{
-   */
-  /**
-   * @brief compute local jacobian matrix for the boxfile for two-phase two-component flow equation
-   *
-   */
+    /** @addtogroup DISC_Disc
+     *
+     * @{
+     */
+    /**
+     * @brief compute local jacobian matrix for the boxfile for two-phase two-component flow equation
+     *
+     */
+    
+    
+    //! Derived class for computing local jacobian matrices
+    /*! A class for computing local jacobian matrix for the two-phase two-component flow equation
+      
+      div j = q; j = -K grad u; in Omega
+      
+      u = g on Gamma1; j*n = J on Gamma2.
+      
+      Uses box scheme with the Lagrange shape functions.  It should
+      work for all dimensions and element types.  All the numbering is
+      with respect to the reference element and the Lagrange shape
+      functions
 
+      Template parameters are:
+      
+      - ProblemT    The problem specific stuff
+    */
+    template <class ProblemT>
+    class _TwoPTwoCBoxJacobianImp
+    {
+        typedef ProblemT                                Problem;
+        typedef typename Problem::DomainTraits          DomTraits;
+        typedef typename Problem::BoxTraits             BoxTraits;
+        
+        typedef typename DomTraits::Scalar             Scalar;
+        typedef typename DomTraits::CoordScalar        CoordScalar;
+        typedef typename DomTraits::Grid               Grid;
+        typedef typename DomTraits::Cell               Cell;
+        typedef typename DomTraits::LocalCoord         LocalCoord;
+        
+        enum {
+            GridDim     = DomTraits::GridDim,
+            WorldDim    = DomTraits::WorldDim,
+            
+            NumUnknowns   = BoxTraits::NumUnknowns,
+            NumPhases     = BoxTraits::NumPhases,
+            NumComponents = BoxTraits::NumComponents,
 
-  //! Derived class for computing local jacobian matrices
-  /*! A class for computing local jacobian matrix for the two-phase two-component flow equation
+            // Phase indices
+            WettingIndex    = BoxTraits::WettingIndex,
+            NonwettingIndex = BoxTraits::NonettingIndex,
+            
+            // Phase state
+            WettingMask = BoxTraits::WettingMask,
+            NonwettingMask = BoxTraits::NonwettingMask,
+        };
 
-	    div j = q; j = -K grad u; in Omega
+        typedef typename BoxTraits::UnknownsVector       UnknownsVector;
+        typedef typename BoxTraits::FVElementGeometry    FVElementGeometry;
+        typedef typename BoxTraits::CachedCellData       CachedCellData;
+        typedef typename BoxTraits::CachedSubContVolData CachedSubContVolData;
+        typedef typename BoxTraits::LocalFunction        LocalFunction;
 
-		u = g on Gamma1; j*n = J on Gamma2.
-
-	Uses box scheme with the Lagrange shape functions.
-	It should work for all dimensions and element types.
-	All the numbering is with respect to the reference element and the
-	Lagrange shape functions
-
-	Template parameters are:
-
-	- Grid  a DUNE grid type
-	- RT    type used for return values
-  */
-  template<class G, class RT, class BoxFunction = LeafP1FunctionExtended<G, RT, 2> >
-  class Box2P2CJacobian
-    : public BoxJacobian<Box2P2CJacobian<G,RT,BoxFunction>,G,RT,2,BoxFunction>
-  {
+#if 0
     typedef typename G::ctype DT;
     typedef typename G::Traits::template Codim<0>::Entity Entity;
     typedef typename Entity::Geometry Geometry;
@@ -72,9 +104,10 @@ namespace Dune
     typedef typename LocalJacobian<ThisType,G,RT,2>::MBlockType MBlockType;
 
  	enum {pWIdx = 0, switchIdx = 1, numberOfComponents = 2};	// Solution vector index
-	enum {wPhase = 0, nPhase = 1};									// Phase index
+	enum {wPhase = 0, nPhase = 1};					// Phase index
 	enum {gasPhase = 0, waterPhase = 1, bothPhases = 2};		// Phase state
-	enum {water = 0, air = 1};										// Component index
+	enum {water = 0, air = 1};                                      // Component index
+
 
   public:
     // define the number of phases (m) and components (c) of your system, this is used outside
@@ -95,42 +128,48 @@ namespace Dune
     {
       this->analytic = false;
     }
+#endif // 0
 
-	/** @brief compute time dependent term (storage), loop over nodes / subcontrol volumes
-	 *  @param e entity
-	 *  @param sol solution vector
-	 *  @param node local node id
-	 *  @return storage term
+	/*! 
+         * \brief compute time dependent term (storage), loop over nodes / subcontrol volumes
+	 * \param e entity
+	 * \param sol solution vector
+	 * \param node local node id
+	 * \return storage term
 	 */
-    virtual VBlockType computeM (const Entity& e, const VBlockType* sol,
-    		int node, std::vector<VariableNodeData>& varData)
-    {
-#if 1
-    	 GeometryType gt = e.geometry().type();
-    	 const typename LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type&
-     	 sfs=LagrangeShapeFunctions<DT,RT,dim>::general(gt,1);
+//        virtual VBlockType computeM (const Entity& e, const VBlockType* sol,
+//                                     int node, std::vector<VariableNodeData>& varData)
 
-   	 int globalIdx = this->vertexMapper.template map<dim>(e, sfs[node].entity());
-#else
-   	 int globalIdx = this->vertexMapper.template map<dim>(e, node);
-#endif
-
-   	 VBlockType result;
-   	 RT satN = varData[node].satN;
-   	 RT satW = varData[node].satW;
-
-   	 // storage of component water
-   	 result[water] =
-   		 sNDat[globalIdx].porosity*(varData[node].density[wPhase]*satW*varData[node].massfrac[water][wPhase]
-   		                +varData[node].density[nPhase]*satN*varData[node].massfrac[water][nPhase]);
-   	 // storage of component air
-   	 result[air] =
-   		 sNDat[globalIdx].porosity*(varData[node].density[nPhase]*satN*varData[node].massfrac[air][nPhase]
-   	                    +varData[node].density[wPhase]*satW*varData[node].massfrac[air][wPhase]);
-
-   	 //std::cout << result << " " << node << std::endl;
-   	 return result;
-    };
+        static void evalLocalRate(UnknownsVector &result,
+                                  const Problem &problem,
+                                  const Cell &cell,
+                                  const FVElementGeometry &dualCell,
+                                  const LocalFunction &localSol,
+                                  const int scvId)
+            {
+/*
+                GeometryType gt = cell.geometry().type();
+                const typename LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type&
+                    sfs=LagrangeShapeFunctions<DT,RT,dim>::general(gt,1);
+*/
+                int globalIdx = this->vertexMapper.template map<dim>(cell, sfs[node].entity());
+                
+                VBlockType result;
+                RT satN = varData[node].satN;
+                RT satW = varData[node].satW;
+                
+                // storage of component water
+                result[water] =
+                    sNDat[globalIdx].porosity*(varData[node].density[wPhase]*satW*varData[node].massfrac[water][wPhase]
+                                               +varData[node].density[nPhase]*satN*varData[node].massfrac[water][nPhase]);
+                // storage of component air
+                result[air] =
+                    sNDat[globalIdx].porosity*(varData[node].density[nPhase]*satN*varData[node].massfrac[air][nPhase]
+                                               +varData[node].density[wPhase]*satW*varData[node].massfrac[air][wPhase]);
+                
+                //std::cout << result << " " << node << std::endl;
+//                return result;
+            };
 
     virtual VBlockType computeM (const Entity& e, const VBlockType* sol, int node, bool old = false)
     {
