@@ -175,7 +175,7 @@ public:
 						double factor = fractionalW*(this->diffproblem.wettingphase.density())
 						+ (1 - fractionalW)*(this->diffproblem.nonwettingphase.density());
 						gEffect *= lambda*factor;
-						vTotal -= gEffect;
+						vTotal += gEffect;
 					}
 					this->diffproblem.variables.velocity[indexi][numberInSelf] = vTotal;
 				}
@@ -211,7 +211,7 @@ public:
 							double factor = fractionalW*(this->diffproblem.wettingphase.density())
 							+ (1 - fractionalW)*(this->diffproblem.nonwettingphase.density());
 							gEffect *= lambda*factor;
-							vTotal -= gEffect;
+							vTotal += gEffect;
 						}
 						this->diffproblem.variables.velocity[indexi][numberInSelf] = vTotal;
 					}
