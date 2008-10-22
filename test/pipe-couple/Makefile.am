@@ -9,6 +9,10 @@ EXTRA_DIST=dune.module
 
 noinst_PROGRAMS = pipe_box_simple_couple
 
+pipe_box_simple_coupledir = $(includedir)/dune/dumux/test/pipe-couple
+pipe_box_simple_couple_HEADERS = bc_ic.hh boxdiffusion_couple.hh boxdiffusionjacobian_couple.hh \
+	diffusionparameters_couple.hh dune_multiscale_headers.hh pipeflowSimple_couple.hh \
+	pipephysic.hh properties.hh vtkout.hh
 pipe_box_simple_couple_SOURCES = pipe_box_simple_couple.cc
 
 pipe_box_simple_couple_CXXFLAGS = $(MPI_CPPFLAGS) $(UG_CPPFLAGS) $(AMIRAMESH_CPPFLAGS) $(ALBERTA_CPPFLAGS) -I$(top_srcdir)/../dune-mux

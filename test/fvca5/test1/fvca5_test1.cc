@@ -3,13 +3,15 @@
 #ifdef HAVE_UG
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
+#include <dune/grid/yaspgrid.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
 #include "dumux/diffusion/fv/fvdiffusion_deprecated.hh"
 #include "dumux/diffusion/fe/fediffusion.hh"
 #include "dumux/diffusion/mimetic/mimeticdiffusion.hh"
-#include "fvca5test1problem.hh"
+#include "trapezproblem.hh"
+//#include "fvca5test1problem.hh"
 #include "../benchmarkresult.hh"
 #include "dumux/fractionalflow/variableclass.hh"
 
@@ -46,7 +48,8 @@ int main(int argc, char** argv)
     typedef Dune::VariableClass<GridType, NumberType> VC;
     double initsat = 1;
     VC variables(grid,initsat);
-    Dune::FVCA5Test1Problem<GridType, NumberType, VC> problem(variables);
+//    Dune::FVCA5Test1Problem<GridType, NumberType, VC> problem(variables);
+    Dune::TrapezProblem<GridType, NumberType, VC> problem(variables);
 
     Dune::Timer timer;
     timer.reset();

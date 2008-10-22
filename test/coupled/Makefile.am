@@ -4,6 +4,8 @@ AM_LDFLAGS = @AM_LDFLAGS@ $(LOCAL_LIBS)
 
 noinst_PROGRAMS = test_coupled test_stokesdarcy
 
+test_coupleddir = $(includedir)/dune/dumux/test/coupled
+test_coupled_HEADERS = boxdiffusion.hh boxdiffusionjacobian.hh diffusionparameters.hh 
 test_coupled_SOURCES = test_coupled.cc
 test_coupled_DEPENDENCIES = $(LOCAL_LIBS)
 

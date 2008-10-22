@@ -4,6 +4,8 @@ AM_LDFLAGS = @AM_LDFLAGS@ $(LOCAL_LIBS)
 
 noinst_PROGRAMS = test_box3d_compressible
 
+test_box3d_compressibledir = $(includedir)/dune/dumux/test/box3d-compressible
+test_box3d_compressible_HEADERS = boxdiffusion.hh boxdiffusionjacobian.hh diffusionparameters.hh 
 test_box3d_compressible_SOURCES = test_box3d_compressible.cc
 test_box3d_compressible_DEPENDENCIES = $(LOCAL_LIBS)
 

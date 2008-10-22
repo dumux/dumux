@@ -14,7 +14,7 @@
 #include <dune/istl/solvers.hh>
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/scalarproducts.hh>
-#include <dune/istl/paamg/amg.hh>
+#include <dune/istl/schwarz.hh>
 #include <dumux/operators/owneroverlapcopyextended.hh>
 #include "dumux/nonlinear/nonlinearmodel.hh"
 #include "dumux/pardiso/pardiso.hh"
@@ -96,6 +96,9 @@ public:
 		typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator; 
 		typedef typename G::Traits::GlobalIdSet::IdType GlobalIdType;
 		typedef OwnerOverlapCopyExtendedCommunication<GlobalIdType,int> CommunicationType;
+//#ifdef HAVE_PARDISO
+//	SeqPardiso<MatrixType,VectorType,VectorType> pardiso;
+//#endif
 
 		LeafP1ParallelBoxDiffusion (const G& g, DiffusionParameters<G, RT>& prob) 
 		: ParallelBoxDiffusion(g, prob), grid(g), vertexmapper(g, g.leafIndexSet())
@@ -207,7 +210,11 @@ public:
 			Dune::MatrixAdapter<MatrixType,VectorType,VectorType> op(*(this->A));
 			//SeqPardiso<MatrixType,VectorType,VectorType> ilu0;
 			//ilu0.factorize(*(this->A));
+//#ifdef HAVE_PARDISO
+//			pardiso.factorize(*(this->A));
+//#else
 			Dune::SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A),1.0);
+//#endif
 			//Dune::SeqSSOR<MatrixType,VectorType,VectorType> ssor(*(this->A),1,0.8);
 
 #if HAVE_MPI
@@ -221,7 +228,11 @@ public:
 				verbose = 1;
 			Dune::OverlappingSchwarzOperator<MatrixType,VectorType,VectorType,CommunicationType> oop(*(this->A),oocc);
 			Dune::OverlappingSchwarzScalarProduct<VectorType,CommunicationType> osp(oocc);
+//#ifdef HAVE_PARDISO 
+//			Dune::BlockPreconditioner<VectorType,VectorType,CommunicationType> parprec(pardiso,oocc);
+//#else 
 			Dune::BlockPreconditioner<VectorType,VectorType,CommunicationType> parprec(ilu0,oocc);
+//#endif
 			//Dune::LoopSolver<VectorType> parcg(oop,osp,parprec,1E-12,1000,verbose);
 			Dune::CGSolver<VectorType> parcg(oop,osp,parprec,1E-20, 1000,verbose);
 

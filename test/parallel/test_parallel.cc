@@ -2,8 +2,9 @@
 #include <config.h>
 #include <iostream>
 //#undef DUMMY 
-#ifdef HAVE_MPI
+#if HAVE_MPI
 #include<mpi.h>
+#include <dune/grid/alugrid.hh>
 #include <dune/grid/common/gridinfo.hh>
 #include <dune/common/mpihelper.hh>
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
@@ -87,29 +88,23 @@ int main(int argc, char** argv)
     }
     
     // instantiate a distributed grid with overlap
-    Dune::FieldVector<double,dim> length(8.0);
-    Dune::FieldVector<int,dim> size(2);
-    size[0] = 2; size[1] = 2;
-    Dune::FieldVector<bool,dim> periodic(false);
-    int overlap = 0;
-    typedef Dune::YaspGrid<dim,dim> GridType;
-
-#if HAVE_MPI
-    GridType grid(MPI_COMM_WORLD, length, size, periodic, overlap);
-#else 
-    GridType grid(length, size, periodic, overlap);
-#endif
+//    Dune::FieldVector<double,dim> length(8.0);
+//    Dune::FieldVector<int,dim> size(refinementSteps);
+//    Dune::FieldVector<bool,dim> periodic(false);
+//    int overlap = 0;
+//    typedef Dune::YaspGrid<dim,dim> GridType;
+//    GridType grid(MPI_COMM_WORLD, length, size, periodic, overlap);
 
     // create a grid object
-//    typedef Dune::ALUSimplexGrid<dim,dim> GridType; 
-//    //typedef Dune::ALUCubeGrid<dim,dim> GridType; 
-//
-//    // create grid pointer
-//    Dune::GridPtr<GridType> gridPtr( argv[1] );
-//    // grid reference 
-//    GridType& grid = *gridPtr;
-//
-//    grid.loadBalance();
+    typedef Dune::ALUSimplexGrid<dim,dim> GridType; 
+    //typedef Dune::ALUCubeGrid<dim,dim> GridType; 
+
+    // create grid pointer
+    Dune::GridPtr<GridType> gridPtr( argv[1] );
+    // grid reference 
+    GridType& grid = *gridPtr;
+
+    grid.loadBalance();
 
     if (refinementSteps)
     	grid.globalRefine(refinementSteps);
