@@ -77,7 +77,7 @@ int main(int argc, char** argv)
      typedef Dune::Box2P2CNI<GridType, NumberType, MultiWriter> TwoPhase;
      TwoPhase twoPhase(grid, problem);
 
-     Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt, "out2p2cni", 1);
+     Dune::TimeLoop<GridType, TwoPhase, true> timeloop(0, tEnd, dt, "out2p2cni", 1);
 
      Dune::Timer timer;
      timer.reset();

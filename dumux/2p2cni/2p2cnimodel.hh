@@ -64,10 +64,14 @@ public:
 			IntersectionIterator;
 
 	LeafP1TwoPhaseModel(const G& g, ProblemType& prob) :
-		ThisTwoPhaseHeatModel(g, prob), problem(prob), grid(g), vertexmapper(g,	g.leafIndexSet()), size((*(this->u)).size())
+		ThisTwoPhaseHeatModel(g, prob), problem(prob), _grid(g), vertexmapper(g,	g.leafIndexSet()), size((*(this->u)).size())
 		{
 	}
-
+    
+        virtual void update(double &dt) {
+            DUNE_THROW(NotImplemented, "This method is obsolete. Use updateModel()!");
+        }
+    
 	virtual void initial() {
 		typedef typename G::Traits::template Codim<0>::Entity Entity;
 		typedef typename G::ctype DT;
@@ -75,7 +79,7 @@ public:
 		enum {dim = G::dimension};
 		enum {dimworld = G::dimensionworld};
 
-		const GV& gridview(this->grid.leafView());
+		const GV& gridview(grid().leafView());
 
 		// iterate through leaf grid an evaluate c0 at cell center
 		Iterator eendit = gridview.template end<0>();
@@ -188,7 +192,7 @@ public:
 		  enum{dim = G::dimension};
 		  enum{dimworld = G::dimensionworld};
 	   	  double sign;
-	   	  const GV& gridview(grid.leafView());
+	   	  const GV& gridview(_grid.leafView());
 		  Iterator eendit = gridview.template end<0>();
 		  FieldVector<RT,m> flux(0);
 		  double Flux(0);
@@ -262,7 +266,7 @@ public:
 		enum {dim = G::dimension};
 		enum {dimworld = G::dimensionworld};
 		enum {gasPhase = 0, waterPhase = 1, bothPhases = 2};	// Phase state
-		const GV& gridview(grid.leafView());
+		const GV& gridview(_grid.leafView());
 		double totalMass = 0;
 		double minSat = 1e100;
 		double maxSat = -1e100;
@@ -353,7 +357,7 @@ public:
 		enum {dim = G::dimension};
 		typedef array<BoundaryConditions::Flags, m> BCBlockType;
 
-		const GV& gridview(grid.leafView());
+		const GV& gridview(_grid.leafView());
 		(*defectGlobal)=0;
 		// allocate flag vector to hold flags for essential boundary conditions
 		std::vector<BCBlockType> essential(this->vertexmapper.size());
@@ -403,9 +407,12 @@ public:
 	virtual void vtkout(const char* name, int k) {
 	}
 
+    const G &grid() const
+        { return _grid; }
+
 protected:
   ProblemType& problem;
-  const G& grid;
+  const G& _grid;
   VertexMapper vertexmapper;
   int size;
 };

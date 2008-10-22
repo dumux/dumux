@@ -105,7 +105,7 @@ public:
 	void update(double& dt) {
 		this->localJacobian.setDt(dt);
 		this->localJacobian.setOldSolution(this->uOldTimeStep);
-		NewtonMethod<G, ThisType> newtonMethod(this->grid, *this);
+		NewtonMethod<G, ThisType> newtonMethod(this->grid(), *this);
 		newtonMethod.execute();
 		dt = this->localJacobian.getDt();
 		double upperMass, oldUpperMass;

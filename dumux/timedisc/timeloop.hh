@@ -11,10 +11,10 @@
 #include "dumux/timedisc/new_impliciteulerstep.hh"
 
 namespace Dune {
-  template<class G, class Model>
-  class TimeLoop
-  {
-  public:
+    template<class G, class Model, bool useMultiWriter = false>
+    class TimeLoop
+    {
+    public:
 	  void execute(Model& model)
 	  {
 		  // generate one meta vtk-file holding the individual timesteps
@@ -116,7 +116,39 @@ namespace Dune {
 
 		  return;
 	  }
+    
+	  TimeLoop(const double ts, const double te, const char* name = "timeloop", const int mod = 1,
+			  const double cfl = 1, const double mdt = 1e100, const double fdt = 1e100,
+			  TimeStep<G, Model>& tist = *(new RungeKuttaStep<G, Model>(1)))
+			  : tStart(ts), tEnd(te), maxDt(mdt), firstDt(fdt), cFLFactor(cfl),
+			  modulo(mod), timeStep(tist), fileName(name), fixed(false)
+			  { }
 
+	  TimeLoop(const double ts, const double te, const double dtime = 1e100,
+			  const char* name = "timeloop", const int mod = 1, const double fdt = 1e100,
+			  TimeStep<G, Model>& tist = *(new ImplicitEulerStep<G, Model>))
+			  : tStart(ts), tEnd(te), dt(dtime), maxDt(1e100), firstDt(fdt), cFLFactor(1),
+			  modulo(mod), timeStep(tist), fileName(name), fixed(true)
+            { }
+        
+    private:
+        const double tStart;
+        const double tEnd;
+        double dt;
+        const double maxDt;
+        const double firstDt;
+        const double cFLFactor;
+        const int modulo;
+        TimeStep<G, Model>& timeStep;
+        const char* fileName;
+        const bool fixed;
+    };
+
+
+    template<class G, class Model>
+    class TimeLoop<G, Model, true>
+    {
+    public:
           // HACK: this function does the same as the execute function
           // above, but it uses the new newton method and the
           // vtkMultiWriter. it is a temorary measure to ease the

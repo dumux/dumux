@@ -96,7 +96,7 @@ int main(int argc, char** argv)
     typedef Dune::Box2P2C<GridType, NumberType, MultiWriter> TwoPhaseTwoComp;
     TwoPhaseTwoComp twoPhasetwoComp(grid, problem);
 
-    Dune::TimeLoop<GridType, TwoPhaseTwoComp> timeloop(0, tEnd, dt, "lens", 1);
+    Dune::TimeLoop<GridType, TwoPhaseTwoComp, true> timeloop(0, tEnd, dt, "lens", 1);
 
     Dune::Timer timer;
     timer.reset();

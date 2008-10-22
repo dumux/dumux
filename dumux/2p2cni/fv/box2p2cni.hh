@@ -42,6 +42,9 @@
 #include "dumux/2p2cni/2p2cniproblem.hh"
 #include "dumux/2p2cni/fv/box2p2cnijacobian.hh"
 
+#include "dumux/nonlinear/new_newtonmethod.hh"
+#include "dumux/nonlinear/new_newtoncontroller.hh"
+
 namespace Dune
 {
 /**
@@ -75,6 +78,38 @@ namespace Dune
 	SeqPardiso<MatrixType,VectorType,VectorType> pardiso;
 #endif
 
+      //////////////////////
+      // Stuff required for the new newton method
+      
+      //! The traits class for the new newton method.
+      struct NewtonTraits {
+          typedef RT                                                  Scalar;
+          typedef typename ThisLeafP1TwoPhaseModel::FunctionType      Function;
+          typedef typename ThisType::LocalJacobian                    LocalJacobian;
+          typedef typename ThisLeafP1TwoPhaseModel::OperatorAssembler JacobianAssembler;
+      };
+      
+      // HACK: traits for the domain of the problem. this is incomplete...
+      struct DomainTraits {
+          typedef RT   Scalar;
+      };
+      
+      typedef NewNewtonMethod<ThisType> NewtonMethod;
+      typedef NewtonController<NewtonMethod> NewtonController;
+      
+      typedef typename NewtonTraits::Function Function;
+      Function &currentSolution()
+          { return this->u; };
+      
+      LocalJacobian &getLocalJacobian()
+          { return this->localJacobian; }
+      
+      typedef typename NewtonTraits::JacobianAssembler JacobianAssembler;
+      JacobianAssembler &jacobianAssembler()
+          { return this->A; }
+      // End of stuff for new newton method
+      //////////////////////
+
 	
 	Box2P2CNI(const G& g, ProblemType& prob) 
 	: ThisLeafP1TwoPhaseModel(g, prob)// (this->size) vectors
@@ -89,7 +124,7 @@ namespace Dune
 		enum {dim = G::dimension};
 		enum {dimworld = G::dimensionworld};
 
-		const GV& gridview(this->grid.leafView());
+		const GV& gridview(this->grid().leafView());
 
 		this->localJacobian.outPressureN = vtkMultiWriter->template createField<RT, 1>(this->size);
 		this->localJacobian.outCapillaryP = vtkMultiWriter->template createField<RT, 1>(this->size);
@@ -257,7 +292,7 @@ namespace Dune
 	}
 
 
-	void update (double& dt)
+        void updateModel(double& dt, double& nextDt)
 	{
 		this->localJacobian.outPressureN = vtkMultiWriter->template createField<RT, 1>(this->size);
 		this->localJacobian.outCapillaryP = vtkMultiWriter->template createField<RT, 1>(this->size);
@@ -308,12 +343,19 @@ namespace Dune
 		///////////////////////////////////
 		// define solver tolerances here
 		///////////////////////////////////
+/*
 		RT absTol = 1e0;
 		RT relTol = 1e-7;
 
 		NewtonMethod<G, ThisType> newtonMethod(this->grid, *this, relTol, absTol, 30, 1.0, 3);
 		newtonMethod.execute();
 		dt = this->localJacobian.getDt();
+*/
+                NewtonMethod newton(*this);
+                NewtonController newtonCtl;
+                newton.execute(*this, newtonCtl);
+                nextDt = newtonCtl.suggestTimeStepSize(dt);
+
 //		double upperMass, oldUpperMass;
 //		double totalMass = this->injected(upperMass, oldUpperMass);
 //		std::cout << totalMass << "\t" << upperMass 

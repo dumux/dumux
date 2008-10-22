@@ -42,7 +42,6 @@
 #include "dumux/2p2c/2p2cproblem.hh"
 #include "dumux/2p2c/fv/box2p2cjacobian.hh"
 
-
 #include "dumux/nonlinear/new_newtonmethod.hh"
 #include "dumux/nonlinear/new_newtoncontroller.hh"
 
@@ -78,35 +77,35 @@ namespace Dune
       //////////////////////
       // Stuff required for the new newton method
       
-        //! The traits class for the new newton method.
-        struct NewtonTraits {
-            typedef RT                                                  Scalar;
-            typedef typename ThisLeafP1TwoPhaseModel::FunctionType      Function;
-            typedef typename ThisType::LocalJacobian                    LocalJacobian;
-            typedef typename ThisLeafP1TwoPhaseModel::OperatorAssembler JacobianAssembler;
-        };
-
-        // HACK: traits for the domain of the problem. this is incomplete...
-        struct DomainTraits {
-            typedef RT   Scalar;
-        };
-
-        typedef NewNewtonMethod<ThisType> NewtonMethod;
-        typedef NewtonController<NewtonMethod> NewtonController;
-
-        typedef typename NewtonTraits::Function Function;
-        Function &currentSolution()
+      //! The traits class for the new newton method.
+      struct NewtonTraits {
+          typedef RT                                                  Scalar;
+          typedef typename ThisLeafP1TwoPhaseModel::FunctionType      Function;
+          typedef typename ThisType::LocalJacobian                    LocalJacobian;
+          typedef typename ThisLeafP1TwoPhaseModel::OperatorAssembler JacobianAssembler;
+      };
+      
+      // HACK: traits for the domain of the problem. this is incomplete...
+      struct DomainTraits {
+          typedef RT   Scalar;
+      };
+      
+      typedef NewNewtonMethod<ThisType> NewtonMethod;
+      typedef NewtonController<NewtonMethod> NewtonController;
+      
+      typedef typename NewtonTraits::Function Function;
+      Function &currentSolution()
           { return this->u; };
       
-        LocalJacobian &getLocalJacobian()
+      LocalJacobian &getLocalJacobian()
           { return this->localJacobian; }
       
-        typedef typename NewtonTraits::JacobianAssembler JacobianAssembler;
-        JacobianAssembler &jacobianAssembler()
+      typedef typename NewtonTraits::JacobianAssembler JacobianAssembler;
+      JacobianAssembler &jacobianAssembler()
           { return this->A; }
-        // End of stuff for new newton method
-        //////////////////////
-
+      // End of stuff for new newton method
+      //////////////////////
+      
 	Box2P2C(const G& g, ProblemType& prob)
 	: ThisLeafP1TwoPhaseModel(g, prob)// (this->size) vectors
 	{ }
