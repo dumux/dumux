@@ -42,8 +42,9 @@
 #include "dumux/2p2c/2p2cproblem.hh"
 #include "dumux/2p2c/fv/box2p2cjacobian.hh"
 
+
 #include "dumux/nonlinear/new_newtonmethod.hh"
-#include "dumux/nonlinear/new_newtoncontroller.hh"
+#include "dumux/2p2c/2p2cnewtoncontroller.hh"
 
 namespace Dune
 {
@@ -66,7 +67,7 @@ namespace Dune
         typedef typename GV::IndexSet IS;
 
         enum{m = 2};
-      
+
 		typedef typename ThisLeafP1TwoPhaseModel::FunctionType::RepresentationType VectorType;
 		typedef typename ThisLeafP1TwoPhaseModel::OperatorAssembler::RepresentationType MatrixType;
 		typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator;
@@ -76,36 +77,36 @@ namespace Dune
 
       //////////////////////
       // Stuff required for the new newton method
-      
-      //! The traits class for the new newton method.
-      struct NewtonTraits {
-          typedef RT                                                  Scalar;
-          typedef typename ThisLeafP1TwoPhaseModel::FunctionType      Function;
-          typedef typename ThisType::LocalJacobian                    LocalJacobian;
-          typedef typename ThisLeafP1TwoPhaseModel::OperatorAssembler JacobianAssembler;
-      };
-      
-      // HACK: traits for the domain of the problem. this is incomplete...
-      struct DomainTraits {
-          typedef RT   Scalar;
-      };
-      
-      typedef NewNewtonMethod<ThisType> NewtonMethod;
-      typedef NewtonController<NewtonMethod> NewtonController;
-      
-      typedef typename NewtonTraits::Function Function;
-      Function &currentSolution()
+
+        //! The traits class for the new newton method.
+        struct NewtonTraits {
+            typedef RT                                                  Scalar;
+            typedef typename ThisLeafP1TwoPhaseModel::FunctionType      Function;
+            typedef typename ThisType::LocalJacobian                    LocalJacobian;
+            typedef typename ThisLeafP1TwoPhaseModel::OperatorAssembler JacobianAssembler;
+        };
+
+        // HACK: traits for the domain of the problem. this is incomplete...
+        struct DomainTraits {
+            typedef RT   Scalar;
+        };
+
+        typedef NewNewtonMethod<ThisType> NewtonMethod;
+        typedef TwoPTwoCNewtonController<NewtonMethod> NewtonController;
+
+        typedef typename NewtonTraits::Function Function;
+        Function &currentSolution()
           { return this->u; };
-      
-      LocalJacobian &getLocalJacobian()
+
+        LocalJacobian &getLocalJacobian()
           { return this->localJacobian; }
-      
-      typedef typename NewtonTraits::JacobianAssembler JacobianAssembler;
-      JacobianAssembler &jacobianAssembler()
+
+        typedef typename NewtonTraits::JacobianAssembler JacobianAssembler;
+        JacobianAssembler &jacobianAssembler()
           { return this->A; }
-      // End of stuff for new newton method
-      //////////////////////
-      
+        // End of stuff for new newton method
+        //////////////////////
+
 	Box2P2C(const G& g, ProblemType& prob)
 	: ThisLeafP1TwoPhaseModel(g, prob)// (this->size) vectors
 	{ }
@@ -134,6 +135,7 @@ namespace Dune
 		this->localJacobian.outPhaseState = vtkMultiWriter->template createField<RT, 1>(this->size);
 		this->localJacobian.outPermeability = vtkMultiWriter->template createField<RT, 1>(this->size);
 
+		this->localJacobian.clearVisited();
 
 		// iterate through leaf grid an evaluate c0 at cell center
 		Iterator eendit = gridview.template end<0>();
@@ -176,7 +178,7 @@ namespace Dune
 					this->problem.initialPhaseState(global, entity, local);
 
 			}
-				this->localJacobian.initiateStaticData(entity);
+			this->localJacobian.initiateStaticData(entity);
 		}
 
 		// set Dirichlet boundary conditions
@@ -308,7 +310,7 @@ namespace Dune
 		return;
 	}
 
-        void updateModel (double& dt, double& nextDt)
+	void updateModel (double& dt, double& nextDt)
 	{
 		this->localJacobian.outPressureN = vtkMultiWriter->template createField<RT, 1>(this->size);
 		this->localJacobian.outCapillaryP = vtkMultiWriter->template createField<RT, 1>(this->size);
@@ -326,37 +328,23 @@ namespace Dune
 		this->localJacobian.setDt(dt);
 		this->localJacobian.setOldSolution(this->uOldTimeStep);
 
-		///////////////////////////////////
-		// define solver tolerances here
-		///////////////////////////////////
-/*		RT absTol = 1e-3;
-		RT relTol = 5e-8;
-*/
-                NewtonMethod newton(*this);
-                NewtonController newtonCtl;
-                newton.execute(*this, newtonCtl);
-                nextDt = newtonCtl.suggestTimeStepSize(dt);
-
-/*		NewtonMethod<G, ThisType> newtonMethod(this->grid, *this, relTol, absTol, 30, 1.0, 5);
-		newtonMethod.execute();
-		dt = this->localJacobian.getDt();
-*/
+		bool switchFlag = this->localJacobian.checkSwitched();
+		// execute newton method
+		NewtonMethod newton(*this); // *this means object itself (box2p2c)
+		NewtonController newtonCtl(switchFlag);
+		newton.execute(*this, newtonCtl);
+		nextDt = newtonCtl.suggestTimeStepSize(dt);
 
 		// update old phase state for computation of ComputeM(..uold..)
 		this->localJacobian.updatePhaseState();
 		this->localJacobian.clearVisited();
-		updateState();							// phase switch after each timestep
+//		updateState();							// phase switch after each timestep
 
 		*(this->uOldTimeStep) = *(this->u);
 
 		return;
 	}
 
-/*	const G& getGrid() const
-	{
-		return this->grid_;
-	}
-*/
 
 	template<class MultiWriter>
 	void addvtkfields (MultiWriter& writer)

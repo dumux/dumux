@@ -20,7 +20,6 @@
 #include<dune/disc/operators/boundaryconditions.hh>
 #include"dumux/operators/boxjacobian.hh"
 #include"dumux/2p2c/2p2cproblem.hh"
-//#include "varswitch.hh"
 #include"dumux/io/vtkmultiwriter.hh"
 
 /**
@@ -91,7 +90,7 @@ namespace Dune
     Box2P2CJacobian (TwoPTwoCProblem<G,RT>& params, bool levelBoundaryAsDirichlet_, const G& grid,
 			      BoxFunction& sol, bool procBoundaryAsDirichlet_=true)
     : BoxJacobian<ThisType,G,RT,2,BoxFunction>(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_),
-      problem(params), sNDat(this->vertexMapper.size()), vNDat(SIZE), oldVNDat(SIZE)
+      problem(params), sNDat(this->vertexMapper.size()), vNDat(SIZE), oldVNDat(SIZE), switchFlag(false)
     {
       this->analytic = false;
     }
@@ -165,12 +164,6 @@ namespace Dune
      VBlockType flux(0.);
 	 FMatrix Ki(0), Kj(0);
 
-     //	FieldVector<RT,dim> Kij(0);
-	 // effective permeability in edge direction
- 	 // RT Kij = sIPDat[global_j].K_eff[face];
-	 //const FMatrix K = harmonicMeanK(e, face);
- 	 //K.umv(normal, Kij);  // Kij=K*n
-
  	 // calculate harmonic mean of permeabilities of nodes i and j
  	 Ki = this->problem.soil().K(global_i,e,local_i);
  	 Kj = this->problem.soil().K(global_j,e,local_j);
@@ -217,23 +210,23 @@ namespace Dune
 
 	 // calculate the advective flux using upwind: K*n(grad p -rho*g)
 	 for (int phase=0; phase<m; phase++)
-	 	{
+	 {
 		 FieldVector<RT,dim> v_tilde(0);
-     	 K.mv(pGrad[phase], v_tilde);  // v_tilde=K*gradP
+		 K.mv(pGrad[phase], v_tilde);  // v_tilde=K*gradP
      	 outward[phase] = v_tilde*normal;
-	 	}
+	 }
 
 	 // evaluate upwind nodes
 	 int up_w, dn_w, up_n, dn_n;
+
 	 if (outward[wPhase] <= 0) {up_w = i; dn_w = j;}
 	 else {up_w = j; dn_w = i;};
 	 if (outward[nPhase] <= 0) {up_n = i; dn_n = j;}
 	 else {up_n = j; dn_n = i;};
 
-
 	 RT alpha = 1.0;  // Upwind parameter
 
-	 // Water conservation
+	 // water conservation
 	 flux[water] =   (alpha* vNDat[up_w].density[wPhase]*vNDat[up_w].mobility[wPhase]
 			               * vNDat[up_w].massfrac[water][wPhase]
 			    + (1-alpha)* vNDat[dn_w].density[wPhase]*vNDat[dn_w].mobility[wPhase]
@@ -244,7 +237,7 @@ namespace Dune
 			    + (1-alpha)* vNDat[dn_n].density[nPhase]*vNDat[dn_n].mobility[nPhase]
 			               * vNDat[dn_n].massfrac[water][nPhase])
 			               * outward[nPhase];
-	 // Air conservation
+	 // air conservation
 	 flux[air]   =   (alpha* vNDat[up_n].density[nPhase]*vNDat[up_n].mobility[nPhase]
 			               * vNDat[up_n].massfrac[air][nPhase]
 			    + (1-alpha)* vNDat[dn_n].density[nPhase]*vNDat[dn_n].mobility[nPhase]
@@ -328,8 +321,8 @@ namespace Dune
     {
 
         bool switched = false;
-   		int state = sNDat[globalIdx].phaseState;
-//   		RT eps = 1e-15;
+        int switch_counter = sNDat[globalIdx].switched;
+        int state = sNDat[globalIdx].phaseState;
 
         RT pW = sol[localIdx][pWIdx];
 //        if (pW < 0.) pW = (-1)*pW;
@@ -354,12 +347,13 @@ namespace Dune
            	pwn = xWNmolar * pN;
             pWSat = problem.multicomp().vaporPressure(vNDat[localIdx].temperature);
 
-        	if (pwn > 1.01*pWSat && switched == false)
+        	if (pwn > 1.01*pWSat && switched == false)// && switch_counter < 3)
             {
             	// appearance of water phase
             	std::cout << "Water appears at node " << globalIdx << "  Coordinates: " << global << std::endl;
             	sNDat[globalIdx].phaseState = bothPhases;
             	sol[localIdx][switchIdx] = 1.0 - 1e-6; // initialize solution vector
+            	sNDat[globalIdx].switched += 1;
             	switched = true;
             }
             break;
@@ -370,14 +364,15 @@ namespace Dune
          	xAWmolar = problem.multicomp().convertMassToMoleFraction(xAWmass, waterPhase);
         	henryInv = problem.multicomp().henry(vNDat[localIdx].temperature);
             pWSat = problem.multicomp().vaporPressure(vNDat[localIdx].temperature);
-        	pbub = pWSat + xAWmolar/henryInv;
+        	pbub = pWSat + xAWmolar/henryInv; // pWSat + pAW
 
-        	if (pbub > pN && switched == false && pN > 0.0)
+        	if (pN < pbub && switched == false)// && switch_counter < 3)
             {
-            	// appearance of gas phase
-            	std::cout << "Gas appears at node " << globalIdx << "  Coordinates: " << global << std::endl;
+        		// appearance of gas phase
+            	std::cout << "Gas appears at node " << globalIdx << ",  Coordinates: " << global << std::endl;
             	sNDat[globalIdx].phaseState = bothPhases;
-            	sol[localIdx][switchIdx] = 1e-6; // initialize solution vector
+            	sol[localIdx][switchIdx] = 1e-5; // initialize solution vector
+            	sNDat[globalIdx].switched += 1;
             	switched = true;
             }
             break;
@@ -385,31 +380,36 @@ namespace Dune
         case bothPhases:
         	RT satN = sol[localIdx][switchIdx];
 
-        	if (satN < 0.0  && switched == false)
+        	if (satN < 0.0  && switched == false)// && switch_counter < 3)
       	  	{
       		  	// disappearance of gas phase
       		  	std::cout << "Gas disappears at node " << globalIdx << "  Coordinates: " << global << std::endl;
       		  	sNDat[globalIdx].phaseState = waterPhase;
-      		  	sol[localIdx][switchIdx] = 1e-6; // initialize solution vector
-      		  	switched = true;
+      		  	sol[localIdx][switchIdx] = problem.multicomp().xAW(pN); // initialize solution vector
+            	sNDat[globalIdx].switched += 1;
+            	switched = true;
             }
-        	else if (satW < 0.0  && switched == false)
+        	else if (satW < 0.0  && switched == false)// && switch_counter < 3)
       	  	{
       	  		// disappearance of water phase
       	  		std::cout << "Water disappears at node " << globalIdx << "  Coordinates: " << global << std::endl;
       	  		sNDat[globalIdx].phaseState = gasPhase;
-      	  		sol[localIdx][switchIdx] = 1e-6; // initialize solution vector
+      	  		sol[localIdx][switchIdx] = problem.multicomp().xWN(pN); // initialize solution vector
+            	sNDat[globalIdx].switched += 1;
             	switched = true;
       	  	}
       	  	break;
 
         }
-        if (switched == true) updateVariableData(e, sol, localIdx, vNDat, sNDat[globalIdx].phaseState);
+        if (switched == true){
+        	updateVariableData(e, sol, localIdx, vNDat, sNDat[globalIdx].phaseState);
+        	switchFlag=true;
+        }
 
    	return;
     }
 
-    // harmonic mean computed directly
+    // harmonic mean of the permeability computed directly
     virtual FMatrix harmonicMeanK (FMatrix& Ki, const FMatrix& Kj) const
     {
     	double eps = 1e-20;
@@ -488,19 +488,13 @@ namespace Dune
   		 const int globalIdx = this->vertexMapper.template map<dim>(e, sfs[k].entity());
 
   		 // if nodes are not already visited
-  		 if (!sNDat[globalIdx].visited)
+//  		 if (!sNDat[globalIdx].visited)
   		  {
-  			  // ASSUME porosity defined at elements!
-  			  sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
-
- 			  // global coordinates
- 			  FieldVector<DT,dim> global_i = this->fvGeom.subContVol[k].global;
-
    			  // evaluate primary variable switch
  			  primaryVarSwitch(e, globalIdx, sol, k);
 
   			  // mark elements that were already visited
-  			  sNDat[globalIdx].visited = true;
+//  			  sNDat[globalIdx].visited = true;
   		  }
   	  }
 
@@ -525,14 +519,13 @@ namespace Dune
   			 // ASSUME porosity defined at nodes
   			 sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
 
+  			 // set counter for variable switch to zero
+  			 sNDat[globalIdx].switched = 0;
+
   			 // mark elements that were already visited
   			 sNDat[globalIdx].visited = true;
-//  			for (int h = 0; h<1600; h++)
-//  			{
-//  				(*outPermeability)[h] = Knew[h];
-//  			}
-  		 }
-   	 }
+  		 	}
+   	 	}
 
 	  return;
     }
@@ -651,11 +644,19 @@ namespace Dune
 				updateVariableData(e, sol, i, old);
 	}
 
+	bool checkSwitched()
+	{
+		bool temp = switchFlag;
+		switchFlag = false;
 
-    struct StaticNodeData
+		return temp;
+	}
+
+
+	struct StaticNodeData
     {
    	 bool visited;
-//   	 bool switched;
+   	 int switched;
    	 int phaseState;
    	 int oldPhaseState;
    	 RT cellVolume;
@@ -667,8 +668,6 @@ namespace Dune
 //   	 RT cellVolume;
 //     	 RT porosity;
 //   	 RT gravity;
-//   	 FieldVector<RT, 4> parameters;
-//   	 FieldMatrix<RT,dim,dim> K;
    	 } elData;
 
 
@@ -678,6 +677,7 @@ namespace Dune
     std::vector<StaticNodeData> sNDat;
     std::vector<VariableNodeData> vNDat;
     std::vector<VariableNodeData> oldVNDat;
+	bool switchFlag;
 
     // for output files
     BlockVector<FieldVector<RT, 1> > *outPressureN;
@@ -698,35 +698,3 @@ namespace Dune
 
 }
 #endif
-
-//    // average permeability from the staticNode Vector
-//    virtual FMatrix harmonicMeanK (const Entity& e, int k) const
-//    {
-//	 FMatrix Ki, Kj;
-//	 const RT eps = 1e-20;
-//
-//    GeometryType gt = e.geometry().type();
-//    const typename LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type&
-//    sfs=LagrangeShapeFunctions<DT,RT,dim>::general(gt,1);
-//
-//     int i = this->fvGeom.subContVolFace[k].i;
-//     int j = this->fvGeom.subContVolFace[k].j;
-//
-//     int global_i = this->vertexMapper.template map<dim>(e, sfs[i].entity());
-//     int global_j = this->vertexMapper.template map<dim>(e, sfs[j].entity());
-//
-//
-//     	Ki = sNDat[global_i].K;
-//     	Kj = sNDat[global_j].K;
-//
-//     	for (int kx=0; kx<dim; kx++){
-//     		for (int ky=0; ky<dim; ky++){
-//     			if (Ki[kx][ky] != Kj[kx][ky])
-//     			{
-//     				Ki[kx][ky] = 2 / (1/(Ki[kx][ky]+eps) + (1/(Kj[kx][ky]+eps)));
-//     			}
-//     		}
-//     	}
-//     	return Ki;
-//    }
-
