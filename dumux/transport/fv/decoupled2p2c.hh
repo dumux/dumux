@@ -929,9 +929,6 @@ namespace Dune
 
 		int which;
 
-		flowout[0] = 0.;
-		flowout[1] = 0.;
-
 		// compute update vector
 		Iterator eendit = grid.template lend<0>(level_);
 		for (Iterator it = grid.template lbegin<0>(level_); it != eendit; ++it)
