@@ -28,10 +28,6 @@
 #include <dune/istl/preconditioners.hh>
 #include "dumux/pardiso/pardiso.hh"
 
-std::ofstream outf("brkthr2p2c.dat");
-double sumout[2] = {0.,0.};
-double flowout[2];
-
 // author: Jochen Fritz
 // last change: 27.08.08
 
@@ -110,20 +106,6 @@ namespace Dune
 			pressure(false, t);
 			totalVelocity(t);
 			concentrationUpdate(t, dt, updateVec);
-
-			//TODO remove DEBUG--->
-			double mass[2];
-			mass[1] = 0.;
-			mass[2] = 0.;
-			for(int i = 0; i < elementmapper.size(); i++)
-			{
-				mass[0] += problem.variables.totalConcentration[i] * 400.;
-				mass[1] += problem.variables.totalConcentration[i + elementmapper.size()] * 400.;
-			}
-			outf << t << "\t"<< mass[0] << "\t" << mass[1]<< "\t" << flowout[0] <<"\t" <<flowout[1] <<"\t"<< sumout[0] << "\t" << sumout[1]<< "\t" << problem.variables.pressure[19] << std::endl;
-			sumout[0] += flowout[0] *0.9 *dt;
-			sumout[1] += flowout[1] *0.9 *dt;
-			// <---DEBUG
 		}
 
 		int level()
@@ -1166,9 +1148,6 @@ namespace Dune
 							- velocityIJ * Xw2_I * rho_w_I * numFlux(satI, satBound, fwI, fwBound)
 							+ velocityJI * Xn2Bound * rho_n_Bound * numFlux(1.0-satBound, 1.0-satI, fnBound, fnI)
 							- velocityIJ * Xn2_I * rho_n_I * numFlux(1.0-satI, 1.0-satBound, fnI, fnBound);
-
-			    	if (factorC1 < 0) flowout[0] -= factorC1 * volume;
-			    	if (factorC2 < 0) flowout[1] -= factorC2 * volume;
 					}
 					else if (pressBCtype == BoundaryConditions::neumann)
 					{
