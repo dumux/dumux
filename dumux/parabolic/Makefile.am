@@ -1,4 +1,4 @@
-SUBDIRS = . fe fv problems
+SUBDIRS = fe fv problems
 
 parabolicdir = $(includedir)/dune/dumux/parabolic
 parabolic_HEADERS = nonlinearparabolic.hh parabolicproblem.hh

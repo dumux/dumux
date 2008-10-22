@@ -281,10 +281,11 @@ namespace Dune
     		  }
     	  }
       }
+      
       DT traceK = K[0][0];
       for (int i = 1; i < n; i++)
     	  traceK += K[i][i];
-      D *= 2*traceK/volume;
+      D *= traceK/volume;
 //      std::cout << "u~D =\n" << D;
       
       // (3) Build the matrix W = Minv
@@ -297,9 +298,14 @@ namespace Dune
     			  W[i][j] += NK[i][k]*N[j][k];
     	  }
       }
+       
       W /= volume;
       W += D;
-//      std::cout << "W = \n" << W;
+      std::cout << "W = \n" << W;
+      std::cout << D[2][2] << ", " << D[2][0] << ", " << D[2][3] << ", " << D[2][1] << std::endl; 
+      std::cout << D[0][2] << ", " << D[0][0] << ", " << D[0][3] << ", " << D[0][1] << std::endl; 
+      std::cout << D[3][2] << ", " << D[3][0] << ", " << D[3][3] << ", " << D[3][1] << std::endl; 
+      std::cout << D[1][2] << ", " << D[1][0] << ", " << D[1][3] << ", " << D[1][1] << std::endl;
      
 
       // Now the notation is borrowed from Aarnes/Krogstadt/Lie 2006, Section 3.4. 

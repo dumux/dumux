@@ -6,7 +6,7 @@ libonedinndgrid_la_SOURCES = onedinndgrid.cc
 
 onedinndgriddir = $(includedir)/dune/dumux/onedinndgrid/
 onedinndgrid_HEADERS = \
-   onedinndgridgeometry.hh onedinndgridentity.hh onedinndgridhieriterator.hh \
+   onedinndgrid.hh onedinndgridgeometry.hh onedinndgridentity.hh onedinndgridhieriterator.hh \
    onedinndgridleveliterator.hh onedinndintersectionit.hh onedinndgridentitypointer.hh \
    onedinndgridindexsets.hh onedinndgridleafiterator.hh
 

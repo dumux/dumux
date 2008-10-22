@@ -74,8 +74,8 @@ namespace Dune
 			    VType& velocity, PType& pressure) 
     {
       // run over all level elements
-      Iterator eendit = this->gridview.template end<0>();
-      for (Iterator it = this->gridview.template begin<0>(); it!=eendit; ++it)
+      Iterator eendit = this->grid.template lend<0>(0);
+      for (Iterator it = this->grid.template lbegin<0>(0); it!=eendit; ++it)
 	{
 	  // get access to shape functions for CR elements
 	  Dune::GeometryType gt = it->geometry().type();

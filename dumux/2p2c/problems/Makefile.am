@@ -1,4 +1,4 @@
-problemsdir = $(includedir)/dune/dumux/twophase/problems
-problems_HEADERS = uniformtwophaseproblem.hh 
+problemsdir = $(includedir)/dune/dumux/2p2c/problems
+problems_HEADERS = layerproblem.hh uniformtwophaseproblem.hh 
 
 include $(top_srcdir)/am/global-rules

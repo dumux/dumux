@@ -320,7 +320,7 @@ template<class G, class RT, class VC> void FVDiffusion<G, RT, VC>::assemble(cons
 				if (hasGravity) {
 					double factor = fractionalW*(this->diffproblem.materialLaw.wettingPhase.density())
 					+ (1 - fractionalW)*(this->diffproblem.materialLaw.nonwettingPhase.density());
-					f[indexi] += factor*lambda*faceVol*(K*gravity);
+					f[indexi] -= factor*lambda*faceVol*(K*gravity);
 				}
 
 				if (this->diffproblem.capillary) {
@@ -371,7 +371,7 @@ template<class G, class RT, class VC> void FVDiffusion<G, RT, VC>::assemble(cons
 					if (hasGravity) {
 						double factor = fractionalW*(this->diffproblem.materialLaw.wettingPhase.density())
 						+ (1 - fractionalW)*(this->diffproblem.materialLaw.nonwettingPhase.density());
-						f[indexi] += factor*lambda*faceVol*(Kni*gravity);
+						f[indexi] -= factor*lambda*faceVol*(Kni*gravity);
 					}
 					if (this->diffproblem.capillary) {
 						double satj = this->diffproblem.gSat(faceglobal, *it, facelocalDim);
@@ -399,7 +399,7 @@ template<class G, class RT, class VC> void FVDiffusion<G, RT, VC>::assemble(cons
 						FieldVector<ct,dim> pCGradient = distVec;
 						pCGradient *= -(pCJ - pCI)/(dist*dist);
 
-						f[indexi] += lambdaN*faceVol*(Kni*pCGradient);
+						f[indexi] -= lambdaN*faceVol*(Kni*pCGradient);
 					}
 				}
 				else

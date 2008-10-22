@@ -49,7 +49,7 @@ namespace Dune
 	  typename BoundaryConditions::Flags bctype (const FieldVector<DT,n>& x, const Entity& e, 
 						   const FieldVector<DT,n>& xi) const
 	  {
-	    if (x[1] > 10-1E-6)// || x[1] < 1e-6)
+	    if (x[1] > 10-1E-6 || x[1] < 1e-6)
 	      return BoundaryConditions::dirichlet;
 	    // all other boundaries
 	    return BoundaryConditions::neumann;

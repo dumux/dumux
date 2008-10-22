@@ -33,6 +33,7 @@
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/disc/functions/functions.hh>
 #include "dumux/operators/p1operatorextended.hh"
+#include "dumux/operators/owneroverlapcopyextended.hh"
 #include <dune/disc/operators/boundaryconditions.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/paamg/amg.hh>
@@ -75,29 +76,53 @@ public:
 	typedef typename ThisLeafP1TwoPhaseModel::FunctionType::RepresentationType VectorType;
 	typedef typename ThisLeafP1TwoPhaseModel::OperatorAssembler::RepresentationType MatrixType;
 	typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator;
+#if HAVE_MPI 
+#else 
 #ifdef HAVE_PARDISO
 	SeqPardiso<MatrixType,VectorType,VectorType> pardiso;
 #endif
-
+#endif
 
 	BoxPwSn(const G& g, ProblemType& prob)
 	: ThisLeafP1TwoPhaseModel(g, prob)
 	{}
 
-	virtual void solve() {
+	virtual void solve() 
+	{
+		Operator op(*(this->A));  // make operator out of matrix
+		double red=1E-14;
 
-		Operator op(*(this->A)); // make operator out of matrix
-		double red=1E-12;
+#if HAVE_MPI
+			// set up parallel solvers
+		typedef typename G::Traits::GlobalIdSet::IdType GlobalIdType;
+		typedef OwnerOverlapCopyExtendedCommunication<GlobalIdType,int> CommunicationType;
+			Dune::IndexInfoFromGrid<GlobalIdType,int> indexinfo; 
+			(this->u).fillIndexInfoFromGrid(indexinfo);
+			typedef Dune::OwnerOverlapCopyExtendedCommunication<GlobalIdType,int> CommunicationType;
+			CommunicationType oocc(indexinfo,(this->grid).comm());
+			int verbose=0;
+			if ((this->grid).comm().rank() == 0) 
+				verbose = 1;
+			Dune::OverlappingSchwarzOperator<MatrixType,VectorType,VectorType,CommunicationType> oop(*(this->A),oocc);
+			Dune::OverlappingSchwarzScalarProduct<VectorType,CommunicationType> osp(oocc);
+			SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A),1.0);// a precondtioner
+			Dune::BlockPreconditioner<VectorType,VectorType,CommunicationType> parprec(ilu0,oocc);
+			Dune::BiCGSTABSolver<VectorType> parcg(oop,osp,parprec,red,1000,verbose);
 
+			// solve system
+			Dune::InverseOperatorResult r;	
+			parcg.apply(*(this->u), *(this->f), r);
+#else
 #ifdef HAVE_PARDISO
 		pardiso.factorize(*(this->A));
-		LoopSolver<VectorType> solver(op, pardiso, red, 10, 2);
+		BiCGSTABSolver<VectorType> solver(op,pardiso,red,100,2);         // an inverse operator
 #else
-		SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A), 1.0);// a precondtioner
-		BiCGSTABSolver<VectorType> solver(op, ilu0, red, 10000, 1); // an inverse operator
+		SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A),1.0);// a precondtioner
+		BiCGSTABSolver<VectorType> solver(op,ilu0,red,10000,1);         // an inverse operator
 #endif
 		InverseOperatorResult r;
 		solver.apply(*(this->u), *(this->f), r);
+#endif
 
 		return;
 	}
