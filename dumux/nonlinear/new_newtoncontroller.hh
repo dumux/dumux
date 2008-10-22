@@ -21,11 +21,15 @@
 #ifndef DUNE_NEWTON_CONTROLLER_HH
 #define DUNE_NEWTON_CONTROLLER_HH
 
+#include "config.h"
+
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/solvers.hh>
 
 #include <iostream>
 #include <boost/format.hpp>
+
+#include "dumux/pardiso/pardiso.hh"
 
 namespace Dune
 {
@@ -76,7 +80,7 @@ namespace Dune
                     return false; // we have exceeded the allowed number of steps
                 else if (newtonConverged())
                     return false; // we have reached the desired defect
-                
+
                 // check for the physicalness of the solution
                 _curPhysicalness = _asImp()._physicalness(u);
                 _curPhysicalness = std::min(_curPhysicalness, 1.0);
@@ -153,45 +157,36 @@ namespace Dune
                                Vector &x,
                                Vector &b)
             {
-                // if the defect of the newton method is large, we do
+        	    // if the defect of the newton method is large, we do
                 // not need to solve the linear approximation
                 // accurately. On the other hand, if this is the first
                 // newton step, we don't have a meaningful value for the defect
                 // yet, so we use the targeted accurracy for the defect.
                 Scalar residTol = _tolerance/10;
 
-                // initialize the preconditioner
-                Dune::SeqILU0<Matrix,Vector,Vector> precond(A, 1.0);
-//                Dune::SeqSSOR<OpAsmRep,FnRep,FnRep> precond(*opAsm, 3, 1.0);
-//                SeqIdentity<OpAsmRep,FnRep,FnRep> precond(*opAsm);
-
-
-/*
-                for (int i = 0; i < A.getmat().N(); ++i) {
-                    for (int k = 0; k < 2; ++k) {
-                        for (int j = 0; j < A.getmat().M(); ++j) {
-                            for (int l = 0; l < 2; ++l) {
-                                if (A.getmat()[i].find(j) != A.getmat()[i].end())
-                                    printf("%- #4lf ",
-                                           (*A.getmat()[i].find(j))[k][l]);
-                                else
-                                    printf(".     ");
-                            }
-                        }
-                        printf("\n");
-                    }
-                }
-*/                
-
-                // invert the linear equation system
                 typedef Dune::MatrixAdapter<typename JacobianAssembler::RepresentationType,
                                             typename Function::RepresentationType,
                                             typename Function::RepresentationType>  MatrixAdapter;
                 MatrixAdapter opA(A);
+
+#ifdef HAVE_PARDISO
+
+                SeqPardiso<Matrix,Vector,Vector> pardiso;
+                pardiso.factorize(A);
+                BiCGSTABSolver<Vector> solver(opA, pardiso, residTol, 100, 2);         // an inverse operator
+
+#else
+
+                // initialize the preconditioner
+                Dune::SeqILU0<Matrix,Vector,Vector> precond(A, 1.0);
+//                Dune::SeqSSOR<OpAsmRep,FnRep,FnRep> precond(*opAsm, 3, 1.0);
+//                SeqIdentity<OpAsmRep,FnRep,FnRep> precond(*opAsm);
+                // invert the linear equation system
                 Dune::BiCGSTABSolver<Vector> solver(opA, precond, residTol, 10000, 1);
+
+#endif
                 Dune::InverseOperatorResult result;
                 solver.apply(x, b, result);
-                
                 return result.converged;
             };
 
@@ -209,8 +204,8 @@ namespace Dune
 
         //! Called when the newton method broke down.
         void newtonFail()
-            { 
-                _numSteps = _targetSteps*2; 
+            {
+                _numSteps = _targetSteps*2;
             }
 
         //! Suggest a new time stepsize based on the number of newton
@@ -231,7 +226,7 @@ namespace Dune
                     return oldTimeStep*(1 + percent/1.2);
                 }
             }
-        
+
 
     protected:
         // returns the actual implementation for the cotroller we do
@@ -268,7 +263,7 @@ namespace Dune
         Scalar _curPhysicalness;
         Scalar _oneByMagnitude;
         int    _probationCount;
-        
+
         // optimal number of iterations we want to achive
         int    _targetSteps;
         // maximum number of iterations we do before giving up
