@@ -7,4 +7,4 @@ Module:dune-mux
 Version:0.1
 Maintainer:bernd@iws.uni-stuttgart.de
 #depending on 
-Depends:dune-common dune-grid dune-istl dune-disc
+Depends:dune-common dune-grid dune-istl dune-disc dune-subgrid
