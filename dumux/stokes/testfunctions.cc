@@ -1,3 +1,4 @@
+// $Id$
 
 // here are some sample problem with known solution
 
@@ -12,9 +13,12 @@ public:
   
   ct velocity(int comp,const Point & glob) const
     {
-      if (comp==0) return glob[0]*glob[0]; // x*x
-	  if (comp==1) return -2*glob[0]*glob[1];// -2xy*
-	  if (comp==2) return 0;// check this 3D prob
+      if (comp==0) 
+	return glob[0]*glob[0]; // x*x
+      if (comp==1) 
+	return -2*glob[0]*glob[1];// -2xy*
+
+      return 0;// check this 3D prob
     }
   ct pressure(const Point & glob) const
   {
@@ -24,16 +28,20 @@ public:
     ct rhsvalue(int variable, const Point& glob) const
   {
 	// stokes system has dim+1 variables (dim velocity comps and 1 pressure)
-	if (variable==0) return -1.0;
-	if (variable==1) return 0.0;
-	if (variable==2) return 0.0;
-	if (variable==3) return 0.0;
+	if (variable==0) 
+	  return -1.0;
+	if (variable==1) 
+	  return 0.0;
+	if (variable==2) 
+	  return 0.0;
+	return 0.0;
 	
   }
 Gradient velocityGradient(int comp,const Point &glob)const
   {
-	// //DUNE_THROW(NotImplemented, "velocityGradient not implemented yet");
-// 		return 0;
+    Gradient result(0);
+
+    return result;
   }
 
   

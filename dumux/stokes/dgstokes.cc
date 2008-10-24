@@ -1,3 +1,4 @@
+// $Id$
 
 template<class G, int v_order, int p_order>
 void DGFiniteElementMethod<G,v_order,p_order>::assembleVolumeTerm(Entity& ent, LocalMatrixBlock& Aee,LocalVectorBlock& Be) const
@@ -20,7 +21,7 @@ void DGFiniteElementMethod<G,v_order,p_order>::assembleVolumeTerm(Entity& ent, L
   //specify the quadrature order ?
   //  #warning fixed quadrature order 
   int qord=6;
-  for (int nqp=0;nqp<Dune::QuadratureRules<ctype,dim>::rule(gt,qord).size();++nqp) 
+  for (unsigned int nqp=0;nqp<Dune::QuadratureRules<ctype,dim>::rule(gt,qord).size();++nqp) 
 	{
 	  //local position of quad points
 	  const Dune::FieldVector<ctype,dim> & quad_point_loc = Dune::QuadratureRules<ctype,dim>::rule(gt,qord)[nqp].position();
@@ -148,7 +149,7 @@ void DGFiniteElementMethod<G,v_order,p_order>::assembleFaceTerm(Entity& ent, Int
   //get parameter
   // DGStokesParameters parameter;
   //get the geometry type of the face
-  Dune::GeometryType gtface = isit.intersectionSelfLocal().type();
+  Dune::GeometryType gtface = isit->intersectionSelfLocal().type();
   //std::cout<<"----gtface: "<<gtface<<std::endl;
   Dune::GeometryType nbgtface = isit->intersectionNeighborLocal().type();
   //specify the quadrature order ?
@@ -157,12 +158,12 @@ void DGFiniteElementMethod<G,v_order,p_order>::assembleFaceTerm(Entity& ent, Int
  //  Grid grid;
 
   
-  for (int qedg=0; qedg<Dune::QuadratureRules<ctype,dim-1>::rule(gtface,qord).size(); ++qedg)
+  for (unsigned int qedg=0; qedg<Dune::QuadratureRules<ctype,dim-1>::rule(gtface,qord).size(); ++qedg)
 	{	
 	  //quadrature position on the edge/face in local=facelocal
 	  //note that this is dim entity
 	  const Dune::FieldVector<ctype,dim-1>& local = Dune::QuadratureRules<ctype,dim-1>::rule(gtface,qord)[qedg].position();
-	  Dune:: FieldVector<ctype,dim> face_self_local = isit.intersectionSelfLocal().global(local);
+	  Dune:: FieldVector<ctype,dim> face_self_local = isit->intersectionSelfLocal().global(local);
 	  Dune:: FieldVector<ctype,dim> face_neighbor_local = isit->intersectionNeighborLocal().global(local);
 
 	  Dune::FieldVector<ctype,dim> global = isit->intersectionGlobal().global(local);
@@ -430,14 +431,14 @@ void DGFiniteElementMethod<G,v_order,p_order>::assembleBoundaryTerm(Entity& ent,
   //DGStokesParameters parameter;
 
   //get the geometry type of the face
-  Dune::GeometryType gtboundary = isit.intersectionSelfLocal().type();
+  Dune::GeometryType gtboundary = isit->intersectionSelfLocal().type();
   
   //specify the quadrature order ?
   int qord=6;
-  for(int bq=0;bq<Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord).size();++bq)
+  for(unsigned int bq=0;bq<Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord).size();++bq)
     {
       const Dune::FieldVector<ctype,dim-1>& boundlocal = Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord)[bq].position();
-      Dune:: FieldVector<ctype,dim> blocal = isit.intersectionSelfLocal().global(boundlocal);
+      Dune:: FieldVector<ctype,dim> blocal = isit->intersectionSelfLocal().global(boundlocal);
       const Dune::FieldVector<ctype,dim> bglobal = isit->intersectionGlobal().global(boundlocal);
       ctype norm_eb=isit->intersectionGlobal().integrationElement(boundlocal);  
       // calculating the inverse jacobian 
@@ -620,8 +621,8 @@ std::cout << "Assembling the matrix and rhs: \n";
   ShapeFunctionSet psfs(p_order); // for pressure
   
   int vdof=vsfs.size()*dim; // dim velocity components and total velocity sfs size
-  int pdof=psfs.size();
-  int ndof=vdof+pdof; // total dofs per element
+  //int pdof=psfs.size();
+  //int ndof=vdof+pdof; // total dofs per element
   //vsfs.print(std::cout);
 
   // assembling on the finest level / leaf level

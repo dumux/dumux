@@ -1,3 +1,5 @@
+// $Id$
+
 #include<dune/disc/stokes/dgstokes.hh>
 
 
@@ -15,9 +17,9 @@ Dune::DGFiniteElementMethod<G,v_order,p_order>::evaluateL2error(int variable,con
   Dune::GeometryType gt = element.type();
   // #warning fixed quadrature order 
   int qord=12;
-  int eid = grid.levelIndexSet(grid.maxLevel()).index(element);
+  //int eid = grid.levelIndexSet(grid.maxLevel()).index(element);
 
-  for (int qp=0;qp<Dune::QuadratureRules<ctype,dim>::rule(gt,qord).size();++qp) 
+  for (unsigned int qp=0;qp<Dune::QuadratureRules<ctype,dim>::rule(gt,qord).size();++qp) 
 	{
 	  qp_loc = Dune::QuadratureRules<ctype,dim>::rule(gt,qord)[qp].position();
 	  qp_glob =element.geometry().global(qp_loc);
