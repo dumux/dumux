@@ -90,6 +90,7 @@ AC_CONFIG_FILES([Makefile
     dumux/onedinndgrid/Makefile
     dumux/operators/Makefile 
     dumux/shapefunctions/Makefile 
+    dumux/stokes/Makefile 
     dumux/timedisc/Makefile 
     dumux/transport/Makefile 
     dumux/fractionalflow/Makefile 
