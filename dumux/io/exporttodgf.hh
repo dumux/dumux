@@ -1,3 +1,4 @@
+// $Id$
 #ifndef EXPORTTODGF_HH
 #define EXPORTTODGF_HH
 
@@ -9,12 +10,6 @@
 
 namespace Dune
 {
-//template<int dim> struct P1
-//{
-//	bool contains(Dune::GeometryType gt) {
-//		return gt.dim() == 0;
-//	}
-//};
 
 template<class GridView, class Data>
 void exportToDGF(const GridView& gridView, const Data& data, int paramnumber = 1,
@@ -26,17 +21,11 @@ void exportToDGF(const GridView& gridView, const Data& data, int paramnumber = 1
 	enum
 	{	n = GridView::dimension};
 
-
-//	const Grid& gridHelp(gridView.grid());
-	// mapper: one data element per vertex
-
 	typedef typename GridView::template Codim< 0>::Iterator ElementIterator;
 	typedef typename GridView::template Codim< n>::Iterator VertexIterator;
 	typedef typename GridView::IntersectionIterator IntersectionIterator;
 
 	typedef typename GridView::IndexSet IndexSet;
-//	typedef MultipleCodimMultipleGeomTypeMapper<Grid,IndexSet,P1> VertexMapper;
-//	VertexMapper vertexmapper(gridHelp,	gridHelp.leafIndexSet());
 
 	const IndexSet& indexSet = gridView.indexSet();
 	int size = indexSet.size(n);
@@ -60,7 +49,6 @@ void exportToDGF(const GridView& gridView, const Data& data, int paramnumber = 1
 	VertexIterator vEndIt = gridView.template end<n>();
 	for (VertexIterator vIt = gridView.template begin<n>(); vIt != vEndIt; ++vIt)
 	{
-//		int vertexIndex = vertexmapper.map(*vIt);
 		int vertexIndex = indexSet.index(*vIt);
 		coordinates[vertexIndex] = vIt->geometry()[0];
 	}
@@ -94,14 +82,12 @@ void exportToDGF(const GridView& gridView, const Data& data, int paramnumber = 1
 	ElementIterator eEndIt = gridView.template end<0>();
 	for (ElementIterator eIt = gridView.template begin<0>(); eIt != eEndIt; ++eIt)
 	{
-//		int elementIndex = vertexmapper.map(*eIt);
 		int elementIndex = indexSet.index(*eIt);
 
 		int vertexOnElement = eIt->geometry().corners();
 
 		for (int i=0; i<vertexOnElement;i++)
 		{
-//			int vertexIndex = vertexmapper.map(*((*eIt).template entity<n>(i) ));
 			int vertexIndex = indexSet.index(*((*eIt).template entity<n>(i) ));
 			dataFile <<
 			vertexIndex << " ";
@@ -119,44 +105,43 @@ void exportToDGF(const GridView& gridView, const Data& data, int paramnumber = 1
 		dataFile <<
 		"\n";
 	}
-//	dataFile <<
-//	"#\n"
-//	"BOUNDARYSEGMENTS\n";
-//
-//	for (ElementIterator eIt = gridView.template begin<0>(); eIt != eEndIt; ++eIt)
-//	{
-//		IntersectionIterator endIIt = gridView.iend(*eIt);
-//		for (IntersectionIterator iIt = gridView.ibegin(*eIt); iIt != endIIt; ++iIt)
-//		{
-//			if ((*iIt).boundary() && !(*iIt).neighbor())
-//			{
-//
-//				dataFile <<
-//				"2 ";
-//
-//				int vertexOnElement = (*eIt).geometry().corners();
-//				int vertexOnIntersection = (*iIt).intersectionGlobal().corners();
-//
-//				for (int i=0; i<vertexOnElement;i++)
-//				{
-//					Dune::FieldVector<DT,n> globalE = eIt->geometry()[i];
-//					for(int j = 0;j<vertexOnIntersection;j++)
-//					{
-//						Dune::FieldVector<DT,n> globalV = iIt->intersectionGlobal()[j];
-//						if (globalE == globalV)
-//						{
-//							int vertexIndex = vertexmapper.index(*((*eIt).template entity<n>(i) ));
-//
-//							dataFile <<
-//							vertexIndex << " ";
-//						}
-//					}
-//				}
-//				dataFile <<
-//				"\n";
-//			}
-//		}
-//	}
+	dataFile <<
+	"#\n"
+	"BOUNDARYSEGMENTS\n";
+
+	for (ElementIterator eIt = gridView.template begin<0>(); eIt != eEndIt; ++eIt)
+	{
+		IntersectionIterator endIIt = gridView.iend(*eIt);
+		for (IntersectionIterator iIt = gridView.ibegin(*eIt); iIt != endIIt; ++iIt)
+		{
+			if ((*iIt).boundary() && !(*iIt).neighbor())
+			{
+				dataFile <<
+				(*iIt).boundaryId()<< " ";
+
+				int vertexOnElement = (*eIt).geometry().corners();
+				int vertexOnIntersection = (*iIt).intersectionGlobal().corners();
+
+				for (int i=0; i<vertexOnElement;i++)
+				{
+					Dune::FieldVector<DT,n> globalE = eIt->geometry()[i];
+					for(int j = 0;j<vertexOnIntersection;j++)
+					{
+						Dune::FieldVector<DT,n> globalV = iIt->intersectionGlobal()[j];
+						if (globalE == globalV)
+						{
+							int vertexIndex = indexSet.index(*((*eIt).template entity<n>(i) ));
+
+							dataFile <<
+							vertexIndex << " ";
+						}
+					}
+				}
+				dataFile <<
+				"\n";
+			}
+		}
+	}
 
 	dataFile <<
 	"#\n"
