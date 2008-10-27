@@ -293,9 +293,6 @@ namespace Dune
 			}
 		}
 
-		std::cout<<(*(this->u))<<std::endl;
-//		importFromDGF<GV>(phaseState, "phasestate", false);
-
 		// iterate through leaf grid an evaluate c0 at cell center
 		Iterator eendit = gridview.template end<0>();
 		for (Iterator it = gridview.template begin<0>(); it
