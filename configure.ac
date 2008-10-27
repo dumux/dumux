@@ -83,23 +83,29 @@ AC_CONFIG_FILES([Makefile
     test/Makefile
     doc/doxygen/Makefile 
     doc/handbook/Makefile 
+    dumux/2p2c/Makefile
+    dumux/2p2cni/Makefile
+    dumux/2penergy/Makefile
+    dumux/brinkman/Makefile 
+    dumux/coupled/Makefile 
     dumux/diffusion/Makefile 
+    dumux/fractionalflow/Makefile 
     dumux/functions/Makefile 
+    dumux/fvgeometry/Makefile 
     dumux/io/Makefile 
     dumux/material/Makefile 
+    dumux/minc/Makefile 
+    dumux/nonlinear/Makefile 
     dumux/onedinndgrid/Makefile
     dumux/operators/Makefile 
+    dumux/parabolic/Makefile 
+    dumux/pardiso/Makefile 
     dumux/shapefunctions/Makefile 
+    dumux/simset/Makefile 
     dumux/stokes/Makefile 
     dumux/timedisc/Makefile 
     dumux/transport/Makefile 
-    dumux/fractionalflow/Makefile 
     dumux/twophase/Makefile 
-    dumux/2penergy/Makefile
-    dumux/parabolic/Makefile 
-    dumux/nonlinear/Makefile 
-    dumux/2p2cni/Makefile
-    dumux/2p2c/Makefile
     test/2p2c/Makefile
     test/2p2cni/Makefile
     test/2penergy/Makefile
@@ -130,17 +136,25 @@ AC_CONFIG_FILES([Makefile
     test/twophase/Makefile
     test/upscaledvelocity/Makefile
     test/vtk/Makefile
+	 dumux/brinkman/fv/Makefile
+	 dumux/2p2c/fv/Makefile
+	 dumux/2p2c/problems/Makefile
 	 dumux/2p2cni/fv/Makefile
+	 dumux/2p2cni/problems/Makefile
     dumux/diffusion/fv/Makefile 
     dumux/diffusion/fe/Makefile 
     dumux/diffusion/mimetic/Makefile 
     dumux/diffusion/problems/Makefile 
+    dumux/material/constrel/Makefile 
+    dumux/material/phaseproperties/Makefile 
+    dumux/minc/box/Makefile 
     dumux/parabolic/fe/Makefile 
     dumux/parabolic/fv/Makefile 
     dumux/parabolic/problems/Makefile 
     dumux/twophase/fv/Makefile 
     dumux/twophase/problems/Makefile 
     dumux/2penergy/fv/Makefile
+    dumux/2penergy/problems/Makefile
     dumux/transport/fv/Makefile 
     dumux/transport/problems/Makefile 
     dumux/fractionalflow/impes/Makefile 
