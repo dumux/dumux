@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_TWOPHASEHEATMODEL_HH
 #define DUNE_TWOPHASEHEATMODEL_HH
@@ -7,6 +7,7 @@
 #include "dumux/operators/p1operatorextended.hh"
 #include "dumux/nonlinear/nonlinearmodel.hh"
 #include "dumux/fvgeometry/fvelementgeometry.hh"
+#include "dumux/io/exporttodgf.hh"
 
 namespace Dune {
 template<class G, class RT, class ProblemType, class LocalJacobian,
@@ -67,11 +68,11 @@ public:
 		ThisTwoPhaseHeatModel(g, prob), problem(prob), _grid(g), vertexmapper(g,	g.leafIndexSet()), size((*(this->u)).size())
 		{
 	}
-    
+
         virtual void update(double &dt) {
             DUNE_THROW(NotImplemented, "This method is obsolete. Use updateModel()!");
         }
-    
+
 	virtual void initial() {
 		typedef typename G::Traits::template Codim<0>::Entity Entity;
 		typedef typename G::ctype DT;
@@ -338,14 +339,14 @@ public:
 		}
 
 		// print minimum and maximum values
-//		std::cout << "nonwetting phase saturation: min = "<< minSat
-//				<< ", max = "<< maxSat << std::endl;
-//		std::cout << "wetting phase pressure: min = "<< minP
-//				<< ", max = "<< maxP << std::endl;
-//		std::cout << "mole fraction CO2: min = "<< minX
-//				<< ", max = "<< maxX << std::endl;
-//		std::cout << "temperature: min = "<< minTe
-//				<< ", max = "<< maxTe << std::endl;
+		std::cout << "nonwetting phase saturation: min = "<< minSat
+				<< ", max = "<< maxSat << std::endl;
+		std::cout << "wetting phase pressure: min = "<< minP
+				<< ", max = "<< maxP << std::endl;
+		std::cout << "mole fraction CO2: min = "<< minX
+				<< ", max = "<< maxX << std::endl;
+		std::cout << "temperature: min = "<< minTe
+				<< ", max = "<< maxTe << std::endl;
 
 		return totalMass;
 	}
@@ -407,6 +408,29 @@ public:
 	virtual void vtkout(const char* name, int k) {
 	}
 
+	void writerestartfile()
+	{
+		enum {dim = G::dimension};
+		typedef typename GV::template Codim<dim>::Iterator Iterator;
+
+//		exportToDGF(_grid.leafView(), *(this->u), m, "primvar", false);
+
+		const int size = vertexmapper.size();
+		BlockVector<FieldVector<double, m+1> > data(size);
+		data=0;
+
+		Iterator endIt = _grid.leafView().template end<dim>();
+		for (Iterator it = _grid.leafView().template begin<dim>(); it != endIt;	++it)
+		{
+			int index = vertexmapper.map(*it);
+			for (int i = 0; i < m;i++)
+			{
+				data[index][i]=(*(this->u))[index][i];
+			}
+			data[index][m]=this->localJacobian.sNDat[index].phaseState;
+		}
+		exportToDGF(_grid.leafView(), data, (m+1), "data", false);
+	}
     const G &grid() const
         { return _grid; }
 
