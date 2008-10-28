@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_CONSTRELBRINE_HH
 #define DUNE_CONSTRELBRINE_HH
@@ -18,7 +18,7 @@ public:
 		double rhoBrine, rhow;
 		double TempC, pMPa;
 		ConstrelWater water;
-		
+
 		TempC = Temp - 273.15;
 		pMPa = pw/1.0E6;
 
@@ -66,6 +66,11 @@ public:
 		double T_C;
 		double A;
 		double mu_brine;
+
+		if(Temp <= 275.) // regularisation
+		{
+			Temp = 275;
+		}
 
 		T_C = Temp - 273.15;
 
