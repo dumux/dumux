@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_CONSTRELCO2_HH
 #define DUNE_CONSTRELCO2_HH
@@ -2060,7 +2060,7 @@ static const double enth[80][39] = {
 	 6.022429e+04,
 	 6.201183e+04,
 	 6.380298e+04,
-   6.559772e+04}, 
+   6.559772e+04},
 
   {-2.865429e+03,
 	 -1.160531e+03,
@@ -5239,14 +5239,14 @@ class ConstrelCO2
 
 		double var_T; // T value at which variable is searched
 		double var_p; // p value at which variable is searched
-	}; 
-	
+	};
+
 public:
-		
+
 double interpolate (InterpolationData dat) const
 {
     double var_Tlow_pges, var_Thigh_pges, var_Tges_pges, rho;
-    
+
     /* Variable at low temperature sampling point and pressure that
        is searched for */
 
@@ -5279,18 +5279,18 @@ double interpolate (InterpolationData dat) const
 
 double density(double T, double p) const
 {
-	// ASSUMES equidistant distribution of temperature and pressure values 
+	// ASSUMES equidistant distribution of temperature and pressure values
 	int maxTIdx = 66;
 	int maxPIdx = 109;
-	if (T > T_vals[maxTIdx]) 
+	if (T > T_vals[maxTIdx])
 		T = T_vals[maxTIdx];
-	else if(T < T_vals[0]) 
+	else if(T < T_vals[0])
 		T = T_vals[0];
-	if (p > p_vals[maxPIdx]) 
+	if (p > p_vals[maxPIdx])
 		p = p_vals[maxPIdx];
-	else if(p < p_vals[0]) 
+	else if(p < p_vals[0])
 		p = p_vals[0];
-          
+
 	double h_T = T_vals[2] - T_vals[1];
 	int j_Tlow = (T - T_vals[0])/h_T;
 	if (j_Tlow == maxTIdx)
@@ -5301,7 +5301,7 @@ double density(double T, double p) const
 	if (j_plow == maxPIdx)
 		j_plow--;
 	int j_pup = j_plow + 1;
-	
+
 	InterpolationData dat;
 	dat.upper_T = T_vals[j_Tup];
 	dat.lower_T = T_vals[j_Tlow];
@@ -5313,12 +5313,12 @@ double density(double T, double p) const
 	dat.var_Thigh_phigh = rho_vals[j_pup][j_Tup];
 	dat.var_T = T;
 	dat.var_p = p;
-	
+
 	double rho = interpolate(dat);
-	
+
 	return (rho);
-}	
-           
+}
+
 
 // from MUFTE:
 /*******************************************************************/
@@ -5336,6 +5336,11 @@ double viscosity(double Temp, double pg, double rhoCO2) const
   double d11, d21, d64, d81, d82;
   double dmu, rho;
   double visco_CO2;
+
+  if(Temp < 275.) // regularisation
+  {
+	  Temp = 275;
+  }
 
   ESP = 251.196;   /* energy scaling parameter [K] */
 
@@ -5386,7 +5391,7 @@ return visco_CO2;
 double enthalpy(double Temp, double pg) const
 {
         /* values calculated from Span & Wagner, 1996     	*/
-	
+
         /* Vorsicht:    Anzahl der Temperaturen und Dru"cke im Array
                         wird spa"ter bei der Interpolation beno"tigt
                         und muss deshalb bei a"nderungen auch dort
@@ -5394,23 +5399,23 @@ double enthalpy(double Temp, double pg) const
 
            Abhilfe:     dynamische Speicherverwaltung   */
 
-	 /********************************************************/ 
-	 /*      Interpolation of the tabular values             */ 
-	 /********************************************************/ 
- 
-	 /*   calculation of upper and lower tabular entry       */ 
-	// ASSUMES equidistant distribution of temperature and pressure values 
+	 /********************************************************/
+	 /*      Interpolation of the tabular values             */
+	 /********************************************************/
+
+	 /*   calculation of upper and lower tabular entry       */
+	// ASSUMES equidistant distribution of temperature and pressure values
 	 int maxTIdx = 38;
 	 int maxPIdx = 79;
-     if(Temp > T_enth[maxTIdx]) 
+     if(Temp > T_enth[maxTIdx])
     	 Temp = T_enth[maxTIdx];
-     else if(Temp < T_enth[0]) 
+     else if(Temp < T_enth[0])
     	 Temp = T_enth[0];
-     if(pg > p_enth[maxPIdx]) 
+     if(pg > p_enth[maxPIdx])
     	 pg = p_enth[maxPIdx];
-     else if(pg < p_enth[0]) 
+     else if(pg < p_enth[0])
     	 pg = p_enth[0];
-   
+
      double h_T = T_enth[2] - T_enth[1];
      int j_Tlow = (Temp - T_enth[0])/h_T;
      if (j_Tlow == maxTIdx)
@@ -5433,8 +5438,8 @@ double enthalpy(double Temp, double pg) const
      dat.var_Thigh_phigh = enth[j_pup][j_Tup];
      dat.var_T = Temp;
      dat.var_p = pg;
-              
-     double enth_result = interpolate (dat); 
+
+     double enth_result = interpolate (dat);
 
      return(enth_result);
 }
@@ -5456,7 +5461,7 @@ double lambda_CO2 (double Temp, double pg) const
 
 
 	InterpolationData dat;
-	
+
 	/* Regularisierung */
         if (Temp < 273.15) Temp = 273.15;
         if (Temp > 350.00) Temp = 350.00;
@@ -5502,9 +5507,9 @@ double lambda_CO2 (double Temp, double pg) const
         /* p = 1 bar = 0.1 MPa = 1.0E5 Pa */
 
         lamb[0][0] = 14.42E-3;     /* [W/mK] */
-        lamb[1][0] = 15.19E-3; 
+        lamb[1][0] = 15.19E-3;
         lamb[2][0] = 15.97E-3;
-        lamb[3][0] = 16.77E-3; 
+        lamb[3][0] = 16.77E-3;
         lamb[4][0] = 17.59E-3;
         lamb[5][0] = 18.41E-3;
         lamb[6][0] = 19.24E-3;
@@ -5514,9 +5519,9 @@ double lambda_CO2 (double Temp, double pg) const
         /* p = 10 bar = 1 MPa = 1.0E6 Pa */
 
         lamb[0][1] = 14.92E-3;     /* [W/mK] */
-        lamb[1][1] = 15.67E-3; 
+        lamb[1][1] = 15.67E-3;
         lamb[2][1] = 16.43E-3;
-        lamb[3][1] = 17.21E-3; 
+        lamb[3][1] = 17.21E-3;
         lamb[4][1] = 18.01E-3;
         lamb[5][1] = 18.81E-3;
         lamb[6][1] = 19.63E-3;
@@ -5526,7 +5531,7 @@ double lambda_CO2 (double Temp, double pg) const
         /* p = 20 bar = 2 MPa = 2.0E6 Pa */
 
         lamb[0][2] = 16.00E-3;	/* [W/mK] */
-        lamb[1][2] = 16.66E-3; 
+        lamb[1][2] = 16.66E-3;
         lamb[2][2] = 17.35E-3;
         lamb[3][2] = 18.06E-3;
         lamb[4][2] = 18.80E-3;
@@ -5538,7 +5543,7 @@ double lambda_CO2 (double Temp, double pg) const
         /* p = 30 bar = 3.0 MPa = 3.0E6 Pa */
 
         lamb[0][3] = 17.09E-3;	/* [W/mK] */
-        lamb[1][3] = 17.53E-3; 
+        lamb[1][3] = 17.53E-3;
         lamb[2][3] = 18.21E-3;
         lamb[3][3] = 18.87E-3;
         lamb[4][3] = 19.56E-3;
@@ -5686,7 +5691,7 @@ double lambda_CO2 (double Temp, double pg) const
                         lower_p = i;
                 }
                 upper_p = lower_p + 1;
-        }        
+        }
 
 	dat.upper_T = T[upper_T];
 	dat.lower_T = T[lower_T];
@@ -5696,9 +5701,9 @@ double lambda_CO2 (double Temp, double pg) const
 	dat.var_Tlow_plow   = lamb[lower_T][lower_p];
 	dat.var_Tlow_phigh  = lamb[lower_T][upper_p];
 	dat.var_Thigh_plow  = lamb[upper_T][lower_p];
-	dat.var_Thigh_phigh = lamb[upper_T][upper_p]; 
+	dat.var_Thigh_phigh = lamb[upper_T][upper_p];
 
-	
+
 
        	dat.var_T = Temp;
 	dat.var_p = pg;
