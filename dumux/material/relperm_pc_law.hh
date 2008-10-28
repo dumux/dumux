@@ -445,22 +445,25 @@ namespace Dune
 		typedef typename G::ctype DT;
 		enum {dim=G::dimension, m=1};
 
-		double pC (double saturationW, const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, const double T=283.15) const
-		{
-			double Se = (saturationW - this->soil.Sr_w(x, e, xi, T))
-				/(1. - this->soil.Sr_w(x, e, xi, T) - this->soil.Sr_n(x, e, xi, T));
-
-			double lambda = this->soil.paramRelPerm(x, e, xi, T)[0];
+		double pC (double saturationW, const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, const double T) const
+   		 {
+   		    //effective Saturation
+   		 	double Se = (saturationW - this->soil.Sr_w(x, e, xi, T))
+						/(1. - this->soil.Sr_w(x, e, xi, T) - this->soil.Sr_n(x, e, xi, T));
+ 			
+ 			double lambda = this->soil.paramRelPerm(x, e, xi, T)[0];
 			double p0 = this->soil.paramRelPerm(x, e, xi, T)[1];
+      		double maxpc = 1e20;
+           	
+    if (Se > epsPC)
+		return (std::min(p0*pow(Se, -1.0/lambda),maxpc));
+    else 
+    {
+		double dpCEps = dPdS(epsPC, x, e, xi, T);
+		return (std::min(dpCEps*(Se - epsPC) + p0*pow(epsPC, -1.0/lambda),maxpc));
+      }
+    }
 
-			if (Se > epsPC)
-				return (p0*pow(Se, -1.0/lambda));
-			else
-			{
-				double dpCEps = dPdS(epsPC, x, e, xi, T);
-				return (dpCEps*(Se - epsPC) + p0*pow(epsPC, -1.0/lambda));
-			}
-		}
 
 		double dPdS (double saturationW, const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, const double T=283.15) const
 		{
