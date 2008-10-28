@@ -770,7 +770,7 @@ namespace Dune
 
       				// total mobility and fractional flow factors
       	    	double satj = problem.variables.saturation[indexj];
-      				kr = problem.materialLaw.kr(satj, global, *it, local, T);
+      				kr = problem.materialLaw.kr(satj, nbglobal, *outside, nblocal, T);
       				viscosityL = problem.liquidPhase.viscosity(T, problem.variables.pressure[indexi], problem.variables.wet_X2[indexj]);
       				viscosityG = problem.gasPhase.viscosity(T, problem.variables.pressure[indexi], problem.variables.nonwet_X1[indexj]);
       				double lambdaJ = kr[0] / viscosityL + kr[1] / viscosityG;
@@ -815,7 +815,7 @@ namespace Dune
 
 						  FieldVector<ct,dim> vTotal(Kni);
 						  vTotal *= lambda * (pressBC - pressi) / dist;
-					      problem.variables.velocity[indexi][numberInSelf] = vTotal;
+					    problem.variables.velocity[indexi][numberInSelf] = vTotal;
 			      }
 			      else
 			      {
@@ -996,7 +996,6 @@ namespace Dune
 					// neighbor geometry informations
 					GeometryType nbgt = outside->geometry().type();
 					const FieldVector<ct,dim>& nblocal = ReferenceElements<ct,dim>::general(nbgt).position(0,0);
-					FieldVector<ct,dimworld> global = it->geometry().global(local); // cell center in global coordinates
 					FieldVector<ct,dimworld> nbglobal = outside->geometry().global(nblocal); // neighbor cell center in global coordinates
 
 					// standardized velocity
@@ -1029,7 +1028,7 @@ namespace Dune
 					// neighbor cell
 					viscosityL = problem.liquidPhase.viscosity(T, problem.variables.pressure[indexj], Xw2_J);
 					viscosityG = problem.gasPhase.viscosity(T, problem.variables.pressure[indexj], Xn1_J);
-					kr = problem.materialLaw.kr(satJ, global, *it, local, T);
+					kr = problem.materialLaw.kr(satJ, nbglobal, *outside, nblocal, T);
 					lambda = kr[0] / viscosityL + kr[1] / viscosityG;
 					double fwJ = kr[0] / viscosityL / lambda;
 					double fnJ = kr[1] / viscosityG / lambda;
@@ -1054,16 +1053,10 @@ namespace Dune
 							- velocityIJ * Xw2_I * rho_w_I * fwI /*numFlux(satI, satJ, fwI, fwJ)*/
 							+ velocityJI * Xn2_J * rho_n_J * fnJ /*numFlux(1.0-satJ, 1.0-satI, fnJ, fnI)*/
 							- velocityIJ * Xn2_I * rho_n_I * fnI /*numFlux(1.0-satI, 1.0-satJ, fnI, fnJ)*/;
-
-					FieldVector<ct,dimworld> faceglobal = is.intersectionGlobal().global(facelocal);
-
 				}
 
 				else // handle boundary face
 				{
-					// cell center in global coordinates
-					FieldVector<ct,dimworld> global = it->geometry().global(local);
-
 					// face center in globel coordinates
 					FieldVector<ct,dim> faceglobal = is.intersectionGlobal().global(facelocal);
 
