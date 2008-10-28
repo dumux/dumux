@@ -430,6 +430,11 @@ namespace Dune
 				flashCalculation(Z1, p, T_, nuw, dummy1, dummy2);
 				dV_dh = ((m1+m2) * (nuw * Vw + (1-nuw) * Vg) - volalt)/ inch;
 
+				if (fabs(dV_dm1-0.001) > 0.001)
+					std::cout<< "cell " << indexi << " has dV_dm1 "<<dV_dm1 <<std::endl;
+				if (fabs(dV_dm2-1) > 1)
+					std::cout<< "cell " << indexi << " has dV_dm2 "<<dV_dm2 <<std::endl;
+
 				// right hand side entry: sources
 				FieldVector<RT,2> q = problem.q(global,*it,local);
 				double qh = problem.qh(global,*it,local);
@@ -786,70 +791,70 @@ namespace Dune
 
 				  // handle interior face
 				  if (is.neighbor())
-				    {
-				      // access neighbor
-				      EntityPointer outside = is.outside();
-				      int indexj = elementmapper.map(*outside);
+					{
+						// access neighbor
+						EntityPointer outside = is.outside();
+						int indexj = elementmapper.map(*outside);
 
-				      // get neighbor pressure and permeability
-				      double pressj = this->problem.variables.pressure[indexj];
+						// get neighbor pressure and permeability
+						double pressj = this->problem.variables.pressure[indexj];
 
-				      // geometry informations of neighbor
-				      GeometryType nbgt = outside->geometry().type(); //geometry type
-				      const FieldVector<ct,dim>& nblocal = ReferenceElements<ct,dim>::general(nbgt).position(0,0); // cell center in local coordinates
-				      FieldVector<ct,dimworld> nbglobal = outside->geometry().global(nblocal); // neighbor cell center in global coordinates
+						// geometry informations of neighbor
+						GeometryType nbgt = outside->geometry().type(); //geometry type
+						const FieldVector<ct,dim>& nblocal = ReferenceElements<ct,dim>::general(nbgt).position(0,0); // cell center in local coordinates
+						FieldVector<ct,dimworld> nbglobal = outside->geometry().global(nblocal); // neighbor cell center in global coordinates
 
-				      // distance vector between barycenters
-				      FieldVector<ct,dimworld> distVec = global - nbglobal;
+						// distance vector between barycenters
+						FieldVector<ct,dimworld> distVec = global - nbglobal;
 
-				      // compute distance between cell centers
-				      double dist = distVec.two_norm();
+						// compute distance between cell centers
+						double dist = distVec.two_norm();
 
-				      // get absolute permeability
-				      FieldMatrix<ct,dim,dim> Kj(problem.soil.K(nbglobal, *outside, nblocal));
+						// get absolute permeability
+						FieldMatrix<ct,dim,dim> Kj(problem.soil.K(nbglobal, *outside, nblocal));
 
-				      // compute vectorized permeabilities
-              FieldVector<ct,dim> Kni(0);
-              FieldVector<ct,dim> Knj(0);
-              Ki.umv(unitOuterNormal, Kni);
-              Kj.umv(unitOuterNormal, Knj);
-              // compute permeability normal to intersection and take harmonic mean
-              double K_n_i = Kni * unitOuterNormal;
-              double K_n_j = Knj * unitOuterNormal;
-              double Kn    = 2 * K_n_i * K_n_j / (K_n_i + K_n_j);
-              // compute permeability tangential to intersection and take arithmetic mean
-              FieldVector<ct,dim> uON = unitOuterNormal;
-              FieldVector<ct,dim> K_t_i = Kni - (uON *= K_n_i);
-              uON = unitOuterNormal;
-              FieldVector<ct,dim> K_t_j = Knj - (uON *= K_n_j);
-              FieldVector<ct,dim> Kt = (K_t_i += K_t_j);
-              Kt *= 0.5;
-              // Build vectorized averaged permeability
-              uON = unitOuterNormal;
-              FieldVector<ct,dim> K = (Kt += (uON *=Kn));
+						// compute vectorized permeabilities
+						FieldVector<ct,dim> Kni(0);
+						FieldVector<ct,dim> Knj(0);
+						Ki.umv(unitOuterNormal, Kni);
+						Kj.umv(unitOuterNormal, Knj);
+						// compute permeability normal to intersection and take harmonic mean
+						double K_n_i = Kni * unitOuterNormal;
+						double K_n_j = Knj * unitOuterNormal;
+						double Kn    = 2 * K_n_i * K_n_j / (K_n_i + K_n_j);
+						// compute permeability tangential to intersection and take arithmetic mean
+						FieldVector<ct,dim> uON = unitOuterNormal;
+						FieldVector<ct,dim> K_t_i = Kni - (uON *= K_n_i);
+						uON = unitOuterNormal;
+						FieldVector<ct,dim> K_t_j = Knj - (uON *= K_n_j);
+						FieldVector<ct,dim> Kt = (K_t_i += K_t_j);
+						Kt *= 0.5;
+						// Build vectorized averaged permeability
+						uON = unitOuterNormal;
+						FieldVector<ct,dim> K = (Kt += (uON *=Kn));
 
 
-      				// total mobility and fractional flow factors
-      	    	double satj = problem.variables.saturation[indexj];
-      				kr = problem.materialLaw.kr(satj, global, *it, local, problem.variables.temperature[indexj]);
-      				viscosityL = problem.liquidPhase.viscosity(problem.variables.temperature[indexj], problem.variables.pressure[indexi], 1. - problem.variables.wet_X1[indexj]);
-      				viscosityG = problem.gasPhase.viscosity(problem.variables.temperature[indexj], problem.variables.pressure[indexi], problem.variables.nonwet_X1[indexj]);
-      				double lambdaJ = kr[0] / viscosityL + kr[1] / viscosityG;
-				    	double fractionalWJ = kr[0] / viscosityL / lambdaJ;
+						// total mobility and fractional flow factors
+						double satj = problem.variables.saturation[indexj];
+						kr = problem.materialLaw.kr(satj, nbglobal, *outside, nblocal, problem.variables.temperature[indexj]);
+						viscosityL = problem.liquidPhase.viscosity(problem.variables.temperature[indexj], problem.variables.pressure[indexj], 1. - problem.variables.wet_X1[indexj]);
+						viscosityG = problem.gasPhase.viscosity(problem.variables.temperature[indexj], problem.variables.pressure[indexj], problem.variables.nonwet_X1[indexj]);
+						double lambdaJ = kr[0] / viscosityL + kr[1] / viscosityG;
+						double fractionalWJ = kr[0] / viscosityL / lambdaJ;
 
-				      // compute averaged total mobility
-				      // CAREFUL: Harmonic weightig can generate zero matrix entries,
-				      // use arithmetic weighting instead:
-				      double lambda = 1;
-				      double fractionalW;
-				      lambda = 0.5 * (lambdaI + lambdaJ);
-				      if (hasGravity)
-				    	  fractionalW = 0.5 * (fractionalWI + fractionalWJ);
+						// compute averaged total mobility
+						// CAREFUL: Harmonic weightig can generate zero matrix entries,
+						// use arithmetic weighting instead:
+						double lambda = 1;
+						double fractionalW;
+						lambda = 0.5 * (lambdaI + lambdaJ);
+						if (hasGravity)
+							fractionalW = 0.5 * (fractionalWI + fractionalWJ);
 
-				      FieldVector<ct,dimworld> vTotal(K);
-				      vTotal *= lambda * (pressi - pressj) / dist;
-				      problem.variables.velocity[indexi][numberInSelf] = vTotal;
-				    }
+						FieldVector<ct,dimworld> vTotal(K);
+						vTotal *= lambda * (pressi - pressj) / dist;
+						problem.variables.velocity[indexi][numberInSelf] = vTotal;
+					}
 				  // boundary face
 				  else
 			    {
@@ -1086,7 +1091,6 @@ namespace Dune
 					// neighbor geometry informations
 					GeometryType nbgt = outside->geometry().type();
 					const FieldVector<ct,dim>& nblocal = ReferenceElements<ct,dim>::general(nbgt).position(0,0);
-					FieldVector<ct,dimworld> global = it->geometry().global(local); // cell center in global coordinates
 					FieldVector<ct,dimworld> nbglobal = outside->geometry().global(nblocal); // neighbor cell center in global coordinates
 
 					// standardized velocity
@@ -1113,7 +1117,7 @@ namespace Dune
 					// neighbor cell
 					viscosityL = problem.liquidPhase.viscosity(T_J, problem.variables.pressure[indexj], Xw2_J);
 					viscosityG = problem.gasPhase.viscosity(T_J, problem.variables.pressure[indexj], Xn1_J);
-					kr = problem.materialLaw.kr(satJ, global, *it, local, T_J);
+					kr = problem.materialLaw.kr(satJ, nbglobal, *outside, nblocal, T_J);
 					lambda = kr[0] / viscosityL + kr[1] / viscosityG;
 					double fwJ = kr[0] / viscosityL / lambda;
 					double fnJ = kr[1] / viscosityG / lambda;
@@ -1129,20 +1133,20 @@ namespace Dune
 
 					//  diffFactor =diffPart / volume; TODO include diffusion into timestep control
 					factorC1 =
-							  velocityJI * Xw1_J * rho_w_J * fwJ /*numFlux(satJ, satI, fwJ, fwI)*/
-							- velocityIJ * Xw1_I * rho_w_I * fwI /*numFlux(satI, satJ, fwI, fwJ)*/
-							+ velocityJI * Xn1_J * rho_n_J * fnJ /*numFlux(1.0-satJ, 1.0-satI, fnJ, fnI)*/
-							- velocityIJ * Xn1_I * rho_n_I * fnI /*numFlux(1.0-satI, 1.0-satJ, fnI, fnJ)*/;
+							  velocityJI * Xw1_J * rho_w_J * numFlux(satJ, satI, fwJ, fwI)
+							- velocityIJ * Xw1_I * rho_w_I * numFlux(satI, satJ, fwI, fwJ)
+							+ velocityJI * Xn1_J * rho_n_J * numFlux(1.0-satJ, 1.0-satI, fnJ, fnI)
+							- velocityIJ * Xn1_I * rho_n_I * numFlux(1.0-satI, 1.0-satJ, fnI, fnJ);
 					factorC2 =
-							  velocityJI * Xw2_J * rho_w_J * fwJ /*numFlux(satJ, satI, fwJ, fwI)*/
-							- velocityIJ * Xw2_I * rho_w_I * fwI /*numFlux(satI, satJ, fwI, fwJ)*/
-							+ velocityJI * Xn2_J * rho_n_J * fnJ /*numFlux(1.0-satJ, 1.0-satI, fnJ, fnI)*/
-							- velocityIJ * Xn2_I * rho_n_I * fnI /*numFlux(1.0-satI, 1.0-satJ, fnI, fnJ)*/;
+							  velocityJI * Xw2_J * rho_w_J * numFlux(satJ, satI, fwJ, fwI)
+							- velocityIJ * Xw2_I * rho_w_I * numFlux(satI, satJ, fwI, fwJ)
+							+ velocityJI * Xn2_J * rho_n_J * numFlux(1.0-satJ, 1.0-satI, fnJ, fnI)
+							- velocityIJ * Xn2_I * rho_n_I * numFlux(1.0-satI, 1.0-satJ, fnI, fnJ);
 					factorH =
-								velocityJI * problem.variables.enthalpy_l[indexj] * rho_w_J * fwJ /*numFlux(satJ, satI, fwJ, fwI)*/
-								- velocityIJ * problem.variables.enthalpy_l[indexi] * rho_w_I * fwI /*numFlux(satI, satJ, fwI, fwJ)*/
-								+ velocityJI * problem.variables.enthalpy_g[indexj] * rho_n_J * fnJ /*numFlux(1.0-satJ, 1.0-satI, fnJ, fnI)*/
-								- velocityIJ * problem.variables.enthalpy_g[indexi] * rho_n_I * fnI /*numFlux(1.0-satI, 1.0-satJ, fnI, fnJ)*/;
+								velocityJI * problem.variables.enthalpy_l[indexj] * rho_w_J * numFlux(satJ, satI, fwJ, fwI)
+								- velocityIJ * problem.variables.enthalpy_l[indexi] * rho_w_I * numFlux(satI, satJ, fwI, fwJ)
+								+ velocityJI * problem.variables.enthalpy_g[indexj] * rho_n_J * numFlux(1.0-satJ, 1.0-satI, fnJ, fnI)
+								- velocityIJ * problem.variables.enthalpy_g[indexi] * rho_n_I * numFlux(1.0-satI, 1.0-satJ, fnI, fnJ);
 
 					FieldVector<ct,dimworld> faceglobal = is.intersectionGlobal().global(facelocal);
 

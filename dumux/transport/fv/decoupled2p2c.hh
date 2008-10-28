@@ -1044,15 +1044,15 @@ namespace Dune
 
 					//  diffFactor =diffPart / volume; TODO include diffusion into timestep control
 					factorC1 =
-							  velocityJI * Xw1_J * rho_w_J * fwJ /*numFlux(satJ, satI, fwJ, fwI)*/
-							- velocityIJ * Xw1_I * rho_w_I * fwI /*numFlux(satI, satJ, fwI, fwJ)*/
-							+ velocityJI * Xn1_J * rho_n_J * fnJ /*numFlux(1.0-satJ, 1.0-satI, fnJ, fnI)*/
-							- velocityIJ * Xn1_I * rho_n_I * fnI /*numFlux(1.0-satI, 1.0-satJ, fnI, fnJ)*/;
+							  velocityJI * Xw1_J * rho_w_J * numFlux(satJ, satI, fwJ, fwI)
+							- velocityIJ * Xw1_I * rho_w_I * numFlux(satI, satJ, fwI, fwJ)
+							+ velocityJI * Xn1_J * rho_n_J * numFlux(1.0-satJ, 1.0-satI, fnJ, fnI)
+							- velocityIJ * Xn1_I * rho_n_I * numFlux(1.0-satI, 1.0-satJ, fnI, fnJ);
 					factorC2 =
-							  velocityJI * Xw2_J * rho_w_J * fwJ /*numFlux(satJ, satI, fwJ, fwI)*/
-							- velocityIJ * Xw2_I * rho_w_I * fwI /*numFlux(satI, satJ, fwI, fwJ)*/
-							+ velocityJI * Xn2_J * rho_n_J * fnJ /*numFlux(1.0-satJ, 1.0-satI, fnJ, fnI)*/
-							- velocityIJ * Xn2_I * rho_n_I * fnI /*numFlux(1.0-satI, 1.0-satJ, fnI, fnJ)*/;
+							  velocityJI * Xw2_J * rho_w_J * numFlux(satJ, satI, fwJ, fwI)
+							- velocityIJ * Xw2_I * rho_w_I * numFlux(satI, satJ, fwI, fwJ)
+							+ velocityJI * Xn2_J * rho_n_J * numFlux(1.0-satJ, 1.0-satI, fnJ, fnI)
+							- velocityIJ * Xn2_I * rho_n_I * numFlux(1.0-satI, 1.0-satJ, fnI, fnJ);
 				}
 
 				else // handle boundary face
@@ -1062,9 +1062,6 @@ namespace Dune
 
 					// distance vector between cell and face center
 					FieldVector<ct,dimworld> distVec = global - faceglobal;
-
-					// get saturation value at cell center
-					double satI = this->problem.variables.saturation[indexi];
 
 					// standardized velocity
 					double velocityJI = std::max(-(problem.variables.velocity[indexi][numberInSelf] * integrationOuterNormal / volume), 0.0);
