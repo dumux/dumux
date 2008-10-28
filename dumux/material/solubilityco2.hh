@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_SOLUBILITYCO2_HH
 #define DUNE_SOLUBILITYCO2_HH
@@ -12,8 +12,29 @@ class SolubilityCO2
 {
 public:
 
-	double SolCO2inWater(const double Temp, double pg, double X_NaCl)
+	double SolCO2inWater(double Temp, double pg, double X_NaCl)
 	{
+		// regularisations:
+
+		if(pg > 2.5e8)
+		{
+			pg = 2.5e8;
+		}
+
+		if(pg < 2.e5)
+		{
+			pg = 2.e5;
+		}
+
+		if(Temp < 275.)
+		{
+			Temp = 275;
+		}
+
+		if(Temp > 600.)
+		{
+			Temp = 600;
+		}
 	                        /* X_NaCl: salinity: mass fraction [-] */
 	    double x_NaCl;      /* salinity: mole fraction [-] */
 	    double mol_NaCl;    /* salinity: molality [mol/kg water] */
