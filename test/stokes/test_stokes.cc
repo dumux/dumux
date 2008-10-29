@@ -11,14 +11,16 @@
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
-#include <dune/disc/stokes/dgstokes.hh>
-#include <dune/disc/stokes/l2error.hh>
+#include "dumux/stokes/dgstokes.hh"
+#include "dumux/stokes/l2error.hh"
+#include "dumux/stokes/h1error.hh"
+#include "exampleproblem.hh"
 
 int main(int argc, char** argv) 
 {
   try{
     // define the problem dimensions  
-    const int dim=2;
+    const int dim = 2;
     const int vOrder = 2; 
     const int pOrder = 1; 
     
@@ -44,18 +46,21 @@ int main(int argc, char** argv)
     	grid.globalRefine(refinementSteps);
 
     DGStokesParameters parameters; 
-    Example<dim, NumberType> exactSolution;
-    DirichletBoundary<GridType> dirichletBoundary(exactSolution);
-    RightHandSide<GridType> rightHandSide(exactSolution);
-    
-	typedef Dune::DGStokes<GridType, vOrder, pOrder> DGStokes;
-	DGStokes dGStokes(grid, exactSolution, parameters, dirichletBoundary, rightHandSide, refinementSteps); 
-	dGStokes.assembleStokesSystem();
-	dGStokes.solveStokesSystem();
+    Dune::ExampleProblem<GridType, double> problem;
+    typedef Dune::DGStokes<GridType, vOrder, pOrder> DGStokes;
+    DGStokes dGStokes(grid, problem, parameters); 
+    dGStokes.assembleStokesSystem();
+    dGStokes.solveStokesSystem();
+    dGStokes.vtkout("test_stokes", 0);
 	
-	std::cout << "L2Error: ";
-	for (int i = 0; i < dim+1; i++)
+	std::cout << "L2Error velocity: ";
+	for (int i = 0; i < dim; i++)
 		std::cout << dGStokes.l2errorStokesSystem(i) << ", ";
+	std::cout << std::endl;
+	std::cout << "L2Error pressure: "<< dGStokes.l2errorStokesSystem(dim) << std::endl;
+	std::cout << "H1Error velocity: ";
+	for (int i = 0; i < dim; i++)
+		std::cout << dGStokes.h1errorStokesSystem(i) << ", ";
 	std::cout << std::endl;
 	
 	dGStokes.vtkout("test_stokes", 0);
