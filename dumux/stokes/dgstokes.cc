@@ -55,7 +55,7 @@ void DGFiniteElementMethod<G,v_order,p_order>::assembleVolumeTerm(Entity& ent, L
 			  inv_jac.umv(temp,grad_phi_ei[dm-1]);
 			  int ii=(dm-1)*vsfs.size()+i;
 			  // get the rhs value
-			  rhsval[dm-1] = rhsvalue.rhsValue(dm-1,quad_point_glob,quad_point_loc);
+			  rhsval[dm-1] = (problem_.q(quad_point_glob, ent, quad_point_loc))[dm-1];
 			  Be[ii]+=rhsval[dm-1]*vsfs[i].evaluateFunction(0,quad_point_loc)*detjac*quad_wt;
 			  for (int j=0;j<vsfs.size();++j)
 				{
@@ -412,7 +412,8 @@ void DGFiniteElementMethod<G,v_order,p_order>::assembleFaceTerm(Entity& ent, Int
 
 
 template<class G, int v_order, int p_order>
-void DGFiniteElementMethod<G,v_order,p_order>::assembleBoundaryTerm(Entity& ent, IntersectionIterator& isit, LocalMatrixBlock& Aee, LocalVectorBlock& Be) const
+void DGFiniteElementMethod<G,v_order,p_order>::assembleDirichletBoundaryTerm(Entity& ent, IntersectionIterator& isit, 
+									     LocalMatrixBlock& Aee, LocalVectorBlock& Be) const
 {
   Gradient grad_phi_ei[dim],grad_phi_ej[dim],temp;
   ctype   phi_ei[dim],phi_ej[dim],psi_ei,psi_ej;
@@ -450,8 +451,8 @@ void DGFiniteElementMethod<G,v_order,p_order>::assembleBoundaryTerm(Entity& ent,
       Dune::FieldVector<ctype,dim> boundnormal = isit->unitOuterNormal(boundlocal);
       // velocity boundary condition
       // dirichlet boundary
-      for(int i=0;i<dim;++i)
-	dirichlet[i]=dirichletvalue.dirichletValue(i,bglobal,blocal);
+       for(int i=0;i<dim;++i)
+	 dirichlet[i] = (problem_.g(bglobal, ent, isit, blocal))[i];
       
 	  
       //================================================//
@@ -613,6 +614,143 @@ void DGFiniteElementMethod<G,v_order,p_order>::assembleBoundaryTerm(Entity& ent,
 }
 
 template<class G, int v_order, int p_order>
+void DGFiniteElementMethod<G,v_order,p_order>::assembleNeumannBoundaryTerm(Entity& ent, IntersectionIterator& isit, 
+									   LocalMatrixBlock& Aee, LocalVectorBlock& Be) const
+{
+  Gradient temp;
+  ctype   phi_ei[dim];
+  //get the shape function set
+  //self shape functions
+  ShapeFunctionSet vsfs(v_order);; //for  velocity
+  ShapeFunctionSet psfs(p_order); // for pressure
+  //neighbor shape functions
+   
+  //get the geometry type of the face
+  Dune::GeometryType gtboundary = isit->intersectionSelfLocal().type();
+  
+  //specify the quadrature order ?
+  int qord=2;
+  for(unsigned int bq=0;bq<Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord).size();++bq)
+    {
+      const Dune::FieldVector<ctype,dim-1>& boundlocal = Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord)[bq].position();
+      Dune:: FieldVector<ctype,dim> blocal = isit->intersectionSelfLocal().global(boundlocal);
+      const Dune::FieldVector<ctype,dim> bglobal = isit->intersectionGlobal().global(boundlocal);
+      // calculating the inverse jacobian 
+      InverseJacobianMatrix inv_jac= ent.geometry().jacobianInverseTransposed(blocal);
+      // get quadrature weight
+      ctype quad_wt_bound = Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord)[bq].weight();
+      ctype detjacbound = isit->intersectionGlobal().integrationElement(boundlocal);
+      // get the boundary normal 
+      Dune::FieldVector<ctype,dim> boundnormal = isit->unitOuterNormal(boundlocal);
+      // normal traction BC 
+      ctype normalTraction = problem_.Jn(bglobal, ent, isit, blocal);
+      // tangential traction BC 
+      Gradient tangentialTraction =  problem_.Jt(bglobal, ent, isit, blocal);
+//       std::cout << "x = " << bglobal << ", normalF = " << normalTraction << ", tangentialF = " << tangentialTraction << std::endl;
+
+      //================================================//
+      // RHS: - \int p_D v n
+      //================================================//			  
+      for(int dm=1;dm<=dim;++dm)
+	{
+	  for (int i=0;i<vsfs.size();++i) 
+	    {
+	      int ii=(dm-1)*vsfs.size()+i;
+	      phi_ei[dm-1] = vsfs[i].evaluateFunction(0,blocal);
+	      Be[ii] -= normalTraction*phi_ei[dm-1]*boundnormal[dm-1]* detjacbound * quad_wt_bound;
+	    }
+	}
+
+      //================================================//
+      // RHS: \int g_t.v 
+      //================================================//			  
+      for(int dm=1;dm<=dim;++dm)
+	{
+	  for (int i=0;i<vsfs.size();++i) 
+	    {
+	      phi_ei[dm-1] =  vsfs[i].evaluateFunction(0,blocal);
+	      int ii=(dm-1)*vsfs.size()+i; 
+	      Be[ii] += (tangentialTraction[dm-1]*phi_ei[dm-1])* detjacbound * quad_wt_bound;
+	    }
+	}
+    }
+}
+
+template<class G, int v_order, int p_order>
+void DGFiniteElementMethod<G,v_order,p_order>::assembleInterfaceTerm(Entity& ent, IntersectionIterator& isit, 
+									   LocalMatrixBlock& Aee, LocalVectorBlock& Be) const
+{
+  Gradient temp;
+  ctype   phi_ei[dim], phi_ej[dim], entry;
+  //get the shape function set
+  //self shape functions
+  ShapeFunctionSet vsfs(v_order);; //for  velocity
+  ShapeFunctionSet psfs(p_order); // for pressure
+  //neighbor shape functions
+   
+  //get the geometry type of the face
+  Dune::GeometryType gtboundary = isit->intersectionSelfLocal().type();
+  
+  //specify the quadrature order ?
+  int qord=2;
+  for(unsigned int bq=0;bq<Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord).size();++bq)
+    {
+      const Dune::FieldVector<ctype,dim-1>& boundlocal = Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord)[bq].position();
+      Dune:: FieldVector<ctype,dim> blocal = isit->intersectionSelfLocal().global(boundlocal);
+      const Dune::FieldVector<ctype,dim> bglobal = isit->intersectionGlobal().global(boundlocal);
+      // calculating the inverse jacobian 
+      InverseJacobianMatrix inv_jac= ent.geometry().jacobianInverseTransposed(blocal);
+      // get quadrature weight
+      ctype quad_wt_bound = Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord)[bq].weight();
+      ctype detjacbound = isit->intersectionGlobal().integrationElement(boundlocal);
+      // get the boundary normal 
+      Dune::FieldVector<ctype,dim> boundnormal = isit->unitOuterNormal(boundlocal);
+      // normal traction BC 
+      ctype normalTraction = problem_.Jn(bglobal, ent, isit, blocal);
+      // Beavers-Joseph proportionality constant c = sqrt(k)/alpha such that u_t = - c (grad u . n)_t 
+      ctype beaversJosephC = problem_.beaversJosephC(bglobal, ent, isit, blocal);
+
+      //================================================//
+      // RHS: - \int p_D v n
+      //================================================//			  
+      for(int dm=1;dm<=dim;++dm)
+	{
+	  for (int i=0;i<vsfs.size();++i) 
+	    {
+	      int ii=(dm-1)*vsfs.size()+i;
+	      phi_ei[dm-1] = vsfs[i].evaluateFunction(0,blocal);
+	      Be[ii] -= normalTraction*phi_ei[dm-1]*boundnormal[dm-1]* detjacbound * quad_wt_bound;
+	    }
+	}
+
+      //================================================//
+      // Beavers-Joseph interface condition 
+      // \int 1/c u_t . v
+      //================================================//			  
+      for(int dm=1;dm<=dim;++dm)
+	{
+	  for (int i=0;i<vsfs.size();++i) 
+	    {
+	      phi_ei[dm-1] =  vsfs[i].evaluateFunction(0,blocal);
+	      int ii=(dm-1)*vsfs.size()+i; 
+	      for (int j=0;j<vsfs.size();++j) 
+		{
+		  int jj=(dm-1)*vsfs.size()+j;
+		  phi_ej[dm-1] = vsfs[j].evaluateFunction(0,blocal);
+		  ctype uN = phi_ej[dm-1]*boundnormal[dm-1];
+		  ctype uT = phi_ej[dm-1] - uN*boundnormal[dm-1];
+		  entry = 1.0/beaversJosephC * (uT*phi_ei[dm-1])* detjacbound*quad_wt_bound;
+		  Aee[ii][jj]+=entry;
+		}
+	    }
+	}
+    }
+}
+
+
+
+
+template<class G, int v_order, int p_order>
 void DGStokes<G,v_order,p_order>::assembleStokesSystem()
 {
 std::cout << "Assembling the matrix and rhs: \n";
@@ -696,38 +834,45 @@ std::cout << "Assembling the matrix and rhs: \n";
 
   
   for (; it != itend; ++it)
-	{
-	  EntityPointer epointer = it;
-	  //int eid = grid.levelIndexSet(level).index(*epointer);
-	  int eid = grid.leafIndexSet().index(*epointer);
-	  
-	  dgfem.assembleVolumeTerm(*it,A[eid][eid],b[eid]);
-	  //IntersectionLevelIterator endis = it->ilevelend();
-	  //   IntersectionLevelIterator is = it->ilevelbegin();
-	  IntersectionIterator endis = it->ileafend();
-	  IntersectionIterator is = it->ileafbegin();
+    {
+      EntityPointer epointer = it;
+      //int eid = grid.levelIndexSet(level).index(*epointer);
+      int eid = grid.leafIndexSet().index(*epointer);
+      
+      dgfem.assembleVolumeTerm(*it,A[eid][eid],b[eid]);
+      //IntersectionLevelIterator endis = it->ilevelend();
+      //   IntersectionLevelIterator is = it->ilevelbegin();
+      IntersectionIterator endis = it->ileafend();
+      IntersectionIterator is = it->ileafbegin();
+      
+      for(; is != endis; ++is)
+	{ 
+	  if(is->neighbor())
+	    {
+	      int eid = grid.leafIndexSet().index(*is->inside());
+	      int fid = grid.leafIndexSet().index(*is->outside());
+	      dgfem.assembleFaceTerm(*it,is,A[eid][eid],A[eid][fid],A[fid][eid],b[eid]);
+	      
+	    }
+	  if (is->boundary())
+	    {
+	      GeometryType gtf = is->intersectionSelfLocal().type();
+	      const FieldVector<ctype,dim-1>& faceLocal = ReferenceElements<ctype,dim-1>::general(gtf).position(0,0);
+	      FieldVector<ctype,dim> faceGlobal = is->intersectionGlobal().global(faceLocal);
+	      const FieldVector<ctype,dim>& faceLocalDim = ReferenceElements<ctype,dim>::general(gtf).position(is->numberInSelf(),1);
+	      BoundaryConditions::Flags bctype = dgfem.problem().bctype(faceGlobal, *it, is, faceLocalDim);
 
-	  for(; is != endis; ++is)
-		{ 
-		  if(is->neighbor())
-			{
-			  
-			  //  int eid = grid.levelIndexSet(level).index(*is->inside());
-//  			  int fid = grid.levelIndexSet(level).index(*is->outside());
-
-			  int eid = grid.leafIndexSet().index(*is->inside());
- 			  int fid = grid.leafIndexSet().index(*is->outside());
-			  dgfem.assembleFaceTerm(*it,is,A[eid][eid],A[eid][fid],A[fid][eid],b[eid]);
-	  			 			  
-			}
-		  if (is->boundary())
-			{
-			  dgfem.assembleBoundaryTerm(*it,is,A[eid][eid],b[eid]);	
-			}
-		}
+	      if (bctype == BoundaryConditions::dirichlet) 
+		dgfem.assembleDirichletBoundaryTerm(*it,is,A[eid][eid],b[eid]);	
+	      else if (bctype == BoundaryConditions::neumann) 
+		dgfem.assembleNeumannBoundaryTerm(*it,is,A[eid][eid],b[eid]);
+	      else // ASSUME that we are on a interface to porous media
+		dgfem.assembleInterfaceTerm(*it,is,A[eid][eid],b[eid]);
+	    }
 	}
-
-
+    }
+  
+  
 
 
 
@@ -883,9 +1028,9 @@ DGFiniteElementMethod<G,v_order,p_order>::getPressureShapeFunctionSet(Dune::Geom
 template <class G, int v_order, int p_order>
 double
 DGFiniteElementMethod<G,v_order,p_order>::evaluateSolution(int variable,
-												const Entity& element,
-												const Dune::FieldVector< ctype, dim > & coord,
-												const LocalVectorBlock & xe) const
+							   const Entity& element,
+							   const Dune::FieldVector< ctype, dim > & coord,
+							   const LocalVectorBlock & xe) const
 {
   // stokes system has dim+1 variables (dim velocity comps and 1 pressure)
   const ShapeFunctionSet&  vsfs = getVelocityShapeFunctionSet(element.type());
@@ -918,15 +1063,13 @@ DGFiniteElementMethod<G,v_order,p_order>::evaluateSolution(int variable,
 template <class G, int v_order, int p_order>
 typename DGFiniteElementMethod<G,v_order,p_order>::Gradient
 DGFiniteElementMethod<G,v_order,p_order>::evaluateGradient(int variable,
-												const Entity& element,
-												const Dune::FieldVector< ctype, dim > & coord,
-												const LocalVectorBlock & xe) const
+							   const Entity& element,
+							   const Dune::FieldVector< ctype, dim > & coord,
+							   const LocalVectorBlock & xe) const
 {
   // stokes system has dim+1 variables (dim velocity comps and 1 pressure)
   const ShapeFunctionSet&  vsfs = getVelocityShapeFunctionSet(element.type());
-  const ShapeFunctionSet&  psfs = getPressureShapeFunctionSet(element.type());
   int nvsfs = vsfs.size();
-  int npsfs = psfs.size();
   Gradient grad[dim+1];
   Gradient grad_phi_ei[dim+1];
   InverseJacobianMatrix invj;

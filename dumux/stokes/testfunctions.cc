@@ -14,24 +14,24 @@ public:
   ct velocity(int comp,const Point & glob) const
     {
       if (comp==0) 
-	return glob[0]*glob[0]; // x*x
+	return 2*glob[0]*glob[1]; // x*x
       if (comp==1) 
-	return -2*glob[0]*glob[1];// -2xy*
+	return -glob[1]*glob[1];// -2xy*
 
       return 0;// check this 3D prob
     }
   ct pressure(const Point & glob) const
   {
-	return glob[0]; // x
+	return glob[0] - 1.0; // x
    
   }
     ct rhsvalue(int variable, const Point& glob) const
   {
 	// stokes system has dim+1 variables (dim velocity comps and 1 pressure)
 	if (variable==0) 
-	  return -1.0;
+	  return 1.0;
 	if (variable==1) 
-	  return 0.0;
+	  return 2.0;
 	if (variable==2) 
 	  return 0.0;
 	return 0.0;
@@ -40,6 +40,13 @@ public:
 Gradient velocityGradient(int comp,const Point &glob)const
   {
     Gradient result(0);
+    if (comp == 0) 
+      {
+	result[0] = 2.0*glob[1];
+	result[1] = 2.0*glob[0];
+      }
+    else 
+      result[1] = -2.0*glob[1];
 
     return result;
   }

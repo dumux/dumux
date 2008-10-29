@@ -17,9 +17,9 @@
 #include<dune/disc/shapefunctions/dgspace/monomialshapefunctions.hh>
 
 #include"stokesparameters.hh"
+#include"stokesproblem.hh"
 #include"boundaryconditions.hh"
 #include"testfunctions.hh"
-#include"rhs.hh"
 
 #include <dune/istl/solvers.hh>
 
@@ -68,33 +68,39 @@ template<class G,int v_order, int p_order>
 
 
 
-	DGFiniteElementMethod (Grid &g,const DGStokesParameters& par, DirichletBoundary<G>& db, RightHandSide<G>& rh): grid(g),parameter(par),dirichletvalue(db), rhsvalue(rh) {};
+    DGFiniteElementMethod (Grid &g, StokesProblem<Grid, ctype>& prob, const DGStokesParameters& par)
+    : grid(g), problem_(prob), parameter(par)
+    {}
+
 	//local assembly
 	void assembleVolumeTerm(Entity& ep, LocalMatrixBlock& Aee,LocalVectorBlock& Be) const;
 	void assembleFaceTerm(Entity& ep,IntersectionIterator& isp, LocalMatrixBlock& Aee,
 						  LocalMatrixBlock& Aef,LocalMatrixBlock& Afe, LocalVectorBlock& Be) const;
 
-	void assembleBoundaryTerm(Entity& ep, IntersectionIterator& isp, LocalMatrixBlock& Aee,LocalVectorBlock& Be)const ;
+	void assembleDirichletBoundaryTerm(Entity& ep, IntersectionIterator& isp, LocalMatrixBlock& Aee,LocalVectorBlock& Be)const ;
+	void assembleNeumannBoundaryTerm(Entity& ep, IntersectionIterator& isp, LocalMatrixBlock& Aee,LocalVectorBlock& Be)const ;
+	void assembleInterfaceTerm(Entity& ep, IntersectionIterator& isp, LocalMatrixBlock& Aee,LocalVectorBlock& Be)const ;
 	// stokes system has dim+1 variables (dim velocity comps and 1 pressure)
 	double evaluateSolution(int variable,const Entity& element,const Dune::FieldVector<ctype,dim>& local,
 							const LocalVectorBlock& xe) const;
 	Gradient evaluateGradient(int variable,const Entity& element,const Dune::FieldVector<ctype,dim>& local,
 							const LocalVectorBlock& xe) const;
-	double evaluateL2error(int variable,const ExactSolution<ctype, dim> & exact,const Entity& element,
-						   const LocalVectorBlock& xe)const;
+	double evaluateL2error(int variable, const Entity& element, const LocalVectorBlock& xe)const;
 
-	double evaluateH1error(int variable,const ExactSolution<ctype, dim> & exact,const Entity& element,
-						   const LocalVectorBlock& xe)const;
+	double evaluateH1error(int variable, const Entity& element, const LocalVectorBlock& xe)const;
 
+    StokesProblem<Grid, ctype>& problem()
+    {
+      return problem_;
+    }
 
 
   private:
 	Grid& grid;
+    StokesProblem<Grid, ctype>& problem_;
 	Dune::MonomialShapeFunctionSetContainer<ctype,double,dim,v_order> vspace;
 	Dune::MonomialShapeFunctionSetContainer<ctype,double,dim,(p_order)> pspace;
 	DGStokesParameters parameter;
-	DirichletBoundary<G> dirichletvalue;
-	RightHandSide<G> rhsvalue;
   };
 
 
@@ -107,6 +113,8 @@ template<class G,int v_order,int p_order>
 	//dimension of grid
 	enum {dimension=G::dimension};
 	enum { dimensionworld=G::dimensionworld };
+	enum{v_ordr = v_order};
+	enum{p_ordr=p_order};
 	typedef G Grid;
   private:
 	enum {dim=G::dimension};
@@ -155,9 +163,8 @@ template<class G,int v_order,int p_order>
 	  void initial()
 	  {}
 
-	DGStokes(Grid &g, ExactSolution<ctype,dim>& ex,
-			 DGStokesParameters& par, DirichletBoundary<Grid>& db,
-			 RightHandSide<Grid>& rh, int l ) : grid(g),level(l),exact(ex), dgfem(g,par,db,rh)
+    DGStokes(Grid &g, StokesProblem<Grid, ctype>& prob, DGStokesParameters& par)
+      : grid(g),level(g.maxLevel()), dgfem(g,prob,par)
 	{
 	  if (par.sigma==1 & par.epsilon==1)
 	std::cout<<"You are using NIPG scheme"<<std::endl;
@@ -193,8 +200,6 @@ template<class G,int v_order,int p_order>
   public:
 	Grid & grid;
 	int level;
-	ExactSolution<ctype,dim>& exact;
-//  private:
 	DGFiniteElementMethod<G,v_order,p_order> dgfem;
 	LMatrix A;
     LVector b;

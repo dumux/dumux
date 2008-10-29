@@ -5,8 +5,7 @@
 
 template <class G,int v_order, int p_order>
 double
-Dune::DGFiniteElementMethod<G,v_order,p_order>::evaluateL2error(int variable,const ExactSolution<ctype, dim> & exact,
-											   const Entity& element,const LocalVectorBlock& xe)const
+Dune::DGFiniteElementMethod<G,v_order,p_order>::evaluateL2error(int variable, const Entity& element, const LocalVectorBlock& xe)const
 
 {
   // stokes system has dim+1 variables (dim velocity comps and 1 pressure)
@@ -28,14 +27,14 @@ Dune::DGFiniteElementMethod<G,v_order,p_order>::evaluateL2error(int variable,con
 	  if (variable<dim)
 		{
 		  error[variable]+=weight*detjac
-			*(exact.velocity(variable,qp_glob)-evaluateSolution(variable,element,qp_loc,xe))
-			*(exact.velocity(variable,qp_glob)-evaluateSolution(variable,element,qp_loc,xe));
+		    *((problem_.velocity(qp_glob))[variable]-evaluateSolution(variable,element,qp_loc,xe))
+		    *((problem_.velocity(qp_glob))[variable]-evaluateSolution(variable,element,qp_loc,xe));
 		}
 	  if(variable==dim)
 		{
 		  error[variable]+=weight*detjac
-			*(exact.pressure(qp_glob)-evaluateSolution(variable,element,qp_loc,xe))
-			*(exact.pressure(qp_glob)-evaluateSolution(variable,element,qp_loc,xe));
+			*(problem_.pressure(qp_glob)-evaluateSolution(variable,element,qp_loc,xe))
+			*(problem_.pressure(qp_glob)-evaluateSolution(variable,element,qp_loc,xe));
 		}
 	   
 	}
@@ -55,7 +54,7 @@ double Dune::DGStokes<G,v_order,p_order>::l2errorStokesSystem(int variable) cons
   for (; it != itend; ++it)
 	{
 	  int eid = grid.levelIndexSet(level).index(*it);
-	  error[variable]+=dgfem.evaluateL2error(variable,exact,*it,b[eid]);
+	  error[variable]+=dgfem.evaluateL2error(variable,*it,b[eid]);
 	}
   return sqrt(error[variable]);
 }
