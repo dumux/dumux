@@ -3,6 +3,8 @@
 #ifndef DUNE_COUPLEDMODEL_HH
 #define DUNE_COUPLEDMODEL_HH
 
+#include "dumux/pardiso/pardiso.hh" 
+
 namespace Dune
 {
 
@@ -241,6 +243,8 @@ public:
 		double red=1E-14;
 		SeqILU0<GlobalMatrixType,GlobalVectorType,GlobalVectorType> ilu0(A,1.0);
 		BiCGSTABSolver<GlobalVectorType> solver(op,ilu0,red,10000,1);
+// 		SeqPardiso<GlobalMatrixType,GlobalVectorType,GlobalVectorType> pardiso(A);
+// 		LoopSolver<GlobalVectorType> solver(op,pardiso,red,10000,1);
 		InverseOperatorResult r;
 		solver.apply(u, f, r);
 
