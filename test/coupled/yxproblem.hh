@@ -20,8 +20,8 @@ public:
 				const FieldVector<DT,dim>& xi) const
   {
     FieldVector<RT,dim> result(0);
-    result[0] = -x[1];
-    result[1] = -x[0];
+    result[0] = x[1];
+    result[1] = x[0];
 
     return result;
   }
@@ -93,22 +93,22 @@ public:
   virtual FieldVector<RT,dim> velocity(const FieldVector<DT,dim>& x) const
   {
     FieldVector<RT,dim> result(0);
-    result[0] = x[1];
-    result[1] = x[0];
+    result[0] = -x[1];
+    result[1] = -x[0];
 
     return result;
   }
 
   virtual RT pressure(const FieldVector<DT,dim>& x) const
   {
-    return (-x[0]*x[1]);
+    return (x[0]*x[1]);
   }
 
   virtual FieldMatrix<DT, dim, dim> velocityGradient(const FieldVector<DT,dim>& x) const
   {
     FieldMatrix<DT, dim, dim> result(0);
-    result[0][1] = 1.0;
-    result[1][0] = 1.0;
+    result[0][1] = -1.0;
+    result[1][0] = -1.0;
 
     return result;
   }

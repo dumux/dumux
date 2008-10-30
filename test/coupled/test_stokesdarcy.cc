@@ -17,6 +17,48 @@
 #include "yxproblem.hh"
 #include "boxdiffusion.hh"
 
+namespace Dune
+{
+template<int dim>
+struct P1Layout
+{
+	bool contains (Dune::GeometryType gt)
+	{
+		return gt.dim() == 0;
+	}
+}; 
+template<class Grid, class Solution, class Problem> 
+double discreteError(const Grid& grid, const Solution& solution, const Problem& problem)
+{
+	  enum{dim=Grid::dimension};
+		typedef typename Grid::LeafGridView GV;
+	    typedef typename GV::IndexSet IS;
+	  typedef MultipleCodimMultipleGeomTypeMapper<Grid,IS,P1Layout> VM;
+		typedef typename GV::template Codim<dim>::Iterator VertexIterator;
+	  
+	  VM vertexMapper(grid, grid.leafIndexSet());
+	  double error = 0.0;
+	  const GV& gridview(grid.leafView());
+	  
+	  VertexIterator endIt = gridview.template end<dim>();
+	  VertexIterator it = gridview.template begin<dim>();
+	  for (; it != endIt; ++it)
+	  {
+		  // get exact solution at vertex
+		  FieldVector<double,dim> globalCoord = (*it).geometry()[0];
+		  double exact = problem.exact(globalCoord);
+
+		  // get approximate solution at vertex
+		  int globalId = vertexMapper.map(*it);
+		  double approximate = solution[globalId];
+		  
+		  error += (exact - approximate)*(exact - approximate);
+	  }
+		  
+	  return sqrt(error);
+}
+}
+
 int main(int argc, char** argv)
 {
   try{
@@ -75,15 +117,17 @@ int main(int argc, char** argv)
 //    printvector(std::cout, dGStokes.sol(), "local solution", "row", 200, 1, 3);
     coupledModel.vtkout("test_coupled", 0);
 
-    	std::cout << "L2Error velocity: ";
+    	std::cout << "Stokes L2Error velocity: ";
     	for (int i = 0; i < dim; i++)
     		std::cout << dGStokes.l2errorStokesSystem(i) << ", ";
     	std::cout << std::endl;
-    	std::cout << "L2Error pressure: "<< dGStokes.l2errorStokesSystem(dim) << std::endl;
-    	std::cout << "H1Error velocity: ";
+    	std::cout << "Stokes L2Error pressure: "<< dGStokes.l2errorStokesSystem(dim) << std::endl;
+    	std::cout << "Stokes H1Error velocity: ";
     	for (int i = 0; i < dim; i++)
     		std::cout << dGStokes.h1errorStokesSystem(i) << ", ";
     	std::cout << std::endl;
+
+	std::cout << "Darcy discrete error = " << discreteError(subGridRight, diffusion.sol(), diffusionProblem) << std::endl;
 
 	return 0;
   }

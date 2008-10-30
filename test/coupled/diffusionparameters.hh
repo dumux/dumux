@@ -53,7 +53,7 @@ public:
 
   RT exact(const Dune::FieldVector<DT,n>& x) const
   {
-		return (-x[0]*x[1]);
+		return (x[0]*x[1]);
   }
 
   RT g (const Dune::FieldVector<DT,n>& x, const Entity& e,
@@ -67,8 +67,8 @@ public:
   {
 	  Dune::FieldVector<DT,n> grad;
 
-	  grad[0] = -x[1];
-	  grad[1] = -x[0];
+	  grad[0] = x[1];
+	  grad[1] = x[0];
 	  grad[2] = 0.0;
 
 	  return grad;
