@@ -14,13 +14,13 @@ Dune::DGFiniteElementMethod<G,v_order,p_order>::evaluateH1error(int variable, co
   Dune::FieldVector<ctype, dim> qp_loc(0.0);
   Dune::FieldVector<ctype, dim> qp_glob(0.0);
   Dune::GeometryType gt = element.type();
-  // #warning fixed quadrature order 
+  // #warning fixed quadrature order
   int qord=6;
 
-  for (int qp=0;qp<Dune::QuadratureRules<ctype,dim>::rule(gt,qord).size();++qp) 
+  for (int qp=0;qp<Dune::QuadratureRules<ctype,dim>::rule(gt,qord).size();++qp)
 	{
 	  qp_loc = Dune::QuadratureRules<ctype,dim>::rule(gt,qord)[qp].position();
-	  
+
 	  qp_glob =element.geometry().global(qp_loc);
 	  //std::cout<<"qp_loc: "<<qp_loc<<" qp_glob: "<<qp_glob<<std::endl;
 	  double weight = Dune::QuadratureRules<ctype,dim>::rule(gt,qord)[qp].weight();
@@ -32,12 +32,12 @@ Dune::DGFiniteElementMethod<G,v_order,p_order>::evaluateH1error(int variable, co
 
 		  error2[variable]=((problem_.velocityGradient(qp_glob))[variable]-evaluateGradient(variable,element,qp_loc,xe)).two_norm2();
 		  error[variable]+=weight*detjac*(error1[variable]+error2[variable]);
-		  
-		  
+
+
 		}
 	}
   return error[variable];
- 
+
 }
 
 
@@ -54,7 +54,7 @@ double Dune::DGStokes<G,v_order,p_order>::h1errorStokesSystem(int variable) cons
 	{
 	  int eid = grid.levelIndexSet(level).index(*it);
 	  //std::cout<<" eid: "<<eid<<std::endl;
-	  error[variable]+=dgfem.evaluateH1error(variable,*it,b[eid]);
+	  error[variable]+=dgfem.evaluateH1error(variable,*it,solution[eid]);
 	}
   return sqrt(error[variable]);
 }

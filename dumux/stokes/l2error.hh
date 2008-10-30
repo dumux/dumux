@@ -14,11 +14,11 @@ Dune::DGFiniteElementMethod<G,v_order,p_order>::evaluateL2error(int variable, co
   Dune::FieldVector<ctype, dim> qp_loc(0.0);
   Dune::FieldVector<ctype, dim> qp_glob(0.0);
   Dune::GeometryType gt = element.type();
-  // #warning fixed quadrature order 
+  // #warning fixed quadrature order
   int qord=12;
   //int eid = grid.levelIndexSet(grid.maxLevel()).index(element);
 
-  for (unsigned int qp=0;qp<Dune::QuadratureRules<ctype,dim>::rule(gt,qord).size();++qp) 
+  for (unsigned int qp=0;qp<Dune::QuadratureRules<ctype,dim>::rule(gt,qord).size();++qp)
 	{
 	  qp_loc = Dune::QuadratureRules<ctype,dim>::rule(gt,qord)[qp].position();
 	  qp_glob =element.geometry().global(qp_loc);
@@ -36,10 +36,10 @@ Dune::DGFiniteElementMethod<G,v_order,p_order>::evaluateL2error(int variable, co
 			*(problem_.pressure(qp_glob)-evaluateSolution(variable,element,qp_loc,xe))
 			*(problem_.pressure(qp_glob)-evaluateSolution(variable,element,qp_loc,xe));
 		}
-	   
+
 	}
   return error[variable];
- 
+
 }
 
 
@@ -54,7 +54,7 @@ double Dune::DGStokes<G,v_order,p_order>::l2errorStokesSystem(int variable) cons
   for (; it != itend; ++it)
 	{
 	  int eid = grid.levelIndexSet(level).index(*it);
-	  error[variable]+=dgfem.evaluateL2error(variable,*it,b[eid]);
+	  error[variable]+=dgfem.evaluateL2error(variable,*it,solution[eid]);
 	}
   return sqrt(error[variable]);
 }
