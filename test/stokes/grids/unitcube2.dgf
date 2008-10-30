@@ -1,8 +1,8 @@
 DGF
 Interval
-1 1   % first corner 
-2 2   % second corner
-4 4   % 1 cells in x and 1 in y direction
+0 0   % first corner 
+1 1   % second corner
+1 1   % 1 cells in x and 1 in y direction
 # 
 
 BOUNDARYDOMAIN

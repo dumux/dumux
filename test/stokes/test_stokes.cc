@@ -14,7 +14,7 @@
 #include "dumux/stokes/dgstokes.hh"
 #include "dumux/stokes/l2error.hh"
 #include "dumux/stokes/h1error.hh"
-#include "exampleproblem.hh"
+#include "yxproblem.hh"
 
 int main(int argc, char** argv) 
 {
@@ -46,13 +46,17 @@ int main(int argc, char** argv)
     	grid.globalRefine(refinementSteps);
 
     DGStokesParameters parameters; 
-    Dune::ExampleProblem<GridType, double> problem;
+    Dune::YXProblem<GridType, double> problem;
     typedef Dune::DGStokes<GridType, vOrder, pOrder> DGStokes;
     DGStokes dGStokes(grid, problem, parameters); 
     dGStokes.assembleStokesSystem();
+	
+    printmatrix(std::cout, dGStokes.matrix(), "stiffness matrix", "row", 11, 4);
+    printvector(std::cout, dGStokes.rhs(), "right hand side", "row", 200, 1, 3);
     dGStokes.solveStokesSystem();
     dGStokes.vtkout("test_stokes", 0);
-	
+    printvector(std::cout, dGStokes.sol(), "solution", "row", 200, 1, 3);
+
 	std::cout << "L2Error velocity: ";
 	for (int i = 0; i < dim; i++)
 		std::cout << dGStokes.l2errorStokesSystem(i) << ", ";
@@ -63,8 +67,6 @@ int main(int argc, char** argv)
 		std::cout << dGStokes.h1errorStokesSystem(i) << ", ";
 	std::cout << std::endl;
 	
-	dGStokes.vtkout("test_stokes", 0);
-
 	return 0;
   }
   catch (Dune::Exception &e){
