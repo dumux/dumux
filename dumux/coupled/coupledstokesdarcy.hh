@@ -256,7 +256,7 @@ namespace Dune
 			      double pressShapeValue = pressShapeFuncSet[jInElement].evaluateFunction(0,qLocal);
 			      double entrySD = (pressShapeValue*(velShapeValue*normal[comp]))* qDetJac * qWeight;
 			      int jInMatrix = darcyIds[j];
-			      (A_SD[stokesId][jInMatrix])[ii] += entrySD;
+			      (A_SD[stokesId][jInMatrix])[ii] -= entrySD;
 			    }
 			}
 		    }
@@ -284,9 +284,6 @@ namespace Dune
 		}
 	    }
 	} // end loop 3 over all elements of the Stokes grid 
-
-      A_SD = 0;
-      A_DS = 0;
     }
     
     virtual void solve()
