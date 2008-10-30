@@ -36,7 +36,7 @@ public:
 			const IntersectionIterator& intersectionIt, 
 					   const Dune::FieldVector<DT,n>& xi) const
   {
-	if (x[0] < 1e-6) 
+ 	if (x[0] > 2 - 1e-6) 
 	  return Dune::BoundaryConditions::dirichlet;
 	
 	return Dune::BoundaryConditions::neumann;
@@ -53,7 +53,7 @@ public:
 	
   RT exact(const Dune::FieldVector<DT,n>& x) const
   {
-		return (x[0]);//1.0 - x[0] + 2.0*x[1] - 3.0*x[2]);	  
+		return (-x[0]*x[1]);	  
   }
   
   RT g (const Dune::FieldVector<DT,n>& x, const Entity& e, 
@@ -67,8 +67,8 @@ public:
   {
 	  Dune::FieldVector<DT,n> grad;
 
-	  grad[0] = -1.0; 
-	  grad[1] = 0.0; 
+	  grad[0] = -x[1]; 
+	  grad[1] = -x[0]; 
 	  grad[2] = 0.0;
 	  
 	  return grad;
@@ -83,7 +83,7 @@ public:
 	  
 	  // ASSUMING face-wise constant normal 
 	  Dune::FieldVector<DT, n-1> localDimM1(0);
-	  return (KGradU*intersectionIt->unitOuterNormal(localDimM1));
+	  return -(KGradU*intersectionIt->unitOuterNormal(localDimM1));
   }
 	  
 private:
