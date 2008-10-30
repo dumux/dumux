@@ -8,16 +8,16 @@
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/solvers.hh>
 #include <../../../dune-subgrid/subgrid/subgrid.hh>
-#include <dune/disc/stokes/dgstokes.hh>
+#include "dumux/stokes/dgstokes.hh"
 #include "dumux/operators/p1operatorextended.hh"
 #include <dumux/timedisc/timeloop.hh>
 #include <dumux/coupled/coupledstokesdarcy.hh>
+#include "yxproblem.hh"
 #include "boxdiffusion.hh"
 
 int main(int argc, char** argv)
 {
   try{
-    // define the problem dimensions
     const int dim=2;
     typedef double NumberType;
 
@@ -35,57 +35,43 @@ int main(int argc, char** argv)
     SubGridType subGridRight(grid);
     subGridLeft.createBegin();
     subGridRight.createBegin();
-	typedef GridType::Codim<0>::LeafIterator Iterator;
-	Iterator eendit = grid.leafend<0>();
-	for (Iterator it = grid.leafbegin<0>(); it != eendit; ++it) {
-		Dune::GeometryType gt = it->geometry().type();
-		const Dune::FieldVector<NumberType,dim>& local = Dune::ReferenceElements<NumberType,dim>::general(gt).position(0, 0);
-		Dune::FieldVector<NumberType,dim> global = it->geometry().global(local);
-		if (global[0] < 1.0)
-			subGridLeft.addPartial(it);
-		else
-			subGridRight.addPartial(it);
-	}
+    typedef GridType::Codim<0>::LeafIterator Iterator;
+    Iterator eendit = grid.leafend<0>();
+    for (Iterator it = grid.leafbegin<0>(); it != eendit; ++it) {
+      Dune::GeometryType gt = it->geometry().type();
+      const Dune::FieldVector<NumberType,dim>& local = Dune::ReferenceElements<NumberType,dim>::general(gt).position(0, 0);
+      Dune::FieldVector<NumberType,dim> global = it->geometry().global(local);
+      if (global[0] < 1.0)
+	subGridLeft.addPartial(it);
+      else
+	subGridRight.addPartial(it);
+    }
     subGridLeft.createEnd();
     subGridRight.createEnd();
 
-    int refinementSteps = 0;
     const int vOrder = 2;
     const int pOrder = 1;
     DGStokesParameters parameters;
-    Example<dim, NumberType> exactSolution;
-    DirichletBoundary<SubGridType> dirichletBoundary(exactSolution);
-    RightHandSide<SubGridType> rightHandSide(exactSolution);
+    Dune::YXProblem<SubGridType, double> stokesProblem;
     typedef Dune::DGStokes<SubGridType, vOrder, pOrder> DGStokes;
-	DGStokes dGStokes(subGridLeft, exactSolution, parameters, dirichletBoundary, rightHandSide, refinementSteps);
+    DGStokes dGStokes(subGridLeft, stokesProblem, parameters); 
 
-    DiffusionParameters<SubGridType,NumberType> problem;
+    DiffusionParameters<SubGridType,NumberType> diffusionProblem;
     typedef Dune::LeafP1BoxDiffusion<SubGridType, NumberType> Diffusion;
-    Diffusion diffusion(subGridRight, problem);
+    Diffusion diffusion(subGridRight, diffusionProblem);
 
-	typedef Dune::CoupledStokesDarcy<DGStokes,Diffusion> CoupledModel;
+    typedef Dune::CoupledStokesDarcy<DGStokes,Diffusion> CoupledModel;
     bool assembleGlobalMatrix = true;
     CoupledModel coupledModel(subGridLeft, dGStokes, subGridRight, diffusion, assembleGlobalMatrix);
 
     coupledModel.initial();
     coupledModel.assemble();
     printmatrix(std::cout, coupledModel.matrix(), "global stiffness matrix", "row", 11, 4);
-	printvector(std::cout, coupledModel.rhs(), "global right hand side", "row", 200, 1, 3);
-	printvector(std::cout, coupledModel.sol(), "global solution before", "row", 200, 1, 3);
+    printvector(std::cout, coupledModel.rhs(), "global right hand side", "row", 200, 1, 3);
+    coupledModel.solve();
+    printvector(std::cout, coupledModel.sol(), "global solution", "row", 200, 1, 3);
+    coupledModel.vtkout("test_coupled", 0);
 
-//    length[0] = length[1];
-//    size[0] = size[1];
-//    GridType controlGrid(length,size,periodic,overlap);
-//    DirichletBoundary<GridType> controlDirichletBoundary(exactSolution);
-//    RightHandSide<GridType> controlRightHandSide(exactSolution);
-//    typedef Dune::DGStokes<GridType, vOrder, pOrder> DGStokesControl;
-//	DGStokesControl dGStokesControl(controlGrid, exactSolution, parameters, controlDirichletBoundary, controlRightHandSide, refinementSteps);
-//    dGStokesControl.initial();
-//    dGStokesControl.assemble();
-//    printmatrix(std::cout, dGStokesControl.matrix(), "Stokes stiffness matrix", "row", 11, 4);
-//	printvector(std::cout, dGStokesControl.rhs(), "Stokes right hand side", "row", 200, 1, 3);
-//	printvector(std::cout, dGStokesControl.sol(), "Stokes solution before", "row", 200, 1, 3);
-	
     return 0;
   }
   catch (Dune::Exception &e){
