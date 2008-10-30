@@ -1,14 +1,13 @@
 #include "config.h"
 #include <iostream>
-#define DUMMY 
-#ifdef DUMMY 
+#define DUMMY
+#ifdef DUMMY
 #include <dune/grid/yaspgrid.hh>
 #include <dune/grid/common/gridinfo.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/solvers.hh>
 #include <../../../dune-subgrid/subgrid/subgrid.hh>
-#include <dune/disc/stokes/dgstokes.hh>
 
 #include "dumux/operators/p1operatorextended.hh"
 
@@ -74,7 +73,7 @@ int main(int argc, char** argv)
     typedef Dune::YaspGrid<dim,dim> GridType;
     GridType grid(length,size,periodic,overlap);
 
-    typedef Dune::SubGrid<dim,GridType> SubGridType; 
+    typedef Dune::SubGrid<dim,GridType> SubGridType;
     SubGridType subGridLeft(grid);
     SubGridType subGridRight(grid);
     subGridLeft.createBegin();
@@ -124,7 +123,7 @@ int main(int argc, char** argv)
     timeloop.execute(diffusionGlobal);
 
 	std::cout << "error of original global solution = " << discreteError(grid, *(*diffusionGlobal), problem) << std::endl;
-	
+
     return 0;
   }
   catch (Dune::Exception &e){
@@ -134,7 +133,7 @@ int main(int argc, char** argv)
     std::cerr << "Unknown exception thrown!" << std::endl;
   }
 }
-#else 
+#else
 
 int main (int argc , char **argv) try
 {
@@ -142,9 +141,9 @@ int main (int argc , char **argv) try
 
   return 1;
 }
-catch (...) 
+catch (...)
 {
     std::cerr << "Generic exception!" << std::endl;
     return 2;
 }
-#endif 
+#endif
