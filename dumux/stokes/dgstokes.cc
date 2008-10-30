@@ -629,7 +629,7 @@ void DGFiniteElementMethod<G,v_order,p_order>::assembleNeumannBoundaryTerm(Entit
   Dune::GeometryType gtboundary = isit->intersectionSelfLocal().type();
   
   //specify the quadrature order ?
-  int qord=2;
+  int qord=6;
   for(unsigned int bq=0;bq<Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord).size();++bq)
     {
       const Dune::FieldVector<ctype,dim-1>& boundlocal = Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord)[bq].position();
@@ -692,7 +692,7 @@ void DGFiniteElementMethod<G,v_order,p_order>::assembleInterfaceTerm(Entity& ent
   Dune::GeometryType gtboundary = isit->intersectionSelfLocal().type();
   
   //specify the quadrature order ?
-  int qord=2;
+  int qord=6;
   for(unsigned int bq=0;bq<Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord).size();++bq)
     {
       const Dune::FieldVector<ctype,dim-1>& boundlocal = Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord)[bq].position();
