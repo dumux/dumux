@@ -38,17 +38,18 @@ namespace Dune {
         : public NewtonControllerBase<NewtonMethod, TwoPTwoCNewtonController<NewtonMethod> >
     {
     public:
-        typedef TwoPTwoCNewtonController<NewtonMethod>            ThisType;
+        typedef TwoPTwoCNewtonController<NewtonMethod>        ThisType;
         typedef NewtonControllerBase<NewtonMethod, ThisType>  ParentType;
 
+        typedef typename NewtonMethod::Model           Model;
         typedef typename ParentType::Scalar            Scalar;
         typedef typename ParentType::Function          Function;
         typedef typename ParentType::JacobianAssembler JacobianAssembler;
 
         TwoPTwoCNewtonController(bool switched = false,
 							Scalar tolerance = 1e-5,
-                             int targetSteps = 8,
-                             int maxSteps = 12)
+							int targetSteps = 8,
+							int maxSteps = 12)
             : ParentType(tolerance, targetSteps, maxSteps), switched_(switched)
             {};
 
@@ -57,7 +58,7 @@ namespace Dune {
 		Scalar suggestTimeStepSize(Scalar oldTimeStep) const
 			{
 			/*
-				if (variableSwitch) {
+				if (switched_) {
 					return somethingSmall;
 				}
 				*/
@@ -65,13 +66,18 @@ namespace Dune {
 				return ParentType::suggestTimeStepSize(oldTimeStep);
 			}
 
-        //! Returns true iff another iteration should be done.
+        //! Returns true if another iteration should be done.
         bool newtonProceed(Function &u)
             {
-                if (switched_ && ParentType::_numSteps < 5)
-                    return true; // we always do at least two iterations
+                if (switched_ && ParentType::_numSteps < 4 && !ParentType::newtonConverged())
+                	return true; // do at least four iterations after variable switch
 
-                return ParentType::newtonProceed(u);
+                if (switched_ && ParentType::_numSteps >= 4) {
+                	ParentType::_method->model().clearSwitched();
+                	return true; // do at least four iterations after variable switch
+                }
+                else
+                	return ParentType::newtonProceed(u);
             }
 
 
@@ -82,41 +88,43 @@ namespace Dune {
         //! "completely unphysical"
         Scalar _physicalness(Function &u)
             {
-//                return 1.0;
-                const Scalar SnNormFactor = 3e-5; // reference value
+				const Scalar switchVarNormFactor = 1e-1; // standarization value
 
                 // the maximum distance of a Sn value to a physically
                 // meaningful value.
-                Scalar maxSnDelta = 0;
-                Scalar Sn;
-//                Scalar pW;
+                Scalar maxSwitchVarDelta = 0;
+                Scalar maxPwDelta = 0;
+                Scalar switchVar;
+                Scalar pW;
 
-                for (int idx = 0; idx < (*u).size(); idx++)  {
-//                    pW = (*u)[idx][0];
-                    Sn = (*u)[idx][1];
+                for (int idx = 0; idx < (*u).size(); idx++)
+                {
+                    pW = (*u)[idx][0];
+                	switchVar = (*u)[idx][1];
 
-                    if (Sn < 0) {
-                        maxSnDelta = std::max(maxSnDelta, std::abs(Sn));
+                    if (switchVar < 0) {
+                        maxSwitchVarDelta = std::max(maxSwitchVarDelta, std::abs(switchVar));
                     }
-                    else if (Sn > 1) {
-                        maxSnDelta = std::max(maxSnDelta, std::abs(Sn - 1));
+                    else if (switchVar > 1) {
+                        maxSwitchVarDelta = std::max(maxSwitchVarDelta, std::abs(switchVar - 1));
                     }
-//                    if (pW < 0.0){
-//                    	maxSnDelta = std::max(maxSnDelta, std::abs(pW/1e5));
-//                    }
-                    // (so far we ignore the wetting phase pressure)
+                    if (pW < 0.0){
+                    	maxPwDelta = std::max(maxPwDelta, std::abs(pW/1e5));
+                    }
                 }
 
                 // we accept solutions up to 0.2 percent bigger than 1
                 // or smaller than 0 as being physical for numerical
                 // reasons...
-                Scalar phys = 1.002 - maxSnDelta/SnNormFactor;
+                Scalar phys = 1.01 - maxSwitchVarDelta/switchVarNormFactor - maxPwDelta;
 
                 // we never return exactly zero, since we want to
                 // allow solutions which are "very close" to a
                 // physically meaningful one
                 return std::min(1.0, phys);
             }
+
+
         bool switched_;
     };
 }

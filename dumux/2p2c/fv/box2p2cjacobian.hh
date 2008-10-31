@@ -93,6 +93,8 @@ namespace Dune
       problem(params), sNDat(this->vertexMapper.size()), vNDat(SIZE), oldVNDat(SIZE), switchFlag(false)
     {
       this->analytic = false;
+      switchFlag = false;
+      switchFlagLocal = false;
     }
 
 	/** @brief compute time dependent term (storage), loop over nodes / subcontrol volumes
@@ -104,15 +106,11 @@ namespace Dune
     virtual VBlockType computeM (const Entity& e, const VBlockType* sol,
     		int node, std::vector<VariableNodeData>& varData)
     {
-#if 1
     	 GeometryType gt = e.geometry().type();
     	 const typename LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type&
      	 sfs=LagrangeShapeFunctions<DT,RT,dim>::general(gt,1);
 
    	 int globalIdx = this->vertexMapper.template map<dim>(e, sfs[node].entity());
-#else
-   	 int globalIdx = this->vertexMapper.template map<dim>(e, node);
-#endif
 
    	 VBlockType result;
    	 RT satN = varData[node].satN;
@@ -321,33 +319,35 @@ namespace Dune
     {
 
         bool switched = false;
-        int switch_counter = sNDat[globalIdx].switched;
-        int state = sNDat[globalIdx].phaseState;
-
-        RT pW = sol[localIdx][pWIdx];
-//        if (pW < 0.) pW = (-1)*pW;
-
-        RT satW = 0.0;
-        if (state == bothPhases) satW = 1.0-sol[localIdx][switchIdx];
-  		if (state == waterPhase) satW = 1.0;
-  		if (state == gasPhase) satW = 0.0;
-
   		const FVector global = this->fvGeom.subContVol[localIdx].global;
   		const FVector local = this->fvGeom.subContVol[localIdx].local;
+  		int state = sNDat[globalIdx].phaseState;
+//        int switch_counter = sNDat[globalIdx].switched;
 
+  		// Evaluate saturation and pressures first
+        RT pW = sol[localIdx][pWIdx];
+        RT satW = 0.0;
+        if (state == bothPhases)
+        	satW = 1.0-sol[localIdx][switchIdx];
+  		if (state == waterPhase)
+  			satW = 1.0;
+  		if (state == gasPhase)
+  			satW = 0.0;
     	RT pC = problem.materialLaw().pC(satW, global, e, local);
   		RT pN = pW + pC;
 
-        switch(state)
+
+  		switch(state)
         {
         case gasPhase :
-        	RT xWNmass, xWNmolar, pwn, pWSat;
+        	RT xWNmass, xWNmolar, pwn, pWSat; // auxiliary variables
+
         	xWNmass = sol[localIdx][switchIdx];
         	xWNmolar = problem.multicomp().convertMassToMoleFraction(xWNmass, gasPhase);
            	pwn = xWNmolar * pN;
             pWSat = problem.multicomp().vaporPressure(vNDat[localIdx].temperature);
 
-        	if (pwn > 1.01*pWSat && switched == false)// && switch_counter < 3)
+        	if (pwn > 1.01*pWSat && !switched)// && switch_counter < 3)
             {
             	// appearance of water phase
             	std::cout << "Water appears at node " << globalIdx << "  Coordinates: " << global << std::endl;
@@ -359,14 +359,15 @@ namespace Dune
             break;
 
         case waterPhase :
-        	RT pbub, xAWmass, xAWmolar, henryInv;
-           	xAWmass = sol[localIdx][switchIdx];
+        	RT xAWmass, xAWmolar, henryInv, pbub; // auxiliary variables
+
+        	xAWmass = sol[localIdx][switchIdx];
          	xAWmolar = problem.multicomp().convertMassToMoleFraction(xAWmass, waterPhase);
         	henryInv = problem.multicomp().henry(vNDat[localIdx].temperature);
             pWSat = problem.multicomp().vaporPressure(vNDat[localIdx].temperature);
         	pbub = pWSat + xAWmolar/henryInv; // pWSat + pAW
 
-        	if (pN < pbub && switched == false)// && switch_counter < 3)
+        	if (pN < pbub && !switched)// && switch_counter < 3)
             {
         		// appearance of gas phase
             	std::cout << "Gas appears at node " << globalIdx << ",  Coordinates: " << global << std::endl;
@@ -380,7 +381,7 @@ namespace Dune
         case bothPhases:
         	RT satN = sol[localIdx][switchIdx];
 
-        	if (satN < 0.0  && switched == false)// && switch_counter < 3)
+        	if (satN < 0.0  && !switched)// && switch_counter < 3)
       	  	{
       		  	// disappearance of gas phase
       		  	std::cout << "Gas disappears at node " << globalIdx << "  Coordinates: " << global << std::endl;
@@ -389,7 +390,7 @@ namespace Dune
             	sNDat[globalIdx].switched += 1;
             	switched = true;
             }
-        	else if (satW < 0.0  && switched == false)// && switch_counter < 3)
+        	else if (satW < 0.0  && !switched)// && switch_counter < 3)
       	  	{
       	  		// disappearance of water phase
       	  		std::cout << "Water disappears at node " << globalIdx << "  Coordinates: " << global << std::endl;
@@ -401,9 +402,9 @@ namespace Dune
       	  	break;
 
         }
-        if (switched == true){
+        if (switched){
         	updateVariableData(e, sol, localIdx, vNDat, sNDat[globalIdx].phaseState);
-        	switchFlag=true;
+        	setSwitchedLocal(); // if switch is triggered at any node, switchFlagLocal is set
         }
 
    	return;
@@ -444,6 +445,14 @@ namespace Dune
        return;
     }
 
+    virtual void resetPhaseState ()
+    {
+      	for (int i = 0; i < this->vertexMapper.size(); i++){
+       		sNDat[i].phaseState = sNDat[i].oldPhaseState;
+      	 }
+       return;
+    }
+
 	  //*********************************************************
 	  //*														*
 	  //*	Calculation of Data at Elements (elData) 			*
@@ -453,10 +462,6 @@ namespace Dune
 
     virtual void computeElementData (const Entity& e)
     {
-//  	 // ASSUME element-wise constant parameters for the material law
-// 		 elData.parameters = problem.materialLawParameters
-// 		 (this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
-//
 //		 // ASSUMING element-wise constant permeability, evaluate K at the cell center
 // 		 elData.K = problem.K(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
 //
@@ -484,17 +489,18 @@ namespace Dune
    	 sfs=LagrangeShapeFunctions<DT,RT,dim>::general(gt,1);
 
    	 // get local to global id map
-   	 for (int k = 0; k < sfs.size(); k++) {
+   	 for (int k = 0; k < sfs.size(); k++)
+   	 {
   		 const int globalIdx = this->vertexMapper.template map<dim>(e, sfs[k].entity());
 
   		 // if nodes are not already visited
-//  		 if (!sNDat[globalIdx].visited)
+  		 if (!sNDat[globalIdx].visited)
   		  {
    			  // evaluate primary variable switch
  			  primaryVarSwitch(e, globalIdx, sol, k);
 
   			  // mark elements that were already visited
-//  			  sNDat[globalIdx].visited = true;
+  			  sNDat[globalIdx].visited = true;
   		  }
   	  }
 
@@ -510,7 +516,8 @@ namespace Dune
    	 sfs=LagrangeShapeFunctions<DT,RT,dim>::general(gt,1);
 
    	 // get local to global id map
-   	 for (int k = 0; k < sfs.size(); k++) {
+   	 for (int k = 0; k < sfs.size(); k++)
+   	 {
   		 const int globalIdx = this->vertexMapper.template map<dim>(e, sfs[k].entity());
 
   		 // if nodes are not already visited
@@ -646,12 +653,37 @@ namespace Dune
 
 	bool checkSwitched()
 	{
-		bool temp = switchFlag;
-		switchFlag = false;
-
-		return temp;
+		return switchFlag;
 	}
 
+	bool checkSwitchedLocal()
+	{
+		return switchFlagLocal;
+	}
+
+	void setSwitched()
+	{
+		switchFlag = true;
+		return;
+	}
+
+	void setSwitchedLocal()
+	{
+		switchFlagLocal = true;
+		return;
+	}
+
+	void resetSwitched()
+	{
+		switchFlag = false;
+		return;
+	}
+
+	void resetSwitchedLocal()
+	{
+		switchFlagLocal = false;
+		return;
+	}
 
 	struct StaticNodeData
     {
@@ -677,7 +709,6 @@ namespace Dune
     std::vector<StaticNodeData> sNDat;
     std::vector<VariableNodeData> vNDat;
     std::vector<VariableNodeData> oldVNDat;
-	bool switchFlag;
 
     // for output files
     BlockVector<FieldVector<RT, 1> > *outPressureN;
@@ -691,9 +722,11 @@ namespace Dune
     BlockVector<FieldVector<RT, 1> > *outMobilityW;
     BlockVector<FieldVector<RT, 1> > *outMobilityN;
     BlockVector<FieldVector<RT, 1> > *outPhaseState;
-	BlockVector<FieldVector<RT, 1> > *outPermeability;
+//	BlockVector<FieldVector<RT, 1> > *outPermeability;
 
-
+  protected:
+		bool switchFlag;
+		bool switchFlagLocal;
   };
 
 }

@@ -156,6 +156,7 @@ namespace Dune {
                   typedef NewImplicitEulerStep<Model> NewTimeStep;
 
 		  int k = 0;
+		  int countVtk = 0;
 
 		  writer.beginTimestep(0, model.grid().leafView());
 
@@ -196,9 +197,10 @@ namespace Dune {
 		  // generate output
 			  if (k%modulo == 0)
 			  {
+				  countVtk++;
 				  writer.beginTimestep(t, model.grid().leafView());
 				  model.addvtkfields(writer);
-				  std::cout << ">>> writing output-file at time : " << t << std::endl;
+				  std::cout << ">>> writing output-file number " << countVtk << " at time : " << t << std::endl;
 				  writer.endTimestep();
 			  }
 			  if (k%(modulo*2) == 0)
