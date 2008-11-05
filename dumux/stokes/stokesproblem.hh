@@ -79,7 +79,12 @@ public:
 	 */
 	virtual RT Jn(const FieldVector<DT,dim>& x, const Entity& e,
 			const IntersectionIterator& intersectionIt,
-			const FieldVector<DT,dim>& xi) const = 0;
+			const FieldVector<DT,dim>& xi) const
+        {
+	  DUNE_THROW(NotImplemented, "no Jn specified, but requested");
+	  
+	  return 0; 
+	}
 
 	//! evaluate tangential force boundary condition at given position
 	/*! evaluate tangential force boundary condition \f$- \mu (\nabla\vec{u}\cdot\vec{n})_\tau = \vec{J}_\tau \f$ at given position
@@ -88,7 +93,13 @@ public:
 	 */
 	virtual FieldVector<RT,dim> Jt(const FieldVector<DT,dim>& x, const Entity& e,
 			const IntersectionIterator& intersectionIt,
-			const FieldVector<DT,dim>& xi) const = 0;
+			const FieldVector<DT,dim>& xi) const
+        {
+	  DUNE_THROW(NotImplemented, "no Jt specified, but requested");
+	  
+	  FieldVector<RT,dim> result(0);
+	  return result; 
+	}
 
 	//! evaluate Beavers-Joseph proportionality constant at given position
 	/*! evaluate Beavers-Joseph proportionality constant \f$c = \sqrt(k)/\alpha\f$ 
