@@ -14,22 +14,22 @@
 #include "dumux/stokes/dgstokes.hh"
 #include "dumux/stokes/l2error.hh"
 #include "dumux/stokes/h1error.hh"
-#include "yxproblem.hh"
+#include "channelflowproblem.hh"
 
 int main(int argc, char** argv)
 {
   try{
     // define the problem dimensions
     const int dim = 2;
-    const int vOrder = 3;
-    const int pOrder = 2;
+    const int vOrder = 2;
+    const int pOrder = 1;
 
     // create a grid object
     typedef double NumberType;
     typedef Dune::SGrid<dim,dim> GridType;
 
     if (argc != 2 && argc != 3) {
-    	std::cout << "Usage: test_stokes dgffilename [refinementsteps]" << std::endl;
+    	std::cout << "Usage: test_channelflow dgffilename [refinementsteps]" << std::endl;
     	return (1);
     }
     int refinementSteps = 0;
@@ -46,7 +46,7 @@ int main(int argc, char** argv)
     	grid.globalRefine(refinementSteps);
 
     DGStokesParameters parameters;
-    Dune::YXProblem<GridType, double> problem;
+    Dune::ChannelFlowProblem<GridType, double> problem;
     typedef Dune::DGStokes<GridType, vOrder, pOrder> DGStokes;
     DGStokes dGStokes(grid, problem, parameters);
     dGStokes.assembleStokesSystem();
@@ -54,7 +54,7 @@ int main(int argc, char** argv)
 //    printmatrix(std::cout, dGStokes.matrix(), "stiffness matrix", "row", 11, 4);
 //    printvector(std::cout, dGStokes.rhs(), "right hand side", "row", 200, 1, 3);
     dGStokes.solveStokesSystem();
-    dGStokes.vtkout("test_stokes", 0);
+    dGStokes.vtkout("test_channelflow", 0);
 //     printvector(std::cout, dGStokes.sol(), "solution", "row", 200, 1, 3);
 
     std::cout << "L2Error velocity: ";
