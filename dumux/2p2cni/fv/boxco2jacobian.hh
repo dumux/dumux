@@ -94,7 +94,7 @@ namespace Dune
 			      bool procBoundaryAsDirichlet_=true)
     : BoxJacobian<ThisType,G,RT,m,BoxFunction>(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_),
       problem(params),
-      sNDat(this->vertexMapper.size()), vNDat(SIZE), oldVNDat(SIZE)
+      sNDat(this->vertexMapper.size()), vNDat(SIZE), oldVNDat(SIZE), switched(false), switchBreak(false)
   	{
       this->analytic = false;
     }
@@ -416,7 +416,9 @@ namespace Dune
    	virtual void primaryVarSwitch (const Entity& e, int global, VBlockType* sol, int local)
     {
 
-   		bool switched = false;
+ //  	 if(!switchBreak)
+ //  	  {
+   		switched = false;
    		int state = sNDat[global].phaseState;
 
         RT pW = sol[local][pWIdx];
@@ -425,7 +427,8 @@ namespace Dune
   		if (state == waterPhase) satW = 1.0;
   		if (state == gasPhase) satW = 0.0;
 
-    	RT pC = problem.materialLaw().pC(satW, this->fvGeom.subContVol[local].global, e, this->fvGeom.subContVol[local].local);
+  		// capillary pressure neglected
+    	RT pC = 0.0; //problem.materialLaw().pC(satW, this->fvGeom.subContVol[local].global, e, this->fvGeom.subContVol[local].local);
   		RT pN = pW + pC;
 
     	FVector Coordinates = this->fvGeom.subContVol[local].global;
@@ -481,7 +484,7 @@ namespace Dune
       	  	}
       	  	break;
         }
-
+ //  	  }
    	return;
     }
 
@@ -519,6 +522,13 @@ namespace Dune
        return;
     }
 
+    virtual void resetPhaseState ()
+    {
+      	for (int i = 0; i < this->vertexMapper.size(); i++){
+       		sNDat[i].phaseState = sNDat[i].oldPhaseState;
+      	 }
+       return;
+    }
 	  //*********************************************************
 	  //*														*
 	  //*	Calculation of Data at Elements (elData) 			*
@@ -674,7 +684,8 @@ namespace Dune
 
    		 varData[i].satW = 1.0 - varData[i].satN;
 
-   		 varData[i].pC = problem.materialLaw().pC(varData[i].satW, this->fvGeom.subContVol[i].global, e, this->fvGeom.subContVol[i].local);
+   		 // Capillary pressure neglected (may produce negative pw values)
+  		 varData[i].pC = 0.0; //problem.materialLaw().pC(varData[i].satW, this->fvGeom.subContVol[i].global, e, this->fvGeom.subContVol[i].local);
    		 varData[i].pN = varData[i].pW + varData[i].pC;
    		 varData[i].temperature = sol[i][teIdx]; // in [K]
 
@@ -766,7 +777,6 @@ namespace Dune
     struct StaticNodeData
     {
    	 bool visited;
-//   	 bool switched;
    	 int phaseState;
    	 int oldPhaseState;
    	 RT cellVolume;
@@ -800,6 +810,7 @@ namespace Dune
     std::vector<StaticIPData> sIPDat;
     std::vector<VariableNodeData> vNDat;
     std::vector<VariableNodeData> oldVNDat;
+    bool switched, switchBreak;
 
     // for output files
     BlockVector<FieldVector<RT, 1> > *outPressureN;
