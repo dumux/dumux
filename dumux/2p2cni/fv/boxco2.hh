@@ -42,7 +42,7 @@
 #include "dumux/2p2cni/fv/boxco2jacobian.hh"
 
 #include "dumux/nonlinear/new_newtonmethod.hh"
-#include "dumux/nonlinear/new_newtoncontroller.hh"
+#include "dumux/2p2cni/2p2cninewtoncontroller.hh"
 #include "dumux/io/importfromdgf_leaf.hh"
 namespace Dune
 {
@@ -94,7 +94,7 @@ namespace Dune
       };
 
       typedef NewNewtonMethod<ThisType> NewtonMethod;
-      typedef NewtonController<NewtonMethod> NewtonController;
+      typedef TwoPTwoCNINewtonController<NewtonMethod> NewtonController;
 
       typedef typename NewtonTraits::Function Function;
       Function &currentSolution()
@@ -502,20 +502,29 @@ namespace Dune
 		NewtonMethod<G, ThisType> newtonMethod(this->_grid, *this, relTol, absTol);
 		newtonMethod.execute();
                 */
+		bool newtonLoop = false;
+		while(!newtonLoop)
+		{
+			    nextDt = this->localJacobian.getDt();
                 NewtonMethod newton(*this);
                 NewtonController newtonCtl;
-                newton.execute(*this, newtonCtl);
-                nextDt = newtonCtl.suggestTimeStepSize(dt);
-
+                newtonLoop = newton.execute(*this, newtonCtl);
+                nextDt = newtonCtl.suggestTimeStepSize(nextDt);
+                this->localJacobian.setDt(nextDt);
+                if(!newtonLoop){
+                	*this->u = *this->uOldTimeStep;
+                	this->localJacobian.resetPhaseState();
+                }
+                std::cout<<"timeStep resized to: "<<nextDt<<std::endl;
+		}
 
 		double Flux(0), Mass(0);
 		Flux = this->computeFlux();
 		Mass = this->totalCO2Mass();
-		dt = this->localJacobian.getDt();
 
 		this->localJacobian.updatePhaseState(); // update variable oldPhaseState
-//		this->localJacobian.clearVisited();
-//		updateState();							// phase switch after each timestep
+		this->localJacobian.clearVisited();
+		updateState();							// phase switch after each timestep
                 std::cout << Flux << ", "<< Mass;
 
 		*(this->uOldTimeStep) = *(this->u);
