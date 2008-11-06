@@ -44,10 +44,10 @@ namespace Dune
 
     public:
         _NewtonUpdateMethod(NewtonMethod &newton,
-                            Function &uInitial, 
+                            Function &uInitial,
                             Model &model)
             {};
-            
+
         bool update(NewtonMethod &newton,
                     Function &u,
                     Function &uOld,
@@ -81,9 +81,9 @@ namespace Dune
         typedef typename NewtonMethod::Model             Model;
         typedef typename Model::NewtonTraits::Function   Function;
         typedef typename Model::NewtonTraits::Scalar     Scalar;
-            
+
         _NewtonUpdateMethod(NewtonMethod &newton,
-                            Function &uInitial, 
+                            Function &uInitial,
                             Model &model)
             {
                 newton.setResidualObsolete();
@@ -91,9 +91,9 @@ namespace Dune
                 _nIterations = 0;
             };
 
-            
+
         bool update(NewtonMethod &newton,
-                    Function &u, 
+                    Function &u,
                     Function &uOld,
                     Model &model)
             {
@@ -143,14 +143,14 @@ namespace Dune
                     Scalar lambdaHat = - fHatPrime0 / (2*(newResidual2Norm2 - _oldResidual2Norm2 - fHatPrime0));
                     lambdaHat = std::max(Scalar(1/10.0), lambdaHat);
                     lambdaHat = std::min(Scalar(.5), lambdaHat);
-                    
-                    // do step with a step size reduced by lambdaHat 
+
+                    // do step with a step size reduced by lambdaHat
                     *u *= -lambdaHat;
                     *u += *uOld;
-                    
+
                     newton.setResidualObsolete();
                     newResidual2Norm2 = (*newton.residual()).two_norm2();
-                    
+
 //                    std::cerr << boost::format(" after line search %f\n")%newResidual2Norm2;
                 }
                 _oldResidual2Norm2 = newResidual2Norm2;
@@ -208,14 +208,14 @@ namespace Dune
                 Function          &u             = model.currentSolution();
                 LocalJacobian     &localJacobian = model.getLocalJacobian();
                 JacobianAssembler &jacobianAsm   = model.jacobianAssembler();
-                
-                // method to of how updated are done. (either 
+
+                // method to of how updated are done. (either
                 // LineSearch or the plain newton-raphson method)
                 Dune::_NewtonUpdateMethod<ThisType, useLineSearch> updateMethod(*this, u, model);;
 
                 _residualUpToDate = false;
                 _deflectionTwoNorm = 1e100;
-                
+
                 // tell the controller that we begin solving
                 ctl.newtonBegin(this, u);
 
@@ -226,7 +226,7 @@ namespace Dune
                     // notify the controller that we're about to start
                     // a new timestep
                     ctl.newtonBeginStep();
-                    
+
                     // make the current soltion to the old one
                     *uOld = *u;
                     *f = 0;
@@ -282,15 +282,15 @@ namespace Dune
          */
         const JacobianMatrix &currentJacobian() const
             { return *(_model->jacobianAssembler()); }
-        
+
 
         /*!
          * \brief This method causes the residual to be recalcuated
-         *        next time the residual() method is called. It is 
+         *        next time the residual() method is called. It is
          *        internal and only used by some update methods such
          *        as LineSearch.
          */
-        void setResidualObsolete(bool yesno=true) 
+        void setResidualObsolete(bool yesno=true)
             { _residualUpToDate = !yesno; };
 
         /*!
@@ -316,6 +316,12 @@ namespace Dune
          */
         Scalar deflectionTwoNorm() const
             { return _deflectionTwoNorm; }
+
+        const Model &model() const
+        { return *_model; }
+
+        Model &model()
+        { return *_model; }
 
     private:
         Function       uOld;
