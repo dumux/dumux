@@ -279,37 +279,43 @@ namespace Dune
 		this->localJacobian.setOldSolution(this->uOldTimeStep);
 
 		// execute newton method
+		typedef typename GV::template Codim<0>::Iterator Iterator;
+		typedef typename G::Traits::template Codim<0>::Entity Entity;
+		typedef typename G::ctype DT;
+		enum {dim = G::dimension};
+
 		bool switchFlag = this->localJacobian.checkSwitched();
 		bool newtonLoop = false;
 		while(!newtonLoop)
 		{
-			dt = this->localJacobian.getDt();
-			NewtonMethod newton(*this); // *this means object itself (box2p2c)
-			NewtonController newtonCtl(switchFlag, 1e-7, 6, 18);
-			newtonLoop = newton.execute(*this, newtonCtl);
-			nextDt = newtonCtl.suggestTimeStepSize(dt);
-			this->localJacobian.setDt(nextDt);
-			if(!newtonLoop){
-				*this->u = *this->uOldTimeStep;
-				this->localJacobian.resetPhaseState();
+			    nextDt = this->localJacobian.getDt();
+                NewtonMethod newton(*this); // *this means object itself (box2p2c)
+                NewtonController newtonCtl(switchFlag, 1e-7, 6, 18);
+                newtonLoop = newton.execute(*this, newtonCtl);
+                nextDt = newtonCtl.suggestTimeStepSize(nextDt);
+                this->localJacobian.setDt(nextDt);
+                if(!newtonLoop){
+                	*this->u = *this->uOldTimeStep;
+                	this->localJacobian.resetPhaseState();
 //				this->localJacobian.resetSwitched();
 //				this->localJacobian.resetSwitchedLocal();
-			}
-			std::cout<<"timeStep reduced to: "<<nextDt<<std::endl;
+                }
+                std::cout<<"timeStep resized to: "<<nextDt<<std::endl;
 		}
 
 //		double Flux(0), Mass(0);
 //		Flux = this->computeFlux();
 //		Mass = this->totalCO2Mass();
-		dt = this->localJacobian.getDt();
 
-		// update old phase state for computation of ComputeM(..uold..)
-		this->localJacobian.updatePhaseState();
+		this->localJacobian.updatePhaseState(); // update variable oldPhaseState
 		this->localJacobian.clearVisited();
 		clearSwitched();
 //		updateState();							// phase switch after each timestep
+//        std::cout << Flux << ", "<< Mass;
 
 		*(this->uOldTimeStep) = *(this->u);
+
+		// update old phase state for computation of ComputeM(..uold..)
 
 		return;
 	}
