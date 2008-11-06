@@ -7,6 +7,7 @@
 #include "dumux/operators/p1operatorextended.hh"
 #include "dumux/nonlinear/nonlinearmodel.hh"
 #include "dumux/fvgeometry/fvelementgeometry.hh"
+#include "dumux/nonlinear/newtonmethod.hh"
 
 namespace Dune {
 template<class G, class RT, class ProblemType, class LocalJacobian,
@@ -348,7 +349,7 @@ public:
 		if (minSat< -0.5 || maxSat > 1.5)DUNE_THROW(MathError, "Saturation exceeds range.");
 	}
 
-    const G &grid() const 
+    const G &grid() const
         { return grid_; }
 
 protected:
