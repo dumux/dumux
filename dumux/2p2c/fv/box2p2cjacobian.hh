@@ -479,7 +479,7 @@ namespace Dune
 	  //*********************************************************
 
     // analog to EvalStaticData in MUFTE
-    virtual void updateStaticData (const Entity& e, VBlockType* sol)
+    virtual void updateStaticDataVS (const Entity& e, VBlockType* sol)
     {
    	 // size of the sNDat vector is determined in the constructor
 
@@ -508,7 +508,7 @@ namespace Dune
     }
 
     // for initialization of the Static Data (sets porosity)
-    virtual void initiateStaticData (const Entity& e)
+    virtual void updateStaticData (const Entity& e, VBlockType* sol)
     {
    	 // get access to shape functions for P1 elements
    	 GeometryType gt = e.geometry().type();
@@ -518,7 +518,7 @@ namespace Dune
    	 // get local to global id map
    	 for (int k = 0; k < sfs.size(); k++)
    	 {
-  		 const int globalIdx = this->vertexMapper.template map<dim>(e, sfs[k].entity());
+   		 const int globalIdx = this->vertexMapper.template map<dim>(e, sfs[k].entity());
 
   		 // if nodes are not already visited
   		 if (!sNDat[globalIdx].visited)
@@ -531,10 +531,18 @@ namespace Dune
 
   			 // mark elements that were already visited
   			 sNDat[globalIdx].visited = true;
-  		 	}
-   	 	}
+  		 }
 
-	  return;
+   	 }
+   	 bool switchFlag = checkSwitched();
+
+   	 if (!switchFlag){
+   		 clearVisited();
+   		 updateStaticDataVS(e, sol); // performs variable switch after each Newton step
+   	 }
+
+
+   	 return;
     }
 
 

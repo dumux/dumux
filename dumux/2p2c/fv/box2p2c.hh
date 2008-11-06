@@ -180,8 +180,9 @@ namespace Dune
 					this->problem.initialPhaseState(global, entity, local);
 
 			}
-				this->localJacobian.clearVisited();
-			this->localJacobian.initiateStaticData(entity);
+			this->localJacobian.clearVisited();
+			this->localJacobian.setLocalSolution(entity);
+			this->localJacobian.updateStaticData(entity, this->localJacobian.u);
 		}
 
 		// set Dirichlet boundary conditions
@@ -390,14 +391,14 @@ namespace Dune
 				// initialize cell concentration
 
 				// initialize variable phaseState
-				this->localJacobian.sNDat[globalId].phaseState =
-				data[globalId][m];
+				this->localJacobian.sNDat[globalId].phaseState = data[globalId][m];
 				// initialize variable oldPhaseState
 				this->localJacobian.sNDat[globalId].oldPhaseState = data[globalId][m];
 
 			}
-				this->localJacobian.clearVisited();
-				this->localJacobian.initiateStaticData(entity);
+			this->localJacobian.clearVisited();
+			this->localJacobian.setLocalSolution(entity);
+			this->localJacobian.updateStaticData(entity, this->localJacobian.u);
 		}
 	}
 
