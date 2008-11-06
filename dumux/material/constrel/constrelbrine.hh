@@ -43,6 +43,11 @@ public:
 		ConstrelWater water;
 		/* S : salinity as a mass fraction [-] */
 		/* x_CO2_w : mole fraction of CO2 in water phase */
+		if(Temp < 273.15)
+			Temp = 273.15;
+
+		if(pw > 2.5e8)
+			pw = 2.5e8;
 
 		rho_brine = this->mass_density_brine (Temp, pw, S);
 		rho_pure = water.mass_density_water_Batzle (Temp, pw);
@@ -115,7 +120,7 @@ public:
 		a[1][2] = -4.6856;
 		a[3][2] = -0.4900E-4;
 
-		X_lSAT = f[0] + f[1]*theta + f[2]*pow(theta, 2) + f[3]*pow(theta, 3);
+		X_lSAT = f[0] + f[1]*theta + f[2]*pow(theta,2) + f[3]*pow(theta,3);
 		/*Regularisierung*/
 		if (X>X_lSAT) {
 			X = X_lSAT;
@@ -125,7 +130,7 @@ public:
 
 		/*DAUBERT UND DANNER*/
 		/*U=*/h_NaCl = (3.6710E4*T + 0.5*(6.2770E1)*T*T - ((6.6670E-2)/3)*T*T*T
-				+((2.8000E-5)/4)*pow(T, 4))/(58.44E3)- 2.045698e+02; /* kJ/kg */
+				+((2.8000E-5)/4)*pow(T,4))/(58.44E3)- 2.045698e+02; /* kJ/kg */
 
 		m = (1E3/58.44)*(X/(1-X));
 		i = 0;
@@ -185,7 +190,7 @@ public:
 		a[1][2] = -4.6856;
 		a[3][2] = -0.4900E-4;
 
-		X_lSAT = f[0] + f[1]*theta + f[2]*pow(theta, 2) + f[3]*pow(theta, 3);
+		X_lSAT = f[0] + f[1]*theta + f[2]*theta*theta + f[3]*theta*theta*theta;
 		/*Regularisierung*/
 		if (X>X_lSAT) {
 			X = X_lSAT;
@@ -195,7 +200,7 @@ public:
 
 		/*DAUBERT UND DANNER*/
 		/*U=*/h_NaCl = (3.6710E4*T + 0.5*(6.2770E1)*T*T - ((6.6670E-2)/3)*T*T*T
-				+((2.8000E-5)/4)*pow(T, 4))/(58.44E3)- 2.045698e+02; /* kJ/kg */
+				+((2.8000E-5)/4)*(T*T*T*T))/(58.44E3)- 2.045698e+02; /* kJ/kg */
 
 		m = (1E3/58.44)*(X/(1-X));
 		i = 0;
