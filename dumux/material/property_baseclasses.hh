@@ -519,9 +519,13 @@ public:
 		return x;
 	}
 
-private:
-	static const double M_w = 1;
-	static const double M_a = 1;
+	Gas_GL():M_w(1.), M_a(1.)
+	{
+	}
+
+protected:
+	double M_w;
+	double M_a;
 };
 
 /**\ingroup properties
