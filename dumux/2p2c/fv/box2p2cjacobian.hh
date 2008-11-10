@@ -222,7 +222,7 @@ namespace Dune
 	 if (outward[nPhase] <= 0) {up_n = i; dn_n = j;}
 	 else {up_n = j; dn_n = i;};
 
-	 RT alpha = 1.0;  // Upwind parameter
+	 RT alpha = 0.8;  // Upwind parameter
 
 	 // water conservation
 	 flux[water] =   (alpha* vNDat[up_w].density[wPhase]*vNDat[up_w].mobility[wPhase]
@@ -404,6 +404,7 @@ namespace Dune
         }
         if (switched){
         	updateVariableData(e, sol, localIdx, vNDat, sNDat[globalIdx].phaseState);
+        	BoxJacobian<ThisType,G,RT,2,BoxFunction>::localToGlobal(e,sol);
         	setSwitchedLocal(); // if switch is triggered at any node, switchFlagLocal is set
         }
 
@@ -452,6 +453,18 @@ namespace Dune
       	 }
        return;
     }
+
+//	void localToGlobal(const Entity& e) {
+//	// we assert that the i-th shape function is
+//	// associated to the i-th node of the cell.
+//	int n = _curCell().template count<GridDim>();
+//	this->setcurrentsize(n);
+//	for (int i = 0; i < n; i++) {
+//		int globalIdx = vertexMapper.template map<dim>(_curCell(), i);
+//		(*currentSolution)[globalIdx] = this->(*u)[i];
+//	}
+//	}
+
 
 	  //*********************************************************
 	  //*														*
@@ -540,8 +553,6 @@ namespace Dune
    		 clearVisited();
    		 updateStaticDataVS(e, sol); // performs variable switch after each Newton step
    	 }
-
-
    	 return;
     }
 

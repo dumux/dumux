@@ -97,7 +97,7 @@ namespace Dune {
                 Scalar switchVar;
                 Scalar pW;
 
-                for (int idx = 0; idx < (*u).size(); idx++)
+                for (int idx = 0; idx < (int) (*u).size(); idx++)
                 {
                     pW = (*u)[idx][0];
                 	switchVar = (*u)[idx][1];

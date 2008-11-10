@@ -37,7 +37,7 @@ namespace Dune
      * \brief Base class for the reference implementation of a newton
      *        controller.
      *
-     * If you want to specialise only some methods but are happy with
+     * If you want to specialize only some methods but are happy with
      * the defaults of the reference controller, derive your
      * controller from this class and simply overload the required
      * methods.
@@ -71,7 +71,7 @@ namespace Dune
                 _maxPhysicalness = 0;
             };
 
-        //! Returns true iff another iteration should be done.
+        //! Returns true if another iteration should be done.
         bool newtonProceed(Function &u)
             {
                 if (_numSteps < 2)
@@ -121,11 +121,11 @@ namespace Dune
                 };
             }
 
-        //! Returns true iff the defect of the solution is below the
+        //! Returns true if the defect of the solution is below the
         //! tolerance
         bool newtonConverged()
             {
-                return _method->deflectionTwoNorm()*_oneByMagnitude <= _tolerance && _curPhysicalness >= 1.0;
+                return ((_method->deflectionTwoNorm()*_oneByMagnitude <= _tolerance) && (_curPhysicalness >= 1.0));
             }
 
         //! called before the newton method is applied to an equation
@@ -162,7 +162,7 @@ namespace Dune
                 // accurately. On the other hand, if this is the first
                 // newton step, we don't have a meaningful value for the defect
                 // yet, so we use the targeted accurracy for the defect.
-                Scalar residTol = _tolerance/10;
+                Scalar residTol = _tolerance/1e8;
 
                 typedef Dune::MatrixAdapter<typename JacobianAssembler::RepresentationType,
                                             typename Function::RepresentationType,
@@ -182,7 +182,7 @@ namespace Dune
 //                Dune::SeqSSOR<OpAsmRep,FnRep,FnRep> precond(*opAsm, 3, 1.0);
 //                SeqIdentity<OpAsmRep,FnRep,FnRep> precond(*opAsm);
                 // invert the linear equation system
-                Dune::BiCGSTABSolver<Vector> solver(opA, precond, residTol, 10000, 1);
+                Dune::BiCGSTABSolver<Vector> solver(opA, precond, residTol, 500, 1);
 
 #endif
                 Dune::InverseOperatorResult result;
@@ -194,6 +194,7 @@ namespace Dune
         void newtonEndStep(Function &u, Function &uOld)
             {
                 ++_numSteps;
+                _curPhysicalness = _asImp()._physicalness(u);
                 std::cout << boost::format("Newton iteration %d done: defect=%g, physicalness: %.3f, maxPhysicalness=%.3f\n")
                     %_numSteps%(_method->deflectionTwoNorm()*_oneByMagnitude)%_curPhysicalness%_maxPhysicalness;
             };
