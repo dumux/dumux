@@ -10,7 +10,7 @@
 #include <dune/istl/solvers.hh>
 
 #include "dumux/operators/p1operatorextended.hh"
-#include <dune/disc/groundwater/p1groundwater.hh>
+//#include <dune/disc/groundwater/p1groundwater.hh>
 
 #include <dumux/io/readstarformat.cc>
 #include <dumux/timedisc/timeloop.hh>
