@@ -71,15 +71,16 @@ public:
 		return x[0];
 	}
 
-	Gas_WaterAir(): Gas_GL(), M_w(0.018016), M_a(0.02896)
+	Gas_WaterAir() : Gas_GL()
 	{
+		M_w = 0.018016;
+		M_a = 0.02896;
 	}
 
 private:
 	ConstrelAir constRelAir;
 	ConstrelWater constRelWater;
-//	static const double M_w = 0.018016; //[kg / mole]
-//	static const double M_a = 0.02896; //[kg / mole]
+
 	static const double R = 8.314472; // universal gas constant [J / (mole * K)]
 };
 
