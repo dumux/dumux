@@ -150,8 +150,15 @@ namespace Dune
 
  	 // normal vector, value of the area of the scvf
 	 const FieldVector<RT,dim> normal(this->fvGeom.subContVolFace[face].normal);
+	 GeometryType gt = e.geometry().type();
+	 const typename LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type&
+ 	 sfs=LagrangeShapeFunctions<DT,RT,dim>::general(gt,1);
 
-	 // get global coordinates of nodes i,j
+	 // global index of the subcontrolvolume face neighbor nodes in element e
+	 int globalIdx_i = this->vertexMapper.template map<dim>(e, sfs[i].entity());
+  	 int globalIdx_j = this->vertexMapper.template map<dim>(e, sfs[j].entity());
+
+  	 // get global coordinates of nodes i,j
 	 const FieldVector<DT,dim> global_i = this->fvGeom.subContVol[i].global;
 	 const FieldVector<DT,dim> global_j = this->fvGeom.subContVol[j].global;
 	 const FieldVector<DT,dim> local_i = this->fvGeom.subContVol[i].local;
@@ -222,7 +229,7 @@ namespace Dune
 	 if (outward[nPhase] <= 0) {up_n = i; dn_n = j;}
 	 else {up_n = j; dn_n = i;};
 
-	 RT alpha = 0.8;  // Upwind parameter
+	 RT alpha = 1.0;  // Upwind parameter
 
 	 // water conservation
 	 flux[water] =   (alpha* vNDat[up_w].density[wPhase]*vNDat[up_w].mobility[wPhase]
@@ -258,8 +265,38 @@ namespace Dune
 	 RT diffusionAW(0.0), diffusionAN(0.0); // diffusion of air
 	 VBlockType avgDensity, avgDpm;
 
-	 avgDpm[wPhase]=2e-9; // needs to be changed !!!
-	 avgDpm[nPhase]=2.25e-5; // water in the gasphase
+     // calculate tortuosity at the nodes i and j needed for porous media diffusion coefficient
+	 RT tauW_i, tauW_j, tauN_i, tauN_j; // tortuosity of wetting and nonwetting phase
+	 tauW_i = pow(sNDat[globalIdx_i].porosity * vNDat[i].satW,(7/3))/
+		 (sNDat[globalIdx_i].porosity*sNDat[globalIdx_i].porosity);
+	 tauW_j = pow(sNDat[globalIdx_j].porosity * vNDat[j].satW,(7/3))/
+		 (sNDat[globalIdx_j].porosity*sNDat[globalIdx_j].porosity);
+	 tauN_i = pow(sNDat[globalIdx_i].porosity * vNDat[i].satN,(7/3))/
+		 (sNDat[globalIdx_i].porosity*sNDat[globalIdx_i].porosity);
+	 tauN_j = pow(sNDat[globalIdx_j].porosity * vNDat[j].satN,(7/3))/
+		 (sNDat[globalIdx_j].porosity*sNDat[globalIdx_j].porosity);
+
+	 // arithmetic mean of porous media diffusion coefficient
+	 RT Dwn, Daw;
+	 Dwn = (sNDat[globalIdx_i].porosity * vNDat[i].satN * tauN_i * vNDat[i].diff[nPhase] +
+			sNDat[globalIdx_j].porosity * vNDat[j].satN * tauN_j * vNDat[j].diff[nPhase])/2;
+	 Daw = (sNDat[globalIdx_i].porosity * vNDat[i].satW * tauW_i * vNDat[i].diff[wPhase] +
+			sNDat[globalIdx_j].porosity * vNDat[j].satW * tauW_j * vNDat[j].diff[wPhase])/2;
+
+//
+//	 avgDpm[wPhase]=2e-9; // needs to be changed !!!
+//	 avgDpm[nPhase]=2.25e-5; // water in the gasphase
+
+	 // adapt the diffusion coefficent according to the phase state.
+	 // TODO: make this continuously dependent on the phase saturations
+	 if (state_i == gasPhase || state_j == gasPhase) {
+		 // one cell is only gas -> no diffusion in water phase
+		 avgDpm[wPhase] = 0;
+	 }
+	 if (state_i == waterPhase || state_j == waterPhase) {
+		 // one cell is only water -> no diffusion in gas phase
+		 avgDpm[nPhase] = 0;
+	 }
 
 	 normDiffGrad[wPhase] = xGrad[wPhase]*normal;
 	 normDiffGrad[nPhase] = xGrad[nPhase]*normal;
@@ -268,23 +305,10 @@ namespace Dune
 	 avgDensity[wPhase] = 0.5*(vNDat[i].density[wPhase] + vNDat[j].density[wPhase]);
 	 avgDensity[nPhase] = 0.5*(vNDat[i].density[nPhase] + vNDat[j].density[nPhase]);
 
-	 if (state_i==2 && state_j==2)
-	 {
-		 diffusionAW = avgDpm[wPhase] * avgDensity[wPhase] * normDiffGrad[wPhase];
-		 diffusionWW = - diffusionAW;
-		 diffusionWN = avgDpm[nPhase] * avgDensity[nPhase] * normDiffGrad[nPhase];
-		 diffusionAN = - diffusionWN;
-	 }
-	 else if ((state_i == 1 || state_j == 1) || (state_i == 1 && state_j == 1))
-	 {
-		 diffusionAW = avgDpm[wPhase] * avgDensity[wPhase] * normDiffGrad[wPhase];
-		 diffusionWW = - diffusionAW;
-	 }
-	 else if ((state_i == 0 || state_j == 0) || (state_i == 0 && state_j == 0))
-	 {
-		 diffusionWN = avgDpm[nPhase] * avgDensity[nPhase] * normDiffGrad[nPhase];
-		 diffusionAN = - diffusionWN;
-	 }
+	 diffusionAW = Daw * avgDensity[wPhase] * normDiffGrad[wPhase];
+	 diffusionWW = - diffusionAW;
+	 diffusionWN = Dwn * avgDensity[nPhase] * normDiffGrad[nPhase];
+	 diffusionAN = - diffusionWN;
 
 	 // add diffusion of water to flux
 	 flux[water] += (diffusionWW + diffusionWN);
@@ -542,17 +566,16 @@ namespace Dune
   			 // set counter for variable switch to zero
   			 sNDat[globalIdx].switched = 0;
 
+  			 if (!checkSwitched())
+  		   	 {
+  		   		 primaryVarSwitch(e, globalIdx, sol, k);
+  		   	 }
+
   			 // mark elements that were already visited
   			 sNDat[globalIdx].visited = true;
   		 }
-
    	 }
-   	 bool switchFlag = checkSwitched();
 
-   	 if (!switchFlag){
-   		 clearVisited();
-   		 updateStaticDataVS(e, sol); // performs variable switch after each Newton step
-   	 }
    	 return;
     }
 
@@ -577,6 +600,7 @@ namespace Dune
      VBlockType density;
      FieldMatrix<RT,c,m> massfrac;
      int phasestate;
+     VBlockType diff;
     };
 
     // analog to EvalPrimaryData in MUFTE, uses members of vNDat
@@ -622,6 +646,9 @@ namespace Dune
    		 varData[i].density[wPhase] = 1000;//problem.wettingPhase().density(varData[i].temperature, varData[i].pN);
    		 varData[i].density[nPhase] = problem.nonwettingPhase().density(varData[i].temperature, varData[i].pN,
    				 varData[i].massfrac[water][nPhase]);
+
+         varData[i].diff[wPhase] = problem.wettingPhase().diffCoeff();
+         varData[i].diff[nPhase] = problem.nonwettingPhase().diffCoeff();
 
          // CONSTANT solubility (for comparison with twophase)
 //         varData[i].massfrac[air][wPhase] = 0.0; varData[i].massfrac[water][wPhase] = 1.0;
@@ -680,9 +707,9 @@ namespace Dune
 		return switchFlagLocal;
 	}
 
-	void setSwitched()
+	void setSwitchedLocalToGlobal()
 	{
-		switchFlag = true;
+		switchFlag = switchFlagLocal;
 		return;
 	}
 

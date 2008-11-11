@@ -134,9 +134,11 @@ namespace Dune
 		this->localJacobian.outPhaseState = vtkMultiWriter->template createField<RT, 1>(this->size);
 //		this->localJacobian.outPermeability = vtkMultiWriter->template createField<RT, 1>(this->size);
 
+
 		this->localJacobian.clearVisited();
 		// initialize switch flags
-		this->localJacobian.resetSwitched();
+		this->localJacobian.setSwitchedLocal();
+		this->localJacobian.setSwitchedLocalToGlobal();
 		this->localJacobian.resetSwitchedLocal();
 
 		// iterate through leaf grid an evaluate c0 at cell center
@@ -184,6 +186,8 @@ namespace Dune
 			this->localJacobian.setLocalSolution(entity);
 			this->localJacobian.updateStaticData(entity, this->localJacobian.u);
 		}
+		this->localJacobian.resetSwitchedLocal();
+		this->localJacobian.resetSwitched();
 
 		// set Dirichlet boundary conditions
 		for (Iterator it = gridview.template begin<0>();
@@ -255,7 +259,6 @@ namespace Dune
 
 		}
 
-
 		*(this->uOldTimeStep) = *(this->u);
 
 		return;
@@ -285,21 +288,18 @@ namespace Dune
 		typedef typename G::ctype DT;
 		enum {dim = G::dimension};
 
-		bool switchFlag = this->localJacobian.checkSwitched();
 		bool newtonLoop = false;
 		while(!newtonLoop)
 		{
 			    nextDt = this->localJacobian.getDt();
                 NewtonMethod newton(*this); // *this means object itself (box2p2c)
-                NewtonController newtonCtl(switchFlag, 1e-7, 6, 18);
+                NewtonController newtonCtl(1e-7, 6, 18);
                 newtonLoop = newton.execute(*this, newtonCtl);
                 nextDt = newtonCtl.suggestTimeStepSize(nextDt);
                 this->localJacobian.setDt(nextDt);
                 if(!newtonLoop){
                 	*this->u = *this->uOldTimeStep;
                 	this->localJacobian.resetPhaseState();
-//				this->localJacobian.resetSwitched();
-//				this->localJacobian.resetSwitchedLocal();
                 }
                 std::cout<<"timeStep resized to: "<<nextDt<<std::endl;
 		}
@@ -465,9 +465,17 @@ namespace Dune
 	{
 		this->localJacobian.resetSwitchedLocal();
 		this->localJacobian.resetSwitched();
-
 	}
 
+	void setSwitchedLocalToGlobal()
+	{
+		this->localJacobian.setSwitchedLocalToGlobal();
+	}
+
+	bool checkSwitched()
+	{
+		return this->localJacobian.checkSwitched();
+	}
 
 	template<class MultiWriter>
 	void addvtkfields (MultiWriter& writer)
