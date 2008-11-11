@@ -31,15 +31,16 @@ int main(int argc, char** argv)
     Dune::FieldVector<NumberType, dim> outerLowerLeft(0.0);
     Dune::FieldVector<NumberType, dim> outerUpperRight(60.0);
     outerUpperRight[1] = 40.0;
-    double depthBOR = 1000.0;
+    double depthBOR = 800.0;
 
 //	For defining a SGrid ////////////////////////////////////////
 //    typedef Dune::SGrid<dim,dim> GridType;
 //    typedef Dune::FieldVector<GridType::ctype,dim> FieldVector;
-//    Dune::FieldVector<int,dim> N(39);
+//    Dune::FieldVector<int,dim> N(24); N[1]=16;
 //    FieldVector L(0);
-//    FieldVector H(300); H[0] = 300;
+//    FieldVector H(60); H[1]=40;
 //    GridType grid(N,L,H);
+////////////
 
     // for defining e.g. a lense
     Dune::FieldVector<NumberType, dim> innerLowerLeft(0.0);
@@ -63,7 +64,6 @@ int main(int argc, char** argv)
 	is2 >> dt;
 
     // create a grid object
-    //typedef Dune::SGrid<dim,dim> GridType;
     //typedef Dune::YaspGrid<dim,dim> GridType;
     typedef Dune::UGGrid<dim> GridType;
 
@@ -91,11 +91,11 @@ int main(int argc, char** argv)
     typedef Dune::Box2P2C<GridType, NumberType, MultiWriter> TwoPhaseTwoComp;
     TwoPhaseTwoComp twoPhasetwoComp(grid, problem);
 
-    Dune::TimeLoop<GridType, TwoPhaseTwoComp, true> timeloop(0, tEnd, dt, "lens", 1);
+    Dune::TimeLoop<GridType, TwoPhaseTwoComp, true> timeloop(0, tEnd, dt, "dummy", 1);
 
     Dune::Timer timer;
     timer.reset();
-    MultiWriter writer("out2p2c-1");
+    MultiWriter writer("out2p2c-2");
     timeloop.executeMultiWriter(twoPhasetwoComp, writer);
     std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
 

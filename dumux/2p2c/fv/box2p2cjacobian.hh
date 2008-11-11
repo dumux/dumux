@@ -95,6 +95,7 @@ namespace Dune
       this->analytic = false;
       switchFlag = false;
       switchFlagLocal = false;
+      temperature = 283.15;
     }
 
 	/** @brief compute time dependent term (storage), loop over nodes / subcontrol volumes
@@ -305,8 +306,9 @@ namespace Dune
 	 avgDensity[wPhase] = 0.5*(vNDat[i].density[wPhase] + vNDat[j].density[wPhase]);
 	 avgDensity[nPhase] = 0.5*(vNDat[i].density[nPhase] + vNDat[j].density[nPhase]);
 
+	 // diffusion in the wetting phase
 	 diffusionAW = Daw * avgDensity[wPhase] * normDiffGrad[wPhase];
-	 diffusionWW = - diffusionAW;
+	 diffusionWW = - diffusionAW; // air must be replaced by water
 	 diffusionWN = Dwn * avgDensity[nPhase] * normDiffGrad[nPhase];
 	 diffusionAN = - diffusionWN;
 
@@ -369,7 +371,7 @@ namespace Dune
         	xWNmass = sol[localIdx][switchIdx];
         	xWNmolar = problem.multicomp().convertMassToMoleFraction(xWNmass, gasPhase);
            	pwn = xWNmolar * pN;
-            pWSat = problem.multicomp().vaporPressure(vNDat[localIdx].temperature);
+            pWSat = problem.multicomp().vaporPressure(temperature);
 
         	if (pwn > 1.01*pWSat && !switched)// && switch_counter < 3)
             {
@@ -387,8 +389,8 @@ namespace Dune
 
         	xAWmass = sol[localIdx][switchIdx];
          	xAWmolar = problem.multicomp().convertMassToMoleFraction(xAWmass, waterPhase);
-        	henryInv = problem.multicomp().henry(vNDat[localIdx].temperature);
-            pWSat = problem.multicomp().vaporPressure(vNDat[localIdx].temperature);
+        	henryInv = problem.multicomp().henry(temperature);
+            pWSat = problem.multicomp().vaporPressure(temperature);
         	pbub = pWSat + xAWmolar/henryInv; // pWSat + pAW
 
         	if (pN < pbub && !switched)// && switch_counter < 3)
@@ -620,7 +622,7 @@ namespace Dune
 
    		 varData[i].pC = problem.materialLaw().pC(varData[i].satW, global, e, local);
    		 varData[i].pN = varData[i].pW + varData[i].pC;
-   		 varData[i].temperature = 283.15; // in [K], constant
+   		 varData[i].temperature = temperature; // in [K], constant
 
    		 // Solubilities of components in phases
    		 if (state == bothPhases){
@@ -773,6 +775,7 @@ namespace Dune
   protected:
 		bool switchFlag;
 		bool switchFlagLocal;
+		double temperature;
   };
 
 }

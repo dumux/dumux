@@ -125,7 +125,7 @@ namespace Dune {
                 // we accept solutions up to 0.2 percent bigger than 1
                 // or smaller than 0 as being physical for numerical
                 // reasons...
-                Scalar phys = 1.01 - maxSwitchVarDelta/switchVarNormFactor - maxPwDelta;
+                Scalar phys = 1.02 - maxSwitchVarDelta/switchVarNormFactor - maxPwDelta;
 
                 // we never return exactly zero, since we want to
                 // allow solutions which are "very close" to a

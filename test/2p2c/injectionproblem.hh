@@ -76,7 +76,7 @@ namespace Dune
 		RT densityW_ = 1000.0;
 
 		values[pWIdx] = 1e5 - densityW_*gravity_[1]*(depthBOR_ - x[1]);
-		values[switchIdx] = 1e-6;  // may be Sn, Xaw or Xwn!!
+		values[switchIdx] = 1e-8;  // may be Sn, Xaw or Xwn!!
 
 //		if (x[1] >= innerLowerLeft_[1] && x[1] <= innerUpperRight_[1]
 //		 && x[0] >= innerLowerLeft_[0])
@@ -115,7 +115,7 @@ namespace Dune
 		RT densityW_ = 1000.0;
 
 		values[pWIdx] = 1e5 - densityW_*gravity_[1]*(depthBOR_ - x[1]);
-		values[switchIdx] = 1e-6;
+		values[switchIdx] = 1e-8;
 
 //		if ((x[0] > 60.0 - eps_) && (x[1] < 10 && x[1] > 5))
 //			values[switchIdx] = 0.05;
@@ -229,7 +229,7 @@ namespace Dune
 
   	virtual double Sr_n(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, const double T) const
   	{
-  		return 0.05;
+  		return 0.0;
   	}
 
   	/* ATTENTION: define heat capacity per cubic meter! Be sure, that it corresponds to porosity!
@@ -270,7 +270,7 @@ namespace Dune
   	{
   		lowK_ = highK_ = 0.;
   		for(int i = 0; i < dim; i++){
-  			lowK_[i][i] = 5e-14;
+  			lowK_[i][i] = 1e-13;
   			highK_[i][i] = 1e-12;
   		}
   		layerBottom_ = 22.0;
