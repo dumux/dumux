@@ -46,11 +46,10 @@ namespace Dune {
         typedef typename ParentType::Function          Function;
         typedef typename ParentType::JacobianAssembler JacobianAssembler;
 
-        TwoPTwoCNewtonController(bool switched = false,
-							Scalar tolerance = 1e-5,
+        TwoPTwoCNewtonController(Scalar tolerance = 1e-5,
 							int targetSteps = 8,
 							int maxSteps = 12)
-            : ParentType(tolerance, targetSteps, maxSteps), switched_(switched)
+            : ParentType(tolerance, targetSteps, maxSteps), minStepsSwitch(8)
             {};
 
 		//! Suggest a new time stepsize based either on the number of newton
@@ -69,26 +68,36 @@ namespace Dune {
         //! Returns true if another iteration should be done.
         bool newtonProceed(Function &u)
             {
-                if (switched_ && ParentType::_numSteps < 4 && !ParentType::newtonConverged())
-                	return true; // do at least four iterations after variable switch
-
-                if (switched_ && ParentType::_numSteps >= 4) {
+				if (ParentType::newtonConverged()){
+					ParentType::_method->model().clearSwitched();
+					return false;
+				}
+				if (ParentType::_method->model().checkSwitched() && ParentType::_numSteps <= minStepsSwitch && !ParentType::newtonConverged())
+                	return true; // do at least some iterations after variable switch
+				else if (ParentType::_method->model().checkSwitched() && ParentType::_numSteps > minStepsSwitch) {
                 	ParentType::_method->model().clearSwitched();
-                	return true; // do at least four iterations after variable switch
+                	return false; // if after some iterations no convergence was reached
                 }
                 else
                 	return ParentType::newtonProceed(u);
             }
 
+        void newtonBeginStep()
+            {
+				ParentType::_method->model().setSwitchedLocalToGlobal();
+            }
+
 
     protected:
         friend class NewtonControllerBase<NewtonMethod, ThisType>;
+        int minStepsSwitch;
+
         //! called by the base class the get an indication of how physical
         //! an iterative solution is 1 means "completely physical", 0 means
         //! "completely unphysical"
         Scalar _physicalness(Function &u)
             {
-				const Scalar switchVarNormFactor = 1e-1; // standarization value
+				const Scalar switchVarNormFactor = 1.0; // standarization value
 
                 // the maximum distance of a Sn value to a physically
                 // meaningful value.
@@ -123,9 +132,6 @@ namespace Dune {
                 // physically meaningful one
                 return std::min(1.0, phys);
             }
-
-
-        bool switched_;
     };
 }
 
