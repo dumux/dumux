@@ -20,7 +20,7 @@
 #ifndef DUMUX_BOX_SCHEME_HH
 #define DUMUX_BOX_SCHEME_HH
 
-#include <dumux/new_models/box/boxjacobian.hh>
+#include <dumux/new_models/boxscheme/boxjacobian.hh>
 #include <dumux/auxiliary/basicdomain.hh>
 #include <dumux/nonlinear/new_newtonmethod.hh>
 #include <dumux/auxiliary/apis.hh>
@@ -95,7 +95,7 @@ namespace Dune
         typedef typename BoxTraits::ShapeFunctionSetContainer  ShapeFunctionSetContainer;
         typedef typename ShapeFunctionSetContainer::value_type ShapeFunctionSet;
 
-        typedef typename BoxTraits::BoundaryTypeVector  UnknownsVector;
+        typedef typename BoxTraits::UnknownsVector      UnknownsVector;
         typedef typename BoxTraits::BoundaryTypeVector  BoundaryTypeVector;
 
         typedef LocalJacobianT                          LocalJacobian;
@@ -127,10 +127,19 @@ namespace Dune
          */
         void initial()
             {
+                // initialize the static node data of the box jacobian
+                this->localJacobian().setCurSolution(&_uCur);
+                this->localJacobian().setOldSolution(&_uPrev);
+                
+                this->localJacobian().initStaticData();
+                
                 _applyInitialSolution(_uCur);
                 _applyDirichletBoundaries(_uCur);
-                
+
                 *_uPrev = *_uCur;
+
+                // update the static node data with the initial solution
+                this->localJacobian().updateStaticData(_uCur, _uPrev);              
             }
 
         /*!
@@ -194,46 +203,73 @@ namespace Dune
             { return _problem.grid(); }
 
         /*!
-         * \brief Try to progress simulation to the next timestep.
+         * \brief Try to progress the model to the next timestep.
          */
         template<class NewtonMethod, class NewtonController>
         void update(Scalar &dt, Scalar &nextDt, NewtonMethod &solver, NewtonController &controller)
             {
-                _localJacobian.setCurrentSolution(&_uCur);
-                _localJacobian.setOldSolution(&_uPrev);
-                
-                _applyDirichletBoundaries(_uCur);
-                
-                // TODO/FIXME: timestep control doesn't really belong
-                // here (previously it was in the newton solver where it
-                // belongs even less)
+                _asImp()->updateBegin();
+
                 int numRetries = 0;
                 while (true)
                 {
                     bool converged = solver.execute(*this->_asImp(),
                                                     controller);
                     nextDt = controller.suggestTimeStepSize(dt);
-                    
                     if (converged)
                         break;
                     
-                    if (numRetries >= 10)
+                    ++numRetries;
+                    if (numRetries > 10)
                         DUNE_THROW(Dune::MathError,
                                    "Newton solver didn't converge after 10 timestep divisions. dt=" << dt);
-                    ++numRetries;
+
                     _problem.setTimeStepSize(nextDt);
                     dt = nextDt;
+
+                    _asImp()->updateFailedTry();
+                    
                     std::cout << boost::format("Newton didn't converge. Retrying with timestep of %f\n")%dt;
                 }
-
-                // make the current solution the previous one. we copy
-                // the whole representation here, because the current
-                // solution is usually a much better approximation of
-                // the next time step than the previous one. This
-                // usually causes the newton solver to converge much
-                // faster.
-                *_uPrev = *_uCur;
+                
+                _asImp()->updateSuccessful();
             }
+
+        
+        /*!
+         * \brief Called by the update() method before it tries to
+         *        apply the newton method. This is primary a hook
+         *        which the actual model can overload.
+         */
+        void updateBegin()
+            {
+                _applyDirichletBoundaries(_uCur);
+            }
+
+        
+        /*!
+         * \brief Called by the update() method if it was
+         *        successful. This is primary a hook which the actual
+         *        model can overload.
+         */
+        void updateSuccessful() 
+            {
+                // make the current solution the previous one.
+                *_uPrev = *_uCur;
+            };
+
+        /*!
+         * \brief Called by the update() method if a try was
+         *         unsuccessful. This is primary a hook which the
+         *         actual model can overload.
+         */
+        void updateFailedTry() 
+            {
+                // Reset the current solution to the one of the
+                // previous time step so that we can start the next
+                // update at a physically meaningful solution.
+                *_uPrev = *_uCur;
+            };
 
 
         /*!
@@ -271,11 +307,10 @@ namespace Dune
                     // corresponding grid's node ids and add the
                     // cell's local residual at a node the global
                     // residual at this node.
-                    const ShapeFunctionSet &shapeFns = BoxTraits::shapeFunctions(cell.geometry().type(), 1);
-                    for(int localId=0; localId < shapeFns.size(); localId++)
+                    int n = cell.template count<GridDim>();
+                    for(int localId=0; localId < n; localId++)
                     {
-                        int globalId = _problem.nodeIndex(cell,
-                                                            shapeFns[localId].entity());
+                        int globalId = _problem.nodeIndex(cell, localId);
                         (*globResidual)[globalId] += localResidual[localId];
                     }
                 }
@@ -292,26 +327,23 @@ namespace Dune
                 {
                     // loop over all shape functions of the current cell
                     const Cell& cell = *it;
-                    const ShapeFunctionSet &shapeFnSet = BoxTraits::shapeFunctions(cell.geometry().type(), 1);
-                    for (int i = 0; i < shapeFnSet.size(); i++) {
-                        // get the local and global coordinates of the
-                        // shape function's center (i.e. the node
-                        // where it is 1 for Lagrange functions)
-                        const LocalCoord &localPos = shapeFnSet[i].position();
-                        WorldCoord globalPos = it->geometry().global(localPos);
+                    int numNodes = cell.template count<GridDim>();
+                    for (int localNodeIdx = 0; localNodeIdx < numNodes; localNodeIdx++) {
+                        // get node position in reference coodinates
+                        const LocalCoord &local =
+                            CellReferenceElements::general(it->type()).position(localNodeIdx, GridDim);
+                        // get global coordinate of node 
+                        const WorldCoord &global = it->geometry()[localNodeIdx];
 
-                        // translate the local index of the center of
-                        // the current shape function to the global
-                        // node id
-                        int globalId = _problem.nodeIndex(cell, shapeFnSet[i].entity());
-
-                        // use the problem controller to actually do
-                        // the dirty work of nailing down the initial
+                        int globalId = this->_problem.nodeIndex(*it, localNodeIdx);
+                        
+                        // use the problem for actually doing the
+                        // dirty work of nailing down the initial
                         // solution.
-                        _problem.initial((*u)[globalId],
-                                         cell,
-                                         globalPos,
-                                         localPos);
+                        this->_problem.initial((*u)[globalId],
+                                               cell,
+                                               global,
+                                               local);
                     }
                 }
             };
@@ -332,44 +364,32 @@ namespace Dune
                     // functions
                     const Cell& cell = *cellIt;
                     Dune::GeometryType geoType = cell.geometry().type();
-                    const typename ShapeFunctionSetContainer::value_type &shapeFnSet = BoxTraits::shapeFunctions(geoType, 1);
 
                     // locally evaluate the cell's boundary condition types
                     _localJacobian.assembleBoundaryCondition(cell);
-                    
-                    // loop over all faces of the cell
-                    const IntersectionIterator &faceEndIt = IntersectionIteratorGetter::end(cell);
-                    IntersectionIterator       faceIt = IntersectionIteratorGetter::begin(cell);
-                    for (; faceIt != faceEndIt;  ++faceIt) {
+
+                    // loop over all the cell's nodes
+                    int n = cellIt->template count<GridDim>();
+                    for (int i = 0; i < n; ++i) {
+                        // TODO: mixed boundary conditions
+                        if (_localJacobian.bc(i)[0] != Dune::BoundaryConditions::dirichlet)
+                            // we ought to evaluate dirichlet
+                            // boundary conditions, not
+                            // something else!
+                            continue;
                         
-                        // loop over all shape functions of the cell
-                        for (int i = 0; i < shapeFnSet.size(); i++)
-                        {
-                            if (_localJacobian.bc(i)[0] != Dune::BoundaryConditions::dirichlet)
-                                // we ought to evaluate dirichlet
-                                // boundary conditions, not
-                                // something else!
-                                continue;
+                        // translate local node id to a global one
+                        int globalId = _problem.nodeIndex(cell, i);
 
-                            // get the shape function's center in
-                            // local and global coordinates
-                            const LocalCoord &localPos = shapeFnSet[i].position();
-                            WorldCoord globalPos = cell.geometry().global(localPos);
-
-                            // translate local node id to a global one
-                            int globalId = _problem.nodeIndex(cell,
-                                                                shapeFnSet[i].entity());
-
-                            // actually evaluate the boundary
-                            // condition for the current
-                            // cell+face+node combo
-                            _problem.dirichlet((*u)[globalId],
-                                               cell,
-                                               faceIt,
-                                               globalPos,
-                                               localPos);                            
-                        }
+                        // actually evaluate the boundary
+                        // condition for the current
+                        // cell+node combo
+                        _problem.dirichlet((*u)[globalId],
+                                           cell,
+                                           i,
+                                           globalId);                            
                     }
+                    
                 }
             };
 
@@ -389,12 +409,12 @@ namespace Dune
         SpatialFunction _uCur;
         SpatialFunction _uPrev;
 
-        // the right hand side (?)
+        // the right hand side
         SpatialFunction  _f;
-        // Operator assembler. Linearizes the problem at a specific
-        // position using the local jacobian (?)
+        // Linearizes the problem at the current time step using the
+        // local jacobian
         JacobianAssembler _jacAsm;
-        // calculates the jacobian matrix at a given position
+        // calculates the local jacobian matrix for a given cell
         LocalJacobian    &_localJacobian;
     };
 }

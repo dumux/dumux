@@ -29,8 +29,8 @@
 
 #include "lenharddomain.hh"
 
-#include <dumux/new_models/box/pwsn/pwsnboxmodel.hh>
-#include <dumux/new_models/box/pwsn/pwsnnewtoncontroller.hh>
+#include <dumux/new_models/pwsn/pwsnboxmodel.hh>
+#include <dumux/new_models/pwsn/pwsnnewtoncontroller.hh>
 
 #include <dumux/new_material/parkerlenhard.hh>
 #include <dumux/new_material/regularizedvangenuchten.hh>
@@ -309,14 +309,15 @@ namespace Lenhard
             }
 
 
-        //! Evaluate a dirichlet boundary condition at a node within
-        //! an cell's face
+        //! Evaluate a dirichlet boundary condition at a cell node
         void dirichlet(UnknownsVector &dest,
                        const Cell &cell,
-                       const IntersectionIterator &face,
-                       const WorldCoord &pos,
-                       const LocalCoord &localPos)
+                       int nodeIdx,
+                       int globalIdx)
             {
+                const LocalCoord &localPos = cell.geometry()[nodeIdx];
+                WorldCoord pos = cell.geometry().global(localPos);
+                
 #if defined USE_NODE_PARAMETERS
                 if (onUpperBoundary(pos)) {
                     dest[PwIndex] = -_maxPc;

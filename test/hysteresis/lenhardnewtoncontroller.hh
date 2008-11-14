@@ -23,7 +23,7 @@
 #ifndef DUMUX_LENHARD_NEWTON_CONTROLLER_HH
 #define DUMUX_LENHARD_NEWTON_CONTROLLER_HH
 
-#include <dumux/new_models/box/pwsn/pwsnnewtoncontroller.hh>
+#include <dumux/new_models/pwsn/pwsnnewtoncontroller.hh>
 
 namespace Dune {
 namespace Lenhard {

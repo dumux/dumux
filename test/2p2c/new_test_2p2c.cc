@@ -29,7 +29,7 @@ int main(int argc, char** argv)
         Dune::gridinfo(*gridPtr);
         
         // instantiate and run the concrete problem
-        Dune::NewInjectionProblem<Scalar> problem(gridPtr, dt, tEnd);
+        Dune::NewInjectionProblem<Scalar> problem(&(*gridPtr), dt, tEnd);
         if (!problem.simulate())
             return 2;
         return 0;

@@ -118,7 +118,9 @@ namespace Dune
          * step size won't exceed the episode, though.
          */
         void setStepSize(double stepSize)
-            { _stepSize = stepSize; }
+            {
+                _stepSize = stepSize; 
+            }
 
         /*!
          * \brief Returns a suggested timestep length so that we don't
@@ -289,8 +291,7 @@ namespace Dune
                     // or Euler).
                     curStepSize = stepSize();
                     problem.timeIntegration(curStepSize, nextStepSize);
-                    if (curStepSize < 100)
-                        std::cerr << "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaAAAAAAA\n";
+
 
                     // advance the simulated time by the timestep size
                     // actually used by the solver
@@ -304,7 +305,6 @@ namespace Dune
                     // notify the problem that the next solution has
                     // been found
                     problem.timestepDone();
-
 
                     if (_verbose) {
                         std::cout <<

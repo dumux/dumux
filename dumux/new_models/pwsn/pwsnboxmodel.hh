@@ -20,8 +20,8 @@
 #ifndef DUMUX_PWSN_BOX_MODEL_HH
 #define DUMUX_PWSN_BOX_MODEL_HH
 
-#include <dumux/new_models/box/boxscheme.hh>
-#include <dumux/new_models/box/p1boxtraits.hh>
+#include <dumux/new_models/boxscheme/boxscheme.hh>
+#include <dumux/new_models/boxscheme/p1boxtraits.hh>
 
 #include <dumux/auxiliary/apis.hh>
 
@@ -112,12 +112,8 @@ namespace Dune
         };
         
     public:
-        PwSnBoxJacobian(ProblemT &problem,
-                        bool levelBoundaryAsDirichlet = false,
-                        bool procBoundaryAsDirichlet = true) 
-            : ParentType(problem,
-                         levelBoundaryAsDirichlet,
-                         procBoundaryAsDirichlet)
+        PwSnBoxJacobian(ProblemT &problem) 
+            : ParentType(problem)
             {};
 
         /*!
@@ -377,7 +373,7 @@ namespace Dune
 
         PwSnBoxModel(ProblemT &prob)
             : ParentType(prob, _pwSnLocalJacobian),
-              _pwSnLocalJacobian(prob, false)
+              _pwSnLocalJacobian(prob)
             {
                 Api::require<Api::BasicDomainTraits, typename ProblemT::DomainTraits>();
             }

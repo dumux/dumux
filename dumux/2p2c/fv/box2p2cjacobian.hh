@@ -107,7 +107,12 @@ namespace Dune
     virtual VBlockType computeM (const Entity& e, const VBlockType* sol,
     		int node, std::vector<VariableNodeData>& varData)
     {
-         int globalIdx = this->vertexMapper.template map<dim>(e, node);
+    	 GeometryType gt = e.geometry().type();
+    	 const typename LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type&
+     	 sfs=LagrangeShapeFunctions<DT,RT,dim>::general(gt,1);
+
+   	 int globalIdx = this->vertexMapper.template map<dim>(e, sfs[node].entity());
+
    	 VBlockType result;
    	 RT satN = varData[node].satN;
    	 RT satW = varData[node].satW;
@@ -229,26 +234,28 @@ namespace Dune
 
 	 // water conservation
 	 flux[water] =   (alpha* vNDat[up_w].density[wPhase]*vNDat[up_w].mobility[wPhase]
-			               * vNDat[up_w].massfrac[water][wPhase]
-			    + (1-alpha)* vNDat[dn_w].density[wPhase]*vNDat[dn_w].mobility[wPhase]
-			               * vNDat[dn_w].massfrac[water][wPhase])
-			               * outward[wPhase];
+                          * vNDat[up_w].massfrac[water][wPhase]
+                          + (1-alpha)* vNDat[dn_w].density[wPhase]*vNDat[dn_w].mobility[wPhase]
+                          * vNDat[dn_w].massfrac[water][wPhase])
+             * outward[wPhase];
 	 flux[water] +=  (alpha* vNDat[up_n].density[nPhase]*vNDat[up_n].mobility[nPhase]
-			               * vNDat[up_n].massfrac[water][nPhase]
-			    + (1-alpha)* vNDat[dn_n].density[nPhase]*vNDat[dn_n].mobility[nPhase]
-			               * vNDat[dn_n].massfrac[water][nPhase])
-			               * outward[nPhase];
+                          * vNDat[up_n].massfrac[water][nPhase]
+                          + (1-alpha)* vNDat[dn_n].density[nPhase]*vNDat[dn_n].mobility[nPhase]
+                          * vNDat[dn_n].massfrac[water][nPhase])
+             * outward[nPhase];
 	 // air conservation
 	 flux[air]   =   (alpha* vNDat[up_n].density[nPhase]*vNDat[up_n].mobility[nPhase]
-			               * vNDat[up_n].massfrac[air][nPhase]
-			    + (1-alpha)* vNDat[dn_n].density[nPhase]*vNDat[dn_n].mobility[nPhase]
-			               * vNDat[dn_n].massfrac[air][nPhase])
-			               * outward[nPhase];
+                          * vNDat[up_n].massfrac[air][nPhase]
+                          + (1-alpha)* vNDat[dn_n].density[nPhase]*vNDat[dn_n].mobility[nPhase]
+                          * vNDat[dn_n].massfrac[air][nPhase])
+             * outward[nPhase];
 	 flux[air]  +=   (alpha* vNDat[up_w].density[wPhase]*vNDat[up_w].mobility[wPhase]
-			               * vNDat[up_w].massfrac[air][wPhase]
-			    + (1-alpha)* vNDat[dn_w].density[wPhase]*vNDat[dn_w].mobility[wPhase]
-			               * vNDat[dn_w].massfrac[air][wPhase])
-			               * outward[wPhase];
+                          * vNDat[up_w].massfrac[air][wPhase]
+                          + (1-alpha)* vNDat[dn_w].density[wPhase]*vNDat[dn_w].mobility[wPhase]
+                          * vNDat[dn_w].massfrac[air][wPhase])
+             * outward[wPhase];
+
+         return flux;
 
 	 // DIFFUSION
 	 VBlockType normDiffGrad;
@@ -261,23 +268,23 @@ namespace Dune
 	 RT diffusionAW(0.0), diffusionAN(0.0); // diffusion of air
 	 VBlockType avgDensity, avgDpm;
 
-     // calculate tortuosity at the nodes i and j needed for porous media diffusion coefficient
+         // calculate tortuosity at the nodes i and j needed for porous media diffusion coefficient
 	 RT tauW_i, tauW_j, tauN_i, tauN_j; // tortuosity of wetting and nonwetting phase
 	 tauW_i = pow(sNDat[globalIdx_i].porosity * vNDat[i].satW,(7/3))/
-		 (sNDat[globalIdx_i].porosity*sNDat[globalIdx_i].porosity);
+             (sNDat[globalIdx_i].porosity*sNDat[globalIdx_i].porosity);
 	 tauW_j = pow(sNDat[globalIdx_j].porosity * vNDat[j].satW,(7/3))/
-		 (sNDat[globalIdx_j].porosity*sNDat[globalIdx_j].porosity);
+             (sNDat[globalIdx_j].porosity*sNDat[globalIdx_j].porosity);
 	 tauN_i = pow(sNDat[globalIdx_i].porosity * vNDat[i].satN,(7/3))/
-		 (sNDat[globalIdx_i].porosity*sNDat[globalIdx_i].porosity);
+             (sNDat[globalIdx_i].porosity*sNDat[globalIdx_i].porosity);
 	 tauN_j = pow(sNDat[globalIdx_j].porosity * vNDat[j].satN,(7/3))/
-		 (sNDat[globalIdx_j].porosity*sNDat[globalIdx_j].porosity);
+             (sNDat[globalIdx_j].porosity*sNDat[globalIdx_j].porosity);
 
 	 // arithmetic mean of porous media diffusion coefficient
 	 RT Dwn, Daw;
 	 Dwn = (sNDat[globalIdx_i].porosity * vNDat[i].satN * tauN_i * vNDat[i].diff[nPhase] +
-			sNDat[globalIdx_j].porosity * vNDat[j].satN * tauN_j * vNDat[j].diff[nPhase])/2;
+                sNDat[globalIdx_j].porosity * vNDat[j].satN * tauN_j * vNDat[j].diff[nPhase])/2;
 	 Daw = (sNDat[globalIdx_i].porosity * vNDat[i].satW * tauW_i * vNDat[i].diff[wPhase] +
-			sNDat[globalIdx_j].porosity * vNDat[j].satW * tauW_j * vNDat[j].diff[wPhase])/2;
+                sNDat[globalIdx_j].porosity * vNDat[j].satW * tauW_j * vNDat[j].diff[wPhase])/2;
 
 //
 //	 avgDpm[wPhase]=2e-9; // needs to be changed !!!
@@ -286,12 +293,12 @@ namespace Dune
 	 // adapt the diffusion coefficent according to the phase state.
 	 // TODO: make this continuously dependent on the phase saturations
 	 if (state_i == gasPhase || state_j == gasPhase) {
-		 // one cell is only gas -> no diffusion in water phase
-		 avgDpm[wPhase] = 0;
+             // one cell is only gas -> no diffusion in water phase
+             avgDpm[wPhase] = 0;
 	 }
 	 if (state_i == waterPhase || state_j == waterPhase) {
-		 // one cell is only water -> no diffusion in gas phase
-		 avgDpm[nPhase] = 0;
+             // one cell is only water -> no diffusion in gas phase
+             avgDpm[nPhase] = 0;
 	 }
 
 	 normDiffGrad[wPhase] = xGrad[wPhase]*normal;
@@ -317,117 +324,123 @@ namespace Dune
 
 
 	 return flux;
-  };
+    };
 
-  	/** @brief integrate sources / sinks
-  	 *  @param e entity
-	 *  @param sol solution vector
-	 *  @param node local node id
-	 *  @return source/sink term
-	 */
-   	virtual VBlockType computeQ (const Entity& e, const VBlockType* sol, const int node)
-   	{
-   		// ASSUME problem.q already contains \rho.q
-   		return problem.q(this->fvGeom.subContVol[node].global, e, this->fvGeom.subContVol[node].local);
-   	}
+      /** @brief integrate sources / sinks
+       *  @param e entity
+       *  @param sol solution vector
+       *  @param node local node id
+       *  @return source/sink term
+       */
+      virtual VBlockType computeQ (const Entity& e, const VBlockType* sol, const int node)
+          {
+              // ASSUME problem.q already contains \rho.q
+              return problem.q(this->fvGeom.subContVol[node].global, e, this->fvGeom.subContVol[node].local);
+          }
 
-  	/** @brief perform variable switch
-  	 *  @param global global node id
-	 *  @param sol solution vector
-	 *  @param local local node id
-	 */
-   	virtual void primaryVarSwitch (const Entity& e, int globalIdx, VBlockType* sol, int localIdx)
-    {
-
+      /** @brief perform variable switch
+       *  @param global global node id
+       *  @param sol solution vector
+       *  @param local local node id
+       */
+      virtual void primaryVarSwitch (const Entity& e, int globalIdx, VBlockType* sol, int localIdx)
+          {
         bool switched = false;
-  		const FVector global = this->fvGeom.subContVol[localIdx].global;
-  		const FVector local = this->fvGeom.subContVol[localIdx].local;
-  		int state = sNDat[globalIdx].phaseState;
+        const FVector global = this->fvGeom.subContVol[localIdx].global;
+        const FVector local = this->fvGeom.subContVol[localIdx].local;
+        int state = sNDat[globalIdx].phaseState;
 //        int switch_counter = sNDat[globalIdx].switched;
 
-  		// Evaluate saturation and pressures first
+        // Evaluate saturation and pressures first
         RT pW = sol[localIdx][pWIdx];
         RT satW = 0.0;
         if (state == bothPhases)
-        	satW = 1.0-sol[localIdx][switchIdx];
-  		if (state == waterPhase)
-  			satW = 1.0;
-  		if (state == gasPhase)
-  			satW = 0.0;
+            satW = 1.0-sol[localIdx][switchIdx];
+        if (state == waterPhase)
+            satW = 1.0;
+        if (state == gasPhase)
+            satW = 0.0;
     	RT pC = problem.materialLaw().pC(satW, global, e, local);
-  		RT pN = pW + pC;
+        RT pN = pW + pC;
 
-
-  		switch(state)
+        switch(state)
         {
-        case gasPhase :
+            case gasPhase :
         	RT xWNmass, xWNmolar, pwn, pWSat; // auxiliary variables
 
         	xWNmass = sol[localIdx][switchIdx];
         	xWNmolar = problem.multicomp().convertMassToMoleFraction(xWNmass, gasPhase);
            	pwn = xWNmolar * pN;
-            pWSat = problem.multicomp().vaporPressure(temperature);
+                pWSat = problem.multicomp().vaporPressure(temperature);
 
         	if (pwn > 1.01*pWSat && !switched)// && switch_counter < 3)
-            {
-            	// appearance of water phase
-            	std::cout << "Water appears at node " << globalIdx << "  Coordinates: " << global << std::endl;
-            	sNDat[globalIdx].phaseState = bothPhases;
-            	sol[localIdx][switchIdx] = 1.0 - 1e-6; // initialize solution vector
-            	sNDat[globalIdx].switched += 1;
-            	switched = true;
-            }
-            break;
+                {
+                    // appearance of water phase
+                    std::cout << "Water appears at node " << globalIdx << "  Coordinates: " << global << std::endl;
+                    sNDat[globalIdx].phaseState = bothPhases;
+                    sol[localIdx][switchIdx] = 1.0 - 2e-5; // initialize solution vector
+                    sNDat[globalIdx].switched += 1;
+                    switched = true;
+                }
+                break;
 
-        case waterPhase :
-        	RT xAWmass, xAWmolar, henryInv, pbub; // auxiliary variables
+            case waterPhase :
+        	RT xAWmass, xAWmolar, henryInv, pbub, xAWmolarMax; // auxiliary variables
 
         	xAWmass = sol[localIdx][switchIdx];
          	xAWmolar = problem.multicomp().convertMassToMoleFraction(xAWmass, waterPhase);
+                xAWmolarMax = problem.multicomp().xAWmolar(pN, temperature);
+/*
         	henryInv = problem.multicomp().henry(temperature);
-            pWSat = problem.multicomp().vaporPressure(temperature);
+                pWSat = problem.multicomp().vaporPressure(temperature);
         	pbub = pWSat + xAWmolar/henryInv; // pWSat + pAW
 
         	if (pN < pbub && !switched)// && switch_counter < 3)
-            {
-        		// appearance of gas phase
-            	std::cout << "Gas appears at node " << globalIdx << ",  Coordinates: " << global << std::endl;
-            	sNDat[globalIdx].phaseState = bothPhases;
-            	sol[localIdx][switchIdx] = 1e-5; // initialize solution vector
-            	sNDat[globalIdx].switched += 1;
-            	switched = true;
-            }
-            break;
+*/
+                if (xAWmolar > (1 + 1e-5)*xAWmolarMax)
+                {
+                    // appearance of gas phase
+                    std::cout << "Gas appears at node " << globalIdx << ",  Coordinates: " << global << std::endl;
+                    sNDat[globalIdx].phaseState = bothPhases;
+                    sol[localIdx][switchIdx] = 2e-5; // initialize solution vector
+                    sNDat[globalIdx].switched += 1;
+                    switched = true;
+                }
+                break;
 
-        case bothPhases:
+            case bothPhases:
+                return;
+
         	RT satN = sol[localIdx][switchIdx];
 
         	if (satN < 0.0  && !switched)// && switch_counter < 3)
       	  	{
-      		  	// disappearance of gas phase
-      		  	std::cout << "Gas disappears at node " << globalIdx << "  Coordinates: " << global << std::endl;
-      		  	sNDat[globalIdx].phaseState = waterPhase;
-      		  	sol[localIdx][switchIdx] = problem.multicomp().xAW(pN); // initialize solution vector
-            	sNDat[globalIdx].switched += 1;
-            	switched = true;
-            }
+                    // disappearance of gas phase
+                    std::cout << "Gas disappears at node " << globalIdx << "  Coordinates: " << global << std::endl;
+                    sNDat[globalIdx].phaseState = waterPhase;
+                    sol[localIdx][switchIdx] = problem.multicomp().xAW(pN); // initialize solution vector
+                    sNDat[globalIdx].switched += 1;
+                    switched = true;
+                }
         	else if (satW < 0.0  && !switched)// && switch_counter < 3)
       	  	{
-      	  		// disappearance of water phase
-      	  		std::cout << "Water disappears at node " << globalIdx << "  Coordinates: " << global << std::endl;
-      	  		sNDat[globalIdx].phaseState = gasPhase;
-      	  		sol[localIdx][switchIdx] = problem.multicomp().xWN(pN); // initialize solution vector
-            	sNDat[globalIdx].switched += 1;
-            	switched = true;
+                    // disappearance of water phase
+                    std::cout << "Water disappears at node " << globalIdx << "  Coordinates: " << global << std::endl;
+                    sNDat[globalIdx].phaseState = gasPhase;
+                    sol[localIdx][switchIdx] = problem.multicomp().xWN(pN); // initialize solution vector
+                    sNDat[globalIdx].switched += 1;
+                    switched = true;
       	  	}
       	  	break;
 
         }
         if (switched){
-        	updateVariableData(e, sol, localIdx, vNDat, sNDat[globalIdx].phaseState);
-        	BoxJacobian<ThisType,G,RT,2,BoxFunction>::localToGlobal(e,sol);
-        	setSwitchedLocal(); // if switch is triggered at any node, switchFlagLocal is set
+            updateVariableData(e, sol, localIdx, vNDat, sNDat[globalIdx].phaseState);
+            BoxJacobian<ThisType,G,RT,2,BoxFunction>::localToGlobal(e,sol);
+            setSwitchedLocal(); // if switch is triggered at any node, switchFlagLocal is set
         }
+
+   	return;
     }
 
     // harmonic mean of the permeability computed directly

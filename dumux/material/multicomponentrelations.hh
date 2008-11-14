@@ -23,21 +23,21 @@ class MultiComp
 
 	public:
 		/*! \brief solubility of a component (water) in the non-wetting phase
-		 *	\param pn non-wetting phase pressure \f$ \left[ Pa \right] \f$
+		 *  \param pn non-wetting phase pressure \f$ \left[ Pa \right] \f$
 		 *  \param T temperature
 		 *  \return the mass fraction of water in the non-wetting phase \f$ \left[ kg/kg \right] \f$
 		 */
 		virtual double xWN (const double pn, double T=283.15) = 0;
 
 		/*! \brief solubility of a component (air) in the wetting phase
-		 *	\param pn non-wetting phase pressure \f$ \left[ Pa \right] \f$
+		 *  \param pn non-wetting phase pressure \f$ \left[ Pa \right] \f$
 		 *  \param T temperature [K]
 		 *  \return mass fraction of gas in the wetting phase \f$ \left[ kg/kg \right] \f$
 		 */
 		virtual double xAW (const double pn, double T=283.15) = 0;
 
 		/*! \brief solubility of a component (air) in the wetting phase
-		 *	\param pn non-wetting phase pressure \f$ \left[ Pa \right] \f$
+		 *  \param pn non-wetting phase pressure \f$ \left[ Pa \right] \f$
 		 *  \param T temperature [K]
 		 *  \param X_NaCl mass fraction of salt dissolved in the wetting phase
 		 *  \return mass fraction of gas in the wetting phase \f$ \left[ kg/kg \right] \f$
@@ -46,7 +46,7 @@ class MultiComp
 		virtual double xWNmolar (const double pn, double T=283.15) = 0;
 
 		/*! \brief solubility of a component (air) in the wetting phase
-		 *	\param pn non-wetting phase pressure \f$ \left[ Pa \right] \f$
+		 *  \param pn non-wetting phase pressure \f$ \left[ Pa \right] \f$
 		 *  \param T temperature [K]
 		 *  \return the mass fraction of water in the non-wetting phase \f$ \left[ mol/mol \right] \f$
 		 */
@@ -64,12 +64,6 @@ class MultiComp
 		 *  \return vapor pressure [Pa]
 		 */
 		virtual double vaporPressure (double T=283.15) const = 0;
-
-		/*! \brief Sum of vapor pressure and partial pressure of air
-		 *  \param T temperature [K]
-		 *  \return vapor pressure [Pa]
-		 */
-		virtual double bubblingPressure (const double pn, double T=283.15) = 0;
 
 		/*! \brief converts mole fractions into mass fractions
 		 *  \param massfrac mole fraction [mol/mol]
@@ -207,24 +201,11 @@ class CWaterAir : public MultiComp
 			return(psat);
 		}
 
-		/*! \brief Sum of vapor pressure and partial pressure of air
-		 *  \param T temperature [K]
-		 *  \return vapor pressure [Pa]
-		 */
-		double bubblingPressure(const double pn, double T=283.15)
-		{
-			double pbub;
-
-			pbub = vaporPressure(T) + xAWmolar(pn,T)/henry(T);
-			return pbub;
-		}
-
-		/** @brief converts mole fractions to mass fractions
+		/** @brief converts mole fractions into mass fractions
 		 */
 		double convertMoleToMassFraction(double molefrac, int phase) const
 		{
-			enum {wPhase = 0, nPhase = 1};	// major component of wetting phase = 0;
-											// major component of nonwetting phase = 1;
+			enum {wPhase = 0, nPhase = 1};
 
 			double result;
 			double molarMass1=0, molarMass2=0;
@@ -243,12 +224,12 @@ class CWaterAir : public MultiComp
 			return (result);
 		}
 
-		/** @brief converts mass fractions to mole fractions
+		/** @brief converts mass fractions into mole fractions
 		 */
 		double convertMassToMoleFraction(double massfrac, int phase) const
 		{
-			enum {wPhase = 0, nPhase = 1}; 	// major component of wetting phase = 0;
-											// major component of nonwetting phase = 1;
+			enum {wPhase = 0, nPhase = 1};
+
 			double result;
 			double molarMass1 = 0, molarMass2 = 0;
 
@@ -341,14 +322,6 @@ class CBrineCO2 : public MultiComp
 			 *  \return vapor pressure [Pa]
 			 */
 			 double vaporPressure (double T=283.15) const
-			{
-				return 0;
-			}
-			/*! \brief Sum of vapor pressure and partial pressure of air
-			 *  \param T temperature [K]
-			 *  \return vapor pressure [Pa]
-			 */
-			double bubblingPressure(const double pn, double T=283.15)
 			{
 				return 0;
 			}

@@ -110,24 +110,19 @@ namespace Dune
         typedef typename ShapeFunctionSetContainer::value_type ShapeFunctionSet;
 
     public:
-        BoxJacobian(Problem &problem,
-                    bool levelBoundaryAsDirichlet,
-                    bool procBoundaryAsDirichlet=true)
+        BoxJacobian(Problem &problem)
             : _problem(problem),
               _curCellPtr(problem.cellEnd()),
 
               _curSolution(NULL),
-              _oldSolution(NULL),
-
-              _levelBoundaryAsDirichlet(levelBoundaryAsDirichlet),
-              _processBoundaryAsDirichlet(procBoundaryAsDirichlet)
+              _oldSolution(NULL)
             {
             }
 
         /*!
          * \brief Set the global solution of the current time step.
          */
-        void setCurrentSolution(SpatialFunction *uCur)
+        void setCurSolution(SpatialFunction *uCur)
             {
                 _curSolution = uCur;
             }
@@ -146,15 +141,15 @@ namespace Dune
                 _oldSolution = uOld;
             }
 
-//        void clearVisited()
-//            { }
-
         /*!
          * \brief Assemble the linear system of equations for the
          *        nodes of a cell, given a local solution 'localU'.
          */
         void assemble(const Cell &cell, const LocalFunction& localU, int orderOfShapeFns = 1)
             {
+                // set the current grid cell
+                _asImp()->setCurrentCell(cell);
+
                 LocalFunction mutableLocalU(localU);
                 _assemble(cell, mutableLocalU, orderOfShapeFns);
             }
@@ -187,65 +182,67 @@ namespace Dune
                 // condition type vector
                 _resetRhs();
                 
-                if (!cell.hasBoundaryIntersections())
-                    return;
-
-                Dune::GeometryType      geoType = _curCell().geometry().type();
+                Dune::GeometryType          geoType = _curCell().geometry().type();
                 const CellReferenceElement &refElem = CellReferenceElements::general(geoType);
                 
-                // evaluate boundary conditions via intersection iterator
+                // evaluate boundary conditions
                 IntersectionIterator endIt = IntersectionIteratorGetter::end(_curCell());
                 IntersectionIterator faceIt = IntersectionIteratorGetter::begin(_curCell());
                 for (; faceIt != endIt; ++faceIt)
                 {
-
-                    // if we have a neighbor then we assume there is
-                    // no boundary (forget interior boundaries) in
-                    // level assemble treat non-level neighbors as
-                    // boundary
-                    if (faceIt.neighbor())
+                    // handle only faces on exterior boundaries. This
+                    // assumes there are no interior boundaries.
+                    if (!faceIt.boundary())
+                        continue;
+                    
+                    // Assemble the boundary for all nodes of the
+                    // current face
+                    int faceIdx = faceIt.numberInSelf();
+                    int nNodesOfFace = refElem.size(faceIdx, 1, GridDim);
+                    for (int nodeInFace = 0; 
+                         nodeInFace < nNodesOfFace;
+                         nodeInFace++)
                     {
-                        if (!_levelBoundaryAsDirichlet)
-                            // we are not supposed to handle
-                            // boundaries within a level.
-                            continue;
-                        else if (faceIt.outside()->level() == _curCell().level())
-                            // we are supposed to handle boundaries
-                            // within a level, but we are not at the
-                            // level boundary of the cell
-                            continue;
-                    }
-
-
-                    // determine boundary condition type for this
-                    // face, initialize as process boundary
-                    BoundaryTypeVector faceBCType(Dune::BoundaryConditions::process);
-
-                    // handle face on exterior boundary, this assumes
-                    // there are no interior boundaries
-                    if (faceIt.boundary())
-                    {
-                        _assembleExteriorBC(faceBCType, faceIt, refElem);
+                        int nodeInElement = refElem.subEntity(faceIdx,
+                                                              1, 
+                                                              nodeInFace, 
+                                                              GridDim);
+                        int bfIdx = _curCellGeom.boundaryFaceIndex(faceIdx, nodeInFace);
+                        const LocalCoord &local = _curCellGeom.boundaryFace[bfIdx].ipLocal;
+                        const WorldCoord &global = _curCellGeom.boundaryFace[bfIdx].ipGlobal;
                         
-                        if (faceBCType[0]==Dune::BoundaryConditions::neumann)
-                            continue; // was a neumann face, go to next face
+                        // set the boundary types
+                        // TODO: better parameters: cell, FVElementGeometry, bfIndex
+                        BoundaryTypeVector tmp;
+                        _problem.boundaryTypes(tmp,
+                                               _curCell(),
+                                               faceIt,
+                                               global,
+                                               local);
+                        // TODO: mixed boundary conditions
+                        this->bctype[nodeInElement].assign(tmp[0]);
+                        
+                        // handle neumann boundary conditions
+                        if (tmp[0] == BoundaryConditions::neumann) {
+                            // TODO: better Parameters: cell, FVElementGeometry, bfIndex
+                            UnknownsVector J;
+                            _problem.neumann(J,
+                                             _curCell(),
+                                             faceIt, 
+                                             global,
+                                             local);
+                            J *= _curCellGeom.boundaryFace[bfIdx].area;
+
+                            this->b[nodeInElement] += J;
+                        }
+                        // handle dirichlet and process boundaries
+                        else if (tmp[0] == BoundaryConditions::dirichlet || 
+                                 tmp[0] == BoundaryConditions::process)
+                        {
+                            // right hand side
+                            this->b[nodeInElement] = Scalar(0);
+                        }
                     }
-
-                    // If we are here, then faceIt is
-                    // (i)   an exterior boundary face with Dirichlet condition, or
-                    // (ii)  a process boundary (i.e. neither boundary() nor neighbor() was true), or
-                    // (iii) a level boundary in case of level-wise assemble
-                    // How process boundaries are handled depends on the process boundary mode
-                    if (faceBCType[0]==Dune::BoundaryConditions::process
-                        && !_processBoundaryAsDirichlet
-                        && !_levelBoundaryAsDirichlet)
-                        continue; // then faceIt acts like homogeneous Neumann
-
-
-                    // now handle exterior or interior Dirichlet boundary
-                    _assembleDirichletBC(faceBCType,
-                                         faceIt,
-                                         refElem);
                 }
             }
 
@@ -253,8 +250,9 @@ namespace Dune
          * \brief Compute the local residual, i.e. the right hand side
          *        of an equation we would like to have zero.
          */
-        void evalLocalResidual(LocalFunction &residual) const
-            {
+        void evalLocalResidual(LocalFunction &residual, 
+                               bool withBoundary = true)
+            {              
                 // reset residual
                 for (int i = 0; i < _curCellGeom.nNodes; i++) {
                     residual[i] = 0;
@@ -297,12 +295,19 @@ namespace Dune
 
                     UnknownsVector flux;
                     this->_asImp()->fluxRate(flux, k);
-                    
+
                     // subtract fluxes from the local mass rates of
                     // the respective sub control volume adjacent to
                     // the face.
                     residual[i] -= flux;
                     residual[j] += flux;
+                }
+                
+                if (withBoundary) {
+                    assembleBoundaryCondition(this->_curCell());
+                    for (int i = 0; i < _curCellGeom.nNodes; i++) {
+                        residual[i] += this->b[i];
+                    }
                 }
             }
 
@@ -312,41 +317,45 @@ namespace Dune
          *        of the current cell, save the result to 'dest'.
          */
         void restrictToCell(LocalFunction &dest,
-                            const SpatialFunction &globalFn)
+                            const SpatialFunction &globalFn) const
             {
-#if 1
                 // we assert that the i-th shape function is
                 // associated to the i-th node of the cell.
                 int n = _curCell().template count<GridDim>();
                 for (int i = 0; i < n; i++) {
                     dest[i] = (*globalFn)[_problem.nodeIndex(_curCell(), i)];
                 }
-#else
-                // TODO: globalFn is probably not required to be
-                // evaluated at the center position of a shape
-                // function since all other shape functions are 0 at
-                // this location. thus we just copy the values at the
-                // nodes of the cell, but if higher order shape
-                // functions are involved, they might not be centered
-                // at the cell's nodes, so this code might actually be
-                // necessarry...
-                Dune::GeometryType geoType = _curCell().geometry().type();
-                const ShapeFunctionSet &shapeFns = BoxTraits::shapeFunctions()(geoType, 1);
-                //int size = ;
-                //dest.resize(size);
-
-                for (int i = 0; i < shapeFns.size(); i++) {
-                    for (int comp = 0; comp < PrimaryVariables; comp++) {
-                        dest[i][comp] = globalFn.evallocal(comp,
-                                                           _curCell(),
-                                                           shapeFns[i].position());
-                    }
-                }
-#endif
             }
+
+        /*!
+         * \brief Initialize the static data of all cells. The current
+         *        solution is not yet valid when this method is
+         *        called. (updateStaticData() is called as soon the
+         *        current solution is valid.)
+         *
+         * This method should be overwritten by the child class if
+         * necessary.
+         */
+        void initStaticData()
+            { };
+        
+        /*!
+         * \brief Update the static data of all cells with the current solution
+         *
+         * This method should be overwritten by the child class if
+         * necessary.
+         */
+        void updateStaticData(SpatialFunction &curSol, SpatialFunction &oldSol)
+            { };
+
+        // clear the visited flag of all nodes, required to make the
+        // old-style models work in conjunction with the new newton
+        // method.  HACK: remove
+        void clearVisited() DUNE_DEPRECATED {};
 
 
     protected:
+                  
         // set the cell which is currently considered as the local
         // stiffness matrix
         bool _setCurrentCell(const Cell &e)
@@ -375,9 +384,6 @@ namespace Dune
         const SpatialFunction *_curSolution;
         const SpatialFunction *_oldSolution;
 
-        bool         _levelBoundaryAsDirichlet;
-        bool         _processBoundaryAsDirichlet;
-
     private:
         void _assemble(const Cell &cell, LocalFunction& localU, int orderOfShapeFns = 1)
             {
@@ -392,24 +398,28 @@ namespace Dune
                 // restrict the previous global solution to the current cell
                 LocalFunction localOldU(numVertices);
                 restrictToCell(localOldU, *_oldSolution);
+
                 this->_asImp()->setParams(cell, localU, localOldU);
 
+                // approximate the local stiffness matrix numerically
+                // TODO: do this analytically if possible
                 LocalFunction residUPlusEps(numVertices);
                 LocalFunction residUMinusEps(numVertices);
                 for (int j = 0; j < numVertices; j++)
                 {
                     for (int comp = 0; comp < PrimaryVariables; comp++)
                     {
-                        Scalar eps = std::max(fabs(1e-3 * localU[j][comp]), 1e-3);
+                        Scalar eps = std::max(fabs(1e-5*localU[j][comp]), 1e-5);
                         Scalar uJ = localU[j][comp];
                         
                         // vary the comp-th component at the cell's j-th node and
-                        // calculate the residual.
+                        // calculate the residual, don't include the boundary
+                        // conditions 
                         this->_asImp()->deflectCurSolution(j, comp, uJ + eps);
-                        evalLocalResidual(residUPlusEps);
-                        
+                        evalLocalResidual(residUPlusEps, false);
+         
                         this->_asImp()->deflectCurSolution(j, comp, uJ - eps);
-                        evalLocalResidual(residUMinusEps);
+                        evalLocalResidual(residUMinusEps, false);
 
                         // restore the current local solution to the state before
                         // varyCurSolution() has been called 
@@ -427,16 +437,18 @@ namespace Dune
                     }
                 }
 
-                // assemble boundary conditions
-                assembleBoundaryCondition(cell);
-                
                 // calculate the right hand side
                 LocalFunction residU(numVertices);
-                evalLocalResidual(residU);
+                evalLocalResidual(residU, true); // include boundary conditions for the residual
+               
                 for (int i=0; i < numVertices; i++) {
                     for (int comp=0; comp < PrimaryVariables; comp++) {
-                        if (this->bctype[i][comp]==Dune::BoundaryConditions::neumann) {
-                            this->b[i][comp] += residU[i][comp];
+                        // TODO: in most cases this is not really a
+                        // boundary cell but an interior cell, so
+                        // Dune::BoundaryConditions::neumann is
+                        // misleading...
+                        if (this->bctype[i][comp] == Dune::BoundaryConditions::neumann) {
+                            this->b[i][comp] = residU[i][comp];
                         }
                     }
                 }
@@ -468,118 +480,6 @@ namespace Dune
                     this->b[i] = 0;
                 }
             };
-
-
-       void _assembleExteriorBC(BoundaryTypeVector &faceBCType,
-                                const IntersectionIterator &faceIt,
-                                const CellReferenceElement &refElem)
-            {
-                int faceIdx = faceIt.numberInSelf();
-                int nVerticesOfFace = refElem.size(faceIdx, 1, GridDim);
-                for (int nodeInFace = 0; nodeInFace < nVerticesOfFace; nodeInFace++)
-                {
-                    int nodeInElement = refElem.subEntity(faceIdx, 1, nodeInFace, GridDim);
-                    
-                    // TODO: "mixed" boundary conditions are not yet
-                    // possible. either it's neumann for all primary
-                    // variables or it's dirchlet.
-                    if (this->bctype[nodeInElement][0] == Dune::BoundaryConditions::neumann) 
-                    {
-                        int bfIdx = _curCellGeom.boundaryFaceIndex(faceIdx, nodeInFace);
-                        const LocalCoord &local = _curCellGeom.boundaryFace[bfIdx].ipLocal;
-                        WorldCoord global = _curCellGeom.boundaryFace[bfIdx].ipGlobal;
-                        
-                        _problem.boundaryTypes(faceBCType,
-                                               _curCell(),
-                                               faceIt,
-                                               global,
-                                               local);
-                        
-                        
-                        if (faceBCType[0]!=Dune::BoundaryConditions::neumann)
-                            break;
-                        
-                        UnknownsVector J;
-                        _problem.neumann(J,
-                                         _curCell(),
-                                         faceIt,
-                                         global,
-                                         local);
-                        
-                        J *= _curCellGeom.boundaryFace[bfIdx].area;
-                        this->b[nodeInElement] += J;
-                    }
-                }
-            }
-        
-
-        // assemble a dirichlet boundary condition for a face which
-        // may be either exterior or within the grid (if level or
-        // process boundaries are required/used)
-        void _assembleDirichletBC(const BoundaryTypeVector &faceBCType,
-                                  const IntersectionIterator &faceIt,
-                                  const CellReferenceElement &refElem)
-            {
-#if 1
-                int nFaceVerts = refElem.size(faceIt.numberInSelf(),
-                                              1,
-                                              GridDim);
-                // loop over all vertices of the face
-                for (int i=0; i < nFaceVerts; ++ i) {
-                    // find the local node index of the cell using
-                    // the local node index of the face
-                    int j = refElem.subEntity(faceIt.numberInSelf(),
-                                              1,
-                                              i,
-                                              GridDim);
-                    
-                    // the associated node of the j-th shape
-                    // function is a node of the current
-                    // face.
-                    for (int k = 0; k < PrimaryVariables; ++k)
-                        this->bctype[j][k] = faceBCType[k];
-                    
-                    // right hand side
-                    this->b[j] = Scalar(0);
-                }
-#else
-                Dune::GeometryType      geoType = _curCell().geometry().type();
-                const ShapeFunctionSet &shapeFnSet = BoxTraits::shapeFunctions()(geoType, 1);
-
-                // loop over shape functions
-                for (int i=0; i<shapeFnSet.size(); i++)
-                {
-                    if (shapeFnSet[i].codim() != GridDim)
-                        continue; // skip interior and face degrees of freedom
-                    
-                    // loop over all vertices of the face in order to
-                    // make sure the entity associated with the
-                    // current shape function is also a node of the
-                    // current face.
-                    //
-                    // TODO: there must be a better way to do this??
-                    int nFaceVerts = refElem.size(faceIt.numberInSelf(),
-                                                  1,
-                                                  shapeFnSet[i].codim());
-                    for (int j=0; j < nFaceVerts; j++)
-                    {
-                        if (shapeFnSet[i].entity() ==
-                            refElem.subEntity(faceIt.numberInSelf(),
-                                              1,
-                                              j,
-                                              shapeFnSet[i].codim()))
-                        {
-                            // the associated node of the i-th shape
-                            // function is a node of the current
-                            // face.
-                            this->bctype[i] = faceBCType[0];
-                            this->b[i] = 0;
-                            break;
-                        }
-                    }
-                }
-#endif
-            }
 
     private:
         JacobianImp *_asImp()

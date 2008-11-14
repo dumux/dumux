@@ -22,7 +22,7 @@
 #include "lensdomain.hh"
 #include "lensnewtoncontroller.hh"
 
-#include <dumux/new_models/box/pwsn/pwsnboxmodel.hh>
+#include <dumux/new_models/pwsn/pwsnboxmodel.hh>
 #include <dumux/new_material/parkerlenhard.hh>
 #include <dumux/new_material/regularizedvangenuchten.hh>
 #include <dumux/timedisc/new_impliciteulerstep.hh>
@@ -334,16 +334,21 @@ namespace Lens
         //! an cell's face
         void dirichlet(UnknownsVector &dest,
                        const Cell &cell,
+                       int   nodeIndex,
+                       int   globalNodeIndex)
+
+/*        void dirichlet(UnknownsVector &dest,
+                       const Cell &cell,
                        const IntersectionIterator &face,
                        const WorldCoord &pos,
                        const LocalCoord &localPos)
+*/
             {
                 Scalar a, b;
 
-                // get the integration point of the boundary face in
-                // world coodinates
-//        WorldCoord &pos = dualCell.boundaryFace[dcBFIndex].ipGlobal;
-
+                const LocalCoord &localPos = cell.geometry()[nodeIndex];
+                WorldCoord pos = cell.geometry().global(localPos);
+                    
                 if (ParentType::onLeftBoundary(pos))
                 {
                     a = -(1 + 0.5/ParentType::height());

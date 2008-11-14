@@ -24,7 +24,7 @@
 
 #include <dumux/auxiliary/basicdomain.hh>
 
-#include <dumux/new_models/box/pwsn/pwsnboxmodel.hh>
+#include <dumux/new_models/pwsn/pwsnboxmodel.hh>
 
 #include <dumux/new_material/regularizedvangenuchten.hh>
 #include <dumux/new_material/parkerlenhard.hh>

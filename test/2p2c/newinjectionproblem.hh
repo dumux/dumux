@@ -6,7 +6,7 @@
 #endif
 
 #if !HAVE_UG
-#error "The UG grid manage is required for this problem"
+#error "The UG grid manager is required for this problem"
 #endif
 
 
@@ -35,10 +35,11 @@
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
 #include <dune/istl/io.hh>
 
-#include<dumux/new_models/box/2p2c/2p2cboxmodel.hh>
+#include<dumux/new_models/2p2c/2p2cboxmodel.hh>
+#include<dumux/new_models/2p2c/2p2cnewtoncontroller.hh>
+
 #include<dumux/timedisc/new_impliciteulerstep.hh>
 #include<dumux/nonlinear/new_newtonmethod.hh>
-#include<dumux/nonlinear/new_newtoncontroller.hh>
 
 #include <dumux/auxiliary/timemanager.hh>
 #include <dumux/auxiliary/basicdomain.hh>
@@ -54,7 +55,6 @@ namespace Dune
 //////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////--SOIL--//////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////
-
     template<class G, class Scalar>
     class InjectionSoil: public Matrix2p<G,Scalar>
     {
@@ -67,7 +67,7 @@ namespace Dune
             {
   		lowK_ = highK_ = 0.;
   		for(int i = 0; i < dim; i++){
-                    lowK_[i][i] = 5e-14;
+                    lowK_[i][i] = 1e-13;
                     highK_[i][i] = 1e-12;
   		}
   		layerBottom_ = 22.0;
@@ -96,7 +96,7 @@ namespace Dune
 
         double Sr_n(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, const double T) const
             {
-  		return 0.05;
+  		return 0.0;
             }
 
   	/* ATTENTION: define heat capacity per cubic meter! Be sure, that it corresponds to porosity!
@@ -182,7 +182,11 @@ namespace Dune
             // Phase State
             WPhaseOnly = TwoPTwoCTraits::WPhaseOnly,
             NPhaseOnly = TwoPTwoCTraits::NPhaseOnly,
-            BothPhases = TwoPTwoCTraits::BothPhases
+            BothPhases = TwoPTwoCTraits::BothPhases,
+
+            // Grid and world dimension
+            GridDim  = DomainTraits::GridDim,
+            WorldDim = DomainTraits::WorldDim
         };
       
         // copy some types from the traits for convenience
@@ -210,47 +214,22 @@ namespace Dune
         typedef Dune::NewImplicitEulerStep<ThisType>        TimeIntegration;
 
         typedef typename Model::NewtonMethod                NewtonMethod;
-        typedef NewtonController<NewtonMethod>              NewtonController;
-
-/*
-        enum {dim=G::dimension, m=2};
-        typedef typename G::ctype DT;
-        typedef typename G::Traits::template Codim<0>::Entity Entity;
-        typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
+        typedef TwoPTwoCNewtonController<NewtonMethod>      NewtonController;
 
     public:
-        enum {pWIdx = 0, switchIdx = 1}; // phase index
-        enum {gasPhase = 0, waterPhase = 1, bothPhases = 2}; // phase state
-*/
-
-    public:
-        NewInjectionProblem(GridPointer grid,
+        NewInjectionProblem(Grid *grid,
                             Scalar dtInitial,
                             Scalar tEnd) 
             : ParentType(grid),
               materialLaw_(soil_, wPhase_, nPhase_),
               multicomp_(wPhase_, nPhase_),
               _model(*this),
-              _newtonMethod(_model)
+              _newtonMethod(_model),
+              _resultWriter("new2p2c")
             {
                 _initialTimeStepSize = dtInitial;
                 _endTime = tEnd;
 
-/*
-  Liquid_GL& liq, 
-  Gas_GL& gas,
-  Matrix2p<G, Scalar>& soil,
-  const FieldVector<DT,dim> outerLowerLeft = 0., 
-  const FieldVector<DT,dim> outerUpperRight = 0.,
-  const FieldVector<DT,dim> innerLowerLeft = 0.,
-  const FieldVector<DT,dim> innerUpperRight = 0.,
-  const Scalar depthBOR = 0., 
-  TwoPhaseRelations<G, Scalar>& law = *(new TwoPhaseRelations<G, Scalar>),
-  MultiComp& multicomp = *(new CWaterAir))
-  : TwoPTwoCProblem<G,Scalar>(liq, gas, soil, multicomp, law),
-  outerLowerLeft_(outerLowerLeft), outerUpperRight_(outerUpperRight),
-  depthBOR_(depthBOR), eps_(1e-8*outerUpperRight[0])
-*/
                 // specify the grid dimensions
                 outerLowerLeft_[0] = 0;
                 outerLowerLeft_[1] = 0;
@@ -268,7 +247,7 @@ namespace Dune
                 innerUpperRight_[0] = 0.0;
                 innerUpperRight_[1] = 0.5;
 
-                depthBOR_ = 1000.0;
+                depthBOR_ = 800.0;
 
                 gravity_[0] = 0;
                 gravity_[1] = -9.81;
@@ -283,8 +262,8 @@ namespace Dune
         //! solution
         void init()
             {
-                // start with a drainage for 30 ksec
-                _timeManager.startNextEpisode(30e3);
+                // set the episode length and initial time step size
+                _timeManager.startNextEpisode(1e100);
                 _timeManager.setStepSize(_initialTimeStepSize);
 
                 // set the initial condition
@@ -335,14 +314,17 @@ namespace Dune
         //! timestep has been computed
         void timestepDone()
             {
+                std::cout << "Writing result file for current time step\n";
+
                 // write the current result to disk
-//                _writeCurrentResult(); // TODO
+                _writeCurrentResult(); // TODO
 
                 // update the domain with the current solution
 //                _updateDomain();
 
-                // change the episode of the simulation if necessary
-//                _updateEpisode();
+                // stop the simulation if reach the end specified time
+                if (_timeManager.time() >= _endTime)
+                    _timeManager.setFinished();
             };
         ///////////////////////////////////
         // End of simulation control stuff
@@ -420,6 +402,9 @@ namespace Dune
             {
                 if (globalPos[0] < eps_)
                     values = BoundaryConditions::dirichlet;
+                else
+                    values = BoundaryConditions::neumann;
+
 //		if (globalPos[1] < eps_)
 //			values = BoundaryConditions::dirichlet;
             }
@@ -429,20 +414,16 @@ namespace Dune
         /////////////////////////////
         void dirichlet(UnknownsVector &values,
                        const Cell &cell,
-                       const IntersectionIterator &faceIt,
-                       const WorldCoord &globalPos,
-                       const LocalCoord &localPos) const
+                       int nodeIdx,
+                       int globalNodeIdx)
             {
-                Scalar densityW_ = 1000.0;
-
-                values[PwIndex] = 1e5 - densityW_*gravity_[1]*(depthBOR_ - globalPos[1]);
-                values[SwitchIndex] = 1e-6;  // may be Sn, Xaw or Xwn!!
-
-//		if (globalPos[1] >= innerLowerLeft_[1] && globalPos[1] <= innerUpperRight_[1]
-//		 && globalPos[0] >= innerLowerLeft_[0])
-//			values[SwitchIndex] = 0.2;
-//		else
-//			values[SwitchIndex] = 1e-6;
+                const LocalCoord &localPos = CellReferenceElements::general(cell.type()).position(nodeIdx, GridDim);
+                const WorldCoord &globalPos = cell.geometry()[nodeIdx];
+                
+                initial(values,
+                        cell,
+                        globalPos, 
+                        localPos);
             }
 
         /////////////////////////////
@@ -454,10 +435,12 @@ namespace Dune
                      const WorldCoord &globalPos,
                      const LocalCoord &localPos) const
             {
-                //Scalar lambda = (globalPos[1])/height_;
+                values = 0;
 
-                if (globalPos[1] < 15 && globalPos[1] > 5)
+                //Scalar lambda = (globalPos[1])/height_;
+                if (globalPos[1] < 15 && globalPos[1] > 5) {
                     values[SwitchIndex] = -1e-3;
+                }
             }
 
         /////////////////////////////
@@ -465,7 +448,7 @@ namespace Dune
         /////////////////////////////
         void sourceTerm(UnknownsVector &values,
                         const Cell &cell,
-                        const FVElementGeometry, 
+                        const FVElementGeometry &, 
                         int subControlVolumeIdx) const
             {
                 values = Scalar(0.0);
@@ -479,12 +462,14 @@ namespace Dune
         void initial(UnknownsVector &values,
                      const Cell& cell,
                      const WorldCoord &globalPos, 
-                     const LocalCoord &localPos) const
+                     const LocalCoord &localPos)
             {
                 Scalar densityW_ = 1000.0;
 
                 values[PwIndex] = 1e5 - densityW_*gravity_[1]*(depthBOR_ - globalPos[1]);
-                values[SwitchIndex] = 1e-6;
+                values[SwitchIndex] = 1e-8;
+
+//                std::cout << "cell " << ParentType::cellIndex(cell) << " position of node " << globalNodeIdx << ": " << globalPos << " -> " << values << "\n";
 
 //		if ((globalPos[0] > 60.0 - eps_) && (globalPos[1] < 10 && globalPos[1] > 5))
 //			values[SwitchIndex] = 0.05;
@@ -497,9 +482,28 @@ namespace Dune
             }
 
 
-        int initialPhaseState(const Cell &cell,
-                              const WorldCoord &globalPos,
-                              const LocalCoord &localPos) const
+        Scalar porosity(const Node &node, int globalIdx, const WorldCoord &globalPos) const
+            {
+                // TODO/HACK: porosity should be defined on the nodes
+                // as it is required on the nodes!
+                const LocalCoord &local =
+                    CellReferenceElements::general(ParentType::cellBegin()->type()).position(0, GridDim);
+                return soil().porosity(globalPos, *(ParentType::cellBegin()), local);
+            };
+
+        Scalar pC(Scalar satW, int globalIdx, const WorldCoord &globalPos)
+            {
+                // TODO/HACK: porosity should be defined on the nodes
+                // as it is required on the nodes!
+                const LocalCoord &local =
+                    CellReferenceElements::general(ParentType::cellBegin()->type()).position(0, GridDim);
+                return materialLaw().pC(satW, globalPos, *(ParentType::cellBegin()), local);
+            };
+
+
+        int initialPhaseState(const Node       &node,
+                              int              &globalIdx,
+                              const WorldCoord &globalPos) const
             {
                 int state;
               
@@ -533,7 +537,20 @@ namespace Dune
                 return true;
             };
 
+
     private:
+        // write the fields current solution into an VTK output file.
+        void _writeCurrentResult()
+            {
+                _resultWriter.beginTimestep(_timeManager.time(),
+                                            ParentType::grid().leafView());
+                
+                _model.addVtkFields(_resultWriter);
+
+                _resultWriter.endTimestep();
+            }
+
+
         WorldCoord outerLowerLeft_;
         WorldCoord outerUpperRight_;
         WorldCoord innerLowerLeft_;

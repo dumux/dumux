@@ -41,23 +41,31 @@ namespace Dune {
         typedef TwoPTwoCNewtonController<NewtonMethod>        ThisType;
         typedef NewtonControllerBase<NewtonMethod, ThisType>  ParentType;
 
-        typedef typename NewtonMethod::Model           Model;
         typedef typename ParentType::Scalar            Scalar;
         typedef typename ParentType::Function          Function;
         typedef typename ParentType::JacobianAssembler JacobianAssembler;
 
-        TwoPTwoCNewtonController(Scalar tolerance = 1e-5,
-                                 int targetSteps = 8,
-                                 int maxSteps = 12)
-            : ParentType(tolerance, targetSteps, maxSteps), minStepsSwitch(8)
+        TwoPTwoCNewtonController(Scalar tolerance = 1e-7,
+                                 int targetSteps = 9,
+                                 int maxSteps = 18)
+            : ParentType(tolerance, targetSteps, maxSteps)
             {};
+
+        //! Suggest a new time stepsize based either on the number of newton
+        //! iterations required or on the variable switch
+        void newtonEndStep(Function &u, Function &uOld)
+            {
+                // call the method of the base class
+                ParentType::model().localJacobian().updateStaticData(u, uOld);
+                ParentType::newtonEndStep(u, uOld);
+            }
 
         //! Suggest a new time stepsize based either on the number of newton
         //! iterations required or on the variable switch
         Scalar suggestTimeStepSize(Scalar oldTimeStep) const
             {
                 /*
-                  if (switched_) {
+                  if (_switched) {
                   return somethingSmall;
                   }
                 */
@@ -65,35 +73,29 @@ namespace Dune {
                 return ParentType::suggestTimeStepSize(oldTimeStep);
             }
 
-        //! Returns true if another iteration should be done.
+        //! Returns true iff another iteration should be done.
         bool newtonProceed(Function &u)
             {
                 return ParentType::newtonProceed(u);
 
-                if (ParentType::newtonConverged()){
-                    ParentType::_method->model().clearSwitched();
-                    return false;
+                bool baseProceed = ParentType::newtonProceed(u);
+                
+                // if we just switched some primary variables we
+                // proceed for at least for newton iterations if
+                // before we give up.
+                if (!baseProceed && 
+                    ParentType::model().switched() &&
+                    ParentType::_numSteps < 4 &&
+                    !ParentType::newtonConverged())
+                {
+                    return true;
                 }
-                if (ParentType::_method->model().checkSwitched() && ParentType::_numSteps <= minStepsSwitch && !ParentType::newtonConverged())
-                    return true; // do at least some iterations after variable switch
-                else if (ParentType::_method->model().checkSwitched() && ParentType::_numSteps > minStepsSwitch) {
-                    ParentType::_method->model().clearSwitched();
-                    return false; // if after some iterations no convergence was reached
-                }
-                else
-                    return ParentType::newtonProceed(u);
-            }
 
-        void newtonBeginStep()
-            {
-                ParentType::_method->model().setSwitchedLocalToGlobal();
+                return baseProceed;
             }
-
 
     protected:
         friend class NewtonControllerBase<NewtonMethod, ThisType>;
-        int minStepsSwitch;
-
         //! called by the base class the get an indication of how physical
         //! an iterative solution is 1 means "completely physical", 0 means
         //! "completely unphysical"
@@ -101,7 +103,7 @@ namespace Dune {
             {
                 return 1.0;
 
-                const Scalar switchVarNormFactor = 1.0; // standarization value
+                const Scalar switchVarNormFactor = 1e-1; // standarization value
 
                 // the maximum distance of a Sn value to a physically
                 // meaningful value.
@@ -110,7 +112,7 @@ namespace Dune {
                 Scalar switchVar;
                 Scalar pW;
 
-                for (int idx = 0; idx < (int) (*u).size(); idx++)
+                for (int idx = 0; idx < (*u).size(); idx++)
                 {
                     pW = (*u)[idx][0];
                     switchVar = (*u)[idx][1];
@@ -126,14 +128,11 @@ namespace Dune {
                     }
                 }
 
-                // we accept solutions up to 0.2 percent bigger than 1
+                // we accept solutions up to 1 percent bigger than 1
                 // or smaller than 0 as being physical for numerical
                 // reasons...
-                Scalar phys = 1.02 - maxSwitchVarDelta/switchVarNormFactor - maxPwDelta;
+                Scalar phys = 1.01 - maxSwitchVarDelta/switchVarNormFactor - maxPwDelta;
 
-                // we never return exactly zero, since we want to
-                // allow solutions which are "very close" to a
-                // physically meaningful one
                 return std::min(1.0, phys);
             }
     };

@@ -126,8 +126,6 @@ namespace Dune
         typedef typename DomainTraits::CellReferenceElement  CellReferenceElement;
         typedef typename DomainTraits::CellReferenceElements CellReferenceElements;
 
-        typedef Dune::GridPtr<Grid>                          GridPointer;
-
         enum {
             GridDim = DomainTraits::GridDim,
             WorldDim = DomainTraits::WorldDim
@@ -164,7 +162,7 @@ namespace Dune
                 _nodeMap = NULL;
             };
 
-        BasicDomain(GridPointer grid)
+        BasicDomain(Grid *grid)
             {
                 Api::require<Api::BasicDomainTraits, DomainTraits>();
 
@@ -182,8 +180,9 @@ namespace Dune
         /*!
          * \brief Returns the current grid.
          */
-        Grid &grid()
+/*        const Grid &grid()
             { return *_grid; }
+*/
 
         /*!
          * \brief Returns the current grid.
@@ -207,7 +206,7 @@ namespace Dune
          * \brief Returns the iterator pointing to the first cell of
          *        the grid.
          */
-        CellIterator cellBegin() {
+        CellIterator cellBegin() const {
             return _grid->template leafbegin<0>();
         }
 
@@ -290,7 +289,7 @@ namespace Dune
          * \brief Given a node return its position in world coodinates.
          */
         void nodePosition(WorldCoord &worldCoord,
-                            const Node &v) const
+                          const Node &v) const
             {
                 worldCoord = v.geometry()[0];
             }
@@ -329,7 +328,7 @@ namespace Dune
          * externally! The grid which was previously in the Domain
          * becomes invalid after calling this method.
          */
-        void setGrid(GridPointer grid)
+        void setGrid(Grid *grid)
             {
                 _grid = grid;
 
@@ -338,7 +337,7 @@ namespace Dune
 
     private:
         // pointer to the grid object
-        GridPointer _grid;
+        Grid  *_grid;
 
         // map from the grid's leafs to an index of the index set
         CellMap *_cellMap;

@@ -197,7 +197,23 @@ namespace Dune
             {
                 delete _residual;
             }
+        
+        /*!
+         * \brief Returns a reference to the current numeric model.
+         */
+        Model &model() 
+            { return *_model; }
 
+        /*!
+         * \brief Returns a reference to the current numeric model.
+         */
+        const Model &model() const
+            { return *_model; }
+
+        /*!
+         * \brief Run the newton method. The controller is responsible
+         *        for all the strategic decisions.
+         */
         template <class NewtonController>
         bool execute(Model &model, NewtonController &ctl)
             {
@@ -226,10 +242,11 @@ namespace Dune
                     // a new timestep
                     ctl.newtonBeginStep();
 
-                    // make the current soltion to the old one
+                    // make the current solution to the old one
                     *uOld = *u;
                     *f = 0;
 
+                    localJacobian.clearVisited();
                     // linearize the problem at the current solution
                     jacobianAsm.assemble(localJacobian, u, f);
 
@@ -240,7 +257,6 @@ namespace Dune
                         // a line search approach or the plain method.
                         if (!updateMethod.update(*this, u, uOld, model)) {
                             ctl.newtonFail();
-//                            *model.u() = *model.uOldTimeStep();
                             _model = NULL;
                             return false;
                         }
@@ -248,14 +264,6 @@ namespace Dune
                     else {
                         // couldn't solve the current linearization
                         ctl.newtonFail();
-                        // reset the current solution of the model to the
-                        // solution of the last time step in order not to
-                        // spoil a possible rerun of the newton method
-                        // by artifacts of the current run. (the solution
-                        // which didn't converge might be completely unphysical,
-                        // but we would like to start from something which is
-                        // physical.)
-//                        *model.u() = *model.uOldTimeStep();
                         _model = NULL;
                         return false;
                     }
@@ -268,6 +276,7 @@ namespace Dune
                 if (!ctl.newtonConverged()) {
                     ctl.newtonFail();
                     _model = NULL;
+                    std::cerr << "Newton didn't converge!\n";
                     return false;
                 }
 
@@ -314,12 +323,6 @@ namespace Dune
          */
         Scalar deflectionTwoNorm() const
             { return _deflectionTwoNorm; }
-
-        const Model &model() const
-        { return *_model; }
-
-        Model &model()
-        { return *_model; }
 
     private:
         Function       uOld;

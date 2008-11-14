@@ -57,7 +57,7 @@ namespace Dune
         typedef typename ModelNewtonTraits::JacobianAssembler     JacobianAssembler;
         typedef typename JacobianAssembler::RepresentationType    JacAsmRep;
 
-        NewtonControllerBase(Scalar tolerance, // maximum tolerated defect
+        NewtonControllerBase(Scalar tolerance, // maximum tolerated deflection between two iterations
                              int targetSteps,
                              int maxSteps)
             {
@@ -66,7 +66,7 @@ namespace Dune
                 _tolerance = tolerance;
                 _targetSteps = targetSteps;
                 _maxSteps = maxSteps;
-
+                
                 _curPhysicalness = 0;
                 _maxPhysicalness = 0;
             };
@@ -79,11 +79,13 @@ namespace Dune
                 else if (_numSteps > _maxSteps)
                     return false; // we have exceeded the allowed number of steps
                 else if (newtonConverged())
-                    return false; // we have reached the desired defect
+                    return false; // we are below the desired tolerance
 
-                // check for the physicalness of the solution
                 _curPhysicalness = _asImp()._physicalness(u);
                 _curPhysicalness = std::min(_curPhysicalness, 1.0);
+
+
+                // check for the physicalness of the solution
                 if (_curPhysicalness <= 0)
                     // not physical enough even for a temporary
                     // solution
@@ -136,6 +138,7 @@ namespace Dune
                 _numSteps = 0;
                 _probationCount = 0;
                 _maxPhysicalness = 0;
+                _curPhysicalness = 0;
                 _oneByMagnitude = 1.0/std::max((*u).two_norm(), 1e-5);
             }
 
@@ -157,8 +160,8 @@ namespace Dune
                                Vector &x,
                                Vector &b)
             {
-        	    // if the defect of the newton method is large, we do
-                // not need to solve the linear approximation
+                // if the deflection of the newton method is large, we
+                // do not need to solve the linear approximation
                 // accurately. On the other hand, if this is the first
                 // newton step, we don't have a meaningful value for the defect
                 // yet, so we use the targeted accurracy for the defect.
@@ -170,13 +173,10 @@ namespace Dune
                 MatrixAdapter opA(A);
 
 #ifdef HAVE_PARDISO
-
                 SeqPardiso<Matrix,Vector,Vector> pardiso;
                 pardiso.factorize(A);
                 BiCGSTABSolver<Vector> solver(opA, pardiso, residTol, 100, 2);         // an inverse operator
-
 #else
-
                 // initialize the preconditioner
                 Dune::SeqILU0<Matrix,Vector,Vector> precond(A, 1.0);
 //                Dune::SeqSSOR<OpAsmRep,FnRep,FnRep> precond(*opAsm, 3, 1.0);
@@ -210,7 +210,8 @@ namespace Dune
             }
 
         //! Suggest a new time stepsize based on the number of newton
-        //! iterations required.
+        //! iterations required for the last time step and the old time
+        //! step size.
         Scalar suggestTimeStepSize(Scalar oldTimeStep) const
             {
                 // be agressive reducing the timestep size but
@@ -227,6 +228,32 @@ namespace Dune
                     return oldTimeStep*(1 + percent/1.2);
                 }
             }
+        
+        /*!
+         * \brief Returns a reference to the current newton method
+         *        which is controlled by this controller.
+         */
+        NewtonMethod &method() 
+            { return *_method; }
+
+        /*!
+         * \brief Returns a reference to the current newton method
+         *        which is controlled by this controller.
+         */
+        const NewtonMethod &method() const
+            { return *_method; }
+        
+        /*!
+         * \brief Returns a reference to the current numeric model.
+         */
+        Model &model()
+            { return _method->model(); }
+
+        /*!
+         * \brief Returns a reference to the current numeric model.
+         */
+        const Model &model() const
+            { return _method->model(); }
 
 
     protected:
