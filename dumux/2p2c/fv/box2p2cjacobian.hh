@@ -107,12 +107,7 @@ namespace Dune
     virtual VBlockType computeM (const Entity& e, const VBlockType* sol,
     		int node, std::vector<VariableNodeData>& varData)
     {
-    	 GeometryType gt = e.geometry().type();
-    	 const typename LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type&
-     	 sfs=LagrangeShapeFunctions<DT,RT,dim>::general(gt,1);
-
-   	 int globalIdx = this->vertexMapper.template map<dim>(e, sfs[node].entity());
-
+         int globalIdx = this->vertexMapper.template map<dim>(e, node);
    	 VBlockType result;
    	 RT satN = varData[node].satN;
    	 RT satW = varData[node].satW;

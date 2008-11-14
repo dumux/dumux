@@ -147,11 +147,6 @@ namespace Dune
                                   const LocalFunction &localSol,
                                   const int scvId)
             {
-/*
-                GeometryType gt = cell.geometry().type();
-                const typename LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type&
-                    sfs=LagrangeShapeFunctions<DT,RT,dim>::general(gt,1);
-*/
                 int globalIdx = this->vertexMapper.template map<dim>(cell, sfs[node].entity());
                 
                 VBlockType result;
