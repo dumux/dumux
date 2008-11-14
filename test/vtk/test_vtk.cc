@@ -16,7 +16,7 @@
 #include "dumux/material/brookscoreylaw_deprecated.hh"
 #include "dumux/material/vangenuchtenlaw_deprecated.hh"
 #include "dumux/material/randompermeability.hh"
-#include "dumux/diffusion/fv/fvdiffusion_deprecated.hh"
+#include "dumux/diffusion/fv/fvdiffusionvelocity_deprecated.hh"
 #include "dumux/diffusion/fe/fediffusion.hh"
 #include "dumux/diffusion/mimetic/mimeticdiffusion.hh"
 #include "dumux/diffusion/problems/heterogeneousproblem.hh"
@@ -36,8 +36,8 @@ int main(int argc, char** argv)
     // create a grid object
     typedef double NumberType;
 
-    typedef Dune::UGGrid<dim> GridType;
-    //typedef Dune::SGrid<dim,dim> GridType;
+    //typedef Dune::UGGrid<dim> GridType;
+    typedef Dune::SGrid<dim,dim> GridType;
 
     // use unitcube from grids
     std::stringstream dgfFileName;
@@ -67,7 +67,7 @@ int main(int argc, char** argv)
 
     Dune::Timer timer;
     timer.reset();
-    Dune::FVDiffusion<GridType, NumberType, VC> diffusion(grid, problem);
+    Dune::FVDiffusionVelocity<GridType, NumberType, VC> diffusion(grid, problem);
     // Dune::FEDiffusion<GridType, NumberType> diffusion(grid, problem);
     // Dune::MimeticDiffusion<GridType, NumberType, VC> diffusion(grid, problem);
 
@@ -82,10 +82,10 @@ int main(int argc, char** argv)
 
     Dune::LeafVTKWriter<GridType> vtkwriter(grid);
 
-    typedef Dune::BlockVector<Dune::FieldVector<double, dim> > WType;
+    typedef Dune::BlockVector<Dune::FieldVector<double, 3> > WType;
     WType cellvelocity(grid.size(0));
 
-    typedef Dune::BlockVector<Dune::FieldVector<double, dim> > ZType;
+    typedef Dune::BlockVector<Dune::FieldVector<double, 3> > ZType;
     ZType vertexvelocity(grid.size(dim));
 
      vtkwriter.faceToCellToVertex(problem.variables.velocity,cellvelocity,vertexvelocity);
