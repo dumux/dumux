@@ -1,3 +1,6 @@
+#ifndef CONFIG_H
+#define CONFIG_H
+
 #define DUNE_MINIMAL_DEBUG_LEVEL 4
 #cmakedefine HAVE_BOOST 1
 #cmakedefine HAVE_DUNE 1
@@ -27,9 +30,11 @@
 #cmakedefine PROJECT_MAINTAINER       "${PROJECT_MAINTAINER}"
 #cmakedefine PROJECT_MAINTAINER_EMAIL "${PROJECT_MAINTAINER_EMAIL}"
 
-#define DUNE_DEPRECATED __attribute__((deprecated))
-
 /* tr1/array. */
 #cmakedefine HAVE_TR1_ARRAY 1
 /* malloc.h */
 #cmakedefine HAVE_MALLOC_H 1
+
+#include <dune/common/deprecated.hh>
+
+#endif // CONFIG_H

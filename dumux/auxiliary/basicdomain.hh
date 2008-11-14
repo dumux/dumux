@@ -51,8 +51,8 @@ namespace Dune
             {typename I::WorldCoord                 *x;x=NULL;}
             {typename I::Cell                       *x;x=NULL;}
             {typename I::CellIterator               *x;x=NULL;}
-            {typename I::Vertex                     *x;x=NULL;}
-            {typename I::VertexIterator             *x;x=NULL;}
+            {typename I::Node                       *x;x=NULL;}
+            {typename I::NodeIterator               *x;x=NULL;}
             {typename I::CellReferenceElement       *x;x=NULL;}
             {typename I::CellReferenceElements      *x;x=NULL;}
             {typename I::IntersectionIteratorGetter *x;x=NULL;}
@@ -75,7 +75,7 @@ namespace Dune
     {
     public:
         /*!
-         * \brief Provides a few default types to interface cell or vertex
+         * \brief Provides a few default types to interface cell or node
          *        based grids.
          */
         class DomainTraits
@@ -99,9 +99,9 @@ namespace Dune
             typedef typename CellTraits::Entity                               Cell;
             typedef typename CellTraits::LeafIterator                         CellIterator;
             
-            typedef typename Grid::Traits::template Codim<GridDim>            VertexTraits;
-            typedef typename VertexTraits::Entity                             Vertex;
-            typedef typename VertexTraits::LeafIterator                       VertexIterator;
+            typedef typename Grid::Traits::template Codim<GridDim>            NodeTraits;
+            typedef typename NodeTraits::Entity                               Node;
+            typedef typename NodeTraits::LeafIterator                         NodeIterator;
             
             typedef Dune::ReferenceElement<CoordScalar, GridDim>              CellReferenceElement;
             typedef Dune::ReferenceElements<CoordScalar, GridDim>             CellReferenceElements;
@@ -118,13 +118,12 @@ namespace Dune
         typedef typename DomainTraits::Grid                  Grid;
         typedef typename DomainTraits::Cell                  Cell;
         typedef typename DomainTraits::CellIterator          CellIterator;
-        typedef typename DomainTraits::Vertex                Vertex;
-        typedef typename DomainTraits::VertexIterator        VertexIterator;
+        typedef typename DomainTraits::Node                  Node;
+        typedef typename DomainTraits::NodeIterator          NodeIterator;
         typedef typename DomainTraits::LocalCoord            LocalCoord;
         typedef typename DomainTraits::WorldCoord            WorldCoord;
         typedef typename DomainTraits::CellReferenceElement  CellReferenceElement;
         typedef typename DomainTraits::CellReferenceElements CellReferenceElements;
-
 
         enum {
             GridDim = DomainTraits::GridDim,
@@ -147,11 +146,11 @@ namespace Dune
         // the set of indices for the grid's cells
         typedef typename Grid::Traits::LeafIndexSet _CellIndexSet;
 
-        // mapper: one data element per vertex
+        // mapper: one data element per node
         template<int dim>
-        struct _VertexLayout
+        struct _NodeLayout
         { bool contains (Dune::GeometryType gt) { return gt.dim() == 0; } };
-        typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,_CellIndexSet,_VertexLayout> VertexMap;
+        typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,_CellIndexSet,_NodeLayout> NodeMap;
         
     public:
         BasicDomain()
@@ -159,14 +158,14 @@ namespace Dune
                 Api::require<Api::BasicDomainTraits, DomainTraits>();
 
                 _cellMap = NULL;
-                _vertexMap = NULL;
+                _nodeMap = NULL;
                 _grid = NULL;
             };
 
         ~BasicDomain()
             {
                 delete _cellMap;
-                delete _vertexMap;
+                delete _nodeMap;
                 delete _grid;
             }
 
@@ -238,27 +237,27 @@ namespace Dune
          * \brief Returns the current grid's number of vertices.
          */
         int numVertices() const
-            { return _vertexMap->size(); }
+            { return _nodeMap->size(); }
 
         /*!
-         * \brief Given a vertex index within a cell, return the
+         * \brief Given a node index within a cell, return the
          *        respective global index.
          */
-        int vertexIndex(const Cell &e, int localVertexId) const
-            { return _vertexMap->template map<GridDim>(e, localVertexId); }
+        int nodeIndex(const Cell &e, int localNodeId) const
+            { return _nodeMap->template map<GridDim>(e, localNodeId); }
 
         /*!
-         * \brief Given a vertex index within a cell, return the
+         * \brief Given a node index within a cell, return the
          *        respective global index.
          */
-        int vertexIndex(const Vertex &v) const
-            { return _vertexMap->map(v); }
+        int nodeIndex(const Node &v) const
+            { return _nodeMap->map(v); }
 
         /*!
          * \brief Returns the iterator pointing to the first cell of
          *        the grid.
          */
-        VertexIterator vertexBegin() {
+        NodeIterator nodeBegin() {
             return _grid->template leafbegin<GridDim>();
         }
 
@@ -266,33 +265,33 @@ namespace Dune
          * \brief Returns the iterator pointing to the next to last
          *        cell of the grid.
          */
-        VertexIterator vertexEnd() {
+        NodeIterator nodeEnd() {
             return _grid->template leafend<GridDim>();
         }
 
         /*!
-         * \brief Return the entity for a vertex given a cell and the
-         *        vertex' local index.
+         * \brief Return the entity for a node given a cell and the
+         *        node' local index.
          */
-        const Vertex &vertex(const Cell &cell, int localVertIdx)
+        const Node &node(const Cell &cell, int localVertIdx)
             { return *cell.template entity<GridDim>(localVertIdx); };
 
         /*!
-         * \brief Given a vertex return its position in world coodinates.
+         * \brief Given a node return its position in world coodinates.
          */
-        void vertexPosition(WorldCoord &worldCoord,
-                            const Vertex &v) const
+        void nodePosition(WorldCoord &worldCoord,
+                            const Node &v) const
             {
                 worldCoord = v.geometry()[0];
             }
 
         /*!
-         * \brief Returns the vertex map in case it is externally required.
+         * \brief Returns the node map in case it is externally required.
          */
-        VertexMap &vertexMap()
-            { return *_vertexMap; }
-        const VertexMap &vertexMap() const
-            { return *_vertexMap; }
+        NodeMap &nodeMap()
+            { return *_nodeMap; }
+        const NodeMap &nodeMap() const
+            { return *_nodeMap; }
 
 
         /*!
@@ -305,11 +304,11 @@ namespace Dune
         void gridChanged()
             {
                 delete _cellMap;
-                delete _vertexMap;
+                delete _nodeMap;
 
-                // create the cell and vertex index sets for the grid
+                // create the cell and node index sets for the grid
                 _cellMap = new CellMap(*_grid);
-                _vertexMap = new VertexMap(*_grid, _grid->leafIndexSet());
+                _nodeMap = new NodeMap(*_grid, _grid->leafIndexSet());
             }
 
         /*!
@@ -333,9 +332,9 @@ namespace Dune
         Grid  *_grid;
 
         // map from the grid's leafs to an index of the index set
-        CellMap   *_cellMap;
+        CellMap *_cellMap;
         // translates vertices local to a cell to global ones
-        VertexMap *_vertexMap;
+        NodeMap *_nodeMap;
     };
 }
 

@@ -26,17 +26,17 @@
 
 /*!
  * \file
- * \brief Specify the shape functions, operator assemblers, etc used for
- *        the PwSnBoxModel.
+ * \brief Specify the shape functions, operator assemblers, etc
+ *        used for the BoxScheme.
  */
 namespace Dune
 {
     /*!
-     * \brief Specify the shape functions, operator assemblers, etc used for
-     *        the PwSnBoxModel.
+     * \brief Specify the shape functions, operator assemblers, etc
+     *        used for the BoxScheme.
      */
-    template<class Scalar, class Grid>
-    class PwSnBoxTraits
+    template<class Scalar, class Grid, int PrimaryVars>
+    class P1BoxTraits
     {
     private:
         typedef typename Grid::ctype     CoordScalar;
@@ -44,73 +44,30 @@ namespace Dune
         enum {
             GridDim = Grid::dimension,
             WorldDim = Grid::dimensionworld,
-
-            SIZE = Dune::LagrangeShapeFunctionSetContainer<CoordScalar,
-                                                           Scalar,
-                                                           Grid::dimension>::maxsize
         };
     
     public:
         enum {
-            NumUnknowns = 2,
-            PwIndex = 0,
-            SnIndex = 1
+            PrimaryVariables = PrimaryVars
         };
         
         //! A vector of all primary variables at a point
-        typedef Dune::FieldVector<Scalar, NumUnknowns>  UnknownsVector;
+        typedef Dune::FieldVector<Scalar, PrimaryVariables> UnknownsVector;
         //! boundary condition vector
         typedef Dune::FieldVector<Dune::BoundaryConditions::Flags, 
-                                  NumUnknowns> BoundaryTypeVector;
+                                  PrimaryVariables>         BoundaryTypeVector;
+        
+        /*!
+         * \brief Represents a local spatial function.
+         *
+         * A field vector is attached at each vertex of the cell.
+         */
+        typedef BlockVector<UnknownsVector> LocalFunction;
         
         
-        //! The finite volume dual cells of a finite element cell
+        //! The finite volume cell segments within a finite element cell
         typedef Dune::FVElementGeometry<Grid>  FVElementGeometry;
         
-        /*!
-         * \brief Represents a local solution.
-         *
-         * A solution vector is attached at each vertex of the cell.
-         */
-        struct LocalFunction
-        {
-            UnknownsVector atSubContVol[SIZE];
-        };
-        
-        /*!
-         * \brief Data which is attached to each vertex of the and can
-         *        be shared between multiple calculations and should
-         *        thus be cached in order to increase efficency.
-         */
-        struct CachedSubContVolData
-        {
-            Scalar Sw;
-            Scalar pC;
-            Scalar pN;
-            
-            UnknownsVector mobility;  //Vector with the number of phases
-        };
-        
-        /*!
-         * \brief Cached data for the each vertex of the cell.
-         */
-        struct CachedCellData
-        {
-            CachedSubContVolData  atSubContVol[SIZE];
-        };
-
-        //! The function which represents a solution for a fixed time
-        //! step. We use first-order vertex centered FE polynomials.
-        typedef Dune::LeafP1Function<Grid, 
-                                     Scalar, 
-                                     NumUnknowns>   SpatialFunction;
-        
-        //! The OperatorAssembler which assembles the global stiffness
-        //! matrix
-        typedef Dune::LeafP1OperatorAssembler<Grid,
-                                              Scalar,
-                                              NumUnknowns>  JacobianAssembler;
-
         //! a single of shape function used for the BoxFunction inside
         //! cells.
         typedef Dune::LagrangeShapeFunctionSetContainer<CoordScalar,
@@ -124,11 +81,30 @@ namespace Dune
         //!
         //! TODO: Use specialization to take advantage of simplex grids
         //!       and structured grids.
-        static const ShapeFunctionSetContainer &shapeFunctions()
-            { 
-                return Dune::LagrangeShapeFunctions<CoordScalar, Scalar, GridDim>::general;
-            }
+        static const ShapeFunctionSetContainer &shapeFunctions;
+        
+        //! The function which represents a solution for a fixed time
+        //! step. We use first-order vertex centered FE polynomials.
+        typedef Dune::LeafP1Function<Grid, 
+                                     Scalar, 
+                                     PrimaryVariables>   SpatialFunction;
+        
+        //! The OperatorAssembler which assembles the global stiffness
+        //! matrix
+        typedef Dune::LeafP1OperatorAssembler<Grid,
+                                              Scalar,
+                                              PrimaryVariables>  JacobianAssembler;
     };
+
+    // this is butt-ugly, but the only way I could come up with to
+    // initialize a static const member of a class
+    template<class Scalar, class Grid, int PrimaryVars>
+    const typename P1BoxTraits<Scalar, Grid, PrimaryVars>::ShapeFunctionSetContainer &
+      P1BoxTraits<Scalar, Grid, PrimaryVars>::shapeFunctions
+         =  Dune::LagrangeShapeFunctions<typename Grid::ctype, 
+                                         Scalar,
+                                         Grid::dimension>::general;
+
 }
 
 #endif

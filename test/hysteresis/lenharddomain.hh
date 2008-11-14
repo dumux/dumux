@@ -30,7 +30,6 @@
 #include "lenhardstate.hh"
 
 #include <dumux/auxiliary/basicdomain.hh>
-#include <dumux/new_models/box/pwsn/pwsnboxtraits.hh>
 
 #include <dumux/new_material/regularizedvangenuchten.hh>
 #include <dumux/new_material/parkerlenhard.hh>
@@ -76,14 +75,14 @@ namespace Lenhard
             // specfic for a medium, and cell specific parameters
             typedef LenhardGlobalState<ScalarT>                   GlobalState;
             typedef LenhardMediumState<VanGenuchtenState>         MediumState;
-            typedef LenhardVertexState<MediumState>               VertexState;
+            typedef LenhardNodeState<MediumState>                 NodeState;
             typedef LenhardCellState<MediumState>                 CellState;
             
             // The parker-lenhard hysteresis model
-#if !defined USE_VERTEX_PARAMETERS
+#if !defined USE_NODE_PARAMETERS
             typedef Dune::ParkerLenhard<CellState, VanGenuchten>     ParkerLenhard;
-#else // defined USE_VERTEX_PARAMETERS
-            typedef Dune::ParkerLenhard<VertexState, VanGenuchten>   ParkerLenhard;
+#else // defined USE_NODE_PARAMETERS
+            typedef Dune::ParkerLenhard<NodeState, VanGenuchten>   ParkerLenhard;
 #endif
         };
 
@@ -93,10 +92,10 @@ namespace Lenhard
         typedef typename DomainTraits::CellReferenceElement  CellReferenceElement;
         typedef typename DomainTraits::CellReferenceElements CellReferenceElements;
 
-        typedef typename DomainTraits::Vertex                Vertex;
+        typedef typename DomainTraits::Node                Node;
 
         typedef typename DomainTraits::CellIterator         CellIterator;
-        typedef typename DomainTraits::VertexIterator       VertexIterator;
+        typedef typename DomainTraits::NodeIterator       NodeIterator;
 
         typedef typename DomainTraits::IntersectionIterator       IntersectionIterator;
         typedef typename DomainTraits::IntersectionIteratorGetter IntersectionIteratorGetter;
@@ -109,7 +108,7 @@ namespace Lenhard
         typedef typename MaterialTraits::GlobalState   GlobalState;
         typedef typename MaterialTraits::MediumState   MediumState;
         typedef typename MaterialTraits::CellState     CellState;
-        typedef typename MaterialTraits::VertexState   VertexState;
+        typedef typename MaterialTraits::NodeState   NodeState;
 
         typedef typename MaterialTraits::VanGenuchtenState VanGenuchtenState;
         typedef typename MaterialTraits::VanGenuchten      VanGenuchten;
@@ -130,7 +129,7 @@ namespace Lenhard
                 _initGlobalState();
                 _initMediaStates();
                 _initCellStates();
-                _initVertexStates();
+                _initNodeStates();
             };
 
         ~PwSnLenhardDomain()
@@ -152,29 +151,29 @@ namespace Lenhard
             }
 
         //! return the permeability tensor for a cell
-        const Matrix &permeability(const Cell &cell) const
+        void applyPermeabilityTensor(Vector &dest, const Cell &cell, const Vector &pressureGradient) const
             {
-                return cellState(cellIndex(cell)).permeability();
+                cellState(cellIndex(cell)).permeability().umv(pressureGradient, dest);
             }
 
-        //! Return the capillary pressure for a given vertex of a cell
+        //! Return the capillary pressure for a given node of a cell
         Scalar pC(const Cell &cell,
                   int cellIdx,
                   int localVertIdx,
                   int globalVertIdx,
                   Scalar Sw) const
             {
-#if defined USE_VERTEX_PARAMETERS
-                return ParkerLenhard::pC(vertexState(globalVertIdx), Sw);
-#else // !defined USE_VERTEX_PARAMETERS
+#if defined USE_NODE_PARAMETERS
+                return ParkerLenhard::pC(nodeState(globalVertIdx), Sw);
+#else // !defined USE_NODE_PARAMETERS
 #if defined USE_INTERFACE_CONDITION
-                const VertexState &vertState = vertexState(globalVertIdx);
+                const NodeState &vertState = nodeState(globalVertIdx);
                 if (!vertState.isOnInterface())
                     return ParkerLenhard::pC(cellState(cellIdx),
                                              Sw);
 
                 // find the minimum capilarry pressure around the
-                // vertex if the vertex is on an interface
+                // node if the node is on an interface
                 Scalar minPc = 1e100;
                 int nNeighbors = vertState.numNeighbourCells();
                 for (int i = 0; i < nNeighbors; ++i) {
@@ -235,7 +234,7 @@ namespace Lenhard
                 return (phase == 0)? viscosityW() : viscosityN();
             }
 
-        // return the mobility of the wetting phase at a vertex
+        // return the mobility of the wetting phase at a node
         Scalar mobilityW(const Cell &cell,
                          int cellIdx,
                          int localVertIdx,
@@ -248,16 +247,16 @@ namespace Lenhard
                        viscosityW());
 */
 
-#if defined USE_VERTEX_PARAMETERS
-                return ParkerLenhard::krw(vertexState(globalVertIdx), Sw) / viscosityW();
-#else // !defined USE_VERTEX_PARAMETERS
+#if defined USE_NODE_PARAMETERS
+                return ParkerLenhard::krw(nodeState(globalVertIdx), Sw) / viscosityW();
+#else // !defined USE_NODE_PARAMETERS
 #ifdef USE_INTERFACE_CONDITION
-                const VertexState &vertState = vertexState(globalVertIdx);
+                const NodeState &vertState = nodeState(globalVertIdx);
                 if (!vertState.isOnInterface())
                     return ParkerLenhard::krw(cellState(cellIdx), Sw) / viscosityW();
 
                 // find the minimum wetting phase mobility around the
-                // vertex if the vertex is on an interface
+                // node if the node is on an interface
                 Scalar minMob = 1e100;
                 int nNeighbors = vertState.numNeighbourCells();
                 for (int i = 0; i < nNeighbors; ++i) {
@@ -273,7 +272,7 @@ namespace Lenhard
 #endif
             }
 
-        // return the mobility of the non-wetting phase at a vertex
+        // return the mobility of the non-wetting phase at a node
         Scalar mobilityN(const Cell &cell,
                          int cellIdx,
                          int localVertIdx,
@@ -291,16 +290,16 @@ namespace Lenhard
                 // mobility!
                 Scalar Sw = 1 - Sn;
 
-#if defined USE_VERTEX_PARAMETERS
-                return ParkerLenhard::krn(vertexState(globalVertIdx), Sw) / viscosityN();
-#else // !defined USE_VERTEX_PARAMETERS
+#if defined USE_NODE_PARAMETERS
+                return ParkerLenhard::krn(nodeState(globalVertIdx), Sw) / viscosityN();
+#else // !defined USE_NODE_PARAMETERS
 #ifdef USE_INTERFACE_CONDITION
-                const VertexState &vertState = vertexState(globalVertIdx);
+                const NodeState &vertState = nodeState(globalVertIdx);
                 if (!vertState.isOnInterface())
                     return ParkerLenhard::krn(cellState(cellIdx), Sw) / viscosityN();
 
                 // find the minimum wetting phase mobility around the
-                // vertex if the vertex is on an interface
+                // node if the node is on an interface
                 Scalar minMob = 1e100;
                 int nNeighbors = vertState.numNeighbourCells();
                 for (int i = 0; i < nNeighbors; ++i) {
@@ -327,23 +326,23 @@ namespace Lenhard
         const CellState &cellState(const Cell &cell) const
             { return _cellStates[cellIndex(cell)]; }
 
-        // given a global vertex index, return the corresponding state
-        VertexState &vertexState(int index)
-            { return _vertexStates[index]; }
-        const VertexState &vertexState(int index) const
-            { return _vertexStates[index]; }
+        // given a global node index, return the corresponding state
+        NodeState &nodeState(int index)
+            { return _nodeStates[index]; }
+        const NodeState &nodeState(int index) const
+            { return _nodeStates[index]; }
 
-        // given a cell and a local vertex index, return the corresponding state
-        VertexState &vertexState(const Cell &cell, int i)
-            { return _vertexStates[ParentType::vertexIndex(cell, i)]; }
-        const VertexState &vertexState(const Cell &cell, int i) const
-            { return _vertexStates[ParentType::vertexIndex(cell, i)]; }
+        // given a cell and a local node index, return the corresponding state
+        NodeState &nodeState(const Cell &cell, int i)
+            { return _nodeStates[ParentType::nodeIndex(cell, i)]; }
+        const NodeState &nodeState(const Cell &cell, int i) const
+            { return _nodeStates[ParentType::nodeIndex(cell, i)]; }
 
-        // given a vertex, return it's state object
-        VertexState &vertexState(const Vertex &vert)
-            { return _vertexStates[ParentType::vertexIndex(vert)]; }
-        const VertexState &vertexState(const Vertex &vert) const
-            { return _vertexStates[ParentType::vertexIndex(vert)]; }
+        // given a node, return it's state object
+        NodeState &nodeState(const Node &vert)
+            { return _nodeStates[ParentType::nodeIndex(vert)]; }
+        const NodeState &nodeState(const Node &vert) const
+            { return _nodeStates[ParentType::nodeIndex(vert)]; }
 
         const WorldCoord &lowerLeft() const
             { return _gridLowerLeft; }
@@ -445,23 +444,23 @@ namespace Lenhard
 
             }
 
-        void _initVertexStates()
+        void _initNodeStates()
             {
-                _vertexStates.resize(ParentType::numVertices());
+                _nodeStates.resize(ParentType::numVertices());
 
-#if defined USE_VERTEX_PARAMETERS
-                VertexIterator vertIt = ParentType::vertexBegin();
-                const VertexIterator &endVertIt = ParentType::vertexEnd();
+#if defined USE_NODE_PARAMETERS
+                NodeIterator vertIt = ParentType::nodeBegin();
+                const NodeIterator &endVertIt = ParentType::nodeEnd();
                 for (; vertIt != endVertIt; ++vertIt) {
                     WorldCoord pos;
-                    ParentType::vertexPosition(pos, *vertIt);
-                    VertexState &vertState = vertexState(*vertIt);
+                    ParentType::nodePosition(pos, *vertIt);
+                    NodeState &vertState = nodeState(*vertIt);
 
                     vertState.setMediumState(_coarseSand);
                 }
 
-#else // ! defined USE_VERTEX_PARAMETERS
-                // initialize the vertex state objects
+#else // ! defined USE_NODE_PARAMETERS
+                // initialize the node state objects
                 /*
                 // loop over all cells
                 CellIterator cellIt = ParentType::cellBegin();
@@ -493,7 +492,7 @@ namespace Lenhard
 #endif
             }
 
-#if !defined USE_VERTEX_PARAMETERS
+#if !defined USE_NODE_PARAMETERS
         //  mark all vertices on a face as as belonging to an
         //  inhomogenity
         /*
@@ -508,22 +507,22 @@ namespace Lenhard
 
                 int faceIdx = interfaceIt.numberInSelf();
                 int nVerticesOfFace = refElem.size(faceIdx, 1, GridDim);
-                for (int vertexInFace = 0;
-                     vertexInFace < nVerticesOfFace;
-                     vertexInFace++)
+                for (int nodeInFace = 0;
+                     nodeInFace < nVerticesOfFace;
+                     nodeInFace++)
                 {
-                    int vertexIdxInElement = refElem.subEntity(faceIdx, 1, vertexInFace, GridDim);
+                    int nodeIdxInElement = refElem.subEntity(faceIdx, 1, nodeInFace, GridDim);
 
-                    vertexState(*interfaceIt.inside(), vertexIdxInElement).addNeighbourCellIdx(inIdx);
-                    vertexState(*interfaceIt.inside(), vertexIdxInElement).addNeighbourCellIdx(outIdx);
+                    nodeState(*interfaceIt.inside(), nodeIdxInElement).addNeighbourCellIdx(inIdx);
+                    nodeState(*interfaceIt.inside(), nodeIdxInElement).addNeighbourCellIdx(outIdx);
                 }
             }
         */
-#endif // !defined USE_VERTEX_PARAMETERS
+#endif // !defined USE_NODE_PARAMETERS
 
 
         // the actual type which stores the cell states.
-        typedef std::vector<VertexState>  _VertexStateArray;
+        typedef std::vector<NodeState>  _NodeStateArray;
 
         // the actual type which stores the cell states.
         typedef std::vector<CellState>    _CellStateArray;
@@ -542,10 +541,10 @@ namespace Lenhard
         GlobalState *_globalState;
         MediumState *_coarseSand;
 
-        // stores a state for each vertex
-        _VertexStateArray _vertexStates;
+        // stores a state for each node
+        _NodeStateArray _nodeStates;
 
-        // stores a state for each vertex
+        // stores a state for each node
         _CellStateArray  _cellStates;
 
         // A small epsilon value and the current simulated

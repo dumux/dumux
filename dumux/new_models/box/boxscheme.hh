@@ -36,13 +36,19 @@ namespace Dune
     /*!
      * \brief The base class for the BOX hybrid finite element/finite volume discretization scheme
      */
-    template<class BoxTraitsT, class ProblemT, class LocalJacobianT>
+    template<class Implementation, 
+             class BoxTraitsT, 
+             class ProblemT,
+             class LocalJacobianT>
     class BoxScheme
     {
         // copy the relevant problem specfific types from the problem
         // controller class
-        typedef BoxScheme<BoxTraitsT, ProblemT, LocalJacobianT> ThisType;
-        typedef ProblemT                                       Problem;
+        typedef BoxScheme<Implementation, 
+                          BoxTraitsT,
+                          ProblemT, 
+                          LocalJacobianT> ThisType;
+        typedef ProblemT                  Problem;
 
     public:
         /*!
@@ -96,7 +102,7 @@ namespace Dune
 
         // some constants
         enum {
-            NumUnknowns = BoxTraits::NumUnknowns,
+            PrimaryVariables = BoxTraits::PrimaryVariables,
 
             GridDim     = DomainTraits::GridDim,
             WorldDim    = DomainTraits::WorldDim
@@ -198,8 +204,8 @@ namespace Dune
                 int numRetries = 0;
                 while (true)
                 {
-                    _localJacobian.setDt(dt);
-                    bool converged = solver.execute(*this, controller);
+                    bool converged = solver.execute(*this->_asImp(),
+                                                    controller);
                     nextDt = controller.suggestTimeStepSize(dt);
                     
                     if (converged)
@@ -209,6 +215,7 @@ namespace Dune
                         DUNE_THROW(Dune::MathError,
                                    "Newton solver didn't converge after 10 timestep divisions. dt=" << dt);
                     ++numRetries;
+                    _problem.setTimeStepSize(nextDt);
                     dt = nextDt;
                     std::cout << boost::format("Newton didn't converge. Retrying with timestep of %f\n")%dt;
                 }
@@ -230,7 +237,7 @@ namespace Dune
          */
         void evalGlobalResidual(SpatialFunction &globResidual)
             {
-                (*globResidual)=0;
+                (*globResidual) = Scalar(0.0);
 
                 // iterate through leaf grid
                 CellIterator it     = _problem.grid().template leafbegin<0>();
@@ -243,26 +250,27 @@ namespace Dune
                     // evaluate the cell's local solutions for the
                     // current and the last timestep.
                     const Cell& cell = *it;
-                    LocalFunction localResidual;
-                    LocalFunction localU;
-                    LocalFunction localOldU;
+                    const int numVertices = cell.template count<GridDim>();
+                    LocalFunction localResidual(numVertices);
+                    LocalFunction localU(numVertices);
+                    LocalFunction localOldU(numVertices);
+
                     _localJacobian.setCurrentCell(cell);
-                    _localJacobian.evalLocal(localU, currentSolution());
-                    _localJacobian.evalLocal(localOldU, previousSolution());
-                    _localJacobian.evalLocalResidual(localResidual,
-                                                     localU,
-                                                     localOldU);
+                    _localJacobian.restrictToCell(localU, currentSolution());
+                    _localJacobian.restrictToCell(localOldU, previousSolution());
+                    _localJacobian.setParams(cell, localU, localOldU);
+                    _localJacobian.evalLocalResidual(localResidual);
 
                     // loop over the cell's vertices, map them to the
-                    // corresponding grid's vertex ids and add the
-                    // cell's local residual at a vertex the global
-                    // residual at this vertex.
-                    const ShapeFunctionSet &shapeFns = BoxTraits::shapeFunctions()(cell.geometry().type(), 1);
+                    // corresponding grid's node ids and add the
+                    // cell's local residual at a node the global
+                    // residual at this node.
+                    const ShapeFunctionSet &shapeFns = BoxTraits::shapeFunctions(cell.geometry().type(), 1);
                     for(int localId=0; localId < shapeFns.size(); localId++)
                     {
-                        int globalId = _problem.vertexIndex(cell,
+                        int globalId = _problem.nodeIndex(cell,
                                                             shapeFns[localId].entity());
-                        (*globResidual)[globalId] += localResidual.atSubContVol[localId];
+                        (*globResidual)[globalId] += localResidual[localId];
                     }
                 }
             }
@@ -278,18 +286,18 @@ namespace Dune
                 {
                     // loop over all shape functions of the current cell
                     const Cell& cell = *it;
-                    const ShapeFunctionSet &shapeFnSet = BoxTraits::shapeFunctions()(cell.geometry().type(), 1);
+                    const ShapeFunctionSet &shapeFnSet = BoxTraits::shapeFunctions(cell.geometry().type(), 1);
                     for (int i = 0; i < shapeFnSet.size(); i++) {
                         // get the local and global coordinates of the
-                        // shape function's center (i.e. the vertex
+                        // shape function's center (i.e. the node
                         // where it is 1 for Lagrange functions)
                         const LocalCoord &localPos = shapeFnSet[i].position();
                         WorldCoord globalPos = it->geometry().global(localPos);
 
                         // translate the local index of the center of
                         // the current shape function to the global
-                        // vertex id
-                        int globalId = _problem.vertexIndex(cell, shapeFnSet[i].entity());
+                        // node id
+                        int globalId = _problem.nodeIndex(cell, shapeFnSet[i].entity());
 
                         // use the problem controller to actually do
                         // the dirty work of nailing down the initial
@@ -318,7 +326,7 @@ namespace Dune
                     // functions
                     const Cell& cell = *cellIt;
                     Dune::GeometryType geoType = cell.geometry().type();
-                    const typename ShapeFunctionSetContainer::value_type &shapeFnSet = BoxTraits::shapeFunctions()(geoType, 1);
+                    const typename ShapeFunctionSetContainer::value_type &shapeFnSet = BoxTraits::shapeFunctions(geoType, 1);
 
                     // locally evaluate the cell's boundary condition types
                     _localJacobian.assembleBoundaryCondition(cell);
@@ -342,13 +350,13 @@ namespace Dune
                             const LocalCoord &localPos = shapeFnSet[i].position();
                             WorldCoord globalPos = cell.geometry().global(localPos);
 
-                            // translate local vertex id to a global one
-                            int globalId = _problem.vertexIndex(cell,
+                            // translate local node id to a global one
+                            int globalId = _problem.nodeIndex(cell,
                                                                 shapeFnSet[i].entity());
 
                             // actually evaluate the boundary
                             // condition for the current
-                            // cell+face+vertex combo
+                            // cell+face+node combo
                             _problem.dirichlet((*u)[globalId],
                                                cell,
                                                faceIt,
@@ -358,6 +366,11 @@ namespace Dune
                     }
                 }
             };
+
+        Implementation *_asImp() 
+            { return static_cast<Implementation*>(this); } 
+        const Implementation *_asImp() const
+            { return static_cast<const Implementation*>(this); } 
 
         // the problem we want to solve. defines the constitutive
         // relations, material laws, etc.

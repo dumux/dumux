@@ -3,6 +3,8 @@
 #ifndef DUNE_FVELEMENTGEOMETRY_HH
 #define DUNE_FVELEMENTGEOMETRY_HH
 
+#include <dune/disc/shapefunctions/lagrangeshapefunctions.hh>
+
 namespace Dune
 {
     /////////////////////

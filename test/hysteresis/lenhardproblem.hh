@@ -55,19 +55,21 @@ namespace Lenhard
         typedef PwSnBoxModel<ThisType>      Model;
 
     public:
-        // the traits of the domain
+        //! the traits of the domain
         typedef typename ParentType::DomainTraits   DomainTraits;
-        // the traits of the BOX model
+        //! the traits of the BOX scheme
         typedef typename Model::BoxTraits           BoxTraits;
-        // the traits for the material relations
+        //! the traits of the Pw-Sn model
+        typedef typename Model::PwSnTraits          PwSnTraits;
+        //! the traits for the material relations
         typedef typename ParentType::MaterialTraits MaterialTraits;
 
     private:
         // some constants from the traits for convenience
         enum {
-            NumUnknowns = BoxTraits::NumUnknowns,
-            PwIndex = BoxTraits::PwIndex,
-            SnIndex = BoxTraits::SnIndex
+            PrimaryVariables = BoxTraits::PrimaryVariables,
+            PwIndex = PwSnTraits::PwIndex,
+            SnIndex = PwSnTraits::SnIndex
         };
         
         // copy some types from the traits for convenience
@@ -77,8 +79,8 @@ namespace Lenhard
         typedef typename DomainTraits::CellIterator               CellIterator;
         typedef typename DomainTraits::CellReferenceElement       CellReferenceElement;
         typedef typename DomainTraits::CellReferenceElements      CellReferenceElements;
-        typedef typename DomainTraits::Vertex                     Vertex;
-        typedef typename DomainTraits::VertexIterator             VertexIterator;
+        typedef typename DomainTraits::Node                       Node;
+        typedef typename DomainTraits::NodeIterator               NodeIterator;
         typedef typename DomainTraits::IntersectionIterator       IntersectionIterator;
         typedef typename DomainTraits::IntersectionIteratorGetter IntersectionIteratorGetter;
         typedef typename DomainTraits::LocalCoord                 LocalCoord;
@@ -91,7 +93,7 @@ namespace Lenhard
 
         typedef typename MaterialTraits::ParkerLenhard            ParkerLenhard;
         typedef typename MaterialTraits::CellState                CellState;
-        typedef typename MaterialTraits::VertexState              VertexState;
+        typedef typename MaterialTraits::NodeState                NodeState;
 
         // episode control stuff
         enum Episode {
@@ -121,10 +123,10 @@ namespace Lenhard
             {
                 Api::require<Api::BasicDomainTraits, DomainTraits>();
 
-#ifdef USE_VERTEX_PARAMETERS
-                _maxPc = ParkerLenhard::pC(ParentType::vertexState(0), 
+#ifdef USE_NODE_PARAMETERS
+                _maxPc = ParkerLenhard::pC(ParentType::nodeState(0), 
                                            0.0);
-#else // !USE_VERTEX_PARAMETERS
+#else // !USE_NODE_PARAMETERS
                 _maxPc = ParkerLenhard::pC(ParentType::cellState(0), 
                                            0.0);
 #endif
@@ -232,7 +234,15 @@ namespace Lenhard
         // etc)
         ///////////////////////////////////
 
-        //! evaluate the initial condition for a vertex
+        //! Returns the current time step size in seconds
+        Scalar timeStepSize() const 
+            { return _timeManager.stepSize(); }
+
+        //! Set the time step size in seconds.
+        void setTimeStepSize(Scalar dt) 
+            { return _timeManager.setStepSize(dt); }
+
+        //! evaluate the initial condition for a node
         void initial(UnknownsVector &dest,
                      const Cell &cell,
                      WorldCoord pos,
@@ -247,8 +257,8 @@ namespace Lenhard
                     // try to model the initial water distribution
                     // above the hydraulic head due to the capillary
                     // pressure
-#ifdef USE_VERTEX_PARAMETERS
-                    dest[SnIndex] = 1.0 - ParkerLenhard::Sw(ParentType::vertexState(0), - pH);
+#ifdef USE_NODE_PARAMETERS
+                    dest[SnIndex] = 1.0 - ParkerLenhard::Sw(ParentType::nodeState(0), - pH);
 #else
                     const CellState &cs = ParentType::cellState(cell);
                     dest[SnIndex] = 1.0 - ParkerLenhard::Sw(cs, - pH);
@@ -257,8 +267,8 @@ namespace Lenhard
                     dest[SnIndex] = std::min((Scalar) 1.0, dest[SnIndex]);
                     dest[SnIndex] = std::max((Scalar) 0.0, dest[SnIndex]);
                     
-#ifdef USE_VERTEX_PARAMETERS
-                    dest[PwIndex] = -ParkerLenhard::pC(ParentType::vertexState(0),
+#ifdef USE_NODE_PARAMETERS
+                    dest[PwIndex] = -ParkerLenhard::pC(ParentType::nodeState(0),
                                                        1 - dest[SnIndex]);
 #else
                     dest[PwIndex] = -ParkerLenhard::pC(cs,
@@ -299,7 +309,7 @@ namespace Lenhard
             }
 
 
-        //! Evaluate a dirichlet boundary condition at a vertex within
+        //! Evaluate a dirichlet boundary condition at a node within
         //! an cell's face
         void dirichlet(UnknownsVector &dest,
                        const Cell &cell,
@@ -307,7 +317,7 @@ namespace Lenhard
                        const WorldCoord &pos,
                        const LocalCoord &localPos)
             {
-#if defined USE_VERTEX_PARAMETERS
+#if defined USE_NODE_PARAMETERS
                 if (onUpperBoundary(pos)) {
                     dest[PwIndex] = -_maxPc;
                     dest[SnIndex] = 1;
@@ -593,19 +603,19 @@ namespace Lenhard
                 
                 _convergenceWriter->addScalarVertexFunction("Sn",
                                                             u,
-                                                            ParentType::vertexMap(),
+                                                            ParentType::nodeMap(),
                                                             SnIndex);
                 _convergenceWriter->addScalarVertexFunction("Pw",
                                                             u,
-                                                            ParentType::vertexMap(),
+                                                            ParentType::nodeMap(),
                                                             PwIndex);
                 _convergenceWriter->addScalarVertexFunction("difference Sn",
                                                             diff,
-                                                            ParentType::vertexMap(),
+                                                            ParentType::nodeMap(),
                                                             SnIndex);
                 _convergenceWriter->addScalarVertexFunction("difference Pw",
                                                             diff,
-                                                            ParentType::vertexMap(),
+                                                            ParentType::nodeMap(),
                                                             PwIndex);
                 
 /*                _writeVertexFields(*_convergenceWriter, u);
@@ -618,14 +628,14 @@ namespace Lenhard
         void _updateDomain()
             {
 #ifdef USE_HYSTERESIS
-#ifdef USE_VERTEX_PARAMETERS
-                VertexIterator it = ParentType::vertexBegin();
-                VertexIterator endit = ParentType::vertexEnd();
+#ifdef USE_NODE_PARAMETERS
+                NodeIterator it = ParentType::nodeBegin();
+                NodeIterator endit = ParentType::nodeEnd();
                 for (; it != endit; ++it) {
-                    int vertIdx = ParentType::vertexIndex(*it);
+                    int vertIdx = ParentType::nodeIndex(*it);
                     Scalar Sn = (*_model.currentSolution())[vertIdx][SnIndex];
                     Scalar Sw = 1 - Sn;
-                    ParkerLenhard::updateState(vertexState(*it), Sw);
+                    ParkerLenhard::updateState(nodeState(*it), Sw);
                 }
 #else
                 // update the parker-lenhard hystersis model
@@ -679,9 +689,9 @@ namespace Lenhard
                         std::cout << "snap\n";
 
                         // print the capillary pressure vs water
-                        // saturtion at some vertex of the cell which
+                        // saturtion at some node of the cell which
                         // contains the current point of interest
-                        const VertexState &vs = ParentType::vertexState(ParentType::cellIndex(*it));
+                        const NodeState &vs = ParentType::nodeState(ParentType::cellIndex(*it));
                         localPos[0] = 0;
                         Sn = _model.currentSolution().evallocal(SnIndex,
                                                                 *it,

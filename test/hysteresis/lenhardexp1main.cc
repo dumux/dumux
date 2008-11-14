@@ -22,7 +22,7 @@
 /////////////////////////////////
 // if defined, most material parameters (capillary pressure, permeability,
 // etc) are defined on the vertices of FE grid.
-#define USE_VERTEX_PARAMETERS
+#define USE_NODE_PARAMETERS
 
 // if defined, interface conditions of capillary pressure und and
 // relative permeability are used at medium interfaces for cell based

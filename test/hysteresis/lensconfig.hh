@@ -29,8 +29,8 @@
 
 // if defined, most material parameters (capillary pressure, permeability,
 // etc) are defined on the vertices of FE grid.
-#ifndef USE_VERTEX_PARAMETERS 
-#define USE_VERTEX_PARAMETERS 1
+#ifndef USE_NODE_PARAMETERS 
+#define USE_NODE_PARAMETERS 1
 #endif
 
 // if defined, interface conditions of capillary pressure und and

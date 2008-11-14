@@ -44,22 +44,23 @@ namespace Dune
         enum {
             GridDim = Grid::dimension,
             WorldDim = Grid::dimensionworld,
-
-            SIZE = Dune::LagrangeShapeFunctionSetContainer<CoordScalar,
-                                                           Scalar,
-                                                           Grid::dimension>::maxsize
         };
     
     public:
         enum {
-            NumUnknowns = 2,
+            PrimaryVariables = 2,
 
             NumPhases     = 2,
             NumComponents = 2
-/*
-            PwIndex = 0,
-            SnIndex = 1
-*/
+            
+            // Phase indices
+            WettingIndex = 0,
+            NonwettingIndex = 1,
+
+            // Bit masks for the phase state. If a bit is set, the
+            // respective fluid is present in a phase.
+            WettingMask    = 0x01,
+            NonwettingMask = 0x02
         };
         
         //! A vector of all primary variables at a point
@@ -69,8 +70,38 @@ namespace Dune
                                   NumUnknowns> BoundaryTypeVector;
         
         
-        //! The finite volume dual cells of a finite element cell
+        //! The finite volume cell segments of a finite element cell
         typedef Dune::FVElementGeometry<Grid>  FVElementGeometry;
+
+        /*!
+         * \brief A single of shape function used for the BoxFunction
+         *        inside cells.
+         */
+        typedef Dune::LagrangeShapeFunctionSetContainer<CoordScalar,
+                                                        Scalar,
+                                                        GridDim> ShapeFunctionSetContainer;
+        
+        /*!
+         * \brief The actual shape functions which are being used. 
+         * 
+         * If a grid only contains simplices or tetrahedra, it is more
+         * efficent to use LagrangeShapeFunctions::p1cube, or
+         * LagrangeShapeFunctions::p1simplex
+         *
+         * TODO: Use specialization to take advantage of simplex grids
+         *       and structured grids.
+        */
+        static const ShapeFunctionSetContainer &shapeFunctions()
+            { 
+                return Dune::LagrangeShapeFunctions<CoordScalar, Scalar, GridDim>::general;
+            }
+
+    private:        
+        enum {
+            _maxDOF = ShapeFunctionSetContainer::maxsize
+        }
+
+    public:
         
         /*!
          * \brief Represents a local solution.
@@ -79,7 +110,7 @@ namespace Dune
          */
         struct LocalFunction
         {
-            UnknownsVector atSubContVol[SIZE];
+            UnknownsVector atSubContVol[_maxDOF];
         };
         
         /*!
@@ -106,38 +137,25 @@ namespace Dune
          */
         struct CachedCellData
         {
-            CachedSubContVolData  atSubContVol[SIZE];
+            CachedSubContVolData  atSubContVol[_maxDOF];
         };
 
-        //! The function which represents a solution for a fixed time
-        //! step. We use first-order vertex centered FE polynomials.
+        /*!
+         * \brief The function which represents a solution for a fixed
+         *        time step. We use first-order vertex centered FE
+         *        polynomials.
+         */
         typedef Dune::LeafP1Function<Grid, 
                                      Scalar, 
                                      NumUnknowns>   SpatialFunction;
         
-        //! The OperatorAssembler which assembles the global stiffness
-        //! matrix
+        /*!
+         * \brief The OperatorAssembler which assembles the global
+         *        stiffness matrix.
+         */
         typedef Dune::LeafP1OperatorAssembler<Grid,
                                               Scalar,
                                               NumUnknowns>  JacobianAssembler;
-
-        //! a single of shape function used for the BoxFunction inside
-        //! cells.
-        typedef Dune::LagrangeShapeFunctionSetContainer<CoordScalar,
-                                                        Scalar,
-                                                        GridDim> ShapeFunctionSetContainer;
-        
-        //! The actual shape functions which are being used. If a 
-        //! grid only contains simplices or tetrahedra, it is more
-        //! efficent to use LagrangeShapeFunctions::p1cube, or
-        //! LagrangeShapeFunctions::p1simplex
-        //!
-        //! TODO: Use specialization to take advantage of simplex grids
-        //!       and structured grids.
-        static const ShapeFunctionSetContainer &shapeFunctions()
-            { 
-                return Dune::LagrangeShapeFunctions<CoordScalar, Scalar, GridDim>::general;
-            }
     };
 }
 

@@ -111,18 +111,18 @@ namespace Lenhard
     };
 
 
-#if !defined USE_VERTEX_PARAMETERS
-    // vertex dependend parameters for cell centered parameter storage
+#if !defined USE_NODE_PARAMETERS
+    // node dependend parameters for cell centered parameter storage
     template <class MediumStateT>
-    class LenhardVertexState
+    class LenhardNodeState
     {
     public:
-        LenhardVertexState()
+        LenhardNodeState()
             {
                 _neighbours = NULL;
             };
 
-        ~LenhardVertexState()
+        ~LenhardNodeState()
             {
                 delete _neighbours;
             };
@@ -167,7 +167,7 @@ namespace Lenhard
         typedef std::vector<int> _NeighbourIdxArray;
         _NeighbourIdxArray *_neighbours;
     };
-#else // USE_VERTEX_PARAMETERS
+#else // USE_NODE_PARAMETERS
     template <class MediumStateT>
     class LenhardCellState
     {
@@ -196,9 +196,9 @@ namespace Lenhard
 #endif
 
 
-    // cell/vertex dependent parameters
-#if defined USE_VERTEX_PARAMETERS
-#define MAIN_STATE_CLASS LenhardVertexState
+    // cell/node dependent parameters
+#if defined USE_NODE_PARAMETERS
+#define MAIN_STATE_CLASS LenhardNodeState
 #else
 #define MAIN_STATE_CLASS LenhardCellState
 #endif

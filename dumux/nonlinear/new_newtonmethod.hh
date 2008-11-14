@@ -107,7 +107,6 @@ namespace Dune
                     return true;
                 }
                 ++ _nIterations;
-
                 newton.setResidualObsolete();
                 // TODO (?): weight the residual with the value of the
                 // component of the solution instead of just taking
@@ -232,7 +231,6 @@ namespace Dune
                     *f = 0;
 
                     // linearize the problem at the current solution
-                    localJacobian.clearVisited();
                     jacobianAsm.assemble(localJacobian, u, f);
 
                     // solve the resultuing linear equation system

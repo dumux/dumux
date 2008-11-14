@@ -48,17 +48,19 @@ namespace Lens
     public:
         // the domain traits of the domain
         typedef typename ParentType::DomainTraits   DomainTraits;
-        // the traits of the BOX method
+        // the traits of the BOX scheme
         typedef typename Model::BoxTraits           BoxTraits;
+        // the traits of the Pw-Sn model
+        typedef typename Model::PwSnTraits          PwSnTraits;
         // the traits for the material relations
         typedef typename ParentType::MaterialTraits MaterialTraits;
 
     private:
         // some constants from the traits for convenience
         enum {
-            NumUnknowns = BoxTraits::NumUnknowns,
-            PwIndex = BoxTraits::PwIndex,
-            SnIndex = BoxTraits::SnIndex
+            PrimaryVariables = BoxTraits::PrimaryVariables,
+            PwIndex = PwSnTraits::PwIndex,
+            SnIndex = PwSnTraits::SnIndex
         };
         
         // copy some types from the traits for convenience
@@ -68,8 +70,8 @@ namespace Lens
         typedef typename DomainTraits::CellIterator               CellIterator;
         typedef typename DomainTraits::CellReferenceElement       CellReferenceElement;
         typedef typename DomainTraits::CellReferenceElements      CellReferenceElements;
-        typedef typename DomainTraits::Vertex                     Vertex;
-        typedef typename DomainTraits::VertexIterator             VertexIterator;
+        typedef typename DomainTraits::Node                     Node;
+        typedef typename DomainTraits::NodeIterator             NodeIterator;
         typedef typename DomainTraits::IntersectionIterator       IntersectionIterator;
         typedef typename DomainTraits::IntersectionIteratorGetter IntersectionIteratorGetter;
         typedef typename DomainTraits::LocalCoord                 LocalCoord;
@@ -203,15 +205,23 @@ namespace Lens
         // etc)
         ///////////////////////////////////
 
-        //! evaluate the initial condition for a vertex
+        //! Returns the current time step size in seconds
+        Scalar timeStepSize() const 
+            { return _timeManager.stepSize(); }
+
+        //! Set the time step size in seconds.
+        void setTimeStepSize(Scalar dt) 
+            { return _timeManager.setStepSize(dt); }
+
+        //! evaluate the initial condition for a node
         void initial(UnknownsVector &dest,
                      const Cell &cell,
                      WorldCoord pos,
                      LocalCoord posLocal)
             {
 /*                WorldCoord pos;
-                ParentType::vertexPosition(pos,
-                                            ParentType::vertex(cell, localVertIdx));
+                ParentType::nodePosition(pos,
+                                            ParentType::node(cell, localVertIdx));
 */
                 Scalar pw = -ParentType::densityW() *
                               ParentType::gravity()[1] *
@@ -319,7 +329,7 @@ namespace Lens
             }
 
 
-        //! Evaluate a dirichlet boundary condition at a vertex within
+        //! Evaluate a dirichlet boundary condition at a node within
         //! an cell's face
         void dirichlet(UnknownsVector &dest,
                        const Cell &cell,
@@ -414,7 +424,7 @@ namespace Lens
             {
                 _resultWriter.beginTimestep(_timeManager.time(),
                                             ParentType::grid().leafView());
-                _writeVertexFields(_resultWriter, _model.currentSolution());
+                _writeNodeFields(_resultWriter, _model.currentSolution());
                 _writeCellFields(_resultWriter, _model.currentSolution());
                 _resultWriter.endTimestep();
             }
@@ -433,13 +443,13 @@ namespace Lens
 
                 _convergenceWriter->addScalarVertexFunction("reduction Sn",
                                                             diff,
-                                                            ParentType::vertexMap(),
+                                                            ParentType::nodeMap(),
                                                             SnIndex);
                 _convergenceWriter->addScalarVertexFunction("reduction Pw",
                                                             diff,
-                                                            ParentType::vertexMap(),
+                                                            ParentType::nodeMap(),
                                                             PwIndex);
-                _writeVertexFields(*_convergenceWriter, u);
+                _writeNodeFields(*_convergenceWriter, u);
                 _writeCellFields(*_convergenceWriter, u);
             };
 #endif // LENS_WRITE_NEWTON_STEPS
@@ -481,7 +491,7 @@ namespace Lens
 
         // write the fields current solution into an VTK output
         // file.
-        void _writeVertexFields(VtkMultiWriter &writer, SpatialFunction &u)
+        void _writeNodeFields(VtkMultiWriter &writer, SpatialFunction &u)
             {
                 writer.addScalarVertexFunction("Sn",
                                                u,
@@ -490,6 +500,7 @@ namespace Lens
                                                u,
                                                PwIndex);
 
+                /*
                 SpatialFunction globResidual(ParentType::grid());
                 _model.evalGlobalResidual(globResidual);
                 writer.addScalarVertexFunction("global residual Sn",
@@ -498,20 +509,21 @@ namespace Lens
                 writer.addScalarVertexFunction("global residual Pw",
                                                globResidual,
                                                PwIndex);
+                */
             }
 
         // called whenever a solution for a timestep has been computed.
         void _updateDomain()
             {
 #if USE_HYSTERESIS
-#if USE_VERTEX_PARAMETERS
-                VertexIterator it = ParentType::vertexBegin();
-                VertexIterator endit = ParentType::vertexEnd();
+#if USE_NODE_PARAMETERS
+                NodeIterator it = ParentType::nodeBegin();
+                NodeIterator endit = ParentType::nodeEnd();
                 for (; it != endit; ++it) {
-                    int vertIdx = ParentType::vertexIndex(*it);
+                    int vertIdx = ParentType::nodeIndex(*it);
                     Scalar Sn = (*_model.currentSolution())[vertIdx][SnIndex];
                     Scalar Sw = 1 - Sn;
-                    ParkerLenhard::updateState(vertexState(*it), Sw);
+                    ParkerLenhard::updateState(nodeState(*it), Sw);
                 }
 #else
                 // update the parker-lenhard hystersis model

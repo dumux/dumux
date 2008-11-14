@@ -2,17 +2,10 @@
 *.la
 .libs
 *.lo
-
-#latex stuff
-dumux-handbook.aux
-dumux-handbook.bbl
-dumux-handbook.blg
-dumux-handbook.idx
-dumux-handbook.log
-dumux-handbook.out
-dumux-handbook.pdf
-dumux-handbook.toc
-
+*.log
+*.tmp
+*.vtu
+*.pvd
 config.*
 !config.h.*
 dune-mux.pc

@@ -112,18 +112,18 @@ namespace Lens
     };
 
 
-#if !USE_VERTEX_PARAMETERS
-    // vertex dependend parameters for cell centered parameter storage
+#if !USE_NODE_PARAMETERS
+    // node dependend parameters for cell centered parameter storage
     template <class MediumStateT>
-    class LensVertexState
+    class LensNodeState
     {
     public:
-        LensVertexState()
+        LensNodeState()
             {
                 _neighbours = NULL;
             };
 
-        ~LensVertexState()
+        ~LensNodeState()
             {
                 delete _neighbours;
             };
@@ -168,7 +168,7 @@ namespace Lens
         typedef std::vector<int> _NeighbourIdxArray;
         _NeighbourIdxArray *_neighbours;
     };
-#else // USE_VERTEX_PARAMETERS
+#else // USE_NODE_PARAMETERS
     template <class MediumStateT>
     class LensCellState
     {
@@ -197,9 +197,9 @@ namespace Lens
 #endif
 
 
-    // cell/vertex dependent parameters
-#if USE_VERTEX_PARAMETERS
-#define MAIN_STATE_CLASS LensVertexState
+    // cell/node dependent parameters
+#if USE_NODE_PARAMETERS
+#define MAIN_STATE_CLASS LensNodeState
 #else
 #define MAIN_STATE_CLASS LensCellState
 #endif
