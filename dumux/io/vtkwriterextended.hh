@@ -579,7 +579,7 @@ namespace Dune
       //! return number of components
       virtual int ncomps () const
         {
-	  return g.dimension;
+	  return 3;//g.dimension;
 	}
 
       //! evaluate
@@ -823,7 +823,6 @@ namespace Dune
 	else
 	  DUNE_THROW(IOError,"VTKWriter::faceToCellToVertex: unknown geometryType"); 
 
-
 	//Piola transformation
 	Dune::FieldMatrix<DT,n,n> jacobi = geometry.jacobianInverseTransposed(local);
 	jacobi.invert();
@@ -846,6 +845,7 @@ namespace Dune
       for(int k=0;k<vertexmapper.size();++k)
 	if(volume[k]!=0)
 	  z[k]/=volume[k];
+
     }
    
 
