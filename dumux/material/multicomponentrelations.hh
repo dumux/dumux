@@ -65,6 +65,12 @@ class MultiComp
 		 */
 		virtual double vaporPressure (double T=283.15) const = 0;
 
+		/*! \brief Sum of vapor pressure and partial pressure of air
+		 *  \param T temperature [K]
+		 *  \return vapor pressure [Pa]
+		 */
+		virtual double bubblingPressure (const double pn, double T=283.15) = 0;
+
 		/*! \brief converts mole fractions into mass fractions
 		 *  \param massfrac mole fraction [mol/mol]
 		 *  \param phase phase for which a conversion is to be done [-]
@@ -201,11 +207,24 @@ class CWaterAir : public MultiComp
 			return(psat);
 		}
 
-		/** @brief converts mole fractions into mass fractions
+		/*! \brief Sum of vapor pressure and partial pressure of air
+		 *  \param T temperature [K]
+		 *  \return vapor pressure [Pa]
+		 */
+		double bubblingPressure(const double pn, double T=283.15)
+		{
+			double pbub;
+
+			pbub = vaporPressure(T) + xAWmolar(pn,T)/henry(T);
+			return pbub;
+		}
+
+		/** @brief converts mole fractions to mass fractions
 		 */
 		double convertMoleToMassFraction(double molefrac, int phase) const
 		{
-			enum {wPhase = 0, nPhase = 1};
+			enum {wPhase = 0, nPhase = 1};	// major component of wetting phase = 0;
+											// major component of nonwetting phase = 1;
 
 			double result;
 			double molarMass1=0, molarMass2=0;
@@ -224,12 +243,12 @@ class CWaterAir : public MultiComp
 			return (result);
 		}
 
-		/** @brief converts mass fractions into mole fractions
+		/** @brief converts mass fractions to mole fractions
 		 */
 		double convertMassToMoleFraction(double massfrac, int phase) const
 		{
-			enum {wPhase = 0, nPhase = 1};
-
+			enum {wPhase = 0, nPhase = 1}; 	// major component of wetting phase = 0;
+											// major component of nonwetting phase = 1;
 			double result;
 			double molarMass1 = 0, molarMass2 = 0;
 
@@ -322,6 +341,14 @@ class CBrineCO2 : public MultiComp
 			 *  \return vapor pressure [Pa]
 			 */
 			 double vaporPressure (double T=283.15) const
+			{
+				return 0;
+			}
+			/*! \brief Sum of vapor pressure and partial pressure of air
+			 *  \param T temperature [K]
+			 *  \return vapor pressure [Pa]
+			 */
+			double bubblingPressure(const double pn, double T=283.15)
 			{
 				return 0;
 			}
