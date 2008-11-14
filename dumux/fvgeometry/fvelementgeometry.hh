@@ -4,6 +4,8 @@
 #define DUNE_FVELEMENTGEOMETRY_HH
 
 #include <dune/disc/shapefunctions/lagrangeshapefunctions.hh>
+#include <dune/grid/common/intersectioniterator.hh>
+#include <dune/grid/utility/intersectiongetter.hh>
 
 namespace Dune
 {

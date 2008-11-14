@@ -178,7 +178,13 @@ namespace Dune
          * the jacobian assembler to produce a global linerization of the
          * problem.
          */
-        LocalJacobian &getLocalJacobian()
+        LocalJacobian &localJacobian()
+            { return _localJacobian; }
+
+        /*!
+         * \brief Same as localJacobian(), included to ease porting.
+         */
+        LocalJacobian &getLocalJacobian() DUNE_DEPRECATED
             { return _localJacobian; }
 
         /*!
@@ -276,7 +282,7 @@ namespace Dune
             }
 
 
-    private:
+    protected:
         void _applyInitialSolution(SpatialFunction &u)
             {
                 // iterate through leaf grid an evaluate c0 at cell center

@@ -26,6 +26,7 @@
 
 #include <dune/grid/common/referenceelements.hh>
 #include <dune/grid/common/intersectioniterator.hh>
+#include <dune/grid/io/file/dgfparser.hh>
 #include <dune/grid/utility/intersectiongetter.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 
@@ -125,6 +126,8 @@ namespace Dune
         typedef typename DomainTraits::CellReferenceElement  CellReferenceElement;
         typedef typename DomainTraits::CellReferenceElements CellReferenceElements;
 
+        typedef Dune::GridPtr<Grid>                          GridPointer;
+
         enum {
             GridDim = DomainTraits::GridDim,
             WorldDim = DomainTraits::WorldDim
@@ -159,14 +162,21 @@ namespace Dune
 
                 _cellMap = NULL;
                 _nodeMap = NULL;
-                _grid = NULL;
+            };
+
+        BasicDomain(GridPointer grid)
+            {
+                Api::require<Api::BasicDomainTraits, DomainTraits>();
+
+                _cellMap = NULL;
+                _nodeMap = NULL;
+                setGrid(grid);
             };
 
         ~BasicDomain()
             {
                 delete _cellMap;
                 delete _nodeMap;
-                delete _grid;
             }
 
         /*!
@@ -234,9 +244,9 @@ namespace Dune
             { return *_cellMap; }
 
         /*!
-         * \brief Returns the current grid's number of vertices.
+         * \brief Returns the current grid's number of nodes.
          */
-        int numVertices() const
+        int numNodes() const
             { return _nodeMap->size(); }
 
         /*!
@@ -319,9 +329,8 @@ namespace Dune
          * externally! The grid which was previously in the Domain
          * becomes invalid after calling this method.
          */
-        void setGrid(Grid *grid)
+        void setGrid(GridPointer grid)
             {
-                delete _grid;
                 _grid = grid;
 
                 gridChanged();
@@ -329,7 +338,7 @@ namespace Dune
 
     private:
         // pointer to the grid object
-        Grid  *_grid;
+        GridPointer _grid;
 
         // map from the grid's leafs to an index of the index set
         CellMap *_cellMap;

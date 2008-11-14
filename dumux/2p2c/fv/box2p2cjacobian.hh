@@ -428,8 +428,6 @@ namespace Dune
         	BoxJacobian<ThisType,G,RT,2,BoxFunction>::localToGlobal(e,sol);
         	setSwitchedLocal(); // if switch is triggered at any node, switchFlagLocal is set
         }
-
-   	return;
     }
 
     // harmonic mean of the permeability computed directly
@@ -544,8 +542,6 @@ namespace Dune
     // for initialization of the Static Data (sets porosity)
     virtual void updateStaticData (const Entity& e, VBlockType* sol)
     {
-#warning "This function shouldn't be in the local jacobian. It is the job of the problem to initialize the spatial domain."
-
    	 // get access to shape functions for P1 elements
    	 GeometryType gt = e.geometry().type();
    	 const typename LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type&

@@ -446,7 +446,7 @@ namespace Lenhard
 
         void _initNodeStates()
             {
-                _nodeStates.resize(ParentType::numVertices());
+                _nodeStates.resize(ParentType::numNodes());
 
 #if defined USE_NODE_PARAMETERS
                 NodeIterator vertIt = ParentType::nodeBegin();

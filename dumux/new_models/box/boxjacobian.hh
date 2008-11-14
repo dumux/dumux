@@ -536,8 +536,11 @@ namespace Dune
                     // the associated node of the j-th shape
                     // function is a node of the current
                     // face.
-                    this->bctype[j] = faceBCType[0];
-                    this->b[j] = 0;
+                    for (int k = 0; k < PrimaryVariables; ++k)
+                        this->bctype[j][k] = faceBCType[k];
+                    
+                    // right hand side
+                    this->b[j] = Scalar(0);
                 }
 #else
                 Dune::GeometryType      geoType = _curCell().geometry().type();

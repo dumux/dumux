@@ -70,15 +70,15 @@ namespace Lens
         typedef typename DomainTraits::CellIterator               CellIterator;
         typedef typename DomainTraits::CellReferenceElement       CellReferenceElement;
         typedef typename DomainTraits::CellReferenceElements      CellReferenceElements;
-        typedef typename DomainTraits::Node                     Node;
-        typedef typename DomainTraits::NodeIterator             NodeIterator;
+        typedef typename DomainTraits::Node                       Node;
+        typedef typename DomainTraits::NodeIterator               NodeIterator;
         typedef typename DomainTraits::IntersectionIterator       IntersectionIterator;
         typedef typename DomainTraits::IntersectionIteratorGetter IntersectionIteratorGetter;
         typedef typename DomainTraits::LocalCoord                 LocalCoord;
         typedef typename DomainTraits::WorldCoord                 WorldCoord;
 
         typedef typename BoxTraits::FVElementGeometry             FVElementGeometry;
-        typedef typename BoxTraits::SpatialFunction                   SpatialFunction;
+        typedef typename BoxTraits::SpatialFunction               SpatialFunction;
         typedef typename BoxTraits::UnknownsVector                UnknownsVector;
         typedef typename BoxTraits::BoundaryTypeVector            BoundaryTypeVector;
 
@@ -93,6 +93,7 @@ namespace Lens
 
         typedef TimeManager<Episode>                        TimeManager;
         typedef Dune::NewImplicitEulerStep<ThisType>        TimeIntegration;
+
         typedef VtkMultiWriter<typename Grid::LeafGridView> VtkMultiWriter;
 
         typedef typename Model::NewtonMethod                    NewtonMethod;

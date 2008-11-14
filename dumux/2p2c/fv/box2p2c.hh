@@ -477,39 +477,6 @@ namespace Dune
 		return this->localJacobian.checkSwitched();
 	}
 
-	template<class MultiWriter>
-	void addvtkfields (MultiWriter& writer)
-	{
-//		BlockVector<FieldVector<RT, 1> > &xWN = *writer.template createField<RT, 1>(this->size);
-//		BlockVector<FieldVector<RT, 1> > &xAW = *writer.template createField<RT, 1>(this->size);
-//		BlockVector<FieldVector<RT, 1> > &satW = *writer.template createField<RT, 1>(this->size);
-
-//		writer.addScalarVertexFunction("nonwetting phase saturation", this->u, 1);
-		writer.addScalarVertexFunction("pressure wetting phase", this->u, 0);
-
-//		writer.addVertexData(&satW,"wetting phase saturation");
-		writer.addVertexData(this->localJacobian.outPressureN,"pressure non-wetting phase");
-		writer.addVertexData(this->localJacobian.outCapillaryP,"capillary pressure");
-		writer.addVertexData(this->localJacobian.outSaturationW,"saturation wetting phase");
-		writer.addVertexData(this->localJacobian.outSaturationN,"saturation non-wetting phase");
-		writer.addVertexData(this->localJacobian.outMassFracAir,"massfraction air in wetting phase");
-		writer.addVertexData(this->localJacobian.outMassFracWater,"massfraction water in non-wetting phase");
-		writer.addVertexData(this->localJacobian.outDensityW,"density wetting phase");
-		writer.addVertexData(this->localJacobian.outDensityN,"density non-wetting phase");
-		writer.addVertexData(this->localJacobian.outMobilityW,"mobility wetting phase");
-		writer.addVertexData(this->localJacobian.outMobilityN,"mobility non-wetting phase");
-		writer.addVertexData(this->localJacobian.outPhaseState,"phase state");
-//		writer.addVertexData(this->localJacobian.outPermeability,"permeability");
-//		writer.addVertexData(&xWN, "water in air");
-//		writer.addVertexData(&xAW, "dissolved air");
-	}
-
-
-	void vtkout (const char* name, int k)
-	{
-
-	}
-
 //	void vtkout (const char* name, int k)
 //	{
 //		VTKWriter<typename G::LeafGridView> vtkwriter(this->leafView());

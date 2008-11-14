@@ -530,7 +530,7 @@ namespace Lens
 
         void _initNodeStates()
             {
-                _nodeStates.resize(ParentType::numVertices());
+                _nodeStates.resize(ParentType::numNodes());
 #if USE_NODE_PARAMETERS
                 NodeIterator vertIt = ParentType::nodeBegin();
                 const NodeIterator &endVertIt = ParentType::nodeEnd();

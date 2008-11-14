@@ -151,7 +151,7 @@ SetConfigHVar(HAVE_ALBERTA Alberta_FOUND)
 
 # actually write the config.h file to disk 
 configure_file(config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h )
-
+add_definitions(-DHAVE_CONFIG_H)
 
 ##############
 # tell cmake that we've got a few subdirectories. (that's the

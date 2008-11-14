@@ -21,6 +21,8 @@
 
 #include <boost/format.hpp>
 
+#include <dune/common/timer.hh>
+
 namespace Dune
 {
     template <class EpisodeIdentiferT, bool _verbose>
@@ -287,6 +289,8 @@ namespace Dune
                     // or Euler).
                     curStepSize = stepSize();
                     problem.timeIntegration(curStepSize, nextStepSize);
+                    if (curStepSize < 100)
+                        std::cerr << "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaAAAAAAA\n";
 
                     // advance the simulated time by the timestep size
                     // actually used by the solver
