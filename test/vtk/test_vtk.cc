@@ -48,6 +48,8 @@ int main(int argc, char** argv)
     // grid reference
     GridType& grid = *gridPtr;
 
+    grid.globalRefine(2);
+
     Dune::gridinfo(grid);
 
     //Uniform mat;
@@ -80,7 +82,7 @@ int main(int argc, char** argv)
     diffusion.calcTotalVelocity(0);
     printvector(std::cout, problem.variables.velocity, "velocity", "row", 2*dim, 1, 3);
 
-    Dune::LeafVTKWriter<GridType> vtkwriter(grid);
+    Dune::LeafVTKWriterExtended<GridType> vtkwriter(grid);
 
     typedef Dune::BlockVector<Dune::FieldVector<double, 3> > WType;
     WType cellvelocity(grid.size(0));
