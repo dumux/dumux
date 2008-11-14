@@ -1,8 +1,8 @@
 // commented lines 1454, 1464-1467 in istl/communicator.hh
 #include <config.h>
 #include <iostream>
-//#undef DUMMY 
-#if HAVE_MPI
+#undef DUMMY 
+#ifdef DUMMY
 #include<mpi.h>
 #include <dune/grid/alugrid.hh>
 #include <dune/grid/common/gridinfo.hh>
@@ -150,8 +150,8 @@ int main(int argc, char** argv)
 
 int main (int argc , char **argv) try
 {
-//  std::cout << "This test is not finished yet." << std::endl;
-  std::cout << "Please install MPI." << std::endl;
+  std::cout << "This test is not finished yet." << std::endl;
+  //  std::cout << "Please install MPI." << std::endl;
 
   return 1;
 }
