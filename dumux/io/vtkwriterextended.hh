@@ -1,7 +1,7 @@
 // $Id$ 
 
-#ifndef DUNE_VTKWRITER_HH
-#define DUNE_VTKWRITER_HH
+#ifndef DUNE_VTKWRITEREXTENDED_HH
+#define DUNE_VTKWRITEREXTENDED_HH
 
 #include <cstring>
 #include <iostream>
@@ -17,18 +17,8 @@
 #include <dune/common/iteratorfacades.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/common/referenceelements.hh>
-// #include <iostream>
-// #include <fstream>
-// #include <vector>
-// #include <list>
-// #include <string.h>
-// #include <dune/common/exceptions.hh>
-// #include <dune/common/iteratorfacades.hh>
-// #include <dune/grid/common/mcmgmapper.hh>
-// #include <dune/grid/common/referenceelements.hh>
-// #include <dune/istl/bvector.hh>
 #include <dune/grid/utility/intersectiongetter.hh>
-// #include <dune/grid/common/intersectioniterator.hh>
+#include <dune/grid/io/file/vtk/vtkwriter.hh>
 
 
 // namespace base64
@@ -48,99 +38,6 @@
 
 namespace Dune
 {
-    /** \brief options for VTK output
-        \ingroup VTK */
-  struct VTKOptions
-  {
-    enum OutputType {
-      /** @brief Output to the file is in ascii. */
-      ascii,
-      /** @brief Output to the file is binary. */
-      binary, 
-      /** @brief Ouput is appended to the binary file. */
-      binaryappended
-    };
-    enum DataMode {
-      /** @brief Output conforming data. */
-      conforming,
-      /** @brief Output non conforming data. */
-      nonconforming
-    };
-  };
-
-
-  // map type to name in data array
-  template<class T>
-  struct VTKTypeNameTraits {
-    std::string operator () (){
-      return "";
-    }
-  };
-
-  template<>
-  struct VTKTypeNameTraits<char> {
-    std::string operator () () {
-      return "Int8";
-    }
-    typedef int PrintType;
-  };
-
-  template<>
-  struct VTKTypeNameTraits<unsigned char> {
-    std::string operator () () {
-      return "UInt8";
-    }   
-    typedef int PrintType;
-  };
-
-  template<>
-  struct VTKTypeNameTraits<short> {
-    std::string operator () () {
-      return "Int16";
-    }   
-    typedef short PrintType;
-  };
-
-  template<>
-  struct VTKTypeNameTraits<unsigned short> {
-    std::string operator () () {
-      return "UInt16";
-    }   
-    typedef unsigned short PrintType;
-  };
-
-  template<>
-  struct VTKTypeNameTraits<int> {
-    std::string operator () () {
-      return "Int32";
-    }   
-    typedef int PrintType;
-  };
-
-  template<>
-  struct VTKTypeNameTraits<unsigned int> {
-    std::string operator () () {
-      return "UInt32";
-    }   
-    typedef unsigned int PrintType;
-  };
-
-  template<>
-  struct VTKTypeNameTraits<float> {
-    std::string operator () () {
-      return "Float32";
-    }   
-    typedef float PrintType;
-  };
-
-  template<>
-  struct VTKTypeNameTraits<double> {
-    std::string operator () () {
-      return "Float64";
-    }   
-    typedef double PrintType;
-  };
-
 
   /** 
    * @brief Writer for the ouput of grid functions in the vtk format.
@@ -151,7 +48,7 @@ namespace Dune
    * <a href="http://public.kitware.com/VTK/">The Visualization Toolkit (VTK)</a>.
    */
   template< class GridView >
-  class VTKWriter {
+  class VTKWriterExtended {
     template<int dim>
     struct P0Layout
     {
@@ -361,7 +258,7 @@ namespace Dune
           case VTKOptions::nonconforming:
             return offset + renumber(*git,index);
           default:
-            DUNE_THROW(IOError,"VTKWriter: unsupported DataMode" << datamode);
+            DUNE_THROW(IOError,"VTKWriterExtended: unsupported DataMode" << datamode);
           }
         }
       int localindex () const
@@ -447,7 +344,7 @@ namespace Dune
           case VTKOptions::nonconforming:
             return offset + renumber(*git,index);
           default:
-            DUNE_THROW(IOError,"VTKWriter: unsupported DataMode" << datamode);
+            DUNE_THROW(IOError,"VTKWriterExtended: unsupported DataMode" << datamode);
           }
         }
       int localindex () const
@@ -500,7 +397,7 @@ namespace Dune
         : g(g_), is(is_), v(v_), s(s_), mapper(g_,is_)
         {
           if (v.size()!=(unsigned int)mapper.size())
-            DUNE_THROW(IOError,"VTKWriter::P0VectorWrapper: size mismatch");
+            DUNE_THROW(IOError,"VTKWriterExtended::P0VectorWrapper: size mismatch");
         }
 
       virtual ~P0VectorWrapper() {}
@@ -558,7 +455,7 @@ namespace Dune
         : g(g_), is(is_), v(v_), s(s_), mapper(g_,is_)
         {
           if (v.size()!=mapper.size())
-            DUNE_THROW(IOError,"VTKWriter::P1VectorWrapper: size mismatch");
+            DUNE_THROW(IOError,"VTKWriterExtended::P1VectorWrapper: size mismatch");
         }
 
       virtual ~P1VectorWrapper() {}
@@ -599,7 +496,7 @@ namespace Dune
         : g(g_), is(is_), v(v_), s(s_), mapper(g_,is_)
         {
 	  if (v.size()!=mapper.size())
-	    DUNE_THROW(IOError,"VTKWriter::P2VectorWrapper: size mismatch");
+	    DUNE_THROW(IOError,"VTKWriterExtended::P2VectorWrapper: size mismatch");
         }
 
       virtual ~P2VectorWrapper() {}
@@ -655,7 +552,7 @@ namespace Dune
         : g(g_), is(is_), v(v_), s(s_), mapper(g_,is_)
         {
           if (v.size()!=(int)mapper.size())
-            DUNE_THROW(IOError,"VTKWriter::P3VectorWrapper: size mismatch");
+            DUNE_THROW(IOError,"VTKWriterExtended::P3VectorWrapper: size mismatch");
         }
 
       virtual ~P3VectorWrapper() {}
@@ -678,7 +575,7 @@ namespace Dune
      * @param i The index set the grid functions live on. (E. g. a level index set.)
      * @param dm The data mode.
      */
-    explicit VTKWriter ( const GridView &gridView,
+    explicit VTKWriterExtended ( const GridView &gridView,
                          VTKOptions::DataMode dm = VTKOptions::conforming )
     : gridView_( gridView ),
       grid( gridView.grid() ),
@@ -770,7 +667,7 @@ namespace Dune
     void faceToCellToVertex (const V& v, W& w, Z& z)
     {
       if((w.size()!=grid.size(0))||v.size()!=grid.size(0) || z.size()!=grid.size(n))
-	DUNE_THROW(IOError,"VTKWriter::faceToCell: size mismatch");
+	DUNE_THROW(IOError,"VTKWriterExtended::faceToCell: size mismatch");
       w=0; z=0;
 
       int dim=Grid::dimension;
@@ -821,14 +718,14 @@ namespace Dune
 	    referencedata[k]=(flux[k*2+1]-flux[k*2])/2;	  
 	   
 	else
-	  DUNE_THROW(IOError,"VTKWriter::faceToCellToVertex: unknown geometryType"); 
+	  DUNE_THROW(IOError,"VTKWriterExtended::faceToCellToVertex: unknown geometryType"); 
 
 	//Piola transformation
 	Dune::FieldMatrix<DT,n,n> jacobi = geometry.jacobianInverseTransposed(local);
 	jacobi.invert();
 	DT det=jacobi.determinant();       
 	if(det==0)
-	  DUNE_THROW(IOError,"VTKWriter::faceToCellToVertex: jacobian is singular");
+	  DUNE_THROW(IOError,"VTKWriterExtended::faceToCellToVertex: jacobian is singular");
 	jacobi.usmtv(1/det,referencedata,w[indexj]);
        
 	//VertexData
@@ -863,7 +760,7 @@ namespace Dune
       }
 
     //! destructor
-    ~VTKWriter ()
+    ~VTKWriterExtended ()
       {
         this->clear();
       }
@@ -1140,7 +1037,7 @@ namespace Dune
           return vtkPrism;
         if (t.isHexahedron())
           return vtkHexahedron;
-        DUNE_THROW(IOError,"VTKWriter: unsupported GeometryType " << t);
+        DUNE_THROW(IOError,"VTKWriterExtended: unsupported GeometryType " << t);
       }
 
     //! write header file in parallel case to stream
@@ -1376,13 +1273,13 @@ namespace Dune
         indentUp();
         for (FunctionIterator it=celldata.begin(); it!=celldata.end(); ++it)
         {
-          VTKDataArrayWriter<float> *p=0;
+          VTKDataArrayWriterExtended<float> *p=0;
           if (outputtype==VTKOptions::ascii)
-            p = new VTKAsciiDataArrayWriter<float>(s,(*it)->name(),(*it)->ncomps());
+            p = new VTKAsciiDataArrayWriterExtended<float>(s,(*it)->name(),(*it)->ncomps());
           if (outputtype==VTKOptions::binary)       
-            p = new VTKBinaryDataArrayWriter<float>(s,(*it)->name(),(*it)->ncomps(),(*it)->ncomps()*ncells); 
+            p = new VTKBinaryDataArrayWriterExtended<float>(s,(*it)->name(),(*it)->ncomps(),(*it)->ncomps()*ncells); 
           if (outputtype==VTKOptions::binaryappended)       
-            p = new VTKBinaryAppendedDataArrayWriter<float>(s,(*it)->name(),(*it)->ncomps(),bytecount); 
+            p = new VTKBinaryAppendedDataArrayWriterExtended<float>(s,(*it)->name(),(*it)->ncomps(),bytecount); 
           for (CellIterator i=cellBegin(); i!=cellEnd(); ++i)
             for (int j=0; j<(*it)->ncomps(); j++)
               p->write((*it)->evaluate(j,*i,i.position()));
@@ -1411,13 +1308,13 @@ namespace Dune
         indentUp();
         for (FunctionIterator it=vertexdata.begin(); it!=vertexdata.end(); ++it)
         {
-          VTKDataArrayWriter<float> *p=0;
+          VTKDataArrayWriterExtended<float> *p=0;
           if (outputtype==VTKOptions::ascii)
-            p = new VTKAsciiDataArrayWriter<float>(s,(*it)->name(),(*it)->ncomps()); 
+            p = new VTKAsciiDataArrayWriterExtended<float>(s,(*it)->name(),(*it)->ncomps()); 
           if (outputtype==VTKOptions::binary)
-            p = new VTKBinaryDataArrayWriter<float>(s,(*it)->name(),(*it)->ncomps(),(*it)->ncomps()*nvertices); 
+            p = new VTKBinaryDataArrayWriterExtended<float>(s,(*it)->name(),(*it)->ncomps(),(*it)->ncomps()*nvertices); 
           if (outputtype==VTKOptions::binaryappended)
-            p = new VTKBinaryAppendedDataArrayWriter<float>(s,(*it)->name(),(*it)->ncomps(),bytecount);
+            p = new VTKBinaryAppendedDataArrayWriterExtended<float>(s,(*it)->name(),(*it)->ncomps(),bytecount);
           for (VertexIterator vit=vertexBegin(); vit!=vertexEnd(); ++vit)
           {
             for (int j=0; j<(*it)->ncomps(); j++)
@@ -1437,13 +1334,13 @@ namespace Dune
         indent(s); s << "<Points>" << std::endl;
         indentUp();
 
-        VTKDataArrayWriter<float> *p=0;
+        VTKDataArrayWriterExtended<float> *p=0;
         if (outputtype==VTKOptions::ascii)
-          p = new VTKAsciiDataArrayWriter<float>(s,"Coordinates",3);
+          p = new VTKAsciiDataArrayWriterExtended<float>(s,"Coordinates",3);
         if (outputtype==VTKOptions::binary)
-          p = new VTKBinaryDataArrayWriter<float>(s,"Coordinates",3,3*nvertices);
+          p = new VTKBinaryDataArrayWriterExtended<float>(s,"Coordinates",3,3*nvertices);
         if (outputtype==VTKOptions::binaryappended)
-          p = new VTKBinaryAppendedDataArrayWriter<float>(s,"Coordinates",3,bytecount);
+          p = new VTKBinaryAppendedDataArrayWriterExtended<float>(s,"Coordinates",3,bytecount);
         VertexIterator vEnd = vertexEnd();
         for (VertexIterator vit=vertexBegin(); vit!=vEnd; ++vit)
         {
@@ -1469,25 +1366,25 @@ namespace Dune
         indentUp();
 
         // connectivity
-        VTKDataArrayWriter<int> *p1=0;
+        VTKDataArrayWriterExtended<int> *p1=0;
         if (outputtype==VTKOptions::ascii)
-          p1 = new VTKAsciiDataArrayWriter<int>(s,"connectivity",1); 
+          p1 = new VTKAsciiDataArrayWriterExtended<int>(s,"connectivity",1); 
         if (outputtype==VTKOptions::binary)
-          p1 = new VTKBinaryDataArrayWriter<int>(s,"connectivity",1,ncorners); 
+          p1 = new VTKBinaryDataArrayWriterExtended<int>(s,"connectivity",1,ncorners); 
         if (outputtype==VTKOptions::binaryappended)
-          p1 = new VTKBinaryAppendedDataArrayWriter<int>(s,"connectivity",1,bytecount);
+          p1 = new VTKBinaryAppendedDataArrayWriterExtended<int>(s,"connectivity",1,bytecount);
         for (CornerIterator it=cornerBegin(); it!=cornerEnd(); ++it)
           p1->write(it.id());
         delete p1;
 
         // offsets
-        VTKDataArrayWriter<int> *p2=0;
+        VTKDataArrayWriterExtended<int> *p2=0;
         if (outputtype==VTKOptions::ascii)
-          p2 = new VTKAsciiDataArrayWriter<int>(s,"offsets",1);
+          p2 = new VTKAsciiDataArrayWriterExtended<int>(s,"offsets",1);
         if (outputtype==VTKOptions::binary)
-          p2 = new VTKBinaryDataArrayWriter<int>(s,"offsets",1,ncells); 
+          p2 = new VTKBinaryDataArrayWriterExtended<int>(s,"offsets",1,ncells); 
         if (outputtype==VTKOptions::binaryappended)
-          p2 = new VTKBinaryAppendedDataArrayWriter<int>(s,"offsets",1,bytecount);
+          p2 = new VTKBinaryAppendedDataArrayWriterExtended<int>(s,"offsets",1,bytecount);
         {
           int offset = 0;
           for (CellIterator it=cellBegin(); it!=cellEnd(); ++it)
@@ -1501,13 +1398,13 @@ namespace Dune
         // types
         if (n>1)
         {
-          VTKDataArrayWriter<unsigned char> *p3=0; 
+          VTKDataArrayWriterExtended<unsigned char> *p3=0; 
           if (outputtype==VTKOptions::ascii)
-            p3 = new VTKAsciiDataArrayWriter<unsigned char>(s,"types",1);
+            p3 = new VTKAsciiDataArrayWriterExtended<unsigned char>(s,"types",1);
           if (outputtype==VTKOptions::binary)
-            p3 = new VTKBinaryDataArrayWriter<unsigned char>(s,"types",1,ncells); 
+            p3 = new VTKBinaryDataArrayWriterExtended<unsigned char>(s,"types",1,ncells); 
           if (outputtype==VTKOptions::binaryappended)
-            p3 = new VTKBinaryAppendedDataArrayWriter<unsigned char>(s,"types",1,bytecount); 
+            p3 = new VTKBinaryAppendedDataArrayWriterExtended<unsigned char>(s,"types",1,bytecount); 
           for (CellIterator it=cellBegin(); it!=cellEnd(); ++it)
           {
             int vtktype = vtkType(it->type());
@@ -1630,27 +1527,27 @@ namespace Dune
     
     // base class for data array writers
     template<class T>
-    class VTKDataArrayWriter
+    class VTKDataArrayWriterExtended
     {
     public:
       virtual void write (T data) = 0;
-      virtual ~VTKDataArrayWriter () {}
+      virtual ~VTKDataArrayWriterExtended () {}
     };
 
     // a streaming writer for data array tags
     template<class T>
-    class VTKAsciiDataArrayWriter : public VTKDataArrayWriter<T>
+    class VTKAsciiDataArrayWriterExtended : public VTKDataArrayWriterExtended<T>
     {
     public:
       //! make a new data array writer
-      VTKAsciiDataArrayWriter (std::ostream& theStream, std::string name, int ncomps) 
+      VTKAsciiDataArrayWriterExtended (std::ostream& theStream, std::string name, int ncomps) 
         : s(theStream), counter(0), numPerLine(12)
         {
           VTKTypeNameTraits<T> tn;
           s << "<DataArray type=\"" << tn() << "\" Name=\"" << name << "\" ";
 		  //vtk file format: a vector data always should have 3 comps(with 3rd comp = 0 in 2D case)
           if (ncomps>3)
-            DUNE_THROW(IOError, "VTKWriter does not support more than 3 components");
+            DUNE_THROW(IOError, "VTKWriterExtended does not support more than 3 components");
           s << "NumberOfComponents=\"" << (ncomps>1?3:1) << "\" ";
           s << "format=\"ascii\">" << std::endl;
         }
@@ -1665,7 +1562,7 @@ namespace Dune
         }
 
       //! finish output; writes end tag
-      ~VTKAsciiDataArrayWriter ()
+      ~VTKAsciiDataArrayWriterExtended ()
         {
           if (counter%numPerLine!=0) s << std::endl;
           s << "</DataArray>" << std::endl;   
@@ -1679,11 +1576,11 @@ namespace Dune
 
     // a streaming writer for data array tags
     template<class T>
-    class VTKBinaryDataArrayWriter : public VTKDataArrayWriter<T>
+    class VTKBinaryDataArrayWriterExtended : public VTKDataArrayWriterExtended<T>
     {
     public:
       //! make a new data array writer
-      VTKBinaryDataArrayWriter (std::ostream& theStream, std::string name, int ncomps, int nitems) 
+      VTKBinaryDataArrayWriterExtended (std::ostream& theStream, std::string name, int ncomps, int nitems) 
         : s(theStream),bufsize(4096),n(0)
         {
           DUNE_THROW(IOError, "binary does not work yet, use binaryappended!");
@@ -1691,7 +1588,7 @@ namespace Dune
           s << "<DataArray type=\"" << tn() << "\" Name=\"" << name << "\" ";
 		  //vtk file format: a vector data always should have 3 comps(with 3rd comp = 0 in 2D case)
           if (ncomps>3)
-            DUNE_THROW(IOError, "VTKWriter does not support more than 3 components");
+            DUNE_THROW(IOError, "VTKWriterExtended does not support more than 3 components");
           s << "NumberOfComponents=\"" << (ncomps>1?3:1) << "\" ";
           s << "format=\"binary\">" << std::endl;
           buffer = new char[bufsize*sizeof(T)];
@@ -1719,7 +1616,7 @@ namespace Dune
         }
 
       //! finish output; writes end tag
-      ~VTKBinaryDataArrayWriter ()
+      ~VTKBinaryDataArrayWriterExtended ()
         {
 //      int codelength;
           if (n>0)
@@ -1747,18 +1644,18 @@ namespace Dune
 
     // a streaming writer for data array tags
     template<class T>
-    class VTKBinaryAppendedDataArrayWriter : public VTKDataArrayWriter<T>
+    class VTKBinaryAppendedDataArrayWriterExtended : public VTKDataArrayWriterExtended<T>
     {
     public:
       //! make a new data array writer
-      VTKBinaryAppendedDataArrayWriter (std::ostream& theStream, std::string name, int ncomps, unsigned int& bc) 
+      VTKBinaryAppendedDataArrayWriterExtended (std::ostream& theStream, std::string name, int ncomps, unsigned int& bc) 
         : s(theStream),bytecount(bc)
         {
           VTKTypeNameTraits<T> tn;
           s << "<DataArray type=\"" << tn() << "\" Name=\"" << name << "\" ";
 		  //vtk file format: a vector data always should have 3 comps(with 3rd comp = 0 in 2D case)
           if (ncomps>3)
-            DUNE_THROW(IOError, "VTKWriter does not support more than 3 components");
+            DUNE_THROW(IOError, "VTKWriterExtended does not support more than 3 components");
           s << "NumberOfComponents=\"" << (ncomps>1?3:1) << "\" ";
           s << "format=\"appended\" offset=\""<< bytecount << "\" />" << std::endl;
           bytecount += 4; // header
@@ -1858,14 +1755,14 @@ namespace Dune
       \ingroup VTK
    */
   template< class Grid >
-  class LeafVTKWriter
-  : public VTKWriter< typename Grid::LeafGridView >
+  class LeafVTKWriterExtended
+  : public VTKWriterExtended< typename Grid::LeafGridView >
   {
-    typedef VTKWriter< typename Grid::LeafGridView > Base;
+    typedef VTKWriterExtended< typename Grid::LeafGridView > Base;
 
   public:
       /** \brief Construct a VTK writer for the leaf level of a given grid */
-    explicit LeafVTKWriter ( const Grid &grid,
+    explicit LeafVTKWriterExtended ( const Grid &grid,
                              VTKOptions::DataMode dm = VTKOptions::conforming ) DUNE_DEPRECATED
     : Base( grid.leafView(), dm )
     {}
@@ -1875,14 +1772,14 @@ namespace Dune
       \ingroup VTK
    */
   template< class Grid >
-  class LevelVTKWriter
-  : public VTKWriter< typename Grid::LevelGridView >
+  class LevelVTKWriterExtended
+  : public VTKWriterExtended< typename Grid::LevelGridView >
   {
-    typedef VTKWriter< typename Grid::LevelGridView > Base;
+    typedef VTKWriterExtended< typename Grid::LevelGridView > Base;
 
   public:
       /** \brief Construct a VTK writer for a certain level of a given grid */
-    LevelVTKWriter ( const Grid &grid, int level,
+    LevelVTKWriterExtended ( const Grid &grid, int level,
                      VTKOptions::DataMode dm = VTKOptions::conforming ) DUNE_DEPRECATED
     : Base( grid.levelView( level ), dm )
     {}
