@@ -53,7 +53,7 @@ namespace Dune
 	  typename Dune::BoundaryConditions::Flags bctype (const Dune::FieldVector<DT,n>& x, const Entity& e, 
 						   const Dune::FieldVector<DT,n>& xi) const
 	  {
-	    if (x[0] > 300-1E-6 || x[0] < 1e-6) 
+	    if (x[0] > 1-1E-6 || x[0] < 1e-6) 
 	      return Dune::BoundaryConditions::dirichlet;
 	    // all other boundaries
 	    return Dune::BoundaryConditions::neumann;

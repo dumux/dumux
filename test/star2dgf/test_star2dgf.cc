@@ -17,8 +17,8 @@ int main (int argc , char **argv) try
     // define the problem dimensions  
     const int dim = 3;
     typedef double NumberType; 
-    //typedef Dune::UGGrid<dim> GridType;
-    typedef Dune::ALUSimplexGrid<dim,dim> GridType;
+    typedef Dune::UGGrid<dim> GridType;
+    //typedef Dune::ALUSimplexGrid<dim,dim> GridType;
     //typedef Dune::ALUCubeGrid<dim,dim> GridType;
     //typedef Dune::AlbertaGrid<dim,dim> GridType;
 

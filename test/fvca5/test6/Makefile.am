@@ -7,6 +7,5 @@ noinst_PROGRAMS = fvca5_test6
 fvca5_test6dir = $(includedir)/dune/dumux/test/fvca5/test6
 fvca5_test6_HEADERS = fvca5test6problem.hh
 fvca5_test6_SOURCES = fvca5_test6.cc
-fvca5_test6_DEPENDENCIES = $(LOCAL_LIBS)
 
 include $(top_srcdir)/am/global-rules

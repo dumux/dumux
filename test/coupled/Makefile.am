@@ -7,9 +7,7 @@ noinst_PROGRAMS = test_coupled test_stokesdarcy
 test_coupleddir = $(includedir)/dune/dumux/test/coupled
 test_coupled_HEADERS = boxdiffusion.hh boxdiffusionjacobian.hh diffusionparameters.hh 
 test_coupled_SOURCES = test_coupled.cc
-test_coupled_DEPENDENCIES = $(LOCAL_LIBS)
 
 test_stokesdarcy_SOURCES = test_stokesdarcy.cc
-test_stokesdarcy_DEPENDENCIES = $(LOCAL_LIBS)
 
 include $(top_srcdir)/am/global-rules

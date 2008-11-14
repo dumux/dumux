@@ -59,7 +59,8 @@ int main(int argc, char** argv)
 
     diffusion.pressure();
     std::cout << "pressure calculation took " << timer.elapsed() << " seconds" << std::endl;
-    //printvector(std::cout, *diffusion, "pressure", "row", 200, 1, 3);
+//     printvector(std::cout, variables.pressure, "pressure", "row", 200, 1, 6);
+//     printvector(std::cout, *(diffusion.normalVelocity), "normal velocity", "row", 4, 1, 6);
 
     Dune::BenchmarkResult result;
     result.evaluate(grid, problem, diffusion);

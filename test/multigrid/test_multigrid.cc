@@ -100,7 +100,7 @@ void testadaptivity (G& grid, int maxsteps, int modulo, bool globalrefine=false,
 
 	typedef Dune::LeafP1Function<G,NumberType> LeafFunction;
 	typedef Dune::LeafP1OperatorAssembler<G,NumberType,1> LeafOperatorAssembler; 
-	typedef Dune::GroundwaterEquationLocalStiffness<G,NumberType> LocalStiffnessType;
+	typedef Dune::GroundwaterEquationLocalStiffness<typename G::LevelGridView,NumberType> LocalStiffnessType;
 	typedef typename Dune::LeafP1Function<G,NumberType>::RepresentationType VectorType;
 	typedef typename Dune::LeafP1OperatorAssembler<G,NumberType,1>::RepresentationType MatrixType;
 	int codim = dim;
@@ -142,7 +142,7 @@ void testadaptivity (G& grid, int maxsteps, int modulo, bool globalrefine=false,
 
 		LeafOperatorAssembler A(grid);
 
-		LocalStiffnessType lstiff(mp,false);
+		LocalStiffnessType lstiff(grid.leafView(),mp,false);
 
 		A.assemble(lstiff,u,f);
 
@@ -168,14 +168,14 @@ void testadaptivity (G& grid, int maxsteps, int modulo, bool globalrefine=false,
 #endif
 
 #if BICGMGC
-		LocalStiffnessType mglstiff(mp,true); // with level bnd as Dirichlet
+		LocalStiffnessType mglstiff(grid.leafView(),mp,true); // with level bnd as Dirichlet
 		Dune::SeqP1GeomMG<MatrixType,G,LocalStiffnessType,VectorType,VectorType,1> 
 		mgc(*A,grid,mglstiff,0,1,1,false);
 		Dune::CGSolver<VectorType> solver(op,mgc,red,10000,2); 
 #endif
 
 #if CGBPX
-		LocalStiffnessType mglstiff(mp,true); // with level bnd as Dirichlet
+		LocalStiffnessType mglstiff(grid.leafView(),mp,true); // with level bnd as Dirichlet
 		Dune::SeqP1GeomMG<MatrixType,G,LocalStiffnessType,VectorType,VectorType,1> 
 		bpx(*A,grid,mglstiff,1,1,0,true);
 		Dune::CGSolver<VectorType> solver(op,bpx,red,10000,1);         // an inverse operator 
@@ -220,7 +220,7 @@ void testadaptivity (G& grid, int maxsteps, int modulo, bool globalrefine=false,
 				os << ".global";
 			else
 				os << ".local";
-			Dune::LeafVTKWriter<typename G::LeafGridView> vtkwriter(grid.leafView());
+			Dune::VTKWriter<typename G::LeafGridView> vtkwriter(grid.leafView());
 			vtkwriter.addVertexData(*u,"solution");
 			std::string s(os.str());
 			vtkwriter.write(s.c_str(),Dune::VTKOptions::ascii);

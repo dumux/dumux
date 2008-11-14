@@ -465,10 +465,6 @@ namespace Dune
 				  // get geometry type of face
 				  GeometryType gtf = is->intersectionSelfLocal().type();
 
-				  // center in face's reference element
-				  const FieldVector<ct,dim-1>&
-				  facelocal = ReferenceElements<ct,dim-1>::general(gtf).position(0,0);
-
 				  // handle interior face
 				  if (is->neighbor())
 				  {
