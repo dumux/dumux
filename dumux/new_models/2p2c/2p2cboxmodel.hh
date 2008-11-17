@@ -794,19 +794,14 @@ namespace Dune
                     Scalar xAWmass = (*sol)[globalIdx][SwitchIndex];
                     Scalar xAWmolar = this->problem_.multicomp().convertMassToMoleFraction(xAWmass, WPhaseIndex);
 
-                    Scalar xAWmolarMax = this->problem_.multicomp().xAWmolar(pN, temperature);
+//                    Scalar xAWmolarMax = this->problem_.multicomp().xAWmolar(pN, temperature);
 
                     henryInv = this->problem_.multicomp().henry(temperature);
                     pWSat = this->problem_.multicomp().vaporPressure(temperature);
                     pbub = pWSat + xAWmolar/henryInv; // pWSat + pAW
 
-/*                    
-                    if (xAWmolar > (1 + 1e-5)*xAWmolarMax) {
-                        std::cerr << std::setprecision(40) << "xAWmolar: " << xAWmolar << " xAWmolarMax: " << xAWmolarMax << " henry: " << henryInv << " temperature: " << temperature << " pbub: " << pbub << " pN: " << pN << " pWSat: " << pWSat << "\n";
-                    }
-*/
-//                    if (pN < (1 - 1e-5)*pbub)
-                    if (xAWmolar > (1 + 1e-2)*xAWmolarMax)
+                    if (pN < (1 - 1e-5)*pbub)
+//                        if (xAWmolar > (1 + 1e-2)*xAWmolarMax)
                     {
                         // appearance of gas phase
                         std::cout << "Gas appears at node " << globalIdx << ",  Coordinates: " << globalPos << std::endl;
