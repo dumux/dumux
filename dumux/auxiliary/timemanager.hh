@@ -25,7 +25,7 @@
 
 namespace Dune
 {
-    template <class EpisodeIdentiferT, bool _verbose>
+    template <class EpisodeIdentiferT, bool verbose_>
     class TimeManager;
     
     /*!
@@ -58,7 +58,7 @@ namespace Dune
      * (simulated) time it starts, its length, an identifier, and a
      * consecutive index starting at 0.
      */
-    template <class EpisodeIdentiferT, bool _verbose = true>
+    template <class EpisodeIdentiferT, bool verbose_ = true>
     class TimeManager
     {
     public:
@@ -67,16 +67,16 @@ namespace Dune
         TimeManager(const EpisodeIdentifer &id, 
                     double len = 1e100)
             {
-                _init();
+                init_();
 
-                _episode = id;
-                _episodeLength = len;
+                episode_ = id;
+                episodeLength_ = len;
             }
 
         TimeManager(double len = 1e100)
             {
-                _init();
-                _episodeLength = len;
+                init_();
+                episodeLength_ = len;
             }
 
         /*!
@@ -89,26 +89,26 @@ namespace Dune
          * current time step number.
          */
         void setTime(double t)
-            { _currentTime = t; }
+            { currentTime_ = t; }
 
         /*!
          * \brief Set the current simulated time and the time step
          * number.
          */
         void setTime(double t, int stepNum)
-            { _currentTime = t; _stepNum = stepNum; }
+            { currentTime_ = t; stepNum_ = stepNum; }
 
         /*!
          * \brief Let some simulated time pass.
          */
         void proceed(double curDt)
-            { _currentTime += curDt; ++_stepNum; }
+            { currentTime_ += curDt; ++stepNum_; }
 
         /*!
          * \brief Return the current simulated time.
          */
         double time() const
-            { return _currentTime; }
+            { return currentTime_; }
 
         /*!
          * \brief Set the suggested time step size to a fixed value.
@@ -119,7 +119,7 @@ namespace Dune
          */
         void setStepSize(double stepSize)
             {
-                _stepSize = stepSize; 
+                stepSize_ = stepSize; 
             }
 
         /*!
@@ -133,12 +133,12 @@ namespace Dune
                 // the time step size it suggested instead of trying
                 // to align it to the end of the episode.
                 if (episodeIsOver())
-                    return _stepSize;
+                    return stepSize_;
 
                 // make sure that we don't exceed the end of the
                 // current episode.
                 return std::min(episodeLength() - (time() - episodeStartTime()),
-                                _stepSize);
+                                stepSize_);
             }
 
         /*!
@@ -146,19 +146,19 @@ namespace Dune
          *        executed since t=0.
          */
         int stepNum() const
-            { return _stepNum; }
+            { return stepNum_; }
 
         /*!
          * \brief Specify whether the simulation is finished
          */
         void setFinished(bool yesno = true)
-            { _finished = yesno; }
+            { finished_ = yesno; }
 
         /*!
          * \brief Returns true if the simulation is finished.
          */
         bool finished() const
-            { return _finished; }
+            { return finished_; }
 
 
         /*!
@@ -181,11 +181,11 @@ namespace Dune
                               double tStart,
                               double len)
             {
-                ++ _episodeIndex;
-                _episodeStartTime = tStart;
-                _episodeLength = len;
+                ++ episodeIndex_;
+                episodeStartTime_ = tStart;
+                episodeLength_ = len;
 
-                _episode = id;
+                episode_ = id;
             }
 
         /*!
@@ -196,11 +196,11 @@ namespace Dune
         void startNextEpisode(const EpisodeIdentifer &id,
                               double len = 1e100)
             {
-                ++ _episodeIndex;
-                _episodeStartTime = _currentTime;
-                _episodeLength = len;
+                ++ episodeIndex_;
+                episodeStartTime_ = currentTime_;
+                episodeLength_ = len;
 
-                _episode = id;
+                episode_ = id;
             }
 
         /*!
@@ -211,22 +211,22 @@ namespace Dune
          */
         void startNextEpisode(double len = 1e100)
             {
-                ++ _episodeIndex;
-                _episodeStartTime = _currentTime;
-                _episodeLength = len;
+                ++ episodeIndex_;
+                episodeStartTime_ = currentTime_;
+                episodeLength_ = len;
             }
 
         /*!
          * \brief Returns the identifier of the current episode
          */
         const EpisodeIdentifer &episode() const
-            { return _episode; }
+            { return episode_; }
 
         /*!
          * \brief Returns the identifier of the current episode
          */
         EpisodeIdentifer &episode()
-            { return _episode; }
+            { return episode_; }
 
         /*!
          * \brief Returns the index of the current episode.
@@ -234,27 +234,27 @@ namespace Dune
          * The first episode has the index 0.
          */
         int episodeIndex() const
-            { return _episodeIndex; }
+            { return episodeIndex_; }
 
         /*!
          * \brief Returns the absolute time when the current episode
          *        started.
          */
         double episodeStartTime() const
-            { return _episodeStartTime; }
+            { return episodeStartTime_; }
 
         /*!
          * \brief Returns the length of the current episode in
          *        simulated time.
          */
         double episodeLength() const
-            { return _episodeLength; }
+            { return episodeLength_; }
 
         /*!
          * \brief Returns true if the current episode is over.
          */
         bool episodeIsOver() const
-            { return time() + _episodeLength*1e-6 >= _episodeStartTime + _episodeLength; }
+            { return time() + episodeLength_*1e-6 >= episodeStartTime_ + episodeLength_; }
 
         /*!
          * @}
@@ -276,7 +276,7 @@ namespace Dune
                 
 
                 // reset the time manager
-                _init();
+                init_();
 
                 // initialize them model and write the initial
                 // condition to disk
@@ -306,7 +306,7 @@ namespace Dune
                     // been found
                     problem.timestepDone();
 
-                    if (_verbose) {
+                    if (verbose_) {
                         std::cout <<
                             boost::format("Timestep %d done: Realtime=%.2f, Simtime=%.2f StepSize=%.2g, NextStepSize=%.2g\n")
                             %stepNum()%timer.elapsed()%time()%curStepSize%stepSize();
@@ -320,25 +320,25 @@ namespace Dune
 
 
     private:
-        void _init()
+        void init_()
             {
-                _episodeIndex = 0;
-                _episodeStartTime = 0;
-                _currentTime = 0.0;
-                _stepSize = 1.0;
-                _stepNum = 0;
-                _finished = false;
+                episodeIndex_ = 0;
+                episodeStartTime_ = 0;
+                currentTime_ = 0.0;
+                stepSize_ = 1.0;
+                stepNum_ = 0;
+                finished_ = false;
             }
 
-        int              _episodeIndex;
-        double           _episodeStartTime;
-        double           _episodeLength;
-        EpisodeIdentifer _episode;
+        int              episodeIndex_;
+        double           episodeStartTime_;
+        double           episodeLength_;
+        EpisodeIdentifer episode_;
 
-        double _currentTime;
-        double _stepSize;
-        int    _stepNum;
-        bool   _finished;
+        double currentTime_;
+        double stepSize_;
+        int    stepNum_;
+        bool   finished_;
     };
 }
 

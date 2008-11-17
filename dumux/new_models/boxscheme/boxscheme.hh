@@ -110,12 +110,12 @@ namespace Dune
         
     public:
         BoxScheme(Problem &prob, LocalJacobian &localJac)
-            : _problem(prob),
-              _uCur(prob.grid()),
-              _uPrev(prob.grid()),
-              _f(prob.grid()),
-              _jacAsm(prob.grid()),
-              _localJacobian(localJac)
+            : problem_(prob),
+              uCur_(prob.grid()),
+              uPrev_(prob.grid()),
+              f_(prob.grid()),
+              jacAsm_(prob.grid()),
+              localJacobian_(localJac)
             {
                 Api::require<Api::BasicDomainTraits, 
                              typename Problem::DomainTraits>();
@@ -128,56 +128,56 @@ namespace Dune
         void initial()
             {
                 // initialize the static node data of the box jacobian
-                this->localJacobian().setCurSolution(&_uCur);
-                this->localJacobian().setOldSolution(&_uPrev);
+                this->localJacobian().setCurSolution(&uCur_);
+                this->localJacobian().setOldSolution(&uPrev_);
                 
                 this->localJacobian().initStaticData();
                 
-                _applyInitialSolution(_uCur);
-                _applyDirichletBoundaries(_uCur);
+                applyInitialSolution_(uCur_);
+                applyDirichletBoundaries_(uCur_);
 
-                *_uPrev = *_uCur;
+                *uPrev_ = *uCur_;
 
                 // update the static node data with the initial solution
-                this->localJacobian().updateStaticData(_uCur, _uPrev);              
+                this->localJacobian().updateStaticData(uCur_, uPrev_);              
             }
 
         /*!
          * \brief Reference to the current solution.
          */
         const SpatialFunction &currentSolution() const
-            { return _uCur; }
+            { return uCur_; }
 
         /*!
          * \brief Reference to the current solution.
          */
         SpatialFunction &currentSolution()
-            { return _uCur; }
+            { return uCur_; }
 
         /*!
          * \brief Reference to the right hand side.
          */
         SpatialFunction &rightHandSide()
-            { return _f; }
+            { return f_; }
 
         /*!
          * \brief Reference to solution of the previous time step.
          */
         SpatialFunction &previousSolution()
-            { return _uPrev; }
+            { return uPrev_; }
 
         /*!
          * \brief Reference to solution of the previous time step.
          */
         const SpatialFunction &previousSolution() const
-            { return _uPrev; }
+            { return uPrev_; }
 
         /*!
          * \brief Returns the operator assembler for the global jacobian of
          *        the problem.
          */
         JacobianAssembler &jacobianAssembler()
-            { return _jacAsm; }
+            { return jacAsm_; }
 
         /*!
          * \brief Returns the local jacobian which calculates the local
@@ -188,19 +188,19 @@ namespace Dune
          * problem.
          */
         LocalJacobian &localJacobian()
-            { return _localJacobian; }
+            { return localJacobian_; }
 
         /*!
          * \brief Same as localJacobian(), included to ease porting.
          */
         LocalJacobian &getLocalJacobian() DUNE_DEPRECATED
-            { return _localJacobian; }
+            { return localJacobian_; }
 
         /*!
          * \brief Reference to the grid of the spatial domain.
          */
         const Grid &grid()
-            { return _problem.grid(); }
+            { return problem_.grid(); }
 
         /*!
          * \brief Try to progress the model to the next timestep.
@@ -208,12 +208,12 @@ namespace Dune
         template<class NewtonMethod, class NewtonController>
         void update(Scalar &dt, Scalar &nextDt, NewtonMethod &solver, NewtonController &controller)
             {
-                _asImp()->updateBegin();
+                asImp_()->updateBegin();
 
                 int numRetries = 0;
                 while (true)
                 {
-                    bool converged = solver.execute(*this->_asImp(),
+                    bool converged = solver.execute(*this->asImp_(),
                                                     controller);
                     nextDt = controller.suggestTimeStepSize(dt);
                     if (converged)
@@ -224,15 +224,15 @@ namespace Dune
                         DUNE_THROW(Dune::MathError,
                                    "Newton solver didn't converge after 10 timestep divisions. dt=" << dt);
 
-                    _problem.setTimeStepSize(nextDt);
+                    problem_.setTimeStepSize(nextDt);
                     dt = nextDt;
 
-                    _asImp()->updateFailedTry();
+                    asImp_()->updateFailedTry();
                     
                     std::cout << boost::format("Newton didn't converge. Retrying with timestep of %f\n")%dt;
                 }
                 
-                _asImp()->updateSuccessful();
+                asImp_()->updateSuccessful();
             }
 
         
@@ -243,7 +243,7 @@ namespace Dune
          */
         void updateBegin()
             {
-                _applyDirichletBoundaries(_uCur);
+                applyDirichletBoundaries_(uCur_);
             }
 
         
@@ -255,7 +255,7 @@ namespace Dune
         void updateSuccessful() 
             {
                 // make the current solution the previous one.
-                *_uPrev = *_uCur;
+                *uPrev_ = *uCur_;
             };
 
         /*!
@@ -268,7 +268,7 @@ namespace Dune
                 // Reset the current solution to the one of the
                 // previous time step so that we can start the next
                 // update at a physically meaningful solution.
-                *_uPrev = *_uCur;
+                *uPrev_ = *uCur_;
             };
 
 
@@ -282,8 +282,8 @@ namespace Dune
                 (*globResidual) = Scalar(0.0);
 
                 // iterate through leaf grid
-                CellIterator it     = _problem.grid().template leafbegin<0>();
-                CellIterator eendit = _problem.grid().template leafend<0>();
+                CellIterator it     = problem_.grid().template leafbegin<0>();
+                CellIterator eendit = problem_.grid().template leafend<0>();
                 for (; it != eendit; ++it)
                 {
                     // tell the local jacobian which cell it should
@@ -297,11 +297,11 @@ namespace Dune
                     LocalFunction localU(numVertices);
                     LocalFunction localOldU(numVertices);
 
-                    _localJacobian.setCurrentCell(cell);
-                    _localJacobian.restrictToCell(localU, currentSolution());
-                    _localJacobian.restrictToCell(localOldU, previousSolution());
-                    _localJacobian.setParams(cell, localU, localOldU);
-                    _localJacobian.evalLocalResidual(localResidual);
+                    localJacobian_.setCurrentCell(cell);
+                    localJacobian_.restrictToCell(localU, currentSolution());
+                    localJacobian_.restrictToCell(localOldU, previousSolution());
+                    localJacobian_.setParams(cell, localU, localOldU);
+                    localJacobian_.evalLocalResidual(localResidual);
 
                     // loop over the cell's vertices, map them to the
                     // corresponding grid's node ids and add the
@@ -310,7 +310,7 @@ namespace Dune
                     int n = cell.template count<GridDim>();
                     for(int localId=0; localId < n; localId++)
                     {
-                        int globalId = _problem.nodeIndex(cell, localId);
+                        int globalId = problem_.nodeIndex(cell, localId);
                         (*globResidual)[globalId] += localResidual[localId];
                     }
                 }
@@ -318,11 +318,11 @@ namespace Dune
 
 
     protected:
-        void _applyInitialSolution(SpatialFunction &u)
+        void applyInitialSolution_(SpatialFunction &u)
             {
                 // iterate through leaf grid an evaluate c0 at cell center
-                CellIterator it     = _problem.grid().template leafbegin<0>();
-                CellIterator eendit = _problem.grid().template leafend<0>();
+                CellIterator it     = problem_.grid().template leafbegin<0>();
+                CellIterator eendit = problem_.grid().template leafend<0>();
                 for (; it != eendit; ++it)
                 {
                     // loop over all shape functions of the current cell
@@ -335,12 +335,12 @@ namespace Dune
                         // get global coordinate of node 
                         const WorldCoord &global = it->geometry()[localNodeIdx];
 
-                        int globalId = this->_problem.nodeIndex(*it, localNodeIdx);
+                        int globalId = this->problem_.nodeIndex(*it, localNodeIdx);
                         
                         // use the problem for actually doing the
                         // dirty work of nailing down the initial
                         // solution.
-                        this->_problem.initial((*u)[globalId],
+                        this->problem_.initial((*u)[globalId],
                                                cell,
                                                global,
                                                local);
@@ -349,12 +349,12 @@ namespace Dune
             };
 
 
-        void _applyDirichletBoundaries(SpatialFunction &u)
+        void applyDirichletBoundaries_(SpatialFunction &u)
             {
                 // set Dirichlet boundary conditions of the grid's
                 // outer boundaries
-                CellIterator cellIt     = _problem.grid().template leafbegin<0>();
-                CellIterator cellEndIt  = _problem.grid().template leafend<0>();
+                CellIterator cellIt     = problem_.grid().template leafbegin<0>();
+                CellIterator cellEndIt  = problem_.grid().template leafend<0>();
                 for (; cellIt != cellEndIt; ++cellIt)
                 {
                     if (!cellIt->hasBoundaryIntersections())
@@ -366,25 +366,25 @@ namespace Dune
                     Dune::GeometryType geoType = cell.geometry().type();
 
                     // locally evaluate the cell's boundary condition types
-                    _localJacobian.assembleBoundaryCondition(cell);
+                    localJacobian_.assembleBoundaryCondition(cell);
 
                     // loop over all the cell's nodes
                     int n = cellIt->template count<GridDim>();
                     for (int i = 0; i < n; ++i) {
                         // TODO: mixed boundary conditions
-                        if (_localJacobian.bc(i)[0] != Dune::BoundaryConditions::dirichlet)
+                        if (localJacobian_.bc(i)[0] != Dune::BoundaryConditions::dirichlet)
                             // we ought to evaluate dirichlet
                             // boundary conditions, not
                             // something else!
                             continue;
                         
                         // translate local node id to a global one
-                        int globalId = _problem.nodeIndex(cell, i);
+                        int globalId = problem_.nodeIndex(cell, i);
 
                         // actually evaluate the boundary
                         // condition for the current
                         // cell+node combo
-                        _problem.dirichlet((*u)[globalId],
+                        problem_.dirichlet((*u)[globalId],
                                            cell,
                                            i,
                                            globalId);                            
@@ -393,29 +393,29 @@ namespace Dune
                 }
             };
 
-        Implementation *_asImp() 
+        Implementation *asImp_() 
             { return static_cast<Implementation*>(this); } 
-        const Implementation *_asImp() const
+        const Implementation *asImp_() const
             { return static_cast<const Implementation*>(this); } 
 
         // the problem we want to solve. defines the constitutive
         // relations, material laws, etc.
-        Problem     &_problem;
+        Problem     &problem_;
 
         // the solution we are looking for
 
         // cur is the current solution, prev the solution of the
         // previous time step
-        SpatialFunction _uCur;
-        SpatialFunction _uPrev;
+        SpatialFunction uCur_;
+        SpatialFunction uPrev_;
 
         // the right hand side
-        SpatialFunction  _f;
+        SpatialFunction  f_;
         // Linearizes the problem at the current time step using the
         // local jacobian
-        JacobianAssembler _jacAsm;
+        JacobianAssembler jacAsm_;
         // calculates the local jacobian matrix for a given cell
-        LocalJacobian    &_localJacobian;
+        LocalJacobian    &localJacobian_;
     };
 }
 

@@ -121,8 +121,8 @@ namespace Dune
          */
         void setCurrentCell(const Cell &cell) 
             {
-                if (ParentType::_setCurrentCell(cell)) {
-                    _curCellPorosity = ParentType::_problem.porosity(ParentType::_curCell());
+                if (ParentType::setCurrentCell_(cell)) {
+                    curCellPorosity_ = ParentType::problem_.porosity(ParentType::curCell_());
                 }
             };
 
@@ -134,12 +134,12 @@ namespace Dune
             {
                 setCurrentCell(cell);
                 
-                _curSol = &curSol;
-                _updateCellCache(_curSolCache, *_curSol);
-                _curSolDeflected = false;
+                curSol_ = &curSol;
+                updateCellCache_(curSolCache_, *curSol_);
+                curSolDeflected_ = false;
                 
-                _prevSol = &prevSol;
-                _updateCellCache(_prevSolCache, *_prevSol);
+                prevSol_ = &prevSol;
+                updateCellCache_(prevSolCache_, *prevSol_);
             };
         
         /*!
@@ -154,19 +154,19 @@ namespace Dune
         void deflectCurSolution(int node, int component, Scalar value)
             {
                 // make sure that the orignal state can be restored
-                if (!_curSolDeflected) {
-                    _curSolDeflected = true;
+                if (!curSolDeflected_) {
+                    curSolDeflected_ = true;
 
-                    _curSolOrigValue = (*_curSol)[node][component];
-                    _curSolOrigVarData = _curSolCache.atSCV[node];
+                    curSolOrigValue_ = (*curSol_)[node][component];
+                    curSolOrigVarData_ = curSolCache_.atSCV[node];
                 }
                 
-                (*_curSol)[node][component] = value;
-                _partialCellCacheUpdate(_curSolCache,
-                                        ParentType::_problem.cellIndex(ParentType::_curCell()),
-                                        *_curSol,
+                (*curSol_)[node][component] = value;
+                partialCellCacheUpdate_(curSolCache_,
+                                        ParentType::problem_.cellIndex(ParentType::curCell_()),
+                                        *curSol_,
                                         node,
-                                        ParentType::_problem.nodeIndex(ParentType::_curCell(), 
+                                        ParentType::problem_.nodeIndex(ParentType::curCell_(), 
                                                                          node)); 
 
             }
@@ -180,9 +180,9 @@ namespace Dune
          */
         void restoreCurSolution(int node, int component)
             {
-                _curSolDeflected = false;
-                (*_curSol)[node][component] = _curSolOrigValue;
-                _curSolCache.atSCV[node] = _curSolOrigVarData;
+                curSolDeflected_ = false;
+                (*curSol_)[node][component] = curSolOrigValue_;
+                curSolCache_.atSCV[node] = curSolOrigVarData_;
             };
         
         /*!
@@ -195,15 +195,15 @@ namespace Dune
          */
         void localRate(UnknownsVector &result, int scvId, bool usePrevSol) const
             {
-                LocalFunction *sol = usePrevSol?_prevSol:_curSol;
+                LocalFunction *sol = usePrevSol?prevSol_:curSol_;
 
                 // partial time derivative of the wetting phase mass
-                result[PwIndex] = -ParentType::_problem.densityW()
-                                   * _curCellPorosity
+                result[PwIndex] = -ParentType::problem_.densityW()
+                                   * curCellPorosity_
                                    * (*sol)[scvId][SnIndex];
                 // partial time derivative of the non-wetting phase mass
-                result[SnIndex] = ParentType::_problem.densityN()
-                                  * _curCellPorosity
+                result[SnIndex] = ParentType::problem_.densityN()
+                                  * curCellPorosity_
                                   * (*sol)[scvId][SnIndex];
 
             }
@@ -219,42 +219,42 @@ namespace Dune
                 assert(PrimaryVariables == 2);
 
                 const typename FVElementGeometry::SubControlVolumeFace
-                    &face = ParentType::_curCellGeom.subContVolFace[faceId];
+                    &face = ParentType::curCellGeom_.subContVolFace[faceId];
                 const int i = face.i;
                 const int j = face.j;
 
                 LocalCoord Kij(0);
                 
                 // Kij = K*normal
-                ParentType::_problem.applyPermeabilityTensor(Kij,
-                                                             ParentType::_curCell(), 
+                ParentType::problem_.applyPermeabilityTensor(Kij,
+                                                             ParentType::curCell_(), 
                                                              face.normal);
 
                 for (int phase = 0; phase < PrimaryVariables; phase++) {
                     // calculate FE gradient
                     LocalCoord pGrad(0);
-                    for (int k = 0; k < ParentType::_curCellGeom.nNodes; k++) {
+                    for (int k = 0; k < ParentType::curCellGeom_.nNodes; k++) {
                         LocalCoord grad(face.grad[k]);
                         if (phase == SnIndex)
-                            grad *= _curSolCache.atSCV[k].pN;
+                            grad *= curSolCache_.atSCV[k].pN;
                         else
-                            grad *= (*_curSol)[k][PwIndex];
+                            grad *= (*curSol_)[k][PwIndex];
 
                         pGrad += grad;
                     }
 
                     // adjust pressure gradient by gravity force
-                    Scalar phaseDensity = ParentType::_problem.density(phase);
-                    LocalCoord gravity = ParentType::_problem.gravity();
+                    Scalar phaseDensity = ParentType::problem_.density(phase);
+                    LocalCoord gravity = ParentType::problem_.gravity();
                     gravity *= phaseDensity;
                     pGrad   -= gravity;
                     
                     // calculate the flux using upwind
                     Scalar outward = pGrad*Kij;
                     if (outward < 0)
-                        flux[phase] = phaseDensity*_curSolCache.atSCV[i].mobility[phase]*outward;
+                        flux[phase] = phaseDensity*curSolCache_.atSCV[i].mobility[phase]*outward;
                     else
-                        flux[phase] = phaseDensity*_curSolCache.atSCV[j].mobility[phase]*outward;
+                        flux[phase] = phaseDensity*curSolCache_.atSCV[j].mobility[phase]*outward;
                 }
             }
 
@@ -266,14 +266,14 @@ namespace Dune
          * called by the operator assembler) every time the current
          * cell changes.
          */
-        void _updateCellCache(CellCache &dest, const LocalFunction &sol)
+        void updateCellCache_(CellCache &dest, const LocalFunction &sol)
             {
                 assert(PrimaryVariables == 2);
 
-                int cellIndex   = ParentType::_problem.cellIndex(ParentType::_curCell());
-                for (int i = 0; i < ParentType::_curCellGeom.nNodes; i++) {
-                    int iGlobal = ParentType::_problem.nodeIndex(ParentType::_curCell(), i);
-                    _partialCellCacheUpdate(dest,
+                int cellIndex   = ParentType::problem_.cellIndex(ParentType::curCell_());
+                for (int i = 0; i < ParentType::curCellGeom_.nNodes; i++) {
+                    int iGlobal = ParentType::problem_.nodeIndex(ParentType::curCell_(), i);
+                    partialCellCacheUpdate_(dest,
                                             cellIndex,
                                             sol,
                                             i,        // index of sub volume to update,
@@ -282,7 +282,7 @@ namespace Dune
             }
 
         
-        void _partialCellCacheUpdate(CellCache           &dest,
+        void partialCellCacheUpdate_(CellCache           &dest,
                                      int                  cellIndex,
                                      const LocalFunction &sol,
                                      int                  i, // index of the subvolume/grid node
@@ -294,37 +294,37 @@ namespace Dune
                 const UnknownsVector &scvSol = sol[i];
 
                 scvCache.Sw = 1.0 - scvSol[SnIndex];
-                scvCache.pC = ParentType::_problem.pC(ParentType::_curCell(),
+                scvCache.pC = ParentType::problem_.pC(ParentType::curCell_(),
                                                       cellIndex,
                                                       i,
                                                       iGlobal,
                                                       scvCache.Sw);
                 scvCache.pN = scvSol[PwIndex] + scvCache.pC;
-                scvCache.mobility[PwIndex] = ParentType::_problem.mobilityW(ParentType::_curCell(),
+                scvCache.mobility[PwIndex] = ParentType::problem_.mobilityW(ParentType::curCell_(),
                                                                             cellIndex,
                                                                             i,
                                                                             iGlobal,
                                                                             scvCache.Sw);
-                scvCache.mobility[SnIndex] = ParentType::_problem.mobilityN(ParentType::_curCell(),
+                scvCache.mobility[SnIndex] = ParentType::problem_.mobilityN(ParentType::curCell_(),
                                                                             cellIndex,
                                                                             i,
                                                                             iGlobal,
                                                                             scvSol[SnIndex]);
             }
 
-//        CellPointer     _curCell;
-        Scalar          _curCellPorosity;
-        Tensor         *_curCellPermeability;
+//        CellPointer     curCell_;
+        Scalar          curCellPorosity_;
+        Tensor         *curCellPermeability_;
 
-        LocalFunction   *_curSol;
-        CellCache        _curSolCache;
+        LocalFunction   *curSol_;
+        CellCache        curSolCache_;
 
-        bool             _curSolDeflected;
-        Scalar           _curSolOrigValue;
-        VariableNodeData _curSolOrigVarData;
+        bool             curSolDeflected_;
+        Scalar           curSolOrigValue_;
+        VariableNodeData curSolOrigVarData_;
 
-        LocalFunction  *_prevSol;
-        CellCache       _prevSolCache;
+        LocalFunction  *prevSol_;
+        CellCache       prevSolCache_;
     };
     
 
@@ -372,15 +372,15 @@ namespace Dune
         typedef NewNewtonMethod<ThisType> NewtonMethod;
 
         PwSnBoxModel(ProblemT &prob)
-            : ParentType(prob, _pwSnLocalJacobian),
-              _pwSnLocalJacobian(prob)
+            : ParentType(prob, pwSnLocalJacobian_),
+              pwSnLocalJacobian_(prob)
             {
                 Api::require<Api::BasicDomainTraits, typename ProblemT::DomainTraits>();
             }
 
     private:
         // calculates the jacobian matrix at a given position
-        PwSnLocalJacobian  _pwSnLocalJacobian;
+        PwSnLocalJacobian  pwSnLocalJacobian_;
     };
 }
 

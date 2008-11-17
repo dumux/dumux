@@ -56,27 +56,27 @@ namespace Dune
             {
                 assert(x1 != x2);
                 
-                _x1 = x1;
-                _x2 = x2;
+                x1_ = x1;
+                x2_ = x2;
                 
                 // calculate the coefficents of the polynomial. this
                 // is pretty cumbersome, since we basically solve a
                 // 4x4 matrix analytically here.
                 Scalar tmpLeft  = 2*(x1*x1*x1 - x2*x2*x2) - 3*(x1 - x2)*(x1*x1 + x2*x2);
                 Scalar tmpRight = 2*(y1 - y2) - (x1 - x2)*(m1 + m2);
-                _a = tmpRight/tmpLeft;
+                a_ = tmpRight/tmpLeft;
                 
                 tmpLeft = 2*(x1 - x2);
-                tmpRight = m1 - m2 - (3*(x1*x1 - x2*x2)*_a);
-                _b = tmpRight/tmpLeft;
+                tmpRight = m1 - m2 - (3*(x1*x1 - x2*x2)*a_);
+                b_ = tmpRight/tmpLeft;
 
-                tmpRight = m1 - (3*x1*x1*_a + 2*x1*_b);
+                tmpRight = m1 - (3*x1*x1*a_ + 2*x1*b_);
                 tmpLeft = 1;
-                _c = tmpRight/tmpLeft;
+                c_ = tmpRight/tmpLeft;
                 
-                tmpRight = y1 - (x1*x1*x1*_a + x1*x1*_b + x1*_c);
+                tmpRight = y1 - (x1*x1*x1*a_ + x1*x1*b_ + x1*c_);
                 tmpLeft  = 1;
-                _d = tmpRight/tmpLeft;
+                d_ = tmpRight/tmpLeft;
 
                 assert(fabs(eval(x1) - y1) < 1e-5);
                 assert(fabs(eval(x2) - y2) < 1e-5);
@@ -88,14 +88,14 @@ namespace Dune
          * \brief Return true iff the given x is in range [x1, x2].
          */
         bool applies(Scalar x) const
-            { return _x1 <= x && x <= _x2; };
+            { return x1_ <= x && x <= x2_; };
 
         /*!
          * \brief Evaluate the polynomial at a given position.
          */
         Scalar eval(Scalar x) const
             {
-                return ((_a*x + _b)*x + _c)*x + _d;
+                return ((a_*x + b_)*x + c_)*x + d_;
             }
 
         /*!
@@ -103,17 +103,17 @@ namespace Dune
          */
         Scalar evalDerivative(Scalar x) const
             {
-                return (3*_a*x + 2*_b)*x + _c;
+                return (3*a_*x + 2*b_)*x + c_;
             }
         
     private:
-        Scalar _a;
-        Scalar _b;
-        Scalar _c;
-        Scalar _d;
+        Scalar a_;
+        Scalar b_;
+        Scalar c_;
+        Scalar d_;
 
-        Scalar _x1; 
-        Scalar _x2; 
+        Scalar x1_; 
+        Scalar x2_; 
     };
 }
 

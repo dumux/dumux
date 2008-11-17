@@ -101,15 +101,15 @@ namespace Lens
 
     public:
         PwSnLensProblem(Scalar initialTimeStepSize, Scalar endTime)
-            : _model(*this),
-              _newtonMethod(_model),
-              _newtonCtl(*this),
-              _resultWriter("lens")
+            : model_(*this),
+              newtonMethod_(model_),
+              newtonCtl_(*this),
+              resultWriter_("lens")
             {
                 Api::require<Api::BasicDomainTraits, DomainTraits>();
 
-                _initialTimeStepSize = initialTimeStepSize;
-                _endTime = endTime;
+                initialTimeStepSize_ = initialTimeStepSize;
+                endTime_ = endTime;
             };
 
         ~PwSnLensProblem()
@@ -120,7 +120,7 @@ namespace Lens
         //! to the TimeManager here.
         bool simulate()
             {
-                _timeManager.runSimulation(*this);
+                timeManager_.runSimulation(*this);
                 return true;
             }
 
@@ -134,14 +134,14 @@ namespace Lens
         void init()
             {
                 // start with a drainage for 30 ksec
-                _timeManager.startNextEpisode(DrainEpisode, 30e3);
-                _timeManager.setStepSize(_initialTimeStepSize);
+                timeManager_.startNextEpisode(DrainEpisode, 30e3);
+                timeManager_.setStepSize(initialTimeStepSize_);
 
                 // set the initial condition
-                _model.initial();
+                model_.initial();
 
                 // write the inital solution to disk
-                _writeCurrentResult();
+                writeCurrentResult_();
             }
 
 
@@ -160,17 +160,17 @@ namespace Lens
             {
                 // execute the time integration (i.e. Runge-Kutta
                 // or Euler).  TODO/FIXME: Note that the time
-                // integration modifies the _curTimeStepSize if it
+                // integration modifies the curTimeStepSize_ if it
                 // thinks that's appropriate. (IMHO, this is an
                 // incorrect abstraction, the simulation
                 // controller is responsible for adapting the time
                 // step size!)
-                _timeIntegration.execute(*this,
-                                         _timeManager.time(),
+                timeIntegration_.execute(*this,
+                                         timeManager_.time(),
                                          stepSize,
                                          nextStepSize,
                                          1e100, // firstDt or maxDt, TODO: WTF?
-                                         _endTime,
+                                         endTime_,
                                          1.0); // CFL factor (not relevant since we use implicit euler)
             };
 
@@ -179,7 +179,7 @@ namespace Lens
         //! time pass.
         void updateModel(Scalar &dt, Scalar &nextDt)
             {
-                _model.update(dt, nextDt, _newtonMethod, _newtonCtl);
+                model_.update(dt, nextDt, newtonMethod_, newtonCtl_);
             }
 
         //! called by the TimeManager whenever a solution for a
@@ -187,13 +187,13 @@ namespace Lens
         void timestepDone()
             {
                 // write the current result to disk
-                _writeCurrentResult();
+                writeCurrentResult_();
 
                 // update the domain with the current solution
-                _updateDomain();
+                updateDomain_();
 
                 // change the episode of the simulation if necessary
-                _updateEpisode();
+                updateEpisode_();
             };
         ///////////////////////////////////
         // End of simulation control stuff
@@ -208,11 +208,11 @@ namespace Lens
 
         //! Returns the current time step size in seconds
         Scalar timeStepSize() const 
-            { return _timeManager.stepSize(); }
+            { return timeManager_.stepSize(); }
 
         //! Set the time step size in seconds.
         void setTimeStepSize(Scalar dt) 
-            { return _timeManager.setStepSize(dt); }
+            { return timeManager_.setStepSize(dt); }
 
         //! evaluate the initial condition for a node
         void initial(UnknownsVector &dest,
@@ -238,9 +238,9 @@ namespace Lens
                 Scalar Sn;
 #if 0
                 if (ParentType::isInLens(pos))
-                    Sn = _lensMedium->Snr();
+                    Sn = lensMedium_->Snr();
                 else
-                    Sn = _outerMedium->Snr();
+                    Sn = outerMedium_->Snr();
 #else
                 Sn = 0;
 #endif
@@ -318,10 +318,10 @@ namespace Lens
 #if !USE_ORIG_PROB
                 else if (ParentType::onLowerBoundary(pos)) {
                     dest[SnIndex] = 0.0;
-                    if (_timeManager.episode() == DrainEpisode)
+                    if (timeManager_.episode() == DrainEpisode)
                         // drain water
                         dest[SnIndex] = -0.04;
-                    else if (_timeManager.episode() == ImbibEpisode)
+                    else if (timeManager_.episode() == ImbibEpisode)
                         // imbibition of water
                         dest[SnIndex] = 0.04;
                 }
@@ -388,10 +388,10 @@ namespace Lens
         void newtonBegin()
             {
 #if LENS_WRITE_NEWTON_STEPS
-                _convergenceWriter =
+                convergenceWriter_ =
                     new VtkMultiWriter((boost::format("lens-convergence-t=%.2f-dt=%.2f")
-                                        %_timeManager.time()
-                                        %_model.localJacobian().getDt()).str());
+                                        %timeManager_.time()
+                                        %model_.localJacobian().getDt()).str());
 #endif // LENS_WRITE_NEWTON_STEPS
             }
 
@@ -400,18 +400,18 @@ namespace Lens
         void newtonEndStep(SpatialFunction &u, SpatialFunction &uOld)
             {
 #if LENS_WRITE_NEWTON_STEPS
-                if (_newtonCtl.newtonNumSteps() == 1) {
-                    _convergenceWriter->beginTimestep(0,
+                if (newtonCtl_.newtonNumSteps() == 1) {
+                    convergenceWriter_->beginTimestep(0,
                                                       ParentType::grid().leafView());
-                    _writeConvergenceFields(uOld, uOld);
-                    _convergenceWriter->endTimestep();
+                    writeConvergenceFields_(uOld, uOld);
+                    convergenceWriter_->endTimestep();
                 }
 
 
-                _convergenceWriter->beginTimestep(_newtonCtl.newtonNumSteps(),
+                convergenceWriter_->beginTimestep(newtonCtl_.newtonNumSteps(),
                                                   ParentType::grid().leafView());
-                _writeConvergenceFields(u, uOld);
-                _convergenceWriter->endTimestep();
+                writeConvergenceFields_(u, uOld);
+                convergenceWriter_->endTimestep();
 #endif // LENS_WRITE_NEWTON_STEPS
             }
 
@@ -420,23 +420,23 @@ namespace Lens
         void newtonEnd()
             {
 #if LENS_WRITE_NEWTON_STEPS
-                delete _convergenceWriter;
+                delete convergenceWriter_;
 #endif // LENS_WRITE_NEWTON_STEPS
             }
 
     private:
         // write results to the output files
-        void _writeCurrentResult()
+        void writeCurrentResult_()
             {
-                _resultWriter.beginTimestep(_timeManager.time(),
+                resultWriter_.beginTimestep(timeManager_.time(),
                                             ParentType::grid().leafView());
-                _writeNodeFields(_resultWriter, _model.currentSolution());
-                _writeCellFields(_resultWriter, _model.currentSolution());
-                _resultWriter.endTimestep();
+                writeNodeFields_(resultWriter_, model_.currentSolution());
+                writeCellFields_(resultWriter_, model_.currentSolution());
+                resultWriter_.endTimestep();
             }
 
 #if LENS_WRITE_NEWTON_STEPS
-        void _writeConvergenceFields(SpatialFunction &u, SpatialFunction &uOld)
+        void writeConvergenceFields_(SpatialFunction &u, SpatialFunction &uOld)
             {
                 SpatialFunction diff(ParentType::grid());
                 for (int i=0; i < (*diff).size(); ++i) {
@@ -447,23 +447,23 @@ namespace Lens
                         (*diff)[i][1] = 1e12;
                 }
 
-                _convergenceWriter->addScalarVertexFunction("reduction Sn",
+                convergenceWriter_->addScalarVertexFunction("reduction Sn",
                                                             diff,
                                                             ParentType::nodeMap(),
                                                             SnIndex);
-                _convergenceWriter->addScalarVertexFunction("reduction Pw",
+                convergenceWriter_->addScalarVertexFunction("reduction Pw",
                                                             diff,
                                                             ParentType::nodeMap(),
                                                             PwIndex);
-                _writeNodeFields(*_convergenceWriter, u);
-                _writeCellFields(*_convergenceWriter, u);
+                writeNodeFields_(*convergenceWriter_, u);
+                writeCellFields_(*convergenceWriter_, u);
             };
 #endif // LENS_WRITE_NEWTON_STEPS
 
 
         // appends a cell centered capillary pressure field to the
         // multi writer's current timestep
-        void _writeCellFields(VtkMultiWriter &writer, SpatialFunction &u)
+        void writeCellFields_(VtkMultiWriter &writer, SpatialFunction &u)
             {
                 // TODO
                 /*
@@ -497,7 +497,7 @@ namespace Lens
 
         // write the fields current solution into an VTK output
         // file.
-        void _writeNodeFields(VtkMultiWriter &writer, SpatialFunction &u)
+        void writeNodeFields_(VtkMultiWriter &writer, SpatialFunction &u)
             {
                 writer.addScalarVertexFunction("Sn",
                                                u,
@@ -508,7 +508,7 @@ namespace Lens
 
                 /*
                 SpatialFunction globResidual(ParentType::grid());
-                _model.evalGlobalResidual(globResidual);
+                model_.evalGlobalResidual(globResidual);
                 writer.addScalarVertexFunction("global residual Sn",
                                                globResidual,
                                                SnIndex);
@@ -519,7 +519,7 @@ namespace Lens
             }
 
         // called whenever a solution for a timestep has been computed.
-        void _updateDomain()
+        void updateDomain_()
             {
 #if USE_HYSTERESIS
 #if USE_NODE_PARAMETERS
@@ -527,7 +527,7 @@ namespace Lens
                 NodeIterator endit = ParentType::nodeEnd();
                 for (; it != endit; ++it) {
                     int vertIdx = ParentType::nodeIndex(*it);
-                    Scalar Sn = (*_model.currentSolution())[vertIdx][SnIndex];
+                    Scalar Sn = (*model_.currentSolution())[vertIdx][SnIndex];
                     Scalar Sw = 1 - Sn;
                     ParkerLenhard::updateState(nodeState(*it), Sw);
                 }
@@ -544,7 +544,7 @@ namespace Lens
 
                     // evaluate the solution for the non-wetting
                     // saturation at this point
-                    Scalar Sn = _model.u().evallocal(SnIndex,
+                    Scalar Sn = model_.u().evallocal(SnIndex,
                                                       *it,
                                                       localPos);
                     Scalar Sw = 1 - Sn;
@@ -554,34 +554,34 @@ namespace Lens
 #endif
             }
 
-        void _updateEpisode()
+        void updateEpisode_()
             {
-                Scalar    len = _timeManager.episodeLength();
-                Episode   epi = _timeManager.episode();
-                int        epiIndex = _timeManager.episodeIndex();
+                Scalar    len = timeManager_.episodeLength();
+                Episode   epi = timeManager_.episode();
+                int        epiIndex = timeManager_.episodeIndex();
 
-                if (_timeManager.time() >= _endTime) {
-                    _timeManager.setFinished();
+                if (timeManager_.time() >= endTime_) {
+                    timeManager_.setFinished();
                     return;
                 }
                 
 #if !USE_ORIG_PROB               
-                if (!_timeManager.episodeIsOver())
+                if (!timeManager_.episodeIsOver())
                     return;
 
 
                 switch (epiIndex) {
                     case 1:
-                        _timeManager.startNextEpisode(WaitEpisode, 50e3);
+                        timeManager_.startNextEpisode(WaitEpisode, 50e3);
                         return;
                     case 2:
-                        _timeManager.startNextEpisode(ImbibEpisode, 10e3);
+                        timeManager_.startNextEpisode(ImbibEpisode, 10e3);
                         return;
                     case 3:
-                        _timeManager.startNextEpisode(WaitEpisode, 50e3);
+                        timeManager_.startNextEpisode(WaitEpisode, 50e3);
                         return;
                     case 4:
-                        _timeManager.startNextEpisode(DrainEpisode, 20e3);
+                        timeManager_.startNextEpisode(DrainEpisode, 20e3);
                         return;
                 }
 
@@ -600,22 +600,22 @@ namespace Lens
                         throw "ooops: unexpected episode type";
                 }
 
-                _timeManager.startNextEpisode(epi, len);
+                timeManager_.startNextEpisode(epi, len);
 #endif
             }
 
         // simulated time control stuff
-        TimeManager     _timeManager;
-        TimeIntegration _timeIntegration;
-        Scalar          _initialTimeStepSize;
-        Scalar          _endTime;
+        TimeManager     timeManager_;
+        TimeIntegration timeIntegration_;
+        Scalar          initialTimeStepSize_;
+        Scalar          endTime_;
 
-        Model            _model;
-        NewtonMethod     _newtonMethod;
-        NewtonController _newtonCtl;
-        VtkMultiWriter   _resultWriter;
+        Model            model_;
+        NewtonMethod     newtonMethod_;
+        NewtonController newtonCtl_;
+        VtkMultiWriter   resultWriter_;
 #if LENS_WRITE_NEWTON_STEPS
-        VtkMultiWriter *_convergenceWriter;
+        VtkMultiWriter *convergenceWriter_;
 #endif // LENS_WRITE_NEWTON_STEPS
 
     };

@@ -87,8 +87,8 @@ namespace Dune
                             Model &model)
             {
                 newton.setResidualObsolete();
-                _oldResidual2Norm2 = (*newton.residual()).two_norm2();
-                _nIterations = 0;
+                oldResidual2Norm2_ = (*newton.residual()).two_norm2();
+                nIterations_ = 0;
             };
 
 
@@ -101,12 +101,12 @@ namespace Dune
                 *u *= - 1;
                 *u += *uOld;
 
-                if (_nIterations >= 2) {
+                if (nIterations_ >= 2) {
                     // do not attempt a line search if we have done more
                     // than 3 iterations
                     return true;
                 }
-                ++ _nIterations;
+                ++ nIterations_;
                 newton.setResidualObsolete();
                 // TODO (?): weight the residual with the value of the
                 // component of the solution instead of just taking
@@ -125,8 +125,8 @@ namespace Dune
                 // J. E. Dennis, R. B. Schnabel: "Numerical methods
                 // for unconstrained optimization and nonlinear
                 // equations", 1, Prentice-Hall, 1983 pp. 126-127.
-                if (newResidual2Norm2 > _oldResidual2Norm2*1.0001) {
-//                    std::cerr << boost::format("_oldResidual2Norm2 %f newResidual2Norm2: %f")%_oldResidual2Norm2%newResidual2Norm2;
+                if (newResidual2Norm2 > oldResidual2Norm2_*1.0001) {
+//                    std::cerr << boost::format("oldResidual2Norm2_ %f newResidual2Norm2: %f")%oldResidual2Norm2_%newResidual2Norm2;
                     // undo the full newton step
                     *u -= *uOld;
                     *u *= -1;
@@ -139,7 +139,7 @@ namespace Dune
                     Scalar fHatPrime0 = ((*tmp) * (*u));
 //                    fHatPrime0 = std::min(-Scalar(1e-1), fHatPrime0);
 
-                    Scalar lambdaHat = - fHatPrime0 / (2*(newResidual2Norm2 - _oldResidual2Norm2 - fHatPrime0));
+                    Scalar lambdaHat = - fHatPrime0 / (2*(newResidual2Norm2 - oldResidual2Norm2_ - fHatPrime0));
                     lambdaHat = std::max(Scalar(1/10.0), lambdaHat);
                     lambdaHat = std::min(Scalar(.5), lambdaHat);
 
@@ -152,14 +152,14 @@ namespace Dune
 
 //                    std::cerr << boost::format(" after line search %f\n")%newResidual2Norm2;
                 }
-                _oldResidual2Norm2 = newResidual2Norm2;
+                oldResidual2Norm2_ = newResidual2Norm2;
 
                 return true;
             };
 
     private:
-        Scalar _oldResidual2Norm2;
-        int    _nIterations;
+        Scalar oldResidual2Norm2_;
+        int    nIterations_;
     };
 
     /*!
@@ -188,27 +188,27 @@ namespace Dune
             : uOld(model.grid()),
               f(model.grid())
             {
-                _deflectionTwoNorm = 1e100;
-                _residual = NULL;
-                _model = NULL;
+                deflectionTwoNorm_ = 1e100;
+                residual_ = NULL;
+                model_ = NULL;
             }
 
         ~NewNewtonMethod()
             {
-                delete _residual;
+                delete residual_;
             }
         
         /*!
          * \brief Returns a reference to the current numeric model.
          */
         Model &model() 
-            { return *_model; }
+            { return *model_; }
 
         /*!
          * \brief Returns a reference to the current numeric model.
          */
         const Model &model() const
-            { return *_model; }
+            { return *model_; }
 
         /*!
          * \brief Run the newton method. The controller is responsible
@@ -217,7 +217,7 @@ namespace Dune
         template <class NewtonController>
         bool execute(Model &model, NewtonController &ctl)
             {
-                _model = &model;
+                model_ = &model;
 
                 // TODO (?): u shouldn't be hard coded to the model
                 Function          &u             = model.currentSolution();
@@ -228,8 +228,8 @@ namespace Dune
                 // LineSearch or the plain newton-raphson method)
                 Dune::_NewtonUpdateMethod<ThisType, useLineSearch> updateMethod(*this, u, model);;
 
-                _residualUpToDate = false;
-                _deflectionTwoNorm = 1e100;
+                residualUpToDate_ = false;
+                deflectionTwoNorm_ = 1e100;
 
                 // tell the controller that we begin solving
                 ctl.newtonBegin(this, u);
@@ -252,19 +252,19 @@ namespace Dune
 
                     // solve the resultuing linear equation system
                     if (ctl.newtonSolveLinear(*jacobianAsm, *u, *f)) {
-                        _deflectionTwoNorm = (*u).two_norm();
+                        deflectionTwoNorm_ = (*u).two_norm();
                         // update the current solution. We use either
                         // a line search approach or the plain method.
                         if (!updateMethod.update(*this, u, uOld, model)) {
                             ctl.newtonFail();
-                            _model = NULL;
+                            model_ = NULL;
                             return false;
                         }
                     }
                     else {
                         // couldn't solve the current linearization
                         ctl.newtonFail();
-                        _model = NULL;
+                        model_ = NULL;
                         return false;
                     }
 
@@ -275,12 +275,12 @@ namespace Dune
 
                 if (!ctl.newtonConverged()) {
                     ctl.newtonFail();
-                    _model = NULL;
+                    model_ = NULL;
                     std::cerr << "Newton didn't converge!\n";
                     return false;
                 }
 
-                _model = NULL;
+                model_ = NULL;
                 return true;
             }
 
@@ -288,7 +288,7 @@ namespace Dune
          * \brief Returns the current Jacobian matrix.
          */
         const JacobianMatrix &currentJacobian() const
-            { return *(_model->jacobianAssembler()); }
+            { return *(model_->jacobianAssembler()); }
 
 
         /*!
@@ -298,7 +298,7 @@ namespace Dune
          *        as LineSearch.
          */
         void setResidualObsolete(bool yesno=true)
-            { _residualUpToDate = !yesno; };
+            { residualUpToDate_ = !yesno; };
 
         /*!
          * \brief Returns the current residual, i.e. the deivation of
@@ -307,31 +307,31 @@ namespace Dune
          */
         Function &residual()
             {
-                if (!_residualUpToDate) {
-                    if (!_residual)
-                        _residual = new Function(_model->grid(), 0.0);
+                if (!residualUpToDate_) {
+                    if (!residual_)
+                        residual_ = new Function(model_->grid(), 0.0);
                     // update the residual
-                    _model->evalGlobalResidual(*_residual);
-                    _residualUpToDate = true;
+                    model_->evalGlobalResidual(*residual_);
+                    residualUpToDate_ = true;
                 }
 
-                return *_residual;
+                return *residual_;
             }
 
         /*!
          * \brief Returns the euclidean norm of the last newton step size.
          */
         Scalar deflectionTwoNorm() const
-            { return _deflectionTwoNorm; }
+            { return deflectionTwoNorm_; }
 
     private:
         Function       uOld;
         Function       f;
 
-        bool          _residualUpToDate;
-        Function     *_residual;
-        Scalar        _deflectionTwoNorm;
-        Model        *_model;
+        bool          residualUpToDate_;
+        Function     *residual_;
+        Scalar        deflectionTwoNorm_;
+        Model        *model_;
     };
 }
 

@@ -111,11 +111,11 @@ namespace Dune
 
     public:
         BoxJacobian(Problem &problem)
-            : _problem(problem),
-              _curCellPtr(problem.cellEnd()),
+            : problem_(problem),
+              curCellPtr_(problem.cellEnd()),
 
-              _curSolution(NULL),
-              _oldSolution(NULL)
+              curSolution_(NULL),
+              oldSolution_(NULL)
             {
             }
 
@@ -124,7 +124,7 @@ namespace Dune
          */
         void setCurSolution(SpatialFunction *uCur)
             {
-                _curSolution = uCur;
+                curSolution_ = uCur;
             }
 
         /*!
@@ -138,7 +138,7 @@ namespace Dune
          */
         void setOldSolution(SpatialFunction *uOld)
             {
-                _oldSolution = uOld;
+                oldSolution_ = uOld;
             }
 
         /*!
@@ -148,10 +148,10 @@ namespace Dune
         void assemble(const Cell &cell, const LocalFunction& localU, int orderOfShapeFns = 1)
             {
                 // set the current grid cell
-                _asImp()->setCurrentCell(cell);
+                asImp_()->setCurrentCell(cell);
 
                 LocalFunction mutableLocalU(localU);
-                _assemble(cell, mutableLocalU, orderOfShapeFns);
+                assemble_(cell, mutableLocalU, orderOfShapeFns);
             }
 
         /*!
@@ -161,12 +161,12 @@ namespace Dune
         void assemble(const Cell &cell, int orderOfShapeFns = 1)
             {
                 // set the current grid cell
-                _asImp()->setCurrentCell(cell);
+                asImp_()->setCurrentCell(cell);
 
-                int numVertices = _curCellGeom.nNodes;
+                int numVertices = curCellGeom_.nNodes;
                 LocalFunction localU(numVertices);
-                restrictToCell(localU, *_curSolution); 
-                _assemble(cell, localU, orderOfShapeFns);
+                restrictToCell(localU, *curSolution_); 
+                assemble_(cell, localU, orderOfShapeFns);
             }
         
         /*!
@@ -176,18 +176,18 @@ namespace Dune
         void assembleBoundaryCondition(const Cell &cell, int orderOfShapeFns=1)
             {
                 // set the current grid cell
-                _asImp()->setCurrentCell(cell);
+                asImp_()->setCurrentCell(cell);
 
                 // reset the right hand side and the boundary
                 // condition type vector
-                _resetRhs();
+                resetRhs_();
                 
-                Dune::GeometryType          geoType = _curCell().geometry().type();
+                Dune::GeometryType          geoType = curCell_().geometry().type();
                 const CellReferenceElement &refElem = CellReferenceElements::general(geoType);
                 
                 // evaluate boundary conditions
-                IntersectionIterator endIt = IntersectionIteratorGetter::end(_curCell());
-                IntersectionIterator faceIt = IntersectionIteratorGetter::begin(_curCell());
+                IntersectionIterator endIt = IntersectionIteratorGetter::end(curCell_());
+                IntersectionIterator faceIt = IntersectionIteratorGetter::begin(curCell_());
                 for (; faceIt != endIt; ++faceIt)
                 {
                     // handle only faces on exterior boundaries. This
@@ -207,15 +207,15 @@ namespace Dune
                                                               1, 
                                                               nodeInFace, 
                                                               GridDim);
-                        int bfIdx = _curCellGeom.boundaryFaceIndex(faceIdx, nodeInFace);
-                        const LocalCoord &local = _curCellGeom.boundaryFace[bfIdx].ipLocal;
-                        const WorldCoord &global = _curCellGeom.boundaryFace[bfIdx].ipGlobal;
+                        int bfIdx = curCellGeom_.boundaryFaceIndex(faceIdx, nodeInFace);
+                        const LocalCoord &local = curCellGeom_.boundaryFace[bfIdx].ipLocal;
+                        const WorldCoord &global = curCellGeom_.boundaryFace[bfIdx].ipGlobal;
                         
                         // set the boundary types
                         // TODO: better parameters: cell, FVElementGeometry, bfIndex
                         BoundaryTypeVector tmp;
-                        _problem.boundaryTypes(tmp,
-                                               _curCell(),
+                        problem_.boundaryTypes(tmp,
+                                               curCell_(),
                                                faceIt,
                                                global,
                                                local);
@@ -226,12 +226,12 @@ namespace Dune
                         if (tmp[0] == BoundaryConditions::neumann) {
                             // TODO: better Parameters: cell, FVElementGeometry, bfIndex
                             UnknownsVector J;
-                            _problem.neumann(J,
-                                             _curCell(),
+                            problem_.neumann(J,
+                                             curCell_(),
                                              faceIt, 
                                              global,
                                              local);
-                            J *= _curCellGeom.boundaryFace[bfIdx].area;
+                            J *= curCellGeom_.boundaryFace[bfIdx].area;
 
                             this->b[nodeInElement] += J;
                         }
@@ -254,12 +254,12 @@ namespace Dune
                                bool withBoundary = true)
             {              
                 // reset residual
-                for (int i = 0; i < _curCellGeom.nNodes; i++) {
+                for (int i = 0; i < curCellGeom_.nNodes; i++) {
                     residual[i] = 0;
                 }
 
                 // evaluate the local rate
-                for (int i=0; i < _curCellGeom.nNodes; i++)
+                for (int i=0; i < curCellGeom_.nNodes; i++)
                 {
                     UnknownsVector massContrib(0), tmp(0);
 
@@ -269,32 +269,32 @@ namespace Dune
                     //
                     // TODO (?): we might need a more explicit way for
                     // doing the time discretization...
-                    this->_asImp()->localRate(massContrib, i, false);
-                    this->_asImp()->localRate(tmp, i, true);
+                    this->asImp_()->localRate(massContrib, i, false);
+                    this->asImp_()->localRate(tmp, i, true);
 
                     massContrib -= tmp;
-                    massContrib *= _curCellGeom.subContVol[i].volume/_problem.timeStepSize();
+                    massContrib *= curCellGeom_.subContVol[i].volume/problem_.timeStepSize();
                     residual[i] += massContrib;
                     
                     // subtract the source term from the local rate
                     UnknownsVector q;
-                    _problem.sourceTerm(q,
-                                        _curCell(),
-                                        _curCellGeom,
+                    problem_.sourceTerm(q,
+                                        curCell_(),
+                                        curCellGeom_,
                                         i);
-                    q *= _curCellGeom.subContVol[i].volume;
+                    q *= curCellGeom_.subContVol[i].volume;
                     residual[i] -= q;
                 }
 
                 // calculate the mass flux over the faces and subtract
                 // it from the local rates
-                for (int k = 0; k < _curCellGeom.nEdges; k++)
+                for (int k = 0; k < curCellGeom_.nEdges; k++)
                 {
-                    int i = _curCellGeom.subContVolFace[k].i;
-                    int j = _curCellGeom.subContVolFace[k].j;
+                    int i = curCellGeom_.subContVolFace[k].i;
+                    int j = curCellGeom_.subContVolFace[k].j;
 
                     UnknownsVector flux;
-                    this->_asImp()->fluxRate(flux, k);
+                    this->asImp_()->fluxRate(flux, k);
 
                     // subtract fluxes from the local mass rates of
                     // the respective sub control volume adjacent to
@@ -304,8 +304,8 @@ namespace Dune
                 }
                 
                 if (withBoundary) {
-                    assembleBoundaryCondition(this->_curCell());
-                    for (int i = 0; i < _curCellGeom.nNodes; i++) {
+                    assembleBoundaryCondition(this->curCell_());
+                    for (int i = 0; i < curCellGeom_.nNodes; i++) {
                         residual[i] += this->b[i];
                     }
                 }
@@ -321,9 +321,9 @@ namespace Dune
             {
                 // we assert that the i-th shape function is
                 // associated to the i-th node of the cell.
-                int n = _curCell().template count<GridDim>();
+                int n = curCell_().template count<GridDim>();
                 for (int i = 0; i < n; i++) {
-                    dest[i] = (*globalFn)[_problem.nodeIndex(_curCell(), i)];
+                    dest[i] = (*globalFn)[problem_.nodeIndex(curCell_(), i)];
                 }
             }
 
@@ -358,48 +358,48 @@ namespace Dune
                   
         // set the cell which is currently considered as the local
         // stiffness matrix
-        bool _setCurrentCell(const Cell &e)
+        bool setCurrentCell_(const Cell &e)
         {
-            if (_curCellPtr != e) {
-                _curCellPtr = e;
-                _curCellGeom.update(_curCell());
+            if (curCellPtr_ != e) {
+                curCellPtr_ = e;
+                curCellGeom_.update(curCell_());
                 // tell the LocalStiffness (-> parent class) the current
                 // number of degrees of freedom
-                setcurrentsize(_curCellGeom.nNodes);
+                setcurrentsize(curCellGeom_.nNodes);
                 return true;
             }
             return false;
         }
 
-        const Cell &_curCell() const
-            { return *_curCellPtr; }
+        const Cell &curCell_() const
+            { return *curCellPtr_; }
 
         // The problem we would like to solve
-        Problem &_problem;
+        Problem &problem_;
 
-        CellPointer       _curCellPtr;
-        FVElementGeometry _curCellGeom;
+        CellPointer       curCellPtr_;
+        FVElementGeometry curCellGeom_;
 
         // global solution of the current and of the last timestep
-        const SpatialFunction *_curSolution;
-        const SpatialFunction *_oldSolution;
+        const SpatialFunction *curSolution_;
+        const SpatialFunction *oldSolution_;
 
     private:
-        void _assemble(const Cell &cell, LocalFunction& localU, int orderOfShapeFns = 1)
+        void assemble_(const Cell &cell, LocalFunction& localU, int orderOfShapeFns = 1)
             {
                 // set the current grid cell
-                _asImp()->setCurrentCell(cell);
+                asImp_()->setCurrentCell(cell);
 
                 // reset the right hand side and the bctype array
-                _resetRhs();
+                resetRhs_();
 
-                int numVertices = _curCellGeom.nNodes;
+                int numVertices = curCellGeom_.nNodes;
 
                 // restrict the previous global solution to the current cell
                 LocalFunction localOldU(numVertices);
-                restrictToCell(localOldU, *_oldSolution);
+                restrictToCell(localOldU, *oldSolution_);
 
-                this->_asImp()->setParams(cell, localU, localOldU);
+                this->asImp_()->setParams(cell, localU, localOldU);
 
                 // approximate the local stiffness matrix numerically
                 // TODO: do this analytically if possible
@@ -415,15 +415,15 @@ namespace Dune
                         // vary the comp-th component at the cell's j-th node and
                         // calculate the residual, don't include the boundary
                         // conditions 
-                        this->_asImp()->deflectCurSolution(j, comp, uJ + eps);
+                        this->asImp_()->deflectCurSolution(j, comp, uJ + eps);
                         evalLocalResidual(residUPlusEps, false);
          
-                        this->_asImp()->deflectCurSolution(j, comp, uJ - eps);
+                        this->asImp_()->deflectCurSolution(j, comp, uJ - eps);
                         evalLocalResidual(residUMinusEps, false);
 
                         // restore the current local solution to the state before
                         // varyCurSolution() has been called 
-                        this->_asImp()->restoreCurSolution(j, comp);
+                        this->asImp_()->restoreCurSolution(j, comp);
 
                         // calculate the gradient when varying the
                         // comp-th primary variable at the j-th node
@@ -431,7 +431,7 @@ namespace Dune
                         // the LocalStiffness base class.
                         residUPlusEps -= residUMinusEps;
                         residUPlusEps /= 2*eps;
-                        _updateLocalStiffness(j, 
+                        updateLocalStiffness_(j, 
                                               comp,
                                               residUPlusEps);
                     }
@@ -454,11 +454,11 @@ namespace Dune
                 }
             };
 
-        void _updateLocalStiffness(int j, 
+        void updateLocalStiffness_(int j, 
                                    int comp,
                                    const LocalFunction &stiffness)
             {
-                for (int i = 0; i < _curCellGeom.nNodes; i++) {
+                for (int i = 0; i < curCellGeom_.nNodes; i++) {
                     for (int compi = 0; compi < PrimaryVariables; compi++) {
                         // A[i][j][compi][comp] is the
                         // approximate rate of change of the
@@ -472,7 +472,7 @@ namespace Dune
             }
 
         // reset the right hand side
-        void _resetRhs()
+        void resetRhs_()
             {
                 int numVertices = this->currentsize();
                 for (int i=0; i < numVertices; i++) {
@@ -482,10 +482,10 @@ namespace Dune
             };
 
     private:
-        JacobianImp *_asImp()
+        JacobianImp *asImp_()
             { return static_cast<JacobianImp*>(this); }
 
-        const JacobianImp *_asImp() const
+        const JacobianImp *asImp_() const
             { return static_cast<const JacobianImp*>(this); }
     };
 }

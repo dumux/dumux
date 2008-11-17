@@ -56,7 +56,7 @@ namespace Dune {
         //! called by the base class the get an indication of how physical
         //! an iterative solution is 1 means "completely physical", 0 means
         //! "completely unphysical"
-        Scalar _physicalness(Function &u)
+        Scalar physicalness_(Function &u)
             {
                 return 1.0;
                 const Scalar SnNormFactor = 2.5;

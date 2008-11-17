@@ -71,9 +71,9 @@ namespace Lenhard
 
         LenhardMediumState()
             {
-                _Swr = _Snr = 0;
-                _porosity = 0;
-                _globalState = NULL;
+                Swr_ = Snr_ = 0;
+                porosity_ = 0;
+                globalState_ = NULL;
             }
 
         // Low level hysteresis model parameters (i.e. parameters
@@ -86,13 +86,13 @@ namespace Lenhard
         PARAMETER(Scalar, Swr);
         void setSwr(Scalar Swr)
             {
-                _Swr = Swr;
-                _Snre = _Snr/(1 - _Swr);
+                Swr_ = Swr;
+                Snre_ = Snr_/(1 - Swr_);
             }
         PARAMETER(Scalar, Snr);
         void setSnr(Scalar Snr){
-            _Snr = Snr;
-            _Snre = _Snr/(1 - _Swr);
+            Snr_ = Snr;
+            Snre_ = Snr_/(1 - Swr_);
         }
         PARAMETER(Scalar, Snre);
 
@@ -100,7 +100,7 @@ namespace Lenhard
         PROPERTY(NxNMatrix, permeability, setPermeability);
         void setPermeability(Scalar permeability)
             {
-                _permeability[0][0] = permeability;
+                permeability_[0][0] = permeability;
             }
 
         // the absolute porosity of the medium
@@ -119,53 +119,53 @@ namespace Lenhard
     public:
         LenhardNodeState()
             {
-                _neighbours = NULL;
+                neighbours_ = NULL;
             };
 
         ~LenhardNodeState()
             {
-                delete _neighbours;
+                delete neighbours_;
             };
 
         bool isOnInterface() const
-            { return _neighbours != NULL; }
+            { return neighbours_ != NULL; }
 
         void addNeighbourCellIdx(int cellIdx)
             {
-                if (_neighbours == NULL) {
+                if (neighbours_ == NULL) {
                     // allocate the array for the neighbouring cell
                     // indices.  in order not having to reallocate the
                     // array every time a new index is added, we
                     // reserve 4 slots from the beginning.
-                    _neighbours = new _NeighbourIdxArray;
-                    _neighbours->reserve(4);
+                    neighbours_ = new NeighbourIdxArray_;
+                    neighbours_->reserve(4);
                 }
 
                 // make sure the cellIdx is not already in the array
-                for (unsigned i = 0; i < _neighbours->size(); ++i)
-                    if ((*_neighbours)[i] == cellIdx)
+                for (unsigned i = 0; i < neighbours_->size(); ++i)
+                    if ((*neighbours_)[i] == cellIdx)
                         return;
 
                 // append the cell index
-                _neighbours->push_back(cellIdx);
+                neighbours_->push_back(cellIdx);
             }
 
         int numNeighbourCells() const
             {
-                return _neighbours == NULL
+                return neighbours_ == NULL
                     ? 0
-                    : _neighbours->size();
+                    : neighbours_->size();
             }
 
         int neighbourCellIdx(int localIdx) const
             {
-                assert(_neighbours != NULL);
-                return _neighbours->at(localIdx);
+                assert(neighbours_ != NULL);
+                return neighbours_->at(localIdx);
             }
 
     private:
-        typedef std::vector<int> _NeighbourIdxArray;
-        _NeighbourIdxArray *_neighbours;
+        typedef std::vector<int> NeighbourIdxArray_;
+        NeighbourIdxArray_ *neighbours_;
     };
 #else // USE_NODE_PARAMETERS
     template <class MediumStateT>
@@ -180,9 +180,9 @@ namespace Lenhard
 
         // pointer to the medium uniform properties
         const MediumState *mediumState() const
-            { return _mediumState; }
+            { return mediumState_; }
         void setMediumState(const MediumState *ms)
-            { _mediumState = ms; }
+            { mediumState_ = ms; }
 
         //////////////////////////////////
         // medium uniform parameters (implemented as proxy parameters)
@@ -191,7 +191,7 @@ namespace Lenhard
         //////////////////////////////////
 
     private:
-        const MediumState *_mediumState;
+        const MediumState *mediumState_;
     };
 #endif
 
@@ -218,7 +218,7 @@ namespace Lenhard
 
         MAIN_STATE_CLASS()
         {
-            _init();
+            init_();
         };
 
         MAIN_STATE_CLASS(const MAIN_STATE_CLASS &s)
@@ -227,12 +227,12 @@ namespace Lenhard
             // use the same medium and global parameters.  (The sole
             // purpose of the copy constructor is to make STL
             // containers work properly.)
-            _init(s._mediumState);
+            init_(s.mediumState_);
         }
 
         MAIN_STATE_CLASS(const MediumState *mediumState)
         {
-            _init(mediumState);
+            init_(mediumState);
         }
 
 
@@ -242,9 +242,9 @@ namespace Lenhard
 
         // pointer to the medium uniform properties
         const MediumState *mediumState() const
-            { return _mediumState; }
+            { return mediumState_; }
         void setMediumState(const MediumState *ms)
-            { _mediumState = ms; }
+            { mediumState_ = ms; }
 
         //////////////////////////////////
         // medium uniform parameters (implemented as proxy parameters)
@@ -270,16 +270,16 @@ namespace Lenhard
         //////////////////////////////////
 
     private:
-        void _init(const MediumState *mediumState = NULL)
+        void init_(const MediumState *mediumState = NULL)
             {
-                _mediumState = mediumState;
+                mediumState_ = mediumState;
 
-                _Snrei = 0;
-                _mdc = new ScanningCurve();
-                _pisc = _csc = NULL;
+                Snrei_ = 0;
+                mdc_ = new ScanningCurve();
+                pisc_ = csc_ = NULL;
             }
 
-        const MediumState *_mediumState;
+        const MediumState *mediumState_;
     };
 }
 }

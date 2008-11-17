@@ -117,31 +117,31 @@ namespace Lens
             {
                 Api::require<Api::BasicDomainTraits, DomainTraits>();
 
-                _initGrid();
+                initGrid_();
 
-                _initGlobalState();
-                _initMediaStates();
-                _initCellStates();
-                _initNodeStates();
+                initGlobalState_();
+                initMediaStates_();
+                initCellStates_();
+                initNodeStates_();
             };
 
         ~PwSnLensDomain()
             {
-                delete _outerMedium;
-                delete _lensMedium;
-                delete _globalState;
+                delete outerMedium_;
+                delete lensMedium_;
+                delete globalState_;
             }
 
         //! returns the body force vector within a cell
         const Vector &gravity(const Cell &cell,
                               int cellIdx) const
             {
-                return _globalState->gravity();
+                return globalState_->gravity();
             }
 
         const Vector &gravity() const
             {
-                return _globalState->gravity();
+                return globalState_->gravity();
             }
 
         //! return the permeability tensor for a cell
@@ -210,13 +210,13 @@ namespace Lens
         // return the density of the wetting phase
         Scalar densityW() const
             {
-                return _globalState->densityW();
+                return globalState_->densityW();
             }
 
         // return the density of the non-wetting phase
         Scalar densityN() const
             {
-                return _globalState->densityN();
+                return globalState_->densityN();
             }
 
         // return the density of a phase given by an index. (lower
@@ -229,13 +229,13 @@ namespace Lens
         // return the viscosity of the wetting phase
         Scalar viscosityW() const
             {
-                return _globalState->viscosityW();
+                return globalState_->viscosityW();
             }
 
         // return the viscosity of the non-wetting phase
         Scalar viscosityN() const
             {
-                return _globalState->viscosityN();
+                return globalState_->viscosityN();
             }
 
         // return the viscosity of a phase given by an index. (lower
@@ -316,59 +316,59 @@ namespace Lens
 
         // given a cell index, return the corresponding cell state
         CellState &cellState(int index)
-            { return _cellStates[index]; }
+            { return cellStates_[index]; }
         const CellState &cellState(int index) const
-            { return _cellStates[index]; }
+            { return cellStates_[index]; }
 
         CellState &cellState(const Cell &cell)
-            { return _cellStates[cellIndex(cell)]; }
+            { return cellStates_[cellIndex(cell)]; }
         const CellState &cellState(const Cell &cell) const
-            { return _cellStates[cellIndex(cell)]; }
+            { return cellStates_[cellIndex(cell)]; }
 
         // given a global node index, return the corresponding state
         NodeState &nodeState(int index)
-            { return _nodeStates[index]; }
+            { return nodeStates_[index]; }
         const NodeState &nodeState(int index) const
-            { return _nodeStates[index]; }
+            { return nodeStates_[index]; }
 
         // given a cell and a local node index, return the corresponding state
         NodeState &nodeState(const Cell &cell, int i)
-            { return _nodeStates[ParentType::nodeIndex(cell, i)]; }
+            { return nodeStates_[ParentType::nodeIndex(cell, i)]; }
         const NodeState &nodeState(const Cell &cell, int i) const
-            { return _nodeStates[ParentType::nodeIndex(cell, i)]; }
+            { return nodeStates_[ParentType::nodeIndex(cell, i)]; }
 
         // given a node, return it's state object
         NodeState &nodeState(const Node &vert)
-            { return _nodeStates[ParentType::nodeIndex(vert)]; }
+            { return nodeStates_[ParentType::nodeIndex(vert)]; }
         const NodeState &nodeState(const Node &vert) const
-            { return _nodeStates[ParentType::nodeIndex(vert)]; }
+            { return nodeStates_[ParentType::nodeIndex(vert)]; }
 
         const WorldCoord &lowerLeft() const
-            { return _gridLowerLeft; }
+            { return gridLowerLeft_; }
         const WorldCoord &upperRight() const
-            { return _gridUpperRight; }
+            { return gridUpperRight_; }
 
         Scalar width() const
-            { return _gridUpperRight[0] - _gridLowerLeft[0]; }
+            { return gridUpperRight_[0] - gridLowerLeft_[0]; }
         Scalar height() const
-            { return _gridUpperRight[1] - _gridLowerLeft[1]; }
+            { return gridUpperRight_[1] - gridLowerLeft_[1]; }
 
         bool onUpperBoundary(const WorldCoord &pos) const
-            { return pos[1] > _gridUpperRight[1] - _eps; }
+            { return pos[1] > gridUpperRight_[1] - eps_; }
         bool onLowerBoundary(const WorldCoord &pos) const
-            { return pos[1] < _gridLowerLeft[1] + _eps; }
+            { return pos[1] < gridLowerLeft_[1] + eps_; }
         bool onLeftBoundary(const WorldCoord &pos) const
-            { return pos[0] < _gridLowerLeft[0] + _eps; }
+            { return pos[0] < gridLowerLeft_[0] + eps_; }
         bool onRightBoundary(const WorldCoord &pos) const
-            { return pos[0] > _gridUpperRight[0] - _eps; }
+            { return pos[0] > gridUpperRight_[0] - eps_; }
 
         // returns true iff a world coordinate is within the fine
         // sand lens.
         bool isInLens(const WorldCoord &coord)
             {
                 for (int i = 0; i < DomainTraits::WorldDim; ++i) {
-                    if (_lensLowerLeft[i] > coord[i] ||
-                        _lensUpperRight[i] < coord[i])
+                    if (lensLowerLeft_[i] > coord[i] ||
+                        lensUpperRight_[i] < coord[i])
                     {
                         return false;
                     }
@@ -381,22 +381,22 @@ namespace Lens
         // within the fine sand lens.
         bool isInLens(const NodeState &state)
             {
-                return state.mediumState() == _lensMedium;
+                return state.mediumState() == lensMedium_;
             }
 */
 
     private:
-        void _initGrid()
+        void initGrid_()
             {
                 // specify the position and size of the grid in world
                 // coordinates
-                _gridLowerLeft[0] = 0;
-                _gridLowerLeft[1] = 0;
-                _gridUpperRight[0] = 6;
-                _gridUpperRight[1] = 4;
+                gridLowerLeft_[0] = 0;
+                gridLowerLeft_[1] = 0;
+                gridUpperRight_[0] = 6;
+                gridUpperRight_[1] = 4;
 
                 // the epsilon constant
-                _eps = 1e-8 * width();
+                eps_ = 1e-8 * width();
 
                 // create the grid
                 Dune::FieldVector<int, GridDim> cellRes;
@@ -409,16 +409,16 @@ namespace Lens
 #endif
 
                 Grid *grid = new Grid(cellRes,
-                                      _gridLowerLeft,
-                                      _gridUpperRight);
+                                      gridLowerLeft_,
+                                      gridUpperRight_);
                 ParentType::setGrid(grid);
 
                 // specify the location and the size of the fine sand
                 // lens in world coordinates
-                _lensLowerLeft[0] = width()*(1./6);
-                _lensLowerLeft[1] = height()*(2./4);
-                _lensUpperRight[0] = width()*(4./6);
-                _lensUpperRight[1] = height()*(3./4);
+                lensLowerLeft_[0] = width()*(1./6);
+                lensLowerLeft_[1] = height()*(2./4);
+                lensUpperRight_[0] = width()*(4./6);
+                lensUpperRight_[1] = height()*(3./4);
                 // make sure the global coordniates of the lens are
                 // aligned to the grid's cell boundaries in order to
                 // make sure the interface occures at the same
@@ -426,91 +426,91 @@ namespace Lens
                 // material parameter storage. (this is not strictly
                 // necessary, but makes it easier to compare the
                 // different approaches.)
-                _lensLowerLeft[0] = width()/cellRes[0]
-                                  * (int) (_lensLowerLeft[0]*cellRes[0]/width())
-                                  + (0.5 - _eps)/cellRes[0];
-                _lensLowerLeft[1] = height()/cellRes[1]
-                                  * (int) (_lensLowerLeft[1]*cellRes[1]/height())
-                                  + (0.5 - _eps)/cellRes[1];
-                _lensUpperRight[0] = width()/cellRes[0]
-                                   * (int) (_lensUpperRight[0]*cellRes[0]/width())
-                                   + (-0.5 + _eps)/cellRes[0];
-                _lensUpperRight[1] = height()/cellRes[1]
-                                   * (int) (_lensUpperRight[1]*cellRes[1]/height())
-                                   + (-0.5 + _eps)/cellRes[1];
+                lensLowerLeft_[0] = width()/cellRes[0]
+                                  * (int) (lensLowerLeft_[0]*cellRes[0]/width())
+                                  + (0.5 - eps_)/cellRes[0];
+                lensLowerLeft_[1] = height()/cellRes[1]
+                                  * (int) (lensLowerLeft_[1]*cellRes[1]/height())
+                                  + (0.5 - eps_)/cellRes[1];
+                lensUpperRight_[0] = width()/cellRes[0]
+                                   * (int) (lensUpperRight_[0]*cellRes[0]/width())
+                                   + (-0.5 + eps_)/cellRes[0];
+                lensUpperRight_[1] = height()/cellRes[1]
+                                   * (int) (lensUpperRight_[1]*cellRes[1]/height())
+                                   + (-0.5 + eps_)/cellRes[1];
             }
 
-        void _initGlobalState()
+        void initGlobalState_()
             {
                 // initialize the globally uniform parameters
-                _globalState = new GlobalState();
+                globalState_ = new GlobalState();
 
                 Water water;
                 DNAPL dnapl;
-                _globalState->setDensityW(water.density());
-                _globalState->setDensityN(dnapl.density());
+                globalState_->setDensityW(water.density());
+                globalState_->setDensityN(dnapl.density());
 
-                _globalState->setViscosityW(water.viscosity());
-                _globalState->setViscosityN(dnapl.viscosity());
+                globalState_->setViscosityW(water.viscosity());
+                globalState_->setViscosityN(dnapl.viscosity());
                 Vector gravity(0); gravity[1] = -9.81;
-                _globalState->setGravity(gravity);
+                globalState_->setGravity(gravity);
             }
 
-        void _initMediaStates()
+        void initMediaStates_()
             {
                 // initializing the state of the lens' medium
-                _lensMedium =  new MediumState();
-                _lensMedium->setGlobalState(_globalState);
-                _lensMedium->setSwr(0.18);
+                lensMedium_ =  new MediumState();
+                lensMedium_->setGlobalState(globalState_);
+                lensMedium_->setSwr(0.18);
 #if USE_ORIG_PROB
-                _lensMedium->setSnr(0.0);
+                lensMedium_->setSnr(0.0);
 #else
-                _lensMedium->setSnr(0.25);
+                lensMedium_->setSnr(0.25);
 #endif
-                _lensMedium->setPorosity(0.4);
-                _lensMedium->setMdcParams(VanGenuchtenState(0.00045, 7.3));
+                lensMedium_->setPorosity(0.4);
+                lensMedium_->setMdcParams(VanGenuchtenState(0.00045, 7.3));
 #if USE_DIFFERENT_MAIN_CURVES
-                _lensMedium->setMicParams(VanGenuchtenState(0.00045*2, 7.5));
+                lensMedium_->setMicParams(VanGenuchtenState(0.00045*2, 7.5));
 #else
-                _lensMedium->setMicParams(VanGenuchtenState(0.00045, 7.3));
+                lensMedium_->setMicParams(VanGenuchtenState(0.00045, 7.3));
 #endif
-                _lensMedium->micParams().setVgMaxPC(_lensMedium->mdcParams().vgMaxPC());
-                _lensMedium->setPermeability(9.05e-13);
+                lensMedium_->micParams().setVgMaxPC(lensMedium_->mdcParams().vgMaxPC());
+                lensMedium_->setPermeability(9.05e-13);
 
                 // initializing the state of the outer medium
-                _outerMedium =  new MediumState();
-                _outerMedium->setGlobalState(_globalState);
-                _outerMedium->setSwr(0.05);
+                outerMedium_ =  new MediumState();
+                outerMedium_->setGlobalState(globalState_);
+                outerMedium_->setSwr(0.05);
 #if USE_ORIG_PROB
-                _outerMedium->setSnr(0.0);
+                outerMedium_->setSnr(0.0);
 #else
-                _outerMedium->setSnr(0.20);
+                outerMedium_->setSnr(0.20);
 #endif
-                _outerMedium->setPorosity(0.4);
-                _outerMedium->setMdcParams(VanGenuchtenState(0.0037, 4.7));
+                outerMedium_->setPorosity(0.4);
+                outerMedium_->setMdcParams(VanGenuchtenState(0.0037, 4.7));
 #if USE_DIFFERENT_MAIN_CURVES
-                _outerMedium->setMicParams(VanGenuchtenState(0.0037*2, 4.8));
+                outerMedium_->setMicParams(VanGenuchtenState(0.0037*2, 4.8));
 #else
-                _outerMedium->setMicParams(VanGenuchtenState(0.0037, 4.7));
+                outerMedium_->setMicParams(VanGenuchtenState(0.0037, 4.7));
 #endif
 
-                _outerMedium->micParams().setVgMaxPC(_outerMedium->mdcParams().vgMaxPC());
-                _outerMedium->setPermeability(4.6e-10);
+                outerMedium_->micParams().setVgMaxPC(outerMedium_->mdcParams().vgMaxPC());
+                outerMedium_->setPermeability(4.6e-10);
 
 #if 0
-                _lensMedium->setSwr(_outerMedium->Swr());
-                _lensMedium->setSnr(_outerMedium->Snr());
-                _lensMedium->setPorosity(_outerMedium->porosity());
-                _lensMedium->setMicParams(_outerMedium->micParams());
-                _lensMedium->setMdcParams(_outerMedium->mdcParams());
-                _lensMedium->setPermeability(_outerMedium->permeability());
+                lensMedium_->setSwr(outerMedium_->Swr());
+                lensMedium_->setSnr(outerMedium_->Snr());
+                lensMedium_->setPorosity(outerMedium_->porosity());
+                lensMedium_->setMicParams(outerMedium_->micParams());
+                lensMedium_->setMdcParams(outerMedium_->mdcParams());
+                lensMedium_->setPermeability(outerMedium_->permeability());
 #endif
 
             }
 
-        void _initCellStates()
+        void initCellStates_()
             {
-                _cellStates.resize(ParentType::numCells());
+                cellStates_.resize(ParentType::numCells());
 
                 // initialize the cell state objects depending on
                 // wether the cell is inside or outside of the lens of
@@ -522,15 +522,15 @@ namespace Lens
                     ParentType::cellCenter(*it, cellCenter);
                     int arrayPos = ParentType::cellIndex(*it);
                     if (isInLens(cellCenter))
-                        _cellStates[arrayPos].setMediumState(_lensMedium);
+                        cellStates_[arrayPos].setMediumState(lensMedium_);
                     else
-                        _cellStates[arrayPos].setMediumState(_outerMedium);
+                        cellStates_[arrayPos].setMediumState(outerMedium_);
                 }
             }
 
-        void _initNodeStates()
+        void initNodeStates_()
             {
-                _nodeStates.resize(ParentType::numNodes());
+                nodeStates_.resize(ParentType::numNodes());
 #if USE_NODE_PARAMETERS
                 NodeIterator vertIt = ParentType::nodeBegin();
                 const NodeIterator &endVertIt = ParentType::nodeEnd();
@@ -539,9 +539,9 @@ namespace Lens
                     ParentType::nodePosition(pos, *vertIt);
                     NodeState &vertState = nodeState(*vertIt);
                     if (isInLens(pos))
-                        vertState.setMediumState(_lensMedium);
+                        vertState.setMediumState(lensMedium_);
                     else
-                        vertState.setMediumState(_outerMedium);
+                        vertState.setMediumState(outerMedium_);
                 }
 
 #else // !USE_NODE_PARAMETERS
@@ -570,7 +570,7 @@ namespace Lens
 
                         // alright, the face is on a inhomogenity, so
                         // we have to mark all its vertices
-                        _markInterfaceVertices(faceIt);
+                        markInterfaceVertices_(faceIt);
                     }
                 }
 #endif
@@ -579,7 +579,7 @@ namespace Lens
 #if !USE_NODE_PARAMETERS
         //  mark all vertices on a face as as belonging to an
         //  inhomogenity
-        void _markInterfaceVertices(IntersectionIterator &interfaceIt)
+        void markInterfaceVertices_(IntersectionIterator &interfaceIt)
             {
                 const Cell &cell = *interfaceIt.inside();
                 const CellReferenceElement &refElem =
@@ -604,35 +604,35 @@ namespace Lens
 
 
         // the actual type which stores the cell states.
-        typedef std::vector<NodeState>  _NodeStateArray;
+        typedef std::vector<NodeState>  NodeStateArray_;
 
         // the actual type which stores the cell states.
-        typedef std::vector<CellState>    _CellStateArray;
+        typedef std::vector<CellState>    CellStateArray_;
 
         // the lower left and upper right coordinates of the complete
         // grid
-        WorldCoord _gridLowerLeft;
-        WorldCoord _gridUpperRight;
+        WorldCoord gridLowerLeft_;
+        WorldCoord gridUpperRight_;
 
         // the lower left and upper right coordinates of the fine sand
         // lens
-        WorldCoord _lensLowerLeft;
-        WorldCoord _lensUpperRight;
+        WorldCoord lensLowerLeft_;
+        WorldCoord lensUpperRight_;
 
         // global state and states of the media
-        GlobalState *_globalState;
-        MediumState *_outerMedium;
-        MediumState *_lensMedium;
+        GlobalState *globalState_;
+        MediumState *outerMedium_;
+        MediumState *lensMedium_;
 
         // stores a state for each node
-        _NodeStateArray _nodeStates;
+        NodeStateArray_ nodeStates_;
 
         // stores a state for each node
-        _CellStateArray  _cellStates;
+        CellStateArray_  cellStates_;
 
         // A small epsilon value and the current simulated
         // time. FIXME/TODO: should probably not be here..
-        Scalar _eps;
+        Scalar eps_;
     };
 }
 }

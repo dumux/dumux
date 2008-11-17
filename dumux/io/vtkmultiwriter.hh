@@ -48,20 +48,20 @@ namespace Dune {
         typedef Dune::VTKWriter<GridView> VtkWriter;
         VtkMultiWriter(const std::string &simName = "", std::string multiFileName = "")
             {
-                _simName = (simName.empty())?"sim":simName;
+                simName_ = (simName.empty())?"sim":simName;
 
                 if (multiFileName.empty())
                     multiFileName = (boost::format("%s.pvd")%simName).str();
 
-                _writerNum = 0;
+                writerNum_ = 0;
 
-                _beginMultiFile(multiFileName);
+                beginMultiFile_(multiFileName);
             }
 
         ~VtkMultiWriter()
             {
-                _endMultiFile();
-                _multiFile.close();
+                endMultiFile_();
+                multiFile_.close();
             }
 
         /*!
@@ -70,16 +70,16 @@ namespace Dune {
          */
         void beginTimestep(double t, const GridView &gridView)
             {
-                _curWriter = new VtkWriter(gridView);
-                ++_writerNum;
-                _curTime = t;
-                _curGridView = &gridView;
+                curWriter_ = new VtkWriter(gridView);
+                ++writerNum_;
+                curTime_ = t;
+                curGridView_ = &gridView;
 
-                _curOutFileName = (boost::format("%s-%05d")
-                                   %_simName%_writerNum).str();
+                curOutFileName_ = (boost::format("%s-%05d")
+                                   %simName_%writerNum_).str();
                 const char *suffix = (GridView::dimension == 1)?"vtp":"vtu";
-                _multiFile << boost::format("   <DataSet timestep=\"%lf\" file=\"%s.%s\"/>\n")
-                    %_curTime%_curOutFileName%suffix;
+                multiFile_ << boost::format("   <DataSet timestep=\"%lf\" file=\"%s.%s\"/>\n")
+                    %curTime_%curOutFileName_%suffix;
             };
 
         /*!
@@ -90,9 +90,9 @@ namespace Dune {
             {
                 typedef Dune::BlockVector<Dune::FieldVector<Scalar, nComp> > VectorField;
 
-                _VtkVectorFieldStoreImpl<VectorField> *vfs =
-                    new _VtkVectorFieldStoreImpl<VectorField>(nEntities);
-                _vectorFields.push_back(vfs);
+                VtkVectorFieldStoreImpl_<VectorField> *vfs =
+                    new VtkVectorFieldStoreImpl_<VectorField>(nEntities);
+                vectorFields_.push_back(vfs);
                 return &(vfs->vf);
             }
 
@@ -105,7 +105,7 @@ namespace Dune {
         template <class VectorField>
         void addVertexData(VectorField *field, const char *name)
             {
-                _curWriter->addVertexData(*field, name);
+                curWriter_->addVertexData(*field, name);
             }
 
         /*!
@@ -117,7 +117,7 @@ namespace Dune {
         template <class VectorField>
         void addCellData(VectorField *field, const char *name)
             {
-                _curWriter->addCellData(*field, name);
+                curWriter_->addCellData(*field, name);
             }
 
         /*!
@@ -144,8 +144,8 @@ namespace Dune {
                 std::vector<bool> vertexVisited(vertexMap.size(), false);
 
                 // fill the Scalar field
-                VertexIterator it = _curGridView->template leafbegin<GridView::dimension>();
-                VertexIterator endIt = _curGridView->template leafend<GridView::dimension>();
+                VertexIterator it = curGridView_->template leafbegin<GridView::dimension>();
+                VertexIterator endIt = curGridView_->template leafend<GridView::dimension>();
                 for (; it != endIt; ++it) {
                     // extract the current solution's Sn component
                     const VertexReferenceElement &refElem =
@@ -200,8 +200,8 @@ namespace Dune {
                 ScalarField *field = createField<Scalar, 1>(cellMap.size());
 
                 // fill the Scalar field
-                CellIterator it = _curGridView->template begin<0>();
-                CellIterator endIt = _curGridView->template end<0>();
+                CellIterator it = curGridView_->template begin<0>();
+                CellIterator endIt = curGridView_->template end<0>();
                 for (; it != endIt; ++it) {
                     // extract the current solution's Sn component
                     const CellReferenceElement &refElem =
@@ -225,27 +225,27 @@ namespace Dune {
          */
         void endTimestep()
             {
-                _curWriter->write(_curOutFileName.c_str(),
+                curWriter_->write(curOutFileName_.c_str(),
                                   Dune::VTKOptions::ascii);
-                delete _curWriter;
-                while (_vectorFields.begin() != _vectorFields.end()) {
-                    delete _vectorFields.front();
-                    _vectorFields.pop_front();
+                delete curWriter_;
+                while (vectorFields_.begin() != vectorFields_.end()) {
+                    delete vectorFields_.front();
+                    vectorFields_.pop_front();
                 }
 
                 // temporarily write the closing XML mumbo-jumbo to
                 // the mashup file so that the data set can be loaded
                 // even if the programm is aborted
-                _endMultiFile();
+                endMultiFile_();
             };
 
 
     private:
-        void _beginMultiFile(const std::string &multiFileName)
+        void beginMultiFile_(const std::string &multiFileName)
             {
                 // generate one meta vtk-file holding the individual timesteps
-                _multiFile.open(multiFileName.c_str());
-                _multiFile <<
+                multiFile_.open(multiFileName.c_str());
+                multiFile_ <<
                     "<?xml version=\"1.0\"?>\n"
                     "<VTKFile type=\"Collection\"\n"
                     "         version=\"0.1\"\n"
@@ -254,15 +254,15 @@ namespace Dune {
                     " <Collection>\n";
             }
 
-        void _endMultiFile()
+        void endMultiFile_()
             {
                 // make sure that we always have a working meta file
-                std::ofstream::pos_type pos = _multiFile.tellp();
-                _multiFile <<
+                std::ofstream::pos_type pos = multiFile_.tellp();
+                multiFile_ <<
                     " </Collection>\n"
                     "</VTKFile>\n";
-                _multiFile.seekp(pos);
-                _multiFile.flush();
+                multiFile_.seekp(pos);
+                multiFile_.flush();
             }
 
         //////////////////////////////
@@ -280,18 +280,18 @@ namespace Dune {
         //       virtual destructor for the type given to the linked
         //       list and a derived template class which actually
         //       knows the type of the vector field it must delete.
-        class _VtkVectorFieldStoreBase
+        class VtkVectorFieldStoreBase_
         {
         public:
-            virtual ~_VtkVectorFieldStoreBase()
+            virtual ~VtkVectorFieldStoreBase_()
                 {}
         };
 
         template <class VF>
-        class _VtkVectorFieldStoreImpl : public _VtkVectorFieldStoreBase
+        class VtkVectorFieldStoreImpl_ : public VtkVectorFieldStoreBase_
         {
         public:
-            _VtkVectorFieldStoreImpl(int size)
+            VtkVectorFieldStoreImpl_(int size)
                 : vf(size)
                 { }
             VF vf;
@@ -299,16 +299,16 @@ namespace Dune {
         // end hack
         ////////////////////////////////////
 
-        std::ofstream   _multiFile;
-        std::string     _simName;
+        std::ofstream   multiFile_;
+        std::string     simName_;
 
-        double          _curTime;
-        VtkWriter     * _curWriter;
-        const GridView* _curGridView;
-        std::string     _curOutFileName;
-        int             _writerNum;
+        double          curTime_;
+        VtkWriter     * curWriter_;
+        const GridView* curGridView_;
+        std::string     curOutFileName_;
+        int             writerNum_;
 
-        std::list<_VtkVectorFieldStoreBase*> _vectorFields;
+        std::list<VtkVectorFieldStoreBase_*> vectorFields_;
     };
 }
 

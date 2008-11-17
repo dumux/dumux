@@ -1,4 +1,4 @@
-#include "newinjectionproblem.hh"
+#include "new_injectionproblem.hh"
 
 #include <dune/common/exceptions.hh>
 

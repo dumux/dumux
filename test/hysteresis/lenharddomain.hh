@@ -124,30 +124,30 @@ namespace Lenhard
             {
                 Api::require<Api::BasicDomainTraits, DomainTraits>();
 
-                _initGrid();
+                initGrid_();
 
-                _initGlobalState();
-                _initMediaStates();
-                _initCellStates();
-                _initNodeStates();
+                initGlobalState_();
+                initMediaStates_();
+                initCellStates_();
+                initNodeStates_();
             };
 
         ~PwSnLenhardDomain()
             {
-                delete _coarseSand;
-                delete _globalState;
+                delete coarseSand_;
+                delete globalState_;
             }
 
         //! returns the body force vector within a cell
         const Vector &gravity(const Cell &cell,
                               int cellIdx) const
             {
-                return _globalState->gravity();
+                return globalState_->gravity();
             }
 
         const Vector &gravity() const
             {
-                return _globalState->gravity();
+                return globalState_->gravity();
             }
 
         //! return the permeability tensor for a cell
@@ -199,13 +199,13 @@ namespace Lenhard
         // return the density of the wetting phase
         Scalar densityW() const
             {
-                return _globalState->densityW();
+                return globalState_->densityW();
             }
 
         // return the density of the non-wetting phase
         Scalar densityN() const
             {
-                return _globalState->densityN();
+                return globalState_->densityN();
             }
 
         // return the density of a phase given by an index. (lower
@@ -218,13 +218,13 @@ namespace Lenhard
         // return the viscosity of the wetting phase
         Scalar viscosityW() const
             {
-                return _globalState->viscosityW();
+                return globalState_->viscosityW();
             }
 
         // return the viscosity of the non-wetting phase
         Scalar viscosityN() const
             {
-                return _globalState->viscosityN();
+                return globalState_->viscosityN();
             }
 
         // return the viscosity of a phase given by an index. (lower
@@ -317,118 +317,118 @@ namespace Lenhard
 
         // given a cell index, return the corresponding cell state
         CellState &cellState(int index)
-            { return _cellStates[index]; }
+            { return cellStates_[index]; }
         const CellState &cellState(int index) const
-            { return _cellStates[index]; }
+            { return cellStates_[index]; }
 
         CellState &cellState(const Cell &cell)
-            { return _cellStates[cellIndex(cell)]; }
+            { return cellStates_[cellIndex(cell)]; }
         const CellState &cellState(const Cell &cell) const
-            { return _cellStates[cellIndex(cell)]; }
+            { return cellStates_[cellIndex(cell)]; }
 
         // given a global node index, return the corresponding state
         NodeState &nodeState(int index)
-            { return _nodeStates[index]; }
+            { return nodeStates_[index]; }
         const NodeState &nodeState(int index) const
-            { return _nodeStates[index]; }
+            { return nodeStates_[index]; }
 
         // given a cell and a local node index, return the corresponding state
         NodeState &nodeState(const Cell &cell, int i)
-            { return _nodeStates[ParentType::nodeIndex(cell, i)]; }
+            { return nodeStates_[ParentType::nodeIndex(cell, i)]; }
         const NodeState &nodeState(const Cell &cell, int i) const
-            { return _nodeStates[ParentType::nodeIndex(cell, i)]; }
+            { return nodeStates_[ParentType::nodeIndex(cell, i)]; }
 
         // given a node, return it's state object
         NodeState &nodeState(const Node &vert)
-            { return _nodeStates[ParentType::nodeIndex(vert)]; }
+            { return nodeStates_[ParentType::nodeIndex(vert)]; }
         const NodeState &nodeState(const Node &vert) const
-            { return _nodeStates[ParentType::nodeIndex(vert)]; }
+            { return nodeStates_[ParentType::nodeIndex(vert)]; }
 
         const WorldCoord &lowerLeft() const
-            { return _gridLowerLeft; }
+            { return gridLowerLeft_; }
         const WorldCoord &upperRight() const
-            { return _gridUpperRight; }
+            { return gridUpperRight_; }
 
         Scalar height() const
-            { return _gridUpperRight[0] - _gridLowerLeft[0]; }
+            { return gridUpperRight_[0] - gridLowerLeft_[0]; }
 
         bool onUpperBoundary(const WorldCoord &pos) const
-            { return pos[0] > _gridUpperRight[0] - _eps; }
+            { return pos[0] > gridUpperRight_[0] - eps_; }
         bool onLowerBoundary(const WorldCoord &pos) const
-            { return pos[0] < _gridLowerLeft[0] + _eps; }
+            { return pos[0] < gridLowerLeft_[0] + eps_; }
 
     private:
-        void _initGrid()
+        void initGrid_()
             {
                 // specify the position and size of the grid in world
                 // coordinates
-                _gridLowerLeft[0] = 0;
+                gridLowerLeft_[0] = 0;
 
                 // column was 72 cm high, but we need some additional
                 // space so that the boundary condition at the upper
                 // boundary doesn't destroy the experiment
-                _gridUpperRight[0] = 0.80;
+                gridUpperRight_[0] = 0.80;
 
 
                 // the epsilon constant
-                _eps = 1e-8 * height();
+                eps_ = 1e-8 * height();
 
                 // create the grid
                 Dune::FieldVector<int, GridDim> cellRes;
                 cellRes[0] = 160;
 
                 Grid *grid = new Grid(cellRes,
-                                      _gridLowerLeft,
-                                      _gridUpperRight);
+                                      gridLowerLeft_,
+                                      gridUpperRight_);
                 ParentType::setGrid(grid);
             }
 
-        void _initGlobalState()
+        void initGlobalState_()
             {
                 // initialize the globally uniform parameters
-                _globalState = new GlobalState();
+                globalState_ = new GlobalState();
 
                 Water wettingFluid;
                 Air   nonwettingFluid;
-                _globalState->setDensityW(wettingFluid.density());
-                _globalState->setDensityN(nonwettingFluid.density());
+                globalState_->setDensityW(wettingFluid.density());
+                globalState_->setDensityN(nonwettingFluid.density());
 
-                _globalState->setViscosityW(wettingFluid.viscosity());
-                _globalState->setViscosityN(nonwettingFluid.viscosity());
+                globalState_->setViscosityW(wettingFluid.viscosity());
+                globalState_->setViscosityN(nonwettingFluid.viscosity());
 
                 Vector gravity(0);
                 gravity[0] = -9.81;
-                _globalState->setGravity(gravity);
+                globalState_->setGravity(gravity);
             }
 
-        void _initMediaStates()
+        void initMediaStates_()
             {
                 // initializing the state of the porous medium
-                _coarseSand =  new MediumState();
-                _coarseSand->setGlobalState(_globalState);
+                coarseSand_ =  new MediumState();
+                coarseSand_->setGlobalState(globalState_);
 #if LENHARD_EXPERIMENT == 1
-                _coarseSand->setSwr(0.0);
-                _coarseSand->setSnr(0.25);
-                _coarseSand->setPorosity(0.36);
-                _coarseSand->setMicParams(VanGenuchtenState(0.00052, 4.63));
-                _coarseSand->setMdcParams(VanGenuchtenState(0.00052, 4.63));
-                _coarseSand->micParams().setVgMaxPC(_coarseSand->mdcParams().vgMaxPC());
-                _coarseSand->setPermeability(3.37e-11);
+                coarseSand_->setSwr(0.0);
+                coarseSand_->setSnr(0.25);
+                coarseSand_->setPorosity(0.36);
+                coarseSand_->setMicParams(VanGenuchtenState(0.00052, 4.63));
+                coarseSand_->setMdcParams(VanGenuchtenState(0.00052, 4.63));
+                coarseSand_->micParams().setVgMaxPC(coarseSand_->mdcParams().vgMaxPC());
+                coarseSand_->setPermeability(3.37e-11);
 #elif LENHARD_EXPERIMENT == 2
-                _coarseSand->setSwr(0.17);
-                _coarseSand->setSnr(0.25);
-                _coarseSand->setPorosity(0.36);
-                _coarseSand->setMdcParams(VanGenuchtenState(0.00042, 5.25));
-//                _coarseSand->setMicParams(VanGenuchtenState(0.00042, 5.25));
-                _coarseSand->setMicParams(VanGenuchtenState(0.00042*2, 5.25));
-                _coarseSand->micParams().setVgMaxPC(_coarseSand->mdcParams().vgMaxPC());
-                _coarseSand->setPermeability(3.37e-11);
+                coarseSand_->setSwr(0.17);
+                coarseSand_->setSnr(0.25);
+                coarseSand_->setPorosity(0.36);
+                coarseSand_->setMdcParams(VanGenuchtenState(0.00042, 5.25));
+//                coarseSand_->setMicParams(VanGenuchtenState(0.00042, 5.25));
+                coarseSand_->setMicParams(VanGenuchtenState(0.00042*2, 5.25));
+                coarseSand_->micParams().setVgMaxPC(coarseSand_->mdcParams().vgMaxPC());
+                coarseSand_->setPermeability(3.37e-11);
 #endif
             }
 
-        void _initCellStates()
+        void initCellStates_()
             {
-                _cellStates.resize(ParentType::numCells());
+                cellStates_.resize(ParentType::numCells());
 
                 // initialize the cell state objects depending on
                 // wether the cell is inside or outside of the lenhard of
@@ -439,14 +439,14 @@ namespace Lenhard
                 for (; it != endit; ++it) {
                     ParentType::cellCenter(*it, cellCenter);
                     int arrayPos = ParentType::cellIndex(*it);
-                    _cellStates[arrayPos].setMediumState(_coarseSand);
+                    cellStates_[arrayPos].setMediumState(coarseSand_);
                 }
 
             }
 
-        void _initNodeStates()
+        void initNodeStates_()
             {
-                _nodeStates.resize(ParentType::numNodes());
+                nodeStates_.resize(ParentType::numNodes());
 
 #if defined USE_NODE_PARAMETERS
                 NodeIterator vertIt = ParentType::nodeBegin();
@@ -456,7 +456,7 @@ namespace Lenhard
                     ParentType::nodePosition(pos, *vertIt);
                     NodeState &vertState = nodeState(*vertIt);
 
-                    vertState.setMediumState(_coarseSand);
+                    vertState.setMediumState(coarseSand_);
                 }
 
 #else // ! defined USE_NODE_PARAMETERS
@@ -485,7 +485,7 @@ namespace Lenhard
 
                         // alright, the face is on a inhomogenity, so
                         // we have to mark all its vertices
-                        _markInterfaceVertices(faceIt);
+                        markInterfaceVertices_(faceIt);
                     }
                 }
                 */
@@ -496,7 +496,7 @@ namespace Lenhard
         //  mark all vertices on a face as as belonging to an
         //  inhomogenity
         /*
-        void _markInterfaceVertices(IntersectionIterator &interfaceIt)
+        void markInterfaceVertices_(IntersectionIterator &interfaceIt)
             {
                 const Cell &cell = *interfaceIt.inside();
                 const CellReferenceElement &refElem =
@@ -522,34 +522,34 @@ namespace Lenhard
 
 
         // the actual type which stores the cell states.
-        typedef std::vector<NodeState>  _NodeStateArray;
+        typedef std::vector<NodeState>  NodeStateArray_;
 
         // the actual type which stores the cell states.
-        typedef std::vector<CellState>    _CellStateArray;
+        typedef std::vector<CellState>    CellStateArray_;
 
         // the lower left and upper right coordinates of the complete
         // grid
-        WorldCoord _gridLowerLeft;
-        WorldCoord _gridUpperRight;
+        WorldCoord gridLowerLeft_;
+        WorldCoord gridUpperRight_;
 
         // the lower left and upper right coordinates of the fine sand
         // lenhard
-        WorldCoord _lenhardLowerLeft;
-        WorldCoord _lenhardUpperRight;
+        WorldCoord lenhardLowerLeft_;
+        WorldCoord lenhardUpperRight_;
 
         // global state and states of the media
-        GlobalState *_globalState;
-        MediumState *_coarseSand;
+        GlobalState *globalState_;
+        MediumState *coarseSand_;
 
         // stores a state for each node
-        _NodeStateArray _nodeStates;
+        NodeStateArray_ nodeStates_;
 
         // stores a state for each node
-        _CellStateArray  _cellStates;
+        CellStateArray_  cellStates_;
 
         // A small epsilon value and the current simulated
         // time. FIXME/TODO: should probably not be here..
-        Scalar _eps;
+        Scalar eps_;
     };
 }
 }

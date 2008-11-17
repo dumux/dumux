@@ -161,8 +161,9 @@ namespace Dune
                     
                     pW = nodeSol[PwIndex];
                     if (phaseState == BothPhases) satN = nodeSol[SwitchIndex];
-                    if (phaseState == WPhaseOnly) satN = 0.0;
-                    if (phaseState == NPhaseOnly) satN = 1.0;
+                    else if (phaseState == WPhaseOnly) satN = 0.0;
+                    else if (phaseState == NPhaseOnly) satN = 1.0;
+                    else DUNE_THROW(Dune::InvalidStateException, "Phase state " << phaseState << " is invalid.");
                     
                     satW = 1.0 - satN;
                     pC = problem.materialLaw().pC(satW, 
@@ -176,14 +177,16 @@ namespace Dune
                         massfrac[NCompIndex][WPhaseIndex] = problem.multicomp().xAW(pN, temperature);
                         massfrac[WCompIndex][NPhaseIndex] = problem.multicomp().xWN(pN, temperature);
                     }
-                    if (phaseState == WPhaseOnly) {
+                    else if (phaseState == WPhaseOnly) {
                         massfrac[WCompIndex][NPhaseIndex] = 0.0;
                         massfrac[NCompIndex][WPhaseIndex] =  nodeSol[SwitchIndex];
                     }
-                    if (phaseState == NPhaseOnly){
+                    else if (phaseState == NPhaseOnly){
                         massfrac[WCompIndex][NPhaseIndex] = nodeSol[SwitchIndex];
                         massfrac[NCompIndex][WPhaseIndex] = 0.0;
                     }
+                    else DUNE_THROW(Dune::InvalidStateException, "Phase state " << phaseState << " is invalid.");
+
                     massfrac[WCompIndex][WPhaseIndex] = 1.0 - massfrac[NCompIndex][WPhaseIndex];
                     massfrac[NCompIndex][NPhaseIndex] = 1.0 - massfrac[WCompIndex][NPhaseIndex];
                     phasestate = phaseState;
@@ -193,7 +196,7 @@ namespace Dune
                     mobility[NPhaseIndex] = problem.materialLaw().mobN(satN, global, cell, local, temperature, pN);
                     
                     // Density of Water is set constant here!
-                    density[WPhaseIndex] = 1000;//this->_problem.wettingPhase().density(temperature, pN);
+                    density[WPhaseIndex] = 1000;//this->problem_.wettingPhase().density(temperature, pN);
                     density[NPhaseIndex] = problem.nonwettingPhase().density(temperature, 
                                                                              pN,
                                                                              massfrac[WCompIndex][NPhaseIndex]);
@@ -224,9 +227,9 @@ namespace Dune
     public:
         TwoPTwoCBoxJacobian(ProblemT &problem) 
             : ParentType(problem),
-              _staticNodeDat(problem.numNodes())
+              staticNodeDat_(problem.numNodes())
             {
-                _switchFlag = false;
+                switchFlag_ = false;
             };
 
         /*!
@@ -234,7 +237,7 @@ namespace Dune
          */
         void setCurrentCell(const Cell &cell) 
             {
-                ParentType::_setCurrentCell(cell);
+                ParentType::setCurrentCell_(cell);
             };
 
         /*!
@@ -247,12 +250,12 @@ namespace Dune
                 
                 // TODO: scheme which allows not to copy curSol and
                 // prevSol all the time
-                _curSol = curSol;
-                _updateCellCache(_curSolCache, _curSol, false);
-                _curSolDeflected = false;
+                curSol_ = curSol;
+                updateCellCache_(curSolCache_, curSol_, false);
+                curSolDeflected_ = false;
                 
-                _prevSol = prevSol;
-                _updateCellCache(_prevSolCache, _prevSol, true);
+                prevSol_ = prevSol;
+                updateCellCache_(prevSolCache_, prevSol_, true);
             };
 
         /*!
@@ -267,22 +270,22 @@ namespace Dune
         void deflectCurSolution(int node, int component, Scalar value)
             {
                 // make sure that the orignal state can be restored
-                if (!_curSolDeflected) {
-                    _curSolDeflected = true;
+                if (!curSolDeflected_) {
+                    curSolDeflected_ = true;
 
-                    _curSolOrigValue = _curSol[node][component];
-                    _curSolOrigVarData = _curSolCache.atSCV[node];
+                    curSolOrigValue_ = curSol_[node][component];
+                    curSolOrigVarData_ = curSolCache_.atSCV[node];
                 }
                 
-                int globalIdx = ParentType::_problem.nodeIndex(ParentType::_curCell(), 
+                int globalIdx = ParentType::problem_.nodeIndex(ParentType::curCell_(), 
                                                                node);
 
-                _curSol[node][component] = value;
-                _curSolCache.atSCV[node].update(_curSol[node],
-                                                _staticNodeDat[globalIdx].phaseState,
-                                                this->_curCell(),
+                curSol_[node][component] = value;
+                curSolCache_.atSCV[node].update(curSol_[node],
+                                                staticNodeDat_[globalIdx].phaseState,
+                                                this->curCell_(),
                                                 node,
-                                                this->_problem,
+                                                this->problem_,
                                                 temperature);
             }
 
@@ -295,9 +298,9 @@ namespace Dune
          */
         void restoreCurSolution(int node, int component)
             {
-                _curSolDeflected = false;
-                _curSol[node][component] = _curSolOrigValue;
-                _curSolCache.atSCV[node] = _curSolOrigVarData;
+                curSolDeflected_ = false;
+                curSol_[node][component] = curSolOrigValue_;
+                curSolCache_.atSCV[node] = curSolOrigVarData_;
             };
         
         /*!
@@ -312,15 +315,15 @@ namespace Dune
             {
                 result = Scalar(0);
 
-//                const LocalFunction &sol   = usePrevSol ? *_prevSol     : *_curSol;
-                const CellCache &cellCache = usePrevSol ? _prevSolCache : _curSolCache;
+//                const LocalFunction &sol   = usePrevSol ? *prevSol_     : *curSol_;
+                const CellCache &cellCache = usePrevSol ? prevSolCache_ : curSolCache_;
                 
-                int globalIdx = this->_problem.nodeIndex(this->_curCell(), scvId);
+                int globalIdx = this->problem_.nodeIndex(this->curCell_(), scvId);
                 
                 Scalar satN = cellCache.atSCV[scvId].satN;
                 Scalar satW = cellCache.atSCV[scvId].satW;
                 
-                Scalar porosity = _staticNodeDat[globalIdx].porosity;
+                Scalar porosity = staticNodeDat_[globalIdx].porosity;
 
                 // storage of component water
                 result[PwIndex] =
@@ -348,18 +351,18 @@ namespace Dune
         void fluxRate(UnknownsVector &flux, int faceId) const
             {
                 // set flux vector to zero
-                int i = this->_curCellGeom.subContVolFace[faceId].i;
-                int j = this->_curCellGeom.subContVolFace[faceId].j;
+                int i = this->curCellGeom_.subContVolFace[faceId].i;
+                int j = this->curCellGeom_.subContVolFace[faceId].j;
 
                 // normal vector, value of the area of the scvf
-                const WorldCoord &normal(this->_curCellGeom.subContVolFace[faceId].normal);
+                const WorldCoord &normal(this->curCellGeom_.subContVolFace[faceId].normal);
 
                 // get global coordinates of nodes i,j
-                const WorldCoord &global_i = this->_curCellGeom.subContVol[i].global;
-                const WorldCoord &global_j = this->_curCellGeom.subContVol[j].global;
+                const WorldCoord &global_i = this->curCellGeom_.subContVol[i].global;
+                const WorldCoord &global_j = this->curCellGeom_.subContVol[j].global;
 
-                const LocalCoord &local_i = this->_curCellGeom.subContVol[i].local;
-                const LocalCoord &local_j = this->_curCellGeom.subContVol[j].local;
+                const LocalCoord &local_i = this->curCellGeom_.subContVol[i].local;
+                const LocalCoord &local_j = this->curCellGeom_.subContVol[j].local;
                
                 WorldCoord pGrad[PrimaryVariables];
                 WorldCoord xGrad[PrimaryVariables];
@@ -372,18 +375,18 @@ namespace Dune
                 UnknownsVector pressure(0.0), massfrac(0.0);
 
                 // calculate harmonic mean of permeabilities of nodes i and j
-                Tensor K         = this->_problem.soil().K(global_i, ParentType::_curCell(), local_i);
-                const Tensor &Kj = this->_problem.soil().K(global_j, ParentType::_curCell(), local_j);
-                _harmonicMeanK(K, Kj);
+                Tensor K         = this->problem_.soil().K(global_i, ParentType::curCell_(), local_i);
+                const Tensor &Kj = this->problem_.soil().K(global_j, ParentType::curCell_(), local_j);
+                harmonicMeanK_(K, Kj);
 
                 // calculate FE gradient (grad p for each phase)
-                for (int k = 0; k < this->_curCellGeom.nNodes; k++) // loop over adjacent nodes
+                for (int k = 0; k < this->curCellGeom_.nNodes; k++) // loop over adjacent nodes
                 {
                     // FEGradient at node k
-                    const LocalCoord &feGrad = this->_curCellGeom.subContVolFace[faceId].grad[k];
+                    const LocalCoord &feGrad = this->curCellGeom_.subContVolFace[faceId].grad[k];
 
-                    pressure[WPhaseIndex] = _curSolCache.atSCV[k].pW;
-                    pressure[NPhaseIndex] = _curSolCache.atSCV[k].pN;
+                    pressure[WPhaseIndex] = curSolCache_.atSCV[k].pW;
+                    pressure[NPhaseIndex] = curSolCache_.atSCV[k].pN;
 
                     // compute sum of pressure gradients for each phase
                     for (int phase = 0; phase < PrimaryVariables; phase++)
@@ -397,12 +400,12 @@ namespace Dune
 
                     // for diffusion of air in wetting phase
                     tmp = feGrad;
-                    tmp *= _curSolCache.atSCV[k].massfrac[NCompIndex][WPhaseIndex];
+                    tmp *= curSolCache_.atSCV[k].massfrac[NCompIndex][WPhaseIndex];
                     xGrad[WPhaseIndex] += tmp;
 
                     // for diffusion of water in nonwetting phase
                     tmp = feGrad;
-                    tmp *= _curSolCache.atSCV[k].massfrac[WCompIndex][NPhaseIndex];
+                    tmp *= curSolCache_.atSCV[k].massfrac[WCompIndex][NPhaseIndex];
                     xGrad[NPhaseIndex] += tmp;
                 }
 
@@ -410,8 +413,8 @@ namespace Dune
                 UnknownsVector contribComp[NumPhases];
                 for (int phase=0; phase < NumPhases; phase++)
                 {
-                    contribComp[phase] = this->_problem.gravity();
-                    contribComp[phase] *= _curSolCache.atSCV[i].density[phase];
+                    contribComp[phase] = this->problem_.gravity();
+                    contribComp[phase] *= curSolCache_.atSCV[i].density[phase];
                     pGrad[phase] -= contribComp[phase]; // grad p - rho*g
                 }
 
@@ -444,29 +447,29 @@ namespace Dune
                 Scalar alpha = 1.0;  // Upwind parameter
 
                 // water conservation
-                flux[WCompIndex] =   (alpha* _curSolCache.atSCV[up_w].density[WPhaseIndex]*_curSolCache.atSCV[up_w].mobility[WPhaseIndex]
-                                      * _curSolCache.atSCV[up_w].massfrac[WCompIndex][WPhaseIndex]
-                                      + (1-alpha)* _curSolCache.atSCV[dn_w].density[WPhaseIndex]*_curSolCache.atSCV[dn_w].mobility[WPhaseIndex]
-                                      * _curSolCache.atSCV[dn_w].massfrac[WCompIndex][WPhaseIndex])
+                flux[WCompIndex] =   (alpha* curSolCache_.atSCV[up_w].density[WPhaseIndex]*curSolCache_.atSCV[up_w].mobility[WPhaseIndex]
+                                      * curSolCache_.atSCV[up_w].massfrac[WCompIndex][WPhaseIndex]
+                                      + (1-alpha)* curSolCache_.atSCV[dn_w].density[WPhaseIndex]*curSolCache_.atSCV[dn_w].mobility[WPhaseIndex]
+                                      * curSolCache_.atSCV[dn_w].massfrac[WCompIndex][WPhaseIndex])
                     * outward[WPhaseIndex];
-                flux[WCompIndex] +=  (alpha* _curSolCache.atSCV[up_n].density[NPhaseIndex]*_curSolCache.atSCV[up_n].mobility[NPhaseIndex]
-                                      * _curSolCache.atSCV[up_n].massfrac[WCompIndex][NPhaseIndex]
-                                      + (1-alpha)* _curSolCache.atSCV[dn_n].density[NPhaseIndex]*_curSolCache.atSCV[dn_n].mobility[NPhaseIndex]
-                                      * _curSolCache.atSCV[dn_n].massfrac[WCompIndex][NPhaseIndex])
+                flux[WCompIndex] +=  (alpha* curSolCache_.atSCV[up_n].density[NPhaseIndex]*curSolCache_.atSCV[up_n].mobility[NPhaseIndex]
+                                      * curSolCache_.atSCV[up_n].massfrac[WCompIndex][NPhaseIndex]
+                                      + (1-alpha)* curSolCache_.atSCV[dn_n].density[NPhaseIndex]*curSolCache_.atSCV[dn_n].mobility[NPhaseIndex]
+                                      * curSolCache_.atSCV[dn_n].massfrac[WCompIndex][NPhaseIndex])
                     * outward[NPhaseIndex];
                 
 
                 // air conservation
-                flux[NCompIndex]   = (alpha* _curSolCache.atSCV[up_n].density[NPhaseIndex]*_curSolCache.atSCV[up_n].mobility[NPhaseIndex]
-                                      * _curSolCache.atSCV[up_n].massfrac[NCompIndex][NPhaseIndex]
-                                      + (1-alpha)* _curSolCache.atSCV[dn_n].density[NPhaseIndex]*_curSolCache.atSCV[dn_n].mobility[NPhaseIndex]
-                                      * _curSolCache.atSCV[dn_n].massfrac[NCompIndex][NPhaseIndex])
+                flux[NCompIndex]   = (alpha* curSolCache_.atSCV[up_n].density[NPhaseIndex]*curSolCache_.atSCV[up_n].mobility[NPhaseIndex]
+                                      * curSolCache_.atSCV[up_n].massfrac[NCompIndex][NPhaseIndex]
+                                      + (1-alpha)* curSolCache_.atSCV[dn_n].density[NPhaseIndex]*curSolCache_.atSCV[dn_n].mobility[NPhaseIndex]
+                                      * curSolCache_.atSCV[dn_n].massfrac[NCompIndex][NPhaseIndex])
                     * outward[NPhaseIndex];
 
-                flux[NCompIndex]  +=   (alpha* _curSolCache.atSCV[up_w].density[WPhaseIndex]*_curSolCache.atSCV[up_w].mobility[WPhaseIndex]
-                                        * _curSolCache.atSCV[up_w].massfrac[NCompIndex][WPhaseIndex]
-                                        + (1-alpha)* _curSolCache.atSCV[dn_w].density[WPhaseIndex]*_curSolCache.atSCV[dn_w].mobility[WPhaseIndex]
-                                        * _curSolCache.atSCV[dn_w].massfrac[NCompIndex][WPhaseIndex]) 
+                flux[NCompIndex]  +=   (alpha* curSolCache_.atSCV[up_w].density[WPhaseIndex]*curSolCache_.atSCV[up_w].mobility[WPhaseIndex]
+                                        * curSolCache_.atSCV[up_w].massfrac[NCompIndex][WPhaseIndex]
+                                        + (1-alpha)* curSolCache_.atSCV[dn_w].density[WPhaseIndex]*curSolCache_.atSCV[dn_w].mobility[WPhaseIndex]
+                                        * curSolCache_.atSCV[dn_w].massfrac[NCompIndex][WPhaseIndex]) 
                     * outward[WPhaseIndex];
                 
 
@@ -476,8 +479,8 @@ namespace Dune
                 UnknownsVector normDiffGrad;
 
                 // get local to global id map
-                int state_i = _curSolCache.atSCV[i].phasestate;
-                int state_j = _curSolCache.atSCV[j].phasestate;
+                int state_i = curSolCache_.atSCV[i].phasestate;
+                int state_j = curSolCache_.atSCV[j].phasestate;
 
                 Scalar diffusionWW(0.0), diffusionWN(0.0); // diffusion of water
                 Scalar diffusionAW(0.0), diffusionAN(0.0); // diffusion of air
@@ -507,8 +510,8 @@ namespace Dune
                 normDiffGrad[NPhaseIndex] = xGrad[NPhaseIndex]*normal;
 
                 // calculate the arithmetic mean of densities
-                avgDensity[WPhaseIndex] = 0.5*(_curSolCache.atSCV[i].density[WPhaseIndex] + _curSolCache.atSCV[j].density[WPhaseIndex]);
-                avgDensity[NPhaseIndex] = 0.5*(_curSolCache.atSCV[i].density[NPhaseIndex] + _curSolCache.atSCV[j].density[NPhaseIndex]);
+                avgDensity[WPhaseIndex] = 0.5*(curSolCache_.atSCV[i].density[WPhaseIndex] + curSolCache_.atSCV[j].density[WPhaseIndex]);
+                avgDensity[NPhaseIndex] = 0.5*(curSolCache_.atSCV[i].density[NPhaseIndex] + curSolCache_.atSCV[j].density[NPhaseIndex]);
 
                 diffusionAW = avgDpm[WPhaseIndex] * avgDensity[WPhaseIndex] * normDiffGrad[WPhaseIndex];
                 diffusionWW = - diffusionAW;
@@ -532,25 +535,25 @@ namespace Dune
             {
                 setSwitched(false);
                 
-                NodeIterator it = this->_problem.nodeBegin();
-                NodeIterator endit = this->_problem.nodeEnd();
+                NodeIterator it = this->problem_.nodeBegin();
+                NodeIterator endit = this->problem_.nodeEnd();
 		for (; it != endit; ++it)
                 {
-                    int globalIdx = this->_problem.nodeIndex(*it);
+                    int globalIdx = this->problem_.nodeIndex(*it);
                     const WorldCoord &globalPos = it->geometry()[0];
 
                     // ASSUME porosity defined at nodes
-                    _staticNodeDat[globalIdx].porosity = 
-                        this->_problem.porosity(*it, globalIdx, globalPos);
+                    staticNodeDat_[globalIdx].porosity = 
+                        this->problem_.porosity(*it, globalIdx, globalPos);
 
                     // number of primary variable switches at the node
-                    _staticNodeDat[globalIdx].numSwitches = 0;
+                    staticNodeDat_[globalIdx].numSwitches = 0;
 
                     // initialize phase state
-                    _staticNodeDat[globalIdx].phaseState =
-                        this->_problem.initialPhaseState(*it, globalIdx, globalPos);
-                    _staticNodeDat[globalIdx].oldPhaseState =
-                        _staticNodeDat[globalIdx].phaseState;
+                    staticNodeDat_[globalIdx].phaseState =
+                        this->problem_.initialPhaseState(*it, globalIdx, globalPos);
+                    staticNodeDat_[globalIdx].oldPhaseState =
+                        staticNodeDat_[globalIdx].phaseState;
                 }
             }
                 
@@ -562,13 +565,13 @@ namespace Dune
             {
                 bool wasSwitched = false;
 
-                NodeIterator it = this->_problem.nodeBegin();
-                for (; it != this->_problem.nodeEnd(); ++it)
+                NodeIterator it = this->problem_.nodeBegin();
+                for (; it != this->problem_.nodeEnd(); ++it)
                 {
-                    int globalIdx = this->_problem.nodeIndex(*it);
+                    int globalIdx = this->problem_.nodeIndex(*it);
                     const WorldCoord &global = it->geometry()[0];
                     
-                    wasSwitched = _primaryVarSwitch(curSol, 
+                    wasSwitched = primaryVarSwitch_(curSol, 
                                                     globalIdx,
                                                     global)
                                   || wasSwitched;
@@ -582,9 +585,9 @@ namespace Dune
          */
         void updateOldPhaseState()
             {
-                int nNodes = this->_problem.numNodes();
+                int nNodes = this->problem_.numNodes();
                 for (int i = 0; i < nNodes; ++i)
-                    _staticNodeDat[i].oldPhaseState = _staticNodeDat[i].phaseState;
+                    staticNodeDat_[i].oldPhaseState = staticNodeDat_[i].phaseState;
             }
 
         /*!
@@ -592,9 +595,9 @@ namespace Dune
          */
         void resetPhaseState()
             {
-                int nNodes = this->_problem.numNodes();
+                int nNodes = this->problem_.numNodes();
                 for (int i = 0; i < nNodes; ++i)
-                    _staticNodeDat[i].phaseState = _staticNodeDat[i].oldPhaseState;
+                    staticNodeDat_[i].phaseState = staticNodeDat_[i].oldPhaseState;
             }
 
         /*!
@@ -603,7 +606,7 @@ namespace Dune
          */
 	bool switched() const
             {
-		return _switchFlag;
+		return switchFlag_;
             }
         
         /*!
@@ -612,7 +615,7 @@ namespace Dune
          */
 	void setSwitched(bool yesno)
             {
-		_switchFlag = yesno;
+		switchFlag_ = yesno;
             }
 
         enum VtkFieldBits {
@@ -646,7 +649,7 @@ namespace Dune
                 typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
                 
                 // create the required scalar fields
-                unsigned nNodes = this->_problem.numNodes();
+                unsigned nNodes = this->problem_.numNodes();
                 ScalarField *pW =           (bitmask&WettingPressureBit)      ? writer.template createField<Scalar, 1>(nNodes):NULL;
                 ScalarField *pN =           (bitmask&NonwettingPressureBit)   ? writer.template createField<Scalar, 1>(nNodes):NULL;
                 ScalarField *pC =           (bitmask&CapillaryPressureBit)    ? writer.template createField<Scalar, 1>(nNodes):NULL;
@@ -661,16 +664,16 @@ namespace Dune
                 ScalarField *phaseState   = (bitmask&PhaseStateBit)           ? writer.template createField<Scalar, 1>(nNodes):NULL;
                 
                 VariableNodeData tmp;
-                CellIterator it = this->_problem.cellBegin();
-                CellIterator endit = this->_problem.cellEnd();
+                CellIterator it = this->problem_.cellBegin();
+                CellIterator endit = this->problem_.cellEnd();
                 for (; it != endit; ++it) {
                     for (int i = 0; i < it->template count<GridDim>(); ++i) {
-                        int globalI = this->_problem.nodeIndex(*it, i);
+                        int globalI = this->problem_.nodeIndex(*it, i);
                         tmp.update((*globalSol)[globalI],
-                                   _staticNodeDat[globalI].phaseState,
+                                   staticNodeDat_[globalI].phaseState,
                                    *it,
                                    i,
-                                   this->_problem,
+                                   this->problem_,
                                    temperature);
                         
                         if (bitmask&WettingPressureBit)
@@ -696,7 +699,7 @@ namespace Dune
                         if (bitmask&MassfracWinABit)
                             (*massfracWinA)[globalI] = tmp.massfrac[WCompIndex][NPhaseIndex];
                         if (bitmask&PhaseStateBit)
-                            (*phaseState)[globalI] = _staticNodeDat[globalI].phaseState;
+                            (*phaseState)[globalI] = staticNodeDat_[globalI].phaseState;
                     };
                 }
 
@@ -729,19 +732,19 @@ namespace Dune
 
         
     private:
-        void _updateCellCache(CellCache &dest, const LocalFunction &sol, bool isOldSol)
+        void updateCellCache_(CellCache &dest, const LocalFunction &sol, bool isOldSol)
             {
                 int phaseState;
-                int nNodes = this->_curCell().template count<GridDim>();
+                int nNodes = this->curCell_().template count<GridDim>();
                 for (int i = 0; i < nNodes; i++) {
-                    int iGlobal = ParentType::_problem.nodeIndex(ParentType::_curCell(), i);
-                    phaseState = isOldSol?_staticNodeDat[iGlobal].oldPhaseState:_staticNodeDat[iGlobal].phaseState;
+                    int iGlobal = ParentType::problem_.nodeIndex(ParentType::curCell_(), i);
+                    phaseState = isOldSol?staticNodeDat_[iGlobal].oldPhaseState:staticNodeDat_[iGlobal].phaseState;
                     
                     dest.atSCV[i].update(sol[i], 
                                          phaseState,
-                                         this->_curCell(), 
+                                         this->curCell_(), 
                                          i,
-                                         this->_problem,
+                                         this->problem_,
                                          temperature);
                 }
             }
@@ -749,12 +752,12 @@ namespace Dune
         
         //  perform variable switch at a node. Retrurns true iff a
         //  variable switch was performed.
-   	bool _primaryVarSwitch(SpatialFunction &sol,
+   	bool primaryVarSwitch_(SpatialFunction &sol,
                                int globalIdx,
                                const WorldCoord &globalPos)
             {
                 // evaluate primary variable switch
-                int  phaseState = _staticNodeDat[globalIdx].phaseState;
+                int  phaseState = staticNodeDat_[globalIdx].phaseState;
 
                 // Evaluate saturation and pressures
                 Scalar pW = (*sol)[globalIdx][PwIndex];
@@ -763,7 +766,7 @@ namespace Dune
   		if (phaseState == WPhaseOnly) satW = 1.0;
   		if (phaseState == NPhaseOnly) satW = 0.0;
 
-                Scalar pC = this->_problem.pC(satW, globalIdx, globalPos);
+                Scalar pC = this->problem_.pC(satW, globalIdx, globalPos);
   		Scalar pN = pW + pC;
 
                 if (phaseState == NPhaseOnly) {
@@ -771,17 +774,17 @@ namespace Dune
                     Scalar xWNmass, xWNmolar, pwn, pWSat;
                     
                     xWNmass = (*sol)[globalIdx][SwitchIndex];
-                    xWNmolar = this->_problem.multicomp().xWNmolar(pN, temperature);
+                    xWNmolar = this->problem_.multicomp().xWNmolar(pN, temperature);
                     pwn = xWNmolar * pN;
-                    pWSat = this->_problem.multicomp().vaporPressure(temperature);
+                    pWSat = this->problem_.multicomp().vaporPressure(temperature);
                     
                     if (pwn > (1 + 1e-5)*pWSat)
                     {
                         // appearance of water phase
                         std::cout << "Water appears at node " << globalIdx << "  Coordinates: " << globalPos << std::endl;
-                        _staticNodeDat[globalIdx].phaseState = BothPhases;
+                        staticNodeDat_[globalIdx].phaseState = BothPhases;
                         (*sol)[globalIdx][SwitchIndex] = 1.0 - 2e-5; // initialize solution vector
-                        _staticNodeDat[globalIdx].numSwitches += 1;
+                        staticNodeDat_[globalIdx].numSwitches += 1;
                     }
                 }
                 else if (phaseState == WPhaseOnly) 
@@ -789,12 +792,12 @@ namespace Dune
                     Scalar pbub, henryInv, pWSat;
                     
                     Scalar xAWmass = (*sol)[globalIdx][SwitchIndex];
-                    Scalar xAWmolar = this->_problem.multicomp().convertMassToMoleFraction(xAWmass, WPhaseIndex);
+                    Scalar xAWmolar = this->problem_.multicomp().convertMassToMoleFraction(xAWmass, WPhaseIndex);
 
-                    Scalar xAWmolarMax = this->_problem.multicomp().xAWmolar(pN, temperature);
+                    Scalar xAWmolarMax = this->problem_.multicomp().xAWmolar(pN, temperature);
 
-                    henryInv = this->_problem.multicomp().henry(temperature);
-                    pWSat = this->_problem.multicomp().vaporPressure(temperature);
+                    henryInv = this->problem_.multicomp().henry(temperature);
+                    pWSat = this->problem_.multicomp().vaporPressure(temperature);
                     pbub = pWSat + xAWmolar/henryInv; // pWSat + pAW
 
 /*                    
@@ -803,14 +806,14 @@ namespace Dune
                     }
 */
 //                    if (pN < (1 - 1e-5)*pbub)
-                    if (xAWmolar > (1 + 1e-5)*xAWmolarMax)
+                    if (xAWmolar > (1 + 1e-2)*xAWmolarMax)
                     {
                         // appearance of gas phase
                         std::cout << "Gas appears at node " << globalIdx << ",  Coordinates: " << globalPos << std::endl;
-                        std::cerr << "xAWmolarMax: " << xAWmolarMax << " henry: " << henryInv << " temperature: " << temperature << " pbub: " << pbub << " pN: " << pN << " pWSat: " << pWSat << "\n";
-                        _staticNodeDat[globalIdx].phaseState = BothPhases;
+//                        std::cerr << "xAWmolarMax: " << xAWmolarMax << " henry: " << henryInv << " temperature: " << temperature << " pbub: " << pbub << " pN: " << pN << " pWSat: " << pWSat << "\n";
+                        staticNodeDat_[globalIdx].phaseState = BothPhases;
                         (*sol)[globalIdx][SwitchIndex] = 2e-5; // initialize solution vector
-                        _staticNodeDat[globalIdx].numSwitches += 1;
+                        staticNodeDat_[globalIdx].numSwitches += 1;
                     }
                 }
                 else if (phaseState == BothPhases) {
@@ -820,28 +823,28 @@ namespace Dune
                     {
                         // disappearance of gas phase
                         std::cout << "Gas disappears at node " << globalIdx << "  Coordinates: " << globalPos << std::endl;
-                        _staticNodeDat[globalIdx].phaseState = WPhaseOnly;
-                        (*sol)[globalIdx][SwitchIndex] = this->_problem.multicomp().xAW(pN); // initialize solution vector
-                        _staticNodeDat[globalIdx].numSwitches += 1;
+                        staticNodeDat_[globalIdx].phaseState = WPhaseOnly;
+                        (*sol)[globalIdx][SwitchIndex] = this->problem_.multicomp().xAW(pN); // initialize solution vector
+                        staticNodeDat_[globalIdx].numSwitches += 1;
                     }
                     else if (satW < -1e-5)
                     {
                         // disappearance of water phase
                         std::cout << "Water disappears at node " << globalIdx << "  Coordinates: " << globalPos << std::endl;
-                        _staticNodeDat[globalIdx].phaseState = NPhaseOnly;
-                        (*sol)[globalIdx][SwitchIndex] = this->_problem.multicomp().xWN(pN); // initialize solution vector
-                        _staticNodeDat[globalIdx].numSwitches += 1;
+                        staticNodeDat_[globalIdx].phaseState = NPhaseOnly;
+                        (*sol)[globalIdx][SwitchIndex] = this->problem_.multicomp().xWN(pN); // initialize solution vector
+                        staticNodeDat_[globalIdx].numSwitches += 1;
                     }
                 }
                 else 
                     DUNE_THROW(Dune::InvalidStateException, "Phase state " << phaseState << " is invalid.");
                
-                return phaseState != _staticNodeDat[globalIdx].phaseState;
+                return phaseState != staticNodeDat_[globalIdx].phaseState;
             }
 
         // harmonic mean of the permeability computed directly.  the
         // first parameter is used to store the result.
-        static void _harmonicMeanK(Tensor &Ki, const Tensor &Kj)
+        static void harmonicMeanK_(Tensor &Ki, const Tensor &Kj)
             {
                 double eps = 1e-20;
                 
@@ -855,23 +858,23 @@ namespace Dune
             }
 
         // parameters given in constructor
-        std::vector<StaticNodeData> _staticNodeDat;
-	bool                        _switchFlag;
+        std::vector<StaticNodeData> staticNodeDat_;
+	bool                        switchFlag_;
 
         static const Scalar temperature = 283.15;
 
         // current solution
-        LocalFunction    _curSol;
-        CellCache        _curSolCache;
+        LocalFunction    curSol_;
+        CellCache        curSolCache_;
 
         // needed for restoreCurSolution()
-        bool             _curSolDeflected;
-        Scalar           _curSolOrigValue;
-        VariableNodeData _curSolOrigVarData;
+        bool             curSolDeflected_;
+        Scalar           curSolOrigValue_;
+        VariableNodeData curSolOrigVarData_;
 
         // previous solution
-        LocalFunction   _prevSol;
-        CellCache       _prevSolCache;
+        LocalFunction   prevSol_;
+        CellCache       prevSolCache_;
     };
     
 
@@ -934,8 +937,8 @@ namespace Dune
         typedef NewNewtonMethod<ThisType> NewtonMethod;
 
         TwoPTwoCBoxModel(ProblemT &prob)
-            : ParentType(prob, _twoPTwoCLocalJacobian),
-              _twoPTwoCLocalJacobian(prob)
+            : ParentType(prob, twoPTwoCLocalJacobian_),
+              twoPTwoCLocalJacobian_(prob)
             {
                 Api::require<Api::BasicDomainTraits, typename ProblemT::DomainTraits>();
             }
@@ -949,9 +952,9 @@ namespace Dune
             {
                 ParentType::updateFailedTry();
 
-		_twoPTwoCLocalJacobian.setSwitched(false);
-                _twoPTwoCLocalJacobian.resetPhaseState();
-                _twoPTwoCLocalJacobian.updateStaticData(this->currentSolution(),
+		twoPTwoCLocalJacobian_.setSwitched(false);
+                twoPTwoCLocalJacobian_.resetPhaseState();
+                twoPTwoCLocalJacobian_.updateStaticData(this->currentSolution(),
                                                         this->previousSolution());
             };
 
@@ -962,8 +965,8 @@ namespace Dune
             {
                 ParentType::updateSuccessful();
                 
-                _twoPTwoCLocalJacobian.updateOldPhaseState();
-		_twoPTwoCLocalJacobian.setSwitched(false);
+                twoPTwoCLocalJacobian_.updateOldPhaseState();
+		twoPTwoCLocalJacobian_.setSwitched(false);
             }
         
         
@@ -975,7 +978,7 @@ namespace Dune
         void addVtkFields(MultiWriter &writer, 
                        int bitmask = 0xffffff) const
             {
-                _twoPTwoCLocalJacobian.addVtkFields(writer, this->currentSolution(), bitmask);
+                twoPTwoCLocalJacobian_.addVtkFields(writer, this->currentSolution(), bitmask);
             }
 
         /*!
@@ -983,12 +986,12 @@ namespace Dune
          *        after the last time step.
          */
         bool switched() const
-            { return _twoPTwoCLocalJacobian.switched(); }
+            { return twoPTwoCLocalJacobian_.switched(); }
 
 
     private:
         // calculates the jacobian matrix at a given position
-        TwoPTwoCLocalJacobian  _twoPTwoCLocalJacobian;
+        TwoPTwoCLocalJacobian  twoPTwoCLocalJacobian_;
     };
 }
 

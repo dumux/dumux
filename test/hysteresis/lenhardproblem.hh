@@ -112,26 +112,26 @@ namespace Lenhard
 
     public:
         PwSnLenhardProblem(Scalar initialTimeStepSize, Scalar endTime)
-            : _model(*this),
-              _newtonMethod(_model),
-              _newtonCtl(*this),
+            : model_(*this),
+              newtonMethod_(model_),
+              newtonCtl_(*this),
 #if LENHARD_EXPERIMENT == 1
-              _resultWriter("LenhardExp1")
+              resultWriter_("LenhardExp1")
 #elif LENHARD_EXPERIMENT == 2
-              _resultWriter("LenhardExp2")
+              resultWriter_("LenhardExp2")
 #endif
             {
                 Api::require<Api::BasicDomainTraits, DomainTraits>();
 
 #ifdef USE_NODE_PARAMETERS
-                _maxPc = ParkerLenhard::pC(ParentType::nodeState(0), 
+                maxPc_ = ParkerLenhard::pC(ParentType::nodeState(0), 
                                            0.0);
 #else // !USE_NODE_PARAMETERS
-                _maxPc = ParkerLenhard::pC(ParentType::cellState(0), 
+                maxPc_ = ParkerLenhard::pC(ParentType::cellState(0), 
                                            0.0);
 #endif
-                _initialTimeStepSize = initialTimeStepSize;
-                _endTime = endTime;
+                initialTimeStepSize_ = initialTimeStepSize;
+                endTime_ = endTime;
             };
 
         ~PwSnLenhardProblem()
@@ -145,7 +145,7 @@ namespace Lenhard
                 Dune::Timer timer;
                 timer.reset();
 
-                _timeManager.runSimulation(*this);
+                timeManager_.runSimulation(*this);
 
                 std::cout <<
                     boost::format("LenhardSimulation took %.3f seconds\n")
@@ -163,13 +163,13 @@ namespace Lenhard
         void init()
             {
                 // set the initial water level and wait for 10 minutes
-                _updateEpisode();
+                updateEpisode_();
 
                  // set the initial solution
-                _model.initial();
+                model_.initial();
 
                 // write the inital solution to disk
-                _writeCurrentResult();
+                writeCurrentResult_();
             }
 
 
@@ -188,17 +188,17 @@ namespace Lenhard
             {
                 // execute the time integration (i.e. Runge-Kutta
                 // or Euler).  TODO/FIXME: Note that the time
-                // integration modifies the _curTimeStepSize if it
+                // integration modifies the curTimeStepSize_ if it
                 // thinks that's appropriate. (IMHO, this is an
                 // incorrect abstraction, the simulation
                 // controller is responsible for adapting the time
                 // step size!)
-                _timeIntegration.execute(*this,
-                                         _timeManager.time(),
+                timeIntegration_.execute(*this,
+                                         timeManager_.time(),
                                          stepSize,
                                          nextStepSize,
                                          1e100, // firstDt or maxDt, TODO: WTF?
-                                         _endTime,
+                                         endTime_,
                                          1.0); // CFL factor (not relevant since we use implicit euler)
             };
 
@@ -207,7 +207,7 @@ namespace Lenhard
         //! time pass.
         void updateModel(Scalar &dt, Scalar &nextDt)
             {
-                _model.update(dt, nextDt, _newtonMethod, _newtonCtl);
+                model_.update(dt, nextDt, newtonMethod_, newtonCtl_);
             }
 
         //! called by the TimeManager whenever a solution for a
@@ -215,13 +215,13 @@ namespace Lenhard
         void timestepDone()
             {
                 // write the current result to disk
-                _writeCurrentResult();
+                writeCurrentResult_();
 
                 // update the domain with the current solution
-                _updateDomain();
+                updateDomain_();
 
                 // change the episode of the simulation if necessary
-                _updateEpisode();
+                updateEpisode_();
             };
         ///////////////////////////////////
         // End of simulation control stuff
@@ -236,11 +236,11 @@ namespace Lenhard
 
         //! Returns the current time step size in seconds
         Scalar timeStepSize() const 
-            { return _timeManager.stepSize(); }
+            { return timeManager_.stepSize(); }
 
         //! Set the time step size in seconds.
         void setTimeStepSize(Scalar dt) 
-            { return _timeManager.setStepSize(dt); }
+            { return timeManager_.setStepSize(dt); }
 
         //! evaluate the initial condition for a node
         void initial(UnknownsVector &dest,
@@ -248,12 +248,12 @@ namespace Lenhard
                      WorldCoord pos,
                      LocalCoord posLocal)
             {
-                Scalar h = _curHydraulicHead - pos[0];
-                Scalar pH = _hydrostaticPressure(h);
+                Scalar h = curHydraulicHead_ - pos[0];
+                Scalar pH = hydrostaticPressure_(h);
 
                 // initially the lower 67cm are filled with water the
                 // remaining 5 with air
-                if (pos[0] > _curHydraulicHead) {
+                if (pos[0] > curHydraulicHead_) {
                     // try to model the initial water distribution
                     // above the hydraulic head due to the capillary
                     // pressure
@@ -320,12 +320,12 @@ namespace Lenhard
                 
 #if defined USE_NODE_PARAMETERS
                 if (onUpperBoundary(pos)) {
-                    dest[PwIndex] = -_maxPc;
+                    dest[PwIndex] = -maxPc_;
                     dest[SnIndex] = 1;
                 }
                 else { // onLowerBoundary(pos) 
-                    Scalar h = _curHydraulicHead - pos[0];
-                    Scalar pH = _hydrostaticPressure(h);
+                    Scalar h = curHydraulicHead_ - pos[0];
+                    Scalar pH = hydrostaticPressure_(h);
                     dest[PwIndex] = pH;
                     dest[SnIndex] = 0;
                 }
@@ -355,9 +355,9 @@ namespace Lenhard
         void newtonBegin()
             {
 #if defined LENHARD_WRITE_NEWTON_STEPS
-                _convergenceWriter =
+                convergenceWriter_ =
                     new VtkMultiWriter((boost::format("lenhard-convergence-t=%.2f-dt=%.2f")
-                                        %_timeManager.time()%_timeManager.stepSize()).str());
+                                        %timeManager_.time()%timeManager_.stepSize()).str());
 #endif // LENHARD_WRITE_NEWTON_STEPS
             }
 
@@ -366,18 +366,18 @@ namespace Lenhard
         void newtonEndStep(SpatialFunction &u, SpatialFunction &uOld)
             {
 #if defined LENHARD_WRITE_NEWTON_STEPS
-                if (_newtonCtl.newtonNumSteps() == 1) {
-                    _convergenceWriter->beginTimestep(0,
+                if (newtonCtl_.newtonNumSteps() == 1) {
+                    convergenceWriter_->beginTimestep(0,
                                                       ParentType::grid().leafView());
-                    _writeConvergenceFields(uOld, uOld);
-                    _convergenceWriter->endTimestep();
+                    writeConvergenceFields_(uOld, uOld);
+                    convergenceWriter_->endTimestep();
                 }
 
 
-                _convergenceWriter->beginTimestep(_newtonCtl.newtonNumSteps(),
+                convergenceWriter_->beginTimestep(newtonCtl_.newtonNumSteps(),
                                                   ParentType::grid().leafView());
-                _writeConvergenceFields(u, uOld);
-                _convergenceWriter->endTimestep();
+                writeConvergenceFields_(u, uOld);
+                convergenceWriter_->endTimestep();
 #endif // LENHARD_WRITE_NEWTON_STEPS
             }
 
@@ -386,7 +386,7 @@ namespace Lenhard
         void newtonEnd()
             {
 #if defined LENHARD_WRITE_NEWTON_STEPS
-                delete _convergenceWriter;
+                delete convergenceWriter_;
 #endif // LENHARD_WRITE_NEWTON_STEPS
             }
         ///////////////////////////////////
@@ -397,42 +397,42 @@ namespace Lenhard
         //! called when the solution for a time step has been
         //! computed.
 #if LENHARD_EXPERIMENT == 1
-        void _updateEpisode()
+        void updateEpisode_()
             {
-                int epiIndex = _timeManager.episodeIndex();
+                int epiIndex = timeManager_.episodeIndex();
 
                 int i = 0;
                 int k = 12;
                 if (epiIndex == i) {
                     // initial episode, we start at t=-3hours
-                    _curHydraulicHead = 0.67;
-                    _timeManager.startNextEpisode(-3*60*60);
-                    _timeManager.setStepSize(_initialTimeStepSize);
+                    curHydraulicHead_ = 0.67;
+                    timeManager_.startNextEpisode(-3*60*60);
+                    timeManager_.setStepSize(initialTimeStepSize_);
                     return;
                 }
                 ++ i;
 
-                if (_timeManager.time() >= _endTime) {
-                    _timeManager.setFinished();
+                if (timeManager_.time() >= endTime_) {
+                    timeManager_.setFinished();
                     return;
                 }
-                else if (!_timeManager.episodeIsOver())
+                else if (!timeManager_.episodeIsOver())
                     return;
 
                 if (epiIndex < i + k) {
                     // reduce the hydraulic head by 5cm and wait
                     // for 10 minutes
-                    _curHydraulicHead -= 0.05;
-                    _timeManager.startNextEpisode(10*60);
-                    _timeManager.setStepSize(1);
+                    curHydraulicHead_ -= 0.05;
+                    timeManager_.startNextEpisode(10*60);
+                    timeManager_.setStepSize(1);
                     return;
                 };
                 i += k;
                     
                 if (epiIndex == i) {
                     // wait until we reach simulation time t=53 hours
-                    _timeManager.startNextEpisode(53*60*60 - _timeManager.time());
-                    _timeManager.setStepSize(1);
+                    timeManager_.startNextEpisode(53*60*60 - timeManager_.time());
+                    timeManager_.setStepSize(1);
                     return;
                 }
                 ++i;
@@ -440,60 +440,60 @@ namespace Lenhard
                 if (epiIndex < i + k) {
                     // increase the hydraulic head by 5cm and wait
                     // for 10 minutes
-                    _curHydraulicHead += 0.05;
-                    _timeManager.startNextEpisode(10*60);
-                    _timeManager.setStepSize(1);
+                    curHydraulicHead_ += 0.05;
+                    timeManager_.startNextEpisode(10*60);
+                    timeManager_.setStepSize(1);
                     return;
                 }
                 i += k;
                 
                 if (epiIndex == i) {
-                    _timeManager.startNextEpisode(20*60*60);
-                    _timeManager.setStepSize(1);
+                    timeManager_.startNextEpisode(20*60*60);
+                    timeManager_.setStepSize(1);
                     return;
                 }
                 
-                _timeManager.setFinished();
+                timeManager_.setFinished();
             }
 
 #elif LENHARD_EXPERIMENT == 2
-        void _updateEpisode()
+        void updateEpisode_()
             {
-                int epiIndex = _timeManager.episodeIndex();
+                int epiIndex = timeManager_.episodeIndex();
 
                 int i = 0;
                 if (epiIndex == i) {
                     // initial episode, we start at t=-3hours
-                    _curHydraulicHead = 0.72;
-                    _timeManager.setTime(-10*60*60, 0);
-                    _timeManager.startNextEpisode(10*60*60);
-                    _timeManager.setStepSize(_initialTimeStepSize);
+                    curHydraulicHead_ = 0.72;
+                    timeManager_.setTime(-10*60*60, 0);
+                    timeManager_.startNextEpisode(10*60*60);
+                    timeManager_.setStepSize(initialTimeStepSize_);
                     return;
                 }
                 ++ i;
 
-                if (_timeManager.time() >= _endTime) {
-                    _timeManager.setFinished();
+                if (timeManager_.time() >= endTime_) {
+                    timeManager_.setFinished();
                     return;
                 }
-                else if (!_timeManager.episodeIsOver())
+                else if (!timeManager_.episodeIsOver())
                     return;
 
                 int k = 13;
                 if (epiIndex < i + k) {
                     // reduce the hydraulic head by 5cm and wait
                     // for 10 minutes
-                    _curHydraulicHead -= 0.05;
-                    _timeManager.startNextEpisode(10*60);
-                    _timeManager.setStepSize(10.0);
+                    curHydraulicHead_ -= 0.05;
+                    timeManager_.startNextEpisode(10*60);
+                    timeManager_.setStepSize(10.0);
                     return;
                 };
                 i += k;
                     
                 if (epiIndex == i) {
                     // wait until we reach simulation time t=3 hours
-                    _timeManager.startNextEpisode(3*60*60 - _timeManager.time());
-                    _timeManager.setStepSize(10.0);
+                    timeManager_.startNextEpisode(3*60*60 - timeManager_.time());
+                    timeManager_.setStepSize(10.0);
                     return;
                 }
                 ++i;
@@ -502,17 +502,17 @@ namespace Lenhard
                 if (epiIndex < i + k) {
                     // increase the hydraulic head by 5cm and wait
                     // for 10 minutes
-                    _curHydraulicHead += 0.05;
-                    _timeManager.startNextEpisode(10*60);
-                    _timeManager.setStepSize(10.0);
+                    curHydraulicHead_ += 0.05;
+                    timeManager_.startNextEpisode(10*60);
+                    timeManager_.setStepSize(10.0);
                     return;
                 }
                 i += k;
                 
                 if (epiIndex == i ) {
                     // wait until we reach simulation time t=3 hours
-                    _timeManager.startNextEpisode(5*60*60 - _timeManager.time());
-                    _timeManager.setStepSize(10.0);
+                    timeManager_.startNextEpisode(5*60*60 - timeManager_.time());
+                    timeManager_.setStepSize(10.0);
                     return;
                 }
                 ++i;
@@ -521,17 +521,17 @@ namespace Lenhard
                 if (epiIndex < i + k) {
                     // decrease the hydraulic head by 5cm and wait
                     // for 10 minutes
-                    _curHydraulicHead -= 0.05;
-                    _timeManager.startNextEpisode(10*60);
-                    _timeManager.setStepSize(10.0);
+                    curHydraulicHead_ -= 0.05;
+                    timeManager_.startNextEpisode(10*60);
+                    timeManager_.setStepSize(10.0);
                     return;
                 }
                 i += k;
 
                 if (epiIndex == i ) {
                     // wait until we reach simulation time t=6.67 hours
-                    _timeManager.startNextEpisode(6.67*60*60 - _timeManager.time());
-                    _timeManager.setStepSize(10.0);
+                    timeManager_.startNextEpisode(6.67*60*60 - timeManager_.time());
+                    timeManager_.setStepSize(10.0);
                     return;
                 }
                 ++i;
@@ -540,58 +540,58 @@ namespace Lenhard
                 if (epiIndex < i + k) {
                     // increase the hydraulic head by 5cm and wait
                     // for 10 minutes
-                    _curHydraulicHead += 0.05;
-                    _timeManager.startNextEpisode(10*60);
-                    _timeManager.setStepSize(60);
+                    curHydraulicHead_ += 0.05;
+                    timeManager_.startNextEpisode(10*60);
+                    timeManager_.setStepSize(60);
                     return;
                 }
                 i += k;
                 
                 if (epiIndex == i ) {
                     // wait until we reach simulation time t=10 hours
-                    _timeManager.startNextEpisode(10*60*60 - _timeManager.time());
-                    _timeManager.setStepSize(10.0);
+                    timeManager_.startNextEpisode(10*60*60 - timeManager_.time());
+                    timeManager_.setStepSize(10.0);
                     return;
                 }
                 ++i;
 
-                _timeManager.setFinished();
+                timeManager_.setFinished();
             }
 #endif
 
         // write results to the output files
-        void _writeCurrentResult()
+        void writeCurrentResult_()
             {
                 // write some points to stdout so that they can be
                 // later filtered and used for plotting them into a
                 // SVG
-                _writeCsv();
+                writeCsv_();
                 
                 // write the actual result into a VTK dataset
-                _resultWriter.beginTimestep(_timeManager.time(),
+                resultWriter_.beginTimestep(timeManager_.time(),
                                             ParentType::grid().leafView());
 
-                _resultWriter.addScalarVertexFunction("Sn",
-                                                      _model.currentSolution(),
+                resultWriter_.addScalarVertexFunction("Sn",
+                                                      model_.currentSolution(),
                                                       SnIndex);
-                _resultWriter.addScalarVertexFunction("Pw",
-                                                      _model.currentSolution(),
+                resultWriter_.addScalarVertexFunction("Pw",
+                                                      model_.currentSolution(),
                                                       PwIndex);
 
                 SpatialFunction globResidual(ParentType::grid());
-                _model.evalGlobalResidual(globResidual);
-                _resultWriter.addScalarVertexFunction("global defect Sn",
+                model_.evalGlobalResidual(globResidual);
+                resultWriter_.addScalarVertexFunction("global defect Sn",
                                                       globResidual,
                                                       SnIndex);
-                _resultWriter.addScalarVertexFunction("global defect Pw",
+                resultWriter_.addScalarVertexFunction("global defect Pw",
                                                       globResidual,
                                                       PwIndex);
 
-                _resultWriter.endTimestep();
+                resultWriter_.endTimestep();
             }
 
 #if defined LENHARD_WRITE_NEWTON_STEPS
-        void _writeConvergenceFields(SpatialFunction &u, SpatialFunction &uOld)
+        void writeConvergenceFields_(SpatialFunction &u, SpatialFunction &uOld)
             {
                 SpatialFunction diff(ParentType::grid());
                 for (int i=0; i < (*diff).size(); ++i) {
@@ -602,31 +602,31 @@ namespace Lenhard
                         (*diff)[i][1] = 1e12;
                 }
                 
-                _convergenceWriter->addScalarVertexFunction("Sn",
+                convergenceWriter_->addScalarVertexFunction("Sn",
                                                             u,
                                                             ParentType::nodeMap(),
                                                             SnIndex);
-                _convergenceWriter->addScalarVertexFunction("Pw",
+                convergenceWriter_->addScalarVertexFunction("Pw",
                                                             u,
                                                             ParentType::nodeMap(),
                                                             PwIndex);
-                _convergenceWriter->addScalarVertexFunction("difference Sn",
+                convergenceWriter_->addScalarVertexFunction("difference Sn",
                                                             diff,
                                                             ParentType::nodeMap(),
                                                             SnIndex);
-                _convergenceWriter->addScalarVertexFunction("difference Pw",
+                convergenceWriter_->addScalarVertexFunction("difference Pw",
                                                             diff,
                                                             ParentType::nodeMap(),
                                                             PwIndex);
                 
-/*                _writeVertexFields(*_convergenceWriter, u);
-                _writeCellFields(*_convergenceWriter, u);
+/*                writeVertexFields_(*convergenceWriter_, u);
+                writeCellFields_(*convergenceWriter_, u);
 */
             };
 #endif // LENHARD_WRITE_NEWTON_STEPS
 
         // called whenever a solution for a timestep has been computed.
-        void _updateDomain()
+        void updateDomain_()
             {
 #ifdef USE_HYSTERESIS
 #ifdef USE_NODE_PARAMETERS
@@ -634,7 +634,7 @@ namespace Lenhard
                 NodeIterator endit = ParentType::nodeEnd();
                 for (; it != endit; ++it) {
                     int vertIdx = ParentType::nodeIndex(*it);
-                    Scalar Sn = (*_model.currentSolution())[vertIdx][SnIndex];
+                    Scalar Sn = (*model_.currentSolution())[vertIdx][SnIndex];
                     Scalar Sw = 1 - Sn;
                     ParkerLenhard::updateState(nodeState(*it), Sw);
                 }
@@ -651,7 +651,7 @@ namespace Lenhard
 
                     // evaluate the solution for the non-wetting
                     // saturation at this point
-                    Scalar Sn = _model.currentSolution().evallocal(SnIndex,
+                    Scalar Sn = model_.currentSolution().evallocal(SnIndex,
                                                      *it,
                                                      localPos);
                     Scalar Sw = 1 - Sn;
@@ -661,7 +661,7 @@ namespace Lenhard
 #endif
             }
         
-        void _writeCsv()
+        void writeCsv_()
             {
                 // write out the points at 67,57,47,37 and 27 cm in
                 // order to allow them being plotted
@@ -678,7 +678,7 @@ namespace Lenhard
                     if (0 <= localPos[0] && localPos[0] < 1.0) {
                         // evaluate the solution for the non-wetting
                         // saturation at this point
-                        Scalar Sn = _model.currentSolution().evallocal(SnIndex,
+                        Scalar Sn = model_.currentSolution().evallocal(SnIndex,
                                                          *it,
                                                          localPos);
 
@@ -686,7 +686,7 @@ namespace Lenhard
                         // given point in order to allow it to be
                         // plotted
                         std::cout << boost::format("snip: pos=%.02f\n")%points[curI];
-                        std::cout << _timeManager.time()/3600 << " " << 1.0 - Sn << "\n"; 
+                        std::cout << timeManager_.time()/3600 << " " << 1.0 - Sn << "\n"; 
                         std::cout << "snap\n";
 
                         // print the capillary pressure vs water
@@ -694,7 +694,7 @@ namespace Lenhard
                         // contains the current point of interest
                         const NodeState &vs = ParentType::nodeState(ParentType::cellIndex(*it));
                         localPos[0] = 0;
-                        Sn = _model.currentSolution().evallocal(SnIndex,
+                        Sn = model_.currentSolution().evallocal(SnIndex,
                                                                 *it,
                                                                 localPos);
                         std::cout << boost::format("snip: pC_pos=%.02f\n")%points[curI];
@@ -706,7 +706,7 @@ namespace Lenhard
                 }
             }
 
-        Scalar _hydrostaticPressure(Scalar hydraulicHead) 
+        Scalar hydrostaticPressure_(Scalar hydraulicHead) 
             {
                 return -ParentType::densityW()*
                         ParentType::gravity()[0]*
@@ -715,21 +715,21 @@ namespace Lenhard
 
 
         // simulated time control stuff
-        TimeManager     _timeManager;
-        TimeIntegration _timeIntegration;
-        Scalar          _initialTimeStepSize;
-        Scalar          _endTime;
+        TimeManager     timeManager_;
+        TimeIntegration timeIntegration_;
+        Scalar          initialTimeStepSize_;
+        Scalar          endTime_;
 
-        Scalar _curHydraulicHead;
-        Scalar _maxPc;
+        Scalar curHydraulicHead_;
+        Scalar maxPc_;
 
-        Model            _model;
-        NewtonMethod     _newtonMethod;
-        NewtonController _newtonCtl;
-        VtkMultiWriter   _resultWriter;
+        Model            model_;
+        NewtonMethod     newtonMethod_;
+        NewtonController newtonCtl_;
+        VtkMultiWriter   resultWriter_;
 
 #if defined LENHARD_WRITE_NEWTON_STEPS
-        VtkMultiWriter *_convergenceWriter;
+        VtkMultiWriter *convergenceWriter_;
 #endif // LENHARD_WRITE_NEWTON_STEPS
     };
 }

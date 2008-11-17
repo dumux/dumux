@@ -223,12 +223,12 @@ namespace Dune
             : ParentType(grid),
               materialLaw_(soil_, wPhase_, nPhase_),
               multicomp_(wPhase_, nPhase_),
-              _model(*this),
-              _newtonMethod(_model),
-              _resultWriter("new2p2c")
+              model_(*this),
+              newtonMethod_(model_),
+              resultWriter_("new2p2c")
             {
-                _initialTimeStepSize = dtInitial;
-                _endTime = tEnd;
+                initialTimeStepSize_ = dtInitial;
+                endTime_ = tEnd;
 
                 // specify the grid dimensions
                 outerLowerLeft_[0] = 0;
@@ -263,14 +263,14 @@ namespace Dune
         void init()
             {
                 // set the episode length and initial time step size
-                _timeManager.startNextEpisode(1e100);
-                _timeManager.setStepSize(_initialTimeStepSize);
+                timeManager_.startNextEpisode(1e100);
+                timeManager_.setStepSize(initialTimeStepSize_);
 
                 // set the initial condition
-                _model.initial();
+                model_.initial();
 
                 // write the inital solution to disk
-//                _writeCurrentResult(); // TODO
+//                writeCurrentResult_(); // TODO
             }
 
         /*!
@@ -288,17 +288,17 @@ namespace Dune
             {
                 // execute the time integration (i.e. Runge-Kutta
                 // or Euler).  TODO/FIXME: Note that the time
-                // integration modifies the _curTimeStepSize if it
+                // integration modifies the curTimeStepSize_ if it
                 // thinks that's appropriate. (IMHO, this is an
                 // incorrect abstraction, the simulation
                 // controller is responsible for adapting the time
                 // step size!)
-                _timeIntegration.execute(*this,
-                                         _timeManager.time(),
+                timeIntegration_.execute(*this,
+                                         timeManager_.time(),
                                          stepSize,
                                          nextStepSize,
                                          1e100, // firstDt or maxDt, TODO: WTF?
-                                         _endTime,
+                                         endTime_,
                                          1.0); // CFL factor (not relevant since we use implicit euler)
 
             };
@@ -307,7 +307,7 @@ namespace Dune
         //! time pass.
         void updateModel(Scalar &dt, Scalar &nextDt)
             {
-                _model.update(dt, nextDt, _newtonMethod, _newtonCtl);
+                model_.update(dt, nextDt, newtonMethod_, newtonCtl_);
             }
 
         //! called by the TimeManager whenever a solution for a
@@ -317,14 +317,14 @@ namespace Dune
                 std::cout << "Writing result file for current time step\n";
 
                 // write the current result to disk
-                _writeCurrentResult(); // TODO
+                writeCurrentResult_(); // TODO
 
                 // update the domain with the current solution
-//                _updateDomain();
+//                updateDomain_();
 
                 // stop the simulation if reach the end specified time
-                if (_timeManager.time() >= _endTime)
-                    _timeManager.setFinished();
+                if (timeManager_.time() >= endTime_)
+                    timeManager_.setFinished();
             };
         ///////////////////////////////////
         // End of simulation control stuff
@@ -337,11 +337,11 @@ namespace Dune
         ///////////////////////////////////
         //! Returns the current time step size in seconds
         Scalar timeStepSize() const 
-            { return _timeManager.stepSize(); }
+            { return timeManager_.stepSize(); }
 
         //! Set the time step size in seconds.
         void setTimeStepSize(Scalar dt) 
-            { return _timeManager.setStepSize(dt); }
+            { return timeManager_.setStepSize(dt); }
         
 
         //! properties of the wetting (liquid) phase
@@ -533,21 +533,21 @@ namespace Dune
 
         bool simulate()
             {
-                _timeManager.runSimulation(*this);
+                timeManager_.runSimulation(*this);
                 return true;
             };
 
 
     private:
         // write the fields current solution into an VTK output file.
-        void _writeCurrentResult()
+        void writeCurrentResult_()
             {
-                _resultWriter.beginTimestep(_timeManager.time(),
+                resultWriter_.beginTimestep(timeManager_.time(),
                                             ParentType::grid().leafView());
                 
-                _model.addVtkFields(_resultWriter);
+                model_.addVtkFields(resultWriter_);
 
-                _resultWriter.endTimestep();
+                resultWriter_.endTimestep();
             }
 
 
@@ -569,16 +569,16 @@ namespace Dune
         MaterialLaw     materialLaw_;
         Multicomp       multicomp_;
 
-        TimeManager     _timeManager;
-        TimeIntegration _timeIntegration;
-        Scalar          _initialTimeStepSize;
-        Scalar          _endTime;
+        TimeManager     timeManager_;
+        TimeIntegration timeIntegration_;
+        Scalar          initialTimeStepSize_;
+        Scalar          endTime_;
 
-        Model            _model;
-        NewtonMethod     _newtonMethod;
-        NewtonController _newtonCtl;
+        Model            model_;
+        NewtonMethod     newtonMethod_;
+        NewtonController newtonCtl_;
 
-        VtkMultiWriter  _resultWriter;
+        VtkMultiWriter  resultWriter_;
     };
 } //end namespace
 

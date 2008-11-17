@@ -137,77 +137,77 @@ namespace Dune
         // geometry type as long as the entity represents a call
         // (i.e. leaf in DUNE-lingo).
         template<int dim>
-        struct _CellLayout
+        struct CellLayout_
         { bool contains(Dune::GeometryType geoType) { return geoType.dim() == dim; } };
 
         // mapper from grid cells to the actual array indices
         // of the cell state vector.
-        typedef Dune::LeafMultipleCodimMultipleGeomTypeMapper<Grid, _CellLayout> CellMap;
+        typedef Dune::LeafMultipleCodimMultipleGeomTypeMapper<Grid, CellLayout_> CellMap;
 
         // the set of indices for the grid's cells
-        typedef typename Grid::Traits::LeafIndexSet _CellIndexSet;
+        typedef typename Grid::Traits::LeafIndexSet CellIndexSet_;
 
         // mapper: one data element per node
         template<int dim>
-        struct _NodeLayout
+        struct NodeLayout_
         { bool contains (Dune::GeometryType gt) { return gt.dim() == 0; } };
-        typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,_CellIndexSet,_NodeLayout> NodeMap;
+        typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,CellIndexSet_,NodeLayout_> NodeMap;
         
     public:
         BasicDomain()
             {
                 Api::require<Api::BasicDomainTraits, DomainTraits>();
 
-                _cellMap = NULL;
-                _nodeMap = NULL;
+                cellMap_ = NULL;
+                nodeMap_ = NULL;
             };
 
         BasicDomain(Grid *grid)
             {
                 Api::require<Api::BasicDomainTraits, DomainTraits>();
 
-                _cellMap = NULL;
-                _nodeMap = NULL;
+                cellMap_ = NULL;
+                nodeMap_ = NULL;
                 setGrid(grid);
             };
 
         ~BasicDomain()
             {
-                delete _cellMap;
-                delete _nodeMap;
+                delete cellMap_;
+                delete nodeMap_;
             }
 
         /*!
          * \brief Returns the current grid.
          */
 /*        const Grid &grid()
-            { return *_grid; }
+            { return *grid_; }
 */
 
         /*!
          * \brief Returns the current grid.
          */
         const Grid &grid() const
-            { return *_grid; }
+            { return *grid_; }
 
         /*!
          * \brief Returns the current grid's number of cells.
          */
         int numCells() const
-            { return _cellMap->size(); }
+            { return cellMap_->size(); }
 
         /*!
          * \brief Given a cell, return it's respective index.
          */
         int cellIndex(const Cell &e) const
-            { return _cellMap->map(e); }
+            { return cellMap_->map(e); }
 
         /*!
          * \brief Returns the iterator pointing to the first cell of
          *        the grid.
          */
         CellIterator cellBegin() const {
-            return _grid->template leafbegin<0>();
+            return grid_->template leafbegin<0>();
         }
 
         /*!
@@ -215,7 +215,7 @@ namespace Dune
          *        cell of the grid.
          */
         CellIterator cellEnd() {
-            return _grid->template leafend<0>();
+            return grid_->template leafend<0>();
         }
 
         /*!
@@ -238,36 +238,36 @@ namespace Dune
          * \brief Returns the cell map in case it is externally required.
          */
         CellMap &cellMap()
-            { return *_cellMap; }
+            { return *cellMap_; }
         const CellMap &cellMap() const
-            { return *_cellMap; }
+            { return *cellMap_; }
 
         /*!
          * \brief Returns the current grid's number of nodes.
          */
         int numNodes() const
-            { return _nodeMap->size(); }
+            { return nodeMap_->size(); }
 
         /*!
          * \brief Given a node index within a cell, return the
          *        respective global index.
          */
         int nodeIndex(const Cell &e, int localNodeId) const
-            { return _nodeMap->template map<GridDim>(e, localNodeId); }
+            { return nodeMap_->template map<GridDim>(e, localNodeId); }
 
         /*!
          * \brief Given a node index within a cell, return the
          *        respective global index.
          */
         int nodeIndex(const Node &v) const
-            { return _nodeMap->map(v); }
+            { return nodeMap_->map(v); }
 
         /*!
          * \brief Returns the iterator pointing to the first cell of
          *        the grid.
          */
         NodeIterator nodeBegin() {
-            return _grid->template leafbegin<GridDim>();
+            return grid_->template leafbegin<GridDim>();
         }
 
         /*!
@@ -275,7 +275,7 @@ namespace Dune
          *        cell of the grid.
          */
         NodeIterator nodeEnd() {
-            return _grid->template leafend<GridDim>();
+            return grid_->template leafend<GridDim>();
         }
 
         /*!
@@ -298,9 +298,9 @@ namespace Dune
          * \brief Returns the node map in case it is externally required.
          */
         NodeMap &nodeMap()
-            { return *_nodeMap; }
+            { return *nodeMap_; }
         const NodeMap &nodeMap() const
-            { return *_nodeMap; }
+            { return *nodeMap_; }
 
 
         /*!
@@ -312,12 +312,12 @@ namespace Dune
          */
         void gridChanged()
             {
-                delete _cellMap;
-                delete _nodeMap;
+                delete cellMap_;
+                delete nodeMap_;
 
                 // create the cell and node index sets for the grid
-                _cellMap = new CellMap(*_grid);
-                _nodeMap = new NodeMap(*_grid, _grid->leafIndexSet());
+                cellMap_ = new CellMap(*grid_);
+                nodeMap_ = new NodeMap(*grid_, grid_->leafIndexSet());
             }
 
         /*!
@@ -330,19 +330,19 @@ namespace Dune
          */
         void setGrid(Grid *grid)
             {
-                _grid = grid;
+                grid_ = grid;
 
                 gridChanged();
             };
 
     private:
         // pointer to the grid object
-        Grid  *_grid;
+        Grid  *grid_;
 
         // map from the grid's leafs to an index of the index set
-        CellMap *_cellMap;
+        CellMap *cellMap_;
         // translates vertices local to a cell to global ones
-        NodeMap *_nodeMap;
+        NodeMap *nodeMap_;
     };
 }
 

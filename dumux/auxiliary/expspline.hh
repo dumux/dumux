@@ -49,14 +49,14 @@ namespace Dune
                   Scalar m2,
                   int p = 0)
             {
-                const int _maxP = 4096;
+                const int maxP_ = 4096;
                 assert(x1 != x2);
                 
-                _x1 = x1;
-                _x2 = x2;
+                x1_ = x1;
+                x2_ = x2;
                 
                 if (p > 0) {
-                    _calcParameters(x1, x2, y1, y2, m1, m2, p);
+                    calcParameters_(x1, x2, y1, y2, m1, m2, p);
                     return;
                 }
                 
@@ -64,33 +64,33 @@ namespace Dune
                 // by calculating the average second derivative of the
                 // spline.
                 p = 1;
-                while (p <= _maxP)
+                while (p <= maxP_)
                 {
                     // calculate parameters for the current p
-                    _calcParameters(x1, x2, y1, y2, m1, m2, p);
+                    calcParameters_(x1, x2, y1, y2, m1, m2, p);
                     
-                    if (_isOk(x1,x2,y1,y2,m1,m2))
+                    if (isOk_(x1,x2,y1,y2,m1,m2))
                         break;
 
                     // try a bigger p next time
                     p = p*2;
                 }
 
-                if (p > 2 && p <= _maxP) {
+                if (p > 2 && p <= maxP_) {
                     int pLow = p/2;
                     int pHigh = p;
                     while (true) {
                         // calculate parameters for the current p
-                        _calcParameters(x1, x2, y1, y2, m1, m2, p);
+                        calcParameters_(x1, x2, y1, y2, m1, m2, p);
                         
-                        if (_isOk(x1,x2,y1,y2,m1,m2))
+                        if (isOk_(x1,x2,y1,y2,m1,m2))
                             pHigh = p;
                         else
                             pLow = p;
                         
                         if (pHigh - pLow < 4) {
                             p = pHigh;
-                            _calcParameters(x1, x2, y1, y2, m1, m2, p);
+                            calcParameters_(x1, x2, y1, y2, m1, m2, p);
                             break;
                         }
                         
@@ -109,17 +109,17 @@ namespace Dune
          * \brief Return true iff the given x is in range [x1, x2].
          */
         bool applies(Scalar x) const
-            { return _x1 <= x && x <= _x2; };
+            { return x1_ <= x && x <= x2_; };
 
         /*!
          * \brief Evaluate the polynomial at a given position.
          */
         Scalar eval(Scalar x) const
             {
-                return _a + 
-                    _b*(x - _x1) +
-                       _c*exp(_p*(x - _x1)) + 
-                       _d*exp(-_p*(x - _x1));
+                return a_ + 
+                    b_*(x - x1_) +
+                       c_*exp(p_*(x - x1_)) + 
+                       d_*exp(-p_*(x - x1_));
             }
 
         /*!
@@ -127,15 +127,15 @@ namespace Dune
          */
         Scalar evalDerivative(Scalar x) const
             {
-                return _b + 
-                    _p*( _c*exp( _p*(x - _x1)) - 
-                         _d*exp(-_p*(x - _x1)) );
+                return b_ + 
+                    p_*( c_*exp( p_*(x - x1_)) - 
+                         d_*exp(-p_*(x - x1_)) );
             }
 
-        Scalar p() { return _p; }
+        Scalar p() { return p_; }
         
     private:
-        void _calcParameters(Scalar x1,
+        void calcParameters_(Scalar x1,
                              Scalar x2,
                              Scalar y1,
                              Scalar y2,
@@ -158,14 +158,14 @@ namespace Dune
                 Scalar gamma = (m1 + v*m2 - (v + 1)*dy/dx)/(v*v - 1);
                 Scalar delta = (-v*m1 - m2 + (v + 1)*dy/dx)/(v*v - 1);
                 
-                _a = dx*(beta + w*delta);
-                _b = alpha - beta + w*(gamma - delta);
-                _c = 0.5*(gamma - delta*exp(-p*dx))/(z - p);
-                _d = 0.5*(delta*exp(p*dx) - gamma)/(z - p);
-                _p = p;
+                a_ = dx*(beta + w*delta);
+                b_ = alpha - beta + w*(gamma - delta);
+                c_ = 0.5*(gamma - delta*exp(-p*dx))/(z - p);
+                d_ = 0.5*(delta*exp(p*dx) - gamma)/(z - p);
+                p_ = p;
             };
 
-        bool _isOk(Scalar x1, Scalar x2,
+        bool isOk_(Scalar x1, Scalar x2,
                    Scalar y1, Scalar y2,
                    Scalar m1, Scalar m2)
             {
@@ -181,31 +181,31 @@ namespace Dune
                 Scalar f = 1.01;
 
                 if (m1 > mAvg)
-                    ok = ok && _isUnder(x1, y1, m1/f);
+                    ok = ok && isUnder_(x1, y1, m1/f);
                 else 
-                    ok = ok && _isOver(x1, y1, m1*f);
+                    ok = ok && isOver_(x1, y1, m1*f);
 
                 if (m2 > mAvg)
-                    ok = ok && _isOver(x2, y2, m2/f);
+                    ok = ok && isOver_(x2, y2, m2/f);
                 else 
-                    ok = ok && _isUnder(x2, y2, m2*f);
+                    ok = ok && isUnder_(x2, y2, m2*f);
 
                 return ok;
             }
 
         // return true iff the curve is unter the line which passes
         // through (x0, y0) with a slope of m
-        bool _isUnder(Scalar x0, Scalar y0, Scalar m)
+        bool isUnder_(Scalar x0, Scalar y0, Scalar m)
             {
                 Scalar b = y0 - m*x0;
 
-                Scalar x = _x1;
-                Scalar inc = (_x2 - _x1)/(2 - 0.01);
-                for (x += inc; x < _x2; x += inc) { 
+                Scalar x = x1_;
+                Scalar inc = (x2_ - x1_)/(2 - 0.01);
+                for (x += inc; x < x2_; x += inc) { 
                     // evaluate spline at position x
                     Scalar tmp = eval(x);
 
-/*                    std::cerr << boost::format("_isUnder: %f > %f !\n")%
+/*                    std::cerr << boost::format("isUnder_: %f > %f !\n")%
                         (m*x + b)%
                         (tmp + fabs(tmp)*0.01);
 */
@@ -217,17 +217,17 @@ namespace Dune
 
         // return true iff the curve is unter the line which passes
         // through (x0, y0) with a slope of m
-        bool _isOver(Scalar x0, Scalar y0, Scalar m)
+        bool isOver_(Scalar x0, Scalar y0, Scalar m)
             {
                 Scalar b = y0 - m*x0;
                 
-                Scalar x = _x1;
-                Scalar inc = (_x2 - _x1)/(2 - 0.01);
-                for (x += inc; x < _x2; x += inc) { 
+                Scalar x = x1_;
+                Scalar inc = (x2_ - x1_)/(2 - 0.01);
+                for (x += inc; x < x2_; x += inc) { 
                     // evaluate spline at position x
                     Scalar tmp = eval(x);
                     
-/*                    std::cerr << boost::format("_isOver: %f < %f !\n")%
+/*                    std::cerr << boost::format("isOver_: %f < %f !\n")%
                         (m*x + b)%
                         (tmp + fabs(tmp)*0.01);
 */
@@ -239,14 +239,14 @@ namespace Dune
             };
 
 
-        Scalar _a;
-        Scalar _b;
-        Scalar _c;
-        Scalar _d;
-        int    _p;
+        Scalar a_;
+        Scalar b_;
+        Scalar c_;
+        Scalar d_;
+        int    p_;
 
-        Scalar _x1; 
-        Scalar _x2; 
+        Scalar x1_; 
+        Scalar x2_; 
     };
 }
 

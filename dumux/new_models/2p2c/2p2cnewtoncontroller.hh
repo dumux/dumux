@@ -65,7 +65,7 @@ namespace Dune {
         Scalar suggestTimeStepSize(Scalar oldTimeStep) const
             {
                 /*
-                  if (_switched) {
+                  if (switched_) {
                   return somethingSmall;
                   }
                 */
@@ -85,7 +85,7 @@ namespace Dune {
                 // before we give up.
                 if (!baseProceed && 
                     ParentType::model().switched() &&
-                    ParentType::_numSteps < 4 &&
+                    ParentType::numSteps_ < 4 &&
                     !ParentType::newtonConverged())
                 {
                     return true;
@@ -99,7 +99,7 @@ namespace Dune {
         //! called by the base class the get an indication of how physical
         //! an iterative solution is 1 means "completely physical", 0 means
         //! "completely unphysical"
-        Scalar _physicalness(Function &u)
+        Scalar physicalness_(Function &u)
             {
                 return 1.0;
 

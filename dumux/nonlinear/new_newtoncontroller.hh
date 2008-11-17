@@ -62,43 +62,43 @@ namespace Dune
                              int maxSteps)
             {
                 assert(maxSteps > targetSteps + 3);
-                _numSteps = 0;
-                _tolerance = tolerance;
-                _targetSteps = targetSteps;
-                _maxSteps = maxSteps;
+                numSteps_ = 0;
+                tolerance_ = tolerance;
+                targetSteps_ = targetSteps;
+                maxSteps_ = maxSteps;
                 
-                _curPhysicalness = 0;
-                _maxPhysicalness = 0;
+                curPhysicalness_ = 0;
+                maxPhysicalness_ = 0;
             };
 
         //! Returns true if another iteration should be done.
         bool newtonProceed(Function &u)
             {
-                if (_numSteps < 2)
+                if (numSteps_ < 2)
                     return true; // we always do at least two iterations
-                else if (_numSteps > _maxSteps)
+                else if (numSteps_ > maxSteps_)
                     return false; // we have exceeded the allowed number of steps
                 else if (newtonConverged())
                     return false; // we are below the desired tolerance
 
-                _curPhysicalness = _asImp()._physicalness(u);
-                _curPhysicalness = std::min(_curPhysicalness, 1.0);
+                curPhysicalness_ = asImp_().physicalness_(u);
+                curPhysicalness_ = std::min(curPhysicalness_, 1.0);
 
 
                 // check for the physicalness of the solution
-                if (_curPhysicalness <= 0)
+                if (curPhysicalness_ <= 0)
                     // not physical enough even for a temporary
                     // solution
                     return false;
-                else if (_curPhysicalness < ((Scalar) _numSteps)/(_maxSteps - 1)) {
+                else if (curPhysicalness_ < ((Scalar) numSteps_)/(maxSteps_ - 1)) {
                     // we require that the solution gets more physical
                     // with every step and at the last step the
                     // solution must be completely physical.
                     return false;
                 }
-                else if (_curPhysicalness < _maxPhysicalness)
+                else if (curPhysicalness_ < maxPhysicalness_)
                 {
-                    if (_probationCount > 1) {
+                    if (probationCount_ > 1) {
                         // an iterative solution was more physical
                         // than the current solution and at least 2
                         // others.
@@ -108,7 +108,7 @@ namespace Dune
                         // we are physical enough, but some earlier
                         // solution was more physical, so we let the
                         // solver continue on probation.
-                        ++_probationCount;
+                        ++probationCount_;
                         return true;
                     }
                 }
@@ -116,8 +116,8 @@ namespace Dune
                     // everything's fine: the solution is physical
                     // enough for the number of iterations we did and
                     // it is the most physical so far.
-                    _maxPhysicalness = _curPhysicalness;
-                    _probationCount = std::min(0, _probationCount - 1);
+                    maxPhysicalness_ = curPhysicalness_;
+                    probationCount_ = std::min(0, probationCount_ - 1);
 
                     return true; // do another round
                 };
@@ -127,19 +127,19 @@ namespace Dune
         //! tolerance
         bool newtonConverged()
             {
-                return ((_method->deflectionTwoNorm()*_oneByMagnitude <= _tolerance) && (_curPhysicalness >= 1.0));
+                return ((method_->deflectionTwoNorm()*oneByMagnitude_ <= tolerance_) && (curPhysicalness_ >= 1.0));
             }
 
         //! called before the newton method is applied to an equation
         //! system.
         void newtonBegin(NewtonMethod *method, Function &u)
             {
-                _method = method;
-                _numSteps = 0;
-                _probationCount = 0;
-                _maxPhysicalness = 0;
-                _curPhysicalness = 0;
-                _oneByMagnitude = 1.0/std::max((*u).two_norm(), 1e-5);
+                method_ = method;
+                numSteps_ = 0;
+                probationCount_ = 0;
+                maxPhysicalness_ = 0;
+                curPhysicalness_ = 0;
+                oneByMagnitude_ = 1.0/std::max((*u).two_norm(), 1e-5);
             }
 
         //! indidicates the beginning of a newton iteration
@@ -150,7 +150,7 @@ namespace Dune
         //! Returns the number of steps done since newtonBegin() was
         //! called
         int newtonNumSteps()
-            { return _numSteps; }
+            { return numSteps_; }
 
         //! Solve the linear equation system Ax - b = 0 for the
         //! current iteration.
@@ -165,7 +165,7 @@ namespace Dune
                 // accurately. On the other hand, if this is the first
                 // newton step, we don't have a meaningful value for the defect
                 // yet, so we use the targeted accurracy for the defect.
-                Scalar residTol = _tolerance/1e8;
+                Scalar residTol = tolerance_/1e8;
 
                 typedef Dune::MatrixAdapter<typename JacobianAssembler::RepresentationType,
                                             typename Function::RepresentationType,
@@ -193,10 +193,10 @@ namespace Dune
         //! Indicates that we're done solving one newton step.
         void newtonEndStep(Function &u, Function &uOld)
             {
-                ++_numSteps;
-                _curPhysicalness = _asImp()._physicalness(u);
+                ++numSteps_;
+                curPhysicalness_ = asImp_().physicalness_(u);
                 std::cout << boost::format("Newton iteration %d done: defect=%g, physicalness: %.3f, maxPhysicalness=%.3f\n")
-                    %_numSteps%(_method->deflectionTwoNorm()*_oneByMagnitude)%_curPhysicalness%_maxPhysicalness;
+                    %numSteps_%(method_->deflectionTwoNorm()*oneByMagnitude_)%curPhysicalness_%maxPhysicalness_;
             };
 
         //! Indicates that we're done solving the equation system.
@@ -206,7 +206,7 @@ namespace Dune
         //! Called when the newton method broke down.
         void newtonFail()
             {
-                _numSteps = _targetSteps*2;
+                numSteps_ = targetSteps_*2;
             }
 
         //! Suggest a new time stepsize based on the number of newton
@@ -219,12 +219,12 @@ namespace Dune
                 // that we want to avoid failing in the next newton
                 // iteration which would require another linerization
                 // of the problem.
-                if (_numSteps > _targetSteps) {
-                    Scalar percent = ((Scalar) _numSteps - _targetSteps)/_targetSteps;
+                if (numSteps_ > targetSteps_) {
+                    Scalar percent = ((Scalar) numSteps_ - targetSteps_)/targetSteps_;
                     return oldTimeStep/(1 + percent);
                 }
                 else {
-                    Scalar percent = ((Scalar) _targetSteps - _numSteps)/_targetSteps;
+                    Scalar percent = ((Scalar) targetSteps_ - numSteps_)/targetSteps_;
                     return oldTimeStep*(1 + percent/1.2);
                 }
             }
@@ -234,26 +234,26 @@ namespace Dune
          *        which is controlled by this controller.
          */
         NewtonMethod &method() 
-            { return *_method; }
+            { return *method_; }
 
         /*!
          * \brief Returns a reference to the current newton method
          *        which is controlled by this controller.
          */
         const NewtonMethod &method() const
-            { return *_method; }
+            { return *method_; }
         
         /*!
          * \brief Returns a reference to the current numeric model.
          */
         Model &model()
-            { return _method->model(); }
+            { return method_->model(); }
 
         /*!
          * \brief Returns a reference to the current numeric model.
          */
         const Model &model() const
-            { return _method->model(); }
+            { return method_->model(); }
 
 
     protected:
@@ -261,9 +261,9 @@ namespace Dune
         // it this way in order to allow "poor man's virtual methods",
         // i.e. methods of subclasses which can be called by the base
         // class.
-        Implementation &_asImp()
+        Implementation &asImp_()
             { return *static_cast<Implementation*>(this); }
-        const Implementation &_asImp() const
+        const Implementation &asImp_() const
             { return *static_cast<const Implementation*>(this); }
 
         //! this function is an indication of how "physically
@@ -278,26 +278,26 @@ namespace Dune
         //! iteration. (The controller assumes that as the method
         //! progresses, the physicallness of the solution must
         //! increase.)
-        Scalar _physicalness(Function &u)
+        Scalar physicalness_(Function &u)
             {
                 return 1;
             }
 
-        NewtonMethod *_method;
+        NewtonMethod *method_;
 
-        Scalar _tolerance;
+        Scalar tolerance_;
 
-        Scalar _maxPhysicalness;
-        Scalar _curPhysicalness;
-        Scalar _oneByMagnitude;
-        int    _probationCount;
+        Scalar maxPhysicalness_;
+        Scalar curPhysicalness_;
+        Scalar oneByMagnitude_;
+        int    probationCount_;
 
         // optimal number of iterations we want to achive
-        int    _targetSteps;
+        int    targetSteps_;
         // maximum number of iterations we do before giving up
-        int    _maxSteps;
+        int    maxSteps_;
         // actual number of steps done so far
-        int    _numSteps;
+        int    numSteps_;
     };
 
     //! A reference implementation of a newton method controller
