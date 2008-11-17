@@ -71,13 +71,13 @@ namespace Dune {
                 return ParentType::newtonProceed(u);
 
                 if (ParentType::newtonConverged()){
-                    ParentType::_method->model().clearSwitched();
+                    ParentType::method_->model().clearSwitched();
                     return false;
                 }
-                if (ParentType::_method->model().checkSwitched() && ParentType::_numSteps <= minStepsSwitch && !ParentType::newtonConverged())
+                if (ParentType::method_->model().checkSwitched() && ParentType::numSteps_ <= minStepsSwitch && !ParentType::newtonConverged())
                     return true; // do at least some iterations after variable switch
-                else if (ParentType::_method->model().checkSwitched() && ParentType::_numSteps > minStepsSwitch) {
-                    ParentType::_method->model().clearSwitched();
+                else if (ParentType::method_->model().checkSwitched() && ParentType::numSteps_ > minStepsSwitch) {
+                    ParentType::method_->model().clearSwitched();
                     return false; // if after some iterations no convergence was reached
                 }
                 else
@@ -86,7 +86,7 @@ namespace Dune {
 
         void newtonBeginStep()
             {
-                ParentType::_method->model().setSwitchedLocalToGlobal();
+                ParentType::method_->model().setSwitchedLocalToGlobal();
             }
 
 
@@ -97,7 +97,7 @@ namespace Dune {
         //! called by the base class the get an indication of how physical
         //! an iterative solution is 1 means "completely physical", 0 means
         //! "completely unphysical"
-        Scalar _physicalness(Function &u)
+        Scalar physicalness_(Function &u)
             {
                 return 1.0;
 
