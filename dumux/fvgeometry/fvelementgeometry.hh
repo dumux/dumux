@@ -242,52 +242,61 @@ namespace Dune
     // END HACK
     /////////////////////
 
-    template<class G>
+    template<class Grid>
     class FVElementGeometry
     {
-        friend class _FVElemGeomHelper<FVElementGeometry<G>, G::dimension>;
+        friend class _FVElemGeomHelper<FVElementGeometry<Grid>, Grid::dimension>;
 
-        typedef _FVElemGeomHelper<FVElementGeometry<G>, G::dimension> FVElemGeomHelper;
+        typedef _FVElemGeomHelper<FVElementGeometry<Grid>, Grid::dimension> FVElemGeomHelper;
 
-        enum{dim = G::dimension};
+        enum{dim = Grid::dimension};
         enum{maxNC = (dim < 3 ? 4 : 8)};
         enum{maxNE = (dim < 3 ? 4 : 12)};
         enum{maxNF = (dim < 3 ? 0 : 6)};
         enum{maxCOS = (dim < 3 ? 2 : 4)};
         enum{maxBF = (dim < 3 ? 8 : 24)};
-        typedef typename G::ctype DT;
-        typedef typename G::Traits::template Codim<0>::Entity Entity;
+        typedef typename Grid::ctype DT;
+        typedef typename Grid::Traits::template Codim<0>::Entity Entity;
         typedef typename Entity::Geometry Geometry;
         typedef FieldVector<DT,dim> FV;
-        typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
+        typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
 
         DT quadrilateralArea(const FV& p0, const FV& p1, const FV& p2, const FV& p3)
             {
                 return 0.5*fabs((p3[0] - p1[0])*(p2[1] - p0[1]) - (p3[1] - p1[1])*(p2[0] - p0[0]));
             }
 
-        FV crossProduct(const FV& a, const FV& b)
+        void crossProduct(FV& c, const FV& a, const FV& b)
             {
-                FV c;
                 c[0] = a[1]*b[2] - a[2]*b[1];
                 c[1] = a[2]*b[0] - a[0]*b[2];
                 c[2] = a[0]*b[1] - a[1]*b[0];
-
-                return c;
             }
 
         DT pyramidVolume (const FV& p0, const FV& p1, const FV& p2, const FV& p3, const FV& p4)
             {
+/*
                 FV a = p2 - p0;
                 FV b = p3 - p1;
                 FV h = p4 - p0;
                 FV n = crossProduct(a, b);
+                return 1.0/6.0*(n*h);
+*/
 
-                return(1.0/6.0*(n*h));
+                FV a(p2); a -= p0;
+                FV b(p3); b -= p1;
+                
+                FV n;
+                crossProduct(n, a, b);
+                
+                a = p4; a -= p0;
+
+                return 1.0/6.0*(n*a);
             }
 
         DT prismVolume (const FV& p0, const FV& p1, const FV& p2, const FV& p3, const FV& p4, const FV& p5)
             {
+/*
                 FV a = p4 - p0;
                 FV b = p1 - p3;
                 FV c = p1 - p0;
@@ -296,46 +305,62 @@ namespace Dune
                 FV m = crossProduct(a, b);
                 FV n = m + crossProduct(c, d);
 
-                return(fabs(1.0/6.0*(n*e)));
+                return fabs(1.0/6.0*(n*e));
+*/
+
+                FV a(p4); a -= p0;
+                FV b(p1); b -= p3;
+                FV m;
+                crossProduct(m, a, b);
+
+                a = p1; a -= p0;
+                b = p2; b -= p0;
+                FV n;
+                crossProduct(n, a, b);
+                n += m;
+
+                a = p5; a -= p0;
+
+                return fabs(1.0/6.0*(n*a));
             }
 
         DT hexahedronVolume (const FV& p0, const FV& p1, const FV& p2, const FV& p3,
                              const FV& p4, const FV& p5, const FV& p6, const FV& p7)
             {
-                return(prismVolume(p0,p1,p2,p4,p5,p6)
-                       + prismVolume(p0,p2,p3,p4,p6,p7));
+                return prismVolume(p0,p1,p2,p4,p5,p6)
+                       + prismVolume(p0,p2,p3,p4,p6,p7);
             }
 
-        FV normalOfQuadrilateral3D(const FV& p0, const FV& p1, const FV& p2, const FV& p3)
+        void normalOfQuadrilateral3D(FV &normal, const FV& p0, const FV& p1, const FV& p2, const FV& p3)
             {
-                FV a = p2 - p0;
-                FV b = p3 - p1;
-                FV normal = crossProduct(a, b);
+                FV a(p2); a -= p0;
+                FV b(p3); b -= p1;
+                crossProduct(normal, a, b);
                 normal *= 0.5;
-
-                return normal;
             }
 
         DT quadrilateralArea3D(const FV& p0, const FV& p1, const FV& p2, const FV& p3)
             {
-                return (normalOfQuadrilateral3D(p0, p1, p2, p3).two_norm());
+                FV normal;
+                normalOfQuadrilateral3D(normal, p0, p1, p2, p3);
+                return normal.two_norm();
             }
 
         void getFaceIndices(int nNodes, int k, int& leftFace, int& rightFace)
             {
-                int edgeToFaceTet[2][6] = {
+                static const int edgeToFaceTet[2][6] = {
                     {2, 0, 3, 1, 2, 0},
                     {3, 3, 1, 2, 0, 1}
                 };
-                int edgeToFacePyramid[2][8] = {
+                static const int edgeToFacePyramid[2][8] = {
                     {1, 2, 3, 4, 4, 1, 2, 3},
                     {0, 0, 0, 0, 1, 2, 3, 4}
                 };
-                int edgeToFacePrism[2][9] = {
+                static const int edgeToFacePrism[2][9] = {
                     {1, 2, 3, 3, 1, 2, 4, 4, 4},
                     {0, 0, 0, 1, 2, 3, 1, 2, 3}
                 };
-                int edgeToFaceHex[2][12] = {
+                static const int edgeToFaceHex[2][12] = {
                     {0, 2, 3, 1, 4, 1, 0, 5, 2, 4, 5, 3},
                     {2, 1, 0, 3, 0, 4, 5, 1, 4, 3, 2, 5}
                 };
@@ -361,52 +386,51 @@ namespace Dune
                         DUNE_THROW(NotImplemented, "FVElementGeometry :: getFaceIndices for nNodes = " << nNodes);
                         break;
                 }
-                return;
             }
 
         void getEdgeIndices(int nNodes, int face, int node, int& leftEdge, int& rightEdge)
             {
-                int faceAndNodeToLeftEdgeTet[4][4] = {
+                static const int faceAndNodeToLeftEdgeTet[4][4] = {
                     {-1,  1,  1,  4},
                     { 2, -1,  2,  3},
                     { 0,  0, -1,  3},
                     { 0,  0,  1, -1}
                 };
-                int faceAndNodeToRightEdgeTet[4][4] = {
+                static const int faceAndNodeToRightEdgeTet[4][4] = {
                     {-1,  4,  5,  5},
                     { 3, -1,  5,  5},
                     { 3,  4, -1,  4},
                     { 2,  1,  2, -1}
                 };
-                int faceAndNodeToLeftEdgePyramid[5][5] = {
+                static const int faceAndNodeToLeftEdgePyramid[5][5] = {
                     { 3,  0,  1,  2, -1},
                     { 0,  0, -1, -1,  4},
                     {-1,  1,  1, -1,  5},
                     {-1, -1,  2,  2,  6},
                     { 3, -1, -1,  3,  4}
                 };
-                int faceAndNodeToRightEdgePyramid[5][5] = {
+                static const int faceAndNodeToRightEdgePyramid[5][5] = {
                     { 0,  1,  2,  3, -1},
                     { 4,  5, -1, -1,  5},
                     {-1,  5,  6, -1,  6},
                     {-1, -1,  6,  7,  7},
                     { 4, -1, -1,  7,  7}
                 };
-                int faceAndNodeToLeftEdgePrism[5][6] = {
+                static const int faceAndNodeToLeftEdgePrism[5][6] = {
                     { 0,  0,  1, -1, -1, -1},
                     { 0,  0, -1,  3,  4, -1},
                     {-1,  1,  1, -1,  4,  5},
                     { 2, -1,  2,  3, -1,  5},
                     {-1, -1, -1,  6,  6,  7}
                 };
-                int faceAndNodeToRightEdgePrism[5][6] = {
+                static const int faceAndNodeToRightEdgePrism[5][6] = {
                     { 2,  1,  2, -1, -1, -1},
                     { 3,  4, -1,  6,  6, -1},
                     {-1,  4,  5, -1,  7,  7},
                     { 3, -1,  5,  8, -1,  8},
                     {-1, -1, -1,  8,  7,  8}
                 };
-                int faceAndNodeToLeftEdgeHex[6][8] = {
+                static const int faceAndNodeToLeftEdgeHex[6][8] = {
                     { 0, -1,  4, -1,  6, -1,  2, -1},
                     {-1,  5, -1,  3, -1,  1, -1,  7},
                     { 8,  1, -1, -1,  0, 10, -1, -1},
@@ -414,7 +438,7 @@ namespace Dune
                     { 4,  8,  9,  5, -1, -1, -1, -1},
                     {-1, -1, -1, -1, 10,  7,  6, 11}
                 };
-                int faceAndNodeToRightEdgeHex[6][8] = {
+                static const int faceAndNodeToRightEdgeHex[6][8] = {
                     { 4, -1,  2, -1,  0, -1,  6, -1},
                     {-1,  1, -1,  5, -1,  7, -1,  3},
                     { 0,  8, -1, -1, 10,  1, -1, -1},
@@ -444,8 +468,8 @@ namespace Dune
                         DUNE_THROW(NotImplemented, "FVElementGeometry :: getFaceIndices for nNodes = " << nNodes);
                         break;
                 }
-                return;
             }
+
     public:
         int boundaryFaceIndex(int face, int nodeInFace) const
             {
@@ -486,7 +510,7 @@ namespace Dune
         int nEdges; //!< number of edges
         int nFaces; //!< number of faces (0 in < 3D)
 
-        FVElementGeometry<G>()
+        FVElementGeometry<Grid>()
             {}
 
         void update(const Entity& e)
@@ -569,8 +593,9 @@ namespace Dune
                             + referenceElement.position(rightFace, 1);
                         ipLocal *= 0.25;
                         subContVolFace[k].ipLocal = ipLocal;
-                        subContVolFace[k].normal = normalOfQuadrilateral3D(edgeCoord[k], faceCoord[rightFace],
-                                                                           cellGlobal, faceCoord[leftFace]);
+                        normalOfQuadrilateral3D(subContVolFace[k].normal,
+                                                edgeCoord[k], faceCoord[rightFace],
+                                                cellGlobal, faceCoord[leftFace]);
                     }
 
                     // get the global integration point and the Jacobian inverse
