@@ -35,12 +35,12 @@ namespace Dune
 {
 
 /*####################################################*
- * 																										*
- *     CLASS DECLARATION															*
- * 																										*
+ *                                                    *
+ *     CLASS DECLARATION                              *
+ *                                                    *
  *####################################################*/
 
-	//! Implementation of a decoupled formulation of a two phase two component process
+	//! Implementation of a decoupled formulation of a two phase two component flow processin porous media
 	/**
 	 * 	The pressure equation is given as \f$ -\frac{\partial V}{\partial p}\frac{\partial p}{\partial t}+\sum_{\kappa}\frac{\partial V}{\partial m^{\kappa}}\nabla\cdot\left(\sum_{\alpha}C_{\alpha}^{\kappa}\mathbf{v}_{\alpha}\right)=\sum_{\kappa}\frac{\partial V}{\partial m^{\kappa}}q^{\kappa}\f$
 	 *  See paper SPE 99619 for derivation.
@@ -141,9 +141,9 @@ namespace Dune
 
 	  int concentrationUpdate(const RT t, RT& dt, RepresentationType& updateVec);
 
-	  void flashCalculation(double Z1, double p, double temp, double poro, double& sat, double& C1, double& C2, double& Xw1, double& Xn1, double& Xw2, double& Xn2);
+	  void flashCalculation(double Z1, double p, double temp, double poro, double& sat, double& C1, double& C2, double& Xw1, double& Xn1);
 
-	  void satFlash(double sat, double p, double temp, double poro, double& C1, double& C2, double& Xw1, double& Xn1, double& Xw2, double& Xn2);
+	  void satFlash(double sat, double p, double temp, double poro, double& C1, double& C2, double& Xw1, double& Xn1);
 
 	  void postupdate(double t, double dt);
 
@@ -208,9 +208,9 @@ namespace Dune
 
 
 	/*####################################################*
-	 * 																										*
-	 *     FUNCTION DEFINITIONS 1: PRESSURE EQUATION			*
-	 * 																										*
+	 *                                                    *
+	 *     FUNCTION DEFINITIONS 1: PRESSURE EQUATION      *
+	 *                                                    *
 	 *####################################################*/
 
   template<class G, class RT>
@@ -273,8 +273,8 @@ namespace Dune
   template<class G, class RT>
   void Decoupled2p2c<G, RT>::assemble(bool first, const RT t=0)
 	{
-	    // initialization: set matrix A to zero
-        A = 0;
+  	// initialization: set matrix A to zero
+  	A = 0;
 
     // iterate over all cells
     Iterator eendit = grid.template lend<0>(level_);
@@ -300,9 +300,6 @@ namespace Dune
 			// get the cell's saturation
 			double sati = problem.variables.saturation[indexi];
 
-			// relative permeabilities
-			std::vector<double> kr(problem.materialLaw.kr(sati, global, *it, local, T));
-
 			// phase viscosities
 			double viscosityL, viscosityG;
 
@@ -319,9 +316,11 @@ namespace Dune
 
 			if (first)
 			{
+				// relative permeabilities
+				std::vector<double> kr(problem.materialLaw.kr(sati, global, *it, local, T));
 				// total mobility and fractional flow factors
-				viscosityL = problem.liquidPhase.viscosity(T, problem.variables.pressure[indexi], 0.);
-				viscosityG = problem.gasPhase.viscosity(T, problem.variables.pressure[indexi], 0.);
+				double viscosityL = problem.liquidPhase.viscosity(T, problem.variables.pressure[indexi], 0.);
+				double viscosityG = problem.gasPhase.viscosity(T, problem.variables.pressure[indexi], 0.);
 				lambdaI = kr[0] / viscosityL + kr[1] / viscosityG;
 				fw_I = kr[0] / viscosityL / lambdaI;
 				fn_I = kr[1] / viscosityG / lambdaI;
@@ -336,15 +335,13 @@ namespace Dune
 			else
 			{
 				// total mobility and fractional flow factors
-				viscosityL = problem.liquidPhase.viscosity(T, problem.variables.pressure[indexi], problem.variables.wet_X2[indexi]);
-				viscosityG = problem.gasPhase.viscosity(T, problem.variables.pressure[indexi], problem.variables.nonwet_X1[indexi]);
-				lambdaI = kr[0] / viscosityL + kr[1] / viscosityG;
-				fw_I = kr[0] / viscosityL / lambdaI;
-				fn_I = kr[1] / viscosityG / lambdaI;
+				lambdaI = problem.variables.mobility_wet[indexi] + problem.variables.mobility_nonwet[indexi];
+				fw_I = problem.variables.mobility_wet[indexi] / lambdaI;
+				fn_I = problem.variables.mobility_nonwet[indexi] / lambdaI;
 
 				// specific volume of the phases
-				Vg = 1. / problem.gasPhase.density(T, problem.variables.pressure[indexi], problem.variables.nonwet_X1[indexi]);
-				Vw = 1. / problem.liquidPhase.density(T, problem.variables.pressure[indexi], problem.variables.wet_X2[indexi]);
+				Vg = 1. / problem.variables.density_nonwet[indexi];
+				Vw = 1. / problem.variables.density_wet[indexi];
 
 				// mass of components inside the cell
 				double m1 = problem.variables.totalConcentration[indexi] * volume * poroI;
@@ -363,8 +360,8 @@ namespace Dune
 				// numerical derivative of fluid volume with respect to mass of component 1
 				m1 +=  inc1;
 				double Z1 = m1 / (m1 + m2);
-			  double dummy1, dummy2, dummy3, dummy4, dummy5, dummy6, satt;
-				flashCalculation(Z1, problem.variables.pressure[indexi], T, problem.soil.porosity(global, *it, local), satt, dummy1, dummy2, dummy3, dummy4, dummy5, dummy6);
+			  double dummy1, dummy2, dummy3, dummy4, satt;
+				flashCalculation(Z1, problem.variables.pressure[indexi], T, problem.soil.porosity(global, *it, local), satt, dummy1, dummy2, dummy3, dummy4);
 				double nuw = satt / Vw / (satt/Vw + (1-satt)/Vg);
 				dV_dm1 = ((m1+m2) * (nuw * Vw + (1-nuw) * Vg) - volalt) /inc1;
 				m1 -= inc1;
@@ -372,7 +369,7 @@ namespace Dune
 				// numerical derivative of fluid volume with respect to mass of component 2
 				m2 += inc2;
 				Z1 = m1 / (m1 + m2);
-				flashCalculation(Z1, problem.variables.pressure[indexi], 283.15, problem.porosity(global, *it, local), satt, dummy1, dummy2, dummy3, dummy4, dummy5, dummy6);
+				flashCalculation(Z1, problem.variables.pressure[indexi], T, problem.porosity(global, *it, local), satt, dummy1, dummy2, dummy3, dummy4);
 				nuw = satt / Vw / (satt/Vw + (1-satt)/Vg);
 				dV_dm2 = ((m1+m2) * (nuw * Vw + (1-nuw) * Vg) - volalt)/ inc2;
 				m2 -= inc2;
@@ -381,7 +378,7 @@ namespace Dune
 				double incp = 1e-5;
 				double p_ = problem.variables.pressure[indexi] + incp;
 				double Vg_ = 1. / problem.gasPhase.density(T, p_, problem.variables.nonwet_X1[indexi]);
-				double Vw_ = 1. / problem.liquidPhase.density(T, p_, problem.variables.wet_X2[indexi]);
+				double Vw_ = 1. / problem.liquidPhase.density(T, p_, 1. - problem.variables.wet_X1[indexi]);
 				dV_dp = ((m1+m2) * (nuw1 * Vw_ + (1-nuw1) * Vg_) - volalt) /incp;
 
 				// right hand side entry: sources
@@ -429,7 +426,7 @@ namespace Dune
 					double dist = distVec.two_norm();
 
 					// get absolute permeability
-					FieldMatrix<ct,dim,dim> Kj(problem.K(nbglobal, *outside, nblocal));
+					FieldMatrix<ct,dim,dim> Kj(problem.soil.K(nbglobal, *outside, nblocal));
 
 					// compute vectorized permeabilities
           FieldVector<ct,dim> Knj(0);
@@ -451,20 +448,19 @@ namespace Dune
 					//compute mobilities
 					double fw_J, fn_J, lambdaJ;
 					double satj = problem.variables.saturation[indexj];
-					kr = problem.materialLaw.kr(satj, nbglobal, *outside, nblocal, T);
+
 					if (first)
 					{
-						viscosityL = problem.liquidPhase.viscosity(T, problem.variables.pressure[indexj], 0.);
-						viscosityG = problem.gasPhase.viscosity(T, problem.variables.pressure[indexj], 0.);
+						std::vector<double> kr = problem.materialLaw.kr(satj, nbglobal, *outside, nblocal, T);
+						double viscosityL = problem.liquidPhase.viscosity(T, problem.variables.pressure[indexj], 0.);
+						double viscosityG = problem.gasPhase.viscosity(T, problem.variables.pressure[indexj], 0.);
 						lambdaJ = kr[0] / viscosityL + kr[1] / viscosityG;
 					}
 					else
 					{
-						viscosityL = problem.liquidPhase.viscosity(T, problem.variables.pressure[indexj], problem.variables.wet_X2[indexj]);
-						viscosityG = problem.gasPhase.viscosity(T, problem.variables.pressure[indexj], problem.variables.nonwet_X1[indexj]);
-						lambdaJ = kr[0] / viscosityL + kr[1] / viscosityG;
-						fw_J = kr[0] / viscosityL / lambdaJ;
-						fn_J = kr[1] / viscosityG / lambdaJ;
+						lambdaJ = problem.variables.mobility_wet[indexi] + problem.variables.mobility_nonwet[indexi];
+						fw_J = problem.variables.mobility_wet[indexi] / lambdaJ;
+						fn_J = problem.variables.mobility_nonwet[indexi] / lambdaJ;
 					}
 
 					// compute averaged total mobility
@@ -482,20 +478,20 @@ namespace Dune
 						// phase densities in cell in neighbor
 						double rho_w_I = 1 / Vw;
 						double rho_n_I = 1 / Vg;
-						double rho_w_J = problem.liquidPhase.density(T, problem.variables.pressure[indexj], problem.variables.wet_X2[indexj]);
-						double rho_n_J = problem.gasPhase.density(T, problem.variables.pressure[indexj], problem.variables.nonwet_X1[indexj]);
+						double rho_w_J = problem.variables.density_wet[indexj];
+						double rho_n_J = problem.variables.density_nonwet[indexj];
 						if (problem.variables.pressure[indexi] > problem.variables.pressure[indexj])
 						{
 							entry = fabs(
 									     dV_dm1 * ( rho_w_I * problem.variables.wet_X1[indexi] * fw_I + rho_n_I * problem.variables.nonwet_X1[indexi] * fn_I)
-										 + dV_dm2 * ( rho_w_I * problem.variables.wet_X2[indexi] * fw_I + rho_n_I * problem.variables.nonwet_X2[indexi] * fn_I)
+										 + dV_dm2 * ( rho_w_I * (1. - problem.variables.wet_X1[indexi]) * fw_I + rho_n_I * (1. - problem.variables.nonwet_X1[indexi]) * fn_I)
 											 );
 						}
 						else
 						{
 							entry = fabs(
 									     dV_dm1 * ( rho_w_J * problem.variables.wet_X1[indexj] * fw_J + rho_n_J * problem.variables.nonwet_X1[indexj] * fn_J)
-										 + dV_dm2 * ( rho_w_J * problem.variables.wet_X2[indexj] * fw_J + rho_n_J * problem.variables.nonwet_X2[indexj] * fn_J)
+										 + dV_dm2 * ( rho_w_J * (1. - problem.variables.wet_X1[indexj]) * fw_J + rho_n_J * (1. - problem.variables.nonwet_X1[indexj]) * fn_J)
 											 );
 						}
 						entry *= lambda * fabs(faceVol*(K*distVec)/(dist*dist));
@@ -536,37 +532,45 @@ namespace Dune
 						{
 							double pressBC = problem.gPress(faceglobal, *it, facelocalDim);
 
-							double satBound, C1Bound, C2Bound, Xw1Bound, Xn1Bound, Xw2Bound, Xn2Bound;
+							double satBound, C1Bound, C2Bound, Xw1Bound, Xn1Bound;
 
 							//get boundary condition type for compositional transport
 							BoundaryConditions2p2c::Flags bctype = problem.cbctype(faceglobal, *it, facelocalDim);
 							if (bctype == BoundaryConditions2p2c::saturation) // saturation given
 							{
 								satBound = problem.gS(faceglobal, *it, facelocalDim);
-								satFlash(satBound, pressBC, T, problem.soil.porosity(global, *it, local), C1Bound, C2Bound, Xw1Bound, Xn1Bound, Xw2Bound, Xn2Bound);
+								satFlash(satBound, pressBC, T, problem.soil.porosity(global, *it, local), C1Bound, C2Bound, Xw1Bound, Xn1Bound);
 							}
 							if (bctype == BoundaryConditions2p2c::concentration) // mass fraction given
 							{
 								double Z1Bound = problem.gZ(faceglobal, *it, facelocalDim);
-								flashCalculation(Z1Bound, pressBC, T, problem.porosity(global, *it, local), satBound, C1Bound, C2Bound, Xw1Bound, Xn1Bound, Xw2Bound, Xn2Bound);
+								flashCalculation(Z1Bound, pressBC, T, problem.porosity(global, *it, local), satBound, C1Bound, C2Bound, Xw1Bound, Xn1Bound);
 							}
+
+				    	// neighbor cell
+				    	std::vector<double> kr = problem.materialLaw.kr(satBound, global, *it, local, T);
+							double viscosityL = problem.liquidPhase.viscosity(T, pressBC , 1. - Xw1Bound);
+							double viscosityG = problem.gasPhase.viscosity(T, pressBC, Xn1Bound);
+							lambda = kr[0] / viscosityL + kr[1] / viscosityG;
+				    	double fwBound = kr[0] / viscosityL / lambda;
+				    	double fnBound = kr[1] / viscosityG / lambda;
 
 							// phase densities in cell and on boundary
 							double rho_w_I = 1 / Vw;
 							double rho_n_I = 1 / Vg;
-							double rho_w_J = problem.liquidPhase.density(T, pressBC, Xw2Bound);
+							double rho_w_J = problem.liquidPhase.density(T, pressBC, 1. - Xw1Bound);
 							double rho_n_J = problem.gasPhase.density(T, pressBC, Xn1Bound);
 
 							double entry;
 							if (problem.variables.pressure[indexi] > pressBC)
 								entry = fabs(
 							     dV_dm1 * ( rho_w_I * problem.variables.wet_X1[indexi] * fw_I + rho_n_I * problem.variables.nonwet_X1[indexi] * fn_I)
-									 + dV_dm2 * ( rho_w_I * problem.variables.wet_X2[indexi] * fw_I + rho_n_I * problem.variables.nonwet_X2[indexi] * fn_I)
+									 + dV_dm2 * ( rho_w_I * (1. - problem.variables.wet_X1[indexi]) * fw_I + rho_n_I * (1. - problem.variables.nonwet_X1[indexi]) * fn_I)
 									 );
 							else
 								entry = fabs(
 							     dV_dm1 * ( rho_w_J * Xw1Bound * fw_I + rho_n_J * Xn1Bound * fn_I)
-									 + dV_dm2 * ( rho_w_J * Xw2Bound * fw_I + rho_n_J * Xn2Bound * fn_I)
+									 + dV_dm2 * ( rho_w_J * (1. - Xw1Bound) * fw_I + rho_n_J * (1. - Xn1Bound) * fn_I)
 									 );
 
 							entry *= - lambda * faceVol*(Kni*distVec)/(dist*dist);
@@ -690,11 +694,8 @@ namespace Dune
 
 				// total mobility and fractional flow factors
 	    	double sati = problem.variables.saturation[indexi];
-				std::vector<double> kr(problem.materialLaw.kr(sati, global, *it, local, T));
-				double viscosityL = problem.liquidPhase.viscosity(T, problem.variables.pressure[indexi], problem.variables.wet_X2[indexi]);
-				double viscosityG = problem.gasPhase.viscosity(T, problem.variables.pressure[indexi], problem.variables.nonwet_X1[indexi]);
-				double lambdaI = kr[0] / viscosityL + kr[1] / viscosityG;
-	    	double fractionalWI = kr[0] / viscosityL / lambdaI;
+				double lambdaI = problem.variables.mobility_wet[indexi] + problem.variables.mobility_nonwet[indexi];
+	    	double fractionalWI = problem.variables.mobility_wet[indexi] / lambdaI;
 
 	    	double faceVol[2*dim];
 
@@ -769,12 +770,8 @@ namespace Dune
 
 
       				// total mobility and fractional flow factors
-      	    	double satj = problem.variables.saturation[indexj];
-      				kr = problem.materialLaw.kr(satj, nbglobal, *outside, nblocal, T);
-      				viscosityL = problem.liquidPhase.viscosity(T, problem.variables.pressure[indexi], problem.variables.wet_X2[indexj]);
-      				viscosityG = problem.gasPhase.viscosity(T, problem.variables.pressure[indexi], problem.variables.nonwet_X1[indexj]);
-      				double lambdaJ = kr[0] / viscosityL + kr[1] / viscosityG;
-				    	double fractionalWJ = kr[0] / viscosityL / lambdaJ;
+      				double lambdaJ = problem.variables.mobility_wet[indexj] + problem.variables.mobility_nonwet[indexj];
+				    	double fractionalWJ = problem.variables.mobility_wet[indexj] / lambdaJ;
 
 				      // compute averaged total mobility
 				      // CAREFUL: Harmonic weightig can generate zero matrix entries,
@@ -896,20 +893,35 @@ namespace Dune
 
 			// initial conditions
 			double sat_0, C1_0, C2_0;
+			double rho_w, rho_n;
 			Dune::BoundaryConditions2p2c::Flags ictype = problem.ictype(global, *it, local);			// get type of initial condition
 
 			if (ictype == Dune::BoundaryConditions2p2c::saturation)  // saturation initial condition
 			{
 				sat_0 = problem.S0(global, *it, local);
-				satFlash(sat_0, problem.variables.pressure[indexi], T, problem.soil.porosity(global, *it, local), C1_0, C2_0, problem.variables.wet_X1[indexi][0], problem.variables.nonwet_X1[indexi][0], problem.variables.wet_X2[indexi][0], problem.variables.nonwet_X2[indexi][0]);
+				satFlash(sat_0, problem.variables.pressure[indexi], T, problem.soil.porosity(global, *it, local), C1_0, C2_0, problem.variables.wet_X1[indexi][0], problem.variables.nonwet_X1[indexi][0]);
+				rho_w = problem.liquidPhase.density(T, problem.variables.pressure[indexi], 1. - problem.variables.wet_X1[indexi][0]);
+				rho_n = problem.gasPhase.density(T, problem.variables.pressure[indexi], problem.variables.nonwet_X1[indexi][0]);
 			}
 			else if (ictype == Dune::BoundaryConditions2p2c::concentration) // concentration initial condition
 			{
 				double Z1_0 = problem.Z1_0(global, *it, local);
-				flashCalculation(Z1_0, problem.variables.pressure[indexi], T, problem.soil.porosity(global, *it, local), sat_0, C1_0, C2_0, problem.variables.wet_X1[indexi][0], problem.variables.nonwet_X1[indexi][0], problem.variables.wet_X2[indexi][0], problem.variables.nonwet_X2[indexi][0]);
+				flashCalculation(Z1_0, problem.variables.pressure[indexi], T, problem.soil.porosity(global, *it, local), sat_0, C1_0, C2_0, problem.variables.wet_X1[indexi][0], problem.variables.nonwet_X1[indexi][0]);
+				rho_w = problem.liquidPhase.density(T, problem.variables.pressure[indexi], 1. - problem.variables.wet_X1[indexi][0]);
+				rho_n = problem.gasPhase.density(T, problem.variables.pressure[indexi], problem.variables.nonwet_X1[indexi][0]);
 			}
 
+			// inizialize mobilities
+			double viscosityL = problem.liquidPhase.viscosity(T, problem.variables.pressure[indexi], 1. - problem.variables.wet_X1[indexi][0]);
+			double viscosityG = problem.gasPhase.viscosity(T, problem.variables.pressure[indexi], problem.variables.nonwet_X1[indexi][0]);
+			std::vector<double> kr = problem.materialLaw.kr(sat_0, global, *it, local, T);
+
+			problem.variables.mobility_wet[indexi] = kr[0] / viscosityL;
+			problem.variables.mobility_nonwet[indexi] = kr[1] / viscosityG;
+
 			// initialize cell concentration
+			problem.variables.density_wet[indexi][0] = rho_w;
+			problem.variables.density_nonwet[indexi][0] = rho_n;
 			problem.variables.totalConcentration[indexi] = C1_0;
 			problem.variables.totalConcentration[indexi + elementmapper.size()] = C2_0;
 			this->problem.variables.saturation[indexi][0] = sat_0;
@@ -950,12 +962,15 @@ namespace Dune
 	    double satI = problem.variables.saturation[indexi];
 	    double Xw1_I = problem.variables.wet_X1[indexi];
 	    double Xn1_I = problem.variables.nonwet_X1[indexi];
-	    double Xw2_I = problem.variables.wet_X2[indexi];
-	    double Xn2_I = problem.variables.nonwet_X2[indexi];
 
 			// phase densities in cell
-			double rho_w_I = problem.liquidPhase.density(T, problem.variables.pressure[indexi], Xw2_I);
-			double rho_n_I = problem.gasPhase.density(T, problem.variables.pressure[indexi], Xn1_I);
+			double rho_w_I = problem.variables.density_wet[indexi];
+			double rho_n_I = problem.variables.density_nonwet[indexi];
+
+			// total mobility and fractional flow factors
+			double lambda = problem.variables.mobility_wet[indexi] + problem.variables.mobility_nonwet[indexi];
+			double fwI = problem.variables.mobility_wet[indexi] / lambda;
+			double fnI = problem.variables.mobility_nonwet[indexi] / lambda;
 
 			// some variables for time step calculation
 			double sumfactor = 0;
@@ -965,8 +980,7 @@ namespace Dune
 
 			// run through all intersections with neighbors and boundary
 			IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
-			for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it);
-				  is!=endit; ++is)
+			for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it); is!=endit; ++is)
 			{
 				// local number of facet
 				int numberInSelf = is.numberInSelf();
@@ -985,7 +999,6 @@ namespace Dune
 
 				// variables for timestep calculation
 				double factor, factorC1, factorC2;
-
 
 				if (is.neighbor()) // handle interior face
 				{
@@ -1011,27 +1024,15 @@ namespace Dune
 					double satJ = this->problem.variables.saturation[indexj];
 					double Xw1_J = problem.variables.wet_X1[indexj];
 					double Xn1_J = problem.variables.nonwet_X1[indexj];
-					double Xw2_J = problem.variables.wet_X2[indexj];
-					double Xn2_J = problem.variables.nonwet_X2[indexj];
 
 					// phase densities in neighbor
-					double rho_w_J = problem.liquidPhase.density(T, problem.variables.pressure[indexj], Xw2_J);
-					double rho_n_J = problem.gasPhase.density(T, problem.variables.pressure[indexj], Xn1_J);
+					double rho_w_J = problem.variables.density_wet[indexj];
+					double rho_n_J = problem.variables.density_nonwet[indexj];
 
-					// total mobility and fractional flow factors
-					std::vector<double> kr(problem.materialLaw.kr(satI, global, *it, local, T));
-					double viscosityL = problem.liquidPhase.viscosity(T, problem.variables.pressure[indexi], Xw2_I);
-					double viscosityG = problem.gasPhase.viscosity(T, problem.variables.pressure[indexi], Xn1_I);
-					double lambda = kr[0] / viscosityL + kr[1] / viscosityG;
-					double fwI = kr[0] / viscosityL / lambda;
-					double fnI = kr[1] / viscosityG / lambda;
-					// neighbor cell
-					viscosityL = problem.liquidPhase.viscosity(T, problem.variables.pressure[indexj], Xw2_J);
-					viscosityG = problem.gasPhase.viscosity(T, problem.variables.pressure[indexj], Xn1_J);
-					kr = problem.materialLaw.kr(satJ, nbglobal, *outside, nblocal, T);
-					lambda = kr[0] / viscosityL + kr[1] / viscosityG;
-					double fwJ = kr[0] / viscosityL / lambda;
-					double fnJ = kr[1] / viscosityG / lambda;
+					// neighbor cell total mobility and fractional flow factors
+					double lambda = problem.variables.mobility_wet[indexj] + problem.variables.mobility_nonwet[indexj];
+					double fwJ = problem.variables.mobility_wet[indexj] / lambda;
+					double fnJ = problem.variables.mobility_nonwet[indexj] / lambda;
 
 					// for timestep control
 					{
@@ -1049,10 +1050,10 @@ namespace Dune
 							+ velocityJI * Xn1_J * rho_n_J * numFlux(1.0-satJ, 1.0-satI, fnJ, fnI)
 							- velocityIJ * Xn1_I * rho_n_I * numFlux(1.0-satI, 1.0-satJ, fnI, fnJ);
 					factorC2 =
-							  velocityJI * Xw2_J * rho_w_J * numFlux(satJ, satI, fwJ, fwI)
-							- velocityIJ * Xw2_I * rho_w_I * numFlux(satI, satJ, fwI, fwJ)
-							+ velocityJI * Xn2_J * rho_n_J * numFlux(1.0-satJ, 1.0-satI, fnJ, fnI)
-							- velocityIJ * Xn2_I * rho_n_I * numFlux(1.0-satI, 1.0-satJ, fnI, fnJ);
+							  velocityJI * (1. - Xw1_J) * rho_w_J * numFlux(satJ, satI, fwJ, fwI)
+							- velocityIJ * (1. - Xw1_I) * rho_w_I * numFlux(satI, satJ, fwI, fwJ)
+							+ velocityJI * (1. - Xn1_J) * rho_n_J * numFlux(1.0-satJ, 1.0-satI, fnJ, fnI)
+							- velocityIJ * (1. - Xn1_I) * rho_n_I * numFlux(1.0-satI, 1.0-satJ, fnI, fnJ);
 				}
 
 				else // handle boundary face
@@ -1070,17 +1071,19 @@ namespace Dune
 					BoundaryConditions::Flags pressBCtype = problem.pbctype(faceglobal, *it, facelocalDim);
 					if (pressBCtype == BoundaryConditions::dirichlet)
 					{
+						double pressBound = problem.gPress(faceglobal, *it, facelocalDim);
+
 						double satBound, C1Bound, C2Bound, Xw1Bound, Xn1Bound, Xw2Bound, Xn2Bound;
 						BoundaryConditions2p2c::Flags bctype = problem.cbctype(faceglobal, *it, facelocalDim);
 						if (bctype == BoundaryConditions2p2c::saturation)
 						{
 							satBound = problem.gS(faceglobal, *it, facelocalDim);
-							satFlash(satBound, problem.gPress(faceglobal, *it, facelocalDim), T, problem.soil.porosity(global, *it, local), C1Bound, C2Bound, Xw1Bound, Xn1Bound, Xw2Bound, Xn2Bound);
+							satFlash(satBound, pressBound, T, problem.soil.porosity(global, *it, local), C1Bound, C2Bound, Xw1Bound, Xn1Bound);
 						}
 						if (bctype == BoundaryConditions2p2c::concentration)
 						{
 							double Z1Bound = problem.gZ(faceglobal, *it, facelocalDim);
-							flashCalculation(Z1Bound, problem.gPress(faceglobal, *it, facelocalDim), T, problem.porosity(global, *it, local), satBound, C1Bound, C2Bound, Xw1Bound, Xn1Bound, Xw2Bound, Xn2Bound);
+							flashCalculation(Z1Bound, pressBound, T, problem.porosity(global, *it, local), satBound, C1Bound, C2Bound, Xw1Bound, Xn1Bound);
 						}
 
 						double dist = distVec.two_norm();
@@ -1093,25 +1096,14 @@ namespace Dune
 									satI -= fabs(distVec[k]) / distVec[k] * dist;//*slope[indexi][k];
 								}
 						}
-
-			    	double Xw1_I = problem.variables.wet_X1[indexi];
-			    	double Xn1_I = problem.variables.nonwet_X1[indexi];
-			    	double Xw2_I = problem.variables.wet_X2[indexi];
-			    	double Xn2_I = problem.variables.nonwet_X2[indexi];
-
 						// phase densities on boundary
-						double rho_w_Bound = problem.liquidPhase.density(T, problem.gPress(faceglobal, *it, facelocalDim), Xw2Bound);
-						double rho_n_Bound = problem.gasPhase.density(T, problem.gPress(faceglobal, *it, facelocalDim), Xn1Bound);
+						double rho_w_Bound = problem.liquidPhase.density(T, pressBound, 1. - Xw1Bound);
+						double rho_n_Bound = problem.gasPhase.density(T, pressBound, Xn1Bound);
 
-						// total mobility and fractional flow factors
-						std::vector<double> kr(problem.materialLaw.kr(satI, global, *it, local, T));
-						double viscosityL = problem.liquidPhase.viscosity(T, problem.variables.pressure[indexi], Xw2_I);
-						double viscosityG = problem.gasPhase.viscosity(T, problem.variables.pressure[indexi], Xn1_I);
-						double lambda = kr[0] / viscosityL + kr[1] / viscosityG;
-			    	double fwI = kr[0] / viscosityL / lambda;
-			    	double fnI = kr[1] / viscosityG / lambda;
 			    	// neighbor cell
-			    	kr = problem.materialLaw.kr(satBound, global, *it, local, T);
+			    	std::vector<double> kr = problem.materialLaw.kr(satBound, global, *it, local, T);
+						double viscosityL = problem.liquidPhase.viscosity(T, pressBound , Xw2Bound);
+						double viscosityG = problem.gasPhase.viscosity(T, pressBound, Xn1Bound);
 						lambda = kr[0] / viscosityL + kr[1] / viscosityG;
 			    	double fwBound = kr[0] / viscosityL / lambda;
 			    	double fnBound = kr[1] / viscosityG / lambda;
@@ -1131,10 +1123,10 @@ namespace Dune
 							+ velocityJI * Xn1Bound * rho_n_Bound * numFlux(1.0-satBound, 1.0-satI, fnBound, fnI)
 							- velocityIJ * Xn1_I * rho_n_I * numFlux(1.0-satI, 1.0-satBound, fnI, fnBound);
 			    	factorC2 =
-							 velocityJI * Xw2Bound * rho_w_Bound * numFlux(satBound, satI, fwBound, fwI)
-							- velocityIJ * Xw2_I * rho_w_I * numFlux(satI, satBound, fwI, fwBound)
-							+ velocityJI * Xn2Bound * rho_n_Bound * numFlux(1.0-satBound, 1.0-satI, fnBound, fnI)
-							- velocityIJ * Xn2_I * rho_n_I * numFlux(1.0-satI, 1.0-satBound, fnI, fnBound);
+							 velocityJI * (1. - Xw1Bound) * rho_w_Bound * numFlux(satBound, satI, fwBound, fwI)
+							- velocityIJ * (1. - Xw1_I) * rho_w_I * numFlux(satI, satBound, fwI, fwBound)
+							+ velocityJI * (1. - Xn1Bound) * rho_n_Bound * numFlux(1.0-satBound, 1.0-satI, fnBound, fnI)
+							- velocityIJ * (1. - Xn1_I) * rho_n_I * numFlux(1.0-satI, 1.0-satBound, fnI, fnBound);
 					}
 					else if (pressBCtype == BoundaryConditions::neumann)
 					{
@@ -1142,14 +1134,6 @@ namespace Dune
 						double faceVol = integrationOuterNormal.two_norm();
 						factorC1 = J[0] * faceVol / volume;
 						factorC2 = J[1] * faceVol / volume;
-
-						// total mobility and fractional flow factors
-						std::vector<double> kr(problem.materialLaw.kr(satI, global, *it, local, T));
-						double viscosityL = problem.liquidPhase.viscosity(T, problem.variables.pressure[indexi], problem.variables.wet_X2[indexi]);
-						double viscosityG = problem.gasPhase.viscosity(T, problem.variables.pressure[indexi], problem.variables.nonwet_X1[indexi]);
-						double lambda = kr[0] / viscosityL + kr[1] / viscosityG;
-			    	double fwI = kr[0] / viscosityL / lambda;
-			    	double fnI = kr[1] / viscosityG / lambda;
 
 				    // for timestep control
 				    {
@@ -1174,10 +1158,6 @@ namespace Dune
 					sumfactor += factor;
 				else
 					sumfactor2 += (-factor);
-//				if (diffFactor>=0)
-//					sumDiff += diffFactor;
-//				else
-//					sumDiff += (-diffFactor);
 			} // end all intersections
 			// compute dt restriction
 //			volInc[indexi] = sumfactor - sumfactor2;
@@ -1200,7 +1180,7 @@ namespace Dune
   } // end function "update"
 
   template<class G, class RT>
-  void Decoupled2p2c<G,RT>::flashCalculation(double Z1, double p, double temp, double poro, double& sat, double& C1, double& C2, double& Xw1, double& Xn1, double& Xw2, double& Xn2)
+  void Decoupled2p2c<G,RT>::flashCalculation(double Z1, double p, double temp, double poro, double& sat, double& C1, double& C2, double& Xw1, double& Xn1)
   {
 	  double K1 = problem.liquidPhase.p_vap(temp) / p;
     double K2 = 1. / (p * problem.liquidPhase.henry(temp));
@@ -1212,8 +1192,6 @@ namespace Dune
                 / ( xn1 * problem.liquidPhase.molarMass_w() + (1.-xn1) * problem.liquidPhase.molarMass_a() );
     K1 = Xn1 / Xw1;
     K2 = (1.-Xn1) / (1.-Xw1);
-    Xw2 = 1- Xw1;
-    Xn2 = 1- Xn1;
 
     double nu2 = 0;
 
@@ -1224,31 +1202,26 @@ namespace Dune
     {
     	nu2 = 1;
     	Xn1 = Z1;
-    	Xn2 = 1 - Z1;
     }
     else if (Z1 > Xw1)
     {
     	nu2 = 0;
     	Xw1 = Z1;
-    	Xw2 = 1 - Z1;
 		}
 
-    double rho_w = problem.liquidPhase.density(temp, p, Xw2);
+    double rho_w = problem.liquidPhase.density(temp, p, 1. - Xw1);
     double rho_n = problem.gasPhase.density(temp, p, Xn1);
-
-    Xw2 = 1 - Xw1;
-    Xn2 = 1 - Xn1;
 
     sat = (1-nu2) / rho_w;
     sat /= ((1-nu2)/rho_w + nu2/rho_n);
 
     C1 = poro * (Xw1 * sat * rho_w + Xn1 * (1-sat) * rho_n);
-    C2 = poro * (Xw2 * sat * rho_w + Xn2 * (1-sat) * rho_n);
+    C2 = poro * ((1. - Xw1) * sat * rho_w + (1. - Xn1) * (1-sat) * rho_n);
 
   } // end function flashCalculation
 
   template<class G, class RT>
-  void Decoupled2p2c<G,RT>::satFlash(double sat, double p, double temp, double poro, double& C1, double& C2, double& Xw1, double& Xn1, double& Xw2, double& Xn2)
+  void Decoupled2p2c<G,RT>::satFlash(double sat, double p, double temp, double poro, double& C1, double& C2, double& Xw1, double& Xn1)
   {
   	if (sat <= 0 || sat >= 1)
 	  DUNE_THROW(RangeError,
@@ -1267,11 +1240,8 @@ namespace Dune
     double rho_w = problem.liquidPhase.density(temp, p, 1.-Xw1);
     double rho_n = problem.gasPhase.density(temp, p, Xn1);
 
-    Xw2 = 1 - Xw1;
-    Xn2 = 1 - Xn1;
-
     C1  = poro* (sat * Xw1 * rho_w + (1-sat) * Xn1 * rho_n);
-    C2  = poro* (sat * Xw2 * rho_w + (1-sat) * Xn2 * rho_n);
+    C2  = poro* (sat * (1. - Xw1) * rho_w + (1-sat) * (1. - Xn1) * rho_n);
   }
 
   template<class G, class RT>
@@ -1289,13 +1259,24 @@ namespace Dune
 			FieldVector<ct,dimworld> global = it->geometry().global(local); // cell center in global coordinates
 
 			double poro = problem.porosity(global, *it, local);
-			double rho_l = problem.liquidPhase.density(T, problem.variables.pressure[indexi][0],0.);
-			double rho_g = problem.gasPhase.density(T, problem.variables.pressure[indexi][0],0.);
 
     	double Z1 = problem.variables.totalConcentration[indexi] / (problem.variables.totalConcentration[indexi] + problem.variables.totalConcentration[elementmapper.size()+indexi]);
     	double C1 = problem.variables.totalConcentration[indexi][0];
     	double C2 = problem.variables.totalConcentration[size+indexi][0];
-			flashCalculation(Z1, problem.variables.pressure[indexi], T, poro, problem.variables.saturation[indexi][0], C1, C2, problem.variables.wet_X1[indexi][0], problem.variables.nonwet_X1[indexi][0], problem.variables.wet_X2[indexi][0], problem.variables.nonwet_X2[indexi][0]);
+			flashCalculation(Z1, problem.variables.pressure[indexi], T, poro, problem.variables.saturation[indexi][0], C1, C2, problem.variables.wet_X1[indexi][0], problem.variables.nonwet_X1[indexi][0]);
+
+			double rho_l = problem.liquidPhase.density(T, problem.variables.pressure[indexi][0], (1. - problem.variables.wet_X1[indexi]));
+			double rho_g = problem.gasPhase.density(T, problem.variables.pressure[indexi][0], problem.variables.nonwet_X1[indexi]);
+			problem.variables.density_wet[indexi][0] = rho_l;
+			problem.variables.density_nonwet[indexi][0] = rho_g;
+
+			// Initialize mobilities
+			double viscosityL = problem.liquidPhase.viscosity(T, problem.variables.pressure[indexi], 1. - problem.variables.wet_X1[indexi][0]);
+			double viscosityG = problem.gasPhase.viscosity(T, problem.variables.pressure[indexi], problem.variables.nonwet_X1[indexi][0]);
+			std::vector<double> kr = problem.materialLaw.kr(problem.variables.saturation[indexi], global, *it, local, T);
+
+			problem.variables.mobility_wet[indexi] = kr[0] / viscosityL;
+			problem.variables.mobility_nonwet[indexi] = kr[1] / viscosityG;
 
 			double nuw = problem.variables.saturation[indexi] * rho_l / (problem.variables.saturation[indexi] * rho_l + (1-problem.variables.saturation[indexi]) * rho_g);
 			double massw = (problem.variables.totalConcentration[indexi][0] + problem.variables.totalConcentration[size+indexi][0]) * nuw;
