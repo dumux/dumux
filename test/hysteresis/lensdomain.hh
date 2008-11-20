@@ -83,8 +83,7 @@ namespace Lens
 
         typedef typename DomainTraits::Grid                  Grid;
         typedef typename DomainTraits::Cell                  Cell;
-        typedef typename DomainTraits::CellReferenceElement  CellReferenceElement;
-        typedef typename DomainTraits::CellReferenceElements CellReferenceElements;
+        typedef typename DomainTraits::ReferenceElement      ReferenceElement;
 
         typedef typename DomainTraits::Node                  Node;
 
@@ -582,8 +581,8 @@ namespace Lens
         void markInterfaceVertices_(IntersectionIterator &interfaceIt)
             {
                 const Cell &cell = *interfaceIt.inside();
-                const CellReferenceElement &refElem =
-                    CellReferenceElements::general(cell.geometry().type());
+                const ReferenceElement &refElem =
+                    DomainTraits::referenceElement(cell.geometry().type());
 
                 int inIdx = cellIndex(*interfaceIt.inside());
                 int outIdx = cellIndex(*interfaceIt.outside());

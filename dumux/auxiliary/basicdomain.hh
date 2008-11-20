@@ -54,12 +54,14 @@ namespace Dune
             {typename I::CellIterator               *x;x=NULL;}
             {typename I::Node                       *x;x=NULL;}
             {typename I::NodeIterator               *x;x=NULL;}
-            {typename I::CellReferenceElement       *x;x=NULL;}
-            {typename I::CellReferenceElements      *x;x=NULL;}
+            {typename I::ReferenceElement           *x;x=NULL;}
+            {typename I::ReferenceElementContainer  *x;x=NULL;}
             {typename I::IntersectionIteratorGetter *x;x=NULL;}
             {typename I::IntersectionIterator       *x;x=NULL;}
             {typename I::Vector                     *x;x=NULL;}
             {typename I::Matrix                     *x;x=NULL;}
+            
+            {const typename I::ReferenceElementContainer *x = &I::referenceElement; x=NULL;}
         }
         END_API_DEF
     };
@@ -104,8 +106,20 @@ namespace Dune
             typedef typename NodeTraits::Entity                               Node;
             typedef typename NodeTraits::LeafIterator                         NodeIterator;
             
-            typedef Dune::ReferenceElement<CoordScalar, GridDim>              CellReferenceElement;
-            typedef Dune::ReferenceElements<CoordScalar, GridDim>             CellReferenceElements;
+            // TODO: Dune::ReferenceElement uses virtual functions in
+            //       order to support arbitary cell types. It would be
+            //       better to use ReferenceCubeContainer,
+            //       ReferenceSimplexContainer,
+            //       ReferencePrismContainer or
+            //       ReferencePyramidContainer if the Grid only uses
+            //       one cell type. We need to investigate how to do
+            //       this, but we probably need to beef up
+            //       Dune::Capabilities a bit and use specialization
+            //       for the DomainTraits...
+            typedef Dune::ReferenceElementContainer<CoordScalar, GridDim>     ReferenceElementContainer;
+            typedef typename ReferenceElementContainer::value_type            ReferenceElement;
+            static const ReferenceElementContainer &referenceElement;
+
             typedef Dune::IntersectionIteratorGetter<Grid,Dune::LeafTag>      IntersectionIteratorGetter;
             typedef typename IntersectionIteratorGetter::IntersectionIterator IntersectionIterator;
             
@@ -113,7 +127,7 @@ namespace Dune
             typedef Dune::FieldVector<Scalar, GridDim>         Vector;
             typedef Dune::FieldMatrix<Scalar, GridDim,GridDim> Matrix;
         };
-
+        
     private:
         // some types from the traits for convenience
         typedef typename DomainTraits::Grid                  Grid;
@@ -123,8 +137,7 @@ namespace Dune
         typedef typename DomainTraits::NodeIterator          NodeIterator;
         typedef typename DomainTraits::LocalCoord            LocalCoord;
         typedef typename DomainTraits::WorldCoord            WorldCoord;
-        typedef typename DomainTraits::CellReferenceElement  CellReferenceElement;
-        typedef typename DomainTraits::CellReferenceElements CellReferenceElements;
+        typedef typename DomainTraits::ReferenceElement      ReferenceElement;
 
         enum {
             GridDim = DomainTraits::GridDim,
@@ -228,7 +241,7 @@ namespace Dune
                 // element
                 Dune::GeometryType geoType = e.type();
                 const LocalCoord &localCoord =
-                    CellReferenceElements::general(geoType).position(0, 0);
+                    DomainTraits::referenceElement(geoType).position(0, 0);
 
                 // get world coordinate of the cell center
                 worldCoord = e.geometry().global(localCoord);
@@ -344,6 +357,16 @@ namespace Dune
         // translates vertices local to a cell to global ones
         NodeMap *nodeMap_;
     };
+
+
+    // this is butt-ugly, but the only way I could come up with to
+    // initialize a static const member of a class
+    template<class Grid, class ScalarT>
+    const typename BasicDomain<Grid, ScalarT>::DomainTraits::ReferenceElementContainer &
+         BasicDomain<Grid, ScalarT>::DomainTraits::referenceElement
+         =  Dune::ReferenceElements<typename Grid::ctype, 
+                                    Grid::dimension>::general;
+
 }
 
 #endif

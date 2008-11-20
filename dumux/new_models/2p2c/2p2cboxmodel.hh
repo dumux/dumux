@@ -118,7 +118,6 @@ namespace Dune
         typedef typename DomTraits::Cell                  Cell;
         typedef typename DomTraits::CellIterator          CellIterator;
         typedef typename Cell::EntityPointer              CellPointer;
-        typedef typename DomTraits::CellReferenceElements CellReferenceElements;
         typedef typename DomTraits::LocalCoord            LocalCoord;
         typedef typename DomTraits::WorldCoord            WorldCoord;
         typedef typename DomTraits::NodeIterator          NodeIterator;
@@ -156,8 +155,8 @@ namespace Dune
                 {
                     const WorldCoord &global = cell.geometry()[localIdx];
                     const LocalCoord &local =
-                        CellReferenceElements::general(cell.type()).position(localIdx,
-                                                                             GridDim);
+                        DomTraits::referenceElement(cell.type()).position(localIdx,
+                                                                          GridDim);
                     
                     pW = nodeSol[PwIndex];
                     if (phaseState == BothPhases) satN = nodeSol[SwitchIndex];

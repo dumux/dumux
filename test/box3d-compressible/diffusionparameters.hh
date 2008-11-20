@@ -60,10 +60,16 @@ public:
 //		std::cout << "global coordinate "<< x << "bctype: boundaryId = " << intersectionIt.boundaryId() << std::endl;
 
 		switch (intersectionIt->boundaryId()) {
-		case 1: case 2: case 5: case 6:
+                    case 1:
+                    case 2:
+                    case 5:
+                    case 6:
 			values = Dune::BoundaryConditions::neumann;
 			break;
-		case 3: case 4:
+                    
+                    case 3:
+                    case 4:
+                    default:
 			values = Dune::BoundaryConditions::dirichlet;
 			break;
 		}

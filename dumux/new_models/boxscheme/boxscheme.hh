@@ -78,8 +78,7 @@ namespace Dune
         typedef typename DomainTraits::Scalar                      Scalar;
         typedef typename DomainTraits::Grid                        Grid;
         typedef typename DomainTraits::Cell                        Cell;
-        typedef typename DomainTraits::CellReferenceElement        CellReferenceElement;
-        typedef typename DomainTraits::CellReferenceElements       CellReferenceElements;
+        typedef typename DomainTraits::ReferenceElement            ReferenceElement;
         typedef typename DomainTraits::CellIterator                CellIterator;
         typedef typename DomainTraits::IntersectionIteratorGetter  IntersectionIteratorGetter;
         typedef typename DomainTraits::IntersectionIterator        IntersectionIterator;
@@ -226,7 +225,7 @@ namespace Dune
 
                     problem_.setTimeStepSize(nextDt);
                     dt = nextDt;
-
+                    
                     asImp_()->updateFailedTry();
                     
                     std::cout << boost::format("Newton didn't converge. Retrying with timestep of %f\n")%dt;
@@ -268,9 +267,8 @@ namespace Dune
                 // Reset the current solution to the one of the
                 // previous time step so that we can start the next
                 // update at a physically meaningful solution.
-                *uPrev_ = *uCur_;
+                *uCur_ = *uPrev_;
             };
-
 
         /*!
          * \brief Calculate the global residual.
@@ -331,7 +329,7 @@ namespace Dune
                     for (int localNodeIdx = 0; localNodeIdx < numNodes; localNodeIdx++) {
                         // get node position in reference coodinates
                         const LocalCoord &local =
-                            CellReferenceElements::general(it->type()).position(localNodeIdx, GridDim);
+                            DomainTraits::referenceElement(it->type()).position(localNodeIdx, GridDim);
                         // get global coordinate of node 
                         const WorldCoord &global = it->geometry()[localNodeIdx];
 

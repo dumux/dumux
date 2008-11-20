@@ -194,8 +194,7 @@ namespace Dune
         typedef typename DomainTraits::Scalar                     Scalar;
         typedef typename DomainTraits::Cell                       Cell;
         typedef typename DomainTraits::CellIterator               CellIterator;
-        typedef typename DomainTraits::CellReferenceElement       CellReferenceElement;
-        typedef typename DomainTraits::CellReferenceElements      CellReferenceElements;
+        typedef typename DomainTraits::ReferenceElement           ReferenceElement;
         typedef typename DomainTraits::Node                       Node;
         typedef typename DomainTraits::NodeIterator               NodeIterator;
         typedef typename DomainTraits::IntersectionIterator       IntersectionIterator;
@@ -402,7 +401,7 @@ namespace Dune
                        int nodeIdx,
                        int globalNodeIdx)
             {
-//                const LocalCoord &localPos = CellReferenceElements::general(cell.type()).position(nodeIdx, GridDim);
+//                const LocalCoord &localPos = DomainTraits::referenceElement(cell.type()).position(nodeIdx, GridDim);
                 const WorldCoord &globalPos = cell.geometry()[nodeIdx];
 		
                 values = 0.0;
@@ -482,7 +481,7 @@ namespace Dune
                 // TODO/HACK: porosity should be defined on the nodes
                 // as it is required on the nodes!
                 const LocalCoord &local =
-                    CellReferenceElements::general(ParentType::cellBegin()->type()).position(0, GridDim);
+                    DomainTraits::referenceElement(ParentType::cellBegin()->type()).position(0, GridDim);
                 return soil().porosity(globalPos, *(ParentType::cellBegin()), local);
             };
 
@@ -491,7 +490,7 @@ namespace Dune
                 // TODO/HACK: porosity should be defined on the nodes
                 // as it is required on the nodes!
                 const LocalCoord &local =
-                    CellReferenceElements::general(ParentType::cellBegin()->type()).position(0, GridDim);
+                    DomainTraits::referenceElement(ParentType::cellBegin()->type()).position(0, GridDim);
                 return materialLaw().pC(satW, globalPos, *(ParentType::cellBegin()), local);
             };
 

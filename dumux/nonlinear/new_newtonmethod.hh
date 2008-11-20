@@ -276,7 +276,6 @@ namespace Dune
                 if (!ctl.newtonConverged()) {
                     ctl.newtonFail();
                     model_ = NULL;
-                    std::cerr << "Newton didn't converge!\n";
                     return false;
                 }
 

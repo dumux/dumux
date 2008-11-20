@@ -111,6 +111,7 @@ AC_CONFIG_FILES([Makefile
     test/2penergy/Makefile
     test/boundaryid/Makefile
     test/box3d/Makefile
+    test/box3d-compressible/Makefile
     test/brinkman/Makefile
     test/capillary/Makefile
     test/co2/Makefile

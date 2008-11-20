@@ -93,8 +93,7 @@ namespace Dune
 
         typedef typename LeafGridView::template Codim<0>::Entity      Cell;
         typedef typename Cell::EntityPointer                          CellPointer;
-        typedef typename DomainTraits::CellReferenceElements          CellReferenceElements;
-        typedef typename DomainTraits::CellReferenceElement           CellReferenceElement;
+        typedef typename DomainTraits::ReferenceElement               ReferenceElement;
         typedef typename DomainTraits::IntersectionIterator           IntersectionIterator;
         typedef typename DomainTraits::IntersectionIteratorGetter     IntersectionIteratorGetter;
 
@@ -183,7 +182,7 @@ namespace Dune
                 resetRhs_();
                 
                 Dune::GeometryType          geoType = curCell_().geometry().type();
-                const CellReferenceElement &refElem = CellReferenceElements::general(geoType);
+                const ReferenceElement &refElem = DomainTraits::referenceElement(geoType);
                 
                 // evaluate boundary conditions
                 IntersectionIterator endIt = IntersectionIteratorGetter::end(curCell_());

@@ -6,6 +6,8 @@
 #include <dune/disc/shapefunctions/lagrangeshapefunctions.hh>
 #include <dune/grid/common/intersectioniterator.hh>
 #include <dune/grid/utility/intersectiongetter.hh>
+#include <dune/grid/common/capabilities.hh>
+
 
 namespace Dune
 {
@@ -50,15 +52,22 @@ namespace Dune
             {
                 switch (nNodes) {
                     case 3: // 2D, triangle
-                        eg.subContVol[0].volume = eg.quadrilateralArea(eg.subContVol[0].global, eg.edgeCoord[2], eg.cellGlobal, eg.edgeCoord[1]);
-                        eg.subContVol[1].volume = eg.quadrilateralArea(eg.subContVol[1].global, eg.edgeCoord[0], eg.cellGlobal, eg.edgeCoord[2]);
-                        eg.subContVol[2].volume = eg.quadrilateralArea(eg.subContVol[2].global, eg.edgeCoord[1], eg.cellGlobal, eg.edgeCoord[0]);
+                        eg.subContVol[0].volume = eg.cellVolume/3;
+                        eg.subContVol[1].volume = eg.cellVolume/3;
+                        eg.subContVol[2].volume = eg.cellVolume/3;
                         break;
                     case 4: // 2D, quadrilinear
+#if 1
+                        eg.subContVol[0].volume = eg.cellVolume/4;
+                        eg.subContVol[1].volume = eg.cellVolume/4;
+                        eg.subContVol[2].volume = eg.cellVolume/4;
+                        eg.subContVol[3].volume = eg.cellVolume/4;
+#else
                         eg.subContVol[0].volume = eg.quadrilateralArea(eg.subContVol[0].global, eg.edgeCoord[2], eg.cellGlobal, eg.edgeCoord[0]);
                         eg.subContVol[1].volume = eg.quadrilateralArea(eg.subContVol[1].global, eg.edgeCoord[1], eg.cellGlobal, eg.edgeCoord[2]);
                         eg.subContVol[2].volume = eg.quadrilateralArea(eg.subContVol[2].global, eg.edgeCoord[0], eg.cellGlobal, eg.edgeCoord[3]);
                         eg.subContVol[3].volume = eg.quadrilateralArea(eg.subContVol[3].global, eg.edgeCoord[3], eg.cellGlobal, eg.edgeCoord[1]);
+#endif
                         break;
                     default:
                         DUNE_THROW(NotImplemented, "_FVElemGeomHelper::fillSubContVolData dim = " << dim << ", nNodes = " << nNodes);
@@ -327,8 +336,12 @@ namespace Dune
         DT hexahedronVolume (const FV& p0, const FV& p1, const FV& p2, const FV& p3,
                              const FV& p4, const FV& p5, const FV& p6, const FV& p7)
             {
-                return prismVolume(p0,p1,p2,p4,p5,p6)
-                       + prismVolume(p0,p2,p3,p4,p6,p7);
+                if (!Capabilities::IsUnstructured<Grid>::v) {
+                    return cellVolume / 8.0;
+                }
+                else
+                    return prismVolume(p0,p1,p2,p4,p5,p6)
+                         + prismVolume(p0,p2,p3,p4,p6,p7);
             }
 
         void normalOfQuadrilateral3D(FV &normal, const FV& p0, const FV& p1, const FV& p2, const FV& p3)

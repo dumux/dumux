@@ -68,8 +68,7 @@ namespace Lens
         typedef typename DomainTraits::Grid                       Grid;
         typedef typename DomainTraits::Cell                       Cell;
         typedef typename DomainTraits::CellIterator               CellIterator;
-        typedef typename DomainTraits::CellReferenceElement       CellReferenceElement;
-        typedef typename DomainTraits::CellReferenceElements      CellReferenceElements;
+        typedef typename DomainTraits::ReferenceElement           ReferenceElement;
         typedef typename DomainTraits::Node                       Node;
         typedef typename DomainTraits::NodeIterator               NodeIterator;
         typedef typename DomainTraits::IntersectionIterator       IntersectionIterator;
@@ -477,7 +476,7 @@ namespace Lens
                 for (; it != endIt; ++it) {
                     // extract the current solution's Sn component
                     const CellReferenceElement &refElem =
-                        CellReferenceElements::general(it->geometry().type());
+                        DomainTraits::referenceElement(it->geometry().type());
                     Scalar Sn = u.evallocal(SnIndex,
                                              *it,
                                              refElem.position(0,0));
@@ -540,7 +539,7 @@ namespace Lens
                     // get the barycenter of the current cell
                     const Dune::GeometryType &geoType = it->type();
                     const LocalCoord &localPos =
-                        CellReferenceElements::general(geoType).position(0,0);
+                        DomainTraits::referenceElement(geoType).position(0,0);
 
                     // evaluate the solution for the non-wetting
                     // saturation at this point
