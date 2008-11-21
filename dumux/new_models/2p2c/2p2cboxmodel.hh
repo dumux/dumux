@@ -616,51 +616,30 @@ namespace Dune
             {
 		switchFlag_ = yesno;
             }
-
-        enum VtkFieldBits {
-            WettingPressureBit      = 0x001,
-            NonwettingPressureBit   = 0x002,
-            CapillaryPressureBit    = 0x004,
-            
-            WettingSaturationBit    = 0x008,
-            NonwettingSaturationBit = 0x010,
-            
-            WettingMobilityBit      = 0x020,
-            NonwettingMobilityBit   = 0x040,
-            
-            MassfracAinWBit         = 0x080,
-            MassfracAinABit         = 0x100,
-            MassfracWinWBit         = 0x200,
-            MassfracWinABit         = 0x400,
-            
-            PhaseStateBit           = 0x800,
-            
-            VtkAllFields = 0xfffff
-        };
-                    
+                   
         /*!
          * \brief Add the mass fraction of air in water to VTK output of
          *        the current timestep.
          */
         template <class MultiWriter>
-        void addVtkFields(MultiWriter &writer, const SpatialFunction &globalSol, int bitmask) const
+        void addVtkFields(MultiWriter &writer, const SpatialFunction &globalSol) const
             {
                 typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
                 
                 // create the required scalar fields
                 unsigned nNodes = this->problem_.numNodes();
-                ScalarField *pW =           (bitmask&WettingPressureBit)      ? writer.template createField<Scalar, 1>(nNodes):NULL;
-                ScalarField *pN =           (bitmask&NonwettingPressureBit)   ? writer.template createField<Scalar, 1>(nNodes):NULL;
-                ScalarField *pC =           (bitmask&CapillaryPressureBit)    ? writer.template createField<Scalar, 1>(nNodes):NULL;
-                ScalarField *Sw =           (bitmask&WettingSaturationBit)    ? writer.template createField<Scalar, 1>(nNodes):NULL;
-                ScalarField *Sn =           (bitmask&NonwettingSaturationBit) ? writer.template createField<Scalar, 1>(nNodes):NULL;
-                ScalarField *mobW =         (bitmask&WettingMobilityBit)      ? writer.template createField<Scalar, 1>(nNodes):NULL;
-                ScalarField *mobN =         (bitmask&NonwettingMobilityBit)   ? writer.template createField<Scalar, 1>(nNodes):NULL;
-                ScalarField *massfracAinW = (bitmask&MassfracAinWBit)         ? writer.template createField<Scalar, 1>(nNodes):NULL;
-                ScalarField *massfracAinA = (bitmask&MassfracAinABit)         ? writer.template createField<Scalar, 1>(nNodes):NULL;
-                ScalarField *massfracWinW = (bitmask&MassfracWinWBit)         ? writer.template createField<Scalar, 1>(nNodes):NULL;
-                ScalarField *massfracWinA = (bitmask&MassfracWinABit)         ? writer.template createField<Scalar, 1>(nNodes):NULL;
-                ScalarField *phaseState   = (bitmask&PhaseStateBit)           ? writer.template createField<Scalar, 1>(nNodes):NULL;
+                ScalarField *pW =           writer.template createField<Scalar, 1>(nNodes);
+                ScalarField *pN =           writer.template createField<Scalar, 1>(nNodes);
+                ScalarField *pC =           writer.template createField<Scalar, 1>(nNodes);
+                ScalarField *Sw =           writer.template createField<Scalar, 1>(nNodes);
+                ScalarField *Sn =           writer.template createField<Scalar, 1>(nNodes);
+                ScalarField *mobW =         writer.template createField<Scalar, 1>(nNodes);
+                ScalarField *mobN =         writer.template createField<Scalar, 1>(nNodes);
+                ScalarField *massfracAinW = writer.template createField<Scalar, 1>(nNodes);
+                ScalarField *massfracAinA = writer.template createField<Scalar, 1>(nNodes);
+                ScalarField *massfracWinW = writer.template createField<Scalar, 1>(nNodes);
+                ScalarField *massfracWinA = writer.template createField<Scalar, 1>(nNodes);
+                ScalarField *phaseState   = writer.template createField<Scalar, 1>(nNodes);
                 
                 VariableNodeData tmp;
                 CellIterator it = this->problem_.cellBegin();
@@ -675,58 +654,34 @@ namespace Dune
                                    this->problem_,
                                    temperature);
                         
-                        if (bitmask&WettingPressureBit)
-                            (*pW)[globalI] = tmp.pW;
-                        if (bitmask&NonwettingPressureBit)
-                            (*pN)[globalI] = tmp.pN;
-                        if (bitmask&CapillaryPressureBit)
-                            (*pC)[globalI] = tmp.pC;
-                        if (bitmask&WettingSaturationBit)
-                            (*Sw)[globalI] = tmp.satW;
-                        if (bitmask&NonwettingSaturationBit)
-                            (*Sn)[globalI] = tmp.satN;
-                        if (bitmask&WettingMobilityBit)
-                            (*mobW)[globalI] = tmp.mobility[PwIndex];
-                        if (bitmask&NonwettingMobilityBit)
-                            (*mobN)[globalI] = tmp.mobility[SwitchIndex];
-                        if (bitmask&MassfracAinWBit)
-                            (*massfracAinW)[globalI] = tmp.massfrac[NCompIndex][WPhaseIndex];
-                        if (bitmask&MassfracAinABit)
-                            (*massfracAinA)[globalI] = tmp.massfrac[NCompIndex][NPhaseIndex];
-                        if (bitmask&MassfracWinWBit)
-                            (*massfracWinW)[globalI] = tmp.massfrac[WCompIndex][WPhaseIndex];
-                        if (bitmask&MassfracWinABit)
-                            (*massfracWinA)[globalI] = tmp.massfrac[WCompIndex][NPhaseIndex];
-                        if (bitmask&PhaseStateBit)
-                            (*phaseState)[globalI] = staticNodeDat_[globalI].phaseState;
+                        (*pW)[globalI] = tmp.pW;
+                        (*pN)[globalI] = tmp.pN;
+                        (*pC)[globalI] = tmp.pC;
+                        (*Sw)[globalI] = tmp.satW;
+                        (*Sn)[globalI] = tmp.satN;
+                        (*mobW)[globalI] = tmp.mobility[PwIndex];
+                        (*mobN)[globalI] = tmp.mobility[SwitchIndex];
+                        (*massfracAinW)[globalI] = tmp.massfrac[NCompIndex][WPhaseIndex];
+                        (*massfracAinA)[globalI] = tmp.massfrac[NCompIndex][NPhaseIndex];
+                        (*massfracWinW)[globalI] = tmp.massfrac[WCompIndex][WPhaseIndex];
+                        (*massfracWinA)[globalI] = tmp.massfrac[WCompIndex][NPhaseIndex];
+                        (*phaseState)[globalI] = staticNodeDat_[globalI].phaseState;
                     };
                 }
 
                 
-                if (bitmask&WettingPressureBit)
-                    writer.addVertexData(pW, "pW");
-                if (bitmask&NonwettingPressureBit)
-                    writer.addVertexData(pN, "pN");
-                if (bitmask&CapillaryPressureBit)
-                    writer.addVertexData(pC, "pC");
-                if (bitmask&WettingSaturationBit)
-                    writer.addVertexData(Sw, "Sw");
-                if (bitmask&NonwettingSaturationBit)
-                    writer.addVertexData(Sn, "Sn");
-                if (bitmask&WettingMobilityBit)
-                    writer.addVertexData(mobW, "mobW");
-                if (bitmask&NonwettingMobilityBit)
-                    writer.addVertexData(mobN, "mobN");
-                if (bitmask&MassfracAinWBit)
-                    writer.addVertexData(massfracAinW, "massfrac Air in Water");
-                if (bitmask&MassfracAinABit)
-                    writer.addVertexData(massfracAinA, "massfrac Air in Air");
-                if (bitmask&MassfracWinWBit)
-                    writer.addVertexData(massfracWinW, "massfrac Water in Water");
-                if (bitmask&MassfracWinABit)
-                    writer.addVertexData(massfracWinA, "massfrac Water in Air");
-                if (bitmask&PhaseStateBit)
-                    writer.addVertexData(phaseState, "phaseState");
+                writer.addVertexData(pW, "pW");
+                writer.addVertexData(pN, "pN");
+                writer.addVertexData(pC, "pC");
+                writer.addVertexData(Sw, "Sw");
+                writer.addVertexData(Sn, "Sn");
+                writer.addVertexData(mobW, "mobW");
+                writer.addVertexData(mobN, "mobN");
+                writer.addVertexData(massfracAinW, "massfrac Air in Water");
+                writer.addVertexData(massfracAinA, "massfrac Air in Air");
+                writer.addVertexData(massfracWinW, "massfrac Water in Water");
+                writer.addVertexData(massfracWinA, "massfrac Water in Air");
+                writer.addVertexData(phaseState, "phaseState");
             }
 
         
