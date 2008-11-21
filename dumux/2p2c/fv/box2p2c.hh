@@ -293,7 +293,7 @@ namespace Dune
 		{
 			    nextDt = this->localJacobian.getDt();
                 NewtonMethod newton(*this); // *this means object itself (box2p2c)
-                NewtonController newtonCtl(1e-7, 6, 18);
+                NewtonController newtonCtl(1e-7, 6);
                 newtonLoop = newton.execute(*this, newtonCtl);
                 nextDt = newtonCtl.suggestTimeStepSize(nextDt);
                 this->localJacobian.setDt(nextDt);
@@ -306,7 +306,7 @@ namespace Dune
 
 //		double Flux(0), Mass(0);
 //		Flux = this->computeFlux();
-//		Mass = this->totalCO2Mass();
+//		Mass = totalCO2Mass();
 
 		this->localJacobian.updatePhaseState(); // update variable oldPhaseState
 		this->localJacobian.clearVisited();
@@ -316,9 +316,97 @@ namespace Dune
 
 		*(this->uOldTimeStep) = *(this->u);
 
-		// update old phase state for computation of ComputeM(..uold..)
-
 		return;
+	}
+
+	virtual double totalCO2Mass() {
+		typedef typename G::Traits::template Codim<0>::Entity Entity;
+		typedef typename G::ctype DT;
+		typedef typename GV::template Codim<0>::Iterator Iterator;
+		enum {dim = G::dimension};
+		enum {dimworld = G::dimensionworld};
+		enum {gasPhase = 0, waterPhase = 1, bothPhases = 2};	// Phase state
+		const GV& gridview(this->grid_.leafView());
+		double totalMass = 0;
+		double minSat = 1e100;
+		double maxSat = -1e100;
+		double minP  = 1e100;
+		double maxP = -1e100;
+		double minTe = 1e100;
+		double maxTe = -1e100;
+		double minX = 1e100;
+		double maxX = -1e100;
+
+		// iterate through leaf grid an evaluate c0 at cell center
+		Iterator eendit = gridview.template end<0>();
+		for (Iterator it = gridview.template begin<0>(); it
+				!= eendit; ++it) {
+			// get geometry type
+			Dune::GeometryType gt = it->geometry().type();
+
+			// get entity
+			const Entity& entity = *it;
+
+			FVElementGeometry<G> fvGeom;
+			fvGeom.update(entity);
+
+			const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type
+					&sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(gt,
+							1);
+			int size = sfs.size();
+
+			for (int i = 0; i < size; i++) {
+				// get cell center in reference element
+				const Dune::FieldVector<DT,dim>&local = sfs[i].position();
+
+				// get global coordinate of cell center
+				Dune::FieldVector<DT,dimworld> global = it->geometry().global(local);
+
+				int globalId = this->vertexmapper.template map<dim>(entity,
+						sfs[i].entity());
+
+				int state;
+				state = this->localJacobian.sNDat[globalId].phaseState;
+				RT vol = fvGeom.subContVol[i].volume;
+				RT poro = this->problem.soil().porosity(global, entity, local);
+
+				RT rhoN = (*(this->localJacobian.outDensityN))[globalId];
+				RT rhoW = (*(this->localJacobian.outDensityW))[globalId];
+				RT satN = (*(this->localJacobian.outSaturationN))[globalId];
+				RT satW = (*(this->localJacobian.outSaturationW))[globalId];
+				RT xAW = (*(this->localJacobian.outMassFracAir))[globalId];
+				RT xWN = (*(this->localJacobian.outMassFracWater))[globalId];
+				RT xAN = 1 - xWN;
+				RT pW = (*(this->u))[globalId][0];
+				RT Te = (*(this->u))[globalId][2];
+				RT mass = vol * poro * (satN * rhoN * xAN + satW * rhoW * xAW);
+
+
+
+				minSat = std::min(minSat, satN);
+				maxSat = std::max(maxSat, satN);
+//				minP = std::min(minP, pW);
+//				maxP = std::max(maxP, pW);
+				minX = std::min(minX, xAW);
+				maxX = std::max(maxX, xAW);
+				minTe = std::min(minTe, Te);
+				maxTe = std::max(maxTe, Te);
+
+				totalMass += mass;
+			}
+
+		}
+
+		// print minimum and maximum values
+		std::cout << "nonwetting phase saturation: min = "<< minSat
+				<< ", max = "<< maxSat << std::endl;
+		std::cout << "wetting phase pressure: min = "<< minP
+				<< ", max = "<< maxP << std::endl;
+		std::cout << "mass fraction CO2: min = "<< minX
+				<< ", max = "<< maxX << std::endl;
+		std::cout << "mass: "<< totalMass << std::endl;
+
+		return totalMass;
 	}
 
 
@@ -350,7 +438,7 @@ namespace Dune
 		Dune::BlockVector<FieldVector<double, m+1> > data(size);
 		data=0;
 
-		importFromDGF<GV>(data, "data", false);
+//		importFromDGF<GV>(data, "data", false);
 
 		for (int i=0;i<size;i++)
 		{

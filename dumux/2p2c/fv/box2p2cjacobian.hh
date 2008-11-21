@@ -315,11 +315,11 @@ namespace Dune
 	 diffusionAN = - diffusionWN;
 
 	 // add diffusion of water to flux
-	 flux[water] += (diffusionWW + diffusionWN);
+//	 flux[water] += (diffusionWW + diffusionWN);
 	 //	std::cout << "Water Flux: " << flux[water] << std::endl;
 
 	 // add diffusion of air to flux
-	 flux[air] += (diffusionAN + diffusionAW);
+//	 flux[air] += (diffusionAN + diffusionAW);
 	 // std::cout << "Air Flux: " << flux[air] << std::endl;
 
 
@@ -371,65 +371,60 @@ namespace Dune
         	xWNmass = sol[localIdx][switchIdx];
         	xWNmolar = problem.multicomp().convertMassToMoleFraction(xWNmass, gasPhase);
            	pwn = xWNmolar * pN;
-                pWSat = problem.multicomp().vaporPressure(temperature);
+			pWSat = problem.multicomp().vaporPressure(temperature);
 
-        	if (pwn > 1.01*pWSat && !switched)// && switch_counter < 3)
-                {
-                    // appearance of water phase
-                    std::cout << "Water appears at node " << globalIdx << "  Coordinates: " << global << std::endl;
-                    sNDat[globalIdx].phaseState = bothPhases;
-                    sol[localIdx][switchIdx] = 1.0 - 2e-5; // initialize solution vector
-                    sNDat[globalIdx].switched += 1;
-                    switched = true;
-                }
-                break;
+        	if (pwn > (1 + 1e-5)*pWSat && !switched)// && switch_counter < 3)
+			{
+        		// appearance of water phase
+				std::cout << "Water appears at node " << globalIdx << "  Coordinates: " << global << std::endl;
+				sNDat[globalIdx].phaseState = bothPhases;
+				sol[localIdx][switchIdx] = 1.0 - 2e-5; // initialize solution vector
+				sNDat[globalIdx].switched += 1;
+				switched = true;
+            }
+            break;
 
             case waterPhase :
         	RT xAWmass, xAWmolar, henryInv, pbub, xAWmolarMax; // auxiliary variables
 
         	xAWmass = sol[localIdx][switchIdx];
          	xAWmolar = problem.multicomp().convertMassToMoleFraction(xAWmass, waterPhase);
-                xAWmolarMax = problem.multicomp().xAWmolar(pN, temperature);
-/*
-        	henryInv = problem.multicomp().henry(temperature);
-                pWSat = problem.multicomp().vaporPressure(temperature);
+
+            henryInv = problem.multicomp().henry(temperature);
+            pWSat = problem.multicomp().vaporPressure(temperature);
         	pbub = pWSat + xAWmolar/henryInv; // pWSat + pAW
 
-        	if (pN < pbub && !switched)// && switch_counter < 3)
-*/
-                if (xAWmolar > (1 + 1e-5)*xAWmolarMax)
-                {
-                    // appearance of gas phase
-                    std::cout << "Gas appears at node " << globalIdx << ",  Coordinates: " << global << std::endl;
-                    sNDat[globalIdx].phaseState = bothPhases;
-                    sol[localIdx][switchIdx] = 2e-5; // initialize solution vector
-                    sNDat[globalIdx].switched += 1;
-                    switched = true;
-                }
-                break;
+        	if (pN < (1 - 1e-5)*pbub && !switched)// && switch_counter < 3)
+			{
+				// appearance of gas phase
+				std::cout << "Gas appears at node " << globalIdx << ",  Coordinates: " << global << std::endl;
+				sNDat[globalIdx].phaseState = bothPhases;
+				sol[localIdx][switchIdx] = 2e-5; // initialize solution vector
+				sNDat[globalIdx].switched += 1;
+				switched = true;
+			}
+			break;
 
             case bothPhases:
-                return;
-
         	RT satN = sol[localIdx][switchIdx];
 
-        	if (satN < 0.0  && !switched)// && switch_counter < 3)
+        	if (satN < -1e-5  && !switched)// && switch_counter < 3)
       	  	{
-                    // disappearance of gas phase
-                    std::cout << "Gas disappears at node " << globalIdx << "  Coordinates: " << global << std::endl;
-                    sNDat[globalIdx].phaseState = waterPhase;
-                    sol[localIdx][switchIdx] = problem.multicomp().xAW(pN); // initialize solution vector
-                    sNDat[globalIdx].switched += 1;
-                    switched = true;
-                }
-        	else if (satW < 0.0  && !switched)// && switch_counter < 3)
+				// disappearance of gas phase
+				std::cout << "Gas disappears at node " << globalIdx << "  Coordinates: " << global << std::endl;
+				sNDat[globalIdx].phaseState = waterPhase;
+				sol[localIdx][switchIdx] = problem.multicomp().xAW(pN); // initialize solution vector
+				sNDat[globalIdx].switched += 1;
+				switched = true;
+			}
+        	else if (satW < -1e-5 && !switched)// && switch_counter < 3)
       	  	{
-                    // disappearance of water phase
-                    std::cout << "Water disappears at node " << globalIdx << "  Coordinates: " << global << std::endl;
-                    sNDat[globalIdx].phaseState = gasPhase;
-                    sol[localIdx][switchIdx] = problem.multicomp().xWN(pN); // initialize solution vector
-                    sNDat[globalIdx].switched += 1;
-                    switched = true;
+				// disappearance of water phase
+				std::cout << "Water disappears at node " << globalIdx << "  Coordinates: " << global << std::endl;
+				sNDat[globalIdx].phaseState = gasPhase;
+				sol[localIdx][switchIdx] = problem.multicomp().xWN(pN); // initialize solution vector
+				sNDat[globalIdx].switched += 1;
+				switched = true;
       	  	}
       	  	break;
 
@@ -485,18 +480,6 @@ namespace Dune
       	 }
        return;
     }
-
-//	void localToGlobal(const Entity& e) {
-//	// we assert that the i-th shape function is
-//	// associated to the i-th node of the cell.
-//	int n = _curCell().template count<GridDim>();
-//	this->setcurrentsize(n);
-//	for (int i = 0; i < n; i++) {
-//		int globalIdx = vertexMapper.template map<dim>(_curCell(), i);
-//		(*currentSolution)[globalIdx] = this->(*u)[i];
-//	}
-//	}
-
 
 	  //*********************************************************
 	  //*														*
@@ -574,10 +557,10 @@ namespace Dune
   			 // set counter for variable switch to zero
   			 sNDat[globalIdx].switched = 0;
 
-  			 if (!checkSwitched())
-  		   	 {
-  		   		 primaryVarSwitch(e, globalIdx, sol, k);
-  		   	 }
+//  			 if (!checkSwitched())
+//  		   	 {
+			 primaryVarSwitch(e, globalIdx, sol, k);
+//  		   	 }
 
   			 // mark elements that were already visited
   			 sNDat[globalIdx].visited = true;

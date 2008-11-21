@@ -5,11 +5,12 @@
 #include <dune/grid/common/gridinfo.hh>
 #include <dune/grid/uggrid.hh>
 #include <dune/grid/sgrid.hh>
-#include <dune/grid/io/file/dgfparser/dgfparser.hh>
-#include <dune/grid/io/file/dgfparser/dgfug.hh>
+//#include <dune/grid/io/file/dgfparser/dgfparser.hh>
+//#include <dune/grid/io/file/dgfparser/dgfug.hh>
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
-#include "injectionproblem.hh"
+//#include "injectionproblem.hh"
+#include "blobproblem.hh"
 #include "dumux/2p2c/fv/box2p2c.hh"
 #include "dumux/timedisc/timeloop.hh"
 
@@ -34,12 +35,12 @@ int main(int argc, char** argv)
     double depthBOR = 800.0;
 
 //	For defining a SGrid ////////////////////////////////////////
-//    typedef Dune::SGrid<dim,dim> GridType;
-//    typedef Dune::FieldVector<GridType::ctype,dim> FieldVector;
-//    Dune::FieldVector<int,dim> N(24); N[1]=16;
-//    FieldVector L(0);
-//    FieldVector H(60); H[1]=40;
-//    GridType grid(N,L,H);
+    typedef Dune::SGrid<dim,dim> GridType;
+    typedef Dune::FieldVector<GridType::ctype,dim> FieldVector;
+    Dune::FieldVector<int,dim> N(40); N[1]=40;
+    FieldVector L(0);
+    FieldVector H(300); H[1]=300;
+    GridType grid(N,L,H);
 ////////////
 
     // for defining e.g. a lense
@@ -65,25 +66,25 @@ int main(int argc, char** argv)
 
     // create a grid object
     //typedef Dune::YaspGrid<dim,dim> GridType;
-    typedef Dune::UGGrid<dim> GridType;
+//    typedef Dune::UGGrid<dim> GridType;
 
     // use grid defined in the arguments
-    Dune::GridPtr<GridType> gridPointer(argv[1]);
+//    Dune::GridPtr<GridType> gridPointer(argv[1]);
     // grid reference
-    GridType& grid = *gridPointer;
+//    GridType& grid = *gridPointer;
 
     Dune::gridinfo(grid);
 
     // choose fluids and properties
     Dune::Liq_WaterAir wPhase;
     Dune::Gas_WaterAir nPhase;
-    Dune::InjectionSoil<GridType, NumberType> soil;
+    Dune::BlobSoil<GridType, NumberType> soil;
 
     Dune::TwoPhaseRelations<GridType, NumberType> materialLaw(soil, wPhase, nPhase);
     Dune::CWaterAir multicomp(wPhase, nPhase);
 
     // create problem properties and geometry
-    Dune::InjectionProblem<GridType, NumberType> problem(wPhase, nPhase, soil, outerLowerLeft,
+    Dune::BlobProblem<GridType, NumberType> problem(wPhase, nPhase, soil, outerLowerLeft,
     		outerUpperRight, innerLowerLeft, innerUpperRight, depthBOR, materialLaw, multicomp);
 
     // create two-phase two-component problem
@@ -95,7 +96,7 @@ int main(int argc, char** argv)
 
     Dune::Timer timer;
     timer.reset();
-    MultiWriter writer("out2p2c-2");
+    MultiWriter writer("out2p2c-blob");
     timeloop.executeMultiWriter(twoPhasetwoComp, writer);
     std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
 

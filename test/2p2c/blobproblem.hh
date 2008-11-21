@@ -110,7 +110,7 @@ namespace Dune
 		values[pWIdx] = 1e5;//(600-x[0])/300 * 1e5;
 		values[switchIdx] = 0;
 
-		if ((x[0] >= 59.0) && (x[0] <=121) && (x[1] >= 119) && (x[1] <= 181))
+		if ((x[0] >= 60.0) && (x[0] <=120) && (x[1] >= 120) && (x[1] <= 180))
 			values[switchIdx] = 0.1;
 
 		return values;
@@ -248,7 +248,9 @@ namespace Dune
   		return Matrix2p<G,RT>::brooks_corey;
   	}
 
-  	BlobSoil():Matrix2p<G,RT>()
+  	BlobSoil()
+		: Matrix2p<G,RT>(),
+		  K_(0)
   	{
   		for(int i = 0; i < n; i++)
   			K_[i][i] = 1e-12;
