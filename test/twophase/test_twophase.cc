@@ -19,6 +19,7 @@
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/material/phaseproperties/phaseproperties2p.hh"
 #include "dumux/material/twophaserelations.hh"
+#include "dumux/io/vtkmultiwriter.hh"
 
 int main(int argc, char** argv)
 {
@@ -73,14 +74,16 @@ int main(int argc, char** argv)
     Dune::LensProblem<GridType, NumberType> problem(wPhase, nPhase, soil, outerLowerLeft,
     		outerUpperRight, innerLowerLeft, innerUpperRight, law);
 
-    typedef Dune::BoxPwSn<GridType, NumberType> TwoPhase;
+    typedef Dune::VtkMultiWriter<GridType::LeafGridView> MultiWriter;
+    typedef Dune::BoxPwSn<GridType, NumberType, MultiWriter> TwoPhase;
     TwoPhase twoPhase(grid, problem);
 
-    Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt, "twophase-out", 1);
+    Dune::TimeLoop<GridType, TwoPhase, true> timeloop(0, tEnd, dt, "dummy", 1);
 
     Dune::Timer timer;
     timer.reset();
-    timeloop.execute(twoPhase);
+    MultiWriter writer("out-twophase");
+    timeloop.executeMultiWriter(twoPhase, writer);
     std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
 
     //printvector(std::cout, *twoPhase.u, "u", "row", 2, 1, 3);
