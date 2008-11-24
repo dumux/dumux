@@ -14,6 +14,7 @@
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
 #include "lensproblem.hh"
+#include "lenssoil.hh"
 #include "dumux/twophase/fv/boxpwsn.hh"
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/material/phaseproperties/phaseproperties2p.hh"
@@ -32,11 +33,13 @@ int main(int argc, char** argv)
     innerLowerLeft[1] = 2;
     Dune::FieldVector<NumberType, dim> innerUpperRight(4);
     innerUpperRight[1] = 3;
+
+    // read tEnd and initial time step from console
     if (argc != 3) {
       std::cout << "usage: test_twophase tEnd dt" << std::endl;
       return 0;
     }
-    	std::string arg1(argv[1]);
+    std::string arg1(argv[1]);
 	std::istringstream is1(arg1);
 	double tEnd;
 	is1 >> tEnd;
@@ -45,32 +48,28 @@ int main(int argc, char** argv)
 	double dt;
 	is2 >> dt;
 
-
     // create a grid object
+    typedef double NumberType;
     typedef Dune::SGrid<dim,dim> GridType;
-    //typedef Dune::ALUSimplexGrid<dim,dim> GridType;
-    //typedef Dune::AlbertaGrid<dim,dim> GridType;
-    //typedef Dune::YaspGrid<dim,dim> GridType;
-    //typedef Dune::UGGrid<dim> GridType;
+    typedef Dune::FieldVector<GridType::ctype,dim> FieldVector;
+    Dune::FieldVector<int,dim> N(24); N[1] = 16; // number of cells
+    FieldVector L(0); //
+    FieldVector H(6); H[1] = 4;
+    GridType grid(N,L,H);
 
-    // use unitcube from grids
-    std::stringstream dgfFileName;
-    dgfFileName << "test/twophase/grids/unitcube" << GridType :: dimension << ".dgf";
-
-
-    // create grid pointer, GridType is defined by gridtype.hh
-    Dune::GridPtr<GridType> gridPtr( dgfFileName.str() );
-
-    // grid reference
-    GridType& grid = *gridPtr;
-
+    // print some information about the grid
     Dune::gridinfo(grid);
 
+    // choose fluids
     Dune::Water wPhase;
     Dune::DNAPL nPhase;
-    Dune::LensSoil<GridType, NumberType> soil;
+    // create soil object
+    Dune::LensSoil<GridType, NumberType> soil(outerLowerLeft,
+    		outerUpperRight, innerLowerLeft, innerUpperRight);
+    // create material law object
     Dune::TwoPhaseRelations<GridType, NumberType> law(soil, wPhase, nPhase);
 
+    // create Prolem object
     Dune::LensProblem<GridType, NumberType> problem(wPhase, nPhase, soil, outerLowerLeft,
     		outerUpperRight, innerLowerLeft, innerUpperRight, law);
 
