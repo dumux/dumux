@@ -122,9 +122,9 @@ namespace Dune {
 			  { }
 
   TimeLoop(const double ts, const double te, const double dtime = 1e100,
-			  const char* name = "timeloop", const int mod = 1, const double fdt = 1e100,
+			  const char* name = "timeloop", const int mod = 1, const double mdt=1e100, const double fdt = 1e100,
 			  TimeStep<G, Model>& tist = *(new ImplicitEulerStep<G, Model>))
-			  : tStart(ts), tEnd(te), dt(dtime), maxDt(1e100), firstDt(fdt), cFLFactor(1),
+			  : tStart(ts), tEnd(te), dt(dtime), maxDt(mdt), firstDt(fdt), cFLFactor(1),
 			  modulo(mod), timeStep(tist), fileName(name), fixed(true)
             { }
 
