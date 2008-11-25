@@ -57,7 +57,7 @@ int main(int argc, char** argv)
 
     Dune::Timer timer;
     timer.reset();
-    MultiWriter writer("out-twophase");
+    MultiWriter writer("out-tutorial-coupled");
     timeloop.executeMultiWriter(boxmethod, writer); /*@\label{tutorial-coupled:execute}@*/
 
     // start simulation
