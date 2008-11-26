@@ -101,6 +101,7 @@ namespace Dune
 		return 1;
 	}
 
+
 	//! evaluate Neumann boundary condition for the pressure equation at given position
 	/*! evaluate Neumann boundary condition for the pressure equation at given position
 	  @param[in]  x    position in global coordinates
@@ -117,14 +118,15 @@ namespace Dune
 	virtual RT initSat (const FieldVector<DT,n>& x, const Entity& e,
 				  const FieldVector<DT,n>& xi) const = 0;
 
+	virtual RT JSat (const FieldVector<DT,n>& x, const Entity& e,
+				  const FieldVector<DT,n>& xi, RT& factor) const = 0;
+
 	//! evaluate gravity
 	/*! evaluate gravity
 	  \return     gravity vector
 	 */
-	const FieldVector<DT,n> gravity() const
+	const FieldVector<DT,n>& gravity() const
 	{
-                FieldVector<DT,n> gravity_(0);
-                // TODO: this is pretty hacky!!!
 		return gravity_;
 	}
 
@@ -133,7 +135,7 @@ namespace Dune
 	 *  @param cap flag to include capillary forces.
 	 */
 	FractionalFlowProblem(VC& variableobject, Fluid& wp, Fluid& nwp, Matrix2p<G, RT>& s, TwoPhaseRelations<G, RT>& law = *(new TwoPhaseRelations<G,RT>), const bool cap = false)
-            : variables(variableobject), wettingphase(wp), nonwettingphase(nwp), soil(s), materialLaw(law), capillary(cap)
+	 : variables(variableobject), wettingphase(wp), nonwettingphase(nwp), soil(s), capillary(cap), materialLaw(law),gravity_(0)
 	 {}
 
 	//! always define virtual destructor in abstract base class
@@ -144,8 +146,9 @@ namespace Dune
 	Fluid& wettingphase;
 	Fluid& nonwettingphase;
 	Matrix2p<G, RT>& soil;
-	TwoPhaseRelations<G, RT>& materialLaw;
 	const bool capillary;
+	TwoPhaseRelations<G, RT>& materialLaw;
+	FieldVector<DT,n> gravity_;
 
   };
 
