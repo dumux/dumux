@@ -29,101 +29,105 @@
 
 namespace Dune
 {
-  /*! \ingroup diffusionProblems
-   * @brief base class that defines the parameters of a diffusion equation
-   *
-   * An interface for defining parameters for the stationary diffusion equation
-   * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = q, \f$,
-   * \f$p = g\f$ on \f$\Gamma_1\f$, and \f$\lambda K \text{grad}\, p = J\f$
-   * on \f$\Gamma_2\f$. Here,
-   * \f$p\f$ denotes the pressure, \f$K\f$ the absolute permeability,
-   * and \f$\lambda\f$ the total mobility, possibly depending on the
-   * saturation.
-   *
-   *	Template parameters are:
-   *
-   *	- Grid  a DUNE grid type
-   *	- RT    type used for return values
-   */
-  template<class G, class RT, class VC>
-  class FractionalFlowProblem {
-  protected:
-	typedef typename G::ctype DT;
+/*! \ingroup diffusionProblems
+ * @brief base class that defines the parameters of a diffusion equation
+ *
+ * An interface for defining parameters for the stationary diffusion equation
+ * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = q, \f$,
+ * \f$p = g\f$ on \f$\Gamma_1\f$, and \f$\lambda K \text{grad}\, p = J\f$
+ * on \f$\Gamma_2\f$. Here,
+ * \f$p\f$ denotes the pressure, \f$K\f$ the absolute permeability,
+ * and \f$\lambda\f$ the total mobility, possibly depending on the
+ * saturation.
+ *
+ *	Template parameters are:
+ *
+ *	- Grid  a DUNE grid type
+ *	- RT    type used for return values
+ */
+template<class G, class RT, class VC>
+class FractionalFlowProblem
+{
+protected:
+typedef	typename G::ctype DT;
 	typedef typename G::Traits::template Codim<0>::Entity Entity;
 
-  public:
-	  typedef G GridType;
-	  typedef RT ReturnType;
-	  enum {n=G::dimension, m=1};
+public:
+	typedef G GridType;
+	typedef RT ReturnType;
+	enum
+	{	n=G::dimension, m=1};
 
 	//! evaluate source term for the pressure equation
 	/*! evaluate source term for the pressure equation at given location
-	  @param[in]  x    position in global coordinates
-	  @param[in]  e    entity of codim 0
-	  @param[in]  xi   position in reference element of e
-	  \return     value of source term
+	 @param[in]  x    position in global coordinates
+	 @param[in]  e    entity of codim 0
+	 @param[in]  xi   position in reference element of e
+	 \return     value of source term
 	 */
-	virtual RT qPress  (const FieldVector<DT,n>& x, const Entity& e,
-					const FieldVector<DT,n>& xi) = 0;
+	virtual RT qPress (const FieldVector<DT,n>& x, const Entity& e,
+			const FieldVector<DT,n>& xi) = 0;
 
 	//! return type of boundary condition for the pressure equation at the given global coordinate
 	/*! return type of boundary condition for the pressure equation at the given global coordinate
-	  @param[in]  x    position in global coordinates
-	  \return     boundary condition type given by enum in this class
+	 @param[in]  x    position in global coordinates
+	 \return     boundary condition type given by enum in this class
 	 */
 	virtual BoundaryConditions::Flags bctypePress (const FieldVector<DT,n>& x, const Entity& e,
-					   const FieldVector<DT,n>& xi) const = 0;
+			const FieldVector<DT,n>& xi) const = 0;
 
 	//! return type of boundary condition for the saturation equation at the given global coordinate
 	/*! return type of boundary condition for the saturation equation at the given global coordinate
-	  @param[in]  x    position in global coordinates
-	  \return     boundary condition type given by enum in this class
+	 @param[in]  x    position in global coordinates
+	 \return     boundary condition type given by enum in this class
 	 */
 	virtual BoundaryConditions::Flags bctypeSat (const FieldVector<DT,n>& x, const Entity& e,
-					   const FieldVector<DT,n>& xi) const = 0;
+			const FieldVector<DT,n>& xi) const = 0;
 
 	//! evaluate Dirichlet boundary condition for the pressure equation at given position
 	/*! evaluate Dirichlet boundary condition for the pressure equation at given position
-	  @param[in]  x    position in global coordinates
-	  \return     boundary condition value
+	 @param[in]  x    position in global coordinates
+	 \return     boundary condition value
 	 */
 	virtual RT gPress (const FieldVector<DT,n>& x, const Entity& e,
-				  const FieldVector<DT,n>& xi) const = 0;
+			const FieldVector<DT,n>& xi) const = 0;
 
 	//! evaluate Dirichlet boundary condition for the saturation equation at given position
 	/*! evaluate Dirichlet boundary condition for the saturation equation at given position
-	  @param[in]  x    position in global coordinates
-	  \return     boundary condition value
+	 @param[in]  x    position in global coordinates
+	 \return     boundary condition value
 	 */
 	virtual RT gSat (const FieldVector<DT,n>& x, const Entity& e,
-					  const FieldVector<DT,n>& xi) const
+			const FieldVector<DT,n>& xi) const
 	{
 		return 1;
 	}
 
-
 	//! evaluate Neumann boundary condition for the pressure equation at given position
 	/*! evaluate Neumann boundary condition for the pressure equation at given position
-	  @param[in]  x    position in global coordinates
-	  \return     boundary condition value
+	 @param[in]  x    position in global coordinates
+	 \return     boundary condition value
 	 */
 	virtual RT JPress (const FieldVector<DT,n>& x, const Entity& e,
-				  const FieldVector<DT,n>& xi) const = 0;
+			const FieldVector<DT,n>& xi) const = 0;
 
 	//! evaluate initial condition for saturation at given position
 	/*! evaluate initial condition for saturation at given position
-	  @param[in]  x    position in global coordinates
-	  \return    initial condition value
+	 @param[in]  x    position in global coordinates
+	 \return    initial condition value
 	 */
 	virtual RT initSat (const FieldVector<DT,n>& x, const Entity& e,
-				  const FieldVector<DT,n>& xi) const = 0;
+			const FieldVector<DT,n>& xi) const = 0;
 
 	virtual RT JSat (const FieldVector<DT,n>& x, const Entity& e,
-				  const FieldVector<DT,n>& xi, RT& factor) const = 0;
+			const FieldVector<DT,n>& xi, RT& factor) const
+	{
+		DUNE_THROW(NotImplemented, "neumann boundary function for saturation eq. not implemented!");
+	}
 
 	//! evaluate gravity
 	/*! evaluate gravity
-	  \return     gravity vector
+	 \return     gravity vector
 	 */
 	const FieldVector<DT,n>& gravity() const
 	{
@@ -135,11 +139,12 @@ namespace Dune
 	 *  @param cap flag to include capillary forces.
 	 */
 	FractionalFlowProblem(VC& variableobject, Fluid& wp, Fluid& nwp, Matrix2p<G, RT>& s, TwoPhaseRelations<G, RT>& law = *(new TwoPhaseRelations<G,RT>), const bool cap = false)
-	 : variables(variableobject), wettingphase(wp), nonwettingphase(nwp), soil(s), capillary(cap), materialLaw(law),gravity_(0)
-	 {}
+	: variables(variableobject), wettingphase(wp), nonwettingphase(nwp), soil(s), capillary(cap), materialLaw(law),gravity_(0)
+	{}
 
 	//! always define virtual destructor in abstract base class
-	virtual ~FractionalFlowProblem () {}
+	virtual ~FractionalFlowProblem ()
+	{}
 
 	//! a class describing relations between two phases and the porous medium
 	VC& variables;
@@ -150,7 +155,7 @@ namespace Dune
 	TwoPhaseRelations<G, RT>& materialLaw;
 	FieldVector<DT,n> gravity_;
 
-  };
+};
 
 }
 #endif
