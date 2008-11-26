@@ -1,4 +1,4 @@
-#include "new_injectionproblem.hh"
+#include "new_waterairproblem.hh"
 
 #include <dune/common/exceptions.hh>
 
@@ -9,7 +9,7 @@ int main(int argc, char** argv)
     // Set the type for scalar values (should be one of float, double
     // or long double)
     typedef double                            Scalar;
-    typedef Dune::NewInjectionProblem<Scalar> Problem;
+    typedef Dune::NewWaterAirProblem<Scalar>  Problem;
     typedef Problem::DomainTraits::Grid       Grid;
     typedef Dune::GridPtr<Grid>               GridPointer;
 
@@ -27,7 +27,7 @@ int main(int argc, char** argv)
         // load the grid from file
         GridPointer gridPtr =  GridPointer(dgfFileName);
         Dune::gridinfo(*gridPtr);
-        
+
         // instantiate and run the concrete problem
         Problem problem(&(*gridPtr), dt, tEnd);
         if (!problem.simulate())

@@ -148,10 +148,10 @@ namespace Dune
      *	- ScalarT  Floating point type used for scalars
      */
     template<class ScalarT>
-    class NewInjectionProblem : public BasicDomain<Dune::UGGrid<2>, 
+    class NewInjectionProblem : public BasicDomain<Dune::SGrid<2,2>, 
                                                    ScalarT>
     {
-        typedef Dune::UGGrid<2>                Grid;
+        typedef Dune::SGrid<2,2>               Grid;
         typedef BasicDomain<Grid, ScalarT>     ParentType;
         typedef NewInjectionProblem<ScalarT>   ThisType;
         typedef TwoPTwoCBoxModel<ThisType>     Model;
@@ -481,12 +481,13 @@ namespace Dune
             }
 
 
-        Scalar porosity(const Node &node, int globalIdx, const WorldCoord &globalPos) const
+        Scalar porosity(const Cell &cell, int localIdx) const
             {
                 // TODO/HACK: porosity should be defined on the nodes
                 // as it is required on the nodes!
                 const LocalCoord &local =
-                    DomainTraits::referenceElement(ParentType::cellBegin()->type()).position(0, GridDim);
+                    DomainTraits::referenceElement(cell.type()).position(localIdx, GridDim);
+                const WorldCoord &globalPos = cell.geometry()[localIdx];
                 return soil().porosity(globalPos, *(ParentType::cellBegin()), local);
             };
 

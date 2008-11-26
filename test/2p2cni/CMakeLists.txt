@@ -4,6 +4,9 @@ add_definitions(-DENABLE_ALUGRID -DGRIDDIM=2 -DENABLE_UG)
 ADD_EXECUTABLE("test_2p2cni" test_2p2cni.cc)
 TARGET_LINK_LIBRARIES("test_2p2cni" ${DumuxLinkLibraries})
 
+ADD_EXECUTABLE("new_test_2p2cni" new_test_2p2cni.cc)
+TARGET_LINK_LIBRARIES("new_test_2p2cni" ${DumuxLinkLibraries})
+
 # build target for the twophase-twocomponent test problem
 # (doesn't work with automake build tools -> commented out) 
 ADD_EXECUTABLE("test_co2_2p2cni" test_co2.cc)

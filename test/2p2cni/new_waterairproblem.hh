@@ -1,5 +1,5 @@
-#ifndef DUNE_NEW_BLOBPROBLEM_HH
-#define DUNE_NEW_BLOBPROBLEM_HH
+#ifndef DUNE_NEW_WATERAIRPROBLEM_HH
+#define DUNE_NEW_WATERAIRPROBLEM_HH
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -35,8 +35,8 @@
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
 #include <dune/istl/io.hh>
 
-#include<dumux/new_models/2p2c/2p2cboxmodel.hh>
-#include<dumux/new_models/2p2c/2p2cnewtoncontroller.hh>
+#include<dumux/new_models/2p2cni/2p2cniboxmodel.hh>
+#include<dumux/new_models/2p2cni/2p2cninewtoncontroller.hh>
 
 #include<dumux/timedisc/new_impliciteulerstep.hh>
 #include<dumux/nonlinear/new_newtonmethod.hh>
@@ -46,122 +46,35 @@
 
 /**
  * @file
- *
- * @brief Definition of a problem, where a blob of gas is enclosed by
- * a zone completely saturated with water. The gas saturation within
- * the blob is below the residual saturation, bit gas gets transported
- * away anyway because it is partially miscible with water.
- *
+ * @brief  Definition of a problem, where air is injected under a low permeable layer
  * @author Bernd Flemisch, Klaus Mosthaf
  */
 
 namespace Dune
 {
-//////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////--SOIL--//////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////
-    template<class G, class Scalar>
-    class BlobSoil: public Matrix2p<G,Scalar>
-    {
-    public:
-  	typedef typename G::Traits::template Codim<0>::Entity Entity;
-  	typedef typename G::ctype DT;
-  	enum {dim=G::dimension};
-
-  	BlobSoil() 
-            : Matrix2p<G,Scalar>(), 
-              K_(0.0)
-            {
-                for(int i = 0; i < dim; i++)
-                    K_[i][i] = 1e-12;
-            }
-  	~BlobSoil()
-  	{}
-
-  	virtual FieldMatrix<DT,dim,dim> K (const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi)
-  	{
-  		return K_;
-  	}
-  	virtual double porosity(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi) const
-  	{
-  		return 0.3;
-  	}
-
-  	virtual double Sr_w(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, const double T) const
-  	{
-  		return 0;
-  	}
-
-  	virtual double Sr_n(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, const double T) const
-  	{
-  		return 0.1;
-  	}
-
-  	/* ATTENTION: define heat capacity per cubic meter! Be sure, that it corresponds to porosity!
-  			 * Best thing will be to define heatCap = (specific heatCapacity of material) * density * porosity*/
-  	virtual double heatCap(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi) const
-  	{
-  		return 	790 /* spec. heat cap. of granite */
-  						* 2700 /* density of granite */
-  						* (1 - porosity(x, e, xi));
-  	}
-
-  	virtual double heatCond(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, const double sat) const
-  	{
-  		static const double lWater = 0.6;
-  		static const double lGranite = 2.8;
-  		double poro = porosity(x, e, xi);
-  		double lsat = pow(lGranite, (1-poro)) * pow(lWater, poro);
-  		double ldry = pow(lGranite, (1-poro));
-  		return ldry + sqrt(sat) * (ldry - lsat);
-  	}
-
-  	virtual std::vector<double> paramRelPerm(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, const double T) const
-  	{
-  		// example for Brooks-Corey parameters
-  		std::vector<double> param(2);
-  		param[0] = 2.; // lambda
-  		param[1] = 0.; // entry-pressures
-
-  //		if (x[0] > 150)
-  //			param[0] = 0.5;
-
-  		return param;
-  	}
-
-  	virtual typename Matrix2p<G,Scalar>::modelFlag relPermFlag(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi) const
-  	{
-  		return Matrix2p<G,Scalar>::brooks_corey;
-  	}
-
-  private:
-	  FieldMatrix<DT,dim,dim> K_;
-    };
-
-    /*! 
-     * @brief Definition of a problem, where a blob of gas is enclosed by
-     * a zone completely saturated with water. The gas saturation within
-     * the blob is below the residual saturation, bit gas gets transported
-     * away anyway because it is partially miscible with water.
+    //! class that defines the parameters of an air waterair under a low permeable layer
+    /*! Problem definition of an air injection under a low permeable layer. Air enters the domain
+     * at the right boundary and migrates upwards.
+     * Problem was set up using the rect2d.dgf grid.
      *
      *	Template parameters are:
      *
      *	- ScalarT  Floating point type used for scalars
      */
     template<class ScalarT>
-    class NewBlobProblem : public BasicDomain<Dune::SGrid<2, 2>, 
-                                               ScalarT>
+    class NewWaterAirProblem : public BasicDomain<Dune::SGrid<2,2>, 
+                                                  ScalarT>
     {
         typedef Dune::SGrid<2,2>               Grid;
         typedef BasicDomain<Grid, ScalarT>     ParentType;
-        typedef NewBlobProblem<ScalarT>        ThisType;
-        typedef TwoPTwoCBoxModel<ThisType>     Model;
+        typedef NewWaterAirProblem<ScalarT>    ThisType;
+        typedef TwoPTwoCNIBoxModel<ThisType>   Model;
 
         typedef Dune::GridPtr<Grid>                    GridPointer;
 
         typedef Dune::Liq_WaterAir                     WettingPhase;
         typedef Dune::Gas_WaterAir                     NonwettingPhase;
-        typedef Dune::BlobSoil<Grid, ScalarT>          Soil;
+        typedef Dune::HomogeneousSoil<Grid, ScalarT>   Soil;
         typedef Dune::TwoPhaseRelations<Grid, ScalarT> MaterialLaw;
         typedef Dune::CWaterAir                        Multicomp;
 
@@ -171,19 +84,20 @@ namespace Dune
         // the traits of the BOX scheme
         typedef typename Model::BoxTraits           BoxTraits;
         // the traits of the Pw-Sn model
-        typedef typename Model::TwoPTwoCTraits      TwoPTwoCTraits;
+        typedef typename Model::TwoPTwoCNITraits    TwoPTwoCNITraits;
 
     private:
         // some constants from the traits for convenience
         enum {
             PrimaryVariables = BoxTraits::PrimaryVariables,
-            PwIndex     = TwoPTwoCTraits::PwIndex,
-            SwitchIndex = TwoPTwoCTraits::SwitchIndex,
+            PwIndex          = TwoPTwoCNITraits::PwIndex,
+            SwitchIndex      = TwoPTwoCNITraits::SwitchIndex,
+            TemperatureIndex = TwoPTwoCNITraits::TemperatureIndex,
             
             // Phase State
-            WPhaseOnly = TwoPTwoCTraits::WPhaseOnly,
-            NPhaseOnly = TwoPTwoCTraits::NPhaseOnly,
-            BothPhases = TwoPTwoCTraits::BothPhases,
+            WPhaseOnly = TwoPTwoCNITraits::WPhaseOnly,
+            NPhaseOnly = TwoPTwoCNITraits::NPhaseOnly,
+            BothPhases = TwoPTwoCNITraits::BothPhases,
 
             // Grid and world dimension
             GridDim  = DomainTraits::GridDim,
@@ -214,30 +128,29 @@ namespace Dune
         typedef Dune::NewImplicitEulerStep<ThisType>        TimeIntegration;
 
         typedef typename Model::NewtonMethod                NewtonMethod;
-        typedef TwoPTwoCNewtonController<NewtonMethod>      NewtonController;
+        typedef TwoPTwoCNINewtonController<NewtonMethod>    NewtonController;
 
     public:
-        NewBlobProblem(Scalar dtInitial,
-                       Scalar tEnd) 
-            : ParentType(new Grid(Dune::FieldVector<int,GridDim>(40), // number of nodes
-                                  WorldCoord(0.0),  // lower left
-                                  WorldCoord(300.0) // upper right
-                             )), 
+        NewWaterAirProblem(Grid *grid,
+                           Scalar dtInitial,
+                           Scalar tEnd) 
+            : ParentType(grid),
               materialLaw_(soil_, wPhase_, nPhase_),
               multicomp_(wPhase_, nPhase_),
               model_(*this),
               newtonMethod_(model_),
-              resultWriter_("newblob")
+              resultWriter_("new_waterair")
             {
                 initialTimeStepSize_ = dtInitial;
                 endTime_ = tEnd;
-                
-                eps_    = 1e-8 * 300.0;
-                
-                depthBOR_ = 800.0;
+
+                // specify the grid dimensions
+                eps_    = 1e-8;
+
+                depthBOR_ = 1000.0;
 
                 gravity_[0] = 0;
-                gravity_[1] = 0; // -9.81;
+                gravity_[1] = -9.81;
             }
 
         ///////////////////////////////////
@@ -257,7 +170,7 @@ namespace Dune
                 model_.initial();
 
                 // write the inital solution to disk
-                writeCurrentResult_();
+//                writeCurrentResult_(); // TODO
             }
 
         /*!
@@ -387,10 +300,10 @@ namespace Dune
                            const WorldCoord &globalPos,
                            const LocalCoord &localPos) const
             {
-                values = BoundaryConditions::neumann;
-
-                if ((globalPos[0] < eps_) || (globalPos[0] > (300 - eps_)))
+                if(globalPos[0] < eps_)
                     values = BoundaryConditions::dirichlet;
+                else
+                    values = BoundaryConditions::neumann;
             }
 
         /////////////////////////////
@@ -401,20 +314,13 @@ namespace Dune
                        int nodeIdx,
                        int globalNodeIdx)
             {
-//                const LocalCoord &localPos = DomainTraits::referenceElement(cell.type()).position(nodeIdx, GridDim);
+                const LocalCoord &localPos = DomainTraits::referenceElement(cell.type()).position(nodeIdx, GridDim);
                 const WorldCoord &globalPos = cell.geometry()[nodeIdx];
-		
-                values = 0.0;
-		if (globalPos[0] < eps_)
-		{
-			values[PwIndex] = 2e5;
-			values[SwitchIndex] = 0;  // may be Sn, Xaw or Xwn!!
-		}
-		if (globalPos[0] > (300 - eps_))
-		{
-			values[PwIndex] = 1e5;
-			values[SwitchIndex] = 0;  // may be Sn, Xaw or Xwn!!
-		}
+                
+                initial(values,
+                        cell,
+                        globalPos, 
+                        localPos);
             }
 
         /////////////////////////////
@@ -426,7 +332,13 @@ namespace Dune
                      const WorldCoord &globalPos,
                      const LocalCoord &localPos) const
             {
-                values = 0.0;
+                values = 0;
+
+                // negative values for injection
+                if (globalPos[1] > 1.0 && globalPos[1] < 5.0)
+                {
+                    values[SwitchIndex] = -1e-5;
+                }
             }
 
         /////////////////////////////
@@ -450,30 +362,10 @@ namespace Dune
                      const WorldCoord &globalPos, 
                      const LocalCoord &localPos)
             {
-		values[PwIndex] = 1e5;//(600-globalPos[0])/300 * 1e5;
-		values[SwitchIndex] = 0;
-
-                if (isInsideBlob_(globalPos))
-                {
-			values[SwitchIndex] = 0.1;
-                }
-            }
-
-        int initialPhaseState(const Node       &node,
-                              int              &globalIdx,
-                              const WorldCoord &globalPos) const
-            {
-                enum {gasPhase = 0, waterPhase = 1, bothPhases = 2}; // Phase states
-		int state;
-                
-		state = waterPhase;
-                
-		if (isInsideBlob_(globalPos))
-                {
-                    state = bothPhases;
-                }
-
-		return state;
+                Scalar densityW = 1000.0;
+                values[PwIndex] = 1e5 + (depthBOR_ - globalPos[1])*densityW*9.81;
+                values[SwitchIndex] = 0.0;
+                values[TemperatureIndex] = 283.0 + (depthBOR_ - globalPos[1])*0.03;
             }
 
         Scalar porosity(const Cell &cell, int localIdx) const
@@ -496,6 +388,13 @@ namespace Dune
             };
 
 
+        int initialPhaseState(const Node       &node,
+                              int              &globalIdx,
+                              const WorldCoord &globalPos) const
+            {
+                return WPhaseOnly;
+            }
+
       
         const WorldCoord &gravity () const
             {
@@ -515,15 +414,6 @@ namespace Dune
 
 
     private:
-        bool isInsideBlob_(const WorldCoord &globalPos) const
-            {
-                return globalPos[0] >= 59.0 && 
-                    globalPos[0] <= 121 && 
-                    globalPos[1] >= 119 && 
-                    globalPos[1] <= 181;
-            }
-                    
-
         // write the fields current solution into an VTK output file.
         void writeCurrentResult_()
             {
@@ -536,6 +426,8 @@ namespace Dune
             }
 
 
+        Scalar width_;
+        Scalar height_;
         Scalar depthBOR_;
         Scalar eps_;
         WorldCoord  gravity_;

@@ -34,18 +34,18 @@ namespace Dune {
      * way out of bounds.
      */
     template <class NewtonMethod>
-    class TwoPTwoCNewtonController
-        : public NewtonControllerBase<NewtonMethod, TwoPTwoCNewtonController<NewtonMethod> >
+    class TwoPTwoCNINewtonController
+        : public NewtonControllerBase<NewtonMethod, TwoPTwoCNINewtonController<NewtonMethod> >
     {
     public:
-        typedef TwoPTwoCNewtonController<NewtonMethod>        ThisType;
+        typedef TwoPTwoCNINewtonController<NewtonMethod>        ThisType;
         typedef NewtonControllerBase<NewtonMethod, ThisType>  ParentType;
 
         typedef typename ParentType::Scalar            Scalar;
         typedef typename ParentType::Function          Function;
         typedef typename ParentType::JacobianAssembler JacobianAssembler;
 
-        TwoPTwoCNewtonController(Scalar tolerance = 1e-7,
+        TwoPTwoCNINewtonController(Scalar tolerance = 1e-7,
                                  int targetSteps = 9,
                                  int maxSteps = 18)
             : ParentType(tolerance, targetSteps, maxSteps)
@@ -64,11 +64,11 @@ namespace Dune {
         //! iterations required or on the variable switch
         Scalar suggestTimeStepSize(Scalar oldTimeStep) const
             {
-                /*
-                  if (switched_) {
-                  return somethingSmall;
-                  }
-                */
+#warning "HACK: remove this:"
+                return std::min(1e5,
+                                ParentType::suggestTimeStepSize(oldTimeStep));
+                // end hack
+
                 // use function of the newtoncontroller
                 return ParentType::suggestTimeStepSize(oldTimeStep);
             }
