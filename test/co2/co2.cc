@@ -10,11 +10,11 @@
 #include <dune/grid/io/file/dgfparser/dgfalu.hh>
 #include <dune/grid/io/file/dgfparser/dgfalberta.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
-#include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
 #include "co2problem.hh"
 #include "dumux/twophase/fv/boxpwsn.hh"
+#include "dumux/io/vtkmultiwriter.hh"
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/material/phaseproperties/phaseproperties2p.hh"
 #include "dumux/material/twophaserelations.hh"
@@ -64,14 +64,18 @@ int main(int argc, char** argv)
 
     Dune::CO2Problem<GridType, NumberType> problem(wPhase, nPhase, soil, law, depthBOR);
 
-    typedef Dune::BoxPwSn<GridType, NumberType> TwoPhase;
+    typedef Dune::VtkMultiWriter<GridType::LeafGridView> MultiWriter;
+    typedef Dune::BoxPwSn<GridType, NumberType, MultiWriter> TwoPhase;
     TwoPhase twoPhase(grid, problem);
 
-    Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt, "co2-out", 1);
+//    Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt, "co2-out", 1);
+    Dune::TimeLoop<GridType, TwoPhase, true> timeloop(0, tEnd, dt, "dummy", 1);
 
     Dune::Timer timer;
     timer.reset();
-    timeloop.execute(twoPhase);
+//    timeloop.execute(twoPhase);
+    MultiWriter writer("co2-out");
+    timeloop.executeMultiWriter(twoPhase, writer); /*@\label{tutorial-coupled:execute}@*/
     std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
 
     //printvector(std::cout, *twoPhase.u, "u", "row", 2, 1, 3);
