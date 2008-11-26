@@ -51,10 +51,10 @@ int main(int argc, char** argv)
 	    int      maxfct, mnum, phase, error, msglvl;
 
 	    /* Number of processors. */
-	    int      num_procs;
+	    //int      num_procs;
 
 	    /* Auxiliary variables. */
-	    char    *var;
+	    //char    *var;
 	    int      i;
 
 	    double   ddum;              /* Double dummy */

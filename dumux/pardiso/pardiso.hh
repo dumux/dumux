@@ -301,7 +301,7 @@ namespace Dune {
         int idum;
         double x[2*n_];
         double b[2*n_];
-        for (int i = 0; i < v.size(); i++) {
+        for (typename X::size_type i = 0; i < v.size(); i++) {
 		for (int comp = 0; comp < systemsize_; comp++) {
         		x[i*systemsize_ + comp] = v[i][comp];
         		b[i*systemsize_ + comp] = d[i][comp];
@@ -316,7 +316,7 @@ namespace Dune {
         if (error_ != 0) 
         	DUNE_THROW(MathError, "SeqPardiso.apply: Backsolve failed. Error code " << error_);
         
-        for (int i = 0; i < v.size(); i++) 
+        for (typename X::size_type i = 0; i < v.size(); i++) 
 		for (int comp = 0; comp < systemsize_; comp++)
         		v[i][comp] = x[i*systemsize_ + comp];
         	
