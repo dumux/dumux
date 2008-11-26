@@ -1,3 +1,4 @@
+// $Id$
 #ifndef DUNE_VARIABLECLASS_HH
 #define DUNE_VARIABLECLASS_HH
 
