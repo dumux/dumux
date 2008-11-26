@@ -27,6 +27,7 @@ SUBDIRS = . \
 	  transport \
 	  tutorial \
 	  twophase \
+	  upscaledsaturationequation \
 	  upscaledvelocity \
 	  vtk
 
