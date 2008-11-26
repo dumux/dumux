@@ -10,36 +10,53 @@
 set -e
 
 canonicalname(){
-  if test $# -ne 1; then
-     echo Usage: canonicalname path > /dev/stderr
-     return 1
-  fi
-  name="$1"
-  while test -L "$name"; do
-    if ! test -e "$name"; then
-      echo $name: file not found > /dev/stderr
-      return 1
-    fi
-    if newname="`readlink $name`"; then
-      name="$newname"
-    else
-      echo "$(dirname $name)/$(basename $name)"
-    fi
-  done
-  echo $name
+	if test $# -ne 1; then
+		echo Usage: canonicalname path >&2
+		return 1
+	fi
+	file="`eval echo $1`" # expand ~
+	if test ! -e "$file"; then
+		echo $file: file not found >&2
+		return 1
+	fi
+    # if this is a symlink, then follow the symlink
+	if test -L "$file"; then
+		fdir="`dirname \"$file\"`"
+		flink="`readlink \"$file\"`"
+		if test -e "$flink"; then
+			# these are absolute links, or links in the CWD
+			canonicalname "$flink"
+		else
+			canonicalname "$fdir/$flink"
+		fi
+	else
+        # if this is a file, then remember the filename and
+        # canonicalize the directory name
+		if test -f "$file"; then
+			fdir="`dirname \"$file\"`"
+			fname="`basename \"$file\"`"
+			fdir="`canonicalname \"$fdir\"`"
+			echo "$fdir/$fname"
+		fi
+        # if this is a directory, then create an absolute 
+        # directory name and we are done
+		if test -d "$file"; then
+			(cd "$file"; pwd)
+		fi
+	fi
 }
 
 canonicalpath(){
   if test $# -ne 1; then
-     echo Usage: canonicalpath path > /dev/stderr
+     echo Usage: canonicalpath path >&2
      return 1
   fi
-  (cd $(dirname $(canonicalname $1)) && pwd)
+  dirname $(canonicalname "$1")
 }
 
 pkg_config_dependencies(){
     if test $# -ne 1; then
-	echo Usage: pkg_config_dependencies name > /dev/stderr
+	echo Usage: pkg_config_dependencies name >&2
 	return 1
     fi
     name="$1"
@@ -62,11 +79,11 @@ modulesexist(){
 	  fi
       done
       if [ "$found" = "0" ]; then
-	  echo "ERROR:">/dev/stderr
-	  echo "Module with name $dep was not found" > /dev/stderr
-	  echo "Did you forget to specify it's location" > /dev/stderr
-	  echo "in the DUNE_CONTROL_PATH variable?"> /dev/stderr
-	  echo >/dev/stderr
+	  echo "ERROR:">&2
+	  echo "Module with name $dep was not found" >&2
+	  echo "Did you forget to specify it's location" >&2
+	  echo "in the DUNE_CONTROL_PATH variable?">&2
+	  echo >&2
 	  allfound=1
       fi
   done
@@ -128,32 +145,24 @@ echo
 # create PKG_CONFIG_PATH for installed dune modules
 export PKG_CONFIG_PATH="$PKG_CONFIG_PATH:$(canonicalpath $0)/../lib/pkgconfig"
 
-if [ "$MODULES" = "" ]; then
-  find_modules_in_path
-fi
+# search for modules, both installed and src modules
+find_modules_in_path
 
 # get the real module names
-SRC_MODULES=""
-for i in $MODULES; do
+MODULES=""
+for i in $FOUND_MODULES; do
   mod=$(eval echo \$NAME_$i)
-  SRC_MODULES="$SRC_MODULES $mod"
+  MODULES="$MODULES$mod "
 done
 
-# get installed modules
-PKG_MODULES="`pkg-config --list-all | grep dune | cut -d' ' -f1`"
-
-# merge lists
-ALL_MODULES="`echo $SRC_MODULES $PKG_MODULES | tr ' ' '\n' | sort | uniq`"
-
-
-if [ "$ALL_MODULES" = "" ]; then
-  echo "ERROR">/dev/stderr
-  echo "No dune modules were found!">/dev/stderr
-  echo "Did you forget to specify the places where ">/dev/stderr
-  echo "you installed your modules in the ">/dev/stderr
-  echo "DUNE_CONTROL_PATH environment variable">/dev/stderr
-  echo "and adjusted the PKG_CONFIG_PATH environment">/dev/stderr
-  echo "accordingly?" >/dev/stderr
+if [ "$MODULES" = "" ]; then
+  echo "ERROR:">&2
+  echo "  No dune modules were found!">&2
+  echo "  Did you forget to specify the places where ">&2
+  echo "  you installed your modules in the ">&2
+  echo "  DUNE_CONTROL_PATH environment variable">&2
+  echo "  and adjusted the PKG_CONFIG_PATH environment">&2
+  echo "  accordingly?" >&2
   exit 1;
 fi
 
@@ -163,7 +172,7 @@ while [ "$DATACORRECT" != "y" -a "$DATACORRECT" != "Y" ]; do
   PROJECT=""
   while [ -z $PROJECT ]; do
     read -p "1) Name of your new Project? (e.g.: dune-grid): " PROJECT
-    if echo "$ALL_MODULES" | grep -q ^$PROJECT$; then
+    if echo "$MODULES" | grep -q ^$PROJECT$; then
       read -p "   A module named $PROJECT already exists. Continue anyway? [y/N] " CONT
       if test x$DELETE = xy -o x$DELETE = xY; then
         PROJECT=""
@@ -178,7 +187,7 @@ while [ "$DATACORRECT" != "y" -a "$DATACORRECT" != "Y" ]; do
   DEPENDENCIES="dune-common dune-disc dune-grid dune-istl"
   echo "2) The new project automatically depends on dune-common, dune-disc, dune-grid, dune-istl."
   set +e
-  modulesexist "$DEPENDENCIES" "$ALL_MODULES"
+  modulesexist "$DEPENDENCIES" "$MODULES"
   DEPOK=$?
   set -e
   done
@@ -220,14 +229,15 @@ mkdir "$PROJECT"
 
 ################## dune.module ##################
 cat > "$PROJECT/dune.module" <<C_DELIM
-
 #dune module information file#
 ##############################
 
 #Name of the module
-Module:$MODULE
+Module: $MODULE
+Version: $VERSION
+Maintainer: $MAINTAINER
 #depending on 
-Depends:$DEPENDENCIES
+Depends: $DEPENDENCIES
 C_DELIM
 
 ################## CONFIGURE.AC ##################
@@ -235,7 +245,6 @@ C_DELIM
 ## Create the parameters passed to DUNE_CHECK_ALL
 
 # save module list of dunemodules.inc
-set -x
 save_MODULES=$MODULES
 for name in $DEPENDENCIES; do
   mod="`fix_variable_name $name`"
@@ -249,7 +258,6 @@ for name in $DEPENDENCIES; do
   else
     # found via pkg-config
     M_DEPS="`pkg_config_dependencies $name` $name"
-    #M_DEPS="`pkg-config --variable=Requires $name`"
   fi
   for dep in $M_DEPS; do
       CHECK="$CHECK [$dep]"
@@ -269,15 +277,20 @@ if [ "$j" = "0" ]; then
     fi
 done
 
+echo "------------------------------------------"
+echo "writing initial files:"
+
 # we need the module with _ instead of - to not confuse automake
 fix_and_assign CMODULE $MODULE
 
+################## OCNFIGURE.AC ##################
+echo "- $PROJECT/configure.ac"
 cat > "$PROJECT/configure.ac" <<C_DELIM
 # -*- Autoconf -*-
 # Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.50)
 DUNE_AC_INIT # gets module version from dune.module file
-AM_INIT_AUTOMAKE($PROJECT, $VERSION, $MAINTAINER)
+AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([$CMODULE.cc])
 AM_CONFIG_HEADER([config.h])
 
@@ -285,187 +298,25 @@ AM_CONFIG_HEADER([config.h])
 # we need no more than the standard DE-stuff
 # this module depends on $DEPENDENCIES
 # this implies checking for $CHECK
-DUNE_CHECK_ALL($CHECK)
-
-AC_DEFUN([SET_PARDISO], [
-AC_PREREQ(2.50)
-AC_REQUIRE([AC_F77_LIBRARY_LDFLAGS])
-acx_pardiso_ok=no
-
-AC_ARG_WITH(pardiso,
-	[AC_HELP_STRING([--with-pardiso=<lib>], [use PARDISO library <lib>])])
-case \$with_pardiso in
-	yes | "") ;;
-	no) acx_pardiso_ok=disable ;;
-	-* | */* | *.a | *.so | *.so.* | *.o) PARDISO_LIBS="\$with_pardiso" ;;
-	*) PARDISO_LIBS="-l\$with_pardiso" ;;
-esac
-
-# Get fortran linker names of PARDISO functions to check for.
-AC_F77_FUNC(pardisoinit)
-
-acx_pardiso_save_LIBS="\$LIBS"
-LIBS="\$BLAS_LIBS -llapack -lg2c \$LIBS \$FLIBS"
-
-# First, check PARDISO_LIBS environment variable
-if test \$acx_pardiso_ok = no; then
-if test "x\$PARDISO_LIBS" != x; then
-	save_LIBS="\$LIBS"; LIBS="\$PARDISO_LIBS \$LIBS"
-	AC_MSG_CHECKING([for \$pardisoinit in \$PARDISO_LIBS])
-	AC_TRY_LINK_FUNC(\$pardisoinit, [acx_pardiso_ok=yes], [PARDISO_LIBS=""])
-	AC_MSG_RESULT(\$acx_pardiso_ok)
-	LIBS="\$save_LIBS"
-fi
-fi
-
-AC_SUBST(PARDISO_LIBS)
-
-LIBS="\$acx_pardiso_save_LIBS"
-
-# Finally, execute ACTION-IF-FOUND/ACTION-IF-NOT-FOUND:
-if test x\$acx_pardiso_ok = xyes; then
-        ifelse([$1],,AC_DEFINE(HAVE_PARDISO,1,[Define if you have a PARDISO library.]),[$1])
-        :
-else
-        acx_pardiso_ok=no
-        $2
-fi
-])dnl SET_PARDISO
-
-SET_PARDISO
+DUNE_CHECK_ALL
 
 # implicitly set the Dune-flags everywhere
-AC_SUBST(AM_CPPFLAGS, \$ALL_PKG_CPPFLAGS)
-AC_SUBST(AM_LDFLAGS, \$ALL_PKG_LDFLAGS)
-LIBS="\$DUNE_LIBS \$ALL_PKG_LIBS \$PARDISO_LIBS \$BLAS_LIBS"
+AC_SUBST(AM_CPPFLAGS, \$DUNE_CPPFLAGS)
+AC_SUBST(AM_LDFLAGS, \$DUNE_LDFLAGS)
+LIBS="\$DUNE_LIBS"
 
-AC_CONFIG_FILES([Makefile])
+AC_CONFIG_FILES([
+  Makefile
+  m4/Makefile
+  $MODULE.pc
+])
 AC_OUTPUT
 # finally print the summary information
 DUNE_SUMMARY_ALL
-echo "Pardiso..........: \$acx_pardiso_ok"
-echo 
 C_DELIM
 
-################## AUTOGEN.SH ##################
-cat > "$PROJECT/autogen.sh" <<A_DELIM
-#!/bin/sh
-# $Id: duneproject 4887 2007-04-02 10:06:45Z christi $
-
-# barf on errors
-set -e
-
-usage () {
-    echo "Usage: ./autogen.sh DUNE_COMMON_DIR [options]"
-    echo "  --ac=, --acversion=VERSION   use a specific VERSION of autoconf"
-    echo "  --am=, --amversion=VERSION   use a specific VERSION of automake"
-    echo "  -h,    --help                you already found this :-)"
-}
-
-for OPT in "\$@"; do
-    set +e
-    # stolen from configure...
-    # when no option is set, this returns an error code
-    arg=\`expr "x\$OPT" : 'x[^=]*=\(.*\)'\`
-    set -e
-
-    case "\$OPT" in
-	--ac=*|--acversion=*)
-			if test "x\$arg" = "x"; then
-				usage; 
-				exit 1;
-			fi
-			ACVERSION=\$arg
-			;;
-	--am=*|--amversion=*)
-			if test "x\$arg" = "x"; then
-				usage; 
-				exit 1;
-			fi
-			AMVERSION=\$arg
-			;;
-	-h|--help) usage ; exit 0 ;;
-	*)
-            if test -d "\$OPT/m4"; then
-              ACLOCAL_FLAGS="\$ACLOCAL_FLAGS -I \$OPT/m4"
-            fi
-            if test -d "\$OPT/am"; then
-              am_dir="\$OPT/am"
-            fi
-            if test -d "\$OPT/share/aclocal"; then
-              ACLOCAL_FLAGS="\$ACLOCAL_FLAGS -I \$OPT/share/aclocal"
-            fi
-            if test -d "\$OPT/share/dune-common/am"; then
-              am_dir="\$OPT/share/dune-common/am"
-            fi
-            PATH="\$PATH:\$OPT/bin"
-            ;;
-    esac
-done
-
-## report parameters
-if test "x\$ACVERSION" != "x"; then
-	echo "Forcing autoconf version �\$ACVERSION�"
-	if ! which autoconf\$ACVERSION > /dev/null; then
-		echo
-		echo "Error: Could not find autoconf\$ACVERSION"
-		echo "       Did you specify a wrong version?"
-		exit 1
-	fi
-fi
-if test "x\$AMVERSION" != "x"; then
-	echo "Forcing automake version �\$AMVERSION�"
-	if ! which automake\$AMVERSION > /dev/null; then
-		echo
-		echo "Error: Could not find automake\$AMVERSION"
-		echo "       Did you specify a wrong version?"
-		exit 1
-	fi
-fi
-
-
-## run autotools
-
-echo "--> libtoolize..."
-# this script won't rewrite the files if they already exist. This is a
-# PITA when you want to upgrade libtool, thus I'm setting --force
-libtoolize --force
-
-# prepare everything
-echo "--> aclocal..."
-aclocal\$AMVERSION \$ACLOCAL_FLAGS
-
-# applications should provide a config.h for now
-echo "--> autoheader..."
-autoheader\$ACVERSION
-
-# create a link to the dune-common am directory
-if [ -n "\$am_dir" ] && [ -d \$am_dir ]; then
-  echo "--> linking dune-common/am..."
-  rm -f am
-  ln -s \$am_dir am
-else
-  echo
-  echo "Error: Could not find dune-common/am!"
-  usage
-  exit 1
-fi
-
-# call automake/conf
-echo "--> automake..."
-automake\$AMVERSION --add-missing
-
-echo "--> autoconf..."
-autoconf\$ACVERSION
-
-## tell the user what to do next
-echo "Now run ./configure "
-
-A_DELIM
-
-chmod +x "$PROJECT/autogen.sh"
-
 ################## README ##################
+echo "- $PROJECT/README"
 cat > "$PROJECT/README" <<R_DELIM
 Preparing the Sources
 =========================
@@ -538,13 +389,14 @@ for further options.
 
 The full build-system is described in the dune-common/doc/buildsystem (SVN version) or under share/doc/dune-common/buildsystem if you installed DUNE!
 
-\$Id: duneproject 4887 2007-04-02 10:06:45Z christi $
+\$Id: duneproject 5370 2008-11-15 17:43:24Z christi $
 
 R_DELIM
 
 ################## MAKEFILE.AM ##################
+echo "- $PROJECT/Makefile.am"
 cat> "$PROJECT/Makefile.am" << M_DELIM
-# \$Id: duneproject 4887 2007-04-02 10:06:45Z christi $
+# \$Id: duneproject 5370 2008-11-15 17:43:24Z christi $
 
 # we need the module file to be able to build via dunecontrol
 EXTRA_DIST=dune.module
@@ -565,9 +417,40 @@ ${CMODULE}_LDADD = \$(MPI_LDFLAGS) \$(ALBERTA_LDFLAGS) \$(ALBERTA_LIBS) \$(AMIRA
 AUTOMAKE_OPTIONS = foreign 1.5
 # pass most important options when "make distcheck" is used
 DISTCHECK_CONFIGURE_FLAGS = --with-dune=\$(DUNEROOT) CXX="\$(CXX)" CC="\$(CC)"
+
+include \$(top_srcdir)/am/top-rules
+include \$(top_srcdir)/am/global-rules
+
 M_DELIM
 
+################## STAMP-VC ##################
+echo "- $PROJECT/stamp-vc"
+touch $PROJECT/stamp-vc
+
+################## PROJECT.PC.IN ##################
+echo "- $PROJECT/$MODULE.pc.in"
+cat> "$PROJECT/$MODULE.pc.in" << CC_DELIM
+prefix=@prefix@
+exec_prefix=@exec_prefix@
+libdir=@libdir@
+includedir=@includedir@
+CXX=@CXX@
+CC=@CC@
+DEPENDENCIES=@REQUIRES@
+
+Name: @PACKAGE_NAME@
+Version: @VERSION@
+Description: $MODULE module
+URL: http://dune-project.org/
+Requires: ${DEPENDENCIES}
+Libs: -L${libdir}
+Cflags: -I${includedir}
+CC_DELIM
+echo "    Please remember to update your $PROJECT/$MODULE.pc.in,"
+echo "    Description and URL are missing right now."
+
 ################## PROJECT.CC ##################
+echo "- $PROJECT/$CMODULE.cc"
 cat> "$PROJECT/$CMODULE.cc" << CC_DELIM
 #ifdef HAVE_CONFIG_H
 # include "config.h"     
@@ -576,7 +459,8 @@ cat> "$PROJECT/$CMODULE.cc" << CC_DELIM
 #include"dune/common/mpihelper.hh" // An initializer of MPI
 #include"dune/common/exceptions.hh" // We use exceptions
 #include <dune/grid/sgrid.hh> // load sgrid definition
-#include <dumux/diffusion/fv/fvdiffusion.hh>
+#include <dumux/fractionalflow/variableclass.hh>
+#include <dumux/diffusion/fv/fvdiffusion_deprecated.hh>
 #include <dumux/diffusion/problems/uniformproblem.hh>
 
 int main(int argc, char** argv)
@@ -592,11 +476,15 @@ int main(int argc, char** argv)
     FieldVector H(300); H[0] = 600; 
     GridType grid(N,L,H);  
  
+    typedef Dune::VariableClass<GridType, NumberType> VC;
+    double initSat = 1;
+    VC variables(grid, initSat);
+
     // declare boundary value problem 
-    Dune::UniformProblem<GridType, NumberType> problem(grid);
+    Dune::UniformProblem<GridType, NumberType, VC> problem(variables);
 
     // initialize diffusion object
-    Dune::FVDiffusion<GridType, NumberType> diffusion(grid, problem);
+    Dune::FVDiffusion<GridType, NumberType, VC> diffusion(grid, problem);
 
     std::cout << "Solving diffusion problem with " << grid.size(0) << " elements." << std::endl;
 
@@ -604,7 +492,7 @@ int main(int argc, char** argv)
     diffusion.pressure();
 
     // print the solution vector
-    printvector(std::cout, *diffusion, "pressure", "row", 200, 1, 3);
+    printvector(std::cout, variables.pressure, "pressure", "row", 200, 1, 3);
 
     return 0;
   }
@@ -617,3 +505,32 @@ int main(int argc, char** argv)
 }
 CC_DELIM
 
+################## M4/MAKEFILE ####################
+mkdir "$PROJECT/m4"
+echo "- $PROJECT/m4/Makefile.am"
+cat> "$PROJECT/m4/Makefile.am" << CC_DELIM
+M4FILES = $MODULE.m4"
+
+aclocaldir = $\(datadir\)/aclocal
+aclocal_DATA = $\(M4FILES\)
+
+EXTRA_DIST = $\(M4FILES\)
+
+include $\(top_srcdir\)/am/global-rules
+CC_DELIM
+
+################## M4/PROJECT.M4 ####################
+M4_MODULE=`echo $MODULE | tr '[a-z-]' '[A-Z_]'`
+echo "- $PROJECT/m4/$MODULE.m4"
+cat> "$PROJECT/m4/$MODULE.m4" << CC_DELIM
+# Additional checks needed to build the module
+AC_DEFUN([${M4_MODULE}_CHECKS])
+# Additional checks needed to find the module
+AC_DEFUN([${M4_MODULE}_CHECK_MODULE])
+CC_DELIM
+
+## done
+echo "done."
+echo "------------------------------------------"
+echo "For further details read the Dune Buildsystem-Howto:"
+echo "http://www.dune-project.org/doc/buildsystem/buildsystem.pdf"
