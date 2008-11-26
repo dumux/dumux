@@ -13,7 +13,7 @@ public:
 typedef	typename G::Traits::template Codim<0>::Entity Entity;
 	typedef typename G::ctype DT;
 	typedef typename Matrix2p<G, RT>::modelFlag modelFlag;
-	
+
 	enum
 	{	n=G::dimension, m=1};
 
