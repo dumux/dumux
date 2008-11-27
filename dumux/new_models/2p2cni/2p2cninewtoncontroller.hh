@@ -64,10 +64,12 @@ namespace Dune {
         //! iterations required or on the variable switch
         Scalar suggestTimeStepSize(Scalar oldTimeStep) const
             {
+/*
 #warning "HACK: remove this:"
-                return std::min(1e5,
+                return std::min(1e7,
                                 ParentType::suggestTimeStepSize(oldTimeStep));
                 // end hack
+                */
 
                 // use function of the newtoncontroller
                 return ParentType::suggestTimeStepSize(oldTimeStep);

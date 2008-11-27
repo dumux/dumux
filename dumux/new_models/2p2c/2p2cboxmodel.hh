@@ -175,13 +175,13 @@ namespace Dune
             int oldPhaseState;
         };
         
-        static void updateVarNodeData_(VariableNodeData &d,
-                                       const UnknownsVector &nodeSol, 
-                                       int phaseState,
-                                       const Cell &cell, 
-                                       int localIdx,
-                                       Problem &problem,
-                                       Scalar temperature) 
+        void updateVarNodeData_(VariableNodeData &d,
+                                const UnknownsVector &nodeSol, 
+                                int phaseState,
+                                const Cell &cell, 
+                                int localIdx,
+                                Problem &problem,
+                                Scalar temperature) const
                 {
                     const WorldCoord &global = cell.geometry()[localIdx];
                     const LocalCoord &local =
@@ -219,15 +219,30 @@ namespace Dune
                     d.massfrac[NCompIndex][NPhaseIndex] = 1.0 - d.massfrac[WCompIndex][NPhaseIndex];
                     d.phaseState = phaseState;
 
-                    // Mobilities & densities
-                    d.mobility[WPhaseIndex] = problem.materialLaw().mobW(d.satW, global, cell, local, temperature, d.pW);
-                    d.mobility[NPhaseIndex] = problem.materialLaw().mobN(d.satN, global, cell, local, temperature, d.pN);
-                    
                     // Density of Water is set constant here!
-                    d.density[WPhaseIndex] = 1000;//this->problem_.wettingPhase().density(temperature, pN);
+                    d.density[WPhaseIndex] = problem.wettingPhase().density(temperature, 
+                                                                            d.pW,
+                                                                            d.massfrac[NCompIndex][WPhaseIndex]);
                     d.density[NPhaseIndex] = problem.nonwettingPhase().density(temperature, 
                                                                                d.pN,
                                                                                d.massfrac[WCompIndex][NPhaseIndex]);
+
+                    // Mobilities & densities
+                    d.mobility[WPhaseIndex] = problem.materialLaw().mobW(d.satW, global, cell, local, temperature, d.pW);
+#if 0
+                    d.mobility[NPhaseIndex] = problem.materialLaw().mobN(d.satN, global, cell, local, temperature, d.pN);
+#else
+#warning "CO2 specific"
+                    Scalar viscosityCO2 = problem.nonwettingPhase().viscosityCO2(temperature, 
+                                                                                 d.pN, 
+                                                                                 d.density[NPhaseIndex]);
+                    Scalar krCO2 = problem.materialLaw().krn(d.satN,
+                                                             this->curCellGeom_.subContVol[localIdx].global,
+                                                             cell,
+                                                             this->curCellGeom_.subContVol[localIdx].local);
+                    
+                    d.mobility[NPhaseIndex] = krCO2 / viscosityCO2;
+#endif
                 }
         
     public:
@@ -287,13 +302,13 @@ namespace Dune
                                                                node);
 
                 curSol_[node][component] = value;
-                Implementation::updateVarNodeData_(curSolCache_.atSCV[node],
-                                                   curSol_[node],
-                                                   staticNodeDat_[globalIdx].phaseState,
-                                                   this->curCell_(),
-                                                   node,
-                                                   this->problem_,
-                                                   Implementation::temperature_(curSol_[node]));
+                asImp_()->updateVarNodeData_(curSolCache_.atSCV[node],
+                                             curSol_[node],
+                                             staticNodeDat_[globalIdx].phaseState,
+                                             this->curCell_(),
+                                             node,
+                                             this->problem_,
+                                             Implementation::temperature_(curSol_[node]));
             }
         
         /*!
@@ -648,13 +663,13 @@ namespace Dune
                 for (; it != endit; ++it) {
                     for (int i = 0; i < it->template count<GridDim>(); ++i) {
                         int globalI = this->problem_.nodeIndex(*it, i);
-                        Implementation::updateVarNodeData_(tmp,
-                                                           (*globalSol)[globalI],
-                                                           staticNodeDat_[globalI].phaseState,
-                                                           *it,
-                                                           i,
-                                                           this->problem_,
-                                                           Implementation::temperature_((*globalSol)[globalI]));
+                        asImp_()->updateVarNodeData_(tmp,
+                                                     (*globalSol)[globalI],
+                                                     staticNodeDat_[globalI].phaseState,
+                                                     *it,
+                                                     i,
+                                                     this->problem_,
+                                                     Implementation::temperature_((*globalSol)[globalI]));
                         
                         (*pW)[globalI] = tmp.pW;
                         (*pN)[globalI] = tmp.pN;
@@ -703,13 +718,13 @@ namespace Dune
                 for (int i = 0; i < nNodes; i++) {
                     int iGlobal = ParentType::problem_.nodeIndex(ParentType::curCell_(), i);
                     phaseState = isOldSol?staticNodeDat_[iGlobal].oldPhaseState:staticNodeDat_[iGlobal].phaseState;
-                    Implementation::updateVarNodeData_(dest.atSCV[i],
-                                                       sol[i], 
-                                                       phaseState,
-                                                       this->curCell_(), 
-                                                       i,
-                                                       this->problem_,
-                                                       Implementation::temperature_(sol[i]));
+                    asImp_()->updateVarNodeData_(dest.atSCV[i],
+                                                 sol[i], 
+                                                 phaseState,
+                                                 this->curCell_(), 
+                                                 i,
+                                                 this->problem_,
+                                                 Implementation::temperature_(sol[i]));
                 }
             }
 
@@ -738,12 +753,18 @@ namespace Dune
                     // auxiliary variables
                     Scalar xWNmass, xWNmolar, pwn, pWSat;
 
+#warning "TODO:clean up"
+#if 0
                     xWNmass = (*sol)[globalIdx][SwitchIndex];
+
                     xWNmolar = this->problem_.multicomp().xWNmolar(pN, temperature);
                     pwn = xWNmolar * pN;
                     pWSat = this->problem_.multicomp().vaporPressure(temperature);
 
                     if (pwn > (1 + 1e-5)*pWSat)
+#else
+                    if (xWNmass > 0.001) // CO2 specific hack
+#endif
                     {
                         // appearance of water phase
                         std::cout << "Water appears at node " << globalIdx << "  Coordinates: " << globalPos << std::endl;
@@ -756,6 +777,10 @@ namespace Dune
                     Scalar pbub, henryInv, pWSat;
 
                     Scalar xAWmass = (*sol)[globalIdx][SwitchIndex];
+                    
+                    
+#warning "TODO:clean up"
+#if 0
                     Scalar xAWmolar = this->problem_.multicomp().convertMassToMoleFraction(xAWmass, WPhaseIndex);
 
 //                    Scalar xAWmolarMax = this->problem_.multicomp().xAWmolar(pN, temperature);
@@ -763,9 +788,13 @@ namespace Dune
                     henryInv = this->problem_.multicomp().henry(temperature);
                     pWSat = this->problem_.multicomp().vaporPressure(temperature);
                     pbub = pWSat + xAWmolar/henryInv; // pWSat + pAW
-
+                    
                     if (pN < (1 - 1e-5)*pbub)
-//                        if (xAWmolar > (1 + 1e-2)*xAWmolarMax)
+                    // if (xAWmolar > (1 + 1e-2)*xAWmolarMax)
+#else                    
+                    Scalar xAWmax = this->problem_.multicomp().xAW(pN, Implementation::temperature_((*sol)[globalIdx]));
+                    if (xAWmass > xAWmax*(1+1e-2))
+#endif
                     {
                         // appearance of gas phase
                         std::cout << "Gas appears at node " << globalIdx << ",  Coordinates: " << globalPos << std::endl;

@@ -1,5 +1,5 @@
-#ifndef DUNE_NEW_WATERAIRPROBLEM_HH
-#define DUNE_NEW_WATERAIRPROBLEM_HH
+#ifndef DUNE_NEW_LEAKYWELLPROBLEM_HH
+#define DUNE_NEW_LEAKYWELLPROBLEM_HH
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -13,6 +13,7 @@
 #include<dumux/material/property_baseclasses.hh>
 #include<dumux/material/relperm_pc_law.hh>
 
+#include <dumux/material/phaseproperties/phaseproperties_brineco2.hh>
 #include <dumux/material/phaseproperties/phaseproperties_waterair.hh>
 #include <dumux/material/matrixproperties.hh>
 #include <dumux/material/twophaserelations.hh>
@@ -39,6 +40,8 @@
 #include <dumux/auxiliary/timemanager.hh>
 #include <dumux/auxiliary/basicdomain.hh>
 
+#include "leakywell_soilproperties.hh"
+
 /**
  * @file
  * @brief  Definition of a problem, where air is injected under a low permeable layer
@@ -57,21 +60,21 @@ namespace Dune
      *	- ScalarT  Floating point type used for scalars
      */
     template<class ScalarT>
-    class NewWaterAirProblem : public BasicDomain<Dune::SGrid<2,2>, 
-                                                  ScalarT>
+    class NewLeakyWellProblem : public BasicDomain<Dune::ALUSimplexGrid<3,3>, 
+                                                   ScalarT>
     {
-        typedef Dune::SGrid<2,2>               Grid;
+        typedef Dune::ALUSimplexGrid<3,3>      Grid;
         typedef BasicDomain<Grid, ScalarT>     ParentType;
-        typedef NewWaterAirProblem<ScalarT>    ThisType;
+        typedef NewLeakyWellProblem<ScalarT>   ThisType;
         typedef TwoPTwoCNIBoxModel<ThisType>   Model;
 
         typedef Dune::GridPtr<Grid>                    GridPointer;
 
-        typedef Dune::Liq_WaterAir                     WettingPhase;
-        typedef Dune::Gas_WaterAir                     NonwettingPhase;
-        typedef Dune::HomogeneousSoil<Grid, ScalarT>   Soil;
+        typedef Dune::Liq_BrineCO2                     WettingPhase;
+        typedef Dune::Gas_BrineCO2                     NonwettingPhase;
+        typedef Dune::LeakyWellSoil<Grid, ScalarT>     Soil;
         typedef Dune::TwoPhaseRelations<Grid, ScalarT> MaterialLaw;
-        typedef Dune::CWaterAir                        Multicomp;
+        typedef Dune::CBrineCO2                        Multicomp;
 
     public:
         // the domain traits of the domain
@@ -126,7 +129,7 @@ namespace Dune
         typedef TwoPTwoCNINewtonController<NewtonMethod>    NewtonController;
 
     public:
-        NewWaterAirProblem(Grid *grid,
+        NewLeakyWellProblem(Grid *grid,
                            Scalar dtInitial,
                            Scalar tEnd) 
             : ParentType(grid),
@@ -134,7 +137,7 @@ namespace Dune
               multicomp_(wPhase_, nPhase_),
               model_(*this),
               newtonMethod_(model_),
-              resultWriter_("new_waterair")
+              resultWriter_("new_leakywell")
             {
                 initialTimeStepSize_ = dtInitial;
                 endTime_ = tEnd;
@@ -142,7 +145,7 @@ namespace Dune
                 // specify the grid dimensions
                 eps_    = 1e-8;
 
-                depthBOR_ = 1000.0;
+                depthBOR_ = 800.0;
 
                 gravity_[0] = 0;
                 gravity_[1] = -9.81;
@@ -294,10 +297,23 @@ namespace Dune
                            const WorldCoord &globalPos,
                            const LocalCoord &localPos) const
             {
-                if(globalPos[0] < eps_)
+                values = BoundaryConditions::neumann;
+                if (globalPos[0] < -500+1e-3 || 
+                    globalPos[0] > 500-1e-3 ||
+                    globalPos[1] < -500+1e-3 ||
+                    globalPos[1] > 500-1e-3)
+                {
                     values = BoundaryConditions::dirichlet;
-                else
-                    values = BoundaryConditions::neumann;
+                }
+
+                if ((globalPos[0]+100.0)*(globalPos[0]+100.0) + globalPos[1]*globalPos[1] < 0.267 &&
+                    globalPos[2] < 30.0 &&
+                    globalPos[2] > 0.0)
+                {
+                    values[PwIndex] = BoundaryConditions::neumann;
+                    values[SwitchIndex] = BoundaryConditions::neumann;
+                    values[TemperatureIndex] = BoundaryConditions::dirichlet;
+                }
             }
 
         /////////////////////////////
@@ -328,10 +344,13 @@ namespace Dune
             {
                 values = 0;
 
-                // negative values for injection
-                if (globalPos[1] > 1.0 && globalPos[1] < 5.0)
+                if ( (globalPos[0]+100.0)*(globalPos[0]+100.0) +
+                      globalPos[1]*globalPos[1] < 0.267
+                     && 
+                     globalPos[2] < 30.0 && 
+                     globalPos[2] > 0.0)
                 {
-                    values[SwitchIndex] = -1e-5;
+                    values[SwitchIndex] = -0.27802;
                 }
             }
 
@@ -356,10 +375,9 @@ namespace Dune
                      const WorldCoord &globalPos, 
                      const LocalCoord &localPos)
             {
-                Scalar densityW = 1000.0;
-                values[PwIndex] = 1e5 + (depthBOR_ - globalPos[1])*densityW*9.81;
-                values[SwitchIndex] = 0.0;
-                values[TemperatureIndex] = 283.0 + (depthBOR_ - globalPos[1])*0.03;
+                values[PwIndex]          = 1.013e5 + (depthBOR_ - globalPos[2]) * 1067.44 * 9.81; // brine density for salinity=0.1
+                values[SwitchIndex]      = 0.0;
+                values[TemperatureIndex] = 283.15 + (depthBOR_ - globalPos[2])*0.03;
             }
 
         Scalar porosity(const Cell &cell, int localIdx) const

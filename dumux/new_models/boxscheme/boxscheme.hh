@@ -351,6 +351,8 @@ namespace Dune
             {
                 // set Dirichlet boundary conditions of the grid's
                 // outer boundaries
+
+                UnknownsVector dirichletVal;
                 CellIterator cellIt     = problem_.grid().template leafbegin<0>();
                 CellIterator cellEndIt  = problem_.grid().template leafend<0>();
                 for (; cellIt != cellEndIt; ++cellIt)
@@ -369,23 +371,34 @@ namespace Dune
                     // loop over all the cell's nodes
                     int n = cellIt->template count<GridDim>();
                     for (int i = 0; i < n; ++i) {
-                        // TODO: mixed boundary conditions
-                        if (localJacobian_.bc(i)[0] != Dune::BoundaryConditions::dirichlet)
-                            // we ought to evaluate dirichlet
-                            // boundary conditions, not
-                            // something else!
-                            continue;
-                        
                         // translate local node id to a global one
                         int globalId = problem_.nodeIndex(cell, i);
 
-                        // actually evaluate the boundary
-                        // condition for the current
-                        // cell+node combo
-                        problem_.dirichlet((*u)[globalId],
-                                           cell,
-                                           i,
-                                           globalId);                            
+                        // apply dirichlet boundaries but make sure
+                        // not to interfere with non-dirichlet
+                        // boundaries...
+                        bool dirichletEvaluated = false;
+                        for (int bcIdx = 0; bcIdx < PrimaryVariables; ++bcIdx) {
+                            if (localJacobian_.bc(i)[bcIdx] == BoundaryConditions::dirichlet) {
+                                if (!dirichletEvaluated) {
+                                    dirichletEvaluated = true;
+                                    
+                                    // actually evaluate the boundary
+                                    // condition for the current cell+node
+                                    // combo. 
+                                    //
+                                    // TODO: better parameters: cell,
+                                    //       FVElementGeometry,
+                                    //       bfIndex
+                                    problem_.dirichlet(dirichletVal,
+                                                       cell,
+                                                       i,
+                                                       globalId);                            
+                                }
+                                (*u)[globalId][bcIdx] = dirichletVal[bcIdx];
+                            }
+                        }
+                        
                     }
                     
                 }

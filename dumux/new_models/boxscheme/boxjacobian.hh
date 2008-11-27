@@ -184,6 +184,9 @@ namespace Dune
                 Dune::GeometryType          geoType = curCell_().geometry().type();
                 const ReferenceElement &refElem = DomainTraits::referenceElement(geoType);
                 
+                // temporary vector to store the neumann boundaries
+                UnknownsVector fluxes;
+
                 // evaluate boundary conditions
                 IntersectionIterator endIt = IntersectionIteratorGetter::end(curCell_());
                 IntersectionIterator faceIt = IntersectionIteratorGetter::begin(curCell_());
@@ -218,28 +221,35 @@ namespace Dune
                                                faceIt,
                                                global,
                                                local);
-                        // TODO: mixed boundary conditions
-                        this->bctype[nodeInElement].assign(tmp[0]);
                         
-                        // handle neumann boundary conditions
-                        if (tmp[0] == BoundaryConditions::neumann) {
-                            // TODO: better Parameters: cell, FVElementGeometry, bfIndex
-                            UnknownsVector J;
-                            problem_.neumann(J,
-                                             curCell_(),
-                                             faceIt, 
-                                             global,
-                                             local);
-                            J *= curCellGeom_.boundaryFace[bfIdx].area;
-
-                            this->b[nodeInElement] += J;
-                        }
-                        // handle dirichlet and process boundaries
-                        else if (tmp[0] == BoundaryConditions::dirichlet || 
-                                 tmp[0] == BoundaryConditions::process)
-                        {
-                            // right hand side
-                            this->b[nodeInElement] = Scalar(0);
+                        // handle boundary conditions
+                        bool neumannEvaluated = false;
+                        for (int bcIdx = 0; bcIdx < PrimaryVariables; ++bcIdx) {
+                            // set the bctype of the LocalStiffness
+                            // base class
+                            this->bctype[nodeInElement][bcIdx] = tmp[bcIdx];
+                            
+                            // neumann boundaries
+                            if (tmp[bcIdx] == BoundaryConditions::neumann) {
+                                if (!neumannEvaluated) {
+                                    // make sure that we only evaluate
+                                    // the neumann fluxes once
+                                    neumannEvaluated = true;
+                                    // TODO: better Parameters: cell, FVElementGeometry, bfIndex
+                                    problem_.neumann(fluxes,
+                                                     curCell_(),
+                                                     faceIt, 
+                                                     global,
+                                                     local);
+                                    fluxes *= curCellGeom_.boundaryFace[bfIdx].area;
+                                }
+                                this->b[nodeInElement][bcIdx] += fluxes[bcIdx];
+                            }
+                            // dirichlet and processor boundaries
+                            else {
+                                // set right hand side to 0
+                                this->b[nodeInElement][bcIdx] = Scalar(0);
+                            }
                         }
                     }
                 }

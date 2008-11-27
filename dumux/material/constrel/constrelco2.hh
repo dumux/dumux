@@ -5715,41 +5715,30 @@ double lambda_CO2 (double Temp, double pg) const
 
 double satpressure_CO2 (double Temp)
 {
-        double p_s, dT, uT, up,dp;
-        double ts[10], ps[10];
-        int i;
+    /*values from Span und Flacke 2004: Statusbericht DKV Nr 20*/
+    static const double ts[] = {
+        270, 272, 276, 280, 284,
+        288, 292, 296, 300, 304
+    };
+    static const double ps[] = {
+        3.2033E6, 3.3802E6, 3.7555E6, 4.1607E6, 4.5978E6,
+        5.0688E6, 5.5761E6, 6.1227E6, 6.7131E6, 7.3555E6
+    };
 
-        if (Temp > 304.0)
-        {
+    if (Temp > 304.0)
         Temp = 304.0;
+    
+    for (int i=0; i < 9; i++)
+    {
+        if (ts[i] <= Temp && Temp <= ts[i+1])
+        {
+            return ps[i] +
+                  (Temp - ts[i])/(ts[i+1] - ts[i])
+                     * (ps[i+1] - ps[i]);
         }
-/*values from Span und Flacke 2004: Statusbericht DKV Nr 20*/
-ts[0]=270; ps[0]=3.2033E6;
-ts[1]=272; ps[1]=3.3802E6;
-ts[2]=276; ps[2]=3.7555E6;
-ts[3]=280; ps[3]=4.1607E6;
-ts[4]=284; ps[4]=4.5978E6;
-ts[5]=288; ps[5]=5.0688E6;
-ts[6]=292; ps[6]=5.5761E6;
-ts[7]=296; ps[7]=6.1227E6;
-ts[8]=300; ps[8]=6.7131E6;
-ts[9]=304; ps[9]=7.3555E6;
+    }
 
-
-                i=0;
-                for (i=0; i<=9; i++)
-                {
-                        if (ts[i] <= Temp && Temp <= ts[i+1])
-                        {
-                        uT = ts[i+1];
-                        dT = ts[i];
-                        up = ps[i+1];
-                        dp = ps[i];
-                        }
-
-                p_s = dp + ((Temp-dT)/(uT-dT))*(up-dp);
-                }
-return(p_s);
+    DUNE_THROW(Dune::RangeError, "satpressure_CO2: Temperature " << Temp << " out of range");
 }
 
 };

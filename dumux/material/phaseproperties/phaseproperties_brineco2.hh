@@ -6,6 +6,7 @@
 #include <dumux/material/property_baseclasses.hh>
 #include <dumux/material/constrel/constrelbrine.hh>
 #include <dumux/material/constrel/constrelco2.hh>
+#include <dumux/material/constrel/constrelair.hh>
 #include <math.h>
 
 /**

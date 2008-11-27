@@ -174,13 +174,13 @@ namespace Dune
 
     public:
         // internal method!
-        static void updateVarNodeData_(VariableNodeData &d,
-                                       const UnknownsVector &nodeSol, 
-                                       int phaseState,
-                                       const Cell &cell, 
-                                       int localIdx,
-                                       Problem &problem,
-                                       Scalar temperature) 
+        void updateVarNodeData_(VariableNodeData &d,
+                                const UnknownsVector &nodeSol, 
+                                int phaseState,
+                                const Cell &cell, 
+                                int localIdx,
+                                Problem &problem,
+                                Scalar temperature) const
             {
                 // update data for the isothermal stuff
                 ParentType::updateVarNodeData_(d, 

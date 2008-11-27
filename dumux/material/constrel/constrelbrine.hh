@@ -3,6 +3,8 @@
 #ifndef DUNE_CONSTRELBRINE_HH
 #define DUNE_CONSTRELBRINE_HH
 
+#include "constrelwater.hh"
+
 class ConstrelBrine {
 public:
 	/**************************************************************************/
@@ -90,45 +92,37 @@ public:
 
 	double enthalpy_brine(double T, double p, double X) const{
 
+		/*Numerical coefficents from PALLISER*/
+        static const double f[] = {
+            2.63500E-1, 7.48368E-6, 1.44611E-6, -3.80860E-10
+        };
+
+		/*Numerical coefficents from MICHAELIDES for the enthalpy of brine*/
+        static const double a[4][3] = {
+            { -9633.6,   -4080.0, +286.49 },
+            { +166.58,   +68.577, -4.6856 },
+            { -0.90963, -0.36524, +0.249667E-1 },
+            { +0.17965E-2, +0.71924E-3, -0.4900E-4 }
+        };
+
 		double theta, h_NaCl;
-		double f[4], a[4][3], m, h_ls, h_ls1, d_h;
+		double m, h_ls, h_ls1, d_h;
 		double X_lSAT, delta_h;
 		int i, j;
-		double R, hw;
+        double hw;
 		ConstrelWater water;
 
-		R = 8.314E-3; /*kJ/(mol*K)*/
 		theta = T - 273.15;
 
-		/*Numerische Koeffizienten nach PALLISER*/
-		f[0] = 2.63500E-1;
-		f[1] = 7.48368E-6;
-		f[2] = 1.44611E-6;
-		f[3] = -3.80860E-10;
-
-		/*Numerische Koeffizienten nach MICHAELIDES f"ur Enthalpie Brine*/
-		a[0][0] = -9633.6;
-		a[2][0] = -0.90963;
-		a[0][1] = -4080.0;
-		a[2][1] = -0.36524;
-		a[0][2] = +286.49;
-		a[2][2] = +0.249667E-1;
-		a[1][0] = +166.58;
-		a[3][0] = +0.17965E-2;
-		a[1][1] = +68.577;
-		a[3][1] = +0.71924E-3;
-		a[1][2] = -4.6856;
-		a[3][2] = -0.4900E-4;
-
 		X_lSAT = f[0] + f[1]*theta + f[2]*pow(theta,2) + f[3]*pow(theta,3);
-		/*Regularisierung*/
+		/*Regularization*/
 		if (X>X_lSAT) {
 			X = X_lSAT;
 		}
 
 		hw = water.enthalpy_water (T, p) /1E3; /* kJ/kg */
 
-		/*DAUBERT UND DANNER*/
+		/*DAUBERT and DANNER*/
 		/*U=*/h_NaCl = (3.6710E4*T + 0.5*(6.2770E1)*T*T - ((6.6670E-2)/3)*T*T*T
 				+((2.8000E-5)/4)*pow(T,4))/(58.44E3)- 2.045698e+02; /* kJ/kg */
 
@@ -159,46 +153,38 @@ public:
 
 		/* same function as enthalpy_brine, only extended by CO2 content */
 
+		/*Numerical coefficents from PALLISER*/
+        static const double f[] = {
+            2.63500E-1, 7.48368E-6, 1.44611E-6, -3.80860E-10
+        };
+
+		/*Numerical coefficents from MICHAELIDES for the enthalpy of brine*/
+        static const double a[4][3] = {
+            { -9633.6,   -4080.0, +286.49 },
+            { +166.58,   +68.577, -4.6856 },
+            { -0.90963, -0.36524, +0.249667E-1 },
+            { +0.17965E-2, +0.71924E-3, -0.4900E-4 }
+        };
+
 		double theta, h_NaCl;
-		double f[4], a[4][3], m, h_ls, h_ls1, d_h;
+		double m, h_ls, h_ls1, d_h;
 		double X_lSAT, delta_h;
 		int i, j;
-		double delta_hCO2, hg, R, hw;
+		double delta_hCO2, hg, hw;
 		ConstrelWater water;
 		ConstrelCO2 co2;
 
-		R = 8.314E-3; /*kJ/(mol*K)*/
 		theta = T - 273.15;
 
-		/*Numerische Koeffizienten nach PALLISER*/
-		f[0] = 2.63500E-1;
-		f[1] = 7.48368E-6;
-		f[2] = 1.44611E-6;
-		f[3] = -3.80860E-10;
-
-		/*Numerische Koeffizienten nach MICHAELIDES f"ur Enthalpie Brine*/
-		a[0][0] = -9633.6;
-		a[2][0] = -0.90963;
-		a[0][1] = -4080.0;
-		a[2][1] = -0.36524;
-		a[0][2] = +286.49;
-		a[2][2] = +0.249667E-1;
-		a[1][0] = +166.58;
-		a[3][0] = +0.17965E-2;
-		a[1][1] = +68.577;
-		a[3][1] = +0.71924E-3;
-		a[1][2] = -4.6856;
-		a[3][2] = -0.4900E-4;
-
 		X_lSAT = f[0] + f[1]*theta + f[2]*theta*theta + f[3]*theta*theta*theta;
-		/*Regularisierung*/
+		/*Regularization*/
 		if (X>X_lSAT) {
 			X = X_lSAT;
 		}
 
 		hw = water.enthalpy_water (T, p) /1E3; /* kJ/kg */
 
-		/*DAUBERT UND DANNER*/
+		/*DAUBERT and DANNER*/
 		/*U=*/h_NaCl = (3.6710E4*T + 0.5*(6.2770E1)*T*T - ((6.6670E-2)/3)*T*T*T
 				+((2.8000E-5)/4)*(T*T*T*T))/(58.44E3)- 2.045698e+02; /* kJ/kg */
 
