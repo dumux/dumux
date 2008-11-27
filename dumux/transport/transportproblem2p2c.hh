@@ -70,10 +70,10 @@ namespace Dune
    * @param e reference to the cell for which the function is to be evaluated
    * @param xi local coordinates inside e
 	 */
-	virtual const FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
-	{
-		return soil.K(x, e, xi);
-	}
+//	virtual const FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
+//	{
+//		return soil.K(x, e, xi);
+//	}
 
 	//! Feed concentration boundary condition
 	/** Feed concentration is the (global) mass fraction of component 1 in the mixture

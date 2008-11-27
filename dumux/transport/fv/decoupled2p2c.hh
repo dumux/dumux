@@ -15,6 +15,7 @@
 #include <dune/grid/utility/intersectiongetter.hh>
 #include <dune/istl/bvector.hh>
 #include <dune/common/fvector.hh>
+#include <dune/common/stdstreams.hh>
 
 // transport:
 #include "dumux/transport/fv/numericalflux.hh"
@@ -84,16 +85,18 @@ namespace Dune
 
 		void initial()
 		{
+			dinfo << "initialization of the model's variables ..."<<std::endl;
 			upd = 0;
 			timestep = 0;
 			problem.variables.pressure = 1e5;
-			initializeMatrix();
-			initialguess();
-			pressure(true, 0);
-			transportInitial();
-			pressure(false,0);
-			transportInitial();
-			totalVelocity(0);
+			initializeMatrix();		dinfo << "matrix initialization"<<std::endl;
+			initialguess();				dinfo << "first saturation guess"<<std::endl;
+			pressure(true, 0);		dinfo << "first pressure guess"<<std::endl;
+			transportInitial();		dinfo << "first guess for mass fractions"<<std::endl;
+			pressure(false,0);		dinfo << "final pressure initialization"<<std::endl;
+			transportInitial();		dinfo << "final initializiation of saturations and mass fractions"<<std::endl;
+			totalVelocity(0.);
+			dinfo << "initialization done."<<std::endl;
 		}
 
 		void update(double t, double& dt, RepresentationType& updateVec)
@@ -105,7 +108,8 @@ namespace Dune
 
 			pressure(false, t);
 			totalVelocity(t);
-			concentrationUpdate(t, dt, updateVec);
+			int which = concentrationUpdate(t, dt, updateVec);
+			dinfo << "timestep restricting cell: " << which << std::endl;
 		}
 
 		int level()
@@ -164,6 +168,8 @@ namespace Dune
   	double timestep;
   	const double T; //Temperature
 
+  	std::ofstream mass;
+
 		// variables for transport equation:
 		TransportProblem2p2c<G, RT>& problem;
 		RepresentationType upd;
@@ -197,7 +203,7 @@ namespace Dune
 	   	  	elementmapper(g, g.levelView(lev).indexSet()),
 	   	  	A(g.size(lev, 0),g.size(lev, 0), (2*dim+1)*g.size(lev, 0), BCRSMatrix<MB>::random), f(g.size(lev, 0)),
 	   	  	solverName_(solverName), preconditionerName_(preconditionerName),
-	   	  	T(283.15)
+	   	  	T(283.15), mass("brkthr2p2c.dat")
  	  {
 			problem.variables.volErr = 0;
 			upd.resize(2*elementmapper.size());
@@ -1176,7 +1182,7 @@ namespace Dune
 
 		} // end grid traversal
 //		printvector(std::cout,updateVec,"update","row");
-		return 0;
+		return which;
   } // end function "update"
 
   template<class G, class RT>
@@ -1285,6 +1291,15 @@ namespace Dune
 			problem.variables.volErr[indexi] = (vol - poro) / dt;
 		}
 		timestep = dt;
+
+		double mass1 = 0.;
+		double mass2 = 0.;
+		for (int i = 0; i < size; i++)
+		{
+			mass1 += problem.variables.totalConcentration[i];
+			mass2 += problem.variables.totalConcentration[i+size];
+		}
+		mass << t + dt << "\t" << mass1 << "\t" << mass2 << std::endl;
   }
 
 

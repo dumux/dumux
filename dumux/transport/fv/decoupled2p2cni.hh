@@ -1237,9 +1237,9 @@ namespace Dune
 					{
 						FieldVector<RT,3> J = problem.J(faceglobal, *it, facelocalDim);
 						double faceVol = integrationOuterNormal.two_norm();
-						factorC1 = J[0] * faceVol;
-						factorC2 = J[1] * faceVol;
-						factorH = J[2] * faceVol;
+						factorC1 = J[0] * faceVol / volume;
+						factorC2 = J[1] * faceVol / volume;
+						factorH = J[2] * faceVol / volume;
 
 				    // for timestep control
 						double coeffW = fwI / satI;
