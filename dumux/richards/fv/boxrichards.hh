@@ -1,4 +1,4 @@
-// $Id: boxpwsn.hh 827 2008-11-24 19:49:54Z klaus $
+// $Id: boxRichards.hh 827 2008-11-24 19:49:54Z klaus $
 
 #ifndef DUNE_RICHARDS_HH
 #define DUNE_RICHARDS_HH
@@ -40,7 +40,7 @@
 #include "dumux/pardiso/identity.hh"
 #include "dumux/twophase/twophasemodel.hh"
 #include "dumux/twophase/twophaseproblem.hh"
-#include "dumux/twophase/fv/boxpwsnjacobian.hh"
+#include "dumux/twophase/fv/boxrichardsjacobian.hh"
 
 #include "dumux/nonlinear/new_newtonmethod.hh"
 #include "dumux/nonlinear/new_newtoncontroller.hh"
@@ -54,8 +54,8 @@ namespace Dune {
  This implements a two phase model with Pw and Sn as primary unknowns.
  */
 template<class G, class RT, class VtkMultiWriter>
-class BoxPwSn
-: public LeafP1TwoPhaseModel<G, RT, TwoPhaseProblem<G, RT>, BoxPwSnJacobian<G, RT> >
+class BoxRichards
+: public LeafP1TwoPhaseModel<G, RT, TwoPhaseProblem<G, RT>, BoxRichardsJacobian<G, RT> >
 {
 
 public:
@@ -63,7 +63,7 @@ public:
 	typedef TwoPhaseProblem<G, RT> ProblemType;
 
 	// define the local Jacobian (also change the template argument above)
-	typedef BoxPwSnJacobian<G, RT> LocalJacobian;
+	typedef BoxRichardsJacobian<G, RT> LocalJacobian;
 	typedef LeafP1TwoPhaseModel<G, RT, ProblemType, LocalJacobian>
 			ThisLeafP1TwoPhaseModel;
 	typedef typename ThisLeafP1TwoPhaseModel::FunctionType FunctionType;
@@ -73,7 +73,7 @@ public:
 
 	enum {m = 2};
 
-	typedef BoxPwSn<G, RT, VtkMultiWriter> ThisType;
+	typedef BoxRichards<G, RT, VtkMultiWriter> ThisType;
 	typedef typename ThisLeafP1TwoPhaseModel::FunctionType::RepresentationType VectorType;
 	typedef typename ThisLeafP1TwoPhaseModel::OperatorAssembler::RepresentationType MatrixType;
 	typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator;
@@ -116,7 +116,7 @@ public:
       // End of stuff for new newton method
       //////////////////////
 
-    BoxPwSn(const G& g, ProblemType& prob)
+    BoxRichards(const G& g, ProblemType& prob)
 	: ThisLeafP1TwoPhaseModel(g, prob)
 	{}
 
@@ -307,7 +307,7 @@ public:
 		while(!newtonLoop)
 		{
 			    nextDt = this->localJacobian.getDt();
-                NewtonMethod newton(*this); // *this means object itself (boxpwsn)
+                NewtonMethod newton(*this); // *this means object itself (boxRichards)
                 NewtonController newtonCtl(1e-7, 6);
                 newtonLoop = newton.execute(*this, newtonCtl);
                 nextDt = newtonCtl.suggestTimeStepSize(nextDt);
@@ -334,14 +334,12 @@ public:
 	void addvtkfields (MultiWriter& writer)
 	{
 		writer.addScalarVertexFunction("pressure wetting phase", this->u, 0);
-		writer.addVertexData(this->localJacobian.outPressureN,"pressure non-wetting phase");
-		writer.addVertexData(this->localJacobian.outCapillaryP,"capillary pressure");
+		writer.addVertexData(this->localJacobian.outPressureW,"pressure non-wetting phase");
 		writer.addVertexData(this->localJacobian.outSaturationW,"saturation wetting phase");
 		writer.addVertexData(this->localJacobian.outSaturationN,"saturation non-wetting phase");
 		writer.addVertexData(this->localJacobian.outDensityW,"density wetting phase");
-		writer.addVertexData(this->localJacobian.outDensityN,"density non-wetting phase");
 		writer.addVertexData(this->localJacobian.outMobilityW,"mobility wetting phase");
-		writer.addVertexData(this->localJacobian.outMobilityN,"mobility non-wetting phase");
+		writer.addVertexData(this->localJacobian.outdSwdPc,"dSwdPc");
 	}
 
 	void setVtkMultiWriter(VtkMultiWriter *writer)

@@ -264,7 +264,7 @@ namespace Dune
    		//   		varData[i].pC = problem.materialLaw().pC(varData[i].satW, global, e, local);
 
    		// for output
-		 (*outPressureN)[globalIdx] = varData[i].pressure;
+		 (*outPressureW)[globalIdx] = varData[i].pressure;
 		 (*outSaturationW)[globalIdx] = varData[i].satW;
 		 (*outSaturationN)[globalIdx] = varData[i].satN;
 		 (*outDensityW)[globalIdx] = varData[i].densityW;
@@ -315,7 +315,7 @@ namespace Dune
      std::vector<VariableNodeData> oldVarNData;
 
      // for output files
-     BlockVector<FieldVector<RT, 1> > *outPressureN;
+     BlockVector<FieldVector<RT, 1> > *outPressureW;
      BlockVector<FieldVector<RT, 1> > *outSaturationN;
      BlockVector<FieldVector<RT, 1> > *outSaturationW;
      BlockVector<FieldVector<RT, 1> > *outDensityW;
