@@ -30,7 +30,7 @@
 #include "dumux/pardiso/pardiso.hh"
 
 // author: Jochen Fritz
-// last change: 27.08.08
+// last change: 27.11.08
 
 namespace Dune
 {
@@ -464,9 +464,9 @@ namespace Dune
 					}
 					else
 					{
-						lambdaJ = problem.variables.mobility_wet[indexi] + problem.variables.mobility_nonwet[indexi];
-						fw_J = problem.variables.mobility_wet[indexi] / lambdaJ;
-						fn_J = problem.variables.mobility_nonwet[indexi] / lambdaJ;
+						lambdaJ = problem.variables.mobility_wet[indexj] + problem.variables.mobility_nonwet[indexj];
+						fw_J = problem.variables.mobility_wet[indexj] / lambdaJ;
+						fn_J = problem.variables.mobility_nonwet[indexj] / lambdaJ;
 					}
 
 					// compute averaged total mobility
@@ -553,13 +553,15 @@ namespace Dune
 								flashCalculation(Z1Bound, pressBC, T, problem.porosity(global, *it, local), satBound, C1Bound, C2Bound, Xw1Bound, Xn1Bound);
 							}
 
-				    	// neighbor cell
+				    	// fluid properties on boundary
 				    	std::vector<double> kr = problem.materialLaw.kr(satBound, global, *it, local, T);
 							double viscosityL = problem.liquidPhase.viscosity(T, pressBC , 1. - Xw1Bound);
 							double viscosityG = problem.gasPhase.viscosity(T, pressBC, Xn1Bound);
-							lambda = kr[0] / viscosityL + kr[1] / viscosityG;
-				    	double fwBound = kr[0] / viscosityL / lambda;
-				    	double fnBound = kr[1] / viscosityG / lambda;
+							double lambdaB = kr[0] / viscosityL + kr[1] / viscosityG;
+				    	double fwBound = kr[0] / viscosityL / lambdaB;
+				    	double fnBound = kr[1] / viscosityG / lambdaB;
+
+				    	lambda = 0.5 * (lambdaI + lambdaB);
 
 							// phase densities in cell and on boundary
 							double rho_w_I = 1 / Vw;
@@ -575,8 +577,8 @@ namespace Dune
 									 );
 							else
 								entry = fabs(
-							     dV_dm1 * ( rho_w_J * Xw1Bound * fw_I + rho_n_J * Xn1Bound * fn_I)
-									 + dV_dm2 * ( rho_w_J * (1. - Xw1Bound) * fw_I + rho_n_J * (1. - Xn1Bound) * fn_I)
+							     dV_dm1 * ( rho_w_J * Xw1Bound * fwBound + rho_n_J * Xn1Bound * fnBound)
+									 + dV_dm2 * ( rho_w_J * (1. - Xw1Bound) * fwBound + rho_n_J * (1. - Xn1Bound) * fnBound)
 									 );
 
 							entry *= - lambda * faceVol*(Kni*distVec)/(dist*dist);
@@ -782,9 +784,8 @@ namespace Dune
 				      // compute averaged total mobility
 				      // CAREFUL: Harmonic weightig can generate zero matrix entries,
 				      // use arithmetic weighting instead:
-				      double lambda = 1;
 				      double fractionalW;
-				      lambda = 0.5 * (lambdaI + lambdaJ);
+				      double lambda = 0.5 * (lambdaI + lambdaJ);
 				      if (hasGravity)
 				    	  fractionalW = 0.5 * (fractionalWI + fractionalWJ);
 
@@ -804,17 +805,40 @@ namespace Dune
 						  double dist = distVec.two_norm();
 						  distVec /= dist;
 
+						  double pressBC = problem.gPress(faceglobal, *it, facelocalDim);
+
 					    // compute directed permeability vector Ki.n
 						  FieldVector<ct,dim> Kni(0);
 						  Ki.umv(distVec, Kni);
 
-						  // compute averaged total mobility
-						  double lambda = 1.;
-						  double fractionalW = 1.;
-							  lambda = lambdaI;
-							  if (hasGravity) fractionalW = fractionalWI;
+							double satBound, C1Bound, C2Bound, Xw1Bound, Xn1Bound;
 
-						  double pressBC = problem.gPress(faceglobal, *it, facelocalDim);
+							//get boundary condition type for compositional transport
+							BoundaryConditions2p2c::Flags bctype = problem.cbctype(faceglobal, *it, facelocalDim);
+							if (bctype == BoundaryConditions2p2c::saturation) // saturation given
+							{
+								satBound = problem.gS(faceglobal, *it, facelocalDim);
+								satFlash(satBound, pressBC, T, problem.soil.porosity(global, *it, local), C1Bound, C2Bound, Xw1Bound, Xn1Bound);
+							}
+							if (bctype == BoundaryConditions2p2c::concentration) // mass fraction given
+							{
+								double Z1Bound = problem.gZ(faceglobal, *it, facelocalDim);
+								flashCalculation(Z1Bound, pressBC, T, problem.porosity(global, *it, local), satBound, C1Bound, C2Bound, Xw1Bound, Xn1Bound);
+							}
+
+				    	// fluid properties on boundary
+				    	std::vector<double> kr = problem.materialLaw.kr(satBound, global, *it, local, T);
+							double viscosityL = problem.liquidPhase.viscosity(T, pressBC , 1. - Xw1Bound);
+							double viscosityG = problem.gasPhase.viscosity(T, pressBC, Xn1Bound);
+							double lambdaB = kr[0] / viscosityL + kr[1] / viscosityG;
+				    	double fwBound = kr[0] / viscosityL / lambdaB;
+				    	double fnBound = kr[1] / viscosityG / lambdaB;
+
+						  // compute averaged total mobility
+						  double lambda = lambdaI + lambdaB;
+						  double fractionalW = 1.;
+							  lambda = 0.5 * (lambdaI + lambdaB);
+							  if (hasGravity) fractionalW = fractionalWI;
 
 						  FieldVector<ct,dim> vTotal(Kni);
 						  vTotal *= lambda * (pressBC - pressi) / dist;
