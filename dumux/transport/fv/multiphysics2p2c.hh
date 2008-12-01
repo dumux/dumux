@@ -92,11 +92,11 @@ namespace Dune
 		void initial()
 		{
 			dinfo << "initialization of the model's variables ..."<<std::endl;
+			subdomain = true;
 			upd = 0;
 			timestep = 0;
 			initializeMatrix();		dinfo << "matrix initialization"<<std::endl;
 			initialguess();				dinfo << "first saturation guess"<<std::endl;
-			initializeSubdomain();dinfo << "initialization of subdomain" << std::endl;
 			pressure(true, 0);		dinfo << "first pressure guess"<<std::endl;
 			transportInitial();		dinfo << "first guess for mass fractions"<<std::endl;
 			pressure(false,0);		dinfo << "final pressure initialization"<<std::endl;
@@ -191,35 +191,6 @@ namespace Dune
 			vtkwriter.write(fname, Dune::VTKOptions::ascii);
 
 		  problem.variables.volErr /= timestep;
-	  }
-
-	  // initialization of the subdomain: each cell where the saturation is not equal to one and the neighbor cells ae added to subdomain.
-	  void initializeSubdomain()
-	  {
-	  	subdomain = false;
-	  	Iterator endit = grid.template lend<0>(level_);
-			for (Iterator it = grid.template lbegin<0>(level_); it != endit; ++it)
-			{
-				int index = indexset.index(*it);
-				GeometryType gt = it->geometry().type(); // cell geometry type
-				const FieldVector<ct,dim>&
-				  local = ReferenceElements<ct,dim>::general(gt).position(0,0); // cell center in reference element
-				FieldVector<ct,dim> global = it->geometry().global(local);
-
-				if(global[0] < 15)
-					subdomain[index] = true;
-
-				if (problem.variables.saturation[index] < 1.)
-				{
-					subdomain[index] = true;
-					IntersectionIterator endis = it->ilevelend();
-					for (IntersectionIterator is = it->ilevelbegin(); is!=endis; ++is)
-					{
-						if (is.neighbor())
-							subdomain[indexset.index(*(is.outside()))] = true;
-					}
-				}
-			}
 	  }
 
 	private:
