@@ -516,9 +516,6 @@ namespace Dune
 					FieldVector<ct,dimworld>
 					  faceglobal = is.intersectionGlobal().global(facelocal);
 
-					// compute total mobility
-					double lambda = lambdaI;
-
 					//get boundary condition for boundary face center
 					BoundaryConditions::Flags bctype = problem.pbctype(faceglobal, *it, facelocalDim);
 
@@ -530,6 +527,7 @@ namespace Dune
 						double dist = distVec.two_norm();
 						if (first)
 						{
+							double lambda = lambdaI;
 							A[indexi][indexi] -= lambda * faceVol * (Kni * distVec) / (dist * dist);
 							double pressBC = problem.gPress(faceglobal, *it, facelocalDim);
 							f[indexi] -= lambda * faceVol * pressBC * (Kni * distVec) / (dist * dist);
@@ -561,7 +559,7 @@ namespace Dune
 				    	double fwBound = kr[0] / viscosityL / lambdaB;
 				    	double fnBound = kr[1] / viscosityG / lambdaB;
 
-				    	lambda = 0.5 * (lambdaI + lambdaB);
+				    	double lambda = 0.5 * (lambdaI + lambdaB);
 
 							// phase densities in cell and on boundary
 							double rho_w_I = 1 / Vw;
