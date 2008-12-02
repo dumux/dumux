@@ -118,7 +118,8 @@ public:
 	virtual void vtkout(const char* name, int k) const {
 		if (this->transproblem.exsolution){
 			this->transproblem.updateExSol();
-			variables().vtkout(name, k, this->transproblem.getuEx());
+			variables().vtkout(name, k);
+			//variables().vtkout(name, k, this->transproblem.getuEx());
 			return;
 		}
 		variables().vtkout(name, k);
