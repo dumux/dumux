@@ -67,7 +67,7 @@ int main(int argc, char** argv)
     diffusion.pressure();
     std::cout << "pressure calculation took " << timer.elapsed() << " seconds" << std::endl;
     printvector(std::cout, variables.pressure, "pressure", "row", 200, 1, 3);
-    variables.vtkoutpressure("fv", 0);
+    variables.vtkout("fv", 0);
 
     diffusion.calcTotalVelocity();
     printvector(std::cout, variables.velocity, "velocity", "row", 4, 1, 3);
