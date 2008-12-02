@@ -71,6 +71,7 @@ namespace Dune
     class BoxJacobian : public Dune::LocalStiffness<typename Problem::DomainTraits::Grid::LeafGridView,
                                                     typename Problem::DomainTraits::Scalar,
                                                     BoxTraitsT::PrimaryVariables>
+
     {
     private:
         typedef typename Problem::DomainTraits DomainTraits;
@@ -439,6 +440,7 @@ namespace Dune
                         // of the cell and fill the required fields of
                         // the LocalStiffness base class.
                         residUPlusEps -= residUMinusEps;
+
                         residUPlusEps /= 2*eps;
                         updateLocalStiffness_(j, 
                                               comp,

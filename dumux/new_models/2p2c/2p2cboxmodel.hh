@@ -229,7 +229,7 @@ namespace Dune
 
                     // Mobilities & densities
                     d.mobility[WPhaseIndex] = problem.materialLaw().mobW(d.satW, global, cell, local, temperature, d.pW);
-#if 0
+#if 1
                     d.mobility[NPhaseIndex] = problem.materialLaw().mobN(d.satN, global, cell, local, temperature, d.pN);
 #else
 #warning "CO2 specific"
@@ -337,8 +337,8 @@ namespace Dune
             {
                 result = Scalar(0);
 
-//                const LocalFunction &sol   = usePrevSol ? *prevSol_     : *curSol_;
-                const CellCache &cellCache = usePrevSol ? prevSolCache_ : curSolCache_;
+                const LocalFunction &sol   = usePrevSol ? this->prevSol_ : this->curSol_;
+                const CellCache &cellCache = usePrevSol ? prevSolCache_  : curSolCache_;
                 
                 Scalar satN = cellCache.atSCV[scvId].satN;
                 Scalar satW = cellCache.atSCV[scvId].satW;
@@ -364,6 +364,9 @@ namespace Dune
                               + cellCache.atSCV[scvId].density[WPhaseIndex]*
                               satW*
                               cellCache.atSCV[scvId].massfrac[NCompIndex][WPhaseIndex]);
+                
+                // storage of energy
+                asImp_()->heatStorage(result, scvId, sol, cellCache);
             }
 
         /*!
@@ -372,6 +375,219 @@ namespace Dune
          */
         void fluxRate(UnknownsVector &flux, int faceId) const
             {
+                // set flux vector to zero
+                int i = this->curCellGeom_.subContVolFace[faceId].i;
+                int j = this->curCellGeom_.subContVolFace[faceId].j;
+
+                // normal vector, value of the area of the scvf
+                const WorldCoord &normal(this->curCellGeom_.subContVolFace[faceId].normal);
+
+                // get global coordinates of nodes i,j
+                const WorldCoord &global_i = this->curCellGeom_.subContVol[i].global;
+                const WorldCoord &global_j = this->curCellGeom_.subContVol[j].global;
+
+                // get local coordinates of nodes i,j
+                const LocalCoord &local_i = this->curCellGeom_.subContVol[i].local;
+                const LocalCoord &local_j = this->curCellGeom_.subContVol[j].local;
+               
+                WorldCoord pGrad[NumPhases];
+                WorldCoord xGrad[NumPhases];
+                WorldCoord tempGrad(0.0);
+                for (int k = 0; k < NumPhases; ++k) {
+                    pGrad[k] = Scalar(0);
+                    xGrad[k] = Scalar(0);
+                }
+                
+                WorldCoord tmp(0.0);
+                PhasesVector pressure(0.0), massfrac(0.0);
+
+                // calculate FE gradient (grad p for each phase)
+                for (int k = 0; k < this->curCellGeom_.nNodes; k++) // loop over adjacent nodes
+                {
+                    // FEGradient at node k
+                    const LocalCoord &feGrad = this->curCellGeom_.subContVolFace[faceId].grad[k];
+
+                    pressure[WPhaseIndex] = this->curSolCache_.atSCV[k].pW;
+                    pressure[NPhaseIndex] = this->curSolCache_.atSCV[k].pN;
+
+                    // compute sum of pressure gradients for each phase
+                    for (int phase = 0; phase < NumPhases; phase++)
+                    {
+                        tmp = feGrad;
+                        tmp *= pressure[phase];
+                        pGrad[phase] += tmp;
+                    }
+
+                    // for diffusion of air in wetting phase
+                    tmp = feGrad;
+                    tmp *= this->curSolCache_.atSCV[k].massfrac[NCompIndex][WPhaseIndex];
+                    xGrad[WPhaseIndex] += tmp;
+
+                    // for diffusion of water in nonwetting phase
+                    tmp = feGrad;
+                    tmp *= this->curSolCache_.atSCV[k].massfrac[WCompIndex][NPhaseIndex];
+                    xGrad[NPhaseIndex] += tmp;
+
+                    // temperature gradient
+                    asImp_()->updateTempGrad(tempGrad, feGrad, this->curSol_, k);
+                }
+
+                // correct the pressure gradients by the hydrostatic
+                // pressure due to gravity
+                for (int phase=0; phase < NumPhases; phase++)
+                {
+                    tmp = this->problem_.gravity();
+                    tmp *= this->curSolCache_.atSCV[i].density[phase];
+                    pGrad[phase] -= tmp;
+                }
+
+                
+                // calculate the permeability tensor
+                Tensor K         = this->problem_.soil().K(global_i, ParentType::curCell_(), local_i);
+                const Tensor &Kj = this->problem_.soil().K(global_j, ParentType::curCell_(), local_j);
+                harmonicMeanK_(K, Kj);
+                
+                // magnitute of darcy velocity of each phase projected
+                // on the normal of the sub-control volume's face
+                PhasesVector vDarcyOut; 
+                // temporary vector for the Darcy velocity
+                WorldCoord vDarcy;
+                for (int phase=0; phase < NumPhases; phase++)
+                {
+                    K.mv(pGrad[phase], vDarcy);  // vDarcy = K * grad p
+                    vDarcyOut[phase] = vDarcy*normal;
+                }
+                
+                // find upsteam and downstream nodes
+                const VariableNodeData *upW = &(this->curSolCache_.atSCV[i]);
+                const VariableNodeData *dnW = &(this->curSolCache_.atSCV[j]);
+                const VariableNodeData *upN = &(this->curSolCache_.atSCV[i]);
+                const VariableNodeData *dnN = &(this->curSolCache_.atSCV[j]);
+                if (vDarcyOut[WPhaseIndex] > 0) {
+                    std::swap(upW, dnW);
+                };
+                if (vDarcyOut[NPhaseIndex] > 0)  {
+                    std::swap(upN, dnN);
+                };
+
+                // Upwind parameter
+                Scalar alpha = 1.0; // -> use only the upstream node
+                
+                ////////
+                // advective flux of the wetting component
+                ////////
+                
+                // flux in the wetting phase
+                flux[PwIndex] =  vDarcyOut[WPhaseIndex] * (
+                    alpha* // upstream nodes
+                    (  upW->density[WPhaseIndex] *
+                       upW->mobility[WPhaseIndex] *
+                       upW->massfrac[WCompIndex][WPhaseIndex])
+                    + 
+                    (1-alpha)* // downstream nodes
+                    (  dnW->density[WPhaseIndex] *
+                       dnW->mobility[WPhaseIndex] *
+                       dnW->massfrac[WCompIndex][WPhaseIndex]));
+                
+                // flux in the non-wetting phase
+                flux[PwIndex] += vDarcyOut[NPhaseIndex] * (
+                    alpha* // upstream node
+                    (  upN->density[NPhaseIndex] *
+                       upN->mobility[NPhaseIndex] *
+                       upN->massfrac[WCompIndex][NPhaseIndex])
+                    + 
+                    (1-alpha)* // downstream node
+                    (  dnN->density[NPhaseIndex] *
+                       dnN->mobility[NPhaseIndex] * 
+                       dnN->massfrac[WCompIndex][NPhaseIndex]) );
+        
+                ////////
+                // advective flux of the non-wetting component
+                ////////
+
+                // flux in the wetting phase
+                flux[SwitchIndex]   = vDarcyOut[NPhaseIndex] * (
+                    alpha * // upstream nodes
+                    (  upN->density[NPhaseIndex] *
+                       upN->mobility[NPhaseIndex] *
+                       upN->massfrac[NCompIndex][NPhaseIndex]) 
+                    + 
+                    (1-alpha) * // downstream node
+                    (  dnN->density[NPhaseIndex] * 
+                       dnN->mobility[NPhaseIndex] *
+                       dnN->massfrac[NCompIndex][NPhaseIndex]) );
+
+                // flux in the non-wetting phase
+                flux[SwitchIndex]  += vDarcyOut[WPhaseIndex] * (
+                    alpha * // upstream node
+                    (  upW->density[WPhaseIndex] * 
+                       upW->mobility[WPhaseIndex] *
+                       upW->massfrac[NCompIndex][WPhaseIndex])
+                    +
+                    (1-alpha) * // downstream node
+                    (  dnW->density[WPhaseIndex] *
+                       dnW->mobility[WPhaseIndex] *
+                       dnW->massfrac[NCompIndex][WPhaseIndex]) );
+
+                ////////
+                // advective flux of energy
+                ////////
+                asImp_()->advectiveHeatFlux(flux, vDarcyOut, alpha, upW, dnW, upN, dnN);
+                
+                asImp_()->diffusiveHeatFlux(flux, faceId, tempGrad);
+                
+                return;
+
+                // DIFFUSION
+                UnknownsVector normDiffGrad;
+
+                // get local to global id map
+                int state_i = this->curSolCache_.atSCV[i].phaseState;
+                int state_j = this->curSolCache_.atSCV[j].phaseState;
+
+                Scalar diffusionWW(0.0), diffusionWN(0.0); // diffusion of water
+                Scalar diffusionAW(0.0), diffusionAN(0.0); // diffusion of air
+                UnknownsVector avgDensity, avgDpm;
+
+                // Diffusion coefficent
+                // TODO: needs to be continuously dependend on the phase saturations
+                avgDpm[WPhaseIndex]=2e-9;
+                avgDpm[NPhaseIndex]=2.25e-5;
+                if (state_i == NPhaseOnly || state_j == NPhaseOnly)
+                {
+                    // only the nonwetting phase is present in at
+                    // least one cell -> no diffusion within the
+                    // wetting phase
+                    avgDpm[WPhaseIndex] = 0;
+                }
+                if (state_i == WPhaseOnly || state_j == WPhaseOnly)
+                {
+                    // only the wetting phase is present in at least
+                    // one cell -> no diffusion within the non wetting
+                    // phase
+                    avgDpm[NPhaseIndex] = 0;
+                }
+
+                // length of the diffusion gradient
+                normDiffGrad[WPhaseIndex] = xGrad[WPhaseIndex]*normal;
+                normDiffGrad[NPhaseIndex] = xGrad[NPhaseIndex]*normal;
+
+                // calculate the arithmetic mean of densities
+                avgDensity[WPhaseIndex] = 0.5*(this->curSolCache_.atSCV[i].density[WPhaseIndex] + this->curSolCache_.atSCV[j].density[WPhaseIndex]);
+                avgDensity[NPhaseIndex] = 0.5*(this->curSolCache_.atSCV[i].density[NPhaseIndex] + this->curSolCache_.atSCV[j].density[NPhaseIndex]);
+
+                diffusionAW = avgDpm[WPhaseIndex] * avgDensity[WPhaseIndex] * normDiffGrad[WPhaseIndex];
+                diffusionWW = - diffusionAW;
+                diffusionWN = avgDpm[NPhaseIndex] * avgDensity[NPhaseIndex] * normDiffGrad[NPhaseIndex];
+                diffusionAN = - diffusionWN;
+
+                // add diffusion of water to water flux
+                flux[WCompIndex] += (diffusionWW + diffusionWN);
+
+                // add diffusion of air to air flux
+                flux[NCompIndex] += (diffusionAN + diffusionAW);
+
+/*
                 // set flux vector to zero
                 int i = this->curCellGeom_.subContVolFace[faceId].i;
                 int j = this->curCellGeom_.subContVolFace[faceId].j;
@@ -544,6 +760,7 @@ namespace Dune
 
                 // add diffusion of air to air flux
                 flux[NCompIndex] += (diffusionAN + diffusionAW);
+*/
             }
 
 
@@ -736,94 +953,72 @@ namespace Dune
                                const WorldCoord &globalPos)
             {
                 // evaluate primary variable switch
-                int  phaseState = staticNodeDat_[globalIdx].phaseState;
+                int phaseState    = staticNodeDat_[globalIdx].phaseState;
+                int newPhaseState = phaseState;
 
                 // Evaluate saturation and pressures
                 Scalar pW = (*sol)[globalIdx][PwIndex];
                 Scalar satW = 0.0;
                 Scalar temperature = Implementation::temperature_((*sol)[globalIdx]);
-                if (phaseState == BothPhases) satW = 1.0 - (*sol)[globalIdx][SwitchIndex];
-                if (phaseState == WPhaseOnly) satW = 1.0;
-                if (phaseState == NPhaseOnly) satW = 0.0;
+                if      (phaseState == BothPhases) satW = 1.0 - (*sol)[globalIdx][SwitchIndex];
+                else if (phaseState == WPhaseOnly) satW = 1.0;
+                else if (phaseState == NPhaseOnly) satW = 0.0;
 
                 Scalar pC = this->problem_.pC(satW, globalIdx, globalPos);
                 Scalar pN = pW + pC;
+                
+                if (phaseState == NPhaseOnly) 
+                {
+                    Scalar xWN = (*sol)[globalIdx][SwitchIndex];
+                    Scalar xWNmax = this->problem_.multicomp().xWN(pN, temperature);
 
-                if (phaseState == NPhaseOnly) {
-                    // auxiliary variables
-                    Scalar xWNmass, xWNmolar, pwn, pWSat;
-
-#warning "TODO:clean up"
-#if 0
-                    xWNmass = (*sol)[globalIdx][SwitchIndex];
-
-                    xWNmolar = this->problem_.multicomp().xWNmolar(pN, temperature);
-                    pwn = xWNmolar * pN;
-                    pWSat = this->problem_.multicomp().vaporPressure(temperature);
-
-                    if (pwn > (1 + 1e-5)*pWSat)
-#else
-                    if (xWNmass > 0.001) // CO2 specific hack
-#endif
+                    if (xWN > xWNmax*(1 + 2e-5))
                     {
-                        // appearance of water phase
-                        std::cout << "Water appears at node " << globalIdx << "  Coordinates: " << globalPos << std::endl;
-                        staticNodeDat_[globalIdx].phaseState = BothPhases;
-                        (*sol)[globalIdx][SwitchIndex] = 1.0 - 2e-5; // initialize solution vector
-                    }
+                        // wetting phase appears
+                        std::cout << "wetting phase appears at node " << globalIdx 
+                                  << ", coordinates: " << globalPos << std::endl;
+                        newPhaseState = BothPhases;
+                        (*sol)[globalIdx][SwitchIndex] = 1.0 - 2e-5;
+                    };
                 }
                 else if (phaseState == WPhaseOnly)
                 {
-                    Scalar pbub, henryInv, pWSat;
+                    Scalar xAW = (*sol)[globalIdx][SwitchIndex];
+                    Scalar xAWmax = this->problem_.multicomp().xAW(pN, temperature);
 
-                    Scalar xAWmass = (*sol)[globalIdx][SwitchIndex];
-                    
-                    
-#warning "TODO:clean up"
-#if 0
-                    Scalar xAWmolar = this->problem_.multicomp().convertMassToMoleFraction(xAWmass, WPhaseIndex);
-
-//                    Scalar xAWmolarMax = this->problem_.multicomp().xAWmolar(pN, temperature);
-
-                    henryInv = this->problem_.multicomp().henry(temperature);
-                    pWSat = this->problem_.multicomp().vaporPressure(temperature);
-                    pbub = pWSat + xAWmolar/henryInv; // pWSat + pAW
-                    
-                    if (pN < (1 - 1e-5)*pbub)
-                    // if (xAWmolar > (1 + 1e-2)*xAWmolarMax)
-#else                    
-                    Scalar xAWmax = this->problem_.multicomp().xAW(pN, Implementation::temperature_((*sol)[globalIdx]));
-                    if (xAWmass > xAWmax*(1+1e-2))
-#endif
+                    if (xAW > xAWmax*(1 + 2e-5))
                     {
-                        // appearance of gas phase
-                        std::cout << "Gas appears at node " << globalIdx << ",  Coordinates: " << globalPos << std::endl;
-                        staticNodeDat_[globalIdx].phaseState = BothPhases;
-                        (*sol)[globalIdx][SwitchIndex] = 2e-5; // initialize solution vector
+                        // non-wetting phase appears
+                        std::cout << "Non-wetting phase appears at node " << globalIdx
+                                  << ", coordinates: " << globalPos << std::endl;
+                        (*sol)[globalIdx][SwitchIndex] = 2e-5;
+                        newPhaseState = BothPhases;
                     }
                 }
                 else if (phaseState == BothPhases) {
-                    Scalar satN = (*sol)[globalIdx][SwitchIndex];
+                    Scalar satN = 1 - satW;
 
-                    if (satN < -1e-5)
-                    {
-                        // disappearance of gas phase
-                        std::cout << "Gas disappears at node " << globalIdx << "  Coordinates: " << globalPos << std::endl;
-                        staticNodeDat_[globalIdx].phaseState = WPhaseOnly;
-                        (*sol)[globalIdx][SwitchIndex] = this->problem_.multicomp().xAW(pN); // initialize solution vector
+                    if (satN < -1e-5) {
+                        // non-wetting phase disappears
+                        std::cout << "Non-wetting phase disappears at node " << globalIdx
+                                  << ", coordinates: " << globalPos << std::endl;
+                        (*sol)[globalIdx][SwitchIndex] 
+                            = this->problem_.multicomp().xAW(pN, temperature); 
+                        newPhaseState = WPhaseOnly;
                     }
-                    else if (satW < -1e-5)
-                    {
-                        // disappearance of water phase
-                        std::cout << "Water disappears at node " << globalIdx << "  Coordinates: " << globalPos << std::endl;
-                        staticNodeDat_[globalIdx].phaseState = NPhaseOnly;
-                        (*sol)[globalIdx][SwitchIndex] = this->problem_.multicomp().xWN(pN); // initialize solution vector
+                    else if (satW < -1e-5) {
+                        // wetting phase disappears
+                        std::cout << "Wetting phase disappears at node " << globalIdx
+                                  << ", coordinates: " << globalPos << std::endl;
+                        (*sol)[globalIdx][SwitchIndex] 
+                            = this->problem_.multicomp().xWN(pN, temperature);
+                        newPhaseState = NPhaseOnly;
                     }
                 }
-                else
-                    DUNE_THROW(Dune::InvalidStateException, "Phase state " << phaseState << " is invalid.");
-
-                return phaseState != staticNodeDat_[globalIdx].phaseState;
+                
+                staticNodeDat_[globalIdx].phaseState = newPhaseState;
+                
+                return phaseState != newPhaseState;
             }
 
         // harmonic mean of the permeability computed directly.  the
@@ -864,12 +1059,12 @@ namespace Dune
              class BoxTraitsT,
              class TwoPTwoCTraitsT>
     class TwoPTwoCBoxJacobian : public TwoPTwoCBoxJacobianBase<ProblemT,
-                                                                 BoxTraitsT, 
-                                                                 TwoPTwoCTraitsT,
-                                                                 TwoPTwoCBoxJacobian<ProblemT, 
-                                                                                       BoxTraitsT,
-                                                                                       TwoPTwoCTraitsT>
-                                                                 >
+                                                               BoxTraitsT, 
+                                                               TwoPTwoCTraitsT,
+                                                               TwoPTwoCBoxJacobian<ProblemT, 
+                                                                                   BoxTraitsT,
+                                                                                   TwoPTwoCTraitsT>
+                                                               >
     {
         typedef TwoPTwoCBoxJacobian<ProblemT, 
                                       BoxTraitsT,
@@ -877,7 +1072,29 @@ namespace Dune
         typedef TwoPTwoCBoxJacobianBase<ProblemT,
                                         BoxTraitsT, 
                                         TwoPTwoCTraitsT,
-                                        ThisType> ParentType;
+                                        ThisType>      ParentType;
+        
+        typedef ProblemT                               Problem;
+
+        typedef typename Problem::DomainTraits         DomTraits;
+        typedef TwoPTwoCTraitsT                        TwoPTwoCTraits;
+        typedef BoxTraitsT                             BoxTraits;
+
+        typedef typename DomTraits::Scalar             Scalar;
+
+        typedef typename DomTraits::WorldCoord         WorldCoord;
+        typedef typename DomTraits::LocalCoord         LocalCoord;
+
+        typedef typename BoxTraits::UnknownsVector     UnknownsVector;
+        typedef typename BoxTraits::FVElementGeometry  FVElementGeometry;
+
+        typedef typename ParentType::VariableNodeData  VariableNodeData;
+        typedef typename ParentType::LocalFunction     LocalFunction;
+        typedef typename ParentType::CellCache         CellCache;
+
+        typedef typename TwoPTwoCTraits::PhasesVector PhasesVector;
+
+        
     public:
         TwoPTwoCBoxJacobian(ProblemT &problem)
             : ParentType(problem)
@@ -885,19 +1102,58 @@ namespace Dune
             };
 
         
-    protected:
-        typedef ProblemT                       Problem;
-        typedef typename Problem::DomainTraits DomTraits;
-        typedef typename DomTraits::Scalar     Scalar;
+        /*!
+         * \brief The storage term of heat
+         */
+        void heatStorage(UnknownsVector &result, 
+                         int scvId,
+                         const LocalFunction &sol,
+                         const CellCache &cellCache) const
+            {
+                // only relevant for the non-isothermal model!
+            }
 
-        typedef BoxTraitsT                         BoxTraits;
-        typedef typename BoxTraits::UnknownsVector UnknownsVector;
+        /*!
+         * \brief Update the temperature gradient at a face of a FV
+         *        cell.
+         */
+        void updateTempGrad(WorldCoord &tempGrad, 
+                            const WorldCoord &feGrad, 
+                            const LocalFunction &sol,
+                            int nodeIdx) const
+            {
+                // only relevant for the non-isothermal model!
+            }
 
+        /*!
+         * \brief Sets the temperature term of the flux vector to the
+         *        heat flux due to advection of the fluids.
+         */
+        void advectiveHeatFlux(UnknownsVector &flux,
+                               const PhasesVector &darcyOut,
+                               Scalar alpha, // upwind parameter
+                               const VariableNodeData *upW, // up/downstream nodes
+                               const VariableNodeData *dnW,
+                               const VariableNodeData *upN, 
+                               const VariableNodeData *dnN) const
+            {
+                // only relevant for the non-isothermal model!
+            }
 
-    public:
+        /*!
+         * \brief Adds the diffusive heat flux to the flux vector over
+         *        the face of a sub-control volume.
+         */
+        void diffusiveHeatFlux(UnknownsVector &flux,
+                               int faceIdx,
+                               const WorldCoord &tempGrad) const
+            {
+                // only relevant for the non-isothermal model!
+            }
+
         // internal method!
         static Scalar temperature_(const UnknownsVector &sol)
-            { return 273.15; }
+            { return 283.15; }
     };
 
     ///////////////////////////////////////////////////////////////////////////

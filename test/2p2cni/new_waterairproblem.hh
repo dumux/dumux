@@ -39,6 +39,8 @@
 #include <dumux/auxiliary/timemanager.hh>
 #include <dumux/auxiliary/basicdomain.hh>
 
+#define ISOTHERMAL 0
+
 /**
  * @file
  * @brief  Definition of a problem, where air is injected under a low permeable layer
@@ -63,7 +65,11 @@ namespace Dune
         typedef Dune::SGrid<2,2>               Grid;
         typedef BasicDomain<Grid, ScalarT>     ParentType;
         typedef NewWaterAirProblem<ScalarT>    ThisType;
+#if !ISOTHERMAL
         typedef TwoPTwoCNIBoxModel<ThisType>   Model;
+#else
+        typedef TwoPTwoCBoxModel<ThisType>   Model;
+#endif
 
         typedef Dune::GridPtr<Grid>                    GridPointer;
 
@@ -79,7 +85,11 @@ namespace Dune
         // the traits of the BOX scheme
         typedef typename Model::BoxTraits           BoxTraits;
         // the traits of the Pw-Sn model
+#if !ISOTHERMAL
         typedef typename Model::TwoPTwoCNITraits    TwoPTwoCNITraits;
+#else
+        typedef typename Model::TwoPTwoCTraits      TwoPTwoCNITraits;
+#endif
 
     private:
         // some constants from the traits for convenience
@@ -87,7 +97,9 @@ namespace Dune
             PrimaryVariables = BoxTraits::PrimaryVariables,
             PwIndex          = TwoPTwoCNITraits::PwIndex,
             SwitchIndex      = TwoPTwoCNITraits::SwitchIndex,
+#if !ISOTHERMAL
             TemperatureIndex = TwoPTwoCNITraits::TemperatureIndex,
+#endif 
             
             // Phase State
             WPhaseOnly = TwoPTwoCNITraits::WPhaseOnly,
@@ -296,8 +308,12 @@ namespace Dune
             {
                 if(globalPos[0] < eps_)
                     values = BoundaryConditions::dirichlet;
-                else
+                else 
                     values = BoundaryConditions::neumann;
+
+#if !ISOTHERMAL
+                values[TemperatureIndex] = BoundaryConditions::dirichlet;
+#endif
             }
 
         /////////////////////////////
@@ -359,7 +375,9 @@ namespace Dune
                 Scalar densityW = 1000.0;
                 values[PwIndex] = 1e5 + (depthBOR_ - globalPos[1])*densityW*9.81;
                 values[SwitchIndex] = 0.0;
+#if !ISOTHERMAL
                 values[TemperatureIndex] = 283.0 + (depthBOR_ - globalPos[1])*0.03;
+#endif
             }
 
         Scalar porosity(const Cell &cell, int localIdx) const

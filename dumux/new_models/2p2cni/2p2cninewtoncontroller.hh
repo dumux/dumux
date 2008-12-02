@@ -46,8 +46,8 @@ namespace Dune {
         typedef typename ParentType::JacobianAssembler JacobianAssembler;
 
         TwoPTwoCNINewtonController(Scalar tolerance = 1e-7,
-                                 int targetSteps = 9,
-                                 int maxSteps = 18)
+                                   int targetSteps = 9,
+                                   int maxSteps = 18)
             : ParentType(tolerance, targetSteps, maxSteps)
             {};
 
@@ -66,7 +66,7 @@ namespace Dune {
             {
 /*
 #warning "HACK: remove this:"
-                return std::min(1e7,
+                return std::min(1e6,
                                 ParentType::suggestTimeStepSize(oldTimeStep));
                 // end hack
                 */

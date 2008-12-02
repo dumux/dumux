@@ -80,6 +80,7 @@ public:
 
 	HomogeneousSoil():Matrix2p<G,RT>()
 	{
+        K_ = 0;
 		for(int i = 0; i < n; i++)
 			K_[i][i] = 1e-12;
 	}
