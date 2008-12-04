@@ -59,7 +59,7 @@ namespace Dune
      *	- ScalarT  Floating point type used for scalars
      */
     template<class ScalarT>
-    class NewWaterAirProblem : public BasicDomain<Dune::SGrid<2,2>, 
+    class NewWaterAirProblem : public BasicDomain<Dune::SGrid<2,2>,
                                                   ScalarT>
     {
         typedef Dune::SGrid<2,2>               Grid;
@@ -95,22 +95,22 @@ namespace Dune
         // some constants from the traits for convenience
         enum {
             PrimaryVariables = BoxTraits::PrimaryVariables,
-            PwIndex          = TwoPTwoCNITraits::PwIndex,
-            SwitchIndex      = TwoPTwoCNITraits::SwitchIndex,
+            PwIndex          = TwoPTwoCNITraits::pWIndex,
+            SwitchIndex      = TwoPTwoCNITraits::switchIndex,
 #if !ISOTHERMAL
-            TemperatureIndex = TwoPTwoCNITraits::TemperatureIndex,
-#endif 
-            
+            TemperatureIndex = TwoPTwoCNITraits::temperatureIndex,
+#endif
+
             // Phase State
-            WPhaseOnly = TwoPTwoCNITraits::WPhaseOnly,
-            NPhaseOnly = TwoPTwoCNITraits::NPhaseOnly,
-            BothPhases = TwoPTwoCNITraits::BothPhases,
+            WPhaseOnly = TwoPTwoCNITraits::wPhaseOnly,
+            NPhaseOnly = TwoPTwoCNITraits::nPhaseOnly,
+            BothPhases = TwoPTwoCNITraits::bothPhases,
 
             // Grid and world dimension
             GridDim  = DomainTraits::GridDim,
             WorldDim = DomainTraits::WorldDim
         };
-      
+
         // copy some types from the traits for convenience
         typedef typename DomainTraits::Scalar                     Scalar;
         typedef typename DomainTraits::Cell                       Cell;
@@ -140,7 +140,7 @@ namespace Dune
     public:
         NewWaterAirProblem(Grid *grid,
                            Scalar dtInitial,
-                           Scalar tEnd) 
+                           Scalar tEnd)
             : ParentType(grid),
               materialLaw_(soil_, wPhase_, nPhase_),
               multicomp_(wPhase_, nPhase_),
@@ -242,13 +242,13 @@ namespace Dune
         // etc)
         ///////////////////////////////////
         //! Returns the current time step size in seconds
-        Scalar timeStepSize() const 
+        Scalar timeStepSize() const
             { return timeManager_.stepSize(); }
 
         //! Set the time step size in seconds.
-        void setTimeStepSize(Scalar dt) 
+        void setTimeStepSize(Scalar dt)
             { return timeManager_.setStepSize(dt); }
-        
+
 
         //! properties of the wetting (liquid) phase
         /*! properties of the wetting (liquid) phase
@@ -263,8 +263,8 @@ namespace Dune
         */
         const NonwettingPhase &nonwettingPhase() const
             { return nPhase_; }
- 
-          
+
+
         //! properties of the soil
         /*! properties of the soil
           \return	soil
@@ -299,7 +299,7 @@ namespace Dune
             {
                 return materialLaw_;
             }
-        
+
         void boundaryTypes(BoundaryTypeVector &values,
                            const Cell &cell,
                            const IntersectionIterator &faceIt,
@@ -308,7 +308,7 @@ namespace Dune
             {
                 if(globalPos[0] < eps_)
                     values = BoundaryConditions::dirichlet;
-                else 
+                else
                     values = BoundaryConditions::neumann;
 
 #if !ISOTHERMAL
@@ -326,10 +326,10 @@ namespace Dune
             {
                 const LocalCoord &localPos = DomainTraits::referenceElement(cell.type()).position(nodeIdx, GridDim);
                 const WorldCoord &globalPos = cell.geometry()[nodeIdx];
-                
+
                 initial(values,
                         cell,
-                        globalPos, 
+                        globalPos,
                         localPos);
             }
 
@@ -356,20 +356,20 @@ namespace Dune
         /////////////////////////////
         void sourceTerm(UnknownsVector &values,
                         const Cell &cell,
-                        const FVElementGeometry &, 
+                        const FVElementGeometry &,
                         int subControlVolumeIdx) const
             {
                 values = Scalar(0.0);
             }
 
         //////////////////////////////
-      
+
         /////////////////////////////
         // INITIAL values
         /////////////////////////////
         void initial(UnknownsVector &values,
                      const Cell& cell,
-                     const WorldCoord &globalPos, 
+                     const WorldCoord &globalPos,
                      const LocalCoord &localPos)
             {
                 Scalar densityW = 1000.0;
@@ -407,12 +407,12 @@ namespace Dune
                 return WPhaseOnly;
             }
 
-      
+
         const WorldCoord &gravity () const
             {
                 return gravity_;
             }
-      
+
         double depthBOR () const
             {
                 return depthBOR_;
@@ -431,7 +431,7 @@ namespace Dune
             {
                 resultWriter_.beginTimestep(timeManager_.time(),
                                             ParentType::grid().leafView());
-                
+
                 model_.addVtkFields(resultWriter_);
 
                 resultWriter_.endTimestep();
