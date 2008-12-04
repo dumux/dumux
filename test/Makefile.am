@@ -1,7 +1,6 @@
 SUBDIRS = . \
 	  2p2c \
 	  2p2cni \
-	  2penergy \
 	  boundaryid \
 	  box3d \
 	  box3d-compressible \
