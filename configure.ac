@@ -85,7 +85,7 @@ AC_CONFIG_FILES([Makefile
     doc/handbook/Makefile 
     dumux/2p2c/Makefile
     dumux/2p2cni/Makefile
-    dumux/2penergy/Makefile
+    dumux/2pni/Makefile
     dumux/brinkman/Makefile 
     dumux/coupled/Makefile 
     dumux/diffusion/Makefile 
@@ -108,7 +108,7 @@ AC_CONFIG_FILES([Makefile
     dumux/twophase/Makefile 
     test/2p2c/Makefile
     test/2p2cni/Makefile
-    test/2penergy/Makefile
+    test/2pni/Makefile
     test/boundaryid/Makefile
     test/box3d/Makefile
     test/box3d-compressible/Makefile
@@ -155,8 +155,7 @@ AC_CONFIG_FILES([Makefile
     dumux/parabolic/problems/Makefile 
     dumux/twophase/fv/Makefile 
     dumux/twophase/problems/Makefile 
-    dumux/2penergy/fv/Makefile
-    dumux/2penergy/problems/Makefile
+    dumux/2pni/fv/Makefile
     dumux/transport/fv/Makefile 
     dumux/transport/problems/Makefile 
     dumux/fractionalflow/impes/Makefile 
