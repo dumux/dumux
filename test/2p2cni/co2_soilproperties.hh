@@ -18,8 +18,8 @@ typedef	typename G::Traits::template Codim<0>::Entity Entity;
 
 	FieldMatrix<DT,dim,dim> K (const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi)
 	{
-//	     if (x[0] > -0.2 && x[0] < 0.2 && x[1] > -0.2 && x[1] < 0.2)
-//		   return permlocWell_;
+	     if (x[0] > -0.2 && x[0] < 0.2 && x[1] > -0.2 && x[1] < 0.2)
+		   return permlocWell_;
 
 		   return permloc_;
 	}
@@ -84,16 +84,19 @@ typedef	typename G::Traits::template Codim<0>::Entity Entity;
 	CO2Soil()
 	:HomogeneousSoil<G,RT>()
 	{
+	  permTest_ = 0;
 	  permloc_ = 0;
 	  permlocWell_ = 0;
 	  for (int i = 0; i < dim; i++)
-          permloc_[i][i] = 2.0e-14;
+		permTest_[i][i] = 1.0e-15;
+	  for (int i = 0; i < dim; i++)
+		permloc_[i][i] = 2.0e-14;
       for (int i = 0; i < dim; i++)
-          permlocWell_[i][i] = 1.0e-12;
+        permlocWell_[i][i] = 1.0e-12;
 	}
 
 	private:
-	Dune::FieldMatrix<DT,dim,dim> permloc_, permlocWell_;
+	Dune::FieldMatrix<DT,dim,dim> permloc_, permlocWell_, permTest_;
 };
 } // end namespace
 #endif
