@@ -100,8 +100,8 @@ public:
           typedef RT   Scalar;
       };
 
-      typedef NewNewtonMethod<ThisType> NewtonMethod;
-      typedef NewtonController<NewtonMethod> NewtonController;
+      typedef Dune::NewNewtonMethod<ThisType> NewtonMethod;
+      typedef Dune::NewtonController<NewtonMethod> NewtonController;
 
       typedef typename NewtonTraits::Function Function;
       Function &currentSolution()
