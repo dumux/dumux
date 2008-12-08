@@ -208,20 +208,49 @@ namespace Dune
 	   */
 	  virtual double pC (double saturationW, const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, double T = 283.15) const
 	  {
-	    switch (soil.relPermFlag(x, e, xi))
+		const std::vector<double>& param = soil.paramRelPerm(x, e, xi);
+
+		switch (soil.relPermFlag(x, e, xi))
 	    {
 	    case 0:
-	    	return linearlaw.pC(saturationW, x, e, xi, T);
+	    	return linearlaw.pC(saturationW, x, e, xi, param, T);
 	    case 1:
-	    	return brookscorey.pC(saturationW, x, e, xi, T);
+	    	return brookscorey.pC(saturationW, x, e, xi, param, T);
 	    case 2:
-	    	return vangenuchten.pC(saturationW, x, e, xi, T);
+	    	return vangenuchten.pC(saturationW, x, e, xi, param, T);
 	    case 3:
-	    	return auxiliary1.pC(saturationW, x, e, xi, T);
+	    	return auxiliary1.pC(saturationW, x, e, xi, param, T);
 	    case 4:
-	    	return auxiliary2.pC(saturationW, x, e, xi, T);
+	    	return auxiliary2.pC(saturationW, x, e, xi, param, T);
 	    case 5:
-	    	return auxiliary3.pC(saturationW, x, e, xi, T);
+	    	return auxiliary3.pC(saturationW, x, e, xi, param, T);
+	    default:
+	    	DUNE_THROW(NotImplemented, "Matrix2p::modelFlag " << soil.relPermFlag(x, e, xi) << " for TwoPhaseRelations::pC");
+	    }
+	  }
+
+	  /*! \brief the capillary pressure - saturation relation
+	   *
+	   *  \param saturationW the saturation of the wetting phase
+	   *  \return the capillary pressur \f$ p_\text{c} (S_\text{w})\f$.
+	   */
+	  virtual double pC (double saturationW, const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi,
+						  const std::vector<double>& param, double T = 283.15) const
+	  {
+		switch (soil.relPermFlag2(x, e, xi))
+	    {
+	    case 0:
+	    	return linearlaw.pC(saturationW, x, e, xi, param, T);
+	    case 1:
+	    	return brookscorey.pC(saturationW, x, e, xi, param, T);
+	    case 2:
+	    	return vangenuchten.pC(saturationW, x, e, xi, param, T);
+	    case 3:
+	    	return auxiliary1.pC(saturationW, x, e, xi, param, T);
+	    case 4:
+	    	return auxiliary2.pC(saturationW, x, e, xi, param, T);
+	    case 5:
+	    	return auxiliary3.pC(saturationW, x, e, xi, param, T);
 	    default:
 	    	DUNE_THROW(NotImplemented, "Matrix2p::modelFlag " << soil.relPermFlag(x, e, xi) << " for TwoPhaseRelations::pC");
 	    }
@@ -236,20 +265,51 @@ namespace Dune
 	   */
 	  virtual double dPdS (double saturationW, const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, double T=283.15, double p=1e5) const
 	  {
-	    switch (soil.relPermFlag(x, e, xi))
+		const std::vector<double>& param = soil.paramRelPerm(x, e, xi);
+
+		switch (soil.relPermFlag(x, e, xi))
 	    {
 	    case 0:
-	    	return linearlaw.dPdS(saturationW, x, e, xi, T);
+	    	return linearlaw.dPdS(saturationW, x, e, xi, param, T);
 	    case 1:
-	    	return brookscorey.dPdS(saturationW, x, e, xi, T);
+	    	return brookscorey.dPdS(saturationW, x, e, xi, param, T);
 	    case 2:
-	    	return vangenuchten.dPdS(saturationW, x, e, xi, T);
+	    	return vangenuchten.dPdS(saturationW, x, e, xi, param, T);
 	    case 3:
-	    	return auxiliary1.dPdS(saturationW, x, e, xi, T);
+	    	return auxiliary1.dPdS(saturationW, x, e, xi, param, T);
 	    case 4:
-	    	return auxiliary2.dPdS(saturationW, x, e, xi, T);
+	    	return auxiliary2.dPdS(saturationW, x, e, xi, param, T);
 	    case 5:
-	    	return auxiliary3.dPdS(saturationW, x, e, xi, T);
+	    	return auxiliary3.dPdS(saturationW, x, e, xi, param, T);
+	    default:
+	    	DUNE_THROW(NotImplemented, "Matrix2p::modelFlag " << soil.relPermFlag(x, e, xi) << " for TwoPhaseRelations::dPdS");
+	    }
+	  }
+
+	  /*! \brief the derivative of capillary pressure w.r.t. the saturation
+	   *
+	   *  \param saturationW the saturation of the wetting phase
+	   *  \param T temperature
+	   *  \param p pressure
+	   *  \return the derivative \f$\text{d}p_\text{c}/\text{d}S_\text{e}\f$
+	   */
+	  virtual double dPdS (double saturationW, const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi,
+							  const std::vector<double>& param, double T=283.15, double p=1e5) const
+	  {
+		switch (soil.relPermFlag2(x, e, xi))
+	    {
+	    case 0:
+	    	return linearlaw.dPdS(saturationW, x, e, xi, param, T);
+	    case 1:
+	    	return brookscorey.dPdS(saturationW, x, e, xi, param, T);
+	    case 2:
+	    	return vangenuchten.dPdS(saturationW, x, e, xi, param, T);
+	    case 3:
+	    	return auxiliary1.dPdS(saturationW, x, e, xi, param, T);
+	    case 4:
+	    	return auxiliary2.dPdS(saturationW, x, e, xi, param, T);
+	    case 5:
+	    	return auxiliary3.dPdS(saturationW, x, e, xi, param, T);
 	    default:
 	    	DUNE_THROW(NotImplemented, "Matrix2p::modelFlag " << soil.relPermFlag(x, e, xi) << " for TwoPhaseRelations::dPdS");
 	    }

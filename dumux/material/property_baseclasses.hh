@@ -111,6 +111,28 @@ typedef	typename G::ctype DT;
 	{
 		return linear;
 	}
+	/**@brief parameters for relative permeabilty models
+	 * @param x position in global coordinates
+	 * @param e codim 0 entity for which the value is sought
+	 * @param xi position in local coordinates in e
+	 * @param T Temperature
+	 */
+	virtual std::vector<double> paramRelPerm2(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, const double T = 283.15) const
+	{
+		DUNE_THROW(NotImplemented, "second Pc-Sw rel");
+	}
+
+
+	/**@brief Flag for determining the relative permeability model
+	 * @param x position in global coordinates
+	 * @param e codim 0 entity for which the value is sought
+	 * @param xi position in local coordinates in e
+	 */
+	virtual modelFlag relPermFlag2(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
+	{
+		return linear;
+	}
+
 
 	virtual ~Matrix2p()
 	{}

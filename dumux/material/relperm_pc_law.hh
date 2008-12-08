@@ -33,7 +33,8 @@ namespace Dune
 	   *  \param xi position in local coordinates in e
 	   *  \return the capillary pressur \f$ p_\text{c} (S_\text{w})\f$.
 	   */
-	  virtual double pC (double saturationW, const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, const double T=283.15) const = 0;
+	  virtual double pC (double saturationW, const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi,
+							  const std::vector<double>& param, const double T=283.15) const = 0;
 
 	  /*! \brief the derivative of capillary pressure w.r.t. the saturation
 	   *
@@ -45,7 +46,8 @@ namespace Dune
 	   *  \param xi position in local coordinates in e
 	   *  \return the derivative \f$\text{d}p_\text{c}/\text{d}S_\text{e}\f$
 	   */
-	  virtual double dPdS (double saturationW, const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, const double T=283.15) const = 0;
+	  virtual double dPdS (double saturationW, const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi,
+							  const std::vector<double>& param, const double T=283.15) const = 0;
 
 	  /*! \brief the wetting phase saturation w.r.t. the capillary pressure
 	   *
@@ -165,12 +167,11 @@ namespace Dune
 			return kr;
 		}
 
-		double pC (double saturationW, const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, double T=283.15) const
+		double pC (double saturationW, const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi,
+					const std::vector<double>& param, double T=283.15) const
 		{
 			double Swr = this->soil.Sr_w(x, e, xi, T);
 			double Snr = this->soil.Sr_n(x, e, xi, T);
-
-			std::vector<double> param = this->soil.paramRelPerm(x, e, xi, T);
 
 			if (saturationW > (1-Snr)) return param[0]; // min pc
 			if (saturationW < Swr) return param[1]; // max pc
@@ -178,12 +179,11 @@ namespace Dune
 			return  param[0] + (param[1] - param[0]) * (1 - (saturationW-Swr) / (1-Swr-Snr));
 		}
 
-		double dPdS (double saturationW, const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, double T=283.15) const
+		double dPdS (double saturationW, const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi,
+					const std::vector<double>& param, double T=283.15) const
 		{
 			double Swr = this->soil.Sr_w(x, e, xi, T);
 			double Snr = this->soil.Sr_n(x, e, xi, T);
-
-			std::vector<double> param = this->soil.paramRelPerm(x, e, xi, T);
 
 			return (param[1] - param[0]) * (-1)/(1-Swr-Snr);
 		}
@@ -306,7 +306,8 @@ namespace Dune
 			return kr;
 		}
 
-		double pC (const double saturationW, const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, double T=283.15) const
+		double pC (const double saturationW, const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi,
+					const std::vector<double>& param, double T=283.15) const
 		{
 			double r, x_, vgM;
 			double pc, pc_prime, Se_regu;
@@ -315,7 +316,6 @@ namespace Dune
 			double Swr = this->soil.Sr_w(x, e, xi, T);
 			double Snr = this->soil.Sr_n(x, e, xi, T);
 
-			std::vector<double> param = this->soil.paramRelPerm(x, e, xi, T);
 			double m = param[0];
 			double n = param[1];
 			double alpha = param[4];
@@ -370,15 +370,14 @@ namespace Dune
 			}
 		}
 
-
-		double dPdS (double saturationW, const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, double T=283.15) const
+		double dPdS (double saturationW, const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi,
+						const std::vector<double>& param, double T=283.15) const
 		{
 			double r, x_;
 
 			double Swr = this->soil.Sr_w(x, e, xi, T);
 			double Snr = this->soil.Sr_n(x, e, xi, T);
 
-			std::vector<double> param = this->soil.paramRelPerm(x, e, xi, T);
 			double m = param[0];
 //			double n = param[1];
 			double alpha = param[4];
@@ -445,33 +444,35 @@ namespace Dune
 		typedef typename G::ctype DT;
 		enum {dim=G::dimension, m=1};
 
-		double pC (double saturationW, const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, const double T) const
+		double pC (double saturationW, const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi,
+					const std::vector<double>& param, const double T) const
    		 {
    		    //effective Saturation
    		 	double Se = (saturationW - this->soil.Sr_w(x, e, xi, T))
 						/(1. - this->soil.Sr_w(x, e, xi, T) - this->soil.Sr_n(x, e, xi, T));
- 			
- 			double lambda = this->soil.paramRelPerm(x, e, xi, T)[0];
-			double p0 = this->soil.paramRelPerm(x, e, xi, T)[1];
+
+ 			double lambda = param[0];
+			double p0 = param[1];
       		double maxpc = 5e5;
-           	
+
     if (Se > epsPC)
 		return (std::min(p0*pow(Se, -1.0/lambda),maxpc));
-    else 
+    else
     {
-		double dpCEps = dPdS(epsPC, x, e, xi, T);
+		double dpCEps = dPdS(epsPC, x, e, xi, param, T);
 		return (std::min(dpCEps*(Se - epsPC) + p0*pow(epsPC, -1.0/lambda),maxpc));
       }
     }
 
 
-		double dPdS (double saturationW, const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, const double T=283.15) const
+		double dPdS (double saturationW, const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi,
+						const std::vector<double>& param, const double T=283.15) const
 		{
 			double Swr = this->soil.Sr_w(x, e, xi, T);
 			double Snr = this->soil.Sr_n(x, e, xi, T);
 
-			double lambda = this->soil.paramRelPerm(x, e, xi, T)[0];
-			double p0 = this->soil.paramRelPerm(x, e, xi, T)[1];
+			double lambda = param[0];
+			double p0 = param[1];
 
 			double Se = (saturationW - Swr)
 				/(1. - Swr - Snr);
