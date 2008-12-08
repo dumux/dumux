@@ -84,17 +84,17 @@ int main(int argc, char** argv)
 
      typedef Dune::VtkMultiWriter<GridType::LeafGridView> MultiWriter;
      typedef Dune::BoxCO2<GridType, NumberType, MultiWriter> TwoPhase;
-//      TwoPhase twoPhase(grid, problem);
+      TwoPhase twoPhase(grid, problem);
 
-//      Dune::TimeLoop<GridType, TwoPhase, true> timeloop(0, tEnd, dt, "co2", 1);
+      Dune::TimeLoop<GridType, TwoPhase, true> timeloop(0, tEnd, dt, "co2", 1);
 
-//      Dune::Timer timer;
-//      timer.reset();
-//      MultiWriter writer("co2");
+      Dune::Timer timer;
+      timer.reset();
+      MultiWriter writer("co2");
 
-// 	 //timeloop.execute(twoPhase);
-//      timeloop.executeMultiWriter(twoPhase, writer);
-//      std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
+ 	 //timeloop.execute(twoPhase);
+      timeloop.executeMultiWriter(twoPhase, writer);
+      std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
 
       //std::cout << twoPhase.injected() << " kg CO2 injected." << std::endl;
 
