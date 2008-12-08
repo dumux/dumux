@@ -36,7 +36,7 @@ namespace Dune
     {
     public:
         enum {
-            PrimaryVars   = 3,  //!< Number of primary variables
+            numEq         = 3,  //!< Number of primary variables
             numPhases     = 2,  //!< Number of fluid phases
             numComponents = 2   //!< Number of fluid components within a phase
         };
@@ -307,7 +307,7 @@ namespace Dune
                            // The Traits for the BOX method
                            P1BoxTraits<typename ProblemT::DomainTraits::Scalar,
                                        typename ProblemT::DomainTraits::Grid,
-                                       TwoPTwoCNITraits<typename ProblemT::DomainTraits::Scalar>::PrimaryVars>,
+                                       TwoPTwoCNITraits<typename ProblemT::DomainTraits::Scalar>::numEq>,
 
                            // The actual problem we would like to solve
                            ProblemT,
@@ -316,18 +316,18 @@ namespace Dune
                            TwoPTwoCNIBoxJacobian<ProblemT,
                                                  P1BoxTraits<typename ProblemT::DomainTraits::Scalar,
                                                              typename ProblemT::DomainTraits::Grid,
-                                                             TwoPTwoCNITraits<typename ProblemT::DomainTraits::Scalar>::PrimaryVars>,
+                                                             TwoPTwoCNITraits<typename ProblemT::DomainTraits::Scalar>::numEq>,
                                                  TwoPTwoCNITraits<typename ProblemT::DomainTraits::Scalar>
                                                  >
                            >
-        {
+    {
         typedef typename ProblemT::DomainTraits::Grid   Grid;
         typedef typename ProblemT::DomainTraits::Scalar DT;
         typedef TwoPTwoCNIBoxModel<ProblemT>              ThisType;
 
     public:
-        typedef Dune::TwoPTwoCNITraits<DT>                           TwoPTwoCNITraits;
-        typedef P1BoxTraits<DT, Grid, TwoPTwoCNITraits::PrimaryVars> BoxTraits;
+        typedef Dune::TwoPTwoCNITraits<DT>                      TwoPTwoCNITraits;
+        typedef P1BoxTraits<DT, Grid, TwoPTwoCNITraits::numEq>  BoxTraits;
 
     private:
         typedef TwoPTwoCNIBoxJacobian<ProblemT, BoxTraits, TwoPTwoCNITraits>  TwoPTwoCNILocalJacobian;

@@ -28,15 +28,16 @@ public:
 		return constRelCO2.density(T,p); // see constrelco2.hh
 	}
 
-	virtual double viscosity(double T, double p, double Xa=0.) const
+	virtual double viscosity(double T, double p, double Xw=0.) const
 	{
-		return 0.0;
+        return constRelCO2.viscosity(T, p); // see constrelco2.hh
 	}
 
-	virtual double viscosityCO2(double T, double p, double rho, double Xw=0.) const // [kg / (m*s)]
+/*	virtual double viscosityCO2(double T, double p, double rho, double Xw=0.) const // [kg / (m*s)]
 	{
 		return constRelCO2.viscosity(T,p,rho); // see constrelco2.hh
 	}
+*/
 
 	virtual double intEnergy(double T, double p, double Xw=0.) const
 	{

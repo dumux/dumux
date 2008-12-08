@@ -221,28 +221,25 @@ namespace Dune
 
                     // Density of Water is set constant here!
                     d.density[wPhase] = problem.wettingPhase().density(temperature,
-                                                                            d.pW,
-                                                                            d.massfrac[nComp][wPhase]);
+                                                                       d.pW,
+                                                                       d.massfrac[nComp][wPhase]);
                     d.density[nPhase] = problem.nonwettingPhase().density(temperature,
-                                                                               d.pN,
-                                                                               d.massfrac[wComp][nPhase]);
+                                                                          d.pN,
+                                                                          d.massfrac[wComp][nPhase]);
 
-                    // Mobilities & densities
-                    d.mobility[wPhase] = problem.materialLaw().mobW(d.satW, global, cell, local, temperature, d.pW);
-#if 1
-                    d.mobility[nPhase] = problem.materialLaw().mobN(d.satN, global, cell, local, temperature, d.pN);
-#else
-#warning "CO2 specific"
-                    DT viscosityCO2 = problem.nonwettingPhase().viscosityCO2(temperature,
-                                                                                 d.pN,
-                                                                                 d.density[nPhase]);
-                    DT krCO2 = problem.materialLaw().krn(d.satN,
-                                                             this->curCellGeom_.subContVol[localIdx].global,
-                                                             cell,
-                                                             this->curCellGeom_.subContVol[localIdx].local);
-
-                    d.mobility[nPhase] = krCO2 / viscosityCO2;
-#endif
+                    // Mobilities
+                    d.mobility[wPhase] = problem.materialLaw().mobW(d.satW, 
+                                                                    global,
+                                                                    cell, 
+                                                                    local, 
+                                                                    temperature, 
+                                                                    d.pW);
+                    d.mobility[nPhase] = problem.materialLaw().mobN(d.satN,
+                                                                    global, 
+                                                                    cell,
+                                                                    local,
+                                                                    temperature,
+                                                                    d.pN);
                 }
 
     public:
@@ -586,181 +583,6 @@ namespace Dune
 
                 // add diffusion of air to air flux
                 flux[nComp] += (diffusionAN + diffusionAW);
-
-/*
-                // set flux vector to zero
-                int i = this->curCellGeom_.subContVolFace[faceId].i;
-                int j = this->curCellGeom_.subContVolFace[faceId].j;
-
-                // normal vector, value of the area of the scvf
-                const WorldCoord &normal(this->curCellGeom_.subContVolFace[faceId].normal);
-
-                // get global coordinates of nodes i,j
-                const WorldCoord &global_i = this->curCellGeom_.subContVol[i].global;
-                const WorldCoord &global_j = this->curCellGeom_.subContVol[j].global;
-
-                const LocalCoord &local_i = this->curCellGeom_.subContVol[i].local;
-                const LocalCoord &local_j = this->curCellGeom_.subContVol[j].local;
-
-                WorldCoord pGrad[numPhases];
-                WorldCoord xGrad[numPhases];
-                for (int k = 0; k < numPhases; ++k) {
-                    pGrad[k] = Scalar(0);
-                    xGrad[k] = Scalar(0);
-                }
-
-                WorldCoord tmp(0.0);
-                PhasesVector pressure(0.0), massfrac(0.0);
-
-                // calculate harmonic mean of permeabilities of nodes i and j
-                Tensor K         = this->problem_.soil().K(global_i, ParentType::curCell_(), local_i);
-                const Tensor &Kj = this->problem_.soil().K(global_j, ParentType::curCell_(), local_j);
-                harmonicMeanK_(K, Kj);
-
-                // calculate FE gradient (grad p for each phase)
-                for (int k = 0; k < this->curCellGeom_.nNodes; k++) // loop over adjacent nodes
-                {
-                    // FEGradient at node k
-                    const LocalCoord &feGrad = this->curCellGeom_.subContVolFace[faceId].grad[k];
-
-                    pressure[wPhase] = curSolCache_.atSCV[k].pW;
-                    pressure[nPhase] = curSolCache_.atSCV[k].pN;
-
-                    // compute sum of pressure gradients for each phase
-                    for (int phase = 0; phase < numPhases; phase++)
-                    {
-                        tmp = feGrad;
-
-                        tmp *= pressure[phase];
-
-                        pGrad[phase] += tmp;
-                    }
-
-                    // for diffusion of air in wetting phase
-                    tmp = feGrad;
-                    tmp *= curSolCache_.atSCV[k].massfrac[nComp][wPhase];
-                    xGrad[wPhase] += tmp;
-
-                    // for diffusion of water in nonwetting phase
-                    tmp = feGrad;
-                    tmp *= curSolCache_.atSCV[k].massfrac[wComp][nPhase];
-                    xGrad[nPhase] += tmp;
-                }
-
-                // deduce gravity*density of each phase
-                WorldCoord contribComp[numPhases];
-                for (int phase=0; phase < numPhases; phase++)
-                {
-                    contribComp[phase] = this->problem_.gravity();
-                    contribComp[phase] *= curSolCache_.atSCV[i].density[phase];
-                    pGrad[phase] -= contribComp[phase]; // grad p - rho*g
-                }
-
-                // calculate the advective flux using upwind: K*n(grad p -rho*g)
-                PhasesVector outward;  // Darcy velocity of each phase
-                WorldCoord v_tilde(0);
-                for (int phase=0; phase < numPhases; phase++)
-                {
-                    K.mv(pGrad[phase], v_tilde);  // v_tilde=K*gradP
-                    outward[phase] = v_tilde*normal;
-                }
-
-                // evaluate upwind nodes
-                int up_w, dn_w, up_n, dn_n;
-                if (outward[wPhase] <= 0) {
-                    up_w = i; dn_w = j;
-                }
-                else {
-                    up_w = j; dn_w = i;
-                };
-
-                if (outward[nPhase] <= 0) {
-                    up_n = i; dn_n = j;
-                }
-                else {
-                    up_n = j; dn_n = i;
-                };
-
-                DT alpha = 1.0;  // Upwind parameter
-
-                // water conservation
-                flux[wComp] =   (alpha* curSolCache_.atSCV[up_w].density[wPhase]*curSolCache_.atSCV[up_w].mobility[wPhase]
-                                      * curSolCache_.atSCV[up_w].massfrac[wComp][wPhase]
-                                      + (1-alpha)* curSolCache_.atSCV[dn_w].density[wPhase]*curSolCache_.atSCV[dn_w].mobility[wPhase]
-                                      * curSolCache_.atSCV[dn_w].massfrac[wComp][wPhase])
-                    * outward[wPhase];
-                flux[wComp] +=  (alpha* curSolCache_.atSCV[up_n].density[nPhase]*curSolCache_.atSCV[up_n].mobility[nPhase]
-                                      * curSolCache_.atSCV[up_n].massfrac[wComp][nPhase]
-                                      + (1-alpha)* curSolCache_.atSCV[dn_n].density[nPhase]*curSolCache_.atSCV[dn_n].mobility[nPhase]
-                                      * curSolCache_.atSCV[dn_n].massfrac[wComp][nPhase])
-                    * outward[nPhase];
-
-
-                // air conservation
-                flux[nComp]   = (alpha* curSolCache_.atSCV[up_n].density[nPhase]*curSolCache_.atSCV[up_n].mobility[nPhase]
-                                      * curSolCache_.atSCV[up_n].massfrac[nComp][nPhase]
-                                      + (1-alpha)* curSolCache_.atSCV[dn_n].density[nPhase]*curSolCache_.atSCV[dn_n].mobility[nPhase]
-                                      * curSolCache_.atSCV[dn_n].massfrac[nComp][nPhase])
-                    * outward[nPhase];
-
-                flux[nComp]  +=   (alpha* curSolCache_.atSCV[up_w].density[wPhase]*curSolCache_.atSCV[up_w].mobility[wPhase]
-                                        * curSolCache_.atSCV[up_w].massfrac[nComp][wPhase]
-                                        + (1-alpha)* curSolCache_.atSCV[dn_w].density[wPhase]*curSolCache_.atSCV[dn_w].mobility[wPhase]
-                                        * curSolCache_.atSCV[dn_w].massfrac[nComp][wPhase])
-                    * outward[wPhase];
-
-
-                return;
-
-                // DIFFUSION
-                UnknownsVector normDiffGrad;
-
-                // get local to global id map
-                int state_i = curSolCache_.atSCV[i].phaseState;
-                int state_j = curSolCache_.atSCV[j].phaseState;
-
-                DT diffusionWW(0.0), diffusionWN(0.0); // diffusion of water
-                DT diffusionAW(0.0), diffusionAN(0.0); // diffusion of air
-                UnknownsVector avgDensity, avgDpm;
-
-                // Diffusion coefficent
-                // TODO: needs to be continuously dependend on the phase saturations
-                avgDpm[wPhase]=2e-9;
-                avgDpm[nPhase]=2.25e-5;
-                if (state_i == nPhaseOnly || state_j == nPhaseOnly)
-                {
-                    // only the nonwetting phase is present in at
-                    // least one cell -> no diffusion within the
-                    // wetting phase
-                    avgDpm[wPhase] = 0;
-                }
-                if (state_i == wPhaseOnly || state_j == wPhaseOnly)
-                {
-                    // only the wetting phase is present in at least
-                    // one cell -> no diffusion within the non wetting
-                    // phase
-                    avgDpm[nPhase] = 0;
-                }
-
-                // length of the diffusion gradient
-                normDiffGrad[wPhase] = xGrad[wPhase]*normal;
-                normDiffGrad[nPhase] = xGrad[nPhase]*normal;
-
-                // calculate the arithmetic mean of densities
-                avgDensity[wPhase] = 0.5*(curSolCache_.atSCV[i].density[wPhase] + curSolCache_.atSCV[j].density[wPhase]);
-                avgDensity[nPhase] = 0.5*(curSolCache_.atSCV[i].density[nPhase] + curSolCache_.atSCV[j].density[nPhase]);
-
-                diffusionAW = avgDpm[wPhase] * avgDensity[wPhase] * normDiffGrad[wPhase];
-                diffusionWW = - diffusionAW;
-                diffusionWN = avgDpm[nPhase] * avgDensity[nPhase] * normDiffGrad[nPhase];
-                diffusionAN = - diffusionWN;
-
-                // add diffusion of water to water flux
-                flux[wComp] += (diffusionWW + diffusionWN);
-
-                // add diffusion of air to air flux
-                flux[nComp] += (diffusionAN + diffusionAW);
-*/
             }
 
 

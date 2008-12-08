@@ -207,10 +207,10 @@ namespace Dune
         typedef typename BoxTraits::UnknownsVector                UnknownsVector;
         typedef typename BoxTraits::BoundaryTypeVector            BoundaryTypeVector;
 
-        typedef VtkMultiWriter<typename Grid::LeafGridView> VtkMultiWriter;
+        typedef Dune::VtkMultiWriter<typename Grid::LeafGridView> VtkMultiWriter;
 
         enum Episode {}; // the type of an episode of the simulation
-        typedef TimeManager<Episode>                        TimeManager;
+        typedef Dune::TimeManager<Episode>                  TimeManager;
         typedef Dune::NewImplicitEulerStep<ThisType>        TimeIntegration;
 
         typedef typename Model::NewtonMethod                NewtonMethod;

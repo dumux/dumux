@@ -352,7 +352,7 @@ namespace Dune
                 // set Dirichlet boundary conditions of the grid's
                 // outer boundaries
 
-                UnknownsVector dirichletVal;
+                UnknownsVector dirichletVal(0);
                 CellIterator cellIt     = problem_.grid().template leafbegin<0>();
                 CellIterator cellEndIt  = problem_.grid().template leafend<0>();
                 for (; cellIt != cellEndIt; ++cellIt)

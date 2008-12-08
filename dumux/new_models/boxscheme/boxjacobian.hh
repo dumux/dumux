@@ -186,7 +186,7 @@ namespace Dune
                 const ReferenceElement &refElem = DomainTraits::referenceElement(geoType);
                 
                 // temporary vector to store the neumann boundaries
-                UnknownsVector fluxes;
+                UnknownsVector fluxes(0.0);
 
                 // evaluate boundary conditions
                 IntersectionIterator endIt = IntersectionIteratorGetter::end(curCell_());

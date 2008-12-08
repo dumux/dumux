@@ -76,28 +76,40 @@ namespace Dune
 
 	public:
 	  /*! \brief Implements the wetting phase mobility/saturation relation.
-	   *	Assumption: Phases do not mix and mixing effects do not influence viscosity respectively.
 	   *  \param saturationW the saturation of the wetting phase
 	   *  \param T temperature
 	   *  \param p pressure
+	   *  \param Xa mass fraction of the non-wetting component in the wetting phase
 	   *  \return the mobility of the wetting phase
 	   */
-	  double mobW (double saturationW, const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, double T=283.15, double p=1e5) const
+	  double mobW (double saturationW, 
+                   const FieldVector<DT,n>& x,
+                   const Entity& e, 
+                   const FieldVector<DT,n>& xi, 
+                   double T = 283.15,
+                   double p = 1e5,
+                   double Xa = 0.0) const
 	  {
-	    double viscosityW = wettingPhase.viscosity ( T, p, 0.);
+	    double viscosityW = wettingPhase.viscosity ( T, p, Xa);
     	return krw(saturationW, x, e, xi, T) / viscosityW;
 	  }
 
 	  /*! \brief Implements the nonwetting phase mobility/saturation relation.
-	   *  Assumption: Phases do not mix and mixing effects do not influence viscosity respectively.
 	   *  \param saturationN the saturation of the nonwetting phase
 	   *  \param T temperature
 	   *  \param p pressure
+	   *  \param Xw mass fraction of the wetting component in the non-wetting phase
 	   *  \return the mobility of the nonwetting phase
 	   */
-	  double mobN (double saturationN, const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, double T=283.15, double p=1e5) const
+	  double mobN (double saturationN, 
+                   const FieldVector<DT,n>& x,
+                   const Entity& e, 
+                   const FieldVector<DT,n>& xi, 
+                   double T=283.15,
+                   double p=1e5,
+                   double Xw = 0) const
 	  {
-	    double viscosityN = nonwettingPhase.viscosity ( T, p, 0.);
+	    double viscosityN = nonwettingPhase.viscosity ( T, p, Xw);
 	    return krn(saturationN, x, e, xi, T) / viscosityN;
 	  }
 
