@@ -453,7 +453,7 @@ namespace Dune
  			
  			double lambda = this->soil.paramRelPerm(x, e, xi, T)[0];
 			double p0 = this->soil.paramRelPerm(x, e, xi, T)[1];
-      		double maxpc = 1e20;
+      		double maxpc = r51e5;
            	
     if (Se > epsPC)
 		return (std::min(p0*pow(Se, -1.0/lambda),maxpc));
