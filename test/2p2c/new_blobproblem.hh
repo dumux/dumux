@@ -176,14 +176,14 @@ namespace Dune
     private:
         // some constants from the traits for convenience
         enum {
-            PrimaryVariables = BoxTraits::PrimaryVariables,
-            PwIndex     = TwoPTwoCTraits::PwIndex,
-            SwitchIndex = TwoPTwoCTraits::SwitchIndex,
+            numEq       = BoxTraits::numEq,
+            pWIndex     = TwoPTwoCTraits::pWIndex,
+            switchIndex = TwoPTwoCTraits::switchIndex,
             
             // Phase State
-            WPhaseOnly = TwoPTwoCTraits::WPhaseOnly,
-            NPhaseOnly = TwoPTwoCTraits::NPhaseOnly,
-            BothPhases = TwoPTwoCTraits::BothPhases,
+            wPhaseOnly = TwoPTwoCTraits::wPhaseOnly,
+            nPhaseOnly = TwoPTwoCTraits::nPhaseOnly,
+            bothPhases = TwoPTwoCTraits::bothPhases,
 
             // Grid and world dimension
             GridDim  = DomainTraits::GridDim,
@@ -403,18 +403,18 @@ namespace Dune
             {
 //                const LocalCoord &localPos = DomainTraits::referenceElement(cell.type()).position(nodeIdx, GridDim);
                 const WorldCoord &globalPos = cell.geometry()[nodeIdx];
-		
+                
                 values = 0.0;
-		if (globalPos[0] < eps_)
-		{
-			values[PwIndex] = 2e5;
-			values[SwitchIndex] = 0;  // may be Sn, Xaw or Xwn!!
-		}
-		if (globalPos[0] > (300 - eps_))
-		{
-			values[PwIndex] = 1e5;
-			values[SwitchIndex] = 0;  // may be Sn, Xaw or Xwn!!
-		}
+                if (globalPos[0] < eps_)
+                {
+                    values[pWIndex] = 2e5;
+                    values[switchIndex] = 0;  // may be Sn, Xaw or Xwn!!
+                }
+                if (globalPos[0] > (300 - eps_))
+                {
+                    values[pWIndex] = 1e5;
+                    values[switchIndex] = 0;  // may be Sn, Xaw or Xwn!!
+                }
             }
 
         /////////////////////////////
@@ -450,12 +450,12 @@ namespace Dune
                      const WorldCoord &globalPos, 
                      const LocalCoord &localPos)
             {
-		values[PwIndex] = 1e5;//(600-globalPos[0])/300 * 1e5;
-		values[SwitchIndex] = 0;
-
+                values[pWIndex] = 1e5;//(600-globalPos[0])/300 * 1e5;
+                values[switchIndex] = 0;
+                
                 if (isInsideBlob_(globalPos))
                 {
-			values[SwitchIndex] = 0.1;
+                    values[switchIndex] = 0.1;
                 }
             }
 
@@ -463,17 +463,10 @@ namespace Dune
                               int              &globalIdx,
                               const WorldCoord &globalPos) const
             {
-                enum {gasPhase = 0, waterPhase = 1, bothPhases = 2}; // Phase states
-		int state;
-                
-		state = waterPhase;
-                
-		if (isInsideBlob_(globalPos))
-                {
-                    state = bothPhases;
-                }
+                if (isInsideBlob_(globalPos))
+                    return bothPhases;
 
-		return state;
+                return wPhaseOnly;
             }
 
         Scalar porosity(const Cell &cell, int localIdx) const

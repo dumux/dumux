@@ -14,7 +14,7 @@ namespace Dune
   : public NonlinearModel<G, RT, ProblemType, LocalJacobian, FunctionType, OperatorAssembler> 
   {
   public:	
-	typedef NonlinearModel<G, RT, ProblemType, LocalJacobian, 
+	typedef Dune::NonlinearModel<G, RT, ProblemType, LocalJacobian, 
 	                          FunctionType, OperatorAssembler> NonlinearModel;
 	
 	NonlinearParabolic(const G& g, ProblemType& prob)
@@ -49,7 +49,7 @@ namespace Dune
 	  // define the operator assembler type:
 	  typedef LeafP1OperatorAssembler<G, RT, m> OperatorAssembler;
 
-	  typedef NonlinearParabolic<G, RT, ProblemType, LocalJac, 
+	  typedef Dune::NonlinearParabolic<G, RT, ProblemType, LocalJac, 
 	                          FunctionType, OperatorAssembler> NonlinearParabolic;
 	  
 	  typedef LeafP1NonlinearParabolic<G, RT, ProblemType, LocalJac, m> ThisType;

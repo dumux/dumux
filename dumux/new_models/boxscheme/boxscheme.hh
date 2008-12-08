@@ -101,7 +101,7 @@ namespace Dune
 
         // some constants
         enum {
-            PrimaryVariables = BoxTraits::PrimaryVariables,
+            numEq = BoxTraits::numEq,
 
             GridDim     = DomainTraits::GridDim,
             WorldDim    = DomainTraits::WorldDim
@@ -378,7 +378,7 @@ namespace Dune
                         // not to interfere with non-dirichlet
                         // boundaries...
                         bool dirichletEvaluated = false;
-                        for (int bcIdx = 0; bcIdx < PrimaryVariables; ++bcIdx) {
+                        for (int bcIdx = 0; bcIdx < numEq; ++bcIdx) {
                             if (localJacobian_.bc(i)[bcIdx] == BoundaryConditions::dirichlet) {
                                 if (!dirichletEvaluated) {
                                     dirichletEvaluated = true;

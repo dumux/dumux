@@ -21,7 +21,7 @@ namespace Dune
 	private:
 		enum{dim = G::dimension};	
 		typedef typename G::Traits::template Codim<0>::Entity Entity;
-		typedef FieldVector<RT, dim> FieldVector;
+		typedef Dune::FieldVector<RT, dim> FieldVector;
 		
 	public:
 		virtual FieldVector operator() (const Entity& entity, const int numberInSelf, 

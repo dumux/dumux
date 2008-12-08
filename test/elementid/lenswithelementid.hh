@@ -43,7 +43,7 @@ namespace Dune
 	enum {n=G::dimension, m=2};
 	typedef typename G::Traits::template Codim<0>::Entity Entity;
 	typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
-    typedef GridPtr<G> GridPtr;
+    typedef Dune::GridPtr<G> GridPtr;
 
   public:
 	enum {pWIdx = 0, sNIdx = 1};

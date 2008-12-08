@@ -170,7 +170,7 @@ namespace Dune {
 
                 unsigned nVerts = (*fn).size();
                 ScalarField *field = createField<Scalar, 1>(nVerts);
-                for (int i = 0; i < (*fn).size(); i++) {
+                for (int i = 0; i < (int) (*fn).size(); i++) {
                     (*field)[i] = (*fn)[i][comp];
                 }
 

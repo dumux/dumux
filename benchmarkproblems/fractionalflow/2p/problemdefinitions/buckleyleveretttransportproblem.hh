@@ -25,7 +25,7 @@ namespace Dune
     typedef typename G::Traits::template Codim<0>::Entity Entity;
     typedef Dune::FieldVector<double, n> R1;
 
-    typedef  BlockVector<FieldVector<double, 1> > BlockVector;
+    typedef Dune::BlockVector<FieldVector<double, 1> > BlockVector;
 
   public:
     BoundaryConditions::Flags bctype (const FieldVector<DT,n>& x, const Entity& e,

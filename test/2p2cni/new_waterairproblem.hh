@@ -94,11 +94,11 @@ namespace Dune
     private:
         // some constants from the traits for convenience
         enum {
-            PrimaryVariables = BoxTraits::PrimaryVariables,
-            PwIndex          = TwoPTwoCNITraits::pWIndex,
-            SwitchIndex      = TwoPTwoCNITraits::switchIndex,
+            numEq            = BoxTraits::numEq,
+            pWIndex          = TwoPTwoCNITraits::pWIndex,
+            switchIndex      = TwoPTwoCNITraits::switchIndex,
 #if !ISOTHERMAL
-            TemperatureIndex = TwoPTwoCNITraits::temperatureIndex,
+            temperatureIndex = TwoPTwoCNITraits::temperatureIndex,
 #endif
 
             // Phase State
@@ -128,10 +128,10 @@ namespace Dune
         typedef typename BoxTraits::UnknownsVector                UnknownsVector;
         typedef typename BoxTraits::BoundaryTypeVector            BoundaryTypeVector;
 
-        typedef VtkMultiWriter<typename Grid::LeafGridView> VtkMultiWriter;
+        typedef Dune::VtkMultiWriter<typename Grid::LeafGridView> VtkMultiWriter;
 
         enum Episode {}; // the type of an episode of the simulation
-        typedef TimeManager<Episode>                        TimeManager;
+        typedef Dune::TimeManager<Episode>                  TimeManager;
         typedef Dune::NewImplicitEulerStep<ThisType>        TimeIntegration;
 
         typedef typename Model::NewtonMethod                NewtonMethod;
@@ -312,7 +312,7 @@ namespace Dune
                     values = BoundaryConditions::neumann;
 
 #if !ISOTHERMAL
-                values[TemperatureIndex] = BoundaryConditions::dirichlet;
+                values[temperatureIndex] = BoundaryConditions::dirichlet;
 #endif
             }
 
@@ -347,7 +347,7 @@ namespace Dune
                 // negative values for injection
                 if (globalPos[1] > 1.0 && globalPos[1] < 5.0)
                 {
-                    values[SwitchIndex] = -1e-5;
+                    values[switchIndex] = -1e-5;
                 }
             }
 
@@ -373,10 +373,10 @@ namespace Dune
                      const LocalCoord &localPos)
             {
                 Scalar densityW = 1000.0;
-                values[PwIndex] = 1e5 + (depthBOR_ - globalPos[1])*densityW*9.81;
-                values[SwitchIndex] = 0.0;
+                values[pWIndex] = 1e5 + (depthBOR_ - globalPos[1])*densityW*9.81;
+                values[switchIndex] = 0.0;
 #if !ISOTHERMAL
-                values[TemperatureIndex] = 283.0 + (depthBOR_ - globalPos[1])*0.03;
+                values[temperatureIndex] = 283.0 + (depthBOR_ - globalPos[1])*0.03;
 #endif
             }
 

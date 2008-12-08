@@ -368,12 +368,12 @@ class CO2 : public Fluid
 			else
 				return constRelCO2.density(T,p);
 		}
-		double viscosityCO2 ( double T=432., double p=3.086e7, double rho=0., double X=1.) const
+    double viscosityCO2 ( double T=432., double p=3.086e7, /* double rho=0., */ double X=1.) const
 		{
 			if (constViscosity_)
 				return constViscosity_;
 			else
-				return constRelCO2.viscosity(T,p,rho);
+				return constRelCO2.viscosity(T,p /*,rho*/);
 		}
 		double enthalpy ( double T=432., double p=3.086e7, double X = 1) const
 		{

@@ -60,83 +60,83 @@ namespace Dune
     class InjectionSoil: public Matrix2p<G,Scalar>
     {
     public:
-  	typedef typename G::Traits::template Codim<0>::Entity Entity;
-  	typedef typename G::ctype DT;
-  	enum {dim=G::dimension};
+        typedef typename G::Traits::template Codim<0>::Entity Entity;
+        typedef typename G::ctype DT;
+        enum {dim=G::dimension};
 
-  	InjectionSoil():Matrix2p<G,Scalar>()
+        InjectionSoil():Matrix2p<G,Scalar>()
             {
-  		lowK_ = highK_ = 0.;
-  		for(int i = 0; i < dim; i++){
+                lowK_ = highK_ = 0.;
+                for(int i = 0; i < dim; i++){
                     lowK_[i][i] = 1e-13;
                     highK_[i][i] = 1e-12;
-  		}
-  		layerBottom_ = 22.0;
+                }
+                layerBottom_ = 22.0;
             }
 
-  	~InjectionSoil()
+        ~InjectionSoil()
             {}
 
-  	FieldMatrix<DT,dim,dim> K (const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi)
+        FieldMatrix<DT,dim,dim> K (const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi)
             {
-  		if (x[1] < layerBottom_)
+                if (x[1] < layerBottom_)
                     return highK_;
-  		else
+                else
                     return lowK_;
             }
 
         double porosity(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi) const
             {
-  		return 0.3;
+                return 0.3;
             }
 
-  	double Sr_w(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, const double T) const
+        double Sr_w(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, const double T) const
             {
-  		return 0.2;
+                return 0.2;
             }
 
         double Sr_n(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, const double T) const
             {
-  		return 0.0;
+                return 0.0;
             }
 
-  	/* ATTENTION: define heat capacity per cubic meter! Be sure, that it corresponds to porosity!
+        /* ATTENTION: define heat capacity per cubic meter! Be sure, that it corresponds to porosity!
          * Best thing will be to define heatCap = (specific heatCapacity of material) * density * porosity*/
         double heatCap(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi) const
             {
-  		return 	790 /* spec. heat cap. of granite */
+                return 	790 /* spec. heat cap. of granite */
                     * 2700 /* density of granite */
                     * porosity(x, e, xi);
             }
 
         double heatCond(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, const double sat) const
             {
-  		static const double lWater = 0.6;
-  		static const double lGranite = 2.8;
-  		double poro = porosity(x, e, xi);
-  		double lsat = pow(lGranite, (1-poro)) * pow(lWater, poro);
-  		double ldry = pow(lGranite, (1-poro));
-  		return ldry + sqrt(sat) * (ldry - lsat);
+                static const double lWater = 0.6;
+                static const double lGranite = 2.8;
+                double poro = porosity(x, e, xi);
+                double lsat = pow(lGranite, (1-poro)) * pow(lWater, poro);
+                double ldry = pow(lGranite, (1-poro));
+                return ldry + sqrt(sat) * (ldry - lsat);
             }
 
         std::vector<double> paramRelPerm(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, const double T) const
             {
-  		// example for Brooks-Corey parameters
-  		std::vector<double> param(2);
-  		param[0] = 2.; // lambda
-  		param[1] = 1e4; // entry-pressures
+                // example for Brooks-Corey parameters
+                std::vector<double> param(2);
+                param[0] = 2.; // lambda
+                param[1] = 1e4; // entry-pressures
 
-  		return param;
+                return param;
             }
 
         typename Matrix2p<G,Scalar>::modelFlag relPermFlag(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi) const
             {
-  		return Matrix2p<G,Scalar>::brooks_corey;
+                return Matrix2p<G,Scalar>::brooks_corey;
             }
 
     private:
-  	FieldMatrix<DT,dim,dim> lowK_, highK_;
-	double layerBottom_;
+        FieldMatrix<DT,dim,dim> lowK_, highK_;
+        double layerBottom_;
     };
 
     //! class that defines the parameters of an air injection under a low permeable layer
@@ -176,9 +176,9 @@ namespace Dune
     private:
         // some constants from the traits for convenience
         enum {
-            PrimaryVariables = BoxTraits::PrimaryVariables,
-            PwIndex     = TwoPTwoCTraits::pWIndex,
-            SwitchIndex = TwoPTwoCTraits::switchIndex,
+            numEq       = BoxTraits::numEq,
+            pWIndex     = TwoPTwoCTraits::pWIndex,
+            switchIndex = TwoPTwoCTraits::switchIndex,
 
             // Phase State
             WPhaseOnly = TwoPTwoCTraits::wPhaseOnly,
@@ -186,6 +186,7 @@ namespace Dune
             BothPhases = TwoPTwoCTraits::bothPhases,
 
             // Grid and world dimension
+
             dim      = DomainTraits::GridDim,
             WorldDim = DomainTraits::WorldDim
         };
@@ -207,10 +208,10 @@ namespace Dune
         typedef typename BoxTraits::UnknownsVector                UnknownsVector;
         typedef typename BoxTraits::BoundaryTypeVector            BoundaryTypeVector;
 
-        typedef VtkMultiWriter<typename Grid::LeafGridView> VtkMultiWriter;
+        typedef Dune::VtkMultiWriter<typename Grid::LeafGridView> VtkMultiWriter;
 
         enum Episode {}; // the type of an episode of the simulation
-        typedef TimeManager<Episode>                        TimeManager;
+        typedef Dune::TimeManager<Episode>                  TimeManager;
         typedef Dune::NewImplicitEulerStep<ThisType>        TimeIntegration;
 
         typedef typename Model::NewtonMethod                NewtonMethod;
@@ -439,7 +440,7 @@ namespace Dune
 
                 //Scalar lambda = (globalPos[1])/height_;
                 if (globalPos[1] < 15 && globalPos[1] > 5) {
-                    values[SwitchIndex] = -1e-3;
+                    values[switchIndex] = -1e-3;
                 }
             }
 
@@ -466,19 +467,19 @@ namespace Dune
             {
                 Scalar densityW_ = 1000.0;
 
-                values[PwIndex] = 1e5 - densityW_*gravity_[1]*(depthBOR_ - globalPos[1]);
-                values[SwitchIndex] = 1e-8;
+                values[pWIndex] = 1e5 - densityW_*gravity_[1]*(depthBOR_ - globalPos[1]);
+                values[switchIndex] = 1e-8;
 
 //                std::cout << "cell " << ParentType::cellIndex(cell) << " position of node " << globalNodeIdx << ": " << globalPos << " -> " << values << "\n";
 
 //		if ((globalPos[0] > 60.0 - eps_) && (globalPos[1] < 10 && globalPos[1] > 5))
-//			values[SwitchIndex] = 0.05;
+//			values[switchIndex] = 0.05;
 
 //			if (globalPos[1] >= innerLowerLeft_[1] && globalPos[1] <= innerUpperRight_[1]
 //			 && globalPos[0] >= innerLowerLeft_[0])
-//				values[SwitchIndex] = 0.2;
+//				values[switchIndex] = 0.2;
 //			else
-//				values[SwitchIndex] = 1e-6;
+//				values[switchIndex] = 1e-6;
             }
 
 

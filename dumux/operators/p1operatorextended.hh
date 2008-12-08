@@ -1417,7 +1417,7 @@ namespace Dune
 			for (coliterator j=this->A[i].begin(); j!=endj; ++j)
 			  {
 				(*j) = MFieldType();
-				if (j.index()==i)
+				if ((int) j.index()==i)
 				  for (int comp=0; comp<m; comp++)
 					(*j)[comp][comp] = static_cast<MFieldType>(1);
 			  }
@@ -1429,7 +1429,7 @@ namespace Dune
 	  for (rowiterator i=this->A.begin(); i!=endi; ++i)
 		{
 		  // muck up extra rows
-		  if (i.index()>=this->vertexmapper.size())
+            if ((int) i.index()>=this->vertexmapper.size())
 			{
 			  coliterator endj=(*i).end();
 			  for (coliterator j=(*i).begin(); j!=endj; ++j)

@@ -67,7 +67,7 @@ namespace Dune {
                 Scalar Sn;
 //                Scalar pW;
 
-                for (int idx = 0; idx < (*u).size(); idx++)  {
+                for (int idx = 0; idx < (int) (*u).size(); idx++)  {
 //                    pW = (*u)[idx][0];
                     Sn = (*u)[idx][1];
 

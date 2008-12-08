@@ -26,7 +26,7 @@ namespace Dune
 	// define the local Jacobian (also change the template argument above)
 	typedef BoxParabolicLocalJacobian<G, RT> LocalJacobian;
 	
-	typedef LeafP1NonlinearParabolic<G, RT, ProblemType, LocalJacobian, 1> LeafP1NonlinearParabolic;
+	typedef Dune::LeafP1NonlinearParabolic<G, RT, ProblemType, LocalJacobian, 1> LeafP1NonlinearParabolic;
 
 	typedef BoxNonlinearParabolic<G, RT> ThisType;
 	

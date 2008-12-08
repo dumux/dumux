@@ -35,7 +35,7 @@ namespace Dune
      * \brief Specify the shape functions, operator assemblers, etc
      *        used for the BoxScheme.
      */
-    template<class Scalar, class Grid, int PrimaryVars>
+    template<class DT, class Grid, int numEqns>
     class P1BoxTraits
     {
     private:
@@ -48,14 +48,14 @@ namespace Dune
     
     public:
         enum {
-            PrimaryVariables = PrimaryVars
+            numEq = numEqns
         };
         
         //! A vector of all primary variables at a point
-        typedef Dune::FieldVector<Scalar, PrimaryVariables> UnknownsVector;
+        typedef Dune::FieldVector<DT, numEq> UnknownsVector;
         //! boundary condition vector
         typedef Dune::FieldVector<Dune::BoundaryConditions::Flags, 
-                                  PrimaryVariables>         BoundaryTypeVector;
+                                  numEq>         BoundaryTypeVector;
         
         /*!
          * \brief Represents a local spatial function.
@@ -71,7 +71,7 @@ namespace Dune
         //! a single of shape function used for the BoxFunction inside
         //! cells.
         typedef Dune::LagrangeShapeFunctionSetContainer<CoordScalar,
-                                                        Scalar,
+                                                        DT,
                                                         GridDim> ShapeFunctionSetContainer;
         
         //! The actual shape functions which are being used. If a 
@@ -86,23 +86,23 @@ namespace Dune
         //! The function which represents a solution for a fixed time
         //! step. We use first-order vertex centered FE polynomials.
         typedef Dune::LeafP1Function<Grid, 
-                                     Scalar, 
-                                     PrimaryVariables>   SpatialFunction;
+                                     DT, 
+                                     numEq>   SpatialFunction;
         
         //! The OperatorAssembler which assembles the global stiffness
         //! matrix
         typedef Dune::LeafP1OperatorAssembler<Grid,
-                                              Scalar,
-                                              PrimaryVariables>  JacobianAssembler;
+                                              DT,
+                                              numEq>  JacobianAssembler;
     };
 
     // this is butt-ugly, but the only way I could come up with to
     // initialize a static const member of a class
-    template<class Scalar, class Grid, int PrimaryVars>
-    const typename P1BoxTraits<Scalar, Grid, PrimaryVars>::ShapeFunctionSetContainer &
-      P1BoxTraits<Scalar, Grid, PrimaryVars>::shapeFunctions
+    template<class DT, class Grid, int PrimaryVars>
+    const typename P1BoxTraits<DT, Grid, PrimaryVars>::ShapeFunctionSetContainer &
+      P1BoxTraits<DT, Grid, PrimaryVars>::shapeFunctions
          =  Dune::LagrangeShapeFunctions<typename Grid::ctype, 
-                                         Scalar,
+                                         DT,
                                          Grid::dimension>::general;
 
 }

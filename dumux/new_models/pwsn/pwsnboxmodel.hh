@@ -38,11 +38,11 @@ namespace Dune
     {
     public:
         enum {
-            PrimaryVars = 2 //!< Number of primary variables
+            numEq = 2 //!< Number of primary variables
         };
         enum {
-            PwIndex = 0,  //!< Index for the wetting phase pressure in a field vector
-            SnIndex = 1   //!< Index for the non-wetting phase saturation in a field vector        
+            pWIndex = 0,  //!< Index for the wetting phase pressure in a field vector
+            snIndex = 1   //!< Index for the non-wetting phase saturation in a field vector        
         };
     };
 
@@ -71,9 +71,9 @@ namespace Dune
         enum {
             GridDim          = DomTraits::GridDim,
             WorldDim         = DomTraits::WorldDim,
-            PrimaryVariables = BoxTraits::PrimaryVariables,
-            PwIndex          = PwSnTraits::PwIndex,
-            SnIndex          = PwSnTraits::SnIndex
+            numEq = BoxTraits::numEq,
+            pWIndex          = PwSnTraits::pWIndex,
+            snIndex          = PwSnTraits::snIndex
         };
         
         typedef typename DomTraits::Scalar              Scalar;
@@ -198,13 +198,13 @@ namespace Dune
                 LocalFunction *sol = usePrevSol?prevSol_:curSol_;
 
                 // partial time derivative of the wetting phase mass
-                result[PwIndex] = -ParentType::problem_.densityW()
+                result[pWIndex] = -ParentType::problem_.densityW()
                                    * curCellPorosity_
-                                   * (*sol)[scvId][SnIndex];
+                                   * (*sol)[scvId][snIndex];
                 // partial time derivative of the non-wetting phase mass
-                result[SnIndex] = ParentType::problem_.densityN()
+                result[snIndex] = ParentType::problem_.densityN()
                                   * curCellPorosity_
-                                  * (*sol)[scvId][SnIndex];
+                                  * (*sol)[scvId][snIndex];
 
             }
 
@@ -216,7 +216,7 @@ namespace Dune
         void fluxRate(UnknownsVector &flux, int faceId) const
             {
                 Api::require<Api::BasicDomainTraits, typename ProblemT::DomainTraits>();
-                assert(PrimaryVariables == 2);
+                assert(numEq == 2);
 
                 const typename FVElementGeometry::SubControlVolumeFace
                     &face = ParentType::curCellGeom_.subContVolFace[faceId];
@@ -230,15 +230,15 @@ namespace Dune
                                                              ParentType::curCell_(), 
                                                              face.normal);
 
-                for (int phase = 0; phase < PrimaryVariables; phase++) {
+                for (int phase = 0; phase < numEq; phase++) {
                     // calculate FE gradient
                     LocalCoord pGrad(0);
                     for (int k = 0; k < ParentType::curCellGeom_.nNodes; k++) {
                         LocalCoord grad(face.grad[k]);
-                        if (phase == SnIndex)
+                        if (phase == snIndex)
                             grad *= curSolCache_.atSCV[k].pN;
                         else
-                            grad *= (*curSol_)[k][PwIndex];
+                            grad *= (*curSol_)[k][pWIndex];
 
                         pGrad += grad;
                     }
@@ -268,7 +268,7 @@ namespace Dune
          */
         void updateCellCache_(CellCache &dest, const LocalFunction &sol)
             {
-                assert(PrimaryVariables == 2);
+                assert(numEq == 2);
 
                 int cellIndex   = ParentType::problem_.cellIndex(ParentType::curCell_());
                 for (int i = 0; i < ParentType::curCellGeom_.nNodes; i++) {
@@ -293,23 +293,23 @@ namespace Dune
                 // Current solution for sub-controlvolume
                 const UnknownsVector &scvSol = sol[i];
 
-                scvCache.Sw = 1.0 - scvSol[SnIndex];
+                scvCache.Sw = 1.0 - scvSol[snIndex];
                 scvCache.pC = ParentType::problem_.pC(ParentType::curCell_(),
                                                       cellIndex,
                                                       i,
                                                       iGlobal,
                                                       scvCache.Sw);
-                scvCache.pN = scvSol[PwIndex] + scvCache.pC;
-                scvCache.mobility[PwIndex] = ParentType::problem_.mobilityW(ParentType::curCell_(),
+                scvCache.pN = scvSol[pWIndex] + scvCache.pC;
+                scvCache.mobility[pWIndex] = ParentType::problem_.mobilityW(ParentType::curCell_(),
                                                                             cellIndex,
                                                                             i,
                                                                             iGlobal,
                                                                             scvCache.Sw);
-                scvCache.mobility[SnIndex] = ParentType::problem_.mobilityN(ParentType::curCell_(),
+                scvCache.mobility[snIndex] = ParentType::problem_.mobilityN(ParentType::curCell_(),
                                                                             cellIndex,
                                                                             i,
                                                                             iGlobal,
-                                                                            scvSol[SnIndex]);
+                                                                            scvSol[snIndex]);
             }
 
 //        CellPointer     curCell_;
@@ -341,7 +341,7 @@ namespace Dune
                                            // The Traits for the BOX method
                                            P1BoxTraits<typename ProblemT::DomainTraits::Scalar,
                                                        typename ProblemT::DomainTraits::Grid,
-                                                       PwSnTraits::PrimaryVars>,
+                                                       PwSnTraits::numEq>,
 
                                            // The actual problem we would like to solve
                                            ProblemT, 
@@ -350,7 +350,7 @@ namespace Dune
                                            PwSnBoxJacobian<ProblemT, 
                                                            P1BoxTraits<typename ProblemT::DomainTraits::Scalar,
                                                                        typename ProblemT::DomainTraits::Grid,
-                                                                       PwSnTraits::PrimaryVars>,
+                                                                       PwSnTraits::numEq>,
                                                            PwSnTraits> >
     {
         typedef typename ProblemT::DomainTraits::Grid   Grid;
@@ -358,7 +358,7 @@ namespace Dune
         typedef PwSnBoxModel<ProblemT>                  ThisType;
         
     public:
-        typedef P1BoxTraits<Scalar, Grid, PwSnTraits::PrimaryVars> BoxTraits;
+        typedef P1BoxTraits<Scalar, Grid, PwSnTraits::numEq> BoxTraits;
         typedef Dune::PwSnTraits                                   PwSnTraits;
         
     private:

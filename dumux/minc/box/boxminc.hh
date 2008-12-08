@@ -65,7 +65,7 @@ public:
 	// define the local Jacobian (also change the template argument above)
 	typedef BoxMincJacobian<G, RT, m> LocalJacobian;
 
-	typedef LeafP1MincModel<G, RT, ProblemType, LocalJacobian, m>
+	typedef Dune::LeafP1MincModel<G, RT, ProblemType, LocalJacobian, m>
 			LeafP1MincModel;
 
 	typedef typename LeafP1MincModel::FunctionType FunctionType;

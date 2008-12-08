@@ -70,7 +70,7 @@ namespace Dune
     template<class Problem, class BoxTraitsT, class JacobianImp>
     class BoxJacobian : public Dune::LocalStiffness<typename Problem::DomainTraits::Grid::LeafGridView,
                                                     typename Problem::DomainTraits::Scalar,
-                                                    BoxTraitsT::PrimaryVariables>
+                                                    BoxTraitsT::numEq>
 
     {
     private:
@@ -78,7 +78,7 @@ namespace Dune
         typedef BoxTraitsT                     BoxTraits;
 
         enum {
-            PrimaryVariables = BoxTraits::PrimaryVariables,
+            numEq = BoxTraits::numEq,
 
             GridDim     = DomainTraits::GridDim,
             WorldDim    = DomainTraits::WorldDim
@@ -225,7 +225,7 @@ namespace Dune
                         
                         // handle boundary conditions
                         bool neumannEvaluated = false;
-                        for (int bcIdx = 0; bcIdx < PrimaryVariables; ++bcIdx) {
+                        for (int bcIdx = 0; bcIdx < numEq; ++bcIdx) {
                             // set the bctype of the LocalStiffness
                             // base class
                             this->bctype[nodeInElement][bcIdx] = tmp[bcIdx];
@@ -417,7 +417,7 @@ namespace Dune
                 LocalFunction residUMinusEps(numVertices);
                 for (int j = 0; j < numVertices; j++)
                 {
-                    for (int comp = 0; comp < PrimaryVariables; comp++)
+                    for (int comp = 0; comp < numEq; comp++)
                     {
                         Scalar eps = std::max(fabs(1e-5*localU[j][comp]), 1e-5);
                         Scalar uJ = localU[j][comp];
@@ -453,7 +453,7 @@ namespace Dune
                 evalLocalResidual(residU, true); // include boundary conditions for the residual
                
                 for (int i=0; i < numVertices; i++) {
-                    for (int comp=0; comp < PrimaryVariables; comp++) {
+                    for (int comp=0; comp < numEq; comp++) {
                         // TODO: in most cases this is not really a
                         // boundary cell but an interior cell, so
                         // Dune::BoundaryConditions::neumann is
@@ -470,7 +470,7 @@ namespace Dune
                                    const LocalFunction &stiffness)
             {
                 for (int i = 0; i < curCellGeom_.nNodes; i++) {
-                    for (int compi = 0; compi < PrimaryVariables; compi++) {
+                    for (int compi = 0; compi < numEq; compi++) {
                         // A[i][j][compi][comp] is the
                         // approximate rate of change of the
                         // unknown 'compi' at node 'i' if the

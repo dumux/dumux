@@ -58,9 +58,9 @@ namespace Lens
     private:
         // some constants from the traits for convenience
         enum {
-            PrimaryVariables = BoxTraits::PrimaryVariables,
-            PwIndex = PwSnTraits::PwIndex,
-            SnIndex = PwSnTraits::SnIndex
+            numEq   = BoxTraits::numEq,
+            pWIndex = PwSnTraits::pWIndex,
+            snIndex = PwSnTraits::snIndex
         };
         
         // copy some types from the traits for convenience
@@ -90,10 +90,10 @@ namespace Lens
             WaitEpisode    // an episode with neither drainage nor imbibition
         };
 
-        typedef TimeManager<Episode>                        TimeManager;
+        typedef Dune::TimeManager<Episode>                  TimeManager;
         typedef Dune::NewImplicitEulerStep<ThisType>        TimeIntegration;
 
-        typedef VtkMultiWriter<typename Grid::LeafGridView> VtkMultiWriter;
+        typedef Dune::VtkMultiWriter<typename Grid::LeafGridView> VtkMultiWriter;
 
         typedef typename Model::NewtonMethod                    NewtonMethod;
         typedef LensNewtonController<NewtonMethod, ThisType>    NewtonController;
@@ -298,8 +298,8 @@ namespace Lens
                      const WorldCoord &pos,
                      const LocalCoord &localPos)
             {
-                dest[PwIndex] = 0;
-                dest[SnIndex] = 0;
+                dest[pWIndex] = 0;
+                dest[snIndex] = 0;
 
                 // get the integration point of the boundary face in
                 // world coodinates
@@ -310,19 +310,19 @@ namespace Lens
                     Scalar relPosX = (ParentType::upperRight()[0] - pos[0])/ParentType::width();
                     if (0.5 < relPosX && relPosX < 2.0/3.0)
                     {
-                        dest[SnIndex] = -0.04;
+                        dest[snIndex] = -0.04;
                     }
 #endif
                 }
 #if !USE_ORIG_PROB
                 else if (ParentType::onLowerBoundary(pos)) {
-                    dest[SnIndex] = 0.0;
+                    dest[snIndex] = 0.0;
                     if (timeManager_.episode() == DrainEpisode)
                         // drain water
-                        dest[SnIndex] = -0.04;
+                        dest[snIndex] = -0.04;
                     else if (timeManager_.episode() == ImbibEpisode)
                         // imbibition of water
-                        dest[SnIndex] = 0.04;
+                        dest[snIndex] = 0.04;
                 }
 #endif
 
@@ -358,13 +358,13 @@ namespace Lens
                     b = ParentType::upperRight()[1];
                 }
 
-                dest[PwIndex] = -ParentType::densityW()*
+                dest[pWIndex] = -ParentType::densityW()*
                                   ParentType::gravity()[1]*
                                   (a*pos[1] + b);
 #if 0
-                dest[SnIndex] = ParentType::outerMedium().Snr();
+                dest[snIndex] = ParentType::outerMedium().Snr();
 #else
-                dest[SnIndex] = 0;
+                dest[snIndex] = 0;
 #endif
             }
 
@@ -375,7 +375,7 @@ namespace Lens
                         const FVElementGeometry &dualCell,
                         int subControlVolumeId)
             {
-                dest[PwIndex] = dest[SnIndex] = 0;
+                dest[pWIndex] = dest[snIndex] = 0;
             }
 
         ///////////////////////////////////
@@ -449,11 +449,11 @@ namespace Lens
                 convergenceWriter_->addScalarVertexFunction("reduction Sn",
                                                             diff,
                                                             ParentType::nodeMap(),
-                                                            SnIndex);
+                                                            snIndex);
                 convergenceWriter_->addScalarVertexFunction("reduction Pw",
                                                             diff,
                                                             ParentType::nodeMap(),
-                                                            PwIndex);
+                                                            pWIndex);
                 writeNodeFields_(*convergenceWriter_, u);
                 writeCellFields_(*convergenceWriter_, u);
             };
@@ -477,7 +477,7 @@ namespace Lens
                     // extract the current solution's Sn component
                     const CellReferenceElement &refElem =
                         DomainTraits::referenceElement(it->geometry().type());
-                    Scalar Sn = u.evallocal(SnIndex,
+                    Scalar Sn = u.evallocal(snIndex,
                                              *it,
                                              refElem.position(0,0));
 
@@ -500,20 +500,20 @@ namespace Lens
             {
                 writer.addScalarVertexFunction("Sn",
                                                u,
-                                               SnIndex);
+                                               snIndex);
                 writer.addScalarVertexFunction("Pw",
                                                u,
-                                               PwIndex);
+                                               pWIndex);
 
                 /*
                 SpatialFunction globResidual(ParentType::grid());
                 model_.evalGlobalResidual(globResidual);
                 writer.addScalarVertexFunction("global residual Sn",
                                                globResidual,
-                                               SnIndex);
+                                               snIndex);
                 writer.addScalarVertexFunction("global residual Pw",
                                                globResidual,
-                                               PwIndex);
+                                               pWIndex);
                 */
             }
 
@@ -526,7 +526,7 @@ namespace Lens
                 NodeIterator endit = ParentType::nodeEnd();
                 for (; it != endit; ++it) {
                     int vertIdx = ParentType::nodeIndex(*it);
-                    Scalar Sn = (*model_.currentSolution())[vertIdx][SnIndex];
+                    Scalar Sn = (*model_.currentSolution())[vertIdx][snIndex];
                     Scalar Sw = 1 - Sn;
                     ParkerLenhard::updateState(nodeState(*it), Sw);
                 }
@@ -543,7 +543,7 @@ namespace Lens
 
                     // evaluate the solution for the non-wetting
                     // saturation at this point
-                    Scalar Sn = model_.u().evallocal(SnIndex,
+                    Scalar Sn = model_.u().evallocal(snIndex,
                                                       *it,
                                                       localPos);
                     Scalar Sw = 1 - Sn;

@@ -95,7 +95,7 @@ namespace Dune
       };
       
       typedef NewNewtonMethod<ThisType> NewtonMethod;
-      typedef NewtonController<NewtonMethod> NewtonController;
+      typedef Dune::NewtonController<NewtonMethod> NewtonController;
       
       typedef typename NewtonTraits::Function Function;
       Function &currentSolution()

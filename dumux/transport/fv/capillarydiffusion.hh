@@ -25,7 +25,7 @@ namespace Dune
     typedef typename G::Traits::template Codim<0>::Entity Entity;
     typedef typename G::template Codim<0>::EntityPointer EntityPointer;
     typedef typename IntersectionIteratorGetter<G,LevelTag>::IntersectionIterator IntersectionIterator;
-    typedef FieldVector<RT, dim> FieldVector;
+    typedef Dune::FieldVector<RT, dim> FieldVector;
     typedef BlockVector< Dune::FieldVector<RT,1> > SatType;
 
   public:

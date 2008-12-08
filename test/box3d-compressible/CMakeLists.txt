@@ -1,8 +1,8 @@
 add_definitions(-DYASPGRID -DGRIDDIM=2 -DENABLE_UG)
 
 # add build targets
-ADD_EXECUTABLE("test_box3d_compressible" test_box3d_compressible.cc)
-TARGET_LINK_LIBRARIES("test_box3d_compressible" ${DumuxLinkLibraries})
+#ADD_EXECUTABLE("test_box3d_compressible" test_box3d_compressible.cc)
+#TARGET_LINK_LIBRARIES("test_box3d_compressible" ${DumuxLinkLibraries})
 
 # add required libraries and includes to the build flags 
 LINK_DIRECTORIES(${DumuxLinkDirectories})

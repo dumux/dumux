@@ -87,15 +87,15 @@ namespace Dune
     private:
         // some constants from the traits for convenience
         enum {
-            PrimaryVariables = BoxTraits::PrimaryVariables,
-            PwIndex          = TwoPTwoCNITraits::PwIndex,
-            SwitchIndex      = TwoPTwoCNITraits::SwitchIndex,
-            TemperatureIndex = TwoPTwoCNITraits::TemperatureIndex,
+            numEq            = BoxTraits::numEq,
+            pWIndex          = TwoPTwoCNITraits::pWIndex,
+            switchIndex      = TwoPTwoCNITraits::switchIndex,
+            temperatureIndex = TwoPTwoCNITraits::temperatureIndex,
             
             // Phase State
-            WPhaseOnly = TwoPTwoCNITraits::WPhaseOnly,
-            NPhaseOnly = TwoPTwoCNITraits::NPhaseOnly,
-            BothPhases = TwoPTwoCNITraits::BothPhases,
+            wPhaseOnly = TwoPTwoCNITraits::wPhaseOnly,
+            nPhaseOnly = TwoPTwoCNITraits::nPhaseOnly,
+            bothPhases = TwoPTwoCNITraits::bothPhases,
 
             // Grid and world dimension
             GridDim  = DomainTraits::GridDim,
@@ -119,10 +119,10 @@ namespace Dune
         typedef typename BoxTraits::UnknownsVector                UnknownsVector;
         typedef typename BoxTraits::BoundaryTypeVector            BoundaryTypeVector;
 
-        typedef VtkMultiWriter<typename Grid::LeafGridView> VtkMultiWriter;
+        typedef Dune::VtkMultiWriter<typename Grid::LeafGridView> VtkMultiWriter;
 
         enum Episode {}; // the type of an episode of the simulation
-        typedef TimeManager<Episode>                        TimeManager;
+        typedef Dune::TimeManager<Episode>                  TimeManager;
         typedef Dune::NewImplicitEulerStep<ThisType>        TimeIntegration;
 
         typedef typename Model::NewtonMethod                NewtonMethod;
@@ -303,7 +303,7 @@ namespace Dune
                     values = Dune::BoundaryConditions::neumann;
 
                 if(globalPos[0] < eps_ && globalPos[1] < 5)
-                    values[TemperatureIndex] = Dune::BoundaryConditions::dirichlet;
+                    values[temperatureIndex] = Dune::BoundaryConditions::dirichlet;
             }
 
         /////////////////////////////
@@ -336,8 +336,8 @@ namespace Dune
 
                 if(globalPos[0] <= eps_ && globalPos[1] <= 5.)
                 {
-                    values[PwIndex] = 0.0;//-4.046e-5;
-                    values[SwitchIndex] = -0.0002;
+                    values[pWIndex] = 0.0;//-4.046e-5;
+                    values[switchIndex] = -0.0002;
                 }
             }
 
@@ -362,9 +362,9 @@ namespace Dune
                      const WorldCoord &globalPos, 
                      const LocalCoord &localPos)
             {
-                values[PwIndex]          = 1.013e5 + (depthBOR_ - globalPos[1]) * 1045 * 9.81;
-                values[SwitchIndex]      = 0.00;
-                values[TemperatureIndex] = 283.15 + (depthBOR_ - globalPos[1])*0.03;
+                values[pWIndex]          = 1.013e5 + (depthBOR_ - globalPos[1]) * 1045 * 9.81;
+                values[switchIndex]      = 0.00;
+                values[temperatureIndex] = 283.15 + (depthBOR_ - globalPos[1])*0.03;
             }
 
         Scalar porosity(const Cell &cell, int localIdx) const
@@ -391,7 +391,7 @@ namespace Dune
                               int              &globalIdx,
                               const WorldCoord &globalPos) const
             {
-                return WPhaseOnly;
+                return wPhaseOnly;
             }
 
       

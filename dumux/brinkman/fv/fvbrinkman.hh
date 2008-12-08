@@ -595,7 +595,7 @@ namespace Dune
 		vtkwriter.addCellData(this->pressure,"total pressure p~");
 //		for (int i = 0; i < dim; i++)
 //		{
-			for (int k = 0; k < velocityComponentX.size(); k++)
+        for (int k = 0; k < (int) velocityComponentX.size(); k++)
 			{
 				velocityComponentX[k] = elementVelocity[k][0];
 				velocityComponentY[k] = elementVelocity[k][1];

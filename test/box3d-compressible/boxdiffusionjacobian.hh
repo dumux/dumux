@@ -48,7 +48,7 @@ namespace Dune
     typedef typename Entity::Geometry Geometry;
     typedef BoxDiffusionJacobian<G,RT,BoxFunction> ThisType;
     typedef typename LocalJacobian<ThisType,G,RT,1>::VBlockType VBlockType;
- 	typedef FVElementGeometry<G> FVElementGeometry;
+ 	typedef Dune::FVElementGeometry<G> FVElementGeometry;
  	enum {pIdx = 0};
 
   public:

@@ -61,7 +61,7 @@ public:
 	// define the local Jacobian (also change the template argument above)
 	typedef BoxPnSwJacobian<G, RT> LocalJacobian;
 
-	typedef LeafP1TwoPhaseModel<G, RT, ProblemType, LocalJacobian>
+	typedef Dune::LeafP1TwoPhaseModel<G, RT, ProblemType, LocalJacobian>
 	LeafP1TwoPhaseModel;
 
 	typedef typename LeafP1TwoPhaseModel::FunctionType FunctionType;

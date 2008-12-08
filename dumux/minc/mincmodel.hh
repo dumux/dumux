@@ -14,7 +14,7 @@ template<class G, class RT, class ProblemType, class LocalJacobian,
 		class FunctionType, class OperatorAssembler> class MincModel :
 	public NonlinearModel<G, RT, ProblemType, LocalJacobian, FunctionType, OperatorAssembler> {
 public:
-	typedef NonlinearModel<G, RT, ProblemType, LocalJacobian,
+	typedef Dune::NonlinearModel<G, RT, ProblemType, LocalJacobian,
 	FunctionType, OperatorAssembler> NonlinearModel;
 
 	MincModel(const G& g, ProblemType& prob) :
@@ -43,8 +43,8 @@ public:
 	// define the operator assembler type:
 	typedef LeafP1OperatorAssembler<G, RT, m> OperatorAssembler;
 
-	typedef MincModel<G, RT, ProblemType, LocalJac,
-	FunctionType, OperatorAssembler> MincModel;
+	typedef Dune::MincModel<G, RT, ProblemType, LocalJac,
+                      FunctionType, OperatorAssembler> MincModel;
 
 	typedef LeafP1MincModel<G, RT, ProblemType, LocalJac, m> ThisType;
 

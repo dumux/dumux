@@ -67,9 +67,9 @@ namespace Lenhard
     private:
         // some constants from the traits for convenience
         enum {
-            PrimaryVariables = BoxTraits::PrimaryVariables,
-            PwIndex = PwSnTraits::PwIndex,
-            SnIndex = PwSnTraits::SnIndex
+            numEq   = BoxTraits::numEq,
+            pWIndex = PwSnTraits::pWIndex,
+            snIndex = PwSnTraits::snIndex
         };
         
         // copy some types from the traits for convenience
@@ -257,28 +257,28 @@ namespace Lenhard
                     // above the hydraulic head due to the capillary
                     // pressure
 #ifdef USE_NODE_PARAMETERS
-                    dest[SnIndex] = 1.0 - ParkerLenhard::Sw(ParentType::nodeState(0), - pH);
+                    dest[snIndex] = 1.0 - ParkerLenhard::Sw(ParentType::nodeState(0), - pH);
 #else
                     const CellState &cs = ParentType::cellState(cell);
-                    dest[SnIndex] = 1.0 - ParkerLenhard::Sw(cs, - pH);
+                    dest[snIndex] = 1.0 - ParkerLenhard::Sw(cs, - pH);
 #endif
                     
-                    dest[SnIndex] = std::min((Scalar) 1.0, dest[SnIndex]);
-                    dest[SnIndex] = std::max((Scalar) 0.0, dest[SnIndex]);
+                    dest[snIndex] = std::min((Scalar) 1.0, dest[snIndex]);
+                    dest[snIndex] = std::max((Scalar) 0.0, dest[snIndex]);
                     
 #ifdef USE_NODE_PARAMETERS
-                    dest[PwIndex] = -ParkerLenhard::pC(ParentType::nodeState(0),
-                                                       1 - dest[SnIndex]);
+                    dest[pWIndex] = -ParkerLenhard::pC(ParentType::nodeState(0),
+                                                       1 - dest[snIndex]);
 #else
-                    dest[PwIndex] = -ParkerLenhard::pC(cs,
-                                                       1 - dest[SnIndex]);
+                    dest[pWIndex] = -ParkerLenhard::pC(cs,
+                                                       1 - dest[snIndex]);
 #endif
                     
 
                 }
                 else {
-                    dest[PwIndex] = pH;
-                    dest[SnIndex] = 0.0;
+                    dest[pWIndex] = pH;
+                    dest[snIndex] = 0.0;
                 }
             }
 
@@ -292,8 +292,8 @@ namespace Lenhard
                            const LocalCoord &localPos)
 
             {
-                dest[PwIndex] = Dune::BoundaryConditions::dirichlet;
-                dest[SnIndex] = Dune::BoundaryConditions::dirichlet;
+                dest[pWIndex] = Dune::BoundaryConditions::dirichlet;
+                dest[snIndex] = Dune::BoundaryConditions::dirichlet;
             }
 
         //! Evaluate a neumann boundary condition
@@ -303,8 +303,8 @@ namespace Lenhard
                      const WorldCoord &pos,
                      const LocalCoord &localPos)
             {
-                dest[PwIndex] = 0;
-                dest[SnIndex] = 0;
+                dest[pWIndex] = 0;
+                dest[snIndex] = 0;
             }
 
 
@@ -319,14 +319,14 @@ namespace Lenhard
                 
 #if defined USE_NODE_PARAMETERS
                 if (onUpperBoundary(pos)) {
-                    dest[PwIndex] = -maxPc_;
-                    dest[SnIndex] = 1;
+                    dest[pWIndex] = -maxPc_;
+                    dest[snIndex] = 1;
                 }
                 else { // onLowerBoundary(pos) 
                     Scalar h = curHydraulicHead_ - pos[0];
                     Scalar pH = hydrostaticPressure_(h);
-                    dest[PwIndex] = pH;
-                    dest[SnIndex] = 0;
+                    dest[pWIndex] = pH;
+                    dest[snIndex] = 0;
                 }
 #else
                 initial(dest, cell, pos, localPos);
@@ -340,7 +340,7 @@ namespace Lenhard
                         const FVElementGeometry &dualCell,
                         int subControlVolumeId)
             {
-                dest[PwIndex] = dest[SnIndex] = 0;
+                dest[pWIndex] = dest[snIndex] = 0;
             }
         ///////////////////////////////////
         // End of problem specific stuff
@@ -572,19 +572,19 @@ namespace Lenhard
 
                 resultWriter_.addScalarVertexFunction("Sn",
                                                       model_.currentSolution(),
-                                                      SnIndex);
+                                                      snIndex);
                 resultWriter_.addScalarVertexFunction("Pw",
                                                       model_.currentSolution(),
-                                                      PwIndex);
+                                                      pWIndex);
 
                 SpatialFunction globResidual(ParentType::grid());
                 model_.evalGlobalResidual(globResidual);
                 resultWriter_.addScalarVertexFunction("global defect Sn",
                                                       globResidual,
-                                                      SnIndex);
+                                                      snIndex);
                 resultWriter_.addScalarVertexFunction("global defect Pw",
                                                       globResidual,
-                                                      PwIndex);
+                                                      pWIndex);
 
                 resultWriter_.endTimestep();
             }
@@ -604,19 +604,19 @@ namespace Lenhard
                 convergenceWriter_->addScalarVertexFunction("Sn",
                                                             u,
                                                             ParentType::nodeMap(),
-                                                            SnIndex);
+                                                            snIndex);
                 convergenceWriter_->addScalarVertexFunction("Pw",
                                                             u,
                                                             ParentType::nodeMap(),
-                                                            PwIndex);
+                                                            pWIndex);
                 convergenceWriter_->addScalarVertexFunction("difference Sn",
                                                             diff,
                                                             ParentType::nodeMap(),
-                                                            SnIndex);
+                                                            snIndex);
                 convergenceWriter_->addScalarVertexFunction("difference Pw",
                                                             diff,
                                                             ParentType::nodeMap(),
-                                                            PwIndex);
+                                                            pWIndex);
                 
 /*                writeVertexFields_(*convergenceWriter_, u);
                 writeCellFields_(*convergenceWriter_, u);
@@ -633,7 +633,7 @@ namespace Lenhard
                 NodeIterator endit = ParentType::nodeEnd();
                 for (; it != endit; ++it) {
                     int vertIdx = ParentType::nodeIndex(*it);
-                    Scalar Sn = (*model_.currentSolution())[vertIdx][SnIndex];
+                    Scalar Sn = (*model_.currentSolution())[vertIdx][snIndex];
                     Scalar Sw = 1 - Sn;
                     ParkerLenhard::updateState(nodeState(*it), Sw);
                 }
@@ -650,7 +650,7 @@ namespace Lenhard
 
                     // evaluate the solution for the non-wetting
                     // saturation at this point
-                    Scalar Sn = model_.currentSolution().evallocal(SnIndex,
+                    Scalar Sn = model_.currentSolution().evallocal(snIndex,
                                                      *it,
                                                      localPos);
                     Scalar Sw = 1 - Sn;
@@ -677,7 +677,7 @@ namespace Lenhard
                     if (0 <= localPos[0] && localPos[0] < 1.0) {
                         // evaluate the solution for the non-wetting
                         // saturation at this point
-                        Scalar Sn = model_.currentSolution().evallocal(SnIndex,
+                        Scalar Sn = model_.currentSolution().evallocal(snIndex,
                                                          *it,
                                                          localPos);
 
@@ -693,7 +693,7 @@ namespace Lenhard
                         // contains the current point of interest
                         const NodeState &vs = ParentType::nodeState(ParentType::cellIndex(*it));
                         localPos[0] = 0;
-                        Sn = model_.currentSolution().evallocal(SnIndex,
+                        Sn = model_.currentSolution().evallocal(snIndex,
                                                                 *it,
                                                                 localPos);
                         std::cout << boost::format("snip: pC_pos=%.02f\n")%points[curI];

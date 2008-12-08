@@ -119,7 +119,7 @@ namespace Dune
             dim              = DomTraits::GridDim,
             dimWorld         = DomTraits::WorldDim,
 
-            PrimaryVariables = BoxTraits::PrimaryVariables,
+            numEq            = BoxTraits::numEq,
             numPhases        = TwoPTwoCTraits::numPhases,
             numComponents    = TwoPTwoCTraits::numComponents,
 
