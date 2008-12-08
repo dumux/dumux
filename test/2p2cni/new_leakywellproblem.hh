@@ -60,7 +60,7 @@ namespace Dune
      *	- ScalarT  Floating point type used for scalars
      */
     template<class ScalarT>
-    class NewLeakyWellProblem : public BasicDomain<Dune::ALUSimplexGrid<3,3>, 
+    class NewLeakyWellProblem : public BasicDomain<Dune::ALUSimplexGrid<3,3>,
                                                    ScalarT>
     {
         typedef Dune::ALUSimplexGrid<3,3>      Grid;
@@ -91,7 +91,7 @@ namespace Dune
             pWIndex          = TwoPTwoCNITraits::pWIndex,
             switchIndex      = TwoPTwoCNITraits::switchIndex,
             temperatureIndex = TwoPTwoCNITraits::temperatureIndex,
-            
+
             // Phase State
             wPhaseOnly = TwoPTwoCNITraits::wPhaseOnly,
             nPhaseOnly = TwoPTwoCNITraits::nPhaseOnly,
@@ -101,7 +101,7 @@ namespace Dune
             GridDim  = DomainTraits::GridDim,
             WorldDim = DomainTraits::WorldDim
         };
-      
+
         // copy some types from the traits for convenience
         typedef typename DomainTraits::Scalar                     Scalar;
         typedef typename DomainTraits::Cell                       Cell;
@@ -131,7 +131,7 @@ namespace Dune
     public:
         NewLeakyWellProblem(Grid *grid,
                            Scalar dtInitial,
-                           Scalar tEnd) 
+                           Scalar tEnd)
             : ParentType(grid),
               materialLaw_(soil_, wPhase_, nPhase_),
               multicomp_(wPhase_, nPhase_),
@@ -233,13 +233,13 @@ namespace Dune
         // etc)
         ///////////////////////////////////
         //! Returns the current time step size in seconds
-        Scalar timeStepSize() const 
+        Scalar timeStepSize() const
             { return timeManager_.stepSize(); }
 
         //! Set the time step size in seconds.
-        void setTimeStepSize(Scalar dt) 
+        void setTimeStepSize(Scalar dt)
             { return timeManager_.setStepSize(dt); }
-        
+
 
         //! properties of the wetting (liquid) phase
         /*! properties of the wetting (liquid) phase
@@ -254,8 +254,8 @@ namespace Dune
         */
         const NonwettingPhase &nonwettingPhase() const
             { return nPhase_; }
- 
-          
+
+
         //! properties of the soil
         /*! properties of the soil
           \return	soil
@@ -290,7 +290,7 @@ namespace Dune
             {
                 return materialLaw_;
             }
-        
+
         void boundaryTypes(BoundaryTypeVector &values,
                            const Cell &cell,
                            const IntersectionIterator &faceIt,
@@ -298,7 +298,7 @@ namespace Dune
                            const LocalCoord &localPos) const
             {
                 values = BoundaryConditions::neumann;
-                if (globalPos[0] < -500+1e-3 || 
+                if (globalPos[0] < -500+1e-3 ||
                     globalPos[0] > 500-1e-3 ||
                     globalPos[1] < -500+1e-3 ||
                     globalPos[1] > 500-1e-3)
@@ -307,8 +307,8 @@ namespace Dune
                 }
 
                 if ((globalPos[0]+100.0)*(globalPos[0]+100.0) + globalPos[1]*globalPos[1] < 0.267 &&
-                    globalPos[2] < 30.0 &&
-                    globalPos[2] > 0.0)
+                    globalPos[2] < 31.0 &&
+                    globalPos[2] > -1.0)
                 {
                     values[pWIndex] = BoundaryConditions::neumann;
                     values[switchIndex] = BoundaryConditions::neumann;
@@ -326,10 +326,10 @@ namespace Dune
             {
                 const LocalCoord &localPos = DomainTraits::referenceElement(cell.type()).position(nodeIdx, GridDim);
                 const WorldCoord &globalPos = cell.geometry()[nodeIdx];
-                
+
                 initial(values,
                         cell,
-                        globalPos, 
+                        globalPos,
                         localPos);
             }
 
@@ -346,9 +346,9 @@ namespace Dune
 
                 if ( (globalPos[0]+100.0)*(globalPos[0]+100.0) +
                       globalPos[1]*globalPos[1] < 0.267
-                     && 
-                     globalPos[2] < 30.0 && 
-                     globalPos[2] > 0.0)
+                     &&
+                     globalPos[2] < 31.0 &&
+                     globalPos[2] > -1.0)
                 {
                     values[switchIndex] = -0.27802;
                 }
@@ -359,20 +359,20 @@ namespace Dune
         /////////////////////////////
         void sourceTerm(UnknownsVector &values,
                         const Cell &cell,
-                        const FVElementGeometry &, 
+                        const FVElementGeometry &,
                         int subControlVolumeIdx) const
             {
                 values = Scalar(0.0);
             }
 
         //////////////////////////////
-      
+
         /////////////////////////////
         // INITIAL values
         /////////////////////////////
         void initial(UnknownsVector &values,
                      const Cell& cell,
-                     const WorldCoord &globalPos, 
+                     const WorldCoord &globalPos,
                      const LocalCoord &localPos)
             {
                 values[pWIndex]          = 1.013e5 + (depthBOR_ - globalPos[2]) * 1067.44 * 9.81; // brine density for salinity=0.1
@@ -407,12 +407,12 @@ namespace Dune
                 return wPhaseOnly;
             }
 
-      
+
         const WorldCoord &gravity () const
             {
                 return gravity_;
             }
-      
+
         double depthBOR () const
             {
                 return depthBOR_;
@@ -431,7 +431,7 @@ namespace Dune
             {
                 resultWriter_.beginTimestep(timeManager_.time(),
                                             ParentType::grid().leafView());
-                
+
                 model_.addVtkFields(resultWriter_);
 
                 resultWriter_.endTimestep();
