@@ -31,7 +31,8 @@ namespace Dune
 	   *  \param x position in global coordinates
 	   *  \param e codim 0 entity for which the value is sought
 	   *  \param xi position in local coordinates in e
-	   *  \return the capillary pressur \f$ p_\text{c} (S_\text{w})\f$.
+	   *  \param param standard vector containing the parameters for the material law
+	   *  \return the capillary pressure \f$ p_\text{c} (S_\text{w})\f$.
 	   */
 	  virtual double pC (double saturationW, const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi,
 							  const std::vector<double>& param, const double T=283.15) const = 0;
@@ -39,8 +40,8 @@ namespace Dune
 	  /*! \brief the derivative of capillary pressure w.r.t. the saturation
 	   *
 	   *  \param saturationW the saturation of the wetting phase
+	   *  \param param standard vector containing the parameters for the material law
 	   *  \param T temperature
-	   *  \param p pressure
 	   *  \param x position in global coordinates
 	   *  \param e codim 0 entity for which the value is sought
 	   *  \param xi position in local coordinates in e
