@@ -47,6 +47,7 @@ int main(int argc, char** argv)
 
     DGStokesParameters parameters;
     Dune::ChannelFlowProblem<GridType, double> problem;
+    parameters.sigma = 1e0;
     typedef Dune::DGStokes<GridType, vOrder, pOrder> DGStokes;
     DGStokes dGStokes(grid, problem, parameters);
     dGStokes.assembleStokesSystem();
