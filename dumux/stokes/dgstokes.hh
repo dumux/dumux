@@ -22,6 +22,7 @@
 #include"testfunctions.hh"
 
 #include <dune/istl/solvers.hh>
+#include "dumux/pardiso/pardiso.hh"
 
 namespace Dune
 {

@@ -20,7 +20,7 @@ void DGFiniteElementMethod<G,v_order,p_order>::assembleVolumeTerm(Entity& ent, L
 	Dune::GeometryType gt = ent.type();
 	//specify the quadrature order ?
 	//  #warning fixed quadrature order
-	int qord=6;
+	int qord=8;
 	for (unsigned int nqp=0;nqp<Dune::QuadratureRules<ctype,dim>::rule(gt,qord).size();++nqp)
 	{
 		//local position of quad points
@@ -154,7 +154,7 @@ void DGFiniteElementMethod<G,v_order,p_order>::assembleFaceTerm(Entity& ent, Int
 	Dune::GeometryType nbgtface = isit->intersectionNeighborLocal().type();
 	//specify the quadrature order ?
 	// #warning now fixed quadrature order
-	int qord=6;
+	int qord=8;
 	//  Grid grid;
 
 
@@ -435,7 +435,7 @@ void DGFiniteElementMethod<G,v_order,p_order>::assembleDirichletBoundaryTerm(Ent
 	Dune::GeometryType gtboundary = isit->intersectionSelfLocal().type();
 
 	//specify the quadrature order ?
-	int qord=6;
+	int qord=8;
 	for(unsigned int bq=0;bq<Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord).size();++bq)
 	{
 		const Dune::FieldVector<ctype,dim-1>& boundlocal = Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord)[bq].position();
@@ -629,7 +629,7 @@ void DGFiniteElementMethod<G,v_order,p_order>::assembleDirichletBoundaryTerm(Ent
 // 	Dune::GeometryType gtboundary = isit->intersectionSelfLocal().type();
 
 // 	//specify the quadrature order ?
-// 	int qord=6;
+// 	int qord=8;
 // 	for(unsigned int bq=0;bq<Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord).size();++bq)
 // 	{
 // 		const Dune::FieldVector<ctype,dim-1>& boundlocal = Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord)[bq].position();
@@ -680,6 +680,7 @@ template<class G, int v_order, int p_order>
 void DGFiniteElementMethod<G,v_order,p_order>::assembleNeumannBoundaryTerm(Entity& ent, IntersectionIterator& isit,
 									   LocalMatrixBlock& Aee, LocalVectorBlock& Be) const
 {
+  std::cout << "assembling the Neumann boundary term" << std::endl;
   Gradient temp;
   ctype   phi_ei[dim], psi_ej, entry;
   //get the shape function set
@@ -694,7 +695,7 @@ void DGFiniteElementMethod<G,v_order,p_order>::assembleNeumannBoundaryTerm(Entit
   Dune::GeometryType gtboundary = isit->intersectionSelfLocal().type();
   
   //specify the quadrature order ?
-  int qord=6;
+  int qord=8;
   for(unsigned int bq=0;bq<Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord).size();++bq)
     {
       const Dune::FieldVector<ctype,dim-1>& boundlocal = Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord)[bq].position();
@@ -733,7 +734,7 @@ void DGFiniteElementMethod<G,v_order,p_order>::assembleNeumannBoundaryTerm(Entit
 template<class G, int v_order, int p_order>
 void DGFiniteElementMethod<G,v_order,p_order>::assembleInterfaceTerm(Entity& ent, IntersectionIterator& isit,
 		LocalMatrixBlock& Aee, LocalVectorBlock& Be) const
-		{
+{
 	Gradient temp;
 	ctype   phi_ei[dim], phi_ej[dim], entry;
 	//get the shape function set
@@ -746,7 +747,7 @@ void DGFiniteElementMethod<G,v_order,p_order>::assembleInterfaceTerm(Entity& ent
 	Dune::GeometryType gtboundary = isit->intersectionSelfLocal().type();
 
 	//specify the quadrature order ?
-	int qord=6;
+	int qord=8;
 	for(unsigned int bq=0;bq<Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord).size();++bq)
 	{
 		const Dune::FieldVector<ctype,dim-1>& boundlocal = Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord)[bq].position();
@@ -784,7 +785,7 @@ void DGFiniteElementMethod<G,v_order,p_order>::assembleInterfaceTerm(Entity& ent
 			}
 		}
 	}
-		}
+}
 
 
 
@@ -970,56 +971,30 @@ void DGStokes<G,v_order,p_order>::assembleStokesSystem()
 template<class G, int v_order, int p_order>
 void DGStokes<G,v_order,p_order>::solveStokesSystem()
 {
-	//------------------ISTL solver--------------------------//
 	std::cout << "Solving Stokes System using ISTL solver\n";
-
-	//printmatrix(std::cout,A,"Matrix A: ","row");
-	//printvector(std::cout,b,"Vector b: ","row");
 	std::cout<<"============================================="<<std::endl;
 
+#ifdef HAVE_PARDISO
+      typedef MatrixAdapter<LMatrix,LVector,LVector> Operator;
+      Operator op(A);  
+      double red=1E-14;
+      SeqPardiso<LMatrix,LVector,LVector> pardiso(A);
+      LoopSolver<LVector> solver(op,pardiso,red,10000,1);
+      InverseOperatorResult r;
+      solver.apply(solution, b, r);
+#else
 	Dune::MatrixAdapter<LMatrix,LVector,LVector> op(A);
 	int maxIterations=1000;
 	double reduction=1E-18;
-	//Dune::SeqILUn<LMatrix,LVector,LVector> ilu0(A,0,0.92);
-	//Dune::SeqILUn<LMatrix,LVector,LVector> ilu0(A,1,1.0);
 	Dune::SeqILUn<LMatrix,LVector,LVector> ilu0(A,1,0.92);
-	//Dune::SeqGS<Matrix,Vector,Vector> seqgs(A,1,0.92);
-	//Dune::BiCGSTABSolver<Vector> bcgsolver(op,ilu0,1E-14,8000,1);
-
 	Dune::BiCGSTABSolver<LVector> bcgsolver(op,ilu0,reduction,maxIterations,0);
-	//Dune::CGSolver<LVector> cgsolver(op,ilu0,1E-10,10000,2);
-
 	Dune::InverseOperatorResult r;
 	solution = 1.0;
 	bcgsolver.apply(solution,b,r);
-	//cgsolver.apply(solution,b,r);
+#endif
 	std::cout<<"Iterations: "<<r.iterations<<std::endl;
-	while (! r.converged && maxIterations < 8000)
-	{
-		maxIterations *= 2;
-		std::cout << "warning ... BiCGStab did not converge..."
-		<< " increasing maxIterations to "
-		<< maxIterations << std::endl;
-		Dune::BiCGSTABSolver<LVector> bcgs(op,ilu0,reduction,maxIterations,0);
-		bcgs.apply(solution,b,r);
-		//    gs.apply(x,b);
-	}
 
-	//cgsolver.apply(solution,b,r);
-	//printvector(std::cout,solution,"Solution","");
 	b=solution;//for l2 error calculation
-	//   for(typename LVector::iterator i=solution.begin();i!=solution.end();++i)
-	//	 {
-	//	   for(int n=0;n<VBlockSize;++n)
-	//		 (*xv)[i.index()][n]=solution[i.index()][n];
-	//	   for(int n=0;n<PBlockSize;++n)
-	//		 (*xp)[i.index()][n]=solution[i.index()][VBlockSize+n];
-	//
-	//	 }
-	//printvector(std::cout,solution,"Solution","");
-	//printvector(std::cout,(*xv),"Velocity Coeff","");
-	//printvector(std::cout,(*xp),"Pressure Coeff","");
-	//------------------ISTL solver--------------------------//
 }
 
 

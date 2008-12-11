@@ -17,7 +17,7 @@ Dune::DGFiniteElementMethod<G,v_order,p_order>::evaluateH1error(int variable, co
   // #warning fixed quadrature order
   int qord=6;
 
-  for (int qp=0;qp<Dune::QuadratureRules<ctype,dim>::rule(gt,qord).size();++qp)
+  for (unsigned int qp=0;qp<Dune::QuadratureRules<ctype,dim>::rule(gt,qord).size();++qp)
 	{
 	  qp_loc = Dune::QuadratureRules<ctype,dim>::rule(gt,qord)[qp].position();
 
