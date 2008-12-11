@@ -82,10 +82,10 @@ namespace Dune
 	   *  \param Xa mass fraction of the non-wetting component in the wetting phase
 	   *  \return the mobility of the wetting phase
 	   */
-	  double mobW (double saturationW, 
+	  double mobW (double saturationW,
                    const FieldVector<DT,n>& x,
-                   const Entity& e, 
-                   const FieldVector<DT,n>& xi, 
+                   const Entity& e,
+                   const FieldVector<DT,n>& xi,
                    double T = 283.15,
                    double p = 1e5,
                    double Xa = 0.0) const
@@ -101,10 +101,10 @@ namespace Dune
 	   *  \param Xw mass fraction of the wetting component in the non-wetting phase
 	   *  \return the mobility of the nonwetting phase
 	   */
-	  double mobN (double saturationN, 
+	  double mobN (double saturationN,
                    const FieldVector<DT,n>& x,
-                   const Entity& e, 
-                   const FieldVector<DT,n>& xi, 
+                   const Entity& e,
+                   const FieldVector<DT,n>& xi,
                    double T=283.15,
                    double p=1e5,
                    double Xw = 0) const
@@ -204,7 +204,7 @@ namespace Dune
 	  /*! \brief the capillary pressure - saturation relation
 	   *
 	   *  \param saturationW the saturation of the wetting phase
-	   *  \return the capillary pressur \f$ p_\text{c} (S_\text{w})\f$.
+	   *  \return the capillary pressure \f$ p_\text{c} (S_\text{w})\f$.
 	   */
 	  virtual double pC (double saturationW, const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, double T = 283.15) const
 	  {
@@ -229,14 +229,18 @@ namespace Dune
 	    }
 	  }
 
-	  /*! \brief the capillary pressure - saturation relation
+	  /*! \brief class for a second capillary pressure - saturation relation
 	   *
 	   *  \param saturationW the saturation of the wetting phase
-	   *  \return the capillary pressur \f$ p_\text{c} (S_\text{w})\f$.
+	   *  \param param standard vector containing the parameters for the material law
+	   *  \return the capillary pressure \f$ p_\text{c} (S_\text{w})\f$.
 	   */
 	  virtual double pC (double saturationW, const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi,
 						  const std::vector<double>& param, double T = 283.15) const
 	  {
+		// ATTENTION: relPermFlag2 is used from the soil class!
+		// This function is mainly implemented, for the definition of a second
+		// Pc-Sw relation for interfacial area models
 		switch (soil.relPermFlag2(x, e, xi))
 	    {
 	    case 0:
@@ -252,7 +256,7 @@ namespace Dune
 	    case 5:
 	    	return auxiliary3.pC(saturationW, x, e, xi, param, T);
 	    default:
-	    	DUNE_THROW(NotImplemented, "Matrix2p::modelFlag " << soil.relPermFlag(x, e, xi) << " for TwoPhaseRelations::pC");
+	    	DUNE_THROW(NotImplemented, "Matrix2p::modelFlag " << soil.relPermFlag2(x, e, xi) << " for TwoPhaseRelations::pC");
 	    }
 	  }
 
@@ -286,9 +290,10 @@ namespace Dune
 	    }
 	  }
 
-	  /*! \brief the derivative of capillary pressure w.r.t. the saturation
+	  /*! \brief second class for calculation of the derivative of capillary pressure w.r.t. the saturation
 	   *
 	   *  \param saturationW the saturation of the wetting phase
+	   *  \param param standard vector containing the parameters for the material law
 	   *  \param T temperature
 	   *  \param p pressure
 	   *  \return the derivative \f$\text{d}p_\text{c}/\text{d}S_\text{e}\f$
@@ -296,6 +301,7 @@ namespace Dune
 	  virtual double dPdS (double saturationW, const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi,
 							  const std::vector<double>& param, double T=283.15, double p=1e5) const
 	  {
+		// ATTENTION: relPermFlag2 is used from the soil class!
 		switch (soil.relPermFlag2(x, e, xi))
 	    {
 	    case 0:
@@ -311,7 +317,7 @@ namespace Dune
 	    case 5:
 	    	return auxiliary3.dPdS(saturationW, x, e, xi, param, T);
 	    default:
-	    	DUNE_THROW(NotImplemented, "Matrix2p::modelFlag " << soil.relPermFlag(x, e, xi) << " for TwoPhaseRelations::dPdS");
+	    	DUNE_THROW(NotImplemented, "Matrix2p::modelFlag " << soil.relPermFlag2(x, e, xi) << " for TwoPhaseRelations::dPdS");
 	    }
 	  }
 
