@@ -75,6 +75,9 @@ int main(int argc, char** argv)
     timer.reset();
 //    timeloop.execute(twoPhase);
     MultiWriter writer("co2-out");
+
+//  for timeloop.executeMultiWriter(twoPhase, writer, true) initial values are read from
+//  restart file data.dgf
     timeloop.executeMultiWriter(twoPhase, writer); /*@\label{tutorial-coupled:execute}@*/
     std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
 
