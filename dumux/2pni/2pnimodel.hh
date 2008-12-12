@@ -7,6 +7,7 @@
 #include "dumux/operators/p1operatorextended.hh"
 #include "dumux/nonlinear/nonlinearmodel.hh"
 #include "dumux/fvgeometry/fvelementgeometry.hh"
+#include "dumux/io/exporttodgf.hh"
 
 namespace Dune {
 template<class G, class RT, class ProblemType, class LocalJacobian,
@@ -25,6 +26,8 @@ public:
 	}
 
 	virtual void initial() = 0;
+
+	virtual void restart() {}
 
 	virtual void update(double& dt) = 0;
 
@@ -74,7 +77,7 @@ public:
 
 	virtual void initial() {}
 
-
+	virtual void restart() {}
 
 	virtual void globalDefect(FunctionType& defectGlobal) {
 		typedef typename G::Traits::template Codim<0>::Entity Entity;
@@ -132,6 +135,28 @@ public:
 			}
 	}
 
+	void writerestartfile()
+	{
+		enum {dim = G::dimension};
+		typedef typename GV::template Codim<dim>::Iterator Iterator;
+
+//		exportToDGF(_grid.leafView(), *(this->u), m, "primvar", false);
+
+		const int size = vertexmapper.size();
+		BlockVector<FieldVector<double, m> > data(size);
+		data=0;
+
+		Iterator endIt = _grid.leafView().template end<dim>();
+		for (Iterator it = _grid.leafView().template begin<dim>(); it != endIt;	++it)
+		{
+			int index = vertexmapper.map(*it);
+			for (int i = 0; i < m;i++)
+			{
+				data[index][i]=(*(this->u))[index][i];
+			}
+		}
+		exportToDGF(_grid.leafView(), data, (m), "data", false);
+	}
 
 	virtual void vtkout(const char* name, int k) {}
 
