@@ -9,6 +9,7 @@
 #include "dumux/nonlinear/newtonmethod.hh"
 #include "dumux/fvgeometry/fvelementgeometry.hh"
 #include "dumux/nonlinear/newtonmethod.hh"
+#include "dumux/io/exporttodgf.hh"
 
 namespace Dune {
 template<class G, class RT, class ProblemType, class LocalJacobian,
@@ -182,6 +183,8 @@ public:
 		return;
 	}
 
+	virtual void restart() {}
+
 	virtual void update(double& dt) {
 		this->localJacobian.setDt(dt);
 		this->localJacobian.setOldSolution(this->uOldTimeStep);
@@ -348,6 +351,29 @@ public:
 		std::cout << "nonwetting phase saturation: min = "<< minSat
 				<< ", max = "<< maxSat << std::endl;
 		if (minSat< -0.5 || maxSat > 1.5)DUNE_THROW(MathError, "Saturation exceeds range.");
+	}
+
+	void writerestartfile()
+	{
+		enum {dim = G::dimension};
+		typedef typename GV::template Codim<dim>::Iterator Iterator;
+
+//		exportToDGF(_grid.leafView(), *(this->u), m, "primvar", false);
+
+		const int size = vertexmapper.size();
+		BlockVector<FieldVector<double, m> > data(size);
+		data=0;
+
+		Iterator endIt = grid_.leafView().template end<dim>();
+		for (Iterator it = grid_.leafView().template begin<dim>(); it != endIt;	++it)
+		{
+			int index = vertexmapper.map(*it);
+			for (int i = 0; i < m;i++)
+			{
+				data[index][i]=(*(this->u))[index][i];
+			}
+		}
+		exportToDGF(grid_.leafView(), data, (m), "data", false);
 	}
 
     const G &grid() const
