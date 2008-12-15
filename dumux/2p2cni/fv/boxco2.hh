@@ -37,6 +37,7 @@
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/paamg/amg.hh>
 #include "dumux/pardiso/pardiso.hh"
+#include "dumux/pardiso/identity.hh"
 #include "dumux/2p2cni/2p2cnimodel.hh"
 #include "dumux/2p2cni/2p2cniproblem.hh"
 #include "dumux/2p2cni/fv/boxco2jacobian.hh"
@@ -44,6 +45,8 @@
 #include "dumux/nonlinear/new_newtonmethod.hh"
 #include "dumux/2p2cni/2p2cninewtoncontroller.hh"
 #include "dumux/io/importfromdgf_leaf.hh"
+#include <boost/format.hpp>
+
 namespace Dune
 {
 /**
@@ -255,7 +258,7 @@ namespace Dune
 		return;
 	}
 
-	void restart() {
+		void restart(int restartNum=0) {
 		typedef typename G::Traits::template Codim<0>::Entity Entity;
 		typedef typename G::ctype DT;
 		typedef typename GV::template Codim<0>::Iterator Iterator;
@@ -283,7 +286,11 @@ namespace Dune
 		Dune::BlockVector<FieldVector<double, m+1> > data(size);
 		data=0;
 
-		importFromDGF<GV>(data, "data", false);
+		// initialize primary variables
+		std::string restartFileName;
+		restartFileName = (boost::format("data-%05d")
+		                           %restartNum).str();
+		importFromDGF<GV>(data, restartFileName, false);
 
 		for (int i=0;i<size;i++)
 		{
@@ -402,11 +409,11 @@ namespace Dune
 
 		}
 
-
 		*(this->uOldTimeStep) = *(this->u);
 
 		return;
 	}
+
 	void updateState()
 	{
 		typedef typename G::Traits::template Codim<0>::Entity Entity;
@@ -440,18 +447,13 @@ namespace Dune
 	void solve()
 	{
 		Operator op(*(this->A));  // make operator out of matrix
-		double red=1E-9;
+		double red=1E-14;
 
 #ifdef HAVE_PARDISO
-//	SeqPardiso<MatrixType,VectorType,VectorType> ilu0(*(this->A));
 		pardiso.factorize(*(this->A));
 		BiCGSTABSolver<VectorType> solver(op,pardiso,red,100,2);         // an inverse operator
-	//	SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A),1.0);// a precondtioner
-		//LoopSolver<VectorType> solver(op, ilu0, red, 10, 2);
 #else
 		SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A),1.0);// a precondtioner
-
-		//SeqIdentity<MatrixType,VectorType,VectorType> ilu0(*(this->A));// a precondtioner
 		BiCGSTABSolver<VectorType> solver(op,ilu0,red,10000,1);         // an inverse operator
 #endif
 		InverseOperatorResult r;
@@ -497,7 +499,7 @@ namespace Dune
                 /*
 		//////////////
 		RT absTol = 1e-1;
-		RT relTol = 1e-9;
+		RT relTol = 1e-8;
 		///////////////////
 		NewtonMethod<G, ThisType> newtonMethod(this->_grid, *this, relTol, absTol);
 		newtonMethod.execute();
