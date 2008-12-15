@@ -47,7 +47,7 @@ int main(int argc, char** argv)
 	    // create a grid object
 	    typedef Dune::SGrid<dim,dim> GridType;
 	    //typedef Dune::YaspGrid<dim,dim> GridType;
-	    //typedef Dune::UGGrid<dim> GridType;
+	    // typedef Dune::UGGrid<dim> GridType;
 		//typedef Dune::ALUSimplexGrid<dim,dim> GridType;
 
 	    Dune::GridPtr<GridType> gridPointer(argv[1]);
