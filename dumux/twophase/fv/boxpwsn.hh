@@ -45,6 +45,7 @@
 #include "dumux/nonlinear/new_newtonmethod.hh"
 #include "dumux/nonlinear/new_newtoncontroller.hh"
 #include "dumux/io/importfromdgf_leaf.hh"
+#include <boost/format.hpp>
 
 namespace Dune {
 
@@ -282,7 +283,7 @@ public:
 		return;
 	}
 
-	virtual void restart()
+	virtual void restart(int restartNum=0)
 	{
 		typedef typename G::Traits::template Codim<0>::Entity Entity;
 		typedef typename G::ctype DT;
@@ -309,7 +310,11 @@ public:
 		data=0;
 
 		// initialize primary variables
-		importFromDGF<GV>(data, "data", false);
+		std::string restartFileName;
+		restartFileName = (boost::format("data-%05d")
+		                           %restartNum).str();
+		importFromDGF<GV>(data, restartFileName, false);
+
 
 		for (int i=0;i<size;i++)
 		{
