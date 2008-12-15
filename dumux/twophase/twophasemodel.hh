@@ -10,6 +10,7 @@
 #include "dumux/fvgeometry/fvelementgeometry.hh"
 #include "dumux/nonlinear/newtonmethod.hh"
 #include "dumux/io/exporttodgf.hh"
+#include <boost/format.hpp>
 
 namespace Dune {
 template<class G, class RT, class ProblemType, class LocalJacobian,
@@ -183,7 +184,7 @@ public:
 		return;
 	}
 
-	virtual void restart() {}
+	virtual void restart(int restartNum=0) {}
 
 	virtual void update(double& dt) {
 		this->localJacobian.setDt(dt);
@@ -353,7 +354,7 @@ public:
 		if (minSat< -0.5 || maxSat > 1.5)DUNE_THROW(MathError, "Saturation exceeds range.");
 	}
 
-	void writerestartfile()
+	void writerestartfile(int restartNum=0)
 	{
 		enum {dim = G::dimension};
 		typedef typename GV::template Codim<dim>::Iterator Iterator;
@@ -373,7 +374,9 @@ public:
 				data[index][i]=(*(this->u))[index][i];
 			}
 		}
-		exportToDGF(grid_.leafView(), data, (m), "data", false);
+		restartFileName = (boost::format("data-%05d")
+                           %restartNum).str();
+		exportToDGF(grid_.leafView(), data, (m), restartFileName, false);
 	}
 
     const G &grid() const
@@ -392,6 +395,7 @@ protected:
 	BlockVector<FieldVector<RT, 1> > satEx;
 	BlockVector<FieldVector<RT, 1> > pEx;
 	BlockVector<FieldVector<RT, 1> > satError;
+	std::string restartFileName;
 };
 
 }
