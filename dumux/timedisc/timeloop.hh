@@ -151,7 +151,7 @@ namespace Dune {
           // vtkMultiWriter. it is a temorary measure to ease the
           // migration...
 	  template<class MultiWriter>
-	  void executeMultiWriter (Model& model, MultiWriter& writer, bool restart=false)
+	  void executeMultiWriter (Model& model, MultiWriter& writer, bool restart=false, int restartNum=0)
 	  {
                   typedef NewImplicitEulerStep<Model> NewTimeStep;
 
@@ -168,7 +168,7 @@ namespace Dune {
 		}
 		else
 		{
-			model.restart();
+			model.restart(restartNum);
 		}
 		model.addvtkfields(writer);
 		std::cout << ">>> writing initial output file" << std::endl;
@@ -205,7 +205,8 @@ namespace Dune {
 			  }
 			  if (k%(modulo*2) == 0)
 			  {
-				  model.writerestartfile();
+				  ++restartNum;
+				  model.writerestartfile(restartNum);
 			  }
 		  }
 
