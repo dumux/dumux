@@ -8,6 +8,7 @@
 #include "dumux/nonlinear/nonlinearmodel.hh"
 #include "dumux/fvgeometry/fvelementgeometry.hh"
 #include "dumux/io/exporttodgf.hh"
+#include <boost/format.hpp>
 
 namespace Dune {
 template<class G, class RT, class ProblemType, class LocalJacobian,
@@ -77,7 +78,7 @@ public:
 
 	virtual void initial() {}
 
-	virtual void restart() {}
+	virtual void restart(int restartNum=0) {}
 
 	virtual void globalDefect(FunctionType& defectGlobal) {
 		typedef typename G::Traits::template Codim<0>::Entity Entity;
@@ -135,7 +136,7 @@ public:
 			}
 	}
 
-	void writerestartfile()
+	void writerestartfile(int restartNum=0)
 	{
 		enum {dim = G::dimension};
 		typedef typename GV::template Codim<dim>::Iterator Iterator;
@@ -155,7 +156,10 @@ public:
 				data[index][i]=(*(this->u))[index][i];
 			}
 		}
-		exportToDGF(_grid.leafView(), data, (m), "data", false);
+
+		restartFileName = (boost::format("data-%05d")
+                           %restartNum).str();
+		exportToDGF(_grid.leafView(), data, (m), restartFileName, false);
 	}
 
 	virtual void vtkout(const char* name, int k) {}
@@ -163,11 +167,15 @@ public:
     const G &grid() const
         { return _grid; }
 
+
+
 protected:
   ProblemType& problem;
   const G& _grid;
   VertexMapper vertexmapper;
   int size;
+  std::string restartFileName;
+
 };
 
 }
