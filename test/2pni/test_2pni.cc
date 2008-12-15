@@ -74,7 +74,11 @@ int main(int argc, char** argv)
 
     Dune::Timer timer;
     timer.reset();
-    MultiWriter writer("out-twophase");
+    MultiWriter writer("out-2pni");
+
+//  for timeloop.executeMultiWriter(twoPhase, writer, true) initial
+//  values are read from restart file data.dgf
+//  at the moment this only works for SGrid in 2D and for ALUCubeGrid in 3D
     timeloop.executeMultiWriter(twoPhase, writer);
     std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
 
