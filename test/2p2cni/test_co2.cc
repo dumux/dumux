@@ -54,10 +54,11 @@ int main(int argc, char** argv)
 	is2 >> dt;
 
     // create a grid object
-    //typedef Dune::SGrid<dim,dim> GridType;
+    typedef Dune::SGrid<dim,dim> GridType;
     //typedef Dune::YaspGrid<dim,dim> GridType;
-    //typedef Dune::UGGrid<dim> GridType;
-	typedef Dune::ALUSimplexGrid<dim,dim> GridType;
+   //  typedef Dune::UGGrid<dim> GridType;
+//	typedef Dune::ALUSimplexGrid<dim,dim> GridType;
+//	typedef Dune::ALUCubeGrid<dim,dim> GridType;
 
     Dune::GridPtr<GridType> gridPointer(argv[1]);
     GridType& grid = *gridPointer;
@@ -93,6 +94,10 @@ int main(int argc, char** argv)
       MultiWriter writer("co2");
 
  	 //timeloop.execute(twoPhase);
+
+//  for timeloop.executeMultiWriter(twoPhase, writer, true) initial
+//  values are read from restart file data.dgf
+//  at the moment this only works for SGrid in 2D and for ALUCubeGrid in 3D
       timeloop.executeMultiWriter(twoPhase, writer);
       std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
 
