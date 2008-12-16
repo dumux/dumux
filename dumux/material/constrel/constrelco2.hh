@@ -21,9 +21,7 @@ class ConstrelCO2
 		double var_p; // p value at which variable is searched
 	};
 
-public:
-
-    double interpolate (InterpolationData dat) const
+    static double interpolate_(InterpolationData dat)
         {
             double var_Tlow_pges, var_Thigh_pges, var_Tges_pges, rho;
 
@@ -54,6 +52,8 @@ public:
             return rho;
         }
 
+
+public:
     // from MUFTE
     // calcualted from Span and Wagner (1996)
     double density(double T, double p) const
@@ -61,6 +61,19 @@ public:
             // ASSUMES equidistant distribution of temperature and pressure values
             int maxTIdx = 66;
             int maxPIdx = 109;
+
+            if(T > T_vals[maxTIdx] || T < T_vals[0] )
+            {
+                DUNE_THROW(Dune::RangeError,
+                           "ConstrelCO2: Temperature " << T << " out of range at " << __FILE__ << ":" << __LINE__);
+            }
+            else if (p > p_vals[maxPIdx] || p < p_vals[0])
+            {
+                DUNE_THROW(Dune::RangeError,
+                           "ConstrelCO2: pressure " << p << " out of range at " << __FILE__ << ":" << __LINE__);
+            }
+
+/*
             if (T > T_vals[maxTIdx])
                 T = T_vals[maxTIdx];
             else if(T < T_vals[0])
@@ -69,6 +82,7 @@ public:
                 p = p_vals[maxPIdx];
             else if(p < p_vals[0])
                 p = p_vals[0];
+*/
 
             double h_T = T_vals[2] - T_vals[1];
             int j_Tlow = (T - T_vals[0])/h_T;
@@ -93,7 +107,7 @@ public:
             dat.var_T = T;
             dat.var_p = p;
 
-            double rho = interpolate(dat);
+            double rho = interpolate_(dat);
 
             return (rho);
         }
@@ -107,7 +121,7 @@ public:
 /*                                                                 */
 /*******************************************************************/
 
-    double viscosity(double Temp, double pg) const
+    double viscosity(double temp, double pg) const
         {
             static const double a0 = 0.235156;
             static const double a1 = -0.491266;
@@ -127,13 +141,15 @@ public:
             double dmu, rho;
             double visco_CO2;
 
-            if(Temp < 275.) // regularisation
+            if(temp < 275.) // regularisation
             {
-                Temp = 275;
+                // temp = 275;
+                DUNE_THROW(Dune::RangeError,
+                           "ConstrelCO2: Temperature " << temp << " out of range at " << __FILE__ << ":" << __LINE__);
             }
 
 
-            TStar = Temp/ESP;
+            TStar = temp/ESP;
 
             /* mu0: viscosity in zero-density limit */
             SigmaStar = exp(a0 + a1*log(TStar)
@@ -141,11 +157,11 @@ public:
                             + a3*log(TStar)*log(TStar)*log(TStar)
                             + a4*log(TStar)*log(TStar)*log(TStar)*log(TStar) );
 
-            mu0 = 1.00697*sqrt(Temp) / SigmaStar;
+            mu0 = 1.00697*sqrt(temp) / SigmaStar;
 
             /* dmu : excess viscosity at elevated density */
 
-            rho = density(Temp, pg); /* CO2 mass density [kg/m^3] */
+            rho = density(temp, pg); /* CO2 mass density [kg/m^3] */
 
             dmu = d11*rho + d21*rho*rho + d64*pow(rho,6)/(TStar*TStar*TStar)
                 + d81*pow(rho,8) + d82*pow(rho,8)/TStar;
@@ -164,7 +180,7 @@ public:
             return visco_CO2;
         }
 
-    double enthalpy(double Temp, double pg) const
+    double enthalpy(double temp, double pg) const
         {
             /* values calculated from Span & Wagner, 1996     	*/
 
@@ -183,17 +199,30 @@ public:
             // ASSUMES equidistant distribution of temperature and pressure values
             int maxTIdx = 38;
             int maxPIdx = 79;
-            if(Temp > T_enth[maxTIdx])
-                Temp = T_enth[maxTIdx];
-            else if(Temp < T_enth[0])
-                Temp = T_enth[0];
+
+            if(temp > T_enth[maxTIdx] || temp < T_enth[0])
+            {
+                DUNE_THROW(Dune::RangeError,
+                           "ConstrelCO2: Temperature " << temp << " out of range at " << __FILE__ << ":" << __LINE__);
+            }
+            else if (pg > p_enth[maxPIdx] || pg < p_enth[0]) {
+                DUNE_THROW(Dune::RangeError,
+                           "ConstrelCO2: gas pressure " << pg << " out of range at " << __FILE__ << ":" << __LINE__);
+            }
+
+/*            if(temp > T_enth[maxTIdx]) {
+                temp = T_enth[maxTIdx];
+            }
+            else if(temp < T_enth[0])
+                temp = T_enth[0];
             if(pg > p_enth[maxPIdx])
                 pg = p_enth[maxPIdx];
             else if(pg < p_enth[0])
                 pg = p_enth[0];
+*/
 
             double h_T = T_enth[2] - T_enth[1];
-            int j_Tlow = (Temp - T_enth[0])/h_T;
+            int j_Tlow = (temp - T_enth[0])/h_T;
             if (j_Tlow == maxTIdx)
                 j_Tlow--;
             int j_Tup = j_Tlow + 1;
@@ -212,15 +241,15 @@ public:
             dat.var_Tlow_phigh  = enth[j_pup][j_Tlow];
             dat.var_Thigh_plow  = enth[j_plow][j_Tup];
             dat.var_Thigh_phigh = enth[j_pup][j_Tup];
-            dat.var_T = Temp;
+            dat.var_T = temp;
             dat.var_p = pg;
 
-            double enth_result = interpolate (dat);
+            double enth_result = interpolate_(dat);
 
             return(enth_result);
         }
 
-    double lambda_CO2 (double Temp, double pg) const
+    double lambda_CO2 (double temp, double pg) const
         {
             /* input of temperature array */
             static const double T[] = {
@@ -411,10 +440,21 @@ public:
             InterpolationData dat;
 
             /* Regularisierung */
-            if (Temp < 273.15) Temp = 273.15;
-            if (Temp > 350.00) Temp = 350.00;
+            if(temp < 273.15 || temp > 350.00)
+            {
+                DUNE_THROW(Dune::RangeError,
+                           "ConstrelCO2: Temperature " << temp << " out of range at " << __FILE__ << ":" << __LINE__);
+            }
+            else if (pg < 1.0E5 || pg > 1.2E7) {
+                DUNE_THROW(Dune::RangeError,
+                           "ConstrelCO2: gas pressure " << pg << " out of range at " << __FILE__ << ":" << __LINE__);
+            }
+/*
+            if (temp < 273.15) temp = 273.15;
+            if (temp > 350.00) temp = 350.00;
             if (pg < 1.0E5) pg = 1.0E5;
             if (pg > 1.2E7) pg = 1.2E7;
+*/
             
             /********************************************************/
             /*                                                      */
@@ -431,7 +471,7 @@ public:
 
             for (int i = 0; i < 9; i++ )
             {
-                if ( T[i] <= Temp )
+                if ( T[i] <= temp )
                 {
                     lower_T = i;
                 }
@@ -459,15 +499,15 @@ public:
 
 
 
-            dat.var_T = Temp;
+            dat.var_T = temp;
             dat.var_p = pg;
 
-            double lamb_result=this->interpolate (dat);
+            double lamb_result = interpolate_(dat);
 
             return(lamb_result);
         }
 
-    double satpressure_CO2 (double Temp)
+    double satpressure_CO2 (double temp)
         {
             /*values from Span und Flacke 2004: Statusbericht DKV Nr 20*/
             static const double ts[] = {
@@ -479,20 +519,27 @@ public:
                 5.0688E6, 5.5761E6, 6.1227E6, 6.7131E6, 7.3555E6
             };
 
-            if (Temp > 304.0)
-                Temp = 304.0;
+            if(temp < 270 || temp > 304)
+            {
+                DUNE_THROW(Dune::RangeError,
+                           "ConstrelCO2: Temperature " << temp << " out of range at " << __FILE__ << ":" << __LINE__);
+            }
+            /*
+            if (temp > 304.0)
+                temp = 304.0;
+            */
     
             for (int i=0; i < 9; i++)
             {
-                if (ts[i] <= Temp && Temp <= ts[i+1])
+                if (ts[i] <= temp && temp <= ts[i+1])
                 {
                     return ps[i] +
-                        (Temp - ts[i])/(ts[i+1] - ts[i])
+                        (temp - ts[i])/(ts[i+1] - ts[i])
                         * (ps[i+1] - ps[i]);
                 }
             }
 
-            DUNE_THROW(Dune::RangeError, "satpressure_CO2: Temperature " << Temp << " out of range");
+            DUNE_THROW(Dune::RangeError, "satpressure_CO2: Temperature " << temp << " out of range");
         }
 
 private:
