@@ -210,7 +210,7 @@ public:
 				FVElementGeometry<G> fvGeom;
 			    fvGeom.update(entity);
 
-				for (int k = 0; k < fvGeom.nEdges; k++)
+				for (int k = 0; k < fvGeom.numEdges; k++)
 			     {
 				    int i = fvGeom.subContVolFace[k].i;
 
@@ -375,7 +375,7 @@ public:
 			// get entity
 			const Entity& entity = *it;
 			this->localJacobian.fvGeom.update(entity);
-			int size = this->localJacobian.fvGeom.nNodes;
+			int size = this->localJacobian.fvGeom.numVertices;
 			this->localJacobian.setLocalSolution(entity);
 			this->localJacobian.computeElementData(entity);
 			bool old = true;

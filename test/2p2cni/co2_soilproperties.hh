@@ -1,22 +1,25 @@
 /// $Id$
-#ifndef CO2_SOILPROPERTIES
-#define CO2_SOILPROPERTIES
+#ifndef CO2_SOILPROPERTIES_H
+#define CO2_SOILPROPERTIES_H
 
 #include <dumux/material/matrixproperties.hh>
 
 namespace Dune
 {
 
-template<class G, class RT>
-class CO2Soil: public HomogeneousSoil<G, RT>
+template<class Grid, class Scalar>
+class CO2Soil: public HomogeneousSoil<Grid, Scalar>
 {
 public:
-typedef	typename G::Traits::template Codim<0>::Entity Entity;
-	typedef typename G::ctype DT;
-	enum
-	{	dim=G::dimension, m=3};
+typedef	typename Grid::Traits::template Codim<0>::Entity Element;
+	typedef typename Grid::ctype CoordScalar;
 
-	FieldMatrix<DT,dim,dim> K (const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi)
+    enum {dim=Grid::dimension, dimWorld=Grid::dimensionworld};
+    
+    typedef Dune::FieldVector<CoordScalar,dim>      LocalPosition;
+    typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
+
+	const FieldMatrix<CoordScalar,dim,dim> &K(const GlobalPosition &x, const Element& e, const LocalPosition &xi)
 	{
 	     if (x[0] > -0.2 && x[0] < 0.2 && x[1] > -0.2 && x[1] < 0.2)
 		   return permlocWell_;
@@ -24,29 +27,29 @@ typedef	typename G::Traits::template Codim<0>::Entity Entity;
 		   return permloc_;
 	}
 
-	double porosity(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi) const
+	double porosity(const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
 	{
 		return 0.15;
 	}
 
-	double Sr_w(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, const double T = 283.15) const
+	double Sr_w(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double T = 283.15) const
 	{
 		return 0.2;
 	}
 
-	double Sr_n(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, const double T = 283.15) const
+	double Sr_n(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double T = 283.15) const
 	{
 		return 0.05;
 	}
 
-	virtual double heatCap(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi) const
+	virtual double heatCap(const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
 	{
 		return 	(800 /* spec. heat cap. of sediment */
 						* 2650 /* density of sediment */
 						* (1-porosity(x, e, xi)));
 	}
 
-	virtual double heatCond(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, const double sat) const
+	virtual double heatCond(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double sat) const
 	{
 		static const double ldry = 0.32;
 		static const double lsat = 2.7;
@@ -64,7 +67,7 @@ typedef	typename G::Traits::template Codim<0>::Entity Entity;
 		return(l_wurz);
 	}
 
-	std::vector<double> paramRelPerm(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, const double T = 283.15) const
+	std::vector<double> paramRelPerm(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double T = 283.15) const
 	{
 		std::vector<double> param(2);
 
@@ -75,14 +78,14 @@ typedef	typename G::Traits::template Codim<0>::Entity Entity;
 		return param;
 	}
 
-	typename Matrix2p<G,RT>::modelFlag relPermFlag(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi) const
+	typename Matrix2p<Grid,Scalar>::modelFlag relPermFlag(const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
 	{
-		return Matrix2p<G,RT>::brooks_corey;
+		return Matrix2p<Grid,Scalar>::brooks_corey;
 	}
 
 
 	CO2Soil()
-	:HomogeneousSoil<G,RT>()
+	:HomogeneousSoil<Grid,Scalar>()
 	{
 	  permTest_ = 0;
 	  permloc_ = 0;
@@ -96,7 +99,7 @@ typedef	typename G::Traits::template Codim<0>::Entity Entity;
 	}
 
 	private:
-	Dune::FieldMatrix<DT,dim,dim> permloc_, permlocWell_, permTest_;
+	Dune::FieldMatrix<Scalar,dim,dim> permloc_, permlocWell_, permTest_;
 };
 } // end namespace
 #endif

@@ -18,7 +18,7 @@ namespace Dune
 	
 	public:
 	  GravityProblem(VC& variables, G* g, TwoPhaseRelations& law = *(new LinearLaw), FieldVector<DT,n> gravity = *(new FieldVector<DT,n>(0)))
-	    : grid(g), DiffusionProblem<G,RT,VC>(variables, law, false, gravity)
+          : DiffusionProblem<G,RT,VC>(variables, law, false, gravity), grid(g)
 	  { }
 	
 	  GravityProblem()

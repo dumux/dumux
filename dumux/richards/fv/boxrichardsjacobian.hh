@@ -146,7 +146,7 @@ namespace Dune
     	 RT flux;
 		 // calculate FE gradient of the pressure
 		 FieldVector<RT, dim> pGrad(0);
-		 for (int k = 0; k < this->fvGeom.nNodes; k++)
+		 for (int k = 0; k < this->fvGeom.numVertices; k++)
 		 {
 			  FieldVector<DT,dim> grad(this->fvGeom.subContVolFace[face].grad[k]);
 			  grad *= sol[k][pWIdx]; // pressure
@@ -206,7 +206,7 @@ namespace Dune
     void updateStaticData (const Entity& e, const VBlockType* sol)
     {
 		// ASSUME porosity defined at nodes
-		sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+		sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
 
 		return;
     }
@@ -285,7 +285,7 @@ namespace Dune
 
 	void updateVariableData(const Entity& e, const VBlockType* sol, bool old = false)
 	{
-		int size = this->fvGeom.nNodes;
+		int size = this->fvGeom.numVertices;
 
 		for (int i = 0; i < size; i++)
 				updateVariableData(e, sol, i, old);

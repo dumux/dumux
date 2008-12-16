@@ -53,11 +53,11 @@ public:
 	 *  and the initial condition \a initialCondition. 
 	 *  Sets the pointers \a grid and \a mapper to \a g and \a m. 
 	 */
-	PipeFlow(int nNodes, Grid *g, MapperC0 *mC0, MapperNodeGlobalIDtoOnOutIndexType *mapGlobalNodeIDtoPipeNodeOnlineIndex, MapperNodeGlobalIDtoOnOutIndexType *mapGlobalNodeIDtoPipeNodeOutlineIndex, VertexVectorOnLineType *vertexVectorOnL, VertexVectorOutLineType *vertexVectorOutL,
+	PipeFlow(int numVertices, Grid *g, MapperC0 *mC0, MapperNodeGlobalIDtoOnOutIndexType *mapGlobalNodeIDtoPipeNodeOnlineIndex, MapperNodeGlobalIDtoOnOutIndexType *mapGlobalNodeIDtoPipeNodeOutlineIndex, VertexVectorOnLineType *vertexVectorOnL, VertexVectorOutLineType *vertexVectorOutL,
 			Press pressureP, double alpEx, double tmp, double dens, double kinematicViscosity, double roughn, double diam) 
 	: boundaryConditionP(), boundaryConditionV(),  
 	initialConditionP(), initialConditionV(), sourceSink(),
-	pressure(nNodes), velocity(nNodes)
+	pressure(numVertices), velocity(numVertices)
 	{
 		vertexVectorOnLine = *vertexVectorOnL;
 		vertexVectorOutLine = *vertexVectorOutL;

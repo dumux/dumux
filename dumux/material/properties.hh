@@ -22,7 +22,7 @@ public:
    * @param p Pressure \f$ \left[ Pa \right] \f$
    * @return kinematic viscosity \f$ \left[ \frac{kg}{ms} \right] \f$
    */
-  virtual double viscosity (double T=283.15, double p=1e5, double rho=0.) const = 0;
+    virtual double viscosity (double T=283.15, double p=1e5, double rho=0.) const = 0;
 
   /** @brief density
    * @param T Temperature \f$ \left[ K \right] \f$
@@ -484,7 +484,8 @@ class CO2 : public Medium
 			else 
 				return constRelCO2.density(T,p);
 		}
-    double viscosity ( double T=432., double p=3.086e7 /*, double rho=0.*/) const 
+
+        double viscosity ( double T=432., double p=3.086e7, double rho=0.) const 
 		{
 			if (constViscosity_) 
 				return constViscosity_;

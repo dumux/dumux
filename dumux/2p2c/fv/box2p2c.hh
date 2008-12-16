@@ -377,7 +377,7 @@ namespace Dune
 				RT xAW = (*(this->localJacobian.outMassFracAir))[globalId];
 				RT xWN = (*(this->localJacobian.outMassFracWater))[globalId];
 				RT xAN = 1 - xWN;
-				RT pW = (*(this->u))[globalId][0];
+//				RT pW = (*(this->u))[globalId][0];
 				RT Te = (*(this->u))[globalId][2];
 				RT mass = vol * poro * (satN * rhoN * xAN + satW * rhoW * xAW);
 
@@ -410,7 +410,7 @@ namespace Dune
 	}
 
 
-	void restart()
+	void restart(int restartNum)
 	{
 		typedef typename G::Traits::template Codim<0>::Entity Entity;
 		typedef typename G::ctype DT;
@@ -610,7 +610,7 @@ namespace Dune
 //			this->satN[i] = (*(this->u))[i][1];
 //			this->satW[i] = 1 - this->satN[i];
 //			//const FieldVector<RT, 4> parameters(this->problem.materialLawParameters
-//			//	 		 (this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal));
+//			//	 		 (this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal));
 //			//			this->pC[i] = this->problem.materialLaw().pC(this->satW[i], parameters);
 //			xWN[i] = this->problem.multicomp().xWN(this->pW[i], 283.15); //Achtung!! pW instead of pN!!!
 //			xAW[i] = this->problem.multicomp().xAW(this->pW[i], 283.15); //Achtung!! pW instead of pN!!!

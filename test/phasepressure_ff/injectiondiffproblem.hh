@@ -59,7 +59,8 @@ public:
 		RT g(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
 		{
 			if (x[0] < outerLowerLeft_[0] + eps_)
-			return (1e5 - densityW_*gravity_[1]*(depthBOR_ - x[1]));
+                return (1e5 - densityW_*gravity_[1]*(depthBOR_ - x[1]));
+            return 0;
 		}
 
 		RT gSat(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const

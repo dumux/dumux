@@ -109,10 +109,10 @@ public:
 
 			   // cell center in reference element
 			  const Dune::FieldVector<DT,n> 
-			    cellLocal = Dune::ReferenceElements<DT,n>::general(gt).position(0,0);
+			    elementLocal = Dune::ReferenceElements<DT,n>::general(gt).position(0,0);
 				
 			  // get global coordinate of cell center
-			  const Dune::FieldVector<DT,n> cellGlobal = it->geometry().global(cellLocal);
+			  const Dune::FieldVector<DT,n> elementGlobal = it->geometry().global(elementLocal);
 
 			  const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::value_type& 
 			    sfs=Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt, n);

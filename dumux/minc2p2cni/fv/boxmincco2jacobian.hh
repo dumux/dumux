@@ -116,7 +116,7 @@ namespace Dune
     			  double length_x =0;  	//the length of the subcontrol face on x direction
     			  double length_y =0;  	//the length of the subcontrol face on y direction
     	    	  double ExtLength =0;		//Exterior length of the subcontrol face
-    	      for (int face =0; face < this->fvGeom.nNodes; face++){
+    	      for (int face =0; face < this->fvGeom.numVertices; face++){
     	    	  int it = this->fvGeom.subContVolFace[face].i;
     	    	  int jt = this->fvGeom.subContVolFace[face].j;
     	    	  if (it == 0)
@@ -371,7 +371,7 @@ namespace Dune
      VBlockType flux(0.0);
 
 	 // calculate FE gradient at subcontrolvolumeface
-		 for (int k = 0; k < this->fvGeom.nNodes; k++) // loop over adjacent nodes
+		 for (int k = 0; k < this->fvGeom.numVertices; k++) // loop over adjacent nodes
 		 {
 			 // FEGradient at subcontrolvolumeface face
 			 const FieldVector<DT,dim> feGrad(this->fvGeom.subContVolFace[face].grad[k]);
@@ -594,7 +594,7 @@ namespace Dune
    		                	}
    		//*******************************************************************//
    		////      the position of the node
-   		//      for (int node = 0; node < nNodes; node++) {
+   		//      for (int node = 0; node < numVertices; node++) {
    		//                          fvGeom.subContVol[node].local  = referenceElement.position(node, dim);
    		//                          subContVol[node].global = geometry.global(subContVol[node].local);
    		//                      }
@@ -760,17 +760,17 @@ namespace Dune
 
     virtual void computeElementData (const Entity& e)
     {
-		 elData.heatCap = problem.soil().heatCap(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+		 elData.heatCap = problem.soil().heatCap(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
 
 //  	 // ASSUME element-wise constant parameters for the material law
 // 		 elData.parameters = problem.materialLawParameters
-// 		 (this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+// 		 (this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
 //
 //		 // ASSUMING element-wise constant permeability, evaluate K at the cell center
-// 		 elData.K = problem.K(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+// 		 elData.K = problem.K(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
 //
 //		 // ASSUMING element-wise constant porosity
-// 		 elData.porosity = problem.porosity(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+// 		 elData.porosity = problem.porosity(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
    	 return;
     }
 
@@ -837,7 +837,7 @@ namespace Dune
   		 if (!sNDat[globalIdx].visited)
   		  {
   			  // ASSUME porosity defined at nodes
-  			  sNDat[globalIdx].porosityFracture = problem.soil().porosity(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+  			  sNDat[globalIdx].porosityFracture = problem.soil().porosity(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
 
   			  // mark elements that were already visited
   			  sNDat[globalIdx].visited = true;
@@ -1037,7 +1037,7 @@ namespace Dune
 
 	void updateVariableData(const Entity& e, const VBlockType* sol, bool old = false)
 	{
-		int size = this->fvGeom.nNodes;
+		int size = this->fvGeom.numVertices;
 
 		for (int i = 0; i < size; i++)
 				updateVariableData(e, sol, i, old);

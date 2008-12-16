@@ -381,7 +381,7 @@ namespace Dune
 	  for (rowiterator i=this->A.begin(); i!=endi; ++i)
 		{
 		  // muck up extra rows
-		  if (i.index()>=this->facemapper.size())
+            if ((int) i.index() >= (int) this->facemapper.size())
 			{
 			  coliterator endj=(*i).end();
 			  for (coliterator j=(*i).begin(); j!=endj; ++j)

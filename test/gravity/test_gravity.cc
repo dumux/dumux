@@ -19,7 +19,7 @@ int main(int argc, char** argv)
     const int dim=2;
 
     // plotting parameters
-    char* fileName("with_gravity");
+    const char* fileName = "with_gravity";
     int modulo = 1;
 
     // time loop parameters
@@ -37,8 +37,8 @@ int main(int argc, char** argv)
     double maxDefect = 1e-5;
 
     // material law parameters
-    double lambda = 2.0;
-    double p0 = 5e3;
+    //double lambda = 2.0;
+    //double p0 = 5e3;
 
     // create a grid object
     typedef double NumberType;

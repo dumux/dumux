@@ -90,7 +90,7 @@ int main(int argc, char** argv)
     double omega=0.8;
 
     // plotting parameters
-    char* fileName("injection");
+    const char* fileName = "injection";
     int modulo = 20;
 
     // choose fluids and properties

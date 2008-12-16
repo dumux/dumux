@@ -186,7 +186,7 @@ namespace Dune
      VBlockType flux(0.);
 
 	 // calculate FE gradient at subcontrolvolumeface
-		 for (int k = 0; k < this->fvGeom.nNodes; k++) // loop over adjacent nodes
+		 for (int k = 0; k < this->fvGeom.numVertices; k++) // loop over adjacent nodes
 		 {
 			 // FEGradient at subcontrolvolumeface face
 			 const FieldVector<DT,dim> feGrad(this->fvGeom.subContVolFace[face].grad[k]);
@@ -312,7 +312,7 @@ namespace Dune
 	  // *********************************************************
     void computeElementData (const Entity& e)
     {
-		 elData.heatCap = problem.soil().heatCap(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+		 elData.heatCap = problem.soil().heatCap(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
 	};
 
 	  // *********************************************************
@@ -368,7 +368,7 @@ namespace Dune
   		 if (!sNDat[globalIdx].visited)
   		  {
   			  // ASSUME porosity defined at nodes
-  			  sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+  			  sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
 
   			  // mark elements that were already visited
   			  sNDat[globalIdx].visited = true;
@@ -462,7 +462,7 @@ namespace Dune
 
 	void updateVariableData(const Entity& e, const VBlockType* sol, bool old = false)
 	{
-		int size = this->fvGeom.nNodes;
+		int size = this->fvGeom.numVertices;
 
 		for (int i = 0; i < size; i++)
 				updateVariableData(e, sol, i, old);

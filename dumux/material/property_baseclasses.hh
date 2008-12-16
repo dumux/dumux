@@ -1,7 +1,7 @@
 // $Id$
 
-#ifndef PROPERTY_BASECLASSES
-#define PROPERTY_BASECLASSES
+#ifndef PROPERTY_BASECLASSES_HH
+#define PROPERTY_BASECLASSES_HH
 
 #include <dune/common/fvector.hh>
 #include <vector>
@@ -44,7 +44,7 @@ typedef	typename G::ctype DT;
 	 * @param e codim 0 entity for which the value is sought
 	 * @param xi position in local coordinates in e
 	 */
-	virtual FieldMatrix<DT,n,n> K (const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) = 0;
+	virtual const FieldMatrix<DT,n,n> &K (const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) = 0;
 
 	/**@brief matrix porosity
 	 * @param x position in global coordinates

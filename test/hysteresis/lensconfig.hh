@@ -34,7 +34,7 @@
 #endif
 
 // if defined, interface conditions of capillary pressure und and
-// relative permeability are used at medium interfaces for cell based
+// relative permeability are used at medium interfaces for element based
 // material parameters.
 #ifndef USE_INTERFACE_CONDITION
 #define USE_INTERFACE_CONDITION 1
@@ -59,12 +59,12 @@
 #define USE_DIFFERENT_MAIN_CURVES 0
 #endif
 
-// number of cells into X direction 
+// number of elements into X direction 
 #ifndef CELLRES_X
 #define CELLRES_X 32
 #endif
 
-// number of cells into Y direction 
+// number of elements into Y direction 
 #ifndef CELLRES_Y
 #define CELLRES_Y 24
 #endif

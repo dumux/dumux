@@ -48,8 +48,8 @@ int main(int argc, char** argv)
     // some parameters needed for the TimeLoop-object
     double tStart = 0; // start simulation at t = tStart
     double tEnd = 1e8; // stop simulation at t = tEnd
-    const char* fileName = "tutorial_coupled"; // name of the output files
-    int modulo = 1; // define time step interval in which output files are generated
+//    const char* fileName = "tutorial_coupled"; // name of the output files
+//    int modulo = 1; // define time step interval in which output files are generated
 
 	// create TimeLoop-object
     Dune::TimeLoop<GridType, TwoPhase, true> timeloop(tStart, tEnd, 100, "dummy", 1);

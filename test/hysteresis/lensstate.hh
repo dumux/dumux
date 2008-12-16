@@ -113,17 +113,17 @@ namespace Lens
 
 
 #if !USE_NODE_PARAMETERS
-    // node dependend parameters for cell centered parameter storage
+    // vert dependend parameters for element centered parameter storage
     template <class MediumStateT>
-    class LensNodeState
+    class LensVertexState
     {
     public:
-        LensNodeState()
+        LensVertexState()
             {
                 neighbours_ = NULL;
             };
 
-        ~LensNodeState()
+        ~LensVertexState()
             {
                 delete neighbours_;
             };
@@ -131,10 +131,10 @@ namespace Lens
         bool isOnInterface() const
             { return neighbours_ != NULL; }
 
-        void addNeighbourCellIdx(int cellIdx)
+        void addNeighbourElementIdx(int elementIdx)
             {
                 if (neighbours_ == NULL) {
-                    // allocate the array for the neighbouring cell
+                    // allocate the array for the neighbouring element
                     // indices.  in order not having to reallocate the
                     // array every time a new index is added, we
                     // reserve 4 slots from the beginning.
@@ -142,23 +142,23 @@ namespace Lens
                     neighbours_->reserve(4);
                 }
 
-                // make sure the cellIdx is not already in the array
+                // make sure the elementIdx is not already in the array
                 for (unsigned i = 0; i < neighbours_->size(); ++i)
-                    if ((*neighbours_)[i] == cellIdx)
+                    if ((*neighbours_)[i] == elementIdx)
                         return;
 
-                // append the cell index
-                neighbours_->push_back(cellIdx);
+                // append the element index
+                neighbours_->push_back(elementIdx);
             }
 
-        int numNeighbourCells() const
+        int numNeighbourElements() const
             {
                 return neighbours_ == NULL
                     ? 0
                     : neighbours_->size();
             }
 
-        int neighbourCellIdx(int localIdx) const
+        int neighbourElementIdx(int localIdx) const
             {
                 assert(neighbours_ != NULL);
                 return neighbours_->at(localIdx);
@@ -170,7 +170,7 @@ namespace Lens
     };
 #else // USE_NODE_PARAMETERS
     template <class MediumStateT>
-    class LensCellState
+    class LensElementState
     {
     public:
         typedef MediumStateT                              MediumState;
@@ -197,11 +197,11 @@ namespace Lens
 #endif
 
 
-    // cell/node dependent parameters
+    // element/vert dependent parameters
 #if USE_NODE_PARAMETERS
-#define MAIN_STATE_CLASS LensNodeState
+#define MAIN_STATE_CLASS LensVertexState
 #else
-#define MAIN_STATE_CLASS LensCellState
+#define MAIN_STATE_CLASS LensElementState
 #endif
 
     template <class MediumStateT>
@@ -224,7 +224,7 @@ namespace Lens
 
         MAIN_STATE_CLASS(const MAIN_STATE_CLASS &s)
         {
-            // we don't really copy the other cell state, but only
+            // we don't really copy the other element state, but only
             // use the same medium and global parameters.  (The sole
             // purpose of the copy constructor is to make STL
             // containers work properly.)
@@ -263,7 +263,7 @@ namespace Lens
         //////////////////////////////////
 
         //////////////////////////////////
-        // cell specific properties
+        // element specific properties
         MUTABLE_PTR_PROPERTY(ScanningCurve, mdc, setMdc); // main drainage scanning curve
         MUTABLE_PTR_PROPERTY(ScanningCurve, pisc, setPisc); // primary imbibition scanning curve
         MUTABLE_PTR_PROPERTY(ScanningCurve, csc, setCsc); // current scanning curve

@@ -78,7 +78,7 @@ public:
 		 \return     index of the primary variable
 		 */
 
-	virtual void dirichletIdx(const FieldVector<DT,dim>& x, const Entity& e,
+	virtual void dirichletIndex(const FieldVector<DT,dim>& x, const Entity& e,
 			const IntersectionIterator& intersectionIt,
 			const FieldVector<DT,dim>& xi, FieldVector<int,m>& dirichletIdx) const
 	{

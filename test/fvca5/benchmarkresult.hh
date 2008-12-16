@@ -93,7 +93,7 @@ struct BenchmarkResult
 	    uMean /= domainVolume; 
 	    
 	    if (pureNeumann) {
-	    	for (int i = 0; i < (problem.variables.pressure).size(); i++)
+	    	for (int i = 0; i < (int) problem.variables.pressure.size(); i++)
 	    	(problem.variables.pressure)[i] -= uMean;
 	    }
 	    

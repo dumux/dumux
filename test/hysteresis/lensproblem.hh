@@ -59,26 +59,26 @@ namespace Lens
         // some constants from the traits for convenience
         enum {
             numEq   = BoxTraits::numEq,
-            pWIndex = PwSnTraits::pWIndex,
-            snIndex = PwSnTraits::snIndex
+            pWIdx = PwSnTraits::pWIdx,
+            snIdx = PwSnTraits::snIdx
         };
         
         // copy some types from the traits for convenience
         typedef typename DomainTraits::Scalar                     Scalar;
         typedef typename DomainTraits::Grid                       Grid;
-        typedef typename DomainTraits::Cell                       Cell;
-        typedef typename DomainTraits::CellIterator               CellIterator;
+        typedef typename DomainTraits::Element                       Element;
+        typedef typename DomainTraits::ElementIterator               ElementIterator;
         typedef typename DomainTraits::ReferenceElement           ReferenceElement;
-        typedef typename DomainTraits::Node                       Node;
-        typedef typename DomainTraits::NodeIterator               NodeIterator;
+        typedef typename DomainTraits::Vertex                       Vertex;
+        typedef typename DomainTraits::VertexIterator               VertexIterator;
         typedef typename DomainTraits::IntersectionIterator       IntersectionIterator;
         typedef typename DomainTraits::IntersectionIteratorGetter IntersectionIteratorGetter;
-        typedef typename DomainTraits::LocalCoord                 LocalCoord;
-        typedef typename DomainTraits::WorldCoord                 WorldCoord;
+        typedef typename DomainTraits::LocalPosition                 LocalPosition;
+        typedef typename DomainTraits::GlobalPosition                 GlobalPosition;
 
         typedef typename BoxTraits::FVElementGeometry             FVElementGeometry;
         typedef typename BoxTraits::SpatialFunction               SpatialFunction;
-        typedef typename BoxTraits::UnknownsVector                UnknownsVector;
+        typedef typename BoxTraits::SolutionVector                SolutionVector;
         typedef typename BoxTraits::BoundaryTypeVector            BoundaryTypeVector;
 
         typedef typename MaterialTraits::ParkerLenhard            ParkerLenhard;
@@ -213,15 +213,15 @@ namespace Lens
         void setTimeStepSize(Scalar dt) 
             { return timeManager_.setStepSize(dt); }
 
-        //! evaluate the initial condition for a node
-        void initial(UnknownsVector &dest,
-                     const Cell &cell,
-                     WorldCoord pos,
-                     LocalCoord posLocal)
+        //! evaluate the initial condition for a vert
+        void initial(SolutionVector &dest,
+                     const Element &element,
+                     GlobalPosition pos,
+                     LocalPosition posLocal)
             {
-/*                WorldCoord pos;
-                ParentType::nodePosition(pos,
-                                            ParentType::node(cell, localVertIdx));
+/*                GlobalPosition pos;
+                ParentType::vertPosition(pos,
+                                            ParentType::vert(element, localVertIdx));
 */
                 Scalar pw = -ParentType::densityW() *
                               ParentType::gravity()[1] *
@@ -250,17 +250,17 @@ namespace Lens
 
 
         // Returns the type of an boundary contition for the wetting
-        // phase pressure at a cell face
+        // phase pressure at a element face
         void boundaryTypes(BoundaryTypeVector &dest,
-                           const Cell &cell,
+                           const Element &element,
                            const IntersectionIterator &face,
-                           const WorldCoord &pos,
-                           const LocalCoord &localPos)
+                           const GlobalPosition &pos,
+                           const LocalPosition &localPos)
 
             {
                 // get the integration point of the boundary face in
                 // world coodinates
-//        WorldCoord &pos = dualCell.boundaryFace[dcBFIndex].ipGlobal;
+//        GlobalPosition &pos = dualElement.boundaryFace[dcBFIdx].ipGlobal;
 
                 if (ParentType::onLeftBoundary(pos) ||
                     ParentType::onRightBoundary(pos))
@@ -292,61 +292,61 @@ namespace Lens
             }
 
         //! Evaluate a neumann boundary condition
-        void neumann(UnknownsVector &dest,
-                     const Cell &cell,
+        void neumann(SolutionVector &dest,
+                     const Element &element,
                      const IntersectionIterator &face,
-                     const WorldCoord &pos,
-                     const LocalCoord &localPos)
+                     const GlobalPosition &pos,
+                     const LocalPosition &localPos)
             {
-                dest[pWIndex] = 0;
-                dest[snIndex] = 0;
+                dest[pWIdx] = 0;
+                dest[snIdx] = 0;
 
                 // get the integration point of the boundary face in
                 // world coodinates
-//        WorldCoord &pos = dualCell.boundaryFace[dcBFIndex].ipGlobal;
+//        GlobalPosition &pos = dualElement.boundaryFace[dcBFIdx].ipGlobal;
 
                 if (ParentType::onUpperBoundary(pos)) {
 #if USE_ORIG_PROB
                     Scalar relPosX = (ParentType::upperRight()[0] - pos[0])/ParentType::width();
                     if (0.5 < relPosX && relPosX < 2.0/3.0)
                     {
-                        dest[snIndex] = -0.04;
+                        dest[snIdx] = -0.04;
                     }
 #endif
                 }
 #if !USE_ORIG_PROB
                 else if (ParentType::onLowerBoundary(pos)) {
-                    dest[snIndex] = 0.0;
+                    dest[snIdx] = 0.0;
                     if (timeManager_.episode() == DrainEpisode)
                         // drain water
-                        dest[snIndex] = -0.04;
+                        dest[snIdx] = -0.04;
                     else if (timeManager_.episode() == ImbibEpisode)
                         // imbibition of water
-                        dest[snIndex] = 0.04;
+                        dest[snIdx] = 0.04;
                 }
 #endif
 
             }
 
 
-        //! Evaluate a dirichlet boundary condition at a node within
-        //! an cell's face
-        void dirichlet(UnknownsVector &dest,
-                       const Cell &cell,
-                       int   nodeIndex,
-                       int   globalNodeIndex)
+        //! Evaluate a dirichlet boundary condition at a vert within
+        //! an element's face
+        void dirichlet(SolutionVector &dest,
+                       const Element &element,
+                       int   vertIdx,
+                       int   globalVertexIdx)
 
-/*        void dirichlet(UnknownsVector &dest,
-                       const Cell &cell,
+/*        void dirichlet(SolutionVector &dest,
+                       const Element &element,
                        const IntersectionIterator &face,
-                       const WorldCoord &pos,
-                       const LocalCoord &localPos)
+                       const GlobalPosition &pos,
+                       const LocalPosition &localPos)
 */
             {
                 Scalar a, b;
 
-                const LocalCoord &localPos = cell.geometry()[nodeIndex];
-                WorldCoord pos = cell.geometry().global(localPos);
+                const LocalPosition &localPos = element.geometry()[vertIdx];
+                GlobalPosition pos = element.geometry().global(localPos);
                     
                 if (ParentType::onLeftBoundary(pos))
                 {
@@ -358,24 +358,24 @@ namespace Lens
                     b = ParentType::upperRight()[1];
                 }
 
-                dest[pWIndex] = -ParentType::densityW()*
+                dest[pWIdx] = -ParentType::densityW()*
                                   ParentType::gravity()[1]*
                                   (a*pos[1] + b);
 #if 0
-                dest[snIndex] = ParentType::outerMedium().Snr();
+                dest[snIdx] = ParentType::outerMedium().Snr();
 #else
-                dest[snIndex] = 0;
+                dest[snIdx] = 0;
 #endif
             }
 
         //! evaluate the mass injection rate of the fluids for a BOX
         //! sub control volume
-        void sourceTerm(UnknownsVector &dest,
-                        const Cell &cell,
-                        const FVElementGeometry &dualCell,
+        void source(SolutionVector &dest,
+                        const Element &element,
+                        const FVElementGeometry &dualElement,
                         int subControlVolumeId)
             {
-                dest[pWIndex] = dest[snIndex] = 0;
+                dest[pWIdx] = dest[snIdx] = 0;
             }
 
         ///////////////////////////////////
@@ -429,8 +429,8 @@ namespace Lens
             {
                 resultWriter_.beginTimestep(timeManager_.time(),
                                             ParentType::grid().leafView());
-                writeNodeFields_(resultWriter_, model_.currentSolution());
-                writeCellFields_(resultWriter_, model_.currentSolution());
+                writeVertexFields_(resultWriter_, model_.currentSolution());
+                writeElementFields_(resultWriter_, model_.currentSolution());
                 resultWriter_.endTimestep();
             }
 
@@ -448,72 +448,72 @@ namespace Lens
 
                 convergenceWriter_->addScalarVertexFunction("reduction Sn",
                                                             diff,
-                                                            ParentType::nodeMap(),
-                                                            snIndex);
+                                                            ParentType::vertMap(),
+                                                            snIdx);
                 convergenceWriter_->addScalarVertexFunction("reduction Pw",
                                                             diff,
-                                                            ParentType::nodeMap(),
-                                                            pWIndex);
-                writeNodeFields_(*convergenceWriter_, u);
-                writeCellFields_(*convergenceWriter_, u);
+                                                            ParentType::vertMap(),
+                                                            pWIdx);
+                writeVertexFields_(*convergenceWriter_, u);
+                writeElementFields_(*convergenceWriter_, u);
             };
 #endif // LENS_WRITE_NEWTON_STEPS
 
 
-        // appends a cell centered capillary pressure field to the
+        // appends a element centered capillary pressure field to the
         // multi writer's current timestep
-        void writeCellFields_(VtkMultiWriter &writer, SpatialFunction &u)
+        void writeElementFields_(VtkMultiWriter &writer, SpatialFunction &u)
             {
                 // TODO
                 /*
                 typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
-                int nCells =  ParentType::numCells();
-                ScalarField *pC = writer.template createField<Scalar, 1>(nCells);
-                ScalarField *dpC_dSw = writer.template createField<Scalar, 1>(nCells);
+                int nElements =  ParentType::numElements();
+                ScalarField *pC = writer.template createField<Scalar, 1>(nElements);
+                ScalarField *dpC_dSw = writer.template createField<Scalar, 1>(nElements);
 
-                CellIterator it = ParentType::grid().template leafbegin<0>();
-                CellIterator endIt = ParentType::grid().template leafend<0>();
+                ElementIterator it = ParentType::grid().template leafbegin<0>();
+                ElementIterator endIt = ParentType::grid().template leafend<0>();
                 for (; it != endIt; ++it) {
                     // extract the current solution's Sn component
-                    const CellReferenceElement &refElem =
+                    const ElementReferenceElement &refElem =
                         DomainTraits::referenceElement(it->geometry().type());
-                    Scalar Sn = u.evallocal(snIndex,
+                    Scalar Sn = u.evallocal(snIdx,
                                              *it,
                                              refElem.position(0,0));
 
                     // calculate the capillary pressure
-                    CellState &eState = ParentType::cellState(*it);
-                    int eIndex = ParentType::cellIndex(*it);
+                    ElementState &eState = ParentType::elementState(*it);
+                    int eIdx = ParentType::elementIdx(*it);
                     Scalar Sw = 1 - Sn;
-                    (*pC)[eIndex] = ParentType::pC(eState, Sw);
-                    (*dpC_dSw)[eIndex] = ParentType::dpC_dSw(eState, Sw);
+                    (*pC)[eIdx] = ParentType::pC(eState, Sw);
+                    (*dpC_dSw)[eIdx] = ParentType::dpC_dSw(eState, Sw);
                 }
-                writer.addCellData(pC, "capillary pressure");
-                writer.addCellData(dpC_dSw, "dpC/dSw");
+                writer.addElementData(pC, "capillary pressure");
+                writer.addElementData(dpC_dSw, "dpC/dSw");
                 */
             }
 
 
         // write the fields current solution into an VTK output
         // file.
-        void writeNodeFields_(VtkMultiWriter &writer, SpatialFunction &u)
+        void writeVertexFields_(VtkMultiWriter &writer, SpatialFunction &u)
             {
                 writer.addScalarVertexFunction("Sn",
                                                u,
-                                               snIndex);
+                                               snIdx);
                 writer.addScalarVertexFunction("Pw",
                                                u,
-                                               pWIndex);
+                                               pWIdx);
 
                 /*
                 SpatialFunction globResidual(ParentType::grid());
                 model_.evalGlobalResidual(globResidual);
                 writer.addScalarVertexFunction("global residual Sn",
                                                globResidual,
-                                               snIndex);
+                                               snIdx);
                 writer.addScalarVertexFunction("global residual Pw",
                                                globResidual,
-                                               pWIndex);
+                                               pWIdx);
                 */
             }
 
@@ -522,32 +522,32 @@ namespace Lens
             {
 #if USE_HYSTERESIS
 #if USE_NODE_PARAMETERS
-                NodeIterator it = ParentType::nodeBegin();
-                NodeIterator endit = ParentType::nodeEnd();
+                VertexIterator it = ParentType::vertexBegin();
+                VertexIterator endit = ParentType::vertexEnd();
                 for (; it != endit; ++it) {
-                    int vertIdx = ParentType::nodeIndex(*it);
-                    Scalar Sn = (*model_.currentSolution())[vertIdx][snIndex];
+                    int vertIdx = ParentType::vertIdx(*it);
+                    Scalar Sn = (*model_.currentSolution())[vertIdx][snIdx];
                     Scalar Sw = 1 - Sn;
-                    ParkerLenhard::updateState(nodeState(*it), Sw);
+                    ParkerLenhard::updateState(vertexState(*it), Sw);
                 }
 #else
                 // update the parker-lenhard hystersis model
-                // for all cells
-                CellIterator it = ParentType::grid().template leafbegin<0>();
-                CellIterator endit = ParentType::grid().template leafend<0>();
+                // for all elements
+                ElementIterator it = ParentType::grid().template leafbegin<0>();
+                ElementIterator endit = ParentType::grid().template leafend<0>();
                 for (; it != endit; ++it) {
-                    // get the barycenter of the current cell
+                    // get the barycenter of the current element
                     const Dune::GeometryType &geoType = it->type();
-                    const LocalCoord &localPos =
+                    const LocalPosition &localPos =
                         DomainTraits::referenceElement(geoType).position(0,0);
 
                     // evaluate the solution for the non-wetting
                     // saturation at this point
-                    Scalar Sn = model_.u().evallocal(snIndex,
+                    Scalar Sn = model_.u().evallocal(snIdx,
                                                       *it,
                                                       localPos);
                     Scalar Sw = 1 - Sn;
-                    ParkerLenhard::updateState(cellState(cellIndex(*it)), Sw);
+                    ParkerLenhard::updateState(elementState(elementIdx(*it)), Sw);
                 }
 #endif
 #endif
@@ -557,7 +557,7 @@ namespace Lens
             {
                 Scalar    len = timeManager_.episodeLength();
                 Episode   epi = timeManager_.episode();
-                int        epiIndex = timeManager_.episodeIndex();
+                int        epiIdx = timeManager_.episodeIndex();
 
                 if (timeManager_.time() >= endTime_) {
                     timeManager_.setFinished();
@@ -569,7 +569,7 @@ namespace Lens
                     return;
 
 
-                switch (epiIndex) {
+                switch (epiIdx) {
                     case 1:
                         timeManager_.startNextEpisode(WaitEpisode, 50e3);
                         return;

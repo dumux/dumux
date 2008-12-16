@@ -332,7 +332,7 @@ public:
 			Dune::GeometryType gt = it->geometry().type();
 
 			// get entity
-			const Entity& entity = *it;
+//			const Entity& entity = *it;
 
 			const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type
 					&sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(gt,
@@ -346,9 +346,9 @@ public:
 				// get global coordinate of cell center
 				Dune::FieldVector<DT,dimworld> global = it->geometry().global(local);
 
-				int globalId = this->vertexmapper.template map<dim>(entity,
+/*				int globalId = this->vertexmapper.template map<dim>(entity,
 						sfs[i].entity());
-
+*/
 
 			}
 		}

@@ -226,7 +226,7 @@ public:
 			// get entity
 			const Entity& entity = *it;
 			this->localJacobian.fvGeom.update(entity);
-			int size = this->localJacobian.fvGeom.nNodes;
+			int size = this->localJacobian.fvGeom.numVertices;
 
 			this->localJacobian.setLocalSolution(entity);
 			this->localJacobian.computeElementData(entity);

@@ -258,6 +258,19 @@ namespace Dune
                 }
             }
 
+        /*!
+         * \brief Calculate the source term of the equation
+         */
+        void computeSource(SolutionVector &q, int localVertexIdx)
+            {
+                this->problem_.source(q,
+                                      this->curElement_(),
+                                      this->curElementGeom_,
+                                      localVertexIdx);
+            }
+
+
+
     private:
         /*!
          * \brief Pre-compute the element cache data.

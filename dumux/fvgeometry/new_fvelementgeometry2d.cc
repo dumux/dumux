@@ -92,22 +92,22 @@ class NewFVElementGeometry<GridT,
                     this->subContVol_[0].volume =
                         quadrilateralArea_(this->subContVol_[0].global,
                                            this->edgeCoord_[2],
-                                           this->cellGlobal_,
+                                           this->elementGlobal_,
                                            this->edgeCoord_[0]);
                     this->subContVol_[1].volume =
                         quadrilateralArea_(this->subContVol_[1].global,
                                            this->edgeCoord_[1],
-                                           this->cellGlobal_,
+                                           this->elementGlobal_,
                                            this->edgeCoord_[2]);
                     this->subContVol_[2].volume =
                         quadrilateralArea_(this->subContVol_[2].global, 
                                            this->edgeCoord_[0],
-                                           this->cellGlobal_,
+                                           this->elementGlobal_,
                                            this->edgeCoord_[3]);
                     this->subContVol_[3].volume = 
                         quadrilateralArea_(this->subContVol_[3].global,
                                            this->edgeCoord_[3],
-                                           this->cellGlobal_,
+                                           this->elementGlobal_,
                                            this->edgeCoord_[1]);
                     break;
 
@@ -115,7 +115,7 @@ class NewFVElementGeometry<GridT,
                     DUNE_THROW(NotImplemented, 
                                "updateVolumes_ dim = " 
                                << GridDim
-                               << ", nNodes = " 
+                               << ", numVertices = " 
                                << cell.template count<GridDim>());
             }
         };
@@ -142,12 +142,12 @@ class NewFVElementGeometry<GridT,
                 // TODO: use a reference element instead of
                 // calculating this every time
                 ipLocal  = refElem.position(scvFaceIdx, GridDim-1);
-                ipLocal += this->cellLocal_;
+                ipLocal += this->elementLocal_;
                 ipLocal *= 0.5;
                     
                 this->subContVolFace_[scvFaceIdx].ipLocal = ipLocal;
 
-                diffVec = this->cellGlobal_ - this->edgeCoord[scvFaceIdx];
+                diffVec = this->elementGlobal_ - this->edgeCoord[scvFaceIdx];
                 this->subContVolFace_[scvFaceIdx].normal[0] =  diffVec[1];
                 this->subContVolFace_[scvFaceIdx].normal[1] = -diffVec[0];
             }
@@ -159,8 +159,8 @@ class NewFVElementGeometry<GridT,
         {
             // fill boundary face data:
             int face = it->numberInSelf();
-            int nNodesOfFace = refElem.size(face, 1, GridDim);
-            for (int nodeInFace = 0; nodeInFace < nNodesOfFace; nodeInFace++)
+            int numVerticesOfFace = refElem.size(face, 1, GridDim);
+            for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++)
             {
                 int nodeInElement = refElem.subEntity(face, 1, nodeInFace, GridDim);
                 int bfIndex = this->_boundaryFaceIndex(face, nodeInFace);

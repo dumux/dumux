@@ -197,7 +197,7 @@ namespace Dune
 
 
 		 // calculate FE gradient (grad p for each phase)
-		 for (int k = 0; k < this->fvGeom.nNodes; k++) // loop over adjacent nodes
+		 for (int k = 0; k < this->fvGeom.numVertices; k++) // loop over adjacent nodes
 		 {
 			 // FEGradient at node k
 			 const FieldVector<DT,dim> feGrad(this->fvGeom.subContVolFace[face].grad[k]);
@@ -370,7 +370,7 @@ namespace Dune
    		int state = sNDat[global].phaseState;
 
 //        const FieldVector<RT, 4> parameters = problem.materialLawParameters
-//        (this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+//        (this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
 
         RT pW = sol[local][pWIdx];
         RT satW = 0.0;
@@ -495,18 +495,18 @@ namespace Dune
     {
 
 
- 		 elData.heatCap = problem.soil().heatCap(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+ 		 elData.heatCap = problem.soil().heatCap(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
 
 
 //  	 // ASSUME element-wise constant parameters for the material law
 // 		 elData.parameters = problem.materialLawParameters
-// 		 (this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+// 		 (this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
 //
 //		 // ASSUMING element-wise constant permeability, evaluate K at the cell center
-// 		 elData.K = problem.K(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+// 		 elData.K = problem.K(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
 //
 //		 // ASSUMING element-wise constant porosity
-// 		 elData.porosity = problem.porosity(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+// 		 elData.porosity = problem.porosity(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
    	 return;
     }
 
@@ -539,7 +539,7 @@ namespace Dune
   		 if (!sNDat[globalIdx].visited)
   		  {
   			  // ASSUME porosity defined at nodes
-  			  sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+  			  sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
 
  			  // global coordinates
  			  FieldVector<DT,dim> global_i = this->fvGeom.subContVol[k].global;
@@ -571,7 +571,7 @@ namespace Dune
   		 if (!sNDat[globalIdx].visited)
   		  {
   			  // ASSUME porosity defined at nodes
-  			  sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+  			  sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
 
   			  // mark elements that were already visited
   			  sNDat[globalIdx].visited = true;
@@ -710,7 +710,7 @@ namespace Dune
 
 	void updateVariableData(const Entity& e, const VBlockType* sol, bool old = false)
 	{
-		int size = this->fvGeom.nNodes;
+		int size = this->fvGeom.numVertices;
 
 		for (int i = 0; i < size; i++)
 				updateVariableData(e, sol, i, old);

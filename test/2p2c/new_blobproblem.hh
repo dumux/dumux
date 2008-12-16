@@ -64,49 +64,54 @@ namespace Dune
     class BlobSoil: public Matrix2p<Grid,ScalarT>
     {
     public:
-  	typedef typename Grid::Traits::template Codim<0>::Entity Element;
-  	typedef ScalarT Scalar;
-  	enum {dim=Grid::dimension};
+        typedef typename Grid::Traits::template Codim<0>::Entity Element;
+        typedef ScalarT Scalar;
 
-  	BlobSoil() 
+        enum {dim=Grid::dimension, dimWorld=Grid::dimensionworld};
+        
+        typedef Dune::FieldVector<Scalar,dim>      LocalPosition;
+        typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
+
+        BlobSoil() 
             : Matrix2p<Grid,Scalar>(), 
               K_(0.0)
             {
                 for(int i = 0; i < dim; i++)
                     K_[i][i] = 1e-12;
             }
-  	~BlobSoil()
-  	{}
 
-  	virtual FieldMatrix<Scalar,dim,dim> K (const FieldVector<Scalar,dim>& x, const Element& e, const FieldVector<Scalar,dim>& xi)
+        ~BlobSoil()
+            {}
+        
+  	virtual const FieldMatrix<Scalar,dim,dim> &K (const GlobalPosition &x, const Element& e, const LocalPosition &xi)
   	{
   		return K_;
   	}
-  	virtual double porosity(const FieldVector<Scalar,dim>& x, const Element& e, const FieldVector<Scalar,dim>& xi) const
+  	virtual double porosity(const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
   	{
   		return 0.3;
   	}
 
-  	virtual double Sr_w(const FieldVector<Scalar,dim>& x, const Element& e, const FieldVector<Scalar,dim>& xi, const double T) const
+  	virtual double Sr_w(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double T) const
   	{
   		return 0;
   	}
 
-  	virtual double Sr_n(const FieldVector<Scalar,dim>& x, const Element& e, const FieldVector<Scalar,dim>& xi, const double T) const
+  	virtual double Sr_n(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double T) const
   	{
   		return 0.1;
   	}
 
   	/* ATTENTION: define heat capacity per cubic meter! Be sure, that it corresponds to porosity!
   			 * Best thing will be to define heatCap = (specific heatCapacity of material) * density * porosity*/
-  	virtual double heatCap(const FieldVector<Scalar,dim>& x, const Element& e, const FieldVector<Scalar,dim>& xi) const
+  	virtual double heatCap(const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
   	{
   		return 	790 /* spec. heat cap. of granite */
   						* 2700 /* density of granite */
   						* (1 - porosity(x, e, xi));
   	}
 
-  	virtual double heatCond(const FieldVector<Scalar,dim>& x, const Element& e, const FieldVector<Scalar,dim>& xi, const double sat) const
+  	virtual double heatCond(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double sat) const
   	{
   		static const double lWater = 0.6;
   		static const double lGranite = 2.8;
@@ -116,7 +121,7 @@ namespace Dune
   		return ldry + sqrt(sat) * (ldry - lsat);
   	}
 
-  	virtual std::vector<double> paramRelPerm(const FieldVector<Scalar,dim>& x, const Element& e, const FieldVector<Scalar,dim>& xi, const double T) const
+  	virtual std::vector<double> paramRelPerm(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double T) const
   	{
   		// example for Brooks-Corey parameters
   		std::vector<double> param(2);
@@ -129,7 +134,7 @@ namespace Dune
   		return param;
   	}
 
-  	virtual typename Matrix2p<Grid,Scalar>::modelFlag relPermFlag(const FieldVector<Scalar,dim>& x, const Element& e, const FieldVector<Scalar,dim>& xi) const
+  	virtual typename Matrix2p<Grid,Scalar>::modelFlag relPermFlag(const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
   	{
   		return Matrix2p<Grid,Scalar>::brooks_corey;
   	}

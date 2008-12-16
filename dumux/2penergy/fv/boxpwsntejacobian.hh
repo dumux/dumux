@@ -172,7 +172,7 @@ namespace Dune
    	  	  FieldVector<RT, n> gravity = problem.gravity();
       	  switch (comp){
     		 case water: 
-    		  	 for (int k = 0; k < this->fvGeom.nNodes; k++) {	 
+    		  	 for (int k = 0; k < this->fvGeom.numVertices; k++) {	 
     		     FieldVector<DT,n> grad(this->fvGeom.subContVolFace[face].grad[k]);
     			 grad *= varNData[k].pW;
     			 pWGrad += grad;
@@ -182,7 +182,7 @@ namespace Dune
     		  	 pWGrad -= gravity;
     			 break;
     		 case co2:
-    			 for (int k = 0; k < this->fvGeom.nNodes; k++) {	 
+    			 for (int k = 0; k < this->fvGeom.numVertices; k++) {	 
     			 FieldVector<DT,n> grad(this->fvGeom.subContVolFace[face].grad[k]);
     			 grad *= varNData[k].pN;
     			 pCO2Grad += grad;
@@ -192,7 +192,7 @@ namespace Dune
     		  	 pCO2Grad -= gravity;
     			 break;
     		 case heat:
-    			 for (int k = 0; k < this->fvGeom.nNodes; k++) {	 
+    			 for (int k = 0; k < this->fvGeom.numVertices; k++) {	 
     			 FieldVector<DT,n> grad(this->fvGeom.subContVolFace[face].grad[k]);
     			 grad *= varNData[k].temp;
     			 teGrad += grad;
@@ -248,20 +248,20 @@ namespace Dune
     virtual void computeElementData (const Entity& e)
     {
   		 // ASSUME element-wise constant parameters for the material law 
- 		 elData.parameters = problem.materialLawParameters(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+ 		 elData.parameters = problem.materialLawParameters(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
    	 
 		 // ASSUMING element-wise constant permeability, evaluate K at the cell center 
- 		 elData.K = problem.K(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);  
+ 		 elData.K = problem.K(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);  
 
- 		 elData.porosity = problem.porosity(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+ 		 elData.porosity = problem.porosity(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
  		 
- 		 elData.soilDens = problem.soilParameters(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal)[0];
+ 		 elData.soilDens = problem.soilParameters(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal)[0];
  		 
- 		 elData.soilCs	= problem.soilParameters(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal)[1];
+ 		 elData.soilCs	= problem.soilParameters(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal)[1];
  		 
- 		 elData.soilLDry = problem.soilParameters(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal)[2];
+ 		 elData.soilLDry = problem.soilParameters(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal)[2];
  		 
- 		 elData.soilLSw	= problem.soilParameters(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal)[3];
+ 		 elData.soilLSw	= problem.soilParameters(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal)[3];
  		 
  		 
     };
@@ -313,7 +313,7 @@ namespace Dune
     {
    		varData[i].saturationW = 1.0 - sol[i][satNIdx];
    		// ASSUME element-wise constant parameters for the material law 
-         FieldVector<RT, 4> parameters = problem.materialLawParameters(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+         FieldVector<RT, 4> parameters = problem.materialLawParameters(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
 
          varData[i].temp = sol[i][teIdx];
          varData[i].pW = sol[i][pWIdx];
@@ -348,7 +348,7 @@ namespace Dune
 
 	void updateVariableData(const Entity& e, const VBlockType* sol, bool old = false)
 	{
-		int size = this->fvGeom.nNodes;
+		int size = this->fvGeom.numVertices;
 			
 		for (int i = 0; i < size; i++) 
 				updateVariableData(e, sol, i, old);

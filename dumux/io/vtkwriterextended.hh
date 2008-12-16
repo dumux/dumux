@@ -495,7 +495,7 @@ namespace Dune
       P2VectorWrapper (const Grid& g_, const IndexSet &is_, const V& v_, std::string s_) 
         : g(g_), is(is_), v(v_), s(s_), mapper(g_,is_)
         {
-	  if (v.size()!=mapper.size())
+            if ((int) v.size()!=(int) mapper.size())
 	    DUNE_THROW(IOError,"VTKWriterExtended::P2VectorWrapper: size mismatch");
         }
 
@@ -551,7 +551,7 @@ namespace Dune
       P3VectorWrapper (const Grid& g_, const IndexSet& is_, const V& v_, std::string s_) 
         : g(g_), is(is_), v(v_), s(s_), mapper(g_,is_)
         {
-          if (v.size()!=(int)mapper.size())
+            if ((int)v.size()!=(int)mapper.size())
             DUNE_THROW(IOError,"VTKWriterExtended::P3VectorWrapper: size mismatch");
         }
 
@@ -666,7 +666,7 @@ namespace Dune
     template<class V, class W,class Z>
     void faceToCellToVertex (const V& v, W& w, Z& z)
     {
-      if((w.size()!=grid.size(0))||v.size()!=grid.size(0) || z.size()!=grid.size(n))
+        if(((int)w.size()!=(int)grid.size(0))||(int)v.size()!=(int)grid.size(0) || (int)z.size()!=(int)grid.size(n))
 	DUNE_THROW(IOError,"VTKWriterExtended::faceToCell: size mismatch");
       w=0; z=0;
 

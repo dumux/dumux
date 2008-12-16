@@ -26,7 +26,7 @@
 #define USE_NODE_PARAMETERS
 
 // if defined, interface conditions of capillary pressure und and
-// relative permeability are used at medium interfaces for cell based
+// relative permeability are used at medium interfaces for element based
 // material parameters.
 //#define USE_INTERFACE_CONDITION
 

@@ -17,15 +17,10 @@ public:
 
 	// function returning the intrinsic permeability tensor K
 	// depending on the position within the domain
-	FieldMatrix<DT,n,n> K (const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-decoupled:permeability}@*/
+	const FieldMatrix<DT,n,n> &K(const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-decoupled:permeability}@*/
 			const FieldVector<DT,n>& xi)
 	{
-		FieldMatrix<DT,n,n> K(0);
-
-		for(int i = 0; i < n; i++)
-			K[i][i] = 1e-7;
-
-		return K;
+		return K_;
 	}
 
 	// function returning the porosity of the porous matrix
@@ -80,8 +75,14 @@ public:
 	}								   //dumux/material/property_baseclasses.hh
 
 	TutorialSoil()
-	:HomogeneousSoil<G,RT>()
-	{}
+        :HomogeneousSoil<G,RT>(),K_(0)
+	{
+		for(int i = 0; i < n; i++)
+			K_[i][i] = 1e-7;
+    }
+
+private:
+    FieldMatrix<DT,n,n> K_;
 
 };
 } // end namespace

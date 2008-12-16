@@ -181,7 +181,7 @@ namespace Dune
                               double tStart,
                               double len)
             {
-                ++ episodeIdx_;
+                ++ episodeIndex_;
                 episodeStartTime_ = tStart;
                 episodeLength_ = len;
 
@@ -196,7 +196,7 @@ namespace Dune
         void startNextEpisode(const EpisodeIdentifer &id,
                               double len = 1e100)
             {
-                ++ episodeIdx_;
+                ++ episodeIndex_;
                 episodeStartTime_ = currentTime_;
                 episodeLength_ = len;
 
@@ -211,7 +211,7 @@ namespace Dune
          */
         void startNextEpisode(double len = 1e100)
             {
-                ++ episodeIdx_;
+                ++ episodeIndex_;
                 episodeStartTime_ = currentTime_;
                 episodeLength_ = len;
             }
@@ -233,8 +233,8 @@ namespace Dune
          *
          * The first episode has the index 0.
          */
-        int episodeIdx() const
-            { return episodeIdx_; }
+        int episodeIndex() const
+            { return episodeIndex_; }
 
         /*!
          * \brief Returns the absolute time when the current episode
@@ -322,7 +322,7 @@ namespace Dune
     private:
         void init_()
             {
-                episodeIdx_ = 0;
+                episodeIndex_ = 0;
                 episodeStartTime_ = 0;
                 currentTime_ = 0.0;
                 stepSize_ = 1.0;
@@ -330,7 +330,7 @@ namespace Dune
                 finished_ = false;
             }
 
-        int              episodeIdx_;
+        int              episodeIndex_;
         double           episodeStartTime_;
         double           episodeLength_;
         EpisodeIdentifer episode_;

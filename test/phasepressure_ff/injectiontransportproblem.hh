@@ -63,11 +63,10 @@ namespace Dune
 			   const int level = 0, const bool cap =
 			   false,RT outerPorosity = 0.4, RT innerPorosity = 0.4)
       : TransportProblem<G, RT, VC>(variableobj,law, cap),
-      outerLowerLeft_(outerLowerLeft), outerUpperRight_(outerUpperRight),
-      	  innerLowerLeft_(innerLowerLeft), innerUpperRight_(innerUpperRight),
-      	outerPorosity_(outerPorosity), innerPorosity_(innerPorosity),
-      	eps_(1e-8)
-      	{}
+        outerLowerLeft_(outerLowerLeft), outerUpperRight_(outerUpperRight),
+        innerLowerLeft_(innerLowerLeft), innerUpperRight_(innerUpperRight),
+      	eps_(1e-8), outerPorosity_(outerPorosity), innerPorosity_(innerPorosity)
+          {}
   };
 
 }

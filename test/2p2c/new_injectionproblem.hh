@@ -5,11 +5,6 @@
 #include "config.h"
 #endif
 
-#if !HAVE_UG
-#error "The UG grid manager is required for this problem"
-#endif
-
-
 #include<iostream>
 #include<iomanip>
 
@@ -62,7 +57,11 @@ namespace Dune
     public:
         typedef typename Grid::Traits::template Codim<0>::Entity Element;
         typedef ScalarT Scalar;
-        enum {dim=Grid::dimension};
+        typedef typename Grid::ctype CoordScalar;
+        enum {dim=Grid::dimension, dimWorld=Grid::dimensionworld};
+
+        typedef Dune::FieldVector<CoordScalar,dim>      LocalPosition;
+        typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
 
         InjectionSoil():Matrix2p<Grid,Scalar>()
             {
@@ -77,7 +76,7 @@ namespace Dune
         ~InjectionSoil()
             {}
 
-        FieldMatrix<Scalar,dim,dim> K (const FieldVector<Scalar,dim>& x, const Element& e, const FieldVector<Scalar,dim>& xi)
+        const FieldMatrix<CoordScalar,dim,dim> &K (const GlobalPosition &x, const Element& e, const LocalPosition &xi)
             {
                 if (x[1] < layerBottom_)
                     return highK_;
@@ -85,31 +84,31 @@ namespace Dune
                     return lowK_;
             }
 
-        double porosity(const FieldVector<Scalar,dim>& x, const Element& e, const FieldVector<Scalar,dim>& xi) const
+        double porosity(const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
             {
                 return 0.3;
             }
 
-        double Sr_w(const FieldVector<Scalar,dim>& x, const Element& e, const FieldVector<Scalar,dim>& xi, const double T) const
+        double Sr_w(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double T) const
             {
                 return 0.2;
             }
 
-        double Sr_n(const FieldVector<Scalar,dim>& x, const Element& e, const FieldVector<Scalar,dim>& xi, const double T) const
+        double Sr_n(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double T) const
             {
                 return 0.0;
             }
 
         /* ATTENTION: define heat capacity per cubic meter! Be sure, that it corresponds to porosity!
          * Best thing will be to define heatCap = (specific heatCapacity of material) * density * porosity*/
-        double heatCap(const FieldVector<Scalar,dim>& x, const Element& e, const FieldVector<Scalar,dim>& xi) const
+        double heatCap(const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
             {
                 return 	790 /* spec. heat cap. of granite */
                     * 2700 /* density of granite */
                     * porosity(x, e, xi);
             }
 
-        double heatCond(const FieldVector<Scalar,dim>& x, const Element& e, const FieldVector<Scalar,dim>& xi, const double sat) const
+        double heatCond(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double sat) const
             {
                 static const double lWater = 0.6;
                 static const double lGranite = 2.8;
@@ -119,7 +118,7 @@ namespace Dune
                 return ldry + sqrt(sat) * (ldry - lsat);
             }
 
-        std::vector<double> paramRelPerm(const FieldVector<Scalar,dim>& x, const Element& e, const FieldVector<Scalar,dim>& xi, const double T) const
+        std::vector<double> paramRelPerm(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double T) const
             {
                 // example for Brooks-Corey parameters
                 std::vector<double> param(2);
@@ -129,7 +128,7 @@ namespace Dune
                 return param;
             }
 
-        typename Matrix2p<Grid,Scalar>::modelFlag relPermFlag(const FieldVector<Scalar,dim>& x, const Element& e, const FieldVector<Scalar,dim>& xi) const
+        typename Matrix2p<Grid,Scalar>::modelFlag relPermFlag(const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
             {
                 return Matrix2p<Grid,Scalar>::brooks_corey;
             }

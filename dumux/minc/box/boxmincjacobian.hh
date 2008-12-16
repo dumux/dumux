@@ -112,7 +112,7 @@ namespace Dune
     			  double length_x =0;  	//the length of the subcontrol face on x direction
     			  double length_y =0;  	//the length of the subcontrol face on y direction
     	    	  double ExtLength =0;		//Exterior length of the subcontrol face
-    	      for (int face =0; face < this->fvGeom.nNodes; face++){
+    	      for (int face =0; face < this->fvGeom.numVertices; face++){
     	    	  int it =this->fvGeom.subContVolFace[face].i;
     	    	  int jt =this->fvGeom.subContVolFace[face].j;
     	    	  if (it == 0)
@@ -272,7 +272,7 @@ namespace Dune
 			  FieldVector<RT, n> gravity = problem.gravity();
 			  switch (comp)	{
 		  case WF:
-	          for (int k = 0; k < this->fvGeom.nNodes; k++) {
+	          for (int k = 0; k < this->fvGeom.numVertices; k++) {
 	        	  FieldVector<DT,n> grad(this->fvGeom.subContVolFace[face].grad[k]);
 //	        	  grad *= sol[k][pWFIdx];
 	        	  grad *= vNData[k].p[wPhase][F];
@@ -283,7 +283,7 @@ namespace Dune
 			  pWFGrad -= gravity;
 			  break;
 		  case NF:
-			  for (int k = 0; k < this->fvGeom.nNodes; k++) {
+			  for (int k = 0; k < this->fvGeom.numVertices; k++) {
 			  	  FieldVector<DT,n> grad(this->fvGeom.subContVolFace[face].grad[k]);
 			  	  grad *= vNData[k].p[nPhase][F];
 			  	  pNFGrad += grad;
@@ -376,7 +376,7 @@ namespace Dune
                 	}
 //*******************************************************************//
 ////      the position of the node
-//      for (int node = 0; node < nNodes; node++) {
+//      for (int node = 0; node < numVertices; node++) {
 //                          fvGeom.subContVol[node].local  = referenceElement.position(node, dim);
 //                          subContVol[node].global = geometry.global(subContVol[node].local);
 //                      }
@@ -434,14 +434,14 @@ namespace Dune
     virtual void computeElementData (const Entity& e)
     {
   		 // ASSUME element-wise constant parameters for the material law
- 		 elData.parametersFracture = problem.materialLawParametersFracture(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
- 		 elData.parametersMatrix = problem.materialLawParametersMatrix(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+ 		 elData.parametersFracture = problem.materialLawParametersFracture(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
+ 		 elData.parametersMatrix = problem.materialLawParametersMatrix(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
 		 // ASSUMING element-wise constant permeability, evaluate K at the cell center
- 		 elData.KFracture = problem.KFracture(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
- 		 elData.KMatrix = problem.KMatrix(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+ 		 elData.KFracture = problem.KFracture(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
+ 		 elData.KMatrix = problem.KMatrix(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
 
- 		 elData.porosityFracture = problem.porosityFracture(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
- 		 elData.porosityMatrix = problem.porosityMatrix(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+ 		 elData.porosityFracture = problem.porosityFracture(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
+ 		 elData.porosityMatrix = problem.porosityMatrix(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
 
     };
 
@@ -472,7 +472,7 @@ namespace Dune
 	virtual void updateVariableData(const Entity& e, const VBlockType* sol,
 			int i, std::vector<VariableNodeData>& vNData)
     {
-   	 vNData.resize(this->fvGeom.nNodes);
+   	 vNData.resize(this->fvGeom.numVertices);
    	 int size = vNData.size();
 
    	 for (int i = 0; i < size; i++) {
@@ -492,10 +492,10 @@ namespace Dune
    		 }
 
    		// ASSUME element-wise constant parameters for the material law
-//   		FieldVector<RT, 4> parameters = problem.materialLawParameters(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+//   		FieldVector<RT, 4> parameters = problem.materialLawParameters(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
 
-   		FieldVector<RT, 4> parametersFracture = problem.materialLawParametersFracture(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
-  		FieldVector<RT, 4> parametersMatrix = problem.materialLawParametersMatrix(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+   		FieldVector<RT, 4> parametersFracture = problem.materialLawParametersFracture(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
+  		FieldVector<RT, 4> parametersMatrix = problem.materialLawParametersMatrix(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
 
          vNData[i].pCFracture = problem.materialLaw().pC(vNData[i].saturation[wPhase][F], parametersFracture);
          vNData[i].pCMatrix   = problem.materialLaw().pC(vNData[i].saturation[wPhase][M], parametersMatrix);
@@ -548,7 +548,7 @@ namespace Dune
 
 	void updateVariableData(const Entity& e, const VBlockType* sol, bool old = false)
 	{
-		int size = this->fvGeom.nNodes;
+		int size = this->fvGeom.numVertices;
 
 		for (int i = 0; i < size; i++)
 				updateVariableData(e, sol, i, old);

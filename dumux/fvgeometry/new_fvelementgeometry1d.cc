@@ -107,8 +107,8 @@ class NewFVElementGeometry<GridT,
         {
             // fill boundary face data:
             int face = it->numberInSelf();
-            int nNodesOfFace = refElem.size(face, 1, GridDim);
-            for (int nodeInFace = 0; nodeInFace < nNodesOfFace; nodeInFace++)
+            int numVerticesOfFace = refElem.size(face, 1, GridDim);
+            for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++)
             {
                 int nodeInElement = refElem.subEntity(face, 1, nodeInFace, GridDim);
                 int bfIndex = this->boundaryFaceIndex(face, nodeInFace);

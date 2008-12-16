@@ -30,7 +30,7 @@ int main(int argc, char** argv)
     const int dim=2;
 
     // plotting parameters
-    char* fileName("with_pc");
+    const char* fileName = "with_pc";
     int modulo = 3;
 
     // time loop parameters

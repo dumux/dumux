@@ -235,7 +235,7 @@ namespace Dune
 														global, entity, is,
 														local);
 												this->problem.dirichletIndex(global, entity, is,
-														local, dirichletIndex);	
+                                                                             local, dirichletIndex);	
 
 										if (bctype[equationNumber]
 												== BoundaryConditions::dirichlet) 
@@ -421,7 +421,7 @@ namespace Dune
 //			this->satN[i] = (*(this->u))[i][1];
 //			this->satW[i] = 1 - this->satN[i];
 //			//const FieldVector<RT, 4> parameters(this->problem.materialLawParameters
-//			//	 		 (this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal));
+//			//	 		 (this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal));
 //			//			this->pC[i] = this->problem.materialLaw().pC(this->satW[i], parameters);			
 //			xWN[i] = this->problem.multicomp().xWN(this->pW[i], 283.15); //Achtung!! pW instead of pN!!!
 //			xAW[i] = this->problem.multicomp().xAW(this->pW[i], 283.15); //Achtung!! pW instead of pN!!!

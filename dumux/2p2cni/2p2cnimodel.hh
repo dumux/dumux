@@ -62,13 +62,13 @@ public:
 	};
 
 	typedef typename G::LeafGridView GV;
-    typedef typename GV::IdxSet IS;
+    typedef typename GV::IndexSet IS;
 	typedef MultipleCodimMultipleGeomTypeMapper<G,IS,P1Layout> VertexMapper;
 	typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator
 			IntersectionIterator;
 
 	LeafP1TwoPhaseModel(const G& g, ProblemType& prob) :
-		ThisTwoPhaseHeatModel(g, prob), problem(prob), _grid(g), vertexmapper(g,	g.leafIdxSet()), size((*(this->u)).size())
+		ThisTwoPhaseHeatModel(g, prob), problem(prob), _grid(g), vertexmapper(g,	g.leafIndexSet()), size((*(this->u)).size())
 		{
 	}
 
@@ -105,7 +105,7 @@ public:
 				FVElementGeometry<G> fvGeom;
 			    fvGeom.update(entity);
 
-				for (int k = 0; k < fvGeom.nEdges; k++)
+				for (int k = 0; k < fvGeom.numEdges; k++)
 			     {
 				    int i = fvGeom.subContVolFace[k].i;
 
@@ -270,7 +270,7 @@ public:
 			// get entity
 			const Entity& entity = *it;
 			this->localJacobian.fvGeom.update(entity);
-			int size = this->localJacobian.fvGeom.nVertexs;
+			int size = this->localJacobian.fvGeom.numVertices;
 			this->localJacobian.setLocalSolution(entity);
 			this->localJacobian.computeElementData(entity);
 			bool old = true;

@@ -68,31 +68,31 @@ namespace Lenhard
         // some constants from the traits for convenience
         enum {
             numEq   = BoxTraits::numEq,
-            pWIndex = PwSnTraits::pWIndex,
-            snIndex = PwSnTraits::snIndex
+            pWIdx = PwSnTraits::pWIdx,
+            snIdx = PwSnTraits::snIdx
         };
         
         // copy some types from the traits for convenience
         typedef typename DomainTraits::Scalar                     Scalar;
         typedef typename DomainTraits::Grid                       Grid;
-        typedef typename DomainTraits::Cell                       Cell;
-        typedef typename DomainTraits::CellIterator               CellIterator;
+        typedef typename DomainTraits::Element                       Element;
+        typedef typename DomainTraits::ElementIterator               ElementIterator;
         typedef typename DomainTraits::ReferenceElement           ReferenceElement;
-        typedef typename DomainTraits::Node                       Node;
-        typedef typename DomainTraits::NodeIterator               NodeIterator;
+        typedef typename DomainTraits::Vertex                       Vertex;
+        typedef typename DomainTraits::VertexIterator               VertexIterator;
         typedef typename DomainTraits::IntersectionIterator       IntersectionIterator;
         typedef typename DomainTraits::IntersectionIteratorGetter IntersectionIteratorGetter;
-        typedef typename DomainTraits::LocalCoord                 LocalCoord;
-        typedef typename DomainTraits::WorldCoord                 WorldCoord;
+        typedef typename DomainTraits::LocalPosition                 LocalPosition;
+        typedef typename DomainTraits::GlobalPosition                 GlobalPosition;
 
         typedef typename BoxTraits::FVElementGeometry             FVElementGeometry;
         typedef typename BoxTraits::SpatialFunction               SpatialFunction;
-        typedef typename BoxTraits::UnknownsVector                UnknownsVector;
+        typedef typename BoxTraits::SolutionVector                SolutionVector;
         typedef typename BoxTraits::BoundaryTypeVector            BoundaryTypeVector;
 
         typedef typename MaterialTraits::ParkerLenhard            ParkerLenhard;
-        typedef typename MaterialTraits::CellState                CellState;
-        typedef typename MaterialTraits::NodeState                NodeState;
+        typedef typename MaterialTraits::ElementState                ElementState;
+        typedef typename MaterialTraits::VertexState                VertexState;
 
         // episode control stuff
         enum Episode {
@@ -123,10 +123,10 @@ namespace Lenhard
                 Api::require<Api::BasicDomainTraits, DomainTraits>();
 
 #ifdef USE_NODE_PARAMETERS
-                maxPc_ = ParkerLenhard::pC(ParentType::nodeState(0), 
+                maxPc_ = ParkerLenhard::pC(ParentType::vertexState(0), 
                                            0.0);
 #else // !USE_NODE_PARAMETERS
-                maxPc_ = ParkerLenhard::pC(ParentType::cellState(0), 
+                maxPc_ = ParkerLenhard::pC(ParentType::elementState(0), 
                                            0.0);
 #endif
                 initialTimeStepSize_ = initialTimeStepSize;
@@ -241,11 +241,11 @@ namespace Lenhard
         void setTimeStepSize(Scalar dt) 
             { return timeManager_.setStepSize(dt); }
 
-        //! evaluate the initial condition for a node
-        void initial(UnknownsVector &dest,
-                     const Cell &cell,
-                     WorldCoord pos,
-                     LocalCoord posLocal)
+        //! evaluate the initial condition for a vert
+        void initial(SolutionVector &dest,
+                     const Element &element,
+                     GlobalPosition pos,
+                     LocalPosition posLocal)
             {
                 Scalar h = curHydraulicHead_ - pos[0];
                 Scalar pH = hydrostaticPressure_(h);
@@ -257,90 +257,90 @@ namespace Lenhard
                     // above the hydraulic head due to the capillary
                     // pressure
 #ifdef USE_NODE_PARAMETERS
-                    dest[snIndex] = 1.0 - ParkerLenhard::Sw(ParentType::nodeState(0), - pH);
+                    dest[snIdx] = 1.0 - ParkerLenhard::Sw(ParentType::vertexState(0), - pH);
 #else
-                    const CellState &cs = ParentType::cellState(cell);
-                    dest[snIndex] = 1.0 - ParkerLenhard::Sw(cs, - pH);
+                    const ElementState &cs = ParentType::elementState(element);
+                    dest[snIdx] = 1.0 - ParkerLenhard::Sw(cs, - pH);
 #endif
                     
-                    dest[snIndex] = std::min((Scalar) 1.0, dest[snIndex]);
-                    dest[snIndex] = std::max((Scalar) 0.0, dest[snIndex]);
+                    dest[snIdx] = std::min((Scalar) 1.0, dest[snIdx]);
+                    dest[snIdx] = std::max((Scalar) 0.0, dest[snIdx]);
                     
 #ifdef USE_NODE_PARAMETERS
-                    dest[pWIndex] = -ParkerLenhard::pC(ParentType::nodeState(0),
-                                                       1 - dest[snIndex]);
+                    dest[pWIdx] = -ParkerLenhard::pC(ParentType::vertexState(0),
+                                                       1 - dest[snIdx]);
 #else
-                    dest[pWIndex] = -ParkerLenhard::pC(cs,
-                                                       1 - dest[snIndex]);
+                    dest[pWIdx] = -ParkerLenhard::pC(cs,
+                                                       1 - dest[snIdx]);
 #endif
                     
 
                 }
                 else {
-                    dest[pWIndex] = pH;
-                    dest[snIndex] = 0.0;
+                    dest[pWIdx] = pH;
+                    dest[snIdx] = 0.0;
                 }
             }
 
 
         // Returns the type of an boundary contition for the wetting
-        // phase pressure at a cell face
+        // phase pressure at a element face
         void boundaryTypes(BoundaryTypeVector &dest,
-                           const Cell &cell,
+                           const Element &element,
                            const IntersectionIterator &face,
-                           const WorldCoord &pos,
-                           const LocalCoord &localPos)
+                           const GlobalPosition &pos,
+                           const LocalPosition &localPos)
 
             {
-                dest[pWIndex] = Dune::BoundaryConditions::dirichlet;
-                dest[snIndex] = Dune::BoundaryConditions::dirichlet;
+                dest[pWIdx] = Dune::BoundaryConditions::dirichlet;
+                dest[snIdx] = Dune::BoundaryConditions::dirichlet;
             }
 
         //! Evaluate a neumann boundary condition
-        void neumann(UnknownsVector &dest,
-                     const Cell &cell,
+        void neumann(SolutionVector &dest,
+                     const Element &element,
                      const IntersectionIterator &face,
-                     const WorldCoord &pos,
-                     const LocalCoord &localPos)
+                     const GlobalPosition &pos,
+                     const LocalPosition &localPos)
             {
-                dest[pWIndex] = 0;
-                dest[snIndex] = 0;
+                dest[pWIdx] = 0;
+                dest[snIdx] = 0;
             }
 
 
-        //! Evaluate a dirichlet boundary condition at a cell node
-        void dirichlet(UnknownsVector &dest,
-                       const Cell &cell,
-                       int nodeIdx,
+        //! Evaluate a dirichlet boundary condition at a element vert
+        void dirichlet(SolutionVector &dest,
+                       const Element &element,
+                       int vertIdx,
                        int globalIdx)
             {
-                const LocalCoord &localPos = cell.geometry()[nodeIdx];
-                WorldCoord pos = cell.geometry().global(localPos);
+                const LocalPosition &localPos = element.geometry()[vertIdx];
+                GlobalPosition pos = element.geometry().global(localPos);
                 
 #if defined USE_NODE_PARAMETERS
                 if (onUpperBoundary(pos)) {
-                    dest[pWIndex] = -maxPc_;
-                    dest[snIndex] = 1;
+                    dest[pWIdx] = -maxPc_;
+                    dest[snIdx] = 1;
                 }
                 else { // onLowerBoundary(pos) 
                     Scalar h = curHydraulicHead_ - pos[0];
                     Scalar pH = hydrostaticPressure_(h);
-                    dest[pWIndex] = pH;
-                    dest[snIndex] = 0;
+                    dest[pWIdx] = pH;
+                    dest[snIdx] = 0;
                 }
 #else
-                initial(dest, cell, pos, localPos);
+                initial(dest, element, pos, localPos);
 #endif
             }
 
         //! evaluate the mass injection rate of the fluids for a BOX
         //! sub control volume
-        void sourceTerm(UnknownsVector &dest,
-                        const Cell &cell,
-                        const FVElementGeometry &dualCell,
+        void source(SolutionVector &dest,
+                        const Element &element,
+                        const FVElementGeometry &dualElement,
                         int subControlVolumeId)
             {
-                dest[pWIndex] = dest[snIndex] = 0;
+                dest[pWIdx] = dest[snIdx] = 0;
             }
         ///////////////////////////////////
         // End of problem specific stuff
@@ -398,11 +398,11 @@ namespace Lenhard
 #if LENHARD_EXPERIMENT == 1
         void updateEpisode_()
             {
-                int epiIndex = timeManager_.episodeIndex();
+                int epiIdx = timeManager_.episodeIndex();
 
                 int i = 0;
                 int k = 12;
-                if (epiIndex == i) {
+                if (epiIdx == i) {
                     // initial episode, we start at t=-3hours
                     curHydraulicHead_ = 0.67;
                     timeManager_.startNextEpisode(-3*60*60);
@@ -418,7 +418,7 @@ namespace Lenhard
                 else if (!timeManager_.episodeIsOver())
                     return;
 
-                if (epiIndex < i + k) {
+                if (epiIdx < i + k) {
                     // reduce the hydraulic head by 5cm and wait
                     // for 10 minutes
                     curHydraulicHead_ -= 0.05;
@@ -428,7 +428,7 @@ namespace Lenhard
                 };
                 i += k;
                     
-                if (epiIndex == i) {
+                if (epiIdx == i) {
                     // wait until we reach simulation time t=53 hours
                     timeManager_.startNextEpisode(53*60*60 - timeManager_.time());
                     timeManager_.setStepSize(1);
@@ -436,7 +436,7 @@ namespace Lenhard
                 }
                 ++i;
                 
-                if (epiIndex < i + k) {
+                if (epiIdx < i + k) {
                     // increase the hydraulic head by 5cm and wait
                     // for 10 minutes
                     curHydraulicHead_ += 0.05;
@@ -446,7 +446,7 @@ namespace Lenhard
                 }
                 i += k;
                 
-                if (epiIndex == i) {
+                if (epiIdx == i) {
                     timeManager_.startNextEpisode(20*60*60);
                     timeManager_.setStepSize(1);
                     return;
@@ -458,10 +458,10 @@ namespace Lenhard
 #elif LENHARD_EXPERIMENT == 2
         void updateEpisode_()
             {
-                int epiIndex = timeManager_.episodeIndex();
+                int epiIdx = timeManager_.episodeIndex();
 
                 int i = 0;
-                if (epiIndex == i) {
+                if (epiIdx == i) {
                     // initial episode, we start at t=-3hours
                     curHydraulicHead_ = 0.72;
                     timeManager_.setTime(-10*60*60, 0);
@@ -479,7 +479,7 @@ namespace Lenhard
                     return;
 
                 int k = 13;
-                if (epiIndex < i + k) {
+                if (epiIdx < i + k) {
                     // reduce the hydraulic head by 5cm and wait
                     // for 10 minutes
                     curHydraulicHead_ -= 0.05;
@@ -489,7 +489,7 @@ namespace Lenhard
                 };
                 i += k;
                     
-                if (epiIndex == i) {
+                if (epiIdx == i) {
                     // wait until we reach simulation time t=3 hours
                     timeManager_.startNextEpisode(3*60*60 - timeManager_.time());
                     timeManager_.setStepSize(10.0);
@@ -498,7 +498,7 @@ namespace Lenhard
                 ++i;
                 
                 k = 7;
-                if (epiIndex < i + k) {
+                if (epiIdx < i + k) {
                     // increase the hydraulic head by 5cm and wait
                     // for 10 minutes
                     curHydraulicHead_ += 0.05;
@@ -508,7 +508,7 @@ namespace Lenhard
                 }
                 i += k;
                 
-                if (epiIndex == i ) {
+                if (epiIdx == i ) {
                     // wait until we reach simulation time t=3 hours
                     timeManager_.startNextEpisode(5*60*60 - timeManager_.time());
                     timeManager_.setStepSize(10.0);
@@ -517,7 +517,7 @@ namespace Lenhard
                 ++i;
 
                 k = 5;
-                if (epiIndex < i + k) {
+                if (epiIdx < i + k) {
                     // decrease the hydraulic head by 5cm and wait
                     // for 10 minutes
                     curHydraulicHead_ -= 0.05;
@@ -527,7 +527,7 @@ namespace Lenhard
                 }
                 i += k;
 
-                if (epiIndex == i ) {
+                if (epiIdx == i ) {
                     // wait until we reach simulation time t=6.67 hours
                     timeManager_.startNextEpisode(6.67*60*60 - timeManager_.time());
                     timeManager_.setStepSize(10.0);
@@ -536,7 +536,7 @@ namespace Lenhard
                 ++i;
 
                 k = 11;
-                if (epiIndex < i + k) {
+                if (epiIdx < i + k) {
                     // increase the hydraulic head by 5cm and wait
                     // for 10 minutes
                     curHydraulicHead_ += 0.05;
@@ -546,7 +546,7 @@ namespace Lenhard
                 }
                 i += k;
                 
-                if (epiIndex == i ) {
+                if (epiIdx == i ) {
                     // wait until we reach simulation time t=10 hours
                     timeManager_.startNextEpisode(10*60*60 - timeManager_.time());
                     timeManager_.setStepSize(10.0);
@@ -572,19 +572,19 @@ namespace Lenhard
 
                 resultWriter_.addScalarVertexFunction("Sn",
                                                       model_.currentSolution(),
-                                                      snIndex);
+                                                      snIdx);
                 resultWriter_.addScalarVertexFunction("Pw",
                                                       model_.currentSolution(),
-                                                      pWIndex);
+                                                      pWIdx);
 
                 SpatialFunction globResidual(ParentType::grid());
                 model_.evalGlobalResidual(globResidual);
                 resultWriter_.addScalarVertexFunction("global defect Sn",
                                                       globResidual,
-                                                      snIndex);
+                                                      snIdx);
                 resultWriter_.addScalarVertexFunction("global defect Pw",
                                                       globResidual,
-                                                      pWIndex);
+                                                      pWIdx);
 
                 resultWriter_.endTimestep();
             }
@@ -603,23 +603,23 @@ namespace Lenhard
                 
                 convergenceWriter_->addScalarVertexFunction("Sn",
                                                             u,
-                                                            ParentType::nodeMap(),
-                                                            snIndex);
+                                                            ParentType::vertMap(),
+                                                            snIdx);
                 convergenceWriter_->addScalarVertexFunction("Pw",
                                                             u,
-                                                            ParentType::nodeMap(),
-                                                            pWIndex);
+                                                            ParentType::vertMap(),
+                                                            pWIdx);
                 convergenceWriter_->addScalarVertexFunction("difference Sn",
                                                             diff,
-                                                            ParentType::nodeMap(),
-                                                            snIndex);
+                                                            ParentType::vertMap(),
+                                                            snIdx);
                 convergenceWriter_->addScalarVertexFunction("difference Pw",
                                                             diff,
-                                                            ParentType::nodeMap(),
-                                                            pWIndex);
+                                                            ParentType::vertMap(),
+                                                            pWIdx);
                 
 /*                writeVertexFields_(*convergenceWriter_, u);
-                writeCellFields_(*convergenceWriter_, u);
+                writeElementFields_(*convergenceWriter_, u);
 */
             };
 #endif // LENHARD_WRITE_NEWTON_STEPS
@@ -629,32 +629,32 @@ namespace Lenhard
             {
 #ifdef USE_HYSTERESIS
 #ifdef USE_NODE_PARAMETERS
-                NodeIterator it = ParentType::nodeBegin();
-                NodeIterator endit = ParentType::nodeEnd();
+                VertexIterator it = ParentType::vertexBegin();
+                VertexIterator endit = ParentType::vertexEnd();
                 for (; it != endit; ++it) {
-                    int vertIdx = ParentType::nodeIndex(*it);
-                    Scalar Sn = (*model_.currentSolution())[vertIdx][snIndex];
+                    int vertIdx = ParentType::vertIdx(*it);
+                    Scalar Sn = (*model_.currentSolution())[vertIdx][snIdx];
                     Scalar Sw = 1 - Sn;
-                    ParkerLenhard::updateState(nodeState(*it), Sw);
+                    ParkerLenhard::updateState(vertexState(*it), Sw);
                 }
 #else
                 // update the parker-lenhard hystersis model
-                // for all cells
-                CellIterator it = ParentType::grid().template leafbegin<0>();
-                CellIterator endit = ParentType::grid().template leafend<0>();
+                // for all elements
+                ElementIterator it = ParentType::grid().template leafbegin<0>();
+                ElementIterator endit = ParentType::grid().template leafend<0>();
                 for (; it != endit; ++it) {
-                    // get the barycenter of the current cell
+                    // get the barycenter of the current element
                     const Dune::GeometryType &geoType = it->type();
-                    const LocalCoord &localPos =
+                    const LocalPosition &localPos =
                         DomainTraits::referenceElement(geoType).position(0,0);
 
                     // evaluate the solution for the non-wetting
                     // saturation at this point
-                    Scalar Sn = model_.currentSolution().evallocal(snIndex,
+                    Scalar Sn = model_.currentSolution().evallocal(snIdx,
                                                      *it,
                                                      localPos);
                     Scalar Sw = 1 - Sn;
-                    ParkerLenhard::updateState(cellState(cellIndex(*it)), Sw);
+                    ParkerLenhard::updateState(elementState(elementIdx(*it)), Sw);
                 }
 #endif
 #endif
@@ -664,8 +664,8 @@ namespace Lenhard
             {
                 // write out the points at 67,57,47,37 and 27 cm in
                 // order to allow them being plotted
-                CellIterator it = ParentType::cellBegin();
-                CellIterator endIt = ParentType::cellEnd();
+                ElementIterator it = ParentType::elementBegin();
+                ElementIterator endIt = ParentType::elementEnd();
 #if LENHARD_EXPERIMENT == 1
                 Scalar points[] = { 0.27, 0.37, 0.47, 0.57, 0.67, 1e100 };
 #elif LENHARD_EXPERIMENT == 2
@@ -673,11 +673,11 @@ namespace Lenhard
 #endif
                 int curI = 0;
                 for (; it != endIt; ++it) {
-                    LocalCoord localPos = it->geometry().local(points[curI]);
+                    LocalPosition localPos = it->geometry().local(points[curI]);
                     if (0 <= localPos[0] && localPos[0] < 1.0) {
                         // evaluate the solution for the non-wetting
                         // saturation at this point
-                        Scalar Sn = model_.currentSolution().evallocal(snIndex,
+                        Scalar Sn = model_.currentSolution().evallocal(snIdx,
                                                          *it,
                                                          localPos);
 
@@ -689,11 +689,11 @@ namespace Lenhard
                         std::cout << "snap\n";
 
                         // print the capillary pressure vs water
-                        // saturtion at some node of the cell which
+                        // saturtion at some vert of the element which
                         // contains the current point of interest
-                        const NodeState &vs = ParentType::nodeState(ParentType::cellIndex(*it));
+                        const VertexState &vs = ParentType::vertexState(ParentType::elementIdx(*it));
                         localPos[0] = 0;
-                        Sn = model_.currentSolution().evallocal(snIndex,
+                        Sn = model_.currentSolution().evallocal(snIdx,
                                                                 *it,
                                                                 localPos);
                         std::cout << boost::format("snip: pC_pos=%.02f\n")%points[curI];

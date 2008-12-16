@@ -16,7 +16,7 @@ typedef	typename G::Traits::template Codim<0>::Entity Entity;
 	enum
 	{	dim=G::dimension, m=2};
 
-	FieldMatrix<DT,dim,dim> K (const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi)
+	const FieldMatrix<DT,dim,dim>& K(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi)
 	{
 		   return permloc_;
 	}

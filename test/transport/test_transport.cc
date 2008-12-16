@@ -31,8 +31,8 @@ int main(int argc, char** argv)
     int modulo = 10;
 
     // slope limiter parameters
-    bool reconstruct = true;
-    double alphaMax = 0.8;
+//    bool reconstruct = true;
+//    double alphaMax = 0.8;
 
     // create a grid object
     typedef double NumberType;

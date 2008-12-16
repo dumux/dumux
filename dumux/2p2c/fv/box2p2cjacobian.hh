@@ -176,7 +176,7 @@ namespace Dune
 	 const FMatrix K = harmonicMeanK(Ki, Kj);
 
 	 // calculate FE gradient (grad p for each phase)
-	 for (int k = 0; k < this->fvGeom.nNodes; k++) // loop over adjacent nodes
+	 for (int k = 0; k < this->fvGeom.numVertices; k++) // loop over adjacent nodes
 	 {
 		 // FEGradient at node k
 		 const FieldVector<DT,dim> feGrad(this->fvGeom.subContVolFace[face].grad[k]);
@@ -293,11 +293,11 @@ namespace Dune
 	 // adapt the diffusion coefficent according to the phase state.
 	 // TODO: make this continuously dependent on the phase saturations
 	 if (state_i == gasPhase || state_j == gasPhase) {
-             // one cell is only gas -> no diffusion in water phase
+             // one element is only gas -> no diffusion in water phase
              avgDpm[wPhase] = 0;
 	 }
 	 if (state_i == waterPhase || state_j == waterPhase) {
-             // one cell is only water -> no diffusion in gas phase
+             // one element is only water -> no diffusion in gas phase
              avgDpm[nPhase] = 0;
 	 }
 
@@ -385,7 +385,7 @@ namespace Dune
             break;
 
             case waterPhase :
-        	RT xAWmass, xAWmolar, henryInv, pbub, xAWmolarMax; // auxiliary variables
+        	RT xAWmass, xAWmolar, henryInv, pbub; // auxiliary variables
 
         	xAWmass = sol[localIdx][switchIdx];
          	xAWmolar = problem.multicomp().convertMassToMoleFraction(xAWmass, waterPhase);
@@ -490,11 +490,11 @@ namespace Dune
 
     virtual void computeElementData (const Entity& e)
     {
-//		 // ASSUMING element-wise constant permeability, evaluate K at the cell center
-// 		 elData.K = problem.K(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+//		 // ASSUMING element-wise constant permeability, evaluate K at the element center
+// 		 elData.K = problem.K(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
 //
 //		 // ASSUMING element-wise constant porosity
-// 		 elData.porosity = problem.porosity(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+// 		 elData.porosity = problem.porosity(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
    	 return;
     }
 
@@ -552,7 +552,7 @@ namespace Dune
   		 if (!sNDat[globalIdx].visited)
   		 {
   			 // ASSUME porosity defined at nodes
-  			 sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+  			 sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
 
   			 // set counter for variable switch to zero
   			 sNDat[globalIdx].switched = 0;
@@ -682,7 +682,7 @@ namespace Dune
 
 	void updateVariableData(const Entity& e, const VBlockType* sol, bool old = false)
 	{
-		int size = this->fvGeom.nNodes;
+		int size = this->fvGeom.numVertices;
 
 		for (int i = 0; i < size; i++)
 				updateVariableData(e, sol, i, old);
@@ -728,13 +728,13 @@ namespace Dune
    	 int switched;
    	 int phaseState;
    	 int oldPhaseState;
-   	 RT cellVolume;
+   	 RT elementVolume;
    	 RT porosity;
    	 FMatrix K;
     };
 
     struct ElementData {
-//   	 RT cellVolume;
+//   	 RT elementVolume;
 //     	 RT porosity;
 //   	 RT gravity;
    	 } elData;

@@ -64,17 +64,17 @@ namespace Lens
             typedef RegularizedVanGenuchten<VanGenuchtenState> VanGenuchten;
 
             // States for globally constant parameters, parameters
-            // specfic for a medium, and cell specific parameters
+            // specfic for a medium, and element specific parameters
             typedef LensGlobalState<ScalarT>                   GlobalState;
             typedef LensMediumState<VanGenuchtenState>         MediumState;
-            typedef LensNodeState<MediumState>                 NodeState;
-            typedef LensCellState<MediumState>                 CellState;
+            typedef LensVertexState<MediumState>                 VertexState;
+            typedef LensElementState<MediumState>                 ElementState;
             
             // The parker-lenhard hysteresis model
 #if !USE_NODE_PARAMETERS
-            typedef Dune::ParkerLenhard<CellState, VanGenuchten, USE_SPLINES>     ParkerLenhard;
+            typedef Dune::ParkerLenhard<ElementState, VanGenuchten, USE_SPLINES>     ParkerLenhard;
 #else // USE_NODE_PARAMETERS
-            typedef Dune::ParkerLenhard<NodeState, VanGenuchten, USE_SPLINES>   ParkerLenhard;
+            typedef Dune::ParkerLenhard<VertexState, VanGenuchten, USE_SPLINES>   ParkerLenhard;
 #endif
         };
 
@@ -82,33 +82,33 @@ namespace Lens
     private:
 
         typedef typename DomainTraits::Grid                  Grid;
-        typedef typename DomainTraits::Cell                  Cell;
+        typedef typename DomainTraits::Element                  Element;
         typedef typename DomainTraits::ReferenceElement      ReferenceElement;
 
-        typedef typename DomainTraits::Node                  Node;
+        typedef typename DomainTraits::Vertex                  Vertex;
 
-        typedef typename DomainTraits::CellIterator         CellIterator;
-        typedef typename DomainTraits::NodeIterator       NodeIterator;
+        typedef typename DomainTraits::ElementIterator         ElementIterator;
+        typedef typename DomainTraits::VertexIterator       VertexIterator;
 
         typedef typename DomainTraits::IntersectionIterator       IntersectionIterator;
         typedef typename DomainTraits::IntersectionIteratorGetter IntersectionIteratorGetter;
 
-        typedef typename DomainTraits::LocalCoord    LocalCoord;
-        typedef typename DomainTraits::WorldCoord    WorldCoord;
-        typedef typename DomainTraits::Vector        Vector;
-        typedef typename DomainTraits::Matrix        Matrix;
+        typedef typename DomainTraits::LocalPosition    LocalPosition;
+        typedef typename DomainTraits::GlobalPosition    GlobalPosition;
+        typedef typename DomainTraits::FieldVector        FieldVector;
+        typedef typename DomainTraits::FieldMatrix        FieldMatrix;
 
         typedef typename MaterialTraits::GlobalState   GlobalState;
         typedef typename MaterialTraits::MediumState   MediumState;
-        typedef typename MaterialTraits::CellState     CellState;
-        typedef typename MaterialTraits::NodeState   NodeState;
+        typedef typename MaterialTraits::ElementState     ElementState;
+        typedef typename MaterialTraits::VertexState   VertexState;
 
         typedef typename MaterialTraits::VanGenuchtenState VanGenuchtenState;
         typedef typename MaterialTraits::VanGenuchten      VanGenuchten;
         typedef typename MaterialTraits::ParkerLenhard     ParkerLenhard;
 
         enum {
-            GridDim = DomainTraits::GridDim
+            dim = DomainTraits::dim
         };
 
     public:
@@ -120,8 +120,8 @@ namespace Lens
 
                 initGlobalState_();
                 initMediaStates_();
-                initCellStates_();
-                initNodeStates_();
+                initElementStates_();
+                initVertexStates_();
             };
 
         ~PwSnLensDomain()
@@ -131,53 +131,53 @@ namespace Lens
                 delete globalState_;
             }
 
-        //! returns the body force vector within a cell
-        const Vector &gravity(const Cell &cell,
-                              int cellIdx) const
+        //! returns the body force vector within a element
+        const FieldVector &gravity(const Element &element,
+                              int elementIdx) const
             {
                 return globalState_->gravity();
             }
 
-        const Vector &gravity() const
+        const FieldVector &gravity() const
             {
                 return globalState_->gravity();
             }
 
-        //! return the permeability tensor for a cell
-        void applyPermeabilityTensor(Vector &dest, const Cell &cell, const Vector &pressureGradient) const
+        //! return the permeability tensor for a element
+        void applyPermeabilityTensor(FieldVector &dest, const Element &element, const FieldVector &pressureGradient) const
             {
-                cellState(cellIndex(cell)).permeability().umv(pressureGradient, dest);
+                elementState(elementIdx(element)).permeability().umv(pressureGradient, dest);
             }
 
-        //! Return the capillary pressure for a given node of a cell
-        Scalar pC(const Cell &cell,
-                  int cellIdx,
+        //! Return the capillary pressure for a given vert of a element
+        Scalar pC(const Element &element,
+                  int elementIdx,
                   int localVertIdx,
                   int globalVertIdx,
                   Scalar Sw) const
             {
 #if USE_NODE_PARAMETERS
-                return ParkerLenhard::pC(nodeState(globalVertIdx), Sw);
+                return ParkerLenhard::pC(vertexState(globalVertIdx), Sw);
 #else // !USE_NODE_PARAMETERS
 #if USE_INTERFACE_CONDITION
-                const NodeState &vertState = nodeState(globalVertIdx);
+                const VertexState &vertState = vertexState(globalVertIdx);
                 if (!vertState.isOnInterface())
-                    return ParkerLenhard::pC(cellState(cellIdx),
+                    return ParkerLenhard::pC(elementState(elementIdx),
                                              Sw);
 
                 // find the minimum capilarry pressure around the
-                // node if the node is on an interface
+                // vert if the vert is on an interface
                 Scalar minPc = 1e100;
-                int nNeighbors = vertState.numNeighbourCells();
+                int nNeighbors = vertState.numNeighbourElements();
                 for (int i = 0; i < nNeighbors; ++i) {
-                    const CellState &ncState = cellState(vertState.neighbourCellIdx(i));
+                    const ElementState &ncState = elementState(vertState.neighbourElementIdx(i));
                     minPc = std::min(minPc,
                                      ParkerLenhard::pC(ncState, Sw));
                 }
 
                 return minPc;
 #else // ! USE_INTERFACE_CONDITION
-                return ParkerLenhard::pC(cellState(cellIdx),
+                return ParkerLenhard::pC(elementState(elementIdx),
                                          Sw);
 #endif
 #endif
@@ -185,14 +185,14 @@ namespace Lens
 
         // return the derivative of the capillary pressure regarding
         // the wetting phase saturation
-        Scalar dpC_dSw(const Cell &cell,
-                       int cellIdx,
+        Scalar dpC_dSw(const Element &element,
+                       int elementIdx,
                        int localVertIdx,
                        int globalVertIdx,
                        Scalar Sw) const
             {
                 /* TODO
-                const CellState &state = cellState(cellIdx);
+                const ElementState &state = elementState(elementIdx);
                 Scalar a = ParkerLenhard::pC(state, Sw + 5e-4);
                 Scalar b = ParkerLenhard::pC(state, Sw - 5e-4);
                 return (a - b) / 1e-3;
@@ -200,10 +200,10 @@ namespace Lens
                 return 0;
             }
 
-        // return the capillary pressure for a given cell
-        Scalar porosity(const Cell &cell) const
+        // return the capillary pressure for a given element
+        Scalar porosity(const Element &element) const
             {
-                return cellState(cell).porosity();
+                return elementState(element).porosity();
             }
 
         // return the density of the wetting phase
@@ -244,41 +244,41 @@ namespace Lens
                 return (phase == 0)? viscosityW() : viscosityN();
             }
 
-        // return the mobility of the wetting phase at a node
-        Scalar mobilityW(const Cell &cell,
-                         int cellIdx,
+        // return the mobility of the wetting phase at a vert
+        Scalar mobilityW(const Element &element,
+                         int elementIdx,
                          int localVertIdx,
                          int globalVertIdx,
                          Scalar Sw) const
             {
 #if USE_NODE_PARAMETERS
-                return ParkerLenhard::krw(nodeState(globalVertIdx), Sw) / viscosityW();
+                return ParkerLenhard::krw(vertexState(globalVertIdx), Sw) / viscosityW();
 #else // !USE_NODE_PARAMETERS
 #if USE_INTERFACE_CONDITION
-                const NodeState &vertState = nodeState(globalVertIdx);
+                const VertexState &vertState = vertexState(globalVertIdx);
                 if (!vertState.isOnInterface())
-                    return ParkerLenhard::krw(cellState(cellIdx), Sw) / viscosityW();
+                    return ParkerLenhard::krw(elementState(elementIdx), Sw) / viscosityW();
 
                 // find the minimum wetting phase mobility around the
-                // node if the node is on an interface
+                // vert if the vert is on an interface
                 Scalar minMob = 1e100;
-                int nNeighbors = vertState.numNeighbourCells();
+                int nNeighbors = vertState.numNeighbourElements();
                 for (int i = 0; i < nNeighbors; ++i) {
-                    const CellState &ncState = cellState(vertState.neighbourCellIdx(i));
+                    const ElementState &ncState = elementState(vertState.neighbourElementIdx(i));
                     minMob = std::min(minMob,
                                       ParkerLenhard::krw(ncState, Sw) / viscosityW());
                 };
 
                 return minMob;
 #else // ! USE_INTERFACE_CONDITION
-                return ParkerLenhard::krw(cellState(cellIdx), Sw) / viscosityW();
+                return ParkerLenhard::krw(elementState(elementIdx), Sw) / viscosityW();
 #endif
 #endif
             }
 
-        // return the mobility of the non-wetting phase at a node
-        Scalar mobilityN(const Cell &cell,
-                         int cellIdx,
+        // return the mobility of the non-wetting phase at a vert
+        Scalar mobilityN(const Element &element,
+                         int elementIdx,
                          int localVertIdx,
                          int globalVertIdx,
                          Scalar Sn) const
@@ -289,62 +289,62 @@ namespace Lens
                 Scalar Sw = 1 - Sn;
 
 #if USE_NODE_PARAMETERS
-                return ParkerLenhard::krn(nodeState(globalVertIdx), Sw) / viscosityN();
+                return ParkerLenhard::krn(vertexState(globalVertIdx), Sw) / viscosityN();
 #else // !USE_NODE_PARAMETERS
 #if USE_INTERFACE_CONDITION
-                const NodeState &vertState = nodeState(globalVertIdx);
+                const VertexState &vertState = vertexState(globalVertIdx);
                 if (!vertState.isOnInterface())
-                    return ParkerLenhard::krn(cellState(cellIdx), Sw) / viscosityN();
+                    return ParkerLenhard::krn(elementState(elementIdx), Sw) / viscosityN();
 
                 // find the minimum wetting phase mobility around the
-                // node if the node is on an interface
+                // vert if the vert is on an interface
                 Scalar minMob = 1e100;
-                int nNeighbors = vertState.numNeighbourCells();
+                int nNeighbors = vertState.numNeighbourElements();
                 for (int i = 0; i < nNeighbors; ++i) {
-                    const CellState &ncState = cellState(vertState.neighbourCellIdx(i));
+                    const ElementState &ncState = elementState(vertState.neighbourElementIdx(i));
                     minMob = std::min(minMob,
                                       ParkerLenhard::krn(ncState, Sw) / viscosityN());
                 };
 
                 return minMob;
 #else // ! USE_INTERFACE_CONDITION
-                return ParkerLenhard::krn(cellState(cellIdx), Sw) / viscosityN();
+                return ParkerLenhard::krn(elementState(elementIdx), Sw) / viscosityN();
 #endif
 #endif
             }
 
-        // given a cell index, return the corresponding cell state
-        CellState &cellState(int index)
-            { return cellStates_[index]; }
-        const CellState &cellState(int index) const
-            { return cellStates_[index]; }
+        // given a element index, return the corresponding element state
+        ElementState &elementState(int index)
+            { return elementStates_[index]; }
+        const ElementState &elementState(int index) const
+            { return elementStates_[index]; }
 
-        CellState &cellState(const Cell &cell)
-            { return cellStates_[cellIndex(cell)]; }
-        const CellState &cellState(const Cell &cell) const
-            { return cellStates_[cellIndex(cell)]; }
+        ElementState &elementState(const Element &element)
+            { return elementStates_[elementIdx(element)]; }
+        const ElementState &elementState(const Element &element) const
+            { return elementStates_[elementIdx(element)]; }
 
-        // given a global node index, return the corresponding state
-        NodeState &nodeState(int index)
-            { return nodeStates_[index]; }
-        const NodeState &nodeState(int index) const
-            { return nodeStates_[index]; }
+        // given a global vert index, return the corresponding state
+        VertexState &vertexState(int index)
+            { return vertStates_[index]; }
+        const VertexState &vertexState(int index) const
+            { return vertStates_[index]; }
 
-        // given a cell and a local node index, return the corresponding state
-        NodeState &nodeState(const Cell &cell, int i)
-            { return nodeStates_[ParentType::nodeIndex(cell, i)]; }
-        const NodeState &nodeState(const Cell &cell, int i) const
-            { return nodeStates_[ParentType::nodeIndex(cell, i)]; }
+        // given a element and a local vert index, return the corresponding state
+        VertexState &vertexState(const Element &element, int i)
+            { return vertStates_[ParentType::vertIdx(element, i)]; }
+        const VertexState &vertexState(const Element &element, int i) const
+            { return vertStates_[ParentType::vertIdx(element, i)]; }
 
-        // given a node, return it's state object
-        NodeState &nodeState(const Node &vert)
-            { return nodeStates_[ParentType::nodeIndex(vert)]; }
-        const NodeState &nodeState(const Node &vert) const
-            { return nodeStates_[ParentType::nodeIndex(vert)]; }
+        // given a vert, return it's state object
+        VertexState &vertexState(const Vertex &vert)
+            { return vertStates_[ParentType::vertIdx(vert)]; }
+        const VertexState &vertexState(const Vertex &vert) const
+            { return vertStates_[ParentType::vertIdx(vert)]; }
 
-        const WorldCoord &lowerLeft() const
+        const GlobalPosition &lowerLeft() const
             { return gridLowerLeft_; }
-        const WorldCoord &upperRight() const
+        const GlobalPosition &upperRight() const
             { return gridUpperRight_; }
 
         Scalar width() const
@@ -352,20 +352,20 @@ namespace Lens
         Scalar height() const
             { return gridUpperRight_[1] - gridLowerLeft_[1]; }
 
-        bool onUpperBoundary(const WorldCoord &pos) const
+        bool onUpperBoundary(const GlobalPosition &pos) const
             { return pos[1] > gridUpperRight_[1] - eps_; }
-        bool onLowerBoundary(const WorldCoord &pos) const
+        bool onLowerBoundary(const GlobalPosition &pos) const
             { return pos[1] < gridLowerLeft_[1] + eps_; }
-        bool onLeftBoundary(const WorldCoord &pos) const
+        bool onLeftBoundary(const GlobalPosition &pos) const
             { return pos[0] < gridLowerLeft_[0] + eps_; }
-        bool onRightBoundary(const WorldCoord &pos) const
+        bool onRightBoundary(const GlobalPosition &pos) const
             { return pos[0] > gridUpperRight_[0] - eps_; }
 
         // returns true iff a world coordinate is within the fine
         // sand lens.
-        bool isInLens(const WorldCoord &coord)
+        bool isInLens(const GlobalPosition &coord)
             {
-                for (int i = 0; i < DomainTraits::WorldDim; ++i) {
+                for (int i = 0; i < DomainTraits::dimWorld; ++i) {
                     if (lensLowerLeft_[i] > coord[i] ||
                         lensUpperRight_[i] < coord[i])
                     {
@@ -376,9 +376,9 @@ namespace Lens
             }
 
 /*
-        // returns true iff the cell corrosponding to the state is
+        // returns true iff the element corrosponding to the state is
         // within the fine sand lens.
-        bool isInLens(const NodeState &state)
+        bool isInLens(const VertexState &state)
             {
                 return state.mediumState() == lensMedium_;
             }
@@ -398,16 +398,16 @@ namespace Lens
                 eps_ = 1e-8 * width();
 
                 // create the grid
-                Dune::FieldVector<int, GridDim> cellRes;
+                Dune::FieldVector<int, dim> elementRes;
 #if USE_ORIG_PROB
-                cellRes[0] = 48;
-                cellRes[1] = 32;
+                elementRes[0] = 48;
+                elementRes[1] = 32;
 #else
-                cellRes[0] = CELLRES_X;
-                cellRes[1] = CELLRES_Y;
+                elementRes[0] = CELLRES_X;
+                elementRes[1] = CELLRES_Y;
 #endif
 
-                Grid *grid = new Grid(cellRes,
+                Grid *grid = new Grid(elementRes,
                                       gridLowerLeft_,
                                       gridUpperRight_);
                 ParentType::setGrid(grid);
@@ -419,24 +419,24 @@ namespace Lens
                 lensUpperRight_[0] = width()*(4./6);
                 lensUpperRight_[1] = height()*(3./4);
                 // make sure the global coordniates of the lens are
-                // aligned to the grid's cell boundaries in order to
+                // aligned to the grid's element boundaries in order to
                 // make sure the interface occures at the same
-                // position for sized lenses for node and cell based
+                // position for sized lenses for vert and element based
                 // material parameter storage. (this is not strictly
                 // necessary, but makes it easier to compare the
                 // different approaches.)
-                lensLowerLeft_[0] = width()/cellRes[0]
-                                  * (int) (lensLowerLeft_[0]*cellRes[0]/width())
-                                  + (0.5 - eps_)/cellRes[0];
-                lensLowerLeft_[1] = height()/cellRes[1]
-                                  * (int) (lensLowerLeft_[1]*cellRes[1]/height())
-                                  + (0.5 - eps_)/cellRes[1];
-                lensUpperRight_[0] = width()/cellRes[0]
-                                   * (int) (lensUpperRight_[0]*cellRes[0]/width())
-                                   + (-0.5 + eps_)/cellRes[0];
-                lensUpperRight_[1] = height()/cellRes[1]
-                                   * (int) (lensUpperRight_[1]*cellRes[1]/height())
-                                   + (-0.5 + eps_)/cellRes[1];
+                lensLowerLeft_[0] = width()/elementRes[0]
+                                  * (int) (lensLowerLeft_[0]*elementRes[0]/width())
+                                  + (0.5 - eps_)/elementRes[0];
+                lensLowerLeft_[1] = height()/elementRes[1]
+                                  * (int) (lensLowerLeft_[1]*elementRes[1]/height())
+                                  + (0.5 - eps_)/elementRes[1];
+                lensUpperRight_[0] = width()/elementRes[0]
+                                   * (int) (lensUpperRight_[0]*elementRes[0]/width())
+                                   + (-0.5 + eps_)/elementRes[0];
+                lensUpperRight_[1] = height()/elementRes[1]
+                                   * (int) (lensUpperRight_[1]*elementRes[1]/height())
+                                   + (-0.5 + eps_)/elementRes[1];
             }
 
         void initGlobalState_()
@@ -451,7 +451,7 @@ namespace Lens
 
                 globalState_->setViscosityW(water.viscosity());
                 globalState_->setViscosityN(dnapl.viscosity());
-                Vector gravity(0); gravity[1] = -9.81;
+                FieldVector gravity(0); gravity[1] = -9.81;
                 globalState_->setGravity(gravity);
             }
 
@@ -507,36 +507,36 @@ namespace Lens
 
             }
 
-        void initCellStates_()
+        void initElementStates_()
             {
-                cellStates_.resize(ParentType::numCells());
+                elementStates_.resize(ParentType::numElements());
 
-                // initialize the cell state objects depending on
-                // wether the cell is inside or outside of the lens of
+                // initialize the element state objects depending on
+                // wether the element is inside or outside of the lens of
                 // fine sand.
-                WorldCoord cellCenter;
-                CellIterator it = ParentType::cellBegin();
-                CellIterator endit = ParentType::cellEnd();
+                GlobalPosition elementCenter;
+                ElementIterator it = ParentType::elementBegin();
+                ElementIterator endit = ParentType::elementEnd();
                 for (; it != endit; ++it) {
-                    ParentType::cellCenter(*it, cellCenter);
-                    int arrayPos = ParentType::cellIndex(*it);
-                    if (isInLens(cellCenter))
-                        cellStates_[arrayPos].setMediumState(lensMedium_);
+                    ParentType::elementCenter(*it, elementCenter);
+                    int arrayPos = ParentType::elementIdx(*it);
+                    if (isInLens(elementCenter))
+                        elementStates_[arrayPos].setMediumState(lensMedium_);
                     else
-                        cellStates_[arrayPos].setMediumState(outerMedium_);
+                        elementStates_[arrayPos].setMediumState(outerMedium_);
                 }
             }
 
-        void initNodeStates_()
+        void initVertexStates_()
             {
-                nodeStates_.resize(ParentType::numNodes());
+                vertStates_.resize(ParentType::numVertices());
 #if USE_NODE_PARAMETERS
-                NodeIterator vertIt = ParentType::nodeBegin();
-                const NodeIterator &endVertIt = ParentType::nodeEnd();
+                VertexIterator vertIt = ParentType::vertexBegin();
+                const VertexIterator &endVertIt = ParentType::vertexEnd();
                 for (; vertIt != endVertIt; ++vertIt) {
-                    WorldCoord pos;
-                    ParentType::nodePosition(pos, *vertIt);
-                    NodeState &vertState = nodeState(*vertIt);
+                    GlobalPosition pos;
+                    ParentType::vertPosition(pos, *vertIt);
+                    VertexState &vertState = vertexState(*vertIt);
                     if (isInLens(pos))
                         vertState.setMediumState(lensMedium_);
                     else
@@ -544,32 +544,32 @@ namespace Lens
                 }
 
 #else // !USE_NODE_PARAMETERS
-                // initialize the node state objects
+                // initialize the vert state objects
 
-                // loop over all cells
-                CellIterator cellIt = ParentType::cellBegin();
-                const CellIterator &endCellIt = ParentType::cellEnd();
-                for (; cellIt != endCellIt; ++cellIt) {
-                    // loop over all faces of the current cell
-                    IntersectionIterator faceIt = IntersectionIteratorGetter::begin(*cellIt);
-                    const IntersectionIterator &endFaceIt = IntersectionIteratorGetter::end(*cellIt);
-                    for (; faceIt != endFaceIt; ++ faceIt) {
+                // loop over all elements
+                ElementIterator elementIt = ParentType::elementBegin();
+                const ElementIterator &endElementIt = ParentType::elementEnd();
+                for (; elementIt != endElementIt; ++elementIt) {
+                    // loop over all faces of the current element
+                    IntersectionIterator isIt = IntersectionIteratorGetter::begin(*elementIt);
+                    const IntersectionIterator &endFaceIt = IntersectionIteratorGetter::end(*elementIt);
+                    for (; isIt != endFaceIt; ++ isIt) {
                         // make sure the face not on the boundary of
                         // the grid
-                        if (!faceIt.neighbor())
+                        if (!isIt.neighbor())
                             continue;
 
-                        // check whether both cells share the same
+                        // check whether both elements share the same
                         // medium. if yes we don't need to do anything
                         // about the current face.
-                        const CellState &inState = cellState(*faceIt.inside());
-                        const CellState &outState = cellState(*faceIt.outside());
+                        const ElementState &inState = elementState(*isIt.inside());
+                        const ElementState &outState = elementState(*isIt.outside());
                         if (inState.mediumState() != outState.mediumState())
                             continue;
 
                         // alright, the face is on a inhomogenity, so
                         // we have to mark all its vertices
-                        markInterfaceVertices_(faceIt);
+                        markInterfaceVertices_(isIt);
                     }
                 }
 #endif
@@ -578,56 +578,56 @@ namespace Lens
 #if !USE_NODE_PARAMETERS
         //  mark all vertices on a face as as belonging to an
         //  inhomogenity
-        void markInterfaceVertices_(IntersectionIterator &interfaceIt)
+        void markInterfaceVertices_(IntersectionIterator &interisIt)
             {
-                const Cell &cell = *interfaceIt.inside();
+                const Element &element = *interisIt.inside();
                 const ReferenceElement &refElem =
-                    DomainTraits::referenceElement(cell.geometry().type());
+                    DomainTraits::referenceElement(element.geometry().type());
 
-                int inIdx = cellIndex(*interfaceIt.inside());
-                int outIdx = cellIndex(*interfaceIt.outside());
+                int inIdx = elementIdx(*interisIt.inside());
+                int outIdx = elementIdx(*interisIt.outside());
 
-                int faceIdx = interfaceIt.numberInSelf();
-                int nVerticesOfFace = refElem.size(faceIdx, 1, GridDim);
-                for (int nodeInFace = 0;
-                     nodeInFace < nVerticesOfFace;
-                     nodeInFace++)
+                int faceIdx = interisIt.numberInSelf();
+                int numVerticesOfFace = refElem.size(faceIdx, 1, dim);
+                for (int vertInFace = 0;
+                     vertInFace < numVerticesOfFace;
+                     vertInFace++)
                 {
-                    int nodeIdxInElement = refElem.subEntity(faceIdx, 1, nodeInFace, GridDim);
+                    int vertIdxInElement = refElem.subEntity(faceIdx, 1, vertInFace, dim);
 
-                    nodeState(*interfaceIt.inside(), nodeIdxInElement).addNeighbourCellIdx(inIdx);
-                    nodeState(*interfaceIt.inside(), nodeIdxInElement).addNeighbourCellIdx(outIdx);
+                    vertexState(*interisIt.inside(), vertIdxInElement).addNeighbourElementIdx(inIdx);
+                    vertexState(*interisIt.inside(), vertIdxInElement).addNeighbourElementIdx(outIdx);
                 }
             }
 #endif // !USE_NODE_PARAMETERS
 
 
-        // the actual type which stores the cell states.
-        typedef std::vector<NodeState>  NodeStateArray_;
+        // the actual type which stores the element states.
+        typedef std::vector<VertexState>  VertexStateArray_;
 
-        // the actual type which stores the cell states.
-        typedef std::vector<CellState>    CellStateArray_;
+        // the actual type which stores the element states.
+        typedef std::vector<ElementState>    ElementStateArray_;
 
         // the lower left and upper right coordinates of the complete
         // grid
-        WorldCoord gridLowerLeft_;
-        WorldCoord gridUpperRight_;
+        GlobalPosition gridLowerLeft_;
+        GlobalPosition gridUpperRight_;
 
         // the lower left and upper right coordinates of the fine sand
         // lens
-        WorldCoord lensLowerLeft_;
-        WorldCoord lensUpperRight_;
+        GlobalPosition lensLowerLeft_;
+        GlobalPosition lensUpperRight_;
 
         // global state and states of the media
         GlobalState *globalState_;
         MediumState *outerMedium_;
         MediumState *lensMedium_;
 
-        // stores a state for each node
-        NodeStateArray_ nodeStates_;
+        // stores a state for each vert
+        VertexStateArray_ vertStates_;
 
-        // stores a state for each node
-        CellStateArray_  cellStates_;
+        // stores a state for each vert
+        ElementStateArray_  elementStates_;
 
         // A small epsilon value and the current simulated
         // time. FIXME/TODO: should probably not be here..

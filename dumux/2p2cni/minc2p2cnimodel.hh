@@ -210,7 +210,7 @@ public:
 				FVElementGeometry<G> fvGeom;
 			    fvGeom.update(entity);
 
-				for (int k = 0; k < fvGeom.nEdges; k++)
+				for (int k = 0; k < fvGeom.numEdges; k++)
 			     {
 				    int i = fvGeom.subContVolFace[k].i;
 

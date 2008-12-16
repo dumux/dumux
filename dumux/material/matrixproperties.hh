@@ -22,7 +22,7 @@ public:
 	typedef typename G::ctype DT;
 	enum {n=G::dimension, m=1};
 
-	virtual FieldMatrix<DT,n,n> K (const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi)
+	virtual const FieldMatrix<DT,n,n> &K(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi)
 	{
 		return K_;
 	}

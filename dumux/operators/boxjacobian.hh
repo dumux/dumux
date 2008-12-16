@@ -99,7 +99,7 @@ public:
 
 	template<class TypeTag>
 	void localDefect(const Entity& e, const VBlockType* sol, bool withBC = true) {
-    	for (int i=0; i < this->fvGeom.nNodes; i++) // begin loop over vertices / sub control volumes
+    	for (int i=0; i < this->fvGeom.numVertices; i++) // begin loop over vertices / sub control volumes
 			{
 				// implicit Euler
 				bool old = true;
@@ -109,7 +109,7 @@ public:
 			}
 
 			//updateVariableData(e, sol);
-			for (int i=0; i < this->fvGeom.nNodes; i++) // begin loop over vertices / sub control volumes
+			for (int i=0; i < this->fvGeom.numVertices; i++) // begin loop over vertices / sub control volumes
 			{
 				VBlockType massContrib = computeM(e, sol, i);
 				this->def[i] += massContrib;
@@ -121,7 +121,7 @@ public:
 				this->def[i] -= q;
 			} // end loop over vertices / sub control volumes
 
-			for (int k = 0; k < this->fvGeom.nEdges; k++) // begin loop over edges / sub control volume faces
+			for (int k = 0; k < this->fvGeom.numEdges; k++) // begin loop over edges / sub control volume faces
 			{
 				int i = this->fvGeom.subContVolFace[k].i;
 				int j = this->fvGeom.subContVolFace[k].j;
@@ -139,7 +139,7 @@ public:
 				assembleBC<TypeTag> (e);
 
 				// add to defect
-				for (int i=0; i < this->fvGeom.nNodes; i++) {
+				for (int i=0; i < this->fvGeom.numVertices; i++) {
 					this->def[i] += this->b[i];
 				}
 			}
@@ -247,8 +247,8 @@ public:
 				// 				for (int i = 0; i < 4; i++)
 				// 				  std::cout << "bctype[" << i << "] = " << this->bctype[i] << std::endl;
 
-				int nNodesOfFace = referenceElement.size(faceIdx, 1, dim);
-				for (int nodeInFace = 0; nodeInFace < nNodesOfFace; nodeInFace++) {
+				int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
+				for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++) {
 					int nodeInElement = referenceElement.subEntity(faceIdx, 1, nodeInFace, dim);
 					for (int equationNumber = 0; equationNumber < m; equationNumber++) {
 						if (this->bctype[nodeInElement][equationNumber] == BoundaryConditions::neumann) {

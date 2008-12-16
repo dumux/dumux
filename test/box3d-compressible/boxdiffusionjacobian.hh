@@ -98,7 +98,7 @@ namespace Dune
     VBlockType computeA (const Entity& e, const VBlockType* sol, int face)
     {
     	FieldVector<RT, n> gradP(0);
-    	for (int k = 0; k < this->fvGeom.nNodes; k++) {
+    	for (int k = 0; k < this->fvGeom.numVertices; k++) {
     		FieldVector<RT,n> grad(this->fvGeom.subContVolFace[face].grad[k]);
     		grad *= sol[k];
     		gradP += grad;
@@ -127,8 +127,8 @@ namespace Dune
     void computeElementData (const Entity& e)
     {
     	// ASSUMING element-wise constant permeability, evaluate K at the cell center
-    	elData.K = problem.K(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
-    	elData.porosity = problem.porosity(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+    	elData.K = problem.K(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
+    	elData.porosity = problem.porosity(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
     };
 
 	  // *********************************************************
@@ -171,7 +171,7 @@ namespace Dune
 
 	void updateVariableData(const Entity& e, const VBlockType* sol, bool old = false)
 	{
-		int size = this->fvGeom.nNodes;
+		int size = this->fvGeom.numVertices;
 
 		for (int i = 0; i < size; i++)
 				updateVariableData(e, sol, i, old);

@@ -81,10 +81,10 @@ namespace Dune
 	      // In the following, it is determined whether the intersection really is on the interface. 
 	      // Every node of the corresponding face is checked whether it also belongs to the Darcy grid. 
 	      int faceIdx = stokesIsIt->numberInSelf();
-	      int nNodesOfFace = referenceElement.size(faceIdx, 1, dim);
-	      int nNodesInDarcyGrid = 0;
-	      int darcyIds[nNodesOfFace];
-	      for (int nodeInFace = 0; nodeInFace < nNodesOfFace; nodeInFace++) {
+	      int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
+	      int numVerticesInDarcyGrid = 0;
+	      int darcyIds[numVerticesOfFace];
+	      for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++) {
 		int nodeInElement = referenceElement.subEntity(faceIdx, 1, nodeInFace, dim);
 
 		// get the node pointer on the Stokes grid 
@@ -98,22 +98,22 @@ namespace Dune
 		  break; // otherwise this face is not at the interface 
 
 		// get the index of the node with respect to the Darcy matrix 
-		darcyIds[nNodesInDarcyGrid] = darcyVM_.map(*stokesVPointer);
+		darcyIds[numVerticesInDarcyGrid] = darcyVM_.map(*stokesVPointer);
 
-		nNodesInDarcyGrid++;
+		numVerticesInDarcyGrid++;
 	      }
 
-	      if (nNodesInDarcyGrid < nNodesOfFace) // then this face is not at the interface 
+	      if (numVerticesInDarcyGrid < numVerticesOfFace) // then this face is not at the interface 
 		continue; 
 
 	      // get the index of the element with respect to the Stokes matrix  
 	      int stokesId = stokesEM_.map(*stokesIt);
 	      
 	      // set rowsize for coupling Stokes <- Darcy  
-	      A_SD.setrowsize(stokesId, nNodesOfFace);
+	      A_SD.setrowsize(stokesId, numVerticesOfFace);
 
 	      // set rowsize for coupling Darcy <- Stokes  
-	      for (int nodeInFace = 0; nodeInFace < nNodesOfFace; nodeInFace++) 
+	      for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++) 
 		A_DS.incrementrowsize(darcyIds[nodeInFace]);
 	    }
 	} // end loop 1 over all elements of the Stokes grid 
@@ -136,10 +136,10 @@ namespace Dune
 	      // In the following, it is determined whether the intersection really is on the interface. 
 	      // Every node of the corresponding face is checked whether it also belongs to the Darcy grid. 
 	      int faceIdx = stokesIsIt->numberInSelf();
-	      int nNodesOfFace = referenceElement.size(faceIdx, 1, dim);
-	      int nNodesInDarcyGrid = 0;
-	      int darcyIds[nNodesOfFace];
-	      for (int nodeInFace = 0; nodeInFace < nNodesOfFace; nodeInFace++) {
+	      int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
+	      int numVerticesInDarcyGrid = 0;
+	      int darcyIds[numVerticesOfFace];
+	      for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++) {
 		int nodeInElement = referenceElement.subEntity(faceIdx, 1, nodeInFace, dim);
 
 		// get the node pointer on the Stokes grid 
@@ -153,19 +153,19 @@ namespace Dune
 		  break; // otherwise this face is not at the interface 
 
 		// get the index of the node with respect to the Darcy matrix 
-		darcyIds[nNodesInDarcyGrid] = darcyVM_.map(*stokesVPointer);
+		darcyIds[numVerticesInDarcyGrid] = darcyVM_.map(*stokesVPointer);
 
-		nNodesInDarcyGrid++;
+		numVerticesInDarcyGrid++;
 	      }
 
-	      if (nNodesInDarcyGrid < nNodesOfFace) // then this face is not at the interface 
+	      if (numVerticesInDarcyGrid < numVerticesOfFace) // then this face is not at the interface 
 		continue; 
 
 	      // get the index of the element with respect to the Stokes matrix  
 	      int stokesId = stokesEM_.map(*stokesIt);
 	      
 	      // set indices of nonzero entries  
-	      for (int nodeInFace = 0; nodeInFace < nNodesOfFace; nodeInFace++) {
+	      for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++) {
 		A_SD.addindex(stokesId, darcyIds[nodeInFace]);
 		A_DS.addindex(darcyIds[nodeInFace], stokesId);
 	      }
@@ -194,11 +194,11 @@ namespace Dune
 	      // In the following, it is determined whether the intersection really is on the interface. 
 	      // Every node of the corresponding face is checked whether it also belongs to the Darcy grid. 
 	      int faceIdx = stokesIsIt->numberInSelf();
-	      int nNodesOfFace = referenceElement.size(faceIdx, 1, dim);
-	      int nNodesInDarcyGrid = 0;
-	      int darcyIds[nNodesOfFace];
-	      int nodeInElement[nNodesOfFace];
-	      for (int nodeInFace = 0; nodeInFace < nNodesOfFace; nodeInFace++) {
+	      int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
+	      int numVerticesInDarcyGrid = 0;
+	      int darcyIds[numVerticesOfFace];
+	      int nodeInElement[numVerticesOfFace];
+	      for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++) {
 		int nInEl = referenceElement.subEntity(faceIdx, 1, nodeInFace, dim);
 
 		// get the node pointer on the Stokes grid 
@@ -212,15 +212,15 @@ namespace Dune
 		  break; // otherwise this face is not at the interface 
 
 		// get the index of the node with respect to the Darcy matrix 
-		darcyIds[nNodesInDarcyGrid] = darcyVM_.map(*stokesVPointer);
+		darcyIds[numVerticesInDarcyGrid] = darcyVM_.map(*stokesVPointer);
 
 		// save the local index of the node inside the element  
-		nodeInElement[nNodesInDarcyGrid] = nInEl;
+		nodeInElement[numVerticesInDarcyGrid] = nInEl;
 
-		nNodesInDarcyGrid++;
+		numVerticesInDarcyGrid++;
 	      }
 
-	      if (nNodesInDarcyGrid < nNodesOfFace) // then this face is not at the interface 
+	      if (numVerticesInDarcyGrid < numVerticesOfFace) // then this face is not at the interface 
 		continue; 
 
 	      // get the index of the element with respect to the Stokes matrix  
@@ -250,7 +250,7 @@ namespace Dune
 			{
 			  int ii = comp*velShapeFuncSet.size() + i;
 			  double velShapeValue = velShapeFuncSet[i].evaluateFunction(0,qLocal);
-			  for (int j = 0; j < nNodesOfFace; ++j) // loop over interface nodes 
+			  for (int j = 0; j < numVerticesOfFace; ++j) // loop over interface nodes 
 			    {
 			      int jInElement = nodeInElement[j];
 			      double pressShapeValue = pressShapeFuncSet[jInElement].evaluateFunction(0,qLocal);
@@ -271,7 +271,7 @@ namespace Dune
 		  for (int i = 0; i < velShapeFuncSet.size(); ++i) // loop over the scalar velocity basis functions 
 		    {
 		      int ii = comp*velShapeFuncSet.size() + i;
-		      for (int j = 0; j < nNodesOfFace; ++j) // loop over interface nodes 
+		      for (int j = 0; j < numVerticesOfFace; ++j) // loop over interface nodes 
 			{
 			  int bfIdx = fvGeom.boundaryFaceIndex(faceIdx, j);
 			  FieldVector<double,dim> qLocal = fvGeom.boundaryFace[bfIdx].ipLocal;

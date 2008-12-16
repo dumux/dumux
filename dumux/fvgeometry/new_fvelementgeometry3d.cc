@@ -149,7 +149,7 @@ class NewFVElementGeometry<GridT,
             return normal.two_norm();
         }
 
-    void getFaceIndices_(int nNodes,
+    void getFaceIndices_(int numVertices,
                          int k,
                          int& leftFace,
                          int& rightFace)
@@ -171,7 +171,7 @@ class NewFVElementGeometry<GridT,
                 {2, 1, 0, 3, 0, 4, 5, 1, 4, 3, 2, 5}
             };
 
-            switch (nNodes) {
+            switch (numVertices) {
                 case 4:
                     leftFace = edgeToFaceTet[0][k];
                     rightFace = edgeToFaceTet[1][k];
@@ -189,12 +189,12 @@ class NewFVElementGeometry<GridT,
                     rightFace = edgeToFaceHex[1][k];
                     break;
                 default:
-                    DUNE_THROW(NotImplemented, "FVElementGeometry :: getFaceIndices for nNodes = " << nNodes);
+                    DUNE_THROW(NotImplemented, "FVElementGeometry :: getFaceIndices for numVertices = " << numVertices);
                     break;
             }
         }
 
-    void getEdgeIndices_(int nNodes,
+    void getEdgeIndices_(int numVertices,
                          int face,
                          int node,
                          int &leftEdge,
@@ -257,7 +257,7 @@ class NewFVElementGeometry<GridT,
                 {-1, -1, -1, -1,  6, 10, 11,  7}
             };
 
-            switch (nNodes) {
+            switch (numVertices) {
                 case 4:
                     leftEdge = faceAndNodeToLeftEdgeTet[face][node];
                     rightEdge = faceAndNodeToRightEdgeTet[face][node];
@@ -275,7 +275,7 @@ class NewFVElementGeometry<GridT,
                     rightEdge = faceAndNodeToRightEdgeHex[face][node];
                     break;
                 default:
-                    DUNE_THROW(NotImplemented, "FVElementGeometry :: getFaceIndices for nNodes = " << nNodes);
+                    DUNE_THROW(NotImplemented, "FVElementGeometry :: getFaceIndices for numVertices = " << numVertices);
                     break;
             }
         }
@@ -317,7 +317,7 @@ class NewFVElementGeometry<GridT,
                                               
                                           this->edgeCoord_[4],
                                           this->faceCoord_[1],
-                                          this->cellGlobal_,
+                                          this->elementGlobal_,
                                           this->faceCoord_[4]);
                         
                     this->subContVol_[1].volume = 
@@ -328,7 +328,7 @@ class NewFVElementGeometry<GridT,
                                               
                                           this->edgeCoord_[5],
                                           this->faceCoord_[2],
-                                          this->cellGlobal_,
+                                          this->elementGlobal_,
                                           this->faceCoord_[1]);
 
                     this->subContVol_[2].volume = 
@@ -339,7 +339,7 @@ class NewFVElementGeometry<GridT,
                                               
                                           this->edgeCoord_[6],
                                           this->faceCoord_[3],
-                                          this->cellGlobal_,
+                                          this->elementGlobal_,
                                           this->faceCoord_[2]);
                         
                     this->subContVol_[3].volume =
@@ -350,7 +350,7 @@ class NewFVElementGeometry<GridT,
                                               
                                           this->edgeCoord_[7],
                                           this->faceCoord_[4],
-                                          this->cellGlobal_,
+                                          this->elementGlobal_,
                                           this->faceCoord_[3]);
                         
                     this->subContVol_[4].volume = 
@@ -370,7 +370,7 @@ class NewFVElementGeometry<GridT,
                                               
                                           this->edgeCoord_[3],
                                           this->faceCoord_[1],
-                                          this->cellGlobal_,
+                                          this->elementGlobal_,
                                           this->faceCoord_[3]);
                         
                     this->subContVol_[1].volume = 
@@ -381,7 +381,7 @@ class NewFVElementGeometry<GridT,
                                                                         
                                           this->edgeCoord_[4],
                                           this->faceCoord_[2],
-                                          this->cellGlobal_,
+                                          this->elementGlobal_,
                                           this->faceCoord_[1]);
 
                     this->subContVol_[2].volume =
@@ -392,13 +392,13 @@ class NewFVElementGeometry<GridT,
                                                                         
                                           this->edgeCoord_[5],
                                           this->faceCoord_[3],
-                                          this->cellGlobal_,
+                                          this->elementGlobal_,
                                           this->faceCoord_[2]);
 
                     this->subContVol_[3].volume =
                         hexahedronVolume_(this->edgeCoord_[3],
                                           this->faceCoord_[1],
-                                          this->cellGlobal_,
+                                          this->elementGlobal_,
                                           this->faceCoord_[3],
                                                                         
                                           this->subContVol_[3].global,
@@ -409,7 +409,7 @@ class NewFVElementGeometry<GridT,
                     this->subContVol_[4].volume =
                         hexahedronVolume_(this->edgeCoord_[4],
                                           this->faceCoord_[2],
-                                          this->cellGlobal_,
+                                          this->elementGlobal_,
                                           this->faceCoord_[1],
                                                                         
                                           this->subContVol_[4].global,
@@ -420,7 +420,7 @@ class NewFVElementGeometry<GridT,
                     this->subContVol_[5].volume = 
                         hexahedronVolume_(this->edgeCoord_[5],
                                           this->faceCoord_[3],
-                                          this->cellGlobal_,
+                                          this->elementGlobal_,
                                           this->faceCoord_[2],
 
                                           this->subContVol_[5].global,
@@ -438,7 +438,7 @@ class NewFVElementGeometry<GridT,
                                                                         
                                           this->edgeCoord_[0],
                                           this->faceCoord_[2],
-                                          this->cellGlobal_,
+                                          this->elementGlobal_,
                                           this->faceCoord_[0]);
 
                     this->subContVol_[1].volume = 
@@ -449,7 +449,7 @@ class NewFVElementGeometry<GridT,
 
                                           this->edgeCoord_[1],
                                           this->faceCoord_[1],
-                                          this->cellGlobal_,
+                                          this->elementGlobal_,
                                           this->faceCoord_[2]);
 
                     this->subContVol_[2].volume =
@@ -460,7 +460,7 @@ class NewFVElementGeometry<GridT,
 
                                           this->edgeCoord_[2],
                                           this->faceCoord_[0],
-                                          this->cellGlobal_,
+                                          this->elementGlobal_,
                                           this->faceCoord_[3]);
 
 
@@ -472,14 +472,14 @@ class NewFVElementGeometry<GridT,
                                                                         
                                           this->edgeCoord_[3],
                                           this->faceCoord_[3],
-                                          this->cellGlobal_,
+                                          this->elementGlobal_,
                                           this->faceCoord_[1]);
 
 
                     this->subContVol_[4].volume = 
                         hexahedronVolume_(this->edgeCoord_[0],
                                           this->faceCoord_[2],
-                                          this->cellGlobal_,
+                                          this->elementGlobal_,
                                           this->faceCoord_[0],
                                                                         
                                           this->subContVol_[4].global,
@@ -491,7 +491,7 @@ class NewFVElementGeometry<GridT,
                     this->subContVol_[5].volume = 
                         hexahedronVolume_(this->edgeCoord_[1],
                                           this->faceCoord_[1],
-                                          this->cellGlobal_,
+                                          this->elementGlobal_,
                                           this->faceCoord_[2],
                                                                         
                                           this->subContVol_[5].global,
@@ -502,7 +502,7 @@ class NewFVElementGeometry<GridT,
                     this->subContVol_[6].volume = 
                         hexahedronVolume_(this->edgeCoord_[2],
                                           this->faceCoord_[0],
-                                          this->cellGlobal_,
+                                          this->elementGlobal_,
                                           this->faceCoord_[3],
                                                                         
                                           this->subContVol_[6].global,
@@ -513,7 +513,7 @@ class NewFVElementGeometry<GridT,
                     this->subContVol_[7].volume = 
                         hexahedronVolume_(this->edgeCoord_[3],
                                           this->faceCoord_[3],
-                                          this->cellGlobal_,
+                                          this->elementGlobal_,
                                           this->faceCoord_[1],
                                                                         
                                           this->subContVol_[7].global,
@@ -526,7 +526,7 @@ class NewFVElementGeometry<GridT,
                     DUNE_THROW(NotImplemented, 
                                "updateVolumes_ dim = " 
                                << GridDim
-                               << ", nNodes = " 
+                               << ", numVertices = " 
                                << cell.template count<GridDim>());
             }
         };
@@ -556,7 +556,7 @@ class NewFVElementGeometry<GridT,
                 int rightFace;
                 getFaceIndices_(this->numNodes_, scvFaceIdx, leftFace, rightFace);
                 ipLocal  = refElem.position(scvFaceIdx, GridDim-1);
-                ipLocal += this->cellLocal_;
+                ipLocal += this->elementLocal_;
                 ipLocal += refElem.position(leftFace, 1);
                 ipLocal += refElem.position(rightFace, 1);
                 ipLocal *= 1 / 4.0;
@@ -565,7 +565,7 @@ class NewFVElementGeometry<GridT,
                 this->subContVolFace_[scvFaceIdx].normal_ = 
                     normalOfQuadrilateral_(this->edgeCoord_[scvFaceIdx], 
                                            this->faceCoord_[rightFace],
-                                           this->cellGlobal_, 
+                                           this->elementGlobal_, 
                                            this->faceCoord_[leftFace]);
             }
         }
@@ -579,8 +579,8 @@ class NewFVElementGeometry<GridT,
             // split finite element face into the sub faces of the
             // sub control volumes
             int face = it->numberInSelf();
-            int nNodesOfFace = refElem.size(face, 1, GridDim);
-            for (int nodeInFace = 0; nodeInFace < nNodesOfFace; nodeInFace++)
+            int numVerticesOfFace = refElem.size(face, 1, GridDim);
+            for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++)
             {
                 int nodeInElement = refElem.subEntity(face, 1,
                                                       nodeInFace, GridDim);

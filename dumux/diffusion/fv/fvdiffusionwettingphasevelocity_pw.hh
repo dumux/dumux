@@ -59,7 +59,7 @@ public:
 			FieldMatrix<ct,dim,dim> Ki(this->diffproblem.K(global, *it, local));
 
 			//compute total mobility
-			double lambdaI, fractionalWI;
+			double lambdaI; //, fractionalWI;
 			double sati = this->diffproblem.variables.saturation[indexi];
 
 			lambdaI = this->diffproblem.materialLaw.mobW(sati);
@@ -149,7 +149,7 @@ public:
 					FieldVector<ct,dim> K = (Kt += (uON *=Kn));
 
 					//compute total mobility
-					double lambdaJ, fractionalWJ;
+					double lambdaJ; //, fractionalWJ;
 					double satj = this->diffproblem.variables.saturation[indexj];
 					double satI = sati;
 					double satJ = satj;
@@ -171,7 +171,7 @@ public:
 
 					FieldVector<ct,dimworld> vTotal(K);
 					double pressgrad = 0;
-					double pcgrad = 0;
+//					double pcgrad = 0;
 
 					pressgrad = (pressi - pressj)/dist;
 
@@ -213,7 +213,7 @@ public:
 
 						// compute averaged total mobility
 						double lambda = 1.;
-						double satI = sati;
+//						double satI = sati;
 
 						lambda = this->diffproblem.materialLaw.mobW(this->diffproblem.gSat(faceglobal, *it, facelocalDim));
 

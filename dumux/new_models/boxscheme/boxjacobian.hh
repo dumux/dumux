@@ -195,12 +195,12 @@ namespace Dune
                 {
                     // handle only faces on exterior boundaries. This
                     // assumes there are no interior boundaries.
-                    if (!isIt.boundary())
+                    if (!isIt->boundary())
                         continue;
                     
                     // Assemble the boundary for all verts of the
                     // current face
-                    int faceIdx = isIt.numberInSelf();
+                    int faceIdx = isIt->numberInSelf();
                     int numVerticesOfFace = refElem.size(faceIdx, 1, dim);
                     for (int vertInFace = 0; 
                          vertInFace < numVerticesOfFace;

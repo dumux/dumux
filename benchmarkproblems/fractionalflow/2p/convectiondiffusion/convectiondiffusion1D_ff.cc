@@ -90,8 +90,8 @@ int main(int argc, char** argv)
     // const double tEnd = 2.5e9;
     const double cFLFactor = 1;
     // slope limiter parameters
-    bool reconstruct = true;
-    double alphaMax = 0.8;
+//    bool reconstruct = true;
+//    double alphaMax = 0.8;
 
     // IMPES parameters
     int iterFlag = 2;
@@ -100,7 +100,7 @@ int main(int argc, char** argv)
     double omega=0.4;
 
     // plotting parameters
-    char* fileName("convectivediffusion");
+    const char* fileName = "convectivediffusion";
     int modulo = 10;
 
     Oil oil(0);

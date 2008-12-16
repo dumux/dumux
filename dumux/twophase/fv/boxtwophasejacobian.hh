@@ -119,16 +119,16 @@ namespace Dune
 
       // cell center in reference element
       const Dune::FieldVector<DT,n>
-		  cellLocal = Dune::ReferenceElements<DT,n>::general(gt).position(0,0);
+		  elementLocal = Dune::ReferenceElements<DT,n>::general(gt).position(0,0);
 
 	  // get global coordinate of cell center
-	  const Dune::FieldVector<DT,n> cellGlobal = geometry.global(cellLocal);
+	  const Dune::FieldVector<DT,n> elementGlobal = geometry.global(elementLocal);
 
 	  // ASSUMING element-wise constant permeability, evaluate K at the cell center
-	  const Dune::FieldMatrix<DT,n,n> K = problem.K(cellGlobal, e, cellLocal);
+	  const Dune::FieldMatrix<DT,n,n> K = problem.K(elementGlobal, e, elementLocal);
 
 	  // ASSUMING element-wise constant porosity, evaluate at the cell center
-	  double volumeFactor = problem.porosity(cellGlobal, e, cellLocal)*cellVolume/dt;
+	  double volumeFactor = problem.porosity(elementGlobal, e, elementLocal)*cellVolume/dt;
 	  for (int i=0; i < size; i++) // begin loop over vertices
 	  {
 		  // capillary pressure
@@ -216,7 +216,7 @@ namespace Dune
 			  const FieldVector<DT,n> edgeGlobal = geometry.global(edgeLocal);
 
 			  // distance between cell center and edge center
-			  DT distanceEdgeCell = (cellGlobal - edgeGlobal).two_norm();
+			  DT distanceEdgeCell = (elementGlobal - edgeGlobal).two_norm();
 
 			  ////////////////////////////////////////////////////////////
 			  // CAREFUL: only valid in 2D

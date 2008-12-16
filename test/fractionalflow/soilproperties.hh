@@ -17,9 +17,9 @@ typedef	typename G::Traits::template Codim<0>::Entity Entity;
 	enum
 	{	n=G::dimension, m=1};
 
-	virtual FieldMatrix<DT,n,n> K (const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi)
+	virtual const FieldMatrix<DT,n,n> &K (const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi)
 	{
-		return 1e-7;
+		return K_;
 	}
 	virtual double porosity(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
 	{
@@ -83,14 +83,17 @@ typedef	typename G::Traits::template Codim<0>::Entity Entity;
 	}
 
 	HeterogeneousSoil()
-	:Matrix2p<G,RT>()//,permeability(g, name, create)
+        :Matrix2p<G,RT>(),K_(1e-7)//,permeability(g, name, create)
 	{}
 
 	~HeterogeneousSoil()
 	{}
 
 private:
+    FieldMatrix<DT,n,n> K_;
+    
 public:
+
 //	RandomPermeability<G> permeability;
 };
 

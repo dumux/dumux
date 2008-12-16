@@ -103,7 +103,7 @@ namespace Dune
 		  for (int comp = 0; comp < m; comp++) {
 	          // calculate FE gradient
 	          FieldVector<RT, n> pGrad(0);
-	          for (int k = 0; k < this->fvGeom.nNodes; k++) {
+	          for (int k = 0; k < this->fvGeom.numVertices; k++) {
 	        	  FieldVector<DT,n> grad(this->fvGeom.subContVolFace[face].grad[k]);
 	        	  grad *= (comp) ? sol[k][pNIdx] : varNData[k].pW;
 	        	  pGrad += grad;
@@ -137,12 +137,12 @@ namespace Dune
     virtual void computeElementData (const Entity& e)
     {
   		 // ASSUME element-wise constant parameters for the material law
- 		 elData.parameters = problem.materialLawParameters(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+ 		 elData.parameters = problem.materialLawParameters(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
 
 		 // ASSUMING element-wise constant permeability, evaluate K at the cell center
- 		 elData.K = problem.K(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+ 		 elData.K = problem.K(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
 
- 		 elData.porosity = problem.porosity(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+ 		 elData.porosity = problem.porosity(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
     };
 
 
@@ -185,7 +185,7 @@ namespace Dune
    		varData[i].saturationN = 1.0 - sol[i][satWIdx];
 
    		// ASSUME element-wise constant parameters for the material law
-         FieldVector<RT, 4> parameters = problem.materialLawParameters(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+         FieldVector<RT, 4> parameters = problem.materialLawParameters(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
 
          varData[i].pC = problem.materialLaw().pC(sol[i][satWIdx], parameters);
          varData[i].pW = sol[i][pNIdx] - varData[i].pC;
@@ -205,7 +205,7 @@ namespace Dune
 
 	void updateVariableData(const Entity& e, const VBlockType* sol, bool old = false)
 	{
-		int size = this->fvGeom.nNodes;
+		int size = this->fvGeom.numVertices;
 
 		for (int i = 0; i < size; i++)
 				updateVariableData(e, sol, i, old);
