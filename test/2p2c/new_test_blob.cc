@@ -11,7 +11,7 @@ int main(int argc, char** argv)
     typedef double                            Scalar;
     typedef Dune::NewBlobProblem<Scalar>      Problem;
     typedef Problem::DomainTraits::Grid       Grid;
-    typedef Problem::DomainTraits::WorldCoord WorldCoord;
+    typedef Problem::DomainTraits::GlobalPosition GlobalPosition;
     typedef Dune::GridPtr<Grid>               GridPointer;
     
     try {

@@ -31,7 +31,7 @@ namespace Dune
     /*!
      * \brief The 2P-2C specific traits.
      */
-    template <class DT>
+    template <class Scalar>
     class TwoPTwoCNITraits
     {
     public:
@@ -41,17 +41,17 @@ namespace Dune
             numComponents = 2   //!< Number of fluid components within a phase
         };
         enum { // Primary variable indices
-            pWIndex = 0,           //!< Index for the wetting phase pressure in a field vector
-            switchIndex = 1,       //!< Index for the non-wetting phase quantity
-            temperatureIndex = 2   //!< Index for the temperature
+            pWIdx = 0,           //!< Idx for the wetting phase pressure in a field vector
+            switchIdx = 1,       //!< Idx for the non-wetting phase quantity
+            temperatureIdx = 2   //!< Idx for the temperature
         };
         enum { // Phase Indices
-            wPhase = 0,  //!< Index of the wetting phase
-            nPhase = 1   //!< Index of the non-wetting phase
+            wPhase = 0,  //!< Idx of the wetting phase
+            nPhase = 1   //!< Idx of the non-wetting phase
         };
         enum { // Component indices
-            wComp = 0,  //!< Index of the wetting component
-            nComp = 1   //!< Index of the non-wetting component
+            wComp = 0,  //!< Idx of the wetting component
+            nComp = 1   //!< Idx of the non-wetting component
         };
         enum { // present phases
             nPhaseOnly = 0, //!< Only the non-wetting phase is present
@@ -59,13 +59,13 @@ namespace Dune
             bothPhases = 2 //!< Both phases are present
         };
 
-        typedef FieldVector<DT, numPhases>         PhasesVector;
+        typedef FieldVector<Scalar, numPhases>         PhasesVector;
 
-        struct VariableNodeData : public TwoPTwoCTraits<DT>::VariableNodeData
+        struct VariableVertexData : public TwoPTwoCTraits<Scalar>::VariableVertexData
         {
             PhasesVector intenergy;
             PhasesVector enthalpy;
-            DT       lambda;
+            Scalar       lambda;
         };
     };
 
@@ -96,18 +96,18 @@ namespace Dune
 
         typedef ProblemT                       Problem;
         typedef typename Problem::DomainTraits DomTraits;
-        typedef typename DomTraits::Scalar     DT;
-        typedef typename DomTraits::Cell       Cell;
+        typedef typename DomTraits::Scalar     Scalar;
+        typedef typename DomTraits::Element       Element;
 
         enum {
-            dim  = DomTraits::GridDim,
-            WorldDim = DomTraits::WorldDim,
+            dim  = DomTraits::dim,
+            dimWorld = DomTraits::dimWorld,
 
-            pWIndex          = TwoPTwoCNITraits::pWIndex,
-            switchIndex      = TwoPTwoCNITraits::switchIndex,
-            temperatureIndex = TwoPTwoCNITraits::temperatureIndex,
+            pWIdx          = TwoPTwoCNITraits::pWIdx,
+            switchIdx      = TwoPTwoCNITraits::switchIdx,
+            temperatureIdx = TwoPTwoCNITraits::temperatureIdx,
 
-            NumPhases        = TwoPTwoCNITraits::numPhases,
+            numPhases        = TwoPTwoCNITraits::numPhases,
             wPhase      = TwoPTwoCNITraits::wPhase,
             nPhase      = TwoPTwoCNITraits::nPhase,
 
@@ -121,19 +121,19 @@ namespace Dune
         };
 
         typedef BoxTraitsT                              BoxTraits;
-        typedef typename BoxTraits::UnknownsVector      UnknownsVector;
+        typedef typename BoxTraits::SolutionVector      SolutionVector;
         typedef typename TwoPTwoCNITraits::PhasesVector PhasesVector;
 
         typedef typename ParentType::LocalFunction     LocalFunction;
-        typedef typename ParentType::CellCache         CellCache;
+        typedef typename ParentType::ElementData         ElementData;
 
-        typedef typename ParentType::VariableNodeData  VariableNodeData;
+        typedef typename ParentType::VariableVertexData  VariableVertexData;
         typedef typename BoxTraits::FVElementGeometry  FVElementGeometry;
 
-        typedef typename DomTraits::WorldCoord         WorldCoord;
-        typedef typename DomTraits::LocalCoord         LocalCoord;
+        typedef typename DomTraits::GlobalPosition         GlobalPosition;
+        typedef typename DomTraits::LocalPosition         LocalPosition;
 
-        typedef FieldMatrix<DT, dim, dim>  Tensor;
+        typedef FieldMatrix<Scalar, dim, dim>  Tensor;
 
     public:
         TwoPTwoCNIBoxJacobian(ProblemT &problem)
@@ -144,46 +144,46 @@ namespace Dune
         /*!
          * \brief The storage term of heat
          */
-        void heatStorage(UnknownsVector &result,
+        void heatStorage(SolutionVector &result,
                          int scvId,
                          const LocalFunction &sol,
-                         const CellCache &cellCache) const
+                         const ElementData &elementCache) const
             {
-                const VariableNodeData &nodeDat = cellCache.atSCV[scvId];
+                const VariableVertexData &vertDat = elementCache.vertex[scvId];
 
-                DT satN = nodeDat.satN;
-                DT satW = nodeDat.satW;
+                Scalar satN = vertDat.satN;
+                Scalar satW = vertDat.satW;
 
-                // assume porosity defined at nodes
-                DT porosity =
-                    this->problem_.porosity(this->curCell_(), scvId);
+                // assume porosity defined at verts
+                Scalar porosity =
+                    this->problem_.porosity(this->curElement_(), scvId);
 
-                result[temperatureIndex] =
-                    porosity*(nodeDat.density[wPhase] *
-                              nodeDat.intenergy[wPhase] *
+                result[temperatureIdx] =
+                    porosity*(vertDat.density[wPhase] *
+                              vertDat.intenergy[wPhase] *
                               satW
                               +
-                              nodeDat.density[nPhase] *
-                              nodeDat.intenergy[nPhase] *
+                              vertDat.density[nPhase] *
+                              vertDat.intenergy[nPhase] *
                               satN)
                     +
-                    this->problem_.soil().heatCap(this->curCellGeom_.cellGlobal,
-                                                  this->curCell_(),
-                                                  this->curCellGeom_.cellLocal)*
+                    this->problem_.soil().heatCap(this->curElementGeom_.elementGlobal,
+                                                  this->curElement_(),
+                                                  this->curElementGeom_.elementLocal)*
                     this->temperature_(sol[scvId]);
             }
 
         /*!
          * \brief Update the temperature gradient at a face of an FV
-         *        cell.
+         *        element.
          */
-        void updateTempGrad(WorldCoord &tempGrad,
-                            const WorldCoord &feGrad,
+        void updateTempGrad(GlobalPosition &tempGrad,
+                            const GlobalPosition &feGrad,
                             const LocalFunction &sol,
-                            int nodeIdx) const
+                            int vertIdx) const
             {
-                WorldCoord tmp = feGrad;
-                tmp *= sol[nodeIdx][temperatureIndex];
+                GlobalPosition tmp = feGrad;
+                tmp *= sol[vertIdx][temperatureIdx];
                 tempGrad += tmp;
             }
 
@@ -191,34 +191,34 @@ namespace Dune
          * \brief Sets the temperature term of the flux vector to the
          *        heat flux due to advection of the fluids.
          */
-        void advectiveHeatFlux(UnknownsVector &flux,
+        void advectiveHeatFlux(SolutionVector &flux,
                                const PhasesVector &darcyOut,
-                               DT alpha, // upwind parameter
-                               const VariableNodeData *upW, // up/downstream nodes
-                               const VariableNodeData *dnW,
-                               const VariableNodeData *upN,
-                               const VariableNodeData *dnN) const
+                               Scalar alpha, // upwind parameter
+                               const VariableVertexData *upW, // up/downstream verts
+                               const VariableVertexData *dnW,
+                               const VariableVertexData *upN,
+                               const VariableVertexData *dnN) const
             {
                 // heat flux in non-wetting phase
-                flux[temperatureIndex]  =  darcyOut[nPhase] * (
-                    alpha * // upstream node
+                flux[temperatureIdx]  =  darcyOut[nPhase] * (
+                    alpha * // upstream vert
                     (  upN->density[nPhase] *
                        upN->mobility[nPhase] *
                        upN->enthalpy[nPhase])
                     +
-                    (1-alpha) * // downstream node
+                    (1-alpha) * // downstream vert
                     (  dnN->density[nPhase] *
                        dnN->mobility[nPhase] *
                        dnN->enthalpy[nPhase]) );
 
                 // advective heat flux in wetting phase
-                flux[temperatureIndex] +=  darcyOut[wPhase] * (
-                    alpha * // upstream node
+                flux[temperatureIdx] +=  darcyOut[wPhase] * (
+                    alpha * // upstream vert
                     (  upW->density[wPhase] *
                        upW->mobility[wPhase] *
                        upW->enthalpy[wPhase] )
                     +
-                    (1-alpha) * // downstream node
+                    (1-alpha) * // downstream vert
                     (  dnW->density[wPhase] *
                        dnW->mobility[wPhase] *
                        dnW->enthalpy[wPhase]) );
@@ -228,76 +228,76 @@ namespace Dune
          * \brief Adds the diffusive heat flux to the flux vector over
          *        the face of a sub-control volume.
          */
-        void diffusiveHeatFlux(UnknownsVector &flux,
+        void diffusiveHeatFlux(SolutionVector &flux,
                                int faceIdx,
-                               const WorldCoord &tempGrad) const
+                               const GlobalPosition &tempGrad) const
             {
-                const CellCache &cc = this->curSolCache_;
-                const FVElementGeometry &fvGeom = this->curCellGeom_;
+                const ElementData &cc = this->curElemDat_;
+                const FVElementGeometry &fvGeom = this->curElementGeom_;
                 int i = fvGeom.subContVolFace[faceIdx].i;
                 int j = fvGeom.subContVolFace[faceIdx].j;
 
                 // unit normal vector of the face
-                const WorldCoord &normal = fvGeom.subContVolFace[faceIdx].normal;
+                const GlobalPosition &normal = fvGeom.subContVolFace[faceIdx].normal;
 
                 // Harmonic mean of the heat conducitivities of the
                 // sub control volumes adjacent to the face
-                DT lambda =  2./((1. / cc.atSCV[i].lambda) + (1. / cc.atSCV[j].lambda));
+                Scalar lambda =  2./((1. / cc.vertex[i].lambda) + (1. / cc.vertex[j].lambda));
 
                 // heat conduction
-                flux[temperatureIndex] += (tempGrad*normal) * lambda;;
+                flux[temperatureIdx] += (tempGrad*normal) * lambda;;
             }
 
     public:
         // internal method!
-        void updateVarNodeData_(VariableNodeData &d,
-                                const UnknownsVector &nodeSol,
+        void updateVarVertexData_(VariableVertexData &d,
+                                const SolutionVector &vertSol,
                                 int phaseState,
-                                const Cell &cell,
+                                const Element &element,
                                 int localIdx,
                                 Problem &problem,
-                                DT temperature) const
+                                Scalar temperature) const
             {
                 // update data for the isothermal stuff
-                ParentType::updateVarNodeData_(d,
-                                               nodeSol,
+                ParentType::updateVarVertexData_(d,
+                                               vertSol,
                                                phaseState,
-                                               cell,
+                                               element,
                                                localIdx,
                                                problem,
                                                temperature);
 
-                const LocalCoord &local =
-                    DomTraits::referenceElement(cell.type()).position(localIdx,
+                const LocalPosition &local =
+                    DomTraits::referenceElement(element.type()).position(localIdx,
                                                                       dim);
-                const WorldCoord &global =
-                    cell.geometry()[localIdx];
+                const GlobalPosition &global =
+                    element.geometry()[localIdx];
 
                 // update data for the energy equation
-                d.lambda = problem.soil().heatCond(global, cell, local, d.satW);
-                d.enthalpy[pWIndex] = problem.wettingPhase().enthalpy(temperature, d.pW);
-                d.enthalpy[switchIndex] = problem.nonwettingPhase().enthalpy(temperature, d.pN);
+                d.lambda = problem.soil().heatCond(global, element, local, d.satW);
+                d.enthalpy[pWIdx] = problem.wettingPhase().enthalpy(temperature, d.pW);
+                d.enthalpy[switchIdx] = problem.nonwettingPhase().enthalpy(temperature, d.pN);
 
-                d.intenergy[pWIndex] = problem.wettingPhase().intEnergy(temperature,
+                d.intenergy[pWIdx] = problem.wettingPhase().intEnergy(temperature,
                                                                         d.pW);
-                d.intenergy[switchIndex] = problem.nonwettingPhase().intEnergy(temperature,
+                d.intenergy[switchIdx] = problem.nonwettingPhase().intEnergy(temperature,
                                                                                d.pN);
             }
 
 
         // internal method!
-        static DT temperature_(const UnknownsVector &sol)
-            { return sol[temperatureIndex]; }
+        static Scalar temperature_(const SolutionVector &sol)
+            { return sol[temperatureIdx]; }
     };
 
     ///////////////////////////////////////////////////////////////////////////
     // TwoPTwoCNIBoxModel (The actual numerical model.)
     ///////////////////////////////////////////////////////////////////////////
     /**
-     * \brief Isothermal two phase two component model with Pw and
+     * \brief Non-isothermal two phase two component model with Pw and
      *        Sn/X as primary unknowns.
      *
-     * This implements an isothermal two phase two component model
+     * This implements a non-isothermal two-phase two-component model
      * with Pw and Sn/X as primary unknowns.
      */
     template<class ProblemT>
@@ -322,12 +322,12 @@ namespace Dune
                            >
     {
         typedef typename ProblemT::DomainTraits::Grid   Grid;
-        typedef typename ProblemT::DomainTraits::Scalar DT;
+        typedef typename ProblemT::DomainTraits::Scalar Scalar;
         typedef TwoPTwoCNIBoxModel<ProblemT>              ThisType;
 
     public:
-        typedef Dune::TwoPTwoCNITraits<DT>                      TwoPTwoCNITraits;
-        typedef P1BoxTraits<DT, Grid, TwoPTwoCNITraits::numEq>  BoxTraits;
+        typedef Dune::TwoPTwoCNITraits<Scalar>                      TwoPTwoCNITraits;
+        typedef P1BoxTraits<Scalar, Grid, TwoPTwoCNITraits::numEq>  BoxTraits;
 
     private:
         typedef TwoPTwoCNIBoxJacobian<ProblemT, BoxTraits, TwoPTwoCNITraits>  TwoPTwoCNILocalJacobian;
@@ -337,14 +337,14 @@ namespace Dune
                           TwoPTwoCNILocalJacobian>        ParentType;
 
         typedef typename ProblemT::DomainTraits           DomTraits;
-        typedef typename DomTraits::Cell                  Cell;
-        typedef typename DomTraits::CellIterator          CellIterator;
-        typedef typename DomTraits::LocalCoord            LocalCoord;
-        typedef typename DomTraits::WorldCoord            WorldCoord;
+        typedef typename DomTraits::Element                  Element;
+        typedef typename DomTraits::ElementIterator          ElementIterator;
+        typedef typename DomTraits::LocalPosition            LocalPosition;
+        typedef typename DomTraits::GlobalPosition            GlobalPosition;
 
         enum {
-            dim          = DomTraits::GridDim,
-            WorldDim         = DomTraits::WorldDim
+            dim          = DomTraits::dim,
+            dimWorld     = DomTraits::dimWorld
         };
 
     public:

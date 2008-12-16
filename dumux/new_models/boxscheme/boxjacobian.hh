@@ -80,8 +80,8 @@ namespace Dune
         enum {
             numEq = BoxTraits::numEq,
 
-            GridDim     = DomainTraits::GridDim,
-            WorldDim    = DomainTraits::WorldDim
+            dim     = DomainTraits::dim,
+            dimWorld    = DomainTraits::dimWorld
         };
         typedef BoxJacobian<Problem, BoxTraits, JacobianImp> ThisType;
 
@@ -89,19 +89,19 @@ namespace Dune
         typedef typename DomainTraits::Grid                           Grid;
         typedef typename DomainTraits::Scalar                         Scalar;
         typedef typename DomainTraits::CoordScalar                    CoordScalar;
-        typedef typename DomainTraits::LocalCoord                     LocalCoord;
-        typedef typename DomainTraits::WorldCoord                     WorldCoord;
+        typedef typename DomainTraits::LocalPosition                  LocalPosition;
+        typedef typename DomainTraits::GlobalPosition                     GlobalPosition;
 
-        typedef typename LeafGridView::template Codim<0>::Entity      Cell;
-        typedef typename Cell::EntityPointer                          CellPointer;
+        typedef typename LeafGridView::template Codim<0>::Entity      Element;
+        typedef typename Element::EntityPointer                       ElementPointer;
         typedef typename DomainTraits::ReferenceElement               ReferenceElement;
         typedef typename DomainTraits::IntersectionIterator           IntersectionIterator;
         typedef typename DomainTraits::IntersectionIteratorGetter     IntersectionIteratorGetter;
 
-        typedef typename Cell::Geometry                        Geometry;
+        typedef typename Element::Geometry                        Geometry;
 
         typedef typename BoxTraits::SpatialFunction            SpatialFunction;
-        typedef typename BoxTraits::UnknownsVector             UnknownsVector;
+        typedef typename BoxTraits::SolutionVector             SolutionVector;
         typedef typename BoxTraits::BoundaryTypeVector         BoundaryTypeVector;
         typedef typename BoxTraits::FVElementGeometry          FVElementGeometry;
         typedef typename BoxTraits::LocalFunction              LocalFunction;
@@ -112,7 +112,7 @@ namespace Dune
     public:
         BoxJacobian(Problem &problem)
             : problem_(problem),
-              curCellPtr_(problem.cellEnd()),
+              curElementPtr_(problem.elementEnd()),
 
               curSolution_(NULL),
               oldSolution_(NULL)
@@ -143,83 +143,83 @@ namespace Dune
 
         /*!
          * \brief Assemble the linear system of equations for the
-         *        nodes of a cell, given a local solution 'localU'.
+         *        verts of a element, given a local solution 'localU'.
          */
-        void assemble(const Cell &cell, const LocalFunction& localU, int orderOfShapeFns = 1)
+        void assemble(const Element &element, const LocalFunction& localU, int orderOfShapeFns = 1)
             {
-                // set the current grid cell
-                asImp_()->setCurrentCell(cell);
+                // set the current grid element
+                asImp_()->setCurrentElement(element);
 
                 LocalFunction mutableLocalU(localU);
-                assemble_(cell, mutableLocalU, orderOfShapeFns);
+                assemble_(element, mutableLocalU, orderOfShapeFns);
             }
 
         /*!
          * \brief Assemble the linear system of equations for the
-         *        nodes of a cell.
+         *        verts of a element.
          */
-        void assemble(const Cell &cell, int orderOfShapeFns = 1)
+        void assemble(const Element &element, int orderOfShapeFns = 1)
             {
-                // set the current grid cell
-                asImp_()->setCurrentCell(cell);
+                // set the current grid element
+                asImp_()->setCurrentElement(element);
 
-                int numVertices = curCellGeom_.nNodes;
+                int numVertices = curElementGeom_.numVertices;
                 LocalFunction localU(numVertices);
-                restrictToCell(localU, *curSolution_); 
-                assemble_(cell, localU, orderOfShapeFns);
+                restrictToElement(localU, *curSolution_); 
+                assemble_(element, localU, orderOfShapeFns);
             }
         
         /*!
-         * \brief Express the boundary conditions for a cell in terms
+         * \brief Express the boundary conditions for a element in terms
          *        of a linear equation system.
          */
-        void assembleBoundaryCondition(const Cell &cell, int orderOfShapeFns=1)
+        void assembleBoundaryCondition(const Element &element, int orderOfShapeFns=1)
             {
-                // set the current grid cell
-                asImp_()->setCurrentCell(cell);
+                // set the current grid element
+                asImp_()->setCurrentElement(element);
 
                 // reset the right hand side and the boundary
                 // condition type vector
                 resetRhs_();
                 
-                Dune::GeometryType          geoType = curCell_().geometry().type();
+                Dune::GeometryType          geoType = curElement_().geometry().type();
                 const ReferenceElement &refElem = DomainTraits::referenceElement(geoType);
                 
                 // temporary vector to store the neumann boundaries
-                UnknownsVector fluxes(0.0);
+                SolutionVector fluxes(0.0);
 
                 // evaluate boundary conditions
-                IntersectionIterator endIt = IntersectionIteratorGetter::end(curCell_());
-                IntersectionIterator faceIt = IntersectionIteratorGetter::begin(curCell_());
-                for (; faceIt != endIt; ++faceIt)
+                IntersectionIterator endIt = IntersectionIteratorGetter::end(curElement_());
+                IntersectionIterator isIt = IntersectionIteratorGetter::begin(curElement_());
+                for (; isIt != endIt; ++isIt)
                 {
                     // handle only faces on exterior boundaries. This
                     // assumes there are no interior boundaries.
-                    if (!faceIt.boundary())
+                    if (!isIt.boundary())
                         continue;
                     
-                    // Assemble the boundary for all nodes of the
+                    // Assemble the boundary for all verts of the
                     // current face
-                    int faceIdx = faceIt.numberInSelf();
-                    int nNodesOfFace = refElem.size(faceIdx, 1, GridDim);
-                    for (int nodeInFace = 0; 
-                         nodeInFace < nNodesOfFace;
-                         nodeInFace++)
+                    int faceIdx = isIt.numberInSelf();
+                    int numVerticesOfFace = refElem.size(faceIdx, 1, dim);
+                    for (int vertInFace = 0; 
+                         vertInFace < numVerticesOfFace;
+                         vertInFace++)
                     {
-                        int nodeInElement = refElem.subEntity(faceIdx,
+                        int vertInElement = refElem.subEntity(faceIdx,
                                                               1, 
-                                                              nodeInFace, 
-                                                              GridDim);
-                        int bfIdx = curCellGeom_.boundaryFaceIndex(faceIdx, nodeInFace);
-                        const LocalCoord &local = curCellGeom_.boundaryFace[bfIdx].ipLocal;
-                        const WorldCoord &global = curCellGeom_.boundaryFace[bfIdx].ipGlobal;
+                                                              vertInFace, 
+                                                              dim);
+                        int bfIdx = curElementGeom_.boundaryFaceIndex(faceIdx, vertInFace);
+                        const LocalPosition &local = curElementGeom_.boundaryFace[bfIdx].ipLocal;
+                        const GlobalPosition &global = curElementGeom_.boundaryFace[bfIdx].ipGlobal;
                         
                         // set the boundary types
-                        // TODO: better parameters: cell, FVElementGeometry, bfIndex
+                        // TODO: better parameters: element, FVElementGeometry, bfIdx
                         BoundaryTypeVector tmp;
                         problem_.boundaryTypes(tmp,
-                                               curCell_(),
-                                               faceIt,
+                                               curElement_(),
+                                               isIt,
                                                global,
                                                local);
                         
@@ -228,7 +228,7 @@ namespace Dune
                         for (int bcIdx = 0; bcIdx < numEq; ++bcIdx) {
                             // set the bctype of the LocalStiffness
                             // base class
-                            this->bctype[nodeInElement][bcIdx] = tmp[bcIdx];
+                            this->bctype[vertInElement][bcIdx] = tmp[bcIdx];
                             
                             // neumann boundaries
                             if (tmp[bcIdx] == BoundaryConditions::neumann) {
@@ -236,20 +236,20 @@ namespace Dune
                                     // make sure that we only evaluate
                                     // the neumann fluxes once
                                     neumannEvaluated = true;
-                                    // TODO: better Parameters: cell, FVElementGeometry, bfIndex
+                                    // TODO: better Parameters: element, FVElementGeometry, bfIdx
                                     problem_.neumann(fluxes,
-                                                     curCell_(),
-                                                     faceIt, 
+                                                     curElement_(),
+                                                     isIt, 
                                                      global,
                                                      local);
-                                    fluxes *= curCellGeom_.boundaryFace[bfIdx].area;
+                                    fluxes *= curElementGeom_.boundaryFace[bfIdx].area;
                                 }
-                                this->b[nodeInElement][bcIdx] += fluxes[bcIdx];
+                                this->b[vertInElement][bcIdx] += fluxes[bcIdx];
                             }
                             // dirichlet and processor boundaries
                             else {
                                 // set right hand side to 0
-                                this->b[nodeInElement][bcIdx] = Scalar(0);
+                                this->b[vertInElement][bcIdx] = Scalar(0);
                             }
                         }
                     }
@@ -264,47 +264,44 @@ namespace Dune
                                bool withBoundary = true)
             {              
                 // reset residual
-                for (int i = 0; i < curCellGeom_.nNodes; i++) {
+                for (int i = 0; i < curElementGeom_.numVertices; i++) {
                     residual[i] = 0;
                 }
 
                 // evaluate the local rate
-                for (int i=0; i < curCellGeom_.nNodes; i++)
+                for (int i=0; i < curElementGeom_.numVertices; i++)
                 {
-                    UnknownsVector massContrib(0), tmp(0);
+                    SolutionVector massContrib(0), tmp(0);
 
-                    // mass balance within the cell. this is the
+                    // mass balance within the element. this is the
                     // $\frac{m}{\partial t}$ term if using implicit
                     // euler as time discretization. 
                     //
                     // TODO (?): we might need a more explicit way for
                     // doing the time discretization...
-                    this->asImp_()->localRate(massContrib, i, false);
-                    this->asImp_()->localRate(tmp, i, true);
+                    this->asImp_()->computeStorage(massContrib, i, false);
+                    this->asImp_()->computeStorage(tmp, i, true);
 
                     massContrib -= tmp;
-                    massContrib *= curCellGeom_.subContVol[i].volume/problem_.timeStepSize();
+                    massContrib *= curElementGeom_.subContVol[i].volume/problem_.timeStepSize();
                     residual[i] += massContrib;
                     
                     // subtract the source term from the local rate
-                    UnknownsVector q;
-                    problem_.sourceTerm(q,
-                                        curCell_(),
-                                        curCellGeom_,
-                                        i);
-                    q *= curCellGeom_.subContVol[i].volume;
-                    residual[i] -= q;
+                    SolutionVector source;
+                    this->asImp_()->computeSource(source, i);
+                    source *= curElementGeom_.subContVol[i].volume;
+                    residual[i] -= source;
                 }
 
                 // calculate the mass flux over the faces and subtract
                 // it from the local rates
-                for (int k = 0; k < curCellGeom_.nEdges; k++)
+                for (int k = 0; k < curElementGeom_.numEdges; k++)
                 {
-                    int i = curCellGeom_.subContVolFace[k].i;
-                    int j = curCellGeom_.subContVolFace[k].j;
+                    int i = curElementGeom_.subContVolFace[k].i;
+                    int j = curElementGeom_.subContVolFace[k].j;
 
-                    UnknownsVector flux;
-                    this->asImp_()->fluxRate(flux, k);
+                    SolutionVector flux;
+                    this->asImp_()->computeFlux(flux, k);
 
                     // subtract fluxes from the local mass rates of
                     // the respective sub control volume adjacent to
@@ -314,8 +311,8 @@ namespace Dune
                 }
                 
                 if (withBoundary) {
-                    assembleBoundaryCondition(this->curCell_());
-                    for (int i = 0; i < curCellGeom_.nNodes; i++) {
+                    assembleBoundaryCondition(this->curElement_());
+                    for (int i = 0; i < curElementGeom_.numVertices; i++) {
                         residual[i] += this->b[i];
                     }
                 }
@@ -323,22 +320,22 @@ namespace Dune
 
 
         /*!
-         * \brief Restrict the global function 'globalFn' to the nodes
-         *        of the current cell, save the result to 'dest'.
+         * \brief Restrict the global function 'globalFn' to the verts
+         *        of the current element, save the result to 'dest'.
          */
-        void restrictToCell(LocalFunction &dest,
+        void restrictToElement(LocalFunction &dest,
                             const SpatialFunction &globalFn) const
             {
                 // we assert that the i-th shape function is
-                // associated to the i-th node of the cell.
-                int n = curCell_().template count<GridDim>();
+                // associated to the i-th vert of the element.
+                int n = curElement_().template count<dim>();
                 for (int i = 0; i < n; i++) {
-                    dest[i] = (*globalFn)[problem_.nodeIndex(curCell_(), i)];
+                    dest[i] = (*globalFn)[problem_.vertIdx(curElement_(), i)];
                 }
             }
 
         /*!
-         * \brief Initialize the static data of all cells. The current
+         * \brief Initialize the static data of all elements. The current
          *        solution is not yet valid when this method is
          *        called. (updateStaticData() is called as soon the
          *        current solution is valid.)
@@ -350,7 +347,7 @@ namespace Dune
             { };
         
         /*!
-         * \brief Update the static data of all cells with the current solution
+         * \brief Update the static data of all elements with the current solution
          *
          * This method should be overwritten by the child class if
          * necessary.
@@ -358,7 +355,7 @@ namespace Dune
         void updateStaticData(SpatialFunction &curSol, SpatialFunction &oldSol)
             { };
 
-        // clear the visited flag of all nodes, required to make the
+        // clear the visited flag of all verts, required to make the
         // old-style models work in conjunction with the new newton
         // method.  HACK: remove
         void clearVisited() DUNE_DEPRECATED {};
@@ -366,50 +363,50 @@ namespace Dune
 
     protected:
                   
-        // set the cell which is currently considered as the local
+        // set the element which is currently considered as the local
         // stiffness matrix
-        bool setCurrentCell_(const Cell &e)
+        bool setCurrentElement_(const Element &e)
         {
-            if (curCellPtr_ != e) {
-                curCellPtr_ = e;
-                curCellGeom_.update(curCell_());
+            if (curElementPtr_ != e) {
+                curElementPtr_ = e;
+                curElementGeom_.update(curElement_());
                 // tell the LocalStiffness (-> parent class) the current
                 // number of degrees of freedom
-                setcurrentsize(curCellGeom_.nNodes);
+                setcurrentsize(curElementGeom_.numVertices);
                 return true;
             }
             return false;
         }
 
-        const Cell &curCell_() const
-            { return *curCellPtr_; }
+        const Element &curElement_() const
+            { return *curElementPtr_; }
 
         // The problem we would like to solve
         Problem &problem_;
 
-        CellPointer       curCellPtr_;
-        FVElementGeometry curCellGeom_;
+        ElementPointer       curElementPtr_;
+        FVElementGeometry curElementGeom_;
 
         // global solution of the current and of the last timestep
         const SpatialFunction *curSolution_;
         const SpatialFunction *oldSolution_;
 
     private:
-        void assemble_(const Cell &cell, LocalFunction& localU, int orderOfShapeFns = 1)
+        void assemble_(const Element &element, LocalFunction& localU, int orderOfShapeFns = 1)
             {
-                // set the current grid cell
-                asImp_()->setCurrentCell(cell);
+                // set the current grid element
+                asImp_()->setCurrentElement(element);
 
                 // reset the right hand side and the bctype array
                 resetRhs_();
 
-                int numVertices = curCellGeom_.nNodes;
+                int numVertices = curElementGeom_.numVertices;
 
-                // restrict the previous global solution to the current cell
+                // restrict the previous global solution to the current element
                 LocalFunction localOldU(numVertices);
-                restrictToCell(localOldU, *oldSolution_);
+                restrictToElement(localOldU, *oldSolution_);
 
-                this->asImp_()->setParams(cell, localU, localOldU);
+                this->asImp_()->setParams(element, localU, localOldU);
 
                 // approximate the local stiffness matrix numerically
                 // TODO: do this analytically if possible
@@ -422,7 +419,7 @@ namespace Dune
                         Scalar eps = std::max(fabs(1e-5*localU[j][comp]), 1e-5);
                         Scalar uJ = localU[j][comp];
                         
-                        // vary the comp-th component at the cell's j-th node and
+                        // vary the comp-th component at the element's j-th vert and
                         // calculate the residual, don't include the boundary
                         // conditions 
                         this->asImp_()->deflectCurSolution(j, comp, uJ + eps);
@@ -436,8 +433,8 @@ namespace Dune
                         this->asImp_()->restoreCurSolution(j, comp);
 
                         // calculate the gradient when varying the
-                        // comp-th primary variable at the j-th node
-                        // of the cell and fill the required fields of
+                        // comp-th primary variable at the j-th vert
+                        // of the element and fill the required fields of
                         // the LocalStiffness base class.
                         residUPlusEps -= residUMinusEps;
 
@@ -455,7 +452,7 @@ namespace Dune
                 for (int i=0; i < numVertices; i++) {
                     for (int comp=0; comp < numEq; comp++) {
                         // TODO: in most cases this is not really a
-                        // boundary cell but an interior cell, so
+                        // boundary element but an interior element, so
                         // Dune::BoundaryConditions::neumann is
                         // misleading...
                         if (this->bctype[i][comp] == Dune::BoundaryConditions::neumann) {
@@ -469,12 +466,12 @@ namespace Dune
                                    int comp,
                                    const LocalFunction &stiffness)
             {
-                for (int i = 0; i < curCellGeom_.nNodes; i++) {
+                for (int i = 0; i < curElementGeom_.numVertices; i++) {
                     for (int compi = 0; compi < numEq; compi++) {
                         // A[i][j][compi][comp] is the
                         // approximate rate of change of the
-                        // unknown 'compi' at node 'i' if the
-                        // component 'comp' at node 'j' is
+                        // unknown 'compi' at vert 'i' if the
+                        // component 'comp' at vert 'j' is
                         // slightly deflected from the current
                         // local solution
                         this->A[i][j][compi][comp] = stiffness[i][compi];

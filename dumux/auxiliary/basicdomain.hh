@@ -14,7 +14,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Provides some convenient interfaces to cells and vertices of grids.
+ * \brief Provides some convenient interfaces to elements and vertices of grids.
  */
 #ifndef DUMUX_BASIC_DOMAIN_HH
 #define DUMUX_BASIC_DOMAIN_HH
@@ -41,25 +41,25 @@ namespace Dune
 
             // make sure the required constants exist
             int i;
-            i = I::GridDim;
-            i = I::WorldDim;
+            i = I::dim;
+            i = I::dimWorld;
 
             // make sure the required types exist
             {typename I::Grid                       *x;x=NULL;}
             {typename I::Scalar                     *x;x=NULL;}
             {typename I::CoordScalar                *x;x=NULL;}
-            {typename I::LocalCoord                 *x;x=NULL;}
-            {typename I::WorldCoord                 *x;x=NULL;}
-            {typename I::Cell                       *x;x=NULL;}
-            {typename I::CellIterator               *x;x=NULL;}
-            {typename I::Node                       *x;x=NULL;}
-            {typename I::NodeIterator               *x;x=NULL;}
+            {typename I::LocalPosition                 *x;x=NULL;}
+            {typename I::GlobalPosition                 *x;x=NULL;}
+            {typename I::Element                    *x;x=NULL;}
+            {typename I::ElementIterator            *x;x=NULL;}
+            {typename I::Vertex                     *x;x=NULL;}
+            {typename I::VertexIterator             *x;x=NULL;}
             {typename I::ReferenceElement           *x;x=NULL;}
             {typename I::ReferenceElementContainer  *x;x=NULL;}
             {typename I::IntersectionIteratorGetter *x;x=NULL;}
             {typename I::IntersectionIterator       *x;x=NULL;}
-            {typename I::Vector                     *x;x=NULL;}
-            {typename I::Matrix                     *x;x=NULL;}
+            {typename I::FieldVector                *x;x=NULL;}
+            {typename I::FieldMatrix                *x;x=NULL;}
             
             {const typename I::ReferenceElementContainer *x = &I::referenceElement; x=NULL;}
         }
@@ -67,10 +67,10 @@ namespace Dune
     };
 
     /*!
-     * \brief Provides some convenient interfaces to cells and vertices of grids.
+     * \brief Provides some convenient interfaces to elements and vertices of grids.
      *
      * This class doesn't handle any user data itself, it just
-     * provides a way to map form cells and vertices to their
+     * provides a way to map form elements and vertices to their
      * respective indices.
      */
     template<class GridT, class ScalarT>
@@ -78,7 +78,7 @@ namespace Dune
     {
     public:
         /*!
-         * \brief Provides a few default types to interface cell or node
+         * \brief Provides a few default types to interface element or vert
          *        based grids.
          */
         class DomainTraits
@@ -88,35 +88,35 @@ namespace Dune
             typedef ScalarT     Scalar;
             
             enum {
-                GridDim = GridT::dimension,        //!< Dimension of the grid.
-                WorldDim = GridT::dimensionworld   //!< Dimension of the world the grid is embedded into.
+                dim = GridT::dimension,        //!< Dimension of the grid.
+                dimWorld = GridT::dimensionworld   //!< Dimension of the world the grid is embedded into.
             };
             
             // coordinate stuff
             typedef typename Grid::ctype                     CoordScalar;
-            typedef Dune::FieldVector<CoordScalar, GridDim>  LocalCoord;
-            typedef Dune::FieldVector<CoordScalar, WorldDim> WorldCoord;
+            typedef Dune::FieldVector<CoordScalar, dim>      LocalPosition;
+            typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
             
-            // Dune grid related stuff: iterators, cells, vertices, traits...
-            typedef typename Grid::Traits::template Codim<0>                  CellTraits;
-            typedef typename CellTraits::Entity                               Cell;
-            typedef typename CellTraits::LeafIterator                         CellIterator;
+            // Dune grid related stuff: iterators, elements, vertices, traits...
+            typedef typename Grid::Traits::template Codim<0>                  ElementTraits;
+            typedef typename ElementTraits::Entity                            Element;
+            typedef typename ElementTraits::LeafIterator                      ElementIterator;
             
-            typedef typename Grid::Traits::template Codim<GridDim>            NodeTraits;
-            typedef typename NodeTraits::Entity                               Node;
-            typedef typename NodeTraits::LeafIterator                         NodeIterator;
+            typedef typename Grid::Traits::template Codim<dim>                VertexTraits;
+            typedef typename VertexTraits::Entity                             Vertex;
+            typedef typename VertexTraits::LeafIterator                       VertexIterator;
             
             // TODO: Dune::ReferenceElement uses virtual functions in
-            //       order to support arbitary cell types. It would be
+            //       order to support arbitary element types. It would be
             //       better to use ReferenceCubeContainer,
             //       ReferenceSimplexContainer,
             //       ReferencePrismContainer or
             //       ReferencePyramidContainer if the Grid only uses
-            //       one cell type. We need to investigate how to do
+            //       one element type. We need to investigate how to do
             //       this, but we probably need to beef up
             //       Dune::Capabilities a bit and use specialization
             //       for the DomainTraits...
-            typedef Dune::ReferenceElementContainer<CoordScalar, GridDim>     ReferenceElementContainer;
+            typedef Dune::ReferenceElementContainer<CoordScalar, dim>         ReferenceElementContainer;
             typedef typename ReferenceElementContainer::value_type            ReferenceElement;
             static const ReferenceElementContainer &referenceElement;
 
@@ -124,70 +124,70 @@ namespace Dune
             typedef typename IntersectionIteratorGetter::IntersectionIterator IntersectionIterator;
             
             // grid-space vector and matrix types
-            typedef Dune::FieldVector<Scalar, GridDim>         Vector;
-            typedef Dune::FieldMatrix<Scalar, GridDim,GridDim> Matrix;
+            typedef Dune::FieldVector<Scalar, dim>     FieldVector;
+            typedef Dune::FieldMatrix<Scalar, dim,dim> FieldMatrix;
         };
         
     private:
         // some types from the traits for convenience
         typedef typename DomainTraits::Grid                  Grid;
-        typedef typename DomainTraits::Cell                  Cell;
-        typedef typename DomainTraits::CellIterator          CellIterator;
-        typedef typename DomainTraits::Node                  Node;
-        typedef typename DomainTraits::NodeIterator          NodeIterator;
-        typedef typename DomainTraits::LocalCoord            LocalCoord;
-        typedef typename DomainTraits::WorldCoord            WorldCoord;
+        typedef typename DomainTraits::Element                  Element;
+        typedef typename DomainTraits::ElementIterator          ElementIterator;
+        typedef typename DomainTraits::Vertex                  Vertex;
+        typedef typename DomainTraits::VertexIterator          VertexIterator;
+        typedef typename DomainTraits::LocalPosition            LocalPosition;
+        typedef typename DomainTraits::GlobalPosition            GlobalPosition;
         typedef typename DomainTraits::ReferenceElement      ReferenceElement;
 
         enum {
-            GridDim = DomainTraits::GridDim,
-            WorldDim = DomainTraits::WorldDim
+            dim = DomainTraits::dim,
+            dimWorld = DomainTraits::dimWorld
         };
 
         // helper class for DUNE. This class tells the element mapper
-        // whether data should be attached to cells of a given
+        // whether data should be attached to elements of a given
         // geometry type. Here we only attach data data to any
         // geometry type as long as the entity represents a call
         // (i.e. leaf in DUNE-lingo).
         template<int dim>
-        struct CellLayout_
+        struct ElementLayout_
         { bool contains(Dune::GeometryType geoType) { return geoType.dim() == dim; } };
 
-        // mapper from grid cells to the actual array indices
-        // of the cell state vector.
-        typedef Dune::LeafMultipleCodimMultipleGeomTypeMapper<Grid, CellLayout_> CellMap;
+        // mapper from grid elements to the actual array indices
+        // of the element state vector.
+        typedef Dune::LeafMultipleCodimMultipleGeomTypeMapper<Grid, ElementLayout_> ElementMap;
 
-        // the set of indices for the grid's cells
-        typedef typename Grid::Traits::LeafIndexSet CellIndexSet_;
+        // the set of indices for the grid's elements
+        typedef typename Grid::Traits::LeafIndexSet ElementIdxSet_;
 
-        // mapper: one data element per node
+        // mapper: one data element per vert
         template<int dim>
-        struct NodeLayout_
+        struct VertexLayout_
         { bool contains (Dune::GeometryType gt) { return gt.dim() == 0; } };
-        typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,CellIndexSet_,NodeLayout_> NodeMap;
+        typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,ElementIdxSet_,VertexLayout_> VertexMap;
         
     public:
         BasicDomain()
             {
                 Api::require<Api::BasicDomainTraits, DomainTraits>();
 
-                cellMap_ = NULL;
-                nodeMap_ = NULL;
+                elementMap_ = NULL;
+                vertMap_ = NULL;
             };
 
         BasicDomain(Grid *grid)
             {
                 Api::require<Api::BasicDomainTraits, DomainTraits>();
 
-                cellMap_ = NULL;
-                nodeMap_ = NULL;
+                elementMap_ = NULL;
+                vertMap_ = NULL;
                 setGrid(grid);
             };
 
         ~BasicDomain()
             {
-                delete cellMap_;
-                delete nodeMap_;
+                delete elementMap_;
+                delete vertMap_;
             }
 
         /*!
@@ -204,116 +204,116 @@ namespace Dune
             { return *grid_; }
 
         /*!
-         * \brief Returns the current grid's number of cells.
+         * \brief Returns the current grid's number of elements.
          */
-        int numCells() const
-            { return cellMap_->size(); }
+        int numElements() const
+            { return elementMap_->size(); }
 
         /*!
-         * \brief Given a cell, return it's respective index.
+         * \brief Given a element, return it's respective index.
          */
-        int cellIndex(const Cell &e) const
-            { return cellMap_->map(e); }
+        int elementIdx(const Element &e) const
+            { return elementMap_->map(e); }
 
         /*!
-         * \brief Returns the iterator pointing to the first cell of
+         * \brief Returns the iterator pointing to the first element of
          *        the grid.
          */
-        CellIterator cellBegin() const {
+        ElementIterator elementBegin() const {
             return grid_->template leafbegin<0>();
         }
 
         /*!
          * \brief Returns the iterator pointing to the next to last
-         *        cell of the grid.
+         *        element of the grid.
          */
-        CellIterator cellEnd() {
+        ElementIterator elementEnd() {
             return grid_->template leafend<0>();
         }
 
         /*!
-         * \brief Calculate the center of gravity of an cell in world
+         * \brief Calculate the center of gravity of an element in world
          *        coordinates.
          */
-        void cellCenter(const Cell &e, WorldCoord &worldCoord) const
+        void elementCenter(const Element &e, GlobalPosition &worldCoord) const
             {
-                // get the center position of the cell's reference
+                // get the center position of the element's reference
                 // element
                 Dune::GeometryType geoType = e.type();
-                const LocalCoord &localCoord =
+                const LocalPosition &localCoord =
                     DomainTraits::referenceElement(geoType).position(0, 0);
 
-                // get world coordinate of the cell center
+                // get world coordinate of the element center
                 worldCoord = e.geometry().global(localCoord);
             }
 
         /*!
-         * \brief Returns the cell map in case it is externally required.
+         * \brief Returns the element map in case it is externally required.
          */
-        CellMap &cellMap()
-            { return *cellMap_; }
-        const CellMap &cellMap() const
-            { return *cellMap_; }
+        ElementMap &elementMap()
+            { return *elementMap_; }
+        const ElementMap &elementMap() const
+            { return *elementMap_; }
 
         /*!
-         * \brief Returns the current grid's number of nodes.
+         * \brief Returns the current grid's number of verts.
          */
-        int numNodes() const
-            { return nodeMap_->size(); }
+        int numVertices() const
+            { return vertMap_->size(); }
 
         /*!
-         * \brief Given a node index within a cell, return the
+         * \brief Given a vert index within a element, return the
          *        respective global index.
          */
-        int nodeIndex(const Cell &e, int localNodeId) const
-            { return nodeMap_->template map<GridDim>(e, localNodeId); }
+        int vertIdx(const Element &e, int localVertexId) const
+            { return vertMap_->template map<dim>(e, localVertexId); }
 
         /*!
-         * \brief Given a node index within a cell, return the
+         * \brief Given a vert index within a element, return the
          *        respective global index.
          */
-        int nodeIndex(const Node &v) const
-            { return nodeMap_->map(v); }
+        int vertIdx(const Vertex &v) const
+            { return vertMap_->map(v); }
 
         /*!
-         * \brief Returns the iterator pointing to the first cell of
+         * \brief Returns the iterator pointing to the first element of
          *        the grid.
          */
-        NodeIterator nodeBegin() {
-            return grid_->template leafbegin<GridDim>();
+        VertexIterator vertexBegin() {
+            return grid_->template leafbegin<dim>();
         }
 
         /*!
          * \brief Returns the iterator pointing to the next to last
-         *        cell of the grid.
+         *        element of the grid.
          */
-        NodeIterator nodeEnd() {
-            return grid_->template leafend<GridDim>();
+        VertexIterator vertexEnd() {
+            return grid_->template leafend<dim>();
         }
 
         /*!
-         * \brief Return the entity for a node given a cell and the
-         *        node' local index.
+         * \brief Return the entity for a vert given a element and the
+         *        vert' local index.
          */
-        const Node &node(const Cell &cell, int localVertIdx)
-            { return *cell.template entity<GridDim>(localVertIdx); };
+        const Vertex &vert(const Element &element, int localVertIdx)
+            { return *element.template entity<dim>(localVertIdx); };
 
         /*!
-         * \brief Given a node return its position in world coodinates.
+         * \brief Given a vert return its position in world coodinates.
          */
-        void nodePosition(WorldCoord &worldCoord,
-                          const Node &v) const
+        void vertPosition(GlobalPosition &worldCoord,
+                          const Vertex &v) const
             {
                 worldCoord = v.geometry()[0];
             }
 
         /*!
-         * \brief Returns the node map in case it is externally required.
+         * \brief Returns the vert map in case it is externally required.
          */
-        NodeMap &nodeMap()
-            { return *nodeMap_; }
-        const NodeMap &nodeMap() const
-            { return *nodeMap_; }
+        VertexMap &vertMap()
+            { return *vertMap_; }
+        const VertexMap &vertMap() const
+            { return *vertMap_; }
 
 
         /*!
@@ -321,16 +321,16 @@ namespace Dune
          *        altered.
          *
          * Cases where this method should be called are grid
-         * refinements, deformation of cells, etc.
+         * refinements, deformation of elements, etc.
          */
         void gridChanged()
             {
-                delete cellMap_;
-                delete nodeMap_;
+                delete elementMap_;
+                delete vertMap_;
 
-                // create the cell and node index sets for the grid
-                cellMap_ = new CellMap(*grid_);
-                nodeMap_ = new NodeMap(*grid_, grid_->leafIndexSet());
+                // create the element and vert index sets for the grid
+                elementMap_ = new ElementMap(*grid_);
+                vertMap_ = new VertexMap(*grid_, grid_->leafIndexSet());
             }
 
         /*!
@@ -353,9 +353,9 @@ namespace Dune
         Grid  *grid_;
 
         // map from the grid's leafs to an index of the index set
-        CellMap *cellMap_;
-        // translates vertices local to a cell to global ones
-        NodeMap *nodeMap_;
+        ElementMap *elementMap_;
+        // translates vertices local to a element to global ones
+        VertexMap *vertMap_;
     };
 
 

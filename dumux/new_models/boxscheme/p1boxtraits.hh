@@ -35,15 +35,15 @@ namespace Dune
      * \brief Specify the shape functions, operator assemblers, etc
      *        used for the BoxScheme.
      */
-    template<class DT, class Grid, int numEqns>
+    template<class Scalar, class Grid, int numEqns>
     class P1BoxTraits
     {
     private:
         typedef typename Grid::ctype     CoordScalar;
 
         enum {
-            GridDim = Grid::dimension,
-            WorldDim = Grid::dimensionworld,
+            dim = Grid::dimension,
+            dimWorld = Grid::dimensionworld,
         };
     
     public:
@@ -52,7 +52,7 @@ namespace Dune
         };
         
         //! A vector of all primary variables at a point
-        typedef Dune::FieldVector<DT, numEq> UnknownsVector;
+        typedef Dune::FieldVector<Scalar, numEq> SolutionVector;
         //! boundary condition vector
         typedef Dune::FieldVector<Dune::BoundaryConditions::Flags, 
                                   numEq>         BoundaryTypeVector;
@@ -60,19 +60,19 @@ namespace Dune
         /*!
          * \brief Represents a local spatial function.
          *
-         * A field vector is attached at each vertex of the cell.
+         * A field vector is attached at each vertex of the element.
          */
-        typedef BlockVector<UnknownsVector> LocalFunction;
+        typedef BlockVector<SolutionVector> LocalFunction;
         
         
-        //! The finite volume cell segments within a finite element cell
+        //! The finite volume element segments within a finite element element
         typedef Dune::FVElementGeometry<Grid>  FVElementGeometry;
         
         //! a single of shape function used for the BoxFunction inside
-        //! cells.
+        //! elements.
         typedef Dune::LagrangeShapeFunctionSetContainer<CoordScalar,
-                                                        DT,
-                                                        GridDim> ShapeFunctionSetContainer;
+                                                        Scalar,
+                                                        dim> ShapeFunctionSetContainer;
         
         //! The actual shape functions which are being used. If a 
         //! grid only contains simplices or tetrahedra, it is more
@@ -86,23 +86,23 @@ namespace Dune
         //! The function which represents a solution for a fixed time
         //! step. We use first-order vertex centered FE polynomials.
         typedef Dune::LeafP1Function<Grid, 
-                                     DT, 
+                                     Scalar, 
                                      numEq>   SpatialFunction;
         
         //! The OperatorAssembler which assembles the global stiffness
         //! matrix
         typedef Dune::LeafP1OperatorAssembler<Grid,
-                                              DT,
+                                              Scalar,
                                               numEq>  JacobianAssembler;
     };
 
     // this is butt-ugly, but the only way I could come up with to
     // initialize a static const member of a class
-    template<class DT, class Grid, int PrimaryVars>
-    const typename P1BoxTraits<DT, Grid, PrimaryVars>::ShapeFunctionSetContainer &
-      P1BoxTraits<DT, Grid, PrimaryVars>::shapeFunctions
+    template<class Scalar, class Grid, int numEq>
+    const typename P1BoxTraits<Scalar, Grid, numEq>::ShapeFunctionSetContainer &
+      P1BoxTraits<Scalar, Grid, numEq>::shapeFunctions
          =  Dune::LagrangeShapeFunctions<typename Grid::ctype, 
-                                         DT,
+                                         Scalar,
                                          Grid::dimension>::general;
 
 }

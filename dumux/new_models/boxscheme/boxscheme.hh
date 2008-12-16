@@ -77,14 +77,14 @@ namespace Dune
         // copy the types from the traits for convenience
         typedef typename DomainTraits::Scalar                      Scalar;
         typedef typename DomainTraits::Grid                        Grid;
-        typedef typename DomainTraits::Cell                        Cell;
+        typedef typename DomainTraits::Element                        Element;
         typedef typename DomainTraits::ReferenceElement            ReferenceElement;
-        typedef typename DomainTraits::CellIterator                CellIterator;
+        typedef typename DomainTraits::ElementIterator                ElementIterator;
         typedef typename DomainTraits::IntersectionIteratorGetter  IntersectionIteratorGetter;
         typedef typename DomainTraits::IntersectionIterator        IntersectionIterator;
         typedef typename DomainTraits::CoordScalar                 CoordScalar;
-        typedef typename DomainTraits::WorldCoord                  WorldCoord;
-        typedef typename DomainTraits::LocalCoord                  LocalCoord;
+        typedef typename DomainTraits::GlobalPosition                  GlobalPosition;
+        typedef typename DomainTraits::LocalPosition                  LocalPosition;
 
         typedef typename BoxTraits::JacobianAssembler          JacobianAssembler;
         typedef typename BoxTraits::SpatialFunction            SpatialFunction;
@@ -94,7 +94,7 @@ namespace Dune
         typedef typename BoxTraits::ShapeFunctionSetContainer  ShapeFunctionSetContainer;
         typedef typename ShapeFunctionSetContainer::value_type ShapeFunctionSet;
 
-        typedef typename BoxTraits::UnknownsVector      UnknownsVector;
+        typedef typename BoxTraits::SolutionVector      SolutionVector;
         typedef typename BoxTraits::BoundaryTypeVector  BoundaryTypeVector;
 
         typedef LocalJacobianT                          LocalJacobian;
@@ -103,8 +103,8 @@ namespace Dune
         enum {
             numEq = BoxTraits::numEq,
 
-            GridDim     = DomainTraits::GridDim,
-            WorldDim    = DomainTraits::WorldDim
+            dim      = DomainTraits::dim,
+            dimWorld = DomainTraits::dimWorld
         };
         
     public:
@@ -126,7 +126,7 @@ namespace Dune
          */
         void initial()
             {
-                // initialize the static node data of the box jacobian
+                // initialize the static vert data of the box jacobian
                 this->localJacobian().setCurSolution(&uCur_);
                 this->localJacobian().setOldSolution(&uPrev_);
                 
@@ -137,7 +137,7 @@ namespace Dune
 
                 *uPrev_ = *uCur_;
 
-                // update the static node data with the initial solution
+                // update the static vert data with the initial solution
                 this->localJacobian().updateStaticData(uCur_, uPrev_);              
             }
 
@@ -180,9 +180,9 @@ namespace Dune
 
         /*!
          * \brief Returns the local jacobian which calculates the local
-         *        stiffness matrix for an arbitrary cell.
+         *        stiffness matrix for an arbitrary element.
          * 
-         * The local stiffness matrices of the cell are used by
+         * The local stiffness matrices of the element are used by
          * the jacobian assembler to produce a global linerization of the
          * problem.
          */
@@ -280,35 +280,35 @@ namespace Dune
                 (*globResidual) = Scalar(0.0);
 
                 // iterate through leaf grid
-                CellIterator it     = problem_.grid().template leafbegin<0>();
-                CellIterator eendit = problem_.grid().template leafend<0>();
+                ElementIterator it     = problem_.grid().template leafbegin<0>();
+                ElementIterator eendit = problem_.grid().template leafend<0>();
                 for (; it != eendit; ++it)
                 {
-                    // tell the local jacobian which cell it should
+                    // tell the local jacobian which element it should
                     // consider and evaluate the local residual for the
-                    // cell. in order to do this we first have to
-                    // evaluate the cell's local solutions for the
+                    // element. in order to do this we first have to
+                    // evaluate the element's local solutions for the
                     // current and the last timestep.
-                    const Cell& cell = *it;
-                    const int numVertices = cell.template count<GridDim>();
+                    const Element& element = *it;
+                    const int numVertices = element.template count<dim>();
                     LocalFunction localResidual(numVertices);
                     LocalFunction localU(numVertices);
                     LocalFunction localOldU(numVertices);
 
-                    localJacobian_.setCurrentCell(cell);
-                    localJacobian_.restrictToCell(localU, currentSolution());
-                    localJacobian_.restrictToCell(localOldU, previousSolution());
-                    localJacobian_.setParams(cell, localU, localOldU);
+                    localJacobian_.setCurrentElement(element);
+                    localJacobian_.restrictToElement(localU, currentSolution());
+                    localJacobian_.restrictToElement(localOldU, previousSolution());
+                    localJacobian_.setParams(element, localU, localOldU);
                     localJacobian_.evalLocalResidual(localResidual);
 
-                    // loop over the cell's vertices, map them to the
-                    // corresponding grid's node ids and add the
-                    // cell's local residual at a node the global
-                    // residual at this node.
-                    int n = cell.template count<GridDim>();
+                    // loop over the element's vertices, map them to the
+                    // corresponding grid's vert ids and add the
+                    // element's local residual at a vert the global
+                    // residual at this vert.
+                    int n = element.template count<dim>();
                     for(int localId=0; localId < n; localId++)
                     {
-                        int globalId = problem_.nodeIndex(cell, localId);
+                        int globalId = problem_.vertIdx(element, localId);
                         (*globResidual)[globalId] += localResidual[localId];
                     }
                 }
@@ -318,28 +318,28 @@ namespace Dune
     protected:
         void applyInitialSolution_(SpatialFunction &u)
             {
-                // iterate through leaf grid an evaluate c0 at cell center
-                CellIterator it     = problem_.grid().template leafbegin<0>();
-                CellIterator eendit = problem_.grid().template leafend<0>();
+                // iterate through leaf grid an evaluate c0 at element center
+                ElementIterator it     = problem_.grid().template leafbegin<0>();
+                ElementIterator eendit = problem_.grid().template leafend<0>();
                 for (; it != eendit; ++it)
                 {
-                    // loop over all shape functions of the current cell
-                    const Cell& cell = *it;
-                    int numNodes = cell.template count<GridDim>();
-                    for (int localNodeIdx = 0; localNodeIdx < numNodes; localNodeIdx++) {
-                        // get node position in reference coodinates
-                        const LocalCoord &local =
-                            DomainTraits::referenceElement(it->type()).position(localNodeIdx, GridDim);
-                        // get global coordinate of node 
-                        const WorldCoord &global = it->geometry()[localNodeIdx];
+                    // loop over all shape functions of the current element
+                    const Element& element = *it;
+                    int numVertices = element.template count<dim>();
+                    for (int localVertexIdx = 0; localVertexIdx < numVertices; localVertexIdx++) {
+                        // get vert position in reference coodinates
+                        const LocalPosition &local =
+                            DomainTraits::referenceElement(it->type()).position(localVertexIdx, dim);
+                        // get global coordinate of vert 
+                        const GlobalPosition &global = it->geometry()[localVertexIdx];
 
-                        int globalId = this->problem_.nodeIndex(*it, localNodeIdx);
+                        int globalId = this->problem_.vertIdx(*it, localVertexIdx);
                         
                         // use the problem for actually doing the
                         // dirty work of nailing down the initial
                         // solution.
                         this->problem_.initial((*u)[globalId],
-                                               cell,
+                                               element,
                                                global,
                                                local);
                     }
@@ -352,27 +352,27 @@ namespace Dune
                 // set Dirichlet boundary conditions of the grid's
                 // outer boundaries
 
-                UnknownsVector dirichletVal(0);
-                CellIterator cellIt     = problem_.grid().template leafbegin<0>();
-                CellIterator cellEndIt  = problem_.grid().template leafend<0>();
-                for (; cellIt != cellEndIt; ++cellIt)
+                SolutionVector dirichletVal(0);
+                ElementIterator elementIt     = problem_.grid().template leafbegin<0>();
+                ElementIterator elementEndIt  = problem_.grid().template leafend<0>();
+                for (; elementIt != elementEndIt; ++elementIt)
                 {
-                    if (!cellIt->hasBoundaryIntersections())
+                    if (!elementIt->hasBoundaryIntersections())
                         continue;
                     
-                    // get the current cell and its set of shape
+                    // get the current element and its set of shape
                     // functions
-                    const Cell& cell = *cellIt;
-                    Dune::GeometryType geoType = cell.geometry().type();
+                    const Element& element = *elementIt;
+                    Dune::GeometryType geoType = element.geometry().type();
 
-                    // locally evaluate the cell's boundary condition types
-                    localJacobian_.assembleBoundaryCondition(cell);
+                    // locally evaluate the element's boundary condition types
+                    localJacobian_.assembleBoundaryCondition(element);
 
-                    // loop over all the cell's nodes
-                    int n = cellIt->template count<GridDim>();
+                    // loop over all the element's verts
+                    int n = elementIt->template count<dim>();
                     for (int i = 0; i < n; ++i) {
-                        // translate local node id to a global one
-                        int globalId = problem_.nodeIndex(cell, i);
+                        // translate local vert id to a global one
+                        int globalId = problem_.vertIdx(element, i);
 
                         // apply dirichlet boundaries but make sure
                         // not to interfere with non-dirichlet
@@ -384,14 +384,14 @@ namespace Dune
                                     dirichletEvaluated = true;
                                     
                                     // actually evaluate the boundary
-                                    // condition for the current cell+node
+                                    // condition for the current element+vert
                                     // combo. 
                                     //
-                                    // TODO: better parameters: cell,
+                                    // TODO: better parameters: element,
                                     //       FVElementGeometry,
-                                    //       bfIndex
+                                    //       bfIdx
                                     problem_.dirichlet(dirichletVal,
-                                                       cell,
+                                                       element,
                                                        i,
                                                        globalId);                            
                                 }
@@ -425,7 +425,7 @@ namespace Dune
         // Linearizes the problem at the current time step using the
         // local jacobian
         JacobianAssembler jacAsm_;
-        // calculates the local jacobian matrix for a given cell
+        // calculates the local jacobian matrix for a given element
         LocalJacobian    &localJacobian_;
     };
 }

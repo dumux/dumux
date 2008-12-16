@@ -62,13 +62,13 @@ public:
 	};
 
 	typedef typename G::LeafGridView GV;
-    typedef typename GV::IndexSet IS;
+    typedef typename GV::IdxSet IS;
 	typedef MultipleCodimMultipleGeomTypeMapper<G,IS,P1Layout> VertexMapper;
 	typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator
 			IntersectionIterator;
 
 	LeafP1TwoPhaseModel(const G& g, ProblemType& prob) :
-		ThisTwoPhaseHeatModel(g, prob), problem(prob), _grid(g), vertexmapper(g,	g.leafIndexSet()), size((*(this->u)).size())
+		ThisTwoPhaseHeatModel(g, prob), problem(prob), _grid(g), vertexmapper(g,	g.leafIdxSet()), size((*(this->u)).size())
 		{
 	}
 
@@ -173,7 +173,7 @@ public:
 		double minX = 1e100;
 		double maxX = -1e100;
 
-		// iterate through leaf grid an evaluate c0 at cell center
+		// iterate through leaf grid an evaluate c0 at element center
 		Iterator eendit = gridview.template end<0>();
 		for (Iterator it = gridview.template begin<0>(); it
 				!= eendit; ++it) {
@@ -192,10 +192,10 @@ public:
 			int size = sfs.size();
 
 			for (int i = 0; i < size; i++) {
-				// get cell center in reference element
+				// get element center in reference element
 				const Dune::FieldVector<DT,dim>&local = sfs[i].position();
 
-				// get global coordinate of cell center
+				// get global coordinate of element center
 				Dune::FieldVector<DT,dimworld> global = it->geometry().global(local);
 
 				int globalId = vertexmapper.template map<dim>(entity,
@@ -270,7 +270,7 @@ public:
 			// get entity
 			const Entity& entity = *it;
 			this->localJacobian.fvGeom.update(entity);
-			int size = this->localJacobian.fvGeom.nNodes;
+			int size = this->localJacobian.fvGeom.nVertexs;
 			this->localJacobian.setLocalSolution(entity);
 			this->localJacobian.computeElementData(entity);
 			bool old = true;

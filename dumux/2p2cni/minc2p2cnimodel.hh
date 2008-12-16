@@ -59,13 +59,13 @@ public:
 	};
 
 	typedef typename G::LeafGridView GV;
-    typedef typename GV::IndexSet IS;
+    typedef typename GV::IdxSet IS;
 	typedef MultipleCodimMultipleGeomTypeMapper<G,IS,P1Layout> VertexMapper;
 	typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator
 			IntersectionIterator;
 
 	LeafP1TwoPhaseModel(const G& g, ProblemType& prob) :
-		ThisTwoPhaseHeatModel(g, prob), problem(prob), _grid(g), vertexmapper(g,	g.leafIndexSet()), size((*(this->u)).size())
+		ThisTwoPhaseHeatModel(g, prob), problem(prob), _grid(g), vertexmapper(g,	g.leafIdxSet()), size((*(this->u)).size())
 		{
 	}
 
@@ -82,7 +82,7 @@ public:
 
 		const GV& gridview(grid().leafView());
 
-		// iterate through leaf grid an evaluate c0 at cell center
+		// iterate through leaf grid an evaluate c0 at element center
 		Iterator eendit = gridview.template end<0>();
 		for (Iterator it = gridview.template begin<0>(); it
 				!= eendit; ++it) {
@@ -98,16 +98,16 @@ public:
 			int size = sfs.size();
 
 			for (int i = 0; i < size; i++) {
-				// get cell center in reference element
+				// get element center in reference element
 				const Dune::FieldVector<DT,dim>&local = sfs[i].position();
 
-				// get global coordinate of cell center
+				// get global coordinate of element center
 				Dune::FieldVector<DT,dimworld> global = it->geometry().global(local);
 
 				int globalId = vertexmapper.template map<dim>(entity,
 						sfs[i].entity());
 
-				// initialize cell concentration
+				// initialize element concentration
 				(*(this->u))[globalId] = this->problem.initial(
 						global, entity, local);
 			}
@@ -146,24 +146,24 @@ public:
 								for (int equationNumber = 0; equationNumber<m; equationNumber++) {
 									if (this->localJacobian.bc(i)[equationNumber]
 											== BoundaryConditions::dirichlet) {
-										// get cell center in reference element
+										// get element center in reference element
 										Dune::FieldVector<DT,dim>
 												local = sfs[i].position();
 
-										// get global coordinate of cell center
+										// get global coordinate of element center
 										Dune::FieldVector<DT,dimworld>
 												global = it->geometry().global(local);
 
 										int
 												globalId = vertexmapper.template map<dim>(
 														entity, sfs[i].entity());
-										FieldVector<int,m> dirichletIndex;
+										FieldVector<int,m> dirichletIdx;
 										FieldVector<BoundaryConditions::Flags, m>
 												bctype = this->problem.bctype(
 														global, entity, is,
 														local);
-												this->problem.dirichletIndex(global, entity, is,
-														local, dirichletIndex);
+												this->problem.dirichletIdx(global, entity, is,
+														local, dirichletIdx);
 
 										if (bctype[equationNumber]
 												== BoundaryConditions::dirichlet) {
@@ -171,8 +171,8 @@ public:
 													ghelp = this->problem.g(
 															global, entity, is,
 															local);
-											(*(this->u))[globalId][dirichletIndex[equationNumber]]
-													= ghelp[dirichletIndex[equationNumber]];
+											(*(this->u))[globalId][dirichletIdx[equationNumber]]
+													= ghelp[dirichletIdx[equationNumber]];
 										}
 									}
 								}
@@ -278,7 +278,7 @@ public:
 		double minX = 1e100;
 		double maxX = -1e100;
 
-		// iterate through leaf grid an evaluate c0 at cell center
+		// iterate through leaf grid an evaluate c0 at element center
 		Iterator eendit = gridview.template end<0>();
 		for (Iterator it = gridview.template begin<0>(); it
 				!= eendit; ++it) {
@@ -297,10 +297,10 @@ public:
 			int size = sfs.size();
 
 			for (int i = 0; i < size; i++) {
-				// get cell center in reference element
+				// get element center in reference element
 				const Dune::FieldVector<DT,dim>&local = sfs[i].position();
 
-				// get global coordinate of cell center
+				// get global coordinate of element center
 				Dune::FieldVector<DT,dimworld> global = it->geometry().global(local);
 
 				int globalId = vertexmapper.template map<dim>(entity,
@@ -375,7 +375,7 @@ public:
 			// get entity
 			const Entity& entity = *it;
 			this->localJacobian.fvGeom.update(entity);
-			int size = this->localJacobian.fvGeom.nNodes;
+			int size = this->localJacobian.fvGeom.nVertexs;
 			this->localJacobian.setLocalSolution(entity);
 			this->localJacobian.computeElementData(entity);
 			bool old = true;

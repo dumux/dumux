@@ -78,12 +78,12 @@ public:
 		 \return     index of the primary variable
 		 */
 
-	virtual void dirichletIndex(const FieldVector<DT,dim>& x, const Entity& e,
+	virtual void dirichletIdx(const FieldVector<DT,dim>& x, const Entity& e,
 			const IntersectionIterator& intersectionIt,
-			const FieldVector<DT,dim>& xi, FieldVector<int,m>& dirichletIndex) const
+			const FieldVector<DT,dim>& xi, FieldVector<int,m>& dirichletIdx) const
 	{
 		for (int i = 0; i < m; i++)
-			dirichletIndex[i]=i;
+			dirichletIdx[i]=i;
 		return;
 	}
 
@@ -170,7 +170,7 @@ public:
 	}
 
 	//element-wise return of the values of an Exact solution
-	virtual RT uExOutVertex(int &ElementIndex, int VariableIndex) const {
+	virtual RT uExOutVertex(int &ElementIdx, int VariableIdx) const {
 		DUNE_THROW(NotImplemented, "Ex(akt) Solution");
 		return 0;
 	}

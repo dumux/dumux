@@ -41,8 +41,8 @@ namespace Dune
             numEq = 2 //!< Number of primary variables
         };
         enum {
-            pWIndex = 0,  //!< Index for the wetting phase pressure in a field vector
-            snIndex = 1   //!< Index for the non-wetting phase saturation in a field vector        
+            pWIdx = 0,  //!< Idx for the wetting phase pressure in a field vector
+            snIdx = 1   //!< Idx for the non-wetting phase saturation in a field vector        
         };
     };
 
@@ -69,46 +69,46 @@ namespace Dune
         typedef PwSnTraitsT                             PwSnTraits;
 
         enum {
-            GridDim          = DomTraits::GridDim,
-            WorldDim         = DomTraits::WorldDim,
+            dim          = DomTraits::dim,
+            dimWorld         = DomTraits::dimWorld,
             numEq = BoxTraits::numEq,
-            pWIndex          = PwSnTraits::pWIndex,
-            snIndex          = PwSnTraits::snIndex
+            pWIdx          = PwSnTraits::pWIdx,
+            snIdx          = PwSnTraits::snIdx
         };
         
         typedef typename DomTraits::Scalar              Scalar;
         typedef typename DomTraits::CoordScalar         CoordScalar;
         typedef typename DomTraits::Grid                Grid;
-        typedef typename DomTraits::Cell                Cell;
-        typedef typename Cell::EntityPointer            CellPointer;
-        typedef typename DomTraits::LocalCoord          LocalCoord;
+        typedef typename DomTraits::Element                Element;
+        typedef typename Element::EntityPointer            ElementPointer;
+        typedef typename DomTraits::LocalPosition          LocalPosition;
 
-        typedef typename BoxTraits::UnknownsVector      UnknownsVector;
+        typedef typename BoxTraits::SolutionVector      SolutionVector;
         typedef typename BoxTraits::FVElementGeometry   FVElementGeometry;
         typedef typename BoxTraits::LocalFunction       LocalFunction;
 
-        typedef FieldMatrix<Scalar, GridDim, GridDim>  Tensor;
+        typedef FieldMatrix<Scalar, dim, dim>  Tensor;
 
         /*!
-         * \brief Data which is attached to each node of the and can
+         * \brief Data which is attached to each vert of the and can
          *        be shared between multiple calculations and should
          *        thus be cached in order to increase efficency.
          */
-        struct VariableNodeData
+        struct VariableVertexData
         {
             Scalar Sw;
             Scalar pC;
             Scalar pN;
             
-            UnknownsVector mobility;  //Vector with the number of phases
+            SolutionVector mobility;  //FieldVector with the number of phases
         };
         
         /*!
-         * \brief Cached data for the each node of the cell.
+         * \brief Cached data for the each vert of the element.
          */
-        struct CellCache
+        struct ElementData
         {
-            VariableNodeData  atSCV[BoxTraits::ShapeFunctionSetContainer::maxsize];
+            VariableVertexData  vertex[BoxTraits::ShapeFunctionSetContainer::maxsize];
         };
         
     public:
@@ -117,12 +117,12 @@ namespace Dune
             {};
 
         /*!
-         * \brief Set the current grid cell.
+         * \brief Set the current grid element.
          */
-        void setCurrentCell(const Cell &cell) 
+        void setCurrentElement(const Element &element) 
             {
-                if (ParentType::setCurrentCell_(cell)) {
-                    curCellPorosity_ = ParentType::problem_.porosity(ParentType::curCell_());
+                if (ParentType::setCurrentElement_(element)) {
+                    curElementPorosity_ = ParentType::problem_.porosity(ParentType::curElement_());
                 }
             };
 
@@ -130,44 +130,44 @@ namespace Dune
          * \brief Set the parameters for the calls to the remaining
          *        members.
          */
-        void setParams(const Cell &cell, LocalFunction &curSol, LocalFunction &prevSol)
+        void setParams(const Element &element, LocalFunction &curSol, LocalFunction &prevSol)
             {
-                setCurrentCell(cell);
+                setCurrentElement(element);
                 
                 curSol_ = &curSol;
-                updateCellCache_(curSolCache_, *curSol_);
+                updateElementData_(curElemDat_, *curSol_);
                 curSolDeflected_ = false;
                 
                 prevSol_ = &prevSol;
-                updateCellCache_(prevSolCache_, *prevSol_);
+                updateElementData_(prevElemDat_, *prevSol_);
             };
         
         /*!
-         * \brief Vary a single component of a single node of the
-         *        local solution for the current cell.
+         * \brief Vary a single component of a single vert of the
+         *        local solution for the current element.
          *
          * This method is a optimization, since if varying a single
-         * component at a degree of freedom not the whole cell cache 
-         * needs to be recalculated. (Updating the cell cache is very
+         * component at a degree of freedom not the whole element cache 
+         * needs to be recalculated. (Updating the element cache is very
          * expensive since material laws need to be evaluated.) 
          */
-        void deflectCurSolution(int node, int component, Scalar value)
+        void deflectCurSolution(int vert, int component, Scalar value)
             {
                 // make sure that the orignal state can be restored
                 if (!curSolDeflected_) {
                     curSolDeflected_ = true;
 
-                    curSolOrigValue_ = (*curSol_)[node][component];
-                    curSolOrigVarData_ = curSolCache_.atSCV[node];
+                    curSolOrigValue_ = (*curSol_)[vert][component];
+                    curSolOrigVarData_ = curElemDat_.vertex[vert];
                 }
                 
-                (*curSol_)[node][component] = value;
-                partialCellCacheUpdate_(curSolCache_,
-                                        ParentType::problem_.cellIndex(ParentType::curCell_()),
+                (*curSol_)[vert][component] = value;
+                partialElementDataUpdate_(curElemDat_,
+                                        ParentType::problem_.elementIdx(ParentType::curElement_()),
                                         *curSol_,
-                                        node,
-                                        ParentType::problem_.nodeIndex(ParentType::curCell_(), 
-                                                                         node)); 
+                                        vert,
+                                        ParentType::problem_.vertIdx(ParentType::curElement_(), 
+                                                                         vert)); 
 
             }
 
@@ -176,35 +176,35 @@ namespace Dune
          *        deflectCurSolution() was called.
          *
          * This only works if deflectSolution was only called with
-         * (node, component) as arguments.
+         * (vert, component) as arguments.
          */
-        void restoreCurSolution(int node, int component)
+        void restoreCurSolution(int vert, int component)
             {
                 curSolDeflected_ = false;
-                (*curSol_)[node][component] = curSolOrigValue_;
-                curSolCache_.atSCV[node] = curSolOrigVarData_;
+                (*curSol_)[vert][component] = curSolOrigValue_;
+                curElemDat_.vertex[vert] = curSolOrigVarData_;
             };
         
         /*!
          * \brief Evaluate the rate of change of all conservation
          *        quantites (e.g. phase mass) within a sub control
-         *        volume of a finite volume cell in the pw-Sn
+         *        volume of a finite volume element in the pw-Sn
          *        formulation.
          * 
          * This function should not include the source and sink terms.
          */
-        void localRate(UnknownsVector &result, int scvId, bool usePrevSol) const
+        void computeStorage(SolutionVector &result, int scvId, bool usePrevSol) const
             {
                 LocalFunction *sol = usePrevSol?prevSol_:curSol_;
 
                 // partial time derivative of the wetting phase mass
-                result[pWIndex] = -ParentType::problem_.densityW()
-                                   * curCellPorosity_
-                                   * (*sol)[scvId][snIndex];
+                result[pWIdx] = -ParentType::problem_.densityW()
+                                   * curElementPorosity_
+                                   * (*sol)[scvId][snIdx];
                 // partial time derivative of the non-wetting phase mass
-                result[snIndex] = ParentType::problem_.densityN()
-                                  * curCellPorosity_
-                                  * (*sol)[scvId][snIndex];
+                result[snIdx] = ParentType::problem_.densityN()
+                                  * curElementPorosity_
+                                  * (*sol)[scvId][snIdx];
 
             }
 
@@ -213,118 +213,118 @@ namespace Dune
          * \brief Evaluates the mass flux over a face of a subcontrol
          *        volume.
          */
-        void fluxRate(UnknownsVector &flux, int faceId) const
+        void computeFlux(SolutionVector &flux, int faceId) const
             {
                 Api::require<Api::BasicDomainTraits, typename ProblemT::DomainTraits>();
                 assert(numEq == 2);
 
                 const typename FVElementGeometry::SubControlVolumeFace
-                    &face = ParentType::curCellGeom_.subContVolFace[faceId];
+                    &face = ParentType::curElementGeom_.subContVolFace[faceId];
                 const int i = face.i;
                 const int j = face.j;
 
-                LocalCoord Kij(0);
+                LocalPosition Kij(0);
                 
                 // Kij = K*normal
                 ParentType::problem_.applyPermeabilityTensor(Kij,
-                                                             ParentType::curCell_(), 
+                                                             ParentType::curElement_(), 
                                                              face.normal);
 
                 for (int phase = 0; phase < numEq; phase++) {
                     // calculate FE gradient
-                    LocalCoord pGrad(0);
-                    for (int k = 0; k < ParentType::curCellGeom_.nNodes; k++) {
-                        LocalCoord grad(face.grad[k]);
-                        if (phase == snIndex)
-                            grad *= curSolCache_.atSCV[k].pN;
+                    LocalPosition pGrad(0);
+                    for (int k = 0; k < ParentType::curElementGeom_.numVertices; k++) {
+                        LocalPosition grad(face.grad[k]);
+                        if (phase == snIdx)
+                            grad *= curElemDat_.vertex[k].pN;
                         else
-                            grad *= (*curSol_)[k][pWIndex];
+                            grad *= (*curSol_)[k][pWIdx];
 
                         pGrad += grad;
                     }
 
                     // adjust pressure gradient by gravity force
                     Scalar phaseDensity = ParentType::problem_.density(phase);
-                    LocalCoord gravity = ParentType::problem_.gravity();
+                    LocalPosition gravity = ParentType::problem_.gravity();
                     gravity *= phaseDensity;
                     pGrad   -= gravity;
                     
                     // calculate the flux using upwind
                     Scalar outward = pGrad*Kij;
                     if (outward < 0)
-                        flux[phase] = phaseDensity*curSolCache_.atSCV[i].mobility[phase]*outward;
+                        flux[phase] = phaseDensity*curElemDat_.vertex[i].mobility[phase]*outward;
                     else
-                        flux[phase] = phaseDensity*curSolCache_.atSCV[j].mobility[phase]*outward;
+                        flux[phase] = phaseDensity*curElemDat_.vertex[j].mobility[phase]*outward;
                 }
             }
 
     private:
         /*!
-         * \brief Pre-compute the cell cache data.
+         * \brief Pre-compute the element cache data.
          *
          * This method is called by BoxJacobian (which in turn is
          * called by the operator assembler) every time the current
-         * cell changes.
+         * element changes.
          */
-        void updateCellCache_(CellCache &dest, const LocalFunction &sol)
+        void updateElementData_(ElementData &dest, const LocalFunction &sol)
             {
                 assert(numEq == 2);
 
-                int cellIndex   = ParentType::problem_.cellIndex(ParentType::curCell_());
-                for (int i = 0; i < ParentType::curCellGeom_.nNodes; i++) {
-                    int iGlobal = ParentType::problem_.nodeIndex(ParentType::curCell_(), i);
-                    partialCellCacheUpdate_(dest,
-                                            cellIndex,
+                int elementIdx   = ParentType::problem_.elementIdx(ParentType::curElement_());
+                for (int i = 0; i < ParentType::curElementGeom_.numVertices; i++) {
+                    int iGlobal = ParentType::problem_.vertIdx(ParentType::curElement_(), i);
+                    partialElementDataUpdate_(dest,
+                                            elementIdx,
                                             sol,
                                             i,        // index of sub volume to update,
-                                            iGlobal); // global node index of the sub volume's grid node
+                                            iGlobal); // global vert index of the sub volume's grid vert
                 }
             }
 
         
-        void partialCellCacheUpdate_(CellCache           &dest,
-                                     int                  cellIndex,
+        void partialElementDataUpdate_(ElementData           &dest,
+                                     int                  elementIdx,
                                      const LocalFunction &sol,
-                                     int                  i, // index of the subvolume/grid node
-                                     int                  iGlobal) // global index of the sub-volume's node
+                                     int                  i, // index of the subvolume/grid vert
+                                     int                  iGlobal) // global index of the sub-volume's vert
             {
                 // Current cache at sub-controlvolume
-                VariableNodeData &scvCache = dest.atSCV[i];
+                VariableVertexData &scvCache = dest.vertex[i];
                 // Current solution for sub-controlvolume
-                const UnknownsVector &scvSol = sol[i];
+                const SolutionVector &scvSol = sol[i];
 
-                scvCache.Sw = 1.0 - scvSol[snIndex];
-                scvCache.pC = ParentType::problem_.pC(ParentType::curCell_(),
-                                                      cellIndex,
+                scvCache.Sw = 1.0 - scvSol[snIdx];
+                scvCache.pC = ParentType::problem_.pC(ParentType::curElement_(),
+                                                      elementIdx,
                                                       i,
                                                       iGlobal,
                                                       scvCache.Sw);
-                scvCache.pN = scvSol[pWIndex] + scvCache.pC;
-                scvCache.mobility[pWIndex] = ParentType::problem_.mobilityW(ParentType::curCell_(),
-                                                                            cellIndex,
+                scvCache.pN = scvSol[pWIdx] + scvCache.pC;
+                scvCache.mobility[pWIdx] = ParentType::problem_.mobilityW(ParentType::curElement_(),
+                                                                            elementIdx,
                                                                             i,
                                                                             iGlobal,
                                                                             scvCache.Sw);
-                scvCache.mobility[snIndex] = ParentType::problem_.mobilityN(ParentType::curCell_(),
-                                                                            cellIndex,
+                scvCache.mobility[snIdx] = ParentType::problem_.mobilityN(ParentType::curElement_(),
+                                                                            elementIdx,
                                                                             i,
                                                                             iGlobal,
-                                                                            scvSol[snIndex]);
+                                                                            scvSol[snIdx]);
             }
 
-//        CellPointer     curCell_;
-        Scalar          curCellPorosity_;
-        Tensor         *curCellPermeability_;
+//        ElementPointer     curElement_;
+        Scalar          curElementPorosity_;
+        Tensor         *curElementPermeability_;
 
         LocalFunction   *curSol_;
-        CellCache        curSolCache_;
+        ElementData        curElemDat_;
 
         bool             curSolDeflected_;
         Scalar           curSolOrigValue_;
-        VariableNodeData curSolOrigVarData_;
+        VariableVertexData curSolOrigVarData_;
 
         LocalFunction  *prevSol_;
-        CellCache       prevSolCache_;
+        ElementData       prevElemDat_;
     };
     
 

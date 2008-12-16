@@ -88,9 +88,9 @@ namespace Dune
         // some constants from the traits for convenience
         enum {
             numEq            = BoxTraits::numEq,
-            pWIndex          = TwoPTwoCNITraits::pWIndex,
-            switchIndex      = TwoPTwoCNITraits::switchIndex,
-            temperatureIndex = TwoPTwoCNITraits::temperatureIndex,
+            pWIdx          = TwoPTwoCNITraits::pWIdx,
+            switchIdx      = TwoPTwoCNITraits::switchIdx,
+            temperatureIdx = TwoPTwoCNITraits::temperatureIdx,
             
             // Phase State
             wPhaseOnly = TwoPTwoCNITraits::wPhaseOnly,
@@ -98,25 +98,25 @@ namespace Dune
             bothPhases = TwoPTwoCNITraits::bothPhases,
 
             // Grid and world dimension
-            GridDim  = DomainTraits::GridDim,
-            WorldDim = DomainTraits::WorldDim
+            dim  = DomainTraits::dim,
+            dimWorld = DomainTraits::dimWorld
         };
       
         // copy some types from the traits for convenience
         typedef typename DomainTraits::Scalar                     Scalar;
-        typedef typename DomainTraits::Cell                       Cell;
-        typedef typename DomainTraits::CellIterator               CellIterator;
+        typedef typename DomainTraits::Element                       Element;
+        typedef typename DomainTraits::ElementIterator               ElementIterator;
         typedef typename DomainTraits::ReferenceElement           ReferenceElement;
-        typedef typename DomainTraits::Node                       Node;
-        typedef typename DomainTraits::NodeIterator               NodeIterator;
+        typedef typename DomainTraits::Vertex                       Vertex;
+        typedef typename DomainTraits::VertexIterator               VertexIterator;
         typedef typename DomainTraits::IntersectionIterator       IntersectionIterator;
         typedef typename DomainTraits::IntersectionIteratorGetter IntersectionIteratorGetter;
-        typedef typename DomainTraits::LocalCoord                 LocalCoord;
-        typedef typename DomainTraits::WorldCoord                 WorldCoord;
+        typedef typename DomainTraits::LocalPosition                 LocalPosition;
+        typedef typename DomainTraits::GlobalPosition                 GlobalPosition;
 
         typedef typename BoxTraits::FVElementGeometry             FVElementGeometry;
         typedef typename BoxTraits::SpatialFunction               SpatialFunction;
-        typedef typename BoxTraits::UnknownsVector                UnknownsVector;
+        typedef typename BoxTraits::SolutionVector                SolutionVector;
         typedef typename BoxTraits::BoundaryTypeVector            BoundaryTypeVector;
 
         typedef Dune::VtkMultiWriter<typename Grid::LeafGridView> VtkMultiWriter;
@@ -292,10 +292,10 @@ namespace Dune
             }
         
         void boundaryTypes(BoundaryTypeVector &values,
-                           const Cell &cell,
-                           const IntersectionIterator &faceIt,
-                           const WorldCoord &globalPos,
-                           const LocalCoord &localPos) const
+                           const Element &element,
+                           const IntersectionIterator &isIt,
+                           const GlobalPosition &globalPos,
+                           const LocalPosition &localPos) const
             {
                 if(globalPos[0] >= 10 - eps_ )
                     values = Dune::BoundaryConditions::dirichlet;
@@ -303,22 +303,22 @@ namespace Dune
                     values = Dune::BoundaryConditions::neumann;
 
                 if(globalPos[0] < eps_ && globalPos[1] < 5)
-                    values[temperatureIndex] = Dune::BoundaryConditions::dirichlet;
+                    values[temperatureIdx] = Dune::BoundaryConditions::dirichlet;
             }
 
         /////////////////////////////
         // DIRICHLET boundaries
         /////////////////////////////
-        void dirichlet(UnknownsVector &values,
-                       const Cell &cell,
-                       int nodeIdx,
-                       int globalNodeIdx)
+        void dirichlet(SolutionVector &values,
+                       const Element &element,
+                       int vertIdx,
+                       int globalVertexIdx)
             {
-                const LocalCoord &localPos = DomainTraits::referenceElement(cell.type()).position(nodeIdx, GridDim);
-                const WorldCoord &globalPos = cell.geometry()[nodeIdx];
+                const LocalPosition &localPos = DomainTraits::referenceElement(element.type()).position(vertIdx, dim);
+                const GlobalPosition &globalPos = element.geometry()[vertIdx];
                 
                 initial(values,
-                        cell,
+                        element,
                         globalPos, 
                         localPos);
             }
@@ -326,26 +326,26 @@ namespace Dune
         /////////////////////////////
         // NEUMANN boundaries
         /////////////////////////////
-        void neumann(UnknownsVector &values,
-                     const Cell &cell,
-                     const IntersectionIterator &faceIt,
-                     const WorldCoord &globalPos,
-                     const LocalCoord &localPos) const
+        void neumann(SolutionVector &values,
+                     const Element &element,
+                     const IntersectionIterator &isIt,
+                     const GlobalPosition &globalPos,
+                     const LocalPosition &localPos) const
             {
                 values = 0;
 
                 if(globalPos[0] <= eps_ && globalPos[1] <= 5.)
                 {
-                    values[pWIndex] = 0.0;//-4.046e-5;
-                    values[switchIndex] = -0.0002;
+                    values[pWIdx] = 0.0;//-4.046e-5;
+                    values[switchIdx] = -0.0002;
                 }
             }
 
         /////////////////////////////
         // sources and sinks
         /////////////////////////////
-        void sourceTerm(UnknownsVector &values,
-                        const Cell &cell,
+        void source(SolutionVector &values,
+                        const Element &element,
                         const FVElementGeometry &, 
                         int subControlVolumeIdx) const
             {
@@ -357,45 +357,45 @@ namespace Dune
         /////////////////////////////
         // INITIAL values
         /////////////////////////////
-        void initial(UnknownsVector &values,
-                     const Cell& cell,
-                     const WorldCoord &globalPos, 
-                     const LocalCoord &localPos)
+        void initial(SolutionVector &values,
+                     const Element& element,
+                     const GlobalPosition &globalPos, 
+                     const LocalPosition &localPos)
             {
-                values[pWIndex]          = 1.013e5 + (depthBOR_ - globalPos[1]) * 1045 * 9.81;
-                values[switchIndex]      = 0.00;
-                values[temperatureIndex] = 283.15 + (depthBOR_ - globalPos[1])*0.03;
+                values[pWIdx]          = 1.013e5 + (depthBOR_ - globalPos[1]) * 1045 * 9.81;
+                values[switchIdx]      = 0.00;
+                values[temperatureIdx] = 283.15 + (depthBOR_ - globalPos[1])*0.03;
             }
 
-        Scalar porosity(const Cell &cell, int localIdx) const
+        Scalar porosity(const Element &element, int localIdx) const
             {
-                // TODO/HACK: porosity should be defined on the nodes
-                // as it is required on the nodes!
-                const LocalCoord &local =
-                    DomainTraits::referenceElement(cell.type()).position(localIdx, GridDim);
-                const WorldCoord &globalPos = cell.geometry()[localIdx];
-                return soil().porosity(globalPos, *(ParentType::cellBegin()), local);
+                // TODO/HACK: porosity should be defined on the verts
+                // as it is required on the verts!
+                const LocalPosition &local =
+                    DomainTraits::referenceElement(element.type()).position(localIdx, dim);
+                const GlobalPosition &globalPos = element.geometry()[localIdx];
+                return soil().porosity(globalPos, *(ParentType::elementBegin()), local);
             };
 
-        Scalar pC(Scalar satW, int globalIdx, const WorldCoord &globalPos)
+        Scalar pC(Scalar satW, int globalIdx, const GlobalPosition &globalPos)
             {
-                // TODO/HACK: porosity should be defined on the nodes
-                // as it is required on the nodes!
-                const LocalCoord &local =
-                    DomainTraits::referenceElement(ParentType::cellBegin()->type()).position(0, GridDim);
-                return materialLaw().pC(satW, globalPos, *(ParentType::cellBegin()), local);
+                // TODO/HACK: porosity should be defined on the verts
+                // as it is required on the verts!
+                const LocalPosition &local =
+                    DomainTraits::referenceElement(ParentType::elementBegin()->type()).position(0, dim);
+                return materialLaw().pC(satW, globalPos, *(ParentType::elementBegin()), local);
             };
 
 
-        int initialPhaseState(const Node       &node,
+        int initialPhaseState(const Vertex       &vert,
                               int              &globalIdx,
-                              const WorldCoord &globalPos) const
+                              const GlobalPosition &globalPos) const
             {
                 return wPhaseOnly;
             }
 
       
-        const WorldCoord &gravity () const
+        const GlobalPosition &gravity () const
             {
                 return gravity_;
             }
@@ -429,7 +429,7 @@ namespace Dune
         Scalar height_;
         Scalar depthBOR_;
         Scalar eps_;
-        WorldCoord  gravity_;
+        GlobalPosition  gravity_;
 
         // fluids and material properties
         WettingPhase    wPhase_;
