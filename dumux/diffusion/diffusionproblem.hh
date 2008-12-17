@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_DIFFUSIONPROBLEM_HH
 #define DUNE_DIFFUSIONPROBLEM_HH
@@ -27,113 +27,111 @@
 
 namespace Dune
 {
-  /*! \ingroup diffusionProblems 
-   * @brief base class that defines the parameters of a diffusion equation 
-   * 
-   * An interface for defining parameters for the stationary diffusion equation 
-   * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = q, \f$, 
-   * \f$p = g\f$ on \f$\Gamma_1\f$, and \f$\lambda K \text{grad}\, p = J\f$ 
-   * on \f$\Gamma_2\f$. Here, 
-   * \f$p\f$ denotes the pressure, \f$K\f$ the absolute permeability, 
-   * and \f$\lambda\f$ the total mobility, possibly depending on the 
-   * saturation. 
+  /*! \ingroup diffusionProblems
+   * @brief base class that defines the parameters of a diffusion equation
+   *
+   * An interface for defining parameters for the stationary diffusion equation
+   * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = q, \f$,
+   * \f$p = g\f$ on \f$\Gamma_1\f$, and \f$\lambda K \text{grad}\, p = J\f$
+   * on \f$\Gamma_2\f$. Here,
+   * \f$p\f$ denotes the pressure, \f$K\f$ the absolute permeability,
+   * and \f$\lambda\f$ the total mobility, possibly depending on the
+   * saturation.
    *
    *	Template parameters are:
-   *	
+   *
    *	- Grid  a DUNE grid type
-   *	- RT    type used for return values 
+   *	- RT    type used for return values
    */
-  template<class G, class RT, class VC>
+  template<class Grid, class Scalar, class VC>
   class DiffusionProblem {
+
   protected:
-	typedef typename G::ctype DT;
-	typedef typename G::Traits::template Codim<0>::Entity Entity;
+	enum {dim=Grid::dimension, dimWorld=Grid::dimensionworld, numEq=1};
+	typedef typename Grid::Traits::template Codim<0>::Entity Element;
+	typedef Dune::FieldVector<Scalar,dim> LocalPosition;
+	typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
+	typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
   public:
-	  typedef G GridType;
-	  typedef RT ReturnType;
-	  enum {n=G::dimension, m=1};
-	  
 	//! evaluate diffusion tensor
 	/*! Evaluate the diffusion tensor at given location
-	  @param[in]  x    position in global coordinates
-	  @param[in]  e    entity of codim 0
-	  @param[in]  xi   position in reference element of e
+	  @param[in]  globalPos    position in global coordinates
+	  @param[in]  element    entity of codim 0
+	  @param[in]  localPos   position in reference element of element
 	  @param[out] D    diffusion tensor to be filled
 	 */
-	virtual FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x, const Entity& e, 
-					const FieldVector<DT,n>& xi) = 0;
-	
-	//! evaluate saturation
-	/*! Evaluate the saturation at given location
-	  @param[in]  x    position in global coordinates
-	  @param[in]  e    entity of codim 0
-	  @param[in]  xi   position in reference element of e
-	 */
+	virtual FieldMatrix& K (const GlobalPosition& globalPos, const Element& element,
+					const LocalPosition& localPos) = 0;
 
 	//! evaluate source term
 	/*! evaluate source term at given location
-	  @param[in]  x    position in global coordinates
-	  @param[in]  e    entity of codim 0
-	  @param[in]  xi   position in reference element of e
+	  @param[in]  globalPos    position in global coordinates
+	  @param[in]  element    entity of codim 0
+	  @param[in]  localPos   position in reference element of element
 	  \return     value of source term
 	 */
-	virtual RT q   (const FieldVector<DT,n>& x, const Entity& e, 
-					const FieldVector<DT,n>& xi) = 0;
+	virtual Scalar source  (const GlobalPosition& globalPos, const Element& element,
+					const LocalPosition& localPos) = 0;
 
 	//! return type of boundary condition at the given global coordinate
 	/*! return type of boundary condition at the given global coordinate
-	  @param[in]  x    position in global coordinates
+	  @param[in]  globalPos    position in global coordinates
 	  \return     boundary condition type given by enum in this class
 	 */
-	virtual BoundaryConditions::Flags bctype (const FieldVector<DT,n>& x, const Entity& e, 
-					   const FieldVector<DT,n>& xi) const = 0;
+	virtual BoundaryConditions::Flags bctype (const GlobalPosition& globalPos, const Element& element,
+					   const LocalPosition& localPos) const = 0;
 
 	//! evaluate Dirichlet boundary condition at given position
 	/*! evaluate Dirichlet boundary condition at given position
-	  @param[in]  x    position in global coordinates
+	  @param[in]  globalPos    position in global coordinates
 	  \return     boundary condition value
 	 */
-	virtual RT g (const FieldVector<DT,n>& x, const Entity& e, 
-				  const FieldVector<DT,n>& xi) const = 0;
-	
-	virtual RT gSat (const FieldVector<DT,n>& x, const Entity& e, 
-					  const FieldVector<DT,n>& xi) const 
+	virtual Scalar dirichletPress (const GlobalPosition& globalPos, const Element& element,
+				  const LocalPosition& localPos) const = 0;
+
+	//! evaluate Dirichlet boundary condition at given position
+	/*! evaluate Dirichlet boundary condition at given position
+	  @param[in]  globalPos    position in global coordinates
+	  \return     boundary condition value
+	 */
+	virtual Scalar dirichletSat (const GlobalPosition& globalPos, const Element& element,
+					  const LocalPosition& localPos) const
 	{
 		return 1;
 	}
-	  
+
 	//! evaluate Neumann boundary condition at given position
 	/*! evaluate Neumann boundary condition at given position
-	  @param[in]  x    position in global coordinates
+	  @param[in]  globalPos    position in global coordinates
 	  \return     boundary condition value
 	 */
-	virtual RT J (const FieldVector<DT,n>& x, const Entity& e, 
-				  const FieldVector<DT,n>& xi) const = 0;
-	  
-	const FieldVector<DT,n>& gravity() const
+	virtual Scalar neumannPress (const GlobalPosition& globalPos, const Element& element,
+				  const LocalPosition& localPos) const = 0;
+
+	const FieldVector<Scalar,dim>& gravity() const
 	{
 		return gravity_;
 	}
-	
+
 	//! constructor
 	/** @param law implementation of Material laws. Class TwoPhaseRelations or derived.
-	 *  @param cap flag to include capillary forces. 
+	 *  @param cap flag to include capillary forces.
 	 */
-	DiffusionProblem(VC& variableobject, TwoPhaseRelations& law = *(new LinearLaw), 
-			const bool cap = false, FieldVector<DT,n> g = *(new FieldVector<DT,n>(0))) 
-	: variables(variableobject), materialLaw(law), capillary(cap), gravity_(g)
+	DiffusionProblem(VC& variables, TwoPhaseRelations& materialLaw = *(new LinearLaw),
+			const bool capillarity = false, FieldVector<Scalar,dim> gravity = *(new FieldVector<Scalar,dim>(0)))
+	: variables(variables), materialLaw(materialLaw), capillarity(capillarity), gravity_(gravity)
 	{	}
-	
+
 	//! always define virtual destructor in abstract base class
 	virtual ~DiffusionProblem () {}
-	
+
 	//! a class describing relations between two phases and the porous medium
 	VC& variables;
 	TwoPhaseRelations& materialLaw;
 	const bool capillary;
   protected:
-	  FieldVector<DT,n> gravity_;
+	  FieldVector<Scalar,dim> gravity_;
   };
 
 }

@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_DIFFUSION_HH
 #define DUNE_DIFFUSION_HH
@@ -28,16 +28,13 @@ namespace Dune
 	Template parameters are:
 
 	- Grid      a DUNE grid type
-	- RT        type used for return values
-	- RepresentationType type of the vector holding the pressure values
-	- VelType   type of the vector holding the velocity values
+	- Scalar        type used for return values
 
    */
-  template<class G, class RT,class VC>
+  template<class Grid, class Scalar,class VC>
   class Diffusion {
   public:
-	FractionalFlowProblem<G, RT, VC>& diffproblem; //!< problem data
-	typedef RT NumberType;
+	FractionalFlowProblem<Grid, Scalar, VC>& diffproblem; //!< problem data
 
 	//! \brief Calculate the pressure.
 	/*!
@@ -48,7 +45,7 @@ namespace Dune
 	 *  \f[ - \text{div}\, (\lambda K \text{grad}\, p ) = 0, \f]
 	 *  subject to appropriate boundary and initial conditions.
 	 */
-	virtual void pressure(const RT t=0) = 0;
+	virtual void pressure(const Scalar t=0) = 0;
 
 	//! \brief Calculate the total velocity.
 	/*!
@@ -62,7 +59,7 @@ namespace Dune
 	 *  The method is used in FractionalFlow to provide the velocity field required for the saturation equation.
 	 */
 
-	virtual void calcTotalVelocity(const RT t=0) const {
+	virtual void calcTotalVelocity(const Scalar t=0) const {
 		return;
 	}
 
@@ -71,22 +68,22 @@ namespace Dune
 
 	//! without specification of a level, the class works on the leaf grid.
 	/**
-	 * \param g grid object of type G
+	 * \param grid grid object of type Grid
 	 * \param prob a problem class object derived from DiffusionProblem
 	*/
-	Diffusion(const G& g, FractionalFlowProblem<G, RT, VC>& prob)
-	: grid(g), diffproblem(prob), level_(g.maxLevel())
+	Diffusion(const Grid& grid, FractionalFlowProblem<Grid, Scalar, VC>& prob)
+	: grid(grid), diffproblem(prob), level_(grid.maxLevel())
 	{
 	}
 
 	//! Constructor with possibility to specify a level for the diffusion class to work on.
 	/**
-	 * \param g grid object of type G
+	 * \param grid grid object of type Grid
 	 * \param prob a problem class object derived from DiffusionProblem
 	 * \param lev the grid level to work on
 	 */
-	Diffusion(const G& g, FractionalFlowProblem<G, RT, VC>& prob, int lev)
-	: diffproblem(prob), grid(g), level_(lev)
+	Diffusion(const Grid& grid, FractionalFlowProblem<Grid, Scalar, VC>& prob, int lev)
+	: diffproblem(prob), grid(grid), level_(lev)
 	{
 	}
 
@@ -95,7 +92,7 @@ namespace Dune
 	{
 		return level_;
 	}
-	  const G& grid;
+	  const Grid& grid;
   protected:
 	  const int level_;
   };
