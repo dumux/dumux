@@ -63,9 +63,9 @@ template<class Grid, class Scalar, class VC> class FVDiffusion :
 	typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
 	typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
-	typedef FieldMatrix<Scalar,1,1> MB;
+	typedef Dune::FieldMatrix<Scalar, 1, 1> MB;
 	typedef BCRSMatrix<MB> MatrixType;
-	typedef BlockVector<FieldVector<Scalar, 1>> Vector;
+	typedef BlockVector<FieldVector<Scalar, 1> > Vector;
 
 public:
 
@@ -82,7 +82,7 @@ public:
 	void initializeMatrix();
 
 	FVDiffusion(Grid& grid, FractionalFlowProblem<Grid, Scalar, VC>& problem, int level = -1) :
-		Diffusion<Grid, Scalar, VC>(grid, problem, level == -1 ? g.maxLevel() : level),
+		Diffusion<Grid, Scalar, VC>(grid, problem, level == -1 ? grid.maxLevel() : level),
 				elementMapper(grid, grid.levelIndexSet(this->level())), gridView(grid.levelView(this->level())),
 				indexSet(gridView.indexSet()), A(grid.size(
 						this->level(), 0), grid.size(this->level(), 0), (2*dim+1)
@@ -92,19 +92,19 @@ public:
 		initializeMatrix();
 	}
 
-	FVDiffusion(Grid& grid, FractionalFlowProblem<Grid, Scalar, VC>& prob, std::string solverName,
+	FVDiffusion(Grid& grid, FractionalFlowProblem<Grid, Scalar, VC>& problem, std::string solverName,
 			std::string preconditionerName, int level = -1) :
-		Diffusion<Grid, Scalar, VC>(grid, problem, level == -1 ? g.maxLevel() : level),
+		Diffusion<Grid, Scalar, VC>(grid, problem, level == -1 ? grid.maxLevel() : level),
 				elementMapper(grid, grid.levelIndexSet(this->level())), gridView(grid.levelView(this->level())),
 				indexSet(gridView.indexSet()), A(grid.size(
 						this->level(), 0), grid.size(this->level(), 0), (2*dim+1)
 						*grid.size(this->level(), 0), BCRSMatrix<MB>::random),
-				f(g.size(this->level(), 0)), solverName_(solverName),
+				f(grid.size(this->level(), 0)), solverName_(solverName),
 				preconditionerName_(preconditionerName) {
 		initializeMatrix();
 	}
 
-	EM elementMapper;
+	ElementMapper elementMapper;
 	const GridView& gridView;
 	const IndexSet& indexSet;
 
@@ -183,10 +183,10 @@ template<class Grid, class Scalar, class VC> void FVDiffusion<Grid, Scalar, VC>:
 		GeometryType gt = eIt->geometry().type();
 
 		// cell center in reference element
-		LocalPosition& localPos = ReferenceElements<Scalar,dim>::general(gt).position(0, 0);
+		const LocalPosition& localPos = ReferenceElements<Scalar,dim>::general(gt).position(0, 0);
 
 		// get global coordinate of cell center
-		GlobalPosition& globalPos = eIt->geometry().global(localPos);
+		const GlobalPosition& globalPos = eIt->geometry().global(localPos);
 
 		// cell index
 		int globalIdxI = elementMapper.map(*eIt);
@@ -214,25 +214,22 @@ template<class Grid, class Scalar, class VC> void FVDiffusion<Grid, Scalar, VC>:
 				!=isItEnd; ++isIt) {
 
 			// get geometry type of face
-			GeometryType gtf = isIt->intersectionSelfLocal().type();
+			GeometryType faceGT = isIt->intersectionSelfLocal().type();
 
 			// center in face's reference element
 			const FieldVector<Scalar,dim-1>&
-			faceLocal = ReferenceElements<Scalar,dim-1>::general(gtf).position(0,0);
+			faceLocal = ReferenceElements<Scalar,dim-1>::general(faceGT).position(0,0);
 
 			// center of face inside volume reference element
-			LocalPosition&
-			localPosFace = ReferenceElements<Scalar,dim>::general(gtf).position(isIt->numberInSelf(),1);
+			const LocalPosition& localPosFace = ReferenceElements<Scalar,dim>::general(faceGT).position(isIt->numberInSelf(),1);
 
 			// get normal vector
-			FieldVector<Scalar,dimworld> unitOuterNormal
+			FieldVector<Scalar,dimWorld> unitOuterNormal
 			= isIt->unitOuterNormal(faceLocal);
 
 			// get normal vector scaled with volume
-			FieldVector<Scalar,dimworld> integrationOuterNormal
-			= isIt->integrationOuterNormal(faceLocal);
-			integrationOuterNormal
-			*= ReferenceElements<Scalar,dim-1>::general(gtf).volume();
+			FieldVector<Scalar,dimWorld> integrationOuterNormal= isIt->integrationOuterNormal(faceLocal);
+			integrationOuterNormal*= ReferenceElements<Scalar,dim-1>::general(faceGT).volume();
 
 			// get face volume
 			Scalar faceVol = 1;
@@ -255,15 +252,13 @@ template<class Grid, class Scalar, class VC> void FVDiffusion<Grid, Scalar, VC>:
 
 				// compute factor in neighbor
 				GeometryType neighborGT = neighborPointer->geometry().type();
-				LocalPosition&
-				localPosNeighbor = ReferenceElements<Scalar,dim>::general(neighborGT).position(0,0);
+				const LocalPosition& localPosNeighbor = ReferenceElements<Scalar,dim>::general(neighborGT).position(0,0);
 
 				// neighbor cell center in global coordinates
-				GlobalPosition&
-				globalPosNeighbor = neighborPointer->geometry().global(localPosNeighbor);
+				const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().global(localPosNeighbor);
 
 				// distance vector between barycenters
-				FieldVector<Scalar,dimworld>
+				FieldVector<Scalar,dimWorld>
 				distVec = globalPos - globalPosNeighbor;
 
 				// compute distance between cell centers
@@ -345,8 +340,7 @@ template<class Grid, class Scalar, class VC> void FVDiffusion<Grid, Scalar, VC>:
 			else
 			{
 				// center of face in global coordinates
-				GlobalPosition&
-				globalPosFace = isIt->intersectionGlobal().global(faceLocal);
+				const GlobalPosition& globalPosFace = isIt->intersectionGlobal().global(faceLocal);
 
 				// compute total mobility
 				Scalar fractionalW = 1.;
@@ -357,7 +351,7 @@ template<class Grid, class Scalar, class VC> void FVDiffusion<Grid, Scalar, VC>:
 				BoundaryConditions::Flags bctype = this->diffproblem.bctypePress(globalPosFace, *eIt, localPosFace);
 				if (bctype == BoundaryConditions::dirichlet)
 				{
-					FieldVector<Scalar,dimworld> distVec(globalPos - globalPosFace);
+					FieldVector<Scalar,dimWorld> distVec(globalPos - globalPosFace);
 					Scalar dist = distVec.two_norm();
 					A[globalIdxI][globalIdxI] -= lambda*faceVol*(Kni*distVec)/(dist*dist);
 					Scalar g = this->diffproblem.dirichletPress(globalPosFace, *eIt, localPosFace);
@@ -372,7 +366,7 @@ template<class Grid, class Scalar, class VC> void FVDiffusion<Grid, Scalar, VC>:
 						Scalar satJ = this->diffproblem.dirichletSat(globalPosFace, *eIt, localPosFace);
 
 						// distance vector between barycenters
-						FieldVector<Scalar,dimworld>
+						FieldVector<Scalar,dimWorld>
 						distVec = globalPos - globalPosFace;
 
 						// compute distance between cell centers
