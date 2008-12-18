@@ -43,84 +43,83 @@ namespace Dune
  *	Template parameters are:
  *
  *	- Grid  a DUNE grid type
- *	- RT    type used for return values
+ *	- Scalar    type used for return values
  */
-template<class G, class RT, class VC>
+template<class Grid, class Scalar, class VC>
 class FractionalFlowProblem
 {
+public:
+	enum
+	{	dim=Grid::dimension,dimWorld= Grid::dimensionworld,numEq=1};
 protected:
-typedef	typename G::ctype DT;
-	typedef typename G::Traits::template Codim<0>::Entity Entity;
+	typedef typename Grid::Traits::template Codim<0>::Entity Element;
+	typedef Dune::FieldVector<Scalar,dim> LocalPosition;
+	typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
 
 public:
-	typedef G GridType;
-	typedef RT ReturnType;
-	enum
-	{	n=G::dimension, m=1};
-
 	//! evaluate source term for the pressure equation
 	/*! evaluate source term for the pressure equation at given location
-	 @param[in]  x    position in global coordinates
-	 @param[in]  e    entity of codim 0
-	 @param[in]  xi   position in reference element of e
+	 @param[in]  globalPos    position in global coordinates
+	 @param[in]  element    entity of codim 0
+	 @param[in]  localPos   position in reference element of element
 	 \return     value of source term
 	 */
-	virtual RT qPress (const FieldVector<DT,n>& x, const Entity& e,
-			const FieldVector<DT,n>& xi) = 0;
+	virtual Scalar qPress (const GlobalPosition& globalPos, const Element& element,
+			const LocalPosition& localPos) = 0;
 
 	//! return type of boundary condition for the pressure equation at the given global coordinate
 	/*! return type of boundary condition for the pressure equation at the given global coordinate
-	 @param[in]  x    position in global coordinates
+	 @param[in]  globalPos    position in global coordinates
 	 \return     boundary condition type given by enum in this class
 	 */
-	virtual BoundaryConditions::Flags bctypePress (const FieldVector<DT,n>& x, const Entity& e,
-			const FieldVector<DT,n>& xi) const = 0;
+	virtual BoundaryConditions::Flags bctypePress (const GlobalPosition& globalPos, const Element& element,
+			const LocalPosition& localPos) const = 0;
 
 	//! return type of boundary condition for the saturation equation at the given global coordinate
 	/*! return type of boundary condition for the saturation equation at the given global coordinate
-	 @param[in]  x    position in global coordinates
+	 @param[in]  globalPos    position in global coordinates
 	 \return     boundary condition type given by enum in this class
 	 */
-	virtual BoundaryConditions::Flags bctypeSat (const FieldVector<DT,n>& x, const Entity& e,
-			const FieldVector<DT,n>& xi) const = 0;
+	virtual BoundaryConditions::Flags bctypeSat (const GlobalPosition& globalPos, const Element& element,
+			const LocalPosition& localPos) const = 0;
 
 	//! evaluate Dirichlet boundary condition for the pressure equation at given position
 	/*! evaluate Dirichlet boundary condition for the pressure equation at given position
-	 @param[in]  x    position in global coordinates
+	 @param[in]  globalPos    position in global coordinates
 	 \return     boundary condition value
 	 */
-	virtual RT gPress (const FieldVector<DT,n>& x, const Entity& e,
-			const FieldVector<DT,n>& xi) const = 0;
+	virtual Scalar gPress (const GlobalPosition& globalPos, const Element& element,
+			const LocalPosition& localPos) const = 0;
 
 	//! evaluate Dirichlet boundary condition for the saturation equation at given position
 	/*! evaluate Dirichlet boundary condition for the saturation equation at given position
-	 @param[in]  x    position in global coordinates
+	 @param[in]  globalPos    position in global coordinates
 	 \return     boundary condition value
 	 */
-	virtual RT gSat (const FieldVector<DT,n>& x, const Entity& e,
-			const FieldVector<DT,n>& xi) const
+	virtual Scalar gSat (const GlobalPosition& globalPos, const Element& element,
+			const LocalPosition& localPos) const
 	{
 		return 1;
 	}
 
 	//! evaluate Neumann boundary condition for the pressure equation at given position
 	/*! evaluate Neumann boundary condition for the pressure equation at given position
-	 @param[in]  x    position in global coordinates
+	 @param[in]  globalPos    position in global coordinates
 	 \return     boundary condition value
 	 */
-	virtual RT JPress (const FieldVector<DT,n>& x, const Entity& e,
-			const FieldVector<DT,n>& xi) const = 0;
+	virtual Scalar JPress (const GlobalPosition& globalPos, const Element& element,
+			const LocalPosition& localPos) const = 0;
 
 	//! evaluate initial condition for saturation at given position
 	/*! evaluate initial condition for saturation at given position
-	 @param[in]  x    position in global coordinates
+	 @param[in]  globalPos    position in global coordinates
 	 \return    initial condition value
 	 */
-	virtual RT initSat (const FieldVector<DT,n>& x, const Entity& e,
-			const FieldVector<DT,n>& xi) const = 0;
+	virtual Scalar initSat (const GlobalPosition& globalPos, const Element& element,
+			const LocalPosition& localPos) const = 0;
 
-	virtual RT JSat (const FieldVector<DT,n>& x, const Entity& e,
-			const FieldVector<DT,n>& xi, RT& factor) const
+	virtual Scalar JSat (const GlobalPosition& globalPos, const Element& element,
+			const LocalPosition& localPos, Scalar& factor) const
 	{
 		DUNE_THROW(NotImplemented, "neumann boundary function for saturation eq. not implemented!");
 	}
@@ -129,7 +128,7 @@ public:
 	/*! evaluate gravity
 	 \return     gravity vector
 	 */
-	const FieldVector<DT,n>& gravity() const
+	const FieldVector<Scalar,dimWorld>& gravity() const
 	{
 		return gravity_;
 	}
@@ -138,8 +137,8 @@ public:
 	/** @param law implementation of Material laws. Class TwoPhaseRelations or derived.
 	 *  @param cap flag to include capillary forces.
 	 */
-	FractionalFlowProblem(VC& variableobject, Fluid& wp, Fluid& nwp, Matrix2p<G, RT>& s, TwoPhaseRelations<G, RT>& law = *(new TwoPhaseRelations<G,RT>), const bool cap = false)
-	: variables(variableobject), wettingphase(wp), nonwettingphase(nwp), soil(s), capillary(cap), materialLaw(law),gravity_(0)
+	FractionalFlowProblem(VC& variables, Fluid& wp, Fluid& nwp, Matrix2p<Grid, Scalar>& s, TwoPhaseRelations<Grid, Scalar>& law = *(new TwoPhaseRelations<Grid,Scalar>), const bool capillarity = false)
+	: variables(variables), wettingphase(wp), nonwettingphase(nwp), soil(s), capillarity(capillarity), materialLaw(law),gravity_(0)
 	{}
 
 	//! always define virtual destructor in abstract base class
@@ -150,10 +149,11 @@ public:
 	VC& variables;
 	Fluid& wettingphase;
 	Fluid& nonwettingphase;
-	Matrix2p<G, RT>& soil;
-	const bool capillary;
-	TwoPhaseRelations<G, RT>& materialLaw;
-	FieldVector<DT,n> gravity_;
+	Matrix2p<Grid, Scalar>& soil;
+	const bool capillarity;
+	TwoPhaseRelations<Grid, Scalar>& materialLaw;
+private:
+	FieldVector<Scalar,dimWorld> gravity_;
 
 };
 
