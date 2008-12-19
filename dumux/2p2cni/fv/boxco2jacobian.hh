@@ -720,6 +720,7 @@ namespace Dune
    		 varData[i].density[wPhase] = problem.wettingPhase().density(varData[i].temperature, varData[i].pW, varData[i].massfrac[co2][wPhase]);
    		 varData[i].density[nPhase] = problem.nonwettingPhase().density(varData[i].temperature, varData[i].pN);
    		 varData[i].mobility[wPhase] = problem.materialLaw().mobW(varData[i].satW, this->fvGeom.subContVol[i].global, e, this->fvGeom.subContVol[i].local, varData[i].temperature, varData[i].pW);
+                 varData[i].mobility[nPhase] = problem.materialLaw().mobN(varData[i].satN, this->fvGeom.subContVol[i].global, e, this->fvGeom.subContVol[i].local, varData[i].temperature, varData[i].pN);
    		 varData[i].lambda = problem.soil().heatCond(this->fvGeom.subContVol[i].global, e, this->fvGeom.subContVol[i].local, varData[i].satW);
          varData[i].enthalpy[wPhase] = problem.wettingPhase().enthalpy(varData[i].temperature,varData[i].pW);
          varData[i].enthalpy[nPhase] = problem.nonwettingPhase().enthalpy(varData[i].temperature,varData[i].pN);
@@ -727,10 +728,7 @@ namespace Dune
          varData[i].intenergy[nPhase] = problem.nonwettingPhase().intEnergy(varData[i].temperature,varData[i].pN);
          varData[i].diff[wPhase] = problem.wettingPhase().diffCoeff();
          varData[i].diff[nPhase] = problem.nonwettingPhase().diffCoeff();
-         // calculate mobility of CO2
-         varData[i].viscosityCO2 = problem.nonwettingPhase().viscosity(varData[i].temperature, varData[i].pN);
-         varData[i].krCO2 = problem.materialLaw().krn(varData[i].satN, this->fvGeom.subContVol[i].global, e, this->fvGeom.subContVol[i].local);
-   		 varData[i].mobility[nPhase] = varData[i].krCO2/varData[i].viscosityCO2;
+
          // CONSTANT solubility (for comparison with twophase)
 //         varData[i].massfrac[co2][wPhase] = 0.0; varData[i].massfrac[water][wPhase] = 1.0;
 //         varData[i].massfrac[water][nPhase] = 0.0; varData[i].massfrac[co2][nPhase] = 1.0;
