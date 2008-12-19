@@ -206,6 +206,7 @@ namespace Dune {
 			  if (k%(modulo*2) == 0)
 			  {
 				  ++restartNum;
+				  std::cout << ">>> writing restart-file number " << restartNum << " at time : " << t << std::endl;
 				  model.writerestartfile(restartNum);
 			  }
 		  }
