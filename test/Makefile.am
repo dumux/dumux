@@ -15,6 +15,7 @@ SUBDIRS = . \
 	  gravity \
 	  hysteresis \
 	  minc \
+	  mixed \
 	  newton \
 	  parallel \
 	  pardiso \
