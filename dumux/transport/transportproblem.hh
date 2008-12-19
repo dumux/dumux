@@ -40,45 +40,44 @@ namespace Dune
    *	- Grid  a DUNE grid type
    *	- RT    type used for return values
    */
-  template<class G, class RT, class VC>
+  template<class Grid, class Scalar, class VC>
   class TransportProblem {
-	typedef typename G::ctype DT;
-	enum {n=G::dimension, m=1, blocksize=2*G::dimension};
-	typedef typename G::Traits::template Codim<0>::Entity Entity;
+	enum {dim=Grid::dimension, dimWorld=Grid::dimensionworld, numEq=1, blocksize=2*Grid::dimension};
+
+	typedef typename Grid::Traits::template Codim<0>::Entity Element;
+	typedef Dune::FieldVector<Scalar,dim> LocalPosition;
+	typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
 
   public:
 	//! return type of boundary condition at the given global coordinate
 	/*! return type of boundary condition at the given global coordinate
-	  @param[in]  x    position in global coordinates
+	  @param[in]  globalPos    position in global coordinates
 	  \return     boundary condition type given by enum in this class
 	 */
-	virtual BoundaryConditions::Flags bctype (const FieldVector<DT,n>& x, const Entity& e,
-					   const FieldVector<DT,n>& xi) const = 0;
+	virtual BoundaryConditions::Flags bctype (const GlobalPosition& globalPos, const Element& e,
+					   const LocalPosition& localPos) const = 0;
 
 	//! evaluate Dirichlet boundary condition at given position
 	/*! evaluate Dirichlet boundary condition at given position
-	  @param[in]  x    position in global coordinates
+	  @param[in]  globalPos    position in global coordinates
 	  \return     boundary condition value
 	 */
-	virtual RT g (const FieldVector<DT,n>& x, const Entity& e,
-				  const FieldVector<DT,n>& xi) const = 0;
+	virtual Scalar dirichlet (const GlobalPosition& globalPos, const Element& e,
+				  const LocalPosition& localPos) const = 0;
 
 	//! evaluate initial condition at given position
 	/*! evaluate initial boundary condition at given position
-	  @param[in]  x    position in global coordinates
+	  @param[in]  globalPos    position in global coordinates
 	  \return    initial condition value
 	 */
-	virtual RT initSat (const FieldVector<DT,n>& x, const Entity& e,
-				  const FieldVector<DT,n>& xi) const = 0;
+	virtual Scalar initSat (const GlobalPosition& globalPos, const Element& e,
+				  const LocalPosition& localPos) const = 0;
 
-	const FieldVector<DT,n>& gravity()
+	const FieldVector<Scalar,dim>& gravity()
 	{
-		FieldVector<DT,n> gravity_ = 0;
+		FieldVector<Scalar,dim> gravity_ = 0;
 		return gravity_;
 	}
-
-//	virtual const FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x, const Entity& e,
-//					const FieldVector<DT,n>& xi) = 0;
 
 	//! evaluate velocity
 	/*! Evaluate the velocity at the element faces
@@ -87,14 +86,7 @@ namespace Dune
 	  @param[out] vTotal         velocity vector to be filled
 	 */
 
-
-	//! Returns the porosity of the porous medium
-	virtual RT porosity () const
-	{
-		return 1.0;
-	}
-
-	virtual BlockVector<FieldVector<RT, 2> >& getuEx()
+	virtual BlockVector<FieldVector<Scalar, 2> >& getuEx()
 	{
 		DUNE_THROW(NotImplemented, "Ex(akt) Solution");
 		return uE;
@@ -117,18 +109,18 @@ namespace Dune
 	 *  @param cap flag for including capillary forces.
 	 */
 
-	TransportProblem(VC& variableobject, TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false, const bool exsol = false)
-	: variables(variableobject), capillary(cap), materialLaw(law),exsolution(exsol), uE(0)
+	TransportProblem(VC& variables, TwoPhaseRelations& materialLaw = *(new LinearLaw), const bool capillarity = false, const bool exsol = false)
+	: variables(variables), capillarity(capillarity), materialLaw(materialLaw),exsolution(exsol), uE(0)
 	{	}
 
 	//! always define virtual destructor in abstract base class
 	virtual ~TransportProblem () {}
 
 	VC& variables;
-	const bool capillary;
+	const bool capillarity;
 	TwoPhaseRelations& materialLaw;
 	const bool exsolution;
-	BlockVector<FieldVector<RT, 2> > uE;
+	BlockVector<FieldVector<Scalar, 2> > uE;
   };
 
 }

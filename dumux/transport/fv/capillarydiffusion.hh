@@ -18,109 +18,114 @@ namespace Dune
   /*!\ingroup diffPart
    * @brief  Base class for defining the diffusive part of an advection-diffusion equation
    */
-  template<class G, class RT, class VC>
-  class CapillaryDiffusion : public DiffusivePart<G,RT>
+  template<class Grid, class Scalar, class VC>
+  class CapillaryDiffusion : public DiffusivePart<Grid,Scalar>
   {
-    enum{dim = G::dimension};
-    typedef typename G::Traits::template Codim<0>::Entity Entity;
-    typedef typename G::template Codim<0>::EntityPointer EntityPointer;
-    typedef typename IntersectionIteratorGetter<G,LevelTag>::IntersectionIterator IntersectionIterator;
-    typedef Dune::FieldVector<RT, dim> FieldVector;
-    typedef BlockVector< Dune::FieldVector<RT,1> > SatType;
+    enum{dim = Grid::dimension,dimWorld = Grid::dimensionworld};
+    typedef typename Grid::Traits::template Codim<0>::Entity Element;
+    typedef typename Grid::template Codim<0>::EntityPointer ElementPointer;
+    typedef typename Grid::LevelGridView GridView;
+    typedef typename GridView::IntersectionIterator IntersectionIterator;
+    typedef Dune::FieldVector<Scalar, dim> FieldVector;
+    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
+
+    typedef VC::ScalarVectorType SatType;
 
   public:
-    virtual FieldVector operator() (const Entity& entity, const int numberInSelf,
-				    const RT satIntersection, const FieldVector& satGradient, const RT time,
-				    const RT satI, const RT satJ) const
+    virtual FieldVector operator() (const Element& element, const int numberInSelf,
+				    const Scalar satIntersection, const FieldVector& satGradient, const Scalar time,
+				    const Scalar satI, const Scalar satJ) const
     {
       // cell geometry type
-      GeometryType gt = entity.geometry().type();
+      GeometryType gt = element.geometry().type();
 
       // cell center in reference element
-      const FieldVector& local = ReferenceElements<RT,dim>::general(gt).position(0,0);
+      const LocalPosition& localPos = ReferenceElements<Scalar,dim>::general(gt).position(0,0);
 
       // get global coordinate of cell center
-      FieldVector global = entity.geometry().global(local);
+      const GlobalPosition& globalPos = element.geometry().global(localPos);
 
       // get absolute permeability of cell
-      FieldMatrix<RT,dim,dim> K(problem.K(global,entity,local));
+      FieldMatrix K(problem_.K(globalPos,element,localPos));
 
-      IntersectionIterator endis = entity.ilevelend();
-      IntersectionIterator is = entity.ilevelbegin();
-      for (; is != endis; ++is)
+      IntersectionIterator isItEnd = element.ilevelend();
+      IntersectionIterator isIt = element.ilevelbegin();
+      for (; isIt != isItEnd; ++isIt)
 	{
 	  if(is->numberInSelf() == numberInSelf)
 	    break;
 	}
 
       // get geometry type of face
-      GeometryType gtf = is->intersectionSelfLocal().type();
+      GeometryType faceGT = isIt->intersectionSelfLocal().type();
 
       // center in face's reference element
-      const Dune::FieldVector<RT,dim-1>& facelocal = ReferenceElements<RT,dim-1>::general(gtf).position(0,0);
+      const Dune::FieldVector<Scalar,dim-1>& faceLocal = ReferenceElements<Scalar,dim-1>::general(faceGT).position(0,0);
 
-      FieldVector unitOuterNormal = is->unitOuterNormal(facelocal);
+      FieldVector unitOuterNormal = isIt->unitOuterNormal(faceLocal);
       //std::cout<<"unitOuterNormaldiff"<<unitOuterNormal<<std::endl;
 
-      if (is->neighbor()) {
+      if (isIt->neighbor()) {
 	// access neighbor
-	EntityPointer outside = is->outside();
+	ElementPointer neighborPointer = isIt->outside();
 
 	// compute factor in neighbor
-	GeometryType nbgt = outside->geometry().type();
-	const FieldVector& nblocal = ReferenceElements<RT,dim>::general(nbgt).position(0,0);
+	GeometryType neighborGT = neighborPointer->geometry().type();
+	const LocalPosition& local = ReferenceElements<Scalar,dim>::general(neighborGT).position(0,0);
 
 	// neighbor cell center in global coordinates
-	FieldVector nbglobal = outside->geometry().global(nblocal);
+	const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().global(localPosNeighbor);
 
 	// take arithmetic average of absolute permeability
-	K += problem.K(nbglobal, *outside, nblocal);
+	K += problem_.K(globalPosNeighbor, *neighborPointer, localPosNeighbor);
 	K *= 0.5;
       }
 
       // set result to grad(S)
-      FieldVector helpresult(satGradient);
+      FieldVector helpResult(satGradient);
 
       //get capillary pressure gradients
-      double dPdSI=constRel.dPdS(satI);
-      double dPdSJ=constRel.dPdS(satJ);
+      Scalar dPdSI=constRel_.dPdS(satI);
+      Scalar dPdSJ=constRel_.dPdS(satJ);
 
       // set result to (dp_c/dS)*grad(S)
-      helpresult *= (dPdSI+dPdSJ)*0.5;
+      helpResult *= (dPdSI+dPdSJ)*0.5;
 
 
       // add gravitational effects (rho_w - rho_n)*g
-      helpresult += gravity;
+      helpResult += gravity;
 
       // set result to K*((dp_c/dS)*grad(S) + (rho_w - rho_n)*g)
       FieldVector result(0);
-      K.umv(helpresult, result);
+      K.umv(helpResult, result);
 
       //get lambda_bar = lambda_n*f_w
-      double mobbarI=constRel.mobN(1-satI)*constRel.fractionalW(satI);
-      double mobbarJ=constRel.mobN(1-satJ)*constRel.fractionalW(satJ);
+      Scalar mobBarI=constRel_.mobN(1-satI)*constRel.fractionalW(satI);
+      Scalar mobBarJ=constRel_.mobN(1-satJ)*constRel.fractionalW(satJ);
 
       // set result to f_w*lambda_n*K*((dp_c/dS)*grad(S) + (rho_w - rho_n)*g)
-      result *= (mobbarI+mobbarJ)*0.5;
+      result *= (mobBarI+mobBarJ)*0.5;
 
       return result;
     }
 
-    CapillaryDiffusion (DiffusionProblem<G, RT, VC>& prob)
-      : problem(prob), constRel(problem.materialLaw), wettingPhase(constRel.wettingPhase),
-	nonwettingPhase(constRel.nonwettingPhase)
+    CapillaryDiffusion (DiffusionProblem<Grid, Scalar, VC>& problem)
+      : problem_(problem), constRel_(problem.materialLaw), wettingPhase_(constRel_.wettingPhase),
+	nonwettingPhase_(constRel_.nonwettingPhase)
     {
-      double rhoDiff = wettingPhase.density() - nonwettingPhase.density();
-      gravity = problem.gravity();
-      gravity *= rhoDiff;
+      Scalar rhoDiff = wettingPhase_.density() - nonwettingPhase_.density();
+      gravity_ = problem_.gravity();
+      gravity_ *= rhoDiff;
     }
 
   private:
-    DiffusionProblem<G, RT, VC>& problem;
-    TwoPhaseRelations& constRel;
-    const Medium& wettingPhase;
-    const Medium& nonwettingPhase;
-    FieldVector gravity;
+    DiffusionProblem<Grid, Scalar, VC>& problem_;
+    TwoPhaseRelations& constRel_;
+    const Medium& wettingPhase_;
+    const Medium& nonwettingPhase_;
+    FieldVector gravity_;
   };
 }
 

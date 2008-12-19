@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_DIFFUSIVEPART_HH
 #define DUNE_DIFFUSIVEPART_HH
@@ -13,27 +13,27 @@
 namespace Dune
 {
 	/*!\ingroup diffPart
-	 * @brief  Base class for defining the diffusive part of an advection-diffusion equation 
+	 * @brief  Base class for defining the diffusive part of an advection-diffusion equation
 	 */
-	template<class G, class RT>
-	class DiffusivePart 
+	template<class Grid, class Scalar>
+	class DiffusivePart
 	{
 	private:
-		enum{dim = G::dimension};	
-		typedef typename G::Traits::template Codim<0>::Entity Entity;
-		typedef Dune::FieldVector<RT, dim> FieldVector;
-		
+		enum{dim = Grid::dimension};
+		typedef typename Grid::Traits::template Codim<0>::Entity Element;
+		typedef Dune::FieldVector<Scalar, dim> FieldVector;
+
 	public:
-		virtual FieldVector operator() (const Entity& entity, const int numberInSelf, 
-						const RT satIntersection, const FieldVector& satGradient, const RT time) const
+		virtual FieldVector operator() (const Element& element, const int numberInSelf,
+						const Scalar satIntersection, const FieldVector& satGradient, const Scalar time) const
 		{
 			FieldVector trivial(0);
 			return trivial;
 		}
 
-		virtual FieldVector operator() (const Entity& entity, const int numberInSelf, 
-						const RT satIntersection, const FieldVector& satGradient, const RT time, 
-						RT satI, RT satJ) const
+		virtual FieldVector operator() (const Element& element, const int numberInSelf,
+						const Scalar satIntersection, const FieldVector& satGradient, const Scalar time,
+						Scalar satI, Scalar satJ) const
 		{
 			FieldVector trivial(0);
 			return trivial;

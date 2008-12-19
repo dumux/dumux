@@ -28,9 +28,9 @@ public:
 	{
 		double result(0);
 
-		int size = problem.soil.getDispersionSat().M();
-
 		int index = problem.variables.transmapper.map(entity);
+
+		colNum = data[index].size();
 
 		// element geometry
 		const Geometry& geometry = entity.geometry();
@@ -41,10 +41,6 @@ public:
 
 		// get global coordinate of cell center
 		const FieldVector<ct,dim> global = geometry.global(local);
-
-		FieldVector<double,dim*2> fluxVector(0);
-
-		VectorType unitOuterNormal(0);
 
 		IntersectionIterator endis = entity.ilevelend();
 		IntersectionIterator is = entity.ilevelbegin();
@@ -59,12 +55,10 @@ public:
 			// center of face in global coordinates
 			Dune::FieldVector<ct,dim> faceGlobalCheck = is->intersectionGlobal().global(faceLocal);
 
-			unitOuterNormal = is->unitOuterNormal(faceLocal);
-
 			if (faceGlobal == faceGlobalCheck )
 			{
 				int faceNumber = is->numberInSelf();
-				for (int i=0;i<size;i++)
+				for (int i=0;i<colNum;i++)
 				{
 					if (satI == problem.soil.Sr_w(global, entity, local))
 					{
@@ -88,8 +82,6 @@ public:
 						else
 						{
 							result += problem.soil.getM()[index][i-1][faceNumber];
-							//						std::cout<<"D = "<<problem.soil.getDispersionInterface()[indexI][i-1][numberInSelf]<<std::endl;
-							//						std::cout<<"sat = "<<sat<<"satD = "<<problem.soil.getDispersionSatInterface()[indexI][i][numberInSelf]<<std::endl;
 						}
 						break;
 					}
@@ -101,13 +93,8 @@ public:
 				}
 			}
 		}
-		double direction = 0;
-		for (int i=0;i<dim;i++)
-		{
-			direction += unitOuterNormal[i];
-		}
 
-		return result;//*direction;
+		return result;
 
 	}
 

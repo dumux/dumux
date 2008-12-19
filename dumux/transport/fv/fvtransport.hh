@@ -13,34 +13,45 @@
 #include "dumux/transport/fv/numericalflux.hh"
 #include "dumux/transport/fv/diffusivepart.hh"
 
-namespace Dune {
+namespace Dune
+{
 //! \ingroup transport
 //! The finite volume model for the solution of the transport equation
-template<class G, class RT, class VC> class FVTransport :
-	public Transport< G, RT, VC> {
-	template<int dim> struct ElementLayout {
-		bool contains(Dune::GeometryType gt) {
+template<class Grid, class Scalar, class VC> class FVTransport: public Transport<
+		Grid, Scalar, VC>
+{
+	template<int dim> struct ElementLayout
+	{
+		bool contains(Dune::GeometryType gt)
+		{
 			return gt.dim() == dim;
 		}
 	};
 
-	enum {dim = G::dimension};
-	enum {dimworld = G::dimensionworld};
-	typedef BlockVector< Dune::FieldVector<RT,1> > PressType;
-	typedef BlockVector< FieldVector<FieldVector<RT, G::dimension>, 2*G::dimension> >
-			VelType;
-	typedef typename G::Traits::template Codim<0>::Entity Entity;
-	typedef typename G::LevelGridView GV;
-    typedef typename GV::IndexSet IS;
-	typedef typename GV::template Codim<0>::Iterator Iterator;
-	typedef Dune::MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout> EM;
-	typedef typename G::template Codim<0>::EntityPointer EntityPointer;
-	typedef typename IntersectionIteratorGetter<G,LevelTag>::IntersectionIterator IntersectionIterator;
-	typedef typename G::ctype ct;
-	typedef BlockVector< Dune::FieldVector<RT,dim> > SlopeType;
+	enum
+	{
+		dim = Grid::dimension
+	};
+	enum
+	{
+		dimWorld = Grid::dimensionworld
+	};
+typedef	typename VC::ScalarVectorType PressType;
+	typedef typename VC::VelType VelType;
+	typedef typename Grid::Traits::template Codim<0>::Entity Element;
+	typedef typename Grid::LevelGridView GridView;
+	typedef typename GridView::IndexSet IndexSet;
+	typedef typename GridView::template Codim<0>::Iterator ElementIterator;
+	typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,IndexSet,ElementLayout> ElementMapper;
+	typedef typename Grid::template Codim<0>::EntityPointer ElementPointer;
+	typedef typename GridView::IntersectionIterator IntersectionIterator;
+	typedef BlockVector< Dune::FieldVector<Scalar,dim> > SlopeType;
+
+	typedef Dune::FieldVector<Scalar,dim> LocalPosition;
+	typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
 
 public:
-	typedef BlockVector< Dune::FieldVector<RT,1> > RepresentationType;
+	typedef typename VC::ScalarVectorType RepresentationType;
 	/*!
 	 *  \param t time
 	 *  \param dt time step size to estimate
@@ -63,10 +74,9 @@ public:
 	 *  Additionally to the \a update vector, the recommended time step size \a dt is calculated
 	 *  employing the usual CFL condition.
 	 */
-	int update(const RT t, RT& dt, RepresentationType& updateVec, RT& cFLFac);
+	int update(const Scalar t, Scalar& dt, RepresentationType& updateVec, Scalar& cFLFac);
 
 	void initialTransport();
-
 
 	/*! @brief constructor
 	 *
@@ -78,421 +88,416 @@ public:
 	 * @param amax alphamax parameter for slope limiter in TVD
 	 * @param numFl an object of class Numerical Flux or derived
 	 */
-	FVTransport(G& g, FractionalFlowProblem<G, RT, VC>& prob, int lev = 0,
-			DiffusivePart<G,RT>& diffPart = *(new DiffusivePart<G, RT>), bool rec = false,
-			double amax = 0.8, const NumericalFlux<RT>& numFl = *(new Upwind<RT>)) :
-		Transport<G, RT, VC>(g, prob, lev),
-				elementmapper(g, g.levelIndexSet(lev)), gridview(g.levelView(lev)),
-				indexset(gridview.indexSet()), reconstruct(rec),
-				numFlux(numFl), diffusivePart(diffPart), alphamax(amax)
-				{}
+	FVTransport(Grid& grid, FractionalFlowProblem<Grid, Scalar, VC>& problem, int level = 0,
+			DiffusivePart<Grid,Scalar>& diffPart = *(new DiffusivePart<Grid, Scalar>), bool rec = false,
+			Scalar aMax = 0.8, const NumericalFlux<Scalar>& numFl = *(new Upwind<Scalar>)) :
+	Transport<Grid, Scalar, VC>(grid, problem),
+	elementMapper_(grid, grid.levelIndexSet(level)),
+	reconstruct_(rec),numFlux_(numFl), diffusivePart_(diffPart), alphaMax_(aMax)
+	{}
 
 private:
 
-	void CalculateSlopes(SlopeType& slope, RT t, RT& cFLFactor);
+	void calculateSlopes(SlopeType& slope, Scalar t, Scalar& cFLFactor);
 
-private:
-	EM elementmapper;
-	const GV& gridview;
-	const IS& indexset;
-	bool reconstruct;
-	const NumericalFlux<RT>& numFlux;
-	const DiffusivePart<G, RT>& diffusivePart;
-	double alphamax;
+	ElementMapper elementMapper_;
+	bool reconstruct_;
+	const NumericalFlux<Scalar>& numFlux_;
+	const DiffusivePart<Grid, Scalar>& diffusivePart_;
+	Scalar alphaMax_;
 };
 
-template<class G, class RT, class VC> int FVTransport<G, RT, VC>::update(const RT t, RT& dt,
-		RepresentationType& updateVec, RT& cFLFac = 1) {
+template<class Grid, class Scalar, class VC> int FVTransport<Grid, Scalar, VC>::update(const Scalar t, Scalar& dt,
+		RepresentationType& updateVec, Scalar& cFLFac = 1)
+{
+	const GridView& gridView = this->grid.levelView(this->level());
 	// initialize dt very large
 	dt = 1E100;
-
-	// TODO: remove DEBUG--->
-	double maxAd = 0;
-	double maxDiff = 0;
-	// <---DEBUG
 
 	// set update vector to zero
 	updateVec = 0;
 
-	SlopeType slope(elementmapper.size());
-	CalculateSlopes(slope, t,cFLFac);
+	SlopeType slope(elementMapper_.size());
+	calculateSlopes(slope, t,cFLFac);
 
 	// compute update vector
-	Iterator eendit = this->grid.template lend<0>(this->level());
-	for (Iterator it = this->grid.template lbegin<0>(this->level()); it != eendit; ++it) {
+	ElementIterator eItEnd = gridView.template end<0>();
+	for (ElementIterator eIt = gridView.template begin<0>(); eIt != eItEnd; ++eIt)
+	{
 		// cell geometry type
-		Dune::GeometryType gt = it->geometry().type();
+		Dune::GeometryType gt = eIt->geometry().type();
 
 		// cell center in reference element
-		const Dune::FieldVector<ct,dim>
-				&local = Dune::ReferenceElements<ct,dim>::general(gt).position(0, 0);
+		const LocalPosition
+		&localPos = Dune::ReferenceElements<Scalar,dim>::general(gt).position(0, 0);
 
-		// yufei temmp
-		Dune::FieldVector<ct,dim> global = it->geometry().global(local);
+		//
+		GlobalPosition globalPos = eIt->geometry().global(localPos);
 
 		// cell volume, assume linear map here
-		double volume = it->geometry().integrationElement(local)
-				*Dune::ReferenceElements<ct,dim>::general(gt).volume();
+		Scalar volume = eIt->geometry().integrationElement(localPos)
+		*Dune::ReferenceElements<Scalar,dim>::general(gt).volume();
 
 		// cell index
-		int indexi = elementmapper.map(*it);
+		int globalIdxI = elementMapper_.map(*eIt);
 
 		// for time step calculation
-		double sumfactor = 0;
-		double sumfactor2 = 0;
-		double sumDiff = 0;
-		double sumDiff2 = 0;
+		Scalar sumFactor = 0;
+		Scalar sumFactor2 = 0;
+		Scalar sumDiff = 0;
+		Scalar sumDiff2 = 0;
 
 		// run through all intersections with neighbors and boundary
 		IntersectionIterator
-				endit = IntersectionIteratorGetter<G, LevelTag>::end(*it);
+		isItEnd = gridView.template iend(*eIt);
 		for (IntersectionIterator
-				is = IntersectionIteratorGetter<G, LevelTag>::begin(*it); is
-				!=endit; ++is) {
+				isIt = gridView.template ibegin(*eIt); isIt
+				!=isItEnd; ++isIt)
+		{
 			// local number of facet
-			int numberInSelf = is->numberInSelf();
+			int numberInSelf = isIt->numberInSelf();
 
 			// get geometry type of face
-			Dune::GeometryType gtf = is->intersectionSelfLocal().type();
+			Dune::GeometryType faceGT = isIt->intersectionSelfLocal().type();
 
 			// center in face's reference element
-			const Dune::FieldVector<ct,dim-1>&
-			facelocal = Dune::ReferenceElements<ct,dim-1>::general(gtf).position(0,0);
+			const Dune::FieldVector<Scalar,dim-1>&
+			faceLocal = Dune::ReferenceElements<Scalar,dim-1>::general(faceGT).position(0,0);
 
 			// center of face inside volume reference element
-			const Dune::FieldVector<ct,dim>&
-			facelocalDim = Dune::ReferenceElements<ct,dim>::general(gtf).position(is->numberInSelf(),1);
+			const LocalPosition&
+			localPosFace = Dune::ReferenceElements<Scalar,dim>::general(faceGT).position(isIt->numberInSelf(),1);
 
 			// get normal vector scaled with volume
-			Dune::FieldVector<ct,dimworld> integrationOuterNormal
-			= is->integrationOuterNormal(facelocal);
+			Dune::FieldVector<Scalar,dimWorld> integrationOuterNormal
+			= isIt->integrationOuterNormal(faceLocal);
 			integrationOuterNormal
-			*= Dune::ReferenceElements<ct,dim-1>::general(gtf).volume();
+			*= Dune::ReferenceElements<Scalar,dim-1>::general(faceGT).volume();
 
 			// compute factor occuring in flux formula
-			double velocityIJ = std::max(this->transproblem.variables.vTotal(*it, numberInSelf)*integrationOuterNormal/(volume), 0.0);
+			Scalar velocityIJ = std::max(this->transProblem.variables.vTotal(*eIt, numberInSelf)*integrationOuterNormal/(volume), 0.0);
 
-			double factor = 0, diffFactor = 0, totfactor = 0;//, volumecorrectionfactor;
+			Scalar factor = 0, diffFactor = 0, totFactor = 0;
 
 			// handle interior face
-			if (is->neighbor())
+			if (isIt->neighbor())
 			{
 				// access neighbor
-				EntityPointer outside = is->outside();
-				int indexj = elementmapper.map(*outside);
+				ElementPointer neighborPointer = isIt->outside();
+				int globalIdxJ = elementMapper_.map(*neighborPointer);
 
 				// compute flux from one side only
 				// this should become easier with the new IntersectionIterator functionality!
-				if ( it->level()>=outside->level() )
+				if ( eIt->level()>=neighborPointer->level() )
 				{
 					// compute factor in neighbor
-					Dune::GeometryType nbgt = outside->geometry().type();
-					const Dune::FieldVector<ct,dim>&
-					nblocal = Dune::ReferenceElements<ct,dim>::general(nbgt).position(0,0);
+					Dune::GeometryType neighborGT = neighborPointer->geometry().type();
+					const LocalPosition&
+					localPosNeighbor = Dune::ReferenceElements<Scalar,dim>::general(neighborGT).position(0,0);
 
-					double velocityJI = std::max(-(this->transproblem.variables.vTotal(*it, numberInSelf)*integrationOuterNormal/volume), 0.0);
+					Scalar velocityJI = std::max(-(this->transProblem.variables.vTotal(*eIt, numberInSelf)*integrationOuterNormal/volume), 0.0);
 
 					// cell center in global coordinates
-					Dune::FieldVector<ct,dimworld> global = it->geometry().global(local);
+					const GlobalPosition& globalPos = eIt->geometry().global(localPos);
 
 					// neighbor cell center in global coordinates
-					Dune::FieldVector<ct,dimworld> nbglobal = outside->geometry().global(nblocal);
+					const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().global(localPosNeighbor);
 
 					// distance vector between barycenters
-					Dune::FieldVector<ct,dimworld> distVec = global - nbglobal;
+					Dune::FieldVector<Scalar,dimWorld> distVec = globalPos - globalPosNeighbor;
 
 					// compute distance between cell centers
-					double dist = distVec.two_norm();
+					Scalar dist = distVec.two_norm();
 
 					// get saturation value at cell center
-					double satI = this->transproblem.variables.saturation[indexi];
+					Scalar satI = this->transProblem.variables.saturation[globalIdxI];
 
 					// get saturation value at neighbor cell center
-					double satJ = this->transproblem.variables.saturation[indexj];
+					Scalar satJ = this->transProblem.variables.saturation[globalIdxJ];
 
 					// calculate the saturation gradient
-					Dune::FieldVector<ct,dim> satGradient = distVec;
+					Dune::FieldVector<Scalar,dim> satGradient = distVec;
 					satGradient *= (satJ - satI)/(dist*dist);
 
 					// the arithmetic average
-					double satAvg = 0.5*(satI + satJ);
+					Scalar satAvg = 0.5*(satI + satJ);
 
 					// get the diffusive part
-					double diffPart = this->diffusivePart(*it, numberInSelf, satAvg, satGradient, t, satI, satJ)*integrationOuterNormal;
+					Scalar diffPart = diffusivePart_(*eIt, numberInSelf, satAvg, satGradient, t, satI, satJ)*integrationOuterNormal;
 
 					// CAREFUL: works only for axisymmetric grids
-					if (reconstruct) {
+					if (reconstruct_)
+					{
 						for (int k = 0; k < dim; k++)
-						if (fabs(distVec[k]) > 0.5*dist)
+						if (fabs(distVec[k])> 0.5*dist)
 						{
-							satI -= fabs(distVec[k])/distVec[k]*0.5*dist*slope[indexi][k];
-							satJ += fabs(distVec[k])/distVec[k]*0.5*dist*slope[indexj][k];
+							satI -= fabs(distVec[k])/distVec[k]*0.5*dist*slope[globalIdxI][k];
+							satJ += fabs(distVec[k])/distVec[k]*0.5*dist*slope[globalIdxJ][k];
 						}
 					}
 
-					double fI = this->transproblem.materialLaw.fractionalW(satI, global, *it,local);
-					double fJ = this->transproblem.materialLaw.fractionalW(satJ, nbglobal, *outside, nblocal);
+					Scalar fI = this->transProblem.materialLaw.fractionalW(satI, globalPos, *eIt,localPos);
+					Scalar fJ = this->transProblem.materialLaw.fractionalW(satJ, globalPosNeighbor, *neighborPointer, localPosNeighbor);
 
 					diffFactor = diffPart / volume;
 					factor = diffFactor
-					+ velocityJI*numFlux(satJ, satI, fJ, fI)
-					- velocityIJ*numFlux(satI, satJ, fI, fJ);
-					factor/= this->transproblem.soil.porosity(global, *it,local);
-					totfactor = velocityJI - velocityIJ;
-					totfactor *= (fI-fJ)/(satI-satJ);
-//					volumecorrectionfactor = (1-this->transproblem.materialLaw.soil.Sr_w(global, *it,local)-this->transproblem.materialLaw.soil.Sr_n(global, *it,local))*this->transproblem.porosity(global, *it,local);
+					+ velocityJI*numFlux_(satJ, satI, fJ, fI)
+					- velocityIJ*numFlux_(satI, satJ, fI, fJ);
+					factor/= this->transProblem.soil.porosity(globalPos, *eIt,localPos);
+					totFactor = velocityJI - velocityIJ;
+					totFactor *= (fI-fJ)/(satI-satJ);
 				}
 			}
 
 			// handle boundary face
-			if (is->boundary())
+			if (isIt->boundary())
 			{
 				// center of face in global coordinates
-				Dune::FieldVector<ct,dimworld> faceglobal = is->intersectionGlobal().global(facelocal);
+				GlobalPosition globalPosFace = isIt->intersectionGlobal().global(faceLocal);
 
 				//get boundary type
-				BoundaryConditions::Flags bctype = this->transproblem.bctypeSat(faceglobal, *it, facelocalDim);
+				BoundaryConditions::Flags bctype = this->transProblem.bctypeSat(globalPosFace, *eIt, localPosFace);
 
 				if (bctype == BoundaryConditions::dirichlet)
 				{
 					// get saturation value at cell center
-					double satI = this->transproblem.variables.saturation[indexi];
+					Scalar satI = this->transProblem.variables.saturation[globalIdxI];
 
-					double velocityJI = std::max(-(this->transproblem.variables.vTotal(*it, numberInSelf)*integrationOuterNormal/volume), 0.0);
+					Scalar velocityJI = std::max(-(this->transProblem.variables.vTotal(*eIt, numberInSelf)*integrationOuterNormal/volume), 0.0);
 
-					double satBound = this->transproblem.gSat(faceglobal, *it, facelocalDim);
+					Scalar satBound = this->transProblem.dirichletSat(globalPosFace, *eIt, localPosFace);
 
 					// cell center in global coordinates
-					Dune::FieldVector<ct,dimworld> global = it->geometry().global(local);
+					GlobalPosition globalPos = eIt->geometry().global(localPos);
 
 					// distance vector between barycenters
-					Dune::FieldVector<ct,dimworld> distVec = global - faceglobal;
+					Dune::FieldVector<Scalar,dimWorld> distVec = globalPos - globalPosFace;
 
 					// compute distance between cell centers
-					double dist = distVec.two_norm();
+					Scalar dist = distVec.two_norm();
 
 					// calculate the saturation gradient
-					Dune::FieldVector<ct,dim> satGradient = distVec;
+					Dune::FieldVector<Scalar,dim> satGradient = distVec;
 					satGradient *= (satBound - satI)/(dist*dist);
 
 					// the arithmetic average
-					double satAvg = 0.5*(satI + satBound);
+					Scalar satAvg = 0.5*(satI + satBound);
 
 					// get the diffusive part
-					double diffPart = this->diffusivePart(*it, numberInSelf, satAvg, satGradient, t, satI, satBound)*integrationOuterNormal;
+					Scalar diffPart = diffusivePart_(*eIt, numberInSelf, satAvg, satGradient, t, satI, satBound)*integrationOuterNormal;
 
 					// CAREFUL: works only for axisymmetric grids
-					if (reconstruct) {
+					if (reconstruct_)
+					{
 						for (int k = 0; k < dim; k++)
-						if (fabs(distVec[k]) > 0.5*dist)
+						if (fabs(distVec[k])> 0.5*dist)
 						{
 							//TODO remove DEBUG--->
-							//double gabagabahey = slope[indexi][k];
+							//Scalar gabagabahey = slope[globalIdxI][k];
 							//<---DEBUG
-							satI -= fabs(distVec[k])/distVec[k]*dist*slope[indexi][k];
+							satI -= fabs(distVec[k])/distVec[k]*dist*slope[globalIdxI][k];
 						}
 					}
 
-					double fI = this->transproblem.materialLaw.fractionalW(satI, global, *it,local);
-					double fBound = this->transproblem.materialLaw.fractionalW(satBound, faceglobal, *it, facelocalDim);
+					Scalar fI = this->transProblem.materialLaw.fractionalW(satI, globalPos, *eIt,localPos);
+					Scalar fBound = this->transProblem.materialLaw.fractionalW(satBound, globalPosFace, *eIt, localPosFace);
 					diffFactor = diffPart / volume;
 					factor = diffFactor
-					+ velocityJI*numFlux(satBound, satI, fBound, fI)
-					- velocityIJ*numFlux(satI, satBound, fI, fBound);
-					factor/= this->transproblem.soil.porosity(global, *it,local);
-					totfactor = velocityJI - velocityIJ;
-					totfactor *= (fI-fBound)/(satI-satBound);
-//					volumecorrectionfactor = (1-this->transproblem.materialLaw.soil.Sr_w(global, *it,local)-this->transproblem.materialLaw.soil.Sr_n(global, *it,local))*this->transproblem.porosity(global, *it,local);
+					+ velocityJI*numFlux_(satBound, satI, fBound, fI)
+					- velocityIJ*numFlux_(satI, satBound, fI, fBound);
+					factor/= this->transProblem.soil.porosity(globalPos, *eIt,localPos);
+					totFactor = velocityJI - velocityIJ;
+					totFactor *= (fI-fBound)/(satI-satBound);
 				}
 				else
 				{
-					//double J = this->transproblem.J(faceglobal, *it, facelocalDim);
-					//factor = J*faceVol;
-					factor = 0;
-					totfactor = 0;
+					double satI = this->transProblem.variables.saturation[globalIdxI];
+					double velocityJI = std::max(-(this->transProblem.variables.vTotal(*eIt, numberInSelf)*integrationOuterNormal/volume), 0.0);
+					double fI = this->transProblem.materialLaw.fractionalW(satI, globalPos, *eIt,localPos);
+					double helpFactor = (velocityJI*numFlux_(satI, satI, fI, fI)
+							-velocityIJ*numFlux_(satI, satI, fI, fI));
+					factor = this->transProblem.neumannSat(globalPosFace, *eIt, localPosFace, helpFactor);
+					totFactor = 0;
 				}
 			}
-//			volumecorrectionfactor = (1-this->transproblem.materialLaw.soil.Sr_w(global, *it,local)-this->transproblem.materialLaw.soil.Sr_n(global, *it,local))*this->transproblem.porosity(global, *it,local);
 			// add to update vector
-			updateVec[indexi] += factor;
+			updateVec[globalIdxI] += factor;
 
 			// for time step calculation
-			if (totfactor>=0)
-			sumfactor += totfactor;
+			if (totFactor>=0)
+			sumFactor += totFactor;
 			else
-			sumfactor2 += (-totfactor);
+			sumFactor2 += (-totFactor);
 			if (diffFactor>=0)
 			sumDiff += diffFactor;
 			else
 			sumDiff += (-diffFactor);
 		}
-		RT volumecorrectionfactor = (1-this->transproblem.soil.Sr_w(global, *it,local)-this->transproblem.soil.Sr_n(global, *it,local))*this->transproblem.soil.porosity(global, *it,local);
+		Scalar volumeCorrectionFactor = (1-this->transProblem.soil.Sr_w(globalPos, *eIt,localPos)-this->transProblem.soil.Sr_n(globalPos, *eIt,localPos))*this->transProblem.soil.porosity(globalPos, *eIt,localPos);
 		// end all intersections
 		// compute dt restriction
-		sumfactor = std::max(sumfactor, sumfactor2);
+		sumFactor = std::max(sumFactor, sumFactor2);
 		sumDiff = std::max(sumDiff, sumDiff2);
-		sumfactor = std::max(sumfactor, 10*sumDiff);
-		dt = std::min(dt, 1.0/sumfactor*volumecorrectionfactor);
-
-		// TODO: remove DEBUG--->
-		maxAd = std::max(maxAd, sumfactor);
-		maxDiff = std::max(maxDiff, sumDiff);
-		// <---DEBUG
+		sumFactor = std::max(sumFactor, 10*sumDiff);
+		dt = std::min(dt, 1.0/sumFactor*volumeCorrectionFactor);
 
 	} // end grid traversal
-
-	//Correct maximal available volume in the CFL-Criterium
-//	RT ResSaturationFactor = 1-this->transproblem.materialLaw.soil.Sr_w()-this->transproblem.materialLaw.soil.Sr_n();
-//	dt = dt*this->transproblem.porosity()*ResSaturationFactor;
-//	updateVec /= this->transproblem.porosity();
-
-	//TODO remove DEBUG--->
-	//std::cout<<"maxAd "<< maxAd << "\t maxDiff "<< maxDiff<<std::endl;
-	// <---DEBUG
 
 	return 0;
 }
 
-template<class G, class RT, class VC> void FVTransport<G, RT, VC>::initialTransport() {
-//	std::cout<<"initsat = "<<&this->transproblem.variables.saturation<<std::endl;
+template<class Grid, class Scalar, class VC> void FVTransport<Grid, Scalar, VC>::initialTransport()
+{
+	const GridView& gridView = this->grid.levelView(this->level());
 	// iterate through leaf grid an evaluate c0 at cell center
-	Iterator eendit = this->grid.template lend<0>(this->level());
-	for (Iterator it = this->grid.template lbegin<0>(this->level()); it != eendit; ++it) {
+	ElementIterator eItEnd = gridView.template end<0>();
+	for (ElementIterator eIt = gridView.template begin<0>(); eIt != eItEnd; ++eIt)
+	{
 		// get geometry type
-		Dune::GeometryType gt = it->geometry().type();
+		Dune::GeometryType gt = eIt->geometry().type();
 
 		// get cell center in reference element
-		const Dune::FieldVector<ct,dim>
-				&local = Dune::ReferenceElements<ct,dim>::general(gt).position(0, 0);
+		const LocalPosition
+		&localPos = Dune::ReferenceElements<Scalar,dim>::general(gt).position(0, 0);
 
 		// get global coordinate of cell center
-		Dune::FieldVector<ct,dimworld> global = it->geometry().global(local);
+		GlobalPosition globalPos = eIt->geometry().global(localPos);
 
 		// initialize cell concentration
-		this->transproblem.variables.saturation[elementmapper.map(*it)] = this->transproblem.initSat(global, *it, local);
+		this->transProblem.variables.saturation[elementMapper_.map(*eIt)] = this->transProblem.initSat(globalPos, *eIt, localPos);
 	}
 	return;
 }
 
-template<class G, class RT, class VC> void FVTransport<G, RT, VC>::CalculateSlopes(
-		SlopeType& slope, RT t, RT& cFLFactor) {
+template<class Grid, class Scalar, class VC> void FVTransport<Grid, Scalar, VC>::calculateSlopes(
+		SlopeType& slope, Scalar t, Scalar& cFLFactor)
+{
+	const GridView& gridView = this->grid.levelView(this->level());
+	Scalar stabilityFactor = 1.0 - cFLFactor*sqrt(cFLFactor);
 
-	double stabilityFactor = 1.0 - cFLFactor*sqrt(cFLFactor);
-
-	Iterator endit = this->grid.template lend<0>(this->level());
-	for (Iterator it = this->grid.template lbegin<0>(this->level()); it!=endit; ++it) {
+	ElementIterator eItEnd = gridView.template end<0>();
+	for (ElementIterator eIt = gridView.template begin<0>(); eIt!=eItEnd; ++eIt)
+	{
 		// get some cell properties
-		Dune::GeometryType gt = it->geometry().type();
-		const Dune::FieldVector<ct,dim>
-				&local = Dune::ReferenceElements<ct,dim>::general(gt).position(0, 0);
-		Dune::FieldVector<ct,dimworld> global = it->geometry().global(local);
-		int indexi = elementmapper.map(*it);
+		Dune::GeometryType gt = eIt->geometry().type();
+		const LocalPosition
+		&localPos = Dune::ReferenceElements<Scalar,dim>::general(gt).position(0, 0);
+		GlobalPosition globalPos = eIt->geometry().global(localPos);
+		int globalIdxI = elementMapper_.map(*eIt);
 
 		// vector containing the distances to the neighboring cells
-		Dune::FieldVector<double, 2*dim> dist;
+		Dune::FieldVector<Scalar, 2*dim> dist;
 
 		// vector containing the saturations of the neighboring cells
-		Dune::FieldVector<double, 2*dim> saturation;
+		Dune::FieldVector<Scalar, 2*dim> saturation;
 
 		// location[k], k = 0,...,2dim-1, contains the local index w.r.t. IntersectionIterator,
-		// i.e. the numberInSelf, which is east, west, north, south, top, bottom to the cell center
+		// i.e. the numberInSelf, which isIt east, west, north, south, top, bottom to the cell center
 		Dune::FieldVector<int, 2*dim> location;
 
 		// run through all intersections with neighbors and boundary
 		IntersectionIterator
-				isend = IntersectionIteratorGetter<G, LevelTag>::end(*it);
+		isItEnd = gridView.template iend(*eIt);
 		for (IntersectionIterator
-				is = IntersectionIteratorGetter<G, LevelTag>::begin(*it); is
-				!=isend; ++is) {
+				isIt = gridView.template ibegin(*eIt); isIt
+				!=isItEnd; ++isIt)
+		{
 			// local number of facet
-			int numberInSelf = is->numberInSelf();
+			int numberInSelf = isIt->numberInSelf();
 
 			// handle interior face
-			if (is->neighbor()) {
+			if (isIt->neighbor())
+			{
 				// access neighbor
-				EntityPointer outside = is->outside();
-				int indexj = elementmapper.map(*outside);
+				ElementPointer neighborPointer = isIt->outside();
+				int globalIdxJ = elementMapper_.map(*neighborPointer);
 
 				// get saturation value
-				saturation[numberInSelf] = this->transproblem.variables.saturation[indexj];
+				saturation[numberInSelf] = this->transProblem.variables.saturation[globalIdxJ];
 
 				// compute factor in neighbor
-				Dune::GeometryType nbgt = outside->geometry().type();
-				const Dune::FieldVector<ct,dim>
-						&nblocal = Dune::ReferenceElements<ct,dim>::general(nbgt).position(0, 0);
+				Dune::GeometryType neighborGT = neighborPointer->geometry().type();
+				const LocalPosition
+				&localPosNeighbor = Dune::ReferenceElements<Scalar,dim>::general(neighborGT).position(0, 0);
 
 				// neighboring cell center in global coordinates
-				Dune::FieldVector<ct,dimworld>nbglobal = outside->geometry().global(nblocal);
+				const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().global(localPosNeighbor);
 
 				// distance vector between barycenters
-				Dune::FieldVector<ct,dimworld> distVec = global - nbglobal;
+				Dune::FieldVector<Scalar,dimWorld> distVec = globalPos - globalPosNeighbor;
 
 				// compute distance between cell centers
 				dist[numberInSelf] = distVec.two_norm();
 
 				// CAREFUL: works only for axiparallel grids
 				for (int k = 0; k < dim; k++)
-					if (nbglobal[k] - global[k]> 0.5*dist[numberInSelf]) {
-						location[2*k] = numberInSelf;
-					} else if (nbglobal[k] - global[k]< -0.5*dist[numberInSelf]) {
-						location[2*k + 1] = numberInSelf;
-					}
+				if (globalPosNeighbor[k] - globalPos[k]> 0.5*dist[numberInSelf])
+				{
+					location[2*k] = numberInSelf;
+				}
+				else if (globalPosNeighbor[k] - globalPos[k]< -0.5*dist[numberInSelf])
+				{
+					location[2*k + 1] = numberInSelf;
+				}
 			}
 
 			// handle boundary face
-			if (is->boundary()) {
+			if (isIt->boundary())
+			{
 				// get geometry type of face
-				Dune::GeometryType gtf = is->intersectionSelfLocal().type();
+				Dune::GeometryType faceGT = isIt->intersectionSelfLocal().type();
 
 				// center in face's reference element
-				const Dune::FieldVector<ct,dim-1>&
-				facelocal = Dune::ReferenceElements<ct,dim-1>::general(gtf).position(0,0);
+				const Dune::FieldVector<Scalar,dim-1>&
+				faceLocal = Dune::ReferenceElements<Scalar,dim-1>::general(faceGT).position(0,0);
 
 				// center of face in global coordinates
-				Dune::FieldVector<ct,dimworld>
-				faceglobal = is->intersectionGlobal().global(facelocal);
+				const GlobalPosition&
+				globalPosFace = isIt->intersectionGlobal().global(faceLocal);
 
 				// get saturation value
-				saturation[numberInSelf] = this->transproblem.variables.saturation[indexi];//this->transproblem.g(faceglobal, *it, facelocalDim);
+				saturation[numberInSelf] = this->transProblem.variables.saturation[globalIdxI];
 
 				// distance vector between barycenters
-				Dune::FieldVector<ct,dimworld> distVec = global - faceglobal;
+				Dune::FieldVector<Scalar,dimWorld> distVec = globalPos - globalPosFace;
 
 				// compute distance
 				dist[numberInSelf] = distVec.two_norm();
 
 				// CAREFUL: works only for axiparallel grids
 				for (int k = 0; k < dim; k++)
-				if (faceglobal[k] - global[k] > 0.5*dist[numberInSelf])
+				if (globalPosFace[k] - globalPos[k]> 0.5*dist[numberInSelf])
 				{
 					location[2*k] = numberInSelf;
 				}
-				else if (faceglobal[k] - global[k] < -0.5*dist[numberInSelf])
+				else if (globalPosFace[k] - globalPos[k] < -0.5*dist[numberInSelf])
 				{
 					location[2*k + 1] = numberInSelf;
 				}
 			}
 		} // end all intersections
 
-		for (int k = 0; k < dim; k++) {
-			double slopeIK = (saturation[location[2*k]]
+		for (int k = 0; k < dim; k++)
+		{
+			Scalar slopeIK = (saturation[location[2*k]]
 					- saturation[location[2*k + 1]])/(dist[location[2*k]]
 					+ dist[location[2*k + 1]]);
 
-			double alphaIK = 1.0;
-			if (fabs(slopeIK) > 1e-8*dist[location[2*k]]) {
-				double satI = this->transproblem.variables.saturation[indexi];
-				double alphaRight = stabilityFactor*fabs(2.0
+			Scalar alphaIK = 1.0;
+			if (fabs(slopeIK)> 1e-8*dist[location[2*k]])
+			{
+				Scalar satI = this->transProblem.variables.saturation[globalIdxI];
+				Scalar alphaRight = stabilityFactor*fabs(2.0
 						/(dist[location[2*k]]*slopeIK)
 						*(saturation[location[2*k]] - satI));
-				double alphaLeft = stabilityFactor*fabs(2.0
+				Scalar alphaLeft = stabilityFactor*fabs(2.0
 						/(dist[location[2*k + 1]]*slopeIK)*(satI
-						- saturation[location[2*k + 1]]));
+								- saturation[location[2*k + 1]]));
 				alphaIK = std::min(std::min(std::max(alphaRight, 0.0),
-						std::max(alphaLeft, 0.0)), alphamax);
+								std::max(alphaLeft, 0.0)), alphaMax_);
 			}
 
-			slope[indexi][k] = alphaIK*slopeIK;
+			slope[globalIdxI][k] = alphaIK*slopeIK;
 
 		}
 	} // end grid traversal

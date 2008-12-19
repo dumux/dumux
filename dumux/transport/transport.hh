@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_TRANSPORT_HH
 #define DUNE_TRANSPORT_HH
@@ -30,12 +30,12 @@ namespace Dune
 	- VelType   type of the vector holding the velocity values
 
    */
-  template<class G, class RT, class VC>
+  template<class Grid, class Scalar, class VC>
   class Transport {
   public:
 
-	typedef BlockVector< Dune::FieldVector<RT,1> > RepresentationType;
-	FractionalFlowProblem<G, RT, VC>& transproblem; //!< problem data
+	typedef typename VC::ScalarVectorType RepresentationType;
+	FractionalFlowProblem<Grid, Scalar, VC>& transProblem; //!< problem data
 
 	//! \brief Calculate the update vector.
 	/*!
@@ -46,7 +46,7 @@ namespace Dune
 	 *  Calculate the update vector, i.e., the discretization
 	 *  of \f$\text{div}\, (f_\text{w}(S) \boldsymbol{v}_t)\f$.
 	 */
-	virtual int update(const RT t, RT& dt, RepresentationType& updateVec, RT& CLFFac) = 0;
+	virtual int update(const Scalar t, Scalar& dt, RepresentationType& updateVec, Scalar& CLFFac) = 0;
 
 	void initial()
 	{
@@ -60,17 +60,17 @@ namespace Dune
 	//! return const reference to saturation vector
 	virtual const RepresentationType& operator* () const
 	{
-	  return transproblem.variables.saturation;
+	  return transProblem.variables.saturation;
 	}
 
 	//! return reference to saturation vector
 	virtual RepresentationType& operator* ()
 	{
-	  return transproblem.variables.saturation;
+	  return transProblem.variables.saturation;
 	}
 
 	virtual void vtkout(const char* name, int k) const {
-		transproblem.variables.vtkout(name, k);
+		transProblem.variables.vtkout(name, k);
 		return;
 	}
 
@@ -81,32 +81,18 @@ namespace Dune
 	 *  @param g a DUNE grid object
 	 *  @param prob an object of class TransportProblem or derived
 	 */
-	Transport(const G& g, FractionalFlowProblem<G, RT, VC>& prob)
-	: grid(g), transproblem(prob), level_(g.maxLevel())
-	{ }
-
-	/*! @brief constructor
-	 *
-	 *  This constructor gives the additional possibility to specify a grid level on which
-	 *  the transport equation shall be solved. This especially important for multiscale methods.
-	 *  @param g a DUNE grid object
-	 *  @param prob an object of class TransportProblem or derived
-	 *  @param lev the grid level on which the Transport equation is to be solved.
-	 */
-	Transport(const G& g, FractionalFlowProblem<G, RT, VC>& prob, int lev)
-	: transproblem(prob), grid(g), level_(lev)
+	Transport(const Grid& grid, FractionalFlowProblem<Grid, Scalar, VC>& problem)
+	: grid(grid), transProblem(problem)
 	{ }
 
 	//! returns the level on which the transport eqution is solved.
-	int level() const
+	int& level() const
 	{
-		return level_;
+		return transProblem.variables.transLevel;
 	}
 
-	const G& grid;
+	const Grid& grid;
 
-  protected:
-	  const int level_;
   };
 
 }
