@@ -72,6 +72,8 @@ namespace Dune
 	typedef typename G::LeafGridView GV;
 
     enum{m = 3};
+    enum{wComp = 0, nComp = 1, temp = 2};
+    enum{gasPhase = 0, waterPhase = 1, bothPhases = 2};
 
 		typedef typename ThisLeafP1TwoPhaseModel::FunctionType::RepresentationType VectorType;
 		typedef typename ThisLeafP1TwoPhaseModel::OperatorAssembler::RepresentationType MatrixType;
@@ -298,51 +300,44 @@ namespace Dune
 			{
 				(*(this->u))[i][j]=data[i][j];
 			}
+
+			// first try sequential coupling, function for mass correction of two-phase state
+			// will be added
+			if(this->problem.sequentialCoupling() == true)
+			{
+				if((*(this->u))[i][nComp] <= 1e-10)
+				{
+					// initialize variable phaseState
+					this->localJacobian.sNDat[i].phaseState = waterPhase;
+					// initialize variable oldPhaseState
+					this->localJacobian.sNDat[i].oldPhaseState = waterPhase;
+					(*(this->u))[i][nComp] = 0.0;
+					this->localJacobian.sNDat[i].primVarSet = true;
+				}
+				else if((*(this->u))[i][nComp] >= 1-1e-10)
+				{
+					// initialize variable phaseState
+					this->localJacobian.sNDat[i].phaseState = gasPhase;
+					// initialize variable oldPhaseState
+					this->localJacobian.sNDat[i].oldPhaseState = gasPhase;
+					(*(this->u))[i][nComp] = 0.0;
+					this->localJacobian.sNDat[i].primVarSet = true;
+				}
+				else if(this->localJacobian.sNDat[i].primVarSet == false)
+				{
+					// initialize variable phaseState
+					this->localJacobian.sNDat[i].phaseState = bothPhases;
+					// initialize variable oldPhaseState
+					this->localJacobian.sNDat[i].oldPhaseState = bothPhases;
+				}
+			}
 		}
 
 		// iterate through leaf grid an evaluate c0 at cell center
 		Iterator eendit = gridview.template end<0>();
-		for (Iterator it = gridview.template begin<0>(); it
-				!= eendit; ++it) {
-			// get geometry type
-			Dune::GeometryType gt = it->geometry().type();
-
-			// get entity
-			const Entity& entity = *it;
-
-			this->localJacobian.fvGeom.update(entity);
-
-			const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type
-					&sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(gt,1);
-			int size = sfs.size();
-
-			for (int i = 0; i < size; i++) {
-				// get cell center in reference element
-				const Dune::FieldVector<DT,dim>&local = sfs[i].position();
-
-				// get global coordinate of cell center
-				Dune::FieldVector<DT,dimworld> global = it->geometry().global(local);
-
-				int globalId = this->vertexmapper.template map<dim>(entity,
-						sfs[i].entity());
-
-				// initialize cell concentration
-
-
-				// initialize variable phaseState
-				this->localJacobian.sNDat[globalId].phaseState =
-				data[globalId][m];
-				// initialize variable oldPhaseState
-				this->localJacobian.sNDat[globalId].oldPhaseState = data[globalId][m];
-
-			}
-				this->localJacobian.clearVisited();
-				this->localJacobian.initiateStaticData(entity);
-		}
 
 		// set Dirichlet boundary conditions
-		for (Iterator it = gridview.template begin<0>(); it
-				!= eendit; ++it) {
+		for (Iterator it = gridview.template begin<0>(); it	!= eendit; ++it) {
 			// get geometry type
 			Dune::GeometryType gt = it->geometry().type();
 
@@ -403,9 +398,11 @@ namespace Dune
 								}
 							}
 				}
-		this->localJacobian.setLocalSolution(entity);
-		for (int i = 0; i < size; i++)
-		this->localJacobian.updateVariableData(entity, this->localJacobian.u, i, false);
+			this->localJacobian.clearVisited();
+			this->localJacobian.initiateStaticData(entity);
+			this->localJacobian.setLocalSolution(entity);
+			for (int i = 0; i < size; i++)
+			this->localJacobian.updateVariableData(entity, this->localJacobian.u, i, false);
 
 		}
 
@@ -435,6 +432,7 @@ namespace Dune
 			this->localJacobian.setLocalSolution(entity);
 			this->localJacobian.computeElementData(entity);
 			this->localJacobian.updateStaticData(entity, this->localJacobian.u);
+			this->localJacobian.localToGlobal(entity);
 		}
 		return;
 	}
@@ -523,14 +521,14 @@ namespace Dune
 		double Flux(0), Mass(0);
 		Flux = this->computeFlux();
 		Mass = this->totalCO2Mass();
+        std::cout << Flux << ", "<< Mass<< "	# flux nPhase, total mass nPhase \n";
 
 		this->localJacobian.updatePhaseState(); // update variable oldPhaseState
-		this->localJacobian.clearVisited();
-		updateState();							// phase switch after each timestep
-                std::cout << Flux << ", "<< Mass;
+		// this->localJacobian.clearVisited();
+		// updateState();							// phase switch after each timestep
+
 
 		*(this->uOldTimeStep) = *(this->u);
-
 		// update old phase state for computation of ComputeM(..uold..)
 
 		return;
