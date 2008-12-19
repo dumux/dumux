@@ -182,6 +182,11 @@ public:
 		return;
 	}
 
+	virtual bool sequentialCoupling() const
+	{
+		return false;
+	}
+
 	TwoPTwoCNIProblem(Liquid_GL& liq, Gas_GL& gas, Matrix2p<G, RT>& soil,
 			MultiComp& multicomp = *(new CWaterAir),
 			TwoPhaseRelations<G,RT>& materialLaw = *(new TwoPhaseRelations<G,RT>),
