@@ -34,7 +34,8 @@ namespace Dune
   template<class Grid, class Scalar,class VC>
   class Diffusion {
   public:
-	FractionalFlowProblem<Grid, Scalar, VC>& diffproblem; //!< problem data
+	  typedef Scalar ScalarType;
+	FractionalFlowProblem<Grid, Scalar, VC>& diffProblem; //!< problem data
 
 	//! \brief Calculate the pressure.
 	/*!
@@ -72,29 +73,17 @@ namespace Dune
 	 * \param prob a problem class object derived from DiffusionProblem
 	*/
 	Diffusion(const Grid& grid, FractionalFlowProblem<Grid, Scalar, VC>& prob)
-	: grid(grid), diffproblem(prob), level_(grid.maxLevel())
+	: grid(grid), diffProblem(prob)
 	{
 	}
 
-	//! Constructor with possibility to specify a level for the diffusion class to work on.
-	/**
-	 * \param grid grid object of type Grid
-	 * \param prob a problem class object derived from DiffusionProblem
-	 * \param lev the grid level to work on
-	 */
-	Diffusion(const Grid& grid, FractionalFlowProblem<Grid, Scalar, VC>& prob, int lev)
-	: diffproblem(prob), grid(grid), level_(lev)
-	{
-	}
 
 	//! Returns the grid level on which the class works
-	int level() const
+	int& level() const
 	{
-		return level_;
+		return diffProblem.variables.diffLevel;
 	}
 	  const Grid& grid;
-  protected:
-	  const int level_;
   };
 
 }

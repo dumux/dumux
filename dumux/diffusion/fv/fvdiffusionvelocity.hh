@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_DIFFUSIONVELOCITYPROBLEM_HH
 #define DUNE_DIFFUSIONVELOCITYPROBLEM_HH
@@ -7,131 +7,135 @@
 
 namespace Dune {
 
-template<class G, class RT, class VC> class FVDiffusionVelocity :
-	public FVDiffusion<G, RT, VC> {
+template<class Grid, class Scalar, class VC> class FVDiffusionVelocity :
+	public FVDiffusion<Grid, Scalar, VC> {
 
-	typedef typename G::Traits::template Codim<0>::Entity Entity;
-	typedef typename G::ctype ct;
-	typedef typename G::LevelGridView GV;
-    typedef typename GV::IndexSet IS;
-	typedef typename GV::template Codim<0>::Iterator Iterator;
-	typedef typename IntersectionIteratorGetter<G,LevelTag>::IntersectionIterator
-			IntersectionIterator;
-	typedef typename G::template Codim<0>::EntityPointer EntityPointer;
+	typedef typename Grid::Traits::template Codim<0>::Entity Element;
+	typedef typename Grid::LevelGridView GridView;
+    typedef typename GridView::IndexSet IndexSet;
+	typedef typename GridView::template Codim<0>::Iterator ElementIterator;
+	typedef typename GridView::IntersectionIterator IntersectionIterator;
+	typedef typename Grid::template Codim<0>::EntityPointer ElementPointer;
 
-	enum {dim = G::dimension};
-	enum {dimworld = G::dimensionworld};
+	enum {dim = Grid::dimension};
+	enum {dimWorld = Grid::dimensionworld};
+
+	typedef Dune::FieldVector<Scalar,dim> LocalPosition;
+	typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
+	typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
+
 
 public:
-	FVDiffusionVelocity(G& g, FractionalFlowProblem<G, RT, VC>& prob, int lev = -1)
-	: FVDiffusion<G,RT,VC>(g, prob, lev)
+	FVDiffusionVelocity(Grid& grid, FractionalFlowProblem<Grid, Scalar, VC>& problem)
+	: FVDiffusion<Grid,Scalar,VC>(grid, problem)
 	{	}
 
 
-	void calcTotalVelocity(const RT t=0) const {
+	void calcTotalVelocity(const Scalar t=0) const {
+
+		const GridView& gridView = this->grid.levelView(this->level());
+
 		// find out whether gravity effects are relevant
 		bool hasGravity = false;
-		const FieldVector<ct,dim>& gravity(this->diffproblem.gravity());
+		const FieldVector<Scalar,dim>& gravity(this->diffProblem.gravity());
 		for (int k = 0; k < dim; k++)
 			if (gravity[k] != 0)
 				hasGravity = true;
 
-		Iterator eendit = this->diffproblem.variables.grid.template lend<0>(this->level());
-		for (Iterator it = this->diffproblem.variables.grid.template lbegin<0>(this->level()); it
-				!= eendit; ++it) {
+		ElementIterator eItEnd = gridView.template end<0>();
+		for (ElementIterator eIt = gridView.template begin<0>(); eIt != eItEnd; ++eIt) {
+
 			// cell geometry type
-			GeometryType gt = it->geometry().type();
+			GeometryType gt = eIt->geometry().type();
 
 			// cell center in reference element
-			const FieldVector<ct,dim>
-					&local = ReferenceElements<ct,dim>::general(gt).position(0, 0);
+			const LocalPosition& localPos = ReferenceElements<Scalar,dim>::general(gt).position(0, 0);
 
 			// cell center in global coordinates
-			const FieldVector<ct,dimworld>global = it->geometry().global(local);
+			const GlobalPosition& globalPos = eIt->geometry().global(localPos);
 
 			// cell index
-			int indexi = this->elementmapper.map(*it);
+			int globalIdxI = this->elementMapper.map(*eIt);
 
 			// get pressure and permeability in element
-			double pressi = this->diffproblem.variables.pressure[indexi];
+			double pressI = this->diffProblem.variables.pressure[globalIdxI];
 
 			// get absolute permeability
-			FieldMatrix<ct,dim,dim> Ki(this->diffproblem.soil.K(global, *it, local));
+			FieldMatrix Ki(this->diffProblem.soil.K(globalPos, *eIt, localPos));
 
 			//compute total mobility
 			double lambdaI, fractionalWI;
-			double sati = this->diffproblem.variables.saturation[indexi];
-			lambdaI = this->diffproblem.materialLaw.mobTotal(sati,global, *it, local);
+			double sati = this->diffProblem.variables.saturation[globalIdxI];
+			lambdaI = this->diffProblem.materialLaw.mobTotal(sati,globalPos, *eIt, localPos);
 			if (hasGravity)
-				fractionalWI = this->diffproblem.materialLaw.fractionalW(sati,global, *it, local);
+				fractionalWI = this->diffProblem.materialLaw.fractionalW(sati,globalPos, *eIt, localPos);
 
 			double faceVol[2*dim];
 
 			// run through all intersections with neighbors and boundary
-			IntersectionIterator endit = IntersectionIteratorGetter<G, LevelTag>::end(*it);
-			for (IntersectionIterator is = IntersectionIteratorGetter<G,
-					LevelTag>::begin(*it); is!=endit; ++is) {
+			IntersectionIterator isItEnd = gridView.template iend(*eIt);
+			for (IntersectionIterator isIt = gridView.template ibegin(*eIt); isIt!=isItEnd; ++isIt) {
 				// get geometry type of face
-				GeometryType gtf = is->intersectionSelfLocal().type();
+				GeometryType faceGT = isIt->intersectionSelfLocal().type();
 
-				//Geometry dg = is->intersectionSelfLocal();
+				//Geometry dg = isIt->intersectionSelfLocal();
 				// local number of facet
-				int numberInSelf = is->numberInSelf();
+				int numberInSelf = isIt->numberInSelf();
 
-				switch (G::dimension) {
+				switch (Grid::dimension) {
 							case 1:
 								faceVol[numberInSelf] = 1;
 							default:
-								faceVol[numberInSelf] = is->intersectionGlobal().volume();
+								faceVol[numberInSelf] = isIt->intersectionGlobal().volume();
 							}
 
 				// center in face's reference element
-				const FieldVector<ct,dim-1>&
-				facelocal = ReferenceElements<ct,dim-1>::general(gtf).position(0,0);
+				const FieldVector<Scalar,dim-1>&
+				faceLocal = ReferenceElements<Scalar,dim-1>::general(faceGT).position(0,0);
 
 				// center of face inside volume reference element
-				const FieldVector<ct,dim>&
-				facelocalDim = ReferenceElements<ct,dim>::general(gtf).position(numberInSelf,1);
+				const LocalPosition&
+				localPosFace = ReferenceElements<Scalar,dim>::general(faceGT).position(numberInSelf,1);
 
 				// get normal vector
-				FieldVector<ct,dimworld> unitOuterNormal
-				= is->unitOuterNormal(facelocal);
+				FieldVector<Scalar,dimWorld> unitOuterNormal
+				= isIt->unitOuterNormal(faceLocal);
 
-				// center of face in global coordinates
-				FieldVector<ct,dimworld>
-				faceglobal = is->intersectionGlobal().global(facelocal);
+				// center of face in globalPos coordinates
+				const GlobalPosition&
+				globalPosFace = isIt->intersectionGlobal().global(faceLocal);
 
 				// handle interior face
-				if (is->neighbor())
+				if (isIt->neighbor())
 				{
 					// access neighbor
-					EntityPointer outside = is->outside();
-					int indexj = this->elementmapper.map(*outside);
+					ElementPointer neighborPointer = isIt->outside();
+					int globalIdxJ = this->elementMapper.map(*neighborPointer);
 
 					// get neighbor pressure and permeability
-					double pressj = this->diffproblem.variables.pressure[indexj];
+					double pressJ = this->diffProblem.variables.pressure[globalIdxJ];
 
 					// compute factor in neighbor
-					GeometryType nbgt = outside->geometry().type();
-					const FieldVector<ct,dim>&
-					nblocal = ReferenceElements<ct,dim>::general(nbgt).position(0,0);
+					GeometryType neighborGT = neighborPointer->geometry().type();
+					const LocalPosition&
+					localPosNeighbor = ReferenceElements<Scalar,dim>::general(neighborGT).position(0,0);
 
-					// neighbor cell center in global coordinates
-					FieldVector<ct,dimworld>
-					nbglobal = outside->geometry().global(nblocal);
+					// neighbor cell center in globalPos coordinates
+					const GlobalPosition&
+					globalPosNeighbor = neighborPointer->geometry().global(localPosNeighbor);
 
 					// distance vector between barycenters
-					FieldVector<ct,dimworld> distVec = global - nbglobal;
+					FieldVector<Scalar,dimWorld> distVec = globalPos - globalPosNeighbor;
 
 					// compute distance between cell centers
 					double dist = distVec.two_norm();
 
 					// get absolute permeability
-					FieldMatrix<ct,dim,dim> Kj(this->diffproblem.soil.K(nbglobal, *outside, nblocal));
+					FieldMatrix Kj(this->diffProblem.soil.K(globalPosNeighbor, *neighborPointer, localPosNeighbor));
 
 					// compute vectorized permeabilities
-					FieldVector<ct,dim> Kni(0);
-					FieldVector<ct,dim> Knj(0);
+					FieldVector<Scalar,dim> Kni(0);
+					FieldVector<Scalar,dim> Knj(0);
 					Ki.umv(unitOuterNormal, Kni);
 					Kj.umv(unitOuterNormal, Knj);
 					// compute permeability normal to intersection and take harmonic mean
@@ -139,22 +143,22 @@ public:
 					double K_n_j = Knj * unitOuterNormal;
 					double Kn = 2 * K_n_i * K_n_j / (K_n_i + K_n_j);
 					// compute permeability tangential to intersection and take arithmetic mean
-					FieldVector<ct,dim> uON = unitOuterNormal;
-					FieldVector<ct,dim> K_t_i = Kni - (uON *= K_n_i);
+					FieldVector<Scalar,dim> uON = unitOuterNormal;
+					FieldVector<Scalar,dim> K_t_i = Kni - (uON *= K_n_i);
 					uON = unitOuterNormal;
-					FieldVector<ct,dim> K_t_j = Knj - (uON *= K_n_j);
-					FieldVector<ct,dim> Kt = (K_t_i += K_t_j);
+					FieldVector<Scalar,dim> K_t_j = Knj - (uON *= K_n_j);
+					FieldVector<Scalar,dim> Kt = (K_t_i += K_t_j);
 					Kt *= 0.5;
 					// Build vectorized averaged permeability
 					uON = unitOuterNormal;
-					FieldVector<ct,dim> K = (Kt += (uON *=Kn));
+					FieldVector<Scalar,dim> K = (Kt += (uON *=Kn));
 
 					//compute total mobility
 					double lambdaJ, fractionalWJ;
-					double satj = this->diffproblem.variables.saturation[indexj];
-					lambdaJ = this->diffproblem.materialLaw.mobTotal(satj,nbglobal, *outside, nblocal);
+					double satj = this->diffProblem.variables.saturation[globalIdxJ];
+					lambdaJ = this->diffProblem.materialLaw.mobTotal(satj,globalPosNeighbor, *neighborPointer, localPosNeighbor);
 					if (hasGravity)
-					fractionalWJ = this->diffproblem.materialLaw.fractionalW(satj,nbglobal, *outside, nblocal);
+					fractionalWJ = this->diffProblem.materialLaw.fractionalW(satj,globalPosNeighbor, *neighborPointer, localPosNeighbor);
 
 					// compute averaged total mobility
 					// CAREFUL: Harmonic weightig can generate zero matrix entries,
@@ -165,34 +169,34 @@ public:
 					if (hasGravity)
 					fractionalW = 0.5*(fractionalWI + fractionalWJ);
 
-					FieldVector<ct,dimworld> vTotal(K);
-					vTotal *= lambda*(pressi - pressj)/dist;
+					FieldVector<Scalar,dimWorld> vTotal(K);
+					vTotal *= lambda*(pressI - pressJ)/dist;
 					if (hasGravity) {
 						Ki += Kj;
 						Ki *= 0.5;
-						FieldVector<ct,dimworld> gEffect(0);
+						FieldVector<Scalar,dimWorld> gEffect(0);
 						Ki.umv(gravity, gEffect);
-						double factor = fractionalW*(this->diffproblem.wettingphase.density())
-						+ (1 - fractionalW)*(this->diffproblem.nonwettingphase.density());
+						double factor = fractionalW*(this->diffProblem.wettingphase.density())
+						+ (1 - fractionalW)*(this->diffProblem.nonwettingphase.density());
 						gEffect *= lambda*factor;
 						vTotal += gEffect;
 					}
-					this->diffproblem.variables.velocity[indexi][numberInSelf] = vTotal;
+					this->diffProblem.variables.velocity[globalIdxI][numberInSelf] = vTotal;
 				}
 				// boundary face
 				else
 				{
 					//get boundary condition for boundary face center
-					BoundaryConditions::Flags bctype = this->diffproblem.bctypePress(faceglobal, *it, facelocalDim);
+					BoundaryConditions::Flags bctype = this->diffProblem.bctypePress(globalPosFace, *eIt, localPosFace);
 					if (bctype == BoundaryConditions::dirichlet) {
 						// distance vector between barycenters
-						FieldVector<ct,dimworld> distVec = global - faceglobal;
+						FieldVector<Scalar,dimWorld> distVec = globalPos - globalPosFace;
 
 						double dist = distVec.two_norm();
 						distVec /= dist;
 
 						// compute directed permeability vector Ki.n
-						FieldVector<ct,dim> Kni(0);
+						FieldVector<Scalar,dim> Kni(0);
 						Ki.umv(distVec, Kni);
 
 						// compute averaged total mobility
@@ -201,61 +205,61 @@ public:
 						lambda = lambdaI;
 						if (hasGravity) fractionalW = fractionalWI;
 
-						double g = this->diffproblem.gPress(faceglobal, *it, facelocalDim);
+						double g = this->diffProblem.dirichletPress(globalPosFace, *eIt, localPosFace);
 
-						FieldVector<ct,dim> vTotal(Kni);
-						vTotal *= lambda*(g-pressi)/dist;
+						FieldVector<Scalar,dim> vTotal(Kni);
+						vTotal *= lambda*(g-pressI)/dist;
 						if (hasGravity) {
-							FieldVector<ct,dimworld> gEffect(0);
+							FieldVector<Scalar,dimWorld> gEffect(0);
 							Ki.umv(gravity, gEffect);
-							double factor = fractionalW*(this->diffproblem.wettingphase.density())
-							+ (1 - fractionalW)*(this->diffproblem.nonwettingphase.density());
+							double factor = fractionalW*(this->diffProblem.wettingphase.density())
+							+ (1 - fractionalW)*(this->diffProblem.nonwettingphase.density());
 							gEffect *= lambda*factor;
 							vTotal += gEffect;
 						}
-						this->diffproblem.variables.velocity[indexi][numberInSelf] = vTotal;
+						this->diffProblem.variables.velocity[globalIdxI][numberInSelf] = vTotal;
 					}
 					else
 					{
-						double J = this->diffproblem.JPress(faceglobal, *it, facelocalDim);
-						FieldVector<ct,dimworld> unitOuterNormal
-						= is->unitOuterNormal(facelocal);
-						this->diffproblem.variables.velocity[indexi][numberInSelf] = unitOuterNormal;
-						this->diffproblem.variables.velocity[indexi][numberInSelf] *= J;
+						double J = this->diffProblem.neumannPress(globalPosFace, *eIt, localPosFace);
+						FieldVector<Scalar,dimWorld> unitOuterNormal
+						= isIt->unitOuterNormal(faceLocal);
+						this->diffProblem.variables.velocity[globalIdxI][numberInSelf] = unitOuterNormal;
+						this->diffProblem.variables.velocity[globalIdxI][numberInSelf] *= J;
 					}
 
 				}
 			}
 			// end all intersections
-//			std::cout<<"velocity = "<< this->diffproblem.variables.velocity <<std::endl;
-			if (dim == 1&& this->diffproblem.capillary != true) {
-				double sum = (fabs(this->diffproblem.variables.velocity[indexi][0][0]*faceVol[0])
-						+ fabs(this->diffproblem.variables.velocity[indexi][1][0]));
-				double diff = fabs(this->diffproblem.variables.velocity[indexi][0][0]*faceVol[0]
-						- this->diffproblem.variables.velocity[indexi][1][0]*faceVol[1])/sum;
+//			std::cout<<"velocity = "<< this->diffProblem.variables.velocity <<std::endl;
+			if (dim == 1&& this->diffProblem.capillarity != true) {
+				double sum = (fabs(this->diffProblem.variables.velocity[globalIdxI][0][0]*faceVol[0])
+						+ fabs(this->diffProblem.variables.velocity[globalIdxI][1][0]));
+				double diff = fabs(this->diffProblem.variables.velocity[globalIdxI][0][0]*faceVol[0]
+						- this->diffProblem.variables.velocity[globalIdxI][1][0]*faceVol[1])/sum;
 				if (diff > 1e-6&& sum > 1e-9) {
 					std::cout << "NOT conservative!!! diff = "<< diff
-							<< ", indexi = "<< indexi << std::endl;
-					std::cout << this->diffproblem.variables.velocity[indexi][0][0]*faceVol[0]<< ", "
-							<< this->diffproblem.variables.velocity[indexi][1][0]*faceVol[1]<< std::endl;
+							<< ", globalIdxI = "<< globalIdxI << std::endl;
+					std::cout << this->diffProblem.variables.velocity[globalIdxI][0][0]*faceVol[0]<< ", "
+							<< this->diffProblem.variables.velocity[globalIdxI][1][0]*faceVol[1]<< std::endl;
 				}
 			}
-			if (dim == 2&& this->diffproblem.capillary != true) {
-				double sum = (fabs(this->diffproblem.variables.velocity[indexi][0][0]*faceVol[0])
-						+ fabs(this->diffproblem.variables.velocity[indexi][1][0]*faceVol[1])
-						+ fabs(this->diffproblem.variables.velocity[indexi][2][1]*faceVol[2])
-						+ fabs(this->diffproblem.variables.velocity[indexi][3][1]*faceVol[3]));
-				double diff = fabs(this->diffproblem.variables.velocity[indexi][0][0]*faceVol[0]
-						- this->diffproblem.variables.velocity[indexi][1][0]*faceVol[1]
-						+ this->diffproblem.variables.velocity[indexi][2][1]*faceVol[2]
-						- this->diffproblem.variables.velocity[indexi][3][1]*faceVol[3])/sum;
+			if (dim == 2&& this->diffProblem.capillarity != true) {
+				double sum = (fabs(this->diffProblem.variables.velocity[globalIdxI][0][0]*faceVol[0])
+						+ fabs(this->diffProblem.variables.velocity[globalIdxI][1][0]*faceVol[1])
+						+ fabs(this->diffProblem.variables.velocity[globalIdxI][2][1]*faceVol[2])
+						+ fabs(this->diffProblem.variables.velocity[globalIdxI][3][1]*faceVol[3]));
+				double diff = fabs(this->diffProblem.variables.velocity[globalIdxI][0][0]*faceVol[0]
+						- this->diffProblem.variables.velocity[globalIdxI][1][0]*faceVol[1]
+						+ this->diffProblem.variables.velocity[globalIdxI][2][1]*faceVol[2]
+						- this->diffProblem.variables.velocity[globalIdxI][3][1]*faceVol[3])/sum;
 				if (diff > 1e-6&& sum > 1e-9) {
 					std::cout << "NOT conservative!!! diff = "<< diff
-							<< ", indexi = "<< indexi << std::endl;
-					std::cout << this->diffproblem.variables.velocity[indexi][0][0]*faceVol[0]<< ", "
-							<< this->diffproblem.variables.velocity[indexi][1][0]*faceVol[1]<< ", "
-							<< this->diffproblem.variables.velocity[indexi][2][1]*faceVol[2]<< ", "
-							<< this->diffproblem.variables.velocity[indexi][3][1]*faceVol[3]<< std::endl;
+							<< ", globalIdxI = "<< globalIdxI << std::endl;
+					std::cout << this->diffProblem.variables.velocity[globalIdxI][0][0]*faceVol[0]<< ", "
+							<< this->diffProblem.variables.velocity[globalIdxI][1][0]*faceVol[1]<< ", "
+							<< this->diffProblem.variables.velocity[globalIdxI][2][1]*faceVol[2]<< ", "
+							<< this->diffProblem.variables.velocity[globalIdxI][3][1]*faceVol[3]<< std::endl;
 				}
 			}
 		} // end grid traversal
