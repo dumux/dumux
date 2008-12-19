@@ -336,6 +336,43 @@ namespace Dune
 		// iterate through leaf grid an evaluate c0 at cell center
 		Iterator eendit = gridview.template end<0>();
 
+		if(this->problem.sequentialCoupling() == false)
+		{
+			for (Iterator it = gridview.template begin<0>(); it
+					!= eendit; ++it) {
+				// get geometry type
+				Dune::GeometryType gt = it->geometry().type();
+
+				// get entity
+				const Entity& entity = *it;
+
+				this->localJacobian.fvGeom.update(entity);
+
+				const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type
+				&sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(gt,1);
+				int size = sfs.size();
+
+				for (int i = 0; i < size; i++) {
+					// get cell center in reference element
+					const Dune::FieldVector<DT,dim>&local = sfs[i].position();
+
+					// get global coordinate of cell center
+					Dune::FieldVector<DT,dimworld> global = it->geometry().global(local);
+
+					int globalId = this->vertexmapper.template map<dim>(entity,
+							sfs[i].entity());
+
+					// initialize variable phaseState
+					this->localJacobian.sNDat[globalId].phaseState = data[globalId][m];
+					// initialize variable oldPhaseState
+					this->localJacobian.sNDat[globalId].oldPhaseState = data[globalId][m];
+
+				}
+				this->localJacobian.clearVisited();
+				this->localJacobian.initiateStaticData(entity);
+			}
+		}
+
 		// set Dirichlet boundary conditions
 		for (Iterator it = gridview.template begin<0>(); it	!= eendit; ++it) {
 			// get geometry type
@@ -398,8 +435,7 @@ namespace Dune
 								}
 							}
 				}
-			this->localJacobian.clearVisited();
-			this->localJacobian.initiateStaticData(entity);
+
 			this->localJacobian.setLocalSolution(entity);
 			for (int i = 0; i < size; i++)
 			this->localJacobian.updateVariableData(entity, this->localJacobian.u, i, false);
