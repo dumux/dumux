@@ -64,7 +64,7 @@ public:
 	 @param[in]  localPos   position in reference element of element
 	 \return     value of source term
 	 */
-	virtual Scalar qPress (const GlobalPosition& globalPos, const Element& element,
+	virtual Scalar sourcePress (const GlobalPosition& globalPos, const Element& element,
 			const LocalPosition& localPos) = 0;
 
 	//! return type of boundary condition for the pressure equation at the given global coordinate
@@ -88,7 +88,7 @@ public:
 	 @param[in]  globalPos    position in global coordinates
 	 \return     boundary condition value
 	 */
-	virtual Scalar gPress (const GlobalPosition& globalPos, const Element& element,
+	virtual Scalar dirichletPress (const GlobalPosition& globalPos, const Element& element,
 			const LocalPosition& localPos) const = 0;
 
 	//! evaluate Dirichlet boundary condition for the saturation equation at given position
@@ -96,7 +96,7 @@ public:
 	 @param[in]  globalPos    position in global coordinates
 	 \return     boundary condition value
 	 */
-	virtual Scalar gSat (const GlobalPosition& globalPos, const Element& element,
+	virtual Scalar dirichletSat (const GlobalPosition& globalPos, const Element& element,
 			const LocalPosition& localPos) const
 	{
 		return 1;
@@ -107,7 +107,7 @@ public:
 	 @param[in]  globalPos    position in global coordinates
 	 \return     boundary condition value
 	 */
-	virtual Scalar JPress (const GlobalPosition& globalPos, const Element& element,
+	virtual Scalar neumannPress (const GlobalPosition& globalPos, const Element& element,
 			const LocalPosition& localPos) const = 0;
 
 	//! evaluate initial condition for saturation at given position
@@ -118,10 +118,10 @@ public:
 	virtual Scalar initSat (const GlobalPosition& globalPos, const Element& element,
 			const LocalPosition& localPos) const = 0;
 
-	virtual Scalar JSat (const GlobalPosition& globalPos, const Element& element,
+	virtual Scalar neumannSat (const GlobalPosition& globalPos, const Element& element,
 			const LocalPosition& localPos, Scalar& factor) const
 	{
-		DUNE_THROW(NotImplemented, "neumann boundary function for saturation eq. not implemented!");
+		return 0;
 	}
 
 	//! evaluate gravity
@@ -137,8 +137,8 @@ public:
 	/** @param law implementation of Material laws. Class TwoPhaseRelations or derived.
 	 *  @param cap flag to include capillary forces.
 	 */
-	FractionalFlowProblem(VC& variables, Fluid& wp, Fluid& nwp, Matrix2p<Grid, Scalar>& s, TwoPhaseRelations<Grid, Scalar>& law = *(new TwoPhaseRelations<Grid,Scalar>), const bool capillarity = false)
-	: variables(variables), wettingphase(wp), nonwettingphase(nwp), soil(s), capillarity(capillarity), materialLaw(law),gravity_(0)
+	FractionalFlowProblem(VC& variables, Fluid& wettingphase, Fluid& nonwettingphase, Matrix2p<Grid, Scalar>& soil, TwoPhaseRelations<Grid, Scalar>& materialLaw = *(new TwoPhaseRelations<Grid,Scalar>), const bool capillarity = false)
+	: variables(variables), wettingphase(wettingphase), nonwettingphase(nonwettingphase), soil(soil), capillarity(capillarity), materialLaw(materialLaw),gravity_(0)
 	{}
 
 	//! always define virtual destructor in abstract base class

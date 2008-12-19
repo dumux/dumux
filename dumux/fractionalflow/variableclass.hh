@@ -11,7 +11,7 @@
 namespace Dune
 {
 
-template<class G, class RT> class VariableClass
+template<class Grid, class Scalar> class VariableClass
 {
 	template<int dim> struct ElementLayout
 	{
@@ -21,76 +21,82 @@ template<class G, class RT> class VariableClass
 		}
 	};
 
-	enum{n=G::dimension};
-	typedef typename G::ctype DT;
-	typedef Dune::BlockVector< Dune::FieldVector<RT,1> > ScalarType;
-	typedef Dune::BlockVector< Dune::FieldVector<RT,n> > SlopeType;
-	typedef Dune::BlockVector< Dune::FieldVector<Dune::FieldVector<double, n>, 2*n> >
-			VelType;
+	enum
+	{
+		dim = Grid::dimension, dimWorld = Grid::dimensionworld
+	};
 
-	typedef typename G::Traits::template Codim<0>::Entity Entity;
-	typedef typename G::Traits::LevelIndexSet IS;
-	typedef Dune::MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout>
-			ElementMapper;
+	typedef Dune::FieldVector<Scalar,dim> LocalPosition;
+	typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
+
+	typedef Dune::BlockVector< Dune::FieldVector<Scalar,dim> > SlopeType;
+
+typedef	typename Grid::Traits::template Codim<0>::Entity Element;
+	typedef typename Grid::Traits::LevelIndexSet IndexSet;
+	typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,IndexSet,ElementLayout>
+	ElementMapper;
 
 public:
-	G& grid;
-	ElementMapper diffmapper;
-	ElementMapper transmapper;
-	int diffsize;
-	int transsize;
-	int difflevel;
-	int translevel;
+	typedef Dune::BlockVector< Dune::FieldVector<Scalar,1> > ScalarVectorType;
+	typedef Dune::BlockVector< FieldVector<FieldVector<Scalar, dim>, 2*dim> > VelType;
 
+	Grid& grid;
+	int diffLevel;
+	int transLevel;
+	ElementMapper diffMapper;
+	ElementMapper transMapper;
+	int diffSize;
+	int transSize;
 
-	ScalarType saturation;
-	ScalarType pressure;
+	ScalarVectorType saturation;
+	ScalarVectorType pressure;
 	VelType velocity;
 	SlopeType slope;
 
-	VariableClass(G& g, RT& initialsat = *(new RT(0)), RT& initalpress = *(new RT(0)), Dune::FieldVector<RT, n>& initialvel = *(new Dune::FieldVector<RT, n> (0)), int translev = -1, int difflev = -1)
-	: grid(g), diffmapper(g, (difflev >= 0) ? g.levelIndexSet(difflev) : g.levelIndexSet(g.maxLevel())), transmapper(g, (translev >= 0) ? g.levelIndexSet(translev) : g.levelIndexSet(g.maxLevel())),
-	  diffsize(diffmapper.size()),transsize(transmapper.size()),
-	  difflevel((difflev >= 0) ? difflev : g.maxLevel()),translevel((translev >= 0) ? translev : g.maxLevel())
+	VariableClass(Grid& grid, Scalar& initialSat = *(new Scalar(0)), Scalar& initalPress = *(new Scalar(0)), Dune::FieldVector<Scalar, dim>& initialVel = *(new Dune::FieldVector<Scalar, dim> (0)), int transLev = -1, int diffLev = -1)
+	: grid(grid),
+	transLevel((transLev >= 0) ? transLev : grid.maxLevel()), diffLevel((diffLev >= 0) ? diffLev : grid.maxLevel()),
+	diffMapper(grid, (diffLev >= 0) ? grid.levelIndexSet(diffLev) : grid.levelIndexSet(grid.maxLevel())), transMapper(grid, (transLev >= 0) ? grid.levelIndexSet(transLev) : grid.levelIndexSet(grid.maxLevel())),
+	diffSize(diffMapper.size()),transSize(transMapper.size())
 	{
-		initsat(initialsat, transsize);
-		initpress(initalpress, diffsize);
-		initvel(initialvel, transsize);
-		initslopes(0.0, transsize);
+		initSat(initialSat, transSize);
+		initPress(initalPress, diffSize);
+		initVel(initialVel, transSize);
+		initSlopes(0.0, transSize);
 	}
 
-	void initsat(RT& initialsat, int size)
+	void initSat(Scalar& initialSat, int size)
 	{
 		saturation.resize(size);
-		saturation=initialsat;
+		saturation=initialSat;
 		return;
 	}
 
-	void initslopes(RT initialslope, int size)
-		{
-			slope.resize(size);
-			slope=initialslope;
-			return;
-		}
+	void initSlopes(Scalar initialSlope, int size)
+	{
+		slope.resize(size);
+		slope=initialSlope;
+		return;
+	}
 
-	void initpress(RT& initialpress, int size)
+	void initPress(Scalar& initialPress, int size)
 	{
 		pressure.resize(size);
-		pressure=initialpress;
+		pressure=initialPress;
 		return;
 	}
-	void initvel(Dune::FieldVector<RT, n>& initialvel, int size)
+	void initVel(Dune::FieldVector<Scalar, dim>& initialVel, int size)
 	{
 		velocity.resize(size);
-		velocity=initialvel;
+		velocity=initialVel;
 		return;
 	}
 
-	ScalarType& sat() const
+	ScalarVectorType& sat() const
 	{
 		return saturation;
 	}
-	ScalarType& press() const
+	ScalarVectorType& press() const
 	{
 		return pressure;
 	}
@@ -99,22 +105,22 @@ public:
 		return velocity;
 	}
 
-	const Dune::FieldVector<RT,1>& sat(const Dune::FieldVector<DT,n>& x,
-			const Entity& e, const Dune::FieldVector<DT,n>& xi) const
+	const Dune::FieldVector<Scalar,1>& sat(const GlobalPosition globalPos,
+			const Element& element, const LocalPosition localPos) const
 	{
-		return saturation[transmapper.map(e)];;
+		return saturation[transMapper.map(element)];;
 	}
 
-	const Dune::FieldVector<RT,1>& press(const Dune::FieldVector<DT,n>& x,
-			const Entity& e, const Dune::FieldVector<DT,n>& xi) const
+	const Dune::FieldVector<Scalar,1>& press(const GlobalPosition globalPos,
+			const Element& element, const LocalPosition localPos) const
 	{
-		return pressure[diffmapper.map(e)];
+		return pressure[diffMapper.map(element)];
 	}
 
-	const Dune::FieldVector<DT,n>& vTotal(const Entity& e,
+	const Dune::FieldVector<Scalar,dim>& vTotal(const Element& element,
 			const int numberInSelf) const
 	{
-		int elemId = transmapper.map(e);
+		int elemId = transMapper.map(element);
 
 		return (velocity[elemId][numberInSelf]);
 	}
@@ -128,14 +134,14 @@ public:
 
 	void vtkout (const char* name, int k)
 	{
-			vtkoutdifflevel(name,k,difflevel,translevel);
+		vtkoutMultiLevel(name,k,diffLevel,transLevel);
 	}
 
-	void vtkoutdifflevel(const char* name, int k, int pressurelevel = 0, int satlevel = 0) const
+	void vtkoutMultiLevel(const char* name, int k, int pressureLevel = 0, int satLevel = 0) const
 	{
-		if (pressurelevel == satlevel)
+		if (pressureLevel == satLevel)
 		{
-			VTKWriter<typename G::LeafGridView> vtkwriter(grid.leafView());
+			VTKWriter<typename Grid::LeafGridView> vtkwriter(grid.leafView());
 			char fname[128];
 			sprintf(fname, "%s-%05d", name, k);
 			vtkwriter.addCellData(saturation, "saturation");
@@ -144,48 +150,48 @@ public:
 		}
 		else
 		{
-			Dune::VTKWriter<typename G::LevelGridView>
-					vtkwriterpressure(grid.levelView(pressurelevel));
+			Dune::VTKWriter<typename Grid::LevelGridView>
+			vtkwriterpressure(grid.levelView(pressureLevel));
 			char fname[128];
 			sprintf(fname, "%s-press%05d", name, k);
 			vtkwriterpressure.addCellData(pressure, "total pressure p~");
 			vtkwriterpressure.write(fname, Dune::VTKOptions::ascii);
 
-			Dune::VTKWriter<typename G::LevelGridView>
-					vtkwritersaturation(grid.levelView(satlevel));
+			Dune::VTKWriter<typename Grid::LevelGridView>
+			vtkwritersaturation(grid.levelView(satLevel));
 			sprintf(fname, "%s-%05d", name, k);
 			vtkwritersaturation.addCellData(saturation, "saturation");
 			vtkwritersaturation.write(fname, VTKOptions::ascii);
 		}
 		return;
 	}
-//	void vtkoutpressure(const char* name, int k) const
-//	{
-//		LeafVTKWriter<typename G::LeafGridView> vtkwriter(grid);
-//		char fname[128];
-//		sprintf(fname, "%s-press%05d", name, k);
-//		vtkwriter.addCellData(pressure, "total pressure p~");
-//		vtkwriter.write(fname, VTKOptions::ascii);
-//	}
-//	void vtkoutsamelevel(const char* name, int k, BlockVector<FieldVector<RT, 2> > uEx) const
-//	{
-//		ScalarType saturationEx(transsize);
-//		ScalarType error(transsize);
-//
-//		for (int i=0; i<transsize; i++)
-//		{
-//			saturationEx[i] = uEx[i][0];
-//			error[i]=uEx[i][1];
-//		}
-//		VTKWriter<typename G::LevelGridView> vtkwriter(grid);
-//		char fname[128];
-//		sprintf(fname, "%s-%05d", name, k);
-//		vtkwriter.addCellData(saturation, "saturation");
-//		vtkwriter.addCellData(pressure, "total pressure p~");
-//		vtkwriter.addCellData(saturationEx, "saturation (exact solution)");
-//		vtkwriter.addCellData(error, "error");
-//		vtkwriter.write(fname, VTKOptions::ascii);
-//	}
+	//	void vtkoutpressure(const char* name, int k) const
+	//	{
+	//		LeafVTKWriter<typename Grid::LeafGridView> vtkwriter(grid);
+	//		char fname[128];
+	//		sprintf(fname, "%s-press%05d", name, k);
+	//		vtkwriter.addCellData(pressure, "total pressure p~");
+	//		vtkwriter.write(fname, VTKOptions::ascii);
+	//	}
+	//	void vtkoutsamelevel(const char* name, int k, BlockVector<FieldVector<Scalar, 2> > uEx) const
+	//	{
+	//		ScalarVectorType saturationEx(transsize);
+	//		ScalarVectorType error(transsize);
+	//
+	//		for (int i=0; i<transsize; i++)
+	//		{
+	//			saturationEx[i] = uEx[i][0];
+	//			error[i]=uEx[i][1];
+	//		}
+	//		VTKWriter<typename Grid::LevelGridView> vtkwriter(grid);
+	//		char fname[128];
+	//		sprintf(fname, "%s-%05d", name, k);
+	//		vtkwriter.addCellData(saturation, "saturation");
+	//		vtkwriter.addCellData(pressure, "total pressure p~");
+	//		vtkwriter.addCellData(saturationEx, "saturation (exact solution)");
+	//		vtkwriter.addCellData(error, "error");
+	//		vtkwriter.write(fname, VTKOptions::ascii);
+	//	}
 };
 }
 #endif
