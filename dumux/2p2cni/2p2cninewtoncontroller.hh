@@ -41,7 +41,7 @@ namespace Dune {
     public:
         typedef TwoPTwoCNINewtonController<NewtonMethod>            ThisType;
         typedef NewtonControllerBase<NewtonMethod, ThisType>  ParentType;
-        typedef typename NewtonMethod::Model  Model_TEst;
+        typedef typename NewtonMethod::Model  	   	   Model;
         typedef typename ParentType::Scalar            Scalar;
         typedef typename ParentType::Function          Function;
         typedef typename ParentType::JacobianAssembler JacobianAssembler;
@@ -70,24 +70,37 @@ namespace Dune {
         //! Returns true iff another iteration should be done.
         bool newtonProceed(Function &u)
             {
-//				Model_TEst *test;
-//				switched_ = test->localJacobian.switched;
-//				if (switched_)
-//				{
-//					test->localJacobian.switchBreak = true;
-//
-//					if(switchCount_ == 5)
-//					{
-//					 test->localJacobian.switchBreak = false;
-//					 switchCount_ = 0;
-//					 return ParentType::newtonProceed(u);
-//					}
-//					else
-//					{
-//						switchCount_++;
-//						return true; // we always do at least five iterations
-//					}
-//				}
+				Model &model = ParentType::model();
+//				Scalar defCheck = ParentType::defectCheck();
+
+				switched_ = model.localJacobian.switchedGlobal;
+				if (switched_)
+				{
+		        	model.localJacobian.switchBreak = true;
+					if(switchCount_ == 5)
+					{
+					 model.localJacobian.switchBreak = false;
+					 switchCount_ = 0;
+					 model.localJacobian.switchedGlobal = false;
+					 return ParentType::newtonProceed(u);
+					}
+					else
+					{
+
+						switchCount_++;
+
+//						if(defCheck < 1.)
+						return true; // we always do at least five iterations
+
+//						else
+//						{
+//							 model.localJacobian.switchBreak = false;
+//							 switchCount_ = 0;
+//							 model.localJacobian.switchedGlobal = false;
+//							 return false;
+//						}
+					}
+				}
                 return ParentType::newtonProceed(u);
             }
 
@@ -99,59 +112,65 @@ namespace Dune {
         //! "completely unphysical"
         Scalar _physicalness(Function &u)
             {
-//                return 1.0;
-                const Scalar SnNormFactor = 1e-5; // reference value
-                const Scalar pWNormFactor = 1.;
-                const Scalar tempNormFactor = 1e-3;
-                // the maximum distance of a Sn value to a physically
-                // meaningful value.
-                Scalar maxSwitchVarDelta = 0;
-                Scalar maxPWDelta = 0;
-                Scalar maxTempDelta = 0;
-                Scalar switchVar;
-                Scalar pW;
-                Scalar temp;
+                return 1.0;
+//                const Scalar SnNormFactor = 1e-5; // reference value
+//                const Scalar pWNormFactor = 1.;
+//                const Scalar tempNormFactor = 1e-3;
+//                // the maximum distance of a Sn value to a physically
+//                // meaningful value.
+//                Scalar maxSwitchVarDelta = 0;
+//                Scalar maxPWDelta = 0;
+//                Scalar maxTempDelta = 0;
+//                Scalar switchVar;
 //                Scalar pW;
-
-                for (int idx = 0; idx < (*u).size(); idx++)  {
-
-                	pW = (*u)[idx][0];
-                    switchVar = (*u)[idx][1];
-                    temp = (*u)[idx][2];
-
-                    if (pW < 1.e5) {
-                    	maxPWDelta = std::max(maxPWDelta, std::abs(pW-1.e5));
-                    }
-                    if (pW > 2.e8) {
-                    	maxPWDelta = std::max(maxPWDelta, std::abs(pW-2.e8));
-                    }
-                    if (switchVar < 0) {
-                        maxSwitchVarDelta = std::max(maxSwitchVarDelta, std::abs(switchVar));
-                    }
-                    if (switchVar > 1) {
-                        maxSwitchVarDelta = std::max(maxSwitchVarDelta, std::abs(switchVar - 1));
-                    }
-                    if (temp < 273.) {
-                    	maxTempDelta = std::max(maxTempDelta, std::abs(temp-273.));
-                    }
-                    if (temp > 600.) {
-                    	maxTempDelta = std::max(maxTempDelta, std::abs(temp-600.));
-                    }
-
-
-                }
-
-                // we accept solutions up to 0.2 percent bigger than 1
-                // or smaller than 0 as being physical for numerical
-                // reasons...
-
-                Scalar phys = 1.002 - maxSwitchVarDelta/SnNormFactor - maxPWDelta/pWNormFactor - maxTempDelta/tempNormFactor;
-
-                // we never return exactly zero, since we want to
-                // allow solutions which are "very close" to a
-                // physically meaningful one
-
-                return std::min(1.0, phys);
+//                Scalar temp;
+//                Scalar pW;
+//
+//                for (int idx = 0; idx < (*u).size(); idx++)  {
+//
+//                	pW = (*u)[idx][0];
+//                    switchVar = (*u)[idx][1];
+//                    temp = (*u)[idx][2];
+//
+//                    if (pW < 1.e5) {
+//                    	maxPWDelta = std::max(maxPWDelta, std::abs(pW-1.e5));
+//                    	std::cout<<"pw:"<<pW<<std::endl;
+//                    }
+//                    if (pW > 2.e8) {
+//                    	maxPWDelta = std::max(maxPWDelta, std::abs(pW-2.e8));
+//                    	std::cout<<"pw:"<<pW<<std::endl;
+//                    }
+//                    if (switchVar < -1.e-2) {
+//                        maxSwitchVarDelta = std::max(maxSwitchVarDelta, std::abs(switchVar));
+//                        std::cout<<"switchVar:"<<switchVar<<std::endl;
+//                    }
+//                    if (switchVar > 1.+1.e-2) {
+//                        maxSwitchVarDelta = std::max(maxSwitchVarDelta, std::abs(switchVar - 1));
+//                        std::cout<<"switchVar:"<<switchVar<<std::endl;
+//                    }
+//                    if (temp < 273.) {
+//                    	maxTempDelta = std::max(maxTempDelta, std::abs(temp-273.));
+//                    	std::cout<<"temp:"<<temp<<std::endl;
+//                    }
+//                    if (temp > 600.) {
+//                    	maxTempDelta = std::max(maxTempDelta, std::abs(temp-600.));
+//                    	std::cout<<"temp:"<<temp<<std::endl;
+//                    }
+//
+//
+//                }
+//
+//                // we accept solutions up to 0.2 percent bigger than 1
+//                // or smaller than 0 as being physical for numerical
+//                // reasons...
+//
+//                Scalar phys = 1.002 - maxSwitchVarDelta/SnNormFactor - maxPWDelta/pWNormFactor - maxTempDelta/tempNormFactor;
+//
+//                // we never return exactly zero, since we want to
+//                // allow solutions which are "very close" to a
+//                // physically meaningful one
+//
+//                return std::min(1.0, phys);
             }
         bool switched_;
         int switchCount_;
