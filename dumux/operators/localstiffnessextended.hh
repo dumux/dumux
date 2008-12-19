@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_LOCALSTIFFNESS_HH
 #define DUNE_LOCALSTIFFNESS_HH
@@ -18,6 +18,7 @@
 #include<dune/common/geometrytype.hh>
 #include<dune/grid/common/grid.hh>
 #include<dune/istl/operators.hh>
+#include<dune/istl/bvector.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
 
 /**
@@ -29,10 +30,10 @@
 /*! @defgroup DISC_Operators Operators
   @ingroup DISC
   @brief
-  
+
   @section D1 Introduction
   <!--=================-->
-  
+
   To be written
 */
 
@@ -61,7 +62,7 @@ namespace Dune
   - m    number of degrees of freedom per node (system size)
    */
   template<class Imp, class G, class RT, int m>
-  class LocalStiffness 
+  class LocalStiffness
   {
 	// grid types
 	typedef typename G::ctype DT;
@@ -83,7 +84,7 @@ namespace Dune
 	  currentsize_ = 0;
 	}
 
-	virtual ~LocalStiffness () 
+	virtual ~LocalStiffness ()
 	{
 	}
 
@@ -91,15 +92,15 @@ namespace Dune
 	/*! On exit the following things have been done:
 	  - The stiffness matrix for the given entity and polynomial degree has been assembled and is
         accessible with the mat() method.
-	  - The boundary conditions have been evaluated and are accessible with the bc() method. 
+	  - The boundary conditions have been evaluated and are accessible with the bc() method.
         The boundary conditions are either neumann, process or dirichlet. Neumann indicates
         that the corresponding node (assuming a nodal basis) is at the Neumann boundary, process
         indicates that the node is at a process boundary (arising from the parallel decomposition of the mesh).
         Process boundaries are treated as homogeneous Dirichlet conditions, i.e. the corresponding value
         in the right hand side is set to 0. Finally, Dirichlet indicates that the node is at the Dirichlet
-        boundary.  
+        boundary.
 	  - The right hand side has been assembled. It contains either the value of the essential boundary
-        condition or the assembled source term and neumann boundary condition. 
+        condition or the assembled source term and neumann boundary condition.
 		It is accessible via the rhs() method.
 
 	  @param[in]  e    a codim 0 entity reference
@@ -111,22 +112,22 @@ namespace Dune
 	}
 
       /** \brief assemble local stiffness matrix including boundary conditions for given element and order
-          
+
       Unlike the method with only two arguments, this one additionally takes the local solution in order
       to allow assembly of nonlinear operators.
 
       On exit the following things have been done:
 	  - The stiffness matrix for the given entity and polynomial degree has been assembled and is
         accessible with the mat() method.
-	  - The boundary conditions have been evaluated and are accessible with the bc() method. 
+	  - The boundary conditions have been evaluated and are accessible with the bc() method.
         The boundary conditions are either neumann, process or dirichlet. Neumann indicates
         that the corresponding node (assuming a nodal basis) is at the Neumann boundary, process
         indicates that the node is at a process boundary (arising from the parallel decomposition of the mesh).
         Process boundaries are treated as homogeneous Dirichlet conditions, i.e. the corresponding value
         in the right hand side is set to 0. Finally, Dirichlet indicates that the node is at the Dirichlet
-        boundary.  
+        boundary.
 	  - The right hand side has been assembled. It contains either the value of the essential boundary
-        condition or the assembled source term and neumann boundary condition. 
+        condition or the assembled source term and neumann boundary condition.
 		It is accessible via the rhs() method.
 
 	  @param[in]  e    a codim 0 entity reference
@@ -137,20 +138,20 @@ namespace Dune
 	void assemble (const Entity& e, const BlockVector<VBlockType>& localSolution, int k=1){
             getImp().template assemble<TypeTag>(e,localSolution, k);
 	}
-    
+
 
 	//! assemble only boundary conditions for given element and order
 	/*! On exit the following things have been done:
-	  - The boundary conditions have been evaluated and are accessible with the bc() method. 
+	  - The boundary conditions have been evaluated and are accessible with the bc() method.
         The boundary conditions are either neumann, process or dirichlet. Neumann indicates
         that the corresponding node (assuming a nodal basis) is at the Neumann boundary, process
         indicates that the node is at a process boundary (arising from the parallel decomposition of the mesh).
         Process boundaries are treated as homogeneous Dirichlet conditions, i.e. the corresponding value
         in the right hand side is set to 0. Finally, Dirichlet indicates that the node is at the Dirichlet
-        boundary.  
-	  - The right hand side has been assembled as far as boundary conditions are concerned. 
+        boundary.
+	  - The right hand side has been assembled as far as boundary conditions are concerned.
         It contains either the value of the essential boundary
-        condition or the assembled neumann boundary condition. 
+        condition or the assembled neumann boundary condition.
 		It is accessible via the rhs() method.
 
 	  @param[in]  e    a codim 0 entity reference
@@ -161,7 +162,7 @@ namespace Dune
     {
       getImp().template assembleBoundaryCondition<TypeTag>(e,k);
     }
-    
+
 
 	//! print contents of local stiffness matrix
 	void print (std::ostream& s, int width, int precision)
@@ -191,7 +192,7 @@ namespace Dune
 		  s << bc(i)[0];
 		  s << std::endl;// start a new line
 		}
-	  
+
 
 	  // reset the output format
 	  s.precision(oldprec);
@@ -225,7 +226,7 @@ namespace Dune
  	{
  	  return bctype[i];
  	}
- 	
+
  	const VBlockType& dirichletIdx (int i) const
  	{
  		return dirichletIndex[i];
@@ -235,7 +236,7 @@ namespace Dune
 	void setcurrentsize (int s)
 	{
 	  if (s>=SIZE)
- 		DUNE_THROW(MathError,"LocalStiffness: increase SIZE");		
+ 		DUNE_THROW(MathError,"LocalStiffness: increase SIZE");
 	  currentsize_ = s;
 	}
 
@@ -252,7 +253,7 @@ namespace Dune
 	VBlockType b[SIZE];
 	BCBlockType bctype[SIZE];
 	VBlockType dirichletIndex[SIZE];
-	
+
     Imp& getImp()
     {
       return static_cast<Imp&>(*this);
@@ -261,7 +262,7 @@ namespace Dune
     {
       return static_cast<const Imp&>(*this);
     }
-    
+
   };
 
 

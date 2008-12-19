@@ -1,5 +1,3 @@
-// $Id$ 
-
 // $Id$
 
 #ifndef DUNE_LOCALJACOBIAN_HH
@@ -33,10 +31,10 @@
 /*! @defgroup DISC_Operators Operators
   @ingroup DISC
   @brief
-  
+
   @section D1 Introduction
   <!--=================-->
-  
+
   To be written
 */
 
@@ -85,7 +83,7 @@ namespace Dune
 		return this->getImp().computeElementData(e);
 	}
 
-	virtual void updateVariableData(const Entity& e, const VBlockType* sol, int i, bool old = false) 
+	virtual void updateVariableData(const Entity& e, const VBlockType* sol, int i, bool old = false)
 	{
 		return this->getImp().updateVariableData(e, sol, i, old);
 	}
@@ -94,24 +92,24 @@ namespace Dune
 	{
 		return this->getImp().updateVariableData(e, sol, old);
 	}
-    
+
     template<class TypeTag>
     void assemble (const Entity& e, bool itIsThis, int k = 1)
     {
     	fvGeom.update(e);
 		computeElementData(e);
-		
+
     	int size = e.template count<n>();
-	  
-    	// set to Zero 
+
+    	// set to Zero
     	for (int i=0; i < size; i++) {
     		this->bctype[i].assign(BoundaryConditions::neumann);
     		this->b[i] = 0;
     		this->def[i] = 0;
     	}
-  	  
+
     	setLocalSolution(e);
-    	
+
     	updateStaticData(e, u);
     	bool old = true;
     	updateVariableData(e, uold, old);
@@ -123,24 +121,24 @@ namespace Dune
 		for (int i=0; i<size; i++)
 		{
 			for (int equationnumber = 0; equationnumber < m; equationnumber++)
-				if (this->bctype[i][equationnumber]==BoundaryConditions::neumann) 
+				if (this->bctype[i][equationnumber]==BoundaryConditions::neumann)
 					bTemp[i][equationnumber] = this->def[i][equationnumber];
 					else
 						bTemp[i][equationnumber] = 0;
 		}
-      
+
 		if (analytic) {
 			analyticJacobian<TypeTag>(e, u);
 		}
 		else {
 			VBlockType defu[size];
-			for (int i = 0; i < size; i++) 
-				defu[i] = def[i];    	
+			for (int i = 0; i < size; i++)
+				defu[i] = def[i];
 			VBlockType uPlusEps[size];
 			VBlockType uMinusEps[size];
-    	
-			for (int j = 0; j < size; j++) 
-				for (int comp = 0; comp < m; comp++) 
+
+			for (int j = 0; j < size; j++)
+				for (int comp = 0; comp < m; comp++)
 				{
 					RT eps = std::max(fabs(1e-5*u[j][comp]), 1e-5);
 					for (int i = 0; i < size; i++) {
@@ -151,66 +149,66 @@ namespace Dune
 					uMinusEps[j][comp] -= eps;
 
 					updateVariableData(e, uPlusEps, j);
-					
-					// calculate the defect without taking into account BCs 
+
+					// calculate the defect without taking into account BCs
 					// ASSUMES that BCs do not depend on the solution
 					bool withoutBC = false;
 					localDefect<TypeTag>(e, uPlusEps, withoutBC);
 					VBlockType defuPlusEps[size];
-					for (int i = 0; i < size; i++) 
+					for (int i = 0; i < size; i++)
 						defuPlusEps[i] = def[i];
-	      
+
 					updateVariableData(e, uMinusEps, j);
 					localDefect<TypeTag>(e, uMinusEps, withoutBC);
 
 					updateVariableData(e, u, j);
-					
+
 					RT oneByEps = 0.5/eps;
-					for (int i = 0; i < size; i++) 
+					for (int i = 0; i < size; i++)
 						for (int compi = 0; compi < m; compi++)
 							this->A[i][j][compi][comp] = oneByEps*(defuPlusEps[i][compi] - def[i][compi]);
 				}
 		}
-		
-//		for (int i = 0; i < size; i++) 
+
+//		for (int i = 0; i < size; i++)
 //			for (int compi = 0; compi < m; compi++) {
 //				for (int j = 0; j < size; j++) {
 //					for (int compj = 0; compj < m; compj++)
-//						std::cout << std::setw(9) << this->A[i][j][compi][compj] << ", "; 
+//						std::cout << std::setw(9) << this->A[i][j][compi][compj] << ", ";
 //					std::cout << "\t";
 //				}
 //				std::cout << std::endl;
 //			}
-			
-       
-		for (int i=0; i<size; i++) 
+
+
+		for (int i=0; i<size; i++)
 		{
 			for (int equationnumber = 0; equationnumber < m; equationnumber++)
 				if (this->bctype[i][equationnumber]==BoundaryConditions::neumann) {
 					this->b[i][equationnumber] = bTemp[i][equationnumber];
 			}
 		}
-      
+
 		return;
     }
-    
+
     template<class TypeTag>
     void localDefect (const Entity& e, const VBlockType* sol, bool withBC = true)
     {
       this->getImp().template localDefect<TypeTag>(e, sol, withBC);
     }
-    
+
     void setLocalSolution (const Entity& e)
     {
       this->getImp().setLocalSolution(e);
     }
-    
+
     template<class TypeTag>
     void assembleBC (const Entity& e)
     {
       this->getImp().template assembleBC<TypeTag>(e);
     }
-    
+
     template<class TypeTag>
     void analyticJacobian (const Entity& e, const VBlockType* sol)
     {
@@ -235,17 +233,17 @@ namespace Dune
     {
       return def[i];
     }
-    
+
     void setDt(double d)
     {
     	this->getImp().setDt(d);
     }
-    
+
     virtual double getDt()
     {
     	return this->getImp().getDt();
     }
-    
+
     ElementGeometry fvGeom;
     VBlockType def[SIZE];
     VBlockType u[SIZE];
