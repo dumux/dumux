@@ -31,7 +31,7 @@ namespace Dune
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
-    typedef VC::ScalarVectorType SatType;
+    typedef typename VC::ScalarVectorType SatType;
 
   public:
     virtual FieldVector operator() (const Element& element, const int numberInSelf,
@@ -54,7 +54,7 @@ namespace Dune
       IntersectionIterator isIt = element.ilevelbegin();
       for (; isIt != isItEnd; ++isIt)
 	{
-	  if(is->numberInSelf() == numberInSelf)
+	  if(isIt->numberInSelf() == numberInSelf)
 	    break;
 	}
 
@@ -73,7 +73,7 @@ namespace Dune
 
 	// compute factor in neighbor
 	GeometryType neighborGT = neighborPointer->geometry().type();
-	const LocalPosition& local = ReferenceElements<Scalar,dim>::general(neighborGT).position(0,0);
+	const LocalPosition& localPosNeighbor = ReferenceElements<Scalar,dim>::general(neighborGT).position(0,0);
 
 	// neighbor cell center in global coordinates
 	const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().global(localPosNeighbor);
@@ -95,15 +95,15 @@ namespace Dune
 
 
       // add gravitational effects (rho_w - rho_n)*g
-      helpResult += gravity;
+      helpResult += gravity_;
 
       // set result to K*((dp_c/dS)*grad(S) + (rho_w - rho_n)*g)
       FieldVector result(0);
       K.umv(helpResult, result);
 
       //get lambda_bar = lambda_n*f_w
-      Scalar mobBarI=constRel_.mobN(1-satI)*constRel.fractionalW(satI);
-      Scalar mobBarJ=constRel_.mobN(1-satJ)*constRel.fractionalW(satJ);
+      Scalar mobBarI=constRel_.mobN(1-satI)*constRel_.fractionalW(satI);
+      Scalar mobBarJ=constRel_.mobN(1-satJ)*constRel_.fractionalW(satJ);
 
       // set result to f_w*lambda_n*K*((dp_c/dS)*grad(S) + (rho_w - rho_n)*g)
       result *= (mobBarI+mobBarJ)*0.5;
