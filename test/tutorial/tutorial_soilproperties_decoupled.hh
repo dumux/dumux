@@ -6,43 +6,45 @@
 namespace Dune
 {
 
-template<class G, class RT>
-class TutorialSoil: public HomogeneousSoil<G, RT> /*@\label{tutorial-decoupled:tutorialsoil}@*/
+template<class Grid, class Scalar>
+class TutorialSoil: public HomogeneousSoil<Grid, Scalar> /*@\label{tutorial-decoupled:tutorialsoil}@*/
 {
 public:
-	typedef	typename G::Traits::template Codim<0>::Entity Entity;
-	typedef typename G::ctype DT;
+	typedef	typename Grid::Traits::template Codim<0>::Entity Element;
 
-	enum{n=G::dimension};
+	enum{dim=Grid::dimension, dimWorld=Grid::dimensionworld};
+	typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+	typedef Dune::FieldVector<Scalar, dim> LocalPosition;
+	typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
 	// function returning the intrinsic permeability tensor K
 	// depending on the position within the domain
-	const FieldMatrix<DT,n,n> &K(const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-decoupled:permeability}@*/
-			const FieldVector<DT,n>& xi)
+	const FieldMatrix &K(const GlobalPosition& globalPos, const Element& element, /*@\label{tutorial-decoupled:permeability}@*/
+			const LocalPosition& localPos)
 	{
 		return K_;
 	}
 
 	// function returning the porosity of the porous matrix
 	// depending on the position within the domain
-	double porosity(const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-decoupled:porosity}@*/
-			const FieldVector<DT,n>& xi) const
+	double porosity(const GlobalPosition& globalPos, const Element& element, /*@\label{tutorial-decoupled:porosity}@*/
+			const LocalPosition& localPos) const
 	{
 		return 0.2;
 	}
 
 	// function returning the residual saturation of the wetting fluid
 	// depending on the position within the domain and on the temperature
-	double Sr_w(const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-decoupled:srw}@*/
-			const FieldVector<DT,n>& xi, const double T = 283.15) const
+	double Sr_w(const GlobalPosition& globalPos, const Element& element, /*@\label{tutorial-decoupled:srw}@*/
+			const LocalPosition& localPos, const double T = 283.15) const
 	{
 		return 0;
 	}
 
 	// function returning the residual saturation of the non-wetting fluid
 	// depending on the position within the domain and on the temperature
-	double Sr_n(const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-decoupled:srn}@*/
-			const FieldVector<DT,n>& xi, const double T = 283.15) const
+	double Sr_n(const GlobalPosition& globalPos, const Element& element, /*@\label{tutorial-decoupled:srn}@*/
+			const LocalPosition& localPos, const double T = 283.15) const
 	{
 		return 0;
 	}
@@ -50,8 +52,8 @@ public:
 	// function returning the parameters of the capillary pressure
 	// and the relative permeability functions
 	// depending on the position within the domain and on the temperature
-	std::vector<double> paramRelPerm(const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-decoupled:parameters}@*/
-			const FieldVector<DT,n>& xi, const double T = 283.15) const
+	std::vector<double> paramRelPerm(const GlobalPosition& globalPos, const Element& element, /*@\label{tutorial-decoupled:parameters}@*/
+			const LocalPosition& localPos, const double T = 283.15) const
 	{
 		std::vector<double> param(2);
 
@@ -68,21 +70,21 @@ public:
 
 	// function returning the kind of relation used for the calculation of the capillary
 	// pressure and the relative permeabilities depending on the position within the domain
-	typename Matrix2p<G,RT>::modelFlag relPermFlag(const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-decoupled:flags}@*/
-			const FieldVector<DT,n>& xi) const
+	typename Matrix2p<Grid,Scalar>::modelFlag relPermFlag(const GlobalPosition& globalPos, const Element& e, /*@\label{tutorial-decoupled:flags}@*/
+			const LocalPosition& localPos) const
 	{
-		return Matrix2p<G,RT>::linear; //flag types defined in
+		return Matrix2p<Grid,Scalar>::linear; //flag types defined in
 	}								   //dumux/material/property_baseclasses.hh
 
 	TutorialSoil()
-        :HomogeneousSoil<G,RT>(),K_(0)
+        :HomogeneousSoil<Grid,Scalar>(),K_(0)
 	{
-		for(int i = 0; i < n; i++)
+		for(int i = 0; i < dim; i++)
 			K_[i][i] = 1e-7;
     }
 
 private:
-    FieldMatrix<DT,n,n> K_;
+    FieldMatrix K_;
 
 };
 } // end namespace
