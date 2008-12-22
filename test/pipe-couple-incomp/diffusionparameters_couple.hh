@@ -21,9 +21,9 @@ public:
 	Medium& medium;
 
 	DiffusionParameters (double alpha, BlockVector& pipePress, VertexVectorOnLineType *vertexVectorOnL,
-			GlobalToPipeMapper& map, VertexMapper& vm, Medium& med)
+			GlobalToPipeMapper& map, VertexMapper& vm, Medium& law = *(new Uniform))
 	: alphaEx(alpha), pipePressure(pipePress),
-	mapGlobalIDtoPipeID(map), vertexMapper(vm), medium(med)
+	mapGlobalIDtoPipeID(map), vertexMapper(vm), medium(law), materialLaw_(law)
 	{
 		for (int i=0; i<n; i++)
 			for (int j=0; j<n; j++)
@@ -32,6 +32,11 @@ public:
 				else
 					large[i][j] = 0/medium.viscosity();
 
+		gravity_[0] = 0;
+		gravity_[1] = 0;
+		gravity_[n-1] = -9.81;
+		Temperature = 288.15;
+		density_= materialLaw_.density(Temperature);
 		vertexVectorOnLine = *vertexVectorOnL;
 	}
 
@@ -40,6 +45,12 @@ public:
 			{
 		return large;
 			}
+
+	const Dune::FieldVector<RT,n>& gravity () const
+	{
+		return gravity_;
+	}
+
 
 	RT q   (const Dune::FieldVector<DT,n>& x, const Entity& e,
 			const Dune::FieldVector<DT,n>& xi, const int& node) const
@@ -66,10 +77,10 @@ public:
 		//		std::cout << "global coordinate "<< x << "bctype: boundaryId = " << intersectionIt.boundaryId() << std::endl;
 
 		switch (intersectionIt.boundaryId()) {
-		case 1: case 2: case 3: case 4: case 6:
+		case 1: case 2: case 3: case 4:
 			values = Dune::BoundaryConditions::neumann;
 			break;
-		case 5:
+		case 5: case 6:
 			values = Dune::BoundaryConditions::dirichlet;
 			break;
 		}
@@ -100,6 +111,9 @@ public:
 		switch (intersectionIt.boundaryId()) {
 		case 5:
 			values= 1.0e+5;
+			break;
+		case 6:
+			values= 4.0e+5;
 			break;
 		}
 
@@ -132,8 +146,18 @@ public:
 		return values;
 			}
 
+	Medium& materialLaw() {
+		return materialLaw_;
+	}
+	const RT& Temp(){
+		return Temperature;
+	}
 private:
 	Dune::FieldMatrix<DT,n,n> large;
+	Dune::FieldVector<RT,n> gravity_;
+	RT density_;
+	RT Temperature;
+	Medium& materialLaw_;
 };
 
 #endif

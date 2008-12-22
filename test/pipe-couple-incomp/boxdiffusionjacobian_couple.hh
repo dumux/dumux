@@ -98,6 +98,12 @@ public:
 			gradP += grad;
 		}
 
+		FieldVector<RT,n> gravity = problem.gravity();
+		double densityFace =  problem.materialLaw().density(problem.Temp());
+
+		gravity *= (-densityFace);
+		gradP += gravity;
+
 		FieldVector<RT,n> KGradP(0);
 		elData.K.umv(gradP, KGradP);
 

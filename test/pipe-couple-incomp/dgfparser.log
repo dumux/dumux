@@ -3,12 +3,12 @@ Using Vertex block
 Using Cube block
 Step 1 finished: 
                  3d
-                 9261 verticies
-                 8000 elements
+                 525 verticies
+                 320 elements
 Using boundarysegments block
 Step 2 finished: 
-                 2400 bnd-segs read in BoundarySegment block
-                 2400 bnd-segs in grid
+                 352 bnd-segs read in BoundarySegment block
+                 352 bnd-segs in grid
                  0 bnd-segs a boundary domain
                  0 bnd-seg assigned default value
                  0 bnd-segs have not been assigned an id!
