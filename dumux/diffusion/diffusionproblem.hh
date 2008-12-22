@@ -129,7 +129,7 @@ namespace Dune
 	//! a class describing relations between two phases and the porous medium
 	VC& variables;
 	TwoPhaseRelations& materialLaw;
-	const bool capillary;
+	const bool capillarity;
   protected:
 	  FieldVector<Scalar,dim> gravity_;
   };
