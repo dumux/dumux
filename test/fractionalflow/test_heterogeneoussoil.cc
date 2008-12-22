@@ -51,10 +51,10 @@ int main(int argc, char** argv)
 //    soil.permeability.vtkout("permeability", grid);
 
     typedef Dune::FVDiffusionVelocity<GridType, NumberType, VariableType> DiffusionType;
-    DiffusionType diffusion(grid, problem, grid.maxLevel());
+    DiffusionType diffusion(grid, problem);
 
     typedef Dune::FVTransport<GridType, NumberType, VariableType> TransportType;
-    TransportType transport(grid, problem, grid.maxLevel());
+    TransportType transport(grid, problem);
 
     int iterFlag = 2;
     int nIter = 30;
