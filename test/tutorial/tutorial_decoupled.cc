@@ -47,11 +47,11 @@ int main(int argc, char** argv)
 
     // create object including the discretisation of the pressure equation
     typedef Dune::FVDiffusionVelocity<GridType, NumberType, VariableType> DiffusionType;
-    DiffusionType diffusion(grid, problem, grid.maxLevel()); /*@\label{tutorial-decoupled:diffusion}@*/
+    DiffusionType diffusion(grid, problem); /*@\label{tutorial-decoupled:diffusion}@*/
 
     // create object including the space discretisation of the saturation equation
     typedef Dune::FVTransport<GridType, NumberType, VariableType> TransportType;
-    TransportType transport(grid, problem, grid.maxLevel()); /*@\label{tutorial-decoupled:transport}@*/
+    TransportType transport(grid, problem); /*@\label{tutorial-decoupled:transport}@*/
 
     // some parameters used in the IMPES-object
     int iterFlag = 2;

@@ -6,37 +6,37 @@
 namespace Dune
 {
 
-template<class G, class RT, class VC> class TutorialProblemDecoupled /*@\label{tutorial-decoupled:tutorialproblem}@*/
-	: public FractionalFlowProblem<G, RT, VC>
+template<class Grid, class Scalar, class VC> class TutorialProblemDecoupled /*@\label{tutorial-decoupled:tutorialproblem}@*/
+	: public FractionalFlowProblem<Grid, Scalar, VC>
 {
-
-typedef	typename G::ctype DT;
 	enum
-	{	n=G::dimension};
-	typedef typename G::Traits::template Codim<0>::Entity Entity;
+	{dim=Grid::dimension, dimWorld = Grid::dimensionworld};
+	typedef typename Grid::Traits::template Codim<0>::Entity Element;
+	typedef Dune::FieldVector<Scalar,dim> LocalPosition;
+	typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
 
 public:
-	TutorialProblemDecoupled(VC& variableobj, Fluid& wp, Fluid& nwp, Matrix2p<G, RT>& s,
-			TwoPhaseRelations<G, RT>& law = *(new TwoPhaseRelations<G,RT>),
-			const FieldVector<DT,n> Left = 0, const FieldVector<DT,n> Right = 0)
-	: FractionalFlowProblem<G, RT, VC>(variableobj, wp, nwp, s, law),
+	TutorialProblemDecoupled(VC& variables, Fluid& wettingphase, Fluid& nonwettingphase, Matrix2p<Grid, Scalar>& soil,
+			TwoPhaseRelations<Grid, Scalar>& materialLaw = *(new TwoPhaseRelations<Grid,Scalar>),
+			const FieldVector<Scalar,dim> Left = 0, const FieldVector<Scalar,dim> Right = 0)
+	: FractionalFlowProblem<Grid, Scalar, VC>(variables, wettingphase, nonwettingphase, soil, materialLaw),
 	Left_(Left[0]), Right_(Right[0]), eps_(1e-8)
 	{}
 
 	// function returning source/sink terms for the pressure equation
 	// depending on the position within the domain
-	virtual RT qPress (const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-decoupled:qpress}@*/
-			const FieldVector<DT,n>& xi)
+	virtual Scalar sourcePress (const GlobalPosition& globalPos, const Element& e, /*@\label{tutorial-decoupled:qpress}@*/
+			const LocalPosition& localPos)
 	{
 		return 0;
 	}
 
 	// function returning the boundary condition type for solution
 	// of the pressure equation depending on the position within the domain
-	typename BoundaryConditions::Flags bctypePress(const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-decoupled:bctypepress}@*/
-			const FieldVector<DT,n>& xi) const
+	typename BoundaryConditions::Flags bctypePress(const GlobalPosition& globalPos, const Element& e, /*@\label{tutorial-decoupled:bctypepress}@*/
+			const LocalPosition& localPos) const
 	{
-		if (x[0] < eps_)
+		if (globalPos[0] < eps_)
 		{
 			return BoundaryConditions::dirichlet;
 		}
@@ -46,10 +46,10 @@ public:
 
 	// function returning the boundary condition type for solution
 	// of the saturation equation depending on the position within the domain
-	BoundaryConditions::Flags bctypeSat (const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-decoupled:bctypesat}@*/
-			const FieldVector<DT,n>& xi) const
+	BoundaryConditions::Flags bctypeSat (const GlobalPosition& globalPos, const Element& e, /*@\label{tutorial-decoupled:bctypesat}@*/
+			const LocalPosition& localPos) const
 	{
-		if (x[0]> (Right_ - eps_) || x[0] < eps_)
+		if (globalPos[0]> (Right_ - eps_) || globalPos[0] < eps_)
 		{
 			return Dune::BoundaryConditions::dirichlet;
 		}
@@ -59,18 +59,18 @@ public:
 
 	// function returning the Dirichlet boundary condition for the solution
 	// of the pressure equation depending on the position within the domain
-	RT gPress(const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-decoupled:gpress}@*/
-			const FieldVector<DT,n>& xi) const
+	Scalar dirichletPress(const GlobalPosition& globalPos, const Element& e, /*@\label{tutorial-decoupled:gpress}@*/
+			const LocalPosition& localPos) const
 	{
 		return 2e5;
 	}
 
 	// function returning the Dirichlet boundary condition for the solution
 	// of the saturation equation depending on the position within the domain
-	RT gSat(const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-decoupled:gsat}@*/
-			const FieldVector<DT,n>& xi) const
+	Scalar dirichletSat(const GlobalPosition& globalPos, const Element& e, /*@\label{tutorial-decoupled:gsat}@*/
+			const LocalPosition& localPos) const
 	{
-		if (x[0] < eps_)
+		if (globalPos[0] < eps_)
 		{
 			return 1;
 		}
@@ -80,10 +80,10 @@ public:
 
 	// function returning the Neumann boundary condition for the solution
 	// of the pressure equation depending on the position within the domain
-	RT JPress(const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-decoupled:jpress}@*/
-			const FieldVector<DT,n>& xi) const
+	Scalar neumannPress(const GlobalPosition& globalPos, const Element& e, /*@\label{tutorial-decoupled:jpress}@*/
+			const LocalPosition& localPos) const
 	{
-		if (x[0]> Right_ - eps_)
+		if (globalPos[0]> Right_ - eps_)
 		{
 			return 3e-7;
 		}
@@ -93,17 +93,17 @@ public:
 
 	// function returning the initial saturation
 	// depending on the position within the domain
-	RT initSat (const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-decoupled:initsat}@*/
-			const FieldVector<DT,n>& xi) const
+	Scalar initSat (const GlobalPosition& globalPos, const Element& e, /*@\label{tutorial-decoupled:initsat}@*/
+			const FieldVector<Scalar,dim>& xi) const
 	{
 		return 0;
 	}
 
 private:
-	DT Left_;
-	DT Right_;
+	Scalar Left_;
+	Scalar Right_;
 
-	RT eps_;
+	Scalar eps_;
 };
 } // end namespace
 #endif
