@@ -11,7 +11,7 @@ namespace Dune
      typedef typename G::ctype DT;
      enum {n=G::dimension};
 	   typedef typename G::Traits::template Codim<0>::Entity Entity;
-     
+
    public:
      McWhorterDiffProblem(VC& variableobj, TwoPhaseRelations& law = *(new LinearLaw),
                                  const FieldVector<DT,n> Left = 0, const FieldVector<DT,n> Right = 0,
@@ -21,44 +21,50 @@ namespace Dune
         eps_(1e-8),
         pleftbc_(pleftbc),prightbc_(prightbc)
      {}
-     
-     typename BoundaryConditions::Flags bctype (const FieldVector<DT,n>& x, const Entity& e, 
+
+                                 RT source (const FieldVector<DT,n>& x, const Entity& e,
+                             	  const FieldVector<DT,n>& xi)
+                                 {
+                                 	return 0;
+                                 }
+
+     typename BoundaryConditions::Flags bctype (const FieldVector<DT,n>& x, const Entity& e,
 						   const FieldVector<DT,n>& xi) const
      {
-       if (x[0] < eps_)  
+       if (x[0] < eps_)
 	 return BoundaryConditions::dirichlet;
        // all other boundaries
        return BoundaryConditions::neumann;
-      
+
      }
-     
-     RT g (const FieldVector<DT,n>& x, const Entity& e, 
+
+     RT dirichletPress (const FieldVector<DT,n>& x, const Entity& e,
 	   const FieldVector<DT,n>& xi) const
      {
-       if (x[0] < eps_) 
+       if (x[0] < eps_)
 	 return pleftbc_;
        //all other boundaries
        return prightbc_;
      }
-     
-     RT gSat (const FieldVector<DT,n>& x, const Entity& e, 
- 	  const FieldVector<DT,n>& xi) const 
+
+     RT dirichletSat (const FieldVector<DT,n>& x, const Entity& e,
+ 	  const FieldVector<DT,n>& xi) const
      {
-       if (x[0] < eps_) 
+       if (x[0] < eps_)
  	return 1;
        else
  	return 0;
      }
-     
-     RT J (const FieldVector<DT,n>& x, const Entity& e, 
+
+     RT neumannPress (const FieldVector<DT,n>& x, const Entity& e,
 	   const FieldVector<DT,n>& xi) const
-     {      
+     {
        return 0;
      }
    private:
      DT Left_;
       DT Right_;
-     
+
      RT eps_;
      RT pleftbc_, prightbc_;
    };

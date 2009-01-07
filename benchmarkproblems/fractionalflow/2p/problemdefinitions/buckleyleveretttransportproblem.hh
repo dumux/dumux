@@ -1,7 +1,7 @@
 #ifndef DUNE_BUCKLEYLEVERETTTRANSPORTPROBLEM_HH
 #define DUNE_BUCKLEYLEVERETTTRANSPORTPROBLEM_HH
 
-#include "dumux/transport/transportproblem.hh"
+#include "dumux/transport/transportproblem_deprecated.hh"
 
 namespace Dune
 {
@@ -37,9 +37,9 @@ namespace Dune
 	return Dune::BoundaryConditions::neumann;
     }
 
-    RT g (const FieldVector<DT,n>& x, const Entity& e,
-	  const FieldVector<DT,n>& xi) const
-    {
+    RT dirichlet (const FieldVector<DT,n>& x, const Entity& e,
+    	  const FieldVector<DT,n>& xi) const
+        {
       if (x[0] < eps_)
 	return 0.8;
       else

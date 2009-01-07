@@ -18,34 +18,40 @@ public:
 			RT prightbc=1.999986e5, const bool cap = false) :
 		HomogeneousProblem<G, RT, VC>(variableobj, law, cap/*,1e-7*/), Left_(Left[0]),
 				Right_(Right[0]), eps_(1e-8), pleftbc_(pleftbc),
-				prightbc_(prightbc) 
+				prightbc_(prightbc)
 				{}
 
 	typename BoundaryConditions::Flags bctype(const FieldVector<DT,n>& x,
 			const Entity& e, const FieldVector<DT,n>& xi) const {
-		if ((x[0] < eps_))//  || x[0] > (Right_ - eps_))  
+		if ((x[0] < eps_))//  || x[0] > (Right_ - eps_))
 			return BoundaryConditions::dirichlet;
 		// all other boundaries
 		return BoundaryConditions::neumann;
 	}
 
-	RT g(const FieldVector<DT,n>& x, const Entity& e,
+    RT source (const FieldVector<DT,n>& x, const Entity& e,
+	  const FieldVector<DT,n>& xi)
+    {
+    	return 0;
+    }
+
+	RT dirichletPress(const FieldVector<DT,n>& x, const Entity& e,
 			const FieldVector<DT,n>& xi) const {
 		if (x[0] < eps_)
 			return pleftbc_;
 		// all other boundaries
 		return prightbc_;
 	}
-	
-	RT gSat(const FieldVector<DT,n>& x, const Entity& e,
+
+	RT dirichletSat(const FieldVector<DT,n>& x, const Entity& e,
 			const FieldVector<DT,n>& xi) const {
 		if (x[0] < eps_)
 			return 0.8;
 		// all other boundaries
 		return 0.2;
-	}	
+	}
 
-	RT J(const FieldVector<DT,n>& x, const Entity& e,
+	RT neumannPress(const FieldVector<DT,n>& x, const Entity& e,
 			const FieldVector<DT,n>& xi) const {
 		if (x[0] > Right_ - eps_)
 			return 3e-7;
