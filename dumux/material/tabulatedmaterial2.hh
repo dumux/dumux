@@ -21,7 +21,7 @@
 #ifndef DUMUX_TABULATED_MATERIAL2_HH
 #define DUMUX_TABULATED_MATERIAL2_HH
 
-#include <dune/common/exceptions.hh>
+#include <dumux/exceptions.hh>
 
 #include <assert.h>
 
@@ -64,7 +64,7 @@ namespace Dune {
 #ifndef NDEBUG
             if (!applies(x,y))
             {
-                DUNE_THROW(RangeError,
+                DUNE_THROW(NumericalProblem,
                            "Attempt to get tabulated " << Traits::name << " value for (" 
                            << x << ", " << y
                            << ") on a table of extend " 
@@ -113,7 +113,7 @@ namespace Dune {
 #ifndef NDEBUG
             if (i < 0 || i >= Traits::numX || 
                 j < 0 || j >= Traits::numY) {
-                DUNE_THROW(RangeError,
+                DUNE_THROW(NumericalProblem,
                            "Attempt to access element (" 
                            << i << ", " << j
                            << ") on a " << Traits::name << " table of size (" 

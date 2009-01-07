@@ -217,6 +217,60 @@ namespace Dune
         template <class NewtonController>
         bool execute(Model &model, NewtonController &ctl)
             {
+                try {
+                    return execute_(model, ctl);
+                }
+                catch (Dune::NumericalProblem) {
+                    ctl.newtonFail();
+                    model_ = NULL;
+                    return false;
+                };
+            };
+        
+        /*!
+         * \brief Returns the current Jacobian matrix.
+         */
+        const JacobianMatrix &currentJacobian() const
+            { return *(model_->jacobianAssembler()); }
+
+
+        /*!
+         * \brief This method causes the residual to be recalcuated
+         *        next time the residual() method is called. It is
+         *        internal and only used by some update methods such
+         *        as LineSearch.
+         */
+        void setResidualObsolete(bool yesno=true)
+            { residualUpToDate_ = !yesno; };
+
+        /*!
+         * \brief Returns the current residual, i.e. the deivation of
+         *        the non-linear function from 0 for the current
+         *        iteration.
+         */
+        Function &residual()
+            {
+                if (!residualUpToDate_) {
+                    if (!residual_)
+                        residual_ = new Function(model_->grid(), 0.0);
+                    // update the residual
+                    model_->evalGlobalResidual(*residual_);
+                    residualUpToDate_ = true;
+                }
+
+                return *residual_;
+            }
+
+        /*!
+         * \brief Returns the euclidean norm of the last newton step size.
+         */
+        Scalar deflectionTwoNorm() const
+            { return deflectionTwoNorm_; }
+
+    protected:
+        template <class NewtonController>
+        bool execute_(Model &model, NewtonController &ctl)
+            {
                 model_ = &model;
 
                 // TODO (?): u shouldn't be hard coded to the model
@@ -282,46 +336,7 @@ namespace Dune
                 model_ = NULL;
                 return true;
             }
-
-        /*!
-         * \brief Returns the current Jacobian matrix.
-         */
-        const JacobianMatrix &currentJacobian() const
-            { return *(model_->jacobianAssembler()); }
-
-
-        /*!
-         * \brief This method causes the residual to be recalcuated
-         *        next time the residual() method is called. It is
-         *        internal and only used by some update methods such
-         *        as LineSearch.
-         */
-        void setResidualObsolete(bool yesno=true)
-            { residualUpToDate_ = !yesno; };
-
-        /*!
-         * \brief Returns the current residual, i.e. the deivation of
-         *        the non-linear function from 0 for the current
-         *        iteration.
-         */
-        Function &residual()
-            {
-                if (!residualUpToDate_) {
-                    if (!residual_)
-                        residual_ = new Function(model_->grid(), 0.0);
-                    // update the residual
-                    model_->evalGlobalResidual(*residual_);
-                    residualUpToDate_ = true;
-                }
-
-                return *residual_;
-            }
-
-        /*!
-         * \brief Returns the euclidean norm of the last newton step size.
-         */
-        Scalar deflectionTwoNorm() const
-            { return deflectionTwoNorm_; }
+        
 
     private:
         Function       uOld;

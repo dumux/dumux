@@ -6,6 +6,8 @@
 #include "co2tables.hh"
 #include "co2tables_old.hh"
 
+#include <dumux/exceptions.hh>
+
 #include <math.h>
 
 namespace Dune
@@ -51,7 +53,7 @@ namespace Dune
                 if(temp < 275.) // regularisation
                 {
                     // temp = 275;
-                    DUNE_THROW(Dune::RangeError,
+                    DUNE_THROW(Dune::NumericalProblem,
                                "ConstrelCO2: Temperature " << temp << " out of range at " << __FILE__ << ":" << __LINE__);
                 }
                 
@@ -113,7 +115,7 @@ namespace Dune
 
 /*                if(temp < 270 || temp > 304)
                 {
-                    DUNE_THROW(Dune::RangeError,
+                    DUNE_THROW(Dune::NumericalProblem,
                                "ConstrelCO2: Temperature " << temp << " out of range at " << __FILE__ << ":" << __LINE__);
                 }
 */
@@ -131,7 +133,7 @@ namespace Dune
                     }
                 }
 
-                DUNE_THROW(Dune::RangeError, "satpressure_CO2: Temperature " << temp << " out of range");
+                DUNE_THROW(Dune::NumericalProblem, "satpressure_CO2: Temperature " << temp << " out of range");
             }
     };
 };

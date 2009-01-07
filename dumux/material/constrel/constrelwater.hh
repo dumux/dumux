@@ -101,11 +101,11 @@ public:
 
             /* Regularisierung */
             if(temperature < 273.15 || temperature > 1073.15) {
-                    DUNE_THROW(Dune::RangeError,
+                    DUNE_THROW(Dune::NumericalProblem,
                                "ConstrelWater: Temperature " << temperature << " out of range at " << __FILE__ << ":" << __LINE__);
                 }
                 else if (pw < 1.0 || pw > 1.0E8) {
-                    DUNE_THROW(Dune::RangeError,
+                    DUNE_THROW(Dune::NumericalProblem,
                                "ConstrelWater: pressure " << pw << " out of range at " << __FILE__ << ":" << __LINE__);
                 }
                 /*
@@ -171,11 +171,11 @@ public:
 
             /* Regularisierung */
             if(temperature < 273.15 || temperature > 623.15) {
-                    DUNE_THROW(Dune::RangeError,
+                    DUNE_THROW(Dune::NumericalProblem,
                                "ConstrelWater: Temperature " << temperature << " out of range at " << __FILE__ << ":" << __LINE__);
                 }
                 else if (pw < 1.0 || pw > 1.0E8) {
-                    DUNE_THROW(Dune::RangeError,
+                    DUNE_THROW(Dune::NumericalProblem,
                                "ConstrelWater: pressure " << pw << " out of range at " << __FILE__ << ":" << __LINE__);
                 }
 /*        if (temperature < 273.15) temperature = 273.15;
@@ -195,7 +195,7 @@ public:
 
             /* regularization */
             if (pw < 1.0 || pw > 1.0E8) {
-                DUNE_THROW(Dune::RangeError,
+                DUNE_THROW(Dune::NumericalProblem,
                            "ConstrelWater: pressure " << pw << " out of range at " << __FILE__ << ":" << __LINE__);
             }
 /*	        if (pw < 1.0)
@@ -424,7 +424,7 @@ public:
             l_s = 4.5; /*W/mK*/
 
             l_w = lambda_w(temperature);
-            l_g = co2.lambda (temperature, p);
+            l_g = co2.lambda(temperature, p);
             l_pm = l_s*(1- phi) + l_w*Sw*phi + l_g* Sg*phi;
 
             /*wet*/
