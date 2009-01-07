@@ -31,11 +31,11 @@ namespace Dune
 	- Scalar        type used for return values
 
    */
-  template<class Grid, class Scalar,class VC>
+    template<class Grid, class Scalar,class VC>
   class Diffusion {
   public:
-	  typedef Scalar ScalarType;
-	FractionalFlowProblem<Grid, Scalar, VC>& diffProblem; //!< problem data
+//     Problem &diffproblem;
+	FractionalFlowProblem<Grid, Scalar, VC>& diffproblem; //!< problem data
 
 	//! \brief Calculate the pressure.
 	/*!

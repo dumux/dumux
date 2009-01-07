@@ -87,20 +87,23 @@ public:
 
 
 	LeakyWellSoil()
-	:HomogeneousSoil<Grid,Scalar>()
+        :HomogeneousSoil<Grid,Scalar>(),
+         permloc_(0.0), permlocWell_(0.0)     
 	{
-	  permloc_ = 0;
-	  permlocWell_ = 0;
 	  for (int i = 0; i < dim; i++)
 		permloc_[i][i] = 2.0e-14;
+
       for (int i = 0; i < dim; i++)
         permlocWell_[i][i] = 1.0e-12;
+/*
+	  permlocAquitard_ = 0;
       for (int i = 0; i < dim; i++)
     	permlocAquitard_[i][i] = 1.0e-18;
+*/
 	}
 
 	private:
-	Dune::FieldMatrix<Scalar,dim,dim> permloc_, permlocWell_, permlocAquitard_;
+	Dune::FieldMatrix<Scalar,dim,dim> permloc_, permlocWell_ /*, permlocAquitard_*/;
 };
 } // end namespace
 #endif

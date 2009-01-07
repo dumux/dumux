@@ -307,7 +307,7 @@ public:
 			V1=Ve;Vr=V1;n1=n;e1=e;
 		}
 		ConstrelCO2 constrelCO2;
-		ps = constrelCO2.satpressure_CO2 (T);
+		ps = constrelCO2.satpressure(T);
 		Vc = 0.1; Vd = 85.0; i=-1;
 		for (n=1; n<=30; n++)
 		{

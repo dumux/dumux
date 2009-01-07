@@ -148,7 +148,8 @@ namespace Dune
                 depthBOR_ = 800.0;
 
                 gravity_[0] = 0;
-                gravity_[1] = -9.81;
+                gravity_[1] = 0;
+                gravity_[2] = -9.81;
             }
 
         ///////////////////////////////////
@@ -298,10 +299,10 @@ namespace Dune
                            const LocalPosition &localPos) const
             {
                 values = BoundaryConditions::neumann;
-                if (globalPos[0] < -500+1e-3 ||
-                    globalPos[0] > 500-1e-3 ||
-                    globalPos[1] < -500+1e-3 ||
-                    globalPos[1] > 500-1e-3)
+                if (globalPos[0] < -500 + 1e-3 ||
+                    globalPos[0] >  500 - 1e-3 ||
+                    globalPos[1] < -500 + 1e-3 ||
+                    globalPos[1] >  500 - 1e-3)
                 {
                     values = BoundaryConditions::dirichlet;
                 }

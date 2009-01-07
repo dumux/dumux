@@ -69,9 +69,9 @@ namespace Dune
         typedef PwSnTraitsT                             PwSnTraits;
 
         enum {
-            dim          = DomTraits::dim,
-            dimWorld         = DomTraits::dimWorld,
-            numEq = BoxTraits::numEq,
+            dim            = DomTraits::dim,
+            dimWorld       = DomTraits::dimWorld,
+            numEq          = BoxTraits::numEq,
             pWIdx          = PwSnTraits::pWIdx,
             snIdx          = PwSnTraits::snIdx
         };

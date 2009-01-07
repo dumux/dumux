@@ -45,7 +45,7 @@ namespace Dune {
         typedef typename ParentType::Function          Function;
         typedef typename ParentType::JacobianAssembler JacobianAssembler;
 
-        TwoPTwoCNINewtonController(Scalar tolerance = 1e-7,
+        TwoPTwoCNINewtonController(Scalar tolerance = 1e-5,
                                    int targetSteps = 9,
                                    int maxSteps = 18)
             : ParentType(tolerance, targetSteps, maxSteps)

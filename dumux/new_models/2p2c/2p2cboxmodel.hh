@@ -175,12 +175,12 @@ namespace Dune
         };
 
         void updateVarVertexData_(VariableVertexData &d,
-                                const SolutionVector &vertSol,
-                                int phaseState,
-                                const Element &element,
-                                int localIdx,
-                                Problem &problem,
-                                Scalar temperature) const
+                                  const SolutionVector &vertSol,
+                                  int phaseState,
+                                  const Element &element,
+                                  int localIdx,
+                                  Problem &problem,
+                                  Scalar temperature) const
                 {
                     const GlobalPosition &global = element.geometry()[localIdx];
                     const LocalPosition &local =
@@ -437,7 +437,6 @@ namespace Dune
                     pGrad[phase] -= tmp;
                 }
 
-
                 // calculate the permeability tensor
                 Tensor K         = this->problem_.soil().K(global_i, ParentType::curElement_(), local_i);
                 const Tensor &Kj = this->problem_.soil().K(global_j, ParentType::curElement_(), local_j);
@@ -459,6 +458,7 @@ namespace Dune
                 const VariableVertexData *dnW = &(this->curElemDat_.vertex[j]);
                 const VariableVertexData *upN = &(this->curElemDat_.vertex[i]);
                 const VariableVertexData *dnN = &(this->curElemDat_.vertex[j]);
+                
                 if (vDarcyOut[wPhase] > 0) {
                     std::swap(upW, dnW);
                 };
@@ -467,7 +467,7 @@ namespace Dune
                 };
 
                 // Upwind parameter
-                Scalar alpha = 1.0; // -> use only the upstream vert
+                Scalar alpha = 1.0; // -> use only the upstream vertex
 
                 ////////
                 // advective flux of the wetting component

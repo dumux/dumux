@@ -5,6 +5,8 @@
 
 #include "constrelwater.hh"
 
+namespace Dune {
+
 class ConstrelBrine {
 public:
 	/**************************************************************************/
@@ -171,8 +173,8 @@ public:
 		double X_lSAT, delta_h;
 		int i, j;
 		double delta_hCO2, hg, hw;
-		ConstrelWater water;
-		ConstrelCO2 co2;
+        Dune::ConstrelWater water;
+        Dune::ConstrelCO2 co2;
 
 		theta = T - 273.15;
 
@@ -214,5 +216,7 @@ public:
 		return (h_ls);
 	}
 };
+
+}
 
 #endif
