@@ -1,9 +1,9 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_TRANSPORT_DEPRECATED_HH
 #define DUNE_TRANSPORT_DEPRECATED_HH
 
-#include "dumux/transport/transportproblem.hh"
+#include "dumux/transport/transportproblem_deprecated.hh"
 
 /**
  * @file

@@ -2,6 +2,10 @@
 #ifndef DUNE_VARIABLECLASS_HH
 #define DUNE_VARIABLECLASS_HH
 
+#include <dune/istl/bvector.hh>
+#include <dune/grid/common/mcmgmapper.hh>
+#include <dune/grid/io/file/vtk/vtkwriter.hh>
+
 /**
  * @file
  * @brief  class including the variables
@@ -41,8 +45,8 @@ public:
 	typedef Dune::BlockVector< FieldVector<FieldVector<Scalar, dim>, 2*dim> > VelType;
 
 	Grid& grid;
-	int diffLevel;
 	int transLevel;
+	int diffLevel;
 	ElementMapper diffMapper;
 	ElementMapper transMapper;
 	int diffSize;

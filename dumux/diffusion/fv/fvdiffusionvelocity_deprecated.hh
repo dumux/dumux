@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_DIFFUSIONVELOCITY_DEPRECATED_HH
 #define DUNE_DIFFUSIONVELOCITY_DEPRECATED_HH
@@ -201,7 +201,7 @@ public:
 						lambda = lambdaI;
 						if (hasGravity) fractionalW = fractionalWI;
 
-						double g = this->diffproblem.g(faceglobal, *it, facelocalDim);
+						double g = this->diffproblem.dirichletPress(faceglobal, *it, facelocalDim);
 
 						FieldVector<ct,dim> vTotal(Kni);
 						vTotal *= lambda*(g-pressi)/dist;
@@ -217,7 +217,7 @@ public:
 					}
 					else
 					{
-						double J = this->diffproblem.J(faceglobal, *it, facelocalDim);
+						double J = this->diffproblem.neumannPress(faceglobal, *it, facelocalDim);
 						FieldVector<ct,dimworld> unitOuterNormal
 						= is->unitOuterNormal(facelocal);
 						this->diffproblem.variables.velocity[indexi][numberInSelf] = unitOuterNormal;
@@ -228,7 +228,7 @@ public:
 			}
 			// end all intersections
 //			std::cout<<"velocity = "<< this->diffproblem.variables.velocity <<std::endl;
-			if (dim == 1&& this->diffproblem.capillary != true) {
+			if (dim == 1&& this->diffproblem.capillarity != true) {
 				double sum = (fabs(this->diffproblem.variables.velocity[indexi][0][0]*faceVol[0])
 						+ fabs(this->diffproblem.variables.velocity[indexi][1][0]));
 				double diff = fabs(this->diffproblem.variables.velocity[indexi][0][0]*faceVol[0]
@@ -240,7 +240,7 @@ public:
 							<< this->diffproblem.variables.velocity[indexi][1][0]*faceVol[1]<< std::endl;
 				}
 			}
-			if (dim == 2&& this->diffproblem.capillary != true) {
+			if (dim == 2&& this->diffproblem.capillarity != true) {
 				double sum = (fabs(this->diffproblem.variables.velocity[indexi][0][0]*faceVol[0])
 						+ fabs(this->diffproblem.variables.velocity[indexi][1][0]*faceVol[1])
 						+ fabs(this->diffproblem.variables.velocity[indexi][2][1]*faceVol[2])

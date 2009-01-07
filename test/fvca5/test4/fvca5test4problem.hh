@@ -13,18 +13,18 @@ namespace Dune
 	  typedef typename G::ctype DT;
 	  enum {n=G::dimension};
 	  typedef typename G::Traits::template Codim<0>::Entity Entity;
-	
+
 	public:
 	  FVCA5Test4Problem(VC& variables)
 	    : DiffusionProblem<G,RT,VC>(variables)
 	  { }
-	
-	  FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x, const Entity& e, 
-					  const FieldVector<DT,n>& xi) 
+
+	  FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x, const Entity& e,
+					  const FieldVector<DT,n>& xi)
 	  {
 		  if (x[0] < 0.5) {
 		     int inty = (int)(10.0*(x[1] + 0.15));
-		     if (inty - 2*(int)(inty/2) == 0) {	
+		     if (inty - 2*(int)(inty/2) == 0) {
 		        permloc_[0][0] = 100.0;
 		        permloc_[0][1] = permloc_[1][0] = 0.0;
 		        permloc_[1][1] = 10.0;
@@ -51,26 +51,26 @@ namespace Dune
 
 		  return permloc_;
 	  }
-	
-	  RT q   (const FieldVector<DT,n>& x, const Entity& e, 
+
+	  RT source   (const FieldVector<DT,n>& x, const Entity& e,
 					  const FieldVector<DT,n>& xi)
 	  {
-		  return (0.0);  
+		  return (0.0);
 	  }
-	
-	  typename BoundaryConditions::Flags bctype (const FieldVector<DT,n>& x, const Entity& e, 
+
+	  typename BoundaryConditions::Flags bctype (const FieldVector<DT,n>& x, const Entity& e,
 						   const FieldVector<DT,n>& xi) const
 	  {
 	      return BoundaryConditions::dirichlet;
 	  }
-	
-	  RT g (const FieldVector<DT,n>& x, const Entity& e, 
+
+	  RT dirichletPress (const FieldVector<DT,n>& x, const Entity& e,
 					const FieldVector<DT,n>& xi) const
 	  {
 		  return (1.0 - x[0]);
 	  }
-		  
-	  RT J (const FieldVector<DT,n>& x, const Entity& e, 
+
+	  RT neumannPress (const FieldVector<DT,n>& x, const Entity& e,
 					const FieldVector<DT,n>& xi) const
 	  {
 		return 0;
@@ -82,11 +82,11 @@ namespace Dune
 	  }
 
 	  FieldVector<RT,n> exactGrad (const FieldVector<DT,n>& x) const
-	  {	
+	  {
 		  FieldVector<RT,n> grad(0);
 		  return grad;
 	  }
-	
+
 	private:
 		FieldMatrix<DT,n,n> permloc_;
 	};

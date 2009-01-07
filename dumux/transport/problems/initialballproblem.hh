@@ -3,7 +3,7 @@
 #ifndef DUNE_INITIALBALLPROBLEM_HH
 #define DUNE_INITIALBALLPROBLEM_HH
 
-#include "dumux/transport/transportproblem.hh"
+#include "dumux/transport/transportproblem_deprecated.hh"
 
 namespace Dune
 {
@@ -46,7 +46,7 @@ namespace Dune
 			return Dune::BoundaryConditions::neumann;
 	}
 
-	RT g (const FieldVector<DT,n>& x, const Entity& e,
+	RT dirichlet (const FieldVector<DT,n>& x, const Entity& e,
 		   const FieldVector<DT,n>& xi) const
 	{
 			return 0.8;

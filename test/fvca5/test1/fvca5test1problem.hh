@@ -28,7 +28,7 @@ namespace Dune
 		  return permloc;
 	  }
 
-	  RT q   (const FieldVector<DT,n>& x, const Entity& e,
+	  RT source   (const FieldVector<DT,n>& x, const Entity& e,
 					  const FieldVector<DT,n>& xi)
 	  {
 		  // Test 1.1:
@@ -56,20 +56,13 @@ namespace Dune
 	      return BoundaryConditions::dirichlet;
 	  }
 
-	  RT g (const FieldVector<DT,n>& x, const Entity& e,
+	  RT dirichletPress (const FieldVector<DT,n>& x, const Entity& e,
 					const FieldVector<DT,n>& xi) const
 	  {
 		  return (exact(x));
 	  }
 
-	  RT gSat (const FieldVector<DT,n>& x, const Entity& e,
-					const FieldVector<DT,n>& xi) const
-	  {
-		  return (1);
-	  }
-
-
-	  RT J (const FieldVector<DT,n>& x, const Entity& e,
+	  RT neumannPress (const FieldVector<DT,n>& x, const Entity& e,
 					const FieldVector<DT,n>& xi) const
 	  {
 		return 0;

@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_IMPES_HH
 #define DUNE_IMPES_HH
@@ -66,11 +66,11 @@ public:
 		while (!converg) {
 			iter++;
 			iterTot++;
-			if (!this->diffproblem.materialLaw.isLinear()
-					|| this->diffproblem.capillary) { // update pressure
+//			if (!this->diffproblem.materialLaw.isLinear()
+//					|| this->diffproblem.capillary) { // update pressure
 				pressure(t);
 				totalVelocity(t);
-			}
+//			}
 			Transport::update(t, dt, updateVec,cFLFactor);
 			if (iterFlag) { // only needed if iteration has to be done
 				variables().pressure *= omega;

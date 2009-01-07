@@ -11,6 +11,7 @@
 #include "dumux/diffusion/problems/gravityproblem.hh"
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/fractionalflow/variableclass.hh"
+#include "dumux/transport/fv/gravitypart.hh"
 
 int main(int argc, char** argv)
 {
@@ -65,8 +66,8 @@ int main(int argc, char** argv)
     Dune::GravityProblem<GridType, NumberType, VC> diffusionProblem(variables, &grid, materialLaw, gravity);
 
     typedef Dune::FVTransport<GridType, NumberType, VC> Transport;
-    Dune::DiffusivePart<GridType, NumberType> diffPart;
-    Transport transport(grid, transportProblem, grid.maxLevel(), diffPart, reconstruct, alphaMax);
+    Dune::GravityPart<GridType, NumberType, VC> gravityPart(diffusionProblem);
+    Transport transport(grid, transportProblem, grid.maxLevel(), gravityPart, reconstruct, alphaMax);
 
     typedef Dune::FVDiffusionVelocity<GridType, NumberType, VC> Diffusion;
     Diffusion diffusion(grid, diffusionProblem, grid.maxLevel());

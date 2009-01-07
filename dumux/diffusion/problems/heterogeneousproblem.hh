@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef HETEROGENPROBLEM_HH
 #define HETEROGENPROBLEM_HH
@@ -16,55 +16,55 @@ namespace Dune
 	  typedef typename G::ctype DT;
 	  enum {n=G::dimension};
 	  typedef typename G::Traits::template Codim<0>::Entity Entity;
-	
+
 	public:
-	  HeterogeneousProblem(VC& variableobj, const G& g, const char* name = "permeab.dat", const bool create = true, 
+	  HeterogeneousProblem(VC& variableobj, const G& g, const char* name = "permeab.dat", const bool create = true,
 			  				TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false)
 	    : DiffusionProblem<G,RT,VC>(variableobj,law, cap), permeability(g, name, create)
 	  { }
-	
-	  Dune::FieldMatrix<DT,n,n>& K (const Dune::FieldVector<DT,n>& x, const Entity& e, 
-					  const Dune::FieldVector<DT,n>& xi) 
+
+	  Dune::FieldMatrix<DT,n,n>& K (const Dune::FieldVector<DT,n>& x, const Entity& e,
+					  const Dune::FieldVector<DT,n>& xi)
 	  {
 		  return permeability.K(e);
 	  }
-	
-	  RT q   (const Dune::FieldVector<DT,n>& x, const Entity& e, 
+
+	  RT source   (const Dune::FieldVector<DT,n>& x, const Entity& e,
 					  const Dune::FieldVector<DT,n>& xi)
 	  {
 		return 0;
 	  }
-	
-	  typename Dune::BoundaryConditions::Flags bctype (const Dune::FieldVector<DT,n>& x, const Entity& e, 
+
+	  typename Dune::BoundaryConditions::Flags bctype (const Dune::FieldVector<DT,n>& x, const Entity& e,
 						   const Dune::FieldVector<DT,n>& xi) const
 	  {
-	    if (x[0] > 300-1E-6 || x[0] < 1e-6) 
+	    if (x[0] > 300-1E-6 || x[0] < 1e-6)
 	      return Dune::BoundaryConditions::dirichlet;
 	    // all other boundaries
 	    return Dune::BoundaryConditions::neumann;
 	  }
-	
-	  RT g (const Dune::FieldVector<DT,n>& x, const Entity& e, 
+
+	  RT dirichletPress (const Dune::FieldVector<DT,n>& x, const Entity& e,
 					const Dune::FieldVector<DT,n>& xi) const
 	  {
 		  return (x[0] < 1e-6) ? 1e6 : 0;
 	  }
-	  
-		RT gSat (const FieldVector<DT,n>& x, const Entity& e, 
-			   const FieldVector<DT,n>& xi) const 
+
+		RT dirichletSat (const FieldVector<DT,n>& x, const Entity& e,
+			   const FieldVector<DT,n>& xi) const
 		{
-			if (x[0] < 1e-6) 
+			if (x[0] < 1e-6)
 				return 0.8;
 			else
 				return 0.2;
 		}
-		  
-	  RT J (const Dune::FieldVector<DT,n>& x, const Entity& e, 
+
+	  RT neumannPress (const Dune::FieldVector<DT,n>& x, const Entity& e,
 					const Dune::FieldVector<DT,n>& xi) const
 	  {
 		return 0;
 	  }
-		  
+
 		RandomPermeability<G> permeability;
 	};
 }

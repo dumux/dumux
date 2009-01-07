@@ -92,7 +92,7 @@ public:
 	VBlockType computeA (const Entity& e, const VBlockType* sol, int face)
 	{
 		FieldVector<RT, n> gradP(0);
-		for (int k = 0; k < this->fvGeom.nNodes; k++) {
+		for (int k = 0; k < this->fvGeom.numVertices; k++) {
 			FieldVector<RT,n> grad(this->fvGeom.subContVolFace[face].grad[k]);
 			grad *= sol[k];
 			gradP += grad;
@@ -115,7 +115,7 @@ public:
 	void computeElementData (const Entity& e)
 	{
 		// ASSUMING element-wise constant permeability, evaluate K at the cell center
-		elData.K = problem.K(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+		elData.K = problem.K(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
 	};
 
  	virtual void updateVariableData(const Entity& e, const VBlockType* sol, int i, bool old = false)

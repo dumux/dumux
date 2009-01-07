@@ -19,6 +19,7 @@
 #include "dumux/material/phaseproperties/phaseproperties2p.hh"
 #include "dumux/material/twophaserelations.hh"
 #include "co2_soilproperties.hh"
+#include "dumux/io/vtkmultiwriter.hh"
 
 int main(int argc, char** argv)
 {

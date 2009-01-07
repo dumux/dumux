@@ -124,6 +124,7 @@ AC_CONFIG_FILES([Makefile
     test/gravity/Makefile
     test/hysteresis/Makefile
     test/minc/Makefile
+    test/mixed/Makefile
     test/multigrid/Makefile
     test/newton/Makefile
     test/parallel/Makefile

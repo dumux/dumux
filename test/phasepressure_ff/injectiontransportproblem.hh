@@ -34,7 +34,7 @@ namespace Dune
 		return BoundaryConditions::neumann;
     }
 
-    RT g (const FieldVector<DT,n>& x, const Entity& e,
+    RT dirichlet (const FieldVector<DT,n>& x, const Entity& e,
 	  const FieldVector<DT,n>& xi) const
     {
    	if (x[0] < outerLowerLeft_[0] + eps_)

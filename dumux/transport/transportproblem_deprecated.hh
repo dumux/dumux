@@ -1,4 +1,4 @@
-// $Id$
+// $Id: transportproblem.hh 946 2008-12-19 14:33:48Z mwolff $
 
 #ifndef DUNE_TRANSPORTPROBLEM_HH
 #define DUNE_TRANSPORTPROBLEM_HH
@@ -108,6 +108,11 @@ public:
 			const LocalPosition& localPos) const
 	{
 		return dirichlet(globalPos, e, localPos);
+	}
+
+	virtual Scalar porosity () const
+	{
+		return 1.0;
 	}
 
 	//! constructor

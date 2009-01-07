@@ -11,7 +11,7 @@ struct ElementLayout
 	{
 		return gt.dim() == dim;
 	}
-}; 
+};
 
 template<int dim>
 struct FaceLayout
@@ -20,14 +20,14 @@ struct FaceLayout
 	{
 		return gt.dim() == dim-1;
 	}
-}; 
+};
 
-struct BenchmarkResult 
+struct BenchmarkResult
 {
 	double relativeL2Error;
 	double ergrad;
 	double ervell2;
-	double uMin; 
+	double uMin;
 	double uMax;
 	double flux0;
 	double flux1;
@@ -48,9 +48,9 @@ struct BenchmarkResult
 	double ener2;
 	double eren;
 	double uMean;
-	
+
 	template<class GridType, class ProblemType, class SolutionType>
-	void evaluate(const GridType& grid, ProblemType& problem, 
+	void evaluate(const GridType& grid, ProblemType& problem,
 							SolutionType& solution, bool pureNeumann = false)
 	{
 	    typedef typename GridType::Traits::template Codim<0>::Entity Entity;
@@ -61,43 +61,43 @@ struct BenchmarkResult
 	    typedef typename IntersectionIteratorGetter<GridType,LeafTag>::IntersectionIterator IntersectionIterator;
 	    typedef MultipleCodimMultipleGeomTypeMapper<GridType,IS,ElementLayout> EM;
 		typedef MultipleCodimMultipleGeomTypeMapper<GridType,IS,FaceLayout> FM;
-	    typedef typename GridType::ctype ct; 
-	    
+	    typedef typename GridType::ctype ct;
+
 	    enum{dim = GridType::dimension};
 
 		const GV& gridview(grid.levelView(grid.maxLevel()));
 	    const IS& indexset(gridview.indexSet());
 	    EM elementmapper(grid,indexset);
 	    FM facemapper(grid,indexset);
-	    
+
 	    uMean = 0;
 	    double domainVolume = 0;
 	    Iterator eendit = gridview.template end<0>();
 	    for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
 	      {
-	    	// get entity 
-	    	const Entity& element = *it; 
-	    	
-	    	// get volume 
+	    	// get entity
+	    	const Entity& element = *it;
+
+	    	// get volume
 	    	double volume = element.geometry().volume();
-	    	
+
 			// cell index
 			int indexi = elementmapper.map(element);
-			
-			// get approximate solution value 
+
+			// get approximate solution value
 			uMean += volume*(problem.variables.pressure)[indexi];
-			
-			// add to domainVolume 
+
+			// add to domainVolume
 			domainVolume += volume;
 	      }
-	    uMean /= domainVolume; 
-	    
+	    uMean /= domainVolume;
+
 	    if (pureNeumann) {
 	    	for (int i = 0; i < (int) problem.variables.pressure.size(); i++)
 	    	(problem.variables.pressure)[i] -= uMean;
 	    }
-	    
-	    
+
+
 	    uMin = 1e100;
 	    uMax = -1e100;
 	    flux0 = 0;
@@ -113,52 +113,52 @@ struct BenchmarkResult
 	    erflm = 0;
 	    ener1 = 0;
 	    ener2 = 0;
-	    double numerator = 0; 
+	    double numerator = 0;
 	    double denominator = 0;
-	    double numeratorGrad = 0; 
+	    double numeratorGrad = 0;
 	    double denominatorGrad = 0;
-	    double numeratorFlux = 0; 
+	    double numeratorFlux = 0;
 	    double denominatorFlux = 0;
 	    for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
 	      {
-	    	// get entity 
-	    	const Entity& element = *it; 
-	    	
+	    	// get entity
+	    	const Entity& element = *it;
+
 	    	// element geometry
 	    	const Geometry& geometry = element.geometry();
-	    	
+
 	    	// cell geometry type
 			GeometryType gt = geometry.type();
-			
-			const typename CRShapeFunctionSetContainer<double,double,dim>::value_type& 
+
+			const typename CRShapeFunctionSetContainer<double,double,dim>::value_type&
 				sfs=CRShapeFunctions<double,double,dim>::general(gt,1);
-				
+
 			// cell center in reference element
-			const FieldVector<ct,dim>& 
+			const FieldVector<ct,dim>&
 			  local = ReferenceElements<ct,dim>::general(gt).position(0,0);
-			
+
 			// get global coordinate of cell center
 			FieldVector<ct,dim> global = geometry.global(local);
-			
-			// get exact solution value 
+
+			// get exact solution value
 			double exactValue = problem.exact(global);
-			
+
 			// cell index
 			int indexi = elementmapper.map(element);
-			
-			// get approximate solution value 
+
+			// get approximate solution value
 			double approximateValue = (problem.variables.pressure)[indexi];
-			
+
 			// update uMin and uMax
 			uMin = std::min(uMin, approximateValue);
 			uMax = std::max(uMax, approximateValue);
-			
+
 			// cell volume, assume linear map here
 			double volume = geometry.volume();
 
-			// update sumf 
-			sumf += volume*problem.q(global, element, local);
-				
+			// update sumf
+			sumf += volume*problem.source(global, element, local);
+
 			// get the absolute permeability
 			FieldMatrix<double,dim,dim> K = problem.K(global, element, local);
 
@@ -166,59 +166,59 @@ struct BenchmarkResult
 			denominator += volume*exactValue*exactValue;
 
 			FieldVector<ct,2*dim> fluxVector;
-			FieldVector<ct,dim> exactGradient; 
+			FieldVector<ct,dim> exactGradient;
 			IntersectionIterator endis = IntersectionIteratorGetter<GridType,LeafTag>::end(element);
 			for (IntersectionIterator is = IntersectionIteratorGetter<GridType,LeafTag>::begin(element); is!=endis; ++is)
 			{
 				// get geometry type of face
 				GeometryType gtf = is->intersectionSelfLocal().type();
-			  
-				// local number of facet 
+
+				// local number of facet
 				int i = is->numberInSelf();
 
-				// global number of face 
+				// global number of face
 			    int faceIndex = facemapper.template map<1>(element, i);
 
 			    const FieldVector<double,dim>& faceLocal = sfs[i].position();
 				FieldVector<double,dim> faceGlobal = geometry.global(faceLocal);
 				double faceVol = is->intersectionGlobal().volume();
-			  
+
 				// center in face's reference element
 				const FieldVector<double,dim-1>& faceLocalNm1 = ReferenceElements<double,dim-1>::general(gtf).position(0,0);
-				
-				// get normal vector 
+
+				// get normal vector
 				FieldVector<double,dim> unitOuterNormal = is->unitOuterNormal(faceLocalNm1);
-				
+
 				// get the approximate solution on the face
 				double approximateFace = (*solution.pressTrace)[faceIndex];
-				
+
 				// get the exact gradient
 				exactGradient = problem.exactGrad(faceGlobal);
-				
-				// get the negative exact velocity 
+
+				// get the negative exact velocity
 				FieldVector<double,dim> KGrad(0);
 				K.umv(exactGradient, KGrad);
-				
+
 				// calculate the exact normal velocity
 				double exactFlux = KGrad*unitOuterNormal;
-				
+
 				// get the approximate normalvelocity
 				double approximateFlux = (*solution.normalVelocity)[indexi][i];
-				
-				// calculate the difference in the normal velocity 
+
+				// calculate the difference in the normal velocity
 				double fluxDiff = exactFlux + approximateFlux;
-				
-				// update mean value error 
+
+				// update mean value error
 				erflm = std::max(erflm, fabs(fluxDiff));
-				
+
 				numeratorFlux += volume*fluxDiff*fluxDiff;
 				denominatorFlux += volume*exactFlux*exactFlux;
-				
-				// calculate the fluxes through the element faces 
+
+				// calculate the fluxes through the element faces
 				exactFlux *= faceVol;
 				approximateFlux *= faceVol;
 				fluxVector[i] = approximateFlux;
-				
+
 				//if (is.boundary()) {
 				if (!is->neighbor()) {
 					if (fabs(faceGlobal[1]) < 1e-6) {
@@ -243,9 +243,9 @@ struct BenchmarkResult
 					}
 				}
 			}
-			
-			// calculate velocity on reference element 
-			FieldVector<ct,dim> refVelocity; 
+
+			// calculate velocity on reference element
+			FieldVector<ct,dim> refVelocity;
 			if (geometry.corners() == 3) {
 				refVelocity[0] = 1.0/3.0*(fluxVector[0] + fluxVector[2] - 2.0*fluxVector[1]);
 				refVelocity[1] = 1.0/3.0*(fluxVector[0] + fluxVector[1] - 2.0*fluxVector[2]);
@@ -254,35 +254,35 @@ struct BenchmarkResult
 				refVelocity[0] = 0.5*(fluxVector[1] - fluxVector[0]);
 				refVelocity[1] = 0.5*(fluxVector[3] - fluxVector[2]);
 			}
-			
-			// get the transposed Jacobian of the element mapping 
+
+			// get the transposed Jacobian of the element mapping
 			const FieldMatrix<ct,dim,dim>& jacobianInv = geometry.jacobianInverseTransposed(local);
 			FieldMatrix<ct,dim,dim> jacobianT(jacobianInv);
 			jacobianT.invert();
-			
+
 			// calculate the element velocity by the Piola transformation
 			FieldVector<ct,dim> elementVelocity(0);
 			jacobianT.umtv(refVelocity, elementVelocity);
 			elementVelocity /= geometry.integrationElement(local);
-			
-			// get the approximate gradient 
+
+			// get the approximate gradient
 			FieldVector<ct,dim> approximateGradient;
 			K.solve(approximateGradient, elementVelocity);
-			
+
 			// get the exact gradient
 			exactGradient = problem.exactGrad(global);
-			
-			// the difference between exact and approximate gradient 
-			FieldVector<ct,dim> gradDiff(exactGradient);
-			gradDiff += approximateGradient; 
 
-			// add to energy 
+			// the difference between exact and approximate gradient
+			FieldVector<ct,dim> gradDiff(exactGradient);
+			gradDiff += approximateGradient;
+
+			// add to energy
 			ener1 += volume*(approximateGradient*elementVelocity);
-			
+
 			numeratorGrad += volume*(gradDiff*gradDiff);
 			denominatorGrad += volume*(exactGradient*exactGradient);
 	      }
-	    
+
 	    relativeL2Error = sqrt(numerator/denominator);
 	    ergrad = sqrt(numeratorGrad/denominatorGrad);
 	    ervell2 = sqrt(numeratorFlux/denominatorFlux);
@@ -292,7 +292,7 @@ struct BenchmarkResult
 	    errfly0 = fabs((fluy0 + exactfluy0)/exactfluy0);
 	    errfly1 = fabs((fluy1 + exactfluy1)/exactfluy1);
 	    eren = fabs(ener1 - ener2)/std::max(ener1, ener2);
-	    
+
 	    return;
 	}
 };

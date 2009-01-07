@@ -3,7 +3,7 @@
 #ifndef DUNE_SIMPLEPROBLEM_HH
 #define DUNE_SIMPLEPROBLEM_HH
 
-#include "dumux/transport/transportproblem.hh"
+#include "dumux/transport/transportproblem_deprecated.hh"
 
 namespace Dune
 {
@@ -29,7 +29,7 @@ namespace Dune
 			return Dune::BoundaryConditions::neumann;
 	}
 
-	RT g (const FieldVector<DT,n>& x, const Entity& e,
+	RT dirichlet (const FieldVector<DT,n>& x, const Entity& e,
 		   const FieldVector<DT,n>& xi) const
 	{
 		if (x[0] < left+1e-8)

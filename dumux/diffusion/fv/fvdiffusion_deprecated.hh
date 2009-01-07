@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_FVDIFFUSION_DEPRECATED_HH
 #define DUNE_FVDIFFUSION_DEPRECATED_HH
@@ -200,7 +200,7 @@ template<class G, class RT, class VC> void FVDiffusion<G, RT, VC>::assemble(cons
 		double volume = it->geometry().integrationElement(local)*ReferenceElements<ct,dim>::general(gt).volume();
 
 		// set right side to zero
-		f[indexi] = volume*this->diffproblem.q(global, *it, local);
+		f[indexi] = volume*this->diffproblem.source(global, *it, local);
 
 		// get absolute permeability
 		FieldMatrix<ct,dim,dim> Ki(this->diffproblem.K(global, *it, local));
@@ -323,7 +323,7 @@ template<class G, class RT, class VC> void FVDiffusion<G, RT, VC>::assemble(cons
 					f[indexi] -= factor*lambda*faceVol*(K*gravity);
 				}
 
-				if (this->diffproblem.capillary) {
+				if (this->diffproblem.capillarity) {
 					// calculate saturation gradient
 					FieldVector<ct,dim> satGradient = distVec;
 					satGradient *= (satj - sati)/(dist*dist);
@@ -365,7 +365,7 @@ template<class G, class RT, class VC> void FVDiffusion<G, RT, VC>::assemble(cons
 					FieldVector<ct,dimworld> distVec(global - faceglobal);
 					double dist = distVec.two_norm();
 					A[indexi][indexi] -= lambda*faceVol*(Kni*distVec)/(dist*dist);
-					double g = this->diffproblem.g(faceglobal, *it, facelocalDim);
+					double g = this->diffproblem.dirichletPress(faceglobal, *it, facelocalDim);
 					f[indexi] -= lambda*faceVol*g*(Kni*distVec)/(dist*dist);
 
 					if (hasGravity) {
@@ -373,8 +373,8 @@ template<class G, class RT, class VC> void FVDiffusion<G, RT, VC>::assemble(cons
 						+ (1 - fractionalW)*(this->diffproblem.materialLaw.nonwettingPhase.density());
 						f[indexi] -= factor*lambda*faceVol*(Kni*gravity);
 					}
-					if (this->diffproblem.capillary) {
-						double satj = this->diffproblem.gSat(faceglobal, *it, facelocalDim);
+					if (this->diffproblem.capillarity) {
+						double satj = this->diffproblem.dirichletSat(faceglobal, *it, facelocalDim);
 
 						// distance vector between barycenters
 						FieldVector<ct,dimworld>
@@ -404,7 +404,7 @@ template<class G, class RT, class VC> void FVDiffusion<G, RT, VC>::assemble(cons
 				}
 				else
 				{
-					double J = this->diffproblem.J(faceglobal, *it, facelocalDim);
+					double J = this->diffproblem.neumannPress(faceglobal, *it, facelocalDim);
 					f[indexi] -= faceVol*J;
 				}
 			}

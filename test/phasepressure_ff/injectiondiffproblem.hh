@@ -37,15 +37,21 @@ public:
 			gravity_[1] = -9.81;
 		}
 		// permeabilities
-		virtual FieldMatrix<DT,n,n>& K(const FieldVector<DT,n>& x, const Entity& e,
-				const FieldVector<DT,n>& xi)
-		{
-			if (x[0] >= innerLowerLeft_[0]&& x[0] <= innerUpperRight_[0]&& x[1]
-					>= innerLowerLeft_[1]&& x[1] <= innerUpperRight_[1])
-				return innerK_;
-			else
-				return outerK_;
-		}
+				virtual FieldMatrix<DT,n,n>& K(const FieldVector<DT,n>& x, const Entity& e,
+						const FieldVector<DT,n>& xi)
+				{
+					if (x[0] >= innerLowerLeft_[0]&& x[0] <= innerUpperRight_[0]&& x[1]
+							>= innerLowerLeft_[1]&& x[1] <= innerUpperRight_[1])
+						return innerK_;
+					else
+						return outerK_;
+				}
+
+				virtual RT source(const FieldVector<DT,n>& x, const Entity& e,
+						const FieldVector<DT,n>& xi)
+				{
+						return 0;
+				}
 
 		typename BoundaryConditions::Flags bctype(const FieldVector<DT,n>& x, const Entity& e,
 				const FieldVector<DT,n>& xi) const
@@ -56,21 +62,21 @@ public:
 			return BoundaryConditions::neumann;
 		}
 
-		RT g(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
+		RT dirichletPress(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
 		{
 			if (x[0] < outerLowerLeft_[0] + eps_)
                 return (1e5 - densityW_*gravity_[1]*(depthBOR_ - x[1]));
             return 0;
 		}
 
-		RT gSat(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
+		RT dirchletSat(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
 		{
 		   	if (x[0] < outerLowerLeft_[0] + eps_)
 		    		return 1;
 			return 0;
 		}
 
-		RT J(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
+		RT neumannPress(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
 		{
 			if (x[1] < 25 && x[1] > 15)
 				return -1.54e-5;

@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_DIFFUSIONVELOCITYPROBLEM_HH
 #define DUNE_DIFFUSIONVELOCITYPROBLEM_HH
@@ -215,9 +215,9 @@ public:
 						double lambda = 1.;
 //						double satI = sati;
 
-						lambda = this->diffproblem.materialLaw.mobW(this->diffproblem.gSat(faceglobal, *it, facelocalDim));
+						lambda = this->diffproblem.materialLaw.mobW(this->diffproblem.dirichletSat(faceglobal, *it, facelocalDim));
 
-						double g = this->diffproblem.g(faceglobal, *it, facelocalDim);
+						double g = this->diffproblem.dirichletPress(faceglobal, *it, facelocalDim);
 
 						FieldVector<ct,dim> vTotal(Kni);
 						double pressgrad = 0;
@@ -236,7 +236,7 @@ public:
 					}
 					else
 					{
-						double J = this->diffproblem.J(faceglobal, *it, facelocalDim);
+						double J = this->diffproblem.neumannPress(faceglobal, *it, facelocalDim);
 						FieldVector<ct,dimworld> unitOuterNormal
 						= is->unitOuterNormal(facelocal);
 						this->diffproblem.variables.velocity[indexi][numberInSelf] = unitOuterNormal;
@@ -247,7 +247,7 @@ public:
 			}
 			// end all intersections
 //			std::cout<<"velocity = "<< this->diffproblem.variables.velocity <<std::endl;
-			if (dim == 1&& this->diffproblem.capillary != true) {
+			if (dim == 1&& this->diffproblem.capillarity != true) {
 				double sum = (fabs(this->diffproblem.variables.velocity[indexi][0][0]*faceVol[0])
 						+ fabs(this->diffproblem.variables.velocity[indexi][1][0]));
 				double diff = fabs(this->diffproblem.variables.velocity[indexi][0][0]*faceVol[0]
@@ -259,7 +259,7 @@ public:
 							<< this->diffproblem.variables.velocity[indexi][1][0]*faceVol[1]<< std::endl;
 				}
 			}
-			if (dim == 2&& this->diffproblem.capillary != true) {
+			if (dim == 2&& this->diffproblem.capillarity != true) {
 				double sum = (fabs(this->diffproblem.variables.velocity[indexi][0][0]*faceVol[0])
 						+ fabs(this->diffproblem.variables.velocity[indexi][1][0]*faceVol[1])
 						+ fabs(this->diffproblem.variables.velocity[indexi][2][1]*faceVol[2])
