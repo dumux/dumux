@@ -423,8 +423,8 @@ public:
             Sg = 1 - Sw;
             l_s = 4.5; /*W/mK*/
 
-            l_w = lambda_w(T);
-            l_g = co2.lambda (T, p);
+            l_w = lambda_w(temperature);
+            l_g = co2.lambda (temperature, p);
             l_pm = l_s*(1- phi) + l_w*Sw*phi + l_g* Sg*phi;
 
             /*wet*/
