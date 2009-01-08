@@ -50,7 +50,7 @@ void exportToDGF(const GridView& gridView, const Data& data, int paramnumber = 1
 	for (VertexIterator vIt = gridView.template begin<n>(); vIt != vEndIt; ++vIt)
 	{
 		int vertexIndex = indexSet.index(*vIt);
-		coordinates[vertexIndex] = vIt->geometry()[0];
+		coordinates[vertexIndex] = vIt->geometry().corner(0);
 	}
 
 	for (int vertexNum = 0; vertexNum < size; vertexNum++)
@@ -124,10 +124,10 @@ void exportToDGF(const GridView& gridView, const Data& data, int paramnumber = 1
 
 				for (int i=0; i<vertexOnElement;i++)
 				{
-					Dune::FieldVector<DT,n> globalE = eIt->geometry()[i];
+					Dune::FieldVector<DT,n> globalE = eIt->geometry().corner(i);
 					for(int j = 0;j<vertexOnIntersection;j++)
 					{
-						Dune::FieldVector<DT,n> globalV = iIt->intersectionGlobal()[j];
+						Dune::FieldVector<DT,n> globalV = iIt->intersectionGlobal().corner(j);
 						if (globalE == globalV)
 						{
 							int vertexIndex = indexSet.index(*((*eIt).template entity<n>(i) ));

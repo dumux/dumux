@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_P1OPERATOR_HH
 #define DUNE_P1OPERATOR_HH
@@ -35,10 +35,10 @@
 /*! @defgroup DISC_Operators Operators
   @ingroup DISC
   @brief
-  
+
   @section D1 Introduction
   <!--=================-->
-  
+
   To be written
 */
 
@@ -60,8 +60,8 @@ namespace Dune
   template<int n, int c>
   struct P1Operator_meta {
 	template<class Entity, class VMapper, class AMapper, class Refelem, class Matrix>
-	static void addrowscube (const Entity& e, const VMapper& vertexmapper, const AMapper& allmapper, 
-							 const Refelem& refelem, Matrix& A, std::vector<bool>& visited, 
+	static void addrowscube (const Entity& e, const VMapper& vertexmapper, const AMapper& allmapper,
+							 const Refelem& refelem, Matrix& A, std::vector<bool>& visited,
 							 int hangingnodes, std::set<P1OperatorLink>& links, std::map<int,int>& doubled2Original)
 	{
 	  if (refelem.type(0,0).isCube())
@@ -69,7 +69,7 @@ namespace Dune
 		  for (int i=0; i<refelem.size(c); i++) // loop over subentities of codim c of e
 			{
 			  int index = allmapper.template map<c>(e,i);
-			  if (!visited[index]) 
+			  if (!visited[index])
 				{
 				  int corners = refelem.size(i,c,n);
 				  for (int j=0; j<corners/2; j++) // uses fact that diagonals are (0,corners-1), (1,corners-2) ...
@@ -95,7 +95,7 @@ namespace Dune
 	  if (refelem.type(0,0).isPyramid() && c==1)
 		{
 		  int index = allmapper.template map<c>(e,0);
-		  if (!visited[index]) 
+		  if (!visited[index])
 			{
 			  int alpha = vertexmapper.template map<n>(e,0);
 			  int beta = vertexmapper.template map<n>(e,2);
@@ -125,11 +125,11 @@ namespace Dune
 				}
 			  visited[index] = true;
 			}
-		}	  
+		}
 	  if (refelem.type(0,0).isPrism() && c==1)
 		{
 		  int index = allmapper.template map<c>(e,1);
-		  if (!visited[index]) 
+		  if (!visited[index])
 			{
 			  int alpha = vertexmapper.template map<n>(e,0);
 			  int beta = vertexmapper.template map<n>(e,4);
@@ -160,7 +160,7 @@ namespace Dune
 			  visited[index] = true;
 			}
 		  index = allmapper.template map<c>(e,2);
-		  if (!visited[index]) 
+		  if (!visited[index])
 			{
 			  int alpha = vertexmapper.template map<n>(e,1);
 			  int beta = vertexmapper.template map<n>(e,5);
@@ -191,7 +191,7 @@ namespace Dune
 			  visited[index] = true;
 			}
 		  index = allmapper.template map<c>(e,3);
-		  if (!visited[index]) 
+		  if (!visited[index])
 			{
 			  int alpha = vertexmapper.template map<n>(e,0);
 			  int beta = vertexmapper.template map<n>(e,5);
@@ -221,12 +221,12 @@ namespace Dune
 				}
 			  visited[index] = true;
 			}
-		}	  
+		}
 	  P1Operator_meta<n,c-1>::addrowscube(e,vertexmapper,allmapper,refelem,A,visited,hangingnodes,links,doubled2Original);
 	  return;
 	}
 	template<class Entity, class VMapper, class AMapper, class Refelem, class Matrix>
-	static void addindicescube (const Entity& e, const VMapper& vertexmapper, const AMapper& allmapper, 
+	static void addindicescube (const Entity& e, const VMapper& vertexmapper, const AMapper& allmapper,
 				   const Refelem& refelem, Matrix& A, std::vector<bool>& visited, std::map<int,int>& doubled2Original)
 	{
 	  if (refelem.type(0,0).isCube())
@@ -234,7 +234,7 @@ namespace Dune
 		  for (int i=0; i<refelem.size(c); i++)
 			{
 			  int index = allmapper.template map<c>(e,i);
-			  if (!visited[index]) 
+			  if (!visited[index])
 				{
 				  int corners = refelem.size(i,c,n);
 				  for (int j=0; j<corners/2; j++) // uses fact that diagonals are (0,corners-1), (1,corners-2) ...
@@ -255,7 +255,7 @@ namespace Dune
 	  if (refelem.type(0,0).isPyramid() && c==1)
 		{
 		  int index = allmapper.template map<c>(e,0);
-		  if (!visited[index]) 
+		  if (!visited[index])
 			{
 			  int alpha = vertexmapper.template map<n>(e,0);
 			  int beta = vertexmapper.template map<n>(e,2);
@@ -271,11 +271,11 @@ namespace Dune
 			  A.addindex(beta,alpha);
 			  visited[index] = true;
 			}
-		}	  
+		}
 	  if (refelem.type(0,0).isPrism() && c==1)
 		{
 		  int index = allmapper.template map<c>(e,1);
-		  if (!visited[index]) 
+		  if (!visited[index])
 			{
 			  int alpha = vertexmapper.template map<n>(e,0);
 			  int beta = vertexmapper.template map<n>(e,4);
@@ -296,7 +296,7 @@ namespace Dune
 			  visited[index] = true;
 			}
 		  index = allmapper.template map<c>(e,2);
-		  if (!visited[index]) 
+		  if (!visited[index])
 			{
 			  int alpha = vertexmapper.template map<n>(e,1);
 			  int beta = vertexmapper.template map<n>(e,5);
@@ -317,7 +317,7 @@ namespace Dune
 			  visited[index] = true;
 			}
 		  index = allmapper.template map<c>(e,3);
-		  if (!visited[index]) 
+		  if (!visited[index])
 			{
 			  int alpha = vertexmapper.template map<n>(e,0);
 			  int beta = vertexmapper.template map<n>(e,5);
@@ -337,7 +337,7 @@ namespace Dune
 			  A.addindex(beta,alpha);
 			  visited[index] = true;
 			}
-		}	  
+		}
 	  P1Operator_meta<n,c-1>::addindicescube(e,vertexmapper,allmapper,refelem,A,visited,doubled2Original);
 	  return;
 	}
@@ -345,7 +345,7 @@ namespace Dune
   template<int n>
   struct P1Operator_meta<n,0> {
 	template<class Entity, class VMapper, class AMapper, class Refelem, class Matrix>
-	static void addrowscube (const Entity& e, const VMapper& vertexmapper, const AMapper& allmapper, 
+	static void addrowscube (const Entity& e, const VMapper& vertexmapper, const AMapper& allmapper,
 							 const Refelem& refelem, Matrix& A, std::vector<bool>& visited,
 							 int hangingnodes, std::set<P1OperatorLink>& links, std::map<int,int>& doubled2Original)
 	{
@@ -370,7 +370,7 @@ namespace Dune
 	  return;
 	}
 	template<class Entity, class VMapper, class AMapper, class Refelem, class Matrix>
-	static void addindicescube (const Entity& e, const VMapper& vertexmapper, const AMapper& allmapper, 
+	static void addindicescube (const Entity& e, const VMapper& vertexmapper, const AMapper& allmapper,
 				  const Refelem& refelem, Matrix& A, std::vector<bool>& visited, std::map<int,int>& doubled2Original)
 	{
 	  if (!refelem.type(0,0).isCube()) return;
@@ -394,14 +394,14 @@ namespace Dune
   template<int n>
   struct P1Operator_meta<n,-1> {
 	template<class Entity, class VMapper, class AMapper, class Refelem, class Matrix>
-	static void addrowscube (const Entity& e, const VMapper& vertexmapper, const AMapper& allmapper, 
+	static void addrowscube (const Entity& e, const VMapper& vertexmapper, const AMapper& allmapper,
 							 const Refelem& refelem, Matrix& A, std::vector<bool>& visited,
 							 int hangingnodes, std::set<P1OperatorLink>& links, std::map<int,int>& doubled2Original)
 	{
 	  return;
 	}
 	template<class Entity, class VMapper, class AMapper, class Refelem, class Matrix>
-	static void addindicescube (const Entity& e, const VMapper& vertexmapper, const AMapper& allmapper, 
+	static void addindicescube (const Entity& e, const VMapper& vertexmapper, const AMapper& allmapper,
 				  const Refelem& refelem, Matrix& A, std::vector<bool>& visited, std::map<int,int>& doubled2Original)
 	{
 	  return;
@@ -411,14 +411,14 @@ namespace Dune
     template<typename Grid, typename RT, typename Tag, bool hasHangingNodes>
     struct HangingNodesIdentifier
     {};
-    
+
     template<typename Grid,typename RT,typename Tag>
     struct HangingNodesIdentifier<Grid,RT,Tag,false>
     {
       template<typename IndexSet, typename VM>
       inline void process(std::vector<unsigned char> S, std::vector<bool>& hanging, std::set<P1OperatorLink>& links, IndexSet& indexset, VM& vertexmapper) const
       {}
-      
+
       inline std::size_t count() const
       {
 	return 0;
@@ -438,16 +438,16 @@ namespace Dune
       template<typename GridView, typename VM>
       void process(std::vector<unsigned char> S, std::vector<bool>& hanging, std::set<P1OperatorLink>& links, GridView& gridView, VM& vertexmapper)
       {
-	
+
 	typedef typename GridView::template Codim<0>::Iterator Iterator;
 	// LOOP 1 : Prepare hanging node detection
 	Iterator eendit = gridView.template end<0>();
 	for (Iterator it = gridView.template begin<0>(); it!=eendit; ++it)
 	  {
 	    Dune::GeometryType gt = it->type();
-	    const typename Dune::ReferenceElementContainer<DT,n>::value_type& 
+	    const typename Dune::ReferenceElementContainer<DT,n>::value_type&
 	      refelem = ReferenceElements<DT,n>::general(gt);
-	    
+
 	    // compute S value in vertex
 	    for (int i=0; i<refelem.size(n); i++)
 	      {
@@ -460,9 +460,9 @@ namespace Dune
 	for (Iterator it = gridView.template begin<0>(); it!=eendit; ++it)
 	  {
 	    Dune::GeometryType gt = it->type();
-	    const typename Dune::ReferenceElementContainer<DT,n>::value_type& 
+	    const typename Dune::ReferenceElementContainer<DT,n>::value_type&
 	      refelem = ReferenceElements<DT,n>::general(gt);
-	    
+
 	    // detect hanging nodes
 	    IntersectionIterator endiit = end(*it);
 	    for (IntersectionIterator iit = begin(*it); iit!=endiit; ++iit)
@@ -471,28 +471,28 @@ namespace Dune
 		  // check if neighbor is on lower level
 		  const EEntityPointer outside = iit->outside();
 		  if (it->level()<=outside->level()) continue;
-		  
+
 		  // loop over all vertices of this face
 		  for (int j=0; j<refelem.size(iit->numberInSelf(),1,n); j++)
 		    {
 		      int alpha = vertexmapper.template map<n>(*it,refelem.subEntity(iit->numberInSelf(),1,j,n));
-		      if (S[alpha]==it->level()) 
+		      if (S[alpha]==it->level())
 			hanging[alpha] = true;
 		    }
 		}
 	  }
-	
+
 	// local to global maps
 	int l2g[Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::maxsize];
 	int fl2g[Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::maxsize];
-	
+
 	// LOOP 3 : determine additional links due to hanging nodes
 	for (Iterator it = gridView.template begin<0>(); it!=eendit; ++it)
 	  {
 	    Dune::GeometryType gt = it->type();
-	    const typename Dune::ReferenceElementContainer<DT,n>::value_type& 
+	    const typename Dune::ReferenceElementContainer<DT,n>::value_type&
 	      refelem = ReferenceElements<DT,n>::general(gt);
-	    
+
 	    // build local to global map
 	    bool hasHangingNodes = false; // flag set to true if this element has hanging nodes
 	    for (int i=0; i<refelem.size(n); i++)
@@ -501,20 +501,20 @@ namespace Dune
 		if (hanging[l2g[i]]) hasHangingNodes=true;
 	      }
 	    if (!hasHangingNodes) continue;
-	    
+
 	    // handle father element if hanging nodes were detected
 	    // get father element
 	    const EEntityPointer father = it->father();
-	    
+
 	    // build local to global map for father
 	    for (int i=0; i<refelem.size(n); i++)
 	      fl2g[i] = vertexmapper.template map<n>(*father,i);
-	    
+
 	    // a map that inverts l2g
 	    std::map<int,int> g2l;
 	    for (int i=0; i<refelem.size(n); i++)
 	      g2l[l2g[i]] = i;
-	    
+
 	    // connect all fine nodes to all coarse nodes
 	    for (int i=0; i<refelem.size(n); i++) // nodes in *it
 	      for (int j=0; j<refelem.size(n); j++) // nodes in *father
@@ -526,9 +526,9 @@ namespace Dune
 	  }
 	// count hanging nodes
 	hangingnodes = 0;
-	for (int i=0; i<vertexmapper.size(); i++) 
+	for (int i=0; i<vertexmapper.size(); i++)
 	  if (hanging[i]) hangingnodes++;
-	
+
       }
       inline std::size_t count() const
       {
@@ -537,9 +537,9 @@ namespace Dune
     private:
       std::size_t hangingnodes;
     };
-    
 
-  
+
+
   /*! @brief A class for mapping a P1 function to a P1 function
 
   This class sets up a compressed row storage matrix with connectivity for P1 elements.
@@ -557,9 +557,9 @@ namespace Dune
   template<typename TypeTag, class G, class RT, class GV, class LC, int m=1>
   class P1OperatorBase
   {
-  public:    
+  public:
 	// export type used to store the matrix
-	typedef FieldMatrix<RT,m,m> BlockType; 
+	typedef FieldMatrix<RT,m,m> BlockType;
 	typedef BCRSMatrix<BlockType> RepresentationType;
 
 	// mapper: one data element per vertex
@@ -570,7 +570,7 @@ namespace Dune
 	  {
               return gt.dim() == 0;
 	  }
-	}; 
+	};
 
 	// mapper: one data element in every entity
 	template<int dim>
@@ -580,7 +580,7 @@ namespace Dune
 	  {
 		return true;
 	  }
-	}; 
+	};
 
 	typedef typename G::ctype DT;
 	enum {n=G::dimension};
@@ -615,8 +615,8 @@ namespace Dune
 
 	  return s;
 	}
-      
-    
+
+
 	// extra initialization function
 	// 0) This method is executed before matrix is allocated
 	// 1) determine hanging nodes as described in the paper
@@ -642,7 +642,7 @@ namespace Dune
 	    HangingNodesIdentifier;
 	  HangingNodesIdentifier hangingNodes;
 	  hangingNodes.process(S,hanging,links,gridView,vertexmapper);
-	  
+
 	  // count hanging nodes
 	  hangingnodes = hangingNodes.count();
 
@@ -662,15 +662,15 @@ namespace Dune
 #else
 		  extender.extend(g,gv,vertexmapper,borderlinks,extraDOFs,gid2index);
 #endif
-		  // put in extra links due to overlap 
+		  // put in extra links due to overlap
 		  // loop over all neighbors of border vertices
 		  for (typename std::map<int,GIDSet>::iterator i=borderlinks.begin(); i!=borderlinks.end(); ++i)
 			for (typename GIDSet::iterator j=(i->second).begin(); j!=(i->second).end(); ++j)
 			  links.insert(P1OperatorLink(i->first,gid2index[*j]));
-		  
+
 		  // insert diagonal links for extra DOFs
 		  for (int i=0; i<extraDOFs; i++)
-			links.insert(P1OperatorLink(vertexmapper.size()+i,vertexmapper.size()+i));		  
+			links.insert(P1OperatorLink(vertexmapper.size()+i,vertexmapper.size()+i));
 		}
 
 	  // Note: links contains now also connections that are standard.
@@ -683,30 +683,30 @@ namespace Dune
 	  {
 		  partitionType[vertexmapper.map(*it)] = it->partitionType();
 	  }
-	  
+
 	  VIterator ghostEndIt = gridView.template end<n>();
 	  for (VIterator ghostIt = gridView.template begin<n>(); ghostIt!=ghostEndIt; ++ghostIt)
 	  {
 		  if (ghostIt->partitionType() != GhostEntity)
 			  continue;
-		  
+
 		  int ghostIndex = vertexmapper.map(*ghostIt);
-		  
+
 		  const IdType& ghostGlobalId = index2gid[ghostIndex];
-		  
+
 		  VIterator realEndIt = gridView.template end<n>();
 		  for (VIterator realIt = gridView.template begin<n>(); realIt!=realEndIt; ++realIt)
 		  {
 			  if (realIt->partitionType() == InteriorEntity)
 				  continue;
-			  
+
 			  int realIndex = vertexmapper.map(*realIt);
-			  
+
 			  if (realIndex == ghostIndex)
 				  continue;
-			  
+
 			  const IdType& realGlobalId = index2gid[realIndex];
-			  
+
 			  if (realGlobalId == ghostGlobalId) {
 				  doubled2Original[std::max(realIndex, ghostIndex)] = std::min(realIndex, ghostIndex);
 //				  if (realIt->partitionType() != GhostEntity)
@@ -715,7 +715,7 @@ namespace Dune
 		  }
 	  }
 
-//	  for (typename std::map<int,int>::const_iterator it=doubled2Original.begin(); it!=doubled2Original.end(); ++it) 
+//	  for (typename std::map<int,int>::const_iterator it=doubled2Original.begin(); it!=doubled2Original.end(); ++it)
 //		  std::cout << grid.comm().rank() << ": doubled = " << it->first << ", original = " << it->second << std::endl;
 
 	  return true;
@@ -737,7 +737,7 @@ namespace Dune
 	};
 
 	// A DataHandle class to exchange matrix entries
-	class MatEntryExchange : 
+	class MatEntryExchange :
 	  public CommDataHandleIF<MatEntryExchange,MatEntry> {
 	  typedef typename RepresentationType::RowIterator rowiterator;
 	  typedef typename RepresentationType::ColIterator coliterator;
@@ -759,7 +759,7 @@ namespace Dune
 
 	  /*! how many objects of type DataType have to be sent for a given entity
 
-	  Note: Only the sender side needs to know this size. 
+	  Note: Only the sender side needs to know this size.
 	  */
 	  template<class EntityType>
 	  size_t size (EntityType& e) const
@@ -793,7 +793,7 @@ namespace Dune
 	  void scatter (MessageBuffer& buff, const EntityType& e, size_t n)
 	  {
 		int i=vertexmapper.map(e);
-		
+
 		for (size_t k=0; k<n; k++)
 		  {
 			MatEntry m;
@@ -807,21 +807,21 @@ namespace Dune
 	  }
 
 	  //! constructor
-	  MatEntryExchange (const G& g, const std::map<IdType,int>& g2i, 
+	  MatEntryExchange (const G& g, const std::map<IdType,int>& g2i,
 						const std::map<int,IdType>& i2g,
 						const VM& vm,
 						RepresentationType& a, std::vector<PartitionType>& pType, std::map<int,int>& d2O)
 		: grid(g), gid2index(g2i), index2gid(i2g), vertexmapper(vm), A(a), partitionType(pType), doubled2Original(d2O)
 	  {
-		  for (typename std::map<IdType,int>::const_iterator it=gid2index.begin(); 
+		  for (typename std::map<IdType,int>::const_iterator it=gid2index.begin();
 		  		it!=gid2index.end(); ++it)
-			  gid2indexNew[it->first] = it->second; 
-			  
-		  for (typename std::map<int,IdType>::const_iterator it=index2gid.begin(); it!=index2gid.end(); ++it) 
+			  gid2indexNew[it->first] = it->second;
+
+		  for (typename std::map<int,IdType>::const_iterator it=index2gid.begin(); it!=index2gid.end(); ++it)
 			  if (doubled2Original.find(it->first) != doubled2Original.end())
 				  gid2indexNew[it->second] = doubled2Original[it->first];
 	  }
- 
+
 	private:
 	  const G& grid;
 	  std::map<IdType,int> gid2indexNew;
@@ -835,26 +835,26 @@ namespace Dune
 
   public:
 
-	P1OperatorBase (const G& g, const GV& gridView, LC lcomm, bool extendoverlap=false) 
+	P1OperatorBase (const G& g, const GV& gridView, LC lcomm, bool extendoverlap=false)
             : grid(g),gv(gridView),lc(lcomm),vertexmapper(g,gridView.indexSet()),allmapper(g,gridView.indexSet()),links(),
               initialized(init(g,gridView,lc,extendoverlap)),A(size(),size(),nnz(gridView.indexSet()),RepresentationType::random)
-		
+
 	{
 	  // Check for the TypeTag
-	  dune_static_assert((is_same<TypeTag,LeafTag>::value 
+	  dune_static_assert((is_same<TypeTag,LeafTag>::value
               || is_same<TypeTag,LevelTag>::value), "TypeTag must be LeafTag or LevelTag");
 
 	  // be verbose
 //  	  std::cout << g.comm().rank() << ": " << "vector size = " << vertexmapper.size() << " + " << extraDOFs << std::endl;
- 	  std::cout << g.comm().rank() << ": " << "making " << size() << "x" 
+ 	  std::cout << g.comm().rank() << ": " << "making " << size() << "x"
                     << size() << " matrix with " << nnz(gv.indexSet()) << " nonzeros" << std::endl;
 //  	  std::cout << g.comm().rank() << ": " << "allmapper has size " << allmapper.size() << std::endl;
 //  	  std::cout << g.comm().rank() << ": " << "vertexmapper has size " << vertexmapper.size() << std::endl;
 //  	  std::cout << g.comm().rank() << ": " << "hanging nodes=" << hangingnodes << " links=" << links.size() << std::endl;
-   
+
 	  // set size of all rows to zero
 	  for (size_t i=0; (int) i < (int) gv.indexSet().size(n); i++)
-		A.setrowsize(i,0); 
+		A.setrowsize(i,0);
 
 	  // build needs a flag for all entities of all codims
 	  std::vector<bool> visited(allmapper.size());
@@ -866,7 +866,7 @@ namespace Dune
 	  for (Iterator it = gv.template begin<0>(); it!=eendit; ++it)
 		{
 		  Dune::GeometryType gt = it->type();
-		  const typename Dune::ReferenceElementContainer<DT,n>::value_type& 
+		  const typename Dune::ReferenceElementContainer<DT,n>::value_type&
 			refelem = ReferenceElements<DT,n>::general(gt);
 
 		  // vertices, c=n
@@ -875,7 +875,7 @@ namespace Dune
 			  int index = allmapper.template map<n>(*it,i);
 			  int alpha = vertexmapper.template map<n>(*it,i);
 			  //			  std::cout << "index=" << index << " alpha=" << alpha << std::endl;
-			  if (!visited[index]) 
+			  if (!visited[index])
 				{
 				  A.incrementrowsize(alpha);
 				  visited[index] = true;
@@ -894,7 +894,7 @@ namespace Dune
 				  alpha = doubled2Original[alpha];
 			  if (doubled2Original.find(beta) != doubled2Original.end())
 				  beta = doubled2Original[beta];
-			  if (!visited[index]) 
+			  if (!visited[index])
 				{
 				  A.incrementrowsize(alpha);
 				  A.incrementrowsize(beta);
@@ -937,8 +937,8 @@ namespace Dune
 			{
 			  int index = allmapper.template map<n>(*it,i);
 			  int alpha = vertexmapper.template map<n>(*it,i);
-			  // 			  std::cout << "vertex allindex " << index << std::endl; 
-			  if (!visited[index]) 
+			  // 			  std::cout << "vertex allindex " << index << std::endl;
+			  if (!visited[index])
 				{
 				  A.addindex(alpha,alpha);
 				  visited[index] = true;
@@ -949,8 +949,8 @@ namespace Dune
 		  for (int i=0; i<refelem.size(n-1); i++)
 			{
 			  int index = allmapper.template map<n-1>(*it,i);
-			  // 			  std::cout << "edge allindex " << index << std::endl; 
-			  if (!visited[index]) 
+			  // 			  std::cout << "edge allindex " << index << std::endl;
+			  if (!visited[index])
 				{
 				  int alpha = vertexmapper.template map<n>(*it,refelem.subEntity(i,n-1,0,n));
 				  int beta = vertexmapper.template map<n>(*it,refelem.subEntity(i,n-1,1,n));
@@ -981,7 +981,7 @@ namespace Dune
 			  indexJ = doubled2Original[indexJ];
 		A.addindex(indexI,indexJ);
 	  }
-	  
+
 	  // now the matrix is ready for use
 	  A.endindices();
 // 	  std::cout << "=== P1OperatorBase index insertion " <<  watch.elapsed() << std::endl;
@@ -1021,13 +1021,13 @@ namespace Dune
 
   protected:
 	Timer watch;
-	const G& grid;	
+	const G& grid;
 	const GV gv;
 	LC lc;
 	VM vertexmapper;
 	AM allmapper;
 	std::vector<bool> hanging;
-	std::set<P1OperatorLink> links; 
+	std::set<P1OperatorLink> links;
 	int hangingnodes;
 	bool extendOverlap;
 	int extraDOFs;
@@ -1072,7 +1072,7 @@ namespace Dune
 
 
 	// A DataHandle class to exchange border rows
-	class AccumulateBCFlags : 
+	class AccumulateBCFlags :
       public CommDataHandleIF<AccumulateBCFlags,std::pair<BCBlockType,VBlockType> > {
 	public:
 	  //! export type of data for message buffer
@@ -1092,7 +1092,7 @@ namespace Dune
 
 	  /*! how many objects of type DataType have to be sent for a given entity
 
-	  Note: Only the sender side needs to know this size. 
+	  Note: Only the sender side needs to know this size.
 	  */
 	  template<class EntityType>
 	  size_t size (EntityType& e) const
@@ -1105,7 +1105,7 @@ namespace Dune
 	  void gather (MessageBuffer& buff, const EntityType& e) const
 	  {
 		int alpha = vertexmapper.map(e);
-		buff.write(DataType(essential[alpha],f[alpha])); 
+		buff.write(DataType(essential[alpha],f[alpha]));
 	  }
 
 	  /*! unpack data from message buffer to user
@@ -1127,10 +1127,10 @@ namespace Dune
 	  }
 
 	  //! constructor
-	  AccumulateBCFlags (const G& g, const VM& vm, std::vector<BCBlockType>& e, VectorType& _f) 
+	  AccumulateBCFlags (const G& g, const VM& vm, std::vector<BCBlockType>& e, VectorType& _f)
 		: grid(g), essential(e), vertexmapper(vm), f(_f)
 	  {}
- 
+
 	private:
 	  const G& grid;
 	  std::vector<BCBlockType>& essential;
@@ -1146,23 +1146,23 @@ namespace Dune
 	{	}
 
 
-	/*! @brief Assemble global stiffness matrix 
+	/*! @brief Assemble global stiffness matrix
 
 	This method takes an object that can compute local stiffness matrices and
     assembles the global linear system Au=f.
-      
-	  @param[in] loc    the local assembler providing element stiffness and boundary conditions for all elements  
+
+	  @param[in] loc    the local assembler providing element stiffness and boundary conditions for all elements
 	  @param[in,out] u  solution, contains initial values on input, Dirichlet values are set. The
                         type of boundary condition for a node is inferred from the values returned
                         by the local assembler. A node is of Neumann type if all elements referring
                         to that node report a Neumann boundary condition, it is set to Dirichlet
                         if a least one element reports a process or Dirichlet boundary condition. The difference
 						between process and Dirichlet is that process always denotes a homogeneous Dirichlet
-                        value. 
+                        value.
 	  @param[in] f      right hand side is filled by this method
 
     Note that the rows corresponding to nodes at the Dirichlet boundary are filled
-    with trivial equations of the form \f[1\cdot u_i = f_i \f] where \f$u_i\f$ and \f$f_i\f$ are both set to the 
+    with trivial equations of the form \f[1\cdot u_i = f_i \f] where \f$u_i\f$ and \f$f_i\f$ are both set to the
     Dirichlet value at the \f$i\f$th node.
 
 	 */
@@ -1171,7 +1171,7 @@ namespace Dune
 	{
 	  // check size
  	  if ((*u).N()!=this->A.M() || (*f).N()!=this->A.N())
- 		DUNE_THROW(MathError,"P1OperatorAssembler::assemble(): size mismatch");		
+ 		DUNE_THROW(MathError,"P1OperatorAssembler::assemble(): size mismatch");
 
 	  // clear global stiffness matrix and right hand side
 	  this->watch.reset();
@@ -1194,7 +1194,7 @@ namespace Dune
 
 	  // hanging node stuff
 	  RT alpha[Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::maxsize][Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::maxsize];
-	  
+
 	  // local to global id mapping (do not ask vertex mapper repeatedly
 	  int l2g[Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::maxsize];
 	  int fl2g[Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::maxsize];
@@ -1209,7 +1209,7 @@ namespace Dune
 
 		  // get access to shape functions for P1 elements
 		  Dune::GeometryType gt = it->type();
-		  const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::value_type& 
+		  const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::value_type&
 			sfs=Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt,1);
 
 		  // get local to global id map
@@ -1249,23 +1249,17 @@ namespace Dune
 				  fl2g[i] = this->vertexmapper.template map<n>(*father,i);
 				  if (this->doubled2Original.find(fl2g[i]) != this->doubled2Original.end())
 					  fl2g[i] = this->doubled2Original[fl2g[i]];
-				}						  
+				}
 
 			  // assemble the constraint row once
 			  if (!treated[l2g[k]])
 				{
 				  bool throwflag=false;
-				  int cnt=0;
 				  for (int i=0; i<Dune::LagrangeShapeFunctions<DT,RT,n>::general(gtf,1).size(); ++i)
 					if (std::abs(alpha[i][k])>1E-4)
 					  {
 						if (this->hanging[fl2g[i]])
 						  {
-							std::cout << "X i=" << father->geometry()[i]
-									  << " k=" << it->geometry()[k]
-									  << " alpha=" << alpha[i][k]
-									  << " cnt=" << ++cnt
-									  << std::endl;
 							throwflag = true;
 						  }
 						this->A[l2g[k]][fl2g[i]] = MFieldType(); // Note: Interpolation is done a posteriori
@@ -1295,7 +1289,7 @@ namespace Dune
 				  // the standard entry
 				  this->A[l2g[i]][l2g[j]] += loc.mat(i,j);
 				}
-			  
+
 			  // essential boundary condition and rhs
 			  for (int comp=0; comp<m; comp++)
 				{
@@ -1383,7 +1377,7 @@ namespace Dune
 						{
 						  // process only hanging nodes
 						  if (!this->hanging[l2g[k]]) continue;
-						  
+
 						  if ( std::abs(alpha[i][k])>1E-4 && loc.bc(k)[comp]==BoundaryConditions::neumann )
 							(*f)[fl2g[i]][comp] += alpha[i][k]*loc.rhs(k)[comp];
 						}
@@ -1458,7 +1452,7 @@ namespace Dune
 							//if (icomp==jcomp)
 							  (*j)[icomp][jcomp] = static_cast<MFieldType>(1);
 							else
-							  (*j)[icomp][jcomp] = MFieldType();							  
+							  (*j)[icomp][jcomp] = MFieldType();
 						}
 					  else
 						{
@@ -1469,7 +1463,7 @@ namespace Dune
 				  }
 			}
 		}
-	} 
+	}
 
 	//! assemble operator, rhs and Dirichlet boundary conditions
 	void interpolateHangingNodes (P1FunctionExtended<GV,RT,LC,m>& u)
@@ -1484,7 +1478,7 @@ namespace Dune
 		{
 		  // get access to shape functions for P1 elements
 		  Dune::GeometryType gt = it->type();
-		  const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::value_type& 
+		  const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::value_type&
 			sfs=Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt,1);
 
 		  // determine the interpolation factors WITH RESPECT TO NODES OF FATHER
@@ -1532,7 +1526,7 @@ namespace Dune
 		  Dune::GeometryType gt = it->type();
 		  //		  if (gt!=Dune::simplex && gt!=Dune::triangle && gt!=Dune::tetrahedron) continue;
 
-		  const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::value_type& 
+		  const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::value_type&
 			sfs=Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt,1);
 
 		  // count nodes with mark
@@ -1566,7 +1560,7 @@ namespace Dune
 
 	  // determine if element has hanging nodes
 	  bool hasHangingNodes = false;
-	  const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::value_type& 
+	  const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::value_type&
 		sfs=Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt,1);
 	  for (int k=0; k<sfs.size(); k++) // loop over rows, i.e. test functions
 		if (this->hanging[this->vertexmapper.template map<n>(*it,sfs[k].entity())])
@@ -1594,7 +1588,7 @@ namespace Dune
 	  return;
 	}
 
-	
+
   private:
 	std::vector<bool> marked;
 
@@ -1606,7 +1600,7 @@ namespace Dune
 		  A[i][j] += alpha*B[i][j];
 	}
   };
-  
+
 
   /*! @brief Leafwise assembler
 
@@ -1624,7 +1618,7 @@ namespace Dune
   class LeafP1OperatorAssembler : public P1OperatorAssembler<LeafTag,G,RT,typename G::LeafGridView,LeafCommunicate<G>,m>
   {
   public:
-	LeafP1OperatorAssembler (const G& grid, bool extendoverlap=false) 
+	LeafP1OperatorAssembler (const G& grid, bool extendoverlap=false)
 	  : P1OperatorAssembler<LeafTag,G,RT,typename G::LeafGridView,LeafCommunicate<G>,m>(grid,grid.leafView(),LeafCommunicate<G>(grid),extendoverlap)
 	{}
   };
@@ -1646,7 +1640,7 @@ namespace Dune
   class LevelP1OperatorAssembler : public P1OperatorAssembler<LevelTag,G,RT,typename G::LevelGridView,LevelCommunicate<G>,m>
   {
   public:
-	LevelP1OperatorAssembler (const G& grid, int level, bool extendoverlap=false) 
+	LevelP1OperatorAssembler (const G& grid, int level, bool extendoverlap=false)
 	  : P1OperatorAssembler<LevelTag,G,RT,typename G::LevelGridView,LevelCommunicate<G>,m>(grid,grid.levelView(level),LevelCommunicate<G>(grid,level),extendoverlap)
 	{}
   };
