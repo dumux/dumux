@@ -25,6 +25,7 @@ public:
 	{}
 
 	// ASSUME a 2D uniform rectangular axiparallel grid
+	template<class TypeTag>
 	void assemble (const Element& element, int k = 1)
 	{
 		// get the number of element faces:

@@ -4,6 +4,7 @@
 #define DUNE_NONLINEARMODEL_HH
 
 #include"dumux/operators/p1operatorextended.hh"
+#include"dumux/operators/mixedoperator.hh"
 
 namespace Dune
 {
@@ -97,10 +98,27 @@ public:
 	// define the operator assembler type:
 	typedef LeafP1OperatorAssembler<G, RT, m> OperatorAssembler;
 
-    typedef NonlinearModel<G, RT, ProblemType, LocalJacobian,
-    FunctionType, OperatorAssembler> ThisNonlinearModel;
+    typedef NonlinearModel<G, RT, ProblemType, LocalJacobian, FunctionType, OperatorAssembler> ThisNonlinearModel;
 
 	LeafP1NonlinearModel (const G& g, ProblemType& prob)
+	: ThisNonlinearModel(g, prob)
+	{ }
+};
+
+template<class G, class RT, class ProblemType, class LocalJacobian, int m=1>
+class MixedNonlinearModel
+: public NonlinearModel<G, RT, ProblemType, LocalJacobian, LeafMixedFunction<G, RT, m>, LeafMixedOperatorAssembler<G, RT, m> >
+{
+public:
+	// define the function type:
+	typedef LeafMixedFunction<G, RT> FunctionType;
+
+	// define the operator assembler type:
+	typedef LeafMixedOperatorAssembler<G, RT, m> OperatorAssembler;
+
+    typedef NonlinearModel<G, RT, ProblemType, LocalJacobian, FunctionType, OperatorAssembler> ThisNonlinearModel;
+
+	MixedNonlinearModel (const G& g, ProblemType& prob)
 	: ThisNonlinearModel(g, prob)
 	{ }
 };

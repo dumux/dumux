@@ -350,7 +350,7 @@ public:
 
 			// build local stiffness matrix for Mixed elements
 			// inludes rhs and boundary condition information
-			loc.assemble(element, 1); // assemble local stiffness matrix
+			loc.template assemble<LeafTag>(element, 1); // assemble local stiffness matrix
 
 
 			// accumulate local matrix into global matrix for non-hanging nodes
@@ -425,7 +425,7 @@ template<class G, class RT, int m>
 class LeafMixedOperatorAssembler : public MixedOperatorAssembler<LeafTag,G,RT,typename G::LeafGridView,LeafCommunicate<G>,m>
 {
 public:
-	LeafMixedOperatorAssembler (const G& grid)
+	LeafMixedOperatorAssembler (const G& grid, bool overlap = false)
 	: MixedOperatorAssembler<LeafTag,G,RT,typename G::LeafGridView,LeafCommunicate<G>,m>(grid,grid.leafView(),LeafCommunicate<G>(grid))
 	{}
 };

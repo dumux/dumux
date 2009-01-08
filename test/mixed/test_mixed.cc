@@ -7,6 +7,8 @@
 #include <dune/istl/solvers.hh>
 #include "dumux/stokes/localmixed.hh"
 #include "dumux/operators/mixedoperator.hh"
+#include "dumux/stokes/stokesjacobian.hh"
+#include "dumux/nonlinear/nonlinearmodel.hh"
 #include "dumux/pardiso/pardiso.hh"
 
 #include "yxproblem.hh"
@@ -154,6 +156,11 @@ int main(int argc, char** argv)
 	  vtkwriter.addCellData(xCellVelocity, "velocity x-comp");
 	  vtkwriter.addCellData(yCellVelocity, "velocity y-comp");
 	  vtkwriter.write("test_mixed", Dune::VTKOptions::ascii);
+
+	  typedef Dune::StokesJacobian<Grid, Scalar> StokesJacobian;
+	  typedef Dune::StokesProblem<Grid, Scalar> StokesProblem;
+	  typedef Dune::MixedNonlinearModel<Grid, Scalar, StokesProblem, StokesJacobian> NonlinearModel;
+	  NonlinearModel nonlinearModel(grid, problem);
 
 	  return 0;
   }
