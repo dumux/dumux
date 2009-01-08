@@ -34,8 +34,9 @@ namespace Dune
     template<class Grid, class Scalar,class VC>
   class Diffusion {
   public:
+	  typedef Scalar ScalarType;
 //     Problem &diffproblem;
-	FractionalFlowProblem<Grid, Scalar, VC>& diffproblem; //!< problem data
+	FractionalFlowProblem<Grid, Scalar, VC>& diffProblem; //!< problem data
 
 	//! \brief Calculate the pressure.
 	/*!

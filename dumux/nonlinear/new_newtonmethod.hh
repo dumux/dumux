@@ -22,6 +22,8 @@
 #ifndef DUNE_NEW_NEWTONMETHOD_HH
 #define DUNE_NEW_NEWTONMETHOD_HH
 
+#include "dumux/exceptions.hh"
+
 namespace Dune
 {
     /*!
@@ -197,11 +199,11 @@ namespace Dune
             {
                 delete residual_;
             }
-        
+
         /*!
          * \brief Returns a reference to the current numeric model.
          */
-        Model &model() 
+        Model &model()
             { return *model_; }
 
         /*!
@@ -226,7 +228,7 @@ namespace Dune
                     return false;
                 };
             };
-        
+
         /*!
          * \brief Returns the current Jacobian matrix.
          */
@@ -336,7 +338,7 @@ namespace Dune
                 model_ = NULL;
                 return true;
             }
-        
+
 
     private:
         Function       uOld;

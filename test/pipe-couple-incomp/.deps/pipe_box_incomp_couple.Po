@@ -230,6 +230,11 @@ pipe_box_incomp_couple.o pipe_box_incomp_couple.o:  \
   /temp/bernd/DUMUX/dune-grid/dune/grid/io/file/dgfparser/entitykey.hh \
   vtkout.hh bc_ic.hh ../../dumux/material/properties.hh \
   ../../dumux/material/constrel/constrelco2.hh \
+  ../../dumux/material/constrel/co2tables.hh \
+  ../../dumux/material/tabulatedmaterial2.hh ../../dumux/exceptions.hh \
+  ../../dumux/material/tabulatedmaterial2hires.hh \
+  ../../dumux/material/tabulatedmaterial2.hh \
+  ../../dumux/material/constrel/co2tables_old.hh \
   ../../dumux/material/constrel/constrelwater.hh \
   ../../dumux/material/constrel/constrelco2.hh \
   ../../dumux/material/constrel/constrelbrine.hh \
@@ -1031,6 +1036,18 @@ bc_ic.hh:
 ../../dumux/material/properties.hh:
 
 ../../dumux/material/constrel/constrelco2.hh:
+
+../../dumux/material/constrel/co2tables.hh:
+
+../../dumux/material/tabulatedmaterial2.hh:
+
+../../dumux/exceptions.hh:
+
+../../dumux/material/tabulatedmaterial2hires.hh:
+
+../../dumux/material/tabulatedmaterial2.hh:
+
+../../dumux/material/constrel/co2tables_old.hh:
 
 ../../dumux/material/constrel/constrelwater.hh:
 
