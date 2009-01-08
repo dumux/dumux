@@ -12,6 +12,7 @@
 #include "dumux/pardiso/pardiso.hh"
 
 #include "yxproblem.hh"
+#include "sinproblem.hh"
 
 template<int dim>
 struct ElementAndFaceLayout
@@ -112,7 +113,7 @@ int main(int argc, char** argv)
 	  typedef Dune::SGrid<dim, dim> Grid;
 
 	  typedef Dune::FieldVector<Scalar,dim> FieldVector;
-	  Dune::FieldVector<int,dim> N(8); N[0] = 8;
+	  Dune::FieldVector<int,dim> N(16); N[0] = 16;
 	  FieldVector L(0);
 	  FieldVector H(1);
 	  Grid grid(N,L,H);
@@ -121,8 +122,9 @@ int main(int argc, char** argv)
 	  MixedFunction u(grid);
 	  MixedFunction f(grid);
 
-	  typedef Dune::YXProblem<Grid, Scalar> YXProblem;
-	  YXProblem problem;
+	  //typedef Dune::YXProblem<Grid, Scalar> Problem;
+	  typedef Dune::SinProblem2<Grid, Scalar> Problem;
+	  Problem problem;
 
 	  typedef Dune::LocalMixed<Grid, Scalar, 1> LocalMixed;
 	  LocalMixed localMixed(problem);
@@ -157,10 +159,10 @@ int main(int argc, char** argv)
 	  vtkwriter.addCellData(yCellVelocity, "velocity y-comp");
 	  vtkwriter.write("test_mixed", Dune::VTKOptions::ascii);
 
-	  typedef Dune::StokesJacobian<Grid, Scalar> StokesJacobian;
-	  typedef Dune::StokesProblem<Grid, Scalar> StokesProblem;
-	  typedef Dune::MixedNonlinearModel<Grid, Scalar, StokesProblem, StokesJacobian> NonlinearModel;
-	  NonlinearModel nonlinearModel(grid, problem);
+//	  typedef Dune::StokesJacobian<Grid, Scalar> StokesJacobian;
+//	  typedef Dune::StokesProblem<Grid, Scalar> StokesProblem;
+//	  typedef Dune::MixedNonlinearModel<Grid, Scalar, StokesProblem, StokesJacobian> NonlinearModel;
+//	  NonlinearModel nonlinearModel(grid, problem);
 
 	  return 0;
   }
