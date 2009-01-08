@@ -5,7 +5,7 @@
 #include <dune/grid/sgrid.hh>
 #include <dune/istl/io.hh>
 #include <dune/istl/solvers.hh>
-#include "dumux/operators/localmixed.hh"
+#include "dumux/stokes/localmixed.hh"
 #include "dumux/operators/mixedoperator.hh"
 #include "dumux/pardiso/pardiso.hh"
 
