@@ -53,10 +53,10 @@ public:
 		// mass conservation
 		// control volume: element
 		// div v = 0 -> \sum_e |e| v.n = 0
-		this->A[4][0] = deltaX;
-		this->A[4][1] = -deltaX;
-		this->A[4][2] = deltaY;
-		this->A[4][3] = -deltaY;
+		this->A[4][0] = deltaY;
+		this->A[4][1] = -deltaY;
+		this->A[4][2] = deltaX;
+		this->A[4][3] = -deltaX;
 
 		// momentum conservation
 		// - div T + grad p
@@ -64,14 +64,14 @@ public:
 		// y-comp control volume: element shifted by deltaY/2 in y-direction
 		// -> i-comp: \sum_e |e|( -T_i.n + p.n_i )
 		Scalar mu = 1.0;
-		this->A[0][0] = this->A[1][1] = mu*deltaX/deltaY;
-		this->A[2][2] = this->A[3][3] = mu*deltaY/deltaX;
-		this->A[0][1] = this->A[1][0] = -mu*deltaX/deltaY;
-		this->A[2][3] = this->A[3][2] = -mu*deltaY/deltaX;
-		this->A[0][4] = deltaX;
-		this->A[1][4] = -deltaX;
-		this->A[2][4] = deltaY;
-		this->A[3][4] = -deltaY;
+		this->A[0][0] = this->A[1][1] = 2.0*mu*deltaY/deltaX;
+		this->A[2][2] = this->A[3][3] = 2.0*mu*deltaX/deltaY;
+		this->A[0][1] = this->A[1][0] = -2.0*mu*deltaY/deltaX;
+		this->A[2][3] = this->A[3][2] = -2.0*mu*deltaX/deltaY;
+		this->A[0][4] = deltaY;
+		this->A[1][4] = -deltaY;
+		this->A[2][4] = deltaX;
+		this->A[3][4] = -deltaX;
 
 		// insert the source term and the boundary conditions:
 		IntersectionIterator endIsIt = element.ileafend();
