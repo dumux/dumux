@@ -107,7 +107,7 @@ namespace Dune
             switchIdx      = TwoPTwoCNITraits::switchIdx,
             temperatureIdx = TwoPTwoCNITraits::temperatureIdx,
 
-            numPhases        = TwoPTwoCNITraits::numPhases,
+            numPhases   = TwoPTwoCNITraits::numPhases,
             wPhase      = TwoPTwoCNITraits::wPhase,
             nPhase      = TwoPTwoCNITraits::nPhase,
 
@@ -124,13 +124,13 @@ namespace Dune
         typedef typename BoxTraits::SolutionVector      SolutionVector;
         typedef typename TwoPTwoCNITraits::PhasesVector PhasesVector;
 
-        typedef typename ParentType::LocalFunction     LocalFunction;
+        typedef typename ParentType::LocalFunction       LocalFunction;
         typedef typename ParentType::ElementData         ElementData;
 
         typedef typename ParentType::VariableVertexData  VariableVertexData;
-        typedef typename BoxTraits::FVElementGeometry  FVElementGeometry;
+        typedef typename BoxTraits::FVElementGeometry    FVElementGeometry;
 
-        typedef typename DomTraits::GlobalPosition         GlobalPosition;
+        typedef typename DomTraits::GlobalPosition        GlobalPosition;
         typedef typename DomTraits::LocalPosition         LocalPosition;
 
         typedef FieldMatrix<Scalar, dim, dim>  Tensor;
@@ -251,12 +251,12 @@ namespace Dune
     public:
         // internal method!
         void updateVarVertexData_(VariableVertexData &d,
-                                const SolutionVector &vertSol,
-                                int phaseState,
-                                const Element &element,
-                                int localIdx,
-                                Problem &problem,
-                                Scalar temperature) const
+                                  const SolutionVector &vertSol,
+                                  int phaseState,
+                                  const Element &element,
+                                  int localIdx,
+                                  Problem &problem,
+                                  Scalar temperature) const
             {
                 // update data for the isothermal stuff
                 ParentType::updateVarVertexData_(d,
@@ -269,7 +269,7 @@ namespace Dune
 
                 const LocalPosition &local =
                     DomTraits::referenceElement(element.type()).position(localIdx,
-                                                                      dim);
+                                                                         dim);
                 const GlobalPosition &global =
                     element.geometry()[localIdx];
 
@@ -277,11 +277,9 @@ namespace Dune
                 d.lambda = problem.soil().heatCond(global, element, local, d.satW);
                 d.enthalpy[pWIdx] = problem.wettingPhase().enthalpy(temperature, d.pW);
                 d.enthalpy[switchIdx] = problem.nonwettingPhase().enthalpy(temperature, d.pN);
-
-                d.intenergy[pWIdx] = problem.wettingPhase().intEnergy(temperature,
-                                                                        d.pW);
-                d.intenergy[switchIdx] = problem.nonwettingPhase().intEnergy(temperature,
-                                                                               d.pN);
+                
+                d.intenergy[pWIdx] = problem.wettingPhase().intEnergy(temperature, d.pW);
+                d.intenergy[switchIdx] = problem.nonwettingPhase().intEnergy(temperature, d.pN);
             }
 
 

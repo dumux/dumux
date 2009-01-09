@@ -123,16 +123,16 @@ struct Table : public std::vector<std::vector<TableEntry> >
 
             // round to upper indices for the maximum pressure and
             // temperature.
-            int maxPIdx = (int) ceil((numP-1)*(hiresTable->maxP - minP)/(maxP - minP));
-            int maxTIdx = (int) ceil((numT-1)*(hiresTable->maxT - minT)/(maxT - minT));
-            
+            int maxPIdx = (int) ceil((numP-1)*(hiresTable->maxP*(1 - 1e-5) - minP)/(maxP - minP));
+            int maxTIdx = (int) ceil((numT-1)*(hiresTable->maxT*(1 - 1e-5) - minT)/(maxT - minT));
+
             // calculate locations of the indices and use them for the
             // highres area
             hiresTable->minP = minP + minPIdx*(maxP - minP)/(numP-1);
             hiresTable->maxP = minP + maxPIdx*(maxP - minP)/(numP-1);
 
             hiresTable->minT = minT + minTIdx*(maxT - minT)/(numT-1);
-            hiresTable->maxT = minT + maxTIdx*(maxT - minT)/(numP-1);
+            hiresTable->maxT = minT + maxTIdx*(maxT - minT)/(numT-1);
 
             assert(0 <= minPIdx);
             assert(minPIdx < maxPIdx);
@@ -142,17 +142,18 @@ struct Table : public std::vector<std::vector<TableEntry> >
             assert(minTIdx < maxTIdx);
             assert(maxTIdx < numT);
             
+
             if (minPIdx > 0) {
-                hiresTable->transitionWest = 1e6*0.05*(hiresTable->maxP - hiresTable->minP);
+                hiresTable->transitionWest = 1e6*0.005*(hiresTable->maxP - hiresTable->minP);
             }
             if (maxPIdx < numP - 1) {
-                hiresTable->transitionEast = 1e6*0.05*(hiresTable->maxP - hiresTable->minP);
+                hiresTable->transitionEast = 1e6*0.005*(hiresTable->maxP - hiresTable->minP);
             }
             if (minTIdx > 0) {
-                hiresTable->transitionNorth = 0.05*(hiresTable->maxT - hiresTable->minT);
+                hiresTable->transitionNorth = 0.005*(hiresTable->maxT - hiresTable->minT);
             }
             if (maxTIdx < numT - 1) {
-                hiresTable->transitionSouth = 0.05*(hiresTable->maxT - hiresTable->minT);
+                hiresTable->transitionSouth = 0.005*(hiresTable->maxT - hiresTable->minT);
             }
             
             // if we've got nested hires ranges, do the same

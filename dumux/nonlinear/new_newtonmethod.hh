@@ -22,7 +22,7 @@
 #ifndef DUNE_NEW_NEWTONMETHOD_HH
 #define DUNE_NEW_NEWTONMETHOD_HH
 
-#include "dumux/exceptions.hh"
+#include <dumux/exceptions.hh>
 
 namespace Dune
 {
@@ -199,11 +199,11 @@ namespace Dune
             {
                 delete residual_;
             }
-
+        
         /*!
          * \brief Returns a reference to the current numeric model.
          */
-        Model &model()
+        Model &model() 
             { return *model_; }
 
         /*!
@@ -222,13 +222,14 @@ namespace Dune
                 try {
                     return execute_(model, ctl);
                 }
-                catch (Dune::NumericalProblem) {
+                catch (const Dune::NumericalProblem &e) {
+                    std::cout << "Newton: Caught exception: \"" << e.what() << "\"\n";
                     ctl.newtonFail();
                     model_ = NULL;
                     return false;
                 };
             };
-
+        
         /*!
          * \brief Returns the current Jacobian matrix.
          */
@@ -307,23 +308,13 @@ namespace Dune
                     jacobianAsm.assemble(localJacobian, u, f);
 
                     // solve the resultuing linear equation system
-                    if (ctl.newtonSolveLinear(*jacobianAsm, *u, *f)) {
-                        deflectionTwoNorm_ = (*u).two_norm();
-                        // update the current solution. We use either
-                        // a line search approach or the plain method.
-                        if (!updateMethod.update(*this, u, uOld, model)) {
-                            ctl.newtonFail();
-                            model_ = NULL;
-                            return false;
-                        }
-                    }
-                    else {
-                        // couldn't solve the current linearization
-                        ctl.newtonFail();
-                        model_ = NULL;
-                        return false;
-                    }
+                    ctl.newtonSolveLinear(*jacobianAsm, *u, *f);
 
+                    deflectionTwoNorm_ = (*u).two_norm();
+                    // update the current solution. We use either
+                    // a line search approach or the plain method.
+                    updateMethod.update(*this, u, uOld, model);
+                    
                     ctl.newtonEndStep(u, uOld);
                 }
                 // tell the controller that we're done
@@ -338,7 +329,7 @@ namespace Dune
                 model_ = NULL;
                 return true;
             }
-
+        
 
     private:
         Function       uOld;

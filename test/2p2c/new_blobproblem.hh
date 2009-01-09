@@ -409,15 +409,12 @@ namespace Dune
 //                const LocalPosition &localPos = DomainTraits::referenceElement(element.type()).position(vertIdx, dim);
                 const GlobalPosition &globalPos = element.geometry()[vertIdx];
                 
-                values = 0.0;
+                values[pWIdx] = 1e5;
+                values[switchIdx] = 0.0;
+
                 if (globalPos[0] < eps_)
                 {
-                    values[pWIdx] = 2e5;
-                    values[switchIdx] = 0;  // may be Sn, Xaw or Xwn!!
-                }
-                if (globalPos[0] > (300 - eps_))
-                {
-                    values[pWIdx] = 1e5;
+                    values[pWIdx] = 1e5 + 50; // used to be 2e5, but then diffusion is negligible
                     values[switchIdx] = 0;  // may be Sn, Xaw or Xwn!!
                 }
             }

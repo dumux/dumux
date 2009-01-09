@@ -79,6 +79,7 @@ namespace Dune
             Scalar pN;
             PhasesVector mobility;  //FieldVector with the number of phases
             PhasesVector density;
+            PhasesVector diffCoeff; // diffusion coefficents for the phases
             Dune::FieldMatrix<Scalar, numComponents, numPhases> massfrac;
             int phaseState;
         };
@@ -201,12 +202,12 @@ namespace Dune
 
                     // Solubilities of components in phases
                     if (phaseState == bothPhases) {
-                        d.massfrac[nComp][wPhase] = problem.multicomp().xAW(d.pN, temperature);
                         d.massfrac[wComp][nPhase] = problem.multicomp().xWN(d.pN, temperature);
+                        d.massfrac[nComp][wPhase] = problem.multicomp().xAW(d.pN, temperature);
                     }
                     else if (phaseState == wPhaseOnly) {
                         d.massfrac[wComp][nPhase] = 0.0;
-                        d.massfrac[nComp][wPhase] =  vertSol[switchIdx];
+                        d.massfrac[nComp][wPhase] = vertSol[switchIdx];
                     }
                     else if (phaseState == nPhaseOnly){
                         d.massfrac[wComp][nPhase] = vertSol[switchIdx];
@@ -239,6 +240,9 @@ namespace Dune
                                                                     local,
                                                                     temperature,
                                                                     d.pN);
+                    
+                    d.diffCoeff[wPhase] = problem.wettingPhase().diffCoeff(temperature, d.pW);
+                    d.diffCoeff[nPhase] = problem.nonwettingPhase().diffCoeff(temperature, d.pN);
                 }
 
     public:
@@ -386,6 +390,10 @@ namespace Dune
                 const LocalPosition &local_i = this->curElementGeom_.subContVol[i].local;
                 const LocalPosition &local_j = this->curElementGeom_.subContVol[j].local;
 
+                const ElementData &elemDat = this->curElemDat_;
+                const VariableVertexData &vDat_i = elemDat.vertex[i];
+                const VariableVertexData &vDat_j = elemDat.vertex[j];
+
                 GlobalPosition pGrad[numPhases];
                 GlobalPosition xGrad[numPhases];
                 GlobalPosition tempGrad(0.0);
@@ -403,27 +411,30 @@ namespace Dune
                     // FEGradient at vert k
                     const LocalPosition &feGrad = this->curElementGeom_.subContVolFace[faceId].grad[k];
 
-                    pressure[wPhase] = this->curElemDat_.vertex[k].pW;
-                    pressure[nPhase] = this->curElemDat_.vertex[k].pN;
+                    pressure[wPhase] = elemDat.vertex[k].pW;
+                    pressure[nPhase] = elemDat.vertex[k].pN;
 
                     // compute sum of pressure gradients for each phase
                     for (int phase = 0; phase < numPhases; phase++)
                     {
+                        // the pressure gradient
                         tmp = feGrad;
                         tmp *= pressure[phase];
                         pGrad[phase] += tmp;
                     }
 
-                    // for diffusion of air in wetting phase
+                    // the diffusion gradient of the non-wetting
+                    // component in the wetting phase
                     tmp = feGrad;
-                    tmp *= this->curElemDat_.vertex[k].massfrac[nComp][wPhase];
+                    tmp *= elemDat.vertex[k].massfrac[nComp][wPhase];
                     xGrad[wPhase] += tmp;
 
-                    // for diffusion of water in nonwetting phase
+                    // the diffusion gradient of the wetting component
+                    // in the non-wetting phase
                     tmp = feGrad;
-                    tmp *= this->curElemDat_.vertex[k].massfrac[wComp][nPhase];
+                    tmp *= elemDat.vertex[k].massfrac[wComp][nPhase];
                     xGrad[nPhase] += tmp;
-
+                    
                     // temperature gradient
                     asImp_()->updateTempGrad(tempGrad, feGrad, this->curSol_, k);
                 }
@@ -433,7 +444,7 @@ namespace Dune
                 for (int phase=0; phase < numPhases; phase++)
                 {
                     tmp = this->problem_.gravity();
-                    tmp *= this->curElemDat_.vertex[i].density[phase];
+                    tmp *= vDat_i.density[phase];
                     pGrad[phase] -= tmp;
                 }
 
@@ -454,10 +465,10 @@ namespace Dune
                 }
 
                 // find upsteam and downstream verts
-                const VariableVertexData *upW = &(this->curElemDat_.vertex[i]);
-                const VariableVertexData *dnW = &(this->curElemDat_.vertex[j]);
-                const VariableVertexData *upN = &(this->curElemDat_.vertex[i]);
-                const VariableVertexData *dnN = &(this->curElemDat_.vertex[j]);
+                const VariableVertexData *upW = &vDat_i;
+                const VariableVertexData *dnW = &vDat_j;
+                const VariableVertexData *upN = &vDat_i;
+                const VariableVertexData *dnN = &vDat_j;
                 
                 if (vDarcyOut[wPhase] > 0) {
                     std::swap(upW, dnW);
@@ -531,57 +542,66 @@ namespace Dune
                 asImp_()->advectiveHeatFlux(flux, vDarcyOut, alpha, upW, dnW, upN, dnN);
 
                 asImp_()->diffusiveHeatFlux(flux, faceId, tempGrad);
-
-                return;
-
+                
+                /////////////////////////////
                 // DIFFUSION
+                /////////////////////////////
+
                 SolutionVector normDiffGrad;
 
-                // get local to global id map
-                int state_i = this->curElemDat_.vertex[i].phaseState;
-                int state_j = this->curElemDat_.vertex[j].phaseState;
-
-                Scalar diffusionWW(0.0), diffusionWN(0.0); // diffusion of water
-                Scalar diffusionAW(0.0), diffusionAN(0.0); // diffusion of air
-                SolutionVector avgDensity, avgDpm;
+                Scalar diffusionWW(0.0), diffusionWN(0.0); // diffusion of liquid
+                Scalar diffusionAW(0.0), diffusionAN(0.0); // diffusion of gas
+                SolutionVector avgDensity;
 
                 // Diffusion coefficent
-                // TODO: needs to be continuously dependend on the phase saturations
-                avgDpm[wPhase]=2e-9;
-                avgDpm[nPhase]=2.25e-5;
-                if (state_i == nPhaseOnly || state_j == nPhaseOnly)
-                {
-                    // only the nonwetting phase is present in at
-                    // least one element -> no diffusion within the
-                    // wetting phase
-                    avgDpm[wPhase] = 0;
-                }
-                if (state_i == wPhaseOnly || state_j == wPhaseOnly)
-                {
-                    // only the wetting phase is present in at least
-                    // one element -> no diffusion within the non wetting
-                    // phase
-                    avgDpm[nPhase] = 0;
-                }
 
-                // length of the diffusion gradient
+                // calculate tortuosity at the nodes i and j needed
+                // for porous media diffusion coefficient
+                Scalar tauW_i, tauW_j;
+                Scalar tauN_i, tauN_j;
+
+                Scalar porosity_i = this->problem_.porosity(this->curElement_(), i);
+                Scalar porosity_j = this->problem_.porosity(this->curElement_(), j);
+
+                tauW_i = pow(porosity_i * vDat_i.satW, 
+                             7.0/3) / (porosity_i * porosity_i);
+                tauW_j = pow(porosity_j * vDat_j.satW, 
+                             7.0/3) / (porosity_j * porosity_j);
+                tauN_i = pow(porosity_i * vDat_i.satN, 
+                             7.0/3) / (porosity_i * porosity_i);
+                tauN_j = pow(porosity_j * vDat_j.satN, 
+                             7.0/3) / (porosity_j * porosity_j);
+
+                // arithmetic mean of porous media diffusion coefficient
+                Scalar Dwn, Daw;
+                
+                // approximate the effective cross sections for
+                // diffusion by the harmonic mean of the volume
+                // occupied by the phases
+                Dwn = harmonicMean_(porosity_i * vDat_i.satN * tauN_i * vDat_i.diffCoeff[nPhase],
+                                    porosity_j * vDat_j.satN * tauN_j * vDat_j.diffCoeff[nPhase]);
+                Daw = harmonicMean_(porosity_i * vDat_i.satW * tauW_i * vDat_i.diffCoeff[wPhase],
+                                    porosity_j * vDat_j.satW * tauW_j * vDat_j.diffCoeff[wPhase]);
+                
+                // projection of the diffusion gradient on the normal
+                // of the FV face
                 normDiffGrad[wPhase] = xGrad[wPhase]*normal;
                 normDiffGrad[nPhase] = xGrad[nPhase]*normal;
 
                 // calculate the arithmetic mean of densities
-                avgDensity[wPhase] = 0.5*(this->curElemDat_.vertex[i].density[wPhase] + this->curElemDat_.vertex[j].density[wPhase]);
-                avgDensity[nPhase] = 0.5*(this->curElemDat_.vertex[i].density[nPhase] + this->curElemDat_.vertex[j].density[nPhase]);
+                avgDensity[wPhase] = 0.5*(vDat_i.density[wPhase] + vDat_j.density[wPhase]);
+                avgDensity[nPhase] = 0.5*(vDat_i.density[nPhase] + vDat_j.density[nPhase]);
 
-                diffusionAW = avgDpm[wPhase] * avgDensity[wPhase] * normDiffGrad[wPhase];
+                diffusionAW = Daw * avgDensity[wPhase] * normDiffGrad[wPhase];
                 diffusionWW = - diffusionAW;
-                diffusionWN = avgDpm[nPhase] * avgDensity[nPhase] * normDiffGrad[nPhase];
+                diffusionWN = Dwn * avgDensity[nPhase] * normDiffGrad[nPhase];
                 diffusionAN = - diffusionWN;
 
                 // add diffusion of water to water flux
-                flux[wComp] += (diffusionWW + diffusionWN);
+                flux[pWIdx] += diffusionWW + diffusionWN;
 
                 // add diffusion of air to air flux
-                flux[nComp] += (diffusionAN + diffusionAW);
+                flux[switchIdx] += diffusionAN + diffusionAW;
             }
 
         /*!
@@ -804,13 +824,13 @@ namespace Dune
                     Scalar xWN = (*globalSol)[globalIdx][switchIdx];
                     Scalar xWNmax = this->problem_.multicomp().xWN(pN, temperature);
 
-                    if (xWN > xWNmax*(1 + 2e-5))
+                    if (xWN > xWNmax)
                     {
                         // wetting phase appears
                         std::cout << "wetting phase appears at vert " << globalIdx
                                   << ", coordinates: " << globalPos << std::endl;
                         newPhaseState = bothPhases;
-                        (*globalSol)[globalIdx][switchIdx] = 1.0 - 2e-5;
+                        (*globalSol)[globalIdx][switchIdx] = 1.0 - 1e-3;
                     };
                 }
                 else if (phaseState == wPhaseOnly)
@@ -818,32 +838,32 @@ namespace Dune
                     Scalar xAW = (*globalSol)[globalIdx][switchIdx];
                     Scalar xAWmax = this->problem_.multicomp().xAW(pN, temperature);
 
-                    if (xAW > xAWmax*(1 + 2e-5))
+                    if (xAW > xAWmax)
                     {
                         // non-wetting phase appears
                         std::cout << "Non-wetting phase appears at vert " << globalIdx
                                   << ", coordinates: " << globalPos << std::endl;
-                        (*globalSol)[globalIdx][switchIdx] = 2e-5;
+                        (*globalSol)[globalIdx][switchIdx] = 1e-3;
                         newPhaseState = bothPhases;
                     }
                 }
                 else if (phaseState == bothPhases) {
                     Scalar satN = 1 - satW;
 
-                    if (satN < -1e-5) {
+                    if (satN < 0) {
                         // non-wetting phase disappears
                         std::cout << "Non-wetting phase disappears at vert " << globalIdx
                                   << ", coordinates: " << globalPos << std::endl;
                         (*globalSol)[globalIdx][switchIdx]
-                            = this->problem_.multicomp().xAW(pN, temperature);
+                            = this->problem_.multicomp().xAW(pN, temperature)*(1 - 1e-2);
                         newPhaseState = wPhaseOnly;
                     }
-                    else if (satW < -1e-5) {
+                    else if (satW < 0) {
                         // wetting phase disappears
                         std::cout << "Wetting phase disappears at vert " << globalIdx
                                   << ", coordinates: " << globalPos << std::endl;
                         (*globalSol)[globalIdx][switchIdx]
-                            = this->problem_.multicomp().xWN(pN, temperature);
+                            = this->problem_.multicomp().xWN(pN, temperature)*(1 - 1e-2);
                         newPhaseState = nPhaseOnly;
                     }
                 }
@@ -857,16 +877,22 @@ namespace Dune
         // first parameter is used to store the result.
         static void harmonicMeanK_(Tensor &Ki, const Tensor &Kj)
             {
-                double eps = 1e-20;
-
                 for (int kx=0; kx < Tensor::rows; kx++){
                     for (int ky=0; ky< Tensor::cols; ky++){
                         if (Ki[kx][ky] != Kj[kx][ky]) {
-                            Ki[kx][ky] = 2 / (1/(Ki[kx][ky]+eps) + (1/(Kj[kx][ky]+eps)));
+                            Ki[kx][ky] = harmonicMean_(Ki[kx][ky], Kj[kx][ky]);
                         }
                     }
                 }
             }
+
+        // returns the harmonic mean of two scalars
+        static Scalar harmonicMean_(Scalar x, Scalar y)
+            {
+                if (x == 0 || y == 0)
+                    return 0;
+                return (2*x*y)/(x + y);
+            };
 
         // parameters given in constructor
         std::vector<StaticVertexData> staticVertexDat_;
@@ -985,7 +1011,7 @@ namespace Dune
 
         // internal method!
         static Scalar temperature_(const SolutionVector &sol)
-            { return 283.15; }
+            { return 283.15; /* -> 10 °C */ }
     };
 
     ///////////////////////////////////////////////////////////////////////////

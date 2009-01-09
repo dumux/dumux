@@ -22,7 +22,7 @@ namespace Dune {
 template<class Grid, class Diffusion, class Transport, class VC> class IMPES :
 	public FractionalFlow<Grid, Diffusion, Transport, VC> {
 
-	typedef FractionalFlow<Grid, Diffusion, Transport, VC> FractionalFlow;
+	typedef Dune::FractionalFlow<Grid, Diffusion, Transport, VC> FractionalFlow;
 	typedef typename FractionalFlow::RepresentationType PressType;
 	typedef typename FractionalFlow::Scalar Scalar;
 

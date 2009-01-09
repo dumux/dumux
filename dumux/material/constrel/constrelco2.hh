@@ -4,7 +4,6 @@
 #define DUNE_CONSTRELCO2_HH
 
 #include "co2tables.hh"
-#include "co2tables_old.hh"
 
 #include <dumux/exceptions.hh>
 
@@ -98,7 +97,6 @@ namespace Dune
         static double lambda(double temp, double pg)
             {
                 DUNE_THROW(NotImplemented, "Heat conductivity of CO2");
-//                return  Dune::Co2Tables::tabulatedHeatCond.at(temp, pg);
             }
 
         static double satpressure(double temp)

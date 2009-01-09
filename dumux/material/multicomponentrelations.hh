@@ -92,7 +92,6 @@ class MultiComp
 
 class CWaterAir : public MultiComp
 {
-
 	public:
 		/*! \brief equation for calculating the mass fraction in the nonwetting phase
 		 *	\param pn non-wetting phase pressure \f$ \left[ Pa \right] \f$

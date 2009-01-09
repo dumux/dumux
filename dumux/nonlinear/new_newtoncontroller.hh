@@ -23,6 +23,8 @@
 
 #include "config.h"
 
+#include <dumux/exceptions.hh>
+
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/solvers.hh>
 
@@ -156,7 +158,7 @@ namespace Dune
         //! current iteration.
         //! Returns true iff the equation system could be solved.
         template <class Matrix, class Vector>
-        bool newtonSolveLinear(Matrix &A,
+        void newtonSolveLinear(Matrix &A,
                                Vector &x,
                                Vector &b)
             {
@@ -187,7 +189,10 @@ namespace Dune
 #endif
                 Dune::InverseOperatorResult result;
                 solver.apply(x, b, result);
-                return result.converged;
+                
+                if (!result.converged)
+                    DUNE_THROW(Dune::NumericalProblem, 
+                               "Solving the linear system of equations did not converge.");
             };
 
         //! Indicates that we're done solving one newton step.
