@@ -11,15 +11,15 @@ template<class G, class RT>
 class YXProblem : public StokesProblem<G, RT>
 {
   typedef typename G::ctype DT;
-  enum {dim=G::dimension, m=G::dimension+1};
+  enum {dim=G::dimension, numEq=G::dimension+1};
   typedef typename G::Traits::template Codim<0>::Entity Entity;
   typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
 
 public:
-  virtual FieldVector<RT,dim> q(const FieldVector<DT,dim>& x, const Entity& e,
+  virtual FieldVector<RT,numEq> q(const FieldVector<DT,dim>& x, const Entity& e,
                 const FieldVector<DT,dim>& xi) const
   {
-    FieldVector<RT,dim> result(0);
+    FieldVector<RT,numEq> result(0);
     result[0] = x[1];
     result[1] = x[0];
 
