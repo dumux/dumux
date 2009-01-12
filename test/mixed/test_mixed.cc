@@ -5,8 +5,8 @@
 #include <dune/grid/sgrid.hh>
 #include <dune/istl/io.hh>
 #include <dune/istl/solvers.hh>
-#include "dumux/stokes/localmixed.hh"
-#include "dumux/operators/mixedoperator.hh"
+#include "dumux/stokes/localstaggered.hh"
+#include "dumux/operators/staggeredoperator.hh"
 #include "dumux/stokes/stokesjacobian.hh"
 #include "dumux/nonlinear/nonlinearmodel.hh"
 #include "dumux/pardiso/pardiso.hh"
@@ -113,7 +113,7 @@ int main(int argc, char** argv)
 	  typedef Dune::SGrid<dim, dim> Grid;
 
 	  typedef Dune::FieldVector<Scalar,dim> FieldVector;
-	  Dune::FieldVector<int,dim> N(16); N[0] = 16;
+	  Dune::FieldVector<int,dim> N(32); N[0] = 32;
 	  FieldVector L(0);
 	  FieldVector H(1);
 	  Grid grid(N,L,H);
@@ -122,25 +122,25 @@ int main(int argc, char** argv)
 	  MixedFunction u(grid);
 	  MixedFunction f(grid);
 
-	  //typedef Dune::YXProblem<Grid, Scalar> Problem;
-	  typedef Dune::SinProblem2<Grid, Scalar> Problem;
+	  typedef Dune::YXProblem<Grid, Scalar> Problem;
+	  //typedef Dune::SinProblem<Grid, Scalar> Problem;
 	  Problem problem;
 
-	  typedef Dune::LocalMixed<Grid, Scalar, 1> LocalMixed;
-	  LocalMixed localMixed(problem);
+	  typedef Dune::LocalStaggered<Grid, Scalar, 1> LocalStaggered;
+	  LocalStaggered localStaggered(problem);
 
-	  typedef Dune::LeafMixedOperatorAssembler<Grid, Scalar, 1> MixedAssembler;
-	  MixedAssembler mixedAssembler(grid);
-	  mixedAssembler.assemble(localMixed, u, f);
+	  typedef Dune::LeafStaggeredOperatorAssembler<Grid, Scalar, 1> StaggeredAssembler;
+	  StaggeredAssembler staggeredAssembler(grid);
+	  staggeredAssembler.assemble(localStaggered, u, f);
 
-//	  printmatrix(std::cout, *mixedAssembler, "global stiffness matrix", "row", 11, 4);
+//	  printmatrix(std::cout, *staggeredAssembler, "global stiffness matrix", "row", 11, 4);
 //	  printvector(std::cout, *f, "right hand side", "row", 200, 1, 3);
 
 	  typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > Vector;
 	  typedef Dune::BCRSMatrix<Dune::FieldMatrix<Scalar, 1, 1> > Matrix;
-	  Dune::MatrixAdapter<Matrix,Vector,Vector> op(*mixedAssembler);
+	  Dune::MatrixAdapter<Matrix,Vector,Vector> op(*staggeredAssembler);
 	  Dune::InverseOperatorResult r;
-	  Dune::SeqPardiso<Matrix,Vector,Vector> preconditioner(*mixedAssembler);
+	  Dune::SeqPardiso<Matrix,Vector,Vector> preconditioner(*staggeredAssembler);
 	  Dune::LoopSolver<Vector> solver(op, preconditioner, 1E-14, 10000, 1);
 	  solver.apply(*u, *f, r);
 

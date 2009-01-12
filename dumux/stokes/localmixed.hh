@@ -64,10 +64,10 @@ public:
 		// y-comp control volume: element shifted by deltaY/2 in y-direction
 		// -> i-comp: \sum_e |e|( -T_i.n + p.n_i )
 		Scalar mu = 1.0;
-		this->A[0][0] = this->A[1][1] = 2.0*mu*deltaY/deltaX;
-		this->A[2][2] = this->A[3][3] = 2.0*mu*deltaX/deltaY;
-		this->A[0][1] = this->A[1][0] = -2.0*mu*deltaY/deltaX;
-		this->A[2][3] = this->A[3][2] = -2.0*mu*deltaX/deltaY;
+		this->A[0][0] = this->A[1][1] = mu*(deltaY/deltaX + deltaX/deltaY);
+		this->A[2][2] = this->A[3][3] = mu*(deltaX/deltaY + deltaY/deltaX);
+		this->A[0][1] = this->A[1][0] = -mu*deltaY/deltaX;
+		this->A[2][3] = this->A[3][2] = -mu*deltaX/deltaY;
 		this->A[0][4] = deltaY;
 		this->A[1][4] = -deltaY;
 		this->A[2][4] = deltaX;
