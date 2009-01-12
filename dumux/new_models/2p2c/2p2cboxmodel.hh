@@ -737,12 +737,12 @@ namespace Dune
                     for (int i = 0; i < it->template count<dim>(); ++i) {
                         int globalI = this->problem_.vertIdx(*it, i);
                         asImp_()->updateVarVertexData_(tmp,
-                                                     (*globalSol)[globalI],
-                                                     staticVertexDat_[globalI].phaseState,
-                                                     *it,
-                                                     i,
-                                                     this->problem_,
-                                                     Implementation::temperature_((*globalSol)[globalI]));
+                                                       (*globalSol)[globalI],
+                                                       staticVertexDat_[globalI].phaseState,
+                                                       *it,
+                                                       i,
+                                                       this->problem_,
+                                                       Implementation::temperature_((*globalSol)[globalI]));
 
                         (*pW)[globalI] = tmp.pW;
                         (*pN)[globalI] = tmp.pN;

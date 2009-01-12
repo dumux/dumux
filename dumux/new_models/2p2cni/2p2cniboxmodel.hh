@@ -242,8 +242,8 @@ namespace Dune
 
                 // Harmonic mean of the heat conducitivities of the
                 // sub control volumes adjacent to the face
-                Scalar lambda =  ParentType::hamonicMean_(eDat.vertex[i].lambda,
-                                                          eDat.vertex[j].lambda);
+                Scalar lambda =  ParentType::harmonicMean_(eDat.vertex[i].lambda,
+                                                           eDat.vertex[j].lambda);
 
                 // heat conduction
                 flux[temperatureIdx] += (tempGrad*normal) * lambda;;
