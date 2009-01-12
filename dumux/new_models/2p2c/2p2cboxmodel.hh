@@ -41,7 +41,7 @@ namespace Dune
     {
     public:
         enum {
-            numEq		  = 2,  //!< Number of primary variables / equations
+            numEq          = 2,  //!< Number of primary variables / equations
             numPhases     = 2,  //!< Number of fluid phases
             numComponents = 2   //!< Number of fluid components within a phase
         };
@@ -228,19 +228,19 @@ namespace Dune
                                                                           d.massfrac[wComp][nPhase]);
 
                     // Mobilities
-                    d.mobility[wPhase] = problem.materialLaw().mobW(d.satW, 
+                    d.mobility[wPhase] = problem.materialLaw().mobW(d.satW,
                                                                     global,
-                                                                    element, 
-                                                                    local, 
-                                                                    temperature, 
+                                                                    element,
+                                                                    local,
+                                                                    temperature,
                                                                     d.pW);
                     d.mobility[nPhase] = problem.materialLaw().mobN(d.satN,
-                                                                    global, 
+                                                                    global,
                                                                     element,
                                                                     local,
                                                                     temperature,
                                                                     d.pN);
-                    
+
                     d.diffCoeff[wPhase] = problem.wettingPhase().diffCoeff(temperature, d.pW);
                     d.diffCoeff[nPhase] = problem.nonwettingPhase().diffCoeff(temperature, d.pN);
                 }
@@ -434,7 +434,7 @@ namespace Dune
                     tmp = feGrad;
                     tmp *= elemDat.vertex[k].massfrac[wComp][nPhase];
                     xGrad[nPhase] += tmp;
-                    
+
                     // temperature gradient
                     asImp_()->updateTempGrad(tempGrad, feGrad, this->curSol_, k);
                 }
@@ -469,7 +469,7 @@ namespace Dune
                 const VariableVertexData *dnW = &vDat_j;
                 const VariableVertexData *upN = &vDat_i;
                 const VariableVertexData *dnN = &vDat_j;
-                
+
                 if (vDarcyOut[wPhase] > 0) {
                     std::swap(upW, dnW);
                 };
@@ -541,8 +541,6 @@ namespace Dune
                 ////////
                 asImp_()->advectiveHeatFlux(flux, vDarcyOut, alpha, upW, dnW, upN, dnN);
 
-                asImp_()->diffusiveHeatFlux(flux, faceId, tempGrad);
-                
                 /////////////////////////////
                 // DIFFUSION
                 /////////////////////////////
@@ -563,18 +561,18 @@ namespace Dune
                 Scalar porosity_i = this->problem_.porosity(this->curElement_(), i);
                 Scalar porosity_j = this->problem_.porosity(this->curElement_(), j);
 
-                tauW_i = pow(porosity_i * vDat_i.satW, 
+                tauW_i = pow(porosity_i * vDat_i.satW,
                              7.0/3) / (porosity_i * porosity_i);
-                tauW_j = pow(porosity_j * vDat_j.satW, 
+                tauW_j = pow(porosity_j * vDat_j.satW,
                              7.0/3) / (porosity_j * porosity_j);
-                tauN_i = pow(porosity_i * vDat_i.satN, 
+                tauN_i = pow(porosity_i * vDat_i.satN,
                              7.0/3) / (porosity_i * porosity_i);
-                tauN_j = pow(porosity_j * vDat_j.satN, 
+                tauN_j = pow(porosity_j * vDat_j.satN,
                              7.0/3) / (porosity_j * porosity_j);
 
                 // arithmetic mean of porous media diffusion coefficient
                 Scalar Dwn, Daw;
-                
+
                 // approximate the effective cross sections for
                 // diffusion by the harmonic mean of the volume
                 // occupied by the phases
@@ -582,7 +580,7 @@ namespace Dune
                                     porosity_j * vDat_j.satN * tauN_j * vDat_j.diffCoeff[nPhase]);
                 Daw = harmonicMean_(porosity_i * vDat_i.satW * tauW_i * vDat_i.diffCoeff[wPhase],
                                     porosity_j * vDat_j.satW * tauW_j * vDat_j.diffCoeff[wPhase]);
-                
+
                 // projection of the diffusion gradient on the normal
                 // of the FV face
                 normDiffGrad[wPhase] = xGrad[wPhase]*normal;
@@ -602,6 +600,12 @@ namespace Dune
 
                 // add diffusion of air to air flux
                 flux[switchIdx] += diffusionAN + diffusionAW;
+
+                ////////
+                // diffusive flux of energy (only for non-isothermal
+                // models)
+                ////////
+                asImp_()->diffusiveHeatFlux(flux, faceId, tempGrad);
             }
 
         /*!
@@ -786,7 +790,10 @@ namespace Dune
                 int numVertices = this->curElement_().template count<dim>();
                 for (int i = 0; i < numVertices; i++) {
                     int iGlobal = ParentType::problem_.vertIdx(ParentType::curElement_(), i);
-                    phaseState = isOldSol?staticVertexDat_[iGlobal].oldPhaseState:staticVertexDat_[iGlobal].phaseState;
+                    if (isOldSol)
+                        phaseState = staticVertexDat_[iGlobal].oldPhaseState;
+                    else
+                        staticVertexDat_[iGlobal].phaseState;
                     asImp_()->updateVarVertexData_(dest.vertex[i],
                                                  sol[i],
                                                  phaseState,

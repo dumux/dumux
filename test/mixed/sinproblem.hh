@@ -17,7 +17,7 @@ class SinProblem : public StokesProblem<G, RT>
 
 public:
   virtual FieldVector<RT,dim> q(const FieldVector<DT,dim>& x, const Entity& e,
-				const FieldVector<DT,dim>& xi) const
+                const FieldVector<DT,dim>& xi) const
   {
     FieldVector<RT,dim> result(0);
     result[0] = 8.0*pi*pi*cos(2.0*pi*x[0])*sin(2.0*pi*x[1]) + 4.0*pi*cos(4.0*pi*(x[0] + x[1]));
@@ -27,15 +27,15 @@ public:
   }
 
   virtual BoundaryConditions::Flags bctype (const FieldVector<DT,dim>& x, const Entity& e,
-					    const IntersectionIterator& intersectionIt,
-					    const FieldVector<DT,dim>& xi) const
+                        const IntersectionIterator& intersectionIt,
+                        const FieldVector<DT,dim>& xi) const
   {
     return BoundaryConditions::dirichlet;
   }
 
   virtual FieldVector<RT,dim> g(const FieldVector<DT,dim>& x, const Entity& e,
-				const IntersectionIterator& intersectionIt,
-				const FieldVector<DT,dim>& xi) const
+                const IntersectionIterator& intersectionIt,
+                const FieldVector<DT,dim>& xi) const
   {
     return velocity(x);
   }
@@ -72,7 +72,7 @@ public:
 
   SinProblem()
   {
-	  pi = 4.0*atan(1.0);
+      pi = 4.0*atan(1.0);
   }
 
   double pi;
@@ -88,7 +88,7 @@ class SinProblem2 : public StokesProblem<G, RT>
 
 public:
   virtual FieldVector<RT,dim> q(const FieldVector<DT,dim>& x, const Entity& e,
-				const FieldVector<DT,dim>& xi) const
+                const FieldVector<DT,dim>& xi) const
   {
     FieldVector<RT,dim> result(0);
     result[0] = 5.0*pi*pi*cos(2.0*pi*x[0])*sin(pi*x[1]) + 4.0*pi*cos(4.0*pi*(x[0])*x[1]);
@@ -98,15 +98,15 @@ public:
   }
 
   virtual BoundaryConditions::Flags bctype (const FieldVector<DT,dim>& x, const Entity& e,
-					    const IntersectionIterator& intersectionIt,
-					    const FieldVector<DT,dim>& xi) const
+                        const IntersectionIterator& intersectionIt,
+                        const FieldVector<DT,dim>& xi) const
   {
     return BoundaryConditions::dirichlet;
   }
 
   virtual FieldVector<RT,dim> g(const FieldVector<DT,dim>& x, const Entity& e,
-				const IntersectionIterator& intersectionIt,
-				const FieldVector<DT,dim>& xi) const
+                const IntersectionIterator& intersectionIt,
+                const FieldVector<DT,dim>& xi) const
   {
     return velocity(x);
   }
@@ -139,7 +139,7 @@ public:
 
   SinProblem2()
   {
-	  pi = 4.0*atan(1.0);
+      pi = 4.0*atan(1.0);
   }
 
   double pi;

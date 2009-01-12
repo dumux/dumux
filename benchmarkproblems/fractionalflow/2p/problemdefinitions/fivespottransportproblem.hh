@@ -26,29 +26,29 @@ namespace Dune
 
   public:
     BoundaryConditions::Flags bctype (const FieldVector<DT,n>& x, const Entity& e,
-				      const FieldVector<DT,n>& xi) const
+                      const FieldVector<DT,n>& xi) const
     {
       if ((x[0] < LowerLeft_[0] + eps_ && x[1] < LowerLeft_[1] + bcf_) ||
-	  (x[1] < LowerLeft_[1] + eps_ && x[0] < LowerLeft_[0] + bcf_) ||
-	  (x[0] > UpperRight_[0] - eps_ && x[1] > UpperRight_[1] - bcf_) ||
-	  (x[1] > UpperRight_[1] - eps_ && x[0] > UpperRight_[0] - bcf_))
-	return BoundaryConditions::dirichlet;
+      (x[1] < LowerLeft_[1] + eps_ && x[0] < LowerLeft_[0] + bcf_) ||
+      (x[0] > UpperRight_[0] - eps_ && x[1] > UpperRight_[1] - bcf_) ||
+      (x[1] > UpperRight_[1] - eps_ && x[0] > UpperRight_[0] - bcf_))
+    return BoundaryConditions::dirichlet;
       // all other boundaries
       return BoundaryConditions::neumann;
     }
 
     RT dirichlet (const FieldVector<DT,n>& x, const Entity& e,
-	  const FieldVector<DT,n>& xi) const
+      const FieldVector<DT,n>& xi) const
     {
       if ((x[0] < LowerLeft_[0] + eps_ && x[1] < LowerLeft_[1] + bcf_) ||
-	  (x[1] < LowerLeft_[1] + eps_ && x[0] < LowerLeft_[0] + bcf_))
-	return 0.8;
+      (x[1] < LowerLeft_[1] + eps_ && x[0] < LowerLeft_[0] + bcf_))
+    return 0.8;
       else
-	return 0.2;
+    return 0.2;
     }
 
     RT initSat (const FieldVector<DT,n>& x, const Entity& e,
-	   const FieldVector<DT,n>& xi) const
+       const FieldVector<DT,n>& xi) const
     {
       return 0.2;
     }
@@ -60,10 +60,10 @@ namespace Dune
 
 
     Fivespotcase1TransportProblem(VC& variableobj, TwoPhaseRelations& law = *(new LinearLaw), RT bcf = 11,
-			 const int level = 0, const bool cap =
-			 false)
+             const int level = 0, const bool cap =
+             false)
       : TransportProblem<G, RT, VC>(variableobj,law, cap), LowerLeft_(variableobj.grid.lowerLeft()), UpperRight_(variableobj.grid.upperRight()),
-	eps_(1e-8*(variableobj.grid.upperRight())[0]),bcf_(bcf),poro_(0.2)
+    eps_(1e-8*(variableobj.grid.upperRight())[0]),bcf_(bcf),poro_(0.2)
     {}
   };
   template<class G, class RT,class VC>
@@ -85,35 +85,35 @@ namespace Dune
 
   public:
     BoundaryConditions::Flags bctype (const FieldVector<DT,n>& x, const Entity& e,
-				      const FieldVector<DT,n>& xi) const
+                      const FieldVector<DT,n>& xi) const
     {
       if ((x[0] < LowerLeft_[0] + eps_ && x[1] < LowerLeft_[1] + bcf_) || //lower left
-	  (x[1] <  LowerLeft_[1] + eps_ && x[0] < LowerLeft_[0] + bcf_) || //lower left
-	  (x[0] > UpperRight_[0] - eps_ && x[1] > UpperRight_[1] - bcf_) || //upper right
-	  (x[1] > UpperRight_[1] - eps_ && x[0] > UpperRight_[0] - bcf_) || //upper right
-	  (x[0] < LowerLeft_[0] + eps_ && x[1] > UpperRight_[1] - bcf_) || //upper left
-	  (x[1] >  UpperRight_[1] - eps_ && x[0] < LowerLeft_[0] + bcf_) || //upper left
-	  (x[0] > UpperRight_[0] - eps_ && x[1] < LowerLeft_[1] + bcf_) ||  //lower right
-	  (x[1] < LowerLeft_[1] + eps_ && x[0] > UpperRight_[0] - bcf_))   //lower right
-	return BoundaryConditions::dirichlet;
+      (x[1] <  LowerLeft_[1] + eps_ && x[0] < LowerLeft_[0] + bcf_) || //lower left
+      (x[0] > UpperRight_[0] - eps_ && x[1] > UpperRight_[1] - bcf_) || //upper right
+      (x[1] > UpperRight_[1] - eps_ && x[0] > UpperRight_[0] - bcf_) || //upper right
+      (x[0] < LowerLeft_[0] + eps_ && x[1] > UpperRight_[1] - bcf_) || //upper left
+      (x[1] >  UpperRight_[1] - eps_ && x[0] < LowerLeft_[0] + bcf_) || //upper left
+      (x[0] > UpperRight_[0] - eps_ && x[1] < LowerLeft_[1] + bcf_) ||  //lower right
+      (x[1] < LowerLeft_[1] + eps_ && x[0] > UpperRight_[0] - bcf_))   //lower right
+    return BoundaryConditions::dirichlet;
       // all other boundaries
       return BoundaryConditions::neumann;
     }
 
     RT dirichlet (const FieldVector<DT,n>& x, const Entity& e,
-	  const FieldVector<DT,n>& xi) const
+      const FieldVector<DT,n>& xi) const
     {
       if ((x[0] < LowerLeft_[0] + eps_ && x[1] < LowerLeft_[1] + bcf_) || //lower left
-	  (x[1] <  LowerLeft_[1] + eps_ && x[0] < LowerLeft_[0] + bcf_) || //lower left
-	  (x[0] > UpperRight_[0] - eps_ && x[1] > UpperRight_[1] - bcf_) || //upper right
-	  (x[1] > UpperRight_[1] - eps_ && x[0] > UpperRight_[0] - bcf_))  //upper right
-	return 0.8;
+      (x[1] <  LowerLeft_[1] + eps_ && x[0] < LowerLeft_[0] + bcf_) || //lower left
+      (x[0] > UpperRight_[0] - eps_ && x[1] > UpperRight_[1] - bcf_) || //upper right
+      (x[1] > UpperRight_[1] - eps_ && x[0] > UpperRight_[0] - bcf_))  //upper right
+    return 0.8;
       // all other boundaries
       return 0.2;
     }
 
     RT initSat (const FieldVector<DT,n>& x, const Entity& e,
-	   const FieldVector<DT,n>& xi) const
+       const FieldVector<DT,n>& xi) const
     {
       return 0.2;
     }
@@ -125,8 +125,8 @@ namespace Dune
 
 
     Fivespotcase2TransportProblem(VC& variableobj, TwoPhaseRelations& law = *(new LinearLaw), RT bcf = 11,
-			 const int level = 0, const bool cap =
-			 false)
+             const int level = 0, const bool cap =
+             false)
       : TransportProblem<G, RT, VC>(variableobj,law, cap), LowerLeft_(variableobj.grid.lowerLeft()), UpperRight_(variableobj.grid.upperRight()),
         eps_(1e-8*(variableobj.grid.upperRight())[0]),bcf_(bcf),poro_(0.2)
     {}

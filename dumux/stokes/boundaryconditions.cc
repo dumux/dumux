@@ -10,6 +10,6 @@ DirichletBoundary<Grid>::dirichletValue(int variable,  const Point& global, Poin
 }
 
 
- 
+
 
 

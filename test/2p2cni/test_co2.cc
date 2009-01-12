@@ -45,20 +45,20 @@ int main(int argc, char** argv)
       return 0;
     }
     std::string arg1(argv[2]);
-	std::istringstream is1(arg1);
-	double tEnd;
-	is1 >> tEnd;
-	std::string arg2(argv[3]);
-	std::istringstream is2(arg2);
-	double dt;
-	is2 >> dt;
+    std::istringstream is1(arg1);
+    double tEnd;
+    is1 >> tEnd;
+    std::string arg2(argv[3]);
+    std::istringstream is2(arg2);
+    double dt;
+    is2 >> dt;
 
     // create a grid object
     typedef Dune::SGrid<dim,dim> GridType;
     //typedef Dune::YaspGrid<dim,dim> GridType;
    //  typedef Dune::UGGrid<dim> GridType;
-//	typedef Dune::ALUSimplexGrid<dim,dim> GridType;
-//	typedef Dune::ALUCubeGrid<dim,dim> GridType;
+//    typedef Dune::ALUSimplexGrid<dim,dim> GridType;
+//    typedef Dune::ALUCubeGrid<dim,dim> GridType;
 
     Dune::GridPtr<GridType> gridPointer(argv[1]);
     GridType& grid = *gridPointer;
@@ -81,7 +81,7 @@ int main(int argc, char** argv)
                  materialLaw, multicomp, depthBOR);
 
  //    Dune::BrineCO2Problem<GridType, NumberType> problem(wPhase, nPhase, soil,
-//    		 materialLaw, multicomp, depthBOR);
+//             materialLaw, multicomp, depthBOR);
 
      typedef Dune::VtkMultiWriter<GridType::LeafGridView> MultiWriter;
      typedef Dune::BoxCO2<GridType, NumberType, MultiWriter> TwoPhase;
@@ -93,7 +93,7 @@ int main(int argc, char** argv)
       timer.reset();
       MultiWriter writer("co2");
 
- 	 //timeloop.execute(twoPhase);
+      //timeloop.execute(twoPhase);
 
 //  for timeloop.executeMultiWriter(twoPhase, writer, true) initial
 //  values are read from restart file data.dgf

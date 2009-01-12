@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #include <dune/grid/common/capabilities.hh>
 
@@ -9,17 +9,17 @@
  * base class, so this class only fills some gaps.
  */
 template <class GridT,
-          class ReferenceElementContainerT, 
+          class ReferenceElementContainerT,
           class ShapeFunctionSetContainerT>
-class NewFVElementGeometry<GridT, 
-                           ReferenceElementContainerT, 
+class NewFVElementGeometry<GridT,
+                           ReferenceElementContainerT,
                            ShapeFunctionSetContainerT,
                            2>
     : public NewFVElementGeometryBase<GridT,
                                       ReferenceElementContainerT,
                                       ShapeFunctionSetContainerT,
                                       NewFVElementGeometry<GridT,
-                                                           ReferenceElementContainerT, 
+                                                           ReferenceElementContainerT,
                                                            ShapeFunctionSetContainerT,
                                                            2> >
 {
@@ -27,7 +27,7 @@ class NewFVElementGeometry<GridT,
     enum {
         GridDim = Grid::dimension,
         WorldDim = Grid::dimensionworld,
-        
+
         // TODO/low priority: This should be specific to the actual
         // reference elements used.
         MaxNodes = 4,
@@ -37,7 +37,7 @@ class NewFVElementGeometry<GridT,
         MaxNodesInFace = 2
     };
 
-    typedef NewFVElementGeometry<Grid, 
+    typedef NewFVElementGeometry<Grid,
                                  ReferenceElementContainer,
                                  ShapeFunctionSetContainer>  ThisType;
     typedef NewFVElementGeometryBase<Grid,
@@ -52,13 +52,13 @@ class NewFVElementGeometry<GridT,
     typedef ShapeFunctionSetContainerT                      ShapeFunctionSetContainer;
     typedef typename ShapeFunctionSetContainer::value_type  ShapeFunctionSet;
     typedef typename Cell::Geometry                         CellGeometry;
-    
+
     typedef Dune::IntersectionIteratorGetter<Grid,Dune::LeafTag>      IntersectionIteratorGetter;
     typedef typename IntersectionIteratorGetter::IntersectionIterator IntersectionIterator;
-    
+
     typedef typename ShapeFunctionSet::ResultType           Scalar;
     typedef typename Grid::ctype                            CoordScalar;
-    
+
     typedef Dune::FieldVector<CoordScalar, GridDim>   LocalCoord;
     typedef Dune::FieldVector<CoordScalar, WorldDim>  WorldCoord;
     typedef FieldMatrix<CoordScalar,GridDim,WorldDim> InverseTransposedJacobian;
@@ -67,7 +67,7 @@ class NewFVElementGeometry<GridT,
     // functions
     friend class NewFVElementGeometryBase< ThisType >;
 
-    Scalar quadrilateralArea_(const WorldCoord& p0, 
+    Scalar quadrilateralArea_(const WorldCoord& p0,
                               const WorldCoord& p1,
                               const WorldCoord& p2,
                               const WorldCoord& p3)
@@ -76,7 +76,7 @@ class NewFVElementGeometry<GridT,
                 return this->cellVolume_ / 4.0;
             }
             else
-                return 0.5*fabs((p3[0] - p1[0])*(p2[1] - p0[1]) - 
+                return 0.5*fabs((p3[0] - p1[0])*(p2[1] - p0[1]) -
                                 (p3[1] - p1[1])*(p2[0] - p0[0]));
         }
 
@@ -100,11 +100,11 @@ class NewFVElementGeometry<GridT,
                                            this->elementGlobal_,
                                            this->edgeCoord_[2]);
                     this->subContVol_[2].volume =
-                        quadrilateralArea_(this->subContVol_[2].global, 
+                        quadrilateralArea_(this->subContVol_[2].global,
                                            this->edgeCoord_[0],
                                            this->elementGlobal_,
                                            this->edgeCoord_[3]);
-                    this->subContVol_[3].volume = 
+                    this->subContVol_[3].volume =
                         quadrilateralArea_(this->subContVol_[3].global,
                                            this->edgeCoord_[3],
                                            this->elementGlobal_,
@@ -112,10 +112,10 @@ class NewFVElementGeometry<GridT,
                     break;
 
                 default:
-                    DUNE_THROW(NotImplemented, 
-                               "updateVolumes_ dim = " 
+                    DUNE_THROW(NotImplemented,
+                               "updateVolumes_ dim = "
                                << GridDim
-                               << ", numVertices = " 
+                               << ", numVertices = "
                                << cell.template count<GridDim>());
             }
         };
@@ -125,11 +125,11 @@ class NewFVElementGeometry<GridT,
                               const CellGeometry &geometry)
         {
             LocalCoord ipLocal;
-            WorldCoord diffVec;            
+            WorldCoord diffVec;
 
             // fill the faces between the sub-control-volumes
-            for (int scvFaceIdx = 0; scvFaceIdx < this->numEdges_; scvFaceIdx++) 
-            { 
+            for (int scvFaceIdx = 0; scvFaceIdx < this->numEdges_; scvFaceIdx++)
+            {
                 int insideIdx = refElem.subEntity(scvFaceIdx, GridDim-1, 0, GridDim);
                 int outsideIdx = refElem.subEntity(scvFaceIdx, GridDim-1, 1, GridDim);
 
@@ -144,7 +144,7 @@ class NewFVElementGeometry<GridT,
                 ipLocal  = refElem.position(scvFaceIdx, GridDim-1);
                 ipLocal += this->elementLocal_;
                 ipLocal *= 0.5;
-                    
+
                 this->subContVolFace_[scvFaceIdx].ipLocal = ipLocal;
 
                 diffVec = this->elementGlobal_ - this->edgeCoord[scvFaceIdx];
@@ -153,7 +153,7 @@ class NewFVElementGeometry<GridT,
             }
         }
 
-    void updateBoundaryFace_(IntersectionIterator &it, 
+    void updateBoundaryFace_(IntersectionIterator &it,
                              const ReferenceElement &refElem,
                              const CellGeometry &geometry)
         {
@@ -164,16 +164,16 @@ class NewFVElementGeometry<GridT,
             {
                 int nodeInElement = refElem.subEntity(face, 1, nodeInFace, GridDim);
                 int bfIndex = this->_boundaryFaceIndex(face, nodeInFace);
-                    
+
                 // TODO: use reference element to find the local
                 // integration point
                 this->boundaryFace_[bfIndex].ipLocal_ = refElem.position(nodeInElement, GridDim);
                 this->boundaryFace_[bfIndex].ipLocal_ += refElem.position(face, 1);
                 this->boundaryFace_[bfIndex].ipLocal_ *= 0.5;
-                    
+
                 this->boundaryFace_[bfIndex].area_ = 0.5*it->intersectionGlobal().volume();
-                    
-                this->boundaryFace_[bfIndex].ipGlobal_ = 
+
+                this->boundaryFace_[bfIndex].ipGlobal_ =
                     geometry.global(this->boundaryFace_[bfIndex].ipLocal_);
             }
         }

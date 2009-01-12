@@ -37,10 +37,10 @@ int main(int argc, char** argv)
          std::cout << "usage: tEnd" << std::endl;
          return 0;
       }
-    	std::string arg1(argv[1]);
-	   std::istringstream is1(arg1);
-	   double tEnd;
-	   is1 >> tEnd;
+        std::string arg1(argv[1]);
+       std::istringstream is1(arg1);
+       double tEnd;
+       is1 >> tEnd;
 
       // create a grid object
       typedef Dune::SGrid<dim,dim> GridType;

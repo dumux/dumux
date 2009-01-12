@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_BRINKMAN_HH
 #define DUNE_BRINKMAN_HH
@@ -9,7 +9,7 @@
  * @file
  * @brief  Base class for defining an instance of a numerical diffusion model
  * @author Bernd Flemisch
- * 
+ *
  * \defgroup diffusion Brinkman
  */
 
@@ -17,94 +17,94 @@ namespace Dune
 {
   //! \ingroup diffusion
   //! Base class for defining an instance of a numerical diffusion model.
-  /*! An interface for defining a numerical diffusion model for the 
-   *  solution of equations of the form 
-   * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = 0, \f$, 
-   * \f$p = g\f$ on \f$\Gamma_1\f$, and \f$\lambda K \text{grad}\, p = J\f$ 
-   * on \f$\Gamma_2\f$. Here, 
-   * \f$p\f$ denotes the pressure, \f$K\f$ the absolute permeability, 
-   * and \f$\lambda\f$ the total mobility, possibly depending on the 
-   * saturation. 
-	Template parameters are:
+  /*! An interface for defining a numerical diffusion model for the
+   *  solution of equations of the form
+   * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = 0, \f$,
+   * \f$p = g\f$ on \f$\Gamma_1\f$, and \f$\lambda K \text{grad}\, p = J\f$
+   * on \f$\Gamma_2\f$. Here,
+   * \f$p\f$ denotes the pressure, \f$K\f$ the absolute permeability,
+   * and \f$\lambda\f$ the total mobility, possibly depending on the
+   * saturation.
+    Template parameters are:
 
-	- Grid      a DUNE grid type
-	- RT        type used for return values 
-	- RepresentationType type of the vector holding the pressure values 
-	- VelType   type of the vector holding the velocity values 
+    - Grid      a DUNE grid type
+    - RT        type used for return values
+    - RepresentationType type of the vector holding the pressure values
+    - VelType   type of the vector holding the velocity values
 
    */
   template<class G, class RT, class RepresentationType, class VelType>
   class Brinkman {
   public:
-	RepresentationType pressure; //!< vector of pressure values
-	RepresentationType pressureCorrection; //!< vector of pressure correction values
-	VelType velocity;
-	VelType velocityCorrection;
-	BrinkmanProblem<G, RT>& problem; //!< problem data
-	typedef RT NumberType;
-	
-	virtual void computeVelocity() = 0;
-	
-	virtual void computePressureCorrection() = 0;
-	
-	virtual void computeVelocityCorrection() = 0;
-	
-	void SIMPLE() 
-	{
-		double tolerance = 1e-3; 
-		int maxIter = 1000;
-		double error = 1e100;
-		int iter = 0;
-		double dampV = 1.0; 
-		double dampP = 0.35;
-		
-		while (error > tolerance && iter <= maxIter)
-		{
-			iter++;
-			computeVelocity();
-			computePressureCorrection();
-			computeVelocityCorrection();
-			pressureCorrection *= dampP;
-			velocityCorrection *= dampV;
-			pressure += pressureCorrection; 
-			velocity += velocityCorrection; 
-			
-			//correctVelocityAndPressure();
-			error = pressureCorrection.two_norm()/pressure.two_norm();
-			std::cout << "Iter = " << iter << ", \t Error = " << error << std::endl;
-		}
-	}
-	
-	//! generate vtk output
-	virtual void vtkout (const char* name, int k) const = 0;
-	
-	//! return const reference to pressure vector
-	const RepresentationType& operator* () const
-	{
-	  return pressure;
-	}
+    RepresentationType pressure; //!< vector of pressure values
+    RepresentationType pressureCorrection; //!< vector of pressure correction values
+    VelType velocity;
+    VelType velocityCorrection;
+    BrinkmanProblem<G, RT>& problem; //!< problem data
+    typedef RT NumberType;
 
-	//! return reference to permeability vector
-	RepresentationType& operator* ()
-	{
-	  return pressure;
-	}
+    virtual void computeVelocity() = 0;
 
-	//! always define virtual destructor in abstract base class
-	virtual ~Brinkman () {}
-	
-	//! without specification of a level, the class works on the leaf grid.
-	/**
-	 * \param g grid object of type G
-	 * \param prob a problem class object derived from BrinkmanProblem
-	*/
-	Brinkman(const G& g, BrinkmanProblem<G, RT>& prob) 
-	: problem(prob), grid(g)
-	{ 
-	}
-	
+    virtual void computePressureCorrection() = 0;
+
+    virtual void computeVelocityCorrection() = 0;
+
+    void SIMPLE()
+    {
+        double tolerance = 1e-3;
+        int maxIter = 1000;
+        double error = 1e100;
+        int iter = 0;
+        double dampV = 1.0;
+        double dampP = 0.35;
+
+        while (error > tolerance && iter <= maxIter)
+        {
+            iter++;
+            computeVelocity();
+            computePressureCorrection();
+            computeVelocityCorrection();
+            pressureCorrection *= dampP;
+            velocityCorrection *= dampV;
+            pressure += pressureCorrection;
+            velocity += velocityCorrection;
+
+            //correctVelocityAndPressure();
+            error = pressureCorrection.two_norm()/pressure.two_norm();
+            std::cout << "Iter = " << iter << ", \t Error = " << error << std::endl;
+        }
+    }
+
+    //! generate vtk output
+    virtual void vtkout (const char* name, int k) const = 0;
+
+    //! return const reference to pressure vector
+    const RepresentationType& operator* () const
+    {
+      return pressure;
+    }
+
+    //! return reference to permeability vector
+    RepresentationType& operator* ()
+    {
+      return pressure;
+    }
+
+    //! always define virtual destructor in abstract base class
+    virtual ~Brinkman () {}
+
+    //! without specification of a level, the class works on the leaf grid.
+    /**
+     * \param g grid object of type G
+     * \param prob a problem class object derived from BrinkmanProblem
+    */
+    Brinkman(const G& g, BrinkmanProblem<G, RT>& prob)
+    : problem(prob), grid(g)
+    {
+    }
+
   protected:
-	  const G& grid;
+      const G& grid;
   };
 
 }

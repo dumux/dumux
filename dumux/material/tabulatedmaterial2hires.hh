@@ -61,7 +61,7 @@ namespace Dune {
                 return northernWeight_(y)*southernWeight_(y)*
                        westernWeight_(x)*easternWeight_(x);
             };
-        
+
     protected:
         /*!
          * \brief Returns the weighting factor of the high resolution
@@ -75,7 +75,7 @@ namespace Dune {
                 // make sure that there is a transition zone
                 if (Traits::transitionNorth == 0)
                     return 1.0;
-                
+
                 // we need the tWidth variable to avoid a bogus
                 // division by zero warning in gcc
                 Scalar tWidth = Traits::transitionNorth;

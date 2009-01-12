@@ -29,42 +29,42 @@ namespace Dune
 template<class G,int v_order, int p_order>
   class DGFiniteElementMethod
   {
-	//dimension of grid
-	enum {dim=G::dimension};
-	enum { dimw=G::dimensionworld };
+    //dimension of grid
+    enum {dim=G::dimension};
+    enum { dimw=G::dimensionworld };
   public:
-	//Grid
-	typedef G Grid;
-	//coordinate type
+    //Grid
+    typedef G Grid;
+    //coordinate type
     typedef typename Grid::ctype ctype;
-	typedef Dune::FieldVector< double , dim> Gradient;
-	typedef Dune::FieldMatrix< double , dim, dim> InverseJacobianMatrix;
-	// "order" is order of velocity shapefn
-	// order of pressure shapefn  is (order-1) i.e, assumed one order less than that of velocity
-	enum{v_ordr = v_order};
-	enum{p_ordr=p_order};
+    typedef Dune::FieldVector< double , dim> Gradient;
+    typedef Dune::FieldMatrix< double , dim, dim> InverseJacobianMatrix;
+    // "order" is order of velocity shapefn
+    // order of pressure shapefn  is (order-1) i.e, assumed one order less than that of velocity
+    enum{v_ordr = v_order};
+    enum{p_ordr=p_order};
 
-	//local vector and matrix blocks
-	static const int BlockSize =dim*Dune::MonomialShapeFunctionSetSize<dim,v_order>::maxSize+Dune::MonomialShapeFunctionSetSize<dim,p_order>::maxSize;
-	static const int VBlockSize =((dim*Dune::MonomialShapeFunctionSetSize<dim,v_order>::maxSize));
-	static const int PBlockSize =((Dune::MonomialShapeFunctionSetSize<dim,p_order>::maxSize));
+    //local vector and matrix blocks
+    static const int BlockSize =dim*Dune::MonomialShapeFunctionSetSize<dim,v_order>::maxSize+Dune::MonomialShapeFunctionSetSize<dim,p_order>::maxSize;
+    static const int VBlockSize =((dim*Dune::MonomialShapeFunctionSetSize<dim,v_order>::maxSize));
+    static const int PBlockSize =((Dune::MonomialShapeFunctionSetSize<dim,p_order>::maxSize));
 
-	typedef Dune::FieldVector<double,BlockSize> LocalVectorBlock;
-	typedef Dune::FieldMatrix<double,BlockSize,BlockSize> LocalMatrixBlock;
-	//shapefn
-	typedef Dune::MonomialShapeFunctionSet<ctype,double,dim> ShapeFunctionSet;
-	inline const ShapeFunctionSet & getVelocityShapeFunctionSet(Dune::GeometryType gt) const;
-	inline const ShapeFunctionSet & getPressureShapeFunctionSet(Dune::GeometryType gt) const;
+    typedef Dune::FieldVector<double,BlockSize> LocalVectorBlock;
+    typedef Dune::FieldMatrix<double,BlockSize,BlockSize> LocalMatrixBlock;
+    //shapefn
+    typedef Dune::MonomialShapeFunctionSet<ctype,double,dim> ShapeFunctionSet;
+    inline const ShapeFunctionSet & getVelocityShapeFunctionSet(Dune::GeometryType gt) const;
+    inline const ShapeFunctionSet & getPressureShapeFunctionSet(Dune::GeometryType gt) const;
 
-	typedef typename Grid::template Codim<0>::LeafIterator ElementLeafIterator;
-	typedef typename Grid::template Codim<0>::LevelIterator ElementLevelIterator;
-	typedef typename Grid::template Codim<0>::EntityPointer EntityPointer;
-	typedef typename Grid::template Codim<0>::Entity Entity;
-	typedef typename Grid::template Codim<dim>::LevelIterator VertexIterator;
-	typedef typename Grid::template Codim<dim>::Entity Vertex;
-	typedef typename Grid::template Codim<0>::LevelIntersectionIterator IntersectionLevelIterator;
-	typedef typename Grid::template Codim<0>::LeafIntersectionIterator IntersectionIterator;
-	typedef typename Grid::template Codim<1>::EntityPointer InterSectionPointer;
+    typedef typename Grid::template Codim<0>::LeafIterator ElementLeafIterator;
+    typedef typename Grid::template Codim<0>::LevelIterator ElementLevelIterator;
+    typedef typename Grid::template Codim<0>::EntityPointer EntityPointer;
+    typedef typename Grid::template Codim<0>::Entity Entity;
+    typedef typename Grid::template Codim<dim>::LevelIterator VertexIterator;
+    typedef typename Grid::template Codim<dim>::Entity Vertex;
+    typedef typename Grid::template Codim<0>::LevelIntersectionIterator IntersectionLevelIterator;
+    typedef typename Grid::template Codim<0>::LeafIntersectionIterator IntersectionIterator;
+    typedef typename Grid::template Codim<1>::EntityPointer InterSectionPointer;
 
 
 
@@ -73,22 +73,22 @@ template<class G,int v_order, int p_order>
     : grid(g), problem_(prob), parameter(par)
     {}
 
-	//local assembly
-	void assembleVolumeTerm(Entity& ep, LocalMatrixBlock& Aee,LocalVectorBlock& Be) const;
-	void assembleFaceTerm(Entity& ep,IntersectionIterator& isp, LocalMatrixBlock& Aee,
-						  LocalMatrixBlock& Aef,LocalMatrixBlock& Afe, LocalVectorBlock& Be) const;
+    //local assembly
+    void assembleVolumeTerm(Entity& ep, LocalMatrixBlock& Aee,LocalVectorBlock& Be) const;
+    void assembleFaceTerm(Entity& ep,IntersectionIterator& isp, LocalMatrixBlock& Aee,
+                          LocalMatrixBlock& Aef,LocalMatrixBlock& Afe, LocalVectorBlock& Be) const;
 
-	void assembleDirichletBoundaryTerm(Entity& ep, IntersectionIterator& isp, LocalMatrixBlock& Aee,LocalVectorBlock& Be)const ;
-	void assembleNeumannBoundaryTerm(Entity& ep, IntersectionIterator& isp, LocalMatrixBlock& Aee,LocalVectorBlock& Be)const ;
-	void assembleInterfaceTerm(Entity& ep, IntersectionIterator& isp, LocalMatrixBlock& Aee,LocalVectorBlock& Be)const ;
-	// stokes system has dim+1 variables (dim velocity comps and 1 pressure)
-	double evaluateSolution(int variable,const Entity& element,const Dune::FieldVector<ctype,dim>& local,
-							const LocalVectorBlock& xe) const;
-	Gradient evaluateGradient(int variable,const Entity& element,const Dune::FieldVector<ctype,dim>& local,
-							const LocalVectorBlock& xe) const;
-	double evaluateL2error(int variable, const Entity& element, const LocalVectorBlock& xe)const;
+    void assembleDirichletBoundaryTerm(Entity& ep, IntersectionIterator& isp, LocalMatrixBlock& Aee,LocalVectorBlock& Be)const ;
+    void assembleNeumannBoundaryTerm(Entity& ep, IntersectionIterator& isp, LocalMatrixBlock& Aee,LocalVectorBlock& Be)const ;
+    void assembleInterfaceTerm(Entity& ep, IntersectionIterator& isp, LocalMatrixBlock& Aee,LocalVectorBlock& Be)const ;
+    // stokes system has dim+1 variables (dim velocity comps and 1 pressure)
+    double evaluateSolution(int variable,const Entity& element,const Dune::FieldVector<ctype,dim>& local,
+                            const LocalVectorBlock& xe) const;
+    Gradient evaluateGradient(int variable,const Entity& element,const Dune::FieldVector<ctype,dim>& local,
+                            const LocalVectorBlock& xe) const;
+    double evaluateL2error(int variable, const Entity& element, const LocalVectorBlock& xe)const;
 
-	double evaluateH1error(int variable, const Entity& element, const LocalVectorBlock& xe)const;
+    double evaluateH1error(int variable, const Entity& element, const LocalVectorBlock& xe)const;
 
     StokesProblem<Grid, ctype>& problem()
     {
@@ -97,11 +97,11 @@ template<class G,int v_order, int p_order>
 
 
   private:
-	Grid& grid;
+    Grid& grid;
     StokesProblem<Grid, ctype>& problem_;
-	Dune::MonomialShapeFunctionSetContainer<ctype,double,dim,v_order> vspace;
-	Dune::MonomialShapeFunctionSetContainer<ctype,double,dim,(p_order)> pspace;
-	DGStokesParameters parameter;
+    Dune::MonomialShapeFunctionSetContainer<ctype,double,dim,v_order> vspace;
+    Dune::MonomialShapeFunctionSetContainer<ctype,double,dim,(p_order)> pspace;
+    DGStokesParameters parameter;
   };
 
 
@@ -111,100 +111,100 @@ template<class G,int v_order,int p_order>
   {
 
   public:
-	//dimension of grid
-	enum {dimension=G::dimension};
-	enum { dimensionworld=G::dimensionworld };
-	enum{v_ordr = v_order};
-	enum{p_ordr=p_order};
-	typedef G Grid;
+    //dimension of grid
+    enum {dimension=G::dimension};
+    enum { dimensionworld=G::dimensionworld };
+    enum{v_ordr = v_order};
+    enum{p_ordr=p_order};
+    typedef G Grid;
   private:
-	enum {dim=G::dimension};
-	enum { dimw=G::dimensionworld };
+    enum {dim=G::dimension};
+    enum { dimw=G::dimensionworld };
     typedef typename Grid::ctype ctype;
-	// Iterators
-	typedef typename Grid::template Codim<0>::LeafIterator ElementLeafIterator;
-	typedef typename Grid::template Codim<0>::LevelIterator ElementLevelIterator;
-	typedef typename Grid::template Codim<0>::EntityPointer EntityPointer;
-	typedef typename Grid::template Codim<0>::Entity Entity;
-	typedef typename Grid::template Codim<dim>::Entity Vertex;
-	typedef typename Grid::template Codim<dim>::LevelIterator VertexIterator;
-	typedef typename Grid::template Codim<0>::LevelIntersectionIterator IntersectionLevelIterator;
-	typedef typename Grid::template Codim<0>::LeafIntersectionIterator IntersectionIterator;
-	typedef typename Grid::template Codim<1>::EntityPointer InterSectionPointer;
-	static const int BlockSize =((dim*Dune::MonomialShapeFunctionSetSize<dim,v_order>::maxSize)+(Dune::MonomialShapeFunctionSetSize<dim,p_order>::maxSize));
+    // Iterators
+    typedef typename Grid::template Codim<0>::LeafIterator ElementLeafIterator;
+    typedef typename Grid::template Codim<0>::LevelIterator ElementLevelIterator;
+    typedef typename Grid::template Codim<0>::EntityPointer EntityPointer;
+    typedef typename Grid::template Codim<0>::Entity Entity;
+    typedef typename Grid::template Codim<dim>::Entity Vertex;
+    typedef typename Grid::template Codim<dim>::LevelIterator VertexIterator;
+    typedef typename Grid::template Codim<0>::LevelIntersectionIterator IntersectionLevelIterator;
+    typedef typename Grid::template Codim<0>::LeafIntersectionIterator IntersectionIterator;
+    typedef typename Grid::template Codim<1>::EntityPointer InterSectionPointer;
+    static const int BlockSize =((dim*Dune::MonomialShapeFunctionSetSize<dim,v_order>::maxSize)+(Dune::MonomialShapeFunctionSetSize<dim,p_order>::maxSize));
 
-	static const int VBlockSize =((dim*Dune::MonomialShapeFunctionSetSize<dim,v_order>::maxSize));
-	static const int PBlockSize =((Dune::MonomialShapeFunctionSetSize<dim,p_order>::maxSize));
+    static const int VBlockSize =((dim*Dune::MonomialShapeFunctionSetSize<dim,v_order>::maxSize));
+    static const int PBlockSize =((Dune::MonomialShapeFunctionSetSize<dim,p_order>::maxSize));
 
-	typedef typename DGFiniteElementMethod<G,v_order,p_order>::Gradient Gradient;
-	typedef typename DGFiniteElementMethod<G,v_order,p_order>::LocalVectorBlock LocalVectorBlock;
-	typedef typename DGFiniteElementMethod<G,v_order,p_order>::LocalMatrixBlock LocalMatrixBlock;
-	typedef Dune::BlockVector<LocalVectorBlock> LVector;
-	typedef Dune::BCRSMatrix<LocalMatrixBlock> LMatrix;
+    typedef typename DGFiniteElementMethod<G,v_order,p_order>::Gradient Gradient;
+    typedef typename DGFiniteElementMethod<G,v_order,p_order>::LocalVectorBlock LocalVectorBlock;
+    typedef typename DGFiniteElementMethod<G,v_order,p_order>::LocalMatrixBlock LocalMatrixBlock;
+    typedef Dune::BlockVector<LocalVectorBlock> LVector;
+    typedef Dune::BCRSMatrix<LocalMatrixBlock> LMatrix;
 
   public:
-	typedef LMatrix MatrixType;
-	typedef G GridType;
+    typedef LMatrix MatrixType;
+    typedef G GridType;
 
-	  MatrixType& matrix()
-	  {
-		  return A;
-	  }
+      MatrixType& matrix()
+      {
+          return A;
+      }
 
-	  LVector& rhs()
-	  {
-		  return b;
-	  }
+      LVector& rhs()
+      {
+          return b;
+      }
 
-	  LVector& sol()
-	  {
-		  return solution;
-	  }
+      LVector& sol()
+      {
+          return solution;
+      }
 
-	  void initial()
-	  {}
+      void initial()
+      {}
 
     DGStokes(Grid &g, StokesProblem<Grid, ctype>& prob, DGStokesParameters& par)
       : grid(g),level(g.maxLevel()), dgfem(g,prob,par)
-	{
-	  if (par.sigma==1 & par.epsilon==1)
-	std::cout<<"You are using NIPG scheme"<<std::endl;
+    {
+      if (par.sigma==1 & par.epsilon==1)
+    std::cout<<"You are using NIPG scheme"<<std::endl;
   else if(par.sigma==1 & par.epsilon==-1)
-	std::cout<<"You are using SIPG scheme"<<std::endl;
+    std::cout<<"You are using SIPG scheme"<<std::endl;
   else if(par.sigma==0 & par.epsilon==1)
-	std::cout<<"You are using OBB scheme"<<std::endl;
+    std::cout<<"You are using OBB scheme"<<std::endl;
   else
-	std::cout<<"check DG parameters epsilon and sigma"<<std::endl;
-	};
+    std::cout<<"check DG parameters epsilon and sigma"<<std::endl;
+    };
 
-	// global assembly and solving
-	void assembleStokesSystem() ;
-	void assemble()
-	{
-		assembleStokesSystem();
-	}
-	void solveStokesSystem();
-	double evaluateSolution(const EntityPointer & e,
+    // global assembly and solving
+    void assembleStokesSystem() ;
+    void assemble()
+    {
+        assembleStokesSystem();
+    }
+    void solveStokesSystem();
+    double evaluateSolution(const EntityPointer & e,
                             const Dune::FieldVector<ctype, dim> & local) const;
 
-	//l2error computation
-	// stokes system has dim+1 variables (dim velocity comps and 1 pressure)
-	double l2errorStokesSystem(int variable) const;
-	double h1errorStokesSystem(int variable) const;
-	void convertToCellData(int variable, BlockVector<FieldVector<double, 1> >& cellData);
-	void vtkout (const char* name, int k);
+    //l2error computation
+    // stokes system has dim+1 variables (dim velocity comps and 1 pressure)
+    double l2errorStokesSystem(int variable) const;
+    double h1errorStokesSystem(int variable) const;
+    void convertToCellData(int variable, BlockVector<FieldVector<double, 1> >& cellData);
+    void vtkout (const char* name, int k);
 
   private:
-	typedef typename DGFiniteElementMethod<G,v_order,p_order>::ShapeFunctionSet ShapeFunctionSet;
-	inline const ShapeFunctionSet & getVelocityShapeFunctionSet(const EntityPointer &ep) const;
-	inline const ShapeFunctionSet & getPressureShapeFunctionSet(const EntityPointer &ep) const;
+    typedef typename DGFiniteElementMethod<G,v_order,p_order>::ShapeFunctionSet ShapeFunctionSet;
+    inline const ShapeFunctionSet & getVelocityShapeFunctionSet(const EntityPointer &ep) const;
+    inline const ShapeFunctionSet & getPressureShapeFunctionSet(const EntityPointer &ep) const;
   public:
-	Grid & grid;
-	int level;
-	DGFiniteElementMethod<G,v_order,p_order> dgfem;
-	LMatrix A;
+    Grid & grid;
+    int level;
+    DGFiniteElementMethod<G,v_order,p_order> dgfem;
+    LMatrix A;
     LVector b;
-	LVector solution;
+    LVector solution;
   };
 
 

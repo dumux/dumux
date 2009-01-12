@@ -24,32 +24,32 @@ namespace Dune
 
   public:
     BoundaryConditions::Flags bctype (const FieldVector<DT,n>& x, const Entity& e,
-				      const FieldVector<DT,n>& xi) const
+                      const FieldVector<DT,n>& xi) const
     {
       if (x[0] < eps_)// (x[0] > (right - eps_) || x[0] < eps_)
-	return Dune::BoundaryConditions::dirichlet;
+    return Dune::BoundaryConditions::dirichlet;
       else
-	return Dune::BoundaryConditions::neumann;
+    return Dune::BoundaryConditions::neumann;
     }
 
     RT dirichlet (const FieldVector<DT,n>& x, const Entity& e,
-	  const FieldVector<DT,n>& xi) const
+      const FieldVector<DT,n>& xi) const
     {
       if (x[0] < eps_)
-	return 0.9;
+    return 0.9;
       else
-	return 0;
+    return 0;
     }
 
     RT initSat (const FieldVector<DT,n>& x, const Entity& e,
-	   const FieldVector<DT,n>& xi) const
+       const FieldVector<DT,n>& xi) const
     {
       //if (x[0] < eps_)
-      //	return 0.9;
+      //    return 0.9;
       //if (x[0] < 20)
-      //	return (0.9)/10*x[0];
+      //    return (0.9)/10*x[0];
       //else
-	return 0;
+    return 0;
     }
 
 
@@ -58,12 +58,12 @@ namespace Dune
     }
 
     ConvectionDiffusionTransportProblem(VC& variableobj, TwoPhaseRelations& law = *(new LinearLaw),
-			   const FieldVector<DT,n> Left = 0, const FieldVector<DT,n> Right = 0,
-			   const int level = 0, const bool cap =
-			   false,RT poro=0.2)
+               const FieldVector<DT,n> Left = 0, const FieldVector<DT,n> Right = 0,
+               const int level = 0, const bool cap =
+               false,RT poro=0.2)
       : TransportProblem<G, RT, VC>(variableobj,law, cap), left(Left[0]), right(Right[0]),
-	eps_(1e-8),
-	poro_(poro)
+    eps_(1e-8),
+    poro_(poro)
     {}
   };
 

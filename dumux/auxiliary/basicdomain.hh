@@ -60,7 +60,7 @@ namespace Dune
             {typename I::IntersectionIterator       *x;x=NULL;}
             {typename I::FieldVector                *x;x=NULL;}
             {typename I::FieldMatrix                *x;x=NULL;}
-            
+
             {const typename I::ReferenceElementContainer *x = &I::referenceElement; x=NULL;}
         }
         END_API_DEF
@@ -86,26 +86,26 @@ namespace Dune
         public:
             typedef GridT       Grid;
             typedef ScalarT     Scalar;
-            
+
             enum {
                 dim = GridT::dimension,        //!< Dimension of the grid.
                 dimWorld = GridT::dimensionworld   //!< Dimension of the world the grid is embedded into.
             };
-            
+
             // coordinate stuff
             typedef typename Grid::ctype                     CoordScalar;
             typedef Dune::FieldVector<CoordScalar, dim>      LocalPosition;
             typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
-            
+
             // Dune grid related stuff: iterators, elements, vertices, traits...
             typedef typename Grid::Traits::template Codim<0>                  ElementTraits;
             typedef typename ElementTraits::Entity                            Element;
             typedef typename ElementTraits::LeafIterator                      ElementIterator;
-            
+
             typedef typename Grid::Traits::template Codim<dim>                VertexTraits;
             typedef typename VertexTraits::Entity                             Vertex;
             typedef typename VertexTraits::LeafIterator                       VertexIterator;
-            
+
             // TODO: Dune::ReferenceElement uses virtual functions in
             //       order to support arbitary element types. It would be
             //       better to use ReferenceCubeContainer,
@@ -122,12 +122,12 @@ namespace Dune
 
             typedef Dune::IntersectionIteratorGetter<Grid,Dune::LeafTag>      IntersectionIteratorGetter;
             typedef typename IntersectionIteratorGetter::IntersectionIterator IntersectionIterator;
-            
+
             // grid-space vector and matrix types
             typedef Dune::FieldVector<Scalar, dim>     FieldVector;
             typedef Dune::FieldMatrix<Scalar, dim,dim> FieldMatrix;
         };
-        
+
     private:
         // some types from the traits for convenience
         typedef typename DomainTraits::Grid                  Grid;
@@ -165,7 +165,7 @@ namespace Dune
         struct VertexLayout_
         { bool contains (Dune::GeometryType gt) { return gt.dim() == 0; } };
         typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,ElementIdxSet_,VertexLayout_> VertexMap;
-        
+
     public:
         BasicDomain()
             {
@@ -364,7 +364,7 @@ namespace Dune
     template<class Grid, class ScalarT>
     const typename BasicDomain<Grid, ScalarT>::DomainTraits::ReferenceElementContainer &
          BasicDomain<Grid, ScalarT>::DomainTraits::referenceElement
-         =  Dune::ReferenceElements<typename Grid::ctype, 
+         =  Dune::ReferenceElements<typename Grid::ctype,
                                     Grid::dimension>::general;
 
 }

@@ -10,77 +10,77 @@ template<class Grid, class Scalar>
 class TutorialSoil: public HomogeneousSoil<Grid, Scalar> /*@\label{tutorial-decoupled:tutorialsoil}@*/
 {
 public:
-	typedef	typename Grid::Traits::template Codim<0>::Entity Element;
+    typedef    typename Grid::Traits::template Codim<0>::Entity Element;
 
-	enum{dim=Grid::dimension, dimWorld=Grid::dimensionworld};
-	typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
-	typedef Dune::FieldVector<Scalar, dim> LocalPosition;
-	typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
+    enum{dim=Grid::dimension, dimWorld=Grid::dimensionworld};
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
+    typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
-	// function returning the intrinsic permeability tensor K
-	// depending on the position within the domain
-	const FieldMatrix &K(const GlobalPosition& globalPos, const Element& element, /*@\label{tutorial-decoupled:permeability}@*/
-			const LocalPosition& localPos)
-	{
-		return K_;
-	}
+    // function returning the intrinsic permeability tensor K
+    // depending on the position within the domain
+    const FieldMatrix &K(const GlobalPosition& globalPos, const Element& element, /*@\label{tutorial-decoupled:permeability}@*/
+            const LocalPosition& localPos)
+    {
+        return K_;
+    }
 
-	// function returning the porosity of the porous matrix
-	// depending on the position within the domain
-	double porosity(const GlobalPosition& globalPos, const Element& element, /*@\label{tutorial-decoupled:porosity}@*/
-			const LocalPosition& localPos) const
-	{
-		return 0.2;
-	}
+    // function returning the porosity of the porous matrix
+    // depending on the position within the domain
+    double porosity(const GlobalPosition& globalPos, const Element& element, /*@\label{tutorial-decoupled:porosity}@*/
+            const LocalPosition& localPos) const
+    {
+        return 0.2;
+    }
 
-	// function returning the residual saturation of the wetting fluid
-	// depending on the position within the domain and on the temperature
-	double Sr_w(const GlobalPosition& globalPos, const Element& element, /*@\label{tutorial-decoupled:srw}@*/
-			const LocalPosition& localPos, const double T = 283.15) const
-	{
-		return 0;
-	}
+    // function returning the residual saturation of the wetting fluid
+    // depending on the position within the domain and on the temperature
+    double Sr_w(const GlobalPosition& globalPos, const Element& element, /*@\label{tutorial-decoupled:srw}@*/
+            const LocalPosition& localPos, const double T = 283.15) const
+    {
+        return 0;
+    }
 
-	// function returning the residual saturation of the non-wetting fluid
-	// depending on the position within the domain and on the temperature
-	double Sr_n(const GlobalPosition& globalPos, const Element& element, /*@\label{tutorial-decoupled:srn}@*/
-			const LocalPosition& localPos, const double T = 283.15) const
-	{
-		return 0;
-	}
+    // function returning the residual saturation of the non-wetting fluid
+    // depending on the position within the domain and on the temperature
+    double Sr_n(const GlobalPosition& globalPos, const Element& element, /*@\label{tutorial-decoupled:srn}@*/
+            const LocalPosition& localPos, const double T = 283.15) const
+    {
+        return 0;
+    }
 
-	// function returning the parameters of the capillary pressure
-	// and the relative permeability functions
-	// depending on the position within the domain and on the temperature
-	std::vector<double> paramRelPerm(const GlobalPosition& globalPos, const Element& element, /*@\label{tutorial-decoupled:parameters}@*/
-			const LocalPosition& localPos, const double T = 283.15) const
-	{
-		std::vector<double> param(2);
+    // function returning the parameters of the capillary pressure
+    // and the relative permeability functions
+    // depending on the position within the domain and on the temperature
+    std::vector<double> paramRelPerm(const GlobalPosition& globalPos, const Element& element, /*@\label{tutorial-decoupled:parameters}@*/
+            const LocalPosition& localPos, const double T = 283.15) const
+    {
+        std::vector<double> param(2);
 
-		//linear law parameters
-		param[0] = 0; // minimal capillary pressure
-		param[1] = 0; // maximal capillary pressure
+        //linear law parameters
+        param[0] = 0; // minimal capillary pressure
+        param[1] = 0; // maximal capillary pressure
 
-		//Brooks-Corey parameters
-//		param[0] = 2; // lambda
-//		param[1] = 0.; // entry-pressure
+        //Brooks-Corey parameters
+//        param[0] = 2; // lambda
+//        param[1] = 0.; // entry-pressure
 
-		return param;
-	}
+        return param;
+    }
 
-	// function returning the kind of relation used for the calculation of the capillary
-	// pressure and the relative permeabilities depending on the position within the domain
-	typename Matrix2p<Grid,Scalar>::modelFlag relPermFlag(const GlobalPosition& globalPos, const Element& e, /*@\label{tutorial-decoupled:flags}@*/
-			const LocalPosition& localPos) const
-	{
-		return Matrix2p<Grid,Scalar>::linear; //flag types defined in
-	}								   //dumux/material/property_baseclasses.hh
+    // function returning the kind of relation used for the calculation of the capillary
+    // pressure and the relative permeabilities depending on the position within the domain
+    typename Matrix2p<Grid,Scalar>::modelFlag relPermFlag(const GlobalPosition& globalPos, const Element& e, /*@\label{tutorial-decoupled:flags}@*/
+            const LocalPosition& localPos) const
+    {
+        return Matrix2p<Grid,Scalar>::linear; //flag types defined in
+    }                                   //dumux/material/property_baseclasses.hh
 
-	TutorialSoil()
+    TutorialSoil()
         :HomogeneousSoil<Grid,Scalar>(),K_(0)
-	{
-		for(int i = 0; i < dim; i++)
-			K_[i][i] = 1e-7;
+    {
+        for(int i = 0; i < dim; i++)
+            K_[i][i] = 1e-7;
     }
 
 private:

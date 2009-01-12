@@ -57,12 +57,12 @@ int main(int argc, char** argv)
     ModelType model(grid, problem, grid.maxLevel(), diffPart, false, 0.8, numFl, "CG");
 
     Dune::ExplicitEulerStep<GridType, ModelType> timestep;
-		Dune::TimeLoop<GridType, ModelType > timeloop(tStart, tEnd, "2p2cni", modulo, cFLFactor, 1e100, 1e100, timestep);
+        Dune::TimeLoop<GridType, ModelType > timeloop(tStart, tEnd, "2p2cni", modulo, cFLFactor, 1e100, 1e100, timestep);
 
-		Dune::Timer timer;
-		timer.reset();
-		timeloop.execute(model);
-		std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
+        Dune::Timer timer;
+        timer.reset();
+        timeloop.execute(model);
+        std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
 
     return 0;
   }

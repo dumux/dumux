@@ -122,7 +122,7 @@ namespace Dune {
                         maxSwitchVarDelta = std::max(maxSwitchVarDelta, std::abs(switchVar - 1));
                     }
                     if (pW < 0.0){
-                    	maxPwDelta = std::max(maxPwDelta, std::abs(pW/1e5));
+                        maxPwDelta = std::max(maxPwDelta, std::abs(pW/1e5));
                     }
                 }
 

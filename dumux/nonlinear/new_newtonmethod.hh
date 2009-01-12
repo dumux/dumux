@@ -199,11 +199,11 @@ namespace Dune
             {
                 delete residual_;
             }
-        
+
         /*!
          * \brief Returns a reference to the current numeric model.
          */
-        Model &model() 
+        Model &model()
             { return *model_; }
 
         /*!
@@ -229,7 +229,7 @@ namespace Dune
                     return false;
                 };
             };
-        
+
         /*!
          * \brief Returns the current Jacobian matrix.
          */
@@ -314,7 +314,7 @@ namespace Dune
                     // update the current solution. We use either
                     // a line search approach or the plain method.
                     updateMethod.update(*this, u, uOld, model);
-                    
+
                     ctl.newtonEndStep(u, uOld);
                 }
                 // tell the controller that we're done
@@ -329,7 +329,7 @@ namespace Dune
                 model_ = NULL;
                 return true;
             }
-        
+
 
     private:
         Function       uOld;

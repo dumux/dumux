@@ -24,89 +24,89 @@ namespace Dune
    * \f$\boldsymbol{v}_\text{total}\f$ the total velocity,
    * and \f$f_\text{w}\f$ the wetting phase fractional flow function.
 
-	- Grid      a DUNE grid type
-	- RT        type used for return values
-	- RepresentationType   type of the vector holding the saturation values
-	- VelType   type of the vector holding the velocity values
+    - Grid      a DUNE grid type
+    - RT        type used for return values
+    - RepresentationType   type of the vector holding the saturation values
+    - VelType   type of the vector holding the velocity values
 
    */
   template<class G, class RT, class VC>
   class Transport {
   public:
 
-	typedef BlockVector< Dune::FieldVector<RT,1> > RepresentationType;
-	TransportProblem<G, RT, VC>& transproblem; //!< problem data
+    typedef BlockVector< Dune::FieldVector<RT,1> > RepresentationType;
+    TransportProblem<G, RT, VC>& transproblem; //!< problem data
 
-	//! \brief Calculate the update vector.
-	/*!
-	 *  \param[in]  t         time
-	 *  \param[out] dt        time step size
-	 *  \param[out] updateVec vector for hte update values
-	 *
-	 *  Calculate the update vector, i.e., the discretization
-	 *  of \f$\text{div}\, (f_\text{w}(S) \boldsymbol{v}_t)\f$.
-	 */
-	virtual int update(const RT t, RT& dt, RepresentationType& updateVec, RT& CLFFac) = 0;
+    //! \brief Calculate the update vector.
+    /*!
+     *  \param[in]  t         time
+     *  \param[out] dt        time step size
+     *  \param[out] updateVec vector for hte update values
+     *
+     *  Calculate the update vector, i.e., the discretization
+     *  of \f$\text{div}\, (f_\text{w}(S) \boldsymbol{v}_t)\f$.
+     */
+    virtual int update(const RT t, RT& dt, RepresentationType& updateVec, RT& CLFFac) = 0;
 
-	void initial()
-	{
-		initialTransport();
-		return;
-	}
+    void initial()
+    {
+        initialTransport();
+        return;
+    }
 
-	//! \brief Sets the initial solution \f$S_0\f$.
-	virtual void initialTransport() = 0;
+    //! \brief Sets the initial solution \f$S_0\f$.
+    virtual void initialTransport() = 0;
 
-	//! return const reference to saturation vector
-	virtual const RepresentationType& operator* () const
-	{
-	  return transproblem.variables.saturation;
-	}
+    //! return const reference to saturation vector
+    virtual const RepresentationType& operator* () const
+    {
+      return transproblem.variables.saturation;
+    }
 
-	//! return reference to saturation vector
-	virtual RepresentationType& operator* ()
-	{
-	  return transproblem.variables.saturation;
-	}
+    //! return reference to saturation vector
+    virtual RepresentationType& operator* ()
+    {
+      return transproblem.variables.saturation;
+    }
 
-	virtual void vtkout(const char* name, int k) const {
-		transproblem.variables.vtkout(name, k);
-		return;
-	}
+    virtual void vtkout(const char* name, int k) const {
+        transproblem.variables.vtkout(name, k);
+        return;
+    }
 
-	//! always define virtual destructor in abstract base class
-	virtual ~Transport () {}
+    //! always define virtual destructor in abstract base class
+    virtual ~Transport () {}
 
-	/*! @brief constructor
-	 *  @param g a DUNE grid object
-	 *  @param prob an object of class TransportProblem or derived
-	 */
-	Transport(const G& g, TransportProblem<G, RT, VC>& prob)
-	: grid(g), transproblem(prob), level_(g.maxLevel())
-	{ }
+    /*! @brief constructor
+     *  @param g a DUNE grid object
+     *  @param prob an object of class TransportProblem or derived
+     */
+    Transport(const G& g, TransportProblem<G, RT, VC>& prob)
+    : grid(g), transproblem(prob), level_(g.maxLevel())
+    { }
 
-	/*! @brief constructor
-	 *
-	 *  This constructor gives the additional possibility to specify a grid level on which
-	 *  the transport equation shall be solved. This especially important for multiscale methods.
-	 *  @param g a DUNE grid object
-	 *  @param prob an object of class TransportProblem or derived
-	 *  @param lev the grid level on which the Transport equation is to be solved.
-	 */
-	Transport(const G& g, TransportProblem<G, RT, VC>& prob, int lev)
-	: transproblem(prob), grid(g), level_(lev)
-	{ }
+    /*! @brief constructor
+     *
+     *  This constructor gives the additional possibility to specify a grid level on which
+     *  the transport equation shall be solved. This especially important for multiscale methods.
+     *  @param g a DUNE grid object
+     *  @param prob an object of class TransportProblem or derived
+     *  @param lev the grid level on which the Transport equation is to be solved.
+     */
+    Transport(const G& g, TransportProblem<G, RT, VC>& prob, int lev)
+    : transproblem(prob), grid(g), level_(lev)
+    { }
 
-	//! returns the level on which the transport eqution is solved.
-	int level() const
-	{
-		return level_;
-	}
+    //! returns the level on which the transport eqution is solved.
+    int level() const
+    {
+        return level_;
+    }
 
-	const G& grid;
+    const G& grid;
 
   protected:
-	  const int level_;
+      const int level_;
   };
 
 }

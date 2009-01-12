@@ -15,7 +15,7 @@ namespace Dune
     {
       bool contains (Dune::GeometryType gt)
       {
-	return gt.dim() == dim;
+    return gt.dim() == dim;
       }
     };
 
@@ -29,30 +29,30 @@ namespace Dune
 
   public:
     BoundaryConditions::Flags bctype (const FieldVector<DT,n>& x, const Entity& e,
-				      const FieldVector<DT,n>& xi) const
+                      const FieldVector<DT,n>& xi) const
     {
       if (x[0] > (right - eps_) || x[0] < eps_)
-	return Dune::BoundaryConditions::dirichlet;
+    return Dune::BoundaryConditions::dirichlet;
       else
-	return Dune::BoundaryConditions::neumann;
+    return Dune::BoundaryConditions::neumann;
     }
 
     RT dirichlet (const FieldVector<DT,n>& x, const Entity& e,
-    	  const FieldVector<DT,n>& xi) const
+          const FieldVector<DT,n>& xi) const
         {
       if (x[0] < eps_)
-	return 0.8;
+    return 0.8;
       else
-	return 0.2;
+    return 0.2;
     }
 
     RT initSat (const FieldVector<DT,n>& x, const Entity& e,
-	   const FieldVector<DT,n>& xi) const
+       const FieldVector<DT,n>& xi) const
     {
       if (x[0] < eps_)
-	return 0.8;
+    return 0.8;
       else
-	return 0.2;
+    return 0.2;
     }
 
     RT porosity () const {
@@ -62,12 +62,12 @@ namespace Dune
 //    void updateanalytical (const G& g, BlockVector& satAnalytic, double& dt);
 
     BuckleyLeverettTransportProblem(VC& variableobj, TwoPhaseRelations& law = *(new LinearLaw),
-			   const FieldVector<DT,n> Left = 0, const FieldVector<DT,n> Right = 0, const bool exsol = false,
-			    const int level = 0, const bool cap =
-			   false,RT poro=0.2)
+               const FieldVector<DT,n> Left = 0, const FieldVector<DT,n> Right = 0, const bool exsol = false,
+                const int level = 0, const bool cap =
+               false,RT poro=0.2)
       : TransportProblem<G, RT, VC>(variableobj, law, cap, exsol), left(Left[0]), right(Right[0]),
-	eps_(1e-8),
-	poro_(poro)
+    eps_(1e-8),
+    poro_(poro)
     { }
 
       private:

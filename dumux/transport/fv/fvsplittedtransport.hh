@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_FVSPLITTEDTRANSPORT_HH
 #define DUNE_FVSPLITTEDTRANSPORT_HH
@@ -25,15 +25,15 @@ namespace Dune
    * \f$\boldsymbol{v}_\text{total}\f$ the total velocity,
    * and \f$f_\text{w}\f$ the wetting phase fractional flow function.
 
-	- Grid      a DUNE grid type
-	- RT        type used for return values
-	- RepresentationType   type of the vector holding the saturation values
-	- VelType   type of the vector holding the velocity values
+    - Grid      a DUNE grid type
+    - RT        type used for return values
+    - RepresentationType   type of the vector holding the saturation values
+    - VelType   type of the vector holding the velocity values
 
    */
   template<class G, class RT, class VC>
   class FVSplittedTransport : public SplittedTransport< G, RT, VC,
-							FVTransport<G, RT, VC>, FVTransport<G, RT, VC> >
+                            FVTransport<G, RT, VC>, FVTransport<G, RT, VC> >
   {
   public:
     typedef typename FVTransport<G, RT, VC>::RepresentationType HyperbolicRepresentationType;
@@ -44,28 +44,28 @@ namespace Dune
 
 
     virtual void transferHyperbolicToParabolic(const HyperbolicRepresentationType& hyperSat,
-					       ParabolicRepresentationType& paraSat)
+                           ParabolicRepresentationType& paraSat)
     {
       paraSat = hyperSat;
       return;
     }
 
     virtual void transferParabolicToHyperbolic(const ParabolicRepresentationType& paraSat,
-					       HyperbolicRepresentationType& hyperSat)
+                           HyperbolicRepresentationType& hyperSat)
     {
       hyperSat = paraSat;
       return;
     }
 
     virtual void transferParabolicToRepresentationType(const ParabolicRepresentationType& paraSat,
-					       RepresentationType& rSat)
+                           RepresentationType& rSat)
     {
       rSat = paraSat;
       return;
     }
 
     virtual void transferRepresentationTypeToParabolic(const RepresentationType& rSat,
-					       ParabolicRepresentationType& paraSat)
+                           ParabolicRepresentationType& paraSat)
     {
       paraSat = rSat;
       return;

@@ -44,7 +44,7 @@ namespace Lens
         typedef PwSnLensDomain<ScalarT>         ParentType;
         typedef PwSnLensProblem<ScalarT>        ThisType;
         typedef PwSnBoxModel<ThisType>          Model;
-        
+
     public:
         // the domain traits of the domain
         typedef typename ParentType::DomainTraits   DomainTraits;
@@ -62,7 +62,7 @@ namespace Lens
             pWIdx = PwSnTraits::pWIdx,
             snIdx = PwSnTraits::snIdx
         };
-        
+
         // copy some types from the traits for convenience
         typedef typename DomainTraits::Scalar                     Scalar;
         typedef typename DomainTraits::Grid                       Grid;
@@ -206,11 +206,11 @@ namespace Lens
         ///////////////////////////////////
 
         //! Returns the current time step size in seconds
-        Scalar timeStepSize() const 
+        Scalar timeStepSize() const
             { return timeManager_.stepSize(); }
 
         //! Set the time step size in seconds.
-        void setTimeStepSize(Scalar dt) 
+        void setTimeStepSize(Scalar dt)
             { return timeManager_.setStepSize(dt); }
 
         //! evaluate the initial condition for a vert
@@ -347,7 +347,7 @@ namespace Lens
 
                 const LocalPosition &localPos = element.geometry()[vertIdx];
                 GlobalPosition pos = element.geometry().global(localPos);
-                    
+
                 if (ParentType::onLeftBoundary(pos))
                 {
                     a = -(1 + 0.5/ParentType::height());
@@ -381,7 +381,7 @@ namespace Lens
         ///////////////////////////////////
         // End of problem specific stuff
         ///////////////////////////////////
-        
+
         //! called by the LensNewtonContoller when the newton method
         //! is started.
         void newtonBegin()
@@ -563,8 +563,8 @@ namespace Lens
                     timeManager_.setFinished();
                     return;
                 }
-                
-#if !USE_ORIG_PROB               
+
+#if !USE_ORIG_PROB
                 if (!timeManager_.episodeIsOver())
                     return;
 

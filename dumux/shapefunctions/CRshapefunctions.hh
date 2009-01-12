@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_CRSHAPEFUNCTIONS_HH
 #define DUNE_CRSHAPEFUNCTIONS_HH
@@ -28,7 +28,7 @@ namespace Dune
   /***********************************************************
    * The interface for CR shape functions.
    ***********************************************************/
- 
+
   /** \brief A scalar (N=1) ShapeFunction extended by a method providing a position
       \param C Type used for coordinates in the reference element
       \param T Type used for the shape function values
@@ -38,14 +38,14 @@ namespace Dune
   class CRShapeFunction : public ShapeFunction<C,T,d,1>
   {
   public:
-	// compile time sizes
-	enum { dim=d };       
-	enum { comps=1 };
-	typedef C CoordType; 
-	typedef T ResultType;
+    // compile time sizes
+    enum { dim=d };
+    enum { comps=1 };
+    typedef C CoordType;
+    typedef T ResultType;
 
-	//! interpolation point associated with shape function
-	virtual const FieldVector<CoordType,dim>& position () const = 0;
+    //! interpolation point associated with shape function
+    virtual const FieldVector<CoordType,dim>& position () const = 0;
   };
 
 
@@ -59,264 +59,264 @@ namespace Dune
   class CRShapeFunctionSet : public ShapeFunctionSet<C,T,d,1>
   {
   public:
-	// compile time sizes
-	enum { dim=d };       
-	enum { comps=1 };
+    // compile time sizes
+    enum { dim=d };
+    enum { comps=1 };
 
-	// exported types
-	typedef C CoordType; 
-	typedef T ResultType;
-	typedef CRShapeFunction<CoordType,ResultType,dim> value_type;
+    // exported types
+    typedef C CoordType;
+    typedef T ResultType;
+    typedef CRShapeFunction<CoordType,ResultType,dim> value_type;
 
-	//! random access to i'th CRShapeFunction
-	virtual const value_type& operator[] (int i) const = 0;
+    //! random access to i'th CRShapeFunction
+    virtual const value_type& operator[] (int i) const = 0;
   };
 
 
   /***********************************************************
    * Wrappers
-   * 
+   *
    ***********************************************************/
 
-  /*! wrap inlinable implementation into class that is derived 
+  /*! wrap inlinable implementation into class that is derived
    * from abstract base class and implement the functions with
    * the given implementation
    */
   template<typename Imp>
-  class CRShapeFunctionWrapper : 
-	public CRShapeFunction<typename Imp::CoordType,typename Imp::ResultType,Imp::dim>,
-	private Imp
+  class CRShapeFunctionWrapper :
+    public CRShapeFunction<typename Imp::CoordType,typename Imp::ResultType,Imp::dim>,
+    private Imp
   {
   public:
 
-	// compile time sizes
-	enum { dim=Imp::dim };
-	enum { comps=1 };
+    // compile time sizes
+    enum { dim=Imp::dim };
+    enum { comps=1 };
 
-	// exported types
-	typedef typename Imp::CoordType CoordType;
-	typedef typename Imp::ResultType ResultType;
-	typedef Imp ImplementationType;
+    // exported types
+    typedef typename Imp::CoordType CoordType;
+    typedef typename Imp::ResultType ResultType;
+    typedef Imp ImplementationType;
 
-	//! assignment from implementation type (this class has no data)
-	CRShapeFunctionWrapper& operator= (const Imp& imp)
-	{
-	  Imp::operator=(imp);
-	  return *this;
-	}
+    //! assignment from implementation type (this class has no data)
+    CRShapeFunctionWrapper& operator= (const Imp& imp)
+    {
+      Imp::operator=(imp);
+      return *this;
+    }
 
-	//! evaluate component comp at point x
-	virtual ResultType evaluateFunction (int comp, const FieldVector<CoordType,dim>& x) const
-	{
-	  return Imp::evaluateFunction(comp,x);
-	}
+    //! evaluate component comp at point x
+    virtual ResultType evaluateFunction (int comp, const FieldVector<CoordType,dim>& x) const
+    {
+      return Imp::evaluateFunction(comp,x);
+    }
 
-	//! evaluate derivative of component comp in direction dir at point x
-	virtual ResultType evaluateDerivative (int comp, int dir, const FieldVector<CoordType,dim>& x) const
-	{
-	  return Imp::evaluateDerivative(comp,dir,x);
-	}
+    //! evaluate derivative of component comp in direction dir at point x
+    virtual ResultType evaluateDerivative (int comp, int dir, const FieldVector<CoordType,dim>& x) const
+    {
+      return Imp::evaluateDerivative(comp,dir,x);
+    }
 
-	//! consecutive number of associated dof within element
-	virtual int localindex (int comp) const
-	{
-	  return Imp::localindex(comp);
-	}
+    //! consecutive number of associated dof within element
+    virtual int localindex (int comp) const
+    {
+      return Imp::localindex(comp);
+    }
 
-	//! codim of associated dof
-	virtual int codim () const
-	{
-	  return Imp::codim();
-	}
+    //! codim of associated dof
+    virtual int codim () const
+    {
+      return Imp::codim();
+    }
 
-	//! entity (of codim) of associated dof
-	virtual int entity () const
-	{
-	  return Imp::entity();
-	}
+    //! entity (of codim) of associated dof
+    virtual int entity () const
+    {
+      return Imp::entity();
+    }
 
-	//! consecutive number of dof within entity
-	virtual int entityindex () const
-	{
-	  return Imp::entityindex();
-	}
+    //! consecutive number of dof within entity
+    virtual int entityindex () const
+    {
+      return Imp::entityindex();
+    }
 
-	//! interpolation point associated with shape function
-	virtual const FieldVector<CoordType,dim>& position () const
-	{
-	  return Imp::position();
-	}
+    //! interpolation point associated with shape function
+    virtual const FieldVector<CoordType,dim>& position () const
+    {
+      return Imp::position();
+    }
   };
 
 
 
 
-  /*! wrap inlinable implementation into class that is derived 
+  /*! wrap inlinable implementation into class that is derived
    * from abstract base class and implement the functions with
    * the given implementation
    */
   template<typename Imp>
-  class CRShapeFunctionSetWrapper : 
-	public CRShapeFunctionSet<typename Imp::CoordType,typename Imp::ResultType,Imp::dim>,
-	private Imp
+  class CRShapeFunctionSetWrapper :
+    public CRShapeFunctionSet<typename Imp::CoordType,typename Imp::ResultType,Imp::dim>,
+    private Imp
   {
   public:
 
-	// compile time sizes
-	enum { dim=Imp::dim };
-	enum { comps=1 };     // must be available at compile time
+    // compile time sizes
+    enum { dim=Imp::dim };
+    enum { comps=1 };     // must be available at compile time
 
-	// exported types
-	typedef typename Imp::CoordType CoordType;
-	typedef typename Imp::ResultType ResultType;
-	typedef Imp ImplementationType;
-	typedef CRShapeFunction<CoordType,ResultType,dim> value_type; // Note: Imp::value_type references
-                                                      // must be convertible to references to 
+    // exported types
+    typedef typename Imp::CoordType CoordType;
+    typedef typename Imp::ResultType ResultType;
+    typedef Imp ImplementationType;
+    typedef CRShapeFunction<CoordType,ResultType,dim> value_type; // Note: Imp::value_type references
+                                                      // must be convertible to references to
                                                       // this type !
-	//! return total number of shape functions
-	virtual int size () const
-	{
-	  return Imp::size();
-	}
-	
-	//! total number of shape functions associated with entity in codim
-	virtual int size (int entity, int codim) const
-	{
-	  return Imp::size(entity,codim);
-	}
+    //! return total number of shape functions
+    virtual int size () const
+    {
+      return Imp::size();
+    }
 
-	//! random access to i'th ShapeFunction
-	virtual const value_type& operator[] (int i) const
-	{
-	  return Imp::operator[](i);
-	}
+    //! total number of shape functions associated with entity in codim
+    virtual int size (int entity, int codim) const
+    {
+      return Imp::size(entity,codim);
+    }
 
-	//! return order
-	virtual int order () const
-	{
-	  return Imp::order();
-	}
+    //! random access to i'th ShapeFunction
+    virtual const value_type& operator[] (int i) const
+    {
+      return Imp::operator[](i);
+    }
 
-	//! return type of element
-	virtual GeometryType type () const
-	{
-	  return Imp::type();
-	}
+    //! return order
+    virtual int order () const
+    {
+      return Imp::order();
+    }
+
+    //! return type of element
+    virtual GeometryType type () const
+    {
+      return Imp::type();
+    }
   };
 
   /***********************************************************
-   * The general container for CR shape functions. 
+   * The general container for CR shape functions.
    * All containers are accessible in a singleton.
    ***********************************************************/
 
-  /** \brief This are CR shape functions 
+  /** \brief This are CR shape functions
       \param C Type used for coordinates in the reference element
       \param T Type used for the shape function values
       \param d Dimension of the element
   */
   template<typename C, typename T, int d>
-  class CRShapeFunctionSetContainer : public ShapeFunctionSetContainer<C,T,d,1,Power_m_p<3,d>::power > 
+  class CRShapeFunctionSetContainer : public ShapeFunctionSetContainer<C,T,d,1,Power_m_p<3,d>::power >
   {
   public:
-	// compile time sizes
-	enum { dim=d };       
-	enum { comps=1 };
-	enum { maxsize=Power_m_p<3,dim>::power };
+    // compile time sizes
+    enum { dim=d };
+    enum { comps=1 };
+    enum { maxsize=Power_m_p<3,dim>::power };
 
-	// exported types
-	typedef C CoordType; 
-	typedef T ResultType;
+    // exported types
+    typedef C CoordType;
+    typedef T ResultType;
 
-	//! type of objects in the container
-	typedef CRShapeFunctionSet<C,T,d> value_type;
+    //! type of objects in the container
+    typedef CRShapeFunctionSet<C,T,d> value_type;
 
-	const value_type& operator() (GeometryType type, int order) const
-	{
+    const value_type& operator() (GeometryType type, int order) const
+    {
             if ( type.isCube() )
-		{
-		  if (order==1) return wrappedcube;
-		  DUNE_THROW(RangeError, "order not available for cubes");
-		}
+        {
+          if (order==1) return wrappedcube;
+          DUNE_THROW(RangeError, "order not available for cubes");
+        }
 
             if ( type.isSimplex() )
-		{
-		  if (order==1) return wrappedsimplex;
-		  DUNE_THROW(RangeError, "order not available for simplex");
-		}
+        {
+          if (order==1) return wrappedsimplex;
+          DUNE_THROW(RangeError, "order not available for simplex");
+        }
 
-            if ( type.isPyramid() ) 
-		{
-		  DUNE_THROW(RangeError, "No pyramid for this dimension");
-		}
+            if ( type.isPyramid() )
+        {
+          DUNE_THROW(RangeError, "No pyramid for this dimension");
+        }
 
-            if ( type.isPrism() ) 
-		{
-			DUNE_THROW(RangeError, "No prism for this dimension ");
-		}
+            if ( type.isPrism() )
+        {
+            DUNE_THROW(RangeError, "No prism for this dimension ");
+        }
 
-	  DUNE_THROW(RangeError, "type or order not available");
-	}
+      DUNE_THROW(RangeError, "type or order not available");
+    }
 
   private:
-	// the cubes
-	typedef CRShapeFunctionWrapper<CRCubeShapeFunction<C,T,d> > WrappedCubeShapeFunction;
-	typedef CRCubeShapeFunctionSet<C,T,d,WrappedCubeShapeFunction> CRCubeWrappedShapeFunctionSet;
-	typedef CRShapeFunctionSetWrapper<CRCubeWrappedShapeFunctionSet> WrappedCRCubeShapeFunctionSet;
-	WrappedCRCubeShapeFunctionSet wrappedcube;
+    // the cubes
+    typedef CRShapeFunctionWrapper<CRCubeShapeFunction<C,T,d> > WrappedCubeShapeFunction;
+    typedef CRCubeShapeFunctionSet<C,T,d,WrappedCubeShapeFunction> CRCubeWrappedShapeFunctionSet;
+    typedef CRShapeFunctionSetWrapper<CRCubeWrappedShapeFunctionSet> WrappedCRCubeShapeFunctionSet;
+    WrappedCRCubeShapeFunctionSet wrappedcube;
 
-	// the simplices
-	typedef CRShapeFunctionWrapper<CRSimplexShapeFunction<C,T,d> > WrappedSimplexShapeFunction;
-	typedef CRSimplexShapeFunctionSet<C,T,d,WrappedSimplexShapeFunction> CRSimplexWrappedShapeFunctionSet;
-	typedef CRShapeFunctionSetWrapper<CRSimplexWrappedShapeFunctionSet> WrappedCRSimplexShapeFunctionSet;
-	WrappedCRSimplexShapeFunctionSet wrappedsimplex;
+    // the simplices
+    typedef CRShapeFunctionWrapper<CRSimplexShapeFunction<C,T,d> > WrappedSimplexShapeFunction;
+    typedef CRSimplexShapeFunctionSet<C,T,d,WrappedSimplexShapeFunction> CRSimplexWrappedShapeFunctionSet;
+    typedef CRShapeFunctionSetWrapper<CRSimplexWrappedShapeFunctionSet> WrappedCRSimplexShapeFunctionSet;
+    WrappedCRSimplexShapeFunctionSet wrappedsimplex;
   };
 
   //! This are CR shape functions for any element type and order (in the future ... )
   template<typename C, typename T>
-  class CRShapeFunctionSetContainer<C,T,3> : public ShapeFunctionSetContainer<C,T,3,1,Power_m_p<3,3>::power > 
+  class CRShapeFunctionSetContainer<C,T,3> : public ShapeFunctionSetContainer<C,T,3,1,Power_m_p<3,3>::power >
   {
   public:
-	// compile time sizes
-	enum { dim=3 };       
-	enum { comps=1 };
-	enum { maxsize=Power_m_p<3,dim>::power };
+    // compile time sizes
+    enum { dim=3 };
+    enum { comps=1 };
+    enum { maxsize=Power_m_p<3,dim>::power };
 
-	// exported types
-	typedef C CoordType; 
-	typedef T ResultType;
+    // exported types
+    typedef C CoordType;
+    typedef T ResultType;
 
-	//! type of objects in the container
-	typedef CRShapeFunctionSet<C,T,3> value_type;
+    //! type of objects in the container
+    typedef CRShapeFunctionSet<C,T,3> value_type;
 
-	const value_type& operator() (GeometryType type, int order) const
-	{
+    const value_type& operator() (GeometryType type, int order) const
+    {
             if ( type.isCube() )
-		{
-		  if (order==1) return wrappedcube;
-		  DUNE_THROW(RangeError, "order not available for cubes");
-		}
+        {
+          if (order==1) return wrappedcube;
+          DUNE_THROW(RangeError, "order not available for cubes");
+        }
 
             if ( type.isSimplex() )
-		{
-		  if (order==1) return wrappedsimplex;
-		  DUNE_THROW(RangeError, "order not available for simplex");
-		}
+        {
+          if (order==1) return wrappedsimplex;
+          DUNE_THROW(RangeError, "order not available for simplex");
+        }
 
-	  DUNE_THROW(RangeError, "type or order not available");
-	}
+      DUNE_THROW(RangeError, "type or order not available");
+    }
 
   private:
-	// the cubes
-	typedef CRShapeFunctionWrapper<CRCubeShapeFunction<C,T,dim> > WrappedCubeShapeFunction;
-	typedef CRCubeShapeFunctionSet<C,T,dim,WrappedCubeShapeFunction> CRCubeWrappedShapeFunctionSet;
-	typedef CRShapeFunctionSetWrapper<CRCubeWrappedShapeFunctionSet> WrappedCRCubeShapeFunctionSet;
-	WrappedCRCubeShapeFunctionSet wrappedcube;
+    // the cubes
+    typedef CRShapeFunctionWrapper<CRCubeShapeFunction<C,T,dim> > WrappedCubeShapeFunction;
+    typedef CRCubeShapeFunctionSet<C,T,dim,WrappedCubeShapeFunction> CRCubeWrappedShapeFunctionSet;
+    typedef CRShapeFunctionSetWrapper<CRCubeWrappedShapeFunctionSet> WrappedCRCubeShapeFunctionSet;
+    WrappedCRCubeShapeFunctionSet wrappedcube;
 
-	// the simplices
-	typedef CRShapeFunctionWrapper<CRSimplexShapeFunction<C,T,dim> > WrappedSimplexShapeFunction;
-	typedef CRSimplexShapeFunctionSet<C,T,dim,WrappedSimplexShapeFunction> CRSimplexWrappedShapeFunctionSet;
-	typedef CRShapeFunctionSetWrapper<CRSimplexWrappedShapeFunctionSet> WrappedCRSimplexShapeFunctionSet;
-	WrappedCRSimplexShapeFunctionSet wrappedsimplex;
+    // the simplices
+    typedef CRShapeFunctionWrapper<CRSimplexShapeFunction<C,T,dim> > WrappedSimplexShapeFunction;
+    typedef CRSimplexShapeFunctionSet<C,T,dim,WrappedSimplexShapeFunction> CRSimplexWrappedShapeFunctionSet;
+    typedef CRShapeFunctionSetWrapper<CRSimplexWrappedShapeFunctionSet> WrappedCRSimplexShapeFunctionSet;
+    WrappedCRSimplexShapeFunctionSet wrappedsimplex;
   };
 
 

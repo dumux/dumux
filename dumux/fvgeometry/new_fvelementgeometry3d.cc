@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 /*!
  * \brief Specialization of the FVElementGeometry for the 3D-case.
@@ -7,14 +7,14 @@
  * base class, so this class only fills some gaps.
  */
 template <class GridT,
-          class ReferenceElementContainerT, 
+          class ReferenceElementContainerT,
           class ShapeFunctionSetContainerT>
-class NewFVElementGeometry<GridT, 
-                           ReferenceElementContainerT, 
+class NewFVElementGeometry<GridT,
+                           ReferenceElementContainerT,
                            ShapeFunctionSetContainerT,
                            3>
     : public NewFVElementGeometryBase<NewFVElementGeometry<GridT,
-                                                           ReferenceElementContainerT, 
+                                                           ReferenceElementContainerT,
                                                            ShapeFunctionSetContainerT,
                                                            3> >
 {
@@ -35,7 +35,7 @@ class NewFVElementGeometry<GridT,
     enum {
         GridDim = Grid::dimension,
         WorldDim = Grid::dimensionworld,
-            
+
         // TODO/low priority: This should be specific to the actual
         // reference elements used.
         MaxNodes = 8,
@@ -45,7 +45,7 @@ class NewFVElementGeometry<GridT,
         MaxNodesInFace = 4
     };
 
-    typedef NewFVElementGeometry<Grid, 
+    typedef NewFVElementGeometry<Grid,
                                  ReferenceElementContainer,
                                  ShapeFunctionSetContainer>  ThisType;
     typedef NewFVElementGeometryBase<ThisType>               ParentType;
@@ -58,7 +58,7 @@ class NewFVElementGeometry<GridT,
     // functions
     friend class NewFVElementGeometryBase< ThisType >;
 
-    void crossProduct_(WorldCoord& c, 
+    void crossProduct_(WorldCoord& c,
                        const WorldCoord& a,
                        const WorldCoord& b)
         {
@@ -83,10 +83,10 @@ class NewFVElementGeometry<GridT,
 
             WorldCoord a(p2); a -= p0;
             WorldCoord b(p3); b -= p1;
-                
+
             WorldCoord n;
             crossProduct_(n, a, b);
-                
+
             a = p4; a -= p0;
 
             return 1.0/6.0*(n*a);
@@ -127,7 +127,7 @@ class NewFVElementGeometry<GridT,
             return fabs(1.0/6.0*(n*a));
         }
 
-    void normalOfQuadrilateral_(WorldCoord &normal, 
+    void normalOfQuadrilateral_(WorldCoord &normal,
                                 const WorldCoord& p0,
                                 const WorldCoord& p1,
                                 const WorldCoord& p2,
@@ -281,12 +281,12 @@ class NewFVElementGeometry<GridT,
         }
 
 
-        
+
     Scalar hexahedronVolume_(const WorldCoord &p0,
-                             const WorldCoord &p1, 
+                             const WorldCoord &p1,
                              const WorldCoord &p2,
                              const WorldCoord &p3,
-                             const WorldCoord &p4, 
+                             const WorldCoord &p4,
                              const WorldCoord &p5,
                              const WorldCoord &p6,
                              const WorldCoord &p7)
@@ -307,78 +307,78 @@ class NewFVElementGeometry<GridT,
                     for (int k = 0; k < this->numNodes_; k++)
                         this->subContVol_[k].volume = this->cellVolume_ / 4.0;
                     break;
-                        
+
                 case 5: // 3D, pyramid
-                    this->subContVol_[0].volume = 
+                    this->subContVol_[0].volume =
                         hexahedronVolume_(this->subContVol_[0].global,
                                           this->edgeCoord_[0],
                                           this->faceCoord_[0],
                                           this->edgeCoord_[3],
-                                              
+
                                           this->edgeCoord_[4],
                                           this->faceCoord_[1],
                                           this->elementGlobal_,
                                           this->faceCoord_[4]);
-                        
-                    this->subContVol_[1].volume = 
+
+                    this->subContVol_[1].volume =
                         hexahedronVolume_(this->subContVol_[1].global,
                                           this->edgeCoord_[1],
                                           this->faceCoord_[0],
                                           this->edgeCoord_[0],
-                                              
+
                                           this->edgeCoord_[5],
                                           this->faceCoord_[2],
                                           this->elementGlobal_,
                                           this->faceCoord_[1]);
 
-                    this->subContVol_[2].volume = 
+                    this->subContVol_[2].volume =
                         hexahedronVolume_(this->subContVol_[2].global,
                                           this->edgeCoord_[2],
                                           this->faceCoord_[0],
                                           this->edgeCoord_[1],
-                                              
+
                                           this->edgeCoord_[6],
                                           this->faceCoord_[3],
                                           this->elementGlobal_,
                                           this->faceCoord_[2]);
-                        
+
                     this->subContVol_[3].volume =
                         _hexahedronVolume(this->subContVol_[3].global,
                                           this->edgeCoord_[3],
                                           this->faceCoord_[0],
                                           this->edgeCoord_[2],
-                                              
+
                                           this->edgeCoord_[7],
                                           this->faceCoord_[4],
                                           this->elementGlobal_,
                                           this->faceCoord_[3]);
-                        
-                    this->subContVol_[4].volume = 
+
+                    this->subContVol_[4].volume =
                         this.cellVolume_ -
                         this->subContVol_[0].volume -
                         this->subContVol_[1].volume -
                         this->subContVol_[2].volume -
                         this->subContVol_[3].volume;
                     break;
-                        
+
                 case 6: // 3D, prism
-                    this->subContVol_[0].volume = 
+                    this->subContVol_[0].volume =
                         hexahedronVolume_(this->subContVol_[0].global,
                                           this->edgeCoord_[0],
                                           this->faceCoord_[0],
                                           this->edgeCoord_[2],
-                                              
+
                                           this->edgeCoord_[3],
                                           this->faceCoord_[1],
                                           this->elementGlobal_,
                                           this->faceCoord_[3]);
-                        
-                    this->subContVol_[1].volume = 
+
+                    this->subContVol_[1].volume =
                         hexahedronVolume_(this->subContVol_[1].global,
                                           this->edgeCoord_[1],
                                           this->faceCoord_[0],
                                           this->edgeCoord_[0],
-                                                                        
+
                                           this->edgeCoord_[4],
                                           this->faceCoord_[2],
                                           this->elementGlobal_,
@@ -389,7 +389,7 @@ class NewFVElementGeometry<GridT,
                                           this->edgeCoord_[2],
                                           this->faceCoord_[0],
                                           this->edgeCoord_[1],
-                                                                        
+
                                           this->edgeCoord_[5],
                                           this->faceCoord_[3],
                                           this->elementGlobal_,
@@ -400,7 +400,7 @@ class NewFVElementGeometry<GridT,
                                           this->faceCoord_[1],
                                           this->elementGlobal_,
                                           this->faceCoord_[3],
-                                                                        
+
                                           this->subContVol_[3].global,
                                           this->edgeCoord_[6],
                                           this->faceCoord_[4],
@@ -411,13 +411,13 @@ class NewFVElementGeometry<GridT,
                                           this->faceCoord_[2],
                                           this->elementGlobal_,
                                           this->faceCoord_[1],
-                                                                        
+
                                           this->subContVol_[4].global,
                                           this->edgeCoord_[7],
                                           this->faceCoord_[4],
                                           this->edgeCoord_[6]);
 
-                    this->subContVol_[5].volume = 
+                    this->subContVol_[5].volume =
                         hexahedronVolume_(this->edgeCoord_[5],
                                           this->faceCoord_[3],
                                           this->elementGlobal_,
@@ -428,20 +428,20 @@ class NewFVElementGeometry<GridT,
                                           this->faceCoord_[4],
                                           this->edgeCoord_[7]);
                     break;
-                        
+
                 case 8: // 3D, hexahedron
-                    this->subContVol_[0].volume = 
+                    this->subContVol_[0].volume =
                         hexahedronVolume_(this->subContVol_[0].global,
                                           this->edgeCoord_[8],
                                           this->faceCoord_[4],
                                           this->edgeCoord_[4],
-                                                                        
+
                                           this->edgeCoord_[0],
                                           this->faceCoord_[2],
                                           this->elementGlobal_,
                                           this->faceCoord_[0]);
 
-                    this->subContVol_[1].volume = 
+                    this->subContVol_[1].volume =
                         hexahedronVolume_(this->subContVol_[1].global,
                                           this->edgeCoord_[5],
                                           this->faceCoord_[4],
@@ -469,53 +469,53 @@ class NewFVElementGeometry<GridT,
                                           this->edgeCoord_[9],
                                           this->faceCoord_[4],
                                           this->edgeCoord_[5],
-                                                                        
+
                                           this->edgeCoord_[3],
                                           this->faceCoord_[3],
                                           this->elementGlobal_,
                                           this->faceCoord_[1]);
 
 
-                    this->subContVol_[4].volume = 
+                    this->subContVol_[4].volume =
                         hexahedronVolume_(this->edgeCoord_[0],
                                           this->faceCoord_[2],
                                           this->elementGlobal_,
                                           this->faceCoord_[0],
-                                                                        
+
                                           this->subContVol_[4].global,
                                           this->edgeCoord_[10],
                                           this->faceCoord_[5],
                                           this->edgeCoord_[6]);
-                        
 
-                    this->subContVol_[5].volume = 
+
+                    this->subContVol_[5].volume =
                         hexahedronVolume_(this->edgeCoord_[1],
                                           this->faceCoord_[1],
                                           this->elementGlobal_,
                                           this->faceCoord_[2],
-                                                                        
+
                                           this->subContVol_[5].global,
                                           this->edgeCoord_[7],
                                           this->faceCoord_[5],
                                           this->edgeCoord_[10]);
 
-                    this->subContVol_[6].volume = 
+                    this->subContVol_[6].volume =
                         hexahedronVolume_(this->edgeCoord_[2],
                                           this->faceCoord_[0],
                                           this->elementGlobal_,
                                           this->faceCoord_[3],
-                                                                        
+
                                           this->subContVol_[6].global,
                                           this->edgeCoord_[6],
                                           this->faceCoord_[5],
                                           this->edgeCoord_[11]);
 
-                    this->subContVol_[7].volume = 
+                    this->subContVol_[7].volume =
                         hexahedronVolume_(this->edgeCoord_[3],
                                           this->faceCoord_[3],
                                           this->elementGlobal_,
                                           this->faceCoord_[1],
-                                                                        
+
                                           this->subContVol_[7].global,
                                           this->edgeCoord_[11],
                                           this->faceCoord_[5],
@@ -523,10 +523,10 @@ class NewFVElementGeometry<GridT,
                     break;
 
                 default:
-                    DUNE_THROW(NotImplemented, 
-                               "updateVolumes_ dim = " 
+                    DUNE_THROW(NotImplemented,
+                               "updateVolumes_ dim = "
                                << GridDim
-                               << ", numVertices = " 
+                               << ", numVertices = "
                                << cell.template count<GridDim>());
             }
         };
@@ -537,13 +537,13 @@ class NewFVElementGeometry<GridT,
             WorldCoord diffVec;
 
             // fill sub control volume face data
-            for (int scvFaceIdx = 0; scvFaceIdx < this->numEdges_; scvFaceIdx++) 
-            { 
+            for (int scvFaceIdx = 0; scvFaceIdx < this->numEdges_; scvFaceIdx++)
+            {
                 int insideIdx = refElem.subEntity(scvFaceIdx, GridDim-1,
                                                   0, GridDim);
                 int outsideIdx = refElem.subEntity(scvFaceIdx, GridDim-1,
                                                    1, GridDim);
-                
+
                 this->subContVolFace_[scvFaceIdx].insideIdx_ = insideIdx;
                 this->subContVolFace_[scvFaceIdx].outsideIdx_ = outsideIdx;
 
@@ -562,20 +562,20 @@ class NewFVElementGeometry<GridT,
                 ipLocal *= 1 / 4.0;
 
                 this->subContVolFace_[scvFaceIdx].ipLocal_ = ipLocal;
-                this->subContVolFace_[scvFaceIdx].normal_ = 
-                    normalOfQuadrilateral_(this->edgeCoord_[scvFaceIdx], 
+                this->subContVolFace_[scvFaceIdx].normal_ =
+                    normalOfQuadrilateral_(this->edgeCoord_[scvFaceIdx],
                                            this->faceCoord_[rightFace],
-                                           this->elementGlobal_, 
+                                           this->elementGlobal_,
                                            this->faceCoord_[leftFace]);
             }
         }
 
-    void updateBoundaryFace_(IntersectionIterator &it, 
+    void updateBoundaryFace_(IntersectionIterator &it,
                              const ReferenceElement &refElem,
                              const CellGeometry &geometry)
         {
             LocalCoord ipLocal;
-                
+
             // split finite element face into the sub faces of the
             // sub control volumes
             int face = it->numberInSelf();
@@ -585,14 +585,14 @@ class NewFVElementGeometry<GridT,
                 int nodeInElement = refElem.subEntity(face, 1,
                                                       nodeInFace, GridDim);
                 int bfIndex = this->_boundaryFaceIndex(face, nodeInFace);
-                    
+
                 int leftEdge;
                 int rightEdge;
 
                 getEdgeIndices(this->numNodes_,
                                face,
                                nodeInElement,
-                               leftEdge, 
+                               leftEdge,
                                rightEdge);
 
                 // TODO: define the local integration point on
@@ -606,12 +606,12 @@ class NewFVElementGeometry<GridT,
                 ipLocal *= 1/4.0;
                 this->boundaryFace_[bfIndex].ipLocal = ipLocal;
 
-                this->boundaryFace_[bfIndex].area = 
+                this->boundaryFace_[bfIndex].area =
                     quadrilateralArea_(this->subContVol_[nodeInElement].global,
-                                       this->edgeCoord_[rightEdge], 
+                                       this->edgeCoord_[rightEdge],
                                        this->faceCoord_[face],
                                        this->edgeCoord_[leftEdge]);
-                    
+
                 this->boundaryFace_[bfIndex].ipGlobal = geometry.global(ipLocal);
             }
         }

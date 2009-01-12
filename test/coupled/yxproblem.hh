@@ -17,7 +17,7 @@ class YXProblem : public StokesProblem<G, RT>
 
 public:
   virtual FieldVector<RT,dim> q(const FieldVector<DT,dim>& x, const Entity& e,
-				const FieldVector<DT,dim>& xi) const
+                const FieldVector<DT,dim>& xi) const
   {
     FieldVector<RT,dim> result(0);
     result[0] = x[1];
@@ -27,8 +27,8 @@ public:
   }
 
   virtual BoundaryConditions::Flags bctype (const FieldVector<DT,dim>& x, const Entity& e,
-					    const IntersectionIterator& intersectionIt,
-					    const FieldVector<DT,dim>& xi) const
+                        const IntersectionIterator& intersectionIt,
+                        const FieldVector<DT,dim>& xi) const
   {
     if (x[0] > 1 - 1e-6)
       return BoundaryConditions::process;
@@ -37,15 +37,15 @@ public:
   }
 
   virtual FieldVector<RT,dim> g(const FieldVector<DT,dim>& x, const Entity& e,
-				const IntersectionIterator& intersectionIt,
-				const FieldVector<DT,dim>& xi) const
+                const IntersectionIterator& intersectionIt,
+                const FieldVector<DT,dim>& xi) const
   {
     return velocity(x);
   }
 
   virtual RT Jn(const FieldVector<DT,dim>& x, const Entity& e,
-		const IntersectionIterator& intersectionIt,
-		const FieldVector<DT,dim>& xi) const
+        const IntersectionIterator& intersectionIt,
+        const FieldVector<DT,dim>& xi) const
   {
     FieldVector<RT, dim-1> localDimM1(0);
     FieldVector<RT,dim> normal = intersectionIt->unitOuterNormal(localDimM1);
@@ -59,15 +59,15 @@ public:
   }
 
   virtual RT beaversJosephC(const FieldVector<DT,dim>& x, const Entity& e,
-		const IntersectionIterator& intersectionIt,
-		const FieldVector<DT,dim>& xi) const
+        const IntersectionIterator& intersectionIt,
+        const FieldVector<DT,dim>& xi) const
   {
-	  return -1.0;
+      return -1.0;
   }
 
   virtual FieldVector<RT,dim> Jt(const FieldVector<DT,dim>& x, const Entity& e,
-				 const IntersectionIterator& intersectionIt,
-				 const FieldVector<DT,dim>& xi) const
+                 const IntersectionIterator& intersectionIt,
+                 const FieldVector<DT,dim>& xi) const
   {
     FieldVector<RT, dim-1> localDimM1(0);
     FieldVector<RT,dim> normal = intersectionIt->unitOuterNormal(localDimM1);

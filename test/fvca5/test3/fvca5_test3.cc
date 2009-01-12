@@ -23,20 +23,20 @@ int main(int argc, char** argv)
     typedef Dune::UGGrid<dim> GridType;
 
     if (argc < 2 || argc > 4) {
-    	std::cout << "Usage: fvca5_test3 dgffilename [delta] [theta]" << std::endl;
-    	return (1);
+        std::cout << "Usage: fvca5_test3 dgffilename [delta] [theta]" << std::endl;
+        return (1);
     }
     double delta = 1.0e-3;
     double theta = 0.6981317007977316802;
     if (argc >= 3) {
-    	std::string arg2(argv[2]);
-    	std::istringstream is2(arg2);
-    	is2 >> delta;
+        std::string arg2(argv[2]);
+        std::istringstream is2(arg2);
+        is2 >> delta;
     }
     if (argc == 4) {
-    	std::string arg3(argv[3]);
-    	std::istringstream is3(arg3);
-    	is3 >> theta;
+        std::string arg3(argv[3]);
+        std::istringstream is3(arg3);
+        is3 >> theta;
     }
 
     // create grid pointer, GridType is defined by gridtype.hh
@@ -68,12 +68,12 @@ int main(int argc, char** argv)
     std::cout.precision(2);
 
     std::cout << "sumflux = flux0 + flux1 + fluy0 + fluy1 - sumf \n        = "
-    	<< result.flux0 << " + " << result.flux1 << " + "
-    	<< result.fluy0 << " + " << result.fluy1 << " - "
-    	<< result.sumf << "\n        = " << result.sumflux << std::endl;
+        << result.flux0 << " + " << result.flux1 << " + "
+        << result.fluy0 << " + " << result.fluy1 << " - "
+        << result.sumf << "\n        = " << result.sumflux << std::endl;
     std::cout << "energy error eren = |ener1 - ener2|/max(ener1,ener2) = |"
-    	<< result.ener1 << " - " << result.ener2 << "|/" << std::max(result.ener1, result.ener2)
-    	<< " = " << result.eren << std::endl;
+        << result.ener1 << " - " << result.ener2 << "|/" << std::max(result.ener1, result.ener2)
+        << " = " << result.eren << std::endl;
     std::cout << "energy ener2 = " << result.ener2 << std::endl;
     std::cout << "umin = " << result.uMin << std::endl;
     std::cout << "umax = " << result.uMax << std::endl;

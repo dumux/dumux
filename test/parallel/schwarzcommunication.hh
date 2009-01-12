@@ -21,11 +21,11 @@ class P1OverlappingSchwarzCommunication
   template<int dim>
   struct P1Layout
   {
-	bool contains (Dune::GeometryType gt)
-	{
-	  return gt.isVertex();
-	}
-  }; 
+    bool contains (Dune::GeometryType gt)
+    {
+      return gt.isVertex();
+    }
+  };
 
   // extract types
   typedef typename Grid::ctype ct;
@@ -33,225 +33,225 @@ class P1OverlappingSchwarzCommunication
   typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,IndexSet,P1Layout> Mapper;
 
   // A DataHandle class that computes owner for each vertex
-  class OwnerExchange 
+  class OwnerExchange
     : public Dune::CommDataHandleIF<OwnerExchange,int>
   {
   public:
-	//! export type of data for message buffer
-	typedef int DataType;
+    //! export type of data for message buffer
+    typedef int DataType;
 
-	//! returns true if data for this codim should be communicated
-	bool contains (int d, int c) const
-	{
-	  return (c==d);
-	}
+    //! returns true if data for this codim should be communicated
+    bool contains (int d, int c) const
+    {
+      return (c==d);
+    }
 
-	//! returns true if size per entity of given dim and codim is a constant
-	bool fixedsize (int d, int c) const
-	{
-	  return true;
-	}
+    //! returns true if size per entity of given dim and codim is a constant
+    bool fixedsize (int d, int c) const
+    {
+      return true;
+    }
 
-	/*! how many objects of type DataType have to be sent for a given entity
+    /*! how many objects of type DataType have to be sent for a given entity
 
-	Note: Only the sender side needs to know this size. 
-	*/
-	template<class EntityType>
-	size_t size (EntityType& e) const
-	{
-	  return 1;
-	}
+    Note: Only the sender side needs to know this size.
+    */
+    template<class EntityType>
+    size_t size (EntityType& e) const
+    {
+      return 1;
+    }
 
-	//! pack data from user to message buffer
-	template<class MessageBuffer, class EntityType>
-	void gather (MessageBuffer& buff, const EntityType& e) const
-	{
-	  // just send your rank
-	  buff.write(grid.comm().rank());	  
-	}
+    //! pack data from user to message buffer
+    template<class MessageBuffer, class EntityType>
+    void gather (MessageBuffer& buff, const EntityType& e) const
+    {
+      // just send your rank
+      buff.write(grid.comm().rank());
+    }
 
-	/*! unpack data from message buffer to user
+    /*! unpack data from message buffer to user
 
-	n is the number of objects sent by the sender
-	*/
-	template<class MessageBuffer, class EntityType>
-	void scatter (MessageBuffer& buff, const EntityType& e, size_t n)
-	{
-	  int q;
-	  buff.read(q); // get rank of sender
+    n is the number of objects sent by the sender
+    */
+    template<class MessageBuffer, class EntityType>
+    void scatter (MessageBuffer& buff, const EntityType& e, size_t n)
+    {
+      int q;
+      buff.read(q); // get rank of sender
 
-	  // smallest rank is the owner
-	  if (grid.comm().rank()>q)
-		{
-		  int index=mapper.map(e);
-		  uniquemask[index] = false;
-		}
-	}
+      // smallest rank is the owner
+      if (grid.comm().rank()>q)
+        {
+          int index=mapper.map(e);
+          uniquemask[index] = false;
+        }
+    }
 
-	//! constructor
-	OwnerExchange (const Grid& grid_, const Mapper& mapper_, std::vector<bool>& uniquemask_)
-	  : grid(grid_), mapper(mapper_), uniquemask(uniquemask_)
-	{}
- 
+    //! constructor
+    OwnerExchange (const Grid& grid_, const Mapper& mapper_, std::vector<bool>& uniquemask_)
+      : grid(grid_), mapper(mapper_), uniquemask(uniquemask_)
+    {}
+
   private:
-	const Grid& grid;
-	const Mapper& mapper;
-	std::vector<bool>& uniquemask;
+    const Grid& grid;
+    const Mapper& mapper;
+    std::vector<bool>& uniquemask;
   };
 
 
   // A DataHandle class that sends and adds
   template<class T>
-  class AddingDataHandle 
+  class AddingDataHandle
     : public Dune::CommDataHandleIF<AddingDataHandle<T>,
-				    typename T::value_type>
+                    typename T::value_type>
   {
   public:
-	//! export type of data for message buffer
-	typedef typename T::value_type DataType;
+    //! export type of data for message buffer
+    typedef typename T::value_type DataType;
 
-	//! returns true if data for this codim should be communicated
-	bool contains (int d, int c) const
-	{
-	  return (c==d);
-	}
+    //! returns true if data for this codim should be communicated
+    bool contains (int d, int c) const
+    {
+      return (c==d);
+    }
 
-	//! returns true if size per entity of given dim and codim is a constant
-	bool fixedsize (int d, int c) const
-	{
-	  return true;
-	}
+    //! returns true if size per entity of given dim and codim is a constant
+    bool fixedsize (int d, int c) const
+    {
+      return true;
+    }
 
-	/*! how many objects of type DataType have to be sent for a given entity
+    /*! how many objects of type DataType have to be sent for a given entity
 
-	Note: Only the sender side needs to know this size. 
-	*/
-	template<class EntityType>
-	size_t size (EntityType& e) const
-	{
-	  return 1;
-	}
+    Note: Only the sender side needs to know this size.
+    */
+    template<class EntityType>
+    size_t size (EntityType& e) const
+    {
+      return 1;
+    }
 
-	//! pack data from user to message buffer
-	template<class MessageBuffer, class EntityType>
-	void gather (MessageBuffer& buff, const EntityType& e) const
-	{
-	  // get index of entity
-	  int index=mapper.map(e);
-	  buff.write(source[index]);	  
-	}
+    //! pack data from user to message buffer
+    template<class MessageBuffer, class EntityType>
+    void gather (MessageBuffer& buff, const EntityType& e) const
+    {
+      // get index of entity
+      int index=mapper.map(e);
+      buff.write(source[index]);
+    }
 
-	/*! unpack data from message buffer to user
+    /*! unpack data from message buffer to user
 
-	n is the number of objects sent by the sender
-	*/
-	template<class MessageBuffer, class EntityType>
-	void scatter (MessageBuffer& buff, const EntityType& e, size_t n)
-	{
-	  DataType x;
-	  buff.read(x);
-	  int index=mapper.map(e);
-	  dest[index] += x;
-	}
+    n is the number of objects sent by the sender
+    */
+    template<class MessageBuffer, class EntityType>
+    void scatter (MessageBuffer& buff, const EntityType& e, size_t n)
+    {
+      DataType x;
+      buff.read(x);
+      int index=mapper.map(e);
+      dest[index] += x;
+    }
 
-	//! constructor
-	AddingDataHandle (const Grid& grid_, const Mapper& mapper_, 
-							  const T& source_, T& dest_)
-	  : grid(grid_), mapper(mapper_), source(source_), dest(dest_)
-	{}
- 
+    //! constructor
+    AddingDataHandle (const Grid& grid_, const Mapper& mapper_,
+                              const T& source_, T& dest_)
+      : grid(grid_), mapper(mapper_), source(source_), dest(dest_)
+    {}
+
   private:
-	const Grid& grid;
-	const Mapper& mapper;
-	const T& source;
-	T& dest;
+    const Grid& grid;
+    const Mapper& mapper;
+    const T& source;
+    T& dest;
   };
 
   // A DataHandle class that sends and adds
   template<class T>
-  class CopyOwnerDataHandle 
+  class CopyOwnerDataHandle
     : public Dune::CommDataHandleIF<CopyOwnerDataHandle<T>,
-				    typename T::value_type>
+                    typename T::value_type>
   {
   public:
-	//! export type of data for message buffer
-	typedef typename T::value_type DataType;
+    //! export type of data for message buffer
+    typedef typename T::value_type DataType;
 
-	//! returns true if data for this codim should be communicated
-	bool contains (int d, int c) const
-	{
-	  return (c==d);
-	}
+    //! returns true if data for this codim should be communicated
+    bool contains (int d, int c) const
+    {
+      return (c==d);
+    }
 
-	//! returns true if size per entity of given dim and codim is a constant
-	bool fixedsize (int d, int c) const
-	{
-	  return true;
-	}
+    //! returns true if size per entity of given dim and codim is a constant
+    bool fixedsize (int d, int c) const
+    {
+      return true;
+    }
 
-	/*! how many objects of type DataType have to be sent for a given entity
+    /*! how many objects of type DataType have to be sent for a given entity
 
-	Note: Only the sender side needs to know this size. 
-	*/
-	template<class EntityType>
-	size_t size (EntityType& e) const
-	{
-	  return 1;
-	}
+    Note: Only the sender side needs to know this size.
+    */
+    template<class EntityType>
+    size_t size (EntityType& e) const
+    {
+      return 1;
+    }
 
-	//! pack data from user to message buffer
-	template<class MessageBuffer, class EntityType>
-	void gather (MessageBuffer& buff, const EntityType& e) const
-	{
-	  // get index of entity
-	  int index=mapper.map(e);
-	  if (uniquemask[index])
-		buff.write(source[index]);
-	  else
-		{
-		  dest[index] = 0;
-		  buff.write(dest[index]);
-		}
-	}
+    //! pack data from user to message buffer
+    template<class MessageBuffer, class EntityType>
+    void gather (MessageBuffer& buff, const EntityType& e) const
+    {
+      // get index of entity
+      int index=mapper.map(e);
+      if (uniquemask[index])
+        buff.write(source[index]);
+      else
+        {
+          dest[index] = 0;
+          buff.write(dest[index]);
+        }
+    }
 
-	/*! unpack data from message buffer to user
+    /*! unpack data from message buffer to user
 
-	n is the number of objects sent by the sender
-	*/
-	template<class MessageBuffer, class EntityType>
-	void scatter (MessageBuffer& buff, const EntityType& e, size_t n)
-	{
-	  DataType x;
-	  buff.read(x);
-	  int index=mapper.map(e);
-	  dest[index] += x;
-	}
+    n is the number of objects sent by the sender
+    */
+    template<class MessageBuffer, class EntityType>
+    void scatter (MessageBuffer& buff, const EntityType& e, size_t n)
+    {
+      DataType x;
+      buff.read(x);
+      int index=mapper.map(e);
+      dest[index] += x;
+    }
 
-	//! constructor
-	CopyOwnerDataHandle (const Grid& grid_, const Mapper& mapper_, 
-						 const T& source_, T& dest_, 
-						 const std::vector<bool>& uniquemask_)
-	  : grid(grid_), mapper(mapper_), source(source_), dest(dest_), uniquemask(uniquemask_)
-	{}
- 
+    //! constructor
+    CopyOwnerDataHandle (const Grid& grid_, const Mapper& mapper_,
+                         const T& source_, T& dest_,
+                         const std::vector<bool>& uniquemask_)
+      : grid(grid_), mapper(mapper_), source(source_), dest(dest_), uniquemask(uniquemask_)
+    {}
+
   private:
-	const Grid& grid;
-	const Mapper& mapper;
-	const T& source;
-	T& dest;
-	const std::vector<bool>& uniquemask;
+    const Grid& grid;
+    const Mapper& mapper;
+    const T& source;
+    T& dest;
+    const std::vector<bool>& uniquemask;
   };
 
 public:
   enum{
-	category = Dune::SolverCategory::overlapping
-	  };
+    category = Dune::SolverCategory::overlapping
+      };
 
   const typename Grid::template Codim<0>::CollectiveCommunication& communicator() const
   {
-	return grid.comm();
+    return grid.comm();
   }
-    
+
   /**
    * @brief Communicate values from owner data points to all other data points.
    *
@@ -261,12 +261,12 @@ public:
   template<class T>
   void copyOwnerToAll (const T& source, T& dest) const
   {
-	CopyOwnerDataHandle<T> datahandle(grid,mapper,source,dest,uniquemask);
-	commwrapper.template communicate<CopyOwnerDataHandle<T> >(datahandle,Dune::All_All_Interface,
-									 Dune::ForwardCommunication);	
+    CopyOwnerDataHandle<T> datahandle(grid,mapper,source,dest,uniquemask);
+    commwrapper.template communicate<CopyOwnerDataHandle<T> >(datahandle,Dune::All_All_Interface,
+                                     Dune::ForwardCommunication);
   }
 
-    
+
   /**
    * @brief Communicate values from owner data points to all other data points and add them to those values.
    *
@@ -276,9 +276,9 @@ public:
   template<class T>
   void addOwnerOverlapToAll (const T& source, T& dest) const
   {
-	AddingDataHandle<T> datahandle(grid,mapper,source,dest);
-	commwrapper.template communicate<AddingDataHandle<T> >(datahandle,Dune::All_All_Interface,
-													Dune::ForwardCommunication);	
+    AddingDataHandle<T> datahandle(grid,mapper,source,dest);
+    commwrapper.template communicate<AddingDataHandle<T> >(datahandle,Dune::All_All_Interface,
+                                                    Dune::ForwardCommunication);
   }
 
   /**
@@ -291,15 +291,15 @@ public:
   template<class T1, class T2>
   void dot (const T1& x, const T1& y, T2& result) const
   {
-	if (uniquemask.size()!=static_cast<typename std::vector<bool>::size_type>(x.size()))
-	  DUNE_THROW(Dune::RangeError,"size mismatch in dot");
-	
-	result = 0;
-	for (int i=0; i<x.size(); i++)
-	  if (uniquemask[i])
-		result += x[i]*y[i];
-	result = grid.comm().sum(result);
-	return;
+    if (uniquemask.size()!=static_cast<typename std::vector<bool>::size_type>(x.size()))
+      DUNE_THROW(Dune::RangeError,"size mismatch in dot");
+
+    result = 0;
+    for (int i=0; i<x.size(); i++)
+      if (uniquemask[i])
+        result += x[i]*y[i];
+    result = grid.comm().sum(result);
+    return;
   }
 
   /**
@@ -311,17 +311,17 @@ public:
   template<class T1>
   double norm (const T1& x) const
   {
-	if (uniquemask.size()!=static_cast<typename std::vector<bool>::size_type>(x.size()))
-	  DUNE_THROW(Dune::RangeError,"size mismatch in norm");
-	
-	double result = 0;
-	for (int i=0; i<x.size(); i++)
-	  if (uniquemask[i])
-		result += x[i].two_norm2();
-	return sqrt(grid.comm().sum(result));
+    if (uniquemask.size()!=static_cast<typename std::vector<bool>::size_type>(x.size()))
+      DUNE_THROW(Dune::RangeError,"size mismatch in norm");
+
+    double result = 0;
+    for (int i=0; i<x.size(); i++)
+      if (uniquemask[i])
+        result += x[i].two_norm2();
+    return sqrt(grid.comm().sum(result));
   }
 
-    
+
   /**
    * @brief Set vector to zero at front nodes
    *
@@ -330,11 +330,11 @@ public:
   template<class T1>
   void project (T1& x) const
   {
- 	if (nonfrontmask.size()!=static_cast<typename std::vector<bool>::size_type>(x.size()))
-	  DUNE_THROW(Dune::RangeError,"size mismatch in project");
-	for (int i=0; i<x.size(); i++)
-	  if (nonfrontmask[i]==false)
-		x[i] = 0;
+     if (nonfrontmask.size()!=static_cast<typename std::vector<bool>::size_type>(x.size()))
+      DUNE_THROW(Dune::RangeError,"size mismatch in project");
+    for (int i=0; i<x.size(); i++)
+      if (nonfrontmask[i]==false)
+        x[i] = 0;
   }
 
 
@@ -343,37 +343,37 @@ public:
    * @param indexinfo The set of IndexTripels describing the local and remote indices.
    * @param comm_ The communicator to use in the communication.
    */
-  P1OverlappingSchwarzCommunication (const Grid& grid_, const IndexSet& indexset_, 
-									 const CommWrapper& commwrapper_)
-	: grid(grid_), indexset(indexset_), commwrapper(commwrapper_), mapper(grid_,indexset_)
+  P1OverlappingSchwarzCommunication (const Grid& grid_, const IndexSet& indexset_,
+                                     const CommWrapper& commwrapper_)
+    : grid(grid_), indexset(indexset_), commwrapper(commwrapper_), mapper(grid_,indexset_)
   {
-	// construct mask vector holding 1 for all vertices that are neither front nor ghost
-	nonfrontmask.resize(mapper.size());
-	VIterator vendit = indexset.template end<dim,Dune::All_Partition>();
-	for (VIterator it = indexset.template begin<dim,Dune::All_Partition>(); it!=vendit; ++it)
-	  if (it->partitionType()!=Dune::FrontEntity && it->partitionType()!=Dune::GhostEntity)
-		nonfrontmask[mapper.map(*it)] = true;
-	  else
-		nonfrontmask[mapper.map(*it)] = false;
+    // construct mask vector holding 1 for all vertices that are neither front nor ghost
+    nonfrontmask.resize(mapper.size());
+    VIterator vendit = indexset.template end<dim,Dune::All_Partition>();
+    for (VIterator it = indexset.template begin<dim,Dune::All_Partition>(); it!=vendit; ++it)
+      if (it->partitionType()!=Dune::FrontEntity && it->partitionType()!=Dune::GhostEntity)
+        nonfrontmask[mapper.map(*it)] = true;
+      else
+        nonfrontmask[mapper.map(*it)] = false;
 
-	// construct mask vector holding 1 for all vertices assigned uniquely to this process
-	uniquemask.resize(mapper.size());
-	for (VIterator it = indexset.template begin<dim,Dune::All_Partition>(); it!=vendit; ++it)
-	  if (it->partitionType()==Dune::InteriorEntity || it->partitionType()==Dune::BorderEntity)
-		uniquemask[mapper.map(*it)] = true;
-	  else
-		uniquemask[mapper.map(*it)] = false;
-	OwnerExchange datahandle(grid,mapper,uniquemask);
-	commwrapper.template communicate<OwnerExchange>(datahandle,Dune::InteriorBorder_InteriorBorder_Interface,
-													Dune::ForwardCommunication);
+    // construct mask vector holding 1 for all vertices assigned uniquely to this process
+    uniquemask.resize(mapper.size());
+    for (VIterator it = indexset.template begin<dim,Dune::All_Partition>(); it!=vendit; ++it)
+      if (it->partitionType()==Dune::InteriorEntity || it->partitionType()==Dune::BorderEntity)
+        uniquemask[mapper.map(*it)] = true;
+      else
+        uniquemask[mapper.map(*it)] = false;
+    OwnerExchange datahandle(grid,mapper,uniquemask);
+    commwrapper.template communicate<OwnerExchange>(datahandle,Dune::InteriorBorder_InteriorBorder_Interface,
+                                                    Dune::ForwardCommunication);
 
-// 	for (VIterator it = indexset.template begin<dim,Dune::All_Partition>(); it!=vendit; ++it)
-// 	  std::cout << "rank=" << grid.comm().rank()
-// 				<< " index=" << mapper.map(*it)
-// 				<< " pos=" << it->geometry()[0]
-// 				<< " nonfront=" << nonfrontmask[mapper.map(*it)]
-// 				<< " unique=" << uniquemask[mapper.map(*it)]
-// 				<< std::endl;
+//     for (VIterator it = indexset.template begin<dim,Dune::All_Partition>(); it!=vendit; ++it)
+//       std::cout << "rank=" << grid.comm().rank()
+//                 << " index=" << mapper.map(*it)
+//                 << " pos=" << it->geometry()[0]
+//                 << " nonfront=" << nonfrontmask[mapper.map(*it)]
+//                 << " unique=" << uniquemask[mapper.map(*it)]
+//                 << std::endl;
 
   }
 
@@ -392,16 +392,16 @@ private:
 \tparam Grid The grid
 */
 template<class Grid>
-class LeafP1OverlappingSchwarzCommunication 
+class LeafP1OverlappingSchwarzCommunication
   : public P1OverlappingSchwarzCommunication<Grid,typename Grid::template Codim<0>::LeafIndexSet,
-											 Dune::LeafCommunicate<Grid> >
+                                             Dune::LeafCommunicate<Grid> >
 {
 public:
   /** \brief Constructor for a given grid
   */
-  LeafP1OverlappingSchwarzCommunication (const Grid& grid) 
-	: P1OverlappingSchwarzCommunication<Grid,typename Grid::template Codim<0>::LeafIndexSet,
-										Dune::LeafCommunicate<Grid> >
+  LeafP1OverlappingSchwarzCommunication (const Grid& grid)
+    : P1OverlappingSchwarzCommunication<Grid,typename Grid::template Codim<0>::LeafIndexSet,
+                                        Dune::LeafCommunicate<Grid> >
   (grid,grid.leafIndexSet(),Dune::LeafCommunicate<Grid>(grid))
   {}
 };
@@ -412,16 +412,16 @@ public:
 \tparam Grid The grid
 */
 template<class Grid>
-class LevelP1OverlappingSchwarzCommunication 
+class LevelP1OverlappingSchwarzCommunication
   : public P1OverlappingSchwarzCommunication<Grid,typename Grid::template Codim<0>::LevelIndexSet,
-											 Dune::LevelCommunicate<Grid> >
+                                             Dune::LevelCommunicate<Grid> >
 {
 public:
   /** \brief Constructor for a given grid
   */
-  LevelP1OverlappingSchwarzCommunication (const Grid& grid, int level) 
-	: P1OverlappingSchwarzCommunication<Grid,typename Grid::template Codim<0>::LevelIndexSet,
-										Dune::LevelCommunicate<Grid> >
+  LevelP1OverlappingSchwarzCommunication (const Grid& grid, int level)
+    : P1OverlappingSchwarzCommunication<Grid,typename Grid::template Codim<0>::LevelIndexSet,
+                                        Dune::LevelCommunicate<Grid> >
   (grid,grid.levelIndexSet(level),Dune::LevelCommunicate<Grid>(grid,level))
   {}
 };

@@ -44,7 +44,7 @@ namespace Dune {
             pWIdx = TwoPTwoCTraits::pWIdx,
             switchIdx = TwoPTwoCTraits::switchIdx
         };
-        
+
     public:
         typedef TwoPTwoCNewtonController<NewtonMethod>        ThisType;
         typedef NewtonControllerBase<NewtonMethod, ThisType>  ParentType;
@@ -78,7 +78,7 @@ namespace Dune {
 
         //! Returns true iff the current solution can be considered to
         //! be acurate enough
-        bool newtonConverged() 
+        bool newtonConverged()
             {
                 if (ParentType::model().switched())
                     return false;
@@ -110,16 +110,16 @@ namespace Dune {
                     Scalar switchVar = (*u)[idx][switchIdx];
 
                     if (switchVar < 0.0) {
-                        maxSwitchVarDelta = std::max(maxSwitchVarDelta, 
+                        maxSwitchVarDelta = std::max(maxSwitchVarDelta,
                                                      std::abs(switchVar));
                     }
                     else if (switchVar > 1.0) {
-                        maxSwitchVarDelta = std::max(maxSwitchVarDelta, 
+                        maxSwitchVarDelta = std::max(maxSwitchVarDelta,
                                                      std::abs(switchVar - 1));
                     }
 
                     if (pW < 0.0){
-                    	maxPwDelta = std::max(maxPwDelta,
+                        maxPwDelta = std::max(maxPwDelta,
                                               std::abs(pW));
                     }
                 }

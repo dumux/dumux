@@ -36,17 +36,17 @@ namespace Dune
     /*!
      * \brief The base class for the BOX hybrid finite element/finite volume discretization scheme
      */
-    template<class Implementation, 
-             class BoxTraitsT, 
+    template<class Implementation,
+             class BoxTraitsT,
              class ProblemT,
              class LocalJacobianT>
     class BoxScheme
     {
         // copy the relevant problem specfific types from the problem
         // controller class
-        typedef BoxScheme<Implementation, 
+        typedef BoxScheme<Implementation,
                           BoxTraitsT,
-                          ProblemT, 
+                          ProblemT,
                           LocalJacobianT> ThisType;
         typedef ProblemT                  Problem;
 
@@ -61,7 +61,7 @@ namespace Dune
          * \brief The traits of the spatial domain (grid type, etc)
          */
         typedef typename Problem::DomainTraits DomainTraits;
-        
+
         /*!
          *  \brief This structure is Required to use models based on the BOX
          *         scheme in conjunction with the newton Method.
@@ -72,7 +72,7 @@ namespace Dune
             typedef typename BoxTraits::JacobianAssembler  JacobianAssembler;
             typedef typename DomainTraits::Scalar          Scalar;
         };
-        
+
     private:
         // copy the types from the traits for convenience
         typedef typename DomainTraits::Scalar                      Scalar;
@@ -106,7 +106,7 @@ namespace Dune
             dim      = DomainTraits::dim,
             dimWorld = DomainTraits::dimWorld
         };
-        
+
     public:
         BoxScheme(Problem &prob, LocalJacobian &localJac)
             : problem_(prob),
@@ -116,7 +116,7 @@ namespace Dune
               jacAsm_(prob.grid()),
               localJacobian_(localJac)
             {
-                Api::require<Api::BasicDomainTraits, 
+                Api::require<Api::BasicDomainTraits,
                              typename Problem::DomainTraits>();
 //                Api::require<Api::PwSnBoxDomain>(prob);
             }
@@ -129,16 +129,16 @@ namespace Dune
                 // initialize the static vert data of the box jacobian
                 this->localJacobian().setCurSolution(&uCur_);
                 this->localJacobian().setOldSolution(&uPrev_);
-                
+
                 this->localJacobian().initStaticData();
-                
+
                 applyInitialSolution_(uCur_);
                 applyDirichletBoundaries_(uCur_);
 
                 *uPrev_ = *uCur_;
 
                 // update the static vert data with the initial solution
-                this->localJacobian().updateStaticData(uCur_, uPrev_);              
+                this->localJacobian().updateStaticData(uCur_, uPrev_);
             }
 
         /*!
@@ -181,7 +181,7 @@ namespace Dune
         /*!
          * \brief Returns the local jacobian which calculates the local
          *        stiffness matrix for an arbitrary element.
-         * 
+         *
          * The local stiffness matrices of the element are used by
          * the jacobian assembler to produce a global linerization of the
          * problem.
@@ -217,7 +217,7 @@ namespace Dune
                     nextDt = controller.suggestTimeStepSize(dt);
                     if (converged)
                         break;
-                    
+
                     ++numRetries;
                     if (numRetries > 10)
                         DUNE_THROW(Dune::MathError,
@@ -225,16 +225,16 @@ namespace Dune
 
                     problem_.setTimeStepSize(nextDt);
                     dt = nextDt;
-                    
+
                     asImp_()->updateFailedTry();
-                    
+
                     std::cout << boost::format("Newton didn't converge. Retrying with timestep of %f\n")%dt;
                 }
-                
+
                 asImp_()->updateSuccessful();
             }
 
-        
+
         /*!
          * \brief Called by the update() method before it tries to
          *        apply the newton method. This is primary a hook
@@ -245,13 +245,13 @@ namespace Dune
                 applyDirichletBoundaries_(uCur_);
             }
 
-        
+
         /*!
          * \brief Called by the update() method if it was
          *        successful. This is primary a hook which the actual
          *        model can overload.
          */
-        void updateSuccessful() 
+        void updateSuccessful()
             {
                 // make the current solution the previous one.
                 *uPrev_ = *uCur_;
@@ -262,7 +262,7 @@ namespace Dune
          *         unsuccessful. This is primary a hook which the
          *         actual model can overload.
          */
-        void updateFailedTry() 
+        void updateFailedTry()
             {
                 // Reset the current solution to the one of the
                 // previous time step so that we can start the next
@@ -272,7 +272,7 @@ namespace Dune
 
         /*!
          * \brief Calculate the global residual.
-         * 
+         *
          * The global deflection of the mass balance from zero.
          */
         void evalGlobalResidual(SpatialFunction &globResidual)
@@ -330,11 +330,11 @@ namespace Dune
                         // get vert position in reference coodinates
                         const LocalPosition &local =
                             DomainTraits::referenceElement(it->type()).position(localVertexIdx, dim);
-                        // get global coordinate of vert 
+                        // get global coordinate of vert
                         const GlobalPosition &global = it->geometry()[localVertexIdx];
 
                         int globalId = this->problem_.vertIdx(*it, localVertexIdx);
-                        
+
                         // use the problem for actually doing the
                         // dirty work of nailing down the initial
                         // solution.
@@ -359,7 +359,7 @@ namespace Dune
                 {
                     if (!elementIt->hasBoundaryIntersections())
                         continue;
-                    
+
                     // get the current element and its set of shape
                     // functions
                     const Element& element = *elementIt;
@@ -382,10 +382,10 @@ namespace Dune
                             if (localJacobian_.bc(i)[bcIdx] == BoundaryConditions::dirichlet) {
                                 if (!dirichletEvaluated) {
                                     dirichletEvaluated = true;
-                                    
+
                                     // actually evaluate the boundary
                                     // condition for the current element+vert
-                                    // combo. 
+                                    // combo.
                                     //
                                     // TODO: better parameters: element,
                                     //       FVElementGeometry,
@@ -393,21 +393,21 @@ namespace Dune
                                     problem_.dirichlet(dirichletVal,
                                                        element,
                                                        i,
-                                                       globalId);                            
+                                                       globalId);
                                 }
                                 (*u)[globalId][bcIdx] = dirichletVal[bcIdx];
                             }
                         }
-                        
+
                     }
-                    
+
                 }
             };
 
-        Implementation *asImp_() 
-            { return static_cast<Implementation*>(this); } 
+        Implementation *asImp_()
+            { return static_cast<Implementation*>(this); }
         const Implementation *asImp_() const
-            { return static_cast<const Implementation*>(this); } 
+            { return static_cast<const Implementation*>(this); }
 
         // the problem we want to solve. defines the constitutive
         // relations, material laws, etc.

@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_ONE_D_IN_N_D_GRID_LEAFITERATOR_HH
 #define DUNE_ONE_D_IN_N_D_GRID_LEAFITERATOR_HH
@@ -15,11 +15,11 @@ namespace Dune {
    * \ingroup OneDInNDGrid
    */
     template<int codim, PartitionIteratorType pitype, class GridImp>
-class OneDInNDGridLeafIterator : 
+class OneDInNDGridLeafIterator :
         public Dune::OneDInNDGridEntityPointer <codim,GridImp>
 {
     enum {dim = GridImp::dimension};
-	enum { dimworld = GridImp::dimensionworld };
+    enum { dimworld = GridImp::dimensionworld };
 
     friend class OneDInNDGridEntity<codim,dim,GridImp>;
 
@@ -29,7 +29,7 @@ public:
 
         /** \todo Can a make the fullRefineLevel work somehow? */
         const int fullRefineLevel = 0;
-        
+
         if (codim==0)
             this->virtualEntity_.setToTarget((OneDInNDEntityImp<1-codim, dimworld>*)grid_->elements[fullRefineLevel].begin);
         else
@@ -40,7 +40,7 @@ public:
     }
 
   //! Constructor
-    OneDInNDGridLeafIterator() 
+    OneDInNDGridLeafIterator()
     {
         this->virtualEntity_.setToTarget(NULL);
     }
@@ -85,5 +85,5 @@ private:
 };
 
 }  // namespace Dune
-  
+
 #endif

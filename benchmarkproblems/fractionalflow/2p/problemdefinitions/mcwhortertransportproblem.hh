@@ -19,31 +19,31 @@ namespace Dune
 
   public:
     BoundaryConditions::Flags bctype (const FieldVector<DT,n>& x, const Entity& e,
-				      const FieldVector<DT,n>& xi) const
+                      const FieldVector<DT,n>& xi) const
     {
       if (x[0] < eps_ || x[0] > right - eps_)
-	return Dune::BoundaryConditions::dirichlet;
+    return Dune::BoundaryConditions::dirichlet;
       else
-	return Dune::BoundaryConditions::neumann;
+    return Dune::BoundaryConditions::neumann;
     }
 
     RT dirichlet (const FieldVector<DT,n>& x, const Entity& e,
-	  const FieldVector<DT,n>& xi) const
+      const FieldVector<DT,n>& xi) const
     {
       if (x[0] < eps_)
-	return 1;
+    return 1;
       else
-	return 0;
+    return 0;
     }
 
     RT initSat (const FieldVector<DT,n>& x, const Entity& e,
-	   const FieldVector<DT,n>& xi) const
+       const FieldVector<DT,n>& xi) const
     {
-    	const RT initlength = 2.6/this->variables.grid.size(0);
-    	if (x[0]< initlength)
-    		return (1-Sinit_-(1-2*Sinit_)/initlength*x[0]);
+        const RT initlength = 2.6/this->variables.grid.size(0);
+        if (x[0]< initlength)
+            return (1-Sinit_-(1-2*Sinit_)/initlength*x[0]);
 
-    	return Sinit_;
+        return Sinit_;
     }
 
 
@@ -52,12 +52,12 @@ namespace Dune
     }
 
     McWhorterTransportProblem(VC& variableobj, TwoPhaseRelations& law = *(new LinearLaw),
-		     const FieldVector<DT,n> Left = 0, const FieldVector<DT,n> Right = 0,
-		     bool exsol = false, const bool cap = false, const int level = 0, RT poro=0.3,RT Si=0.0)
+             const FieldVector<DT,n> Left = 0, const FieldVector<DT,n> Right = 0,
+             bool exsol = false, const bool cap = false, const int level = 0, RT poro=0.3,RT Si=0.0)
       : TransportProblem<G, RT, VC>(variableobj,law, cap, exsol), left(Left[0]), right(Right[0]),
-	eps_(1e-8),
-	poro_(poro),
-	Sinit_(Si)
+    eps_(1e-8),
+    poro_(poro),
+    Sinit_(Si)
     {}
 
   private:

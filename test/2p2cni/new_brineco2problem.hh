@@ -55,12 +55,12 @@ namespace Dune
      * at the right boundary and migrates upwards.
      * Problem was set up using the rect2d.dgf grid.
      *
-     *	Template parameters are:
+     *    Template parameters are:
      *
-     *	- ScalarT  Floating point type used for scalars
+     *    - ScalarT  Floating point type used for scalars
      */
     template<class ScalarT>
-    class NewBrineCO2Problem : public BasicDomain<Dune::SGrid<2,2>, 
+    class NewBrineCO2Problem : public BasicDomain<Dune::SGrid<2,2>,
                                                   ScalarT>
     {
         typedef Dune::SGrid<2,2>               Grid;
@@ -91,7 +91,7 @@ namespace Dune
             pWIdx          = TwoPTwoCNITraits::pWIdx,
             switchIdx      = TwoPTwoCNITraits::switchIdx,
             temperatureIdx = TwoPTwoCNITraits::temperatureIdx,
-            
+
             // Phase State
             wPhaseOnly = TwoPTwoCNITraits::wPhaseOnly,
             nPhaseOnly = TwoPTwoCNITraits::nPhaseOnly,
@@ -101,7 +101,7 @@ namespace Dune
             dim  = DomainTraits::dim,
             dimWorld = DomainTraits::dimWorld
         };
-      
+
         // copy some types from the traits for convenience
         typedef typename DomainTraits::Scalar                     Scalar;
         typedef typename DomainTraits::Element                       Element;
@@ -131,7 +131,7 @@ namespace Dune
     public:
         NewBrineCO2Problem(Grid *grid,
                            Scalar dtInitial,
-                           Scalar tEnd) 
+                           Scalar tEnd)
             : ParentType(grid),
               materialLaw_(soil_, wPhase_, nPhase_),
               multicomp_(wPhase_, nPhase_),
@@ -233,39 +233,39 @@ namespace Dune
         // etc)
         ///////////////////////////////////
         //! Returns the current time step size in seconds
-        Scalar timeStepSize() const 
+        Scalar timeStepSize() const
             { return timeManager_.stepSize(); }
 
         //! Set the time step size in seconds.
-        void setTimeStepSize(Scalar dt) 
+        void setTimeStepSize(Scalar dt)
             { return timeManager_.setStepSize(dt); }
-        
+
 
         //! properties of the wetting (liquid) phase
         /*! properties of the wetting (liquid) phase
-          \return	wetting phase
+          \return    wetting phase
         */
         const WettingPhase &wettingPhase() const
             { return wPhase_; }
 
         //! properties of the nonwetting (liquid) phase
         /*! properties of the nonwetting (liquid) phase
-          \return	nonwetting phase
+          \return    nonwetting phase
         */
         const NonwettingPhase &nonwettingPhase() const
             { return nPhase_; }
- 
-          
+
+
         //! properties of the soil
         /*! properties of the soil
-          \return	soil
+          \return    soil
         */
         const Soil &soil() const
             {  return soil_; }
 
         //! properties of the soil
         /*! properties of the soil
-          \return	soil
+          \return    soil
         */
         Soil &soil()
             {  return soil_; }
@@ -273,7 +273,7 @@ namespace Dune
         //! object for multicomponent calculations
         /*! object for multicomponent calculations including mass fractions,
          * mole fractions and some basic laws
-         \return	multicomponent object
+         \return    multicomponent object
         */
         MultiComp &multicomp ()
 //        const MultiComp &multicomp () const
@@ -283,14 +283,14 @@ namespace Dune
 
         //! object for definition of material law
         /*! object for definition of material law (e.g. Brooks-Corey, Van Genuchten, ...)
-          \return	material law
+          \return    material law
         */
         MaterialLaw &materialLaw ()
 //        const MaterialLaw &materialLaw () const
             {
                 return materialLaw_;
             }
-        
+
         void boundaryTypes(BoundaryTypeVector &values,
                            const Element &element,
                            const IntersectionIterator &isIt,
@@ -316,10 +316,10 @@ namespace Dune
             {
                 const LocalPosition &localPos = DomainTraits::referenceElement(element.type()).position(vertIdx, dim);
                 const GlobalPosition &globalPos = element.geometry()[vertIdx];
-                
+
                 initial(values,
                         element,
-                        globalPos, 
+                        globalPos,
                         localPos);
             }
 
@@ -346,20 +346,20 @@ namespace Dune
         /////////////////////////////
         void source(SolutionVector &values,
                         const Element &element,
-                        const FVElementGeometry &, 
+                        const FVElementGeometry &,
                         int subControlVolumeIdx) const
             {
                 values = Scalar(0.0);
             }
 
         //////////////////////////////
-      
+
         /////////////////////////////
         // INITIAL values
         /////////////////////////////
         void initial(SolutionVector &values,
                      const Element& element,
-                     const GlobalPosition &globalPos, 
+                     const GlobalPosition &globalPos,
                      const LocalPosition &localPos)
             {
                 values[pWIdx]          = 1.013e5 + (depthBOR_ - globalPos[1]) * 1045 * 9.81;
@@ -394,12 +394,12 @@ namespace Dune
                 return wPhaseOnly;
             }
 
-      
+
         const GlobalPosition &gravity () const
             {
                 return gravity_;
             }
-      
+
         double depthBOR () const
             {
                 return depthBOR_;
@@ -418,7 +418,7 @@ namespace Dune
             {
                 resultWriter_.beginTimestep(timeManager_.time(),
                                             ParentType::grid().leafView());
-                
+
                 model_.addVtkFields(resultWriter_);
 
                 resultWriter_.endTimestep();

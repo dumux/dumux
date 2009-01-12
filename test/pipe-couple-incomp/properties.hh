@@ -31,12 +31,12 @@ public:
 
   double gasconstant ()
   {
-	  return 286.991; /* individual gas const. for air [J/(kg K)] */
+      return 286.991; /* individual gas const. for air [J/(kg K)] */
   }
   double viscosity ( double T, double p)
   {
    // return 17.75e-6;//[kg/(ms)] at 15°C
-	  return 1.e-6;
+      return 1.e-6;
   }
   double density ( double T, double p)
   {

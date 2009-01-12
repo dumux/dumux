@@ -41,31 +41,31 @@ namespace Dune {
     public:
         typedef TwoPTwoCNINewtonController<NewtonMethod>            ThisType;
         typedef NewtonControllerBase<NewtonMethod, ThisType>  ParentType;
-        typedef typename NewtonMethod::Model  	   	   Model;
+        typedef typename NewtonMethod::Model                Model;
         typedef typename ParentType::Scalar            Scalar;
         typedef typename ParentType::Function          Function;
         typedef typename ParentType::JacobianAssembler JacobianAssembler;
 
         TwoPTwoCNINewtonController(bool switched = false,
-							Scalar tolerance = 1e-9,
+                            Scalar tolerance = 1e-9,
                              int targetSteps = 8,
                              int maxSteps = 12,
                              int switchCount = 0)
             : ParentType(tolerance, targetSteps, maxSteps), switched_(switched), switchCount_(switchCount)
             {};
 
-		//! Suggest a new time stepsize based either on the number of newton
-		//! iterations required or on the variable switch
-		Scalar suggestTimeStepSize(Scalar oldTimeStep) const
-			{
-				// use function of the newtoncontroller
-				return ParentType::suggestTimeStepSize(oldTimeStep);
-			}
+        //! Suggest a new time stepsize based either on the number of newton
+        //! iterations required or on the variable switch
+        Scalar suggestTimeStepSize(Scalar oldTimeStep) const
+            {
+                // use function of the newtoncontroller
+                return ParentType::suggestTimeStepSize(oldTimeStep);
+            }
 
         //! Returns true iff another iteration should be done.
         bool newtonProceed(Function &u)
             {
-        	    // use function of the newtoncontroller
+                // use function of the newtoncontroller
                 return ParentType::newtonProceed(u);
             }
 

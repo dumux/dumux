@@ -27,7 +27,7 @@ namespace Dune
 {
     template <class EpisodeIdentiferT, bool verbose_>
     class TimeManager;
-    
+
     /*!
      * \brief Dummy value for the time manager's EpisodeId template
      *        parameter if the simulation doesn't use distinct
@@ -64,7 +64,7 @@ namespace Dune
     public:
         typedef EpisodeIdentiferT EpisodeIdentifer;
 
-        TimeManager(const EpisodeIdentifer &id, 
+        TimeManager(const EpisodeIdentifer &id,
                     double len = 1e100)
             {
                 init_();
@@ -119,7 +119,7 @@ namespace Dune
          */
         void setStepSize(double stepSize)
             {
-                stepSize_ = stepSize; 
+                stepSize_ = stepSize;
             }
 
         /*!
@@ -270,10 +270,10 @@ namespace Dune
         void runSimulation(Problem &problem)
             {
                 typedef typename Problem::DomainTraits::Scalar  Scalar;
-                
+
                 Dune::Timer timer;
                 timer.reset();
-                
+
 
                 // reset the time manager
                 init_();
@@ -301,7 +301,7 @@ namespace Dune
                     // size
                     if (!episodeIsOver())
                         setStepSize(nextStepSize);
-                    
+
                     // notify the problem that the next solution has
                     // been found
                     problem.timestepDone();

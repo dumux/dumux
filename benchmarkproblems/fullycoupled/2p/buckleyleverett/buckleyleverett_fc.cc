@@ -63,16 +63,16 @@ int main(int argc, char** argv)
 //    Dune::LinearLaw law(water, oil);
 
     //Calclulate with analytical solution
-	Dune::BLWithAnalytical<GridType, NumberType> problem(grid,law, LowerLeft, UpperRight);
+    Dune::BLWithAnalytical<GridType, NumberType> problem(grid,law, LowerLeft, UpperRight);
 
-	//Calculate without analytical solution
+    //Calculate without analytical solution
 //    Dune::BuckleyLeverettProblem<GridType, NumberType> problem(law, LowerLeft, UpperRight,/*VanGenuchten*/BrooksCorey);
 
     typedef Dune::BoxPwSn<GridType, NumberType> TwoPhase;
     TwoPhase twoPhase(grid, problem);
 
     Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt,
-						"buckleyleverett", 1);
+                        "buckleyleverett", 1);
 
     Dune::Timer timer;
     timer.reset();

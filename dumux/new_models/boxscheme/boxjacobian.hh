@@ -130,11 +130,11 @@ namespace Dune
         /*!
          * \brief Set the global solution of the previous time step.
          *
-         * This is required for implicit Euler time integration. 
+         * This is required for implicit Euler time integration.
          *
          * TODO: If we would use a different time integration scheme
          *       we might need more old solutions, so it would be nice
-         *       to have a non-hacky way to accomplish this. 
+         *       to have a non-hacky way to accomplish this.
          */
         void setOldSolution(SpatialFunction *uOld)
             {
@@ -165,10 +165,10 @@ namespace Dune
 
                 int numVertices = curElementGeom_.numVertices;
                 LocalFunction localU(numVertices);
-                restrictToElement(localU, *curSolution_); 
+                restrictToElement(localU, *curSolution_);
                 assemble_(element, localU, orderOfShapeFns);
             }
-        
+
         /*!
          * \brief Express the boundary conditions for a element in terms
          *        of a linear equation system.
@@ -181,10 +181,10 @@ namespace Dune
                 // reset the right hand side and the boundary
                 // condition type vector
                 resetRhs_();
-                
+
                 Dune::GeometryType          geoType = curElement_().geometry().type();
                 const ReferenceElement &refElem = DomainTraits::referenceElement(geoType);
-                
+
                 // temporary vector to store the neumann boundaries
                 SolutionVector fluxes(0.0);
 
@@ -197,23 +197,23 @@ namespace Dune
                     // assumes there are no interior boundaries.
                     if (!isIt->boundary())
                         continue;
-                    
+
                     // Assemble the boundary for all verts of the
                     // current face
                     int faceIdx = isIt->numberInSelf();
                     int numVerticesOfFace = refElem.size(faceIdx, 1, dim);
-                    for (int vertInFace = 0; 
+                    for (int vertInFace = 0;
                          vertInFace < numVerticesOfFace;
                          vertInFace++)
                     {
                         int vertInElement = refElem.subEntity(faceIdx,
-                                                              1, 
-                                                              vertInFace, 
+                                                              1,
+                                                              vertInFace,
                                                               dim);
                         int bfIdx = curElementGeom_.boundaryFaceIndex(faceIdx, vertInFace);
                         const LocalPosition &local = curElementGeom_.boundaryFace[bfIdx].ipLocal;
                         const GlobalPosition &global = curElementGeom_.boundaryFace[bfIdx].ipGlobal;
-                        
+
                         // set the boundary types
                         // TODO: better parameters: element, FVElementGeometry, bfIdx
                         BoundaryTypeVector tmp;
@@ -222,14 +222,14 @@ namespace Dune
                                                isIt,
                                                global,
                                                local);
-                        
+
                         // handle boundary conditions
                         bool neumannEvaluated = false;
                         for (int bcIdx = 0; bcIdx < numEq; ++bcIdx) {
                             // set the bctype of the LocalStiffness
                             // base class
                             this->bctype[vertInElement][bcIdx] = tmp[bcIdx];
-                            
+
                             // neumann boundaries
                             if (tmp[bcIdx] == BoundaryConditions::neumann) {
                                 if (!neumannEvaluated) {
@@ -239,7 +239,7 @@ namespace Dune
                                     // TODO: better Parameters: element, FVElementGeometry, bfIdx
                                     problem_.neumann(fluxes,
                                                      curElement_(),
-                                                     isIt, 
+                                                     isIt,
                                                      global,
                                                      local);
                                     fluxes *= curElementGeom_.boundaryFace[bfIdx].area;
@@ -260,9 +260,9 @@ namespace Dune
          * \brief Compute the local residual, i.e. the right hand side
          *        of an equation we would like to have zero.
          */
-        void evalLocalResidual(LocalFunction &residual, 
+        void evalLocalResidual(LocalFunction &residual,
                                bool withBoundary = true)
-            {              
+            {
                 // reset residual
                 for (int i = 0; i < curElementGeom_.numVertices; i++) {
                     residual[i] = 0;
@@ -275,7 +275,7 @@ namespace Dune
 
                     // mass balance within the element. this is the
                     // $\frac{m}{\partial t}$ term if using implicit
-                    // euler as time discretization. 
+                    // euler as time discretization.
                     //
                     // TODO (?): we might need a more explicit way for
                     // doing the time discretization...
@@ -285,7 +285,7 @@ namespace Dune
                     massContrib -= tmp;
                     massContrib *= curElementGeom_.subContVol[i].volume/problem_.timeStepSize();
                     residual[i] += massContrib;
-                    
+
                     // subtract the source term from the local rate
                     SolutionVector source;
                     this->asImp_()->computeSource(source, i);
@@ -309,7 +309,7 @@ namespace Dune
                     residual[i] -= flux;
                     residual[j] += flux;
                 }
-                
+
                 if (withBoundary) {
                     assembleBoundaryCondition(this->curElement_());
                     for (int i = 0; i < curElementGeom_.numVertices; i++) {
@@ -345,7 +345,7 @@ namespace Dune
          */
         void initStaticData()
             { };
-        
+
         /*!
          * \brief Update the static data of all elements with the current solution
          *
@@ -362,7 +362,7 @@ namespace Dune
 
 
     protected:
-                  
+
         // set the element which is currently considered as the local
         // stiffness matrix
         bool setCurrentElement_(const Element &e)
@@ -418,18 +418,18 @@ namespace Dune
                     {
                         Scalar eps = std::max(fabs(1e-5*localU[j][comp]), 1e-5);
                         Scalar uJ = localU[j][comp];
-                        
+
                         // vary the comp-th component at the element's j-th vert and
                         // calculate the residual, don't include the boundary
-                        // conditions 
+                        // conditions
                         this->asImp_()->deflectCurSolution(j, comp, uJ + eps);
                         evalLocalResidual(residUPlusEps, false);
-         
+
                         this->asImp_()->deflectCurSolution(j, comp, uJ - eps);
                         evalLocalResidual(residUMinusEps, false);
 
                         // restore the current local solution to the state before
-                        // varyCurSolution() has been called 
+                        // varyCurSolution() has been called
                         this->asImp_()->restoreCurSolution(j, comp);
 
                         // calculate the gradient when varying the
@@ -439,7 +439,7 @@ namespace Dune
                         residUPlusEps -= residUMinusEps;
 
                         residUPlusEps /= 2*eps;
-                        updateLocalStiffness_(j, 
+                        updateLocalStiffness_(j,
                                               comp,
                                               residUPlusEps);
                     }
@@ -448,7 +448,7 @@ namespace Dune
                 // calculate the right hand side
                 LocalFunction residU(numVertices);
                 evalLocalResidual(residU, true); // include boundary conditions for the residual
-               
+
                 for (int i=0; i < numVertices; i++) {
                     for (int comp=0; comp < numEq; comp++) {
                         // TODO: in most cases this is not really a
@@ -462,7 +462,7 @@ namespace Dune
                 }
             };
 
-        void updateLocalStiffness_(int j, 
+        void updateLocalStiffness_(int j,
                                    int comp,
                                    const LocalFunction &stiffness)
             {

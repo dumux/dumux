@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_ONE_D_IN_N_D_GEOMETRY_HH
 #define DUNE_ONE_D_IN_N_D_GEOMETRY_HH
@@ -12,7 +12,7 @@ namespace Dune {
     template<int mydim, class GridImp>
     class OneDInNDMakeableGeometry : public Geometry<mydim, GridImp::dimensionworld, GridImp, OneDInNDGridGeometry>
     {
-    	enum {dimworld = GridImp::dimensionworld};
+        enum {dimworld = GridImp::dimensionworld};
     public:
 
         OneDInNDMakeableGeometry() :
@@ -24,7 +24,7 @@ namespace Dune {
         }
 
         void setPosition(double p) {
-        	std::cout << "Here in setPosition with p = " << p << std::endl;
+            std::cout << "Here in setPosition with p = " << p << std::endl;
             this->realGeometry.storeCoordsLocally_ = true;
             this->realGeometry.pos_[0] = p;
         }
@@ -33,7 +33,7 @@ namespace Dune {
     template<class GridImp>
     class OneDInNDMakeableGeometry<1,GridImp> : public Geometry<1, GridImp::dimensionworld, GridImp, OneDInNDGridGeometry>
     {
-    	enum { dimworld = GridImp::dimensionworld };
+        enum { dimworld = GridImp::dimensionworld };
     public:
 
         OneDInNDMakeableGeometry() :
@@ -45,7 +45,7 @@ namespace Dune {
         }
 
         void setPositions(double p1, double p2) {
-        	std::cout << "Here in setPositions with p1 = " << p1 << ", p2 = " << p2 << std::endl;
+            std::cout << "Here in setPositions with p1 = " << p1 << ", p2 = " << p2 << std::endl;
             this->realGeometry.storeCoordsLocally_ = true;
             this->realGeometry.pos_[0][0] = p1;
             this->realGeometry.pos_[1][0] = p2;
@@ -57,10 +57,10 @@ namespace Dune {
     class OneDInNDGridEntity;
 
 
-template<class GridImp, int dimworld>  
-class OneDInNDGridGeometry <0, dimworld, GridImp> : 
+template<class GridImp, int dimworld>
+class OneDInNDGridGeometry <0, dimworld, GridImp> :
         public GeometryDefaultImplementation <0, dimworld, GridImp,OneDInNDGridGeometry>
-{ 
+{
     template <int codim_, int dim_, class GridImp_>
     friend class OneDInNDGridEntity;
     template <int mydim_, int coorddim_, class GridImp_>
@@ -76,18 +76,18 @@ public:
     //! return the number of corners of this element (==1)
     int corners () const {return 1;}
 
-    //! access to coordinates of corners. Index is the number of the corner 
+    //! access to coordinates of corners. Index is the number of the corner
     const FieldVector<typename GridImp::ctype, dimworld>& operator[] (int i) const {
         return (storeCoordsLocally_) ? pos_ : target_->pos_;
     }
 
-    /** \brief Maps a local coordinate within reference element to 
+    /** \brief Maps a local coordinate within reference element to
      * global coordinate in element  */
     FieldVector<typename GridImp::ctype, dimworld> global (const FieldVector<typename GridImp::ctype, 0>& local) const {
         return (storeCoordsLocally_) ? pos_ : target_->pos_;
     }
 
-    /** \brief Maps a global coordinate within the element to a 
+    /** \brief Maps a global coordinate within the element to a
      * local coordinate in its reference element */
     FieldVector<typename GridImp::ctype, 0> local (const FieldVector<typename GridImp::ctype, dimworld>& global) const {
         FieldVector<typename GridImp::ctype, 0> l;
@@ -125,23 +125,23 @@ public:
     FieldVector<typename GridImp::ctype, dimworld> pos_;
 
     OneDInNDEntityImp<0, dimworld>* target_;
-    
+
     FieldMatrix<typename GridImp::ctype,0,0> jacInverse_;
 };
 
 //**********************************************************************
 //
 // --OneDInNDGridGeometry
-  /** \brief Defines the geometry part of a mesh entity. 
+  /** \brief Defines the geometry part of a mesh entity.
    * \ingroup OneDInNDGrid
 */
-template<int mydim, int coorddim, class GridImp>  
-class OneDInNDGridGeometry : 
+template<int mydim, int coorddim, class GridImp>
+class OneDInNDGridGeometry :
 public GeometryDefaultImplementation <mydim, coorddim, GridImp, OneDInNDGridGeometry>
-{ 
-	enum { dimworld = GridImp::dimensionworld };
+{
+    enum { dimworld = GridImp::dimensionworld };
 
-	template <int codim_, int dim_, class GridImp_>
+    template <int codim_, int dim_, class GridImp_>
     friend class OneDInNDGridEntity;
 
     template <int dimworld>
@@ -159,7 +159,7 @@ public:
 
     OneDInNDGridGeometry() : storeCoordsLocally_(false) {}
 
-    /** \brief Return the element type identifier 
+    /** \brief Return the element type identifier
      *
      * OneDInNDGrid obviously supports only lines
      */
@@ -168,24 +168,24 @@ public:
     //! return the number of corners of this element. Corners are numbered 0...n-1
     int corners () const {return 2;}
 
-    //! access to coordinates of corners. Index is the number of the corner 
+    //! access to coordinates of corners. Index is the number of the corner
     const FieldVector<typename GridImp::ctype, coorddim>& operator[](int i) const {
         assert(i==0 || i==1);
         return (storeCoordsLocally_) ? pos_[i] : target_->vertex_[i]->pos_;
     }
 
-    /** \brief Maps a local coordinate within reference element to 
+    /** \brief Maps a local coordinate within reference element to
      * global coordinate in element  */
     FieldVector<typename GridImp::ctype, coorddim> global (const FieldVector<typename GridImp::ctype, mydim>& local) const {
         FieldVector<typename GridImp::ctype, coorddim> g;
         for (int k = 0; k < coorddim; k++)
-        	g[k] = (storeCoordsLocally_)
+            g[k] = (storeCoordsLocally_)
             ? pos_[0][k] * (1-local[0]) + pos_[1][k] * local[0]
             : target_->vertex_[0]->pos_[k] * (1-local[0]) + target_->vertex_[1]->pos_[k] * local[0];
         return g;
     }
 
-    /** \brief Maps a global coordinate within the element to a 
+    /** \brief Maps a global coordinate within the element to a
      * local coordinate in its reference element */
     FieldVector<typename GridImp::ctype, mydim> local (const FieldVector<typename GridImp::ctype, coorddim>& global) const {
         FieldVector<typename GridImp::ctype, mydim> l;
@@ -198,7 +198,7 @@ public:
         }
         return l;
     }
-    
+
     //! Returns true if the point is in the current element
     bool checkInside(const FieldVector<typename GridImp::ctype, coorddim> &global) const {
         return (storeCoordsLocally_)

@@ -18,92 +18,92 @@
 #include"../problemdefinitions/buckleyleverettanalytical.hh"
 
 int main(int argc, char** argv) {
-	try {
-		// define the problem dimensions
-		const int dim=1;
-		enum {BrooksCorey = 0, VanGenuchten = 1};
-		typedef double NumberType;
-		typedef GridType::ctype ctype;
-		Dune::FieldVector<NumberType, dim> Left(0);
-		Dune::FieldVector<NumberType, dim> Right(300);
-		if (argc != 3) {
-			std::cout << "usage: test_twophase tEnd dt" << std::endl;
-			return 0;
-		}
-		std::string arg1(argv[1]);
-		std::istringstream is1(arg1);
-		int tEnd;
-		is1 >> tEnd;
-		std::string arg2(argv[2]);
-		std::istringstream is2(arg2);
-		int dt;
-		is2 >> dt;
+    try {
+        // define the problem dimensions
+        const int dim=1;
+        enum {BrooksCorey = 0, VanGenuchten = 1};
+        typedef double NumberType;
+        typedef GridType::ctype ctype;
+        Dune::FieldVector<NumberType, dim> Left(0);
+        Dune::FieldVector<NumberType, dim> Right(300);
+        if (argc != 3) {
+            std::cout << "usage: test_twophase tEnd dt" << std::endl;
+            return 0;
+        }
+        std::string arg1(argv[1]);
+        std::istringstream is1(arg1);
+        int tEnd;
+        is1 >> tEnd;
+        std::string arg2(argv[2]);
+        std::istringstream is2(arg2);
+        int dt;
+        is2 >> dt;
 
-		// create a grid object
-		typedef Dune::OneDGrid GridType;
+        // create a grid object
+        typedef Dune::OneDGrid GridType;
 
-//		const int numberofelements = 15;
-//		const int numberofelements = 30;
-//		const int numberofelements = 60;
-		const int numberofelements = 120;
+//        const int numberofelements = 15;
+//        const int numberofelements = 30;
+//        const int numberofelements = 60;
+        const int numberofelements = 120;
 
-		//grid stretching factor:positiv -> smaller elements on the left, negativ -> smaller elements on the right
-		double strfactor = 0.;
+        //grid stretching factor:positiv -> smaller elements on the left, negativ -> smaller elements on the right
+        double strfactor = 0.;
 
-		//vector with coordinates
-		std::vector<ctype> coord;
-		coord.resize(numberofelements+1);
-		coord[0]=0;
-		coord[1]=1;
-		//generate coordinates for a stretched grid
-		for (int i=2;i<numberofelements+1;i++) {
-			coord[i]=coord[i-1]+(coord[i-1]-coord[i-2])*(1+strfactor);
-		}
+        //vector with coordinates
+        std::vector<ctype> coord;
+        coord.resize(numberofelements+1);
+        coord[0]=0;
+        coord[1]=1;
+        //generate coordinates for a stretched grid
+        for (int i=2;i<numberofelements+1;i++) {
+            coord[i]=coord[i-1]+(coord[i-1]-coord[i-2])*(1+strfactor);
+        }
 
-		//scale coordinates to geometry
-		for (int i=0;i<numberofelements+1;i++) {
-			coord[i]*=Right[0]/coord[numberofelements];
-			std::cout << "coordinates =  " << coord[i] << std::endl;
-		}
+        //scale coordinates to geometry
+        for (int i=0;i<numberofelements+1;i++) {
+            coord[i]*=Right[0]/coord[numberofelements];
+            std::cout << "coordinates =  " << coord[i] << std::endl;
+        }
 
-		const std::vector<ctype>& coordinates(coord);
+        const std::vector<ctype>& coordinates(coord);
 
-		// grid reference
-		//GridType& grid = *gridPtr;
-		GridType grid(coordinates);
+        // grid reference
+        //GridType& grid = *gridPtr;
+        GridType grid(coordinates);
 
-		Dune::gridinfo(grid);
+        Dune::gridinfo(grid);
 
-		Oil oil(0.2);
-		Water water(0.2);
-//		Dune::BrooksCoreyLaw law(water, oil,2,0);
-		Dune::LinearLaw law(water, oil);
-		//Dune::VanGenuchtenLaw law(water, oil);
+        Oil oil(0.2);
+        Water water(0.2);
+//        Dune::BrooksCoreyLaw law(water, oil,2,0);
+        Dune::LinearLaw law(water, oil);
+        //Dune::VanGenuchtenLaw law(water, oil);
 
-		//Calculate with analytical solution
-		Dune::BLWithAnalytical<GridType, NumberType> problem(grid,law, Left, Right);
+        //Calculate with analytical solution
+        Dune::BLWithAnalytical<GridType, NumberType> problem(grid,law, Left, Right);
 
-		//Calculate without analytical solution
-//		Dune::BuckleyLeverettProblem<GridType, NumberType> problem(law, Left, Right,/*VanGenuchten*/BrooksCorey);
+        //Calculate without analytical solution
+//        Dune::BuckleyLeverettProblem<GridType, NumberType> problem(law, Left, Right,/*VanGenuchten*/BrooksCorey);
 
-		typedef Dune::BoxPwSn<GridType, NumberType> TwoPhase;
-		TwoPhase twoPhase(grid, problem);
+        typedef Dune::BoxPwSn<GridType, NumberType> TwoPhase;
+        TwoPhase twoPhase(grid, problem);
 
-		Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt,"buckleyleverett1D", 1);
+        Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt,"buckleyleverett1D", 1);
 
-		Dune::Timer timer;
-		timer.reset();
-		timeloop.execute(twoPhase);
-		std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
+        Dune::Timer timer;
+        timer.reset();
+        timeloop.execute(twoPhase);
+        std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
 
-		//printvector(std::cout, *twoPhase.u, "u", "row", 2, 1, 3);
+        //printvector(std::cout, *twoPhase.u, "u", "row", 2, 1, 3);
 
-		return 0;
-	}
-	catch (Dune::Exception &e) {
-		std::cerr << "Dune reported error: " << e << std::endl;
-	}
-	catch (...) {
-		std::cerr << "Unknown exception thrown!" << std::endl;
-	}
+        return 0;
+    }
+    catch (Dune::Exception &e) {
+        std::cerr << "Dune reported error: " << e << std::endl;
+    }
+    catch (...) {
+        std::cerr << "Unknown exception thrown!" << std::endl;
+    }
 }

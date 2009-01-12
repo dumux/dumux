@@ -31,9 +31,9 @@ public:
    double mu;
   // sigma and epsilon are paremetrs for defining the different versions of DG
    /*
-	if sigma > 0 and epsilon = +1 --> NIPG
-	if sigma > 0 and epsilon = -1 --> SIPG
-	if sigma = 0 and epsilon = +1 --> OBB
+    if sigma > 0 and epsilon = +1 --> NIPG
+    if sigma > 0 and epsilon = -1 --> SIPG
+    if sigma = 0 and epsilon = +1 --> OBB
   */
   double sigma;
   int epsilon;

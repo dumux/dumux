@@ -18,24 +18,24 @@ Dune::DGFiniteElementMethod<G,v_order,p_order>::evaluateH1error(int variable, co
   int qord=6;
 
   for (unsigned int qp=0;qp<Dune::QuadratureRules<ctype,dim>::rule(gt,qord).size();++qp)
-	{
-	  qp_loc = Dune::QuadratureRules<ctype,dim>::rule(gt,qord)[qp].position();
+    {
+      qp_loc = Dune::QuadratureRules<ctype,dim>::rule(gt,qord)[qp].position();
 
-	  qp_glob =element.geometry().global(qp_loc);
-	  //std::cout<<"qp_loc: "<<qp_loc<<" qp_glob: "<<qp_glob<<std::endl;
-	  double weight = Dune::QuadratureRules<ctype,dim>::rule(gt,qord)[qp].weight();
-	  double detjac = element.geometry().integrationElement(qp_loc);
-	  if (variable<dim)
-		{
-		  error1[variable]=((problem_.velocity(qp_glob))[variable]-evaluateSolution(variable,element,qp_loc,xe))
-		    *((problem_.velocity(qp_glob))[variable]-evaluateSolution(variable,element,qp_loc,xe));
+      qp_glob =element.geometry().global(qp_loc);
+      //std::cout<<"qp_loc: "<<qp_loc<<" qp_glob: "<<qp_glob<<std::endl;
+      double weight = Dune::QuadratureRules<ctype,dim>::rule(gt,qord)[qp].weight();
+      double detjac = element.geometry().integrationElement(qp_loc);
+      if (variable<dim)
+        {
+          error1[variable]=((problem_.velocity(qp_glob))[variable]-evaluateSolution(variable,element,qp_loc,xe))
+            *((problem_.velocity(qp_glob))[variable]-evaluateSolution(variable,element,qp_loc,xe));
 
-		  error2[variable]=((problem_.velocityGradient(qp_glob))[variable]-evaluateGradient(variable,element,qp_loc,xe)).two_norm2();
-		  error[variable]+=weight*detjac*(error1[variable]+error2[variable]);
+          error2[variable]=((problem_.velocityGradient(qp_glob))[variable]-evaluateGradient(variable,element,qp_loc,xe)).two_norm2();
+          error[variable]+=weight*detjac*(error1[variable]+error2[variable]);
 
 
-		}
-	}
+        }
+    }
   return error[variable];
 
 }
@@ -51,11 +51,11 @@ double Dune::DGStokes<G,v_order,p_order>::h1errorStokesSystem(int variable) cons
   ElementLevelIterator itend = grid.template lend<0>(level);
   //std::cout<<"level:::"<<level;
   for (; it != itend; ++it)
-	{
-	  int eid = grid.levelIndexSet(level).index(*it);
-	  //std::cout<<" eid: "<<eid<<std::endl;
-	  error[variable]+=dgfem.evaluateH1error(variable,*it,solution[eid]);
-	}
+    {
+      int eid = grid.levelIndexSet(level).index(*it);
+      //std::cout<<" eid: "<<eid<<std::endl;
+      error[variable]+=dgfem.evaluateH1error(variable,*it,solution[eid]);
+    }
   return sqrt(error[variable]);
 }
 

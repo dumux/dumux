@@ -7,96 +7,96 @@ namespace Dune
 {
 //! \ingroup diffusionProblems
 //! example class for diffusion problems
-	template<class G, class RT, class VC>
-	class FVCA5Test2Problem : public DiffusionProblem<G,RT,VC>
-	{
-	  typedef typename G::ctype DT;
-	  enum {n=G::dimension};
-	  typedef typename G::Traits::template Codim<0>::Entity Entity;
+    template<class G, class RT, class VC>
+    class FVCA5Test2Problem : public DiffusionProblem<G,RT,VC>
+    {
+      typedef typename G::ctype DT;
+      enum {n=G::dimension};
+      typedef typename G::Traits::template Codim<0>::Entity Entity;
 
-	public:
-	  FVCA5Test2Problem(VC& variables, double delta = 1.0e-3)
-	    : DiffusionProblem<G,RT,VC>(variables)
-	  {
-		  delta_ = delta;
-		  permloc_[1][1] = 1.0;
-		  permloc_[0][0] = delta;
-		  permloc_[1][0] = permloc_[0][1] = 0.0;
-	  }
+    public:
+      FVCA5Test2Problem(VC& variables, double delta = 1.0e-3)
+        : DiffusionProblem<G,RT,VC>(variables)
+      {
+          delta_ = delta;
+          permloc_[1][1] = 1.0;
+          permloc_[0][0] = delta;
+          permloc_[1][0] = permloc_[0][1] = 0.0;
+      }
 
-	  FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x, const Entity& e,
-					  const FieldVector<DT,n>& xi)
-	  {
-		  return permloc_;
-	  }
+      FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x, const Entity& e,
+                      const FieldVector<DT,n>& xi)
+      {
+          return permloc_;
+      }
 
-	  RT source   (const FieldVector<DT,n>& x, const Entity& e,
-					  const FieldVector<DT,n>& xi)
-	  {
-		  return (0.0);
-	  }
+      RT source   (const FieldVector<DT,n>& x, const Entity& e,
+                      const FieldVector<DT,n>& xi)
+      {
+          return (0.0);
+      }
 
-	  typename BoundaryConditions::Flags bctype (const FieldVector<DT,n>& x, const Entity& e,
-						   const FieldVector<DT,n>& xi) const
-	  {
-//		  if (x[1] < 1e-8)
-//			  return BoundaryConditions::dirichlet;
+      typename BoundaryConditions::Flags bctype (const FieldVector<DT,n>& x, const Entity& e,
+                           const FieldVector<DT,n>& xi) const
+      {
+//          if (x[1] < 1e-8)
+//              return BoundaryConditions::dirichlet;
 
-		  return BoundaryConditions::neumann;
-	  }
+          return BoundaryConditions::neumann;
+      }
 
-	  RT dirichletPress (const FieldVector<DT,n>& x, const Entity& e,
-					const FieldVector<DT,n>& xi) const
-	  {
-		  return (exact(x));
-	  }
+      RT dirichletPress (const FieldVector<DT,n>& x, const Entity& e,
+                    const FieldVector<DT,n>& xi) const
+      {
+          return (exact(x));
+      }
 
-	  RT neumannPress (const FieldVector<DT,n>& x, const Entity& e,
-					const FieldVector<DT,n>& xi) const
-	  {
-		  FieldVector<RT,n> unitNormal(0);
+      RT neumannPress (const FieldVector<DT,n>& x, const Entity& e,
+                    const FieldVector<DT,n>& xi) const
+      {
+          FieldVector<RT,n> unitNormal(0);
 
-		  if (x[0] < 1e-8)
-			  unitNormal[0] = -1.0;
-		  else if (fabs(x[0] - 1.0) < 1e-8)
-			  unitNormal[0] = 1.0;
-		  else if (x[1]  < 1e-8)
-			  unitNormal[1] = -1.0;
-		  else
-			  unitNormal[1] = 1.0;
+          if (x[0] < 1e-8)
+              unitNormal[0] = -1.0;
+          else if (fabs(x[0] - 1.0) < 1e-8)
+              unitNormal[0] = 1.0;
+          else if (x[1]  < 1e-8)
+              unitNormal[1] = -1.0;
+          else
+              unitNormal[1] = 1.0;
 
-		  FieldVector<RT,n> Kgrad(0);
-		  permloc_.umv(exactGrad(x), Kgrad);
+          FieldVector<RT,n> Kgrad(0);
+          permloc_.umv(exactGrad(x), Kgrad);
 
-		  return -(Kgrad*unitNormal);
-	  }
+          return -(Kgrad*unitNormal);
+      }
 
-	  RT exact (const FieldVector<DT,n>& x) const
-	  {
-		  double pi = 4.0*atan(1.0);
-		  double x1 = 2.0*pi;
-		  double x2 = x1/sqrt(delta_);
+      RT exact (const FieldVector<DT,n>& x) const
+      {
+          double pi = 4.0*atan(1.0);
+          double x1 = 2.0*pi;
+          double x2 = x1/sqrt(delta_);
 
-		  return (sin(x1*x[1])*exp(-x2*x[0]));
-	  }
+          return (sin(x1*x[1])*exp(-x2*x[0]));
+      }
 
-	  FieldVector<RT,n> exactGrad (const FieldVector<DT,n>& x) const
-	  {
-		  FieldVector<RT,n> grad(0);
-		  double pi = 4.0*atan(1.0);
-		  double x1 = 2.0*pi;
-		  double x2 = x1/sqrt(delta_);
-		  double u = sin(x1*x[1])*exp(-x2*x[0]);
-		  grad[1] = x1*cos(x1*x[1])*exp(-x2*x[0]);
-		  grad[0] = -x2*u;
+      FieldVector<RT,n> exactGrad (const FieldVector<DT,n>& x) const
+      {
+          FieldVector<RT,n> grad(0);
+          double pi = 4.0*atan(1.0);
+          double x1 = 2.0*pi;
+          double x2 = x1/sqrt(delta_);
+          double u = sin(x1*x[1])*exp(-x2*x[0]);
+          grad[1] = x1*cos(x1*x[1])*exp(-x2*x[0]);
+          grad[0] = -x2*u;
 
-		  return grad;
-	  }
+          return grad;
+      }
 
-	private:
-		FieldMatrix<DT,n,n> permloc_;
-		double delta_;
-	};
+    private:
+        FieldMatrix<DT,n,n> permloc_;
+        double delta_;
+    };
 }
 
 #endif

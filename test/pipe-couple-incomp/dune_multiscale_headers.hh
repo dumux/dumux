@@ -24,7 +24,7 @@ template<class G, class V>
 void vtkout (const G& grid, const V& Sat,const V& press,const V& perm, char* name, int k);
 
 void inline TimeloopOptsPipe( double& tstart, double& tend, double& max_dt, double& first_dt, double& CFL_factor, int& flag,
-			  int& n_iter, double& max_def, int& modulo, int& stages );
+              int& n_iter, double& max_def, int& modulo, int& stages );
 
 void inline TimeloopOptsPorous(double& tstart, double& tend, double& max_dt, double& max_def, int& modulo);
 
@@ -40,8 +40,8 @@ struct P0Layout
 {
   bool contains (Dune::GeometryType gt)
   {
-	if (gt.dim()==dim) return true;
-	return false;
+    if (gt.dim()==dim) return true;
+    return false;
   }
 };
 
@@ -51,8 +51,8 @@ struct PDimLayout
 {
   bool contains (Dune::GeometryType gt)
   {
-	if (gt.dim()==0) return true;
-	return false;
+    if (gt.dim()==0) return true;
+    return false;
   }
 };
 

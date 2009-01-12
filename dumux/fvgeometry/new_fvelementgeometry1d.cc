@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 /*!
  * \brief Specialization of the FVElementGeometry for the 1D-case.
@@ -7,14 +7,14 @@
  * base class, so this class only fills some gaps.
  */
 template <class GridT,
-          class ReferenceElementContainerT, 
+          class ReferenceElementContainerT,
           class ShapeFunctionSetContainerT>
-class NewFVElementGeometry<GridT, 
-                           ReferenceElementContainerT, 
+class NewFVElementGeometry<GridT,
+                           ReferenceElementContainerT,
                            ShapeFunctionSetContainerT,
                            1>
     : public NewFVElementGeometryBase<NewFVElementGeometry<GridT,
-                                                           ReferenceElementContainerT, 
+                                                           ReferenceElementContainerT,
                                                            ShapeFunctionSetContainerT,
                                                            1> >
 {
@@ -43,7 +43,7 @@ class NewFVElementGeometry<GridT,
         MaxNodesInFace = 1
     };
 
-    typedef NewFVElementGeometry<Grid, 
+    typedef NewFVElementGeometry<Grid,
                                  ReferenceElementContainer,
                                  ShapeFunctionSetContainer>  ThisType;
     typedef NewFVElementGeometryBase<ThisType>               ParentType;
@@ -70,8 +70,8 @@ class NewFVElementGeometry<GridT,
             LocalCoord temp;
 
             // fill sub control volume face data
-            for (int scvFaceIdx = 0; scvFaceIdx < this->numEdges_; scvFaceIdx++) 
-            { 
+            for (int scvFaceIdx = 0; scvFaceIdx < this->numEdges_; scvFaceIdx++)
+            {
                 int insideIdx  = refElem.subEntity(scvFaceIdx, GridDim-1, 0, GridDim);
                 int outsideIdx = refElem.subEntity(scvFaceIdx, GridDim-1, 1, GridDim);
 
@@ -79,10 +79,10 @@ class NewFVElementGeometry<GridT,
                 this->subContVolFace_[scvFaceIdx].outsideIdx_ = outsideIdx;
 
                 // calculate the local integration point and
-                // the face normal. 
+                // the face normal.
                 this->subContVolFace_[scvFaceIdx].ipLocal = 0.5;
                 this->subContVolFace_[scvFaceIdx].normal = 1.0;
-                   
+
                 // get the global integration point and the Jacobian inverse
                 const LocalCoord &ipLocal = this->subContVolFace_[scvFaceIdx].ipLocal;
                 this->subContVolFace_[scvFaceIdx].ipGlobal = geometry.global(ipLocal);
@@ -95,13 +95,13 @@ class NewFVElementGeometry<GridT,
                                                                i,
                                                                ipLocal);
                     // grad[node] = J^-1 * temp
-                    jacInvT.mv(temp, 
+                    jacInvT.mv(temp,
                                this->subContVolFace_[scvFaceIdx].grad[node]);
                 }
             }
         }
-        
-    void updateBoundaryFace_(IntersectionIterator &it, 
+
+    void updateBoundaryFace_(IntersectionIterator &it,
                              const ReferenceElement &refElem,
                              const CellGeometry &geometry)
         {
@@ -112,14 +112,14 @@ class NewFVElementGeometry<GridT,
             {
                 int nodeInElement = refElem.subEntity(face, 1, nodeInFace, GridDim);
                 int bfIndex = this->boundaryFaceIndex(face, nodeInFace);
-                    
+
                 this->boundaryFace_[bfIndex].ipLocal = refElem.position(nodeInElement, GridDim);
                 this->boundaryFace_[bfIndex].area = 1.0;
 
                 this->boundaryFace_[bfIndex].ipGlobal =
                     geometry.global(this->boundaryFace_[bfIndex].ipLocal);
             }
-                
+
         }
 };
 

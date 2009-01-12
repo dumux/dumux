@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #include "config.h"
 
@@ -20,7 +20,7 @@ template <>
 struct OneDInNDGridLevelIteratorFactory<1>
 {
     template <Dune::PartitionIteratorType PiType, int dimworld>
-    static Dune::OneDInNDGridLevelIterator<1,PiType, const Dune::OneDInNDGrid<dimworld> > 
+    static Dune::OneDInNDGridLevelIterator<1,PiType, const Dune::OneDInNDGrid<dimworld> >
     lbegin(const Dune::OneDInNDGrid<dimworld>* g, int level) {
 
     return Dune::OneDInNDGridLevelIterator<1,PiType, const Dune::OneDInNDGrid<dimworld> >(g->vertices[level].begin);
@@ -32,7 +32,7 @@ template <>
 struct OneDInNDGridLevelIteratorFactory<0>
 {
     template <Dune::PartitionIteratorType PiType, int dimworld>
-    static Dune::OneDInNDGridLevelIterator<0,PiType, const Dune::OneDInNDGrid<dimworld> > 
+    static Dune::OneDInNDGridLevelIterator<0,PiType, const Dune::OneDInNDGrid<dimworld> >
     lbegin(const Dune::OneDInNDGrid<dimworld> * g, int level) {
 
     return Dune::OneDInNDGridLevelIterator<0,PiType, const Dune::OneDInNDGrid<dimworld> >(g->elements[level].begin);
@@ -102,9 +102,9 @@ Dune::OneDInNDGrid<dimworld>::OneDInNDGrid(int numElements, Dune::FieldVector<do
 
     // Init vertex set
     for (int i=0; i<numElements+1; i++) {
-    	Dune::FieldVector<double, dimworld> newCoord;
-    	for (int k = 0; k < dimworld; k++)
-    		newCoord[k] = leftBoundary[k] + i*(rightBoundary[k]-leftBoundary[k]) / numElements;
+        Dune::FieldVector<double, dimworld> newCoord;
+        for (int k = 0; k < dimworld; k++)
+            newCoord[k] = leftBoundary[k] + i*(rightBoundary[k]-leftBoundary[k]) / numElements;
 
         OneDInNDEntityImp<0, dimworld>* newVertex = new OneDInNDEntityImp<0, dimworld>(0, newCoord);
         newVertex->id_ = getNextFreeId(1);
@@ -128,7 +128,7 @@ Dune::OneDInNDGrid<dimworld>::OneDInNDGrid(int numElements, Dune::FieldVector<do
     setIndices();
 }
 
-//Dune::OneDInNDGrid::OneDInNDGrid(const std::vector<OneDInNDCType>& coords) 
+//Dune::OneDInNDGrid::OneDInNDGrid(const std::vector<OneDInNDCType>& coords)
 //    : refinementType_(LOCAL),
 //      leafIndexSet_(*this),
 //      idSet_(*this),
@@ -176,7 +176,7 @@ Dune::OneDInNDGrid<dimworld>::~OneDInNDGrid()
         OneDInNDEntityImp<0, dimworld>* v = vertices[i].begin;
 
         while (v) {
-            
+
             OneDInNDEntityImp<0, dimworld>* vSucc = v->succ_;
             vertices[i].remove(v);
             delete(v);
@@ -192,7 +192,7 @@ Dune::OneDInNDGrid<dimworld>::~OneDInNDGrid()
         OneDInNDEntityImp<1, dimworld>* e = elements[i].begin;
 
         while (e) {
-            
+
             OneDInNDEntityImp<1, dimworld>* eSucc = e->succ_;
             elements[i].remove(e);
             delete(e);
@@ -226,7 +226,7 @@ Dune::OneDInNDGrid<dimworld>::lend(int level) const
 {
     if (level<0 || level>maxLevel())
         DUNE_THROW(GridError, "LevelIterator in nonexisting level " << level << " requested!");
-    
+
     return OneDInNDGridLevelIterator<codim,All_Partition, const Dune::OneDInNDGrid<dimworld> >(0);
 }
 
@@ -248,7 +248,7 @@ Dune::OneDInNDGrid<dimworld>::lend(int level) const
 {
     if (level<0 || level>maxLevel())
         DUNE_THROW(GridError, "LevelIterator in nonexisting level " << level << " requested!");
-    
+
     return OneDInNDGridLevelIterator<codim,PiType, const Dune::OneDInNDGrid<dimworld> >(0);
 }
 
@@ -330,7 +330,7 @@ Dune::OneDInNDGrid<dimworld>::getRightUpperVertex(const OneDInNDEntityImp<1, dim
 }
 
 template<int dimworld>
-Dune::OneDInNDEntityImp<1, dimworld>* 
+Dune::OneDInNDEntityImp<1, dimworld>*
 Dune::OneDInNDGrid<dimworld>::getLeftNeighborWithSon(OneDInNDEntityImp<1, dimworld>* eIt)
 {
     OneDInNDEntityImp<1, dimworld>* l = eIt;
@@ -347,7 +347,7 @@ template<int dimworld>
 bool Dune::OneDInNDGrid<dimworld>::adapt()
 {
     OneDInNDEntityImp<1, dimworld>* eIt;
-    
+
     // for the return value:  true if the grid was changed
     bool changedGrid = false;
 
@@ -368,7 +368,7 @@ bool Dune::OneDInNDGrid<dimworld>::adapt()
                 assert(rightElementToBeDeleted->isLeaf());
 
                 // Is the left vertex obsolete?
-                if (leftElementToBeDeleted->pred_==NULL 
+                if (leftElementToBeDeleted->pred_==NULL
                     || leftElementToBeDeleted->pred_->vertex_[1] != leftElementToBeDeleted->vertex_[0]){
 
                     // If the left vertex has a father remove the reference to this vertex at this father
@@ -380,7 +380,7 @@ bool Dune::OneDInNDGrid<dimworld>::adapt()
                 }
 
                 // Is the right vertex obsolete?
-                if (rightElementToBeDeleted->succ_==NULL 
+                if (rightElementToBeDeleted->succ_==NULL
                     || rightElementToBeDeleted->succ_->vertex_[0] != rightElementToBeDeleted->vertex_[1]) {
 
                     // If the left vertex has a father remove the reference to this vertex at this father
@@ -420,13 +420,13 @@ bool Dune::OneDInNDGrid<dimworld>::adapt()
         }
 
     }
-    
+
     // /////////////////////////////////////////////////////////////////////////
     //  Check if one of the elements on the toplevel is marked for refinement
     //  In that case add another level
     // /////////////////////////////////////////////////////////////////////////
     bool toplevelRefinement = false;
-    for (eIt = elements[maxLevel()].begin; eIt!=NULL; eIt=eIt->succ_) 
+    for (eIt = elements[maxLevel()].begin; eIt!=NULL; eIt=eIt->succ_)
         if (eIt->markState_ == OneDInNDEntityImp<1, dimworld>::REFINED) {
             toplevelRefinement = true;
             break;
@@ -455,8 +455,8 @@ bool Dune::OneDInNDGrid<dimworld>::adapt()
                 OneDInNDEntityImp<0, dimworld>* leftUpperVertex = getLeftUpperVertex(eIt);
 
                 if (leftUpperVertex==NULL)
-                    leftUpperVertex = new OneDInNDEntityImp<0, dimworld>(i+1, 
-                                                           eIt->vertex_[0]->pos_, 
+                    leftUpperVertex = new OneDInNDEntityImp<0, dimworld>(i+1,
+                                                           eIt->vertex_[0]->pos_,
                                                            eIt->vertex_[0]->id_);
 
                 eIt->vertex_[0]->son_ = leftUpperVertex;
@@ -464,10 +464,10 @@ bool Dune::OneDInNDGrid<dimworld>::adapt()
                 // Does the right vertex exist on the next-higher level?
                 // If no create it
                 OneDInNDEntityImp<0, dimworld>* rightUpperVertex = getRightUpperVertex(eIt);
-                
-                if (rightUpperVertex==NULL) 
-                    rightUpperVertex = new OneDInNDEntityImp<0, dimworld>(i+1, 
-                                                            eIt->vertex_[1]->pos_, 
+
+                if (rightUpperVertex==NULL)
+                    rightUpperVertex = new OneDInNDEntityImp<0, dimworld>(i+1,
+                                                            eIt->vertex_[1]->pos_,
                                                             eIt->vertex_[1]->id_);
 
                 eIt->vertex_[1]->son_ = rightUpperVertex;
@@ -525,7 +525,7 @@ bool Dune::OneDInNDGrid<dimworld>::adapt()
                 if (leftNeighbor!=NULL)
                     // leftNeighbor exists
                     elements[i+1].insert_after(leftNeighbor->sons_[1], newElement0);
-                else 
+                else
                     // leftNeighbor does not exist
                     elements[i+1].insert_before(elements[i+1].begin, newElement0);
 
@@ -555,28 +555,28 @@ bool Dune::OneDInNDGrid<dimworld>::adapt()
     // If the refinement mode is 'COPY', fill the empty slots in the grid
     // by copying elements
     if (refinementType_ == COPY) {
-        
+
         for (int i=0; i<maxLevel(); i++) {
-            
+
             OneDInNDEntityImp<1, dimworld>* eIt;
             for (eIt = elements[i].begin; eIt!=NULL; eIt = eIt->succ_) {
-                
+
                 if (eIt->isLeaf()) {
-                    
+
                     // Does the left vertex exist on the next-higher level?
                     // If no create it
                     OneDInNDEntityImp<0, dimworld>* leftUpperVertex = getLeftUpperVertex(eIt);
-                    
+
                     if (leftUpperVertex==NULL)
                         leftUpperVertex = new OneDInNDEntityImp<0, dimworld>(i+1, eIt->vertex_[0]->pos_, eIt->vertex_[0]->id_);
- 
+
                     eIt->vertex_[0]->son_ = leftUpperVertex;
-                   
+
                     // Does the right vertex exist on the next-higher level?
                     // If no create it
                     OneDInNDEntityImp<0, dimworld>* rightUpperVertex = getRightUpperVertex(eIt);
-                    
-                    if (rightUpperVertex==NULL) 
+
+                    if (rightUpperVertex==NULL)
                         rightUpperVertex = new OneDInNDEntityImp<0, dimworld>(i+1, eIt->vertex_[1]->pos_, eIt->vertex_[1]->id_);
 
                     eIt->vertex_[1]->son_ = rightUpperVertex;
@@ -584,15 +584,15 @@ bool Dune::OneDInNDGrid<dimworld>::adapt()
                     // //////////////////////////////////////
                     // Insert new vertices into vertex list
                     // //////////////////////////////////////
-                    
+
                     OneDInNDEntityImp<1, dimworld>* leftNeighbor = getLeftNeighborWithSon(eIt);
-                    
+
                     if (leftNeighbor!=NULL) {
-                        
+
                         // leftNeighbor exists
                         if ( leftNeighbor->sons_[1]->vertex_[1] != leftUpperVertex)
                             vertices[i+1].insert_after(leftNeighbor->sons_[1]->vertex_[1], leftUpperVertex);
-                        
+
                     } else {
                         // leftNeighbor does not exist
                         vertices[i+1].insert_before(vertices[i+1].begin, leftUpperVertex);
@@ -604,7 +604,7 @@ bool Dune::OneDInNDGrid<dimworld>::adapt()
 
                     if (succOfLeft==NULL || succOfLeft != rightUpperVertex)
                         vertices[i+1].insert_after(leftUpperVertex, rightUpperVertex);
-                    
+
                     // /////////////////////////
                     //   Create new element
                     // /////////////////////////
@@ -618,17 +618,17 @@ bool Dune::OneDInNDGrid<dimworld>::adapt()
                     if (leftNeighbor!=NULL)
                         // leftNeighbor exists
                         elements[i+1].insert_after(leftNeighbor->sons_[1], newElement);
-                    else 
+                    else
                         // leftNeighbor does not exist
                         elements[i+1].insert_before(elements[i+1].begin, newElement);
-                    
+
                     // Mark the new element as the sons of the refined element
                     eIt->sons_[0] = eIt->sons_[1] = newElement;
-                    
+
                 }
-                
+
             }
-            
+
         }
 
     }
@@ -663,7 +663,7 @@ void Dune::OneDInNDGrid<dimworld>::postAdapt()
             eIt->markState_ = OneDInNDEntityImp<1, dimworld>::NONE;
 
     }
-        
+
 }
 
 template<int dimworld>
@@ -698,12 +698,12 @@ void Dune::OneDInNDGrid<dimworld>::globalRefine(int refCount)
   for (int i=0; i<refCount; i++) {
 
       // mark all entities for grid refinement
-	  typename Traits::template Codim<0>::LeafIterator iIt    = leafbegin<0>();
-	  typename Traits::template Codim<0>::LeafIterator iEndIt = leafend<0>();
-      
+      typename Traits::template Codim<0>::LeafIterator iIt    = leafbegin<0>();
+      typename Traits::template Codim<0>::LeafIterator iEndIt = leafend<0>();
+
       for (; iIt!=iEndIt; ++iIt)
           mark(1, iIt);
-	  
+
       this->preAdapt();
       adapt();
       this->postAdapt();
@@ -732,13 +732,13 @@ bool Dune::OneDInNDGrid<dimworld>::mark(int refCount,
 }
 
 template<int dimworld>
-int Dune::OneDInNDGrid<dimworld>::getMark(const typename Traits::template Codim<0>::EntityPointer & ep ) const 
+int Dune::OneDInNDGrid<dimworld>::getMark(const typename Traits::template Codim<0>::EntityPointer & ep ) const
 {
-  if(getRealImplementation(*ep).target_->markState_ == OneDInNDEntityImp<1, dimworld>::COARSEN) 
-      return -1; 
-  else if(getRealImplementation(*ep).target_->markState_ == OneDInNDEntityImp<1, dimworld>::REFINED) 
-      return 1; 
-  return 0;  
+  if(getRealImplementation(*ep).target_->markState_ == OneDInNDEntityImp<1, dimworld>::COARSEN)
+      return -1;
+  else if(getRealImplementation(*ep).target_->markState_ == OneDInNDEntityImp<1, dimworld>::REFINED)
+      return 1;
+  return 0;
 }
 
 
@@ -758,9 +758,9 @@ template Dune::OneDInNDGrid<2>::Codim<1>::LevelIterator Dune::OneDInNDGrid<2>::l
 template Dune::OneDInNDGrid<2>::Codim<0>::LevelIterator Dune::OneDInNDGrid<2>::lend<0>(int level) const;
 template Dune::OneDInNDGrid<2>::Codim<1>::LevelIterator Dune::OneDInNDGrid<2>::lend<1>(int level) const;
 
-template Dune::OneDInNDGrid<2>::Codim<0>::Partition<Dune::Interior_Partition>::LevelIterator 
+template Dune::OneDInNDGrid<2>::Codim<0>::Partition<Dune::Interior_Partition>::LevelIterator
 Dune::OneDInNDGrid<2>::lbegin<0,Dune::Interior_Partition>(int level) const;
-template Dune::OneDInNDGrid<2>::Codim<0>::Partition<Dune::InteriorBorder_Partition>::LevelIterator 
+template Dune::OneDInNDGrid<2>::Codim<0>::Partition<Dune::InteriorBorder_Partition>::LevelIterator
 Dune::OneDInNDGrid<2>::lbegin<0,Dune::InteriorBorder_Partition>(int level) const;
 template Dune::OneDInNDGrid<2>::Codim<0>::Partition<Dune::Overlap_Partition>::LevelIterator
  Dune::OneDInNDGrid<2>::lbegin<0,Dune::Overlap_Partition>(int level) const;
@@ -771,9 +771,9 @@ Dune::OneDInNDGrid<2>::lbegin<0,Dune::All_Partition>(int level) const;
 template Dune::OneDInNDGrid<2>::Codim<0>::Partition<Dune::Ghost_Partition>::LevelIterator
 Dune::OneDInNDGrid<2>::lbegin<0,Dune::Ghost_Partition>(int level) const;
 
-template Dune::OneDInNDGrid<2>::Codim<0>::Partition<Dune::Interior_Partition>::LevelIterator 
+template Dune::OneDInNDGrid<2>::Codim<0>::Partition<Dune::Interior_Partition>::LevelIterator
 Dune::OneDInNDGrid<2>::lend<0,Dune::Interior_Partition>(int level) const;
-template Dune::OneDInNDGrid<2>::Codim<0>::Partition<Dune::InteriorBorder_Partition>::LevelIterator 
+template Dune::OneDInNDGrid<2>::Codim<0>::Partition<Dune::InteriorBorder_Partition>::LevelIterator
 Dune::OneDInNDGrid<2>::lend<0,Dune::InteriorBorder_Partition>(int level) const;
 template Dune::OneDInNDGrid<2>::Codim<0>::Partition<Dune::Overlap_Partition>::LevelIterator
  Dune::OneDInNDGrid<2>::lend<0,Dune::Overlap_Partition>(int level) const;
@@ -784,9 +784,9 @@ Dune::OneDInNDGrid<2>::lend<0,Dune::All_Partition>(int level) const;
 template Dune::OneDInNDGrid<2>::Codim<0>::Partition<Dune::Ghost_Partition>::LevelIterator
 Dune::OneDInNDGrid<2>::lend<0,Dune::Ghost_Partition>(int level) const;
 
-template Dune::OneDInNDGrid<2>::Codim<1>::Partition<Dune::Interior_Partition>::LevelIterator 
+template Dune::OneDInNDGrid<2>::Codim<1>::Partition<Dune::Interior_Partition>::LevelIterator
 Dune::OneDInNDGrid<2>::lbegin<1,Dune::Interior_Partition>(int level) const;
-template Dune::OneDInNDGrid<2>::Codim<1>::Partition<Dune::InteriorBorder_Partition>::LevelIterator 
+template Dune::OneDInNDGrid<2>::Codim<1>::Partition<Dune::InteriorBorder_Partition>::LevelIterator
 Dune::OneDInNDGrid<2>::lbegin<1,Dune::InteriorBorder_Partition>(int level) const;
 template Dune::OneDInNDGrid<2>::Codim<1>::Partition<Dune::Overlap_Partition>::LevelIterator
  Dune::OneDInNDGrid<2>::lbegin<1,Dune::Overlap_Partition>(int level) const;
@@ -797,9 +797,9 @@ Dune::OneDInNDGrid<2>::lbegin<1,Dune::All_Partition>(int level) const;
 template Dune::OneDInNDGrid<2>::Codim<1>::Partition<Dune::Ghost_Partition>::LevelIterator
 Dune::OneDInNDGrid<2>::lbegin<1,Dune::Ghost_Partition>(int level) const;
 
-template Dune::OneDInNDGrid<2>::Codim<1>::Partition<Dune::Interior_Partition>::LevelIterator 
+template Dune::OneDInNDGrid<2>::Codim<1>::Partition<Dune::Interior_Partition>::LevelIterator
 Dune::OneDInNDGrid<2>::lend<1,Dune::Interior_Partition>(int level) const;
-template Dune::OneDInNDGrid<2>::Codim<1>::Partition<Dune::InteriorBorder_Partition>::LevelIterator 
+template Dune::OneDInNDGrid<2>::Codim<1>::Partition<Dune::InteriorBorder_Partition>::LevelIterator
 Dune::OneDInNDGrid<2>::lend<1,Dune::InteriorBorder_Partition>(int level) const;
 template Dune::OneDInNDGrid<2>::Codim<1>::Partition<Dune::Overlap_Partition>::LevelIterator
  Dune::OneDInNDGrid<2>::lend<1,Dune::Overlap_Partition>(int level) const;
@@ -816,9 +816,9 @@ template Dune::OneDInNDGrid<2>::Codim<1>::LeafIterator Dune::OneDInNDGrid<2>::le
 template Dune::OneDInNDGrid<2>::Codim<0>::LeafIterator Dune::OneDInNDGrid<2>::leafend<0>() const;
 template Dune::OneDInNDGrid<2>::Codim<1>::LeafIterator Dune::OneDInNDGrid<2>::leafend<1>() const;
 
-template Dune::OneDInNDGrid<2>::Codim<0>::Partition<Dune::Interior_Partition>::LeafIterator 
+template Dune::OneDInNDGrid<2>::Codim<0>::Partition<Dune::Interior_Partition>::LeafIterator
 Dune::OneDInNDGrid<2>::leafbegin<0,Dune::Interior_Partition>() const;
-template Dune::OneDInNDGrid<2>::Codim<0>::Partition<Dune::InteriorBorder_Partition>::LeafIterator 
+template Dune::OneDInNDGrid<2>::Codim<0>::Partition<Dune::InteriorBorder_Partition>::LeafIterator
 Dune::OneDInNDGrid<2>::leafbegin<0,Dune::InteriorBorder_Partition>() const;
 template Dune::OneDInNDGrid<2>::Codim<0>::Partition<Dune::Overlap_Partition>::LeafIterator
  Dune::OneDInNDGrid<2>::leafbegin<0,Dune::Overlap_Partition>() const;
@@ -829,9 +829,9 @@ Dune::OneDInNDGrid<2>::leafbegin<0,Dune::All_Partition>() const;
 template Dune::OneDInNDGrid<2>::Codim<0>::Partition<Dune::Ghost_Partition>::LeafIterator
 Dune::OneDInNDGrid<2>::leafbegin<0,Dune::Ghost_Partition>() const;
 
-template Dune::OneDInNDGrid<2>::Codim<0>::Partition<Dune::Interior_Partition>::LeafIterator 
+template Dune::OneDInNDGrid<2>::Codim<0>::Partition<Dune::Interior_Partition>::LeafIterator
 Dune::OneDInNDGrid<2>::leafend<0,Dune::Interior_Partition>() const;
-template Dune::OneDInNDGrid<2>::Codim<0>::Partition<Dune::InteriorBorder_Partition>::LeafIterator 
+template Dune::OneDInNDGrid<2>::Codim<0>::Partition<Dune::InteriorBorder_Partition>::LeafIterator
 Dune::OneDInNDGrid<2>::leafend<0,Dune::InteriorBorder_Partition>() const;
 template Dune::OneDInNDGrid<2>::Codim<0>::Partition<Dune::Overlap_Partition>::LeafIterator
  Dune::OneDInNDGrid<2>::leafend<0,Dune::Overlap_Partition>() const;
@@ -842,9 +842,9 @@ Dune::OneDInNDGrid<2>::leafend<0,Dune::All_Partition>() const;
 template Dune::OneDInNDGrid<2>::Codim<0>::Partition<Dune::Ghost_Partition>::LeafIterator
 Dune::OneDInNDGrid<2>::leafend<0,Dune::Ghost_Partition>() const;
 
-template Dune::OneDInNDGrid<2>::Codim<1>::Partition<Dune::Interior_Partition>::LeafIterator 
+template Dune::OneDInNDGrid<2>::Codim<1>::Partition<Dune::Interior_Partition>::LeafIterator
 Dune::OneDInNDGrid<2>::leafbegin<1,Dune::Interior_Partition>() const;
-template Dune::OneDInNDGrid<2>::Codim<1>::Partition<Dune::InteriorBorder_Partition>::LeafIterator 
+template Dune::OneDInNDGrid<2>::Codim<1>::Partition<Dune::InteriorBorder_Partition>::LeafIterator
 Dune::OneDInNDGrid<2>::leafbegin<1,Dune::InteriorBorder_Partition>() const;
 template Dune::OneDInNDGrid<2>::Codim<1>::Partition<Dune::Overlap_Partition>::LeafIterator
  Dune::OneDInNDGrid<2>::leafbegin<1,Dune::Overlap_Partition>() const;
@@ -855,9 +855,9 @@ Dune::OneDInNDGrid<2>::leafbegin<1,Dune::All_Partition>() const;
 template Dune::OneDInNDGrid<2>::Codim<1>::Partition<Dune::Ghost_Partition>::LeafIterator
 Dune::OneDInNDGrid<2>::leafbegin<1,Dune::Ghost_Partition>() const;
 
-template Dune::OneDInNDGrid<2>::Codim<1>::Partition<Dune::Interior_Partition>::LeafIterator 
+template Dune::OneDInNDGrid<2>::Codim<1>::Partition<Dune::Interior_Partition>::LeafIterator
 Dune::OneDInNDGrid<2>::leafend<1,Dune::Interior_Partition>() const;
-template Dune::OneDInNDGrid<2>::Codim<1>::Partition<Dune::InteriorBorder_Partition>::LeafIterator 
+template Dune::OneDInNDGrid<2>::Codim<1>::Partition<Dune::InteriorBorder_Partition>::LeafIterator
 Dune::OneDInNDGrid<2>::leafend<1,Dune::InteriorBorder_Partition>() const;
 template Dune::OneDInNDGrid<2>::Codim<1>::Partition<Dune::Overlap_Partition>::LeafIterator
  Dune::OneDInNDGrid<2>::leafend<1,Dune::Overlap_Partition>() const;
@@ -886,9 +886,9 @@ template Dune::OneDInNDGrid<3>::Codim<1>::LevelIterator Dune::OneDInNDGrid<3>::l
 template Dune::OneDInNDGrid<3>::Codim<0>::LevelIterator Dune::OneDInNDGrid<3>::lend<0>(int level) const;
 template Dune::OneDInNDGrid<3>::Codim<1>::LevelIterator Dune::OneDInNDGrid<3>::lend<1>(int level) const;
 
-template Dune::OneDInNDGrid<3>::Codim<0>::Partition<Dune::Interior_Partition>::LevelIterator 
+template Dune::OneDInNDGrid<3>::Codim<0>::Partition<Dune::Interior_Partition>::LevelIterator
 Dune::OneDInNDGrid<3>::lbegin<0,Dune::Interior_Partition>(int level) const;
-template Dune::OneDInNDGrid<3>::Codim<0>::Partition<Dune::InteriorBorder_Partition>::LevelIterator 
+template Dune::OneDInNDGrid<3>::Codim<0>::Partition<Dune::InteriorBorder_Partition>::LevelIterator
 Dune::OneDInNDGrid<3>::lbegin<0,Dune::InteriorBorder_Partition>(int level) const;
 template Dune::OneDInNDGrid<3>::Codim<0>::Partition<Dune::Overlap_Partition>::LevelIterator
  Dune::OneDInNDGrid<3>::lbegin<0,Dune::Overlap_Partition>(int level) const;
@@ -899,9 +899,9 @@ Dune::OneDInNDGrid<3>::lbegin<0,Dune::All_Partition>(int level) const;
 template Dune::OneDInNDGrid<3>::Codim<0>::Partition<Dune::Ghost_Partition>::LevelIterator
 Dune::OneDInNDGrid<3>::lbegin<0,Dune::Ghost_Partition>(int level) const;
 
-template Dune::OneDInNDGrid<3>::Codim<0>::Partition<Dune::Interior_Partition>::LevelIterator 
+template Dune::OneDInNDGrid<3>::Codim<0>::Partition<Dune::Interior_Partition>::LevelIterator
 Dune::OneDInNDGrid<3>::lend<0,Dune::Interior_Partition>(int level) const;
-template Dune::OneDInNDGrid<3>::Codim<0>::Partition<Dune::InteriorBorder_Partition>::LevelIterator 
+template Dune::OneDInNDGrid<3>::Codim<0>::Partition<Dune::InteriorBorder_Partition>::LevelIterator
 Dune::OneDInNDGrid<3>::lend<0,Dune::InteriorBorder_Partition>(int level) const;
 template Dune::OneDInNDGrid<3>::Codim<0>::Partition<Dune::Overlap_Partition>::LevelIterator
  Dune::OneDInNDGrid<3>::lend<0,Dune::Overlap_Partition>(int level) const;
@@ -912,9 +912,9 @@ Dune::OneDInNDGrid<3>::lend<0,Dune::All_Partition>(int level) const;
 template Dune::OneDInNDGrid<3>::Codim<0>::Partition<Dune::Ghost_Partition>::LevelIterator
 Dune::OneDInNDGrid<3>::lend<0,Dune::Ghost_Partition>(int level) const;
 
-template Dune::OneDInNDGrid<3>::Codim<1>::Partition<Dune::Interior_Partition>::LevelIterator 
+template Dune::OneDInNDGrid<3>::Codim<1>::Partition<Dune::Interior_Partition>::LevelIterator
 Dune::OneDInNDGrid<3>::lbegin<1,Dune::Interior_Partition>(int level) const;
-template Dune::OneDInNDGrid<3>::Codim<1>::Partition<Dune::InteriorBorder_Partition>::LevelIterator 
+template Dune::OneDInNDGrid<3>::Codim<1>::Partition<Dune::InteriorBorder_Partition>::LevelIterator
 Dune::OneDInNDGrid<3>::lbegin<1,Dune::InteriorBorder_Partition>(int level) const;
 template Dune::OneDInNDGrid<3>::Codim<1>::Partition<Dune::Overlap_Partition>::LevelIterator
  Dune::OneDInNDGrid<3>::lbegin<1,Dune::Overlap_Partition>(int level) const;
@@ -925,9 +925,9 @@ Dune::OneDInNDGrid<3>::lbegin<1,Dune::All_Partition>(int level) const;
 template Dune::OneDInNDGrid<3>::Codim<1>::Partition<Dune::Ghost_Partition>::LevelIterator
 Dune::OneDInNDGrid<3>::lbegin<1,Dune::Ghost_Partition>(int level) const;
 
-template Dune::OneDInNDGrid<3>::Codim<1>::Partition<Dune::Interior_Partition>::LevelIterator 
+template Dune::OneDInNDGrid<3>::Codim<1>::Partition<Dune::Interior_Partition>::LevelIterator
 Dune::OneDInNDGrid<3>::lend<1,Dune::Interior_Partition>(int level) const;
-template Dune::OneDInNDGrid<3>::Codim<1>::Partition<Dune::InteriorBorder_Partition>::LevelIterator 
+template Dune::OneDInNDGrid<3>::Codim<1>::Partition<Dune::InteriorBorder_Partition>::LevelIterator
 Dune::OneDInNDGrid<3>::lend<1,Dune::InteriorBorder_Partition>(int level) const;
 template Dune::OneDInNDGrid<3>::Codim<1>::Partition<Dune::Overlap_Partition>::LevelIterator
  Dune::OneDInNDGrid<3>::lend<1,Dune::Overlap_Partition>(int level) const;
@@ -944,9 +944,9 @@ template Dune::OneDInNDGrid<3>::Codim<1>::LeafIterator Dune::OneDInNDGrid<3>::le
 template Dune::OneDInNDGrid<3>::Codim<0>::LeafIterator Dune::OneDInNDGrid<3>::leafend<0>() const;
 template Dune::OneDInNDGrid<3>::Codim<1>::LeafIterator Dune::OneDInNDGrid<3>::leafend<1>() const;
 
-template Dune::OneDInNDGrid<3>::Codim<0>::Partition<Dune::Interior_Partition>::LeafIterator 
+template Dune::OneDInNDGrid<3>::Codim<0>::Partition<Dune::Interior_Partition>::LeafIterator
 Dune::OneDInNDGrid<3>::leafbegin<0,Dune::Interior_Partition>() const;
-template Dune::OneDInNDGrid<3>::Codim<0>::Partition<Dune::InteriorBorder_Partition>::LeafIterator 
+template Dune::OneDInNDGrid<3>::Codim<0>::Partition<Dune::InteriorBorder_Partition>::LeafIterator
 Dune::OneDInNDGrid<3>::leafbegin<0,Dune::InteriorBorder_Partition>() const;
 template Dune::OneDInNDGrid<3>::Codim<0>::Partition<Dune::Overlap_Partition>::LeafIterator
  Dune::OneDInNDGrid<3>::leafbegin<0,Dune::Overlap_Partition>() const;
@@ -957,9 +957,9 @@ Dune::OneDInNDGrid<3>::leafbegin<0,Dune::All_Partition>() const;
 template Dune::OneDInNDGrid<3>::Codim<0>::Partition<Dune::Ghost_Partition>::LeafIterator
 Dune::OneDInNDGrid<3>::leafbegin<0,Dune::Ghost_Partition>() const;
 
-template Dune::OneDInNDGrid<3>::Codim<0>::Partition<Dune::Interior_Partition>::LeafIterator 
+template Dune::OneDInNDGrid<3>::Codim<0>::Partition<Dune::Interior_Partition>::LeafIterator
 Dune::OneDInNDGrid<3>::leafend<0,Dune::Interior_Partition>() const;
-template Dune::OneDInNDGrid<3>::Codim<0>::Partition<Dune::InteriorBorder_Partition>::LeafIterator 
+template Dune::OneDInNDGrid<3>::Codim<0>::Partition<Dune::InteriorBorder_Partition>::LeafIterator
 Dune::OneDInNDGrid<3>::leafend<0,Dune::InteriorBorder_Partition>() const;
 template Dune::OneDInNDGrid<3>::Codim<0>::Partition<Dune::Overlap_Partition>::LeafIterator
  Dune::OneDInNDGrid<3>::leafend<0,Dune::Overlap_Partition>() const;
@@ -970,9 +970,9 @@ Dune::OneDInNDGrid<3>::leafend<0,Dune::All_Partition>() const;
 template Dune::OneDInNDGrid<3>::Codim<0>::Partition<Dune::Ghost_Partition>::LeafIterator
 Dune::OneDInNDGrid<3>::leafend<0,Dune::Ghost_Partition>() const;
 
-template Dune::OneDInNDGrid<3>::Codim<1>::Partition<Dune::Interior_Partition>::LeafIterator 
+template Dune::OneDInNDGrid<3>::Codim<1>::Partition<Dune::Interior_Partition>::LeafIterator
 Dune::OneDInNDGrid<3>::leafbegin<1,Dune::Interior_Partition>() const;
-template Dune::OneDInNDGrid<3>::Codim<1>::Partition<Dune::InteriorBorder_Partition>::LeafIterator 
+template Dune::OneDInNDGrid<3>::Codim<1>::Partition<Dune::InteriorBorder_Partition>::LeafIterator
 Dune::OneDInNDGrid<3>::leafbegin<1,Dune::InteriorBorder_Partition>() const;
 template Dune::OneDInNDGrid<3>::Codim<1>::Partition<Dune::Overlap_Partition>::LeafIterator
  Dune::OneDInNDGrid<3>::leafbegin<1,Dune::Overlap_Partition>() const;
@@ -983,9 +983,9 @@ Dune::OneDInNDGrid<3>::leafbegin<1,Dune::All_Partition>() const;
 template Dune::OneDInNDGrid<3>::Codim<1>::Partition<Dune::Ghost_Partition>::LeafIterator
 Dune::OneDInNDGrid<3>::leafbegin<1,Dune::Ghost_Partition>() const;
 
-template Dune::OneDInNDGrid<3>::Codim<1>::Partition<Dune::Interior_Partition>::LeafIterator 
+template Dune::OneDInNDGrid<3>::Codim<1>::Partition<Dune::Interior_Partition>::LeafIterator
 Dune::OneDInNDGrid<3>::leafend<1,Dune::Interior_Partition>() const;
-template Dune::OneDInNDGrid<3>::Codim<1>::Partition<Dune::InteriorBorder_Partition>::LeafIterator 
+template Dune::OneDInNDGrid<3>::Codim<1>::Partition<Dune::InteriorBorder_Partition>::LeafIterator
 Dune::OneDInNDGrid<3>::leafend<1,Dune::InteriorBorder_Partition>() const;
 template Dune::OneDInNDGrid<3>::Codim<1>::Partition<Dune::Overlap_Partition>::LeafIterator
  Dune::OneDInNDGrid<3>::leafend<1,Dune::Overlap_Partition>() const;

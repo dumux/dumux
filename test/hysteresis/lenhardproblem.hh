@@ -71,7 +71,7 @@ namespace Lenhard
             pWIdx = PwSnTraits::pWIdx,
             snIdx = PwSnTraits::snIdx
         };
-        
+
         // copy some types from the traits for convenience
         typedef typename DomainTraits::Scalar                     Scalar;
         typedef typename DomainTraits::Grid                       Grid;
@@ -123,10 +123,10 @@ namespace Lenhard
                 Api::require<Api::BasicDomainTraits, DomainTraits>();
 
 #ifdef USE_NODE_PARAMETERS
-                maxPc_ = ParkerLenhard::pC(ParentType::vertexState(0), 
+                maxPc_ = ParkerLenhard::pC(ParentType::vertexState(0),
                                            0.0);
 #else // !USE_NODE_PARAMETERS
-                maxPc_ = ParkerLenhard::pC(ParentType::elementState(0), 
+                maxPc_ = ParkerLenhard::pC(ParentType::elementState(0),
                                            0.0);
 #endif
                 initialTimeStepSize_ = initialTimeStepSize;
@@ -234,11 +234,11 @@ namespace Lenhard
         ///////////////////////////////////
 
         //! Returns the current time step size in seconds
-        Scalar timeStepSize() const 
+        Scalar timeStepSize() const
             { return timeManager_.stepSize(); }
 
         //! Set the time step size in seconds.
-        void setTimeStepSize(Scalar dt) 
+        void setTimeStepSize(Scalar dt)
             { return timeManager_.setStepSize(dt); }
 
         //! evaluate the initial condition for a vert
@@ -262,10 +262,10 @@ namespace Lenhard
                     const ElementState &cs = ParentType::elementState(element);
                     dest[snIdx] = 1.0 - ParkerLenhard::Sw(cs, - pH);
 #endif
-                    
+
                     dest[snIdx] = std::min((Scalar) 1.0, dest[snIdx]);
                     dest[snIdx] = std::max((Scalar) 0.0, dest[snIdx]);
-                    
+
 #ifdef USE_NODE_PARAMETERS
                     dest[pWIdx] = -ParkerLenhard::pC(ParentType::vertexState(0),
                                                        1 - dest[snIdx]);
@@ -273,7 +273,7 @@ namespace Lenhard
                     dest[pWIdx] = -ParkerLenhard::pC(cs,
                                                        1 - dest[snIdx]);
 #endif
-                    
+
 
                 }
                 else {
@@ -316,13 +316,13 @@ namespace Lenhard
             {
                 const LocalPosition &localPos = element.geometry()[vertIdx];
                 GlobalPosition pos = element.geometry().global(localPos);
-                
+
 #if defined USE_NODE_PARAMETERS
                 if (onUpperBoundary(pos)) {
                     dest[pWIdx] = -maxPc_;
                     dest[snIdx] = 1;
                 }
-                else { // onLowerBoundary(pos) 
+                else { // onLowerBoundary(pos)
                     Scalar h = curHydraulicHead_ - pos[0];
                     Scalar pH = hydrostaticPressure_(h);
                     dest[pWIdx] = pH;
@@ -427,7 +427,7 @@ namespace Lenhard
                     return;
                 };
                 i += k;
-                    
+
                 if (epiIdx == i) {
                     // wait until we reach simulation time t=53 hours
                     timeManager_.startNextEpisode(53*60*60 - timeManager_.time());
@@ -435,7 +435,7 @@ namespace Lenhard
                     return;
                 }
                 ++i;
-                
+
                 if (epiIdx < i + k) {
                     // increase the hydraulic head by 5cm and wait
                     // for 10 minutes
@@ -445,13 +445,13 @@ namespace Lenhard
                     return;
                 }
                 i += k;
-                
+
                 if (epiIdx == i) {
                     timeManager_.startNextEpisode(20*60*60);
                     timeManager_.setStepSize(1);
                     return;
                 }
-                
+
                 timeManager_.setFinished();
             }
 
@@ -488,7 +488,7 @@ namespace Lenhard
                     return;
                 };
                 i += k;
-                    
+
                 if (epiIdx == i) {
                     // wait until we reach simulation time t=3 hours
                     timeManager_.startNextEpisode(3*60*60 - timeManager_.time());
@@ -496,7 +496,7 @@ namespace Lenhard
                     return;
                 }
                 ++i;
-                
+
                 k = 7;
                 if (epiIdx < i + k) {
                     // increase the hydraulic head by 5cm and wait
@@ -507,7 +507,7 @@ namespace Lenhard
                     return;
                 }
                 i += k;
-                
+
                 if (epiIdx == i ) {
                     // wait until we reach simulation time t=3 hours
                     timeManager_.startNextEpisode(5*60*60 - timeManager_.time());
@@ -545,7 +545,7 @@ namespace Lenhard
                     return;
                 }
                 i += k;
-                
+
                 if (epiIdx == i ) {
                     // wait until we reach simulation time t=10 hours
                     timeManager_.startNextEpisode(10*60*60 - timeManager_.time());
@@ -565,7 +565,7 @@ namespace Lenhard
                 // later filtered and used for plotting them into a
                 // SVG
                 writeCsv_();
-                
+
                 // write the actual result into a VTK dataset
                 resultWriter_.beginTimestep(timeManager_.time(),
                                             ParentType::grid().leafView());
@@ -600,7 +600,7 @@ namespace Lenhard
                     if ((*diff)[i][1] > 1e12)
                         (*diff)[i][1] = 1e12;
                 }
-                
+
                 convergenceWriter_->addScalarVertexFunction("Sn",
                                                             u,
                                                             ParentType::vertMap(),
@@ -617,7 +617,7 @@ namespace Lenhard
                                                             diff,
                                                             ParentType::vertMap(),
                                                             pWIdx);
-                
+
 /*                writeVertexFields_(*convergenceWriter_, u);
                 writeElementFields_(*convergenceWriter_, u);
 */
@@ -659,7 +659,7 @@ namespace Lenhard
 #endif
 #endif
             }
-        
+
         void writeCsv_()
             {
                 // write out the points at 67,57,47,37 and 27 cm in
@@ -685,7 +685,7 @@ namespace Lenhard
                         // given point in order to allow it to be
                         // plotted
                         std::cout << boost::format("snip: pos=%.02f\n")%points[curI];
-                        std::cout << timeManager_.time()/3600 << " " << 1.0 - Sn << "\n"; 
+                        std::cout << timeManager_.time()/3600 << " " << 1.0 - Sn << "\n";
                         std::cout << "snap\n";
 
                         // print the capillary pressure vs water
@@ -697,15 +697,15 @@ namespace Lenhard
                                                                 *it,
                                                                 localPos);
                         std::cout << boost::format("snip: pC_pos=%.02f\n")%points[curI];
-                        std::cout << 1.0 - Sn << " " << ParkerLenhard::pC(vs, 1.0 - Sn) << "\n"; 
+                        std::cout << 1.0 - Sn << " " << ParkerLenhard::pC(vs, 1.0 - Sn) << "\n";
                         std::cout << "snap\n";
-                        
+
                         ++curI;
                     }
                 }
             }
 
-        Scalar hydrostaticPressure_(Scalar hydraulicHead) 
+        Scalar hydrostaticPressure_(Scalar hydraulicHead)
             {
                 return -ParentType::densityW()*
                         ParentType::gravity()[0]*

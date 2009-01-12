@@ -13,7 +13,7 @@ int main(int argc, char** argv)
     typedef Problem::DomainTraits::Grid       Grid;
     typedef Problem::DomainTraits::GlobalPosition GlobalPosition;
     typedef Dune::GridPtr<Grid>               GridPointer;
-    
+
     try {
         // parse the command line arguments for the program
         if (argc != 3) {

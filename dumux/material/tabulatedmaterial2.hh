@@ -55,24 +55,24 @@ namespace Dune {
 
         bool applies(Scalar x, Scalar y) const
             {
-                return xMin() <= x && x <= xMax() && 
+                return xMin() <= x && x <= xMax() &&
                        yMin() <= y && y <= yMax();
             }
-        
+
         Scalar at(Scalar x, Scalar y) const
         {
 #ifndef NDEBUG
             if (!applies(x,y))
             {
                 DUNE_THROW(NumericalProblem,
-                           "Attempt to get tabulated " << Traits::name << " value for (" 
+                           "Attempt to get tabulated " << Traits::name << " value for ("
                            << x << ", " << y
-                           << ") on a table of extend " 
+                           << ") on a table of extend "
                            << xMin() << " to " << xMax() << " times "
                            << yMin() << " to " << yMax() << "\n");
-            }; 
+            };
 #endif
-            
+
             // use higher resolution if available
             Scalar hiresValue = 0.0;
             Scalar hiresWeight = 0.0;
@@ -80,7 +80,7 @@ namespace Dune {
                 hiresValue = Traits::hires.at(x, y);
                 hiresWeight = Traits::hires.hiresWeight(x, y);
                 assert(hiresWeight >= 0.0 && hiresWeight <= 1.0);
-                
+
                 if (hiresWeight == 1.0)
                     return hiresValue;
             }
@@ -95,10 +95,10 @@ namespace Dune {
 
             Scalar alpha = (x - xAtI)/(xAtI1 - xAtI);
             Scalar beta  = (y - yAtJ)/(yAtJ1 - yAtJ);
-            
+
             // bi-linear interpolation
             Scalar lowresValue =
-                (1-alpha)*(1-beta)*val(i, j) + 
+                (1-alpha)*(1-beta)*val(i, j) +
                 (1-alpha)*(  beta)*val(i, j + 1) +
                 (  alpha)*(1-beta)*val(i + 1, j) +
                 (  alpha)*(  beta)*val(i + 1, j + 1);
@@ -111,19 +111,19 @@ namespace Dune {
         Scalar val(int i, int j) const
         {
 #ifndef NDEBUG
-            if (i < 0 || i >= Traits::numX || 
+            if (i < 0 || i >= Traits::numX ||
                 j < 0 || j >= Traits::numY) {
                 DUNE_THROW(NumericalProblem,
-                           "Attempt to access element (" 
+                           "Attempt to access element ("
                            << i << ", " << j
-                           << ") on a " << Traits::name << " table of size (" 
+                           << ") on a " << Traits::name << " table of size ("
                            << Traits::numX << ", " << Traits::numY
                            << ")\n");
-            }; 
+            };
 #endif
             return Traits::vals[i][j];
         };
-        
+
     protected:
         int findXIdx_(Scalar x) const
         {
@@ -138,7 +138,7 @@ namespace Dune {
                 return numY - 2;
             return static_cast<int>((y - yMin())/(yMax() - yMin())*(numY - 1));
         };
-        
+
         Scalar xAt_(int i) const
         { return i*(xMax() - xMin())/(numX - 1) + xMin(); }
         Scalar yAt_(int j) const

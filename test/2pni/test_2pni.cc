@@ -35,13 +35,13 @@ int main(int argc, char** argv)
       return 0;
     }
     std::string arg1(argv[1]);
-	std::istringstream is1(arg1);
-	double tEnd;
-	is1 >> tEnd;
-	std::string arg2(argv[2]);
-	std::istringstream is2(arg2);
-	double dt;
-	is2 >> dt;
+    std::istringstream is1(arg1);
+    double tEnd;
+    is1 >> tEnd;
+    std::string arg2(argv[2]);
+    std::istringstream is2(arg2);
+    double dt;
+    is2 >> dt;
 
     // create a grid object
     typedef double NumberType;

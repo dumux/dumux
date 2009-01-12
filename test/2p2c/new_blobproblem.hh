@@ -68,12 +68,12 @@ namespace Dune
         typedef ScalarT Scalar;
 
         enum {dim=Grid::dimension, dimWorld=Grid::dimensionworld};
-        
+
         typedef Dune::FieldVector<Scalar,dim>      LocalPosition;
         typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
 
-        BlobSoil() 
-            : Matrix2p<Grid,Scalar>(), 
+        BlobSoil()
+            : Matrix2p<Grid,Scalar>(),
               K_(0.0)
             {
                 for(int i = 0; i < dim; i++)
@@ -82,79 +82,79 @@ namespace Dune
 
         ~BlobSoil()
             {}
-        
-  	virtual const FieldMatrix<Scalar,dim,dim> &K (const GlobalPosition &x, const Element& e, const LocalPosition &xi)
-  	{
-  		return K_;
-  	}
-  	virtual double porosity(const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
-  	{
-  		return 0.3;
-  	}
 
-  	virtual double Sr_w(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double T) const
-  	{
-  		return 0;
-  	}
+      virtual const FieldMatrix<Scalar,dim,dim> &K (const GlobalPosition &x, const Element& e, const LocalPosition &xi)
+      {
+          return K_;
+      }
+      virtual double porosity(const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
+      {
+          return 0.3;
+      }
 
-  	virtual double Sr_n(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double T) const
-  	{
-  		return 0.1;
-  	}
+      virtual double Sr_w(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double T) const
+      {
+          return 0;
+      }
 
-  	/* ATTENTION: define heat capacity per cubic meter! Be sure, that it corresponds to porosity!
-  			 * Best thing will be to define heatCap = (specific heatCapacity of material) * density * porosity*/
-  	virtual double heatCap(const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
-  	{
-  		return 	790 /* spec. heat cap. of granite */
-  						* 2700 /* density of granite */
-  						* (1 - porosity(x, e, xi));
-  	}
+      virtual double Sr_n(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double T) const
+      {
+          return 0.1;
+      }
 
-  	virtual double heatCond(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double sat) const
-  	{
-  		static const double lWater = 0.6;
-  		static const double lGranite = 2.8;
-  		double poro = porosity(x, e, xi);
-  		double lsat = pow(lGranite, (1-poro)) * pow(lWater, poro);
-  		double ldry = pow(lGranite, (1-poro));
-  		return ldry + sqrt(sat) * (ldry - lsat);
-  	}
+      /* ATTENTION: define heat capacity per cubic meter! Be sure, that it corresponds to porosity!
+               * Best thing will be to define heatCap = (specific heatCapacity of material) * density * porosity*/
+      virtual double heatCap(const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
+      {
+          return     790 /* spec. heat cap. of granite */
+                          * 2700 /* density of granite */
+                          * (1 - porosity(x, e, xi));
+      }
 
-  	virtual std::vector<double> paramRelPerm(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double T) const
-  	{
-  		// example for Brooks-Corey parameters
-  		std::vector<double> param(2);
-  		param[0] = 2.; // lambda
-  		param[1] = 0.; // entry-pressures
+      virtual double heatCond(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double sat) const
+      {
+          static const double lWater = 0.6;
+          static const double lGranite = 2.8;
+          double poro = porosity(x, e, xi);
+          double lsat = pow(lGranite, (1-poro)) * pow(lWater, poro);
+          double ldry = pow(lGranite, (1-poro));
+          return ldry + sqrt(sat) * (ldry - lsat);
+      }
 
-  //		if (x[0] > 150)
-  //			param[0] = 0.5;
+      virtual std::vector<double> paramRelPerm(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double T) const
+      {
+          // example for Brooks-Corey parameters
+          std::vector<double> param(2);
+          param[0] = 2.; // lambda
+          param[1] = 0.; // entry-pressures
 
-  		return param;
-  	}
+  //        if (x[0] > 150)
+  //            param[0] = 0.5;
 
-  	virtual typename Matrix2p<Grid,Scalar>::modelFlag relPermFlag(const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
-  	{
-  		return Matrix2p<Grid,Scalar>::brooks_corey;
-  	}
+          return param;
+      }
+
+      virtual typename Matrix2p<Grid,Scalar>::modelFlag relPermFlag(const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
+      {
+          return Matrix2p<Grid,Scalar>::brooks_corey;
+      }
 
   private:
-	  FieldMatrix<Scalar,dim,dim> K_;
+      FieldMatrix<Scalar,dim,dim> K_;
     };
 
-    /*! 
+    /*!
      * @brief Definition of a problem, where a blob of gas is enclosed by
      * a zone completely saturated with water. The gas saturation within
      * the blob is below the residual saturation, bit gas gets transported
      * away anyway because it is partially miscible with water.
      *
-     *	Template parameters are:
+     *    Template parameters are:
      *
-     *	- ScalarT  Floating point type used for scalars
+     *    - ScalarT  Floating point type used for scalars
      */
     template<class ScalarT>
-    class NewBlobProblem : public BasicDomain<Dune::SGrid<2, 2>, 
+    class NewBlobProblem : public BasicDomain<Dune::SGrid<2, 2>,
                                                ScalarT>
     {
         typedef Dune::SGrid<2,2>               Grid;
@@ -184,7 +184,7 @@ namespace Dune
             numEq       = BoxTraits::numEq,
             pWIdx     = TwoPTwoCTraits::pWIdx,
             switchIdx = TwoPTwoCTraits::switchIdx,
-            
+
             // Phase State
             wPhaseOnly = TwoPTwoCTraits::wPhaseOnly,
             nPhaseOnly = TwoPTwoCTraits::nPhaseOnly,
@@ -194,7 +194,7 @@ namespace Dune
             dim  = DomainTraits::dim,
             dimWorld = DomainTraits::dimWorld
         };
-      
+
         // copy some types from the traits for convenience
         typedef typename DomainTraits::Scalar                     Scalar;
         typedef typename DomainTraits::Element                       Element;
@@ -223,11 +223,11 @@ namespace Dune
 
     public:
         NewBlobProblem(Scalar dtInitial,
-                       Scalar tEnd) 
+                       Scalar tEnd)
             : ParentType(new Grid(Dune::FieldVector<int,dim>(40), // number of verts
                                   GlobalPosition(0.0),  // lower left
                                   GlobalPosition(300.0) // upper right
-                             )), 
+                             )),
               materialLaw_(soil_, wPhase_, nPhase_),
               multicomp_(wPhase_, nPhase_),
               model_(*this),
@@ -236,9 +236,9 @@ namespace Dune
             {
                 initialTimeStepSize_ = dtInitial;
                 endTime_ = tEnd;
-                
+
                 eps_    = 1e-8 * 300.0;
-                
+
                 depthBOR_ = 800.0;
 
                 gravity_[0] = 0;
@@ -328,39 +328,39 @@ namespace Dune
         // etc)
         ///////////////////////////////////
         //! Returns the current time step size in seconds
-        Scalar timeStepSize() const 
+        Scalar timeStepSize() const
             { return timeManager_.stepSize(); }
 
         //! Set the time step size in seconds.
-        void setTimeStepSize(Scalar dt) 
+        void setTimeStepSize(Scalar dt)
             { return timeManager_.setStepSize(dt); }
-        
+
 
         //! properties of the wetting (liquid) phase
         /*! properties of the wetting (liquid) phase
-          \return	wetting phase
+          \return    wetting phase
         */
         const WettingPhase &wettingPhase() const
             { return wPhase_; }
 
         //! properties of the nonwetting (liquid) phase
         /*! properties of the nonwetting (liquid) phase
-          \return	nonwetting phase
+          \return    nonwetting phase
         */
         const NonwettingPhase &nonwettingPhase() const
             { return nPhase_; }
- 
-          
+
+
         //! properties of the soil
         /*! properties of the soil
-          \return	soil
+          \return    soil
         */
         const Soil &soil() const
             {  return soil_; }
 
         //! properties of the soil
         /*! properties of the soil
-          \return	soil
+          \return    soil
         */
         Soil &soil()
             {  return soil_; }
@@ -368,7 +368,7 @@ namespace Dune
         //! object for multicomponent calculations
         /*! object for multicomponent calculations including mass fractions,
          * mole fractions and some basic laws
-         \return	multicomponent object
+         \return    multicomponent object
         */
         MultiComp &multicomp ()
 //        const MultiComp &multicomp () const
@@ -378,14 +378,14 @@ namespace Dune
 
         //! object for definition of material law
         /*! object for definition of material law (e.g. Brooks-Corey, Van Genuchten, ...)
-          \return	material law
+          \return    material law
         */
         MaterialLaw &materialLaw ()
 //        const MaterialLaw &materialLaw () const
             {
                 return materialLaw_;
             }
-        
+
         void boundaryTypes(BoundaryTypeVector &values,
                            const Element &element,
                            const IntersectionIterator &isIt,
@@ -408,7 +408,7 @@ namespace Dune
             {
 //                const LocalPosition &localPos = DomainTraits::referenceElement(element.type()).position(vertIdx, dim);
                 const GlobalPosition &globalPos = element.geometry()[vertIdx];
-                
+
                 values[pWIdx] = 1e5;
                 values[switchIdx] = 0.0;
 
@@ -436,25 +436,25 @@ namespace Dune
         /////////////////////////////
         void source(SolutionVector &values,
                         const Element &element,
-                        const FVElementGeometry &, 
+                        const FVElementGeometry &,
                         int subControlVolumeIdx) const
             {
                 values = Scalar(0.0);
             }
 
         //////////////////////////////
-      
+
         /////////////////////////////
         // INITIAL values
         /////////////////////////////
         void initial(SolutionVector &values,
                      const Element& element,
-                     const GlobalPosition &globalPos, 
+                     const GlobalPosition &globalPos,
                      const LocalPosition &localPos)
             {
                 values[pWIdx] = 1e5;//(600-globalPos[0])/300 * 1e5;
                 values[switchIdx] = 0;
-                
+
                 if (isInsideBlob_(globalPos))
                 {
                     values[switchIdx] = 0.1;
@@ -491,12 +491,12 @@ namespace Dune
             };
 
 
-      
+
         const GlobalPosition &gravity () const
             {
                 return gravity_;
             }
-      
+
         double depthBOR () const
             {
                 return depthBOR_;
@@ -512,19 +512,19 @@ namespace Dune
     private:
         bool isInsideBlob_(const GlobalPosition &globalPos) const
             {
-                return globalPos[0] >= 59.0 && 
-                    globalPos[0] <= 121 && 
-                    globalPos[1] >= 119 && 
+                return globalPos[0] >= 59.0 &&
+                    globalPos[0] <= 121 &&
+                    globalPos[1] >= 119 &&
                     globalPos[1] <= 181;
             }
-                    
+
 
         // write the fields current solution into an VTK output file.
         void writeCurrentResult_()
             {
                 resultWriter_.beginTimestep(timeManager_.time(),
                                             ParentType::grid().leafView());
-                
+
                 model_.addVtkFields(resultWriter_);
 
                 resultWriter_.endTimestep();

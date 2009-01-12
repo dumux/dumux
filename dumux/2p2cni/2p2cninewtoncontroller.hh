@@ -41,66 +41,66 @@ namespace Dune {
     public:
         typedef TwoPTwoCNINewtonController<NewtonMethod>            ThisType;
         typedef NewtonControllerBase<NewtonMethod, ThisType>  ParentType;
-        typedef typename NewtonMethod::Model  	   	   Model;
+        typedef typename NewtonMethod::Model                Model;
         typedef typename ParentType::Scalar            Scalar;
         typedef typename ParentType::Function          Function;
         typedef typename ParentType::JacobianAssembler JacobianAssembler;
 
         TwoPTwoCNINewtonController(bool switched = false,
-							Scalar tolerance = 1e-9,
+                            Scalar tolerance = 1e-9,
                              int targetSteps = 8,
                              int maxSteps = 12,
                              int switchCount = 0)
             : ParentType(tolerance, targetSteps, maxSteps), switched_(switched), switchCount_(switchCount)
             {};
 
-		//! Suggest a new time stepsize based either on the number of newton
-		//! iterations required or on the variable switch
-		Scalar suggestTimeStepSize(Scalar oldTimeStep) const
-			{
-			/*
-				if (variableSwitch) {
-					return somethingSmall;
-				}
-				*/
-				// use function of the newtoncontroller
-				return ParentType::suggestTimeStepSize(oldTimeStep);
-			}
+        //! Suggest a new time stepsize based either on the number of newton
+        //! iterations required or on the variable switch
+        Scalar suggestTimeStepSize(Scalar oldTimeStep) const
+            {
+            /*
+                if (variableSwitch) {
+                    return somethingSmall;
+                }
+                */
+                // use function of the newtoncontroller
+                return ParentType::suggestTimeStepSize(oldTimeStep);
+            }
 
         //! Returns true iff another iteration should be done.
         bool newtonProceed(Function &u)
             {
-				Model &model = ParentType::model();
-//				Scalar defCheck = ParentType::defectCheck();
+                Model &model = ParentType::model();
+//                Scalar defCheck = ParentType::defectCheck();
 
-				switched_ = model.localJacobian.switchedGlobal;
-				if (switched_)
-				{
-		        	model.localJacobian.switchBreak = true;
-					if(switchCount_ == 5)
-					{
-					 model.localJacobian.switchBreak = false;
-					 switchCount_ = 0;
-					 model.localJacobian.switchedGlobal = false;
-					 return ParentType::newtonProceed(u);
-					}
-					else
-					{
+                switched_ = model.localJacobian.switchedGlobal;
+                if (switched_)
+                {
+                    model.localJacobian.switchBreak = true;
+                    if(switchCount_ == 5)
+                    {
+                     model.localJacobian.switchBreak = false;
+                     switchCount_ = 0;
+                     model.localJacobian.switchedGlobal = false;
+                     return ParentType::newtonProceed(u);
+                    }
+                    else
+                    {
 
-						switchCount_++;
+                        switchCount_++;
 
-//						if(defCheck < 1.)
-						return true; // we always do at least five iterations
+//                        if(defCheck < 1.)
+                        return true; // we always do at least five iterations
 
-//						else
-//						{
-//							 model.localJacobian.switchBreak = false;
-//							 switchCount_ = 0;
-//							 model.localJacobian.switchedGlobal = false;
-//							 return false;
-//						}
-					}
-				}
+//                        else
+//                        {
+//                             model.localJacobian.switchBreak = false;
+//                             switchCount_ = 0;
+//                             model.localJacobian.switchedGlobal = false;
+//                             return false;
+//                        }
+                    }
+                }
                 return ParentType::newtonProceed(u);
             }
 
@@ -128,17 +128,17 @@ namespace Dune {
 //
 //                for (int idx = 0; idx < (*u).size(); idx++)  {
 //
-//                	pW = (*u)[idx][0];
+//                    pW = (*u)[idx][0];
 //                    switchVar = (*u)[idx][1];
 //                    temp = (*u)[idx][2];
 //
 //                    if (pW < 1.e5) {
-//                    	maxPWDelta = std::max(maxPWDelta, std::abs(pW-1.e5));
-//                    	std::cout<<"pw:"<<pW<<std::endl;
+//                        maxPWDelta = std::max(maxPWDelta, std::abs(pW-1.e5));
+//                        std::cout<<"pw:"<<pW<<std::endl;
 //                    }
 //                    if (pW > 2.e8) {
-//                    	maxPWDelta = std::max(maxPWDelta, std::abs(pW-2.e8));
-//                    	std::cout<<"pw:"<<pW<<std::endl;
+//                        maxPWDelta = std::max(maxPWDelta, std::abs(pW-2.e8));
+//                        std::cout<<"pw:"<<pW<<std::endl;
 //                    }
 //                    if (switchVar < -1.e-2) {
 //                        maxSwitchVarDelta = std::max(maxSwitchVarDelta, std::abs(switchVar));
@@ -149,12 +149,12 @@ namespace Dune {
 //                        std::cout<<"switchVar:"<<switchVar<<std::endl;
 //                    }
 //                    if (temp < 273.) {
-//                    	maxTempDelta = std::max(maxTempDelta, std::abs(temp-273.));
-//                    	std::cout<<"temp:"<<temp<<std::endl;
+//                        maxTempDelta = std::max(maxTempDelta, std::abs(temp-273.));
+//                        std::cout<<"temp:"<<temp<<std::endl;
 //                    }
 //                    if (temp > 600.) {
-//                    	maxTempDelta = std::max(maxTempDelta, std::abs(temp-600.));
-//                    	std::cout<<"temp:"<<temp<<std::endl;
+//                        maxTempDelta = std::max(maxTempDelta, std::abs(temp-600.));
+//                        std::cout<<"temp:"<<temp<<std::endl;
 //                    }
 //
 //

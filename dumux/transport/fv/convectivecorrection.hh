@@ -12,99 +12,99 @@ namespace Dune
 template<class G, class RT, class VC>
 class ConvectiveCorrection: public ConvectivePart<G, RT>
 {
-	enum
-	{
-		dim = G::dimension
-	};
-typedef	typename G::Traits::template Codim<0>::Entity Entity;
-	typedef typename Entity::Geometry Geometry;
-	typedef typename G::template Codim<0>::EntityPointer EntityPointer;
-	typedef typename IntersectionIteratorGetter<G,LevelTag>::IntersectionIterator IntersectionIterator;
-	typedef FieldVector<RT, dim> VectorType;
-	typedef typename G::ctype ct;
+    enum
+    {
+        dim = G::dimension
+    };
+typedef    typename G::Traits::template Codim<0>::Entity Entity;
+    typedef typename Entity::Geometry Geometry;
+    typedef typename G::template Codim<0>::EntityPointer EntityPointer;
+    typedef typename IntersectionIteratorGetter<G,LevelTag>::IntersectionIterator IntersectionIterator;
+    typedef FieldVector<RT, dim> VectorType;
+    typedef typename G::ctype ct;
 
 public:
-	virtual double operator() (const Entity& entity, const RT satI, VectorType faceGlobal) const
-	{
-		double result(0);
+    virtual double operator() (const Entity& entity, const RT satI, VectorType faceGlobal) const
+    {
+        double result(0);
 
-		int index = problem.variables.transmapper.map(entity);
+        int index = problem.variables.transmapper.map(entity);
 
-		colNum = data[index].size();
+        colNum = data[index].size();
 
-		// element geometry
-		const Geometry& geometry = entity.geometry();
+        // element geometry
+        const Geometry& geometry = entity.geometry();
 
-		GeometryType gt = entity.type();
-		// cell center in reference element
-		const FieldVector<ct,dim>& local = ReferenceElements<ct,dim>::general(gt).position(0, 0);
+        GeometryType gt = entity.type();
+        // cell center in reference element
+        const FieldVector<ct,dim>& local = ReferenceElements<ct,dim>::general(gt).position(0, 0);
 
-		// get global coordinate of cell center
-		const FieldVector<ct,dim> global = geometry.global(local);
+        // get global coordinate of cell center
+        const FieldVector<ct,dim> global = geometry.global(local);
 
-		IntersectionIterator endis = entity.ilevelend();
-		IntersectionIterator is = entity.ilevelbegin();
-		for (; is != endis; ++is)
-		{
-			// get geometry type of face
-			GeometryType gtf = is->intersectionSelfLocal().type();
+        IntersectionIterator endis = entity.ilevelend();
+        IntersectionIterator is = entity.ilevelbegin();
+        for (; is != endis; ++is)
+        {
+            // get geometry type of face
+            GeometryType gtf = is->intersectionSelfLocal().type();
 
-			// center in face's reference element
-			const FieldVector<ct,dim-1>& faceLocal = ReferenceElements<RT,dim-1>::general(gtf).position(0,0);
+            // center in face's reference element
+            const FieldVector<ct,dim-1>& faceLocal = ReferenceElements<RT,dim-1>::general(gtf).position(0,0);
 
-			// center of face in global coordinates
-			Dune::FieldVector<ct,dim> faceGlobalCheck = is->intersectionGlobal().global(faceLocal);
+            // center of face in global coordinates
+            Dune::FieldVector<ct,dim> faceGlobalCheck = is->intersectionGlobal().global(faceLocal);
 
-			if (faceGlobal == faceGlobalCheck )
-			{
-				int faceNumber = is->numberInSelf();
-				for (int i=0;i<colNum;i++)
-				{
-					if (satI == problem.soil.Sr_w(global, entity, local))
-					{
-						break;
-					}
-					if (problem.soil.getMSat()[index][i][faceNumber]>= satI)
-					{
-						//					std::cout<<"sat = "<<sat<<"satD = "<<problem.soil.getDispersionSatInterface()[indexI][i][numberInSelf]<<std::endl;
-						double satdiff1 = problem.soil.getMSat()[index][i][faceNumber] - satI;
-						double satdiff2 = 1e100;
-						if (i)
-						{
-							satdiff2 = satI - problem.soil.getMSat()[index][i-1][faceNumber];
-						}
-						if (satdiff1 < satdiff2)
-						{
-							result += problem.soil.getM()[index][i][faceNumber];
-//													std::cout<<"m = "<<problem.soil.getM()[index][i][faceNumber]<<std::endl;
-//													std::cout<<"sat = "<<satI<<"satM = "<<problem.soil.getMSat()[index][i][faceNumber]<<std::endl;
-						}
-						else
-						{
-							result += problem.soil.getM()[index][i-1][faceNumber];
-						}
-						break;
-					}
-					if (i==(size-1))
-					{
-						result += problem.soil.getM()[index][i][faceNumber];
-						break;
-					}
-				}
-			}
-		}
+            if (faceGlobal == faceGlobalCheck )
+            {
+                int faceNumber = is->numberInSelf();
+                for (int i=0;i<colNum;i++)
+                {
+                    if (satI == problem.soil.Sr_w(global, entity, local))
+                    {
+                        break;
+                    }
+                    if (problem.soil.getMSat()[index][i][faceNumber]>= satI)
+                    {
+                        //                    std::cout<<"sat = "<<sat<<"satD = "<<problem.soil.getDispersionSatInterface()[indexI][i][numberInSelf]<<std::endl;
+                        double satdiff1 = problem.soil.getMSat()[index][i][faceNumber] - satI;
+                        double satdiff2 = 1e100;
+                        if (i)
+                        {
+                            satdiff2 = satI - problem.soil.getMSat()[index][i-1][faceNumber];
+                        }
+                        if (satdiff1 < satdiff2)
+                        {
+                            result += problem.soil.getM()[index][i][faceNumber];
+//                                                    std::cout<<"m = "<<problem.soil.getM()[index][i][faceNumber]<<std::endl;
+//                                                    std::cout<<"sat = "<<satI<<"satM = "<<problem.soil.getMSat()[index][i][faceNumber]<<std::endl;
+                        }
+                        else
+                        {
+                            result += problem.soil.getM()[index][i-1][faceNumber];
+                        }
+                        break;
+                    }
+                    if (i==(size-1))
+                    {
+                        result += problem.soil.getM()[index][i][faceNumber];
+                        break;
+                    }
+                }
+            }
+        }
 
-		return result;
+        return result;
 
-	}
+    }
 
-	ConvectiveCorrection (FractionalFlowProblem<G, RT, VC>& prob)
-	: problem(prob)
+    ConvectiveCorrection (FractionalFlowProblem<G, RT, VC>& prob)
+    : problem(prob)
 
-	{}
+    {}
 
 private:
-	FractionalFlowProblem<G, RT, VC>& problem;
+    FractionalFlowProblem<G, RT, VC>& problem;
 };
 }
 

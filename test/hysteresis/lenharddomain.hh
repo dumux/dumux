@@ -77,7 +77,7 @@ namespace Lenhard
             typedef LenhardMediumState<VanGenuchtenState>         MediumState;
             typedef LenhardVertexState<MediumState>                 VertexState;
             typedef LenhardElementState<MediumState>                 ElementState;
-            
+
             // The parker-lenhard hysteresis model
 #if !defined USE_NODE_PARAMETERS
             typedef Dune::ParkerLenhard<ElementState, VanGenuchten>     ParkerLenhard;

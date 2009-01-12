@@ -29,21 +29,21 @@ int main(int argc, char** argv)
     typedef Dune::SGrid<dim,dim> GridType;
 
     if (argc != 2 && argc != 3) {
-    	std::cout << "Usage: test_channelflow dgffilename [refinementsteps]" << std::endl;
-    	return (1);
+        std::cout << "Usage: test_channelflow dgffilename [refinementsteps]" << std::endl;
+        return (1);
     }
     int refinementSteps = 0;
     if (argc == 3) {
-    	std::string arg2(argv[2]);
-    	std::istringstream is2(arg2);
-    	is2 >> refinementSteps;
+        std::string arg2(argv[2]);
+        std::istringstream is2(arg2);
+        is2 >> refinementSteps;
     }
 
     Dune::GridPtr<GridType> gridPtr( argv[1] );
     GridType& grid = *gridPtr;
 
     if (refinementSteps)
-    	grid.globalRefine(refinementSteps);
+        grid.globalRefine(refinementSteps);
 
     DGStokesParameters parameters;
     Dune::ChannelFlowProblem<GridType, double> problem;
@@ -67,7 +67,7 @@ int main(int argc, char** argv)
     for (int i = 0; i < dim; i++)
       std::cout << dGStokes.h1errorStokesSystem(i) << ", ";
     std::cout << std::endl;
-    
+
     return 0;
   }
   catch (Dune::Exception &e){

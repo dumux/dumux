@@ -27,7 +27,7 @@ int main(int argc, char** argv)
         // load the grid from file
         GridPointer gridPtr =  GridPointer(dgfFileName);
         Dune::gridinfo(*gridPtr);
-        
+
         // instantiate and run the concrete problem
         Problem problem(&(*gridPtr), dt, tEnd);
         if (!problem.simulate())

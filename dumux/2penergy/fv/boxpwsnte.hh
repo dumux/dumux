@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_BOXPWSNTE_HH
 #define DUNE_BOXPWSNTE_HH
@@ -47,95 +47,95 @@ namespace Dune
 
 /**
  \brief Two phase model with Pw and Sn as primary unknowns
- 
+
  This implements a two phase model with Pw and Sn as primary unknowns.
  */
   template<class G, class RT>
-  class BoxPwSnTe 
+  class BoxPwSnTe
   : public LeafP1TwoPhaseModel<G, RT, TwoPhaseHeatProblem<G, RT>, BoxPwSnTeJacobian<G, RT> >
   {
-		
-		
-		 
 
- 
+
+
+
+
 
   public:
-	// define the problem type (also change the template argument above)
-	typedef TwoPhaseHeatProblem<G, RT> ProblemType;
-	
-	// define the local Jacobian (also change the template argument above)
-	typedef BoxPwSnTeJacobian<G, RT> LocalJacobian;
-	
-	typedef LeafP1TwoPhaseModel<G, RT, ProblemType, LocalJacobian> LeafP1TwoPhaseModel;
-	
+    // define the problem type (also change the template argument above)
+    typedef TwoPhaseHeatProblem<G, RT> ProblemType;
+
+    // define the local Jacobian (also change the template argument above)
+    typedef BoxPwSnTeJacobian<G, RT> LocalJacobian;
+
+    typedef LeafP1TwoPhaseModel<G, RT, ProblemType, LocalJacobian> LeafP1TwoPhaseModel;
+
     typedef typename LeafP1TwoPhaseModel::FunctionType FunctionType;
 
     typedef typename G::Traits::LeafIndexSet IS;
 
     enum{m = 3};
 
-	typedef BoxPwSnTe<G, RT> ThisType;
-		typedef typename LeafP1TwoPhaseModel::FunctionType::RepresentationType VectorType;
-		typedef typename LeafP1TwoPhaseModel::OperatorAssembler::RepresentationType MatrixType;
-		typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator; 
+    typedef BoxPwSnTe<G, RT> ThisType;
+        typedef typename LeafP1TwoPhaseModel::FunctionType::RepresentationType VectorType;
+        typedef typename LeafP1TwoPhaseModel::OperatorAssembler::RepresentationType MatrixType;
+        typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator;
 #ifdef HAVE_PARDISO
-	SeqPardiso<MatrixType,VectorType,VectorType> pardiso; 
+    SeqPardiso<MatrixType,VectorType,VectorType> pardiso;
 #endif
-	
-	BoxPwSnTe(const G& g, ProblemType& prob) 
-	: LeafP1TwoPhaseModel(g, prob)
-	{ 	}
 
-	void solve() 
-	{
-		
-		
-		 
-		
-		Operator op(*(this->A));  // make operator out of matrix
-		double red=1E-8;
+    BoxPwSnTe(const G& g, ProblemType& prob)
+    : LeafP1TwoPhaseModel(g, prob)
+    {     }
 
-#ifdef HAVE_PARDISO 
-//	SeqPardiso<MatrixType,VectorType,VectorType> ilu0(*(this->A)); 
-		pardiso.factorize(*(this->A));
-		BiCGSTABSolver<VectorType> solver(op,pardiso,red,100,2);         // an inverse operator 
-	//	SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A),1.0);// a precondtioner
-		//LoopSolver<VectorType> solver(op, ilu0, red, 10, 2);
+    void solve()
+    {
+
+
+
+
+        Operator op(*(this->A));  // make operator out of matrix
+        double red=1E-8;
+
+#ifdef HAVE_PARDISO
+//    SeqPardiso<MatrixType,VectorType,VectorType> ilu0(*(this->A));
+        pardiso.factorize(*(this->A));
+        BiCGSTABSolver<VectorType> solver(op,pardiso,red,100,2);         // an inverse operator
+    //    SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A),1.0);// a precondtioner
+        //LoopSolver<VectorType> solver(op, ilu0, red, 10, 2);
 #else
-		SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A),1.0);// a precondtioner
+        SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A),1.0);// a precondtioner
 
-		//SeqIdentity<MatrixType,VectorType,VectorType> ilu0(*(this->A));// a precondtioner
-		BiCGSTABSolver<VectorType> solver(op,ilu0,red,10000,1);         // an inverse operator 
+        //SeqIdentity<MatrixType,VectorType,VectorType> ilu0(*(this->A));// a precondtioner
+        BiCGSTABSolver<VectorType> solver(op,ilu0,red,10000,1);         // an inverse operator
 #endif
-		InverseOperatorResult r;
-		solver.apply(*(this->u), *(this->f), r);
-		
-		return;		
-	}
+        InverseOperatorResult r;
+        solver.apply(*(this->u), *(this->f), r);
 
-	void update (double& dt)
-	{
-		this->localJacobian.setDt(dt);
-		this->localJacobian.setOldSolution(this->uOldTimeStep);
-		NewtonMethod<G, ThisType> newtonMethod(this->grid, *this, 1.e-8, 1.e+5);
-		newtonMethod.execute();
-		dt = this->localJacobian.getDt();
-		double upperMass, oldUpperMass;
-		double totalMass = this->injected(upperMass, oldUpperMass);
-		std::cout << "total CO2 Mass: "<<totalMass << "\t" << std::endl;
-//		double MassFlux = 0;
-//		double upperValue[2], lowerValue[2];
-//		upperValue[0] = upperValue[1] = 0.;
-//		lowerValue[0] = lowerValue[1] = 0.;
-//		MassFlux = this->ComputeFlux(upperValue,lowerValue);
-//		std::cout << MassFlux <<" "<< upperValue[0] << " "<< upperValue[1] << " "<< 
-//		lowerValue[0] <<" "<< lowerValue[1] <<" ";
-		*(this->uOldTimeStep) = *(this->u);
+        return;
+    }
 
-		return;
-	}
- 
+    void update (double& dt)
+    {
+        this->localJacobian.setDt(dt);
+        this->localJacobian.setOldSolution(this->uOldTimeStep);
+        NewtonMethod<G, ThisType> newtonMethod(this->grid, *this, 1.e-8, 1.e+5);
+        newtonMethod.execute();
+        dt = this->localJacobian.getDt();
+        double upperMass, oldUpperMass;
+        double totalMass = this->injected(upperMass, oldUpperMass);
+        std::cout << "total CO2 Mass: "<<totalMass << "\t" << std::endl;
+//        double MassFlux = 0;
+//        double upperValue[2], lowerValue[2];
+//        upperValue[0] = upperValue[1] = 0.;
+//        lowerValue[0] = lowerValue[1] = 0.;
+//        MassFlux = this->ComputeFlux(upperValue,lowerValue);
+//        std::cout << MassFlux <<" "<< upperValue[0] << " "<< upperValue[1] << " "<<
+//        lowerValue[0] <<" "<< lowerValue[1] <<" ";
+        *(this->uOldTimeStep) = *(this->u);
+
+        return;
+    }
+
   };
 
 }

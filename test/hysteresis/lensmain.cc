@@ -43,7 +43,7 @@ int main(int argc, char** argv)
         double tEnd, dt;
         std::istringstream(argv[1]) >> tEnd;
         std::istringstream(argv[2]) >> dt;
-        
+
         // instantiate and run the concrete problem (defined in
         // lensproblem.hh)
         Dune::Lens::PwSnLensProblem<Scalar> problem(dt, tEnd);

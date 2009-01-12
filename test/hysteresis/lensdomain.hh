@@ -50,7 +50,7 @@ namespace Lens
         typedef PwSnLensDomain<ScalarT>                               ThisType;
         typedef BasicDomain<LensGrid, ScalarT>                        ParentType;
         typedef ScalarT                                               Scalar;
-        
+
     public:
         // traits for the domain
         typedef typename ParentType::DomainTraits DomainTraits;
@@ -69,7 +69,7 @@ namespace Lens
             typedef LensMediumState<VanGenuchtenState>         MediumState;
             typedef LensVertexState<MediumState>                 VertexState;
             typedef LensElementState<MediumState>                 ElementState;
-            
+
             // The parker-lenhard hysteresis model
 #if !USE_NODE_PARAMETERS
             typedef Dune::ParkerLenhard<ElementState, VanGenuchten, USE_SPLINES>     ParkerLenhard;

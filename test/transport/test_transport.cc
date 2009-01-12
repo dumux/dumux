@@ -55,7 +55,7 @@ int main(int argc, char** argv)
 
     typedef Dune::VariableClass<GridType, NumberType> VC;
 
-	double initsat=0;
+    double initsat=0;
     double initpress=0;
     Dune::FieldVector<double,dim>vel(0);
     vel[0] = 1.0/6.0*1e-6;

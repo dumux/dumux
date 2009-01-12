@@ -38,20 +38,20 @@ int main(int argc, char** argv)
       std::cout << "usage: 2p2cni basefilename tEnd dt" << std::endl;
       return 0;
     }
-    	std::string arg1(argv[2]);
-	std::istringstream is1(arg1);
-	double tEnd;
-	is1 >> tEnd;
-	std::string arg2(argv[3]);
-	std::istringstream is2(arg2);
-	double dt;
-	is2 >> dt;
+        std::string arg1(argv[2]);
+    std::istringstream is1(arg1);
+    double tEnd;
+    is1 >> tEnd;
+    std::string arg2(argv[3]);
+    std::istringstream is2(arg2);
+    double dt;
+    is2 >> dt;
 
     // create a grid object
     typedef Dune::SGrid<dim,dim> GridType;
     //typedef Dune::YaspGrid<dim,dim> GridType;
     //typedef Dune::UGGrid<dim> GridType;
-	//typedef Dune::ALUSimplexGrid<dim,dim> GridType;
+    //typedef Dune::ALUSimplexGrid<dim,dim> GridType;
 
     Dune::GridPtr<GridType> gridPointer(argv[1]);
     GridType& grid = *gridPointer;
@@ -71,7 +71,7 @@ int main(int argc, char** argv)
      Dune::CWaterAir multicomp(wPhase, nPhase);
 
      Dune::WaterAirProblem<GridType, NumberType> problem(wPhase, nPhase, soil,
-    		 materialLaw, multicomp, depthBOR);
+             materialLaw, multicomp, depthBOR);
 
      typedef Dune::VtkMultiWriter<GridType::LeafGridView> MultiWriter;
      typedef Dune::Box2P2CNI<GridType, NumberType, MultiWriter> TwoPhase;
@@ -83,7 +83,7 @@ int main(int argc, char** argv)
      timer.reset();
      MultiWriter writer("out2p2cni");
 
-	 //timeloop.execute(twoPhase);
+     //timeloop.execute(twoPhase);
      timeloop.executeMultiWriter(twoPhase, writer);
      std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
 

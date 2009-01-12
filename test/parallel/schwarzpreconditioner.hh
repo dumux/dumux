@@ -31,53 +31,53 @@ public:
   constructor gets all parameters to operate the prec.
   */
   AdditiveOverlappingSchwarzPreconditioner (S& solver_, const C& communication_)
-	: solver(solver_), communication(communication_)
+    : solver(solver_), communication(communication_)
   {
-	k = 0;
+    k = 0;
   }
 
   //! prepare: nothing to do here
-  virtual void pre (X& x, Y& b) 
+  virtual void pre (X& x, Y& b)
   {
-  	communication.copyOwnerToAll(x,x); // make dirichlet values consistent
+      communication.copyOwnerToAll(x,x); // make dirichlet values consistent
   }
 
   //! just calls the istl functions
   virtual void apply (X& v, const Y& d)
   {
-	k++;
+    k++;
 
-	// copy rhs because solver overwrites rhs argument
-	Y rhs(d);
-	communication.addOwnerOverlapToAll(rhs,rhs);
+    // copy rhs because solver overwrites rhs argument
+    Y rhs(d);
+    communication.addOwnerOverlapToAll(rhs,rhs);
 
-	// solve subdomain problem
-// 	char title[32], rowtitle[32];
-// 	sprintf(rowtitle,"[%3d]",communication.communicator().rank());
-// 	sprintf(title,"rhs before rank=%d k=%d",communication.communicator().rank(),k);
-// 	communication.communicator().barrier();
-// 	printvector(std::cout,rhs,title,rowtitle,4,9,1);
-// 	sprintf(title,"correction before rank=%d k=%d",communication.communicator().rank(),k);
-// 	communication.communicator().barrier();
-// 	printvector(std::cout,v,title,rowtitle,4,9,1);
+    // solve subdomain problem
+//     char title[32], rowtitle[32];
+//     sprintf(rowtitle,"[%3d]",communication.communicator().rank());
+//     sprintf(title,"rhs before rank=%d k=%d",communication.communicator().rank(),k);
+//     communication.communicator().barrier();
+//     printvector(std::cout,rhs,title,rowtitle,4,9,1);
+//     sprintf(title,"correction before rank=%d k=%d",communication.communicator().rank(),k);
+//     communication.communicator().barrier();
+//     printvector(std::cout,v,title,rowtitle,4,9,1);
 
-	Dune::InverseOperatorResult r;
-	solver.apply(v,rhs,r);
+    Dune::InverseOperatorResult r;
+    solver.apply(v,rhs,r);
 
-// 	sprintf(title,"correction after solve rank=%d k=%d",communication.communicator().rank(),k);
-// 	communication.communicator().barrier();
-// 	printvector(std::cout,v,title,rowtitle,4,9,1);
+//     sprintf(title,"correction after solve rank=%d k=%d",communication.communicator().rank(),k);
+//     communication.communicator().barrier();
+//     printvector(std::cout,v,title,rowtitle,4,9,1);
 
-	// add up all corrections
-	communication.addOwnerOverlapToAll(v,v);
+    // add up all corrections
+    communication.addOwnerOverlapToAll(v,v);
 
-//  	sprintf(title,"correction after communicate rank=%d k=%d",communication.communicator().rank(),k);
-// 	communication.communicator().barrier();
-// 	printvector(std::cout,v,title,rowtitle,4,9,1);
+//      sprintf(title,"correction after communicate rank=%d k=%d",communication.communicator().rank(),k);
+//     communication.communicator().barrier();
+//     printvector(std::cout,v,title,rowtitle,4,9,1);
  }
 
   // nothing to do here
-  virtual void post (X& x) 
+  virtual void post (X& x)
   {
   }
 

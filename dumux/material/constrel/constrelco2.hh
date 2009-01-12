@@ -20,8 +20,8 @@ namespace Dune
             {
                 return Dune::Co2Tables::tabulatedDensity.at(p, T);
             }
-        
-        
+
+
         // from MUFTE:
         /*******************************************************************/
         /*                                                                 */
@@ -36,27 +36,27 @@ namespace Dune
                 static const double a2 = 5.211155E-2;
                 static const double a3 = 5.347906E-2;
                 static const double a4 = -1.537102E-2;
-                
+
                 static const double d11 = 0.4071119E-2;
                 static const double d21 = 0.7198037E-4;
                 static const double d64 = 0.2411697E-16;
                 static const double d81 = 0.2971072E-22;
                 static const double d82 = -0.1627888E-22;
-                
+
                 static const double ESP = 251.196;
-                
+
                 double mu0, SigmaStar, TStar;
                 double dmu, rho;
                 double visco_CO2;
-                
+
                 if(temp < 275.) // regularisation
                 {
                     // temp = 275;
                     DUNE_THROW(Dune::NumericalProblem,
                                "ConstrelCO2: Temperature " << temp << " out of range at " << __FILE__ << ":" << __LINE__);
                 }
-                
-                
+
+
                 TStar = temp/ESP;
 
                 /* mu0: viscosity in zero-density limit */
@@ -117,10 +117,10 @@ namespace Dune
                                "ConstrelCO2: Temperature " << temp << " out of range at " << __FILE__ << ":" << __LINE__);
                 }
 */
-                
+
                 if (temp > 304.0)
                   temp = 304.0;
-    
+
                 for (int i=0; i < 9; i++)
                 {
                     if (ts[i] <= temp && temp <= ts[i+1])

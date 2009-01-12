@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_FVELEMENTGEOMETRY_HH
 #define DUNE_FVELEMENTGEOMETRY_HH
@@ -297,10 +297,10 @@ namespace Dune
 
                 FV a(p2); a -= p0;
                 FV b(p3); b -= p1;
-                
+
                 FV n;
                 crossProduct(n, a, b);
-                
+
                 a = p4; a -= p0;
 
                 return 1.0/6.0*(n*a);

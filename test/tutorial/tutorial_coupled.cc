@@ -35,7 +35,7 @@ int main(int argc, char** argv)
 
     Dune::gridinfo(grid);
 
-	// create object including the problem definition
+    // create object including the problem definition
     typedef Dune::TutorialProblemCoupled<GridType, NumberType> Problem;
     Problem problem(wettingfluid, nonwettingfluid, soil, materialLaw, L, H); /*@\label{tutorial-coupled:problem}@*/
 
@@ -51,7 +51,7 @@ int main(int argc, char** argv)
 //    const char* fileName = "tutorial_coupled"; // name of the output files
 //    int modulo = 1; // define time step interval in which output files are generated
 
-	// create TimeLoop-object
+    // create TimeLoop-object
     Dune::TimeLoop<GridType, TwoPhase, true> timeloop(tStart, tEnd, 100, "dummy", 1);
 //    Dune::TimeLoop<GridType, TwoPhase> timeloop(tStart, tEnd, 100, fileName, modulo); /*@\label{tutorial-coupled:timeloop}@*/
 

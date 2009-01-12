@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #include "config.h"
 #include "CRshapefunctions.hh"
@@ -30,7 +30,7 @@ namespace Dune {
           InitCRShapefunctions<C,T,d-1> i;
         };
     };
-  
+
     template <class C, class T>
     struct InitCRShapefunctions<T,C,0>
     {
@@ -39,7 +39,7 @@ namespace Dune {
         {
         };
     };
-  
+
     // force creation of symbols and code ...
     void init_CRshapefunctions()
     {

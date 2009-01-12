@@ -9,7 +9,7 @@
 template<class Grid>
 class DirichletBoundary
 {
- 
+
   enum{dim=Grid::dimension};
   typedef typename Grid::ctype ct;
 public:

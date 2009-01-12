@@ -81,11 +81,11 @@ namespace Dune {
                 return ParentType::newtonProceed(u);
 
                 bool baseProceed = ParentType::newtonProceed(u);
-                
+
                 // if we just switched some primary variables we
                 // proceed for at least for newton iterations if
                 // before we give up.
-                if (!baseProceed && 
+                if (!baseProceed &&
                     ParentType::model().switched() &&
                     ParentType::numSteps_ < 4 &&
                     !ParentType::newtonConverged())
@@ -126,7 +126,7 @@ namespace Dune {
                         maxSwitchVarDelta = std::max(maxSwitchVarDelta, std::abs(switchVar - 1));
                     }
                     if (pW < 0.0){
-                    	maxPwDelta = std::max(maxPwDelta, std::abs(pW/1e5));
+                        maxPwDelta = std::max(maxPwDelta, std::abs(pW/1e5));
                     }
                 }
 

@@ -35,14 +35,14 @@ int main(int argc, char** argv)
       std::cout << "usage: test_elementid basefilename tEnd dt" << std::endl;
       return 0;
     }
-    	std::string arg1(argv[2]);
-	std::istringstream is1(arg1);
-	double tEnd;
-	is1 >> tEnd;
-	std::string arg2(argv[3]);
-	std::istringstream is2(arg2);
-	double dt;
-	is2 >> dt;
+        std::string arg1(argv[2]);
+    std::istringstream is1(arg1);
+    double tEnd;
+    is1 >> tEnd;
+    std::string arg2(argv[3]);
+    std::istringstream is2(arg2);
+    double dt;
+    is2 >> dt;
 
 
 
@@ -53,7 +53,7 @@ int main(int argc, char** argv)
     //typedef Dune::YaspGrid<dim,dim> GridType;
 //    typedef Dune::UGGrid<dim> GridType;
 //      typedef Dune::ALUCubeGrid<dim,dim> GridType;
-	  typedef Dune::ALUSimplexGrid<dim,dim> GridType;
+      typedef Dune::ALUSimplexGrid<dim,dim> GridType;
     // create grid pointer, GridType is defined by gridtype.hh
     Dune::GridPtr<GridType> gridPtr( argv[1] );
 

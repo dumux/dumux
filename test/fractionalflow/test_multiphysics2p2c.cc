@@ -16,7 +16,7 @@
 #include "dumux/timedisc/expliciteulerstep.hh"
 
 //  @author Jochen Fritz
-//	last change: 27.11.2008
+//    last change: 27.11.2008
 //
 
 int main(int argc, char** argv)
@@ -50,7 +50,7 @@ int main(int argc, char** argv)
 //    std::ofstream outf("permeab.dat");
 //    for(int i = 0;i<grid.size(0); i++)
 //    {
-//    	outf<<(*(soil.permeability))[i]<<","<<std::endl;
+//        outf<<(*(soil.permeability))[i]<<","<<std::endl;
 //    }
 
     Dune::TwoPhaseRelations<GridType, NumberType> materialLaw(soil, wetmat, nonwetmat);

@@ -36,124 +36,124 @@ namespace Dune
    * and \f$\lambda\f$ the total mobility, possibly depending on the
    * saturation.
    *
-   *	Template parameters are:
+   *    Template parameters are:
    *
-   *	- Grid  a DUNE grid type
-   *	- RT    type used for return values
+   *    - Grid  a DUNE grid type
+   *    - RT    type used for return values
    */
   template<class Grid, class RT>
   class BrineCO2Problem : public TwoPTwoCNIProblem<Grid, RT> {
-	typedef typename Grid::ctype Scalar;
-	typedef typename Grid::Traits::template Codim<0>::Entity Element;
-	typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
-	enum {dim=Grid::dimension, m=3};
-	enum {wPhase = 0, nPhase = 1};
-	enum {pWIdx = 0, switchIdx = 1, teIdx = 2};
+    typedef typename Grid::ctype Scalar;
+    typedef typename Grid::Traits::template Codim<0>::Entity Element;
+    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
+    enum {dim=Grid::dimension, m=3};
+    enum {wPhase = 0, nPhase = 1};
+    enum {pWIdx = 0, switchIdx = 1, teIdx = 2};
 
 
   public:
 
-	virtual FieldVector<RT,m> q (const FieldVector<Scalar,dim>& x, const Element& e,
-					const FieldVector<Scalar,dim>& xi) const
-	{
-		FieldVector<RT,m> values(0);
+    virtual FieldVector<RT,m> q (const FieldVector<Scalar,dim>& x, const Element& e,
+                    const FieldVector<Scalar,dim>& xi) const
+    {
+        FieldVector<RT,m> values(0);
 
-		return values;
-	}
+        return values;
+    }
 
-	virtual FieldVector<BoundaryConditions::Flags, m> bctype (const FieldVector<Scalar,dim>& x, const Element& e,
-					const IntersectionIterator& intersectionIt,
-					   const FieldVector<Scalar,dim>& xi) const
-	{
-		FieldVector<BoundaryConditions::Flags, m> values(Dune::BoundaryConditions::neumann);
+    virtual FieldVector<BoundaryConditions::Flags, m> bctype (const FieldVector<Scalar,dim>& x, const Element& e,
+                    const IntersectionIterator& intersectionIt,
+                       const FieldVector<Scalar,dim>& xi) const
+    {
+        FieldVector<BoundaryConditions::Flags, m> values(Dune::BoundaryConditions::neumann);
 
-		if(x[0] >= 10-1e-2 )
-		values = Dune::BoundaryConditions::dirichlet;
-		if(x[0] < 1e-2 && x[1] < 5)
-		values[2] = Dune::BoundaryConditions::dirichlet;
+        if(x[0] >= 10-1e-2 )
+        values = Dune::BoundaryConditions::dirichlet;
+        if(x[0] < 1e-2 && x[1] < 5)
+        values[2] = Dune::BoundaryConditions::dirichlet;
 
-		return values;
-	}
+        return values;
+    }
 
-	virtual void dirichletIndex(const FieldVector<Scalar,dim>& x, const Element& e,
-			const IntersectionIterator& intersectionIt,
-			const FieldVector<Scalar,dim>& xi, FieldVector<int,m>& dirichletIndex) const
-	{
-		for (int i = 0; i < m; i++)
-			dirichletIndex[i]=i;
-		return;
-	}
+    virtual void dirichletIndex(const FieldVector<Scalar,dim>& x, const Element& e,
+            const IntersectionIterator& intersectionIt,
+            const FieldVector<Scalar,dim>& xi, FieldVector<int,m>& dirichletIndex) const
+    {
+        for (int i = 0; i < m; i++)
+            dirichletIndex[i]=i;
+        return;
+    }
 
-	virtual FieldVector<RT,m> g (const FieldVector<Scalar,dim>& x, const Element& e,
-				const IntersectionIterator& intersectionIt,
-				  const FieldVector<Scalar,dim>& xi) const
-	{
-		FieldVector<RT,m> values(0);
+    virtual FieldVector<RT,m> g (const FieldVector<Scalar,dim>& x, const Element& e,
+                const IntersectionIterator& intersectionIt,
+                  const FieldVector<Scalar,dim>& xi) const
+    {
+        FieldVector<RT,m> values(0);
 
-		values[0] = 1.013e5 + (depthBOR_ - x[1]) * 1045 * 9.81;
-		values[1] = 0.0;
-		values[2] = 283.15 + (depthBOR_ - x[1])*0.03;
+        values[0] = 1.013e5 + (depthBOR_ - x[1]) * 1045 * 9.81;
+        values[1] = 0.0;
+        values[2] = 283.15 + (depthBOR_ - x[1])*0.03;
 
-		return values;
-	}
+        return values;
+    }
 
-	virtual FieldVector<RT,m> J (const FieldVector<Scalar,dim>& x, const Element& e,
-				const IntersectionIterator& intersectionIt, const FieldVector<Scalar,dim>& xi) const
-	{
-		FieldVector<RT,m> values(0);
-		if(x[0] <= 1.e-2 && x[1] <= 5.)
-		{
-			values[0] = 0.0;//-4.046e-5;
-			values[1] = -0.0002;
-		}
-		return values;
-	}
+    virtual FieldVector<RT,m> J (const FieldVector<Scalar,dim>& x, const Element& e,
+                const IntersectionIterator& intersectionIt, const FieldVector<Scalar,dim>& xi) const
+    {
+        FieldVector<RT,m> values(0);
+        if(x[0] <= 1.e-2 && x[1] <= 5.)
+        {
+            values[0] = 0.0;//-4.046e-5;
+            values[1] = -0.0002;
+        }
+        return values;
+    }
 
-	// Initial Conditions for global vector x, element e and local vector xi
-	virtual FieldVector<RT,m> initial (const FieldVector<Scalar,dim>& x, const Element& e,
-				  const FieldVector<Scalar,dim>& xi) const
-	{
-		FieldVector<RT,m> values(0);
-		values[0] = 1.013e5 + (depthBOR_ - x[1]) * 1045 * 9.81;
-		values[1] = 0.00;
-		values[2] = 283.15 + (depthBOR_ - x[1])*0.03;
-
-
-		return values;
-	}
-
-	int initialPhaseState (const FieldVector<Scalar,dim>& x, const Element& e,
-				  const FieldVector<Scalar,dim>& xi) const
-	{
-		enum {gasPhase = 0, waterPhase = 1, bothPhases = 2}; // Phase states
-		int state;
-
-		state = waterPhase;
-
-		return state;
-	}
-
-	FieldVector<RT,dim> gravity () const
-	{
-		FieldVector<RT,dim> values(0);
-
-		values[1] = -9.81;
-
-		return values;
-	}
+    // Initial Conditions for global vector x, element e and local vector xi
+    virtual FieldVector<RT,m> initial (const FieldVector<Scalar,dim>& x, const Element& e,
+                  const FieldVector<Scalar,dim>& xi) const
+    {
+        FieldVector<RT,m> values(0);
+        values[0] = 1.013e5 + (depthBOR_ - x[1]) * 1045 * 9.81;
+        values[1] = 0.00;
+        values[2] = 283.15 + (depthBOR_ - x[1])*0.03;
 
 
-	BrineCO2Problem(Liquid_GL& liq, Gas_GL& gas, Matrix2p<Grid, RT>& soil,
-			TwoPhaseRelations<Grid, RT>& law = *(new TwoPhaseRelations<Grid, RT>),
-			MultiComp& multicomp = *(new CWaterAir), RT depthBOR = 0.0)
-	: TwoPTwoCNIProblem<Grid, RT>(liq, gas, soil, multicomp, law)
-	{
-		depthBOR_ = depthBOR;
-	}
+        return values;
+    }
 
-	private:
-		RT depthBOR_;
-		RT soilDens_, soilHeatCp_, soilLDry_, soilLSw_;
+    int initialPhaseState (const FieldVector<Scalar,dim>& x, const Element& e,
+                  const FieldVector<Scalar,dim>& xi) const
+    {
+        enum {gasPhase = 0, waterPhase = 1, bothPhases = 2}; // Phase states
+        int state;
+
+        state = waterPhase;
+
+        return state;
+    }
+
+    FieldVector<RT,dim> gravity () const
+    {
+        FieldVector<RT,dim> values(0);
+
+        values[1] = -9.81;
+
+        return values;
+    }
+
+
+    BrineCO2Problem(Liquid_GL& liq, Gas_GL& gas, Matrix2p<Grid, RT>& soil,
+            TwoPhaseRelations<Grid, RT>& law = *(new TwoPhaseRelations<Grid, RT>),
+            MultiComp& multicomp = *(new CWaterAir), RT depthBOR = 0.0)
+    : TwoPTwoCNIProblem<Grid, RT>(liq, gas, soil, multicomp, law)
+    {
+        depthBOR_ = depthBOR;
+    }
+
+    private:
+        RT depthBOR_;
+        RT soilDens_, soilHeatCp_, soilLDry_, soilLSw_;
   };
 
 }

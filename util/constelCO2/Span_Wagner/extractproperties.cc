@@ -20,7 +20,7 @@
 
 /* prototypes of fortran routines */
 extern "C" double db_(double* Temp, double* pg_MPa);
-extern "C" double hb_ (double* Temp, double* rho); 
+extern "C" double hb_ (double* Temp, double* rho);
 
 // C prototype
 extern "C" double SolCO2inWater(double Temp, double pg, double X_NaCl);
@@ -67,7 +67,7 @@ struct Table : public std::vector<std::vector<TableEntry> >
 
     double transitionNorth;
     double transitionSouth;
-    
+
     double minT;
     double maxT;
     int    numT;
@@ -83,10 +83,10 @@ struct Table : public std::vector<std::vector<TableEntry> >
             if (argc%6 != 0) {
                 usage();
             }
-            
+
             hiresIndex = hiresIdx;
             hiresTable = NULL;
-            
+
             minT = strtod(argv[0], NULL);
             maxT = strtod(argv[1], NULL);
             numT = strtol(argv[2], NULL, 10);
@@ -98,7 +98,7 @@ struct Table : public std::vector<std::vector<TableEntry> >
             transitionSouth = 0.0;
             transitionWest = 0.0;
             transitionEast = 0.0;
-            
+
             resize(numP);
             for (int i = 0; i < size(); ++i) {
                 operator[](i).resize(numT);
@@ -115,7 +115,7 @@ struct Table : public std::vector<std::vector<TableEntry> >
         {
             if (!hiresTable)
                 return;
-            
+
             // round to lower indices for the minumum pressure and
             // temperature.
             int minPIdx = (int) trunc((numP-1)*(hiresTable->minP - minP)/(maxP - minP));
@@ -141,7 +141,7 @@ struct Table : public std::vector<std::vector<TableEntry> >
             assert(0 <= minTIdx);
             assert(minTIdx < maxTIdx);
             assert(maxTIdx < numT);
-            
+
 
             if (minPIdx > 0) {
                 hiresTable->transitionWest = 1e6*0.005*(hiresTable->maxP - hiresTable->minP);
@@ -155,40 +155,40 @@ struct Table : public std::vector<std::vector<TableEntry> >
             if (maxTIdx < numT - 1) {
                 hiresTable->transitionSouth = 0.005*(hiresTable->maxT - hiresTable->minT);
             }
-            
+
             // if we've got nested hires ranges, do the same
             // recursively
             hiresTable->adjustHiresRange();
         };
 
-    
+
     // fill the table with the values of the material law
     void calculate()
         {
             std::cerr << "Calculating table @ hires index #" << hiresIndex << "\n";
             for (int i = 0; i < numP; ++i)
-            { 
+            {
                 double pg_MPa = minP + ((double) i)/(numP - 1)*(maxP - minP);
                 std::cerr << "  p=" << pg_MPa << " (" << (int) 100*(pg_MPa - minP)/(maxP - minP) << "%)                     \n";
-                
+
                 for (int j = 0; j < numT; ++j)
-                {	
+                {
                     double Temp = minT + ((double) j)/(numT - 1)*(maxT - minT);
-                    
+
                     // call the fortran code from Span and Wagner to calculate
                     // the density and the enthalpy
                     double rho  = db_(&Temp, &pg_MPa);
-                    double enth = (2.190963e+01 +  hb_(&Temp, &rho))*1E3 ; 
-                    
+                    double enth = (2.190963e+01 +  hb_(&Temp, &rho))*1E3 ;
+
                     // calculate the solubility of CO2 in water
                     double pg_Pa = pg_MPa * 1.0E6;
                     double solu = SolCO2inWater(Temp, pg_Pa, 0.048);
                     //double solu = SolCO2inWater(Temp, pg_Pa, 0.1);
-                    
+
                     operator[](i)[j].density = rho;
                     operator[](i)[j].enthalpy = enth;
                     operator[](i)[j].solubility = solu;
-                    
+
                     std::cerr << "  T=" << Temp << " (" << (int) 100*(Temp - minT)/(maxT - minT) << "%)                 \r";
                     std::cerr.flush();
                 }
@@ -213,12 +213,12 @@ struct Table : public std::vector<std::vector<TableEntry> >
         {
             if (hiresTable)
                 hiresTable->printAll();
-            
+
             print(Density);
             print(Enthalpy);
             print(Solubility);
         };
-    
+
     void print(What what)
         {
             std::string fieldName = "";
@@ -234,38 +234,38 @@ struct Table : public std::vector<std::vector<TableEntry> >
 
             std::string FieldName = fieldName;
             FieldName[0] = toupper(fieldName[0]);
-            
+
             std::cout.setf(std::ios::scientific);
             std::cout.precision(15);
 
-            std::cout << 
+            std::cout <<
                 "struct " << name(FieldName) << "Traits {\n"
                 "    typedef double Scalar;\n"
-                
+
                 "    static const char  *name;\n"
                 "    static const int    numX = " << numP << ";\n"
                 "    static const Scalar xMin = " << minP*1e6 << ";\n"
                 "    static const Scalar xMax = " << maxP*1e6 << ";\n"
-                
+
                 "    static const int    numY = " << numT << ";\n"
                 "    static const Scalar yMin = " << minT << ";\n"
                 "    static const Scalar yMax = " << maxT << ";\n";
 
             if (hiresIndex > 0) {
-                std::cout << 
+                std::cout <<
                     "    static const Scalar transitionNorth = " << transitionNorth << ";\n"
                     "    static const Scalar transitionSouth = " << transitionSouth << ";\n"
                     "    static const Scalar transitionWest = " << transitionWest << ";\n"
                     "    static const Scalar transitionEast = " << transitionEast << ";\n";
             }
-                                
-            
-            std::string HiResName = "HiResDummy"; 
+
+
+            std::string HiResName = "HiResDummy";
             if (hiresTable) {
                 HiResName = hiresTable->name(FieldName);
             }
 
-            std::cout << 
+            std::cout <<
                 "    static const " << HiResName << " hires;\n"
                 "    static const Scalar vals[numX][numY];\n"
                 "};\n";
@@ -282,7 +282,7 @@ struct Table : public std::vector<std::vector<TableEntry> >
                     if (j % 5 == 0) {
                         std::cout << "\n        ";
                     }
-                    
+
                     double val = 0;
                     switch (what)
                     {
@@ -294,7 +294,7 @@ struct Table : public std::vector<std::vector<TableEntry> >
                         val = (*this)[i][j].solubility; break;
                     };
                     std::cout << std::setw(25) << val;
-                    
+
                     if (j != operator[](i).size() - 1)
                         std::cout << ", ";
                 }
@@ -323,13 +323,13 @@ struct Table : public std::vector<std::vector<TableEntry> >
 int main(int argc, const char **argv)
 {
     progname = argv[0];
-  
+
     if (argc < 7) {
         usage();
     }
-    
+
     const double eps = 1e-12;
-    
+
     Table table(argc - 1, argv + 1);
     table.adjustHiresRange();
 
@@ -338,8 +338,8 @@ int main(int argc, const char **argv)
         cmd += " ";
         cmd += argv[i];
     }
-    
-	printf("/* Tables for CO2 fluid properties calculated according to Span and\n"
+
+    printf("/* Tables for CO2 fluid properties calculated according to Span and\n"
            " * Wagner (1996).\n"
            " *\n"
            " * THIS AN AUTO-GENERATED FILE! DO NOT EDIT IT!\n"
@@ -384,14 +384,14 @@ int main(int argc, const char **argv)
            table.minP, table.maxP, table.numP,
 
            cmd.c_str());
-    
+
     table.calculate();
-    
-	// print the results to the standard output
+
+    // print the results to the standard output
     table.printAll();
-    
+
 /*
-    std::cout << 
+    std::cout <<
         "typedef TabulatedMaterial2<double, densityNumP, densityNumT> DensityTable;\n"
         "static const DensityTable tabulatedDensity(densityMinP, densityMaxP,\n"
         "                                           densityMinT, densityMaxT,\n"

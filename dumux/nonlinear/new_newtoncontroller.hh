@@ -68,7 +68,7 @@ namespace Dune
                 tolerance_ = tolerance;
                 targetSteps_ = targetSteps;
                 maxSteps_ = maxSteps;
-                
+
                 curPhysicalness_ = 0;
                 maxPhysicalness_ = 0;
             };
@@ -189,9 +189,9 @@ namespace Dune
 #endif
                 Dune::InverseOperatorResult result;
                 solver.apply(x, b, result);
-                
+
                 if (!result.converged)
-                    DUNE_THROW(Dune::NumericalProblem, 
+                    DUNE_THROW(Dune::NumericalProblem,
                                "Solving the linear system of equations did not converge.");
             };
 
@@ -233,12 +233,12 @@ namespace Dune
                     return oldTimeStep*(1 + percent/1.2);
                 }
             }
-        
+
         /*!
          * \brief Returns a reference to the current newton method
          *        which is controlled by this controller.
          */
-        NewtonMethod &method() 
+        NewtonMethod &method()
             { return *method_; }
 
         /*!
@@ -247,7 +247,7 @@ namespace Dune
          */
         const NewtonMethod &method() const
             { return *method_; }
-        
+
         /*!
          * \brief Returns a reference to the current numeric model.
          */

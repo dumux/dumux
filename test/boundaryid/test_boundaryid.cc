@@ -31,19 +31,19 @@ int main (int argc , char **argv) try
       std::cout << "usage: test_boundaryid tEnd dt" << std::endl;
       return 0;
     }
-    	std::string arg1(argv[1]);
-	std::istringstream is1(arg1);
-	double tEnd;
-	is1 >> tEnd;
-	std::string arg2(argv[2]);
-	std::istringstream is2(arg2);
-	double dt;
-	is2 >> dt;
+        std::string arg1(argv[1]);
+    std::istringstream is1(arg1);
+    double tEnd;
+    is1 >> tEnd;
+    std::string arg2(argv[2]);
+    std::istringstream is2(arg2);
+    double dt;
+    is2 >> dt;
 
 
     // create a grid object
-	//typedef Dune::AlbertaGrid<dim,dim> GridType;
-	typedef Dune::ALUSimplexGrid<dim,dim> GridType;
+    //typedef Dune::AlbertaGrid<dim,dim> GridType;
+    typedef Dune::ALUSimplexGrid<dim,dim> GridType;
 
     typedef Dune::BoxPwSn<GridType, NumberType> TwoPhase;
     DNAPL dnapl;
@@ -57,7 +57,7 @@ int main (int argc , char **argv) try
     GridType& gridWithID = *gridPtrWithID;
 
     Dune::LensProblemWithID<GridType, NumberType> problemWithID(law, outerLowerLeft, outerUpperRight,
-    		innerLowerLeft, innerUpperRight);
+            innerLowerLeft, innerUpperRight);
 
     TwoPhase twoPhaseWithID(gridWithID, problemWithID);
 
@@ -72,7 +72,7 @@ int main (int argc , char **argv) try
     GridType& grid = *gridPtr;
 
     Dune::LensProblem<GridType, NumberType> problem(law, outerLowerLeft, outerUpperRight,
-    		innerLowerLeft, innerUpperRight);
+            innerLowerLeft, innerUpperRight);
 
     TwoPhase twoPhase(grid, problem);
 

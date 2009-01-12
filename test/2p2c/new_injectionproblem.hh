@@ -103,7 +103,7 @@ namespace Dune
          * Best thing will be to define heatCap = (specific heatCapacity of material) * density * porosity*/
         double heatCap(const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
             {
-                return 	790 /* spec. heat cap. of granite */
+                return     790 /* spec. heat cap. of granite */
                     * 2700 /* density of granite */
                     * porosity(x, e, xi);
             }
@@ -143,9 +143,9 @@ namespace Dune
      * at the right boundary and migrates upwards.
      * Problem was set up using the rect2d.dgf grid.
      *
-     *	Template parameters are:
+     *    Template parameters are:
      *
-     *	- ScalarT  Floating point type used for scalars
+     *    - ScalarT  Floating point type used for scalars
      */
     template<class ScalarT>
     class NewInjectionProblem : public BasicDomain<Dune::SGrid<2,2>,
@@ -346,14 +346,14 @@ namespace Dune
 
         //! properties of the wetting (liquid) phase
         /*! properties of the wetting (liquid) phase
-          \return	wetting phase
+          \return    wetting phase
         */
         const WettingPhase &wettingPhase() const
             { return wPhase_; }
 
         //! properties of the nonwetting (liquid) phase
         /*! properties of the nonwetting (liquid) phase
-          \return	nonwetting phase
+          \return    nonwetting phase
         */
         const NonwettingPhase &nonwettingPhase() const
             { return nPhase_; }
@@ -361,14 +361,14 @@ namespace Dune
 
         //! properties of the soil
         /*! properties of the soil
-          \return	soil
+          \return    soil
         */
         const Soil &soil() const
             {  return soil_; }
 
         //! properties of the soil
         /*! properties of the soil
-          \return	soil
+          \return    soil
         */
         Soil &soil()
             {  return soil_; }
@@ -376,7 +376,7 @@ namespace Dune
         //! object for multicomponent calculations
         /*! object for multicomponent calculations including mass fractions,
          * mole fractions and some basic laws
-         \return	multicomponent object
+         \return    multicomponent object
         */
         MultiComp &multicomp ()
 //        const MultiComp &multicomp () const
@@ -386,7 +386,7 @@ namespace Dune
 
         //! object for definition of material law
         /*! object for definition of material law (e.g. Brooks-Corey, Van Genuchten, ...)
-          \return	material law
+          \return    material law
         */
         MaterialLaw &materialLaw ()
 //        const MaterialLaw &materialLaw () const
@@ -405,8 +405,8 @@ namespace Dune
                 else
                     values = BoundaryConditions::neumann;
 
-//		if (globalPos[1] < eps_)
-//			values = BoundaryConditions::dirichlet;
+//        if (globalPos[1] < eps_)
+//            values = BoundaryConditions::dirichlet;
             }
 
         /////////////////////////////
@@ -471,14 +471,14 @@ namespace Dune
 
 //                std::cout << "element " << ParentType::elementIdx(element) << " position of vert " << globalVertexIdx << ": " << globalPos << " -> " << values << "\n";
 
-//		if ((globalPos[0] > 60.0 - eps_) && (globalPos[1] < 10 && globalPos[1] > 5))
-//			values[switchIdx] = 0.05;
+//        if ((globalPos[0] > 60.0 - eps_) && (globalPos[1] < 10 && globalPos[1] > 5))
+//            values[switchIdx] = 0.05;
 
-//			if (globalPos[1] >= innerLowerLeft_[1] && globalPos[1] <= innerUpperRight_[1]
-//			 && globalPos[0] >= innerLowerLeft_[0])
-//				values[switchIdx] = 0.2;
-//			else
-//				values[switchIdx] = 1e-6;
+//            if (globalPos[1] >= innerLowerLeft_[1] && globalPos[1] <= innerUpperRight_[1]
+//             && globalPos[0] >= innerLowerLeft_[0])
+//                values[switchIdx] = 0.2;
+//            else
+//                values[switchIdx] = 1e-6;
             }
 
 
@@ -508,15 +508,15 @@ namespace Dune
             {
                 int state;
 
-//		state = BothPhases;
+//        state = BothPhases;
                 state = WPhaseOnly;
 
-//		if ((globalPos[0] > 60.0 - eps_) && (globalPos[1] < 10 && globalPos[1] > 5))
-//			state = bothPhases;
-//			if (globalPos[1] >= innerLowerLeft_[1] && globalPos[1] <= innerUpperRight_[1]
-//			      && globalPos[0] >= innerLowerLeft_[0])
-//				state = 2;
-//			else
+//        if ((globalPos[0] > 60.0 - eps_) && (globalPos[1] < 10 && globalPos[1] > 5))
+//            state = bothPhases;
+//            if (globalPos[1] >= innerLowerLeft_[1] && globalPos[1] <= innerUpperRight_[1]
+//                  && globalPos[0] >= innerLowerLeft_[0])
+//                state = 2;
+//            else
 
                 return state;
             }
@@ -560,7 +560,7 @@ namespace Dune
         Scalar height_;
         Scalar depthBOR_;
         Scalar eps_;
-//	  Scalar densityW_, densityN_;
+//      Scalar densityW_, densityN_;
         GlobalPosition  gravity_;
 
         // fluids and material properties

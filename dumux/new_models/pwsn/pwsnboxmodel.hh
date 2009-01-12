@@ -28,7 +28,7 @@
 namespace Dune
 {
     ///////////////////////////////////////////////////////////////////////////
-    // PwSn traits (central place for names and indices required by the 
+    // PwSn traits (central place for names and indices required by the
     // PwSnBoxJacobian and PwSnBoxModel)
     ///////////////////////////////////////////////////////////////////////////
     /*!
@@ -42,7 +42,7 @@ namespace Dune
         };
         enum {
             pWIdx = 0,  //!< Idx for the wetting phase pressure in a field vector
-            snIdx = 1   //!< Idx for the non-wetting phase saturation in a field vector        
+            snIdx = 1   //!< Idx for the non-wetting phase saturation in a field vector
         };
     };
 
@@ -75,7 +75,7 @@ namespace Dune
             pWIdx          = PwSnTraits::pWIdx,
             snIdx          = PwSnTraits::snIdx
         };
-        
+
         typedef typename DomTraits::Scalar              Scalar;
         typedef typename DomTraits::CoordScalar         CoordScalar;
         typedef typename DomTraits::Grid                Grid;
@@ -99,10 +99,10 @@ namespace Dune
             Scalar Sw;
             Scalar pC;
             Scalar pN;
-            
+
             SolutionVector mobility;  //FieldVector with the number of phases
         };
-        
+
         /*!
          * \brief Cached data for the each vert of the element.
          */
@@ -110,16 +110,16 @@ namespace Dune
         {
             VariableVertexData  vertex[BoxTraits::ShapeFunctionSetContainer::maxsize];
         };
-        
+
     public:
-        PwSnBoxJacobian(ProblemT &problem) 
+        PwSnBoxJacobian(ProblemT &problem)
             : ParentType(problem)
             {};
 
         /*!
          * \brief Set the current grid element.
          */
-        void setCurrentElement(const Element &element) 
+        void setCurrentElement(const Element &element)
             {
                 if (ParentType::setCurrentElement_(element)) {
                     curElementPorosity_ = ParentType::problem_.porosity(ParentType::curElement_());
@@ -133,23 +133,23 @@ namespace Dune
         void setParams(const Element &element, LocalFunction &curSol, LocalFunction &prevSol)
             {
                 setCurrentElement(element);
-                
+
                 curSol_ = &curSol;
                 updateElementData_(curElemDat_, *curSol_);
                 curSolDeflected_ = false;
-                
+
                 prevSol_ = &prevSol;
                 updateElementData_(prevElemDat_, *prevSol_);
             };
-        
+
         /*!
          * \brief Vary a single component of a single vert of the
          *        local solution for the current element.
          *
          * This method is a optimization, since if varying a single
-         * component at a degree of freedom not the whole element cache 
+         * component at a degree of freedom not the whole element cache
          * needs to be recalculated. (Updating the element cache is very
-         * expensive since material laws need to be evaluated.) 
+         * expensive since material laws need to be evaluated.)
          */
         void deflectCurSolution(int vert, int component, Scalar value)
             {
@@ -160,14 +160,14 @@ namespace Dune
                     curSolOrigValue_ = (*curSol_)[vert][component];
                     curSolOrigVarData_ = curElemDat_.vertex[vert];
                 }
-                
+
                 (*curSol_)[vert][component] = value;
                 partialElementDataUpdate_(curElemDat_,
                                         ParentType::problem_.elementIdx(ParentType::curElement_()),
                                         *curSol_,
                                         vert,
-                                        ParentType::problem_.vertIdx(ParentType::curElement_(), 
-                                                                         vert)); 
+                                        ParentType::problem_.vertIdx(ParentType::curElement_(),
+                                                                         vert));
 
             }
 
@@ -184,13 +184,13 @@ namespace Dune
                 (*curSol_)[vert][component] = curSolOrigValue_;
                 curElemDat_.vertex[vert] = curSolOrigVarData_;
             };
-        
+
         /*!
          * \brief Evaluate the rate of change of all conservation
          *        quantites (e.g. phase mass) within a sub control
          *        volume of a finite volume element in the pw-Sn
          *        formulation.
-         * 
+         *
          * This function should not include the source and sink terms.
          */
         void computeStorage(SolutionVector &result, int scvId, bool usePrevSol) const
@@ -208,7 +208,7 @@ namespace Dune
 
             }
 
-        
+
         /*!
          * \brief Evaluates the mass flux over a face of a subcontrol
          *        volume.
@@ -224,10 +224,10 @@ namespace Dune
                 const int j = face.j;
 
                 LocalPosition Kij(0);
-                
+
                 // Kij = K*normal
                 ParentType::problem_.applyPermeabilityTensor(Kij,
-                                                             ParentType::curElement_(), 
+                                                             ParentType::curElement_(),
                                                              face.normal);
 
                 for (int phase = 0; phase < numEq; phase++) {
@@ -248,7 +248,7 @@ namespace Dune
                     LocalPosition gravity = ParentType::problem_.gravity();
                     gravity *= phaseDensity;
                     pGrad   -= gravity;
-                    
+
                     // calculate the flux using upwind
                     Scalar outward = pGrad*Kij;
                     if (outward < 0)
@@ -294,7 +294,7 @@ namespace Dune
                 }
             }
 
-        
+
         void partialElementDataUpdate_(ElementData           &dest,
                                      int                  elementIdx,
                                      const LocalFunction &sol,
@@ -339,7 +339,7 @@ namespace Dune
         LocalFunction  *prevSol_;
         ElementData       prevElemDat_;
     };
-    
+
 
     ///////////////////////////////////////////////////////////////////////////
     // PwSnBoxModel (The actual numerical model.)
@@ -350,17 +350,17 @@ namespace Dune
     template<class ProblemT>
     class PwSnBoxModel : public BoxScheme< // The implementation of the model
                                            PwSnBoxModel<ProblemT>,
-        
+
                                            // The Traits for the BOX method
                                            P1BoxTraits<typename ProblemT::DomainTraits::Scalar,
                                                        typename ProblemT::DomainTraits::Grid,
                                                        PwSnTraits::numEq>,
 
                                            // The actual problem we would like to solve
-                                           ProblemT, 
-        
+                                           ProblemT,
+
                                            // The local jacobian operator
-                                           PwSnBoxJacobian<ProblemT, 
+                                           PwSnBoxJacobian<ProblemT,
                                                            P1BoxTraits<typename ProblemT::DomainTraits::Scalar,
                                                                        typename ProblemT::DomainTraits::Grid,
                                                                        PwSnTraits::numEq>,
@@ -369,18 +369,18 @@ namespace Dune
         typedef typename ProblemT::DomainTraits::Grid   Grid;
         typedef typename ProblemT::DomainTraits::Scalar Scalar;
         typedef PwSnBoxModel<ProblemT>                  ThisType;
-        
+
     public:
         typedef P1BoxTraits<Scalar, Grid, PwSnTraits::numEq> BoxTraits;
         typedef Dune::PwSnTraits                                   PwSnTraits;
-        
+
     private:
         typedef PwSnBoxJacobian<ProblemT, BoxTraits, PwSnTraits>  PwSnLocalJacobian;
         typedef BoxScheme<ThisType,
                           BoxTraits,
-                          ProblemT, 
+                          ProblemT,
                           PwSnLocalJacobian>  ParentType;
-        
+
     public:
         typedef NewNewtonMethod<ThisType> NewtonMethod;
 

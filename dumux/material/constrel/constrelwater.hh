@@ -8,19 +8,19 @@
 namespace Dune {
 
 /************************************************************************/
-/*																		*/
-/*	Calculation of the mass density of pure water                   	*/
-/*																		*/
-/*	after IAPWS 1997 (only region 1)									*/
-/*																		*/
-/*	validity: temperature: 273.15 K <= temperature <= 1073.15 K			*/
-/*		  pressure : p <= 100 MPa (1000 bar, 1.0E8Pa)					*/
-/*																		*/
-/*	(IAPWS: The international Association for the properties			*/
-/*		of water and steam)												*/
-/*																		*/
-/*	(http://www.iapws.org)												*/
-/*																		*/
+/*                                                                        */
+/*    Calculation of the mass density of pure water                       */
+/*                                                                        */
+/*    after IAPWS 1997 (only region 1)                                    */
+/*                                                                        */
+/*    validity: temperature: 273.15 K <= temperature <= 1073.15 K            */
+/*          pressure : p <= 100 MPa (1000 bar, 1.0E8Pa)                    */
+/*                                                                        */
+/*    (IAPWS: The international Association for the properties            */
+/*        of water and steam)                                                */
+/*                                                                        */
+/*    (http://www.iapws.org)                                                */
+/*                                                                        */
 /************************************************************************/
 
 static const double I[35] = {
@@ -88,13 +88,13 @@ class ConstrelWater
 {
 public:
 
-	double mass_density_water_IAPWS (double temperature, double pw) const
+    double mass_density_water_IAPWS (double temperature, double pw) const
         {
             double gam_pi;
             double pi, p_star;
             double R;
-            double v;	/* specific volume */
-            double rho;	/* mass density */
+            double v;    /* specific volume */
+            double rho;    /* mass density */
 
 
             /* Regularisierung */
@@ -113,12 +113,12 @@ public:
                   if (pw > 1.0E8) pw = 1.0E8;
                 */
 
-                R = 461.526;	   /* [J/kg K] specific gas constant for ordinary water */
-                p_star = 16.53E6;	/* [Pa] */
+                R = 461.526;       /* [J/kg K] specific gas constant for ordinary water */
+                p_star = 16.53E6;    /* [Pa] */
                 pi = pw / p_star;
                 gam_pi = gamma_pi(pi, temperature);
                 v = pi * gam_pi * R * temperature / pw;
-                rho = 1 / v;	/* kg / m^3 */
+                rho = 1 / v;    /* kg / m^3 */
 
                 return(rho);  /* unit: [kg/m^3] */
         }
@@ -146,25 +146,25 @@ public:
 
 
     /************************************************************************/
-    /*									*/
-    /*	Calculation of the enthalpy of pure water                       */
-    /*									*/
-    /*	after IAPWS 1997 (only region 1)				*/
-    /*									*/
-    /*	validity: temperature: 273.15 K <= temperature <= 1073.15 K		*/
-    /*		  pressure : p <= 100 MPa (1000 bar, 1.0E8Pa)		*/
-    /*									*/
-    /*	(IAPWS: The international Association for the properties	*/
-    /*		of water and steam)					*/
-    /*									*/
-    /*	(http://www.iapws.org)						*/
-    /*									*/
+    /*                                    */
+    /*    Calculation of the enthalpy of pure water                       */
+    /*                                    */
+    /*    after IAPWS 1997 (only region 1)                */
+    /*                                    */
+    /*    validity: temperature: 273.15 K <= temperature <= 1073.15 K        */
+    /*          pressure : p <= 100 MPa (1000 bar, 1.0E8Pa)        */
+    /*                                    */
+    /*    (IAPWS: The international Association for the properties    */
+    /*        of water and steam)                    */
+    /*                                    */
+    /*    (http://www.iapws.org)                        */
+    /*                                    */
     /************************************************************************/
 
     double enthalpy_water (double temperature, double pw) const
         {
             double tau;
-            const double T_star = 1386;	/* [K] */
+            const double T_star = 1386;    /* [K] */
             const double R = 461.526;/* [J/kg K] specific gas constant for ordinary water */
 
             /* Regularisierung */
@@ -182,8 +182,8 @@ public:
           if (pw > 1.0E8) pw = 1.0E8;
 */
 
-                tau = T_star / temperature;	/* reduced temperature */
-                return tau * gamma_tau(tau, pw) * R * temperature;	/* J/kg */
+                tau = T_star / temperature;    /* reduced temperature */
+                return tau * gamma_tau(tau, pw) * R * temperature;    /* J/kg */
         }
 
 
@@ -196,9 +196,9 @@ public:
                 DUNE_THROW(Dune::NumericalProblem,
                            "ConstrelWater: pressure " << pw << " out of range at " << __FILE__ << ":" << __LINE__);
             }
-/*	        if (pw < 1.0)
+/*            if (pw < 1.0)
             pw = 1.0;
-	        if (pw > 1.0E8)
+            if (pw > 1.0E8)
             pw = 1.0E8;
 */
 
@@ -348,7 +348,7 @@ public:
             M_CO2 = 0.044;
             M_H2O = 0.018;
 
-            tempC = temperature - 273.15;		/* tempC : temperature in °C */
+            tempC = temperature - 273.15;        /* tempC : temperature in °C */
 
             rho_pure = mass_density_water_Batzle (temperature, pw);
 
@@ -377,7 +377,7 @@ public:
             l[2] = 0.574;
             l[3] = 0.584;
             l[4] = 0.597;
-            l[5] = 0.618;	/*W/mK*/
+            l[5] = 0.618;    /*W/mK*/
             l[6] = 0.627;
             l[7] = 0.645;
             l[8] = 0.651;
@@ -427,16 +427,16 @@ public:
 
             /*wet*/
             /*Hashin-Shtrikman bounds for water and solid*/ /*Hartmann et al 2004*/
-            /*HS-*/	llow = l_w + ( (1-phi) / (  ( 1/(l_s-l_w) )+(phi/(3*l_w))  ) );
-            /*HS+*/	lhigh = l_s + ( phi / (  ( 1/(l_w-l_s) )+(phi/(3*l_s))  ) );
+            /*HS-*/    llow = l_w + ( (1-phi) / (  ( 1/(l_s-l_w) )+(phi/(3*l_w))  ) );
+            /*HS+*/    lhigh = l_s + ( phi / (  ( 1/(l_w-l_s) )+(phi/(3*l_s))  ) );
 
             l_sat = 2 / ( 1/llow + 1/lhigh); /*harmonic averaging of the two
                                                bounds*/
 
             /*dry*/
             /*Hashin-Shtrikman bounds for gas and solid*/
-            /*HS-*/	llow = l_g + ( (1-phi) / (  ( 1/(l_s-l_g) )+(phi/(3*l_g))  ) );
-            /*HS+*/	lhigh = l_s + ( phi / (  ( 1/(l_g-l_s) )+(phi/(3*l_s))  ) );
+            /*HS-*/    llow = l_g + ( (1-phi) / (  ( 1/(l_s-l_g) )+(phi/(3*l_g))  ) );
+            /*HS+*/    lhigh = l_s + ( phi / (  ( 1/(l_g-l_s) )+(phi/(3*l_s))  ) );
 
             l_dry = 2 / ( 1/llow + 1/lhigh); /*harmonic averaging of the two
                                                bounds*/
@@ -474,9 +474,9 @@ public:
             double gammao,gammar,H;
             int i;
 
-            static const double Rw = 461.526;		// Gas Constant [kJ/(kg K)]
-            static const double pr = 1.0E6;		// reduced pressure [Pa]
-            static const double Tr = 540.; 		// reduced Temperature [K]
+            static const double Rw = 461.526;        // Gas Constant [kJ/(kg K)]
+            static const double pr = 1.0E6;        // reduced pressure [Pa]
+            static const double Tr = 540.;         // reduced Temperature [K]
 
             gammao = 0.0;
             for (i=1; i<=9; i++){

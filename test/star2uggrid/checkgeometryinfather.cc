@@ -26,7 +26,7 @@ void checkGeometryInFather(const GridType& grid) {
     if (grid.maxLevel()==0)
     {
       dwarn << "SKIPPING check geometryInFather(), because grid has only one level! \n";
-      return; 
+      return;
     }
 
     // Loop over all levels except the lowest one
@@ -36,55 +36,55 @@ void checkGeometryInFather(const GridType& grid) {
         ElementIterator eIt    = grid.template lbegin<0>(i);
         ElementIterator eEndIt = grid.template lend<0>(i);
 
-        for (; eIt!=eEndIt; ++eIt) 
+        for (; eIt!=eEndIt; ++eIt)
         {
-            // check the father method 
+            // check the father method
             if( eIt->level () > 0 )
             {
-              typedef typename GridType::template Codim<0>::EntityPointer EntityPointer;  
-              EntityPointer father = eIt->father(); 
+              typedef typename GridType::template Codim<0>::EntityPointer EntityPointer;
+              EntityPointer father = eIt->father();
 
               while ( father->level() > 0 )
               {
                 EntityPointer grandPa = father->father();
-                typedef typename GridType :: Traits :: HierarchicIterator HierarchicIterator; 
+                typedef typename GridType :: Traits :: HierarchicIterator HierarchicIterator;
 
                 const int mxl = grandPa->level() + 1;
                 bool foundChild = false;
-                
+
                 HierarchicIterator end = grandPa->hend(mxl);
-                for(HierarchicIterator sons = grandPa->hbegin(mxl); 
+                for(HierarchicIterator sons = grandPa->hbegin(mxl);
                     sons != end; ++sons)
                 {
                   if(father == sons) foundChild = true;
                 }
 
-                if(!foundChild) 
+                if(!foundChild)
                   DUNE_THROW(GridError, "father-child error while iterating over childs of father!");
                 father = grandPa;
               }
             }
 
-            // hierarchy check 
+            // hierarchy check
             {
-              typedef typename GridType :: Traits :: HierarchicIterator HierarchicIterator; 
+              typedef typename GridType :: Traits :: HierarchicIterator HierarchicIterator;
               const int mxl = grid.maxLevel();
               int countChildren = 0;
 
               HierarchicIterator end = eIt->hend(mxl);
-              for(HierarchicIterator sons = eIt->hbegin(mxl); 
+              for(HierarchicIterator sons = eIt->hbegin(mxl);
                   sons != end; ++sons)
               {
                 ++countChildren;
                 int count = sons->level();
                 if( sons->level() > 0 )
                 {
-                  typedef typename GridType::template Codim<0>::EntityPointer EntityPointer;  
-                  EntityPointer father = sons->father(); 
+                  typedef typename GridType::template Codim<0>::EntityPointer EntityPointer;
+                  EntityPointer father = sons->father();
                   --count;
                   while ( father->level() > 0 )
                   {
-                    father = father->father();    
+                    father = father->father();
                     --count;
                   }
                 }
@@ -98,7 +98,7 @@ void checkGeometryInFather(const GridType& grid) {
             // Get geometry in father
             typedef typename GridType::template Codim<0>::Entity::Geometry Geometry;
             typedef typename GridType::template Codim<0>::Entity::LocalGeometry LocalGeometry;
-            
+
             const LocalGeometry& geometryInFather = eIt->geometryInFather();
 
             // //////////////////////////////////////////////////////
@@ -126,7 +126,7 @@ void checkGeometryInFather(const GridType& grid) {
 
             if (geometryInFather.integrationElement(center) <=0)
                 DUNE_THROW(GridError, "nonpositive integration element found!");
-            
+
             /** \todo Missing local() */
             /** \todo Missing global() */
             /** \todo Missing jacobianInverse() */
@@ -140,14 +140,14 @@ void checkGeometryInFather(const GridType& grid) {
 
                 FieldVector<ctype, dim> localPos = eIt->father()->geometry().local(eIt->geometry()[j]);
 
-                if ( (localPos-geometryInFather[j]).infinity_norm() > 1e-7) 
+                if ( (localPos-geometryInFather[j]).infinity_norm() > 1e-7)
                 {
-                   std::cerr << localPos << " lp[" << j << "] | gp " << geometryInFather[j] << "\n";   
+                   std::cerr << localPos << " lp[" << j << "] | gp " << geometryInFather[j] << "\n";
                    DUNE_THROW(GridError, "geometryInFather yields wrong vertex position!");
                 }
 
             }
-                
+
         }
 
     }

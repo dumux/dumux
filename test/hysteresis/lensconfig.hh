@@ -29,7 +29,7 @@
 
 // if defined, most material parameters (capillary pressure, permeability,
 // etc) are defined on the vertices of FE grid.
-#ifndef USE_NODE_PARAMETERS 
+#ifndef USE_NODE_PARAMETERS
 #define USE_NODE_PARAMETERS 1
 #endif
 
@@ -59,12 +59,12 @@
 #define USE_DIFFERENT_MAIN_CURVES 0
 #endif
 
-// number of elements into X direction 
+// number of elements into X direction
 #ifndef CELLRES_X
 #define CELLRES_X 32
 #endif
 
-// number of elements into Y direction 
+// number of elements into Y direction
 #ifndef CELLRES_Y
 #define CELLRES_Y 24
 #endif

@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_ONE_D_IN_N_D_GRID_ENTITY_HH
 #define DUNE_ONE_D_IN_N_D_GRID_ENTITY_HH
@@ -9,7 +9,7 @@
  * \brief The OneDInNDGridEntity class and its specializations
  */
 
-namespace Dune {  
+namespace Dune {
 
     // forward declarations
     template <class GridImp>
@@ -27,22 +27,22 @@ class OneDInNDEntityImp<0, dimworld>
 {
 public:
 
-	OneDInNDEntityImp(int level, const FieldVector<double, dimworld>& pos) : pos_(pos), level_(level), son_(NULL), pred_(NULL), succ_(NULL)
+    OneDInNDEntityImp(int level, const FieldVector<double, dimworld>& pos) : pos_(pos), level_(level), son_(NULL), pred_(NULL), succ_(NULL)
     {}
 
-    OneDInNDEntityImp(int level, const FieldVector<double, dimworld>& pos, unsigned int id) 
+    OneDInNDEntityImp(int level, const FieldVector<double, dimworld>& pos, unsigned int id)
         : pos_(pos), id_(id), level_(level), son_(NULL), pred_(NULL), succ_(NULL)
     {}
-    //private: 
+    //private:
     bool isLeaf() const {
         return son_==NULL;
     }
 
     FieldVector<double, dimworld> pos_;
 
-    //! entity number 
+    //! entity number
     unsigned int levelIndex_;
-    
+
     unsigned int leafIndex_;
 
     unsigned int id_;
@@ -55,9 +55,9 @@ public:
 
     //!
     OneDInNDEntityImp<0, dimworld>* pred_;
-    
+
     OneDInNDEntityImp<0, dimworld>* succ_;
-    
+
 
 };
 
@@ -68,8 +68,8 @@ class OneDInNDEntityImp<1, dimworld>
 public:
     enum AdaptationState { NONE , COARSEN , REFINED };
 
-    OneDInNDEntityImp(int level, unsigned int id) 
-        : id_(id), level_(level), 
+    OneDInNDEntityImp(int level, unsigned int id)
+        : id_(id), level_(level),
           markState_(NONE), adaptationState_(NONE),
           pred_(NULL), succ_(NULL)
     {
@@ -88,9 +88,9 @@ public:
 
     OneDInNDEntityImp<0, dimworld>* vertex_[2];
 
-    //! element number 
+    //! element number
     unsigned int levelIndex_;
-    
+
     unsigned int leafIndex_;
 
     /** \brief Unique and persistent id for elements */
@@ -98,7 +98,7 @@ public:
 
     //! the level of the entity
     int level_;
-    
+
     /** \brief Stores requests for refinement and coarsening */
     AdaptationState markState_;
 
@@ -111,7 +111,7 @@ public:
 
     /** \brief Successor in the doubly linked list of elements */
     OneDInNDEntityImp<1, dimworld>* succ_;
-    
+
 };
 
 
@@ -146,11 +146,11 @@ public:
 
  */
 template<int cd, int dim, class GridImp>
-class OneDInNDGridEntity : 
+class OneDInNDGridEntity :
         public EntityDefaultImplementation <cd,dim,GridImp,OneDInNDGridEntity>
 {
     enum{dimworld = GridImp::dimensionworld};
-    
+
     template <int codim_, PartitionIteratorType PiType_, class GridImp_>
     friend class OneDInNDGridLevelIterator;
 
@@ -182,12 +182,12 @@ public:
     /*! Intra-element access to entities of codimension cc > codim. Return number of entities
       with codimension cc.
     */
-    //!< Default codim 1 Faces and codim == dim Vertices 
-    template<int cc> int count () const; 
-    
+    //!< Default codim 1 Faces and codim == dim Vertices
+    template<int cc> int count () const;
+
   //! Provide access to mesh entity i of given codimension. Entities
   //!  are numbered 0 ... count<cc>()-1
-    template<int cc> 
+    template<int cc>
     OneDInNDGridLevelIterator<cc,All_Partition, GridImp> entity (int i);
 
   //! geometry of this entity
@@ -206,7 +206,7 @@ public:
 };
 
 //***********************
-//  
+//
 //  --OneDInNDGridEntity
 //  --0Entity
 //
@@ -224,11 +224,11 @@ public:
    * OneDInNDGrid only implements the case dim==dimworld==1
    */
 template<int dim, class GridImp>
-class OneDInNDGridEntity<0,dim, GridImp> : 
+class OneDInNDGridEntity<0,dim, GridImp> :
         public EntityDefaultImplementation<0,dim,GridImp, OneDInNDGridEntity>
 {
     enum{dimworld = GridImp::dimensionworld};
-    
+
     template <int dimworld>
     friend class OneDInNDGrid;
     template <class GridImp_>
@@ -245,7 +245,7 @@ public:
     typedef typename GridImp::template Codim<0>::LeafIntersectionIterator LeafIntersectionIterator;
     typedef typename GridImp::template Codim<0>::LevelIntersectionIterator LevelIntersectionIterator;
     typedef typename GridImp::template Codim<0>::HierarchicIterator HierarchicIterator;
-    
+
     //! Default Constructor
     OneDInNDGridEntity() {};
 
@@ -268,7 +268,7 @@ public:
 
     /** \brief Return the number of subentities of codimension cc.
      */
-    template<int cc> 
+    template<int cc>
     int count () const {
         assert(cc==0 || cc==1);
         return (cc==0) ? 1 : 2;
@@ -276,7 +276,7 @@ public:
 
     /** \brief Return index of sub entity with codim = cc and local number i
      */
-    template<int cc> 
+    template<int cc>
     int subLevelIndex (int i) const {
         assert(i==0 || i==1);
         return (cc==0)
@@ -286,28 +286,28 @@ public:
 
     /** \brief Return leaf index of sub entity with codim = cc and local number i
      */
-    template<int cc> 
+    template<int cc>
     int subLeafIndex (int i) const {
         assert(i==0 || i==1);
-        return (cc==0) 
+        return (cc==0)
             ? target_->leafIndex_
             : target_->vertex_[i]->leafIndex_;
     }
 
     /** \brief Return leaf index of sub entity with codim = cc and local number i
      */
-    template<int cc> 
+    template<int cc>
     int subId (int i) const {
         assert(i==0 || i==1);
-        return (cc==0) 
+        return (cc==0)
             ? target_->id_
             : target_->vertex_[i]->id_;
     }
-    
+
     /** \brief Provide access to sub entity i of given codimension. Entities
      *  are numbered 0 ... count<cc>()-1
      */
-    template<int cc> 
+    template<int cc>
     typename GridImp::template Codim<cc>::EntityPointer entity (int i) const {
         if (cc==0) {
             assert(i==0);
@@ -327,7 +327,7 @@ public:
     LevelIntersectionIterator ilevelbegin () const {
         return OneDInNDGridLevelIntersectionIterator<GridImp>(target_, 0);
     }
-    
+
     LeafIntersectionIterator ileafend () const {
         return OneDInNDGridLeafIntersectionIterator<GridImp>(target_);
     }
@@ -335,25 +335,25 @@ public:
     LevelIntersectionIterator ilevelend () const {
         return OneDInNDGridLevelIntersectionIterator<GridImp>(target_);
     }
-    
-    //! returns true if Entity has no children 
+
+    //! returns true if Entity has no children
     bool isLeaf () const {
         return (target_->sons_[0]==NULL) && (target_->sons_[1]==NULL);
     }
-    
-    //! Inter-level access to father element on coarser grid. 
+
+    //! Inter-level access to father element on coarser grid.
     //! Assumes that meshes are nested.
     OneDInNDGridEntityPointer<0, GridImp> father () const {
         return OneDInNDGridEntityPointer<0,GridImp>(target_->father_);
     }
-    
-    /*! Location of this element relative to the reference element 
-      of the father. This is sufficient to interpolate all 
-      dofs in conforming case. Nonconforming may require access to 
+
+    /*! Location of this element relative to the reference element
+      of the father. This is sufficient to interpolate all
+      dofs in conforming case. Nonconforming may require access to
       neighbors of father and computations with local coordinates.
-      On the fly case is somewhat inefficient since dofs  are visited 
-      several times. If we store interpolation matrices, this is tolerable. 
-      We assume that on-the-fly implementation of numerical algorithms 
+      On the fly case is somewhat inefficient since dofs  are visited
+      several times. If we store interpolation matrices, this is tolerable.
+      We assume that on-the-fly implementation of numerical algorithms
       is only done for simple discretizations. Assumes that meshes are nested.
     */
     // \todo should be LocalGeometry
@@ -371,7 +371,7 @@ public:
             // Right son!
             geometryInFather_.setPositions(0.5,1);
         }
-            
+
         return geometryInFather_;
     }
 
@@ -380,7 +380,7 @@ public:
       Returns iterator to first son.
     */
     OneDInNDGridHierarchicIterator<GridImp> hbegin (int maxlevel) const {
-        
+
         OneDInNDGridHierarchicIterator<GridImp> it(maxlevel);
 
         if (level()<=maxlevel) {
@@ -401,24 +401,24 @@ public:
         }
 
         it.virtualEntity_.setToTarget((it.elemStack.empty()) ? NULL : it.elemStack.top().element);
-        
+
         return it;
     }
-    
+
     //! Returns iterator to one past the last son
     HierarchicIterator hend (int maxlevel) const {
         return HierarchicIterator(maxlevel);
     }
-    
+
     // ***************************************************************
     //  Interface for Adaptation
     // ***************************************************************
-      
+
     /** returns true, if entity might be coarsened during next adaptation cycle */
     bool mightBeCoarsened () const { return target_->adaptationState_ == OneDInNDEntityImp<1, dimworld> :: COARSEN; }
     /** returns true, if entity was refined during last adaptation cycle */
     bool wasRefined () const { return target_->adaptationState_ == OneDInNDEntityImp<1, dimworld> :: REFINED; }
-    
+
     void setToTarget(OneDInNDEntityImp<1, dimworld>* target) {
         target_ = target;
         geo_.setToTarget(target);

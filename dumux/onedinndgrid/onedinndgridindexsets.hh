@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_ONEDINNDGRID_INDEXSETS_HH
 #define DUNE_ONEDINNDGRID_INDEXSETS_HH
@@ -11,18 +11,18 @@
 
 namespace Dune {
 
-template <class GridImp> 
+template <class GridImp>
 struct OneDInNDGridLevelIndexSetTypes
 {
   //! The types
   template<int cd>
   struct Codim
   {
-	template<PartitionIteratorType pitype>
-	struct Partition
-	{
-	  typedef typename GridImp::Traits::template Codim<cd>::template Partition<pitype>::LevelIterator Iterator;
-	};
+    template<PartitionIteratorType pitype>
+    struct Partition
+    {
+      typedef typename GridImp::Traits::template Codim<cd>::template Partition<pitype>::LevelIterator Iterator;
+    };
   };
 };
 
@@ -36,15 +36,15 @@ public:
 
     /** \brief Constructor for a given level of a given grid
     */
-    OneDInNDGridLevelIndexSet (const GridImp& grid, int level) 
+    OneDInNDGridLevelIndexSet (const GridImp& grid, int level)
         : grid_(&grid), level_(level)
     {}
 
   //! get index of an entity
   template<int cd>
-  int index (const typename GridImp::Traits::template Codim<cd>::Entity& e) const 
+  int index (const typename GridImp::Traits::template Codim<cd>::Entity& e) const
   {
-      return grid_->getRealImplementation(e).levelIndex(); 
+      return grid_->getRealImplementation(e).levelIndex();
   }
 
   //! get index of subentity of a codim 0 entity
@@ -69,21 +69,21 @@ public:
     /** \brief Deliver all geometry types used in this grid */
   const std::vector<GeometryType>& geomTypes (int codim) const
   {
-	return myTypes_[codim];
+    return myTypes_[codim];
   }
 
   //! one past the end on this level
   template<int cd, PartitionIteratorType pitype>
   typename Base::template Codim<cd>::template Partition<pitype>::Iterator begin () const
   {
-	return grid_->template lbegin<cd,pitype>(level_);
+    return grid_->template lbegin<cd,pitype>(level_);
   }
-  
+
   //! Iterator to one past the last entity of given codim on level for partition type
   template<int cd, PartitionIteratorType pitype>
   typename Base::template Codim<cd>::template Partition<pitype>::Iterator end () const
   {
-	return grid_->template lend<cd,pitype>(level_);
+    return grid_->template lend<cd,pitype>(level_);
   }
 
     /** \todo Should be private */
@@ -133,23 +133,23 @@ private:
   std::vector<GeometryType> myTypes_[2];
 };
 
-template <class GridImp> 
+template <class GridImp>
 struct OneDInNDGridLeafIndexSetTypes
 {
   //! The types
   template<int cd>
   struct Codim
   {
-	template<PartitionIteratorType pitype>
-	struct Partition
-	{
-	  typedef typename GridImp::Traits::template Codim<cd>::template Partition<pitype>::LeafIterator Iterator;
-	};
+    template<PartitionIteratorType pitype>
+    struct Partition
+    {
+      typedef typename GridImp::Traits::template Codim<cd>::template Partition<pitype>::LeafIterator Iterator;
+    };
   };
 };
 
 template<class GridImp>
-class OneDInNDGridLeafIndexSet : 
+class OneDInNDGridLeafIndexSet :
   public IndexSetDefaultImplementation<GridImp,OneDInNDGridLeafIndexSet<GridImp>,OneDInNDGridLeafIndexSetTypes<GridImp> >
 {
   typedef IndexSetDefaultImplementation<GridImp,OneDInNDGridLeafIndexSet<GridImp>,OneDInNDGridLeafIndexSetTypes<GridImp> > Base;
@@ -165,14 +165,14 @@ public:
     because the const class is not instatiated yet.
   */
   template<int cd>
-  int index (const typename remove_const<GridImp>::type::Traits::template Codim<cd>::Entity& e) const 
+  int index (const typename remove_const<GridImp>::type::Traits::template Codim<cd>::Entity& e) const
   {
-      return grid_.getRealImplementation(e).leafIndex(); 
+      return grid_.getRealImplementation(e).leafIndex();
   }
 //  template<int cd>
-//  int index (const typename RemoveConst<GridImp>::Type::Traits::template Codim<cd>::Entity& e) const 
+//  int index (const typename RemoveConst<GridImp>::Type::Traits::template Codim<cd>::Entity& e) const
 //  {
-//      return grid_.getRealImplementation(e).leafIndex(); 
+//      return grid_.getRealImplementation(e).leafIndex();
 //  }
 
   //! get index of subentity of a codim 0 entity
@@ -202,35 +202,35 @@ public:
 
           return numElements_;
 
-      } 
+      }
 
       return 0;
   }
 
   //! get number of entities of given codim, type on the leaf level
-  int size(int codim) const 
+  int size(int codim) const
   {
     return Base::size(codim);
-  } 
+  }
 
   /** deliver all geometry types used in this grid */
   const std::vector<GeometryType>& geomTypes (int codim) const
   {
-	return myTypes_[codim];
+    return myTypes_[codim];
   }
 
   //! one past the end on this level
   template<int cd, PartitionIteratorType pitype>
   typename Base::template Codim<cd>::template Partition<pitype>::Iterator begin () const
   {
-	return grid_.template leafbegin<cd,pitype>();
+    return grid_.template leafbegin<cd,pitype>();
   }
-  
+
   //! Iterator to one past the last entity of given codim on level for partition type
   template<int cd, PartitionIteratorType pitype>
   typename Base::template Codim<cd>::template Partition<pitype>::Iterator end () const
   {
-	return grid_.template leafend<cd,pitype>();
+    return grid_.template leafend<cd,pitype>();
   }
 
     /** \todo Should be private */
@@ -242,9 +242,9 @@ public:
         numElements_ = 0;
         typename GridImp::Traits::template Codim<0>::LeafIterator eIt    = grid_.template leafbegin<0>();
         typename GridImp::Traits::template Codim<0>::LeafIterator eEndIt = grid_.template leafend<0>();
-        
+
         for (; eIt!=eEndIt; ++eIt) {
-         
+
             grid_.getRealImplementation(*eIt).target_->leafIndex_ = numElements_++;
 
         }
@@ -289,7 +289,7 @@ public:
 private:
 
     const GridImp& grid_;
-    
+
     int numElements_;
     int numVertices_;
 
@@ -315,12 +315,12 @@ public:
     because the const class is not instatiated yet.
   */
   template<int cd>
-  GlobalIdType id (const typename remove_const<GridImp>::type::Traits::template Codim<cd>::Entity& e) const 
+  GlobalIdType id (const typename remove_const<GridImp>::type::Traits::template Codim<cd>::Entity& e) const
   {
       return grid_.getRealImplementation(e).globalId();
   }
 //  template<int cd>
-//  GlobalIdType id (const typename RemoveConst<GridImp>::Type::Traits::template Codim<cd>::Entity& e) const 
+//  GlobalIdType id (const typename RemoveConst<GridImp>::Type::Traits::template Codim<cd>::Entity& e) const
 //  {
 //      return grid_.getRealImplementation(e).globalId();
 //  }

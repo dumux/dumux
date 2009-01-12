@@ -33,119 +33,119 @@ namespace Dune
    * and \f$\lambda\f$ the total mobility, possibly depending on the
    * saturation.
    *
-   *	Template parameters are:
+   *    Template parameters are:
    *
-   *	- Grid  a DUNE grid type
-   *	- RT    type used for return values
+   *    - Grid  a DUNE grid type
+   *    - RT    type used for return values
    */
   template<class Grid, class RT>
   class UniformTwoPhaseProblem : public TwoPhaseProblem<Grid, RT> {
-	typedef typename Grid::ctype Scalar;
-	enum {n=Grid::dimension, m=2};
-	typedef typename Grid::Traits::template Codim<0>::Entity Element;
-	typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
+    typedef typename Grid::ctype Scalar;
+    enum {n=Grid::dimension, m=2};
+    typedef typename Grid::Traits::template Codim<0>::Entity Element;
+    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
 
   public:
-	virtual const FieldMatrix<Scalar,n,n>& K (const FieldVector<Scalar,n>& x, const Element& e,
-					const FieldVector<Scalar,n>& xi)
-	{
-		return permloc;
-	}
+    virtual const FieldMatrix<Scalar,n,n>& K (const FieldVector<Scalar,n>& x, const Element& e,
+                    const FieldVector<Scalar,n>& xi)
+    {
+        return permloc;
+    }
 
-	virtual FieldVector<RT,m> q (const FieldVector<Scalar,n>& x, const Element& e,
-					const FieldVector<Scalar,n>& xi) const
-	{
-		FieldVector<RT,m> values(0);
+    virtual FieldVector<RT,m> q (const FieldVector<Scalar,n>& x, const Element& e,
+                    const FieldVector<Scalar,n>& xi) const
+    {
+        FieldVector<RT,m> values(0);
 
-		return values;
-	}
+        return values;
+    }
 
-	virtual FieldVector<BoundaryConditions::Flags, m> bctype (const FieldVector<Scalar,n>& x, const Element& e,
-					const IntersectionIterator& intersectionIt,
-					   const FieldVector<Scalar,n>& xi) const
-	{
-		FieldVector<BoundaryConditions::Flags, m> values(Dune::BoundaryConditions::neumann);
+    virtual FieldVector<BoundaryConditions::Flags, m> bctype (const FieldVector<Scalar,n>& x, const Element& e,
+                    const IntersectionIterator& intersectionIt,
+                       const FieldVector<Scalar,n>& xi) const
+    {
+        FieldVector<BoundaryConditions::Flags, m> values(Dune::BoundaryConditions::neumann);
 
-		if (x[0] > 600-1E-6)// || x[0] < 1e-6)
-		//if (x[0] < 1E-6)
-			values = Dune::BoundaryConditions::dirichlet;
+        if (x[0] > 600-1E-6)// || x[0] < 1e-6)
+        //if (x[0] < 1E-6)
+            values = Dune::BoundaryConditions::dirichlet;
 
-		return values;
-	}
+        return values;
+    }
 
-	virtual FieldVector<RT,m> g (const FieldVector<Scalar,n>& x, const Element& e,
-				const IntersectionIterator& intersectionIt,
-				  const FieldVector<Scalar,n>& xi) const
-	{
-		FieldVector<RT,m> values(0);
-		if (x[0] < 1e-6) {
-			values[0] = 1e6;
-			values[1] = 1;
-		}
-		else {
-			values[0] = 0;
-			values[1] = 0;
-		}
+    virtual FieldVector<RT,m> g (const FieldVector<Scalar,n>& x, const Element& e,
+                const IntersectionIterator& intersectionIt,
+                  const FieldVector<Scalar,n>& xi) const
+    {
+        FieldVector<RT,m> values(0);
+        if (x[0] < 1e-6) {
+            values[0] = 1e6;
+            values[1] = 1;
+        }
+        else {
+            values[0] = 0;
+            values[1] = 0;
+        }
 
-		return values;
-	}
+        return values;
+    }
 
-	virtual FieldVector<RT,m> J (const FieldVector<Scalar,n>& x, const Element& e,
-				const IntersectionIterator& intersectionIt,
-				  const FieldVector<Scalar,n>& xi) const
-	{
-		FieldVector<RT,m> values(0);
-		if (x[0] < 1e-6)
-			values[0] = 1;
+    virtual FieldVector<RT,m> J (const FieldVector<Scalar,n>& x, const Element& e,
+                const IntersectionIterator& intersectionIt,
+                  const FieldVector<Scalar,n>& xi) const
+    {
+        FieldVector<RT,m> values(0);
+        if (x[0] < 1e-6)
+            values[0] = 1;
 
-		return values;
-	}
+        return values;
+    }
 
-	virtual FieldVector<RT,m> initial (const FieldVector<Scalar,n>& x, const Element& e,
-				  const FieldVector<Scalar,n>& xi) const
-	{
-		FieldVector<RT,m> values(0);
-		values[0] = 1e6 - 1.0/600.0*1e6*x[0];
-		//values[1] = 1 - 1.0/600.0*x[0];
-		if (x[0] < 1e-6) {
-			values[1] = 1e3;
-		}
+    virtual FieldVector<RT,m> initial (const FieldVector<Scalar,n>& x, const Element& e,
+                  const FieldVector<Scalar,n>& xi) const
+    {
+        FieldVector<RT,m> values(0);
+        values[0] = 1e6 - 1.0/600.0*1e6*x[0];
+        //values[1] = 1 - 1.0/600.0*x[0];
+        if (x[0] < 1e-6) {
+            values[1] = 1e3;
+        }
 
-		return values;
-	}
+        return values;
+    }
 
-	double porosity (const FieldVector<Scalar,n>& x, const Element& e,
-			  const FieldVector<Scalar,n>& xi) const
-	{
-		return 1.0;
-	}
+    double porosity (const FieldVector<Scalar,n>& x, const Element& e,
+              const FieldVector<Scalar,n>& xi) const
+    {
+        return 1.0;
+    }
 
-	virtual FieldVector<RT,n> gravity () const
-	{
-		FieldVector<RT,n> values(0);
+    virtual FieldVector<RT,n> gravity () const
+    {
+        FieldVector<RT,n> values(0);
 
-		return values;
-	}
+        return values;
+    }
 
-	virtual FieldVector<RT,4> materialLawParameters (const FieldVector<Scalar,n>& x, const Element& e,
-			  const FieldVector<Scalar,n>& xi) const
-	{
-		FieldVector<RT,4> values(0);
+    virtual FieldVector<RT,4> materialLawParameters (const FieldVector<Scalar,n>& x, const Element& e,
+              const FieldVector<Scalar,n>& xi) const
+    {
+        FieldVector<RT,4> values(0);
 
-		return values;
-	}
+        return values;
+    }
 
-	UniformTwoPhaseProblem(TwoPhaseRelations& law = *(new LinearLaw))
-	: TwoPhaseProblem<Grid, RT>(law)
-	{
-		permloc = 0;
+    UniformTwoPhaseProblem(TwoPhaseRelations& law = *(new LinearLaw))
+    : TwoPhaseProblem<Grid, RT>(law)
+    {
+        permloc = 0;
 
-		for (int i = 0; i < n; i++)
-			permloc[i][i] = 1.0;
-	}
+        for (int i = 0; i < n; i++)
+            permloc[i][i] = 1.0;
+    }
 
-	private:
-		Dune::FieldMatrix<Scalar,n,n> permloc;
+    private:
+        Dune::FieldMatrix<Scalar,n,n> permloc;
   };
 
 }

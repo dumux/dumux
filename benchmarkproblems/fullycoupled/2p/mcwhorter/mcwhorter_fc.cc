@@ -1,4 +1,4 @@
-# include "config.h"     
+# include "config.h"
 #include <iostream>
 #include <dune/grid/utility/gridtype.hh>
 #include <dune/grid/common/gridinfo.hh>
@@ -18,9 +18,9 @@
 int main(int argc, char** argv)
 {
    try{
-      // define the problem dimensions  
+      // define the problem dimensions
       const int dim=2;
-      typedef double NumberType; 
+      typedef double NumberType;
       Dune::FieldVector<NumberType, dim> LowerLeft(0);
       Dune::FieldVector<NumberType, dim> UpperRight(2.6);
       UpperRight[1] = 1;
@@ -30,29 +30,29 @@ int main(int argc, char** argv)
       }
 
       std::string arg1(argv[1]);
-	   std::istringstream is1(arg1);
-	   int tEnd;
-	   is1 >> tEnd;
-	   std::string arg2(argv[2]);
-	   std::istringstream is2(arg2);
-	   int dt;
-	   is2 >> dt;
+       std::istringstream is1(arg1);
+       int tEnd;
+       is1 >> tEnd;
+       std::string arg2(argv[2]);
+       std::istringstream is2(arg2);
+       int dt;
+       is2 >> dt;
 
       // create a grid object
       typedef Dune::SGrid<dim,dim> GridType;
- 
-      // use unitcube from grids 
+
+      // use unitcube from grids
       std::stringstream dgfFileName;
       dgfFileName << "grids/unitcube" << GridType :: dimension << ".dgf";
 
       // create grid pointer, GridType is defined by gridtype.hh
       Dune::GridPtr<GridType> gridPtr( dgfFileName.str() );
 
-      // grid reference 
+      // grid reference
       GridType& grid = *gridPtr;
 
       Dune::gridinfo(grid);
-    
+
 
       Oil oil(0);
       Water water(0);
@@ -60,24 +60,24 @@ int main(int argc, char** argv)
       Dune::BrooksCoreyLaw law(water, oil,2,5000);
 //      Dune::LinearLaw law(water, oil);
 //      Dune::VanGenuchtenLaw law(water, oil);
-      
-	  //calculate with analytical solution
+
+      //calculate with analytical solution
       Dune::McWWithAnalytical<GridType, NumberType> problem(grid,law, LowerLeft, UpperRight);
-      
+
       //calculate without analytical solution
-//      Dune::McWhorterProblem<GridType, NumberType> problem(law, LowerLeft, UpperRight); 
+//      Dune::McWhorterProblem<GridType, NumberType> problem(law, LowerLeft, UpperRight);
 
       typedef Dune::BoxPnSw<GridType, NumberType> TwoPhase;
       TwoPhase twoPhase(grid, problem);
-    
+
       Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt,
       "mcwhorter", 1);
-    
+
       Dune::Timer timer;
       timer.reset();
       timeloop.execute(twoPhase);
       std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
-     
+
       //printvector(std::cout, *twoPhase.u, "u", "row", 2, 1, 3);
 
       return 0;

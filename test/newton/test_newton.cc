@@ -11,21 +11,21 @@
 #include "dumux/parabolic/fe/fenonlinearparabolic.hh"
 #include "dumux/timedisc/timeloop.hh"
 
-int main(int argc, char** argv) 
+int main(int argc, char** argv)
 {
   try{
-    // define the problem dimensions  
+    // define the problem dimensions
     const int dim=2;
 
     // create a grid object
-    typedef double NumberType; 
-    typedef Dune::SGrid<dim,dim> GridType; 
-    typedef Dune::FieldVector<GridType::ctype,dim> FieldVector; 
-    Dune::FieldVector<int,dim> N(1); N[0] = 32;                   
-    FieldVector L(0); 
-    FieldVector H(300); H[0] = 600; 
-    GridType grid(N,L,H);  
- 
+    typedef double NumberType;
+    typedef Dune::SGrid<dim,dim> GridType;
+    typedef Dune::FieldVector<GridType::ctype,dim> FieldVector;
+    Dune::FieldVector<int,dim> N(1); N[0] = 32;
+    FieldVector L(0);
+    FieldVector H(300); H[0] = 600;
+    GridType grid(N,L,H);
+
     Dune::UniformParabolicProblem<GridType, NumberType> problem;
 
     //typedef Dune::FENonlinearParabolic<GridType, NumberType> NonlinearParabolic;
@@ -33,12 +33,12 @@ int main(int argc, char** argv)
     NonlinearParabolic nonlinParabolic(grid, problem);
 
     Dune::TimeLoop<GridType, NonlinearParabolic> timeloop(0, 5e5, 5e3, "timeloop", 1);
-    
+
     Dune::Timer timer;
     timer.reset();
     timeloop.execute(nonlinParabolic);
     std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
-     
+
     //printvector(std::cout, *nonlinParabolic.u, "u", "row", 200, 1, 3);
 
     return 0;

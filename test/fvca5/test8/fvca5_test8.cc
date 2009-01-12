@@ -23,14 +23,14 @@ int main(int argc, char** argv)
     typedef Dune::UGGrid<dim> GridType;
 
     if (argc != 2 && argc != 3) {
-    	std::cout << "Usage: fvca5_test7 dgffilename [refinementsteps]" << std::endl;
-    	return (1);
+        std::cout << "Usage: fvca5_test7 dgffilename [refinementsteps]" << std::endl;
+        return (1);
     }
     int refinementSteps = 0;
     if (argc == 3) {
-    	std::string arg2(argv[2]);
-    	std::istringstream is2(arg2);
-    	is2 >> refinementSteps;
+        std::string arg2(argv[2]);
+        std::istringstream is2(arg2);
+        is2 >> refinementSteps;
     }
 
     // create grid pointer, GridType is defined by gridtype.hh
@@ -40,7 +40,7 @@ int main(int argc, char** argv)
     GridType& grid = *gridPtr;
 
     if (refinementSteps)
-    	grid.globalRefine(refinementSteps);
+        grid.globalRefine(refinementSteps);
 
     typedef Dune::VariableClass<GridType, NumberType> VC;
     double initsat = 1;
@@ -64,9 +64,9 @@ int main(int argc, char** argv)
     std::cout.precision(2);
 
     std::cout << "sumflux = flux0 + flux1 + fluy0 + fluy1 - sumf \n        = "
-    	<< result.flux0 << " + " << result.flux1 << " + "
-    	<< result.fluy0 << " + " << result.fluy1 << " - "
-    	<< result.sumf << "\n        = " << result.sumflux << std::endl;
+        << result.flux0 << " + " << result.flux1 << " + "
+        << result.fluy0 << " + " << result.fluy1 << " - "
+        << result.sumf << "\n        = " << result.sumflux << std::endl;
     std::cout << "energy ener2 = " << result.ener2 << std::endl;
     std::cout << "umin = " << result.uMin << std::endl;
     std::cout << "umax = " << result.uMax << std::endl;
@@ -74,7 +74,7 @@ int main(int argc, char** argv)
     for (int i = 0; i < 11; i++) {
       std::cout << i+1 << " & ";
       for (int j = 0; j < 11; j++)
-	std::cout << (problem.variables.pressure)[i*11 + j] << " & ";
+    std::cout << (problem.variables.pressure)[i*11 + j] << " & ";
       std::cout << std::endl;
     }
 

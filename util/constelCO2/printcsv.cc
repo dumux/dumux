@@ -17,7 +17,7 @@ void printArray()
             double p = double(j)/(numP - 1)*(maxP - minP) + minP;
             std::cout << T << " " << p << " " << Traits::vals[j][i] << "\n";
         }
-        std::cout << "\n";        
+        std::cout << "\n";
     }
 };
 
@@ -35,7 +35,7 @@ void printRange(int numP, int numT)
             double p = double(j)/(numP - 1)*(maxP - minP) + minP;
             std::cout << T << " " << p << " " << ConstRel::enthalpy(T, p) << "\n";
         }
-        std::cout << "\n";        
+        std::cout << "\n";
     }
 }
 
@@ -56,6 +56,6 @@ int main(int argc, char **argv)
     else if (argv[1][0] == 'a')
         printRange<Dune::Co2Tables::TabulatedEnthalpyTraits,
                    Dune::ConstrelCO2>(100, 100);
-    
+
     return 0;
 };

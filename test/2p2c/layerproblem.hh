@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_LAYERPROBLEM_HH
 #define DUNE_LAYERPROBLEM_HH
@@ -25,231 +25,231 @@
 namespace Dune
 {
   //! base class that defines the parameters of a diffusion equation
-  /*! An interface for defining parameters for the stationary diffusion equation 
-   * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = q, \f$, 
-   * \f$p = g\f$ on \f$\Gamma_1\f$, and \f$\lambda K \text{grad}\, p = J\f$ 
-   * on \f$\Gamma_2\f$. Here, 
-   * \f$p\f$ denotes the pressure, \f$K\f$ the absolute permeability, 
-   * and \f$\lambda\f$ the total mobility, possibly depending on the 
-   * saturation. 
+  /*! An interface for defining parameters for the stationary diffusion equation
+   * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = q, \f$,
+   * \f$p = g\f$ on \f$\Gamma_1\f$, and \f$\lambda K \text{grad}\, p = J\f$
+   * on \f$\Gamma_2\f$. Here,
+   * \f$p\f$ denotes the pressure, \f$K\f$ the absolute permeability,
+   * and \f$\lambda\f$ the total mobility, possibly depending on the
+   * saturation.
    *
-   *	Template parameters are:
-   *	
-   *	- Grid  a DUNE grid type
-   *	- RT    type used for return values 
+   *    Template parameters are:
+   *
+   *    - Grid  a DUNE grid type
+   *    - RT    type used for return values
    */
   template<class Grid, class RT>
   class LayerProblem : public TwoPTwoCProblem<Grid, RT> {
-	typedef typename Grid::ctype Scalar;
-	enum {dim=Grid::dimension, m=2};
-	typedef typename Grid::Traits::template Codim<0>::Entity Element;
-	typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
+    typedef typename Grid::ctype Scalar;
+    enum {dim=Grid::dimension, m=2};
+    typedef typename Grid::Traits::template Codim<0>::Entity Element;
+    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
 
   public:
-	enum {pWIdx = 0, satNIdx = 1};
-	enum {swrIdx = 0, snrIdx = 1, alphaIdx = 2, nIdx = 3};
-	enum {gasPhase = 0, waterPhase = 1, bothPhases = 2};
+    enum {pWIdx = 0, satNIdx = 1};
+    enum {swrIdx = 0, snrIdx = 1, alphaIdx = 2, nIdx = 3};
+    enum {gasPhase = 0, waterPhase = 1, bothPhases = 2};
 
-	// permeabilities
-	virtual const FieldMatrix<Scalar,dim,dim>& K (const FieldVector<Scalar,dim>& x)
-	//, const Element& e, const FieldVector<Scalar,dim>& xi)
-	{
-		if (x[0] >= innerLowerLeft_[0] && x[0] <= innerUpperRight_[0] 
-		    && x[1] >= innerLowerLeft_[1] && x[1] <= innerUpperRight_[1])
-			return innerK_;
-		else
-			return outerK_;
-	}
+    // permeabilities
+    virtual const FieldMatrix<Scalar,dim,dim>& K (const FieldVector<Scalar,dim>& x)
+    //, const Element& e, const FieldVector<Scalar,dim>& xi)
+    {
+        if (x[0] >= innerLowerLeft_[0] && x[0] <= innerUpperRight_[0]
+            && x[1] >= innerLowerLeft_[1] && x[1] <= innerUpperRight_[1])
+            return innerK_;
+        else
+            return outerK_;
+    }
 
-	// sources and sinks
-	virtual FieldVector<RT,m> q (const FieldVector<Scalar,dim>& x, const Element& e, 
-					const FieldVector<Scalar,dim>& xi) const
-	{
-		FieldVector<RT,m> values(0);
+    // sources and sinks
+    virtual FieldVector<RT,m> q (const FieldVector<Scalar,dim>& x, const Element& e,
+                    const FieldVector<Scalar,dim>& xi) const
+    {
+        FieldVector<RT,m> values(0);
 
-		return values;
-	}
+        return values;
+    }
 
 /////////////////////////////
 // TYPE of the boundaries
 /////////////////////////////
-	virtual FieldVector<BoundaryConditions::Flags, m> bctype (const FieldVector<Scalar,dim>& x, const Element& e, 
-					const IntersectionIterator& intersectionIt, 
-					   const FieldVector<Scalar,dim>& xi) const 
-	{
-		FieldVector<BoundaryConditions::Flags, m> values(BoundaryConditions::neumann); 
+    virtual FieldVector<BoundaryConditions::Flags, m> bctype (const FieldVector<Scalar,dim>& x, const Element& e,
+                    const IntersectionIterator& intersectionIt,
+                       const FieldVector<Scalar,dim>& xi) const
+    {
+        FieldVector<BoundaryConditions::Flags, m> values(BoundaryConditions::neumann);
 
-		if (x[0] < outerLowerLeft_[0] + eps_)
-			values = BoundaryConditions::dirichlet;
-//		if (x[1] < eps_)
-//			values = BoundaryConditions::dirichlet;
+        if (x[0] < outerLowerLeft_[0] + eps_)
+            values = BoundaryConditions::dirichlet;
+//        if (x[1] < eps_)
+//            values = BoundaryConditions::dirichlet;
 
-		return values;
-	}
-	
+        return values;
+    }
+
 /////////////////////////////
 // INITIAL values
 /////////////////////////////
-		virtual FieldVector<RT,m> initial (const FieldVector<Scalar,dim>& x, const Element& e, 
-					  const FieldVector<Scalar,dim>& xi) const 
-		{
+        virtual FieldVector<RT,m> initial (const FieldVector<Scalar,dim>& x, const Element& e,
+                      const FieldVector<Scalar,dim>& xi) const
+        {
 
-			FieldVector<RT,m> values;
-			
-			values[pWIdx] = -densityW_*gravity_[1]*(depthBOR_ - x[1]);
-					
-//			if (x[1] >= innerLowerLeft_[1] && x[1] <= innerUpperRight_[1] 
-//			 && x[0] >= innerLowerLeft_[0])
-				values[satNIdx] = 0.2;
-//			else
-//				values[satNIdx] = 1e-6;
-		
-			return values;
-		}
+            FieldVector<RT,m> values;
 
-		
-		int initialPhaseState (const FieldVector<Scalar,dim>& x, const Element& e, 
-					  const FieldVector<Scalar,dim>& xi) const 
-		{
+            values[pWIdx] = -densityW_*gravity_[1]*(depthBOR_ - x[1]);
 
-			enum {gasPhase = 0, waterPhase = 1, bothPhases = 2}; // Phase states
-			int state;
+//            if (x[1] >= innerLowerLeft_[1] && x[1] <= innerUpperRight_[1]
+//             && x[0] >= innerLowerLeft_[0])
+                values[satNIdx] = 0.2;
+//            else
+//                values[satNIdx] = 1e-6;
 
-//			if (x[1] >= innerLowerLeft_[1] && x[1] <= innerUpperRight_[1]
-//			      && x[0] >= innerLowerLeft_[0])
-//				state = 2;
-//			else
-				state = 2;
-				
-			return state;
-		}
-		
-	
+            return values;
+        }
+
+
+        int initialPhaseState (const FieldVector<Scalar,dim>& x, const Element& e,
+                      const FieldVector<Scalar,dim>& xi) const
+        {
+
+            enum {gasPhase = 0, waterPhase = 1, bothPhases = 2}; // Phase states
+            int state;
+
+//            if (x[1] >= innerLowerLeft_[1] && x[1] <= innerUpperRight_[1]
+//                  && x[0] >= innerLowerLeft_[0])
+//                state = 2;
+//            else
+                state = 2;
+
+            return state;
+        }
+
+
 /////////////////////////////
 // DIRICHLET boundaries
 /////////////////////////////
-	virtual FieldVector<RT,m> g (const FieldVector<Scalar,dim>& x, const Element& e, 
-				const IntersectionIterator& intersectionIt, 
-				  const FieldVector<Scalar,dim>& xi) const 
-	{
-		FieldVector<RT,m> values(0);
+    virtual FieldVector<RT,m> g (const FieldVector<Scalar,dim>& x, const Element& e,
+                const IntersectionIterator& intersectionIt,
+                  const FieldVector<Scalar,dim>& xi) const
+    {
+        FieldVector<RT,m> values(0);
 
-		values[pWIdx] = -densityW_*gravity_[1]*(depthBOR_ - x[1]);
+        values[pWIdx] = -densityW_*gravity_[1]*(depthBOR_ - x[1]);
 
-//		if (x[1] >= innerLowerLeft_[1] && x[1] <= innerUpperRight_[1] 
-//		 && x[0] >= innerLowerLeft_[0])
-			values[satNIdx] = 0.2;
-//		else
-//			values[satNIdx] = 1e-6;
-		
-		return values;
-	}
+//        if (x[1] >= innerLowerLeft_[1] && x[1] <= innerUpperRight_[1]
+//         && x[0] >= innerLowerLeft_[0])
+            values[satNIdx] = 0.2;
+//        else
+//            values[satNIdx] = 1e-6;
+
+        return values;
+    }
 
 /////////////////////////////
 // NEUMANN boundaries
 /////////////////////////////
-	virtual FieldVector<RT,m> J (const FieldVector<Scalar,dim>& x, const Element& e, 
-				const IntersectionIterator& intersectionIt, 
-				  const FieldVector<Scalar,dim>& xi) const 
-	{
-		FieldVector<RT,m> values(0);
+    virtual FieldVector<RT,m> J (const FieldVector<Scalar,dim>& x, const Element& e,
+                const IntersectionIterator& intersectionIt,
+                  const FieldVector<Scalar,dim>& xi) const
+    {
+        FieldVector<RT,m> values(0);
 
-		//RT lambda = (x[1])/height_;
-//		if (x[1] < 2.0 && x[1] > 1.5)
-			values[satNIdx] = -5e-6;
-		
-		return values;
-	}
-//////////////////////////////	  
-	
-	double porosity (const FieldVector<Scalar,dim>& x, const Element& e, 
-			  const FieldVector<Scalar,dim>& xi) const 
-	{
-		if (x[0] > innerLowerLeft_[0] && x[0] < innerUpperRight_[0] 
-		    && x[1] > innerLowerLeft_[1] && x[1] < innerUpperRight_[1])
-			return innerPorosity_;
-		else 
-			return outerPorosity_;
-	}
-	
-	virtual FieldVector<RT,dim> gravity () const 
-	{
-		return gravity_;
-	}
-	
-	double depthBOR () const
-	{
-		return depthBOR_;
-	}
-	  
-	virtual FieldVector<RT,4> materialLawParameters (const FieldVector<Scalar,dim>& x, const Element& e, 
-			  const FieldVector<Scalar,dim>& xi) const 
-	{
-		FieldVector<RT,4> values;
-		
-		if (x[0] > innerLowerLeft_[0] && x[0] < innerUpperRight_[0] 
-		    && x[1] > innerLowerLeft_[1] && x[1] < innerUpperRight_[1]) {
-			values[swrIdx] = innerSwr_;
-			values[snrIdx] = innerSnr_;
-			values[alphaIdx] = innerAlpha_;
-			values[nIdx] = innerN_;
-		}
-		else {
-			values[swrIdx] = outerSwr_;
-			values[snrIdx] = outerSnr_;
-			values[alphaIdx] = outerAlpha_;
-			values[nIdx] = outerN_;
-		}
-		
-		return values;
-	}
+        //RT lambda = (x[1])/height_;
+//        if (x[1] < 2.0 && x[1] > 1.5)
+            values[satNIdx] = -5e-6;
 
-	LayerProblem(TwoPhaseRelations& law = *(new LinearLaw), MultiComp& multicomp = *(new CWaterAir), 
-			const FieldVector<Scalar,dim> outerLowerLeft = 0., const FieldVector<Scalar,dim> outerUpperRight = 0., 
-			const FieldVector<Scalar,dim> innerLowerLeft = 0., const FieldVector<Scalar,dim> innerUpperRight = 0., 
-			const RT depthBOR = 0., RT outerK = 1.2e-12, RT innerK = 1.2e-12,
-			RT outerSwr = 0.05, RT outerSnr = 0.1, RT innerSwr = 0.05, RT innerSnr = 0.1, 
-			RT outerPorosity = 0.4, RT innerPorosity = 0.4, 
-			RT outerAlpha = 0.0037, RT innerAlpha = 0.0037,  //0.00045
-			RT outerN = 4.7, RT innerN = 4.7)	//7.3
-	: TwoPTwoCProblem<Grid, RT>(law, multicomp), 
-	  outerLowerLeft_(outerLowerLeft), outerUpperRight_(outerUpperRight), 
-	  innerLowerLeft_(innerLowerLeft), innerUpperRight_(innerUpperRight), 
-	  depthBOR_(depthBOR), eps_(1e-8*outerUpperRight[0]), 
-	  densityW_(law.wettingPhase.density()), densityN_(law.nonwettingPhase.density()), 
-	  outerSwr_(outerSwr), outerSnr_(outerSnr), innerSwr_(innerSwr), innerSnr_(innerSnr), 
-	  outerPorosity_(outerPorosity), innerPorosity_(innerPorosity), 
-	  outerAlpha_(outerAlpha), innerAlpha_(innerAlpha), 
-	  outerN_(outerN), innerN_(innerN)
-	{	
-		outerK_[0][0] = outerK_[1][1] = outerK;
-		outerK_[0][1] = outerK_[1][0] = 0;
-		
-		innerK_[0][0] = innerK_[1][1] = innerK;
-		innerK_[0][1] = innerK_[1][0] = 0;
-		
-		height_ = outerUpperRight[1] - outerLowerLeft[1];
-		width_ = outerUpperRight[0] - outerLowerLeft[0];
-		 
-		gravity_[0] = 0;
-		gravity_[1] = -9.81;
-	}
-	
-	private:
-		FieldMatrix<Scalar,dim,dim> outerK_;
-		FieldMatrix<Scalar,dim,dim> innerK_;
-		FieldVector<Scalar,dim> outerLowerLeft_;
-		FieldVector<Scalar,dim> outerUpperRight_;
-		FieldVector<Scalar,dim> innerLowerLeft_;
-		FieldVector<Scalar,dim> innerUpperRight_;
-		Scalar width_, height_;
-		Scalar depthBOR_, eps_;
-		RT densityW_, densityN_;
-		FieldVector<Scalar,dim> gravity_;
-		RT outerSwr_, outerSnr_, innerSwr_, innerSnr_;
-		RT outerPorosity_, innerPorosity_;
-		RT outerAlpha_, innerAlpha_;
-		RT outerN_, innerN_;
+        return values;
+    }
+//////////////////////////////
+
+    double porosity (const FieldVector<Scalar,dim>& x, const Element& e,
+              const FieldVector<Scalar,dim>& xi) const
+    {
+        if (x[0] > innerLowerLeft_[0] && x[0] < innerUpperRight_[0]
+            && x[1] > innerLowerLeft_[1] && x[1] < innerUpperRight_[1])
+            return innerPorosity_;
+        else
+            return outerPorosity_;
+    }
+
+    virtual FieldVector<RT,dim> gravity () const
+    {
+        return gravity_;
+    }
+
+    double depthBOR () const
+    {
+        return depthBOR_;
+    }
+
+    virtual FieldVector<RT,4> materialLawParameters (const FieldVector<Scalar,dim>& x, const Element& e,
+              const FieldVector<Scalar,dim>& xi) const
+    {
+        FieldVector<RT,4> values;
+
+        if (x[0] > innerLowerLeft_[0] && x[0] < innerUpperRight_[0]
+            && x[1] > innerLowerLeft_[1] && x[1] < innerUpperRight_[1]) {
+            values[swrIdx] = innerSwr_;
+            values[snrIdx] = innerSnr_;
+            values[alphaIdx] = innerAlpha_;
+            values[nIdx] = innerN_;
+        }
+        else {
+            values[swrIdx] = outerSwr_;
+            values[snrIdx] = outerSnr_;
+            values[alphaIdx] = outerAlpha_;
+            values[nIdx] = outerN_;
+        }
+
+        return values;
+    }
+
+    LayerProblem(TwoPhaseRelations& law = *(new LinearLaw), MultiComp& multicomp = *(new CWaterAir),
+            const FieldVector<Scalar,dim> outerLowerLeft = 0., const FieldVector<Scalar,dim> outerUpperRight = 0.,
+            const FieldVector<Scalar,dim> innerLowerLeft = 0., const FieldVector<Scalar,dim> innerUpperRight = 0.,
+            const RT depthBOR = 0., RT outerK = 1.2e-12, RT innerK = 1.2e-12,
+            RT outerSwr = 0.05, RT outerSnr = 0.1, RT innerSwr = 0.05, RT innerSnr = 0.1,
+            RT outerPorosity = 0.4, RT innerPorosity = 0.4,
+            RT outerAlpha = 0.0037, RT innerAlpha = 0.0037,  //0.00045
+            RT outerN = 4.7, RT innerN = 4.7)    //7.3
+    : TwoPTwoCProblem<Grid, RT>(law, multicomp),
+      outerLowerLeft_(outerLowerLeft), outerUpperRight_(outerUpperRight),
+      innerLowerLeft_(innerLowerLeft), innerUpperRight_(innerUpperRight),
+      depthBOR_(depthBOR), eps_(1e-8*outerUpperRight[0]),
+      densityW_(law.wettingPhase.density()), densityN_(law.nonwettingPhase.density()),
+      outerSwr_(outerSwr), outerSnr_(outerSnr), innerSwr_(innerSwr), innerSnr_(innerSnr),
+      outerPorosity_(outerPorosity), innerPorosity_(innerPorosity),
+      outerAlpha_(outerAlpha), innerAlpha_(innerAlpha),
+      outerN_(outerN), innerN_(innerN)
+    {
+        outerK_[0][0] = outerK_[1][1] = outerK;
+        outerK_[0][1] = outerK_[1][0] = 0;
+
+        innerK_[0][0] = innerK_[1][1] = innerK;
+        innerK_[0][1] = innerK_[1][0] = 0;
+
+        height_ = outerUpperRight[1] - outerLowerLeft[1];
+        width_ = outerUpperRight[0] - outerLowerLeft[0];
+
+        gravity_[0] = 0;
+        gravity_[1] = -9.81;
+    }
+
+    private:
+        FieldMatrix<Scalar,dim,dim> outerK_;
+        FieldMatrix<Scalar,dim,dim> innerK_;
+        FieldVector<Scalar,dim> outerLowerLeft_;
+        FieldVector<Scalar,dim> outerUpperRight_;
+        FieldVector<Scalar,dim> innerLowerLeft_;
+        FieldVector<Scalar,dim> innerUpperRight_;
+        Scalar width_, height_;
+        Scalar depthBOR_, eps_;
+        RT densityW_, densityN_;
+        FieldVector<Scalar,dim> gravity_;
+        RT outerSwr_, outerSnr_, innerSwr_, innerSnr_;
+        RT outerPorosity_, innerPorosity_;
+        RT outerAlpha_, innerAlpha_;
+        RT outerN_, innerN_;
   };
 
 }

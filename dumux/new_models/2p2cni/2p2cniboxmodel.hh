@@ -194,31 +194,31 @@ namespace Dune
         void advectiveHeatFlux(SolutionVector &flux,
                                const PhasesVector &darcyOut,
                                Scalar alpha, // upwind parameter
-                               const VariableVertexData *upW, // up/downstream verts
+                               const VariableVertexData *upW, // up/downstream vertices
                                const VariableVertexData *dnW,
                                const VariableVertexData *upN,
                                const VariableVertexData *dnN) const
             {
                 // heat flux in non-wetting phase
                 flux[temperatureIdx]  =  darcyOut[nPhase] * (
-                    alpha * // upstream vert
+                    alpha * // upstream vertex
                     (  upN->density[nPhase] *
                        upN->mobility[nPhase] *
                        upN->enthalpy[nPhase])
                     +
-                    (1-alpha) * // downstream vert
+                    (1-alpha) * // downstream vertex
                     (  dnN->density[nPhase] *
                        dnN->mobility[nPhase] *
                        dnN->enthalpy[nPhase]) );
 
                 // advective heat flux in wetting phase
                 flux[temperatureIdx] +=  darcyOut[wPhase] * (
-                    alpha * // upstream vert
+                    alpha * // upstream vertex
                     (  upW->density[wPhase] *
                        upW->mobility[wPhase] *
                        upW->enthalpy[wPhase] )
                     +
-                    (1-alpha) * // downstream vert
+                    (1-alpha) * // downstream vertex
                     (  dnW->density[wPhase] *
                        dnW->mobility[wPhase] *
                        dnW->enthalpy[wPhase]) );
@@ -232,7 +232,7 @@ namespace Dune
                                int faceIdx,
                                const GlobalPosition &tempGrad) const
             {
-                const ElementData &cc = this->curElemDat_;
+                const ElementData &eDat = this->curElemDat_;
                 const FVElementGeometry &fvGeom = this->curElementGeom_;
                 int i = fvGeom.subContVolFace[faceIdx].i;
                 int j = fvGeom.subContVolFace[faceIdx].j;
@@ -242,7 +242,8 @@ namespace Dune
 
                 // Harmonic mean of the heat conducitivities of the
                 // sub control volumes adjacent to the face
-                Scalar lambda =  2./((1. / cc.vertex[i].lambda) + (1. / cc.vertex[j].lambda));
+                Scalar lambda =  ParentType::hamonicMean_(eDat.vertex[i].lambda,
+                                                          eDat.vertex[j].lambda);
 
                 // heat conduction
                 flux[temperatureIdx] += (tempGrad*normal) * lambda;;
@@ -277,7 +278,7 @@ namespace Dune
                 d.lambda = problem.soil().heatCond(global, element, local, d.satW);
                 d.enthalpy[pWIdx] = problem.wettingPhase().enthalpy(temperature, d.pW);
                 d.enthalpy[switchIdx] = problem.nonwettingPhase().enthalpy(temperature, d.pN);
-                
+
                 d.intenergy[pWIdx] = problem.wettingPhase().intEnergy(temperature, d.pW);
                 d.intenergy[switchIdx] = problem.nonwettingPhase().intEnergy(temperature, d.pN);
             }

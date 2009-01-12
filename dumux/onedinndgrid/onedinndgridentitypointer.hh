@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_ONEDINNDGRID_ENTITY_POINTER_HH
 #define DUNE_ONEDINNDGRID_ENTITY_POINTER_HH
@@ -19,7 +19,7 @@ class OneDInNDGridEntityPointer
     template <class GridImp_>
     friend class OneDInNDGridLeafIntersectionIterator;
     friend class OneDInNDGridEntity<0,dim,GridImp>;
-    
+
 public:
   typedef typename GridImp::template Codim<codim>::Entity Entity;
   typedef OneDInNDGridEntityPointer<codim,GridImp> Base;
@@ -31,7 +31,7 @@ public:
 
   //! dereferencing
   Entity& dereference() const {return virtualEntity_;}
-  
+
   //! ask for level of entity
   int level () const {return virtualEntity_.level();}
 

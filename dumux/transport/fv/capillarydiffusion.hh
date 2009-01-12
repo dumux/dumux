@@ -35,8 +35,8 @@ namespace Dune
 
   public:
     virtual FieldVector operator() (const Element& element, const int numberInSelf,
-				    const Scalar satIntersection, const FieldVector& satGradient, const Scalar time,
-				    const Scalar satI, const Scalar satJ) const
+                    const Scalar satIntersection, const FieldVector& satGradient, const Scalar time,
+                    const Scalar satI, const Scalar satJ) const
     {
       // cell geometry type
       GeometryType gt = element.geometry().type();
@@ -53,10 +53,10 @@ namespace Dune
       IntersectionIterator isItEnd = element.ilevelend();
       IntersectionIterator isIt = element.ilevelbegin();
       for (; isIt != isItEnd; ++isIt)
-	{
-	  if(isIt->numberInSelf() == numberInSelf)
-	    break;
-	}
+    {
+      if(isIt->numberInSelf() == numberInSelf)
+        break;
+    }
 
       // get geometry type of face
       GeometryType faceGT = isIt->intersectionSelfLocal().type();
@@ -68,19 +68,19 @@ namespace Dune
       //std::cout<<"unitOuterNormaldiff"<<unitOuterNormal<<std::endl;
 
       if (isIt->neighbor()) {
-	// access neighbor
-	ElementPointer neighborPointer = isIt->outside();
+    // access neighbor
+    ElementPointer neighborPointer = isIt->outside();
 
-	// compute factor in neighbor
-	GeometryType neighborGT = neighborPointer->geometry().type();
-	const LocalPosition& localPosNeighbor = ReferenceElements<Scalar,dim>::general(neighborGT).position(0,0);
+    // compute factor in neighbor
+    GeometryType neighborGT = neighborPointer->geometry().type();
+    const LocalPosition& localPosNeighbor = ReferenceElements<Scalar,dim>::general(neighborGT).position(0,0);
 
-	// neighbor cell center in global coordinates
-	const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().global(localPosNeighbor);
+    // neighbor cell center in global coordinates
+    const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().global(localPosNeighbor);
 
-	// take arithmetic average of absolute permeability
-	K += problem_.K(globalPosNeighbor, *neighborPointer, localPosNeighbor);
-	K *= 0.5;
+    // take arithmetic average of absolute permeability
+    K += problem_.K(globalPosNeighbor, *neighborPointer, localPosNeighbor);
+    K *= 0.5;
       }
 
       // set result to grad(S)
@@ -113,7 +113,7 @@ namespace Dune
 
     CapillaryDiffusion (DiffusionProblem<Grid, Scalar, VC>& problem)
       : problem_(problem), constRel_(problem.materialLaw), wettingPhase_(constRel_.wettingPhase),
-	nonwettingPhase_(constRel_.nonwettingPhase)
+    nonwettingPhase_(constRel_.nonwettingPhase)
     {
       Scalar rhoDiff = wettingPhase_.density() - nonwettingPhase_.density();
       gravity_ = problem_.gravity();

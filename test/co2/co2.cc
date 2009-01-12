@@ -24,39 +24,39 @@
 int main(int argc, char** argv)
 {
   try{
-	    // define the problem dimensions
-	    const int dim=2;
-	    typedef double NumberType;
-	    double depthBOR = 800.0;  // bottom of reservoir
-	    Dune::FieldVector<NumberType, dim> outerLowerLeft(0);
-	    Dune::FieldVector<NumberType, dim> outerUpperRight(60);
-	    outerUpperRight[1] = 40;
+        // define the problem dimensions
+        const int dim=2;
+        typedef double NumberType;
+        double depthBOR = 800.0;  // bottom of reservoir
+        Dune::FieldVector<NumberType, dim> outerLowerLeft(0);
+        Dune::FieldVector<NumberType, dim> outerUpperRight(60);
+        outerUpperRight[1] = 40;
 
-	    if (argc != 4) {
-	      std::cout << "usage: 2p2cni basefilename tEnd dt" << std::endl;
-	      return 0;
-	    }
-	    std::string arg1(argv[2]);
-		std::istringstream is1(arg1);
-		double tEnd;
-		is1 >> tEnd;
-		std::string arg2(argv[3]);
-		std::istringstream is2(arg2);
-		double dt;
-		is2 >> dt;
+        if (argc != 4) {
+          std::cout << "usage: 2p2cni basefilename tEnd dt" << std::endl;
+          return 0;
+        }
+        std::string arg1(argv[2]);
+        std::istringstream is1(arg1);
+        double tEnd;
+        is1 >> tEnd;
+        std::string arg2(argv[3]);
+        std::istringstream is2(arg2);
+        double dt;
+        is2 >> dt;
 
-	    // create a grid object
-	    typedef Dune::SGrid<dim,dim> GridType;
-	    //typedef Dune::YaspGrid<dim,dim> GridType;
-	    // typedef Dune::UGGrid<dim> GridType;
-		//typedef Dune::ALUSimplexGrid<dim,dim> GridType;
+        // create a grid object
+        typedef Dune::SGrid<dim,dim> GridType;
+        //typedef Dune::YaspGrid<dim,dim> GridType;
+        // typedef Dune::UGGrid<dim> GridType;
+        //typedef Dune::ALUSimplexGrid<dim,dim> GridType;
 
-	    Dune::GridPtr<GridType> gridPointer(argv[1]);
-	    GridType& grid = *gridPointer;
-	    //readStarFormat(grid, argv[1]);
-	    //grid.createLGMGrid(argv[1]);
+        Dune::GridPtr<GridType> gridPointer(argv[1]);
+        GridType& grid = *gridPointer;
+        //readStarFormat(grid, argv[1]);
+        //grid.createLGMGrid(argv[1]);
 
-	     Dune::gridinfo(grid);
+         Dune::gridinfo(grid);
 
     Dune::Brine wPhase(1045., 2.535e-4);
     Dune::CO2 nPhase(479., 3.95e-5);
@@ -77,9 +77,9 @@ int main(int argc, char** argv)
 //    timeloop.execute(twoPhase);
     MultiWriter writer("co2-out");
 
-//  for timeloop.executeMultiWriter(twoPhase, writer, true) initial 
+//  for timeloop.executeMultiWriter(twoPhase, writer, true) initial
 //  values are read from restart file data.dgf
-//  at the moment this only works for SGrid in 2D and for ALUCubeGrid in 3D    
+//  at the moment this only works for SGrid in 2D and for ALUCubeGrid in 3D
     timeloop.executeMultiWriter(twoPhase, writer);
     std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
 

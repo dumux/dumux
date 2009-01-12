@@ -41,25 +41,25 @@ namespace Dune
         typedef ScalarT Scalar;
 
     public:
-        ExpSpline(Scalar x1, 
-                  Scalar x2, 
-                  Scalar y1, 
-                  Scalar y2, 
-                  Scalar m1, 
+        ExpSpline(Scalar x1,
+                  Scalar x2,
+                  Scalar y1,
+                  Scalar y2,
+                  Scalar m1,
                   Scalar m2,
                   int p = 0)
             {
                 const int maxP_ = 4096;
                 assert(x1 != x2);
-                
+
                 x1_ = x1;
                 x2_ = x2;
-                
+
                 if (p > 0) {
                     calcParameters_(x1, x2, y1, y2, m1, m2, p);
                     return;
                 }
-                
+
                 // try to auto-detect a good value for p. we do this
                 // by calculating the average second derivative of the
                 // spline.
@@ -68,7 +68,7 @@ namespace Dune
                 {
                     // calculate parameters for the current p
                     calcParameters_(x1, x2, y1, y2, m1, m2, p);
-                    
+
                     if (isOk_(x1,x2,y1,y2,m1,m2))
                         break;
 
@@ -82,29 +82,29 @@ namespace Dune
                     while (true) {
                         // calculate parameters for the current p
                         calcParameters_(x1, x2, y1, y2, m1, m2, p);
-                        
+
                         if (isOk_(x1,x2,y1,y2,m1,m2))
                             pHigh = p;
                         else
                             pLow = p;
-                        
+
                         if (pHigh - pLow < 4) {
                             p = pHigh;
                             calcParameters_(x1, x2, y1, y2, m1, m2, p);
                             break;
                         }
-                        
+
                         // use the middle p for the next round
                         p = (pHigh + pLow)/2;
                     }
                 }
-                
+
                 assert(fabs(eval(x1) - y1) < 1e-5);
                 assert(fabs(eval(x2) - y2) < 1e-5);
                 assert(fabs(evalDerivative(x1) - m1) < 1e-5);
                 assert(fabs(evalDerivative(x2) - m2) < 1e-5);
             }
-        
+
         /*!
          * \brief Return true iff the given x is in range [x1, x2].
          */
@@ -116,9 +116,9 @@ namespace Dune
          */
         Scalar eval(Scalar x) const
             {
-                return a_ + 
+                return a_ +
                     b_*(x - x1_) +
-                       c_*exp(p_*(x - x1_)) + 
+                       c_*exp(p_*(x - x1_)) +
                        d_*exp(-p_*(x - x1_));
             }
 
@@ -127,13 +127,13 @@ namespace Dune
          */
         Scalar evalDerivative(Scalar x) const
             {
-                return b_ + 
-                    p_*( c_*exp( p_*(x - x1_)) - 
+                return b_ +
+                    p_*( c_*exp( p_*(x - x1_)) -
                          d_*exp(-p_*(x - x1_)) );
             }
 
         Scalar p() { return p_; }
-        
+
     private:
         void calcParameters_(Scalar x1,
                              Scalar x2,
@@ -146,18 +146,18 @@ namespace Dune
                 // calculate the coefficents of the exponential spline.
                 Scalar dx = x2 - x1;
                 Scalar dy = y2 - y1;
-                
+
                 Scalar z = sinh(p*dx)/dx;
                 Scalar w = -z/(z - p);
-                
+
                 Scalar alpha = y2/dx;
                 Scalar beta = y1/dx;
-                
+
                 Scalar v = (p*cosh(p*dx) - z)/(z - p);
-                
+
                 Scalar gamma = (m1 + v*m2 - (v + 1)*dy/dx)/(v*v - 1);
                 Scalar delta = (-v*m1 - m2 + (v + 1)*dy/dx)/(v*v - 1);
-                
+
                 a_ = dx*(beta + w*delta);
                 b_ = alpha - beta + w*(gamma - delta);
                 c_ = 0.5*(gamma - delta*exp(-p*dx))/(z - p);
@@ -174,7 +174,7 @@ namespace Dune
                     std::swap(y1,y2);
                     std::swap(m1,m2);
                 }
-   
+
                 Scalar mAvg = (y2 - y1)/(x2 - x1);
 
                 bool ok = true;
@@ -182,12 +182,12 @@ namespace Dune
 
                 if (m1 > mAvg)
                     ok = ok && isUnder_(x1, y1, m1/f);
-                else 
+                else
                     ok = ok && isOver_(x1, y1, m1*f);
 
                 if (m2 > mAvg)
                     ok = ok && isOver_(x2, y2, m2/f);
-                else 
+                else
                     ok = ok && isUnder_(x2, y2, m2*f);
 
                 return ok;
@@ -201,7 +201,7 @@ namespace Dune
 
                 Scalar x = x1_;
                 Scalar inc = (x2_ - x1_)/(2 - 0.01);
-                for (x += inc; x < x2_; x += inc) { 
+                for (x += inc; x < x2_; x += inc) {
                     // evaluate spline at position x
                     Scalar tmp = eval(x);
 
@@ -220,13 +220,13 @@ namespace Dune
         bool isOver_(Scalar x0, Scalar y0, Scalar m)
             {
                 Scalar b = y0 - m*x0;
-                
+
                 Scalar x = x1_;
                 Scalar inc = (x2_ - x1_)/(2 - 0.01);
-                for (x += inc; x < x2_; x += inc) { 
+                for (x += inc; x < x2_; x += inc) {
                     // evaluate spline at position x
                     Scalar tmp = eval(x);
-                    
+
 /*                    std::cerr << boost::format("isOver_: %f < %f !\n")%
                         (m*x + b)%
                         (tmp + fabs(tmp)*0.01);
@@ -245,8 +245,8 @@ namespace Dune
         Scalar d_;
         int    p_;
 
-        Scalar x1_; 
-        Scalar x2_; 
+        Scalar x1_;
+        Scalar x2_;
     };
 }
 

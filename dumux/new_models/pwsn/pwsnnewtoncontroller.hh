@@ -45,7 +45,7 @@ namespace Dune {
         typedef typename ParentType::Function          Function;
         typedef typename ParentType::JacobianAssembler JacobianAssembler;
 
-        PwSnNewtonController(Scalar tolerance = 1e-5, 
+        PwSnNewtonController(Scalar tolerance = 1e-5,
                              int targetSteps = 8,
                              int maxSteps = 12)
             : ParentType(tolerance, targetSteps, maxSteps)
@@ -84,7 +84,7 @@ namespace Dune {
                 // or smaller than 0 as being physical for numerical
                 // reasons...
                 Scalar phys = 1.002 - maxSnDelta/SnNormFactor;
-                
+
                 // we never return exactly zero, since we want to
                 // allow solutions which are "very close" to a
                 // physically meaningful one

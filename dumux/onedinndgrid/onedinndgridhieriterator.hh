@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_ONE_D_IN_N_D_GRID_HIERITERATOR_HH
 #define DUNE_ONE_D_IN_N_D_GRID_HIERITERATOR_HH
@@ -31,7 +31,7 @@ class OneDInNDGridHierarchicIterator :
         public HierarchicIteratorDefaultImplementation <GridImp, OneDInNDGridHierarchicIterator>
 {
     enum { dim = GridImp::dimension };
-	enum { dimworld = GridImp::dimensionworld };
+    enum { dimworld = GridImp::dimensionworld };
     friend class OneDInNDGridEntity<0,dim,GridImp>;
 
     // Stack entry
@@ -44,7 +44,7 @@ class OneDInNDGridHierarchicIterator :
 public:
 
     typedef typename GridImp::template Codim<0>::Entity Entity;
- 
+
   //! Constructor
     OneDInNDGridHierarchicIterator(int maxlevel) : OneDInNDGridEntityPointer<0,GridImp>(NULL),
                                                maxlevel_(maxlevel), elemStack()
@@ -52,22 +52,22 @@ public:
 
     //! prefix increment
     void increment() {
-      
+
         if (elemStack.empty())
             return;
-        
+
         StackEntry old_target = elemStack.pop();
-        
+
         // Traverse the tree no deeper than maxlevel
         if (old_target.level < maxlevel_) {
-            
+
             // Load sons of old target onto the iterator stack
             if (!old_target.element->isLeaf()) {
                 StackEntry se0;
                 se0.element = old_target.element->sons_[0];
                 se0.level   = old_target.level + 1;
                 elemStack.push(se0);
-                
+
                 // Add the second son only if it is different from the first one
                 // i.e. the son is not just a copy of the father
                 if (old_target.element->sons_[0] != old_target.element->sons_[1]) {
@@ -77,15 +77,15 @@ public:
                     elemStack.push(se1);
                 }
             }
-            
+
         }
-        
+
         this->virtualEntity_.setToTarget((elemStack.empty()) ? NULL : elemStack.top().element);
     }
 
 private:
 
-  //! max level to go down 
+  //! max level to go down
   int maxlevel_;
 
   std::stack<StackEntry> elemStack;

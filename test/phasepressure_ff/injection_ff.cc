@@ -65,7 +65,7 @@ int main(int argc, char** argv)
     std::stringstream dgfFileName;
     dgfFileName << "grids/unitcube"
 //    dgfFileName << "grids/unitcube"
-    	<< GridType :: dimension << ".dgf";
+        << GridType :: dimension << ".dgf";
 
     // create grid pointer, GridType is defined by gridtype.hh
     Dune::GridPtr<GridType> gridPtr( dgfFileName.str() );
@@ -104,9 +104,9 @@ int main(int argc, char** argv)
     VC variables(grid);
 
     Dune::InjectionTransportProblem<GridType, NumberType, VC> transportProblem(variables, materialLaw, outerLowerLeft, outerUpperRight,
-    		innerLowerLeft, innerUpperRight);
+            innerLowerLeft, innerUpperRight);
     Dune::InjectionDiffProblem<GridType, NumberType, VC> diffusionProblem(variables, materialLaw,outerLowerLeft, outerUpperRight,
-    		innerLowerLeft, innerUpperRight,depthBOR, true);
+            innerLowerLeft, innerUpperRight,depthBOR, true);
 
     typedef Dune::FVTransport<GridType, NumberType, VC> Transport;
     Transport transport(grid, transportProblem, grid.maxLevel(),reconstruct, alphaMax);

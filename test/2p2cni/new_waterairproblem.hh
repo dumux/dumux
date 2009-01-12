@@ -54,9 +54,9 @@ namespace Dune
      * at the right boundary and migrates upwards.
      * Problem was set up using the rect2d.dgf grid.
      *
-     *	Template parameters are:
+     *    Template parameters are:
      *
-     *	- ScalarT  Floating point type used for scalars
+     *    - ScalarT  Floating point type used for scalars
      */
     template<class ScalarT>
     class NewWaterAirProblem : public BasicDomain<Dune::SGrid<2,2>,
@@ -252,14 +252,14 @@ namespace Dune
 
         //! properties of the wetting (liquid) phase
         /*! properties of the wetting (liquid) phase
-          \return	wetting phase
+          \return    wetting phase
         */
         const WettingPhase &wettingPhase() const
             { return wPhase_; }
 
         //! properties of the nonwetting (liquid) phase
         /*! properties of the nonwetting (liquid) phase
-          \return	nonwetting phase
+          \return    nonwetting phase
         */
         const NonwettingPhase &nonwettingPhase() const
             { return nPhase_; }
@@ -267,14 +267,14 @@ namespace Dune
 
         //! properties of the soil
         /*! properties of the soil
-          \return	soil
+          \return    soil
         */
         const Soil &soil() const
             {  return soil_; }
 
         //! properties of the soil
         /*! properties of the soil
-          \return	soil
+          \return    soil
         */
         Soil &soil()
             {  return soil_; }
@@ -282,7 +282,7 @@ namespace Dune
         //! object for multicomponent calculations
         /*! object for multicomponent calculations including mass fractions,
          * mole fractions and some basic laws
-         \return	multicomponent object
+         \return    multicomponent object
         */
         MultiComp &multicomp ()
 //        const MultiComp &multicomp () const
@@ -292,7 +292,7 @@ namespace Dune
 
         //! object for definition of material law
         /*! object for definition of material law (e.g. Brooks-Corey, Van Genuchten, ...)
-          \return	material law
+          \return    material law
         */
         MaterialLaw &materialLaw ()
 //        const MaterialLaw &materialLaw () const

@@ -1,7 +1,7 @@
 #include "config.h"
 #include <iostream>
 #include <iomanip>
-#undef DUMMY 
+#undef DUMMY
 #ifdef DUMMY
 #include <dune/grid/sgrid.hh> // load sgrid definition
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
@@ -57,7 +57,7 @@ int main(int argc, char** argv)
 
     typedef Dune::VariableClass<GridType, NumberType> VC;
 
-	double initsat=0;
+    double initsat=0;
     double initpress=0;
     Dune::FieldVector<double,dim>vel(0);
     vel[0] = 1.0/6.0*1e-6;
@@ -86,7 +86,7 @@ int main(int argc, char** argv)
     std::cerr << "Unknown exception thrown!" << std::endl;
   }
 }
-#else 
+#else
 
 int main (int argc , char **argv) try
 {
@@ -95,9 +95,9 @@ int main (int argc , char **argv) try
 
   return 1;
 }
-catch (...) 
+catch (...)
 {
     std::cerr << "Generic exception!" << std::endl;
     return 2;
 }
-#endif 
+#endif

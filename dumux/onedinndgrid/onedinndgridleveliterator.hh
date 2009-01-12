@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_ONE_D_IN_N_D_GRID_LEVELITERATOR_HH
 #define DUNE_ONE_D_IN_N_D_GRID_LEVELITERATOR_HH
@@ -27,7 +27,7 @@ class OneDInNDGridLevelIterator :
 {
 public:
     enum {dim=GridImp::dimension};
-	enum { dimworld = GridImp::dimensionworld };
+    enum { dimworld = GridImp::dimensionworld };
     friend class OneDInNDGridLevelIteratorFactory<codim>;
     template <int dimworld>
     friend class OneDInNDGrid;
@@ -41,8 +41,8 @@ protected:
     /** \brief Constructor from a given iterator */
     OneDInNDGridLevelIterator<codim,pitype, GridImp>(OneDInNDEntityImp<dim-codim, dimworld>* it)
       : OneDInNDGridEntityPointer<codim, GridImp>(it)
-    { 
-    } 
+    {
+    }
 
 public:
 
@@ -53,5 +53,5 @@ public:
 };
 
 }  // namespace Dune
-  
+
 #endif

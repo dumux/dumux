@@ -56,68 +56,68 @@ class BoxPwSn
 {
 
 public:
-	// define the problem type (also change the template argument above)
-	typedef TwoPhaseProblem<G, RT> ProblemType;
+    // define the problem type (also change the template argument above)
+    typedef TwoPhaseProblem<G, RT> ProblemType;
 
-	// define the local Jacobian (also change the template argument above)
-	typedef BoxPwSnJacobian<G, RT> LocalJacobian;
+    // define the local Jacobian (also change the template argument above)
+    typedef BoxPwSnJacobian<G, RT> LocalJacobian;
 
-	typedef LeafP1TwoPhaseModel<G, RT, ProblemType, LocalJacobian>
-			ThisLeafP1TwoPhaseModel;
+    typedef LeafP1TwoPhaseModel<G, RT, ProblemType, LocalJacobian>
+            ThisLeafP1TwoPhaseModel;
 
-	typedef typename ThisLeafP1TwoPhaseModel::FunctionType FunctionType;
+    typedef typename ThisLeafP1TwoPhaseModel::FunctionType FunctionType;
 
-	typedef typename G::Traits::LeafIndexSet IS;
+    typedef typename G::Traits::LeafIndexSet IS;
 
-	enum {m = 2};
+    enum {m = 2};
 
-	typedef BoxPwSn<G, RT> ThisType;
-	typedef typename ThisLeafP1TwoPhaseModel::FunctionType::RepresentationType VectorType;
-	typedef typename ThisLeafP1TwoPhaseModel::OperatorAssembler::RepresentationType MatrixType;
-	typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator;
+    typedef BoxPwSn<G, RT> ThisType;
+    typedef typename ThisLeafP1TwoPhaseModel::FunctionType::RepresentationType VectorType;
+    typedef typename ThisLeafP1TwoPhaseModel::OperatorAssembler::RepresentationType MatrixType;
+    typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator;
 #ifdef HAVE_PARDISO
-	SeqPardiso<MatrixType,VectorType,VectorType> pardiso;
+    SeqPardiso<MatrixType,VectorType,VectorType> pardiso;
 #endif
 
 
-	BoxPwSn(const G& g, ProblemType& prob)
-	: ThisLeafP1TwoPhaseModel(g, prob)
-	{}
+    BoxPwSn(const G& g, ProblemType& prob)
+    : ThisLeafP1TwoPhaseModel(g, prob)
+    {}
 
-	virtual void solve() {
+    virtual void solve() {
 
-		Operator op(*(this->A)); // make operator out of matrix
-		double red=1E-12;
+        Operator op(*(this->A)); // make operator out of matrix
+        double red=1E-12;
 
 #ifdef HAVE_PARDISO
-		pardiso.factorize(*(this->A));
-		LoopSolver<VectorType> solver(op, pardiso, red, 10, 2);
+        pardiso.factorize(*(this->A));
+        LoopSolver<VectorType> solver(op, pardiso, red, 10, 2);
 #else
-		SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A), 1.0);// a precondtioner
-		BiCGSTABSolver<VectorType> solver(op, ilu0, red, 10000, 1); // an inverse operator
+        SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A), 1.0);// a precondtioner
+        BiCGSTABSolver<VectorType> solver(op, ilu0, red, 10000, 1); // an inverse operator
 #endif
-		InverseOperatorResult r;
-		solver.apply(*(this->u), *(this->f), r);
+        InverseOperatorResult r;
+        solver.apply(*(this->u), *(this->f), r);
 
-		return;
-	}
+        return;
+    }
 
-	void update(double& dt) {
-		this->localJacobian.setDt(dt);
-		this->localJacobian.setOldSolution(this->uOldTimeStep);
-		NewtonMethod<G, ThisType> newtonMethod(this->grid, *this);
-		newtonMethod.execute();
-		dt = this->localJacobian.getDt();
-		double upperMass, oldUpperMass;
-		double totalMass = this->injected(upperMass, oldUpperMass);
-		std::cout << totalMass << "\t"<< upperMass<< "\t"<< oldUpperMass
-				<< "\t"; //# totalMass, upperMass, oldUpperMass"<< std::endl;
-		*(this->uOldTimeStep) = *(this->u);
+    void update(double& dt) {
+        this->localJacobian.setDt(dt);
+        this->localJacobian.setOldSolution(this->uOldTimeStep);
+        NewtonMethod<G, ThisType> newtonMethod(this->grid, *this);
+        newtonMethod.execute();
+        dt = this->localJacobian.getDt();
+        double upperMass, oldUpperMass;
+        double totalMass = this->injected(upperMass, oldUpperMass);
+        std::cout << totalMass << "\t"<< upperMass<< "\t"<< oldUpperMass
+                << "\t"; //# totalMass, upperMass, oldUpperMass"<< std::endl;
+        *(this->uOldTimeStep) = *(this->u);
 
-		if (this->problem.exsolution)
-			this->problem.updateExSol(dt, *(this->u));
+        if (this->problem.exsolution)
+            this->problem.updateExSol(dt, *(this->u));
 
-	}
+    }
 };
 
 }

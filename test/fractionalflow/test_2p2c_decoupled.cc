@@ -1,8 +1,8 @@
 #include "config.h"
 #include <iostream>
-//#define DUMMY 
-#undef DUMMY 
-#ifdef DUMMY 
+//#define DUMMY
+#undef DUMMY
+#ifdef DUMMY
 #include <iomanip>
 #include <dune/grid/sgrid.hh> // load sgrid definition
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
@@ -75,7 +75,7 @@ int main(int argc, char** argv)
     return 1;
   }
 }
-#else 
+#else
 
 int main (int argc , char **argv) try
 {
@@ -83,9 +83,9 @@ int main (int argc , char **argv) try
 
   return 1;
 }
-catch (...) 
+catch (...)
 {
     std::cerr << "Generic exception!" << std::endl;
     return 2;
 }
-#endif 
+#endif

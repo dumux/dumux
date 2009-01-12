@@ -38,14 +38,14 @@ int main(int argc, char** argv)
          std::cout << "usage: tEnd" << std::endl;
          return 0;
       }
-    	std::string arg1(argv[1]);
-	   std::istringstream is1(arg1);
-	   int tEnd;
-	   is1 >> tEnd;
-	  // std::string arg2(argv[2]);
-	  // std::istringstream is2(arg2);
-	  // int dt;
-	  // is2 >> dt;
+        std::string arg1(argv[1]);
+       std::istringstream is1(arg1);
+       int tEnd;
+       is1 >> tEnd;
+      // std::string arg2(argv[2]);
+      // std::istringstream is2(arg2);
+      // int dt;
+      // is2 >> dt;
 
       // create a grid object
       typedef Dune::SGrid<dim,dim> GridType;

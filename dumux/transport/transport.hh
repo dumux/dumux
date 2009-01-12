@@ -24,74 +24,74 @@ namespace Dune
    * \f$\boldsymbol{v}_\text{total}\f$ the total velocity,
    * and \f$f_\text{w}\f$ the wetting phase fractional flow function.
 
-	- Grid      a DUNE grid type
-	- RT        type used for return values
-	- RepresentationType   type of the vector holding the saturation values
-	- VelType   type of the vector holding the velocity values
+    - Grid      a DUNE grid type
+    - RT        type used for return values
+    - RepresentationType   type of the vector holding the saturation values
+    - VelType   type of the vector holding the velocity values
 
    */
   template<class Grid, class Scalar, class VC>
   class Transport {
   public:
 
-	typedef typename VC::ScalarVectorType RepresentationType;
-	FractionalFlowProblem<Grid, Scalar, VC>& transProblem; //!< problem data
+    typedef typename VC::ScalarVectorType RepresentationType;
+    FractionalFlowProblem<Grid, Scalar, VC>& transProblem; //!< problem data
 
-	//! \brief Calculate the update vector.
-	/*!
-	 *  \param[in]  t         time
-	 *  \param[out] dt        time step size
-	 *  \param[out] updateVec vector for hte update values
-	 *
-	 *  Calculate the update vector, i.e., the discretization
-	 *  of \f$\text{div}\, (f_\text{w}(S) \boldsymbol{v}_t)\f$.
-	 */
-	virtual int update(const Scalar t, Scalar& dt, RepresentationType& updateVec, Scalar& CLFFac) = 0;
+    //! \brief Calculate the update vector.
+    /*!
+     *  \param[in]  t         time
+     *  \param[out] dt        time step size
+     *  \param[out] updateVec vector for hte update values
+     *
+     *  Calculate the update vector, i.e., the discretization
+     *  of \f$\text{div}\, (f_\text{w}(S) \boldsymbol{v}_t)\f$.
+     */
+    virtual int update(const Scalar t, Scalar& dt, RepresentationType& updateVec, Scalar& CLFFac) = 0;
 
-	void initial()
-	{
-		initialTransport();
-		return;
-	}
+    void initial()
+    {
+        initialTransport();
+        return;
+    }
 
-	//! \brief Sets the initial solution \f$S_0\f$.
-	virtual void initialTransport() = 0;
+    //! \brief Sets the initial solution \f$S_0\f$.
+    virtual void initialTransport() = 0;
 
-	//! return const reference to saturation vector
-	virtual const RepresentationType& operator* () const
-	{
-	  return transProblem.variables.saturation;
-	}
+    //! return const reference to saturation vector
+    virtual const RepresentationType& operator* () const
+    {
+      return transProblem.variables.saturation;
+    }
 
-	//! return reference to saturation vector
-	virtual RepresentationType& operator* ()
-	{
-	  return transProblem.variables.saturation;
-	}
+    //! return reference to saturation vector
+    virtual RepresentationType& operator* ()
+    {
+      return transProblem.variables.saturation;
+    }
 
-	virtual void vtkout(const char* name, int k) const {
-		transProblem.variables.vtkout(name, k);
-		return;
-	}
+    virtual void vtkout(const char* name, int k) const {
+        transProblem.variables.vtkout(name, k);
+        return;
+    }
 
-	//! always define virtual destructor in abstract base class
-	virtual ~Transport () {}
+    //! always define virtual destructor in abstract base class
+    virtual ~Transport () {}
 
-	/*! @brief constructor
-	 *  @param g a DUNE grid object
-	 *  @param prob an object of class TransportProblem or derived
-	 */
-	Transport(const Grid& grid, FractionalFlowProblem<Grid, Scalar, VC>& problem)
-	: grid(grid), transProblem(problem)
-	{ }
+    /*! @brief constructor
+     *  @param g a DUNE grid object
+     *  @param prob an object of class TransportProblem or derived
+     */
+    Transport(const Grid& grid, FractionalFlowProblem<Grid, Scalar, VC>& problem)
+    : grid(grid), transProblem(problem)
+    { }
 
-	//! returns the level on which the transport eqution is solved.
-	int& level() const
-	{
-		return transProblem.variables.transLevel;
-	}
+    //! returns the level on which the transport eqution is solved.
+    int& level() const
+    {
+        return transProblem.variables.transLevel;
+    }
 
-	const Grid& grid;
+    const Grid& grid;
 
   };
 

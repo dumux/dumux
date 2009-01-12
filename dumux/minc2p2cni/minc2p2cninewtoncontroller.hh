@@ -47,47 +47,47 @@ namespace Dune {
         typedef typename ParentType::JacobianAssembler JacobianAssembler;
 
         TwoPTwoCNINewtonController(bool switched = false,
-							Scalar tolerance = 1e-9,
+                            Scalar tolerance = 1e-9,
                              int targetSteps = 8,
                              int maxSteps = 12,
                              int switchCount = 0)
             : ParentType(tolerance, targetSteps, maxSteps), switched_(switched), switchCount_(switchCount)
             {};
 
-		//! Suggest a new time stepsize based either on the number of newton
-		//! iterations required or on the variable switch
-		Scalar suggestTimeStepSize(Scalar oldTimeStep) const
-			{
-			/*
-				if (variableSwitch) {
-					return somethingSmall;
-				}
-				*/
-				// use function of the newtoncontroller
-				return ParentType::suggestTimeStepSize(oldTimeStep);
-			}
+        //! Suggest a new time stepsize based either on the number of newton
+        //! iterations required or on the variable switch
+        Scalar suggestTimeStepSize(Scalar oldTimeStep) const
+            {
+            /*
+                if (variableSwitch) {
+                    return somethingSmall;
+                }
+                */
+                // use function of the newtoncontroller
+                return ParentType::suggestTimeStepSize(oldTimeStep);
+            }
 
         //! Returns true iff another iteration should be done.
         bool newtonProceed(Function &u)
             {
-//				Model_TEst *test;
-//				switched_ = test->localJacobian.switched;
-//				if (switched_)
-//				{
-//					test->localJacobian.switchBreak = true;
+//                Model_TEst *test;
+//                switched_ = test->localJacobian.switched;
+//                if (switched_)
+//                {
+//                    test->localJacobian.switchBreak = true;
 //
-//					if(switchCount_ == 5)
-//					{
-//					 test->localJacobian.switchBreak = false;
-//					 switchCount_ = 0;
-//					 return ParentType::newtonProceed(u);
-//					}
-//					else
-//					{
-//						switchCount_++;
-//						return true; // we always do at least five iterations
-//					}
-//				}
+//                    if(switchCount_ == 5)
+//                    {
+//                     test->localJacobian.switchBreak = false;
+//                     switchCount_ = 0;
+//                     return ParentType::newtonProceed(u);
+//                    }
+//                    else
+//                    {
+//                        switchCount_++;
+//                        return true; // we always do at least five iterations
+//                    }
+//                }
                 return ParentType::newtonProceed(u);
             }
 
@@ -115,15 +115,15 @@ namespace Dune {
 
                 for (int idx = 0; idx < (*u).size(); idx++)  {
 
-                	pW = (*u)[idx][0];
+                    pW = (*u)[idx][0];
                     switchVar = (*u)[idx][1];
                     temp = (*u)[idx][2];
 
                     if (pW < 1.e5) {
-                    	maxPWDelta = std::max(maxPWDelta, std::abs(pW-1.e5));
+                        maxPWDelta = std::max(maxPWDelta, std::abs(pW-1.e5));
                     }
                     if (pW > 2.e8) {
-                    	maxPWDelta = std::max(maxPWDelta, std::abs(pW-2.e8));
+                        maxPWDelta = std::max(maxPWDelta, std::abs(pW-2.e8));
                     }
                     if (switchVar < 0) {
                         maxSwitchVarDelta = std::max(maxSwitchVarDelta, std::abs(switchVar));
@@ -132,10 +132,10 @@ namespace Dune {
                         maxSwitchVarDelta = std::max(maxSwitchVarDelta, std::abs(switchVar - 1));
                     }
                     if (temp < 273.) {
-                    	maxTempDelta = std::max(maxTempDelta, std::abs(temp-273.));
+                        maxTempDelta = std::max(maxTempDelta, std::abs(temp-273.));
                     }
                     if (temp > 600.) {
-                    	maxTempDelta = std::max(maxTempDelta, std::abs(temp-600.));
+                        maxTempDelta = std::max(maxTempDelta, std::abs(temp-600.));
                     }
 
 

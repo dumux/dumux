@@ -41,13 +41,13 @@ int main(int argc, char** argv)
       return 0;
     }
     std::string arg1(argv[1]);
-	std::istringstream is1(arg1);
-	double tEnd;
-	is1 >> tEnd;
-	std::string arg2(argv[2]);
-	std::istringstream is2(arg2);
-	double dt;
-	is2 >> dt;
+    std::istringstream is1(arg1);
+    double tEnd;
+    is1 >> tEnd;
+    std::string arg2(argv[2]);
+    std::istringstream is2(arg2);
+    double dt;
+    is2 >> dt;
 
     // create a grid object
     typedef double NumberType;
@@ -66,13 +66,13 @@ int main(int argc, char** argv)
     Dune::DNAPL nPhase;
     // create soil object
     Dune::LensSoil<GridType, NumberType> soil(outerLowerLeft,
-    		outerUpperRight, innerLowerLeft, innerUpperRight);
+            outerUpperRight, innerLowerLeft, innerUpperRight);
     // create material law object
     Dune::TwoPhaseRelations<GridType, NumberType> law(soil, wPhase, nPhase);
 
     // create Prolem object
     Dune::LensProblem<GridType, NumberType> problem(wPhase, nPhase, soil, outerLowerLeft,
-    		outerUpperRight, innerLowerLeft, innerUpperRight, law);
+            outerUpperRight, innerLowerLeft, innerUpperRight, law);
 
     typedef Dune::VtkMultiWriter<GridType::LeafGridView> MultiWriter;
     typedef Dune::BoxPwSn<GridType, NumberType, MultiWriter> TwoPhase;

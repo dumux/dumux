@@ -23,20 +23,20 @@ int main(int argc, char** argv)
     typedef Dune::UGGrid<dim> GridType;
 
     if (argc < 2 || argc > 4) {
-    	std::cout << "Usage: fvca5_test9 dgffilename [delta] [theta]" << std::endl;
-    	return (1);
+        std::cout << "Usage: fvca5_test9 dgffilename [delta] [theta]" << std::endl;
+        return (1);
     }
     double delta = 1.0e-3;
     double theta = 1.178097245096172418;
     if (argc >= 3) {
-    	std::string arg2(argv[2]);
-    	std::istringstream is2(arg2);
-    	is2 >> delta;
+        std::string arg2(argv[2]);
+        std::istringstream is2(arg2);
+        is2 >> delta;
     }
     if (argc == 4) {
-    	std::string arg3(argv[3]);
-    	std::istringstream is3(arg3);
-    	is3 >> theta;
+        std::string arg3(argv[3]);
+        std::istringstream is3(arg3);
+        is3 >> theta;
     }
 
     // create grid pointer, GridType is defined by gridtype.hh
@@ -67,9 +67,9 @@ int main(int argc, char** argv)
     std::cout.precision(2);
 
     std::cout << "sumflux = flux0 + flux1 + fluy0 + fluy1 - sumf \n        = "
-    	<< result.flux0 << " + " << result.flux1 << " + "
-    	<< result.fluy0 << " + " << result.fluy1 << " - "
-    	<< result.sumf << "\n        = " << result.sumflux << std::endl;
+        << result.flux0 << " + " << result.flux1 << " + "
+        << result.fluy0 << " + " << result.fluy1 << " - "
+        << result.sumf << "\n        = " << result.sumflux << std::endl;
     std::cout << "energy ener2 = " << result.ener2 << std::endl;
     std::cout << "umin = " << result.uMin << std::endl;
     std::cout << "umax = " << result.uMax << std::endl;
@@ -80,20 +80,20 @@ int main(int argc, char** argv)
     for (int i = 0; i < 11; i++) {
       std::cout << i+1 << " & ";
       for (int j = 0; j < 11; j++) {
-	int fullIdx = i*11 + j;
-	int realIdx;
-	if (fullIdx < 58)
-	  realIdx = fullIdx;
-	else if (fullIdx < 63)
-	  realIdx = fullIdx - 1;
-	else
-	  realIdx = fullIdx - 2;
-	if (fullIdx == 58)
-	  std::cout << "0.00E+00 & ";
-	else if (fullIdx == 62)
-	  std::cout << "1.00E+00 & ";
-	else
-	  std::cout << (problem.variables.pressure)[realIdx] << " & ";
+    int fullIdx = i*11 + j;
+    int realIdx;
+    if (fullIdx < 58)
+      realIdx = fullIdx;
+    else if (fullIdx < 63)
+      realIdx = fullIdx - 1;
+    else
+      realIdx = fullIdx - 2;
+    if (fullIdx == 58)
+      std::cout << "0.00E+00 & ";
+    else if (fullIdx == 62)
+      std::cout << "1.00E+00 & ";
+    else
+      std::cout << (problem.variables.pressure)[realIdx] << " & ";
       }
       std::cout << std::endl;
     }

@@ -17,7 +17,7 @@ class YXProblem : public StokesProblem<G, RT>
 
 public:
   virtual FieldVector<RT,dim> q(const FieldVector<DT,dim>& x, const Entity& e,
-				const FieldVector<DT,dim>& xi) const
+                const FieldVector<DT,dim>& xi) const
   {
     FieldVector<RT,dim> result(0);
     result[0] = x[1];
@@ -27,15 +27,15 @@ public:
   }
 
   virtual BoundaryConditions::Flags bctype (const FieldVector<DT,dim>& x, const Entity& e,
-					    const IntersectionIterator& intersectionIt,
-					    const FieldVector<DT,dim>& xi) const
+                        const IntersectionIterator& intersectionIt,
+                        const FieldVector<DT,dim>& xi) const
   {
     return BoundaryConditions::dirichlet;
   }
 
   virtual FieldVector<RT,dim> g(const FieldVector<DT,dim>& x, const Entity& e,
-				const IntersectionIterator& intersectionIt,
-				const FieldVector<DT,dim>& xi) const
+                const IntersectionIterator& intersectionIt,
+                const FieldVector<DT,dim>& xi) const
   {
     return velocity(x);
   }
