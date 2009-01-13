@@ -1,6 +1,6 @@
 // $Id$
 
-#include<dune/disc/stokes/dgstokes.hh>
+#include"dumux/stokes/dgstokes.hh"
 
 
 template <class G,int v_order, int p_order>
