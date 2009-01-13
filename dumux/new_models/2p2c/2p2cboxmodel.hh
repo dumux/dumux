@@ -81,7 +81,6 @@ namespace Dune
             PhasesVector density;
             PhasesVector diffCoeff; // diffusion coefficents for the phases
             Dune::FieldMatrix<Scalar, numComponents, numPhases> massfrac;
-            int phaseState;
         };
 
     };
@@ -183,7 +182,7 @@ namespace Dune
                                   Problem &problem,
                                   Scalar temperature) const
                 {
-                    const GlobalPosition &global = element.geometry()[localIdx];
+                    const GlobalPosition &global = element.geometry().corner(localIdx);
                     const LocalPosition &local =
                         DomTraits::referenceElement(element.type()).position(localIdx,
                                                                           dim);
@@ -217,7 +216,7 @@ namespace Dune
 
                     vertDat.massfrac[wComp][wPhase] = 1.0 - vertDat.massfrac[nComp][wPhase];
                     vertDat.massfrac[nComp][nPhase] = 1.0 - vertDat.massfrac[wComp][nPhase];
-                    vertDat.phaseState = phaseState;
+//                    vertDat.phaseState = phaseState;
 
                     // Density of Water is set constant here!
                     vertDat.density[wPhase] = problem.wettingPhase().density(temperature,
@@ -303,12 +302,12 @@ namespace Dune
 
                 curSol_[vert][component] = value;
                 asImp_()->updateVarVertexData_(curElemDat_.vertex[vert],
-                                             curSol_[vert],
-                                             staticVertexDat_[globalIdx].phaseState,
-                                             this->curElement_(),
-                                             vert,
-                                             this->problem_,
-                                             Implementation::temperature_(curSol_[vert]));
+                                               curSol_[vert],
+                                               staticVertexDat_[globalIdx].phaseState,
+                                               this->curElement_(),
+                                               vert,
+                                               this->problem_,
+                                               Implementation::temperature_(curSol_[vert]));
             }
 
         /*!
@@ -583,6 +582,17 @@ namespace Dune
                                     porosity_j * vDat_j.satN * tauN_j * vDat_j.diffCoeff[nPhase]);
                 Daw = harmonicMean_(porosity_i * vDat_i.satW * tauW_i * vDat_i.diffCoeff[wPhase],
                                     porosity_j * vDat_j.satW * tauW_j * vDat_j.diffCoeff[wPhase]);
+/*
+                // arithmetic mean
+                Dwn = 1./2*(porosity_i * vDat_i.satN * tauN_i * vDat_i.diffCoeff[nPhase] +
+                                    porosity_j * vDat_j.satN * tauN_j * vDat_j.diffCoeff[nPhase]);
+                Daw = 1./2*(porosity_i * vDat_i.satW * tauW_i * vDat_i.diffCoeff[wPhase] +
+                                    porosity_j * vDat_j.satW * tauW_j * vDat_j.diffCoeff[wPhase]);
+                if (vDat_i.satN == 0 || vDat_j.satN == 0)
+                    Dwn = 0;
+                if (vDat_i.satW == 0 || vDat_j.satW == 0)
+                    Daw = 0;
+*/
 
                 // projection of the diffusion gradient on the normal
                 // of the FV face
@@ -599,10 +609,10 @@ namespace Dune
                 diffusionAN = - diffusionWN;
 
                 // add diffusion of water to water flux
-                flux[wComp] += diffusionWW + diffusionWN;
+                flux[pWIdx] += diffusionWW + diffusionWN;
 
                 // add diffusion of air to air flux
-                flux[nComp] += diffusionAN + diffusionAW;
+                flux[switchIdx] += diffusionAN + diffusionAW;
 
                 ////////
                 // diffusive flux of energy (only for non-isothermal
@@ -637,7 +647,7 @@ namespace Dune
                 for (; it != endit; ++it)
                 {
                     int globalIdx = this->problem_.vertIdx(*it);
-                    const GlobalPosition &globalPos = it->geometry()[0];
+                    const GlobalPosition &globalPos = it->geometry().corner(0);
 
                     // initialize phase state
                     staticVertexDat_[globalIdx].phaseState =
@@ -659,7 +669,7 @@ namespace Dune
                 for (; it != this->problem_.vertexEnd(); ++it)
                 {
                     int globalIdx = this->problem_.vertIdx(*it);
-                    const GlobalPosition &global = it->geometry()[0];
+                    const GlobalPosition &global = it->geometry().corner(0);
 
                     wasSwitched = primaryVarSwitch_(curGlobalSol,
                                                     globalIdx,
@@ -796,7 +806,7 @@ namespace Dune
                     if (isOldSol)
                         phaseState = staticVertexDat_[iGlobal].oldPhaseState;
                     else
-                        staticVertexDat_[iGlobal].phaseState;
+                        phaseState = staticVertexDat_[iGlobal].phaseState;
                     asImp_()->updateVarVertexData_(dest.vertex[i],
                                                  sol[i],
                                                  phaseState,
@@ -906,7 +916,7 @@ namespace Dune
 
         // parameters given in constructor
         std::vector<StaticVertexData> staticVertexDat_;
-        bool                        switchFlag_;
+        bool                          switchFlag_;
 
         // current solution
         LocalFunction       curSol_;
