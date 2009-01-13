@@ -610,6 +610,10 @@ namespace Dune
             varData[i].satW = 1.0 - varData[i].satN;
 
             varData[i].pC = problem.materialLaw().pC(varData[i].satW, global, e, local);
+// For computation of a second pc-Sw law
+//           const std::vector<double>& param = problem.soil().paramRelPerm2(global, e, local);
+//           varData[i].pC = problem.materialLaw().pC(varData[i].satW, global, e, local, param);
+
             varData[i].pN = varData[i].pW + varData[i].pC;
             varData[i].temperature = temperature; // in [K], constant
 
