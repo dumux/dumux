@@ -456,51 +456,9 @@ namespace Dune
             double p0 = param[1];
               double maxpc = 5e5;
 
-<<<<<<< .mine
-	/*!\ingroup 2pRel
-	 * \brief Brooks-Corey mobility/saturation relation.
-	 *
-	 *  Employs the Brooks-Corey non-linear relative permeability/saturation relation, namely,
-	 *  \f{align*}
-	 *  S_\text{e} = \frac{S - S_\text{r}}{1 - S_\text{r}}, \quad
-	 *  \lambda_\text{w} = \mu_\text{w}^{-1} S_\text{e}^{\frac{2 + 3\lambda}{\lambda}},  \quad
-	 *  \lambda_\text{n} = \mu_\text{n}^{-1} \left( 1 - S_\text{e}^{\frac{2 + 2\lambda}{\lambda}}\right)
-	 *  \left( 1 - S_\text{e} \right)^2, \quad
-	 *  \lambda = \lambda_\text{w} + \lambda_\text{n}.
-	 *  \f}
-	 *
-	 *  Vector entries in Matrix2p::paramRelPerm must be in the order
-	 * 		- \f$ lambda \f$
-	 * 		- entry pressure \f$ p_c \f$
-	 */
-	template<class G>
-	class BrooksCoreyLaw : public RelPerm_pc<G>
-	{
-	public:
-		typedef typename G::Traits::template Codim<0>::Entity Entity;
-		typedef typename G::ctype DT;
-		enum {dim=G::dimension, m=1};
-
-		double pC (double saturationW, const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, const double T) const
-   		 {
-   		    //effective Saturation
-   		 	double Se = (saturationW - this->soil.Sr_w(x, e, xi, T))
-						/(1. - this->soil.Sr_w(x, e, xi, T) - this->soil.Sr_n(x, e, xi, T));
-
- 			double lambda = this->soil.paramRelPerm(x, e, xi, T)[0];
-			double p0 = this->soil.paramRelPerm(x, e, xi, T)[1];
-      		double maxpc = 1e20;
-
-=======
->>>>>>> .r978
     if (Se > epsPC)
-<<<<<<< .mine
-		return (std::min(p0*pow(Se, -1.0/lambda),maxpc));
-    else
-=======
         return (std::min(p0*pow(Se, -1.0/lambda),maxpc));
     else
->>>>>>> .r978
     {
         double dpCEps = dPdS(epsPC, x, e, xi, param, T);
         return (std::min(dpCEps*(Se - epsPC) + p0*pow(epsPC, -1.0/lambda),maxpc));
