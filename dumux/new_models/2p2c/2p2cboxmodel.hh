@@ -175,7 +175,7 @@ namespace Dune
             int oldPhaseState;
         };
 
-        void updateVarVertexData_(VariableVertexData &d,
+        void updateVarVertexData_(VariableVertexData &vertDat,
                                   const SolutionVector &vertSol,
                                   int phaseState,
                                   const Element &element,
@@ -187,62 +187,62 @@ namespace Dune
                     const LocalPosition &local =
                         DomTraits::referenceElement(element.type()).position(localIdx,
                                                                           dim);
-                    d.pW = vertSol[pWIdx];
-                    if (phaseState == bothPhases) d.satN = vertSol[switchIdx];
-                    else if (phaseState == wPhaseOnly) d.satN = 0.0;
-                    else if (phaseState == nPhaseOnly) d.satN = 1.0;
+                    vertDat.pW = vertSol[pWIdx];
+                    if (phaseState == bothPhases) vertDat.satN = vertSol[switchIdx];
+                    else if (phaseState == wPhaseOnly) vertDat.satN = 0.0;
+                    else if (phaseState == nPhaseOnly) vertDat.satN = 1.0;
                     else DUNE_THROW(Dune::InvalidStateException, "Phase state " << phaseState << " is invalid.");
 
-                    d.satW = 1.0 - d.satN;
-                    d.pC = problem.materialLaw().pC(d.satW,
+                    vertDat.satW = 1.0 - vertDat.satN;
+                    vertDat.pC = problem.materialLaw().pC(vertDat.satW,
                                                     global,
                                                     element,
                                                     local);
-                    d.pN = d.pW + d.pC;
+                    vertDat.pN = vertDat.pW + vertDat.pC;
 
                     // Solubilities of components in phases
                     if (phaseState == bothPhases) {
-                        d.massfrac[wComp][nPhase] = problem.multicomp().xWN(d.pN, temperature);
-                        d.massfrac[nComp][wPhase] = problem.multicomp().xAW(d.pN, temperature);
+                        vertDat.massfrac[wComp][nPhase] = problem.multicomp().xWN(vertDat.pN, temperature);
+                        vertDat.massfrac[nComp][wPhase] = problem.multicomp().xAW(vertDat.pN, temperature);
                     }
                     else if (phaseState == wPhaseOnly) {
-                        d.massfrac[wComp][nPhase] = 0.0;
-                        d.massfrac[nComp][wPhase] = vertSol[switchIdx];
+                        vertDat.massfrac[wComp][nPhase] = 0.0;
+                        vertDat.massfrac[nComp][wPhase] = vertSol[switchIdx];
                     }
                     else if (phaseState == nPhaseOnly){
-                        d.massfrac[wComp][nPhase] = vertSol[switchIdx];
-                        d.massfrac[nComp][wPhase] = 0.0;
+                        vertDat.massfrac[wComp][nPhase] = vertSol[switchIdx];
+                        vertDat.massfrac[nComp][wPhase] = 0.0;
                     }
                     else DUNE_THROW(Dune::InvalidStateException, "Phase state " << phaseState << " is invalid.");
 
-                    d.massfrac[wComp][wPhase] = 1.0 - d.massfrac[nComp][wPhase];
-                    d.massfrac[nComp][nPhase] = 1.0 - d.massfrac[wComp][nPhase];
-                    d.phaseState = phaseState;
+                    vertDat.massfrac[wComp][wPhase] = 1.0 - vertDat.massfrac[nComp][wPhase];
+                    vertDat.massfrac[nComp][nPhase] = 1.0 - vertDat.massfrac[wComp][nPhase];
+                    vertDat.phaseState = phaseState;
 
                     // Density of Water is set constant here!
-                    d.density[wPhase] = problem.wettingPhase().density(temperature,
-                                                                       d.pW,
-                                                                       d.massfrac[nComp][wPhase]);
-                    d.density[nPhase] = problem.nonwettingPhase().density(temperature,
-                                                                          d.pN,
-                                                                          d.massfrac[wComp][nPhase]);
+                    vertDat.density[wPhase] = problem.wettingPhase().density(temperature,
+                                                                       vertDat.pW,
+                                                                       vertDat.massfrac[nComp][wPhase]);
+                    vertDat.density[nPhase] = problem.nonwettingPhase().density(temperature,
+                                                                          vertDat.pN,
+                                                                          vertDat.massfrac[wComp][nPhase]);
 
                     // Mobilities
-                    d.mobility[wPhase] = problem.materialLaw().mobW(d.satW,
+                    vertDat.mobility[wPhase] = problem.materialLaw().mobW(vertDat.satW,
                                                                     global,
                                                                     element,
                                                                     local,
                                                                     temperature,
-                                                                    d.pW);
-                    d.mobility[nPhase] = problem.materialLaw().mobN(d.satN,
+                                                                    vertDat.pW);
+                    vertDat.mobility[nPhase] = problem.materialLaw().mobN(vertDat.satN,
                                                                     global,
                                                                     element,
                                                                     local,
                                                                     temperature,
-                                                                    d.pN);
+                                                                    vertDat.pN);
 
-                    d.diffCoeff[wPhase] = problem.wettingPhase().diffCoeff(temperature, d.pW);
-                    d.diffCoeff[nPhase] = problem.nonwettingPhase().diffCoeff(temperature, d.pN);
+                    vertDat.diffCoeff[wPhase] = problem.wettingPhase().diffCoeff(temperature, vertDat.pW);
+                    vertDat.diffCoeff[nPhase] = problem.nonwettingPhase().diffCoeff(temperature, vertDat.pN);
                 }
 
     public:
@@ -290,7 +290,7 @@ namespace Dune
          */
         void deflectCurSolution(int vert, int component, Scalar value)
             {
-                // make sure that the orignal state can be restored
+                // make sure that the original state can be restored
                 if (!curSolDeflected_) {
                     curSolDeflected_ = true;
 
@@ -337,13 +337,16 @@ namespace Dune
             {
                 result = Scalar(0);
 
+                // if flag usePrevSol is set, the solution from the previous time step is used,
+                // otherwise the current solution is used. The secondary variables are used accordingly.
+                // This computes the derivative of the storage term.
                 const LocalFunction &sol   = usePrevSol ? this->prevSol_ : this->curSol_;
                 const ElementData &elementCache = usePrevSol ? prevElemDat_  : curElemDat_;
 
                 Scalar satN = elementCache.vertex[scvId].satN;
                 Scalar satW = elementCache.vertex[scvId].satW;
 
-                // assume porosity defined at verts
+                // assume porosity defined at vertices
                 Scalar porosity =
                     this->problem_.porosity(this->curElement_(), scvId);
 
@@ -365,7 +368,7 @@ namespace Dune
                               satW*
                               elementCache.vertex[scvId].massfrac[nComp][wPhase]);
 
-                // storage of energy
+                // storage of energy (if nonisothermal model is used)
                 asImp_()->heatStorage(result, scvId, sol, elementCache);
             }
 
@@ -596,10 +599,10 @@ namespace Dune
                 diffusionAN = - diffusionWN;
 
                 // add diffusion of water to water flux
-                flux[pWIdx] += diffusionWW + diffusionWN;
+                flux[wComp] += diffusionWW + diffusionWN;
 
                 // add diffusion of air to air flux
-                flux[switchIdx] += diffusionAN + diffusionAW;
+                flux[nComp] += diffusionAN + diffusionAW;
 
                 ////////
                 // diffusive flux of energy (only for non-isothermal
