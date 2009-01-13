@@ -506,12 +506,14 @@ namespace Dune
             FV ipGlobal; //!< integration point in global coords
             FV normal; //!< normal on face at ip pointing to CV j with length equal to |scvf|
             FieldVector<FV, maxNC> grad; //!< derivatives of shape functions at ip
+            FieldVector<Scalar, maxNC> shapeValue; //!< value of shape functions at ip
         };
 
         struct BoundaryFace {
             FV ipLocal; //!< integration point in local coords
             FV ipGlobal; //!< integration point in global coords
             Scalar area; //!< area of boundary face
+            FieldVector<Scalar, maxNC> shapeValue; //!< value of shape functions at ip
         };
 
         FV elementLocal; //!< local coordinate of element center
@@ -630,6 +632,7 @@ namespace Dune
                             temp[l] = sfs[vert].evaluateDerivative(0, l, subContVolFace[k].ipLocal);
                         jacInvT.umv(temp, grad);
                         subContVolFace[k].grad[vert] = grad;
+                        subContVolFace[k].shapeValue[vert] = sfs[vert].evaluateFunction(0, subContVolFace[k].ipLocal);
                     }
                 } // end loop over edges / sub control volume faces
 
@@ -671,6 +674,9 @@ namespace Dune
                                 DUNE_THROW(NotImplemented, "FVElementGeometry for dim = " << dim);
                             }
                             boundaryFace[bfIdx].ipGlobal = geometry.global(boundaryFace[bfIdx].ipLocal);
+
+                            for (int vert = 0; vert < numVertices; vert++)
+                            	boundaryFace[bfIdx].shapeValue[vert] = sfs[vert].evaluateFunction(0, boundaryFace[bfIdx].ipLocal);
 
                             //                    std::cout << "boundary face " << face << ", vert = " << vertInElement << ", ipLocal = "
                             //                        << boundaryFace[bfIdx].ipLocal << ", ipGlobal = " << boundaryFace[bfIdx].ipGlobal
