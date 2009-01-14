@@ -100,6 +100,7 @@ AC_CONFIG_FILES([Makefile
     dumux/operators/Makefile 
     dumux/parabolic/Makefile 
     dumux/pardiso/Makefile 
+    dumux/richards/Makefile
     dumux/shapefunctions/Makefile 
     dumux/simset/Makefile 
     dumux/stokes/Makefile 
@@ -131,6 +132,7 @@ AC_CONFIG_FILES([Makefile
     test/pardiso/Makefile
     test/phasepressure_ff/Makefile
     test/pipe-couple-incomp/Makefile
+    test/richards/Makefile  
     test/splitting/Makefile
     test/star2dgf/Makefile
     test/star2uggrid/Makefile
@@ -155,6 +157,8 @@ AC_CONFIG_FILES([Makefile
     dumux/parabolic/fe/Makefile 
     dumux/parabolic/fv/Makefile 
     dumux/parabolic/problems/Makefile 
+    dumux/richards/fv/Makefile
+    dumux/richards/problems/Makefile    
     dumux/twophase/fv/Makefile 
     dumux/twophase/problems/Makefile 
     dumux/2pni/fv/Makefile
