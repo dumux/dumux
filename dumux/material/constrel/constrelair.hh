@@ -9,60 +9,64 @@ class ConstrelAir
 
 public:
 
-      /** @brief mass density of gas phase, calculated with ideal gas law
-       * @param T Temperature \f$ \left[ K \right] \f$
+      /** @brief molar density of gas phase, calculated with ideal gas law
+       * @param temperature Temperature \f$ \left[ K \right] \f$
        * @param p Pressure \f$ \left[ Pa \right] \f$
-       * @param  x \f$ \left[ - \right] \f$
-       * @return mass density \f$ \left[ \frac{kg}{m^3} \right] \f$
+       * @return molar density \f$ \left[ \frac{mol}{m^3} \right] \f$
        */
-    double rho_idGG_molar (double Temp, double pg) const
+    double rho_idGG_molar (double temperature, double pg) const
     {
-        double value;
-        const double RU = 8.31451;             // univ. gas constant [J/(mol K)]
+        double rho;
+        const double RU = 8.31451;          // univ. gas constant [J/(mol K)]
         const double eps = 1e-18;
 
-        if(Temp<250.) Temp=250.;    // ACHTUNG Regularisierung
-        if(Temp>500.) Temp=500.;    // ACHTUNG Regularisierung
+        if(temperature<250.) temperature=250.;    // ACHTUNG Regularisierung
+        if(temperature>500.) temperature=500.;    // ACHTUNG Regularisierung
         if(pg<eps) pg=eps;          // ACHTUNG Regularisierung
-        if(pg>1.E8) pg=1.E8;        // ACHTUNG Regularisierung
+        if(pg>1.e8) pg=1.e8;        // ACHTUNG Regularisierung
 
-        value=pg/(RU*Temp);
+        rho=pg/(RU*temperature);
 
-        return(value);
+        return(rho);
     }
 
-    double rho_idGG_mass (double Temp, double pg, const double molarMass) const
+      /** @brief mass density of gas phase, calculated with ideal gas law
+       * @param temperature Temperature \f$ \left[ K \right] \f$
+       * @param p Pressure \f$ \left[ Pa \right] \f$
+       * @return mass density \f$ \left[ \frac{kg}{m^3} \right] \f$
+       */
+    double rho_idGG_mass (double temperature, double pg, const double molarMass) const
     {
-        double value;
-        const double RU = 8.31451;             // univ. gas constant [J/(mol K)]
+        double rho;
+        const double RU = 8.31451;          // univ. gas constant [J/(mol K)]
         const double eps = 1e-18;
 
-        if(Temp<250.) Temp=250.;    // ACHTUNG Regularisierung
-        if(Temp>500.) Temp=500.;    // ACHTUNG Regularisierung
+        if(temperature<250.) temperature=250.;    // ACHTUNG Regularisierung
+        if(temperature>500.) temperature=500.;    // ACHTUNG Regularisierung
         if(pg<eps) pg=eps;          // ACHTUNG Regularisierung
         if(pg>1.E8) pg=1.E8;        // ACHTUNG Regularisierung
 
-        value=molarMass*pg/(RU*Temp);
+        rho=molarMass*pg/(RU*temperature);
 
-        return(value);
+        return(rho);
     }
 
 
     /*** viscosity of air ***/
-    double viscosity_air (double Temp) const
+    double viscosity_air (double temperature) const
     {
         double r;
 
-        if(Temp<250.) Temp = 250.;      /* ACHTUNG Regularisierung */
-        if(Temp>500.) Temp = 500.;      /* ACHTUNG Regularisierung */
+        if(temperature<250.) temperature = 250.;      /* ACHTUNG Regularisierung */
+        if(temperature>500.) temperature = 500.;      /* ACHTUNG Regularisierung */
 
-        r = 1.496*1.E-6*pow(Temp,1.5)/(Temp+120.);
+        r = 1.496*1.E-6*pow(temperature,1.5)/(temperature+120.);
 
         return (r);
     }
 
     /*** saturation pressure curve ***/
-    double pwsat(double Temp) const
+    double pwsat(double temperature) const
     {
         double K_0,K_1,K_2,K_3;
         const double k0=-4.05968210;
@@ -90,7 +94,7 @@ public:
         p_c1=22120000;           /* kritischer Druck [Pa] */
 
 
-        theta=Temp/Temp_c1;
+        theta=temperature/Temp_c1;
         if(theta<0.4)    theta=0.4;     /* ACHTUNG Regularisierung */
         if(theta>1.05)    theta=1.05;    /* ACHTUNG Regularisierung */
 
@@ -117,18 +121,18 @@ public:
         p_s=exp(hoch)*p_c1;
 
 
-//        if(isnan(p_s))
-//        {
-//            sprintf(buf,"isnan pwsat \n");
-//            p_s = 0.0;
-//        }
+//      if(isnan(p_s))
+//      {
+//          sprintf(buf,"isnan pwsat \n");
+//          p_s = 0.0;
+//      }
 
         return (p_s);
 
     }
 
     /*** saturation pressure curve ***/
-    double pwsat_antoine (double Temp) const
+    double pwsat_antoine (double temperature) const
     {
         /*** SOURCE: Luedecke, Luedecke (2000): Thermodynamik, ***/
         /*** Physikalisch-chemische Grundlagen der thermischen ***/
@@ -136,21 +140,21 @@ public:
 
         /* Antoine Equation: log10 (p) = A - B / (C + T)         */
         /*                   units: p in mbar, t in Grad Celsius */
-        /*                   validity: 1 <= T <= 100             */
+        /*                   validity: 1 <= temperature <= 100   */
         /* Antoine constants A, B, C after Gmehling et al. 1977  */
 
         /* Antoine constants */
         const double A = 8.19621;
         const double B = 1730.63;
         const double C = 233.436;
-        double Celsius;        /* temperature in Grad Celsius */
+        double Celsius;     /* temperature in Grad Celsius */
         double exponent;    /* log10 (p) = exponent = A-B/(C+T) */
         double pwsat;
 
-        if (Temp < 274.15) Temp = 274.15; /* ACHTUNG Regularisierung */
-        if (Temp > 373.15) Temp = 373.15; /* ACHTUNG Regularisierung */
+        if (temperature < 274.15) temperature = 274.15; /* ACHTUNG Regularisierung */
+        if (temperature > 373.15) temperature = 373.15; /* ACHTUNG Regularisierung */
 
-        Celsius = Temp - 273.15;
+        Celsius = temperature - 273.15;
 
         exponent = A - (B / (Celsius + C));
 
@@ -160,13 +164,13 @@ public:
     }
 
     // Partialdruck von Wasserdampf in der Gasphase
-    double partial_pressure_gas_w (double pg, double Temp, double Sw, double Xwg) const
+    double partial_pressure_gas_w (double pg, double temperature, double Sw, double Xwg) const
     {
         double pwg;
         const double eps = 1e-18;
 
-        if(Temp<250.) Temp = 250.;    /* ACHTUNG Regularisierung */
-        if(Temp>500.) Temp = 500.;    /* ACHTUNG Regularisierung */
+        if(temperature<250.) temperature = 250.;    /* ACHTUNG Regularisierung */
+        if(temperature>500.) temperature = 500.;    /* ACHTUNG Regularisierung */
         if(pg>1.E8)   pg=1.E8;        /* ACHTUNG Regularisierung */
         if(pg<1.E-8)  pg=1.E-8;       /* ACHTUNG Regularisierung */
 
@@ -174,32 +178,32 @@ public:
         {
             pwg=Xwg*pg;   /* pwgS0 */
         }
-        else pwg=pwsat(Temp);   /* pwgS */
+        else pwg=pwsat(temperature);   /* pwgS */
 
 
-//        if(isnan(pwg)){
-//            sprintf(buf,"isnan partial_pressure_gas_w \n");
-//            pwg = 0.0;
-//        }
+//      if(isnan(pwg)){
+//          sprintf(buf,"isnan partial_pressure_gas_w \n");
+//          pwg = 0.0;
+//      }
 
         return(pwg);
     }
 
     // viscosity of water vapour
-    double visco_w_vap (double Temp) const
+    double visco_w_vap (double temperature) const
     {
         double Tc,Pc,Zc,M,Tr,mu_r;
         double Fp0,xi,eta_xi,r;
         const double eps=1e-18;
 
-        if(Temp<250.) Temp = 250.;    /* ACHTUNG Regularisierung */
-        if(Temp>500.) Temp = 500.;    /* ACHTUNG Regularisierung */
+        if(temperature<250.) temperature = 250.;    /* ACHTUNG Regularisierung */
+        if(temperature>500.) temperature = 500.;    /* ACHTUNG Regularisierung */
 
         Tc = 647.3;            /* [K] */
         Pc = 221.2;            /* [bar] */
         Zc = 0.231;
         M = 18.015;            /* [g/mol] */
-        Tr = Temp/Tc;
+        Tr = temperature/Tc;
         if(Tr<eps) Tr=eps;     /* Regularisierung */
         mu_r = 0.0897;         /* polarity factor */
         Fp0 = 1. + 0.221*(0.96+0.1*(Tr-0.7));
@@ -209,17 +213,17 @@ public:
         r = eta_xi/xi;         /* [1.E-6 P] */
         r = r/1.E7;            /* [Pa s] */
 
-//        if(isnan(r)){
-//            sprintf(buf,"isnan visco_w_vap \n");
-//            r = 0.0;
-//        }
+//      if(isnan(r)){
+//          sprintf(buf,"isnan visco_w_vap \n");
+//          r = 0.0;
+//      }
 
         return (r);
     }
 
     /****************************************************************************/
     /****************************************************************************/
-    /*  specific enthalpies and heat capacities (thermo properties)                */
+    /*  specific enthalpies and heat capacities (thermo properties)             */
     /****************************************************************************/
     /****************************************************************************/
 
@@ -227,33 +231,33 @@ public:
 
 
     /* spezifische Enthalpie der Wasserphase [J/kg]  (  -> 1J = 1 (kg*m�)/s�  ) */
-    double sp_enthalpy_w (double Temp, double pw)
+    double sp_enthalpy_w (double temperature, double pw)
     {
     double A[23],SA[12];
     double TKR,PNMR,Y,ZP,Z,PAR1,PAR2,PAR3,PAR4,PAR5;
     double VMKR,v,D,YD,SNUM,PRT1,PRT2,PRT3,PRT4,PRT5,ENTR,H,U;
     int i;
-//        /*Regularisierung*/
-//        if(Temp<250.)
-//            {
-//            UserWriteF("sp_enthalpy_w: \t \t Regularisation Temp \t %18.8g -> 250 K\n",Temp);
-//            Temp=250;
-//            }
-//        if(Temp>500.)
-//            {
-//            UserWriteF("sp_enthalpy_w: \t \t Regularisation Temp \t %18.8g -> 500 K\n",Temp);
-//            Temp=500;
-//            }
-//        if(pw<eps)
-//            {
-//            UserWriteF("sp_enthalpy_w: \t \t Regularisation pw \t %18.8g -> %g Pa\n",pw,eps);
-//            pw=eps;
-//            }
-//        if(pw>1.E8)
-//            {
-//            UserWriteF("sp_enthalpy_w: \t \t Regularisation pw \t %18.8g -> 1.E8 Pa\n",pw);
-//            pw=1.E8;
-//            }
+//      /*Regularisierung*/
+//      if(temperature<250.)
+//          {
+//          UserWriteF("sp_enthalpy_w: \t \t Regularisation temperature \t %18.8g -> 250 K\n",temperature);
+//          temperature=250;
+//          }
+//      if(temperature>500.)
+//          {
+//          UserWriteF("sp_enthalpy_w: \t \t Regularisation temperature \t %18.8g -> 500 K\n",temperature);
+//          temperature=500;
+//          }
+//      if(pw<eps)
+//          {
+//          UserWriteF("sp_enthalpy_w: \t \t Regularisation pw \t %18.8g -> %g Pa\n",pw,eps);
+//          pw=eps;
+//          }
+//      if(pw>1.E8)
+//          {
+//          UserWriteF("sp_enthalpy_w: \t \t Regularisation pw \t %18.8g -> 1.E8 Pa\n",pw);
+//          pw=1.E8;
+//          }
 
     A[0]=6.824687741E3;
     A[1]=-5.422063673E2;
@@ -292,7 +296,7 @@ public:
     SA[11]=2.04E-1;
 
             /* Berechnung */
-    TKR=Temp/647.3;
+    TKR=temperature/647.3;
     PNMR=pw/2.212E7;
     Y=1-SA[0]*TKR*TKR-SA[1]/pow(TKR,6);
     ZP=(SA[2]*Y*Y-2*SA[3]*TKR+2*SA[4]*PNMR);
@@ -331,67 +335,67 @@ public:
     H=ENTR*70120.4;         /* specific enthalpy */
     U=H-pw*v;               /* specific internal energy */
 
-//        if(isnan(H)){
-//            sprintf(buf,"isnan sp_enthalpy_w \n");
-//        H = 0.0;
-//        }
+//      if(isnan(H)){
+//          sprintf(buf,"isnan sp_enthalpy_w \n");
+//      H = 0.0;
+//      }
 
     return (H);
     }
 
 
     // Enthalpie des gesaettigten Wasserdampfes
-    double hsat(double Temp) const
+    double hsat(double temperature) const
     {
     double h,x;
-    x=(Temp-273.15)/100;          /* in Celsius/100 !! */
+    x=(temperature-273.15)/100;          /* in Celsius/100 !! */
 
     h=2500514.22+188815.35*x-24027.4*pow(x,2)+29367.67*pow(x,3)-25873.63*pow(x,4)
                              +7886.38*pow(x,5)-982.6*pow(x,6);
 
-//        if(isnan(h)){
-//            sprintf(buf,"isnan hsat \n");
-//        h = 0.0;
-//        }
+//      if(isnan(h)){
+//          sprintf(buf,"isnan hsat \n");
+//      h = 0.0;
+//      }
 
     return(h);
     }
 
     // Enthalpie von stark ueberhitztem Dampf
-    double hsteam(double p_gw, double Temp) const
+    double hsteam(double p_gw, double temperature) const
     {
-    static double A[6];          /* Data A */
-    static double C[7];        /* Data C */
-    static double B[3][8];        /* Data B */
+    static double A[6];         /* Data A */
+    static double C[7];     /* Data C */
+    static double B[3][8];      /* Data B */
     static double SB[5];        /* Data SB */
-    static double Z[3][8];        /* Data Z */
+    static double Z[3][8];      /* Data Z */
     double TK,PK,EL1,X,BEL,BELP,SUM,SC,d__1,S2,v,HK,D,H,U;
     double S[3],R[3];
     int j,k;
     double b,z;
     const double eps = 1e-18;
 
-//    // Regularisierung
-//    if(Temp<270.)
-//        {
-//        UserWriteF("hsteam: \t \t Regularisation Temp \t %18.8g -> 270 K\n",Temp);
-//        Temp=270.;
-//        }
-//    if(Temp>500.)
-//        {
-//        UserWriteF("hsteam: \t \t Regularisation Temp \t %18.8g -> 500 K\n",Temp);
-//        Temp=500.;
-//        }
-//    if(p_gw<1.E-8)
-//        {
-//        UserWriteF("hsteam:\t \t  Regularisation p_gw \t %18.8g -> 1.E-8 Pa\n",p_gw);
-//        p_gw=1.E-8;
-//        }
-//    if(p_gw>1.E8)
-//        {
-//        UserWriteF("hsteam: \t \t Regularisation p_gw \t %18.8g -> 1.E8 Pa\n",p_gw);
-//        p_gw=1.E8;
-//        }
+//  // Regularisierung
+//  if(temperature<270.)
+//      {
+//      UserWriteF("hsteam: \t \t Regularisation temperature \t %18.8g -> 270 K\n",temperature);
+//      temperature=270.;
+//      }
+//  if(temperature>500.)
+//      {
+//      UserWriteF("hsteam: \t \t Regularisation temperature \t %18.8g -> 500 K\n",temperature);
+//      temperature=500.;
+//      }
+//  if(p_gw<1.E-8)
+//      {
+//      UserWriteF("hsteam:\t \t  Regularisation p_gw \t %18.8g -> 1.E-8 Pa\n",p_gw);
+//      p_gw=1.E-8;
+//      }
+//  if(p_gw>1.E8)
+//      {
+//      UserWriteF("hsteam: \t \t Regularisation p_gw \t %18.8g -> 1.E8 Pa\n",p_gw);
+//      p_gw=1.E8;
+//      }
         /* Initialisierung der Data-Arrays */
     A[0]=16.83599274;
     A[1]=28.56067796;
@@ -461,7 +465,7 @@ public:
     Z[2][7]=0.;
 
     /* Berechnung */
-    TK=Temp/647.3;
+    TK=temperature/647.3;
     PK=p_gw/2.212E7;
     EL1=4.260321148;
     X=exp(SB[0]*(1-TK));
@@ -505,8 +509,8 @@ public:
     }
 
     SUM=SUM+11*pow((PK/BEL),10)*S2;
-    v=SUM*0.00317;            /* specific volume */
-    D=1/v;                /* density !! */
+    v=SUM*0.00317;          /* specific volume */
+    D=1/v;              /* density !! */
 
     HK=0.;
     HK=A[0]*TK;
@@ -553,15 +557,15 @@ public:
 
     HK=HK+PK*pow((PK/BEL),10)*S2;
 
-    H=HK*70120.4;            /* specific enthalpy */
+    H=HK*70120.4;           /* specific enthalpy */
 
-    U=H-p_gw*v;            /* specific INTernal energy */
+    U=H-p_gw*v;         /* specific INTernal energy */
 
 
-//        if(isnan(H)){
-//            sprintf(buf,"isnan hsteam \n");
-//        H = 0.0;
-//        }
+//      if(isnan(H)){
+//          sprintf(buf,"isnan hsteam \n");
+//      H = 0.0;
+//      }
 
     return (H);
     }
@@ -569,10 +573,10 @@ public:
 
     /* Interpolationspolynome fuer leicht ueberhitzten */
     /* Dampf fuer 100/50/25/5/1 bar                    */
-    double h_supst100(double T) const
+    double h_supst100(double temperature) const
     {
     double h,x;
-    x=T/100;
+    x=temperature/100;
 
     h=-28677461.4108+30630020.8681*x-11287756.0179*pow(x,2)
              +1865074.74575*pow(x,3)-115262.537121*pow(x,4);
@@ -581,10 +585,10 @@ public:
     }
 
 
-    double h_supst50(double T) const
+    double h_supst50(double temperature) const
     {
     double h,x;
-    x=T/100;
+    x=temperature/100;
 
     h=1188555.125+806071*x-37758.307*x*x-22191.355*x*x*x+3148.348*pow(x,4);
 
@@ -593,10 +597,10 @@ public:
     }
 
 
-    double h_supst25(double T) const
+    double h_supst25(double temperature) const
     {
     double h,x;
-    x=T/100;
+    x=temperature/100;
 
     h=239668.627+2761061.512*x-1170664.429*x*x+242749.898*pow(x,3)
               -18933.3687*pow(x,4);
@@ -605,10 +609,10 @@ public:
     return(h);
     }
 
-    double h_supst5(double T) const
+    double h_supst5(double temperature) const
     {
     double h,x;
-    x=T/100;
+    x=temperature/100;
 
     h=2287056.901+417531.975*x-106064.44*x*x+23491.494*pow(x,3)-1921.521*pow(x,4);
 
@@ -616,10 +620,10 @@ public:
     }
 
 
-    double h_supst1(double T) const
+    double h_supst1(double temperature) const
     {
     double h,x;
-    x=T/100;
+    x=temperature/100;
 
     h=2456564.043+241284.295*x-29300.9264*x*x+8110.1514*pow(x,3)-757.5625*pow(x,4);
 
@@ -629,7 +633,7 @@ public:
 
 
     /* Enthalpie von Wasserdampf in der Gasphase */
-    double enth_gw(double Sw, double p_gw, double Temp) const
+    double enth_gw(double Sw, double p_gw, double temperature) const
     {
     double T_sat=0.,epsilon,tsa,tsa_neu,g,g_strich,Celsius;
     int i;
@@ -639,39 +643,39 @@ public:
     double wicht;
     double eps = 1e-18;
 
-//       /*Regularisierung*/
-//       if(Temp<250.)
-//           {
-//           UserWriteF("enth_gw: \t \t Regularisation Temp \t %18.8g -> 250 K\n",Temp);
-//        Temp=250.;
-//        }
-//       if(Temp>500.)
-//           {
-//        UserWriteF("enth_gw: \t \t Regularisation Temp \t %18.8g -> 500 K\n",Temp);
-//        Temp=500.;
-//        }
-//       if(p_gw<eps)
-//           {
-//        UserWriteF("enth_gw: \t \t Regularisation p_gw \t %18.8g -> %g Pa\n",p_gw,eps);
-//        p_gw=eps;
-//        }
-//       if(p_gw>1.E8)
-//           {
-//         UserWriteF("enth_gw: \t \t Regularisation p_gw \t %18.8g -> 1.E8 Pa\n",p_gw);
-//        p_gw=1.E8;
-//        }
-//       if(Sw<0.0)
-//           {
-//        UserWriteF("enth_gw: \t \t Regularisation Sw \t %18.8g -> 0.0 \n",Sw);
-//        Sw=0.0;
-//        }
-//       if(Sw>1.0)
-//           {
-//        UserWriteF("enth_gw: \t \t Regularisation Sw \t %18.8g -> 1.0 \n",Sw);
-//        Sw=1.0;
-//        }
+//     /*Regularisierung*/
+//     if(temperature<250.)
+//      {
+//      UserWriteF("enth_gw: \t \t Regularisation temperature \t %18.8g -> 250 K\n",temperature);
+//      temperature=250.;
+//      }
+//     if(temperature>500.)
+//      {
+//      UserWriteF("enth_gw: \t \t Regularisation temperature \t %18.8g -> 500 K\n",temperature);
+//      temperature=500.;
+//      }
+//     if(p_gw<eps)
+//      {
+//      UserWriteF("enth_gw: \t \t Regularisation p_gw \t %18.8g -> %g Pa\n",p_gw,eps);
+//      p_gw=eps;
+//      }
+//     if(p_gw>1.E8)
+//      {
+//       UserWriteF("enth_gw: \t \t Regularisation p_gw \t %18.8g -> 1.E8 Pa\n",p_gw);
+//      p_gw=1.E8;
+//      }
+//     if(Sw<0.0)
+//      {
+//      UserWriteF("enth_gw: \t \t Regularisation Sw \t %18.8g -> 0.0 \n",Sw);
+//      Sw=0.0;
+//      }
+//     if(Sw>1.0)
+//      {
+//      UserWriteF("enth_gw: \t \t Regularisation Sw \t %18.8g -> 1.0 \n",Sw);
+//      Sw=1.0;
+//      }
 
-    Celsius=Temp-273.15;
+    Celsius=temperature-273.15;
 
         /* Nassdampf, leicht oder stark ueberhitzter Dampf ?? */
 
@@ -679,7 +683,7 @@ public:
     else
     {
         /* Ermittlung von T_sat(p_gw) */
-      tsa=Temp;
+      tsa=temperature;
       epsilon=1.E-2;
       for(i=1;i<100;++i)
       {
@@ -706,12 +710,12 @@ public:
     {
       case 1:
       {
-        h=hsat(Temp);
+        h=hsat(temperature);
 
-//        if(isnan(h)){
-//            sprintf(buf,"isnan enth_gw \n");
-//        h = 0.0;
-//        }
+//      if(isnan(h)){
+//          sprintf(buf,"isnan enth_gw \n");
+//      h = 0.0;
+//      }
 
         return (h);
       }
@@ -729,9 +733,9 @@ public:
           case 1:
           {
         h0=hsat(T_sat);
-        h=h0-1.759*(T_sat-Temp);
+        h=h0-1.759*(T_sat-temperature);
         wicht=(1.E5-p_gw)/1.E5;
-        DT_sat=Temp-T_sat;
+        DT_sat=temperature-T_sat;
         Dh1=h_supst1(DT_sat+99.632)-h_supst1(99.632);
         h=h*wicht+(1-wicht)*(h0+Dh1);
 
@@ -740,7 +744,7 @@ public:
           case 2:
           {
         h0=hsat(T_sat);
-        DT_sat=Temp-T_sat;
+        DT_sat=temperature-T_sat;
         Dh1=h_supst1(DT_sat+99.632)-h_supst1(99.632);
         Dh2=h_supst5(DT_sat+151.866)-h_supst5(151.866);
         Dh=(T_sat-273.15-99.632)*Dh2/52.231
@@ -752,7 +756,7 @@ public:
           case 3:
           {
             h0=hsat(T_sat);
-            DT_sat=Temp-T_sat;
+            DT_sat=temperature-T_sat;
             Dh1=h_supst5(DT_sat+151.866)-h_supst5(151.866);
             Dh2=h_supst25(DT_sat+223.989)-h_supst25(223.989);
             Dh=(T_sat-273.15-151.866)*Dh2/72.123
@@ -764,7 +768,7 @@ public:
           case 4:
           {
             h0=hsat(T_sat);
-            DT_sat=Temp-T_sat;
+            DT_sat=temperature-T_sat;
             Dh1=h_supst25(DT_sat+223.989)-h_supst25(223.989);
             Dh2=h_supst50(DT_sat+263.977)-h_supst50(263.977);
             Dh=(T_sat-273.15-223.989)*Dh2/39.988
@@ -776,7 +780,7 @@ public:
           case 5:
           {
             h0=hsat(T_sat);
-            DT_sat=Temp-T_sat;
+            DT_sat=temperature-T_sat;
             Dh1=h_supst50(DT_sat+263.977)-h_supst50(263.977);
             Dh2=h_supst100(DT_sat+311.031)-h_supst100(311.031);
             Dh=(T_sat-273.15-263.977)*Dh2/47.054
@@ -789,12 +793,12 @@ public:
       }
       case 3:
       {
-        h=hsteam(p_gw,Temp);
+        h=hsteam(p_gw,temperature);
 
-//        if(isnan(h)){
-//            sprintf(buf,"isnan enth_gw \n");
-//        h = 0.0;
-//        }
+//      if(isnan(h)){
+//          sprintf(buf,"isnan enth_gw \n");
+//      h = 0.0;
+//      }
 
       return (h);
       }
@@ -803,8 +807,8 @@ public:
     }
 
     /* spezifische Enthalpie der Gasphase EINHEITEN ! */
-//    double sp_enth2p2cni_g (double Temp, double Xag, double Xwg, double pg, double Sw)
-    double sp_enth2p2cni_g (double Temp, double pg, double Xwg) const
+//  double sp_enth2p2cni_g (double temperature, double Xag, double Xwg, double pg, double Sw)
+    double sp_enth2p2cni_g (double temperature, double pg, double Xwg) const
     {
        double omega_gw, omega_ag; // mass fractions (notwendig?)
        double h_g, h_ga, h_gw, C_va, p_gw; //, m_w;
@@ -812,57 +816,57 @@ public:
        const double molecular_weight_water = 0.018016;
        const double molecular_weight_air = 0.02896;
        double Xag = 1.0 - Xwg;
-//       /*Regularisierung*/
-//       if(Temp<eps)
-//           {
-//         UserWriteF("sp_enth2p2cni_g: \t Regularisation Temp \t %18.8g -> %g K\n",Temp,eps);
-//        Temp=eps;
-//        }
-//       if(Temp>500.)
-//           {
-//         UserWriteF("sp_enth2p2cni_g: \t Regularisation Temp \t %18.8g -> 500 K\n",Temp);
-//        Temp=500.;
-//        }
-//       if(pg<eps)
-//           {
-//        UserWriteF("sp_enth2p2cni_g: \t Regularisation pg \t %18.8g -> %g Pa\n",pg,eps);
-//        pg=eps;
-//        }
-//       if(pg>1.E8)
-//           {
-//         UserWriteF("sp_enth2p2cni_g: \t Regularisation pg \t %18.8g -> 1.E8 Pa\n",pg);
-//        pg=1.E8;
-//        }
-//       if(Sw<0.0)
-//           {
-//         UserWriteF("sp_enth2p2cni_g: \t Regularisation Sw \t %18.8g -> 0.0 \n",Sw);
-//        Sw = 0.0;
-//        }
-//       if(Sw>1.)
-//           {
-//         UserWriteF("sp_enth2p2cni_g: \t Regularisation Sw \t %18.8g -> 1.0 \n",Sw);
-//        Sw = 1.;
-//        }
-//       if(Xwg<0.0)
-//           {
-//         UserWriteF("sp_enth2p2cni_g: \t Regularisation Xwg \t %18.8g -> 0.0 \n",Xwg);
-//        Xwg = 0.0;
-//        }
-//       if(Xwg>1.)
-//           {
-//         UserWriteF("sp_enth2p2cni_g: \t Regularisation Xwg \t %18.8g -> 1.0 \n",Xwg);
-//        Xwg = 1.;
-//        }
-//       if(Xag<0.0)
-//           {
-//         UserWriteF("sp_enth2p2cni_g: \t Regularisation Xag \t %18.8g -> 0.0 \n",Xag);
-//        Xag = 0.0;
-//        }
-//       if(Xag>1.)
-//           {
-//         UserWriteF("sp_enth2p2cni_g: \t Regularisation Xag \t %18.8g -> 1.0 \n",Xag);
-//        Xag = 1.;
-//        }
+//     /*Regularisierung*/
+//     if(temperature<eps)
+//      {
+//       UserWriteF("sp_enth2p2cni_g: \t Regularisation temperature \t %18.8g -> %g K\n",temperature,eps);
+//      temperature=eps;
+//      }
+//     if(temperature>500.)
+//      {
+//       UserWriteF("sp_enth2p2cni_g: \t Regularisation temperature \t %18.8g -> 500 K\n",temperature);
+//      temperature=500.;
+//      }
+//     if(pg<eps)
+//      {
+//      UserWriteF("sp_enth2p2cni_g: \t Regularisation pg \t %18.8g -> %g Pa\n",pg,eps);
+//      pg=eps;
+//      }
+//     if(pg>1.E8)
+//      {
+//       UserWriteF("sp_enth2p2cni_g: \t Regularisation pg \t %18.8g -> 1.E8 Pa\n",pg);
+//      pg=1.E8;
+//      }
+//     if(Sw<0.0)
+//      {
+//       UserWriteF("sp_enth2p2cni_g: \t Regularisation Sw \t %18.8g -> 0.0 \n",Sw);
+//      Sw = 0.0;
+//      }
+//     if(Sw>1.)
+//      {
+//       UserWriteF("sp_enth2p2cni_g: \t Regularisation Sw \t %18.8g -> 1.0 \n",Sw);
+//      Sw = 1.;
+//      }
+//     if(Xwg<0.0)
+//      {
+//       UserWriteF("sp_enth2p2cni_g: \t Regularisation Xwg \t %18.8g -> 0.0 \n",Xwg);
+//      Xwg = 0.0;
+//      }
+//     if(Xwg>1.)
+//      {
+//       UserWriteF("sp_enth2p2cni_g: \t Regularisation Xwg \t %18.8g -> 1.0 \n",Xwg);
+//      Xwg = 1.;
+//      }
+//     if(Xag<0.0)
+//      {
+//       UserWriteF("sp_enth2p2cni_g: \t Regularisation Xag \t %18.8g -> 0.0 \n",Xag);
+//      Xag = 0.0;
+//      }
+//     if(Xag>1.)
+//      {
+//       UserWriteF("sp_enth2p2cni_g: \t Regularisation Xag \t %18.8g -> 1.0 \n",Xag);
+//      Xag = 1.;
+//      }
        omega_ag = (Xag*molecular_weight_air)/(Xag*molecular_weight_air
                    + Xwg*molecular_weight_water);
        omega_gw = (Xwg*molecular_weight_air)/(Xag*molecular_weight_air
@@ -871,17 +875,17 @@ public:
        //HACK:
        double Sw = 1.0;
 
-       p_gw = partial_pressure_gas_w(pg,Temp,Sw,Xwg);
-       h_gw = enth_gw(Sw,p_gw,Temp); // enth. of steam
+       p_gw = partial_pressure_gas_w(pg,temperature,Sw,Xwg);
+       h_gw = enth_gw(Sw,p_gw,temperature); // enth. of steam
        C_va = 733.;   /* Waermekapazitaet von Luft [J/(kg * K)] */
-       h_ga = C_va*(Temp-273.15) + Rluft*Temp; // enth. of gas
+       h_ga = C_va*(temperature-273.15) + Rluft*temperature; // enth. of gas
        h_g = omega_ag*h_ga+omega_gw*h_gw; //
 
-//        /**   **/
-//        if(isnan(h_g)){
-//            sprintf(buf,"isnan sp_enthalpy_g \n");
-//        h_g = 0.0;
-//        }
+//      /**   **/
+//      if(isnan(h_g)){
+//          sprintf(buf,"isnan sp_enthalpy_g \n");
+//      h_g = 0.0;
+//      }
        return(h_g);
     }
 };
