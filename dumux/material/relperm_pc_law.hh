@@ -177,7 +177,7 @@ namespace Dune
             if (saturationW > (1-Snr)) return param[0]; // min pc
             if (saturationW < Swr) return param[1]; // max pc
 
-            return  param[0] + (param[1] - param[0]) * (1 - saturationW-Swr) / (1-Swr-Snr);
+			return  param[0] + (param[1] - param[0]) * (1 - saturationW - Swr) / (1-Swr-Snr);
         }
 
         double dPdS (double saturationW, const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi,
@@ -191,12 +191,26 @@ namespace Dune
 
         double saturationW (double pC, const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, double T=283.15) const
         {
-            DUNE_THROW(NotImplemented, "LinearLaw::saturationW");
+			double Swr = this->soil.Sr_w(x, e, xi, T);
+			double Snr = this->soil.Sr_n(x, e, xi, T);
+
+			std::vector<double> param = this->soil.paramRelPerm(x, e, xi, T);
+
+			double Sw = 1-Snr - (pC-param[0])/(param[1]-param[0])*(1-Swr-Snr);
+			if (Sw > (1-Snr)) return (1-Snr);
+			if (Sw < Swr) return (Swr);
+
+			return ( Sw);
         }
 
         double dSdP (double pC, const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, double T=283.15) const
         {
-            DUNE_THROW(NotImplemented, "LinearLaw::dSdP");
+			double Swr = this->soil.Sr_w(x, e, xi, T);
+			double Snr = this->soil.Sr_n(x, e, xi, T);
+
+			std::vector<double> param = this->soil.paramRelPerm(x, e, xi, T);
+
+			return ( (1-Swr-Snr) / (param[0] - param[1])  ) ;
         }
 
         LinearLaw(const Matrix2p<G,double>& s, bool lin = false)
@@ -215,7 +229,7 @@ namespace Dune
      *  Employs the van Genuchten non-linear relative permeability/saturation relation.
      *  Vector entries in Matrix2p::paramRelPerm must be in the order
      *         - m
-     *         - n
+     *         - dim
      *         - \f$ \epsilon \f$
      *         - \f$ \gamma \f$
      *         - \f$ \alpha \f$
@@ -405,9 +419,31 @@ namespace Dune
 
         double dSdP (double pC, const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, double T=283.15) const
         {
-            DUNE_THROW(NotImplemented, "VanGenuchtenLaw::dSdP()");
+	    	double SwReg = 0.979;
+			double Swr = this->soil.Sr_w(x, e, xi, T);
+			double Snr = this->soil.Sr_n(x, e, xi, T);
 
-            return 0;
+			std::vector<double> param = this->soil.paramRelPerm(x, e, xi, T);
+
+			double n = param[1];
+			double alpha = param[4];
+
+	    	double dsdSe = 1-Swr-Snr;
+
+	    	double pcReg = this->pC (SwReg, x, e, xi, param, T);
+	    	double dswdpc_reg =-(n-1)*pow(alpha*pcReg,n)*pow(1+pow(alpha*pcReg,n),-2+1/n)/pcReg*dsdSe;
+	    	double dswdpc = -(n-1)*pow(alpha*pC,n)*pow(1+pow(alpha*pC,n),-2+1/n)/pC*dsdSe;
+
+//	    	pc_reg = pc_VanG_Reg(QT2, Swr, Snr, alpha, vg_n);
+//	    	dswdpc_reg =-(vg_n-1)*pow(alpha*pc_reg,vg_n)*pow(1+pow(alpha*pc_reg,vg_n),-2+1/vg_n)/pc_reg*dsdSe;
+//	    	dswdpc = -(vg_n-1)*pow(alpha*pc_in,vg_n)*pow(1+pow(alpha*pc_in,vg_n),-2+1/vg_n)/pc_in*dsdSe;
+
+	    	if (pC<pcReg)
+	    	{
+	    		dswdpc = (pC-pcReg)/pcReg*dswdpc_reg + dswdpc_reg;
+	    	}
+
+	    	return dswdpc;
         }
 
         VanGenuchtenLaw(const Matrix2p<G,double>& s, bool lin = false)
