@@ -215,7 +215,7 @@ namespace Dune
      *  Employs the van Genuchten non-linear relative permeability/saturation relation.
      *  Vector entries in Matrix2p::paramRelPerm must be in the order
      *         - m
-     *         - dim
+     *         - n
      *         - \f$ \epsilon \f$
      *         - \f$ \gamma \f$
      *         - \f$ \alpha \f$
