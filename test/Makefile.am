@@ -21,6 +21,7 @@ SUBDIRS = . \
 	  pardiso \
 	  phasepressure_ff \
 	  pipe-couple-incomp \
+	  richards \
 	  splitting \
 	  star2dgf \
 	  star2uggrid \
