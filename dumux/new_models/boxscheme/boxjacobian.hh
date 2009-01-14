@@ -96,7 +96,6 @@ namespace Dune
         typedef typename Element::EntityPointer                       ElementPointer;
         typedef typename DomainTraits::ReferenceElement               ReferenceElement;
         typedef typename DomainTraits::IntersectionIterator           IntersectionIterator;
-        typedef typename DomainTraits::IntersectionIteratorGetter     IntersectionIteratorGetter;
 
         typedef typename Element::Geometry                        Geometry;
 
@@ -189,8 +188,8 @@ namespace Dune
                 SolutionVector fluxes(0.0);
 
                 // evaluate boundary conditions
-                IntersectionIterator endIt = IntersectionIteratorGetter::end(curElement_());
-                IntersectionIterator isIt = IntersectionIteratorGetter::begin(curElement_());
+                IntersectionIterator isIt = curElement_().ileafbegin();
+                const IntersectionIterator &endIt = curElement_().ileafend();
                 for (; isIt != endIt; ++isIt)
                 {
                     // handle only faces on exterior boundaries. This

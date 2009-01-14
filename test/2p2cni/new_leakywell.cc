@@ -1,3 +1,4 @@
+#include "config.h"
 #include "new_leakywellproblem.hh"
 
 #include <dune/common/exceptions.hh>

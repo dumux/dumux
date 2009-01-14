@@ -1,6 +1,7 @@
 #ifndef DUNE_CHECK_GEOMETRYINFATHER_CC
 #define DUNE_CHECK_GEOMETRYINFATHER_CC
 
+#include "config.h"
 #include <dune/common/typetraits.hh>
 
 /** \file
@@ -149,7 +150,7 @@ void checkGeometryInFather(const GridType& grid) {
             // /////////////////////////////////////////////////////////////////////////////////////
             for (int j=0; j<geometryInFather.corners(); j++) {
 
-                FieldVector<ctype, dim> localPos = eIt->father()->geometry().local(eIt->geometry()[j]);
+                FieldVector<ctype, dim> localPos = eIt->father()->geometry().local(eIt->geometry().corner(j));
 
                 if ( (localPos-geometryInFather[j]).infinity_norm() > 1e-7)
                 {

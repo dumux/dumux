@@ -82,25 +82,24 @@ namespace Lens
     private:
 
         typedef typename DomainTraits::Grid                  Grid;
-        typedef typename DomainTraits::Element                  Element;
+        typedef typename DomainTraits::Element               Element;
         typedef typename DomainTraits::ReferenceElement      ReferenceElement;
 
-        typedef typename DomainTraits::Vertex                  Vertex;
+        typedef typename DomainTraits::Vertex                Vertex;
 
-        typedef typename DomainTraits::ElementIterator         ElementIterator;
-        typedef typename DomainTraits::VertexIterator       VertexIterator;
+        typedef typename DomainTraits::ElementIterator       ElementIterator;
+        typedef typename DomainTraits::VertexIterator        VertexIterator;
 
-        typedef typename DomainTraits::IntersectionIterator       IntersectionIterator;
-        typedef typename DomainTraits::IntersectionIteratorGetter IntersectionIteratorGetter;
+        typedef typename DomainTraits::IntersectionIterator  IntersectionIterator;
 
-        typedef typename DomainTraits::LocalPosition    LocalPosition;
-        typedef typename DomainTraits::GlobalPosition    GlobalPosition;
-        typedef typename DomainTraits::FieldVector        FieldVector;
-        typedef typename DomainTraits::FieldMatrix        FieldMatrix;
+        typedef typename DomainTraits::LocalPosition         LocalPosition;
+        typedef typename DomainTraits::GlobalPosition        GlobalPosition;
+        typedef typename DomainTraits::FieldVector           FieldVector;
+        typedef typename DomainTraits::FieldMatrix           FieldMatrix;
 
         typedef typename MaterialTraits::GlobalState   GlobalState;
         typedef typename MaterialTraits::MediumState   MediumState;
-        typedef typename MaterialTraits::ElementState     ElementState;
+        typedef typename MaterialTraits::ElementState  ElementState;
         typedef typename MaterialTraits::VertexState   VertexState;
 
         typedef typename MaterialTraits::VanGenuchtenState VanGenuchtenState;

@@ -11,7 +11,6 @@
 #include<dune/common/exceptions.hh>
 #include<dune/grid/common/grid.hh>
 #include<dune/grid/common/referenceelements.hh>
-#include<dune/grid/utility/intersectiongetter.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
 #include<dumux/material/twophaserelations.hh>
 #include<dumux/material/property_baseclasses.hh>
@@ -42,7 +41,7 @@ namespace Dune
     typedef typename G::ctype DT;
     enum {dim=G::dimension, m=2};
     typedef typename G::Traits::template Codim<0>::Entity Entity;
-    typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
+    typedef typename G::template Codim<0>::LeafIntersectionIterator IntersectionIterator;
 
   public:
 //    //! evaluate diffusion tensor

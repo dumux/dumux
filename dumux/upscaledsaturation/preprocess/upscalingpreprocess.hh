@@ -106,8 +106,8 @@ template<class G, class RT>void UpscalingPreprocess<G,RT>::calcdispersivecorrect
         }
         subGrid.createEnd();
 
-        FieldVector<ct,dim> lowerLeft = cIt->geometry()[0];
-        FieldVector<ct,dim> upperRight = cIt->geometry()[3];
+        FieldVector<ct,dim> lowerLeft = cIt->geometry().corner(0);
+        FieldVector<ct,dim> upperRight = cIt->geometry().corner(3);
 
         //            std::cout<<"LowerLeft = "<<LowerLeft<<" UpperRight = "<< UpperRight<<std::endl;
 
@@ -242,14 +242,14 @@ template<class G, class RT>void UpscalingPreprocess<G,RT>::calcconvectivecorrect
                 }
                 subGrid.createEnd();
 
-                FieldVector<ct,dim> lowerLeftHelp = cIt->geometry()[0];
-                FieldVector<ct,dim> upperRightHelp = cIt->geometry()[3];
+                FieldVector<ct,dim> lowerLeftHelp = cIt->geometry().corner(0);
+                FieldVector<ct,dim> upperRightHelp = cIt->geometry().corner(3);
 
                 if (faceGlobalCoarse[0] == lowerLeftHelp[0])
                 {
                     //                    std::cout<<"faceGlobalCoarse[0] ="<<faceGlobalCoarse[0]<<"lowerLeftHelp[0] = "<<lowerLeftHelp[0]<<std::endl;
-                    FieldVector<ct, dim> lowerLeft = outside->geometry()[0];
-                    FieldVector<ct,dim> upperRight = cIt->geometry()[3];
+                    FieldVector<ct, dim> lowerLeft = outside->geometry().corner(0);
+                    FieldVector<ct,dim> upperRight = cIt->geometry().corner(3);
 
 //                    std::cout<<"lowerLeftx1 = "<<lowerLeft<<"upperRight = "<<upperRight<<std::endl;
 
@@ -259,7 +259,7 @@ template<class G, class RT>void UpscalingPreprocess<G,RT>::calcconvectivecorrect
                 {
                     //                    std::cout<<"faceGlobalCoarse[0] ="<<faceGlobalCoarse[0]<<"upperRightHelp[0] = "<<upperRightHelp[0]<<std::endl;
                     FieldVector<ct, dim> lowerLeft = lowerLeftHelp;
-                    FieldVector<ct,dim> upperRight = outside->geometry()[3];
+                    FieldVector<ct,dim> upperRight = outside->geometry().corner(3);
 //                    std::cout<<"lowerLeftx2 = "<<lowerLeft<<"upperRight = "<<upperRight<<std::endl;
 
                     if(firstRun_)
@@ -271,7 +271,7 @@ template<class G, class RT>void UpscalingPreprocess<G,RT>::calcconvectivecorrect
                 if (faceGlobalCoarse[1] == lowerLeftHelp[1])
                 {
                     //                    std::cout<<"faceGlobalCoarse[1] ="<<faceGlobalCoarse[1]<<"lowerLeftHelp[1] = "<<lowerLeftHelp[1]<<std::endl;
-                    FieldVector<ct, dim> lowerLeft = outside->geometry()[0];
+                    FieldVector<ct, dim> lowerLeft = outside->geometry().corner(0);
                     FieldVector<ct,dim> upperRight = upperRightHelp;
 //                    std::cout<<"lowerLefty1 = "<<lowerLeft<<"upperRight = "<<upperRight<<std::endl;
 
@@ -281,7 +281,7 @@ template<class G, class RT>void UpscalingPreprocess<G,RT>::calcconvectivecorrect
                 {
                     //                    std::cout<<"faceGlobalCoarse[1] ="<<faceGlobalCoarse[1]<<"upperRightHelp[1] = "<<upperRightHelp[1]<<std::endl;
                     FieldVector<ct, dim> lowerLeft = lowerLeftHelp;
-                    FieldVector<ct,dim> upperRight = outside->geometry()[3];
+                    FieldVector<ct,dim> upperRight = outside->geometry().corner(3);
 //                    std::cout<<"lowerLefty2 = "<<lowerLeft<<"upperRight = "<<upperRight<<std::endl;
 
                     YProblem2(subGrid, fineLev, lowerLeft, upperRight, coarseIndex, numberInSelf,faceGlobalCoarse, size);

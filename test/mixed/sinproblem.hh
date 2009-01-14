@@ -87,10 +87,10 @@ class SinProblem2 : public StokesProblem<G, RT>
   typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
 
 public:
-  virtual FieldVector<RT,dim> q(const FieldVector<DT,dim>& x, const Entity& e,
+  virtual FieldVector<RT,m> q(const FieldVector<DT,dim>& x, const Entity& e,
                 const FieldVector<DT,dim>& xi) const
   {
-    FieldVector<RT,dim> result(0);
+    FieldVector<RT,m> result(0);
     result[0] = 5.0*pi*pi*cos(2.0*pi*x[0])*sin(pi*x[1]) + 4.0*pi*cos(4.0*pi*(x[0])*x[1]);
     result[1] = -10.0*pi*pi*sin(2.0*pi*x[0])*cos(pi*x[1]) + sin(4.0*pi*(x[0]));
 

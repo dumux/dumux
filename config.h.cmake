@@ -35,6 +35,6 @@
 /* malloc.h */
 #cmakedefine HAVE_MALLOC_H 1
 
-#include <dune/common/deprecated.hh>
+#define DUNE_DEPRECATED __attribute__((deprecated))
 
 #endif // CONFIG_H

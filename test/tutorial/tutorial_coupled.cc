@@ -1,4 +1,5 @@
 // $Id$
+#include "config.h"
 #include <iostream>
 #include <iomanip>
 #include <dune/grid/sgrid.hh> /*@\label{tutorial-coupled:include-begin}@*/

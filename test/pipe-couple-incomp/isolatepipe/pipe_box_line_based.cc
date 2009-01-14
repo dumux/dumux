@@ -21,9 +21,9 @@ public:
     bool operator() (const HostVertexPointer& p1, const HostVertexPointer& p2) const
     {
         char stringP1[100];
-        sprintf(stringP1, "%e%e", p1->geometry()[0][0], p1->geometry()[0][1]);
+        sprintf(stringP1, "%e%e", p1->geometry().corner(0][0], p1->geometry()[0][1));
         char stringP2[100];
-        sprintf(stringP2, "%e%e", p2->geometry()[0][0], p2->geometry()[0][1]);
+        sprintf(stringP2, "%e%e", p2->geometry().corner(0][0], p2->geometry()[0][1));
         return strcmp(stringP1, stringP2) < 0;
     }
 };
@@ -213,7 +213,7 @@ void isolate (G& grid, GP& gridP, EdgeV& edgeVector, MapperVetex& vertexToIndex)
 //            for (unsigned j = 0; j < 2; j++)
 //            {
 //                std::cout << "  numberInself: " << edgeVector[k].isIt->numberInSelf() << std::endl;
-//                std::cout << "    vertice: " <<edgeVector[k].vertices[j].nodePointer->geometry()[0] << std::endl;
+//                std::cout << "    vertice: " <<edgeVector[k].vertices[j].nodePointer->geometry().corner(0) << std::endl;
 //                std::cout << "        boundary: " << edgeVector[k].vertices[j].boundary << std::endl;
 //                for (unsigned n = 0; n < edgeVector[k].vertices[j].neighbourEdges.size(); n++)
 //                    std::cout << "            neighbour edges: " << edgeVector[k].vertices[j].neighbourEdges[n] << std::endl;
@@ -223,7 +223,7 @@ void isolate (G& grid, GP& gridP, EdgeV& edgeVector, MapperVetex& vertexToIndex)
 //        std::cout << "Mapper size " << vertexToIndex.size() << std::endl;
 //        for (mapIterator mi = vertexToIndex.begin(); mi != vertexToIndex.end(); mi++)
 //        {
-//            std::cout << "Vertex " << mi->first->geometry()[0] << ", index " << mi->second << std::endl;
+//            std::cout << "Vertex " << mi->first->geometry().corner(0) << ", index " << mi->second << std::endl;
 //        }
 
     }
@@ -295,7 +295,7 @@ int main(int argc, char** argv)
         for (unsigned j = 0; j < 2; j++)
         {
             std::cout << "  numberInself: " << edgeVector[k].isIt.numberInSelf() << std::endl;
-            std::cout << "    vertice: " <<edgeVector[k].vertices[j].nodePointer->geometry()[0] << std::endl;
+            std::cout << "    vertice: " <<edgeVector[k].vertices[j].nodePointer->geometry().corner(0) << std::endl;
             std::cout << "        boundary: " << edgeVector[k].vertices[j].boundary << std::endl;
             for (unsigned n = 0; n < edgeVector[k].vertices[j].neighbourEdges.size(); n++)
                 std::cout << "            neighbour edges: " << edgeVector[k].vertices[j].neighbourEdges[n] << std::endl;
@@ -307,7 +307,7 @@ int main(int argc, char** argv)
     std::cout << "Mapper size " << vertexToIndex.size() << std::endl;
     for (mapIterator mi = vertexToIndex.begin(); mi != vertexToIndex.end(); mi++)
     {
-        std::cout << "Vertex " << mi->first->geometry()[0] << ", index " << mi->second << std::endl;
+        std::cout << "Vertex " << mi->first->geometry().corner(0) << ", index " << mi->second << std::endl;
     }
 
     return 0;

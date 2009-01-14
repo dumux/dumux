@@ -17,8 +17,17 @@ public:
     FunctionType u;
     FunctionType f;
     OperatorAssembler A;
-    LocalJacobian localJacobian;
 
+protected:
+    LocalJacobian localJacobian_;
+public:
+
+    LocalJacobian &localJacobian()
+        { return localJacobian_; };
+
+    const LocalJacobian &localJacobian() const
+        { return localJacobian_; };
+    
     //! return const reference to solution vector
     const FunctionType& operator* () const
     {
@@ -33,19 +42,19 @@ public:
 
     virtual double getDt()
     {
-        return localJacobian.getDt();
+        return localJacobian().getDt();
     }
 
     virtual void setDt(double& dt)
     {
-        localJacobian.setDt(dt);
+        localJacobian().setDt(dt);
     }
 
     virtual void assemble()
     {
         *f = 0;
-        localJacobian.clearVisited();
-        A.assemble(localJacobian, u, f);
+        localJacobian().clearVisited();
+        A.assemble(localJacobian(), u, f);
     }
 
       virtual MatrixType& matrix()
@@ -76,14 +85,14 @@ public:
 
     NonlinearModel(const G& g, ProblemType& prob)
 : problem(prob), u(g, g.overlapSize(0)==0), f(g, g.overlapSize(0)==0), A(g, g.overlapSize(0)==0),
-localJacobian(prob, false, g, u, g.overlapSize(0)>0)
+localJacobian_(prob, false, g, u, g.overlapSize(0)>0)
 //: problem(prob), u(g), f(g), A(g),
-//localJacobian(prob, false, g, u)
+//localJacobian_(prob, false, g, u)
     { }
 
     NonlinearModel(const G& g, ProblemType& prob, int level)
     : problem(prob), u(g, level, g.overlapSize(0)==0), f(g, level, g.overlapSize(0)==0), A(g, level, g.overlapSize(0)==0),
-    localJacobian(prob, false, g, u, g.overlapSize(0)>0)
+    localJacobian_(prob, false, g, u, g.overlapSize(0)>0)
     { }
 };
 

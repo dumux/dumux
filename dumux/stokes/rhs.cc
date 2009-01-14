@@ -1,5 +1,6 @@
 // $Id$
 
+#include "config.h"
 #include"rhs.hh"
 
 template<class Grid>

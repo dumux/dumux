@@ -88,7 +88,7 @@ void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM,
 
     for (unsigned k = 0; k < vertexVectorOnLine.size(); k++)
     {
-        std::cout << "vertice on line coord: " <<vertexVectorOnLine[k].nodePoint->geometry()[0] << std::endl;
+        std::cout << "vertice on line coord: " <<vertexVectorOnLine[k].nodePoint->geometry().corner(0) << std::endl;
         std::cout << "       vertice on line: " << k << std::endl;
         std::cout << "       globalId: " << vertexVectorOnLine[k].globalId << std::endl;
         std::cout << "       vertexOnLineIndex: " << ((*mapperGlobalNodeIdtoOnPipeNodeIndex).find(vertexVectorOnLine[k].globalId))->second << std::endl;
@@ -120,7 +120,7 @@ void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM,
 
     for (unsigned k = 0; k < vertexVectorOutLine.size(); k++)
     {
-        std::cout << "vertice out line coord: " <<vertexVectorOutLine[k].nodePoint->geometry()[0] << std::endl;
+        std::cout << "vertice out line coord: " <<vertexVectorOutLine[k].nodePoint->geometry().corner(0) << std::endl;
         std::cout << "       vertice out line: " << k << std::endl;
         std::cout << "       globalId: " << vertexVectorOutLine[k].globalId << std::endl;
         std::cout << "       vertexOutLineIndex: " << ((*mapperGlobalNodeIdtoOutPipeNodeIndex).find(vertexVectorOutLine[k].globalId))->second << std::endl;
@@ -139,7 +139,7 @@ void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM,
     for (unsigned k = 0; k < vertexVectorOnLine.size(); k++)
     {
         typedef Dune::FieldVector<double,Grid::dimension>  FieldVector;
-        FieldVector global = vertexVectorOnLine[k].nodePoint->geometry()[0];
+        FieldVector global = vertexVectorOnLine[k].nodePoint->geometry().corner(0);
         pressure[k] = initialConditionP(global);
     }
     return;
@@ -177,12 +177,12 @@ void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM,
       double PI = 3.14;
       double crossArea = PI* diameter * diameter / 4;
       typedef Dune::FieldVector<double,dim> FieldVector;
-      FieldVector globali = vertexVectorOnLine[indexi].nodePoint->geometry()[0];
+      FieldVector globali = vertexVectorOnLine[indexi].nodePoint->geometry().corner(0);
 
       for (unsigned m = 0; m < vertexVectorOnLine[indexi].indexVertexVectorOnLine.size(); m++)
       {
           int indexj = vertexVectorOnLine[indexi].indexVertexVectorOnLine[m];
-          FieldVector globalj = vertexVectorOnLine[indexj].nodePoint->geometry()[0];
+          FieldVector globalj = vertexVectorOnLine[indexj].nodePoint->geometry().corner(0);
           FieldVector distVect = globalj;
           distVect -= globali;
           double distVal = distVect.two_norm();
@@ -220,7 +220,7 @@ void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM,
       double PI = 3.14;
       double crossArea = PI* diameter * diameter / 4;
       typedef Dune::FieldVector<double,dim> FieldVector;
-      FieldVector globali = vertexVectorOnLine[indexi].nodePoint->geometry()[0];
+      FieldVector globali = vertexVectorOnLine[indexi].nodePoint->geometry().corner(0);
 
       double TaoNoVel_i= 8 * viscosity * density /diameter * (PI * diameter) / crossArea; // Tao(no velocity inside) * perimeter / crossarea uniform
       double localLoss_i= lambdaLocal(globali, t) * density / 2 * crossArea;
@@ -231,7 +231,7 @@ void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM,
       for (unsigned m = 0; m < vertexVectorOnLine[indexi].indexVertexVectorOnLine.size(); m++)
       {
           int indexj = vertexVectorOnLine[indexi].indexVertexVectorOnLine[m];
-          FieldVector globalj = vertexVectorOnLine[indexj].nodePoint->geometry()[0];
+          FieldVector globalj = vertexVectorOnLine[indexj].nodePoint->geometry().corner(0);
 
           double TaoNoVel_j= 8 * viscosity * density /diameter * (PI * diameter) / crossArea; // Tao(no velocity inside) * perimeter / crossarea uniform
           double localLoss_j= lambdaLocal(globalj, t) * density / 2 * crossArea;
@@ -268,7 +268,7 @@ void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM,
       double crossArea = PI* diameter * diameter / 4;
 
       typedef Dune::FieldVector<double,dim> FieldVector;
-      FieldVector globali = vertexVectorOnLine[k].nodePoint->geometry()[0];
+      FieldVector globali = vertexVectorOnLine[k].nodePoint->geometry().corner(0);
 
       f[indexi] += sourceSink(globali, t) / density *length*crossArea;
 
@@ -289,7 +289,7 @@ void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM,
       {
           int indexj = vertexVectorOnLine[k].indexVertexVectorOnLine[m];
 
-          FieldVector globalj = vertexVectorOnLine[indexj].nodePoint->geometry()[0];
+          FieldVector globalj = vertexVectorOnLine[indexj].nodePoint->geometry().corner(0);
           FieldVector distVect = globalj;
           distVect -= globali;
           double distVal = distVect.two_norm();

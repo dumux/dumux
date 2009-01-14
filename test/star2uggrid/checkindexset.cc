@@ -1,6 +1,7 @@
 #ifndef DUNE_CHECKINDEXSET_CC
 #define DUNE_CHECKINDEXSET_CC
 
+#include "config.h"
 #include <iostream>
 #include <algorithm>
 
@@ -114,7 +115,7 @@ void checkSubEntity ( const GridType & grid,
               typedef typename GridType :: template Codim<dim> :: EntityPointer VertexPointerType;
               VertexPointerType vxp = en.template entity<dim> (local[j]);
 
-              FieldVector<coordType,dim> vx ( vxp->geometry()[0]);
+              FieldVector<coordType,dim> vx ( vxp->geometry().corner(0));
               if(vertexCoordsMap.find(global[j]) != vertexCoordsMap.end())
               {
                 FieldVector<coordType,dim> vxcheck ( vertexCoordsMap[global[j]] );
@@ -133,7 +134,7 @@ void checkSubEntity ( const GridType & grid,
             // otherwise one of the theoretical conditions is violated
             assert( subenp.level() == en.level() );
 
-            FieldVector<coordType,dim> vx ( subenp->geometry()[j]);
+            FieldVector<coordType,dim> vx ( subenp->geometry().corner(j));
             if(vertexCoordsMap.find(global[j]) != vertexCoordsMap.end())
             {
               FieldVector<coordType,dim> vxcheck ( vertexCoordsMap[global[j]] );
@@ -334,7 +335,7 @@ void checkIndexSetForCodim ( const GridType &grid , const IndexSetType & lset,
     {
       count ++ ;
       // get coordinates of vertex
-      FieldVector<coordType,dim> vx ( it->geometry()[0] );
+      FieldVector<coordType,dim> vx ( it->geometry().corner(0) );
 
       // get index of vertex
       sout << "Vertex " << vx << "\n";
@@ -417,7 +418,7 @@ void checkIndexSetForCodim ( const GridType &grid , const IndexSetType & lset,
         VertexPointerType vxp = it->template entity<dim> (i);
 
         // get coordinates of entity pointer
-        FieldVector<coordType,dim> vx (vxp->geometry()[0]);
+        FieldVector<coordType,dim> vx (vxp->geometry().corner(0));
 
         // output vertex coordinates
         if(i<svx-1) sout << vx << " , ";

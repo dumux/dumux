@@ -306,7 +306,7 @@ namespace Dune
       DarcyVIterator endItV2 = (this->darcyGrid_).template leafend<dim>();
       for (DarcyVIterator it = (this->darcyGrid_).template leafbegin<dim>(); it != endItV2; ++it)
     {
-      FieldVector<double,dim> globalCoord = (*it).geometry()[0];
+      FieldVector<double,dim> globalCoord = (*it).geometry().corner(0);
       BoundaryConditions::Flags bctype = (this->secondModel_).problem.bctype(globalCoord, *dummyIT2, dummyIS2, globalCoord);
       int darcyId = darcyVM_.map(*it);
       this->u[rowsInBlock1*nOfBlockRows1 + darcyId] = -this->u[rowsInBlock1*nOfBlockRows1 + darcyId];

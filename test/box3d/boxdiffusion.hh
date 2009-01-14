@@ -149,11 +149,11 @@ namespace Dune
               int size = sfs.size();
 
               // set type of boundary conditions
-              this->localJacobian.fvGeom.update(entity);
-              this->localJacobian.template assembleBC<LeafTag>(entity);
+              this->localJacobian().fvGeom.update(entity);
+              this->localJacobian().template assembleBC<LeafTag>(entity);
 
 //               for (int i = 0; i < size; i++)
-//                 std::cout << "bc[" << i << "] = " << this->localJacobian.bc(i) << std::endl;
+//                 std::cout << "bc[" << i << "] = " << this->localJacobian().bc(i) << std::endl;
 
               IntersectionIterator endit = IntersectionIteratorGetter<G,LeafTag>::end(entity);
               for (IntersectionIterator is = IntersectionIteratorGetter<G,LeafTag>::begin(entity);
@@ -165,7 +165,7 @@ namespace Dune
                       for (int j = 0; j < ReferenceElements<DT,dim>::general(gt).size(is->numberInSelf(), 1, sfs[i].codim()); j++)
                         if (sfs[i].entity() == ReferenceElements<DT,dim>::general(gt).subEntity(is->numberInSelf(), 1, j, sfs[i].codim()))
                         {
-                            if (this->localJacobian.bc(i)[0] == BoundaryConditions::dirichlet)
+                            if (this->localJacobian().bc(i)[0] == BoundaryConditions::dirichlet)
                             {
                                 // get cell center in reference element
                                 Dune::FieldVector<DT,dim> local = sfs[i].position();
@@ -195,11 +195,11 @@ namespace Dune
 
     virtual void update(double& dt)
     {
-        this->localJacobian.setDt(dt);
-        this->localJacobian.setOldSolution(this->uOldTimeStep);
+        this->localJacobian().setDt(dt);
+        this->localJacobian().setOldSolution(this->uOldTimeStep);
         NewtonMethod<G, ThisType> newtonMethod(this->grid, *this);
         newtonMethod.execute();
-        dt = this->localJacobian.getDt();
+        dt = this->localJacobian().getDt();
         *(this->uOldTimeStep) = *(this->u);
 
         return;
@@ -248,21 +248,21 @@ namespace Dune
 
             // get entity
             const Entity& entity = *it;
-            this->localJacobian.fvGeom.update(entity);
-            int size = this->localJacobian.fvGeom.numVertices;
+            this->localJacobian().fvGeom.update(entity);
+            int size = this->localJacobian().fvGeom.numVertices;
 
-            this->localJacobian.setLocalSolution(entity);
-            this->localJacobian.computeElementData(entity);
-            this->localJacobian.updateVariableData(entity, this->localJacobian.u);
-            this->localJacobian.template localDefect<LeafTag>(entity, this->localJacobian.u);
+            this->localJacobian().setLocalSolution(entity);
+            this->localJacobian().computeElementData(entity);
+            this->localJacobian().updateVariableData(entity, this->localJacobian().u);
+            this->localJacobian().template localDefect<LeafTag>(entity, this->localJacobian().u);
 
             // begin loop over vertices
             for (int i=0; i < size; i++) {
                 int globalId = this->vertexmapper.template map<dim>(entity,i);
                 for (int equationnumber = 0; equationnumber < m; equationnumber++) {
-                    if (this->localJacobian.bc(i)[equationnumber] == BoundaryConditions::neumann)
+                    if (this->localJacobian().bc(i)[equationnumber] == BoundaryConditions::neumann)
                         (*defectGlobal)[globalId][equationnumber]
-                                += this->localJacobian.def[i][equationnumber];
+                                += this->localJacobian().def[i][equationnumber];
                     else
                         essential[globalId].assign(BoundaryConditions::dirichlet);
                 }

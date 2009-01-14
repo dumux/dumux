@@ -58,7 +58,7 @@ namespace Lens
     private:
         // some constants from the traits for convenience
         enum {
-            numEq   = BoxTraits::numEq,
+            numEq = BoxTraits::numEq,
             pWIdx = PwSnTraits::pWIdx,
             snIdx = PwSnTraits::snIdx
         };
@@ -66,15 +66,14 @@ namespace Lens
         // copy some types from the traits for convenience
         typedef typename DomainTraits::Scalar                     Scalar;
         typedef typename DomainTraits::Grid                       Grid;
-        typedef typename DomainTraits::Element                       Element;
-        typedef typename DomainTraits::ElementIterator               ElementIterator;
+        typedef typename DomainTraits::Element                    Element;
+        typedef typename DomainTraits::ElementIterator            ElementIterator;
         typedef typename DomainTraits::ReferenceElement           ReferenceElement;
-        typedef typename DomainTraits::Vertex                       Vertex;
-        typedef typename DomainTraits::VertexIterator               VertexIterator;
+        typedef typename DomainTraits::Vertex                     Vertex;
+        typedef typename DomainTraits::VertexIterator             VertexIterator;
         typedef typename DomainTraits::IntersectionIterator       IntersectionIterator;
-        typedef typename DomainTraits::IntersectionIteratorGetter IntersectionIteratorGetter;
-        typedef typename DomainTraits::LocalPosition                 LocalPosition;
-        typedef typename DomainTraits::GlobalPosition                 GlobalPosition;
+        typedef typename DomainTraits::LocalPosition              LocalPosition;
+        typedef typename DomainTraits::GlobalPosition             GlobalPosition;
 
         typedef typename BoxTraits::FVElementGeometry             FVElementGeometry;
         typedef typename BoxTraits::SpatialFunction               SpatialFunction;
@@ -345,7 +344,7 @@ namespace Lens
             {
                 Scalar a, b;
 
-                const LocalPosition &localPos = element.geometry()[vertIdx];
+                const LocalPosition &localPos = element.geometry().corner(vertIdx);
                 GlobalPosition pos = element.geometry().global(localPos);
 
                 if (ParentType::onLeftBoundary(pos))

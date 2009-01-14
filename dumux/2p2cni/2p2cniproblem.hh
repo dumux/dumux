@@ -42,8 +42,8 @@ namespace Dune {
 template<class G, class RT> class TwoPTwoCNIProblem {
     typedef typename G::ctype DT;
     enum {dim=G::dimension, m=3};
-    typedef typename G::Traits::template Codim<0>::Entity Entity;
-    typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator
+    typedef typename G::template Codim<0>::Entity Entity;
+    typedef typename G::template Codim<0>::LeafIntersectionIterator
             IntersectionIterator;
 
 public:

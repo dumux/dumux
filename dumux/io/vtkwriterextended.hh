@@ -1344,11 +1344,11 @@ namespace Dune
         VertexIterator vEnd = vertexEnd();
         for (VertexIterator vit=vertexBegin(); vit!=vEnd; ++vit)
         {
-          int dimw=w;
-          for (int j=0; j<std::min(dimw,3); j++)
-            p->write(vit->geometry()[vit.localindex()][j]);
-          for (int j=std::min(dimw,3); j<3; j++)
-            p->write(0.0);
+            int dimw=w;
+            for (int j=0; j<std::min(dimw,3); j++)
+                p->write(vit->geometry().corner(vit.localindex())[j]);
+            for (int j=std::min(dimw,3); j<3; j++)
+                p->write(0.0);
         }
         delete p;
 
@@ -1480,8 +1480,8 @@ namespace Dune
           float data;
           for (int j=0; j<std::min(dimw,3); j++)
           {
-            data = vit->geometry()[vit.localindex()][j];
-            stream.write(data);
+              data = vit->geometry().corner(vit.localindex())[j];
+              stream.write(data);
           }
           data = 0;
           for (int j=std::min(dimw,3); j<3; j++)

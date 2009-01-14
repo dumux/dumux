@@ -1,3 +1,4 @@
+#include "config.h"
 #include "new_waterairproblem.hh"
 
 #include <dune/common/exceptions.hh>

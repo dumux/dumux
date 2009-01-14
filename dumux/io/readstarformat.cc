@@ -1,5 +1,6 @@
 // $Id$
 
+#include "config.h"
 #include <dune/grid/uggrid.hh>
 #include <fstream>
 

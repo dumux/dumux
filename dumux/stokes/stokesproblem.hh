@@ -51,7 +51,7 @@ public:
      @param[in]  xi   position in reference element of e
      \return     value of source term
      */
-    virtual FieldVector<RT,dim> q(const FieldVector<DT,dim>& x, const Entity& e,
+    virtual FieldVector<RT,m> q(const FieldVector<DT,dim>& x, const Entity& e,
             const FieldVector<DT,dim>& xi) const = 0;
 
     //! return type of boundary condition at the given global coordinate

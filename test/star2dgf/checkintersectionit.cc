@@ -1,6 +1,7 @@
 #ifndef DUNE_CHECK_INTERSECTIONITERATOR_CC
 #define DUNE_CHECK_INTERSECTIONITERATOR_CC
 
+#include "config.h"
 #include <cmath>
 
 #include <dune/grid/common/quadraturerules.hh>

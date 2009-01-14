@@ -51,8 +51,8 @@ namespace Dune
 
     void update (double& dt)
     {
-        this->localJacobian.setDt(dt);
-        this->localJacobian.setOldSolution(this->uOldTimeStep);
+        this->localJacobian().setDt(dt);
+        this->localJacobian().setOldSolution(this->uOldTimeStep);
         NewtonMethod<G, ThisType> newtonMethod(this->grid, *this);
         newtonMethod.execute();
         *(this->uOldTimeStep) = *(this->u);

@@ -102,7 +102,7 @@ namespace Dune
           { return this->u; };
 
       LocalJacobian &getLocalJacobian()
-          { return this->localJacobian; }
+          { return this->localJacobian(); }
 
       typedef typename NewtonTraits::JacobianAssembler JacobianAssembler;
       JacobianAssembler &jacobianAssembler()
@@ -126,18 +126,18 @@ namespace Dune
 
         const GV& gridview(this->grid().leafView());
 
-        this->localJacobian.outPressureN = vtkMultiWriter->template createField<RT, 1>(this->size);
-        this->localJacobian.outCapillaryP = vtkMultiWriter->template createField<RT, 1>(this->size);
-        this->localJacobian.outSaturationW = vtkMultiWriter->template createField<RT, 1>(this->size);
-        this->localJacobian.outSaturationN = vtkMultiWriter->template createField<RT, 1>(this->size);
-        this->localJacobian.outTemperature = vtkMultiWriter->template createField<RT, 1>(this->size);
-        this->localJacobian.outMassFracAir = vtkMultiWriter->template createField<RT, 1>(this->size);
-        this->localJacobian.outMassFracWater = vtkMultiWriter->template createField<RT, 1>(this->size);
-        this->localJacobian.outDensityW = vtkMultiWriter->template createField<RT, 1>(this->size);
-        this->localJacobian.outDensityN = vtkMultiWriter->template createField<RT, 1>(this->size);
-        this->localJacobian.outMobilityW = vtkMultiWriter->template createField<RT, 1>(this->size);
-        this->localJacobian.outMobilityN = vtkMultiWriter->template createField<RT, 1>(this->size);
-        this->localJacobian.outPhaseState = vtkMultiWriter->template createField<RT, 1>(this->size);
+        this->localJacobian().outPressureN = vtkMultiWriter->template createField<RT, 1>(this->size);
+        this->localJacobian().outCapillaryP = vtkMultiWriter->template createField<RT, 1>(this->size);
+        this->localJacobian().outSaturationW = vtkMultiWriter->template createField<RT, 1>(this->size);
+        this->localJacobian().outSaturationN = vtkMultiWriter->template createField<RT, 1>(this->size);
+        this->localJacobian().outTemperature = vtkMultiWriter->template createField<RT, 1>(this->size);
+        this->localJacobian().outMassFracAir = vtkMultiWriter->template createField<RT, 1>(this->size);
+        this->localJacobian().outMassFracWater = vtkMultiWriter->template createField<RT, 1>(this->size);
+        this->localJacobian().outDensityW = vtkMultiWriter->template createField<RT, 1>(this->size);
+        this->localJacobian().outDensityN = vtkMultiWriter->template createField<RT, 1>(this->size);
+        this->localJacobian().outMobilityW = vtkMultiWriter->template createField<RT, 1>(this->size);
+        this->localJacobian().outMobilityN = vtkMultiWriter->template createField<RT, 1>(this->size);
+        this->localJacobian().outPhaseState = vtkMultiWriter->template createField<RT, 1>(this->size);
 
 
         // iterate through leaf grid an evaluate c0 at cell center
@@ -155,7 +155,7 @@ namespace Dune
                     &sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(gt,1);
             int size = sfs.size();
 
-            this->localJacobian.fvGeom.update(entity);
+            this->localJacobian().fvGeom.update(entity);
 
             for (int i = 0; i < size; i++)
             {
@@ -173,14 +173,14 @@ namespace Dune
                         global, entity, local);
 
                 // initialize phase state
-                this->localJacobian.sNDat[globalId].phaseState =
+                this->localJacobian().sNDat[globalId].phaseState =
                     this->problem.initialPhaseState(global, entity, local);
 
-                this->localJacobian.sNDat[globalId].oldPhaseState =
+                this->localJacobian().sNDat[globalId].oldPhaseState =
                     this->problem.initialPhaseState(global, entity, local);
 
             }
-            this->localJacobian.initiateStaticData(entity);
+            this->localJacobian().initiateStaticData(entity);
         }
 
         // set Dirichlet boundary conditions
@@ -199,7 +199,7 @@ namespace Dune
             int size = sfs.size();
 
             // set type of boundary conditions
-            this->localJacobian.template assembleBC<LeafTag>(entity);
+            this->localJacobian().template assembleBC<LeafTag>(entity);
 
             IntersectionIterator
                     endit = IntersectionIteratorGetter<G, LeafTag>::end(entity);
@@ -216,7 +216,7 @@ namespace Dune
                             {
                                 for (int equationNumber = 0; equationNumber<m; equationNumber++)
                                 {
-                                    if (this->localJacobian.bc(i)[equationNumber]
+                                    if (this->localJacobian().bc(i)[equationNumber]
                                             == BoundaryConditions::dirichlet)
                                     {
                                         // get cell center in reference element
@@ -251,9 +251,9 @@ namespace Dune
                                 }
                             }
                 }
-        this->localJacobian.setLocalSolution(entity);
+        this->localJacobian().setLocalSolution(entity);
         for (int i = 0; i < size; i++)
-            this->localJacobian.updateVariableData(entity, this->localJacobian.u, i, false);
+            this->localJacobian().updateVariableData(entity, this->localJacobian().u, i, false);
 
         }
 
@@ -294,21 +294,21 @@ namespace Dune
 
         void updateModel(double& dt, double& nextDt)
     {
-        this->localJacobian.outPressureN = vtkMultiWriter->template createField<RT, 1>(this->size);
-        this->localJacobian.outCapillaryP = vtkMultiWriter->template createField<RT, 1>(this->size);
-        this->localJacobian.outSaturationW = vtkMultiWriter->template createField<RT, 1>(this->size);
-        this->localJacobian.outSaturationN = vtkMultiWriter->template createField<RT, 1>(this->size);
-        this->localJacobian.outTemperature = vtkMultiWriter->template createField<RT, 1>(this->size);
-        this->localJacobian.outMassFracAir = vtkMultiWriter->template createField<RT, 1>(this->size);
-        this->localJacobian.outMassFracWater = vtkMultiWriter->template createField<RT, 1>(this->size);
-        this->localJacobian.outDensityW = vtkMultiWriter->template createField<RT, 1>(this->size);
-        this->localJacobian.outDensityN = vtkMultiWriter->template createField<RT, 1>(this->size);
-        this->localJacobian.outMobilityW = vtkMultiWriter->template createField<RT, 1>(this->size);
-        this->localJacobian.outMobilityN = vtkMultiWriter->template createField<RT, 1>(this->size);
-        this->localJacobian.outPhaseState = vtkMultiWriter->template createField<RT, 1>(this->size);
+        this->localJacobian().outPressureN = vtkMultiWriter->template createField<RT, 1>(this->size);
+        this->localJacobian().outCapillaryP = vtkMultiWriter->template createField<RT, 1>(this->size);
+        this->localJacobian().outSaturationW = vtkMultiWriter->template createField<RT, 1>(this->size);
+        this->localJacobian().outSaturationN = vtkMultiWriter->template createField<RT, 1>(this->size);
+        this->localJacobian().outTemperature = vtkMultiWriter->template createField<RT, 1>(this->size);
+        this->localJacobian().outMassFracAir = vtkMultiWriter->template createField<RT, 1>(this->size);
+        this->localJacobian().outMassFracWater = vtkMultiWriter->template createField<RT, 1>(this->size);
+        this->localJacobian().outDensityW = vtkMultiWriter->template createField<RT, 1>(this->size);
+        this->localJacobian().outDensityN = vtkMultiWriter->template createField<RT, 1>(this->size);
+        this->localJacobian().outMobilityW = vtkMultiWriter->template createField<RT, 1>(this->size);
+        this->localJacobian().outMobilityN = vtkMultiWriter->template createField<RT, 1>(this->size);
+        this->localJacobian().outPhaseState = vtkMultiWriter->template createField<RT, 1>(this->size);
 
-        this->localJacobian.setDt(dt);
-        this->localJacobian.setOldSolution(this->uOldTimeStep);
+        this->localJacobian().setDt(dt);
+        this->localJacobian().setOldSolution(this->uOldTimeStep);
 
 //////////////// FOR VARIABLE SWITCH ONCE EACH TIMESTEP
 //        typedef typename IS::template Codim<0>::template Partition<All_Partition>::Iterator
@@ -330,12 +330,12 @@ namespace Dune
 //            &sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(gt,    1);
 //
 //            int size = sfs.size();
-//            this->localJacobian.updateVariableData(e, this->localJacobian.u);
+//            this->localJacobian().updateVariableData(e, this->localJacobian().u);
 //            for (int i=0; i < size; i++)
 //            {
 //                int globalId = this->vertexmapper.template map<dim>(e,
 //                        sfs[i].entity());
-//                this->localJacobian.primaryVarSwitch(e, globalId, this->localJacobian.u, i);
+//                this->localJacobian().primaryVarSwitch(e, globalId, this->localJacobian().u, i);
 //            }
 //        }
 /////////////////////
@@ -349,7 +349,7 @@ namespace Dune
 
         NewtonMethod<G, ThisType> newtonMethod(this->grid, *this, relTol, absTol, 30, 1.0, 3);
         newtonMethod.execute();
-        dt = this->localJacobian.getDt();
+        dt = this->localJacobian().getDt();
 */
                 NewtonMethod newton(*this);
                 NewtonController newtonCtl;
@@ -364,7 +364,7 @@ namespace Dune
         *(this->uOldTimeStep) = *(this->u);
 
         // update old phase state for computation of ComputeM(..uold..)
-        this->localJacobian.updatePhaseState();
+        this->localJacobian().updatePhaseState();
         return;
     }
 
@@ -383,21 +383,21 @@ namespace Dune
 //        writer.addScalarVertexFunction("nonwetting phase saturation", this->u, 1);
         writer.addScalarVertexFunction("pressure wetting phase", this->u, 0);
 
-//        printvector(std::cout, *(this->localJacobian.outPhaseState), "phase state", "row", 200, 1, 3);
+//        printvector(std::cout, *(this->localJacobian().outPhaseState), "phase state", "row", 200, 1, 3);
 
         //        writer.addVertexData(&satW,"wetting phase saturation");
-        writer.addVertexData(this->localJacobian.outPressureN,"pressure non-wetting phase");
-        writer.addVertexData(this->localJacobian.outCapillaryP,"capillary pressure");
-        writer.addVertexData(this->localJacobian.outTemperature,"temperature");
-        writer.addVertexData(this->localJacobian.outSaturationW,"saturation wetting phase");
-        writer.addVertexData(this->localJacobian.outSaturationN,"saturation non-wetting phase");
-        writer.addVertexData(this->localJacobian.outMassFracAir,"massfraction air in wetting phase");
-        writer.addVertexData(this->localJacobian.outMassFracWater,"massfraction water in non-wetting phase");
-        writer.addVertexData(this->localJacobian.outDensityW,"density wetting phase");
-        writer.addVertexData(this->localJacobian.outDensityN,"density non-wetting phase");
-        writer.addVertexData(this->localJacobian.outMobilityW,"mobility wetting phase");
-        writer.addVertexData(this->localJacobian.outMobilityN,"mobility non-wetting phase");
-        writer.addVertexData(this->localJacobian.outPhaseState,"phase state");
+        writer.addVertexData(this->localJacobian().outPressureN,"pressure non-wetting phase");
+        writer.addVertexData(this->localJacobian().outCapillaryP,"capillary pressure");
+        writer.addVertexData(this->localJacobian().outTemperature,"temperature");
+        writer.addVertexData(this->localJacobian().outSaturationW,"saturation wetting phase");
+        writer.addVertexData(this->localJacobian().outSaturationN,"saturation non-wetting phase");
+        writer.addVertexData(this->localJacobian().outMassFracAir,"massfraction air in wetting phase");
+        writer.addVertexData(this->localJacobian().outMassFracWater,"massfraction water in non-wetting phase");
+        writer.addVertexData(this->localJacobian().outDensityW,"density wetting phase");
+        writer.addVertexData(this->localJacobian().outDensityN,"density non-wetting phase");
+        writer.addVertexData(this->localJacobian().outMobilityW,"mobility wetting phase");
+        writer.addVertexData(this->localJacobian().outMobilityN,"mobility non-wetting phase");
+        writer.addVertexData(this->localJacobian().outPhaseState,"phase state");
 
 //        writer.addVertexData(&xWN, "water in air");
 //        writer.addVertexData(&xAW, "dissolved air");

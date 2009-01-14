@@ -180,7 +180,7 @@ namespace Dune
         typedef typename Model::NewtonTraits::LocalJacobian     LocalJacobian;
         typedef typename Model::NewtonTraits::JacobianAssembler JacobianAssembler;
         typedef typename Model::NewtonTraits::Scalar            Scalar;
-        typedef NewNewtonMethod<Model, useLineSearch>              ThisType;
+        typedef NewNewtonMethod<Model, useLineSearch>           ThisType;
 
     public:
         typedef typename JacobianAssembler::RepresentationType  JacobianMatrix;
@@ -278,7 +278,7 @@ namespace Dune
 
                 // TODO (?): u shouldn't be hard coded to the model
                 Function          &u             = model.currentSolution();
-                LocalJacobian     &localJacobian = model.getLocalJacobian();
+                LocalJacobian     &localJacobian = model.localJacobian();
                 JacobianAssembler &jacobianAsm   = model.jacobianAssembler();
 
                 // method to of how updated are done. (either
@@ -303,7 +303,6 @@ namespace Dune
                     *uOld = *u;
                     *f = 0;
 
-                    localJacobian.clearVisited();
                     // linearize the problem at the current solution
                     jacobianAsm.assemble(localJacobian, u, f);
 

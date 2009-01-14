@@ -1,3 +1,4 @@
+#include "config.h"
 #include "new_injectionproblem.hh"
 
 #include <dune/common/exceptions.hh>

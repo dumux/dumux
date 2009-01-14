@@ -111,8 +111,8 @@ public:
                 (*(this->u))[globalId] = this->problem.initial(
                         global, entity, local);
             }
-            this->localJacobian.clearVisited();
-            this->localJacobian.initiateStaticData(entity);
+            this->localJacobian().clearVisited();
+            this->localJacobian().initiateStaticData(entity);
         }
 
         // set Dirichlet boundary conditions
@@ -130,7 +130,7 @@ public:
             int size = sfs.size();
 
             // set type of boundary conditions
-            this->localJacobian.template assembleBC<LeafTag>(entity);
+            this->localJacobian().template assembleBC<LeafTag>(entity);
 
             IntersectionIterator
                     endit = IntersectionIteratorGetter<G, LeafTag>::end(entity);
@@ -144,7 +144,7 @@ public:
                                     == ReferenceElements<DT,dim>::general(gt).subEntity(is->numberInSelf(), 1,
                                             j, sfs[i].codim())) {
                                 for (int equationNumber = 0; equationNumber<m; equationNumber++) {
-                                    if (this->localJacobian.bc(i)[equationNumber]
+                                    if (this->localJacobian().bc(i)[equationNumber]
                                             == BoundaryConditions::dirichlet) {
                                         // get element center in reference element
                                         Dune::FieldVector<DT,dim>
@@ -245,12 +245,12 @@ public:
 
                          if(flag_i != flag_j)
                          {
-                        this->localJacobian.setLocalSolution(entity);
-                        this->localJacobian.computeElementData(entity);
-                        this->localJacobian.updateVariableData(entity, this->localJacobian.u);
+                        this->localJacobian().setLocalSolution(entity);
+                        this->localJacobian().computeElementData(entity);
+                        this->localJacobian().updateVariableData(entity, this->localJacobian().u);
 
 
-                        flux = this->localJacobian.computeA(entity, this->localJacobian.u, k);
+                        flux = this->localJacobian().computeA(entity, this->localJacobian().u, k);
                         Flux += sign*flux[1];
                          }
                  }
@@ -307,16 +307,16 @@ public:
                         sfs[i].entity());
 
                 int state;
-                state = this->localJacobian.sNDat[globalId].phaseState;
+                state = this->localJacobian().sNDat[globalId].phaseState;
                 RT vol = fvGeom.subContVol[i].volume;
 //                RT poro = this->problem.soil().porosity(global, entity, local);
                 RT poro = this->problem.soil().porosity(global, entity, local);
-                RT rhoN = (*(this->localJacobian.outDensityN))[globalId];
-                RT rhoW = (*(this->localJacobian.outDensityW))[globalId];
-                RT satN = (*(this->localJacobian.outSaturationN))[globalId];
-                RT satW = (*(this->localJacobian.outSaturationW))[globalId];
-                RT xAW = (*(this->localJacobian.outMassFracAir))[globalId];
-                RT xWN = (*(this->localJacobian.outMassFracWater))[globalId];
+                RT rhoN = (*(this->localJacobian().outDensityN))[globalId];
+                RT rhoW = (*(this->localJacobian().outDensityW))[globalId];
+                RT satN = (*(this->localJacobian().outSaturationN))[globalId];
+                RT satW = (*(this->localJacobian().outSaturationW))[globalId];
+                RT xAW = (*(this->localJacobian().outMassFracAir))[globalId];
+                RT xWN = (*(this->localJacobian().outMassFracWater))[globalId];
                 RT xAN = 1 - xWN;
                 RT pW = (*(this->u))[globalId][0];
                 RT Te = (*(this->u))[globalId][2];
@@ -374,22 +374,22 @@ public:
 
             // get entity
             const Entity& entity = *it;
-            this->localJacobian.fvGeom.update(entity);
-            int size = this->localJacobian.fvGeom.nVertexs;
-            this->localJacobian.setLocalSolution(entity);
-            this->localJacobian.computeElementData(entity);
+            this->localJacobian().fvGeom.update(entity);
+            int size = this->localJacobian().fvGeom.nVertexs;
+            this->localJacobian().setLocalSolution(entity);
+            this->localJacobian().computeElementData(entity);
             bool old = true;
-            this->localJacobian.updateVariableData(entity, this->localJacobian.uold, old);
-            this->localJacobian.updateVariableData(entity, this->localJacobian.u);
-            this->localJacobian.template localDefect<LeafTag>(entity, this->localJacobian.u);
+            this->localJacobian().updateVariableData(entity, this->localJacobian().uold, old);
+            this->localJacobian().updateVariableData(entity, this->localJacobian().u);
+            this->localJacobian().template localDefect<LeafTag>(entity, this->localJacobian().u);
 
             // begin loop over vertices
             for (int i=0; i < size; i++) {
                 int globalId = this->vertexmapper.template map<dim>(entity,i);
                 for (int equationnumber = 0; equationnumber < m; equationnumber++) {
-                    if (this->localJacobian.bc(i)[equationnumber] == BoundaryConditions::neumann)
+                    if (this->localJacobian().bc(i)[equationnumber] == BoundaryConditions::neumann)
                         (*defectGlobal)[globalId][equationnumber]
-                                += this->localJacobian.def[i][equationnumber];
+                                += this->localJacobian().def[i][equationnumber];
                     else
                         essential[globalId].assign(BoundaryConditions::dirichlet);
                 }
@@ -427,7 +427,7 @@ public:
             {
                 data[index][i]=(*(this->u))[index][i];
             }
-            data[index][m]=this->localJacobian.sNDat[index].phaseState;
+            data[index][m]=this->localJacobian().sNDat[index].phaseState;
         }
         exportToDGF(_grid.leafView(), data, (m+1), "data", false);
     }

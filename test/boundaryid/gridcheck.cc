@@ -9,6 +9,7 @@
 
 */
 
+#include "config.h"
 #include <dune/grid/common/capabilities.hh>
 #include <dune/common/helpertemplates.hh>
 #include <dune/common/exceptions.hh>
@@ -540,7 +541,7 @@ struct GridInterface
 };
 
 // check
-// Entity::geometry()[c] == Entity::entity<dim>.geometry()[0]
+// Entity::geometry().corner(c] == Entity::entity<dim>.geometry()[0)
 // for codim=cd
 template <int cd, class Grid, class Entity, bool doCheck>
 struct subIndexCheck
@@ -627,12 +628,12 @@ void zeroEntityConsistency (Grid &g)
     assert( it->template entity<0>(0)->level() == it->level() );
     // Entity::count<dim>() == Entity::geometry().corners();
     assert( it->template count<Grid::dimension>() == it->geometry().corners() );
-    // Entity::geometry()[c] == Entity::entity<dim>.geometry()[0];
+    // Entity::geometry().corner(c] == Entity::entity<dim>.geometry()[0);
     const int cmax = it->template count<Grid::dimension>();
     for (int c=0; c<cmax; ++c)
     {
-      Dune::FieldVector<typename Grid::ctype, Grid::dimensionworld> c1(it->geometry()[c]);
-      Dune::FieldVector<typename Grid::ctype, Grid::dimensionworld> c2(it->template entity<Grid::dimension>(c)->geometry()[0]);
+      Dune::FieldVector<typename Grid::ctype, Grid::dimensionworld> c1(it->geometry().corner(c));
+      Dune::FieldVector<typename Grid::ctype, Grid::dimensionworld> c2(it->template entity<Grid::dimension>(c)->geometry().corner(0));
       if( (c2-c1).two_norm() > 10 * std::numeric_limits<typename Grid::ctype>::epsilon() )
       {
         DUNE_THROW(CheckError, "geometry[i] == entity<dim>(i) failed: || c1-c2 || = || " <<
@@ -819,7 +820,7 @@ void iterate(Grid &g)
 
     it->geometry().type();
     it->geometry().corners();
-    it->geometry()[0];
+    it->geometry().corner(0);
 
   }
 
@@ -859,7 +860,7 @@ void iterate(Grid &g)
 
     lit->geometry().type();
     lit->geometry().corners();
-    lit->geometry()[0];
+    lit->geometry().corner(0);
   }
 
 }

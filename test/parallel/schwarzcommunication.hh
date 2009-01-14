@@ -370,7 +370,7 @@ public:
 //     for (VIterator it = indexset.template begin<dim,Dune::All_Partition>(); it!=vendit; ++it)
 //       std::cout << "rank=" << grid.comm().rank()
 //                 << " index=" << mapper.map(*it)
-//                 << " pos=" << it->geometry()[0]
+//                 << " pos=" << it->geometry().corner(0)
 //                 << " nonfront=" << nonfrontmask[mapper.map(*it)]
 //                 << " unique=" << uniquemask[mapper.map(*it)]
 //                 << std::endl;

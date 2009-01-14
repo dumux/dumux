@@ -57,9 +57,9 @@ namespace Dune {
         Scalar suggestTimeStepSize(Scalar oldTimeStep) const
             {
                 /*
-                  if (switched_) {
-                  return somethingSmall;
-                  }
+                if (ParentType::model().checkSwitched()) {
+                    return somethingSmall;
+                }
                 */
                 // use function of the newtoncontroller
                 return ParentType::suggestTimeStepSize(oldTimeStep);
@@ -71,13 +71,13 @@ namespace Dune {
                 return ParentType::newtonProceed(u);
 
                 if (ParentType::newtonConverged()){
-                    ParentType::method_->model().clearSwitched();
+                    ParentType::model().clearSwitched();
                     return false;
                 }
-                if (ParentType::method_->model().checkSwitched() && ParentType::numSteps_ <= minStepsSwitch && !ParentType::newtonConverged())
+                if (ParentType::model().checkSwitched() && ParentType::numSteps_ <= minStepsSwitch && !ParentType::newtonConverged())
                     return true; // do at least some iterations after variable switch
-                else if (ParentType::method_->model().checkSwitched() && ParentType::numSteps_ > minStepsSwitch) {
-                    ParentType::method_->model().clearSwitched();
+                else if (ParentType::model().checkSwitched() && ParentType::numSteps_ > minStepsSwitch) {
+                    ParentType::model().clearSwitched();
                     return false; // if after some iterations no convergence was reached
                 }
                 else
@@ -86,7 +86,10 @@ namespace Dune {
 
         void newtonBeginStep()
             {
-                ParentType::method_->model().setSwitchedLocalToGlobal();
+                ParentType::newtonBeginStep();
+
+                ParentType::model().localJacobian().clearVisited();;
+                ParentType::model().setSwitchedLocalToGlobal();
             }
 
 

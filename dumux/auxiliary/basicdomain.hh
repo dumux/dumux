@@ -27,7 +27,6 @@
 #include <dune/grid/common/referenceelements.hh>
 #include <dune/grid/common/intersectioniterator.hh>
 #include <dune/grid/io/file/dgfparser.hh>
-#include <dune/grid/utility/intersectiongetter.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 
 #include <dune/disc/operators/boundaryconditions.hh>
@@ -56,7 +55,6 @@ namespace Dune
             {typename I::VertexIterator             *x;x=NULL;}
             {typename I::ReferenceElement           *x;x=NULL;}
             {typename I::ReferenceElementContainer  *x;x=NULL;}
-            {typename I::IntersectionIteratorGetter *x;x=NULL;}
             {typename I::IntersectionIterator       *x;x=NULL;}
             {typename I::FieldVector                *x;x=NULL;}
             {typename I::FieldMatrix                *x;x=NULL;}
@@ -120,8 +118,7 @@ namespace Dune
             typedef typename ReferenceElementContainer::value_type            ReferenceElement;
             static const ReferenceElementContainer &referenceElement;
 
-            typedef Dune::IntersectionIteratorGetter<Grid,Dune::LeafTag>      IntersectionIteratorGetter;
-            typedef typename IntersectionIteratorGetter::IntersectionIterator IntersectionIterator;
+            typedef typename Grid::template Codim<0>::LeafIntersectionIterator IntersectionIterator;
 
             // grid-space vector and matrix types
             typedef Dune::FieldVector<Scalar, dim>     FieldVector;
@@ -131,12 +128,12 @@ namespace Dune
     private:
         // some types from the traits for convenience
         typedef typename DomainTraits::Grid                  Grid;
-        typedef typename DomainTraits::Element                  Element;
-        typedef typename DomainTraits::ElementIterator          ElementIterator;
-        typedef typename DomainTraits::Vertex                  Vertex;
-        typedef typename DomainTraits::VertexIterator          VertexIterator;
-        typedef typename DomainTraits::LocalPosition            LocalPosition;
-        typedef typename DomainTraits::GlobalPosition            GlobalPosition;
+        typedef typename DomainTraits::Element               Element;
+        typedef typename DomainTraits::ElementIterator       ElementIterator;
+        typedef typename DomainTraits::Vertex                Vertex;
+        typedef typename DomainTraits::VertexIterator        VertexIterator;
+        typedef typename DomainTraits::LocalPosition         LocalPosition;
+        typedef typename DomainTraits::GlobalPosition        GlobalPosition;
         typedef typename DomainTraits::ReferenceElement      ReferenceElement;
 
         enum {
@@ -304,7 +301,7 @@ namespace Dune
         void vertPosition(GlobalPosition &worldCoord,
                           const Vertex &v) const
             {
-                worldCoord = v.geometry()[0];
+                worldCoord = v.geometry().corner(0);
             }
 
         /*!

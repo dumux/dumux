@@ -1049,7 +1049,7 @@ namespace Dune
           int i;
           if (manager.savedMap().contains(*it,i))
             {
-//               std::cout << " found vertex=" << it->geometry()[0]
+//               std::cout << " found vertex=" << it->geometry().corner(0)
 //                         << " at i=" << i
 //                         << " oldindex=" << manager.oldIndex()[i]
 //                         << " newindex=" << mapper_.map(*it)
@@ -1088,7 +1088,7 @@ namespace Dune
                           for (int c=0; c<m; c++)
                             (*coeff)[index][c] += basefuncvalue * (*coeff)[mapper_.template map<n>(*father,j)][c];
                           //                       std::cout << "  corner=" << i
-                          //                                 << " cpos=" << father->geometry()[i]
+                          //                                 << " cpos=" << father->geometry().corner(i)
                           //                                 << " u=" << (*coeff)[mapper_.template map<n>(*father,i)]
                           //                                 << std::endl;
                         }

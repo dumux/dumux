@@ -272,7 +272,7 @@ namespace Dune
                     DomTraits::referenceElement(element.type()).position(localIdx,
                                                                          dim);
                 const GlobalPosition &global =
-                    element.geometry()[localIdx];
+                    element.geometry().corner(localIdx);
 
                 // update data for the energy equation
                 d.lambda = problem.soil().heatCond(global, element, local, d.satW);

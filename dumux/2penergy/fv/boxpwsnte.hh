@@ -116,11 +116,11 @@ namespace Dune
 
     void update (double& dt)
     {
-        this->localJacobian.setDt(dt);
-        this->localJacobian.setOldSolution(this->uOldTimeStep);
+        this->localJacobian().setDt(dt);
+        this->localJacobian().setOldSolution(this->uOldTimeStep);
         NewtonMethod<G, ThisType> newtonMethod(this->grid, *this, 1.e-8, 1.e+5);
         newtonMethod.execute();
-        dt = this->localJacobian.getDt();
+        dt = this->localJacobian().getDt();
         double upperMass, oldUpperMass;
         double totalMass = this->injected(upperMass, oldUpperMass);
         std::cout << "total CO2 Mass: "<<totalMass << "\t" << std::endl;

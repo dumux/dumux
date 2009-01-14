@@ -40,8 +40,8 @@ namespace Dune
   {
       enum {dim=Grid::dimension, m=2};
       typedef typename Grid::ctype Scalar;
-      typedef typename Grid::Traits::template Codim<0>::Entity Element;
-      typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
+      typedef typename Grid::template Codim<0>::Entity Element;
+      typedef typename Grid::template Codim<0>::LeafIntersectionIterator IntersectionIterator;
 
   public:
       enum {pWIdx = 0, switchIdx = 1}; // phase index

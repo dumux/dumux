@@ -113,11 +113,11 @@ public:
     }
 
     void update(double& dt) {
-        this->localJacobian.setDt(dt);
-        this->localJacobian.setOldSolution(this->uOldTimeStep);
+        this->localJacobian().setDt(dt);
+        this->localJacobian().setOldSolution(this->uOldTimeStep);
         NewtonMethod<G, ThisType> newtonMethod(this->grid, *this);
         newtonMethod.execute();
-        dt = this->localJacobian.getDt();
+        dt = this->localJacobian().getDt();
         double upperMass, oldUpperMass;
         double totalMass = this->injected(upperMass, oldUpperMass);
         std::cout << totalMass << "\t"<< upperMass<< "\t"<< oldUpperMass
@@ -156,23 +156,23 @@ public:
 
             // get entity
             const Entity& entity = *it;
-            this->localJacobian.fvGeom.update(entity);
-            int size = this->localJacobian.fvGeom.numVertices;
+            this->localJacobian().fvGeom.update(entity);
+            int size = this->localJacobian().fvGeom.numVertices;
 
-            this->localJacobian.setLocalSolution(entity);
-            this->localJacobian.computeElementData(entity);
+            this->localJacobian().setLocalSolution(entity);
+            this->localJacobian().computeElementData(entity);
             bool old = true;
-            this->localJacobian.updateVariableData(entity, this->localJacobian.uold, old);
-            this->localJacobian.updateVariableData(entity, this->localJacobian.u);
-            this->localJacobian.template localDefect<LeafTag>(entity, this->localJacobian.u);
+            this->localJacobian().updateVariableData(entity, this->localJacobian().uold, old);
+            this->localJacobian().updateVariableData(entity, this->localJacobian().u);
+            this->localJacobian().template localDefect<LeafTag>(entity, this->localJacobian().u);
 
             // begin loop over vertices
             for (int i=0; i < size; i++) {
                 int globalId = this->vertexmapper.template map<dim>(entity,i);
                 for (int equationnumber = 0; equationnumber < m; equationnumber++) {
-                    if (this->localJacobian.bc(i)[equationnumber] == BoundaryConditions::neumann)
+                    if (this->localJacobian().bc(i)[equationnumber] == BoundaryConditions::neumann)
                         (*defectGlobal)[globalId][equationnumber]
-                                += this->localJacobian.def[i][equationnumber];
+                                += this->localJacobian().def[i][equationnumber];
                     else
                         essential[globalId].assign(BoundaryConditions::dirichlet);
                 }
@@ -218,20 +218,20 @@ public:
 //            // get entity
 //            const Entity& entity = *it;
 //
-//            this->localJacobian.fvGeom.update(entity);
+//            this->localJacobian().fvGeom.update(entity);
 //
-//            this->localJacobian.setLocalSolution(entity);
-//            this->localJacobian.template localDefect<LeafTag>(entity,
-//                    this->localJacobian.u);
+//            this->localJacobian().setLocalSolution(entity);
+//            this->localJacobian().template localDefect<LeafTag>(entity,
+//                    this->localJacobian().u);
 //
 //            // begin loop over vertices
 //            for (int i=0; i < size; i++) {
 //                int globalId = this->vertexmapper.template map<dim>(entity,
 //                        sfs[i].entity());
 //                for (int equationnumber = 0; equationnumber < m; equationnumber++) {
-//                    if (this->localJacobian.bc(i)[equationnumber] == BoundaryConditions::neumann)
+//                    if (this->localJacobian().bc(i)[equationnumber] == BoundaryConditions::neumann)
 //                        (*defectGlobal)[globalId][equationnumber]
-//                                += this->localJacobian.def[i][equationnumber];
+//                                += this->localJacobian().def[i][equationnumber];
 //                    else
 //                        essential[globalId].assign(BoundaryConditions::dirichlet);
 //                }

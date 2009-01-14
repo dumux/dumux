@@ -21,9 +21,9 @@ public:
     bool operator() (const HostVertexPointer& p1, const HostVertexPointer& p2) const
     {
         char stringP1[100];
-        sprintf(stringP1, "%e%e", p1->geometry()[0][0], p1->geometry()[0][1]);
+        sprintf(stringP1, "%e%e", p1->geometry().corner(0][0], p1->geometry()[0][1));
         char stringP2[100];
-        sprintf(stringP2, "%e%e", p2->geometry()[0][0], p2->geometry()[0][1]);
+        sprintf(stringP2, "%e%e", p2->geometry().corner(0][0], p2->geometry()[0][1));
         return strcmp(stringP1, stringP2) < 0;
     }
 };
@@ -70,7 +70,7 @@ double VertexOnLine<GridType>::length(VectorVertexOnLineType& vectorVertexOnLine
     for(unsigned i=0; i < indexVertexVectorOnLine.size(); i++)
     {
         Dune::FieldVector<double,GridType::dimension> distVec;
-        distVec = vectorVertexOnLine[indexVertexVectorOnLine[i]].nodePoint->geometry()[0] - nodePoint->geometry()[0];
+        distVec = vectorVertexOnLine[indexVertexVectorOnLine[i]].nodePoint->geometry().corner(0] - nodePoint->geometry()[0);
         double dist = distVec.two_norm();
         l += dist/2.0;
     }
@@ -82,7 +82,7 @@ template <class VectorNeighbor>
 Dune::FieldVector<double,GridType::dimension> VertexOnLine<GridType>::normal(VectorNeighbor& vectorNeighbor, unsigned index)
 {
     Dune::FieldVector<double,GridType::dimension> normalVec;
-    normalVec = vectorNeighbor[index].nodePoint->geometry()[0] - nodePoint->geometry()[0];
+    normalVec = vectorNeighbor[index].nodePoint->geometry().corner(0] - nodePoint->geometry()[0);
     double dist = normalVec.two_norm();
     normalVec *=1/dist;
     return(normalVec);
@@ -343,7 +343,7 @@ int main(int argc, char** argv)
 
     for (unsigned k = 0; k < vertexVectorOnLine.size(); k++)
     {
-        std::cout << "vertice on line coord: " <<vertexVectorOnLine[k].nodePoint->geometry()[0] << std::endl;
+        std::cout << "vertice on line coord: " <<vertexVectorOnLine[k].nodePoint->geometry().corner(0) << std::endl;
         std::cout << "       vertice on line: " << k << std::endl;
         std::cout << "           boundary: " << vertexVectorOnLine[k].boundary() << std::endl;
         std::cout << "             length: " << vertexVectorOnLine[k].length(vertexVectorOnLine) << std::endl;
@@ -363,7 +363,7 @@ int main(int argc, char** argv)
 
     for (unsigned k = 0; k < vertexVectorOutLine.size(); k++)
     {
-        std::cout << "vertice out line coord: " <<vertexVectorOutLine[k].nodePoint->geometry()[0] << std::endl;
+        std::cout << "vertice out line coord: " <<vertexVectorOutLine[k].nodePoint->geometry().corner(0) << std::endl;
         std::cout << "       vertice out line: " << k << std::endl;
         std::cout << "          out line size: " << vertexVectorOutLine[k].lineVectorOutLine.size() << std::endl;
         for (unsigned m = 0; m < vertexVectorOutLine[k].indexVertexVectorOnLine.size(); m++)

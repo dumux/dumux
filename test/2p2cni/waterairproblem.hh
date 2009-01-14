@@ -44,7 +44,7 @@ namespace Dune
   class WaterAirProblem : public TwoPTwoCNIProblem<Grid, RT> {
     typedef typename Grid::ctype Scalar;
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
-    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
+    typedef typename Grid::template Codim<0>::LeafIntersectionIterator IntersectionIterator;
     enum {dim=Grid::dimension, m=3};
     enum {swrIdx=0, snrIdx=1, lamIdx=2, pbIdx=3};
     enum {wPhase = 0, nPhase = 1};

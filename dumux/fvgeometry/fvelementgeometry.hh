@@ -5,7 +5,6 @@
 
 #include <dune/disc/shapefunctions/lagrangeshapefunctions.hh>
 #include <dune/grid/common/intersectioniterator.hh>
-#include <dune/grid/utility/intersectiongetter.hh>
 #include <dune/grid/common/capabilities.hh>
 
 
@@ -271,7 +270,7 @@ namespace Dune
         typedef typename Grid::Traits::template Codim<0>::Entity Element;
         typedef typename Element::Geometry Geometry;
         typedef FieldVector<Scalar,dim> FV;
-        typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
+        typedef typename Grid::template Codim<0>::LeafIntersectionIterator IntersectionIterator;
 
         Scalar quadrilateralArea(const FV& p0, const FV& p1, const FV& p2, const FV& p3)
             {

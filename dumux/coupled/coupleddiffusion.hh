@@ -68,7 +68,7 @@ public:
             A21.setrowsize(secondId, (this->A11)[firstId].size());
 
             // generate some output
-            FieldVector<double,dim> globalCoord = (*firstIt).geometry()[0];
+            FieldVector<double,dim> globalCoord = (*firstIt).geometry().corner(0);
         } // end loop 1 over all nodes of the first grid
         A12.endrowsizes();
         A21.endrowsizes();
@@ -147,7 +147,7 @@ public:
             VIterator endItV1 = (this->firstGrid_).template leafend<dim>();
             for (VIterator it = (this->firstGrid_).template leafbegin<dim>(); it != endItV1; ++it)
             {
-                FieldVector<double,dim> globalCoord = (*it).geometry()[0];
+                FieldVector<double,dim> globalCoord = (*it).geometry().corner(0);
                 FieldVector<BoundaryConditions::Flags, rowsInBlock1> bctype = (this->firstModel_).problem.bctype(globalCoord, *dummyIT1, dummyIS1, globalCoord);
                 int firstId = firstVM.map(*it);
 
@@ -163,7 +163,7 @@ public:
             VIterator endItV2 = (this->secondGrid_).template leafend<dim>();
             for (VIterator it = (this->secondGrid_).template leafbegin<dim>(); it != endItV2; ++it)
             {
-                FieldVector<double,dim> globalCoord = (*it).geometry()[0];
+                FieldVector<double,dim> globalCoord = (*it).geometry().corner(0);
                 FieldVector<BoundaryConditions::Flags, rowsInBlock1> bctype = (this->secondModel_).problem.bctype(globalCoord, *dummyIT2, dummyIS2, globalCoord);
                 int secondId = secondVM.map(*it);
 

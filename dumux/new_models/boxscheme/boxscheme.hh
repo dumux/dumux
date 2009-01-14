@@ -77,14 +77,13 @@ namespace Dune
         // copy the types from the traits for convenience
         typedef typename DomainTraits::Scalar                      Scalar;
         typedef typename DomainTraits::Grid                        Grid;
-        typedef typename DomainTraits::Element                        Element;
+        typedef typename DomainTraits::Element                     Element;
         typedef typename DomainTraits::ReferenceElement            ReferenceElement;
-        typedef typename DomainTraits::ElementIterator                ElementIterator;
-        typedef typename DomainTraits::IntersectionIteratorGetter  IntersectionIteratorGetter;
+        typedef typename DomainTraits::ElementIterator             ElementIterator;
         typedef typename DomainTraits::IntersectionIterator        IntersectionIterator;
         typedef typename DomainTraits::CoordScalar                 CoordScalar;
-        typedef typename DomainTraits::GlobalPosition                  GlobalPosition;
-        typedef typename DomainTraits::LocalPosition                  LocalPosition;
+        typedef typename DomainTraits::GlobalPosition              GlobalPosition;
+        typedef typename DomainTraits::LocalPosition               LocalPosition;
 
         typedef typename BoxTraits::JacobianAssembler          JacobianAssembler;
         typedef typename BoxTraits::SpatialFunction            SpatialFunction;
@@ -331,7 +330,7 @@ namespace Dune
                         const LocalPosition &local =
                             DomainTraits::referenceElement(it->type()).position(localVertexIdx, dim);
                         // get global coordinate of vert
-                        const GlobalPosition &global = it->geometry()[localVertexIdx];
+                        const GlobalPosition &global = it->geometry().corner(localVertexIdx);
 
                         int globalId = this->problem_.vertIdx(*it, localVertexIdx);
 

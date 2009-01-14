@@ -45,7 +45,7 @@ double discreteError(const Grid& grid, const Solution& solution, const Problem& 
       for (; it != endIt; ++it)
       {
           // get exact solution at vertex
-          FieldVector<double,dim> globalCoord = (*it).geometry()[0];
+          FieldVector<double,dim> globalCoord = (*it).geometry().corner(0);
           double exact = problem.exact(globalCoord);
 
           // get approximate solution at vertex

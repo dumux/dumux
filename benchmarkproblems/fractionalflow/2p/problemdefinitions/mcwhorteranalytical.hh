@@ -177,7 +177,7 @@ public:
                 int index = this->mapper.map(*it);
 
                 //get global coordinate of vertex
-                Dune::FieldVector<DT,dimworld> global = it->geometry()[0];
+                Dune::FieldVector<DT,dimworld> global = it->geometry().corner(0);
 
                 //find x_f next to global coordinate of the vertex
                 int xnext = 0;

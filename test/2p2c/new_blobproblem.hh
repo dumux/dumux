@@ -203,7 +203,6 @@ namespace Dune
         typedef typename DomainTraits::Vertex                       Vertex;
         typedef typename DomainTraits::VertexIterator               VertexIterator;
         typedef typename DomainTraits::IntersectionIterator       IntersectionIterator;
-        typedef typename DomainTraits::IntersectionIteratorGetter IntersectionIteratorGetter;
         typedef typename DomainTraits::LocalPosition                 LocalPosition;
         typedef typename DomainTraits::GlobalPosition                 GlobalPosition;
 
@@ -407,7 +406,7 @@ namespace Dune
                        int globalVertexIdx)
             {
 //                const LocalPosition &localPos = DomainTraits::referenceElement(element.type()).position(vertIdx, dim);
-                const GlobalPosition &globalPos = element.geometry()[vertIdx];
+                const GlobalPosition &globalPos = element.geometry().corner(vertIdx);
 
                 values[pWIdx] = 1e5;
                 values[switchIdx] = 0.0;
@@ -477,7 +476,7 @@ namespace Dune
                 // as it is required on the verts!
                 const LocalPosition &local =
                     DomainTraits::referenceElement(element.type()).position(localIdx, dim);
-                const GlobalPosition &globalPos = element.geometry()[localIdx];
+                const GlobalPosition &globalPos = element.geometry().corner(localIdx);
                 return soil().porosity(globalPos, *(ParentType::elementBegin()), local);
             };
 

@@ -130,7 +130,7 @@ public:
             int size = sfs.size();
 
             // set type of boundary conditions
-            this->localJacobian.template assembleBC<LeafTag>(entity);
+            this->localJacobian().template assembleBC<LeafTag>(entity);
 
             IntersectionIterator
                     endit = IntersectionIteratorGetter<G, LeafTag>::end(entity);
@@ -144,7 +144,7 @@ public:
                                     == ReferenceElements<DT,dim>::general(gt).subEntity(is->numberInSelf(), 1,
                                             j, sfs[i].codim())) {
                                 for (int equationNumber = 0; equationNumber<m; equationNumber++) {
-                                    if (this->localJacobian.bc(i)[equationNumber]
+                                    if (this->localJacobian().bc(i)[equationNumber]
                                             == BoundaryConditions::dirichlet) {
                                         // get cell center in reference element
                                         Dune::FieldVector<DT,dim>

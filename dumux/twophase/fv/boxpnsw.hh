@@ -106,11 +106,11 @@ public:
     }
 
     void update(double& dt) {
-        this->localJacobian.setDt(dt);
-        this->localJacobian.setOldSolution(this->uOldTimeStep);
+        this->localJacobian().setDt(dt);
+        this->localJacobian().setOldSolution(this->uOldTimeStep);
         NewtonMethod<G, ThisType> newtonMethod(this->grid, *this, 1e-6, 1e-4);
         newtonMethod.execute();
-        dt = this->localJacobian.getDt();
+        dt = this->localJacobian().getDt();
         double upperMass, oldUpperMass;
         double totalMass = this->injected(upperMass, oldUpperMass);
         std::cout << totalMass << "\t"<< upperMass<< "\t"<< oldUpperMass

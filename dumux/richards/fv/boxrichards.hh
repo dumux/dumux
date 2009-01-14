@@ -108,7 +108,7 @@ public:
         { return this->u; };
 
       LocalJacobian &getLocalJacobian()
-        { return this->localJacobian; }
+        { return this->localJacobian(); }
 
       typedef typename NewtonTraits::JacobianAssembler JacobianAssembler;
       JacobianAssembler &jacobianAssembler()
@@ -173,14 +173,14 @@ public:
         const GV& gridview(this->grid().leafView());
 
         // for multiwriter output
-        this->localJacobian.outPressureN = vtkMultiWriter->template createField<RT, 1>(this->size);
-        this->localJacobian.outCapillaryP = vtkMultiWriter->template createField<RT, 1>(this->size);
-        this->localJacobian.outSaturationW = vtkMultiWriter->template createField<RT, 1>(this->size);
-        this->localJacobian.outSaturationN = vtkMultiWriter->template createField<RT, 1>(this->size);
-        this->localJacobian.outDensityW = vtkMultiWriter->template createField<RT, 1>(this->size);
-        this->localJacobian.outDensityN = vtkMultiWriter->template createField<RT, 1>(this->size);
-        this->localJacobian.outMobilityW = vtkMultiWriter->template createField<RT, 1>(this->size);
-        this->localJacobian.outMobilityN = vtkMultiWriter->template createField<RT, 1>(this->size);
+        this->localJacobian().outPressureN = vtkMultiWriter->template createField<RT, 1>(this->size);
+        this->localJacobian().outCapillaryP = vtkMultiWriter->template createField<RT, 1>(this->size);
+        this->localJacobian().outSaturationW = vtkMultiWriter->template createField<RT, 1>(this->size);
+        this->localJacobian().outSaturationN = vtkMultiWriter->template createField<RT, 1>(this->size);
+        this->localJacobian().outDensityW = vtkMultiWriter->template createField<RT, 1>(this->size);
+        this->localJacobian().outDensityN = vtkMultiWriter->template createField<RT, 1>(this->size);
+        this->localJacobian().outMobilityW = vtkMultiWriter->template createField<RT, 1>(this->size);
+        this->localJacobian().outMobilityN = vtkMultiWriter->template createField<RT, 1>(this->size);
 
         // iterate through leaf grid an evaluate c0 at cell center
         Iterator eendit = gridview.template end<0>();
@@ -228,7 +228,7 @@ public:
             int size = sfs.size();
 
             // set type of boundary conditions
-            this->localJacobian.template assembleBC<LeafTag>(entity);
+            this->localJacobian().template assembleBC<LeafTag>(entity);
 
             IntersectionIterator
                     endit = IntersectionIteratorGetter<G, LeafTag>::end(entity);
@@ -242,7 +242,7 @@ public:
                                     == ReferenceElements<DT,dim>::general(gt).subEntity(is->numberInSelf(), 1,
                                             j, sfs[i].codim())) {
                                 for (int equationNumber = 0; equationNumber<m; equationNumber++) {
-                                    if (this->localJacobian.bc(i)[equationNumber]
+                                    if (this->localJacobian().bc(i)[equationNumber]
                                             == BoundaryConditions::dirichlet) {
                                         // get cell center in reference element
                                         Dune::FieldVector<DT,dim>
@@ -284,18 +284,18 @@ public:
 
     void updateModel (double& dt, double& nextDt)
     {
-        this->localJacobian.outPressureN = vtkMultiWriter->template createField<RT, 1>(this->size);
-        this->localJacobian.outCapillaryP = vtkMultiWriter->template createField<RT, 1>(this->size);
-        this->localJacobian.outSaturationW = vtkMultiWriter->template createField<RT, 1>(this->size);
-        this->localJacobian.outSaturationN = vtkMultiWriter->template createField<RT, 1>(this->size);
-        this->localJacobian.outDensityW = vtkMultiWriter->template createField<RT, 1>(this->size);
-        this->localJacobian.outDensityN = vtkMultiWriter->template createField<RT, 1>(this->size);
-        this->localJacobian.outMobilityW = vtkMultiWriter->template createField<RT, 1>(this->size);
-        this->localJacobian.outMobilityN = vtkMultiWriter->template createField<RT, 1>(this->size);
-//        this->localJacobian.outPermeability = vtkMultiWriter->template createField<RT, 1>(this->size);
+        this->localJacobian().outPressureN = vtkMultiWriter->template createField<RT, 1>(this->size);
+        this->localJacobian().outCapillaryP = vtkMultiWriter->template createField<RT, 1>(this->size);
+        this->localJacobian().outSaturationW = vtkMultiWriter->template createField<RT, 1>(this->size);
+        this->localJacobian().outSaturationN = vtkMultiWriter->template createField<RT, 1>(this->size);
+        this->localJacobian().outDensityW = vtkMultiWriter->template createField<RT, 1>(this->size);
+        this->localJacobian().outDensityN = vtkMultiWriter->template createField<RT, 1>(this->size);
+        this->localJacobian().outMobilityW = vtkMultiWriter->template createField<RT, 1>(this->size);
+        this->localJacobian().outMobilityN = vtkMultiWriter->template createField<RT, 1>(this->size);
+//        this->localJacobian().outPermeability = vtkMultiWriter->template createField<RT, 1>(this->size);
 
-        this->localJacobian.setDt(dt);
-        this->localJacobian.setOldSolution(this->uOldTimeStep);
+        this->localJacobian().setDt(dt);
+        this->localJacobian().setOldSolution(this->uOldTimeStep);
 
         // execute newton method
         typedef typename GV::template Codim<0>::Iterator Iterator;
@@ -306,12 +306,12 @@ public:
         bool newtonLoop = false;
         while(!newtonLoop)
         {
-                nextDt = this->localJacobian.getDt();
+                nextDt = this->localJacobian().getDt();
                 NewtonMethod newton(*this); // *this means object itself (boxRichards)
                 NewtonController newtonCtl(1e-7, 6);
                 newtonLoop = newton.execute(*this, newtonCtl);
                 nextDt = newtonCtl.suggestTimeStepSize(nextDt);
-                this->localJacobian.setDt(nextDt);
+                this->localJacobian().setDt(nextDt);
                 if(!newtonLoop){
                     *this->u = *this->uOldTimeStep;
                 }
@@ -322,7 +322,7 @@ public:
 //        Flux = this->computeFlux();
 //        Mass = totalCO2Mass();
 
-        this->localJacobian.clearVisited();
+        this->localJacobian().clearVisited();
 //        std::cout << Flux << ", "<< Mass;
 
         *(this->uOldTimeStep) = *(this->u);
@@ -334,12 +334,12 @@ public:
     void addvtkfields (MultiWriter& writer)
     {
         writer.addScalarVertexFunction("pressure wetting phase", this->u, 0);
-        writer.addVertexData(this->localJacobian.outPressureW,"pressure non-wetting phase");
-        writer.addVertexData(this->localJacobian.outSaturationW,"saturation wetting phase");
-        writer.addVertexData(this->localJacobian.outSaturationN,"saturation non-wetting phase");
-        writer.addVertexData(this->localJacobian.outDensityW,"density wetting phase");
-        writer.addVertexData(this->localJacobian.outMobilityW,"mobility wetting phase");
-        writer.addVertexData(this->localJacobian.outdSwdPc,"dSwdPc");
+        writer.addVertexData(this->localJacobian().outPressureW,"pressure non-wetting phase");
+        writer.addVertexData(this->localJacobian().outSaturationW,"saturation wetting phase");
+        writer.addVertexData(this->localJacobian().outSaturationN,"saturation non-wetting phase");
+        writer.addVertexData(this->localJacobian().outDensityW,"density wetting phase");
+        writer.addVertexData(this->localJacobian().outMobilityW,"mobility wetting phase");
+        writer.addVertexData(this->localJacobian().outdSwdPc,"dSwdPc");
     }
 
     void setVtkMultiWriter(VtkMultiWriter *writer)

@@ -1,5 +1,6 @@
 // $Id$
 
+#include "config.h"
 #include"boundaryconditions.hh"
 
 template<class Grid>

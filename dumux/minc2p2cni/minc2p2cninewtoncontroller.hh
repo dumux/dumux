@@ -71,14 +71,14 @@ namespace Dune {
         bool newtonProceed(Function &u)
             {
 //                Model_TEst *test;
-//                switched_ = test->localJacobian.switched;
+//                switched_ = test->localJacobian().switched;
 //                if (switched_)
 //                {
-//                    test->localJacobian.switchBreak = true;
+//                    test->localJacobian().switchBreak = true;
 //
 //                    if(switchCount_ == 5)
 //                    {
-//                     test->localJacobian.switchBreak = false;
+//                     test->localJacobian().switchBreak = false;
 //                     switchCount_ = 0;
 //                     return ParentType::newtonProceed(u);
 //                    }

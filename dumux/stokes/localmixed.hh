@@ -87,7 +87,7 @@ public:
             FieldVector<Scalar,dim> global = isIt->intersectionGlobal().global(localDimM1);
 
             // get the source term from the problem:
-            FieldVector<Scalar,dim> source = problem_.q(global, element, local);
+            FieldVector<Scalar,m> source = problem_.q(global, element, local);
 
             // set the right hand side:
             this->b[numberInSelf] = 0.5*volume*source[numberInSelf/2];

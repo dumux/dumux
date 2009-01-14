@@ -73,15 +73,15 @@ namespace Dune {
                 Model &model = ParentType::model();
 //                Scalar defCheck = ParentType::defectCheck();
 
-                switched_ = model.localJacobian.switchedGlobal;
+                switched_ = model.localJacobian().switchedGlobal;
                 if (switched_)
                 {
-                    model.localJacobian.switchBreak = true;
+                    model.localJacobian().switchBreak = true;
                     if(switchCount_ == 5)
                     {
-                     model.localJacobian.switchBreak = false;
+                     model.localJacobian().switchBreak = false;
                      switchCount_ = 0;
-                     model.localJacobian.switchedGlobal = false;
+                     model.localJacobian().switchedGlobal = false;
                      return ParentType::newtonProceed(u);
                     }
                     else
@@ -94,14 +94,21 @@ namespace Dune {
 
 //                        else
 //                        {
-//                             model.localJacobian.switchBreak = false;
+//                             model.localJacobian().switchBreak = false;
 //                             switchCount_ = 0;
-//                             model.localJacobian.switchedGlobal = false;
+//                             model.localJacobian().switchedGlobal = false;
 //                             return false;
 //                        }
                     }
                 }
                 return ParentType::newtonProceed(u);
+            }
+
+        void newtonBeginStep()
+            {
+                ParentType::newtonBeginStep();
+                
+                ParentType::model().localJacobian().clearVisited();;
             }
 
 
