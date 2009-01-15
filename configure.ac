@@ -82,7 +82,8 @@ AC_CONFIG_FILES([Makefile
     dumux/Makefile 
     test/Makefile
     doc/doxygen/Makefile 
-    doc/handbook/Makefile 
+    doc/handbook/Makefile
+    dumux/1p2c/Makefile 
     dumux/2p2c/Makefile
     dumux/2p2cni/Makefile
     dumux/2pni/Makefile
@@ -106,7 +107,8 @@ AC_CONFIG_FILES([Makefile
     dumux/stokes/Makefile 
     dumux/timedisc/Makefile 
     dumux/transport/Makefile 
-    dumux/twophase/Makefile 
+    dumux/twophase/Makefile
+    test/1p2c/Makefile 
     test/2p2c/Makefile
     test/2p2cni/Makefile
     test/2pni/Makefile
@@ -143,6 +145,7 @@ AC_CONFIG_FILES([Makefile
     test/upscaledvelocity/Makefile
     test/vtk/Makefile
 	 dumux/brinkman/fv/Makefile
+	 dumux/1p2c/fv/Makefile
 	 dumux/2p2c/fv/Makefile
 	 dumux/2p2c/problems/Makefile
 	 dumux/2p2cni/fv/Makefile
