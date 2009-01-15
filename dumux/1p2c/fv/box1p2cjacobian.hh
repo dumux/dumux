@@ -334,9 +334,11 @@ namespace Dune
     // analog to EvalPrimaryData in MUFTE, uses members of vNDat
 	virtual void updateVariableData(const Entity& e, const VBlockType* sol,
 			int i, std::vector<VariableNodeData>& varData)
-    {
+    {	double T=273; 		//Temperatur in Kelvin
+    	double p=1e5; 		//Druck in Pa
+		
 		varData[i].porosity = problem.soil().porosity(this->fvGeom.subContVol[i].global, e, this->fvGeom.subContVol[i].local);
-   		varData[i].viscosity = problem.phase().viscosity();
+   		varData[i].viscosity = problem.phase().viscosity(T, p);
    		varData[i].tortuosity = problem.soil().tortuosity(this->fvGeom.subContVol[i].global, e, this->fvGeom.subContVol[i].local);
 	   	varData[i].diffCoeff = problem.phase().diffCoeff();
 	   	varData[i].molefraction = sol[i][1];
