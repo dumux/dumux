@@ -44,7 +44,7 @@ typedef	typename G::ctype DT;
 	 * @param e codim 0 entity for which the value is sought
 	 * @param xi position in local coordinates in e
 	 */
-	virtual FieldMatrix<DT,n,n> K (const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const = 0;
+	virtual FieldMatrix<DT,n,n> &K (const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const = 0;
 
 	/**@brief matrix porosity
 	 * @param x position in global coordinates
@@ -225,7 +225,7 @@ public:
 	 *  @param Xa mass fraction of dissolved component
 	 * @return kinematic viscosity \f$ \left[ \frac{kg}{ms} \right] \f$
 	 */
-	virtual double viscosity (double T=283.15, double p=1e5, double X = 0.) const = 0;
+	virtual double viscosity (double T, double p, double X = 0.) const = 0;
 
 	/** @brief density
 	 * @param T Temperature \f$ \left[ K \right] \f$
