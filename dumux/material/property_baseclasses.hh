@@ -44,7 +44,7 @@ typedef	typename G::ctype DT;
 	 * @param e codim 0 entity for which the value is sought
 	 * @param xi position in local coordinates in e
 	 */
-	virtual FieldMatrix<DT,n,n> &K (const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi)  = 0;
+	virtual const FieldMatrix<DT,n,n> &K (const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi)  = 0;
 
 	/**@brief matrix porosity
 	 * @param x position in global coordinates
@@ -93,7 +93,7 @@ typedef	typename G::ctype DT;
 	{
 		DUNE_THROW(NotImplemented, "heat conductivity function not implemented!");
 	}
-	
+
 	/**@brief Tortuosity of matrix
 	 * @param x position in global coordinates
 	 * @param e codim 0 entity for which the value is sought
@@ -102,8 +102,8 @@ typedef	typename G::ctype DT;
 	virtual double tortuosity(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
 	{
 		DUNE_THROW(NotImplemented, "heat conductivity function not implemented!");
-	} 
-	
+	}
+
 	/**@brief parameters for relative permeabilty models
 	 * @param x position in global coordinates
 	 * @param e codim 0 entity for which the value is sought
