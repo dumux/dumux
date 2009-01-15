@@ -16,7 +16,7 @@ typedef	typename G::Traits::template Codim<0>::Entity Entity;
 	enum
 	{	dim=G::dimension, m=2};
 
-	FieldMatrix<DT,dim,dim> K (const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi) const
+	const FieldMatrix<DT,dim,dim> &K (const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi) 
 	{
 	     if (10<x[0] && x[0]<12 && 10<x[1] && x[1]<12)
 		   return permloc_;						//tumor tissue
