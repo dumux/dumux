@@ -123,7 +123,7 @@ namespace Dune
 		const GV& gridview(this->grid().leafView());
 
 
-		this->localJacobian.clearVisited();
+		this->localJacobian().clearVisited();
 	
 
 		// iterate through leaf grid an evaluate c0 at cell center
@@ -137,7 +137,7 @@ namespace Dune
 			// get entity
 			const Entity& entity = *it;
 
-			this->localJacobian.fvGeom.update(entity);
+			this->localJacobian().fvGeom.update(entity);
 
 			const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type
 					&sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(gt,1);
@@ -159,9 +159,9 @@ namespace Dune
 				(*(this->u))[globalId] = this->problem.initial(
 						global, entity, local);
 			}
-			this->localJacobian.clearVisited();
-			this->localJacobian.setLocalSolution(entity);
-			this->localJacobian.updateStaticData(entity, this->localJacobian.u);
+			this->localJacobian().clearVisited();
+			this->localJacobian().setLocalSolution(entity);
+			this->localJacobian().updateStaticData(entity, this->localJacobian().u);
 		}
 		
 		// set Dirichlet boundary conditions
@@ -179,7 +179,7 @@ namespace Dune
 			int size = sfs.size();
 
 			// set type of boundary conditions
-			this->localJacobian.template assembleBC<LeafTag>(entity);
+			this->localJacobian().template assembleBC<LeafTag>(entity);
 
 			IntersectionIterator
 					endit = IntersectionIteratorGetter<G, LeafTag>::end(entity);
@@ -197,7 +197,7 @@ namespace Dune
 							{
 								for (int equationNumber = 0; equationNumber<m; equationNumber++)
 								{
-									if (this->localJacobian.bc(i)[equationNumber]
+									if (this->localJacobian().bc(i)[equationNumber]
 											== BoundaryConditions::dirichlet)
 									{
 										// get cell center in reference element
@@ -228,9 +228,9 @@ namespace Dune
 								}
 							}
 				}
-		this->localJacobian.setLocalSolution(entity);
+		this->localJacobian().setLocalSolution(entity);
 		for (int i = 0; i < size; i++)
-			this->localJacobian.updateVariableData(entity, this->localJacobian.u, i, false);
+			this->localJacobian().updateVariableData(entity, this->localJacobian().u, i, false);
 
 		}
 
