@@ -75,6 +75,15 @@ set(DumuxIncludeDirectories
     ${DUNE_istl_INCLUDE_DIRS}
     ${DUNE_mux_INCLUDE_DIRS}
     ${Boost_INCLUDE_DIR})
+
+if (MPI_FOUND)
+#  add_definitions(-DENABLE_MPI)
+  set(TMP ${MPI_COMPILE_FLAGS})
+  separate_arguments(TMP)
+  add_definitions(-DDENABLE_MPI ${TMP})
+  set(DumuxLinkLibraries ${DumuxLinkLibraries} ${MPI_LIBRARIES})
+  set(DumuxIncludeDirectories ${DumuxIncludeDirectories} ${MPI_INCLUDE_PATH})
+endif (MPI_FOUND)
 ##############
 
 

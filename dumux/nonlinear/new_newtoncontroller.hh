@@ -25,6 +25,9 @@
 
 #include <dumux/exceptions.hh>
 
+#include <dune/istl/owneroverlapcopy.hh>
+#include <dune/istl/overlappingschwarz.hh>
+#include <dune/istl/schwarz.hh>
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/solvers.hh>
 
@@ -53,7 +56,8 @@ namespace Dune
         typedef typename Model::NewtonTraits  ModelNewtonTraits;
 
     public:
-        typedef typename DomainTraits::Scalar                     Scalar;
+        typedef typename DomainTraits::Scalar  Scalar;
+        typedef typename DomainTraits::Grid    Grid;
 
         typedef typename ModelNewtonTraits::Function              Function;
         typedef typename ModelNewtonTraits::JacobianAssembler     JacobianAssembler;
@@ -157,42 +161,16 @@ namespace Dune
         //! Solve the linear equation system Ax - b = 0 for the
         //! current iteration.
         //! Returns true iff the equation system could be solved.
-        template <class Matrix, class Vector>
+        template <class Matrix, class Function, class Vector>
         void newtonSolveLinear(Matrix &A,
-                               Vector &x,
+                               Function &u,
                                Vector &b)
             {
-                // if the deflection of the newton method is large, we
-                // do not need to solve the linear approximation
-                // accurately. On the other hand, if this is the first
-                // newton step, we don't have a meaningful value for the defect
-                // yet, so we use the targeted accurracy for the defect.
-                Scalar residTol = tolerance_/1e8;
-
-                typedef Dune::MatrixAdapter<typename JacobianAssembler::RepresentationType,
-                                            typename Function::RepresentationType,
-                                            typename Function::RepresentationType>  MatrixAdapter;
-                MatrixAdapter opA(A);
-
-#ifdef HAVE_PARDISO
-                SeqPardiso<Matrix,Vector,Vector> pardiso;
-                pardiso.factorize(A);
-                BiCGSTABSolver<Vector> solver(opA, pardiso, residTol, 100, 2);         // an inverse operator
-#else
-                // initialize the preconditioner
-                Dune::SeqILU0<Matrix,Vector,Vector> precond(A, 1.0);
-//                Dune::SeqSSOR<OpAsmRep,FnRep,FnRep> precond(*opAsm, 3, 1.0);
-//                SeqIdentity<OpAsmRep,FnRep,FnRep> precond(*opAsm);
-                // invert the linear equation system
-                Dune::BiCGSTABSolver<Vector> solver(opA, precond, residTol, 500, 1);
-
+#if HAVE_MPI
+                solveParallel_(A, u, b);
+#else 
+                solveSequential_(A, *u, b);
 #endif
-                Dune::InverseOperatorResult result;
-                solver.apply(x, b, result);
-
-                if (!result.converged)
-                    DUNE_THROW(Dune::NumericalProblem,
-                               "Solving the linear system of equations did not converge.");
             };
 
         //! Indicates that we're done solving one newton step.
@@ -200,8 +178,9 @@ namespace Dune
             {
                 ++numSteps_;
                 curPhysicalness_ = asImp_().physicalness_(u);
-                std::cout << boost::format("Newton iteration %d done: defect=%g, physicalness: %.3f, maxPhysicalness=%.3f\n")
-                    %numSteps_%(method_->deflectionTwoNorm()*oneByMagnitude_)%curPhysicalness_%maxPhysicalness_;
+                if (this->method().verbose())
+                    std::cout << boost::format("Newton iteration %d done: defect=%g, physicalness: %.3f, maxPhysicalness=%.3f\n")
+                        %numSteps_%(method_->deflectionTwoNorm()*oneByMagnitude_)%curPhysicalness_%maxPhysicalness_;
             };
 
         //! Indicates that we're done solving the equation system.
@@ -270,6 +249,98 @@ namespace Dune
             { return *static_cast<Implementation*>(this); }
         const Implementation &asImp_() const
             { return *static_cast<const Implementation*>(this); }
+
+        
+#if defined HAVE_MPI
+        template <class Matrix, class Vector>
+        void solveParallel_(Matrix &A,
+                            Function &u,
+                            Vector &b)
+            {
+                Vector &x = *u;
+
+                // if the deflection of the newton method is large, we
+                // do not need to solve the linear approximation
+                // accurately. On the other hand, if this is the first
+                // newton step, we don't have a meaningful value for the defect
+                // yet, so we use the targeted accurracy for the defect.
+                Scalar residTol = tolerance_/1e8;
+                
+                // set up parallel solvers
+                typedef typename Grid::Traits::GlobalIdSet::IdType GlobalId;
+                typedef Dune::OwnerOverlapCopyCommunication<GlobalId,int> Communication;
+
+                Dune::IndexInfoFromGrid<GlobalId,int> indexinfo;
+                u.fillIndexInfoFromGrid(indexinfo);
+                Communication comm(indexinfo, 
+                                   model().grid().comm());
+
+                Dune::OverlappingSchwarzOperator<Matrix,Vector,Vector,Communication>
+                    opA(A, comm);
+
+                Dune::OverlappingSchwarzScalarProduct<Vector,Communication>
+                    scalarProduct(comm);
+
+                SeqILU0<Matrix,Vector,Vector>
+                    seqPreCond(A, 1.0);// a precondtioner
+                Dune::BlockPreconditioner<Vector,Vector,Communication>
+                    parPreCond(seqPreCond, comm);
+                Dune::BiCGSTABSolver<Vector>
+                    solver(opA,
+                           scalarProduct,
+                           parPreCond,
+                           residTol,
+                           1000,
+                           this->method().verbose());
+
+                Dune::InverseOperatorResult result;
+                solver.apply(x, b, result);
+
+                if (!result.converged)
+                    DUNE_THROW(Dune::NumericalProblem,
+                               "Solving the linear system of equations did not converge.");
+            }
+
+#elif !defined HAVE_MPI
+        template <class Matrix, class Vector>
+        void solveSequential_(Matrix &A,
+                              Vector &x,
+                              Vector &b)
+            {
+                // if the deflection of the newton method is large, we
+                // do not need to solve the linear approximation
+                // accurately. On the other hand, if this is the first
+                // newton step, we don't have a meaningful value for the defect
+                // yet, so we use the targeted accurracy for the defect.
+                Scalar residTol = tolerance_/1e8;
+
+                typedef Dune::MatrixAdapter<typename JacobianAssembler::RepresentationType,
+                                            typename Function::RepresentationType,
+                                            typename Function::RepresentationType>  MatrixAdapter;
+                MatrixAdapter opA(A);
+
+#ifdef HAVE_PARDISO
+                SeqPardiso<Matrix,Vector,Vector> pardiso;
+                pardiso.factorize(A);
+                BiCGSTABSolver<Vector> solver(opA, pardiso, residTol, 100, 2);         // an inverse operator
+#else // HAVE_PARDISO
+                // initialize the preconditioner
+                Dune::SeqILU0<Matrix,Vector,Vector> precond(A, 1.0);
+//                Dune::SeqSSOR<OpAsmRep,FnRep,FnRep> precond(*opAsm, 3, 1.0);
+//                SeqIdentity<OpAsmRep,FnRep,FnRep> precond(*opAsm);
+                // invert the linear equation system
+                Dune::BiCGSTABSolver<Vector> solver(opA, precond, residTol, 500, 1);
+#endif // HAVE_PARDISO
+
+                Dune::InverseOperatorResult result;
+                solver.apply(x, b, result);
+
+                if (!result.converged)
+                    DUNE_THROW(Dune::NumericalProblem,
+                               "Solving the linear system of equations did not converge.");
+            }
+#endif // HAVE_MPI
+
 
         //! this function is an indication of how "physically
         //! meaningful" a temporary solution is. 0 means it isn't

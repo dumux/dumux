@@ -154,10 +154,10 @@ namespace Dune
      *    - ScalarT  Floating point type used for scalars
      */
     template<class ScalarT>
-    class NewBlobProblem : public BasicDomain<Dune::SGrid<2, 2>,
-                                               ScalarT>
+    class NewBlobProblem : public BasicDomain<Dune::YaspGrid<2>,
+                                              ScalarT>
     {
-        typedef Dune::SGrid<2,2>               Grid;
+        typedef Dune::YaspGrid<2>              Grid;
         typedef BasicDomain<Grid, ScalarT>     ParentType;
         typedef NewBlobProblem<ScalarT>        ThisType;
         typedef TwoPTwoCBoxModel<ThisType>     Model;
@@ -223,9 +223,13 @@ namespace Dune
     public:
         NewBlobProblem(Scalar dtInitial,
                        Scalar tEnd)
-            : ParentType(new Grid(Dune::FieldVector<int,dim>(40), // number of verts
-                                  GlobalPosition(0.0),  // lower left
-                                  GlobalPosition(300.0) // upper right
+            : ParentType(new Grid(
+//                                  GlobalPosition(0.0),  // lower left
+                                  GlobalPosition(300.0), // upper right
+                                  Dune::FieldVector<int,dim>(40), // number of cells
+                                  Dune::FieldVector<bool,dim>(false), // periodic
+                                  2 // overlap
+
                              )),
               materialLaw_(soil_, wPhase_, nPhase_),
               multicomp_(wPhase_, nPhase_),

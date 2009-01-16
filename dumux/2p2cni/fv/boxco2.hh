@@ -96,6 +96,7 @@ namespace Dune
       // HACK: traits for the domain of the problem. this is incomplete...
       struct DomainTraits {
           typedef RT   Scalar;
+          typedef G    Grid;
       };
 
       typedef NewNewtonMethod<ThisType> NewtonMethod;

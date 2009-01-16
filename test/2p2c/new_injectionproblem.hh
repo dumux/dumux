@@ -148,10 +148,10 @@ namespace Dune
      *    - ScalarT  Floating point type used for scalars
      */
     template<class ScalarT>
-    class NewInjectionProblem : public BasicDomain<Dune::SGrid<2,2>,
+    class NewInjectionProblem : public BasicDomain<Dune::YaspGrid<2>,
                                                    ScalarT>
     {
-        typedef Dune::SGrid<2,2>               Grid;
+        typedef Dune::YaspGrid<2>              Grid;
         typedef BasicDomain<Grid, ScalarT>     ParentType;
         typedef NewInjectionProblem<ScalarT>   ThisType;
         typedef TwoPTwoCBoxModel<ThisType>     Model;

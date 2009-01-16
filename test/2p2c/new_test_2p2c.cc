@@ -1,3 +1,4 @@
+#define ENABLE_MPI 1
 #include "config.h"
 #include "new_injectionproblem.hh"
 
@@ -13,6 +14,9 @@ int main(int argc, char** argv)
     typedef Dune::NewInjectionProblem<Scalar> Problem;
     typedef Problem::DomainTraits::Grid       Grid;
     typedef Dune::GridPtr<Grid>               GridPointer;
+    
+    // initialize MPI, finalize is done automatically on exit
+    Dune::MPIHelper::instance(argc, argv);
 
     try {
         // parse the command line arguments for the program

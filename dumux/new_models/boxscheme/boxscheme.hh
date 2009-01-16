@@ -118,6 +118,9 @@ namespace Dune
                 Api::require<Api::BasicDomainTraits,
                              typename Problem::DomainTraits>();
 //                Api::require<Api::PwSnBoxDomain>(prob);
+
+                // check data partitioning
+                assert((prob.grid().overlapSize(0) > 0) || (prob.grid().ghostSize(0) > 0));
             }
 
         /*!
@@ -189,15 +192,9 @@ namespace Dune
             { return localJacobian_; }
 
         /*!
-         * \brief Same as localJacobian(), included to ease porting.
-         */
-        LocalJacobian &getLocalJacobian() DUNE_DEPRECATED
-            { return localJacobian_; }
-
-        /*!
          * \brief Reference to the grid of the spatial domain.
          */
-        const Grid &grid()
+        const Grid &grid() const
             { return problem_.grid(); }
 
         /*!
@@ -351,11 +348,13 @@ namespace Dune
                 // set Dirichlet boundary conditions of the grid's
                 // outer boundaries
 
+                int n = 0;
                 SolutionVector dirichletVal(0);
                 ElementIterator elementIt     = problem_.grid().template leafbegin<0>();
                 ElementIterator elementEndIt  = problem_.grid().template leafend<0>();
                 for (; elementIt != elementEndIt; ++elementIt)
                 {
+                    ++n;
                     if (!elementIt->hasBoundaryIntersections())
                         continue;
 
@@ -397,10 +396,9 @@ namespace Dune
                                 (*u)[globalId][bcIdx] = dirichletVal[bcIdx];
                             }
                         }
-
                     }
-
                 }
+                std::cout << "numElements rank=" << grid().comm().rank() << "(as by LeafIterator): " << n << "\n";
             };
 
         Implementation *asImp_()

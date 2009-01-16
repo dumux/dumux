@@ -1,3 +1,5 @@
+#define ENABLE_MPI 1
+
 #include "config.h"
 #include "new_blobproblem.hh"
 
@@ -15,6 +17,12 @@ int main(int argc, char** argv)
     typedef Problem::DomainTraits::GlobalPosition GlobalPosition;
     typedef Dune::GridPtr<Grid>               GridPointer;
 
+    // initialize MPI, finalize is done automatically on exit
+    Dune::MPIHelper::instance(argc, argv);
+
+    for (int i = 0; i < argc; ++i)
+        std::cout << argv[i] << "\n";
+    
     try {
         // parse the command line arguments for the program
         if (argc != 3) {

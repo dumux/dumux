@@ -31,6 +31,8 @@
 
 #include <dune/disc/operators/boundaryconditions.hh>
 
+#include <iostream>
+
 namespace Dune
 {
     namespace Api {
@@ -47,8 +49,8 @@ namespace Dune
             {typename I::Grid                       *x;x=NULL;}
             {typename I::Scalar                     *x;x=NULL;}
             {typename I::CoordScalar                *x;x=NULL;}
-            {typename I::LocalPosition                 *x;x=NULL;}
-            {typename I::GlobalPosition                 *x;x=NULL;}
+            {typename I::LocalPosition              *x;x=NULL;}
+            {typename I::GlobalPosition             *x;x=NULL;}
             {typename I::Element                    *x;x=NULL;}
             {typename I::ElementIterator            *x;x=NULL;}
             {typename I::Vertex                     *x;x=NULL;}
@@ -341,8 +343,10 @@ namespace Dune
         void setGrid(Grid *grid)
             {
                 grid_ = grid;
+                grid->loadBalance();
 
                 gridChanged();
+                std::cout << "blubb: " << numElements() << "\n";
             };
 
     private:

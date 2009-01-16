@@ -213,6 +213,13 @@ namespace Dune
             { return *model_; }
 
         /*!
+         * \brief Returns true iff the newton method should be verbose
+         *        about what it is going on;
+         */
+        bool verbose() const
+            { return (model().grid().comm().rank() == 0); }
+
+        /*!
          * \brief Run the newton method. The controller is responsible
          *        for all the strategic decisions.
          */
@@ -223,7 +230,8 @@ namespace Dune
                     return execute_(model, ctl);
                 }
                 catch (const Dune::NumericalProblem &e) {
-                    std::cout << "Newton: Caught exception: \"" << e.what() << "\"\n";
+                    if (verbose())
+                        std::cout << "Newton: Caught exception: \"" << e.what() << "\"\n";
                     ctl.newtonFail();
                     model_ = NULL;
                     return false;
@@ -307,7 +315,7 @@ namespace Dune
                     jacobianAsm.assemble(localJacobian, u, f);
 
                     // solve the resultuing linear equation system
-                    ctl.newtonSolveLinear(*jacobianAsm, *u, *f);
+                    ctl.newtonSolveLinear(*jacobianAsm, u, *f);
 
                     deflectionTwoNorm_ = (*u).two_norm();
                     // update the current solution. We use either
@@ -338,6 +346,7 @@ namespace Dune
         Function     *residual_;
         Scalar        deflectionTwoNorm_;
         Model        *model_;
+        bool          verbose_;
     };
 }
 
