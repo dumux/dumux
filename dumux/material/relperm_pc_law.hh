@@ -380,6 +380,7 @@ namespace Dune
 
                     /* evaluate tangential */
                     r        = (Se - Se_regu) * pc_prime + pc;
+                    if (r<0) r=0; // if Sw=1, pc with correct van Genuchten curve formulation is negatif
                     return(r);
                 }
             }
@@ -412,14 +413,50 @@ namespace Dune
 
         double saturationW (double pC, const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, double T=283.15) const
         {
-            DUNE_THROW(NotImplemented, "VanGenuchtenLaw::saturationW()");
 
-            return 0;
+			double QT1 = 0.001;
+			double QT2 = 0.979;
+			double Swr = this->soil.Sr_w(x, e, xi, T);
+			double Snr = this->soil.Sr_n(x, e, xi, T);
+
+			std::vector<double> param = this->soil.paramRelPerm(x, e, xi, T);
+
+			double n = param[1];
+			double m = param[2];
+			double alpha = param[4];
+
+			/* check left tangent */
+			double r = pow(QT1,-1/m);
+			double vx = pow(r-1,1-m);
+			double pc = (vx/alpha);
+			if (pC>=pc)
+			{
+				double pc_prime = (1-m)/alpha/pow(pow(QT1,-1/m)-1,m)/pow(QT1,1+1/m)*(-1/m);
+				double Se = (pC-pc)/pc_prime+QT1;
+				return (Se*(1.0-Swr-Snr)+Swr);
+//				printf("saturation is %d\n",Se);
+			}
+
+			/* check right part */
+			r = pow(QT2,-1/m);
+			vx = pow(r-1,1-m);
+			pc = (vx/alpha);
+			if (pC<=pc)
+			{
+				double Se = (1.0-pC/pc)*(1-QT2)+QT2;
+				return (Se*(1.0-Swr-Snr)+Swr);
+			}
+
+			/* do inversion ... */
+
+			double Se = 1.0/pow(pow(alpha*pC,n)+1.0,m);
+			return (Se*(1.0-Swr-Snr)+Swr);
+
         }
 
         double dSdP (double pC, const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, double T=283.15) const
         {
-	    	double SwReg = 0.979;
+	    	double QT1 = 0.979;
 			double Swr = this->soil.Sr_w(x, e, xi, T);
 			double Snr = this->soil.Sr_n(x, e, xi, T);
 
@@ -430,7 +467,7 @@ namespace Dune
 
 	    	double dsdSe = 1-Swr-Snr;
 
-	    	double pcReg = this->pC (SwReg, x, e, xi, param, T);
+	    	double pcReg = this->pC (QT1, x, e, xi, param, T);
 	    	double dswdpc_reg =-(n-1)*pow(alpha*pcReg,n)*pow(1+pow(alpha*pcReg,n),-2+1/n)/pcReg*dsdSe;
 	    	double dswdpc = -(n-1)*pow(alpha*pC,n)*pow(1+pow(alpha*pC,n),-2+1/n)/pC*dsdSe;
 
