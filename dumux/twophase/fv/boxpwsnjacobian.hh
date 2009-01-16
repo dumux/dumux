@@ -74,7 +74,7 @@ namespace Dune
         // define the number of components of your system, this is used outside
         // to allocate the correct size of (dense) blocks with a FieldMatrix
         enum {dim=G::dimension};
-        enum {m=2};
+        enum {numEq=2};
         enum {SIZE=LagrangeShapeFunctionSetContainer<DT,RT,dim>::maxsize};
         struct VariableNodeData;
         typedef FieldMatrix<RT,dim,dim> FMatrix;
@@ -128,23 +128,26 @@ namespace Dune
           elData.K.umv(this->fvGeom.subContVolFace[face].normal, Kij);
 
           VBlockType flux;
-          for (int phase = 0; phase < m; phase++)
+          for (int phase = 0; phase < numEq; phase++)
           {
               // calculate FE gradient of the pressure
               FieldVector<RT, dim> pGrad(0);
-              for (int k = 0; k < this->fvGeom.numVertices; k++)
+              RT densityIJ = 0;
+              for (int vert = 0; vert < this->fvGeom.numVertices; vert++)
               {
-                  FieldVector<DT,dim> grad(this->fvGeom.subContVolFace[face].grad[k]);
+                  FieldVector<DT,dim> grad(this->fvGeom.subContVolFace[face].grad[vert]);
                   if (phase == wPhase)
-                      grad *= sol[k][pWIdx];
+                      grad *= sol[vert][pWIdx];
                   else if (phase == nPhase)
-                      grad *= varNData[k].pN;
+                      grad *= varNData[vert].pN;
                   pGrad += grad;
+
+                  densityIJ += varNData[vert].density[phase]*this->fvGeom.subContVolFace[face].shapeValue[vert];
               }
 
               // adjust by gravity
               FieldVector<RT, dim> gravity = problem.gravity();
-              gravity *= varNData[i].density[phase];
+              gravity *= densityIJ;
               pGrad -= gravity;
 
               // calculate the flux using fully upwind
