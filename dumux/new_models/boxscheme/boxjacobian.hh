@@ -90,14 +90,14 @@ namespace Dune
         typedef typename DomainTraits::Scalar                         Scalar;
         typedef typename DomainTraits::CoordScalar                    CoordScalar;
         typedef typename DomainTraits::LocalPosition                  LocalPosition;
-        typedef typename DomainTraits::GlobalPosition                     GlobalPosition;
+        typedef typename DomainTraits::GlobalPosition                 GlobalPosition;
 
         typedef typename LeafGridView::template Codim<0>::Entity      Element;
         typedef typename Element::EntityPointer                       ElementPointer;
         typedef typename DomainTraits::ReferenceElement               ReferenceElement;
         typedef typename DomainTraits::IntersectionIterator           IntersectionIterator;
 
-        typedef typename Element::Geometry                        Geometry;
+        typedef typename Element::Geometry                     Geometry;
 
         typedef typename BoxTraits::SpatialFunction            SpatialFunction;
         typedef typename BoxTraits::SolutionVector             SolutionVector;
@@ -382,8 +382,8 @@ namespace Dune
 
         // The problem we would like to solve
         Problem &problem_;
-
-        ElementPointer       curElementPtr_;
+        
+        ElementPointer    curElementPtr_;
         FVElementGeometry curElementGeom_;
 
         // global solution of the current and of the last timestep

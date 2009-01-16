@@ -99,7 +99,8 @@ namespace Lens
 
     public:
         PwSnLensProblem(Scalar initialTimeStepSize, Scalar endTime)
-            : model_(*this),
+            : timeManager_(this->grid().comm().rank() == 0),
+              model_(*this),
               newtonMethod_(model_),
               newtonCtl_(*this),
               resultWriter_("lens")

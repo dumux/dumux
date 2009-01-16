@@ -198,6 +198,13 @@ namespace Dune
             { return problem_.grid(); }
 
         /*!
+         * \brief Reference to the grid of the spatial domain.
+         */
+/*        Grid &grid()
+            { return problem_.grid(); }
+*/
+
+        /*!
          * \brief Try to progress the model to the next timestep.
          */
         template<class NewtonMethod, class NewtonController>
@@ -211,8 +218,11 @@ namespace Dune
                     bool converged = solver.execute(*this->asImp_(),
                                                     controller);
                     nextDt = controller.suggestTimeStepSize(dt);
-                    if (converged)
+                    if (converged) {
+                        std::cout << boost::format("Newton solver converged for rank %d\n")
+                            %grid().comm().rank();
                         break;
+                    }
 
                     ++numRetries;
                     if (numRetries > 10)
@@ -224,7 +234,8 @@ namespace Dune
 
                     asImp_()->updateFailedTry();
 
-                    std::cout << boost::format("Newton didn't converge. Retrying with timestep of %f\n")%dt;
+                    std::cout << boost::format("Newton didn't converge for rank %d. Retrying with timestep of %f\n")
+                        %grid().comm().rank()%dt;
                 }
 
                 asImp_()->updateSuccessful();
@@ -347,14 +358,11 @@ namespace Dune
             {
                 // set Dirichlet boundary conditions of the grid's
                 // outer boundaries
-
-                int n = 0;
                 SolutionVector dirichletVal(0);
                 ElementIterator elementIt     = problem_.grid().template leafbegin<0>();
                 ElementIterator elementEndIt  = problem_.grid().template leafend<0>();
                 for (; elementIt != elementEndIt; ++elementIt)
                 {
-                    ++n;
                     if (!elementIt->hasBoundaryIntersections())
                         continue;
 
@@ -398,7 +406,6 @@ namespace Dune
                         }
                     }
                 }
-                std::cout << "numElements rank=" << grid().comm().rank() << "(as by LeafIterator): " << n << "\n";
             };
 
         Implementation *asImp_()

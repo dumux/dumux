@@ -25,23 +25,6 @@
 
 namespace Dune
 {
-    template <class EpisodeIdentiferT, bool verbose_>
-    class TimeManager;
-
-    /*!
-     * \brief Dummy value for the time manager's EpisodeId template
-     *        parameter if the simulation doesn't use distinct
-     *        episodes.
-     */
-    class TimeManagerNoEpisodes {
-    private:
-        friend class TimeManager<TimeManagerNoEpisodes, true>;
-        friend class TimeManager<TimeManagerNoEpisodes, false>;
-        // not constructable! (except by time manager for technical
-        // reasons...)
-        TimeManagerNoEpisodes() {};
-    };
-
     /*!
      * \brief Simplify the handling of time dependend problems.
      *
@@ -58,27 +41,40 @@ namespace Dune
      * (simulated) time it starts, its length, an identifier, and a
      * consecutive index starting at 0.
      */
-    template <class EpisodeIdentiferT, bool verbose_ = true>
+    template <class EpisodeIdentiferT>
     class TimeManager
     {
     public:
         typedef EpisodeIdentiferT EpisodeIdentifer;
 
         TimeManager(const EpisodeIdentifer &id,
-                    double len = 1e100)
+                    double len = 1e100,
+                    bool verbose = true)
             {
+                verbose_ = verbose;
+
                 init_();
 
                 episode_ = id;
                 episodeLength_ = len;
             }
 
-        TimeManager(double len = 1e100)
+        TimeManager(double len = 1e100,
+                    bool verbose = true)
             {
+                verbose_ = verbose;
+
                 init_();
                 episodeLength_ = len;
             }
 
+        TimeManager(bool verbose = true)
+            {
+                verbose_ = verbose;              
+                init_();
+                episodeLength_ = 1e100;
+            }
+        
         /*!
          *  \defgroup time Simulated time and time step management
          * @{
@@ -313,9 +309,10 @@ namespace Dune
                     }
                 }
 
-                std::cout <<
-                    boost::format("Simulation took %.3f seconds\n")
-                    %timer.elapsed();
+                if (verbose_)
+                    std::cout <<
+                        boost::format("Simulation took %.3f seconds\n")
+                        %timer.elapsed();
             }
 
 
@@ -339,6 +336,7 @@ namespace Dune
         double stepSize_;
         int    stepNum_;
         bool   finished_;
+        bool   verbose_;
     };
 }
 

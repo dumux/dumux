@@ -680,6 +680,11 @@ namespace Dune
                         || wasSwitched;
                 }
 
+                // make sure that if there was a variable switch in an
+                // other partition we will also set the switch flag
+                // for our partition.
+                wasSwitched = this->problem_.grid().comm().max(wasSwitched);
+
                 setSwitched(wasSwitched);
             }
 

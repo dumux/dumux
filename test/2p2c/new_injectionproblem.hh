@@ -222,6 +222,7 @@ namespace Dune
             : ParentType(grid),
               materialLaw_(soil_, wPhase_, nPhase_),
               multicomp_(wPhase_, nPhase_),
+              timeManager_(this->grid().comm().rank() == 0),
               model_(*this),
               newtonMethod_(model_),
               resultWriter_("new2p2c")
@@ -313,10 +314,11 @@ namespace Dune
         //! timestep has been computed
         void timestepDone()
             {
-                std::cout << "Writing result file for current time step\n";
+                if (this->grid().comm().rank() == 0)
+                    std::cout << "Writing result file for current time step\n";
 
                 // write the current result to disk
-                writeCurrentResult_(); // TODO
+                writeCurrentResult_();
 
                 // update the domain with the current solution
 //                updateDomain_();

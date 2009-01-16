@@ -189,12 +189,14 @@ namespace Dune
                 delete vertMap_;
             }
 
+
         /*!
          * \brief Returns the current grid.
          */
-/*        const Grid &grid()
-            { return *grid_; }
-*/
+        /*        Grid &grid()
+            { return const_cast<Grid&>(*grid_); }
+        */
+
 
         /*!
          * \brief Returns the current grid.
@@ -346,7 +348,6 @@ namespace Dune
                 grid->loadBalance();
 
                 gridChanged();
-                std::cout << "blubb: " << numElements() << "\n";
             };
 
     private:

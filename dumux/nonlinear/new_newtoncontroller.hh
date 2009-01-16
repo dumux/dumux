@@ -87,7 +87,8 @@ namespace Dune
                 else if (newtonConverged())
                     return false; // we are below the desired tolerance
 
-                curPhysicalness_ = asImp_().physicalness_(u);
+                Scalar tmp = asImp_().physicalness_(u);
+                curPhysicalness_ = model().grid().comm().min(tmp);
                 curPhysicalness_ = std::min(curPhysicalness_, 1.0);
 
 
@@ -145,7 +146,10 @@ namespace Dune
                 probationCount_ = 0;
                 maxPhysicalness_ = 0;
                 curPhysicalness_ = 0;
-                oneByMagnitude_ = 1.0/std::max((*u).two_norm(), 1e-5);
+
+                Scalar tmp = (*u).two_norm2();
+                tmp = sqrt(model().grid().comm().sum(tmp));
+                oneByMagnitude_ = 1.0/std::max(tmp, 1e-5);
             }
 
         //! indidicates the beginning of a newton iteration

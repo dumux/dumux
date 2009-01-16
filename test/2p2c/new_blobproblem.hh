@@ -223,7 +223,10 @@ namespace Dune
     public:
         NewBlobProblem(Scalar dtInitial,
                        Scalar tEnd)
-            : ParentType(new Grid(MPI_COMM_WORLD,
+            : ParentType(new Grid(
+#ifdef HAVE_MPI
+                                  MPI_COMM_WORLD,
+#endif
 //                                  GlobalPosition(0.0),  // lower left
                                   GlobalPosition(300.0), // upper right
                                   Dune::FieldVector<int,dim>(40), // number of cells
@@ -233,6 +236,7 @@ namespace Dune
                              )),
               materialLaw_(soil_, wPhase_, nPhase_),
               multicomp_(wPhase_, nPhase_),
+              timeManager_(this->grid().comm().rank() == 0),
               model_(*this),
               newtonMethod_(model_),
               resultWriter_("newblob")
@@ -309,10 +313,11 @@ namespace Dune
         //! timestep has been computed
         void timestepDone()
             {
-                std::cout << "Writing result file for current time step\n";
+                if (this->grid().comm().rank() == 0)
+                    std::cout << "Writing result file for current time step\n";
 
                 // write the current result to disk
-                writeCurrentResult_(); // TODO
+                writeCurrentResult_();
 
                 // update the domain with the current solution
 //                updateDomain_();

@@ -110,7 +110,8 @@ namespace Lenhard
 
     public:
         PwSnLenhardProblem(Scalar initialTimeStepSize, Scalar endTime)
-            : model_(*this),
+            : timeManager_(this->grid().comm().rank() == 0),
+              model_(*this),
               newtonMethod_(model_),
               newtonCtl_(*this),
 #if LENHARD_EXPERIMENT == 1

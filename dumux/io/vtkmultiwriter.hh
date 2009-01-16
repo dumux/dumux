@@ -49,19 +49,18 @@ namespace Dune {
         VtkMultiWriter(const std::string &simName = "", std::string multiFileName = "")
             {
                 simName_ = (simName.empty())?"sim":simName;
-
-                if (multiFileName.empty())
-                    multiFileName = (boost::format("%s.pvd")%simName).str();
-
+                multiFileName_ = multiFileName;
                 writerNum_ = 0;
-
-                beginMultiFile_(multiFileName);
+                commRank_ = 0;
+                commSize_ = 1;
             }
 
         ~VtkMultiWriter()
             {
                 endMultiFile_();
-                multiFile_.close();
+                
+                if (commRank_ == 0)
+                    multiFile_.close();
             }
 
         /*!
@@ -70,17 +69,44 @@ namespace Dune {
          */
         void beginTimestep(double t, const GridView &gridView)
             {
+                curGridView_ = &gridView;
+
+                if (writerNum_ == 0) {
+                    commRank_ = gridView.comm().rank();
+                    commSize_ = gridView.comm().size();
+
+                    if (multiFileName_.empty())
+                        multiFileName_ = (boost::format("%s.pvd")%simName_).str();
+
+                    beginMultiFile_(multiFileName_);
+                }
+
+
                 curWriter_ = new VtkWriter(gridView);
                 ++writerNum_;
                 curTime_ = t;
-                curGridView_ = &gridView;
+                
+                curOutFileName_ = fileName_();
 
-                curOutFileName_ = (boost::format("%s-%05d")
-                                   %simName_%writerNum_).str();
-                const char *suffix = (GridView::dimension == 1)?"vtp":"vtu";
-                multiFile_ << boost::format("   <DataSet timestep=\"%lf\" file=\"%s.%s\"/>\n")
-                    %curTime_%curOutFileName_%suffix;
-            };
+                // determine name to write into the multi-file for the
+                // current time step
+                std::string fileName;
+                std::string suffix = fileSuffix_();
+                if (commSize_ == 1) {
+                    fileName = curOutFileName_;
+                    multiFile_ << (boost::format("   <DataSet timestep=\"%lf\" file=\"%s.%s\"/>\n")
+                                   %curTime_%fileName%suffix);
+                }
+                if (commSize_ > 1 && commRank_ == 0)  {
+                    // only the first process updates the multi-file
+                    for (int part=0; part < commSize_; ++part) {
+                        fileName = fileName_(part);
+                        multiFile_ << (boost::format("   <DataSet part=\"%d\" timestep=\"%lf\" file=\"%s.%s\"/>\n")
+                                       %part%curTime_%fileName%suffix);
+                    }
+                }
+
+            }
 
         /*!
          * \brief Write a vertex centered vector field to disk.
@@ -227,6 +253,7 @@ namespace Dune {
             {
                 curWriter_->write(curOutFileName_.c_str(),
                                   Dune::VTKOptions::ascii);
+                
                 delete curWriter_;
                 while (vectorFields_.begin() != vectorFields_.end()) {
                     delete vectorFields_.front();
@@ -241,28 +268,77 @@ namespace Dune {
 
 
     private:
+        std::string fileName_()
+            {
+                return (boost::format("%s-%05d")
+                        %simName_%writerNum_).str();
+            }
+
+        std::string fileName_(int rank)
+            {
+                if (commSize_ > 1) {
+                    return (boost::format("s%04d:p%04d:%s-%05d")
+                            %commSize_
+                            %rank
+                            %simName_
+                            %writerNum_).str();
+                }
+                else {
+                    return (boost::format("%s-%05d")
+                            %simName_%writerNum_).str();
+                }
+            }
+
+        std::string pvtuFileName_()
+            {
+                if (commSize_ > 1) {
+                    std::string result;
+                    for (int i = 0; i < commSize_; ++i)
+                        result += (boost::format("s%04d:")%commSize_).str();
+                    result += (boost::format("p0000:%s-%05d")
+                               %simName_
+                               %writerNum_).str();
+                    return result;
+                }
+                else {
+                    return fileName_(0);
+                }
+            }
+        
+        std::string fileSuffix_()
+            {
+                return (GridView::dimension == 1)?"vtp":"vtu";
+            }
+
+
         void beginMultiFile_(const std::string &multiFileName)
             {
-                // generate one meta vtk-file holding the individual timesteps
-                multiFile_.open(multiFileName.c_str());
-                multiFile_ <<
-                    "<?xml version=\"1.0\"?>\n"
-                    "<VTKFile type=\"Collection\"\n"
-                    "         version=\"0.1\"\n"
-                    "         byte_order=\"LittleEndian\"\n"
-                    "         compressor=\"vtkZLibDataCompressor\">\n"
-                    " <Collection>\n";
+                // only the first process writes to the multi-file
+                if (commRank_ == 0) {
+                    // generate one meta vtk-file holding the individual timesteps
+                    multiFile_.open(multiFileName.c_str());
+                    multiFile_ <<
+                        "<?xml version=\"1.0\"?>\n"
+                        "<VTKFile type=\"Collection\"\n"
+                        "         version=\"0.1\"\n"
+                        "         byte_order=\"LittleEndian\"\n"
+                        "         compressor=\"vtkZLibDataCompressor\">\n"
+                        " <Collection>\n";
+                }
             }
 
         void endMultiFile_()
             {
-                // make sure that we always have a working meta file
-                std::ofstream::pos_type pos = multiFile_.tellp();
-                multiFile_ <<
-                    " </Collection>\n"
-                    "</VTKFile>\n";
-                multiFile_.seekp(pos);
-                multiFile_.flush();
+                // only the first process writes to the multi-file
+                if (commRank_ == 0) {
+                    // make sure that we always have a working meta file
+                    std::ofstream::pos_type pos = multiFile_.tellp();
+                    multiFile_ <<
+                        " </Collection>\n"
+                        "</VTKFile>\n";
+                    multiFile_.seekp(pos);
+                    multiFile_.flush();
+                }
             }
 
         //////////////////////////////
@@ -299,8 +375,12 @@ namespace Dune {
         // end hack
         ////////////////////////////////////
 
-        std::ofstream   multiFile_;
         std::string     simName_;
+        std::ofstream   multiFile_;
+        std::string     multiFileName_;
+
+        int commSize_; // number of processes in the communicator
+        int commRank_; // rank of the current process in the communicator
 
         double          curTime_;
         VtkWriter     * curWriter_;

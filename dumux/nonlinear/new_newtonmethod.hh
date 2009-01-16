@@ -317,7 +317,10 @@ namespace Dune
                     // solve the resultuing linear equation system
                     ctl.newtonSolveLinear(*jacobianAsm, u, *f);
 
-                    deflectionTwoNorm_ = (*u).two_norm();
+                    Scalar tmp = (*u).two_norm2();
+                    tmp = model.grid().comm().sum(tmp);
+                    deflectionTwoNorm_ = sqrt(tmp);
+
                     // update the current solution. We use either
                     // a line search approach or the plain method.
                     updateMethod.update(*this, u, uOld, model);
