@@ -223,7 +223,7 @@ namespace Dune
     public:
         NewBlobProblem(Scalar dtInitial,
                        Scalar tEnd)
-            : ParentType(new Grid(
+            : ParentType(new Grid(MPI_COMM_WORLD,
 //                                  GlobalPosition(0.0),  // lower left
                                   GlobalPosition(300.0), // upper right
                                   Dune::FieldVector<int,dim>(40), // number of cells

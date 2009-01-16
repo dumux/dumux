@@ -4,6 +4,7 @@
 #include "new_blobproblem.hh"
 
 #include <dune/common/exceptions.hh>
+#include <dune/common/mpihelper.hh>
 
 #include <iostream>
 
@@ -22,7 +23,7 @@ int main(int argc, char** argv)
 
     for (int i = 0; i < argc; ++i)
         std::cout << argv[i] << "\n";
-    
+
     try {
         // parse the command line arguments for the program
         if (argc != 3) {
