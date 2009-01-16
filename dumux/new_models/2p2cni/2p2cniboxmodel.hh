@@ -251,7 +251,7 @@ namespace Dune
 
     public:
         // internal method!
-        void updateVarVertexData_(VariableVertexData &d,
+        void updateVarVertexData_(VariableVertexData &vertDat,
                                   const SolutionVector &vertSol,
                                   int phaseState,
                                   const Element &element,
@@ -260,7 +260,7 @@ namespace Dune
                                   Scalar temperature) const
             {
                 // update data for the isothermal stuff
-                ParentType::updateVarVertexData_(d,
+                ParentType::updateVarVertexData_(vertDat,
                                                vertSol,
                                                phaseState,
                                                element,
@@ -275,12 +275,12 @@ namespace Dune
                     element.geometry().corner(localIdx);
 
                 // update data for the energy equation
-                d.lambda = problem.soil().heatCond(global, element, local, d.satW);
-                d.enthalpy[pWIdx] = problem.wettingPhase().enthalpy(temperature, d.pW);
-                d.enthalpy[switchIdx] = problem.nonwettingPhase().enthalpy(temperature, d.pN);
+                vertDat.lambda = problem.soil().heatCond(global, element, local, vertDat.satW);
+                vertDat.enthalpy[pWIdx] = problem.wettingPhase().enthalpy(temperature, vertDat.pW);
+                vertDat.enthalpy[switchIdx] = problem.nonwettingPhase().enthalpy(temperature, vertDat.pN);
 
-                d.intenergy[pWIdx] = problem.wettingPhase().intEnergy(temperature, d.pW);
-                d.intenergy[switchIdx] = problem.nonwettingPhase().intEnergy(temperature, d.pN);
+                vertDat.intenergy[pWIdx] = problem.wettingPhase().intEnergy(temperature, vertDat.pW);
+                vertDat.intenergy[switchIdx] = problem.nonwettingPhase().intEnergy(temperature, vertDat.pN);
             }
 
 
