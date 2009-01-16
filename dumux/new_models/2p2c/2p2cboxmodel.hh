@@ -145,7 +145,7 @@ namespace Dune
         typedef typename DomTraits::ElementIterator       ElementIterator;
         typedef typename Element::EntityPointer           ElementPointer;
         typedef typename DomTraits::LocalPosition         LocalPosition;
-        typedef typename DomTraits::GlobalPosition            GlobalPosition;
+        typedef typename DomTraits::GlobalPosition        GlobalPosition;
         typedef typename DomTraits::VertexIterator        VertexIterator;
 
         typedef typename BoxTraits::SolutionVector      SolutionVector;
@@ -406,6 +406,7 @@ namespace Dune
 
                 GlobalPosition tmp(0.0);
                 PhasesVector pressure(0.0), massfrac(0.0);
+                PhasesVector densityIJ(0.);
 
                 // calculate FE gradient (grad p for each phase)
                 for (int k = 0; k < this->curElementGeom_.numVertices; k++) // loop over adjacent verts
@@ -423,6 +424,8 @@ namespace Dune
                         tmp = feGrad;
                         tmp *= pressure[phase];
                         pGrad[phase] += tmp;
+                        densityIJ[phase] += elemDat.vertex[k].density[phase] *
+                                            this->curElementGeom_.subContVolFace[faceId].shapeValue[k];
                     }
 
                     // the diffusion gradient of the non-wetting
@@ -446,7 +449,7 @@ namespace Dune
                 for (int phase=0; phase < numPhases; phase++)
                 {
                     tmp = this->problem_.gravity();
-                    tmp *= vDat_i.density[phase];
+                    tmp *= densityIJ[phase];
                     pGrad[phase] -= tmp;
                 }
 
@@ -734,6 +737,8 @@ namespace Dune
                 ScalarField *pC =           writer.template createField<Scalar, 1>(numVertices);
                 ScalarField *Sw =           writer.template createField<Scalar, 1>(numVertices);
                 ScalarField *Sn =           writer.template createField<Scalar, 1>(numVertices);
+                ScalarField *rhoW =         writer.template createField<Scalar, 1>(numVertices);
+                ScalarField *rhoN =         writer.template createField<Scalar, 1>(numVertices);
                 ScalarField *mobW =         writer.template createField<Scalar, 1>(numVertices);
                 ScalarField *mobN =         writer.template createField<Scalar, 1>(numVertices);
                 ScalarField *massfracAinW = writer.template createField<Scalar, 1>(numVertices);
@@ -762,6 +767,8 @@ namespace Dune
                         (*pC)[globalI] = tmp.pC;
                         (*Sw)[globalI] = tmp.satW;
                         (*Sn)[globalI] = tmp.satN;
+                        (*rhoW)[globalI] = tmp.density[wPhase];
+                        (*rhoN)[globalI] = tmp.density[nPhase];
                         (*mobW)[globalI] = tmp.mobility[wPhase];
                         (*mobN)[globalI] = tmp.mobility[nPhase];
                         (*massfracAinW)[globalI] = tmp.massfrac[nComp][wPhase];
@@ -779,6 +786,8 @@ namespace Dune
                 writer.addVertexData(pC, "pC");
                 writer.addVertexData(Sw, "Sw");
                 writer.addVertexData(Sn, "Sn");
+                writer.addVertexData(rhoW, "rhoW");
+                writer.addVertexData(rhoN, "rhoN");
                 writer.addVertexData(mobW, "mobW");
                 writer.addVertexData(mobN, "mobN");
                 writer.addVertexData(massfracAinW, "Xaw");
