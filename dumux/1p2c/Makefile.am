@@ -1,4 +1,4 @@
-SUBDIRS = fv problems
+SUBDIRS = fv 
 
 1p2cdir = $(includedir)/dune/dumux/1p2c
 1p2c_HEADERS = 1p2cproblem.hh
