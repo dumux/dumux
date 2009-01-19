@@ -99,7 +99,6 @@ public:
       // HACK: traits for the domain of the problem. this is incomplete...
       struct DomainTraits {
           typedef RT   Scalar;
-          typedef G    Grid;
       };
 
       typedef Dune::NewNewtonMethod<ThisType> NewtonMethod;
@@ -278,6 +277,10 @@ public:
                                 }
                             }
                 }
+            // to avoid error in paraview (otherwise initial time step cannot be displayed)
+			this->localJacobian().setLocalSolution(entity);
+			for (int i = 0; i < size; i++)
+			this->localJacobian().updateVariableData(entity, this->localJacobian().u, i, false);
         }
 
         *(this->uOldTimeStep) = *(this->u);
