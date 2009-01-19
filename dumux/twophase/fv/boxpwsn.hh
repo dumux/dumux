@@ -99,6 +99,7 @@ public:
       // HACK: traits for the domain of the problem. this is incomplete...
       struct DomainTraits {
           typedef RT   Scalar;
+          typedef G    Grid;
       };
 
       typedef Dune::NewNewtonMethod<ThisType> NewtonMethod;
