@@ -105,8 +105,7 @@ namespace Dune
     {
    	 VBlockType result;
    	 //std::cout << "rhoW = " << varData[node].density[pWIdx] << ", rhoN = " << varData[node].density[satNIdx] << std::endl;
-   	 result[0] = elData.porosity*varData[node].density[pWIdx]*varData[node].dSdpC*varData[node].pC;//varData[node].density[pWIdx]*elData.porosity*varData[node].satW;//sol[node][satWIdx];
-
+   	 result[0] = elData.porosity*varData[node].density[pWIdx]*oldVarNData[node].dSdpC*(-varData[node].pW);// !! to stablize the solution dSdpC is taken from the old time step
    	 return result;
     };
 
@@ -132,15 +131,18 @@ namespace Dune
 		  for (int phase = 0; phase < m; phase++) {
 	          // calculate FE gradient
 	          FieldVector<RT, dim> pGrad(0);
+	          double densityIJ = 0;
 	          for (int k = 0; k < this->fvGeom.nNodes; k++) {
 	        	  FieldVector<DT,dim> grad(this->fvGeom.subContVolFace[face].grad[k]);
 	        	  grad *= varNData[k].pW ;  //(phase) ? varNData[k].pN : sol[k][pWIdx];
 	        	  pGrad += grad;
+
+                  densityIJ += varNData[k].density[phase]*this->fvGeom.subContVolFace[face].shapeValue[k];
 	          }
 
 	          // adjust by gravity
 			  FieldVector<RT, dim> gravity = problem.gravity();
-			  gravity *= varNData[i].density[phase];
+			  gravity *= densityIJ;
 			  pGrad -= gravity;
 
 			  // calculate the flux using upwind
@@ -184,13 +186,12 @@ namespace Dune
 	  // *														 *
 	  // *********************************************************
 
-    // analog to EvalStaticData in MUFTE
+    //analog to EvalStaticData in MUFTE
     void updateStaticData (const Entity& e, const VBlockType* sol)
     {
-	  return;
+
+		return;
     }
-
-
 	  //*********************************************************
 	  //*														*
 	  //*	Calculation of variable Data at Nodes			 	*
