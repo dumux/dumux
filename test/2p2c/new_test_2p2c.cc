@@ -1,4 +1,3 @@
-#define ENABLE_MPI 1
 #include "config.h"
 #include "new_injectionproblem.hh"
 
@@ -8,17 +7,17 @@
 
 int main(int argc, char** argv)
 {
-    // Set the type for scalar values (should be one of float, double
-    // or long double)
-    typedef double                            Scalar;
-    typedef Dune::NewInjectionProblem<Scalar> Problem;
-    typedef Problem::DomainTraits::Grid       Grid;
-    typedef Dune::GridPtr<Grid>               GridPointer;
-    
-    // initialize MPI, finalize is done automatically on exit
-    Dune::MPIHelper::instance(argc, argv);
-
     try {
+        // Set the type for scalar values (should be one of float, double
+        // or long double)
+        typedef double                            Scalar;
+        typedef Dune::NewInjectionProblem<Scalar> Problem;
+        typedef Problem::DomainTraits::Grid       Grid;
+        typedef Dune::GridPtr<Grid>               GridPointer;
+        
+        // initialize MPI, finalize is done automatically on exit
+        Dune::MPIHelper::instance(argc, argv);
+
         // parse the command line arguments for the program
         if (argc != 4) {
             std::cout << boost::format("usage: %s gridFile.dgf tEnd dt\n")%argv[0];

@@ -21,6 +21,10 @@
 #cmakedefine HAVE_ALUGRID 1
 #endif
 
+#ifdef ENABLE_METIS
+#cmakedefine HAVE_METIS 1
+#endif
+
 #ifdef ENABLE_ALBERTA
 #cmakedefine HAVE_ALBERTA 1
 #endif

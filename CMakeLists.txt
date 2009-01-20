@@ -32,6 +32,7 @@ FIND_PACKAGE(DUNE_istl REQUIRED)
 #FIND_PACKAGE(DUNE_mux REQUIRED)
 FIND_PACKAGE(DUNE_common REQUIRED)
 FIND_PACKAGE(Boost REQUIRED)
+FIND_PACKAGE(METIS)
 ##############
 
 ##############
@@ -77,10 +78,10 @@ set(DumuxIncludeDirectories
     ${Boost_INCLUDE_DIR})
 
 if (MPI_FOUND)
-#  add_definitions(-DENABLE_MPI)
   set(TMP ${MPI_COMPILE_FLAGS})
   separate_arguments(TMP)
-  add_definitions(-DDENABLE_MPI ${TMP})
+  add_definitions(${TMP})
+  add_definitions(-DENABLE_MPI=1)
   set(DumuxLinkLibraries ${DumuxLinkLibraries} ${MPI_LIBRARIES})
   set(DumuxIncludeDirectories ${DumuxIncludeDirectories} ${MPI_INCLUDE_PATH})
 endif (MPI_FOUND)
@@ -147,6 +148,15 @@ if (ALUGrid_FOUND)
       ${ALUGrid_INCLUDE_DIRS})
 endif(ALUGrid_FOUND)
 SetConfigHVar(HAVE_ALUGRID ALUGrid_FOUND)
+
+# deal with METIS
+if (METIS_FOUND)
+  set(DumuxLinkLibraries ${DumuxLinkLibraries} 
+      ${METIS_LIBRARIES})
+  set(DumuxIncludeDirectories ${DumuxIncludeDirectories} 
+      ${METIS_INCLUDE_DIRS})
+endif(METIS_FOUND)
+SetConfigHVar(HAVE_METIS METIS_FOUND)
 
 # deal with Alberta
 if (Alberta_FOUND)

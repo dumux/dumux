@@ -255,7 +255,7 @@ namespace Dune
             { return *static_cast<const Implementation*>(this); }
 
         
-#if defined HAVE_MPI
+#if HAVE_MPI
         template <class Matrix, class Vector>
         void solveParallel_(Matrix &A,
                             Function &u,
@@ -277,7 +277,7 @@ namespace Dune
                 Dune::IndexInfoFromGrid<GlobalId,int> indexinfo;
                 u.fillIndexInfoFromGrid(indexinfo);
                 Communication comm(indexinfo, 
-                                   model().grid().comm());
+                                   MPIHelper::getCommunicator());
 
                 Dune::OverlappingSchwarzOperator<Matrix,Vector,Vector,Communication>
                     opA(A, comm);
@@ -305,7 +305,7 @@ namespace Dune
                                "Solving the linear system of equations did not converge.");
             }
 
-#elif !defined HAVE_MPI
+#elif !HAVE_MPI
         template <class Matrix, class Vector>
         void solveSequential_(Matrix &A,
                               Vector &x,

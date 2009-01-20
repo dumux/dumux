@@ -94,7 +94,7 @@ DumuxAddPathSuffixes("${MyIncludeSuffixes}" "")
 
 DumuxFindIncludeDir("alugrid_2d.h")
 DumuxFindExtraIncludeDir("ALU_SERIAL" "serialize.h")
-DumuxFindExtraIncludeDir("ALU_PARALLEL" "metis.h")
+DumuxFindExtraIncludeDir("ALU_PARALLEL" "gitter_pll_impl.h")
 DumuxFindExtraIncludeDir("ALU_DUNE" "gitter_dune_impl.h")
 DumuxFindLibrary("alugrid")
 

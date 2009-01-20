@@ -352,13 +352,7 @@ namespace Dune
          * necessary.
          */
         void updateStaticData(SpatialFunction &curSol, SpatialFunction &oldSol)
-            { };
-
-        // clear the visited flag of all verts, required to make the
-        // old-style models work in conjunction with the new newton
-        // method.  HACK: remove
-        void clearVisited() DUNE_DEPRECATED {};
-
+            { };     
 
     protected:
 

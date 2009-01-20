@@ -1,15 +1,6 @@
 #ifndef DUNE_NEW_BLOBPROBLEM_HH
 #define DUNE_NEW_BLOBPROBLEM_HH
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#if !HAVE_UG
-#error "The UG grid manager is required for this problem"
-#endif
-
-
 #include<iostream>
 #include<iomanip>
 

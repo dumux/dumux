@@ -1,10 +1,6 @@
 #ifndef DUNE_NEW_LEAKYWELLPROBLEM_HH
 #define DUNE_NEW_LEAKYWELLPROBLEM_HH
 
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
 #include<iostream>
 #include<iomanip>
 

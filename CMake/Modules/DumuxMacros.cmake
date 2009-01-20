@@ -16,7 +16,7 @@ macro(DumuxSetup
 
   set(DumuxLibsFound 1)
   set(DumuxLibraryNames)
-  set(DumuxFound         0)
+  set(DumuxFound     0)
 
   set(DumuxPathMessage 
 "Set the ${DumuxModule}_DIR cmake cache entry to the directory 

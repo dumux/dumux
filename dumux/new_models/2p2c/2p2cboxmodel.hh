@@ -933,12 +933,12 @@ namespace Dune
         bool                          switchFlag_;
 
         // current solution
-        LocalFunction       curSol_;
+        LocalFunction      curSol_;
         ElementData        curElemDat_;
 
         // needed for restoreCurSolution()
         bool               curSolDeflected_;
-        Scalar                 curSolOrigValue_;
+        Scalar             curSolOrigValue_;
         VariableVertexData curSolOrigVarData_;
 
         // previous solution

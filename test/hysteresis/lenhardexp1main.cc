@@ -55,6 +55,9 @@ int main(int argc, char** argv)
     try{
         typedef double Scalar;
 
+        // initialize MPI, finalize is done automatically on exit
+        Dune::MPIHelper::instance(argc, argv);
+
         if (argc != 3) {
             std::cout << boost::format("usage: %s tEnd dt\n")%argv[0];
             return 1;
