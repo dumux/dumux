@@ -10,17 +10,17 @@
 
 namespace Dune {
 template<class G, class RT, class ProblemType, class LocalJacobian,
-		class FunctionType, class OperatorAssembler> class TwoPhaseModel :
+		class FunctionType, class OperatorAssembler> class RichardsModel :
 	public NonlinearModel<G, RT, ProblemType, LocalJacobian, FunctionType, OperatorAssembler> {
 public:
 	typedef NonlinearModel<G, RT, ProblemType, LocalJacobian,
 	FunctionType, OperatorAssembler> ThisNonlinearModel;
 
-	TwoPhaseModel(const G& g, ProblemType& prob) :
+	RichardsModel(const G& g, ProblemType& prob) :
 		ThisNonlinearModel(g, prob), uOldTimeStep(g, g.overlapSize(0)==0) {
 	}
 
-	TwoPhaseModel(const G& g, ProblemType& prob, int level) :
+	RichardsModel(const G& g, ProblemType& prob, int level) :
 		ThisNonlinearModel(g, prob, level), uOldTimeStep(g, level, g.overlapSize(0)==0) {
 	}
 
@@ -35,7 +35,7 @@ public:
 
 template<class G, class RT, class ProblemType, class LocalJac, int m=1>
 class LeafP1TwoPhaseModel
-: public TwoPhaseModel<G, RT, ProblemType, LocalJac,
+: public RichardsModel<G, RT, ProblemType, LocalJac,
 		LeafP1FunctionExtended<G, RT, m>, LeafP1OperatorAssembler<G, RT, m> >
 {
 public:
@@ -45,8 +45,8 @@ public:
 	// define the operator assembler type:
 	typedef LeafP1OperatorAssembler<G, RT, m> OperatorAssembler;
 
-	typedef TwoPhaseModel<G, RT, ProblemType, LocalJac,
-	FunctionType, OperatorAssembler> ThisTwoPhaseModel;
+	typedef RichardsModel<G, RT, ProblemType, LocalJac,
+	FunctionType, OperatorAssembler> ThisRichardsModel;
 
 	typedef LeafP1TwoPhaseModel<G, RT, ProblemType, LocalJac, m> ThisType;
 
@@ -66,7 +66,7 @@ public:
 			IntersectionIterator;
 
 	LeafP1TwoPhaseModel(const G& g, ProblemType& prob) :
-		ThisTwoPhaseModel(g, prob), problem(prob), grid_(g), vertexmapper(g,
+		ThisRichardsModel(g, prob), problem(prob), grid_(g), vertexmapper(g,
 				g.leafIndexSet()), size((*(this->u)).size()), pW(size), pC(size),
 				satW(size), satEx(0), pEx(0), satError(0) {
 	}
