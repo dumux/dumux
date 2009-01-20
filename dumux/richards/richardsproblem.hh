@@ -37,7 +37,7 @@ namespace Dune {
  *	- Grid  a DUNE grid type
  *	- RT    type used for return values
  */
-template<class G, class RT> class TwoPhaseProblem {
+template<class G, class RT> class RichardsProblem {
 	typedef typename G::ctype DT;
 	enum {n=G::dimension, m=1};
 	typedef typename G::Traits::template Codim<0>::Entity Entity;
@@ -152,7 +152,7 @@ public:
 		return;
 	}
 
-	TwoPhaseProblem(Fluid& liq1, Matrix2p<G, RT>& soil,
+	RichardsProblem(Fluid& liq1, Matrix2p<G, RT>& soil,
 			TwoPhaseRelations<G,RT>& materialLaw = *(new TwoPhaseRelations<G,RT>),
 			const bool exsol = false)
 	: exsolution(exsol), wettingPhase_(liq1), soil_(soil),
@@ -160,7 +160,7 @@ public:
 	  { 	}
 
 	//! always define virtual destructor in abstract base class
-	virtual ~TwoPhaseProblem() {
+	virtual ~RichardsProblem() {
 	}
 
 	const bool exsolution;
