@@ -53,12 +53,12 @@ namespace Dune {
  */
 template<class G, class RT>
 class BoxPw
-: public LeafP1TwoPhaseModel<G, RT, TwoPhaseProblem<G, RT>, BoxPwJacobian<G, RT> >
+: public LeafP1TwoPhaseModel<G, RT, RichardsProblem<G, RT>, BoxPwJacobian<G, RT> >
 {
 
 public:
 	// define the problem type (also change the template argument above)
-	typedef TwoPhaseProblem<G, RT> ProblemType;
+	typedef RichardsProblem<G, RT> ProblemType;
 
 	// define the local Jacobian (also change the template argument above)
 	typedef BoxPwJacobian<G, RT> LocalJacobian;
@@ -146,6 +146,7 @@ public:
 
 	virtual void vtkout(const char* name, int k) {
 		VTKWriter<typename G::LeafGridView> vtkwriter(this->grid_.leafView());
+
 		int size=this->vertexmapper.size();
 		enum {dim = G::dimension};
 		char fname[128];
@@ -162,6 +163,16 @@ public:
 //			satN[i] = (*(this->u))[i][1];
 //			satW[i] = 1 - satN[i];
 			FieldVector<RT, dim> dummy (0);
+
+			//HACK for plottting
+//			for (int j = 0; j < 1001; j++) {
+//				std::cout << "Sw-pC:"  << j/1000. << "  " << this->problem.materialLaw().pC(j/1000., dummy, *(this->grid_.template leafbegin<0>()), dummy) << "\n";
+//				std::cout << "Sw-krw:"  << j/1000. << "  " << this->problem.materialLaw().krw(j/1000., dummy, *(this->grid_.template leafbegin<0>()), dummy) << "\n";
+//				std::cout << "pC-Sw:"  << j/1000.*1.0e+4 << "  " << this->problem.materialLaw().saturationW(j/1000.*1.0e+4, dummy, *(this->grid_.template leafbegin<0>()), dummy) << "\n";
+//				std::cout << "pc-dSdpC:"  << j/1000.*1.0e+4 << "  " << this->problem.materialLaw().dSdP(j/1000.*1.0e+4, dummy, *(this->grid_.template leafbegin<0>()), dummy) << "\n";
+//			}
+//			exit(0);
+
 			this->satW[i] = this->problem.materialLaw().saturationW(this->pC[i], dummy, *(this->grid_.template leafbegin<0>()), dummy);
 			double satWI = this->satW[i];
 			minSat = std::min(minSat, satWI);
