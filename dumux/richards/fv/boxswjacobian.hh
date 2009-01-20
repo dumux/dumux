@@ -84,7 +84,7 @@ namespace Dune
 	    typedef FieldVector<RT,dim> FVector;
 
 	     //! Constructor
-    BoxSwJacobian (TwoPhaseProblem<G,RT>& params,
+    BoxSwJacobian (RichardsProblem<G,RT>& params,
 			      bool levelBoundaryAsDirichlet_, const G& grid,
 			      BoxFunction& sol,
 			      bool procBoundaryAsDirichlet_=true)
@@ -259,7 +259,7 @@ namespace Dune
    	 } elData;
 
      // parameters given in constructor
-     TwoPhaseProblem<G,RT>& problem;
+     RichardsProblem<G,RT>& problem;
      std::vector<StaticNodeData> statNData;
      std::vector<VariableNodeData> varNData;
      std::vector<VariableNodeData> oldVarNData;
