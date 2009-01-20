@@ -13,10 +13,10 @@
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
-//#include "richardsproblemSw.hh"
-#include "richardsproblemPw.hh"
-//#include "dumux/richards/boxsw.hh"
-#include "dumux/richards/fv/boxpw.hh"
+#include "richardsproblemSw.hh"
+//#include "richardsproblemPw.hh"
+#include "dumux/richards/fv/boxsw.hh"
+//#include "dumux/richards/fv/boxpw.hh"
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/material/phaseproperties/phaseproperties2p.hh"
 #include "dumux/material/twophaserelations.hh"
@@ -62,16 +62,16 @@ int main(int argc, char** argv)
     Dune::RichardsSoil<GridType, NumberType> soil;
     Dune::TwoPhaseRelations<GridType, NumberType> law(soil, wPhase, nPhase);
 
-    Dune::RichardsProblem<GridType, NumberType> problem(wPhase, soil, law);
+    Dune::RichardsSwProblem<GridType, NumberType> problem(wPhase, soil, law);
 
-    typedef Dune::BoxPw<GridType, NumberType> TwoPhase;
-    TwoPhase twoPhase(grid, problem);
+    typedef Dune::BoxSw<GridType, NumberType> Richards;
+    Richards richards(grid, problem);
 
-    Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt, "richards", 1);
+    Dune::TimeLoop<GridType, Richards> timeloop(0, tEnd, dt, "richards", 1);
 
     Dune::Timer timer;
     timer.reset();
-    timeloop.execute(twoPhase);
+    timeloop.execute(richards);
     std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
 
     //printvector(std::cout, *twoPhase.u, "u", "row", 2, 1, 3);
