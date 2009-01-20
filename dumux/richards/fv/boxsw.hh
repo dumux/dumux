@@ -53,12 +53,12 @@ namespace Dune {
  */
 template<class G, class RT>
 class BoxSw
-: public LeafP1TwoPhaseModel<G, RT, TwoPhaseProblem<G, RT>, BoxSwJacobian<G, RT> >
+: public LeafP1TwoPhaseModel<G, RT, RichardsProblem<G, RT>, BoxSwJacobian<G, RT> >
 {
 
 public:
 	// define the problem type (also change the template argument above)
-	typedef TwoPhaseProblem<G, RT> ProblemType;
+	typedef RichardsProblem<G, RT> ProblemType;
 
 	// define the local Jacobian (also change the template argument above)
 	typedef BoxSwJacobian<G, RT> LocalJacobian;
