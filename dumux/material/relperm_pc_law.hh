@@ -421,26 +421,26 @@ namespace Dune
 
 			std::vector<double> param = this->soil.paramRelPerm(x, e, xi, T);
 
+			double m = param[0];
 			double n = param[1];
-			double m = param[2];
 			double alpha = param[4];
 
 			/* check left tangent */
 			double r = pow(QT1,-1/m);
-			double vx = pow(r-1,1-m);
-			double pc = (vx/alpha);
+			double x_ = pow(r-1,1/n);
+			double pc = (x_/alpha);
 			if (pC>=pc)
 			{
 				double pc_prime = (1-m)/alpha/pow(pow(QT1,-1/m)-1,m)/pow(QT1,1+1/m)*(-1/m);
 				double Se = (pC-pc)/pc_prime+QT1;
 				return (Se*(1.0-Swr-Snr)+Swr);
-//				printf("saturation is %d\n",Se);
 			}
 
 			/* check right part */
+
 			r = pow(QT2,-1/m);
-			vx = pow(r-1,1-m);
-			pc = (vx/alpha);
+			x_ = pow(r-1,1-m);
+			pc = (x_/alpha);
 			if (pC<=pc)
 			{
 				double Se = (1.0-pC/pc)*(1-QT2)+QT2;
@@ -456,7 +456,7 @@ namespace Dune
 
         double dSdP (double pC, const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, double T=283.15) const
         {
-	    	double QT1 = 0.979;
+	    	double QT2 = 0.979;
 			double Swr = this->soil.Sr_w(x, e, xi, T);
 			double Snr = this->soil.Sr_n(x, e, xi, T);
 
@@ -467,13 +467,9 @@ namespace Dune
 
 	    	double dsdSe = 1-Swr-Snr;
 
-	    	double pcReg = this->pC (QT1, x, e, xi, param, T);
+	    	double pcReg = this->pC (QT2, x, e, xi, param, T);
 	    	double dswdpc_reg =-(n-1)*pow(alpha*pcReg,n)*pow(1+pow(alpha*pcReg,n),-2+1/n)/pcReg*dsdSe;
 	    	double dswdpc = -(n-1)*pow(alpha*pC,n)*pow(1+pow(alpha*pC,n),-2+1/n)/pC*dsdSe;
-
-//	    	pc_reg = pc_VanG_Reg(QT2, Swr, Snr, alpha, vg_n);
-//	    	dswdpc_reg =-(vg_n-1)*pow(alpha*pc_reg,vg_n)*pow(1+pow(alpha*pc_reg,vg_n),-2+1/vg_n)/pc_reg*dsdSe;
-//	    	dswdpc = -(vg_n-1)*pow(alpha*pc_in,vg_n)*pow(1+pow(alpha*pc_in,vg_n),-2+1/vg_n)/pc_in*dsdSe;
 
 	    	if (pC<pcReg)
 	    	{
