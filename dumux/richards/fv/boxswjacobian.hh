@@ -131,15 +131,18 @@ namespace Dune
 		  for (int phase = 0; phase < m; phase++) {
 	          // calculate FE gradient
 	          FieldVector<RT, dim> pGrad(0);
+	          double densityIJ = 0;
 	          for (int k = 0; k < this->fvGeom.nNodes; k++) {
 	        	  FieldVector<DT,dim> grad(this->fvGeom.subContVolFace[face].grad[k]);
 	        	  grad *= varNData[k].pW ;  //(phase) ? varNData[k].pN : sol[k][pWIdx];
 	        	  pGrad += grad;
+
+                  densityIJ += varNData[k].density[phase]*this->fvGeom.subContVolFace[face].shapeValue[k];
 	          }
 
 	          // adjust by gravity
 			  FieldVector<RT, dim> gravity = problem.gravity();
-			  gravity *= varNData[i].density[phase];
+			  gravity *= densityIJ;
 			  pGrad -= gravity;
 
 			  // calculate the flux using upwind
