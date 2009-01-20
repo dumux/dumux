@@ -13,7 +13,7 @@
 #include<dune/grid/common/referenceelements.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
 #include<dumux/material/property_baseclasses.hh>
-#include"richardsproblem.hh"
+#include"dumux/richards/richardsproblem.hh"
 
 /**
  * @file
@@ -38,7 +38,7 @@ namespace Dune
    *	- RT    type used for return values
    */
   template<class G, class RT>
-  class RichardsProblem : public TwoPhaseProblem<G, RT> {
+  class RichardsPwProblem : public RichardsProblem<G, RT> {
 	typedef typename G::ctype DT;
 	enum {dim=G::dimension, m=1};
 	typedef typename G::Traits::template Codim<0>::Entity Entity;
@@ -125,7 +125,7 @@ namespace Dune
 		return gravity_;
 	}
 
-	RichardsProblem(Fluid& liq1, Matrix2p<G, RT>& soil, TwoPhaseRelations<G, RT>& law = *(new TwoPhaseRelations<G, RT>))
+	RichardsPwProblem(Fluid& liq1, Matrix2p<G, RT>& soil, TwoPhaseRelations<G, RT>& law = *(new TwoPhaseRelations<G, RT>))
 	: TwoPhaseProblem<G,RT>(liq1, soil, law),
 		densityW_(liq1.density())
 	{
