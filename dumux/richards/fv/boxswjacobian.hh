@@ -132,7 +132,7 @@ namespace Dune
 	          // calculate FE gradient
 	          FieldVector<RT, dim> pGrad(0);
 	          double densityIJ = 0;
-	          for (int k = 0; k < this->fvGeom.nNodes; k++) {
+	          for (int k = 0; k < this->fvGeom.numVertices; k++) {
 	        	  FieldVector<DT,dim> grad(this->fvGeom.subContVolFace[face].grad[k]);
 	        	  grad *= varNData[k].pW ;  //(phase) ? varNData[k].pN : sol[k][pWIdx];
 	        	  pGrad += grad;
@@ -171,11 +171,11 @@ namespace Dune
 	  // *														 *
 	  // *********************************************************
 
-    void computeElementData (const Entity& e)
+    void computeElementData (const Entity& element)
     {
 		 // ASSUMING element-wise constant permeability and porosity, evaluate at the cell center
- 		 elData.K = this->problem.soil().K(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
- 		 elData.porosity = this->problem.soil().porosity(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+ 		 elData.K = this->problem.soil().K(this->fvGeom.elementGlobal, element, this->fvGeom.elementLocal);
+ 		 elData.porosity = this->problem.soil().porosity(this->fvGeom.elementGlobal, element, this->fvGeom.elementLocal);
     };
 
 
@@ -239,7 +239,7 @@ namespace Dune
 
 	void updateVariableData(const Entity& e, const VBlockType* sol, bool old = false)
 	{
-		int size = this->fvGeom.nNodes;
+		int size = this->fvGeom.numVertices;
 
 		for (int i = 0; i < size; i++)
 				updateVariableData(e, sol, i, old);

@@ -126,7 +126,7 @@ public:
 			int size = sfs.size();
 
 			// set type of boundary conditions
-			this->localJacobian.template assembleBC<LeafTag>(entity);
+			this->localJacobian().template assembleBC<LeafTag>(entity);
 
 			IntersectionIterator
 					endit = IntersectionIteratorGetter<G, LeafTag>::end(entity);
@@ -140,7 +140,7 @@ public:
 									== ReferenceElements<DT,dim>::general(gt).subEntity(is->numberInSelf(), 1,
 											j, sfs[i].codim())) {
 								for (int equationNumber = 0; equationNumber<m; equationNumber++) {
-									if (this->localJacobian.bc(i)[equationNumber]
+									if (this->localJacobian().bc(i)[equationNumber]
 											== BoundaryConditions::dirichlet) {
 										// get cell center in reference element
 										Dune::FieldVector<DT,dim>
@@ -181,11 +181,11 @@ public:
 	}
 
 	virtual void update(double& dt) {
-		this->localJacobian.setDt(dt);
-		this->localJacobian.setOldSolution(this->uOldTimeStep);
+		this->localJacobian().setDt(dt);
+		this->localJacobian().setOldSolution(this->uOldTimeStep);
 		NewtonMethod<G, ThisType> newtonMethod(this->grid_, *this);
 		newtonMethod.execute();
-		dt = this->localJacobian.getDt();
+		dt = this->localJacobian().getDt();
 		*(this->uOldTimeStep) = *(this->u);
 
 		if (this->problem.exsolution)
@@ -219,23 +219,23 @@ public:
 
 			// get entity
 			const Entity& entity = *it;
-			this->localJacobian.fvGeom.update(entity);
-			int size = this->localJacobian.fvGeom.nNodes;
+			this->localJacobian().fvGeom.update(entity);
+			int size = this->localJacobian().fvGeom.numVertices;
 
-			this->localJacobian.setLocalSolution(entity);
-			this->localJacobian.computeElementData(entity);
+			this->localJacobian().setLocalSolution(entity);
+			this->localJacobian().computeElementData(entity);
 			bool old = true;
-			this->localJacobian.updateVariableData(entity, this->localJacobian.uold, old);
-			this->localJacobian.updateVariableData(entity, this->localJacobian.u);
-			this->localJacobian.template localDefect<LeafTag>(entity, this->localJacobian.u);
+			this->localJacobian().updateVariableData(entity, this->localJacobian().uold, old);
+			this->localJacobian().updateVariableData(entity, this->localJacobian().u);
+			this->localJacobian().template localDefect<LeafTag>(entity, this->localJacobian().u);
 
 			// begin loop over vertices
 			for (int i=0; i < size; i++) {
 				int globalId = this->vertexmapper.template map<dim>(entity,i);
 				for (int equationnumber = 0; equationnumber < m; equationnumber++) {
-					if (this->localJacobian.bc(i)[equationnumber] == BoundaryConditions::neumann)
+					if (this->localJacobian().bc(i)[equationnumber] == BoundaryConditions::neumann)
 						(*defectGlobal)[globalId][equationnumber]
-								+= this->localJacobian.def[i][equationnumber];
+								+= this->localJacobian().def[i][equationnumber];
 					else
 						essential[globalId].assign(BoundaryConditions::dirichlet);
 				}
