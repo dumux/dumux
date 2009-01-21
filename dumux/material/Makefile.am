@@ -2,8 +2,8 @@ SUBDIRS = constrel phaseproperties
 
 materialdir = $(includedir)/dune/dumux/material
 material_HEADERS = brookscoreylaw_deprecated.hh linearlaw_deprecated.hh matrixproperties.hh \
-	multicomponentrelations_deprecated.hh multicomponentrelations.hh properties.hh\
-	properties.hh property_baseclasses.hh \
+	multicomponentrelations_deprecated.hh multicomponentrelations.hh \
+	property_baseclasses.hh \
 	randompermeability.hh relperm_pc_law.hh solubilityco2.hh twophaserelations_deprecated.hh \
 	twophaserelations.hh vangenuchtenlaw_deprecated.hh
 
