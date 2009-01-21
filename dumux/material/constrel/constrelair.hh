@@ -3,9 +3,13 @@
 #ifndef DUNE_CONSTRELAIR_HH
 #define DUNE_CONSTRELAIR_HH
 
-//from MUFTE
+#include <dumux/exceptions.hh>
+
+namespace Dune {
+
 class ConstrelAir
 {
+static const double eps_ = 1e-18;
 
 public:
 
@@ -18,12 +22,15 @@ public:
     {
         double rho;
         const double RU = 8.31451;          // univ. gas constant [J/(mol K)]
-        const double eps = 1e-18;
 
-        if(temperature<250.) temperature=250.;    // ACHTUNG Regularisierung
-        if(temperature>500.) temperature=500.;    // ACHTUNG Regularisierung
-        if(pg<eps) pg=eps;          // ACHTUNG Regularisierung
-        if(pg>1.e8) pg=1.e8;        // ACHTUNG Regularisierung
+        if(temperature < 273.15 || temperature > 500.){
+            DUNE_THROW(Dune::NumericalProblem,
+                "ConstrelAir: Temperature " << temperature << " out of range at " << __FILE__ << ":" << __LINE__);
+        }
+        else if (pg < eps_ || pg > 1.0E8) {
+            DUNE_THROW(Dune::NumericalProblem,
+                "ConstrelAir: Pressure " << pg << " out of range at " << __FILE__ << ":" << __LINE__);
+        }
 
         rho=pg/(RU*temperature);
 
@@ -39,12 +46,16 @@ public:
     {
         double rho;
         const double RU = 8.31451;          // univ. gas constant [J/(mol K)]
-        const double eps = 1e-18;
 
-        if(temperature<250.) temperature=250.;    // ACHTUNG Regularisierung
-        if(temperature>500.) temperature=500.;    // ACHTUNG Regularisierung
-        if(pg<eps) pg=eps;          // ACHTUNG Regularisierung
-        if(pg>1.E8) pg=1.E8;        // ACHTUNG Regularisierung
+        if(temperature < 273.15 || temperature > 500.)
+        {
+            DUNE_THROW(Dune::NumericalProblem,
+                "ConstrelAir: Temperature " << temperature << " out of range at " << __FILE__ << ":" << __LINE__);
+        }
+        else if (pg < eps_ || pg > 1.0E8) {
+            DUNE_THROW(Dune::NumericalProblem,
+                "ConstrelAir: Pressure " << pg << " out of range at " << __FILE__ << ":" << __LINE__);
+        }
 
         rho=molarMass*pg/(RU*temperature);
 
@@ -57,8 +68,11 @@ public:
     {
         double r;
 
-        if(temperature<250.) temperature = 250.;      /* ACHTUNG Regularisierung */
-        if(temperature>500.) temperature = 500.;      /* ACHTUNG Regularisierung */
+        if(temperature < 273.15 || temperature > 500.)
+        {
+            DUNE_THROW(Dune::NumericalProblem,
+                "ConstrelAir: Temperature " << temperature << " out of range at " << __FILE__ << ":" << __LINE__);
+        }
 
         r = 1.496*1.E-6*pow(temperature,1.5)/(temperature+120.);
 
@@ -83,7 +97,6 @@ public:
         const double k11=-0.0000209545300;
         double u,T0,T1,T2,T3,T4,T5,T6,T7,T8,T9,T10,T11,theta;
         double p_s,Temp_c1,p_c1,hoch;
-        const double eps = 1e-18;
 
         K_0=2.0;
         K_1=0.95;
@@ -95,10 +108,15 @@ public:
 
 
         theta=temperature/Temp_c1;
-        if(theta<0.4)    theta=0.4;     /* ACHTUNG Regularisierung */
-        if(theta>1.05)    theta=1.05;    /* ACHTUNG Regularisierung */
+        if(theta < 0.4 || theta > 1.05)
+        {
+            DUNE_THROW(Dune::NumericalProblem,
+                "ConstrelAir: Theta " << theta << " out of range at " << __FILE__ << ":" << __LINE__);
+        }
+//        if(theta<0.4)    theta=0.4;     /* ACHTUNG Regularisierung */
+//        if(theta>1.05)    theta=1.05;    /* ACHTUNG Regularisierung */
 
-        u=(K_0*pow((1/(theta+eps) - K_1),0.4) - K_2)/K_3;
+        u=(K_0*pow((1/(theta+eps_) - K_1),0.4) - K_2)/K_3;
         if(u<-10.0) u=-10.0;     if(u>10.0) u=10.0; /* ACHTUNG Regularisierung */
 
         T0=1;
@@ -119,13 +137,6 @@ public:
         if(hoch>40.0) hoch=40.0;
 
         p_s=exp(hoch)*p_c1;
-
-
-//      if(isnan(p_s))
-//      {
-//          sprintf(buf,"isnan pwsat \n");
-//          p_s = 0.0;
-//      }
 
         return (p_s);
 
@@ -151,8 +162,13 @@ public:
         double exponent;    /* log10 (p) = exponent = A-B/(C+T) */
         double pwsat;
 
-        if (temperature < 274.15) temperature = 274.15; /* ACHTUNG Regularisierung */
-        if (temperature > 373.15) temperature = 373.15; /* ACHTUNG Regularisierung */
+        if(temperature < 274.15 || temperature > 373.15)
+        {
+            DUNE_THROW(Dune::NumericalProblem,
+                "ConstrelAir: Temperature " << temperature << " out of range at " << __FILE__ << ":" << __LINE__);
+        }
+//        if (temperature < 274.15) temperature = 274.15; /* ACHTUNG Regularisierung */
+//        if (temperature > 373.15) temperature = 373.15; /* ACHTUNG Regularisierung */
 
         Celsius = temperature - 273.15;
 
@@ -167,24 +183,26 @@ public:
     double partial_pressure_gas_w (double pg, double temperature, double Sw, double Xwg) const
     {
         double pwg;
-        const double eps = 1e-18;
 
-        if(temperature<250.) temperature = 250.;    /* ACHTUNG Regularisierung */
-        if(temperature>500.) temperature = 500.;    /* ACHTUNG Regularisierung */
-        if(pg>1.E8)   pg=1.E8;        /* ACHTUNG Regularisierung */
-        if(pg<1.E-8)  pg=1.E-8;       /* ACHTUNG Regularisierung */
+        if(temperature < 250. || temperature > 500.)
+        {
+            DUNE_THROW(Dune::NumericalProblem,
+                "ConstrelAir: Temperature " << temperature << " out of range at " << __FILE__ << ":" << __LINE__);
+        }
+        else if (pg < eps_ || pg > 1.0E8) {
+            DUNE_THROW(Dune::NumericalProblem,
+                "ConstrelAir: Pressure " << pg << " out of range at " << __FILE__ << ":" << __LINE__);
+        }
+//        if(temperature<250.) temperature = 250.;    /* ACHTUNG Regularisierung */
+//        if(temperature>500.) temperature = 500.;    /* ACHTUNG Regularisierung */
+//        if(pg>1.E8)   pg=1.E8;        /* ACHTUNG Regularisierung */
+//        if(pg<1.E-8)  pg=1.E-8;       /* ACHTUNG Regularisierung */
 
-        if (Sw<eps)
+        if (Sw<eps_)
         {
             pwg=Xwg*pg;   /* pwgS0 */
         }
         else pwg=pwsat(temperature);   /* pwgS */
-
-
-//      if(isnan(pwg)){
-//          sprintf(buf,"isnan partial_pressure_gas_w \n");
-//          pwg = 0.0;
-//      }
 
         return(pwg);
     }
@@ -194,17 +212,19 @@ public:
     {
         double Tc,Pc,Zc,M,Tr,mu_r;
         double Fp0,xi,eta_xi,r;
-        const double eps=1e-18;
 
-        if(temperature<250.) temperature = 250.;    /* ACHTUNG Regularisierung */
-        if(temperature>500.) temperature = 500.;    /* ACHTUNG Regularisierung */
+        if(temperature < 250. || temperature > 500.)
+        {
+            DUNE_THROW(Dune::NumericalProblem,
+                "ConstrelAir: Temperature " << temperature << " out of range at " << __FILE__ << ":" << __LINE__);
+        }
 
         Tc = 647.3;            /* [K] */
         Pc = 221.2;            /* [bar] */
         Zc = 0.231;
         M = 18.015;            /* [g/mol] */
         Tr = temperature/Tc;
-        if(Tr<eps) Tr=eps;     /* Regularisierung */
+        if(Tr<eps_) Tr=eps_;     /* Regularisierung */
         mu_r = 0.0897;         /* polarity factor */
         Fp0 = 1. + 0.221*(0.96+0.1*(Tr-0.7));
         xi = 3.334E-3;
@@ -230,34 +250,23 @@ public:
     /* sources: Falta 1990, IFC 1967   */
 
 
-    /* spezifische Enthalpie der Wasserphase [J/kg]  (  -> 1J = 1 (kg*m�)/s�  ) */
+    /* specific enthalpy of the water phase [J/kg]  (  -> 1 J = 1 (kg*m2)/s2  ) */
     double sp_enthalpy_w (double temperature, double pw)
     {
     double A[23],SA[12];
     double TKR,PNMR,Y,ZP,Z,PAR1,PAR2,PAR3,PAR4,PAR5;
     double VMKR,v,D,YD,SNUM,PRT1,PRT2,PRT3,PRT4,PRT5,ENTR,H,U;
     int i;
-//      /*Regularisierung*/
-//      if(temperature<250.)
-//          {
-//          UserWriteF("sp_enthalpy_w: \t \t Regularisation temperature \t %18.8g -> 250 K\n",temperature);
-//          temperature=250;
-//          }
-//      if(temperature>500.)
-//          {
-//          UserWriteF("sp_enthalpy_w: \t \t Regularisation temperature \t %18.8g -> 500 K\n",temperature);
-//          temperature=500;
-//          }
-//      if(pw<eps)
-//          {
-//          UserWriteF("sp_enthalpy_w: \t \t Regularisation pw \t %18.8g -> %g Pa\n",pw,eps);
-//          pw=eps;
-//          }
-//      if(pw>1.E8)
-//          {
-//          UserWriteF("sp_enthalpy_w: \t \t Regularisation pw \t %18.8g -> 1.E8 Pa\n",pw);
-//          pw=1.E8;
-//          }
+
+    if(temperature < 250. || temperature > 500.)
+    {
+        DUNE_THROW(Dune::NumericalProblem,
+            "ConstrelAir: Temperature " << temperature << " out of range at " << __FILE__ << ":" << __LINE__);
+    }
+    else if (pw < eps_ || pw > 1.0E8) {
+        DUNE_THROW(Dune::NumericalProblem,
+            "ConstrelAir: Pressure " << pw << " out of range at " << __FILE__ << ":" << __LINE__);
+    }
 
     A[0]=6.824687741E3;
     A[1]=-5.422063673E2;
@@ -335,16 +344,11 @@ public:
     H=ENTR*70120.4;         /* specific enthalpy */
     U=H-pw*v;               /* specific internal energy */
 
-//      if(isnan(H)){
-//          sprintf(buf,"isnan sp_enthalpy_w \n");
-//      H = 0.0;
-//      }
-
     return (H);
     }
 
 
-    // Enthalpie des gesaettigten Wasserdampfes
+    // Enthalpy of saturated vapor
     double hsat(double temperature) const
     {
     double h,x;
@@ -361,7 +365,7 @@ public:
     return(h);
     }
 
-    // Enthalpie von stark ueberhitztem Dampf
+    // Enthalpy of superheated steam
     double hsteam(double p_gw, double temperature) const
     {
     static double A[6];         /* Data A */
@@ -373,30 +377,18 @@ public:
     double S[3],R[3];
     int j,k;
     double b,z;
-    const double eps = 1e-18;
 
-//  // Regularisierung
-//  if(temperature<270.)
-//      {
-//      UserWriteF("hsteam: \t \t Regularisation temperature \t %18.8g -> 270 K\n",temperature);
-//      temperature=270.;
-//      }
-//  if(temperature>500.)
-//      {
-//      UserWriteF("hsteam: \t \t Regularisation temperature \t %18.8g -> 500 K\n",temperature);
-//      temperature=500.;
-//      }
-//  if(p_gw<1.E-8)
-//      {
-//      UserWriteF("hsteam:\t \t  Regularisation p_gw \t %18.8g -> 1.E-8 Pa\n",p_gw);
-//      p_gw=1.E-8;
-//      }
-//  if(p_gw>1.E8)
-//      {
-//      UserWriteF("hsteam: \t \t Regularisation p_gw \t %18.8g -> 1.E8 Pa\n",p_gw);
-//      p_gw=1.E8;
-//      }
-        /* Initialisierung der Data-Arrays */
+    if(temperature < 270. || temperature > 500.)
+    {
+        DUNE_THROW(Dune::NumericalProblem,
+            "ConstrelAir: Temperature " << temperature << " out of range at " << __FILE__ << ":" << __LINE__);
+    }
+    else if (p_gw < eps_ || p_gw > 1.0E8) {
+        DUNE_THROW(Dune::NumericalProblem,
+            "ConstrelAir: Pressure " << p_gw << " out of range at " << __FILE__ << ":" << __LINE__);
+    }
+
+    /* Initialization of data-arrays */
     A[0]=16.83599274;
     A[1]=28.56067796;
     A[2]=-54.38923329;
@@ -464,7 +456,7 @@ public:
     Z[2][6]=14.;
     Z[2][7]=0.;
 
-    /* Berechnung */
+    /* Calculation */
     TK=temperature/647.3;
     PK=p_gw/2.212E7;
     EL1=4.260321148;
@@ -486,9 +478,9 @@ public:
       SUM=SUM-j*pow(PK,d__1)*SC;
     }
 
-    S[0]=1/(pow(PK,4)+eps) + SB[1]*pow(X,14);
-    S[1]=1/(pow(PK,5)+eps)+ SB[2]*pow(X,19);
-    S[2]=1/(pow(PK,6)+eps) + SB[3]*pow(X,54) + SB[4]*pow(X,27);
+    S[0]=1/(pow(PK,4)+eps_) + SB[1]*pow(X,14);
+    S[1]=1/(pow(PK,5)+eps_)+ SB[2]*pow(X,19);
+    S[2]=1/(pow(PK,6)+eps_) + SB[3]*pow(X,54) + SB[4]*pow(X,27);
 
     for (j=6;j<=8;++j)
     {
@@ -559,7 +551,7 @@ public:
 
     H=HK*70120.4;           /* specific enthalpy */
 
-    U=H-p_gw*v;         /* specific INTernal energy */
+    U=H-p_gw*v;         /* specific internal energy */
 
 
 //      if(isnan(H)){
@@ -571,8 +563,8 @@ public:
     }
 
 
-    /* Interpolationspolynome fuer leicht ueberhitzten */
-    /* Dampf fuer 100/50/25/5/1 bar                    */
+    /* Interpolation polynoms for slightly overheated */
+    /* steam, for 100/50/25/5/1 bar                    */
     double h_supst100(double temperature) const
     {
     double h,x;
@@ -632,7 +624,7 @@ public:
 
 
 
-    /* Enthalpie von Wasserdampf in der Gasphase */
+    /* Enthalpy of ater vapor in the gasphase */
     double enth_gw(double Sw, double p_gw, double temperature) const
     {
     double T_sat=0.,epsilon,tsa,tsa_neu,g,g_strich,Celsius;
@@ -641,45 +633,26 @@ public:
     double a,h;
     double h0,DT_sat,Dh1,Dh2,Dh;
     double wicht;
-    double eps = 1e-18;
 
-//     /*Regularisierung*/
-//     if(temperature<250.)
-//      {
-//      UserWriteF("enth_gw: \t \t Regularisation temperature \t %18.8g -> 250 K\n",temperature);
-//      temperature=250.;
-//      }
-//     if(temperature>500.)
-//      {
-//      UserWriteF("enth_gw: \t \t Regularisation temperature \t %18.8g -> 500 K\n",temperature);
-//      temperature=500.;
-//      }
-//     if(p_gw<eps)
-//      {
-//      UserWriteF("enth_gw: \t \t Regularisation p_gw \t %18.8g -> %g Pa\n",p_gw,eps);
-//      p_gw=eps;
-//      }
-//     if(p_gw>1.E8)
-//      {
-//       UserWriteF("enth_gw: \t \t Regularisation p_gw \t %18.8g -> 1.E8 Pa\n",p_gw);
-//      p_gw=1.E8;
-//      }
-//     if(Sw<0.0)
-//      {
-//      UserWriteF("enth_gw: \t \t Regularisation Sw \t %18.8g -> 0.0 \n",Sw);
-//      Sw=0.0;
-//      }
-//     if(Sw>1.0)
-//      {
-//      UserWriteF("enth_gw: \t \t Regularisation Sw \t %18.8g -> 1.0 \n",Sw);
-//      Sw=1.0;
-//      }
+    if(temperature < 250. || temperature > 500.)
+    {
+        DUNE_THROW(Dune::NumericalProblem,
+            "ConstrelAir: Temperature " << temperature << " out of range at " << __FILE__ << ":" << __LINE__);
+    }
+    else if (p_gw < eps_ || p_gw > 1.0E8) {
+        DUNE_THROW(Dune::NumericalProblem,
+            "ConstrelAir: Pressure " << p_gw << " out of range at " << __FILE__ << ":" << __LINE__);
+    }
+    else if (Sw < 0.0 || Sw > 1.0) {
+        DUNE_THROW(Dune::NumericalProblem,
+            "ConstrelAir: Water saturation " << Sw << " out of range at " << __FILE__ << ":" << __LINE__);
+    }
 
     Celsius=temperature-273.15;
 
         /* Nassdampf, leicht oder stark ueberhitzter Dampf ?? */
 
-    if (Sw>eps) crit_I=1;   /* Nassdampf ! */
+    if (Sw > eps_) crit_I=1;   /* Nassdampf ! */
     else
     {
         /* Ermittlung von T_sat(p_gw) */
@@ -816,21 +789,44 @@ public:
        const double molecular_weight_water = 0.018016;
        const double molecular_weight_air = 0.02896;
        double Xag = 1.0 - Xwg;
+
+       if(temperature < 250. || temperature > 500.)
+       {
+           DUNE_THROW(Dune::NumericalProblem,
+               "ConstrelAir: Temperature " << temperature << " out of range at " << __FILE__ << ":" << __LINE__);
+       }
+       else if (pg < eps_ || pg > 1.0E8) {
+           DUNE_THROW(Dune::NumericalProblem,
+               "ConstrelAir: Pressure " << pg << " out of range at " << __FILE__ << ":" << __LINE__);
+       }
+//       else if (Sw < 0.0 || Sw > 1.0) {
+//           DUNE_THROW(Dune::NumericalProblem,
+//               "ConstrelAir: Water saturation " << Sw << " out of range at " << __FILE__ << ":" << __LINE__);
+//       }
+       else if (Xwg < 0.0 || Xwg > 1.0) {
+           DUNE_THROW(Dune::NumericalProblem,
+               "ConstrelAir: Mass fraction Xwg " << Xwg << " out of range at " << __FILE__ << ":" << __LINE__);
+       }
+       else if (Xag < 0.0 || Xag > 1.0) {
+           DUNE_THROW(Dune::NumericalProblem,
+               "ConstrelAir: Massfraction Xag " << Xag << " out of range at " << __FILE__ << ":" << __LINE__);
+       }
+
 //     /*Regularisierung*/
-//     if(temperature<eps)
+//     if(temperature<eps_)
 //      {
-//       UserWriteF("sp_enth2p2cni_g: \t Regularisation temperature \t %18.8g -> %g K\n",temperature,eps);
-//      temperature=eps;
+//       UserWriteF("sp_enth2p2cni_g: \t Regularisation temperature \t %18.8g -> %g K\n",temperature,eps_);
+//      temperature=eps_;
 //      }
 //     if(temperature>500.)
 //      {
 //       UserWriteF("sp_enth2p2cni_g: \t Regularisation temperature \t %18.8g -> 500 K\n",temperature);
 //      temperature=500.;
 //      }
-//     if(pg<eps)
+//     if(pg<eps_)
 //      {
-//      UserWriteF("sp_enth2p2cni_g: \t Regularisation pg \t %18.8g -> %g Pa\n",pg,eps);
-//      pg=eps;
+//      UserWriteF("sp_enth2p2cni_g: \t Regularisation pg \t %18.8g -> %g Pa\n",pg,eps_);
+//      pg=eps_;
 //      }
 //     if(pg>1.E8)
 //      {
@@ -889,5 +885,7 @@ public:
        return(h_g);
     }
 };
+
+} // end namespace Dune
 
 #endif

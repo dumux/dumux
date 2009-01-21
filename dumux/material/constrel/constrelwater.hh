@@ -13,13 +13,13 @@ namespace Dune {
 /*                                                                        */
 /*    after IAPWS 1997 (only region 1)                                    */
 /*                                                                        */
-/*    validity: temperature: 273.15 K <= temperature <= 1073.15 K            */
-/*          pressure : p <= 100 MPa (1000 bar, 1.0E8Pa)                    */
+/*    validity: temperature: 273.15 K <= temperature <= 1073.15 K         */
+/*          pressure : p <= 100 MPa (1000 bar, 1.0E8Pa)                   */
 /*                                                                        */
 /*    (IAPWS: The international Association for the properties            */
-/*        of water and steam)                                                */
+/*        of water and steam)                                             */
 /*                                                                        */
-/*    (http://www.iapws.org)                                                */
+/*    (http://www.iapws.org)                                              */
 /*                                                                        */
 /************************************************************************/
 
@@ -493,6 +493,6 @@ public:
         }
 };
 
-}
+} // end namespace Dune
 
 #endif
