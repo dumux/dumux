@@ -3,353 +3,364 @@
 #define CONVECTIONSUBPROBLEM_HH
 
 #include "dumux/upscaledsaturation/preprocess/fractionalflowproblemsubprobs.hh"
-#include "dumux/transport/fv/numericalflux.hh"
 
 namespace Dune
 {
 //! \ingroup diffusionProblems
 //! example class for diffusion problems
-template<class G, class RT, class VC> class ConvSubProblemX1: public FractionalFlowProblemSubProbs<
-        G, RT, VC>
+template<class Grid, class Scalar, class VC> class ConvSubProblemX1: public FractionalFlowProblemSubProbs<
+        Grid, Scalar, VC>
 {
-
-typedef    typename G::ctype DT;
     enum
-    {    n=G::dimension};
-    typedef typename G::Traits::template Codim<0>::Entity Entity;
+    {
+        dim = Grid::dimension, dimWorld = Grid::dimensionworld
+    };
+    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+
+typedef    typename Grid::Traits::template Codim<0>::Entity Element;
 
 public:
-    ConvSubProblemX1(VC& variableobj, Fluid& wp, Fluid& nwp, Matrix2p<typename G::HostGridType, RT>& s, TwoPhaseRelations<typename G::HostGridType, RT>& law = *(new TwoPhaseRelations<G,RT>), FieldVector<DT,n> Left = 0,
-            FieldVector<DT,n> Right = 0) :
-    FractionalFlowProblemSubProbs<G, RT, VC>(variableobj, wp, nwp, s, law), LowerLeft_(Left),
+    ConvSubProblemX1(VC& variableobj, Fluid& wp, Fluid& nwp, Matrix2p<typename Grid::HostGridType, Scalar>& s, TwoPhaseRelations<typename Grid::HostGridType, Scalar>& law = *(new TwoPhaseRelations<typename Grid::HostGridType,Scalar>), GlobalPosition Left = 0,
+            GlobalPosition Right = 0) :
+    FractionalFlowProblemSubProbs<Grid, Scalar, VC>(variableobj, wp, nwp, s, law), LowerLeft_(Left),
     UpperRight_(Right), eps_(1e-6)
     {}
 
-    virtual RT qPress (const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi)
+    virtual Scalar sourcePress (const GlobalPosition& globalPos, const Element& element,
+            const LocalPosition& localPos)
     {
         return 0;
     }
 
-    typename BoundaryConditions::Flags bctypePress(const FieldVector<DT,n>& x,
-            const Entity& e, const FieldVector<DT,n>& xi) const
+    typename BoundaryConditions::Flags bctypePress(const GlobalPosition& globalPos,
+            const Element& element, const LocalPosition& localPos) const
     {
-        if (x[0] < LowerLeft_[0] +  eps_ || x[0] > (UpperRight_[0] - eps_))
+        if (globalPos[0] < LowerLeft_[0] + eps_ || globalPos[0]> (UpperRight_[0] - eps_))
         return BoundaryConditions::dirichlet;
         // all other boundaries
         return BoundaryConditions::neumann;
     }
 
-    BoundaryConditions::Flags bctypeSat (const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi) const
+    BoundaryConditions::Flags bctypeSat (const GlobalPosition& globalPos, const Element& element,
+            const LocalPosition& localPos) const
     {
-        if (x[0] < LowerLeft_[0] + eps_)
+        if (globalPos[0] < LowerLeft_[0] + eps_)
         return Dune::BoundaryConditions::dirichlet;
         // all other boundaries
         return Dune::BoundaryConditions::neumann;
     }
 
-    RT gPress(const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi) const
+    Scalar dirichletPress(const GlobalPosition& globalPos, const Element& element,
+            const LocalPosition& localPos) const
     {
-        if (x[0] <  LowerLeft_[0] + eps_)
+        if (globalPos[0] < LowerLeft_[0] + eps_)
         return 1;
         // all other boundaries
         return 0;
     }
 
-    RT gSat(const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi) const
+    Scalar dirichletSat(const GlobalPosition& globalPos, const Element& element,
+            const LocalPosition& localPos) const
     {
-        if (x[0] <  LowerLeft_[0] + eps_)
+        if (globalPos[0] < LowerLeft_[0] + eps_)
         return 1;
         // all other boundaries
         return 0;
     }
 
-    RT JPress(const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi) const
+    Scalar neumannPress(const GlobalPosition& globalPos, const Element& element,
+            const LocalPosition& localPos) const
     {
         return 0;
     }
 
-    RT JSat(const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi, RT& factor) const
+    Scalar neumannSat(const GlobalPosition& globalPos, const Element& element,
+            const LocalPosition& localPos, Scalar& factor) const
     {
-        if (x[0] > (UpperRight_[0] - eps_))
-            return factor;
+        if (globalPos[0]> (UpperRight_[0] - eps_))
+        return factor;
         // all other boundaries
         return 0;
     }
 
-    RT initSat (const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi) const
+    Scalar initSat (const GlobalPosition& globalPos, const Element& element,
+            const LocalPosition& localPos) const
     {
         return 0;
     }
 
 private:
-    FieldVector<DT,n> LowerLeft_;
-    FieldVector<DT,n> UpperRight_;
+    GlobalPosition LowerLeft_;
+    GlobalPosition UpperRight_;
 
-    RT eps_;
+    Scalar eps_;
 };
 
-template<class G, class RT, class VC> class ConvSubProblemY1: public FractionalFlowProblemSubProbs<
-        G , RT, VC>
+template<class Grid, class Scalar, class VC> class ConvSubProblemY1: public FractionalFlowProblemSubProbs<
+Grid , Scalar, VC>
 {
-
-typedef    typename G::ctype DT;
     enum
-    {    n=G::dimension};
-    typedef typename G::Traits::template Codim<0>::Entity Entity;
+    {
+        dim = Grid::dimension, dimWorld = Grid::dimensionworld
+    };
+    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+
+    typedef typename Grid::Traits::template Codim<0>::Entity Element;
 
 public:
-    ConvSubProblemY1(VC& variableobj, Fluid& wp, Fluid& nwp, Matrix2p<typename G::HostGridType, RT>& s, TwoPhaseRelations<typename G::HostGridType, RT>& law = *(new TwoPhaseRelations<G,RT>), FieldVector<DT,n> Left = 0,
-            FieldVector<DT,n> Right = 0) :
-    FractionalFlowProblemSubProbs<G, RT, VC>(variableobj, wp, nwp, s, law), LowerLeft_(Left),
+    ConvSubProblemY1(VC& variableobj, Fluid& wp, Fluid& nwp, Matrix2p<typename Grid::HostGridType, Scalar>& s, TwoPhaseRelations<typename Grid::HostGridType, Scalar>& law = *(new TwoPhaseRelations<typename Grid::HostGridType,Scalar>), GlobalPosition Left = 0,
+            GlobalPosition Right = 0) :
+    FractionalFlowProblemSubProbs<Grid, Scalar, VC>(variableobj, wp, nwp, s, law), LowerLeft_(Left),
     UpperRight_(Right), eps_(1e-8)
     {}
 
-    virtual RT qPress (const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi)
+    virtual Scalar sourcePress (const GlobalPosition& globalPos, const Element& element,
+            const LocalPosition& localPos)
     {
         return 0;
     }
 
-    typename BoundaryConditions::Flags bctypePress(const FieldVector<DT,n>& x,
-            const Entity& e, const FieldVector<DT,n>& xi) const
+    typename BoundaryConditions::Flags bctypePress(const GlobalPosition& globalPos,
+            const Element& element, const LocalPosition& localPos) const
     {
-        if ((x[1] <  LowerLeft_[1] + eps_ || x[1] > (UpperRight_[1] - eps_)))
+        if ((globalPos[1] < LowerLeft_[1] + eps_ || globalPos[1]> (UpperRight_[1] - eps_)))
         return BoundaryConditions::dirichlet;
         // all other boundaries
         return BoundaryConditions::neumann;
     }
 
-    BoundaryConditions::Flags bctypeSat (const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi) const
+    BoundaryConditions::Flags bctypeSat (const GlobalPosition& globalPos, const Element& element,
+            const LocalPosition& localPos) const
     {
-        if (x[1] <  LowerLeft_[1] + eps_)
+        if (globalPos[1] < LowerLeft_[1] + eps_)
         return Dune::BoundaryConditions::dirichlet;
         else
         return Dune::BoundaryConditions::neumann;
     }
 
-    RT gPress(const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi) const
+    Scalar dirichletPress(const GlobalPosition& globalPos, const Element& element,
+            const LocalPosition& localPos) const
     {
-        if (x[1] <  LowerLeft_[1] + eps_)
+        if (globalPos[1] < LowerLeft_[1] + eps_)
         return 1;
         // all other boundaries
         return 0;
     }
 
-    RT gSat(const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi) const
+    Scalar dirichletSat(const GlobalPosition& globalPos, const Element& element,
+            const LocalPosition& localPos) const
     {
-        if (x[1] <  LowerLeft_[1] + eps_)
+        if (globalPos[1] < LowerLeft_[1] + eps_)
         return 1;
         // all other boundaries
         return 0;
     }
 
-    RT JPress(const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi) const
+    Scalar neumannPress(const GlobalPosition& globalPos, const Element& element,
+            const LocalPosition& localPos) const
     {
         return 0;
     }
 
-    RT JSat(const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi, RT& factor) const
+    Scalar neumannSat(const GlobalPosition& globalPos, const Element& element,
+            const LocalPosition& localPos, Scalar& factor) const
     {
-        if (x[1] > (UpperRight_[1] - eps_))
-            return factor;
+        if (globalPos[1]> (UpperRight_[1] - eps_))
+        return factor;
         // all other boundaries
         return 0;
     }
 
-    RT initSat (const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi) const
+    Scalar initSat (const GlobalPosition& globalPos, const Element& element,
+            const LocalPosition& localPos) const
     {
         return 0;
     }
 
 private:
-    FieldVector<DT,n> LowerLeft_;
-    FieldVector<DT,n> UpperRight_;
+    GlobalPosition LowerLeft_;
+    GlobalPosition UpperRight_;
 
-    RT eps_;
+    Scalar eps_;
 };
-template<class G, class RT, class VC> class ConvSubProblemX2: public FractionalFlowProblemSubProbs<
-        G, RT, VC>
+template<class Grid, class Scalar, class VC> class ConvSubProblemX2: public FractionalFlowProblemSubProbs<
+Grid, Scalar, VC>
 {
-
-typedef    typename G::ctype DT;
     enum
-    {    n=G::dimension};
-    typedef typename G::Traits::template Codim<0>::Entity Entity;
+    {
+        dim = Grid::dimension, dimWorld = Grid::dimensionworld
+    };
+    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+
+    typedef typename Grid::Traits::template Codim<0>::Entity Element;
 
 public:
-    ConvSubProblemX2(VC& variableobj, Fluid& wp, Fluid& nwp, Matrix2p<typename G::HostGridType, RT>& s, TwoPhaseRelations<typename G::HostGridType, RT>& law = *(new TwoPhaseRelations<G,RT>), FieldVector<DT,n> Left = 0,
-            FieldVector<DT,n> Right = 0) :
-    FractionalFlowProblemSubProbs<G, RT, VC>(variableobj, wp, nwp, s, law), LowerLeft_(Left),
+    ConvSubProblemX2(VC& variableobj, Fluid& wp, Fluid& nwp, Matrix2p<typename Grid::HostGridType, Scalar>& s, TwoPhaseRelations<typename Grid::HostGridType, Scalar>& law = *(new TwoPhaseRelations<typename Grid::HostGridType,Scalar>), GlobalPosition Left = 0,
+            GlobalPosition Right = 0) :
+    FractionalFlowProblemSubProbs<Grid, Scalar, VC>(variableobj, wp, nwp, s, law), LowerLeft_(Left),
     UpperRight_(Right), eps_(1e-6)
     {}
 
-    virtual RT qPress (const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi)
+    virtual Scalar sourcePress (const GlobalPosition& globalPos, const Element& element,
+            const LocalPosition& localPos)
     {
         return 0;
     }
 
-    typename BoundaryConditions::Flags bctypePress(const FieldVector<DT,n>& x,
-            const Entity& e, const FieldVector<DT,n>& xi) const
+    typename BoundaryConditions::Flags bctypePress(const GlobalPosition& globalPos,
+            const Element& element, const LocalPosition& localPos) const
     {
-        if (x[0] < LowerLeft_[0] +  eps_ || x[0] > (UpperRight_[0] - eps_))
+        if (globalPos[0] < LowerLeft_[0] + eps_ || globalPos[0]> (UpperRight_[0] - eps_))
         return BoundaryConditions::dirichlet;
         // all other boundaries
         return BoundaryConditions::neumann;
     }
 
-    BoundaryConditions::Flags bctypeSat (const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi) const
+    BoundaryConditions::Flags bctypeSat (const GlobalPosition& globalPos, const Element& element,
+            const LocalPosition& localPos) const
     {
-        if (x[0] > UpperRight_[0] - eps_)
+        if (globalPos[0]> UpperRight_[0] - eps_)
         return Dune::BoundaryConditions::dirichlet;
         // all other boundaries
         return Dune::BoundaryConditions::neumann;
     }
 
-    RT gPress(const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi) const
+    Scalar dirichletPress(const GlobalPosition& globalPos, const Element& element,
+            const LocalPosition& localPos) const
     {
-        if (x[0] >  UpperRight_[0] - eps_)
+        if (globalPos[0]> UpperRight_[0] - eps_)
         return 1;
         // all other boundaries
         return 0;
     }
 
-    RT gSat(const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi) const
+    Scalar dirichletSat(const GlobalPosition& globalPos, const Element& element,
+            const LocalPosition& localPos) const
     {
-        if (x[0] >  UpperRight_[0] - eps_)
+        if (globalPos[0]> UpperRight_[0] - eps_)
         return 1;
         // all other boundaries
         return 0;
     }
 
-    RT JPress(const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi) const
+    Scalar neumannPress(const GlobalPosition& globalPos, const Element& element,
+            const LocalPosition& localPos) const
     {
         return 0;
     }
 
-    RT JSat(const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi, RT& factor) const
+    Scalar neumannSat(const GlobalPosition& globalPos, const Element& element,
+            const LocalPosition& localPos, Scalar& factor) const
     {
-        if (x[0] < (LowerLeft_[0] + eps_))
-            return factor;
+        if (globalPos[0] < (LowerLeft_[0] + eps_))
+        return factor;
         // all other boundaries
         return 0;
     }
 
-    RT initSat (const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi) const
+    Scalar initSat (const GlobalPosition& globalPos, const Element& element,
+            const LocalPosition& localPos) const
     {
         return 0;
     }
 
 private:
-    FieldVector<DT,n> LowerLeft_;
-    FieldVector<DT,n> UpperRight_;
+    GlobalPosition LowerLeft_;
+    GlobalPosition UpperRight_;
 
-    RT eps_;
+    Scalar eps_;
 };
 
-template<class G, class RT, class VC> class ConvSubProblemY2: public FractionalFlowProblemSubProbs<
-        G , RT, VC>
+template<class Grid, class Scalar, class VC> class ConvSubProblemY2: public FractionalFlowProblemSubProbs<
+Grid , Scalar, VC>
 {
-
-typedef    typename G::ctype DT;
     enum
-    {    n=G::dimension};
-    typedef typename G::Traits::template Codim<0>::Entity Entity;
+    {
+        dim = Grid::dimension, dimWorld = Grid::dimensionworld
+    };
+    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+
+    typedef typename Grid::Traits::template Codim<0>::Entity Element;
 
 public:
-    ConvSubProblemY2(VC& variableobj, Fluid& wp, Fluid& nwp, Matrix2p<typename G::HostGridType, RT>& s, TwoPhaseRelations<typename G::HostGridType, RT>& law = *(new TwoPhaseRelations<G,RT>), FieldVector<DT,n> Left = 0,
-            FieldVector<DT,n> Right = 0) :
-    FractionalFlowProblemSubProbs<G, RT, VC>(variableobj, wp, nwp, s, law), LowerLeft_(Left),
+    ConvSubProblemY2(VC& variableobj, Fluid& wp, Fluid& nwp, Matrix2p<typename Grid::HostGridType, Scalar>& s, TwoPhaseRelations<typename Grid::HostGridType, Scalar>& law = *(new TwoPhaseRelations<typename Grid::HostGridType,Scalar>), GlobalPosition Left = 0,
+            GlobalPosition Right = 0) :
+    FractionalFlowProblemSubProbs<Grid, Scalar, VC>(variableobj, wp, nwp, s, law), LowerLeft_(Left),
     UpperRight_(Right), eps_(1e-8)
     {}
 
-    virtual RT qPress (const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi)
+    virtual Scalar sourcePress (const GlobalPosition& globalPos, const Element& element,
+            const LocalPosition& localPos)
     {
         return 0;
     }
 
-    typename BoundaryConditions::Flags bctypePress(const FieldVector<DT,n>& x,
-            const Entity& e, const FieldVector<DT,n>& xi) const
+    typename BoundaryConditions::Flags bctypePress(const GlobalPosition& globalPos,
+            const Element& element, const LocalPosition& localPos) const
     {
-        if ((x[1] <  LowerLeft_[1] + eps_ || x[1] > (UpperRight_[1] - eps_)))
+        if ((globalPos[1] < LowerLeft_[1] + eps_ || globalPos[1]> (UpperRight_[1] - eps_)))
         return BoundaryConditions::dirichlet;
         // all other boundaries
         return BoundaryConditions::neumann;
     }
 
-    BoundaryConditions::Flags bctypeSat (const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi) const
+    BoundaryConditions::Flags bctypeSat (const GlobalPosition& globalPos, const Element& element,
+            const LocalPosition& localPos) const
     {
-        if (x[1] >  UpperRight_[1] - eps_)
+        if (globalPos[1]> UpperRight_[1] - eps_)
         return Dune::BoundaryConditions::dirichlet;
         else
         return Dune::BoundaryConditions::neumann;
     }
 
-    RT gPress(const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi) const
+    Scalar dirichletPress(const GlobalPosition& globalPos, const Element& element,
+            const LocalPosition& localPos) const
     {
-        if (x[1] > UpperRight_[1] - eps_)
+        if (globalPos[1]> UpperRight_[1] - eps_)
         return 1;
         // all other boundaries
         return 0;
     }
 
-    RT gSat(const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi) const
+    Scalar dirichletSat(const GlobalPosition& globalPos, const Element& element,
+            const LocalPosition& localPos) const
     {
-        if (x[1] > UpperRight_[1] - eps_)
+        if (globalPos[1]> UpperRight_[1] - eps_)
         return 1;
         // all other boundaries
         return 0;
     }
 
-    RT JPress(const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi) const
+    Scalar neumannPress(const GlobalPosition& globalPos, const Element& element,
+            const LocalPosition& localPos) const
     {
         return 0;
     }
 
-    RT JSat(const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi, RT& factor) const
+    Scalar neumannSat(const GlobalPosition& globalPos, const Element& element,
+            const LocalPosition& localPos, Scalar& factor) const
     {
-        if (x[1] < (LowerLeft_[1] + eps_))
-            return factor;
+        if (globalPos[1] < (LowerLeft_[1] + eps_))
+        return factor;
         // all other boundaries
         return 0;
     }
 
-    RT initSat (const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi) const
+    Scalar initSat (const GlobalPosition& globalPos, const Element& element,
+            const LocalPosition& localPos) const
     {
         return 0;
     }
 
 private:
-    FieldVector<DT,n> LowerLeft_;
-    FieldVector<DT,n> UpperRight_;
+    GlobalPosition LowerLeft_;
+    GlobalPosition UpperRight_;
 
-    RT eps_;
+    Scalar eps_;
 };
 }
 #endif
