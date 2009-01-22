@@ -166,11 +166,7 @@ public:
 
 	HeterogeneousSoil(const G& g, const bool read, const char* name, const bool create = false)
 	:Matrix2p<G,RT>(),permeability(g, name, create)
-	{
-		K_ = 0;
-		for(int i = 0; i < n; i++)
-		K_[i][i] = 1e-12;
-	}
+	{}
 
 	~HeterogeneousSoil()
 	{}
@@ -178,7 +174,6 @@ public:
 private:
 public:
 	RandomPermeability<G> permeability;
-	FieldMatrix<DT,n,n> K_;
 
 };
 
