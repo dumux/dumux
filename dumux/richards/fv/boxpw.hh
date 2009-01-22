@@ -159,7 +159,15 @@ public:
 		}
 		for (int i = 0; i < size; i++) {
 			this->pW[i] = (*(this->u))[i][0];
-			this->pC[i]  = -this->pW[i];
+	  	   	/* pc = -pw || pc = 0 for computing Sw */
+	  	   	if (this->pW[i] >= 0)
+	  	   	{
+	  	   		this->pC[i] = 0.0;
+	  	   	}
+	  	   	else
+	  	   	{
+	  	   		this->pC[i] = -this->pW[i];
+	  	   	}
 //			satN[i] = (*(this->u))[i][1];
 //			satW[i] = 1 - satN[i];
 			FieldVector<Scalar, dim> dummy (0);
