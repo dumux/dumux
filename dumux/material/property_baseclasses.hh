@@ -44,14 +44,14 @@ typedef	typename G::ctype DT;
 	 * @param e codim 0 entity for which the value is sought
 	 * @param xi position in local coordinates in e
 	 */
-	virtual const FieldMatrix<DT,n,n> &K (const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi)  = 0;
+	virtual const FieldMatrix<DT,n,n> &K (const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, const int idx=0) = 0;
 
 	/**@brief matrix porosity
 	 * @param x position in global coordinates
 	 * @param e codim 0 entity for which the value is sought
 	 * @param xi position in local coordinates in e
 	 */
-	virtual double porosity(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const = 0;
+	virtual double porosity(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, const int idx=0) const = 0;
 
 	/**@brief Wetting phase residual saturation
 	 * @param x position in global coordinates
@@ -78,7 +78,7 @@ typedef	typename G::ctype DT;
 	 */
 	/* ATTENTION: define heat capacity per cubic meter! Be sure, that it corresponds to porosity!
 	 * Best thing will be to define heatCap = (specific heatCapacity of material) * density * porosity*/
-	virtual double heatCap(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
+	virtual double heatCap(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, const int idx=0) const
 	{
 		DUNE_THROW(NotImplemented, "heat capacity function not implemented!");
 	}
@@ -89,7 +89,7 @@ typedef	typename G::ctype DT;
 	 * @param xi position in local coordinates in e
 	 * @param sat wetting Phase saturation
 	 */
-	virtual double heatCond(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, const double sat) const
+	virtual double heatCond(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, const double sat, const int idx=0) const
 	{
 		DUNE_THROW(NotImplemented, "heat conductivity function not implemented!");
 	}
@@ -132,7 +132,6 @@ typedef	typename G::ctype DT;
 		DUNE_THROW(NotImplemented, "second Pc-Sw rel");
 	}
 
-
 	/**@brief Flag for determining the relative permeability model
 	 * @param x position in global coordinates
 	 * @param e codim 0 entity for which the value is sought
@@ -143,6 +142,24 @@ typedef	typename G::ctype DT;
 		return linear;
 	}
 
+	virtual bool readPropertiesFlag()
+	{
+		DUNE_THROW(NotImplemented, "flag for reading soil properties from file");
+	}
+
+	/**@brief function for reading soil properties from file
+	 */
+	virtual void readSoilProperties()
+	{
+		DUNE_THROW(NotImplemented, "read soil properties from file");
+	}
+
+	/**@brief function for assigning soil properties from file to model parameters
+	 */
+	virtual void setSoilProperties()
+	{
+		DUNE_THROW(NotImplemented, "read soil properties from file");
+	}
 
 	virtual ~Matrix2p()
 	{}
