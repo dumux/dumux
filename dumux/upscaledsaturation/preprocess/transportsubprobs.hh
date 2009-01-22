@@ -29,12 +29,11 @@ namespace Dune
     - VelType   type of the vector holding the velocity values
 
    */
-  template<class G, class RT, class VC>
+  template<class Grid, class Scalar, class VC>
   class TransportSubProbs {
   public:
 
-    typedef typename VC::ScalarType RepresentationType;
-    FractionalFlowProblemSubProbs<G, RT, VC>& transproblem; //!< problem data
+    typedef typename VC::ScalarVectorType RepresentationType;
 
     //! \brief Calculate the update vector.
     /*!
@@ -45,7 +44,7 @@ namespace Dune
      *  Calculate the update vector, i.e., the discretization
      *  of \f$\text{div}\, (f_\text{w}(S) \boldsymbol{v}_t)\f$.
      */
-    virtual int update(const RT t, RT& dt, RepresentationType& updateVec, RT& CLFFac) = 0;
+    virtual int update(const Scalar t, Scalar& dt, RepresentationType& updateVec, Scalar& CLFFac) = 0;
 
     void initial()
     {
@@ -59,13 +58,13 @@ namespace Dune
     //! return const reference to saturation vector
     virtual const RepresentationType& operator* () const
     {
-      return transproblem.variables.saturation;
+      return transProblem.variables.saturation;
     }
 
     //! return reference to saturation vector
     virtual RepresentationType& operator* ()
     {
-      return transproblem.variables.saturation;
+      return transProblem.variables.saturation;
     }
 
     //! always define virtual destructor in abstract base class
@@ -79,20 +78,18 @@ namespace Dune
      *  @param prob an object of class TransportProblem or derived
      *  @param lev the grid level on which the Transport equation is to be solved.
      */
-    TransportSubProbs(const G& g, FractionalFlowProblemSubProbs<G, RT, VC>& prob, int lev)
-    : transproblem(prob), grid(g), level_(lev)
+    TransportSubProbs(const Grid& grid, FractionalFlowProblemSubProbs<Grid, Scalar, VC>& problem)
+    : grid(grid), transProblem(problem)
     { }
 
     //! returns the level on which the transport eqution is solved.
     int level() const
     {
-        return level_;
+        return transProblem.variables.diffLevel;
     }
 
-    const G& grid;
-
-  protected:
-      const int level_;
+    const Grid& grid;
+    FractionalFlowProblemSubProbs<Grid, Scalar, VC>& transProblem; //!< problem data
   };
 
 }

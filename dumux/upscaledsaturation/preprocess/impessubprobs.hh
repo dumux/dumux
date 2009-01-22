@@ -18,22 +18,23 @@ namespace Dune {
  * coupled diffusion/transport problems
  */
 
-template<class G, class DiffusionSubProbs, class TransportSubProbs, class VC> class IMPESSubProbs :
-    public FractionalFlowSubProbs<G, DiffusionSubProbs, TransportSubProbs, VC> {
-    typedef typename DiffusionSubProbs::RepresentationType PressType;
-    typedef typename DiffusionSubProbs::NumberType RT;
+template<class Grid, class DiffusionSubProbs, class TransportSubProbs, class VC> class IMPESSubProbs :
+    public FractionalFlowSubProbs<Grid, DiffusionSubProbs, TransportSubProbs, VC> {
 
 public:
-    typedef typename TransportSubProbs::RepresentationType RepresentationType;
+    typedef Dune::FractionalFlowSubProbs<Grid, DiffusionSubProbs, TransportSubProbs, VC> FractionalFlow;
+    typedef typename FractionalFlow::RepresentationType RepresentationType;
+    typedef typename FractionalFlow::RepresentationType PressType;
+    typedef typename FractionalFlow::Scalar Scalar;
 
-    virtual void totalVelocity(const RT t=0) {
+    virtual void totalVelocity(const Scalar t=0) {
         this->calcTotalVelocity(t);
 //        std::cout<<"velocity= "<<this->variables().velocity<<std::endl;
         return;
     }
 
     VC variables() const{
-        return this->transproblem.variables;
+        return this->transProblem.variables;
     }
 
     virtual void initial() {
@@ -45,8 +46,8 @@ public:
         return;
     }
 
-    virtual int update(const RT t, RT& dt, RepresentationType& updateVec,
-            RT cFLFactor = 1) {
+    virtual void update(const Scalar t, Scalar& dt, RepresentationType& updateVec,
+            Scalar cFLFactor = 1) {
         int pressSize = variables().pressure.size();
         PressType pressOldIter(variables().pressure);
         PressType pressHelp(pressSize);
@@ -96,7 +97,7 @@ public:
             else if (iterFlag==2&& iter > nIter ) {
                 std::cout << "Nonlinear loop in IMPES.update exceeded nIter = "
                         << nIter << " iterations."<< std::endl;
-                return 1;
+                return;
             } else if (iterFlag==1&& iter > nIter )
                 converg = true;
             else if (iterFlag==0)
@@ -107,13 +108,13 @@ public:
 //            std::cout << "Iteration steps: "<< iterTot << std::endl;
 //        std::cout.setf(std::ios::scientific, std::ios::floatfield);
 
-        return 0;
+        return;
     }
 
     //! Construct an IMPES object.
     IMPESSubProbs(DiffusionSubProbs& diff, TransportSubProbs& trans, int flag = 2, int nIt = 30,
             double maxDef = 1e-5, double om = 1) :
-        FractionalFlowSubProbs<G, DiffusionSubProbs, TransportSubProbs, VC>(diff, trans),
+        FractionalFlowSubProbs<Grid, DiffusionSubProbs, TransportSubProbs, VC>(diff, trans),
                 iterFlag(flag), nIter(nIt), maxDefect(maxDef), omega(om) {
     }
 

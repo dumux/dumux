@@ -30,12 +30,12 @@ namespace Dune
      * supplemented by appropriate initial and boundary conditions.
      */
 
-  template<class G, class DiffusionSubProbs, class TransportSubProbs, class VC>
+  template<class Grid, class DiffusionSubProbs, class TransportSubProbs, class VC>
   class FractionalFlowSubProbs  : public TransportSubProbs, public DiffusionSubProbs {
   public:
       typedef typename TransportSubProbs::RepresentationType RepresentationType;
-      typedef typename VC::ScalarType PressType;
-      typedef typename DiffusionSubProbs::NumberType RT;
+      typedef typename VC::ScalarVectorType PressType;
+      typedef typename DiffusionSubProbs::ScalarType Scalar;
 
 //      Diffusion& diffusion;
 
@@ -48,24 +48,19 @@ namespace Dune
      *  subject to appropriate boundary and initial conditions.
      *  Employ the method \a pressure of Diffusion.
      */
-//    void pressure(const RT t=0)
-//    {
-//        Diffusion::pressure(t);
-//    }
-
 
         virtual void initial() = 0;
 
         //! return const reference to saturation vector
         const RepresentationType& operator* () const
         {
-          return this->transproblem.variables.saturation;
+          return this->transProblem.variables.saturation;
         }
 
         //! return reference to saturation vector
         RepresentationType& operator* ()
         {
-          return this->transproblem.variables.saturation;
+          return this->transProblem.variables.saturation;
         }
 
 
@@ -78,7 +73,7 @@ namespace Dune
      *  \f$\boldsymbol{v}_\text{t} = - \lambda(S) K \text{grad}\, p\f$.
      *  Employ the method \a totalVelocity of Diffusion.
      */
-    virtual void totalVelocity(const RT t=0) = 0;
+    virtual void totalVelocity(const Scalar t=0) = 0;
 
     //! \brief Calculate the update vector.
     /*!
@@ -89,14 +84,14 @@ namespace Dune
      *  Calculate the update vector, i.e., the discretization
      *  of \f$\text{div}\, (f_\text{w}(S) \boldsymbol{v}_t)\f$.
      */
-    virtual int update(const RT t, RT& dt, RepresentationType& updateVec, RT cFLFactor = 1) = 0;
+    virtual void update(const Scalar t, Scalar& dt, RepresentationType& updateVec, Scalar cFLFactor = 1) = 0;
 
 
     //! Construct a FractionalFlow object.
-    FractionalFlowSubProbs (DiffusionSubProbs& diff, TransportSubProbs& trans)
-    : DiffusionSubProbs(diff), TransportSubProbs(trans)
+    FractionalFlowSubProbs (DiffusionSubProbs& diffusionProblem, TransportSubProbs& transportProblem)
+    : DiffusionSubProbs(diffusionProblem), TransportSubProbs(transportProblem)
     {
-        if (trans.level() > diff.level())
+        if (transportProblem.level() > diffusionProblem.level())
           DUNE_THROW(Exception,"from class Twophase (or derived): transport class level is higher than diffusion class level!");
     }
 

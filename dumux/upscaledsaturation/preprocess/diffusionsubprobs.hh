@@ -32,11 +32,10 @@ namespace Dune
     - VelType   type of the vector holding the velocity values
 
    */
-  template<class G, class RT,class VC>
+  template<class Grid, class Scalar,class VC>
   class DiffusionSubProbs {
   public:
-    FractionalFlowProblemSubProbs<G, RT, VC>& diffproblem; //!< problem data
-    typedef RT NumberType;
+      typedef Scalar ScalarType;
 
     //! \brief Calculate the pressure.
     /*!
@@ -47,7 +46,7 @@ namespace Dune
      *  \f[ - \text{div}\, (\lambda K \text{grad}\, p ) = 0, \f]
      *  subject to appropriate boundary and initial conditions.
      */
-    virtual void pressure(const RT t=0) = 0;
+    virtual void pressure(const Scalar t=0) = 0;
 
     //! \brief Calculate the total velocity.
     /*!
@@ -61,7 +60,7 @@ namespace Dune
      *  The method is used in FractionalFlow to provide the velocity field required for the saturation equation.
      */
 
-    virtual void calcTotalVelocity(const RT t=0) const {
+    virtual void calcTotalVelocity(const Scalar t=0) const {
         return;
     }
 
@@ -71,23 +70,23 @@ namespace Dune
 
     //! Constructor with possibility to specify a level for the diffusion class to work on.
     /**
-     * \param g grid object of type G
+     * \param g grid object of type Grid
      * \param prob a problem class object derived from DiffusionProblem
      * \param lev the grid level to work on
      */
-    DiffusionSubProbs(G& g, FractionalFlowProblemSubProbs<G, RT, VC>& prob, int lev)
-    : diffproblem(prob), grid(g), level_(lev)
+    DiffusionSubProbs(Grid& grid, FractionalFlowProblemSubProbs<Grid, Scalar, VC>& problem)
+    : grid(grid), diffProblem(problem)
     {
     }
 
     //! Returns the grid level on which the class works
     int level() const
     {
-        return level_;
+        return diffProblem.variables.diffLevel;
     }
-     const G& grid;
-  protected:
-      const int level_;
+
+     const Grid& grid;
+     FractionalFlowProblemSubProbs<Grid, Scalar, VC>& diffProblem; //!< problem data
   };
 
 }

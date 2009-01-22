@@ -7,386 +7,282 @@
 
 namespace Dune
 {
-template<class G, class Model>
+template<class Grid, class Model>
 class TimeLoopSubProbs
 {
-typedef    typename G::ctype ct;
+typedef    typename Model::Scalar Scalar;
     enum
-    {    n = G::dimension, dimworld = G::dimensionworld};
+    {   dim = Grid::dimension, dimWorld = Grid::dimensionworld};
 
-    typedef typename G::Traits::template Codim<0>::Entity Entity;
-    typedef typename G::HostGridType HG;
-    typedef typename HG::template Codim<0>::EntityPointer HostEntityPointer;
+    typedef typename Grid::Traits::template Codim<0>::Entity Element;
+    typedef typename Grid::HostGridType HostGrid;
+    typedef typename HostGrid::template Codim<0>::EntityPointer HostElementPointer;
+
+    typedef Dune::FieldVector<Scalar,dim> LocalPosition;
+    typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
 
 public:
 
-    void calculatemacrodispersion(Model&, const int, int&, FieldVector<ct,n>&, FieldVector<ct,n>&);
-    void calculateconvectivecorrection(Model&, const int, int&, int&, FieldVector<ct,n>&, FieldVector<ct,n>&, FieldVector<ct,n>&);
+    void calculateMacroDispersion(Model&, const int, const int&, const GlobalPosition&, const GlobalPosition&);
 
-    void executeD(Model& model, const int& subProblemNumber, int& coarseIndex, FieldVector<ct,n>& lowerLeft, FieldVector<ct,n>& upperRight, int& nDt = *(new int(1e2)), double& tEnd = *(new double(1e6)), bool firstRun=false)
+    void calculateFluxCorrection(Model&, const int,const int&, const int&, const GlobalPosition&, const GlobalPosition&, const GlobalPosition&);
+
+    void calculateBoundaryFluxCorrection(Model&, const int,const int&,const int&, const GlobalPosition&, const GlobalPosition&, const GlobalPosition&);
+
+    void execute(Model& model, const int& subProblemNumber,const int& globalIdxCoarseCurrent, const GlobalPosition& lowerLeft, const GlobalPosition& upperRight, bool correctionType, const int& faceNumberCurrent, const GlobalPosition& globalPosFaceCoarseCurrent, Scalar& tEnd = *(new Scalar(1e6)))
     {
-        // initialize solution with initial values
-        model.initial();
+        typedef typename Grid::LevelGridView GridView;
+        typedef typename GridView::template Codim<0>::Iterator ElementIterator;
+        typedef typename GridView::IndexSet IndexSet;
 
-        // now do the time steps
-        double t = tStart_;
-        int k = 0;
-
-        if (firstRun)
-        {
-            while(t < tEnd_)
-            {
-                k++;
-
-                timeStep_.execute(model, t, dt_, maxDt_, tEnd_, cFLFactor_);
-
-                // generate output
-                t += dt_;
-                t = std::min(t, tEnd_);
-                std::cout << ",subproblem timestep: " << k << "\t t=" << t
-                << "\t dt_=" << dt_ << std::endl;
-
-                if (t == tEnd_)
-                {
-                    for (int i = 0; i < model.variables().diffSize; i++)
-                    {
-                        meanSat_ += (*model)[i];
-                    }
-                    meanSat_ /= model.variables().diffSize;
-                    std::cout<<"meansat = "<<meanSat_<<std::endl;
-                    if (meanSat_ < minMaxMeanSat_)
-                    {
-                        model.initial();
-                        k=0;
-                        t=tStart_;
-                        tEnd_+=2*dt_;
-                        dt_=1e100;
-                    }
-                }
-
-            }
-        }
-        else
-        {
-            bool reachedtEnd = false;
-            while (k < nDt)
-            {
-                k++;
-
-                timeStep_.execute(model, t, dt_, maxDt_, tEnd_, cFLFactor_);
-
-                calculatemacrodispersion(model, subProblemNumber, coarseIndex, lowerLeft, upperRight);
-
-                // generate output
-                t += dt_;
-                t = std::min(t, tEnd_);
-
-                if (t==tEnd_)
-                {
-                    reachedtEnd = true;
-                }
-
-                if (reachedtEnd && meanSat_ <= 0.99)
-                {
-                    tEnd_+=dt_;
-                }
-                if (reachedtEnd && meanSat_> 0.99)
-                {
-                    break;
-                }
-
-                //                std::cout << ",subproblem timestep: " << k << "\t t=" << t
-                //                << "\t dt_=" << dt_ << std::endl;
-
-                //                std::cout<<"saturation ="<<model.variables().saturation<<"pressure = "<<model.variables().pressure<<std::endl;
-                //                VTKWriter<typename G::LeafGridView> vtkwriter(model.variables().grid.leafView());
-                //                char fname[128];
-                //                sprintf(fname, "dispsubprob-%05d-%05d-%05d",coarseIndex, subProblemNumber, k);
-                ////                vtkwriter.addCellData(model.variables().saturation, "saturation");
-                //                vtkwriter.addCellData(model.variables().pressure, "total pressure p~");
-                //                vtkwriter.write(fname, VTKOptions::ascii);
-            }
-            std::cout << ",subproblem timestep: " << k << "\t t=" << t
-            << "\t dt_=" << dt_ << std::endl;
-        }
-
-        if (firstRun)
-        {
-            nDt=k;
-            tEnd=tEnd_;
-        }
-        return;
-    }
-
-    void executeM(Model& model, const int& subProblemNumber, int& coarseIndex, int& numberInSelf, FieldVector<ct, n>& faceGlobalCoarse, FieldVector<ct,n>& lowerLeft, FieldVector<ct,n>& upperRight, int& nDt = *(new int(1e2)), double& tEnd = *(new double(1e6)), bool firstRun=false)
-    {
-        typedef typename G::LevelGridView GV;
-        typedef typename GV::template Codim<0>::Iterator Iterator;
-        typedef typename GV::IndexSet IS;
-
-        typedef typename HG::LevelGridView HGV;
-
-        typedef typename HG::template Codim<0>::EntityPointer HostEntityPointer;
-        typedef typename HGV::IndexSet HIS;
-        int fineLev = model.variables().diffLevel;
-        int size = model.variables().diffSize;
-
-        const GV& gridViewCoarse(model.variables().grid.levelView(0));
-        const GV& gridViewFine(model.variables().grid.levelView(fineLev));
-        const HGV& gridViewHost(gridViewCoarse.grid().getHostGrid().levelView(0));
-
-        //    const IS& coarseIset = gridViewCoarse.indexSet();
-        const HIS& coarseIsetHost = gridViewHost.indexSet();
+        typedef typename HostGrid::LevelGridView HostGridView;
+        typedef typename HostGrid::Traits::template Codim<0>::Entity HostElement;
+        typedef typename HostGrid::template Codim<0>::EntityPointer HostElementPointer;
+        typedef typename HostGridView::IndexSet HostIndexSet;
 
         // initialize solution with initial values
         model.initial();
 
         // now do the time steps
-        double t = tStart_;
+        Scalar t = tStart_;
         int k = 0;
 
-        if (firstRun)
+        bool reachedTEnd = false;
+        bool stop = true;
+        while (stop)
         {
-            while(t < tEnd_)
+            k++;
+
+            if ((t+dt_)>tEnd_)
             {
-                k++;
-
-                timeStep_.execute(model, t, dt_, maxDt_, tEnd_, cFLFactor_);
-
-                // generate output
-                t += dt_;
-                t = std::min(t, tEnd_);
-                std::cout << ",subproblem timestep: " << k << "\t t=" << t
-                << "\t dt_=" << dt_ << std::endl;
-
-                if (t == tEnd_)
-                {
-                    meanSat_=0;
-                    int count = 0;
-                    Iterator endCIt = gridViewCoarse.template end<0>();
-                    for (Iterator cIt = gridViewCoarse.template begin<0>(); cIt != endCIt; ++cIt)
-                    {
-                        const HostEntityPointer& hostCoarseIt = model.variables().grid.template getHostEntity<0>(*cIt);
-
-                        int coarseInd = coarseIsetHost.index(*hostCoarseIt);
-                        Iterator eEndIt = gridViewFine.template end<0>();
-                        Iterator eBeginIt = gridViewFine.template begin<0>();
-                        for (Iterator it = eBeginIt; it != eEndIt; ++it)
-                        {
-
-                            int index = model.variables().diffMapper.map(*it);
-                            if (coarseInd == coarseIndex)
-                            {
-                                meanSat_ += (*model)[index];
-                                count++;
-                            }
-                            //                            std::cout<<"coarseInd = "<<coarseInd<<"coarseIndex = "<<coarseIndex<<std::endl;
-                        }
-                    }
-                    meanSat_ /= count;
-                    std::cout<<"meansat = "<<meanSat_<<std::endl;
-                    if (meanSat_ < minMaxMeanSat_)
-                    {
-                        model.initial();
-                        k=0;
-                        t=tStart_;
-                        tEnd_+=4*dt_;
-                        dt_=1e100;
-                    }
-                }
-
+                tEnd_+=dt_;
             }
-        }
-        else
-        {
-            bool reachedtEnd = false;
-            while (k < nDt)
+
+            timeStep_.execute(model, t, dt_, maxDt_, tEnd_, cFLFactor_);
+
+            if (correctionType)
             {
-                k++;
-
-                timeStep_.execute(model, t, dt_, maxDt_, tEnd_, cFLFactor_);
-
-                calculateconvectivecorrection(model, subProblemNumber, coarseIndex, numberInSelf, faceGlobalCoarse, lowerLeft, upperRight);
-
-                // generate output
-                t += dt_;
-                t = std::min(t, tEnd_);
-
-                if (t==tEnd_)
-                {
-                    reachedtEnd = true;
-                }
-
-                if (reachedtEnd && meanSat_ <= 0.99)
-                {
-                    tEnd_+=dt_;
-                }
-                if (reachedtEnd && meanSat_> 0.99)
-                {
-                    break;
-                }
-
-                //                std::cout << ",subproblem timestep: " << k << "\t t=" << t
-                //                << "\t dt_=" << dt_ << std::endl;
-
-                //                                std::cout<<"saturation ="<<model.variables().saturation<<"pressure = "<<model.variables().pressure<<std::endl;
-                //                                VTKWriter<typename G::LeafGridView> vtkwriter(model.variables().grid.leafView());
-                //                                char fname[128];
-                //                                sprintf(fname, "convsubprob-%05d-%05d-%05d",coarseIndex, numberInSelf, k);
-                //                                vtkwriter.addCellData(model.variables().saturation, "saturation");
-                //                                vtkwriter.addCellData(model.variables().pressure, "total pressure p~");
-                //                                vtkwriter.write(fname, VTKOptions::ascii);
+                calculateMacroDispersion(model, subProblemNumber, globalIdxCoarseCurrent, lowerLeft, upperRight);
             }
-            std::cout << ",subproblem timestep: " << k << "\t t=" << t
-            << "\t dt_=" << dt_ << std::endl;
-        }
+            else
+            {
+                if (!isBoundary_)
+                {
+                    calculateFluxCorrection(model, subProblemNumber, globalIdxCoarseCurrent, faceNumberCurrent, globalPosFaceCoarseCurrent, lowerLeft, upperRight);
+                }
+                else
+                {
+                    calculateBoundaryFluxCorrection(model, subProblemNumber, globalIdxCoarseCurrent, faceNumberCurrent, globalPosFaceCoarseCurrent, lowerLeft, upperRight);
+                }
+            }
 
-        if (firstRun)
-        {
-            nDt=k;
-            tEnd=tEnd_;
+            // generate output
+            t += dt_;
+            t = std::min(t, tEnd_);
+
+            if (t==tEnd_)
+            {
+                reachedTEnd = true;
+            }
+
+            if (reachedTEnd && meanSat_ <= minMaxMeanSat_)
+            {
+                tEnd_+=2*dt_;
+                reachedTEnd = false;
+            }
+            if (meanSat_> minMaxMeanSat_)
+            {
+                stop = false;
+            }
+//            if (correctionType)
+//            {
+//                VTKWriter<typename Grid::LeafGridView> vtkwriter(model.variables().grid.leafView());
+//                char fname[128];
+//                sprintf(fname, "dispsubprob-%02d-%02d-%03d",globalIdxCoarseCurrent, subProblemNumber, k);
+//                vtkwriter.addCellData((*model), "saturation");
+//                //                                              vtkwriter.addCellData(model.variables().pressure, "total pressure p~");
+//                vtkwriter.write(fname, VTKOptions::ascii);
+//            }
+//            else
+//            {
+//                VTKWriter<typename Grid::LeafGridView> vtkwriter(model.variables().grid.leafView());
+//                char fname[128];
+//                sprintf(fname, "convsubprob-%02d-%02d-%03d",globalIdxCoarseCurrent, faceNumberCurrent, k);
+//                vtkwriter.addCellData((*model), "saturation");
+//                //												vtkwriter.addCellData(model.variables().pressure, "total pressure p~");
+//                vtkwriter.write(fname, VTKOptions::ascii);
+//            }
         }
+        //			std::cout<<"saturation ="<<model.variables().saturation<<"pressure = "<<model.variables().pressure<<std::endl;
+        std::cout << ",subproblem timestep: " << k << "\t t=" << t
+        << "\t dt_=" << dt_ << std::endl;
+
         return;
     }
 
-    TimeLoopSubProbs(double te = 1e6,const double mMMeanSat = 0.95,
-            const double cfl = 0.95, TimeStep<G,
-            Model>& tist = *(new RungeKuttaStep<G, Model> (1))) :
-    tEnd_(te), minMaxMeanSat_(mMMeanSat), cFLFactor_(cfl), timeStep_(tist), dt_(1e100), tStart_(0), maxDt_(1e100), timeStepCounter_(0), meanSat_(0)
+    TimeLoopSubProbs(bool isBoundary = false,const Scalar mMMeanSat = 0.99,
+            const Scalar cfl = 0.99, TimeStep<Grid,
+            Model>& tist = *(new RungeKuttaStep<Grid, Model> (1))) :
+    isBoundary_(isBoundary),tEnd_(1e5), minMaxMeanSat_(mMMeanSat), cFLFactor_(cfl), timeStep_(tist), dt_(1e100), tStart_(0), maxDt_(1e100), timeStepCounter_(0), meanSat_(0)
     {
     }
 
 private:
-    double tEnd_;
-    double minMaxMeanSat_;
-    const double cFLFactor_;
-    TimeStep<G, Model>& timeStep_;
-    double dt_;
-    const double tStart_;
-    const double maxDt_;
+    bool isBoundary_;
+    Scalar tEnd_;
+    Scalar minMaxMeanSat_;
+    const Scalar cFLFactor_;
+    TimeStep<Grid, Model>& timeStep_;
+    Scalar dt_;
+    const Scalar tStart_;
+    const Scalar maxDt_;
     int timeStepCounter_;
-    double meanSat_;
+    Scalar meanSat_;
 };
-template<class G, class Model>void TimeLoopSubProbs<G,Model>::calculatemacrodispersion(Model& model, const int subProblemNumber, int& coarseIndex, FieldVector<ct,n>& lowerLeft, FieldVector<ct,n>& upperRight)
+
+template<class Grid, class Model>void TimeLoopSubProbs<Grid,Model>::calculateMacroDispersion(Model& model, const int subProblemNumber, const int& globalIdxCoarseCurrent, const GlobalPosition& lowerLeft, const GlobalPosition& upperRight)
 {
+    typedef typename Element::Geometry Geometry;
+    typedef typename Grid::LevelGridView GridView;
+    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
+    typedef typename GridView::IndexSet IndexSet;
+    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
-    typedef typename G::LevelGridView GV;
-    typedef typename GV::template Codim<0>::Iterator Iterator;
-    typedef typename IntersectionIteratorGetter<G,LevelTag>::IntersectionIterator
-    IntersectionIterator;
-    typedef typename G::HostGridType HG;
-    typedef typename HG::template Codim<0>::EntityPointer HostEntityPointer;
+    typedef typename Grid::HostGridType HostGrid;
+    typedef typename HostGrid::LevelGridView HostGridView;
 
-    typedef typename Entity::Geometry Geometry;
-
+    typedef typename Grid::template Codim<0>::EntityPointer ElementPointer;
+    typedef typename HostGrid::template Codim<0>::EntityPointer HostElementPointer;
+    typedef typename HostGrid::Traits::template Codim<0>::Entity HostElement;
+    typedef typename HostGridView::IndexSet HostIndexSet;
     int fineLev = model.variables().diffLevel;
-    int size = model.variables().diffSize;
 
-    const GV& gridView(model.variables().grid.levelView(fineLev));
+    const GridView& gridViewCoarse(model.variables().grid.levelView(0));
+    const GridView& gridViewFine(model.variables().grid.levelView(fineLev));
 
     meanSat_=0;
+    Scalar fwSMean=0;// fractional flow function values of mean saturation
 
-    FieldVector<double, n> meanVelocity(0);
-    for (int i = 0; i < size; i++)
-    {
-        meanSat_ += (*model)[i];
-    }
-    meanSat_ /= size;
+    FieldVector<Scalar, dim> meanVelocity(0);
+    FieldVector<Scalar, dim> meanVf(0);//mean of finescale velocity v times fine scale fractional flow function f
 
-    //        std::cout<<"meanSat = "<<meanSat_<<"meanvel = "<<meanVelocity<<std::endl;
+    Scalar elementVolumeCoarse = 1;
+    Scalar faceAreaCoarse=0;
+    Scalar sumFaceArea = 0;
 
-    FieldVector<double, n> meanVf(0);//mean of finescale velocity v times fine scale fractional flow function f
-    double fwSmean;// fractional flow function values of mean saturation
+    Scalar satIn=0;
+    Scalar satOut=0;
 
-    double satIn=0;
-    double satOut=0;
-    int count = 0;
-
-    Iterator eEndIt = gridView.template end<0>();
-    Iterator eBeginIt = gridView.template begin<0>();
-    for (Iterator it = eBeginIt; it != eEndIt; ++it)
+    ElementIterator eItEnd = gridViewFine.template end<0>();
+    ElementIterator eItBegin = gridViewFine.template begin<0>();
+    for (ElementIterator eIt = eItBegin; eIt != eItEnd; ++eIt)
     {
         // element geometry
-        const Geometry& geometry = it->geometry();
+        const Geometry& geometry = eIt->geometry();
 
         GeometryType gt = geometry.type();
+
         // cell center in reference element
-        const FieldVector<ct,n>& local = ReferenceElements<ct,n>::general(gt).position(0, 0);
+        const LocalPosition& localPos = ReferenceElements<Scalar,dim>::general(gt).position(0, 0);
 
         // get global coordinate of cell center
-        const FieldVector<ct,n> global = geometry.global(local);
+        const GlobalPosition& globalPos = geometry.global(localPos);
 
-        const HostEntityPointer& hostIt = model.variables().grid.template getHostEntity<0>(*it);
+        const HostElementPointer& eItHost = model.variables().grid.template getHostEntity<0>(*eIt);
 
-        int index = model.variables().diffMapper.map(*it);
-        double sat = (*model)[index];
+        int globalIdx = model.variables().diffMapper.map(*eIt);
 
-        if (index == 1)
-        fwSmean = model.diffproblem.materialLaw.fractionalW(meanSat_, global, *hostIt, local);
+        Scalar elementVolume = geometry.integrationElement(localPos)*Dune::ReferenceElements<Scalar,dim>::general(gt).volume();
+        Scalar elementFaceArea = 0;
 
-        FieldVector<double,n*2> fluxVector(0);
+        Scalar sat = (*model)[globalIdx];
+
+        HostElement& hostElement = *eItHost;
+        HostElementPointer fatherPointer = hostElement.father();
+        int fatherLevel = fatherPointer.level();
+        //      std::cout<<"fatherLevel = "<<fatherLevel<<std::endl;
+        while (fatherLevel != 0)
+        {
+            HostElement& fatherElement = *fatherPointer;
+            fatherPointer = fatherElement.father();
+            fatherLevel = fatherPointer.level();
+            //          std::cout<<"fatherLevel = "<<fatherLevel<<std::endl;
+        }
+
+        const LocalPosition &localPosCoarse = Dune::ReferenceElements<Scalar,dim>::general(fatherPointer->geometry().type()).position(0, 0);
+
+        elementVolumeCoarse = fatherPointer->geometry().integrationElement(localPosCoarse)*Dune::ReferenceElements<Scalar,dim>::general(gt).volume();
+        meanSat_ += sat*elementVolume;
+        fwSMean += model.diffProblem.materialLaw.fractionalW(sat, globalPos, *eItHost, localPos)*elementVolume;
+
+        FieldVector<Scalar,dim*2> fluxVector(0);
 
         IntersectionIterator
-        endit = IntersectionIteratorGetter<G, LevelTag>::end(*it);
+        isItEnd = gridViewFine.template iend(*eIt);
         for (IntersectionIterator
-                is = IntersectionIteratorGetter<G, LevelTag>::begin(*it); is
-                !=endit; ++is)
+                isIt = gridViewFine.template ibegin(*eIt); isIt
+                !=isItEnd; ++isIt)
         {
             // get geometry type of face
-            Dune::GeometryType gtf = is->intersectionSelfLocal().type();
+            Dune::GeometryType faceGT = isIt->intersectionSelfLocal().type();
 
             // center in face's reference element
-            const Dune::FieldVector<ct,n-1>&
-            faceLocal = Dune::ReferenceElements<ct,n-1>::general(gtf).position(0,0);
+            const Dune::FieldVector<Scalar,dim-1>&
+            faceLocal = Dune::ReferenceElements<Scalar,dim-1>::general(faceGT).position(0,0);
 
             // center of face in global coordinates
-            Dune::FieldVector<ct,dimworld> faceGlobal = is->intersectionGlobal().global(faceLocal);
+            const GlobalPosition& globalPosFace = isIt->intersectionGlobal().global(faceLocal);
 
-            double faceVol = is->intersectionGlobal().volume();
+            Scalar faceArea = isIt->intersectionGlobal().volume();
+            sumFaceArea += 0.5*faceArea;
+            elementFaceArea += faceArea;
+
+            int faceNumber = isIt->numberInSelf();
 
             // get normal vector
-            FieldVector<double,n> unitOuterNormal = is->unitOuterNormal(faceLocal);
+            FieldVector<Scalar,dim> unitOuterNormal = isIt->unitOuterNormal(faceLocal);
 
-            int faceNumber = is->numberInSelf();
+            fluxVector[faceNumber] = model.variables().velocity[globalIdx][faceNumber] * unitOuterNormal;
+            fluxVector[faceNumber] *= faceArea;
 
-            fluxVector[faceNumber] = model.variables().velocity[index][faceNumber] * unitOuterNormal;
-            fluxVector[faceNumber] *= faceVol;
-
-            if (is->boundary())
+            if (isIt->boundary())
             {
+                sumFaceArea += 0.5*faceArea;
+
                 // center of face inside volume reference element
-                const Dune::FieldVector<ct,n>&
-                facelocalDim = Dune::ReferenceElements<ct,n>::general(gtf).position(faceNumber,1);
+                const LocalPosition&
+                localPosFace = Dune::ReferenceElements<Scalar,dim>::general(faceGT).position(faceNumber,1);
 
                 //get boundary type
-                BoundaryConditions::Flags bctype = model.diffproblem.bctypeSat(faceGlobal, *it, facelocalDim);
+                BoundaryConditions::Flags bctype = model.diffProblem.bctypeSat(globalPosFace, *eIt, localPosFace);
 
                 if (bctype == BoundaryConditions::dirichlet)
                 {
+                    Scalar eps = 1e-6;
                     switch(subProblemNumber)
                     {
                         case 1:
-                        if (faceGlobal[0]> lowerLeft[0])
+                        if (globalPosFace[0]> lowerLeft[0]+eps)
                         {
-                            satOut+=sat;
-                            count++;
+                            satOut+=sat*faceArea;
+                            faceAreaCoarse += faceArea;
                         }
                         else
                         {
-                            satIn+=sat;
-                            count++;
+                            satIn+=sat*faceArea;
+                            faceAreaCoarse += faceArea;
                         }
                         break;
-                        case 2:
-                        if (faceGlobal[1]> lowerLeft[1])
+                        case 3:
+                        if (globalPosFace[1]> lowerLeft[1]-eps)
                         {
-                            satOut+=sat;
-                            count++;
+                            satOut+=sat*faceArea;
+                            faceAreaCoarse += faceArea;
                         }
                         else
                         {
-                            satIn+=sat;
-                            count++;
+                            satIn+=sat*faceArea;
+                            faceAreaCoarse += faceArea;
                         }
                         break;
                         default:
@@ -398,29 +294,27 @@ template<class G, class Model>void TimeLoopSubProbs<G,Model>::calculatemacrodisp
             }
         }
         // calculate velocity on reference element
-        FieldVector<ct,n> refVelocity;
+        FieldVector<Scalar,dim> refVelocity;
         refVelocity[0] = 0.5*(fluxVector[1] - fluxVector[0]);
         refVelocity[1] = 0.5*(fluxVector[3] - fluxVector[2]);
 
         // get the transposed Jacobian of the element mapping
-        const FieldMatrix<ct,n,n>& jacobianInv = geometry.jacobianInverseTransposed(local);
-        FieldMatrix<ct,n,n> jacobianT(jacobianInv);
+        const FieldMatrix<Scalar,dim,dim>& jacobianInv = geometry.jacobianInverseTransposed(localPos);
+        FieldMatrix<Scalar,dim,dim> jacobianT(jacobianInv);
         jacobianT.invert();
 
         // calculate the element velocity by the Piola transformation
-        FieldVector<ct,n> elementVelocity(0);
+        FieldVector<Scalar,dim> elementVelocity(0);
         jacobianT.umtv(refVelocity, elementVelocity);
-        elementVelocity /= geometry.integrationElement(local);
+        elementVelocity /= geometry.integrationElement(localPos);
 
-        for (int i=0; i<n; i++)
+        for (int i=0; i<dim; i++)
         {
-            meanVelocity[i]+=elementVelocity[i];
-            //                    std::cout<<"velocity "<<model.variables().velocity[i][j]<<std::endl;
-
-            meanVf[i] += (elementVelocity[i] * model.diffproblem.materialLaw.fractionalW(sat, global, *hostIt, local));
+            meanVelocity[i]+=elementVelocity[i]*elementFaceArea;
+            meanVf[i] += (elementVelocity[i] * model.diffProblem.materialLaw.fractionalW(sat, globalPos, *eItHost, localPos))*elementFaceArea;
         }
     }
-    double dist;
+    Scalar dist;
     switch (subProblemNumber)
     {
         case 1:
@@ -430,39 +324,53 @@ template<class G, class Model>void TimeLoopSubProbs<G,Model>::calculatemacrodisp
         dist=upperRight[1] - lowerLeft[1];
         break;
     }
-    meanVelocity /= size;
-    meanVf /= size;
-    meanVelocity *= fwSmean;
+    meanVelocity /= sumFaceArea;
+    meanVf /= sumFaceArea;
+    fwSMean /= elementVolumeCoarse;
+    meanSat_ /= elementVolumeCoarse;
+
+    FieldVector<Scalar, dim> meanVelocityMeanFwS = meanVelocity;
+    meanVelocityMeanFwS *= fwSMean;
+
     //        std::cout<<"meanveltimesfwmean ="<<meanvelocity<<std::endl;
-    FieldVector<double, n> D = meanVelocity - meanVf;
+    FieldVector<Scalar, dim> D = meanVf-meanVelocityMeanFwS;
 
     //divide by pressure gradient = 1/distance
     D *= dist;
 
     //calculate saturation gradient
-    count /= 2;
-    satIn /= count;
-    satOut /= count;
-    double satGrad = (satIn - satOut)/dist;
+    satIn /=faceAreaCoarse;
+    satOut /= faceAreaCoarse;
+    Scalar satGrad = (satIn - satOut)/dist;
     //        std::cout<<"satin = "<<satin<<"satout = "<<satout<<"satgrad ="<<satgrad<<std::endl;
 
     //divide D by saturationgradient
     D /= satGrad;
     //                    std::cout<<"D ="<<D<<std::endl;
 
-    //write D and satmean into soil
+
+    //write Dispersion coefficient and mean saturation into soil
+    int vectorsize = model.diffProblem.soil.getDispersion()[globalIdxCoarseCurrent].size();
+    if (vectorsize < (timeStepCounter_+1))
+    {
+        Dune::FieldVector<Scalar, dim> addVec(0);
+        Dune::FieldVector<Scalar, 1> addVecSat(0);
+        model.diffProblem.soil.getDispersion()[globalIdxCoarseCurrent].push_back(addVec);
+        model.diffProblem.soil.getDispersionSat()[globalIdxCoarseCurrent].push_back(addVecSat);
+    }
+
     switch (subProblemNumber)
     {
         case 1:
-        model.diffproblem.soil.getDispersion()[coarseIndex][timeStepCounter_][0][0]= D[0];
-        model.diffproblem.soil.getDispersion()[coarseIndex][timeStepCounter_][1][1]= D[1];
-        model.diffproblem.soil.getDispersionSat()[coarseIndex][timeStepCounter_]= meanSat_;
+        model.diffProblem.soil.getDispersion()[globalIdxCoarseCurrent][timeStepCounter_][0]= D[0];
+        model.diffProblem.soil.getDispersion()[globalIdxCoarseCurrent][timeStepCounter_][1]= D[1];
+        model.diffProblem.soil.getDispersionSat()[globalIdxCoarseCurrent][timeStepCounter_]= meanSat_;
         break;
         case 2:
-        model.diffproblem.soil.getDispersion()[coarseIndex][timeStepCounter_][0][0]+= D[0];
-        model.diffproblem.soil.getDispersion()[coarseIndex][timeStepCounter_][1][1]+= D[1];
-        model.diffproblem.soil.getDispersionSat()[coarseIndex][timeStepCounter_]+= meanSat_;
-        model.diffproblem.soil.getDispersionSat()[coarseIndex][timeStepCounter_]*=0.5;
+        model.diffProblem.soil.getDispersion()[globalIdxCoarseCurrent][timeStepCounter_][0]+= D[0];
+        model.diffProblem.soil.getDispersion()[globalIdxCoarseCurrent][timeStepCounter_][1]+= D[1];
+        model.diffProblem.soil.getDispersionSat()[globalIdxCoarseCurrent][timeStepCounter_]+= meanSat_;
+        model.diffProblem.soil.getDispersionSat()[globalIdxCoarseCurrent][timeStepCounter_]*=0.5;
         break;
         default:
         break;
@@ -470,280 +378,419 @@ template<class G, class Model>void TimeLoopSubProbs<G,Model>::calculatemacrodisp
     timeStepCounter_++;
 }
 
-template<class G, class Model>void TimeLoopSubProbs<G,Model>::calculateconvectivecorrection(Model& model, const int subProblemNumber, int& coarseIndex, int& numberInSelfCoarse, FieldVector<ct, n>& faceGlobalCoarse,FieldVector<ct,n>& lowerLeft, FieldVector<ct,n>& upperRight)
+template<class Grid, class Model>void TimeLoopSubProbs<Grid,Model>::calculateFluxCorrection(Model& model, const int subProblemNumber,const int& globalIdxCoarseCurrent,const int& faceNumberCurrent, const GlobalPosition& globalPosFaceCoarseCurrent,const GlobalPosition& lowerLeft, const GlobalPosition& upperRight)
 {
-    //std::cout<<"numberinself = "<<numberInSelfCoarse<<"coarseIndex = "<<coarseIndex<<std::endl;
+    //std::cout<<"numberinself = "<<faceNumberCurrent<<"globalIdxCoarseCurrent = "<<globalIdxCoarseCurrent<<std::endl;
 
-    typedef typename Entity::Geometry Geometry;
-    typedef typename G::LevelGridView GV;
-    typedef typename GV::template Codim<0>::Iterator Iterator;
-    typedef typename GV::IndexSet IS;
-    typedef typename IntersectionIteratorGetter<G,LevelTag>::IntersectionIterator
-    IntersectionIterator;
-    typedef typename G::HostGridType HG;
-    typedef typename HG::LevelGridView HGV;
+    typedef typename Element::Geometry Geometry;
+    typedef typename Grid::LevelGridView GridView;
+    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
+    typedef typename GridView::IndexSet IndexSet;
+    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
-    typedef typename G::template Codim<0>::EntityPointer EntityPointer;
-    typedef typename HG::template Codim<0>::EntityPointer HostEntityPointer;
-    typedef typename HG::Traits::template Codim<0>::Entity HostEntity;
-    typedef typename HGV::IndexSet HIS;
+    typedef typename Grid::HostGridType HostGrid;
+    typedef typename HostGrid::LevelGridView HostGridView;
+
+    typedef typename Grid::template Codim<0>::EntityPointer ElementPointer;
+    typedef typename HostGrid::template Codim<0>::EntityPointer HostElementPointer;
+    typedef typename HostGrid::Traits::template Codim<0>::Entity HostElement;
+    typedef typename HostGridView::IndexSet HostIndexSet;
     int fineLev = model.variables().diffLevel;
-    int size = model.variables().diffSize;
 
-    const GV& gridViewCoarse(model.variables().grid.levelView(0));
-    const GV& gridViewFine(model.variables().grid.levelView(fineLev));
-    const HGV& gridViewHost(gridViewCoarse.grid().getHostGrid().levelView(0));
+    const GridView& gridViewCoarse(model.variables().grid.levelView(0));
+    const GridView& gridViewFine(model.variables().grid.levelView(fineLev));
+    const HostGridView& gridViewHost(gridViewCoarse.grid().getHostGrid().levelView(0));
 
-    //    const IS& coarseIset = gridViewCoarse.indexSet();
-    const HIS& coarseIsetHost = gridViewHost.indexSet();
+    //	const IndexSet& coarseIset = gridViewCoarse.indexSet();
+    const HostIndexSet& indexSetCoarseHost = gridViewHost.indexSet();
 
     meanSat_=0;
 
-    double meanVelocity=0;
+    Scalar meanVelocity=0;
+    //	std::cout<<"meanSat = "<<meanSat_<<"meanvel = "<<meanVelocity<<std::endl;
 
-    //    std::cout<<"meanSat = "<<meanSat_<<"meanvel = "<<meanVelocity<<std::endl;
+    Scalar meanVf=0;//mean of finescale velocity v times fine scale fractional flow function f
+    Scalar fwSMean=0;// fractional flow function values of mean saturation
 
-    double meanVf=0;//mean of finescale velocity v times fine scale fractional flow function f
-    double fwSmean;// fractional flow function values of mean saturation
+    Scalar pressureIn=0;
+    Scalar pressureOut=0;
 
-    Dune::BlockVector<Dune::FieldMatrix<double,2,2> > D(2);
-    Dune::FieldVector<double,2> meanSatHelp(0);
+    Scalar elementVolumeCoarse = 1;
+    Scalar faceAreaCoarse=0;
 
-    double pressureIn=0;
-    double pressureOut=0;
-    double satIn=0;
-    double satOut=0;
-    int count = 0;
-    int cellCounter = 0;
-    int coarseCellNumber =0;
-
-    Iterator eEndIt = gridViewFine.template end<0>();
-    Iterator eBeginIt = gridViewFine.template begin<0>();
-    for (Iterator it = eBeginIt; it != eEndIt; ++it)
+    ElementIterator eItEnd = gridViewFine.template end<0>();
+    ElementIterator eItBegin = gridViewFine.template begin<0>();
+    for (ElementIterator eIt = eItBegin; eIt != eItEnd; ++eIt)
     {
         // element geometry
-        const Geometry& geometry = it->geometry();
+        const Geometry& geometry = eIt->geometry();
 
         GeometryType gt = geometry.type();
+
         // cell center in reference element
-        const FieldVector<ct,n>& local = ReferenceElements<ct,n>::general(gt).position(0, 0);
+        const LocalPosition& localPos = ReferenceElements<Scalar,dim>::general(gt).position(0, 0);
 
         // get global coordinate of cell center
-        const FieldVector<ct,n> global = geometry.global(local);
+        const GlobalPosition& globalPos = geometry.global(localPos);
 
-        const HostEntityPointer& hostIt = model.variables().grid.template getHostEntity<0>(*it);
+        const HostElementPointer& eItHost = model.variables().grid.template getHostEntity<0>(*eIt);
 
-        int index = model.variables().diffMapper.map(*it);
-        double sat = (*model)[index];
-        double pressure = model.variables().pressure[index];
+        int globalIdx = model.variables().diffMapper.map(*eIt);
 
-        HostEntity& hostEntity = *hostIt;
-        HostEntityPointer fatherPointer = hostEntity.father();
+        Scalar elementVolume = geometry.integrationElement(localPos)*Dune::ReferenceElements<Scalar,dim>::general(gt).volume();
+
+        Scalar sat = (*model)[globalIdx];
+        Scalar pressure = model.variables().pressure[globalIdx];
+
+        HostElement& hostElement = *eItHost;
+        HostElementPointer fatherPointer = hostElement.father();
         int fatherLevel = fatherPointer.level();
-//        std::cout<<"fatherLevel = "<<fatherLevel<<std::endl;
+        //		std::cout<<"fatherLevel = "<<fatherLevel<<std::endl;
         while (fatherLevel != 0)
         {
-            HostEntity& fatherEntity = *fatherPointer;
-            fatherPointer = fatherEntity.father();
+            HostElement& fatherElement = *fatherPointer;
+            fatherPointer = fatherElement.father();
             fatherLevel = fatherPointer.level();
-//            std::cout<<"fatherLevel = "<<fatherLevel<<std::endl;
+            //			std::cout<<"fatherLevel = "<<fatherLevel<<std::endl;
         }
 
-        int coarseInd = coarseIsetHost.index(*fatherPointer);
-//                std::cout<<"coarseInd = "<<coarseInd<<"coarseIndex = "<<coarseIndex<<std::endl;
-        if (coarseInd == coarseIndex)
-        {
-            satOut+=sat;
-            pressureOut+=pressure;
-            meanSatHelp[0] += sat;
-            //                std::cout<<"pressureOut = "<<pressureOut<<std::endl;
-        }
-        else
-        {
-            satIn+=sat;
-            pressureIn+=pressure;
-            meanSatHelp[1] += sat;
-            meanSat_ += sat;
-            //                std::cout<<"meanSat = "<<meanSat_<<std::endl;
-            //                std::cout<<"pressureIn = "<<pressureIn<<std::endl;
-            cellCounter++;
-        }
+        int globalIdxCoarse = indexSetCoarseHost.index(*fatherPointer);
 
-        double meanSat = meanSat_/cellCounter;
-        fwSmean = model.diffproblem.materialLaw.fractionalW(meanSat, global, *hostIt, local);
+        const LocalPosition &localPosCoarse = Dune::ReferenceElements<Scalar,dim>::general(fatherPointer->geometry().type()).position(0, 0);
+
+        //				std::cout<<"globalIdxCoarse = "<<globalIdxCoarse<<"globalIdxCoarseCurrent = "<<globalIdxCoarseCurrent<<std::endl;
+        if (globalIdxCoarse != globalIdxCoarseCurrent)
+        {
+            elementVolumeCoarse = fatherPointer->geometry().integrationElement(localPosCoarse)*Dune::ReferenceElements<Scalar,dim>::general(gt).volume();
+            pressureIn+=pressure*elementVolume;
+            meanSat_ += sat*elementVolume;
+            fwSMean += model.diffProblem.materialLaw.fractionalW(sat, globalPos, *eItHost, localPos)*elementVolume;
+            //				std::cout<<"meanSat = "<<meanSat_<<std::endl;
+        }
+        if (globalIdxCoarse == globalIdxCoarseCurrent)
+        {
+            pressureOut+=pressure*elementVolume;
+        }
 
         IntersectionIterator
-        endit = IntersectionIteratorGetter<G, LevelTag>::end(*it);
+        isItEnd = gridViewFine.template iend(*eIt);
         for (IntersectionIterator
-                is = IntersectionIteratorGetter<G, LevelTag>::begin(*it); is
-                !=endit; ++is)
+                isIt = gridViewFine.template ibegin(*eIt); isIt
+                !=isItEnd; ++isIt)
         {
             // get geometry type of face
-            Dune::GeometryType gtf = is->intersectionSelfLocal().type();
+            Dune::GeometryType faceGT = isIt->intersectionSelfLocal().type();
 
             // center in face's reference element
-            const Dune::FieldVector<ct,n-1>&
-            faceLocal = Dune::ReferenceElements<ct,n-1>::general(gtf).position(0,0);
+            const Dune::FieldVector<Scalar,dim-1>&
+            faceLocal = Dune::ReferenceElements<Scalar,dim-1>::general(faceGT).position(0,0);
 
             // center of face in global coordinates
-            Dune::FieldVector<ct,dimworld> faceGlobal = is->intersectionGlobal().global(faceLocal);
+            const GlobalPosition& globalPosFace = isIt->intersectionGlobal().global(faceLocal);
 
-            double faceVol = is->intersectionGlobal().volume();
+            Scalar faceArea = isIt->intersectionGlobal().volume();
 
-            // get normal vector
-            FieldVector<double,n> unitOuterNormal = is->unitOuterNormal(faceLocal);
+            int faceNumber = isIt->numberInSelf();
 
-            int faceNumber = is->numberInSelf();
-
-            if (coarseInd != coarseIndex)
+            if (globalIdxCoarse != globalIdxCoarseCurrent)
             {
                 switch(subProblemNumber)
                 {
                     case 1:
-                    if (faceGlobal[0] == faceGlobalCoarse[0])
+                    if (globalPosFace[0] == globalPosFaceCoarseCurrent[0])
                     {
-                        meanVelocity += model.variables().velocity[index][faceNumber][0];
-                        meanVf += (model.variables().velocity[index][faceNumber][0] * model.diffproblem.materialLaw.fractionalW(sat, global, *hostIt, local));
-                        count++;
+                        meanVelocity += model.variables().velocity[globalIdx][faceNumber][0]*faceArea;
+                        meanVf += (model.variables().velocity[globalIdx][faceNumber][0] * model.diffProblem.materialLaw.fractionalW(sat, globalPos, *eItHost, localPos))*faceArea;
+                        faceAreaCoarse += faceArea;
                     }
                     break;
                     case 2:
-                    if (faceGlobal[0] == faceGlobalCoarse[0])
+                    if (globalPosFace[0] == globalPosFaceCoarseCurrent[0])
                     {
-                        meanVelocity -= model.variables().velocity[index][faceNumber][0];
-                        meanVf -= (model.variables().velocity[index][faceNumber][0] * model.diffproblem.materialLaw.fractionalW(sat, global, *hostIt, local));
-                        count++;
+                        meanVelocity += model.variables().velocity[globalIdx][faceNumber][0]*faceArea;
+                        meanVf += (model.variables().velocity[globalIdx][faceNumber][0] * model.diffProblem.materialLaw.fractionalW(sat, globalPos, *eItHost, localPos))*faceArea;
+                        faceAreaCoarse += faceArea;
                     }
                     break;
                     case 3:
-                    if (faceGlobal[1] == faceGlobalCoarse[1])
+                    if (globalPosFace[1] == globalPosFaceCoarseCurrent[1])
                     {
-                        meanVelocity += model.variables().velocity[index][faceNumber][1];
-                        meanVf += (model.variables().velocity[index][faceNumber][1] * model.diffproblem.materialLaw.fractionalW(sat, global, *hostIt, local));
-                        count++;
+                        meanVelocity += model.variables().velocity[globalIdx][faceNumber][1]*faceArea;
+                        meanVf += (model.variables().velocity[globalIdx][faceNumber][1] * model.diffProblem.materialLaw.fractionalW(sat, globalPos, *eItHost, localPos))*faceArea;
+                        faceAreaCoarse += faceArea;
                     }
                     break;
                     case 4:
-                    if (faceGlobal[1] == faceGlobalCoarse[1])
+                    if (globalPosFace[1] == globalPosFaceCoarseCurrent[1])
                     {
-                        meanVelocity -= model.variables().velocity[index][faceNumber][1];
-                        meanVf -= (model.variables().velocity[index][faceNumber][1] * model.diffproblem.materialLaw.fractionalW(sat, global, *hostIt, local));
-                        count++;
+                        meanVelocity += model.variables().velocity[globalIdx][faceNumber][1]*faceArea;
+                        meanVf += (model.variables().velocity[globalIdx][faceNumber][1] * model.diffProblem.materialLaw.fractionalW(sat, globalPos, *eItHost, localPos))*faceArea;
+                        faceAreaCoarse += faceArea;
                     }
                     break;
                 }
             }
         }
     }
-    meanSatHelp/=cellCounter;
-    Iterator endCIt = gridViewCoarse.template end<0>();
-    for (Iterator cIt = gridViewCoarse.template begin<0>(); cIt != endCIt; ++cIt)
-    {
-        const HostEntityPointer& hostCoarseIt = model.variables().grid.template getHostEntity<0>(*cIt);
 
-        int coarseInd = coarseIsetHost.index(*hostCoarseIt);
-
-        int timesize = model.diffproblem.soil.getDispersionSat().M();
-        //subtract DgradS
-        for (int i=0;i<timesize;i++)
-        {
-            if (model.diffproblem.soil.getDispersionSat()[coarseIndex][i]> meanSatHelp[coarseCellNumber])
-            {
-                double satdiff1 = model.diffproblem.soil.getDispersionSat()[coarseIndex][i] - meanSatHelp[coarseCellNumber];
-                double satdiff2 = 1e100;
-                if (i)
-                {
-                    satdiff2 = meanSatHelp[coarseCellNumber] - model.diffproblem.soil.getDispersionSat()[coarseIndex][i-1];
-                }
-                if (satdiff1 < satdiff2)
-                {
-                    D[coarseCellNumber]=model.diffproblem.soil.getDispersion()[coarseInd][i];
-                    //                        std::cout<<"result1 = "<<problem.soil.getDispersion()[indexI][i]<<std::endl;
-                }
-                else
-                {
-                    D[coarseCellNumber]=model.diffproblem.soil.getDispersion()[coarseInd][i-1];
-                    //                        std::cout<<"result2 = "<<problem.soil.getDispersion()[indexI][i-1]<<std::endl;
-                    //                        std::cout<<"satGrad = "<<satGradient<<std::endl;
-                }
-                if (i==(timesize-1))
-                {
-                    D[coarseCellNumber]=model.diffproblem.soil.getDispersion()[coarseInd][i];
-                    break;
-                }
-                break;
-            }
-        }
-
-        coarseCellNumber++;
-    }
-    double dist;
+    Scalar dist;
     switch (subProblemNumber)
     {
         case 1:
-        dist= upperRight[0] - faceGlobalCoarse[0];
+        dist= upperRight[0] - globalPosFaceCoarseCurrent[0];
         break;
         case 2:
-        dist=faceGlobalCoarse[0] - lowerLeft[0];
+        dist=globalPosFaceCoarseCurrent[0] - lowerLeft[0];
         break;
         case 3:
-        dist=upperRight[1] - faceGlobalCoarse[1];
+        dist=upperRight[1] - globalPosFaceCoarseCurrent[1];
         break;
         case 4:
-        dist=faceGlobalCoarse[1] - lowerLeft[1];
+        dist=globalPosFaceCoarseCurrent[1] - lowerLeft[1];
         break;
     }
-//    std::cout<<"cellCounter = "<<cellCounter<<"count ="<<count<<std::endl;
-    //    std::cout<<"meanVelocity = "<<meanVelocity<<std::endl;
-    meanVelocity /= count;
-    meanSat_ /= cellCounter;
-    meanVf /= count;
-    //    std::cout<<"fwSmean ="<<fwSmean<<std::endl;
-    meanVelocity *= fwSmean;
-    //    std::cout<<"meanveltimesfwmean ="<<meanVelocity<<std::endl;
-    double M = meanVelocity - meanVf;
-//        std::cout<<"m = "<<M<<std::endl;
 
-    //calculate saturation gradient
-    satIn /= cellCounter;
-    satOut /= cellCounter;
-    pressureIn /= cellCounter;
-    pressureOut /= cellCounter;
+    meanSat_ /= elementVolumeCoarse;
+    //	std::cout<<"meanSat_ = "<<meanSat_<<std::endl;
 
-    double satGrad = (satIn - satOut)/dist;
-    double pressureGrad = (pressureIn - pressureOut)/dist;
-    //    std::cout<<"pressureIn = "<<pressureIn<<"pressureOut = "<<pressureOut<<std::endl;
-//        std::cout<<"satgrad ="<<satGrad<<"pressureGrad = "<<pressureGrad<<std::endl;
+    meanVelocity /= faceAreaCoarse;
+    meanVf /= faceAreaCoarse;
+    //		std::cout<<"fwSMean ="<<fwSMean<<std::endl;
+    //			std::cout<<"meanVelocity = "<<meanVelocity<<std::endl;
+
+    fwSMean/=elementVolumeCoarse;
+    Scalar meanVelocityMeanFwS = meanVelocity * fwSMean;
+    //				std::cout<<"meanveltimesfwmean ="<<meanVelocity<<std::endl;
+
+    Scalar fluxCorrection = meanVf - meanVelocityMeanFwS;
+    //std::cout<<"m1 = "<<fluxCorrection<<std::endl;
+
+    pressureIn /= elementVolumeCoarse;
+    pressureOut /= elementVolumeCoarse;
+
+    Scalar pressureGrad = (pressureIn - pressureOut)/dist;
+    //		std::cout<<"pressureIn = "<<pressureIn<<"pressureOut = "<<pressureOut<<std::endl;
+    //			std::cout<<"pressureGrad = "<<pressureGrad<<std::endl;
 
     //scale by pressure gradient = 1/dist!!!
     if (pressureGrad != 0)
     {
-        M /= pressureGrad;
+        fluxCorrection /= pressureGrad;
     }
-//    std::cout<<"D000 = "<<D[0][0][0]<<"D100 = "<<D[1][0][0]<<"D011 = "<<D[0][1][1]<<"D111 = "<<D[1][1][1]<<std::endl;
+    //		std::cout<<"m2 = "<<fluxCorrection<<std::endl;
 
-    //write M and satmean into soil
+    //write fluxCorrection and satmean into soil
+    int vectorsize = model.diffProblem.soil.getM()[globalIdxCoarseCurrent].size();
+    if (vectorsize < (timeStepCounter_+1))
+    {
+        Dune::FieldVector<Scalar, dim*2> addVec(0);
+        model.diffProblem.soil.getM()[globalIdxCoarseCurrent].push_back(addVec);
+        model.diffProblem.soil.getMSat()[globalIdxCoarseCurrent].push_back(addVec);
+    }
+
+    model.diffProblem.soil.getM()[globalIdxCoarseCurrent][timeStepCounter_][faceNumberCurrent]= fluxCorrection;
+    model.diffProblem.soil.getMSat()[globalIdxCoarseCurrent][timeStepCounter_][faceNumberCurrent]= meanSat_;
+
+    timeStepCounter_++;
+
+}
+
+template<class Grid, class Model>void TimeLoopSubProbs<Grid,Model>::calculateBoundaryFluxCorrection(Model& model, const int subProblemNumber,const int& globalIdxCoarseCurrent,const int& faceNumberCurrent, const GlobalPosition& globalPosFaceCoarseCurrent,const GlobalPosition& lowerLeft, const GlobalPosition& upperRight)
+{
+    //std::cout<<"numberinself = "<<faceNumberCurrent<<"globalIdxCoarseCurrent = "<<globalIdxCoarseCurrent<<std::endl;
+
+    typedef typename Element::Geometry Geometry;
+    typedef typename Grid::LevelGridView GridView;
+    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
+    typedef typename GridView::IndexSet IndexSet;
+    typedef typename IntersectionIteratorGetter<Grid,LevelTag>::IntersectionIterator
+    IntersectionIterator;
+    typedef typename Grid::HostGridType HostGrid;
+    typedef typename HostGrid::LevelGridView HostGridView;
+
+    typedef typename Grid::template Codim<0>::EntityPointer ElementPointer;
+    typedef typename HostGrid::template Codim<0>::EntityPointer HostElementPointer;
+    typedef typename HostGrid::Traits::template Codim<0>::Entity HostElement;
+    typedef typename HostGridView::IndexSet HostIndexSet;
+    int fineLev = model.variables().diffLevel;
+
+    const GridView& gridViewFine(model.variables().grid.levelView(fineLev));
+
+    meanSat_=0;
+
+    Scalar meanVelocity=0;
+
+    //  std::cout<<"meanSat = "<<meanSat_<<"meanvel = "<<meanVelocity<<std::endl;
+
+    Scalar meanVf=0;//mean of finescale velocity v times fine scale fractional flow function f
+    Scalar fwSMean=0;// fractional flow function values of mean saturation
+
+    Scalar pressure=0;
+
+    Scalar elementVolumeCoarse = 1;
+    Scalar faceAreaCoarse=0;
+
+    ElementIterator eItEnd = gridViewFine.template end<0>();
+    ElementIterator eItBegin = gridViewFine.template begin<0>();
+    for (ElementIterator eIt = eItBegin; eIt != eItEnd; ++eIt)
+    {
+        // element geometry
+        const Geometry& geometry = eIt->geometry();
+
+        GeometryType gt = geometry.type();
+        // cell center in reference element
+        const LocalPosition& localPos = ReferenceElements<Scalar,dim>::general(gt).position(0, 0);
+
+        // get global coordinate of cell center
+        const GlobalPosition& globalPos = geometry.global(localPos);
+
+        const HostElementPointer& eItHost = model.variables().grid.template getHostEntity<0>(*eIt);
+
+        int globalIdx = model.variables().diffMapper.map(*eIt);
+
+        Scalar elementVolume = geometry.integrationElement(localPos)*Dune::ReferenceElements<Scalar,dim>::general(gt).volume();
+
+        Scalar sat = (*model)[globalIdx];
+        pressure += model.variables().pressure[globalIdx];
+
+        meanSat_ += sat*elementVolume;
+        //              std::cout<<"meanSat = "<<meanSat_<<std::endl;
+
+        fwSMean = model.diffProblem.materialLaw.fractionalW(1.0, globalPos, *eItHost, localPos);
+
+        HostElement& hostElement = *eItHost;
+        HostElementPointer fatherPointer = hostElement.father();
+        int fatherLevel = fatherPointer.level();
+        //      std::cout<<"fatherLevel = "<<fatherLevel<<std::endl;
+        while (fatherLevel != 0)
+        {
+            HostElement& fatherElement = *fatherPointer;
+            fatherPointer = fatherElement.father();
+            fatherLevel = fatherPointer.level();
+            //          std::cout<<"fatherLevel = "<<fatherLevel<<std::endl;
+        }
+
+        const LocalPosition &localPosCoarse = Dune::ReferenceElements<Scalar,dim>::general(fatherPointer->geometry().type()).position(0, 0);
+
+        elementVolumeCoarse = fatherPointer->geometry().integrationElement(localPosCoarse)*Dune::ReferenceElements<Scalar,dim>::general(gt).volume();
+
+        IntersectionIterator
+        isItEnd = gridViewFine.template iend(*eIt);
+        for (IntersectionIterator
+                isIt = gridViewFine.template ibegin(*eIt); isIt
+                !=isItEnd; ++isIt)
+        {
+            // get geometry type of face
+            Dune::GeometryType faceGT = isIt->intersectionSelfLocal().type();
+
+            // center in face's reference element
+            const Dune::FieldVector<Scalar,dim-1>&
+            faceLocal = Dune::ReferenceElements<Scalar,dim-1>::general(faceGT).position(0,0);
+
+            // center of face in global coordinates
+            const GlobalPosition& globalPosFace = isIt->intersectionGlobal().global(faceLocal);
+
+            Scalar faceArea = isIt->intersectionGlobal().volume();
+
+            int faceNumber = isIt->numberInSelf();
+
+            switch(subProblemNumber)
+            {
+                case 1:
+                if (globalPosFace[0] == globalPosFaceCoarseCurrent[0])
+                {
+                    //                      std::cout<<"globalPosFace = "<<globalPosFace<<"globalPosFaceCoarseCurrent = "<<globalPosFaceCoarseCurrent<<std::endl;
+                    meanVelocity += model.variables().velocity[globalIdx][faceNumber][0]*faceArea;
+                    meanVf += (model.variables().velocity[globalIdx][faceNumber][0] * model.diffProblem.materialLaw.fractionalW(1.0, globalPos, *eItHost, localPos))*faceArea;
+                    faceAreaCoarse += faceArea;
+                }
+                break;
+                case 2:
+                if (globalPosFace[0] == globalPosFaceCoarseCurrent[0])
+                {
+                    //                      std::cout<<"globalPosFace = "<<globalPosFace<<"globalPosFaceCoarseCurrent = "<<globalPosFaceCoarseCurrent<<std::endl;
+                    meanVelocity += model.variables().velocity[globalIdx][faceNumber][0]*faceArea;
+                    meanVf += (model.variables().velocity[globalIdx][faceNumber][0] * model.diffProblem.materialLaw.fractionalW(1.0, globalPos, *eItHost, localPos))*faceArea;
+                    faceAreaCoarse += faceArea;
+                }
+                break;
+                case 3:
+                if (globalPosFace[1] == globalPosFaceCoarseCurrent[1])
+                {
+                    //                      std::cout<<"globalPosFace = "<<globalPosFace<<"globalPosFaceCoarseCurrent = "<<globalPosFaceCoarseCurrent<<std::endl;
+                    meanVelocity += model.variables().velocity[globalIdx][faceNumber][1]*faceArea;
+                    meanVf += (model.variables().velocity[globalIdx][faceNumber][1] * model.diffProblem.materialLaw.fractionalW(1.0, globalPos, *eItHost, localPos))*faceArea;
+                    faceAreaCoarse += faceArea;
+                }
+                break;
+                case 4:
+                if (globalPosFace[1] == globalPosFaceCoarseCurrent[1])
+                {
+                    //                      std::cout<<"globalPosFace = "<<globalPosFace<<"globalPosFaceCoarseCurrent = "<<globalPosFaceCoarseCurrent<<std::endl;
+                    meanVelocity += model.variables().velocity[globalIdx][faceNumber][1]*faceArea;
+                    meanVf += (model.variables().velocity[globalIdx][faceNumber][1] * model.diffProblem.materialLaw.fractionalW(1.0, globalPos, *eItHost, localPos))*faceArea;
+                    faceAreaCoarse += faceArea;
+                }
+                break;
+
+            }
+        }
+    }
+
+    Scalar dist;
     switch (subProblemNumber)
     {
         case 1:
-        model.diffproblem.soil.getM()[coarseIndex][timeStepCounter_][numberInSelfCoarse]= M-0.5*(D[0][0][0]+D[1][0][0])*satGrad;
-        model.diffproblem.soil.getMSat()[coarseIndex][timeStepCounter_][numberInSelfCoarse]= meanSat_;
+        dist= upperRight[0] - lowerLeft[0];
         break;
         case 2:
-        model.diffproblem.soil.getM()[coarseIndex][timeStepCounter_][numberInSelfCoarse]= M-0.5*(D[0][0][0]+D[1][0][0])*satGrad;
-        model.diffproblem.soil.getMSat()[coarseIndex][timeStepCounter_][numberInSelfCoarse]= meanSat_;
+        dist= upperRight[0] - lowerLeft[0];
         break;
         case 3:
-        model.diffproblem.soil.getM()[coarseIndex][timeStepCounter_][numberInSelfCoarse]= M-0.5*(D[0][1][1]+D[1][1][1])*satGrad;
-        model.diffproblem.soil.getMSat()[coarseIndex][timeStepCounter_][numberInSelfCoarse]= meanSat_;
+        dist=upperRight[1] - lowerLeft[1];
         break;
         case 4:
-        model.diffproblem.soil.getM()[coarseIndex][timeStepCounter_][numberInSelfCoarse]= M-0.5*(D[0][1][1]+D[1][1][1])*satGrad;
-        model.diffproblem.soil.getMSat()[coarseIndex][timeStepCounter_][numberInSelfCoarse]= meanSat_;
-        break;
-        default:
+        dist=upperRight[1] - lowerLeft[1];
         break;
     }
+
+    meanSat_ /= elementVolumeCoarse;
+    pressure/= elementVolumeCoarse;
+
+    meanVf /= faceAreaCoarse;
+    //      std::cout<<"fwSMean ="<<fwSMean<<std::endl;
+
+    meanVelocity /=faceAreaCoarse;
+
+    Scalar meanVelocityMeanFwS = meanVelocity * fwSMean;
+    //              std::cout<<"meanveltimesfwmean ="<<meanVelocity<<std::endl;
+
+    Scalar fluxCorrection = meanVf - meanVelocityMeanFwS;
+    //          std::cout<<"m1 = "<<fluxCorrection<<std::endl;
+
+    Scalar pressureGrad = (1-pressure)/(0.5*dist);
+    //      std::cout<<"pressureIn = "<<pressureIn<<"pressureOut = "<<pressureOut<<std::endl;
+    //          std::cout<<"pressureGrad = "<<pressureGrad<<std::endl;
+
+    //scale by pressure gradient = 1/dist!!!
+    if (pressureGrad != 0)
+    {
+        fluxCorrection /= pressureGrad;
+    }
+    //      std::cout<<"m2 = "<<fluxCorrection<<std::endl;
+
+    //write fluxCorrection and satmean into soil
+    int vectorsize = model.diffProblem.soil.getM()[globalIdxCoarseCurrent].size();
+    if (vectorsize < (timeStepCounter_+1))
+    {
+        Dune::FieldVector<Scalar, dim*2> addVec(0);
+        model.diffProblem.soil.getM()[globalIdxCoarseCurrent].push_back(addVec);
+        model.diffProblem.soil.getMSat()[globalIdxCoarseCurrent].push_back(addVec);
+    }
+
+    model.diffProblem.soil.getM()[globalIdxCoarseCurrent][timeStepCounter_][faceNumberCurrent]= fluxCorrection;
+    model.diffProblem.soil.getMSat()[globalIdxCoarseCurrent][timeStepCounter_][faceNumberCurrent]= meanSat_;
+
     timeStepCounter_++;
 
 }
