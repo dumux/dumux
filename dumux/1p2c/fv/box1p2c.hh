@@ -37,6 +37,7 @@
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/paamg/amg.hh>
 #include "dumux/pardiso/pardiso.hh"
+#include "dumux/pardiso/identity.hh"
 #include "dumux/nonlinear/newtonmethod.hh"
 #include "dumux/1p2c/onephasemodel.hh"
 #include "dumux/1p2c/1p2cproblem.hh"
@@ -68,9 +69,11 @@ namespace Dune
 	typedef typename ThisLeafP1OnePhaseModel::FunctionType::RepresentationType VectorType;
 	typedef typename ThisLeafP1OnePhaseModel::OperatorAssembler::RepresentationType MatrixType;
     typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator;
-    
+	#ifdef HAVE_PARDISO
+    SeqPardiso<MatrixType,VectorType,VectorType> pardiso;
+	#endif
 	typedef typename G::LeafGridView GV;
-	
+
 
 	enum{m = 2};
 
@@ -124,7 +127,7 @@ namespace Dune
 
 
 		this->localJacobian().clearVisited();
-	
+
 
 		// iterate through leaf grid an evaluate c0 at cell center
 		Iterator eendit = gridview.template end<0>();
@@ -163,7 +166,7 @@ namespace Dune
 			this->localJacobian().setLocalSolution(entity);
 			this->localJacobian().updateStaticData(entity, this->localJacobian().u);
 		}
-		
+
 		// set Dirichlet boundary conditions
 		for (Iterator it = gridview.template begin<0>();
 				it != eendit; ++it)
@@ -241,7 +244,7 @@ namespace Dune
 
 	void updateModel (double& dt, double& nextDt)
 	{
-		
+
 		this->localJacobian.setDt(dt);
 		this->localJacobian.setOldSolution(this->uOldTimeStep);
 
@@ -267,7 +270,7 @@ namespace Dune
                 std::cout<<"timeStep resized to: "<<nextDt<<std::endl;
 		}
 
-		
+
 		this->localJacobian.clearVisited();
 
 		*(this->uOldTimeStep) = *(this->u);
@@ -362,27 +365,21 @@ namespace Dune
 
 	void solve()
 		{
-		Operator op(*(this->A));  // make operator out of matrix
-		double red=1E-11;
+	        Operator op(*(this->A));  // make operator out of matrix
+        double red=1E-14;
 
 #ifdef HAVE_PARDISO
-//	SeqPardiso<MatrixType,VectorType,VectorType> ilu0(*(this->A));
-		pardiso.factorize(*(this->A));
-		BiCGSTABSolver<VectorType> solver(op,pardiso,red,100,2);         // an inverse operator
-	//	SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A),1.0);// a precondtioner
-		//LoopSolver<VectorType> solver(op, ilu0, red, 10, 2);
+        pardiso.factorize(*(this->A));
+        BiCGSTABSolver<VectorType> solver(op,pardiso,red,100,2);         // an inverse operator
 #else
-		SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A),1.0);// a precondtioner
-
-		//SeqIdentity<MatrixType,VectorType,VectorType> ilu0(*(this->A));// a precondtioner
-		BiCGSTABSolver<VectorType> solver(op,ilu0,red,1000,1);         // an inverse operator
-		//iteration numbers were 1e4 before
+        SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A),1.0);// a precondtioner
+        BiCGSTABSolver<VectorType> solver(op,ilu0,red,10000,1);         // an inverse operator
 #endif
-		InverseOperatorResult r;
-		solver.apply(*(this->u), *(this->f), r);
+        InverseOperatorResult r;
+        solver.apply(*(this->u), *(this->f), r);
 
-		return;
-	}
+        return;
+		}
 
 	void updateState()
 	{
@@ -426,13 +423,13 @@ namespace Dune
 		BlockVector<FieldVector<RT, 1> > p(this->size);
 		BlockVector<FieldVector<RT, 1> > x(this->size);
 	  	for (int i = 0; i < this->size; i++) {
-			p[i] = (*(this->u))[i][0];  
+			p[i] = (*(this->u))[i][0];
 			x[i] = (*(this->u))[i][1];
 						//const FieldVector<RT, 4> parameters(this->problem.materialLawParameters
 			//	 		 (this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal));
 			//			this->pC[i] = this->problem.materialLaw().pC(this->satW[i], parameters);
 			}
-		
+
 		vtkwriter.addVertexData(p, "pressure");
 		vtkwriter.addVertexData(x, "mole fraction");
 		vtkwriter.write(fname, VTKOptions::ascii);
@@ -444,7 +441,7 @@ namespace Dune
 
   protected:
     VtkMultiWriter *vtkMultiWriter;
-    
+
   };
 }
 
