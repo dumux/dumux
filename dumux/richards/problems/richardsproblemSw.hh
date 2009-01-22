@@ -35,29 +35,29 @@ namespace Dune
    *	Template parameters are:
    *
    *	- Grid  a DUNE grid type
-   *	- RT    type used for return values
+   *	- Scalar    type used for return values
    */
-  template<class G, class RT>
-  class RichardsSwProblem : public RichardsProblem<G, RT> {
-	typedef typename G::ctype DT;
-	enum {dim=G::dimension, m=1};
-	typedef typename G::Traits::template Codim<0>::Entity Entity;
-	typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
+  template<class Grid, class Scalar>
+  class RichardsSwProblem : public RichardsProblem<Grid, Scalar> {
+	typedef typename Grid::ctype Scalar;
+	enum {dim=Grid::dimension, m=1};
+	typedef typename Grid::Traits::template Codim<0>::Entity Entity;
+	typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
 
   public:
 	enum {sWIdx =0 };
 
-	virtual FieldVector<RT,m> q (const FieldVector<DT,dim>& x, const Entity& e,
-					const FieldVector<DT,dim>& xi) const
+	virtual FieldVector<Scalar,m> q (const FieldVector<Scalar,dim>& x, const Entity& e,
+					const FieldVector<Scalar,dim>& xi) const
 	{
-		FieldVector<RT,m> values(0);
+		FieldVector<Scalar,m> values(0);
 
 		return values;
 	}
 
-	virtual FieldVector<BoundaryConditions::Flags, m> bctype (const FieldVector<DT,dim>& x, const Entity& e,
+	virtual FieldVector<BoundaryConditions::Flags, m> bctype (const FieldVector<Scalar,dim>& x, const Entity& e,
 					const IntersectionIterator& intersectionIt,
-					   const FieldVector<DT,dim>& xi) const
+					   const FieldVector<Scalar,dim>& xi) const
 	{
 		FieldVector<BoundaryConditions::Flags, m> values(BoundaryConditions::neumann);
 
@@ -73,11 +73,11 @@ namespace Dune
 		return values;
 	}
 
-	virtual FieldVector<RT,m> g (const FieldVector<DT,dim>& x, const Entity& e,
+	virtual FieldVector<Scalar,m> g (const FieldVector<Scalar,dim>& x, const Entity& e,
 				const IntersectionIterator& intersectionIt,
-				  const FieldVector<DT,dim>& xi) const
+				  const FieldVector<Scalar,dim>& xi) const
 	{
-		FieldVector<RT,m> values(0);
+		FieldVector<Scalar,m> values(0);
 
 		switch (intersectionIt.boundaryId()) {
 		case 6:
@@ -89,11 +89,11 @@ namespace Dune
 		return values;
 	}
 
-	virtual FieldVector<RT,m> J (const FieldVector<DT,dim>& x, const Entity& e,
+	virtual FieldVector<Scalar,m> J (const FieldVector<Scalar,dim>& x, const Entity& e,
 				const IntersectionIterator& intersectionIt,
-				  const FieldVector<DT,dim>& xi) const
+				  const FieldVector<Scalar,dim>& xi) const
 	{
-		FieldVector<RT,m> values(0);
+		FieldVector<Scalar,m> values(0);
 
 		switch (intersectionIt.boundaryId()) {
 		case 1: case 2: case 3: case 4:
@@ -108,11 +108,11 @@ namespace Dune
 		return values;
 	}
 
-	virtual FieldVector<RT,m> initial (const FieldVector<DT,dim>& x, const Entity& e,
-				  const FieldVector<DT,dim>& xi) const
+	virtual FieldVector<Scalar,m> initial (const FieldVector<Scalar,dim>& x, const Entity& e,
+				  const FieldVector<Scalar,dim>& xi) const
 	{
 
-		FieldVector<RT,m> values;
+		FieldVector<Scalar,m> values;
 
 //		values[pWIdx] = 1.0e+5 - densityW_*gravity_[2]*(height_-x[2]);
 		values[sWIdx] = 0.05;
@@ -120,13 +120,13 @@ namespace Dune
 		return values;
 	}
 
-	virtual FieldVector<RT,dim> gravity () const
+	virtual FieldVector<Scalar,dim> gravity () const
 	{
 		return gravity_;
 	}
 
-	RichardsSwProblem(Fluid& liq1, Matrix2p<G, RT>& soil, TwoPhaseRelations<G, RT>& law = *(new TwoPhaseRelations<G, RT>))
-	: RichardsProblem<G,RT>(liq1, soil, law),
+	RichardsSwProblem(Fluid& liq1, Matrix2p<Grid, Scalar>& soil, TwoPhaseRelations<Grid, Scalar>& law = *(new TwoPhaseRelations<Grid, Scalar>))
+	: RichardsProblem<Grid,Scalar>(liq1, soil, law),
 		densityW_(liq1.density())
 	{
 		height_ = 20;
@@ -138,52 +138,52 @@ namespace Dune
 	}
 
 	private:
-		DT width_, height_;
-		RT densityW_, densityN_;
-		FieldVector<DT,dim> gravity_;
+		Scalar width_, height_;
+		Scalar densityW_, densityN_;
+		FieldVector<Scalar,dim> gravity_;
   };
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////--SOIL--//////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////
 
-  template<class G, class RT>
-  class RichardsSoil: public Matrix2p<G,RT>
+  template<class Grid, class Scalar>
+  class RichardsSoil: public Matrix2p<Grid,Scalar>
   {
   public:
-  	typedef typename G::Traits::template Codim<0>::Entity Entity;
-  	typedef typename G::ctype DT;
-  	enum {dim=G::dimension, m=1};
+  	typedef typename Grid::Traits::template Codim<0>::Entity Entity;
+  	typedef typename Grid::ctype Scalar;
+  	enum {dim=Grid::dimension, m=1};
 
-  	virtual FieldMatrix<DT,dim,dim> K (const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi)
+  	virtual FieldMatrix<Scalar,dim,dim> K (const FieldVector<Scalar,dim>& x, const Entity& e, const FieldVector<Scalar,dim>& xi)
   	{
   			return Kout_;
   	}
-  	virtual double porosity(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi) const
+  	virtual double porosity(const FieldVector<Scalar,dim>& x, const Entity& e, const FieldVector<Scalar,dim>& xi) const
   	{
   		return 0.4;
   	}
 
-  	virtual double Sr_w(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, const double T) const
+  	virtual double Sr_w(const FieldVector<Scalar,dim>& x, const Entity& e, const FieldVector<Scalar,dim>& xi, const double T) const
   	{
   			return 0.05;
   	}
 
-  	virtual double Sr_n(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, const double T) const
+  	virtual double Sr_n(const FieldVector<Scalar,dim>& x, const Entity& e, const FieldVector<Scalar,dim>& xi, const double T) const
   	{
   		return 0.0;
   	}
 
   	/* ATTENTION: define heat capacity per cubic meter! Be sure, that it corresponds to porosity!
   			 * Best thing will be to define heatCap = (specific heatCapacity of material) * density * porosity*/
-  	virtual double heatCap(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi) const
+  	virtual double heatCap(const FieldVector<Scalar,dim>& x, const Entity& e, const FieldVector<Scalar,dim>& xi) const
   	{
   		return 	790 /* spec. heat cap. of granite */
   						* 2700 /* density of granite */
   						* porosity(x, e, xi);
   	}
 
-  	virtual double heatCond(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, const double sat) const
+  	virtual double heatCond(const FieldVector<Scalar,dim>& x, const Entity& e, const FieldVector<Scalar,dim>& xi, const double sat) const
   	{
   		static const double lWater = 0.6;
   		static const double lGranite = 2.8;
@@ -193,7 +193,7 @@ namespace Dune
   		return ldry + sqrt(sat) * (ldry - lsat);
   	}
 
-  	virtual std::vector<double> paramRelPerm(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, const double T) const
+  	virtual std::vector<double> paramRelPerm(const FieldVector<Scalar,dim>& x, const Entity& e, const FieldVector<Scalar,dim>& xi, const double T) const
   	{
   		// VanGenuchten
 //		std::vector<double> param(5);
@@ -212,13 +212,13 @@ namespace Dune
   		return param;
   	}
 
-  	virtual typename Matrix2p<G,RT>::modelFlag relPermFlag(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi) const
+  	virtual typename Matrix2p<Grid,Scalar>::modelFlag relPermFlag(const FieldVector<Scalar,dim>& x, const Entity& e, const FieldVector<Scalar,dim>& xi) const
   	{
-//  		return Matrix2p<G,RT>::van_genuchten;
-  		return Matrix2p<G,RT>::linear;
+//  		return Matrix2p<Grid,Scalar>::van_genuchten;
+  		return Matrix2p<Grid,Scalar>::linear;
   	}
 
-  	RichardsSoil():Matrix2p<G,RT>()
+  	RichardsSoil():Matrix2p<Grid,Scalar>()
   	{
   		Kout_ = 0;
   		for(int i = 0; i < dim; i++)
@@ -231,7 +231,7 @@ namespace Dune
   	{}
 
   private:
-  	FieldMatrix<DT,dim,dim> Kout_;
+  	FieldMatrix<Scalar,dim,dim> Kout_;
 
   };
 

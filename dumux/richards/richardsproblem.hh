@@ -38,8 +38,8 @@ namespace Dune {
  *	- RT    type used for return values
  */
 template<class G, class RT> class RichardsProblem {
-	typedef typename G::ctype DT;
-	enum {n=G::dimension, m=1};
+	typedef typename G::ctype Scalar;
+	enum {dim=G::dimension, numEq=1};
 	typedef typename G::Traits::template Codim<0>::Entity Entity;
 	typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator
 			IntersectionIterator;
@@ -52,22 +52,22 @@ public:
 	 @param[in]  xi   position in reference element of e
 	 \return     value of source term
 	 */
-	virtual FieldVector<RT,m> q(const FieldVector<DT,n>& x, const Entity& e,
-			const FieldVector<DT,n>& xi) const = 0;
+	virtual FieldVector<RT,numEq> q(const FieldVector<Scalar,dim>& x, const Entity& e,
+			const FieldVector<Scalar,dim>& xi) const = 0;
 
 	//! return type of boundary condition at the given global coordinate
 	/*! return type of boundary condition at the given global coordinate
 	 @param[in]  x    position in global coordinates
 	 \return     boundary condition type given by enum in this class
 	 */
-	//	virtual FieldVector<BoundaryConditions::Flags, m> bctype (const FieldVector<DT,n>& x, const Entity& e,
+	//	virtual FieldVector<BoundaryConditions::Flags, numEq> bctype (const FieldVector<Scalar,dim>& x, const Entity& e,
 	//			const IntersectionIterator& intersectionIt,
-	//			const FieldVector<DT,n>& xi) const = 0;
+	//			const FieldVector<Scalar,dim>& xi) const = 0;
 
-	virtual FieldVector<BoundaryConditions::Flags, m>bctype(
-			const FieldVector<DT,n>& x, const Entity& e,
+	virtual FieldVector<BoundaryConditions::Flags, numEq>bctype(
+			const FieldVector<Scalar,dim>& x, const Entity& e,
 			const IntersectionIterator& intersectionIt,
-			const FieldVector<DT,n>& xi) const = 0;
+			const FieldVector<Scalar,dim>& xi) const = 0;
 
 	//! returns index of the primary variable corresponding to the dirichlet boundary condition at the given global coordinate
 		/*! returns index of the primary variable corresponding to the dirichlet boundary condition at the given global coordinate
@@ -75,11 +75,11 @@ public:
 		 \return     index of the primary variable
 		 */
 
-	virtual void dirichletIndex(const FieldVector<DT,n>& x, const Entity& e,
+	virtual void dirichletIndex(const FieldVector<Scalar,dim>& x, const Entity& e,
 			const IntersectionIterator& intersectionIt,
-			const FieldVector<DT,n>& xi, FieldVector<int,m>& dirichletIdx) const
+			const FieldVector<Scalar,dim>& xi, FieldVector<int,numEq>& dirichletIdx) const
 	{
-		for (int i = 0; i < m; i++)
+		for (int i = 0; i < numEq; i++)
 			dirichletIdx[i]=i;
 		return;
 	}
@@ -89,28 +89,28 @@ public:
 	 @param[in]  x    position in global coordinates
 	 \return     boundary condition value
 	 */
-	virtual FieldVector<RT,m> g(const FieldVector<DT,n>& x, const Entity& e,
+	virtual FieldVector<RT,numEq> g(const FieldVector<Scalar,dim>& x, const Entity& e,
 			const IntersectionIterator& intersectionIt,
-			const FieldVector<DT,n>& xi) const = 0;
+			const FieldVector<Scalar,dim>& xi) const = 0;
 
 	//! evaluate Neumann boundary condition at given position
 	/*! evaluate Neumann boundary condition at given position
 	 @param[in]  x    position in global coordinates
 	 \return     boundary condition value
 	 */
-	virtual FieldVector<RT,m> J(const FieldVector<DT,n>& x, const Entity& e,
+	virtual FieldVector<RT,numEq> J(const FieldVector<Scalar,dim>& x, const Entity& e,
 			const IntersectionIterator& intersectionIt,
-			const FieldVector<DT,n>& xi) const = 0;
+			const FieldVector<Scalar,dim>& xi) const = 0;
 
 	//! evaluate initial condition at given position
 	/*! evaluate initial boundary condition at given position
 	 @param[in]  x    position in global coordinates
 	 \return     boundary condition value
 	 */
-	virtual FieldVector<RT,m> initial(const FieldVector<DT,n>& x,
-			const Entity& e, const FieldVector<DT,n>& xi) const = 0;
+	virtual FieldVector<RT,numEq> initial(const FieldVector<Scalar,dim>& x,
+			const Entity& e, const FieldVector<Scalar,dim>& xi) const = 0;
 
-	virtual FieldVector<RT,n> gravity() const = 0;
+	virtual FieldVector<RT,dim> gravity() const = 0;
 
 	//! properties of the wetting (liquid) phase
 	/*! properties of the wetting (liquid) phase
@@ -147,7 +147,7 @@ public:
 
 	//updates an exact/analytic solution
 	virtual void updateExSol(double &dt,
-			BlockVector<FieldVector<RT, m> > &approxSol) {
+			BlockVector<FieldVector<RT, numEq> > &approxSol) {
 		DUNE_THROW(NotImplemented, "Ex(akt) Solution");
 		return;
 	}

@@ -51,28 +51,28 @@ namespace Dune {
 
  This implements a two phase model with Pw and Sn as primary unknowns.
  */
-template<class G, class RT>
+template<class Grid, class Scalar>
 class BoxPw
-: public LeafP1TwoPhaseModel<G, RT, RichardsProblem<G, RT>, BoxPwJacobian<G, RT> >
+: public LeafP1TwoPhaseModel<Grid, Scalar, RichardsProblem<Grid, Scalar>, BoxPwJacobian<Grid, Scalar> >
 {
 
 public:
 	// define the problem type (also change the template argument above)
-	typedef RichardsProblem<G, RT> ProblemType;
+	typedef RichardsProblem<Grid, Scalar> ProblemType;
 
 	// define the local Jacobian (also change the template argument above)
-	typedef BoxPwJacobian<G, RT> LocalJacobian;
+	typedef BoxPwJacobian<Grid, Scalar> LocalJacobian;
 
-	typedef LeafP1TwoPhaseModel<G, RT, ProblemType, LocalJacobian>
+	typedef LeafP1TwoPhaseModel<Grid, Scalar, ProblemType, LocalJacobian>
 			ThisLeafP1TwoPhaseModel;
 
 	typedef typename ThisLeafP1TwoPhaseModel::FunctionType FunctionType;
 
-	typedef typename G::Traits::LeafIndexSet IS;
+	typedef typename Grid::Traits::LeafIndexSet IS;
 
 	enum {m = 1};
 
-	typedef BoxPw<G, RT> ThisType;
+	typedef BoxPw<Grid, Scalar> ThisType;
 	typedef typename ThisLeafP1TwoPhaseModel::FunctionType::RepresentationType VectorType;
 	typedef typename ThisLeafP1TwoPhaseModel::OperatorAssembler::RepresentationType MatrixType;
 	typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator;
@@ -83,7 +83,7 @@ public:
 #endif
 #endif
 
-	BoxPw(const G& g, ProblemType& prob)
+	BoxPw(const Grid& g, ProblemType& prob)
 	: ThisLeafP1TwoPhaseModel(g, prob)
 	{}
 
@@ -94,7 +94,7 @@ public:
 
 #if HAVE_MPI
 			// set up parallel solvers
-		typedef typename G::Traits::GlobalIdSet::IdType GlobalIdType;
+		typedef typename Grid::Traits::GlobalIdSet::IdType GlobalIdType;
 		typedef OwnerOverlapCopyExtendedCommunication<GlobalIdType,int> CommunicationType;
 			Dune::IndexInfoFromGrid<GlobalIdType,int> indexinfo;
 			(this->u).fillIndexInfoFromGrid(indexinfo);
@@ -130,7 +130,7 @@ public:
 	void update(double& dt) {
 		this->localJacobian().setDt(dt);
 		this->localJacobian().setOldSolution(this->uOldTimeStep);
-		NewtonMethod<G, ThisType> newtonMethod(this->grid(), *this);
+		NewtonMethod<Grid, ThisType> newtonMethod(this->grid(), *this);
 		newtonMethod.execute();
 		dt = this->localJacobian().getDt();
 		double upperMass, oldUpperMass;
@@ -145,10 +145,10 @@ public:
 	}
 
 	virtual void vtkout(const char* name, int k) {
-		VTKWriter<typename G::LeafGridView> vtkwriter(this->grid_.leafView());
+		VTKWriter<typename Grid::LeafGridView> vtkwriter(this->grid_.leafView());
 
 		int size=this->vertexmapper.size();
-		enum {dim = G::dimension};
+		enum {dim = Grid::dimension};
 		char fname[128];
 		sprintf(fname, "%s-%05d", name, k);
 		double minSat = 1e100;
@@ -162,7 +162,7 @@ public:
 			this->pC[i]  = -this->pW[i];
 //			satN[i] = (*(this->u))[i][1];
 //			satW[i] = 1 - satN[i];
-			FieldVector<RT, dim> dummy (0);
+			FieldVector<Scalar, dim> dummy (0);
 
 			//HACK for plottting
 //			for (int j = 0; j < 1001; j++) {

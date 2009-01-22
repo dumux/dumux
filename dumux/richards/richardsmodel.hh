@@ -9,18 +9,18 @@
 #include "dumux/fvgeometry/fvelementgeometry.hh"
 
 namespace Dune {
-template<class G, class RT, class ProblemType, class LocalJacobian,
+template<class Grid, class Scalar, class ProblemType, class LocalJacobian,
 		class FunctionType, class OperatorAssembler> class RichardsModel :
-	public NonlinearModel<G, RT, ProblemType, LocalJacobian, FunctionType, OperatorAssembler> {
+	public NonlinearModel<Grid, Scalar, ProblemType, LocalJacobian, FunctionType, OperatorAssembler> {
 public:
-	typedef NonlinearModel<G, RT, ProblemType, LocalJacobian,
+	typedef NonlinearModel<Grid, Scalar, ProblemType, LocalJacobian,
 	FunctionType, OperatorAssembler> ThisNonlinearModel;
 
-	RichardsModel(const G& g, ProblemType& prob) :
+	RichardsModel(const Grid& g, ProblemType& prob) :
 		ThisNonlinearModel(g, prob), uOldTimeStep(g, g.overlapSize(0)==0) {
 	}
 
-	RichardsModel(const G& g, ProblemType& prob, int level) :
+	RichardsModel(const Grid& g, ProblemType& prob, int level) :
 		ThisNonlinearModel(g, prob, level), uOldTimeStep(g, level, g.overlapSize(0)==0) {
 	}
 
@@ -33,22 +33,22 @@ public:
 	FunctionType uOldTimeStep;
 };
 
-template<class G, class RT, class ProblemType, class LocalJac, int m=1>
+template<class Grid, class Scalar, class ProblemType, class LocalJac, int numEq=1>
 class LeafP1TwoPhaseModel
-: public RichardsModel<G, RT, ProblemType, LocalJac,
-		LeafP1FunctionExtended<G, RT, m>, LeafP1OperatorAssembler<G, RT, m> >
+: public RichardsModel<Grid, Scalar, ProblemType, LocalJac,
+		LeafP1FunctionExtended<Grid, Scalar, numEq>, LeafP1OperatorAssembler<Grid, Scalar, numEq> >
 {
 public:
 	// define the function type:
-	typedef LeafP1FunctionExtended<G, RT, m> FunctionType;
+	typedef LeafP1FunctionExtended<Grid, Scalar, numEq> FunctionType;
 
 	// define the operator assembler type:
-	typedef LeafP1OperatorAssembler<G, RT, m> OperatorAssembler;
+	typedef LeafP1OperatorAssembler<Grid, Scalar, numEq> OperatorAssembler;
 
-	typedef RichardsModel<G, RT, ProblemType, LocalJac,
+	typedef RichardsModel<Grid, Scalar, ProblemType, LocalJac,
 	FunctionType, OperatorAssembler> ThisRichardsModel;
 
-	typedef LeafP1TwoPhaseModel<G, RT, ProblemType, LocalJac, m> ThisType;
+	typedef LeafP1TwoPhaseModel<Grid, Scalar, ProblemType, LocalJac, numEq> ThisType;
 
 	typedef LocalJac LocalJacobian;
 
@@ -59,24 +59,24 @@ public:
 		}
 	};
 
-	typedef typename G::LeafGridView GV;
+	typedef typename Grid::LeafGridView GV;
     typedef typename GV::IndexSet IS;
-	typedef MultipleCodimMultipleGeomTypeMapper<G,IS,P1Layout> VertexMapper;
-	typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator
+	typedef MultipleCodimMultipleGeomTypeMapper<Grid,IS,P1Layout> VertexMapper;
+	typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator
 			IntersectionIterator;
 
-	LeafP1TwoPhaseModel(const G& g, ProblemType& prob) :
+	LeafP1TwoPhaseModel(const Grid& g, ProblemType& prob) :
 		ThisRichardsModel(g, prob), problem(prob), grid_(g), vertexmapper(g,
 				g.leafIndexSet()), size((*(this->u)).size()), pW(size), pC(size),
 				satW(size), satEx(0), pEx(0), satError(0) {
 	}
 
 	virtual void initial() {
-		typedef typename G::Traits::template Codim<0>::Entity Entity;
-		typedef typename G::ctype DT;
+		typedef typename Grid::Traits::template Codim<0>::Entity Entity;
+		typedef typename Grid::ctype DT;
 		typedef typename GV::template Codim<0>::Iterator Iterator;
-		enum {dim = G::dimension};
-		enum {dimworld = G::dimensionworld};
+		enum {dim = Grid::dimension};
+		enum {dimworld = Grid::dimensionworld};
 
 		const GV& gridview(this->grid_.leafView());
 
@@ -90,8 +90,8 @@ public:
 			// get entity
 			const Entity& entity = *it;
 
-			const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type
-					&sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(gt,
+			const typename Dune::LagrangeShapeFunctionSetContainer<DT,Scalar,dim>::value_type
+					&sfs=Dune::LagrangeShapeFunctions<DT, Scalar, dim>::general(gt,
 							1);
 			int size = sfs.size();
 
@@ -120,8 +120,8 @@ public:
 			// get entity
 			const Entity& entity = *it;
 
-			const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type
-					&sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(gt,
+			const typename Dune::LagrangeShapeFunctionSetContainer<DT,Scalar,dim>::value_type
+					&sfs=Dune::LagrangeShapeFunctions<DT, Scalar, dim>::general(gt,
 							1);
 			int size = sfs.size();
 
@@ -129,8 +129,8 @@ public:
 			this->localJacobian().template assembleBC<LeafTag>(entity);
 
 			IntersectionIterator
-					endit = IntersectionIteratorGetter<G, LeafTag>::end(entity);
-			for (IntersectionIterator is = IntersectionIteratorGetter<G,
+					endit = IntersectionIteratorGetter<Grid, LeafTag>::end(entity);
+			for (IntersectionIterator is = IntersectionIteratorGetter<Grid,
 					LeafTag>::begin(entity); is!=endit; ++is)
 				if (is->boundary()) {
 					for (int i = 0; i < size; i++)
@@ -139,7 +139,7 @@ public:
 							if (sfs[i].entity()
 									== ReferenceElements<DT,dim>::general(gt).subEntity(is->numberInSelf(), 1,
 											j, sfs[i].codim())) {
-								for (int equationNumber = 0; equationNumber<m; equationNumber++) {
+								for (int equationNumber = 0; equationNumber<numEq; equationNumber++) {
 									if (this->localJacobian().bc(i)[equationNumber]
 											== BoundaryConditions::dirichlet) {
 										// get cell center in reference element
@@ -153,8 +153,8 @@ public:
 										int
 												globalId = vertexmapper.template map<dim>(
 														entity, sfs[i].entity());
-										FieldVector<int,m> dirichletIndex;
-										FieldVector<BoundaryConditions::Flags, m>
+										FieldVector<int,numEq> dirichletIndex;
+										FieldVector<BoundaryConditions::Flags, numEq>
 												bctype = this->problem.bctype(
 														global, entity, is,
 														local);
@@ -163,7 +163,7 @@ public:
 
 										if (bctype[equationNumber]
 												== BoundaryConditions::dirichlet) {
-											FieldVector<RT,m>
+											FieldVector<Scalar,numEq>
 													ghelp = this->problem.g(
 															global, entity, is,
 															local);
@@ -183,7 +183,7 @@ public:
 	virtual void update(double& dt) {
 		this->localJacobian().setDt(dt);
 		this->localJacobian().setOldSolution(this->uOldTimeStep);
-		NewtonMethod<G, ThisType> newtonMethod(this->grid_, *this);
+		NewtonMethod<Grid, ThisType> newtonMethod(this->grid_, *this);
 		newtonMethod.execute();
 		dt = this->localJacobian().getDt();
 		*(this->uOldTimeStep) = *(this->u);
@@ -195,11 +195,11 @@ public:
 	}
 
 	virtual void globalDefect(FunctionType& defectGlobal) {
-		typedef typename G::Traits::template Codim<0>::Entity Entity;
-		typedef typename G::ctype DT;
+		typedef typename Grid::Traits::template Codim<0>::Entity Entity;
+		typedef typename Grid::ctype DT;
 		typedef typename GV::template Codim<0>::Iterator Iterator;
-		enum {dim = G::dimension};
-		typedef array<BoundaryConditions::Flags, m> BCBlockType;
+		enum {dim = Grid::dimension};
+		typedef array<BoundaryConditions::Flags, numEq> BCBlockType;
 
 		const GV& gridview(this->grid_.leafView());
 		(*defectGlobal)=0;
@@ -232,7 +232,7 @@ public:
 			// begin loop over vertices
 			for (int i=0; i < size; i++) {
 				int globalId = this->vertexmapper.template map<dim>(entity,i);
-				for (int equationnumber = 0; equationnumber < m; equationnumber++) {
+				for (int equationnumber = 0; equationnumber < numEq; equationnumber++) {
 					if (this->localJacobian().bc(i)[equationnumber] == BoundaryConditions::neumann)
 						(*defectGlobal)[globalId][equationnumber]
 								+= this->localJacobian().def[i][equationnumber];
@@ -244,18 +244,18 @@ public:
 
 		for (typename std::vector<BCBlockType>::size_type i=0; i
 				<essential.size(); i++)
-			for (int equationnumber = 0; equationnumber < m; equationnumber++) {
+			for (int equationnumber = 0; equationnumber < numEq; equationnumber++) {
 			if (essential[i][equationnumber] == BoundaryConditions::dirichlet)
 				(*defectGlobal)[i][equationnumber] = 0;
 			}
 	}
 
 	virtual double injected(double& upperMass, double& oldUpperMass) {
-		typedef typename G::Traits::template Codim<0>::Entity Entity;
-		typedef typename G::ctype DT;
+		typedef typename Grid::Traits::template Codim<0>::Entity Entity;
+		typedef typename Grid::ctype DT;
 		typedef typename GV::template Codim<0>::Iterator Iterator;
-		enum {dim = G::dimension};
-		enum {dimworld = G::dimensionworld};
+		enum {dim = Grid::dimension};
+		enum {dimworld = Grid::dimensionworld};
 
 		const GV& gridview(this->grid_.leafView());
 		double totalMass = 0;
@@ -271,11 +271,11 @@ public:
 			// get entity
 			const Entity& entity = *it;
 
-			FVElementGeometry<G> fvGeom;
+			FVElementGeometry<Grid> fvGeom;
 			fvGeom.update(entity);
 
-			const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type
-					&sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(gt,
+			const typename Dune::LagrangeShapeFunctionSetContainer<DT,Scalar,dim>::value_type
+					&sfs=Dune::LagrangeShapeFunctions<DT, Scalar, dim>::general(gt,
 							1);
 			int size = sfs.size();
 
@@ -310,20 +310,20 @@ public:
 	}
 
 
-    const G &grid() const
+    const Grid &grid() const
         { return grid_; }
 
 protected:
 	ProblemType& problem;
-	const G& grid_;
+	const Grid& grid_;
 	VertexMapper vertexmapper;
 	int size;
-	BlockVector<FieldVector<RT, 1> > pW;
-	BlockVector<FieldVector<RT, 1> > pC;
-	BlockVector<FieldVector<RT, 1> > satW;
-	BlockVector<FieldVector<RT, 1> > satEx;
-	BlockVector<FieldVector<RT, 1> > pEx;
-	BlockVector<FieldVector<RT, 1> > satError;
+	BlockVector<FieldVector<Scalar, 1> > pW;
+	BlockVector<FieldVector<Scalar, 1> > pC;
+	BlockVector<FieldVector<Scalar, 1> > satW;
+	BlockVector<FieldVector<Scalar, 1> > satEx;
+	BlockVector<FieldVector<Scalar, 1> > pEx;
+	BlockVector<FieldVector<Scalar, 1> > satError;
 };
 
 }

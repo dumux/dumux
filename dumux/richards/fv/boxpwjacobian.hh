@@ -58,37 +58,36 @@ namespace Dune
 	Template parameters are:
 
 	- Grid  a DUNE grid type
-	- RT    type used for return values
+	- Scalar    type used for return values
   */
-  template<class G, class RT, class BoxFunction = LeafP1FunctionExtended<G, RT, 1> >
+  template<class Grid, class Scalar, class BoxFunction = LeafP1FunctionExtended<Grid, Scalar, 1> >
   class BoxPwJacobian
-    : public BoxJacobian<BoxPwJacobian<G,RT,BoxFunction>,G,RT,1,BoxFunction>
+    : public BoxJacobian<BoxPwJacobian<Grid,Scalar,BoxFunction>,Grid,Scalar,1,BoxFunction>
   {
-    typedef typename G::ctype DT;
-    typedef typename G::Traits::template Codim<0>::Entity Entity;
+    typedef typename Grid::Traits::template Codim<0>::Entity Entity;
     typedef typename Entity::Geometry Geometry;
-    typedef BoxPwJacobian<G,RT,BoxFunction> ThisType;
-    typedef typename LocalJacobian<ThisType,G,RT,1>::VBlockType VBlockType;
-    typedef typename LocalJacobian<ThisType,G,RT,1>::MBlockType MBlockType;
+    typedef BoxPwJacobian<Grid,Scalar,BoxFunction> ThisType;
+    typedef typename LocalJacobian<ThisType,Grid,Scalar,1>::VBlockType VBlockType;
+    typedef typename LocalJacobian<ThisType,Grid,Scalar,1>::MBlockType MBlockType;
 	enum {pWIdx = 0};
 
 
   public:
 	    // define the number of components of your system, this is used outside
 	    // to allocate the correct size of (dense) blocks with a FieldMatrix
-	    enum {dim=G::dimension};
+	    enum {dim=Grid::dimension};
 	    enum {m=1};
-	    enum {SIZE=LagrangeShapeFunctionSetContainer<DT,RT,dim>::maxsize};
+	    enum {SIZE=LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::maxsize};
 	    struct VariableNodeData;
-	    typedef FieldMatrix<RT,dim,dim> FMatrix;
-	    typedef FieldVector<RT,dim> FVector;
+	    typedef FieldMatrix<Scalar,dim,dim> FMatrix;
+	    typedef FieldVector<Scalar,dim> FVector;
 
 	     //! Constructor
-    BoxPwJacobian (RichardsProblem<G,RT>& params,
-			      bool levelBoundaryAsDirichlet_, const G& grid,
+    BoxPwJacobian (RichardsProblem<Grid,Scalar>& params,
+			      bool levelBoundaryAsDirichlet_, const Grid& grid,
 			      BoxFunction& sol,
 			      bool procBoundaryAsDirichlet_=true)
-    : BoxJacobian<ThisType,G,RT,1,BoxFunction>(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_),
+    : BoxJacobian<ThisType,Grid,Scalar,1,BoxFunction>(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_),
       problem(params),
       statNData(this->vertexMapper.size()), varNData(SIZE), oldVarNData(SIZE)
     {
@@ -124,17 +123,17 @@ namespace Dune
      	 int j = this->fvGeom.subContVolFace[face].j;
 
 		  // permeability in edge direction
-		  FieldVector<DT,dim> Kij(0);
+		  FieldVector<Scalar,dim> Kij(0);
 		  elData.K.umv(this->fvGeom.subContVolFace[face].normal, Kij);
 
 
 		  VBlockType flux;
 		  for (int phase = 0; phase < m; phase++) {
 	          // calculate FE gradient
-	          FieldVector<RT, dim> pGrad(0);
+	          FieldVector<Scalar, dim> pGrad(0);
 	          double densityIJ = 0;
 	          for (int k = 0; k < this->fvGeom.numVertices; k++) {
-	        	  FieldVector<DT,dim> grad(this->fvGeom.subContVolFace[face].grad[k]);
+	        	  FieldVector<Scalar,dim> grad(this->fvGeom.subContVolFace[face].grad[k]);
 	        	  grad *= varNData[k].pW ;  //(phase) ? varNData[k].pN : sol[k][pWIdx];
 	        	  pGrad += grad;
 
@@ -142,12 +141,12 @@ namespace Dune
 	          }
 
 	          // adjust by gravity
-			  FieldVector<RT, dim> gravity = problem.gravity();
+			  FieldVector<Scalar, dim> gravity = problem.gravity();
 			  gravity *= densityIJ;
 			  pGrad -= gravity;
 
 			  // calculate the flux using upwind
-			  RT outward = pGrad*Kij;
+			  Scalar outward = pGrad*Kij;
 			  if (outward < 0)
 				  flux[phase] = varNData[i].density[phase]*varNData[i].mobility[phase]*outward;
 			  else
@@ -204,13 +203,13 @@ namespace Dune
     // the members of the struct are defined here
     struct VariableNodeData
     {
-    	RT satW;
-    	RT pC;
-    	RT pW;
-    	RT dSdpC;
+    	Scalar satW;
+    	Scalar pC;
+    	Scalar pW;
+    	Scalar dSdpC;
     	VBlockType mobility;  //Vector with the number of phases
     	VBlockType density;
-    	FieldMatrix<DT,dim,dim> K;
+    	FieldMatrix<Scalar,dim,dim> K;
     };
 
     // analog to EvalPrimaryData in MUFTE, uses members of varNData
@@ -263,15 +262,15 @@ namespace Dune
     };
 
     struct ElementData {
-   	 RT cellVolume;
-     RT porosity;
-   	 RT gravity;
-   	 FieldVector<RT, 4> parameters;
-   	 FieldMatrix<DT,dim,dim> K;
+   	 Scalar cellVolume;
+     Scalar porosity;
+   	 Scalar gravity;
+   	 FieldVector<Scalar, 4> parameters;
+   	 FieldMatrix<Scalar,dim,dim> K;
    	 } elData;
 
      // parameters given in constructor
-     RichardsProblem<G,RT>& problem;
+     RichardsProblem<Grid,Scalar>& problem;
      std::vector<StaticNodeData> statNData;
      std::vector<VariableNodeData> varNData;
      std::vector<VariableNodeData> oldVarNData;
