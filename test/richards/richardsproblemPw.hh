@@ -137,7 +137,7 @@ namespace Dune
 
 		gravity_[0] = 0;
 		gravity_[1] = 0;
-		gravity_[dim-1] = -9.81; //-9.81;
+		gravity_[dim-1] = -9.81;
 	}
 
 	private:
@@ -158,7 +158,7 @@ namespace Dune
   	typedef typename G::ctype DT;
   	enum {dim=G::dimension, m=1};
 
-  	virtual FieldMatrix<DT,dim,dim> K (const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi)
+  	virtual const FieldMatrix<DT,dim,dim>& K (const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi)
   	{
   			return Kout_;
   	}
