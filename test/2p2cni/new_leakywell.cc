@@ -3,7 +3,6 @@
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/mpihelper.hh>
-#include <mpi.h>
 
 #include <iostream>
 
