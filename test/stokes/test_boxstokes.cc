@@ -14,6 +14,80 @@
 #include "dumux/timedisc/timeloop.hh"
 #include "boxstokes.hh"
 #include "yxproblem.hh"
+#include "sinproblem.hh"
+
+template<int dim>
+struct VertexLayout
+{
+    bool contains (Dune::GeometryType gt)
+    {
+        return (gt.dim() == 0);
+    }
+};
+
+template<int dim>
+struct ElementLayout
+{
+    bool contains (Dune::GeometryType gt)
+    {
+        return (gt.dim() == dim);
+    }
+};
+
+template<class Vector, class Grid, class Problem>
+void calculateError(const Grid& grid, const Problem& problem, Vector& solution)
+{
+    typedef typename Grid::ctype Scalar;
+    enum {dim=Grid::dimension};
+    typedef typename Grid::template Codim<0>::Entity Element;
+    typedef typename Grid::LeafGridView::template Codim<0>::Iterator ElementIterator;
+    typedef typename Grid::LeafGridView::template Codim<dim>::Iterator VertexIterator;
+    typedef typename Grid::LeafGridView::IndexSet IS;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,IS,ElementLayout> ElementMapper;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,IS,VertexLayout> VertexMapper;
+
+    VertexMapper vertexMapper(grid, grid.leafView().indexSet());
+    ElementMapper elementMapper(grid, grid.leafView().indexSet());
+
+    Scalar errPressure = 0;
+    Scalar errVelocity = 0;
+    Scalar constant = 0;
+    ElementIterator endEIt = grid.template leafend<0>();
+    for (ElementIterator eIt = grid.template leafbegin<0>(); eIt != endEIt; ++eIt)
+    {
+        const Element& element = *eIt;
+
+        Dune::GeometryType geomType = element.geometry().type();
+
+        const Dune::FieldVector<Scalar,dim>& local = Dune::ReferenceElements<Scalar,dim>::general(geomType).position(0, 0);
+        Dune::FieldVector<Scalar,dim> global = element.geometry().global(local);
+
+        Scalar volume = element.geometry().integrationElement(local)
+                *Dune::ReferenceElements<Scalar,dim>::general(geomType).volume();
+
+        int eIdx = elementMapper.map(element);
+
+        Scalar approxPressure = solution.evallocal (2, element, local);
+        Scalar exactPressure = problem.pressure(global);
+        if (eIdx == 0)
+            constant = exactPressure - approxPressure;
+        approxPressure += constant;
+        errPressure += volume*(approxPressure - exactPressure)*(approxPressure - exactPressure);
+
+        Scalar approxXV = solution.evallocal (0, element, local);
+        Scalar exactXV = problem.velocity(global)[0];
+        errVelocity += volume*(approxXV - exactXV)*(approxXV - exactXV);
+
+        Scalar approxYV = solution.evallocal (1, element, local);
+        Scalar exactYV = problem.velocity(global)[1];
+        errVelocity += volume*(approxYV - exactYV)*(approxYV - exactYV);
+    }
+
+    errPressure = sqrt(errPressure);
+    errVelocity = sqrt(errVelocity);
+
+    std::cout << "Error in discrete L2 norm:\nPressure: " << errPressure << "\nVelocity: " << errVelocity << std::endl;
+}
 
 int main(int argc, char** argv)
 {
@@ -42,13 +116,16 @@ int main(int argc, char** argv)
     if (refinementSteps)
         grid.globalRefine(refinementSteps);
 
-    Dune::YXProblem<GridType, double> problem;
+    Dune::SinProblem<GridType, double> problem;
     typedef Dune::LeafP1BoxStokes<GridType, NumberType, dim> BoxStokes;
     BoxStokes boxStokes(grid, problem);
 
     Dune::TimeLoop<GridType, BoxStokes> timeloop(0, 1, 1, "test_boxstokes", 1);
 
     timeloop.execute(boxStokes);
+
+    //printvector(std::cout, *(boxStokes.u), "solution", "row", 200, 1, 3);
+    calculateError(grid, problem, boxStokes.u);
 
     return 0;
   }
