@@ -10,29 +10,31 @@
 #include "dumux/nonlinear/new_newtonmethod.hh"
 #include "dumux/timedisc/new_impliciteulerstep.hh"
 
-namespace Dune {
-   template<class G, class Model, bool useMultiWriter = false>
-    class TimeLoop
+namespace Dune
+{
+template<class G, class Model, bool useMultiWriter = false>
+class TimeLoop
+{
+public:
+    void execute(Model& model)
     {
-    public:
-      void execute(Model& model)
-      {
-          // generate one meta vtk-file holding the individual timesteps
-          char multiFileName[128];
-          char fileNameVTK[128];
-          sprintf(multiFileName,"multi-%s.pvd", fileName);
-          std::ofstream multiFile(multiFileName);
-          multiFile << "<?xml version=\"1.0\"?>" << std::endl
-          << "<VTKFile type=\"Collection\" version=\"0.1\" byte_order=\"LittleEndian\" " << std::endl
-          << "compressor=\"vtkZLibDataCompressor\">"  << std::endl
-          << " <Collection>" << std::endl;
+        // generate one meta vtk-file holding the individual timesteps
+        char multiFileName[128];
+        char fileNameVTK[128];
+        sprintf(multiFileName, "multi-%s.pvd", fileName);
+        std::ofstream multiFile(multiFileName);
+        multiFile << "<?xml version=\"1.0\"?>" << std::endl
+                << "<VTKFile type=\"Collection\" version=\"0.1\" byte_order=\"LittleEndian\" "
+                << std::endl << "compressor=\"vtkZLibDataCompressor\">"
+                << std::endl << " <Collection>" << std::endl;
 
         // initialize solution with initial values
         model.initial();
 
         int k = 0;
         model.vtkout(fileName, k);
-        switch (G::dimension) {
+        switch (G::dimension)
+        {
         case 1:
             sprintf(fileNameVTK, "%s-%05d.vtp", fileName, k);
             break;
@@ -48,7 +50,8 @@ namespace Dune {
         //          double dtOriginal;
         //          if (fixed)
         //              dtOriginal = dt;
-        while (t < tEnd) {
+        while (t < tEnd)
+        {
             k++;
             double dtOld = dt;
 
@@ -57,16 +60,21 @@ namespace Dune {
             else
                 timeStep.execute(model, t, dt, maxDt, tEnd, cFLFactor);
 
-            if (fixed) {
-                if (dt > dtOld) {
+            if (fixed)
+            {
+                if (dt > dtOld)
+                {
                     t += dtOld;
                     t = std::min(t, tEnd);
-                    if (dt > tEnd - t) {
+                    if (dt > tEnd - t)
+                    {
                         std::cout << "\t" << k << "\t" << t << "\t" << dtOld
                                 << "\t # timestep number k, time t, timestep size dt"
                                 << std::endl;
                         //std::cout << ", timestep: " << k << "\t t=" << t << "\t dt=" << (tEnd-t) << std::endl;
-                    } else {
+                    }
+                    else
+                    {
                         std::cout << "\t" << k << "\t" << t << "\t" << dtOld
                                 << "\t # timestep number k, time t, timestep size dt"
                                 << std::endl;
@@ -74,7 +82,8 @@ namespace Dune {
                     }
                 }
 
-                else {
+                else
+                {
                     t += dt;
                     t = std::min(t, tEnd);
                     std::cout << "\t" << k << "\t" << t << "\t" << dt
@@ -82,7 +91,9 @@ namespace Dune {
                             << std::endl;
                     //std::cout << ", timestep: " << k << "\t t=" << t << "\t dt=" << dt << std::endl;
                 }
-            } else {
+            }
+            else
+            {
                 t += dt;
                 t = std::min(t, tEnd);
                 std::cout << ", timestep: " << k << "\t t=" << t << "\t dt="
@@ -91,9 +102,11 @@ namespace Dune {
             }
 
             // generate output
-            if (k % modulo == 0) {
+            if (k % modulo == 0)
+            {
                 model.vtkout(fileName, k / modulo);
-                switch (G::dimension) {
+                switch (G::dimension)
+                {
                 case 1:
                     sprintf(fileNameVTK, "%s-%05d.vtp", fileName, k / modulo);
                     break;
@@ -114,51 +127,56 @@ namespace Dune {
         return;
     }
 
-      TimeLoop(const double ts, const double te, const char* name = "timeloop", const int mod = 1,
-              const double cfl = 1, const double mdt = 1e100, const double fdt = 1e100,
-              TimeStep<G, Model>& tist = *(new RungeKuttaStep<G, Model>(1)))
-              : tStart(ts), tEnd(te), maxDt(mdt), firstDt(fdt), cFLFactor(cfl),
-              modulo(mod), timeStep(tist), fileName(name), fixed(false)
-              { }
-
-  TimeLoop(const double ts, const double te, const double dtime = 1e100,
-              const char* name = "timeloop", const int mod = 1, const double mdt=1e100, const double fdt = 1e100,
-              TimeStep<G, Model>& tist = *(new ImplicitEulerStep<G, Model>))
-              : tStart(ts), tEnd(te), dt(dtime), maxDt(mdt), firstDt(fdt), cFLFactor(1),
-              modulo(mod), timeStep(tist), fileName(name), fixed(true)
-            { }
-
-    private:
-        const double tStart;
-        const double tEnd;
-        double dt;
-        const double maxDt;
-        const double firstDt;
-        const double cFLFactor;
-        const int modulo;
-        TimeStep<G, Model>& timeStep;
-        const char* fileName;
-        const bool fixed;
-    };
-
-
-    template<class G, class Model>
-    class TimeLoop<G, Model, true>
+    TimeLoop(const double ts, const double te, const char* name = "timeloop",
+            const int mod = 1, const double cfl = 1, const double mdt = 1e100,
+            const double fdt = 1e100, TimeStep<G, Model>& tist =
+                    *(new RungeKuttaStep<G, Model> (1))) :
+        tStart(ts), tEnd(te), maxDt(mdt), firstDt(fdt), cFLFactor(cfl), modulo(
+                mod), timeStep(tist), fileName(name), fixed(false)
     {
-    public:
-          // HACK: this function does the same as the execute function
-          // above, but it uses the new newton method and the
-          // vtkMultiWriter. it is a temorary measure to ease the
-          // migration...
-      template<class MultiWriter>
-      void executeMultiWriter (Model& model, MultiWriter& writer, bool restart=false, int restartNum=0)
-      {
-                  typedef NewImplicitEulerStep<Model> NewTimeStep;
+    }
 
-          int k = 0;
-          int countVtk = 0;
+    TimeLoop(const double ts, const double te, const double dtime = 1e100,
+            const char* name = "timeloop", const int mod = 1, const double mdt =
+                    1e100, const double fdt = 1e100, TimeStep<G, Model>& tist =
+                    *(new ImplicitEulerStep<G, Model> )) :
+        tStart(ts), tEnd(te), dt(dtime), maxDt(mdt), firstDt(fdt),
+                cFLFactor(1), modulo(mod), timeStep(tist), fileName(name),
+                fixed(true)
+    {
+    }
 
-          writer.beginTimestep(0, model.grid().leafView());
+private:
+    const double tStart;
+    const double tEnd;
+    double dt;
+    const double maxDt;
+    const double firstDt;
+    const double cFLFactor;
+    const int modulo;
+    TimeStep<G, Model>& timeStep;
+    const char* fileName;
+    const bool fixed;
+};
+
+template<class G, class Model>
+class TimeLoop<G, Model, true>
+{
+public:
+    // HACK: this function does the same as the execute function
+    // above, but it uses the new newton method and the
+    // vtkMultiWriter. it is a temorary measure to ease the
+    // migration...
+    template<class MultiWriter>
+    void executeMultiWriter(Model& model, MultiWriter& writer,
+            bool writeRestart = false, bool restart = false, int restartNum = 0)
+    {
+        typedef NewImplicitEulerStep<Model> NewTimeStep;
+
+        int k = 0;
+        int countVtk = 0;
+
+        writer.beginTimestep(0, model.grid().leafView());
 
         // initialize solution with initial values
         model.setVtkMultiWriter(&writer);
@@ -166,6 +184,8 @@ namespace Dune {
         {
             model.initial();
         }
+
+        // initialize solution from restart file with the number restartNum
         else
         {
             model.restart(restartNum);
@@ -174,42 +194,52 @@ namespace Dune {
         std::cout << ">>> writing initial output file" << std::endl;
         writer.endTimestep(); // writes output file
 
-          // now do the time steps
-          double t = tStart;
-          //          double dtOriginal;
-          //          if (fixed)
-          //              dtOriginal = dt;
-          while (t < tEnd) {
-              k++;
-//              double dtOld = dt;
+        // now do the time steps
+        double t = tStart;
+        //          double dtOriginal;
+        //          if (fixed)
+        //              dtOriginal = dt;
+        while (t < tEnd)
+        {
+            k++;
+            //              double dtOld = dt;
 
-                         double nextDt;
-              if (t == tStart)
-                              NewTimeStep::execute(model, t, dt, nextDt, firstDt, tEnd, cFLFactor);
-              else
-                              NewTimeStep::execute(model, t, dt, nextDt, maxDt, tEnd, cFLFactor);
+            double nextDt;
+            if (t == tStart)
+                NewTimeStep::execute(model, t, dt, nextDt, firstDt, tEnd,
+                        cFLFactor);
+            else
+                NewTimeStep::execute(model, t, dt, nextDt, maxDt, tEnd,
+                        cFLFactor);
 
-                          t += dt;
-                          t = std::min(t, tEnd);
-                          dt = nextDt;
-                          std::cout << ", timestep: " << k << "\t t=" << t << "\t dt=" << dt << std::endl;
+            t += dt;
+            t = std::min(t, tEnd);
+            dt = nextDt;
+            std::cout << ", timestep: " << k << "\t t=" << t << "\t dt=" << dt
+                    << std::endl;
 
-          // generate output
-              if (k%modulo == 0)
-              {
-                  countVtk++;
-                  writer.beginTimestep(t, model.grid().leafView());
-                  model.addvtkfields(writer);
-                  std::cout << ">>> writing output-file number " << countVtk << " at time : " << t << std::endl;
-                  writer.endTimestep();
-              }
-              if (k%(modulo*2) == 0)
-              {
-                  ++restartNum;
-                  std::cout << ">>> writing restart-file number " << restartNum << " at time : " << t << std::endl;
-                  model.writerestartfile(restartNum);
-              }
-          }
+            // generate output
+            if (k % modulo == 0)
+            {
+                countVtk++;
+                writer.beginTimestep(t, model.grid().leafView());
+                model.addvtkfields(writer);
+                std::cout << ">>> writing output-file number " << countVtk
+                        << " at time : " << t << std::endl;
+                writer.endTimestep();
+            }
+            // write restart file
+            if (writeRestart == true)
+            {
+                if (k % modulo == 0) // writes restart file each timestep
+                {
+                    ++restartNum;
+                    std::cout << ">>> writing restart-file number "
+                            << restartNum << " at time : " << t << std::endl;
+                    model.writerestartfile(restartNum);
+                }
+            }
+        }
 
         return;
     }
@@ -219,7 +249,8 @@ namespace Dune {
             const double fdt = 1e100, TimeStep<G, Model>& tist =
                     *(new RungeKuttaStep<G, Model> (1))) :
         tStart(ts), tEnd(te), maxDt(mdt), firstDt(fdt), cFLFactor(cfl), modulo(
-                mod), timeStep(tist), fileName(name), fixed(false) {
+                mod), timeStep(tist), fileName(name), fixed(false)
+    {
     }
 
     TimeLoop(const double ts, const double te, const double dtime = 1e100,
@@ -227,7 +258,8 @@ namespace Dune {
                     1e100, TimeStep<G, Model>& tist = *(new ImplicitEulerStep<
                     G, Model> )) :
         tStart(ts), tEnd(te), dt(dtime), maxDt(1e100), firstDt(fdt), cFLFactor(
-                1), modulo(mod), timeStep(tist), fileName(name), fixed(true) {
+                1), modulo(mod), timeStep(tist), fileName(name), fixed(true)
+    {
     }
 
 private:
