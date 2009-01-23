@@ -39,19 +39,21 @@ typedef	typename G::ctype DT;
 		auxiliary3 = 5,
 	};
 
-	/** @brief Permeability tensor
+    /** @brief Permeability tensor
 	 * @param x position in global coordinates
 	 * @param e codim 0 entity for which the value is sought
 	 * @param xi position in local coordinates in e
 	 */
-	virtual const FieldMatrix<DT,n,n> &K (const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) = 0;
+	virtual const FieldMatrix<DT,n,n> &K (const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, const int idx=0)
+	{    DUNE_THROW(NotImplemented, "Permeability not implemented!"); }
 
-	/**@brief matrix porosity
+    /**@brief matrix porosity
 	 * @param x position in global coordinates
 	 * @param e codim 0 entity for which the value is sought
 	 * @param xi position in local coordinates in e
 	 */
-	virtual double porosity(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const = 0;
+	virtual double porosity(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, const int idx=0) const
+    {    DUNE_THROW(NotImplemented, "Porosity not implemented!"); }
 
 	/**@brief Wetting phase residual saturation
 	 * @param x position in global coordinates
@@ -78,10 +80,10 @@ typedef	typename G::ctype DT;
 	 */
 	/* ATTENTION: define heat capacity per cubic meter! Be sure, that it corresponds to porosity!
 	 * Best thing will be to define heatCap = (specific heatCapacity of material) * density * porosity*/
-	virtual double heatCap(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
-	{
-		DUNE_THROW(NotImplemented, "heat capacity function not implemented!");
-	}
+    virtual double heatCap(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, const int idx=0) const
+    {
+        DUNE_THROW(NotImplemented, "heat capacity function not implemented!");
+    }
 
 	/**@brief Heat conductivity of matrix AND fluid phases [ W / (m * K)]
 	 * @param x position in global coordinates
@@ -89,10 +91,11 @@ typedef	typename G::ctype DT;
 	 * @param xi position in local coordinates in e
 	 * @param sat wetting Phase saturation
 	 */
-	virtual double heatCond(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, const double sat) const
-	{
-		DUNE_THROW(NotImplemented, "heat conductivity function not implemented!");
-	}
+    virtual double heatCond(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, const double sat, const int idx=0) const
+    {
+        DUNE_THROW(NotImplemented, "heat conductivity function not implemented!");
+    }
+
 
 	/**@brief Tortuosity of matrix
 	 * @param x position in global coordinates

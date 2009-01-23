@@ -22,11 +22,11 @@ typedef	typename G::Traits::template Codim<0>::Entity Entity;
 	typedef typename G::ctype DT;
 	enum {n=G::dimension, m=1};
 
-	virtual const FieldMatrix<DT,n,n> &K(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, const int idx=0)
+	virtual const FieldMatrix<DT,n,n> &K(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi)
 	{
 		return K_;
 	}
-	virtual double porosity(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, const int idx=0) const
+	virtual double porosity(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
 	{
 		return 0.3;
 	}
@@ -43,14 +43,14 @@ typedef	typename G::Traits::template Codim<0>::Entity Entity;
 
 	/* ATTENTION: define heat capacity per cubic meter! Be sure, that it corresponds to porosity!
 	 * Best thing will be to define heatCap = (specific heatCapacity of material) * density * porosity*/
-	virtual double heatCap(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, const int idx=0) const
+	virtual double heatCap(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
 	{
 		return 790 /* spec. heat cap. of granite */
 		* 2700 /* density of granite */
 		* (1 - porosity(x, e, xi));
 	}
 
-	virtual double heatCond(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, const double sat, const int idx=0) const
+	virtual double heatCond(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, const double sat) const
 	{
 		static const double lWater = 0.6;
 		static const double lGranite = 2.8;
@@ -101,12 +101,12 @@ public:
 	typedef typename G::ctype DT;
 	enum {n=G::dimension, m=1};
 
-	const virtual FieldMatrix<DT,n,n> &K (const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, const int idx=0)
+	const virtual FieldMatrix<DT,n,n> &K (const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi)
 	{
 		return permeability.K(e);
 	}
 
-	virtual double porosity(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, const int idx=0) const
+	virtual double porosity(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
 	{
 		return 0.3;
 	}
@@ -123,14 +123,14 @@ public:
 
 	/* ATTENTION: define heat capacity per cubic meter! Be sure, that it corresponds to porosity!
 	 * Best thing will be to define heatCap = (specific heatCapacity of material) * density * porosity*/
-	virtual double heatCap(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, const int idx=0) const
+	virtual double heatCap(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
 	{
 		return 790 /* spec. heat cap. of granite */
 		* 2700 /* density of granite */
-		* (1-porosity(x, e, xi, idx));
+		* (1-porosity(x, e, xi));
 	}
 
-	virtual double heatCond(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, const double sat, const int idx=0) const
+	virtual double heatCond(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, const double sat) const
 	{
 		static const double lWater = 0.6;
 		static const double lGranite = 2.8;
@@ -161,10 +161,6 @@ public:
 	}
 
 	HeterogeneousSoil(const G& g,const char* name = "permeab.dat", const bool create = true)
-	:Matrix2p<G,RT>(),permeability(g, name, create)
-	{}
-
-	HeterogeneousSoil(const G& g, const bool read, const char* name, const bool create = false)
 	:Matrix2p<G,RT>(),permeability(g, name, create)
 	{}
 
