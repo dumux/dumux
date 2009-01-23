@@ -14,7 +14,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Simplify the handling of time dependend problems
+ * \brief Simplify the handling of time dependent problems
  */
 #ifndef DUNE_TIME_MANAGER_HH
 #define DUNE_TIME_MANAGER_HH
@@ -26,7 +26,7 @@
 namespace Dune
 {
     /*!
-     * \brief Simplify the handling of time dependend problems.
+     * \brief Simplify the handling of time dependent problems.
      *
      * This class manages a sequence of "episodes" which determine the
      * boundary conditions of a problem. This approach is handy if the
@@ -59,7 +59,7 @@ namespace Dune
                 episodeLength_ = len;
             }
 
-        TimeManager(double len = 1e100,
+        TimeManager(double len,
                     bool verbose = true)
             {
                 verbose_ = verbose;
@@ -70,11 +70,11 @@ namespace Dune
 
         TimeManager(bool verbose = true)
             {
-                verbose_ = verbose;              
+                verbose_ = verbose;
                 init_();
                 episodeLength_ = 1e100;
             }
-        
+
         /*!
          *  \defgroup time Simulated time and time step management
          * @{
