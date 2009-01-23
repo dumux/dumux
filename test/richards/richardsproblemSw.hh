@@ -155,7 +155,7 @@ namespace Dune
   	typedef typename G::ctype DT;
   	enum {dim=G::dimension, m=1};
 
-  	virtual FieldMatrix<DT,dim,dim> K (const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi)
+  	virtual const FieldMatrix<DT,dim,dim> &K (const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi)
   	{
   			return Kout_;
   	}
