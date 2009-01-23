@@ -15,7 +15,7 @@ public:
     for (int i=0; i<n; i++)
       for (int j=0; j<n; j++)
         if (i==j)
-          large[i][j] = 1;
+          large[i][j] = 4e-2;
         else
           large[i][j] = 0;
   }
@@ -36,7 +36,7 @@ public:
             const IntersectionIterator& intersectionIt,
                        const Dune::FieldVector<DT,n>& xi) const
   {
-     if (x[0] > 2 - 1e-6)
+    if (x[0] > 2 - 1e-6)
       return Dune::BoundaryConditions::dirichlet;
 
     return Dune::BoundaryConditions::neumann;

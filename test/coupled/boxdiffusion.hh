@@ -20,11 +20,79 @@
 #include "dumux/fvgeometry/fvelementgeometry.hh"
 #include "dumux/nonlinear/newtonmethod.hh"
 #include "boxdiffusionjacobian.hh"
+#include "darcyparameters.hh"
 #include "diffusionparameters.hh"
 #include "dumux/pardiso/pardiso.hh"
 
 namespace Dune
 {
+template<int dim>
+struct VertexLayout
+{
+    bool contains (Dune::GeometryType gt)
+    {
+        return (gt.dim() == 0);
+    }
+};
+
+template<int dim>
+struct ElementLayout
+{
+    bool contains (Dune::GeometryType gt)
+    {
+        return (gt.dim() == dim);
+    }
+};
+
+template<class PressureFunction, class Vector, class Grid, class Problem>
+void calculateDarcyVelocity(const Grid& grid, const Problem& problem, PressureFunction& pressure, Vector& xVelocity, Vector& yVelocity)
+{
+    typedef typename Grid::ctype Scalar;
+    enum {dim=Grid::dimension};
+    typedef typename Grid::template Codim<0>::Entity Element;
+    typedef typename Grid::LeafGridView::template Codim<0>::Iterator ElementIterator;
+    typedef typename Grid::LeafGridView::template Codim<dim>::Iterator VertexIterator;
+    typedef typename Grid::LeafGridView::IndexSet IS;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,IS,ElementLayout> ElementMapper;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,IS,VertexLayout> VertexMapper;
+
+    VertexMapper vertexMapper(grid, grid.leafView().indexSet());
+    ElementMapper elementMapper(grid, grid.leafView().indexSet());
+
+    ElementIterator endEIt = grid.template leafend<0>();
+    for (ElementIterator eIt = grid.template leafbegin<0>(); eIt != endEIt; ++eIt)
+    {
+        const Element& element = *eIt;
+
+        Dune::GeometryType geomType = element.geometry().type();
+
+        const Dune::FieldVector<Scalar,dim>& local = Dune::ReferenceElements<Scalar,dim>::general(geomType).position(0, 0);
+        Dune::FieldVector<Scalar,dim> global = element.geometry().global(local);
+
+        int eIdx = elementMapper.map(element);
+
+        FieldVector<Scalar, dim> pressGradient;
+
+        for (int comp = 0; comp < dim; comp++) {
+            FieldVector<int, dim> order(0);
+            order[comp] = 1;
+            pressGradient[comp] = pressure.derivativelocal (0, order, element, local);
+        }
+
+        FieldMatrix<Scalar, dim, dim> K = problem.K(global, element, local);
+
+        FieldVector<Scalar, dim> darcyVelocity(0);
+        K.umv(pressGradient, darcyVelocity);
+
+        darcyVelocity *= -1.0;
+
+        xVelocity[eIdx] = darcyVelocity[0];
+        yVelocity[eIdx] = darcyVelocity[1];
+    }
+}
+
+
+
   template<class G, class RT, class ProblemType, class LocalJacobian,
             class FunctionType, class OperatorAssembler>
   class BoxDiffusion
@@ -40,7 +108,7 @@ namespace Dune
 
     BoxDiffusion(const G& g, ProblemType& prob, int level)
     : NonlinearModel(g, prob, level), uOldTimeStep(g, level)
-    {     }
+    {   }
 
     virtual void initial() = 0;
 
@@ -56,7 +124,7 @@ namespace Dune
 
 
   template<class G, class RT, int m=1>
-  class LeafP1BoxDiffusion : public BoxDiffusion<G, RT, DiffusionParameters<G, RT>, BoxDiffusionJacobian<G, RT>,
+  class LeafP1BoxDiffusion : public BoxDiffusion<G, RT, DarcyParameters<G, RT>, BoxDiffusionJacobian<G, RT>,
                                         LeafP1FunctionExtended<G, RT, m>, LeafP1OperatorAssembler<G, RT, m> >
   {
   public:
@@ -66,11 +134,12 @@ namespace Dune
       // define the operator assembler type:
       typedef LeafP1OperatorAssembler<G, RT, m> OperatorAssembler;
 
-      typedef DiffusionParameters<G, RT> ProblemType;
+      typedef DarcyParameters<G, RT> ProblemType;
+//    typedef DiffusionParameters<G, RT> ProblemType;
 
       typedef G GridType;
 
-      typedef BoxDiffusion<G, RT, DiffusionParameters<G, RT>, BoxDiffusionJacobian<G, RT>,
+      typedef BoxDiffusion<G, RT, ProblemType, BoxDiffusionJacobian<G, RT>,
                               FunctionType, OperatorAssembler> BoxDiffusion;
 
       typedef LeafP1BoxDiffusion<G, RT, m> ThisType;
@@ -95,10 +164,10 @@ namespace Dune
         typedef typename ThisType::OperatorAssembler::RepresentationType MatrixType;
         typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator;
 //#ifdef HAVE_PARDISO
-//    SeqPardiso<MatrixType,VectorType,VectorType> pardiso;
+//  SeqPardiso<MatrixType,VectorType,VectorType> pardiso;
 //#endif
 
-      LeafP1BoxDiffusion (const G& g, DiffusionParameters<G, RT>& prob)
+      LeafP1BoxDiffusion (const G& g, DarcyParameters<G, RT>& prob)
       : BoxDiffusion(g, prob), grid(g), vertexmapper(g, g.leafIndexSet()),
         size((*(this->u)).size())
       { }
@@ -129,7 +198,7 @@ namespace Dune
               const Entity& entity = *it;
 
               const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type&
-                  sfs=Dune::LagrangeShapeFunctions<DT,RT,dim>::general(gt, 1);
+                sfs=Dune::LagrangeShapeFunctions<DT,RT,dim>::general(gt, 1);
               int size = sfs.size();
 
               for (int i = 0; i < size; i++) {
@@ -150,7 +219,7 @@ namespace Dune
               const Entity& entity = *it;
 
               const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type&
-                  sfs=Dune::LagrangeShapeFunctions<DT,RT,dim>::general(gt, 1);
+                sfs=Dune::LagrangeShapeFunctions<DT,RT,dim>::general(gt, 1);
               int size = sfs.size();
 
               // set type of boundary conditions
@@ -181,7 +250,7 @@ namespace Dune
                                 int globalId = vertexmapper.template map<dim>(entity, sfs[i].entity());
 
                                 FieldVector<BoundaryConditions::Flags, m> bctype = this->problem.bctype(global, entity, is, local);
-//                                 std::cout << "global = " << global << ", id = " << globalId << std::endl;
+//                              std::cout << "global = " << global << ", id = " << globalId << std::endl;
                                 if (bctype[0] == BoundaryConditions::dirichlet) {
                                     (*(this->u))[globalId] = this->problem.g(global, entity, is, local);
                                 }
@@ -216,8 +285,8 @@ namespace Dune
         double red=1E-14;
 
 //#ifdef HAVE_PARDISO
-//        pardiso.factorize(*(this->A));
-//        LoopSolver<VectorType> solver(op, pardiso, red, 10, 2);
+//      pardiso.factorize(*(this->A));
+//      LoopSolver<VectorType> solver(op, pardiso, red, 10, 2);
 //#else
         SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A),1.0);// a precondtioner
         BiCGSTABSolver<VectorType> solver(op,ilu0,red,10000,1);         // an inverse operator
@@ -284,8 +353,14 @@ namespace Dune
 
     virtual void vtkout (const char* name, int k)
     {
-                VTKWriter<typename G::LeafGridView> vtkwriter(this->grid.leafView());
+        BlockVector<FieldVector<RT, 1> > xVelocity(grid.size(0));
+        BlockVector<FieldVector<RT, 1> > yVelocity(grid.size(0));
+
+        calculateDarcyVelocity(grid, this->problem, this->u, xVelocity, yVelocity);
+        VTKWriter<typename G::LeafGridView> vtkwriter(this->grid.leafView());
         vtkwriter.addVertexData(*(this->u),"pressure");
+        vtkwriter.addCellData(xVelocity,"x-velocity");
+        vtkwriter.addCellData(yVelocity,"y-velocity");
         vtkwriter.write(name, VTKOptions::ascii);
     }
 

@@ -242,7 +242,7 @@ namespace Dune
           double qDetJac = stokesIsIt->intersectionGlobal().integrationElement(qLocalDimM1);
           FieldVector<double,dim> normal = stokesIsIt->unitOuterNormal(qLocalDimM1);
           const typename LagrangeShapeFunctionSetContainer<double,double,dim>::value_type&
-            pressShapeFuncSet = LagrangeShapeFunctions<double,double,dim>::general(gt,1);
+          pressShapeFuncSet = LagrangeShapeFunctions<double,double,dim>::general(gt,1);
 
           for(int comp = 0; comp < dim; ++comp) // loop over the velocity components
             {
@@ -296,6 +296,8 @@ namespace Dune
       double red=1E-14;
       SeqPardiso<GlobalMatrixType,GlobalVectorType,GlobalVectorType> pardiso(this->A);
       LoopSolver<GlobalVectorType> solver(op,pardiso,red,10000,1);
+//      SeqILU0<GlobalMatrixType,GlobalVectorType,GlobalVectorType> ilu(this->A, 0.9);
+//      BiCGSTABSolver<GlobalVectorType> solver(op,ilu,red,10000,1);
       InverseOperatorResult r;
       solver.apply(this->u, this->f, r);
 
@@ -327,6 +329,15 @@ namespace Dune
       for (int i = 0; i < this->secondModel_.sol().size(); i++)
     for (typename BaseType::SecondMatrixType::block_type::size_type k = 0; k < colsInBlock2; k++)
       this->secondModel_.sol()[i][k] = this->u[colsInBlock1*this->firstModel_.sol().size() + i*colsInBlock2 + k];
+    }
+
+    virtual void vtkout (const char* name, int k)
+    {
+        char localName[128];
+        sprintf(localName, "%s_stokes", name);
+        this->firstModel_.vtkout(localName, k);
+        sprintf(localName, "%s_darcy", name);
+        this->secondModel_.vtkout(localName, k);
     }
 
     CoupledStokesDarcy(const StokesGrid& stokesGrid, StokesModel& stokesModel,

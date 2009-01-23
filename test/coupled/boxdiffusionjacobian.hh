@@ -19,7 +19,8 @@
 #include<dune/disc/operators/boundaryconditions.hh>
 
 #include<dumux/operators/boxjacobian.hh>
-#include "diffusionparameters.hh"
+//#include "diffusionparameters.hh"
+#include "darcyparameters.hh"
 
 namespace Dune
 {
@@ -47,13 +48,13 @@ namespace Dune
     typedef typename Entity::Geometry Geometry;
     typedef BoxDiffusionJacobian<G,RT,BoxFunction> ThisType;
     typedef typename LocalJacobian<ThisType,G,RT,1>::VBlockType VBlockType;
-     typedef FVElementGeometry<G> FVElementGeometry;
+    typedef FVElementGeometry<G> FVElementGeometry;
 
   public:
     enum {n=G::dimension};
 
     //! Constructor
-    BoxDiffusionJacobian (DiffusionParameters<G,RT>& params,
+    BoxDiffusionJacobian (DarcyParameters<G,RT>& params,
                   bool levelBoundaryAsDirichlet_, const G& grid,
                   BoxFunction& sol,
                   bool procBoundaryAsDirichlet_=true)
@@ -70,13 +71,8 @@ namespace Dune
 
     VBlockType computeM (const Entity& e, const VBlockType* sol, int node, bool old = false)
     {
-        VBlockType result(0);
-        return result;
-    }
-
-    VBlockType computeQ (const Entity& e, const VBlockType* sol, const int& node)
-    {
-        return problem.q(this->fvGeom.subContVol[node].global, e, this->fvGeom.subContVol[node].local);
+     VBlockType result(0);
+     return result;
     }
 
     VBlockType computeA (const Entity& e, const VBlockType* sol, int face)
@@ -88,12 +84,20 @@ namespace Dune
             gradP += grad;
         }
 
+//TODO: implement correct viscosity, called from material law
+        double viscosity(0.01);
         FieldVector<RT,n> KGradP(0);
         elData.K.umv(gradP, KGradP);
 
         VBlockType flux = KGradP*this->fvGeom.subContVolFace[face].normal;
+        flux /= viscosity;
 
         return flux;
+    }
+
+    VBlockType computeQ (const Entity& e, const VBlockType* sol, const int& node)
+    {
+     return problem.q(this->fvGeom.subContVol[node].global, e, this->fvGeom.subContVol[node].local);
     }
 
     void computeElementData (const Entity& e)
@@ -102,9 +106,9 @@ namespace Dune
         elData.K = problem.K(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
     };
 
-     virtual void updateVariableData(const Entity& e, const VBlockType* sol, int i, bool old = false)
+    virtual void updateVariableData(const Entity& e, const VBlockType* sol, int i, bool old = false)
     {
-         return;
+        return;
     }
 
     void updateVariableData(const Entity& e, const VBlockType* sol, bool old = false)
@@ -119,10 +123,10 @@ namespace Dune
 
     struct ElementData {
         FieldMatrix<DT,n,n> K;
-       };
+    };
 
-       ElementData elData;
-    DiffusionParameters<G,RT>& problem;
+    ElementData elData;
+    DarcyParameters<G,RT>& problem;
   };
 }
 #endif
