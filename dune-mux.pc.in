@@ -4,11 +4,12 @@ libdir=@libdir@
 includedir=@includedir@
 CXX=@CXX@
 CC=@CC@
+DEPENDENCIES=@REQUIRES@
 
-Name: DUMUX
+Name: @PACKAGE_NAME@
 Version: @VERSION@
-Description: the DUMUX Module 
-URL: http://www.dune-project.org/
-Requires:
-Libs: 
-Cflags: -I${includedir}
+Description: dune-mux module
+URL: http://dune-project.org/
+Requires: dune-common dune-grid dune-istl dune-disc dune-subgrid
+Libs: -L
+Cflags: -I

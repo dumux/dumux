@@ -21,9 +21,9 @@ AM_CONDITIONAL([TEX4HT], [test "x$TEX4HT" != xtrue])
 AC_CHECK_PROGS([CONVERT], [convert], [false])
 AM_CONDITIONAL([CONVERT], [test "x$CONVERT" != xfalse])
 # we need no more than the standard DE-stuff
-# this module depends on dune-common dune-disc dune-fem dune-grid dune-istl
-# this implies checking for [dune-common], [dune-istl], [dune-grid], [dune-disc], [dune-fem]
-DUNE_CHECK_ALL([dune-common], [dune-istl], [dune-grid], [dune-disc])
+# this module depends on dune-common dune-grid dune-istl dune-disc dune-subgrid
+# this implies checking for [dune-common], [dune-grid], [dune-istl], [dune-disc], [dune-subgrid]
+DUNE_CHECK_ALL
 
 AC_DEFUN([SET_PARDISO], [
 AC_PREREQ(2.50)
@@ -191,6 +191,7 @@ AC_CONFIG_FILES([Makefile
     benchmarkproblems/fractionalflow/2p/convectiondiffusion/Makefile      
     benchmarkproblems/fullycoupled/2p/mcwhorter/Makefile
     benchmarkproblems/fractionalflow/2p/mcwhorter/Makefile
+    m4/Makefile
     dune-mux.pc])
 
 AC_OUTPUT
