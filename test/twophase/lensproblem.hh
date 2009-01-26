@@ -34,23 +34,23 @@ namespace Dune
    *
    *    Template parameters are:
    *
-   *    - Grid  a DUNE grid type
-   *    - RT    type used for return values
+   *    - Grid    a DUNE grid type
+   *    - Scalar  type used for return values
    */
-  template<class G, class RT>
-  class LensProblem : public TwoPhaseProblem<G, RT> {
-    typedef typename G::ctype DT;
-    enum {dim=G::dimension, m=2};
-    typedef typename G::Traits::template Codim<0>::Entity Entity;
-    typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
+  template<class Grid, class Scalar>
+  class LensProblem : public TwoPhaseProblem<Grid, Scalar> {
+    typedef typename Grid::ctype DT;
+    enum {dim=Grid::dimension, numEq=2};
+    typedef typename Grid::Traits::template Codim<0>::Entity Entity;
+    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
 
   public:
     // Constructor
-    LensProblem(Fluid& liq1, Fluid& liq2, Matrix2p<G, RT>& soil,
+    LensProblem(Fluid& liq1, Fluid& liq2, Matrix2p<Grid, Scalar>& soil,
             const FieldVector<DT,dim>& outerLowerLeft = 0., const FieldVector<DT,dim>& outerUpperRight = 0,
             const FieldVector<DT,dim>& innerLowerLeft = 0., const FieldVector<DT,dim>& innerUpperRight = 0,
-            TwoPhaseRelations<G, RT>& law = *(new TwoPhaseRelations<G, RT>))
-    : TwoPhaseProblem<G,RT>(liq1, liq2, soil, law),
+            TwoPhaseRelations<Grid, Scalar>& law = *(new TwoPhaseRelations<Grid, Scalar>))
+    : TwoPhaseProblem<Grid,Scalar>(liq1, liq2, soil, law),
         outerLowerLeft_(outerLowerLeft), outerUpperRight_(outerUpperRight),
         innerLowerLeft_(innerLowerLeft), innerUpperRight_(innerUpperRight),
         eps_(1e-8*outerUpperRight[0]),
@@ -67,12 +67,12 @@ namespace Dune
     enum {pWIdx = 0, sNIdx = 1};
 
     // function returning the BOUNDARY CONDITION TYPE depending on the position
-    virtual FieldVector<BoundaryConditions::Flags, m> bctype (const FieldVector<DT,dim>& x, const Entity& e,
+    virtual FieldVector<BoundaryConditions::Flags, numEq> bctype (const FieldVector<DT,dim>& x, const Entity& element,
                     const IntersectionIterator& intersectionIt,
                        const FieldVector<DT,dim>& xi) const
     {
         // boundary condition type is set to neumann
-        FieldVector<BoundaryConditions::Flags, m> values(BoundaryConditions::neumann);
+        FieldVector<BoundaryConditions::Flags, numEq> values(BoundaryConditions::neumann);
 
         if (x[0] < outerLowerLeft_[0] + eps_ || x[0] > outerUpperRight_[0] - eps_)
         {
@@ -83,22 +83,22 @@ namespace Dune
     }
 
     // definition of DIRICHLET boundary conditions depending on the position
-    virtual FieldVector<RT,m> g (const FieldVector<DT,dim>& x, const Entity& e,
+    virtual FieldVector<Scalar,numEq> g (const FieldVector<DT,dim>& x, const Entity& element,
                 const IntersectionIterator& intersectionIt,
                   const FieldVector<DT,dim>& xi) const
     {
-        FieldVector<RT,m> values(0);
+        FieldVector<Scalar,numEq> values(0);
 
         if (x[0] < outerLowerLeft_[0] + eps_)
         {
-            RT a = -(1 + 0.5/height_);
-            RT b = -a*outerUpperRight_[1];
+            Scalar a = -(1 + 0.5/height_);
+            Scalar b = -a*outerUpperRight_[1];
             values[pWIdx] = -densityW_*gravity_[1]*(a*x[1] + b);
             values[sNIdx] = 0;
         }
         else {
-            RT a = -1;
-            RT b = outerUpperRight_[1];
+            Scalar a = -1;
+            Scalar b = outerUpperRight_[1];
             values[pWIdx] = -densityW_*gravity_[1]*(a*x[1] + b);
             values[sNIdx] = 0;
         }
@@ -107,13 +107,13 @@ namespace Dune
     }
 
     // definition of NEUMANN boundary conditions depending on the position
-    virtual FieldVector<RT,m> J (const FieldVector<DT,dim>& x, const Entity& e,
+    virtual FieldVector<Scalar,numEq> J (const FieldVector<DT,dim>& x, const Entity& element,
                 const IntersectionIterator& intersectionIt,
                   const FieldVector<DT,dim>& xi) const
     {
-        FieldVector<RT,m> values(0);
+        FieldVector<Scalar,numEq> values(0);
 
-        RT lambda = (outerUpperRight_[0] - x[0])/width_;
+        Scalar lambda = (outerUpperRight_[0] - x[0])/width_;
         if (lambda > 0.5 && lambda < 2.0/3.0 && x[1] > outerUpperRight_[1] - eps_) {
             values[sNIdx] = -0.04;
         }
@@ -122,17 +122,17 @@ namespace Dune
     }
 
     // definition of INITIAL VALUES for pressure and saturation
-    virtual FieldVector<RT,m> initial (const FieldVector<DT,dim>& x, const Entity& e,
+    virtual FieldVector<Scalar,numEq> initial (const FieldVector<DT,dim>& x, const Entity& element,
                   const FieldVector<DT,dim>& xi) const
     {
 
-        FieldVector<RT,m> values;
+        FieldVector<Scalar,numEq> values;
 
         values[pWIdx] = -densityW_*gravity_[1]*(height_ - x[1]);
 
         if (x[0] < outerLowerLeft_[0] + eps_) {
-            RT a = -(1 + 0.5/height_);
-            RT b = -a*outerUpperRight_[1];
+            Scalar a = -(1 + 0.5/height_);
+            Scalar b = -a*outerUpperRight_[1];
             values[pWIdx] = -densityW_*gravity_[1]*(a*x[1] + b);
         }
 
@@ -147,15 +147,15 @@ namespace Dune
 
 
     // function returning SOURCE/SINK terms
-    virtual FieldVector<RT,m> q (const FieldVector<DT,dim>& x, const Entity& e,
+    virtual FieldVector<Scalar,numEq> q (const FieldVector<DT,dim>& x, const Entity& element,
                     const FieldVector<DT,dim>& xi) const
     {
-        FieldVector<RT,m> values(0);
+        FieldVector<Scalar,numEq> values(0);
 
         return values;
     }
 
-    virtual FieldVector<RT,dim> gravity () const
+    virtual FieldVector<Scalar,dim> gravity () const
     {
         return gravity_;
     }
@@ -167,7 +167,7 @@ namespace Dune
         FieldVector<DT,dim> innerUpperRight_;
         DT width_, height_;
         DT eps_;
-        RT densityW_, densityN_;
+        Scalar densityW_, densityN_;
         FieldVector<DT,dim> gravity_;
   };
 
