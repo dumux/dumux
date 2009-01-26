@@ -267,6 +267,10 @@ namespace Dune
             {
                 typedef typename Problem::DomainTraits::Scalar  Scalar;
 
+                if (verbose_)
+                    std::cout <<
+                        "Welcome aboard DuMuX airlines. Please fasten your seatbelts! Emergency exits are near the time integration.\n";
+
                 Dune::Timer timer;
                 timer.reset();
 
@@ -311,7 +315,7 @@ namespace Dune
 
                 if (verbose_)
                     std::cout <<
-                        boost::format("Simulation took %.3f seconds\n")
+                        boost::format("Simulation took %.3f seconds. Hopefully you enjoyed simulating with us and that you choose us next time as well.\n")
                         %timer.elapsed();
             }
 

@@ -275,6 +275,7 @@ namespace Dune
                 // previous time step so that we can start the next
                 // update at a physically meaningful solution.
                 *uCur_ = *uPrev_;
+                applyDirichletBoundaries_(uCur_);
             };
 
         /*!
