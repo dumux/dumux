@@ -9,7 +9,6 @@
 #include<fstream>
 #include<vector>
 #include<sstream>
-
 #include<dune/common/exceptions.hh>
 #include<dune/grid/common/grid.hh>
 #include<dune/grid/common/referenceelements.hh>
@@ -53,8 +52,8 @@ namespace Dune
 
     Template parameters are:
 
-    - Grid  a DUNE grid type
-    - Scalar    type used for return values
+    - Grid    a DUNE grid type
+    - Scalar  type used for return values
   */
   template<class Grid, class Scalar, class BoxFunction = LeafP1FunctionExtended<Grid, Scalar, 2> >
   class BoxPwSnJacobian

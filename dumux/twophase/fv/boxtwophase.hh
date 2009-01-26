@@ -14,24 +14,26 @@
 
 namespace Dune
 {
-  template<class G, class RT>
+/** \todo Please doc me! */
+
+  template<class Grid, class Scalar>
   class BoxTwoPhase
-  : public LeafP1TwoPhaseModel<G, RT, TwoPhaseProblem<G, RT>,
-                                 BoxTwoPhaseLocalJacobian<G, RT> >
+  : public LeafP1TwoPhaseModel<Grid, Scalar, TwoPhaseProblem<Grid, Scalar>,
+                                 BoxTwoPhaseLocalJacobian<Grid, Scalar> >
   {
   public:
     // define the problem type (also change the template argument above)
-    typedef TwoPhaseProblem<G, RT> ProblemType;
+    typedef TwoPhaseProblem<Grid, Scalar> ProblemType;
 
     // define the local Jacobian (also change the template argument above)
-    typedef BoxTwoPhaseLocalJacobian<G, RT> LocalJacobian;
+    typedef BoxTwoPhaseLocalJacobian<Grid, Scalar> LocalJacobian;
 
-    typedef LeafP1TwoPhaseModel<G, RT, ProblemType, LocalJacobian> LeafP1TwoPhaseModel;
+    typedef LeafP1TwoPhaseModel<Grid, Scalar, ProblemType, LocalJacobian> LeafP1TwoPhaseModel;
 
-    typedef BoxTwoPhase<G, RT> ThisType;
+    typedef BoxTwoPhase<Grid, Scalar> ThisType;
 
-    BoxTwoPhase(const G& g, ProblemType& prob)
-    : LeafP1TwoPhaseModel(g, prob)
+    BoxTwoPhase(const Grid& grid, ProblemType& prob)
+    : LeafP1TwoPhaseModel(grid, prob)
     {     }
 
     void solve()
@@ -54,7 +56,7 @@ namespace Dune
     {
         this->localJacobian().setDt(dt);
         this->localJacobian().setOldSolution(this->uOldTimeStep);
-        NewtonMethod<G, ThisType> newtonMethod(this->grid, *this);
+        NewtonMethod<Grid, ThisType> newtonMethod(this->grid, *this);
         newtonMethod.execute();
         *(this->uOldTimeStep) = *(this->u);
 
