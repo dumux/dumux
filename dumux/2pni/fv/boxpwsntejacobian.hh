@@ -177,6 +177,12 @@ namespace Dune
          RT lambda;
          lambda = 2./((1./vNDat[i].lambda) + (1./vNDat[j].lambda));
 
+           // Calculate arithmetic mean of the densities
+             VBlockType avgDensity;
+            avgDensity[wPhase] = 0.5*(vNDat[i].density[wPhase] + vNDat[j].density[wPhase]);
+            avgDensity[nPhase] = 0.5*(vNDat[i].density[nPhase] + vNDat[j].density[nPhase]);
+
+
     //////////////////////////////////////////////////////////////////////////////////////////
     // GRADIENTS
 
@@ -214,7 +220,7 @@ namespace Dune
          for (int phase=0; phase<2; phase++)
          {
              contribComp[phase] = problem.gravity();
-             contribComp[phase] *= vNDat[i].density[phase];
+             contribComp[phase] *= avgDensity[phase];
              pGrad[phase] -= contribComp[phase]; // grad p - rho*g
          }
 
