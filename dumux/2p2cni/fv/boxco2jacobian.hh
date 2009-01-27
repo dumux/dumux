@@ -276,7 +276,7 @@ namespace Dune
          for (int phase=0; phase<2; phase++)
          {
              contribComp[phase] = problem.gravity();
-             contribComp[phase] *= vNDat[i].density[phase];
+             contribComp[phase] *= avgDensity[phase];
              pGrad[phase] -= contribComp[phase]; // grad p - rho*g
          }
 
