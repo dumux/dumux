@@ -141,7 +141,7 @@ namespace Dune
         typedef TwoPTwoCNINewtonController<NewtonMethod>    NewtonController;
 
     public:
-        NewTimeProblem(Grid *grid,
+        TimeDependentProblem(Grid *grid,
                            Scalar dtInitial,
                            Scalar tEnd)
             : ParentType(grid),
