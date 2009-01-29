@@ -61,7 +61,6 @@ public:
             FieldVector<Scalar, 2*dim> faceAreaCoarse(0);
             BlockVector<FieldVector<Scalar,dim> > fluxCoarse(2*dim);
             fluxCoarse=0;
-            FieldVector<int,2*dim> count(0);
 
             HierarchicIterator eItEnd = eItCoarse-> hend(this->level());
             for (HierarchicIterator eIt = eItCoarse->hbegin(this->level()); eIt != eItEnd; ++eIt)
