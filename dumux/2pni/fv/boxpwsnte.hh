@@ -43,7 +43,7 @@
 #include "dumux/2pni/fv/boxpwsntejacobian.hh"
 
 #include "dumux/nonlinear/new_newtonmethod.hh"
-#include "dumux/nonlinear/new_newtoncontroller.hh"
+#include "dumux/2pni/2pninewtoncontroller.hh"
 #include "dumux/io/importfromdgf_leaf.hh"
 #include <boost/format.hpp>
 
@@ -99,10 +99,11 @@ public:
       // HACK: traits for the domain of the problem. this is incomplete...
       struct DomainTraits {
           typedef RT   Scalar;
+          typedef G    Grid;
       };
 
       typedef NewNewtonMethod<ThisType> NewtonMethod;
-      typedef NewtonController<NewtonMethod> NewtonController;
+      typedef TwoPTwoCNINewtonController<NewtonMethod> NewtonController;
 
       typedef typename NewtonTraits::Function Function;
       Function &currentSolution()
