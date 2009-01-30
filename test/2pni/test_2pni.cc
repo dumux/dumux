@@ -21,6 +21,7 @@
 #include "dumux/material/phaseproperties/phaseproperties2p.hh"
 #include "dumux/material/twophaserelations.hh"
 #include "dumux/io/vtkmultiwriter.hh"
+#include <dune/common/exceptions.hh>
 
 int main(int argc, char** argv)
 {
