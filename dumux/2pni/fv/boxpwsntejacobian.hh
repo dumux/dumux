@@ -190,6 +190,7 @@ namespace Dune
      FieldVector<RT,dim> teGrad(0.);
      FieldVector<RT,dim> temp(0.);
      VBlockType flux(0.);
+     FieldVector<RT,2> densityIP(0.0);
 
      // calculate FE gradient at subcontrolvolumeface
          for (int k = 0; k < this->fvGeom.numVertices; k++) // loop over adjacent nodes
@@ -213,6 +214,9 @@ namespace Dune
                temp = feGrad;
               temp *= vNDat[k].temperature;
               teGrad += temp;
+
+	      densityIP[wPhase] = vNDat[k].density[wPhase] * this->fvGeom.subContVolFace[face].shapeValue[k];
+	      densityIP[nPhase] = vNDat[k].density[nPhase] * this->fvGeom.subContVolFace[face].shapeValue[k];
          }
 
       // deduce gravity*density of each phase
@@ -220,7 +224,7 @@ namespace Dune
          for (int phase=0; phase<2; phase++)
          {
              contribComp[phase] = problem.gravity();
-             contribComp[phase] *= avgDensity[phase];
+             contribComp[phase] *= densityIP[phase];
              pGrad[phase] -= contribComp[phase]; // grad p - rho*g
          }
 
