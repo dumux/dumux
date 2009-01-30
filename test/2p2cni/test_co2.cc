@@ -27,7 +27,7 @@
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/io/readstarformat.cc"
 #include "dumux/io/vtkmultiwriter.hh"
-
+#include <dune/common/exceptions.hh>
 
 int main(int argc, char** argv)
 {
