@@ -719,7 +719,7 @@ namespace Dune
     , virtual public FunctionDefault<typename GV::Grid::ctype,RT,GV::Grid::dimension,m>
     , virtual public ElementwiseCInfinityFunction<GV,RT,m>
     , virtual public H1Function<typename GV::Grid::ctype,RT,GV::Grid::dimension,m>
-    , virtual public C0GridFunction<GV,RT,m>
+    , virtual public C0GridFunction<typename GV::Grid,RT,m>
   {
     //! get the Grid from the GridView
     typedef typename GV::Grid G;
