@@ -9,184 +9,167 @@
 namespace Dune
 {
 
-template<class G, class RT, class VC>
-class DispersiveCorrection: public DiffusivePart<G, RT>
+template<class Grid, class Scalar, class VC>
+class DispersiveCorrection: public DiffusivePart<Grid, Scalar>
 {
     enum
     {
-        dim = G::dimension
+        dim = Grid::dimension, dimWorld = Grid::dimensionworld
     };
-typedef    typename G::Traits::template Codim<0>::Entity Entity;
-    typedef typename G::template Codim<0>::EntityPointer EntityPointer;
-    typedef typename IntersectionIteratorGetter<G,LevelTag>::IntersectionIterator IntersectionIterator;
-    typedef FieldVector<RT, dim> VectorType;
-    typedef typename G::ctype ct;
+typedef    typename Grid::LevelGridView GridView;
+    typedef typename Grid::Traits::template Codim<0>::Entity Element;
+    typedef typename Element::Geometry Geometry;
+    typedef typename Grid::template Codim<0>::EntityPointer ElementPointer;
+    typedef typename GridView::IntersectionIterator IntersectionIterator;
+    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
-    virtual VectorType operator() (const Entity& entity, const int numberInSelf,
-            const RT satIntersection, const VectorType& satGradient, const RT time,
-            const RT satI, const RT satJ) const
+    virtual Dune::FieldVector<Scalar, dim> operator() (const Element& element, const int numberInSelf,
+            const Scalar satIntersection, const Dune::FieldVector<Scalar, dim>& satGradient, const Scalar time,
+            const Scalar satI, const Scalar satJ) const
     {
-        VectorType result(0);
-        VectorType helpresult(0);
+        Scalar result = 0;
+        Scalar helpresult = 0;
 
-        int size = problem.soil.getDispersionSat().M();
+        int globalIdxI = problem_.variables.transMapper.map(element);
 
-        int indexI = problem.variables.transmapper.map(entity);
+        int colNumI = problem_.soil.getDispersion()[globalIdxI].size();
 
-        GeometryType gt = entity.type();
-        // cell center in reference element
-        const FieldVector<ct,dim>& local = ReferenceElements<ct,dim>::general(gt).position(0, 0);
-
-        // get global coordinate of cell center
-        const FieldVector<ct,dim> global = entity.geometry().global(local);
-
-        IntersectionIterator endis = entity.ilevelend();
-        IntersectionIterator is = entity.ilevelbegin();
-        for (; is != endis; ++is)
+        IntersectionIterator endis = element.ilevelend();
+        for (IntersectionIterator isIt = element.ilevelbegin(); isIt != endis; ++isIt)
         {
-            if(is->numberInSelf() == numberInSelf)
-            break;
-        }
-
-        // get geometry type of face
-        GeometryType gtf = is->intersectionSelfLocal().type();
-
-        // center in face's reference element
-        const FieldVector<ct,dim-1>& facelocal = ReferenceElements<RT,dim-1>::general(gtf).position(0,0);
-
-        VectorType unitOuterNormal = is->unitOuterNormal(facelocal);
-        //        std::cout<<"unitOuterNormaldiff"<<unitOuterNormal<<std::endl;
-
-        if (is->neighbor())
-        {
-            // access neighbor
-            EntityPointer outside = is->outside();
-
-            int indexJ = problem.variables.transmapper.map(*outside);
-
-            for (int i=0;i<size;i++)
+            if(isIt->numberInSelf() != numberInSelf)
             {
-                if (problem.soil.getDispersionSat()[indexI][i]> satI)
-                {
-                    double satdiff1 = problem.soil.getDispersionSat()[indexI][i] - satI;
-                    double satdiff2 = 1e100;
-                    if (i)
-                    {
-                        satdiff2 = satI - problem.soil.getDispersionSat()[indexI][i-1];
-                    }
-                    if (satdiff1 < satdiff2)
-                    {
-                        problem.soil.getDispersion()[indexI][i].mv(satGradient,result);
-                        //                        std::cout<<"result1 = "<<problem.soil.getDispersion()[indexI][i]<<std::endl;
-                    }
-                    else
-                    {
-                        problem.soil.getDispersion()[indexI][i-1].mv(satGradient,result);
-                        //                        std::cout<<"result2 = "<<problem.soil.getDispersion()[indexI][i-1]<<std::endl;
-                        //                        std::cout<<"satGrad = "<<satGradient<<std::endl;
-                    }
-                    break;
-                }
-                if (i==(size-1))
-                {
-                    problem.soil.getDispersion()[indexI][i].mv(satGradient,helpresult);
-                    break;
-                }
-            }
-            for (int i=0;i<size;i++)
-            {
-                if (problem.soil.getDispersionSat()[indexJ][i]> satJ)
-                {
-                    double satdiff1 = problem.soil.getDispersionSat()[indexJ][i] - satJ;
-                    double satdiff2 = 1e100;
-                    if (i)
-                    {
-                        satdiff2 = satJ - problem.soil.getDispersionSat()[indexJ][i-1];
-                    }
-                    if (satdiff1 < satdiff2)
-                    {
-                        problem.soil.getDispersion()[indexJ][i].mv(satGradient,helpresult);
-                        //                        std::cout<<"helpresult1 = "<<problem.soil.getDispersion()[indexJ][i]<<std::endl;
-                    }
-                    else
-                    {
-                        //                        std::cout<<"D = "<<problem.soil.getDispersion()[indexJ][i-1]<<std::endl;
-                        //                        std::cout<<"satG = "<<satGradient<<std::endl;
-                        problem.soil.getDispersion()[indexJ][i-1].mv(satGradient,helpresult);
-                        //                        std::cout<<"helpresult2 = "<<problem.soil.getDispersion()[indexJ][i-1]<<std::endl;
-                    }
-                    break;
-                }
-                if (i==(size-1))
-                {
-                    problem.soil.getDispersion()[indexJ][i].mv(satGradient,helpresult);
-                    break;
-                }
+                continue;
             }
 
-            for (int i = 0; i< dim;i++)
+            if (isIt->neighbor())
             {
-                if (result[i]*helpresult[i]==0)
-                    result[i]=0;
+                // access neighbor
+                ElementPointer neighborPointer = isIt->outside();
+
+                int globalIdxJ = problem_.variables.transMapper.map(*neighborPointer);
+
+                int colNumJ = problem_.soil.getDispersion()[globalIdxJ].size();
+
+                for (int i=0;i<colNumI;i++)
+                {
+                    if (problem_.soil.getDispersionSat()[globalIdxI][i]> satI)
+                    {
+                        Scalar satdiff1 = problem_.soil.getDispersionSat()[globalIdxI][i] - satI;
+                        Scalar satdiff2 = 1e100;
+                        if (i)
+                        {
+                            satdiff2 = satI - problem_.soil.getDispersionSat()[globalIdxI][i-1];
+                        }
+                        if (satdiff1 < satdiff2)
+                        {
+                            result = problem_.soil.getDispersion()[globalIdxI][i]*satGradient;
+//                                                    std::cout<<"result1 = "<<problem_.soil.getDispersion()[globalIdxI][i]<<std::endl;
+                        }
+                        else
+                        {
+                            result = problem_.soil.getDispersion()[globalIdxI][i-1]*satGradient;
+//                                                    std::cout<<"result2 = "<<problem_.soil.getDispersion()[globalIdxI][i-1]<<std::endl;
+                            //                        std::cout<<"satGrad = "<<satGradient<<std::endl;
+                        }
+                        break;
+                    }
+                    if (i==(colNumI-1))
+                    {
+                        result = problem_.soil.getDispersion()[globalIdxI][i]*satGradient;
+                        break;
+                    }
+                }
+                for (int i=0;i<colNumJ;i++)
+                {
+                    if (problem_.soil.getDispersionSat()[globalIdxJ][i]> satJ)
+                    {
+                        Scalar satdiff1 = problem_.soil.getDispersionSat()[globalIdxJ][i] - satJ;
+                        Scalar satdiff2 = 1e100;
+                        if (i)
+                        {
+                            satdiff2 = satJ - problem_.soil.getDispersionSat()[globalIdxJ][i-1];
+                        }
+                        if (satdiff1 < satdiff2)
+                        {
+                            helpresult = problem_.soil.getDispersion()[globalIdxJ][i]*satGradient;
+//                                                    std::cout<<"helpresult1 = "<<problem_.soil.getDispersion()[globalIdxJ][i]<<std::endl;
+                        }
+                        else
+                        {
+                            //                        std::cout<<"D = "<<problem_.soil.getDispersion()[globalIdxJ][i-1]<<std::endl;
+                            //                        std::cout<<"satG = "<<satGradient<<std::endl;
+                            helpresult = problem_.soil.getDispersion()[globalIdxJ][i-1]*satGradient;
+//                                                    std::cout<<"helpresult2 = "<<problem_.soil.getDispersion()[globalIdxJ][i-1]<<std::endl;
+                        }
+                        break;
+                    }
+                    if (i==(colNumJ-1))
+                    {
+                        helpresult = problem_.soil.getDispersion()[globalIdxJ][i]*satGradient;
+                        break;
+                    }
+                }
+
+                if (result*helpresult == 0)
+                {
+                    result=0;
+                }
                 else
-                    result[i] = 2*result[i]*helpresult[i]/(result[i]+helpresult[i]);
+                {
+                    result = 0.5*(result+helpresult);
+//                    std::cout<<"result 1 = "<<result<<std::endl;
+                }
             }
-            //            for (int i=0;i<dim;i++)
-            //            {
-            //                result[i]*=unitOuterNormal[i];
-            //            }
-
-        }
-        else
-        {
-            for (int i=0;i<size;i++)
+            else
             {
-                if (problem.soil.getDispersionSat()[indexI][i]> satJ)
+                for (int i=0;i<colNumI;i++)
                 {
-                    double satdiff1 = problem.soil.getDispersionSat()[indexI][i] - satJ;
-                    double satdiff2 = 1e100;
-                    if (i)
+                    if (problem_.soil.getDispersionSat()[globalIdxI][i]> satJ)
                     {
-                        satdiff2 = satJ - problem.soil.getDispersionSat()[indexI][i-1];
+                        Scalar satdiff1 = problem_.soil.getDispersionSat()[globalIdxI][i] - satJ;
+                        Scalar satdiff2 = 1e100;
+                        if (i)
+                        {
+                            satdiff2 = satJ - problem_.soil.getDispersionSat()[globalIdxI][i-1];
+                        }
+                        if (satdiff1 < satdiff2)
+                        {
+                            result = problem_.soil.getDispersion()[globalIdxI][i]*satGradient;
+//                                                    std::cout<<"result1Bound = "<<problem_.soil.getDispersion()[globalIdxI][i]<<std::endl;
+                        }
+                        else
+                        {
+                            result = problem_.soil.getDispersion()[globalIdxI][i-1]*satGradient;
+//                                                    std::cout<<"result2Bound = "<<problem_.soil.getDispersion()[globalIdxI][i]<<std::endl;
+                        }
+                        break;
                     }
-                    if (satdiff1 < satdiff2)
+                    if (i==(colNumI-1))
                     {
-                        problem.soil.getDispersion()[indexI][i].mv(satGradient,result);
-                        //                        std::cout<<"result1Bound = "<<problem.soil.getDispersion()[indexI][i]<<std::endl;
+                        result = problem_.soil.getDispersion()[globalIdxI][i]*satGradient;
+                        break;
                     }
-                    else
-                    {
-                        problem.soil.getDispersion()[indexI][i-1].mv(satGradient,result);
-                        //                        std::cout<<"result2Bound = "<<problem.soil.getDispersion()[indexI][i]<<std::endl;
-                    }
-                    break;
-                }
-                if (i==(size-1))
-                {
-                    problem.soil.getDispersion()[indexI][i].mv(satGradient,result);
-                    break;
                 }
             }
-            result *= 1;
-
-            //            for (int i=0;i<dim;i++)
-            //            {
-            //                result[i]*=unitOuterNormal[i];
-            //            }
         }
 
-        return result;
+        FieldVector<Scalar, dim> returnVector(result);
+//        std::cout<<"result = "<<result<<std::endl;
+//        std::cout<<"returnVector = "<<returnVector<<std::endl;
+        return returnVector;
 
     }
 
-    DispersiveCorrection (FractionalFlowProblem<G, RT, VC>& prob)
-    : problem(prob)
+    DispersiveCorrection (FractionalFlowProblem<Grid, Scalar, VC>& prob)
+    : problem_(prob)
 
     {}
 
 private:
-    FractionalFlowProblem<G, RT, VC>& problem;
+    FractionalFlowProblem<Grid, Scalar, VC>& problem_;
 };
 }
 

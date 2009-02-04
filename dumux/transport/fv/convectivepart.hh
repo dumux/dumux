@@ -5,19 +5,19 @@
 
 namespace Dune
 {
-    template<class G, class RT>
+    template<class Grid, class Scalar>
     class ConvectivePart
     {
     private:
-        enum{dim = G::dimension};
-        typedef typename G::Traits::template Codim<0>::Entity Entity;
-        typedef FieldVector<RT, dim> Vector;
+        enum{dim = Grid::dimension, dimWorld = Grid::dimensionworld};
+        typedef typename Grid::Traits::template Codim<0>::Entity Element;
+        typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
     public:
 
-        virtual double operator() (const Entity& entity, const RT satI, Vector faceGlobal) const
+        virtual Scalar operator() (const Element& element, const Scalar sat, const GlobalPosition& faceGlobal) const
         {
-            double trivial(0);
+            Scalar trivial(0);
             return trivial;
         }
 
