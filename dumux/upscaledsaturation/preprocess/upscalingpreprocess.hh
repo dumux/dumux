@@ -44,7 +44,7 @@ typedef	typename Grid::LevelGridView GridView;
 
 public:
 	UpscalingPreprocess(Grid& grid, Fluid& wettingPhase , Fluid& nonWettingPhase, Matrix2p<Grid, Scalar>& soil, TwoPhaseRelations<Grid, Scalar>& materialLaw = *(new TwoPhaseRelations<Grid,Scalar>), Scalar tEnd = 1e6)
-	:grid_(grid), wettingPhase_(wettingPhase), nonWettingPhase_(nonWettingPhase),soil_(soil),materialLaw_(materialLaw)
+	:grid_(grid), wettingPhase_(wettingPhase), nonWettingPhase_(nonWettingPhase),soil_(soil),materialLaw_(materialLaw),eps_(1e-6)
 	{}
 
 	void preprocessexecute(int coarseLev = 0,int fineLev=-1)
@@ -60,7 +60,7 @@ private:
 	Fluid& nonWettingPhase_;
 	Matrix2p<Grid, Scalar>& soil_;
 	TwoPhaseRelations<Grid, Scalar>& materialLaw_;
-	bool firstRun_;
+	Scalar eps_;
 };
 
 template<class Grid, class Scalar>void UpscalingPreprocess<Grid,Scalar>::calcDispersiveFluxCorrection(int coarseLev,int fineLev)
@@ -166,7 +166,7 @@ template<class Grid, class Scalar>void UpscalingPreprocess<Grid,Scalar>::calcCon
 				GlobalPosition lowerLeftHelp = eItCoarse->geometry().corner(0);
 				GlobalPosition upperRightHelp = eItCoarse->geometry().corner(3);
 
-				if (globalPosFaceCoarse[0] == lowerLeftHelp[0])
+				if (globalPosFaceCoarse[0] <= lowerLeftHelp[0] + eps_ && globalPosFaceCoarse[0] >= lowerLeftHelp[0] - eps_)
 				{
 					//					std::cout<<"globalPosFaceCoarse[0] ="<<globalPosFaceCoarse[0]<<"lowerLeftHelp[0] = "<<lowerLeftHelp[0]<<std::endl;
 					GlobalPosition lowerLeft = neighborPointer->geometry().corner(0);
@@ -176,7 +176,7 @@ template<class Grid, class Scalar>void UpscalingPreprocess<Grid,Scalar>::calcCon
 
 					XProblem1(subGrid, fineLev, lowerLeft, upperRight,globalIdxCoarse,calcConvection, numberInSelf, globalPosFaceCoarse);
 				}
-				if (globalPosFaceCoarse[0] == upperRightHelp[0])
+				if (globalPosFaceCoarse[0] <= upperRightHelp[0] + eps_ && globalPosFaceCoarse[0] >= upperRightHelp[0] - eps_)
 				{
 					//					std::cout<<"globalPosFaceCoarse[0] ="<<globalPosFaceCoarse[0]<<"upperRightHelp[0] = "<<upperRightHelp[0]<<std::endl;
 					GlobalPosition lowerLeft = lowerLeftHelp;
@@ -185,7 +185,7 @@ template<class Grid, class Scalar>void UpscalingPreprocess<Grid,Scalar>::calcCon
 
 					XProblem2(subGrid, fineLev, lowerLeft, upperRight,globalIdxCoarse,calcConvection, numberInSelf,globalPosFaceCoarse);
 				}
-				if (globalPosFaceCoarse[1] == lowerLeftHelp[1])
+				if (globalPosFaceCoarse[1] <= lowerLeftHelp[1] + eps_ && globalPosFaceCoarse[1] >= lowerLeftHelp[1] - eps_)
 				{
 					//					std::cout<<"globalPosFaceCoarse[1] ="<<globalPosFaceCoarse[1]<<"lowerLeftHelp[1] = "<<lowerLeftHelp[1]<<std::endl;
 					GlobalPosition lowerLeft = neighborPointer->geometry().corner(0);
@@ -194,7 +194,7 @@ template<class Grid, class Scalar>void UpscalingPreprocess<Grid,Scalar>::calcCon
 
 					YProblem1(subGrid, fineLev, lowerLeft, upperRight, globalIdxCoarse,calcConvection, numberInSelf,globalPosFaceCoarse);
 				}
-				if (globalPosFaceCoarse[1] == upperRightHelp[1])
+				if (globalPosFaceCoarse[1] <= upperRightHelp[1] + eps_ && globalPosFaceCoarse[1] >= upperRightHelp[1] - eps_)
 				{
 					//					std::cout<<"globalPosFaceCoarse[1] ="<<globalPosFaceCoarse[1]<<"upperRightHelp[1] = "<<upperRightHelp[1]<<std::endl;
 					GlobalPosition lowerLeft = lowerLeftHelp;
@@ -233,19 +233,19 @@ template<class Grid, class Scalar>void UpscalingPreprocess<Grid,Scalar>::calcCon
 					GlobalPosition lowerLeft = eItCoarse->geometry().corner(0);
 					GlobalPosition upperRight = eItCoarse->geometry().corner(3);
 
-					if (globalPosFaceCoarse[0] == lowerLeft[0])
+					if (globalPosFaceCoarse[0] <= lowerLeft[0] + eps_ && globalPosFaceCoarse[0] >= lowerLeft[0] - eps_)
 					{
 						XProblem1(subGrid, fineLev, lowerLeft, upperRight,globalIdxCoarse,calcConvection, numberInSelf, globalPosFaceCoarse,isBoundary);
 					}
-					if (globalPosFaceCoarse[0] == upperRight[0])
+					if (globalPosFaceCoarse[0] <= upperRight[0] + eps_ && globalPosFaceCoarse[0] >= upperRight[0] - eps_)
 					{
 						XProblem2(subGrid, fineLev, lowerLeft, upperRight,globalIdxCoarse,calcConvection, numberInSelf,globalPosFaceCoarse, isBoundary);
 					}
-					if (globalPosFaceCoarse[1] == lowerLeft[1])
+					if (globalPosFaceCoarse[1] <= lowerLeft[1] + eps_ && globalPosFaceCoarse[1] >= lowerLeft[1] - eps_)
 					{
 						YProblem1(subGrid, fineLev, lowerLeft, upperRight, globalIdxCoarse,calcConvection, numberInSelf,globalPosFaceCoarse,isBoundary);
 					}
-					if (globalPosFaceCoarse[1] == upperRight[1])
+					if (globalPosFaceCoarse[1] <= upperRight[1] + eps_ && globalPosFaceCoarse[1] >= upperRight[1] - eps_)
 					{
 						YProblem2(subGrid, fineLev, lowerLeft, upperRight, globalIdxCoarse,calcConvection, numberInSelf,globalPosFaceCoarse,isBoundary);
 					}

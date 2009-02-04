@@ -35,7 +35,6 @@ namespace Dune
   public:
 
     typedef typename VC::ScalarVectorType RepresentationType;
-    FractionalFlowProblem<Grid, Scalar, VC>& transProblem; //!< problem data
 
     //! \brief Calculate the update vector.
     /*!
@@ -74,6 +73,11 @@ namespace Dune
         return;
     }
 
+    virtual void postProcessUpdate(Scalar t, Scalar dt)
+    {
+        return;
+    }
+
     //! always define virtual destructor in abstract base class
     virtual ~Transport () {}
 
@@ -92,7 +96,7 @@ namespace Dune
     }
 
     const Grid& grid;
-
+    FractionalFlowProblem<Grid, Scalar, VC>& transProblem; //!< problem data
   };
 
 }

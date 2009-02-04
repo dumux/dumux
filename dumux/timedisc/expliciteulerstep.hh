@@ -11,8 +11,8 @@ namespace Dune
     /** Class Model must contain a method postupdate(double t, double dt)
      * with t the time at begin of timestep and dt the timestep length.
      */
-    template<class G, class Model>
-    class ExplicitEulerStep : public TimeStep<G, Model>
+    template<class Grid, class Model>
+    class ExplicitEulerStep : public TimeStep<Grid, Model>
     {
     public:
             /** Performs a simple Euler just as the RungeKuttaStep with stages == 1.
@@ -37,7 +37,7 @@ namespace Dune
                   // explicit Euler: Sat <- Sat + dt*N(Sat)
                   *model += (k1 *= dt);
 
-                  model.postupdate(t, dt);
+                  model.postProcessUpdate(t, dt);
             }
 
     };

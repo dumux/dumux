@@ -282,7 +282,7 @@ public:
             for (int i = 0; i<2*dim; i++)
             {
                 this->diffProblem.variables.velocity[globalIdxICoarse][i] = fluxCoarse[i]/=faceAreaCoarse[i];
-                //                std::cout<<"velocity "<<fluxCoarse[i]<<std::endl;
+//                                std::cout<<"velocity "<<fluxCoarse[i]<<std::endl;
             }
 
             // check for conservativity

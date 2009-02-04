@@ -28,7 +28,12 @@ template<class Grid, class Scalar, class VC> class FVDiffusionVelocity :
 public:
     FVDiffusionVelocity(Grid& grid, FractionalFlowProblem<Grid, Scalar, VC>& problem)
     : FVDiffusion<Grid,Scalar,VC>(grid, problem)
-    {    }
+    {}
+
+    FVDiffusionVelocity(Grid& grid, FractionalFlowProblem<Grid, Scalar, VC>& problem, std::string solverName,
+            std::string preconditionerName)
+    : FVDiffusion<Grid,Scalar,VC>(grid, problem,solverName,preconditionerName)
+    {}
 
 
     void calcTotalVelocity(const Scalar t=0) const {
@@ -176,8 +181,8 @@ public:
                         Ki *= 0.5;
                         FieldVector<Scalar,dimWorld> gEffect(0);
                         Ki.umv(gravity, gEffect);
-                        double factor = fractionalW*(this->diffProblem.wettingphase.density())
-                        + (1 - fractionalW)*(this->diffProblem.nonwettingphase.density());
+                        double factor = fractionalW*(this->diffProblem.wettingPhase.density())
+                        + (1 - fractionalW)*(this->diffProblem.nonWettingPhase.density());
                         gEffect *= lambda*factor;
                         vTotal += gEffect;
                     }
@@ -212,8 +217,8 @@ public:
                         if (hasGravity) {
                             FieldVector<Scalar,dimWorld> gEffect(0);
                             Ki.umv(gravity, gEffect);
-                            double factor = fractionalW*(this->diffProblem.wettingphase.density())
-                            + (1 - fractionalW)*(this->diffProblem.nonwettingphase.density());
+                            double factor = fractionalW*(this->diffProblem.wettingPhase.density())
+                            + (1 - fractionalW)*(this->diffProblem.nonWettingPhase.density());
                             gEffect *= lambda*factor;
                             vTotal += gEffect;
                         }

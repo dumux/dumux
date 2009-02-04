@@ -15,28 +15,27 @@
 
 namespace Dune
 {
-  //! \ingroup diffusion
-  //! Base class for defining an instance of a numerical diffusion model.
-  /*! An interface for defining a numerical diffusion model for the
-   *  solution of equations of the form
-   * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = 0, \f$,
-   * \f$p = g\f$ on \f$\Gamma_1\f$, and \f$\lambda K \text{grad}\, p = J\f$
-   * on \f$\Gamma_2\f$. Here,
-   * \f$p\f$ denotes the pressure, \f$K\f$ the absolute permeability,
-   * and \f$\lambda\f$ the total mobility, possibly depending on the
-   * saturation.
-    Template parameters are:
+//! \ingroup diffusion
+//! Base class for defining an instance of a numerical diffusion model.
+/*! An interface for defining a numerical diffusion model for the
+ *  solution of equations of the form
+ * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = 0, \f$,
+ * \f$p = g\f$ on \f$\Gamma_1\f$, and \f$\lambda K \text{grad}\, p = J\f$
+ * on \f$\Gamma_2\f$. Here,
+ * \f$p\f$ denotes the pressure, \f$K\f$ the absolute permeability,
+ * and \f$\lambda\f$ the total mobility, possibly depending on the
+ * saturation.
+ Template parameters are:
 
-    - Grid      a DUNE grid type
-    - Scalar        type used for return values
+ - Grid      a DUNE grid type
+ - Scalar        type used for return values
 
-   */
-    template<class Grid, class Scalar,class VC>
-  class Diffusion {
-  public:
-      typedef Scalar ScalarType;
-//     Problem &diffproblem;
-    FractionalFlowProblem<Grid, Scalar, VC>& diffProblem; //!< problem data
+ */
+template<class Grid, class Scalar, class VC>
+class Diffusion
+{
+public:
+    typedef Scalar ScalarType;
 
     //! \brief Calculate the pressure.
     /*!
@@ -47,7 +46,7 @@ namespace Dune
      *  \f[ - \text{div}\, (\lambda K \text{grad}\, p ) = 0, \f]
      *  subject to appropriate boundary and initial conditions.
      */
-    virtual void pressure(const Scalar t=0) = 0;
+    virtual void pressure(const Scalar t = 0) = 0;
 
     //! \brief Calculate the total velocity.
     /*!
@@ -61,31 +60,39 @@ namespace Dune
      *  The method is used in FractionalFlow to provide the velocity field required for the saturation equation.
      */
 
-    virtual void calcTotalVelocity(const Scalar t=0) const {
+    virtual void calcTotalVelocity(const Scalar t = 0) const
+    {
+        return;
+    }
+
+    virtual void postProcessUpdate(Scalar t, Scalar dt)
+    {
         return;
     }
 
     //! always define virtual destructor in abstract base class
-    virtual ~Diffusion () {}
+    virtual ~Diffusion()
+    {
+    }
 
     //! without specification of a level, the class works on the leaf grid.
     /**
      * \param grid grid object of type Grid
      * \param prob a problem class object derived from DiffusionProblem
-    */
-    Diffusion(const Grid& grid, FractionalFlowProblem<Grid, Scalar, VC>& prob)
-    : grid(grid), diffProblem(prob)
+     */
+    Diffusion(const Grid& grid, FractionalFlowProblem<Grid, Scalar, VC>& prob) :
+        grid(grid), diffProblem(prob)
     {
     }
-
 
     //! Returns the grid level on which the class works
     int& level() const
     {
         return diffProblem.variables.diffLevel;
     }
-      const Grid& grid;
-  };
+    const Grid& grid;
+    FractionalFlowProblem<Grid, Scalar, VC>& diffProblem; //!< problem data
+};
 
 }
 #endif

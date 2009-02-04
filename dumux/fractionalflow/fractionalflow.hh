@@ -73,7 +73,13 @@ namespace Dune
      *  Calculate the update vector, i.e., the discretization
      *  of \f$\text{div}\, (f_\text{w}(S) \boldsymbol{v}_t)\f$.
      */
+
     virtual int update(const Scalar t, Scalar& dt, RepresentationType& updateVec, Scalar cFLFactor = 1) = 0;
+
+    virtual void postProcessUpdate(Scalar t, Scalar dt)
+    {
+        return;
+    }
 
     virtual void vtkout (const char* name, int k) const = 0;
 

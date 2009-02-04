@@ -100,8 +100,8 @@ public:
     elementMapper(grid, grid.levelIndexSet(this->level())), A(grid.size(
                     this->level(), 0), grid.size(this->level(), 0), (2*dim+1)
             *grid.size(this->level(), 0), BCRSMatrix<MB>::random),
-    f(grid.size(this->level(), 0)), solverName_("BiCGSTAB"),
-    preconditionerName_("SeqILU0")
+    f(grid.size(this->level(), 0)), solverName_("Loop"),
+    preconditionerName_("Pardiso")
     {
         initializeMatrix();
     }
@@ -370,7 +370,7 @@ template<class Grid, class Scalar, class VC> void FVDiffSubProbs<Grid, Scalar, V
         SeqPardiso<MatrixType,Vector,Vector> preconditioner(A);
         if (solverName_ == "Loop")
         {
-            LoopSolver<Vector> solver(op, preconditioner, 1E-14, 10000, 1);
+            LoopSolver<Vector> solver(op, preconditioner, 1E-14, 10000, 0);
             solver.apply(this->diffProblem.variables.pressure, f, r);
         }
         else

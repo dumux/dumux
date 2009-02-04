@@ -309,8 +309,8 @@ template<class Grid, class Scalar, class VC> void FVDiffusion<Grid, Scalar, VC>:
                 A[globalIdxI][globalIdxJ] = -entry;
 
                 if (hasGravity) {
-                    Scalar factor = fractionalW*(this->diffProblem.wettingphase.density())
-                    + (1 - fractionalW)*(this->diffProblem.nonwettingphase.density());
+                    Scalar factor = fractionalW*(this->diffProblem.wettingPhase.density())
+                    + (1 - fractionalW)*(this->diffProblem.nonWettingPhase.density());
                     f[globalIdxI] -= factor*lambda*faceVol*(K*gravity);
                 }
 
@@ -359,8 +359,8 @@ template<class Grid, class Scalar, class VC> void FVDiffusion<Grid, Scalar, VC>:
                     f[globalIdxI] -= lambda*faceVol*g*(Kni*distVec)/(dist*dist);
 
                     if (hasGravity) {
-                        Scalar factor = fractionalW*(this->diffProblem.wettingphase.density())
-                        + (1 - fractionalW)*(this->diffProblem.nonwettingphase.density());
+                        Scalar factor = fractionalW*(this->diffProblem.wettingPhase.density())
+                        + (1 - fractionalW)*(this->diffProblem.nonWettingPhase.density());
                         f[globalIdxI] -= factor*lambda*faceVol*(Kni*gravity);
                     }
                     if (this->diffProblem.capillarity) {

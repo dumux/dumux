@@ -426,7 +426,7 @@ template<class Grid, class Scalar, class VC> void FVDiffusion<Grid, Scalar, VC>:
         SeqPardiso<MatrixType,Vector,Vector> preconditioner(globalMatrix_);
         if (solverName_ == "Loop")
         {
-            LoopSolver<Vector> solver(op, preconditioner, 1E-14, 10000, 1);
+            LoopSolver<Vector> solver(op, preconditioner, 1E-14, 10000, 0);
             solver.apply(this->diffProblem.variables.pressure, rightHandSide_, r);
         }
         else
