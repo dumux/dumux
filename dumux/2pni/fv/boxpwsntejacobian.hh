@@ -423,7 +423,7 @@ namespace Dune
             varData[i].pW = sol[i][pWIdx];
             varData[i].satN = sol[i][satNIdx];
             varData[i].satW = 1.0 - varData[i].satN;
-           varData[i].pC = 0.0;// problem.materialLaw().pC(varData[i].satW, this->fvGeom.subContVol[i].global, e, this->fvGeom.subContVol[i].local);
+           varData[i].pC = problem.materialLaw().pC(varData[i].satW, this->fvGeom.subContVol[i].global, e, this->fvGeom.subContVol[i].local);
             varData[i].pN = varData[i].pW + varData[i].pC;
             varData[i].temperature = sol[i][teIdx]; // in [K]
 
