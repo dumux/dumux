@@ -311,13 +311,18 @@ template<class Grid, class Scalar, class VC> int FVTransport<Grid, Scalar, VC>::
                 }
                 else
                 {
-                    double satI = this->transProblem.variables.saturation[globalIdxI];
-                    double velocityJI = std::max(-(this->transProblem.variables.vTotal(*eIt, numberInSelf)*integrationOuterNormal/volume), 0.0);
-                    double fI = this->transProblem.materialLaw.fractionalW(satI, globalPos, *eIt,localPos);
-                    double helpFactor = (velocityJI*numFlux_(satI, satI, fI, fI)
-                            -velocityIJ*numFlux_(satI, satI, fI, fI));
+                    Scalar satI = this->transProblem.variables.saturation[globalIdxI];
+                    Scalar velocityJI = std::max(-(this->transProblem.variables.vTotal(*eIt, numberInSelf)*integrationOuterNormal/volume), 0.0);
+                    Scalar fI = this->transProblem.materialLaw.fractionalW(satI, globalPos, *eIt,localPos);
+                    Scalar helpFactor = (velocityJI-velocityIJ)*fI;
                     factor = this->transProblem.neumannSat(globalPosFace, *eIt, localPosFace, helpFactor);
+                    factor/= this->transProblem.soil.porosity(globalPos, *eIt,localPos);
+
                     totFactor = 0;
+                    if (factor)
+                    {
+                        totFactor = velocityJI-velocityIJ;
+                    }
                 }
             }
             // add to update vector
