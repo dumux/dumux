@@ -306,7 +306,13 @@ template<class Grid, class Scalar, class VC> int FVTransSubProbs<Grid, Scalar, V
                     double helpFactor = (velocityJI*numFlux_(satI, satI, fI, fI)
                             -velocityIJ*numFlux_(satI, satI, fI, fI));
                     factor = this->transProblem.neumannSat(globalPosFace, *eIt, localPosFace, helpFactor);
+                    factor/= this->transProblem.soil.porosity(globalPos, *hostPointer,localPos);
+
                     totFactor = 0;
+                    if (factor)
+                    {
+                        totFactor = velocityJI-velocityIJ;
+                    }
                 }
             }
             // add to update vector

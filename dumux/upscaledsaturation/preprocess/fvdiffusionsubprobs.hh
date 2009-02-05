@@ -100,8 +100,8 @@ public:
     elementMapper(grid, grid.levelIndexSet(this->level())), A(grid.size(
                     this->level(), 0), grid.size(this->level(), 0), (2*dim+1)
             *grid.size(this->level(), 0), BCRSMatrix<MB>::random),
-    f(grid.size(this->level(), 0)), solverName_("Loop"),
-    preconditionerName_("Pardiso")
+    f(grid.size(this->level(), 0)), solverName_("BiCGSTAB"),
+    preconditionerName_("SeqILU0")
     {
         initializeMatrix();
     }

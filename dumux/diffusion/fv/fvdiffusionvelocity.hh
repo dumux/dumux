@@ -5,25 +5,28 @@
 
 #include "dumux/diffusion/fv/fvdiffusion.hh"
 
-namespace Dune {
+namespace Dune
+{
 
-template<class Grid, class Scalar, class VC> class FVDiffusionVelocity :
-    public FVDiffusion<Grid, Scalar, VC> {
+template<class Grid, class Scalar, class VC> class FVDiffusionVelocity: public FVDiffusion<
+        Grid, Scalar, VC>
+{
 
-    typedef typename Grid::Traits::template Codim<0>::Entity Element;
+typedef    typename Grid::Traits::template Codim<0>::Entity Element;
     typedef typename Grid::LevelGridView GridView;
     typedef typename GridView::IndexSet IndexSet;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef typename Grid::template Codim<0>::EntityPointer ElementPointer;
 
-    enum {dim = Grid::dimension};
-    enum {dimWorld = Grid::dimensionworld};
+    enum
+    {   dim = Grid::dimension};
+    enum
+    {   dimWorld = Grid::dimensionworld};
 
     typedef Dune::FieldVector<Scalar,dim> LocalPosition;
     typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
-
 
 public:
     FVDiffusionVelocity(Grid& grid, FractionalFlowProblem<Grid, Scalar, VC>& problem)
@@ -35,20 +38,20 @@ public:
     : FVDiffusion<Grid,Scalar,VC>(grid, problem,solverName,preconditionerName)
     {}
 
-
-    void calcTotalVelocity(const Scalar t=0) const {
-
+    void calcTotalVelocity(const Scalar t=0) const
+    {
         const GridView& gridView = this->grid.levelView(this->level());
 
         // find out whether gravity effects are relevant
         bool hasGravity = false;
         const FieldVector<Scalar,dim>& gravity(this->diffProblem.gravity());
         for (int k = 0; k < dim; k++)
-            if (gravity[k] != 0)
-                hasGravity = true;
+        if (gravity[k] != 0)
+        hasGravity = true;
 
         ElementIterator eItEnd = gridView.template end<0>();
-        for (ElementIterator eIt = gridView.template begin<0>(); eIt != eItEnd; ++eIt) {
+        for (ElementIterator eIt = gridView.template begin<0>(); eIt != eItEnd; ++eIt)
+        {
 
             // cell geometry type
             GeometryType gt = eIt->geometry().type();
@@ -73,13 +76,14 @@ public:
             double sati = this->diffProblem.variables.saturation[globalIdxI];
             lambdaI = this->diffProblem.materialLaw.mobTotal(sati,globalPos, *eIt, localPos);
             if (hasGravity)
-                fractionalWI = this->diffProblem.materialLaw.fractionalW(sati,globalPos, *eIt, localPos);
+            fractionalWI = this->diffProblem.materialLaw.fractionalW(sati,globalPos, *eIt, localPos);
 
             double faceVol[2*dim];
 
             // run through all intersections with neighbors and boundary
             IntersectionIterator isItEnd = gridView.template iend(*eIt);
-            for (IntersectionIterator isIt = gridView.template ibegin(*eIt); isIt!=isItEnd; ++isIt) {
+            for (IntersectionIterator isIt = gridView.template ibegin(*eIt); isIt!=isItEnd; ++isIt)
+            {
                 // get geometry type of face
                 GeometryType faceGT = isIt->intersectionSelfLocal().type();
 
@@ -87,12 +91,13 @@ public:
                 // local number of facet
                 int numberInSelf = isIt->numberInSelf();
 
-                switch (Grid::dimension) {
-                            case 1:
-                                faceVol[numberInSelf] = 1;
-                            default:
-                                faceVol[numberInSelf] = isIt->intersectionGlobal().volume();
-                            }
+                switch (Grid::dimension)
+                {
+                    case 1:
+                    faceVol[numberInSelf] = 1;
+                    default:
+                    faceVol[numberInSelf] = isIt->intersectionGlobal().volume();
+                }
 
                 // center in face's reference element
                 const FieldVector<Scalar,dim-1>&
@@ -176,7 +181,8 @@ public:
 
                     FieldVector<Scalar,dimWorld> vTotal(K);
                     vTotal *= lambda*(pressI - pressJ)/dist;
-                    if (hasGravity) {
+                    if (hasGravity)
+                    {
                         Ki += Kj;
                         Ki *= 0.5;
                         FieldVector<Scalar,dimWorld> gEffect(0);
@@ -189,11 +195,13 @@ public:
                     this->diffProblem.variables.velocity[globalIdxI][numberInSelf] = vTotal;
                 }
                 // boundary face
+
                 else
                 {
                     //get boundary condition for boundary face center
                     BoundaryConditions::Flags bctype = this->diffProblem.bctypePress(globalPosFace, *eIt, localPosFace);
-                    if (bctype == BoundaryConditions::dirichlet) {
+                    if (bctype == BoundaryConditions::dirichlet)
+                    {
                         // distance vector between barycenters
                         FieldVector<Scalar,dimWorld> distVec = globalPos - globalPosFace;
 
@@ -214,7 +222,8 @@ public:
 
                         FieldVector<Scalar,dim> vTotal(Kni);
                         vTotal *= lambda*(g-pressI)/dist;
-                        if (hasGravity) {
+                        if (hasGravity)
+                        {
                             FieldVector<Scalar,dimWorld> gEffect(0);
                             Ki.umv(gravity, gEffect);
                             double factor = fractionalW*(this->diffProblem.wettingPhase.density())
@@ -236,20 +245,23 @@ public:
                 }
             }
             // end all intersections
-//            std::cout<<"velocity = "<< this->diffProblem.variables.velocity <<std::endl;
-            if (dim == 1&& this->diffProblem.capillarity != true) {
+            //            std::cout<<"velocity = "<< this->diffProblem.variables.velocity <<std::endl;
+            if (dim == 1&& this->diffProblem.capillarity != true)
+            {
                 double sum = (fabs(this->diffProblem.variables.velocity[globalIdxI][0][0]*faceVol[0])
                         + fabs(this->diffProblem.variables.velocity[globalIdxI][1][0]));
                 double diff = fabs(this->diffProblem.variables.velocity[globalIdxI][0][0]*faceVol[0]
                         - this->diffProblem.variables.velocity[globalIdxI][1][0]*faceVol[1])/sum;
-                if (diff > 1e-6&& sum > 1e-9) {
+                if (diff> 1e-6&& sum> 1e-9)
+                {
                     std::cout << "NOT conservative!!! diff = "<< diff
-                            << ", globalIdxI = "<< globalIdxI << std::endl;
+                    << ", globalIdxI = "<< globalIdxI << std::endl;
                     std::cout << this->diffProblem.variables.velocity[globalIdxI][0][0]*faceVol[0]<< ", "
-                            << this->diffProblem.variables.velocity[globalIdxI][1][0]*faceVol[1]<< std::endl;
+                    << this->diffProblem.variables.velocity[globalIdxI][1][0]*faceVol[1]<< std::endl;
                 }
             }
-            if (dim == 2&& this->diffProblem.capillarity != true) {
+            if (dim == 2&& this->diffProblem.capillarity != true)
+            {
                 double sum = (fabs(this->diffProblem.variables.velocity[globalIdxI][0][0]*faceVol[0])
                         + fabs(this->diffProblem.variables.velocity[globalIdxI][1][0]*faceVol[1])
                         + fabs(this->diffProblem.variables.velocity[globalIdxI][2][1]*faceVol[2])
@@ -258,16 +270,18 @@ public:
                         - this->diffProblem.variables.velocity[globalIdxI][1][0]*faceVol[1]
                         + this->diffProblem.variables.velocity[globalIdxI][2][1]*faceVol[2]
                         - this->diffProblem.variables.velocity[globalIdxI][3][1]*faceVol[3])/sum;
-                if (diff > 1e-6&& sum > 1e-9) {
+                if (diff> 1e-6&& sum> 1e-9)
+                {
                     std::cout << "NOT conservative!!! diff = "<< diff
-                            << ", globalIdxI = "<< globalIdxI << std::endl;
+                    << ", globalIdxI = "<< globalIdxI << std::endl;
                     std::cout << this->diffProblem.variables.velocity[globalIdxI][0][0]*faceVol[0]<< ", "
-                            << this->diffProblem.variables.velocity[globalIdxI][1][0]*faceVol[1]<< ", "
-                            << this->diffProblem.variables.velocity[globalIdxI][2][1]*faceVol[2]<< ", "
-                            << this->diffProblem.variables.velocity[globalIdxI][3][1]*faceVol[3]<< std::endl;
+                    << this->diffProblem.variables.velocity[globalIdxI][1][0]*faceVol[1]<< ", "
+                    << this->diffProblem.variables.velocity[globalIdxI][2][1]*faceVol[2]<< ", "
+                    << this->diffProblem.variables.velocity[globalIdxI][3][1]*faceVol[3]<< std::endl;
                 }
             }
         } // end grid traversal
+
         return;
     }
 };

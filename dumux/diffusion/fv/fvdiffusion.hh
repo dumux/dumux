@@ -422,7 +422,7 @@ template<class Grid, class Scalar, class VC> void FVDiffusion<Grid, Scalar, VC>:
     } else if (preconditionerName_ == "SeqPardiso") {
         SeqPardiso<MatrixType,Vector,Vector> preconditioner(A);
         if (solverName_ == "Loop") {
-            LoopSolver<Vector> solver(op, preconditioner, 1E-14, 10000, 1);
+            LoopSolver<Vector> solver(op, preconditioner, 1E-14, 10000, 0);
             solver.apply(this->diffProblem.variables.pressure, f, r);
         } else
             DUNE_THROW(NotImplemented, "FVDiffusion :: solve : combination "

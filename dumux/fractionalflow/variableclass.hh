@@ -140,6 +140,10 @@ public:
     {
         vtkoutMultiLevel(name,k,diffLevel,transLevel);
     }
+    void vtkout(const char* name, int k,BlockVector<FieldVector<Scalar, 2> > uEx)
+    {
+        vtkOutWithExSol(name,k,uEx);
+    }
 
     void vtkoutMultiLevel(const char* name, int k, int pressureLevel = 0, int satLevel = 0) const
     {
@@ -169,33 +173,26 @@ public:
         }
         return;
     }
-    //    void vtkoutpressure(const char* name, int k) const
-    //    {
-    //        LeafVTKWriter<typename Grid::LeafGridView> vtkwriter(grid);
-    //        char fname[128];
-    //        sprintf(fname, "%s-press%05d", name, k);
-    //        vtkwriter.addCellData(pressure, "total pressure p~");
-    //        vtkwriter.write(fname, VTKOptions::ascii);
-    //    }
-    //    void vtkoutsamelevel(const char* name, int k, BlockVector<FieldVector<Scalar, 2> > uEx) const
-    //    {
-    //        ScalarVectorType saturationEx(transsize);
-    //        ScalarVectorType error(transsize);
-    //
-    //        for (int i=0; i<transsize; i++)
-    //        {
-    //            saturationEx[i] = uEx[i][0];
-    //            error[i]=uEx[i][1];
-    //        }
-    //        VTKWriter<typename Grid::LevelGridView> vtkwriter(grid);
-    //        char fname[128];
-    //        sprintf(fname, "%s-%05d", name, k);
-    //        vtkwriter.addCellData(saturation, "saturation");
-    //        vtkwriter.addCellData(pressure, "total pressure p~");
-    //        vtkwriter.addCellData(saturationEx, "saturation (exact solution)");
-    //        vtkwriter.addCellData(error, "error");
-    //        vtkwriter.write(fname, VTKOptions::ascii);
-    //    }
+
+    void vtkOutWithExSol(const char* name, int k, BlockVector<FieldVector<Scalar, 2> > uEx)
+    {
+        ScalarVectorType saturationEx(transSize);
+        ScalarVectorType error(transSize);
+
+        for (int i=0; i<transSize; i++)
+        {
+            saturationEx[i] = uEx[i][0];
+            error[i]=uEx[i][1];
+        }
+        VTKWriter<typename Grid::LeafGridView> vtkwriter(grid.leafView());
+        char fname[128];
+        sprintf(fname, "%s-%05d", name, k);
+        vtkwriter.addCellData(saturation, "saturation");
+        vtkwriter.addCellData(pressure, "total pressure p~");
+        vtkwriter.addCellData(saturationEx, "saturation (exact solution)");
+        vtkwriter.addCellData(error, "error");
+        vtkwriter.write(fname, VTKOptions::ascii);
+    }
 };
 }
 #endif

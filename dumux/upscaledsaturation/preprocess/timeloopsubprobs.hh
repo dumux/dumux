@@ -94,26 +94,26 @@ public:
             {
                 stop = false;
             }
-//                        if (correctionType)
-//                        {
-//                            VTKWriter<typename Grid::LeafGridView> vtkwriter(model.variables().grid.leafView());
-//                            char fname[128];
-//                            sprintf(fname, "dispsubprob-%02d-%02d-%03d",globalIdxCoarseCurrent, subProblemNumber, k);
-//                            vtkwriter.addCellData((*model), "saturation");
-//                            //                                              vtkwriter.addCellData(model.variables().pressure, "total pressure p~");
-//                            vtkwriter.write(fname, VTKOptions::ascii);
-//                        }
-//                        else
-//                        {
-//                            VTKWriter<typename Grid::LeafGridView> vtkwriter(model.variables().grid.leafView());
-//                            char fname[128];
-//                            sprintf(fname, "convsubprob-%02d-%02d-%03d",globalIdxCoarseCurrent, faceNumberCurrent, k);
-//                            vtkwriter.addCellData((*model), "saturation");
-//                            //												vtkwriter.addCellData(model.variables().pressure, "total pressure p~");
-//                            vtkwriter.write(fname, VTKOptions::ascii);
-//                        }
+//            if (correctionType)
+//            {
+//                VTKWriter<typename Grid::LeafGridView> vtkwriter(model.variables.grid.leafView());
+//                char fname[128];
+//                sprintf(fname, "dispsubprob-%02d-%02d-%03d",globalIdxCoarseCurrent, subProblemNumber, k);
+//                vtkwriter.addCellData((*model), "saturation");
+//                //                                              vtkwriter.addCellData(model.variables.pressure, "total pressure p~");
+//                vtkwriter.write(fname, VTKOptions::ascii);
+//            }
+//            else
+//            {
+//                VTKWriter<typename Grid::LeafGridView> vtkwriter(model.variables.grid.leafView());
+//                char fname[128];
+//                sprintf(fname, "convsubprob-%02d-%02d-%03d",globalIdxCoarseCurrent, faceNumberCurrent, k);
+//                vtkwriter.addCellData((*model), "saturation");
+//                //												vtkwriter.addCellData(model.variables.pressure, "total pressure p~");
+//                vtkwriter.write(fname, VTKOptions::ascii);
+//            }
         }
-        //			std::cout<<"saturation ="<<model.variables().saturation<<"pressure = "<<model.variables().pressure<<std::endl;
+        //			std::cout<<"saturation ="<<model.variables.saturation<<"pressure = "<<model.variables.pressure<<std::endl;
         if (correctionType)
         {
             std::cout << ",dispersion subproblem timestep: " << k << "\t t=" << t
@@ -164,9 +164,9 @@ template<class Grid, class Model>void TimeLoopSubProbs<Grid,Model>::calculateMac
     typedef typename HostGrid::template Codim<0>::EntityPointer HostElementPointer;
     typedef typename HostGrid::Traits::template Codim<0>::Entity HostElement;
     typedef typename HostGridView::IndexSet HostIndexSet;
-    int fineLev = model.variables().diffLevel;
+    int fineLev = model.variables.diffLevel;
 
-    const GridView& gridViewFine(model.variables().grid.levelView(fineLev));
+    const GridView& gridViewFine(model.variables.grid.levelView(fineLev));
 
     meanSat_=0;
     Scalar fwSMean=0;// fractional flow function values of mean saturation
@@ -197,9 +197,9 @@ template<class Grid, class Model>void TimeLoopSubProbs<Grid,Model>::calculateMac
         // get global coordinate of cell center
         const GlobalPosition& globalPos = geometry.global(localPos);
 
-        const HostElementPointer& eItHost = model.variables().grid.template getHostEntity<0>(*eIt);
+        const HostElementPointer& eItHost = model.variables.grid.template getHostEntity<0>(*eIt);
 
-        int globalIdx = model.variables().diffMapper.map(*eIt);
+        int globalIdx = model.variables.diffMapper.map(*eIt);
 
         Scalar elementVolume = geometry.integrationElement(localPos)*Dune::ReferenceElements<Scalar,dim>::general(gt).volume();
         Scalar elementFaceArea = 0;
@@ -252,7 +252,7 @@ template<class Grid, class Model>void TimeLoopSubProbs<Grid,Model>::calculateMac
             // get normal vector
             FieldVector<Scalar,dim> unitOuterNormal = isIt->unitOuterNormal(faceLocal);
 
-            fluxVector[faceNumber] = model.variables().velocity[globalIdx][faceNumber] * unitOuterNormal;
+            fluxVector[faceNumber] = model.variables.velocity[globalIdx][faceNumber] * unitOuterNormal;
             fluxVector[faceNumber] *= faceArea;
 
             if (isIt->boundary())
@@ -339,15 +339,15 @@ template<class Grid, class Model>void TimeLoopSubProbs<Grid,Model>::calculateMac
     meanVf /= sumFaceArea;
     fwSMean /= elementVolumeCoarse;
     meanSat_ /= elementVolumeCoarse;
-//        std::cout<<meanVelocity<<std::endl;
-//        std::cout<<meanVf<<std::endl;
+    //        std::cout<<meanVelocity<<std::endl;
+    //        std::cout<<meanVf<<std::endl;
     //    std::cout<<"fwSMean = "<<fwSMean<<std::endl;
     //        std::cout<<"fwSMeanTest = "<<fwSMeanTest<<std::endl;
 
     FieldVector<Scalar, dim> meanVelocityMeanFwS = meanVelocity;
     meanVelocityMeanFwS *= fwSMean;
 
-//                std::cout<<"meanVelocityMeanFwS ="<<meanVelocityMeanFwS<<std::endl;
+    //                std::cout<<"meanVelocityMeanFwS ="<<meanVelocityMeanFwS<<std::endl;
     FieldVector<Scalar, dim> D = meanVf-meanVelocityMeanFwS;
     //    std::cout<<"D ="<<D<<std::endl;
 
@@ -411,10 +411,10 @@ template<class Grid, class Model>void TimeLoopSubProbs<Grid,Model>::calculateFlu
     typedef typename HostGrid::template Codim<0>::EntityPointer HostElementPointer;
     typedef typename HostGrid::Traits::template Codim<0>::Entity HostElement;
     typedef typename HostGridView::IndexSet HostIndexSet;
-    int fineLev = model.variables().diffLevel;
+    int fineLev = model.variables.diffLevel;
 
-    const GridView& gridViewCoarse(model.variables().grid.levelView(0));
-    const GridView& gridViewFine(model.variables().grid.levelView(fineLev));
+    const GridView& gridViewCoarse(model.variables.grid.levelView(0));
+    const GridView& gridViewFine(model.variables.grid.levelView(fineLev));
     const HostGridView& gridViewHost(gridViewCoarse.grid().getHostGrid().levelView(0));
 
     const IndexSet& indexSetCoarse = gridViewCoarse.indexSet();
@@ -450,15 +450,15 @@ template<class Grid, class Model>void TimeLoopSubProbs<Grid,Model>::calculateFlu
         // get global coordinate of cell center
         const GlobalPosition& globalPos = geometry.global(localPos);
 
-        const HostElementPointer& eItHost = model.variables().grid.template getHostEntity<0>(*eIt);
+        const HostElementPointer& eItHost = model.variables.grid.template getHostEntity<0>(*eIt);
 
-        int globalIdx = model.variables().diffMapper.map(*eIt);
+        int globalIdx = model.variables.diffMapper.map(*eIt);
 
         Scalar elementVolume = geometry.integrationElement(localPos)*Dune::ReferenceElements<Scalar,dim>::general(gt).volume();
         Scalar elementFaceArea=0;
 
         Scalar sat = (*model)[globalIdx];
-        Scalar pressure = model.variables().pressure[globalIdx];
+        Scalar pressure = model.variables.pressure[globalIdx];
 
         HostElement& hostElement = *eItHost;
         HostElementPointer fatherPointerHost = hostElement.father();
@@ -478,8 +478,8 @@ template<class Grid, class Model>void TimeLoopSubProbs<Grid,Model>::calculateFlu
 
         int globalIdxCoarse = indexSetCoarse.index(*fatherPointer);
         int globalIdxCoarseHost = indexSetCoarseHost.index(*fatherPointerHost);
-//        std::cout<<"globalIdxCoarse = "<<globalIdxCoarse<<std::endl;
-//        std::cout<<"globalIdxCoarseHost = "<<globalIdxCoarseHost<<std::endl;
+        //        std::cout<<"globalIdxCoarse = "<<globalIdxCoarse<<std::endl;
+        //        std::cout<<"globalIdxCoarseHost = "<<globalIdxCoarseHost<<std::endl;
 
         const LocalPosition &localPosCoarse = Dune::ReferenceElements<Scalar,dim>::general(fatherPointerHost->geometry().type()).position(0, 0);
 
@@ -520,7 +520,7 @@ template<class Grid, class Model>void TimeLoopSubProbs<Grid,Model>::calculateFlu
             int faceNumber = isIt->numberInSelf();
 
             elementFaceArea += faceArea;
-//            std::cout<<"faceArea = "<<faceArea<<std::endl;
+            //            std::cout<<"faceArea = "<<faceArea<<std::endl;
 
             //            std::cout<<"globalIdxCoarseHost = "<<globalIdxCoarseHost<<"globalIdxCoarseCurrent = "<<globalIdxCoarseCurrent<<std::endl;
             //            std::cout<<"globalPosFace = "<<globalPosFace<<"globalPosFaceCoarseCurrent = "<<globalPosFaceCoarseCurrent<<std::endl;
@@ -532,32 +532,32 @@ template<class Grid, class Model>void TimeLoopSubProbs<Grid,Model>::calculateFlu
                     case 1:
                     if (globalPosFace[0] >= globalPosFaceCoarseCurrent[0]-eps_ && globalPosFace[0] <= globalPosFaceCoarseCurrent[0]+eps_)
                     {
-                        meanVelocity += model.variables().velocity[globalIdx][faceNumber][0]*faceArea;
-                        meanVf += (model.variables().velocity[globalIdx][faceNumber][0] * model.diffProblem.materialLaw.fractionalW(sat, globalPos, *eItHost, localPos))*faceArea;
+                        meanVelocity += model.variables.velocity[globalIdx][faceNumber][0]*faceArea;
+                        meanVf += (model.variables.velocity[globalIdx][faceNumber][0] * model.diffProblem.materialLaw.fractionalW(sat, globalPos, *eItHost, localPos))*faceArea;
                         faceAreaCoarse += faceArea;
                     }
                     break;
                     case 2:
                     if (globalPosFace[0] >= globalPosFaceCoarseCurrent[0]-eps_ && globalPosFace[0] <= globalPosFaceCoarseCurrent[0]+eps_)
                     {
-                        meanVelocity += model.variables().velocity[globalIdx][faceNumber][0]*faceArea;
-                        meanVf += (model.variables().velocity[globalIdx][faceNumber][0] * model.diffProblem.materialLaw.fractionalW(sat, globalPos, *eItHost, localPos))*faceArea;
+                        meanVelocity += model.variables.velocity[globalIdx][faceNumber][0]*faceArea;
+                        meanVf += (model.variables.velocity[globalIdx][faceNumber][0] * model.diffProblem.materialLaw.fractionalW(sat, globalPos, *eItHost, localPos))*faceArea;
                         faceAreaCoarse += faceArea;
                     }
                     break;
                     case 3:
                     if (globalPosFace[1] >= globalPosFaceCoarseCurrent[1]-eps_ && globalPosFace[1] <= globalPosFaceCoarseCurrent[1]+eps_)
                     {
-                        meanVelocity += model.variables().velocity[globalIdx][faceNumber][1]*faceArea;
-                        meanVf += (model.variables().velocity[globalIdx][faceNumber][1] * model.diffProblem.materialLaw.fractionalW(sat, globalPos, *eItHost, localPos))*faceArea;
+                        meanVelocity += model.variables.velocity[globalIdx][faceNumber][1]*faceArea;
+                        meanVf += (model.variables.velocity[globalIdx][faceNumber][1] * model.diffProblem.materialLaw.fractionalW(sat, globalPos, *eItHost, localPos))*faceArea;
                         faceAreaCoarse += faceArea;
                     }
                     break;
                     case 4:
                     if (globalPosFace[1] >= globalPosFaceCoarseCurrent[1]-eps_ && globalPosFace[1] <= globalPosFaceCoarseCurrent[1]+eps_)
                     {
-                        meanVelocity += model.variables().velocity[globalIdx][faceNumber][1]*faceArea;
-                        meanVf += (model.variables().velocity[globalIdx][faceNumber][1] * model.diffProblem.materialLaw.fractionalW(sat, globalPos, *eItHost, localPos))*faceArea;
+                        meanVelocity += model.variables.velocity[globalIdx][faceNumber][1]*faceArea;
+                        meanVf += (model.variables.velocity[globalIdx][faceNumber][1] * model.diffProblem.materialLaw.fractionalW(sat, globalPos, *eItHost, localPos))*faceArea;
                         faceAreaCoarse += faceArea;
                     }
                     break;
@@ -601,7 +601,7 @@ template<class Grid, class Model>void TimeLoopSubProbs<Grid,Model>::calculateFlu
     {
         int globalIdx = indexSetCoarse.index(*eItCoarse);
 
-        const HostElementPointer& eItCoarseHost = model.variables().grid.template getHostEntity<0>(*eItCoarse);
+        const HostElementPointer& eItCoarseHost = model.variables.grid.template getHostEntity<0>(*eItCoarse);
 
         int globalIdxHost = indexSetCoarseHost.index(*eItCoarseHost);
 
@@ -646,16 +646,16 @@ template<class Grid, class Model>void TimeLoopSubProbs<Grid,Model>::calculateFlu
 
     meanVelocity /= faceAreaCoarse;
     meanVf /= faceAreaCoarse;
-//    std::cout<<"meanVf ="<<meanVf<<std::endl;
-//    std::cout<<"faceAreaCoarse = "<<faceAreaCoarse<<std::endl;
-//    std::cout<<"meanVelocity = "<<meanVelocity<<std::endl;
+    //    std::cout<<"meanVf ="<<meanVf<<std::endl;
+    //    std::cout<<"faceAreaCoarse = "<<faceAreaCoarse<<std::endl;
+    //    std::cout<<"meanVelocity = "<<meanVelocity<<std::endl;
 
     fwSMean/=elementVolumeCoarse;
     Scalar meanVelocityMeanFwS = meanVelocity * fwSMean;
-//    std::cout<<"meanveltimesfwmean ="<<meanVelocityMeanFwS<<std::endl;
+    //    std::cout<<"meanveltimesfwmean ="<<meanVelocityMeanFwS<<std::endl;
 
     Scalar fluxCorrection = meanVf - meanVelocityMeanFwS;
-//    std::cout<<"m1 = "<<fluxCorrection<<std::endl;
+    //    std::cout<<"m1 = "<<fluxCorrection<<std::endl;
 
     pressureIn /= elementVolumeCoarse;
     pressureOut /= elementVolumeCoarse;
@@ -713,10 +713,10 @@ template<class Grid, class Model>void TimeLoopSubProbs<Grid,Model>::calculateBou
     typedef typename HostGrid::template Codim<0>::EntityPointer HostElementPointer;
     typedef typename HostGrid::Traits::template Codim<0>::Entity HostElement;
     typedef typename HostGridView::IndexSet HostIndexSet;
-    int fineLev = model.variables().diffLevel;
+    int fineLev = model.variables.diffLevel;
 
-    const GridView& gridViewFine(model.variables().grid.levelView(fineLev));
-    const GridView& gridViewCoarse(model.variables().grid.levelView(0));
+    const GridView& gridViewFine(model.variables.grid.levelView(fineLev));
+    const GridView& gridViewCoarse(model.variables.grid.levelView(0));
     const HostGridView& gridViewCoarseHost(gridViewCoarse.grid().getHostGrid().levelView(0));
     const HostIndexSet& indexSetCoarseHost = gridViewCoarseHost.indexSet();
 
@@ -748,14 +748,14 @@ template<class Grid, class Model>void TimeLoopSubProbs<Grid,Model>::calculateBou
         // get global coordinate of cell center
         const GlobalPosition& globalPos = geometry.global(localPos);
 
-        const HostElementPointer& eItHost = model.variables().grid.template getHostEntity<0>(*eIt);
+        const HostElementPointer& eItHost = model.variables.grid.template getHostEntity<0>(*eIt);
 
-        int globalIdx = model.variables().diffMapper.map(*eIt);
+        int globalIdx = model.variables.diffMapper.map(*eIt);
 
         Scalar elementVolume = geometry.integrationElement(localPos)*Dune::ReferenceElements<Scalar,dim>::general(gt).volume();
 
         Scalar sat = (*model)[globalIdx];
-        pressure += model.variables().pressure[globalIdx];
+        pressure += model.variables.pressure[globalIdx];
 
         meanSat_ += sat*elementVolume;
         //              std::cout<<"meanSat = "<<meanSat_<<std::endl;
@@ -804,8 +804,8 @@ template<class Grid, class Model>void TimeLoopSubProbs<Grid,Model>::calculateBou
                 if (globalPosFace[0] == globalPosFaceCoarseCurrent[0])
                 {
                     //                      std::cout<<"globalPosFace = "<<globalPosFace<<"globalPosFaceCoarseCurrent = "<<globalPosFaceCoarseCurrent<<std::endl;
-                    meanVelocity += model.variables().velocity[globalIdx][faceNumber][0]*faceArea;
-                    meanVf += (model.variables().velocity[globalIdx][faceNumber][0] * model.diffProblem.materialLaw.fractionalW(1.0, globalPos, *eItHost, localPos))*faceArea;
+                    meanVelocity += model.variables.velocity[globalIdx][faceNumber][0]*faceArea;
+                    meanVf += (model.variables.velocity[globalIdx][faceNumber][0] * model.diffProblem.materialLaw.fractionalW(1.0, globalPos, *eItHost, localPos))*faceArea;
                     faceAreaCoarse += faceArea;
                 }
                 break;
@@ -813,8 +813,8 @@ template<class Grid, class Model>void TimeLoopSubProbs<Grid,Model>::calculateBou
                 if (globalPosFace[0] == globalPosFaceCoarseCurrent[0])
                 {
                     //                      std::cout<<"globalPosFace = "<<globalPosFace<<"globalPosFaceCoarseCurrent = "<<globalPosFaceCoarseCurrent<<std::endl;
-                    meanVelocity += model.variables().velocity[globalIdx][faceNumber][0]*faceArea;
-                    meanVf += (model.variables().velocity[globalIdx][faceNumber][0] * model.diffProblem.materialLaw.fractionalW(1.0, globalPos, *eItHost, localPos))*faceArea;
+                    meanVelocity += model.variables.velocity[globalIdx][faceNumber][0]*faceArea;
+                    meanVf += (model.variables.velocity[globalIdx][faceNumber][0] * model.diffProblem.materialLaw.fractionalW(1.0, globalPos, *eItHost, localPos))*faceArea;
                     faceAreaCoarse += faceArea;
                 }
                 break;
@@ -822,8 +822,8 @@ template<class Grid, class Model>void TimeLoopSubProbs<Grid,Model>::calculateBou
                 if (globalPosFace[1] == globalPosFaceCoarseCurrent[1])
                 {
                     //                      std::cout<<"globalPosFace = "<<globalPosFace<<"globalPosFaceCoarseCurrent = "<<globalPosFaceCoarseCurrent<<std::endl;
-                    meanVelocity += model.variables().velocity[globalIdx][faceNumber][1]*faceArea;
-                    meanVf += (model.variables().velocity[globalIdx][faceNumber][1] * model.diffProblem.materialLaw.fractionalW(1.0, globalPos, *eItHost, localPos))*faceArea;
+                    meanVelocity += model.variables.velocity[globalIdx][faceNumber][1]*faceArea;
+                    meanVf += (model.variables.velocity[globalIdx][faceNumber][1] * model.diffProblem.materialLaw.fractionalW(1.0, globalPos, *eItHost, localPos))*faceArea;
                     faceAreaCoarse += faceArea;
                 }
                 break;
@@ -831,8 +831,8 @@ template<class Grid, class Model>void TimeLoopSubProbs<Grid,Model>::calculateBou
                 if (globalPosFace[1] == globalPosFaceCoarseCurrent[1])
                 {
                     //                      std::cout<<"globalPosFace = "<<globalPosFace<<"globalPosFaceCoarseCurrent = "<<globalPosFaceCoarseCurrent<<std::endl;
-                    meanVelocity += model.variables().velocity[globalIdx][faceNumber][1]*faceArea;
-                    meanVf += (model.variables().velocity[globalIdx][faceNumber][1] * model.diffProblem.materialLaw.fractionalW(1.0, globalPos, *eItHost, localPos))*faceArea;
+                    meanVelocity += model.variables.velocity[globalIdx][faceNumber][1]*faceArea;
+                    meanVf += (model.variables.velocity[globalIdx][faceNumber][1] * model.diffProblem.materialLaw.fractionalW(1.0, globalPos, *eItHost, localPos))*faceArea;
                     faceAreaCoarse += faceArea;
                 }
                 break;
@@ -872,7 +872,7 @@ template<class Grid, class Model>void TimeLoopSubProbs<Grid,Model>::calculateBou
     ElementIterator eItCoarseEnd = gridViewCoarse.template end<0>();
     for (ElementIterator eItCoarse = gridViewCoarse.template begin<0>(); eItCoarse != eItCoarseEnd; ++eItCoarse)
     {
-        const HostElementPointer& eItCoarseHost = model.variables().grid.template getHostEntity<0>(*eItCoarse);
+        const HostElementPointer& eItCoarseHost = model.variables.grid.template getHostEntity<0>(*eItCoarse);
 
         int globalIdx = indexSetCoarseHost.index(*eItCoarseHost);
 

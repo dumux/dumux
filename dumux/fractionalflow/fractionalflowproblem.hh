@@ -15,7 +15,7 @@
 #include<dumux/material/twophaserelations.hh>
 
 #include <dumux/material/property_baseclasses.hh>
-#include "dumux/fractionalflow/variableclass.hh"
+//#include "dumux/fractionalflow/variableclass.hh"
 
 /**
  * @file
@@ -119,7 +119,7 @@ public:
             const LocalPosition& localPos) const = 0;
 
     virtual Scalar neumannSat (const GlobalPosition& globalPos, const Element& element,
-            const LocalPosition& localPos, Scalar& factor) const
+            const LocalPosition& localPos, Scalar factor) const
     {
         return 0;
     }
@@ -138,7 +138,7 @@ public:
      *  @param cap flag to include capillary forces.
      */
     FractionalFlowProblem(VC& variables, Fluid& wettingphase, Fluid& nonwettingphase, Matrix2p<Grid, Scalar>& soil, TwoPhaseRelations<Grid, Scalar>& materialLaw = *(new TwoPhaseRelations<Grid,Scalar>), const bool capillarity = false)
-    : variables(variables), wettingphase(wettingphase), nonwettingphase(nonwettingphase), soil(soil), capillarity(capillarity), materialLaw(materialLaw),gravity_(0)
+    : variables(variables), wettingPhase(wettingphase), nonWettingPhase(nonwettingphase), soil(soil), capillarity(capillarity), materialLaw(materialLaw),gravity_(0)
     {}
 
     //! always define virtual destructor in abstract base class
@@ -147,8 +147,8 @@ public:
 
     //! a class describing relations between two phases and the porous medium
     VC& variables;
-    Fluid& wettingphase;
-    Fluid& nonwettingphase;
+    Fluid& wettingPhase;
+    Fluid& nonWettingPhase;
     Matrix2p<Grid, Scalar>& soil;
     const bool capillarity;
     TwoPhaseRelations<Grid, Scalar>& materialLaw;
