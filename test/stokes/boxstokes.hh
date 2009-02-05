@@ -103,7 +103,7 @@ namespace Dune
 #endif
 
       LeafP1BoxStokes (const G& g, StokesProblem<G, RT>& prob)
-      : BoxStokes(g, prob), grid(g), vertexmapper(g, g.leafIndexSet()),
+      : BoxStokes(g, prob), grid_(g), vertexmapper(g, g.leafIndexSet()),
         size((*(this->u)).size()), pressure(size), xVelocity(size), yVelocity(size), count(0)
       { }
 
@@ -114,7 +114,7 @@ namespace Dune
           typedef typename GV::template Codim<0>::Iterator Iterator;
           enum{dimworld = G::dimensionworld};
 
-          const GV& gridview(this->grid.leafView());
+          const GV& gridview(this->grid_.leafView());
           std::cout << "initializing solution." << std::endl;
           // iterate through leaf grid an evaluate c0 at cell center
           Iterator eendit = gridview.template end<0>();
@@ -216,7 +216,7 @@ namespace Dune
     {
         this->localJacobian().setDt(dt);
         this->localJacobian().setOldSolution(this->uOldTimeStep);
-        NewtonMethod<G, ThisType> newtonMethod(this->grid, *this);
+        NewtonMethod<G, ThisType> newtonMethod(this->grid_, *this);
         newtonMethod.execute();
         dt = this->localJacobian().getDt();
         *(this->uOldTimeStep) = *(this->u);
@@ -229,7 +229,7 @@ namespace Dune
     	count++;
     	MatrixType& A = *(this->A);
         //modify matrix for introducing pressure boundary condition
-        const GV& gridview(this->grid.leafView());
+        const GV& gridview(this->grid_.leafView());
         typedef typename GV::template Codim<0>::Iterator Iterator;
 
         Iterator it = gridview.template begin<0>();
@@ -267,7 +267,7 @@ namespace Dune
         typedef typename GV::template Codim<0>::Iterator Iterator;
         typedef typename BoundaryConditions::Flags BCBlockType;
 
-        const GV& gridview(this->grid.leafView());
+        const GV& gridview(this->grid_.leafView());
         (*defectGlobal)=0;
 
         // allocate flag vector to hold flags for essential boundary conditions
@@ -320,17 +320,20 @@ namespace Dune
             yVelocity[i] = (*(this->u))[i][1];
         }
 
-    	VTKWriter<typename G::LeafGridView> vtkwriter(this->grid.leafView());
+    	VTKWriter<typename G::LeafGridView> vtkwriter(this->grid_.leafView());
         vtkwriter.addVertexData(pressure,"pressure");
         vtkwriter.addVertexData(xVelocity,"xVelocity");
         vtkwriter.addVertexData(yVelocity,"yVelocity");
         vtkwriter.write(name, VTKOptions::ascii);
     }
 
+    const G& grid() const
+        { return grid_; }
+
 
 
 protected:
-  const G& grid;
+  const G& grid_;
   VertexMapper vertexmapper;
   int size;
   BlockVector<FieldVector<RT, 1> > pressure;
