@@ -38,7 +38,7 @@ namespace Dune {
  */
 template<class G, class RT> class StokesProblem {
     typedef typename G::ctype DT;
-    enum {dim=G::dimension, m=G::dimension+1};
+    enum {dim=G::dimension, numEq=G::dimension+1};
     typedef typename G::Traits::template Codim<0>::Entity Entity;
     typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator
             IntersectionIterator;
@@ -51,8 +51,14 @@ public:
      @param[in]  xi   position in reference element of e
      \return     value of source term
      */
-    virtual FieldVector<RT,m> q(const FieldVector<DT,dim>& x, const Entity& e,
-            const FieldVector<DT,dim>& xi) const = 0;
+    virtual FieldVector<RT,numEq> q(const FieldVector<DT,dim>& x, const Entity& e,
+            const FieldVector<DT,dim>& xi) const
+    {
+     	DUNE_THROW(NotImplemented, "no q specified, but requested");
+
+         FieldVector<RT,numEq> result(0);
+         return result;
+     }
 
     //! return type of boundary condition at the given global coordinate
     /*! return type of boundary condition at the given global coordinate
@@ -71,6 +77,21 @@ public:
     virtual FieldVector<RT,dim> g(const FieldVector<DT,dim>& x, const Entity& e,
             const IntersectionIterator& intersectionIt,
             const FieldVector<DT,dim>& xi) const = 0;
+
+    //! evaluate Neumann boundary condition at given position
+    /*! evaluate Neumann boundary condition at given position
+     @param[in]  x    position in global coordinates
+     \return     boundary condition value
+     */
+    virtual FieldVector<RT,dim> J(const FieldVector<DT,dim>& x, const Entity& e,
+            const IntersectionIterator& intersectionIt,
+            const FieldVector<DT,dim>& xi)
+    {
+    	DUNE_THROW(NotImplemented, "no J specified, but requested");
+
+        FieldVector<RT,dim> result(0);
+        return result;
+    }
 
     //! evaluate normal force boundary condition at given position
     /*! evaluate normal force boundary condition \f$ p - \mu \vec{n}\cdot(\nabla\vec{u}\cdot\vec{n}) = J_n \f$ at given position
@@ -142,6 +163,15 @@ public:
 
     FieldMatrix<DT, dim, dim> result(0);
     return result;
+  }
+
+  virtual void dirichletIndex(const Dune::FieldVector<DT,dim>& x, const Entity& e,
+          const IntersectionIterator& intersectionIt,
+          const Dune::FieldVector<DT,dim>& xi, Dune::FieldVector<int,numEq>& dirichletIndex) const
+  {
+      for (int i = 0; i < numEq; i++)
+          dirichletIndex[i]=i;
+      return;
   }
 
     StokesProblem()

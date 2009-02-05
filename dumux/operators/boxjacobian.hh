@@ -136,7 +136,8 @@ public:
 
             if (withBC) {
                 // assemble boundary conditions
-                assembleBC<TypeTag> (e);
+    			this->getImp().assembleBC<TypeTag> (e);
+//                assembleBC<TypeTag> (e);
 
                 // add to defect
                 for (int i=0; i < this->fvGeom.numVertices; i++) {

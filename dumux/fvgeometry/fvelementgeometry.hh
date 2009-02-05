@@ -496,6 +496,9 @@ namespace Dune
             FV local; //!< local vert position
             FV global; //!< global vert position
             Scalar volume; //!< volume of scv
+            FV grad; //! derivative of shape function associated with the sub control volume
+            Scalar shapeValue; //! value of shape function associated with the sub control volume
+            bool inner;
         };
 
         struct SubControlVolumeFace
@@ -512,6 +515,8 @@ namespace Dune
             FV ipLocal; //!< integration point in local coords
             FV ipGlobal; //!< integration point in global coords
             Scalar area; //!< area of boundary face
+            FV normal; //!< normal on face at ip pointing to CV j with length equal to |scvf|
+            FieldVector<FV, maxNC> grad; //!< derivatives of shape functions at ip
             FieldVector<Scalar, maxNC> shapeValue; //!< value of shape functions at ip
         };
 
@@ -553,6 +558,7 @@ namespace Dune
                 for (int vert = 0; vert < numVertices; vert++) {
                     subContVol[vert].local  = referenceElement.position(vert, dim);
                     subContVol[vert].global = geometry.global(subContVol[vert].local);
+                    subContVol[vert].inner = true;
                 }
 
                 // edges:
@@ -646,6 +652,7 @@ namespace Dune
                         {
                             int vertInElement = referenceElement.subEntity(face, 1, vertInFace, dim);
                             int bfIdx = boundaryFaceIndex(face, vertInFace);
+                            subContVol[vertInElement].inner = false;
                             switch (dim) {
                             case 1:
                                 boundaryFace[bfIdx].ipLocal = referenceElement.position(vertInElement, dim);
@@ -674,8 +681,16 @@ namespace Dune
                             }
                             boundaryFace[bfIdx].ipGlobal = geometry.global(boundaryFace[bfIdx].ipLocal);
 
+                            FieldMatrix<Scalar,dim,dim> jacInvT = geometry.jacobianInverseTransposed(boundaryFace[bfIdx].ipLocal);
                             for (int vert = 0; vert < numVertices; vert++)
+                            {
+                                FV grad(0),temp;
+                                for (int l = 0; l < dim; l++)
+                                    temp[l] = sfs[vert].evaluateDerivative(0, l, boundaryFace[bfIdx].ipLocal);
+                                jacInvT.umv(temp, grad);
+                                boundaryFace[bfIdx].grad[vert] = grad;
                             	boundaryFace[bfIdx].shapeValue[vert] = sfs[vert].evaluateFunction(0, boundaryFace[bfIdx].ipLocal);
+                            }
 
                             //                    std::cout << "boundary face " << face << ", vert = " << vertInElement << ", ipLocal = "
                             //                        << boundaryFace[bfIdx].ipLocal << ", ipGlobal = " << boundaryFace[bfIdx].ipGlobal
@@ -683,6 +698,63 @@ namespace Dune
 
                         }
                     }
+
+
+                for (int vert = 0; vert < numVertices; vert++)
+                	if (dim == 2)
+                	{
+                		if (!subContVol[vert].inner) {
+                			switch (vert)
+                			{
+                			case 0:
+                				if (numVertices == 4) {
+                					subContVol[vert].local[0] = 0.25;
+                					subContVol[vert].local[1] = 0.25;
+                				}
+                				else {
+                					subContVol[vert].local[0] = 1.0/6.0;
+                					subContVol[vert].local[1] = 1.0/6.0;
+                				}
+                				break;
+                			case 1:
+                				if (numVertices == 4) {
+                					subContVol[vert].local[0] = 0.75;
+                					subContVol[vert].local[1] = 0.25;
+                				}
+                				else {
+                					subContVol[vert].local[0] = 4.0/6.0;
+                					subContVol[vert].local[1] = 1.0/6.0;
+                				}
+                				break;
+                			case 2:
+                				if (numVertices == 4) {
+                					subContVol[vert].local[0] = 0.25;
+                					subContVol[vert].local[1] = 0.75;
+                				}
+                				else {
+                					subContVol[vert].local[0] = 1.0/6.0;
+                					subContVol[vert].local[1] = 4.0/6.0;
+                				}
+                				break;
+                			case 3:
+                				subContVol[vert].local[0] = 0.75;
+                				subContVol[vert].local[1] = 0.75;
+                				break;
+                			}
+                		}
+
+                		subContVol[vert].global = geometry.global(subContVol[vert].local);
+
+                		FieldMatrix<Scalar,dim,dim> jacInvT = geometry.jacobianInverseTransposed(subContVol[vert].local);
+
+                		FV grad(0),temp;
+                		for (int l = 0; l < dim; l++)
+                			temp[l] = sfs[vert].evaluateDerivative(0, l, subContVol[vert].local);
+                		jacInvT.umv(temp, grad);
+                		subContVol[vert].grad = grad;
+                		subContVol[vert].shapeValue = sfs[vert].evaluateFunction(0, subContVol[vert].local);
+                	}
+
             }
 
     };
