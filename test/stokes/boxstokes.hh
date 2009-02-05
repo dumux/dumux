@@ -52,6 +52,8 @@ namespace Dune
 
     virtual void solve() = 0;
 
+    virtual ~BoxStokes () {}
+
     FunctionType uOldTimeStep;
   };
 
@@ -97,12 +99,12 @@ namespace Dune
         typedef typename ThisType::OperatorAssembler::RepresentationType MatrixType;
         typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator;
 #ifdef HAVE_PARDISO
-    SeqPardiso<MatrixType,VectorType,VectorType> pardiso;
+//    SeqPardiso<MatrixType,VectorType,VectorType> pardiso;
 #endif
 
       LeafP1BoxStokes (const G& g, StokesProblem<G, RT>& prob)
       : BoxStokes(g, prob), grid(g), vertexmapper(g, g.leafIndexSet()),
-        size((*(this->u)).size()), pressure(size), xVelocity(size), yVelocity(size)
+        size((*(this->u)).size()), pressure(size), xVelocity(size), yVelocity(size), count(0)
       { }
 
       virtual void initial()
@@ -128,11 +130,24 @@ namespace Dune
                   sfs=Dune::LagrangeShapeFunctions<DT,RT,dim>::general(gt, 1);
               int size = sfs.size();
 
+              IntersectionIterator is = IntersectionIteratorGetter<G,LeafTag>::end(entity);
+
               for (int i = 0; i < size; i++) {
                   int globalId = vertexmapper.template map<dim>(entity, sfs[i].entity());
 
-                  // initialize cell concentration
-                  (*(this->u))[globalId] = 0;
+              	// initialize cell concentration
+                (*(this->u))[globalId] = 0;
+
+/*                // get cell center in reference element
+                Dune::FieldVector<DT,dim> local = sfs[i].position();
+
+                // get global coordinate of cell center
+                Dune::FieldVector<DT,dimworld> global = it->geometry().global(local);
+
+                FieldVector<DT,dim> dirichlet = this->problem.g(global, entity, is, local);
+            	for (int eq = 0; eq < dim; eq++)
+            		(*(this->u))[globalId][eq] = dirichlet[eq];*/
+
               }
           }
 
@@ -166,7 +181,7 @@ namespace Dune
                       for (int j = 0; j < ReferenceElements<DT,dim>::general(gt).size(is->numberInSelf(), 1, sfs[i].codim()); j++)
                         if (sfs[i].entity() == ReferenceElements<DT,dim>::general(gt).subEntity(is->numberInSelf(), 1, j, sfs[i].codim()))
                         {
-                            if (this->localJacobian().bc(i)[0] == BoundaryConditions::dirichlet)
+                            if (this->localJacobian().bc(i)[1] == BoundaryConditions::dirichlet)
                             {
                                 // get cell center in reference element
                                 Dune::FieldVector<DT,dim> local = sfs[i].position();
@@ -192,7 +207,7 @@ namespace Dune
           }
 
           *(this->uOldTimeStep) = *(this->u);
-          printvector(std::cout, *(this->u), "initial solution", "row", 200, 1, 3);
+          //printvector(std::cout, *(this->u), "initial solution", "row", 200, 1, 3);
           return;
       }
 
@@ -211,20 +226,30 @@ namespace Dune
 
     virtual void solve()
     {
+    	count++;
     	MatrixType& A = *(this->A);
         //modify matrix for introducing pressure boundary condition
-        for (typename MatrixType::RowIterator i=A.begin(); i!=A.end(); ++i)
-            if(i.index()==0)
+        const GV& gridview(this->grid.leafView());
+        typedef typename GV::template Codim<0>::Iterator Iterator;
+
+        Iterator it = gridview.template begin<0>();
+//        unsigned int globalId = 8;//vertexmapper.template map<dim>(*it, 3);
+        unsigned int globalId = vertexmapper.template map<dim>(*it, 3);
+
+        //std::cout << "globalId = " << globalId << std::endl;
+    	for (typename MatrixType::RowIterator i=A.begin(); i!=A.end(); ++i)
+            if(i.index()==globalId)
             	for (typename MatrixType::ColIterator j=(*i).begin(); j!=(*i).end(); ++j)
                        A[i.index()][j.index()][dim] = 0.0;
-        (*(this->A))[0][0][dim][dim] = 1.0;
-        (*(this->f))[0][dim] = 0.0;
+        (*(this->A))[globalId][globalId][dim][dim] = 1.0;
+        (*(this->f))[globalId][dim] = 0.0;
 
         Operator op(A);  // make operator out of matrix
-        double red=1E-14;
+        double red=1E-18;
 
 #ifdef HAVE_PARDISO
-        pardiso.factorize(A);
+        //pardiso.factorize(A);
+	SeqPardiso<MatrixType,VectorType,VectorType> pardiso(A);
         LoopSolver<VectorType> solver(op, pardiso, red, 10, 2);
 #else
         SeqILU0<MatrixType,VectorType,VectorType> ilu0(A,1.0);// a precondtioner
@@ -311,6 +336,7 @@ protected:
   BlockVector<FieldVector<RT, 1> > pressure;
   BlockVector<FieldVector<RT, 1> > xVelocity;
   BlockVector<FieldVector<RT, 1> > yVelocity;
+  int count;
 };
 
 }

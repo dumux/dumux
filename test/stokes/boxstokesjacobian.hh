@@ -50,6 +50,7 @@ namespace Dune
     typedef typename Entity::Geometry Geometry;
     typedef BoxStokesJacobian<G,RT,BoxFunction> ThisType;
     typedef typename LocalJacobian<ThisType,G,RT,numEq>::VBlockType VBlockType;
+    typedef BoxJacobian<ThisType,G,RT,numEq,BoxFunction> BoxJacobianType;
     typedef Dune::FVElementGeometry<G> FVElementGeometry;
 
   public:
@@ -59,15 +60,71 @@ namespace Dune
                   bool levelBoundaryAsDirichlet_, const G& grid,
                   BoxFunction& sol,
                   bool procBoundaryAsDirichlet_=true)
-    : BoxJacobian<ThisType,G,RT,numEq,BoxFunction>(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_),
+    : BoxJacobianType(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_),
       problem(params)
     {
+    	alpha = -1;//-1.0e-2;
       this->analytic = false;
     }
 
     void clearVisited ()
     {
         return;
+    }
+
+    template<class TypeTag>
+    void localDefect(const Entity& e, const VBlockType* sol, bool withBC = true) {
+    	BoxJacobianType::template localDefect<TypeTag>(e, sol, withBC);
+
+
+		Dune::GeometryType gt = e.geometry().type();
+		const typename ReferenceElementContainer<DT,dim>::value_type& referenceElement = ReferenceElements<DT, dim>::general(gt);
+
+		for (int i=0; i < this->fvGeom.numVertices; i++) // begin loop over vertices / sub control volumes
+			if (!this->fvGeom.subContVol[i].inner)
+			{
+				typedef typename IntersectionIteratorGetter<G,TypeTag>::IntersectionIterator IntersectionIterator;
+
+				FieldVector<DT,dim> averagedNormal(0);
+				int faces = 0;
+				IntersectionIterator endit = IntersectionIteratorGetter<G, TypeTag>::end(e);
+				for (IntersectionIterator it = IntersectionIteratorGetter<G, TypeTag>::begin(e); it!=endit; ++it)
+				{
+					// handle face on exterior boundary, this assumes there are no interior boundaries
+					if (it->boundary()) {
+						// get geometry type of face
+						GeometryType faceGT = it->intersectionSelfLocal().type();
+
+						// center in face's reference element
+						const FieldVector<RT,dim-1>& faceLocal = ReferenceElements<RT,dim-1>::general(faceGT).position(0,0);
+
+						int faceIdx = it->numberInSelf();
+						int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
+						for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++) {
+							int nodeInElement = referenceElement.subEntity(faceIdx, 1, nodeInFace, dim);
+							if (nodeInElement != i)
+								continue;
+							int bfIdx = this->fvGeom.boundaryFaceIndex(faceIdx,    nodeInFace);
+							FieldVector<DT,dim> normal = it->unitOuterNormal(faceLocal);
+							normal *= this->fvGeom.boundaryFace[bfIdx].area;
+							averagedNormal += normal;
+							faces++;
+						}
+					}
+				}
+				RT defect = 0;
+				averagedNormal /= averagedNormal.two_norm();
+				for (int k = 0; k < dim; k++)
+					defect += this->def[i][k]*averagedNormal[k];
+
+				if (faces == 2 && this->fvGeom.numVertices == 4)
+					this->def[i][dim] = sol[0][dim] + sol[3][dim] - sol[1][dim] - sol[2][dim];
+				else
+					this->def[i][dim] = defect;
+				//std::cout << "node " << i << ", coord = " << this->fvGeom.subContVol[i].global << ", N = " << averagedNormal << std::endl;
+			}
+
+		return;
     }
 
     VBlockType computeM (const Entity& e, const VBlockType* sol, int node, bool old = false)
@@ -79,10 +136,24 @@ namespace Dune
 
     VBlockType computeQ (const Entity& e, const VBlockType* sol, const int& node)
     {
-    	VBlockType result = problem.q(this->fvGeom.subContVol[node].global, e, this->fvGeom.subContVol[node].local);
+   // 	std::cout << "sol[1] = " << sol[node][1] << ", node = " << node << std::endl;
+   // 	std::cout << "sol[2] = " << sol[node][2] << ", node = " << node << std::endl;
 
-    	RT flux = boundaryFlux(e, sol, node)/this->fvGeom.subContVol[node].volume;
-    	result[dim] -= flux;
+    	VBlockType result = problem.q(this->fvGeom.subContVol[node].global, e, this->fvGeom.subContVol[node].local);
+    	result *= -1.0;
+
+    	RT alphaH2 = alpha*this->fvGeom.subContVol[node].volume;
+    	result[dim] *= alphaH2;
+
+//    	result[dim] -= alphaH2*(result[0]*this->fvGeom.subContVol[node].grad[0]
+//    	              + result[1]*this->fvGeom.subContVol[node].grad[1]);
+    	//result[dim] -= alphaH2*(this->fvGeom.subContVol[node].grad[0] + this->fvGeom.subContVol[node].grad[1]);
+    	VBlockType flux = boundaryFlux(e, sol, node);
+
+//    	std::cout << "flux = " << flux[0] << ", node = " << node << std::endl;
+
+    	flux /= this->fvGeom.subContVol[node].volume;
+    	result -= flux;
 
        return (result);
     }
@@ -92,9 +163,13 @@ namespace Dune
     	VBlockType flux(0);
 
     	RT pressValue = 0;
+		FieldVector<RT, dim> pressGradient(0);
     	FieldVector<RT, dim> velocityValue(0);
 		for (int k = 0; k < this->fvGeom.numVertices; k++) {
 			pressValue += sol[k][dim]*this->fvGeom.subContVolFace[face].shapeValue[k];
+			FieldVector<RT,dim> grad(this->fvGeom.subContVolFace[face].grad[k]);
+			grad *= sol[k][dim];
+			pressGradient += grad;
 			for (int comp = 0; comp < dim; comp++)
 				velocityValue[comp] += sol[k][comp]*this->fvGeom.subContVolFace[face].shapeValue[k];
 		}
@@ -105,6 +180,7 @@ namespace Dune
     		FieldVector<RT, dim> gradVComp(0);
     		for (int k = 0; k < this->fvGeom.numVertices; k++) {
     			FieldVector<RT,dim> grad(this->fvGeom.subContVolFace[face].grad[k]);
+//                std::cout << "local = " << this->fvGeom.subContVolFace[face].iplocal << ", node = " << k << ", grad = " << this->fvGeom.subContVolFace[face].grad[k] << std::endl;
     			grad *= sol[k][comp];
     			gradVComp += grad;
     		}
@@ -120,7 +196,23 @@ namespace Dune
     	}
 
 		// mass balance:
-		flux[dim] = velocityValue*this->fvGeom.subContVolFace[face].normal;
+		FieldVector<RT, dim> massResidual = velocityValue;
+//		if (!(this->fvGeom.subContVolFace[face].ipGlobal[0] > 0.25 && this->fvGeom.subContVolFace[face].ipGlobal[0] < 0.75
+//			&&	this->fvGeom.subContVolFace[face].ipGlobal[1] > 0.25 && this->fvGeom.subContVolFace[face].ipGlobal[1] < 0.75))
+//		{
+        int i = this->fvGeom.subContVolFace[face].i;
+        int j = this->fvGeom.subContVolFace[face].j;
+    	RT alphaH2 = 0.5*alpha*(this->fvGeom.subContVol[i].volume + this->fvGeom.subContVol[j].volume);
+			pressGradient *= alphaH2;
+			massResidual += pressGradient;
+/*			VBlockType source = problem.q(this->fvGeom.subContVolFace[face].ipGlobal, e, this->fvGeom.subContVolFace[face].ipLocal);
+			FieldVector<RT, dim> dimSource;
+			for (int comp = 0; comp < dim; comp++)
+				dimSource[comp] = source[comp];
+			dimSource *= alphaH2;
+			massResidual -= dimSource;*/
+//		}
+		flux[dim] = massResidual*this->fvGeom.subContVolFace[face].normal;
 
     	return flux;
     }
@@ -146,8 +238,12 @@ namespace Dune
         return;
     }
 
-    RT boundaryFlux(const Entity& e, const VBlockType* sol, int node) {
-    	RT result = 0;
+    VBlockType boundaryFlux(const Entity& e, const VBlockType* sol, int node) {
+    	VBlockType  result(0);
+
+//		std::cout << "press = " << sol[node][dim]
+//		          << ", vel = " << sol[node][0] << ", " << sol[node][1] << ", node = " << node << std::endl;
+
 
         Dune::GeometryType gt = e.geometry().type();
         const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type
@@ -191,15 +287,57 @@ namespace Dune
                     // center in face's reference element
                     const FieldVector<RT,dim-1>& faceLocal = ReferenceElements<RT,dim-1>::general(faceGT).position(0,0);
 
+                    RT pressureValue = 0;
                     FieldVector<DT,dim>  velocityValue(0);
-                    for (int vert = 0; vert < this->fvGeom.numVertices; vert++)
-                    	for (int comp = 0; comp < dim; comp++)
-                    		velocityValue[comp] += sol[vert][comp]*this->fvGeom.boundaryFace[bfIdx].shapeValue[vert];
+                    FieldVector<DT,dim>  pressGradient(0);
+                     for (int vert = 0; vert < this->fvGeom.numVertices; vert++) {
+                    	pressureValue += sol[vert][dim]*this->fvGeom.boundaryFace[bfIdx].shapeValue[vert];
+            			FieldVector<RT,dim> grad(this->fvGeom.boundaryFace[bfIdx].grad[vert]);
+            			grad *= sol[vert][dim];
+            			pressGradient += grad;
 
-                    result += velocityValue*it->outerNormal(faceLocal)*this->fvGeom.boundaryFace[bfIdx].area;
+//            			std::cout << "press = " << sol[vert][dim]
+//            			          << ", vel = " << sol[vert][0] << ", " << sol[vert][1] << ", node = " << vert << std::endl;
+
+            			for (int comp = 0; comp < dim; comp++)
+                    	{
+                    		velocityValue[comp] += sol[vert][comp]*this->fvGeom.boundaryFace[bfIdx].shapeValue[vert];
+  //                  		std::cout << "sol = " << sol[vert][0] << ", node = " << vert << std::endl;
+                    	}
+                    }
+             		FieldVector<RT, dim> massResidual = velocityValue;
+                	RT alphaH2 = alpha*this->fvGeom.subContVol[node].volume;
+//             		std::cout << "node " << this->fvGeom.boundaryFace[bfIdx].ipGlobal << ": v = " << velocityValue << std::endl;
+/*             		pressGradient *= alphaH2;
+             		massResidual += pressGradient;*/
+                 	VBlockType source = problem.q(this->fvGeom.boundaryFace[bfIdx].ipGlobal, e, this->fvGeom.boundaryFace[bfIdx].ipLocal);
+                 	FieldVector<RT, dim> dimSource;
+                 	for (int comp = 0; comp < dim; comp++)
+                 		dimSource[comp] = source[comp];
+                 	dimSource *= alphaH2;
+//i                 	massResidual += dimSource;
+                 	massResidual += dimSource;
+                	result[dim] -= massResidual*it->unitOuterNormal(faceLocal)*this->fvGeom.boundaryFace[bfIdx].area;
+//                	std::cout << "global = " << this->fvGeom.boundaryFace[bfIdx].ipGlobal << ": f.n = " << (massResidual*it->unitOuterNormal(faceLocal)*this->fvGeom.boundaryFace[bfIdx].area)/alphaH2 << std::endl;
+
+                	for (int comp = 0; comp < dim; comp++)
+                	{
+                        FieldVector<DT,dim>  velocityGradient(0);
+                        for (int vert = 0; vert < this->fvGeom.numVertices; vert++) {
+                            FieldVector<RT,dim> grad(this->fvGeom.boundaryFace[bfIdx].grad[vert]);
+                            grad *= sol[vert][comp];
+                            velocityGradient += grad;
+                        }
+
+                        velocityGradient *= 0.0;//elData.mu;
+                        FieldVector<DT,dim>  pressVector(0);
+                        pressVector[comp] = pressureValue;
+                        velocityGradient -= pressVector;
+
+                    	result[comp] += velocityGradient*it->outerNormal(faceLocal)*this->fvGeom.boundaryFace[bfIdx].area;
+                	}
                 }
             }
-
         }
 
         return result;
@@ -268,7 +406,7 @@ namespace Dune
                             	J[equationNumber] *= this->fvGeom.boundaryFace[bfIdx].area;
                             	this->b[nodeInElement][equationNumber] += J[equationNumber];
                             }
-                        }
+                       }
                     }
                 }
 
@@ -354,6 +492,7 @@ namespace Dune
 
        ElementData elData;
     StokesProblem<G,RT>& problem;
+	double alpha;
   };
 }
 #endif

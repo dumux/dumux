@@ -8,6 +8,7 @@
 #include <dune/grid/sgrid.hh>
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
+#include <dune/grid/io/file/dgfparser/dgfalberta.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
@@ -15,6 +16,7 @@
 #include "boxstokes.hh"
 #include "yxproblem.hh"
 #include "sinproblem.hh"
+#include "curlproblem.hh"
 
 template<int dim>
 struct VertexLayout
@@ -98,6 +100,7 @@ int main(int argc, char** argv)
     // create a grid object
     typedef double NumberType;
     typedef Dune::SGrid<dim,dim> GridType;
+    //typedef Dune::AlbertaGrid<dim,dim> GridType;
 
     if (argc != 2 && argc != 3) {
         std::cout << "Usage: test_boxstokes dgffilename [refinementsteps]" << std::endl;
@@ -116,7 +119,7 @@ int main(int argc, char** argv)
     if (refinementSteps)
         grid.globalRefine(refinementSteps);
 
-    Dune::SinProblem<GridType, double> problem;
+    Dune::SinProblem2<GridType, double> problem;
     typedef Dune::LeafP1BoxStokes<GridType, NumberType, dim> BoxStokes;
     BoxStokes boxStokes(grid, problem);
 
