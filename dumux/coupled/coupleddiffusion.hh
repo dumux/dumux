@@ -7,6 +7,7 @@
 
 namespace Dune
 {
+/** \todo Please doc me! */
 
 template<class DiffusionModel>
 class CoupledDiffusion : public CoupledModel<DiffusionModel, DiffusionModel, CoupledDiffusion<DiffusionModel> > {

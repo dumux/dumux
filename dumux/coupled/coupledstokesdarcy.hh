@@ -8,7 +8,7 @@
 
 namespace Dune
 {
-
+/** \todo Please doc me! */
   template<class StokesModel, class DarcyModel>
   class CoupledStokesDarcy : public CoupledModel<StokesModel, DarcyModel, CoupledStokesDarcy<StokesModel, DarcyModel> > {
   public:
