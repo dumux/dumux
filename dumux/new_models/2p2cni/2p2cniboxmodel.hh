@@ -276,9 +276,12 @@ namespace Dune
 
                 // update data for the energy equation
                 vertDat.lambda = problem.soil().heatCond(global, element, local, vertDat.satW);
-                vertDat.enthalpy[pWIdx] = problem.wettingPhase().enthalpy(temperature, vertDat.pW);
-                vertDat.enthalpy[switchIdx] = problem.nonwettingPhase().enthalpy(temperature, vertDat.pN);
-
+                vertDat.enthalpy[pWIdx] = problem.wettingPhase().enthalpy(temperature,
+                                                                          vertDat.pW,
+                                                                          vertDat.massfrac[nComp][wPhase]);
+                vertDat.enthalpy[switchIdx] = problem.nonwettingPhase().enthalpy(temperature,
+                                                                          vertDat.pN,
+                                                                          vertDat.massfrac[wComp][nPhase]);
                 vertDat.intenergy[pWIdx] = problem.wettingPhase().intEnergy(temperature, vertDat.pW);
                 vertDat.intenergy[switchIdx] = problem.nonwettingPhase().intEnergy(temperature, vertDat.pN);
             }
