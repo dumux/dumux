@@ -44,7 +44,7 @@ template<class Grid, class Scalar> class TwoPTwoCNIProblem
 typedef    typename Grid::ctype CoordScalar;
     enum
     {   dim=Grid::dimension, numEq=3};
-    typedef typename Grid::template Codim<0>::Element Element;
+    typedef typename Grid::template Codim<0>::Entity Element;
     typedef typename Grid::template Codim<0>::LeafIntersectionIterator
     ElementIterator;
 
