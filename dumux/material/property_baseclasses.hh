@@ -19,14 +19,14 @@ namespace Dune
  * w for wetting phase
  * n for non-wetting phase
  */
-template<class G, class RT>
+template<class Grid, class ScalarT>
 class Matrix2p
 {
 public:
-typedef	typename G::ctype DT;
+typedef	typename Grid::ctype Scalar;
 	enum
-	{	n=G::dimension, m=2};
-	typedef typename G::Traits::template Codim<0>::Entity Entity;
+	{	dim=Grid::dimension, m=2};
+	typedef typename Grid::Traits::template Codim<0>::Entity Element;
 
 	//! provides flags for the relative permeability and capillary pressure model
 	enum modelFlag
@@ -40,107 +40,107 @@ typedef	typename G::ctype DT;
 	};
 
     /** @brief Permeability tensor
-	 * @param x position in global coordinates
-	 * @param e codim 0 entity for which the value is sought
-	 * @param xi position in local coordinates in e
+	 * @param globalPos position in global coordinates
+	 * @param element codim 0 entity for which the value is sought
+	 * @param localPos position in local coordinates in element
 	 */
-	virtual const FieldMatrix<DT,n,n> &K (const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, const int idx=0)
+	virtual const FieldMatrix<Scalar,dim,dim> &K (const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos)
 	{    DUNE_THROW(NotImplemented, "Permeability not implemented!"); }
 
     /**@brief matrix porosity
-	 * @param x position in global coordinates
-	 * @param e codim 0 entity for which the value is sought
-	 * @param xi position in local coordinates in e
+	 * @param globalPos position in global coordinates
+	 * @param element codim 0 entity for which the value is sought
+	 * @param localPos position in local coordinates in element
 	 */
-	virtual double porosity(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, const int idx=0) const
+	virtual double porosity(const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos) const
     {    DUNE_THROW(NotImplemented, "Porosity not implemented!"); }
 
 	/**@brief Wetting phase residual saturation
-	 * @param x position in global coordinates
-	 * @param e codim 0 entity for which the value is sought
-	 * @param xi position in local coordinates in e
+	 * @param globalPos position in global coordinates
+	 * @param element codim 0 entity for which the value is sought
+	 * @param localPos position in local coordinates in element
 	 * @param T temperature in [K]
 	 */
-	virtual double Sr_w(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, const double T = 283.15) const = 0;
+	virtual double Sr_w(const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos, const double T = 283.15) const = 0;
 
 	/**@brief Nonwetting phase residual saturation
-	 * @param x position in global coordinates
-	 * @param e codim 0 entity for which the value is sought
-	 * @param xi position in local coordinates in e
+	 * @param globalPos position in global coordinates
+	 * @param element codim 0 entity for which the value is sought
+	 * @param localPos position in local coordinates in element
 	 * @param T temperature in [K]
 	 */
-	virtual double Sr_n(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, const double T = 283.15) const = 0;
+	virtual double Sr_n(const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos, const double T = 283.15) const = 0;
 
 	/**@brief Matrix heat capacity in [kJ / (m^3 K)]
 	 * ATTENTION: define heat capacity per cubic meter! Be sure, that it corresponds to porosity!
 	 * Best thing will be to define heatCap = (specific heatCapacity of material) * density * porosity
-	 * @param x position in global coordinates
-	 * @param e codim 0 entity for which the value is sought
-	 * @param xi position in local coordinates in e
+	 * @param globalPos position in global coordinates
+	 * @param element codim 0 entity for which the value is sought
+	 * @param localPos position in local coordinates in element
 	 */
 	/* ATTENTION: define heat capacity per cubic meter! Be sure, that it corresponds to porosity!
 	 * Best thing will be to define heatCap = (specific heatCapacity of material) * density * porosity*/
-    virtual double heatCap(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, const int idx=0) const
+    virtual double heatCap(const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos) const
     {
         DUNE_THROW(NotImplemented, "heat capacity function not implemented!");
     }
 
 	/**@brief Heat conductivity of matrix AND fluid phases [ W / (m * K)]
-	 * @param x position in global coordinates
-	 * @param e codim 0 entity for which the value is sought
-	 * @param xi position in local coordinates in e
+	 * @param globalPos position in global coordinates
+	 * @param element codim 0 entity for which the value is sought
+	 * @param localPos position in local coordinates in element
 	 * @param sat wetting Phase saturation
 	 */
-    virtual double heatCond(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, const double sat, const int idx=0) const
+    virtual double heatCond(const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos, const double sat) const
     {
         DUNE_THROW(NotImplemented, "heat conductivity function not implemented!");
     }
 
 
 	/**@brief Tortuosity of matrix
-	 * @param x position in global coordinates
-	 * @param e codim 0 entity for which the value is sought
-	 * @param xi position in local coordinates in e
+	 * @param globalPos position in global coordinates
+	 * @param element codim 0 entity for which the value is sought
+	 * @param localPos position in local coordinates in element
 	 */
-	virtual double tortuosity(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
+	virtual double tortuosity(const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos) const
 	{
 		DUNE_THROW(NotImplemented, "heat conductivity function not implemented!");
 	}
 
 	/**@brief parameters for relative permeabilty models
-	 * @param x position in global coordinates
-	 * @param e codim 0 entity for which the value is sought
-	 * @param xi position in local coordinates in e
+	 * @param globalPos position in global coordinates
+	 * @param element codim 0 entity for which the value is sought
+	 * @param localPos position in local coordinates in element
 	 * @param T Temperature
 	 */
-	virtual std::vector<double> paramRelPerm(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, const double T = 283.15) const = 0;
+	virtual std::vector<double> paramRelPerm(const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos, const double T = 283.15) const = 0;
 
 	/**@brief Flag for determining the relative permeability model
-	 * @param x position in global coordinates
-	 * @param e codim 0 entity for which the value is sought
-	 * @param xi position in local coordinates in e
+	 * @param globalPos position in global coordinates
+	 * @param element codim 0 entity for which the value is sought
+	 * @param localPos position in local coordinates in element
 	 */
-	virtual modelFlag relPermFlag(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
+	virtual modelFlag relPermFlag(const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos) const
 	{
 		return linear;
 	}
 	/**@brief parameters for relative permeabilty models
-	 * @param x position in global coordinates
-	 * @param e codim 0 entity for which the value is sought
-	 * @param xi position in local coordinates in e
+	 * @param globalPos position in global coordinates
+	 * @param element codim 0 entity for which the value is sought
+	 * @param localPos position in local coordinates in element
 	 * @param T Temperature
 	 */
-	virtual std::vector<double> paramRelPerm2(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, const double T = 283.15) const
+	virtual std::vector<double> paramRelPerm2(const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos, const double T = 283.15) const
 	{
 		DUNE_THROW(NotImplemented, "second Pc-Sw rel");
 	}
 
 	/**@brief Flag for determining the relative permeability model
-	 * @param x position in global coordinates
-	 * @param e codim 0 entity for which the value is sought
-	 * @param xi position in local coordinates in e
+	 * @param globalPos position in global coordinates
+	 * @param element codim 0 entity for which the value is sought
+	 * @param localPos position in local coordinates in element
 	 */
-	virtual modelFlag relPermFlag2(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
+	virtual modelFlag relPermFlag2(const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos) const
 	{
 		return linear;
 	}
