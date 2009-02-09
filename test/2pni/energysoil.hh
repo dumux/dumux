@@ -20,7 +20,7 @@ namespace Dune
       enum {dim=G::dimension, m=1};
 
       // define PERMEABILITY tensor
-      virtual FieldMatrix<DT,dim,dim> K (const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi)
+      virtual const FieldMatrix<DT,dim,dim>& K (const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi)
       {
             return K_;
       }
