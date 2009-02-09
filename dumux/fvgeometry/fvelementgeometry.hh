@@ -18,6 +18,9 @@ namespace Dune
     // doing this.  it is required since it is not possible to
     // specialize member functions of template classes because of some
     // weird reason I didn't really get...
+
+/** \todo Please doc me! */
+
     template <typename FVElementGeometry, int dim>
     class _FVElemGeomHelper
     {
