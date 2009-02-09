@@ -89,6 +89,7 @@ class MultiComp
 
 };
 
+/** \todo Please doc me! */
 
 class CWaterAir : public MultiComp
 {
@@ -256,6 +257,9 @@ class CWaterAir : public MultiComp
 
 
 };
+
+/** \todo Please doc me! */
+
 class CBrineCO2 : public MultiComp
 {
     SolubilityCO2 solco2;
