@@ -17,11 +17,11 @@
 #include "dumux/material/vangenuchtenlaw_deprecated.hh"
 #include "dumux/material/randompermeability.hh"
 #include "dumux/diffusion/fv/fvdiffusionvelocity_deprecated.hh"
-#include "dumux/diffusion/fe/fediffusion.hh"
 #include "dumux/diffusion/mimetic/mimeticdiffusion.hh"
 #include "dumux/diffusion/problems/heterogeneousproblem.hh"
 #include "dumux/diffusion/problems/uniformproblem.hh"
 #include <dune/grid/uggrid.hh>
+#include "dumux/fractionalflow/variableclass.hh"
 //#include "annikaproblem.hh"
 
 int main(int argc, char** argv)
