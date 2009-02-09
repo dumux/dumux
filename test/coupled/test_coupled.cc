@@ -92,7 +92,7 @@ int main(int argc, char** argv)
     subGridLeft.createEnd();
     subGridRight.createEnd();
 
-    DiffusionParameters<SubGridType,NumberType> problem;
+    DarcyParameters<SubGridType,NumberType> problem;
 
     typedef Dune::LeafP1BoxDiffusion<SubGridType, NumberType> Diffusion;
     Diffusion diffusionLeft(subGridLeft, problem);
@@ -116,7 +116,7 @@ int main(int argc, char** argv)
     double errorCoupled = std::max(discreteError(subGridLeft, *(*diffusionLeft), problem), discreteError(subGridRight, *(*diffusionRight), problem));
     std::cout << "error of coupled solution = " << errorCoupled << std::endl;
 
-    DiffusionParameters<GridType,NumberType> problemGlobal;
+    DarcyParameters<GridType,NumberType> problemGlobal;
     typedef Dune::LeafP1BoxDiffusion<GridType, NumberType> DiffusionGlobal;
     DiffusionGlobal diffusionGlobal(grid, problemGlobal);
     Dune::TimeLoop<GridType, DiffusionGlobal> timeloop(0, 1, 1, "diffusionGlobal", 1);

@@ -168,7 +168,7 @@ void calculateDarcyVelocity(const Grid& grid, const Problem& problem, PressureFu
 //#endif
 
       LeafP1BoxDiffusion (const G& g, DarcyParameters<G, RT>& prob)
-      : BoxDiffusion(g, prob), grid(g), vertexmapper(g, g.leafIndexSet()),
+      : BoxDiffusion(g, prob), grid_(g), vertexmapper(g, g.leafIndexSet()),
         size((*(this->u)).size())
       { }
 
@@ -185,7 +185,7 @@ void calculateDarcyVelocity(const Grid& grid, const Problem& problem, PressureFu
           enum{dim = G::dimension};
           enum{dimworld = G::dimensionworld};
 
-          const GV& gridview(this->grid.leafView());
+          const GV& gridview(grid_.leafView());
           std::cout << "initializing solution." << std::endl;
           // iterate through leaf grid an evaluate c0 at cell center
           Iterator eendit = gridview.template end<0>();
@@ -271,7 +271,7 @@ void calculateDarcyVelocity(const Grid& grid, const Problem& problem, PressureFu
     {
         this->localJacobian().setDt(dt);
         this->localJacobian().setOldSolution(this->uOldTimeStep);
-        NewtonMethod<G, ThisType> newtonMethod(this->grid, *this);
+        NewtonMethod<G, ThisType> newtonMethod(grid_, *this);
         newtonMethod.execute();
         dt = this->localJacobian().getDt();
         *(this->uOldTimeStep) = *(this->u);
@@ -304,7 +304,7 @@ void calculateDarcyVelocity(const Grid& grid, const Problem& problem, PressureFu
         enum {dim = G::dimension};
         typedef array<BoundaryConditions::Flags, m> BCBlockType;
 
-        const GV& gridview(this->grid.leafView());
+        const GV& gridview(grid_.leafView());
         (*defectGlobal)=0;
 
         // allocate flag vector to hold flags for essential boundary conditions
@@ -353,21 +353,23 @@ void calculateDarcyVelocity(const Grid& grid, const Problem& problem, PressureFu
 
     virtual void vtkout (const char* name, int k)
     {
-        BlockVector<FieldVector<RT, 1> > xVelocity(grid.size(0));
-        BlockVector<FieldVector<RT, 1> > yVelocity(grid.size(0));
+        BlockVector<FieldVector<RT, 1> > xVelocity(grid_.size(0));
+        BlockVector<FieldVector<RT, 1> > yVelocity(grid_.size(0));
 
-        calculateDarcyVelocity(grid, this->problem, this->u, xVelocity, yVelocity);
-        VTKWriter<typename G::LeafGridView> vtkwriter(this->grid.leafView());
+        calculateDarcyVelocity(grid_, this->problem, this->u, xVelocity, yVelocity);
+        VTKWriter<typename G::LeafGridView> vtkwriter(grid_.leafView());
         vtkwriter.addVertexData(*(this->u),"pressure");
         vtkwriter.addCellData(xVelocity,"x-velocity");
         vtkwriter.addCellData(yVelocity,"y-velocity");
         vtkwriter.write(name, VTKOptions::ascii);
     }
 
+    const G& grid() const
+        { return grid_; }
 
 
 protected:
-  const G& grid;
+  const G& grid_;
   VertexMapper vertexmapper;
   int size;
 };
