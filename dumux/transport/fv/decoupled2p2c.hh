@@ -159,9 +159,15 @@ namespace Dune
           problem.variables.volErr /= timestep;
       }
 
+      const G& grid() const
+          { return grid_; }
+
+      virtual void postProcessUpdate(RT t, RT dt)
+      {}
+
     private:
         // common variables
-        G& grid;
+        G& grid_;
         int level_;
       const IS& indexset;
       EM elementmapper;
@@ -197,7 +203,7 @@ namespace Dune
              const NumericalFlux<RT>& numFl = *(new Upwind<RT>),
              const std::string solverName = "BiCGSTAB",
               const std::string preconditionerName = "SeqILU0" )
-             :    grid(g), level_(lev), indexset(g.levelView(lev).indexSet()), reconstruct(rec),
+             :    grid_(g), level_(lev), indexset(g.levelView(lev).indexSet()), reconstruct(rec),
                  numFlux(numFl), diffusivePart(diffPart), alphamax(amax),
                  problem(prob),
                  elementmapper(g, g.levelView(lev).indexSet()),
@@ -223,8 +229,8 @@ namespace Dune
   void Decoupled2p2c<G, RT>::initializeMatrix()
   {
     // determine matrix row sizes
-    Iterator eendit = grid.template lend<0>(level_);
-    for (Iterator it = grid.template lbegin<0>(level_); it != eendit; ++it)
+    Iterator eendit = grid_.template lend<0>(level_);
+    for (Iterator it = grid_.template lbegin<0>(level_); it != eendit; ++it)
     {
             // cell index
             int indexi = elementmapper.map(*it);
@@ -241,7 +247,7 @@ namespace Dune
       A.endrowsizes();
 
     // determine position of matrix entries
-    for (Iterator it = grid.template lbegin<0>(level_); it != eendit; ++it)
+    for (Iterator it = grid_.template lbegin<0>(level_); it != eendit; ++it)
     {
             // cell index
             int indexi = elementmapper.map(*it);
@@ -283,8 +289,8 @@ namespace Dune
       A = 0;
 
     // iterate over all cells
-    Iterator eendit = grid.template lend<0>(level_);
-    for (Iterator it = grid.template lbegin<0>(level_); it != eendit; ++it)
+    Iterator eendit = grid_.template lend<0>(level_);
+    for (Iterator it = grid_.template lbegin<0>(level_); it != eendit; ++it)
     {
         // get geometry infos about the cell...
             GeometryType gt = it->geometry().type(); // cell geometry type
@@ -680,8 +686,8 @@ namespace Dune
           if (gravity[k] != 0)
               hasGravity = true;
 
-        Iterator eendit = grid.template lend<0>(level_);
-        for (Iterator it = grid.template lbegin<0>(level_); it != eendit; ++it)
+        Iterator eendit = grid_.template lend<0>(level_);
+        for (Iterator it = grid_.template lbegin<0>(level_); it != eendit; ++it)
         {
             // some geometry infos about the cell
             GeometryType gt = it->geometry().type();  // cell geometry type
@@ -866,8 +872,8 @@ namespace Dune
   void Decoupled2p2c<G,RT>::initialguess()
   {
         // iterate through leaf grid an evaluate c0 at cell center
-        Iterator eendit = grid.template lend<0>(level_);
-        for (Iterator it = grid.template lbegin<0>(level_); it != eendit; ++it)
+        Iterator eendit = grid_.template lend<0>(level_);
+        for (Iterator it = grid_.template lbegin<0>(level_); it != eendit; ++it)
         {
             int indexi = elementmapper.map(*it);
 
@@ -908,8 +914,8 @@ namespace Dune
   void Decoupled2p2c<G,RT>::transportInitial()
     {
         // iterate through leaf grid an evaluate c0 at cell center
-    Iterator eendit = grid.template lend<0>(level_);
-    for (Iterator it = grid.template lbegin<0>(level_); it != eendit; ++it)
+    Iterator eendit = grid_.template lend<0>(level_);
+    for (Iterator it = grid_.template lbegin<0>(level_); it != eendit; ++it)
         {
         int indexi = elementmapper.map(*it);
 
@@ -970,8 +976,8 @@ namespace Dune
         int which;
 
         // compute update vector
-        Iterator eendit = grid.template lend<0>(level_);
-        for (Iterator it = grid.template lbegin<0>(level_); it != eendit; ++it)
+        Iterator eendit = grid_.template lend<0>(level_);
+        for (Iterator it = grid_.template lbegin<0>(level_); it != eendit; ++it)
         {
             // get cell geometry informations
             GeometryType gt = it->geometry().type(); //geometry type
@@ -1277,8 +1283,8 @@ namespace Dune
   {
       int size = elementmapper.size();
       // iterate through leaf grid an evaluate c0 at cell center
-    Iterator eendit = grid.template lend<0>(level_);
-    for (Iterator it = grid.template lbegin<0>(level_); it != eendit; ++it)
+    Iterator eendit = grid_.template lend<0>(level_);
+    for (Iterator it = grid_.template lbegin<0>(level_); it != eendit; ++it)
         {
         int indexi = elementmapper.map(*it);
         // get cell geometry informations

@@ -17,8 +17,8 @@ namespace Dune
 {
 //! \ingroup transport
 //! The finite volume model for the solution of the transport equation
-template<class Grid, class Scalar, class VC> class FVTransport: public Transport<
-        Grid, Scalar, VC>
+template<class Grid, class Scalar, class VC, class Problem =  FractionalFlowProblem<Grid, Scalar, VC> >
+class FVTransport: public Transport<Grid, Scalar, VC>
 {
     template<int dim> struct ElementLayout
     {
@@ -88,7 +88,7 @@ public:
      * @param amax alphamax parameter for slope limiter in TVD
      * @param numFl an object of class Numerical Flux or derived
      */
-    FVTransport(Grid& grid, FractionalFlowProblem<Grid, Scalar, VC>& problem, int level = 0,
+    FVTransport(Grid& grid, Problem& problem, int level = 0,
             DiffusivePart<Grid,Scalar>& diffPart = *(new DiffusivePart<Grid, Scalar>), bool rec = false,
             Scalar aMax = 0.8, const NumericalFlux<Scalar>& numFl = *(new Upwind<Scalar>)) :
     Transport<Grid, Scalar, VC>(grid, problem),
@@ -107,10 +107,11 @@ private:
     Scalar alphaMax_;
 };
 
-template<class Grid, class Scalar, class VC> int FVTransport<Grid, Scalar, VC>::update(const Scalar t, Scalar& dt,
+template<class Grid, class Scalar, class VC, class Problem>
+int FVTransport<Grid, Scalar, VC, Problem>::update(const Scalar t, Scalar& dt,
         RepresentationType& updateVec, Scalar& cFLFac = 1)
 {
-    const GridView& gridView = this->grid.levelView(this->level());
+    const GridView& gridView = this->grid_.levelView(this->level());
     // initialize dt very large
     dt = 1E100;
 
@@ -351,9 +352,10 @@ template<class Grid, class Scalar, class VC> int FVTransport<Grid, Scalar, VC>::
     return 0;
 }
 
-template<class Grid, class Scalar, class VC> void FVTransport<Grid, Scalar, VC>::initialTransport()
+template<class Grid, class Scalar, class VC, class Problem>
+void FVTransport<Grid, Scalar, VC, Problem>::initialTransport()
 {
-    const GridView& gridView = this->grid.levelView(this->level());
+    const GridView& gridView = this->grid_.levelView(this->level());
     // iterate through leaf grid an evaluate c0 at cell center
     ElementIterator eItEnd = gridView.template end<0>();
     for (ElementIterator eIt = gridView.template begin<0>(); eIt != eItEnd; ++eIt)
@@ -374,10 +376,11 @@ template<class Grid, class Scalar, class VC> void FVTransport<Grid, Scalar, VC>:
     return;
 }
 
-template<class Grid, class Scalar, class VC> void FVTransport<Grid, Scalar, VC>::calculateSlopes(
+template<class Grid, class Scalar, class VC, class Problem>
+void FVTransport<Grid, Scalar, VC, Problem>::calculateSlopes(
         SlopeType& slope, Scalar t, Scalar& cFLFactor)
 {
-    const GridView& gridView = this->grid.levelView(this->level());
+    const GridView& gridView = this->grid_.levelView(this->level());
     Scalar stabilityFactor = 1.0 - cFLFactor*sqrt(cFLFactor);
 
     ElementIterator eItEnd = gridView.template end<0>();

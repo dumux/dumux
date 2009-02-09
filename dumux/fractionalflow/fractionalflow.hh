@@ -93,6 +93,10 @@ namespace Dune
 
     //! always define virtual destructor in abstract base class
     virtual ~FractionalFlow () {}
+
+    const Grid& grid() const
+        { return Transport::grid(); }
+
   };
 }
 #endif

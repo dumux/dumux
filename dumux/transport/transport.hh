@@ -84,12 +84,15 @@ typedef    typename VC::ScalarVectorType RepresentationType;
     virtual ~Transport ()
     {}
 
+    const Grid& grid() const
+        { return grid_; }
+
     /*! @brief constructor
      *  @param g a DUNE grid object
      *  @param prob an object of class TransportProblem or derived
      */
     Transport(const Grid& grid, FractionalFlowProblem<Grid, Scalar, VC>& problem)
-    : grid(grid), transProblem(problem)
+    : grid_(grid), transProblem(problem)
     {}
 
     //! returns the level on which the transport eqution is solved.
@@ -98,7 +101,7 @@ typedef    typename VC::ScalarVectorType RepresentationType;
         return transProblem.variables.transLevel;
     }
 
-    const Grid& grid;
+    const Grid& grid_;
     FractionalFlowProblem<Grid, Scalar, VC>& transProblem; //!< problem data
 };
 
