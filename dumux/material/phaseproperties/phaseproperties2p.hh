@@ -122,6 +122,7 @@ private:
    double constEnthalpy_;
 };
 
+/** \todo Please doc me! */
 
 class Brine : public Fluid
 {
@@ -186,6 +187,8 @@ private:
    double constViscosity_;
    double constEnthalpy_;
 };
+
+/** \todo Please doc me! */
 
 class Oil : public Fluid
 {
