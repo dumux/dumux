@@ -65,6 +65,8 @@ namespace Dune
     typedef std::pair<IdType,int> Pair;
     typedef std::set<int> ProcSet;
 
+/** \todo Please doc me! */
+
     // A DataHandle class to exchange border rows
     class IdExchange
       : public CommDataHandleIF<IdExchange,Pair> {
@@ -145,6 +147,8 @@ namespace Dune
       std::map<int,ProcSet>& myprocs;
       std::map<IdType,int>& owner;
     };
+
+/** \todo Please doc me! */
 
     // A DataHandle class to exchange border rows
     class BorderLinksExchange

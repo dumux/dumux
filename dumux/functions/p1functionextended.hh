@@ -62,6 +62,8 @@ namespace Dune
     const G& grid;
   };
 
+/** \todo Please doc me! */
+
   template<class G>
   class LevelCommunicate
   {
@@ -98,6 +100,8 @@ namespace Dune
     typedef std::set<IdType> GIDSet;
     typedef std::pair<IdType,int> Pair;
     typedef std::set<int> ProcSet;
+
+/** \todo Please doc me! */
 
     // A DataHandle class to exchange border rows
     class OwnerExchange
@@ -176,6 +180,8 @@ namespace Dune
       std::map<IdType,int>& owner;
       const std::map<int,IdType>& index2gid;
     };
+
+/** \todo Please doc me! */
 
     // A DataHandle class to exchange border rows
     class IdExchange
@@ -290,6 +296,8 @@ namespace Dune
       const std::map<int,int>& doubled2Original;
       std::vector<PartitionType> partitionType;
     };
+
+/** \todo Please doc me! */
 
     // A DataHandle class to exchange border rows
     class BorderLinksExchange
@@ -696,6 +704,8 @@ namespace Dune
   private:
     LC lc;
   };
+
+/** \todo Please doc me! */
 
   // forward declaration
   template<class G, class RT> class P1FunctionExtendedManager;
