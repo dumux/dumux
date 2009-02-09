@@ -115,7 +115,7 @@ public:
     void update(double& dt) {
         this->localJacobian().setDt(dt);
         this->localJacobian().setOldSolution(this->uOldTimeStep);
-        NewtonMethod<G, ThisType> newtonMethod(this->grid, *this);
+        NewtonMethod<G, ThisType> newtonMethod(this->grid(), *this);
         newtonMethod.execute();
         dt = this->localJacobian().getDt();
         double upperMass, oldUpperMass;
@@ -138,7 +138,7 @@ public:
         enum {dim = G::dimension};
         typedef array<BoundaryConditions::Flags, m> BCBlockType;
 
-        const GV& gridview(this->grid.leafView());
+        const GV& gridview(this->grid().leafView());
         (*defectGlobal)=0;
 
         // allocate flag vector to hold flags for essential boundary conditions

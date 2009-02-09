@@ -70,7 +70,7 @@ public:
             IntersectionIterator;
 
     LeafP1MincModel(const G& g, ProblemType& prob) :
-        MincModel(g, prob), problem(prob), grid(g), vertexmapper(g,
+        MincModel(g, prob), problem(prob), grid_(g), vertexmapper(g,
                 g.leafIndexSet()), size((*(this->u)).size()), satExFracture(0), pExFracture(0), satErrorFracture(0) {
         for (int i = 0; i < m/2; ++i) {
              pWFracture[i].resize(size);
@@ -88,7 +88,7 @@ public:
         enum {dim = G::dimension};
         enum {dimworld = G::dimensionworld};
 
-        const GV& gridview(this->grid.leafView());
+        const GV& gridview(this->grid_.leafView());
 
         // iterate through leaf grid an evaluate c0 at cell center
         Iterator eendit = gridview.template end<0>();
@@ -197,7 +197,7 @@ public:
         enum {dim = G::dimension};
         enum {dimworld = G::dimensionworld};
 
-        const GV& gridview(this->grid.leafView());
+        const GV& gridview(this->grid_.leafView());
         double totalMass = 0;
         upperMass = 0;
         oldUpperMass = 0;
@@ -252,7 +252,7 @@ public:
     }
 
     virtual void vtkout(const char* name, int k) {
-            VTKWriter<typename G::LeafGridView> vtkwriter(this->grid.leafView());
+            VTKWriter<typename G::LeafGridView> vtkwriter(this->grid_.leafView());
         char fname[128];
         sprintf(fname, "%s-%05d", name, k);
         double minSat = 1e100;
@@ -296,9 +296,13 @@ public:
 
     }
 
+    const G& grid() const
+        { return grid_; }
+
+
 protected:
     ProblemType& problem;
-    const G& grid;
+    const G& grid_;
     VertexMapper vertexmapper;
     int size;
 //    BlockVector<FieldVector<RT, 1> > pW;
