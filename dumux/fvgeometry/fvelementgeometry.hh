@@ -31,6 +31,8 @@ namespace Dune
             };
     };
 
+/** \todo Please doc me! */
+
     template <typename FVElementGeometry>
     class _FVElemGeomHelper<FVElementGeometry, 1>
     {
@@ -43,6 +45,8 @@ namespace Dune
                 eg.subContVol[1].volume = 0.5*eg.elementVolume;
             }
     };
+
+/** \todo Please doc me! */
 
     template <typename FVElementGeometry>
     class _FVElemGeomHelper<FVElementGeometry, 2>
@@ -77,6 +81,8 @@ namespace Dune
                 }
             }
     };
+
+/** \todo Please doc me! */
 
     template <typename FVElementGeometry>
     class _FVElemGeomHelper<FVElementGeometry, 3>
@@ -254,11 +260,14 @@ namespace Dune
     // END HACK
     /////////////////////
 
+/** \todo Please doc me! */
+
     template<class GridT>
     class FVElementGeometry
     {
         typedef GridT Grid;
 
+        /** \todo Please doc me! */
         friend class _FVElemGeomHelper<FVElementGeometry<Grid>, Grid::dimension>;
 
         typedef _FVElemGeomHelper<FVElementGeometry<Grid>, Grid::dimension> FVElemGeomHelper;

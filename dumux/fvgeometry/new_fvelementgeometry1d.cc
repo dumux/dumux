@@ -54,6 +54,9 @@ class NewFVElementGeometry<GridT,
 
     // allow the parent class to access our protected member
     // functions
+
+    /** \todo Please doc me! */
+
     friend class NewFVElementGeometryBase< ThisType >;
 
     void updateVolumes_(const Cell &cell)
