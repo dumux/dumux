@@ -107,10 +107,11 @@ namespace Dune {
         void newtonBeginStep()
             {
                 ParentType::newtonBeginStep();
-                
+
                 ParentType::model().localJacobian().clearVisited();;
             }
 
+/** \todo Please doc me! */
 
     protected:
         friend class NewtonControllerBase<NewtonMethod, ThisType>;

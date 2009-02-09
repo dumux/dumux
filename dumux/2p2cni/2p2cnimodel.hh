@@ -20,6 +20,7 @@ template<class Grid, class Scalar, class ProblemType, class LocalJacobian,
         Grid, Scalar, ProblemType, LocalJacobian, FunctionType,
         OperatorAssembler>
 {
+
 public:
     typedef NonlinearModel<Grid, Scalar, ProblemType, LocalJacobian,
             FunctionType, OperatorAssembler> ThisNonlinearModel;
@@ -46,6 +47,8 @@ public:
 
     FunctionType uOldTimeStep;
 };
+
+/** \todo Please doc me! */
 
 template<class Grid, class Scalar, class ProblemType, class LocalJac,
         int numEq = 3> class LeafP1TwoPhaseModel: public TwoPhaseHeatModel<
