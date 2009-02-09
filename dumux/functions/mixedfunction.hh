@@ -432,7 +432,7 @@ from a C0GridFunction via Mixed interpolation. Dereferencing delivers
 the coefficient vector.
 */
 template<class G, class RT, class GV, class LC, int m=1>
-class MixedFunction : virtual public ElementwiseCInfinityFunction<G,RT,m>,
+class MixedFunction : virtual public ElementwiseCInfinityFunction<GV,RT,m>,
 virtual public H1Function<typename G::ctype,RT,G::dimension,m>,
 virtual public C0GridFunction<G,RT,m>
 {
