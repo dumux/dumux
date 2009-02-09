@@ -145,6 +145,8 @@ namespace Dune
   private:
     typedef typename std::list<VTKFunction*>::iterator FunctionIterator;
 
+/** \todo Please doc me! */
+
     class CellIterator :
       public ForwardIteratorFacade<CellIterator, Entity, Entity&, int>
     {
@@ -180,6 +182,8 @@ namespace Dune
       return CellIterator( gridView_.template end< 0, VTK_Partition >(),
                            gridView_.template end< 0, VTK_Partition >() );
       }
+
+/** \todo Please doc me! */
 
     class VertexIterator :
       public ForwardIteratorFacade<VertexIterator, Entity, Entity&, int>
@@ -283,6 +287,8 @@ namespace Dune
                              gridView_.template end< 0, VTK_Partition >(),
                              datamode, *vertexmapper, number );
     }
+
+/** \todo Please doc me! */
 
     class CornerIterator :
       public ForwardIteratorFacade<CornerIterator, Entity, Entity&, int>
@@ -468,6 +474,8 @@ namespace Dune
       VM1 mapper;
     };
 
+/** \todo Please doc me! */
+
     template<class V>
     class P2VectorWrapper : public VTKFunction
     {
@@ -509,6 +517,7 @@ namespace Dune
       VM2 mapper;
     };
 
+/** \todo Please doc me! */
 
   template<class V>
     class P3VectorWrapper : public VTKFunction
@@ -1526,6 +1535,9 @@ namespace Dune
       }
 
     // base class for data array writers
+
+/** \todo Please doc me! */
+
     template<class T>
     class VTKDataArrayWriterExtended
     {
@@ -1535,6 +1547,9 @@ namespace Dune
     };
 
     // a streaming writer for data array tags
+
+/** \todo Please doc me! */
+
     template<class T>
     class VTKAsciiDataArrayWriterExtended : public VTKDataArrayWriterExtended<T>
     {
@@ -1575,6 +1590,9 @@ namespace Dune
     };
 
     // a streaming writer for data array tags
+
+/** \todo Please doc me! */
+
     template<class T>
     class VTKBinaryDataArrayWriterExtended : public VTKDataArrayWriterExtended<T>
     {
@@ -1643,6 +1661,9 @@ namespace Dune
     };
 
     // a streaming writer for data array tags
+
+/** \todo Please doc me! */
+
     template<class T>
     class VTKBinaryAppendedDataArrayWriterExtended : public VTKDataArrayWriterExtended<T>
     {
@@ -1672,8 +1693,10 @@ namespace Dune
       unsigned int& bytecount;
     };
 
-
     // write out data in binary
+
+/** \todo Please doc me! */
+
     class SimpleStream
     {
     public:

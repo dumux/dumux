@@ -58,7 +58,7 @@ namespace Dune {
         ~VtkMultiWriter()
             {
                 endMultiFile_();
-                
+
                 if (commRank_ == 0)
                     multiFile_.close();
             }
@@ -85,7 +85,7 @@ namespace Dune {
                 curWriter_ = new VtkWriter(gridView);
                 ++writerNum_;
                 curTime_ = t;
-                
+
                 curOutFileName_ = fileName_();
 
                 // determine name to write into the multi-file for the
@@ -253,7 +253,7 @@ namespace Dune {
             {
                 curWriter_->write(curOutFileName_.c_str(),
                                   Dune::VTKOptions::ascii);
-                
+
                 delete curWriter_;
                 while (vectorFields_.begin() != vectorFields_.end()) {
                     delete vectorFields_.front();
@@ -304,7 +304,7 @@ namespace Dune {
                     return fileName_(0);
                 }
             }
-        
+
         std::string fileSuffix_()
             {
                 return (GridView::dimension == 1)?"vtp":"vtu";
@@ -356,12 +356,17 @@ namespace Dune {
         //       virtual destructor for the type given to the linked
         //       list and a derived template class which actually
         //       knows the type of the vector field it must delete.
+
+/** \todo Please doc me! */
+
         class VtkVectorFieldStoreBase_
         {
         public:
             virtual ~VtkVectorFieldStoreBase_()
                 {}
         };
+
+/** \todo Please doc me! */
 
         template <class VF>
         class VtkVectorFieldStoreImpl_ : public VtkVectorFieldStoreBase_
