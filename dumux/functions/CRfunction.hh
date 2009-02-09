@@ -434,7 +434,7 @@ namespace Dune
   template<class G, class RT, class GV, class LC, int m=1>
   class CRFunction : virtual public ElementwiseCInfinityFunction<GV,RT,m>,
              virtual public H1Function<typename G::ctype,RT,G::dimension,m>,
-             virtual public C0GridFunction<GV,RT,m>
+             virtual public C0GridFunction<G,RT,m>
   {
     //! get domain field type from the grid
     typedef typename G::ctype DT;
