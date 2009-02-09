@@ -29,478 +29,489 @@
  * @author Bernd Flemisch, Klaus Mosthaf, Melanie Darcis
  */
 
-
-
 namespace Dune
 {
-  /** @addtogroup DISC_Disc
-   *
-   * @{
-   */
-  /**
-   * @brief compute local jacobian matrix for the boxfile for two-phase two-component flow equation
-   *
-   */
+/** @addtogroup DISC_Disc
+ *
+ * @{
+ */
+/**
+ * @brief compute local jacobian matrix for the boxfile for two-phase two-component flow equation
+ *
+ */
 
+//! Derived class for computing local jacobian matrices
+/*! A class for computing local jacobian matrix for the two-phase two-component flow equation
 
-  //! Derived class for computing local jacobian matrices
-  /*! A class for computing local jacobian matrix for the two-phase two-component flow equation
+ div j = q; j = -K grad u; in Omega
 
-        div j = q; j = -K grad u; in Omega
+ u = g on Gamma1; j*n = J on Gamma2.
 
-        u = g on Gamma1; j*n = J on Gamma2.
+ Uses box scheme with the Lagrange shape functions.
+ It should work for all dimensions and element types.
+ All the numbering is with respect to the reference element and the
+ Lagrange shape functions
 
-    Uses box scheme with the Lagrange shape functions.
-    It should work for all dimensions and element types.
-    All the numbering is with respect to the reference element and the
-    Lagrange shape functions
+ Template parameters are:
 
-    Template parameters are:
+ - Grid  a DUNE grid type
+ - Scalar    type used for return values
+ */
+template<class Grid, class Scalar, class BoxFunction = LeafP1FunctionExtended<
+        Grid, Scalar, 3> >
+class BoxCO2Jacobian: public BoxJacobian<BoxCO2Jacobian<Grid, Scalar,
+        BoxFunction> , Grid, Scalar, 3, BoxFunction>
+{
+typedef    typename Grid::ctype CoordScalar;
+    typedef typename Grid::Traits::template Codim<0>::Entity Element;
+    typedef typename Element::Geometry Geometry;
+    typedef BoxCO2Jacobian<Grid,Scalar,BoxFunction> ThisType;
+    typedef typename LocalJacobian<ThisType,Grid,Scalar,3>::VBlockType VBlockType;
+    typedef typename LocalJacobian<ThisType,Grid,Scalar,3>::MBlockType MBlockType;
 
-    - Grid  a DUNE grid type
-    - RT    type used for return values
-  */
-  template<class G, class RT, class BoxFunction = LeafP1FunctionExtended<G, RT, 3> >
-  class BoxCO2Jacobian
-    : public BoxJacobian<BoxCO2Jacobian<G,RT,BoxFunction>,G,RT,3,BoxFunction>
-  {
-    typedef typename G::ctype DT;
-    typedef typename G::Traits::template Codim<0>::Entity Entity;
-    typedef typename Entity::Geometry Geometry;
-    typedef BoxCO2Jacobian<G,RT,BoxFunction> ThisType;
-    typedef typename LocalJacobian<ThisType,G,RT,3>::VBlockType VBlockType;
-    typedef typename LocalJacobian<ThisType,G,RT,3>::MBlockType MBlockType;
+    enum
+    {   pWIdx = 0, switchIdx = 1, teIdx=2}; // Solution vector index
+    enum
+    {   wPhase = 0, nPhase = 1, temp = 2}; // Phase index
+    enum
+    {   gasPhase = 0, waterPhase = 1, bothPhases = 2}; // Phase state
+    enum
+    {   wComp = 0, nComp = 1, heat = 2}; // Component index
 
-     enum {pWIdx = 0, switchIdx = 1, teIdx=2};    // Solution vector index
-    enum {wPhase = 0, nPhase = 1};                    // Phase index
-    enum {gasPhase = 0, waterPhase = 1, bothPhases = 2};    // Phase state
-    enum {water = 0, co2 = 1, heat = 2};                // Component index
-
-  public:
-    // define the number of phases (m) and components (c) of your system, this is used outside
+public:
+    // define the number of phases (numEq) and components (numComp) of your system, this is used outside
     // to allocate the correct size of (dense) blocks with a FieldMatrix
-    enum {dim=G::dimension};
-    enum {m=3, c=2};
-    enum {SIZE=LagrangeShapeFunctionSetContainer<DT,RT,dim>::maxsize};
+    enum
+    {   dim=Grid::dimension};
+    enum
+    {   numEq=3, numComp=2};
+    enum
+    {   SIZE=LagrangeShapeFunctionSetContainer<CoordScalar,Scalar,dim>::maxsize};
     struct VariableNodeData;
 
-    typedef FieldMatrix<RT,dim,dim> FMatrix;
-    typedef FieldVector<RT,dim> FVector;
+    typedef FieldMatrix<Scalar,dim,dim> FMatrix;
+    typedef FieldVector<Scalar,dim> FVector;
 
     //! Constructor
-    BoxCO2Jacobian (TwoPTwoCNIProblem<G,RT>& params,
-                  bool levelBoundaryAsDirichlet_, const G& grid,
-                  BoxFunction& sol,
-                  bool procBoundaryAsDirichlet_=true)
-    : BoxJacobian<ThisType,G,RT,m,BoxFunction>(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_),
-      problem(params),
-      sNDat(this->vertexMapper.size()), vNDat(SIZE), oldVNDat(SIZE), switched(false), switchBreak(false), switchedGlobal(false), primVarSet(false)
-      {
-      this->analytic = false;
+    BoxCO2Jacobian (TwoPTwoCNIProblem<Grid,Scalar>& params,
+            bool levelBoundaryAsDirichlet_, const Grid& grid,
+            BoxFunction& sol,
+            bool procBoundaryAsDirichlet_=true)
+    : BoxJacobian<ThisType,Grid,Scalar,numEq,BoxFunction>(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_),
+    problem(params),
+    sNDat(this->vertexMapper.size()), vNDat(SIZE), oldVNDat(SIZE), switched(false), switchBreak(false), switchedGlobal(false), primVarSet(false)
+    {
+        this->analytic = false;
     }
 
     /** @brief compute time dependent term (storage), loop over nodes / subcontrol volumes
-     *  @param e entity
+     *  @param element entity
      *  @param sol solution vector
-     *  @param node local node id
+     *  @param idx local node id
      *  @return storage term
      */
-    virtual VBlockType computeM (const Entity& e, const VBlockType* sol,
-            int node, std::vector<VariableNodeData>& varData)
+    virtual VBlockType computeM (const Element& element, const VBlockType* sol,
+            int idx, std::vector<VariableNodeData>& varData)
     {
-         GeometryType gt = e.geometry().type();
-         const typename LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type&
-                     sfs=LagrangeShapeFunctions<DT,RT,dim>::general(gt,1);
+        GeometryType gt = element.geometry().type();
+        const typename LagrangeShapeFunctionSetContainer<CoordScalar,Scalar,dim>::value_type&
+        sfs=LagrangeShapeFunctions<CoordScalar,Scalar,dim>::general(gt,1);
 
-        int globalIdx = this->vertexMapper.template map<dim>(e, sfs[node].entity());
+        int globalIdx = this->vertexMapper.template map<dim>(element, sfs[idx].entity());
 
         VBlockType result;
-        RT satN = varData[node].satN;
-        RT satW = varData[node].satW;
+        Scalar satN = varData[idx].satN;
+        Scalar satW = varData[idx].satW;
 
-        // storage of component water
-        result[water] =
-             sNDat[globalIdx].porosity*(varData[node].density[wPhase]*satW*varData[node].massfrac[water][wPhase]
-                            +varData[node].density[nPhase]*satN*varData[node].massfrac[water][nPhase]);
-        // storage of component co2
-        result[co2] =
-             sNDat[globalIdx].porosity*(varData[node].density[nPhase]*satN*varData[node].massfrac[co2][nPhase]
-                           +varData[node].density[wPhase]*satW*varData[node].massfrac[co2][wPhase]);
+        // storage of main component wetting phase
+        result[wComp] =
+        sNDat[globalIdx].porosity*(varData[idx].density[wPhase]*satW*varData[idx].massfrac[wComp][wPhase]
+                +varData[idx].density[nPhase]*satN*varData[idx].massfrac[wComp][nPhase]);
+        // storage of main component in nonwetting phase
+        result[nComp] =
+        sNDat[globalIdx].porosity*(varData[idx].density[nPhase]*satN*varData[idx].massfrac[nComp][nPhase]
+                +varData[idx].density[wPhase]*satW*varData[idx].massfrac[nComp][wPhase]);
 
         // storage term of energy equation
-        result[heat] = sNDat[globalIdx].porosity * (varData[node].density[wPhase] * varData[node].intenergy[wPhase] * satW
-                    + varData[node].density[nPhase] * varData[node].intenergy[nPhase] * satN)
-                    + elData.heatCap * varData[node].temperature;
-         // soil properties defined at the elements!!!
+        result[heat] = sNDat[globalIdx].porosity * (varData[idx].density[wPhase] * varData[idx].intenergy[wPhase] * satW
+                + varData[idx].density[nPhase] * varData[idx].intenergy[nPhase] * satN)
+        + elData.heatCap * varData[idx].temperature;
+        // soil properties defined at the elements!!!
 
         //DEBUG
-
-        for(int j=0; j<3; j++)
-        {
-            if(isinf(result[j]))
-            {
-                std::cout<<"INF in ComputeM \n" << "Coordinates:X="<< this->fvGeom.subContVol[node].global[0] <<" Y="<< this->fvGeom.subContVol[node].global[1] <<
-                " Z="<<  this->fvGeom.subContVol[node].global[2]<<"\n"
-                <<"water pressure: " << varData[node].pW << "water saturation: "<< satW << "temperature: "<< varData[node].temperature << std::endl;
-            }
-        }
+//        for(int j=0; j<3; j++)
+//        {
+//            if(isinf(result[j]))
+//            {
+//                std::cout<<"INF in ComputeM \n" << "Coordinates:X="<< this->fvGeom.subContVol[idx].global[0] <<" Y="<< this->fvGeom.subContVol[idx].global[1] <<
+//                " Z="<< this->fvGeom.subContVol[idx].global[2]<<"\n"
+//                <<"wetting phase pressure: " << varData[idx].pW << "wetting phase saturation: "<< satW << "temperature: "<< varData[idx].temperature << std::endl;
+//            }
+//        }
 
         return result;
     };
 
-    virtual VBlockType computeM (const Entity& e, const VBlockType* sol, int node, bool old = false)
-     {
-         if (old)
-             return computeM(e, sol, node, oldVNDat);
-         else
-             return computeM(e, sol, node, vNDat);
-     }
+    virtual VBlockType computeM (const Element& element, const VBlockType* sol, int idx, bool old = false)
+    {
+        if (old)
+        return computeM(element, sol, idx, oldVNDat);
+        else
+        return computeM(element, sol, idx, vNDat);
+    }
 
     /** @brief compute diffusive/advective fluxes, loop over subcontrol volume faces
-     *  @param e entity
+     *  @param element entity
      *  @param sol solution vector
      *  @param face face id
      *  @return flux term
      */
-     virtual VBlockType computeA (const Entity& e, const VBlockType* sol, int face)
+    virtual VBlockType computeA (const Element& element, const VBlockType* sol, int face)
     {
-        int i = this->fvGeom.subContVolFace[face].i;
-      int j = this->fvGeom.subContVolFace[face].j;
+        int idx_i = this->fvGeom.subContVolFace[face].i;
+        int idx_j = this->fvGeom.subContVolFace[face].j;
 
-      // normal vector, value of the area of the scvf
-     const FieldVector<RT,dim> normal(this->fvGeom.subContVolFace[face].normal);
-     GeometryType gt = e.geometry().type();
-     const typename LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type&
-      sfs=LagrangeShapeFunctions<DT,RT,dim>::general(gt,1);
+        // normal vector, value of the area of the scvf
+        const FieldVector<Scalar,dim> normal(this->fvGeom.subContVolFace[face].normal);
+        GeometryType gt = element.geometry().type();
+        const typename LagrangeShapeFunctionSetContainer<CoordScalar,Scalar,dim>::value_type&
+        sfs=LagrangeShapeFunctions<CoordScalar,Scalar,dim>::general(gt,1);
 
-      // global index of the subcontrolvolume face neighbour nodes in element e
-     int globalIdx_i = this->vertexMapper.template map<dim>(e, sfs[i].entity());
-       int globalIdx_j = this->vertexMapper.template map<dim>(e, sfs[j].entity());
+        // global index of the subcontrolvolume face neighbour nodes in element element
+        int globalIdx_i = this->vertexMapper.template map<dim>(element, sfs[idx_i].entity());
+        int globalIdx_j = this->vertexMapper.template map<dim>(element, sfs[idx_j].entity());
 
-       // get global coordinates of nodes i,j
-     const FieldVector<DT,dim> global_i = this->fvGeom.subContVol[i].global;
-     const FieldVector<DT,dim> global_j = this->fvGeom.subContVol[j].global;
-     const FieldVector<DT,dim> local_i = this->fvGeom.subContVol[i].local;
-     const FieldVector<DT,dim> local_j = this->fvGeom.subContVol[j].local;
+        // get global coordinates of nodes idx_i,idx_j
+        const FieldVector<CoordScalar,dim> globalPos_i = this->fvGeom.subContVol[idx_i].global;
+        const FieldVector<CoordScalar,dim> globalPos_j = this->fvGeom.subContVol[idx_j].global;
+        const FieldVector<CoordScalar,dim> localPos_i = this->fvGeom.subContVol[idx_i].local;
+        const FieldVector<CoordScalar,dim> localPos_j = this->fvGeom.subContVol[idx_j].local;
 
-     /////////////////////////////////////////////////////////////////////////////
-     // AVERAGING to get parameter values at integration points
-         // Harmonic Mean:
+        /////////////////////////////////////////////////////////////////////////////
+        // AVERAGING to get parameter values at integration points
+        // Harmonic Mean:
 
-         // harmonic mean of the permeability
-            FMatrix Ki(0.), Kj(0.);
-         Ki = this->problem.soil().K(global_i,e,local_i);
-         Kj = this->problem.soil().K(global_j,e,local_j);
-         const FMatrix K = harmonicMeanK(Ki, Kj);
+        // harmonic mean of the permeability
+        FMatrix Ki(0.), Kj(0.);
+        Ki = this->problem.soil().K(globalPos_i,element,localPos_i);
+        Kj = this->problem.soil().K(globalPos_j,element,localPos_j);
+        const FMatrix K = harmonicMeanK(Ki, Kj);
 
-         // harmonic mean of the heat conductivity lambda
-         RT lambda;
-         lambda = 2./((1./vNDat[i].lambda) + (1./vNDat[j].lambda));
+        // harmonic mean of the heat conductivity lambda
+        Scalar lambda;
+        lambda = 2./((1./vNDat[idx_i].lambda) + (1./vNDat[idx_j].lambda));
 
-         // Arithmetic Mean:
+        // Arithmetic Mean:
 
-         // calculate tortuosity at the nodes i and j needed for porous media diffusion coefficient
-             RT tauW_i, tauW_j, tauN_i, tauN_j; // tortuosity of wetting and nonwetting phase
-             tauW_i = pow(sNDat[globalIdx_i].porosity * vNDat[i].satW,(7/3))/
-                 (sNDat[globalIdx_i].porosity*sNDat[globalIdx_i].porosity);
-             tauW_j = pow(sNDat[globalIdx_j].porosity * vNDat[j].satW,(7/3))/
-                  (sNDat[globalIdx_j].porosity*sNDat[globalIdx_j].porosity);
-             tauN_i = pow(sNDat[globalIdx_i].porosity * vNDat[i].satN,(7/3))/
-                 (sNDat[globalIdx_i].porosity*sNDat[globalIdx_i].porosity);
-             tauN_j = pow(sNDat[globalIdx_j].porosity * vNDat[j].satN,(7/3))/
-                 (sNDat[globalIdx_j].porosity*sNDat[globalIdx_j].porosity);
+        // calculate tortuosity at the nodes idx_i and idx_j needed for porous media diffusion coefficient
+        Scalar tauW_i, tauW_j, tauN_i, tauN_j; // tortuosity of wetting and nonwetting phase
+        tauW_i = pow(sNDat[globalIdx_i].porosity * vNDat[idx_i].satW,(7/3))/
+        (sNDat[globalIdx_i].porosity*sNDat[globalIdx_i].porosity);
+        tauW_j = pow(sNDat[globalIdx_j].porosity * vNDat[idx_j].satW,(7/3))/
+        (sNDat[globalIdx_j].porosity*sNDat[globalIdx_j].porosity);
+        tauN_i = pow(sNDat[globalIdx_i].porosity * vNDat[idx_i].satN,(7/3))/
+        (sNDat[globalIdx_i].porosity*sNDat[globalIdx_i].porosity);
+        tauN_j = pow(sNDat[globalIdx_j].porosity * vNDat[idx_j].satN,(7/3))/
+        (sNDat[globalIdx_j].porosity*sNDat[globalIdx_j].porosity);
 
-             // arithmetic mean of porous media diffusion coefficient
-              RT Dwg, Daw;
-              Dwg = 0.5*(sNDat[globalIdx_i].porosity * vNDat[i].satN * tauN_i * vNDat[i].diff[nPhase] +
-                  sNDat[globalIdx_j].porosity * vNDat[j].satN * tauN_j * vNDat[j].diff[nPhase]);
-              Daw = 0.5*(sNDat[globalIdx_i].porosity * vNDat[i].satW * tauW_i * vNDat[i].diff[wPhase] +
-                 sNDat[globalIdx_j].porosity * vNDat[j].satW * tauW_j * vNDat[j].diff[wPhase]);
+        // arithmetic mean of porous media diffusion coefficient
+        Scalar Dwg, Daw;
+        Dwg = 0.5*(sNDat[globalIdx_i].porosity * vNDat[idx_i].satN * tauN_i * vNDat[idx_i].diff[nPhase] +
+                sNDat[globalIdx_j].porosity * vNDat[idx_j].satN * tauN_j * vNDat[idx_j].diff[nPhase]);
+        Daw = 0.5*(sNDat[globalIdx_i].porosity * vNDat[idx_i].satW * tauW_i * vNDat[idx_i].diff[wPhase] +
+                sNDat[globalIdx_j].porosity * vNDat[idx_j].satW * tauW_j * vNDat[idx_j].diff[wPhase]);
 
-             // arithmetic mean of phase enthalpies (dissolved components neglected)
-              RT enthW;
-              RT enthCO2;
-              enthW = 0.5*(vNDat[i].enthalpy[pWIdx] + vNDat[j].enthalpy[pWIdx]);
-              enthCO2 = 0.5*(vNDat[i].enthalpy[switchIdx] + vNDat[j].enthalpy[switchIdx]);
+        // arithmetic mean of phase enthalpies (dissolved components neglected)
+        Scalar enthW;
+        Scalar enthCO2;
+        enthW = 0.5*(vNDat[idx_i].enthalpy[wPhase] + vNDat[idx_j].enthalpy[wPhase]);
+        enthCO2 = 0.5*(vNDat[idx_i].enthalpy[nPhase] + vNDat[idx_j].enthalpy[nPhase]);
 
-            // Calculate arithmetic mean of the densities
-             VBlockType avgDensity;
-            avgDensity[wPhase] = 0.5*(vNDat[i].density[wPhase] + vNDat[j].density[wPhase]);
-            avgDensity[nPhase] = 0.5*(vNDat[i].density[nPhase] + vNDat[j].density[nPhase]);
+        // Calculate arithmetic mean of the densities
+        VBlockType avgDensity;
+        avgDensity[wPhase] = 0.5*(vNDat[idx_i].density[wPhase] + vNDat[idx_j].density[wPhase]);
+        avgDensity[nPhase] = 0.5*(vNDat[idx_i].density[nPhase] + vNDat[idx_j].density[nPhase]);
 
-    //////////////////////////////////////////////////////////////////////////////////////////
-    // GRADIENTS
+        //////////////////////////////////////////////////////////////////////////////////////////
+        // GRADIENTS
 
-     FieldMatrix<RT,2,dim> pGrad(0.), xGrad(0.);
-     FieldVector<RT,dim> teGrad(0.);
-     FieldVector<RT,dim> temp(0.);
-     VBlockType flux(0.);
+        FieldMatrix<Scalar,2,dim> pGrad(0.), xGrad(0.);
+        FieldVector<Scalar,dim> teGrad(0.);
+        FieldVector<Scalar,dim> tmp(0.);
+        VBlockType flux(0.);
 
-     // calculate FE gradient at subcontrolvolumeface
-         for (int k = 0; k < this->fvGeom.numVertices; k++) // loop over adjacent nodes
-         {
-             // FEGradient at subcontrolvolumeface face
-             const FieldVector<DT,dim> feGrad(this->fvGeom.subContVolFace[face].grad[k]);
-             FieldVector<RT,2> pressure(0.0);
+        // calculate FE gradient at subcontrolvolumeface
+        for (int k = 0; k < this->fvGeom.numVertices; k++) // loop over adjacent nodes
 
-             pressure[wPhase] = vNDat[k].pW;
-             pressure[nPhase] = vNDat[k].pN;
+        {
+            // FEGradient at subcontrolvolumeface face
+            const FieldVector<CoordScalar,dim> feGrad(this->fvGeom.subContVolFace[face].grad[k]);
+            FieldVector<Scalar,2> pressure(0.0);
 
-             // compute pressure gradients for each phase at integration point of subcontrolvolumeface face
-             for (int phase = 0; phase < 2; phase++)
-               {
-                   temp = feGrad;
-                   temp *= pressure[phase];
-                   pGrad[phase] += temp;
-               }
+            pressure[wPhase] = vNDat[k].pW;
+            pressure[nPhase] = vNDat[k].pN;
 
-             // compute temperature gradient
-               temp = feGrad;
-              temp *= vNDat[k].temperature;
-              teGrad += temp;
+            // compute pressure gradients for each phase at integration point of subcontrolvolumeface face
+            for (int phase = 0; phase < 2; phase++)
+            {
+                tmp = feGrad;
+                tmp *= pressure[phase];
+                pGrad[phase] += tmp;
+            }
 
-              // compute concentration gradients
-              // for diffusion of co2 in wetting phase
-               temp = feGrad;
-              temp *= vNDat[k].massfrac[co2][wPhase];
-              xGrad[wPhase] += temp;
+            // compute temperature gradient
+            tmp = feGrad;
+            tmp *= vNDat[k].temperature;
+            teGrad += tmp;
 
-               // for diffusion of water in nonwetting phase
-              temp = feGrad;
-              temp *= vNDat[k].massfrac[water][nPhase];
-              xGrad[nPhase] += temp;
-         }
+            // compute concentration gradients
+            // for diffusion of nComp in wetting phase
+            tmp = feGrad;
+            tmp *= vNDat[k].massfrac[nComp][wPhase];
+            xGrad[wPhase] += tmp;
 
-      // deduce gravity*density of each phase
-         FieldMatrix<RT,2,dim> contribComp(0);
-         for (int phase=0; phase<2; phase++)
-         {
-             contribComp[phase] = problem.gravity();
-             contribComp[phase] *= avgDensity[phase];
-             pGrad[phase] -= contribComp[phase]; // grad p - rho*g
-         }
+            // for diffusion of wetting phase in nonwetting phase
+            tmp = feGrad;
+            tmp *= vNDat[k].massfrac[wComp][nPhase];
+            xGrad[nPhase] += tmp;
+        }
 
-     // Darcy velocity in normal direction for each phase K*n(grad p -rho*g)
-         VBlockType outward(0);
-         FieldVector<RT,dim> v_tilde_w(0.);
-         FieldVector<RT,dim> v_tilde_n(0.);
+        // deduce gravity*density of each phase
+        FieldMatrix<Scalar,2,dim> contribComp(0);
+        for (int phase=0; phase<2; phase++)
+        {
+            contribComp[phase] = problem.gravity();
+            contribComp[phase] *= avgDensity[phase];
+            pGrad[phase] -= contribComp[phase]; // grad p - rho*g
+        }
 
-          K.umv(pGrad[wPhase], v_tilde_w);  // v_tilde=K*gradP
-         outward[wPhase] = v_tilde_w*normal;
-         K.umv(pGrad[nPhase], v_tilde_n);  // v_tilde=K*gradP
-         outward[nPhase] = v_tilde_n*normal;
+        // Darcy velocity in normal direction for each phase K*n(grad p -rho*g)
+        VBlockType outward(0);
+        FieldVector<Scalar,dim> v_tilde_w(0.);
+        FieldVector<Scalar,dim> v_tilde_n(0.);
 
-     // Heat conduction
-         outward[heat] = teGrad * normal;
-           outward[heat] *= lambda;
+        K.umv(pGrad[wPhase], v_tilde_w); // v_tilde=K*gradP
+        outward[wPhase] = v_tilde_w*normal;
+        K.umv(pGrad[nPhase], v_tilde_n); // v_tilde=K*gradP
+        outward[nPhase] = v_tilde_n*normal;
 
-     // evaluate upwind nodes
-         int up_w, dn_w, up_n, dn_n;
-         if (outward[wPhase] <= 0) {up_w = i; dn_w = j;}
-         else {up_w = j; dn_w = i;};
-         if (outward[nPhase] <= 0) {up_n = i; dn_n = j;}
-         else {up_n = j; dn_n = i;};
+        // Heat conduction
+        outward[heat] = teGrad * normal;
+        outward[heat] *= lambda;
 
-     RT alpha = 1.0;  // Upwind parameter
+        // evaluate upwind nodes
+        int up_w, dn_w, up_n, dn_n;
+        if (outward[wPhase] <= 0)
+        {   up_w = idx_i; dn_w = idx_j;}
+        else
+        {   up_w = idx_j; dn_w = idx_i;};
+        if (outward[nPhase] <= 0)
+        {   up_n = idx_i; dn_n = idx_j;}
+        else
+        {   up_n = idx_j; dn_n = idx_i;};
 
-     ////////////////////////////////////////////////////////////////////////////////////////////////
-     // ADVECTIVE TRANSPORT
-         // Water conservation
-          flux[water] =   (alpha* vNDat[up_w].density[wPhase]*vNDat[up_w].mobility[wPhase]
-                                * vNDat[up_w].massfrac[water][wPhase]
-                     + (1-alpha)* vNDat[dn_w].density[wPhase]*vNDat[dn_w].mobility[wPhase]
-                                * vNDat[dn_w].massfrac[water][wPhase])
-                                * outward[wPhase];
-          flux[water] +=  (alpha* vNDat[up_n].density[nPhase]*vNDat[up_n].mobility[nPhase]
-                                * vNDat[up_n].massfrac[water][nPhase]
-                     + (1-alpha)* vNDat[dn_n].density[nPhase]*vNDat[dn_n].mobility[nPhase]
-                                * vNDat[dn_n].massfrac[water][nPhase])
-                                * outward[nPhase];
-          // CO2 conservation
-          flux[co2]   =   (alpha* vNDat[up_n].density[nPhase]*vNDat[up_n].mobility[nPhase]
-                                * vNDat[up_n].massfrac[co2][nPhase]
-                     + (1-alpha)* vNDat[dn_n].density[nPhase]*vNDat[dn_n].mobility[nPhase]
-                                * vNDat[dn_n].massfrac[co2][nPhase])
-                                * outward[nPhase];
-          flux[co2]  +=   (alpha* vNDat[up_w].density[wPhase]*vNDat[up_w].mobility[wPhase]
-                                * vNDat[up_w].massfrac[co2][wPhase]
-                     + (1-alpha)* vNDat[dn_w].density[wPhase]*vNDat[dn_w].mobility[wPhase]
-                                * vNDat[dn_w].massfrac[co2][wPhase])
-                                * outward[wPhase];
-          // Heat conservation
-         flux[heat]  =  (alpha* vNDat[up_n].density[nPhase]*vNDat[up_n].mobility[nPhase] * vNDat[up_n].enthalpy[nPhase]
-                     + (1-alpha)* vNDat[dn_n].density[nPhase]*vNDat[dn_n].mobility[nPhase] * vNDat[dn_n].enthalpy[nPhase])
-                     * outward[nPhase];
-          flux[heat]  +=  (alpha* vNDat[up_w].density[wPhase]*vNDat[up_w].mobility[wPhase] * vNDat[up_w].enthalpy[wPhase]
-                     + (1-alpha)* vNDat[dn_w].density[wPhase]*vNDat[dn_w].mobility[wPhase] * vNDat[dn_w].enthalpy[wPhase])
-                     * outward[wPhase];
+        Scalar alpha = 1.0; // Upwind parameter
 
-      /////////////////////////////////////////////////////////////////////////////////////////////////////////
-      // DIFFUSIVE TRANSPORT
+        ////////////////////////////////////////////////////////////////////////////////////////////////
+        // ADVECTIVE TRANSPORT
+        // Water conservation
+        flux[wComp] = (alpha* vNDat[up_w].density[wPhase]*vNDat[up_w].mobility[wPhase]
+                * vNDat[up_w].massfrac[wComp][wPhase]
+                + (1-alpha)* vNDat[dn_w].density[wPhase]*vNDat[dn_w].mobility[wPhase]
+                * vNDat[dn_w].massfrac[wComp][wPhase])
+        * outward[wPhase];
+        flux[wComp] += (alpha* vNDat[up_n].density[nPhase]*vNDat[up_n].mobility[nPhase]
+                * vNDat[up_n].massfrac[wComp][nPhase]
+                + (1-alpha)* vNDat[dn_n].density[nPhase]*vNDat[dn_n].mobility[nPhase]
+                * vNDat[dn_n].massfrac[wComp][nPhase])
+        * outward[nPhase];
+        // CO2 conservation
+        flux[nComp] = (alpha* vNDat[up_n].density[nPhase]*vNDat[up_n].mobility[nPhase]
+                * vNDat[up_n].massfrac[nComp][nPhase]
+                + (1-alpha)* vNDat[dn_n].density[nPhase]*vNDat[dn_n].mobility[nPhase]
+                * vNDat[dn_n].massfrac[nComp][nPhase])
+        * outward[nPhase];
+        flux[nComp] += (alpha* vNDat[up_w].density[wPhase]*vNDat[up_w].mobility[wPhase]
+                * vNDat[up_w].massfrac[nComp][wPhase]
+                + (1-alpha)* vNDat[dn_w].density[wPhase]*vNDat[dn_w].mobility[wPhase]
+                * vNDat[dn_w].massfrac[nComp][wPhase])
+        * outward[wPhase];
+        // Heat conservation
+        flux[heat] = (alpha* vNDat[up_n].density[nPhase]*vNDat[up_n].mobility[nPhase] * vNDat[up_n].enthalpy[nPhase]
+                + (1-alpha)* vNDat[dn_n].density[nPhase]*vNDat[dn_n].mobility[nPhase] * vNDat[dn_n].enthalpy[nPhase])
+        * outward[nPhase];
+        flux[heat] += (alpha* vNDat[up_w].density[wPhase]*vNDat[up_w].mobility[wPhase] * vNDat[up_w].enthalpy[wPhase]
+                + (1-alpha)* vNDat[dn_w].density[wPhase]*vNDat[dn_w].mobility[wPhase] * vNDat[dn_w].enthalpy[wPhase])
+        * outward[wPhase];
 
-          VBlockType normDiffGrad;
+        /////////////////////////////////////////////////////////////////////////////////////////////////////////
+        // DIFFUSIVE TRANSPORT
 
-           // get local to global id map
-         int state_i = sNDat[globalIdx_i].phaseState;
-         int state_j = sNDat[globalIdx_j].phaseState;
+        VBlockType normDiffGrad;
 
-         RT diffusionAW(0.0), diffusionWW(0.0), diffusionWN(0.0), diffusionAN(0.0);
+        // get local to global id map
+        int state_i = sNDat[globalIdx_i].phaseState;
+        int state_j = sNDat[globalIdx_j].phaseState;
 
-         normDiffGrad[wPhase] = xGrad[wPhase]*normal;
-         normDiffGrad[nPhase] = xGrad[nPhase]*normal;
+        Scalar diffusionAW(0.0), diffusionWW(0.0), diffusionWN(0.0), diffusionAN(0.0);
 
-         if (state_i == bothPhases && state_j == bothPhases)
-         {
-             diffusionAW = Daw * avgDensity[wPhase] * normDiffGrad[wPhase];
-             diffusionWW = - diffusionAW;
-             diffusionWN = Dwg * avgDensity[nPhase] * normDiffGrad[nPhase];
-             diffusionAN = - diffusionWN;
-         }
-         else if (state_i == waterPhase || state_j == waterPhase)
-         {
-             diffusionAW = Daw * avgDensity[wPhase] * normDiffGrad[wPhase];
-             diffusionWW = - diffusionAW;
-         }
-         else if (state_i == gasPhase || state_j == gasPhase)
-         {
-             diffusionWN = Dwg * avgDensity[nPhase] * normDiffGrad[nPhase];
-             diffusionAN = - diffusionWN;
-         }
+        normDiffGrad[wPhase] = xGrad[wPhase]*normal;
+        normDiffGrad[nPhase] = xGrad[nPhase]*normal;
 
-         // Water conservation
-         flux[water] += (diffusionWW + diffusionWN);
+        if (state_i == bothPhases && state_j == bothPhases)
+        {
+            diffusionAW = Daw * avgDensity[wPhase] * normDiffGrad[wPhase];
+            diffusionWW = - diffusionAW;
+            diffusionWN = Dwg * avgDensity[nPhase] * normDiffGrad[nPhase];
+            diffusionAN = - diffusionWN;
+        }
+        else if (state_i == waterPhase || state_j == waterPhase)
+        {
+            diffusionAW = Daw * avgDensity[wPhase] * normDiffGrad[wPhase];
+            diffusionWW = - diffusionAW;
+        }
+        else if (state_i == gasPhase || state_j == gasPhase)
+        {
+            diffusionWN = Dwg * avgDensity[nPhase] * normDiffGrad[nPhase];
+            diffusionAN = - diffusionWN;
+        }
 
-         // CO2 conservation
-         flux[co2] += (diffusionAN + diffusionAW);
+        // Water conservation
+        flux[wComp] += (diffusionWW + diffusionWN);
 
-//         // Heat conservation
-//          flux[heat] += diffusionWW*enthW + diffusionAW*enthCO2; diffusive transport of enthalpy neglected here
+        // CO2 conservation
+        flux[nComp] += (diffusionAN + diffusionAW);
 
-      //////////////////////////////////////////////////////////////////////////////////////////////
-      // HEAT CONDUCTION
+        //         // Heat conservation
+        //          flux[heat] += diffusionWW*enthW + diffusionAW*enthCO2; diffusive transport of enthalpy neglected here
 
-          flux[heat]    +=    outward[heat];
+        //////////////////////////////////////////////////////////////////////////////////////////////
+        // HEAT CONDUCTION
 
-//    BEGIN DEBUG
-//          for(int j=0; j<3; j++)
-//             {
-//                 if(isinf(flux[j]))
-//                 {
-//                     std::cout<<"INF in ComputeA \n" << "Coordinates upw_node:X="<< this->fvGeom.subContVol[up_w].global[0] <<" Y="<< this->fvGeom.subContVol[up_w].global[1] <<
-//                     " Z="<<  this->fvGeom.subContVol[up_w].global[2]<<"\n"
-//                     <<"water pressure: " << vNDat[up_w].pW << "water saturation: "<< vNDat[up_w].satW
-//                     << " \n temperature: "<< vNDat[up_w].temperature << "Xaw" << vNDat[up_w].massfrac[co2][wPhase] << std::endl;
-//                 }
-//             }
-//     END DEBUG
-         return flux;
-  };
+        flux[heat] += outward[heat];
 
-      /** @brief integrate sources / sinks
-       *  @param e entity
+        //    BEGIN DEBUG
+        //          for(int j=0; j<3; j++)
+        //             {
+        //                 if(isinf(flux[j]))
+        //                 {
+        //                     std::cout<<"INF in ComputeA \n" << "Coordinates upw_node:X="<< this->fvGeom.subContVol[up_w].global[0] <<" Y="<< this->fvGeom.subContVol[up_w].global[1] <<
+        //                     " Z="<<  this->fvGeom.subContVol[up_w].global[2]<<"\n"
+        //                     <<"wetting phase pressure: " << vNDat[up_w].pW << "wetting phase saturation: "<< vNDat[up_w].satW
+        //                     << " \n temperature: "<< vNDat[up_w].temperature << "Xaw" << vNDat[up_w].massfrac[nComp][wPhase] << std::endl;
+        //                 }
+        //             }
+        //     END DEBUG
+        return flux;
+    };
+
+    /** @brief integrate sources / sinks
+     *  @param element entity
      *  @param sol solution vector
-     *  @param node local node id
+     *  @param idx local node id
      *  @return source/sink term
      */
-       virtual VBlockType computeQ (const Entity& e, const VBlockType* sol, const int& node)
-       {
-           // ASSUME problem.q already contains \rho.q
-           return problem.q(this->fvGeom.subContVol[node].global, e, this->fvGeom.subContVol[node].local);
-       }
+    virtual VBlockType computeQ (const Element& element, const VBlockType* sol, const int& idx)
+    {
+        // ASSUME problem.q already contains \rho.q
+        return problem.q(this->fvGeom.subContVol[idx].global, element, this->fvGeom.subContVol[idx].local);
+    }
 
-      /** @brief perform variable switch
-       *  @param global global node id
+    /** @brief perform variable switch
+     *  @param global global node id
      *  @param sol solution vector
      *  @param local local node id
      */
-       virtual void primaryVarSwitch (const Entity& e, int global, VBlockType* sol, int local)
+    virtual void primaryVarSwitch (const Element& element, int globalIdx, VBlockType* sol, int idx)
     {
 
         if(!switchBreak)
-         {
-           switched = false;
-           int state = sNDat[global].phaseState;
-
-        RT pW = sol[local][pWIdx];
-        RT satW = 0.0;
-        if (state == bothPhases) satW = 1.0-sol[local][switchIdx];
-          if (state == waterPhase) satW = 1.0;
-          if (state == gasPhase) satW = 0.0;
-
-        RT pC = problem.materialLaw().pC(satW, this->fvGeom.subContVol[local].global, e, this->fvGeom.subContVol[local].local);
-          RT pN = pW + pC;
-
-        FVector Coordinates = this->fvGeom.subContVol[local].global;
-
-        switch(state)
         {
-        case gasPhase :
-            RT xWNmass;
-            xWNmass = sol[local][switchIdx];
+            switched = false;
+            int state = sNDat[globalIdx].phaseState;
 
-            if (xWNmass > 0.001 && switched == false)
+            Scalar pW = sol[idx][wPhase];
+            Scalar satW = 0.0;
+            if (state == bothPhases) satW = 1.0-sol[idx][nPhase];
+            if (state == waterPhase) satW = 1.0;
+            if (state == gasPhase) satW = 0.0;
+
+            Scalar pC = problem.materialLaw().pC(satW, this->fvGeom.subContVol[idx].global, element, this->fvGeom.subContVol[idx].local);
+            Scalar pN = pW + pC;
+
+            FVector Coordinates = this->fvGeom.subContVol[idx].global;
+
+            switch(state)
             {
-                // appearance of water phase
-                std::cout << "Water appears at node " << global << "  Coordinates: " << Coordinates << std::endl;
-                sNDat[global].phaseState = bothPhases;
-                sol[local][switchIdx] = 1.0 - 1.e-3; // initialize solution vector
-                switched = true;
-            }
-            break;
+                case gasPhase :
+                Scalar xWNmass;
+                xWNmass = sol[idx][switchIdx];
 
-        case waterPhase :
-            RT xAWmax, xAWmass;
-             xAWmass = sol[local][switchIdx];
-             xAWmax = problem.multicomp().xAW(pN, sol[local][teIdx]);
-
-            if (xAWmass > xAWmax && switched == false)
-            {
-                // appearance of gas phase
-                std::cout << "Gas appears at node " << global << "  Coordinates: " << Coordinates << std::endl;
-                sNDat[global].phaseState = bothPhases;
-                sol[local][switchIdx] = 1.e-3; // initialize solution vector
-                switched = true;
-            }
-            break;
-
-        case bothPhases :
-            RT satN = sol[local][switchIdx];
-                if (satN < 0.0  && switched == false)
+                if (xWNmass> 0.001 && switched == false)
                 {
-                    // disappearance of gas phase
-                    std::cout << "Gas disappears at node " << global << "  Coordinates: " << Coordinates << std::endl;
-                    sNDat[global].phaseState = waterPhase;
-                    sol[local][switchIdx] = 1e-3; // initialize solution vector
+                    // appearance of wetting phase phase
+                    std::cout << "Water appears at node " << globalIdx << "  Coordinates: " << Coordinates << std::endl;
+                    sNDat[globalIdx].phaseState = bothPhases;
+                    sol[idx][nPhase] = 1.0 - 1.e-3; // initialize solution vector
                     switched = true;
-            }
-                else if (satW < -1.e-5  && switched == false)
-                {
-                    // disappearance of water phase
-                    std::cout << "Water disappears at node " << global << "  Coordinates: " << Coordinates << std::endl;
-                    sNDat[global].phaseState = gasPhase;
-                    sol[local][switchIdx] = 1e-8; // initialize solution vector
-                switched = true;
                 }
                 break;
-        }
 
-        if(switched)
-         {
-                 // fill global solution vector with initialised local values
-                 BoxJacobian<ThisType,G,RT,m,BoxFunction>::localToGlobal(e, sol);
-            switchedGlobal = true;
-         }
-         }
-       return;
+                case waterPhase :
+                Scalar xAWmax, xAWmass;
+                xAWmass = sol[idx][switchIdx];
+                xAWmax = problem.multicomp().xAW(pN, sol[idx][temp]);
+
+                if (xAWmass> xAWmax && switched == false)
+                {
+                    // appearance of gas phase
+                    std::cout << "Gas appears at node " << globalIdx << "  Coordinates: " << Coordinates << std::endl;
+                    sNDat[globalIdx].phaseState = bothPhases;
+                    sol[idx][nPhase] = 1.e-3; // initialize solution vector
+                    switched = true;
+                }
+                break;
+
+                case bothPhases :
+                Scalar satN = sol[idx][nPhase];
+                if (satN < 0.0 && switched == false)
+                {
+                    // disappearance of gas phase
+                    std::cout << "Gas disappears at node " << globalIdx << "  Coordinates: " << Coordinates << std::endl;
+                    sNDat[globalIdx].phaseState = waterPhase;
+                    sol[idx][switchIdx] = 1e-3; // initialize solution vector
+                    switched = true;
+                }
+                else if (satW < -1.e-5 && switched == false)
+                {
+                    // disappearance of wetting phase phase
+                    std::cout << "Water disappears at node " << globalIdx << "  Coordinates: " << Coordinates << std::endl;
+                    sNDat[globalIdx].phaseState = gasPhase;
+                    sol[idx][switchIdx] = 1e-8; // initialize solution vector
+                    switched = true;
+                }
+                break;
+            }
+
+            if(switched)
+            {
+                // fill global solution vector with initialised local values
+                BoxJacobian<ThisType,Grid,Scalar,numEq,BoxFunction>::localToGlobal(element, sol);
+                switchedGlobal = true;
+            }
+        }
+        return;
     }
 
-       // harmonic mean computed directly
+    // harmonic mean computed directly
     virtual FMatrix harmonicMeanK (FMatrix& Ki, const FMatrix& Kj) const
     {
         double eps = 1e-20;
         FMatrix K(0.);
-        for (int kx=0; kx<dim; kx++){
-            for (int ky=0; ky<dim; ky++){
+        for (int kx=0; kx<dim; kx++)
+        {
+            for (int ky=0; ky<dim; ky++)
+            {
                 if (Ki[kx][ky] != Kj[kx][ky])
                 {
                     K[kx][ky] = 2 / (1/(Ki[kx][ky]+eps) + (1/(Kj[kx][ky]+eps)));
@@ -513,302 +524,304 @@ namespace Dune
 
     virtual void clearVisited ()
     {
-        for (int i = 0; i < this->vertexMapper.size(); i++){
-           sNDat[i].visited = false;
+        for (int globalIdx = 0; globalIdx < this->vertexMapper.size(); globalIdx++)
+        {
+            sNDat[globalIdx].visited = false;
         }
         return;
-       }
+    }
 
     // updates old phase state after each time step
     virtual void updatePhaseState ()
     {
-          for (int i = 0; i < this->vertexMapper.size(); i++){
-               sNDat[i].oldPhaseState = sNDat[i].phaseState;
-           }
-       return;
+        for (int globalIdx = 0; globalIdx < this->vertexMapper.size(); globalIdx++)
+        {
+            sNDat[globalIdx].oldPhaseState = sNDat[globalIdx].phaseState;
+        }
+        return;
     }
 
     virtual void resetPhaseState ()
     {
-          for (int i = 0; i < this->vertexMapper.size(); i++){
-               sNDat[i].phaseState = sNDat[i].oldPhaseState;
-           }
-       return;
+        for (int globalIdx = 0; globalIdx < this->vertexMapper.size(); globalIdx++)
+        {
+            sNDat[globalIdx].phaseState = sNDat[globalIdx].oldPhaseState;
+        }
+        return;
     }
-      //*********************************************************
-      //*                                                        *
-      //*    Calculation of Data at Elements (elData)             *
-      //*                                                         *
-      //*                                                        *
-      //*********************************************************
+    //*********************************************************
+    //*                                                        *
+    //*    Calculation of Data at Elements (elData)             *
+    //*                                                         *
+    //*                                                        *
+    //*********************************************************
 
-    virtual void computeElementData (const Entity& e)
+    virtual void computeElementData (const Element& element)
     {
-         elData.heatCap = problem.soil().heatCap(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
+        elData.heatCap = problem.soil().heatCap(this->fvGeom.elementGlobal, element, this->fvGeom.elementLocal);
 
-//       // ASSUME element-wise constant parameters for the material law
-//          elData.parameters = problem.materialLawParameters
-//          (this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
-//
-//         // ASSUMING element-wise constant permeability, evaluate K at the cell center
-//          elData.K = problem.K(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
-//
-//         // ASSUMING element-wise constant porosity
-//          elData.porosity = problem.porosity(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+        //       // ASSUME element-wise constant parameters for the material law
+        //          elData.parameters = problem.materialLawParameters
+        //          (this->fvGeom.cellGlobal, element, this->fvGeom.cellLocal);
+        //
+        //         // ASSUMING element-wise constant permeability, evaluate K at the cell center
+        //          elData.K = problem.K(this->fvGeom.cellGlobal, element, this->fvGeom.cellLocal);
+        //
+        //         // ASSUMING element-wise constant porosity
+        //          elData.porosity = problem.porosity(this->fvGeom.cellGlobal, element, this->fvGeom.cellLocal);
         return;
     }
 
-
-      //*********************************************************
-      //*                                                        *
-      //*    Calculation of Data at Nodes that has to be            *
-      //*    determined only once    (sNDat)                        *
-      //*                                                        *
-      //*********************************************************
+    //*********************************************************
+    //*                                                        *
+    //*    Calculation of Data at Nodes that has to be            *
+    //*    determined only once    (sNDat)                        *
+    //*                                                        *
+    //*********************************************************
 
     // analog to EvalStaticData in MUFTE
-    virtual void updateStaticData (const Entity& e, VBlockType* sol)
+    virtual void updateStaticData (const Element& element, VBlockType* sol)
     {
         // size of the sNDat vector is determined in the constructor
 
         // local to global id mapping (do not ask vertex mapper repeatedly
-        //int localToGlobal[LagrangeShapeFunctionSetContainer<DT,RT,n>::maxsize];
+        //int localToGlobal[LagrangeShapeFunctionSetContainer<CoordScalar,Scalar,n>::maxsize];
 
         // get access to shape functions for P1 elements
-        GeometryType gt = e.geometry().type();
-        const typename LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type&
-        sfs=LagrangeShapeFunctions<DT,RT,dim>::general(gt,1);
+        GeometryType gt = element.geometry().type();
+        const typename LagrangeShapeFunctionSetContainer<CoordScalar,Scalar,dim>::value_type&
+        sfs=LagrangeShapeFunctions<CoordScalar,Scalar,dim>::general(gt,1);
 
         // get local to global id map
-        for (int k = 0; k < sfs.size(); k++) {
-           const int globalIdx = this->vertexMapper.template map<dim>(e, sfs[k].entity());
+        for (int k = 0; k < sfs.size(); k++)
+        {
+            const int globalIdx = this->vertexMapper.template map<dim>(element, sfs[k].entity());
 
-           // if nodes are not already visited
-          if (!sNDat[globalIdx].visited)
-           {
-                // ASSUME porosity defined at nodes
-                sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.subContVol[k].global, e, this->fvGeom.subContVol[k].local);
-
-               // global coordinates
-               FieldVector<DT,dim> global_i = this->fvGeom.subContVol[k].global;
-
-                 // evaluate primary variable switch
-               primaryVarSwitch(e, globalIdx, sol, k);
-
-                // mark elements that were already visited
-                sNDat[globalIdx].visited = true;
-           }
-        }
-
-      return;
-    }
-
-
-   // for initialization of the Static Data (sets porosity)
-    virtual void initiateStaticData (const Entity& e)
-    {
-        // get access to shape functions for P1 elements
-        GeometryType gt = e.geometry().type();
-        const typename LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type&
-        sfs=LagrangeShapeFunctions<DT,RT,dim>::general(gt,1);
-
-        // get local to global id map
-        for (int k = 0; k < sfs.size(); k++) {
-           const int globalIdx = this->vertexMapper.template map<dim>(e, sfs[k].entity());
-
-           // if nodes are not already visited
-           if (!sNDat[globalIdx].visited)
+            // if nodes are not already visited
+            if (!sNDat[globalIdx].visited)
             {
                 // ASSUME porosity defined at nodes
-                sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
+                sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.subContVol[k].global, element, this->fvGeom.subContVol[k].local);
+
+                // global coordinates
+                FieldVector<CoordScalar,dim> globalPos_i = this->fvGeom.subContVol[k].global;
+
+                // evaluate primary variable switch
+                primaryVarSwitch(element, globalIdx, sol, k);
 
                 // mark elements that were already visited
                 sNDat[globalIdx].visited = true;
             }
         }
 
-      return;
+        return;
     }
 
-      //*********************************************************
-      //*                                                        *
-      //*    Calculation of variable Data at Nodes                *
-      //*    (vNDat)                                                *
-      //*                                                        *
-      //*********************************************************
+    // for initialization of the Static Data (sets porosity)
+    virtual void initiateStaticData (const Element& element)
+    {
+        // get access to shape functions for P1 elements
+        GeometryType gt = element.geometry().type();
+        const typename LagrangeShapeFunctionSetContainer<CoordScalar,Scalar,dim>::value_type&
+        sfs=LagrangeShapeFunctions<CoordScalar,Scalar,dim>::general(gt,1);
+
+        // get local to global id map
+        for (int k = 0; k < sfs.size(); k++)
+        {
+            const int globalIdx = this->vertexMapper.template map<dim>(element, sfs[k].entity());
+
+            // if nodes are not already visited
+            if (!sNDat[globalIdx].visited)
+            {
+                // ASSUME porosity defined at nodes
+                sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.subContVol[k].global, element, this->fvGeom.subContVol[k].local);
+
+                // mark elements that were already visited
+                sNDat[globalIdx].visited = true;
+            }
+        }
+
+        return;
+    }
+
+    //*********************************************************
+    //*                                                        *
+    //*    Calculation of variable Data at Nodes                *
+    //*    (vNDat)                                                *
+    //*                                                        *
+    //*********************************************************
 
     // for output files
-//    BlockVector<FieldVector<RT, 1> > *hackyMassFracCO2;
-//    BlockVector<FieldVector<RT, 1> > *hackyMassFracWater;
-//    BlockVector<FieldVector<RT, 1> > *hackySaturationN;
+    //    BlockVector<FieldVector<Scalar, 1> > *hackyMassFracCO2;
+    //    BlockVector<FieldVector<Scalar, 1> > *hackyMassFracWater;
+    //    BlockVector<FieldVector<Scalar, 1> > *hackySaturationN;
 
-//    void printVariableData()
-//    {
-//        for (int i = 0; i < 4; i++)
-//        {
-//            std::cout << "new: i = " << i << ": satN = " << vNDat[i].satN << ", satW = " << vNDat[i].satW
-//                << ", pW = " << vNDat[i].pW << ", pC = " << vNDat[i].pC << ", pN = " << vNDat[i].pN
-//                << ", T = " << vNDat[i].temperature << ", lambda = " << vNDat[i].lambda << std::endl;
-//            std::cout << "old: i = " << i << ": satN = " << oldVNDat[i].satN << ", satW = " << oldVNDat[i].satW
-//                << ", pW = " << oldVNDat[i].pW << ", pC = " << oldVNDat[i].pC << ", pN = " << oldVNDat[i].pN
-//                << ", T = " << oldVNDat[i].temperature << ", lambda = " << oldVNDat[i].lambda << std::endl;
-//        }
-//    }
-
+    //    void printVariableData()
+    //    {
+    //        for (int idx = 0; idx < 4; idx++)
+    //        {
+    //            std::cout << "new: idx = " << idx << ": satN = " << vNDat[idx].satN << ", satW = " << vNDat[idx].satW
+    //                << ", pW = " << vNDat[idx].pW << ", pC = " << vNDat[idx].pC << ", pN = " << vNDat[idx].pN
+    //                << ", T = " << vNDat[idx].temperature << ", lambda = " << vNDat[idx].lambda << std::endl;
+    //            std::cout << "old: idx = " << idx << ": satN = " << oldVNDat[idx].satN << ", satW = " << oldVNDat[idx].satW
+    //                << ", pW = " << oldVNDat[idx].pW << ", pC = " << oldVNDat[idx].pC << ", pN = " << oldVNDat[idx].pN
+    //                << ", T = " << oldVNDat[idx].temperature << ", lambda = " << oldVNDat[idx].lambda << std::endl;
+    //        }
+    //    }
 
 
     struct VariableNodeData
     {
-        RT satN;
-     RT satW;
-     RT pW;
-     RT pC;
-     RT pN;
-     RT temperature;
-     RT lambda;
-     RT viscosityCO2;
-     RT krCO2;
-     FieldVector<RT,2> mobility;  //Vector with the number of phases
-     FieldVector<RT,2> density;
-     FieldMatrix<RT,c,2> massfrac;
-     FieldVector<RT,2> enthalpy;
-     FieldVector<RT,2> intenergy;
-     FieldVector<RT,2> diff;
-     int phasestate;
+        Scalar satN;
+        Scalar satW;
+        Scalar pW;
+        Scalar pC;
+        Scalar pN;
+        Scalar temperature;
+        Scalar lambda;
+        Scalar viscosityCO2;
+        Scalar krCO2;
+        FieldVector<Scalar,2> mobility; //Vector with the number of phases
+        FieldVector<Scalar,2> density;
+        FieldMatrix<Scalar,numComp,2> massfrac;
+        FieldVector<Scalar,2> enthalpy;
+        FieldVector<Scalar,2> intenergy;
+        FieldVector<Scalar,2> diff;
+        int phasestate;
     };
 
     // analog to EvalPrimaryData in MUFTE, uses members of vNDat
-    virtual void updateVariableData(const Entity& e, const VBlockType* sol,
-            int i, std::vector<VariableNodeData>& varData, int state)
+    virtual void updateVariableData(const Element& element, const VBlockType* sol,
+            int idx, std::vector<VariableNodeData>& varData, int state)
     {
-               const int global = this->vertexMapper.template map<dim>(e, i);
+        const int globalIdx = this->vertexMapper.template map<dim>(element, idx);
 
-            varData[i].pW = sol[i][pWIdx];
-            if (state == bothPhases) varData[i].satN = sol[i][switchIdx];
-            if (state == waterPhase) varData[i].satN = 0.0;
-            if (state == gasPhase) varData[i].satN = 1.0;
+        varData[idx].pW = sol[idx][wPhase];
+        if (state == bothPhases) varData[idx].satN = sol[idx][nPhase];
+        if (state == waterPhase) varData[idx].satN = 0.0;
+        if (state == gasPhase) varData[idx].satN = 1.0;
 
-            varData[i].satW = 1.0 - varData[i].satN;
+        varData[idx].satW = 1.0 - varData[idx].satN;
 
+        varData[idx].pC = problem.materialLaw().pC(varData[idx].satW, this->fvGeom.subContVol[idx].global, element, this->fvGeom.subContVol[idx].local);
+        varData[idx].pN = varData[idx].pW + varData[idx].pC;
+        varData[idx].temperature = sol[idx][temp]; // in [K]
 
-           varData[i].pC = problem.materialLaw().pC(varData[i].satW, this->fvGeom.subContVol[i].global, e, this->fvGeom.subContVol[i].local);
-            varData[i].pN = varData[i].pW + varData[i].pC;
-            varData[i].temperature = sol[i][teIdx]; // in [K]
+        // Solubilities of components in phases
+        if (state == bothPhases)
+        {
+            varData[idx].massfrac[nComp][wPhase] = problem.multicomp().xAW(varData[idx].pN, varData[idx].temperature);
+            varData[idx].massfrac[wComp][nPhase] = problem.multicomp().xWN(varData[idx].pN, varData[idx].temperature);
+        }
+        if (state == waterPhase)
+        {
+            varData[idx].massfrac[wComp][nPhase] = 0.0;
+            varData[idx].massfrac[nComp][wPhase] = sol[idx][switchIdx];
+        }
+        if (state == gasPhase)
+        {
+            varData[idx].massfrac[wComp][nPhase] = sol[idx][switchIdx];
+            varData[idx].massfrac[nComp][wPhase] = 0.0;
+        }
+        varData[idx].massfrac[wComp][wPhase] = 1.0 - varData[idx].massfrac[nComp][wPhase];
+        varData[idx].massfrac[nComp][nPhase] = 1.0 - varData[idx].massfrac[wComp][nPhase];
+        // for output
+        //               (*hackySaturationN)[global] = varData[idx].satN;
+        //               (*hackyMassFracCO2)[global] = varData[idx].massfrac[nComp][wPhase];
+        //               (*hackyMassFracWater)[global] = varData[idx].massfrac[wComp][nPhase];
+        // Diffusion coefficients
+        // Mobilities & densities
 
-            // Solubilities of components in phases
-            if (state == bothPhases){
-                       varData[i].massfrac[co2][wPhase] = problem.multicomp().xAW(varData[i].pN, varData[i].temperature);
-                          varData[i].massfrac[water][nPhase] = problem.multicomp().xWN(varData[i].pN, varData[i].temperature);
-            }
-            if (state == waterPhase){
-                   varData[i].massfrac[water][nPhase] = 0.0;
-                   varData[i].massfrac[co2][wPhase] =  sol[i][switchIdx];
-            }
-            if (state == gasPhase){
-                   varData[i].massfrac[water][nPhase] = sol[i][switchIdx];
-                   varData[i].massfrac[co2][wPhase] = 0.0;
-            }
-               varData[i].massfrac[water][wPhase] = 1.0 - varData[i].massfrac[co2][wPhase];
-               varData[i].massfrac[co2][nPhase] = 1.0 - varData[i].massfrac[water][nPhase];
-               // for output
-//               (*hackySaturationN)[global] = varData[i].satN;
-//               (*hackyMassFracCO2)[global] = varData[i].massfrac[co2][wPhase];
-//               (*hackyMassFracWater)[global] = varData[i].massfrac[water][nPhase];
-               // Diffusion coefficients
-            // Mobilities & densities
+        varData[idx].density[wPhase] = problem.wettingPhase().density(varData[idx].temperature, varData[idx].pW, varData[idx].massfrac[nComp][wPhase]);
+        varData[idx].density[nPhase] = problem.nonwettingPhase().density(varData[idx].temperature, varData[idx].pN);
+        varData[idx].mobility[wPhase] = problem.materialLaw().mobW(varData[idx].satW, this->fvGeom.subContVol[idx].global, element, this->fvGeom.subContVol[idx].local, varData[idx].temperature, varData[idx].pW);
+        varData[idx].mobility[nPhase] = problem.materialLaw().mobN(varData[idx].satN, this->fvGeom.subContVol[idx].global, element, this->fvGeom.subContVol[idx].local, varData[idx].temperature, varData[idx].pN);
+        varData[idx].lambda = problem.soil().heatCond(this->fvGeom.subContVol[idx].global, element, this->fvGeom.subContVol[idx].local, varData[idx].satW);
+        varData[idx].enthalpy[wPhase] = problem.wettingPhase().enthalpy(varData[idx].temperature,varData[idx].pW);
+        varData[idx].enthalpy[nPhase] = problem.nonwettingPhase().enthalpy(varData[idx].temperature,varData[idx].pN);
+        varData[idx].intenergy[wPhase] = problem.wettingPhase().intEnergy(varData[idx].temperature,varData[idx].pW);
+        varData[idx].intenergy[nPhase] = problem.nonwettingPhase().intEnergy(varData[idx].temperature,varData[idx].pN);
+        varData[idx].diff[wPhase] = problem.wettingPhase().diffCoeff();
+        varData[idx].diff[nPhase] = problem.nonwettingPhase().diffCoeff();
 
-           varData[i].density[wPhase] = problem.wettingPhase().density(varData[i].temperature, varData[i].pW, varData[i].massfrac[co2][wPhase]);
-        varData[i].density[nPhase] = problem.nonwettingPhase().density(varData[i].temperature, varData[i].pN);
-        varData[i].mobility[wPhase] = problem.materialLaw().mobW(varData[i].satW, this->fvGeom.subContVol[i].global, e, this->fvGeom.subContVol[i].local, varData[i].temperature, varData[i].pW);
-        varData[i].mobility[nPhase] = problem.materialLaw().mobN(varData[i].satN, this->fvGeom.subContVol[i].global, e, this->fvGeom.subContVol[i].local, varData[i].temperature, varData[i].pN);
-        varData[i].lambda = problem.soil().heatCond(this->fvGeom.subContVol[i].global, e, this->fvGeom.subContVol[i].local, varData[i].satW);
-        varData[i].enthalpy[wPhase] = problem.wettingPhase().enthalpy(varData[i].temperature,varData[i].pW);
-        varData[i].enthalpy[nPhase] = problem.nonwettingPhase().enthalpy(varData[i].temperature,varData[i].pN);
-        varData[i].intenergy[wPhase] = problem.wettingPhase().intEnergy(varData[i].temperature,varData[i].pW);
-        varData[i].intenergy[nPhase] = problem.nonwettingPhase().intEnergy(varData[i].temperature,varData[i].pN);
-        varData[i].diff[wPhase] = problem.wettingPhase().diffCoeff();
-        varData[i].diff[nPhase] = problem.nonwettingPhase().diffCoeff();
+        // CONSTANT solubility (for comparison with twophase)
+        //         varData[idx].massfrac[nComp][wPhase] = 0.0; varData[idx].massfrac[wComp][wPhase] = 1.0;
+        //         varData[idx].massfrac[wComp][nPhase] = 0.0; varData[idx].massfrac[nComp][nPhase] = 1.0;
 
-         // CONSTANT solubility (for comparison with twophase)
-//         varData[i].massfrac[co2][wPhase] = 0.0; varData[i].massfrac[water][wPhase] = 1.0;
-//         varData[i].massfrac[water][nPhase] = 0.0; varData[i].massfrac[co2][nPhase] = 1.0;
+        //std::cout << "wComp in gasphase: " << varData[idx].massfrac[wComp][nPhase] << std::endl;
+        //std::cout << "nComp in waterphase: " << varData[idx].massfrac[nComp][wPhase] << std::endl;
 
-         //std::cout << "water in gasphase: " << varData[i].massfrac[water][nPhase] << std::endl;
-         //std::cout << "co2 in waterphase: " << varData[i].massfrac[co2][wPhase] << std::endl;
+        // for output
+        (*outPressureN)[globalIdx] = varData[idx].pN;
+        (*outCapillaryP)[globalIdx] = varData[idx].pC;
+        (*outSaturationW)[globalIdx] = varData[idx].satW;
+        (*outSaturationN)[globalIdx] = varData[idx].satN;
+        (*outTemperature)[globalIdx] = varData[idx].temperature;
+        (*outMassFracAir)[globalIdx] = varData[idx].massfrac[nComp][wPhase];
+        (*outMassFracWater)[globalIdx] = varData[idx].massfrac[wComp][nPhase];
+        (*outDensityW)[globalIdx] = varData[idx].density[wPhase];
+        (*outDensityN)[globalIdx] = varData[idx].density[nPhase];
+        (*outMobilityW)[globalIdx] = varData[idx].mobility[wPhase];
+        (*outMobilityN)[globalIdx] = varData[idx].mobility[nPhase];
+        (*outPhaseState)[globalIdx] = state;
 
-            // for output
-            (*outPressureN)[global] = varData[i].pN;
-            (*outCapillaryP)[global] = varData[i].pC;
-              (*outSaturationW)[global] = varData[i].satW;
-               (*outSaturationN)[global] = varData[i].satN;
-               (*outTemperature)[global] = varData[i].temperature;
-               (*outMassFracAir)[global] = varData[i].massfrac[co2][wPhase];
-               (*outMassFracWater)[global] = varData[i].massfrac[water][nPhase];
-               (*outDensityW)[global] = varData[i].density[wPhase];
-               (*outDensityN)[global] = varData[i].density[nPhase];
-               (*outMobilityW)[global] = varData[i].mobility[wPhase];
-               (*outMobilityN)[global] = varData[i].mobility[nPhase];
-               (*outPhaseState)[global] = state;
-
-               return;
+        return;
     }
 
-    virtual void updateVariableData(const Entity& e, const VBlockType* sol, int i, bool old = false)
+    virtual void updateVariableData(const Element& element, const VBlockType* sol, int idx, bool old = false)
     {
         int state;
-        const int global = this->vertexMapper.template map<dim>(e, i);
+        const int globalIdx = this->vertexMapper.template map<dim>(element, idx);
         if (old)
         {
-                  state = sNDat[global].oldPhaseState;
-            updateVariableData(e, sol, i, oldVNDat, state);
+            state = sNDat[globalIdx].oldPhaseState;
+            updateVariableData(element, sol, idx, oldVNDat, state);
         }
         else
         {
-            state = sNDat[global].phaseState;
-            updateVariableData(e, sol, i, vNDat, state);
+            state = sNDat[globalIdx].phaseState;
+            updateVariableData(element, sol, idx, vNDat, state);
         }
     }
 
-    void updateVariableData(const Entity& e, const VBlockType* sol, bool old = false)
+    void updateVariableData(const Element& element, const VBlockType* sol, bool old = false)
     {
         int size = this->fvGeom.numVertices;
 
-        for (int i = 0; i < size; i++)
-                updateVariableData(e, sol, i, old);
+        for (int idx = 0; idx < size; idx++)
+        updateVariableData(element, sol, idx, old);
     }
-
 
     struct StaticNodeData
     {
         bool visited, primVarSet;
         int phaseState;
         int oldPhaseState;
-        RT cellVolume;
-        RT porosity;
-        FieldVector<RT, 4> parameters;
+        Scalar cellVolume;
+        Scalar porosity;
+        FieldVector<Scalar, 4> parameters;
         FMatrix K;
     };
 
-     struct StaticIPData
-     {
-         bool visited;
-         FMatrix K;
-     };
+    struct StaticIPData
+    {
+        bool visited;
+        FMatrix K;
+    };
 
+    struct ElementData
+    {
+        Scalar heatCap;
 
-    struct ElementData {
-     RT heatCap;
-
-//        RT cellVolume;
-//          RT porosity;
-//        RT gravity;
-//        FieldVector<RT, 4> parameters;
-//        FieldMatrix<RT,dim,dim> K;
-        } elData;
-
+        //        Scalar cellVolume;
+        //          Scalar porosity;
+        //        Scalar gravity;
+        //        FieldVector<Scalar, 4> parameters;
+        //        FieldMatrix<Scalar,dim,dim> K;
+    }elData;
 
     // parameters given in constructor
-       TwoPTwoCNIProblem<G,RT>& problem;
+    TwoPTwoCNIProblem<Grid,Scalar>& problem;
     CBrineCO2 multicomp;
     std::vector<StaticNodeData> sNDat;
     std::vector<StaticIPData> sIPDat;
@@ -817,35 +830,35 @@ namespace Dune
     bool switched, switchBreak, switchedGlobal, primVarSet;
 
     // for output files
-    BlockVector<FieldVector<RT, 1> > *outPressureN;
-    BlockVector<FieldVector<RT, 1> > *outCapillaryP;
-    BlockVector<FieldVector<RT, 1> > *outSaturationN;
-    BlockVector<FieldVector<RT, 1> > *outSaturationW;
-    BlockVector<FieldVector<RT, 1> > *outTemperature;
-    BlockVector<FieldVector<RT, 1> > *outMassFracAir;
-    BlockVector<FieldVector<RT, 1> > *outMassFracWater;
-    BlockVector<FieldVector<RT, 1> > *outDensityW;
-    BlockVector<FieldVector<RT, 1> > *outDensityN;
-    BlockVector<FieldVector<RT, 1> > *outMobilityW;
-    BlockVector<FieldVector<RT, 1> > *outMobilityN;
-    BlockVector<FieldVector<RT, 1> > *outPhaseState;
+    BlockVector<FieldVector<Scalar, 1> > *outPressureN;
+    BlockVector<FieldVector<Scalar, 1> > *outCapillaryP;
+    BlockVector<FieldVector<Scalar, 1> > *outSaturationN;
+    BlockVector<FieldVector<Scalar, 1> > *outSaturationW;
+    BlockVector<FieldVector<Scalar, 1> > *outTemperature;
+    BlockVector<FieldVector<Scalar, 1> > *outMassFracAir;
+    BlockVector<FieldVector<Scalar, 1> > *outMassFracWater;
+    BlockVector<FieldVector<Scalar, 1> > *outDensityW;
+    BlockVector<FieldVector<Scalar, 1> > *outDensityN;
+    BlockVector<FieldVector<Scalar, 1> > *outMobilityW;
+    BlockVector<FieldVector<Scalar, 1> > *outMobilityN;
+    BlockVector<FieldVector<Scalar, 1> > *outPhaseState;
 
-  };
+};
 
 }
 #endif
 
 //    // average permeability from the staticNode Vector
-//    virtual FMatrix harmonicMeanK (const Entity& e, int k) const
+//    virtual FMatrix harmonicMeanK (const Element& element, int k) const
 //    {
 //     FMatrix Ki, Kj;
-//     const RT eps = 1e-20;
+//     const Scalar eps = 1e-20;
 //
-//     int i = this->fvGeom.subContVolFace[k].i;
+//     int idx = this->fvGeom.subContVolFace[k].idx;
 //     int j = this->fvGeom.subContVolFace[k].j;
 //
-//     int global_i = this->vertexMapper.template map<dim>(e, i);
-//     int global_j = this->vertexMapper.template map<dim>(e, j);
+//     int global_i = this->vertexMapper.template map<dim>(element, idx);
+//     int global_j = this->vertexMapper.template map<dim>(element, j);
 //
 //
 //         Ki = sNDat[global_i].K;
