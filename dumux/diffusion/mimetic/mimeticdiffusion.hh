@@ -62,7 +62,7 @@ namespace Dune
 
     void assemble(const RT t=0)
     {
-        LocalStiffnessType lstiff(this->diffproblem, false, this->grid, levell);
+        LocalStiffnessType lstiff(this->diffproblem, false, this->grid(), levell);
         A.assemble(lstiff, pressTrace, f);
         return;
     }
@@ -90,7 +90,7 @@ namespace Dune
 
     void postprocess()
     {
-        LocalStiffnessType lstiff(this->diffproblem, false, this->grid, levell);
+        LocalStiffnessType lstiff(this->diffproblem, false, this->grid(), levell);
         A.calculatePressure(lstiff, pressTrace, normalVelocity, this->diffproblem.variables.pressure);
         //printvector(std::cout, this->variables.pressure, "element pressures", "row", 200, 1, 5);
         //printvector(std::cout, *normalVelocity, "normal velocities", "row", 200, 1, 5);
@@ -108,7 +108,7 @@ namespace Dune
     void calcTotalVelocity(const RT t=0) const
     {
         // ASSUMES axiparallel grids in 2D
-        for (int i = 0; i < this->grid.size(levell, 0); i++) {
+        for (int i = 0; i < this->grid().size(levell, 0); i++) {
             this->diffproblem.variables.velocity[i][0][0] = -(*normalVelocity)[i][0];
             this->diffproblem.variables.velocity[i][0][1] = 0;
             this->diffproblem.variables.velocity[i][1][0] = (*normalVelocity)[i][1];
@@ -129,7 +129,7 @@ namespace Dune
     void vtkout (const char* name, int k) const
     {
         VTKWriter<typename G::LevelGridView>
-            vtkwriter(this->grid.levelView(this->level()));
+            vtkwriter(this->grid().levelView(this->level()));
         char fname[128];
         sprintf(fname,"%s-%05d",name,k);
         vtkwriter.addCellData(this->diffproblem.variables.pressure,"total pressure p~");

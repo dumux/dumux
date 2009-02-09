@@ -8,7 +8,6 @@
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
 #include "dumux/diffusion/fv/fvdiffusion_deprecated.hh"
-#include "dumux/diffusion/fe/fediffusion.hh"
 #include "dumux/diffusion/mimetic/mimeticdiffusion.hh"
 #include "trapezproblem.hh"
 //#include "fvca5test1problem.hh"

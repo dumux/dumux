@@ -7,10 +7,10 @@
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
 #include "dumux/diffusion/fv/fvdiffusion_deprecated.hh"
-#include "dumux/diffusion/fe/fediffusion.hh"
 #include "dumux/diffusion/mimetic/mimeticdiffusion.hh"
 #include "fvca5test6problem.hh"
 #include "../benchmarkresult.hh"
+#include "dumux/fractionalflow/variableclass.hh"
 
 int main(int argc, char** argv)
 {
