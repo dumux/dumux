@@ -4,17 +4,10 @@
 #include <dune/grid/sgrid.hh> // load sgrid definition
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/io.hh>
-#include "dumux/material/properties.hh"
-#include "dumux/material/linearlaw_deprecated.hh"
-#include "dumux/material/brookscoreylaw_deprecated.hh"
-#include "dumux/material/vangenuchtenlaw_deprecated.hh"
-#include "dumux/transport/fv/fvtransport_deprecated.hh"
-#include "dumux/transport/fv/capillarydiffusion.hh"
-#include "dumux/transport/problems/buckleyleverettproblem.hh"
+#include "dumux/material/phaseproperties/phaseproperties2p.hh"
+#include "dumux/transport/fv/fvtransport.hh"
 #include "dumux/transport/problems/simpleproblem.hh"
 #include "dumux/timedisc/timeloop.hh"
-#include "dumux/timedisc/rungekuttastep.hh"
-#include "dumux/diffusion/problems/uniformproblem.hh"
 #include "dumux/fractionalflow/variableclass.hh"
 
 int main(int argc, char** argv)
@@ -26,7 +19,7 @@ int main(int argc, char** argv)
     // time loop parameters
     const double tStart = 0;
     const double tEnd = 2.5e9;
-    const double cFLFactor = 1;
+    const double cFLFactor = 1.0;
     double maxDT = 1e100;
     int modulo = 10;
 
@@ -48,10 +41,9 @@ int main(int argc, char** argv)
 
     grid.globalRefine(0);
 
-    Uniform mat(0.2);
-    //Dune::VanGenuchtenLaw materialLaw(mat, mat);
-    Dune::BrooksCoreyLaw materialLaw(mat, mat);
-    //Dune::LinearLaw materialLaw(mat, mat);
+    Dune::Uniform mat(0.2);
+    Dune::HomogeneousLinearSoil<GridType, NumberType> soil;
+    Dune::TwoPhaseRelations<GridType, NumberType> materialLaw(soil, mat, mat);
 
     typedef Dune::VariableClass<GridType, NumberType> VC;
 
@@ -62,9 +54,10 @@ int main(int argc, char** argv)
 
     VC variables(grid,initsat,initpress,vel);
 
-    Dune::SimpleProblem<GridType, NumberType, VC> problem(variables, materialLaw,L,H);
+    Dune::SimpleProblem<GridType, NumberType, VC> problem(variables, soil, materialLaw,L,H);
 
-    typedef Dune::FVTransport<GridType, NumberType, VC> Transport;
+    typedef Dune::TransportProblem<GridType, NumberType, VC> TransportProblem;
+    typedef Dune::FVTransport<GridType, NumberType, VC, TransportProblem> Transport;
 
     Transport transport(grid, problem, grid.maxLevel());
 

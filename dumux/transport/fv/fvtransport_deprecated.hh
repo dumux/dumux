@@ -12,6 +12,7 @@
 #include "dumux/transport/transport_deprecated.hh"
 #include "dumux/transport/fv/numericalflux.hh"
 #include "dumux/transport/fv/diffusivepart.hh"
+#include "dumux/transport/fv/parfvdatahandle.hh"
 
 namespace Dune {
 //! \ingroup transport
@@ -119,8 +120,8 @@ template<class G, class RT, class VC> int FVTransport<G, RT, VC>::update(const R
     CalculateSlopes(slope, t,cFLFac);
 
     // compute update vector
-    Iterator eendit = this->grid.template lend<0>(this->level());
-    for (Iterator it = this->grid.template lbegin<0>(this->level()); it != eendit; ++it) {
+    Iterator eendit = this->grid().template lend<0>(this->level());
+    for (Iterator it = this->grid().template lbegin<0>(this->level()); it != eendit; ++it) {
         // cell geometry type
         Dune::GeometryType gt = it->geometry().type();
 
@@ -340,11 +341,21 @@ template<class G, class RT, class VC> int FVTransport<G, RT, VC>::update(const R
     //Correct maximal available volume in the CFL-Criterium
     RT ResSaturationFactor = 1-this->transproblem.materialLaw.wettingPhase.Sr()-this->transproblem.materialLaw.nonwettingPhase.Sr();
     dt = dt*this->transproblem.porosity()*ResSaturationFactor;
+
+    // global min over all partitions
+    dt = this->grid().comm().min(dt);
+
     updateVec /= this->transproblem.porosity();
 
     //TODO remove DEBUG--->
     //std::cout<<"maxAd "<< maxAd << "\t maxDiff "<< maxDiff<<std::endl;
     // <---DEBUG
+
+    // exchange update
+    typedef VectorExchange<EM,RepresentationType> VecExchange;
+    VecExchange dataHandle(elementmapper,updateVec);
+    this->grid().template communicate<VecExchange>(dataHandle, InteriorBorder_All_Interface,
+            ForwardCommunication);
 
     return 0;
 }
@@ -352,8 +363,8 @@ template<class G, class RT, class VC> int FVTransport<G, RT, VC>::update(const R
 template<class G, class RT, class VC> void FVTransport<G, RT, VC>::initialTransport() {
 //    std::cout<<"initsat = "<<&this->transproblem.variables.saturation<<std::endl;
     // iterate through leaf grid an evaluate c0 at cell center
-    Iterator eendit = this->grid.template lend<0>(this->level());
-    for (Iterator it = this->grid.template lbegin<0>(this->level()); it != eendit; ++it) {
+    Iterator eendit = this->grid().template lend<0>(this->level());
+    for (Iterator it = this->grid().template lbegin<0>(this->level()); it != eendit; ++it) {
         // get geometry type
         Dune::GeometryType gt = it->geometry().type();
 
@@ -375,8 +386,8 @@ template<class G, class RT, class VC> void FVTransport<G, RT, VC>::CalculateSlop
 
     double stabilityFactor = 1.0 - cFLFactor*sqrt(cFLFactor);
 
-    Iterator endit = this->grid.template lend<0>(this->level());
-    for (Iterator it = this->grid.template lbegin<0>(this->level()); it!=endit; ++it) {
+    Iterator endit = this->grid().template lend<0>(this->level());
+    for (Iterator it = this->grid().template lbegin<0>(this->level()); it!=endit; ++it) {
         // get some cell properties
         Dune::GeometryType gt = it->geometry().type();
         const Dune::FieldVector<ct,dim>

@@ -4,15 +4,16 @@
 #define DUNE_LOCALMIXED_HH
 
 #include<dune/grid/utility/intersectiongetter.hh>
-#include"dumux/operators/localstiffnessextended.hh"
+#include<dune/disc/operators/localstiffness.hh>
 #include"dumux/stokes/stokesproblem.hh"
 
 namespace Dune
 {
 template<class Grid, class Scalar, int m>
-class LocalMixed : public LocalStiffness< LocalMixed<Grid,Scalar,m>, Grid, Scalar, m>
+class LocalMixed : public LinearLocalStiffness<typename Grid::LeafGridView, Scalar, m>
 {
-    typedef LocalStiffness< LocalMixed<Grid,Scalar,m>, Grid, Scalar, m> Stiffness;
+//    typedef LocalStiffness< LocalMixed<Grid,Scalar,m>, Grid, Scalar, m> Stiffness;
+    typedef LinearLocalStiffness<typename Grid::LeafGridView, Scalar, m> Stiffness;
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
     typedef typename Element::Geometry Geometry;
     typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
@@ -25,11 +26,12 @@ public:
     {}
 
     // ASSUME a 2D uniform rectangular axiparallel grid
-    template<class TypeTag>
     void assemble (const Element& element, int k = 1)
     {
         // get the number of element faces:
         int nFaces = element.template count<1>();
+
+       this->setcurrentsize(nFaces+1);
 
         // initialize everything with 0:
         for (int i = 0; i < nFaces+1; i++) {
@@ -87,7 +89,7 @@ public:
             FieldVector<Scalar,dim> global = isIt->intersectionGlobal().global(localDimM1);
 
             // get the source term from the problem:
-            FieldVector<Scalar,m> source = problem_.q(global, element, local);
+            FieldVector<Scalar,dim+1> source = problem_.q(global, element, local);
 
             // set the right hand side:
             this->b[numberInSelf] = 0.5*volume*source[numberInSelf/2];
@@ -115,6 +117,10 @@ public:
         }
 
         return;
+    }
+
+    void assembleBoundaryCondition (const Element& element, int k = 1)
+    {
     }
 
 private:

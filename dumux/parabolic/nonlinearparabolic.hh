@@ -71,7 +71,7 @@ namespace Dune
       typedef MultipleCodimMultipleGeomTypeMapper<G,IS,P1Layout> VertexMapper;
 
       LeafP1NonlinearParabolic (const G& g, ProblemType& prob)
-      : NonlinearParabolic(g, prob), grid(g), vertexmapper(g, g.leafIndexSet())
+      : NonlinearParabolic(g, prob), grid_(g), vertexmapper(g, g.leafIndexSet())
       { }
 
       virtual void initial()
@@ -82,7 +82,7 @@ namespace Dune
           enum{dim = G::dimension};
           enum{dimworld = G::dimensionworld};
 
-            const GV& gridview(this->grid.leafView());
+            const GV& gridview(this->grid_.leafView());
 
           // iterate through leaf grid an evaluate c0 at cell center
           Iterator eendit = gridview.template end<0>();
@@ -117,15 +117,18 @@ namespace Dune
         void vtkout (const char* name, int k) const
         {
             VTKWriter<typename G::LeafGridView>
-                vtkwriter(this->grid.leafView());
+                vtkwriter(this->grid_.leafView());
             char fname[128];
             sprintf(fname,"%s-%05d",name,k);
             vtkwriter.addVertexData(*(this->u),"total pressure p~");
             vtkwriter.write(fname, VTKOptions::ascii);
         }
 
+        const G& grid() const
+            { return grid_; }
+
   protected:
-      const G& grid;
+      const G& grid_;
       VertexMapper vertexmapper;
   };
 

@@ -7,12 +7,9 @@
 #include <dune/istl/solvers.hh>
 #include "dumux/stokes/localmixed.hh"
 #include "dumux/operators/mixedoperator.hh"
-#include "dumux/stokes/stokesjacobian.hh"
-#include "dumux/nonlinear/nonlinearmodel.hh"
 #include "dumux/pardiso/pardiso.hh"
 
 #include "yxproblem.hh"
-#include "sinproblem.hh"
 
 template<int dim>
 struct ElementAndFaceLayout
@@ -122,8 +119,7 @@ int main(int argc, char** argv)
       MixedFunction u(grid);
       MixedFunction f(grid);
 
-      //typedef Dune::YXProblem<Grid, Scalar> Problem;
-      typedef Dune::SinProblem2<Grid, Scalar> Problem;
+      typedef Dune::YXProblem<Grid, Scalar> Problem;
       Problem problem;
 
       typedef Dune::LocalMixed<Grid, Scalar, 1> LocalMixed;
@@ -141,7 +137,7 @@ int main(int argc, char** argv)
       Dune::MatrixAdapter<Matrix,Vector,Vector> op(*mixedAssembler);
       Dune::InverseOperatorResult r;
       Dune::SeqPardiso<Matrix,Vector,Vector> preconditioner(*mixedAssembler);
-      Dune::LoopSolver<Vector> solver(op, preconditioner, 1E-14, 10000, 1);
+      Dune::LoopSolver<Vector> solver(op, preconditioner, 1E-14, 1000, 1);
       solver.apply(*u, *f, r);
 
 //      printvector(std::cout, *u, "solution", "row", 200, 1, 3);

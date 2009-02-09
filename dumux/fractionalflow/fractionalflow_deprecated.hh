@@ -94,6 +94,9 @@ namespace Dune
 
     virtual void vtkout (const char* name, int k) const = 0;
 
+    const G &grid() const
+        { return Transport::grid(); }
+
     //! Construct a FractionalFlow object.
     FractionalFlow (Diffusion& diff, Transport& trans)
             : Transport(trans), Diffusion(diff)

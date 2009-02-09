@@ -268,8 +268,8 @@ template<class G, class RT, class VC> void FVTransport<G, RT, VC>::CalculateSlop
 
     double stabilityFactor = 1.0 - cFLFactor*sqrt(cFLFactor);
 
-    Iterator endit = this->grid.template lend<0>(this->level());
-    for (Iterator it = this->grid.template lbegin<0>(this->level()); it!=endit; ++it) {
+    Iterator endit = this->grid().template lend<0>(this->level());
+    for (Iterator it = this->grid().template lbegin<0>(this->level()); it!=endit; ++it) {
         // get some cell properties
         Dune::GeometryType gt = it->geometry().type();
         const Dune::FieldVector<ct,dim>

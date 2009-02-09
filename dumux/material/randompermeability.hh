@@ -62,7 +62,7 @@ public:
      *  permeability at the cell center.
      */
     RandomPermeability(const Grid& grid, const char* name = "permeab.dat", const bool create = true)
-    : grid_(grid), fileName_(name), createNew_(create), perm_(grid_), permLoc_(0),
+    : grid_(grid), fileName_(name), createNew_(create), perm_(grid_.leafView()), permLoc_(0),
     elementMapper_(grid_, grid_.leafIndexSet())
     {
         typedef typename GridView::template Codim<0>::Iterator ElementIterator;

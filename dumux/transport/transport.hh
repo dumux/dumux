@@ -30,7 +30,7 @@ namespace Dune
  - VelType   type of the vector holding the velocity values
 
  */
-template<class Grid, class Scalar, class VC>
+template<class Grid, class Scalar, class VC, class Problem =  FractionalFlowProblem<Grid, Scalar, VC> >
 class Transport
 {
 public:
@@ -91,7 +91,7 @@ typedef    typename VC::ScalarVectorType RepresentationType;
      *  @param g a DUNE grid object
      *  @param prob an object of class TransportProblem or derived
      */
-    Transport(const Grid& grid, FractionalFlowProblem<Grid, Scalar, VC>& problem)
+    Transport(const Grid& grid, Problem& problem)
     : grid_(grid), transProblem(problem)
     {}
 
@@ -102,7 +102,7 @@ typedef    typename VC::ScalarVectorType RepresentationType;
     }
 
     const Grid& grid_;
-    FractionalFlowProblem<Grid, Scalar, VC>& transProblem; //!< problem data
+    Problem& transProblem; //!< problem data
 };
 
 }

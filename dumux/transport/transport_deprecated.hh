@@ -82,7 +82,7 @@ namespace Dune
      *  @param prob an object of class TransportProblem or derived
      */
     Transport(const G& g, TransportProblem<G, RT, VC>& prob)
-    : grid(g), transproblem(prob), level_(g.maxLevel())
+    : grid_(g), transproblem(prob), level_(g.maxLevel())
     { }
 
     /*! @brief constructor
@@ -94,7 +94,7 @@ namespace Dune
      *  @param lev the grid level on which the Transport equation is to be solved.
      */
     Transport(const G& g, TransportProblem<G, RT, VC>& prob, int lev)
-    : transproblem(prob), grid(g), level_(lev)
+    : transproblem(prob), grid_(g), level_(lev)
     { }
 
     //! returns the level on which the transport eqution is solved.
@@ -103,9 +103,11 @@ namespace Dune
         return level_;
     }
 
-    const G& grid;
+    const G &grid() const
+        { return grid_; }
 
   protected:
+      const G& grid_;
       const int level_;
   };
 

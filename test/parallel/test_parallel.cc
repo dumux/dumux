@@ -1,7 +1,7 @@
 // commented lines 1454, 1464-1467 in istl/communicator.hh
 #include <config.h>
 #include <iostream>
-#undef DUMMY
+#define DUMMY
 #ifdef DUMMY
 #include<mpi.h>
 #include <dune/grid/alugrid.hh>
@@ -100,7 +100,7 @@ int main(int argc, char** argv)
     //typedef Dune::ALUCubeGrid<dim,dim> GridType;
 
     // create grid pointer
-    Dune::GridPtr<GridType> gridPtr( argv[1] );
+    Dune::GridPtr<GridType> gridPtr( argv[1], Dune::MPIHelper::getCommunicator() );
     // grid reference
     GridType& grid = *gridPtr;
 

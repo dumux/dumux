@@ -92,7 +92,7 @@ public:
 #endif
 
     LeafP1BoxDiffusion (const G& g, DiffusionParameters<G, RT, GlobalToPipeMapper, VertexMapper, VertexVectorOnLineType>& prob)
-    : BoxDiffusion(g, prob), grid(g), vertexmapper(g, g.leafIndexSet()),
+    : BoxDiffusion(g, prob), grid_(g), vertexmapper(g, g.leafIndexSet()),
     size((*(this->u)).size())
     { }
 
@@ -104,7 +104,7 @@ public:
         enum{dim = G::dimension};
         enum{dimworld = G::dimensionworld};
 
-        const GV& gridview(this->grid.leafView());
+        const GV& gridview(this->grid_.leafView());
         std::cout << "initializing solution." << std::endl;
         // iterate through leaf grid an evaluate c0 at cell center
         Iterator eendit = gridview.template end<0>();
@@ -190,7 +190,7 @@ public:
     {
         this->localJacobian().setDt(dt);
         this->localJacobian().setOldSolution(this->uOldTimeStep);
-        NewtonMethod<G, ThisType> newtonMethod(this->grid, *this);
+        NewtonMethod<G, ThisType> newtonMethod(this->grid_, *this);
         newtonMethod.execute();
         dt = this->localJacobian().getDt();
         *(this->uOldTimeStep) = *(this->u);
@@ -228,7 +228,7 @@ public:
         enum {dim = G::dimension};
         typedef array<BoundaryConditions::Flags, m> BCBlockType;
 
-        const GV& gridview(this->grid.leafView());
+        const GV& gridview(this->grid_.leafView());
         (*defectGlobal)=0;
 
         // allocate flag vector to hold flags for essential boundary conditions
@@ -277,14 +277,16 @@ public:
 
     virtual void vtkout (const char* name, int k)
     {
-        VTKWriter<typename G::LeafGridView> vtkwriter(this->grid.leafView());
+        VTKWriter<typename G::LeafGridView> vtkwriter(this->grid_.leafView());
         vtkwriter.addVertexData(*(this->u),"pressure");
         vtkwriter.write(name, VTKOptions::ascii);
     }
 
+    const G& grid() const
+        { return grid_; }
 
 protected:
-    const G& grid;
+    const G& grid_;
     VertexMapper vertexmapper;
     int size;
 };

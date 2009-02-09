@@ -71,7 +71,7 @@ int main(int argc, char** argv)
 
      Dune::TissueTumorProblem<GridType, NumberType> problem(phase, soil);
 
- 
+
 
      typedef Dune::VtkMultiWriter<GridType::LeafGridView> MultiWriter;
      typedef Dune::Box1P2C<GridType, NumberType, MultiWriter> OnePhaseTwoComp;
@@ -101,10 +101,10 @@ int main(int argc, char** argv)
 
 int main (int argc , char **argv) try
 {
-  //std::cout << "Please install the UG library." << std::endl;
-  std::cout << "Dummy implementation, this test would not compile at the moment." << std::endl;
+    //std::cout << "Please install the UG library." << std::endl;
+    std::cout << "Dummy implementation, this test would not compile at the moment." << std::endl;
 
-  return 1;
+    return 1;
 }
 catch (...)
 {

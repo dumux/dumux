@@ -52,13 +52,13 @@ namespace Dune
     {
           typedef typename G::template Codim<0>::LevelIterator ElementLevelIterator;
           typedef typename G::template Codim<0>::HierarchicIterator HierarchicIterator;
-//          const typename G::Traits::LevelIndexSet& isetC ( Transport::grid.levelIndexSet(Transport::level()) );
-//          const typename G::Traits::LevelIndexSet& isetF ( Diffusion::grid.levelIndexSet(Diffusion::level()) );
+//          const typename G::Traits::LevelIndexSet& isetC ( Transport::grid().levelIndexSet(Transport::level()) );
+//          const typename G::Traits::LevelIndexSet& isetF ( Diffusion::grid().levelIndexSet(Diffusion::level()) );
 
 //          RepresentationType saturation(isetF.size(0));
           // entity pointer type
           typedef typename G::template Codim<0>::EntityPointer ElementEntityPointer;
-//          int maxlevel = Transport::grid.maxLevel();
+//          int maxlevel = Transport::grid().maxLevel();
 
           int pressSize = this->diffproblem.variables.pressure.size();
           int satSize = saturation.size();
@@ -133,12 +133,12 @@ namespace Dune
 
       Transport::vtkout (name,k);
 
-//      Dune::VTKWriter<typename G::LevelGridView> vtkWriterSat(this->grid.levelView(this->level()));
+//      Dune::VTKWriter<typename G::LevelGridView> vtkWriterSat(this->grid().levelView(this->level()));
 //      sprintf(fname,"%s-%05d",name,k);
 //      vtkWriterSat.addCellData(this->sat,"saturation");
 //      vtkWriterSat.write(fname,Dune::VTKOptions::ascii);
 
-          VTKWriter<typename G::LevelGridView> vtkWriterPress(this->Diffusion::grid.levelView(this->Diffusion::level()));
+          VTKWriter<typename G::LevelGridView> vtkWriterPress(this->Diffusion::grid().levelView(this->Diffusion::level()));
       sprintf(fname,"%s-press.%05d",name,k);
       vtkWriterPress.addCellData(this->diffproblem.variables.pressure,"total pressure p~");
       vtkWriterPress.write(fname,Dune::VTKOptions::ascii);
@@ -149,7 +149,7 @@ namespace Dune
             double om = 1)
     : IMPES<G, Diffusion, Transport, VC>(diff, trans, flag, nIt, maxDef, om)
     {
-        saturation.resize(trans.grid.size(0));
+        saturation.resize(trans.grid().size(0));
     }
 
   private:

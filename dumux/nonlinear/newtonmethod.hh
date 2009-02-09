@@ -57,7 +57,7 @@ public:
 //                sprintf(buf, "rank %d, A*1: ", grid.comm().rank());
 //                printvector(std::cout, *uOldNewtonStep, buf, "row", 200, 1, 3);
 
-                if (grid.comm().rank() == 1) {
+                if (grid.comm().rank() == 10) {
                     printmatrix(std::cout, *A, "global stiffness matrix", "row", 11, 4);
                     printvector(std::cout, *uOldNewtonStep, "uOldNewtonStep", "row", 200, 1, 3);
                     printvector(std::cout, *f, "right hand side", "row", 200, 1, 3);

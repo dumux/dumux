@@ -145,10 +145,6 @@ public:
     : grid(g), gridview(gv), is(gv.indexSet()), lc(lcomm), faceMapper(g,is), elementMapper(g, is), elementAndFaceMapper(g, is), allMapper(g,is),
     A(size(), size(), nnz(is), RepresentationType::random)
     {
-        // Check for the TypeTag
-        dune_static_assert((is_same<TypeTag,LeafTag>::value
-                || is_same<TypeTag,LevelTag>::value), "TypeTag must be LeafTag or LevelTag");
-
         // be verbose
         std::cout << g.comm().rank() << ": " << "making " << size() << "x"
         << size() << " matrix with " << nnz(is) << " nonzeros" << std::endl;
@@ -350,7 +346,7 @@ public:
 
             // build local stiffness matrix for Mixed elements
             // inludes rhs and boundary condition information
-            loc.template assemble<LeafTag>(element, 1); // assemble local stiffness matrix
+            loc.assemble(element, 1); // assemble local stiffness matrix
 
 
             // accumulate local matrix into global matrix for non-hanging nodes

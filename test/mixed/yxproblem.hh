@@ -16,10 +16,10 @@ class YXProblem : public StokesProblem<G, RT>
   typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
 
 public:
-  virtual FieldVector<RT,dim> q(const FieldVector<DT,dim>& x, const Entity& e,
+  virtual FieldVector<RT,m> q(const FieldVector<DT,dim>& x, const Entity& e,
                 const FieldVector<DT,dim>& xi) const
   {
-    FieldVector<RT,dim> result(0);
+    FieldVector<RT,m> result(0);
     result[0] = x[1];
     result[1] = x[0];
 

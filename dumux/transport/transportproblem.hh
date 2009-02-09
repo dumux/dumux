@@ -12,8 +12,7 @@
 #include<dune/grid/common/grid.hh>
 #include<dune/grid/common/referenceelements.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
-#include<dumux/material/twophaserelations_deprecated.hh>
-#include<dumux/material/linearlaw_deprecated.hh>
+#include<dumux/material/twophaserelations.hh>
 
 /**
 * @file
@@ -54,7 +53,7 @@ public:
     @param[in]  globalPos    position in global coordinates
     \return     boundary condition type given by enum in this class
     */
-    virtual BoundaryConditions::Flags bctype (const GlobalPosition& globalPos, const Element& e,
+    virtual BoundaryConditions::Flags bctypeSat (const GlobalPosition& globalPos, const Element& element,
             const LocalPosition& localPos) const = 0;
 
     //! evaluate Dirichlet boundary condition at given position
@@ -62,15 +61,23 @@ public:
     @param[in]  globalPos    position in global coordinates
     \return     boundary condition value
     */
-    virtual Scalar dirichlet (const GlobalPosition& globalPos, const Element& e,
+    virtual Scalar dirichletSat (const GlobalPosition& globalPos, const Element& element,
             const LocalPosition& localPos) const = 0;
+
+    //! evaluate Neumann boundary condition at given position
+    /*! evaluate Neumann boundary condition at given position
+    @param[in]  globalPos    position in global coordinates
+    \return     boundary condition value
+    */
+    virtual Scalar neumannSat (const GlobalPosition& globalPos, const Element& element,
+            const LocalPosition& localPos, Scalar helpFactor) const = 0;
 
     //! evaluate initial condition at given position
     /*! evaluate initial boundary condition at given position
     @param[in]  globalPos    position in global coordinates
     \return    initial condition value
     */
-    virtual Scalar initSat (const GlobalPosition& globalPos, const Element& e,
+    virtual Scalar initSat (const GlobalPosition& globalPos, const Element& element,
             const LocalPosition& localPos) const = 0;
 
     const FieldVector<Scalar,dim>& gravity()
@@ -81,7 +88,7 @@ public:
 
     //! evaluate velocity
     /*! Evaluate the velocity at the element faces
-    @param[in]  e              entity of codim 0
+    @param[in]  element              entity of codim 0
     @param[in]  numberInSelf   local index of element face
     @param[out] vTotal         velocity vector to be filled
     */
@@ -104,10 +111,10 @@ public:
         return;
     }
 
-    virtual Scalar g (const GlobalPosition& globalPos, const Element& e,
+    virtual Scalar g (const GlobalPosition& globalPos, const Element& element,
             const LocalPosition& localPos) const
     {
-        return dirichlet(globalPos, e, localPos);
+        return dirichletSat(globalPos, element, localPos);
     }
 
     //! constructor
@@ -115,8 +122,8 @@ public:
     *  @param cap flag for including capillary forces.
     */
 
-    TransportProblem(VC& variables, TwoPhaseRelations& materialLaw = *(new LinearLaw), const bool capillarity = false, const bool exsol = false)
-    : variables(variables), capillarity(capillarity), materialLaw(materialLaw),exsolution(exsol), uE(0)
+    TransportProblem(VC& variables, Matrix2p<Grid, Scalar>& soil, TwoPhaseRelations<Grid,Scalar>& materialLaw  = *(new TwoPhaseRelations<Grid,Scalar>), const bool capillarity = false, const bool exsol = false)
+    : variables(variables), capillarity(capillarity), materialLaw(materialLaw), soil(soil), exsolution(exsol), uE(0)
     {    }
 
     //! always define virtual destructor in abstract base class
@@ -124,7 +131,8 @@ public:
 
     VC& variables;
     const bool capillarity;
-    TwoPhaseRelations& materialLaw;
+    TwoPhaseRelations<Grid,Scalar>& materialLaw;
+    Matrix2p<Grid, Scalar>& soil;
     const bool exsolution;
     BlockVector<FieldVector<Scalar, 2> > uE;
 };

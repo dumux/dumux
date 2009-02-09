@@ -96,7 +96,7 @@ namespace Dune
 //#endif
 
       LeafP1BoxDiffusion (const G& g, DiffusionParameters<G, RT>& prob)
-      : BoxDiffusion(g, prob), grid(g), vertexmapper(g, g.leafIndexSet()),
+      : BoxDiffusion(g, prob), grid_(g), vertexmapper(g, g.leafIndexSet()),
         size((*(this->u)).size())
       { }
 
@@ -108,7 +108,7 @@ namespace Dune
           enum{dim = G::dimension};
           enum{dimworld = G::dimensionworld};
 
-          const GV& gridview(this->grid.leafView());
+          const GV& gridview(this->grid_.leafView());
           std::cout << "initializing solution." << std::endl;
 
             // iterate through leaf grid an evaluate c0 at cell center
@@ -204,7 +204,7 @@ namespace Dune
     {
         this->localJacobian().setDt(dt);
         this->localJacobian().setOldSolution(this->uOldTimeStep);
-        NewtonMethod<G, ThisType> newtonMethod(this->grid, *this);
+        NewtonMethod<G, ThisType> newtonMethod(this->grid_, *this);
         newtonMethod.execute();
         dt = this->localJacobian().getDt();
         *(this->uOldTimeStep) = *(this->u);
@@ -238,7 +238,7 @@ namespace Dune
         enum {dim = G::dimension};
         typedef array<BoundaryConditions::Flags, m> BCBlockType;
 
-        const GV& gridview(this->grid.leafView());
+        const GV& gridview(this->grid_.leafView());
         (*defectGlobal)=0;
 
         // allocate flag vector to hold flags for essential boundary conditions
@@ -247,7 +247,7 @@ namespace Dune
                 <essential.size(); i++)
             essential[i].assign(BoundaryConditions::neumann);
 
-        // iterate through leaf grid
+        // iterate through leaf grid_
         Iterator eendit = gridview.template end<0>();
         for (Iterator it = gridview.template begin<0>(); it
                 != eendit; ++it) {
@@ -291,15 +291,18 @@ namespace Dune
     {
         char fname[128];
         sprintf(fname,"%s-%05d",name,k);
-        VTKWriter<typename G::LeafGridView> vtkwriter(this->grid.leafView());
+        VTKWriter<typename G::LeafGridView> vtkwriter(this->grid_.leafView());
         vtkwriter.addVertexData(*(this->u),"pressure");
         vtkwriter.write(fname, VTKOptions::ascii);
     }
 
+    const G &grid() const
+        { return grid_; }
+
 
 
 protected:
-  const G& grid;
+  const G& grid_;
   VertexMapper vertexmapper;
   int size;
 };

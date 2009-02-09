@@ -18,7 +18,7 @@ namespace Dune
 //! \ingroup transport
 //! The finite volume model for the solution of the transport equation
 template<class Grid, class Scalar, class VC, class Problem =  FractionalFlowProblem<Grid, Scalar, VC> >
-class FVTransport: public Transport<Grid, Scalar, VC>
+class FVTransport: public Transport<Grid, Scalar, VC, Problem>
 {
     template<int dim> struct ElementLayout
     {
@@ -91,7 +91,7 @@ public:
     FVTransport(Grid& grid, Problem& problem, int level = 0,
             DiffusivePart<Grid,Scalar>& diffPart = *(new DiffusivePart<Grid, Scalar>), bool rec = false,
             Scalar aMax = 0.8, const NumericalFlux<Scalar>& numFl = *(new Upwind<Scalar>)) :
-    Transport<Grid, Scalar, VC>(grid, problem),
+    Transport<Grid, Scalar, VC, Problem>(grid, problem),
     elementMapper_(grid, grid.levelIndexSet(level)),
     reconstruct_(rec),numFlux_(numFl), diffusivePart_(diffPart), alphaMax_(aMax)
     {}
