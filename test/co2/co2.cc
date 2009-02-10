@@ -78,8 +78,9 @@ int main(int argc, char** argv)
 //    timeloop.execute(twoPhase);
     MultiWriter writer("co2-out");
 
-//  for timeloop.executeMultiWriter(twoPhase, writer, true) initial
-//  values are read from restart file data.dgf
+//  for timeloop.executeMultiWriter(twoPhase, writer, true) restart files are written
+//  for timeloop.executeMultiWriter(twoPhase, writer, true, true, #) initial values are
+//  read from restart file data-#.dgf
 //  at the moment this only works for SGrid in 2D and for ALUCubeGrid in 3D
     timeloop.executeMultiWriter(twoPhase, writer);
     std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;

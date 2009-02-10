@@ -13,7 +13,7 @@
 #include<dune/disc/operators/boundaryconditions.hh>
 #include<dumux/material/property_baseclasses.hh>
 #include<dumux/twophase/twophaseproblem.hh>
-
+#include<dumux/auxiliary/basicdomain.hh>
 
 /**
  * @file
@@ -23,115 +23,123 @@
 
 namespace Dune
 {
-  //! base class that defines the parameters of a diffusion equation
-  /*! An interface for defining parameters for the stationary diffusion equation
-   * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = q, \f$,
-   * \f$p = g\f$ on \f$\Gamma_1\f$, and \f$\lambda K \text{grad}\, p = J\f$
-   * on \f$\Gamma_2\f$. Here,
-   * \f$p\f$ denotes the pressure, \f$K\f$ the absolute permeability,
-   * and \f$\lambda\f$ the total mobility, possibly depending on the
-   * saturation.
-   *
-   *    Template parameters are:
-   *
-   *    - Grid  a DUNE grid type
-   *    - RT    type used for return values
-   */
-  template<class G, class RT>
-  class CO2Problem : public TwoPhaseProblem<G, RT> {
-    typedef typename G::ctype DT;
-    typedef typename G::Traits::template Codim<0>::Entity Entity;
-    typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
-    enum {dim=G::dimension, m=2};
+//! base class that defines the parameters of a diffusion equation
+/*! An interface for defining parameters for the stationary diffusion equation
+ * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = q, \f$,
+ * \f$p = g\f$ on \f$\Gamma_1\f$, and \f$\lambda K \text{grad}\, p = J\f$
+ * on \f$\Gamma_2\f$. Here,
+ * \f$p\f$ denotes the pressure, \f$K\f$ the absolute permeability,
+ * and \f$\lambda\f$ the total mobility, possibly depending on the
+ * saturation.
+ *
+ *    Template parameters are:
+ *
+ *    - Grid  a DUNE grid type
+ *    - Scalar    type used for return values
+ */
+template<class Grid, class Scalar>
+class CO2Problem: public TwoPhaseProblem<Grid, Scalar>
+{
+typedef    typename Grid::ctype CoordScalar;
+    typedef typename Grid::Traits::template Codim<0>::Entity Element;
+    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
+    typedef BasicDomain<Grid, Scalar> ParentType;
+    // the domain traits of the domain
+    typedef typename ParentType::DomainTraits DomainTraits;
+    typedef typename DomainTraits::LocalPosition LocalPosition;
+    typedef typename DomainTraits::GlobalPosition GlobalPosition;
 
-  public:
-    enum {pWIdx = 0, sNIdx = 1};
+    enum
+    {   dim=Grid::dimension, numEq=2};
 
-    virtual FieldVector<RT,m> q (const FieldVector<DT,dim>& x, const Entity& e,
-                    const FieldVector<DT,dim>& xi) const
+public:
+    enum
+    {   wPhase = 0, nPhase = 1};
+
+    virtual FieldVector<Scalar,numEq> q (const GlobalPosition& globalPos, const Element& element,
+            const LocalPosition& localPos) const
     {
-        FieldVector<RT,m> values(0);
+        FieldVector<Scalar,numEq> values(0);
 
         return values;
     }
 
-    virtual FieldVector<BoundaryConditions::Flags, m> bctype (const FieldVector<DT,dim>& x, const Entity& e,
-                    const IntersectionIterator& intersectionIt,
-                       const FieldVector<DT,dim>& xi) const
+    virtual FieldVector<BoundaryConditions::Flags, numEq> bctype (const GlobalPosition& globalPos, const Element& element,
+            const IntersectionIterator& isIt,
+            const LocalPosition& localPos) const
     {
-        FieldVector<BoundaryConditions::Flags, m> values(Dune::BoundaryConditions::neumann);
+        FieldVector<BoundaryConditions::Flags, numEq> values(Dune::BoundaryConditions::neumann);
 
-        if(x[0] >= 300-1e-2 )
+        if(globalPos[0] >= 300-1e-2 )
         values = Dune::BoundaryConditions::dirichlet;
 
         return values;
     }
 
-    virtual void dirichletIndex(const FieldVector<DT,dim>& x, const Entity& e,
-            const IntersectionIterator& intersectionIt,
-            const FieldVector<DT,dim>& xi, FieldVector<int,m>& dirichletIndex) const
+    virtual void dirichletIndex(const GlobalPosition& globalPos, const Element& element,
+            const IntersectionIterator& isIt,
+            const LocalPosition& localPos, FieldVector<int,numEq>& dirichletIndex) const
     {
-        for (int i = 0; i < m; i++)
-            dirichletIndex[i]=i;
+        for (int equationNumber = 0; equationNumber < numEq; equationNumber++)
+        dirichletIndex[equationNumber]=equationNumber;
         return;
     }
 
-    virtual FieldVector<RT,m> g (const FieldVector<DT,dim>& x, const Entity& e,
-                const IntersectionIterator& intersectionIt,
-                  const FieldVector<DT,dim>& xi) const
+    virtual FieldVector<Scalar,numEq> g (const GlobalPosition& globalPos, const Element& element,
+            const IntersectionIterator& isIt,
+            const LocalPosition& localPos) const
     {
-        FieldVector<RT,m> values(0);
+        FieldVector<Scalar,numEq> values(0);
 
-        values[0] = 1.013e5 + (depthBOR_ - x[1]) * 1045 * 9.81;
-        values[1] = 0.0;
+        values[wPhase] = 1.013e5 + (depthBOR_ - globalPos[1]) * 1045 * 9.81;
+        values[nPhase] = 0.0;
 
         return values;
     }
 
-    virtual FieldVector<RT,m> J (const FieldVector<DT,dim>& x, const Entity& e,
-                const IntersectionIterator& intersectionIt, const FieldVector<DT,dim>& xi) const
+    virtual FieldVector<Scalar,numEq> J (const GlobalPosition& globalPos, const Element& element,
+            const IntersectionIterator& isIt, const LocalPosition& localPos) const
     {
-        FieldVector<RT,m> values(0);
-        if(x[0] < 1.e-2 && x[1] < 30.)
+        FieldVector<Scalar,numEq> values(0);
+        if(globalPos[0] < 1.e-2 && globalPos[1] < 30.)
         {
-            values[0] = 0.0;//-4.046e-5;
-            values[1] = -0.02;
+            values[wPhase] = 0.0;//-4.046e-5;
+            values[nPhase] = -0.02;
         }
         return values;
     }
 
-    // Initial Conditions for global vector x, element e and local vector xi
-    virtual FieldVector<RT,m> initial (const FieldVector<DT,dim>& x, const Entity& e,
-                  const FieldVector<DT,dim>& xi) const
+    // Initial Conditions for global vector globalPos, element element and local vector localPos
+    virtual FieldVector<Scalar,numEq> initial (const GlobalPosition& globalPos, const Element& element,
+            const LocalPosition& localPos) const
     {
-        FieldVector<RT,m> values(0);
-        values[0] = 1.013e5 + (depthBOR_ - x[1]) * 1045 * 9.81;
-        values[1] = 0.00;
-
+        FieldVector<Scalar,numEq> values(0);
+        values[wPhase] = 1.013e5 + (depthBOR_ - globalPos[1]) * 1045 * 9.81;
+        values[nPhase] = 0.00;
 
         return values;
     }
 
-    FieldVector<RT,dim> gravity () const
+    FieldVector<Scalar,dim> gravity () const
     {
-        FieldVector<RT,dim> values(0);
+        FieldVector<Scalar,dim> values(0);
 
-        values[1] = -9.81;
+        values[dim] = -9.81;
 
         return values;
     }
 
-    CO2Problem(Fluid& liq1, Fluid& liq2, Matrix2p<G, RT>& soil,
-            TwoPhaseRelations<G, RT>& law = *(new TwoPhaseRelations<G, RT>), RT depthBOR = 0.0)
-    : TwoPhaseProblem<G,RT>(liq1, liq2, soil, law)
+    CO2Problem(Fluid& liq1, Fluid& liq2, Matrix2p<Grid, Scalar>& soil,
+            TwoPhaseRelations<Grid, Scalar>& law = *(new TwoPhaseRelations<Grid, Scalar>), Scalar depthBOR = 0.0)
+    : TwoPhaseProblem<Grid,Scalar>(liq1, liq2, soil, law)
 
     {
-            depthBOR_ = depthBOR;
+        depthBOR_ = depthBOR;
     }
 
-    private:
-        RT depthBOR_;
-  };
+private:
+    Scalar depthBOR_;
+};
 
 } // end namespace
 #endif
