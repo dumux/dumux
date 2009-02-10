@@ -19,7 +19,7 @@ public:
         double globalResiduum = 1e100;
         bool divided = false;
         double dt = model.getDt();
-        //char buf[128];
+//        char buf[128];
 
         while (dt > minDt && (relDiff > diffTolerance || globalResiduum > resTolerance)) {
             relDiff = 1e100;
@@ -57,19 +57,19 @@ public:
 //                sprintf(buf, "rank %d, A*1: ", grid.comm().rank());
 //                printvector(std::cout, *uOldNewtonStep, buf, "row", 200, 1, 3);
 
-                if (grid.comm().rank() == 10) {
+                if (grid.comm().rank() == 1) {
                     printmatrix(std::cout, *A, "global stiffness matrix", "row", 11, 4);
-                    printvector(std::cout, *uOldNewtonStep, "uOldNewtonStep", "row", 200, 1, 3);
-                    printvector(std::cout, *f, "right hand side", "row", 200, 1, 3);
+                    printvector(std::cout, *uOldNewtonStep, "uOldNewtonStep", "row", 3, 1, 3);
+                    printvector(std::cout, *f, "right hand side", "row", 3, 1, 3);
                 }
 
                 model.solve();
                 relDiff = oneByMagnitude*((*u).two_norm());
-//                printvector(std::cout, *u, "update", "row", 200, 1, 3);
+//                printvector(std::cout, *u, "update", "row", 3, 1, 3);
                 *u *= -lambda; // hm, lambda is always 1.0, right???
                 *u += *uOldNewtonStep;
 //                sprintf(buf, "rank %d, solution: ", grid.comm().rank());
-//                printvector(std::cout, *u, buf, "row", 200, 1, 3);
+//                printvector(std::cout, *u, buf, "row", 3, 1, 3);
                 model.globalDefect(defectGlobal);
                 globalResiduum = residuumWeight*0.5*(*defectGlobal).two_norm();
                 grid.comm().sum(&globalResiduum, 1);
@@ -122,8 +122,8 @@ public:
         return;
     }
 
-    NewtonMethod(const G& g, Model& mod, double dtol = 1e-7,
-            double rtol = 1e2, int maxIt = 10, double mindt = 1e-5,
+    NewtonMethod(const G& g, Model& mod, double dtol = 1e-4,
+            double rtol = 1e-7, int maxIt = 10, double mindt = 1e-5,
             int goodIt = 4, int maxInc = 2)
     : grid(g), model(mod), u(mod.u), f(mod.f), A(mod.A),
     uOldNewtonStep(g, g.overlapSize(0)==0),
