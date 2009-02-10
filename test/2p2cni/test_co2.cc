@@ -99,10 +99,10 @@ int main(int argc, char** argv)
 
         //  execute timeloop --> run simulation: timeloop.executeMultiWriter(twoPhase, writer);
         //  for timeloop.executeMultiWriter(twoPhase, writer, true) restart files are written
-        //  for timeloop.executeMultiWriter(twoPhase, writer, true, true, #restartfile)
+        //  for timeloop.executeMultiWriter(twoPhase, writer, true, true, #)
         //        initial values are read from restart file data-#.dgf
         //  (at the moment this only works for SGrid in 2D and for ALUCubeGrid in 3D)
-        timeloop.executeMultiWriter(twoPhase, writer);
+        timeloop.executeMultiWriter(twoPhase, writer, true, true, 1);
         std::cout << "timeloop.execute took " << timer.elapsed() << " seconds"
                 << std::endl;
 
