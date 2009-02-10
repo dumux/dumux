@@ -11,47 +11,54 @@
 namespace Dune
 {
 
-  template<class G, class RT>
-  class TwoPHeatSoil: public Matrix2p<G,RT>
+  template<class Grid, class Scalar>
+  class TwoPHeatSoil: public Matrix2p<Grid,Scalar>
   {
   public:
-      typedef typename G::Traits::template Codim<0>::Entity Entity;
-      typedef typename G::ctype DT;
-      enum {dim=G::dimension, m=1};
+      typedef typename Grid::Traits::template Codim<0>::Entity Element;
+      typedef typename Grid::ctype CoordScalar;
+
+      typedef BasicDomain<Grid, Scalar> ParentType;
+      // the domain traits of the domain
+      typedef typename ParentType::DomainTraits DomainTraits;
+      typedef typename DomainTraits::LocalPosition LocalPosition;
+      typedef typename DomainTraits::GlobalPosition GlobalPosition;
+
+      enum {dim=Grid::dimension, numEq=1};
 
       // define PERMEABILITY tensor
-      virtual const FieldMatrix<DT,dim,dim>& K (const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi)
+      virtual const FieldMatrix<CoordScalar,dim,dim>& K (const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos)
       {
             return K_;
       }
-      virtual double porosity(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi) const
+      virtual double porosity(const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos) const
       {
           return 0.15;
       }
 
-      virtual double Sr_w(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, const double T) const
+      virtual double Sr_w(const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos, const double T) const
       {
               return 0.2;
       }
 
-      virtual double Sr_n(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, const double T) const
+      virtual double Sr_n(const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos, const double T) const
       {
           return 0.05;
       }
 
-      virtual typename Matrix2p<G,RT>::modelFlag relPermFlag(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi) const
+      virtual typename Matrix2p<Grid,Scalar>::modelFlag relPermFlag(const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos) const
       {
-          return Matrix2p<G,RT>::brooks_corey;
+          return Matrix2p<Grid,Scalar>::brooks_corey;
       }
 
-    virtual double heatCap(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi) const
+    virtual double heatCap(const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos) const
     {
         return     (800 /* spec. heat cap. of sediment */
                         * 2650 /* density of sediment */
-                        * (1-porosity(x, e, xi)));
+                        * (1-porosity(globalPos, element, localPos)));
     }
 
-    virtual double heatCond(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, const double sat) const
+    virtual double heatCond(const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos, const double sat) const
     {
         static const double ldry = 0.32;
         static const double lsat = 2.7;
@@ -69,7 +76,7 @@ namespace Dune
         return(l_wurz);
     }
 
-      virtual std::vector<double> paramRelPerm(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, const double T) const
+      virtual std::vector<double> paramRelPerm(const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos, const double T) const
       {
           // example for Brooks-Corey parameters
         std::vector<double> param(5);
@@ -81,7 +88,7 @@ namespace Dune
       }
 
       TwoPHeatSoil()
-      : Matrix2p<G,RT>()
+      : Matrix2p<Grid,Scalar>()
       {
           K_ = 0;
           for(int i = 0; i < dim; i++)
@@ -94,7 +101,7 @@ namespace Dune
       {}
 
   private:
-      FieldMatrix<DT,dim,dim> K_;
+      FieldMatrix<CoordScalar,dim,dim> K_;
    };
 
 } // end namespace
