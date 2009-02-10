@@ -16,6 +16,7 @@
 #include<dumux/material/twophaserelations.hh>
 #include<dumux/material/multicomponentrelations.hh>
 #include<dumux/material/property_baseclasses.hh>
+#include<dumux/auxiliary/basicdomain.hh>
 
 /**
  * @file
@@ -47,6 +48,11 @@ typedef    typename Grid::ctype CoordScalar;
     typedef typename Grid::template Codim<0>::Entity Element;
     typedef typename Grid::template Codim<0>::LeafIntersectionIterator
     ElementIterator;
+    typedef BasicDomain<Grid, Scalar> ParentType;
+    // the domain traits of the domain
+    typedef typename ParentType::DomainTraits DomainTraits;
+    typedef typename DomainTraits::LocalPosition LocalPosition;
+    typedef typename DomainTraits::GlobalPosition GlobalPosition;
 
 public:
 
@@ -57,22 +63,22 @@ public:
      @param[in]  localPos   position in reference element of element
      \return     value of source term
      */
-    virtual FieldVector<Scalar,numEq> q(const FieldVector<CoordScalar,dim>& globalPos, const Element& element,
-            const FieldVector<CoordScalar,dim>& localPos) const = 0;
+    virtual FieldVector<Scalar,numEq> q(const GlobalPosition& globalPos, const Element& element,
+            const LocalPosition& localPos) const = 0;
 
     //! return type of boundary condition at the given global coordinate
     /*! return type of boundary condition at the given global coordinate
      @param[in]  globalPos    position in global coordinates
      \return     boundary condition type given by enum in this class
      */
-    //    virtual FieldVector<BoundaryConditions::Flags, numEq> bctype (const FieldVector<CoordScalar,dim>& globalPos, const Element& element,
+    //    virtual FieldVector<BoundaryConditions::Flags, numEq> bctype (const GlobalPosition& globalPos, const Element& element,
     //            const ElementIterator& intersectionIt,
-    //            const FieldVector<CoordScalar,dim>& localPos) const = 0;
+    //            const LocalPosition& localPos) const = 0;
 
     virtual FieldVector<BoundaryConditions::Flags, numEq>bctype(
-            const FieldVector<CoordScalar,dim>& globalPos, const Element& element,
+            const GlobalPosition& globalPos, const Element& element,
             const ElementIterator& intersectionIt,
-            const FieldVector<CoordScalar,dim>& localPos) const = 0;
+            const LocalPosition& localPos) const = 0;
 
     //! returns index of the primary variable corresponding to the dirichlet boundary condition at the given global coordinate
     /*! returns index of the primary variable corresponding to the dirichlet boundary condition at the given global coordinate
@@ -80,12 +86,12 @@ public:
      \return     index of the primary variable
      */
 
-    virtual void dirichletIndex(const FieldVector<CoordScalar,dim>& globalPos, const Element& element,
+    virtual void dirichletIndex(const GlobalPosition& globalPos, const Element& element,
             const ElementIterator& intersectionIt,
-            const FieldVector<CoordScalar,dim>& localPos, FieldVector<int,numEq>& dirichletIdx) const
+            const LocalPosition& localPos, FieldVector<int,numEq>& dirichletIdx) const
     {
-        for (int i = 0; i < numEq; i++)
-        dirichletIdx[i]=i;
+        for (int equationnumber = 0; equationnumber < numEq; equationnumber++)
+        dirichletIdx[equationnumber]=equationnumber;
         return;
     }
 
@@ -94,34 +100,34 @@ public:
      @param[in]  globalPos    position in global coordinates
      \return     boundary condition value
      */
-    virtual FieldVector<Scalar,numEq> g(const FieldVector<CoordScalar,dim>& globalPos, const Element& element,
+    virtual FieldVector<Scalar,numEq> g(const GlobalPosition& globalPos, const Element& element,
             const ElementIterator& intersectionIt,
-            const FieldVector<CoordScalar,dim>& localPos) const = 0;
+            const LocalPosition& localPos) const = 0;
 
     //! evaluate Neumann boundary condition at given position
     /*! evaluate Neumann boundary condition at given position
      @param[in]  globalPos    position in global coordinates
      \return     boundary condition value
      */
-    virtual FieldVector<Scalar,numEq> J(const FieldVector<CoordScalar,dim>& globalPos, const Element& element,
+    virtual FieldVector<Scalar,numEq> J(const GlobalPosition& globalPos, const Element& element,
             const ElementIterator& intersectionIt,
-            const FieldVector<CoordScalar,dim>& localPos) const = 0;
+            const LocalPosition& localPos) const = 0;
 
     //! evaluate initial condition at given position
     /*! evaluate initial boundary condition at given position
      @param[in]  globalPos    position in global coordinates
      \return     boundary condition value
      */
-    virtual FieldVector<Scalar,numEq> initial(const FieldVector<CoordScalar,dim>& globalPos,
-            const Element& element, const FieldVector<CoordScalar,dim>& localPos) const = 0;
+    virtual FieldVector<Scalar,numEq> initial(const GlobalPosition& globalPos,
+            const Element& element, const LocalPosition& localPos) const = 0;
 
     //! initiate phase state at given position
     /*! initiate phase state at given position
      @param[in]  globalPos    position in global coordinates
      \return     initial phase state
      */
-    virtual int initialPhaseState(const FieldVector<CoordScalar,dim>& globalPos,
-            const Element& element, const FieldVector<CoordScalar,dim>& localPos) const = 0;
+    virtual int initialPhaseState(const GlobalPosition& globalPos,
+            const Element& element, const LocalPosition& localPos) const = 0;
 
     virtual FieldVector<Scalar,dim> gravity() const = 0;
 
