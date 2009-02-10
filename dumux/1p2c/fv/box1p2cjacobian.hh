@@ -66,6 +66,8 @@ namespace Dune
 	The transport equation is coupled with the continuity equation.
   */
 
+	//the influence of the gravity is neglected
+
   template<class G, class RT, class BoxFunction = LeafP1FunctionExtended<G, RT, 2> >
   class Box1P2CJacobian
     : public BoxJacobian<Box1P2CJacobian<G,RT,BoxFunction>,G,RT,2,BoxFunction>
