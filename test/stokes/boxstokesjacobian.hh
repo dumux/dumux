@@ -35,29 +35,28 @@ namespace Dune
 
     Template parameters are:
 
-    - G     a DUNE grid type
-    - RT    type used for return values
+    - Grid     a DUNE grid type
+    - Scalar    type used for return values
   */
-  template<class G, class RT, class BoxFunction = LeafP1FunctionExtended<G, RT, G::dimension+1> >
+  template<class Grid, class Scalar, class BoxFunction = LeafP1FunctionExtended<Grid, Scalar, Grid::dimension+1> >
   class BoxStokesJacobian
-    : public BoxJacobian<BoxStokesJacobian<G,RT,BoxFunction>,G,RT,G::dimension+1,BoxFunction>
+    : public BoxJacobian<BoxStokesJacobian<Grid,Scalar,BoxFunction>,Grid,Scalar,Grid::dimension+1,BoxFunction>
   {
-        enum {dim=G::dimension};
+        enum {dim=Grid::dimension};
         enum {numEq = dim+1};
 
-    typedef typename G::ctype DT;
-    typedef typename G::Traits::template Codim<0>::Entity Entity;
-    typedef typename Entity::Geometry Geometry;
-    typedef BoxStokesJacobian<G,RT,BoxFunction> ThisType;
-    typedef typename LocalJacobian<ThisType,G,RT,numEq>::VBlockType VBlockType;
-    typedef BoxJacobian<ThisType,G,RT,numEq,BoxFunction> BoxJacobianType;
-    typedef Dune::FVElementGeometry<G> FVElementGeometry;
+    typedef typename Grid::Traits::template Codim<0>::Entity Element;
+    typedef typename Element::Geometry Geometry;
+    typedef BoxStokesJacobian<Grid,Scalar,BoxFunction> ThisType;
+    typedef typename LocalJacobian<ThisType,Grid,Scalar,numEq>::VBlockType VBlockType;
+    typedef BoxJacobian<ThisType,Grid,Scalar,numEq,BoxFunction> BoxJacobianType;
+    typedef Dune::FVElementGeometry<Grid> FVElementGeometry;
 
   public:
 
     //! Constructor
-    BoxStokesJacobian (StokesProblem<G,RT>& params,
-                  bool levelBoundaryAsDirichlet_, const G& grid,
+    BoxStokesJacobian (StokesProblem<Grid,Scalar>& params,
+                  bool levelBoundaryAsDirichlet_, const Grid& grid,
                   BoxFunction& sol,
                   bool procBoundaryAsDirichlet_=true)
     : BoxJacobianType(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_),
@@ -73,30 +72,30 @@ namespace Dune
     }
 
     template<class TypeTag>
-    void localDefect(const Entity& e, const VBlockType* sol, bool withBC = true) {
-    	BoxJacobianType::template localDefect<TypeTag>(e, sol, withBC);
+    void localDefect(const Element& element, const VBlockType* sol, bool withBC = true) {
+    	BoxJacobianType::template localDefect<TypeTag>(element, sol, withBC);
 
-    	this->template assembleBC<TypeTag>(e);
+    	this->template assembleBC<TypeTag>(element);
 
-		Dune::GeometryType gt = e.geometry().type();
-		const typename ReferenceElementContainer<DT,dim>::value_type& referenceElement = ReferenceElements<DT, dim>::general(gt);
+		Dune::GeometryType gt = element.geometry().type();
+		const typename ReferenceElementContainer<Scalar,dim>::value_type& referenceElement = ReferenceElements<Scalar, dim>::general(gt);
 
 		for (int vert=0; vert < this->fvGeom.numVertices; vert++) // begin loop over vertices / sub control volumes
 			if (!this->fvGeom.subContVol[vert].inner)
 			{
-				typedef typename IntersectionIteratorGetter<G,TypeTag>::IntersectionIterator IntersectionIterator;
+				typedef typename IntersectionIteratorGetter<Grid,TypeTag>::IntersectionIterator IntersectionIterator;
 
-				FieldVector<DT,dim> averagedNormal(0);
+				FieldVector<Scalar,dim> averagedNormal(0);
 				int faces = 0;
-				IntersectionIterator endit = IntersectionIteratorGetter<G, TypeTag>::end(e);
-				for (IntersectionIterator it = IntersectionIteratorGetter<G, TypeTag>::begin(e); it!=endit; ++it)
+				IntersectionIterator endit = IntersectionIteratorGetter<Grid, TypeTag>::end(element);
+				for (IntersectionIterator it = IntersectionIteratorGetter<Grid, TypeTag>::begin(element); it!=endit; ++it)
 				{
                     if (it->boundary()) {
 						// get geometry type of face
 						GeometryType faceGT = it->intersectionSelfLocal().type();
 
 						// center in face's reference element
-						const FieldVector<RT,dim-1>& faceLocal = ReferenceElements<RT,dim-1>::general(faceGT).position(0,0);
+						const FieldVector<Scalar,dim-1>& faceLocal = ReferenceElements<Scalar,dim-1>::general(faceGT).position(0,0);
 
 						int faceIdx = it->numberInSelf();
 						int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
@@ -106,13 +105,13 @@ namespace Dune
 								continue;
 							int bfIdx = this->fvGeom.boundaryFaceIndex(faceIdx,    nodeInFace);
 
-							FieldVector<DT,dim> local = this->fvGeom.boundaryFace[bfIdx].ipLocal;
-		                    FieldVector<DT,dim> global = this->fvGeom.boundaryFace[bfIdx].ipGlobal;
-		                    BoundaryConditions::Flags bctypeface = this->getImp().problem.bctype(global, e, it, local);
+							FieldVector<Scalar,dim> local = this->fvGeom.boundaryFace[bfIdx].ipLocal;
+		                    FieldVector<Scalar,dim> global = this->fvGeom.boundaryFace[bfIdx].ipGlobal;
+		                    BoundaryConditions::Flags bctypeface = this->getImp().problem.bctype(global, element, it, local);
 
 		                    if (bctypeface == BoundaryConditions::dirichlet)
 		                    {
-		                        FieldVector<DT,dim> normal = it->unitOuterNormal(faceLocal);
+		                        FieldVector<Scalar,dim> normal = it->unitOuterNormal(faceLocal);
 		                        normal *= this->fvGeom.boundaryFace[bfIdx].area;
 		                        averagedNormal += normal;
 		                    }
@@ -120,7 +119,7 @@ namespace Dune
 						}
 					}
 				}
-				RT defect = 0;
+				Scalar defect = 0;
 				if (averagedNormal.two_norm())
 				    averagedNormal /= averagedNormal.two_norm();
 				for (int k = 0; k < dim; k++)
@@ -142,14 +141,14 @@ namespace Dune
 		                if (i != vert && j != vert)
 		                    continue;
 
-		                FieldVector<RT, dim> pressGradient(0);
+		                FieldVector<Scalar, dim> pressGradient(0);
 		                for (int k = 0; k < this->fvGeom.numVertices; k++) {
-		                    FieldVector<RT,dim> grad(this->fvGeom.subContVolFace[face].grad[k]);
+		                    FieldVector<Scalar,dim> grad(this->fvGeom.subContVolFace[face].grad[k]);
 		                    grad *= sol[k][dim];
 		                    pressGradient += grad;
 		                }
 
-		                RT alphaH2 = 0.5*alpha*(this->fvGeom.subContVol[i].volume + this->fvGeom.subContVol[j].volume);
+		                Scalar alphaH2 = 0.5*alpha*(this->fvGeom.subContVol[i].volume + this->fvGeom.subContVol[j].volume);
 		                pressGradient *= alphaH2;
 		                if (i == vert)
 		                    this->def[vert][dim] += pressGradient*this->fvGeom.subContVolFace[face].normal;
@@ -162,22 +161,22 @@ namespace Dune
 		return;
     }
 
-    VBlockType computeM (const Entity& e, const VBlockType* sol, int node, bool old = false)
+    VBlockType computeM (const Element& element, const VBlockType* sol, int node, bool old = false)
     {
         VBlockType result(0);
 
         return result;
     }
 
-    VBlockType computeQ (const Entity& e, const VBlockType* sol, const int& node)
+    VBlockType computeQ (const Element& element, const VBlockType* sol, const int& node)
     {
-    	VBlockType result = problem.q(this->fvGeom.subContVol[node].global, e, this->fvGeom.subContVol[node].local);
+    	VBlockType result = problem.q(this->fvGeom.subContVol[node].global, element, this->fvGeom.subContVol[node].local);
     	result *= -1.0;
 
-    	RT alphaH2 = alpha*this->fvGeom.subContVol[node].volume;
+    	Scalar alphaH2 = alpha*this->fvGeom.subContVol[node].volume;
     	result[dim] *= alphaH2;
 
-    	VBlockType flux = boundaryFlux(e, sol, node);
+    	VBlockType flux = boundaryFlux(element, sol, node);
 
     	flux /= this->fvGeom.subContVol[node].volume;
     	result -= flux;
@@ -185,16 +184,16 @@ namespace Dune
        return (result);
     }
 
-    VBlockType computeA (const Entity& e, const VBlockType* sol, int face)
+    VBlockType computeA (const Element& element, const VBlockType* sol, int face)
     {
     	VBlockType flux(0);
 
-    	RT pressValue = 0;
-		FieldVector<RT, dim> pressGradient(0);
-    	FieldVector<RT, dim> velocityValue(0);
+    	Scalar pressValue = 0;
+		FieldVector<Scalar, dim> pressGradient(0);
+    	FieldVector<Scalar, dim> velocityValue(0);
 		for (int k = 0; k < this->fvGeom.numVertices; k++) {
 			pressValue += sol[k][dim]*this->fvGeom.subContVolFace[face].shapeValue[k];
-			FieldVector<RT,dim> grad(this->fvGeom.subContVolFace[face].grad[k]);
+			FieldVector<Scalar,dim> grad(this->fvGeom.subContVolFace[face].grad[k]);
 			grad *= sol[k][dim];
 			pressGradient += grad;
 			for (int comp = 0; comp < dim; comp++)
@@ -204,16 +203,16 @@ namespace Dune
 		// momentum balance:
 		for (int comp = 0; comp < dim; comp++)
     	{
-    		FieldVector<RT, dim> gradVComp(0);
+    		FieldVector<Scalar, dim> gradVComp(0);
     		for (int k = 0; k < this->fvGeom.numVertices; k++) {
-    			FieldVector<RT,dim> grad(this->fvGeom.subContVolFace[face].grad[k]);
+    			FieldVector<Scalar,dim> grad(this->fvGeom.subContVolFace[face].grad[k]);
     			grad *= sol[k][comp];
     			gradVComp += grad;
     		}
 
     		gradVComp *= -elData.mu;
 
-    		FieldVector<RT, dim> pComp(0);
+    		FieldVector<Scalar, dim> pComp(0);
     		pComp[comp] = pressValue;
 
     		gradVComp += pComp;
@@ -222,10 +221,10 @@ namespace Dune
     	}
 
 		// mass balance:
-		FieldVector<RT, dim> massResidual = velocityValue;
+		FieldVector<Scalar, dim> massResidual = velocityValue;
         int i = this->fvGeom.subContVolFace[face].i;
         int j = this->fvGeom.subContVolFace[face].j;
-    	RT alphaH2 = 0.5*alpha*(this->fvGeom.subContVol[i].volume + this->fvGeom.subContVol[j].volume);
+    	Scalar alphaH2 = 0.5*alpha*(this->fvGeom.subContVol[i].volume + this->fvGeom.subContVol[j].volume);
     	pressGradient *= alphaH2;
     	massResidual += pressGradient;
 		flux[dim] = massResidual*this->fvGeom.subContVolFace[face].normal;
@@ -233,49 +232,49 @@ namespace Dune
     	return flux;
     }
 
-    void computeElementData (const Entity& e)
+    void computeElementData (const Element& element)
     {
         // ASSUMING element-wise constant viscosity, evaluate mu at the cell center
-        elData.mu = problem.mu(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
+        elData.mu = problem.mu(this->fvGeom.elementGlobal, element, this->fvGeom.elementLocal);
     };
 
-     virtual void updateVariableData(const Entity& e, const VBlockType* sol, int i, bool old = false)
+     virtual void updateVariableData(const Element& element, const VBlockType* sol, int i, bool old = false)
     {
          return;
     }
 
-    void updateVariableData(const Entity& e, const VBlockType* sol, bool old = false)
+    void updateVariableData(const Element& element, const VBlockType* sol, bool old = false)
     {
         return;
     }
 
-    virtual void updateStaticData (const Entity& e, const VBlockType* sol)
+    virtual void updateStaticData (const Element& element, const VBlockType* sol)
     {
         return;
     }
 
-    VBlockType boundaryFlux(const Entity& e, const VBlockType* sol, int node) {
+    VBlockType boundaryFlux(const Element& element, const VBlockType* sol, int node) {
     	VBlockType  result(0);
 
-        Dune::GeometryType gt = e.geometry().type();
-        const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type
-        &sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(gt, 1);
+        Dune::GeometryType gt = element.geometry().type();
+        const typename Dune::LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::value_type
+        &sfs=Dune::LagrangeShapeFunctions<Scalar, Scalar, dim>::general(gt, 1);
         setcurrentsize(sfs.size());
-        this->fvGeom.update(e);
+        this->fvGeom.update(element);
 
-        const typename ReferenceElementContainer<DT,dim>::value_type
-        &referenceElement = ReferenceElements<DT, dim>::general(gt);
+        const typename ReferenceElementContainer<Scalar,dim>::value_type
+        &referenceElement = ReferenceElements<Scalar, dim>::general(gt);
 
         // evaluate boundary conditions via intersection iterator
-        typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
+        typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
 
-        IntersectionIterator endit = IntersectionIteratorGetter<G, LeafTag>::end(e);
-        for (IntersectionIterator it = IntersectionIteratorGetter<G, LeafTag>::begin(e); it!=endit; ++it)
+        IntersectionIterator endit = IntersectionIteratorGetter<Grid, LeafTag>::end(element);
+        for (IntersectionIterator it = IntersectionIteratorGetter<Grid, LeafTag>::begin(element); it!=endit; ++it)
         {
             // if we have a neighbor then we assume there is no boundary (forget interior boundaries)
             // in level assemble treat non-level neighbors as boundary
             if (it->neighbor()) {
-                if (this->levelBoundaryAsDirichlet && it->outside()->level()==e.level())
+                if (this->levelBoundaryAsDirichlet && it->outside()->level()==element.level())
                     continue;
                 if (!this->levelBoundaryAsDirichlet)
                     continue;
@@ -297,14 +296,14 @@ namespace Dune
                     GeometryType faceGT = it->intersectionSelfLocal().type();
 
                     // center in face's reference element
-                    const FieldVector<RT,dim-1>& faceLocal = ReferenceElements<RT,dim-1>::general(faceGT).position(0,0);
+                    const FieldVector<Scalar,dim-1>& faceLocal = ReferenceElements<Scalar,dim-1>::general(faceGT).position(0,0);
 
-                    RT pressureValue = 0;
-                    FieldVector<DT,dim>  velocityValue(0);
-                    FieldVector<DT,dim>  pressGradient(0);
+                    Scalar pressureValue = 0;
+                    FieldVector<Scalar,dim>  velocityValue(0);
+                    FieldVector<Scalar,dim>  pressGradient(0);
                      for (int vert = 0; vert < this->fvGeom.numVertices; vert++) {
                     	pressureValue += sol[vert][dim]*this->fvGeom.boundaryFace[bfIdx].shapeValue[vert];
-            			FieldVector<RT,dim> grad(this->fvGeom.boundaryFace[bfIdx].grad[vert]);
+            			FieldVector<Scalar,dim> grad(this->fvGeom.boundaryFace[bfIdx].grad[vert]);
             			grad *= sol[vert][dim];
             			pressGradient += grad;
 
@@ -313,10 +312,10 @@ namespace Dune
                     		velocityValue[comp] += sol[vert][comp]*this->fvGeom.boundaryFace[bfIdx].shapeValue[vert];
                     	}
                     }
-             		FieldVector<RT, dim> massResidual = velocityValue;
-                	RT alphaH2 = alpha*this->fvGeom.subContVol[node].volume;
-                 	VBlockType source = problem.q(this->fvGeom.boundaryFace[bfIdx].ipGlobal, e, this->fvGeom.boundaryFace[bfIdx].ipLocal);
-                 	FieldVector<RT, dim> dimSource;
+             		FieldVector<Scalar, dim> massResidual = velocityValue;
+                	Scalar alphaH2 = alpha*this->fvGeom.subContVol[node].volume;
+                 	VBlockType source = problem.q(this->fvGeom.boundaryFace[bfIdx].ipGlobal, element, this->fvGeom.boundaryFace[bfIdx].ipLocal);
+                 	FieldVector<Scalar, dim> dimSource;
                  	for (int comp = 0; comp < dim; comp++)
                  		dimSource[comp] = source[comp];
                  	dimSource *= alphaH2;
@@ -325,14 +324,14 @@ namespace Dune
 
                 	for (int comp = 0; comp < dim; comp++)
                 	{
-                        FieldVector<DT,dim>  velocityGradient(0);
+                        FieldVector<Scalar,dim>  velocityGradient(0);
                         for (int vert = 0; vert < this->fvGeom.numVertices; vert++) {
-                            FieldVector<RT,dim> grad(this->fvGeom.boundaryFace[bfIdx].grad[vert]);
+                            FieldVector<Scalar,dim> grad(this->fvGeom.boundaryFace[bfIdx].grad[vert]);
                             grad *= sol[vert][comp];
                             velocityGradient += grad;
                         }
 
-                        FieldVector<DT,dim>  pressVector(0);
+                        FieldVector<Scalar,dim>  pressVector(0);
                         pressVector[comp] = -pressureValue;
 
                     	result[comp] += pressVector*it->outerNormal(faceLocal)*this->fvGeom.boundaryFace[bfIdx].area;
@@ -345,15 +344,15 @@ namespace Dune
     }
 
 
-    template<class TypeTag> void assembleBC(const Entity& e) {
-        Dune::GeometryType gt = e.geometry().type();
-        const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type
-        &sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(gt, 1);
+    template<class TypeTag> void assembleBC(const Element& element) {
+        Dune::GeometryType gt = element.geometry().type();
+        const typename Dune::LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::value_type
+        &sfs=Dune::LagrangeShapeFunctions<Scalar, Scalar, dim>::general(gt, 1);
         setcurrentsize(sfs.size());
-        this->fvGeom.update(e);
+        this->fvGeom.update(element);
 
-        const typename ReferenceElementContainer<DT,dim>::value_type
-        &referenceElement = ReferenceElements<DT, dim>::general(gt);
+        const typename ReferenceElementContainer<Scalar,dim>::value_type
+        &referenceElement = ReferenceElements<Scalar, dim>::general(gt);
 
         for (int i = 0; i < sfs.size(); i++) {
             this->bctype[i].assign(BoundaryConditions::neumann);
@@ -362,15 +361,15 @@ namespace Dune
         }
 
         // evaluate boundary conditions via intersection iterator
-        typedef typename IntersectionIteratorGetter<G,TypeTag>::IntersectionIterator IntersectionIterator;
+        typedef typename IntersectionIteratorGetter<Grid,TypeTag>::IntersectionIterator IntersectionIterator;
 
-        IntersectionIterator endit = IntersectionIteratorGetter<G, TypeTag>::end(e);
-        for (IntersectionIterator it = IntersectionIteratorGetter<G, TypeTag>::begin(e); it!=endit; ++it)
+        IntersectionIterator endit = IntersectionIteratorGetter<Grid, TypeTag>::end(element);
+        for (IntersectionIterator it = IntersectionIteratorGetter<Grid, TypeTag>::begin(element); it!=endit; ++it)
         {
             // if we have a neighbor then we assume there is no boundary (forget interior boundaries)
             // in level assemble treat non-level neighbors as boundary
             if (it->neighbor()) {
-                if (this->levelBoundaryAsDirichlet && it->outside()->level()==e.level())
+                if (this->levelBoundaryAsDirichlet && it->outside()->level()==element.level())
                     continue;
                 if (!this->levelBoundaryAsDirichlet)
                     continue;
@@ -389,16 +388,16 @@ namespace Dune
                     for (int equationNumber = 0; equationNumber < numEq; equationNumber++) {
                         if (this->bctype[nodeInElement][equationNumber] == BoundaryConditions::neumann) {
                             int bfIdx = this->fvGeom.boundaryFaceIndex(faceIdx,    nodeInFace);
-                            FieldVector<DT,dim> local = this->fvGeom.boundaryFace[bfIdx].ipLocal;
-                            FieldVector<DT,dim> global = this->fvGeom.boundaryFace[bfIdx].ipGlobal;
-                            bctypeface = this->getImp().problem.bctype(global, e, it, local); // eval bctype
-                            this->getImp().problem.dirichletIndex(global, e, it, local, dirichletIdx); // eval bctype
+                            FieldVector<Scalar,dim> local = this->fvGeom.boundaryFace[bfIdx].ipLocal;
+                            FieldVector<Scalar,dim> global = this->fvGeom.boundaryFace[bfIdx].ipGlobal;
+                            bctypeface = this->getImp().problem.bctype(global, element, it, local); // eval bctype
+                            this->getImp().problem.dirichletIndex(global, element, it, local, dirichletIdx); // eval bctype
                             //                                                     std::cout << "faceIdx = " << faceIdx << ", nodeInElement = " << nodeInElement
                             //                                                           << ", bfIdx = " << bfIdx << ", local = " << local << ", global = " << global
                             //                                                           << ", bctypeface = " << bctypeface << std::endl;
                             if (bctypeface[equationNumber]!=BoundaryConditions::neumann)
                                 break;
-                            FieldVector<DT,dim> J = this->getImp().problem.J(global, e, it, local);
+                            FieldVector<Scalar,dim> J = this->getImp().problem.J(global, element, it, local);
                             if (equationNumber < dim) {
                             	J[equationNumber] *= this->fvGeom.boundaryFace[bfIdx].area;
                             	this->b[nodeInElement][equationNumber] += J[equationNumber];
@@ -463,8 +462,8 @@ namespace Dune
                         continue;
                     }
                     // handle subentities of this face
-                    for (int j=0; j<ReferenceElements<DT,dim>::general(gt).size(it->numberInSelf(), 1, sfs[i].codim()); j++)
-                        if (sfs[i].entity()==ReferenceElements<DT,dim>::general(gt).subEntity(it->numberInSelf(), 1, j, sfs[i].codim()))
+                    for (int j=0; j<ReferenceElements<Scalar,dim>::general(gt).size(it->numberInSelf(), 1, sfs[i].codim()); j++)
+                        if (sfs[i].entity()==ReferenceElements<Scalar,dim>::general(gt).subEntity(it->numberInSelf(), 1, j, sfs[i].codim()))
                         {
                             if (this->bctype[i][equationNumber] < bctypeface[equationNumber]) {
                                 this->bctype[i][equationNumber] = bctypeface[equationNumber];
@@ -484,11 +483,11 @@ namespace Dune
 
 
     struct ElementData {
-        RT mu;
+        Scalar mu;
        };
 
        ElementData elData;
-    StokesProblem<G,RT>& problem;
+    StokesProblem<Grid,Scalar>& problem;
 	double alpha;
   };
 }
