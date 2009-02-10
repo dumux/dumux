@@ -28,9 +28,8 @@ public:
                         const IntersectionIterator& intersectionIt,
                         const FieldVector<DT,dim>& xi) const
   {
-    //if (x[0] < 1.0e-8)
-//	  if (x[0] > 0.0009999)
-//		  return BoundaryConditions::neumann;
+	  if (x[0] > 0.0009999)
+		  return BoundaryConditions::neumann;
 
 	  return BoundaryConditions::dirichlet;
   }
@@ -39,7 +38,6 @@ public:
                 const IntersectionIterator& intersectionIt,
                 const FieldVector<DT,dim>& xi) const
   {
-    //if (x[0] > 0.0009999)
 	  if (x[0] < 1.0e-8)
 		  return velocity(x);
 	  else
@@ -74,9 +72,7 @@ public:
 
   virtual RT pressure(const FieldVector<DT,dim>& x) const
   {
-    RT result(0);
-	result = (-1995000.0*x[0]);
-    return result;
+    return (-1995000.0*x[0]);
   }
 
   virtual FieldMatrix<DT, dim, dim> velocityGradient(const FieldVector<DT,dim>& x) const

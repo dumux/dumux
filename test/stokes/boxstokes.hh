@@ -244,6 +244,9 @@ namespace Dune
         (*(this->A))[globalId][globalId][dim][dim] = 1.0;
         (*(this->f))[globalId][dim] = 0.0;
 
+//        printmatrix(std::cout, *(this->A), "global stiffness matrix", "row", 11, 4);
+//         printvector(std::cout, *(this->f), "right hand side", "row", 3, 1, 3);
+
         Operator op(A);  // make operator out of matrix
         double red=1E-18;
 
