@@ -1,8 +1,8 @@
 GF
 Interval
 0 0   % first corner 
-4 4   % second corner
-4 4   % cells in x and in y direction
+10 10   % second corner
+10 10  % cells in x and in y direction
 # 
 
 BOUNDARYDOMAIN
