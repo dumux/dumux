@@ -26,49 +26,52 @@
 int main(int argc, char** argv)
 {
   try{
-    // define the problem dimensions
-    const int dim=2;
-    typedef double NumberType;
+      // define the problem dimensions
+       const int dim = 2;
+       typedef double Scalar;
 
-    // read tEnd and initial time step from console
-    if (argc != 3) {
-      std::cout << "usage: test_twophase tEnd dt" << std::endl;
-      return 0;
-    }
-    std::string arg1(argv[1]);
-    std::istringstream is1(arg1);
-    double tEnd;
-    is1 >> tEnd;
-    std::string arg2(argv[2]);
-    std::istringstream is2(arg2);
-    double dt;
-    is2 >> dt;
+       // read path for grid, total simulation time tEnd and timestep dt
+       if (argc != 4)
+       {
+           std::cout << "usage: 2pni basefilename tEnd dt" << std::endl;
+           return 0;
+       }
+       std::string arg1(argv[2]);
+       std::istringstream is1(arg1);
+       double tEnd;
+       is1 >> tEnd;
+       std::string arg2(argv[3]);
+       std::istringstream is2(arg2);
+       double dt;
+       is2 >> dt;
 
-    // create a grid object
-    typedef double NumberType;
-    typedef Dune::SGrid<dim,dim> GridType;
-    typedef Dune::FieldVector<GridType::ctype,dim> FieldVector;
-    Dune::FieldVector<int,dim> N(10); N[1] = 10; // number of cells
-    FieldVector L(0); //
-    FieldVector H(10);
-    GridType grid(N,L,H);
+       // create a grid object
+       typedef Dune::SGrid<dim,dim> GridType;
+       //typedef Dune::YaspGrid<dim,dim> GridType;
+       //typedef Dune::UGGrid<dim> GridType;
+       //typedef Dune::ALUSimplexGrid<dim,dim> GridType;
+       //typedef Dune::ALUCubeGrid<dim,dim> GridType;
 
-    // print some information about the grid
-    Dune::gridinfo(grid);
+       Dune::GridPtr<GridType> gridPointer(argv[1]);
+       GridType& grid = *gridPointer;
+       //readStarFormat(grid, argv[1]);
+       //grid.createLGMGrid(argv[1]);
+
+       Dune::gridinfo(grid);
 
     // choose fluids
     Dune::Brine wPhase;
     Dune::CO2 nPhase;
     // create soil object
-    Dune::TwoPHeatSoil<GridType, NumberType> soil;
+    Dune::TwoPHeatSoil<GridType, Scalar> soil;
     // create material law object
-    Dune::TwoPhaseRelations<GridType, NumberType> law(soil, wPhase, nPhase);
+    Dune::TwoPhaseRelations<GridType, Scalar> law(soil, wPhase, nPhase);
 
     // create Prolem object
-    Dune::TwoPHeatProblem<GridType, NumberType> problem(wPhase, nPhase, soil, law);
+    Dune::TwoPHeatProblem<GridType, Scalar> problem(wPhase, nPhase, soil, law);
 
     typedef Dune::VtkMultiWriter<GridType::LeafGridView> MultiWriter;
-    typedef Dune::BoxPwSnTe<GridType, NumberType, MultiWriter> TwoPhase;
+    typedef Dune::BoxPwSnTe<GridType, Scalar, MultiWriter> TwoPhase;
     TwoPhase twoPhase(grid, problem);
 
     Dune::TimeLoop<GridType, TwoPhase, true> timeloop(0, tEnd, dt, "dummy", 1);
@@ -77,13 +80,12 @@ int main(int argc, char** argv)
     timer.reset();
     MultiWriter writer("out-2pni");
 
-//  for timeloop.executeMultiWriter(twoPhase, writer, true) initial
-//  values are read from restart file data.dgf
+//  for timeloop.executeMultiWriter(twoPhase, writer, true) restart files are written
+//  for timeloop.executeMultiWriter(twoPhase, writer, true, true, #) initial values are read
+//  from restart file with the number #
 //  at the moment this only works for SGrid in 2D and for ALUCubeGrid in 3D
     timeloop.executeMultiWriter(twoPhase, writer);
     std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
-
-    //printvector(std::cout, *twoPhase.u, "u", "row", 2, 1, 3);
 
     return 0;
   }
