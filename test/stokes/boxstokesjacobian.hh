@@ -48,7 +48,7 @@ namespace Dune
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
     typedef typename Element::Geometry Geometry;
     typedef BoxStokesJacobian<Grid,Scalar,BoxFunction> ThisType;
-    typedef typename LocalJacobian<ThisType,Grid,Scalar,numEq>::VBlockType VBlockType;
+    typedef typename LocalJacobian<ThisType,Grid,Scalar,numEq>::VBlockType SolutionVector;
     typedef BoxJacobian<ThisType,Grid,Scalar,numEq,BoxFunction> BoxJacobianType;
     typedef Dune::FVElementGeometry<Grid> FVElementGeometry;
 
@@ -72,7 +72,7 @@ namespace Dune
     }
 
     template<class TypeTag>
-    void localDefect(const Element& element, const VBlockType* sol, bool withBC = true) {
+    void localDefect(const Element& element, const SolutionVector* sol, bool withBC = true) {
     	BoxJacobianType::template localDefect<TypeTag>(element, sol, withBC);
 
     	this->template assembleBC<TypeTag>(element);
@@ -161,22 +161,22 @@ namespace Dune
 		return;
     }
 
-    VBlockType computeM (const Element& element, const VBlockType* sol, int node, bool old = false)
+    SolutionVector computeM (const Element& element, const SolutionVector* sol, int node, bool old = false)
     {
-        VBlockType result(0);
+        SolutionVector result(0);
 
         return result;
     }
 
-    VBlockType computeQ (const Element& element, const VBlockType* sol, const int& node)
+    SolutionVector computeQ (const Element& element, const SolutionVector* sol, const int& node)
     {
-    	VBlockType result = problem.q(this->fvGeom.subContVol[node].global, element, this->fvGeom.subContVol[node].local);
+    	SolutionVector result = problem.q(this->fvGeom.subContVol[node].global, element, this->fvGeom.subContVol[node].local);
     	result *= -1.0;
 
     	Scalar alphaH2 = alpha*this->fvGeom.subContVol[node].volume;
     	result[dim] *= alphaH2;
 
-    	VBlockType flux = boundaryFlux(element, sol, node);
+    	SolutionVector flux = boundaryFlux(element, sol, node);
 
     	flux /= this->fvGeom.subContVol[node].volume;
     	result -= flux;
@@ -184,9 +184,9 @@ namespace Dune
        return (result);
     }
 
-    VBlockType computeA (const Element& element, const VBlockType* sol, int face)
+    SolutionVector computeA (const Element& element, const SolutionVector* sol, int face)
     {
-    	VBlockType flux(0);
+    	SolutionVector flux(0);
 
     	Scalar pressValue = 0;
 		FieldVector<Scalar, dim> pressGradient(0);
@@ -238,23 +238,23 @@ namespace Dune
         elData.mu = problem.mu(this->fvGeom.elementGlobal, element, this->fvGeom.elementLocal);
     };
 
-     virtual void updateVariableData(const Element& element, const VBlockType* sol, int i, bool old = false)
+     virtual void updateVariableData(const Element& element, const SolutionVector* sol, int i, bool old = false)
     {
          return;
     }
 
-    void updateVariableData(const Element& element, const VBlockType* sol, bool old = false)
+    void updateVariableData(const Element& element, const SolutionVector* sol, bool old = false)
     {
         return;
     }
 
-    virtual void updateStaticData (const Element& element, const VBlockType* sol)
+    virtual void updateStaticData (const Element& element, const SolutionVector* sol)
     {
         return;
     }
 
-    VBlockType boundaryFlux(const Element& element, const VBlockType* sol, int node) {
-    	VBlockType  result(0);
+    SolutionVector boundaryFlux(const Element& element, const SolutionVector* sol, int node) {
+    	SolutionVector  result(0);
 
         Dune::GeometryType gt = element.geometry().type();
         const typename Dune::LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::value_type
@@ -314,7 +314,7 @@ namespace Dune
                     }
              		FieldVector<Scalar, dim> massResidual = velocityValue;
                 	Scalar alphaH2 = alpha*this->fvGeom.subContVol[node].volume;
-                 	VBlockType source = problem.q(this->fvGeom.boundaryFace[bfIdx].ipGlobal, element, this->fvGeom.boundaryFace[bfIdx].ipLocal);
+                 	SolutionVector source = problem.q(this->fvGeom.boundaryFace[bfIdx].ipGlobal, element, this->fvGeom.boundaryFace[bfIdx].ipLocal);
                  	FieldVector<Scalar, dim> dimSource;
                  	for (int comp = 0; comp < dim; comp++)
                  		dimSource[comp] = source[comp];
