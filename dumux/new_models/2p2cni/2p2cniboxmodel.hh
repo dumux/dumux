@@ -282,8 +282,12 @@ namespace Dune
                 vertDat.enthalpy[switchIdx] = problem.nonwettingPhase().enthalpy(temperature,
                                                                           vertDat.pN,
                                                                           vertDat.massfrac[wComp][nPhase]);
-                vertDat.intenergy[pWIdx] = problem.wettingPhase().intEnergy(temperature, vertDat.pW);
-                vertDat.intenergy[switchIdx] = problem.nonwettingPhase().intEnergy(temperature, vertDat.pN);
+                vertDat.intenergy[pWIdx] = problem.wettingPhase().intEnergy(temperature,
+                                                                          vertDat.pW,
+                                                                          vertDat.massfrac[nComp][wPhase]);
+                vertDat.intenergy[switchIdx] = problem.nonwettingPhase().intEnergy(temperature,
+                                                                          vertDat.pN,
+                                                                          vertDat.massfrac[wComp][nPhase]);
             }
 
 
