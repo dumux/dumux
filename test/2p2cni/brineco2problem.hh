@@ -144,7 +144,7 @@ public:
     {
         FieldVector<Scalar,dim> values(0);
 
-        values[dim] = -9.81;
+        values[dim-1] = -9.81;
 
         return values;
     }
