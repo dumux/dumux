@@ -104,7 +104,7 @@ typedef	typename Grid::ctype Scalar;
 	 */
 	virtual double tortuosity(const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos) const
 	{
-		DUNE_THROW(NotImplemented, "heat conductivity function not implemented!");
+		DUNE_THROW(NotImplemented, "tortuosity function not implemented!");
 	}
 
 	/**@brief parameters for relative permeabilty models
