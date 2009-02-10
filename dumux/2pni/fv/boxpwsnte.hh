@@ -131,7 +131,7 @@ typedef    typename ThisLeafP1TwoPhaseModel::FunctionType FunctionType;
     {
         typedef typename ThisGrid::Traits::template Codim<0>::Entity Element;
         typedef typename ThisGrid::ctype CoordScalar;
-        typedef typename GridView::template Codim<0>::Iterator Iterator;
+        typedef typename GridView::template Codim<0>::Iterator ElementIterator;
         typedef typename IntersectionIteratorGetter<ThisGrid,LeafTag>::IntersectionIterator IntersectionIterator;
 
         enum
@@ -152,8 +152,8 @@ typedef    typename ThisLeafP1TwoPhaseModel::FunctionType FunctionType;
         this->localJacobian().outMobilityN = vtkMultiWriter->template createField<ThisScalar, 1>(this->size);
 
         // iterate through leaf grid an evaluate c0 at cell center
-        Iterator eendit = gridview.template end<0>();
-        for (Iterator eIt = gridview.template begin<0>(); eIt
+        ElementIterator eendit = gridview.template end<0>();
+        for (ElementIterator eIt = gridview.template begin<0>(); eIt
                 != eendit; ++eIt)
         {
             // get geometry type
@@ -187,7 +187,7 @@ typedef    typename ThisLeafP1TwoPhaseModel::FunctionType FunctionType;
         }
 
         // set Dirichlet boundary conditions
-        for (Iterator eIt = gridview.template begin<0>(); eIt
+        for (ElementIterator eIt = gridview.template begin<0>(); eIt
                 != eendit; ++eIt)
         {
             // get geometry type
@@ -270,7 +270,7 @@ typedef    typename ThisLeafP1TwoPhaseModel::FunctionType FunctionType;
     {
         typedef typename ThisGrid::Traits::template Codim<0>::Entity Element;
         typedef typename ThisGrid::ctype CoordScalar;
-        typedef typename GridView::template Codim<0>::Iterator Iterator;
+        typedef typename GridView::template Codim<0>::Iterator ElementIterator;
         typedef typename IntersectionIteratorGetter<ThisGrid,LeafTag>::IntersectionIterator IntersectionIterator;
 
         enum
@@ -309,8 +309,8 @@ typedef    typename ThisLeafP1TwoPhaseModel::FunctionType FunctionType;
         }
 
         // iterate through leaf grid an evaluate c0 at cell center
-        Iterator eendit = gridview.template end<0>();
-        for (Iterator eIt = gridview.template begin<0>(); eIt
+        ElementIterator eendit = gridview.template end<0>();
+        for (ElementIterator eIt = gridview.template begin<0>(); eIt
                 != eendit; ++eIt)
         {
             // get geometry type
@@ -341,7 +341,7 @@ typedef    typename ThisLeafP1TwoPhaseModel::FunctionType FunctionType;
         }
 
         // set Dirichlet boundary conditions
-        for (Iterator eIt = gridview.template begin<0>(); eIt
+        for (ElementIterator eIt = gridview.template begin<0>(); eIt
                 != eendit; ++eIt)
         {
             // get geometry type
@@ -469,7 +469,7 @@ typedef    typename ThisLeafP1TwoPhaseModel::FunctionType FunctionType;
         this->localJacobian().setDt(dt);
         this->localJacobian().setOldSolution(this->uOldTimeStep);
 
-        typedef typename GridView::template Codim<0>::Iterator Iterator;
+        typedef typename GridView::template Codim<0>::Iterator ElementIterator;
         typedef typename ThisGrid::Traits::template Codim<0>::Entity Element;
         typedef typename ThisGrid::ctype CoordScalar;
         enum
