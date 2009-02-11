@@ -29,8 +29,8 @@
 
 #include "lenharddomain.hh"
 
-#include <dumux/new_models/pwsn/pwsnboxmodel.hh>
-#include <dumux/new_models/pwsn/pwsnnewtoncontroller.hh>
+#include <dumux/new_models/2p/pwsnboxmodel.hh>
+#include <dumux/new_models/2p/pwsnnewtoncontroller.hh>
 
 #include <dumux/new_material/parkerlenhard.hh>
 #include <dumux/new_material/regularizedvangenuchten.hh>
@@ -242,17 +242,32 @@ namespace Lenhard
             { return timeManager_.setStepSize(dt); }
 
         //! evaluate the initial condition for a vert
-        void initial(SolutionVector &dest,
-                     const Element &element,
-                     GlobalPosition pos,
-                     LocalPosition posLocal)
+        void initial(SolutionVector          &values,
+                     const Element           &element,
+                     const FVElementGeometry &fvElemGeom,
+                     int                      scvIdx) const
             {
-                Scalar h = curHydraulicHead_ - pos[0];
+                const GlobalPosition &globalPos
+                    = fvElemGeom.subContVol[scvIdx].global;
+/*                const LocalPosition &localPos
+                    = fvElemGeom.subContVol[scvIdx].local;
+*/
+                
+                initial_(values, globalPos);
+            }
+
+    private:
+        // internal method for the initial condition (reused for the
+        // dirichlet conditions!)
+        void initial_(SolutionVector       &dest,
+                      const GlobalPosition &globalPos) const
+        {
+                Scalar h = curHydraulicHead_ - globalPos[0];
                 Scalar pH = hydrostaticPressure_(h);
 
                 // initially the lower 67cm are filled with water the
                 // remaining 5 with air
-                if (pos[0] > curHydraulicHead_) {
+                if (globalPos[0] > curHydraulicHead_) {
                     // try to model the initial water distribution
                     // above the hydraulic head due to the capillary
                     // pressure
@@ -268,10 +283,10 @@ namespace Lenhard
 
 #ifdef USE_NODE_PARAMETERS
                     dest[pWIdx] = -ParkerLenhard::pC(ParentType::vertexState(0),
-                                                       1 - dest[snIdx]);
+                                                     1 - dest[snIdx]);
 #else
                     dest[pWIdx] = -ParkerLenhard::pC(cs,
-                                                       1 - dest[snIdx]);
+                                                     1 - dest[snIdx]);
 #endif
 
 
@@ -282,63 +297,79 @@ namespace Lenhard
                 }
             }
 
-
-        // Returns the type of an boundary contition for the wetting
+    public:
+        // Returns the type of an boundary condition for the wetting
         // phase pressure at a element face
-        void boundaryTypes(BoundaryTypeVector &dest,
-                           const Element &element,
-                           const IntersectionIterator &face,
-                           const GlobalPosition &pos,
-                           const LocalPosition &localPos)
-
+        void boundaryTypes(BoundaryTypeVector         &values,
+                           const Element              &element,
+                           const FVElementGeometry    &fvElemGeom,
+                           const IntersectionIterator &isIt,
+                           int                         scvIdx,
+                           int                         boundaryFaceIdx) const
             {
-                dest[pWIdx] = Dune::BoundaryConditions::dirichlet;
-                dest[snIdx] = Dune::BoundaryConditions::dirichlet;
+//                const GlobalPosition &globalPos
+//                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
+//                const LocalPosition &localPos
+//                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipLocal;
+
+                values[pWIdx] = Dune::BoundaryConditions::dirichlet;
+                values[snIdx] = Dune::BoundaryConditions::dirichlet;
             }
 
         //! Evaluate a neumann boundary condition
-        void neumann(SolutionVector &dest,
-                     const Element &element,
-                     const IntersectionIterator &face,
-                     const GlobalPosition &pos,
-                     const LocalPosition &localPos)
+        void neumann(SolutionVector             &values,
+                     const Element              &element,
+                     const FVElementGeometry    &fvElemGeom,
+                     const IntersectionIterator &isIt,
+                     int                         scvIdx,
+                     int                         boundaryFaceIdx) const
             {
-                dest[pWIdx] = 0;
-                dest[snIdx] = 0;
+//                const GlobalPosition &globalPos
+//                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
+//                const LocalPosition &localPos
+//                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipLocal;
+
+                values[pWIdx] = 0;
+                values[snIdx] = 0;
             }
 
 
         //! Evaluate a dirichlet boundary condition at a element vert
-        void dirichlet(SolutionVector &dest,
-                       const Element &element,
-                       int vertIdx,
-                       int globalIdx)
+        void dirichlet(SolutionVector             &values,
+                       const Element              &element,
+                       const FVElementGeometry    &fvElemGeom,
+                       const IntersectionIterator &isIt,
+                       int                         scvIdx,
+                       int                         boundaryFaceIdx) const
             {
-                const LocalPosition &localPos = element.geometry().corner(vertIdx);
-                GlobalPosition pos = element.geometry().global(localPos);
+                const GlobalPosition &globalPos
+                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
+//                const LocalPosition &localPos
+//                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipLocal;
+
 
 #if defined USE_NODE_PARAMETERS
-                if (onUpperBoundary(pos)) {
-                    dest[pWIdx] = -maxPc_;
-                    dest[snIdx] = 1;
+                if (onUpperBoundary(globalPos)) {
+                    values[pWIdx] = -maxPc_;
+                    values[snIdx] = 1;
                 }
                 else { // onLowerBoundary(pos)
-                    Scalar h = curHydraulicHead_ - pos[0];
+                    Scalar h = curHydraulicHead_ - globalPos[0];
                     Scalar pH = hydrostaticPressure_(h);
-                    dest[pWIdx] = pH;
-                    dest[snIdx] = 0;
+                    values[pWIdx] = pH;
+                    values[snIdx] = 0;
                 }
 #else
-                initial(dest, element, pos, localPos);
+                initial_(dest, globalPos);
 #endif
             }
 
         //! evaluate the mass injection rate of the fluids for a BOX
         //! sub control volume
-        void source(SolutionVector &dest,
-                        const Element &element,
-                        const FVElementGeometry &dualElement,
-                        int subControlVolumeId)
+        void source(SolutionVector          &dest,
+                    const Element           &element,
+                    const FVElementGeometry &dualElement,
+                    int                      scvIdx)
             {
                 dest[pWIdx] = dest[snIdx] = 0;
             }
@@ -632,7 +663,7 @@ namespace Lenhard
                 VertexIterator it = ParentType::vertexBegin();
                 VertexIterator endit = ParentType::vertexEnd();
                 for (; it != endit; ++it) {
-                    int vertIdx = ParentType::vertIdx(*it);
+                    int vertIdx = ParentType::vertexIdx(*it);
                     Scalar Sn = (*model_.currentSolution())[vertIdx][snIdx];
                     Scalar Sw = 1 - Sn;
                     ParkerLenhard::updateState(vertexState(*it), Sw);
@@ -705,7 +736,7 @@ namespace Lenhard
                 }
             }
 
-        Scalar hydrostaticPressure_(Scalar hydraulicHead)
+        Scalar hydrostaticPressure_(Scalar hydraulicHead) const
             {
                 return -ParentType::densityW()*
                         ParentType::gravity()[0]*

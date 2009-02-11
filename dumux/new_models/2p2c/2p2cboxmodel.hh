@@ -186,6 +186,8 @@ namespace Dune
                     const LocalPosition &local =
                         DomTraits::referenceElement(element.type()).position(localIdx,
                                                                           dim);
+
+                    // pressures and saturations
                     vertDat.pW = vertSol[pWIdx];
                     if (phaseState == bothPhases) vertDat.satN = vertSol[switchIdx];
                     else if (phaseState == wPhaseOnly) vertDat.satN = 0.0;
@@ -216,30 +218,30 @@ namespace Dune
 
                     vertDat.massfrac[wComp][wPhase] = 1.0 - vertDat.massfrac[nComp][wPhase];
                     vertDat.massfrac[nComp][nPhase] = 1.0 - vertDat.massfrac[wComp][nPhase];
-//                    vertDat.phaseState = phaseState;
 
-                    // Density of Water is set constant here!
+                    // densities
                     vertDat.density[wPhase] = problem.wettingPhase().density(temperature,
-                                                                       vertDat.pW,
-                                                                       vertDat.massfrac[nComp][wPhase]);
+                                                                             vertDat.pW,
+                                                                             vertDat.massfrac[nComp][wPhase]);
                     vertDat.density[nPhase] = problem.nonwettingPhase().density(temperature,
-                                                                          vertDat.pN,
-                                                                          vertDat.massfrac[wComp][nPhase]);
+                                                                                vertDat.pN,
+                                                                                vertDat.massfrac[wComp][nPhase]);
 
                     // Mobilities
                     vertDat.mobility[wPhase] = problem.materialLaw().mobW(vertDat.satW,
-                                                                    global,
-                                                                    element,
-                                                                    local,
-                                                                    temperature,
-                                                                    vertDat.pW);
+                                                                          global,
+                                                                          element,
+                                                                          local,
+                                                                          temperature,
+                                                                          vertDat.pW);
                     vertDat.mobility[nPhase] = problem.materialLaw().mobN(vertDat.satN,
-                                                                    global,
-                                                                    element,
-                                                                    local,
-                                                                    temperature,
-                                                                    vertDat.pN);
-
+                                                                          global,
+                                                                          element,
+                                                                          local,
+                                                                          temperature,
+                                                                          vertDat.pN);
+                    
+                    // diffusion coefficents
                     vertDat.diffCoeff[wPhase] = problem.wettingPhase().diffCoeff(temperature, vertDat.pW);
                     vertDat.diffCoeff[nPhase] = problem.nonwettingPhase().diffCoeff(temperature, vertDat.pN);
                 }
@@ -297,7 +299,7 @@ namespace Dune
                     curSolOrigVarData_ = curElemDat_.vertex[vert];
                 }
 
-                int globalIdx = ParentType::problem_.vertIdx(ParentType::curElement_(),
+                int globalIdx = ParentType::problem_.vertexIdx(ParentType::curElement_(),
                                                                vert);
 
                 curSol_[vert][component] = value;
@@ -649,7 +651,7 @@ namespace Dune
                 VertexIterator endit = this->problem_.vertexEnd();
                 for (; it != endit; ++it)
                 {
-                    int globalIdx = this->problem_.vertIdx(*it);
+                    int globalIdx = this->problem_.vertexIdx(*it);
                     const GlobalPosition &globalPos = it->geometry().corner(0);
 
                     // initialize phase state
@@ -671,7 +673,7 @@ namespace Dune
                 VertexIterator it = this->problem_.vertexBegin();
                 for (; it != this->problem_.vertexEnd(); ++it)
                 {
-                    int globalIdx = this->problem_.vertIdx(*it);
+                    int globalIdx = this->problem_.vertexIdx(*it);
                     const GlobalPosition &global = it->geometry().corner(0);
 
                     wasSwitched = primaryVarSwitch_(curGlobalSol,
@@ -758,7 +760,7 @@ namespace Dune
                 ElementIterator endit = this->problem_.elementEnd();
                 for (; it != endit; ++it) {
                     for (int i = 0; i < it->template count<dim>(); ++i) {
-                        int globalI = this->problem_.vertIdx(*it, i);
+                        int globalI = this->problem_.vertexIdx(*it, i);
                         asImp_()->updateVarVertexData_(tmp,
                                                        (*globalSol)[globalI],
                                                        staticVertexDat_[globalI].phaseState,
@@ -816,7 +818,7 @@ namespace Dune
                 int phaseState;
                 int numVertices = this->curElement_().template count<dim>();
                 for (int i = 0; i < numVertices; i++) {
-                    int iGlobal = ParentType::problem_.vertIdx(ParentType::curElement_(), i);
+                    int iGlobal = ParentType::problem_.vertexIdx(ParentType::curElement_(), i);
                     if (isOldSol)
                         phaseState = staticVertexDat_[iGlobal].oldPhaseState;
                     else

@@ -22,7 +22,7 @@
 #include "lensdomain.hh"
 #include "lensnewtoncontroller.hh"
 
-#include <dumux/new_models/pwsn/pwsnboxmodel.hh>
+#include <dumux/new_models/2p/pwsnboxmodel.hh>
 #include <dumux/new_material/parkerlenhard.hh>
 #include <dumux/new_material/regularizedvangenuchten.hh>
 #include <dumux/timedisc/new_impliciteulerstep.hh>
@@ -214,29 +214,31 @@ namespace Lens
             { return timeManager_.setStepSize(dt); }
 
         //! evaluate the initial condition for a vert
-        void initial(SolutionVector &dest,
-                     const Element &element,
-                     GlobalPosition pos,
-                     LocalPosition posLocal)
+        void initial(SolutionVector          &values,
+                     const Element           &element,
+                     const FVElementGeometry &fvElemGeom,
+                     int                      scvIdx) const
             {
-/*                GlobalPosition pos;
-                ParentType::vertPosition(pos,
-                                            ParentType::vert(element, localVertIdx));
+                const GlobalPosition &globalPos
+                    = fvElemGeom.subContVol[scvIdx].global;
+/*                const LocalPosition &localPos
+                    = fvElemGeom.subContVol[scvIdx].local;
 */
+
                 Scalar pw = -ParentType::densityW() *
                               ParentType::gravity()[1] *
-                              (ParentType::height() - pos[1]);
+                              (ParentType::height() - globalPos[1]);
 
-                if (ParentType::onLeftBoundary(pos)) {
+                if (ParentType::onLeftBoundary(globalPos)) {
                     Scalar a = -(1 + 0.5/ParentType::height());
                     Scalar b = -a*ParentType::upperRight()[1];
                     pw = -ParentType::densityW()*
-                          ParentType::gravity()[1]*(a*pos[1] + b);
+                          ParentType::gravity()[1]*(a*globalPos[1] + b);
                 }
 
                 Scalar Sn;
 #if 0
-                if (ParentType::isInLens(pos))
+                if (ParentType::isInLens(globalPos))
                     Sn = lensMedium_->Snr();
                 else
                     Sn = outerMedium_->Snr();
@@ -244,34 +246,35 @@ namespace Lens
                 Sn = 0;
 #endif
 
-                dest[0] = pw; // pw
-                dest[1] = Sn; // Sn
+                values[pWIdx] = pw; // pw
+                values[snIdx] = Sn; // Sn
             }
 
 
-        // Returns the type of an boundary contition for the wetting
+        // Returns the type of an boundary condition for the wetting
         // phase pressure at a element face
-        void boundaryTypes(BoundaryTypeVector &dest,
-                           const Element &element,
-                           const IntersectionIterator &face,
-                           const GlobalPosition &pos,
-                           const LocalPosition &localPos)
-
+        void boundaryTypes(BoundaryTypeVector         &values,
+                           const Element              &element,
+                           const FVElementGeometry    &fvElemGeom,
+                           const IntersectionIterator &isIt,
+                           int                         scvIdx,
+                           int                         boundaryFaceIdx) const
             {
-                // get the integration point of the boundary face in
-                // world coodinates
-//        GlobalPosition &pos = dualElement.boundaryFace[dcBFIdx].ipGlobal;
+                const GlobalPosition &globalPos
+                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
+//                const LocalPosition &localPos
+//                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipLocal;
 
-                if (ParentType::onLeftBoundary(pos) ||
-                    ParentType::onRightBoundary(pos))
+                if (ParentType::onLeftBoundary(globalPos) ||
+                    ParentType::onRightBoundary(globalPos))
                 {
-                    dest[0] = dest[1] = Dune::BoundaryConditions::dirichlet;
+                    values[0] = values[1] = Dune::BoundaryConditions::dirichlet;
 
 #if !USE_ORIG_PROB
-                    Scalar relPosY = (pos[1] - ParentType::lowerLeft()[1])/ParentType::height();
+                    Scalar relPosY = (globalPos[1] - ParentType::lowerLeft()[1])/ParentType::height();
                     if (relPosY < 0.80)
                     {
-                        dest[0] = dest[1] = Dune::BoundaryConditions::neumann;
+                        values[0] = values[1] = Dune::BoundaryConditions::neumann;
                     }
 #endif
 
@@ -281,74 +284,73 @@ namespace Lens
                     // upper or lower boundary of the grid
 
 #if 0
-                    if (ParentType::onUpperBoundary(pos))
-                        dest[0] = dest[1] = Dune::BoundaryConditions::dirichlet;
+                    if (ParentType::onUpperBoundary(globalPos))
+                        values[0] = values[1] = Dune::BoundaryConditions::dirichlet;
                     else
-                        dest[0] = dest[1] = Dune::BoundaryConditions::neumann;
+                        values[0] = values[1] = Dune::BoundaryConditions::neumann;
 #else
-                    dest[0] = dest[1] = Dune::BoundaryConditions::neumann;
+                    values[0] = values[1] = Dune::BoundaryConditions::neumann;
 #endif
                 }
             }
 
         //! Evaluate a neumann boundary condition
-        void neumann(SolutionVector &dest,
-                     const Element &element,
-                     const IntersectionIterator &face,
-                     const GlobalPosition &pos,
-                     const LocalPosition &localPos)
+        void neumann(SolutionVector             &values,
+                     const Element              &element,
+                     const FVElementGeometry    &fvElemGeom,
+                     const IntersectionIterator &isIt,
+                     int                         scvIdx,
+                     int                         boundaryFaceIdx) const
             {
-                dest[pWIdx] = 0;
-                dest[snIdx] = 0;
+                const GlobalPosition &globalPos
+                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
+//                const LocalPosition &localPos
+//                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipLocal;
 
-                // get the integration point of the boundary face in
-                // world coodinates
-//        GlobalPosition &pos = dualElement.boundaryFace[dcBFIdx].ipGlobal;
+                values[pWIdx] = 0;
+                values[snIdx] = 0;
 
-                if (ParentType::onUpperBoundary(pos)) {
+                if (ParentType::onUpperBoundary(globalPos)) {
 #if USE_ORIG_PROB
-                    Scalar relPosX = (ParentType::upperRight()[0] - pos[0])/ParentType::width();
+                    Scalar relPosX = (ParentType::upperRight()[0] - globalPos[0])/ParentType::width();
                     if (0.5 < relPosX && relPosX < 2.0/3.0)
                     {
-                        dest[snIdx] = -0.04;
+                        values[snIdx] = -0.04;
                     }
 #endif
                 }
 #if !USE_ORIG_PROB
-                else if (ParentType::onLowerBoundary(pos)) {
-                    dest[snIdx] = 0.0;
+                else if (ParentType::onLowerBoundary(globalPos)) {
+                    values[snIdx] = 0.0;
                     if (timeManager_.episode() == DrainEpisode)
                         // drain water
-                        dest[snIdx] = -0.04;
+                        values[snIdx] = -0.04;
                     else if (timeManager_.episode() == ImbibEpisode)
                         // imbibition of water
-                        dest[snIdx] = 0.04;
+                        values[snIdx] = 0.04;
                 }
 #endif
 
             }
 
 
-        //! Evaluate a dirichlet boundary condition at a vert within
+        //! Evaluate a dirichlet boundary condition at a vertex within
         //! an element's face
-        void dirichlet(SolutionVector &dest,
-                       const Element &element,
-                       int   vertIdx,
-                       int   globalVertexIdx)
-
-/*        void dirichlet(SolutionVector &dest,
-                       const Element &element,
-                       const IntersectionIterator &face,
-                       const GlobalPosition &pos,
-                       const LocalPosition &localPos)
-*/
+        void dirichlet(SolutionVector             &values,
+                       const Element              &element,
+                       const FVElementGeometry    &fvElemGeom,
+                       const IntersectionIterator &isIt,
+                       int                         scvIdx,
+                       int                         boundaryFaceIdx) const
             {
+                const GlobalPosition &globalPos
+                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
+//                const LocalPosition &localPos
+//                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipLocal;
+
                 Scalar a, b;
 
-                const LocalPosition &localPos = element.geometry().corner(vertIdx);
-                GlobalPosition pos = element.geometry().global(localPos);
-
-                if (ParentType::onLeftBoundary(pos))
+                if (ParentType::onLeftBoundary(globalPos))
                 {
                     a = -(1 + 0.5/ParentType::height());
                     b = -a*ParentType::upperRight()[1];
@@ -358,24 +360,24 @@ namespace Lens
                     b = ParentType::upperRight()[1];
                 }
 
-                dest[pWIdx] = -ParentType::densityW()*
+                values[pWIdx] = -ParentType::densityW()*
                                   ParentType::gravity()[1]*
-                                  (a*pos[1] + b);
+                                  (a*globalPos[1] + b);
 #if 0
-                dest[snIdx] = ParentType::outerMedium().Snr();
+                values[snIdx] = ParentType::outerMedium().Snr();
 #else
-                dest[snIdx] = 0;
+                values[snIdx] = 0;
 #endif
             }
 
         //! evaluate the mass injection rate of the fluids for a BOX
         //! sub control volume
-        void source(SolutionVector &dest,
-                        const Element &element,
-                        const FVElementGeometry &dualElement,
-                        int subControlVolumeId)
+        void source(SolutionVector          &values,
+                    const Element           &element,
+                    const FVElementGeometry &dualElement,
+                    int                      scvIdx)
             {
-                dest[pWIdx] = dest[snIdx] = 0;
+                values[pWIdx] = values[snIdx] = 0;
             }
 
         ///////////////////////////////////
@@ -525,7 +527,7 @@ namespace Lens
                 VertexIterator it = ParentType::vertexBegin();
                 VertexIterator endit = ParentType::vertexEnd();
                 for (; it != endit; ++it) {
-                    int vertIdx = ParentType::vertIdx(*it);
+                    int vertIdx = ParentType::vertexIdx(*it);
                     Scalar Sn = (*model_.currentSolution())[vertIdx][snIdx];
                     Scalar Sw = 1 - Sn;
                     ParkerLenhard::updateState(vertexState(*it), Sw);

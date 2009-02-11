@@ -79,6 +79,7 @@ namespace Dune
         typedef typename DomainTraits::Grid                        Grid;
         typedef typename DomainTraits::Element                     Element;
         typedef typename DomainTraits::ReferenceElement            ReferenceElement;
+        typedef typename BoxTraits::FVElementGeometry              FVElementGeometry;
         typedef typename DomainTraits::ElementIterator             ElementIterator;
         typedef typename DomainTraits::IntersectionIterator        IntersectionIterator;
         typedef typename DomainTraits::CoordScalar                 CoordScalar;
@@ -200,24 +201,17 @@ namespace Dune
             { return problem_.grid(); }
 
         /*!
-         * \brief Reference to the grid of the spatial domain.
-         */
-/*        Grid &grid()
-            { return problem_.grid(); }
-*/
-
-        /*!
          * \brief Try to progress the model to the next timestep.
          */
         template<class NewtonMethod, class NewtonController>
         void update(Scalar &dt, Scalar &nextDt, NewtonMethod &solver, NewtonController &controller)
             {
-                asImp_()->updateBegin();
+                asImp_().updateBegin();
 
                 int numRetries = 0;
                 while (true)
                 {
-                    bool converged = solver.execute(*this->asImp_(),
+                    bool converged = solver.execute(this->asImp_(),
                                                     controller);
                     nextDt = controller.suggestTimeStepSize(dt);
                     if (converged) {
@@ -234,13 +228,13 @@ namespace Dune
                     problem_.setTimeStepSize(nextDt);
                     dt = nextDt;
 
-                    asImp_()->updateFailedTry();
+                    asImp_().updateFailedTry();
 
                     std::cout << boost::format("Newton didn't converge for rank %d. Retrying with timestep of %f\n")
                         %grid().comm().rank()%dt;
                 }
 
-                asImp_()->updateSuccessful();
+                asImp_().updateSuccessful();
             }
 
 
@@ -290,8 +284,8 @@ namespace Dune
                 (*globResidual) = Scalar(0.0);
 
                 // iterate through leaf grid
-                ElementIterator it     = problem_.grid().template leafbegin<0>();
-                ElementIterator eendit = problem_.grid().template leafend<0>();
+                ElementIterator        it     = problem_.elementBegin();
+                const ElementIterator &eendit = problem_.elementEnd();
                 for (; it != eendit; ++it)
                 {
                     // tell the local jacobian which element it should
@@ -318,103 +312,176 @@ namespace Dune
                     int n = element.template count<dim>();
                     for(int localId=0; localId < n; localId++)
                     {
-                        int globalId = problem_.vertIdx(element, localId);
+                        int globalId = problem_.vertexIdx(element, localId);
                         (*globResidual)[globalId] += localResidual[localId];
                     }
                 }
             }
 
-
     protected:
         void applyInitialSolution_(SpatialFunction &u)
             {
-                // iterate through leaf grid an evaluate c0 at element center
-                ElementIterator it     = problem_.grid().template leafbegin<0>();
-                ElementIterator eendit = problem_.grid().template leafend<0>();
+                // first set the whole domain to zero. This is
+                // necessary in order to also get a meaningful value
+                // for ghost nodes (if we are running in parallel)
+                if (problem_.grid().comm().size() > 1) {
+                    (*u) = Scalar(0.0);
+                }
+                
+                // iterate through leaf grid and evaluate initial
+                // condition at the center of each sub control volume
+                ElementIterator it            = problem_.elementBegin();
+                const ElementIterator &eendit = problem_.elementEnd();
                 for (; it != eendit; ++it)
                 {
-                    // loop over all shape functions of the current element
-                    const Element& element = *it;
-                    int numVertices = element.template count<dim>();
-                    for (int localVertexIdx = 0; localVertexIdx < numVertices; localVertexIdx++) {
-                        // get vert position in reference coodinates
-                        const LocalPosition &local =
-                            DomainTraits::referenceElement(it->type()).position(localVertexIdx, dim);
-                        // get global coordinate of vert
-                        const GlobalPosition &global = it->geometry().corner(localVertexIdx);
-
-                        int globalId = this->problem_.vertIdx(*it, localVertexIdx);
-
-                        // use the problem for actually doing the
-                        // dirty work of nailing down the initial
-                        // solution.
-                        this->problem_.initial((*u)[globalId],
-                                               element,
-                                               global,
-                                               local);
-                    }
+                    // deal with the current element
+                    applyInitialSolutionElement_(u, *it);
                 }
             };
 
+        // apply the initial solition for a single element
+        void applyInitialSolutionElement_(SpatialFunction &u,
+                                          const Element &element)
+        {
+            // HACK: set the current element for the local
+            // solution in order to get an updated FVElementGeometry
+            localJacobian_.setCurrentElement(element);
 
-        void applyDirichletBoundaries_(SpatialFunction &u)
+            // loop over all element vertices, i.e. sub control volumes
+            int numScv = element.template count<dim>();
+            for (int scvIdx = 0;
+                 scvIdx < numScv; 
+                 scvIdx++) 
             {
-                // set Dirichlet boundary conditions of the grid's
-                // outer boundaries
-                SolutionVector dirichletVal(0);
-                ElementIterator elementIt     = problem_.grid().template leafbegin<0>();
-                ElementIterator elementEndIt  = problem_.grid().template leafend<0>();
-                for (; elementIt != elementEndIt; ++elementIt)
+                int globalIdx = this->problem_.vertexIdx(element,
+                                                         scvIdx);
+                
+                const FVElementGeometry &fvElemGeom
+                    = localJacobian_.curFvElementGeometry();
+                // use the problem for actually doing the
+                // dirty work of nailing down the initial
+                // solution.
+                this->problem_.initial((*u)[globalIdx],
+                                       element,
+                                       fvElemGeom,
+                                       scvIdx);
+            }
+        }
+
+
+        // apply dirichlet boundaries for the whole grid
+        void applyDirichletBoundaries_(SpatialFunction &u)
+        {
+            // set Dirichlet boundary conditions of the grid's
+            // outer boundaries
+            ElementIterator elementIt           = problem_.elementBegin();
+            const ElementIterator &elementEndIt = problem_.elementEnd();
+            for (; elementIt != elementEndIt; ++elementIt)
+            {
+                // ignore elements which are not on the boundary of
+                // the domain
+                if (!elementIt->hasBoundaryIntersections())
+                    continue;
+
+                // evaluate the element's boundary locally
+                localJacobian_.updateBoundaryTypes(*elementIt);
+
+                // apply dirichlet boundary for the current element
+                applyDirichletElement_(u, *elementIt);
+            }
+        };
+        
+        // apply dirichlet boundaries for a single element
+        void applyDirichletElement_(SpatialFunction &u,
+                                              const Element &element)
+        {
+            Dune::GeometryType      geoType = element.geometry().type();
+            const ReferenceElement &refElem = DomainTraits::referenceElement(geoType);
+            
+            // loop over all the element's surface patches
+            IntersectionIterator isIt = element.ileafbegin();
+            const IntersectionIterator &isEndIt = element.ileafend();
+            for (; isIt != isEndIt; ++isIt) {
+                // if the current intersection is not on the boundary,
+                // we ignore it
+                if (!isIt->boundary())
+                    continue;
+
+                // Assemble the boundary for all vertices of the
+                // current face
+                int faceIdx = isIt->numberInSelf();
+                int numVerticesOfFace = refElem.size(faceIdx, 1, dim);
+                for (int vertInFace = 0;
+                     vertInFace < numVerticesOfFace;
+                     vertInFace++)
                 {
-                    if (!elementIt->hasBoundaryIntersections())
-                        continue;
-
-                    // get the current element and its set of shape
-                    // functions
-                    const Element& element = *elementIt;
-                    Dune::GeometryType geoType = element.geometry().type();
-
-                    // locally evaluate the element's boundary condition types
-                    localJacobian_.assembleBoundaryCondition(element);
-
-                    // loop over all the element's verts
-                    int n = elementIt->template count<dim>();
-                    for (int i = 0; i < n; ++i) {
-                        // translate local vert id to a global one
-                        int globalId = problem_.vertIdx(element, i);
-
-                        // apply dirichlet boundaries but make sure
-                        // not to interfere with non-dirichlet
-                        // boundaries...
-                        bool dirichletEvaluated = false;
-                        for (int bcIdx = 0; bcIdx < numEq; ++bcIdx) {
-                            if (localJacobian_.bc(i)[bcIdx] == BoundaryConditions::dirichlet) {
-                                if (!dirichletEvaluated) {
-                                    dirichletEvaluated = true;
-
-                                    // actually evaluate the boundary
-                                    // condition for the current element+vert
-                                    // combo.
-                                    //
-                                    // TODO: better parameters: element,
-                                    //       FVElementGeometry,
-                                    //       bfIdx
-                                    problem_.dirichlet(dirichletVal,
-                                                       element,
-                                                       i,
-                                                       globalId);
-                                }
-                                (*u)[globalId][bcIdx] = dirichletVal[bcIdx];
-                            }
-                        }
-                    }
+                    // apply dirichlet boundaries for the current
+                    // sub-control volume face
+                    applyDirichletSCVF_(u, element, refElem, isIt, vertInFace);
                 }
-            };
+            }
+        }
 
-        Implementation *asImp_()
-            { return static_cast<Implementation*>(this); }
-        const Implementation *asImp_() const
-            { return static_cast<const Implementation*>(this); }
+        // apply dirichlet boundaries for a single boundary
+        // sub-control volume face of a finite volume cell.
+        void applyDirichletSCVF_(SpatialFunction &u,
+                                 const Element &element,
+                                 const ReferenceElement &refElem, 
+                                 const IntersectionIterator &isIt,
+                                 int faceVertIdx)
+        {
+            // apply dirichlet boundaries but make sure
+            // not to interfere with non-dirichlet
+            // boundaries...
+            const FVElementGeometry &fvElemGeom = 
+                localJacobian_.curFvElementGeometry();
+
+            int elemVertIdx = refElem.subEntity(isIt->numberInSelf(),
+                                                1,
+                                                faceVertIdx,
+                                                dim);
+            int boundaryFaceIdx = fvElemGeom.boundaryFaceIndex(isIt->numberInSelf(), 
+                                                               faceVertIdx);
+            int globalVertexIdx = problem_.vertexIdx(element,
+                                                     elemVertIdx);
+            
+
+            SolutionVector dirichletVal;
+            bool dirichletEvaluated = false;
+            for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+            {
+                // ignore non-dirichlet boundary conditions
+                if (localJacobian_.bc(elemVertIdx)[eqIdx] != BoundaryConditions::dirichlet) 
+                    continue;
+                
+                // make sure to evaluate the dirichlet boundary
+                // conditions exactly once (and only if the boundary
+                // type is actually dirichlet).
+                if (!dirichletEvaluated) 
+                {
+                    dirichletEvaluated = true;
+                    problem_.dirichlet(dirichletVal,
+                                       element,
+                                       fvElemGeom,
+                                       isIt,
+                                       elemVertIdx,
+                                       boundaryFaceIdx);
+                }
+                
+                // copy the dirichlet value for the current equation
+                // to the global index.
+                //
+                // TODO: we should use the sum weighted by the
+                //       sub-control volume face's area instead of
+                //       just overwriting the previous values...
+                (*u)[globalVertexIdx][eqIdx] = dirichletVal[eqIdx];
+            }
+        }
+
+        Implementation &asImp_()
+            { return *static_cast<Implementation*>(this); }
+        const Implementation &asImp_() const
+            { return *static_cast<const Implementation*>(this); }
 
         // the problem we want to solve. defines the constitutive
         // relations, material laws, etc.

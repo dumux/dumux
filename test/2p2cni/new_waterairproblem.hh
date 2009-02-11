@@ -24,10 +24,9 @@
 
 #include <dune/common/timer.hh>
 #include <dune/grid/common/gridinfo.hh>
-#include <dune/grid/uggrid.hh>
-#include <dune/grid/sgrid.hh>
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
-#include <dune/grid/io/file/dgfparser/dgfug.hh>
+#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
+#include <dune/grid/yaspgrid.hh>
 #include <dune/istl/io.hh>
 
 #include<dumux/new_models/2p2cni/2p2cniboxmodel.hh>
@@ -59,10 +58,10 @@ namespace Dune
      *    - ScalarT  Floating point type used for scalars
      */
     template<class ScalarT>
-    class NewWaterAirProblem : public BasicDomain<Dune::SGrid<2,2>,
+    class NewWaterAirProblem : public BasicDomain<Dune::YaspGrid<2>,
                                                   ScalarT>
     {
-        typedef Dune::SGrid<2,2>               Grid;
+        typedef Dune::YaspGrid<2>              Grid;
         typedef BasicDomain<Grid, ScalarT>     ParentType;
         typedef NewWaterAirProblem<ScalarT>    ThisType;
 #if !ISOTHERMAL
@@ -301,12 +300,18 @@ namespace Dune
                 return materialLaw_;
             }
 
-        void boundaryTypes(BoundaryTypeVector &values,
-                           const Element &element,
+        void boundaryTypes(BoundaryTypeVector         &values,
+                           const Element              &element,
+                           const FVElementGeometry    &fvElemGeom,
                            const IntersectionIterator &isIt,
-                           const GlobalPosition &globalPos,
-                           const LocalPosition &localPos) const
+                           int                         scvIdx,
+                           int                         boundaryFaceIdx) const
             {
+                const GlobalPosition &globalPos
+                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
+//                const LocalPosition &localPos
+//                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipLocal;
+
                 if(globalPos[0] < eps_)
                     values = BoundaryConditions::dirichlet;
                 else
@@ -320,29 +325,36 @@ namespace Dune
         /////////////////////////////
         // DIRICHLET boundaries
         /////////////////////////////
-        void dirichlet(SolutionVector &values,
-                       const Element &element,
-                       int vertIdx,
-                       int globalVertexIdx)
+        void dirichlet(SolutionVector             &values,
+                       const Element              &element,
+                       const FVElementGeometry    &fvElemGeom,
+                       const IntersectionIterator &isIt,
+                       int                         scvIdx,
+                       int                         boundaryFaceIdx) const
             {
-                const LocalPosition &localPos = DomainTraits::referenceElement(element.type()).position(vertIdx, dim);
-                const GlobalPosition &globalPos = element.geometry().corner(vertIdx);
+                const GlobalPosition &globalPos
+                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
+//                const LocalPosition &localPos
+//                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipLocal;
 
-                initial(values,
-                        element,
-                        globalPos,
-                        localPos);
+                initial_(values, globalPos);
             }
 
         /////////////////////////////
         // NEUMANN boundaries
         /////////////////////////////
-        void neumann(SolutionVector &values,
-                     const Element &element,
+        void neumann(SolutionVector             &values,
+                     const Element              &element,
+                     const FVElementGeometry    &fvElemGeom,
                      const IntersectionIterator &isIt,
-                     const GlobalPosition &globalPos,
-                     const LocalPosition &localPos) const
+                     int                         scvIdx,
+                     int                         boundaryFaceIdx) const
             {
+                const GlobalPosition &globalPos
+                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
+//                const LocalPosition &localPos
+//                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipLocal;
+
                 values = 0;
 
                 // negative values for injection
@@ -355,10 +367,10 @@ namespace Dune
         /////////////////////////////
         // sources and sinks
         /////////////////////////////
-        void source(SolutionVector &values,
-                        const Element &element,
-                        const FVElementGeometry &,
-                        int subControlVolumeIdx) const
+        void source(SolutionVector          &values,
+                    const Element           &element,
+                    const FVElementGeometry &fvElemGeom,
+                    int                      scvIdx) const
             {
                 values = Scalar(0.0);
             }
@@ -368,19 +380,35 @@ namespace Dune
         /////////////////////////////
         // INITIAL values
         /////////////////////////////
-        void initial(SolutionVector &values,
-                     const Element& element,
-                     const GlobalPosition &globalPos,
-                     const LocalPosition &localPos)
+        void initial(SolutionVector          &values,
+                     const Element           &element,
+                     const FVElementGeometry &fvElemGeom,
+                     int                      scvIdx) const
             {
+                const GlobalPosition &globalPos
+                    = fvElemGeom.subContVol[scvIdx].global;
+/*                const LocalPosition &localPos
+                    = fvElemGeom.subContVol[scvIdx].local;
+*/
+                
+                initial_(values, globalPos);
+            }
+
+    private:
+        // internal method for the initial condition (reused for the
+        // dirichlet conditions!)
+        void initial_(SolutionVector       &values,
+                      const GlobalPosition &globalPos) const
+        {
                 Scalar densityW = 1000.0;
                 values[pWIdx] = 1e5 + (depthBOR_ - globalPos[1])*densityW*9.81;
                 values[switchIdx] = 0.0;
 #if !ISOTHERMAL
                 values[temperatureIdx] = 283.0 + (depthBOR_ - globalPos[1])*0.03;
 #endif
-            }
-
+        }
+        
+    public:
         Scalar porosity(const Element &element, int localIdx) const
             {
                 // TODO/HACK: porosity should be defined on the verts

@@ -128,7 +128,7 @@ namespace Dune
 		return gravity_;
 	}
 
-	RichardsPwProblem(Fluid& liq1, Matrix2p<G, RT>& soil, TwoPhaseRelations<G, RT>& law = *(new TwoPhaseRelations<G, RT>))
+	RichardsPwProblem(Fluid& liq1, Matrix2p<G, RT>& soil, TwoPhaseRelations<G, RT>& law))
 	: RichardsProblem<G,RT>(liq1, soil, law),
 		densityW_(liq1.density())
 	{

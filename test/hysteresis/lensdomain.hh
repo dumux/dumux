@@ -24,7 +24,7 @@
 
 #include <dumux/auxiliary/basicdomain.hh>
 
-#include <dumux/new_models/pwsn/pwsnboxmodel.hh>
+#include <dumux/new_models/2p/pwsnboxmodel.hh>
 
 #include <dumux/new_material/regularizedvangenuchten.hh>
 #include <dumux/new_material/parkerlenhard.hh>
@@ -331,15 +331,15 @@ namespace Lens
 
         // given a element and a local vert index, return the corresponding state
         VertexState &vertexState(const Element &element, int i)
-            { return vertStates_[ParentType::vertIdx(element, i)]; }
+            { return vertStates_[ParentType::vertexIdx(element, i)]; }
         const VertexState &vertexState(const Element &element, int i) const
-            { return vertStates_[ParentType::vertIdx(element, i)]; }
+            { return vertStates_[ParentType::vertexIdx(element, i)]; }
 
         // given a vert, return it's state object
         VertexState &vertexState(const Vertex &vert)
-            { return vertStates_[ParentType::vertIdx(vert)]; }
+            { return vertStates_[ParentType::vertexIdx(vert)]; }
         const VertexState &vertexState(const Vertex &vert) const
-            { return vertStates_[ParentType::vertIdx(vert)]; }
+            { return vertStates_[ParentType::vertexIdx(vert)]; }
 
         const GlobalPosition &lowerLeft() const
             { return gridLowerLeft_; }
@@ -534,7 +534,7 @@ namespace Lens
                 const VertexIterator &endVertIt = ParentType::vertexEnd();
                 for (; vertIt != endVertIt; ++vertIt) {
                     GlobalPosition pos;
-                    ParentType::vertPosition(pos, *vertIt);
+                    ParentType::vertexPosition(pos, *vertIt);
                     VertexState &vertState = vertexState(*vertIt);
                     if (isInLens(pos))
                         vertState.setMediumState(lensMedium_);

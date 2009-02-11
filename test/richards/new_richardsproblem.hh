@@ -1,5 +1,9 @@
-#ifndef DUNE_NEW_LEAKYWELLPROBLEM_HH
-#define DUNE_NEW_LEAKYWELLPROBLEM_HH
+#ifndef DUNE_NEW_RICHARDSPROBLEM_HH
+#define DUNE_NEW_RICHARDSPROBLEM_HH
+
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include<iostream>
 #include<iomanip>
@@ -9,32 +13,24 @@
 #include<dumux/material/property_baseclasses.hh>
 #include<dumux/material/relperm_pc_law.hh>
 
-#include <dumux/material/phaseproperties/phaseproperties_brineco2.hh>
-#include <dumux/material/phaseproperties/phaseproperties_waterair.hh>
+#include "dumux/material/phaseproperties/phaseproperties2p.hh"
 #include <dumux/material/matrixproperties.hh>
 #include <dumux/material/twophaserelations.hh>
 
-#include <dumux/material/multicomponentrelations.hh>
-
 #include <dumux/io/vtkmultiwriter.hh>
 #include <dumux/auxiliary/timemanager.hh>
+
 #include <dune/common/timer.hh>
-#include <dune/grid/common/gridinfo.hh>
 
-#include <dune/grid/uggrid.hh>
-#include <dune/grid/sgrid.hh>
-#include <dune/istl/io.hh>
-
-#include<dumux/new_models/2p2cni/2p2cniboxmodel.hh>
-#include<dumux/new_models/2p2cni/2p2cninewtoncontroller.hh>
+#include<dumux/new_models/richards/richardsboxmodel.hh>
 
 #include<dumux/timedisc/new_impliciteulerstep.hh>
 #include<dumux/nonlinear/new_newtonmethod.hh>
+#include<dumux/nonlinear/new_newtoncontroller.hh>
 
 #include <dumux/auxiliary/timemanager.hh>
 #include <dumux/auxiliary/basicdomain.hh>
 
-#include "leakywell_soilproperties.hh"
 
 /**
  * @file
@@ -44,7 +40,90 @@
 
 namespace Dune
 {
-    //! class that defines the parameters of an air waterair under a low permeable layer
+//////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////--SOIL--//////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////////////////
+    template<class Grid, class ScalarT>
+    class RichardsSoil: public Matrix2p<Grid,ScalarT>
+    {
+    public:
+        typedef typename Grid::Traits::template Codim<0>::Entity Element;
+        typedef ScalarT Scalar;
+        typedef typename Grid::ctype CoordScalar;
+        enum {dim=Grid::dimension, dimWorld=Grid::dimensionworld};
+
+        typedef Dune::FieldVector<CoordScalar,dim>      LocalPosition;
+        typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
+
+        RichardsSoil():Matrix2p<Grid,Scalar>()
+            {
+                Kout_ = 0.;
+                for(int i = 0; i < dim; i++)
+                    Kout_[i][i] = 5e-10;
+            }
+
+        ~RichardsSoil()
+            {}
+
+        const FieldMatrix<CoordScalar,dim,dim> &K (const GlobalPosition &x, const Element& e, const LocalPosition &xi)
+            {
+                return Kout_;
+            }
+
+        double porosity(const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
+            {
+                return 0.4;
+            }
+
+        double Sr_w(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double T) const
+            {
+                return 0.05;
+            }
+
+        double Sr_n(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double T) const
+            {
+                return 0.0;
+            }
+
+        /* ATTENTION: define heat capacity per cubic meter! Be sure, that it corresponds to porosity!
+         * Best thing will be to define heatCap = (specific heatCapacity of material) * density * porosity*/
+        double heatCap(const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
+            {
+                return     790 /* spec. heat cap. of granite */
+                    * 2700 /* density of granite */
+                    * porosity(x, e, xi);
+            }
+
+        double heatCond(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double sat) const
+            {
+                static const double lWater = 0.6;
+                static const double lGranite = 2.8;
+                double poro = porosity(x, e, xi);
+                double lsat = pow(lGranite, (1-poro)) * pow(lWater, poro);
+                double ldry = pow(lGranite, (1-poro));
+                return ldry + sqrt(sat) * (ldry - lsat);
+            }
+
+        std::vector<double> paramRelPerm(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double T) const
+            {
+                // example for Brooks-Corey parameters
+                std::vector<double> param(2);
+                param[0] = 0; // pCMin
+                param[1] = 1e4; // pCMax
+
+                return param;
+            }
+
+        typename Matrix2p<Grid,Scalar>::modelFlag relPermFlag(const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
+            {
+                return Matrix2p<Grid,Scalar>::linear;
+            }
+
+    private:
+        FieldMatrix<Scalar,dim,dim> Kout_;
+    };
+
+    //! class that defines the parameters of an air injection under a low permeable layer
     /*! Problem definition of an air injection under a low permeable layer. Air enters the domain
      * at the right boundary and migrates upwards.
      * Problem was set up using the rect2d.dgf grid.
@@ -54,43 +133,35 @@ namespace Dune
      *    - ScalarT  Floating point type used for scalars
      */
     template<class GridT, class ScalarT>
-    class NewLeakyWellProblem : public BasicDomain<GridT,
+    class NewRichardsProblem : public BasicDomain<GridT,
                                                    ScalarT>
     {
-        typedef GridT                              Grid;
-        typedef BasicDomain<Grid, ScalarT>         ParentType;
-        typedef NewLeakyWellProblem<Grid, ScalarT> ThisType;
-        typedef TwoPTwoCNIBoxModel<ThisType>       Model;
+        typedef GridT                               Grid;
+        typedef BasicDomain<Grid, ScalarT>          ParentType;
+        typedef NewRichardsProblem<GridT, ScalarT>  ThisType;
+        typedef RichardsBoxModel<ThisType>          Model;
 
-        typedef Dune::Liq_BrineCO2                     WettingPhase;
-        typedef Dune::Gas_BrineCO2                     NonwettingPhase;
-        typedef Dune::LeakyWellSoil<Grid, ScalarT>     Soil;
+        typedef Dune::Water                            WettingPhase;
+        typedef Dune::DNAPL                            NonwettingPhase;
+        typedef Dune::RichardsSoil<Grid, ScalarT>      Soil;
         typedef Dune::TwoPhaseRelations<Grid, ScalarT> MaterialLaw;
-        typedef Dune::CBrineCO2                        Multicomp;
 
     public:
         // the domain traits of the domain
         typedef typename ParentType::DomainTraits   DomainTraits;
         // the traits of the BOX scheme
         typedef typename Model::BoxTraits           BoxTraits;
-        // the traits of the Pw-Sn model
-        typedef typename Model::TwoPTwoCNITraits    TwoPTwoCNITraits;
+        // the traits of the richards model
+        typedef typename Model::RichardsTraits      RichardsTraits;
 
     private:
         // some constants from the traits for convenience
         enum {
-            numEq            = TwoPTwoCNITraits::numEq,
-            pWIdx          = TwoPTwoCNITraits::pWIdx,
-            switchIdx      = TwoPTwoCNITraits::switchIdx,
-            temperatureIdx = TwoPTwoCNITraits::temperatureIdx,
-
-            // Phase State
-            wPhaseOnly = TwoPTwoCNITraits::wPhaseOnly,
-            nPhaseOnly = TwoPTwoCNITraits::nPhaseOnly,
-            bothPhases = TwoPTwoCNITraits::bothPhases,
+            numEq     = BoxTraits::numEq,
+            pWIdx     = RichardsTraits::pWIdx,
 
             // Grid and world dimension
-            dim  = DomainTraits::dim,
+            dim      = DomainTraits::dim,
             dimWorld = DomainTraits::dimWorld
         };
 
@@ -117,31 +188,24 @@ namespace Dune
         typedef Dune::NewImplicitEulerStep<ThisType>        TimeIntegration;
 
         typedef typename Model::NewtonMethod                NewtonMethod;
-        typedef TwoPTwoCNINewtonController<NewtonMethod>    NewtonController;
+        typedef Dune::NewtonController<NewtonMethod>        NewtonController;
 
     public:
-        NewLeakyWellProblem(Grid *grid,
-                            Scalar dtInitial,
-                            Scalar tEnd)
+        NewRichardsProblem(Grid *grid,
+                           Scalar dtInitial,
+                           Scalar tEnd)
             : ParentType(grid),
               materialLaw_(soil_, wPhase_, nPhase_),
-              multicomp_(wPhase_, nPhase_),
               timeManager_(this->grid().comm().rank() == 0),
               model_(*this),
               newtonMethod_(model_),
-              resultWriter_("new_leakywell")
+              resultWriter_("new_richards")
             {
                 initialTimeStepSize_ = dtInitial;
                 endTime_ = tEnd;
 
-                // specify the grid dimensions
-                eps_    = 1e-8;
-
-                depthBOR_ = 800.0;
-
                 gravity_[0] = 0;
-                gravity_[1] = 0;
-                gravity_[2] = -9.81;
+                gravity_[1] = -9.81;
             }
 
         ///////////////////////////////////
@@ -154,13 +218,14 @@ namespace Dune
         void init()
             {
                 // set the episode length and initial time step size
+                timeManager_.startNextEpisode(1e100);
                 timeManager_.setStepSize(initialTimeStepSize_);
 
                 // set the initial condition
                 model_.initial();
 
                 // write the inital solution to disk
-                writeCurrentResult_();
+//                writeCurrentResult_(); // TODO
             }
 
         /*!
@@ -264,17 +329,6 @@ namespace Dune
         Soil &soil()
             {  return soil_; }
 
-        //! object for multicomponent calculations
-        /*! object for multicomponent calculations including mass fractions,
-         * mole fractions and some basic laws
-         \return    multicomponent object
-        */
-        MultiComp &multicomp ()
-//        const MultiComp &multicomp () const
-            {
-                return multicomp_;
-            }
-
         //! object for definition of material law
         /*! object for definition of material law (e.g. Brooks-Corey, Van Genuchten, ...)
           \return    material law
@@ -292,27 +346,19 @@ namespace Dune
                            int                         scvIdx,
                            int                         boundaryFaceIdx) const
             {
-                const GlobalPosition &globalPos
-                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
-//                const LocalPosition &localPos
-//                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipLocal;
-
-                values = BoundaryConditions::neumann;
-                if (globalPos[0] < -500 + 1e-3 ||
-                    globalPos[0] >  500 - 1e-3 ||
-                    globalPos[1] < -500 + 1e-3 ||
-                    globalPos[1] >  500 - 1e-3)
-                {
-                    values = BoundaryConditions::dirichlet;
-                }
-
-                if ((globalPos[0]+100.0)*(globalPos[0]+100.0) + globalPos[1]*globalPos[1] < 0.267 &&
-                    globalPos[2] < 31.0 &&
-                    globalPos[2] > -1.0)
-                {
-                    values[pWIdx] = BoundaryConditions::neumann;
-                    values[switchIdx] = BoundaryConditions::neumann;
-                    values[temperatureIdx] = BoundaryConditions::dirichlet;
+                values = Dune::BoundaryConditions::neumann;
+                switch (isIt->boundaryId()) {
+/*                case 1:
+                case 2:
+                case 3:
+                case 4:
+                    values = Dune::BoundaryConditions::neumann;
+                    break;
+*/
+                case 5: 
+                case 6:
+                    values = Dune::BoundaryConditions::dirichlet;
+                    break;
                 }
             }
 
@@ -325,14 +371,16 @@ namespace Dune
                        const IntersectionIterator &isIt,
                        int                         scvIdx,
                        int                         boundaryFaceIdx) const
-            {
-                const GlobalPosition &globalPos
-                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
-//                const LocalPosition &localPos
-//                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipLocal;
-
-                initial_(values, globalPos);
+        {
+            values[pWIdx] = 0;
+            
+            switch (isIt->boundaryId()) {
+            case 5:
+//			values[pWIdx] = 1.0e+5 - densityW_*gravity_[2]*(height_-x[2]);
+                values[pWIdx] = +1e+4; //- densityW_*gravity_[2]*(height_-x[2]); //-1.0e+6 - densityW_*gravity_[2]*(height_-x[2]);
+                break;
             }
+        }
 
         /////////////////////////////
         // NEUMANN boundaries
@@ -343,23 +391,21 @@ namespace Dune
                      const IntersectionIterator &isIt,
                      int                         scvIdx,
                      int                         boundaryFaceIdx) const
-            {
-                const GlobalPosition &globalPos
-                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
-//                const LocalPosition &localPos
-//                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipLocal;
-
-                values = 0;
-
-                if ( (globalPos[0]+100.0)*(globalPos[0]+100.0) +
-                      globalPos[1]*globalPos[1] < 0.267
-                     &&
-                     globalPos[2] < 31.0 &&
-                     globalPos[2] > -1.0)
-                {
-                    values[switchIdx] = -0.27802;
-                }
+        {
+            values = 0;
+            switch (isIt->boundaryId()) {
+            case 1:
+            case 2:
+            case 3:
+            case 4:
+                values[pWIdx] = 0;
+                    break;
+/*                case 5:
+                  values[pWIdx] = -1.0;
+                  break;
+*/
             }
+        }
 
         /////////////////////////////
         // sources and sinks
@@ -377,29 +423,19 @@ namespace Dune
         /////////////////////////////
         // INITIAL values
         /////////////////////////////
-        void initial(SolutionVector          &values,
-                     const Element           &element,
-                     const FVElementGeometry &fvElemGeom,
-                     int                      scvIdx) const
+        void initial(SolutionVector         &values,
+                    const Element           &element,
+                    const FVElementGeometry &fvElemGeom,
+                    int                      scvIdx) const
             {
-                const GlobalPosition &globalPos
-                    = fvElemGeom.subContVol[scvIdx].global;
-/*                const LocalPosition &localPos
-                    = fvElemGeom.subContVol[scvIdx].local;
-*/
-                initial_(values, globalPos);
+                values[pWIdx] = -1e+5;// - densityW_*gravity_[2]*(height_-x[2]);
             }
 
-    private:
-        // the internal initial method (-> is also used as dirichlet boundary)
-        void initial_(SolutionVector &values, 
-                      const GlobalPosition &globalPos) const
-        {            
-            values[pWIdx]          = 1.013e5 + (depthBOR_ - globalPos[2]) * 1067.44 * 9.81; // brine density for salinity=0.1
-            values[switchIdx]      = 0.0;
-            values[temperatureIdx] = 283.15 + (depthBOR_ - globalPos[2])*0.03;
-        }
-    public:
+
+        Scalar temperature() const
+        {
+            return 283.15; // 10°C
+        };
 
         Scalar porosity(const Element &element, int localIdx) const
             {
@@ -421,22 +457,9 @@ namespace Dune
             };
 
 
-        int initialPhaseState(const Vertex       &vert,
-                              int              &globalIdx,
-                              const GlobalPosition &globalPos) const
-            {
-                return wPhaseOnly;
-            }
-
-
         const GlobalPosition &gravity () const
             {
                 return gravity_;
-            }
-
-        double depthBOR () const
-            {
-                return depthBOR_;
             }
 
         bool simulate()
@@ -459,10 +482,6 @@ namespace Dune
             }
 
 
-        Scalar width_;
-        Scalar height_;
-        Scalar depthBOR_;
-        Scalar eps_;
         GlobalPosition  gravity_;
 
         // fluids and material properties
@@ -470,7 +489,6 @@ namespace Dune
         NonwettingPhase nPhase_;
         Soil            soil_;
         MaterialLaw     materialLaw_;
-        Multicomp       multicomp_;
 
         TimeManager     timeManager_;
         TimeIntegration timeIntegration_;

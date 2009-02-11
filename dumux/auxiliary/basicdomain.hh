@@ -97,13 +97,17 @@ namespace Dune
             typedef Dune::FieldVector<CoordScalar, dimWorld> GlobalPosition;
 
             // Dune grid related stuff: iterators, elements, vertices, traits...
-            typedef typename Grid::Traits::template Codim<0>                  ElementTraits;
-            typedef typename ElementTraits::Entity                            Element;
-            typedef typename ElementTraits::LeafIterator                      ElementIterator;
+            typedef typename Grid::Traits::template Codim<0>                ElementTraits;
+            typedef typename ElementTraits::Entity                          Element;
+            typedef typename ElementTraits
+                             ::template Partition<InteriorBorder_Partition>
+                             ::LeafIterator                                 ElementIterator;
 
-            typedef typename Grid::Traits::template Codim<dim>                VertexTraits;
-            typedef typename VertexTraits::Entity                             Vertex;
-            typedef typename VertexTraits::LeafIterator                       VertexIterator;
+            typedef typename Grid::Traits::template Codim<dim>              VertexTraits;
+            typedef typename VertexTraits::Entity                           Vertex;
+            typedef typename VertexTraits
+                             ::template Partition<InteriorBorder_Partition>
+                             ::LeafIterator                                 VertexIterator;
 
             // TODO: Dune::ReferenceElement uses virtual functions in
             //       order to support arbitary element types. It would be
@@ -220,7 +224,7 @@ namespace Dune
          *        the grid.
          */
         ElementIterator elementBegin() const {
-            return grid_->template leafbegin<0>();
+            return grid_->template leafbegin<0, InteriorBorder_Partition>();
         }
 
         /*!
@@ -228,7 +232,7 @@ namespace Dune
          *        element of the grid.
          */
         ElementIterator elementEnd() {
-            return grid_->template leafend<0>();
+            return grid_->template leafend<0, InteriorBorder_Partition>();
         }
 
         /*!
@@ -265,14 +269,14 @@ namespace Dune
          * \brief Given a vert index within a element, return the
          *        respective global index.
          */
-        int vertIdx(const Element &e, int localVertexId) const
+        int vertexIdx(const Element &e, int localVertexId) const
             { return vertMap_->template map<dim>(e, localVertexId); }
 
         /*!
          * \brief Given a vert index within a element, return the
          *        respective global index.
          */
-        int vertIdx(const Vertex &v) const
+        int vertexIdx(const Vertex &v) const
             { return vertMap_->map(v); }
 
         /*!
@@ -280,7 +284,7 @@ namespace Dune
          *        the grid.
          */
         VertexIterator vertexBegin() {
-            return grid_->template leafbegin<dim>();
+            return grid_->template leafbegin<dim, InteriorBorder_Partition>();
         }
 
         /*!
@@ -288,20 +292,20 @@ namespace Dune
          *        element of the grid.
          */
         VertexIterator vertexEnd() {
-            return grid_->template leafend<dim>();
+            return grid_->template leafend<dim, InteriorBorder_Partition>();
         }
 
         /*!
          * \brief Return the entity for a vert given a element and the
          *        vert' local index.
          */
-        const Vertex &vert(const Element &element, int localVertIdx)
+        const Vertex &vertex(const Element &element, int localVertIdx)
             { return *element.template entity<dim>(localVertIdx); };
 
         /*!
          * \brief Given a vert return its position in world coodinates.
          */
-        void vertPosition(GlobalPosition &worldCoord,
+        void vertexPosition(GlobalPosition &worldCoord,
                           const Vertex &v) const
             {
                 worldCoord = v.geometry().corner(0);
@@ -310,9 +314,9 @@ namespace Dune
         /*!
          * \brief Returns the vert map in case it is externally required.
          */
-        VertexMap &vertMap()
+        VertexMap &vertexMap()
             { return *vertMap_; }
-        const VertexMap &vertMap() const
+        const VertexMap &vertexMap() const
             { return *vertMap_; }
 
 

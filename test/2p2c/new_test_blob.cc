@@ -14,15 +14,19 @@
 
 int main(int argc, char** argv)
 {
-    try {
+//    try {
 
         // Set the type for scalar values (should be one of float, double
         // or long double)
         const int dim = 2;
         typedef double                                Scalar;
-//        typedef Dune::YaspGrid<dim>                   Grid;
 //        typedef Dune::ALUSimplexGrid<dim,dim>         Grid;
+#define USE_UG 0
+#if USE_UG
         typedef Dune::UGGrid<dim>                     Grid;
+#else
+        typedef Dune::YaspGrid<dim>                   Grid;
+#endif
         typedef Dune::GridPtr<Grid>                   GridPointer;
         typedef Dune::NewBlobProblem<Grid, Scalar>    Problem;
         typedef Problem::DomainTraits::GlobalPosition GlobalPosition;
@@ -40,31 +44,63 @@ int main(int argc, char** argv)
         std::istringstream(argv[1]) >> tEnd;
         std::istringstream(argv[2]) >> dt;
 
-        const char *dgfFileName = argv[3];
-        
-        // load the grid from file
-        GridPointer gridPtr = GridPointer(dgfFileName,
-                                          Dune::MPIHelper::getCommunicator());
-        Dune::gridinfo(*gridPtr);
+#if USE_UG
+        // //////////////////////////////////////////////////////////
+        //   Make a uniform grid on rank 0 for testing
+        // //////////////////////////////////////////////////////////
+        int n = 11;
+        Grid grid;
+        Dune::GridFactory<Grid> factory(&grid);
 
-/*
+        for (int i=0; i<n; i++) {
+            for (int j=0; j<n; j++) {
+                Dune::FieldVector<double,2> pos;
+                pos[0] = 300*double(i)/(n-1);
+                pos[1] = 300*double(j)/(n-1);
+                factory.insertVertex(pos);
+            }
+        }
+    
+        for (int i=0; i<n-1; i++) {
+            for (int j=0; j<n-1; j++) {
+                std::vector<unsigned int> v(4);
+                v[0] = i*n + j;
+                v[1] = i*n + j+1;
+                v[2] = (i+1)*n + j;
+                v[3] = (i+1)*n + j+1;
+                factory.insertElement(Dune::GeometryType(Dune::GeometryType::cube,2), v);
+            }
+        }
+
+        //std::auto_ptr<Dune::UGGrid<2> > grid(factory.createGrid());
+        factory.createGrid();
+#else
+
+        GlobalPosition upperRight;
+        Dune::FieldVector<int,dim> res; // cell resolution
+        upperRight[0] = 300.0;
+        res[0]        = 6;
+
+        upperRight[1] = 300.0;
+        res[1]        = 6;
+
         Grid grid(
 #ifdef HAVE_MPI
                   Dune::MPIHelper::getCommunicator(),
 #endif
-                  GlobalPosition(300.0), // upper right
-                  Dune::FieldVector<int,dim>(40), // number of cells
+                  upperRight, // upper right
+                  res, // number of cells
                   Dune::FieldVector<bool,dim>(false), // periodic
                   2); // overlap
-*/
-
+#endif
+        
         // instantiate and run the concrete problem
-        Problem problem(&(*gridPtr), dt, tEnd);
+        Problem problem(&grid, dt, tEnd);
         if (!problem.simulate())
             return 2;
         
         return 0;
-    }
+/*    }
     catch (Dune::Exception &e) {
         std::cerr << "Dune reported error: " << e << std::endl;
     }
@@ -72,5 +108,6 @@ int main(int argc, char** argv)
         std::cerr << "Unknown exception thrown!\n";
         throw;
     }
+*/
     return 3;
 }

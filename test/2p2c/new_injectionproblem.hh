@@ -387,47 +387,56 @@ namespace Dune
                 return materialLaw_;
             }
 
-        void boundaryTypes(BoundaryTypeVector &values,
-                           const Element &element,
+        void boundaryTypes(BoundaryTypeVector         &values,
+                           const Element              &element,
+                           const FVElementGeometry    &fvElemGeom,
                            const IntersectionIterator &isIt,
-                           const GlobalPosition &globalPos,
-                           const LocalPosition &localPos) const
+                           int                         scvIdx,
+                           int                         boundaryFaceIdx) const
             {
+                const GlobalPosition &globalPos
+                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
+//                const LocalPosition &localPos
+//                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipLocal;
+
                 if (globalPos[0] < eps_)
                     values = BoundaryConditions::dirichlet;
                 else
                     values = BoundaryConditions::neumann;
-
-//        if (globalPos[1] < eps_)
-//            values = BoundaryConditions::dirichlet;
             }
 
         /////////////////////////////
         // DIRICHLET boundaries
         /////////////////////////////
-        void dirichlet(SolutionVector &values,
-                       const Element &element,
-                       int vertIdx,
-                       int globalVertexIdx)
+        void dirichlet(SolutionVector             &values,
+                       const Element              &element,
+                       const FVElementGeometry    &fvElemGeom,
+                       const IntersectionIterator &isIt,
+                       int                         scvIdx,
+                       int                         boundaryFaceIdx) const
             {
-                const LocalPosition &localPos = DomainTraits::referenceElement(element.type()).position(vertIdx, dim);
-                const GlobalPosition &globalPos = element.geometry().corner(vertIdx);
+                const GlobalPosition &globalPos
+                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
+//                const LocalPosition &localPos
+//                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipLocal;
 
-                initial(values,
-                        element,
-                        globalPos,
-                        localPos);
+                initial_(values, globalPos);
             }
 
         /////////////////////////////
         // NEUMANN boundaries
         /////////////////////////////
-        void neumann(SolutionVector &values,
-                     const Element &element,
+        void neumann(SolutionVector             &values,
+                     const Element              &element,
+                     const FVElementGeometry    &fvElemGeom,
                      const IntersectionIterator &isIt,
-                     const GlobalPosition &globalPos,
-                     const LocalPosition &localPos) const
+                     int                         scvIdx,
+                     int                         boundaryFaceIdx) const
             {
+                const GlobalPosition &globalPos
+                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
+//                const LocalPosition &localPos
+//                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipLocal;
                 values = 0;
 
                 //Scalar lambda = (globalPos[1])/height_;
@@ -439,41 +448,31 @@ namespace Dune
         /////////////////////////////
         // sources and sinks
         /////////////////////////////
-        void source(SolutionVector &values,
-                        const Element &element,
-                        const FVElementGeometry &,
-                        int subControlVolumeIdx) const
-            {
-                values = Scalar(0.0);
-            }
+        void source(SolutionVector          &values,
+                    const Element           &element,
+                    const FVElementGeometry &fvElemGeom,
+                    int                      scvIdx) const
+        {
+            values = Scalar(0.0);
+        }
 
         //////////////////////////////
 
         /////////////////////////////
         // INITIAL values
         /////////////////////////////
-        void initial(SolutionVector &values,
-                     const Element& element,
-                     const GlobalPosition &globalPos,
-                     const LocalPosition &localPos)
+        void initial(SolutionVector          &values,
+                     const Element           &element,
+                     const FVElementGeometry &fvElemGeom,
+                     int                      scvIdx) const
             {
-                Scalar densityW_ = 1000.0;
-
-                values[pWIdx] = 1e5 - densityW_*gravity_[1]*(depthBOR_ - globalPos[1]);
-                values[switchIdx] = 1e-8;
-
-//                std::cout << "element " << ParentType::elementIdx(element) << " position of vert " << globalVertexIdx << ": " << globalPos << " -> " << values << "\n";
-
-//        if ((globalPos[0] > 60.0 - eps_) && (globalPos[1] < 10 && globalPos[1] > 5))
-//            values[switchIdx] = 0.05;
-
-//            if (globalPos[1] >= innerLowerLeft_[1] && globalPos[1] <= innerUpperRight_[1]
-//             && globalPos[0] >= innerLowerLeft_[0])
-//                values[switchIdx] = 0.2;
-//            else
-//                values[switchIdx] = 1e-6;
+                const GlobalPosition &globalPos
+                    = fvElemGeom.subContVol[scvIdx].global;
+/*                const LocalPosition &localPos
+                    = fvElemGeom.subContVol[scvIdx].local;
+*/
+                initial_(values, globalPos);
             }
-
 
         Scalar porosity(const Element &element, int localIdx) const
             {
@@ -496,7 +495,7 @@ namespace Dune
 
 
         int initialPhaseState(const Vertex       &vert,
-                              int              &globalIdx,
+                              int                &globalIdx,
                               const GlobalPosition &globalPos) const
             {
                 int state;
@@ -533,6 +532,27 @@ namespace Dune
 
 
     private:
+        // the internal method for the initial condition
+        void initial_(SolutionVector         &values,
+                      const GlobalPosition   &globalPos) const
+        {
+            Scalar densityW_ = 1000.0;
+            
+            values[pWIdx] = 1e5 - densityW_*gravity_[1]*(depthBOR_ - globalPos[1]);
+            values[switchIdx] = 1e-8;
+
+//                std::cout << "element " << ParentType::elementIdx(element) << " position of vert " << globalVertexIdx << ": " << globalPos << " -> " << values << "\n";
+
+//        if ((globalPos[0] > 60.0 - eps_) && (globalPos[1] < 10 && globalPos[1] > 5))
+//            values[switchIdx] = 0.05;
+
+//            if (globalPos[1] >= innerLowerLeft_[1] && globalPos[1] <= innerUpperRight_[1]
+//             && globalPos[0] >= innerLowerLeft_[0])
+//                values[switchIdx] = 0.2;
+//            else
+//                values[switchIdx] = 1e-6;
+        }
+
         // write the fields current solution into an VTK output file.
         void writeCurrentResult_()
             {

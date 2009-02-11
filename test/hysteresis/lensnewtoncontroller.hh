@@ -23,7 +23,7 @@
 #ifndef DUMUX_LENS_NEWTON_CONTROLLER_HH
 #define DUMUX_LENS_NEWTON_CONTROLLER_HH
 
-#include <dumux/new_models/pwsn/pwsnnewtoncontroller.hh>
+#include <dumux/new_models/2p/pwsnnewtoncontroller.hh>
 
 namespace Dune {
 namespace Lens {

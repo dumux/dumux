@@ -372,12 +372,18 @@ namespace Dune
                 return materialLaw_;
             }
 
-        void boundaryTypes(BoundaryTypeVector &values,
-                           const Element &element,
+        void boundaryTypes(BoundaryTypeVector         &values,
+                           const Element              &element,
+                           const FVElementGeometry    &fvElemGeom,
                            const IntersectionIterator &isIt,
-                           const GlobalPosition &globalPos,
-                           const LocalPosition &localPos) const
+                           int                         scvIdx,
+                           int                         boundaryFaceIdx) const
             {
+                const GlobalPosition &globalPos
+                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
+//                const LocalPosition &localPos
+//                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipLocal;
+                
                 values = BoundaryConditions::neumann;
 
                 if ((globalPos[0] < eps_) || (globalPos[0] > (300 - eps_)))
@@ -387,13 +393,17 @@ namespace Dune
         /////////////////////////////
         // DIRICHLET boundaries
         /////////////////////////////
-        void dirichlet(SolutionVector &values,
-                       const Element &element,
-                       int vertIdx,
-                       int globalVertexIdx)
+        void dirichlet(SolutionVector             &values,
+                       const Element              &element,
+                       const FVElementGeometry    &fvElemGeom,
+                       const IntersectionIterator &isIt,
+                       int                         scvIdx,
+                       int                         boundaryFaceIdx) const
             {
-//                const LocalPosition &localPos = DomainTraits::referenceElement(element.type()).position(vertIdx, dim);
-                const GlobalPosition &globalPos = element.geometry().corner(vertIdx);
+                const GlobalPosition &globalPos
+                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
+//                const LocalPosition &localPos
+//                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipLocal;
 
                 values[pWIdx] = 1e5;
                 values[switchIdx] = 0.0;
@@ -408,12 +418,18 @@ namespace Dune
         /////////////////////////////
         // NEUMANN boundaries
         /////////////////////////////
-        void neumann(SolutionVector &values,
-                     const Element &element,
+        void neumann(SolutionVector             &values,
+                     const Element              &element,
+                     const FVElementGeometry    &fvElemGeom,
                      const IntersectionIterator &isIt,
-                     const GlobalPosition &globalPos,
-                     const LocalPosition &localPos) const
+                     int                         scvIdx,
+                     int                         boundaryFaceIdx) const
             {
+//                const GlobalPosition &globalPos
+//                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
+//                const LocalPosition &localPos
+//                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipLocal;
+
                 values = 0.0;
             }
 
@@ -421,23 +437,29 @@ namespace Dune
         // sources and sinks
         /////////////////////////////
         void source(SolutionVector &values,
-                        const Element &element,
-                        const FVElementGeometry &,
-                        int subControlVolumeIdx) const
-            {
-                values = Scalar(0.0);
-            }
+                    const Element &element,
+                    const FVElementGeometry &,
+                    int subControlVolumeIdx) const
+        {
+            values = Scalar(0.0);
+        }
 
         //////////////////////////////
 
         /////////////////////////////
         // INITIAL values
         /////////////////////////////
-        void initial(SolutionVector &values,
-                     const Element& element,
-                     const GlobalPosition &globalPos,
-                     const LocalPosition &localPos)
+        void initial(SolutionVector         &values,
+                    const Element           &element,
+                    const FVElementGeometry &fvElemGeom,
+                    int                      scvIdx) const
             {
+                const GlobalPosition &globalPos
+                    = fvElemGeom.subContVol[scvIdx].global;
+/*                const LocalPosition &localPos
+                    = fvElemGeom.subContVol[scvIdx].local;
+*/
+
                 values[pWIdx] = 1e5;//(600-globalPos[0])/300 * 1e5;
                 values[switchIdx] = 0;
 

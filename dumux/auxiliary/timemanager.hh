@@ -22,6 +22,7 @@
 #include <boost/format.hpp>
 
 #include <dune/common/timer.hh>
+#include <dune/common/mpihelper.hh>
 
 namespace Dune
 {
@@ -51,7 +52,9 @@ namespace Dune
                     double len = 1e100,
                     bool verbose = true)
             {
-                verbose_ = verbose;
+                verbose_ = 
+                    verbose &&  
+                    MPIHelper::getCollectiveCommunication().rank() == 0;
 
                 init_();
 

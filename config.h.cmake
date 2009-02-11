@@ -35,8 +35,7 @@
 #cmakedefine PROJECT_MAINTAINER_EMAIL "${PROJECT_MAINTAINER_EMAIL}"
 
 /* tr1/array. */
-#cmakedefine HAVE_TR1_ARRAY 1
-/* malloc.h */
+//#cmakedefine HAVE_TR1_ARRAY 1
 #cmakedefine HAVE_MALLOC_H 1
 
 #define DUNE_DEPRECATED __attribute__((deprecated))

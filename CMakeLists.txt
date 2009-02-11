@@ -47,7 +47,7 @@ FIND_PACKAGE(ALUGrid)
 # Find the required include files
 INCLUDE (CheckIncludeFileCXX)
 CHECK_INCLUDE_FILE_CXX("malloc.h" HAVE_MALLOC_H)
-CHECK_INCLUDE_FILE_CXX("tr1/array" HAVE_TR1_ARRAY)
+#CHECK_INCLUDE_FILE_CXX("tr1/array" HAVE_TR1_ARRAY)
 ##############
 
 
@@ -81,8 +81,8 @@ set(DumuxIncludeDirectories
 
 ##############
 # set appropriate compiler flags for debug/release compilation modes
-set( CMAKE_CXX_FLAGS_DEBUG "-g -Wall" )
-set( CMAKE_C_FLAGS_DEBUG "-g -Wall" )
+set( CMAKE_CXX_FLAGS_DEBUG "-g -Wall -fno-inline-functions" )
+set( CMAKE_C_FLAGS_DEBUG "-g -Wall -fno-inline-functions" )
 
 set( CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -funroll-loops -finline-functions" )
 set( CMAKE_C_FLAGS_RELEASE "-O3 -Wall -funroll-loops -finline-functions" )

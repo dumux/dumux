@@ -164,10 +164,10 @@ namespace Dune
 
                 (*curSol_)[vert][component] = value;
                 partialElementDataUpdate_(curElemDat_,
-                                        ParentType::problem_.elementIdx(ParentType::curElement_()),
-                                        *curSol_,
-                                        vert,
-                                        ParentType::problem_.vertIdx(ParentType::curElement_(),
+                                          ParentType::problem_.elementIdx(ParentType::curElement_()),
+                                          *curSol_,
+                                          vert,
+                                          ParentType::problem_.vertexIdx(ParentType::curElement_(),
                                                                          vert));
 
             }
@@ -286,7 +286,7 @@ namespace Dune
 
                 int elementIdx   = ParentType::problem_.elementIdx(ParentType::curElement_());
                 for (int i = 0; i < ParentType::curElementGeom_.numVertices; i++) {
-                    int iGlobal = ParentType::problem_.vertIdx(ParentType::curElement_(), i);
+                    int iGlobal = ParentType::problem_.vertexIdx(ParentType::curElement_(), i);
                     partialElementDataUpdate_(dest,
                                             elementIdx,
                                             sol,

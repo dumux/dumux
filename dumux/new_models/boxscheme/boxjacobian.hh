@@ -181,79 +181,107 @@ namespace Dune
                 // condition type vector
                 resetRhs_();
 
-                Dune::GeometryType          geoType = curElement_().geometry().type();
-                const ReferenceElement &refElem = DomainTraits::referenceElement(geoType);
+                // set the boundary types
+                updateBoundaryTypes_();
 
-                // temporary vector to store the neumann boundaries
-                SolutionVector fluxes(0.0);
+                // apply the neumann conditions
+                applyBoundaryCondition_();
+            };
 
-                // evaluate boundary conditions
-                IntersectionIterator isIt = curElement_().ileafbegin();
-                const IntersectionIterator &endIt = curElement_().ileafend();
-                for (; isIt != endIt; ++isIt)
+        void updateBoundaryTypes(const Element &element)
+        {
+            // set the current grid element
+            asImp_()->setCurrentElement(element);
+            updateBoundaryTypes_();
+        }
+
+        void applyBoundaryCondition_()
+        {
+            Dune::GeometryType      geoType = curElement_().geometry().type();
+            const ReferenceElement &refElem = DomainTraits::referenceElement(geoType);
+
+            // evaluate boundary conditions for all intersections of
+            // the current element
+            IntersectionIterator isIt = curElement_().ileafbegin();
+            const IntersectionIterator &endIt = curElement_().ileafend();
+            for (; isIt != endIt; ++isIt)
+            {
+                // handle only faces on boundaries.
+                if (!isIt->boundary())
+                    continue;
+
+                // Assemble the boundary for all verts of the
+                // current face
+                int faceIdx = isIt->numberInSelf();
+                int numFaceVerts = refElem.size(faceIdx, 1, dim);
+                for (int faceVertIdx = 0;
+                     faceVertIdx < numFaceVerts;
+                     ++faceVertIdx)
                 {
-                    // handle only faces on exterior boundaries. This
-                    // assumes there are no interior boundaries.
-                    if (!isIt->boundary())
-                        continue;
+                    int elemVertIdx = refElem.subEntity(faceIdx,
+                                                        1,
+                                                        faceVertIdx,
+                                                        dim);
+                    int boundaryFaceIdx = 
+                        curElementGeom_.boundaryFaceIndex(faceIdx,
+                                                          faceVertIdx);
 
-                    // Assemble the boundary for all verts of the
-                    // current face
-                    int faceIdx = isIt->numberInSelf();
-                    int numVerticesOfFace = refElem.size(faceIdx, 1, dim);
-                    for (int vertInFace = 0;
-                         vertInFace < numVerticesOfFace;
-                         vertInFace++)
-                    {
-                        int vertInElement = refElem.subEntity(faceIdx,
-                                                              1,
-                                                              vertInFace,
-                                                              dim);
-                        int bfIdx = curElementGeom_.boundaryFaceIndex(faceIdx, vertInFace);
-                        const LocalPosition &local = curElementGeom_.boundaryFace[bfIdx].ipLocal;
-                        const GlobalPosition &global = curElementGeom_.boundaryFace[bfIdx].ipGlobal;
-
-                        // set the boundary types
-                        // TODO: better parameters: element, FVElementGeometry, bfIdx
-                        BoundaryTypeVector tmp;
-                        problem_.boundaryTypes(tmp,
-                                               curElement_(),
-                                               isIt,
-                                               global,
-                                               local);
-
-                        // handle boundary conditions
-                        bool neumannEvaluated = false;
-                        for (int bcIdx = 0; bcIdx < numEq; ++bcIdx) {
-                            // set the bctype of the LocalStiffness
-                            // base class
-                            this->bctype[vertInElement][bcIdx] = tmp[bcIdx];
-
-                            // neumann boundaries
-                            if (tmp[bcIdx] == BoundaryConditions::neumann) {
-                                if (!neumannEvaluated) {
-                                    // make sure that we only evaluate
-                                    // the neumann fluxes once
-                                    neumannEvaluated = true;
-                                    // TODO: better Parameters: element, FVElementGeometry, bfIdx
-                                    problem_.neumann(fluxes,
-                                                     curElement_(),
-                                                     isIt,
-                                                     global,
-                                                     local);
-                                    fluxes *= curElementGeom_.boundaryFace[bfIdx].area;
-                                }
-                                this->b[vertInElement][bcIdx] += fluxes[bcIdx];
-                            }
-                            // dirichlet and processor boundaries
-                            else {
-                                // set right hand side to 0
-                                this->b[vertInElement][bcIdx] = Scalar(0);
-                            }
-                        }
-                    }
+                    // handle boundary conditions for a single
+                    // sub-control volume face
+                    applyBoundaryCondition_(isIt, 
+                                            elemVertIdx,
+                                            boundaryFaceIdx);
                 }
             }
+        }
+
+        // handle boundary conditions for a single
+        // sub-control volume face
+        void applyBoundaryCondition_(const IntersectionIterator &isIt,
+                                     int scvIdx,
+                                     int boundaryFaceIdx)
+        {                        
+            // temporary vector to store the neumann boundaries
+            SolutionVector values(0.0);
+            bool wasEvaluated = false;
+            
+            // loop over all primary variables to deal with mixed
+            // boundary conditions
+            for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+            {
+                if (this->bctype[scvIdx][eqIdx] 
+                    != BoundaryConditions::neumann)
+                {
+                    // dirichlet boundary conditions are treated as
+                    // zeros on the right hand side
+                    this->b[scvIdx][eqIdx] = 0;
+                    continue;
+                }
+
+                // if we are here we've got a neumann boundary condition
+                
+                // make sure that we evaluate call the problem's
+                // neumann() method exactly once if
+                if (!wasEvaluated)
+                {
+                    // make sure that we only evaluate
+                    // the neumann fluxes once
+                    wasEvaluated = true;
+                    
+                    problem_.neumann(values,
+                                     curElement_(),
+                                     curElementGeom_,
+                                     isIt,
+                                     scvIdx,
+                                     boundaryFaceIdx);
+                    // TODO (?): multiple integration
+                    // points
+                    values *= curElementGeom_.boundaryFace[boundaryFaceIdx].area;
+                }
+                
+                this->b[scvIdx][eqIdx] += values[eqIdx];
+            }
+        }
 
         /*!
          * \brief Compute the local residual, i.e. the right hand side
@@ -317,6 +345,14 @@ namespace Dune
                 }
             }
 
+        /*!
+         * \brief Set the current grid element.
+         */
+        void setCurrentElement(const Element &element)
+        {
+            this->setCurrentElement_(element);
+        };
+
 
         /*!
          * \brief Restrict the global function 'globalFn' to the verts
@@ -329,7 +365,7 @@ namespace Dune
                 // associated to the i-th vert of the element.
                 int n = curElement_().template count<dim>();
                 for (int i = 0; i < n; i++) {
-                    dest[i] = (*globalFn)[problem_.vertIdx(curElement_(), i)];
+                    dest[i] = (*globalFn)[problem_.vertexIdx(curElement_(), i)];
                 }
             }
 
@@ -353,6 +389,13 @@ namespace Dune
          */
         void updateStaticData(SpatialFunction &curSol, SpatialFunction &oldSol)
             { };     
+
+        /*!
+         * \brief This returns the finite volume geometric information of the current
+         *        element. <b>Use this method with great care!</br>
+         */
+        const FVElementGeometry &curFvElementGeometry() const
+            { return curElementGeom_; }
 
     protected:
 
@@ -385,6 +428,63 @@ namespace Dune
         const SpatialFunction *oldSolution_;
 
     private:
+        void updateBoundaryTypes_()
+        {
+            Dune::GeometryType      geoType = curElement_().geometry().type();
+            const ReferenceElement &refElem = DomainTraits::referenceElement(geoType);
+
+            int numVerts = curElement_().template count<dim>();
+            for (int i = 0; i < numVerts; ++i)
+                this->bctype[i] = BoundaryConditions::neumann;
+
+            // evaluate boundary conditions
+            IntersectionIterator isIt = curElement_().ileafbegin();
+            const IntersectionIterator &endIt = curElement_().ileafend();
+            for (; isIt != endIt; ++isIt)
+            {
+                // Ignore non- boundary faces.
+                if (!isIt->boundary())
+                    continue;
+
+                // Set the bctype for all vertices of the face
+                int faceIdx = isIt->numberInSelf();
+                int numFaceVerts = refElem.size(faceIdx, 1, dim);
+                for (int faceVertIdx = 0;
+                     faceVertIdx < numFaceVerts;
+                     faceVertIdx++)
+                {
+                    int elemVertIdx = refElem.subEntity(faceIdx,
+                                                          1,
+                                                          faceVertIdx,
+                                                          dim);
+                    int boundaryFaceIdx =
+                        curElementGeom_.boundaryFaceIndex(faceIdx, 
+                                                          faceVertIdx);
+
+                    // set the boundary types
+                    BoundaryTypeVector tmp;
+                    problem_.boundaryTypes(tmp,
+                                           curElement_(),
+                                           curFvElementGeometry(),
+                                           isIt,
+                                           elemVertIdx,
+                                           boundaryFaceIdx);
+
+                    // copy boundary type to the bctype array.
+                    for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {
+                        // make sure that dirichlet boundaries have
+                        // priority over neumann ones
+                        if (this->bctype[elemVertIdx][eqIdx]
+                            == BoundaryConditions::dirichlet)
+                        {
+                            continue;
+                        }
+                        this->bctype[elemVertIdx][eqIdx] = tmp[eqIdx];
+                    }
+                }
+            }
+        };
+
         void assemble_(const Element &element, LocalFunction& localU, int orderOfShapeFns = 1)
             {
                 // set the current grid element

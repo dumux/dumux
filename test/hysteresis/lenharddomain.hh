@@ -338,9 +338,9 @@ namespace Lenhard
 
         // given a vert, return it's state object
         VertexState &vertexState(const Vertex &vert)
-            { return vertStates_[ParentType::vertIdx(vert)]; }
+            { return vertStates_[ParentType::vertexIdx(vert)]; }
         const VertexState &vertexState(const Vertex &vert) const
-            { return vertStates_[ParentType::vertIdx(vert)]; }
+            { return vertStates_[ParentType::vertexIdx(vert)]; }
 
         const GlobalPosition &lowerLeft() const
             { return gridLowerLeft_; }
@@ -451,7 +451,7 @@ namespace Lenhard
                 const VertexIterator &endVertIt = ParentType::vertexEnd();
                 for (; vertIt != endVertIt; ++vertIt) {
                     GlobalPosition pos;
-                    ParentType::vertPosition(pos, *vertIt);
+                    ParentType::vertexPosition(pos, *vertIt);
                     VertexState &vertState = vertexState(*vertIt);
 
                     vertState.setMediumState(coarseSand_);
