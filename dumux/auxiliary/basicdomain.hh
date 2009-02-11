@@ -26,7 +26,6 @@
 
 #include <dune/grid/common/referenceelements.hh>
 #include <dune/grid/common/intersectioniterator.hh>
-#include <dune/grid/io/file/dgfparser.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 
 #include <dune/disc/operators/boundaryconditions.hh>

@@ -171,6 +171,7 @@ elseif (MPI_COMPILE_CMDLINE)
   # Extract linker paths from the link command line
   string(REGEX MATCHALL "-L([^\" ]+|\"[^\"]+\")" MPI_ALL_LINK_PATHS "${MPI_LINK_CMDLINE}")
   set(MPI_LINK_PATH)
+
   foreach(LPATH ${MPI_ALL_LINK_PATHS})
     string(REGEX REPLACE "^-L" "" LPATH ${LPATH})
     string(REGEX REPLACE "//" "/" LPATH ${LPATH})
@@ -199,6 +200,7 @@ elseif (MPI_COMPILE_CMDLINE)
       set(MPI_LINK_FLAGS_WORK ${FLAG})
     endif(MPI_LINK_FLAGS_WORK)
   endforeach(FLAG)
+
 
   # Extract the set of libraries to link against from the link command
   # line.

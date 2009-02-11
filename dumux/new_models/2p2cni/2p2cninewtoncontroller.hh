@@ -20,8 +20,8 @@
  * which allows the newton method to abort quicker if the solution is
  * way out of bounds.
  */
-#ifndef DUMUX_2P2C_NEWTON_CONTROLLER_HH
-#define DUMUX_2P2C_NEWTON_CONTROLLER_HH
+#ifndef DUMUX_2P2CNI_NEWTON_CONTROLLER_HH
+#define DUMUX_2P2CNI_NEWTON_CONTROLLER_HH
 
 #include <dumux/nonlinear/new_newtoncontroller.hh>
 

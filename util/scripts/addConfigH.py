@@ -14,7 +14,7 @@ for filename in sys.argv[1:]:
     added = False
     tmpFile = open("/tmp/addConfigH.tmp", "w")
     for line in open(filename).xreadlines():
-        if not added and line.find("include") >= 0:
+        if not added and line.find("#include") >= 0:
             if line.find("config.h") < 0:
                 tmpFile.write("#include \"config.h\"\n")
             added = True

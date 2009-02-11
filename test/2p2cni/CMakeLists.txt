@@ -1,4 +1,4 @@
-add_definitions(-DENABLE_ALUGRID -DGRIDDIM=2 -DENABLE_UG)
+add_definitions(-DENABLE_ALUGRID -DENABLE_UG)
 
 ADD_EXECUTABLE("test_2p2cni" test_2p2cni.cc)
 TARGET_LINK_LIBRARIES("test_2p2cni" ${DumuxLinkLibraries})

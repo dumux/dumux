@@ -120,8 +120,8 @@ namespace Dune
 //                Api::require<Api::PwSnBoxDomain>(prob);
 
                 // check grid partitioning
-                assert((prob.grid().comm().size() == 1) ||
-                       (prob.grid().overlapSize(0) > 0) ||
+                assert((prob.grid().comm().size() == 1) || 
+                       (prob.grid().overlapSize(0) > 0) || 
                        (prob.grid().ghostSize(0) > 0));
             }
 

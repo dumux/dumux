@@ -31,10 +31,15 @@
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/solvers.hh>
 
+#include <dune/common/mpihelper.hh>
+
 #include <iostream>
 #include <boost/format.hpp>
 
 #include "dumux/pardiso/pardiso.hh"
+
+#include "dumux/operators/owneroverlapcopyextended.hh"
+
 
 namespace Dune
 {

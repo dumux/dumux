@@ -23,12 +23,6 @@
 #include <dumux/auxiliary/timemanager.hh>
 
 #include <dune/common/timer.hh>
-#include <dune/grid/common/gridinfo.hh>
-#include <dune/grid/uggrid.hh>
-#include <dune/grid/sgrid.hh>
-#include <dune/grid/io/file/dgfparser/dgfparser.hh>
-#include <dune/grid/io/file/dgfparser/dgfug.hh>
-#include <dune/istl/io.hh>
 
 #include<dumux/new_models/2p2c/2p2cboxmodel.hh>
 #include<dumux/new_models/2p2c/2p2cnewtoncontroller.hh>
@@ -147,16 +141,14 @@ namespace Dune
      *
      *    - ScalarT  Floating point type used for scalars
      */
-    template<class ScalarT>
-    class NewInjectionProblem : public BasicDomain<Dune::YaspGrid<2>,
+    template<class GridT, class ScalarT>
+    class NewInjectionProblem : public BasicDomain<GridT,
                                                    ScalarT>
     {
-        typedef Dune::YaspGrid<2>              Grid;
-        typedef BasicDomain<Grid, ScalarT>     ParentType;
-        typedef NewInjectionProblem<ScalarT>   ThisType;
-        typedef TwoPTwoCBoxModel<ThisType>     Model;
-
-        typedef Dune::GridPtr<Grid>                    GridPointer;
+        typedef GridT                               Grid;
+        typedef BasicDomain<Grid, ScalarT>          ParentType;
+        typedef NewInjectionProblem<GridT, ScalarT> ThisType;
+        typedef TwoPTwoCBoxModel<ThisType>          Model;
 
         typedef Dune::Liq_WaterAir                     WettingPhase;
         typedef Dune::Gas_WaterAir                     NonwettingPhase;

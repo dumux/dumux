@@ -18,13 +18,11 @@
 
 #include <dumux/io/vtkmultiwriter.hh>
 #include <dumux/auxiliary/timemanager.hh>
-
 #include <dune/common/timer.hh>
 #include <dune/grid/common/gridinfo.hh>
+
 #include <dune/grid/uggrid.hh>
 #include <dune/grid/sgrid.hh>
-#include <dune/grid/io/file/dgfparser/dgfparser.hh>
-#include <dune/grid/io/file/dgfparser/dgfug.hh>
 #include <dune/istl/io.hh>
 
 #include<dumux/new_models/2p2cni/2p2cniboxmodel.hh>
@@ -55,16 +53,14 @@ namespace Dune
      *
      *    - ScalarT  Floating point type used for scalars
      */
-    template<class ScalarT>
-    class NewLeakyWellProblem : public BasicDomain<Dune::ALUSimplexGrid<3,3>,
+    template<class GridT, class ScalarT>
+    class NewLeakyWellProblem : public BasicDomain<GridT,
                                                    ScalarT>
     {
-        typedef Dune::ALUSimplexGrid<3,3>      Grid;
-        typedef BasicDomain<Grid, ScalarT>     ParentType;
-        typedef NewLeakyWellProblem<ScalarT>   ThisType;
-        typedef TwoPTwoCNIBoxModel<ThisType>   Model;
-
-        typedef Dune::GridPtr<Grid>                    GridPointer;
+        typedef GridT                              Grid;
+        typedef BasicDomain<Grid, ScalarT>         ParentType;
+        typedef NewLeakyWellProblem<Grid, ScalarT> ThisType;
+        typedef TwoPTwoCNIBoxModel<ThisType>       Model;
 
         typedef Dune::Liq_BrineCO2                     WettingPhase;
         typedef Dune::Gas_BrineCO2                     NonwettingPhase;

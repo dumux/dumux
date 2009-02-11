@@ -22,8 +22,6 @@
 #include <dune/grid/common/gridinfo.hh>
 #include <dune/grid/uggrid.hh>
 #include <dune/grid/sgrid.hh>
-#include <dune/grid/io/file/dgfparser/dgfparser.hh>
-#include <dune/grid/io/file/dgfparser/dgfug.hh>
 #include <dune/istl/io.hh>
 
 #include<dumux/new_models/2p2c/2p2cboxmodel.hh>
@@ -144,16 +142,14 @@ namespace Dune
      *
      *    - ScalarT  Floating point type used for scalars
      */
-    template<class ScalarT>
-    class NewBlobProblem : public BasicDomain<Dune::YaspGrid<2>,
+    template<class GridT, class ScalarT>
+    class NewBlobProblem : public BasicDomain<GridT,
                                               ScalarT>
     {
-        typedef Dune::YaspGrid<2>              Grid;
+        typedef GridT                          Grid;
         typedef BasicDomain<Grid, ScalarT>     ParentType;
-        typedef NewBlobProblem<ScalarT>        ThisType;
+        typedef NewBlobProblem<Grid, ScalarT>  ThisType;
         typedef TwoPTwoCBoxModel<ThisType>     Model;
-
-        typedef Dune::GridPtr<Grid>                    GridPointer;
 
         typedef Dune::Liq_WaterAir                     WettingPhase;
         typedef Dune::Gas_WaterAir                     NonwettingPhase;
@@ -212,19 +208,10 @@ namespace Dune
         typedef TwoPTwoCNewtonController<NewtonMethod>      NewtonController;
 
     public:
-        NewBlobProblem(Scalar dtInitial,
+        NewBlobProblem(Grid *grid,
+                       Scalar dtInitial,
                        Scalar tEnd)
-            : ParentType(new Grid(
-#ifdef HAVE_MPI
-                                  MPI_COMM_WORLD,
-#endif
-//                                  GlobalPosition(0.0),  // lower left
-                                  GlobalPosition(300.0), // upper right
-                                  Dune::FieldVector<int,dim>(40), // number of cells
-                                  Dune::FieldVector<bool,dim>(false), // periodic
-                                  2 // overlap
-
-                             )),
+            : ParentType(grid),
               materialLaw_(soil_, wPhase_, nPhase_),
               multicomp_(wPhase_, nPhase_),
               timeManager_(this->grid().comm().rank() == 0),

@@ -1,20 +1,25 @@
 #include "config.h"
+
 #include "new_leakywellproblem.hh"
+
+#include <dune/grid/common/gridinfo.hh>
+#include <dune/grid/io/file/dgfparser.hh>
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/mpihelper.hh>
 
 #include <iostream>
+#include <boost/format.hpp>
 
 int main(int argc, char** argv)
 {
     try {
         // Set the type for scalar values (should be one of float, double
         // or long double)
-        typedef double                            Scalar;
-        typedef Dune::NewLeakyWellProblem<Scalar> Problem;
-        typedef Problem::DomainTraits::Grid       Grid;
-        typedef Dune::GridPtr<Grid>               GridPointer;
+        typedef double                                  Scalar;
+        typedef Dune::ALUSimplexGrid<3,3>               Grid;
+        typedef Dune::NewLeakyWellProblem<Grid, Scalar> Problem;
+        typedef Dune::GridPtr<Grid>                     GridPointer;
 
         // initialize MPI, finalize is done automatically on exit
         Dune::MPIHelper::instance(argc, argv);
@@ -30,14 +35,15 @@ int main(int argc, char** argv)
         std::istringstream(argv[3]) >> dt;
 
         // load the grid from file
-        GridPointer gridPtr =  GridPointer(dgfFileName,
-                                           Dune::MPIHelper::getCommunicator());
+        GridPointer gridPtr = GridPointer(dgfFileName,
+                                          Dune::MPIHelper::getCommunicator());
         Dune::gridinfo(*gridPtr);
 
         // instantiate and run the concrete problem
         Problem problem(&(*gridPtr), dt, tEnd);
         if (!problem.simulate())
             return 2;
+        
         return 0;
     }
     catch (Dune::Exception &e) {

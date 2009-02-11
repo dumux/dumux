@@ -76,15 +76,6 @@ set(DumuxIncludeDirectories
     ${DUNE_istl_INCLUDE_DIRS}
     ${DUNE_mux_INCLUDE_DIRS}
     ${Boost_INCLUDE_DIR})
-
-if (MPI_FOUND)
-  set(TMP ${MPI_COMPILE_FLAGS})
-  separate_arguments(TMP)
-  add_definitions(${TMP})
-  add_definitions(-DENABLE_MPI=1)
-  set(DumuxLinkLibraries ${DumuxLinkLibraries} ${MPI_LIBRARIES})
-  set(DumuxIncludeDirectories ${DumuxIncludeDirectories} ${MPI_INCLUDE_PATH})
-endif (MPI_FOUND)
 ##############
 
 
@@ -167,6 +158,15 @@ if (Alberta_FOUND)
 endif(Alberta_FOUND)
 SetConfigHVar(HAVE_ALBERTA Alberta_FOUND)
 ##############
+
+if (MPI_FOUND)
+   set(TMP ${MPI_COMPILE_FLAGS})
+   separate_arguments(TMP)
+   add_definitions(${TMP})
+   add_definitions(-DENABLE_MPI=1)
+   set(DumuxLinkLibraries ${DumuxLinkLibraries} ${MPI_LIBRARIES})
+   set(DumuxIncludeDirectories ${DumuxIncludeDirectories} ${MPI_INCLUDE_PATH})
+endif (MPI_FOUND)
 
 # actually write the config.h file to disk 
 configure_file(config.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config.h )

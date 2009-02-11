@@ -17,49 +17,25 @@ namespace Dune {
   template <class GlobalIdType, class LocalIdType>
   class OwnerOverlapCopyExtendedCommunication : public OwnerOverlapCopyCommunication<GlobalIdType,LocalIdType>
   {
-    typedef typename IndexInfoFromGrid<GlobalIdType,LocalIdType>::IndexTripel IndexTripel;
-    typedef typename IndexInfoFromGrid<GlobalIdType,LocalIdType>::RemoteIndexTripel RemoteIndexTripel;
-    typedef typename std::set<IndexTripel>::const_iterator localindex_iterator;
-    typedef typename std::set<RemoteIndexTripel>::const_iterator remoteindex_iterator;
-    typedef typename OwnerOverlapCopyAttributeSet::AttributeSet AttributeSet;
-    typedef Dune::ParallelLocalIndex<AttributeSet> LI;
-    typedef Dune::ParallelIndexSet<GlobalIdType,LI,512> PIS;
-    typedef Dune::RemoteIndices<PIS> RI;
-    typedef Dune::RemoteIndexListModifier<PIS,false> RILM;
-    typedef typename RI::RemoteIndex RX;
-    typedef Dune::BufferedCommunicator<PIS> BC;
-    typedef Dune::Interface<PIS> IF;
+      typedef OwnerOverlapCopyCommunication<GlobalIdType,LocalIdType> ParentType;
 
-    template<typename T>
-    struct AddGatherScatter
-    {
-      typedef typename CommPolicy<T>::IndexedType V;
-
-      static V gather(const T& a, int i)
-      {
-        return a[i];
-      }
-
-      static void scatter(T& a, V v, int i)
-      {
-        a[i] += v;
-      }
-    };
+      typedef typename OwnerOverlapCopyAttributeSet::AttributeSet AttributeSet;
+      typedef typename ParentType::BC   BC; // BufferedCommunicator
+      typedef typename ParentType::IF   IF; // Interface
 
     void buildAllToAllInterface () const
-    {
-      if (AllToAllInterfaceBuilt)
-        AllToAllInterface.free();
-      typedef Combine<EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::owner>,EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::copy>,AttributeSet> OwnerCopySet;
-      typedef Combine<EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::owner>,EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::overlap>,AttributeSet> OwnerOverlapSet;
-      typedef Combine<OwnerOverlapSet,EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::copy>,AttributeSet> AllSet;
-      AllSet sourceFlags;
-      AllSet destFlags;
-      AllToAllInterface.build(this->remoteIndices(),sourceFlags,destFlags);
-      AllToAllInterfaceBuilt = true;
-    }
+          {
+              if (AllToAllInterfaceBuilt)
+                  AllToAllInterface.free();
+              typedef Combine<EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::owner>,EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::copy>,AttributeSet> OwnerCopySet;
+              typedef Combine<EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::owner>,EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::overlap>,AttributeSet> OwnerOverlapSet;
+              typedef Combine<OwnerOverlapSet,EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::copy>,AttributeSet> AllSet;
+              AllSet sourceFlags;
+              AllSet destFlags;
+              AllToAllInterface.build(this->remoteIndices(),sourceFlags,destFlags);
+              AllToAllInterfaceBuilt = true;
+          }
 
-  public:
     /**
      * @brief Communicate values from all data points to all other data points and add them to those values.
      *
@@ -73,22 +49,10 @@ namespace Dune {
         buildAllToAllInterface ();
       BC communicator;
       communicator.template build<T>(AllToAllInterface);
-      communicator.template forward<AddGatherScatter<T> >(source,dest);
+      communicator.template forward<ParentType::template AddGatherScatter<T> >(source,dest);
       communicator.free();
     }
-
-    typedef Dune::EnumItem<AttributeSet,OwnerOverlapCopyAttributeSet::copy> CopyFlags;
-
-    /** @brief The type of the parallel index set. */
-    typedef Dune::ParallelIndexSet<GlobalIdType,LI,512> ParallelIndexSet;
-
-    /** @brief The type of the remote indices. */
-    typedef Dune::RemoteIndices<PIS> RemoteIndices;
-
-    /**
-     * @brief The type of the reverse lookup of indices. */
-    typedef Dune::GlobalLookupIndexSet<ParallelIndexSet> GlobalLookupIndexSet;
-
+  public:
 
     /**
      * @brief Construct the communication without any indices.

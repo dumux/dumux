@@ -7,16 +7,16 @@ MODDIR=$OLDPWD/external
 # configure flags 
 CONFIGURE_FLAGS=" CXXFLAGS=\"-O3 -DNDEBUG -funroll-loops -finline-functions\" \
   --with-grid-dim=2 \
-  --with-alberta=$MODDIR/alberta-1.2 \
   --with-alugrid=$MODDIR/ALUGrid-1.13 \
   --with-ug=$MODDIR/ug \
   --with-blas='-lpthread -L$MODDIR/GotoBLAS -lgoto -llapack -lg2c' \
   --with-pardiso='-L$MODDIR/pardiso/lib -lpardiso_GNU_AMD64' \
-  --enable-parallel
+  --enable-parallel \
   --disable-mpiruntest"
 
 # optional 
 # --with-grape=$MODDIR/grape \
+#  --with-alberta=$MODDIR/alberta-1.2 \
 
 # make all
 MAKE_FLAGS=
