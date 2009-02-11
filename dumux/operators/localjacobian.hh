@@ -58,48 +58,46 @@ in a derived class via the virtual assemble method.
 
 The template parameters are:
 - Imp  The implementation of the Interface with Barton-Nackman
-- G    A grid type
-- RT   The field type used in the elements of the jacobian matrix
-- m    number of degrees of freedom per node (system size)
+- Grid    A grid type
+- Scalar   The field type used in the elements of the jacobian matrix
+- numEq    number of degrees of freedom per node (system size)
 */
-template<class Imp, class G, class RT, int m>
-class LocalJacobian : public LocalStiffness<Imp, G, RT, m>
+template<class Imp, class Grid, class Scalar, int numEq>
+class LocalJacobian : public LocalStiffness<Imp, Grid, Scalar, numEq>
 {
     // grid types
-    typedef typename G::ctype DT;
-    typedef typename G::Traits::template Codim<0>::Entity Entity;
-    enum {n=G::dimension};
+    typedef typename Grid::Traits::template Codim<0>::Entity Element;
+    enum {dim=Grid::dimension};
 
 public:
     // types for matrics, vectors and boundary conditions
-    typedef LocalStiffness<Imp, G, RT, m> ThisLocalStiffness;
-    typedef FieldMatrix<RT,m,m> MBlockType;                      // one entry in the stiffness matrix
-    typedef FieldVector<RT,m> VBlockType;                        // one entry in the global vectors
-    typedef array<BoundaryConditions::Flags,m> BCBlockType; // componentwise boundary conditions
-    typedef FVElementGeometry<G> ElementGeometry;
+    typedef LocalStiffness<Imp, Grid, Scalar, numEq> ThisLocalStiffness;
+    typedef FieldVector<Scalar,numEq> SolutionVector;                        // one entry in the global vectors
+    typedef array<BoundaryConditions::Flags,numEq> BCBlockType; // componentwise boundary conditions
+    typedef FVElementGeometry<Grid> ElementGeometry;
     enum {SIZE=8};
 
-    void computeElementData(const Entity& e) {
-        return this->getImp().computeElementData(e);
+    void computeElementData(const Element& element) {
+        return this->getImp().computeElementData(element);
     }
 
-    virtual void updateVariableData(const Entity& e, const VBlockType* sol, int i, bool old = false)
+    virtual void updateVariableData(const Element& element, const SolutionVector* sol, int i, bool old = false)
     {
-        return this->getImp().updateVariableData(e, sol, i, old);
+        return this->getImp().updateVariableData(element, sol, i, old);
     }
 
-    void updateVariableData(const Entity& e, const VBlockType* sol, bool old = false)
+    void updateVariableData(const Element& element, const SolutionVector* sol, bool old = false)
     {
-        return this->getImp().updateVariableData(e, sol, old);
+        return this->getImp().updateVariableData(element, sol, old);
     }
 
     template<class TypeTag>
-    void assemble (const Entity& e, int k = 1)
+    void assemble (const Element& element, int k = 1)
     {
-        fvGeom.update(e);
-        computeElementData(e);
+        fvGeom.update(element);
+        computeElementData(element);
 
-        int size = e.template count<n>();
+        int size = element.template count<dim>();
 
         // set to Zero
         for (int i=0; i < size; i++) {
@@ -108,19 +106,19 @@ public:
             this->def[i] = 0;
         }
 
-        setLocalSolution(e);
+        setLocalSolution(element);
 
-        updateStaticData(e, u);
+        updateStaticData(element, u);
         bool old = true;
-        updateVariableData(e, uold, old);
-        updateVariableData(e, u);
+        updateVariableData(element, uold, old);
+        updateVariableData(element, u);
 
-        localDefect<TypeTag>(e, u);
+        localDefect<TypeTag>(element, u);
 
-        VBlockType bTemp[size];
+        SolutionVector bTemp[size];
         for (int i=0; i<size; i++)
         {
-            for (int equationnumber = 0; equationnumber < m; equationnumber++)
+            for (int equationnumber = 0; equationnumber < numEq; equationnumber++)
                 if (this->bctype[i][equationnumber]==BoundaryConditions::neumann)
                     bTemp[i][equationnumber] = this->def[i][equationnumber];
                 else
@@ -128,19 +126,19 @@ public:
         }
 
         if (analytic) {
-            analyticJacobian<TypeTag>(e, u);
+            analyticJacobian<TypeTag>(element, u);
         }
         else {
-            VBlockType defu[size];
+            SolutionVector defu[size];
             for (int i = 0; i < size; i++)
                 defu[i] = def[i];
-            VBlockType uPlusEps[size];
-            VBlockType uMinusEps[size];
+            SolutionVector uPlusEps[size];
+            SolutionVector uMinusEps[size];
 
             for (int j = 0; j < size; j++)
-                for (int comp = 0; comp < m; comp++)
+                for (int comp = 0; comp < numEq; comp++)
                 {
-                    RT eps = std::max(fabs(1e-5*u[j][comp]), 1e-5);
+                    Scalar eps = std::max(fabs(1e-5*u[j][comp]), 1e-5);
                     for (int i = 0; i < size; i++) {
                         uPlusEps[i] = u[i];
                         uMinusEps[i] = u[i];
@@ -148,32 +146,32 @@ public:
                     uPlusEps[j][comp] += eps;
                     uMinusEps[j][comp] -= eps;
 
-                    updateVariableData(e, uPlusEps, j);
+                    updateVariableData(element, uPlusEps, j);
 
                     // calculate the defect without taking into account BCs
                     // ASSUMES that BCs do not depend on the solution
                     bool withoutBC = false;
-                    localDefect<TypeTag>(e, uPlusEps, withoutBC);
-                    VBlockType defuPlusEps[size];
+                    localDefect<TypeTag>(element, uPlusEps, withoutBC);
+                    SolutionVector defuPlusEps[size];
                     for (int i = 0; i < size; i++)
                         defuPlusEps[i] = def[i];
 
-                    updateVariableData(e, uMinusEps, j);
-                    localDefect<TypeTag>(e, uMinusEps, withoutBC);
+                    updateVariableData(element, uMinusEps, j);
+                    localDefect<TypeTag>(element, uMinusEps, withoutBC);
 
-                    updateVariableData(e, u, j);
+                    updateVariableData(element, u, j);
 
-                    RT oneByEps = 0.5/eps;
+                    Scalar oneByEps = 0.5/eps;
                     for (int i = 0; i < size; i++)
-                        for (int compi = 0; compi < m; compi++)
+                        for (int compi = 0; compi < numEq; compi++)
                             this->A[i][j][compi][comp] = oneByEps*(defuPlusEps[i][compi] - def[i][compi]);
                 }
         }
 
         //        for (int i = 0; i < size; i++)
-        //            for (int compi = 0; compi < m; compi++) {
+        //            for (int compi = 0; compi < numEq; compi++) {
         //                for (int j = 0; j < size; j++) {
-        //                    for (int compj = 0; compj < m; compj++)
+        //                    for (int compj = 0; compj < numEq; compj++)
         //                        std::cout << std::setw(9) << this->A[i][j][compi][compj] << ", ";
         //                    std::cout << "\t";
         //                }
@@ -183,7 +181,7 @@ public:
 
         for (int i=0; i<size; i++)
         {
-            for (int equationnumber = 0; equationnumber < m; equationnumber++)
+            for (int equationnumber = 0; equationnumber < numEq; equationnumber++)
                 if (this->bctype[i][equationnumber]==BoundaryConditions::neumann) {
                     this->b[i][equationnumber] = bTemp[i][equationnumber];
                 }
@@ -193,29 +191,29 @@ public:
     }
 
     template<class TypeTag>
-    void localDefect (const Entity& e, const VBlockType* sol, bool withBC = true)
+    void localDefect (const Element& element, const SolutionVector* sol, bool withBC = true)
     {
-        this->getImp().template localDefect<TypeTag>(e, sol, withBC);
+        this->getImp().template localDefect<TypeTag>(element, sol, withBC);
     }
 
-    void setLocalSolution (const Entity& e)
+    void setLocalSolution (const Element& element)
     {
-        this->getImp().setLocalSolution(e);
-    }
-
-    template<class TypeTag>
-    void assembleBC (const Entity& e)
-    {
-        this->getImp().template assembleBC<TypeTag>(e);
+        this->getImp().setLocalSolution(element);
     }
 
     template<class TypeTag>
-    void analyticJacobian (const Entity& e, const VBlockType* sol)
+    void assembleBC (const Element& element)
     {
-        this->getImp().template analyticJacobian<TypeTag>(e, sol);
+        this->getImp().template assembleBC<TypeTag>(element);
     }
 
-    virtual void updateStaticData (const Entity& e, VBlockType* sol)
+    template<class TypeTag>
+    void analyticJacobian (const Element& element, const SolutionVector* sol)
+    {
+        this->getImp().template analyticJacobian<TypeTag>(element, sol);
+    }
+
+    virtual void updateStaticData (const Element& element, SolutionVector* sol)
     {
         return;
     }
@@ -229,7 +227,7 @@ public:
     /*! Access defect for each degree of freedom. Elements are
     undefined without prior call to the assemble method.
     */
-    const VBlockType& defect (int i) const
+    const SolutionVector& defect (int i) const
     {
         return def[i];
     }
@@ -245,9 +243,9 @@ public:
     }
 
     ElementGeometry fvGeom;
-    VBlockType def[SIZE];
-    VBlockType u[SIZE];
-    VBlockType uold[SIZE];
+    SolutionVector def[SIZE];
+    SolutionVector u[SIZE];
+    SolutionVector uold[SIZE];
     bool analytic;
 };
 
