@@ -4,6 +4,7 @@
 
 #include <dune/grid/common/gridinfo.hh>
 #include <dune/grid/io/file/dgfparser.hh>
+#include <dune/grid/uggrid.hh>
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/mpihelper.hh>
@@ -19,8 +20,9 @@ int main(int argc, char** argv)
         // or long double)
         const int dim = 2;
         typedef double                                Scalar;
-        typedef Dune::YaspGrid<dim>                   Grid;
+//        typedef Dune::YaspGrid<dim>                   Grid;
 //        typedef Dune::ALUSimplexGrid<dim,dim>         Grid;
+        typedef Dune::UGGrid<dim>                     Grid;
         typedef Dune::GridPtr<Grid>                   GridPointer;
         typedef Dune::NewBlobProblem<Grid, Scalar>    Problem;
         typedef Problem::DomainTraits::GlobalPosition GlobalPosition;
@@ -30,7 +32,7 @@ int main(int argc, char** argv)
 
         // parse the command line arguments for the program
         if (argc != 4) {
-            std::cout << boost::format("usage: %s tEnd dt\n")%argv[0];
+            std::cout << boost::format("usage: %s tEnd dt dgfFile\n")%argv[0];
             return 1;
         }
 
@@ -38,6 +40,14 @@ int main(int argc, char** argv)
         std::istringstream(argv[1]) >> tEnd;
         std::istringstream(argv[2]) >> dt;
 
+        const char *dgfFileName = argv[3];
+        
+        // load the grid from file
+        GridPointer gridPtr = GridPointer(dgfFileName,
+                                          Dune::MPIHelper::getCommunicator());
+        Dune::gridinfo(*gridPtr);
+
+/*
         Grid grid(
 #ifdef HAVE_MPI
                   Dune::MPIHelper::getCommunicator(),
@@ -46,9 +56,10 @@ int main(int argc, char** argv)
                   Dune::FieldVector<int,dim>(40), // number of cells
                   Dune::FieldVector<bool,dim>(false), // periodic
                   2); // overlap
+*/
 
         // instantiate and run the concrete problem
-        Problem problem(&grid, dt, tEnd);
+        Problem problem(&(*gridPtr), dt, tEnd);
         if (!problem.simulate())
             return 2;
         

@@ -72,6 +72,7 @@ namespace Dune
             dim            = DomTraits::dim,
             dimWorld       = DomTraits::dimWorld,
             numEq          = BoxTraits::numEq,
+
             pWIdx          = PwSnTraits::pWIdx,
             snIdx          = PwSnTraits::snIdx
         };
