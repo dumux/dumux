@@ -1,22 +1,20 @@
 #include "config.h"
 #include <iostream>
-#ifdef HAVE_UG
 #include <iomanip>
 #include <dune/grid/utility/gridtype.hh>
 #include <dune/grid/common/gridinfo.hh>
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
-#include <dune/grid/io/file/dgfparser/dgfug.hh>
-#include <dune/grid/io/file/dgfparser/dgfs.hh>
 #include <dune/grid/io/file/dgfparser/dgfalu.hh>
-#include <dune/grid/io/file/dgfparser/dgfalberta.hh>
-#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
-#include "lenswithelementid.hh"
-#include "dumux/twophase/fv/boxpwsn_deprecated.hh"
+#include "lensproblem.hh"
+#include "lenssoilwithid.hh"
+#include "dumux/twophase/fv/boxpwsn.hh"
 #include "dumux/timedisc/timeloop.hh"
-#include "dumux/material/vangenuchtenlaw_deprecated.hh"
+#include "dumux/material/phaseproperties/phaseproperties2p.hh"
+#include "dumux/material/twophaserelations.hh"
+#include "dumux/io/vtkmultiwriter.hh"
 
 int main(int argc, char** argv)
 {
@@ -25,12 +23,13 @@ int main(int argc, char** argv)
     const int dim=2;
     typedef double NumberType;
     Dune::FieldVector<NumberType, dim> outerLowerLeft(0);
-    Dune::FieldVector<NumberType, dim> outerUpperRight(500);
-    outerUpperRight[1] = 1000;
+    Dune::FieldVector<NumberType, dim> outerUpperRight(6);
+    outerUpperRight[1] = 4;
     Dune::FieldVector<NumberType, dim> innerLowerLeft(1);
     innerLowerLeft[1] = 2;
     Dune::FieldVector<NumberType, dim> innerUpperRight(4);
     innerUpperRight[1] = 3;
+
     if (argc != 4) {
       std::cout << "usage: test_elementid basefilename tEnd dt" << std::endl;
       return 0;
@@ -44,39 +43,40 @@ int main(int argc, char** argv)
     double dt;
     is2 >> dt;
 
+    typedef Dune::ALUSimplexGrid<dim,dim> GridType;
+  // create grid pointer, GridType is defined by gridtype.hh
+  Dune::GridPtr<GridType> gridPtr( argv[1] );
 
+  // grid reference
+  GridType& grid = *gridPtr;
+  grid.globalRefine(2);
 
-    // create a grid object
-    //typedef Dune::SGrid<dim,dim> GridType;
-    //typedef Dune::ALUSimplexGrid<dim,dim> GridType;
-    //typedef Dune::AlbertaGrid<dim,dim> GridType;
-    //typedef Dune::YaspGrid<dim,dim> GridType;
-//    typedef Dune::UGGrid<dim> GridType;
-//      typedef Dune::ALUCubeGrid<dim,dim> GridType;
-      typedef Dune::ALUSimplexGrid<dim,dim> GridType;
-    // create grid pointer, GridType is defined by gridtype.hh
-    Dune::GridPtr<GridType> gridPtr( argv[1] );
-
-    // grid reference
-    GridType& grid = *gridPtr;
-
-// hussam   grid.globalRefine(1); //3
-
+    // print some information about the grid
     Dune::gridinfo(grid);
 
-    Air air;
-    Water water;
-    Dune::VanGenuchtenLaw law(water, air);
-    Dune::LensWithElementID<GridType, NumberType> problem(gridPtr, law, outerLowerLeft, outerUpperRight, innerLowerLeft, innerUpperRight);
+    // choose fluids
+    Dune::Water wPhase;
+    Dune::DNAPL nPhase;
+    // create soil object
+    Dune::LensSoilWithId<GridType, NumberType> soil(gridPtr, outerLowerLeft,
+            outerUpperRight, innerLowerLeft, innerUpperRight);
+    // create material law object
+    Dune::TwoPhaseRelations<GridType, NumberType> law(soil, wPhase, nPhase);
 
-    typedef Dune::BoxPwSn<GridType, NumberType> TwoPhase;
+    // create Prolem object
+    Dune::LensProblem<GridType, NumberType> problem(wPhase, nPhase, soil, outerLowerLeft,
+            outerUpperRight, innerLowerLeft, innerUpperRight, law);
+
+    typedef Dune::VtkMultiWriter<GridType::LeafGridView> MultiWriter;
+    typedef Dune::BoxPwSn<GridType, NumberType, MultiWriter> TwoPhase;
     TwoPhase twoPhase(grid, problem);
 
-    Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt, "layers", 1);
+    Dune::TimeLoop<GridType, TwoPhase, true> timeloop(0, tEnd, dt, "dummy", 1);
 
     Dune::Timer timer;
     timer.reset();
-    timeloop.execute(twoPhase);
+    MultiWriter writer("out-elementid");
+    timeloop.executeMultiWriter(twoPhase, writer);
     std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
 
     //printvector(std::cout, *twoPhase.u, "u", "row", 2, 1, 3);
@@ -90,17 +90,3 @@ int main(int argc, char** argv)
     std::cerr << "Unknown exception thrown!" << std::endl;
   }
 }
-#else
-
-int main (int argc , char **argv) try
-{
-  std::cout << "Please install the UG library." << std::endl;
-
-  return 1;
-}
-catch (...)
-{
-    std::cerr << "Generic exception!" << std::endl;
-    return 2;
-}
-#endif
