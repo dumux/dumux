@@ -3,6 +3,8 @@
 #ifndef DUNE_TWOPHASEPROBLEM_HH
 #define DUNE_TWOPHASEPROBLEM_HH
 
+#warning this file is deprecated, please use twophaseproblem.hh instead
+
 #include<iostream>
 #include<iomanip>
 

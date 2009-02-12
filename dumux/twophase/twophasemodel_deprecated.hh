@@ -3,6 +3,8 @@
 #ifndef DUNE_TWOPHASEMODEL_HH
 #define DUNE_TWOPHASEMODEL_HH
 
+#warning this file is deprecated, please use twophasemodel.hh instead
+
 #include <dune/disc/shapefunctions/lagrangeshapefunctions.hh>
 #include "dumux/operators/p1operatorextended.hh"
 #include "dumux/nonlinear/nonlinearmodel.hh"

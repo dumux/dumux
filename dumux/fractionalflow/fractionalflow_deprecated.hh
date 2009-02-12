@@ -3,6 +3,8 @@
 #ifndef DUNE_FRACTIONALFLOW_HH
 #define DUNE_FRACTIONALFLOW_HH
 
+#warning this file is deprecated, please use fractionalflow.hh instead
+
 #include "dumux/diffusion/diffusion_deprecated.hh"
 #include "dumux/transport/transport_deprecated.hh"
 

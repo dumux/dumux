@@ -3,6 +3,8 @@
 #ifndef DUNE_DIFFUSION_DEPRECATED_HH
 #define DUNE_DIFFUSION_DEPRECATED_HH
 
+#warning this file is deprecated, please use diffusion.hh instead
+
 #include "dumux/diffusion/diffusionproblem.hh"
 
 /**

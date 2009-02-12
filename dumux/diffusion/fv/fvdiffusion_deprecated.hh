@@ -3,6 +3,8 @@
 #ifndef DUNE_FVDIFFUSION_DEPRECATED_HH
 #define DUNE_FVDIFFUSION_DEPRECATED_HH
 
+#warning this file is deprecated, please use fvdiffusion.hh instead
+
 #include <dune/common/helpertemplates.hh>
 #include <dune/common/typetraits.hh>
 #include <dune/grid/common/mcmgmapper.hh>

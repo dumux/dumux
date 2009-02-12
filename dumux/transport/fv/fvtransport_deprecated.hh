@@ -3,6 +3,8 @@
 #ifndef DUNE_FVTRANSPORT_DEPRECATED_HH
 #define DUNE_FVTRANSPORT_DEPRECATED_HH
 
+#warning this file is deprecated, please use fvtransport.hh instead
+
 #include <dune/common/helpertemplates.hh>
 #include <dune/common/typetraits.hh>
 #include <dune/grid/common/mcmgmapper.hh>

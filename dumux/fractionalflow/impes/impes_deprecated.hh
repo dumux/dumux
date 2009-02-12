@@ -3,6 +3,8 @@
 #ifndef DUNE_IMPES_HH
 #define DUNE_IMPES_HH
 
+#warning this file is deprecated, please use impes.hh instead
+
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include "dumux/fractionalflow/fractionalflow_deprecated.hh"
 

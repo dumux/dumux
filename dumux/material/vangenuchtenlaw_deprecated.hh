@@ -3,6 +3,8 @@
 #ifndef DUNE_VANGENUCHTENLAW_HH
 #define DUNE_VANGENUCHTENLAW_HH
 
+#warning this file is deprecated, please use relperm_pc_law.hh instead
+
 #include "dumux/material/twophaserelations_deprecated.hh"
 
 namespace Dune

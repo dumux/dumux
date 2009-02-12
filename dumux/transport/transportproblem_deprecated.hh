@@ -3,6 +3,8 @@
 #ifndef DUNE_TRANSPORTPROBLEM_HH
 #define DUNE_TRANSPORTPROBLEM_HH
 
+#warning this file is deprecated, please use transportproblem.hh instead
+
 #include<iostream>
 #include<iomanip>
 

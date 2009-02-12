@@ -3,6 +3,8 @@
 #ifndef DUNE_TRANSPORT_DEPRECATED_HH
 #define DUNE_TRANSPORT_DEPRECATED_HH
 
+#warning this file is deprecated, please use transport.hh instead
+
 #include "dumux/transport/transportproblem_deprecated.hh"
 
 /**

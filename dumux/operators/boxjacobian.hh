@@ -137,6 +137,9 @@ public:
             if (withBC) {
                 // assemble boundary conditions
     			this->getImp().assembleBC<TypeTag> (e);
+//    			for (int i = 0; i < this->fvGeom.numVertices; i++)
+//    			    std::cout << this->fvGeom.subContVol[i].global << ": cond = " << this->bctype[i][0] << std::endl;
+
 //                assembleBC<TypeTag> (e);
 
                 // add to defect

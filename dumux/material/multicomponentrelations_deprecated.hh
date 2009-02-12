@@ -3,6 +3,8 @@
 #ifndef DUNE_MULTICOMPONENTRELATIONS_HH
 #define DUNE_MULTICOMPONENTRELATIONS_HH
 
+#warning this file is deprecated, please use multicomponentrelations.hh instead
+
 #include <dumux/material/solubilityco2.hh>
 #include <dumux/material/properties.hh>
 

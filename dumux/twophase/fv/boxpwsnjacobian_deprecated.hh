@@ -3,6 +3,8 @@
 #ifndef DUNE_BOXPWSNJACOBIAN_HH
 #define DUNE_BOXPWSNJACOBIAN_HH
 
+#warning this file is deprecated, please use boxpwsnjacobian.hh instead
+
 #include<map>
 #include<iostream>
 #include<iomanip>

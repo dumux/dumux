@@ -3,6 +3,8 @@
 #ifndef DUNE_DIFFUSIONVELOCITY_DEPRECATED_HH
 #define DUNE_DIFFUSIONVELOCITY_DEPRECATED_HH
 
+#warning this file is deprecated, please use fvdiffusionvelocity.hh instead
+
 #include "dumux/diffusion/fv/fvdiffusion_deprecated.hh"
 
 namespace Dune {

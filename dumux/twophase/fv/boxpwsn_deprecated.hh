@@ -3,6 +3,8 @@
 #ifndef DUNE_BOXPWSN_HH
 #define DUNE_BOXPWSN_HH
 
+#warning this file is deprecated, please use boxpwsn.hh instead
+
 #include<dune/istl/operators.hh>
 #include<dune/istl/solvers.hh>
 #include<dune/istl/preconditioners.hh>

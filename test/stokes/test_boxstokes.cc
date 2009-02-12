@@ -119,7 +119,7 @@ int main(int argc, char** argv)
     if (refinementSteps)
         grid.globalRefine(refinementSteps);
 
-    Dune::SinProblem2<GridType, double> problem;
+    Dune::SinProblem<GridType, double> problem;
     typedef Dune::LeafP1BoxStokes<GridType, NumberType, dim> BoxStokes;
     BoxStokes boxStokes(grid, problem);
 

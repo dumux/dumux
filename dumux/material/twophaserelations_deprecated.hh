@@ -3,6 +3,8 @@
 #ifndef DUNE_RELATIVEPERMEABILITY_HH
 #define DUNE_RELATIVEPERMEABILITY_HH
 
+#warning this file is deprecated, please use twophaserelations.hh instead
+
 #include <dumux/material/properties.hh>
 /**
  * \defgroup material Relative Permeabilities and material properties
