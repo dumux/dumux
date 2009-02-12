@@ -1,9 +1,9 @@
-%  The DuMuX Logo 
+%  The DuMuX Logo              Metapost version 1.000 or higher needed!
 %  design by Jochen Fritz 2009
 %  
 %  This is the metapost file for the colored logo. To compile a b/w logo, simply comment the drawoptions
 %  in lines 37 and 42. To scale the logo to different sizes, alter u = ... in line 19 but don't forget to
-%  alter the fontsizes in line 16 and 35 by the same factor!!
+%  alter the fontsizes in line 16 and 35 by the same factor!! 
 
 prologues:=3;
 verbatimtex
