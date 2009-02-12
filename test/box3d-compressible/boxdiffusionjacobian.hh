@@ -17,7 +17,7 @@
 
 #include<dune/disc/shapefunctions/lagrangeshapefunctions.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
-#include<dumux/functions/p1functionextended.hh>
+#include<dune/disc/functions/p1function.hh>
 
 #include<dumux/operators/boxjacobian.hh>
 #include "diffusionparameters.hh"
@@ -39,7 +39,7 @@ namespace Dune
     - G     a DUNE grid type
     - RT    type used for return values
   */
-  template<class G, class RT, class BoxFunction = LeafP1FunctionExtended<G, RT, 1> >
+  template<class G, class RT, class BoxFunction = LeafP1Function<G, RT, 1> >
   class BoxDiffusionJacobian
     : public BoxJacobian<BoxDiffusionJacobian<G,RT,BoxFunction>,G,RT,1,BoxFunction>
   {

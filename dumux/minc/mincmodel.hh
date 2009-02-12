@@ -41,10 +41,10 @@ public:
 
 template<class G, class RT, class ProblemType, class LocalJac, int m> class LeafP1MincModel :
     public MincModel<G, RT, ProblemType, LocalJac,
-             Dune::LeafP1FunctionExtended<G, RT, m>, LeafP1OperatorAssembler<G, RT, m> > {
+             Dune::LeafP1Function<G, RT, m>, LeafP1OperatorAssembler<G, RT, m> > {
 public:
     // define the function type:
-    typedef LeafP1FunctionExtended<G, RT, m> FunctionType;
+    typedef LeafP1Function<G, RT, m> FunctionType;
 
     // define the operator assembler type:
     typedef LeafP1OperatorAssembler<G, RT, m> OperatorAssembler;

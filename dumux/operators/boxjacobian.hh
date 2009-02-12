@@ -19,8 +19,8 @@
 
 #include<dune/disc/shapefunctions/lagrangeshapefunctions.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
+#include<dune/disc/functions/p1function.hh>
 
-#include"dumux/functions/p1functionextended.hh"
 #include"localjacobian.hh"
 
 /**
@@ -58,7 +58,7 @@ namespace Dune {
  - RT    type used for return values
  */
 template<class Imp, class G, class RT, int m,
-    class BoxFunction = LeafP1FunctionExtended<G, RT, m> >
+    class BoxFunction = LeafP1Function<G, RT, m> >
 class BoxJacobian :
 public LocalJacobian<Imp,G,RT,m> {
     // mapper: one data element per vertex

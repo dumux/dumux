@@ -51,7 +51,7 @@ int main (int argc , char **argv) try
     Dune::VanGenuchtenLaw law(water, dnapl);
 
     // create grid pointer, GridType is defined by gridtype.hh
-    Dune::GridPtr<GridType> gridPtrWithID( "grids/rectangle.dgf" );
+    Dune::GridPtr<GridType> gridPtrWithID( "grids/unitcube2.dgf" );
 
     // grid reference
     GridType& gridWithID = *gridPtrWithID;

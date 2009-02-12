@@ -62,7 +62,7 @@ namespace Dune
     - Grid  a DUNE grid type
     - RT    type used for return values
   */
-  template<class G, class RT, class BoxFunction = LeafP1FunctionExtended<G, RT, 2> >
+  template<class G, class RT, class BoxFunction = LeafP1Function<G, RT, 2> >
   class BoxPwSnJacobian
     : public BoxJacobian<BoxPwSnJacobian<G,RT,BoxFunction>,G,RT,2,BoxFunction>
   {

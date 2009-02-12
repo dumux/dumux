@@ -23,8 +23,8 @@
 #include<dune/istl/bcrsmatrix.hh>
 #include<dune/disc/shapefunctions/lagrangeshapefunctions.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
+#include<dune/disc/functions/p1function.hh>
 #include"localstiffnessextended.hh"
-#include"../functions/p1functionextended.hh" // for parallel extender class
 
 /**
  * @file
@@ -656,12 +656,12 @@ namespace Dune
           std::map<int,GIDSet> borderlinks;
 
           // compute extension
-          P1ExtendOverlap<G,GV,VM,LC> extender(lc);
-#if HAVE_MPI
-          extender.extend(g,gv,vertexmapper,borderlinks,extraDOFs,gid2index,index2gid);
-#else
-          extender.extend(g,gv,vertexmapper,borderlinks,extraDOFs,gid2index);
-#endif
+          P1ExtendOverlap<GV,VM,LC> extender(lc);
+//#if HAVE_MPI
+//          extender.extend(g,gv,vertexmapper,borderlinks,extraDOFs,gid2index,index2gid);
+//#else
+          extender.extend(gv,vertexmapper,borderlinks,extraDOFs,gid2index);
+//#endif
           // put in extra links due to overlap
           // loop over all neighbors of border vertices
           for (typename std::map<int,GIDSet>::iterator i=borderlinks.begin(); i!=borderlinks.end(); ++i)
@@ -1060,7 +1060,7 @@ namespace Dune
     typedef typename GV::template Codim<n>::Iterator VIterator;
     typedef typename G::template Codim<0>::HierarchicIterator HierarchicIterator;
     typedef typename G::template Codim<0>::EntityPointer EEntityPointer;
-    typedef typename P1FunctionExtended<GV,RT,LC,m>::RepresentationType VectorType;
+    typedef typename P1Function<GV,RT,LC,m>::RepresentationType VectorType;
     typedef typename VectorType::block_type VBlockType;
     typedef typename P1OperatorBase<TypeTag,G,RT,GV,LC,m>::RepresentationType MatrixType;
         typedef typename MatrixType::field_type MFieldType;
@@ -1167,7 +1167,7 @@ namespace Dune
 
      */
         template<class I>
-    void assemble (LocalStiffness<I,G,RT,m>& loc, P1FunctionExtended<GV,RT,LC,m>& u, P1FunctionExtended<GV,RT,LC,m>& f)
+    void assemble (LocalStiffness<I,G,RT,m>& loc, P1Function<GV,RT,LC,m>& u, P1Function<GV,RT,LC,m>& f)
     {
       // check size
        if ((*u).N()!=this->A.M() || (*f).N()!=this->A.N())
@@ -1466,7 +1466,7 @@ namespace Dune
     }
 
     //! assemble operator, rhs and Dirichlet boundary conditions
-    void interpolateHangingNodes (P1FunctionExtended<GV,RT,LC,m>& u)
+    void interpolateHangingNodes (P1Function<GV,RT,LC,m>& u)
     {
       // allocate flag vector to note hanging nodes whose row has been assembled
       std::vector<unsigned char> treated(this->vertexmapper.size());

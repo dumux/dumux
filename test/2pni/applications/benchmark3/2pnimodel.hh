@@ -39,10 +39,10 @@ public:
 
 template<class G, class RT, class ProblemType, class LocalJac, int m=3> class LeafP1TwoPhaseModel :
     public TwoPhaseHeatModel<G, RT, ProblemType, LocalJac,
-        LeafP1FunctionExtended<G, RT, m>, LeafP1OperatorAssembler<G, RT, m> > {
+        LeafP1Function<G, RT, m>, LeafP1OperatorAssembler<G, RT, m> > {
 public:
     // define the function type:
-    typedef LeafP1FunctionExtended<G, RT, m> FunctionType;
+    typedef LeafP1Function<G, RT, m> FunctionType;
 
     // define the operator assembler type:
     typedef LeafP1OperatorAssembler<G, RT, m> OperatorAssembler;

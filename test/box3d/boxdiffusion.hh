@@ -61,11 +61,11 @@ namespace Dune
 
   template<class G, class RT, int m=1>
   class LeafP1BoxDiffusion : public BoxDiffusion<G, RT, DiffusionParameters<G, RT>, BoxDiffusionJacobian<G, RT>,
-                                        LeafP1FunctionExtended<G, RT, m>, LeafP1OperatorAssembler<G, RT, m> >
+                                        LeafP1Function<G, RT, m>, LeafP1OperatorAssembler<G, RT, m> >
   {
   public:
       // define the function type:
-      typedef LeafP1FunctionExtended<G, RT, m> FunctionType;
+      typedef LeafP1Function<G, RT, m> FunctionType;
 
       // define the operator assembler type:
       typedef LeafP1OperatorAssembler<G, RT, m> OperatorAssembler;

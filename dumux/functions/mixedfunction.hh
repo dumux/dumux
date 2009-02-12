@@ -28,7 +28,7 @@
 // same directory includes
 #include<dune/disc/functions/functions.hh>
 #include<dune/disc/functions/p0function.hh>
-#include"dumux/functions/p1functionextended.hh"
+#include<dune/disc/functions/p1function.hh>
 #include"dumux/shapefunctions/CRshapefunctions.hh"
 
 /**

@@ -44,10 +44,10 @@ public:
 
 template<class Grid, class Scalar, class ProblemType, class LocalJac, int numEq=3> class LeafP1TwoPhaseModel :
     public TwoPhaseHeatModel<Grid, Scalar, ProblemType, LocalJac,
-        LeafP1FunctionExtended<Grid, Scalar, numEq>, LeafP1OperatorAssembler<Grid, Scalar, numEq> > {
+        LeafP1Function<Grid, Scalar, numEq>, LeafP1OperatorAssembler<Grid, Scalar, numEq> > {
 public:
     // define the function type:
-    typedef LeafP1FunctionExtended<Grid, Scalar, numEq> FunctionType;
+    typedef LeafP1Function<Grid, Scalar, numEq> FunctionType;
 
     // define the operator assembler type:
     typedef LeafP1OperatorAssembler<Grid, Scalar, numEq> OperatorAssembler;

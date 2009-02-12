@@ -42,7 +42,7 @@ namespace Dune
     - Scalar  type used for return values
   */
 
-  template<class Grid, class Scalar, class BoxFunction = LeafP1FunctionExtended<Grid, Scalar, 2> > class BoxPnSwJacobian
+  template<class Grid, class Scalar, class BoxFunction = LeafP1Function<Grid, Scalar, 2> > class BoxPnSwJacobian
     : public BoxJacobian<BoxPnSwJacobian<Grid,Scalar,BoxFunction>,Grid,Scalar,2,BoxFunction>
   {
     typedef typename Grid::Traits::template Codim<0>::Entity Entity;

@@ -61,11 +61,11 @@ public:
 
 template<class G, class RT, int m=1>
 class LeafP1ParallelBoxDiffusion : public ParallelBoxDiffusion<G, RT, DiffusionParameters<G, RT>, ParallelBoxDiffusionJacobian<G, RT>,
-LeafP1FunctionExtended<G, RT, m>, LeafP1OperatorAssembler<G, RT, m> >
+LeafP1Function<G, RT, m>, LeafP1OperatorAssembler<G, RT, m> >
 {
 public:
     // define the function type:
-        typedef LeafP1FunctionExtended<G, RT, m> FunctionType;
+        typedef LeafP1Function<G, RT, m> FunctionType;
 
         // define the operator assembler type:
         typedef LeafP1OperatorAssembler<G, RT, m> OperatorAssembler;
@@ -205,7 +205,7 @@ public:
         virtual void solve()
         {
             typedef typename G::Traits::GlobalIdSet::IdType GlobalIdType;
-            typedef typename Dune::LeafP1FunctionExtended<G,RT>::P1IndexInfoFromGrid P1IndexInfoFromGrid;
+            typedef typename Dune::LeafP1Function<G,RT>::P1IndexInfoFromGrid P1IndexInfoFromGrid;
 
             Dune::MatrixAdapter<MatrixType,VectorType,VectorType> op(*(this->A));
             //SeqPardiso<MatrixType,VectorType,VectorType> ilu0;

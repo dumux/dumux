@@ -5,6 +5,7 @@
 #include <dune/grid/common/gridinfo.hh>
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
 #include <dune/grid/io/file/dgfparser/dgfalu.hh>
+#include <dune/grid/io/file/dgfparser/dgfug.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
@@ -43,7 +44,7 @@ int main(int argc, char** argv)
     double dt;
     is2 >> dt;
 
-    typedef Dune::ALUSimplexGrid<dim,dim> GridType;
+    typedef Dune::UGGrid<dim> GridType;
   // create grid pointer, GridType is defined by gridtype.hh
   Dune::GridPtr<GridType> gridPtr( argv[1] );
 

@@ -63,13 +63,13 @@ namespace Dune
 
   template<class Grid, class Scalar, int dim>
   class LeafP1BoxStokes : public BoxStokes<Grid, Scalar, StokesProblem<Grid, Scalar>, BoxStokesJacobian<Grid, Scalar>,
-                                        LeafP1FunctionExtended<Grid, Scalar, dim+1>, LeafP1OperatorAssembler<Grid, Scalar, dim+1> >
+                                        LeafP1Function<Grid, Scalar, dim+1>, LeafP1OperatorAssembler<Grid, Scalar, dim+1> >
   {
   public:
       enum{numEq = dim+1};
 
       // define the function type:
-      typedef LeafP1FunctionExtended<Grid, Scalar, numEq> FunctionType;
+      typedef LeafP1Function<Grid, Scalar, numEq> FunctionType;
 
       // define the operator assembler type:
       typedef LeafP1OperatorAssembler<Grid, Scalar, numEq> OperatorAssembler;

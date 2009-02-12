@@ -27,7 +27,7 @@ public:
 
     const LocalJacobian &localJacobian() const
         { return localJacobian_; };
-    
+
     //! return const reference to solution vector
     const FunctionType& operator* () const
     {
@@ -98,11 +98,11 @@ localJacobian_(prob, false, g, u, g.overlapSize(0)>0)
 
 template<class G, class RT, class ProblemType, class LocalJacobian, int m=1>
 class LeafP1NonlinearModel
-: public NonlinearModel<G, RT, ProblemType, LocalJacobian, LeafP1FunctionExtended<G, RT, m>, LeafP1OperatorAssembler<G, RT, m> >
+: public NonlinearModel<G, RT, ProblemType, LocalJacobian, LeafP1Function<G, RT, m>, LeafP1OperatorAssembler<G, RT, m> >
 {
 public:
     // define the function type:
-    typedef LeafP1FunctionExtended<G, RT> FunctionType;
+    typedef LeafP1Function<G, RT> FunctionType;
 
     // define the operator assembler type:
     typedef LeafP1OperatorAssembler<G, RT, m> OperatorAssembler;

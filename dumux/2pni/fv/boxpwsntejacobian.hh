@@ -54,7 +54,7 @@ namespace Dune
  - Grid  a DUNE grid type
  - Scalar    type used for return values
  */
-template<class Grid, class Scalar, class BoxFunktion = LeafP1FunctionExtended<
+template<class Grid, class Scalar, class BoxFunktion = LeafP1Function<
         Grid, Scalar, 3> >
 class BoxPwSnTeJacobian: public BoxJacobian<BoxPwSnTeJacobian<Grid, Scalar,
         BoxFunktion> , Grid, Scalar, 3, BoxFunktion>
