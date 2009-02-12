@@ -56,68 +56,68 @@ namespace Dune
         typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
 
         RichardsSoil():Matrix2p<Grid,Scalar>()
-            {
-                Kout_ = 0.;
-                for(int i = 0; i < dim; i++)
-                    Kout_[i][i] = 5e-10;
-            }
+        {
+            Kout_ = 0.;
+            for(int i = 0; i < dim; i++)
+                Kout_[i][i] = 5e-10;
+        }
 
         ~RichardsSoil()
-            {}
+        {}
 
         const FieldMatrix<CoordScalar,dim,dim> &K (const GlobalPosition &x, const Element& e, const LocalPosition &xi)
-            {
-                return Kout_;
-            }
+        {
+            return Kout_;
+        }
 
         double porosity(const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
-            {
-                return 0.4;
-            }
+        {
+            return 0.4;
+        }
 
         double Sr_w(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double T) const
-            {
-                return 0.05;
-            }
+        {
+            return 0.05;
+        }
 
         double Sr_n(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double T) const
-            {
-                return 0.0;
-            }
+        {
+            return 0.0;
+        }
 
         /* ATTENTION: define heat capacity per cubic meter! Be sure, that it corresponds to porosity!
          * Best thing will be to define heatCap = (specific heatCapacity of material) * density * porosity*/
         double heatCap(const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
-            {
-                return     790 /* spec. heat cap. of granite */
-                    * 2700 /* density of granite */
-                    * porosity(x, e, xi);
-            }
+        {
+            return     790 /* spec. heat cap. of granite */
+                * 2700 /* density of granite */
+                * porosity(x, e, xi);
+        }
 
         double heatCond(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double sat) const
-            {
-                static const double lWater = 0.6;
-                static const double lGranite = 2.8;
-                double poro = porosity(x, e, xi);
-                double lsat = pow(lGranite, (1-poro)) * pow(lWater, poro);
-                double ldry = pow(lGranite, (1-poro));
-                return ldry + sqrt(sat) * (ldry - lsat);
-            }
+        {
+            static const double lWater = 0.6;
+            static const double lGranite = 2.8;
+            double poro = porosity(x, e, xi);
+            double lsat = pow(lGranite, (1-poro)) * pow(lWater, poro);
+            double ldry = pow(lGranite, (1-poro));
+            return ldry + sqrt(sat) * (ldry - lsat);
+        }
 
         std::vector<double> paramRelPerm(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double T) const
-            {
-                // example for Brooks-Corey parameters
-                std::vector<double> param(2);
-                param[0] = 0; // pCMin
-                param[1] = 1e4; // pCMax
+        {
+            // example for Brooks-Corey parameters
+            std::vector<double> param(2);
+            param[0] = 0; // pCMin
+            param[1] = 1e5; // pCMax
 
-                return param;
-            }
+            return param;
+        }
 
         typename Matrix2p<Grid,Scalar>::modelFlag relPermFlag(const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
-            {
-                return Matrix2p<Grid,Scalar>::linear;
-            }
+        {
+            return Matrix2p<Grid,Scalar>::linear;
+        }
 
     private:
         FieldMatrix<Scalar,dim,dim> Kout_;
@@ -134,7 +134,7 @@ namespace Dune
      */
     template<class GridT, class ScalarT>
     class NewRichardsProblem : public BasicDomain<GridT,
-                                                   ScalarT>
+                                                  ScalarT>
     {
         typedef GridT                               Grid;
         typedef BasicDomain<Grid, ScalarT>          ParentType;
@@ -200,13 +200,13 @@ namespace Dune
               model_(*this),
               newtonMethod_(model_),
               resultWriter_("new_richards")
-            {
-                initialTimeStepSize_ = dtInitial;
-                endTime_ = tEnd;
+        {
+            initialTimeStepSize_ = dtInitial;
+            endTime_ = tEnd;
 
-                gravity_[0] = 0;
-                gravity_[1] = -9.81;
-            }
+            gravity_ = 0;
+            gravity_[dim - 1] = -9.81;
+        }
 
         ///////////////////////////////////
         // Strings pulled by the TimeManager during the course of the
@@ -216,17 +216,17 @@ namespace Dune
         //! called by the time manager in order to create the initial
         //! solution
         void init()
-            {
-                // set the episode length and initial time step size
-                timeManager_.startNextEpisode(1e100);
-                timeManager_.setStepSize(initialTimeStepSize_);
+        {
+            // set the episode length and initial time step size
+            timeManager_.startNextEpisode(1e100);
+            timeManager_.setStepSize(initialTimeStepSize_);
 
-                // set the initial condition
-                model_.initial();
+            // set the initial condition
+            model_.initial();
 
-                // write the inital solution to disk
+            // write the inital solution to disk
 //                writeCurrentResult_(); // TODO
-            }
+        }
 
         /*!
          * \brief Called by the TimeManager in order to get a time
@@ -240,48 +240,48 @@ namespace Dune
          *       step size for the next time step.
          */
         void timeIntegration(Scalar &stepSize, Scalar &nextStepSize)
-            {
-                // execute the time integration (i.e. Runge-Kutta
-                // or Euler).  TODO/FIXME: Note that the time
-                // integration modifies the curTimeStepSize_ if it
-                // thinks that's appropriate. (IMHO, this is an
-                // incorrect abstraction, the simulation
-                // controller is responsible for adapting the time
-                // step size!)
-                timeIntegration_.execute(*this,
-                                         timeManager_.time(),
-                                         stepSize,
-                                         nextStepSize,
-                                         1e100, // firstDt or maxDt, TODO: WTF?
-                                         endTime_,
-                                         1.0); // CFL factor (not relevant since we use implicit euler)
+        {
+            // execute the time integration (i.e. Runge-Kutta
+            // or Euler).  TODO/FIXME: Note that the time
+            // integration modifies the curTimeStepSize_ if it
+            // thinks that's appropriate. (IMHO, this is an
+            // incorrect abstraction, the simulation
+            // controller is responsible for adapting the time
+            // step size!)
+            timeIntegration_.execute(*this,
+                                     timeManager_.time(),
+                                     stepSize,
+                                     nextStepSize,
+                                     1e100, // firstDt or maxDt, TODO: WTF?
+                                     endTime_,
+                                     1.0); // CFL factor (not relevant since we use implicit euler)
 
-            };
+        };
 
         //! called by the TimeIntegration::execute function to let
         //! time pass.
         void updateModel(Scalar &dt, Scalar &nextDt)
-            {
-                model_.update(dt, nextDt, newtonMethod_, newtonCtl_);
-            }
+        {
+            model_.update(dt, nextDt, newtonMethod_, newtonCtl_);
+        }
 
         //! called by the TimeManager whenever a solution for a
         //! timestep has been computed
         void timestepDone()
-            {
-                if (this->grid().comm().rank() == 0)
-                    std::cout << "Writing result file for current time step\n";
+        {
+            if (this->grid().comm().rank() == 0)
+                std::cout << "Writing result file for current time step\n";
 
-                // write the current result to disk
-                writeCurrentResult_();
+            // write the current result to disk
+            writeCurrentResult_();
 
-                // update the domain with the current solution
+            // update the domain with the current solution
 //                updateDomain_();
 
-                // stop the simulation if reach the end specified time
-                if (timeManager_.time() >= endTime_)
-                    timeManager_.setFinished();
-            };
+            // stop the simulation if reach the end specified time
+            if (timeManager_.time() >= endTime_)
+                timeManager_.setFinished();
+        };
         ///////////////////////////////////
         // End of simulation control stuff
         ///////////////////////////////////
@@ -293,11 +293,11 @@ namespace Dune
         ///////////////////////////////////
         //! Returns the current time step size in seconds
         Scalar timeStepSize() const
-            { return timeManager_.stepSize(); }
+        { return timeManager_.stepSize(); }
 
         //! Set the time step size in seconds.
         void setTimeStepSize(Scalar dt)
-            { return timeManager_.setStepSize(dt); }
+        { return timeManager_.setStepSize(dt); }
 
 
         //! properties of the wetting (liquid) phase
@@ -305,14 +305,14 @@ namespace Dune
           \return    wetting phase
         */
         const WettingPhase &wettingPhase() const
-            { return wPhase_; }
+        { return wPhase_; }
 
         //! properties of the nonwetting (liquid) phase
         /*! properties of the nonwetting (liquid) phase
           \return    nonwetting phase
         */
         const NonwettingPhase &nonwettingPhase() const
-            { return nPhase_; }
+        { return nPhase_; }
 
 
         //! properties of the soil
@@ -320,24 +320,24 @@ namespace Dune
           \return    soil
         */
         const Soil &soil() const
-            {  return soil_; }
+        {  return soil_; }
 
         //! properties of the soil
         /*! properties of the soil
           \return    soil
         */
         Soil &soil()
-            {  return soil_; }
+        {  return soil_; }
 
         //! object for definition of material law
         /*! object for definition of material law (e.g. Brooks-Corey, Van Genuchten, ...)
           \return    material law
         */
         MaterialLaw &materialLaw ()
-//        const MaterialLaw &materialLaw () const
-            {
-                return materialLaw_;
-            }
+        //        const MaterialLaw &materialLaw () const
+        {
+            return materialLaw_;
+        }
 
         void boundaryTypes(BoundaryTypeVector         &values,
                            const Element              &element,
@@ -345,22 +345,22 @@ namespace Dune
                            const IntersectionIterator &isIt,
                            int                         scvIdx,
                            int                         boundaryFaceIdx) const
-            {
-                values = Dune::BoundaryConditions::neumann;
-                switch (isIt->boundaryId()) {
+        {
+            values = Dune::BoundaryConditions::neumann;
+            switch (isIt->boundaryId()) {
 /*                case 1:
-                case 2:
-                case 3:
-                case 4:
-                    values = Dune::BoundaryConditions::neumann;
-                    break;
+                  case 2:
+                  case 3:
+                  case 4:
+                  values = Dune::BoundaryConditions::neumann;
+                  break;
 */
-                case 5: 
-                case 6:
-                    values = Dune::BoundaryConditions::dirichlet;
-                    break;
-                }
+            case 5: 
+            case 6:
+                values = Dune::BoundaryConditions::dirichlet;
+                break;
             }
+        }
 
         /////////////////////////////
         // DIRICHLET boundaries
@@ -372,12 +372,12 @@ namespace Dune
                        int                         scvIdx,
                        int                         boundaryFaceIdx) const
         {
-            values[pWIdx] = 0;
+            values[pWIdx] = -1e5;
             
             switch (isIt->boundaryId()) {
             case 5:
 //			values[pWIdx] = 1.0e+5 - densityW_*gravity_[2]*(height_-x[2]);
-                values[pWIdx] = +1e+4; //- densityW_*gravity_[2]*(height_-x[2]); //-1.0e+6 - densityW_*gravity_[2]*(height_-x[2]);
+                values[pWIdx] = -1e+4; //- densityW_*gravity_[2]*(height_-x[2]); //-1.0e+6 - densityW_*gravity_[2]*(height_-x[2]);
                 break;
             }
         }
@@ -399,7 +399,7 @@ namespace Dune
             case 3:
             case 4:
                 values[pWIdx] = 0;
-                    break;
+                break;
 /*                case 5:
                   values[pWIdx] = -1.0;
                   break;
@@ -414,9 +414,9 @@ namespace Dune
                     const Element           &element,
                     const FVElementGeometry &fvElemGeom,
                     int                      scvIdx) const
-            {
-                values = Scalar(0.0);
-            }
+        {
+            values = Scalar(0.0);
+        }
 
         //////////////////////////////
 
@@ -424,12 +424,12 @@ namespace Dune
         // INITIAL values
         /////////////////////////////
         void initial(SolutionVector         &values,
-                    const Element           &element,
-                    const FVElementGeometry &fvElemGeom,
-                    int                      scvIdx) const
-            {
-                values[pWIdx] = -1e+5;// - densityW_*gravity_[2]*(height_-x[2]);
-            }
+                     const Element           &element,
+                     const FVElementGeometry &fvElemGeom,
+                     int                      scvIdx) const
+        {
+            values[pWIdx] = -1e+5;// - densityW_*gravity_[2]*(height_-x[2]);
+        }
 
 
         Scalar temperature() const
@@ -438,48 +438,48 @@ namespace Dune
         };
 
         Scalar porosity(const Element &element, int localIdx) const
-            {
-                // TODO/HACK: porosity should be defined on the verts
-                // as it is required on the verts!
-                const LocalPosition &local =
-                    DomainTraits::referenceElement(element.type()).position(localIdx, dim);
-                const GlobalPosition &globalPos = element.geometry().corner(localIdx);
-                return soil().porosity(globalPos, *(ParentType::elementBegin()), local);
-            };
+        {
+            // TODO/HACK: porosity should be defined on the verts
+            // as it is required on the verts!
+            const LocalPosition &local =
+                DomainTraits::referenceElement(element.type()).position(localIdx, dim);
+            const GlobalPosition &globalPos = element.geometry().corner(localIdx);
+            return soil().porosity(globalPos, *(ParentType::elementBegin()), local);
+        };
 
         Scalar pC(Scalar satW, int globalIdx, const GlobalPosition &globalPos)
-            {
-                // TODO/HACK: porosity should be defined on the verts
-                // as it is required on the verts!
-                const LocalPosition &local =
-                    DomainTraits::referenceElement(ParentType::elementBegin()->type()).position(0, dim);
-                return materialLaw().pC(satW, globalPos, *(ParentType::elementBegin()), local);
-            };
+        {
+            // TODO/HACK: porosity should be defined on the verticess
+            // as it is required on the vertices!
+            const LocalPosition &local =
+                DomainTraits::referenceElement(ParentType::elementBegin()->type()).position(0, dim);
+            return materialLaw().pC(satW, globalPos, *(ParentType::elementBegin()), local);
+        };
 
 
         const GlobalPosition &gravity () const
-            {
-                return gravity_;
-            }
+        {
+            return gravity_;
+        }
 
         bool simulate()
-            {
-                timeManager_.runSimulation(*this);
-                return true;
-            };
+        {
+            timeManager_.runSimulation(*this);
+            return true;
+        };
 
 
     private:
         // write the fields current solution into an VTK output file.
         void writeCurrentResult_()
-            {
-                resultWriter_.beginTimestep(timeManager_.time(),
-                                            ParentType::grid().leafView());
+        {
+            resultWriter_.beginTimestep(timeManager_.time(),
+                                        ParentType::grid().leafView());
 
-                model_.addVtkFields(resultWriter_);
+            model_.addVtkFields(resultWriter_);
 
-                resultWriter_.endTimestep();
-            }
+            resultWriter_.endTimestep();
+        }
 
 
         GlobalPosition  gravity_;

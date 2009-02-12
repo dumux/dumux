@@ -224,7 +224,7 @@ namespace Dune
             const LocalPosition &local_j = this->curElementGeom_.subContVol[j].local;
             
             // calculate FE gradient
-            Scalar densityIJ;
+            Scalar densityIJ = 0;
             LocalPosition pGrad(0);
             for (int k = 0; k < ParentType::curElementGeom_.numVertices; k++) {
                 LocalPosition grad(face.grad[k]);
