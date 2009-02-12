@@ -1,5 +1,5 @@
-#ifndef DUNE_NEW_RICHARDSPROBLEM_HH
-#define DUNE_NEW_RICHARDSPROBLEM_HH
+#ifndef DUNE_NEW_1PPROBLEM_HH
+#define DUNE_NEW_1PPROBLEM_HH
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -22,7 +22,7 @@
 
 #include <dune/common/timer.hh>
 
-#include<dumux/new_models/richards/richardsboxmodel.hh>
+#include<dumux/new_models/1p/1pboxmodel.hh>
 
 #include<dumux/timedisc/new_impliciteulerstep.hh>
 #include<dumux/nonlinear/new_newtonmethod.hh>
@@ -44,7 +44,7 @@ namespace Dune
 ////////////////////////////////////////--SOIL--//////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////
     template<class Grid, class ScalarT>
-    class RichardsSoil: public Matrix2p<Grid,ScalarT>
+    class OnePSoil: public Matrix2p<Grid,ScalarT>
     {
     public:
         typedef typename Grid::Traits::template Codim<0>::Entity Element;
@@ -55,14 +55,14 @@ namespace Dune
         typedef Dune::FieldVector<CoordScalar,dim>      LocalPosition;
         typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
 
-        RichardsSoil():Matrix2p<Grid,Scalar>()
+        OnePSoil():Matrix2p<Grid,Scalar>()
         {
             Kout_ = 0.;
             for(int i = 0; i < dim; i++)
                 Kout_[i][i] = 5e-10;
         }
 
-        ~RichardsSoil()
+        ~OnePSoil()
         {}
 
         const FieldMatrix<CoordScalar,dim,dim> &K (const GlobalPosition &x, const Element& e, const LocalPosition &xi)
@@ -133,32 +133,30 @@ namespace Dune
      *    - ScalarT  Floating point type used for scalars
      */
     template<class GridT, class ScalarT>
-    class NewRichardsProblem : public BasicDomain<GridT,
+    class NewOnePProblem : public BasicDomain<GridT,
                                                   ScalarT>
     {
-        typedef GridT                               Grid;
-        typedef BasicDomain<Grid, ScalarT>          ParentType;
-        typedef NewRichardsProblem<GridT, ScalarT>  ThisType;
-        typedef RichardsBoxModel<ThisType>          Model;
+        typedef GridT                           Grid;
+        typedef BasicDomain<Grid, ScalarT>      ParentType;
+        typedef NewOnePProblem<GridT, ScalarT>  ThisType;
+        typedef OnePBoxModel<ThisType>          Model;
 
-        typedef Dune::Water                            WettingPhase;
-        typedef Dune::DNAPL                            NonwettingPhase;
-        typedef Dune::RichardsSoil<Grid, ScalarT>      Soil;
-        typedef Dune::TwoPhaseRelations<Grid, ScalarT> MaterialLaw;
+        typedef Dune::Water                            Fluid;
+        typedef Dune::OnePSoil<Grid, ScalarT>          Soil;
 
     public:
         // the domain traits of the domain
         typedef typename ParentType::DomainTraits   DomainTraits;
         // the traits of the BOX scheme
         typedef typename Model::BoxTraits           BoxTraits;
-        // the traits of the richards model
-        typedef typename Model::RichardsTraits      RichardsTraits;
+        // the traits of the 1 phase model
+        typedef typename Model::OnePTraits      OnePTraits;
 
     private:
         // some constants from the traits for convenience
         enum {
             numEq     = BoxTraits::numEq,
-            pWIdx     = RichardsTraits::pWIdx,
+            pIdx      = OnePTraits::pIdx,
 
             // Grid and world dimension
             dim      = DomainTraits::dim,
@@ -191,15 +189,14 @@ namespace Dune
         typedef Dune::NewtonController<NewtonMethod>        NewtonController;
 
     public:
-        NewRichardsProblem(Grid *grid,
+        NewOnePProblem(Grid *grid,
                            Scalar dtInitial,
                            Scalar tEnd)
             : ParentType(grid),
-              materialLaw_(soil_, wPhase_, nPhase_),
               timeManager_(this->grid().comm().rank() == 0),
               model_(*this),
               newtonMethod_(model_),
-              resultWriter_("new_richards")
+              resultWriter_("new_1p")
         {
             initialTimeStepSize_ = dtInitial;
             endTime_ = tEnd;
@@ -300,20 +297,9 @@ namespace Dune
         { return timeManager_.setStepSize(dt); }
 
 
-        //! properties of the wetting (liquid) phase
-        /*! properties of the wetting (liquid) phase
-          \return    wetting phase
-        */
-        const WettingPhase &wettingPhase() const
-        { return wPhase_; }
-
-        //! properties of the nonwetting (liquid) phase
-        /*! properties of the nonwetting (liquid) phase
-          \return    nonwetting phase
-        */
-        const NonwettingPhase &nonwettingPhase() const
-        { return nPhase_; }
-
+        //! properties of the fluid
+        const Fluid &fluid() const
+        { return fluid_; }
 
         //! properties of the soil
         /*! properties of the soil
@@ -328,16 +314,6 @@ namespace Dune
         */
         Soil &soil()
         {  return soil_; }
-
-        //! object for definition of material law
-        /*! object for definition of material law (e.g. Brooks-Corey, Van Genuchten, ...)
-          \return    material law
-        */
-        MaterialLaw &materialLaw ()
-        //        const MaterialLaw &materialLaw () const
-        {
-            return materialLaw_;
-        }
 
         void boundaryTypes(BoundaryTypeVector         &values,
                            const Element              &element,
@@ -372,12 +348,11 @@ namespace Dune
                        int                         scvIdx,
                        int                         boundaryFaceIdx) const
         {
-            values[pWIdx] = -1e5;
+            values[pIdx] = 1e5;
             
             switch (isIt->boundaryId()) {
             case 5:
-//			values[pWIdx] = 1.0e+5 - densityW_*gravity_[2]*(height_-x[2]);
-                values[pWIdx] = -1e+4; //- densityW_*gravity_[2]*(height_-x[2]); //-1.0e+6 - densityW_*gravity_[2]*(height_-x[2]);
+                values[pIdx] = 2e+5;
                 break;
             }
         }
@@ -398,10 +373,10 @@ namespace Dune
             case 2:
             case 3:
             case 4:
-                values[pWIdx] = 0;
+                values[pIdx] = 0;
                 break;
 /*                case 5:
-                  values[pWIdx] = -1.0;
+                  values[pIdx] = -1.0;
                   break;
 */
             }
@@ -428,7 +403,7 @@ namespace Dune
                      const FVElementGeometry &fvElemGeom,
                      int                      scvIdx) const
         {
-            values[pWIdx] = -1e+5;// - densityW_*gravity_[2]*(height_-x[2]);
+            values[pIdx] = 1e+5;
         }
 
 
@@ -446,16 +421,6 @@ namespace Dune
             const GlobalPosition &globalPos = element.geometry().corner(localIdx);
             return soil().porosity(globalPos, *(ParentType::elementBegin()), local);
         };
-
-        Scalar pC(Scalar satW, int globalIdx, const GlobalPosition &globalPos)
-        {
-            // TODO/HACK: porosity should be defined on the verticess
-            // as it is required on the vertices!
-            const LocalPosition &local =
-                DomainTraits::referenceElement(ParentType::elementBegin()->type()).position(0, dim);
-            return materialLaw().pC(satW, globalPos, *(ParentType::elementBegin()), local);
-        };
-
 
         const GlobalPosition &gravity () const
         {
@@ -485,10 +450,8 @@ namespace Dune
         GlobalPosition  gravity_;
 
         // fluids and material properties
-        WettingPhase    wPhase_;
-        NonwettingPhase nPhase_;
+        Fluid           fluid_;
         Soil            soil_;
-        MaterialLaw     materialLaw_;
 
         TimeManager     timeManager_;
         TimeIntegration timeIntegration_;
