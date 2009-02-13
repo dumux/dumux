@@ -67,6 +67,67 @@ private:
 };
 
 /** \ingroup properties
+ * @brief Fluid properties of methane
+ */
+class Methane : public Fluid
+{
+    ConstrelWater constRelWater;
+
+public:
+    Methane(double constDensity = 0,
+            double constViscosity = 0, double constEnthalpy = 0)
+    : constDensity_(constDensity), constViscosity_(constViscosity), constEnthalpy_(constEnthalpy)
+    {}
+
+    double viscosity (double T=283.15, double p=1e5, double X=1.0) const
+    {
+        if (constViscosity_)
+            return constViscosity_;
+        else
+            return constRelWater.viscosity_water(T,p); //[kg/(ms)]
+    }
+
+    double density (double T=283.15, double p=1e5, double X=1.0) const
+    {
+        if (constDensity_)
+            return constDensity_;
+        else
+        {
+        	double R = 0.54978284;
+        	double temp = 284.43;
+            double rhog = p/(R*temp*1000.0);
+            if(rhog < 1e-15) 
+            	rhog = 1e-15;
+            
+            return(rhog);
+        }
+    }
+
+    double enthalpy (double T=283.15, double p=1e5, double X = 1) const
+    {
+        if (constEnthalpy_)
+            return constEnthalpy_;
+        else {
+            return constRelWater.enthalpy_water(T,p);
+        }
+    }
+    double intEnergy( double T=283.15, double p=1e5, double X = 1) const
+    {
+        double u;
+        double rho_mass = density(T,p);
+        double h = enthalpy(T,p);
+
+        u = h - (p / rho_mass);
+        return u;
+    }
+
+private:
+   double constDensity_;
+   double constViscosity_;
+   double constEnthalpy_;
+};
+
+/** \ingroup properties
  * @brief Fluid properties of Air
  */
 class Air : public Fluid
