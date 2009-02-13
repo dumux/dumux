@@ -237,14 +237,14 @@ int FVTransport<Grid, Scalar, VC, Problem>::update(const Scalar t, Scalar& dt,
                         }
                     }
 
-                    Scalar fI = this->transProblem.materialLaw.fractionalW(satI, globalPos, *eIt,localPos);
-                    Scalar fJ = this->transProblem.materialLaw.fractionalW(satJ, globalPosNeighbor, *neighborPointer, localPosNeighbor);
+                    Scalar fI = this->transProblem.materialLaw().fractionalW(satI, globalPos, *eIt,localPos);
+                    Scalar fJ = this->transProblem.materialLaw().fractionalW(satJ, globalPosNeighbor, *neighborPointer, localPosNeighbor);
 
                     diffFactor = diffPart / volume;
                     factor = diffFactor
                     + velocityJI*numFlux_(satJ, satI, fJ, fI)
                     - velocityIJ*numFlux_(satI, satJ, fI, fJ);
-                    factor/= this->transProblem.soil.porosity(globalPos, *eIt,localPos);
+                    factor/= this->transProblem.soil().porosity(globalPos, *eIt,localPos);
                     totFactor = velocityJI - velocityIJ;
                     totFactor *= (fI-fJ)/(satI-satJ);
                 }
@@ -300,13 +300,13 @@ int FVTransport<Grid, Scalar, VC, Problem>::update(const Scalar t, Scalar& dt,
                         }
                     }
 
-                    Scalar fI = this->transProblem.materialLaw.fractionalW(satI, globalPos, *eIt,localPos);
-                    Scalar fBound = this->transProblem.materialLaw.fractionalW(satBound, globalPosFace, *eIt, localPosFace);
+                    Scalar fI = this->transProblem.materialLaw().fractionalW(satI, globalPos, *eIt,localPos);
+                    Scalar fBound = this->transProblem.materialLaw().fractionalW(satBound, globalPosFace, *eIt, localPosFace);
                     diffFactor = diffPart / volume;
                     factor = diffFactor
                     + velocityJI*numFlux_(satBound, satI, fBound, fI)
                     - velocityIJ*numFlux_(satI, satBound, fI, fBound);
-                    factor/= this->transProblem.soil.porosity(globalPos, *eIt,localPos);
+                    factor/= this->transProblem.soil().porosity(globalPos, *eIt,localPos);
                     totFactor = velocityJI - velocityIJ;
                     totFactor *= (fI-fBound)/(satI-satBound);
                 }
@@ -314,10 +314,10 @@ int FVTransport<Grid, Scalar, VC, Problem>::update(const Scalar t, Scalar& dt,
                 {
                     Scalar satI = this->transProblem.variables.saturation[globalIdxI];
                     Scalar velocityJI = std::max(-(this->transProblem.variables.vTotal(*eIt, numberInSelf)*integrationOuterNormal/volume), 0.0);
-                    Scalar fI = this->transProblem.materialLaw.fractionalW(satI, globalPos, *eIt,localPos);
+                    Scalar fI = this->transProblem.materialLaw().fractionalW(satI, globalPos, *eIt,localPos);
                     Scalar helpFactor = (velocityJI-velocityIJ)*fI;
                     factor = this->transProblem.neumannSat(globalPosFace, *eIt, localPosFace, helpFactor);
-                    factor/= this->transProblem.soil.porosity(globalPos, *eIt,localPos);
+                    factor/= this->transProblem.soil().porosity(globalPos, *eIt,localPos);
 
                     totFactor = 0;
                     if (factor)
@@ -339,7 +339,7 @@ int FVTransport<Grid, Scalar, VC, Problem>::update(const Scalar t, Scalar& dt,
             else
             sumDiff += (-diffFactor);
         }
-        Scalar volumeCorrectionFactor = (1-this->transProblem.soil.Sr_w(globalPos, *eIt,localPos)-this->transProblem.soil.Sr_n(globalPos, *eIt,localPos))*this->transProblem.soil.porosity(globalPos, *eIt,localPos);
+        Scalar volumeCorrectionFactor = (1-this->transProblem.soil().Sr_w(globalPos, *eIt,localPos)-this->transProblem.soil().Sr_n(globalPos, *eIt,localPos))*this->transProblem.soil().porosity(globalPos, *eIt,localPos);
         // end all intersections
         // compute dt restriction
         sumFactor = std::max(sumFactor, sumFactor2);

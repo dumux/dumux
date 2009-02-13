@@ -117,13 +117,31 @@ public:
         return dirichletSat(globalPos, element, localPos);
     }
 
+    //! properties of the soil
+    /*! properties of the soil
+      \return    soil
+     */
+    virtual Matrix2p<Grid, Scalar>& soil () const
+    {
+        return soil_;
+    }
+
+    //! object for definition of material law
+    /*! object for definition of material law (e.g. Brooks-Corey, Van Genuchten, ...)
+      \return    material law
+     */
+    virtual TwoPhaseRelations<Grid, Scalar>& materialLaw () const
+    {
+        return materialLaw_;
+    }
+
     //! constructor
     /** @param law implementation of material laws. Class TwoPhaseRelations or derived.
     *  @param cap flag for including capillary forces.
     */
 
-    TransportProblem(VC& variables, Matrix2p<Grid, Scalar>& soil, TwoPhaseRelations<Grid,Scalar>& materialLaw  = *(new TwoPhaseRelations<Grid,Scalar>), const bool capillarity = false, const bool exsol = false)
-    : variables(variables), capillarity(capillarity), materialLaw(materialLaw), soil(soil), exsolution(exsol), uE(0)
+    TransportProblem(VC& var, Matrix2p<Grid, Scalar>& soil, TwoPhaseRelations<Grid,Scalar>& materialLaw  = *(new TwoPhaseRelations<Grid,Scalar>), const bool capillarity = false, const bool exsol = false)
+    : variables(var), capillarity(capillarity), materialLaw_(materialLaw), soil_(soil), exsolution(exsol), uE(0)
     {    }
 
     //! always define virtual destructor in abstract base class
@@ -131,8 +149,8 @@ public:
 
     VC& variables;
     const bool capillarity;
-    TwoPhaseRelations<Grid,Scalar>& materialLaw;
-    Matrix2p<Grid, Scalar>& soil;
+    TwoPhaseRelations<Grid,Scalar>& materialLaw_;
+    Matrix2p<Grid, Scalar>& soil_;
     const bool exsolution;
     BlockVector<FieldVector<Scalar, 2> > uE;
 };
