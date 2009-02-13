@@ -71,7 +71,7 @@ namespace Dune
   class Box1P2CJacobian
     : public BoxJacobian<Box1P2CJacobian<Grid,Scalar,BoxFunction>,Grid,Scalar,2,BoxFunction>
   {
-    typedef typename Grid::ctype DT;
+    typedef typename Grid::ctype CoordScalar;
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
     typedef typename Element::Geometry Geometry;
     typedef Box1P2CJacobian<Grid,Scalar,BoxFunction> ThisType;
@@ -85,7 +85,7 @@ namespace Dune
   public:
     enum {dim=Grid::dimension};
     enum {numComp=2};					//number of components
-    enum {SIZE=LagrangeShapeFunctionSetContainer<DT,Scalar,dim>::maxsize};
+    enum {SIZE=LagrangeShapeFunctionSetContainer<CoordScalar,Scalar,dim>::maxsize};
     struct VariableNodeData;
 
     typedef FieldMatrix<Scalar,dim,dim> FMatrix;
@@ -143,10 +143,10 @@ namespace Dune
 	 const FieldVector<Scalar,dim> normal(this->fvGeom.subContVolFace[face].normal);
 
   	 // get global coordinates of nodes i,j
-	 const FieldVector<DT,dim> global_i = this->fvGeom.subContVol[i].global;
-	 const FieldVector<DT,dim> global_j = this->fvGeom.subContVol[j].global;
-	 const FieldVector<DT,dim> local_i = this->fvGeom.subContVol[i].local;
-	 const FieldVector<DT,dim> local_j = this->fvGeom.subContVol[j].local;
+	 const FieldVector<CoordScalar,dim> global_i = this->fvGeom.subContVol[i].global;
+	 const FieldVector<CoordScalar,dim> global_j = this->fvGeom.subContVol[j].global;
+	 const FieldVector<CoordScalar,dim> local_i = this->fvGeom.subContVol[i].local;
+	 const FieldVector<CoordScalar,dim> local_j = this->fvGeom.subContVol[j].local;
 
 	 VBlockType flux;
 
