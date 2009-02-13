@@ -36,21 +36,20 @@ namespace Dune
    *    Template parameters are:
    *
    *    - Grid  a DUNE grid type
-   *    - RT    type used for return values
+   *    - Scalar    type used for return values
    */
-  template<class G, class RT>
-  class LensProblem : public TwoPhaseProblem<G, RT> {
-    typedef typename G::ctype DT;
-    enum {n=G::dimension, m=2};
-    typedef typename G::Traits::template Codim<0>::Entity Entity;
-    typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
+  template<class Grid, class Scalar>
+  class LensProblem : public TwoPhaseProblem<Grid, Scalar> {
+    enum {dim=Grid::dimension, numEq=2};
+    typedef typename Grid::Traits::template Codim<0>::Entity Entity;
+    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
 
   public:
     enum {pWIdx = 0, sNIdx = 1};
     enum {swrIdx = 0, snrIdx = 1, alphaIdx = 2, nIdx = 3};
 
-    virtual const FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x, const Entity& e,
-                    const FieldVector<DT,n>& xi)
+    virtual const FieldMatrix<Scalar,dim,dim>& K (const FieldVector<Scalar,dim>& x, const Entity& e,
+                    const FieldVector<Scalar,dim>& xi)
     {
         if (x[0] > innerLowerLeft_[0] && x[0] < innerUpperRight_[0]
             && x[1] > innerLowerLeft_[1] && x[1] < innerUpperRight_[1])
@@ -59,19 +58,19 @@ namespace Dune
             return outerK_;
     }
 
-    virtual FieldVector<RT,m> q (const FieldVector<DT,n>& x, const Entity& e,
-                    const FieldVector<DT,n>& xi) const
+    virtual FieldVector<Scalar,numEq> q (const FieldVector<Scalar,dim>& x, const Entity& e,
+                    const FieldVector<Scalar,dim>& xi) const
     {
-        FieldVector<RT,m> values(0);
+        FieldVector<Scalar,numEq> values(0);
 
         return values;
     }
 
-    virtual FieldVector<BoundaryConditions::Flags, m> bctype (const FieldVector<DT,n>& x, const Entity& e,
+    virtual FieldVector<BoundaryConditions::Flags, numEq> bctype (const FieldVector<Scalar,dim>& x, const Entity& e,
                     const IntersectionIterator& intersectionIt,
-                       const FieldVector<DT,n>& xi) const
+                       const FieldVector<Scalar,dim>& xi) const
     {
-        FieldVector<BoundaryConditions::Flags, m> values(BoundaryConditions::neumann);
+        FieldVector<BoundaryConditions::Flags, numEq> values(BoundaryConditions::neumann);
 
         if (x[0] < outerLowerLeft_[0] + eps_ || x[0] > outerUpperRight_[0] - eps_) {
             //std::cout << "Dirichlet: " << x << std::endl;
@@ -85,21 +84,21 @@ namespace Dune
         return values;
     }
 
-    virtual FieldVector<RT,m> g (const FieldVector<DT,n>& x, const Entity& e,
+    virtual FieldVector<Scalar,numEq> g (const FieldVector<Scalar,dim>& x, const Entity& e,
                 const IntersectionIterator& intersectionIt,
-                  const FieldVector<DT,n>& xi) const
+                  const FieldVector<Scalar,dim>& xi) const
     {
-        FieldVector<RT,m> values(0);
+        FieldVector<Scalar,numEq> values(0);
 
         if (x[0] < outerLowerLeft_[0] + eps_) {
-            RT a = -(1 + 0.5/height_);
-            RT b = -a*outerUpperRight_[1];
+            Scalar a = -(1 + 0.5/height_);
+            Scalar b = -a*outerUpperRight_[1];
             values[pWIdx] = -densityW_*gravity_[1]*(a*x[1] + b);
             values[sNIdx] = outerSnr_;
         }
         else {
-            RT a = -1;
-            RT b = outerUpperRight_[1];
+            Scalar a = -1;
+            Scalar b = outerUpperRight_[1];
             values[pWIdx] = -densityW_*gravity_[1]*(a*x[1] + b);
             values[sNIdx] = outerSnr_;
         }
@@ -107,13 +106,13 @@ namespace Dune
         return values;
     }
 
-    virtual FieldVector<RT,m> J (const FieldVector<DT,n>& x, const Entity& e,
+    virtual FieldVector<Scalar,numEq> J (const FieldVector<Scalar,dim>& x, const Entity& e,
                 const IntersectionIterator& intersectionIt,
-                  const FieldVector<DT,n>& xi) const
+                  const FieldVector<Scalar,dim>& xi) const
     {
-        FieldVector<RT,m> values(0);
+        FieldVector<Scalar,numEq> values(0);
 
-        RT lambda = (outerUpperRight_[0] - x[0])/width_;
+        Scalar lambda = (outerUpperRight_[0] - x[0])/width_;
         if (lambda > 0.5 && lambda < 2.0/3.0 && x[1] > outerUpperRight_[1] - eps_) {
             values[sNIdx] = -0.04;
         }
@@ -121,17 +120,17 @@ namespace Dune
         return values;
     }
 
-    virtual FieldVector<RT,m> initial (const FieldVector<DT,n>& x, const Entity& e,
-                  const FieldVector<DT,n>& xi) const
+    virtual FieldVector<Scalar,numEq> initial (const FieldVector<Scalar,dim>& x, const Entity& e,
+                  const FieldVector<Scalar,dim>& xi) const
     {
 
-        FieldVector<RT,m> values;
+        FieldVector<Scalar,numEq> values;
 
         values[pWIdx] = -densityW_*gravity_[1]*(height_ - x[1]);
 
         if (x[0] < outerLowerLeft_[0] + eps_) {
-            RT a = -(1 + 0.5/height_);
-            RT b = -a*outerUpperRight_[1];
+            Scalar a = -(1 + 0.5/height_);
+            Scalar b = -a*outerUpperRight_[1];
             values[pWIdx] = -densityW_*gravity_[1]*(a*x[1] + b);
         }
 
@@ -144,8 +143,8 @@ namespace Dune
         return values;
     }
 
-    double porosity (const FieldVector<DT,n>& x, const Entity& e,
-              const FieldVector<DT,n>& xi) const
+    double porosity (const FieldVector<Scalar,dim>& x, const Entity& e,
+              const FieldVector<Scalar,dim>& xi) const
     {
         if (x[0] > innerLowerLeft_[0] && x[0] < innerUpperRight_[0]
             && x[1] > innerLowerLeft_[1] && x[1] < innerUpperRight_[1])
@@ -154,15 +153,15 @@ namespace Dune
             return outerPorosity_;
     }
 
-    virtual FieldVector<RT,n> gravity () const
+    virtual FieldVector<Scalar,dim> gravity () const
     {
         return gravity_;
     }
 
-    virtual FieldVector<RT,4> materialLawParameters (const FieldVector<DT,n>& x, const Entity& e,
-              const FieldVector<DT,n>& xi) const
+    virtual FieldVector<Scalar,4> materialLawParameters (const FieldVector<Scalar,dim>& x, const Entity& e,
+              const FieldVector<Scalar,dim>& xi) const
     {
-        FieldVector<RT,4> values;
+        FieldVector<Scalar,4> values;
 
         if (x[0] > innerLowerLeft_[0] && x[0] < innerUpperRight_[0]
             && x[1] > innerLowerLeft_[1] && x[1] < innerUpperRight_[1]) {
@@ -182,14 +181,14 @@ namespace Dune
     }
 
     LensProblem(TwoPhaseRelations& law = *(new LinearLaw),
-            const FieldVector<DT,n> outerLowerLeft = 0, const FieldVector<DT,n> outerUpperRight = 0,
-            const FieldVector<DT,n> innerLowerLeft = 0, const FieldVector<DT,n> innerUpperRight = 0,
-            RT outerK = 4.6e-10, RT innerK = 9.05e-13,
-            RT outerSwr = 0.05, RT outerSnr = 0, RT innerSwr = 0.18, RT innerSnr = 0,
-            RT outerPorosity = 0.4, RT innerPorosity = 0.4,
-            RT outerAlpha = 0.0037, RT innerAlpha = 0.00045,
-            RT outerN = 4.7, RT innerN = 7.3)
-    : TwoPhaseProblem<G, RT>(law),
+            const FieldVector<Scalar,dim> outerLowerLeft = 0, const FieldVector<Scalar,dim> outerUpperRight = 0,
+            const FieldVector<Scalar,dim> innerLowerLeft = 0, const FieldVector<Scalar,dim> innerUpperRight = 0,
+            Scalar outerK = 4.6e-10, Scalar innerK = 9.05e-13,
+            Scalar outerSwr = 0.05, Scalar outerSnr = 0, Scalar innerSwr = 0.18, Scalar innerSnr = 0,
+            Scalar outerPorosity = 0.4, Scalar innerPorosity = 0.4,
+            Scalar outerAlpha = 0.0037, Scalar innerAlpha = 0.00045,
+            Scalar outerN = 4.7, Scalar innerN = 7.3)
+    : TwoPhaseProblem<Grid, Scalar>(law),
       outerLowerLeft_(outerLowerLeft), outerUpperRight_(outerUpperRight),
       innerLowerLeft_(innerLowerLeft), innerUpperRight_(innerUpperRight),
       eps_(1e-8*outerUpperRight[0]),
@@ -213,20 +212,20 @@ namespace Dune
     }
 
     private:
-        FieldMatrix<DT,n,n> outerK_;
-        FieldMatrix<DT,n,n> innerK_;
-        FieldVector<DT,n> outerLowerLeft_;
-        FieldVector<DT,n> outerUpperRight_;
-        FieldVector<DT,n> innerLowerLeft_;
-        FieldVector<DT,n> innerUpperRight_;
-        DT width_, height_;
-        DT eps_;
-        RT densityW_, densityN_;
-        FieldVector<DT,n> gravity_;
-        RT outerSwr_, outerSnr_, innerSwr_, innerSnr_;
-        RT outerPorosity_, innerPorosity_;
-        RT outerAlpha_, innerAlpha_;
-        RT outerN_, innerN_;
+        FieldMatrix<Scalar,dim,dim> outerK_;
+        FieldMatrix<Scalar,dim,dim> innerK_;
+        FieldVector<Scalar,dim> outerLowerLeft_;
+        FieldVector<Scalar,dim> outerUpperRight_;
+        FieldVector<Scalar,dim> innerLowerLeft_;
+        FieldVector<Scalar,dim> innerUpperRight_;
+        Scalar width_, height_;
+        Scalar eps_;
+        Scalar densityW_, densityN_;
+        FieldVector<Scalar,dim> gravity_;
+        Scalar outerSwr_, outerSnr_, innerSwr_, innerSnr_;
+        Scalar outerPorosity_, innerPorosity_;
+        Scalar outerAlpha_, innerAlpha_;
+        Scalar outerN_, innerN_;
   };
 
 }
