@@ -240,7 +240,7 @@ namespace Dune
                                                                           local,
                                                                           temperature,
                                                                           vertDat.pN);
-                    
+
                     // diffusion coefficents
                     vertDat.diffCoeff[wPhase] = problem.wettingPhase().diffCoeff(temperature, vertDat.pW);
                     vertDat.diffCoeff[nPhase] = problem.nonwettingPhase().diffCoeff(temperature, vertDat.pN);
@@ -948,6 +948,7 @@ namespace Dune
         ElementData        prevElemDat_;
     };
 
+/** \todo Please doc me! */
 
     template<class ProblemT,
              class BoxTraitsT,

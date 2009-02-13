@@ -51,6 +51,8 @@ namespace Dune {
             : ParentType(tolerance, targetSteps, maxSteps)
             {};
 
+/** \todo Please doc me! */
+
     protected:
         friend class NewtonControllerBase<NewtonMethod, ThisType>;
         //! called by the base class the get an indication of how physical

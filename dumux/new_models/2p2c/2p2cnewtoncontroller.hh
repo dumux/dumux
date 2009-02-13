@@ -92,6 +92,8 @@ namespace Dune {
                 return ParentType::newtonProceed(u);
             }
 
+/** \todo Please doc me! */
+
     protected:
         friend class NewtonControllerBase<NewtonMethod, ThisType>;
         //! called by the base class the get an indication of how physical
