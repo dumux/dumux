@@ -9,6 +9,8 @@
 
 namespace Dune {
 
+/** \todo Please doc me! */
+
     template<int mydim, class GridImp>
     class OneDInNDMakeableGeometry : public Geometry<mydim, GridImp::dimensionworld, GridImp, OneDInNDGridGeometry>
     {
@@ -29,6 +31,8 @@ namespace Dune {
             this->realGeometry.pos_[0] = p;
         }
     };
+
+/** \todo Please doc me! */
 
     template<class GridImp>
     class OneDInNDMakeableGeometry<1,GridImp> : public Geometry<1, GridImp::dimensionworld, GridImp, OneDInNDGridGeometry>
@@ -56,6 +60,7 @@ namespace Dune {
     template <int codim, int dim, class GridImp>
     class OneDInNDGridEntity;
 
+/** \todo Please doc me! */
 
 template<class GridImp, int dimworld>
 class OneDInNDGridGeometry <0, dimworld, GridImp> :

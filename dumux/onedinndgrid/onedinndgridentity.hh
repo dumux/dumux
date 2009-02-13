@@ -61,6 +61,7 @@ public:
 
 };
 
+/** \todo Please doc me! */
 
 template <int dimworld>
 class OneDInNDEntityImp<1, dimworld>
@@ -114,6 +115,7 @@ public:
 
 };
 
+/** \todo Please doc me! */
 
 template<int cd, int dim, class GridImp, int dimworld>
 class OneDInNDEntityWrapper :

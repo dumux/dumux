@@ -11,6 +11,8 @@
 
 namespace Dune {
 
+/** \todo Please doc me! */
+
 template <class GridImp>
 struct OneDInNDGridLevelIndexSetTypes
 {
@@ -26,6 +28,7 @@ struct OneDInNDGridLevelIndexSetTypes
   };
 };
 
+/** \todo Please doc me! */
 
 template<class GridImp>
 class OneDInNDGridLevelIndexSet : public IndexSetDefaultImplementation<GridImp,OneDInNDGridLevelIndexSet<GridImp>,OneDInNDGridLevelIndexSetTypes<GridImp> >
@@ -133,6 +136,8 @@ private:
   std::vector<GeometryType> myTypes_[2];
 };
 
+/** \todo Please doc me! */
+
 template <class GridImp>
 struct OneDInNDGridLeafIndexSetTypes
 {
@@ -147,6 +152,8 @@ struct OneDInNDGridLeafIndexSetTypes
     };
   };
 };
+
+/** \todo Please doc me! */
 
 template<class GridImp>
 class OneDInNDGridLeafIndexSet :
@@ -297,6 +304,7 @@ private:
     std::vector<GeometryType> myTypes_[2];
 };
 
+/** \todo Please doc me! */
 
 template<class GridImp>
 class OneDInNDGridIdSet : public IdSet<GridImp,OneDInNDGridIdSet<GridImp>,unsigned int>
