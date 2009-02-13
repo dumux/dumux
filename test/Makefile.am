@@ -10,7 +10,6 @@ SUBDIRS = . \
 	  capillary \
 	  co2 \
 	  diffusion \
-	  dimltdimworld \
 	  elementid \
 	  fractionalflow \
 	  fvca5 \
