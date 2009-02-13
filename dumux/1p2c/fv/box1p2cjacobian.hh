@@ -228,7 +228,7 @@ namespace Dune
       	Scalar Ti, Tj;
 
       	Ti = this->problem.soil().tortuosity(this->fvGeom.subContVol[i].global, element, this->fvGeom.subContVol[i].local);
-      	Tj = this->problem.soil().tortuosity(this->fvGeom.subContVol[i].global, element, this->fvGeom.subContVol[i].local);
+      	Tj = this->problem.soil().tortuosity(this->fvGeom.subContVol[j].global, element, this->fvGeom.subContVol[j].local);
 
       	if (Ti != Tj)
       	    {
