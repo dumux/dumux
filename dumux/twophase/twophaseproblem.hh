@@ -38,46 +38,45 @@ namespace Dune {
  *    - Scalar  type used for return values
  */
 template<class Grid, class Scalar> class TwoPhaseProblem {
-    typedef typename Grid::ctype DT;
     enum {dim=Grid::dimension, numEq=2};
-    typedef typename Grid::Traits::template Codim<0>::Entity Entity;
+    typedef typename Grid::Traits::template Codim<0>::Entity Element;
     typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator
             IntersectionIterator;
 
 public:
     //! evaluate source term
     /*! evaluate source term at given location
-     @param[in]  x    position in global coordinates
+     @param[in]  globalPos    position in global coordinates
      @param[in]  element    entity of codim 0
-     @param[in]  xi   position in reference element of element
+     @param[in]  localPos   position in reference element of element
      \return     value of source term
      */
-    virtual FieldVector<Scalar,numEq> q(const FieldVector<DT,dim>& x, const Entity& element,
-            const FieldVector<DT,dim>& xi) const = 0;
+    virtual FieldVector<Scalar,numEq> q(const FieldVector<Scalar,dim>& globalPos, const Element& element,
+            const FieldVector<Scalar,dim>& localPos) const = 0;
 
     //! return type of boundary condition at the given global coordinate
     /*! return type of boundary condition at the given global coordinate
-     @param[in]  x    position in global coordinates
+     @param[in]  globalPos    position in global coordinates
      \return     boundary condition type given by enum in this class
      */
-    //    virtual FieldVector<BoundaryConditions::Flags, numEq> bctype (const FieldVector<DT,dim>& x, const Entity& element,
+    //    virtual FieldVector<BoundaryConditions::Flags, numEq> bctype (const FieldVector<Scalar,dim>& globalPos, const Element& element,
     //            const IntersectionIterator& intersectionIt,
-    //            const FieldVector<DT,dim>& xi) const = 0;
+    //            const FieldVector<Scalar,dim>& localPos) const = 0;
 
     virtual FieldVector<BoundaryConditions::Flags, numEq>bctype(
-            const FieldVector<DT,dim>& x, const Entity& element,
+            const FieldVector<Scalar,dim>& globalPos, const Element& element,
             const IntersectionIterator& intersectionIt,
-            const FieldVector<DT,dim>& xi) const = 0;
+            const FieldVector<Scalar,dim>& localPos) const = 0;
 
     //! returns index of the primary variable corresponding to the dirichlet boundary condition at the given global coordinate
         /*! returns index of the primary variable corresponding to the dirichlet boundary condition at the given global coordinate
-         @param[in]  x    position in global coordinates
+         @param[in]  globalPos    position in global coordinates
          \return     index of the primary variable
          */
 
-    virtual void dirichletIndex(const FieldVector<DT,dim>& x, const Entity& element,
+    virtual void dirichletIndex(const FieldVector<Scalar,dim>& globalPos, const Element& element,
             const IntersectionIterator& intersectionIt,
-            const FieldVector<DT,dim>& xi, FieldVector<int,numEq>& dirichletIdx) const
+            const FieldVector<Scalar,dim>& localPos, FieldVector<int,numEq>& dirichletIdx) const
     {
         for (int i = 0; i < numEq; i++)
             dirichletIdx[i]=i;
@@ -86,29 +85,29 @@ public:
 
     //! evaluate Dirichlet boundary condition at given position
     /*! evaluate Dirichlet boundary condition at given position
-     @param[in]  x    position in global coordinates
+     @param[in]  globalPos    position in global coordinates
      \return     boundary condition value
      */
-    virtual FieldVector<Scalar,numEq> g(const FieldVector<DT,dim>& x, const Entity& element,
+    virtual FieldVector<Scalar,numEq> g(const FieldVector<Scalar,dim>& globalPos, const Element& element,
             const IntersectionIterator& intersectionIt,
-            const FieldVector<DT,dim>& xi) const = 0;
+            const FieldVector<Scalar,dim>& localPos) const = 0;
 
     //! evaluate Neumann boundary condition at given position
     /*! evaluate Neumann boundary condition at given position
-     @param[in]  x    position in global coordinates
+     @param[in]  globalPos    position in global coordinates
      \return     boundary condition value
      */
-    virtual FieldVector<Scalar,numEq> J(const FieldVector<DT,dim>& x, const Entity& element,
+    virtual FieldVector<Scalar,numEq> J(const FieldVector<Scalar,dim>& globalPos, const Element& element,
             const IntersectionIterator& intersectionIt,
-            const FieldVector<DT,dim>& xi) const = 0;
+            const FieldVector<Scalar,dim>& localPos) const = 0;
 
     //! evaluate initial condition at given position
     /*! evaluate initial boundary condition at given position
-     @param[in]  x    position in global coordinates
+     @param[in]  globalPos    position in global coordinates
      \return     boundary condition value
      */
-    virtual FieldVector<Scalar,numEq> initial(const FieldVector<DT,dim>& x,
-            const Entity& element, const FieldVector<DT,dim>& xi) const = 0;
+    virtual FieldVector<Scalar,numEq> initial(const FieldVector<Scalar,dim>& globalPos,
+            const Element& element, const FieldVector<Scalar,dim>& localPos) const = 0;
 
     virtual FieldVector<Scalar,dim> gravity() const = 0;
 
