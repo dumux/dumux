@@ -8,6 +8,9 @@
 
 namespace Dune
 {
+
+/** \todo Please doc me! */
+
 template<class G, class RT, class ProblemType, class LocalJacobian, class FunctionType, class OperatorAssembler>
 class NonlinearModel {
 public:
@@ -96,6 +99,8 @@ localJacobian_(prob, false, g, u, g.overlapSize(0)>0)
     { }
 };
 
+/** \todo Please doc me! */
+
 template<class G, class RT, class ProblemType, class LocalJacobian, int m=1>
 class LeafP1NonlinearModel
 : public NonlinearModel<G, RT, ProblemType, LocalJacobian, LeafP1Function<G, RT, m>, LeafP1OperatorAssembler<G, RT, m> >
@@ -113,6 +118,8 @@ public:
     : ThisNonlinearModel(g, prob)
     { }
 };
+
+/** \todo Please doc me! */
 
 template<class G, class RT, class ProblemType, class LocalJacobian, int m=1>
 class MixedNonlinearModel

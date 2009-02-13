@@ -4,6 +4,9 @@
 #define DUNE_NEWTONMETHOD_HH
 
 namespace Dune {
+
+/** \todo Please doc me! */
+
 template<class G, class Model> class NewtonMethod {
     typedef typename Model::FunctionType FunctionType;
     typedef typename Model::OperatorAssembler OperatorAssembler;
