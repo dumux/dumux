@@ -59,7 +59,7 @@ namespace Dune
 	Template parameters are:
 
 	- Grid  a DUNE grid type
-	- RT    type used for return values
+	- Scalar    type used for return values
 
 	A class for computing the transport equation with the primary variables x and p.
 	The transport equation is coupled with the continuity equation.
@@ -67,46 +67,46 @@ namespace Dune
 
 	//the influence of the gravity is neglected
 
-  template<class G, class RT, class BoxFunction = LeafP1Function<G, RT, 2> >
+  template<class Grid, class Scalar, class BoxFunction = LeafP1Function<Grid, Scalar, 2> >
   class Box1P2CJacobian
-    : public BoxJacobian<Box1P2CJacobian<G,RT,BoxFunction>,G,RT,2,BoxFunction>
+    : public BoxJacobian<Box1P2CJacobian<Grid,Scalar,BoxFunction>,Grid,Scalar,2,BoxFunction>
   {
-    typedef typename G::ctype DT;
-    typedef typename G::Traits::template Codim<0>::Entity Entity;
-    typedef typename Entity::Geometry Geometry;
-    typedef Box1P2CJacobian<G,RT,BoxFunction> ThisType;
-    typedef typename LocalJacobian<ThisType,G,RT,2>::VBlockType VBlockType;
-    typedef typename LocalJacobian<ThisType,G,RT,2>::MBlockType MBlockType;
-    typedef FVElementGeometry<G> FVElementGeometry;
+    typedef typename Grid::ctype DT;
+    typedef typename Grid::Traits::template Codim<0>::Entity Element;
+    typedef typename Element::Geometry Geometry;
+    typedef Box1P2CJacobian<Grid,Scalar,BoxFunction> ThisType;
+    typedef typename LocalJacobian<ThisType,Grid,Scalar,2>::VBlockType VBlockType;
+    typedef typename LocalJacobian<ThisType,Grid,Scalar,2>::MBlockType MBlockType;
+    typedef FVElementGeometry<Grid> FVElementGeometry;
 
  	enum {konti = 0, transport = 1};	// Solution vector index
 
 
   public:
-    enum {dim=G::dimension};
-    enum {m=2};					//number of components
-    enum {SIZE=LagrangeShapeFunctionSetContainer<DT,RT,dim>::maxsize};
+    enum {dim=Grid::dimension};
+    enum {numComp=2};					//number of components
+    enum {SIZE=LagrangeShapeFunctionSetContainer<DT,Scalar,dim>::maxsize};
     struct VariableNodeData;
 
-    typedef FieldMatrix<RT,dim,dim> FMatrix;
-    typedef FieldVector<RT,dim> FVector;
+    typedef FieldMatrix<Scalar,dim,dim> FMatrix;
+    typedef FieldVector<Scalar,dim> FVector;
 
     //! Constructor
-    Box1P2CJacobian (OnePTwoCProblem<G,RT>& params, bool levelBoundaryAsDirichlet_, const G& grid,
+    Box1P2CJacobian (OnePTwoCProblem<Grid,Scalar>& params, bool levelBoundaryAsDirichlet_, const Grid& grid,
 			      BoxFunction& sol, bool procBoundaryAsDirichlet_=true)
-    : BoxJacobian<ThisType,G,RT,2,BoxFunction>(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_),
+    : BoxJacobian<ThisType,Grid,Scalar,2,BoxFunction>(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_),
       problem(params), vNDat(SIZE), oldVNDat(SIZE)
     {
       this->analytic = false;
     }
 
 	/** @brief compute time dependent term (storage), loop over nodes / subcontrol volumes
-	 *  @param e entity
+	 *  @param e element
 	 *  @param sol solution vector
 	 *  @param node local node id
 	 *  @return storage term
 	 */
-    virtual VBlockType computeM (const Entity& e, const VBlockType* sol,
+    virtual VBlockType computeM (const Element& element, const VBlockType* sol,
     		int node, std::vector<VariableNodeData>& varData)
     {
 
@@ -120,27 +120,27 @@ namespace Dune
    	 return result;
     };
 
-    virtual VBlockType computeM (const Entity& e, const VBlockType* sol, int node, bool old = false)
+    virtual VBlockType computeM (const Element& element, const VBlockType* sol, int node, bool old = false)
     {
     	if (old)
-    		return computeM(e, sol, node, oldVNDat);
+    		return computeM(element, sol, node, oldVNDat);
     	else
-    		return computeM(e, sol, node, vNDat);
+    		return computeM(element, sol, node, vNDat);
     }
 
     /** @brief compute diffusive/advective fluxes, loop over subcontrol volume faces
-	 *  @param e entity
+	 *  @param e element
 	 *  @param sol solution vector
 	 *  @param face face id
 	 *  @return flux term
      */
-    virtual VBlockType computeA (const Entity& e, const VBlockType* sol, int face)
+    virtual VBlockType computeA (const Element& element, const VBlockType* sol, int face)
     {
    	 int i = this->fvGeom.subContVolFace[face].i;
  	 int j = this->fvGeom.subContVolFace[face].j;
 
  	 // normal vector, value of the area of the scvf
-	 const FieldVector<RT,dim> normal(this->fvGeom.subContVolFace[face].normal);
+	 const FieldVector<Scalar,dim> normal(this->fvGeom.subContVolFace[face].normal);
 
   	 // get global coordinates of nodes i,j
 	 const FieldVector<DT,dim> global_i = this->fvGeom.subContVol[i].global;
@@ -151,19 +151,19 @@ namespace Dune
 	 VBlockType flux;
 
 	 //calculation of the flux of the continuity equation
-	 FieldVector<RT,dim> gradP(0);
+	 FieldVector<Scalar,dim> gradP(0);
 	 for (int k = 0; k < this->fvGeom.numVertices; k++) {
-	     FieldVector<RT,dim> grad(this->fvGeom.subContVolFace[face].grad[k]);
+	     FieldVector<Scalar,dim> grad(this->fvGeom.subContVolFace[face].grad[k]);
 	     grad *= sol[k][0];
 	     gradP += grad;
 	 }
 
-	 FieldVector<RT,dim> KGradP(0);
+	 FieldVector<Scalar,dim> KGradP(0);
 	 FMatrix Ki(0), Kj(0);
 
 	 // calculate harmonic mean of permeabilities of nodes i and j
-	 Ki = this->problem.soil().K(global_i,e,local_i);
-	 Kj = this->problem.soil().K(global_j,e,local_j);
+	 Ki = this->problem.soil().K(global_i,element,local_i);
+	 Kj = this->problem.soil().K(global_j,element,local_j);
 	 const FMatrix K = harmonicMeanK(Ki, Kj); //harmonic mean of the permeability
 
 	 K.umv(gradP, KGradP);					 //KGradP = KGradP + gradP
@@ -171,18 +171,18 @@ namespace Dune
 	 flux[0] = ( KGradP* this->fvGeom.subContVolFace[face].normal) / vNDat[i].viscosity;
 
 	 //calculation of the flux of the transport equation
-	 FieldVector<RT,dim> gradX(0);
+	 FieldVector<Scalar,dim> gradX(0);
 	 for (int k=0; k<this->fvGeom.numVertices; k++) {
-	     FieldVector<RT,dim> grad(this->fvGeom.subContVolFace[face].grad[k]);
+	     FieldVector<Scalar,dim> grad(this->fvGeom.subContVolFace[face].grad[k]);
 	     grad *= sol[k][1];
 	     gradX += grad;
 	 }
 
-	 const RT T = arithmeticMeanT(i, j, e);	//arithmetic mean of the tortuosity T
+	 const Scalar T = arithmeticMeanT(i, j, element);	//arithmetic mean of the tortuosity T
 
-	 const RT P = arithmeticMeanP(i, j, e);	//arithmetic mean of the porosity P
+	 const Scalar P = arithmeticMeanP(i, j, element);	//arithmetic mean of the porosity P
 
-	 RT outward = KGradP * this->fvGeom.subContVolFace[face].normal;													//calcualte the flux using upwind
+	 Scalar outward = KGradP * this->fvGeom.subContVolFace[face].normal;													//calcualte the flux using upwind
 	 if (outward < 0)
 	    flux[1] = (outward * vNDat[i].molefraction / vNDat[i].viscosity) + (T * P * vNDat[i].diffCoeff * (gradX * this->fvGeom.subContVolFace[face].normal));
 	 else
@@ -193,15 +193,15 @@ namespace Dune
 
 
       /** @brief integrate sources / sinks
-       *  @param e entity
+       *  @param e element
        *  @param sol solution vector
        *  @param node local node id
        *  @return source/sink term
        */
-      virtual VBlockType computeQ (const Entity& e, const VBlockType* sol, const int& node)
+      virtual VBlockType computeQ (const Element& element, const VBlockType* sol, const int& node)
           {
               // ASSUME problem.q already contains \rho.q
-              return problem.q(this->fvGeom.subContVol[node].global, e, this->fvGeom.subContVol[node].local);
+              return problem.q(this->fvGeom.subContVol[node].global, element, this->fvGeom.subContVol[node].local);
           }
 
 
@@ -222,13 +222,13 @@ namespace Dune
       }
 
       //arithmetic mean of the tortuosity is computed directly
-      virtual RT arithmeticMeanT (const int i, const int j, const Entity& e) const
+      virtual Scalar arithmeticMeanT (const int i, const int j, const Element& element) const
       {
 
-      	RT Ti, Tj;
+      	Scalar Ti, Tj;
 
-      	Ti = this->problem.soil().tortuosity(this->fvGeom.subContVol[i].global, e, this->fvGeom.subContVol[i].local);
-      	Tj = this->problem.soil().tortuosity(this->fvGeom.subContVol[i].global, e, this->fvGeom.subContVol[i].local);
+      	Ti = this->problem.soil().tortuosity(this->fvGeom.subContVol[i].global, element, this->fvGeom.subContVol[i].local);
+      	Tj = this->problem.soil().tortuosity(this->fvGeom.subContVol[i].global, element, this->fvGeom.subContVol[i].local);
 
       	if (Ti != Tj)
       	    {
@@ -241,13 +241,13 @@ namespace Dune
       }
 
       //arithmetic mean of the porosity is computed directly
-      virtual RT arithmeticMeanP (const int i, const int j, const Entity& e) const
+      virtual Scalar arithmeticMeanP (const int i, const int j, const Element& element) const
       {
 
-       RT Pi, Pj;
+       Scalar Pi, Pj;
 
-       Pi = this->problem.soil().porosity(this->fvGeom.subContVol[i].global, e, this->fvGeom.subContVol[i].local);
-       Pj = this->problem.soil().porosity(this->fvGeom.subContVol[j].global, e, this->fvGeom.subContVol[j].local);
+       Pi = this->problem.soil().porosity(this->fvGeom.subContVol[i].global, element, this->fvGeom.subContVol[i].local);
+       Pj = this->problem.soil().porosity(this->fvGeom.subContVol[j].global, element, this->fvGeom.subContVol[j].local);
 
        if (Pi != Pj)
           {
@@ -283,13 +283,13 @@ namespace Dune
 	  //*														*
 	  //*********************************************************
 
-    virtual void computeElementData (const Entity& e)
+    virtual void computeElementData (const Element& element)
     {
 //		 // ASSUMING element-wise constant permeability, evaluate K at the cell center
-// 		 elData.K = problem.K(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+// 		 elData.K = problem.K(this->fvGeom.cellGlobal, element, this->fvGeom.cellLocal);
 //
 //		 // ASSUMING element-wise constant porosity
-// 		 elData.porosity = problem.porosity(this->fvGeom.cellGlobal, e, this->fvGeom.cellLocal);
+// 		 elData.porosity = problem.porosity(this->fvGeom.cellGlobal, element, this->fvGeom.cellLocal);
    	 return;
     }
 
@@ -302,13 +302,13 @@ namespace Dune
 	  //*********************************************************
 
     // analog to EvalStaticData in MUFTE
-    virtual void updateStaticDataVS (const Entity& e, VBlockType* sol)
+    virtual void updateStaticDataVS (const Element& element, VBlockType* sol)
     {
    	 return;
     }
 
     // for initialization of the Static Data (sets porosity)
-    virtual void updateStaticData (const Entity& e, VBlockType* sol)
+    virtual void updateStaticData (const Element& element, VBlockType* sol)
     {
    	 return;
     }
@@ -324,45 +324,45 @@ namespace Dune
 
     struct VariableNodeData
     {
-    	RT porosity;
-    	RT molefraction;
-    	RT viscosity;
-    	RT tortuosity;
-    	RT diffCoeff;
+    	Scalar porosity;
+    	Scalar molefraction;
+    	Scalar viscosity;
+    	Scalar tortuosity;
+    	Scalar diffCoeff;
     	FMatrix K;
     };
 
     // analog to EvalPrimaryData in MUFTE, uses members of vNDat
-	virtual void updateVariableData(const Entity& e, const VBlockType* sol,
+	virtual void updateVariableData(const Element& element, const VBlockType* sol,
 			int i, std::vector<VariableNodeData>& varData)
     {	double T=273; 		//Temperatur in Kelvin
     	double p=1e5; 		//Druck in Pa
 
-		varData[i].porosity = problem.soil().porosity(this->fvGeom.subContVol[i].global, e, this->fvGeom.subContVol[i].local);
+		varData[i].porosity = problem.soil().porosity(this->fvGeom.subContVol[i].global, element, this->fvGeom.subContVol[i].local);
    		varData[i].viscosity = problem.phase().viscosity(T, p);
-   		varData[i].tortuosity = problem.soil().tortuosity(this->fvGeom.subContVol[i].global, e, this->fvGeom.subContVol[i].local);
+   		varData[i].tortuosity = problem.soil().tortuosity(this->fvGeom.subContVol[i].global, element, this->fvGeom.subContVol[i].local);
 	   	varData[i].diffCoeff = problem.phase().diffCoeff();
 	   	varData[i].molefraction = sol[i][1];
     }
 
 
- 	virtual void updateVariableData(const Entity& e, const VBlockType* sol, int i, bool old = false)
+ 	virtual void updateVariableData(const Element& element, const VBlockType* sol, int i, bool old = false)
  		{
 
  			if (old)
- 				updateVariableData(e, sol, i, oldVNDat);
+ 				updateVariableData(element, sol, i, oldVNDat);
  			else
- 				updateVariableData(e, sol, i, vNDat);
+ 				updateVariableData(element, sol, i, vNDat);
  		}
 
-	void updateVariableData (const Entity& e, const VBlockType* sol, bool old = false)
+	void updateVariableData (const Element& element, const VBlockType* sol, bool old = false)
 	{
 		int size = this->fvGeom.numVertices;
 		vNDat.resize(size);
 		oldVNDat.resize(size);
 
 		for (int i = 0; i < size; i++)
-			updateVariableData(e, sol, i, old);
+			updateVariableData(element, sol, i, old);
 	}
 
 
@@ -375,7 +375,7 @@ namespace Dune
 
 
     // parameters given in constructor
-    OnePTwoCProblem<G,RT>& problem;
+    OnePTwoCProblem<Grid,Scalar>& problem;
     std::vector<StaticNodeData> sNDat;
     std::vector<VariableNodeData> vNDat;
     std::vector<VariableNodeData> oldVNDat;
