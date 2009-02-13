@@ -40,7 +40,6 @@ namespace Dune
    */
   template<class Grid, class Scalar>
   class LayerProblem : public TwoPTwoCProblem<Grid, Scalar> {
-    typedef typename Grid::ctype Scalar;
     enum {dim=Grid::dimension, numEq=2};
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
     typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;

@@ -39,7 +39,6 @@ namespace Dune
   class BlobProblem : public TwoPTwoCProblem<Grid, Scalar>
   {
       enum {dim=Grid::dimension, numEq=2};
-      typedef typename Grid::ctype Scalar;
       typedef typename Grid::template Codim<0>::Entity Element;
       typedef typename Grid::template Codim<0>::LeafIntersectionIterator IntersectionIterator;
 
@@ -189,7 +188,6 @@ namespace Dune
   {
   public:
       typedef typename Grid::Traits::template Codim<0>::Entity Element;
-      typedef typename Grid::ctype Scalar;
       enum {dim=Grid::dimension};
 
       virtual const FieldMatrix<Scalar,dim,dim> &K (const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos)
