@@ -19,98 +19,90 @@
 
 /**
  * @file
- * @brief  Base class for defining an instance of the TwoPhase problem
- * @author Bernd Flemisch
+ * @brief  Base class for defining an instance of the OnePhase problem
+ * @author Karin Erbertseder
  */
 
 namespace Dune
 {
-  //! base class that defines the parameters of a diffusion equation
-  /*! An interface for defining parameters for the stationary diffusion equation
-   * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = q, \f$,
-   * \f$p = g\f$ on \f$\Gamma_1\f$, and \f$\lambda K \text{grad}\, p = J\f$
-   * on \f$\Gamma_2\f$. Here,
-   * \f$p\f$ denotes the pressure, \f$K\f$ the absolute permeability,
-   * and \f$\lambda\f$ the total mobility, possibly depending on the
-   * saturation.
+  //! base class that defines the parameters for the boundary conditions and the source/sink term
+  /*! Template parameters are:
    *
-   *	Template parameters are:
-   *
-   *	- Grid  a DUNE grid type
-   *	- RT    type used for return values
+   *	- Grid   a DUNE grid type
+   *	- Scalar type used for return values
    */
-  template<class G, class RT>
-  class TissueTumorProblem : public OnePTwoCProblem<G, RT> {
-	typedef typename G::ctype DT;
-	typedef typename G::Traits::template Codim<0>::Entity Entity;
-	typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
-	enum {dim=G::dimension, m=2};
+  template<class Grid, class Scalar>
+  class TissueTumorProblem : public OnePTwoCProblem<Grid, Scalar> {
+	typedef typename Grid::ctype CoordScalar;
+	typedef typename Grid::Traits::template Codim<0>::Entity Element;
+	typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
+	enum {dim=Grid::dimension, numEq=2};
 	enum {konti = 0, transport = 1};	// Solution vector index
 
   public:
 
-	virtual FieldVector<RT,m> q (const FieldVector<DT,dim>& x, const Entity& e,
-					const FieldVector<DT,dim>& xi) const
+	virtual FieldVector<Scalar,numEq> q (const FieldVector<CoordScalar,dim>& golbalPos, const Element& element,
+					const FieldVector<CoordScalar,dim>& localPos) const
 	{
-		FieldVector<RT,m> values(0);
-		
-		if(x[0]>10 && x[0]<12 && x[1]>10 && x[1]<12)
+		FieldVector<Scalar,numEq> values(0);
+
+		if(golbalPos[0]>10 && golbalPos[0]<12 && golbalPos[1]>10 && golbalPos[1]<12)
 			values[0]=1.5e-6;
 		return values;
 	}
 
-	virtual FieldVector<BoundaryConditions::Flags, m> bctype (const FieldVector<DT,dim>& x, const Entity& e,
+	virtual FieldVector<BoundaryConditions::Flags, numEq> bctype (const FieldVector<CoordScalar,dim>& golbalPos, const Element& element,
 					const IntersectionIterator& intersectionIt,
-					   const FieldVector<DT,dim>& xi) const
+					   const FieldVector<CoordScalar,dim>& localPos) const
 	{
-		FieldVector<BoundaryConditions::Flags, m> values(Dune::BoundaryConditions::dirichlet);
+		FieldVector<BoundaryConditions::Flags, numEq> values(Dune::BoundaryConditions::dirichlet);
 
-//		if( x[0]<1e-1 || x[0]> 22-1e-1 )
+//		if( golbalPos[0]<1e-1 || golbalPos[0]> 22-1e-1 )
 //			values = Dune::BoundaryConditions::dirichlet;
-		
+
 		return values;
 	}
 
-	virtual void dirichletIndex(const FieldVector<DT,dim>& x, const Entity& e,
+	virtual void dirichletIndex(const FieldVector<CoordScalar,dim>& golbalPos, const Element& element,
 			const IntersectionIterator& intersectionIt,
-			const FieldVector<DT,dim>& xi, FieldVector<int,m>& dirichletIndex) const
+			const FieldVector<CoordScalar,dim>& localPos, FieldVector<int,numEq>& dirichletIndex) const
 	{
-		for (int i = 0; i < m; i++)
+		for (int i = 0; i < numEq; i++)
 			dirichletIndex[i]=i;
 		return;
 	}
 
-	virtual FieldVector<RT,m> g (const FieldVector<DT,dim>& x, const Entity& e,
+	virtual FieldVector<Scalar,numEq> g (const FieldVector<CoordScalar,dim>& golbalPos, const Element& element,
 				const IntersectionIterator& intersectionIt,
-				  const FieldVector<DT,dim>& xi) const
+				  const FieldVector<CoordScalar,dim>& localPos) const
 	{
-		FieldVector<RT,m> values(0);
+		FieldVector<Scalar,numEq> values(0);
 
-		if(x[0]<1e-1)
+		if(golbalPos[0]<1e-1)
 		 {
 		  values[0] = -931;
 		  values[1] = 1.1249e-8;
 		 }
-		  		
-		else if(x[0]>22-1e-1)
+
+		else if(golbalPos[0]>22-1e-1)
          {
 		 values[0] = -1067;  	//Dirichlet RB für Druck
 		 values[1] = 1.1249e-8;       //Dirichlet RB für mol fraction x
 		 }
-			
+
 		else
 		{
-		values[0] =-931-((136/22)*x[0]); //AB für Druck p
-		values[1] = 1.1249e-8; //AB für mole fraction x	
+		values[0] =-931-((136/22)*golbalPos[0]); //AB für Druck p
+		values[1] = 1.1249e-8; //AB für mole fraction x
 		}
 		return values;
 	}
 
-	virtual FieldVector<RT,m> J (const FieldVector<DT,dim>& x, const Entity& e,
-				const IntersectionIterator& intersectionIt, const FieldVector<DT,dim>& xi) const
+	virtual FieldVector<Scalar,numEq> J (const FieldVector<CoordScalar,dim>& golbalPos, const Element& element,
+				const IntersectionIterator& intersectionIt, const FieldVector<CoordScalar,dim>& localPos) const
 	{
-		FieldVector<RT,m> values(0);
-//		if(x[0] < 1.e-1)
+		FieldVector<Scalar,numEq> values(0);
+//		if(golbalPos[0] < 1.e-1)
 //		{
 //			values[0] = -3.8676e-8;
 //			values[1] = -4.35064e-16;
@@ -119,30 +111,30 @@ namespace Dune
 	}
 
 	// Initial Conditions for global vector x, element e and local vector xi
-	virtual FieldVector<RT,m> initial (const FieldVector<DT,dim>& x, const Entity& e,
-				  const FieldVector<DT,dim>& xi) const
+	virtual FieldVector<Scalar,numEq> initial (const FieldVector<CoordScalar,dim>& golbalPos, const Element& element,
+				  const FieldVector<CoordScalar,dim>& localPos) const
 	{
-		FieldVector<RT,m> values(0);
-				
-		values[0] =-931-((136/22)*x[0]); //AB für Druck p
-		
+		FieldVector<Scalar,numEq> values(0);
+
+		values[0] =-931-((136/22)*golbalPos[0]); //AB für Druck p
+
 //		values[0] = -1067;
 //		values[1] = 1.1249e-8;
-		if(x[0]>10 && x[0]<12 && x[1]>10 && x[1]<12)
-			values[1]=0;	
+		if(golbalPos[0]>10 && golbalPos[0]<12 && golbalPos[1]>10 && golbalPos[1]<12)
+			values[1]=0;
 		else
 			values[1]=1.1249e-8;
-		
+
 		return values;
 	}
 
 
 
-	TissueTumorProblem(Liquid_GL& phase, Matrix2p<G, RT>& soil)
-	: OnePTwoCProblem<G, RT>(phase, soil)
+	TissueTumorProblem(Liquid_GL& phase, Matrix2p<Grid, Scalar>& soil)
+	: OnePTwoCProblem<Grid, Scalar>(phase, soil)
 	{
-		
-	}	
+
+	}
   };
 
 }
