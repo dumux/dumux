@@ -143,7 +143,6 @@ AC_CONFIG_FILES([Makefile
     test/transport/Makefile
     test/tutorial/Makefile
     test/twophase/Makefile
-    test/upscaledvelocity/Makefile
     test/vtk/Makefile
 	 dumux/brinkman/fv/Makefile
 	 dumux/1p2c/fv/Makefile
