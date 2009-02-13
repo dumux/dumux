@@ -7,57 +7,57 @@
 namespace Dune
 {
 
-template<class G, class RT>
-class TissueSoil: public Matrix2p<G, RT>
+template<class Grid, class Scalar>
+class TissueSoil: public Matrix2p<Grid, Scalar>
 {
 public:
-typedef	typename G::Traits::template Codim<0>::Entity Entity;
-	typedef typename G::ctype DT;
+typedef	typename Grid::Traits::template Codim<0>::Entity Element;
+	typedef typename Grid::ctype CoordScalar;
 	enum
-	{	dim=G::dimension, m=2};
+	{	dim=Grid::dimension, numEq=2};
 
-	const FieldMatrix<DT,dim,dim> &K (const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi) 
+	const FieldMatrix<CoordScalar,dim,dim> &K (const FieldVector<CoordScalar,dim>& globalPos, const Element& element, const FieldVector<CoordScalar,dim>& localPos)
 	{
-	     if (10<x[0] && x[0]<12 && 10<x[1] && x[1]<12)
+	     if (10<globalPos[0] && globalPos[0]<12 && 10<globalPos[1] && globalPos[1]<12)
 		   return permloc_;						//tumor tissue
 	     else
 		   return permlocWell_;					//healthy tissue
 	}
 
-	double porosity(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi) const
+	double porosity(const FieldVector<CoordScalar,dim>& globalPos, const Element& element, const FieldVector<CoordScalar,dim>& localPos) const
 	{
-		if (10<x[0] && x[0]<12 && 10<x[1] && x[1]<12)
+		if (10<globalPos[0] && globalPos[0]<12 && 10<globalPos[1] && globalPos[1]<12)
 		   return 0.31;						//tumor tissue
 		else
 		   return 0.13;					//healthy tissue
 	}
 
-	double tortuosity (const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi) const
+	double tortuosity (const FieldVector<CoordScalar,dim>& globalPos, const Element& element, const FieldVector<CoordScalar,dim>& localPos) const
 		{
-			if (10<x[0] && x[0]<12 && 10<x[1] && x[1]<12)
+			if (10<globalPos[0] && globalPos[0]<12 && 10<globalPos[1] && globalPos[1]<12)
 			   return 0.706;						//tumor tissue
 			else
 			   return 0.280;					//healthy tissue
 		}
-	
-	virtual double Sr_w(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, const double T = 283.15) const
+
+	virtual double Sr_w(const FieldVector<CoordScalar,dim>& globalPos, const Element& element, const FieldVector<CoordScalar,dim>& localPos, const double T = 283.15) const
 	{
 		return 0;
 	}
-	
-	virtual double Sr_n(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, const double T = 283.15) const 
+
+	virtual double Sr_n(const FieldVector<CoordScalar,dim>& globalPos, const Element& element, const FieldVector<CoordScalar,dim>& localPos, const double T = 283.15) const
 	{
 		return 0;
 	}
-	
-	virtual std::vector<double> paramRelPerm(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, const double T = 283.15) const
+
+	virtual std::vector<double> paramRelPerm(const FieldVector<CoordScalar,dim>& globalPos, const Element& element, const FieldVector<CoordScalar,dim>& localPos, const double T = 283.15) const
 	{
 		std::vector<double> param(0);
 		return param;
 	}
-	
+
 	TissueSoil()
-	:Matrix2p<G,RT>()
+	:Matrix2p<Grid,Scalar>()
 	{
 	  permloc_ = 0;
 	  permlocWell_ = 0;
@@ -68,7 +68,7 @@ typedef	typename G::Traits::template Codim<0>::Entity Entity;
 	}
 
 	private:
-	Dune::FieldMatrix<DT,dim,dim> permloc_, permlocWell_;
+	Dune::FieldMatrix<CoordScalar,dim,dim> permloc_, permlocWell_;
 };
 } // end namespace
 #endif
