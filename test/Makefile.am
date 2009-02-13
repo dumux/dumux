@@ -30,7 +30,6 @@ SUBDIRS = . \
 	  transport \
 	  tutorial \
 	  twophase \
-	  upscaledvelocity \
 	  vtk
 
 include $(top_srcdir)/am/global-rules
