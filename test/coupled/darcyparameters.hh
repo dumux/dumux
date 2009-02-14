@@ -1,102 +1,102 @@
 #ifndef DARCYPARAMETERS_HH
 #define DARCYPARAMETERS_HH
 
-template<class G, class RT>
+template<class Grid, class Scalar>
 class DarcyParameters
 {
-  typedef typename G::ctype DT;
-  enum {n=G::dimension, m=1};
-  typedef typename G::Traits::template Codim<0>::Entity Entity;
-  typedef typename Dune::IntersectionIteratorGetter<G,Dune::LeafTag>::IntersectionIterator IntersectionIterator;
+  typedef typename Grid::ctype Scalar;
+  enum {dim=Grid::dimension, numEq=1};
+  typedef typename Grid::Traits::template Codim<0>::Entity Element;
+  typedef typename Dune::IntersectionIteratorGetter<Grid,Dune::LeafTag>::IntersectionIterator IntersectionIterator;
 
 public:
   DarcyParameters ()
   {
       // CHANGE also in the Stokes problem!
-	for (int i=0; i<n; i++)
-	  for (int j=0; j<n; j++)
+	for (int i=0; i<dim; i++)
+	  for (int j=0; j<dim; j++)
 		if (i==j)
 		  permeability_[i][j] = 1.0e-2;//5.88e-5;
 		else
 			permeability_[i][j] = 0;
   }
 
-  const Dune::FieldMatrix<DT,n,n>& K (const Dune::FieldVector<DT,n>& x, const Entity& e,
-				  const Dune::FieldVector<DT,n>& xi) const
+  const Dune::FieldMatrix<Scalar,dim,dim>& K (const Dune::FieldVector<Scalar,dim>& globalPos, const Element& element,
+				  const Dune::FieldVector<Scalar,dim>& localPos) const
   {
 	return permeability_;
   }
 
-  RT q   (const Dune::FieldVector<DT,n>& x, const Entity& e,
-				  const Dune::FieldVector<DT,n>& xi) const
+  Scalar q   (const Dune::FieldVector<Scalar,dim>& globalPos, const Element& element,
+				  const Dune::FieldVector<Scalar,dim>& localPos) const
   {
 	return 0;
   }
 
-  Dune::BoundaryConditions::Flags bctype (const Dune::FieldVector<DT,n>& x, const Entity& e,
+  Dune::BoundaryConditions::Flags bctype (const Dune::FieldVector<Scalar,dim>& globalPos, const Element& element,
 			const IntersectionIterator& intersectionIt,
-					   const Dune::FieldVector<DT,n>& xi) const
+					   const Dune::FieldVector<Scalar,dim>& localPos) const
   {
- 	if (x[0] > 4 - 1e-6)
+ 	if (globalPos[0] > 4 - 1e-6)
 	  return Dune::BoundaryConditions::dirichlet;
 
 	return Dune::BoundaryConditions::neumann;
   }
 
-	virtual void dirichletIndex(const Dune::FieldVector<DT,n>& x, const Entity& e,
+	virtual void dirichletIndex(const Dune::FieldVector<Scalar,dim>& globalPos, const Element& element,
 			const IntersectionIterator& intersectionIt,
-			const Dune::FieldVector<DT,n>& xi, Dune::FieldVector<int,m>& dirichletIndex) const
+			const Dune::FieldVector<Scalar,dim>& localPos, Dune::FieldVector<int,numEq>& dirichletIndex) const
 	{
-		for (int i = 0; i < m; i++)
+		for (int i = 0; i < numEq; i++)
 			dirichletIndex[i]=i;
 		return;
 	}
 
-  RT exact(const Dune::FieldVector<DT,n>& x) const
+  Scalar exact(const Dune::FieldVector<Scalar,dim>& globalPos) const
   {
-		return (x[0]*x[1]);
+		return (globalPos[0]*globalPos[1]);
   }
 
   // Dirichlet boundary conditions
-  RT g (const Dune::FieldVector<DT,n>& x, const Entity& e,
+  Scalar g (const Dune::FieldVector<Scalar,dim>& globalPos, const Element& element,
 			const IntersectionIterator& intersectionIt,
-				const Dune::FieldVector<DT,n>& xi) const
+				const Dune::FieldVector<Scalar,dim>& localPos) const
   {
 	return 0;
   }
 
-  Dune::FieldVector<RT,n> exactGrad(const Dune::FieldVector<DT,n>& x) const
+  Dune::FieldVector<Scalar,dim> exactGrad(const Dune::FieldVector<Scalar,dim>& globalPos) const
   {
-	  Dune::FieldVector<DT,n> grad;
+	  Dune::FieldVector<Scalar,dim> grad;
 
-	  grad[0] = x[1];
-	  grad[1] = x[0];
+	  grad[0] = globalPos[1];
+	  grad[1] = globalPos[0];
 	  grad[2] = 0.0;
 
 	  return grad;
   }
 
   // Neumann b.c.
-  RT J (const Dune::FieldVector<DT,n>& x, const Entity& e,
+  Scalar J (const Dune::FieldVector<Scalar,dim>& globalPos, const Element& element,
 			const IntersectionIterator& intersectionIt,
-				const Dune::FieldVector<DT,n>& xi) const
+				const Dune::FieldVector<Scalar,dim>& localPos) const
   {
 	  return 0;
-//	  if (x[0] < 0.5 + 1e-6 && x[1] > 0.4 - 1e-6)
+//	  if (globalPos[0] < 0.5 + 1e-6 && globalPos[1] > 0.4 - 1e-6)
 //		  return 0;
 //	  else
 //	  {
-//		  Dune::FieldVector<RT,n> KGradU(0);
-//		  large.umv(exactGrad(x), KGradU);
+//		  Dune::FieldVector<Scalar,dim> KGradU(0);
+//		  large.umv(exactGrad(globalPos), KGradU);
 //
 //		  // ASSUMING face-wise constant normal
-//		  Dune::FieldVector<DT, n-1> localDimM1(0);
+//		  Dune::FieldVector<Scalar, dim-1> localDimM1(0);
 //		  return -(KGradU*intersectionIt->unitOuterNormal(localDimM1));
 //	  }
   }
 
 private:
-  Dune::FieldMatrix<DT,n,n> permeability_;
+  Dune::FieldMatrix<Scalar,dim,dim> permeability_;
 };
 
 #endif

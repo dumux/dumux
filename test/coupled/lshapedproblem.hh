@@ -7,46 +7,46 @@
 
 namespace Dune {
 
-template<class G, class RT>
-class LShapedProblem : public StokesProblem<G, RT>
+template<class Grid, class Scalar>
+class LShapedProblem : public StokesProblem<Grid, Scalar>
 {
-  typedef typename G::ctype DT;
-  enum {dim=G::dimension, m=G::dimension+1};
-  typedef typename G::Traits::template Codim<0>::Entity Entity;
-  typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
+  typedef typename Grid::ctype Scalar;
+  enum {dim=Grid::dimension, numEq=Grid::dimension+1};
+  typedef typename Grid::Traits::template Codim<0>::Entity Element;
+  typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
 
 public:
-  virtual FieldVector<RT,m> q(const FieldVector<DT,dim>& x, const Entity& e,
-				const FieldVector<DT,dim>& xi) const
+  virtual FieldVector<Scalar,numEq> q(const FieldVector<Scalar,dim>& globalPos, const Element& element,
+				const FieldVector<Scalar,dim>& localPos) const
   {
-    FieldVector<RT,m> result(0);
+    FieldVector<Scalar,numEq> result(0);
 
     return result;
   }
 
-  virtual BoundaryConditions::Flags bctype (const FieldVector<DT,dim>& x, const Entity& e,
+  virtual BoundaryConditions::Flags bctype (const FieldVector<Scalar,dim>& globalPos, const Element& element,
 					    const IntersectionIterator& intersectionIt,
-					    const FieldVector<DT,dim>& xi) const
+					    const FieldVector<Scalar,dim>& localPos) const
   {
-    if (x[0] > 1.5 - 1e-6 && x[1] < 0.5 + 1e-6)
+    if (globalPos[0] > 1.5 - 1e-6 && globalPos[1] < 0.5 + 1e-6)
       return BoundaryConditions::process;
-   	if (x[0] > 4 - 1e-6)
+   	if (globalPos[0] > 4 - 1e-6)
       return BoundaryConditions::neumann;
     else
       return BoundaryConditions::dirichlet;
   }
 
-  virtual FieldVector<RT,dim> g(const FieldVector<DT,dim>& x, const Entity& e,
+  virtual FieldVector<Scalar,dim> g(const FieldVector<Scalar,dim>& globalPos, const Element& element,
 				const IntersectionIterator& intersectionIt,
-				const FieldVector<DT,dim>& xi) const
+				const FieldVector<Scalar,dim>& localPos) const
   {
-    return velocity(x);
+    return velocity(globalPos);
   }
 
   // function returns the square root of the permeability (scalar) divided by alpha
-  virtual RT beaversJosephC(const FieldVector<DT,dim>& x, const Entity& e,
+  virtual Scalar beaversJosephC(const FieldVector<Scalar,dim>& globalPos, const Element& element,
 		const IntersectionIterator& intersectionIt,
-		const FieldVector<DT,dim>& xi) const
+		const FieldVector<Scalar,dim>& localPos) const
   {
       // CHANGE also in the porous medium problem!
 	  double permeability = 1.0e-2;//5.88e-5;
@@ -57,33 +57,33 @@ public:
   }
 
   //TODO: this is not called yet
-  virtual RT mu(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi) const
+  virtual Scalar mu(const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos) const
   {
     return 0.01;
   }
 
-  virtual FieldVector<RT,dim> velocity(const FieldVector<DT,dim>& x) const
+  virtual FieldVector<Scalar,dim> velocity(const FieldVector<Scalar,dim>& globalPos) const
   {
-	  FieldVector<RT,dim> result(0);
+	  FieldVector<Scalar,dim> result(0);
 
-	  if (x[0] < 1e-6)
-		  result[0] = 1;//-x[1];
-	  if (x[1] < 1e-6)
-		  result[0] = 0;//-x[1];
-	  if (x[1] > 1-1e-6)
-		  result[0] = 0;//-x[1];
+	  if (globalPos[0] < 1e-6)
+		  result[0] = 1;//-globalPos[1];
+	  if (globalPos[1] < 1e-6)
+		  result[0] = 0;//-globalPos[1];
+	  if (globalPos[1] > 1-1e-6)
+		  result[0] = 0;//-globalPos[1];
 
     return result;
   }
 
-  virtual RT pressure(const FieldVector<DT,dim>& x) const
+  virtual Scalar pressure(const FieldVector<Scalar,dim>& globalPos) const
   {
-    return (x[0]);
+    return (globalPos[0]);
   }
 
-  virtual FieldMatrix<DT, dim, dim> velocityGradient(const FieldVector<DT,dim>& x) const
+  virtual FieldMatrix<Scalar, dim, dim> velocityGradient(const FieldVector<Scalar,dim>& globalPos) const
   {
-    FieldMatrix<DT, dim, dim> result(0);
+    FieldMatrix<Scalar, dim, dim> result(0);
 //    result[0][1] = -1.0;
 //    result[1][0] = -1.0;
     result[0][0] = -1.0;
