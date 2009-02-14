@@ -97,6 +97,8 @@ private:
     Scalar eps_;
 };
 
+/** \todo Please doc me! */
+
 template<class Grid, class Scalar, class VC> class ConvSubProblemY1: public FractionalFlowProblemSubProbs<
 Grid , Scalar, VC>
 {
@@ -185,6 +187,9 @@ private:
 
     Scalar eps_;
 };
+
+/** \todo Please doc me! */
+
 template<class Grid, class Scalar, class VC> class ConvSubProblemX2: public FractionalFlowProblemSubProbs<
 Grid, Scalar, VC>
 {
@@ -273,6 +278,8 @@ private:
 
     Scalar eps_;
 };
+
+/** \todo Please doc me! */
 
 template<class Grid, class Scalar, class VC> class ConvSubProblemY2: public FractionalFlowProblemSubProbs<
 Grid , Scalar, VC>

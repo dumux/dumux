@@ -95,6 +95,8 @@ private:
     RT eps_;
 };
 
+/** \todo Please doc me! */
+
 template<class G, class RT, class VC> class DiffSubProblemY: public FractionalFlowProblemSubProbs<
         G , RT, VC>
 {
@@ -180,6 +182,9 @@ private:
 
     RT eps_;
 };
+
+/** \todo Please doc me! */
+
 template<class G, class RT, class VC> class DiffSubProblemXInt2: public FractionalFlowProblemSubProbs<
         G, RT, VC>
 {
@@ -265,6 +270,8 @@ private:
 
     RT eps_;
 };
+
+/** \todo Please doc me! */
 
 template<class G, class RT, class VC> class DiffSubProblemYInt2: public FractionalFlowProblemSubProbs<
         G , RT, VC>
