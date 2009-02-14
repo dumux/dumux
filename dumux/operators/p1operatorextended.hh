@@ -342,6 +342,9 @@ namespace Dune
       return;
     }
   };
+
+/** \todo Please doc me! */
+
   template<int n>
   struct P1Operator_meta<n,0> {
     template<class Entity, class VMapper, class AMapper, class Refelem, class Matrix>
@@ -391,6 +394,9 @@ namespace Dune
   };
 
   // handles case n=1, c=-1
+
+/** \todo Please doc me! */
+
   template<int n>
   struct P1Operator_meta<n,-1> {
     template<class Entity, class VMapper, class AMapper, class Refelem, class Matrix>
@@ -407,6 +413,8 @@ namespace Dune
       return;
     }
   };
+
+/** \todo Please doc me! */
 
     template<typename Grid, typename RT, typename Tag, bool hasHangingNodes>
     struct HangingNodesIdentifier
@@ -563,6 +571,9 @@ namespace Dune
     typedef BCRSMatrix<BlockType> RepresentationType;
 
     // mapper: one data element per vertex
+
+/** \todo Please doc me! */
+
     template<int dim>
     struct P1Layout
     {
@@ -573,6 +584,9 @@ namespace Dune
     };
 
     // mapper: one data element in every entity
+
+/** \todo Please doc me! */
+
     template<int dim>
     struct AllLayout
     {
@@ -728,6 +742,8 @@ namespace Dune
       return vertexmapper.size()+extraDOFs;
     }
 
+/** \todo Please doc me! */
+
     struct MatEntry
     {
       IdType first;
@@ -737,6 +753,9 @@ namespace Dune
     };
 
     // A DataHandle class to exchange matrix entries
+
+/** \todo Please doc me! */
+
     class MatEntryExchange :
       public CommDataHandleIF<MatEntryExchange,MatEntry> {
       typedef typename RepresentationType::RowIterator rowiterator;
@@ -1072,6 +1091,9 @@ namespace Dune
 
 
     // A DataHandle class to exchange border rows
+
+/** \todo Please doc me! */
+
     class AccumulateBCFlags :
       public CommDataHandleIF<AccumulateBCFlags,std::pair<BCBlockType,VBlockType> > {
     public:

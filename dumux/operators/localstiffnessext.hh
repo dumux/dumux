@@ -7,6 +7,9 @@
 
 namespace Dune
 {
+
+/** \todo Please doc me! */
+
   template<class Imp, class G, class RT, int m>
   class LocalStiffnessExt : public LocalStiffness<typename G::LeafGridView, RT, m>
   {
