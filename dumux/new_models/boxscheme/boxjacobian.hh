@@ -222,13 +222,13 @@ namespace Dune
                                                         1,
                                                         faceVertIdx,
                                                         dim);
-                    int boundaryFaceIdx = 
+                    int boundaryFaceIdx =
                         curElementGeom_.boundaryFaceIndex(faceIdx,
                                                           faceVertIdx);
 
                     // handle boundary conditions for a single
                     // sub-control volume face
-                    applyBoundaryCondition_(isIt, 
+                    applyBoundaryCondition_(isIt,
                                             elemVertIdx,
                                             boundaryFaceIdx);
                 }
@@ -240,16 +240,16 @@ namespace Dune
         void applyBoundaryCondition_(const IntersectionIterator &isIt,
                                      int scvIdx,
                                      int boundaryFaceIdx)
-        {                        
+        {
             // temporary vector to store the neumann boundaries
             SolutionVector values(0.0);
             bool wasEvaluated = false;
-            
+
             // loop over all primary variables to deal with mixed
             // boundary conditions
             for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
             {
-                if (this->bctype[scvIdx][eqIdx] 
+                if (this->bctype[scvIdx][eqIdx]
                     != BoundaryConditions::neumann)
                 {
                     // dirichlet boundary conditions are treated as
@@ -259,7 +259,7 @@ namespace Dune
                 }
 
                 // if we are here we've got a neumann boundary condition
-                
+
                 // make sure that we evaluate call the problem's
                 // neumann() method exactly once if
                 if (!wasEvaluated)
@@ -267,7 +267,7 @@ namespace Dune
                     // make sure that we only evaluate
                     // the neumann fluxes once
                     wasEvaluated = true;
-                    
+
                     problem_.neumann(values,
                                      curElement_(),
                                      curElementGeom_,
@@ -278,7 +278,7 @@ namespace Dune
                     // points
                     values *= curElementGeom_.boundaryFace[boundaryFaceIdx].area;
                 }
-                
+
                 this->b[scvIdx][eqIdx] += values[eqIdx];
             }
         }
@@ -388,7 +388,7 @@ namespace Dune
          * necessary.
          */
         void updateStaticData(SpatialFunction &curSol, SpatialFunction &oldSol)
-            { };     
+            { };
 
         /*!
          * \brief This returns the finite volume geometric information of the current
@@ -419,7 +419,7 @@ namespace Dune
 
         // The problem we would like to solve
         Problem &problem_;
-        
+
         ElementPointer    curElementPtr_;
         FVElementGeometry curElementGeom_;
 
@@ -435,7 +435,9 @@ namespace Dune
 
             int numVerts = curElement_().template count<dim>();
             for (int i = 0; i < numVerts; ++i)
-                this->bctype[i] = BoundaryConditions::neumann;
+                for (int comp=0; comp < numEq; comp++) {
+                	this->bctype[i][comp] == BoundaryConditions::neumann;
+                }
 
             // evaluate boundary conditions
             IntersectionIterator isIt = curElement_().ileafbegin();
@@ -458,7 +460,7 @@ namespace Dune
                                                           faceVertIdx,
                                                           dim);
                     int boundaryFaceIdx =
-                        curElementGeom_.boundaryFaceIndex(faceIdx, 
+                        curElementGeom_.boundaryFaceIndex(faceIdx,
                                                           faceVertIdx);
 
                     // set the boundary types
