@@ -99,7 +99,7 @@ void calculateDarcyVelocity(const Grid& grid, const Problem& problem, PressureFu
   : public NonlinearModel<G, RT, ProblemType, LocalJacobian, FunctionType, OperatorAssembler>
   {
   public:
-    typedef NonlinearModel<G, RT, ProblemType, LocalJacobian,
+    typedef Dune::NonlinearModel<G, RT, ProblemType, LocalJacobian,
                               FunctionType, OperatorAssembler> NonlinearModel;
 
     BoxDiffusion(const G& g, ProblemType& prob)
@@ -139,7 +139,7 @@ void calculateDarcyVelocity(const Grid& grid, const Problem& problem, PressureFu
 
       typedef G GridType;
 
-      typedef BoxDiffusion<G, RT, ProblemType, BoxDiffusionJacobian<G, RT>,
+      typedef Dune::BoxDiffusion<G, RT, ProblemType, BoxDiffusionJacobian<G, RT>,
                               FunctionType, OperatorAssembler> BoxDiffusion;
 
       typedef LeafP1BoxDiffusion<G, RT, m> ThisType;
