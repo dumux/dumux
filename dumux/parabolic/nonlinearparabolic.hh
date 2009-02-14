@@ -8,6 +8,9 @@
 
 namespace Dune
 {
+
+/** \todo Please doc me! */
+
   template<class G, class RT, class ProblemType, class LocalJacobian,
             class FunctionType, class OperatorAssembler>
   class NonlinearParabolic
@@ -36,7 +39,7 @@ namespace Dune
 
 
 
-
+/** \todo Please doc me! */
 
   template<class G, class RT, class ProblemType, class LocalJac, int m=1>
   class LeafP1NonlinearParabolic : public NonlinearParabolic<G, RT, ProblemType, LocalJac,
