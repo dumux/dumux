@@ -4,6 +4,8 @@
 #define RHS_HH
 #include "testfunctions.hh"
 
+/** \todo Please doc me! */
+
 template<class Grid>
 class RightHandSide
 {

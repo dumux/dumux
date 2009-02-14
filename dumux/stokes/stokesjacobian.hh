@@ -26,6 +26,8 @@
 
 namespace Dune {
 
+/** \todo Please doc me! */
+
 template<class G, class RT, class MixedFunction = LeafMixedFunction<G, RT, 1> >
 class StokesJacobian :
 public LocalJacobian<StokesJacobian<G,RT,MixedFunction>,G,RT,1> {

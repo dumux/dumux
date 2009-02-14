@@ -26,6 +26,9 @@
 
 namespace Dune
 {
+
+/** \todo Please doc me! */
+
 template<class G,int v_order, int p_order>
   class DGFiniteElementMethod
   {
@@ -104,7 +107,7 @@ template<class G,int v_order, int p_order>
     DGStokesParameters parameter;
   };
 
-
+/** \todo Please doc me! */
 
 template<class G,int v_order,int p_order>
   class DGStokes

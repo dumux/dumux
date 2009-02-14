@@ -9,6 +9,9 @@
 
 namespace Dune
 {
+
+/** \todo Please doc me! */
+
 template<class Grid, class Scalar, int m>
 class LocalMixed : public LinearLocalStiffness<typename Grid::LeafGridView, Scalar, m>
 {

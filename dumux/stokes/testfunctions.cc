@@ -2,6 +2,8 @@
 
 // here are some sample problem with known solution
 
+/** \todo Please doc me! */
+
 template<int dim, class ct>
 class Example : public ExactSolution<ct, dim>
 {
@@ -55,6 +57,7 @@ Gradient velocityGradient(int comp,const Point &glob)const
   virtual ~Example(){}
 };
 
+/** \todo Please doc me! */
 
 template<int dim, class ct>
 class PoiseuilleFlow : public ExactSolution<ct, dim>
@@ -91,6 +94,7 @@ Gradient velocityGradient(int comp,const Point &glob)const
   virtual ~ PoiseuilleFlow(){}
 };
 
+/** \todo Please doc me! */
 
 template<int dim, class ct>
 class Example1 : public ExactSolution<ct, dim>
@@ -127,6 +131,7 @@ public:
   virtual ~Example1(){}
 };
 
+/** \todo Please doc me! */
 
 template<int dim, class ct>
 class Example2 : public ExactSolution<ct, dim>
@@ -163,7 +168,7 @@ public:
   virtual ~Example2(){}
 };
 
-
+/** \todo Please doc me! */
 
 template<int dim,class ct>
 class Example2D : public ExactSolution<ct,dim>
@@ -229,6 +234,7 @@ Gradient velocityGradient(int comp,const Point &glob)const
   virtual ~ Example2D(){}
 };
 
+/** \todo Please doc me! */
 
 template<int dim,class ct>
 class Example2DNew : public ExactSolution<ct,dim>
@@ -316,7 +322,7 @@ public:
   virtual ~ Example2DNew(){}
 };
 
-
+/** \todo Please doc me! */
 
 template<int dim,class ct>
 class Example3D : public ExactSolution<ct,dim>
@@ -428,6 +434,7 @@ public:
   virtual ~ Example3D(){}
 };
 
+/** \todo Please doc me! */
 
 template<int dim,class ct>
 class DrivenCavity2D  : public ExactSolution<ct,dim>
@@ -477,6 +484,8 @@ Gradient velocityGradient(int comp,const Point &glob)const
   }
   virtual ~ DrivenCavity2D(){}
 };
+
+/** \todo Please doc me! */
 
 template<int dim,class ct>
 class DrivenCavity3D  : public ExactSolution<ct,dim>
