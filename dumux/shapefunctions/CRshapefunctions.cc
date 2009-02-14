@@ -16,6 +16,8 @@ namespace Dune {
 
   namespace {
 
+/** \todo Please doc me! */
+
     template <class C, class T, int d>
     struct InitCRShapefunctions
     {
@@ -30,6 +32,8 @@ namespace Dune {
           InitCRShapefunctions<C,T,d-1> i;
         };
     };
+
+/** \todo Please doc me! */
 
     template <class C, class T>
     struct InitCRShapefunctions<T,C,0>
