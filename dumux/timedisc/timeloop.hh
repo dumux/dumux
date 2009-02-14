@@ -12,6 +12,9 @@
 
 namespace Dune
 {
+
+/** \todo Please doc me! */
+
 template<class G, class Model, bool useMultiWriter = false>
 class TimeLoop
 {
@@ -158,6 +161,8 @@ private:
     const char* fileName;
     const bool fixed;
 };
+
+/** \todo Please doc me! */
 
 template<class G, class Model>
 class TimeLoop<G, Model, true>
