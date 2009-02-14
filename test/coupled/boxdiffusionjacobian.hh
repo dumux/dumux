@@ -43,7 +43,6 @@ template<class Grid, class Scalar, class BoxFunction = LeafP1Function<Grid, Scal
 class BoxDiffusionJacobian
 : public BoxJacobian<BoxDiffusionJacobian<Grid,Scalar,BoxFunction>,Grid,Scalar,1,BoxFunction>
 {
-	typedef typename Grid::ctype Scalar;
 	typedef typename Grid::Traits::template Codim<0>::Entity Element;
 	typedef typename Element::Geometry Geometry;
 	typedef BoxDiffusionJacobian<Grid,Scalar,BoxFunction> ThisType;

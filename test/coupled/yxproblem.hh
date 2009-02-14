@@ -10,7 +10,6 @@ namespace Dune {
 template<class Grid, class Scalar>
 class YXProblem : public StokesProblem<Grid, Scalar>
 {
-    typedef typename Grid::ctype Scalar;
     enum {dim=Grid::dimension, m=Grid::dimension+1};
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
     typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;

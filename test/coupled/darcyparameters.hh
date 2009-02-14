@@ -4,7 +4,6 @@
 template<class Grid, class Scalar>
 class DarcyParameters
 {
-  typedef typename Grid::ctype Scalar;
   enum {dim=Grid::dimension, numEq=1};
   typedef typename Grid::Traits::template Codim<0>::Entity Element;
   typedef typename Dune::IntersectionIteratorGetter<Grid,Dune::LeafTag>::IntersectionIterator IntersectionIterator;
