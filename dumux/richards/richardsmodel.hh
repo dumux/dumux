@@ -9,6 +9,9 @@
 #include "dumux/fvgeometry/fvelementgeometry.hh"
 
 namespace Dune {
+
+/** \todo Please doc me! */
+
 template<class G, class RT, class ProblemType, class LocalJacobian,
 		class FunctionType, class OperatorAssembler> class RichardsModel :
 	public NonlinearModel<G, RT, ProblemType, LocalJacobian, FunctionType, OperatorAssembler> {
@@ -32,6 +35,8 @@ public:
 
 	FunctionType uOldTimeStep;
 };
+
+/** \todo Please doc me! */
 
 template<class G, class RT, class ProblemType, class LocalJac, int m=1>
 class LeafP1TwoPhaseModel
