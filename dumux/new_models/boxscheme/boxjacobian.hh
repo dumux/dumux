@@ -436,7 +436,7 @@ namespace Dune
             int numVerts = curElement_().template count<dim>();
             for (int i = 0; i < numVerts; ++i)
                 for (int comp=0; comp < numEq; comp++) {
-                	this->bctype[i][comp] == BoundaryConditions::neumann;
+                	this->bctype[i][comp] = BoundaryConditions::neumann;
                 }
 
             // evaluate boundary conditions

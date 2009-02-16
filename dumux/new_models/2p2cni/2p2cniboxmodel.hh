@@ -22,53 +22,10 @@
 
 #include <dumux/new_models/2p2c/2p2cboxmodel.hh>
 
+#include <dumux/new_models/2p2c/2p2ctraits.hh>
+
 namespace Dune
 {
-    ///////////////////////////////////////////////////////////////////////////
-    // two-phase two-component traits (central place for names and
-    // indices required by the TwoPTwoCNIBoxJacobian and TwoPTwoCNIBoxModel)
-    ///////////////////////////////////////////////////////////////////////////
-    /*!
-     * \brief The 2P-2C specific traits.
-     */
-    template <class Scalar>
-    class TwoPTwoCNITraits
-    {
-    public:
-        enum {
-            numEq         = 3,  //!< Number of primary variables
-            numPhases     = 2,  //!< Number of fluid phases
-            numComponents = 2   //!< Number of fluid components within a phase
-        };
-        enum { // Primary variable indices
-            pWIdx = 0,           //!< Idx for the wetting phase pressure in a field vector
-            switchIdx = 1,       //!< Idx for the non-wetting phase quantity
-            temperatureIdx = 2   //!< Idx for the temperature
-        };
-        enum { // Phase Indices
-            wPhase = 0,  //!< Idx of the wetting phase
-            nPhase = 1   //!< Idx of the non-wetting phase
-        };
-        enum { // Component indices
-            wComp = 0,  //!< Idx of the wetting component
-            nComp = 1   //!< Idx of the non-wetting component
-        };
-        enum { // present phases
-            nPhaseOnly = 0, //!< Only the non-wetting phase is present
-            wPhaseOnly = 1, //!< Only the wetting phase is present
-            bothPhases = 2 //!< Both phases are present
-        };
-
-        typedef FieldVector<Scalar, numPhases>         PhasesVector;
-
-        struct VariableVertexData : public TwoPTwoCTraits<Scalar>::VariableVertexData
-        {
-            PhasesVector intenergy;
-            PhasesVector enthalpy;
-            Scalar       lambda;
-        };
-    };
-
 
     ///////////////////////////////////////////////////////////////////////////
     // TwoPTwoCNIBoxJacobian (evaluate the local jacobian for the newton method.)
@@ -106,7 +63,7 @@ namespace Dune
             dim  = DomTraits::dim,
             dimWorld = DomTraits::dimWorld,
 
-            pWIdx          = TwoPTwoCNITraits::pWIdx,
+            pressureIdx    = TwoPTwoCNITraits::pressureIdx,
             switchIdx      = TwoPTwoCNITraits::switchIdx,
             temperatureIdx = TwoPTwoCNITraits::temperatureIdx,
 
@@ -279,13 +236,13 @@ namespace Dune
 
                 // update data for the energy equation
                 vertDat.lambda = problem.soil().heatCond(global, element, local, vertDat.satW);
-                vertDat.enthalpy[pWIdx] = problem.wettingPhase().enthalpy(temperature,
-                                                                          vertDat.pW,
-                                                                          vertDat.massfrac[nComp][wPhase]);
+                vertDat.enthalpy[pressureIdx] = problem.wettingPhase().enthalpy(temperature,
+                                                                                vertDat.pW,
+                                                                                vertDat.massfrac[nComp][wPhase]);
                 vertDat.enthalpy[switchIdx] = problem.nonwettingPhase().enthalpy(temperature,
-                                                                          vertDat.pN,
-                                                                          vertDat.massfrac[wComp][nPhase]);
-                vertDat.intenergy[pWIdx] = problem.wettingPhase().intEnergy(temperature,
+                                                                              vertDat.pN,
+                                                                              vertDat.massfrac[wComp][nPhase]);
+                vertDat.intenergy[pressureIdx] = problem.wettingPhase().intEnergy(temperature,
                                                                           vertDat.pW,
                                                                           vertDat.massfrac[nComp][wPhase]);
                 vertDat.intenergy[switchIdx] = problem.nonwettingPhase().intEnergy(temperature,
@@ -309,14 +266,16 @@ namespace Dune
      * This implements a non-isothermal two-phase two-component model
      * with Pw and Sn/X as primary unknowns.
      */
-    template<class ProblemT>
+    template<class ProblemT,
+             class TwoPTwoCNITraitsT = TwoPTwoCNITraits<typename ProblemT::DomainTraits::Scalar,
+                                                        TwoPTwoCPwSnTraits<typename ProblemT::DomainTraits::Scalar> > >
     class TwoPTwoCNIBoxModel
-        : public BoxScheme<TwoPTwoCNIBoxModel<ProblemT>, // Implementation of the box scheme
+        : public BoxScheme<TwoPTwoCNIBoxModel<ProblemT,TwoPTwoCNITraitsT>, // Implementation of the box scheme
 
                            // The Traits for the BOX method
                            P1BoxTraits<typename ProblemT::DomainTraits::Scalar,
                                        typename ProblemT::DomainTraits::Grid,
-                                       TwoPTwoCNITraits<typename ProblemT::DomainTraits::Scalar>::numEq>,
+                                       TwoPTwoCNITraitsT::numEq>,
 
                            // The actual problem we would like to solve
                            ProblemT,
@@ -325,17 +284,17 @@ namespace Dune
                            TwoPTwoCNIBoxJacobian<ProblemT,
                                                  P1BoxTraits<typename ProblemT::DomainTraits::Scalar,
                                                              typename ProblemT::DomainTraits::Grid,
-                                                             TwoPTwoCNITraits<typename ProblemT::DomainTraits::Scalar>::numEq>,
-                                                 TwoPTwoCNITraits<typename ProblemT::DomainTraits::Scalar>
+                                                             TwoPTwoCNITraitsT::numEq>,
+                                                 TwoPTwoCNITraitsT
                                                  >
                            >
     {
-        typedef typename ProblemT::DomainTraits::Grid   Grid;
-        typedef typename ProblemT::DomainTraits::Scalar Scalar;
-        typedef TwoPTwoCNIBoxModel<ProblemT>              ThisType;
+        typedef typename ProblemT::DomainTraits::Grid           Grid;
+        typedef typename ProblemT::DomainTraits::Scalar         Scalar;
+        typedef TwoPTwoCNIBoxModel<ProblemT, TwoPTwoCNITraitsT> ThisType;
 
     public:
-        typedef Dune::TwoPTwoCNITraits<Scalar>                      TwoPTwoCNITraits;
+        typedef TwoPTwoCNITraitsT                                   TwoPTwoCNITraits;
         typedef P1BoxTraits<Scalar, Grid, TwoPTwoCNITraits::numEq>  BoxTraits;
 
     private:
