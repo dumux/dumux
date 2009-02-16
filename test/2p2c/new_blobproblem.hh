@@ -169,7 +169,7 @@ namespace Dune
         // some constants from the traits for convenience
         enum {
             numEq       = BoxTraits::numEq,
-            pWIdx     = TwoPTwoCTraits::pWIdx,
+            pressureIdx = TwoPTwoCTraits::pressureIdx,
             switchIdx = TwoPTwoCTraits::switchIdx,
 
             // Phase State
@@ -178,8 +178,12 @@ namespace Dune
             bothPhases = TwoPTwoCTraits::bothPhases,
 
             // Grid and world dimension
-            dim  = DomainTraits::dim,
-            dimWorld = DomainTraits::dimWorld
+            dim         = DomainTraits::dim,
+            dimWorld 	= DomainTraits::dimWorld,
+
+            // Choice of primary variables
+            pWsN   	    = TwoPTwoCTraits::pWsN,
+            pNsW            = TwoPTwoCTraits::pNsW
         };
 
         // copy some types from the traits for convenience
@@ -227,7 +231,10 @@ namespace Dune
                 depthBOR_ = 800.0;
 
                 gravity_[0] = 0;
-                gravity_[1] = 0; // -9.81;
+                gravity_[1] = 0;
+
+                // choose primary variables
+                formulation_ = pWsN;
             }
 
         ///////////////////////////////////
@@ -383,7 +390,7 @@ namespace Dune
                     = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
 //                const LocalPosition &localPos
 //                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipLocal;
-                
+
                 values = BoundaryConditions::neumann;
 
                 if ((globalPos[0] < eps_) || (globalPos[0] > (300 - eps_)))
@@ -405,12 +412,12 @@ namespace Dune
 //                const LocalPosition &localPos
 //                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipLocal;
 
-                values[pWIdx] = 1e5;
+                values[pressureIdx] = 1e5;
                 values[switchIdx] = 0.0;
 
                 if (globalPos[0] < eps_)
                 {
-                    values[pWIdx] = 1e5 + 50; // used to be 2e5, but then diffusion is negligible
+                    values[pressureIdx] = 1e5 + 50; // used to be 2e5, but then diffusion is negligible
                     values[switchIdx] = 0;  // may be Sn, Xaw or Xwn!!
                 }
             }
@@ -460,7 +467,7 @@ namespace Dune
                     = fvElemGeom.subContVol[scvIdx].local;
 */
 
-                values[pWIdx] = 1e5;//(600-globalPos[0])/300 * 1e5;
+                values[pressureIdx] = 1e5;//(600-globalPos[0])/300 * 1e5;
                 values[switchIdx] = 0;
 
                 if (isInsideBlob_(globalPos))
@@ -510,6 +517,11 @@ namespace Dune
                 return depthBOR_;
             }
 
+        int formulation () const
+        {
+        	return formulation_;
+        }
+
         bool simulate()
             {
                 timeManager_.runSimulation(*this);
@@ -541,6 +553,7 @@ namespace Dune
 
         Scalar depthBOR_;
         Scalar eps_;
+        int formulation_;
         GlobalPosition  gravity_;
 
         // fluids and material properties

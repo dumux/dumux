@@ -41,8 +41,8 @@ namespace Dune {
         typedef typename Model::TwoPTwoCTraits TwoPTwoCTraits;
 
         enum {
-            pWIdx = TwoPTwoCTraits::pWIdx,
-            switchIdx = TwoPTwoCTraits::switchIdx
+            pressureIdx = TwoPTwoCTraits::pressureIdx,
+            switchIdx   = TwoPTwoCTraits::switchIdx
         };
 
     public:
@@ -108,7 +108,7 @@ namespace Dune {
 
                 for (int idx = 0; idx < (int) (*u).size(); idx++)
                 {
-                    Scalar pW = (*u)[idx][pWIdx];
+                    Scalar pressure = (*u)[idx][pressureIdx];
                     Scalar switchVar = (*u)[idx][switchIdx];
 
                     if (switchVar < 0.0) {
@@ -120,9 +120,9 @@ namespace Dune {
                                                      std::abs(switchVar - 1));
                     }
 
-                    if (pW < 0.0){
+                    if (pressure < 0.0){
                         maxPwDelta = std::max(maxPwDelta,
-                                              std::abs(pW));
+                                              std::abs(pressure));
                     }
                 }
 

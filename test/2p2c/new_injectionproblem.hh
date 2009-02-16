@@ -168,30 +168,33 @@ namespace Dune
         // some constants from the traits for convenience
         enum {
             numEq       = BoxTraits::numEq,
-            pWIdx     = TwoPTwoCTraits::pWIdx,
-            switchIdx = TwoPTwoCTraits::switchIdx,
+            pressureIdx = TwoPTwoCTraits::pressureIdx,
+            switchIdx   = TwoPTwoCTraits::switchIdx,
 
             // Phase State
-            WPhaseOnly = TwoPTwoCTraits::wPhaseOnly,
-            NPhaseOnly = TwoPTwoCTraits::nPhaseOnly,
-            BothPhases = TwoPTwoCTraits::bothPhases,
+            wPhaseOnly = TwoPTwoCTraits::wPhaseOnly,
+            nPhaseOnly = TwoPTwoCTraits::nPhaseOnly,
+            bothPhases = TwoPTwoCTraits::bothPhases,
 
             // Grid and world dimension
+            dim      	= DomainTraits::dim,
+            dimWorld 	= DomainTraits::dimWorld,
 
-            dim      = DomainTraits::dim,
-            dimWorld = DomainTraits::dimWorld
+            // Choice of primary variables
+            pWsN   	    = TwoPTwoCTraits::pWsN,
+            pNsW            = TwoPTwoCTraits::pNsW
         };
 
         // copy some types from the traits for convenience
         typedef typename DomainTraits::Scalar                     Scalar;
-        typedef typename DomainTraits::Element                       Element;
-        typedef typename DomainTraits::ElementIterator               ElementIterator;
+        typedef typename DomainTraits::Element                    Element;
+        typedef typename DomainTraits::ElementIterator            ElementIterator;
         typedef typename DomainTraits::ReferenceElement           ReferenceElement;
-        typedef typename DomainTraits::Vertex                       Vertex;
-        typedef typename DomainTraits::VertexIterator               VertexIterator;
+        typedef typename DomainTraits::Vertex                     Vertex;
+        typedef typename DomainTraits::VertexIterator             VertexIterator;
         typedef typename DomainTraits::IntersectionIterator       IntersectionIterator;
-        typedef typename DomainTraits::LocalPosition                 LocalPosition;
-        typedef typename DomainTraits::GlobalPosition                 GlobalPosition;
+        typedef typename DomainTraits::LocalPosition              LocalPosition;
+        typedef typename DomainTraits::GlobalPosition             GlobalPosition;
 
         typedef typename BoxTraits::FVElementGeometry             FVElementGeometry;
         typedef typename BoxTraits::SpatialFunction               SpatialFunction;
@@ -243,6 +246,9 @@ namespace Dune
 
                 gravity_[0] = 0;
                 gravity_[1] = -9.81;
+
+                // choose primary variables
+                formulation_ = pWsN;
             }
 
         ///////////////////////////////////
@@ -524,6 +530,11 @@ namespace Dune
                 return depthBOR_;
             }
 
+        int formulation () const
+        {
+        	return formulation_;
+        }
+
         bool simulate()
             {
                 timeManager_.runSimulation(*this);
@@ -537,8 +548,8 @@ namespace Dune
                       const GlobalPosition   &globalPos) const
         {
             Scalar densityW_ = 1000.0;
-            
-            values[pWIdx] = 1e5 - densityW_*gravity_[1]*(depthBOR_ - globalPos[1]);
+
+            values[pressureIdx] = 1e5 - densityW_*gravity_[1]*(depthBOR_ - globalPos[1]);
             values[switchIdx] = 1e-8;
 
 //                std::cout << "element " << ParentType::elementIdx(element) << " position of vert " << globalVertexIdx << ": " << globalPos << " -> " << values << "\n";
@@ -573,6 +584,7 @@ namespace Dune
         Scalar height_;
         Scalar depthBOR_;
         Scalar eps_;
+        int formulation_;
 //      Scalar densityW_, densityN_;
         GlobalPosition  gravity_;
 

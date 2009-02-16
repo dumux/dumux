@@ -26,7 +26,7 @@ int main(int argc, char** argv)
         typedef Dune::NewInjectionProblem<Grid, Scalar>  Problem;
         typedef Problem::DomainTraits::GlobalPosition    GlobalPosition;
 //        typedef Dune::GridPtr<Grid>                      GridPointer;
-        
+
         // initialize MPI, finalize is done automatically on exit
         Dune::MPIHelper::instance(argc, argv);
 
