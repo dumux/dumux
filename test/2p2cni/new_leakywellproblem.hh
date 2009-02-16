@@ -80,7 +80,7 @@ namespace Dune
         // some constants from the traits for convenience
         enum {
             numEq            = TwoPTwoCNITraits::numEq,
-            pWIdx          = TwoPTwoCNITraits::pWIdx,
+            pressureIdx          = TwoPTwoCNITraits::pressureIdx,
             switchIdx      = TwoPTwoCNITraits::switchIdx,
             temperatureIdx = TwoPTwoCNITraits::temperatureIdx,
 
@@ -316,7 +316,7 @@ namespace Dune
                     globalPos[2] < 31.0 &&
                     globalPos[2] > -1.0)
                 {
-                    values[pWIdx] = BoundaryConditions::neumann;
+                    values[pressureIdx] = BoundaryConditions::neumann;
                     values[switchIdx] = BoundaryConditions::neumann;
                     values[temperatureIdx] = BoundaryConditions::dirichlet;
                 }
@@ -401,7 +401,7 @@ namespace Dune
         void initial_(SolutionVector &values,
                       const GlobalPosition &globalPos) const
         {
-            values[pWIdx]          = 1.013e5 + (depthBOR_ - globalPos[2]) * 1067.44 * 9.81; // brine density for salinity=0.1
+            values[pressureIdx]    = 1.013e5 + (depthBOR_ - globalPos[2]) * 1067.44 * 9.81; // brine density for salinity=0.1
             values[switchIdx]      = 0.0;
             values[temperatureIdx] = 283.15 + (depthBOR_ - globalPos[2])*0.03;
         }
