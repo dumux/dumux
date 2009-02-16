@@ -417,14 +417,14 @@ class CO2 : public Fluid
         : constDensity_(constDensity), constViscosity_(constViscosity), constEnthalpy_(constEnthalpy)
         {}
 
-        double density ( double T, double p, double X=1.) const
+        double density ( double T=283.15, double p=1e5, double X=1.) const
         {
             if (constDensity_)
                 return constDensity_;
             else
                 return constRelCO2.density(T,p);
         }
-    double viscosity ( double T=432., double p=3.086e7, double X=1.) const
+    double viscosity ( double T=283.15, double p=1e5, double X=1.) const
         {
             if (constViscosity_)
                 return constViscosity_;
@@ -432,7 +432,7 @@ class CO2 : public Fluid
                 return constRelCO2.viscosity(T,p);
         }
 
-        double enthalpy ( double T=432., double p=3.086e7, double X = 1) const
+        double enthalpy ( double T=283.15, double p=1e5, double X = 1) const
         {
             if (constEnthalpy_)
                 return constEnthalpy_;
