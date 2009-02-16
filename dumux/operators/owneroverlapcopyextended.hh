@@ -25,7 +25,7 @@ namespace Dune {
     typedef Dune::ParallelLocalIndex<AttributeSet> LI;
     typedef Dune::ParallelIndexSet<GlobalIdType,LI,512> PIS;
     typedef Dune::RemoteIndices<PIS> RI;
-    typedef Dune::RemoteIndexListModifier<PIS,false> RILM;
+    typedef Dune::RemoteIndexListModifier<PIS,typename RI::Allocator,false> RILM;
     typedef typename RI::RemoteIndex RX;
     typedef Dune::BufferedCommunicator<PIS> BC;
     typedef Dune::Interface<PIS> IF;
