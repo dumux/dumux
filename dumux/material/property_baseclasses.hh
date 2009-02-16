@@ -47,6 +47,14 @@ typedef	typename Grid::ctype Scalar;
 	virtual const FieldMatrix<Scalar,dim,dim> &K (const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos)
 	{    DUNE_THROW(NotImplemented, "Permeability not implemented!"); }
 
+    /** @brief interface - Permeability tensor
+	 * @param globalPos position in global coordinates
+	 * @param element codim 0 entity for which the value is sought
+	 * @param localPos position in local coordinates in element
+	 */
+	virtual const FieldMatrix<Scalar,dim,dim> &Kwn (const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos)
+	{    DUNE_THROW(NotImplemented, "Permeability not implemented!"); }
+
     /**@brief matrix porosity
 	 * @param globalPos position in global coordinates
 	 * @param element codim 0 entity for which the value is sought
@@ -115,6 +123,17 @@ typedef	typename Grid::ctype Scalar;
 	 */
 	virtual std::vector<double> paramRelPerm(const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos, const double T = 283.15) const = 0;
 
+	/**@brief parameters for interfacial area surfaces
+	 * @param globalPos position in global coordinates
+	 * @param element codim 0 entity for which the value is sought
+	 * @param localPos position in local coordinates in element
+	 * @param T Temperature
+	 */
+	virtual std::vector<double> awnParam(const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos) const
+    {
+        DUNE_THROW(NotImplemented, "awn-surface function not implemented!");
+    }
+
 	/**@brief Flag for determining the relative permeability model
 	 * @param globalPos position in global coordinates
 	 * @param element codim 0 entity for which the value is sought
@@ -135,14 +154,13 @@ typedef	typename Grid::ctype Scalar;
 		DUNE_THROW(NotImplemented, "second Pc-Sw rel");
 	}
 
-	/**@brief Flag for determining the relative permeability model
-	 * @param globalPos position in global coordinates
-	 * @param element codim 0 entity for which the value is sought
-	 * @param localPos position in local coordinates in element
+
+	/**@brief Flag for determining primary drainage or primary imbibition curve
+	 * @param bool flag to distinguish between drainage or imbibition
 	 */
-	virtual modelFlag relPermFlag2(const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos) const
+	virtual void setDrainFlag(bool flag)
 	{
-		return linear;
+		DUNE_THROW(NotImplemented, "flag for imbibition/drainage not implemented");
 	}
 
 	virtual bool readPropertiesFlag()
