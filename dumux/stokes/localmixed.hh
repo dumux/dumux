@@ -38,7 +38,7 @@ public:
 
         // initialize everything with 0:
         for (int i = 0; i < nFaces+1; i++) {
-            this->bctype[i] = BoundaryConditions::neumann;
+            this->bctype[i].assign(BoundaryConditions::neumann);
             this->b[i] = 0;
             for (int j = 0; j < nFaces+1; j++)
                 this->A[i][j] = 0;
@@ -111,7 +111,7 @@ public:
 
                 // set the right hand side and the boundary condition type:
                 this->b[numberInSelf] = velocity[numberInSelf/2];
-                this->bctype[numberInSelf] = BoundaryConditions::dirichlet;
+                this->bctype[numberInSelf].assign(BoundaryConditions::dirichlet);
             }
             else
             {
