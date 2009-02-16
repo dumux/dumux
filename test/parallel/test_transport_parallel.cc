@@ -1,7 +1,7 @@
 #include "config.h"
 #include <iostream>
 #include <iomanip>
-#define DUMMY
+#undef DUMMY
 #ifdef DUMMY
 #include <dune/common/mpihelper.hh>
 #include <dune/common/timer.hh>

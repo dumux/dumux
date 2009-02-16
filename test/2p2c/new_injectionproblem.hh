@@ -507,7 +507,7 @@ namespace Dune
                 int state;
 
 //        state = BothPhases;
-                state = WPhaseOnly;
+                state = wPhaseOnly;
 
 //        if ((globalPos[0] > 60.0 - eps_) && (globalPos[1] < 10 && globalPos[1] > 5))
 //            state = bothPhases;

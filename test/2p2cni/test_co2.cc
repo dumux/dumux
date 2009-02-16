@@ -23,7 +23,8 @@
 #include "dumux/material/matrixproperties.hh"
 #include "dumux/material/twophaserelations.hh"
 
-#include "dumux/2p2cni/fv/boxco2.hh"
+//#include "dumux/2p2cni/fv/boxco2.hh"
+#include "dumux/2p2cni/fv/box2p2cni.hh"
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/io/readstarformat.cc"
 #include "dumux/io/vtkmultiwriter.hh"
@@ -85,7 +86,7 @@ int main(int argc, char** argv)
         typedef Dune::VtkMultiWriter<GridType::LeafGridView> MultiWriter;
 
         // choose discretization scheme (box)
-        typedef Dune::BoxCO2<GridType, NumberType, MultiWriter> TwoPhase;
+        typedef Dune::Box2P2CNI<GridType, NumberType, MultiWriter> TwoPhase;
         TwoPhase twoPhase(grid, problem);
 
         // create timeloop object, last entry determines the number of timesteps

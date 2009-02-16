@@ -128,7 +128,7 @@ protected:
 		numPhases        = TwoPTwoCTraits::numPhases,
 		numComponents    = TwoPTwoCTraits::numComponents,
 
-		pressureIdx      = TwoPTwoCTraits::pressureIdx,
+		pressureIdx      = 0,       //!< Idx for either wetting or non-wetting phase pressure (depending on formulation) in a solution vector
 		switchIdx        = TwoPTwoCTraits::switchIdx,
 
 		wPhase           = TwoPTwoCTraits::wPhase,
@@ -141,8 +141,10 @@ protected:
 		nPhaseOnly       = TwoPTwoCTraits::nPhaseOnly,
 		bothPhases       = TwoPTwoCTraits::bothPhases,
 
-		pWsN   	         = TwoPTwoCTraits::pWsN,
-		pNsW      	     = TwoPTwoCTraits::pNsW
+        pWsN = 0, //!< Pw and Sn as primary variables
+        pNsW = 1  //!< Pn and Sw as primary variables
+		//pWsN   	         = TwoPTwoCTraits::pWsN,
+		//pNsW      	     = TwoPTwoCTraits::pNsW
 	};
 
 

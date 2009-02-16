@@ -70,14 +70,14 @@ public:
             double pressI = this->diffProblem.variables.pressure[globalIdxI];
 
             // get absolute permeability
-            FieldMatrix Ki(this->diffProblem.soil.K(globalPos, *eIt, localPos));
+            FieldMatrix Ki(this->diffProblem.soil().K(globalPos, *eIt, localPos));
 
             //compute total mobility
             double lambdaI, fractionalWI;
             double sati = this->diffProblem.variables.saturation[globalIdxI];
-            lambdaI = this->diffProblem.materialLaw.mobTotal(sati,globalPos, *eIt, localPos);
+            lambdaI = this->diffProblem.materialLaw().mobTotal(sati,globalPos, *eIt, localPos);
             if (hasGravity)
-            fractionalWI = this->diffProblem.materialLaw.fractionalW(sati,globalPos, *eIt, localPos);
+            fractionalWI = this->diffProblem.materialLaw().fractionalW(sati,globalPos, *eIt, localPos);
 
             double faceVol[2*dim];
 
@@ -142,7 +142,7 @@ public:
                     double dist = distVec.two_norm();
 
                     // get absolute permeability
-                    FieldMatrix Kj(this->diffProblem.soil.K(globalPosNeighbor, *neighborPointer, localPosNeighbor));
+                    FieldMatrix Kj(this->diffProblem.soil().K(globalPosNeighbor, *neighborPointer, localPosNeighbor));
 
                     // compute vectorized permeabilities
                     FieldVector<Scalar,dim> Kni(0);
@@ -167,9 +167,9 @@ public:
                     //compute total mobility
                     double lambdaJ, fractionalWJ;
                     double satj = this->diffProblem.variables.saturation[globalIdxJ];
-                    lambdaJ = this->diffProblem.materialLaw.mobTotal(satj,globalPosNeighbor, *neighborPointer, localPosNeighbor);
+                    lambdaJ = this->diffProblem.materialLaw().mobTotal(satj,globalPosNeighbor, *neighborPointer, localPosNeighbor);
                     if (hasGravity)
-                    fractionalWJ = this->diffProblem.materialLaw.fractionalW(satj,globalPosNeighbor, *neighborPointer, localPosNeighbor);
+                    fractionalWJ = this->diffProblem.materialLaw().fractionalW(satj,globalPosNeighbor, *neighborPointer, localPosNeighbor);
 
                     // compute averaged total mobility
                     // CAREFUL: Harmonic weightig can generate zero matrix entries,

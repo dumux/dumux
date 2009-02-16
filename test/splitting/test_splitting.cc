@@ -12,7 +12,7 @@
 #include "dumux/transport/fv/fvsplittedtransport.hh"
 #include "dumux/transport/fv/capillarydiffusion.hh"
 #include "dumux/transport/problems/buckleyleverettproblem.hh"
-#include "dumux/transport/problems/simpleproblem.hh"
+//#include "dumux/transport/problems/simpleproblem.hh"
 #include "dumux/transport/problems/simpleparabolicproblem.hh"
 #include "dumux/diffusion/problems/uniformproblem.hh"
 #include "dumux/timedisc/timeloop.hh"
@@ -66,7 +66,8 @@ int main(int argc, char** argv)
     typedef Dune::FVSplittedTransport<GridType, NumberType, VC> SplittedTransport;
 
     Dune::DiffusivePart<GridType, NumberType> diffPart;
-    Dune::SimpleProblem<GridType, NumberType, VC> hyperbolicProblem(variables, materialLaw, true);
+    //Dune::SimpleProblem<GridType, NumberType, VC> hyperbolicProblem(variables, materialLaw, true);
+    Dune::SimpleParabolicProblem<GridType, NumberType, VC> hyperbolicProblem(variables, materialLaw, true);
     HyperbolicPart hyperbolicPart(grid, hyperbolicProblem, grid.maxLevel(), diffPart, reconstruct, alphaMax);
 
     Dune::UniformProblem<GridType, NumberType, VC> diffusionProblem(variables, materialLaw, true);

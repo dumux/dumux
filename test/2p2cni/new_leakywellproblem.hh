@@ -91,7 +91,10 @@ namespace Dune
 
             // Grid and world dimension
             dim  = DomainTraits::dim,
-            dimWorld = DomainTraits::dimWorld
+            dimWorld = DomainTraits::dimWorld,
+
+            pWsN        = 0,
+            pNsW        = 1
         };
 
         // copy some types from the traits for convenience
@@ -142,6 +145,9 @@ namespace Dune
                 gravity_[0] = 0;
                 gravity_[1] = 0;
                 gravity_[2] = -9.81;
+
+                // choose primary variables
+                formulation_ = pWsN;
             }
 
         ///////////////////////////////////
@@ -392,9 +398,9 @@ namespace Dune
 
     private:
         // the internal initial method (-> is also used as dirichlet boundary)
-        void initial_(SolutionVector &values, 
+        void initial_(SolutionVector &values,
                       const GlobalPosition &globalPos) const
-        {            
+        {
             values[pWIdx]          = 1.013e5 + (depthBOR_ - globalPos[2]) * 1067.44 * 9.81; // brine density for salinity=0.1
             values[switchIdx]      = 0.0;
             values[temperatureIdx] = 283.15 + (depthBOR_ - globalPos[2])*0.03;
@@ -445,6 +451,11 @@ namespace Dune
                 return true;
             };
 
+        int formulation () const
+        {
+            return formulation_;
+        }
+
 
     private:
         // write the fields current solution into an VTK output file.
@@ -463,6 +474,7 @@ namespace Dune
         Scalar height_;
         Scalar depthBOR_;
         Scalar eps_;
+        int formulation_;
         GlobalPosition  gravity_;
 
         // fluids and material properties

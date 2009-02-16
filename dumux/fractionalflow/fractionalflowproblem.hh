@@ -133,12 +133,30 @@ public:
         return gravity_;
     }
 
+    //! properties of the soil
+    /*! properties of the soil
+      \return    soil
+     */
+    virtual Matrix2p<Grid, Scalar>& soil () const
+    {
+        return soil_;
+    }
+
+    //! object for definition of material law
+    /*! object for definition of material law (e.g. Brooks-Corey, Van Genuchten, ...)
+      \return    material law
+     */
+    virtual TwoPhaseRelations<Grid, Scalar>& materialLaw () const
+    {
+        return materialLaw_;
+    }
+
     //! constructor
     /** @param law implementation of Material laws. Class TwoPhaseRelations or derived.
      *  @param cap flag to include capillary forces.
      */
     FractionalFlowProblem(VC& variables, Fluid& wettingphase, Fluid& nonwettingphase, Matrix2p<Grid, Scalar>& soil, TwoPhaseRelations<Grid, Scalar>& materialLaw = *(new TwoPhaseRelations<Grid,Scalar>), const bool capillarity = false)
-    : variables(variables), wettingPhase(wettingphase), nonWettingPhase(nonwettingphase), soil(soil), capillarity(capillarity), materialLaw(materialLaw),gravity_(0)
+    : variables(variables), wettingPhase(wettingphase), nonWettingPhase(nonwettingphase), soil_(soil), capillarity(capillarity), materialLaw_(materialLaw),gravity_(0)
     {}
 
     //! always define virtual destructor in abstract base class
@@ -149,9 +167,9 @@ public:
     VC& variables;
     Fluid& wettingPhase;
     Fluid& nonWettingPhase;
-    Matrix2p<Grid, Scalar>& soil;
+    Matrix2p<Grid, Scalar>& soil_;
     const bool capillarity;
-    TwoPhaseRelations<Grid, Scalar>& materialLaw;
+    TwoPhaseRelations<Grid, Scalar>& materialLaw_;
 private:
     FieldVector<Scalar,dimWorld> gravity_;
 

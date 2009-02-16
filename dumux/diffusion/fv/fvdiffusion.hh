@@ -199,14 +199,14 @@ template<class Grid, class Scalar, class VC> void FVDiffusion<Grid, Scalar, VC>:
         f[globalIdxI] = volume*this->diffProblem.sourcePress(globalPos, *eIt, localPos);
 
         // get absolute permeability
-        FieldMatrix Ki(this->diffProblem.soil.K(globalPos, *eIt, localPos));
+        FieldMatrix Ki(this->diffProblem.soil().K(globalPos, *eIt, localPos));
 
         //compute total mobility
         Scalar lambdaI, fractionalWI;
         Scalar satI = this->diffProblem.variables.saturation[globalIdxI];
-        lambdaI = this->diffProblem.materialLaw.mobTotal(satI,globalPos, *eIt, localPos);
+        lambdaI = this->diffProblem.materialLaw().mobTotal(satI,globalPos, *eIt, localPos);
         if (hasGravity)
-            fractionalWI = this->diffProblem.materialLaw.fractionalW(satI,globalPos, *eIt, localPos);
+            fractionalWI = this->diffProblem.materialLaw().fractionalW(satI,globalPos, *eIt, localPos);
 
         IntersectionIterator
                 isItEnd = gridView.template iend(*eIt);
@@ -266,7 +266,7 @@ template<class Grid, class Scalar, class VC> void FVDiffusion<Grid, Scalar, VC>:
                 Scalar dist = distVec.two_norm();
 
                 // get absolute permeability
-                FieldMatrix Kj(this->diffProblem.soil.K(globalPosNeighbor, *neighborPointer, localPosNeighbor));
+                FieldMatrix Kj(this->diffProblem.soil().K(globalPosNeighbor, *neighborPointer, localPosNeighbor));
 
                 // compute vectorized permeabilities
                 FieldVector<Scalar,dim> Knj(0);
@@ -289,9 +289,9 @@ template<class Grid, class Scalar, class VC> void FVDiffusion<Grid, Scalar, VC>:
                 Scalar lambdaJ, fractionalWJ;
                 Scalar satJ = this->diffProblem.variables.saturation[globalIdxJ];
 
-                lambdaJ = this->diffProblem.materialLaw.mobTotal(satJ,globalPosNeighbor, *neighborPointer, localPosNeighbor);
+                lambdaJ = this->diffProblem.materialLaw().mobTotal(satJ,globalPosNeighbor, *neighborPointer, localPosNeighbor);
                 if (hasGravity)
-                fractionalWJ = this->diffProblem.materialLaw.fractionalW(satJ,globalPosNeighbor, *neighborPointer, localPosNeighbor);
+                fractionalWJ = this->diffProblem.materialLaw().fractionalW(satJ,globalPosNeighbor, *neighborPointer, localPosNeighbor);
 
                 // compute averaged total mobility
                 // CAREFUL: Harmonic weightig can generate zero matrix entries,
@@ -323,12 +323,12 @@ template<class Grid, class Scalar, class VC> void FVDiffusion<Grid, Scalar, VC>:
                     K = ((Kni + Knj) *= 0.5);
 
                     // capillary pressure w.r.t. saturation
-                    Scalar pCI = this->diffProblem.materialLaw.pC(satI,globalPos, *eIt, localPos);
-                    Scalar pCJ = this->diffProblem.materialLaw.pC(satJ,globalPosNeighbor, *neighborPointer, localPosNeighbor);
+                    Scalar pCI = this->diffProblem.materialLaw().pC(satI,globalPos, *eIt, localPos);
+                    Scalar pCJ = this->diffProblem.materialLaw().pC(satJ,globalPosNeighbor, *neighborPointer, localPosNeighbor);
 
                     // mobility of the nonwetting phase
-                    Scalar lambdaN = 0.5*(this->diffProblem.materialLaw.mobN(1 - satI,globalPos, *eIt, localPos)
-                            + this->diffProblem.materialLaw.mobN(1 - satJ,globalPosNeighbor, *neighborPointer, localPosNeighbor));
+                    Scalar lambdaN = 0.5*(this->diffProblem.materialLaw().mobN(1 - satI,globalPos, *eIt, localPos)
+                            + this->diffProblem.materialLaw().mobN(1 - satJ,globalPosNeighbor, *neighborPointer, localPosNeighbor));
 
                     // calculate capillary pressure gradient
                     FieldVector<Scalar,dim> pCGradient = distVec;
@@ -378,12 +378,12 @@ template<class Grid, class Scalar, class VC> void FVDiffusion<Grid, Scalar, VC>:
                         satGradient *= (satJ - satI)/(dist*dist);
 
                         // capillary pressure w.r.t. saturation
-                        Scalar pCI = this->diffProblem.materialLaw.pC(satI,globalPos, *eIt, localPos);
-                        Scalar pCJ = this->diffProblem.materialLaw.pC(satJ,globalPosFace, *eIt, localPosFace);
+                        Scalar pCI = this->diffProblem.materialLaw().pC(satI,globalPos, *eIt, localPos);
+                        Scalar pCJ = this->diffProblem.materialLaw().pC(satJ,globalPosFace, *eIt, localPosFace);
 
                         // mobility of the nonwetting phase
-                        Scalar lambdaN = 0.5*(this->diffProblem.materialLaw.mobN(1 - satI,globalPos, *eIt, localPos)
-                                + this->diffProblem.materialLaw.mobN(1 - satJ,globalPosFace, *eIt, localPosFace));
+                        Scalar lambdaN = 0.5*(this->diffProblem.materialLaw().mobN(1 - satI,globalPos, *eIt, localPos)
+                                + this->diffProblem.materialLaw().mobN(1 - satJ,globalPosFace, *eIt, localPosFace));
 
                         // calculate capillary pressure gradient
                         FieldVector<Scalar,dim> pCGradient = distVec;

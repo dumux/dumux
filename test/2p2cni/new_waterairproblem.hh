@@ -107,7 +107,10 @@ namespace Dune
 
             // Grid and world dimension
             dim  = DomainTraits::dim,
-            dimWorld = DomainTraits::dimWorld
+            dimWorld = DomainTraits::dimWorld,
+
+            pWsN        = 0,
+            pNsW        = 1
         };
 
         // copy some types from the traits for convenience
@@ -157,6 +160,9 @@ namespace Dune
 
                 gravity_[0] = 0;
                 gravity_[1] = -9.81;
+
+                // choose primary variables
+                formulation_ = pWsN;
             }
 
         ///////////////////////////////////
@@ -390,7 +396,7 @@ namespace Dune
 /*                const LocalPosition &localPos
                     = fvElemGeom.subContVol[scvIdx].local;
 */
-                
+
                 initial_(values, globalPos);
             }
 
@@ -407,7 +413,7 @@ namespace Dune
                 values[temperatureIdx] = 283.0 + (depthBOR_ - globalPos[1])*0.03;
 #endif
         }
-        
+
     public:
         Scalar porosity(const Element &element, int localIdx) const
             {
@@ -453,6 +459,10 @@ namespace Dune
                 return true;
             };
 
+        int formulation () const
+        {
+            return formulation_;
+        }
 
     private:
         // write the fields current solution into an VTK output file.
@@ -471,6 +481,7 @@ namespace Dune
         Scalar height_;
         Scalar depthBOR_;
         Scalar eps_;
+        int formulation_;
         GlobalPosition  gravity_;
 
         // fluids and material properties

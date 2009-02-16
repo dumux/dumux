@@ -1,7 +1,7 @@
 // commented lines 1454, 1464-1467 in istl/communicator.hh
 #include <config.h>
 #include <iostream>
-#define DUMMY
+#undef DUMMY
 #ifdef DUMMY
 #include<mpi.h>
 #include <dune/grid/alugrid.hh>

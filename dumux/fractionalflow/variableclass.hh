@@ -16,7 +16,8 @@ namespace Dune
 {
 /** \todo Please doc me! */
 
-template<class Grid, class Scalar> class VariableClass
+template<class Grid, class Scalar>
+class VariableClass
 {
     template<int dim> struct ElementLayout
     {

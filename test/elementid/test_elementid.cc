@@ -53,7 +53,7 @@ int main(int argc, char** argv)
   grid.globalRefine(2);
 
     // print some information about the grid
-    Dune::gridinfo(grid);
+    //Dune::gridinfo(grid);
 
     // choose fluids
     Dune::Water wPhase;
