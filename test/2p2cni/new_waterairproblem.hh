@@ -93,8 +93,8 @@ namespace Dune
     private:
         // some constants from the traits for convenience
         enum {
-            numEq            = BoxTraits::numEq,
-            pWIdx          = TwoPTwoCNITraits::pWIdx,
+            numEq          = BoxTraits::numEq,
+            pressureIdx    = TwoPTwoCNITraits::pressureIdx,
             switchIdx      = TwoPTwoCNITraits::switchIdx,
 #if !ISOTHERMAL
             temperatureIdx = TwoPTwoCNITraits::temperatureIdx,
@@ -407,7 +407,7 @@ namespace Dune
                       const GlobalPosition &globalPos) const
         {
                 Scalar densityW = 1000.0;
-                values[pWIdx] = 1e5 + (depthBOR_ - globalPos[1])*densityW*9.81;
+                values[pressureIdx] = 1e5 + (depthBOR_ - globalPos[1])*densityW*9.81;
                 values[switchIdx] = 0.0;
 #if !ISOTHERMAL
                 values[temperatureIdx] = 283.0 + (depthBOR_ - globalPos[1])*0.03;

@@ -86,8 +86,8 @@ namespace Dune
     private:
         // some constants from the traits for convenience
         enum {
-            numEq            = BoxTraits::numEq,
-            pWIdx          = TwoPTwoCNITraits::pWIdx,
+            numEq           = BoxTraits::numEq,
+            pressureIdx    = TwoPTwoCNITraits::pressureIdx,
             switchIdx      = TwoPTwoCNITraits::switchIdx,
             temperatureIdx = TwoPTwoCNITraits::temperatureIdx,
 
@@ -349,7 +349,7 @@ namespace Dune
 
                 if(globalPos[0] <= eps_ && globalPos[1] <= 5.)
                 {
-                    values[pWIdx] = 0.0;//-4.046e-5;
+                    values[pressureIdx] = 0.0;//-4.046e-5;
                     values[switchIdx] = -0.0002;
                 }
             }
@@ -389,7 +389,7 @@ namespace Dune
         void initial_(SolutionVector       &values,
                       const GlobalPosition &globalPos) const
         {
-            values[pWIdx]          = 1.013e5 + (depthBOR_ - globalPos[1]) * 1045 * 9.81;
+            values[pressureIdx]    = 1.013e5 + (depthBOR_ - globalPos[1]) * 1045 * 9.81;
             values[switchIdx]      = 0.00;
             values[temperatureIdx] = 283.15 + (depthBOR_ - globalPos[1])*0.03;
         }
