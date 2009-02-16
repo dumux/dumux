@@ -81,12 +81,7 @@ typedef    typename ThisLeafP1TwoPhaseModel::FunctionType FunctionType;
     typedef typename ThisLeafP1TwoPhaseModel::FunctionType::RepresentationType VectorType;
     typedef typename ThisLeafP1TwoPhaseModel::OperatorAssembler::RepresentationType MatrixType;
     typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator;
-#if HAVE_MPI
-#else
-#ifdef HAVE_PARDISO
-    SeqPardiso<MatrixType,VectorType,VectorType> pardiso;
-#endif
-#endif
+
 
     //////////////////////
     // Stuff required for the new newton method
@@ -431,6 +426,8 @@ typedef    typename ThisLeafP1TwoPhaseModel::FunctionType FunctionType;
         double red=1E-9;
 
 #ifdef HAVE_PARDISO
+
+        SeqPardiso<MatrixType,VectorType,VectorType> pardiso;
         //    SeqPardiso<MatrixType,VectorType,VectorType> ilu0(*(this->A));
         pardiso.factorize(*(this->A));
         BiCGSTABSolver<VectorType> solver(op,pardiso,red,100,2); // an inverse operator
