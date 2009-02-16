@@ -49,9 +49,9 @@ int main(int argc, char** argv)
         res[1]        = 16;
 
         Grid grid(
-#ifdef HAVE_MPI
-                  Dune::MPIHelper::getCommunicator(),
-#endif
+//#ifdef HAVE_MPI
+//                  Dune::MPIHelper::getCommunicator(),
+//#endif
                   upperRight, // upper right
                   res, // number of cells
                   Dune::FieldVector<bool,dim>(false), // periodic
