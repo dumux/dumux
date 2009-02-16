@@ -246,10 +246,7 @@ namespace Dune
 
                 gravity_[0] = 0;
                 gravity_[1] = -9.81;
-
-                // choose primary variables
-                formulation_ = pWsN;
-            }
+             }
 
         ///////////////////////////////////
         // Strings pulled by the TimeManager during the course of the
@@ -530,12 +527,7 @@ namespace Dune
                 return depthBOR_;
             }
 
-        int formulation () const
-        {
-        	return formulation_;
-        }
-
-        bool simulate()
+         bool simulate()
             {
                 timeManager_.runSimulation(*this);
                 return true;
@@ -584,8 +576,7 @@ namespace Dune
         Scalar height_;
         Scalar depthBOR_;
         Scalar eps_;
-        int formulation_;
-//      Scalar densityW_, densityN_;
+ //      Scalar densityW_, densityN_;
         GlobalPosition  gravity_;
 
         // fluids and material properties
