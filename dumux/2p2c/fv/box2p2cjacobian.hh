@@ -98,19 +98,19 @@ namespace Dune
     }
 
     /** @brief compute time dependent term (storage), loop over nodes / subcontrol volumes
-     *  @param e entity
+     *  @param element entity
      *  @param sol solution vector
      *  @param node local node id
      *  @return storage term
      */
-    virtual SolutionVector computeM (const Element& e, const SolutionVector* sol,
+    virtual SolutionVector computeM (const Element& element, const SolutionVector* sol,
             int node, std::vector<VariableNodeData>& varData)
     {
-         GeometryType gt = e.geometry().type();
+         GeometryType gt = element.geometry().type();
          const typename LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::value_type&
          sfs=LagrangeShapeFunctions<Scalar,Scalar,dim>::general(gt,1);
 
-        int globalIdx = this->vertexMapper.template map<dim>(e, sfs[node].entity());
+        int globalIdx = this->vertexMapper.template map<dim>(element, sfs[node].entity());
 
         SolutionVector result;
         Scalar satN = varData[node].satN;
@@ -129,34 +129,34 @@ namespace Dune
         return result;
     };
 
-    virtual SolutionVector computeM (const Element& e, const SolutionVector* sol, int node, bool old = false)
+    virtual SolutionVector computeM (const Element& element, const SolutionVector* sol, int node, bool old = false)
     {
         if (old)
-            return computeM(e, sol, node, oldVNDat);
+            return computeM(element, sol, node, oldVNDat);
         else
-            return computeM(e, sol, node, vNDat);
+            return computeM(element, sol, node, vNDat);
     }
 
     /** @brief compute diffusive/advective fluxes, loop over subcontrol volume faces
-     *  @param e entity
+     *  @param element entity
      *  @param sol solution vector
      *  @param face face id
      *  @return flux term
      */
-    virtual SolutionVector computeA (const Element& e, const SolutionVector* sol, int face)
+    virtual SolutionVector computeA (const Element& element, const SolutionVector* sol, int face)
     {
       int i = this->fvGeom.subContVolFace[face].i;
       int j = this->fvGeom.subContVolFace[face].j;
 
       // normal vector, value of the area of the scvf
       const FieldVector<Scalar,dim> normal(this->fvGeom.subContVolFace[face].normal);
-      GeometryType gt = e.geometry().type();
+      GeometryType gt = element.geometry().type();
       const typename LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::value_type&
       sfs=LagrangeShapeFunctions<Scalar,Scalar,dim>::general(gt,1);
 
-      // global index of the subcontrolvolume face neighbor nodes in element e
-      int globalIdx_i = this->vertexMapper.template map<dim>(e, sfs[i].entity());
-      int globalIdx_j = this->vertexMapper.template map<dim>(e, sfs[j].entity());
+      // global index of the subcontrolvolume face neighbor nodes in element element
+      int globalIdx_i = this->vertexMapper.template map<dim>(element, sfs[i].entity());
+      int globalIdx_j = this->vertexMapper.template map<dim>(element, sfs[j].entity());
 
        // get global coordinates of nodes i,j
      const FieldVector<Scalar,dim> global_i = this->fvGeom.subContVol[i].global;
@@ -171,8 +171,8 @@ namespace Dune
      FMatrix Ki(0), Kj(0);
 
       // calculate harmonic mean of permeabilities of nodes i and j
-      Ki = this->problem.soil().K(global_i,e,local_i);
-      Kj = this->problem.soil().K(global_j,e,local_j);
+      Ki = this->problem.soil().K(global_i,element,local_i);
+      Kj = this->problem.soil().K(global_j,element,local_j);
       const FMatrix K = harmonicMeanK(Ki, Kj);
 
      // calculate FE gradient (grad p for each phase)
@@ -325,15 +325,15 @@ namespace Dune
     };
 
       /** @brief integrate sources / sinks
-       *  @param e entity
+       *  @param element entity
        *  @param sol solution vector
        *  @param node local node id
        *  @return source/sink term
        */
-      virtual SolutionVector computeQ (const Element& e, const SolutionVector* sol, const int node)
+      virtual SolutionVector computeQ (const Element& element, const SolutionVector* sol, const int node)
           {
               // ASSUME problem.q already contains \rho.q
-              return problem.q(this->fvGeom.subContVol[node].global, e, this->fvGeom.subContVol[node].local);
+              return problem.q(this->fvGeom.subContVol[node].global, element, this->fvGeom.subContVol[node].local);
           }
 
       /** @brief perform variable switch
@@ -341,7 +341,7 @@ namespace Dune
        *  @param sol solution vector
        *  @param local local node id
        */
-      virtual void primaryVarSwitch (const Element& e, int globalIdx, SolutionVector* sol, int localIdx)
+      virtual void primaryVarSwitch (const Element& element, int globalIdx, SolutionVector* sol, int localIdx)
           {
         bool switched = false;
         const FVector global = this->fvGeom.subContVol[localIdx].global;
@@ -358,7 +358,7 @@ namespace Dune
             satW = 1.0;
         if (state == gasPhase)
             satW = 0.0;
-        Scalar pC = problem.materialLaw().pC(satW, global, e, local);
+        Scalar pC = problem.materialLaw().pC(satW, global, element, local);
         Scalar pN = pW + pC;
 
         switch(state)
@@ -428,8 +428,8 @@ namespace Dune
 
         }
         if (switched){
-            updateVariableData(e, sol, localIdx, vNDat, sNDat[globalIdx].phaseState);
-            BoxJacobian<ThisType,Grid,Scalar,2,BoxFunction>::localToGlobal(e,sol);
+            updateVariableData(element, sol, localIdx, vNDat, sNDat[globalIdx].phaseState);
+            BoxJacobian<ThisType,Grid,Scalar,2,BoxFunction>::localToGlobal(element,sol);
             setSwitchedLocal(); // if switch is triggered at any node, switchFlagLocal is set
         }
 
@@ -455,9 +455,9 @@ namespace Dune
 
     virtual void clearVisited ()
     {
-        for (int i = 0; i < this->vertexMapper.size(); i++){
-           sNDat[i].visited = false;
-//            sNDat[i].switched = false;
+        for (int vertex = 0; vertex < this->vertexMapper.size(); vertex++){
+           sNDat[vertex].visited = false;
+//            sNDat[vertex].switched = false;
         }
         return;
        }
@@ -465,16 +465,16 @@ namespace Dune
     // updates old phase state after each time step
     virtual void updatePhaseState ()
     {
-          for (int i = 0; i < this->vertexMapper.size(); i++){
-               sNDat[i].oldPhaseState = sNDat[i].phaseState;
+          for (int vertex = 0; vertex < this->vertexMapper.size(); vertex++){
+               sNDat[vertex].oldPhaseState = sNDat[vertex].phaseState;
            }
        return;
     }
 
     virtual void resetPhaseState ()
     {
-          for (int i = 0; i < this->vertexMapper.size(); i++){
-               sNDat[i].phaseState = sNDat[i].oldPhaseState;
+          for (int vertex = 0; vertex < this->vertexMapper.size(); vertex++){
+               sNDat[vertex].phaseState = sNDat[vertex].oldPhaseState;
            }
        return;
     }
@@ -486,13 +486,13 @@ namespace Dune
       //*                                                        *
       //*********************************************************
 
-    virtual void computeElementData (const Element& e)
+    virtual void computeElementData (const Element& element)
     {
 //         // ASSUMING element-wise constant permeability, evaluate K at the element center
-//          elData.K = problem.K(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
+//          elData.K = problem.K(this->fvGeom.elementGlobal, element, this->fvGeom.elementLocal);
 //
 //         // ASSUMING element-wise constant porosity
-//          elData.porosity = problem.porosity(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
+//          elData.porosity = problem.porosity(this->fvGeom.elementGlobal, element, this->fvGeom.elementLocal);
         return;
     }
 
@@ -505,25 +505,25 @@ namespace Dune
       //*********************************************************
 
     // analog to EvalStaticData in MUFTE
-    virtual void updateStaticDataVS (const Element& e, SolutionVector* sol)
+    virtual void updateStaticDataVS (const Element& element, SolutionVector* sol)
     {
         // size of the sNDat vector is determined in the constructor
 
         // get access to shape functions for P1 elements
-        GeometryType gt = e.geometry().type();
+        GeometryType gt = element.geometry().type();
         const typename LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::value_type&
         sfs=LagrangeShapeFunctions<Scalar,Scalar,dim>::general(gt,1);
 
         // get local to global id map
         for (int k = 0; k < sfs.size(); k++)
         {
-           const int globalIdx = this->vertexMapper.template map<dim>(e, sfs[k].entity());
+           const int globalIdx = this->vertexMapper.template map<dim>(element, sfs[k].entity());
 
            // if nodes are not already visited
            if (!sNDat[globalIdx].visited)
             {
                  // evaluate primary variable switch
-               primaryVarSwitch(e, globalIdx, sol, k);
+               primaryVarSwitch(element, globalIdx, sol, k);
 
                 // mark elements that were already visited
                 sNDat[globalIdx].visited = true;
@@ -534,30 +534,30 @@ namespace Dune
     }
 
     // for initialization of the Static Data (sets porosity)
-    virtual void updateStaticData (const Element& e, SolutionVector* sol)
+    virtual void updateStaticData (const Element& element, SolutionVector* sol)
     {
         // get access to shape functions for P1 elements
-        GeometryType gt = e.geometry().type();
+        GeometryType gt = element.geometry().type();
         const typename LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::value_type&
         sfs=LagrangeShapeFunctions<Scalar,Scalar,dim>::general(gt,1);
 
         // get local to global id map
         for (int k = 0; k < sfs.size(); k++)
         {
-            const int globalIdx = this->vertexMapper.template map<dim>(e, sfs[k].entity());
+            const int globalIdx = this->vertexMapper.template map<dim>(element, sfs[k].entity());
 
            // if nodes are not already visited
            if (!sNDat[globalIdx].visited)
            {
                // ASSUME porosity defined at nodes
-               sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
+               sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.elementGlobal, element, this->fvGeom.elementLocal);
 
                // set counter for variable switch to zero
                sNDat[globalIdx].switched = 0;
 
 //               if (!checkSwitched())
 //                  {
-             primaryVarSwitch(e, globalIdx, sol, k);
+             primaryVarSwitch(element, globalIdx, sol, k);
 //                  }
 
                // mark elements that were already visited
@@ -593,101 +593,101 @@ namespace Dune
     };
 
     // analog to EvalPrimaryData in MUFTE, uses members of vNDat
-    virtual void updateVariableData(const Element& e, const SolutionVector* sol,
-            int i, std::vector<VariableNodeData>& varData, int state)
+    virtual void updateVariableData(const Element& element, const SolutionVector* sol,
+            int vertex, std::vector<VariableNodeData>& varData, int state)
     {
-               const int globalIdx = this->vertexMapper.template map<dim>(e, i);
-               FVector& global = this->fvGeom.subContVol[i].global;
-               FVector& local = this->fvGeom.subContVol[i].local;
+               const int globalIdx = this->vertexMapper.template map<dim>(element, vertex);
+               FVector& global = this->fvGeom.subContVol[vertex].global;
+               FVector& local = this->fvGeom.subContVol[vertex].local;
 
-            varData[i].pW = sol[i][pWIdx];
-            if (state == bothPhases) varData[i].satN = sol[i][switchIdx];
-            if (state == waterPhase) varData[i].satN = 0.0;
-            if (state == gasPhase) varData[i].satN = 1.0;
+            varData[vertex].pW = sol[vertex][pWIdx];
+            if (state == bothPhases) varData[vertex].satN = sol[vertex][switchIdx];
+            if (state == waterPhase) varData[vertex].satN = 0.0;
+            if (state == gasPhase) varData[vertex].satN = 1.0;
 
-            varData[i].satW = 1.0 - varData[i].satN;
+            varData[vertex].satW = 1.0 - varData[vertex].satN;
 
-            varData[i].pC = problem.materialLaw().pC(varData[i].satW, global, e, local);
+            varData[vertex].pC = problem.materialLaw().pC(varData[vertex].satW, global, element, local);
 // For computation of a second pc-Sw law
-//           const std::vector<double>& param = problem.soil().paramRelPerm2(global, e, local);
-//           varData[i].pC = problem.materialLaw().pC(varData[i].satW, global, e, local, param);
+//           const std::vector<double>& param = problem.soil().paramRelPerm2(global, element, local);
+//           varData[vertex].pC = problem.materialLaw().pC(varData[vertex].satW, global, element, local, param);
 
-            varData[i].pN = varData[i].pW + varData[i].pC;
-            varData[i].temperature = temperature; // in [K], constant
+            varData[vertex].pN = varData[vertex].pW + varData[vertex].pC;
+            varData[vertex].temperature = temperature; // in [K], constant
 
             // Solubilities of components in phases
             if (state == bothPhases){
-                   varData[i].massfrac[air][wPhase] = problem.multicomp().xAW(varData[i].pN, varData[i].temperature);
-                   varData[i].massfrac[water][nPhase] = problem.multicomp().xWN(varData[i].pN, varData[i].temperature);
+                   varData[vertex].massfrac[air][wPhase] = problem.multicomp().xAW(varData[vertex].pN, varData[vertex].temperature);
+                   varData[vertex].massfrac[water][nPhase] = problem.multicomp().xWN(varData[vertex].pN, varData[vertex].temperature);
             }
             if (state == waterPhase){
-                   varData[i].massfrac[water][nPhase] = 0.0;
-                   varData[i].massfrac[air][wPhase] =  sol[i][switchIdx];
+                   varData[vertex].massfrac[water][nPhase] = 0.0;
+                   varData[vertex].massfrac[air][wPhase] =  sol[vertex][switchIdx];
             }
             if (state == gasPhase){
-                   varData[i].massfrac[water][nPhase] = sol[i][switchIdx];
-                   varData[i].massfrac[air][wPhase] = 0.0;
+                   varData[vertex].massfrac[water][nPhase] = sol[vertex][switchIdx];
+                   varData[vertex].massfrac[air][wPhase] = 0.0;
             }
-               varData[i].massfrac[water][wPhase] = 1.0 - varData[i].massfrac[air][wPhase];
-               varData[i].massfrac[air][nPhase] = 1.0 - varData[i].massfrac[water][nPhase];
-               varData[i].phasestate = state;
+               varData[vertex].massfrac[water][wPhase] = 1.0 - varData[vertex].massfrac[air][wPhase];
+               varData[vertex].massfrac[air][nPhase] = 1.0 - varData[vertex].massfrac[water][nPhase];
+               varData[vertex].phasestate = state;
 
             // Mobilities & densities
-            varData[i].mobility[wPhase] = problem.materialLaw().mobW(varData[i].satW, global, e, local, varData[i].temperature, varData[i].pW);
-            varData[i].mobility[nPhase] = problem.materialLaw().mobN(varData[i].satN, global, e, local, varData[i].temperature, varData[i].pN);
+            varData[vertex].mobility[wPhase] = problem.materialLaw().mobW(varData[vertex].satW, global, element, local, varData[vertex].temperature, varData[vertex].pW);
+            varData[vertex].mobility[nPhase] = problem.materialLaw().mobN(varData[vertex].satN, global, element, local, varData[vertex].temperature, varData[vertex].pN);
             // Density of Water is set constant here!
-            varData[i].density[wPhase] = 1000;//problem.wettingPhase().density(varData[i].temperature, varData[i].pN);
-            varData[i].density[nPhase] = problem.nonwettingPhase().density(varData[i].temperature, varData[i].pN,
-                    varData[i].massfrac[water][nPhase]);
+            varData[vertex].density[wPhase] = 1000;//problem.wettingPhase().density(varData[vertex].temperature, varData[vertex].pN);
+            varData[vertex].density[nPhase] = problem.nonwettingPhase().density(varData[vertex].temperature, varData[vertex].pN,
+                    varData[vertex].massfrac[water][nPhase]);
 
-         varData[i].diff[wPhase] = problem.wettingPhase().diffCoeff();
-         varData[i].diff[nPhase] = problem.nonwettingPhase().diffCoeff();
+         varData[vertex].diff[wPhase] = problem.wettingPhase().diffCoeff();
+         varData[vertex].diff[nPhase] = problem.nonwettingPhase().diffCoeff();
 
          // CONSTANT solubility (for comparison with twophase)
-//         varData[i].massfrac[air][wPhase] = 0.0; varData[i].massfrac[water][wPhase] = 1.0;
-//         varData[i].massfrac[water][nPhase] = 0.0; varData[i].massfrac[air][nPhase] = 1.0;
+//         varData[vertex].massfrac[air][wPhase] = 0.0; varData[vertex].massfrac[water][wPhase] = 1.0;
+//         varData[vertex].massfrac[water][nPhase] = 0.0; varData[vertex].massfrac[air][nPhase] = 1.0;
 
-         //std::cout << "water in gasphase: " << varData[i].massfrac[water][nPhase] << std::endl;
-         //std::cout << "air in waterphase: " << varData[i].massfrac[air][wPhase] << std::endl;
+         //std::cout << "water in gasphase: " << varData[vertex].massfrac[water][nPhase] << std::endl;
+         //std::cout << "air in waterphase: " << varData[vertex].massfrac[air][wPhase] << std::endl;
 
             // for output
-            (*outPressureN)[globalIdx] = varData[i].pN;
-            (*outCapillaryP)[globalIdx] = varData[i].pC;
-              (*outSaturationW)[globalIdx] = varData[i].satW;
-               (*outSaturationN)[globalIdx] = varData[i].satN;
-               (*outMassFracAir)[globalIdx] = varData[i].massfrac[air][wPhase];
-               (*outMassFracWater)[globalIdx] = varData[i].massfrac[water][nPhase];
-               (*outDensityW)[globalIdx] = varData[i].density[wPhase];
-               (*outDensityN)[globalIdx] = varData[i].density[nPhase];
-               (*outMobilityW)[globalIdx] = varData[i].mobility[wPhase];
-               (*outMobilityN)[globalIdx] = varData[i].mobility[nPhase];
-               (*outPhaseState)[globalIdx] = varData[i].phasestate;
+            (*outPressureN)[globalIdx] = varData[vertex].pN;
+            (*outCapillaryP)[globalIdx] = varData[vertex].pC;
+              (*outSaturationW)[globalIdx] = varData[vertex].satW;
+               (*outSaturationN)[globalIdx] = varData[vertex].satN;
+               (*outMassFracAir)[globalIdx] = varData[vertex].massfrac[air][wPhase];
+               (*outMassFracWater)[globalIdx] = varData[vertex].massfrac[water][nPhase];
+               (*outDensityW)[globalIdx] = varData[vertex].density[wPhase];
+               (*outDensityN)[globalIdx] = varData[vertex].density[nPhase];
+               (*outMobilityW)[globalIdx] = varData[vertex].mobility[wPhase];
+               (*outMobilityN)[globalIdx] = varData[vertex].mobility[nPhase];
+               (*outPhaseState)[globalIdx] = varData[vertex].phasestate;
 
                return;
     }
 
-    virtual void updateVariableData(const Element& e, const SolutionVector* sol, int i, bool old = false)
+    virtual void updateVariableData(const Element& element, const SolutionVector* sol, int vertex, bool old = false)
     {
         int state;
-        const int global = this->vertexMapper.template map<dim>(e, i);
+        const int global = this->vertexMapper.template map<dim>(element, vertex);
         if (old)
         {
                   state = sNDat[global].oldPhaseState;
-            updateVariableData(e, sol, i, oldVNDat, state);
+            updateVariableData(element, sol, vertex, oldVNDat, state);
         }
         else
         {
             state = sNDat[global].phaseState;
-            updateVariableData(e, sol, i, vNDat, state);
+            updateVariableData(element, sol, vertex, vNDat, state);
         }
     }
 
-    void updateVariableData(const Element& e, const SolutionVector* sol, bool old = false)
+    void updateVariableData(const Element& element, const SolutionVector* sol, bool old = false)
     {
         int size = this->fvGeom.numVertices;
 
-        for (int i = 0; i < size; i++)
-                updateVariableData(e, sol, i, old);
+        for (int vertex = 0; vertex < size; vertex++)
+                updateVariableData(element, sol, vertex, old);
     }
 
     bool checkSwitched()
