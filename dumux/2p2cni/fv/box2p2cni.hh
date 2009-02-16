@@ -77,9 +77,7 @@ namespace Dune
         typedef typename ThisLeafP1TwoPhaseModel::FunctionType::RepresentationType VectorType;
         typedef typename ThisLeafP1TwoPhaseModel::OperatorAssembler::RepresentationType MatrixType;
         typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator;
-#ifdef HAVE_PARDISO
-    SeqPardiso<MatrixType,VectorType,VectorType> pardiso;
-#endif
+
 
             //////////////////////
       // Stuff required for the new newton method
@@ -484,6 +482,7 @@ namespace Dune
         double red=1E-14;
 
 #ifdef HAVE_PARDISO
+    SeqPardiso<MatrixType,VectorType,VectorType> pardiso;
         pardiso.factorize(*(this->A));
         BiCGSTABSolver<VectorType> solver(op,pardiso,red,100,2);         // an inverse operator
 #else
