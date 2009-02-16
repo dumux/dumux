@@ -241,7 +241,7 @@ namespace Dune
         // ATTENTION: relPermFlag2 is used from the soil class!
         // This function is mainly implemented, for the definition of a second
         // Pc-Sw relation for interfacial area models
-        switch (soil.relPermFlag2(x, e, xi))
+        switch (soil.relPermFlag(x, e, xi))
         {
         case 0:
             return linearlaw.pC(saturationW, x, e, xi, param, T);
@@ -256,7 +256,7 @@ namespace Dune
         case 5:
             return auxiliary3.pC(saturationW, x, e, xi, param, T);
         default:
-            DUNE_THROW(NotImplemented, "Matrix2p::modelFlag " << soil.relPermFlag2(x, e, xi) << " for TwoPhaseRelations::pC");
+            DUNE_THROW(NotImplemented, "Matrix2p::modelFlag " << soil.relPermFlag(x, e, xi) << " for TwoPhaseRelations::pC");
         }
       }
 
@@ -301,8 +301,7 @@ namespace Dune
       virtual double dPdS (double saturationW, const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi,
                               const std::vector<double>& param, double T=283.15, double p=1e5) const
       {
-        // ATTENTION: relPermFlag2 is used from the soil class!
-        switch (soil.relPermFlag2(x, e, xi))
+        switch (soil.relPermFlag(x, e, xi))
         {
         case 0:
             return linearlaw.dPdS(saturationW, x, e, xi, param, T);
@@ -317,7 +316,7 @@ namespace Dune
         case 5:
             return auxiliary3.dPdS(saturationW, x, e, xi, param, T);
         default:
-            DUNE_THROW(NotImplemented, "Matrix2p::modelFlag " << soil.relPermFlag2(x, e, xi) << " for TwoPhaseRelations::dPdS");
+            DUNE_THROW(NotImplemented, "Matrix2p::modelFlag " << soil.relPermFlag(x, e, xi) << " for TwoPhaseRelations::dPdS");
         }
       }
 
@@ -373,6 +372,60 @@ namespace Dune
         default:
             DUNE_THROW(NotImplemented, "Matrix2p::modelFlag " << soil.relPermFlag(x, e, xi) << " for TwoPhaseRelations::dSdP");
         }
+      }
+
+      /*! \brief the specific interfacial area function
+       *
+       *  \param pC the capillary pressure
+       *  \param saturationW the saturation of the wetting phase
+       *  \param awnparam the parameter of the biquadratic awn surface curve
+       *  \return the derivative \f$\text{d}S_w/\text{d}p_\text{c}\f$
+       */
+      virtual double awn (double saturationW, double pC, const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
+      {
+          const std::vector<double> awnparam = soil.awnParam(x, e, xi);
+    	  double value;
+    	  double a0,a1,a2,a3,a4,a5;
+    	  a0=awnparam[0];
+    	  a1=awnparam[1];
+    	  a2=awnparam[2];
+    	  a3=awnparam[3];
+    	  a4=awnparam[4];
+    	  a5=awnparam[5];
+
+        value = awnparam[0]+awnparam[1]*saturationW + awnparam[2]*pC + awnparam[3]*pC*saturationW + awnparam[4]*saturationW*saturationW + awnparam[5]*pC*pC;
+
+        return value;
+      }
+
+      /*! \brief the derivative of specific interfacial area function w.r.t. capillary pressure
+       *
+       *  \param pC the capillary pressure
+       *  \param saturationW the saturation of the wetting phase
+       *  \param awnparam the parameter of the biquadratic awn surface curve
+       *  \return the derivative \f$\text{d}a_{wn}/\text{d}p_\text{c}\f$
+       */
+      virtual double dawndpC (double saturationW, double pC, const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
+      {
+          const std::vector<double> awnparam = soil.awnParam(x, e, xi);
+    	  double value;
+        value = awnparam[2] + awnparam[3]*saturationW + 2*awnparam[5]*pC;
+    	return value;
+      }
+      /*! \brief the derivative of specific interfacial area function w.r.t. saturation
+       *
+       *  \param pC the capillary pressure
+       *  \param saturationW the saturation of the wetting phase
+       *  \param awnparam the parameter of the biquadratic awn surface curve
+       *  \return the derivative \f$\text{d}a_{wn}/\text{d}S_w\f$
+       */
+
+      virtual double dawndS (double saturationW, double pC, const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
+      {
+          const std::vector<double> awnparam = soil.awnParam(x, e, xi);
+    	  double value;
+        value = awnparam[1] + awnparam[3]*pC + 2*awnparam[4]*saturationW;
+    	return value;
       }
 
         /*! \brief wetting phase relative permeability saturation relationship
