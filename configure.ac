@@ -178,21 +178,22 @@ AC_CONFIG_FILES([Makefile
     test/fvca5/test7/Makefile
     test/fvca5/test8/Makefile
     test/fvca5/test9/Makefile
-    benchmarkproblems/Makefile
-    benchmarkproblems/fractionalflow/Makefile
-    benchmarkproblems/fullycoupled/Makefile
-    benchmarkproblems/fullycoupled/2p/Makefile
-    benchmarkproblems/fractionalflow/2p/Makefile
-    benchmarkproblems/fullycoupled/2p/buckleyleverett/Makefile
-    benchmarkproblems/fractionalflow/2p/buckleyleverett/Makefile
-    benchmarkproblems/fullycoupled/2p/fivespot/Makefile
-    benchmarkproblems/fractionalflow/2p/fivespot/Makefile    
-    benchmarkproblems/fullycoupled/2p/convectiondiffusion/Makefile  
-    benchmarkproblems/fractionalflow/2p/convectiondiffusion/Makefile      
-    benchmarkproblems/fullycoupled/2p/mcwhorter/Makefile
-    benchmarkproblems/fractionalflow/2p/mcwhorter/Makefile
     m4/Makefile
     dune-mux.pc])
+
+#    benchmarkproblems/Makefile
+#    benchmarkproblems/fractionalflow/Makefile
+#    benchmarkproblems/fullycoupled/Makefile
+#    benchmarkproblems/fullycoupled/2p/Makefile
+#    benchmarkproblems/fractionalflow/2p/Makefile
+#    benchmarkproblems/fullycoupled/2p/buckleyleverett/Makefile
+#    benchmarkproblems/fractionalflow/2p/buckleyleverett/Makefile
+#    benchmarkproblems/fullycoupled/2p/fivespot/Makefile
+#    benchmarkproblems/fractionalflow/2p/fivespot/Makefile    
+#    benchmarkproblems/fullycoupled/2p/convectiondiffusion/Makefile  
+#    benchmarkproblems/fractionalflow/2p/convectiondiffusion/Makefile      
+#    benchmarkproblems/fullycoupled/2p/mcwhorter/Makefile
+#    benchmarkproblems/fractionalflow/2p/mcwhorter/Makefile
 
 AC_OUTPUT
 # finally print the summary information
