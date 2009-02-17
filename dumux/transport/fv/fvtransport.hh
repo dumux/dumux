@@ -170,10 +170,8 @@ int FVTransport<Grid, Scalar, VC, Problem>::update(const Scalar t, Scalar& dt,
             localPosFace = Dune::ReferenceElements<Scalar,dim>::general(faceGT).position(isIt->numberInSelf(),1);
 
             // get normal vector scaled with volume
-            Dune::FieldVector<Scalar,dimWorld> integrationOuterNormal
-            = isIt->integrationOuterNormal(faceLocal);
-            integrationOuterNormal
-            *= Dune::ReferenceElements<Scalar,dim-1>::general(faceGT).volume();
+            Dune::FieldVector<Scalar,dimWorld> integrationOuterNormal = isIt->integrationOuterNormal(faceLocal);
+            integrationOuterNormal *= Dune::ReferenceElements<Scalar,dim-1>::general(faceGT).volume();
 
             // compute factor occuring in flux formula
             Scalar velocityIJ = std::max(this->transProblem.variables.vTotal(*eIt, numberInSelf)*integrationOuterNormal/(volume), 0.0);

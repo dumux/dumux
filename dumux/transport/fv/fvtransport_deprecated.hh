@@ -168,10 +168,8 @@ template<class G, class RT, class VC> int FVTransport<G, RT, VC>::update(const R
             facelocalDim = Dune::ReferenceElements<ct,dim>::general(gtf).position(is->numberInSelf(),1);
 
             // get normal vector scaled with volume
-            Dune::FieldVector<ct,dimworld> integrationOuterNormal
-            = is->integrationOuterNormal(facelocal);
-            integrationOuterNormal
-            *= Dune::ReferenceElements<ct,dim-1>::general(gtf).volume();
+            Dune::FieldVector<ct,dimworld> integrationOuterNormal = is->integrationOuterNormal(facelocal);
+            integrationOuterNormal *= Dune::ReferenceElements<ct,dim-1>::general(gtf).volume();
 
             // compute factor occuring in flux formula
             double velocityIJ = std::max(this->transproblem.variables.vTotal(*it, numberInSelf)*integrationOuterNormal/(volume), 0.0);
