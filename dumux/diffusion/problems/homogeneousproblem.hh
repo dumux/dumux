@@ -3,7 +3,7 @@
 #ifndef HOMOGENEOUSPROBLEM_HH
 #define HOMOGENEOUSPROBLEM_HH
 
-#include "dumux/diffusion/diffusionproblem.hh"
+#include "dumux/diffusion/diffusionproblem_deprecated.hh"
 
 namespace Dune
 {
@@ -35,7 +35,7 @@ namespace Dune
         return K_;
     }
 
-    virtual RT q   (const FieldVector<DT,n>& x, const Entity& e,
+    virtual RT source   (const FieldVector<DT,n>& x, const Entity& e,
             const FieldVector<DT,n>& xi)
     {
       return 0;
@@ -50,19 +50,19 @@ namespace Dune
       return BoundaryConditions::neumann;
     }
 
-    virtual RT g (const FieldVector<DT,n>& x, const Entity& e,
+    virtual RT dirichletPress (const FieldVector<DT,n>& x, const Entity& e,
           const FieldVector<DT,n>& xi) const
     {
       return (x[0] < 1e-6) ? 2e5 : 1.9e5;
     }
 
-    virtual RT gSat (const FieldVector<DT,n>& x, const Entity& e,
+    virtual RT dirichletSat (const FieldVector<DT,n>& x, const Entity& e,
           const FieldVector<DT,n>& xi) const
     {
       return (x[0] < 1e-6) ? 1 : 0;
     }
 
-    virtual RT J (const FieldVector<DT,n>& x, const Entity& e,
+    virtual RT neumannPress (const FieldVector<DT,n>& x, const Entity& e,
           const FieldVector<DT,n>& xi) const
     {
       return 0;

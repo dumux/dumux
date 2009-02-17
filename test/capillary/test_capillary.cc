@@ -16,8 +16,8 @@
 #include "dumux/diffusion/mimetic/mimeticdiffusion.hh"
 #include "dumux/fractionalflow/impes/impes_deprecated.hh"
 #include "dumux/transport/problems/buckleyleverettproblem.hh"
-#include "dumux/diffusion/problems/uniformproblem.hh"
-#include "dumux/diffusion/problems/heterogeneousproblem.hh"
+//#include "dumux/diffusion/problems/uniformproblem.hh"
+#include "dumux/diffusion/problems/homogeneousproblem.hh"
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/timedisc/rungekuttastep.hh"
 #include "dumux/fractionalflow/variableclass.hh"
@@ -67,8 +67,8 @@ int main(int argc, char** argv)
     VC variables(grid);
 
     Dune::BuckleyLeverettProblem<GridType, NumberType, VC> transportProblem(variables, materialLaw);
-    Dune::UniformProblem<GridType, NumberType,VC> diffusionProblem(variables, materialLaw);
-    //Dune::HeterogeneousProblem<GridType, NumberType> diffusionProblem(grid, "permeab.dat", false, materialLaw);
+    //Dune::UniformProblem<GridType, NumberType,VC> diffusionProblem(variables, materialLaw);
+    Dune::HomogeneousProblem<GridType, NumberType, VC> diffusionProblem(variables, materialLaw);
     //diffusionProblem.permeability.vtkout("permeability", grid);
 
     typedef Dune::FVTransport<GridType, NumberType,VC> Transport;

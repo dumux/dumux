@@ -5,7 +5,7 @@
 
 #warning this file is deprecated, please use diffusion.hh instead
 
-#include "dumux/diffusion/diffusionproblem.hh"
+#include "dumux/diffusion/diffusionproblem_deprecated.hh"
 
 /**
  * @file

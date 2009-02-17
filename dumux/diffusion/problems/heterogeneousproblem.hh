@@ -3,7 +3,7 @@
 #ifndef HETEROGENPROBLEM_HH
 #define HETEROGENPROBLEM_HH
 
-#include "dumux/diffusion/diffusionproblem.hh"
+#include "dumux/diffusion/diffusionproblem_deprecated.hh"
 #include "dumux/material/randompermeability.hh"
 
 namespace Dune
