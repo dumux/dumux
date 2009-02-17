@@ -31,7 +31,7 @@ namespace Dune
  - Scalar        type used for return values
 
  */
-template<class Grid, class Scalar, class VC>
+template<class Grid, class Scalar, class VC, class Problem = FractionalFlowProblem<Grid, Scalar, VC> >
 class Diffusion
 {
 public:
@@ -80,7 +80,7 @@ public:
      * \param grid grid object of type Grid
      * \param prob a problem class object derived from DiffusionProblem
      */
-    Diffusion(const Grid& grid, FractionalFlowProblem<Grid, Scalar, VC>& prob) :
+    Diffusion(const Grid& grid, Problem& prob) :
         grid(grid), diffProblem(prob)
     {
     }
@@ -91,7 +91,7 @@ public:
         return diffProblem.variables.diffLevel;
     }
     const Grid& grid;
-    FractionalFlowProblem<Grid, Scalar, VC>& diffProblem; //!< problem data
+    Problem& diffProblem; //!< problem data
 };
 
 }

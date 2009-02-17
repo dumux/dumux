@@ -15,7 +15,7 @@
 #include "dune/disc/operators/p1operator.hh"
 #include "dumux/diffusion/fe/p1groundwater.hh"
 #include "dumux/transport/problems/simpleproblem.hh"
-#include "dumux/diffusion/problems/uniformproblem.hh"
+//#include "dumux/diffusion/problems/uniformproblem.hh"
 //#include "mgpreconditioner.hh"
 
 /**
@@ -42,9 +42,9 @@ namespace Dune
     - Grid      a DUNE grid type
     - RT        type used for return values
    */
-  template<class G, class RT, class VC, class LocalStiffnessType = GroundwaterEquationLocalStiffness<G,RT> >
+  template<class G, class RT, class VC, class Problem = FractionalFlowProblem<G, RT, VC>, class LocalStiffnessType = GroundwaterEquationLocalStiffness<G,RT,Problem> >
   class FEDiffusion
-  : public Diffusion< G, RT, VC >
+  : public Diffusion< G, RT, VC, Problem >
   {
       template<int dim>
       struct ElementLayout
@@ -64,7 +64,7 @@ namespace Dune
 
     void assemble(const RT t=0)
     {
-        LocalStiffnessType lstiff(this->problem, false, this->grid, this->level());
+        LocalStiffnessType lstiff(this->diffProblem, false, this->grid, this->level());
         A.assemble(lstiff, pressP1, f);
         return;
     }
@@ -81,7 +81,8 @@ namespace Dune
         CGSolver<VectorType> solver(op,ilu0,red,10000,1);         // an inverse operator
         InverseOperatorResult r;
         solver.apply(*pressP1, *f, r);
-        this->press = *pressP1;
+        //this->press = *pressP1;
+	this->diffProblem.variables.pressure = *pressP1;
 
         return;
     }
@@ -93,29 +94,22 @@ namespace Dune
         return;
     }
 
-    void totalVelocity(VelType& velocity, const RT t=0) const
-    {
-        DUNE_THROW(NotImplemented,"FEDiffusion :: totalVelocity");
-        return;
-    }
-
+    void totalVelocity(VelType& velocity, const RT t=0) const;
+    
     void vtkout (const char* name, int k) const
     {
         VTKWriter<typename G::LevelGridView>
             vtkwriter(this->grid.levelView(this->level()));
         char fname[128];
         sprintf(fname,"%s-%05d",name,k);
-        vtkwriter.addVertexData(this->diffproblem.variables.pressure,"total pressure p~");
+        vtkwriter.addVertexData(*pressP1,"total pressure p~");
         vtkwriter.write(fname, VTKOptions::ascii);
     }
 
-    FEDiffusion(G& g, DiffusionProblem<G, RT, VC>& prob,
-            TransportProblem<G, RT, VC>& satprob = *(new typename Dune::SimpleProblem<G, RT, VC>),
-            int lev = -1)
-      : Diffusion<G, RT, VC>(g, prob, lev == -1 ? g.maxLevel() : lev),
+    FEDiffusion(G& g, Problem& prob)
+      : Diffusion<G, RT, VC, Problem>(g, prob),
       pressP1(g, this->level()), f(g, this->level()), A(g, this->level())
     {
-        this->press.resize(g.size(this->level(), G::dimension));
         *pressP1 = 0;
     }
 
@@ -123,6 +117,8 @@ namespace Dune
     PressP1Type f;
     LevelOperatorAssembler A;
   };
-
 }
+
+#include "fediffusionvelocity.hh"
+
 #endif

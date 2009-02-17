@@ -12,9 +12,10 @@
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
+#include "dumux/material/phaseproperties/phaseproperties2p.hh"
 #include "dumux/diffusion/fe/fediffusion.hh"
-#include "dumux/diffusion/problems/uniformproblem.hh"
-#include "dumux/fractionalflow/variableclass.hh"
+#include "uniformproblem.hh"
+#include "dumux/fractionalflow/p1variableclass.hh"
 
 int main(int argc, char** argv)
 {
@@ -27,7 +28,7 @@ int main(int argc, char** argv)
     typedef Dune::SGrid<dim,dim> GridType;
 
     Dune::FieldVector<GridType::ctype,dim> L(0);
-    Dune::FieldVector<GridType::ctype,dim> R(300);
+    Dune::FieldVector<GridType::ctype,dim> R(1);
     Dune::FieldVector<int,dim> N(2);
     GridType grid(N,L,R);
 
@@ -36,20 +37,21 @@ int main(int argc, char** argv)
     //Dune::BrooksCoreyLaw materialLaw(mat, mat);
     //Dune::LinearLaw materialLaw(mat, mat);
 
-    typedef Dune::VariableClass<GridType, NumberType> VC;
+    typedef Dune::P1VariableClass<GridType, NumberType> VC;
 
     double initsat = 1;
 
     VC variables(grid,initsat);
 
-    //Dune::HeterogeneousProblem<GridType, NumberType> problem(grid, "permeab.dat", true);
-    //printvector(std::cout, *(problem.permeability), "permeability", "row", 200, 1);
-    Dune::UniformProblem<GridType, NumberType, VC> problem(variables);
-    //problem.permeability.vtkout("permeability", grid);
-
+    Dune::Uniform mat;
+    Dune::HomogeneousLinearSoil<GridType, NumberType> soil;
+    Dune::TwoPhaseRelations<GridType, NumberType> materialLaw(soil, mat, mat);
+    typedef Dune::UniformProblem<GridType, NumberType, VC> DiffusionProblem;
+    DiffusionProblem problem(variables, materialLaw);
+    
     Dune::Timer timer;
     timer.reset();
-    Dune::FEDiffusion<GridType, NumberType, VC> diffusion(grid, problem);
+    Dune::FEDiffusion<GridType, NumberType, VC, DiffusionProblem> diffusion(grid, problem);
     //Dune::FVDiffusion<GridType, NumberType, VC> diffusion(grid, problem, grid.maxLevel());
     //Dune::FVDiffusionVelocity<GridType, NumberType, VC> diffusion(grid, problem, grid.maxLevel());
     //Dune::MimeticDiffusion<GridType, NumberType, VC> diffusion(grid, problem, grid.maxLevel());
@@ -58,7 +60,7 @@ int main(int argc, char** argv)
     diffusion.pressure();
     std::cout << "pressure calculation took " << timer.elapsed() << " seconds" << std::endl;
     printvector(std::cout, variables.pressure, "pressure", "row", 200, 1, 3);
-    variables.vtkout("fv", 0);
+    variables.vtkout("test_equilibrated", 0);
 
     diffusion.calcTotalVelocity();
     printvector(std::cout, variables.velocity, "velocity", "row", 4, 1, 3);

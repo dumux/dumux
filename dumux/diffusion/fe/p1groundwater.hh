@@ -59,9 +59,9 @@ namespace Dune
     - Grid  a DUNE grid type
     - RT    type used for return values
   */
-  template<class G, class RT>
+  template<class G, class RT, class Problem = FractionalFlowProblem<G, RT, VariableClass<G,RT> > >
   class GroundwaterEquationLocalStiffness
-      : public LocalStiffness<typename G::LeafGridView,RT,1>
+      : public LinearLocalStiffness<typename G::LevelGridView,RT,1>
   {
         template<int dim>
         struct ElementLayout
@@ -87,7 +87,7 @@ namespace Dune
     enum {SIZE=LagrangeShapeFunctionSetContainer<DT,RT,n>::maxsize};
 
     //! Constructor
-    GroundwaterEquationLocalStiffness (DiffusionProblem<G,RT,VC>& params,
+    GroundwaterEquationLocalStiffness (Problem& params,
                                        bool levelBoundaryAsDirichlet_, const G& grid,
                                        int level = 0,
                                        bool procBoundaryAsDirichlet_=true)
@@ -106,7 +106,6 @@ namespace Dune
       @param[in]  e    a codim 0 entity reference
       @param[in]  k    order of Lagrange basis
      */
-    template<class TypeTag>
     void assemble (const Entity& e, int k=1)
     {
       // extract some important parameters
@@ -125,7 +124,7 @@ namespace Dune
         }
 
       assembleV(e,k);
-      assembleBC<TypeTag>(e,k);
+      assembleBC(e,k);
     }
 
     //! assemble only boundary conditions for given element
@@ -136,7 +135,6 @@ namespace Dune
       @param[in]  e    a codim 0 entity reference
       @param[in]  k    order of Lagrange basis
      */
-    template<typename TypeTag>
     void assembleBoundaryCondition (const Entity& e, int k=1)
     {
       // extract some important parameters
@@ -152,7 +150,7 @@ namespace Dune
           this->bctype[i][0] = BoundaryConditions::neumann;
         }
 
-      this->template assembleBC<TypeTag>(e,k);
+      this->assembleBC(e,k);
     }
 
   private:
@@ -178,10 +176,10 @@ namespace Dune
           const Dune::FieldMatrix<DT,n,n>
             jac = e.geometry().jacobianInverseTransposed(local);           // eval jacobian inverse
           Dune::FieldMatrix<DT,n,n> K = problem.K(global,e,local);   // eval diffusion tensor
-              K *= problem.materialLaw.mobTotal(problem.sat(global,e,local));
+          K *= problem.materialLaw.mobTotal(problem.variables.sat(global,e,local), global, e, local);
           double weight = Dune::QuadratureRules<DT,n>::rule(gt,p)[g].weight();// weight of quadrature point
           DT detjac = e.geometry().integrationElement(local);              // determinant of jacobian
-          RT q = problem.q(global,e,local);                                // source term
+          RT q = problem.source(global,e,local);                                // source term
           RT factor = weight*detjac;
 
           // evaluate gradients at Gauss points
@@ -212,7 +210,7 @@ namespace Dune
         }
     }
 
-        template<class TypeTag>
+    
     void assembleBC (const Entity& e, int k=1)
     {
       // extract some important parameters
@@ -227,11 +225,11 @@ namespace Dune
       if (k>1) p=2*(k-1);
 
       // evaluate boundary conditions via intersection iterator
-      typedef typename IntersectionIteratorGetter<G,TypeTag>::IntersectionIterator
+      typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator
         IntersectionIterator;
 
-      IntersectionIterator endit = IntersectionIteratorGetter<G,TypeTag>::end(e);
-      for (IntersectionIterator it = IntersectionIteratorGetter<G,TypeTag>::begin(e);
+      IntersectionIterator endit = IntersectionIteratorGetter<G,LeafTag>::end(e);
+      for (IntersectionIterator it = IntersectionIteratorGetter<G,LeafTag>::begin(e);
            it!=endit; ++it)
         {
           // if we have a neighbor then we assume there is no boundary (forget interior boundaries)
@@ -261,7 +259,7 @@ namespace Dune
 
                   if (bctypeface!=BoundaryConditions::neumann) break;
 
-                  RT J = problem.J(global,e,local);
+                  RT J = problem.neumannPress(global,e,local);
                   double weightface = Dune::QuadratureRules<DT,n-1>::rule(gtface,p)[g].weight();
                   DT detjacface = it->intersectionGlobal().integrationElement(facelocal);
                   for (int i=0; i<sfs.size(); i++) // loop over test function number
@@ -298,7 +296,7 @@ namespace Dune
                           if (bctypeface==BoundaryConditions::dirichlet)
                             {
                               Dune::FieldVector<DT,n> global = e.geometry().global(sfs[i].position());
-                              this->b[i] = problem.g(global,e,sfs[i].position());
+                              this->b[i] = problem.dirichletPress(global,e,sfs[i].position());
                             }
                         }
                     }
@@ -316,7 +314,7 @@ namespace Dune
                         if (bctypeface==BoundaryConditions::dirichlet)
                           {
                             Dune::FieldVector<DT,n> global = e.geometry().global(sfs[i].position());
-                            this->b[i] = problem.g(global,e,sfs[i].position());
+                            this->b[i] = problem.dirichletPress(global,e,sfs[i].position());
                           }
                       }
                   }
@@ -325,7 +323,7 @@ namespace Dune
     }
 
     // parameters given in constructor
-    DiffusionProblem<G,RT,VC>& problem;
+    Problem& problem;
     bool levelBoundaryAsDirichlet;
     bool procBoundaryAsDirichlet;
     EM elementmapper;
