@@ -11,7 +11,7 @@
 #include <dune/istl/operators.hh>
 #include <dune/istl/solvers.hh>
 #include <dune/istl/preconditioners.hh>
-#include "dumux/diffusion/diffusion_deprecated.hh"
+#include "dumux/diffusion/diffusion.hh"
 #include "dune/disc/operators/p1operator.hh"
 #include "dumux/diffusion/fe/p1groundwater.hh"
 #include "dumux/transport/problems/simpleproblem.hh"

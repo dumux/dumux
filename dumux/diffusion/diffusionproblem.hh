@@ -12,8 +12,7 @@
 #include<dune/grid/common/grid.hh>
 #include<dune/grid/common/referenceelements.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
-#include<dumux/material/twophaserelations_deprecated.hh>
-#include<dumux/material/linearlaw_deprecated.hh>
+#include<dumux/material/twophaserelations.hh>
 
 /**
  * @file
@@ -118,7 +117,7 @@ namespace Dune
     /** @param law implementation of Material laws. Class TwoPhaseRelations or derived.
      *  @param cap flag to include capillary forces.
      */
-    DiffusionProblem(VC& variables, TwoPhaseRelations& materialLaw = *(new LinearLaw),
+    DiffusionProblem(VC& variables, TwoPhaseRelations<Grid,Scalar>& materialLaw = *(new TwoPhaseRelations<Grid,Scalar>),
             const bool capillarity = false, FieldVector<Scalar,dim> gravity = *(new FieldVector<Scalar,dim>(0)))
     : variables(variables), materialLaw(materialLaw), capillarity(capillarity), gravity_(gravity)
     {    }
@@ -128,7 +127,7 @@ namespace Dune
 
     //! a class describing relations between two phases and the porous medium
     VC& variables;
-    TwoPhaseRelations& materialLaw;
+    TwoPhaseRelations<Grid,Scalar>& materialLaw;
     const bool capillarity;
   protected:
       FieldVector<Scalar,dim> gravity_;
