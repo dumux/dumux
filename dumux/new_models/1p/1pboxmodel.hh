@@ -44,7 +44,7 @@ namespace Dune
             pIdx = 0  //!< Index for the fluid pressure in a field vector
         };
     };
-    
+
     ///////////////////////////////////////////////////////////////////////////
     // OnePBoxJacobian (evaluate the local jacobian for the newton method.)
     ///////////////////////////////////////////////////////////////////////////
@@ -52,8 +52,8 @@ namespace Dune
      * \brief Local Jacobian for the single phase isothermal model
      */
     template<class ProblemT, class BoxTraitsT, class OnePTraitsT>
-    class OnePBoxJacobian : public BoxJacobian<ProblemT, 
-                                               BoxTraitsT, 
+    class OnePBoxJacobian : public BoxJacobian<ProblemT,
+                                               BoxTraitsT,
                                                OnePBoxJacobian<ProblemT,
                                                                BoxTraitsT,
                                                                OnePTraitsT> >
@@ -178,7 +178,7 @@ namespace Dune
         /*!
          * \brief Evaluate the rate of change of all conservation
          *        quantites (e.g. phase mass) within a sub control
-         *        volume of a finite volume element for the OneP 
+         *        volume of a finite volume element for the OneP
          *        model.
          *
          * This function should not include the source and sink terms.
@@ -189,8 +189,7 @@ namespace Dune
             const VariableVertexData &vertDat = usePrevSol?prevElemDat_.vertex[scvId]:curElemDat_.vertex[scvId];
 
             // partial time derivative of the wetting phase mass
-            result[pIdx] = - vertDat.density
-                * ParentType::problem_.porosity(*this->curElementPtr_, scvId);
+            result[pIdx] =  vertDat.density * ParentType::problem_.porosity(*this->curElementPtr_, scvId);
         }
 
 
@@ -202,7 +201,7 @@ namespace Dune
         {
             const typename FVElementGeometry::SubControlVolumeFace
                 &face = ParentType::curElementGeom_.subContVolFace[faceId];
-            
+
             const int i = face.i;
             const int j = face.j;
 
@@ -212,11 +211,11 @@ namespace Dune
             // get global coordinates of verts i,j
             const GlobalPosition &global_i = this->curElementGeom_.subContVol[i].global;
             const GlobalPosition &global_j = this->curElementGeom_.subContVol[j].global;
-            
+
             // get local coordinates of verts i,j
             const LocalPosition &local_i = this->curElementGeom_.subContVol[i].local;
             const LocalPosition &local_j = this->curElementGeom_.subContVol[j].local;
-            
+
             // calculate FE gradient
             Scalar densityIJ = 0;
             Scalar viscosityIJ = 0;
@@ -225,7 +224,7 @@ namespace Dune
                 LocalPosition grad(face.grad[k]);
                 grad *= (*curSol_)[k][pIdx];
                 pGrad += grad;
-                    
+
                 densityIJ += curElemDat_.vertex[k].density*face.shapeValue[k];
                 viscosityIJ += curElemDat_.vertex[k].viscosity*face.shapeValue[k];
             }
@@ -245,8 +244,8 @@ namespace Dune
 
             K.mv(pGrad, vDarcy);  // vDarcy = K * grad p
             vDarcy /= viscosityIJ;
-               
-            flux[pIdx] = vDarcy*normal;
+
+            flux[pIdx] = densityIJ * (vDarcy * normal);
         }
 
         /*!
@@ -291,7 +290,7 @@ namespace Dune
 
                 writer.addVertexData(p, "p");
             }
-        
+
     private:
         // harmonic mean of the permeability computed directly.  the
         // first parameter is used to store the result.
@@ -341,16 +340,16 @@ namespace Dune
 //            const GlobalPosition &global = this->curElementGeom_.subContVol[i].global;
 //            const LocalPosition &local = this->curElementGeom_.subContVol[i].local;
 
-            vertexData.density = this->problem_.fluid().density(asImp_().temperature_(), 
+            vertexData.density = this->problem_.fluid().density(asImp_().temperature_(),
                                                                 sol[pIdx]);
-            vertexData.viscosity = this->problem_.fluid().density(asImp_().temperature_(), 
+            vertexData.viscosity = this->problem_.fluid().viscosity(asImp_().temperature_(),
                                                                   sol[pIdx]);
         }
-        
+
         Scalar temperature_() const
         { return this->problem_.temperature(); }
 
-        ThisType &asImp_() 
+        ThisType &asImp_()
         { return *static_cast<ThisType *>(this); }
 
         const ThisType &asImp_() const
