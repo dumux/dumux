@@ -216,8 +216,8 @@ public:
             tmp *= vNDat[idx].temperature;
             teGrad += tmp;
 
-            densityIP[wPhase] = vNDat[idx].density[wPhase] * this->fvGeom.subContVolFace[face].shapeValue[idx];
-            densityIP[nPhase] = vNDat[idx].density[nPhase] * this->fvGeom.subContVolFace[face].shapeValue[idx];
+            densityIP[wPhase] += vNDat[idx].density[wPhase] * this->fvGeom.subContVolFace[face].shapeValue[idx];
+            densityIP[nPhase] += vNDat[idx].density[nPhase] * this->fvGeom.subContVolFace[face].shapeValue[idx];
         }
 
         // deduce gravity*density of each phase
