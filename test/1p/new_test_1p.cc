@@ -4,7 +4,10 @@
 
 #include <dune/grid/common/gridinfo.hh>
 #include <dune/grid/io/file/dgfparser.hh>
-
+#include <dune/grid/io/file/dgfparser/dgfug.hh>
+#include <dune/grid/io/file/dgfparser/dgfs.hh>
+#include <dune/grid/io/file/dgfparser/dgfalu.hh>
+#include <dune/grid/io/file/dgfparser/dgfalberta.hh>
 #include <dune/grid/yaspgrid.hh>
 
 #include <dune/common/exceptions.hh>

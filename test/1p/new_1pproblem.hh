@@ -141,7 +141,7 @@ namespace Dune
         typedef NewOnePProblem<GridT, ScalarT>  ThisType;
         typedef OnePBoxModel<ThisType>          Model;
 
-        typedef Dune::Water                            Fluid;
+        typedef Dune::Air                            Fluid;
         typedef Dune::OnePSoil<Grid, ScalarT>          Soil;
 
     public:
@@ -331,7 +331,7 @@ namespace Dune
                   values = Dune::BoundaryConditions::neumann;
                   break;
 */
-            case 5: 
+            case 5:
             case 6:
                 values = Dune::BoundaryConditions::dirichlet;
                 break;
@@ -349,7 +349,7 @@ namespace Dune
                        int                         boundaryFaceIdx) const
         {
             values[pIdx] = 1e5;
-            
+
             switch (isIt->boundaryId()) {
             case 5:
                 values[pIdx] = 2e+5;
