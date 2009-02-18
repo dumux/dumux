@@ -260,6 +260,16 @@ public:
                 secondModel_.sol()[i][k] = u[colsInBlock1*firstModel_.sol().size() + i*colsInBlock2 + k];
     }
 
+    const FirstGrid& firstGrid()
+    {
+        return firstGrid_;
+    }
+
+    const SecondGrid& secondGrid()
+    {
+        return secondGrid_;
+    }
+
     FirstModel& firstModel()
     {
         return firstModel_;

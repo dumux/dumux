@@ -9,8 +9,8 @@
 namespace Dune
 {
 /** \todo Please doc me! */
-template<class FirstModel, class SecondModel>
-class CoupledBox : public CoupledModel<FirstModel, SecondModel, CoupledBox<FirstModel, SecondModel> > {
+template<class FirstModel, class SecondModel, class Imp>
+class CoupledBox : public CoupledModel<FirstModel, SecondModel, Imp> {
 public:
     template<int dim>
     struct NodeLayout
@@ -28,19 +28,22 @@ public:
     };
 
     // typedefs depending on base class
-    typedef CoupledModel<FirstModel, SecondModel, CoupledBox<FirstModel, SecondModel> > BaseType;
+    typedef CoupledModel<FirstModel, SecondModel, Imp> BaseType;
     typedef typename BaseType::FirstGrid FirstGrid;
     typedef typename BaseType::SecondGrid SecondGrid;
+    typedef typename FirstModel::MatrixType FirstMatrixType;
+    typedef typename SecondModel::MatrixType SecondMatrixType;
+    enum{firstNumEq = FirstMatrixType::block_type::rows};
+    enum{secondNumEq = SecondMatrixType::block_type::rows};
 
     // new typedefs
     enum {dim = FirstGrid::dimension};
-    enum {vOrder = FirstModel::v_ordr};
     typedef typename FirstGrid::LeafGridView FirstGV;
     typedef typename FirstGV::IndexSet FirstIS;
     typedef typename FirstGV::template Codim<0>::Iterator FirstIterator;
+    typedef typename FirstGrid::Traits::template Codim<0>::Entity FirstElement;
     typedef typename FirstGrid::template Codim<dim>::EntityPointer FirstVPointer;
     typedef typename IntersectionIteratorGetter<FirstGrid,LeafTag>::IntersectionIterator FirstIntersectionIterator;
-    typedef MultipleCodimMultipleGeomTypeMapper<FirstGrid,FirstIS,ElementLayout> FirstElementMapper;
     typedef MultipleCodimMultipleGeomTypeMapper<FirstGrid,FirstIS,NodeLayout> FirstVertexMapper;
     typedef typename FirstGrid::HostGridType FirstHostGrid;
     typedef typename FirstHostGrid::template Codim<0>::EntityPointer FirstHostPointer;
@@ -48,6 +51,7 @@ public:
     typedef typename SecondGrid::LeafGridView SecondGV;
     typedef typename SecondGV::IndexSet SecondIS;
     typedef typename SecondGV::template Codim<0>::Iterator SecondIterator;
+    typedef typename SecondGrid::Traits::template Codim<0>::Entity SecondElement;
     typedef typename SecondGV::template Codim<dim>::Iterator SecondVIterator;
     typedef typename IntersectionIteratorGetter<SecondGrid,LeafTag>::IntersectionIterator SecondIntersectionIterator;
     typedef MultipleCodimMultipleGeomTypeMapper<SecondGrid,SecondIS,NodeLayout> SecondVertexMapper;
@@ -55,7 +59,22 @@ public:
     typedef typename SecondGrid::HostGridType HostGrid;
     typedef typename HostGrid::template Codim<0>::EntityPointer HostPointer;
     typedef typename HostGrid::template Codim<dim>::EntityPointer HostVPointer;
-    typedef MonomialShapeFunctionSet<double,double,dim> ShapeFunctionSet;
+
+    template <class FirstFV, class SecondFV>
+    void localCoupling12(FirstFV& firstSol, SecondFV& secondSol, int firstIndex, int secondIndex, 
+                            FieldVector<double, dim> qGlobal, FirstFV& result)
+    {
+        this->getImp().template localCoupling12<FirstFV,SecondFV>(firstSol, secondSol, 
+                                        firstIndex, secondIndex, qGlobal, result);
+    }
+
+    template <class FirstFV, class SecondFV>
+    void localCoupling21(FirstFV& firstSol, SecondFV& secondSol, int firstIndex, int secondIndex, 
+                            FieldVector<double, dim> qGlobal, SecondFV& result)
+    {
+        this->getImp().template localCoupling21<FirstFV,SecondFV>(firstSol, secondSol, 
+                                        firstIndex, secondIndex, qGlobal, result);
+    }
 
     template <class A12Type, class A21Type>
     void assembleCoupling(A12Type& A_12, A21Type& A_21)
@@ -67,14 +86,14 @@ public:
             A_21.setrowsize(i, 0);
 
         std::vector<bool> visitedFirst(A_12.N());
-        for (typename std::vector::size_type i = 0; i < A_12.N(); i++)
-            visitedFirst = false;
+        for (unsigned int i = 0; i < A_12.N(); i++)
+            visitedFirst[i] = false;
         std::vector<bool> visitedSecond(A_21.N());
-        for (typename std::vector::size_type i = 0; i < A_21.N(); i++)
-            visitedSecond = false;
+        for (unsigned int i = 0; i < A_21.N(); i++)
+            visitedSecond[i] = false;
         // loop 1 over all elements of the First grid to set the rowsizes of the coupling matrices
-        FirstIterator endIt = (this->firstGrid_).template leafend<0>();
-        for (FirstIterator firstIt = (this->firstGrid_).template leafbegin<0>(); firstIt != endIt; ++firstIt)
+        FirstIterator endIt = (this->firstGrid()).template leafend<0>();
+        for (FirstIterator firstIt = (this->firstGrid()).template leafbegin<0>(); firstIt != endIt; ++firstIt)
         {
             GeometryType gt = firstIt->geometry().type();
             const typename ReferenceElementContainer<double,dim>::value_type& referenceElement = ReferenceElements<double, dim>::general(gt);
@@ -100,10 +119,10 @@ public:
                     const FirstVPointer& firstVPointer = (*firstIt).template entity<dim>(nodeInElement);
 
                     // get the node pointer on the host grid
-                    const HostVPointer& hostVPointer = (this->firstGrid_).template getHostEntity<dim>(*firstVPointer);
+                    const HostVPointer& hostVPointer = (this->firstGrid()).template getHostEntity<dim>(*firstVPointer);
 
                     // check if the node is also part of the second grid
-                    if (!((this->secondGrid_).template contains<dim>(hostVPointer)))
+                    if (!((this->secondGrid()).template contains<dim>(hostVPointer)))
                         break; // otherwise this face is not at the interface
 
                     // get the index of the node with respect to the first matrix
@@ -147,7 +166,7 @@ public:
 
 
         // loop 2 over all elements of the First grid to set the indices of the nonzero entries of the coupling matrices
-        for (FirstIterator firstIt = (this->firstGrid_).template leafbegin<0>(); firstIt != endIt; ++firstIt)
+        for (FirstIterator firstIt = (this->firstGrid()).template leafbegin<0>(); firstIt != endIt; ++firstIt)
         {
             GeometryType gt = firstIt->geometry().type();
             const typename ReferenceElementContainer<double,dim>::value_type& referenceElement = ReferenceElements<double, dim>::general(gt);
@@ -173,10 +192,10 @@ public:
                     const FirstVPointer& firstVPointer = (*firstIt).template entity<dim>(nodeInElement);
 
                     // get the node pointer on the host grid
-                    const HostVPointer& hostVPointer = (this->firstGrid_).template getHostEntity<dim>(*firstVPointer);
+                    const HostVPointer& hostVPointer = (this->firstGrid()).template getHostEntity<dim>(*firstVPointer);
 
                     // check if the node is also part of the second grid
-                    if (!((this->secondGrid_).template contains<dim>(hostVPointer)))
+                    if (!((this->secondGrid()).template contains<dim>(hostVPointer)))
                         break; // otherwise this face is not at the interface
 
                     // get the index of the node with respect to the first matrix
@@ -211,13 +230,10 @@ public:
         A_21 = 0;
 
         // loop 3 over all elements of the First grid to actually fill the coupling matrices
-        for (FirstIterator firstIt = (this->firstGrid_).template leafbegin<0>(); firstIt != endIt; ++firstIt)
+        for (FirstIterator firstIt = (this->firstGrid()).template leafbegin<0>(); firstIt != endIt; ++firstIt)
         {
             GeometryType gt = firstIt->geometry().type();
             const typename ReferenceElementContainer<double,dim>::value_type& referenceElement = ReferenceElements<double, dim>::general(gt);
-
-            FVElementGeometry<FirstGrid> fvGeom;
-            fvGeom.update(*firstIt);
 
             FirstIntersectionIterator endIsIt = firstIt->ileafend();
             for (FirstIntersectionIterator firstIsIt = firstIt->ileafbegin(); firstIsIt != endIsIt; ++ firstIsIt)
@@ -231,25 +247,26 @@ public:
                 int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
                 int numVerticesInSecondGrid = 0;
                 int secondIds[numVerticesOfFace];
-                int nodeInElement[numVerticesOfFace];
-                for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++) {
-                    int nInEl = referenceElement.subEntity(faceIdx, 1, nodeInFace, dim);
+                int firstIds[numVerticesOfFace];
+                for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++)
+                {
+                    int nodeInElement = referenceElement.subEntity(faceIdx, 1, nodeInFace, dim);
 
                     // get the node pointer on the First grid
-                    const FirstVPointer& firstVPointer = (*firstIt).template entity<dim>(nInEl);
+                    const FirstVPointer& firstVPointer = (*firstIt).template entity<dim>(nodeInElement);
 
                     // get the node pointer on the host grid
-                    const HostVPointer& hostVPointer = (this->firstGrid_).template getHostEntity<dim>(*firstVPointer);
+                    const HostVPointer& hostVPointer = (this->firstGrid()).template getHostEntity<dim>(*firstVPointer);
 
                     // check if the node is also part of the second grid
-                    if (!((this->secondGrid_).template contains<dim>(hostVPointer)))
+                    if (!((this->secondGrid()).template contains<dim>(hostVPointer)))
                         break; // otherwise this face is not at the interface
+
+                    // get the index of the node with respect to the first matrix
+                    firstIds[numVerticesInSecondGrid] = firstVertexMapper_.map(*firstVPointer);
 
                     // get the index of the node with respect to the Second matrix
                     secondIds[numVerticesInSecondGrid] = secondVertexMapper_.map(*firstVPointer);
-
-                    // save the local index of the node inside the element
-                    nodeInElement[numVerticesInSecondGrid] = nInEl;
 
                     numVerticesInSecondGrid++;
                 }
@@ -257,63 +274,65 @@ public:
                 if (numVerticesInSecondGrid < numVerticesOfFace) // then this face is not at the interface
                     continue;
 
-                // get the index of the element with respect to the First matrix
-                int firstId = firstElementMapper_.map(*firstIt);
-
+                FVElementGeometry<FirstGrid> firstFVGeom;
+                firstFVGeom.update(*firstIt);
 
                 // get the geometry type of the face
                 GeometryType geomTypeBoundary = firstIsIt->intersectionSelfLocal().type();
 
-                // The coupling First <- Second is realized in the FE way.
-                // The unknown Second pressure is the piecewise linear FE interpolant.
-                int qOrder = vOrder + 1;
-                ShapeFunctionSet velShapeFuncSet(vOrder);
-                for(unsigned int qNode = 0; qNode < QuadratureRules<double,dim-1>::rule(geomTypeBoundary,qOrder).size(); ++qNode)
-                {
-                    const FieldVector<double,dim-1>& qLocalDimM1 = QuadratureRules<double,dim-1>::rule(geomTypeBoundary,qOrder)[qNode].position();
-                    FieldVector<double,dim> qLocal = firstIsIt->intersectionSelfLocal().global(qLocalDimM1);
-                    double qWeight = QuadratureRules<double,dim-1>::rule(geomTypeBoundary,qOrder)[qNode].weight();
-                    double qDetJac = firstIsIt->intersectionGlobal().integrationElement(qLocalDimM1);
-                    FieldVector<double,dim> normal = firstIsIt->unitOuterNormal(qLocalDimM1);
-                    const typename LagrangeShapeFunctionSetContainer<double,double,dim>::value_type&
-                    pressShapeFuncSet = LagrangeShapeFunctions<double,double,dim>::general(gt,1);
-
-                    for(int comp = 0; comp < dim; ++comp) // loop over the velocity components
-                    {
-                        for (int i = 0; i < velShapeFuncSet.size(); ++i) // loop over the scalar velocity basis functions
-                        {
-                            int ii = comp*velShapeFuncSet.size() + i;
-                            double velShapeValue = velShapeFuncSet[i].evaluateFunction(0,qLocal);
-                            for (int j = 0; j < numVerticesOfFace; ++j) // loop over interface nodes
-                            {
-                                int jInElement = nodeInElement[j];
-                                double pressShapeValue = pressShapeFuncSet[jInElement].evaluateFunction(0,qLocal);
-                                double entry12 = (pressShapeValue*(velShapeValue*normal[comp]))* qDetJac * qWeight;
-                                int jInMatrix = secondIds[j];
-                                (A_12[firstId][jInMatrix])[ii] -= entry12;
-                            }
-                        }
-                    }
-                }
-
-                // The coupling Second <- First is realized in the FV way.
+                // The coupling is realized in the FV way.
                 // The unknown First normal velocity is evaluated in the center of the subcontrolvolume face.
                 const FieldVector<double,dim-1>& faceLocalDimM1 = ReferenceElements<double,dim-1>::general(geomTypeBoundary).position(0,0);
                 FieldVector<double,dim> normal = firstIsIt->unitOuterNormal(faceLocalDimM1);
-                for(int comp = 0; comp < dim; ++comp) // loop over the velocity components
+
+                for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; ++nodeInFace) // loop over interface nodes
                 {
-                    for (int i = 0; i < velShapeFuncSet.size(); ++i) // loop over the scalar velocity basis functions
+                    int bfIdx = firstFVGeom.boundaryFaceIndex(faceIdx, nodeInFace);
+                    FieldVector<double,dim> firstQLocal = firstFVGeom.boundaryFace[bfIdx].ipLocal;
+                    FieldVector<double,dim> qGlobal = firstFVGeom.boundaryFace[bfIdx].ipGlobal;
+
+                    int firstIndex = firstIds[nodeInFace];
+                    int secondIndex = secondIds[nodeInFace];
+                    
+                    FieldVector<double, firstNumEq> firstSol = (this->firstModel_.sol())[firstIndex];
+                    FieldVector<double, secondNumEq> secondSol = (this->secondModel_.sol())[secondIndex];
+
+                    // calculate the entries of A_12
+                    for (int j = 0; j < secondNumEq; j++)
                     {
-                        int ii = comp*velShapeFuncSet.size() + i;
-                        for (int j = 0; j < numVerticesOfFace; ++j) // loop over interface nodes
-                        {
-                            int bfIdx = fvGeom.boundaryFaceIndex(faceIdx, j);
-                            FieldVector<double,dim> qLocal = fvGeom.boundaryFace[bfIdx].ipLocal;
-                            double velShapeValue = velShapeFuncSet[i].evaluateFunction(0,qLocal);
-                            double entry21 = (velShapeValue*normal[comp])*fvGeom.boundaryFace[bfIdx].area;
-                            int jInMatrix = secondIds[j];
-                            (A_21[jInMatrix][firstId])[0][ii] += entry21;
-                        }
+                        double eps = std::max(fabs(1e-5*secondSol[j]), 1e-5);
+
+                        secondSol[j] += eps; 
+                        FieldVector<double, firstNumEq> c12PlusEps(0);
+                        localCoupling12(firstSol, secondSol, firstIndex, secondIndex, qGlobal, c12PlusEps);
+
+                        secondSol[j] -= 2.0*eps; 
+                        FieldVector<double, firstNumEq> c12MinusEps(0);
+                        localCoupling12(firstSol, secondSol, firstIndex, secondIndex, qGlobal, c12MinusEps);
+
+                        for (int i = 0; i < firstNumEq; i++)
+                            A_12[firstIndex][secondIndex][i][j] = 0.5/eps*(c12PlusEps[i] - c12MinusEps[i]);
+
+                        secondSol[j] += eps;
+                    }
+
+                    // calculate the entries of A_21
+                    for (int j = 0; j < firstNumEq; j++)
+                    {
+                        double eps = std::max(fabs(1e-5*firstSol[j]), 1e-5);
+
+                        firstSol[j] += eps; 
+                        FieldVector<double, secondNumEq> c21PlusEps(0);
+                        localCoupling21(firstSol, secondSol, firstIndex, secondIndex, qGlobal, c21PlusEps);
+
+                        firstSol[j] -= 2.0*eps; 
+                        FieldVector<double, secondNumEq> c21MinusEps(0);
+                        localCoupling21(firstSol, secondSol, firstIndex, secondIndex, qGlobal, c21MinusEps);
+
+                        for (int i = 0; i < secondNumEq; i++)
+                            A_21[secondIndex][firstIndex][i][j] = 0.5/eps*(c21PlusEps[i] - c21MinusEps[i]);
+
+                        firstSol[j] += eps;
                     }
                 }
             }
@@ -337,10 +356,10 @@ public:
 
         int rowsInBlock1 = BaseType::FirstMatrixType::block_type::rows;
         int nOfBlockRows1 = (this->firstModel_).matrix().N();
-        SecondIterator dummyIT2((this->secondGrid_).template leafbegin<0>());
+        SecondIterator dummyIT2((this->secondGrid()).template leafbegin<0>());
         SecondIntersectionIterator dummyIS2(IntersectionIteratorGetter<SecondGrid,LeafTag>::begin(*dummyIT2));
-        SecondVIterator endItV2 = (this->secondGrid_).template leafend<dim>();
-        for (SecondVIterator it = (this->secondGrid_).template leafbegin<dim>(); it != endItV2; ++it)
+        SecondVIterator endItV2 = (this->secondGrid()).template leafend<dim>();
+        for (SecondVIterator it = (this->secondGrid()).template leafbegin<dim>(); it != endItV2; ++it)
         {
             FieldVector<double,dim> globalCoord = (*it).geometry().corner(0);
             BoundaryConditions::Flags bctype = (this->secondModel_).problem.bctype(globalCoord, *dummyIT2, dummyIS2, globalCoord);
@@ -360,9 +379,9 @@ public:
         for (int i = 0; i < this->firstModel_.sol().size(); i++)
             for (typename BaseType::FirstMatrixType::block_type::size_type k = 0; k < colsInBlock1; k++)
                 this->firstModel_.sol()[i][k] = this->u[i*colsInBlock1 + k];
-        for (int i = 0; i < this->secondModel_.sol().size(); i++)
-            for (typename BaseType::SecondMatrixType::block_type::size_type k = 0; k < colsInBlock2; k++)
-                this->secondModel_.sol()[i][k] = this->u[colsInBlock1*this->firstModel_.sol().size() + i*colsInBlock2 + k];
+                for (int i = 0; i < this->secondModel_.sol().size(); i++)
+                    for (typename BaseType::SecondMatrixType::block_type::size_type k = 0; k < colsInBlock2; k++)
+                        this->secondModel_.sol()[i][k] = this->u[colsInBlock1*this->firstModel_.sol().size() + i*colsInBlock2 + k];
     }
 
     virtual void vtkout (const char* name, int k)
@@ -377,16 +396,12 @@ public:
     CoupledBox(const FirstGrid& firstGrid, FirstModel& firstModel,
             const SecondGrid& secondGrid, SecondModel& secondModel,
             bool assembleGlobalSystem)
-    : BaseType(firstGrid, firstModel, secondGrid, secondModel, assembleGlobalSystem),
-    firstGrid_(this->firstGrid_), secondGrid_(this->secondGrid_),
-    firstElementMapper_(firstGrid_, firstGrid_.leafIndexSet()), firstVertexMapper_(firstGrid_, firstGrid_.leafIndexSet()),
-    secondVertexMapper_(secondGrid_, secondGrid_.leafIndexSet())
-    {}
+            : BaseType(firstGrid, firstModel, secondGrid, secondModel, assembleGlobalSystem),
+            firstVertexMapper_(firstGrid, firstGrid.leafIndexSet()),
+            secondVertexMapper_(secondGrid, secondGrid.leafIndexSet())
+            {}
 
 private:
-    const FirstGrid& firstGrid_;
-    const SecondGrid& secondGrid_;
-    FirstElementMapper firstElementMapper_;
     FirstVertexMapper firstVertexMapper_;
     SecondVertexMapper secondVertexMapper_;
 };

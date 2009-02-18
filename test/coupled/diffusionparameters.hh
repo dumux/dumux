@@ -36,7 +36,7 @@ public:
             const IntersectionIterator& intersectionIt,
                        const Dune::FieldVector<DT,n>& xi) const
   {
-    if (x[0] > 2 - 1e-6)
+    if (x[1] > 2 - 1e-6)
       return Dune::BoundaryConditions::dirichlet;
 
     return Dune::BoundaryConditions::neumann;
@@ -78,7 +78,7 @@ public:
             const IntersectionIterator& intersectionIt,
                 const Dune::FieldVector<DT,n>& xi) const
   {
-      if (x[0] < 1 + 1e-6)
+      if (x[1] < 1 + 1e-6)
           return 0;
       else
       {

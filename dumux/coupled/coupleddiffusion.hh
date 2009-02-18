@@ -182,19 +182,19 @@ public:
         for (int i = 0; i < (this->firstModel_).sol().size(); i++)
             for (typename MatrixType::block_type::size_type k = 0; k < colsInBlock1; k++)
                 (this->firstModel_).sol()[i][k] = this->u[i*colsInBlock1 + k];
-        for (int i = 0; i < (this->secondModel_).sol().size(); i++)
-            for (typename MatrixType::block_type::size_type k = 0; k < colsInBlock2; k++)
-                (this->secondModel_).sol()[i][k] = this->u[colsInBlock1*(this->firstModel_).sol().size() + i*colsInBlock2 + k];
+                for (int i = 0; i < (this->secondModel_).sol().size(); i++)
+                    for (typename MatrixType::block_type::size_type k = 0; k < colsInBlock2; k++)
+                        (this->secondModel_).sol()[i][k] = this->u[colsInBlock1*(this->firstModel_).sol().size() + i*colsInBlock2 + k];
     }
 
 
     CoupledDiffusion(const Grid& firstGrid, DiffusionModel& firstModel,
             const Grid& secondGrid, DiffusionModel& secondModel,
             bool assembleGlobalSystem, bool stationary)
-    : BaseType(firstGrid, firstModel, secondGrid, secondModel, assembleGlobalSystem),
-    firstVM(firstGrid, firstGrid.leafIndexSet()), secondVM(secondGrid, secondGrid.leafIndexSet()),
-    stationary_(stationary)
-    {}
+            : BaseType(firstGrid, firstModel, secondGrid, secondModel, assembleGlobalSystem),
+            firstVM(firstGrid, firstGrid.leafIndexSet()), secondVM(secondGrid, secondGrid.leafIndexSet()),
+            stationary_(stationary)
+            {}
 
 protected:
     VM firstVM;
