@@ -23,47 +23,47 @@ class MultiComp
 
     public:
         /*! \brief solubility of a component (water) in the non-wetting phase
-         *  \param pn non-wetting phase pressure \f$ \left[ Pa \right] \f$
-         *  \param T temperature
+         *  \param pressureN non-wetting phase pressure \f$ \left[ Pa \right] \f$
+         *  \param temperature temperature
          *  \return the mass fraction of water in the non-wetting phase \f$ \left[ kg/kg \right] \f$
          */
-        virtual double xWN (const double pn, double T=283.15) = 0;
+        virtual double xWN (const double pressureN, double temperature=283.15) = 0;
 
         /*! \brief solubility of a component (air) in the wetting phase
-         *  \param pn non-wetting phase pressure \f$ \left[ Pa \right] \f$
-         *  \param T temperature [K]
+         *  \param pressureN non-wetting phase pressure \f$ \left[ Pa \right] \f$
+         *  \param temperature temperature [K]
          *  \return mass fraction of gas in the wetting phase \f$ \left[ kg/kg \right] \f$
          */
-        virtual double xAW (const double pn, double T=283.15) = 0;
+        virtual double xAW (const double pressureN, double temperature=283.15) = 0;
 
         /*! \brief solubility of a component (air) in the wetting phase
-         *  \param pn non-wetting phase pressure \f$ \left[ Pa \right] \f$
-         *  \param T temperature [K]
+         *  \param pressureN non-wetting phase pressure \f$ \left[ Pa \right] \f$
+         *  \param temperature temperature [K]
          *  \param X_NaCl mass fraction of salt dissolved in the wetting phase
          *  \return mass fraction of gas in the wetting phase \f$ \left[ kg/kg \right] \f$
          */
 
-        virtual double xWNmolar (const double pn, double T=283.15) = 0;
+        virtual double xWNmolar (const double pressureN, double temperature=283.15) = 0;
 
         /*! \brief solubility of a component (air) in the wetting phase
-         *  \param pn non-wetting phase pressure \f$ \left[ Pa \right] \f$
-         *  \param T temperature [K]
+         *  \param pressureN non-wetting phase pressure \f$ \left[ Pa \right] \f$
+         *  \param temperature temperature [K]
          *  \return the mass fraction of water in the non-wetting phase \f$ \left[ mol/mol \right] \f$
          */
-        virtual double xAWmolar (const double pn, double T=283.15) = 0;
+        virtual double xAWmolar (const double pressureN, double temperature=283.15) = 0;
 
         /** @brief Henry coefficient
-         * \param pn non-wetting phase pressure \f$ \left[ Pa \right] \f$
-         * @param T Temperature \f$ \left[ K \right] \f$
+         * \param pressureN non-wetting phase pressure \f$ \left[ Pa \right] \f$
+         * @param temperature Temperature \f$ \left[ K \right] \f$
          * @return Henry coefficient \f$ \left[ 1/Pa \right] \f$
          */
-        virtual double henry (double T=283.15) const = 0;
+        virtual double henry (double temperature=283.15) const = 0;
 
         /*! \brief Antoine equation for calculating the vapor pressure
-         *  \param T temperature [K]
+         *  \param temperature temperature [K]
          *  \return vapor pressure [Pa]
          */
-        virtual double vaporPressure (double T=283.15) const = 0;
+        virtual double vaporPressure (double temperature=283.15) const = 0;
 
         /*! \brief converts mole fractions into mass fractions
          *  \param massfrac mole fraction [mol/mol]
@@ -95,17 +95,17 @@ class CWaterAir : public MultiComp
 {
     public:
         /*! \brief equation for calculating the mass fraction in the nonwetting phase
-         *    \param pn non-wetting phase pressure \f$ \left[ Pa \right] \f$
-         *  \param T temperature \f$ \left[ K \right] \f$
+         *    \param pressureN non-wetting phase pressure \f$ \left[ Pa \right] \f$
+         *  \param temperature temperature \f$ \left[ K \right] \f$
          *  \return mass fraction \f$ \left[ kg/kg \right] \f$
          */
-        double xWN (const double pn, const double T=283.15)
+        double xWN (const double pressureN, const double temperature=283.15)
         {
-            double pwsat;
+            double pWSat;
             double result;
 
-            pwsat = vaporPressure(T);
-            result = pwsat / pn; //xWNmolar
+            pWSat = vaporPressure(temperature);
+            result = pWSat / pressureN; //xWNmolar
 
             result = convertMoleToMassFraction(result, 1);
 
@@ -114,18 +114,18 @@ class CWaterAir : public MultiComp
 
 
         /*! \brief equation for calculating the mass fraction in the wetting phase
-         *    \param pn non-wetting phase pressure \f$ \left[ Pa \right] \f$
-         *  \param T temperature \f$ \left[ K \right] \f$
+         *    \param pressureN non-wetting phase pressure \f$ \left[ Pa \right] \f$
+         *  \param temperature temperature \f$ \left[ K \right] \f$
          *  \return mass fraction \f$ \left[ kg/kg \right] \f$
          */
-        double xAW (const double pn, const double T=283.15)
+        double xAW (const double pressureN, const double temperature=283.15)
         {
             double pan;
             double result;
             double hagw;
 
-            pan = pn * (1-xWNmolar(pn,T));
-            hagw = henry(T);
+            pan = pressureN * (1-xWNmolar(pressureN,temperature));
+            hagw = henry(temperature);
             result = pan * hagw; //xAWmolar
 
             result = convertMoleToMassFraction(result, 0);
@@ -133,56 +133,56 @@ class CWaterAir : public MultiComp
         }
 
         /*! \brief equation for calculating the mole fraction in the nonwetting phase
-         *    \param pn non-wetting phase pressure \f$ \left[ Pa \right] \f$
-         *  \param T temperature \f$ \left[ K \right] \f$
+         *    \param pressureN non-wetting phase pressure \f$ \left[ Pa \right] \f$
+         *  \param temperature temperature \f$ \left[ K \right] \f$
          *  \return mole fraction \f$ \left[ mol/mol \right] \f$
          */
-        double xWNmolar (const double pn, const double T=283.15)
+        double xWNmolar (const double pressureN, const double temperature=283.15)
         {
-            double pwsat;
+            double pWSat;
             double result;
 
-            pwsat = vaporPressure(T);
-            result = pwsat / pn;
+            pWSat = vaporPressure(temperature);
+            result = pWSat / pressureN;
 
             return(result);
         }
 
         /*! \brief equation for calculating the mole fraction in the wetting phase
-         *    \param pn non-wetting phase pressure \f$ \left[ Pa \right] \f$
-         *  \param T temperature \f$ \left[ K \right] \f$
+         *    \param pressureN non-wetting phase pressure \f$ \left[ Pa \right] \f$
+         *  \param temperature temperature \f$ \left[ K \right] \f$
          *  \return mole fraction \f$ \left[ mol/mol \right] \f$
          */
-        double xAWmolar (const double pn, const double T=283.15)
+        double xAWmolar (const double pressureN, const double temperature=283.15)
         {
             double pan;
             double result;
             double hagw;
 
-            pan = pn * (1-xWNmolar(pn,T));
-            hagw = henry(T);
+            pan = pressureN * (1-xWNmolar(pressureN,temperature));
+            hagw = henry(temperature);
             result = pan * hagw;
 
             return(result);
         }
 
         /*! \brief equation for calculating the inverse Henry coefficient
-         *  \param T temperature \f$ \left[ K \right] \f$
+         *  \param temperature temperature \f$ \left[ K \right] \f$
          *  \return Henry Coefficient \f$ \left[ 1/Pa \right] \f$
          */
-        double henry(double T=283.15) const
+        double henry(double temperature=283.15) const
         {
-            double celsius = T - 273.15;
+            double celsius = temperature - 273.15;
             double result = ((0.8942 + 1.47 * exp(-0.04394*celsius) )*1e-10);
 
             return (result); // [1/Pa]
         }
 
         /** @brief calculates vapor pressure
-         *  @param T temperature \f$ \left[ K \right] \f$
+         *  @param temperature temperature \f$ \left[ K \right] \f$
          *  @return vapor pressure \f$ \left[ Pa \right] \f$
          */
-        double vaporPressure(double T=283.15) const
+        double vaporPressure(double temperature=283.15) const
         {
             const double constA = 8.19621;
             const double constB = 1730.63;
@@ -191,7 +191,7 @@ class CWaterAir : public MultiComp
             double celsius;
             double exponent, psat;
 
-            celsius = T - 273.15;
+            celsius = temperature - 273.15;
 
             exponent = constA - (constB / (celsius + constC));
 
@@ -266,11 +266,11 @@ class CBrineCO2 : public MultiComp
 
         public:
             /*! \brief equation for calculating the mass fraction in the nonwetting phase
-             *    \param pn non-wetting phase pressure \f$ \left[ Pa \right] \f$
-             *  \param T temperature \f$ \left[ K \right] \f$
+             *    \param pressureN non-wetting phase pressure \f$ \left[ Pa \right] \f$
+             *  \param temperature temperature \f$ \left[ K \right] \f$
              *  \return mass fraction \f$ \left[ kg/kg \right] \f$
              */
-            double xWN (const double pn, const double T=283.15)
+            double xWN (const double pressureN, const double temperature=283.15)
             {
                 double result=0.001;
 
@@ -279,52 +279,52 @@ class CBrineCO2 : public MultiComp
 
 
             /*! \brief equation for calculating the mass fraction in the wetting phase
-             *    \param pn non-wetting phase pressure \f$ \left[ Pa \right] \f$
-             *  \param T temperature \f$ \left[ K \right] \f$
+             *    \param pressureN non-wetting phase pressure \f$ \left[ Pa \right] \f$
+             *  \param temperature temperature \f$ \left[ K \right] \f$
              *  \return mass fraction \f$ \left[ kg/kg \right] \f$
              */
-            double xAW (const double pn, const double T=283.15)
+            double xAW (const double pressureN, const double temperature=283.15)
             {
                 double result;
                 double X_NaCl = 0.1;
 
-                result = solco2.SolCO2inWater(T, pn, X_NaCl);
+                result = solco2.SolCO2inWater(temperature, pressureN, X_NaCl);
                 return result;
             }
             /*! \brief solubility of a component (air) in the wetting phase
-             *    \param pn non-wetting phase pressure \f$ \left[ Pa \right] \f$
-             *  \param T temperature [K]
+             *    \param pressureN non-wetting phase pressure \f$ \left[ Pa \right] \f$
+             *  \param temperature temperature [K]
              *  \param X_NaCl mass fraction of salt dissolved in the wetting phase
              *  \return mass fraction of gas in the wetting phase \f$ \left[ kg/kg \right] \f$
              */
 
-             double xWNmolar (const double pn, double T=283.15)
+             double xWNmolar (const double pressureN, double temperature=283.15)
             {
                 return 0;
             }
             /*! \brief solubility of a component (air) in the wetting phase
-             *    \param pn non-wetting phase pressure \f$ \left[ Pa \right] \f$
-             *  \param T temperature [K]
+             *    \param pressureN non-wetting phase pressure \f$ \left[ Pa \right] \f$
+             *  \param temperature temperature [K]
              *  \return the mass fraction of water in the non-wetting phase \f$ \left[ mol/mol \right] \f$
              */
-             double xAWmolar (const double pn, double T=283.15)
+             double xAWmolar (const double pressureN, double temperature=283.15)
             {
                 return 0;
             }
             /** @brief Henry coefficient
-             * \param pn non-wetting phase pressure \f$ \left[ Pa \right] \f$
-             * @param T Temperature \f$ \left[ K \right] \f$
+             * \param pressureN non-wetting phase pressure \f$ \left[ Pa \right] \f$
+             * @param temperature Temperature \f$ \left[ K \right] \f$
              * @return Henry coefficient \f$ \left[ 1/Pa \right] \f$
              */
-             double henry (double T=283.15) const
+             double henry (double temperature=283.15) const
             {
                 return 0;
             }
             /*! \brief Antoine equation for calculating the vapor pressure
-             *  \param T temperature [K]
+             *  \param temperature temperature [K]
              *  \return vapor pressure [Pa]
              */
-             double vaporPressure (double T=283.15) const
+             double vaporPressure (double temperature=283.15) const
             {
                 return 0;
             }
