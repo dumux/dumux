@@ -99,7 +99,7 @@ public:
             bool procBoundaryAsDirichlet_=true)
     : BoxJacobian<ThisType,Grid,Scalar,numEq,BoxFunction>(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_),
     problem(params),
-    sNDat(this->vertexMapper.size()), vNDat(SIZE), oldVNDat(SIZE), switched(false), switchBreak(false), switchedGlobal(false), primVarSet(false)
+    sNDat(this->vertexMapper.size()), vNDat(SIZE), oldVNDat(SIZE), switched(false), switchBreak(false), switchedGlobal(false)
     {
         this->analytic = false;
     }
@@ -528,6 +528,8 @@ public:
         for (int globalIdx = 0; globalIdx < this->vertexMapper.size(); globalIdx++)
         {
             sNDat[globalIdx].visited = false;
+            if(problem.sequentialCoupling() == true)
+            sNDat[globalIdx].primVarSet = false;
         }
         return;
     }
@@ -571,6 +573,75 @@ public:
         //         // ASSUMING element-wise constant porosity
         //          elData.porosity = problem.porosity(this->fvGeom.cellGlobal, element, this->fvGeom.cellLocal);
         return;
+    }
+
+    // if this model is sequentially coupled to a 2pni model the saturation
+    // values calculated by the 2pni model need to be corrected to prevent mass errors
+    // saturation in 2p2cni model needs to be reduced due to the amount
+    // of co2 dissolved in brine
+    void correctSaturation(const Element& element, int size, VBlockType *sol)
+    {
+        // get access to shape functions for P1 elements
+        GeometryType gt = element.geometry().type();
+        const typename LagrangeShapeFunctionSetContainer<CoordScalar,Scalar,dim>::value_type&
+        sfs=LagrangeShapeFunctions<CoordScalar,Scalar,dim>::general(gt,1);
+        Scalar result, corrTolerance;
+        Scalar xCorrNew(1.), xCorrOld(0.);
+        Scalar satCorrNew(1.), satCorrOld(0.);
+        Scalar twoPNIDens, twoPNISatN;
+        corrTolerance = 1.e-9;
+        for (int idx = 0; idx < size; idx ++)
+        {
+            const int globalIdx = this->vertexMapper.template map<dim>(element, sfs[idx].entity());
+
+            if(sNDat[globalIdx].visited != true && sNDat[globalIdx].phaseState == bothPhases)
+            {
+                twoPNIDens = vNDat[idx].density[nPhase]; // density like in 2pni model
+                twoPNISatN = vNDat[idx].satN; // saturation like in 2pni model
+
+                while(std::fabs(satCorrNew - satCorrOld)> corrTolerance && satCorrNew> 0.)//for(int i=0; i<5; i++)  // iteration loop for correct saturation value to take
+                // capillary pressure effects into account
+
+                {
+                    satCorrOld = satCorrNew;
+                    satCorrNew = (twoPNIDens * twoPNISatN
+                            - vNDat[idx].density[wPhase] * vNDat[idx].massfrac[nComp][wPhase])/
+                    (vNDat[idx].density[nPhase] * vNDat[idx].massfrac[nComp][nPhase]
+                            - vNDat[idx].density[wPhase] * vNDat[idx].massfrac[nComp][wPhase]);
+
+                    // correction of densities and massfractions due to pressure changes
+                    vNDat[idx].satW = 1.0 - satCorrNew;
+                    vNDat[idx].pC = problem.materialLaw().pC(vNDat[idx].satW, this->fvGeom.subContVol[idx].global, element, this->fvGeom.subContVol[idx].local);
+                    vNDat[idx].pN = vNDat[idx].pW + vNDat[idx].pC;
+                    vNDat[idx].massfrac[nComp][wPhase] = problem.multicomp().xAW(vNDat[idx].pN, vNDat[idx].temperature);
+                    vNDat[idx].massfrac[wComp][nPhase] = problem.multicomp().xWN(vNDat[idx].pN, vNDat[idx].temperature);
+                    vNDat[idx].massfrac[wComp][wPhase] = 1.0 - vNDat[idx].massfrac[nComp][wPhase];
+                    vNDat[idx].massfrac[nComp][nPhase] = 1.0 - vNDat[idx].massfrac[wComp][nPhase];
+                    vNDat[idx].density[wPhase] = problem.wettingPhase().density(vNDat[idx].temperature, vNDat[idx].pW, vNDat[idx].massfrac[nComp][wPhase]);
+                    vNDat[idx].density[nPhase] = problem.nonwettingPhase().density(vNDat[idx].temperature, vNDat[idx].pN);
+                }
+                result = satCorrNew;
+
+                // if the resulting saturation becomes < 0 all co2 of the nPhase can
+                // be dissolved in the brine. The new mass fraction is calculated here
+                if(satCorrNew <= 0.0)
+                {
+                    sNDat[globalIdx].phaseState = waterPhase;
+                    sNDat[globalIdx].oldPhaseState = waterPhase;
+
+                    while(std::fabs(xCorrNew - xCorrOld)> corrTolerance)
+                    {
+                        xCorrOld = xCorrNew;
+                        xCorrNew = (twoPNIDens * twoPNISatN)/vNDat[idx].density[wPhase];
+                        vNDat[idx].density[wPhase] = problem.wettingPhase().density(vNDat[idx].temperature, vNDat[idx].pW, xCorrNew);
+                    }
+                    result = xCorrNew;
+                }
+                sol[idx][switchIdx] = result;
+            }
+        }
+        // fill global solution vector with corrected local values
+        BoxJacobian<ThisType,Grid,Scalar,numEq,BoxFunction>::localToGlobal(element, sol);
     }
 
     //*********************************************************
@@ -801,7 +872,7 @@ public:
     std::vector<StaticIPData> sIPDat;
     std::vector<VariableNodeData> vNDat;
     std::vector<VariableNodeData> oldVNDat;
-    bool switched, switchBreak, switchedGlobal, primVarSet;
+    bool switched, switchBreak, switchedGlobal;
 
     // for output files
     BlockVector<FieldVector<Scalar, 1> > *outPressureN;
