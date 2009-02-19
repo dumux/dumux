@@ -68,6 +68,8 @@ namespace Dune
   public:
       enum{numEq = dim+1};
 
+      typedef Grid GridType; 
+      
       // define the function type:
       typedef LeafP1Function<Grid, Scalar, numEq> FunctionType;
 
