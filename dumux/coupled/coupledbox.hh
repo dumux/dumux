@@ -61,19 +61,19 @@ public:
     typedef typename HostGrid::template Codim<dim>::EntityPointer HostVPointer;
 
     template <class FirstFV, class SecondFV>
-    void localCoupling12(FirstFV& firstSol, SecondFV& secondSol, int firstIndex, int secondIndex, 
-                            FieldVector<double, dim> qGlobal, FirstFV& result)
+    void localCoupling12(FirstFV& firstSol, SecondFV& secondSol, int firstIndex, int secondIndex,
+            FieldVector<double, dim> qGlobal, FirstFV& result)
     {
-        this->getImp().template localCoupling12<FirstFV,SecondFV>(firstSol, secondSol, 
-                                        firstIndex, secondIndex, qGlobal, result);
+        this->getImp().template localCoupling12<FirstFV,SecondFV>(firstSol, secondSol,
+                firstIndex, secondIndex, qGlobal, result);
     }
 
     template <class FirstFV, class SecondFV>
-    void localCoupling21(FirstFV& firstSol, SecondFV& secondSol, int firstIndex, int secondIndex, 
-                            FieldVector<double, dim> qGlobal, SecondFV& result)
+    void localCoupling21(FirstFV& firstSol, SecondFV& secondSol, int firstIndex, int secondIndex,
+            FieldVector<double, dim> qGlobal, SecondFV& result)
     {
-        this->getImp().template localCoupling21<FirstFV,SecondFV>(firstSol, secondSol, 
-                                        firstIndex, secondIndex, qGlobal, result);
+        this->getImp().template localCoupling21<FirstFV,SecondFV>(firstSol, secondSol,
+                firstIndex, secondIndex, qGlobal, result);
     }
 
     template <class A12Type, class A21Type>
@@ -293,7 +293,7 @@ public:
 
                     int firstIndex = firstIds[nodeInFace];
                     int secondIndex = secondIds[nodeInFace];
-                    
+
                     FieldVector<double, firstNumEq> firstSol = (this->firstModel_.sol())[firstIndex];
                     FieldVector<double, secondNumEq> secondSol = (this->secondModel_.sol())[secondIndex];
 
@@ -302,11 +302,11 @@ public:
                     {
                         double eps = std::max(fabs(1e-5*secondSol[j]), 1e-5);
 
-                        secondSol[j] += eps; 
+                        secondSol[j] += eps;
                         FieldVector<double, firstNumEq> c12PlusEps(0);
                         localCoupling12(firstSol, secondSol, firstIndex, secondIndex, qGlobal, c12PlusEps);
 
-                        secondSol[j] -= 2.0*eps; 
+                        secondSol[j] -= 2.0*eps;
                         FieldVector<double, firstNumEq> c12MinusEps(0);
                         localCoupling12(firstSol, secondSol, firstIndex, secondIndex, qGlobal, c12MinusEps);
 
@@ -321,11 +321,11 @@ public:
                     {
                         double eps = std::max(fabs(1e-5*firstSol[j]), 1e-5);
 
-                        firstSol[j] += eps; 
+                        firstSol[j] += eps;
                         FieldVector<double, secondNumEq> c21PlusEps(0);
                         localCoupling21(firstSol, secondSol, firstIndex, secondIndex, qGlobal, c21PlusEps);
 
-                        firstSol[j] -= 2.0*eps; 
+                        firstSol[j] -= 2.0*eps;
                         FieldVector<double, secondNumEq> c21MinusEps(0);
                         localCoupling21(firstSol, secondSol, firstIndex, secondIndex, qGlobal, c21MinusEps);
 
@@ -354,34 +354,34 @@ public:
         InverseOperatorResult r;
         solver.apply(this->u, this->f, r);
 
-        int rowsInBlock1 = BaseType::FirstMatrixType::block_type::rows;
-        int nOfBlockRows1 = (this->firstModel_).matrix().N();
-        SecondIterator dummyIT2((this->secondGrid()).template leafbegin<0>());
-        SecondIntersectionIterator dummyIS2(IntersectionIteratorGetter<SecondGrid,LeafTag>::begin(*dummyIT2));
-        SecondVIterator endItV2 = (this->secondGrid()).template leafend<dim>();
-        for (SecondVIterator it = (this->secondGrid()).template leafbegin<dim>(); it != endItV2; ++it)
-        {
-            FieldVector<double,dim> globalCoord = (*it).geometry().corner(0);
-            BoundaryConditions::Flags bctype = (this->secondModel_).problem.bctype(globalCoord, *dummyIT2, dummyIS2, globalCoord);
-            int secondId = secondVertexMapper_.map(*it);
-            this->u[rowsInBlock1*nOfBlockRows1 + secondId] = -this->u[rowsInBlock1*nOfBlockRows1 + secondId];
-
-            if (bctype == BoundaryConditions::dirichlet)
-            {
-                double dirichletBC = (this->secondModel_).problem.g(globalCoord, *dummyIT2, dummyIS2, globalCoord);
-                this->u[rowsInBlock1*nOfBlockRows1 + secondId] += dirichletBC;
-            }
-        }
+        //        int rowsInBlock1 = BaseType::FirstMatrixType::block_type::rows;
+        //        int nOfBlockRows1 = (this->firstModel_).matrix().N();
+        //        SecondIterator dummyIT2((this->secondGrid()).template leafbegin<0>());
+        //        SecondIntersectionIterator dummyIS2(IntersectionIteratorGetter<SecondGrid,LeafTag>::begin(*dummyIT2));
+        //        SecondVIterator endItV2 = (this->secondGrid()).template leafend<dim>();
+        //        for (SecondVIterator it = (this->secondGrid()).template leafbegin<dim>(); it != endItV2; ++it)
+        //        {
+        //            FieldVector<double,dim> globalCoord = (*it).geometry().corner(0);
+        //            BoundaryConditions::Flags bctype = (this->secondModel_).problem.bctype(globalCoord, *dummyIT2, dummyIS2, globalCoord);
+        //            int secondId = secondVertexMapper_.map(*it);
+        //            this->u[rowsInBlock1*nOfBlockRows1 + secondId] = -this->u[rowsInBlock1*nOfBlockRows1 + secondId];
+        //
+        //            if (bctype == BoundaryConditions::dirichlet)
+        //            {
+        //                double dirichletBC = (this->secondModel_).problem.g(globalCoord, *dummyIT2, dummyIS2, globalCoord);
+        //                this->u[rowsInBlock1*nOfBlockRows1 + secondId] += dirichletBC;
+        //            }
+        //        }
 
         // transfer to local solution vectors
         const typename BaseType::FirstMatrixType::block_type::size_type colsInBlock1 = BaseType::FirstMatrixType::block_type::cols;
         const typename BaseType::SecondMatrixType::block_type::size_type colsInBlock2 = BaseType::SecondMatrixType::block_type::cols;
-        for (int i = 0; i < this->firstModel_.sol().size(); i++)
+        for (unsigned int i = 0; i < this->firstModel_.sol().size(); i++)
             for (typename BaseType::FirstMatrixType::block_type::size_type k = 0; k < colsInBlock1; k++)
-                this->firstModel_.sol()[i][k] = this->u[i*colsInBlock1 + k];
-                for (int i = 0; i < this->secondModel_.sol().size(); i++)
-                    for (typename BaseType::SecondMatrixType::block_type::size_type k = 0; k < colsInBlock2; k++)
-                        this->secondModel_.sol()[i][k] = this->u[colsInBlock1*this->firstModel_.sol().size() + i*colsInBlock2 + k];
+                this->firstModel_.sol()[i][k] -= this->u[i*colsInBlock1 + k];
+        for (unsigned int i = 0; i < this->secondModel_.sol().size(); i++)
+            for (typename BaseType::SecondMatrixType::block_type::size_type k = 0; k < colsInBlock2; k++)
+                this->secondModel_.sol()[i][k] -= this->u[colsInBlock1*this->firstModel_.sol().size() + i*colsInBlock2 + k];
     }
 
     virtual void vtkout (const char* name, int k)
@@ -396,10 +396,10 @@ public:
     CoupledBox(const FirstGrid& firstGrid, FirstModel& firstModel,
             const SecondGrid& secondGrid, SecondModel& secondModel,
             bool assembleGlobalSystem)
-            : BaseType(firstGrid, firstModel, secondGrid, secondModel, assembleGlobalSystem),
-            firstVertexMapper_(firstGrid, firstGrid.leafIndexSet()),
-            secondVertexMapper_(secondGrid, secondGrid.leafIndexSet())
-            {}
+    : BaseType(firstGrid, firstModel, secondGrid, secondModel, assembleGlobalSystem),
+    firstVertexMapper_(firstGrid, firstGrid.leafIndexSet()),
+    secondVertexMapper_(secondGrid, secondGrid.leafIndexSet())
+    {}
 
 private:
     FirstVertexMapper firstVertexMapper_;

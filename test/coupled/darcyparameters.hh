@@ -15,7 +15,7 @@ public:
 	for (int i=0; i<dim; i++)
 	  for (int j=0; j<dim; j++)
 		if (i==j)
-		  permeability_[i][j] = 1.0e-2;//5.88e-5;
+		  permeability_[i][j] = 1.0;//5.88e-5;
 		else
 			permeability_[i][j] = 0;
   }
@@ -36,7 +36,7 @@ public:
 			const IntersectionIterator& intersectionIt,
 					   const Dune::FieldVector<Scalar,dim>& localPos) const
   {
- 	if (globalPos[0] > 4 - 1e-6)
+// 	if (globalPos[0] > 2 - 1e-6)
 	  return Dune::BoundaryConditions::dirichlet;
 
 	return Dune::BoundaryConditions::neumann;
@@ -61,16 +61,15 @@ public:
 			const IntersectionIterator& intersectionIt,
 				const Dune::FieldVector<Scalar,dim>& localPos) const
   {
-	return 0;
+	return (exact(globalPos));
   }
 
   Dune::FieldVector<Scalar,dim> exactGrad(const Dune::FieldVector<Scalar,dim>& globalPos) const
   {
-	  Dune::FieldVector<Scalar,dim> grad;
+	  Dune::FieldVector<Scalar,dim> grad(0);
 
 	  grad[0] = globalPos[1];
 	  grad[1] = globalPos[0];
-	  grad[2] = 0.0;
 
 	  return grad;
   }

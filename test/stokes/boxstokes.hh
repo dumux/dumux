@@ -68,8 +68,8 @@ namespace Dune
   public:
       enum{numEq = dim+1};
 
-      typedef Grid GridType; 
-      
+      typedef Grid GridType;
+
       // define the function type:
       typedef LeafP1Function<Grid, Scalar, numEq> FunctionType;
 
@@ -106,8 +106,14 @@ namespace Dune
 
       LeafP1BoxStokes (const Grid& grid, StokesProblem<Grid, Scalar>& prob)
       : BoxStokes(grid, prob), grid_(grid), vertexmapper(grid, grid.leafIndexSet()),
-        size((*(this->u)).size()), pressure(size), xVelocity(size), yVelocity(size), count(0)
+        size((*(this->u)).size()), pressure(size), xVelocity(size), yVelocity(size),
+        uOldNewtonStep(size)
       { }
+
+      VectorType& solOldNewtonStep()
+      {
+          return uOldNewtonStep;
+      }
 
       virtual void initial()
       {
@@ -213,6 +219,28 @@ namespace Dune
       }
 
 
+      virtual void assemble()
+      {
+          MatrixType& A = *(this->A);
+          *(this->f) = 0;
+          this->localJacobian().clearVisited();
+          this->A.assemble(this->localJacobian(), this->u, this->f);
+
+          //modify matrix for introducing pressure boundary condition
+          const GV& gridview(this->grid_.leafView());
+          typedef typename GV::template Codim<0>::Iterator Iterator;
+
+          Iterator it = gridview.template begin<0>();
+          unsigned int globalId = vertexmapper.template map<dim>(*it, 3);
+
+          for (typename MatrixType::RowIterator i=A.begin(); i!=A.end(); ++i)
+              if(i.index()==globalId)
+                  for (typename MatrixType::ColIterator j=(*i).begin(); j!=(*i).end(); ++j)
+                         A[i.index()][j.index()][dim] = 0.0;
+          A[globalId][globalId][dim][dim] = 1.0;
+          (*(this->f))[globalId][dim] = 0.0;
+      }
+
     virtual void update(double& dt)
     {
         this->localJacobian().setDt(dt);
@@ -227,27 +255,7 @@ namespace Dune
 
     virtual void solve()
     {
-    	count++;
     	MatrixType& A = *(this->A);
-        //modify matrix for introducing pressure boundary condition
-        const GV& gridview(this->grid_.leafView());
-        typedef typename GV::template Codim<0>::Iterator Iterator;
-
-        Iterator it = gridview.template begin<0>();
-//        unsigned int globalId = 8;//vertexmapper.template map<dim>(*it, 3);
-        unsigned int globalId = vertexmapper.template map<dim>(*it, 3);
-
-        //std::cout << "globalId = " << globalId << std::endl;
-    	for (typename MatrixType::RowIterator i=A.begin(); i!=A.end(); ++i)
-            if(i.index()==globalId)
-            	for (typename MatrixType::ColIterator j=(*i).begin(); j!=(*i).end(); ++j)
-                       A[i.index()][j.index()][dim] = 0.0;
-        (*(this->A))[globalId][globalId][dim][dim] = 1.0;
-        (*(this->f))[globalId][dim] = 0.0;
-
-//        printmatrix(std::cout, *(this->A), "global stiffness matrix", "row", 11, 4);
-//         printvector(std::cout, *(this->f), "right hand side", "row", 3, 1, 3);
-
         Operator op(A);  // make operator out of matrix
         double red=1E-18;
 
@@ -342,7 +350,7 @@ protected:
   BlockVector<FieldVector<Scalar, 1> > pressure;
   BlockVector<FieldVector<Scalar, 1> > xVelocity;
   BlockVector<FieldVector<Scalar, 1> > yVelocity;
-  int count;
+  VectorType uOldNewtonStep;
 };
 
 }

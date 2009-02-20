@@ -163,18 +163,20 @@ void calculateDarcyVelocity(const Grid& grid, const Problem& problem, PressureFu
         typedef typename ThisType::FunctionType::RepresentationType VectorType;
         typedef typename ThisType::OperatorAssembler::RepresentationType MatrixType;
         typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator;
-//#ifdef HAVE_PARDISO
-//  SeqPardiso<MatrixType,VectorType,VectorType> pardiso;
-//#endif
 
       LeafP1BoxDiffusion (const G& g, DarcyParameters<G, RT>& prob)
       : BoxDiffusion(g, prob), grid_(g), vertexmapper(g, g.leafIndexSet()),
-        size((*(this->u)).size())
+        size((*(this->u)).size()), uOldNewtonStep(size)
       { }
 
       MatrixType& matrix()
       {
           return *(this->A);
+      }
+
+      VectorType& solOldNewtonStep()
+      {
+          return uOldNewtonStep;
       }
 
       virtual void initial()
@@ -226,9 +228,6 @@ void calculateDarcyVelocity(const Grid& grid, const Problem& problem, PressureFu
               this->localJacobian().fvGeom.update(entity);
               this->localJacobian().template assembleBC<LeafTag>(entity);
 
-//               for (int i = 0; i < size; i++)
-//                 std::cout << "bc[" << i << "] = " << (this->localJacobian().bc(i))[0] << std::endl;
-
               IntersectionIterator endit = IntersectionIteratorGetter<G,LeafTag>::end(entity);
               for (IntersectionIterator is = IntersectionIteratorGetter<G,LeafTag>::begin(entity);
                    is!=endit; ++is)
@@ -250,7 +249,6 @@ void calculateDarcyVelocity(const Grid& grid, const Problem& problem, PressureFu
                                 int globalId = vertexmapper.template map<dim>(entity, sfs[i].entity());
 
                                 FieldVector<BoundaryConditions::Flags, m> bctype = this->problem.bctype(global, entity, is, local);
-//                              std::cout << "global = " << global << ", id = " << globalId << std::endl;
                                 if (bctype[0] == BoundaryConditions::dirichlet) {
                                     (*(this->u))[globalId] = this->problem.g(global, entity, is, local);
                                 }
@@ -284,13 +282,13 @@ void calculateDarcyVelocity(const Grid& grid, const Problem& problem, PressureFu
         Operator op(*(this->A));  // make operator out of matrix
         double red=1E-14;
 
-//#ifdef HAVE_PARDISO
-//      pardiso.factorize(*(this->A));
-//      LoopSolver<VectorType> solver(op, pardiso, red, 10, 2);
-//#else
+#ifdef HAVE_PARDISO
+        SeqPardiso<MatrixType,VectorType,VectorType> pardiso(*(this->A));
+        LoopSolver<VectorType> solver(op, pardiso, red, 10, 2);
+#else
         SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A),1.0);// a precondtioner
         BiCGSTABSolver<VectorType> solver(op,ilu0,red,10000,1);         // an inverse operator
-//#endif
+#endif
         InverseOperatorResult r;
         solver.apply(*(this->u), *(this->f), r);
 
@@ -372,6 +370,7 @@ protected:
   const G& grid_;
   VertexMapper vertexmapper;
   int size;
+  VectorType uOldNewtonStep;
 };
 
 }
