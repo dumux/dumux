@@ -173,9 +173,9 @@ int main(int argc, char** argv)
         timeloop.execute(coupledModel);
         std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
 
-        //    printvector(std::cout, coupledModel.sol(), "global solution", "row", 200, 1, 3);
-        //    printvector(std::cout, boxStokes.sol(), "local Stokes solution", "row", 200, 1, 3);
-        //    printvector(std::cout, darcyModel.sol(), "local Darcy solution", "row", 200, 1, 3);
+//        printvector(std::cout, coupledModel.sol(), "global solution", "row", 200, 1, 3);
+//        printvector(std::cout, boxStokes.sol(), "local Stokes solution", "row", 200, 1, 3);
+//        printvector(std::cout, darcyModel.sol(), "local Darcy solution", "row", 200, 1, 3);
 
         std::cout << "Darcy discrete error = " << discreteDarcyError(subGridDarcy, darcyModel.sol(), darcyParam) << std::endl;
         discreteStokesError(subGridStokes, stokesProblem, boxStokes.u);

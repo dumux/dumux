@@ -83,13 +83,9 @@ public:
 			gradP += grad;
 		}
 
-		//TODO: implement correct viscosity, called from material law
-		double viscosity(0.01);
 		FieldVector<Scalar,dim> KGradP(0);
 		elData.K.umv(gradP, KGradP);
-
 		SolutionVector flux = KGradP*this->fvGeom.subContVolFace[face].normal;
-		flux /= viscosity;
 
 		return flux;
 	}

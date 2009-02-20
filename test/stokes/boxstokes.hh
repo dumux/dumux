@@ -144,17 +144,6 @@ namespace Dune
 
               	// initialize cell concentration
                 (*(this->u))[globalId] = 0;
-
-/*                // get cell center in reference element
-                Dune::FieldVector<Scalar,dim> local = sfs[i].position();
-
-                // get global coordinate of cell center
-                Dune::FieldVector<Scalar,dimworld> global = it->geometry().global(local);
-
-                FieldVector<Scalar,dim> dirichlet = this->problem.g(global, entity, is, local);
-            	for (int eq = 0; eq < dim; eq++)
-            		(*(this->u))[globalId][eq] = dirichlet[eq];*/
-
               }
           }
 
@@ -174,9 +163,6 @@ namespace Dune
               // set type of boundary conditions
               this->localJacobian().fvGeom.update(entity);
               this->localJacobian().template assembleBC<LeafTag>(entity);
-
-//               for (int i = 0; i < size; i++)
-//                 std::cout << "bc[" << i << "] = " << this->localJacobian().bc(i) << std::endl;
 
               IntersectionIterator endit = IntersectionIteratorGetter<Grid,LeafTag>::end(entity);
               for (IntersectionIterator is = IntersectionIteratorGetter<Grid,LeafTag>::begin(entity);
@@ -199,7 +185,6 @@ namespace Dune
                                 int globalId = vertexmapper.template map<dim>(entity, sfs[i].entity());
 
                                 BoundaryConditions::Flags bctype = this->problem.bctype(global, entity, is, local);
-//                                 std::cout << "global = " << global << ", id = " << globalId << std::endl;
                                 if (bctype == BoundaryConditions::dirichlet) {
                                 	FieldVector<Scalar,dim> dirichlet = this->problem.g(global, entity, is, local);
                                 	for (int eq = 0; eq < dim; eq++)
@@ -214,7 +199,6 @@ namespace Dune
           }
 
           *(this->uOldTimeStep) = *(this->u);
-          //printvector(std::cout, *(this->u), "initial solution", "row", 200, 1, 3);
           return;
       }
 
@@ -260,8 +244,7 @@ namespace Dune
         double red=1E-18;
 
 #ifdef HAVE_PARDISO
-        //pardiso.factorize(A);
-	SeqPardiso<MatrixType,VectorType,VectorType> pardiso(A);
+        SeqPardiso<MatrixType,VectorType,VectorType> pardiso(A);
         LoopSolver<VectorType> solver(op, pardiso, red, 10, 2);
 #else
         SeqILU0<MatrixType,VectorType,VectorType> ilu0(A,1.0);// a precondtioner

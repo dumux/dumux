@@ -23,17 +23,22 @@ public:
     enum {dim = StokesGrid::dimension};
 
     template <class FirstFV, class SecondFV>
-    void localCoupling12(FirstFV& firstSol, SecondFV& secondSol, int firstIndex, int secondIndex,
-                            FieldVector<double, dim> qGlobal, FirstFV& result)
+    void localCoupling12(FirstFV& stokesSol, SecondFV& darcySol, int stokesIndex, int darcyIndex,
+                            FieldVector<double, dim> qGlobal, FieldVector<double, dim> normal, FirstFV& result)
     {
         return;
     }
 
     template <class FirstFV, class SecondFV>
-    void localCoupling21(FirstFV& firstSol, SecondFV& secondSol, int firstIndex, int secondIndex,
-                            FieldVector<double, dim> qGlobal, SecondFV& result)
+    void localCoupling21(FirstFV& stokesSol, SecondFV& darcySol, int stokesIndex, int darcyIndex,
+            FieldVector<double, dim> qGlobal, FieldVector<double, dim> normal, SecondFV& result)
     {
-        return;
+        FieldVector<double, dim> stokesVel(0);
+        for (int i = 0; i < dim; i++)
+            stokesVel[i] = stokesSol[i];
+
+        //std::cout << "q = " << qGlobal << ", stokesVel = " << stokesVel << ", normal = " << normal<< std::endl;
+        result = (stokesVel*normal);
     }
 
 //    template <class A12Type, class A21Type>

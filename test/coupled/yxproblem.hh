@@ -16,7 +16,30 @@ class YXProblem : public StokesProblem<G, RT>
   typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
 
 public:
-  virtual FieldVector<RT,numEq> q(const FieldVector<DT,dim>& x, const Entity& e,
+    virtual FieldVector<RT,dim> velocity(const FieldVector<DT,dim>& x) const
+    {
+      FieldVector<RT,dim> result(0);
+      result[0] = -x[1];
+      result[1] = -x[0];
+
+      return result;
+    }
+
+    virtual RT pressure(const FieldVector<DT,dim>& x) const
+    {
+      return (x[0]*x[1]);
+    }
+
+    virtual FieldMatrix<DT, dim, dim> velocityGradient(const FieldVector<DT,dim>& x) const
+    {
+      FieldMatrix<DT, dim, dim> result(0);
+      result[0][1] = -1.0;
+      result[1][0] = -1.0;
+
+      return result;
+    }
+
+    virtual FieldVector<RT,numEq> q(const FieldVector<DT,dim>& x, const Entity& e,
                 const FieldVector<DT,dim>& xi) const
   {
     FieldVector<RT,numEq> result(0);
@@ -30,10 +53,10 @@ public:
                         const IntersectionIterator& intersectionIt,
                         const FieldVector<DT,dim>& xi) const
   {
-//     if (x[0] > 1 - 1e-6)
-//       return BoundaryConditions::process;
+//     if (x[0] < 1e-6)
+       return BoundaryConditions::dirichlet;
 
-    return BoundaryConditions::dirichlet;
+    return BoundaryConditions::neumann;
   }
 
   virtual FieldVector<RT,dim> g(const FieldVector<DT,dim>& x, const Entity& e,
@@ -48,35 +71,27 @@ public:
                 const FieldVector<DT,dim>& xi)
   {
       FieldVector<RT,dim> result(0);
+
+      // ASSUMING face-wise constant normal
+      FieldVector<RT, dim-1> localDimM1(0);
+      FieldVector<RT,dim> normal = intersectionIt->unitOuterNormal(localDimM1);
+
+      FieldVector<RT,dim> pN = normal;
+      pN *= pressure(x);
+
+      FieldVector<RT,dim> muGradVN(0);
+      velocityGradient(x).umv(normal, muGradVN);
+      muGradVN *= mu(x, e, xi);
+
+      result = muGradVN;
+      result -= pN;
+
       return result;
   }
 
   virtual RT mu(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi) const
   {
     return 1.0;
-  }
-
-  virtual FieldVector<RT,dim> velocity(const FieldVector<DT,dim>& x) const
-  {
-    FieldVector<RT,dim> result(0);
-    result[0] = -x[1];
-    result[1] = -x[0];
-
-    return result;
-  }
-
-  virtual RT pressure(const FieldVector<DT,dim>& x) const
-  {
-    return (x[0]*x[1]);
-  }
-
-  virtual FieldMatrix<DT, dim, dim> velocityGradient(const FieldVector<DT,dim>& x) const
-  {
-    FieldMatrix<DT, dim, dim> result(0);
-    result[0][1] = -1.0;
-    result[1][0] = -1.0;
-
-    return result;
   }
 
   YXProblem()

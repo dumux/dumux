@@ -292,6 +292,9 @@ namespace Dune
 
                     int bfIdx = this->fvGeom.boundaryFaceIndex(faceIdx,    nodeInFace);
 
+                    FieldVector<typename BoundaryConditions::Flags, numEq> bctypeface(BoundaryConditions::process);
+                    bctypeface = this->getImp().problem.bctype(this->fvGeom.boundaryFace[bfIdx].ipGlobal, element, it, this->fvGeom.boundaryFace[bfIdx].ipLocal);
+
                     // get geometry type of face
                     GeometryType faceGT = it->intersectionSelfLocal().type();
 
@@ -322,20 +325,16 @@ namespace Dune
                  	massResidual += dimSource;
                 	result[dim] -= massResidual*it->unitOuterNormal(faceLocal)*this->fvGeom.boundaryFace[bfIdx].area;
 
-                	for (int comp = 0; comp < dim; comp++)
-                	{
-                        FieldVector<Scalar,dim>  velocityGradient(0);
-                        for (int vert = 0; vert < this->fvGeom.numVertices; vert++) {
-                            FieldVector<Scalar,dim> grad(this->fvGeom.boundaryFace[bfIdx].grad[vert]);
-                            grad *= sol[vert][comp];
-                            velocityGradient += grad;
+//                    if (bctypeface[0] == BoundaryConditions::dirichlet)
+//                    {
+                        for (int comp = 0; comp < dim; comp++)
+                        {
+                            FieldVector<Scalar,dim>  pressVector(0);
+                            pressVector[comp] = -pressureValue;
+
+                            result[comp] += pressVector*it->outerNormal(faceLocal)*this->fvGeom.boundaryFace[bfIdx].area;
                         }
-
-                        FieldVector<Scalar,dim>  pressVector(0);
-                        pressVector[comp] = -pressureValue;
-
-                    	result[comp] += pressVector*it->outerNormal(faceLocal)*this->fvGeom.boundaryFace[bfIdx].area;
-                	}
+//                    }
                 }
             }
         }

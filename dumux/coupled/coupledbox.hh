@@ -62,18 +62,56 @@ public:
 
     template <class FirstFV, class SecondFV>
     void localCoupling12(FirstFV& firstSol, SecondFV& secondSol, int firstIndex, int secondIndex,
-            FieldVector<double, dim> qGlobal, FirstFV& result)
+            FieldVector<double, dim> qGlobal, FieldVector<double, dim> normal, FirstFV& result)
     {
         this->getImp().template localCoupling12<FirstFV,SecondFV>(firstSol, secondSol,
-                firstIndex, secondIndex, qGlobal, result);
+                firstIndex, secondIndex, qGlobal, normal, result);
     }
 
     template <class FirstFV, class SecondFV>
     void localCoupling21(FirstFV& firstSol, SecondFV& secondSol, int firstIndex, int secondIndex,
-            FieldVector<double, dim> qGlobal, SecondFV& result)
+            FieldVector<double, dim> qGlobal, FieldVector<double, dim> normal, SecondFV& result)
     {
         this->getImp().template localCoupling21<FirstFV,SecondFV>(firstSol, secondSol,
-                firstIndex, secondIndex, qGlobal, result);
+                firstIndex, secondIndex, qGlobal, normal, result);
+    }
+
+    template <class FirstFVVec, class FirstFV>
+    void calculateFirstSolAtQ(const FirstFVVec& firstSol, int subCVF, FirstFV& firstSolAtQ)
+    {
+        if (subCVF == 0)
+        {
+            firstSolAtQ = firstSol[0];
+            firstSolAtQ *= 3.0;
+            firstSolAtQ += firstSol[1];
+            firstSolAtQ *= 0.25;
+        }
+        else
+        {
+            firstSolAtQ = firstSol[1];
+            firstSolAtQ *= 3.0;
+            firstSolAtQ += firstSol[0];
+            firstSolAtQ *= 0.25;
+        }
+    }
+
+    template <class SecondFVVec, class SecondFV>
+    void calculateSecondSolAtQ(const SecondFVVec& secondSol, int subCVF, SecondFV& secondSolAtQ)
+    {
+        if (subCVF == 0)
+        {
+            secondSolAtQ = secondSol[1];
+            secondSolAtQ *= 3.0;
+            secondSolAtQ += secondSol[0];
+            secondSolAtQ *= 0.25;
+        }
+        else
+        {
+            secondSolAtQ = secondSol[0];
+            secondSolAtQ *= 3.0;
+            secondSolAtQ += secondSol[1];
+            secondSolAtQ *= 0.25;
+        }
     }
 
     template <class A12Type, class A21Type>
@@ -285,54 +323,70 @@ public:
                 const FieldVector<double,dim-1>& faceLocalDimM1 = ReferenceElements<double,dim-1>::general(geomTypeBoundary).position(0,0);
                 FieldVector<double,dim> normal = firstIsIt->unitOuterNormal(faceLocalDimM1);
 
+                std::vector<FieldVector<double, firstNumEq> > firstSol(numVerticesOfFace);
+                std::vector<FieldVector<double, secondNumEq> > secondSol(numVerticesOfFace);
                 for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; ++nodeInFace) // loop over interface nodes
                 {
-                    int bfIdx = firstFVGeom.boundaryFaceIndex(faceIdx, nodeInFace);
+                    firstSol[nodeInFace] = this->firstModel().sol()[firstIds[nodeInFace]];
+                    secondSol[nodeInFace] = this->secondModel().sol()[secondIds[nodeInFace]];
+                }
+
+                for (int subCVF = 0; subCVF < numVerticesOfFace; ++subCVF) // loop over interface nodes
+                {
+                    int bfIdx = firstFVGeom.boundaryFaceIndex(faceIdx, subCVF);
                     FieldVector<double,dim> firstQLocal = firstFVGeom.boundaryFace[bfIdx].ipLocal;
                     FieldVector<double,dim> qGlobal = firstFVGeom.boundaryFace[bfIdx].ipGlobal;
-
-                    int firstIndex = firstIds[nodeInFace];
-                    int secondIndex = secondIds[nodeInFace];
-
-                    FieldVector<double, firstNumEq> firstSol = (this->firstModel_.sol())[firstIndex];
-                    FieldVector<double, secondNumEq> secondSol = (this->secondModel_.sol())[secondIndex];
+                    FieldVector<double,dim> normal = firstFVGeom.boundaryFace[bfIdx].normal;
 
                     // calculate the entries of A_12
-                    for (int j = 0; j < secondNumEq; j++)
-                    {
-                        double eps = std::max(fabs(1e-5*secondSol[j]), 1e-5);
-
-                        secondSol[j] += eps;
-                        FieldVector<double, firstNumEq> c12PlusEps(0);
-                        localCoupling12(firstSol, secondSol, firstIndex, secondIndex, qGlobal, c12PlusEps);
-
-                        secondSol[j] -= 2.0*eps;
-                        FieldVector<double, firstNumEq> c12MinusEps(0);
-                        localCoupling12(firstSol, secondSol, firstIndex, secondIndex, qGlobal, c12MinusEps);
-
-                        for (int i = 0; i < firstNumEq; i++)
-                            A_12[firstIndex][secondIndex][i][j] = 0.5/eps*(c12PlusEps[i] - c12MinusEps[i]);
-
-                        secondSol[j] += eps;
-                    }
+//                    for (int j = 0; j < secondNumEq; j++)
+//                    {
+//                        double eps = std::max(fabs(1e-5*secondSol[j]), 1e-5);
+//
+//                        secondSol[j] += eps;
+//                        FieldVector<double, firstNumEq> c12PlusEps(0);
+//                        localCoupling12(firstSol, secondSol, firstIndex, secondIndex, qGlobal, normal, c12PlusEps);
+//
+//                        secondSol[j] -= 2.0*eps;
+//                        FieldVector<double, firstNumEq> c12MinusEps(0);
+//                        localCoupling12(firstSol, secondSol, firstIndex, secondIndex, qGlobal, normal, c12MinusEps);
+//
+//                        for (int i = 0; i < firstNumEq; i++)
+//                            A_12[firstIndex][secondIndex][i][j] = 0.5/eps*(c12PlusEps[i] - c12MinusEps[i]);
+//
+//                        secondSol[j] += eps;
+//                    }
 
                     // calculate the entries of A_21
-                    for (int j = 0; j < firstNumEq; j++)
+                    int secondIndex = secondIds[subCVF];
+                    FieldVector<double, firstNumEq>  firstSolAtQ(0);
+                    FieldVector<double, secondNumEq>  secondSolAtQ(0);
+                    calculateSecondSolAtQ(secondSol, subCVF, secondSolAtQ);
+                    for (int firstNode = 0; firstNode < numVerticesOfFace; ++firstNode)
                     {
-                        double eps = std::max(fabs(1e-5*firstSol[j]), 1e-5);
+                        int firstIndex = firstIds[firstNode];
 
-                        firstSol[j] += eps;
-                        FieldVector<double, secondNumEq> c21PlusEps(0);
-                        localCoupling21(firstSol, secondSol, firstIndex, secondIndex, qGlobal, c21PlusEps);
+                        for (int j = 0; j < firstNumEq; j++)
+                        {
+                            double eps = std::max(fabs(1e-5*firstSol[firstNode][j]), 1e-5);
 
-                        firstSol[j] -= 2.0*eps;
-                        FieldVector<double, secondNumEq> c21MinusEps(0);
-                        localCoupling21(firstSol, secondSol, firstIndex, secondIndex, qGlobal, c21MinusEps);
+                            firstSol[firstNode][j] += eps;
+                            calculateFirstSolAtQ(firstSol, subCVF, firstSolAtQ);
 
-                        for (int i = 0; i < secondNumEq; i++)
-                            A_21[secondIndex][firstIndex][i][j] = 0.5/eps*(c21PlusEps[i] - c21MinusEps[i]);
+                            FieldVector<double, secondNumEq> c21PlusEps(0);
+                            localCoupling21(firstSolAtQ, secondSolAtQ, firstIndex, secondIndex, qGlobal, normal, c21PlusEps);
 
-                        firstSol[j] += eps;
+                            firstSol[firstNode][j] -= 2.0*eps;
+                            calculateFirstSolAtQ(firstSol, subCVF, firstSolAtQ);
+
+                            FieldVector<double, secondNumEq> c21MinusEps(0);
+                            localCoupling21(firstSolAtQ, secondSolAtQ, firstIndex, secondIndex, qGlobal, normal, c21MinusEps);
+
+                            for (int i = 0; i < secondNumEq; i++)
+                                A_21[secondIndex][firstIndex][i][j] = 0.5/eps*(c21PlusEps[i] - c21MinusEps[i]);
+
+                            firstSol[firstNode][j] += eps;
+                        }
                     }
                 }
             }
@@ -349,29 +403,8 @@ public:
         double red=1E-14;
         SeqPardiso<GlobalMatrixType,GlobalVectorType,GlobalVectorType> pardiso(this->A);
         LoopSolver<GlobalVectorType> solver(op,pardiso,red,10000,1);
-        //      SeqILU0<GlobalMatrixType,GlobalVectorType,GlobalVectorType> ilu(this->A, 0.9);
-        //      BiCGSTABSolver<GlobalVectorType> solver(op,ilu,red,10000,1);
         InverseOperatorResult r;
         solver.apply(this->u, this->f, r);
-
-        //        int rowsInBlock1 = BaseType::FirstMatrixType::block_type::rows;
-        //        int nOfBlockRows1 = (this->firstModel_).matrix().N();
-        //        SecondIterator dummyIT2((this->secondGrid()).template leafbegin<0>());
-        //        SecondIntersectionIterator dummyIS2(IntersectionIteratorGetter<SecondGrid,LeafTag>::begin(*dummyIT2));
-        //        SecondVIterator endItV2 = (this->secondGrid()).template leafend<dim>();
-        //        for (SecondVIterator it = (this->secondGrid()).template leafbegin<dim>(); it != endItV2; ++it)
-        //        {
-        //            FieldVector<double,dim> globalCoord = (*it).geometry().corner(0);
-        //            BoundaryConditions::Flags bctype = (this->secondModel_).problem.bctype(globalCoord, *dummyIT2, dummyIS2, globalCoord);
-        //            int secondId = secondVertexMapper_.map(*it);
-        //            this->u[rowsInBlock1*nOfBlockRows1 + secondId] = -this->u[rowsInBlock1*nOfBlockRows1 + secondId];
-        //
-        //            if (bctype == BoundaryConditions::dirichlet)
-        //            {
-        //                double dirichletBC = (this->secondModel_).problem.g(globalCoord, *dummyIT2, dummyIS2, globalCoord);
-        //                this->u[rowsInBlock1*nOfBlockRows1 + secondId] += dirichletBC;
-        //            }
-        //        }
 
         // transfer to local solution vectors
         const typename BaseType::FirstMatrixType::block_type::size_type colsInBlock1 = BaseType::FirstMatrixType::block_type::cols;
