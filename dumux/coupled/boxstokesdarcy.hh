@@ -23,21 +23,21 @@ public:
     enum {dim = StokesGrid::dimension};
 
     template <class FirstFV, class SecondFV>
-    void localDefect12(FirstFV& stokesSol, SecondFV& darcySol, int stokesIndex, int darcyIndex,
+    void localCoupling12(FirstFV& stokesSol, SecondFV& darcySol, int stokesIndex, int darcyIndex,
                             FieldVector<double, dim> globalPos, FieldVector<double, dim> normal, FirstFV& result)
     {
         result = 0;
 
-//        for (int comp = 0; comp < dim; comp++)
-//            result[comp] = normal[comp];
-//
-//        result *= darcySol;
+        for (int comp = 0; comp < dim; comp++)
+            result[comp] = normal[comp];
+
+        result *= darcySol;
 
         return;
     }
 
     template <class FirstFV, class SecondFV>
-    void localDefect21(FirstFV& stokesSol, SecondFV& darcySol, int stokesIndex, int darcyIndex,
+    void localCoupling21(FirstFV& stokesSol, SecondFV& darcySol, int stokesIndex, int darcyIndex,
             FieldVector<double, dim> globalPos, FieldVector<double, dim> normal, SecondFV& result)
     {
         result = 0;
@@ -48,6 +48,36 @@ public:
 
         //std::cout << "q = " << qGlobal << ", stokesVel = " << stokesVel << ", normal = " << normal<< std::endl;
         result = (stokesVel*normal);
+
+        return;
+    }
+
+    template <class FV, class FVGrad, class ElementT>
+    void localBoundaryDefect1(FV& stokesSol, FVGrad& stokesSolGrad, int stokesIndex,
+            FieldVector<double, dim> globalPos, const ElementT& element,  FieldVector<double, dim> localPos,
+            FieldVector<double, dim> normal, FV& result)
+    {
+        // extract velocity gradient
+        FieldMatrix<Scalar, dim, dim> gradV;
+        for (int i = 0; i < dim; i++)
+            for (int j = 0; j < dim; j++)
+                gradV[i][j] = stokesSolGrad[i][j];
+
+        //std::cout << "gradV = " << gradV << std::endl;
+        // calculate mu . grad v
+        gradV *= this->firstModel().problem.mu(globalPos, element, localPos);
+
+        // (mu . grad v) . n
+        FieldVector<Scalar, dim> gradVN(0);
+        gradV.umv(normal, gradVN);
+
+        // the normal component ((mu . grad v) . n) . n
+        Scalar gradVNN = gradVN*normal;
+
+        for (int i = 0; i < dim; i++)
+            result[i] = normal[i];
+
+        result *= -(stokesSol[dim] - gradVNN);
 
         return;
     }

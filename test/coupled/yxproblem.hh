@@ -77,20 +77,20 @@ public:
       FieldVector<Scalar,dim> result(0);
 
       // ASSUMING face-wise constant normal
-      FieldVector<Scalar, dim-1> localDimM1(0);
-      FieldVector<Scalar,dim> normal = intersectionIt->unitOuterNormal(localDimM1);
-
-      FieldVector<Scalar,dim> pN = normal;
-      pN *= pressure(globalPos);
-
-      FieldVector<Scalar,dim> muGradVN(0);
-      velocityGradient(globalPos).umv(normal, muGradVN);
-      muGradVN *= mu(globalPos, element, localPos);
-      Scalar muGradVNN = muGradVN*normal;
-
-      result = normal;
-      result *= muGradVNN;
-      result -= pN;
+//      FieldVector<Scalar, dim-1> localDimM1(0);
+//      FieldVector<Scalar,dim> normal = intersectionIt->unitOuterNormal(localDimM1);
+//
+//      FieldVector<Scalar,dim> pN = normal;
+//      pN *= pressure(globalPos);
+//
+//      FieldVector<Scalar,dim> muGradVN(0);
+//      velocityGradient(globalPos).umv(normal, muGradVN);
+//      muGradVN *= mu(globalPos, element, localPos);
+//      Scalar muGradVNN = muGradVN*normal;
+//
+//      result = normal;
+//      result *= muGradVNN;
+//      result -= pN;
 
       return result;
   }
