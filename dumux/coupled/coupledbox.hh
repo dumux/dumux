@@ -53,11 +53,13 @@ public:
     typedef typename SecondGV::template Codim<0>::Iterator SecondIterator;
     typedef typename SecondGrid::Traits::template Codim<0>::Entity SecondElement;
     typedef typename SecondGrid::template Codim<0>::EntityPointer SecondElementPointer;
+    typedef typename SecondGrid::template Codim<dim>::EntityPointer SecondVPointer;
     typedef typename SecondGV::template Codim<dim>::Iterator SecondVIterator;
     typedef typename IntersectionIteratorGetter<SecondGrid,LeafTag>::IntersectionIterator SecondIntersectionIterator;
     typedef MultipleCodimMultipleGeomTypeMapper<SecondGrid,SecondIS,NodeLayout> SecondVertexMapper;
 
     typedef typename SecondGrid::HostGridType HostGrid;
+    typedef typename HostGrid::template Codim<0>::Entity HostElement;
     typedef typename HostGrid::template Codim<0>::EntityPointer HostPointer;
     typedef typename HostGrid::template Codim<dim>::EntityPointer HostVPointer;
     typedef typename IntersectionIteratorGetter<HostGrid,LeafTag>::IntersectionIterator HostIntersectionIterator;
@@ -332,16 +334,6 @@ public:
                     firstSol[nodeInFace] = this->firstModel().sol()[firstIds[nodeInFace]];
                     secondSol[nodeInFace] = this->secondModel().sol()[secondIds[nodeInFace]];
                 }
-
-                // obtain the neighboring element
-                const HostPointer& hostFirstIt = (this->firstGrid()).template getHostEntity<0>(*firstIt);
-                HostPointer hostPointerToSecondElement = hostFirstIt;
-                HostIntersectionIterator endHostIsIt = hostFirstIt->ileafend();
-                for (HostIntersectionIterator hostIsIt = hostFirstIt->ileafbegin(); hostIsIt != endHostIsIt; ++hostIsIt)
-                    if (hostIsIt->numberInSelf() == faceIdx)
-                    {
-                        hostPointerToSecondElement = hostIsIt->outside();
-                    }
 
                 for (int subCVF = 0; subCVF < numVerticesOfFace; ++subCVF) // loop over interface nodes
                 {

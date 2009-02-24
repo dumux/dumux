@@ -124,7 +124,7 @@ public:
 
     //! evaluate Beavers-Joseph proportionality constant at given position
     /*! evaluate Beavers-Joseph proportionality constant \f$c = \sqrt(k)/\alpha\f$
-      such that \f$u_\tau = - c (\nabla u\cdot n)_\tau\f$
+      such that \f$u_\tau = - c (\mu \nabla u\cdot n)_\tau\f$
      @param[in]  globalPos    position in global coordinates
      \return     value of the proportionality constant
      */

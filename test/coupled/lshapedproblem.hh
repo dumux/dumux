@@ -48,7 +48,7 @@ public:
 		const FieldVector<Scalar,dim>& localPos) const
   {
       // CHANGE also in the porous medium problem!
-	  double permeability = 1.0e-2;//5.88e-5;
+	  double permeability = 5.0e-3;//5.88e-5;
 	  double alpha = 1.0;
 
 	  //TODO: divide by viscosity - check?

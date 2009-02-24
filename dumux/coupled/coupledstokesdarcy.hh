@@ -84,7 +84,8 @@ public:
                 int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
                 int numVerticesInDarcyGrid = 0;
                 int darcyIds[numVerticesOfFace];
-                for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++) {
+                for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++)
+                {
                     int nodeInElement = referenceElement.subEntity(faceIdx, 1, nodeInFace, dim);
 
                     // get the node pointer on the Stokes grid
@@ -139,7 +140,8 @@ public:
                 int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
                 int numVerticesInDarcyGrid = 0;
                 int darcyIds[numVerticesOfFace];
-                for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++) {
+                for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++)
+                {
                     int nodeInElement = referenceElement.subEntity(faceIdx, 1, nodeInFace, dim);
 
                     // get the node pointer on the Stokes grid
@@ -326,9 +328,9 @@ public:
         for (int i = 0; i < this->firstModel_.sol().size(); i++)
             for (typename BaseType::FirstMatrixType::block_type::size_type k = 0; k < colsInBlock1; k++)
                 this->firstModel_.sol()[i][k] = this->u[i*colsInBlock1 + k];
-                for (int i = 0; i < this->secondModel_.sol().size(); i++)
-                    for (typename BaseType::SecondMatrixType::block_type::size_type k = 0; k < colsInBlock2; k++)
-                        this->secondModel_.sol()[i][k] = this->u[colsInBlock1*this->firstModel_.sol().size() + i*colsInBlock2 + k];
+        for (int i = 0; i < this->secondModel_.sol().size(); i++)
+            for (typename BaseType::SecondMatrixType::block_type::size_type k = 0; k < colsInBlock2; k++)
+                this->secondModel_.sol()[i][k] = this->u[colsInBlock1*this->firstModel_.sol().size() + i*colsInBlock2 + k];
     }
 
     virtual void vtkout (const char* name, int k)
@@ -343,10 +345,10 @@ public:
     CoupledStokesDarcy(const StokesGrid& stokesGrid, StokesModel& stokesModel,
             const DarcyGrid& darcyGrid, DarcyModel& darcyModel,
             bool assembleGlobalSystem)
-            : BaseType(stokesGrid, stokesModel, darcyGrid, darcyModel, assembleGlobalSystem),
-            stokesGrid_(this->firstGrid_), darcyGrid_(this->secondGrid_),
-            stokesEM_(stokesGrid_, stokesGrid_.leafIndexSet()), darcyVM_(darcyGrid_, darcyGrid_.leafIndexSet())
-            {}
+    : BaseType(stokesGrid, stokesModel, darcyGrid, darcyModel, assembleGlobalSystem),
+    stokesGrid_(this->firstGrid_), darcyGrid_(this->secondGrid_),
+    stokesEM_(stokesGrid_, stokesGrid_.leafIndexSet()), darcyVM_(darcyGrid_, darcyGrid_.leafIndexSet())
+    {}
 
 private:
     const StokesGrid& stokesGrid_;

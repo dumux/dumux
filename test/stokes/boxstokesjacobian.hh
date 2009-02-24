@@ -62,7 +62,7 @@ namespace Dune
     : BoxJacobianType(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_),
       problem(params)
     {
-    	alpha = -1;
+    	alpha = -1e-3;
       this->analytic = false;
     }
 
@@ -107,14 +107,14 @@ namespace Dune
 
 							FieldVector<Scalar,dim> local = this->fvGeom.boundaryFace[bfIdx].ipLocal;
 		                    FieldVector<Scalar,dim> global = this->fvGeom.boundaryFace[bfIdx].ipGlobal;
-		                    BoundaryConditions::Flags bctypeface = this->getImp().problem.bctype(global, element, it, local);
+//		                    BoundaryConditions::Flags bctypeface = this->getImp().problem.bctype(global, element, it, local);
 
-		                    if (bctypeface == BoundaryConditions::dirichlet)
-		                    {
+//		                    if (bctypeface == BoundaryConditions::dirichlet)
+//		                    {
 		                        FieldVector<Scalar,dim> normal = it->unitOuterNormal(faceLocal);
 		                        normal *= this->fvGeom.boundaryFace[bfIdx].area;
 		                        averagedNormal += normal;
-		                    }
+//		                    }
 							faces++;
 						}
 					}
@@ -129,7 +129,7 @@ namespace Dune
 
 				if (faces == 2 && this->fvGeom.numVertices == 4)
 					this->def[vert][dim] = sol[0][dim] + sol[3][dim] - sol[1][dim] - sol[2][dim];
-				else  if (this->bctype[vert][0] == BoundaryConditions::dirichlet)
+				else if (this->bctype[vert][0] == BoundaryConditions::dirichlet)
 					this->def[vert][dim] = defect;
 				else // de-stabilize
 				{
@@ -304,15 +304,21 @@ namespace Dune
                     Scalar pressureValue = 0;
                     FieldVector<Scalar,dim>  velocityValue(0);
                     FieldVector<Scalar,dim>  pressGradient(0);
+                    FieldMatrix<Scalar,dim,dim> velocityGradient(0);
                      for (int vert = 0; vert < this->fvGeom.numVertices; vert++) {
                     	pressureValue += sol[vert][dim]*this->fvGeom.boundaryFace[bfIdx].shapeValue[vert];
             			FieldVector<Scalar,dim> grad(this->fvGeom.boundaryFace[bfIdx].grad[vert]);
             			grad *= sol[vert][dim];
             			pressGradient += grad;
 
+            			grad = this->fvGeom.boundaryFace[bfIdx].grad[vert];
+
             			for (int comp = 0; comp < dim; comp++)
                     	{
                     		velocityValue[comp] += sol[vert][comp]*this->fvGeom.boundaryFace[bfIdx].shapeValue[vert];
+                    		FieldVector<Scalar,dim> gradVComp = grad;
+                    		gradVComp *= sol[vert][comp];
+                    		velocityGradient[comp] += gradVComp;
                     	}
                     }
              		FieldVector<Scalar, dim> massResidual = velocityValue;
@@ -325,16 +331,53 @@ namespace Dune
                  	massResidual += dimSource;
                 	result[dim] -= massResidual*it->unitOuterNormal(faceLocal)*this->fvGeom.boundaryFace[bfIdx].area;
 
-//                    if (bctypeface[0] == BoundaryConditions::dirichlet)
-//                    {
+                	if (bctypeface[0] == BoundaryConditions::dirichlet)
+                    {
+                        FieldVector<Scalar,dim>  gradVN(0);
+                        velocityGradient.umv(it->unitOuterNormal(faceLocal), gradVN);
+                        gradVN *= this->fvGeom.boundaryFace[bfIdx].area;
+
                         for (int comp = 0; comp < dim; comp++)
                         {
                             FieldVector<Scalar,dim>  pressVector(0);
                             pressVector[comp] = -pressureValue;
 
-                            result[comp] += pressVector*it->outerNormal(faceLocal)*this->fvGeom.boundaryFace[bfIdx].area;
+                            result[comp] += pressVector*it->unitOuterNormal(faceLocal)*this->fvGeom.boundaryFace[bfIdx].area;
+
+                            if (alpha == 0)
+                                result[comp] += gradVN[comp];
                         }
-//                    }
+                    }
+                    else
+                    {
+                        Scalar beaversJosephC = this->getImp().problem.beaversJosephC(this->fvGeom.boundaryFace[bfIdx].ipGlobal, element, it, this->fvGeom.boundaryFace[bfIdx].ipLocal);
+                        if (fabs(beaversJosephC) > 0) // realize Beavers-Joseph interface condition
+                        {
+                            FieldVector<Scalar,dim> tangentialV = velocityValue;
+//                            for (int comp = 0; comp < dim; comp++)
+//                            {
+//                                tangentialV[comp] = sol[node][comp];
+//                            }
+
+                            // normal n
+                            FieldVector<Scalar,dim> normal = it->unitOuterNormal(faceLocal);
+
+                            // v.n
+                            Scalar normalComp = tangentialV*normal;
+
+                            // (v.n)n
+                            FieldVector<Scalar,dim> normalV = normal;
+                            normalV *= normalComp;
+
+                            // v_tau = v - (v.n)n
+                            tangentialV -= normalV;
+
+                            for (int comp = 0; comp < dim; comp++)
+                            {
+                                result[comp] += 1.0/beaversJosephC*this->fvGeom.boundaryFace[bfIdx].area*tangentialV[comp];
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -391,12 +434,13 @@ namespace Dune
                             FieldVector<Scalar,dim> global = this->fvGeom.boundaryFace[bfIdx].ipGlobal;
                             bctypeface = this->getImp().problem.bctype(global, element, it, local); // eval bctype
                             this->getImp().problem.dirichletIndex(global, element, it, local, dirichletIdx); // eval bctype
-                            //                                                     std::cout << "faceIdx = " << faceIdx << ", nodeInElement = " << nodeInElement
-                            //                                                           << ", bfIdx = " << bfIdx << ", local = " << local << ", global = " << global
-                            //                                                           << ", bctypeface = " << bctypeface << std::endl;
+//                            std::cout << "faceIdx = " << faceIdx << ", nodeInElement = " << nodeInElement
+//                                      << ", bfIdx = " << bfIdx << ", local = " << local << ", global = " << global
+//                                      << ", bctypeface = " << bctypeface << std::endl;
                             if (bctypeface[equationNumber]!=BoundaryConditions::neumann)
                                 break;
                             FieldVector<Scalar,dim> J = this->getImp().problem.J(global, element, it, local);
+//                            std::cout << "J = " << J << std::endl;
                             if (equationNumber < dim) {
                             	J[equationNumber] *= this->fvGeom.boundaryFace[bfIdx].area;
                             	this->b[nodeInElement][equationNumber] += J[equationNumber];
@@ -441,7 +485,6 @@ namespace Dune
                 {
                     //this->dirichletIndex[i][equationNumber] = equationNumber;
 
-                    //std::cout<<"i = "<<i<<std::endl;
                     if (sfs[i].codim()==0)
                         continue; // skip interior dof
                     if (sfs[i].codim()==1) // handle face dofs
@@ -476,6 +519,7 @@ namespace Dune
                         }
                 }
             }
+
         }
 
     }

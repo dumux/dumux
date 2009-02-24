@@ -2,6 +2,7 @@
 #include <iostream>
 #define DUMMY
 #ifdef DUMMY
+#include <dune/grid/yaspgrid.hh>
 #include <dune/grid/common/gridinfo.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
@@ -69,8 +70,8 @@ int main(int argc, char** argv)
     typedef double NumberType;
 
     // geometry
-    //typedef Dune::ALUSimplexGrid<dim,dim> GridType;
-    typedef Dune::SGrid<dim,dim> GridType;
+    typedef Dune::ALUSimplexGrid<dim,dim> GridType;
+//    typedef Dune::SGrid<dim,dim> GridType;
     Dune::GridPtr<GridType> gridPtr( argv[1] );
     GridType& grid = *gridPtr;
 
