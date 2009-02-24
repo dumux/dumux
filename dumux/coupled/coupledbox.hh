@@ -52,6 +52,7 @@ public:
     typedef typename SecondGV::IndexSet SecondIS;
     typedef typename SecondGV::template Codim<0>::Iterator SecondIterator;
     typedef typename SecondGrid::Traits::template Codim<0>::Entity SecondElement;
+    typedef typename SecondGrid::template Codim<0>::EntityPointer SecondElementPointer;
     typedef typename SecondGV::template Codim<dim>::Iterator SecondVIterator;
     typedef typename IntersectionIteratorGetter<SecondGrid,LeafTag>::IntersectionIterator SecondIntersectionIterator;
     typedef MultipleCodimMultipleGeomTypeMapper<SecondGrid,SecondIS,NodeLayout> SecondVertexMapper;
@@ -59,6 +60,7 @@ public:
     typedef typename SecondGrid::HostGridType HostGrid;
     typedef typename HostGrid::template Codim<0>::EntityPointer HostPointer;
     typedef typename HostGrid::template Codim<dim>::EntityPointer HostVPointer;
+    typedef typename IntersectionIteratorGetter<HostGrid,LeafTag>::IntersectionIterator HostIntersectionIterator;
 
     template <class FirstFV, class SecondFV>
     void localCoupling12(FirstFV& firstSol, SecondFV& secondSol, int firstIndex, int secondIndex,
@@ -82,16 +84,16 @@ public:
         if (subCVF == 0)
         {
             firstSolAtQ = firstSol[0];
-            firstSolAtQ *= 3.0;
-            firstSolAtQ += firstSol[1];
-            firstSolAtQ *= 0.25;
+//            firstSolAtQ *= 3.0;
+//            firstSolAtQ += firstSol[1];
+//            firstSolAtQ *= 0.25;
         }
         else
         {
             firstSolAtQ = firstSol[1];
-            firstSolAtQ *= 3.0;
-            firstSolAtQ += firstSol[0];
-            firstSolAtQ *= 0.25;
+//            firstSolAtQ *= 3.0;
+//            firstSolAtQ += firstSol[0];
+//            firstSolAtQ *= 0.25;
         }
     }
 
@@ -101,16 +103,16 @@ public:
         if (subCVF == 0)
         {
             secondSolAtQ = secondSol[1];
-            secondSolAtQ *= 3.0;
-            secondSolAtQ += secondSol[0];
-            secondSolAtQ *= 0.25;
+//            secondSolAtQ *= 3.0;
+//            secondSolAtQ += secondSol[0];
+//            secondSolAtQ *= 0.25;
         }
         else
         {
             secondSolAtQ = secondSol[0];
-            secondSolAtQ *= 3.0;
-            secondSolAtQ += secondSol[1];
-            secondSolAtQ *= 0.25;
+//            secondSolAtQ *= 3.0;
+//            secondSolAtQ += secondSol[1];
+//            secondSolAtQ *= 0.25;
         }
     }
 
@@ -331,6 +333,16 @@ public:
                     secondSol[nodeInFace] = this->secondModel().sol()[secondIds[nodeInFace]];
                 }
 
+                // obtain the neighboring element
+                const HostPointer& hostFirstIt = (this->firstGrid()).template getHostEntity<0>(*firstIt);
+                HostPointer hostPointerToSecondElement = hostFirstIt;
+                HostIntersectionIterator endHostIsIt = hostFirstIt->ileafend();
+                for (HostIntersectionIterator hostIsIt = hostFirstIt->ileafbegin(); hostIsIt != endHostIsIt; ++hostIsIt)
+                    if (hostIsIt->numberInSelf() == faceIdx)
+                    {
+                        hostPointerToSecondElement = hostIsIt->outside();
+                    }
+
                 for (int subCVF = 0; subCVF < numVerticesOfFace; ++subCVF) // loop over interface nodes
                 {
                     int bfIdx = firstFVGeom.boundaryFaceIndex(faceIdx, subCVF);
@@ -338,54 +350,89 @@ public:
                     FieldVector<double,dim> qGlobal = firstFVGeom.boundaryFace[bfIdx].ipGlobal;
                     FieldVector<double,dim> normal = firstFVGeom.boundaryFace[bfIdx].normal;
 
-                    // calculate the entries of A_12
-//                    for (int j = 0; j < secondNumEq; j++)
-//                    {
-//                        double eps = std::max(fabs(1e-5*secondSol[j]), 1e-5);
-//
-//                        secondSol[j] += eps;
-//                        FieldVector<double, firstNumEq> c12PlusEps(0);
-//                        localCoupling12(firstSol, secondSol, firstIndex, secondIndex, qGlobal, normal, c12PlusEps);
-//
-//                        secondSol[j] -= 2.0*eps;
-//                        FieldVector<double, firstNumEq> c12MinusEps(0);
-//                        localCoupling12(firstSol, secondSol, firstIndex, secondIndex, qGlobal, normal, c12MinusEps);
-//
-//                        for (int i = 0; i < firstNumEq; i++)
-//                            A_12[firstIndex][secondIndex][i][j] = 0.5/eps*(c12PlusEps[i] - c12MinusEps[i]);
-//
-//                        secondSol[j] += eps;
-//                    }
+                    int nodeInElement = referenceElement.subEntity(faceIdx, 1, subCVF, dim);
+                    FieldVector<double, dim> nodeGlobal = firstIt->geometry().corner(nodeInElement);
+                    FieldVector<double, dim> nodeLocal = firstIt->geometry().local(nodeGlobal);
 
-                    // calculate the entries of A_21
-                    int secondIndex = secondIds[subCVF];
-                    FieldVector<double, firstNumEq>  firstSolAtQ(0);
-                    FieldVector<double, secondNumEq>  secondSolAtQ(0);
-                    calculateSecondSolAtQ(secondSol, subCVF, secondSolAtQ);
-                    for (int firstNode = 0; firstNode < numVerticesOfFace; ++firstNode)
+                    // WARNING: ASSUMES scalar BoundaryConditions flags for firstModel
+                    typename BoundaryConditions::Flags bctypeNode = this->firstModel().problem.bctype(nodeGlobal, *firstIt, firstIsIt, nodeLocal);
+
+                    // WARNING: ASSUMES that Dirichlet nodes are always on both sides
+                    if (bctypeNode == BoundaryConditions::neumann)
                     {
-                        int firstIndex = firstIds[firstNode];
+                        // add coupling defect to rhs:
+                        int firstIndex = firstIds[subCVF];
+                        int secondIndex = secondIds[subCVF];
+                        FieldVector<double, firstNumEq>  firstSolAtQ(0);
+                        FieldVector<double, secondNumEq>  secondSolAtQ(0);
+//                        calculateFirstSolAtQ(firstSol, subCVF, firstSolAtQ);
+//                        calculateSecondSolAtQ(secondSol, subCVF, secondSolAtQ);
+//                        FieldVector<double, firstNumEq> boundaryDefect1(0);
+//                        localBoundaryDefect1(firstSolAtQ, secondSolAtQ, firstIndex, secondIndex, qGlobal, normal, boundaryDefect1);
+//                        (this->firstModel().rhs())[firstIndex] -= boundaryDefect1;
+//                        FieldVector<double, secondNumEq> boundaryDefect2(0);
+//                        localBoundaryDefect2(firstSolAtQ, secondSolAtQ, firstIndex, secondIndex, qGlobal, normal, boundaryDefect2);
+//                        (this->secondModel().rhs())[secondIndex] -= boundaryDefect2;
 
-                        for (int j = 0; j < firstNumEq; j++)
+                        // calculate the entries of A_12
+                        firstIndex = firstIds[subCVF];
+                        for (int secondNode = 0; secondNode < numVerticesOfFace; ++secondNode)
                         {
-                            double eps = std::max(fabs(1e-5*firstSol[firstNode][j]), 1e-5);
+                            secondIndex = secondIds[secondNode];
 
-                            firstSol[firstNode][j] += eps;
-                            calculateFirstSolAtQ(firstSol, subCVF, firstSolAtQ);
+                            for (int j = 0; j < secondNumEq; j++)
+                            {
+                                double eps = std::max(fabs(1e-5*secondSol[secondNode][j]), 1e-5);
 
-                            FieldVector<double, secondNumEq> c21PlusEps(0);
-                            localCoupling21(firstSolAtQ, secondSolAtQ, firstIndex, secondIndex, qGlobal, normal, c21PlusEps);
+                                secondSol[secondNode][j] += eps;
+                                calculateSecondSolAtQ(secondSol, subCVF, secondSolAtQ);
 
-                            firstSol[firstNode][j] -= 2.0*eps;
-                            calculateFirstSolAtQ(firstSol, subCVF, firstSolAtQ);
+                                FieldVector<double, firstNumEq> coupling12PlusEps(0);
+                                localCoupling12(firstSolAtQ, secondSolAtQ, firstIndex, secondIndex, qGlobal, normal, coupling12PlusEps);
 
-                            FieldVector<double, secondNumEq> c21MinusEps(0);
-                            localCoupling21(firstSolAtQ, secondSolAtQ, firstIndex, secondIndex, qGlobal, normal, c21MinusEps);
+                                secondSol[secondNode][j] -= 2.0*eps;
+                                calculateSecondSolAtQ(secondSol, subCVF, secondSolAtQ);
 
-                            for (int i = 0; i < secondNumEq; i++)
-                                A_21[secondIndex][firstIndex][i][j] = 0.5/eps*(c21PlusEps[i] - c21MinusEps[i]);
+                                FieldVector<double, firstNumEq> coupling12MinusEps(0);
+                                localCoupling12(firstSolAtQ, secondSolAtQ, firstIndex, secondIndex, qGlobal, normal, coupling12MinusEps);
 
-                            firstSol[firstNode][j] += eps;
+                                for (int i = 0; i < firstNumEq; i++)
+                                    A_12[firstIndex][secondIndex][i][j] = 0.5/eps*(coupling12PlusEps[i] - coupling12MinusEps[i]);
+
+                                secondSol[secondNode][j] += eps;
+                            }
+                        }
+
+                        // calculate the entries of A_21
+                        secondIndex = secondIds[subCVF];
+                        firstSolAtQ = 0;
+                        secondSolAtQ = 0;
+                        calculateSecondSolAtQ(secondSol, subCVF, secondSolAtQ);
+                        for (int firstNode = 0; firstNode < numVerticesOfFace; ++firstNode)
+                        {
+                            firstIndex = firstIds[firstNode];
+
+                            for (int j = 0; j < firstNumEq; j++)
+                            {
+                                double eps = std::max(fabs(1e-5*firstSol[firstNode][j]), 1e-5);
+
+                                firstSol[firstNode][j] += eps;
+                                calculateFirstSolAtQ(firstSol, subCVF, firstSolAtQ);
+
+                                FieldVector<double, secondNumEq> coupling21PlusEps(0);
+                                localCoupling21(firstSolAtQ, secondSolAtQ, firstIndex, secondIndex, qGlobal, normal, coupling21PlusEps);
+
+                                firstSol[firstNode][j] -= 2.0*eps;
+                                calculateFirstSolAtQ(firstSol, subCVF, firstSolAtQ);
+
+                                FieldVector<double, secondNumEq> coupling21MinusEps(0);
+                                localCoupling21(firstSolAtQ, secondSolAtQ, firstIndex, secondIndex, qGlobal, normal, coupling21MinusEps);
+
+                                for (int i = 0; i < secondNumEq; i++)
+                                    A_21[secondIndex][firstIndex][i][j] = 0.5/eps*(coupling21PlusEps[i] - coupling21MinusEps[i]);
+
+                                firstSol[firstNode][j] += eps;
+                            }
                         }
                     }
                 }
