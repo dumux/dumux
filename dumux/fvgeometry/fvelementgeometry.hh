@@ -693,6 +693,11 @@ namespace Dune
                             }
                             boundaryFace[bfIdx].ipGlobal = geometry.global(boundaryFace[bfIdx].ipLocal);
 
+                            // ASSUME constant normal
+                            FieldVector<Scalar, dim-1> localDimM1(0);
+                            boundaryFace[bfIdx].normal = it->unitOuterNormal(localDimM1);
+                            boundaryFace[bfIdx].normal *= boundaryFace[bfIdx].area;
+
                             FieldMatrix<Scalar,dim,dim> jacInvT = geometry.jacobianInverseTransposed(boundaryFace[bfIdx].ipLocal);
                             for (int vert = 0; vert < numVertices; vert++)
                             {
