@@ -45,11 +45,10 @@ class TwoPTwoCBoxJacobianBase : public BoxJacobian<ProblemT,
 {
 protected:
     typedef TwoPTwoCBoxJacobianBase<ProblemT,
-    BoxTraitsT,
-    TwoPTwoCTraitsT,
-    Implementation>              ThisType;
+                                    BoxTraitsT,
+                                    TwoPTwoCTraitsT,
+                                    Implementation>              ThisType;
     typedef BoxJacobian<ProblemT, BoxTraitsT, Implementation>    ParentType;
-
     typedef ProblemT                                Problem;
     typedef typename Problem::DomainTraits          DomTraits;
     typedef BoxTraitsT                              BoxTraits;
@@ -130,7 +129,7 @@ protected:
             int localIdx,
             Problem &problem,
             Scalar temperature) const
-            {
+    {
         const GlobalPosition &global = element.geometry().corner(localIdx);
         const LocalPosition &local =
             DomTraits::referenceElement(element.type()).position(localIdx,
@@ -214,7 +213,7 @@ protected:
         // diffusion coefficents
         vertDat.diffCoeff[wPhase] = problem.wettingPhase().diffCoeff(temperature, vertDat.pW);
         vertDat.diffCoeff[nPhase] = problem.nonwettingPhase().diffCoeff(temperature, vertDat.pN);
-            }
+    }
 
 public:
     TwoPTwoCBoxJacobianBase(ProblemT &problem)
@@ -371,9 +370,9 @@ public:
         GlobalPosition pGrad[numPhases];
         GlobalPosition xGrad[numPhases];
         GlobalPosition tempGrad(0.0);
-        for (int k = 0; k < numPhases; ++k) {
-            pGrad[k] = Scalar(0);
-            xGrad[k] = Scalar(0);
+        for (int phase = 0; phase < numPhases; ++phase) {
+            pGrad[phase] = Scalar(0);
+            xGrad[phase] = Scalar(0);
         }
 
         GlobalPosition tmp(0.0);
@@ -381,13 +380,13 @@ public:
         PhasesVector densityIJ(0.);
 
         // calculate FE gradient (grad p for each phase)
-        for (int k = 0; k < this->curElementGeom_.numVertices; k++) // loop over adjacent vertices
+        for (int idx = 0; idx < this->curElementGeom_.numVertices; idx++) // loop over adjacent vertices
         {
-            // FEGradient at vertex k
-            const LocalPosition &feGrad = this->curElementGeom_.subContVolFace[faceId].grad[k];
+            // FEGradient at vertex idx
+            const LocalPosition &feGrad = this->curElementGeom_.subContVolFace[faceId].grad[idx];
 
-            pressure[wPhase] = elemDat.vertex[k].pW;
-            pressure[nPhase] = elemDat.vertex[k].pN;
+            pressure[wPhase] = elemDat.vertex[idx].pW;
+            pressure[nPhase] = elemDat.vertex[idx].pN;
 
             // compute sum of pressure gradients for each phase
             for (int phase = 0; phase < numPhases; phase++)
@@ -396,24 +395,24 @@ public:
                 tmp = feGrad;
                 tmp *= pressure[phase];
                 pGrad[phase] += tmp;
-                densityIJ[phase] += elemDat.vertex[k].density[phase] *
-                this->curElementGeom_.subContVolFace[faceId].shapeValue[k];
+                densityIJ[phase] += elemDat.vertex[idx].density[phase] *
+                this->curElementGeom_.subContVolFace[faceId].shapeValue[idx];
             }
 
             // the concentration gradient of the non-wetting
             // component in the wetting phase
             tmp = feGrad;
-            tmp *= elemDat.vertex[k].massfrac[nComp][wPhase];
+            tmp *= elemDat.vertex[idx].massfrac[nComp][wPhase];
             xGrad[wPhase] += tmp;
 
             // the concentration gradient of the wetting component
             // in the non-wetting phase
             tmp = feGrad;
-            tmp *= elemDat.vertex[k].massfrac[wComp][nPhase];
+            tmp *= elemDat.vertex[idx].massfrac[wComp][nPhase];
             xGrad[nPhase] += tmp;
 
             // temperature gradient
-            asImp_()->updateTempGrad(tempGrad, feGrad, this->curSol_, k);
+            asImp_()->updateTempGrad(tempGrad, feGrad, this->curSol_, idx);
         }
 
         // correct the pressure gradients by the hydrostatic
@@ -703,6 +702,157 @@ public:
     }
 
     /*!
+    * \brief Compute Darcy velocity for output
+    *
+    */
+//    template<class PressureFunction, class Vector, class Grid, class Problem>
+    void calculateDarcyVelocity(GlobalPosition &velocity,
+            const Element &element,
+            const int faceId,
+            const Problem &problem) const
+    {
+    	//        ElementIterator endEIt = grid.template leafend<0>();
+    	//        for (ElementIterator eIt = grid.template leafbegin<0>(); eIt != endEIt; ++eIt)
+    	//        {
+    	//            const Element& element = *eIt;
+    	//
+        // set flux vector to zero
+        int i = this->curElementGeom_.subContVolFace[faceId].i;
+        int j = this->curElementGeom_.subContVolFace[faceId].j;
+
+        // normal vector, value of the area of the scvf
+        const GlobalPosition &normal(this->curElementGeom_.subContVolFace[faceId].normal);
+
+        // get global coordinates of verts i,j
+        const GlobalPosition &global_i = this->curElementGeom_.subContVol[i].global;
+        const GlobalPosition &global_j = this->curElementGeom_.subContVol[j].global;
+
+        // get local coordinates of verts i,j
+        const LocalPosition &local_i = this->curElementGeom_.subContVol[i].local;
+        const LocalPosition &local_j = this->curElementGeom_.subContVol[j].local;
+
+        const ElementData &elemDat = this->curElemDat_;
+        const VariableVertexData &vDat_i = elemDat.vertex[i];
+        const VariableVertexData &vDat_j = elemDat.vertex[j];
+
+    	GlobalPosition pGrad[numPhases];
+        GlobalPosition tempGrad(0.0);
+        for (int phase = 0; phase < numPhases; ++phase) {
+            pGrad[phase] = Scalar(0);
+        }
+
+        GlobalPosition tmp(0.0);
+        PhasesVector pressure(0.0);
+        PhasesVector densityIJ(0.);
+
+        // calculate FE gradient (grad p for each phase)
+        for (int idx = 0; idx < this->curElementGeom_.numVertices; idx++) // loop over adjacent vertices
+        {
+            // FEGradient at vertex idx
+            const LocalPosition &feGrad = this->curElementGeom_.subContVolFace[faceId].grad[idx];
+
+            pressure[wPhase] = elemDat.vertex[idx].pW;
+            pressure[nPhase] = elemDat.vertex[idx].pN;
+
+            // compute sum of pressure gradients for each phase
+            for (int phase = 0; phase < numPhases; phase++)
+            {
+                // the pressure gradient
+                tmp = feGrad;
+                tmp *= pressure[phase];
+                pGrad[phase] += tmp;
+                densityIJ[phase] += elemDat.vertex[idx].density[phase] *
+                this->curElementGeom_.subContVolFace[faceId].shapeValue[idx];
+            }
+        }
+
+        // correct the pressure gradients by the hydrostatic
+        // pressure due to gravity
+        for (int phase=0; phase < numPhases; phase++)
+        {
+            tmp = this->problem_.gravity();
+            tmp *= densityIJ[phase];
+            pGrad[phase] -= tmp;
+        }
+
+        // calculate the permeability tensor
+        Tensor K         = this->problem_.soil().K(global_i, ParentType::curElement_(), local_i);
+        const Tensor &Kj = this->problem_.soil().K(global_j, ParentType::curElement_(), local_j);
+        harmonicMeanK_(K, Kj);
+
+        // magnitude of darcy velocity of each phase projected
+        // on the normal of the sub-control volume's face
+        PhasesVector vDarcyOut;
+        // temporary vector for the Darcy velocity
+        GlobalPosition vDarcy;
+        for (int phase=0; phase < numPhases; phase++)
+        {
+            K.mv(pGrad[phase], vDarcy);  // vDarcy = K * grad p
+            vDarcyOut[phase] = vDarcy*normal;
+        }
+
+        // find upsteam and downstream verts
+        const VariableVertexData *upW = &vDat_i;
+        const VariableVertexData *dnW = &vDat_j;
+        const VariableVertexData *upN = &vDat_i;
+        const VariableVertexData *dnN = &vDat_j;
+
+        if (vDarcyOut[wPhase] > 0) {
+            std::swap(upW, dnW);
+        };
+        if (vDarcyOut[nPhase] > 0)  {
+            std::swap(upN, dnN);
+        };
+
+        // Upwind parameter
+        Scalar alpha = 1.0; // -> use only the upstream vertex
+
+        ////////
+        // advective flux of the wetting component
+        ////////
+
+        // flux in the wetting phase
+        velocity[wPhase] =  vDarcyOut[wPhase] * (
+                alpha* // upstream verts
+                (  upW->density[wPhase] *
+                        upW->mobility[wPhase])
+                        +
+                        (1-alpha)* // downstream vert
+                        (  dnW->density[wPhase] *
+                                dnW->mobility[wPhase]));
+
+		// flux in the non-wetting phase
+        velocity[nPhase] =  vDarcyOut[nPhase] * (
+                alpha* // upstream verts
+                (  upN->density[nPhase] *
+                        upN->mobility[nPhase])
+                        +
+                        (1-alpha)* // downstream vert
+                        (  dnN->density[nPhase] *
+                                dnN->mobility[nPhase]));
+    }
+
+/////////////////
+//FROM boxdiffusion!!
+//    template<class PressureFunction, class Vector, class Grid, class Problem>
+//    void calculateDarcyVelocity(const Grid& grid, const Problem& problem, PressureFunction& pressure, Vector& xVelocity, Vector& yVelocity)
+//    {
+//        typedef typename Grid::ctype Scalar;
+//        enum {dim=Grid::dimension};
+//        typedef typename Grid::template Codim<0>::Entity Element;
+//        typedef typename Grid::LeafGridView::template Codim<0>::Iterator ElementIterator;
+//        typedef typename Grid::LeafGridView::template Codim<dim>::Iterator VertexIterator;
+//        typedef typename Grid::LeafGridView::IndexSet IS;
+//        typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,IS,ElementLayout> ElementMapper;
+//        typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,IS,VertexLayout> VertexMapper;
+//
+//        VertexMapper vertexMapper(grid, grid.leafView().indexSet());
+//        ElementMapper elementMapper(grid, grid.leafView().indexSet());
+//
+//    }
+//
+/////////////////
+    /*!
     * \brief Add the mass fraction of air in water to VTK output of
     *        the current timestep.
     */
@@ -713,6 +863,7 @@ public:
 
         // create the required scalar fields
         unsigned numVertices = this->problem_.numVertices();
+        unsigned numElements = this->problem_.numElements();
         ScalarField *pW =           writer.template createField<Scalar, 1>(numVertices);
         ScalarField *pN =           writer.template createField<Scalar, 1>(numVertices);
         ScalarField *pC =           writer.template createField<Scalar, 1>(numVertices);
@@ -728,17 +879,22 @@ public:
         ScalarField *massfracWinN = writer.template createField<Scalar, 1>(numVertices);
         ScalarField *temperature  = writer.template createField<Scalar, 1>(numVertices);
         ScalarField *phaseState   = writer.template createField<Scalar, 1>(numVertices);
+        ScalarField *velocityX   = writer.template createField<Scalar, 1>(numElements);
+        ScalarField *velocityY   = writer.template createField<Scalar, 1>(numElements);
+//        ScalarField *velocityZ   = writer.template createField<Scalar, 1>(numElements);
 
         VariableVertexData tmp;
-        ElementIterator it = this->problem_.elementBegin();
+        ElementIterator element = this->problem_.elementBegin();
         ElementIterator endit = this->problem_.elementEnd();
-        for (; it != endit; ++it) {
-            for (int i = 0; i < it->template count<dim>(); ++i) {
-                int globalI = this->problem_.vertexIdx(*it, i);
+        for (; element != endit; ++element)
+        {
+            for (int i = 0; i < element->template count<dim>(); ++i)
+            {
+                int globalI = this->problem_.vertexIdx(*element, i);
                 asImp_()->updateVarVertexData_(tmp,
                         (*globalSol)[globalI],
                         staticVertexDat_[globalI].phaseState,
-                        *it,
+                        *element,
                         i,
                         this->problem_,
                         Implementation::temperature_((*globalSol)[globalI]));
@@ -759,6 +915,29 @@ public:
                 (*temperature)[globalI] = Implementation::temperature_((*globalSol)[globalI]);
                 (*phaseState)[globalI] = staticVertexDat_[globalI].phaseState;
             };
+            // Vector containing the velocity at the element
+            GlobalPosition velocity(0);
+            GlobalPosition elementVelocity(0);
+//            for (int phase=0; phase < numPhases; ++phase)
+//            {
+//            	velocity[phase] = 0;
+//            	elementVelocity[phase] = 0;
+//            }
+
+//            updateElementData_(element, localSol??, false);
+            for (int faceId = 0; faceId< this->curElementGeom_.numEdges; faceId++)
+            {
+				asImp_()->calculateDarcyVelocity(velocity,
+						*element,
+						faceId,
+						this->problem_);
+				elementVelocity += velocity;
+            }
+            int elementIdx = this->problem_.elementIdx(*element);
+            elementVelocity *= 1.0/this->curElementGeom_.numEdges;
+        	(*velocityX)[elementIdx] = elementVelocity[0];
+            (*velocityY)[elementIdx] = elementVelocity[1];
+//            (*velocityZ) = elementVelocity[2];
         }
 
 
@@ -777,7 +956,9 @@ public:
         writer.addVertexData(massfracWinN, "XwN");
         writer.addVertexData(temperature, "T");
         writer.addVertexData(phaseState, "phase state");
-    }
+        writer.addCellData(velocityX, "Vx");
+        writer.addCellData(velocityY, "Vy");
+        }
 
 
 protected:
@@ -953,12 +1134,11 @@ template<class ProblemT,
 class BoxTraitsT,
 class TwoPTwoCTraitsT>
 class TwoPTwoCBoxJacobian : public TwoPTwoCBoxJacobianBase<ProblemT,
-BoxTraitsT,
-TwoPTwoCTraitsT,
-TwoPTwoCBoxJacobian<ProblemT,
-BoxTraitsT,
-TwoPTwoCTraitsT>
->
+                                    BoxTraitsT,
+                                    TwoPTwoCTraitsT,
+                                    TwoPTwoCBoxJacobian<ProblemT,
+                                    BoxTraitsT,
+                                    TwoPTwoCTraitsT> >
 {
     typedef TwoPTwoCBoxJacobian<ProblemT,
     BoxTraitsT,
@@ -1015,9 +1195,9 @@ public:
             const GlobalPosition &feGrad,
             const LocalFunction &sol,
             int vertexIdx) const
-            {
+    {
         // only relevant for the non-isothermal model!
-            }
+    }
 
     /*!
     * \brief Sets the temperature term of the flux vector to the
@@ -1030,9 +1210,9 @@ public:
             const VariableVertexData *dnW,
             const VariableVertexData *upN,
             const VariableVertexData *dnN) const
-            {
+    {
         // only relevant for the non-isothermal model!
-            }
+    }
 
     /*!
     * \brief Adds the diffusive heat flux to the flux vector over
@@ -1041,9 +1221,9 @@ public:
     void diffusiveHeatFlux(SolutionVector &flux,
             int faceIdx,
             const GlobalPosition &tempGrad) const
-            {
+    {
         // only relevant for the non-isothermal model!
-            }
+    }
 
     // internal method!
     static Scalar temperature_(const SolutionVector &sol)
@@ -1064,19 +1244,18 @@ template<class ProblemT, class TwoPTwoCTraitsT = TwoPTwoCPwSnTraits<typename Pro
 class TwoPTwoCBoxModel
 : public BoxScheme<TwoPTwoCBoxModel<ProblemT, TwoPTwoCTraitsT>, // Implementation of the box scheme
 
-// The Traits for the BOX method
-P1BoxTraits<typename ProblemT::DomainTraits::Scalar,
-typename ProblemT::DomainTraits::Grid,
-TwoPTwoCTraitsT::numEq>,
+        // The Traits for the BOX method
+        P1BoxTraits<typename ProblemT::DomainTraits::Scalar,
+        typename ProblemT::DomainTraits::Grid,
+        TwoPTwoCTraitsT::numEq>,
 
-// The actual problem we would like to solve
-ProblemT,
-
-// The local jacobian operator
-TwoPTwoCBoxJacobian<ProblemT,
-P1BoxTraits<typename ProblemT::DomainTraits::Scalar,
-typename ProblemT::DomainTraits::Grid,
-TwoPTwoCTraitsT::numEq>, TwoPTwoCTraitsT > >
+        // The actual problem we would like to solve
+        ProblemT,
+        // The local jacobian operator
+        TwoPTwoCBoxJacobian<ProblemT,
+            P1BoxTraits<typename ProblemT::DomainTraits::Scalar,
+            typename ProblemT::DomainTraits::Grid,
+            TwoPTwoCTraitsT::numEq>, TwoPTwoCTraitsT > >
 {
     typedef typename ProblemT::DomainTraits::Grid       Grid;
     typedef typename ProblemT::DomainTraits::Scalar     Scalar;

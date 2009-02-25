@@ -31,14 +31,14 @@ int main(int argc, char** argv)
         Dune::MPIHelper::instance(argc, argv);
 
         // parse the command line arguments for the program
-        if (argc != 3) {
-            std::cout << boost::format("usage: %s tEnd dt\n")%argv[0];
+        if (argc != 4) {
+            std::cout << boost::format("usage: %s tEnd dt grid\n")%argv[0];
             return 1;
         }
         double tEnd, dt;
-        std::istringstream(argv[1]) >> tEnd;
-        std::istringstream(argv[2]) >> dt;
-        const char *dgfFileName = argv[3];
+        const char *dgfFileName = argv[1];
+        std::istringstream(argv[2]) >> tEnd;
+        std::istringstream(argv[3]) >> dt;
 
         // create grid
 
