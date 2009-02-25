@@ -16,6 +16,7 @@
 #include "yxproblem.hh"
 #include "../stokes/boxstokes.hh"
 #include "boxdiffusion.hh"
+#include <boost/format.hpp>
 
 namespace Dune
 {
@@ -132,6 +133,11 @@ int main(int argc, char** argv)
         // geometry
         //typedef Dune::ALUSimplexGrid<dim,dim> GridType;
         typedef Dune::SGrid<dim,dim> GridType;
+
+        if (argc != 2) {
+            std::cout << boost::format("usage: %s grid\n")%argv[0];
+            return 1;
+        }
         Dune::GridPtr<GridType> gridPtr( argv[1] );
         GridType& grid = *gridPtr;
 
@@ -159,7 +165,7 @@ int main(int argc, char** argv)
         typedef Dune::LeafP1BoxStokes<SubGridType, NumberType, dim> BoxStokes;
         BoxStokes boxStokes(subGridStokes, stokesProblem);
 
-        DarcyParameters<SubGridType,NumberType> darcyParam;
+        Dune::DarcyParameters<SubGridType,NumberType> darcyParam;
         typedef Dune::LeafP1BoxDiffusion<SubGridType, NumberType> DarcyModel;
         DarcyModel darcyModel(subGridDarcy, darcyParam);
 

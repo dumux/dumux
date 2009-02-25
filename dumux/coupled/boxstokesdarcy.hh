@@ -23,8 +23,10 @@ public:
     enum {dim = StokesGrid::dimension};
 
     template <class FirstFV, class SecondFV>
-    void localCoupling12(FirstFV& stokesSol, SecondFV& darcySol, int stokesIndex, int darcyIndex,
-                            FieldVector<double, dim> globalPos, FieldVector<double, dim> normal, FirstFV& result)
+    void localCoupling12(FirstFV& stokesSol, SecondFV& darcySol,
+            int stokesIndex, int darcyIndex,
+            FieldVector<double, dim> globalPos,
+            FieldVector<double, dim> normal, FirstFV& result)
     {
         result = 0;
 
@@ -37,8 +39,10 @@ public:
     }
 
     template <class FirstFV, class SecondFV>
-    void localCoupling21(FirstFV& stokesSol, SecondFV& darcySol, int stokesIndex, int darcyIndex,
-            FieldVector<double, dim> globalPos, FieldVector<double, dim> normal, SecondFV& result)
+    void localCoupling21(FirstFV& stokesSol, SecondFV& darcySol,
+            int stokesIndex, int darcyIndex,
+            FieldVector<double, dim> globalPos,
+            FieldVector<double, dim> normal, SecondFV& result)
     {
         result = 0;
 
@@ -82,11 +86,11 @@ public:
         return;
     }
 
-//    template <class A12Type, class A21Type>
-//    void assembleCoupling(A12Type& A_12, A21Type& A_21)
-//    {
-//        BaseType::template assembleCoupling<A12Type, A21Type>(A_12, A_21);
-//    }
+    //    template <class A12Type, class A21Type>
+    //    void assembleCoupling(A12Type& A_12, A21Type& A_21)
+    //    {
+    //        BaseType::template assembleCoupling<A12Type, A21Type>(A_12, A_21);
+    //    }
 
     virtual void update(double& dt)
     {
