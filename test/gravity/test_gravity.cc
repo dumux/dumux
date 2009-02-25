@@ -54,7 +54,7 @@ int main(int argc, char** argv)
 
     DNAPL dnapl(0, 2e3, 5e-4);
     Water water(0, 1e3, 5e-4);
-    Dune::LinearLaw materialLaw(water, dnapl);
+    Dune::DeprecatedLinearLaw materialLaw(water, dnapl);
 
     typedef Dune::VariableClass<GridType, NumberType> VC;
     double initsat = 1;
@@ -65,14 +65,14 @@ int main(int argc, char** argv)
     gravity[dim-1] = -9.81;
     Dune::GravityProblem<GridType, NumberType, VC> diffusionProblem(variables, &grid, materialLaw, gravity);
 
-    typedef Dune::FVTransport<GridType, NumberType, VC> Transport;
+    typedef Dune::DeprecatedFVTransport<GridType, NumberType, VC> DeprecatedTransport;
     Dune::GravityPart<GridType, NumberType, VC> gravityPart(diffusionProblem);
-    Transport transport(grid, transportProblem, grid.maxLevel(), gravityPart, reconstruct, alphaMax);
+    DeprecatedTransport transport(grid, transportProblem, grid.maxLevel(), gravityPart, reconstruct, alphaMax);
 
-    typedef Dune::FVDiffusionVelocity<GridType, NumberType, VC> Diffusion;
-    Diffusion diffusion(grid, diffusionProblem, grid.maxLevel());
+    typedef Dune::DeprecatedFVDiffusionVelocity<GridType, NumberType, VC> DeprecatedDiffusion;
+    DeprecatedDiffusion diffusion(grid, diffusionProblem, grid.maxLevel());
 
-    typedef Dune::IMPES<GridType, Diffusion, Transport, VC> IMPES;
+    typedef Dune::IMPES<GridType, DeprecatedDiffusion, DeprecatedTransport, VC> IMPES;
     IMPES fractionalflow(diffusion, transport, iterFlag, nIter, maxDefect);
 
     Dune::TimeLoop<GridType, IMPES > timeloop(tStart, tEnd, fileName, modulo, cFLFactor);

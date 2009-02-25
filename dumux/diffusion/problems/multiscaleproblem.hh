@@ -21,7 +21,7 @@ namespace Dune
 //      enum {n=G::dimension};
 //      typedef typename G::ctype DT;
 //    public:
-//      MultiscaleProblem(Problem& p, const int diff_level, const int trans_level, TwoPhaseRelations& law = *(new LinearLaw),
+//      MultiscaleProblem(Problem& p, const int diff_level, const int trans_level, TwoPhaseRelations& law = *(new DeprecatedLinearLaw),
 //                const bool cap = false)
 //      : DiffusionProblem<G, RT>(law, cap), problem(p), l_diffusion(diff_level), l_transport(trans_level)
 //      {
@@ -87,7 +87,7 @@ template<class G, class RT,class VC>
       typedef typename G::Traits::template Codim<0>::Entity Entity;
 
     public:
-      MultiscaleProblem(G& g, DiffusionProblem<G,RT>& p,const int diff_level, const int trans_level, TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false)
+      MultiscaleProblem(G& g, DiffusionProblem<G,RT>& p,const int diff_level, const int trans_level, TwoPhaseRelations& law = *(new DeprecatedLinearLaw), const bool cap = false)
         : DiffusionProblem<G,RT,VC>(p.variabls,p.materialLaw, p.capillary), l_diffusion(diff_level), l_transport(trans_level)
       {
           problem = &p;

@@ -10,7 +10,7 @@
  * @file
  * @brief  Base class for defining an instance of a numerical diffusion model
  * @author Bernd Flemisch
- * \defgroup transport Transport
+ * \defgroup transport DeprecatedTransport
  */
 
 namespace Dune
@@ -33,14 +33,14 @@ namespace Dune
    */
   template<class G, class RT, class VC>
   class FVSplittedTransport : public SplittedTransport< G, RT, VC,
-                            FVTransport<G, RT, VC>, FVTransport<G, RT, VC> >
+                                                        DeprecatedFVTransport<G, RT, VC>, DeprecatedFVTransport<G, RT, VC> >
   {
   public:
-    typedef typename FVTransport<G, RT, VC>::RepresentationType HyperbolicRepresentationType;
-    typedef typename FVTransport<G, RT, VC>::RepresentationType ParabolicRepresentationType;
-    typedef typename FVTransport<G, RT, VC>::RepresentationType RepresentationType;
-    typedef FVTransport<G, RT, VC>  HyperbolicType;
-    typedef FVTransport<G, RT, VC>  ParabolicType;
+    typedef typename DeprecatedFVTransport<G, RT, VC>::RepresentationType HyperbolicRepresentationType;
+    typedef typename DeprecatedFVTransport<G, RT, VC>::RepresentationType ParabolicRepresentationType;
+    typedef typename DeprecatedFVTransport<G, RT, VC>::RepresentationType RepresentationType;
+    typedef DeprecatedFVTransport<G, RT, VC>  HyperbolicType;
+    typedef DeprecatedFVTransport<G, RT, VC>  ParabolicType;
 
 
     virtual void transferHyperbolicToParabolic(const HyperbolicRepresentationType& hyperSat,
@@ -84,10 +84,10 @@ namespace Dune
 
     /*! @brief constructor
      *  @param g a DUNE grid object
-     *  @param prob an object of class TransportProblem or derived
+     *  @param prob an object of class DeprecatedTransportProblem or derived
      */
     FVSplittedTransport(const G& g, HyperbolicType& hyper, ParabolicType& para)
-      : SplittedTransport< G, RT, VC, FVTransport<G, RT, VC>, FVTransport<G, RT, VC> >(g, hyper, para)
+      : SplittedTransport< G, RT, VC, DeprecatedFVTransport<G, RT, VC>, DeprecatedFVTransport<G, RT, VC> >(g, hyper, para)
     {
       this->sat.resize(this->parabolicPart.transproblem.variables.saturation.size());
     }

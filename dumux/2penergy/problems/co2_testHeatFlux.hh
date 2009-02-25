@@ -165,7 +165,7 @@ namespace Dune
         return values;
     }
 
-    CO2Problem2D(TwoPhaseRelations& law = *(new BrooksCoreyLaw), RT pdown = 3.086e5, RT swr = 0.2, RT snr = 0.05, RT pb = 10000.0, RT lambda = 2.0 )
+    CO2Problem2D(TwoPhaseRelations& law = *(new DeprecatedBrooksCoreyLaw), RT pdown = 3.086e5, RT swr = 0.2, RT snr = 0.05, RT pb = 10000.0, RT lambda = 2.0 )
     : TwoPhaseHeatProblem<G, RT>(law)
     {
         p0_ = pdown;

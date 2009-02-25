@@ -100,7 +100,7 @@ public:
         return result;
 }
 
-    GravityPart (DiffusionProblem<G, RT, VC>& prob)
+    GravityPart (DeprecatedDiffusionProblem<G, RT, VC>& prob)
     : problem(prob), constRel(problem.materialLaw), wettingPhase(constRel.wettingPhase),
     nonwettingPhase(constRel.nonwettingPhase)
     {
@@ -110,8 +110,8 @@ public:
     }
 
 private:
-    DiffusionProblem<G, RT, VC>& problem;
-    TwoPhaseRelations& constRel;
+    DeprecatedDiffusionProblem<G, RT, VC>& problem;
+    DeprecatedTwoPhaseRelations& constRel;
     const Medium& wettingPhase;
     const Medium& nonwettingPhase;
     FieldVector gravity;

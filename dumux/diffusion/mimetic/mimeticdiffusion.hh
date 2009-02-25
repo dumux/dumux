@@ -42,7 +42,7 @@ namespace Dune
    */
   template<class G, class RT, class VC, class LocalStiffnessType = Dune::MimeticGroundwaterEquationLocalStiffness<G,RT,VC> >
   class MimeticDiffusion
-  : public Diffusion< G, RT, VC>
+  : public DeprecatedDiffusion< G, RT, VC>
   {
       template<int dim>
       struct ElementLayout
@@ -136,8 +136,8 @@ namespace Dune
         vtkwriter.write(fname, VTKOptions::ascii);
     }
 
-    MimeticDiffusion(G& g, DiffusionProblem<G, RT,VC>& prob, int lev = 0, bool calcPressure = true)
-      : Diffusion<G, RT, VC>(g, prob, lev), levell(lev),
+    MimeticDiffusion(G& g, DeprecatedDiffusionProblem<G, RT,VC>& prob, int lev = 0, bool calcPressure = true)
+      : DeprecatedDiffusion<G, RT, VC>(g, prob, lev), levell(lev),
       pressTrace(g, levell), normalVelocity(g, levell), f(g, levell), A(g, levell)
     {
         *pressTrace = 0;

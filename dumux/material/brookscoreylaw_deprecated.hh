@@ -21,7 +21,7 @@ namespace Dune
    *  \lambda = \lambda_\text{w} + \lambda_\text{n}.
    *  \f}
    */
-  class BrooksCoreyLaw : public TwoPhaseRelations
+  class DeprecatedBrooksCoreyLaw : public DeprecatedTwoPhaseRelations
   {
   public:
     double pC (double saturationW)
@@ -150,10 +150,10 @@ namespace Dune
       return pow(1-Se,2)*(1-pow(Se,exponent));
     }
 
-    BrooksCoreyLaw(const Medium& wP = *(new Uniform), const Medium& nwP = *(new Uniform),
+    DeprecatedBrooksCoreyLaw(const Medium& wP = *(new Uniform), const Medium& nwP = *(new Uniform),
            double l = 2.0, double p = 0, double eps1 = 0.001, double
            eps2=1e-15)
-      : TwoPhaseRelations(wP, nwP,
+      : DeprecatedTwoPhaseRelations(wP, nwP,
               false),lambda(l),p0(p),epsPC(eps1),epsKr(eps2)
     {      }
 

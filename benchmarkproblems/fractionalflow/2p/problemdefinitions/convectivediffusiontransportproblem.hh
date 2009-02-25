@@ -57,7 +57,7 @@ namespace Dune
       return poro_;
     }
 
-    ConvectionDiffusionTransportProblem(VC& variableobj, TwoPhaseRelations& law = *(new LinearLaw),
+    ConvectionDiffusionTransportProblem(VC& variableobj, TwoPhaseRelations& law = *(new DeprecatedLinearLaw),
                const FieldVector<DT,n> Left = 0, const FieldVector<DT,n> Right = 0,
                const int level = 0, const bool cap =
                false,RT poro=0.2)

@@ -203,7 +203,7 @@ namespace Dune
         return values;
     }
 
-    LayerProblem(TwoPhaseRelations& law = *(new LinearLaw), MultiComp& multicomp = *(new CWaterAir),
+    LayerProblem(TwoPhaseRelations& law = *(new DeprecatedLinearLaw), MultiComp& multicomp = *(new CWaterAir),
             const FieldVector<DT,dim> outerLowerLeft = 0., const FieldVector<DT,dim> outerUpperRight = 0.,
             const FieldVector<DT,dim> innerLowerLeft = 0., const FieldVector<DT,dim> innerUpperRight = 0.,
             const RT depthBOR = 0., RT outerK = 1.2e-12, RT innerK = 1.2e-12,

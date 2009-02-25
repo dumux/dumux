@@ -51,11 +51,11 @@ namespace Dune
         return vLoc;
     }
 
-    SimplerProblem(const G& g, TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false)
+    SimplerProblem(const G& g, TwoPhaseRelations& law = *(new DeprecatedLinearLaw), const bool cap = false)
     : TransportProblem<G, RT, VelType>(law, cap), left(0), right(600)
     {    }
 
-    SimplerProblem(TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false)
+    SimplerProblem(TwoPhaseRelations& law = *(new DeprecatedLinearLaw), const bool cap = false)
     : TransportProblem<G, RT, VelType>(law, cap), left(0), right(1)
     {    }
   };

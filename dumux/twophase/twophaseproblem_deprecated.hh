@@ -1,7 +1,7 @@
 // $Id: twophaseproblem.hh 566 2008-09-11 11:38:31Z bernd $
 
-#ifndef DUNE_TWOPHASEPROBLEM_HH
-#define DUNE_TWOPHASEPROBLEM_HH
+#ifndef DUNE_TWOPHASEPROBLEM_DEPRECATED_HH
+#define DUNE_TWOPHASEPROBLEM_DEPRECATED_HH
 
 #warning this file is deprecated, please use twophaseproblem.hh instead
 
@@ -40,7 +40,7 @@ namespace Dune {
  *    - Grid  a DUNE grid type
  *    - RT    type used for return values
  */
-template<class G, class RT> class TwoPhaseProblem {
+template<class G, class RT> class DeprecatedTwoPhaseProblem {
     typedef typename G::ctype DT;
     enum {n=G::dimension, m=2};
     typedef typename G::Traits::template Codim<0>::Entity Entity;
@@ -131,7 +131,7 @@ public:
     virtual FieldVector<RT,4> materialLawParameters(const FieldVector<DT,n>& x,
             const Entity& e, const FieldVector<DT,n>& xi) const = 0;
 
-    TwoPhaseRelations& materialLaw() {
+    DeprecatedTwoPhaseRelations& materialLaw() {
         return materialLaw_;
     }
 
@@ -148,19 +148,19 @@ public:
         return;
     }
 
-    TwoPhaseProblem(TwoPhaseRelations& law = *(new
-            LinearLaw), const bool exsol = false) :
+    DeprecatedTwoPhaseProblem(DeprecatedTwoPhaseRelations& law = *(new
+            DeprecatedLinearLaw), const bool exsol = false) :
       exsolution(exsol),  materialLaw_(law) {
     }
 
     //! always define virtual destructor in abstract base class
-    virtual ~TwoPhaseProblem() {
+    virtual ~DeprecatedTwoPhaseProblem() {
     }
 
     const bool exsolution;
 
 protected:
-    TwoPhaseRelations& materialLaw_;
+    DeprecatedTwoPhaseRelations& materialLaw_;
 };
 
 }

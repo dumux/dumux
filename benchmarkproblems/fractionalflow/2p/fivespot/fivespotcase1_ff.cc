@@ -67,7 +67,7 @@ int main(int argc, char** argv)
 
       Oil oil(0.2);
       Water water(0.2);
-      Dune::BrooksCoreyLaw materialLaw(water, oil,2.0,0.0);
+      Dune::DeprecatedBrooksCoreyLaw materialLaw(water, oil,2.0,0.0);
       //Dune::LinearLaw materialLaw(water,oil);
 
       typedef Dune::VariableClass<GridType, NumberType> VC;
@@ -77,17 +77,17 @@ int main(int argc, char** argv)
       Dune::Fivespotcase1TransportProblem<GridType, NumberType, VC> transportProblem(variables, materialLaw, bcf);
       Dune::Fivespotcase1DiffProblem<GridType, NumberType, VC> diffusionProblem(variables, materialLaw, bcf);
 
-      typedef Dune::FVTransport<GridType, NumberType, VC> Transport;
-      Transport transport(grid, transportProblem, grid.maxLevel());
+      typedef Dune::DeprecatedFVTransport<GridType, NumberType, VC> DeprecatedTransport;
+      DeprecatedTransport transport(grid, transportProblem, grid.maxLevel());
 
-      //typedef Dune::MimeticDiffusion<GridType, NumberType, VC> Diffusion;
-      typedef Dune::FVDiffusionVelocity<GridType, NumberType, VC> Diffusion;
-      Diffusion diffusion(grid, diffusionProblem, grid.maxLevel());
+      //typedef Dune::MimeticDiffusion<GridType, NumberType, VC> DeprecatedDiffusion;
+      typedef Dune::DeprecatedFVDiffusionVelocity<GridType, NumberType, VC> DeprecatedDiffusion;
+      DeprecatedDiffusion diffusion(grid, diffusionProblem, grid.maxLevel());
 
       int iterFlag = 2;
       int nIter = 100;
       double maxDefect = 1e-5;
-      typedef Dune::IMPES<GridType, Diffusion, Transport, VC> IMPES;
+      typedef Dune::IMPES<GridType, DeprecatedDiffusion, DeprecatedTransport, VC> IMPES;
       IMPES fractionalflow(diffusion, transport, iterFlag, nIter, maxDefect);
 
       double tStart = 0;

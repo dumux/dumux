@@ -33,11 +33,11 @@ namespace Dune
 
    */
   template<class G, class RT, class VC>
-  class Transport {
+  class DeprecatedTransport {
   public:
 
     typedef BlockVector< Dune::FieldVector<RT,1> > RepresentationType;
-    TransportProblem<G, RT, VC>& transproblem; //!< problem data
+    DeprecatedTransportProblem<G, RT, VC>& transproblem; //!< problem data
 
     //! \brief Calculate the update vector.
     /*!
@@ -77,13 +77,13 @@ namespace Dune
     }
 
     //! always define virtual destructor in abstract base class
-    virtual ~Transport () {}
+    virtual ~DeprecatedTransport () {}
 
     /*! @brief constructor
      *  @param g a DUNE grid object
      *  @param prob an object of class TransportProblem or derived
      */
-    Transport(const G& g, TransportProblem<G, RT, VC>& prob)
+      DeprecatedTransport(const G& g, DeprecatedTransportProblem<G, RT, VC>& prob)
     : grid_(g), transproblem(prob), level_(g.maxLevel())
     { }
 
@@ -95,7 +95,7 @@ namespace Dune
      *  @param prob an object of class TransportProblem or derived
      *  @param lev the grid level on which the Transport equation is to be solved.
      */
-    Transport(const G& g, TransportProblem<G, RT, VC>& prob, int lev)
+    DeprecatedTransport(const G& g, DeprecatedTransportProblem<G, RT, VC>& prob, int lev)
     : transproblem(prob), grid_(g), level_(lev)
     { }
 

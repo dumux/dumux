@@ -18,13 +18,13 @@
 
 /**
  * @file
- * @brief  Finite Volume Diffusion Model
+ * @brief  Finite Volume DeprecatedDiffusion Model
  * @author Bernd Flemisch, Jochen Fritz; last changed by Markus Wolff
  */
 
 namespace Dune {
 //! \ingroup diffusion
-//! Finite Volume Diffusion Model
+//! Finite Volume DeprecatedDiffusion Model
 /*! Provides a Finite Volume implementation for the evaluation
  * of equations of the form
  * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = q, \f$,
@@ -39,8 +39,8 @@ namespace Dune {
  - G         a DUNE grid type
  - RT        type used for return values
  */
-template<class G, class RT, class VC> class FVDiffusion :
-    public Diffusion< G, RT, VC> {
+template<class G, class RT, class VC> class DeprecatedFVDiffusion :
+    public DeprecatedDiffusion< G, RT, VC> {
     template<int dim> struct ElementLayout {
         bool contains(GeometryType gt) {
             return gt.dim() == dim;
@@ -86,8 +86,8 @@ public:
 
     void initializeMatrix();
 
-    FVDiffusion(G& g, DiffusionProblem<G, RT, VC>& prob, int lev = -1) :
-        Diffusion<G, RT, VC>(g, prob,
+    DeprecatedFVDiffusion(G& g, DeprecatedDiffusionProblem<G, RT, VC>& prob, int lev = -1) :
+        DeprecatedDiffusion<G, RT, VC>(g, prob,
                 lev == -1 ? g.maxLevel() : lev), gridview(g.levelView(this->level())),
                 indexset(gridview.indexSet()), elementmapper(g, indexset),
                 A(g.size(this->level(), 0), g.size(this->level(), 0), (2*dim+1)*g.size(this->level(), 0), BCRSMatrix<MB>::random),
@@ -96,9 +96,9 @@ public:
         initializeMatrix();
     }
 
-    FVDiffusion(G& g, DiffusionProblem<G, RT, VC>& prob, std::string solverName,
+    DeprecatedFVDiffusion(G& g, DeprecatedDiffusionProblem<G, RT, VC>& prob, std::string solverName,
             std::string preconditionerName, int lev = -1) :
-        Diffusion<G, RT, VC>(g, prob,
+        DeprecatedDiffusion<G, RT, VC>(g, prob,
                 lev == -1 ? g.maxLevel() : lev), gridview(g.levelView(this->level())),
                 indexset(gridview.indexSet()), elementmapper(g, indexset),
                 A(g.size(this->level(), 0), g.size(this->level(), 0), (2*dim+1)*g.size(this->level(), 0), BCRSMatrix<MB>::random),
@@ -119,7 +119,7 @@ private:
     std::string preconditionerName_;
 };
 
-template<class G, class RT, class VC> void FVDiffusion<G, RT, VC>::initializeMatrix() {
+template<class G, class RT, class VC> void DeprecatedFVDiffusion<G, RT, VC>::initializeMatrix() {
     // determine matrix row sizes
     Iterator eendit = gridview.template end<0>();
     for (Iterator it = gridview.template begin<0>(); it != eendit; ++it) {
@@ -169,7 +169,7 @@ template<class G, class RT, class VC> void FVDiffusion<G, RT, VC>::initializeMat
     return;
 }
 
-template<class G, class RT, class VC> void FVDiffusion<G, RT, VC>::assemble(const RT t=0) {
+template<class G, class RT, class VC> void DeprecatedFVDiffusion<G, RT, VC>::assemble(const RT t=0) {
     // initialization: set matrix A to zero
     A = 0;
 
@@ -409,7 +409,7 @@ template<class G, class RT, class VC> void FVDiffusion<G, RT, VC>::assemble(cons
     return;
 }
 
-template<class G, class RT, class VC> void FVDiffusion<G, RT, VC>::solve() {
+template<class G, class RT, class VC> void DeprecatedFVDiffusion<G, RT, VC>::solve() {
     MatrixAdapter<MatrixType,Vector,Vector> op(A);
     InverseOperatorResult r;
 
@@ -422,7 +422,7 @@ template<class G, class RT, class VC> void FVDiffusion<G, RT, VC>::solve() {
             BiCGSTABSolver<Vector> solver(op, preconditioner, 1E-14, 10000, 1);
             solver.apply((this->diffproblem.variables.pressure), f, r);
         } else
-            DUNE_THROW(NotImplemented, "FVDiffusion :: solve : combination "
+            DUNE_THROW(NotImplemented, "DeprecatedFVDiffusion :: solve : combination "
                     << preconditionerName_<< " and "<< solverName_ << ".");
     } else if (preconditionerName_ == "SeqPardiso") {
         SeqPardiso<MatrixType,Vector,Vector> preconditioner(A);
@@ -430,10 +430,10 @@ template<class G, class RT, class VC> void FVDiffusion<G, RT, VC>::solve() {
             LoopSolver<Vector> solver(op, preconditioner, 1E-14, 10000, 1);
             solver.apply(this->diffproblem.variables.pressure, f, r);
         } else
-            DUNE_THROW(NotImplemented, "FVDiffusion :: solve : combination "
+            DUNE_THROW(NotImplemented, "DeprecatedFVDiffusion :: solve : combination "
                     << preconditionerName_<< " and "<< solverName_ << ".");
     } else
-        DUNE_THROW(NotImplemented, "FVDiffusion :: solve : preconditioner "
+        DUNE_THROW(NotImplemented, "DeprecatedFVDiffusion :: solve : preconditioner "
                 << preconditionerName_ << ".");
 //    printmatrix(std::cout, A, "global stiffness matrix", "row", 11, 3);
 //    printvector(std::cout, f, "right hand side", "row", 200, 1, 3);

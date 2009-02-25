@@ -4,7 +4,7 @@
 #define DUNE_CAPILLARYDIFFUSION_HH
 
 #include "dumux/transport/fv/diffusivepart.hh"
-#include "dumux/diffusion/diffusionproblem.hh"
+#include "dumux/diffusion/diffusionproblem_deprecated.hh"
 
 //! \ingroup transport
 //! \defgroup diffPart Diffusive transport
@@ -111,7 +111,7 @@ namespace Dune
       return result;
     }
 
-    CapillaryDiffusion (DiffusionProblem<Grid, Scalar, VC>& problem)
+    CapillaryDiffusion (DeprecatedDiffusionProblem<Grid, Scalar, VC>& problem)
       : problem_(problem), constRel_(problem.materialLaw), wettingPhase_(constRel_.wettingPhase),
     nonwettingPhase_(constRel_.nonwettingPhase)
     {
@@ -121,8 +121,8 @@ namespace Dune
     }
 
   private:
-    DiffusionProblem<Grid, Scalar, VC>& problem_;
-    TwoPhaseRelations& constRel_;
+    DeprecatedDiffusionProblem<Grid, Scalar, VC>& problem_;
+    DeprecatedTwoPhaseRelations& constRel_;
     const Medium& wettingPhase_;
     const Medium& nonwettingPhase_;
     FieldVector gravity_;

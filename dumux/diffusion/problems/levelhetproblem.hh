@@ -11,7 +11,7 @@ namespace Dune {
 //! \ingroup diffusionProblems
 //! example class for diffusion problems
 template<class G, class RT, class VC> class LevelHetProblem :
-    public DiffusionProblem<G,RT,VC> {
+    public DeprecatedDiffusionProblem<G,RT,VC> {
     typedef typename G::ctype DT;
     enum {n=G::dimension};
     typedef typename G::Traits::template Codim<0>::Entity Entity;
@@ -19,8 +19,8 @@ template<class G, class RT, class VC> class LevelHetProblem :
 public:
     LevelHetProblem(VC& variableobj, const int level,
             const char* name = "permeab.dat", const bool create = true,
-            TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false) :
-        DiffusionProblem<G, RT, VC>(variableobj, law, cap),
+            DeprecatedTwoPhaseRelations& law = *(new DeprecatedLinearLaw), const bool cap = false) :
+        DeprecatedDiffusionProblem<G, RT, VC>(variableobj, law, cap),
                 permeability(variableobj.grid, level, name, create) {
     }
 

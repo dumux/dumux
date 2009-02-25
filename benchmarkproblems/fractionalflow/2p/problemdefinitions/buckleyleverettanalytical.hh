@@ -30,7 +30,7 @@ namespace Dune
 
 public:
 
-        BLWithAnalytical(VC& variables, TwoPhaseRelations &law = *(new LinearLaw), const FieldVector<DT,n> Left = 0,
+        BLWithAnalytical(VC& variables, DeprecatedTwoPhaseRelations &law = *(new DeprecatedLinearLaw), const FieldVector<DT,n> Left = 0,
                 const FieldVector<DT,n> Right = 0, RT cfl = 1,
                 RT totalvelocity = 3e-7) :
             ExSolution<G, RT>(variables.grid), BuckleyLeverettTransportProblem<

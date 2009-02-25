@@ -3,26 +3,26 @@
 #ifndef GRAVITYPROBLEM_HH
 #define GRAVITYPROBLEM_HH
 
-#include "dumux/diffusion/diffusionproblem.hh"
+#include "dumux/diffusion/diffusionproblem_deprecated.hh"
 
 namespace Dune
 {
 //! \ingroup diffusionProblems
 //! example class for diffusion problems
     template<class G, class RT, class VC>
-    class GravityProblem : public DiffusionProblem<G,RT,VC>
+    class GravityProblem : public DeprecatedDiffusionProblem<G,RT,VC>
     {
       typedef typename G::ctype DT;
       enum {n=G::dimension};
       typedef typename G::Traits::template Codim<0>::Entity Entity;
 
     public:
-      GravityProblem(VC& variables, G* g, TwoPhaseRelations& law = *(new LinearLaw), FieldVector<DT,n> gravity = *(new FieldVector<DT,n>(0)))
-          : DiffusionProblem<G,RT,VC>(variables, law, false, gravity), grid(g)
+      GravityProblem(VC& variables, G* g, DeprecatedTwoPhaseRelations& law = *(new DeprecatedLinearLaw), FieldVector<DT,n> gravity = *(new FieldVector<DT,n>(0)))
+          : DeprecatedDiffusionProblem<G,RT,VC>(variables, law, false, gravity), grid(g)
       { }
 
       GravityProblem()
-        : DiffusionProblem<G,RT,VC>()
+        : DeprecatedDiffusionProblem<G,RT,VC>()
       { }
 
       FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x, const Entity& e,

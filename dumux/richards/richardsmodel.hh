@@ -4,7 +4,8 @@
 #define DUNE_TWOPHASEMODEL_HH
 
 #include <dune/disc/shapefunctions/lagrangeshapefunctions.hh>
-#include "dumux/operators/p1operatorextended.hh"
+#include <dune/disc/operators/p1operator.hh>
+#include <dune/disc/functions/p1function.hh>
 #include "dumux/nonlinear/nonlinearmodel.hh"
 #include "dumux/fvgeometry/fvelementgeometry.hh"
 
@@ -36,11 +37,12 @@ public:
 template<class G, class RT, class ProblemType, class LocalJac, int m=1>
 class LeafP1TwoPhaseModel
 : public RichardsModel<G, RT, ProblemType, LocalJac,
-		LeafP1FunctionExtended<G, RT, m>, LeafP1OperatorAssembler<G, RT, m> >
+                       LeafP1Function<G, RT, m>,
+                       LeafP1OperatorAssembler<G, RT, m> >
 {
 public:
 	// define the function type:
-	typedef LeafP1FunctionExtended<G, RT, m> FunctionType;
+	typedef LeafP1Function<G, RT, m> FunctionType;
 
 	// define the operator assembler type:
 	typedef LeafP1OperatorAssembler<G, RT, m> OperatorAssembler;

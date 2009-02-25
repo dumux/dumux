@@ -8,7 +8,7 @@ namespace Dune
 //! \ingroup diffusionProblems
 //! example class for diffusion problems
     template<class G, class RT, class VC>
-    class TrapezProblem : public DiffusionProblem<G,RT,VC>
+    class TrapezProblem : public DeprecatedDiffusionProblem<G,RT,VC>
     {
       typedef typename G::ctype DT;
       enum {n=G::dimension};
@@ -16,7 +16,7 @@ namespace Dune
 
     public:
       TrapezProblem(VC& variables)
-        : DiffusionProblem<G,RT,VC>(variables)
+        : DeprecatedDiffusionProblem<G,RT,VC>(variables)
       { }
 
       virtual FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x, const Entity& e,

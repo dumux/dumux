@@ -1,9 +1,9 @@
-// $Id: boxpwsnjacobian.hh 566 2008-09-11 11:38:31Z bernd $
+// $Id: boxpnswjacobian.hh 566 2008-09-11 11:38:31Z bernd $
 
-#ifndef DUNE_BOXPWSNJACOBIAN_DEPRECATED_HH
-#define DUNE_BOXPWSNJACOBIAN_DEPRECATED_HH
+#ifndef DUNE_BOXPNSWJACOBIAN_DEPRECATED_HH
+#define DUNE_BOXPNSWJACOBIAN_DEPRECATED_HH
 
-#warning this file is deprecated, please use boxpwsnjacobian.hh instead
+#warning this file is deprecated, please use boxpnswjacobian.hh instead
 
 #include<map>
 #include<iostream>
@@ -63,16 +63,16 @@ namespace Dune
     - RT    type used for return values
   */
   template<class G, class RT, class BoxFunction = LeafP1Function<G, RT, 2> >
-  class DeprecatedBoxPwSnJacobian
-    : public BoxJacobian<DeprecatedBoxPwSnJacobian<G,RT,BoxFunction>,G,RT,2,BoxFunction>
+  class DeprecatedBoxPnSwJacobian
+    : public BoxJacobian<DeprecatedBoxPnSwJacobian<G,RT,BoxFunction>,G,RT,2,BoxFunction>
   {
     typedef typename G::ctype DT;
     typedef typename G::Traits::template Codim<0>::Entity Entity;
     typedef typename Entity::Geometry Geometry;
-    typedef DeprecatedBoxPwSnJacobian<G,RT,BoxFunction> ThisType;
+    typedef DeprecatedBoxPnSwJacobian<G,RT,BoxFunction> ThisType;
     typedef typename LocalJacobian<ThisType,G,RT,2>::VBlockType VBlockType;
     typedef typename LocalJacobian<ThisType,G,RT,2>::MBlockType MBlockType;
-    enum {pWIdx = 0, satNIdx = 1};
+    enum {pnIdx = 0, satWIdx = 1};
 
 
   public:
@@ -84,7 +84,7 @@ namespace Dune
         struct VariableNodeData;
 
          //! Constructor
-    DeprecatedBoxPwSnJacobian (DeprecatedTwoPhaseProblem<G,RT>& params,
+    DeprecatedBoxPnSwJacobian (DeprecatedTwoPhaseProblem<G,RT>& params,
                   bool levelBoundaryAsDirichlet_, const G& grid,
                   BoxFunction& sol,
                   bool procBoundaryAsDirichlet_=true)
@@ -104,9 +104,9 @@ namespace Dune
             int node, const std::vector<VariableNodeData>& varData)
     {
         VBlockType result;
-        //std::cout << "rhoW = " << varData[node].density[pWIdx] << ", rhoN = " << varData[node].density[satNIdx] << std::endl;
-        result[0] = -varData[node].density[pWIdx]*elData.porosity*sol[node][satNIdx];
-        result[1] = varData[node].density[satNIdx]*elData.porosity*sol[node][satNIdx];
+        //std::cout << "rhoW = " << varData[node].density[pnIdx] << ", rhoN = " << varData[node].density[satWIdx] << std::endl;
+        result[0] = -varData[node].density[pnIdx]*elData.porosity*sol[node][satWIdx];
+        result[1] = varData[node].density[satWIdx]*elData.porosity*sol[node][satWIdx];
 
         return result;
     };
@@ -149,7 +149,7 @@ namespace Dune
               FieldVector<RT, n> pGrad(0);
               for (int k = 0; k < this->fvGeom.numVertices; k++) {
                   FieldVector<DT,n> grad(this->fvGeom.subContVolFace[face].grad[k]);
-                  grad *= (comp) ? varNData[k].pN : sol[k][pWIdx];
+                  grad *= (comp) ? varNData[k].pW : sol[k][pnIdx];
                   pGrad += grad;
               }
 
@@ -217,7 +217,7 @@ namespace Dune
     {
         RT saturationW;
         RT pC;
-        RT pN;
+        RT pW;
         VBlockType mobility;  //Vector with the number of phases
         VBlockType density;
         FieldMatrix<DT,n,n> K;
@@ -233,13 +233,13 @@ namespace Dune
         //FieldVector<RT, 4> parameters = problem.materialLawParameters(this->fvGeom.subContVol[i].global, e, this->fvGeom.subContVol[i].local);
         FieldVector<RT, 4> parameters = problem.materialLawParameters(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
 
-        varData[i].saturationW = 1.0 - sol[i][satNIdx];
-           varData[i].pC = problem.materialLaw().pC(varData[i].saturationW, parameters);
-           varData[i].pN = sol[i][pWIdx] + varData[i].pC;
-           varData[i].mobility[pWIdx] = problem.materialLaw().mobW(varData[i].saturationW, parameters);
-           varData[i].mobility[satNIdx] = problem.materialLaw().mobN(sol[i][satNIdx], parameters);
-           varData[i].density[pWIdx] = problem.materialLaw().wettingPhase.density();
-           varData[i].density[satNIdx] = problem.materialLaw().nonwettingPhase.density();
+        varData[i].saturationW = sol[i][satWIdx];
+        varData[i].pC = problem.materialLaw().pC(varData[i].saturationW, parameters);
+        varData[i].pW = sol[i][pnIdx] - varData[i].pC;
+        varData[i].mobility[satWIdx] = problem.materialLaw().mobW(varData[i].saturationW, parameters);
+        varData[i].mobility[pnIdx] = problem.materialLaw().mobN(1.0 - sol[i][satWIdx], parameters);
+        varData[i].density[satWIdx] = problem.materialLaw().wettingPhase.density();
+        varData[i].density[pnIdx] = problem.materialLaw().nonwettingPhase.density();
     }
 
     void updateVariableData(const Entity& e, const VBlockType* sol, int i, bool old = false)

@@ -28,7 +28,7 @@ namespace Dune
 
 public:
 
-        McWWithAnalytical(VC& variables, TwoPhaseRelations &law = *(new LinearLaw), const FieldVector<DT,n> Left = 0,
+        McWWithAnalytical(VC& variables, DeprecatedTwoPhaseRelations &law = *(new DeprecatedLinearLaw), const FieldVector<DT,n> Left = 0,
                 const FieldVector<DT,n> Right = 0, RT cfl = 1, RT permeability = 1e-10) :
             ExSolution<G, RT>(variables.grid), McWhorterTransportProblem<G, RT, VC>(
                     variables, law, Left, Right, true), CFL(cfl), K(permeability),

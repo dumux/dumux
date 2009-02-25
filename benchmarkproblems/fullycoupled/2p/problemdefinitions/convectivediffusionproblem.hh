@@ -23,7 +23,7 @@
 namespace Dune {
 
 template<class G, class RT> class ConvectiveDiffusionProblem :
-    public TwoPhaseProblem<G, RT> {
+    public DeprecatedTwoPhaseProblem<G, RT> {
     typedef typename G::ctype DT;
     enum {n=G::dimension, m=2};
     typedef typename G::Traits::template Codim<0>::Entity Entity;
@@ -144,13 +144,13 @@ public:
 
     void assembleAdvPart(const G& g, const Entity& e, FieldVector<RT,m> flux);
 
-    ConvectiveDiffusionProblem(TwoPhaseRelations& law = *(new LinearLaw), const FieldVector<DT,n> LowerLeft = 0,
+    ConvectiveDiffusionProblem(DeprecatedTwoPhaseRelations& law = *(new DeprecatedLinearLaw), const FieldVector<DT,n> LowerLeft = 0,
             const FieldVector<DT,n> UpperRight = 0, int chooselaw = BrooksCorey,
             bool calcpeclet = false, bool analyticalsol = false, RT K = 1e-7,
             RT Swr = 0, RT Snr = 0, RT Si = 0, RT Porosity = 0.2,
             RT Lambda = 2.0, RT p0 = 10, RT Alpha = 0.1,//1.74e-4,
             RT N = 3.1257, RT pwleftbc=2e5, RT pwrightbc=2e5) :
-            TwoPhaseProblem<G, RT>(law, analyticalsol),
+            DeprecatedTwoPhaseProblem<G, RT>(law, analyticalsol),
             K_(K),
             LowerLeft_(LowerLeft),
             UpperRight_(UpperRight),

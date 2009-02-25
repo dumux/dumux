@@ -15,7 +15,7 @@ namespace Dune
     typedef typename G::Traits::template Codim<0>::Entity Entity;
 
   public:
-    Fivespotcase1DiffProblem(VC& variableobj, TwoPhaseRelations& law = *(new LinearLaw), RT bcf = 11,
+    Fivespotcase1DiffProblem(VC& variableobj, DeprecatedTwoPhaseRelations& law = *(new DeprecatedLinearLaw), RT bcf = 11,
                  RT pleftbc=2e5, RT prightbc=1.999986e5, const bool cap = false)
       : HomogeneousProblem<G,RT, VC>(variableobj, law, cap),
         LowerLeft_(variableobj.grid.lowerLeft()), UpperRight_(variableobj.grid.upperRight()),
@@ -88,7 +88,7 @@ namespace Dune
     typedef typename G::Traits::template Codim<0>::Entity Entity;
 
   public:
-    Fivespotcase2DiffProblem(VC& variableobj, TwoPhaseRelations& law = *(new LinearLaw), RT bcf = 11,
+    Fivespotcase2DiffProblem(VC& variableobj, DeprecatedTwoPhaseRelations& law = *(new DeprecatedLinearLaw), RT bcf = 11,
                  RT pleftbc=2e5, RT prightbc=0, const bool cap = false)
       : HomogeneousProblem<G,RT,VC>(variableobj, law, cap),
         LowerLeft_(variableobj.grid.lowerLeft()), UpperRight_(variableobj.grid.upperRight()),

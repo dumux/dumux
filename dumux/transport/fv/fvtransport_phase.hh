@@ -16,8 +16,8 @@
 namespace Dune {
 //! \ingroup transport
 //! The finite volume model for the solution of the transport equation
-template<class G, class RT, class VC> class FVTransport :
-    public Transport< G, RT, VC> {
+template<class G, class RT, class VC> class DeprecatedFVTransport :
+    public DeprecatedTransport< G, RT, VC> {
     template<int dim> struct ElementLayout {
         bool contains(Dune::GeometryType gt) {
             return gt.dim() == dim;
@@ -72,16 +72,16 @@ public:
     /*! @brief constructor
      *
      * @param g a DUNE grid object
-     * @param prob an object of class TransportProblem or derived
-     * @param lev the grid level on which the Transport equation is to be solved.
+     * @param prob an object of class DeprecatedTransportProblem or derived
+     * @param lev the grid level on which the DeprecatedTransport equation is to be solved.
      * @param diffPart an object of class DiffusivePart or derived. This determines the diffusive flux incorporated in the transport.
      * @param rec flag to switch on linear reconstruction (second order TVD)
      * @param amax alphamax parameter for slope limiter in TVD
      * @param numFl an object of class Numerical Flux or derived
      */
-    FVTransport(G& g, TransportProblem<G, RT, VC>& prob, int lev = 0, bool rec = false,
+    DeprecatedFVTransport(G& g, DeprecatedTransportProblem<G, RT, VC>& prob, int lev = 0, bool rec = false,
             double amax = 0.8) :
-                Transport<G, RT, VC>(g, prob, lev), gridview(g.levelView(lev)),
+                DeprecatedTransport<G, RT, VC>(g, prob, lev), gridview(g.levelView(lev)),
                 indexset(gridview.indexSet()), elementmapper(g, indexset),
                 reconstruct(rec), alphamax(amax)
                 {}
@@ -98,7 +98,7 @@ private:
     double alphamax;
 };
 
-template<class G, class RT, class VC> int FVTransport<G, RT, VC>::update(const RT t, RT& dt,
+template<class G, class RT, class VC> int DeprecatedFVTransport<G, RT, VC>::update(const RT t, RT& dt,
         RepresentationType& updateVec, RT& cFLFac = 1) {
     // initialize dt very large
     dt = 1E100;
@@ -242,7 +242,7 @@ template<class G, class RT, class VC> int FVTransport<G, RT, VC>::update(const R
     return 0;
 }
 
-template<class G, class RT, class VC> void FVTransport<G, RT, VC>::initialTransport() {
+template<class G, class RT, class VC> void DeprecatedFVTransport<G, RT, VC>::initialTransport() {
 //    std::cout<<"initsat = "<<&this->transproblem.variables.saturation<<std::endl;
     // iterate through leaf grid an evaluate c0 at cell center
     Iterator eendit = gridview.template end<0>();
@@ -263,7 +263,7 @@ template<class G, class RT, class VC> void FVTransport<G, RT, VC>::initialTransp
     return;
 }
 
-template<class G, class RT, class VC> void FVTransport<G, RT, VC>::CalculateSlopes(
+template<class G, class RT, class VC> void DeprecatedFVTransport<G, RT, VC>::CalculateSlopes(
         SlopeType& slope, RT t, RT& cFLFactor) {
 
     double stabilityFactor = 1.0 - cFLFactor*sqrt(cFLFactor);

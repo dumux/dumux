@@ -9,7 +9,7 @@
 #include <dune/common/timer.hh>
 #include "../problemdefinitions/mcwhorterproblem.hh"
 #include "dumux/twophase/problems/uniformtwophaseproblem.hh"
-#include "dumux/twophase/fv/boxpnsw.hh"
+#include "dumux/twophase/fv/boxpnsw_deprecated.hh"
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/material/brookscoreylaw_deprecated.hh"
 #include "dumux/material/vangenuchtenlaw_deprecated.hh"
@@ -58,9 +58,9 @@ int main(int argc, char** argv)
       Oil oil(0);
       Water water(0);
       Uniform mat;
-      Dune::BrooksCoreyLaw law(water, oil,2,5000);
-//      Dune::LinearLaw law(water, oil);
-//      Dune::VanGenuchtenLaw law(water, oil);
+      Dune::DeprecatedBrooksCoreyLaw law(water, oil,2,5000);
+//      Dune::DeprecatedLinearLaw law(water, oil);
+//      Dune::DeprecatedVanGenuchtenLaw law(water, oil);
 
       //calculate with analytical solution
       Dune::McWWithAnalytical<GridType, NumberType> problem(grid,law, LowerLeft, UpperRight);
@@ -68,18 +68,15 @@ int main(int argc, char** argv)
       //calculate without analytical solution
 //      Dune::McWhorterProblem<GridType, NumberType> problem(law, LowerLeft, UpperRight);
 
-      typedef Dune::VtkMultiWriter<GridType::LeafGridView> MultiWriter;
-      typedef Dune::BoxPnSw<GridType, NumberType, MultiWriter> TwoPhase;
+      typedef Dune::DeprecatedBoxPnSw<GridType, NumberType> TwoPhase;
       TwoPhase twoPhase(grid, problem);
 
-      Dune::TimeLoop<GridType, TwoPhase, true> timeloop(0, tEnd, dt,
+      Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt,
       "mcwhorter", 1);
 
       Dune::Timer timer;
       timer.reset();
-      
-      MultiWriter writer("mcworther_fc");
-      timeloop.executeMultiWriter(twoPhase, writer);
+      timeloop.execute(twoPhase);
       std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
 
       //printvector(std::cout, *twoPhase.u, "u", "row", 2, 1, 3);

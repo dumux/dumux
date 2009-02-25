@@ -1,7 +1,7 @@
 // $Id: diffusionproblem.hh 972 2009-01-12 10:15:57Z lauser $
 
-#ifndef DUNE_DIFFUSIONPROBLEM_HH
-#define DUNE_DIFFUSIONPROBLEM_HH
+#ifndef DUNE_DIFFUSIONPROBLEM_DEPRECATED_HH
+#define DUNE_DIFFUSIONPROBLEM_DEPRECATED_HH
 
 #include<iostream>
 #include<iomanip>
@@ -44,7 +44,7 @@ namespace Dune
    *    - RT    type used for return values
    */
   template<class Grid, class Scalar, class VC>
-  class DiffusionProblem {
+  class DeprecatedDiffusionProblem {
 
   protected:
     enum {dim=Grid::dimension, dimWorld=Grid::dimensionworld, numEq=1};
@@ -118,17 +118,17 @@ namespace Dune
     /** @param law implementation of Material laws. Class TwoPhaseRelations or derived.
      *  @param cap flag to include capillary forces.
      */
-    DiffusionProblem(VC& variables, TwoPhaseRelations& materialLaw = *(new LinearLaw),
+    DeprecatedDiffusionProblem(VC& variables, DeprecatedTwoPhaseRelations& materialLaw = *(new DeprecatedLinearLaw),
             const bool capillarity = false, FieldVector<Scalar,dim> gravity = *(new FieldVector<Scalar,dim>(0)))
     : variables(variables), materialLaw(materialLaw), capillarity(capillarity), gravity_(gravity)
     {    }
 
     //! always define virtual destructor in abstract base class
-    virtual ~DiffusionProblem () {}
+    virtual ~DeprecatedDiffusionProblem () {}
 
     //! a class describing relations between two phases and the porous medium
     VC& variables;
-    TwoPhaseRelations& materialLaw;
+    DeprecatedTwoPhaseRelations& materialLaw;
     const bool capillarity;
   protected:
       FieldVector<Scalar,dim> gravity_;

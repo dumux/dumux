@@ -24,10 +24,11 @@ template<class G, class RT> class McWWithAnalytical : public ExSolution<G, RT>,
 
 public:
 
-    McWWithAnalytical(const G &g, TwoPhaseRelations &law = *(new LinearLaw), const FieldVector<DT,n> Left = 0,
+    McWWithAnalytical(const G &g, DeprecatedTwoPhaseRelations &law = *(new DeprecatedLinearLaw), const FieldVector<DT,n> Left = 0,
             const FieldVector<DT,n> Right = 0, int chooselaw = BrooksCorey) :
-        ExSolution<G, RT>(g), McWhorterProblem<G, RT>(law, Left, Right,
-                chooselaw, true), tolanalytic(1e-14), R(0) {
+        ExSolution<G, RT>(g), 
+        McWhorterProblem<G, RT>(law, Left, Right,
+                                chooselaw, true), tolanalytic(1e-14), R(0) {
         prepareanalytical();
     }
 

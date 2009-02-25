@@ -9,7 +9,7 @@ namespace Dune
   //! @brief example class for a transport problem
   template<class G, class RT, class VC>
   class McWhorterTransportProblem
-    : public TransportProblem<G, RT, VC> {
+    : public DeprecatedTransportProblem<G, RT, VC> {
 
     typedef typename G::ctype DT;
     enum {n=G::dimension, m=1};
@@ -51,10 +51,10 @@ namespace Dune
       return poro_;
     }
 
-    McWhorterTransportProblem(VC& variableobj, TwoPhaseRelations& law = *(new LinearLaw),
+    McWhorterTransportProblem(VC& variableobj, DeprecatedTwoPhaseRelations& law = *(new DeprecatedLinearLaw),
              const FieldVector<DT,n> Left = 0, const FieldVector<DT,n> Right = 0,
              bool exsol = false, const bool cap = false, const int level = 0, RT poro=0.3,RT Si=0.0)
-      : TransportProblem<G, RT, VC>(variableobj,law, cap, exsol), left(Left[0]), right(Right[0]),
+      : DeprecatedTransportProblem<G, RT, VC>(variableobj,law, cap, exsol), left(Left[0]), right(Right[0]),
     eps_(1e-8),
     poro_(poro),
     Sinit_(Si)

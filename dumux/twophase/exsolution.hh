@@ -14,6 +14,7 @@
 #include<dune/grid/utility/intersectiongetter.hh>
 #include<dumux/material/twophaserelations_deprecated.hh>
 #include<dumux/material/linearlaw_deprecated.hh>
+#include<disc/shapefunctions/lagrangeshapefunctions.hh>
 
 /**
  * @file

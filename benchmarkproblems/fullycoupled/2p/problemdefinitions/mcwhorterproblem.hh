@@ -23,7 +23,7 @@
 namespace Dune {
 
 template<class G, class RT> class McWhorterProblem :
-    public TwoPhaseProblem<G, RT> {
+    public DeprecatedTwoPhaseProblem<G, RT> {
 
     typedef typename G::ctype DT;
     enum {n=G::dimension, m=2};
@@ -159,13 +159,13 @@ public:
         return values;
     }
 
-    McWhorterProblem(TwoPhaseRelations& law = *(new LinearLaw), const FieldVector<DT,n>  LowerLeft = 0,
+    McWhorterProblem(DeprecatedTwoPhaseRelations& law = *(new DeprecatedLinearLaw), const FieldVector<DT,n>  LowerLeft = 0,
             const FieldVector<DT,n> UpperRight = 0, int chooselaw = BrooksCorey,
             bool analytic = false, RT K = 1e-10, RT Si = 0, RT Swr = 0,
             RT Snr = 0, RT Porosity = 0.3, RT Lambda = 2.0, RT p0 = 5000,
             RT Alpha = 1.74e-4, RT N = 3.1257, RT pnleftbc=2e5,
             RT pnrightbc=1.999986e5) :
-        TwoPhaseProblem<G, RT>(law, analytic),
+        DeprecatedTwoPhaseProblem<G, RT>(law, analytic),
                 K_(K),
                 Sinit_(Si),
                 Porosity_(Porosity),

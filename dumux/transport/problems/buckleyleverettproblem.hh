@@ -11,7 +11,7 @@ namespace Dune
 //! @brief example class for a transport problem
   template<class G, class RT, class VC>
   class BuckleyLeverettProblem
-  : public TransportProblem<G, RT,VC> {
+  : public DeprecatedTransportProblem<G, RT,VC> {
 
       typedef typename G::ctype DT;
       enum {n=G::dimension, m=1, blocksize=2*G::dimension};
@@ -48,9 +48,9 @@ namespace Dune
     }
 
 
-    BuckleyLeverettProblem(VC& variableobj, TwoPhaseRelations& law = *(new LinearLaw),
+    BuckleyLeverettProblem(VC& variableobj, DeprecatedTwoPhaseRelations& law = *(new DeprecatedLinearLaw),
                                 const int level = 0, const bool cap = false)
-    : TransportProblem<G, RT, VC>(variableobj,law, cap), left((variableobj.grid.lowerLeft())[0]), right((variableobj.grid.upperRight())[0])
+    : DeprecatedTransportProblem<G, RT, VC>(variableobj,law, cap), left((variableobj.grid.lowerLeft())[0]), right((variableobj.grid.upperRight())[0])
     {}
   };
 

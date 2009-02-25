@@ -11,8 +11,8 @@ namespace Dune {
 
 /** \todo Please doc me! */
 
-template<class G, class RT, class VC> class FVDiffusionVelocity :
-    public FVDiffusion<G, RT, VC> {
+template<class G, class RT, class VC> class DeprecatedFVDiffusionVelocity :
+    public DeprecatedFVDiffusion<G, RT, VC> {
 
     typedef typename G::Traits::template Codim<0>::Entity Entity;
     typedef typename G::ctype ct;
@@ -27,8 +27,8 @@ template<class G, class RT, class VC> class FVDiffusionVelocity :
     enum {dimworld = G::dimensionworld};
 
 public:
-    FVDiffusionVelocity(G& g, DiffusionProblem<G, RT, VC>& prob, int lev = -1)
-    : FVDiffusion<G,RT,VC>(g, prob, lev, true)
+    DeprecatedFVDiffusionVelocity(G& g, DeprecatedDiffusionProblem<G, RT, VC>& prob, int lev = -1)
+    : DeprecatedFVDiffusion<G,RT,VC>(g, prob, lev, true)
     {    }
 
 

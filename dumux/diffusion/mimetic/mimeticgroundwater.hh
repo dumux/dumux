@@ -86,12 +86,12 @@ namespace Dune
     enum {SIZE=CRShapeFunctionSetContainer<DT,RT,n>::maxsize};
 
     //! Constructor
-    MimeticGroundwaterEquationLocalStiffness (DiffusionProblem<G,RT,VC>& params,
-                          bool levelBoundaryAsDirichlet_, const G& grid, int level=0,
-                          bool procBoundaryAsDirichlet_=true)
-      : problem(params),levelBoundaryAsDirichlet(levelBoundaryAsDirichlet_),
-        procBoundaryAsDirichlet(procBoundaryAsDirichlet_),
-        elementmapper(grid, grid.levelIndexSet(level))
+      MimeticGroundwaterEquationLocalStiffness (DeprecatedDiffusionProblem<G,RT,VC>& params,
+                                                bool levelBoundaryAsDirichlet_, const G& grid, int level=0,
+                                                bool procBoundaryAsDirichlet_=true)
+          : problem(params),levelBoundaryAsDirichlet(levelBoundaryAsDirichlet_),
+            procBoundaryAsDirichlet(procBoundaryAsDirichlet_),
+            elementmapper(grid, grid.levelIndexSet(level))
     {    }
 
 
@@ -522,7 +522,7 @@ namespace Dune
     }
 
     // parameters given in constructor
-    DiffusionProblem<G,RT,VC>& problem;
+    DeprecatedDiffusionProblem<G,RT,VC>& problem;
     bool levelBoundaryAsDirichlet;
     bool procBoundaryAsDirichlet;
     EM elementmapper;

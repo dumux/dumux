@@ -137,9 +137,9 @@ public:
             Dune::IndexInfoFromGrid<GlobalIdType,int> indexinfo;
             (this->u).fillIndexInfoFromGrid(indexinfo);
             typedef Dune::OwnerOverlapCopyCommunication<GlobalIdType,int> CommunicationType;
-            CommunicationType oocc(indexinfo,(this->grid).comm());
+            CommunicationType oocc(indexinfo,MPIHelper::getCommunicator());
             int verbose=0;
-            if ((this->grid).comm().rank() == 0)
+            if (this->grid().comm().rank() == 0)
                 verbose = 1;
             Dune::OverlappingSchwarzOperator<MatrixType,VectorType,VectorType,CommunicationType> oop(*(this->A),oocc);
             Dune::OverlappingSchwarzScalarProduct<VectorType,CommunicationType> osp(oocc);

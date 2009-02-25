@@ -10,16 +10,16 @@ namespace Dune
   //! \ingroup diffusionProblems
   //! example class for diffusion problems
   template<class G, class RT, class VC>
-  class HomogeneousProblem : public DiffusionProblem<G,RT,VC>
+  class HomogeneousProblem : public DeprecatedDiffusionProblem<G,RT,VC>
   {
     typedef typename G::ctype DT;
     enum {n=G::dimension};
     typedef typename G::Traits::template Codim<0>::Entity Entity;
 
   public:
-    HomogeneousProblem(VC& variableobj, TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false,
+    HomogeneousProblem(VC& variableobj, DeprecatedTwoPhaseRelations& law = *(new DeprecatedLinearLaw), const bool cap = false,
                RT K=1e-7)
-      : DiffusionProblem<G,RT,VC>(variableobj,law, cap)
+      : DeprecatedDiffusionProblem<G,RT,VC>(variableobj,law, cap)
     {
         if (n == 1) {
             K_=K;

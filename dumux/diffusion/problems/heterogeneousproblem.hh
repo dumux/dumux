@@ -11,7 +11,7 @@ namespace Dune
     //! \ingroup diffusionProblems
     //! example class for diffusion problems
     template<class G, class RT, class VC>
-    class HeterogeneousProblem : public DiffusionProblem<G,RT,VC>
+    class HeterogeneousProblem : public DeprecatedDiffusionProblem<G,RT,VC>
     {
       typedef typename G::ctype DT;
       enum {n=G::dimension};
@@ -19,8 +19,8 @@ namespace Dune
 
     public:
       HeterogeneousProblem(VC& variableobj, const G& g, const char* name = "permeab.dat", const bool create = true,
-                              TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false)
-        : DiffusionProblem<G,RT,VC>(variableobj,law, cap), permeability(g, name, create)
+                              DeprecatedTwoPhaseRelations& law = *(new DeprecatedLinearLaw), const bool cap = false)
+        : DeprecatedDiffusionProblem<G,RT,VC>(variableobj,law, cap), permeability(g, name, create)
       { }
 
       Dune::FieldMatrix<DT,n,n>& K (const Dune::FieldVector<DT,n>& x, const Entity& e,

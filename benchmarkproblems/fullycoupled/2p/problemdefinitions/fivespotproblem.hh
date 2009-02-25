@@ -23,7 +23,7 @@
 namespace Dune {
 
 template<class G, class RT> class FiveSpotCase1Problem :
-    public TwoPhaseProblem<G, RT> {
+    public DeprecatedTwoPhaseProblem<G, RT> {
     typedef typename G::ctype DT;
     enum {n=G::dimension, m=2};
     typedef typename G::Traits::template Codim<0>::Entity Entity;
@@ -145,13 +145,13 @@ public:
         return values;
     }
 
-    FiveSpotCase1Problem(TwoPhaseRelations& law = *(new LinearLaw), const FieldVector<DT,n> LowerLeft = 0,
+    FiveSpotCase1Problem(DeprecatedTwoPhaseRelations& law = *(new DeprecatedLinearLaw), const FieldVector<DT,n> LowerLeft = 0,
             const FieldVector<DT,n> UpperRight = 0, RT bcf = 11,
             int chooselaw = BrooksCorey, RT K = 1e-7, RT Swr = 0.2,
             RT Snr = 0.2, RT Porosity = 0.2, RT Lambda = 2.0, RT p0 = 0,
             RT Alpha = 0.0037, RT N = 4.7, RT pwlowerleftbc=2e5,
             RT pwupperrightbc=1.999986e5) :
-        TwoPhaseProblem<G, RT>(law),
+        DeprecatedTwoPhaseProblem<G, RT>(law),
                 LowerLeft_(LowerLeft),
                 UpperRight_(UpperRight),
                 eps_(1e-8*UpperRight[0]),
@@ -200,7 +200,7 @@ private:
     int chooselaw_;
 };
 template<class G, class RT> class FiveSpotCase2Problem :
-    public TwoPhaseProblem<G, RT> {
+    public DeprecatedTwoPhaseProblem<G, RT> {
     typedef typename G::ctype DT;
     enum {n=G::dimension, m=2};
     typedef typename G::Traits::template Codim<0>::Entity Entity;
@@ -325,12 +325,12 @@ public:
         return values;
     }
 
-    FiveSpotCase2Problem(TwoPhaseRelations& law = *(new LinearLaw), const FieldVector<DT,n> LowerLeft = 0,
+    FiveSpotCase2Problem(DeprecatedTwoPhaseRelations& law = *(new DeprecatedLinearLaw), const FieldVector<DT,n> LowerLeft = 0,
             const FieldVector<DT,n> UpperRight = 0, RT bcf = 11, int chooselaw = BrooksCorey, RT K = 1e-7,
             RT Swr = 0.2, RT Snr = 0.2, RT Porosity = 0.2, RT Lambda = 2.0,
             RT p0 = 0, RT Alpha = 0.0037, RT N = 4.7, RT pwinbc=2e5,
             RT pwoutbc=2e5) :
-        TwoPhaseProblem<G, RT>(law), LowerLeft_(LowerLeft),
+        DeprecatedTwoPhaseProblem<G, RT>(law), LowerLeft_(LowerLeft),
                 UpperRight_(UpperRight), eps_(1e-8*UpperRight[0]), bcf_(bcf),
                 densityW_(law.wettingPhase.density()),
                 densityN_(law.nonwettingPhase.density()),

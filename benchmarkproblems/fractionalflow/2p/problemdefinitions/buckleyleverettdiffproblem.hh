@@ -13,7 +13,7 @@ template<class G, class RT, class VC> class BuckleyLeverettDiffProblem :
     typedef typename G::Traits::template Codim<0>::Entity Entity;
 
 public:
-    BuckleyLeverettDiffProblem(VC& variableobj, TwoPhaseRelations& law = *(new LinearLaw), const FieldVector<DT,n> Left = 0,
+    BuckleyLeverettDiffProblem(VC& variableobj, DeprecatedTwoPhaseRelations& law = *(new DeprecatedLinearLaw), const FieldVector<DT,n> Left = 0,
             const FieldVector<DT,n> Right = 0, RT pleftbc=2e5,
             RT prightbc=1.999986e5, const bool cap = false) :
         HomogeneousProblem<G, RT, VC>(variableobj, law, cap/*,1e-7*/), Left_(Left[0]),

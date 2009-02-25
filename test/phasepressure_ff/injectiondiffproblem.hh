@@ -1,6 +1,7 @@
 #ifndef INJECTIONDIFFPROBLEM_HH
 #define INJECTIONDIFFPROBLEM_HH
 
+#include "dumux/material/twophaserelations_deprecated.hh"
 #include "dumux/diffusion/problems/homogeneousproblem.hh"
 
 namespace Dune
@@ -16,7 +17,7 @@ namespace Dune
         typedef typename G::Traits::template Codim<0>::Entity Entity;
 
 public:
-        InjectionDiffProblem(VC& variableobj, TwoPhaseRelations& law = *(new LinearLaw), const FieldVector<DT,n> outerLowerLeft = 0.,
+        InjectionDiffProblem(VC& variableobj, DeprecatedTwoPhaseRelations& law = *(new DeprecatedLinearLaw), const FieldVector<DT,n> outerLowerLeft = 0.,
                 const FieldVector<DT,n> outerUpperRight = 0.,
                 const FieldVector<DT,n> innerLowerLeft = 0.,
                 const FieldVector<DT,n> innerUpperRight = 0., const RT depthBOR = 0.,

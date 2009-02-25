@@ -53,9 +53,9 @@ int main(int argc, char** argv)
     Dune::gridinfo(grid);
 
     //Uniform mat;
-    //Dune::VanGenuchtenLaw materialLaw(mat, mat);
-    //Dune::BrooksCoreyLaw materialLaw(mat, mat);
-    //Dune::LinearLaw materialLaw(mat, mat);
+    //Dune::DeprecatedVanGenuchtenLaw materialLaw(mat, mat);
+    //Dune::DeprecatedBrooksCoreyLaw materialLaw(mat, mat);
+    //Dune::DeprecatedLinearLaw materialLaw(mat, mat);
 
     typedef Dune::VariableClass<GridType, NumberType> VC;
     double initsat = 1;
@@ -69,7 +69,7 @@ int main(int argc, char** argv)
 
     Dune::Timer timer;
     timer.reset();
-    Dune::FVDiffusionVelocity<GridType, NumberType, VC> diffusion(grid, problem);
+    Dune::DeprecatedFVDiffusionVelocity<GridType, NumberType, VC> diffusion(grid, problem);
     // Dune::FEDiffusion<GridType, NumberType> diffusion(grid, problem);
     // Dune::MimeticDiffusion<GridType, NumberType, VC> diffusion(grid, problem);
 

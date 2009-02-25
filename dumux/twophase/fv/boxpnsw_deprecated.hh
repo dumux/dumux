@@ -1,9 +1,9 @@
-// $Id: boxpwsn.hh 581 2008-09-12 10:11:17Z klaus $
+// $Id: boxpnsw.hh 581 2008-09-12 10:11:17Z klaus $
 
-#ifndef DUNE_BOXPWSN_DEPRECATED_HH
-#define DUNE_BOXPWSN_DEPRECATED_HH
+#ifndef DUNE_BOXPNSW_DEPRECATED_HH
+#define DUNE_BOXPNSW_DEPRECATED_HH
 
-#warning this file is deprecated, please use boxpwsn.hh instead
+#warning this file is deprecated, please use boxpnsw.hh instead
 
 #include<dune/istl/operators.hh>
 #include<dune/istl/solvers.hh>
@@ -43,18 +43,18 @@
 #include "dumux/nonlinear/newtonmethod.hh"
 #include "dumux/twophase/twophasemodel_deprecated.hh"
 #include "dumux/twophase/twophaseproblem_deprecated.hh"
-#include "dumux/twophase/fv/boxpwsnjacobian_deprecated.hh"
+#include "dumux/twophase/fv/boxpnswjacobian_deprecated.hh"
 
 namespace Dune {
 
 /**
- \brief Two phase model with Pw and Sn as primary unknowns
+ \brief Two phase model with Pn and Sw as primary unknowns
 
- This implements a two phase model with Pw and Sn as primary unknowns.
+ This implements a two phase model with Pn and Sw as primary unknowns.
  */
 template<class G, class RT>
-class DeprecatedBoxPwSn
-: public LeafP1TwoPhaseModel<G, RT, DeprecatedTwoPhaseProblem<G, RT>, DeprecatedBoxPwSnJacobian<G, RT> >
+class DeprecatedBoxPnSw
+: public LeafP1TwoPhaseModel<G, RT, DeprecatedTwoPhaseProblem<G, RT>, DeprecatedBoxPnSwJacobian<G, RT> >
 {
 
 public:
@@ -62,7 +62,7 @@ public:
     typedef DeprecatedTwoPhaseProblem<G, RT> ProblemType;
 
     // define the local Jacobian (also change the template argument above)
-    typedef DeprecatedBoxPwSnJacobian<G, RT> LocalJacobian;
+    typedef DeprecatedBoxPnSwJacobian<G, RT> LocalJacobian;
 
     typedef LeafP1TwoPhaseModel<G, RT, ProblemType, LocalJacobian>
             ThisLeafP1TwoPhaseModel;
@@ -73,7 +73,7 @@ public:
 
     enum {m = 2};
 
-    typedef DeprecatedBoxPwSn<G, RT> ThisType;
+    typedef DeprecatedBoxPnSw<G, RT> ThisType;
     typedef typename ThisLeafP1TwoPhaseModel::FunctionType::RepresentationType VectorType;
     typedef typename ThisLeafP1TwoPhaseModel::OperatorAssembler::RepresentationType MatrixType;
     typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator;
@@ -82,7 +82,7 @@ public:
 #endif
 
 
-    DeprecatedBoxPwSn(const G& g, ProblemType& prob)
+    DeprecatedBoxPnSw(const G& g, ProblemType& prob)
     : ThisLeafP1TwoPhaseModel(g, prob)
     {}
 

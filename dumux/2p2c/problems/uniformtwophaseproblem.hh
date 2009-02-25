@@ -134,7 +134,7 @@ namespace Dune
         return values;
     }
 
-    UniformTwoPhaseProblem(TwoPhaseRelations& law = *(new LinearLaw))
+    UniformTwoPhaseProblem(TwoPhaseRelations& law = *(new DeprecatedLinearLaw))
     : TwoPhaseProblem<Grid, Scalar>(law)
     {
         permloc = 0;

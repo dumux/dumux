@@ -8,7 +8,7 @@ namespace Dune
 //! \ingroup diffusionProblems
 //! example class for diffusion problems
     template<class G, class RT, class VC>
-    class FVCA5Test8Problem : public DiffusionProblem<G,RT,VC>
+    class FVCA5Test8Problem : public DeprecatedDiffusionProblem<G,RT,VC>
     {
         template<int dim>
         struct ElementLayout
@@ -27,7 +27,7 @@ namespace Dune
 
     public:
       FVCA5Test8Problem(VC& variables, G& grid)
-        : DiffusionProblem<G,RT,VC>(variables), elementmapper(grid, grid.levelIndexSet(grid.maxLevel()))
+        : DeprecatedDiffusionProblem<G,RT,VC>(variables), elementmapper(grid, grid.levelIndexSet(grid.maxLevel()))
       {
           permloc_[0][0] = permloc_[1][1] = 1.0;
           permloc_[0][1] = permloc_[1][0] = 0.0;

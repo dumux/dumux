@@ -8,7 +8,7 @@ namespace Dune
 //! \ingroup diffusionProblems
 //! example class for diffusion problems
     template<class G, class RT, class VC>
-    class FVCA5Test7Problem : public DiffusionProblem<G,RT,VC>
+    class FVCA5Test7Problem : public DeprecatedDiffusionProblem<G,RT,VC>
     {
       typedef typename G::ctype DT;
       enum {n=G::dimension};
@@ -16,7 +16,7 @@ namespace Dune
 
     public:
       FVCA5Test7Problem(VC& variables, double delta = 0.2)
-        : DiffusionProblem<G,RT,VC>(variables)
+        : DeprecatedDiffusionProblem<G,RT,VC>(variables)
       {
           delta_ = 0.2;
       }

@@ -3,7 +3,7 @@
 #ifndef UNIFORMPROBLEM_HH
 #define UNIFORMPROBLEM_HH
 
-#include "dumux/diffusion/diffusionproblem.hh"
+#include "dumux/diffusion/diffusionproblem_deprecated.hh"
 #include <dune/istl/bvector.hh>
 
 namespace Dune
@@ -11,15 +11,15 @@ namespace Dune
 //! \ingroup diffusionProblems
 //! example class for diffusion problems
     template<class G, class RT, class VC>
-    class UniformProblem : public DiffusionProblem<G,RT,VC>
+    class UniformProblem : public DeprecatedDiffusionProblem<G,RT,VC>
     {
       typedef typename G::ctype DT;
       enum {n=G::dimension};
       typedef typename G::Traits::template Codim<0>::Entity Entity;
 
     public:
-      UniformProblem(VC& variableobj, TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false)
-        : DiffusionProblem<G,RT,VC>(variableobj,law, cap)
+      UniformProblem(VC& variableobj, DeprecatedTwoPhaseRelations& law = *(new DeprecatedLinearLaw), const bool cap = false)
+        : DeprecatedDiffusionProblem<G,RT,VC>(variableobj,law, cap)
         {
         permloc = 0;
         for (int k = 0; k < n; k++)
@@ -28,7 +28,7 @@ namespace Dune
         }
 
       UniformProblem()
-        : DiffusionProblem<G,RT,VC>()
+        : DeprecatedDiffusionProblem<G,RT,VC>()
       {
         permloc = 0;
         for (int k = 0; k < n; k++)

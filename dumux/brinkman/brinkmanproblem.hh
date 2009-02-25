@@ -114,7 +114,7 @@ namespace Dune
     /** @param law implementation of Material laws. Class TwoPhaseRelations or derived.
      *  @param cap flag to include capillary forces.
      */
-    BrinkmanProblem(TwoPhaseRelations& law = *(new LinearLaw))
+    BrinkmanProblem(DeprecatedTwoPhaseRelations& law = *(new DeprecatedLinearLaw))
     : materialLaw(law)
     {    }
 
@@ -122,7 +122,7 @@ namespace Dune
     virtual ~BrinkmanProblem () {}
 
     //! a class describing relations between two phases and the porous medium
-    TwoPhaseRelations& materialLaw;
+    DeprecatedTwoPhaseRelations& materialLaw;
   };
 
 }

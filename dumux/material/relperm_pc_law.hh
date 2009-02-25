@@ -1,7 +1,7 @@
 // $Id$
 
-#ifndef DUNE_RELATIVEPERMEABILITY_HH
-#define DUNE_RELATIVEPERMEABILITY_HH
+#ifndef DUNE_RELPERM_PC_LAW_HH
+#define DUNE_RELPERM_PC_LAW_HH
 
 #include <dumux/material/property_baseclasses.hh>
 

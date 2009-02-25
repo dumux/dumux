@@ -96,14 +96,14 @@ namespace Dune
     virtual RT initial (const FieldVector<DT,n>& x, const Entity& e,
                   const FieldVector<DT,n>& xi) const = 0;
 
-    ParabolicProblem(TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false)
+    ParabolicProblem(DeprecatedTwoPhaseRelations& law = *(new DeprecatedLinearLaw), const bool cap = false)
     : materialLaw(law), capillary(cap)
     {    }
 
     //! always define virtual destructor in abstract base class
     virtual ~ParabolicProblem () {}
 
-    TwoPhaseRelations& materialLaw;
+    DeprecatedTwoPhaseRelations& materialLaw;
     const bool capillary;
   };
 

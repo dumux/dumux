@@ -24,7 +24,7 @@ template<class G, class RT> class BLWithAnalytical : public ExSolution<G, RT>,
 
 public:
 
-    BLWithAnalytical(const G &g, TwoPhaseRelations &law = *(new LinearLaw), const FieldVector<DT,n> Left = 0,
+    BLWithAnalytical(const G &g, DeprecatedTwoPhaseRelations &law = *(new DeprecatedLinearLaw), const FieldVector<DT,n> Left = 0,
             const FieldVector<DT,n> Right = 0, int chooselaw = BrooksCorey,
             RT totalvelocity = 3e-7) :
         ExSolution<G, RT>(g), BuckleyLeverettProblem<G, RT>(law, Left, Right,

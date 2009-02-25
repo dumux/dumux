@@ -12,7 +12,7 @@ namespace Dune
   /** \ingroup material
    * @brief Represents the linear relative permability - saturation relation \f$ k_{r\alpha}(S) = \frac{S-S_{r\alpha}}{1-S_{r\alpha}} \f$
    */
-  class LinearLaw : public TwoPhaseRelations
+  class DeprecatedLinearLaw : public DeprecatedTwoPhaseRelations
   {
   public:
     double pC (double saturationW)
@@ -67,8 +67,8 @@ namespace Dune
       return (0.0);
     }
 
-    LinearLaw(const Medium& wP = *(new Uniform), const Medium& nwP = *(new Uniform),double pcmax = 0.0,double pcmin = 0.0)
-      : TwoPhaseRelations(wP, nwP, true),maxpc(pcmax),minpc(pcmin)
+    DeprecatedLinearLaw(const Medium& wP = *(new Uniform), const Medium& nwP = *(new Uniform),double pcmax = 0.0,double pcmin = 0.0)
+      : DeprecatedTwoPhaseRelations(wP, nwP, true),maxpc(pcmax),minpc(pcmin)
     {     }
 
   private:

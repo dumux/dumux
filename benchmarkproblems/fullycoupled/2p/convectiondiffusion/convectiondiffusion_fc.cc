@@ -58,12 +58,12 @@ int main(int argc, char** argv)
 
     Oil oil(0.);
     Water water(0.);
-    Dune::BrooksCoreyLaw law(water, oil,2.0,10);
-    //Dune::LinearLaw law(water, oil);
+    Dune::DeprecatedBrooksCoreyLaw law(water, oil,2.0,10);
+    //Dune::DeprecatedLinearLaw law(water, oil);
 
     Dune::ConvectiveDiffusionProblem<GridType, NumberType> problem(law, LowerLeft, UpperRight,/*VanGenuchten*/BrooksCorey);
 
-    typedef Dune::BoxPwSn<GridType, NumberType> TwoPhase;
+    typedef Dune::DeprecatedBoxPwSn<GridType, NumberType> TwoPhase;
     TwoPhase twoPhase(grid, problem);
 
     Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt,

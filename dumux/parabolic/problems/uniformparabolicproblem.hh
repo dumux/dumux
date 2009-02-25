@@ -18,7 +18,7 @@ namespace Dune
       typedef typename G::Traits::template Codim<0>::Entity Entity;
 
     public:
-      UniformParabolicProblem(G& g, TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false)
+      UniformParabolicProblem(G& g, DeprecatedTwoPhaseRelations& law = *(new DeprecatedLinearLaw), const bool cap = false)
         : ParabolicProblem<G,RT>(law, cap)
       { }
 

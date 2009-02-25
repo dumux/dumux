@@ -256,7 +256,7 @@ namespace Dune
         return values;
     }
 
-    MincLensProblem(TwoPhaseRelations& law = *(new LinearLaw),
+    MincLensProblem(DeprecatedTwoPhaseRelations& law = *(new DeprecatedLinearLaw),
             const FieldVector<DT,n> outerLowerLeft = 0, const FieldVector<DT,n> outerUpperRight = 0,
             const FieldVector<DT,n> innerLowerLeft = 0, const FieldVector<DT,n> innerUpperRight = 0,
             RT outerKFracture = 4.0e-10, RT innerKFracture = 9.0e-13,

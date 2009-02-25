@@ -39,7 +39,7 @@ namespace Dune
    *    - Scalar    type used for return values
    */
   template<class Grid, class Scalar>
-  class UniformTwoPhaseProblem : public TwoPhaseProblem<Grid, Scalar> {
+  class UniformTwoPhaseProblem : public DeprecatedTwoPhaseProblem<Grid, Scalar> {
     enum {dim=Grid::dimension, numEq=2};
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
     typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
@@ -134,8 +134,8 @@ namespace Dune
         return values;
     }
 
-    UniformTwoPhaseProblem(TwoPhaseRelations& law = *(new LinearLaw))
-    : TwoPhaseProblem<Grid, Scalar>(law)
+    UniformTwoPhaseProblem(DeprecatedTwoPhaseRelations& law = *(new DeprecatedLinearLaw))
+    : DeprecatedTwoPhaseProblem<Grid, Scalar>(law)
     {
         permloc = 0;
 

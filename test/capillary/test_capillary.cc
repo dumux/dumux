@@ -58,9 +58,9 @@ int main(int argc, char** argv)
     grid.globalRefine(0);
 
     Uniform mat;
-    //Dune::LinearLaw materialLaw(mat, mat);
-    Dune::BrooksCoreyLaw materialLaw(mat, mat,2,10000);
-    //Dune::VanGenuchtenLaw materialLaw(mat, mat);
+    //Dune::DeprecatedLinearLaw materialLaw(mat, mat);
+    Dune::DeprecatedBrooksCoreyLaw materialLaw(mat, mat,2,10000);
+    //Dune::DeprecatedVanGenuchtenLaw materialLaw(mat, mat);
 
     typedef Dune::VariableClass<GridType, NumberType> VC;
 
@@ -71,15 +71,15 @@ int main(int argc, char** argv)
     Dune::HomogeneousProblem<GridType, NumberType, VC> diffusionProblem(variables, materialLaw);
     //diffusionProblem.permeability.vtkout("permeability", grid);
 
-    typedef Dune::FVTransport<GridType, NumberType,VC> Transport;
+    typedef Dune::DeprecatedFVTransport<GridType, NumberType,VC> DeprecatedTransport;
     //Dune::DiffusivePart<GridType, NumberType> diffPart;
     Dune::CapillaryDiffusion<GridType, NumberType,VC> diffPart(diffusionProblem);
-    Transport transport(grid, transportProblem, grid.maxLevel(), diffPart, reconstruct, alphaMax);
+    DeprecatedTransport transport(grid, transportProblem, grid.maxLevel(), diffPart, reconstruct, alphaMax);
 
-    typedef Dune::FVDiffusionVelocity<GridType, NumberType,VC> Diffusion;
-    Diffusion diffusion(grid, diffusionProblem, grid.maxLevel());
+    typedef Dune::DeprecatedFVDiffusionVelocity<GridType, NumberType,VC> DeprecatedDiffusion;
+    DeprecatedDiffusion diffusion(grid, diffusionProblem, grid.maxLevel());
 
-    typedef Dune::IMPES<GridType, Diffusion, Transport,VC> IMPES;
+    typedef Dune::IMPES<GridType, DeprecatedDiffusion, DeprecatedTransport,VC> IMPES;
     IMPES fractionalflow(diffusion, transport, iterFlag, nIter, maxDefect);
 
     Dune::TimeLoop<GridType, IMPES > timeloop(tStart, tEnd, fileName, modulo, cFLFactor);

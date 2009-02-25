@@ -10,7 +10,7 @@ namespace Dune
 //! \ingroup transportProblems
 //! @brief example class for a transport problem
   template<class G, class RT, class VC>
-  class SimpleParabolicProblem : public TransportProblem<G, RT, VC > {
+  class SimpleParabolicProblem : public DeprecatedTransportProblem<G, RT, VC > {
       typedef typename G::ctype DT;
       enum {n=G::dimension, m=1};
       typedef typename G::Traits::template Codim<0>::Entity Entity;
@@ -53,12 +53,12 @@ namespace Dune
         return vLoc;
     }
 
-    SimpleParabolicProblem(VC& variables, const G& g, TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false)
-    : TransportProblem<G, RT, VC>(variables, law, cap), left((g.lowerLeft())[0]), right((g.upperRight())[0])
+    SimpleParabolicProblem(VC& variables, const G& g, DeprecatedTwoPhaseRelations& law = *(new DeprecatedLinearLaw), const bool cap = false)
+    : DeprecatedTransportProblem<G, RT, VC>(variables, law, cap), left((g.lowerLeft())[0]), right((g.upperRight())[0])
     {    }
 
-    SimpleParabolicProblem(VC& variables, TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false)
-    : TransportProblem<G, RT, VC>(variables, law, cap), left(0), right(1)
+    SimpleParabolicProblem(VC& variables, DeprecatedTwoPhaseRelations& law = *(new DeprecatedLinearLaw), const bool cap = false)
+    : DeprecatedTransportProblem<G, RT, VC>(variables, law, cap), left(0), right(1)
     {    }
   };
 

@@ -50,9 +50,9 @@ int main(int argc, char** argv)
     grid.globalRefine(0);
 
     Uniform mat;
-    //Dune::VanGenuchtenLaw materialLaw(mat, mat);
-    Dune::BrooksCoreyLaw materialLaw(mat, mat);
-    //Dune::LinearLaw materialLaw(mat, mat);
+    //Dune::DeprecatedVanGenuchtenLaw materialLaw(mat, mat);
+    Dune::DeprecatedBrooksCoreyLaw materialLaw(mat, mat);
+    //Dune::DeprecatedLinearLaw materialLaw(mat, mat);
 
     typedef Dune::VariableClass<GridType, NumberType> VC;
     double initsat=0;
@@ -61,8 +61,8 @@ int main(int argc, char** argv)
     vel[0] = 1.0/6.0*1e-6;
     VC variables(grid,initsat,initpress,vel);
 
-    typedef Dune::FVTransport<GridType, NumberType, VC> HyperbolicPart;
-    typedef Dune::FVTransport<GridType, NumberType, VC> ParabolicPart;
+    typedef Dune::DeprecatedFVTransport<GridType, NumberType, VC> HyperbolicPart;
+    typedef Dune::DeprecatedFVTransport<GridType, NumberType, VC> ParabolicPart;
     typedef Dune::FVSplittedTransport<GridType, NumberType, VC> SplittedTransport;
 
     Dune::DiffusivePart<GridType, NumberType> diffPart;

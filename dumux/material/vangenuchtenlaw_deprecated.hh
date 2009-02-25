@@ -14,7 +14,7 @@ namespace Dune
    *
    *  Employs the van Genuchten non-linear relative permeability/saturation relation.
    */
-  class VanGenuchtenLaw : public TwoPhaseRelations
+  class DeprecatedVanGenuchtenLaw : public DeprecatedTwoPhaseRelations
   {
   public:
     double pC (double saturationW)
@@ -172,9 +172,9 @@ namespace Dune
       return 0;
     }
 
-    VanGenuchtenLaw(const Medium& wP = *(new Uniform), const Medium& nwP = *(new Uniform),
+    DeprecatedVanGenuchtenLaw(const Medium& wP = *(new Uniform), const Medium& nwP = *(new Uniform),
             double n = 0.0, double a = 0.0, double e = 0.0, double g = 0.0, double eps = 0.0)
-      : TwoPhaseRelations(wP, nwP, false)
+      : DeprecatedTwoPhaseRelations(wP, nwP, false)
     {
       epsilon = e ? e : 0.5;
       gamma = g ? g : (1/3);

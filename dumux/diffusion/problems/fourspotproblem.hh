@@ -21,7 +21,7 @@ namespace Dune
 
     public:
       FourSpotProblem(G& g, const int level, const char* name = "permeab.dat", const bool create = true,
-                              TwoPhaseRelations& law = *(new LinearLaw), const bool cap = false)
+                              TwoPhaseRelations& law = *(new DeprecatedLinearLaw), const bool cap = false)
         : grid(g), DiffusionProblem<G,RT,VC>(law, cap), permeability(g, level, name, create)
       { }
 

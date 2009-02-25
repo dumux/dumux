@@ -146,7 +146,7 @@ public:
     virtual FieldVector<RT,4> materialLawParametersMatrix(const FieldVector<DT,n>& x,
             const Entity& e, const FieldVector<DT,n>& xi) const = 0;
 
-    TwoPhaseRelations& materialLaw() {
+    DeprecatedTwoPhaseRelations& materialLaw() {
         return materialLaw_;
     }
 
@@ -163,8 +163,9 @@ public:
         return;
     }
 
-    MincProblem(TwoPhaseRelations& law = *(new
-            LinearLaw), const bool exsol = false) :
+    MincProblem(DeprecatedTwoPhaseRelations& law = 
+                *(new DeprecatedLinearLaw), 
+                const bool exsol = false) :
       exsolution(exsol),  materialLaw_(law) {
     }
 
@@ -175,7 +176,7 @@ public:
     const bool exsolution;
 
 protected:
-    TwoPhaseRelations& materialLaw_;
+    DeprecatedTwoPhaseRelations& materialLaw_;
 };
 
 }

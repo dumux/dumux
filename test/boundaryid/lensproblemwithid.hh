@@ -175,7 +175,7 @@ namespace Dune
         return values;
     }
 
-    LensProblemWithID(TwoPhaseRelations& law = *(new LinearLaw),
+    LensProblemWithID(TwoPhaseRelations& law = *(new DeprecatedLinearLaw),
             const FieldVector<DT,n> outerLowerLeft = 0, const FieldVector<DT,n> outerUpperRight = 0,
             const FieldVector<DT,n> innerLowerLeft = 0, const FieldVector<DT,n> innerUpperRight = 0,
             RT outerK = 4.6e-10, RT innerK = 9.05e-13,

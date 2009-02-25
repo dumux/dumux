@@ -24,7 +24,7 @@
 namespace Dune {
 
 template<class G, class RT> class BuckleyLeverettProblem :
-    public TwoPhaseProblem<G, RT> {
+    public DeprecatedTwoPhaseProblem<G, RT> {
     typedef typename G::ctype DT;
     enum {n=G::dimension, m=2};
     typedef typename G::Traits::template Codim<0>::Entity Entity;
@@ -158,13 +158,13 @@ public:
         return values;
     }
 
-    BuckleyLeverettProblem(TwoPhaseRelations& law = *(new LinearLaw), const FieldVector<DT,n> LowerLeft = 0,
+    BuckleyLeverettProblem(DeprecatedTwoPhaseRelations& law = *(new DeprecatedLinearLaw), const FieldVector<DT,n> LowerLeft = 0,
             const FieldVector<DT,n> UpperRight = 0,
             int chooselaw = BrooksCorey, bool analytic = false, RT K = 1e-7,
             RT Swr = 0.2, RT Snr = 0.2, RT Porosity = 0.2, RT Lambda = 2.0,
             RT p0 =0, RT Alpha = 80, RT N = 4, RT pwleftbc=2e5,
             RT pwrightbc=1.999984e5) :
-            TwoPhaseProblem<G, RT>(law, analytic),
+            DeprecatedTwoPhaseProblem<G, RT>(law, analytic),
             K_(K),
             LowerLeft_(LowerLeft),
             UpperRight_(UpperRight),

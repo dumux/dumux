@@ -129,7 +129,7 @@ namespace Dune
         return values;
     }
 
-    CO2Problem11(TwoPhaseRelations& law = *(new LinearLaw), RT pdown = 3.086e7)
+    CO2Problem11(TwoPhaseRelations& law = *(new DeprecatedLinearLaw), RT pdown = 3.086e7)
     : TwoPhaseProblem<G, RT>(law)
     {
         p0 = pdown;

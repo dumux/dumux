@@ -11,7 +11,7 @@ namespace Dune
 //! @brief example class for a transport problem
   template<class G, class RT, class VC>
   class InitialBallProblem
-  : public TransportProblem<G, RT, VC> {
+  : public DeprecatedTransportProblem<G, RT, VC> {
         template<int dim>
         struct ElementLayout
         {
@@ -71,9 +71,9 @@ namespace Dune
         return(this->velocity[elemId][numberInSelf]);
     }
 
-    InitialBallProblem(VC& variables, const G& g, TwoPhaseRelations& law = *(new LinearLaw),
+    InitialBallProblem(VC& variables, const G& g, DeprecatedTwoPhaseRelations& law = *(new DeprecatedLinearLaw),
                                 const int level = 0)
-    : TransportProblem<G, RT, VC>(variables, law), left((g.lowerLeft())[0]), right((g.upperRight())[0]),
+    : DeprecatedTransportProblem<G, RT, VC>(variables, law), left((g.lowerLeft())[0]), right((g.upperRight())[0]),
       bottom((g.lowerLeft())[1]), top((g.upperRight())[1]),
       elementmapper(g, g.levelIndexSet(level))
     {

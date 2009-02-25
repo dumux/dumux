@@ -1,7 +1,7 @@
 // $Id: transportproblem.hh 946 2008-12-19 14:33:48Z mwolff $
 
-#ifndef DUNE_TRANSPORTPROBLEM_HH
-#define DUNE_TRANSPORTPROBLEM_HH
+#ifndef DUNE_TRANSPORTPROBLEM_DEPRECATED_HH
+#define DUNE_TRANSPORTPROBLEM_DEPRECATED_HH
 
 #warning this file is deprecated, please use transportproblem.hh instead
 
@@ -43,7 +43,7 @@ namespace Dune
 *    - RT    type used for return values
 */
 template<class Grid, class Scalar, class VC>
-class TransportProblem {
+class DeprecatedTransportProblem {
     enum {dim=Grid::dimension, dimWorld=Grid::dimensionworld, numEq=1, blocksize=2*Grid::dimension};
 
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
@@ -122,16 +122,16 @@ public:
     *  @param cap flag for including capillary forces.
     */
 
-    TransportProblem(VC& variables, TwoPhaseRelations& materialLaw = *(new LinearLaw), const bool capillarity = false, const bool exsol = false)
+    DeprecatedTransportProblem(VC& variables, DeprecatedTwoPhaseRelations& materialLaw = *(new DeprecatedLinearLaw), const bool capillarity = false, const bool exsol = false)
     : variables(variables), capillarity(capillarity), materialLaw(materialLaw),exsolution(exsol), uE(0)
     {    }
 
     //! always define virtual destructor in abstract base class
-    virtual ~TransportProblem () {}
+    virtual ~DeprecatedTransportProblem () {}
 
     VC& variables;
     const bool capillarity;
-    TwoPhaseRelations& materialLaw;
+    DeprecatedTwoPhaseRelations& materialLaw;
     const bool exsolution;
     BlockVector<FieldVector<Scalar, 2> > uE;
 };

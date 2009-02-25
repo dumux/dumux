@@ -13,7 +13,7 @@ namespace Dune
        typedef typename G::Traits::template Codim<0>::Entity Entity;
 
    public:
-     McWhorterDiffProblem(VC& variableobj, TwoPhaseRelations& law = *(new LinearLaw),
+     McWhorterDiffProblem(VC& variableobj, DeprecatedTwoPhaseRelations& law = *(new DeprecatedLinearLaw),
                                  const FieldVector<DT,n> Left = 0, const FieldVector<DT,n> Right = 0,
                RT pleftbc=1.95e5, RT prightbc=0, const bool cap = false)
        : HomogeneousProblem<G,RT,VC>(variableobj, law, cap,1e-10),

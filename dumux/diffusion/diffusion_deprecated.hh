@@ -36,9 +36,9 @@ namespace Dune
 
    */
   template<class G, class RT,class VC>
-  class Diffusion {
+  class DeprecatedDiffusion {
   public:
-    DiffusionProblem<G, RT, VC>& diffproblem; //!< problem data
+    DeprecatedDiffusionProblem<G, RT, VC>& diffproblem; //!< problem data
     typedef RT NumberType;
 
     //! \brief Calculate the pressure.
@@ -69,14 +69,14 @@ namespace Dune
     }
 
     //! always define virtual destructor in abstract base class
-    virtual ~Diffusion () {}
+    virtual ~DeprecatedDiffusion () {}
 
     //! without specification of a level, the class works on the leaf grid.
     /**
      * \param g grid object of type G
      * \param prob a problem class object derived from DiffusionProblem
     */
-    Diffusion(const G& g, DiffusionProblem<G, RT, VC>& prob)
+    DeprecatedDiffusion(const G& g, DeprecatedDiffusionProblem<G, RT, VC>& prob)
     : grid_(g), diffproblem(prob), level_(g.maxLevel())
     {
     }
@@ -87,7 +87,7 @@ namespace Dune
      * \param prob a problem class object derived from DiffusionProblem
      * \param lev the grid level to work on
      */
-    Diffusion(const G& g, DiffusionProblem<G, RT, VC>& prob, int lev)
+    DeprecatedDiffusion(const G& g, DeprecatedDiffusionProblem<G, RT, VC>& prob, int lev)
     : diffproblem(prob), grid_(g), level_(lev)
     {
     }

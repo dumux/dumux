@@ -22,7 +22,7 @@ namespace Dune
      *  \f$\text{d}p_\text{c}/\text{d}S_\text{e}\f$ can be calculated.
      *  For use in Properties.
      */
-    class TwoPhaseRelations {
+    class DeprecatedTwoPhaseRelations {
     public:
       /*! \brief Implements the wetting phase mobility/saturation relation.
        *
@@ -174,12 +174,12 @@ namespace Dune
           return linear_;
       }
 
-      TwoPhaseRelations(const Medium& wP = *(new Uniform), const Medium& nwP = *(new Uniform),
-                          const bool lin = false)
+      DeprecatedTwoPhaseRelations(const Medium& wP = *(new Uniform), const Medium& nwP = *(new Uniform),
+                                  const bool lin = false)
       : wettingPhase(wP), nonwettingPhase(nwP), linear_(lin)
       {     }
 
-      virtual ~TwoPhaseRelations()
+      virtual ~DeprecatedTwoPhaseRelations()
       {      }
 
 

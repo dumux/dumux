@@ -76,9 +76,9 @@ int main(int argc, char** argv) {
 
         Oil oil(0.2);
         Water water(0.2);
-//        Dune::BrooksCoreyLaw law(water, oil,2,0);
-        Dune::LinearLaw law(water, oil);
-        //Dune::VanGenuchtenLaw law(water, oil);
+//        Dune::DeprecatedBrooksCoreyLaw law(water, oil,2,0);
+        Dune::DeprecatedLinearLaw law(water, oil);
+        //Dune::DeprecatedVanGenuchtenLaw law(water, oil);
 
         //Calculate with analytical solution
         Dune::BLWithAnalytical<GridType, NumberType> problem(grid,law, Left, Right);
@@ -86,7 +86,7 @@ int main(int argc, char** argv) {
         //Calculate without analytical solution
 //        Dune::BuckleyLeverettProblem<GridType, NumberType> problem(law, Left, Right,/*VanGenuchten*/BrooksCorey);
 
-        typedef Dune::BoxPwSn<GridType, NumberType> TwoPhase;
+        typedef Dune::DeprecatedBoxPwSn<GridType, NumberType> TwoPhase;
         TwoPhase twoPhase(grid, problem);
 
         Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt,"buckleyleverett1D", 1);

@@ -72,7 +72,7 @@ int main(int argc, char** argv)
 
     Water water;
     DNAPL dnapl;
-    Dune::LinearLaw law(water, dnapl);
+    Dune::DeprecatedLinearLaw law(water, dnapl);
     //Dune::LensSoil<GridType, NumberType> soil;
     //Dune::TwoPhaseRelations<GridType, NumberType> law(soil, wPhase, nPhase);
 

@@ -9,7 +9,7 @@ namespace Dune
   //! @brief example class for a transport problem
   template<class G, class RT, class VC>
   class Fivespotcase1TransportProblem
-    : public TransportProblem<G, RT,VC> {
+    : public DeprecatedTransportProblem<G, RT,VC> {
 
     typedef typename G::ctype DT;
     enum {n=G::dimension, m=1, blocksize=2*G::dimension};
@@ -59,16 +59,16 @@ namespace Dune
     }
 
 
-    Fivespotcase1TransportProblem(VC& variableobj, TwoPhaseRelations& law = *(new LinearLaw), RT bcf = 11,
+    Fivespotcase1TransportProblem(VC& variableobj, DeprecatedTwoPhaseRelations& law = *(new DeprecatedLinearLaw), RT bcf = 11,
              const int level = 0, const bool cap =
              false)
-      : TransportProblem<G, RT, VC>(variableobj,law, cap), LowerLeft_(variableobj.grid.lowerLeft()), UpperRight_(variableobj.grid.upperRight()),
+      : DeprecatedTransportProblem<G, RT, VC>(variableobj,law, cap), LowerLeft_(variableobj.grid.lowerLeft()), UpperRight_(variableobj.grid.upperRight()),
     eps_(1e-8*(variableobj.grid.upperRight())[0]),bcf_(bcf),poro_(0.2)
     {}
   };
   template<class G, class RT,class VC>
   class Fivespotcase2TransportProblem
-    : public TransportProblem<G, RT, VC> {
+    : public DeprecatedTransportProblem<G, RT, VC> {
 
     typedef typename G::ctype DT;
     enum {n=G::dimension, m=1, blocksize=2*G::dimension};
@@ -124,10 +124,10 @@ namespace Dune
     }
 
 
-    Fivespotcase2TransportProblem(VC& variableobj, TwoPhaseRelations& law = *(new LinearLaw), RT bcf = 11,
+    Fivespotcase2TransportProblem(VC& variableobj, DeprecatedTwoPhaseRelations& law = *(new DeprecatedLinearLaw), RT bcf = 11,
              const int level = 0, const bool cap =
              false)
-      : TransportProblem<G, RT, VC>(variableobj,law, cap), LowerLeft_(variableobj.grid.lowerLeft()), UpperRight_(variableobj.grid.upperRight()),
+      : DeprecatedTransportProblem<G, RT, VC>(variableobj,law, cap), LowerLeft_(variableobj.grid.lowerLeft()), UpperRight_(variableobj.grid.upperRight()),
         eps_(1e-8*(variableobj.grid.upperRight())[0]),bcf_(bcf),poro_(0.2)
     {}
   };
