@@ -62,7 +62,7 @@ namespace Dune
     : BoxJacobianType(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_),
       problem(params)
     {
-    	alpha = -1e-3;
+    	alpha = 0;//-1e-3;
       this->analytic = false;
     }
 

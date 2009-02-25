@@ -95,16 +95,16 @@ public:
         if (subCVF == 0)
         {
             firstSolAtQ = firstSol[0];
-//            firstSolAtQ *= 3.0;
-//            firstSolAtQ += firstSol[1];
-//            firstSolAtQ *= 0.25;
+            firstSolAtQ *= 3.0;
+            firstSolAtQ += firstSol[1];
+            firstSolAtQ *= 0.25;
         }
         else
         {
             firstSolAtQ = firstSol[1];
-//            firstSolAtQ *= 3.0;
-//            firstSolAtQ += firstSol[0];
-//            firstSolAtQ *= 0.25;
+            firstSolAtQ *= 3.0;
+            firstSolAtQ += firstSol[0];
+            firstSolAtQ *= 0.25;
         }
     }
 
@@ -142,17 +142,17 @@ public:
     {
         if (subCVF == 0)
         {
-            secondSolAtQ = secondSol[1];
-//            secondSolAtQ *= 3.0;
-//            secondSolAtQ += secondSol[0];
-//            secondSolAtQ *= 0.25;
+            secondSolAtQ = secondSol[0];
+            secondSolAtQ *= 3.0;
+            secondSolAtQ += secondSol[1];
+            secondSolAtQ *= 0.25;
         }
         else
         {
-            secondSolAtQ = secondSol[0];
-//            secondSolAtQ *= 3.0;
-//            secondSolAtQ += secondSol[1];
-//            secondSolAtQ *= 0.25;
+            secondSolAtQ = secondSol[1];
+            secondSolAtQ *= 3.0;
+            secondSolAtQ += secondSol[0];
+            secondSolAtQ *= 0.25;
         }
     }
 
@@ -160,7 +160,7 @@ public:
     void assembleCoupling(A12Type& A_12, A21Type& A_21)
     {
         count ++;
-        std::cout << "count = " << count << std::endl;
+        //std::cout << "count = " << count << std::endl;
         //printvector(std::cout, this->firstModel().sol(), "Stokes solution", "row", 3, 1, 3);
         //printvector(std::cout, this->secondModel().sol(), "Darcy solution", "row", 100, 1, 3);
 
@@ -409,10 +409,10 @@ public:
 //                            localBoundaryDefect1(firstSolAtQ, firstSolGradientAtQ, firstIndex, qGlobal, *firstIt, firstQLocal, normal, boundaryDefect1);
 //                        else
                         localCoupling12(firstSolAtQ, secondSolAtQ, firstIndex, secondIndex, qGlobal, normal, boundaryDefect1);
-                        (this->firstModel().rhs())[firstIndex] -= boundaryDefect1;
+                        (this->firstModel().rhs())[firstIndex] += boundaryDefect1;
                         FieldVector<double, secondNumEq> boundaryDefect2(0);
                         localCoupling21(firstSolAtQ, secondSolAtQ, firstIndex, secondIndex, qGlobal, normal, boundaryDefect2);
-                        (this->secondModel().rhs())[secondIndex] -= boundaryDefect2;
+                        (this->secondModel().rhs())[secondIndex] += boundaryDefect2;
 
                         // calculate the entries of A_12
                         firstIndex = firstIds[subCVF];
@@ -437,7 +437,7 @@ public:
                                 localCoupling12(firstSolAtQ, secondSolAtQ, firstIndex, secondIndex, qGlobal, normal, coupling12MinusEps);
 
                                 for (int i = 0; i < firstNumEq; i++)
-                                    A_12[firstIndex][secondIndex][i][j] = 0.5/eps*(coupling12PlusEps[i] - coupling12MinusEps[i]);
+                                    A_12[firstIndex][secondIndex][i][j] += 0.5/eps*(coupling12PlusEps[i] - coupling12MinusEps[i]);
 
                                 secondSol[secondNode][j] += eps;
                             }
@@ -469,7 +469,7 @@ public:
                                 localCoupling21(firstSolAtQ, secondSolAtQ, firstIndex, secondIndex, qGlobal, normal, coupling21MinusEps);
 
                                 for (int i = 0; i < secondNumEq; i++)
-                                    A_21[secondIndex][firstIndex][i][j] = 0.5/eps*(coupling21PlusEps[i] - coupling21MinusEps[i]);
+                                    A_21[secondIndex][firstIndex][i][j] += 0.5/eps*(coupling21PlusEps[i] - coupling21MinusEps[i]);
 
                                 firstSol[firstNode][j] += eps;
                             }

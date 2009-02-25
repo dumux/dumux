@@ -31,7 +31,7 @@ public:
         for (int comp = 0; comp < dim; comp++)
             result[comp] = normal[comp];
 
-        result *= darcySol;
+        result *= -darcySol;
 
         return;
     }
@@ -47,7 +47,7 @@ public:
             stokesVel[comp] = stokesSol[comp];
 
         //std::cout << "q = " << qGlobal << ", stokesVel = " << stokesVel << ", normal = " << normal<< std::endl;
-        result = (stokesVel*normal);
+        result = -(stokesVel*normal);
 
         return;
     }

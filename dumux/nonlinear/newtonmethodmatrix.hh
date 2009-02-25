@@ -23,7 +23,7 @@ public:
         double globalResiduum = 1e100;
         bool divided = false;
         double dt = model.getDt();
-        //        char buf[128];
+        char buf[128];
 
         while (dt > minDt && (relDiff > diffTolerance || globalResiduum > resTolerance)) {
             relDiff = 1e100;
@@ -34,7 +34,6 @@ public:
             //model.globalDefect(defectGlobal);
             globalResiduum = 0.5*(defectGlobal).two_norm();
             grid.comm().sum(&globalResiduum, 1);
-            //            globalResiduum = model.residual(defectGlobal);
             double residuumWeight = 1.0/std::max(globalResiduum, 1.0e-8);
             globalResiduum *= residuumWeight;
             double globalResiduumOld = globalResiduum;
@@ -55,29 +54,23 @@ public:
                 //printvector(std::cout, uOldNewtonStep, "uOldNewtonStep", "row", 200, 1, 3);
                 //printvector(std::cout, (model.uOldTimeStep), "uOldTimeStep", "row", 200, 1, 3);
                 model.assemble();
-                //                (uOldNewtonStep) = 0.0;
-                //                (model.uOldTimeStep) = 1.0;
-                //                (A).mv((model.uOldTimeStep), uOldNewtonStep);
-                //                sprintf(buf, "rank %d, A*1: ", grid.comm().rank());
-                //                printvector(std::cout, uOldNewtonStep, buf, "row", 200, 1, 3);
 
-                if (grid.comm().rank() == 1) {
-                    printmatrix(std::cout, A, "global stiffness matrix", "row", 11, 4);
+                if (grid.comm().rank() == 10) {
+                    printmatrix(std::cout, A, "global stiffness matrix", "row", 8, 2);
                     printvector(std::cout, uOldNewtonStep, "uOldNewtonStep", "row", 3, 1, 3);
                     printvector(std::cout, f, "right hand side", "row", 3, 1, 3);
                 }
 
                 model.solve();
                 relDiff = oneByMagnitude*((u).two_norm());
-                //                printvector(std::cout, u, "update", "row", 3, 1, 3);
+                //printvector(std::cout, u, "update", "row", 3, 1, 3);
                 u *= -lambda; // hm, lambda is always 1.0, right???
                 u += uOldNewtonStep;
-                //                sprintf(buf, "rank %d, solution: ", grid.comm().rank());
-                //                printvector(std::cout, u, buf, "row", 3, 1, 3);
+                sprintf(buf, "rank %d, solution: ", grid.comm().rank());
+                //printvector(std::cout, u, buf, "row", 3, 1, 3);
                 //model.globalDefect(defectGlobal);
                 globalResiduum = residuumWeight*0.5*(defectGlobal).two_norm();
                 grid.comm().sum(&globalResiduum, 1);
-                //                globalResiduum = residuumWeight*model.residual(defectGlobal);
                 //                sprintf(buf, "rank %d, global Defect: ", grid.comm().rank());
                 //                printvector(std::cout, defectGlobal, buf, "row", 200, 1, 3);
 
@@ -126,13 +119,13 @@ public:
         return;
     }
 
-    NewtonMethodMatrix(const G& g, Model& mod, double dtol = 1e-4,
-            double rtol = 1e-7, int maxIt = 10, double mindt = 1e-5,
+    NewtonMethodMatrix(const G& g, Model& mod, double dtol = 1e-7,
+            double rtol = 1e7, int maxIt = 20, double mindt = 1,
             int goodIt = 4, int maxInc = 2)
     : grid(g), model(mod), u(mod.sol()), f(mod.rhs()), A(mod.matrix()),
-    uOldNewtonStep(u.size()),
+    uOldNewtonStep(mod.sol().size()),
     diffTolerance(dtol), resTolerance(rtol), maxIter(maxIt),
-    defectGlobal(u.size()), num(0), minDt(mindt), goodIter(goodIt), maxIncreased(maxInc)
+    defectGlobal(mod.sol().size()), num(0), minDt(mindt), goodIter(goodIt), maxIncreased(maxInc)
     {
         defectGlobal = 0;
     }
@@ -141,9 +134,9 @@ public:
             double rtol = 1e-5, int maxIt = 12, double mindt = 1e-5,
             int goodIt = 3, int maxInc = 2)
     : grid(g), model(mod), u(mod.sol()), f(mod.rhs()), A(mod.matrix()),
-    uOldNewtonStep(u.size()),
+    uOldNewtonStep(mod.sol().size()),
     diffTolerance(dtol), resTolerance(rtol), maxIter(maxIt),
-    defectGlobal(u.size()), num(0), minDt(mindt), goodIter(goodIt), maxIncreased(maxInc)
+    defectGlobal(mod.sol().size()), num(0), minDt(mindt), goodIter(goodIt), maxIncreased(maxInc)
     {
         defectGlobal = 0;
     }
