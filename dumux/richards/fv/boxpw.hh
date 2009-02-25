@@ -29,11 +29,11 @@
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/scalarproducts.hh>
 #include <dune/istl/paamg/amg.hh>
+#include <dune/istl/owneroverlapcopy.hh>
 #include <dune/grid/common/scsgmapper.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/disc/functions/functions.hh>
 #include "dumux/operators/p1operatorextended.hh"
-#include "dumux/operators/owneroverlapcopyextended.hh"
 #include <dune/disc/operators/boundaryconditions.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/paamg/amg.hh>
@@ -95,10 +95,10 @@ public:
 #if HAVE_MPI
 			// set up parallel solvers
 		typedef typename G::Traits::GlobalIdSet::IdType GlobalIdType;
-		typedef OwnerOverlapCopyExtendedCommunication<GlobalIdType,int> CommunicationType;
+		typedef OwnerOverlapCopyCommunication<GlobalIdType,int> CommunicationType;
 			Dune::IndexInfoFromGrid<GlobalIdType,int> indexinfo;
 			(this->u).fillIndexInfoFromGrid(indexinfo);
-			typedef Dune::OwnerOverlapCopyExtendedCommunication<GlobalIdType,int> CommunicationType;
+			typedef Dune::OwnerOverlapCopyCommunication<GlobalIdType,int> CommunicationType;
 			CommunicationType oocc(indexinfo,(this->grid).comm());
 			int verbose=0;
 			if ((this->grid).comm().rank() == 0)

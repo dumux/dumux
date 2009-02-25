@@ -1,4 +1,6 @@
 #include "config.h"
+
+#include <dune/grid/sgrid.hh>
 #include "new_waterairproblem.hh"
 
 #include <dune/common/exceptions.hh>

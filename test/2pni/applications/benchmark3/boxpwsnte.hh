@@ -33,7 +33,6 @@
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/disc/functions/functions.hh>
 #include "dumux/operators/p1operatorextended.hh"
-#include "dumux/operators/owneroverlapcopyextended.hh"
 #include <dune/disc/operators/boundaryconditions.hh>
 #include <dune/istl/paamg/amg.hh>
 #include "dumux/pardiso/pardiso.hh"

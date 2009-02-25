@@ -497,7 +497,7 @@ namespace Dune
 
 
         // fill the info object
-        std::set< Tuple<IdType,int,int> > ownindices;
+        std::set< tuple<IdType,int,int> > ownindices;
         for (typename std::map<int,GIDSet>::iterator i=myids.begin(); i!=myids.end(); ++i)
             for (typename GIDSet::iterator j=(i->second).begin(); j!=(i->second).end(); ++j)
             {
@@ -506,11 +506,11 @@ namespace Dune
                 int localIndex = gid2index[*j];
                 // do not add double indices
                 if (doubled2Original.find(localIndex) == doubled2Original.end())
-                    info.addLocalIndex(Tuple<IdType,int,int>(*j,localIndex,a));
+                    info.addLocalIndex(tuple<IdType,int,int>(*j,localIndex,a));
                 else
-                    info.addLocalIndex(Tuple<IdType,int,int>(*j,doubled2Original[localIndex],a));
+                    info.addLocalIndex(tuple<IdType,int,int>(*j,doubled2Original[localIndex],a));
             }
-        std::set< Tuple<int,IdType,int> > remoteindices;
+        std::set< tuple<int,IdType,int> > remoteindices;
         for (typename std::map<int,ProcSet>::iterator i=myprocs.begin(); i!=myprocs.end(); ++i)
         {
             GIDSet& thisset = myids[i->first];
@@ -519,16 +519,16 @@ namespace Dune
                 {
                     int a=slave;
                     if (owner[*j]==(*p)) a=master;
-                    if (*p!=grid.comm().rank()) info.addRemoteIndex(Tuple<int,IdType,int>(*p,*j,a));
+                    if (*p!=grid.comm().rank()) info.addRemoteIndex(tuple<int,IdType,int>(*p,*j,a));
                 }
         }
 
-//        for (typename std::set< Tuple<IdType,int,int> >::const_iterator it = info.localIndices().begin();
+//        for (typename std::set< tuple<IdType,int,int> >::const_iterator it = info.localIndices().begin();
 //            it != info.localIndices().end(); ++it)
 //            std::cout << grid.comm().rank() << ": global = " << Element<0>::get(*it)
 //                << ", local = " << Element<1>::get(*it) << ", m = " << Element<2>::get(*it) << std::endl;
 //
-//        for (typename std::set< Tuple<int,IdType,int> >::const_iterator it = info.remoteIndices().begin();
+//        for (typename std::set< tuple<int,IdType,int> >::const_iterator it = info.remoteIndices().begin();
 //            it != info.remoteIndices().end(); ++it)
 //            std::cout << grid.comm().rank() << ": p = " << Element<0>::get(*it)
 //                << ", global = " << Element<1>::get(*it) << ", m = " << Element<2>::get(*it) << std::endl;

@@ -100,13 +100,13 @@ namespace Dune
             typedef typename Grid::Traits::template Codim<0>                ElementTraits;
             typedef typename ElementTraits::Entity                          Element;
             typedef typename ElementTraits
-                             ::template Partition<InteriorBorder_Partition>
+                             ::template Partition<All_Partition>
                              ::LeafIterator                                 ElementIterator;
 
             typedef typename Grid::Traits::template Codim<dim>              VertexTraits;
             typedef typename VertexTraits::Entity                           Vertex;
             typedef typename VertexTraits
-                             ::template Partition<InteriorBorder_Partition>
+                             ::template Partition<All_Partition>
                              ::LeafIterator                                 VertexIterator;
 
             // TODO: Dune::ReferenceElement uses virtual functions in
@@ -224,7 +224,7 @@ namespace Dune
          *        the grid.
          */
         ElementIterator elementBegin() const {
-            return grid_->template leafbegin<0, InteriorBorder_Partition>();
+            return grid_->template leafbegin<0, All_Partition>();
         }
 
         /*!
@@ -232,7 +232,7 @@ namespace Dune
          *        element of the grid.
          */
         ElementIterator elementEnd() {
-            return grid_->template leafend<0, InteriorBorder_Partition>();
+            return grid_->template leafend<0, All_Partition>();
         }
 
         /*!
@@ -284,7 +284,7 @@ namespace Dune
          *        the grid.
          */
         VertexIterator vertexBegin() {
-            return grid_->template leafbegin<dim, InteriorBorder_Partition>();
+            return grid_->template leafbegin<dim, All_Partition>();
         }
 
         /*!
@@ -292,7 +292,7 @@ namespace Dune
          *        element of the grid.
          */
         VertexIterator vertexEnd() {
-            return grid_->template leafend<dim, InteriorBorder_Partition>();
+            return grid_->template leafend<dim, All_Partition>();
         }
 
         /*!

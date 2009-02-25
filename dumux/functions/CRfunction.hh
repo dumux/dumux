@@ -305,15 +305,15 @@ namespace Dune
 
 
       // fill the info object
-      std::set< Tuple<IdType,int,int> > ownindices;
+      std::set< tuple<IdType,int,int> > ownindices;
       for (typename std::map<int,GIDSet>::iterator i=myids.begin(); i!=myids.end(); ++i)
         for (typename GIDSet::iterator j=(i->second).begin(); j!=(i->second).end(); ++j)
           {
             int a=slave;
             if (owner[*j]==grid.comm().rank()) a=master;
-            info.addLocalIndex(Tuple<IdType,int,int>(*j,gid2index[*j],a));
+            info.addLocalIndex(tuple<IdType,int,int>(*j,gid2index[*j],a));
           }
-      std::set< Tuple<int,IdType,int> > remoteindices;
+      std::set< tuple<int,IdType,int> > remoteindices;
       for (typename std::map<int,ProcSet>::iterator i=myprocs.begin(); i!=myprocs.end(); ++i)
         {
           GIDSet& thisset = myids[i->first];
@@ -322,7 +322,7 @@ namespace Dune
               {
                 int a=slave;
                 if (owner[*j]==(*p)) a=master;
-                if (*p!=grid.comm().rank()) info.addRemoteIndex(Tuple<int,IdType,int>(*p,*j,a));
+                if (*p!=grid.comm().rank()) info.addRemoteIndex(tuple<int,IdType,int>(*p,*j,a));
               }
         }
 
@@ -433,8 +433,8 @@ namespace Dune
    */
   template<class G, class RT, class GV, class LC, int m=1>
   class CRFunction : virtual public ElementwiseCInfinityFunction<GV,RT,m>,
-             virtual public H1Function<typename G::ctype,RT,G::dimension,m>,
-             virtual public C0GridFunction<G,RT,m>
+                     virtual public H1Function<typename G::ctype,RT,G::dimension,m>,
+                     virtual public C0GridFunction<G,RT,m>
   {
     //! get domain field type from the grid
     typedef typename G::ctype DT;

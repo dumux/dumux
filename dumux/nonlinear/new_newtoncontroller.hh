@@ -25,11 +25,11 @@
 
 #include <dumux/exceptions.hh>
 
-#include <dune/istl/owneroverlapcopy.hh>
 #include <dune/istl/overlappingschwarz.hh>
 #include <dune/istl/schwarz.hh>
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/solvers.hh>
+#include "dune/istl/owneroverlapcopy.hh"
 
 #include <dune/common/mpihelper.hh>
 
@@ -38,7 +38,6 @@
 
 #include "dumux/pardiso/pardiso.hh"
 
-#include "dumux/operators/owneroverlapcopyextended.hh"
 
 
 namespace Dune

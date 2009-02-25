@@ -29,11 +29,11 @@
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/scalarproducts.hh>
 #include <dune/istl/paamg/amg.hh>
+#include <dune/istl/owneroverlapcopy.hh>
 #include <dune/grid/common/scsgmapper.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/disc/functions/functions.hh>
 #include "dumux/operators/p1operatorextended.hh"
-#include "dumux/operators/owneroverlapcopyextended.hh"
 #include <dune/disc/operators/boundaryconditions.hh>
 #include <dune/istl/paamg/amg.hh>
 #include "dumux/pardiso/pardiso.hh"
@@ -128,13 +128,14 @@ public:
 #if HAVE_MPI
             // set up parallel solvers
         typedef typename Grid::Traits::GlobalIdSet::IdType GlobalIdType;
-        typedef OwnerOverlapCopyExtendedCommunication<GlobalIdType,int> CommunicationType;
+        typedef OwnerOverlapCopyCommunication<GlobalIdType,int> CommunicationType;
             Dune::IndexInfoFromGrid<GlobalIdType,int> indexinfo;
             (this->u).fillIndexInfoFromGrid(indexinfo);
-            typedef Dune::OwnerOverlapCopyExtendedCommunication<GlobalIdType,int> CommunicationType;
-            CommunicationType oocc(indexinfo,(this->grid).comm());
+            typedef Dune::OwnerOverlapCopyCommunication<GlobalIdType,int> CommunicationType;
+            CommunicationType oocc(indexinfo, 
+                                   MPIHelper::getCommunicator());
             int verbose=0;
-            if ((this->grid).comm().rank() == 0)
+            if (this->grid().comm().rank() == 0)
                 verbose = 1;
             Dune::OverlappingSchwarzOperator<MatrixType,VectorType,VectorType,CommunicationType> oop(*(this->A),oocc);
             Dune::OverlappingSchwarzScalarProduct<VectorType,CommunicationType> osp(oocc);

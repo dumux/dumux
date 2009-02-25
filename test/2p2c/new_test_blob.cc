@@ -14,14 +14,14 @@
 
 int main(int argc, char** argv)
 {
-//    try {
+    try {
 
         // Set the type for scalar values (should be one of float, double
         // or long double)
         const int dim = 2;
         typedef double                                Scalar;
 //        typedef Dune::ALUSimplexGrid<dim,dim>         Grid;
-#define USE_UG 0
+#define USE_UG 1
 #if USE_UG
         typedef Dune::UGGrid<dim>                     Grid;
 #else
@@ -48,7 +48,7 @@ int main(int argc, char** argv)
         // //////////////////////////////////////////////////////////
         //   Make a uniform grid on rank 0 for testing
         // //////////////////////////////////////////////////////////
-        int n = 11;
+        int n = 41;
         Grid grid;
         Dune::GridFactory<Grid> factory(&grid);
 
@@ -93,14 +93,14 @@ int main(int argc, char** argv)
                   Dune::FieldVector<bool,dim>(false), // periodic
                   2); // overlap
 #endif
-        
+
         // instantiate and run the concrete problem
         Problem problem(&grid, dt, tEnd);
         if (!problem.simulate())
             return 2;
         
         return 0;
-/*    }
+    }
     catch (Dune::Exception &e) {
         std::cerr << "Dune reported error: " << e << std::endl;
     }
@@ -108,6 +108,6 @@ int main(int argc, char** argv)
         std::cerr << "Unknown exception thrown!\n";
         throw;
     }
-*/
+    
     return 3;
 }

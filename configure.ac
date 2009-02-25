@@ -97,7 +97,6 @@ AC_CONFIG_FILES([Makefile
     dumux/material/Makefile 
     dumux/minc/Makefile 
     dumux/nonlinear/Makefile 
-    dumux/onedinndgrid/Makefile
     dumux/operators/Makefile 
     dumux/parabolic/Makefile 
     dumux/pardiso/Makefile 

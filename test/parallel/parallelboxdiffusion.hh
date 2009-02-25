@@ -15,7 +15,7 @@
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/scalarproducts.hh>
 #include <dune/istl/schwarz.hh>
-#include <dumux/operators/owneroverlapcopyextended.hh>
+#include <dune/istl/owneroverlapcopy.hh>
 #include "dumux/nonlinear/nonlinearmodel.hh"
 #include "dumux/pardiso/pardiso.hh"
 #include "dumux/fvgeometry/fvelementgeometry.hh"
@@ -95,7 +95,7 @@ public:
         typedef typename ThisType::OperatorAssembler::RepresentationType MatrixType;
         typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator;
         typedef typename G::Traits::GlobalIdSet::IdType GlobalIdType;
-        typedef OwnerOverlapCopyExtendedCommunication<GlobalIdType,int> CommunicationType;
+        typedef OwnerOverlapCopyCommunication<GlobalIdType,int> CommunicationType;
 //#ifdef HAVE_PARDISO
 //    SeqPardiso<MatrixType,VectorType,VectorType> pardiso;
 //#endif

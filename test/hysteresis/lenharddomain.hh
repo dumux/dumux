@@ -39,8 +39,6 @@
 #include <dune/grid/sgrid.hh>
 #include <dune/grid/onedgrid.hh>
 //#include <dune/grid/yaspgrid.hh>
-//#include <dumux/onedinndgrid/onedinndgrid.hh>
-//#include <dumux/onedinndgrid/onedinndgrid.cc>
 
 namespace Dune
 {

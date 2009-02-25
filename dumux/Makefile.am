@@ -2,7 +2,6 @@ SUBDIRS = 1p2c 2p2c 2p2cni 2pni brinkman coupled diffusion fractionalflow functi
 
 # the standard debug streams are put into the libdune
 noinst_LTLIBRARIES = libdumux.la
-#SUBLIBS = shapefunctions/libshapefunctions.la onedinndgrid/libonedinndgrid.la
 SUBLIBS = shapefunctions/libshapefunctions.la 
 
 libdumux_la_SOURCES =

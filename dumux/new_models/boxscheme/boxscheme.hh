@@ -330,6 +330,9 @@ namespace Dune
                 
                 // iterate through leaf grid and evaluate initial
                 // condition at the center of each sub control volume
+                //
+                // TODO: the initial condition needs to be unique for
+                // each vertex. we should think about the API...
                 ElementIterator it            = problem_.elementBegin();
                 const ElementIterator &eendit = problem_.elementEnd();
                 for (; it != eendit; ++it)

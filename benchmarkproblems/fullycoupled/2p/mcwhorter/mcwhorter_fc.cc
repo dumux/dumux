@@ -13,6 +13,7 @@
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/material/brookscoreylaw_deprecated.hh"
 #include "dumux/material/vangenuchtenlaw_deprecated.hh"
+#include "dumux/io/vtkmultiwriter.hh"
 #include"../problemdefinitions/mcwhorteranalytical.hh"
 
 int main(int argc, char** argv)
@@ -67,15 +68,18 @@ int main(int argc, char** argv)
       //calculate without analytical solution
 //      Dune::McWhorterProblem<GridType, NumberType> problem(law, LowerLeft, UpperRight);
 
-      typedef Dune::BoxPnSw<GridType, NumberType> TwoPhase;
+      typedef Dune::VtkMultiWriter<GridType::LeafGridView> MultiWriter;
+      typedef Dune::BoxPnSw<GridType, NumberType, MultiWriter> TwoPhase;
       TwoPhase twoPhase(grid, problem);
 
-      Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt,
+      Dune::TimeLoop<GridType, TwoPhase, true> timeloop(0, tEnd, dt,
       "mcwhorter", 1);
 
       Dune::Timer timer;
       timer.reset();
-      timeloop.execute(twoPhase);
+      
+      MultiWriter writer("mcworther_fc");
+      timeloop.executeMultiWriter(twoPhase, writer);
       std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
 
       //printvector(std::cout, *twoPhase.u, "u", "row", 2, 1, 3);

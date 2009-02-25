@@ -18,8 +18,10 @@ namespace Dune
 template<class GV, class Data>
 void importFromDGF(Data& data, std::string dataFileName, bool cellWise = true)
 {
+#ifndef DUMUX_NO_RESTART
     enum{n = GV::dimension};
 
+//    typedef Dune::UGGrid<n> GInternal;
     typedef Dune::UGGrid<n> GInternal;
     typedef typename GInternal::LeafGridView GridView;
     typedef    typename GInternal::ctype DT;
@@ -84,6 +86,7 @@ void importFromDGF(Data& data, std::string dataFileName, bool cellWise = true)
         }
     }
     return;
+#endif // DUMUX_NO_RESTART
 }
 }
 #endif

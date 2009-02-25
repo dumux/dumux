@@ -24,7 +24,6 @@
 
 #include <dune/common/timer.hh>
 #include <dune/grid/common/gridinfo.hh>
-#include <dune/grid/io/file/dgfparser/dgfparser.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 #include <dune/grid/yaspgrid.hh>
 #include <dune/istl/io.hh>
