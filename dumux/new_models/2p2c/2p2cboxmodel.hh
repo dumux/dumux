@@ -709,7 +709,7 @@ public:
     void calculateDarcyVelocity(GlobalPosition &velocity,
             const Element &element,
             const int faceId,
-            const Problem &problem) const
+            const Problem &problem)
     {
     	//        ElementIterator endEIt = grid.template leafend<0>();
     	//        for (ElementIterator eIt = grid.template leafbegin<0>(); eIt != endEIt; ++eIt)
@@ -857,7 +857,7 @@ public:
     *        the current timestep.
     */
     template <class MultiWriter>
-    void addVtkFields(MultiWriter &writer, const SpatialFunction &globalSol) const
+    void addVtkFields(MultiWriter &writer, const SpatialFunction &globalSol)
     {
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
 
@@ -879,64 +879,66 @@ public:
         ScalarField *massfracWinN = writer.template createField<Scalar, 1>(numVertices);
         ScalarField *temperature  = writer.template createField<Scalar, 1>(numVertices);
         ScalarField *phaseState   = writer.template createField<Scalar, 1>(numVertices);
-        ScalarField *velocityX   = writer.template createField<Scalar, 1>(numElements);
-        ScalarField *velocityY   = writer.template createField<Scalar, 1>(numElements);
+        ScalarField *velocityX    = writer.template createField<Scalar, 1>(numElements);
+        ScalarField *velocityY    = writer.template createField<Scalar, 1>(numElements);
 //        ScalarField *velocityZ   = writer.template createField<Scalar, 1>(numElements);
 
-        VariableVertexData tmp;
-        ElementIterator element = this->problem_.elementBegin();
-        ElementIterator endit = this->problem_.elementEnd();
-        for (; element != endit; ++element)
-        {
-            for (int i = 0; i < element->template count<dim>(); ++i)
-            {
-                int globalI = this->problem_.vertexIdx(*element, i);
-                asImp_()->updateVarVertexData_(tmp,
-                        (*globalSol)[globalI],
-                        staticVertexDat_[globalI].phaseState,
-                        *element,
-                        i,
-                        this->problem_,
-                        Implementation::temperature_((*globalSol)[globalI]));
+        LocalFunction curSol;
+        ElementData   elemDat;
 
-                (*pW)[globalI] = tmp.pW;
-                (*pN)[globalI] = tmp.pN;
-                (*pC)[globalI] = tmp.pC;
-                (*Sw)[globalI] = tmp.satW;
-                (*Sn)[globalI] = tmp.satN;
-                (*rhoW)[globalI] = tmp.density[wPhase];
-                (*rhoN)[globalI] = tmp.density[nPhase];
-                (*mobW)[globalI] = tmp.mobility[wPhase];
-                (*mobN)[globalI] = tmp.mobility[nPhase];
-                (*massfracAinW)[globalI] = tmp.massfrac[nComp][wPhase];
-                (*massfracAinN)[globalI] = tmp.massfrac[nComp][nPhase];
-                (*massfracWinW)[globalI] = tmp.massfrac[wComp][wPhase];
-                (*massfracWinN)[globalI] = tmp.massfrac[wComp][nPhase];
+        VariableVertexData tmp;
+        ElementIterator elementIt = this->problem_.elementBegin();
+        ElementIterator endit = this->problem_.elementEnd();
+        for (; elementIt != endit; ++elementIt)
+        {
+            int numLocalVerts = elementIt->template count<dim>();
+
+            setCurrentElement(*elementIt);
+            this->restrictToElement(curSol, globalSol);
+            updateElementData_(elemDat, curSol, false);
+
+            for (int i = 0; i < numLocalVerts; ++i)
+            {
+                int globalI = this->problem_.vertexIdx(*elementIt, i);
+
+                (*pW)[globalI] = elemDat.vertex[i].pW;
+                (*pN)[globalI] = elemDat.vertex[i].pN;
+                (*pC)[globalI] = elemDat.vertex[i].pC;
+                (*Sw)[globalI] = elemDat.vertex[i].satW;
+                (*Sn)[globalI] = elemDat.vertex[i].satN;
+                (*rhoW)[globalI] = elemDat.vertex[i].density[wPhase];
+                (*rhoN)[globalI] = elemDat.vertex[i].density[nPhase];
+                (*mobW)[globalI] = elemDat.vertex[i].mobility[wPhase];
+                (*mobN)[globalI] = elemDat.vertex[i].mobility[nPhase];
+                (*massfracAinW)[globalI] = elemDat.vertex[i].massfrac[nComp][wPhase];
+                (*massfracAinN)[globalI] = elemDat.vertex[i].massfrac[nComp][nPhase];
+                (*massfracWinW)[globalI] = elemDat.vertex[i].massfrac[wComp][wPhase];
+                (*massfracWinN)[globalI] = elemDat.vertex[i].massfrac[wComp][nPhase];
                 (*temperature)[globalI] = Implementation::temperature_((*globalSol)[globalI]);
                 (*phaseState)[globalI] = staticVertexDat_[globalI].phaseState;
             };
             // Vector containing the velocity at the element
-            GlobalPosition velocity(0);
-            GlobalPosition elementVelocity(0);
-//            for (int phase=0; phase < numPhases; ++phase)
-//            {
-//            	velocity[phase] = 0;
-//            	elementVelocity[phase] = 0;
-//            }
+            GlobalPosition velocity[numPhases];
+            GlobalPosition elementVelocity[numPhases];
+            for (int phase=0; phase < numPhases; ++phase)
+            {
+            	velocity[phase] = 0;
+            	elementVelocity[phase] = 0;
+            }
 
-//            updateElementData_(element, localSol??, false);
+            int elementIdx = this->problem_.elementIdx(*elementIt);
+            const int phase=0; //HACK
             for (int faceId = 0; faceId< this->curElementGeom_.numEdges; faceId++)
             {
-				asImp_()->calculateDarcyVelocity(velocity,
-						*element,
+				asImp_()->calculateDarcyVelocity(velocity[phase],
+						*elementIt,
 						faceId,
 						this->problem_);
-				elementVelocity += velocity;
+				elementVelocity[phase] += velocity[phase];
             }
-            int elementIdx = this->problem_.elementIdx(*element);
-            elementVelocity *= 1.0/this->curElementGeom_.numEdges;
-        	(*velocityX)[elementIdx] = elementVelocity[0];
-            (*velocityY)[elementIdx] = elementVelocity[1];
+            elementVelocity[phase] *= 1.0/this->curElementGeom_.numEdges;
+        	(*velocityX)[elementIdx] = elementVelocity[phase][0];
+            (*velocityY)[elementIdx] = elementVelocity[phase][1];
 //            (*velocityZ) = elementVelocity[2];
         }
 
@@ -1325,7 +1327,7 @@ public:
     *        the current timestep.
     */
     template <class MultiWriter>
-    void addVtkFields(MultiWriter &writer) const
+    void addVtkFields(MultiWriter &writer)
     {
         twoPTwoCLocalJacobian_.addVtkFields(writer, this->currentSolution());
     }
