@@ -77,7 +77,7 @@ namespace Dune
     typedef Box1P2CJacobian<Grid,Scalar,BoxFunction> ThisType;
     typedef typename LocalJacobian<ThisType,Grid,Scalar,2>::VBlockType VBlockType;
     typedef typename LocalJacobian<ThisType,Grid,Scalar,2>::MBlockType MBlockType;
-    typedef FVElementGeometry<Grid> FVElementGeometry;
+    typedef Dune::FVElementGeometry<Grid> FVElementGeometry;
 
  	enum {konti = 0, transport = 1};	// Solution vector index
 

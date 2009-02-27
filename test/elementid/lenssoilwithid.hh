@@ -18,7 +18,7 @@ namespace Dune
   public:
       typedef typename Grid::Traits::template Codim<0>::Entity Entity;
       typedef typename Grid::ctype DT;
-      typedef GridPtr<Grid> GridPtr;
+      typedef Dune::GridPtr<Grid> GridPtr;
       enum {dim=Grid::dimension, numEq=1};
 
       // define PERMEABILITY tensor

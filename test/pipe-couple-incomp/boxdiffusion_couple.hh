@@ -31,8 +31,8 @@ class BoxDiffusion
 : public NonlinearModel<G, RT, ProblemType, LocalJacobian, FunctionType, OperatorAssembler>
 {
 public:
-    typedef NonlinearModel<G, RT, ProblemType, LocalJacobian,
-    FunctionType, OperatorAssembler> NonlinearModel;
+    typedef Dune::NonlinearModel<G, RT, ProblemType, LocalJacobian,
+                                 FunctionType, OperatorAssembler> NonlinearModel;
 
     BoxDiffusion(const G& g, ProblemType& prob)
     : NonlinearModel(g, prob), uOldTimeStep(g)
@@ -63,8 +63,8 @@ public:
     // define the operator assembler type:
     typedef LeafP1OperatorAssembler<G, RT, m> OperatorAssembler;
 
-    typedef BoxDiffusion<G, RT, DiffusionParameters<G, RT, GlobalToPipeMapper, VertexMapper, VertexVectorOnLineType>, BoxDiffusionJacobian<G, RT, GlobalToPipeMapper, VertexMapper, VertexVectorOnLineType>,
-    FunctionType, OperatorAssembler> BoxDiffusion;
+    typedef Dune::BoxDiffusion<G, RT, DiffusionParameters<G, RT, GlobalToPipeMapper, VertexMapper, VertexVectorOnLineType>, BoxDiffusionJacobian<G, RT, GlobalToPipeMapper, VertexMapper, VertexVectorOnLineType>,
+                               FunctionType, OperatorAssembler> BoxDiffusion;
 
     typedef LeafP1BoxDiffusion<G, RT, GlobalToPipeMapper, VertexMapper, VertexVectorOnLineType, m> ThisType;
 

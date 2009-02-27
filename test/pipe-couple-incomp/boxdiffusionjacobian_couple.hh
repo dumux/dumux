@@ -47,7 +47,7 @@ class BoxDiffusionJacobian
     typedef typename Entity::Geometry Geometry;
     typedef BoxDiffusionJacobian<G,RT, GlobalToPipeMapper,VertexMapper,VertexVectorOnLineType,BoxFunction> ThisType;
     typedef typename LocalJacobian<ThisType,G,RT,1>::VBlockType VBlockType;
-    typedef FVElementGeometry<G> FVElementGeometry;
+    typedef Dune::FVElementGeometry<G> FVElementGeometry;
 
 public:
     enum {n=G::dimension};
