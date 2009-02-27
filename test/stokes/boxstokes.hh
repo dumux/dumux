@@ -140,10 +140,19 @@ namespace Dune
               IntersectionIterator is = IntersectionIteratorGetter<Grid,LeafTag>::end(entity);
 
               for (int i = 0; i < size; i++) {
+                  // get cell center in reference element
+                  const Dune::FieldVector<Scalar,dim>&local = sfs[i].position();
+
+                  // get global coordinate of cell center
+                  Dune::FieldVector<Scalar,dimworld> global = it->geometry().global(local);
+
                   int globalId = vertexmapper.template map<dim>(entity, sfs[i].entity());
 
               	// initialize cell concentration
-                (*(this->u))[globalId] = 0;
+                  for (int comp = 0; comp < dim; comp++)
+                      (*(this->u))[globalId][comp] = this->problem.velocity(global)[comp];
+
+                  (*(this->u))[globalId][dim] = 0;
               }
           }
 
@@ -241,7 +250,7 @@ namespace Dune
     {
     	MatrixType& A = *(this->A);
         Operator op(A);  // make operator out of matrix
-        double red=1E-18;
+        double red=1E-14;
 
 #ifdef HAVE_PARDISO
         SeqPardiso<MatrixType,VectorType,VectorType> pardiso(A);

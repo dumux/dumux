@@ -107,14 +107,14 @@ namespace Dune
 
 							FieldVector<Scalar,dim> local = this->fvGeom.boundaryFace[bfIdx].ipLocal;
 		                    FieldVector<Scalar,dim> global = this->fvGeom.boundaryFace[bfIdx].ipGlobal;
-//		                    BoundaryConditions::Flags bctypeface = this->getImp().problem.bctype(global, element, it, local);
+		                    BoundaryConditions::Flags bctypeface = this->getImp().problem.bctype(global, element, it, local);
 
-//		                    if (bctypeface == BoundaryConditions::dirichlet)
-//		                    {
+		                    if (bctypeface == BoundaryConditions::dirichlet)
+		                    {
 		                        FieldVector<Scalar,dim> normal = it->unitOuterNormal(faceLocal);
 		                        normal *= this->fvGeom.boundaryFace[bfIdx].area;
 		                        averagedNormal += normal;
-//		                    }
+		                    }
 							faces++;
 						}
 					}
@@ -305,7 +305,7 @@ namespace Dune
                     FieldVector<Scalar,dim>  velocityValue(0);
                     FieldVector<Scalar,dim>  pressGradient(0);
                     FieldMatrix<Scalar,dim,dim> velocityGradient(0);
-                     for (int vert = 0; vert < this->fvGeom.numVertices; vert++) {
+                    for (int vert = 0; vert < this->fvGeom.numVertices; vert++) {
                     	pressureValue += sol[vert][dim]*this->fvGeom.boundaryFace[bfIdx].shapeValue[vert];
             			FieldVector<Scalar,dim> grad(this->fvGeom.boundaryFace[bfIdx].grad[vert]);
             			grad *= sol[vert][dim];

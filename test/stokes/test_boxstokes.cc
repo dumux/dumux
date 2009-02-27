@@ -52,7 +52,8 @@ void calculateError(const Grid& grid, const Problem& problem, Vector& solution)
     ElementMapper elementMapper(grid, grid.leafView().indexSet());
 
     Scalar errPressure = 0;
-    Scalar errVelocity = 0;
+    Scalar errVelocityX = 0;
+    Scalar errVelocityY = 0;
     Scalar constant = 0;
     ElementIterator endEIt = grid.template leafend<0>();
     for (ElementIterator eIt = grid.template leafbegin<0>(); eIt != endEIt; ++eIt)
@@ -78,17 +79,19 @@ void calculateError(const Grid& grid, const Problem& problem, Vector& solution)
 
         Scalar approxXV = solution.evallocal (0, element, local);
         Scalar exactXV = problem.velocity(global)[0];
-        errVelocity += volume*(approxXV - exactXV)*(approxXV - exactXV);
+        errVelocityX += volume*(approxXV - exactXV)*(approxXV - exactXV);
 
         Scalar approxYV = solution.evallocal (1, element, local);
         Scalar exactYV = problem.velocity(global)[1];
-        errVelocity += volume*(approxYV - exactYV)*(approxYV - exactYV);
+        errVelocityY += volume*(approxYV - exactYV)*(approxYV - exactYV);
     }
 
     errPressure = sqrt(errPressure);
-    errVelocity = sqrt(errVelocity);
+    errVelocityX = sqrt(errVelocityX);
+    errVelocityY = sqrt(errVelocityY);
 
-    std::cout << "Error in discrete L2 norm:\nPressure: " << errPressure << "\nVelocity: " << errVelocity << std::endl;
+    std::cout << "error in discrete L2 norm:\npressure: " << errPressure
+    << "\nx-velocity: " << errVelocityX << "\ny-velocity: " << errVelocityY << std::endl;
 }
 
 int main(int argc, char** argv)
