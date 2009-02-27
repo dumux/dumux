@@ -357,7 +357,7 @@ namespace Dune
          *        the current timestep.
          */
         template <class MultiWriter>
-        void addVtkFields(MultiWriter &writer) const
+        void addVtkFields(MultiWriter &writer)
             {
                 twoPTwoCLocalJacobian_.addVtkFields(writer, this->currentSolution());
             }
