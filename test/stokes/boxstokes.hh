@@ -157,7 +157,7 @@ public:
                 (*(this->u))[globalId][dim] = 0;
             }
         }
-        (*(this->u))[34][dim] = 0.75;
+//        (*(this->u))[116][dim] = 0.2;
 
         // set Dirichlet boundary conditions
         for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
@@ -246,7 +246,7 @@ public:
         typedef typename GV::template Codim<0>::Iterator Iterator;
 
         Iterator it = gridview.template begin<0>();
-        unsigned int globalId = 34;//vertexmapper.template map<dim>(*it, 3);
+        unsigned int globalId = 136;//vertexmapper.template map<dim>(*it, 3);
 
         for (typename MatrixType::RowIterator i=A.begin(); i!=A.end(); ++i)
             if(i.index()==globalId)
