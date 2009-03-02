@@ -29,6 +29,9 @@
 
 namespace Dune
 {
+
+/** \todo Please doc me! */
+
 template<class G, class RT, class ProblemType, class LocalJacobian,
 class FunctionType, class OperatorAssembler>
 class ParallelBoxDiffusion
@@ -57,7 +60,7 @@ public:
 
 
 
-
+/** \todo Please doc me! */
 
 template<class G, class RT, int m=1>
 class LeafP1ParallelBoxDiffusion : public ParallelBoxDiffusion<G, RT, DiffusionParameters<G, RT>, ParallelBoxDiffusionJacobian<G, RT>,

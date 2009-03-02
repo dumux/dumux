@@ -33,6 +33,9 @@ class P1OverlappingSchwarzCommunication
   typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,IndexSet,P1Layout> Mapper;
 
   // A DataHandle class that computes owner for each vertex
+
+/** \todo Please doc me! */
+
   class OwnerExchange
     : public Dune::CommDataHandleIF<OwnerExchange,int>
   {
@@ -101,6 +104,9 @@ class P1OverlappingSchwarzCommunication
 
 
   // A DataHandle class that sends and adds
+
+/** \todo Please doc me! */
+
   template<class T>
   class AddingDataHandle
     : public Dune::CommDataHandleIF<AddingDataHandle<T>,
@@ -168,6 +174,9 @@ class P1OverlappingSchwarzCommunication
   };
 
   // A DataHandle class that sends and adds
+
+/** \todo Please doc me! */
+
   template<class T>
   class CopyOwnerDataHandle
     : public Dune::CommDataHandleIF<CopyOwnerDataHandle<T>,
