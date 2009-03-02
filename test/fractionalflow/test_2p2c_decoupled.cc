@@ -78,14 +78,14 @@ int main(int argc, char** argv)
 #else
 
 int main (int argc , char **argv) try
-    {
-        std::cout << "Dummy implementation, this test would not compile at the moment." << std::endl;
+ {
+     std::cout << "Dummy implementation, this test would not compile at the moment." << std::endl;
 
-        return 1;
-    }
+     return 1;
+ }
  catch (...)
-     {
-         std::cerr << "Generic exception!" << std::endl;
-         return 2;
-     }
+ {
+     std::cerr << "Generic exception!" << std::endl;
+     return 2;
+ }
 #endif

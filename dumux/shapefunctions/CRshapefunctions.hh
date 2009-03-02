@@ -233,26 +233,26 @@ public:
     const value_type& operator() (GeometryType type, int order) const
     {
         if ( type.isCube() )
-            {
-                if (order==1) return wrappedcube;
-                DUNE_THROW(RangeError, "order not available for cubes");
-            }
+        {
+            if (order==1) return wrappedcube;
+            DUNE_THROW(RangeError, "order not available for cubes");
+        }
 
         if ( type.isSimplex() )
-            {
-                if (order==1) return wrappedsimplex;
-                DUNE_THROW(RangeError, "order not available for simplex");
-            }
+        {
+            if (order==1) return wrappedsimplex;
+            DUNE_THROW(RangeError, "order not available for simplex");
+        }
 
         if ( type.isPyramid() )
-            {
-                DUNE_THROW(RangeError, "No pyramid for this dimension");
-            }
+        {
+            DUNE_THROW(RangeError, "No pyramid for this dimension");
+        }
 
         if ( type.isPrism() )
-            {
-                DUNE_THROW(RangeError, "No prism for this dimension ");
-            }
+        {
+            DUNE_THROW(RangeError, "No prism for this dimension ");
+        }
 
         DUNE_THROW(RangeError, "type or order not available");
     }
@@ -291,16 +291,16 @@ public:
     const value_type& operator() (GeometryType type, int order) const
     {
         if ( type.isCube() )
-            {
-                if (order==1) return wrappedcube;
-                DUNE_THROW(RangeError, "order not available for cubes");
-            }
+        {
+            if (order==1) return wrappedcube;
+            DUNE_THROW(RangeError, "order not available for cubes");
+        }
 
         if ( type.isSimplex() )
-            {
-                if (order==1) return wrappedsimplex;
-                DUNE_THROW(RangeError, "order not available for simplex");
-            }
+        {
+            if (order==1) return wrappedsimplex;
+            DUNE_THROW(RangeError, "order not available for simplex");
+        }
 
         DUNE_THROW(RangeError, "type or order not available");
     }

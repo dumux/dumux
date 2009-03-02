@@ -371,13 +371,13 @@ public:
 
         Iterator endIt = grid_.leafView().template end<dim>();
         for (Iterator it = grid_.leafView().template begin<dim>(); it != endIt;    ++it)
+        {
+            int index = vertexmapper.map(*it);
+            for (int i = 0; i < numEq;i++)
             {
-                int index = vertexmapper.map(*it);
-                for (int i = 0; i < numEq;i++)
-                    {
-                        data[index][i]=(*(this->u))[index][i];
-                    }
+                data[index][i]=(*(this->u))[index][i];
             }
+        }
         restartFileName = (boost::format("data-%05d")
                            %restartNum).str();
         exportToDGF(grid_.leafView(), data, (numEq), restartFileName, false);

@@ -270,7 +270,7 @@ template<class ProblemT,
          class TwoPTwoCNITraitsT = TwoPTwoCNITraits<typename ProblemT::DomainTraits::Scalar,
                                                     TwoPTwoCPwSnTraits<typename ProblemT::DomainTraits::Scalar> > >
 class TwoPTwoCNIBoxModel
-    : public BoxScheme<TwoPTwoCNIBoxModel<ProblemT,TwoPTwoCNITraitsT>, // Implementation of the box scheme
+    : public BoxScheme<TwoPTwoCNIBoxModel, // Implementation of the box scheme
 
                        // The Traits for the BOX method
                        P1BoxTraits<typename ProblemT::DomainTraits::Scalar,
@@ -305,10 +305,10 @@ private:
                       TwoPTwoCNILocalJacobian>        ParentType;
 
     typedef typename ProblemT::DomainTraits           DomTraits;
-    typedef typename DomTraits::Element                  Element;
-    typedef typename DomTraits::ElementIterator          ElementIterator;
-    typedef typename DomTraits::LocalPosition            LocalPosition;
-    typedef typename DomTraits::GlobalPosition            GlobalPosition;
+    typedef typename DomTraits::Element               Element;
+    typedef typename DomTraits::ElementIterator       ElementIterator;
+    typedef typename DomTraits::LocalPosition         LocalPosition;
+    typedef typename DomTraits::GlobalPosition        GlobalPosition;
 
     enum {
         dim          = DomTraits::dim,

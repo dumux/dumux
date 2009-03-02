@@ -211,22 +211,22 @@ public:
         const std::vector<double>& param = soil.paramRelPerm(x, e, xi);
 
         switch (soil.relPermFlag(x, e, xi))
-            {
-            case 0:
-                return linearlaw.pC(saturationW, x, e, xi, param, T);
-            case 1:
-                return brookscorey.pC(saturationW, x, e, xi, param, T);
-            case 2:
-                return vangenuchten.pC(saturationW, x, e, xi, param, T);
-            case 3:
-                return auxiliary1.pC(saturationW, x, e, xi, param, T);
-            case 4:
-                return auxiliary2.pC(saturationW, x, e, xi, param, T);
-            case 5:
-                return auxiliary3.pC(saturationW, x, e, xi, param, T);
-            default:
-                DUNE_THROW(NotImplemented, "Matrix2p::modelFlag " << soil.relPermFlag(x, e, xi) << " for TwoPhaseRelations::pC");
-            }
+        {
+        case 0:
+            return linearlaw.pC(saturationW, x, e, xi, param, T);
+        case 1:
+            return brookscorey.pC(saturationW, x, e, xi, param, T);
+        case 2:
+            return vangenuchten.pC(saturationW, x, e, xi, param, T);
+        case 3:
+            return auxiliary1.pC(saturationW, x, e, xi, param, T);
+        case 4:
+            return auxiliary2.pC(saturationW, x, e, xi, param, T);
+        case 5:
+            return auxiliary3.pC(saturationW, x, e, xi, param, T);
+        default:
+            DUNE_THROW(NotImplemented, "Matrix2p::modelFlag " << soil.relPermFlag(x, e, xi) << " for TwoPhaseRelations::pC");
+        }
     }
 
     /*! \brief class for a second capillary pressure - saturation relation
@@ -242,22 +242,22 @@ public:
         // This function is mainly implemented, for the definition of a second
         // Pc-Sw relation for interfacial area models
         switch (soil.relPermFlag(x, e, xi))
-            {
-            case 0:
-                return linearlaw.pC(saturationW, x, e, xi, param, T);
-            case 1:
-                return brookscorey.pC(saturationW, x, e, xi, param, T);
-            case 2:
-                return vangenuchten.pC(saturationW, x, e, xi, param, T);
-            case 3:
-                return auxiliary1.pC(saturationW, x, e, xi, param, T);
-            case 4:
-                return auxiliary2.pC(saturationW, x, e, xi, param, T);
-            case 5:
-                return auxiliary3.pC(saturationW, x, e, xi, param, T);
-            default:
-                DUNE_THROW(NotImplemented, "Matrix2p::modelFlag " << soil.relPermFlag(x, e, xi) << " for TwoPhaseRelations::pC");
-            }
+        {
+        case 0:
+            return linearlaw.pC(saturationW, x, e, xi, param, T);
+        case 1:
+            return brookscorey.pC(saturationW, x, e, xi, param, T);
+        case 2:
+            return vangenuchten.pC(saturationW, x, e, xi, param, T);
+        case 3:
+            return auxiliary1.pC(saturationW, x, e, xi, param, T);
+        case 4:
+            return auxiliary2.pC(saturationW, x, e, xi, param, T);
+        case 5:
+            return auxiliary3.pC(saturationW, x, e, xi, param, T);
+        default:
+            DUNE_THROW(NotImplemented, "Matrix2p::modelFlag " << soil.relPermFlag(x, e, xi) << " for TwoPhaseRelations::pC");
+        }
     }
 
     /*! \brief the derivative of capillary pressure w.r.t. the saturation
@@ -272,22 +272,22 @@ public:
         const std::vector<double>& param = soil.paramRelPerm(x, e, xi);
 
         switch (soil.relPermFlag(x, e, xi))
-            {
-            case 0:
-                return linearlaw.dPdS(saturationW, x, e, xi, param, T);
-            case 1:
-                return brookscorey.dPdS(saturationW, x, e, xi, param, T);
-            case 2:
-                return vangenuchten.dPdS(saturationW, x, e, xi, param, T);
-            case 3:
-                return auxiliary1.dPdS(saturationW, x, e, xi, param, T);
-            case 4:
-                return auxiliary2.dPdS(saturationW, x, e, xi, param, T);
-            case 5:
-                return auxiliary3.dPdS(saturationW, x, e, xi, param, T);
-            default:
-                DUNE_THROW(NotImplemented, "Matrix2p::modelFlag " << soil.relPermFlag(x, e, xi) << " for TwoPhaseRelations::dPdS");
-            }
+        {
+        case 0:
+            return linearlaw.dPdS(saturationW, x, e, xi, param, T);
+        case 1:
+            return brookscorey.dPdS(saturationW, x, e, xi, param, T);
+        case 2:
+            return vangenuchten.dPdS(saturationW, x, e, xi, param, T);
+        case 3:
+            return auxiliary1.dPdS(saturationW, x, e, xi, param, T);
+        case 4:
+            return auxiliary2.dPdS(saturationW, x, e, xi, param, T);
+        case 5:
+            return auxiliary3.dPdS(saturationW, x, e, xi, param, T);
+        default:
+            DUNE_THROW(NotImplemented, "Matrix2p::modelFlag " << soil.relPermFlag(x, e, xi) << " for TwoPhaseRelations::dPdS");
+        }
     }
 
     /*! \brief second class for calculation of the derivative of capillary pressure w.r.t. the saturation
@@ -302,22 +302,22 @@ public:
                          const std::vector<double>& param, double T=283.15, double p=1e5) const
     {
         switch (soil.relPermFlag(x, e, xi))
-            {
-            case 0:
-                return linearlaw.dPdS(saturationW, x, e, xi, param, T);
-            case 1:
-                return brookscorey.dPdS(saturationW, x, e, xi, param, T);
-            case 2:
-                return vangenuchten.dPdS(saturationW, x, e, xi, param, T);
-            case 3:
-                return auxiliary1.dPdS(saturationW, x, e, xi, param, T);
-            case 4:
-                return auxiliary2.dPdS(saturationW, x, e, xi, param, T);
-            case 5:
-                return auxiliary3.dPdS(saturationW, x, e, xi, param, T);
-            default:
-                DUNE_THROW(NotImplemented, "Matrix2p::modelFlag " << soil.relPermFlag(x, e, xi) << " for TwoPhaseRelations::dPdS");
-            }
+        {
+        case 0:
+            return linearlaw.dPdS(saturationW, x, e, xi, param, T);
+        case 1:
+            return brookscorey.dPdS(saturationW, x, e, xi, param, T);
+        case 2:
+            return vangenuchten.dPdS(saturationW, x, e, xi, param, T);
+        case 3:
+            return auxiliary1.dPdS(saturationW, x, e, xi, param, T);
+        case 4:
+            return auxiliary2.dPdS(saturationW, x, e, xi, param, T);
+        case 5:
+            return auxiliary3.dPdS(saturationW, x, e, xi, param, T);
+        default:
+            DUNE_THROW(NotImplemented, "Matrix2p::modelFlag " << soil.relPermFlag(x, e, xi) << " for TwoPhaseRelations::dPdS");
+        }
     }
 
     /*! \brief the wetting phase saturation w.r.t. the capillary pressure
@@ -329,22 +329,22 @@ public:
     virtual double saturationW (double pC, const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, double T=283.15) const
     {
         switch (soil.relPermFlag(x, e, xi))
-            {
-            case 0:
-                return linearlaw.saturationW(pC, x, e, xi, T);
-            case 1:
-                return brookscorey.saturationW(pC, x, e, xi, T);
-            case 2:
-                return vangenuchten.saturationW(pC, x, e, xi, T);
-            case 3:
-                return auxiliary1.saturationW(pC, x, e, xi, T);
-            case 4:
-                return auxiliary2.saturationW(pC, x, e, xi, T);
-            case 5:
-                return auxiliary3.saturationW(pC, x, e, xi, T);
-            default:
-                DUNE_THROW(NotImplemented, "Matrix2p::modelFlag " << soil.relPermFlag(x, e, xi) << " for TwoPhaseRelations::saturationW");
-            }
+        {
+        case 0:
+            return linearlaw.saturationW(pC, x, e, xi, T);
+        case 1:
+            return brookscorey.saturationW(pC, x, e, xi, T);
+        case 2:
+            return vangenuchten.saturationW(pC, x, e, xi, T);
+        case 3:
+            return auxiliary1.saturationW(pC, x, e, xi, T);
+        case 4:
+            return auxiliary2.saturationW(pC, x, e, xi, T);
+        case 5:
+            return auxiliary3.saturationW(pC, x, e, xi, T);
+        default:
+            DUNE_THROW(NotImplemented, "Matrix2p::modelFlag " << soil.relPermFlag(x, e, xi) << " for TwoPhaseRelations::saturationW");
+        }
     }
 
     /*! \brief the derivative of the saturation w.r.t. the capillary pressure
@@ -356,22 +356,22 @@ public:
     virtual double dSdP (double pC, const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, double T=283.15) const
     {
         switch (soil.relPermFlag(x, e, xi))
-            {
-            case 0:
-                return linearlaw.dSdP(pC, x, e, xi, T);
-            case 1:
-                return brookscorey.dSdP(pC, x, e, xi, T);
-            case 2:
-                return vangenuchten.dSdP(pC, x, e, xi, T);
-            case 3:
-                return auxiliary1.dSdP(pC, x, e, xi, T);
-            case 4:
-                return auxiliary2.dSdP(pC, x, e, xi, T);
-            case 5:
-                return auxiliary3.dSdP(pC, x, e, xi, T);
-            default:
-                DUNE_THROW(NotImplemented, "Matrix2p::modelFlag " << soil.relPermFlag(x, e, xi) << " for TwoPhaseRelations::dSdP");
-            }
+        {
+        case 0:
+            return linearlaw.dSdP(pC, x, e, xi, T);
+        case 1:
+            return brookscorey.dSdP(pC, x, e, xi, T);
+        case 2:
+            return vangenuchten.dSdP(pC, x, e, xi, T);
+        case 3:
+            return auxiliary1.dSdP(pC, x, e, xi, T);
+        case 4:
+            return auxiliary2.dSdP(pC, x, e, xi, T);
+        case 5:
+            return auxiliary3.dSdP(pC, x, e, xi, T);
+        default:
+            DUNE_THROW(NotImplemented, "Matrix2p::modelFlag " << soil.relPermFlag(x, e, xi) << " for TwoPhaseRelations::dSdP");
+        }
     }
 
     /*! \brief the specific interfacial area function
@@ -436,22 +436,22 @@ public:
     virtual double krw (const double saturationW, const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, double T=283.15) const
     {
         switch (soil.relPermFlag(x, e, xi))
-            {
-            case 0:
-                return linearlaw.krw(saturationW, x, e, xi, T);
-            case 1:
-                return brookscorey.krw(saturationW, x, e, xi, T);
-            case 2:
-                return vangenuchten.krw(saturationW, x, e, xi, T);
-            case 3:
-                return auxiliary1.krw(saturationW, x, e, xi, T);
-            case 4:
-                return auxiliary2.krw(saturationW, x, e, xi, T);
-            case 5:
-                return auxiliary3.krw(saturationW, x, e, xi, T);
-            default:
-                DUNE_THROW(NotImplemented, "Matrix2p::modelFlag " << soil.relPermFlag(x, e, xi) << " for TwoPhaseRelations::krw");
-            }
+        {
+        case 0:
+            return linearlaw.krw(saturationW, x, e, xi, T);
+        case 1:
+            return brookscorey.krw(saturationW, x, e, xi, T);
+        case 2:
+            return vangenuchten.krw(saturationW, x, e, xi, T);
+        case 3:
+            return auxiliary1.krw(saturationW, x, e, xi, T);
+        case 4:
+            return auxiliary2.krw(saturationW, x, e, xi, T);
+        case 5:
+            return auxiliary3.krw(saturationW, x, e, xi, T);
+        default:
+            DUNE_THROW(NotImplemented, "Matrix2p::modelFlag " << soil.relPermFlag(x, e, xi) << " for TwoPhaseRelations::krw");
+        }
     }
 
     /*! \brief nonwetting phase relative permeability saturation relationship
@@ -462,43 +462,43 @@ public:
     virtual double krn (const double saturationN, const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, double T=283.15) const
     {
         switch (soil.relPermFlag(x, e, xi))
-            {
-            case 0:
-                return linearlaw.krn(saturationN, x, e, xi, T);
-            case 1:
-                return brookscorey.krn(saturationN, x, e, xi, T);
-            case 2:
-                return vangenuchten.krn(saturationN, x, e, xi, T);
-            case 3:
-                return auxiliary1.krn(saturationN, x, e, xi, T);
-            case 4:
-                return auxiliary2.krn(saturationN, x, e, xi, T);
-            case 5:
-                return auxiliary3.krn(saturationN, x, e, xi, T);
-            default:
-                DUNE_THROW(NotImplemented, "Matrix2p::modelFlag " << soil.relPermFlag(x, e, xi) << " for TwoPhaseRelations::krn");
-            }
+        {
+        case 0:
+            return linearlaw.krn(saturationN, x, e, xi, T);
+        case 1:
+            return brookscorey.krn(saturationN, x, e, xi, T);
+        case 2:
+            return vangenuchten.krn(saturationN, x, e, xi, T);
+        case 3:
+            return auxiliary1.krn(saturationN, x, e, xi, T);
+        case 4:
+            return auxiliary2.krn(saturationN, x, e, xi, T);
+        case 5:
+            return auxiliary3.krn(saturationN, x, e, xi, T);
+        default:
+            DUNE_THROW(NotImplemented, "Matrix2p::modelFlag " << soil.relPermFlag(x, e, xi) << " for TwoPhaseRelations::krn");
+        }
     }
 
     virtual std::vector<double> kr (const double saturationW, const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, double T=283.15) const
     {
         switch (soil.relPermFlag(x, e, xi))
-            {
-            case 0:
-                return linearlaw.kr(saturationW, x, e, xi, T);
-            case 1:
-                return brookscorey.kr(saturationW, x, e, xi, T);
-            case 2:
-                return vangenuchten.kr(saturationW, x, e, xi, T);
-            case 3:
-                return auxiliary1.kr(saturationW, x, e, xi, T);
-            case 4:
-                return auxiliary2.kr(saturationW, x, e, xi, T);
-            case 5:
-                return auxiliary3.kr(saturationW, x, e, xi, T);
-            default:
-                DUNE_THROW(NotImplemented, "Matrix2p::modelFlag " << soil.relPermFlag(x, e, xi) << " for TwoPhaseRelations::kr");
-            }
+        {
+        case 0:
+            return linearlaw.kr(saturationW, x, e, xi, T);
+        case 1:
+            return brookscorey.kr(saturationW, x, e, xi, T);
+        case 2:
+            return vangenuchten.kr(saturationW, x, e, xi, T);
+        case 3:
+            return auxiliary1.kr(saturationW, x, e, xi, T);
+        case 4:
+            return auxiliary2.kr(saturationW, x, e, xi, T);
+        case 5:
+            return auxiliary3.kr(saturationW, x, e, xi, T);
+        default:
+            DUNE_THROW(NotImplemented, "Matrix2p::modelFlag " << soil.relPermFlag(x, e, xi) << " for TwoPhaseRelations::kr");
+        }
     }
 
 };

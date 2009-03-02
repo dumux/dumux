@@ -79,9 +79,9 @@ public:
         double mu_brine;
 
         if(Temp <= 275.) // regularisation
-            {
-                Temp = 275;
-            }
+        {
+            Temp = 275;
+        }
 
         T_C = Temp - 273.15;
 

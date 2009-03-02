@@ -72,15 +72,15 @@ public:
         FieldVector<Scalar,numEq> values(0);
 
         if (globalPos[0] < eps_)
-            {
-                values[pWIdx] = 2e5;
-                values[switchIdx] = 0;  // may be Sn, Xaw or Xwn!!
-            }
+        {
+            values[pWIdx] = 2e5;
+            values[switchIdx] = 0;  // may be Sn, Xaw or Xwn!!
+        }
         if (globalPos[0] > (300 - eps_))
-            {
-                values[pWIdx] = 1e5;
-                values[switchIdx] = 0;  // may be Sn, Xaw or Xwn!!
-            }
+        {
+            values[pWIdx] = 1e5;
+            values[switchIdx] = 0;  // may be Sn, Xaw or Xwn!!
+        }
 
         return values;
     }

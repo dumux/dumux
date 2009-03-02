@@ -41,10 +41,10 @@ public:
         if (x[0] < 1.0e-8)
             return velocity(x);
         else
-            {
-                FieldVector<RT,dim> result(0);
-                return result;
-            }
+        {
+            FieldVector<RT,dim> result(0);
+            return result;
+        }
     }
 
     virtual FieldVector<RT,dim> J(const FieldVector<DT,dim>& x, const Entity& e,

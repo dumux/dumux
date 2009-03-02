@@ -133,19 +133,19 @@ public:
 
         VertexIterator vEndIt = gridView.template end<dim>();
         for (VertexIterator vIt = gridView.template begin<dim>(); vIt != vEndIt; ++vIt)
+        {
+            int vertexIndex = indexSet.index(*vIt);
+            for (int j=0; j<numNodes; j++)
             {
-                int vertexIndex = indexSet.index(*vIt);
-                for (int j=0; j<numNodes; j++)
-                    {
-                        if (vIt->geometry().corner(0)[0]-0.05 <= soilProps_[j][0] && vIt->geometry().corner(0)[0]+0.05 >= soilProps_[j][0]
-                            && vIt->geometry().corner(0)[1]-0.05 <= soilProps_[j][1] && vIt->geometry().corner(0)[1]+0.05 >= soilProps_[j][1]
-                            && vIt->geometry().corner(0)[2]-3238.01 <= soilProps_[j][2] && vIt->geometry().corner(0)[2]-3237.914 >= soilProps_[j][2])
-                            {
-                                poro_[vertexIndex] = soilProps_[j][3];
-                                perm_[vertexIndex] = soilProps_[j][4];
-                            }
-                    }
+                if (vIt->geometry().corner(0)[0]-0.05 <= soilProps_[j][0] && vIt->geometry().corner(0)[0]+0.05 >= soilProps_[j][0]
+                    && vIt->geometry().corner(0)[1]-0.05 <= soilProps_[j][1] && vIt->geometry().corner(0)[1]+0.05 >= soilProps_[j][1]
+                    && vIt->geometry().corner(0)[2]-3238.01 <= soilProps_[j][2] && vIt->geometry().corner(0)[2]-3237.914 >= soilProps_[j][2])
+                {
+                    poro_[vertexIndex] = soilProps_[j][3];
+                    perm_[vertexIndex] = soilProps_[j][4];
+                }
             }
+        }
     }
 
     virtual bool readPropertiesFlag()

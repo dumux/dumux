@@ -129,9 +129,9 @@ public:
         K_Fracture = 0.;
         K_Matrix  = 0.;
         for (int i = 0; i < dim; i++)
-            {permloc_[i][i] = 2.0e-12;
-                K_Fracture[i][i]= 2.0e-12;
-                K_Matrix[i][i]= 2.0e-12;}
+        {permloc_[i][i] = 2.0e-12;
+            K_Fracture[i][i]= 2.0e-12;
+            K_Matrix[i][i]= 2.0e-12;}
         for (int i = 0; i < dim; i++){
             permlocWell_[i][i] = 1.0e-10;
             K_FractureWell[i][i] = 1.0e-10;

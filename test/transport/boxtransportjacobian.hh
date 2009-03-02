@@ -119,15 +119,15 @@ public:
         elData.porosity = problem.soil().porosity(this->fvGeom.elementGlobal, element, this->fvGeom.elementLocal);
 
         switch (dim)
-            {
-            case 1:
-                elData.velocity[0] = 0.5*(problem.variables.vTotal(element, 0)[0] + problem.variables.vTotal(element, 1)[0]);
-                break;
-            case 2:
-                elData.velocity[0] = 0.5*(problem.variables.vTotal(element, 0)[0] + problem.variables.vTotal(element, 1)[0]);
-                elData.velocity[1] = 0.5*(problem.variables.vTotal(element, 2)[1] + problem.variables.vTotal(element, 3)[1]);
-                break;
-            }
+        {
+        case 1:
+            elData.velocity[0] = 0.5*(problem.variables.vTotal(element, 0)[0] + problem.variables.vTotal(element, 1)[0]);
+            break;
+        case 2:
+            elData.velocity[0] = 0.5*(problem.variables.vTotal(element, 0)[0] + problem.variables.vTotal(element, 1)[0]);
+            elData.velocity[1] = 0.5*(problem.variables.vTotal(element, 2)[1] + problem.variables.vTotal(element, 3)[1]);
+            break;
+        }
     };
 
     // the members of the struct are defined here
@@ -201,118 +201,118 @@ public:
 
         IntersectionIterator endit = IntersectionIteratorGetter<Grid, TypeTag>::end(e);
         for (IntersectionIterator it = IntersectionIteratorGetter<Grid, TypeTag>::begin(e); it!=endit; ++it)
-            {
-                // if we have a neighbor then we assume there is no boundary (forget interior boundaries)
-                // in level assemble treat non-level neighbors as boundary
-                if (it->neighbor()) {
-                    if (this->levelBoundaryAsDirichlet && it->outside()->level()==e.level())
-                        continue;
-                    if (!this->levelBoundaryAsDirichlet)
-                        continue;
-                }
+        {
+            // if we have a neighbor then we assume there is no boundary (forget interior boundaries)
+            // in level assemble treat non-level neighbors as boundary
+            if (it->neighbor()) {
+                if (this->levelBoundaryAsDirichlet && it->outside()->level()==e.level())
+                    continue;
+                if (!this->levelBoundaryAsDirichlet)
+                    continue;
+            }
 
-                // determine boundary condition type for this face, initialize with processor boundary
-                FieldVector<typename BoundaryConditions::Flags, numEq> bctypeface(BoundaryConditions::process);
-                FieldVector<int,numEq> dirichletIdx(0);
+            // determine boundary condition type for this face, initialize with processor boundary
+            FieldVector<typename BoundaryConditions::Flags, numEq> bctypeface(BoundaryConditions::process);
+            FieldVector<int,numEq> dirichletIdx(0);
 
-                // handle face on exterior boundary, this assumes there are no interior boundaries
-                if (it->boundary()) {
-                    int faceIdx = it->numberInSelf();
-                    //                 std::cout << "faceIdx = " << faceIdx << ", beginning: " << std::endl;
-                    //                 for (int i = 0; i < 4; i++)
-                    //                   std::cout << "bctype[" << i << "] = " << this->bctype[i] << std::endl;
+            // handle face on exterior boundary, this assumes there are no interior boundaries
+            if (it->boundary()) {
+                int faceIdx = it->numberInSelf();
+                //                 std::cout << "faceIdx = " << faceIdx << ", beginning: " << std::endl;
+                //                 for (int i = 0; i < 4; i++)
+                //                   std::cout << "bctype[" << i << "] = " << this->bctype[i] << std::endl;
 
-                    int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
-                    for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++) {
-                        int nodeInElement = referenceElement.subEntity(faceIdx, 1, nodeInFace, dim);
-                        for (int equationNumber = 0; equationNumber < numEq; equationNumber++) {
-                            if (this->bctype[nodeInElement][equationNumber] == BoundaryConditions::neumann) {
-                                int bfIdx = this->fvGeom.boundaryFaceIndex(faceIdx,    nodeInFace);
-                                FieldVector<Scalar,dim> local = this->fvGeom.boundaryFace[bfIdx].ipLocal;
-                                FieldVector<Scalar,dim> global = this->fvGeom.boundaryFace[bfIdx].ipGlobal;
-                                bctypeface = this->getImp().problem.bctypeSat(global, e, local); // eval bctype
+                int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
+                for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++) {
+                    int nodeInElement = referenceElement.subEntity(faceIdx, 1, nodeInFace, dim);
+                    for (int equationNumber = 0; equationNumber < numEq; equationNumber++) {
+                        if (this->bctype[nodeInElement][equationNumber] == BoundaryConditions::neumann) {
+                            int bfIdx = this->fvGeom.boundaryFaceIndex(faceIdx,    nodeInFace);
+                            FieldVector<Scalar,dim> local = this->fvGeom.boundaryFace[bfIdx].ipLocal;
+                            FieldVector<Scalar,dim> global = this->fvGeom.boundaryFace[bfIdx].ipGlobal;
+                            bctypeface = this->getImp().problem.bctypeSat(global, e, local); // eval bctype
 
-                                if (bctypeface[equationNumber]!=BoundaryConditions::neumann)
-                                    break;
-                                VBlockType J = this->getImp().problem.neumannSat(global, e, local, 0);
-                                J[equationNumber] *= this->fvGeom.boundaryFace[bfIdx].area;
-                                this->b[nodeInElement][equationNumber] += J[equationNumber];
-                            }
-                        }
-                    }
-
-                    bool nface(true); // check if face is a neumann face
-                    for(int i=0; i<numEq; i++)
-                        {
-                            if(bctypeface[i] != BoundaryConditions::neumann)
-                                nface = false; // was not a neumann face
-                        }
-                    if(nface == true)
-                        continue; // was a neumann face, go to next face
-                }
-
-                // If we are here, then it is
-                // (i)   an exterior boundary face with Dirichlet condition, or
-                // (ii)  a processor boundary (i.e. neither boundary() nor neighbor() was true), or
-                // (iii) a level boundary in case of level-wise assemble
-                // How processor boundaries are handled depends on the processor boundary mode
-
-                bool pface(false);  // check if face is a process boundary
-                for(int i=0; i<numEq; i++)
-                    {
-                        if (bctypeface[i]==BoundaryConditions::process
-                            && this->procBoundaryAsDirichlet==false
-                            && this->levelBoundaryAsDirichlet==false)
-                            {
-                                pface = true;
+                            if (bctypeface[equationNumber]!=BoundaryConditions::neumann)
                                 break;
-                            }
+                            VBlockType J = this->getImp().problem.neumannSat(global, e, local, 0);
+                            J[equationNumber] *= this->fvGeom.boundaryFace[bfIdx].area;
+                            this->b[nodeInElement][equationNumber] += J[equationNumber];
+                        }
                     }
-                if(pface == true)
-                    continue;   // if face is a process boundary it acts like homogeneous Neumann
+                }
+
+                bool nface(true); // check if face is a neumann face
+                for(int i=0; i<numEq; i++)
+                {
+                    if(bctypeface[i] != BoundaryConditions::neumann)
+                        nface = false; // was not a neumann face
+                }
+                if(nface == true)
+                    continue; // was a neumann face, go to next face
+            }
+
+            // If we are here, then it is
+            // (i)   an exterior boundary face with Dirichlet condition, or
+            // (ii)  a processor boundary (i.e. neither boundary() nor neighbor() was true), or
+            // (iii) a level boundary in case of level-wise assemble
+            // How processor boundaries are handled depends on the processor boundary mode
+
+            bool pface(false);  // check if face is a process boundary
+            for(int i=0; i<numEq; i++)
+            {
+                if (bctypeface[i]==BoundaryConditions::process
+                    && this->procBoundaryAsDirichlet==false
+                    && this->levelBoundaryAsDirichlet==false)
+                {
+                    pface = true;
+                    break;
+                }
+            }
+            if(pface == true)
+                continue;   // if face is a process boundary it acts like homogeneous Neumann
 
 
-                for (int equationNumber=0; equationNumber<numEq; equationNumber++) {
-                    for (int i=0; i<sfs.size(); i++) // loop over test function number
-                        {
-                            //this->dirichletIndex[i][equationNumber] = equationNumber;
+            for (int equationNumber=0; equationNumber<numEq; equationNumber++) {
+                for (int i=0; i<sfs.size(); i++) // loop over test function number
+                {
+                    //this->dirichletIndex[i][equationNumber] = equationNumber;
 
-                            //std::cout<<"i = "<<i<<std::endl;
-                            if (sfs[i].codim()==0)
-                                continue; // skip interior dof
-                            if (sfs[i].codim()==1) // handle face dofs
-                                {
-                                    if (sfs[i].entity()==it->numberInSelf()) {
-                                        if (this->bctype[i][equationNumber] < bctypeface[equationNumber]) {
-                                            this->bctype[i][equationNumber] = bctypeface[equationNumber];
-                                            this->dirichletIndex[i][equationNumber] = dirichletIdx[equationNumber];
+                    //std::cout<<"i = "<<i<<std::endl;
+                    if (sfs[i].codim()==0)
+                        continue; // skip interior dof
+                    if (sfs[i].codim()==1) // handle face dofs
+                    {
+                        if (sfs[i].entity()==it->numberInSelf()) {
+                            if (this->bctype[i][equationNumber] < bctypeface[equationNumber]) {
+                                this->bctype[i][equationNumber] = bctypeface[equationNumber];
+                                this->dirichletIndex[i][equationNumber] = dirichletIdx[equationNumber];
 
-                                            if (bctypeface[equationNumber] == BoundaryConditions::process)
-                                                this->b[i][equationNumber] = 0;
-                                            if (bctypeface[equationNumber] == BoundaryConditions::dirichlet) {
-                                                this->b[i][equationNumber] = 0;
-                                            }
-                                        }
-                                    }
-                                    continue;
+                                if (bctypeface[equationNumber] == BoundaryConditions::process)
+                                    this->b[i][equationNumber] = 0;
+                                if (bctypeface[equationNumber] == BoundaryConditions::dirichlet) {
+                                    this->b[i][equationNumber] = 0;
                                 }
-                            // handle subentities of this face
-                            for (int j=0; j<ReferenceElements<Scalar,dim>::general(gt).size(it->numberInSelf(), 1, sfs[i].codim()); j++)
-                                if (sfs[i].entity()==ReferenceElements<Scalar,dim>::general(gt).subEntity(it->numberInSelf(), 1, j, sfs[i].codim()))
-                                    {
-                                        if (this->bctype[i][equationNumber] < bctypeface[equationNumber]) {
-                                            this->bctype[i][equationNumber] = bctypeface[equationNumber];
-                                            this->dirichletIndex[i][equationNumber] = dirichletIdx[equationNumber];
-                                            if (bctypeface[equationNumber] == BoundaryConditions::process)
-                                                this->b[i][equationNumber] = 0;
-                                            if (bctypeface[equationNumber] == BoundaryConditions::dirichlet) {
-                                                this->b[i][equationNumber] = 0;
-                                            }
-                                        }
-                                    }
+                            }
+                        }
+                        continue;
+                    }
+                    // handle subentities of this face
+                    for (int j=0; j<ReferenceElements<Scalar,dim>::general(gt).size(it->numberInSelf(), 1, sfs[i].codim()); j++)
+                        if (sfs[i].entity()==ReferenceElements<Scalar,dim>::general(gt).subEntity(it->numberInSelf(), 1, j, sfs[i].codim()))
+                        {
+                            if (this->bctype[i][equationNumber] < bctypeface[equationNumber]) {
+                                this->bctype[i][equationNumber] = bctypeface[equationNumber];
+                                this->dirichletIndex[i][equationNumber] = dirichletIdx[equationNumber];
+                                if (bctypeface[equationNumber] == BoundaryConditions::process)
+                                    this->b[i][equationNumber] = 0;
+                                if (bctypeface[equationNumber] == BoundaryConditions::dirichlet) {
+                                    this->b[i][equationNumber] = 0;
+                                }
+                            }
                         }
                 }
             }
+        }
 
     }
 

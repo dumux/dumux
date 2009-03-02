@@ -107,26 +107,26 @@ public:
         Iterator eendit = gridview.template end<0>();
         for (Iterator it = gridview.template begin<0>(); it
                  != eendit; ++it)
-            {
-                // get entity
-                const Entity& entity = *it;
+        {
+            // get entity
+            const Entity& entity = *it;
 
-                int index = mapper.map(*it);
+            int index = mapper.map(*it);
 
-                elementvolume[index]= entity.geometry().volume();
-                //                        std::cout<<"elementvolume = "<<elementvolume[index]<<std::endl;
-            }
+            elementvolume[index]= entity.geometry().volume();
+            //                        std::cout<<"elementvolume = "<<elementvolume[index]<<std::endl;
+        }
 
         double globalvolume = elementvolume.one_norm();
         //                std::cout<<"globalvolume = "<<globalvolume<<std::endl;
 
         for (int i=0; i<size; i++)
-            {
-                error[i]=uEx[i][0]-Approx[i];
-                //            std::cout<<"error = "<<error[i]<<std::endl;
-                //            std::cout<<"uEx = "<<uEx[i]<<std::endl;
-                //            std::cout<<"Approx = "<<Approx[i]<<std::endl;
-            }
+        {
+            error[i]=uEx[i][0]-Approx[i];
+            //            std::cout<<"error = "<<error[i]<<std::endl;
+            //            std::cout<<"uEx = "<<uEx[i]<<std::endl;
+            //            std::cout<<"Approx = "<<Approx[i]<<std::endl;
+        }
         //        std::cout<<"error = "<<error<<std::endl;
 
         double diffNorm = error.two_norm();

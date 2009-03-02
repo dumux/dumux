@@ -167,32 +167,32 @@ struct Table : public std::vector<std::vector<TableEntry> >
     {
         std::cerr << "Calculating table @ hires index #" << hiresIndex << "\n";
         for (int i = 0; i < numP; ++i)
+        {
+            double pg_MPa = minP + ((double) i)/(numP - 1)*(maxP - minP);
+            std::cerr << "  p=" << pg_MPa << " (" << (int) 100*(pg_MPa - minP)/(maxP - minP) << "%)                     \n";
+
+            for (int j = 0; j < numT; ++j)
             {
-                double pg_MPa = minP + ((double) i)/(numP - 1)*(maxP - minP);
-                std::cerr << "  p=" << pg_MPa << " (" << (int) 100*(pg_MPa - minP)/(maxP - minP) << "%)                     \n";
+                double Temp = minT + ((double) j)/(numT - 1)*(maxT - minT);
 
-                for (int j = 0; j < numT; ++j)
-                    {
-                        double Temp = minT + ((double) j)/(numT - 1)*(maxT - minT);
+                // call the fortran code from Span and Wagner to calculate
+                // the density and the enthalpy
+                double rho  = db_(&Temp, &pg_MPa);
+                double enth = (2.190963e+01 +  hb_(&Temp, &rho))*1E3 ;
 
-                        // call the fortran code from Span and Wagner to calculate
-                        // the density and the enthalpy
-                        double rho  = db_(&Temp, &pg_MPa);
-                        double enth = (2.190963e+01 +  hb_(&Temp, &rho))*1E3 ;
+                // calculate the solubility of CO2 in water
+                double pg_Pa = pg_MPa * 1.0E6;
+                double solu = SolCO2inWater(Temp, pg_Pa, 0.048);
+                //double solu = SolCO2inWater(Temp, pg_Pa, 0.1);
 
-                        // calculate the solubility of CO2 in water
-                        double pg_Pa = pg_MPa * 1.0E6;
-                        double solu = SolCO2inWater(Temp, pg_Pa, 0.048);
-                        //double solu = SolCO2inWater(Temp, pg_Pa, 0.1);
+                operator[](i)[j].density = rho;
+                operator[](i)[j].enthalpy = enth;
+                operator[](i)[j].solubility = solu;
 
-                        operator[](i)[j].density = rho;
-                        operator[](i)[j].enthalpy = enth;
-                        operator[](i)[j].solubility = solu;
-
-                        std::cerr << "  T=" << Temp << " (" << (int) 100*(Temp - minT)/(maxT - minT) << "%)                 \r";
-                        std::cerr.flush();
-                    }
+                std::cerr << "  T=" << Temp << " (" << (int) 100*(Temp - minT)/(maxT - minT) << "%)                 \r";
+                std::cerr.flush();
             }
+        }
 
         if (hiresTable)
             hiresTable->calculate();
@@ -223,14 +223,14 @@ struct Table : public std::vector<std::vector<TableEntry> >
     {
         std::string fieldName = "";
         switch (what)
-            {
-            case Density:
-                fieldName = "density"; break;
-            case Enthalpy:
-                fieldName = "enthalpy"; break;
-            case Solubility:
-                fieldName = "solubility"; break;
-            };
+        {
+        case Density:
+            fieldName = "density"; break;
+        case Enthalpy:
+            fieldName = "enthalpy"; break;
+        case Solubility:
+            fieldName = "solubility"; break;
+        };
 
         std::string FieldName = fieldName;
         FieldName[0] = toupper(fieldName[0]);
@@ -285,14 +285,14 @@ struct Table : public std::vector<std::vector<TableEntry> >
 
                 double val = 0;
                 switch (what)
-                    {
-                    case Density:
-                        val = (*this)[i][j].density; break;
-                    case Enthalpy:
-                        val = (*this)[i][j].enthalpy; break;
-                    case Solubility:
-                        val = (*this)[i][j].solubility; break;
-                    };
+                {
+                case Density:
+                    val = (*this)[i][j].density; break;
+                case Enthalpy:
+                    val = (*this)[i][j].enthalpy; break;
+                case Solubility:
+                    val = (*this)[i][j].solubility; break;
+                };
                 std::cout << std::setw(25) << val;
 
                 if (j != operator[](i).size() - 1)

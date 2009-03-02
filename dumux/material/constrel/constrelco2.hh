@@ -53,11 +53,11 @@ public:
         double visco_CO2;
 
         if(temp < 275.) // regularisation
-            {
-                // temp = 275;
-                DUNE_THROW(Dune::NumericalProblem,
-                           "ConstrelCO2: Temperature " << temp << " out of range at " << __FILE__ << ":" << __LINE__);
-            }
+        {
+            // temp = 275;
+            DUNE_THROW(Dune::NumericalProblem,
+                       "ConstrelCO2: Temperature " << temp << " out of range at " << __FILE__ << ":" << __LINE__);
+        }
 
 
         TStar = temp/ESP;
@@ -125,14 +125,14 @@ public:
             temp = 304.0;
 
         for (int i=0; i < 9; i++)
+        {
+            if (ts[i] <= temp && temp <= ts[i+1])
             {
-                if (ts[i] <= temp && temp <= ts[i+1])
-                    {
-                        return ps[i] +
-                            (temp - ts[i])/(ts[i+1] - ts[i])
-                            * (ps[i+1] - ps[i]);
-                    }
+                return ps[i] +
+                    (temp - ts[i])/(ts[i+1] - ts[i])
+                    * (ps[i+1] - ps[i]);
             }
+        }
 
         DUNE_THROW(Dune::NumericalProblem, "satpressure_CO2: Temperature " << temp << " out of range");
     }

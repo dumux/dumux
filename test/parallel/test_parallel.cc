@@ -43,25 +43,25 @@ double discreteError(const Grid& grid, const Solution& solution, const Problem& 
     VertexIterator endIt = grid.leafView().template end<dim>();
     VertexIterator it = grid.leafView().template begin<dim>();
     for (; it != endIt; ++it)
+    {
+        const PartitionType& partitionType = (*it).partitionType();
+        //std::cout << "type = " << partitionType << std::endl;
+
+        if (partitionType != GhostEntity)
         {
-            const PartitionType& partitionType = (*it).partitionType();
-            //std::cout << "type = " << partitionType << std::endl;
+            // get exact solution at vertex
+            FieldVector<double,dim> globalCoord = (*it).geometry().corner(0);
+            double exact = problem.exact(globalCoord);
 
-            if (partitionType != GhostEntity)
-                {
-                    // get exact solution at vertex
-                    FieldVector<double,dim> globalCoord = (*it).geometry().corner(0);
-                    double exact = problem.exact(globalCoord);
+            // get approximate solution at vertex
+            int globalId = vertexMapper.map(*it);
+            double approximate = (*solution)[globalId];
 
-                    // get approximate solution at vertex
-                    int globalId = vertexMapper.map(*it);
-                    double approximate = (*solution)[globalId];
+            //          std::cout << grid.comm().rank() << ": id = " << globalId << ", coord = " << globalCoord << ", type = " << partitionType << std::endl;
 
-                    //          std::cout << grid.comm().rank() << ": id = " << globalId << ", coord = " << globalCoord << ", type = " << partitionType << std::endl;
-
-                    error += (exact - approximate)*(exact - approximate);
-                }
+            error += (exact - approximate)*(exact - approximate);
         }
+    }
 
     return sqrt(error)/(*solution).two_norm();
 }
@@ -149,16 +149,16 @@ int main(int argc, char** argv)
 #else
 
 int main (int argc , char **argv) try
-    {
-        std::cout << "This test is not finished yet." << std::endl;
-        //  std::cout << "Please install MPI." << std::endl;
+ {
+     std::cout << "This test is not finished yet." << std::endl;
+     //  std::cout << "Please install MPI." << std::endl;
 
-        return 1;
-    }
+     return 1;
+ }
  catch (...)
-     {
-         std::cerr << "Generic exception!" << std::endl;
-         return 2;
-     }
+ {
+     std::cerr << "Generic exception!" << std::endl;
+     return 2;
+ }
 #endif
 

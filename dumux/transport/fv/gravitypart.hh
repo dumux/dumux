@@ -48,10 +48,10 @@ public:
         IntersectionIterator endis = entity.ilevelend();
         IntersectionIterator is = entity.ilevelbegin();
         for (; is != endis; ++is)
-            {
-                if(is->numberInSelf() == numberInSelf)
-                    break;
-            }
+        {
+            if(is->numberInSelf() == numberInSelf)
+                break;
+        }
 
         // get geometry type of face
         GeometryType gtf = is->intersectionSelfLocal().type();

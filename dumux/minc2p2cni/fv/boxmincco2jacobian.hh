@@ -120,15 +120,15 @@ public:
             int it = this->fvGeom.subContVolFace[face].i;
             int jt = this->fvGeom.subContVolFace[face].j;
             if (it == 0)
-                {
-                    FieldVector<DT,dim> ht;
-                    ht = this->fvGeom.subContVolFace[face].normal;
-                    if (ht[0]<0) {ht[0]*=(-1);}
-                    if (ht[1]<0) {ht[1]*=(-1);}
-                    if (ht[0]==0){ht[0]=ht[1];}
-                    if (ht[1]==0){ht[1]=ht[0];}
-                    length_y = ht[0];
-                }
+            {
+                FieldVector<DT,dim> ht;
+                ht = this->fvGeom.subContVolFace[face].normal;
+                if (ht[0]<0) {ht[0]*=(-1);}
+                if (ht[1]<0) {ht[1]*=(-1);}
+                if (ht[0]==0){ht[0]=ht[1];}
+                if (ht[1]==0){ht[1]=ht[0];}
+                length_y = ht[0];
+            }
             else if (jt==0)   {
                 FieldVector<DT,dim> ht;
                 ht = this->fvGeom.subContVolFace[face].normal;
@@ -179,13 +179,13 @@ public:
         for (int kx=0; kx<nPermeabilities; kx++){
             for (int ky=0; ky<nPermeabilities; ky++){
                 if (KF[kx][ky] != KM[kx][ky])
-                    {
-                        K[kx][ky] = 2 / (1/(KF[kx][ky]+eps) + (1/(KM[kx][ky]+eps)));
-                    }
+                {
+                    K[kx][ky] = 2 / (1/(KF[kx][ky]+eps) + (1/(KM[kx][ky]+eps)));
+                }
                 else
-                    {
-                        K = KF;
-                    }
+                {
+                    K = KF;
+                }
             }
         }
         return K;
@@ -202,9 +202,9 @@ public:
         for (int kx=0; kx<nPermeabilities; kx++){
             for (int ky=0; ky<nPermeabilities; ky++){
                 if (Ki[kx][ky] != Kj[kx][ky])
-                    {
-                        K[kx][ky] = 2 / (1/(Ki[kx][ky]+eps) + (1/(Kj[kx][ky]+eps)));
-                    }
+                {
+                    K[kx][ky] = 2 / (1/(Ki[kx][ky]+eps) + (1/(Kj[kx][ky]+eps)));
+                }
                 else K = Ki;
             }
         }
@@ -372,52 +372,52 @@ public:
 
         // calculate FE gradient at subcontrolvolumeface
         for (int k = 0; k < this->fvGeom.numVertices; k++) // loop over adjacent nodes
+        {
+            // FEGradient at subcontrolvolumeface face
+            const FieldVector<DT,dim> feGrad(this->fvGeom.subContVolFace[face].grad[k]);
+            FieldVector<RT,2> pressureF(0.0);
+            FieldVector<RT,2> pressureM(0.0);
+
+            pressureF[wPhase] = vNDat[k].pWFracture;
+            pressureF[nPhase] = vNDat[k].pNFracture;
+            pressureM[wPhase] = vNDat[k].pWMatrix;
+            pressureM[nPhase] = vNDat[k].pNMatrix;
+
+
+
+            // compute pressure gradients for each phase at integration point of subcontrolvolumeface face
+            for (int phase = 0; phase < 2; phase++)
             {
-                // FEGradient at subcontrolvolumeface face
-                const FieldVector<DT,dim> feGrad(this->fvGeom.subContVolFace[face].grad[k]);
-                FieldVector<RT,2> pressureF(0.0);
-                FieldVector<RT,2> pressureM(0.0);
-
-                pressureF[wPhase] = vNDat[k].pWFracture;
-                pressureF[nPhase] = vNDat[k].pNFracture;
-                pressureM[wPhase] = vNDat[k].pWMatrix;
-                pressureM[nPhase] = vNDat[k].pNMatrix;
-
-
-
-                // compute pressure gradients for each phase at integration point of subcontrolvolumeface face
-                for (int phase = 0; phase < 2; phase++)
-                    {
-                        tempF = feGrad;
-                        tempF *= pressureF[phase];
-                        pGradF[phase] += tempF;
-                    }
-
-                // compute temperature gradient
                 tempF = feGrad;
-                tempF *= vNDat[k].temperatureF;
-                teGradF += tempF;
-
-                // compute concentration gradients
-                // for diffusion of co2 in wetting phase
-                tempF = feGrad;
-                tempF *= vNDat[k].massfrac[co2F][wPhase];
-                xGradF[wPhase] += tempF;
-
-                // for diffusion of water in nonwetting phase
-                tempF = feGrad;
-                tempF *= vNDat[k].massfrac[waterF][nPhase];
-                xGradF[nPhase] += tempF;
+                tempF *= pressureF[phase];
+                pGradF[phase] += tempF;
             }
+
+            // compute temperature gradient
+            tempF = feGrad;
+            tempF *= vNDat[k].temperatureF;
+            teGradF += tempF;
+
+            // compute concentration gradients
+            // for diffusion of co2 in wetting phase
+            tempF = feGrad;
+            tempF *= vNDat[k].massfrac[co2F][wPhase];
+            xGradF[wPhase] += tempF;
+
+            // for diffusion of water in nonwetting phase
+            tempF = feGrad;
+            tempF *= vNDat[k].massfrac[waterF][nPhase];
+            xGradF[nPhase] += tempF;
+        }
 
         // deduce gravity*density of each phase
         FieldMatrix<RT,2,dim> contribComp(0);
         for (int phase=0; phase<2; phase++)
-            {
-                contribComp[phase] = problem.gravity();
-                contribComp[phase] *= vNDat[i].densityF[phase];
-                pGradF[phase] -= contribComp[phase]; // grad p - rho*g
-            }
+        {
+            contribComp[phase] = problem.gravity();
+            contribComp[phase] *= vNDat[i].densityF[phase];
+            pGradF[phase] -= contribComp[phase]; // grad p - rho*g
+        }
 
         // Darcy velocity in normal direction for each phase K*n(grad p -rho*g)
         VBlockType outward(0);
@@ -489,22 +489,22 @@ public:
         normDiffGrad[nPhase] = xGradF[nPhase]*normal;
 
         if (state_i == bothPhases && state_j == bothPhases)
-            {
-                diffusionAW = Daw * avgDensity[wPhase] * normDiffGrad[wPhase];
-                diffusionWW = - diffusionAW;
-                diffusionWN = Dwg * avgDensity[nPhase] * normDiffGrad[nPhase];
-                diffusionAN = - diffusionWN;
-            }
+        {
+            diffusionAW = Daw * avgDensity[wPhase] * normDiffGrad[wPhase];
+            diffusionWW = - diffusionAW;
+            diffusionWN = Dwg * avgDensity[nPhase] * normDiffGrad[nPhase];
+            diffusionAN = - diffusionWN;
+        }
         else if (state_i == waterPhase || state_j == waterPhase)
-            {
-                diffusionAW = Daw * avgDensity[wPhase] * normDiffGrad[wPhase];
-                diffusionWW = - diffusionAW;
-            }
+        {
+            diffusionAW = Daw * avgDensity[wPhase] * normDiffGrad[wPhase];
+            diffusionWW = - diffusionAW;
+        }
         else if (state_i == gasPhase || state_j == gasPhase)
-            {
-                diffusionWN = Dwg * avgDensity[nPhase] * normDiffGrad[nPhase];
-                diffusionAN = - diffusionWN;
-            }
+        {
+            diffusionWN = Dwg * avgDensity[nPhase] * normDiffGrad[nPhase];
+            diffusionAN = - diffusionWN;
+        }
 
         // Water conservation
         flux[waterF] += (diffusionWW + diffusionWN);
@@ -565,9 +565,9 @@ public:
         FieldVector<RT, nCont> KA_nestVol(0.0);
         ////  Product of permeability with the nestedvolume area
         for (int nC=0; nC<nCont; nC++)
-            {
-                KA_nestVol[nC] = Kharmonic[0][0] * A[nC];
-            }
+        {
+            KA_nestVol[nC] = Kharmonic[0][0] * A[nC];
+        }
 
         /***********************************************************************************/
         //// MINC Flux Matrix
@@ -577,57 +577,57 @@ public:
         //// Here should be added the normal and what sign it gives
 
         for (int nC = 0; nC < nCont-1; nC++)
-            {
-                PGrad[wPhase][nC] += vNDat[i].p[wPhase][nC];
-                PGrad[wPhase][nC] -= vNDat[i].p[wPhase][nC+1];
-                PGrad[nPhase][nC] += vNDat[i].p[nPhase][nC];
-                PGrad[nPhase][nC] -= vNDat[i].p[nPhase][nC+1];
+        {
+            PGrad[wPhase][nC] += vNDat[i].p[wPhase][nC];
+            PGrad[wPhase][nC] -= vNDat[i].p[wPhase][nC+1];
+            PGrad[nPhase][nC] += vNDat[i].p[nPhase][nC];
+            PGrad[nPhase][nC] -= vNDat[i].p[nPhase][nC+1];
 
-                ////       //if the normal of the face gives negative numbers it multiplies with -1
-                inward[wPhase] = PGrad[wPhase][nC] * KA_nestVol[nC] / elData.delta;
-                if (inward[wPhase] < 0){
-                    inward[wPhase]*=(-1);
-                }
-                inward[nPhase] = PGrad[wPhase][nC] * KA_nestVol[nC] / elData.delta;
-                if (inward[nPhase] < 0){
-                    inward[nPhase]*=(-1);
-                }
-                //*******************************************************************//
-                ////      the position of the node
-                //      for (int node = 0; node < numVertices; node++) {
-                //                          fvGeom.subContVol[node].local  = referenceElement.position(node, dim);
-                //                          subContVol[node].global = geometry.global(subContVol[node].local);
-                //                      }
-                //*******************************************************************//
-
-                //// If the pressure in the fracture is bigger than the one in the matrix the flow occurs from fracture to matrix
-                if (vNDat[i].p[wPhase][nC]>vNDat[i].p[wPhase][nC+1])
-                    {
-                        // wetting interporosity flux calculated with the wetting mobility of the Fracture;
-                        IPFlux[wPhase][nC]=vNDat[i].density[wPhase][nC]*vNDat[i].mobility[wPhase][nC]*inward[wPhase];
-                        q[3*nC]-=IPFlux[wPhase][nC]; //pWFIdx
-                        q[3*(nC+1)]+=IPFlux[wPhase][nC];//pWMIdx
-                    }
-                else
-                    {
-                        // wetting interporosity flux calculated with the wetting mobility of the Matrix;
-                        IPFlux[wPhase][nC]=vNDat[i].density[wPhase][nC+1]*vNDat[i].mobility[wPhase][nC+1]*inward[wPhase];
-                        q[3*nC]+=IPFlux[wPhase][nC];//pWFIdx
-                        q[3*(nC+1)]-=IPFlux[wPhase][nC];//pWMIdx
-                    }
-                if (vNDat[i].p[nPhase][nC]>vNDat[i].p[nPhase][nC+1])
-                    {
-                        IPFlux[nPhase][nC]=vNDat[i].density[nPhase][nC]*vNDat[i].mobility[nPhase][nC]*inward[nPhase];
-                        q[3*nC+1]-=IPFlux[nPhase][0];//satNFIdx
-                        q[3*(nC+1)+1]+=IPFlux[nPhase][0];//satNMIdx
-                    }
-                else
-                    {
-                        IPFlux[nPhase][nC]=vNDat[i].density[nPhase][nC+1]*vNDat[i].mobility[nPhase][nC+1]*inward[nPhase];
-                        q[3*nC+1]+=IPFlux[nPhase][nC];//satNFIdx
-                        q[3*(nC+1)+1]-=IPFlux[nPhase][nC];//satNMIdx
-                    }
+            ////       //if the normal of the face gives negative numbers it multiplies with -1
+            inward[wPhase] = PGrad[wPhase][nC] * KA_nestVol[nC] / elData.delta;
+            if (inward[wPhase] < 0){
+                inward[wPhase]*=(-1);
             }
+            inward[nPhase] = PGrad[wPhase][nC] * KA_nestVol[nC] / elData.delta;
+            if (inward[nPhase] < 0){
+                inward[nPhase]*=(-1);
+            }
+            //*******************************************************************//
+            ////      the position of the node
+            //      for (int node = 0; node < numVertices; node++) {
+            //                          fvGeom.subContVol[node].local  = referenceElement.position(node, dim);
+            //                          subContVol[node].global = geometry.global(subContVol[node].local);
+            //                      }
+            //*******************************************************************//
+
+            //// If the pressure in the fracture is bigger than the one in the matrix the flow occurs from fracture to matrix
+            if (vNDat[i].p[wPhase][nC]>vNDat[i].p[wPhase][nC+1])
+            {
+                // wetting interporosity flux calculated with the wetting mobility of the Fracture;
+                IPFlux[wPhase][nC]=vNDat[i].density[wPhase][nC]*vNDat[i].mobility[wPhase][nC]*inward[wPhase];
+                q[3*nC]-=IPFlux[wPhase][nC]; //pWFIdx
+                q[3*(nC+1)]+=IPFlux[wPhase][nC];//pWMIdx
+            }
+            else
+            {
+                // wetting interporosity flux calculated with the wetting mobility of the Matrix;
+                IPFlux[wPhase][nC]=vNDat[i].density[wPhase][nC+1]*vNDat[i].mobility[wPhase][nC+1]*inward[wPhase];
+                q[3*nC]+=IPFlux[wPhase][nC];//pWFIdx
+                q[3*(nC+1)]-=IPFlux[wPhase][nC];//pWMIdx
+            }
+            if (vNDat[i].p[nPhase][nC]>vNDat[i].p[nPhase][nC+1])
+            {
+                IPFlux[nPhase][nC]=vNDat[i].density[nPhase][nC]*vNDat[i].mobility[nPhase][nC]*inward[nPhase];
+                q[3*nC+1]-=IPFlux[nPhase][0];//satNFIdx
+                q[3*(nC+1)+1]+=IPFlux[nPhase][0];//satNMIdx
+            }
+            else
+            {
+                IPFlux[nPhase][nC]=vNDat[i].density[nPhase][nC+1]*vNDat[i].mobility[nPhase][nC+1]*inward[nPhase];
+                q[3*nC+1]+=IPFlux[nPhase][nC];//satNFIdx
+                q[3*(nC+1)+1]-=IPFlux[nPhase][nC];//satNMIdx
+            }
+        }
 
         return q;
     }
@@ -672,56 +672,56 @@ public:
         FVector Coordinates = this->fvGeom.subContVol[local].global;
 
         switch(state)
+        {
+        case gasPhase :
+            RT xWNmass;
+            xWNmass = sol[local][switchIdx];
+
+            if (xWNmass > 0.001 && switched == false)
             {
-            case gasPhase :
-                RT xWNmass;
-                xWNmass = sol[local][switchIdx];
-
-                if (xWNmass > 0.001 && switched == false)
-                    {
-                        // appearance of water phase
-                        std::cout << "Water appears at node " << global << "  Coordinates: " << Coordinates << std::endl;
-                        sNDat[global].phaseState = bothPhases;
-                        sol[local][switchIdx] = 1.0 - 1.e-6; // initialize solution vector
-                        switched = true;
-                    }
-                break;
-
-            case waterPhase :
-                RT xAWmax, xAWmass;
-                xAWmass = sol[local][switchIdx];
-                xAWmax = problem.multicomp().xAW(pNFracture, sol[local][teIdx]);
-
-                if (xAWmass > xAWmax && switched == false)
-                    {
-                        // appearance of gas phase
-                        std::cout << "Gas appears at node " << global << "  Coordinates: " << Coordinates << std::endl;
-                        sNDat[global].phaseState = bothPhases;
-                        sol[local][switchIdx] = 1.e-6; // initialize solution vector
-                        switched = true;
-                    }
-                break;
-
-            case bothPhases :
-                RT satNFracture = sol[local][switchIdx];
-                if (satNFracture < 0.0  && switched == false)
-                    {
-                        // disappearance of gas phase
-                        std::cout << "Gas disappears at node " << global << "  Coordinates: " << Coordinates << std::endl;
-                        sNDat[global].phaseState = waterPhase;
-                        sol[local][switchIdx] = 1e-6; // initialize solution vector
-                        switched = true;
-                    }
-                else if (satWFracture < 0.0  && switched == false)
-                    {
-                        // disappearance of water phase
-                        std::cout << "Water disappears at node " << global << "  Coordinates: " << Coordinates << std::endl;
-                        sNDat[global].phaseState = gasPhase;
-                        sol[local][switchIdx] = 1e-6; // initialize solution vector
-                        switched = true;
-                    }
-                break;
+                // appearance of water phase
+                std::cout << "Water appears at node " << global << "  Coordinates: " << Coordinates << std::endl;
+                sNDat[global].phaseState = bothPhases;
+                sol[local][switchIdx] = 1.0 - 1.e-6; // initialize solution vector
+                switched = true;
             }
+            break;
+
+        case waterPhase :
+            RT xAWmax, xAWmass;
+            xAWmass = sol[local][switchIdx];
+            xAWmax = problem.multicomp().xAW(pNFracture, sol[local][teIdx]);
+
+            if (xAWmass > xAWmax && switched == false)
+            {
+                // appearance of gas phase
+                std::cout << "Gas appears at node " << global << "  Coordinates: " << Coordinates << std::endl;
+                sNDat[global].phaseState = bothPhases;
+                sol[local][switchIdx] = 1.e-6; // initialize solution vector
+                switched = true;
+            }
+            break;
+
+        case bothPhases :
+            RT satNFracture = sol[local][switchIdx];
+            if (satNFracture < 0.0  && switched == false)
+            {
+                // disappearance of gas phase
+                std::cout << "Gas disappears at node " << global << "  Coordinates: " << Coordinates << std::endl;
+                sNDat[global].phaseState = waterPhase;
+                sol[local][switchIdx] = 1e-6; // initialize solution vector
+                switched = true;
+            }
+            else if (satWFracture < 0.0  && switched == false)
+            {
+                // disappearance of water phase
+                std::cout << "Water disappears at node " << global << "  Coordinates: " << Coordinates << std::endl;
+                sNDat[global].phaseState = gasPhase;
+                sol[local][switchIdx] = 1e-6; // initialize solution vector
+                switched = true;
+            }
+            break;
+        }
         //        }
         return;
     }
@@ -801,20 +801,20 @@ public:
 
             // if nodes are not already visited
             if (!sNDat[globalIdx].visited)
-                {
-                    // ASSUME porosity defined at nodes
-                    sNDat[globalIdx].porosityFracture = problem.soil().porosity(this->fvGeom.subContVol[k].global, e, this->fvGeom.subContVol[k].local);
-                    sNDat[globalIdx].porosityMatrix = problem.soil().porosity(this->fvGeom.subContVol[k].global, e, this->fvGeom.subContVol[k].local);
+            {
+                // ASSUME porosity defined at nodes
+                sNDat[globalIdx].porosityFracture = problem.soil().porosity(this->fvGeom.subContVol[k].global, e, this->fvGeom.subContVol[k].local);
+                sNDat[globalIdx].porosityMatrix = problem.soil().porosity(this->fvGeom.subContVol[k].global, e, this->fvGeom.subContVol[k].local);
 
-                    // global coordinates
-                    FieldVector<DT,dim> global_i = this->fvGeom.subContVol[k].global;
+                // global coordinates
+                FieldVector<DT,dim> global_i = this->fvGeom.subContVol[k].global;
 
-                    // evaluate primary variable switch
-                    primaryVarSwitch(e, globalIdx, sol, k);
+                // evaluate primary variable switch
+                primaryVarSwitch(e, globalIdx, sol, k);
 
-                    // mark elements that were already visited
-                    sNDat[globalIdx].visited = true;
-                }
+                // mark elements that were already visited
+                sNDat[globalIdx].visited = true;
+            }
         }
 
         return;
@@ -835,13 +835,13 @@ public:
 
             // if nodes are not already visited
             if (!sNDat[globalIdx].visited)
-                {
-                    // ASSUME porosity defined at nodes
-                    sNDat[globalIdx].porosityFracture = problem.soil().porosity(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
+            {
+                // ASSUME porosity defined at nodes
+                sNDat[globalIdx].porosityFracture = problem.soil().porosity(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
 
-                    // mark elements that were already visited
-                    sNDat[globalIdx].visited = true;
-                }
+                // mark elements that were already visited
+                sNDat[globalIdx].visited = true;
+            }
         }
 
         return;
@@ -1024,15 +1024,15 @@ public:
         int state;
         const int global = this->vertexMapper.template map<dim>(e, i);
         if (old)
-            {
-                state = sNDat[global].oldPhaseState;
-                updateVariableData(e, sol, i, oldVNDat, state);
-            }
+        {
+            state = sNDat[global].oldPhaseState;
+            updateVariableData(e, sol, i, oldVNDat, state);
+        }
         else
-            {
-                state = sNDat[global].phaseState;
-                updateVariableData(e, sol, i, vNDat, state);
-            }
+        {
+            state = sNDat[global].phaseState;
+            updateVariableData(e, sol, i, vNDat, state);
+        }
     }
 
     void updateVariableData(const Entity& e, const VBlockType* sol, bool old = false)

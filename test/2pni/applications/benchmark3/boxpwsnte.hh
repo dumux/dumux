@@ -143,10 +143,10 @@ public:
         this->localJacobian().outMobilityN = vtkMultiWriter->template createField<RT, 1>(this->size);
         this->localJacobian().outPhaseState = vtkMultiWriter->template createField<RT, 1>(this->size);
         if(this->problem.soil().readPropertiesFlag() == true)
-            {
-                this->problem.soil().readSoilProperties();
-                this->problem.soil().setSoilProperties();
-            }
+        {
+            this->problem.soil().readSoilProperties();
+            this->problem.soil().setSoilProperties();
+        }
         this->localJacobian().outPermeabilityXDir = vtkMultiWriter->template createField<RT, 1>(this->size);
         this->localJacobian().outPorosity = vtkMultiWriter->template createField<RT, 1>(this->size);
 
@@ -280,10 +280,10 @@ public:
         this->localJacobian().outMobilityN = vtkMultiWriter->template createField<RT, 1>(this->size);
         this->localJacobian().outPhaseState = vtkMultiWriter->template createField<RT, 1>(this->size);
         if(this->problem.soil().readPropertiesFlag() == true)
-            {
-                this->problem.soil().readSoilProperties();
-                this->problem.soil().setSoilProperties();
-            }
+        {
+            this->problem.soil().readSoilProperties();
+            this->problem.soil().setSoilProperties();
+        }
         this->localJacobian().outPermeabilityXDir = vtkMultiWriter->template createField<RT, 1>(this->size);
         this->localJacobian().outPorosity = vtkMultiWriter->template createField<RT, 1>(this->size);
 
@@ -297,12 +297,12 @@ public:
         importFromDGF<GV>(data, restartFileName, false);
 
         for (int i=0;i<size;i++)
+        {
+            for (int j=0;j<m;j++)
             {
-                for (int j=0;j<m;j++)
-                    {
-                        (*(this->u))[i][j]=data[i][j];
-                    }
+                (*(this->u))[i][j]=data[i][j];
             }
+        }
 
         // iterate through leaf grid an evaluate c0 at cell center
         Iterator eendit = gridview.template end<0>();
@@ -470,18 +470,18 @@ public:
 
         bool newtonLoop = false;
         while(!newtonLoop)
-            {
-                nextDt = this->localJacobian().getDt();
-                NewtonMethod newton(*this);
-                NewtonController newtonCtl;
-                newtonLoop = newton.execute(*this, newtonCtl);
-                nextDt = newtonCtl.suggestTimeStepSize(nextDt);
-                this->localJacobian().setDt(nextDt);
-                if(!newtonLoop){
-                    *this->u = *this->uOldTimeStep;
-                }
-                std::cout<<"timeStep resized to: "<<nextDt<<std::endl;
+        {
+            nextDt = this->localJacobian().getDt();
+            NewtonMethod newton(*this);
+            NewtonController newtonCtl;
+            newtonLoop = newton.execute(*this, newtonCtl);
+            nextDt = newtonCtl.suggestTimeStepSize(nextDt);
+            this->localJacobian().setDt(nextDt);
+            if(!newtonLoop){
+                *this->u = *this->uOldTimeStep;
             }
+            std::cout<<"timeStep resized to: "<<nextDt<<std::endl;
+        }
 
         double mass(0);
         mass = this->totalCO2Mass();

@@ -195,39 +195,39 @@ public:
         // calculate FE gradient at subcontrolvolumeface
         for (int idx = 0; idx < this->fvGeom.numVertices; idx++) // loop over adjacent nodes
 
+        {
+            // FEGradient at subcontrolvolumeface face
+            const FieldVector<CoordScalar,dim> feGrad(this->fvGeom.subContVolFace[face].grad[idx]);
+            FieldVector<Scalar,2> pressure(0.0);
+
+            pressure[wPhase] = vNDat[idx].pW;
+            pressure[nPhase] = vNDat[idx].pN;
+
+            // compute pressure gradients for each phase at integration point of subcontrolvolumeface face
+            for (int phase = 0; phase < 2; phase++)
             {
-                // FEGradient at subcontrolvolumeface face
-                const FieldVector<CoordScalar,dim> feGrad(this->fvGeom.subContVolFace[face].grad[idx]);
-                FieldVector<Scalar,2> pressure(0.0);
-
-                pressure[wPhase] = vNDat[idx].pW;
-                pressure[nPhase] = vNDat[idx].pN;
-
-                // compute pressure gradients for each phase at integration point of subcontrolvolumeface face
-                for (int phase = 0; phase < 2; phase++)
-                    {
-                        tmp = feGrad;
-                        tmp *= pressure[phase];
-                        pGrad[phase] += tmp;
-                    }
-
-                // compute temperature gradient
                 tmp = feGrad;
-                tmp *= vNDat[idx].temperature;
-                teGrad += tmp;
-
-                densityIP[wPhase] += vNDat[idx].density[wPhase] * this->fvGeom.subContVolFace[face].shapeValue[idx];
-                densityIP[nPhase] += vNDat[idx].density[nPhase] * this->fvGeom.subContVolFace[face].shapeValue[idx];
+                tmp *= pressure[phase];
+                pGrad[phase] += tmp;
             }
+
+            // compute temperature gradient
+            tmp = feGrad;
+            tmp *= vNDat[idx].temperature;
+            teGrad += tmp;
+
+            densityIP[wPhase] += vNDat[idx].density[wPhase] * this->fvGeom.subContVolFace[face].shapeValue[idx];
+            densityIP[nPhase] += vNDat[idx].density[nPhase] * this->fvGeom.subContVolFace[face].shapeValue[idx];
+        }
 
         // deduce gravity*density of each phase
         FieldMatrix<Scalar,2,dim> contribComp(0);
         for (int phase=0; phase<2; phase++)
-            {
-                contribComp[phase] = problem.gravity();
-                contribComp[phase] *= densityIP[phase];
-                pGrad[phase] -= contribComp[phase]; // grad p - rho*g
-            }
+        {
+            contribComp[phase] = problem.gravity();
+            contribComp[phase] *= densityIP[phase];
+            pGrad[phase] -= contribComp[phase]; // grad p - rho*g
+        }
 
         // Darcy velocity in normal direction for each phase K*n(grad p -rho*g)
         VBlockType outward(0);
@@ -246,13 +246,13 @@ public:
         // evaluate upwind nodes
         int up_w, dn_w, up_n, dn_n;
         if (outward[wPhase] <= 0)
-            {   up_w = idx_i; dn_w = idx_j;}
+        {   up_w = idx_i; dn_w = idx_j;}
         else
-            {   up_w = idx_j; dn_w = idx_i;};
+        {   up_w = idx_j; dn_w = idx_i;};
         if (outward[nPhase] <= 0)
-            {   up_n = idx_i; dn_n = idx_j;}
+        {   up_n = idx_i; dn_n = idx_j;}
         else
-            {   up_n = idx_j; dn_n = idx_i;};
+        {   up_n = idx_j; dn_n = idx_i;};
 
         Scalar alpha = 1.0; // Upwind parameter
 
@@ -300,25 +300,25 @@ public:
         double eps = 1e-20;
         FMatrix K(0.);
         for (int kx=0; kx<dim; kx++)
+        {
+            for (int ky=0; ky<dim; ky++)
             {
-                for (int ky=0; ky<dim; ky++)
-                    {
-                        if (Ki[kx][ky] != Kj[kx][ky])
-                            {
-                                K[kx][ky] = 2 / (1/(Ki[kx][ky]+eps) + (1/(Kj[kx][ky]+eps)));
-                            }
-                        else K = Ki;
-                    }
+                if (Ki[kx][ky] != Kj[kx][ky])
+                {
+                    K[kx][ky] = 2 / (1/(Ki[kx][ky]+eps) + (1/(Kj[kx][ky]+eps)));
+                }
+                else K = Ki;
             }
+        }
         return K;
     }
 
     virtual void clearVisited ()
     {
         for (int globalIdx = 0; globalIdx < this->vertexMapper.size(); globalIdx++)
-            {
-                sNDat[globalIdx].visited = false;
-            }
+        {
+            sNDat[globalIdx].visited = false;
+        }
         return;
     }
 
@@ -355,19 +355,19 @@ public:
 
         // get local to global id map
         for (int idx = 0; idx < sfs.size(); idx++)
+        {
+            const int globalIdx = this->vertexMapper.template map<dim>(element, sfs[idx].entity());
+
+            // if nodes are not already visited
+            if (!sNDat[globalIdx].visited)
             {
-                const int globalIdx = this->vertexMapper.template map<dim>(element, sfs[idx].entity());
+                // ASSUME porosity defined at nodes
+                sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.subContVol[idx].global, element, this->fvGeom.subContVol[idx].local);
 
-                // if nodes are not already visited
-                if (!sNDat[globalIdx].visited)
-                    {
-                        // ASSUME porosity defined at nodes
-                        sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.subContVol[idx].global, element, this->fvGeom.subContVol[idx].local);
-
-                        // mark elements that were already visited
-                        sNDat[globalIdx].visited = true;
-                    }
+                // mark elements that were already visited
+                sNDat[globalIdx].visited = true;
             }
+        }
 
         return;
     }
@@ -381,19 +381,19 @@ public:
 
         // get local to global id map
         for (int idx = 0; idx < sfs.size(); idx++)
+        {
+            const int globalIdx = this->vertexMapper.template map<dim>(element, sfs[idx].entity());
+
+            // if nodes are not already visited
+            if (!sNDat[globalIdx].visited)
             {
-                const int globalIdx = this->vertexMapper.template map<dim>(element, sfs[idx].entity());
+                // ASSUME porosity defined at nodes
+                sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.elementGlobal, element, this->fvGeom.elementLocal);
 
-                // if nodes are not already visited
-                if (!sNDat[globalIdx].visited)
-                    {
-                        // ASSUME porosity defined at nodes
-                        sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.elementGlobal, element, this->fvGeom.elementLocal);
-
-                        // mark elements that were already visited
-                        sNDat[globalIdx].visited = true;
-                    }
+                // mark elements that were already visited
+                sNDat[globalIdx].visited = true;
             }
+        }
 
         return;
     }
@@ -472,9 +472,9 @@ public:
     void updateVariableData(const Element& element, const SolutionVector* sol, int idx, bool old = false)
     {
         if (old)
-            {
-                updateVariableData(element, sol, idx, oldVNDat);
-            }
+        {
+            updateVariableData(element, sol, idx, oldVNDat);
+        }
         else
             updateVariableData(element, sol, idx, vNDat);
     }

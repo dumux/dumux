@@ -139,9 +139,9 @@ public:
         gam_pi = 0.0;
 
         for (i = 1; i <= 34; i++)
-            {
-                gam_pi = gam_pi - n[i] * I[i] * pow((7.1 - pi), (I[i] - 1)) * pow((tau - 1.222), J[i]);
-            }
+        {
+            gam_pi = gam_pi - n[i] * I[i] * pow((7.1 - pi), (I[i] - 1)) * pow((tau - 1.222), J[i]);
+        }
 
         return(gam_pi);
     }
@@ -287,12 +287,12 @@ public:
         /* computation of mu1 */
 
         for(i=0; i<=5; i++)
+        {
+            for(j=0; j<=6; j++)
             {
-                for(j=0; j<=6; j++)
-                    {
-                        H[i][j]=0.0;
-                    }
+                H[i][j]=0.0;
             }
+        }
         H[0][0] =  0.5132047;
         H[1][0] =  0.3205656;
         H[4][0] = -0.7782567;
@@ -316,12 +316,12 @@ public:
         sum = 0.0;
 
         for (i=0; i<=5; i++)
+        {
+            for (j=0; j<=6; j++)
             {
-                for (j=0; j<=6; j++)
-                    {
-                        sum += H[i][j] * pow((1/T_bar-1), i) * pow((rho_bar-1), j);
-                    }
+                sum += H[i][j] * pow((1/T_bar-1), i) * pow((rho_bar-1), j);
             }
+        }
 
         mu1 = exp(rho_bar*sum);
 
@@ -399,15 +399,15 @@ public:
 
 
         for (i=1; i<=10; i++)
+        {
+            if (t[i] <= temperature && temperature <= t[i+1])
             {
-                if (t[i] <= temperature && temperature <= t[i+1])
-                    {
-                        upT = t[i+1];
-                        downT=t[i];
-                        upl = l[i+1];
-                        downl=l[i];
-                    }
+                upT = t[i+1];
+                downT=t[i];
+                upl = l[i+1];
+                downl=l[i];
             }
+        }
 
         lambda = downl + ((temperature-downT)/(upT-downT))*(upl-downl);
         return(lambda);

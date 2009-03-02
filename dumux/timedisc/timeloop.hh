@@ -37,14 +37,14 @@ public:
         int k = 0;
         model.vtkout(fileName, k);
         switch (G::dimension)
-            {
-            case 1:
-                sprintf(fileNameVTK, "%s-%05d.vtp", fileName, k);
-                break;
-            default:
-                sprintf(fileNameVTK, "%s-%05d.vtu", fileName, k);
-                break;
-            }
+        {
+        case 1:
+            sprintf(fileNameVTK, "%s-%05d.vtp", fileName, k);
+            break;
+        default:
+            sprintf(fileNameVTK, "%s-%05d.vtu", fileName, k);
+            break;
+        }
         multiFile << "   <DataSet timestep=\"" << k << "\" file=\""
                   << fileNameVTK << "\"/>" << std::endl;
 
@@ -54,75 +54,75 @@ public:
         //          if (fixed)
         //              dtOriginal = dt;
         while (t < tEnd)
+        {
+            k++;
+            double dtOld = dt;
+
+            if (t == tStart)
+                timeStep.execute(model, t, dt, firstDt, tEnd, cFLFactor);
+            else
+                timeStep.execute(model, t, dt, maxDt, tEnd, cFLFactor);
+
+            if (fixed)
             {
-                k++;
-                double dtOld = dt;
+                if (dt > dtOld)
+                {
+                    t += dtOld;
+                    t = std::min(t, tEnd);
+                    if (dt > tEnd - t)
+                    {
+                        std::cout << "\t" << k << "\t" << t << "\t" << dtOld
+                                  << "\t # timestep number k, time t, timestep size dt"
+                                  << std::endl;
+                        //std::cout << ", timestep: " << k << "\t t=" << t << "\t dt=" << (tEnd-t) << std::endl;
+                    }
+                    else
+                    {
+                        std::cout << "\t" << k << "\t" << t << "\t" << dtOld
+                                  << "\t # timestep number k, time t, timestep size dt"
+                                  << std::endl;
+                        //std::cout << ", timestep: " << k << "\t t=" << t << "\t dt=" << dt << std::endl;
+                    }
+                }
 
-                if (t == tStart)
-                    timeStep.execute(model, t, dt, firstDt, tEnd, cFLFactor);
                 else
-                    timeStep.execute(model, t, dt, maxDt, tEnd, cFLFactor);
-
-                if (fixed)
-                    {
-                        if (dt > dtOld)
-                            {
-                                t += dtOld;
-                                t = std::min(t, tEnd);
-                                if (dt > tEnd - t)
-                                    {
-                                        std::cout << "\t" << k << "\t" << t << "\t" << dtOld
-                                                  << "\t # timestep number k, time t, timestep size dt"
-                                                  << std::endl;
-                                        //std::cout << ", timestep: " << k << "\t t=" << t << "\t dt=" << (tEnd-t) << std::endl;
-                                    }
-                                else
-                                    {
-                                        std::cout << "\t" << k << "\t" << t << "\t" << dtOld
-                                                  << "\t # timestep number k, time t, timestep size dt"
-                                                  << std::endl;
-                                        //std::cout << ", timestep: " << k << "\t t=" << t << "\t dt=" << dt << std::endl;
-                                    }
-                            }
-
-                        else
-                            {
-                                t += dt;
-                                t = std::min(t, tEnd);
-                                std::cout << "\t" << k << "\t" << t << "\t" << dt
-                                          << "\t # timestep number k, time t, timestep size dt"
-                                          << std::endl;
-                                //std::cout << ", timestep: " << k << "\t t=" << t << "\t dt=" << dt << std::endl;
-                            }
-                    }
-                else
-                    {
-                        t += dt;
-                        t = std::min(t, tEnd);
-                        std::cout << ", timestep: " << k << "\t t=" << t << "\t dt="
-                                  << dt << std::endl;
-
-                    }
-
-                // generate output
-                if (k % modulo == 0)
-                    {
-                        model.vtkout(fileName, k / modulo);
-                        switch (G::dimension)
-                            {
-                            case 1:
-                                sprintf(fileNameVTK, "%s-%05d.vtp", fileName, k / modulo);
-                                break;
-                            default:
-                                sprintf(fileNameVTK, "%s-%05d.vtu", fileName, k / modulo);
-                                break;
-                            }
-                        multiFile << "   <DataSet timestep=\"" << t << "\" file=\""
-                                  << fileNameVTK << "\"/>" << std::endl;
-                    }
-                //            if (fixed)
-                //                dt = dtOriginal;
+                {
+                    t += dt;
+                    t = std::min(t, tEnd);
+                    std::cout << "\t" << k << "\t" << t << "\t" << dt
+                              << "\t # timestep number k, time t, timestep size dt"
+                              << std::endl;
+                    //std::cout << ", timestep: " << k << "\t t=" << t << "\t dt=" << dt << std::endl;
+                }
             }
+            else
+            {
+                t += dt;
+                t = std::min(t, tEnd);
+                std::cout << ", timestep: " << k << "\t t=" << t << "\t dt="
+                          << dt << std::endl;
+
+            }
+
+            // generate output
+            if (k % modulo == 0)
+            {
+                model.vtkout(fileName, k / modulo);
+                switch (G::dimension)
+                {
+                case 1:
+                    sprintf(fileNameVTK, "%s-%05d.vtp", fileName, k / modulo);
+                    break;
+                default:
+                    sprintf(fileNameVTK, "%s-%05d.vtu", fileName, k / modulo);
+                    break;
+                }
+                multiFile << "   <DataSet timestep=\"" << t << "\" file=\""
+                          << fileNameVTK << "\"/>" << std::endl;
+            }
+            //            if (fixed)
+            //                dt = dtOriginal;
+        }
         // finalize output
         multiFile << " </Collection>" << std::endl << "</VTKFile>" << std::endl;
         multiFile.close();
@@ -186,15 +186,15 @@ public:
         // initialize solution with initial values
         model.setVtkMultiWriter(&writer);
         if (!restart)
-            {
-                model.initial();
-            }
+        {
+            model.initial();
+        }
 
         // initialize solution from restart file with the number restartNum
         else
-            {
-                model.restart(restartNum);
-            }
+        {
+            model.restart(restartNum);
+        }
         model.addvtkfields(writer);
         std::cout << ">>> writing initial output file" << std::endl;
         writer.endTimestep(); // writes output file
@@ -205,46 +205,46 @@ public:
         //          if (fixed)
         //              dtOriginal = dt;
         while (t < tEnd)
+        {
+            k++;
+            //              double dtOld = dt;
+
+            double nextDt;
+            if (t == tStart)
+                NewTimeStep::execute(model, t, dt, nextDt, firstDt, tEnd,
+                                     cFLFactor);
+            else
+                NewTimeStep::execute(model, t, dt, nextDt, maxDt, tEnd,
+                                     cFLFactor);
+
+            t += dt;
+            t = std::min(t, tEnd);
+            dt = nextDt;
+            std::cout << ", timestep: " << k << "\t t=" << t << "\t dt=" << dt
+                      << std::endl;
+
+            // generate output
+            if (k % modulo == 0)
             {
-                k++;
-                //              double dtOld = dt;
-
-                double nextDt;
-                if (t == tStart)
-                    NewTimeStep::execute(model, t, dt, nextDt, firstDt, tEnd,
-                                         cFLFactor);
-                else
-                    NewTimeStep::execute(model, t, dt, nextDt, maxDt, tEnd,
-                                         cFLFactor);
-
-                t += dt;
-                t = std::min(t, tEnd);
-                dt = nextDt;
-                std::cout << ", timestep: " << k << "\t t=" << t << "\t dt=" << dt
-                          << std::endl;
-
-                // generate output
-                if (k % modulo == 0)
-                    {
-                        countVtk++;
-                        writer.beginTimestep(t, model.grid().leafView());
-                        model.addvtkfields(writer);
-                        std::cout << ">>> writing output-file number " << countVtk
-                                  << " at time : " << t << std::endl;
-                        writer.endTimestep();
-                    }
-                // write restart file
-                if (writeRestart == true)
-                    {
-                        if (k % modulo == 0) // writes restart file each timestep
-                            {
-                                ++restartNum;
-                                std::cout << ">>> writing restart-file number "
-                                          << restartNum << " at time : " << t << std::endl;
-                                model.writerestartfile(restartNum);
-                            }
-                    }
+                countVtk++;
+                writer.beginTimestep(t, model.grid().leafView());
+                model.addvtkfields(writer);
+                std::cout << ">>> writing output-file number " << countVtk
+                          << " at time : " << t << std::endl;
+                writer.endTimestep();
             }
+            // write restart file
+            if (writeRestart == true)
+            {
+                if (k % modulo == 0) // writes restart file each timestep
+                {
+                    ++restartNum;
+                    std::cout << ">>> writing restart-file number "
+                              << restartNum << " at time : " << t << std::endl;
+                    model.writerestartfile(restartNum);
+                }
+            }
+        }
 
         return;
     }

@@ -289,32 +289,32 @@ public:
         Scalar curStepSize = 0;
         Scalar nextStepSize = 0;
         while (!finished())
-            {
-                // execute the time integration (i.e. Runge-Kutta
-                // or Euler).
-                curStepSize = stepSize();
-                problem.timeIntegration(curStepSize, nextStepSize);
+        {
+            // execute the time integration (i.e. Runge-Kutta
+            // or Euler).
+            curStepSize = stepSize();
+            problem.timeIntegration(curStepSize, nextStepSize);
 
 
-                // advance the simulated time by the timestep size
-                // actually used by the solver
-                proceed(curStepSize);
-                // make sure that if don't use an step size
-                // aligned to the end of the episode as next step
-                // size
-                if (!episodeIsOver())
-                    setStepSize(nextStepSize);
+            // advance the simulated time by the timestep size
+            // actually used by the solver
+            proceed(curStepSize);
+            // make sure that if don't use an step size
+            // aligned to the end of the episode as next step
+            // size
+            if (!episodeIsOver())
+                setStepSize(nextStepSize);
 
-                // notify the problem that the next solution has
-                // been found
-                problem.timestepDone();
+            // notify the problem that the next solution has
+            // been found
+            problem.timestepDone();
 
-                if (verbose_) {
-                    std::cout <<
-                        boost::format("Timestep %d done: Realtime=%.2f, Simtime=%.2f StepSize=%.2g, NextStepSize=%.2g\n")
-                        %stepNum()%timer.elapsed()%time()%curStepSize%stepSize();
-                }
+            if (verbose_) {
+                std::cout <<
+                    boost::format("Timestep %d done: Realtime=%.2f, Simtime=%.2f StepSize=%.2g, NextStepSize=%.2g\n")
+                    %stepNum()%timer.elapsed()%time()%curStepSize%stepSize();
             }
+        }
 
         if (verbose_)
             std::cout <<

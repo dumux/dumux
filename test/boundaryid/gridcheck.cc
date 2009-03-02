@@ -550,26 +550,26 @@ struct subIndexCheck
     {
         const int imax = e.template count<cd>();
         for (int i=0; i<imax; ++i)
+        {
+            if( g.levelIndexSet(e.level()).index( *(e.template entity<cd>(i)) )
+                != g.levelIndexSet(e.level()).template subIndex<cd>(e,i) )
             {
-                if( g.levelIndexSet(e.level()).index( *(e.template entity<cd>(i)) )
-                    != g.levelIndexSet(e.level()).template subIndex<cd>(e,i) )
-                    {
-                        int id_e =
-                            g.levelIndexSet(e.level()).index(e);
-                        int id_e_i =
-                            g.levelIndexSet(e.level()).index( *(e.template entity<cd>(i)) );
-                        int subid_e_i =
-                            g.levelIndexSet(e.level()).template subIndex<cd>(e,i);
-                        DUNE_THROW(CheckError,
-                                   "g.levelIndexSet.index( *(e.template entity<cd>(i)) ) "
-                                   << "== g.levelIndexSet.template subIndex<cd>(e,i) failed "
-                                   << "[with cd=" << cd << ", i=" << i << "]"
-                                   << " ... index(e)=" << id_e
-                                   << " ... index(e.entity<cd>(i))=" << id_e_i
-                                   << " ... subIndex(e,i)=" << subid_e_i
-                                   );
-                    }
+                int id_e =
+                    g.levelIndexSet(e.level()).index(e);
+                int id_e_i =
+                    g.levelIndexSet(e.level()).index( *(e.template entity<cd>(i)) );
+                int subid_e_i =
+                    g.levelIndexSet(e.level()).template subIndex<cd>(e,i);
+                DUNE_THROW(CheckError,
+                           "g.levelIndexSet.index( *(e.template entity<cd>(i)) ) "
+                           << "== g.levelIndexSet.template subIndex<cd>(e,i) failed "
+                           << "[with cd=" << cd << ", i=" << i << "]"
+                           << " ... index(e)=" << id_e
+                           << " ... index(e.entity<cd>(i))=" << id_e_i
+                           << " ... subIndex(e,i)=" << subid_e_i
+                           );
             }
+        }
         subIndexCheck<cd-1,Grid,Entity,
             Dune::Capabilities::hasEntity<Grid,cd-1>::v> sick(g,e);
     }
@@ -613,35 +613,35 @@ void zeroEntityConsistency (Grid &g)
     const LevelIterator endit = g.template lend<0>(g.maxLevel());
 
     for (; it!=endit; ++it)
+    {
+        // Entity::entity<0>(0) == Entity
+        assert( g.levelIndexSet(g.maxLevel()).index( *(it->template entity<0>(0)) )
+                == g.levelIndexSet(g.maxLevel()).index( *it ) );
+        assert( g.leafIndexSet().index( *(it->template entity<0>(0)) )
+                == g.leafIndexSet().index( *it ) );
+
+        assert( g.globalIdSet().id( *(it->template entity<0>(0)) )
+                == g.globalIdSet().id( *it ) );
+
+        assert( g.localIdSet().id( *(it->template entity<0>(0)) )
+                == g.localIdSet().id( *it ) );
+        assert( it->template entity<0>(0)->level() == it->level() );
+        // Entity::count<dim>() == Entity::geometry().corners();
+        assert( it->template count<Grid::dimension>() == it->geometry().corners() );
+        // Entity::geometry().corner(c] == Entity::entity<dim>.geometry()[0);
+        const int cmax = it->template count<Grid::dimension>();
+        for (int c=0; c<cmax; ++c)
         {
-            // Entity::entity<0>(0) == Entity
-            assert( g.levelIndexSet(g.maxLevel()).index( *(it->template entity<0>(0)) )
-                    == g.levelIndexSet(g.maxLevel()).index( *it ) );
-            assert( g.leafIndexSet().index( *(it->template entity<0>(0)) )
-                    == g.leafIndexSet().index( *it ) );
-
-            assert( g.globalIdSet().id( *(it->template entity<0>(0)) )
-                    == g.globalIdSet().id( *it ) );
-
-            assert( g.localIdSet().id( *(it->template entity<0>(0)) )
-                    == g.localIdSet().id( *it ) );
-            assert( it->template entity<0>(0)->level() == it->level() );
-            // Entity::count<dim>() == Entity::geometry().corners();
-            assert( it->template count<Grid::dimension>() == it->geometry().corners() );
-            // Entity::geometry().corner(c] == Entity::entity<dim>.geometry()[0);
-            const int cmax = it->template count<Grid::dimension>();
-            for (int c=0; c<cmax; ++c)
-                {
-                    Dune::FieldVector<typename Grid::ctype, Grid::dimensionworld> c1(it->geometry().corner(c));
-                    Dune::FieldVector<typename Grid::ctype, Grid::dimensionworld> c2(it->template entity<Grid::dimension>(c)->geometry().corner(0));
-                    if( (c2-c1).two_norm() > 10 * std::numeric_limits<typename Grid::ctype>::epsilon() )
-                        {
-                            DUNE_THROW(CheckError, "geometry[i] == entity<dim>(i) failed: || c1-c2 || = || " <<
-                                       c1 << " - " << c2 << " || = " << (c2-c1).two_norm() << " [ with i = " << c << " ]");
-                        }
-                }
-            subIndexCheck<Grid::dimension, Grid, Entity, true> sick(g,*it);
+            Dune::FieldVector<typename Grid::ctype, Grid::dimensionworld> c1(it->geometry().corner(c));
+            Dune::FieldVector<typename Grid::ctype, Grid::dimensionworld> c2(it->template entity<Grid::dimension>(c)->geometry().corner(0));
+            if( (c2-c1).two_norm() > 10 * std::numeric_limits<typename Grid::ctype>::epsilon() )
+            {
+                DUNE_THROW(CheckError, "geometry[i] == entity<dim>(i) failed: || c1-c2 || = || " <<
+                           c1 << " - " << c2 << " || = " << (c2-c1).two_norm() << " [ with i = " << c << " ]");
+            }
         }
+        subIndexCheck<Grid::dimension, Grid, Entity, true> sick(g,*it);
+    }
 }
 
 /*
@@ -663,89 +663,89 @@ void assertNeighbor (Grid &g)
 
     LevelIterator next = e;
     if (next != eend)
-        {
-            ++next;
-            if (g.name()=="AlbertaGrid") {
-                ;//std::cerr << "WARNING: skip indices test using LevelIntersectionIterator for AlbertaGrid!\n";
-            } else {
-                for (;e != eend; ++e)
+    {
+        ++next;
+        if (g.name()=="AlbertaGrid") {
+            ;//std::cerr << "WARNING: skip indices test using LevelIntersectionIterator for AlbertaGrid!\n";
+        } else {
+            for (;e != eend; ++e)
+            {
+                // flag vector for elements faces
+                std::vector<bool> visited(e->template count<1>(), false);
+                // loop over intersections
+                IntersectionIterator endit = e->ilevelend();
+                IntersectionIterator it = e->ilevelbegin();
+                // state
+                it.boundary();
+                it.neighbor();
+                // id of boundary segment
+                it.boundaryId();
+                // check id
+                //assert(globalid.id(*e) >= 0);
+                assert(it != endit);
+
+                if(! e->isLeaf() )
+                {
+                    if( e->ileafbegin() != e->ileafend())
                     {
-                        // flag vector for elements faces
-                        std::vector<bool> visited(e->template count<1>(), false);
-                        // loop over intersections
-                        IntersectionIterator endit = e->ilevelend();
-                        IntersectionIterator it = e->ilevelbegin();
-                        // state
-                        it.boundary();
-                        it.neighbor();
-                        // id of boundary segment
-                        it.boundaryId();
-                        // check id
-                        //assert(globalid.id(*e) >= 0);
-                        assert(it != endit);
-
-                        if(! e->isLeaf() )
-                            {
-                                if( e->ileafbegin() != e->ileafend())
-                                    {
-                                        DUNE_THROW(CheckError, "On non-leaf entities ileafbegin should be equal to ileafend!");
-                                    }
-                            }
-
-                        // for all intersections
-                        for(; it != endit; ++it)
-                            {
-                                // mark visited face
-                                visited[it.numberInSelf()] = true;
-                                // check id
-                                assert(globalid.id(*(it.inside())) ==
-                                       globalid.id(*e));
-
-                                // numbering
-                                int num = it.numberInSelf();
-                                assert( num >= 0 && num < e->template count<1> () );
-
-                                if(it.neighbor())
-                                    {
-                                        // geometry
-                                        it.intersectionNeighborLocal();
-                                        // numbering
-                                        num = it.numberInNeighbor();
-                                        assert( num >= 0 && num < it.outside()->template count<1> () );
-                                    }
-
-                                // geometry
-                                it.intersectionSelfLocal();
-                                it.intersectionGlobal();
-
-                                // normal vectors
-                                Dune::FieldVector<ct, dim-1> v(0);
-                                it.outerNormal(v);
-                                it.integrationOuterNormal(v);
-                                it.unitOuterNormal(v);
-                                // search neighbouring cell
-                                if (it.neighbor())
-                                    {
-                                        //assert(globalid.id(*(it.outside())) >= 0);
-                                        assert(globalid.id(*(it.outside())) !=
-                                               globalid.id(*e));
-
-                                        LevelIterator n    = g.template lbegin<0>(e->level());
-                                        LevelIterator nend = g.template lend<0>  (e->level());
-
-                                        while (n != it.outside() && n != nend)
-                                            {
-                                                assert(globalid.id(*(it.outside())) !=
-                                                       globalid.id(*n));
-                                                ++n;
-                                            }
-                                    }
-                            }
-                        // check that all faces were visited
-                        for (size_t i=0; i<visited.size(); i++) assert(visited[i] == true);
+                        DUNE_THROW(CheckError, "On non-leaf entities ileafbegin should be equal to ileafend!");
                     }
+                }
+
+                // for all intersections
+                for(; it != endit; ++it)
+                {
+                    // mark visited face
+                    visited[it.numberInSelf()] = true;
+                    // check id
+                    assert(globalid.id(*(it.inside())) ==
+                           globalid.id(*e));
+
+                    // numbering
+                    int num = it.numberInSelf();
+                    assert( num >= 0 && num < e->template count<1> () );
+
+                    if(it.neighbor())
+                    {
+                        // geometry
+                        it.intersectionNeighborLocal();
+                        // numbering
+                        num = it.numberInNeighbor();
+                        assert( num >= 0 && num < it.outside()->template count<1> () );
+                    }
+
+                    // geometry
+                    it.intersectionSelfLocal();
+                    it.intersectionGlobal();
+
+                    // normal vectors
+                    Dune::FieldVector<ct, dim-1> v(0);
+                    it.outerNormal(v);
+                    it.integrationOuterNormal(v);
+                    it.unitOuterNormal(v);
+                    // search neighbouring cell
+                    if (it.neighbor())
+                    {
+                        //assert(globalid.id(*(it.outside())) >= 0);
+                        assert(globalid.id(*(it.outside())) !=
+                               globalid.id(*e));
+
+                        LevelIterator n    = g.template lbegin<0>(e->level());
+                        LevelIterator nend = g.template lend<0>  (e->level());
+
+                        while (n != it.outside() && n != nend)
+                        {
+                            assert(globalid.id(*(it.outside())) !=
+                                   globalid.id(*n));
+                            ++n;
+                        }
+                    }
+                }
+                // check that all faces were visited
+                for (size_t i=0; i<visited.size(); i++) assert(visited[i] == true);
             }
         }
+    }
 }
 
 template <class GridType, bool c>
@@ -757,17 +757,17 @@ struct CheckMark
         // last marker is 0, so the grid is not changed after this check
         const int refCount[4] = {1,0,-1,0};
         for(int k=0; k<4; ++k)
+        {
+            // mark entity
+            bool marked = grid.mark( refCount[k] , it);
+            // if element was marked, check that the marker was set correctly
+            if(marked)
             {
-                // mark entity
-                bool marked = grid.mark( refCount[k] , it);
-                // if element was marked, check that the marker was set correctly
-                if(marked)
-                    {
-                        // now getMark should return the mark we just set, otherwise error
-                        if( grid.getMark(it) != refCount[k] )
-                            DUNE_THROW(CheckError,"mark/getMark method not working correctly!");
-                    }
+                // now getMark should return the mark we just set, otherwise error
+                if( grid.getMark(it) != refCount[k] )
+                    DUNE_THROW(CheckError,"mark/getMark method not working correctly!");
             }
+        }
     }
 };
 
@@ -799,30 +799,30 @@ void iterate(Grid &g)
     Dune::FieldVector<typename Grid::ctype, Grid::dimension> result;
 
     for (;it != endit; ++it)
+    {
+        LevelIterator l1 = it;
+        LevelIterator l2 = l1; ++l1;
+        assert(l2 == it);
+        assert(l1 != it);
+        ++l2;
+        assert(l1 == l2);
+
+        result = it->geometry().local(it->geometry().global(origin));
+        typename Grid::ctype error = (result-origin).two_norm();
+        if(error >= factorEpsilon * std::numeric_limits<typename Grid::ctype>::epsilon())
         {
-            LevelIterator l1 = it;
-            LevelIterator l2 = l1; ++l1;
-            assert(l2 == it);
-            assert(l1 != it);
-            ++l2;
-            assert(l1 == l2);
+            DUNE_THROW(CheckError, "|| geom.local(geom.global(" << origin
+                       << ")) - origin || != 0 ( || " << result << " - origin || ) = " << error);
+        };
+        it->geometry().integrationElement(origin);
+        if((int)Geometry::coorddimension == (int)Geometry::mydimension)
+            it->geometry().jacobianInverseTransposed(origin);
 
-            result = it->geometry().local(it->geometry().global(origin));
-            typename Grid::ctype error = (result-origin).two_norm();
-            if(error >= factorEpsilon * std::numeric_limits<typename Grid::ctype>::epsilon())
-                {
-                    DUNE_THROW(CheckError, "|| geom.local(geom.global(" << origin
-                               << ")) - origin || != 0 ( || " << result << " - origin || ) = " << error);
-                };
-            it->geometry().integrationElement(origin);
-            if((int)Geometry::coorddimension == (int)Geometry::mydimension)
-                it->geometry().jacobianInverseTransposed(origin);
+        it->geometry().type();
+        it->geometry().corners();
+        it->geometry().corner(0);
 
-            it->geometry().type();
-            it->geometry().corners();
-            it->geometry().corner(0);
-
-        }
+    }
 
     typedef typename Grid::template Codim<0>::LeafIterator LeafIterator;
     LeafIterator lit = g.template leafbegin<0>();
@@ -832,36 +832,36 @@ void iterate(Grid &g)
     if(lit == lend) return;
 
     for (;lit != lend; ++lit)
+    {
+        LeafIterator l1 = lit;
+        LeafIterator l2 = l1; ++l1;
+        assert(l2 == lit);
+        assert(l1 != lit);
+        ++l2;
+        assert(l1 == l2);
+
+        // leaf check
+        if( !lit->isLeaf() )
+            DUNE_THROW(CheckError,"LeafIterator gives non-leaf entity!");
+
+        // check adaptation mark for leaf entity mark
+        CheckMark<Grid,checkMark>::check(g,lit);
+
+        result = lit->geometry().local(lit->geometry().global(origin));
+        typename Grid::ctype error = (result-origin).two_norm();
+        if(error >= factorEpsilon * std::numeric_limits<typename Grid::ctype>::epsilon())
         {
-            LeafIterator l1 = lit;
-            LeafIterator l2 = l1; ++l1;
-            assert(l2 == lit);
-            assert(l1 != lit);
-            ++l2;
-            assert(l1 == l2);
+            DUNE_THROW(CheckError, "|| geom.local(geom.global(" << origin
+                       << ")) - origin || != 0 ( || " << result << " - origin || ) = " << error);
+        };
+        lit->geometry().integrationElement(origin);
+        if((int)Geometry::coorddimension == (int)Geometry::mydimension)
+            lit->geometry().jacobianInverseTransposed(origin);
 
-            // leaf check
-            if( !lit->isLeaf() )
-                DUNE_THROW(CheckError,"LeafIterator gives non-leaf entity!");
-
-            // check adaptation mark for leaf entity mark
-            CheckMark<Grid,checkMark>::check(g,lit);
-
-            result = lit->geometry().local(lit->geometry().global(origin));
-            typename Grid::ctype error = (result-origin).two_norm();
-            if(error >= factorEpsilon * std::numeric_limits<typename Grid::ctype>::epsilon())
-                {
-                    DUNE_THROW(CheckError, "|| geom.local(geom.global(" << origin
-                               << ")) - origin || != 0 ( || " << result << " - origin || ) = " << error);
-                };
-            lit->geometry().integrationElement(origin);
-            if((int)Geometry::coorddimension == (int)Geometry::mydimension)
-                lit->geometry().jacobianInverseTransposed(origin);
-
-            lit->geometry().type();
-            lit->geometry().corners();
-            lit->geometry().corner(0);
-        }
+        lit->geometry().type();
+        lit->geometry().corners();
+        lit->geometry().corner(0);
+    }
 
 }
 

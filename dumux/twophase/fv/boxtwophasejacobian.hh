@@ -129,105 +129,105 @@ public:
         // ASSUMING element-wise constant porosity, evaluate at the cell center
         double volumeFactor = problem.porosity(elementGlobal, element, elementLocal)*cellVolume/dt;
         for (int i=0; i < size; i++) // begin loop over vertices
+        {
+            // capillary pressure
+            Scalar pCI = pC[i];
+            Scalar pCOld = uold[i][1] - uold[i][0];
+
+            // derivative of wetting phase saturation w.r.t. pC
+            Scalar dSdP = problem.materialLaw().dSdP(pCI);
+
+            // time derivative
+            Scalar diffPC = dSdP*volumeFactor*(pCI - pCOld);
+            this->def[i][0] += diffPC;
+            this->def[i][1] -= diffPC;
+
+            // local coordinate of vertex
+            const FieldVector<Scalar,dim> vertexLocal = sfs[i].position();
+
+            // get global coordinate of vertex
+            const FieldVector<Scalar,dim> vertexGlobal = geometry.global(vertexLocal);
+
+            // get source term
+            FieldVector<Scalar, numEq> q = problem.q(vertexGlobal, element, vertexLocal);
+
+            // add source to defect
+            q *= cellVolume;
+            this->def[i] -= q;
+
+            for (int j=i+1; j < size; j++) // begin loop over neighboring vertices
             {
-                // capillary pressure
-                Scalar pCI = pC[i];
-                Scalar pCOld = uold[i][1] - uold[i][0];
+                // local coordinate of neighbor
+                const FieldVector<Scalar,dim> neighborLocal = sfs[j].position();
 
-                // derivative of wetting phase saturation w.r.t. pC
-                Scalar dSdP = problem.materialLaw().dSdP(pCI);
+                if (!gt.isSimplex()) {
+                    // compute the local distance
+                    Scalar distanceLocal = (vertexLocal - neighborLocal).two_norm();
 
-                // time derivative
-                Scalar diffPC = dSdP*volumeFactor*(pCI - pCOld);
-                this->def[i][0] += diffPC;
-                this->def[i][1] -= diffPC;
+                    // check whether the two vertices share a cell edge
+                    if (distanceLocal > 1.01)
+                        continue;
+                }
 
-                // local coordinate of vertex
-                const FieldVector<Scalar,dim> vertexLocal = sfs[i].position();
+                // get global coordinate of neighbor
+                const FieldVector<Scalar,dim> neighborGlobal = geometry.global(neighborLocal);
 
-                // get global coordinate of vertex
-                const FieldVector<Scalar,dim> vertexGlobal = geometry.global(vertexLocal);
+                // compute the edge vector
+                FieldVector<Scalar,dim>  edgeVector = neighborGlobal - vertexGlobal;
 
-                // get source term
-                FieldVector<Scalar, numEq> q = problem.q(vertexGlobal, element, vertexLocal);
+                // get distance between neighbors
+                Scalar oneByDistanceGlobal = 1.0/edgeVector.two_norm();
 
-                // add source to defect
-                q *= cellVolume;
-                this->def[i] -= q;
+                // normalize edge vector
+                edgeVector *= oneByDistanceGlobal;
 
-                for (int j=i+1; j < size; j++) // begin loop over neighboring vertices
-                    {
-                        // local coordinate of neighbor
-                        const FieldVector<Scalar,dim> neighborLocal = sfs[j].position();
+                // permeability in edge direction
+                FieldVector<Scalar,dim> Kij(0);
+                K.umv(edgeVector, Kij);
 
-                        if (!gt.isSimplex()) {
-                            // compute the local distance
-                            Scalar distanceLocal = (vertexLocal - neighborLocal).two_norm();
+                // calculate pressure difference
+                SolutionVector uDiff = sol[j] - sol[i];
 
-                            // check whether the two vertices share a cell edge
-                            if (distanceLocal > 1.01)
-                                continue;
-                        }
+                SolutionVector flux;
+                for (int comp = 0; comp < numEq; comp++) {
+                    // calculate pressure component gradient
+                    FieldVector<Scalar, dim> uGrad(edgeVector);
+                    uGrad *= oneByDistanceGlobal*uDiff[comp];
 
-                        // get global coordinate of neighbor
-                        const FieldVector<Scalar,dim> neighborGlobal = geometry.global(neighborLocal);
+                    // adjust by gravity
+                    FieldVector<Scalar, dim> gravity = problem.gravity();
+                    gravity *= density[comp];
+                    uGrad -= gravity;
 
-                        // compute the edge vector
-                        FieldVector<Scalar,dim>  edgeVector = neighborGlobal - vertexGlobal;
+                    // calculate the flux using upwind
+                    Scalar outward = uGrad*Kij;
+                    if (outward > 0)
+                        flux[comp] = mobility[i][comp]*outward;
+                    else
+                        flux[comp] = mobility[j][comp]*outward;
+                }
 
-                        // get distance between neighbors
-                        Scalar oneByDistanceGlobal = 1.0/edgeVector.two_norm();
+                // get the local edge center
+                FieldVector<Scalar,dim> edgeLocal = vertexLocal + neighborLocal;
+                edgeLocal *= 0.5;
 
-                        // normalize edge vector
-                        edgeVector *= oneByDistanceGlobal;
+                // get global coordinate of edge center
+                const FieldVector<Scalar,dim> edgeGlobal = geometry.global(edgeLocal);
 
-                        // permeability in edge direction
-                        FieldVector<Scalar,dim> Kij(0);
-                        K.umv(edgeVector, Kij);
+                // distance between cell center and edge center
+                Scalar distanceEdgeCell = (elementGlobal - edgeGlobal).two_norm();
 
-                        // calculate pressure difference
-                        SolutionVector uDiff = sol[j] - sol[i];
+                ////////////////////////////////////////////////////////////
+                // CAREFUL: only valid in 2D
+                ////////////////////////////////////////////////////////////
+                // obtain integrated Flux
+                flux *= distanceEdgeCell;
 
-                        SolutionVector flux;
-                        for (int comp = 0; comp < numEq; comp++) {
-                            // calculate pressure component gradient
-                            FieldVector<Scalar, dim> uGrad(edgeVector);
-                            uGrad *= oneByDistanceGlobal*uDiff[comp];
-
-                            // adjust by gravity
-                            FieldVector<Scalar, dim> gravity = problem.gravity();
-                            gravity *= density[comp];
-                            uGrad -= gravity;
-
-                            // calculate the flux using upwind
-                            Scalar outward = uGrad*Kij;
-                            if (outward > 0)
-                                flux[comp] = mobility[i][comp]*outward;
-                            else
-                                flux[comp] = mobility[j][comp]*outward;
-                        }
-
-                        // get the local edge center
-                        FieldVector<Scalar,dim> edgeLocal = vertexLocal + neighborLocal;
-                        edgeLocal *= 0.5;
-
-                        // get global coordinate of edge center
-                        const FieldVector<Scalar,dim> edgeGlobal = geometry.global(edgeLocal);
-
-                        // distance between cell center and edge center
-                        Scalar distanceEdgeCell = (elementGlobal - edgeGlobal).two_norm();
-
-                        ////////////////////////////////////////////////////////////
-                        // CAREFUL: only valid in 2D
-                        ////////////////////////////////////////////////////////////
-                        // obtain integrated Flux
-                        flux *= distanceEdgeCell;
-
-                        // add to defect
-                        this->def[i] -= flux;
-                        this->def[j] += flux;
-                    } // end loop over neighboring vertices
-            } // end loop over vertices
+                // add to defect
+                this->def[i] -= flux;
+                this->def[j] += flux;
+            } // end loop over neighboring vertices
+        } // end loop over vertices
 
         // adjust by density
         for (int i=0; i < size; i++) {
@@ -294,103 +294,103 @@ private:
         IntersectionIterator endit = IntersectionIteratorGetter<Grid,TypeTag>::end(element);
         for (IntersectionIterator it = IntersectionIteratorGetter<Grid,TypeTag>::begin(element);
              it!=endit; ++it)
+        {
+            // if we have a neighbor then we assume there is no boundary (forget interior boundaries)
+            // in level assemble treat non-level neighbors as boundary
+            if (it.neighbor())
             {
-                // if we have a neighbor then we assume there is no boundary (forget interior boundaries)
-                // in level assemble treat non-level neighbors as boundary
-                if (it.neighbor())
-                    {
-                        if (levelBoundaryAsDirichlet && it.outside()->level()==element.level())
-                            continue;
-                        if (!levelBoundaryAsDirichlet)
-                            continue;
-                    }
+                if (levelBoundaryAsDirichlet && it.outside()->level()==element.level())
+                    continue;
+                if (!levelBoundaryAsDirichlet)
+                    continue;
+            }
 
-                // determine boundary condition type for this face, initialize with processor boundary
-                FieldVector<typename BoundaryConditions::Flags, numEq> bctypeface(BoundaryConditions::process);
+            // determine boundary condition type for this face, initialize with processor boundary
+            FieldVector<typename BoundaryConditions::Flags, numEq> bctypeface(BoundaryConditions::process);
 
-                // handle face on exterior boundary, this assumes there are no interior boundaries
-                if (it.boundary())
-                    {
-                        Dune::GeometryType gtface = it.intersectionSelfLocal().type();
-                        for (size_t g=0; g<Dune::QuadratureRules<Scalar,dim-1>::rule(gtface,p).size(); ++g)
-                            {
-                                const Dune::FieldVector<Scalar,dim-1>& facelocal = Dune::QuadratureRules<Scalar,dim-1>::rule(gtface,p)[g].position();
-                                FieldVector<Scalar,dim> local = it.intersectionSelfLocal().global(facelocal);
-                                FieldVector<Scalar,dim> global = it.intersectionGlobal().global(facelocal);
-                                bctypeface = problem.bctype(global,element,it,local); // eval bctype
+            // handle face on exterior boundary, this assumes there are no interior boundaries
+            if (it.boundary())
+            {
+                Dune::GeometryType gtface = it.intersectionSelfLocal().type();
+                for (size_t g=0; g<Dune::QuadratureRules<Scalar,dim-1>::rule(gtface,p).size(); ++g)
+                {
+                    const Dune::FieldVector<Scalar,dim-1>& facelocal = Dune::QuadratureRules<Scalar,dim-1>::rule(gtface,p)[g].position();
+                    FieldVector<Scalar,dim> local = it.intersectionSelfLocal().global(facelocal);
+                    FieldVector<Scalar,dim> global = it.intersectionGlobal().global(facelocal);
+                    bctypeface = problem.bctype(global,element,it,local); // eval bctype
 
 
-                                if (bctypeface[0]!=BoundaryConditions::neumann) break;
+                    if (bctypeface[0]!=BoundaryConditions::neumann) break;
 
-                                SolutionVector J = problem.J(global,element,it,local);
-                                if (J.two_norm() < 1e-10)
-                                    continue;
-                                double weightface = Dune::QuadratureRules<Scalar,dim-1>::rule(gtface,p)[g].weight();
-                                Scalar detjacface = it.intersectionGlobal().integrationElement(facelocal);
-                                for (int i=0; i<sfs.size(); i++) // loop over test function number
-                                    if (this->bctype[i][0]==BoundaryConditions::neumann)
-                                        {
-                                            //////////////////////////////////////////////////////////////////////////
-                                            // HACK: piecewise constants with respect to dual grid not implemented yet
-                                            // works only if exactly one quadrature point is located within each dual
-                                            // cell boundary (which should be the case for p = 2)
-                                            //////////////////////////////////////////////////////////////////////////
-                                            if (sfs[i].evaluateFunction(0,local) > 0.5) {
-                                                J *= weightface*detjacface;
-                                                this->b[i] -= J;
-                                            }
-                                        }
+                    SolutionVector J = problem.J(global,element,it,local);
+                    if (J.two_norm() < 1e-10)
+                        continue;
+                    double weightface = Dune::QuadratureRules<Scalar,dim-1>::rule(gtface,p)[g].weight();
+                    Scalar detjacface = it.intersectionGlobal().integrationElement(facelocal);
+                    for (int i=0; i<sfs.size(); i++) // loop over test function number
+                        if (this->bctype[i][0]==BoundaryConditions::neumann)
+                        {
+                            //////////////////////////////////////////////////////////////////////////
+                            // HACK: piecewise constants with respect to dual grid not implemented yet
+                            // works only if exactly one quadrature point is located within each dual
+                            // cell boundary (which should be the case for p = 2)
+                            //////////////////////////////////////////////////////////////////////////
+                            if (sfs[i].evaluateFunction(0,local) > 0.5) {
+                                J *= weightface*detjacface;
+                                this->b[i] -= J;
                             }
-                        if (bctypeface[0]==BoundaryConditions::neumann) continue; // was a neumann face, go to next face
-                    }
+                        }
+                }
+                if (bctypeface[0]==BoundaryConditions::neumann) continue; // was a neumann face, go to next face
+            }
 
-                // If we are here, then it is
-                // (i)   an exterior boundary face with Dirichlet condition, or
-                // (ii)  a processor boundary (i.e. neither boundary() nor neighbor() was true), or
-                // (iii) a level boundary in case of level-wise assemble
-                // How processor boundaries are handled depends on the processor boundary mode
-                if (bctypeface[0]==BoundaryConditions::process && procBoundaryAsDirichlet==false
-                    && levelBoundaryAsDirichlet==false)
-                    continue; // then it acts like homogeneous Neumann
+            // If we are here, then it is
+            // (i)   an exterior boundary face with Dirichlet condition, or
+            // (ii)  a processor boundary (i.e. neither boundary() nor neighbor() was true), or
+            // (iii) a level boundary in case of level-wise assemble
+            // How processor boundaries are handled depends on the processor boundary mode
+            if (bctypeface[0]==BoundaryConditions::process && procBoundaryAsDirichlet==false
+                && levelBoundaryAsDirichlet==false)
+                continue; // then it acts like homogeneous Neumann
 
-                // now handle exterior or interior Dirichlet boundary
-                for (int i=0; i<sfs.size(); i++) // loop over test function number
+            // now handle exterior or interior Dirichlet boundary
+            for (int i=0; i<sfs.size(); i++) // loop over test function number
+            {
+                if (sfs[i].codim()==0) continue; // skip interior dof
+                if (sfs[i].codim()==1) // handle face dofs
+                {
+                    if (sfs[i].entity()==it.numberInSelf())
                     {
-                        if (sfs[i].codim()==0) continue; // skip interior dof
-                        if (sfs[i].codim()==1) // handle face dofs
+                        if (this->bctype[i][0]<bctypeface[0])
+                        {
+                            this->bctype[i].assign(bctypeface[0]);
+                            if (bctypeface[0]==BoundaryConditions::process)
+                                this->b[i] = 0;
+                            if (bctypeface[0]==BoundaryConditions::dirichlet)
                             {
-                                if (sfs[i].entity()==it.numberInSelf())
-                                    {
-                                        if (this->bctype[i][0]<bctypeface[0])
-                                            {
-                                                this->bctype[i].assign(bctypeface[0]);
-                                                if (bctypeface[0]==BoundaryConditions::process)
-                                                    this->b[i] = 0;
-                                                if (bctypeface[0]==BoundaryConditions::dirichlet)
-                                                    {
-                                                        this->b[i] = 0;
-                                                    }
-                                            }
-                                    }
-                                continue;
+                                this->b[i] = 0;
                             }
-                        // handle subentities of this face
-                        for (int j=0; j<ReferenceElements<Scalar,dim>::general(gt).size(it.numberInSelf(),1,sfs[i].codim()); j++)
-                            if (sfs[i].entity()==ReferenceElements<Scalar,dim>::general(gt).subEntity(it.numberInSelf(),1,j,sfs[i].codim()))
-                                {
-                                    if (this->bctype[i][0]<bctypeface[0])
-                                        {
-                                            this->bctype[i].assign(bctypeface[0]);
-                                            if (bctypeface[0]==BoundaryConditions::process)
-                                                this->b[i] = 0;
-                                            if (bctypeface[0]==BoundaryConditions::dirichlet)
-                                                {
-                                                    this->b[i] = 0;
-                                                }
-                                        }
-                                }
+                        }
+                    }
+                    continue;
+                }
+                // handle subentities of this face
+                for (int j=0; j<ReferenceElements<Scalar,dim>::general(gt).size(it.numberInSelf(),1,sfs[i].codim()); j++)
+                    if (sfs[i].entity()==ReferenceElements<Scalar,dim>::general(gt).subEntity(it.numberInSelf(),1,j,sfs[i].codim()))
+                    {
+                        if (this->bctype[i][0]<bctypeface[0])
+                        {
+                            this->bctype[i].assign(bctypeface[0]);
+                            if (bctypeface[0]==BoundaryConditions::process)
+                                this->b[i] = 0;
+                            if (bctypeface[0]==BoundaryConditions::dirichlet)
+                            {
+                                this->b[i] = 0;
+                            }
+                        }
                     }
             }
+        }
     }
 
     // parameters given in constructor

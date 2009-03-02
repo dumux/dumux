@@ -79,22 +79,22 @@ public:
         FieldVector<Scalar,numEq> values(0);
 
         if(golbalPos[0]<1e-1)
-            {
-                values[0] = -931;
-                values[1] = 1.1249e-8;
-            }
+        {
+            values[0] = -931;
+            values[1] = 1.1249e-8;
+        }
 
         else if(golbalPos[0]>22-1e-1)
-            {
-                values[0] = -1067;      //Dirichlet RB für Druck
-                values[1] = 1.1249e-8;       //Dirichlet RB für mol fraction x
-            }
+        {
+            values[0] = -1067;      //Dirichlet RB für Druck
+            values[1] = 1.1249e-8;       //Dirichlet RB für mol fraction x
+        }
 
         else
-            {
-                values[0] =-931-((136/22)*golbalPos[0]); //AB für Druck p
-                values[1] = 1.1249e-8; //AB für mole fraction x
-            }
+        {
+            values[0] =-931-((136/22)*golbalPos[0]); //AB für Druck p
+            values[1] = 1.1249e-8; //AB für mole fraction x
+        }
         return values;
     }
 

@@ -89,9 +89,9 @@ public:
             ParentType::model().switched() &&
             ParentType::numSteps_ < 4 &&
             !ParentType::newtonConverged())
-            {
-                return true;
-            }
+        {
+            return true;
+        }
 
         return baseProceed;
     }
@@ -117,20 +117,20 @@ protected:
         Scalar pW;
 
         for (int idx = 0; idx < (int) (*u).size(); idx++)
-            {
-                pW = (*u)[idx][0];
-                switchVar = (*u)[idx][1];
+        {
+            pW = (*u)[idx][0];
+            switchVar = (*u)[idx][1];
 
-                if (switchVar < 0) {
-                    maxSwitchVarDelta = std::max(maxSwitchVarDelta, std::abs(switchVar));
-                }
-                else if (switchVar > 1) {
-                    maxSwitchVarDelta = std::max(maxSwitchVarDelta, std::abs(switchVar - 1));
-                }
-                if (pW < 0.0){
-                    maxPwDelta = std::max(maxPwDelta, std::abs(pW/1e5));
-                }
+            if (switchVar < 0) {
+                maxSwitchVarDelta = std::max(maxSwitchVarDelta, std::abs(switchVar));
             }
+            else if (switchVar > 1) {
+                maxSwitchVarDelta = std::max(maxSwitchVarDelta, std::abs(switchVar - 1));
+            }
+            if (pW < 0.0){
+                maxPwDelta = std::max(maxPwDelta, std::abs(pW/1e5));
+            }
+        }
 
         // we accept solutions up to 1 percent bigger than 1
         // or smaller than 0 as being physical for numerical

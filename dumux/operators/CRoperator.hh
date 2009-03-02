@@ -157,31 +157,31 @@ public:
         watch.reset();
         Iterator eendit = grid.template lend<0>(0);
         for (Iterator it = grid.template lbegin<0>(0); it != eendit; ++it)
+        {
+            Dune::GeometryType gt = it->geometry().type();
+            const typename Dune::ReferenceElementContainer<DT,n>::value_type&
+                refelem = ReferenceElements<DT,n>::general(gt);
+
+            // faces, c=1
+            for (int i = 0; i < refelem.size(1); i++)
             {
-                Dune::GeometryType gt = it->geometry().type();
-                const typename Dune::ReferenceElementContainer<DT,n>::value_type&
-                    refelem = ReferenceElements<DT,n>::general(gt);
-
-                // faces, c=1
-                for (int i = 0; i < refelem.size(1); i++)
-                    {
-                        int index = allmapper.template map<1>(*it, i);
-                        int alpha = facemapper.template map<1>(*it, i);
-                        //std::cout << "index = " << index << ", alpha = " << alpha << std::endl;
-                        if (!visited[index])
-                            {
-                                A.incrementrowsize(alpha);
-                                visited[index] = true;
-                                // printf("increment row %04d\n",alpha);
-                            }
-                        for (int k = 0; k < refelem.size(1)-1; k++) {
-                            A.incrementrowsize(alpha);
-                            // printf("increment row %04d\n",alpha);
-                        }
-
-                    }
+                int index = allmapper.template map<1>(*it, i);
+                int alpha = facemapper.template map<1>(*it, i);
+                //std::cout << "index = " << index << ", alpha = " << alpha << std::endl;
+                if (!visited[index])
+                {
+                    A.incrementrowsize(alpha);
+                    visited[index] = true;
+                    // printf("increment row %04d\n",alpha);
+                }
+                for (int k = 0; k < refelem.size(1)-1; k++) {
+                    A.incrementrowsize(alpha);
+                    // printf("increment row %04d\n",alpha);
+                }
 
             }
+
+        }
 
         // now the row sizes have been set
         A.endrowsizes();
@@ -194,32 +194,32 @@ public:
         // LOOP 2 : insert the nonzeros
         watch.reset();
         for (Iterator it = grid.template lbegin<0>(0); it!=eendit; ++it)
+        {
+            Dune::GeometryType gt = it->geometry().type();
+            const typename Dune::ReferenceElementContainer<DT,n>::value_type&
+                refelem = ReferenceElements<DT,n>::general(gt);
+            //           std::cout << "ELEM " << GeometryName(gt) << std::endl;
+
+            // faces, c=1
+            for (int i = 0; i < refelem.size(1); i++)
             {
-                Dune::GeometryType gt = it->geometry().type();
-                const typename Dune::ReferenceElementContainer<DT,n>::value_type&
-                    refelem = ReferenceElements<DT,n>::general(gt);
-                //           std::cout << "ELEM " << GeometryName(gt) << std::endl;
-
-                // faces, c=1
-                for (int i = 0; i < refelem.size(1); i++)
-                    {
-                        int index = allmapper.template map<1>(*it, i);
-                        int alpha = facemapper.template map<1>(*it, i);
-                        if (!visited[index])
-                            {
-                                A.addindex(alpha,alpha);
-                                visited[index] = true;
-                            }
-                        for (int k = 0; k < refelem.size(1); k++)
-                            if (k != i) {
-                                int beta = facemapper.template map<1>(*it, k);
-                                A.addindex(alpha, beta);
-                                //std::cout << "alpha = " << alpha << ", added beta = " << beta << std::endl;
-                            }
-
+                int index = allmapper.template map<1>(*it, i);
+                int alpha = facemapper.template map<1>(*it, i);
+                if (!visited[index])
+                {
+                    A.addindex(alpha,alpha);
+                    visited[index] = true;
+                }
+                for (int k = 0; k < refelem.size(1); k++)
+                    if (k != i) {
+                        int beta = facemapper.template map<1>(*it, k);
+                        A.addindex(alpha, beta);
+                        //std::cout << "alpha = " << alpha << ", added beta = " << beta << std::endl;
                     }
 
             }
+
+        }
 
         // now the matrix is ready for use
         A.endindices();
@@ -330,93 +330,93 @@ public:
         // run over all leaf elements
         Iterator eendit = this->grid.template lend<0>(0);
         for (Iterator it = this->grid.template lbegin<0>(0); it!=eendit; ++it)
+        {
+            // get access to shape functions for CR elements
+            Dune::GeometryType gt = it->geometry().type();
+            const typename Dune::CRShapeFunctionSetContainer<DT,RT,n>::value_type&
+                sfs = Dune::CRShapeFunctions<DT,RT,n>::general(gt,1);
+
+            // get local to global id map
+            for (int k = 0; k < sfs.size(); k++)
             {
-                // get access to shape functions for CR elements
-                Dune::GeometryType gt = it->geometry().type();
-                const typename Dune::CRShapeFunctionSetContainer<DT,RT,n>::value_type&
-                    sfs = Dune::CRShapeFunctions<DT,RT,n>::general(gt,1);
-
-                // get local to global id map
-                for (int k = 0; k < sfs.size(); k++)
-                    {
-                        if (sfs[k].codim() != 1) DUNE_THROW(MathError, "expected codim == dim");
-                        int alpha = this->facemapper.template map<1>(*it, k);
-                        local2Global[k] = alpha;
-                        //FieldVector<double,n> global = (*it).geometry().global(sfs[k].position());
-                        //std::cout << "local = " << sfs[k].position() << ", global = " << global << " -> " << alpha << std::endl;
-                    }
-
-                // build local stiffness matrix for CR elements
-                // inludes rhs and boundary condition information
-                loc.assemble(*it, 1); // assemble local stiffness matrix
-
-
-                // accumulate local matrix into global matrix for non-hanging nodes
-                for (int i=0; i<sfs.size(); i++) // loop over rows, i.e. test functions
-                    {
-                        // accumulate matrix
-                        for (int j=0; j<sfs.size(); j++)
-                            {
-                                // the standard entry
-                                this->A[local2Global[i]][local2Global[j]] += loc.mat(i,j);
-                            }
-
-                        // essential boundary condition and rhs
-                        for (int comp=0; comp<m; comp++)
-                            {
-                                if (loc.bc(i)[comp]>essential[local2Global[i]][comp])
-                                    {
-                                        essential[local2Global[i]][comp] = loc.bc(i)[comp];
-                                        (*f)[local2Global[i]][comp] = loc.rhs(i)[comp];
-                                    }
-                                if (essential[local2Global[i]][comp]==BoundaryConditions::neumann)
-                                    (*f)[local2Global[i]][comp] += loc.rhs(i)[comp];
-                            }
-                    }
-
+                if (sfs[k].codim() != 1) DUNE_THROW(MathError, "expected codim == dim");
+                int alpha = this->facemapper.template map<1>(*it, k);
+                local2Global[k] = alpha;
+                //FieldVector<double,n> global = (*it).geometry().global(sfs[k].position());
+                //std::cout << "local = " << sfs[k].position() << ", global = " << global << " -> " << alpha << std::endl;
             }
+
+            // build local stiffness matrix for CR elements
+            // inludes rhs and boundary condition information
+            loc.assemble(*it, 1); // assemble local stiffness matrix
+
+
+            // accumulate local matrix into global matrix for non-hanging nodes
+            for (int i=0; i<sfs.size(); i++) // loop over rows, i.e. test functions
+            {
+                // accumulate matrix
+                for (int j=0; j<sfs.size(); j++)
+                {
+                    // the standard entry
+                    this->A[local2Global[i]][local2Global[j]] += loc.mat(i,j);
+                }
+
+                // essential boundary condition and rhs
+                for (int comp=0; comp<m; comp++)
+                {
+                    if (loc.bc(i)[comp]>essential[local2Global[i]][comp])
+                    {
+                        essential[local2Global[i]][comp] = loc.bc(i)[comp];
+                        (*f)[local2Global[i]][comp] = loc.rhs(i)[comp];
+                    }
+                    if (essential[local2Global[i]][comp]==BoundaryConditions::neumann)
+                        (*f)[local2Global[i]][comp] += loc.rhs(i)[comp];
+                }
+            }
+
+        }
 
         // put in essential boundary conditions
         rowiterator endi=this->A.end();
         for (rowiterator i=this->A.begin(); i!=endi; ++i)
+        {
+            // muck up extra rows
+            if ((int) i.index() >= (int) this->facemapper.size())
             {
-                // muck up extra rows
-                if ((int) i.index() >= (int) this->facemapper.size())
-                    {
-                        coliterator endj=(*i).end();
-                        for (coliterator j=(*i).begin(); j!=endj; ++j)
-                            {
-                                (*j) = 0;
-                                if (j.index()==i.index())
-                                    for (int comp=0; comp<m; comp++)
-                                        (*j)[comp][comp] = 1;
-                            }
-                        (*f)[i.index()] = 0;
-                        continue;
-                    }
-
-                // insert dirichlet ans processor boundary conditions
-                for (int icomp=0; icomp<m; icomp++)
-                    if (essential[i.index()][icomp]!=BoundaryConditions::neumann)
-                        {
-                            coliterator endj=(*i).end();
-                            for (coliterator j=(*i).begin(); j!=endj; ++j)
-                                if (j.index()==i.index())
-                                    {
-                                        for (int jcomp=0; jcomp<m; jcomp++)
-                                            if (icomp==jcomp)
-                                                (*j)[icomp][jcomp] = 1;
-                                            else
-                                                (*j)[icomp][jcomp] = 0;
-                                    }
-                                else
-                                    {
-                                        for (int jcomp=0; jcomp<m; jcomp++)
-                                            (*j)[icomp][jcomp] = 0;
-                                    }
-                            (*u)[i.index()][icomp] = (*f)[i.index()][icomp];
-                        }
+                coliterator endj=(*i).end();
+                for (coliterator j=(*i).begin(); j!=endj; ++j)
+                {
+                    (*j) = 0;
+                    if (j.index()==i.index())
+                        for (int comp=0; comp<m; comp++)
+                            (*j)[comp][comp] = 1;
+                }
+                (*f)[i.index()] = 0;
+                continue;
             }
+
+            // insert dirichlet ans processor boundary conditions
+            for (int icomp=0; icomp<m; icomp++)
+                if (essential[i.index()][icomp]!=BoundaryConditions::neumann)
+                {
+                    coliterator endj=(*i).end();
+                    for (coliterator j=(*i).begin(); j!=endj; ++j)
+                        if (j.index()==i.index())
+                        {
+                            for (int jcomp=0; jcomp<m; jcomp++)
+                                if (icomp==jcomp)
+                                    (*j)[icomp][jcomp] = 1;
+                                else
+                                    (*j)[icomp][jcomp] = 0;
+                        }
+                        else
+                        {
+                            for (int jcomp=0; jcomp<m; jcomp++)
+                                (*j)[icomp][jcomp] = 0;
+                        }
+                    (*u)[i.index()][icomp] = (*f)[i.index()][icomp];
+                }
+        }
     }
 
     void preMark ()
@@ -432,28 +432,28 @@ public:
         int extra=0;
         Iterator eendit = this->grid.template lend<0>(0);
         for (Iterator it = this->grid.template lbegin<0>(0); it!=eendit; ++it)
+        {
+            // get access to shape functions for CR elements
+            Dune::GeometryType gt = it->geometry().type();
+            //          if (gt!=Dune::simplex && gt!=Dune::triangle && gt!=Dune::tetrahedron) continue;
+
+            const typename Dune::CRShapeFunctionSetContainer<DT,RT,n>::value_type&
+                sfs=Dune::CRShapeFunctions<DT,RT,n>::general(gt,1);
+
+            // count nodes with mark
+            int count=0;
+            for (int k=0; k<sfs.size(); k++)
             {
-                // get access to shape functions for CR elements
-                Dune::GeometryType gt = it->geometry().type();
-                //          if (gt!=Dune::simplex && gt!=Dune::triangle && gt!=Dune::tetrahedron) continue;
-
-                const typename Dune::CRShapeFunctionSetContainer<DT,RT,n>::value_type&
-                    sfs=Dune::CRShapeFunctions<DT,RT,n>::general(gt,1);
-
-                // count nodes with mark
-                int count=0;
-                for (int k=0; k<sfs.size(); k++)
-                    {
-                        int alpha = this->facemapper.template map<n>(*it, k);
-                        if (marked[alpha]) count++;
-                    }
-
-                // refine if a marked edge exists
-                if (count>0) {
-                    extra++;
-                    g.mark(1,it);
-                }
+                int alpha = this->facemapper.template map<n>(*it, k);
+                if (marked[alpha]) count++;
             }
+
+            // refine if a marked edge exists
+            if (count>0) {
+                extra++;
+                g.mark(1,it);
+            }
+        }
 
         //       std::cout << "placed " << extra << " extra marks" << std::endl;
         marked.clear();

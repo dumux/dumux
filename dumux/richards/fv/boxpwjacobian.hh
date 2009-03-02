@@ -225,13 +225,13 @@ public:
 
         /* pc = -pw || pc = 0 for computing Sw */
         if (varData[i].pW >= 0)
-            {
-                varData[i].pC = 0.0;
-            }
+        {
+            varData[i].pC = 0.0;
+        }
         else
-            {
-                varData[i].pC = -varData[i].pW;
-            }
+        {
+            varData[i].pC = -varData[i].pW;
+        }
 
         varData[i].dSdpC = problem.materialLaw().dSdP(varData[i].pC, global, e, local);
         varData[i].satW = problem.materialLaw().saturationW(varData[i].pC, global, e, local);

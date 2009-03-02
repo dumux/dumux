@@ -65,16 +65,16 @@ public:
         // spline.
         p = 1;
         while (p <= maxP_)
-            {
-                // calculate parameters for the current p
-                calcParameters_(x1, x2, y1, y2, m1, m2, p);
+        {
+            // calculate parameters for the current p
+            calcParameters_(x1, x2, y1, y2, m1, m2, p);
 
-                if (isOk_(x1,x2,y1,y2,m1,m2))
-                    break;
+            if (isOk_(x1,x2,y1,y2,m1,m2))
+                break;
 
-                // try a bigger p next time
-                p = p*2;
-            }
+            // try a bigger p next time
+            p = p*2;
+        }
 
         if (p > 2 && p <= maxP_) {
             int pLow = p/2;

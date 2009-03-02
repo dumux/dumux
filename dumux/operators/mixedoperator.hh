@@ -162,26 +162,26 @@ public:
         watch.reset();
         ElementIterator endEIt = grid.template leafend<0>();
         for (ElementIterator eIt = grid.template leafbegin<0>(); eIt != endEIt; ++eIt)
+        {
+            const Element& element = *eIt;
+
+            int eIdx = elementAndFaceMapper.map(element);
+            int nFaces = element.template count<1>();
+            A.incrementrowsize(eIdx, nFaces + 1);
+
+            for (int i = 0; i < nFaces; i++)
             {
-                const Element& element = *eIt;
+                int index = allMapper.template map<1>(element, i);
+                int fIdx = elementAndFaceMapper.template map<1>(element, i);
 
-                int eIdx = elementAndFaceMapper.map(element);
-                int nFaces = element.template count<1>();
-                A.incrementrowsize(eIdx, nFaces + 1);
-
-                for (int i = 0; i < nFaces; i++)
-                    {
-                        int index = allMapper.template map<1>(element, i);
-                        int fIdx = elementAndFaceMapper.template map<1>(element, i);
-
-                        if (!visited[index])
-                            {
-                                A.incrementrowsize(fIdx);
-                                visited[index] = true;
-                            }
-                        A.incrementrowsize(fIdx, nFaces);
-                    }
+                if (!visited[index])
+                {
+                    A.incrementrowsize(fIdx);
+                    visited[index] = true;
+                }
+                A.incrementrowsize(fIdx, nFaces);
             }
+        }
 
         // now the row sizes have been set
         A.endrowsizes();
@@ -194,32 +194,32 @@ public:
         // LOOP 2 : insert the nonzeros
         watch.reset();
         for (ElementIterator eIt = grid.template leafbegin<0>(); eIt!=endEIt; ++eIt)
+        {
+            const Element& element = *eIt;
+
+            int eIdx = elementAndFaceMapper.map(element);
+            A.addindex(eIdx, eIdx);
+            int nFaces = element.template count<1>();
+
+            for (int i = 0; i < nFaces; i++)
             {
-                const Element& element = *eIt;
-
-                int eIdx = elementAndFaceMapper.map(element);
-                A.addindex(eIdx, eIdx);
-                int nFaces = element.template count<1>();
-
-                for (int i = 0; i < nFaces; i++)
-                    {
-                        int index = allMapper.template map<1>(element, i);
-                        int fIdx = elementAndFaceMapper.template map<1>(element, i);
-                        if (!visited[index])
-                            {
-                                A.addindex(fIdx,fIdx);
-                                visited[index] = true;
-                            }
-                        for (int k = 0; k < nFaces; k++)
-                            if (k != i) {
-                                int fIdx2 = elementAndFaceMapper.template map<1>(element, k);
-                                A.addindex(fIdx, fIdx2);
-                            }
-
-                        A.addindex(fIdx, eIdx);
-                        A.addindex(eIdx, fIdx);
+                int index = allMapper.template map<1>(element, i);
+                int fIdx = elementAndFaceMapper.template map<1>(element, i);
+                if (!visited[index])
+                {
+                    A.addindex(fIdx,fIdx);
+                    visited[index] = true;
+                }
+                for (int k = 0; k < nFaces; k++)
+                    if (k != i) {
+                        int fIdx2 = elementAndFaceMapper.template map<1>(element, k);
+                        A.addindex(fIdx, fIdx2);
                     }
+
+                A.addindex(fIdx, eIdx);
+                A.addindex(eIdx, fIdx);
             }
+        }
         A.endindices();
         std::cout << "=== MixedOperatorBase index insertion " <<  watch.elapsed() << std::endl;
     }
@@ -332,75 +332,75 @@ public:
         // run over all leaf elements
         ElementIterator endEIt = this->grid.template leafend<0>();
         for (ElementIterator eIt = this->grid.template leafbegin<0>(); eIt!=endEIt; ++eIt)
+        {
+            const Element& element = *eIt;
+
+            int nFaces = element.template count<1>();
+            int nDOF = nFaces + 1;
+
+            // get local to global id map
+            for (int k = 0; k < nFaces; k++)
+                local2Global[k] = this->elementAndFaceMapper.template map<1>(element, k);
+
+            local2Global[nFaces] = this->elementAndFaceMapper.map(element);
+
+            // build local stiffness matrix for Mixed elements
+            // inludes rhs and boundary condition information
+            loc.assemble(element, 1); // assemble local stiffness matrix
+
+
+            // accumulate local matrix into global matrix for non-hanging nodes
+            for (int i=0; i<nDOF; i++) // loop over rows, i.e. test functions
             {
-                const Element& element = *eIt;
+                // accumulate matrix
+                for (int j=0; j<nDOF; j++)
+                {
+                    // the standard entry
+                    this->A[local2Global[i]][local2Global[j]] += loc.mat(i,j);
+                }
 
-                int nFaces = element.template count<1>();
-                int nDOF = nFaces + 1;
-
-                // get local to global id map
-                for (int k = 0; k < nFaces; k++)
-                    local2Global[k] = this->elementAndFaceMapper.template map<1>(element, k);
-
-                local2Global[nFaces] = this->elementAndFaceMapper.map(element);
-
-                // build local stiffness matrix for Mixed elements
-                // inludes rhs and boundary condition information
-                loc.assemble(element, 1); // assemble local stiffness matrix
-
-
-                // accumulate local matrix into global matrix for non-hanging nodes
-                for (int i=0; i<nDOF; i++) // loop over rows, i.e. test functions
+                // essential boundary condition and rhs
+                for (int comp = 0; comp < m; comp++)
+                {
+                    if (loc.bc(i)[comp] > essential[local2Global[i]][comp])
                     {
-                        // accumulate matrix
-                        for (int j=0; j<nDOF; j++)
-                            {
-                                // the standard entry
-                                this->A[local2Global[i]][local2Global[j]] += loc.mat(i,j);
-                            }
-
-                        // essential boundary condition and rhs
-                        for (int comp = 0; comp < m; comp++)
-                            {
-                                if (loc.bc(i)[comp] > essential[local2Global[i]][comp])
-                                    {
-                                        essential[local2Global[i]][comp] = loc.bc(i)[comp];
-                                        (*f)[local2Global[i]][comp] = loc.rhs(i)[comp];
-                                    }
-                                if (essential[local2Global[i]][comp] == BoundaryConditions::neumann)
-                                    (*f)[local2Global[i]][comp] += loc.rhs(i)[comp];
-                            }
+                        essential[local2Global[i]][comp] = loc.bc(i)[comp];
+                        (*f)[local2Global[i]][comp] = loc.rhs(i)[comp];
                     }
-
+                    if (essential[local2Global[i]][comp] == BoundaryConditions::neumann)
+                        (*f)[local2Global[i]][comp] += loc.rhs(i)[comp];
+                }
             }
+
+        }
 
         // put in essential boundary conditions
         rowiterator endi = this->A.end();
         for (rowiterator i = this->A.begin(); i!=endi; ++i)
-            {
-                // insert dirichlet ans processor boundary conditions
-                for (int icomp = 0; icomp < m; icomp++)
-                    if (essential[i.index()][icomp] != BoundaryConditions::neumann
-                        || (i.index() == 0 && icomp == 0)) // the pressure is set to zero in the first element
+        {
+            // insert dirichlet ans processor boundary conditions
+            for (int icomp = 0; icomp < m; icomp++)
+                if (essential[i.index()][icomp] != BoundaryConditions::neumann
+                    || (i.index() == 0 && icomp == 0)) // the pressure is set to zero in the first element
+                {
+                    coliterator endj = (*i).end();
+                    for (coliterator j = (*i).begin(); j != endj; ++j)
+                        if (j.index() == i.index())
                         {
-                            coliterator endj = (*i).end();
-                            for (coliterator j = (*i).begin(); j != endj; ++j)
-                                if (j.index() == i.index())
-                                    {
-                                        for (int jcomp = 0; jcomp < m; jcomp++)
-                                            if (icomp == jcomp)
-                                                (*j)[icomp][jcomp] = 1;
-                                            else
-                                                (*j)[icomp][jcomp] = 0;
-                                    }
+                            for (int jcomp = 0; jcomp < m; jcomp++)
+                                if (icomp == jcomp)
+                                    (*j)[icomp][jcomp] = 1;
                                 else
-                                    {
-                                        for (int jcomp = 0; jcomp < m; jcomp++)
-                                            (*j)[icomp][jcomp] = 0;
-                                    }
-                            (*u)[i.index()][icomp] = (*f)[i.index()][icomp];
+                                    (*j)[icomp][jcomp] = 0;
                         }
-            }
+                        else
+                        {
+                            for (int jcomp = 0; jcomp < m; jcomp++)
+                                (*j)[icomp][jcomp] = 0;
+                        }
+                    (*u)[i.index()][icomp] = (*f)[i.index()][icomp];
+                }
+        }
     }
 };
 

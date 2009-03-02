@@ -657,120 +657,120 @@ public:
         IntersectionIterator endit = e.ileafend();
         for (IntersectionIterator it = e.ileafbegin(); it != endit; ++it)
             if (it->boundary())
+            {
+                int face = it->numberInSelf();
+                int numVerticesOfFace = referenceElement.size(face, 1, dim);
+                for (int vertInFace = 0; vertInFace < numVerticesOfFace; vertInFace++)
                 {
-                    int face = it->numberInSelf();
-                    int numVerticesOfFace = referenceElement.size(face, 1, dim);
-                    for (int vertInFace = 0; vertInFace < numVerticesOfFace; vertInFace++)
-                        {
-                            int vertInElement = referenceElement.subEntity(face, 1, vertInFace, dim);
-                            int bfIdx = boundaryFaceIndex(face, vertInFace);
-                            subContVol[vertInElement].inner = false;
-                            switch (dim) {
-                            case 1:
-                                boundaryFace[bfIdx].ipLocal = referenceElement.position(vertInElement, dim);
-                                boundaryFace[bfIdx].area = 1.0;
-                                break;
-                            case 2:
-                                boundaryFace[bfIdx].ipLocal = referenceElement.position(vertInElement, dim)
-                                    + referenceElement.position(face, 1);
-                                boundaryFace[bfIdx].ipLocal *= 0.5;
-                                boundaryFace[bfIdx].area = 0.5*it->intersectionGlobal().volume();
-                                break;
-                            case 3:
-                                int leftEdge;
-                                int rightEdge;
-                                getEdgeIndices(numVertices, face, vertInElement, leftEdge, rightEdge);
-                                boundaryFace[bfIdx].ipLocal = referenceElement.position(vertInElement, dim)
-                                    + referenceElement.position(face, 1)
-                                    + referenceElement.position(leftEdge, dim-1)
-                                    + referenceElement.position(rightEdge, dim-1);
-                                boundaryFace[bfIdx].ipLocal *= 0.25;
-                                boundaryFace[bfIdx].area = quadrilateralArea3D(subContVol[vertInElement].global,
-                                                                               edgeCoord[rightEdge], faceCoord[face], edgeCoord[leftEdge]);
-                                break;
-                            default:
-                                DUNE_THROW(NotImplemented, "FVElementGeometry for dim = " << dim);
-                            }
-                            boundaryFace[bfIdx].ipGlobal = geometry.global(boundaryFace[bfIdx].ipLocal);
+                    int vertInElement = referenceElement.subEntity(face, 1, vertInFace, dim);
+                    int bfIdx = boundaryFaceIndex(face, vertInFace);
+                    subContVol[vertInElement].inner = false;
+                    switch (dim) {
+                    case 1:
+                        boundaryFace[bfIdx].ipLocal = referenceElement.position(vertInElement, dim);
+                        boundaryFace[bfIdx].area = 1.0;
+                        break;
+                    case 2:
+                        boundaryFace[bfIdx].ipLocal = referenceElement.position(vertInElement, dim)
+                            + referenceElement.position(face, 1);
+                        boundaryFace[bfIdx].ipLocal *= 0.5;
+                        boundaryFace[bfIdx].area = 0.5*it->intersectionGlobal().volume();
+                        break;
+                    case 3:
+                        int leftEdge;
+                        int rightEdge;
+                        getEdgeIndices(numVertices, face, vertInElement, leftEdge, rightEdge);
+                        boundaryFace[bfIdx].ipLocal = referenceElement.position(vertInElement, dim)
+                            + referenceElement.position(face, 1)
+                            + referenceElement.position(leftEdge, dim-1)
+                            + referenceElement.position(rightEdge, dim-1);
+                        boundaryFace[bfIdx].ipLocal *= 0.25;
+                        boundaryFace[bfIdx].area = quadrilateralArea3D(subContVol[vertInElement].global,
+                                                                       edgeCoord[rightEdge], faceCoord[face], edgeCoord[leftEdge]);
+                        break;
+                    default:
+                        DUNE_THROW(NotImplemented, "FVElementGeometry for dim = " << dim);
+                    }
+                    boundaryFace[bfIdx].ipGlobal = geometry.global(boundaryFace[bfIdx].ipLocal);
 
-                            // ASSUME constant normal
-                            FieldVector<Scalar, dim-1> localDimM1(0);
-                            boundaryFace[bfIdx].normal = it->unitOuterNormal(localDimM1);
-                            boundaryFace[bfIdx].normal *= boundaryFace[bfIdx].area;
+                    // ASSUME constant normal
+                    FieldVector<Scalar, dim-1> localDimM1(0);
+                    boundaryFace[bfIdx].normal = it->unitOuterNormal(localDimM1);
+                    boundaryFace[bfIdx].normal *= boundaryFace[bfIdx].area;
 
-                            FieldMatrix<Scalar,dim,dim> jacInvT = geometry.jacobianInverseTransposed(boundaryFace[bfIdx].ipLocal);
-                            for (int vert = 0; vert < numVertices; vert++)
-                                {
-                                    FV grad(0),temp;
-                                    for (int l = 0; l < dim; l++)
-                                        temp[l] = sfs[vert].evaluateDerivative(0, l, boundaryFace[bfIdx].ipLocal);
-                                    jacInvT.umv(temp, grad);
-                                    boundaryFace[bfIdx].grad[vert] = grad;
-                                    boundaryFace[bfIdx].shapeValue[vert] = sfs[vert].evaluateFunction(0, boundaryFace[bfIdx].ipLocal);
-                                }
+                    FieldMatrix<Scalar,dim,dim> jacInvT = geometry.jacobianInverseTransposed(boundaryFace[bfIdx].ipLocal);
+                    for (int vert = 0; vert < numVertices; vert++)
+                    {
+                        FV grad(0),temp;
+                        for (int l = 0; l < dim; l++)
+                            temp[l] = sfs[vert].evaluateDerivative(0, l, boundaryFace[bfIdx].ipLocal);
+                        jacInvT.umv(temp, grad);
+                        boundaryFace[bfIdx].grad[vert] = grad;
+                        boundaryFace[bfIdx].shapeValue[vert] = sfs[vert].evaluateFunction(0, boundaryFace[bfIdx].ipLocal);
+                    }
 
-                            //                    std::cout << "boundary face " << face << ", vert = " << vertInElement << ", ipLocal = "
-                            //                        << boundaryFace[bfIdx].ipLocal << ", ipGlobal = " << boundaryFace[bfIdx].ipGlobal
-                            //                        << ", area = " << boundaryFace[bfIdx].area << std::endl;
+                    //                    std::cout << "boundary face " << face << ", vert = " << vertInElement << ", ipLocal = "
+                    //                        << boundaryFace[bfIdx].ipLocal << ", ipGlobal = " << boundaryFace[bfIdx].ipGlobal
+                    //                        << ", area = " << boundaryFace[bfIdx].area << std::endl;
 
-                        }
                 }
+            }
 
 
         for (int vert = 0; vert < numVertices; vert++)
             if (dim == 2)
-                {
-                    if (!subContVol[vert].inner) {
-                        switch (vert)
-                            {
-                            case 0:
-                                if (numVertices == 4) {
-                                    subContVol[vert].local[0] = 0.25;
-                                    subContVol[vert].local[1] = 0.25;
-                                }
-                                else {
-                                    subContVol[vert].local[0] = 1.0/6.0;
-                                    subContVol[vert].local[1] = 1.0/6.0;
-                                }
-                                break;
-                            case 1:
-                                if (numVertices == 4) {
-                                    subContVol[vert].local[0] = 0.75;
-                                    subContVol[vert].local[1] = 0.25;
-                                }
-                                else {
-                                    subContVol[vert].local[0] = 4.0/6.0;
-                                    subContVol[vert].local[1] = 1.0/6.0;
-                                }
-                                break;
-                            case 2:
-                                if (numVertices == 4) {
-                                    subContVol[vert].local[0] = 0.25;
-                                    subContVol[vert].local[1] = 0.75;
-                                }
-                                else {
-                                    subContVol[vert].local[0] = 1.0/6.0;
-                                    subContVol[vert].local[1] = 4.0/6.0;
-                                }
-                                break;
-                            case 3:
-                                subContVol[vert].local[0] = 0.75;
-                                subContVol[vert].local[1] = 0.75;
-                                break;
-                            }
+            {
+                if (!subContVol[vert].inner) {
+                    switch (vert)
+                    {
+                    case 0:
+                        if (numVertices == 4) {
+                            subContVol[vert].local[0] = 0.25;
+                            subContVol[vert].local[1] = 0.25;
+                        }
+                        else {
+                            subContVol[vert].local[0] = 1.0/6.0;
+                            subContVol[vert].local[1] = 1.0/6.0;
+                        }
+                        break;
+                    case 1:
+                        if (numVertices == 4) {
+                            subContVol[vert].local[0] = 0.75;
+                            subContVol[vert].local[1] = 0.25;
+                        }
+                        else {
+                            subContVol[vert].local[0] = 4.0/6.0;
+                            subContVol[vert].local[1] = 1.0/6.0;
+                        }
+                        break;
+                    case 2:
+                        if (numVertices == 4) {
+                            subContVol[vert].local[0] = 0.25;
+                            subContVol[vert].local[1] = 0.75;
+                        }
+                        else {
+                            subContVol[vert].local[0] = 1.0/6.0;
+                            subContVol[vert].local[1] = 4.0/6.0;
+                        }
+                        break;
+                    case 3:
+                        subContVol[vert].local[0] = 0.75;
+                        subContVol[vert].local[1] = 0.75;
+                        break;
                     }
-
-                    subContVol[vert].global = geometry.global(subContVol[vert].local);
-
-                    FieldMatrix<Scalar,dim,dim> jacInvT = geometry.jacobianInverseTransposed(subContVol[vert].local);
-
-                    FV grad(0),temp;
-                    for (int l = 0; l < dim; l++)
-                        temp[l] = sfs[vert].evaluateDerivative(0, l, subContVol[vert].local);
-                    jacInvT.umv(temp, grad);
-                    subContVol[vert].grad = grad;
-                    subContVol[vert].shapeValue = sfs[vert].evaluateFunction(0, subContVol[vert].local);
                 }
+
+                subContVol[vert].global = geometry.global(subContVol[vert].local);
+
+                FieldMatrix<Scalar,dim,dim> jacInvT = geometry.jacobianInverseTransposed(subContVol[vert].local);
+
+                FV grad(0),temp;
+                for (int l = 0; l < dim; l++)
+                    temp[l] = sfs[vert].evaluateDerivative(0, l, subContVol[vert].local);
+                jacInvT.umv(temp, grad);
+                subContVol[vert].grad = grad;
+                subContVol[vert].shapeValue = sfs[vert].evaluateFunction(0, subContVol[vert].local);
+            }
 
     }
 

@@ -210,29 +210,29 @@ public:
 
         int numRetries = 0;
         while (true)
-            {
-                bool converged = solver.execute(this->asImp_(),
-                                                controller);
-                nextDt = controller.suggestTimeStepSize(dt);
-                if (converged) {
-                    std::cout << boost::format("Newton solver converged for rank %d\n")
-                        %grid().comm().rank();
-                    break;
-                }
-
-                ++numRetries;
-                if (numRetries > 10)
-                    DUNE_THROW(Dune::MathError,
-                               "Newton solver didn't converge after 10 timestep divisions. dt=" << dt);
-
-                problem_.setTimeStepSize(nextDt);
-                dt = nextDt;
-
-                asImp_().updateFailedTry();
-
-                std::cout << boost::format("Newton didn't converge for rank %d. Retrying with timestep of %f\n")
-                    %grid().comm().rank()%dt;
+        {
+            bool converged = solver.execute(this->asImp_(),
+                                            controller);
+            nextDt = controller.suggestTimeStepSize(dt);
+            if (converged) {
+                std::cout << boost::format("Newton solver converged for rank %d\n")
+                    %grid().comm().rank();
+                break;
             }
+
+            ++numRetries;
+            if (numRetries > 10)
+                DUNE_THROW(Dune::MathError,
+                           "Newton solver didn't converge after 10 timestep divisions. dt=" << dt);
+
+            problem_.setTimeStepSize(nextDt);
+            dt = nextDt;
+
+            asImp_().updateFailedTry();
+
+            std::cout << boost::format("Newton didn't converge for rank %d. Retrying with timestep of %f\n")
+                %grid().comm().rank()%dt;
+        }
 
         asImp_().updateSuccessful();
     }
@@ -287,35 +287,35 @@ public:
         ElementIterator        it     = problem_.elementBegin();
         const ElementIterator &eendit = problem_.elementEnd();
         for (; it != eendit; ++it)
+        {
+            // tell the local jacobian which element it should
+            // consider and evaluate the local residual for the
+            // element. in order to do this we first have to
+            // evaluate the element's local solutions for the
+            // current and the last timestep.
+            const Element& element = *it;
+            const int numVertices = element.template count<dim>();
+            LocalFunction localResidual(numVertices);
+            LocalFunction localU(numVertices);
+            LocalFunction localOldU(numVertices);
+
+            localJacobian_.setCurrentElement(element);
+            localJacobian_.restrictToElement(localU, currentSolution());
+            localJacobian_.restrictToElement(localOldU, previousSolution());
+            localJacobian_.setParams(element, localU, localOldU);
+            localJacobian_.evalLocalResidual(localResidual);
+
+            // loop over the element's vertices, map them to the
+            // corresponding grid's vert ids and add the
+            // element's local residual at a vert the global
+            // residual at this vert.
+            int n = element.template count<dim>();
+            for(int localId=0; localId < n; localId++)
             {
-                // tell the local jacobian which element it should
-                // consider and evaluate the local residual for the
-                // element. in order to do this we first have to
-                // evaluate the element's local solutions for the
-                // current and the last timestep.
-                const Element& element = *it;
-                const int numVertices = element.template count<dim>();
-                LocalFunction localResidual(numVertices);
-                LocalFunction localU(numVertices);
-                LocalFunction localOldU(numVertices);
-
-                localJacobian_.setCurrentElement(element);
-                localJacobian_.restrictToElement(localU, currentSolution());
-                localJacobian_.restrictToElement(localOldU, previousSolution());
-                localJacobian_.setParams(element, localU, localOldU);
-                localJacobian_.evalLocalResidual(localResidual);
-
-                // loop over the element's vertices, map them to the
-                // corresponding grid's vert ids and add the
-                // element's local residual at a vert the global
-                // residual at this vert.
-                int n = element.template count<dim>();
-                for(int localId=0; localId < n; localId++)
-                    {
-                        int globalId = problem_.vertexIdx(element, localId);
-                        (*globResidual)[globalId] += localResidual[localId];
-                    }
+                int globalId = problem_.vertexIdx(element, localId);
+                (*globResidual)[globalId] += localResidual[localId];
             }
+        }
     }
 
 protected:
@@ -336,10 +336,10 @@ protected:
         ElementIterator it            = problem_.elementBegin();
         const ElementIterator &eendit = problem_.elementEnd();
         for (; it != eendit; ++it)
-            {
-                // deal with the current element
-                applyInitialSolutionElement_(u, *it);
-            }
+        {
+            // deal with the current element
+            applyInitialSolutionElement_(u, *it);
+        }
     };
 
     // apply the initial solition for a single element
@@ -355,20 +355,20 @@ protected:
         for (int scvIdx = 0;
              scvIdx < numScv;
              scvIdx++)
-            {
-                int globalIdx = this->problem_.vertexIdx(element,
-                                                         scvIdx);
+        {
+            int globalIdx = this->problem_.vertexIdx(element,
+                                                     scvIdx);
 
-                const FVElementGeometry &fvElemGeom
-                    = localJacobian_.curFvElementGeometry();
-                // use the problem for actually doing the
-                // dirty work of nailing down the initial
-                // solution.
-                this->problem_.initial((*u)[globalIdx],
-                                       element,
-                                       fvElemGeom,
-                                       scvIdx);
-            }
+            const FVElementGeometry &fvElemGeom
+                = localJacobian_.curFvElementGeometry();
+            // use the problem for actually doing the
+            // dirty work of nailing down the initial
+            // solution.
+            this->problem_.initial((*u)[globalIdx],
+                                   element,
+                                   fvElemGeom,
+                                   scvIdx);
+        }
     }
 
 
@@ -380,18 +380,18 @@ protected:
         ElementIterator elementIt           = problem_.elementBegin();
         const ElementIterator &elementEndIt = problem_.elementEnd();
         for (; elementIt != elementEndIt; ++elementIt)
-            {
-                // ignore elements which are not on the boundary of
-                // the domain
-                if (!elementIt->hasBoundaryIntersections())
-                    continue;
+        {
+            // ignore elements which are not on the boundary of
+            // the domain
+            if (!elementIt->hasBoundaryIntersections())
+                continue;
 
-                // evaluate the element's boundary locally
-                localJacobian_.updateBoundaryTypes(*elementIt);
+            // evaluate the element's boundary locally
+            localJacobian_.updateBoundaryTypes(*elementIt);
 
-                // apply dirichlet boundary for the current element
-                applyDirichletElement_(u, *elementIt);
-            }
+            // apply dirichlet boundary for the current element
+            applyDirichletElement_(u, *elementIt);
+        }
     };
 
     // apply dirichlet boundaries for a single element
@@ -417,11 +417,11 @@ protected:
             for (int vertInFace = 0;
                  vertInFace < numVerticesOfFace;
                  vertInFace++)
-                {
-                    // apply dirichlet boundaries for the current
-                    // sub-control volume face
-                    applyDirichletSCVF_(u, element, refElem, isIt, vertInFace);
-                }
+            {
+                // apply dirichlet boundaries for the current
+                // sub-control volume face
+                applyDirichletSCVF_(u, element, refElem, isIt, vertInFace);
+            }
         }
     }
 
@@ -452,33 +452,33 @@ protected:
         SolutionVector dirichletVal;
         bool dirichletEvaluated = false;
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+        {
+            // ignore non-dirichlet boundary conditions
+            if (localJacobian_.bc(elemVertIdx)[eqIdx] != BoundaryConditions::dirichlet)
+                continue;
+
+            // make sure to evaluate the dirichlet boundary
+            // conditions exactly once (and only if the boundary
+            // type is actually dirichlet).
+            if (!dirichletEvaluated)
             {
-                // ignore non-dirichlet boundary conditions
-                if (localJacobian_.bc(elemVertIdx)[eqIdx] != BoundaryConditions::dirichlet)
-                    continue;
-
-                // make sure to evaluate the dirichlet boundary
-                // conditions exactly once (and only if the boundary
-                // type is actually dirichlet).
-                if (!dirichletEvaluated)
-                    {
-                        dirichletEvaluated = true;
-                        problem_.dirichlet(dirichletVal,
-                                           element,
-                                           fvElemGeom,
-                                           isIt,
-                                           elemVertIdx,
-                                           boundaryFaceIdx);
-                    }
-
-                // copy the dirichlet value for the current equation
-                // to the global index.
-                //
-                // TODO: we should use the sum weighted by the
-                //       sub-control volume face's area instead of
-                //       just overwriting the previous values...
-                (*u)[globalVertexIdx][eqIdx] = dirichletVal[eqIdx];
+                dirichletEvaluated = true;
+                problem_.dirichlet(dirichletVal,
+                                   element,
+                                   fvElemGeom,
+                                   isIt,
+                                   elemVertIdx,
+                                   boundaryFaceIdx);
             }
+
+            // copy the dirichlet value for the current equation
+            // to the global index.
+            //
+            // TODO: we should use the sum weighted by the
+            //       sub-control volume face's area instead of
+            //       just overwriting the previous values...
+            (*u)[globalVertexIdx][eqIdx] = dirichletVal[eqIdx];
+        }
     }
 
     Implementation &asImp_()

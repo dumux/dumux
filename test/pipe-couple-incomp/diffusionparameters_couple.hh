@@ -59,13 +59,13 @@ public:
     {
         int globalId = vertexMapper.template map<n>(e, node);
         for (unsigned k = 0; k < vertexVectorOnLine.size(); k++)
+        {
+            if (globalId == vertexVectorOnLine[k].globalId)
             {
-                if (globalId == vertexVectorOnLine[k].globalId)
-                    {
-                        int pipeId = ((mapGlobalIDtoPipeID).find(globalId))->second;
-                        return alphaEx * pipePressure[pipeId];
-                    }
+                int pipeId = ((mapGlobalIDtoPipeID).find(globalId))->second;
+                return alphaEx * pipePressure[pipeId];
             }
+        }
 
         return 0;
     }

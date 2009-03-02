@@ -68,111 +68,111 @@ public:
         // loop 1 over all elements of the Stokes grid to set the rowsizes of the coupling matrices
         StokesIterator endIt = (this->stokesGrid_).template leafend<0>();
         for (StokesIterator stokesIt = (this->stokesGrid_).template leafbegin<0>(); stokesIt != endIt; ++stokesIt)
+        {
+            GeometryType gt = stokesIt->geometry().type();
+            const typename ReferenceElementContainer<double,dim>::value_type& referenceElement = ReferenceElements<double, dim>::general(gt);
+
+            StokesIntersectionIterator endIsIt = stokesIt->ileafend();
+            for (StokesIntersectionIterator stokesIsIt = stokesIt->ileafbegin(); stokesIsIt != endIsIt; ++ stokesIsIt)
             {
-                GeometryType gt = stokesIt->geometry().type();
-                const typename ReferenceElementContainer<double,dim>::value_type& referenceElement = ReferenceElements<double, dim>::general(gt);
+                if (stokesIsIt->neighbor())
+                    continue; // only work on border entities
 
-                StokesIntersectionIterator endIsIt = stokesIt->ileafend();
-                for (StokesIntersectionIterator stokesIsIt = stokesIt->ileafbegin(); stokesIsIt != endIsIt; ++ stokesIsIt)
-                    {
-                        if (stokesIsIt->neighbor())
-                            continue; // only work on border entities
+                // In the following, it is determined whether the intersection really is on the interface.
+                // Every node of the corresponding face is checked whether it also belongs to the Darcy grid.
+                int faceIdx = stokesIsIt->numberInSelf();
+                int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
+                int numVerticesInDarcyGrid = 0;
+                int darcyIds[numVerticesOfFace];
+                for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++)
+                {
+                    int nodeInElement = referenceElement.subEntity(faceIdx, 1, nodeInFace, dim);
 
-                        // In the following, it is determined whether the intersection really is on the interface.
-                        // Every node of the corresponding face is checked whether it also belongs to the Darcy grid.
-                        int faceIdx = stokesIsIt->numberInSelf();
-                        int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
-                        int numVerticesInDarcyGrid = 0;
-                        int darcyIds[numVerticesOfFace];
-                        for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++)
-                            {
-                                int nodeInElement = referenceElement.subEntity(faceIdx, 1, nodeInFace, dim);
+                    // get the node pointer on the Stokes grid
+                    const StokesVPointer& stokesVPointer = (*stokesIt).template entity<dim>(nodeInElement);
 
-                                // get the node pointer on the Stokes grid
-                                const StokesVPointer& stokesVPointer = (*stokesIt).template entity<dim>(nodeInElement);
+                    // get the node pointer on the host grid
+                    const HostVPointer& hostVPointer = (this->stokesGrid_).template getHostEntity<dim>(*stokesVPointer);
 
-                                // get the node pointer on the host grid
-                                const HostVPointer& hostVPointer = (this->stokesGrid_).template getHostEntity<dim>(*stokesVPointer);
+                    // check if the node is also part of the darcy grid
+                    if (!((this->darcyGrid_).template contains<dim>(hostVPointer)))
+                        break; // otherwise this face is not at the interface
 
-                                // check if the node is also part of the darcy grid
-                                if (!((this->darcyGrid_).template contains<dim>(hostVPointer)))
-                                    break; // otherwise this face is not at the interface
+                    // get the index of the node with respect to the Darcy matrix
+                    darcyIds[numVerticesInDarcyGrid] = darcyVM_.map(*stokesVPointer);
 
-                                // get the index of the node with respect to the Darcy matrix
-                                darcyIds[numVerticesInDarcyGrid] = darcyVM_.map(*stokesVPointer);
+                    numVerticesInDarcyGrid++;
+                }
 
-                                numVerticesInDarcyGrid++;
-                            }
+                if (numVerticesInDarcyGrid < numVerticesOfFace) // then this face is not at the interface
+                    continue;
 
-                        if (numVerticesInDarcyGrid < numVerticesOfFace) // then this face is not at the interface
-                            continue;
+                // get the index of the element with respect to the Stokes matrix
+                int stokesId = stokesEM_.map(*stokesIt);
 
-                        // get the index of the element with respect to the Stokes matrix
-                        int stokesId = stokesEM_.map(*stokesIt);
+                // set rowsize for coupling Stokes <- Darcy
+                A_SD.setrowsize(stokesId, numVerticesOfFace);
 
-                        // set rowsize for coupling Stokes <- Darcy
-                        A_SD.setrowsize(stokesId, numVerticesOfFace);
-
-                        // set rowsize for coupling Darcy <- Stokes
-                        for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++)
-                            A_DS.incrementrowsize(darcyIds[nodeInFace]);
-                    }
-            } // end loop 1 over all elements of the Stokes grid
+                // set rowsize for coupling Darcy <- Stokes
+                for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++)
+                    A_DS.incrementrowsize(darcyIds[nodeInFace]);
+            }
+        } // end loop 1 over all elements of the Stokes grid
         A_SD.endrowsizes();
         A_DS.endrowsizes();
 
 
         // loop 2 over all elements of the Stokes grid to set the indices of the nonzero entries of the coupling matrices
         for (StokesIterator stokesIt = (this->stokesGrid_).template leafbegin<0>(); stokesIt != endIt; ++stokesIt)
+        {
+            GeometryType gt = stokesIt->geometry().type();
+            const typename ReferenceElementContainer<double,dim>::value_type& referenceElement = ReferenceElements<double, dim>::general(gt);
+
+            StokesIntersectionIterator endIsIt = stokesIt->ileafend();
+            for (StokesIntersectionIterator stokesIsIt = stokesIt->ileafbegin(); stokesIsIt != endIsIt; ++ stokesIsIt)
             {
-                GeometryType gt = stokesIt->geometry().type();
-                const typename ReferenceElementContainer<double,dim>::value_type& referenceElement = ReferenceElements<double, dim>::general(gt);
+                if (stokesIsIt->neighbor())
+                    continue; // only work on border entities
 
-                StokesIntersectionIterator endIsIt = stokesIt->ileafend();
-                for (StokesIntersectionIterator stokesIsIt = stokesIt->ileafbegin(); stokesIsIt != endIsIt; ++ stokesIsIt)
-                    {
-                        if (stokesIsIt->neighbor())
-                            continue; // only work on border entities
+                // In the following, it is determined whether the intersection really is on the interface.
+                // Every node of the corresponding face is checked whether it also belongs to the Darcy grid.
+                int faceIdx = stokesIsIt->numberInSelf();
+                int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
+                int numVerticesInDarcyGrid = 0;
+                int darcyIds[numVerticesOfFace];
+                for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++)
+                {
+                    int nodeInElement = referenceElement.subEntity(faceIdx, 1, nodeInFace, dim);
 
-                        // In the following, it is determined whether the intersection really is on the interface.
-                        // Every node of the corresponding face is checked whether it also belongs to the Darcy grid.
-                        int faceIdx = stokesIsIt->numberInSelf();
-                        int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
-                        int numVerticesInDarcyGrid = 0;
-                        int darcyIds[numVerticesOfFace];
-                        for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++)
-                            {
-                                int nodeInElement = referenceElement.subEntity(faceIdx, 1, nodeInFace, dim);
+                    // get the node pointer on the Stokes grid
+                    const StokesVPointer& stokesVPointer = (*stokesIt).template entity<dim>(nodeInElement);
 
-                                // get the node pointer on the Stokes grid
-                                const StokesVPointer& stokesVPointer = (*stokesIt).template entity<dim>(nodeInElement);
+                    // get the node pointer on the host grid
+                    const HostVPointer& hostVPointer = (this->stokesGrid_).template getHostEntity<dim>(*stokesVPointer);
 
-                                // get the node pointer on the host grid
-                                const HostVPointer& hostVPointer = (this->stokesGrid_).template getHostEntity<dim>(*stokesVPointer);
+                    // check if the node is also part of the darcy grid
+                    if (!((this->darcyGrid_).template contains<dim>(hostVPointer)))
+                        break; // otherwise this face is not at the interface
 
-                                // check if the node is also part of the darcy grid
-                                if (!((this->darcyGrid_).template contains<dim>(hostVPointer)))
-                                    break; // otherwise this face is not at the interface
+                    // get the index of the node with respect to the Darcy matrix
+                    darcyIds[numVerticesInDarcyGrid] = darcyVM_.map(*stokesVPointer);
 
-                                // get the index of the node with respect to the Darcy matrix
-                                darcyIds[numVerticesInDarcyGrid] = darcyVM_.map(*stokesVPointer);
+                    numVerticesInDarcyGrid++;
+                }
 
-                                numVerticesInDarcyGrid++;
-                            }
+                if (numVerticesInDarcyGrid < numVerticesOfFace) // then this face is not at the interface
+                    continue;
 
-                        if (numVerticesInDarcyGrid < numVerticesOfFace) // then this face is not at the interface
-                            continue;
+                // get the index of the element with respect to the Stokes matrix
+                int stokesId = stokesEM_.map(*stokesIt);
 
-                        // get the index of the element with respect to the Stokes matrix
-                        int stokesId = stokesEM_.map(*stokesIt);
-
-                        // set indices of nonzero entries
-                        for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++) {
-                            A_SD.addindex(stokesId, darcyIds[nodeInFace]);
-                            A_DS.addindex(darcyIds[nodeInFace], stokesId);
-                        }
-                    }
-            } // end loop 2 over all elements of the Stokes grid
+                // set indices of nonzero entries
+                for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++) {
+                    A_SD.addindex(stokesId, darcyIds[nodeInFace]);
+                    A_DS.addindex(darcyIds[nodeInFace], stokesId);
+                }
+            }
+        } // end loop 2 over all elements of the Stokes grid
         A_SD.endindices();
         A_DS.endindices();
         A_SD = 0;
@@ -180,112 +180,112 @@ public:
 
         // loop 3 over all elements of the Stokes grid to actually fill the coupling matrices
         for (StokesIterator stokesIt = (this->stokesGrid_).template leafbegin<0>(); stokesIt != endIt; ++stokesIt)
+        {
+            GeometryType gt = stokesIt->geometry().type();
+            const typename ReferenceElementContainer<double,dim>::value_type& referenceElement = ReferenceElements<double, dim>::general(gt);
+
+            FVElementGeometry<StokesGrid> fvGeom;
+            fvGeom.update(*stokesIt);
+
+            StokesIntersectionIterator endIsIt = stokesIt->ileafend();
+            for (StokesIntersectionIterator stokesIsIt = stokesIt->ileafbegin(); stokesIsIt != endIsIt; ++ stokesIsIt)
             {
-                GeometryType gt = stokesIt->geometry().type();
-                const typename ReferenceElementContainer<double,dim>::value_type& referenceElement = ReferenceElements<double, dim>::general(gt);
+                if (stokesIsIt->neighbor())
+                    continue; // only work on border entities
 
-                FVElementGeometry<StokesGrid> fvGeom;
-                fvGeom.update(*stokesIt);
+                // In the following, it is determined whether the intersection really is on the interface.
+                // Every node of the corresponding face is checked whether it also belongs to the Darcy grid.
+                int faceIdx = stokesIsIt->numberInSelf();
+                int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
+                int numVerticesInDarcyGrid = 0;
+                int darcyIds[numVerticesOfFace];
+                int nodeInElement[numVerticesOfFace];
+                for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++) {
+                    int nInEl = referenceElement.subEntity(faceIdx, 1, nodeInFace, dim);
 
-                StokesIntersectionIterator endIsIt = stokesIt->ileafend();
-                for (StokesIntersectionIterator stokesIsIt = stokesIt->ileafbegin(); stokesIsIt != endIsIt; ++ stokesIsIt)
+                    // get the node pointer on the Stokes grid
+                    const StokesVPointer& stokesVPointer = (*stokesIt).template entity<dim>(nInEl);
+
+                    // get the node pointer on the host grid
+                    const HostVPointer& hostVPointer = (this->stokesGrid_).template getHostEntity<dim>(*stokesVPointer);
+
+                    // check if the node is also part of the darcy grid
+                    if (!((this->darcyGrid_).template contains<dim>(hostVPointer)))
+                        break; // otherwise this face is not at the interface
+
+                    // get the index of the node with respect to the Darcy matrix
+                    darcyIds[numVerticesInDarcyGrid] = darcyVM_.map(*stokesVPointer);
+
+                    // save the local index of the node inside the element
+                    nodeInElement[numVerticesInDarcyGrid] = nInEl;
+
+                    numVerticesInDarcyGrid++;
+                }
+
+                if (numVerticesInDarcyGrid < numVerticesOfFace) // then this face is not at the interface
+                    continue;
+
+                // get the index of the element with respect to the Stokes matrix
+                int stokesId = stokesEM_.map(*stokesIt);
+
+
+                // get the geometry type of the face
+                GeometryType geomTypeBoundary = stokesIsIt->intersectionSelfLocal().type();
+
+                // The coupling Stokes <- Darcy is realized in the FE way.
+                // The unknown Darcy pressure is the piecewise linear FE interpolant.
+                int qOrder = vOrder + 1;
+                ShapeFunctionSet velShapeFuncSet(vOrder);
+                for(unsigned int qNode = 0; qNode < QuadratureRules<double,dim-1>::rule(geomTypeBoundary,qOrder).size(); ++qNode)
+                {
+                    const FieldVector<double,dim-1>& qLocalDimM1 = QuadratureRules<double,dim-1>::rule(geomTypeBoundary,qOrder)[qNode].position();
+                    FieldVector<double,dim> qLocal = stokesIsIt->intersectionSelfLocal().global(qLocalDimM1);
+                    double qWeight = QuadratureRules<double,dim-1>::rule(geomTypeBoundary,qOrder)[qNode].weight();
+                    double qDetJac = stokesIsIt->intersectionGlobal().integrationElement(qLocalDimM1);
+                    FieldVector<double,dim> normal = stokesIsIt->unitOuterNormal(qLocalDimM1);
+                    const typename LagrangeShapeFunctionSetContainer<double,double,dim>::value_type&
+                        pressShapeFuncSet = LagrangeShapeFunctions<double,double,dim>::general(gt,1);
+
+                    for(int comp = 0; comp < dim; ++comp) // loop over the velocity components
                     {
-                        if (stokesIsIt->neighbor())
-                            continue; // only work on border entities
-
-                        // In the following, it is determined whether the intersection really is on the interface.
-                        // Every node of the corresponding face is checked whether it also belongs to the Darcy grid.
-                        int faceIdx = stokesIsIt->numberInSelf();
-                        int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
-                        int numVerticesInDarcyGrid = 0;
-                        int darcyIds[numVerticesOfFace];
-                        int nodeInElement[numVerticesOfFace];
-                        for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++) {
-                            int nInEl = referenceElement.subEntity(faceIdx, 1, nodeInFace, dim);
-
-                            // get the node pointer on the Stokes grid
-                            const StokesVPointer& stokesVPointer = (*stokesIt).template entity<dim>(nInEl);
-
-                            // get the node pointer on the host grid
-                            const HostVPointer& hostVPointer = (this->stokesGrid_).template getHostEntity<dim>(*stokesVPointer);
-
-                            // check if the node is also part of the darcy grid
-                            if (!((this->darcyGrid_).template contains<dim>(hostVPointer)))
-                                break; // otherwise this face is not at the interface
-
-                            // get the index of the node with respect to the Darcy matrix
-                            darcyIds[numVerticesInDarcyGrid] = darcyVM_.map(*stokesVPointer);
-
-                            // save the local index of the node inside the element
-                            nodeInElement[numVerticesInDarcyGrid] = nInEl;
-
-                            numVerticesInDarcyGrid++;
+                        for (int i = 0; i < velShapeFuncSet.size(); ++i) // loop over the scalar velocity basis functions
+                        {
+                            int ii = comp*velShapeFuncSet.size() + i;
+                            double velShapeValue = velShapeFuncSet[i].evaluateFunction(0,qLocal);
+                            for (int j = 0; j < numVerticesOfFace; ++j) // loop over interface nodes
+                            {
+                                int jInElement = nodeInElement[j];
+                                double pressShapeValue = pressShapeFuncSet[jInElement].evaluateFunction(0,qLocal);
+                                double entrySD = (pressShapeValue*(velShapeValue*normal[comp]))* qDetJac * qWeight;
+                                int jInMatrix = darcyIds[j];
+                                (A_SD[stokesId][jInMatrix])[ii] -= entrySD;
+                            }
                         }
-
-                        if (numVerticesInDarcyGrid < numVerticesOfFace) // then this face is not at the interface
-                            continue;
-
-                        // get the index of the element with respect to the Stokes matrix
-                        int stokesId = stokesEM_.map(*stokesIt);
-
-
-                        // get the geometry type of the face
-                        GeometryType geomTypeBoundary = stokesIsIt->intersectionSelfLocal().type();
-
-                        // The coupling Stokes <- Darcy is realized in the FE way.
-                        // The unknown Darcy pressure is the piecewise linear FE interpolant.
-                        int qOrder = vOrder + 1;
-                        ShapeFunctionSet velShapeFuncSet(vOrder);
-                        for(unsigned int qNode = 0; qNode < QuadratureRules<double,dim-1>::rule(geomTypeBoundary,qOrder).size(); ++qNode)
-                            {
-                                const FieldVector<double,dim-1>& qLocalDimM1 = QuadratureRules<double,dim-1>::rule(geomTypeBoundary,qOrder)[qNode].position();
-                                FieldVector<double,dim> qLocal = stokesIsIt->intersectionSelfLocal().global(qLocalDimM1);
-                                double qWeight = QuadratureRules<double,dim-1>::rule(geomTypeBoundary,qOrder)[qNode].weight();
-                                double qDetJac = stokesIsIt->intersectionGlobal().integrationElement(qLocalDimM1);
-                                FieldVector<double,dim> normal = stokesIsIt->unitOuterNormal(qLocalDimM1);
-                                const typename LagrangeShapeFunctionSetContainer<double,double,dim>::value_type&
-                                    pressShapeFuncSet = LagrangeShapeFunctions<double,double,dim>::general(gt,1);
-
-                                for(int comp = 0; comp < dim; ++comp) // loop over the velocity components
-                                    {
-                                        for (int i = 0; i < velShapeFuncSet.size(); ++i) // loop over the scalar velocity basis functions
-                                            {
-                                                int ii = comp*velShapeFuncSet.size() + i;
-                                                double velShapeValue = velShapeFuncSet[i].evaluateFunction(0,qLocal);
-                                                for (int j = 0; j < numVerticesOfFace; ++j) // loop over interface nodes
-                                                    {
-                                                        int jInElement = nodeInElement[j];
-                                                        double pressShapeValue = pressShapeFuncSet[jInElement].evaluateFunction(0,qLocal);
-                                                        double entrySD = (pressShapeValue*(velShapeValue*normal[comp]))* qDetJac * qWeight;
-                                                        int jInMatrix = darcyIds[j];
-                                                        (A_SD[stokesId][jInMatrix])[ii] -= entrySD;
-                                                    }
-                                            }
-                                    }
-                            }
-
-                        // The coupling Darcy <- Stokes is realized in the FV way.
-                        // The unknown Stokes normal velocity is evaluated in the center of the subcontrolvolume face.
-                        const FieldVector<double,dim-1>& faceLocalDimM1 = ReferenceElements<double,dim-1>::general(geomTypeBoundary).position(0,0);
-                        FieldVector<double,dim> normal = stokesIsIt->unitOuterNormal(faceLocalDimM1);
-                        for(int comp = 0; comp < dim; ++comp) // loop over the velocity components
-                            {
-                                for (int i = 0; i < velShapeFuncSet.size(); ++i) // loop over the scalar velocity basis functions
-                                    {
-                                        int ii = comp*velShapeFuncSet.size() + i;
-                                        for (int j = 0; j < numVerticesOfFace; ++j) // loop over interface nodes
-                                            {
-                                                int bfIdx = fvGeom.boundaryFaceIndex(faceIdx, j);
-                                                FieldVector<double,dim> qLocal = fvGeom.boundaryFace[bfIdx].ipLocal;
-                                                double velShapeValue = velShapeFuncSet[i].evaluateFunction(0,qLocal);
-                                                double entryDS = (velShapeValue*normal[comp])*fvGeom.boundaryFace[bfIdx].area;
-                                                int jInMatrix = darcyIds[j];
-                                                (A_DS[jInMatrix][stokesId])[0][ii] += entryDS;
-                                            }
-                                    }
-                            }
                     }
-            } // end loop 3 over all elements of the Stokes grid
+                }
+
+                // The coupling Darcy <- Stokes is realized in the FV way.
+                // The unknown Stokes normal velocity is evaluated in the center of the subcontrolvolume face.
+                const FieldVector<double,dim-1>& faceLocalDimM1 = ReferenceElements<double,dim-1>::general(geomTypeBoundary).position(0,0);
+                FieldVector<double,dim> normal = stokesIsIt->unitOuterNormal(faceLocalDimM1);
+                for(int comp = 0; comp < dim; ++comp) // loop over the velocity components
+                {
+                    for (int i = 0; i < velShapeFuncSet.size(); ++i) // loop over the scalar velocity basis functions
+                    {
+                        int ii = comp*velShapeFuncSet.size() + i;
+                        for (int j = 0; j < numVerticesOfFace; ++j) // loop over interface nodes
+                        {
+                            int bfIdx = fvGeom.boundaryFaceIndex(faceIdx, j);
+                            FieldVector<double,dim> qLocal = fvGeom.boundaryFace[bfIdx].ipLocal;
+                            double velShapeValue = velShapeFuncSet[i].evaluateFunction(0,qLocal);
+                            double entryDS = (velShapeValue*normal[comp])*fvGeom.boundaryFace[bfIdx].area;
+                            int jInMatrix = darcyIds[j];
+                            (A_DS[jInMatrix][stokesId])[0][ii] += entryDS;
+                        }
+                    }
+                }
+            }
+        } // end loop 3 over all elements of the Stokes grid
     }
 
     virtual void solve()
@@ -309,18 +309,18 @@ public:
         DarcyIntersectionIterator dummyIS2(IntersectionIteratorGetter<DarcyGrid,LeafTag>::begin(*dummyIT2));
         DarcyVIterator endItV2 = (this->darcyGrid_).template leafend<dim>();
         for (DarcyVIterator it = (this->darcyGrid_).template leafbegin<dim>(); it != endItV2; ++it)
-            {
-                FieldVector<double,dim> globalCoord = (*it).geometry().corner(0);
-                BoundaryConditions::Flags bctype = (this->secondModel_).problem.bctype(globalCoord, *dummyIT2, dummyIS2, globalCoord);
-                int darcyId = darcyVM_.map(*it);
-                this->u[rowsInBlock1*nOfBlockRows1 + darcyId] = -this->u[rowsInBlock1*nOfBlockRows1 + darcyId];
+        {
+            FieldVector<double,dim> globalCoord = (*it).geometry().corner(0);
+            BoundaryConditions::Flags bctype = (this->secondModel_).problem.bctype(globalCoord, *dummyIT2, dummyIS2, globalCoord);
+            int darcyId = darcyVM_.map(*it);
+            this->u[rowsInBlock1*nOfBlockRows1 + darcyId] = -this->u[rowsInBlock1*nOfBlockRows1 + darcyId];
 
-                if (bctype == BoundaryConditions::dirichlet)
-                    {
-                        double dirichletBC = (this->secondModel_).problem.g(globalCoord, *dummyIT2, dummyIS2, globalCoord);
-                        this->u[rowsInBlock1*nOfBlockRows1 + darcyId] += dirichletBC;
-                    }
+            if (bctype == BoundaryConditions::dirichlet)
+            {
+                double dirichletBC = (this->secondModel_).problem.g(globalCoord, *dummyIT2, dummyIS2, globalCoord);
+                this->u[rowsInBlock1*nOfBlockRows1 + darcyId] += dirichletBC;
             }
+        }
 
         // transfer to local solution vectors
         const typename BaseType::FirstMatrixType::block_type::size_type colsInBlock1 = BaseType::FirstMatrixType::block_type::cols;

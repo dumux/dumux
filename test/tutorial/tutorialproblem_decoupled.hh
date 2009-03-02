@@ -37,9 +37,9 @@ public:
                                                    const LocalPosition& localPos) const
     {
         if (globalPos[0] < eps_)
-            {
-                return BoundaryConditions::dirichlet;
-            }
+        {
+            return BoundaryConditions::dirichlet;
+        }
         // all other boundaries
         return BoundaryConditions::neumann;
     }
@@ -50,9 +50,9 @@ public:
                                          const LocalPosition& localPos) const
     {
         if (globalPos[0]> (Right_ - eps_) || globalPos[0] < eps_)
-            {
-                return Dune::BoundaryConditions::dirichlet;
-            }
+        {
+            return Dune::BoundaryConditions::dirichlet;
+        }
         // all other boundaries
         return Dune::BoundaryConditions::neumann;
     }
@@ -71,9 +71,9 @@ public:
                         const LocalPosition& localPos) const
     {
         if (globalPos[0] < eps_)
-            {
-                return 1;
-            }
+        {
+            return 1;
+        }
         // all other boundaries
         return 0;
     }
@@ -84,9 +84,9 @@ public:
                         const LocalPosition& localPos) const
     {
         if (globalPos[0]> Right_ - eps_)
-            {
-                return 3e-7;
-            }
+        {
+            return 3e-7;
+        }
         // all other boundaries
         return 0;
     }

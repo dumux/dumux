@@ -118,63 +118,63 @@ public:
 
         for (Iterator eIt = gridview.template begin<0>(); eIt != eendit; ++eIt) // loop over all entities
 
+        {
+
+            // get geometry type
+            Dune::GeometryType gt = eIt->geometry().type();
+
+            // get element
+            const Element& element = *eIt;
+
+            FVElementGeometry<Grid> fvGeom;
+            fvGeom.update(element);
+
+            for (int k = 0; k < fvGeom.numEdges; k++)
             {
+                int idx_i = fvGeom.subContVolFace[k].i;
 
-                // get geometry type
-                Dune::GeometryType gt = eIt->geometry().type();
+                int idx_j = fvGeom.subContVolFace[k].j;
 
-                // get element
-                const Element& element = *eIt;
+                int flag_i, flag_j;
 
-                FVElementGeometry<Grid> fvGeom;
-                fvGeom.update(element);
+                // 2D case: give y or x value of the line over which flux is to be
+                //            calculated.
+                // up to now only flux calculation to lines or planes (3D) parallel to
+                // x, y and z axis possible
 
-                for (int k = 0; k < fvGeom.numEdges; k++)
-                    {
-                        int idx_i = fvGeom.subContVolFace[k].i;
+                // Flux across plane with z = 80 numEq
+                if(fvGeom.subContVol[idx_i].global[2] < 80.)
+                    flag_i = 1;
+                else flag_i = -1;
 
-                        int idx_j = fvGeom.subContVolFace[k].j;
+                if(fvGeom.subContVol[idx_j].global[2] < 80.)
+                    flag_j = 1;
+                else flag_j = -1;
 
-                        int flag_i, flag_j;
+                if(flag_i == flag_j)
+                {
+                    sign = 0;
+                }
+                else
+                {
+                    if(flag_i> 0)
+                        sign = -1;
+                    else sign = 1;}
 
-                        // 2D case: give y or x value of the line over which flux is to be
-                        //            calculated.
-                        // up to now only flux calculation to lines or planes (3D) parallel to
-                        // x, y and z axis possible
+                // get variables
 
-                        // Flux across plane with z = 80 numEq
-                        if(fvGeom.subContVol[idx_i].global[2] < 80.)
-                            flag_i = 1;
-                        else flag_i = -1;
+                if(flag_i != flag_j)
+                {
+                    this->localJacobian().setLocalSolution(element);
+                    this->localJacobian().computeElementData(element);
+                    this->localJacobian().updateVariableData(element, this->localJacobian().u);
 
-                        if(fvGeom.subContVol[idx_j].global[2] < 80.)
-                            flag_j = 1;
-                        else flag_j = -1;
-
-                        if(flag_i == flag_j)
-                            {
-                                sign = 0;
-                            }
-                        else
-                            {
-                                if(flag_i> 0)
-                                    sign = -1;
-                                else sign = 1;}
-
-                        // get variables
-
-                        if(flag_i != flag_j)
-                            {
-                                this->localJacobian().setLocalSolution(element);
-                                this->localJacobian().computeElementData(element);
-                                this->localJacobian().updateVariableData(element, this->localJacobian().u);
-
-                                flux = this->localJacobian().computeA(element, this->localJacobian().u, k);
-                                Flux += sign*flux[1];
-                            }
-                    }
-
+                    flux = this->localJacobian().computeA(element, this->localJacobian().u, k);
+                    Flux += sign*flux[1];
+                }
             }
+
+        }
         return Flux; // Co2 flux
     }
 
@@ -204,61 +204,61 @@ public:
         Iterator eendit = gridview.template end<0>();
         for (Iterator eIt = gridview.template begin<0>(); eIt
                  != eendit; ++eIt)
+        {
+            // get geometry type
+            Dune::GeometryType gt = eIt->geometry().type();
+
+            // get element
+            const Element& element = *eIt;
+
+            FVElementGeometry<Grid> fvGeom;
+            fvGeom.update(element);
+
+            const typename Dune::LagrangeShapeFunctionSetContainer<CoordScalar,Scalar,dim>::value_type
+                &sfs=Dune::LagrangeShapeFunctions<CoordScalar, Scalar, dim>::general(gt,
+                                                                                     1);
+            int size = sfs.size();
+
+            for (int idx = 0; idx < size; idx++)
             {
-                // get geometry type
-                Dune::GeometryType gt = eIt->geometry().type();
+                // get element center in reference element
+                const Dune::FieldVector<CoordScalar,dim>&localPos = sfs[idx].position();
 
-                // get element
-                const Element& element = *eIt;
+                // get globalPos coordinate of element center
+                Dune::FieldVector<CoordScalar,dimworld> globalPos = eIt->geometry().global(localPos);
 
-                FVElementGeometry<Grid> fvGeom;
-                fvGeom.update(element);
+                int globalIdx = vertexmapper.template map<dim>(element,
+                                                               sfs[idx].entity());
 
-                const typename Dune::LagrangeShapeFunctionSetContainer<CoordScalar,Scalar,dim>::value_type
-                    &sfs=Dune::LagrangeShapeFunctions<CoordScalar, Scalar, dim>::general(gt,
-                                                                                         1);
-                int size = sfs.size();
+                int state;
+                state = this->localJacobian().sNDat[globalIdx].phaseState;
+                Scalar vol = fvGeom.subContVol[idx].volume;
+                Scalar poro = this->problem.soil().porosity(globalPos, element, localPos);
 
-                for (int idx = 0; idx < size; idx++)
-                    {
-                        // get element center in reference element
-                        const Dune::FieldVector<CoordScalar,dim>&localPos = sfs[idx].position();
+                Scalar rhoN = (*(this->localJacobian().outDensityN))[globalIdx];
+                Scalar rhoW = (*(this->localJacobian().outDensityW))[globalIdx];
+                Scalar satN = (*(this->localJacobian().outSaturationN))[globalIdx];
+                Scalar satW = (*(this->localJacobian().outSaturationW))[globalIdx];
+                Scalar xAW = (*(this->localJacobian().outMassFracAir))[globalIdx];
+                Scalar xWN = (*(this->localJacobian().outMassFracWater))[globalIdx];
+                Scalar xAN = 1 - xWN;
+                Scalar pW = (*(this->u))[globalIdx][0];
+                Scalar Te = (*(this->u))[globalIdx][2];
+                Scalar mass = vol * poro * (satN * rhoN * xAN + satW * rhoW * xAW);
 
-                        // get globalPos coordinate of element center
-                        Dune::FieldVector<CoordScalar,dimworld> globalPos = eIt->geometry().global(localPos);
+                minSat = std::min(minSat, satN);
+                maxSat = std::max(maxSat, satN);
+                minP = std::min(minP, pW);
+                maxP = std::max(maxP, pW);
+                minX = std::min(minX, xAW);
+                maxX = std::max(maxX, xAW);
+                minTe = std::min(minTe, Te);
+                maxTe = std::max(maxTe, Te);
 
-                        int globalIdx = vertexmapper.template map<dim>(element,
-                                                                       sfs[idx].entity());
-
-                        int state;
-                        state = this->localJacobian().sNDat[globalIdx].phaseState;
-                        Scalar vol = fvGeom.subContVol[idx].volume;
-                        Scalar poro = this->problem.soil().porosity(globalPos, element, localPos);
-
-                        Scalar rhoN = (*(this->localJacobian().outDensityN))[globalIdx];
-                        Scalar rhoW = (*(this->localJacobian().outDensityW))[globalIdx];
-                        Scalar satN = (*(this->localJacobian().outSaturationN))[globalIdx];
-                        Scalar satW = (*(this->localJacobian().outSaturationW))[globalIdx];
-                        Scalar xAW = (*(this->localJacobian().outMassFracAir))[globalIdx];
-                        Scalar xWN = (*(this->localJacobian().outMassFracWater))[globalIdx];
-                        Scalar xAN = 1 - xWN;
-                        Scalar pW = (*(this->u))[globalIdx][0];
-                        Scalar Te = (*(this->u))[globalIdx][2];
-                        Scalar mass = vol * poro * (satN * rhoN * xAN + satW * rhoW * xAW);
-
-                        minSat = std::min(minSat, satN);
-                        maxSat = std::max(maxSat, satN);
-                        minP = std::min(minP, pW);
-                        maxP = std::max(maxP, pW);
-                        minX = std::min(minX, xAW);
-                        maxX = std::max(maxX, xAW);
-                        minTe = std::min(minTe, Te);
-                        maxTe = std::max(maxTe, Te);
-
-                        totalMass += mass;
-                    }
-
+                totalMass += mass;
             }
+
+        }
 
         // print minimum and maximum values
         std::cout << "nonwetting phase saturation: min = "<< minSat
@@ -293,43 +293,43 @@ public:
         Iterator eendit = gridview.template end<0>();
         for (Iterator eIt = gridview.template begin<0>(); eIt
                  != eendit; ++eIt)
+        {
+            // get geometry type
+            Dune::GeometryType gt = eIt->geometry().type();
+
+            // get element
+            const Element& element = *eIt;
+            this->localJacobian().fvGeom.update(element);
+            int size = this->localJacobian().fvGeom.numVertices;
+            this->localJacobian().setLocalSolution(element);
+            this->localJacobian().computeElementData(element);
+            bool old = true;
+            this->localJacobian().updateVariableData(element, this->localJacobian().uold, old);
+            this->localJacobian().updateVariableData(element, this->localJacobian().u);
+            this->localJacobian().template localDefect<LeafTag>(element, this->localJacobian().u);
+
+            // begin loop over vertices
+            for (int idx=0; idx < size; idx++)
             {
-                // get geometry type
-                Dune::GeometryType gt = eIt->geometry().type();
-
-                // get element
-                const Element& element = *eIt;
-                this->localJacobian().fvGeom.update(element);
-                int size = this->localJacobian().fvGeom.numVertices;
-                this->localJacobian().setLocalSolution(element);
-                this->localJacobian().computeElementData(element);
-                bool old = true;
-                this->localJacobian().updateVariableData(element, this->localJacobian().uold, old);
-                this->localJacobian().updateVariableData(element, this->localJacobian().u);
-                this->localJacobian().template localDefect<LeafTag>(element, this->localJacobian().u);
-
-                // begin loop over vertices
-                for (int idx=0; idx < size; idx++)
-                    {
-                        int globalIdx = this->vertexmapper.template map<dim>(element,idx);
-                        for (int equationnumber = 0; equationnumber < numEq; equationnumber++)
-                            {
-                                if (this->localJacobian().bc(idx)[equationnumber] == BoundaryConditions::neumann)
-                                    (*defectGlobal)[globalIdx][equationnumber]
-                                        += this->localJacobian().def[idx][equationnumber];
-                                else
-                                    essential[globalIdx].assign(BoundaryConditions::dirichlet);
-                            }
-                    }
+                int globalIdx = this->vertexmapper.template map<dim>(element,idx);
+                for (int equationnumber = 0; equationnumber < numEq; equationnumber++)
+                {
+                    if (this->localJacobian().bc(idx)[equationnumber] == BoundaryConditions::neumann)
+                        (*defectGlobal)[globalIdx][equationnumber]
+                            += this->localJacobian().def[idx][equationnumber];
+                    else
+                        essential[globalIdx].assign(BoundaryConditions::dirichlet);
+                }
             }
+        }
 
         for (typename std::vector<BCBlockType>::size_type globalIdx=0; globalIdx
                  <essential.size(); globalIdx++)
             for (int equationnumber = 0; equationnumber < numEq; equationnumber++)
-                {
-                    if (essential[globalIdx][equationnumber] == BoundaryConditions::dirichlet)
-                        (*defectGlobal)[globalIdx][equationnumber] = 0;
-                }
+            {
+                if (essential[globalIdx][equationnumber] == BoundaryConditions::dirichlet)
+                    (*defectGlobal)[globalIdx][equationnumber] = 0;
+            }
     }
 
     virtual void vtkout(const char* name, int k)
@@ -350,14 +350,14 @@ public:
 
         Iterator endIt = _grid.leafView().template end<dim>();
         for (Iterator vIt = _grid.leafView().template begin<dim>(); vIt != endIt; ++vIt)
+        {
+            int globalIdx = vertexmapper.map(*vIt);
+            for (int eq = 0; eq < numEq; eq++)
             {
-                int globalIdx = vertexmapper.map(*vIt);
-                for (int eq = 0; eq < numEq; eq++)
-                    {
-                        data[globalIdx][eq]=(*(this->u))[globalIdx][eq];
-                    }
-                data[globalIdx][numEq]=this->localJacobian().sNDat[globalIdx].phaseState;
+                data[globalIdx][eq]=(*(this->u))[globalIdx][eq];
             }
+            data[globalIdx][numEq]=this->localJacobian().sNDat[globalIdx].phaseState;
+        }
         restartFileName = (boost::format("data-%05d")
                            %restartNum).str();
         exportToDGF(_grid.leafView(), data, (numEq+1), restartFileName, false);

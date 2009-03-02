@@ -109,10 +109,10 @@ public:
     {
         FieldVector<Scalar,numEq> values(0);
         if(globalPos[0] <= 1.e-2 && globalPos[1] <= 5.)
-            {
-                values[wComp] = 0.0;//-4.046e-5;
-                values[nComp] = -0.0002;
-            }
+        {
+            values[wComp] = 0.0;//-4.046e-5;
+            values[nComp] = -0.0002;
+        }
         return values;
     }
 

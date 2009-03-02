@@ -52,22 +52,22 @@ public:
         //define saturation range for analytic solution
         SatVec= 0;
         for (int i=1; i<pointnum; i++)
-            {
-                SatVec[i]=SatVec[i-1]+h;
-            }
+        {
+            SatVec[i]=SatVec[i-1]+h;
+        }
 
         //get fractional flow function vector
         for (int i=0; i<pointnum; i++)
-            {
-                fractionalW[i] = this->materialLaw.fractionalW(SatVec[i]);
-            }
+        {
+            fractionalW[i] = this->materialLaw.fractionalW(SatVec[i]);
+        }
 
         //get capillary pressure derivatives
         dpcdsw=0;
         for (int i=0; i<pointnum; i++)
-            {
-                dpcdsw[i] = this->materialLaw.dPdS(SatVec[i]);
-            }
+        {
+            dpcdsw[i] = this->materialLaw.dPdS(SatVec[i]);
+        }
 
         //set initial fW
         if (Sinit == 0)
@@ -79,20 +79,20 @@ public:
 
         //normalize fW
         for (int i=0; i<pointnum; i++)
-            {
-                fn[i]= R * (fractionalW[i] - finit)/ (1 - R * finit);
-            }
+        {
+            fn[i]= R * (fractionalW[i] - finit)/ (1 - R * finit);
+        }
 
         //diffusivity function
         for (int i=0; i<pointnum; i++)
-            {
-                D[i] = fractionalW[i]*this->materialLaw.mobN(1-SatVec[i])*(-dpcdsw[i])*K;
-            }
+        {
+            D[i] = fractionalW[i]*this->materialLaw.mobN(1-SatVec[i])*(-dpcdsw[i])*K;
+        }
 
         for (int i=0; i<pointnum; i++)
-            {
-                Gk[i] = D[i]/(1-fn[i]);
-            }
+        {
+            Gk[i] = D[i]/(1-fn[i]);
+        }
         Gk[0] = 0;
         //std::cout<<"Gk_ = "<<Gk_<<std::endl;
         return;
@@ -117,52 +117,52 @@ public:
         double Ii = 0;
 
         while (diff > tolanalytic)
+        {
+            k++;
+            //std::cout<<" k = "<<k<<std::endl;
+            if (k > 50000)
             {
-                k++;
-                //std::cout<<" k = "<<k<<std::endl;
-                if (k > 50000)
-                    {
-                        std::cout<<"Analytical solution: Too many iteratioins!"<<std::endl;
-                        break;
-                    }
-
-                Akm1=Ak;
-                I0=0;
-                for (int i=0; i<intervalnum; i++)
-                    {
-                        a[i] = 0.5 * h * Sinit *(Gk[i] + Gk[i+1])+ pow(h, 2) / 6* ((3* i + 1) * Gk[i]
-                                                                                   + (3 * i + 2) * Gk[i+1]);
-                        b[i] = 0.5 * h * (Gk[i] + Gk[i+1]);
-                        I0 += (a[i] - Sinit * b[i]);
-                    }
-                //std::cout<<" I0 = "<<I0<<std::endl;
-
-                Gk[0]=0;
-                for (int i=1; i<pointnum; i++)
-                    {
-                        Ii=0;
-                        for (int j = i; j<intervalnum; j++)
-                            Ii += (a[j] - SatVec[i] * b[j]);
-                        //Gk[i] = D[i] + Gk[i]*(fn[i] + Ii/I0); // method A
-                        Gk[i] = (D[i] + Gk[i]*fn[i])/(1 - Ii/I0); // method B
-                    }
-
-                Ak = pow((0.5*Porosity/pow((1 - finit), 2)*I0), 0.5);
-                diff=fabs(Ak - Akm1);
-                //std::cout<<"diff = "<<diff<<std::endl;
+                std::cout<<"Analytical solution: Too many iteratioins!"<<std::endl;
+                break;
             }
+
+            Akm1=Ak;
+            I0=0;
+            for (int i=0; i<intervalnum; i++)
+            {
+                a[i] = 0.5 * h * Sinit *(Gk[i] + Gk[i+1])+ pow(h, 2) / 6* ((3* i + 1) * Gk[i]
+                                                                           + (3 * i + 2) * Gk[i+1]);
+                b[i] = 0.5 * h * (Gk[i] + Gk[i+1]);
+                I0 += (a[i] - Sinit * b[i]);
+            }
+            //std::cout<<" I0 = "<<I0<<std::endl;
+
+            Gk[0]=0;
+            for (int i=1; i<pointnum; i++)
+            {
+                Ii=0;
+                for (int j = i; j<intervalnum; j++)
+                    Ii += (a[j] - SatVec[i] * b[j]);
+                //Gk[i] = D[i] + Gk[i]*(fn[i] + Ii/I0); // method A
+                Gk[i] = (D[i] + Gk[i]*fn[i])/(1 - Ii/I0); // method B
+            }
+
+            Ak = pow((0.5*Porosity/pow((1 - finit), 2)*I0), 0.5);
+            diff=fabs(Ak - Akm1);
+            //std::cout<<"diff = "<<diff<<std::endl;
+        }
         //  std::cout<<" b = "<<b<<std::endl;
         //  std::cout<<" Ak = "<<Ak<<std::endl;
         for (int i = 0; i<pointnum ; i++)
-            {
-                for (int j = i; j<intervalnum; j++)
-                    Fp[i] += b[j]/I0;
-            }
+        {
+            for (int j = i; j<intervalnum; j++)
+                Fp[i] += b[j]/I0;
+        }
         //std::cout<<" Fp = "<<Fp<<std::endl;
         for (int i = 0; i<pointnum ; i++)
-            {
-                xf[i]= 2 * Ak * (1 - finit * R)/ Porosity * Fp[i]* pow(time, 0.5);
-            }
+        {
+            xf[i]= 2 * Ak * (1 - finit * R)/ Porosity * Fp[i]* pow(time, 0.5);
+        }
         //std::cout<<" xf = "<<xf_<<std::endl;
 
         //iterate over vertices and get analytical saturation solution
@@ -171,35 +171,35 @@ public:
 
         Iterator eendit = gridview.template end<0>();
         for (Iterator it = gridview.template begin<0>(); it!= eendit; ++it)
+        {
+
+            //find index of current vertex
+            int index = this->mapper.map(*it);
+
+            //get global coordinate of vertex
+            Dune::FieldVector<DT,dimworld> global = it->geometry().corner(0);
+
+            //find x_f next to global coordinate of the vertex
+            int xnext = 0;
+            for (int i=intervalnum; i>0; i--)
             {
-
-                //find index of current vertex
-                int index = this->mapper.map(*it);
-
-                //get global coordinate of vertex
-                Dune::FieldVector<DT,dimworld> global = it->geometry().corner(0);
-
-                //find x_f next to global coordinate of the vertex
-                int xnext = 0;
-                for (int i=intervalnum; i>0; i--)
-                    {
-                        if (global[0]<xf[i])
-                            {
-                                xnext = i;
-                                break;
-                            }
-                    }
-                //account for the area not yet reached by the front
-
-                if (global[0] > xf[0])
-                    {
-                        this->uExInVertex(Sinit, index, 0);
-                        continue;
-                    }
-
-                this->uExInVertex(SatVec[xnext], index, 0);
-                //std::cout<<"Analytical = "<<SatVec_[xnext]<<std::endl;
+                if (global[0]<xf[i])
+                {
+                    xnext = i;
+                    break;
+                }
             }
+            //account for the area not yet reached by the front
+
+            if (global[0] > xf[0])
+            {
+                this->uExInVertex(Sinit, index, 0);
+                continue;
+            }
+
+            this->uExInVertex(SatVec[xnext], index, 0);
+            //std::cout<<"Analytical = "<<SatVec_[xnext]<<std::endl;
+        }
 
         //call function to calculate the saturation error
         this->calcSatError(this->variables.saturation);

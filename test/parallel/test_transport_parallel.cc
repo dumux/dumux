@@ -89,15 +89,15 @@ int main(int argc, char** argv)
 #else
 
 int main (int argc , char **argv) try
-    {
-        std::cout << "This test is not finished yet." << std::endl;
-        //  std::cout << "Please install MPI." << std::endl;
+ {
+     std::cout << "This test is not finished yet." << std::endl;
+     //  std::cout << "Please install MPI." << std::endl;
 
-        return 1;
-    }
+     return 1;
+ }
  catch (...)
-     {
-         std::cerr << "Generic exception!" << std::endl;
-         return 2;
-     }
+ {
+     std::cerr << "Generic exception!" << std::endl;
+     return 2;
+ }
 #endif

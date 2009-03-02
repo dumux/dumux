@@ -204,14 +204,14 @@ private:
             ++index;
             const int numCorners = git->template count< n >();
             if( index == numCorners )
-                {
-                    offset += numCorners;
-                    index = 0;
+            {
+                offset += numCorners;
+                index = 0;
 
+                ++git;
+                while( (git != gend) && (git->partitionType() != InteriorEntity) )
                     ++git;
-                    while( (git != gend) && (git->partitionType() != InteriorEntity) )
-                        ++git;
-                }
+            }
         }
     public:
         VertexIterator(const GridCellIterator & x,
@@ -229,19 +229,19 @@ private:
         void increment ()
         {
             switch (datamode)
+            {
+            case VTKOptions::conforming:
+                while(visited[vertexmapper.template map<n>(*git,index)])
                 {
-                case VTKOptions::conforming:
-                    while(visited[vertexmapper.template map<n>(*git,index)])
-                        {
-                            basicIncrement();
-                            if (git == gend) return;
-                        }
-                    visited[vertexmapper.template map<n>(*git,index)] = true;
-                    break;
-                case VTKOptions::nonconforming:
                     basicIncrement();
-                    break;
+                    if (git == gend) return;
                 }
+                visited[vertexmapper.template map<n>(*git,index)] = true;
+                break;
+            case VTKOptions::nonconforming:
+                basicIncrement();
+                break;
+            }
         }
         bool equals (const VertexIterator & cit) const
         {
@@ -255,15 +255,15 @@ private:
         int id () const
         {
             switch (datamode)
-                {
-                case VTKOptions::conforming:
-                    return
-                        number[vertexmapper.template map<n>(*git,renumber(*git,index))];
-                case VTKOptions::nonconforming:
-                    return offset + renumber(*git,index);
-                default:
-                    DUNE_THROW(IOError,"VTKWriterExtended: unsupported DataMode" << datamode);
-                }
+            {
+            case VTKOptions::conforming:
+                return
+                    number[vertexmapper.template map<n>(*git,renumber(*git,index))];
+            case VTKOptions::nonconforming:
+                return offset + renumber(*git,index);
+            default:
+                DUNE_THROW(IOError,"VTKWriterExtended: unsupported DataMode" << datamode);
+            }
         }
         int localindex () const
         {
@@ -309,14 +309,14 @@ private:
             ++index;
             const int numCorners = git->template count< n >();
             if( index == numCorners )
-                {
-                    offset += numCorners;
-                    index = 0;
+            {
+                offset += numCorners;
+                index = 0;
 
+                ++git;
+                while( (git != gend) && (git->partitionType() != InteriorEntity) )
                     ++git;
-                    while( (git != gend) && (git->partitionType() != InteriorEntity) )
-                        ++git;
-                }
+            }
         }
     public:
         CornerIterator(const GridCellIterator & x,
@@ -343,15 +343,15 @@ private:
         int id () const
         {
             switch (datamode)
-                {
-                case VTKOptions::conforming:
-                    return
-                        number[vertexmapper.template map<n>(*git,renumber(*git,index))];
-                case VTKOptions::nonconforming:
-                    return offset + renumber(*git,index);
-                default:
-                    DUNE_THROW(IOError,"VTKWriterExtended: unsupported DataMode" << datamode);
-                }
+            {
+            case VTKOptions::conforming:
+                return
+                    number[vertexmapper.template map<n>(*git,renumber(*git,index))];
+            case VTKOptions::nonconforming:
+                return offset + renumber(*git,index);
+            default:
+                DUNE_THROW(IOError,"VTKWriterExtended: unsupported DataMode" << datamode);
+            }
         }
         int localindex () const
         {
@@ -437,16 +437,16 @@ private:
             int imin=-1;
             Dune::GeometryType gt = e.type();
             for (int i=0; i<e.template count<n>(); ++i)
+            {
+                Dune::FieldVector<DT,n>
+                    local = Dune::ReferenceElements<DT,n>::general(gt).position(i,n);
+                local -= xi;
+                if (local.infinity_norm()<min)
                 {
-                    Dune::FieldVector<DT,n>
-                        local = Dune::ReferenceElements<DT,n>::general(gt).position(i,n);
-                    local -= xi;
-                    if (local.infinity_norm()<min)
-                        {
-                            min = local.infinity_norm();
-                            imin = i;
-                        }
+                    min = local.infinity_norm();
+                    imin = i;
                 }
+            }
             return v[mapper.template map<n>(e,imin)];
         }
 
@@ -537,16 +537,16 @@ private:
             int imin=-1;
             Dune::GeometryType gt = e.geometry().type();
             for (int i=0; i<e.template count<n>(); ++i)
+            {
+                Dune::FieldVector<DT,n>
+                    local = Dune::ReferenceElements<DT,n>::general(gt).position(i,n);
+                local -= xi;
+                if (local.infinity_norm()<min)
                 {
-                    Dune::FieldVector<DT,n>
-                        local = Dune::ReferenceElements<DT,n>::general(gt).position(i,n);
-                    local -= xi;
-                    if (local.infinity_norm()<min)
-                        {
-                            min = local.infinity_norm();
-                            imin = i;
-                        }
+                    min = local.infinity_norm();
+                    imin = i;
                 }
+            }
             return v[mapper.template map<n>(e,imin)][comp];
         }
 
@@ -685,67 +685,67 @@ public:
         std::vector<DT> volume(vertexmapper.size(),0);
 
         for(CellIterator cit=cellBegin();cit!=cellEnd();++cit)
+        {
+            int indexj=mapper.map(*cit);
+
+            int nlfaces=cit->template count<1>();
+            std::vector<DT> faceVolume(nlfaces);
+
+            Dune::FieldVector<DT,n> local = cit.position();
+            typedef typename Entity::Geometry Geometry;
+            const Geometry& geometry = cit->geometry();
+
+            //ReferenceData
+            std::vector<Dune::FieldVector<DT,n> > outernormal(nlfaces,0);
+            Dune::FieldVector<DT,n-1> loc(0);
+            typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
+            IntersectionIterator endit = IntersectionIteratorGetter<Grid,LeafTag>::end(*cit);
+            for (IntersectionIterator it = IntersectionIteratorGetter<Grid,LeafTag>::begin(*cit); it!=endit; ++it)
             {
-                int indexj=mapper.map(*cit);
-
-                int nlfaces=cit->template count<1>();
-                std::vector<DT> faceVolume(nlfaces);
-
-                Dune::FieldVector<DT,n> local = cit.position();
-                typedef typename Entity::Geometry Geometry;
-                const Geometry& geometry = cit->geometry();
-
-                //ReferenceData
-                std::vector<Dune::FieldVector<DT,n> > outernormal(nlfaces,0);
-                Dune::FieldVector<DT,n-1> loc(0);
-                typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
-                IntersectionIterator endit = IntersectionIteratorGetter<Grid,LeafTag>::end(*cit);
-                for (IntersectionIterator it = IntersectionIteratorGetter<Grid,LeafTag>::begin(*cit); it!=endit; ++it)
-                    {
-                        int indexi=it->numberInSelf();
-                        faceVolume[indexi] = it->intersectionGlobal().volume();
-                        outernormal[indexi]=it->unitOuterNormal(loc);
-                    }
-
-                Dune::ReferenceCube<DT,n> referencecube;
-                Dune::ReferenceSimplex<DT,n> referencesimplex;
-                Dune::FieldVector<DT,n> referencedata(0);
-                std::vector<DT> flux(nlfaces);
-                for(int i=0;i<nlfaces;++i)
-                    flux[i]=v[indexj][i]*outernormal[i]*faceVolume[i];
-
-                if(geometry.type() == referencesimplex.type(0,0))
-                    for(int k=0;k<dim;++k)
-                        {
-                            for(int i=0;i<nlfaces;++i)
-                                referencedata[k]+=flux[i]/3;
-                            referencedata[k]-=flux[k+1];
-                        }
-
-                else if(geometry.type() == referencecube.type(0,0))
-                    for(int k=0;k<dim;++k)
-                        referencedata[k]=(flux[k*2+1]-flux[k*2])/2;
-
-                else
-                    DUNE_THROW(IOError,"VTKWriterExtended::faceToCellToVertex: unknown geometryType");
-
-                //Piola transformation
-                Dune::FieldMatrix<DT,n,n> jacobi = geometry.jacobianInverseTransposed(local);
-                jacobi.invert();
-                DT det=jacobi.determinant();
-                if(det==0)
-                    DUNE_THROW(IOError,"VTKWriterExtended::faceToCellToVertex: jacobian is singular");
-                jacobi.usmtv(1/det,referencedata,w[indexj]);
-
-                //VertexData
-                for(int l=0;l<cit->template count<n>();++l)
-                    {
-                        int id = vertexmapper.template map<n>(*cit,l);
-                        for(int k=0;k<dim;++k)
-                            z[id][k]+=w[indexj][k]*geometry.volume();
-                        volume[id]+=geometry.volume();
-                    }
+                int indexi=it->numberInSelf();
+                faceVolume[indexi] = it->intersectionGlobal().volume();
+                outernormal[indexi]=it->unitOuterNormal(loc);
             }
+
+            Dune::ReferenceCube<DT,n> referencecube;
+            Dune::ReferenceSimplex<DT,n> referencesimplex;
+            Dune::FieldVector<DT,n> referencedata(0);
+            std::vector<DT> flux(nlfaces);
+            for(int i=0;i<nlfaces;++i)
+                flux[i]=v[indexj][i]*outernormal[i]*faceVolume[i];
+
+            if(geometry.type() == referencesimplex.type(0,0))
+                for(int k=0;k<dim;++k)
+                {
+                    for(int i=0;i<nlfaces;++i)
+                        referencedata[k]+=flux[i]/3;
+                    referencedata[k]-=flux[k+1];
+                }
+
+            else if(geometry.type() == referencecube.type(0,0))
+                for(int k=0;k<dim;++k)
+                    referencedata[k]=(flux[k*2+1]-flux[k*2])/2;
+
+            else
+                DUNE_THROW(IOError,"VTKWriterExtended::faceToCellToVertex: unknown geometryType");
+
+            //Piola transformation
+            Dune::FieldMatrix<DT,n,n> jacobi = geometry.jacobianInverseTransposed(local);
+            jacobi.invert();
+            DT det=jacobi.determinant();
+            if(det==0)
+                DUNE_THROW(IOError,"VTKWriterExtended::faceToCellToVertex: jacobian is singular");
+            jacobi.usmtv(1/det,referencedata,w[indexj]);
+
+            //VertexData
+            for(int l=0;l<cit->template count<n>();++l)
+            {
+                int id = vertexmapper.template map<n>(*cit,l);
+                for(int k=0;k<dim;++k)
+                    z[id][k]+=w[indexj][k]*geometry.volume();
+                volume[id]+=geometry.volume();
+            }
+        }
 
         //Scale
         for(int k=0;k<vertexmapper.size();++k)
@@ -795,10 +795,10 @@ public:
         // generate filename for process data
         std::ostringstream pieceName;
         if( commSize > 1 )
-            {
-                pieceName << "s" << std::setfill( '0' ) << std::setw( 4 ) << commSize << ":";
-                pieceName << "p" << std::setfill( '0' ) << std::setw( 4 ) << commRank << ":";
-            }
+        {
+            pieceName << "s" << std::setfill( '0' ) << std::setw( 4 ) << commSize << ":";
+            pieceName << "p" << std::setfill( '0' ) << std::setw( 4 ) << commRank << ":";
+        }
         pieceName << name << (GridView::dimension > 1 ? ".vtu" : ".vtp");
 
         // write process data
@@ -824,11 +824,11 @@ public:
 
         // on process 0: write out parallel header
         if( commRank == 0 )
-            {
-                file.open( parallelName.str().c_str() );
-                writeParallelHeader( file, name.c_str(), "" );
-                file.close();
-            }
+        {
+            file.open( parallelName.str().c_str() );
+            writeParallelHeader( file, name.c_str(), "" );
+            file.close();
+        }
 
         // synchronize processes
         gridView_.comm().barrier();
@@ -850,47 +850,47 @@ public:
         bytecount = 0;
 
         if (grid.comm().size()==1)
-            {
-                std::ofstream file;
-                char fullname[128];
-                if (n>1)
-                    sprintf(fullname,"%s.vtu",name);
-                else
-                    sprintf(fullname,"%s.vtp",name);
-                if (outputtype==VTKOptions::binaryappended)
-                    file.open(fullname,std::ios::binary);
-                else
-                    file.open(fullname);
-                writeDataFile(file);
-                file.close();
-            }
+        {
+            std::ofstream file;
+            char fullname[128];
+            if (n>1)
+                sprintf(fullname,"%s.vtu",name);
+            else
+                sprintf(fullname,"%s.vtp",name);
+            if (outputtype==VTKOptions::binaryappended)
+                file.open(fullname,std::ios::binary);
+            else
+                file.open(fullname);
+            writeDataFile(file);
+            file.close();
+        }
         else
+        {
+            std::ofstream file;
+            char fullname[128];
+            if (n>1)
+                sprintf(fullname,"s%04d:p%04d:%s.vtu",grid.comm().size(),grid.comm().rank(),name);
+            else
+                sprintf(fullname,"s%04d:p%04d:%s.vtp",grid.comm().size(),grid.comm().rank(),name);
+            if (outputtype==VTKOptions::binaryappended)
+                file.open(fullname,std::ios::binary);
+            else
+                file.open(fullname);
+            writeDataFile(file);
+            file.close();
+            grid.comm().barrier();
+            if (grid.comm().rank()==0)
             {
-                std::ofstream file;
-                char fullname[128];
                 if (n>1)
-                    sprintf(fullname,"s%04d:p%04d:%s.vtu",grid.comm().size(),grid.comm().rank(),name);
+                    sprintf(fullname,"s%04d:%s.pvtu",grid.comm().size(),name);
                 else
-                    sprintf(fullname,"s%04d:p%04d:%s.vtp",grid.comm().size(),grid.comm().rank(),name);
-                if (outputtype==VTKOptions::binaryappended)
-                    file.open(fullname,std::ios::binary);
-                else
-                    file.open(fullname);
-                writeDataFile(file);
+                    sprintf(fullname,"s%04d:%s.pvtp",grid.comm().size(),name);
+                file.open(fullname);
+                writeParallelHeader(file,name,"");
                 file.close();
-                grid.comm().barrier();
-                if (grid.comm().rank()==0)
-                    {
-                        if (n>1)
-                            sprintf(fullname,"s%04d:%s.pvtu",grid.comm().size(),name);
-                        else
-                            sprintf(fullname,"s%04d:%s.pvtp",grid.comm().size(),name);
-                        file.open(fullname);
-                        writeParallelHeader(file,name,"");
-                        file.close();
-                    }
-                grid.comm().barrier();
             }
+            grid.comm().barrier();
+        }
     }
 #endif
 
@@ -911,85 +911,85 @@ public:
         int n=strlen(path);
         int m=strlen(extendpath);
         if (n>0 && path[0]=='/' && path[n-1]=='/')
+        {
+            // 1) path is an absolute path to the directory where the pvtu file will be placed
+            // 2) extendpath is an absolute path from "/" where the pieces are placed
+            // 3) pieces are addressed relative in the pvtu files
+            if (m==0)
             {
-                // 1) path is an absolute path to the directory where the pvtu file will be placed
-                // 2) extendpath is an absolute path from "/" where the pieces are placed
-                // 3) pieces are addressed relative in the pvtu files
-                if (m==0)
-                    {
-                        // write pieces to root :-)
-                        piecepath[0] = '/';
-                        piecepath[1] = '\0';
-                    }
-                else
-                    {
-                        // make piecepath absolute with trailing "/"
-                        char *p=piecepath;
-                        if (extendpath[0]!='/')
-                            {
-                                *p = '/';
-                                p++;
-                            }
-                        for (int i=0; i<m; i++)
-                            {
-                                *p = extendpath[i];
-                                p++;
-                            }
-                        if (*(p-1)!='/')
-                            {
-                                *p = '/';
-                                p++;
-                            }
-                        *p = '\0';
-                    }
-                // path and piecepath are either "/" or have leading and trailing /
-                // count slashes in path
-                int k=0;
-                const char *p=path;
-                while (*p!='\0')
-                    {
-                        if (*p=='/') k++;
-                        p++;
-                    }
-                char *pp = relpiecepath;
-                if (k>1)
-                    {
-                        for (int i=0; i<k; i++)
-                            {
-                                *pp='.'; pp++; *pp='.'; pp++; *pp='/'; pp++;
-                            }
-                    }
-                // now copy the extendpath
+                // write pieces to root :-)
+                piecepath[0] = '/';
+                piecepath[1] = '\0';
+            }
+            else
+            {
+                // make piecepath absolute with trailing "/"
+                char *p=piecepath;
+                if (extendpath[0]!='/')
+                {
+                    *p = '/';
+                    p++;
+                }
                 for (int i=0; i<m; i++)
-                    {
-                        if (i==0 && extendpath[i]=='/') continue;
-                        *pp = extendpath[i];
-                        pp++;
-                    }
-                if ( pp!=relpiecepath && (*(pp-1)!='/') )
-                    {
-                        *pp = '/';
-                        pp++;
-                    }
-                *pp = '\0';
+                {
+                    *p = extendpath[i];
+                    p++;
+                }
+                if (*(p-1)!='/')
+                {
+                    *p = '/';
+                    p++;
+                }
+                *p = '\0';
             }
-        else
+            // path and piecepath are either "/" or have leading and trailing /
+            // count slashes in path
+            int k=0;
+            const char *p=path;
+            while (*p!='\0')
             {
-                // 1) path is a relative path to the directory where pvtu files are placed
-                // 2) extendpath is relative to where the pvtu files are and there the pieces are placed
-                if (n==0 || m==0)
-                    sprintf(piecepath,"%s%s",path,extendpath);
-                else
-                    {
-                        // both are non-zero
-                        if (path[n-1]!='/' && extendpath[0]!='/')
-                            sprintf(piecepath,"%s/%s",path,extendpath);
-                        else
-                            sprintf(piecepath,"%s%s",path,extendpath);
-                    }
-                // the pieces are relative to the pvtu files
-                sprintf(relpiecepath,"%s",extendpath);
+                if (*p=='/') k++;
+                p++;
             }
+            char *pp = relpiecepath;
+            if (k>1)
+            {
+                for (int i=0; i<k; i++)
+                {
+                    *pp='.'; pp++; *pp='.'; pp++; *pp='/'; pp++;
+                }
+            }
+            // now copy the extendpath
+            for (int i=0; i<m; i++)
+            {
+                if (i==0 && extendpath[i]=='/') continue;
+                *pp = extendpath[i];
+                pp++;
+            }
+            if ( pp!=relpiecepath && (*(pp-1)!='/') )
+            {
+                *pp = '/';
+                pp++;
+            }
+            *pp = '\0';
+        }
+        else
+        {
+            // 1) path is a relative path to the directory where pvtu files are placed
+            // 2) extendpath is relative to where the pvtu files are and there the pieces are placed
+            if (n==0 || m==0)
+                sprintf(piecepath,"%s%s",path,extendpath);
+            else
+            {
+                // both are non-zero
+                if (path[n-1]!='/' && extendpath[0]!='/')
+                    sprintf(piecepath,"%s/%s",path,extendpath);
+                else
+                    sprintf(piecepath,"%s%s",path,extendpath);
+            }
+            // the pieces are relative to the pvtu files
+            sprintf(relpiecepath,"%s",extendpath);
+        }
         char fullname[256];
         if (GridView::dimension>1)
             sprintf(fullname,"%s/s%04d:p%04d:%s.vtu",piecepath,grid.comm().size(),grid.comm().rank(),name);
@@ -1003,15 +1003,15 @@ public:
         file.close();
         grid.comm().barrier();
         if (grid.comm().rank()==0)
-            {
-                if (GridView::dimension>1)
-                    sprintf(fullname,"%s/s%04d:%s.pvtu",path,grid.comm().size(),name);
-                else
-                    sprintf(fullname,"%s/s%04d:%s.pvtp",path,grid.comm().size(),name);
-                file.open(fullname);
-                writeParallelHeader(file,name,relpiecepath);
-                file.close();
-            }
+        {
+            if (GridView::dimension>1)
+                sprintf(fullname,"%s/s%04d:%s.pvtu",path,grid.comm().size(),name);
+            else
+                sprintf(fullname,"%s/s%04d:%s.pvtp",path,grid.comm().size(),name);
+            file.open(fullname);
+            writeParallelHeader(file,name,relpiecepath);
+            file.close();
+        }
         grid.comm().barrier();
         return fullname;
     }
@@ -1074,29 +1074,29 @@ private:
         indent(s); s << "<PPointData";
         for (FunctionIterator it=vertexdata.begin(); it!=vertexdata.end(); ++it)
             if ((*it)->ncomps()==1)
-                {
-                    s << " Scalars=\"" << (*it)->name() << "\"" ;
-                    break;
-                }
+            {
+                s << " Scalars=\"" << (*it)->name() << "\"" ;
+                break;
+            }
         for (FunctionIterator it=vertexdata.begin(); it!=vertexdata.end(); ++it)
             if ((*it)->ncomps()>1)
-                {
-                    s << " Vectors=\"" << (*it)->name() << "\"" ;
-                    break;
-                }
+            {
+                s << " Vectors=\"" << (*it)->name() << "\"" ;
+                break;
+            }
         s << ">" << std::endl;
         indentUp();
         for (FunctionIterator it=vertexdata.begin(); it!=vertexdata.end(); ++it)
-            {
-                indent(s); s << "<PDataArray type=\"Float32\" Name=\"" << (*it)->name() << "\" ";
-                s << "NumberOfComponents=\"" << ((*it)->ncomps()>1?3:1) << "\" ";
-                if (outputtype==VTKOptions::ascii)
-                    s << "format=\"ascii\"/>" << std::endl;
-                if (outputtype==VTKOptions::binary)
-                    s << "format=\"binary\"/>" << std::endl;
-                if (outputtype==VTKOptions::binaryappended)
-                    s << "format=\"appended\"/>" << std::endl;
-            }
+        {
+            indent(s); s << "<PDataArray type=\"Float32\" Name=\"" << (*it)->name() << "\" ";
+            s << "NumberOfComponents=\"" << ((*it)->ncomps()>1?3:1) << "\" ";
+            if (outputtype==VTKOptions::ascii)
+                s << "format=\"ascii\"/>" << std::endl;
+            if (outputtype==VTKOptions::binary)
+                s << "format=\"binary\"/>" << std::endl;
+            if (outputtype==VTKOptions::binaryappended)
+                s << "format=\"appended\"/>" << std::endl;
+        }
         indentDown();
         indent(s); s << "</PPointData>" << std::endl;
 
@@ -1104,29 +1104,29 @@ private:
         indent(s); s << "<PCellData";
         for (FunctionIterator it=celldata.begin(); it!=celldata.end(); ++it)
             if ((*it)->ncomps()==1)
-                {
-                    s << " Scalars=\"" << (*it)->name() << "\"" ;
-                    break;
-                }
+            {
+                s << " Scalars=\"" << (*it)->name() << "\"" ;
+                break;
+            }
         for (FunctionIterator it=celldata.begin(); it!=celldata.end(); ++it)
             if ((*it)->ncomps()>1)
-                {
-                    s << " Vectors=\"" << (*it)->name() << "\"" ;
-                    break;
-                }
+            {
+                s << " Vectors=\"" << (*it)->name() << "\"" ;
+                break;
+            }
         s << ">" << std::endl;
         indentUp();
         for (FunctionIterator it=celldata.begin(); it!=celldata.end(); ++it)
-            {
-                indent(s); s << "<PDataArray type=\"Float32\" Name=\"" << (*it)->name() << "\" ";
-                s << "NumberOfComponents=\"" << ((*it)->ncomps()>1?3:1) << "\" ";
-                if (outputtype==VTKOptions::ascii)
-                    s << "format=\"ascii\"/>" << std::endl;
-                if (outputtype==VTKOptions::binary)
-                    s << "format=\"binary\"/>" << std::endl;
-                if (outputtype==VTKOptions::binaryappended)
-                    s << "format=\"appended\"/>" << std::endl;
-            }
+        {
+            indent(s); s << "<PDataArray type=\"Float32\" Name=\"" << (*it)->name() << "\" ";
+            s << "NumberOfComponents=\"" << ((*it)->ncomps()>1?3:1) << "\" ";
+            if (outputtype==VTKOptions::ascii)
+                s << "format=\"ascii\"/>" << std::endl;
+            if (outputtype==VTKOptions::binary)
+                s << "format=\"binary\"/>" << std::endl;
+            if (outputtype==VTKOptions::binaryappended)
+                s << "format=\"appended\"/>" << std::endl;
+        }
         indentDown();
         indent(s); s << "</PCellData>" << std::endl;
 
@@ -1145,14 +1145,14 @@ private:
 
         // Pieces
         for (int i=0; i<grid.comm().size(); i++)
-            {
-                char fullname[128];
-                if (GridView::dimension>1)
-                    sprintf(fullname,"%s/s%04d:p%04d:%s.vtu",piecepath,grid.comm().size(),i,piecename);
-                else
-                    sprintf(fullname,"%s/s%04d:p%04d:%s.vtp",piecepath,grid.comm().size(),i,piecename);
-                indent(s); s << "<Piece Source=\"" << fullname << "\"/>" << std::endl;
-            }
+        {
+            char fullname[128];
+            if (GridView::dimension>1)
+                sprintf(fullname,"%s/s%04d:p%04d:%s.vtu",piecepath,grid.comm().size(),i,piecename);
+            else
+                sprintf(fullname,"%s/s%04d:p%04d:%s.vtp",piecepath,grid.comm().size(),i,piecename);
+            indent(s); s << "<Piece Source=\"" << fullname << "\"/>" << std::endl;
+        }
 
         // /PUnstructuredGrid
         indentDown();
@@ -1183,31 +1183,31 @@ private:
         // Grid characteristics
         vertexmapper = new VertexMapper(grid,is);
         if (datamode == VTKOptions::conforming)
-            {
-                number.resize(vertexmapper->size());
-                for (std::vector<int>::size_type i=0; i<number.size(); i++) number[i] = -1;
-            }
+        {
+            number.resize(vertexmapper->size());
+            for (std::vector<int>::size_type i=0; i<number.size(); i++) number[i] = -1;
+        }
         nvertices = 0;
         ncells = 0;
         ncorners = 0;
         for (CellIterator it=cellBegin(); it!=cellEnd(); ++it)
+        {
+            ncells++;
+            for (int i=0; i<it->template count<n>(); ++i)
             {
-                ncells++;
-                for (int i=0; i<it->template count<n>(); ++i)
-                    {
-                        ncorners++;
-                        if (datamode == VTKOptions::conforming)
-                            {
-                                int alpha = vertexmapper->template map<n>(*it,i);
-                                if (number[alpha]<0)
-                                    number[alpha] = nvertices++;
-                            }
-                        else
-                            {
-                                nvertices++;
-                            }
-                    }
+                ncorners++;
+                if (datamode == VTKOptions::conforming)
+                {
+                    int alpha = vertexmapper->template map<n>(*it,i);
+                    if (number[alpha]<0)
+                        number[alpha] = nvertices++;
+                }
+                else
+                {
+                    nvertices++;
+                }
             }
+        }
 
         // UnstructuredGrid
         indent(s);
@@ -1268,32 +1268,32 @@ private:
         indent(s); s << "<CellData";
         for (FunctionIterator it=celldata.begin(); it!=celldata.end(); ++it)
             if ((*it)->ncomps()==1)
-                {
-                    s << " Scalars=\"" << (*it)->name() << "\"" ;
-                    break;
-                }
+            {
+                s << " Scalars=\"" << (*it)->name() << "\"" ;
+                break;
+            }
         for (FunctionIterator it=celldata.begin(); it!=celldata.end(); ++it)
             if ((*it)->ncomps()>1)
-                {
-                    s << " Vectors=\"" << (*it)->name() << "\"" ;
-                    break;
-                }
+            {
+                s << " Vectors=\"" << (*it)->name() << "\"" ;
+                break;
+            }
         s << ">" << std::endl;
         indentUp();
         for (FunctionIterator it=celldata.begin(); it!=celldata.end(); ++it)
-            {
-                VTKDataArrayWriterExtended<float> *p=0;
-                if (outputtype==VTKOptions::ascii)
-                    p = new VTKAsciiDataArrayWriterExtended<float>(s,(*it)->name(),(*it)->ncomps());
-                if (outputtype==VTKOptions::binary)
-                    p = new VTKBinaryDataArrayWriterExtended<float>(s,(*it)->name(),(*it)->ncomps(),(*it)->ncomps()*ncells);
-                if (outputtype==VTKOptions::binaryappended)
-                    p = new VTKBinaryAppendedDataArrayWriterExtended<float>(s,(*it)->name(),(*it)->ncomps(),bytecount);
-                for (CellIterator i=cellBegin(); i!=cellEnd(); ++i)
-                    for (int j=0; j<(*it)->ncomps(); j++)
-                        p->write((*it)->evaluate(j,*i,i.position()));
-                delete p;
-            }
+        {
+            VTKDataArrayWriterExtended<float> *p=0;
+            if (outputtype==VTKOptions::ascii)
+                p = new VTKAsciiDataArrayWriterExtended<float>(s,(*it)->name(),(*it)->ncomps());
+            if (outputtype==VTKOptions::binary)
+                p = new VTKBinaryDataArrayWriterExtended<float>(s,(*it)->name(),(*it)->ncomps(),(*it)->ncomps()*ncells);
+            if (outputtype==VTKOptions::binaryappended)
+                p = new VTKBinaryAppendedDataArrayWriterExtended<float>(s,(*it)->name(),(*it)->ncomps(),bytecount);
+            for (CellIterator i=cellBegin(); i!=cellEnd(); ++i)
+                for (int j=0; j<(*it)->ncomps(); j++)
+                    p->write((*it)->evaluate(j,*i,i.position()));
+            delete p;
+        }
         indentDown();
         indent(s); s << "</CellData>" << std::endl;
     }
@@ -1303,37 +1303,37 @@ private:
         indent(s); s << "<PointData";
         for (FunctionIterator it=vertexdata.begin(); it!=vertexdata.end(); ++it)
             if ((*it)->ncomps()==1)
-                {
-                    s << " Scalars=\"" << (*it)->name() << "\"" ;
-                    break;
-                }
+            {
+                s << " Scalars=\"" << (*it)->name() << "\"" ;
+                break;
+            }
         for (FunctionIterator it=vertexdata.begin(); it!=vertexdata.end(); ++it)
             if ((*it)->ncomps()>1)
-                {
-                    s << " Vectors=\"" << (*it)->name() << "\"" ;
-                    break;
-                }
+            {
+                s << " Vectors=\"" << (*it)->name() << "\"" ;
+                break;
+            }
         s << ">" << std::endl;
         indentUp();
         for (FunctionIterator it=vertexdata.begin(); it!=vertexdata.end(); ++it)
+        {
+            VTKDataArrayWriterExtended<float> *p=0;
+            if (outputtype==VTKOptions::ascii)
+                p = new VTKAsciiDataArrayWriterExtended<float>(s,(*it)->name(),(*it)->ncomps());
+            if (outputtype==VTKOptions::binary)
+                p = new VTKBinaryDataArrayWriterExtended<float>(s,(*it)->name(),(*it)->ncomps(),(*it)->ncomps()*nvertices);
+            if (outputtype==VTKOptions::binaryappended)
+                p = new VTKBinaryAppendedDataArrayWriterExtended<float>(s,(*it)->name(),(*it)->ncomps(),bytecount);
+            for (VertexIterator vit=vertexBegin(); vit!=vertexEnd(); ++vit)
             {
-                VTKDataArrayWriterExtended<float> *p=0;
-                if (outputtype==VTKOptions::ascii)
-                    p = new VTKAsciiDataArrayWriterExtended<float>(s,(*it)->name(),(*it)->ncomps());
-                if (outputtype==VTKOptions::binary)
-                    p = new VTKBinaryDataArrayWriterExtended<float>(s,(*it)->name(),(*it)->ncomps(),(*it)->ncomps()*nvertices);
-                if (outputtype==VTKOptions::binaryappended)
-                    p = new VTKBinaryAppendedDataArrayWriterExtended<float>(s,(*it)->name(),(*it)->ncomps(),bytecount);
-                for (VertexIterator vit=vertexBegin(); vit!=vertexEnd(); ++vit)
-                    {
-                        for (int j=0; j<(*it)->ncomps(); j++)
-                            p->write((*it)->evaluate(j,*vit,vit.position()));
-                        //vtk file format: a vector data always should have 3 comps(with 3rd comp = 0 in 2D case)
-                        if((*it)->ncomps()==2)
-                            p->write(0.0);
-                    }
-                delete p;
+                for (int j=0; j<(*it)->ncomps(); j++)
+                    p->write((*it)->evaluate(j,*vit,vit.position()));
+                //vtk file format: a vector data always should have 3 comps(with 3rd comp = 0 in 2D case)
+                if((*it)->ncomps()==2)
+                    p->write(0.0);
             }
+            delete p;
+        }
         indentDown();
         indent(s); s << "</PointData>" << std::endl;
     }
@@ -1352,13 +1352,13 @@ private:
             p = new VTKBinaryAppendedDataArrayWriterExtended<float>(s,"Coordinates",3,bytecount);
         VertexIterator vEnd = vertexEnd();
         for (VertexIterator vit=vertexBegin(); vit!=vEnd; ++vit)
-            {
-                int dimw=w;
-                for (int j=0; j<std::min(dimw,3); j++)
-                    p->write(vit->geometry().corner(vit.localindex())[j]);
-                for (int j=std::min(dimw,3); j<3; j++)
-                    p->write(0.0);
-            }
+        {
+            int dimw=w;
+            for (int j=0; j<std::min(dimw,3); j++)
+                p->write(vit->geometry().corner(vit.localindex())[j]);
+            for (int j=std::min(dimw,3); j<3; j++)
+                p->write(0.0);
+        }
         delete p;
 
         indentDown();
@@ -1397,30 +1397,30 @@ private:
         {
             int offset = 0;
             for (CellIterator it=cellBegin(); it!=cellEnd(); ++it)
-                {
-                    offset += it->template count<n>();
-                    p2->write(offset);
-                }
+            {
+                offset += it->template count<n>();
+                p2->write(offset);
+            }
         }
         delete p2;
 
         // types
         if (n>1)
+        {
+            VTKDataArrayWriterExtended<unsigned char> *p3=0;
+            if (outputtype==VTKOptions::ascii)
+                p3 = new VTKAsciiDataArrayWriterExtended<unsigned char>(s,"types",1);
+            if (outputtype==VTKOptions::binary)
+                p3 = new VTKBinaryDataArrayWriterExtended<unsigned char>(s,"types",1,ncells);
+            if (outputtype==VTKOptions::binaryappended)
+                p3 = new VTKBinaryAppendedDataArrayWriterExtended<unsigned char>(s,"types",1,bytecount);
+            for (CellIterator it=cellBegin(); it!=cellEnd(); ++it)
             {
-                VTKDataArrayWriterExtended<unsigned char> *p3=0;
-                if (outputtype==VTKOptions::ascii)
-                    p3 = new VTKAsciiDataArrayWriterExtended<unsigned char>(s,"types",1);
-                if (outputtype==VTKOptions::binary)
-                    p3 = new VTKBinaryDataArrayWriterExtended<unsigned char>(s,"types",1,ncells);
-                if (outputtype==VTKOptions::binaryappended)
-                    p3 = new VTKBinaryAppendedDataArrayWriterExtended<unsigned char>(s,"types",1,bytecount);
-                for (CellIterator it=cellBegin(); it!=cellEnd(); ++it)
-                    {
-                        int vtktype = vtkType(it->type());
-                        p3->write(vtktype);
-                    }
-                delete p3;
+                int vtktype = vtkType(it->type());
+                p3->write(vtktype);
             }
+            delete p3;
+        }
 
         indentDown();
         indent(s);
@@ -1444,66 +1444,66 @@ private:
 
         // point data
         for (FunctionIterator it=vertexdata.begin(); it!=vertexdata.end(); ++it)
-            {
+        {
 
-                blocklength = nvertices * (*it)->ncomps() * sizeof(float);
+            blocklength = nvertices * (*it)->ncomps() * sizeof(float);
+            //vtk file format: a vector data always should have 3 comps(with 3rd comp = 0 in 2D case)
+            if((*it)->ncomps()==2)
+                blocklength = nvertices * (3) * sizeof(float);
+            stream.write(blocklength);
+            std::vector<bool> visited(vertexmapper->size(), false);
+            for (VertexIterator vit=vertexBegin(); vit!=vertexEnd(); ++vit)
+            {
+                for (int j=0; j<(*it)->ncomps(); j++)
+                {
+                    float data = (*it)->evaluate(j,*vit,vit.position());
+                    stream.write(data);
+                }
                 //vtk file format: a vector data always should have 3 comps(with 3rd comp = 0 in 2D case)
-                if((*it)->ncomps()==2)
-                    blocklength = nvertices * (3) * sizeof(float);
-                stream.write(blocklength);
-                std::vector<bool> visited(vertexmapper->size(), false);
-                for (VertexIterator vit=vertexBegin(); vit!=vertexEnd(); ++vit)
-                    {
-                        for (int j=0; j<(*it)->ncomps(); j++)
-                            {
-                                float data = (*it)->evaluate(j,*vit,vit.position());
-                                stream.write(data);
-                            }
-                        //vtk file format: a vector data always should have 3 comps(with 3rd comp = 0 in 2D case)
-                        if((*it)->ncomps()==2){
-                            float data=0.0;
-                            stream.write(data);}
-                    }
+                if((*it)->ncomps()==2){
+                    float data=0.0;
+                    stream.write(data);}
             }
+        }
 
         // cell data
         for (FunctionIterator it=celldata.begin(); it!=celldata.end(); ++it)
-            {
-                blocklength = ncells * (*it)->ncomps() * sizeof(float);
-                stream.write(blocklength);
-                for (CellIterator i=cellBegin(); i!=cellEnd(); ++i)
-                    for (int j=0; j<(*it)->ncomps(); j++)
-                        {
-                            float data = (*it)->evaluate(j,*i,i.position());
-                            stream.write(data);
-                        }
-            }
+        {
+            blocklength = ncells * (*it)->ncomps() * sizeof(float);
+            stream.write(blocklength);
+            for (CellIterator i=cellBegin(); i!=cellEnd(); ++i)
+                for (int j=0; j<(*it)->ncomps(); j++)
+                {
+                    float data = (*it)->evaluate(j,*i,i.position());
+                    stream.write(data);
+                }
+        }
 
         // point coordinates
         blocklength = nvertices * 3 * sizeof(float);
         stream.write(blocklength);
         std::vector<bool> visited(vertexmapper->size(), false);
         for (VertexIterator vit=vertexBegin(); vit!=vertexEnd(); ++vit)
+        {
+            int dimw=w;
+            float data;
+            for (int j=0; j<std::min(dimw,3); j++)
             {
-                int dimw=w;
-                float data;
-                for (int j=0; j<std::min(dimw,3); j++)
-                    {
-                        data = vit->geometry().corner(vit.localindex())[j];
-                        stream.write(data);
-                    }
-                data = 0;
-                for (int j=std::min(dimw,3); j<3; j++)
-                    stream.write(data);
+                data = vit->geometry().corner(vit.localindex())[j];
+                stream.write(data);
             }
+            data = 0;
+            for (int j=std::min(dimw,3); j<3; j++)
+                stream.write(data);
+        }
 
         // connectivity
         blocklength = ncorners * sizeof(unsigned int);
         stream.write(blocklength);
         for (CornerIterator it=cornerBegin(); it!=cornerEnd(); ++it)
-            {
-                stream.write(it.id());
-            }
+        {
+            stream.write(it.id());
+        }
 
         // offsets
         blocklength = ncells * sizeof(unsigned int);
@@ -1511,23 +1511,23 @@ private:
         {
             int offset = 0;
             for (CellIterator it=cellBegin(); it!=cellEnd(); ++it)
-                {
-                    offset += it->template count<n>();
-                    stream.write(offset);
-                }
+            {
+                offset += it->template count<n>();
+                stream.write(offset);
+            }
         }
 
         // cell types
         if (n>1)
+        {
+            blocklength = ncells * sizeof(unsigned char);
+            stream.write(blocklength);
+            for (CellIterator it=cellBegin(); it!=cellEnd(); ++it)
             {
-                blocklength = ncells * sizeof(unsigned char);
-                stream.write(blocklength);
-                for (CellIterator it=cellBegin(); it!=cellEnd(); ++it)
-                    {
-                        unsigned char vtktype = vtkType(it->type());
-                        stream.write(vtktype);
-                    }
+                unsigned char vtktype = vtkType(it->type());
+                stream.write(vtktype);
             }
+        }
 
         s << std::endl;
         indentDown();
@@ -1622,12 +1622,12 @@ private:
         void write (T data)
         {
             if (n+sizeof(T)>bufsize)
-                {
-                    // flush buffer
-                    //          int codelength = base64::base64_encode_block(buffer,n,code,&_state);
-                    //          s.write(code,codelength);
-                    n=0;
-                }
+            {
+                // flush buffer
+                //          int codelength = base64::base64_encode_block(buffer,n,code,&_state);
+                //          s.write(code,codelength);
+                n=0;
+            }
             char* p = reinterpret_cast<char*>(&data);
             memcpy(buffer+n,p,sizeof(T));
             n += sizeof(T);
@@ -1638,10 +1638,10 @@ private:
         {
             //      int codelength;
             if (n>0)
-                {
-                    //          codelength = base64::base64_encode_block(buffer,n,code,&_state);
-                    //          s.write(code,codelength);
-                }
+            {
+                //          codelength = base64::base64_encode_block(buffer,n,code,&_state);
+                //          s.write(code,codelength);
+            }
             //        codelength = base64::base64_encode_blockend(code,&_state);
             //      s.write(code,codelength);
             //        base64::base64_init_encodestate(&_state);
@@ -1736,16 +1736,16 @@ private:
         static const int cubeRenumbering[8] = {0,1,3,2,4,5,7,6};
         static const int prismRenumbering[6] = {0,2,1,3,5,4};
         switch (vtkType(e.type()))
-            {
-            case vtkQuadrilateral:
-                return quadRenumbering[i];
-            case vtkHexahedron:
-                return cubeRenumbering[i];
-            case vtkPrism:
-                return prismRenumbering[i];
-            default:
-                return i;
-            }
+        {
+        case vtkQuadrilateral:
+            return quadRenumbering[i];
+        case vtkHexahedron:
+            return cubeRenumbering[i];
+        case vtkPrism:
+            return prismRenumbering[i];
+        default:
+            return i;
+        }
     }
 
     // the list of registered functions

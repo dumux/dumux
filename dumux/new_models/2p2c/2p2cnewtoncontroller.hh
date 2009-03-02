@@ -107,24 +107,24 @@ protected:
         Scalar maxPwDelta = 0;
 
         for (int idx = 0; idx < (int) (*u).size(); idx++)
-            {
-                Scalar pressure = (*u)[idx][pressureIdx];
-                Scalar switchVar = (*u)[idx][switchIdx];
+        {
+            Scalar pressure = (*u)[idx][pressureIdx];
+            Scalar switchVar = (*u)[idx][switchIdx];
 
-                if (switchVar < 0.0) {
-                    maxSwitchVarDelta = std::max(maxSwitchVarDelta,
-                                                 std::abs(switchVar));
-                }
-                else if (switchVar > 1.0) {
-                    maxSwitchVarDelta = std::max(maxSwitchVarDelta,
-                                                 std::abs(switchVar - 1));
-                }
-
-                if (pressure < 0.0){
-                    maxPwDelta = std::max(maxPwDelta,
-                                          std::abs(pressure));
-                }
+            if (switchVar < 0.0) {
+                maxSwitchVarDelta = std::max(maxSwitchVarDelta,
+                                             std::abs(switchVar));
             }
+            else if (switchVar > 1.0) {
+                maxSwitchVarDelta = std::max(maxSwitchVarDelta,
+                                             std::abs(switchVar - 1));
+            }
+
+            if (pressure < 0.0){
+                maxPwDelta = std::max(maxPwDelta,
+                                      std::abs(pressure));
+            }
+        }
 
         // we accept solutions up to 1 percent bigger than 1
         // or smaller than 0 as being physical for numerical

@@ -114,50 +114,50 @@ public:
     void vtkout(const char* name, int k, int pressurelevel = 0, int satlevel = 0)
     {
         if (pressurelevel == satlevel)
+        {
+            ScalarType C1, C2, U;
+            C1.resize(size); C2.resize(size); U.resize(size);
+            for (int i = 0; i < size; i++)
             {
-                ScalarType C1, C2, U;
-                C1.resize(size); C2.resize(size); U.resize(size);
-                for (int i = 0; i < size; i++)
-                    {
-                        C1[i] = totalConcentration[i];
-                        C2[i] = totalConcentration[i + size];
-                        U[i] = totalConcentration[i + 2*size];
-                    }
-                volErr *= 100.;
-                VTKWriter<G> vtkwriter(grid);
-                char fname[128];
-                sprintf(fname, "%s-%05d", name, k);
-                vtkwriter.addCellData(saturation, "saturation [-]");
-                vtkwriter.addCellData(pressure, "total pressure p~ [Pa]");
-                vtkwriter.addCellData(temperature, "temperature [K]");
-                vtkwriter.addCellData(C1, "total concentration 1 [kg/m^3]");
-                vtkwriter.addCellData(C2, "total concentration 2 [kg/m^3]");
-                vtkwriter.addCellData(wet_X1, "Mass fraction 1 in wetting phase [kg/m^3]");
-                vtkwriter.addCellData(nonwet_X1, "Mass fraction 1 in non-wetting phase [kg/m^3]");
-                vtkwriter.addCellData(density_wet, "Density of wetting phase [kg/m^3]");
-                vtkwriter.addCellData(density_nonwet, "Density of non-wetting phase [kg/m^3]");
-                vtkwriter.addCellData(U, "Internal energy in cell [J/m^3]");
-                vtkwriter.addCellData(enthalpy_l, "hl [J/kg]");
-                vtkwriter.addCellData(enthalpy_g, "hg [J/kg]");
-                vtkwriter.addCellData(volErr, "volume error [%]");
-                vtkwriter.write(fname, VTKOptions::ascii);
-                volErr /= 100.;
+                C1[i] = totalConcentration[i];
+                C2[i] = totalConcentration[i + size];
+                U[i] = totalConcentration[i + 2*size];
             }
+            volErr *= 100.;
+            VTKWriter<G> vtkwriter(grid);
+            char fname[128];
+            sprintf(fname, "%s-%05d", name, k);
+            vtkwriter.addCellData(saturation, "saturation [-]");
+            vtkwriter.addCellData(pressure, "total pressure p~ [Pa]");
+            vtkwriter.addCellData(temperature, "temperature [K]");
+            vtkwriter.addCellData(C1, "total concentration 1 [kg/m^3]");
+            vtkwriter.addCellData(C2, "total concentration 2 [kg/m^3]");
+            vtkwriter.addCellData(wet_X1, "Mass fraction 1 in wetting phase [kg/m^3]");
+            vtkwriter.addCellData(nonwet_X1, "Mass fraction 1 in non-wetting phase [kg/m^3]");
+            vtkwriter.addCellData(density_wet, "Density of wetting phase [kg/m^3]");
+            vtkwriter.addCellData(density_nonwet, "Density of non-wetting phase [kg/m^3]");
+            vtkwriter.addCellData(U, "Internal energy in cell [J/m^3]");
+            vtkwriter.addCellData(enthalpy_l, "hl [J/kg]");
+            vtkwriter.addCellData(enthalpy_g, "hg [J/kg]");
+            vtkwriter.addCellData(volErr, "volume error [%]");
+            vtkwriter.write(fname, VTKOptions::ascii);
+            volErr /= 100.;
+        }
         else
-            {
-                Dune::VTKWriter<G, typename G::LevelGridView>
-                    vtkwriterpressure(grid.levelView(pressurelevel));
-                char fname[128];
-                sprintf(fname, "%s-%05d", name, k);
-                vtkwriterpressure.addCellData(pressure, "total pressure p~");
-                vtkwriterpressure.write(fname, Dune::VTKOptions::ascii);
+        {
+            Dune::VTKWriter<G, typename G::LevelGridView>
+                vtkwriterpressure(grid.levelView(pressurelevel));
+            char fname[128];
+            sprintf(fname, "%s-%05d", name, k);
+            vtkwriterpressure.addCellData(pressure, "total pressure p~");
+            vtkwriterpressure.write(fname, Dune::VTKOptions::ascii);
 
-                VTKWriter<G, typename G::LevelGridView>
-                    vtkwritersaturation(grid.levelView(satlevel));
-                sprintf(fname, "%s-press%05d", name, k);
-                vtkwritersaturation.addCellData(saturation, "saturation");
-                vtkwritersaturation.write(fname, VTKOptions::ascii);
-            }
+            VTKWriter<G, typename G::LevelGridView>
+                vtkwritersaturation(grid.levelView(satlevel));
+            sprintf(fname, "%s-press%05d", name, k);
+            vtkwritersaturation.addCellData(saturation, "saturation");
+            vtkwritersaturation.write(fname, VTKOptions::ascii);
+        }
         return;
     }
     void vtkoutpressure(const char* name, int k) const {

@@ -63,17 +63,17 @@ public:
 
         std::vector<double> param(2);
         if (globalPos[0]<=300)
-            {
-                //linear parameters
-                param[0] = 0.2;
-                param[1] = 0.;
-            }
+        {
+            //linear parameters
+            param[0] = 0.2;
+            param[1] = 0.;
+        }
         else
-            {
-                //Brooks-Corey parameters
-                param[0] = 3; // lambda
-                param[1] = 0.; // entry-pressure
-            }
+        {
+            //Brooks-Corey parameters
+            param[0] = 3; // lambda
+            param[1] = 0.; // entry-pressure
+        }
         return param;
     }
 

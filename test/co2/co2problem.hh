@@ -102,10 +102,10 @@ public:
     {
         FieldVector<Scalar,numEq> values(0);
         if(globalPos[0] < 1.e-2 && globalPos[1] < 30.)
-            {
-                values[wPhase] = 0.0;//-4.046e-5;
-                values[nPhase] = -0.02;
-            }
+        {
+            values[wPhase] = 0.0;//-4.046e-5;
+            values[nPhase] = -0.02;
+        }
         return values;
     }
 

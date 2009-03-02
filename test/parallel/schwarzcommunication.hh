@@ -85,10 +85,10 @@ class P1OverlappingSchwarzCommunication
 
             // smallest rank is the owner
             if (grid.comm().rank()>q)
-                {
-                    int index=mapper.map(e);
-                    uniquemask[index] = false;
-                }
+            {
+                int index=mapper.map(e);
+                uniquemask[index] = false;
+            }
         }
 
         //! constructor
@@ -217,10 +217,10 @@ class P1OverlappingSchwarzCommunication
             if (uniquemask[index])
                 buff.write(source[index]);
             else
-                {
-                    dest[index] = 0;
-                    buff.write(dest[index]);
-                }
+            {
+                dest[index] = 0;
+                buff.write(dest[index]);
+            }
         }
 
         /*! unpack data from message buffer to user

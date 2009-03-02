@@ -169,43 +169,43 @@ template<class G, class RT, class VC> int DeprecatedFVTransport<G, RT, VC>::upda
 
             // handle interior face
             if (is->neighbor())
-                {
-                    // access neighbor
-                    EntityPointer outside = is->outside();
+            {
+                // access neighbor
+                EntityPointer outside = is->outside();
 
-                    // compute flux from one side only
-                    // this should become easier with the new IntersectionIterator functionality!
-                    if ( it->level()>=outside->level() )
-                        {
-                            double velocityJI = std::max(-(this->transproblem.variables.vTotal(*it, numberInSelf)*integrationOuterNormal/volume), 0.0);
-                            //                    std::cout<<"velocity JI = "<<velocityJI<<std::endl;
-                            factor = velocityJI - velocityIJ;
-                        }
+                // compute flux from one side only
+                // this should become easier with the new IntersectionIterator functionality!
+                if ( it->level()>=outside->level() )
+                {
+                    double velocityJI = std::max(-(this->transproblem.variables.vTotal(*it, numberInSelf)*integrationOuterNormal/volume), 0.0);
+                    //                    std::cout<<"velocity JI = "<<velocityJI<<std::endl;
+                    factor = velocityJI - velocityIJ;
                 }
+            }
 
             // handle boundary face
             if (is->boundary())
+            {
+                // center of face in global coordinates
+                Dune::FieldVector<ct,dimworld> faceglobal = is->intersectionGlobal().global(facelocal);
+
+                //get boundary type
+                BoundaryConditions::Flags bctype = this->transproblem.bctype(faceglobal, *it, facelocalDim);
+
+                if (bctype == BoundaryConditions::dirichlet)
                 {
-                    // center of face in global coordinates
-                    Dune::FieldVector<ct,dimworld> faceglobal = is->intersectionGlobal().global(facelocal);
 
-                    //get boundary type
-                    BoundaryConditions::Flags bctype = this->transproblem.bctype(faceglobal, *it, facelocalDim);
+                    double velocityJI = std::max(-(this->transproblem.variables.vTotal(*it, numberInSelf)*integrationOuterNormal/volume), 0.0);
 
-                    if (bctype == BoundaryConditions::dirichlet)
-                        {
-
-                            double velocityJI = std::max(-(this->transproblem.variables.vTotal(*it, numberInSelf)*integrationOuterNormal/volume), 0.0);
-
-                            factor = velocityJI - velocityIJ;
-                        }
-                    else
-                        {
-                            //double J = this->transproblem.J(faceglobal, *it, facelocalDim);
-                            //factor = J*faceVol;
-                            factor = 0;
-                        }
+                    factor = velocityJI - velocityIJ;
                 }
+                else
+                {
+                    //double J = this->transproblem.J(faceglobal, *it, facelocalDim);
+                    //factor = J*faceVol;
+                    factor = 0;
+                }
+            }
 
             // add to update vector
             updateVec[indexi] += factor;
@@ -353,13 +353,13 @@ template<class G, class RT, class VC> void DeprecatedFVTransport<G, RT, VC>::Cal
                 // CAREFUL: works only for axiparallel grids
                 for (int k = 0; k < dim; k++)
                     if (faceglobal[k] - global[k] > 0.5*dist[numberInSelf])
-                        {
-                            location[2*k] = numberInSelf;
-                        }
+                    {
+                        location[2*k] = numberInSelf;
+                    }
                     else if (faceglobal[k] - global[k] < -0.5*dist[numberInSelf])
-                        {
-                            location[2*k + 1] = numberInSelf;
-                        }
+                    {
+                        location[2*k + 1] = numberInSelf;
+                    }
             }
         } // end all intersections
 

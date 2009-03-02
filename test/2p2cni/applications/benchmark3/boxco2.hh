@@ -144,10 +144,10 @@ public:
         this->localJacobian().outMobilityN = vtkMultiWriter->template createField<RT, 1>(this->size);
         this->localJacobian().outPhaseState = vtkMultiWriter->template createField<RT, 1>(this->size);
         if(this->problem.soil().readPropertiesFlag() == true)
-            {
-                this->problem.soil().readSoilProperties();
-                this->problem.soil().setSoilProperties();
-            }
+        {
+            this->problem.soil().readSoilProperties();
+            this->problem.soil().setSoilProperties();
+        }
         this->localJacobian().outPermeabilityXDir = vtkMultiWriter->template createField<RT, 1>(this->size);
         this->localJacobian().outPorosity = vtkMultiWriter->template createField<RT, 1>(this->size);
 
@@ -292,10 +292,10 @@ public:
         this->localJacobian().outMobilityN = vtkMultiWriter->template createField<RT, 1>(this->size);
         this->localJacobian().outPhaseState = vtkMultiWriter->template createField<RT, 1>(this->size);
         if(this->problem.soil().readPropertiesFlag() == true)
-            {
-                this->problem.soil().readSoilProperties();
-                this->problem.soil().setSoilProperties();
-            }
+        {
+            this->problem.soil().readSoilProperties();
+            this->problem.soil().setSoilProperties();
+        }
         this->localJacobian().outPermeabilityXDir = vtkMultiWriter->template createField<RT, 1>(this->size);
         this->localJacobian().outPorosity = vtkMultiWriter->template createField<RT, 1>(this->size);
 
@@ -310,83 +310,83 @@ public:
         importFromDGF<GV>(data, restartFileName, false);
 
         for (int i=0;i<size;i++)
+        {
+            for (int j=0;j<m;j++)
             {
-                for (int j=0;j<m;j++)
-                    {
-                        (*(this->u))[i][j]=data[i][j];
-                    }
-
-                // first try sequential coupling, function for mass correction of two-phase state
-                // will be added
-                if(this->problem.sequentialCoupling() == true)
-                    {
-                        if((*(this->u))[i][nComp] <= 1e-10)
-                            {
-                                // initialize variable phaseState
-                                this->localJacobian().sNDat[i].phaseState = waterPhase;
-                                // initialize variable oldPhaseState
-                                this->localJacobian().sNDat[i].oldPhaseState = waterPhase;
-                                (*(this->u))[i][nComp] = 0.0;
-                                this->localJacobian().sNDat[i].primVarSet = true;
-                            }
-                        else if((*(this->u))[i][nComp] >= 1-1e-10)
-                            {
-                                // initialize variable phaseState
-                                this->localJacobian().sNDat[i].phaseState = gasPhase;
-                                // initialize variable oldPhaseState
-                                this->localJacobian().sNDat[i].oldPhaseState = gasPhase;
-                                (*(this->u))[i][nComp] = 0.0;
-                                this->localJacobian().sNDat[i].primVarSet = true;
-                            }
-                        else if(this->localJacobian().sNDat[i].primVarSet == false)
-                            {
-                                // initialize variable phaseState
-                                this->localJacobian().sNDat[i].phaseState = bothPhases;
-                                // initialize variable oldPhaseState
-                                this->localJacobian().sNDat[i].oldPhaseState = bothPhases;
-                            }
-                    }
+                (*(this->u))[i][j]=data[i][j];
             }
+
+            // first try sequential coupling, function for mass correction of two-phase state
+            // will be added
+            if(this->problem.sequentialCoupling() == true)
+            {
+                if((*(this->u))[i][nComp] <= 1e-10)
+                {
+                    // initialize variable phaseState
+                    this->localJacobian().sNDat[i].phaseState = waterPhase;
+                    // initialize variable oldPhaseState
+                    this->localJacobian().sNDat[i].oldPhaseState = waterPhase;
+                    (*(this->u))[i][nComp] = 0.0;
+                    this->localJacobian().sNDat[i].primVarSet = true;
+                }
+                else if((*(this->u))[i][nComp] >= 1-1e-10)
+                {
+                    // initialize variable phaseState
+                    this->localJacobian().sNDat[i].phaseState = gasPhase;
+                    // initialize variable oldPhaseState
+                    this->localJacobian().sNDat[i].oldPhaseState = gasPhase;
+                    (*(this->u))[i][nComp] = 0.0;
+                    this->localJacobian().sNDat[i].primVarSet = true;
+                }
+                else if(this->localJacobian().sNDat[i].primVarSet == false)
+                {
+                    // initialize variable phaseState
+                    this->localJacobian().sNDat[i].phaseState = bothPhases;
+                    // initialize variable oldPhaseState
+                    this->localJacobian().sNDat[i].oldPhaseState = bothPhases;
+                }
+            }
+        }
 
         // iterate through leaf grid an evaluate c0 at cell center
         Iterator eendit = gridview.template end<0>();
 
         if(this->problem.sequentialCoupling() == false)
-            {
-                for (Iterator it = gridview.template begin<0>(); it
-                         != eendit; ++it) {
-                    // get geometry type
-                    Dune::GeometryType gt = it->geometry().type();
+        {
+            for (Iterator it = gridview.template begin<0>(); it
+                     != eendit; ++it) {
+                // get geometry type
+                Dune::GeometryType gt = it->geometry().type();
 
-                    // get entity
-                    const Entity& entity = *it;
+                // get entity
+                const Entity& entity = *it;
 
-                    this->localJacobian().fvGeom.update(entity);
+                this->localJacobian().fvGeom.update(entity);
 
-                    const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type
-                        &sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(gt,1);
-                    int size = sfs.size();
+                const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type
+                    &sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(gt,1);
+                int size = sfs.size();
 
-                    for (int i = 0; i < size; i++) {
-                        // get cell center in reference element
-                        const Dune::FieldVector<DT,dim>&local = sfs[i].position();
+                for (int i = 0; i < size; i++) {
+                    // get cell center in reference element
+                    const Dune::FieldVector<DT,dim>&local = sfs[i].position();
 
-                        // get global coordinate of cell center
-                        Dune::FieldVector<DT,dimworld> global = it->geometry().global(local);
+                    // get global coordinate of cell center
+                    Dune::FieldVector<DT,dimworld> global = it->geometry().global(local);
 
-                        int globalId = this->vertexmapper.template map<dim>(entity,
-                                                                            sfs[i].entity());
+                    int globalId = this->vertexmapper.template map<dim>(entity,
+                                                                        sfs[i].entity());
 
-                        // initialize variable phaseState
-                        this->localJacobian().sNDat[globalId].phaseState = data[globalId][m];
-                        // initialize variable oldPhaseState
-                        this->localJacobian().sNDat[globalId].oldPhaseState = data[globalId][m];
+                    // initialize variable phaseState
+                    this->localJacobian().sNDat[globalId].phaseState = data[globalId][m];
+                    // initialize variable oldPhaseState
+                    this->localJacobian().sNDat[globalId].oldPhaseState = data[globalId][m];
 
-                    }
-                    this->localJacobian().clearVisited();
-                    this->localJacobian().initiateStaticData(entity);
                 }
+                this->localJacobian().clearVisited();
+                this->localJacobian().initiateStaticData(entity);
             }
+        }
 
         // set Dirichlet boundary conditions
         for (Iterator it = gridview.template begin<0>(); it    != eendit; ++it) {
@@ -557,19 +557,19 @@ newtonMethod.execute();
         */
         bool newtonLoop = false;
         while(!newtonLoop)
-            {
-                nextDt = this->localJacobian().getDt();
-                NewtonMethod newton(*this);
-                NewtonController newtonCtl;
-                newtonLoop = newton.execute(*this, newtonCtl);
-                nextDt = newtonCtl.suggestTimeStepSize(nextDt);
-                this->localJacobian().setDt(nextDt);
-                if(!newtonLoop){
-                    *this->u = *this->uOldTimeStep;
-                    this->localJacobian().resetPhaseState();
-                }
-                std::cout<<"timeStep resized to: "<<nextDt<<std::endl;
+        {
+            nextDt = this->localJacobian().getDt();
+            NewtonMethod newton(*this);
+            NewtonController newtonCtl;
+            newtonLoop = newton.execute(*this, newtonCtl);
+            nextDt = newtonCtl.suggestTimeStepSize(nextDt);
+            this->localJacobian().setDt(nextDt);
+            if(!newtonLoop){
+                *this->u = *this->uOldTimeStep;
+                this->localJacobian().resetPhaseState();
             }
+            std::cout<<"timeStep resized to: "<<nextDt<<std::endl;
+        }
 
         double massNPhase(0);
         double mass(0);

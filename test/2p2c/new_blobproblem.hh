@@ -419,10 +419,10 @@ public:
         values[switchIdx] = 0.0;
 
         if (globalPos[0] < eps_)
-            {
-                values[pressureIdx] = 1e5 + 50; // used to be 2e5, but then diffusion is negligible
-                values[switchIdx] = 0;  // may be Sn, Xaw or Xwn!!
-            }
+        {
+            values[pressureIdx] = 1e5 + 50; // used to be 2e5, but then diffusion is negligible
+            values[switchIdx] = 0;  // may be Sn, Xaw or Xwn!!
+        }
     }
 
     /////////////////////////////
@@ -474,9 +474,9 @@ public:
         values[switchIdx] = 0;
 
         if (isInsideBlob_(globalPos))
-            {
-                values[switchIdx] = 0.1;
-            }
+        {
+            values[switchIdx] = 0.1;
+        }
     }
 
     int initialPhaseState(const Vertex       &vert,

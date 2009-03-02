@@ -50,10 +50,10 @@ public:
         const double RU = 8.31451;          // univ. gas constant [J/(mol K)]
 
         if(temperature < 273.15 || temperature > 500.)
-            {
-                DUNE_THROW(Dune::NumericalProblem,
-                           "ConstrelAir: Temperature " << temperature << " out of range at " << __FILE__ << ":" << __LINE__);
-            }
+        {
+            DUNE_THROW(Dune::NumericalProblem,
+                       "ConstrelAir: Temperature " << temperature << " out of range at " << __FILE__ << ":" << __LINE__);
+        }
         else if (pg < eps_ || pg > 1.0E8) {
             DUNE_THROW(Dune::NumericalProblem,
                        "ConstrelAir: Pressure " << pg << " out of range at " << __FILE__ << ":" << __LINE__);
@@ -71,10 +71,10 @@ public:
         double r;
 
         if(temperature < 273.15 || temperature > 500.)
-            {
-                DUNE_THROW(Dune::NumericalProblem,
-                           "ConstrelAir: Temperature " << temperature << " out of range at " << __FILE__ << ":" << __LINE__);
-            }
+        {
+            DUNE_THROW(Dune::NumericalProblem,
+                       "ConstrelAir: Temperature " << temperature << " out of range at " << __FILE__ << ":" << __LINE__);
+        }
 
         r = 1.496*1.E-6*pow(temperature,1.5)/(temperature+120.);
 
@@ -111,10 +111,10 @@ public:
 
         theta=temperature/Temp_c1;
         if(theta < 0.4 || theta > 1.05)
-            {
-                DUNE_THROW(Dune::NumericalProblem,
-                           "ConstrelAir: Theta " << theta << " out of range at " << __FILE__ << ":" << __LINE__);
-            }
+        {
+            DUNE_THROW(Dune::NumericalProblem,
+                       "ConstrelAir: Theta " << theta << " out of range at " << __FILE__ << ":" << __LINE__);
+        }
         //        if(theta<0.4)    theta=0.4;     /* ACHTUNG Regularisierung */
         //        if(theta>1.05)    theta=1.05;    /* ACHTUNG Regularisierung */
 
@@ -165,10 +165,10 @@ public:
         double pwsat;
 
         if(temperature < 274.15 || temperature > 373.15)
-            {
-                DUNE_THROW(Dune::NumericalProblem,
-                           "ConstrelAir: Temperature " << temperature << " out of range at " << __FILE__ << ":" << __LINE__);
-            }
+        {
+            DUNE_THROW(Dune::NumericalProblem,
+                       "ConstrelAir: Temperature " << temperature << " out of range at " << __FILE__ << ":" << __LINE__);
+        }
         //        if (temperature < 274.15) temperature = 274.15; /* ACHTUNG Regularisierung */
         //        if (temperature > 373.15) temperature = 373.15; /* ACHTUNG Regularisierung */
 
@@ -187,10 +187,10 @@ public:
         double pwg;
 
         if(temperature < 250. || temperature > 500.)
-            {
-                DUNE_THROW(Dune::NumericalProblem,
-                           "ConstrelAir: Temperature " << temperature << " out of range at " << __FILE__ << ":" << __LINE__);
-            }
+        {
+            DUNE_THROW(Dune::NumericalProblem,
+                       "ConstrelAir: Temperature " << temperature << " out of range at " << __FILE__ << ":" << __LINE__);
+        }
         else if (pg < eps_ || pg > 1.0E8) {
             DUNE_THROW(Dune::NumericalProblem,
                        "ConstrelAir: Pressure " << pg << " out of range at " << __FILE__ << ":" << __LINE__);
@@ -201,9 +201,9 @@ public:
         //        if(pg<1.E-8)  pg=1.E-8;       /* ACHTUNG Regularisierung */
 
         if (Sw<eps_)
-            {
-                pwg=Xwg*pg;   /* pwgS0 */
-            }
+        {
+            pwg=Xwg*pg;   /* pwgS0 */
+        }
         else pwg=pwsat(temperature);   /* pwgS */
 
         return(pwg);
@@ -216,10 +216,10 @@ public:
         double Fp0,xi,eta_xi,r;
 
         if(temperature < 250. || temperature > 500.)
-            {
-                DUNE_THROW(Dune::NumericalProblem,
-                           "ConstrelAir: Temperature " << temperature << " out of range at " << __FILE__ << ":" << __LINE__);
-            }
+        {
+            DUNE_THROW(Dune::NumericalProblem,
+                       "ConstrelAir: Temperature " << temperature << " out of range at " << __FILE__ << ":" << __LINE__);
+        }
 
         Tc = 647.3;            /* [K] */
         Pc = 221.2;            /* [bar] */
@@ -261,10 +261,10 @@ public:
         int i;
 
         if(temperature < 250. || temperature > 500.)
-            {
-                DUNE_THROW(Dune::NumericalProblem,
-                           "ConstrelAir: Temperature " << temperature << " out of range at " << __FILE__ << ":" << __LINE__);
-            }
+        {
+            DUNE_THROW(Dune::NumericalProblem,
+                       "ConstrelAir: Temperature " << temperature << " out of range at " << __FILE__ << ":" << __LINE__);
+        }
         else if (pw < eps_ || pw > 1.0E8) {
             DUNE_THROW(Dune::NumericalProblem,
                        "ConstrelAir: Pressure " << pw << " out of range at " << __FILE__ << ":" << __LINE__);
@@ -329,9 +329,9 @@ public:
         SNUM=0.;
 
         for (i=1;i<=10;++i)
-            {
-                SNUM=SNUM+(i-2)*A[i]*pow(TKR,(i-1));
-            }
+        {
+            SNUM=SNUM+(i-2)*A[i]*pow(TKR,(i-1));
+        }
 
         PRT1=A[11]*(Z*(17*(Z/29-Y/12)+5*TKR*YD/12)+SA[3]*TKR
                     -(SA[2]-1)*TKR*Y*YD)/pow(Z,(5/17));
@@ -381,10 +381,10 @@ public:
         double b,z;
 
         if(temperature < 270. || temperature > 500.)
-            {
-                DUNE_THROW(Dune::NumericalProblem,
-                           "ConstrelAir: Temperature " << temperature << " out of range at " << __FILE__ << ":" << __LINE__);
-            }
+        {
+            DUNE_THROW(Dune::NumericalProblem,
+                       "ConstrelAir: Temperature " << temperature << " out of range at " << __FILE__ << ":" << __LINE__);
+        }
         else if (p_gw < eps_ || p_gw > 1.0E8) {
             DUNE_THROW(Dune::NumericalProblem,
                        "ConstrelAir: Pressure " << p_gw << " out of range at " << __FILE__ << ":" << __LINE__);
@@ -468,39 +468,39 @@ public:
         SUM=EL1*(TK/PK);
 
         for (j=1;j<=5;++j)
+        {
+            SC=0.;
+            for (k=1;k<=3;++k)
             {
-                SC=0.;
-                for (k=1;k<=3;++k)
-                    {
-                        b=B[k-1][j-1];
-                        z=Z[k-1][j-1];
-                        SC=b*pow(X,z)+SC;
-                    }
-                d__1=(double) (j-1);
-                SUM=SUM-j*pow(PK,d__1)*SC;
+                b=B[k-1][j-1];
+                z=Z[k-1][j-1];
+                SC=b*pow(X,z)+SC;
             }
+            d__1=(double) (j-1);
+            SUM=SUM-j*pow(PK,d__1)*SC;
+        }
 
         S[0]=1/(pow(PK,4)+eps_) + SB[1]*pow(X,14);
         S[1]=1/(pow(PK,5)+eps_)+ SB[2]*pow(X,19);
         S[2]=1/(pow(PK,6)+eps_) + SB[3]*pow(X,54) + SB[4]*pow(X,27);
 
         for (j=6;j<=8;++j)
+        {
+            S2=0.;
+            for (k=1;k<=3;++k)
             {
-                S2=0.;
-                for (k=1;k<=3;++k)
-                    {
-                        S2=S2+B[k-1][j-1]*pow(X,(Z[k-1][j-1]));
-                    }
-                d__1= (double) (1-j);
-                SUM=SUM-(S2/pow(S[j-6],2))*(j-2)*pow(PK,d__1);
+                S2=S2+B[k-1][j-1]*pow(X,(Z[k-1][j-1]));
             }
+            d__1= (double) (1-j);
+            SUM=SUM-(S2/pow(S[j-6],2))*(j-2)*pow(PK,d__1);
+        }
         S2=0.;
 
         for (k=1;k<=7;++k)
-            {
-                d__1= (double) (k-1);
-                S2=C[k-1]*pow(X,d__1)+S2;
-            }
+        {
+            d__1= (double) (k-1);
+            S2=C[k-1]*pow(X,d__1)+S2;
+        }
 
         SUM=SUM+11*pow((PK/BEL),10)*S2;
         v=SUM*0.00317;          /* specific volume */
@@ -510,44 +510,44 @@ public:
         HK=A[0]*TK;
 
         for (k=1;k<=5;++k)
-            {
-                d__1= (double) (k-1);
-                HK=HK-A[k]*(k-2)*pow(TK,d__1);
-            }
+        {
+            d__1= (double) (k-1);
+            HK=HK-A[k]*(k-2)*pow(TK,d__1);
+        }
 
         for (j=1;j<=5;++j)
+        {
+            S2=0.;
+            for (k=1;k<=3;++k)
             {
-                S2=0.;
-                for (k=1;k<=3;++k)
-                    {
-                        S2=S2+B[k-1][j-1]*(1+Z[k-1][j-1]*SB[0]*TK)*pow(X,(Z[k-1][j-1]));
-                    }
-                d__1= (double) j;
-                HK=HK-pow(PK,d__1)*S2;
+                S2=S2+B[k-1][j-1]*(1+Z[k-1][j-1]*SB[0]*TK)*pow(X,(Z[k-1][j-1]));
             }
+            d__1= (double) j;
+            HK=HK-pow(PK,d__1)*S2;
+        }
 
         R[0]=14*SB[1]*pow(X,14);
         R[1]=19*SB[2]*pow(X,19);
         R[2]=54*SB[3]*pow(X,54)+27*SB[4]*pow(X,27);
 
         for (j=6;j<=8;++j)
+        {
+            S2=0.;
+            for (k=1;k<=3;++k)
             {
-                S2=0.;
-                for (k=1;k<=3;++k)
-                    {
-                        S2=S2+B[k-1][j-1]*pow(X,(Z[k-1][j-1]))*(1/S[j-6])*
-                            (1+(Z[k-1][j-1]*SB[0]*TK-SB[0]*TK*R[j-6])/S[j-6]);
-                    }
-                HK=HK-S2;
+                S2=S2+B[k-1][j-1]*pow(X,(Z[k-1][j-1]))*(1/S[j-6])*
+                    (1+(Z[k-1][j-1]*SB[0]*TK-SB[0]*TK*R[j-6])/S[j-6]);
             }
+            HK=HK-S2;
+        }
 
         S2=0.;
 
         for (k=1;k<=7;++k)
-            {
-                d__1= (double) (k-1);
-                S2=S2+(1+TK*(10*(BELP/BEL)+(k-1)*SB[0]))*C[k-1]*pow(X,d__1);
-            }
+        {
+            d__1= (double) (k-1);
+            S2=S2+(1+TK*(10*(BELP/BEL)+(k-1)*SB[0]))*C[k-1]*pow(X,d__1);
+        }
 
         HK=HK+PK*pow((PK/BEL),10)*S2;
 
@@ -637,10 +637,10 @@ public:
         double wicht;
 
         if(temperature < 250. || temperature > 500.)
-            {
-                DUNE_THROW(Dune::NumericalProblem,
-                           "ConstrelAir: Temperature " << temperature << " out of range at " << __FILE__ << ":" << __LINE__);
-            }
+        {
+            DUNE_THROW(Dune::NumericalProblem,
+                       "ConstrelAir: Temperature " << temperature << " out of range at " << __FILE__ << ":" << __LINE__);
+        }
         else if (p_gw < eps_ || p_gw > 1.0E8) {
             DUNE_THROW(Dune::NumericalProblem,
                        "ConstrelAir: Pressure " << p_gw << " out of range at " << __FILE__ << ":" << __LINE__);
@@ -656,128 +656,128 @@ public:
 
         if (Sw > eps_) crit_I=1;   /* Nassdampf ! */
         else
+        {
+            /* Ermittlung von T_sat(p_gw) */
+            tsa=temperature;
+            epsilon=1.E-2;
+            for(i=1;i<100;++i)
             {
-                /* Ermittlung von T_sat(p_gw) */
-                tsa=temperature;
-                epsilon=1.E-2;
-                for(i=1;i<100;++i)
-                    {
-                        g=pwsat(tsa)-p_gw;
-                        g_strich=(pwsat(tsa+epsilon)-pwsat(tsa))/epsilon;
-                        if (g_strich <= epsilon) g_strich = epsilon;
-                        tsa_neu=tsa-g/g_strich;
-                        a=tsa-tsa_neu;
-                        if (a<0) a=-a;
-                        if (a<epsilon)
-                            {
-                                T_sat=tsa;
-                                break;
-                            }
-                        tsa=tsa_neu;
-                    }
-
-
-                if (Celsius/(T_sat-273.15)<1.8) crit_I=2;   /* leicht ueberhitzt */
-                else crit_I=3;   /* stark ueberhitzt */
+                g=pwsat(tsa)-p_gw;
+                g_strich=(pwsat(tsa+epsilon)-pwsat(tsa))/epsilon;
+                if (g_strich <= epsilon) g_strich = epsilon;
+                tsa_neu=tsa-g/g_strich;
+                a=tsa-tsa_neu;
+                if (a<0) a=-a;
+                if (a<epsilon)
+                {
+                    T_sat=tsa;
+                    break;
+                }
+                tsa=tsa_neu;
             }
+
+
+            if (Celsius/(T_sat-273.15)<1.8) crit_I=2;   /* leicht ueberhitzt */
+            else crit_I=3;   /* stark ueberhitzt */
+        }
 
         switch(crit_I)
+        {
+        case 1:
             {
-            case 1:
+                h=hsat(temperature);
+
+                //      if(isnan(h)){
+                //          sprintf(buf,"isnan enth_gw \n");
+                //      h = 0.0;
+                //      }
+
+                return (h);
+            }
+        case 2:
+            {
+                /* Abfrage des Interpolationsbereichs */
+                if (p_gw<=1.E5) crit_II=1;
+                if ((p_gw>1.E5)&&(p_gw<=5.E5)) crit_II=2;
+                if ((p_gw>5.E5)&&(p_gw<=25.E5)) crit_II=3;
+                if ((p_gw>25.E5)&&(p_gw<=50.E5)) crit_II=4;
+                if ((p_gw>50.E5)&&(p_gw<=100.E5)) crit_II=5;
+
+                switch(crit_II)
                 {
-                    h=hsat(temperature);
+                case 1:
+                    {
+                        h0=hsat(T_sat);
+                        h=h0-1.759*(T_sat-temperature);
+                        wicht=(1.E5-p_gw)/1.E5;
+                        DT_sat=temperature-T_sat;
+                        Dh1=h_supst1(DT_sat+99.632)-h_supst1(99.632);
+                        h=h*wicht+(1-wicht)*(h0+Dh1);
 
-                    //      if(isnan(h)){
-                    //          sprintf(buf,"isnan enth_gw \n");
-                    //      h = 0.0;
-                    //      }
+                        return (h);
+                    }
+                case 2:
+                    {
+                        h0=hsat(T_sat);
+                        DT_sat=temperature-T_sat;
+                        Dh1=h_supst1(DT_sat+99.632)-h_supst1(99.632);
+                        Dh2=h_supst5(DT_sat+151.866)-h_supst5(151.866);
+                        Dh=(T_sat-273.15-99.632)*Dh2/52.231
+                            + (151.866-(T_sat-273.15))*Dh1/52.231;
+                        h=h0+Dh;
 
-                    return (h);
-                }
-            case 2:
-                {
-                    /* Abfrage des Interpolationsbereichs */
-                    if (p_gw<=1.E5) crit_II=1;
-                    if ((p_gw>1.E5)&&(p_gw<=5.E5)) crit_II=2;
-                    if ((p_gw>5.E5)&&(p_gw<=25.E5)) crit_II=3;
-                    if ((p_gw>25.E5)&&(p_gw<=50.E5)) crit_II=4;
-                    if ((p_gw>50.E5)&&(p_gw<=100.E5)) crit_II=5;
+                        return (h);
+                    }
+                case 3:
+                    {
+                        h0=hsat(T_sat);
+                        DT_sat=temperature-T_sat;
+                        Dh1=h_supst5(DT_sat+151.866)-h_supst5(151.866);
+                        Dh2=h_supst25(DT_sat+223.989)-h_supst25(223.989);
+                        Dh=(T_sat-273.15-151.866)*Dh2/72.123
+                            + (223.989-(T_sat-273.15))*Dh1/72.123;
+                        h=h0+Dh;
 
-                    switch(crit_II)
-                        {
-                        case 1:
-                            {
-                                h0=hsat(T_sat);
-                                h=h0-1.759*(T_sat-temperature);
-                                wicht=(1.E5-p_gw)/1.E5;
-                                DT_sat=temperature-T_sat;
-                                Dh1=h_supst1(DT_sat+99.632)-h_supst1(99.632);
-                                h=h*wicht+(1-wicht)*(h0+Dh1);
+                        return (h);
+                    }
+                case 4:
+                    {
+                        h0=hsat(T_sat);
+                        DT_sat=temperature-T_sat;
+                        Dh1=h_supst25(DT_sat+223.989)-h_supst25(223.989);
+                        Dh2=h_supst50(DT_sat+263.977)-h_supst50(263.977);
+                        Dh=(T_sat-273.15-223.989)*Dh2/39.988
+                            + (263.977-(T_sat-273.15))*Dh1/39.988;
+                        h=h0+Dh;
 
-                                return (h);
-                            }
-                        case 2:
-                            {
-                                h0=hsat(T_sat);
-                                DT_sat=temperature-T_sat;
-                                Dh1=h_supst1(DT_sat+99.632)-h_supst1(99.632);
-                                Dh2=h_supst5(DT_sat+151.866)-h_supst5(151.866);
-                                Dh=(T_sat-273.15-99.632)*Dh2/52.231
-                                    + (151.866-(T_sat-273.15))*Dh1/52.231;
-                                h=h0+Dh;
+                        return (h);
+                    }
+                case 5:
+                    {
+                        h0=hsat(T_sat);
+                        DT_sat=temperature-T_sat;
+                        Dh1=h_supst50(DT_sat+263.977)-h_supst50(263.977);
+                        Dh2=h_supst100(DT_sat+311.031)-h_supst100(311.031);
+                        Dh=(T_sat-273.15-263.977)*Dh2/47.054
+                            + (311.031-(T_sat-273.15))*Dh1/47.054;
+                        h=h0+Dh;
 
-                                return (h);
-                            }
-                        case 3:
-                            {
-                                h0=hsat(T_sat);
-                                DT_sat=temperature-T_sat;
-                                Dh1=h_supst5(DT_sat+151.866)-h_supst5(151.866);
-                                Dh2=h_supst25(DT_sat+223.989)-h_supst25(223.989);
-                                Dh=(T_sat-273.15-151.866)*Dh2/72.123
-                                    + (223.989-(T_sat-273.15))*Dh1/72.123;
-                                h=h0+Dh;
-
-                                return (h);
-                            }
-                        case 4:
-                            {
-                                h0=hsat(T_sat);
-                                DT_sat=temperature-T_sat;
-                                Dh1=h_supst25(DT_sat+223.989)-h_supst25(223.989);
-                                Dh2=h_supst50(DT_sat+263.977)-h_supst50(263.977);
-                                Dh=(T_sat-273.15-223.989)*Dh2/39.988
-                                    + (263.977-(T_sat-273.15))*Dh1/39.988;
-                                h=h0+Dh;
-
-                                return (h);
-                            }
-                        case 5:
-                            {
-                                h0=hsat(T_sat);
-                                DT_sat=temperature-T_sat;
-                                Dh1=h_supst50(DT_sat+263.977)-h_supst50(263.977);
-                                Dh2=h_supst100(DT_sat+311.031)-h_supst100(311.031);
-                                Dh=(T_sat-273.15-263.977)*Dh2/47.054
-                                    + (311.031-(T_sat-273.15))*Dh1/47.054;
-                                h=h0+Dh;
-
-                                return (h);
-                            }
-                        }
-                }
-            case 3:
-                {
-                    h=hsteam(p_gw,temperature);
-
-                    //      if(isnan(h)){
-                    //          sprintf(buf,"isnan enth_gw \n");
-                    //      h = 0.0;
-                    //      }
-
-                    return (h);
+                        return (h);
+                    }
                 }
             }
+        case 3:
+            {
+                h=hsteam(p_gw,temperature);
+
+                //      if(isnan(h)){
+                //          sprintf(buf,"isnan enth_gw \n");
+                //      h = 0.0;
+                //      }
+
+                return (h);
+            }
+        }
         return(1);
     }
 
@@ -793,10 +793,10 @@ public:
         double Xag = 1.0 - Xwg;
 
         if(temperature < 250. || temperature > 500.)
-            {
-                DUNE_THROW(Dune::NumericalProblem,
-                           "ConstrelAir: Temperature " << temperature << " out of range at " << __FILE__ << ":" << __LINE__);
-            }
+        {
+            DUNE_THROW(Dune::NumericalProblem,
+                       "ConstrelAir: Temperature " << temperature << " out of range at " << __FILE__ << ":" << __LINE__);
+        }
         else if (pg < eps_ || pg > 1.0E8) {
             DUNE_THROW(Dune::NumericalProblem,
                        "ConstrelAir: Pressure " << pg << " out of range at " << __FILE__ << ":" << __LINE__);

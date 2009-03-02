@@ -153,50 +153,50 @@ int main(int argc, char** argv)
         int maxIt = 10;
         int iter = 0;
         while (diff >toler)
-            {
-                iter++;
-                if (iter > maxIt) {
-                    std::cout << "Did not converge!" << std::endl;
-                    break;
-                }
-
-                PipeFlow< BCP, BCV, ICP, ICV, SST, PresType, Lmbd, LmbdLocal, GridType, MapperTypeCDim, MapGlobalNodeIDtoPipeNodeOnOutlineIndexType, VertexVectorOnLineType, VertexVectorOutLineType>
-                    pipeflow(nElem, &grid, &mapperCDim, &mapGlobalNodeIDtoPipeNodeOnlineIndex, &mapGlobalNodeIDtoPipeNodeOutlineIndex, &vertexVectorOnLine, &vertexVectorOutLine,
-                             pressurePorous, alphaEX, temp, density, kinematicViscosity, roughness, diameter, gravity );
-
-                pipeflow.timeLoop();
-
-                alphaEX = 1.0e-3/(WaterProp.density() * 9.81);
-                //            alphaEX = 0;
-                pressurePipe = pipeflow.pressure;
-
-                typedef DiffusionParameters<GridType, NumberType, MapGlobalNodeIDtoPipeNodeOnOutlineIndexType, VM, VertexVectorOnLineType> DiffusionParameters;
-                DiffusionParameters diffusionProblem(alphaEX, pressurePipe, &vertexVectorOnLine,
-                                                     mapGlobalNodeIDtoPipeNodeOnlineIndex, vertexmapper, WaterProp);
-
-                typedef Dune::LeafP1BoxDiffusion<GridType, NumberType, MapGlobalNodeIDtoPipeNodeOnOutlineIndexType, VM, VertexVectorOnLineType> Diffusion;
-                Diffusion diffusion(grid, diffusionProblem);
-
-                Dune::TimeLoop<GridType, Diffusion> timeloop(0, 1, 1, "box3d", 1);
-
-                timeloop.execute(diffusion);
-
-                pressurePorous = *(*diffusion);
-                pipeflow.alphaEX = alphaEX;
-
-                PresType difVec1 = pipeflow.pressure;
-                difVec1 -= oldPipePress;
-                double dif1 = difVec1.two_norm()/pipeflow.pressure.two_norm();
-                PresType difVec2 = *(*diffusion);
-                difVec2 -= oldPorousPress;
-                double dif2 = difVec2.two_norm()/(*(*diffusion)).two_norm();
-                diff = std::max(dif1, dif2);
-                std::cout << "diff1 = " << dif1 << ", dif2 = " << dif2 << std::endl;
-
-                oldPipePress = pipeflow.pressure;
-                oldPorousPress = *(*diffusion);
-
+        {
+            iter++;
+            if (iter > maxIt) {
+                std::cout << "Did not converge!" << std::endl;
+                break;
             }
+
+            PipeFlow< BCP, BCV, ICP, ICV, SST, PresType, Lmbd, LmbdLocal, GridType, MapperTypeCDim, MapGlobalNodeIDtoPipeNodeOnOutlineIndexType, VertexVectorOnLineType, VertexVectorOutLineType>
+                pipeflow(nElem, &grid, &mapperCDim, &mapGlobalNodeIDtoPipeNodeOnlineIndex, &mapGlobalNodeIDtoPipeNodeOutlineIndex, &vertexVectorOnLine, &vertexVectorOutLine,
+                         pressurePorous, alphaEX, temp, density, kinematicViscosity, roughness, diameter, gravity );
+
+            pipeflow.timeLoop();
+
+            alphaEX = 1.0e-3/(WaterProp.density() * 9.81);
+            //            alphaEX = 0;
+            pressurePipe = pipeflow.pressure;
+
+            typedef DiffusionParameters<GridType, NumberType, MapGlobalNodeIDtoPipeNodeOnOutlineIndexType, VM, VertexVectorOnLineType> DiffusionParameters;
+            DiffusionParameters diffusionProblem(alphaEX, pressurePipe, &vertexVectorOnLine,
+                                                 mapGlobalNodeIDtoPipeNodeOnlineIndex, vertexmapper, WaterProp);
+
+            typedef Dune::LeafP1BoxDiffusion<GridType, NumberType, MapGlobalNodeIDtoPipeNodeOnOutlineIndexType, VM, VertexVectorOnLineType> Diffusion;
+            Diffusion diffusion(grid, diffusionProblem);
+
+            Dune::TimeLoop<GridType, Diffusion> timeloop(0, 1, 1, "box3d", 1);
+
+            timeloop.execute(diffusion);
+
+            pressurePorous = *(*diffusion);
+            pipeflow.alphaEX = alphaEX;
+
+            PresType difVec1 = pipeflow.pressure;
+            difVec1 -= oldPipePress;
+            double dif1 = difVec1.two_norm()/pipeflow.pressure.two_norm();
+            PresType difVec2 = *(*diffusion);
+            difVec2 -= oldPorousPress;
+            double dif2 = difVec2.two_norm()/(*(*diffusion)).two_norm();
+            diff = std::max(dif1, dif2);
+            std::cout << "diff1 = " << dif1 << ", dif2 = " << dif2 << std::endl;
+
+            oldPipePress = pipeflow.pressure;
+            oldPorousPress = *(*diffusion);
+
+        }
 
         printvector(std::cout,oldPipePress,"PressurePipe","row",100,1,4);
         //        printvector(std::cout,pressurePorous,"PressurePorous","row",100,1,4);

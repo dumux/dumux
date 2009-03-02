@@ -205,34 +205,34 @@ public:
         IntersectionIterator isIt = curElement_().ileafbegin();
         const IntersectionIterator &endIt = curElement_().ileafend();
         for (; isIt != endIt; ++isIt)
+        {
+            // handle only faces on boundaries.
+            if (!isIt->boundary())
+                continue;
+
+            // Assemble the boundary for all verts of the
+            // current face
+            int faceIdx = isIt->numberInSelf();
+            int numFaceVerts = refElem.size(faceIdx, 1, dim);
+            for (int faceVertIdx = 0;
+                 faceVertIdx < numFaceVerts;
+                 ++faceVertIdx)
             {
-                // handle only faces on boundaries.
-                if (!isIt->boundary())
-                    continue;
+                int elemVertIdx = refElem.subEntity(faceIdx,
+                                                    1,
+                                                    faceVertIdx,
+                                                    dim);
+                int boundaryFaceIdx =
+                    curElementGeom_.boundaryFaceIndex(faceIdx,
+                                                      faceVertIdx);
 
-                // Assemble the boundary for all verts of the
-                // current face
-                int faceIdx = isIt->numberInSelf();
-                int numFaceVerts = refElem.size(faceIdx, 1, dim);
-                for (int faceVertIdx = 0;
-                     faceVertIdx < numFaceVerts;
-                     ++faceVertIdx)
-                    {
-                        int elemVertIdx = refElem.subEntity(faceIdx,
-                                                            1,
-                                                            faceVertIdx,
-                                                            dim);
-                        int boundaryFaceIdx =
-                            curElementGeom_.boundaryFaceIndex(faceIdx,
-                                                              faceVertIdx);
-
-                        // handle boundary conditions for a single
-                        // sub-control volume face
-                        applyBoundaryCondition_(isIt,
-                                                elemVertIdx,
-                                                boundaryFaceIdx);
-                    }
+                // handle boundary conditions for a single
+                // sub-control volume face
+                applyBoundaryCondition_(isIt,
+                                        elemVertIdx,
+                                        boundaryFaceIdx);
             }
+        }
     }
 
     // handle boundary conditions for a single
@@ -248,39 +248,39 @@ public:
         // loop over all primary variables to deal with mixed
         // boundary conditions
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+        {
+            if (this->bctype[scvIdx][eqIdx]
+                != BoundaryConditions::neumann)
             {
-                if (this->bctype[scvIdx][eqIdx]
-                    != BoundaryConditions::neumann)
-                    {
-                        // dirichlet boundary conditions are treated as
-                        // zeros on the right hand side
-                        this->b[scvIdx][eqIdx] = 0;
-                        continue;
-                    }
-
-                // if we are here we've got a neumann boundary condition
-
-                // make sure that we evaluate call the problem's
-                // neumann() method exactly once if
-                if (!wasEvaluated)
-                    {
-                        // make sure that we only evaluate
-                        // the neumann fluxes once
-                        wasEvaluated = true;
-
-                        problem_.neumann(values,
-                                         curElement_(),
-                                         curElementGeom_,
-                                         isIt,
-                                         scvIdx,
-                                         boundaryFaceIdx);
-                        // TODO (?): multiple integration
-                        // points
-                        values *= curElementGeom_.boundaryFace[boundaryFaceIdx].area;
-                    }
-
-                this->b[scvIdx][eqIdx] += values[eqIdx];
+                // dirichlet boundary conditions are treated as
+                // zeros on the right hand side
+                this->b[scvIdx][eqIdx] = 0;
+                continue;
             }
+
+            // if we are here we've got a neumann boundary condition
+
+            // make sure that we evaluate call the problem's
+            // neumann() method exactly once if
+            if (!wasEvaluated)
+            {
+                // make sure that we only evaluate
+                // the neumann fluxes once
+                wasEvaluated = true;
+
+                problem_.neumann(values,
+                                 curElement_(),
+                                 curElementGeom_,
+                                 isIt,
+                                 scvIdx,
+                                 boundaryFaceIdx);
+                // TODO (?): multiple integration
+                // points
+                values *= curElementGeom_.boundaryFace[boundaryFaceIdx].area;
+            }
+
+            this->b[scvIdx][eqIdx] += values[eqIdx];
+        }
     }
 
     /*!
@@ -297,45 +297,45 @@ public:
 
         // evaluate the local rate
         for (int i=0; i < curElementGeom_.numVertices; i++)
-            {
-                SolutionVector massContrib(0), tmp(0);
+        {
+            SolutionVector massContrib(0), tmp(0);
 
-                // mass balance within the element. this is the
-                // $\frac{m}{\partial t}$ term if using implicit
-                // euler as time discretization.
-                //
-                // TODO (?): we might need a more explicit way for
-                // doing the time discretization...
-                this->asImp_()->computeStorage(massContrib, i, false);
-                this->asImp_()->computeStorage(tmp, i, true);
+            // mass balance within the element. this is the
+            // $\frac{m}{\partial t}$ term if using implicit
+            // euler as time discretization.
+            //
+            // TODO (?): we might need a more explicit way for
+            // doing the time discretization...
+            this->asImp_()->computeStorage(massContrib, i, false);
+            this->asImp_()->computeStorage(tmp, i, true);
 
-                massContrib -= tmp;
-                massContrib *= curElementGeom_.subContVol[i].volume/problem_.timeStepSize();
-                residual[i] += massContrib;
+            massContrib -= tmp;
+            massContrib *= curElementGeom_.subContVol[i].volume/problem_.timeStepSize();
+            residual[i] += massContrib;
 
-                // subtract the source term from the local rate
-                SolutionVector source;
-                this->asImp_()->computeSource(source, i);
-                source *= curElementGeom_.subContVol[i].volume;
-                residual[i] -= source;
-            }
+            // subtract the source term from the local rate
+            SolutionVector source;
+            this->asImp_()->computeSource(source, i);
+            source *= curElementGeom_.subContVol[i].volume;
+            residual[i] -= source;
+        }
 
         // calculate the mass flux over the faces and subtract
         // it from the local rates
         for (int k = 0; k < curElementGeom_.numEdges; k++)
-            {
-                int i = curElementGeom_.subContVolFace[k].i;
-                int j = curElementGeom_.subContVolFace[k].j;
+        {
+            int i = curElementGeom_.subContVolFace[k].i;
+            int j = curElementGeom_.subContVolFace[k].j;
 
-                SolutionVector flux;
-                this->asImp_()->computeFlux(flux, k);
+            SolutionVector flux;
+            this->asImp_()->computeFlux(flux, k);
 
-                // subtract fluxes from the local mass rates of
-                // the respective sub control volume adjacent to
-                // the face.
-                residual[i] -= flux;
-                residual[j] += flux;
-            }
+            // subtract fluxes from the local mass rates of
+            // the respective sub control volume adjacent to
+            // the face.
+            residual[i] -= flux;
+            residual[j] += flux;
+        }
 
         if (withBoundary) {
             assembleBoundaryCondition(this->curElement_());
@@ -443,48 +443,48 @@ private:
         IntersectionIterator isIt = curElement_().ileafbegin();
         const IntersectionIterator &endIt = curElement_().ileafend();
         for (; isIt != endIt; ++isIt)
+        {
+            // Ignore non- boundary faces.
+            if (!isIt->boundary())
+                continue;
+
+            // Set the bctype for all vertices of the face
+            int faceIdx = isIt->numberInSelf();
+            int numFaceVerts = refElem.size(faceIdx, 1, dim);
+            for (int faceVertIdx = 0;
+                 faceVertIdx < numFaceVerts;
+                 faceVertIdx++)
             {
-                // Ignore non- boundary faces.
-                if (!isIt->boundary())
-                    continue;
+                int elemVertIdx = refElem.subEntity(faceIdx,
+                                                    1,
+                                                    faceVertIdx,
+                                                    dim);
+                int boundaryFaceIdx =
+                    curElementGeom_.boundaryFaceIndex(faceIdx,
+                                                      faceVertIdx);
 
-                // Set the bctype for all vertices of the face
-                int faceIdx = isIt->numberInSelf();
-                int numFaceVerts = refElem.size(faceIdx, 1, dim);
-                for (int faceVertIdx = 0;
-                     faceVertIdx < numFaceVerts;
-                     faceVertIdx++)
+                // set the boundary types
+                BoundaryTypeVector tmp;
+                problem_.boundaryTypes(tmp,
+                                       curElement_(),
+                                       curFvElementGeometry(),
+                                       isIt,
+                                       elemVertIdx,
+                                       boundaryFaceIdx);
+
+                // copy boundary type to the bctype array.
+                for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {
+                    // make sure that dirichlet boundaries have
+                    // priority over neumann ones
+                    if (this->bctype[elemVertIdx][eqIdx]
+                        == BoundaryConditions::dirichlet)
                     {
-                        int elemVertIdx = refElem.subEntity(faceIdx,
-                                                            1,
-                                                            faceVertIdx,
-                                                            dim);
-                        int boundaryFaceIdx =
-                            curElementGeom_.boundaryFaceIndex(faceIdx,
-                                                              faceVertIdx);
-
-                        // set the boundary types
-                        BoundaryTypeVector tmp;
-                        problem_.boundaryTypes(tmp,
-                                               curElement_(),
-                                               curFvElementGeometry(),
-                                               isIt,
-                                               elemVertIdx,
-                                               boundaryFaceIdx);
-
-                        // copy boundary type to the bctype array.
-                        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {
-                            // make sure that dirichlet boundaries have
-                            // priority over neumann ones
-                            if (this->bctype[elemVertIdx][eqIdx]
-                                == BoundaryConditions::dirichlet)
-                                {
-                                    continue;
-                                }
-                            this->bctype[elemVertIdx][eqIdx] = tmp[eqIdx];
-                        }
+                        continue;
                     }
+                    this->bctype[elemVertIdx][eqIdx] = tmp[eqIdx];
+                }
             }
+        }
     };
 
     void assemble_(const Element &element, LocalFunction& localU, int orderOfShapeFns = 1)
@@ -508,37 +508,37 @@ private:
         LocalFunction residUPlusEps(numVertices);
         LocalFunction residUMinusEps(numVertices);
         for (int j = 0; j < numVertices; j++)
+        {
+            for (int comp = 0; comp < numEq; comp++)
             {
-                for (int comp = 0; comp < numEq; comp++)
-                    {
-                        Scalar eps = std::max(fabs(1e-5*localU[j][comp]), 1e-5);
-                        Scalar uJ = localU[j][comp];
+                Scalar eps = std::max(fabs(1e-5*localU[j][comp]), 1e-5);
+                Scalar uJ = localU[j][comp];
 
-                        // vary the comp-th component at the element's j-th vert and
-                        // calculate the residual, don't include the boundary
-                        // conditions
-                        this->asImp_()->deflectCurSolution(j, comp, uJ + eps);
-                        evalLocalResidual(residUPlusEps, false);
+                // vary the comp-th component at the element's j-th vert and
+                // calculate the residual, don't include the boundary
+                // conditions
+                this->asImp_()->deflectCurSolution(j, comp, uJ + eps);
+                evalLocalResidual(residUPlusEps, false);
 
-                        this->asImp_()->deflectCurSolution(j, comp, uJ - eps);
-                        evalLocalResidual(residUMinusEps, false);
+                this->asImp_()->deflectCurSolution(j, comp, uJ - eps);
+                evalLocalResidual(residUMinusEps, false);
 
-                        // restore the current local solution to the state before
-                        // varyCurSolution() has been called
-                        this->asImp_()->restoreCurSolution(j, comp);
+                // restore the current local solution to the state before
+                // varyCurSolution() has been called
+                this->asImp_()->restoreCurSolution(j, comp);
 
-                        // calculate the gradient when varying the
-                        // comp-th primary variable at the j-th vert
-                        // of the element and fill the required fields of
-                        // the LocalStiffness base class.
-                        residUPlusEps -= residUMinusEps;
+                // calculate the gradient when varying the
+                // comp-th primary variable at the j-th vert
+                // of the element and fill the required fields of
+                // the LocalStiffness base class.
+                residUPlusEps -= residUMinusEps;
 
-                        residUPlusEps /= 2*eps;
-                        updateLocalStiffness_(j,
-                                              comp,
-                                              residUPlusEps);
-                    }
+                residUPlusEps /= 2*eps;
+                updateLocalStiffness_(j,
+                                      comp,
+                                      residUPlusEps);
             }
+        }
 
         // calculate the right hand side
         LocalFunction residU(numVertices);

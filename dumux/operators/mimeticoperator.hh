@@ -76,42 +76,42 @@ public:
         // run over all level elements
         Iterator eendit = this->grid.template lend<0>(0);
         for (Iterator it = this->grid.template lbegin<0>(0); it!=eendit; ++it)
+        {
+            // get access to shape functions for CR elements
+            Dune::GeometryType gt = it->geometry().type();
+            const typename Dune::CRShapeFunctionSetContainer<DT,RT,n>::value_type&
+                sfs = Dune::CRShapeFunctions<DT,RT,n>::general(gt,1);
+
+            int elemId = elementmapper.map(*it);
+
+            // get local to global id map and pressure traces
+            Dune::FieldVector<DT,2*n> pressTrace(0);
+            for (int k = 0; k < sfs.size(); k++)
             {
-                // get access to shape functions for CR elements
-                Dune::GeometryType gt = it->geometry().type();
-                const typename Dune::CRShapeFunctionSetContainer<DT,RT,n>::value_type&
-                    sfs = Dune::CRShapeFunctions<DT,RT,n>::general(gt,1);
-
-                int elemId = elementmapper.map(*it);
-
-                // get local to global id map and pressure traces
-                Dune::FieldVector<DT,2*n> pressTrace(0);
-                for (int k = 0; k < sfs.size(); k++)
-                    {
-                        pressTrace[k] = (*u)[this->facemapper.template map<1>(*it, k)];
-                    }
-
-                // The notation is borrowed from Aarnes/Krogstadt/Lie 2006, Section 3.4.
-                // The matrix W developed here corresponds to one element-associated
-                // block of the matrix B^{-1} there.
-                Dune::FieldVector<DT,2*n> faceVol(0);
-                Dune::FieldMatrix<DT,2*n,2*n> W(0);
-                Dune::FieldVector<DT,2*n> c(0);
-                Dune::FieldMatrix<DT,2*n,2*n> Pi(0);
-                Dune::FieldVector<RT,2*n> F(0);
-                RT dinv = 0;
-                RT qmean = 0;
-                loc.assembleElementMatrices(*it, faceVol, W, c, Pi, dinv, F, qmean);
-
-                pressure[elemId] = dinv*(qmean + (F*pressTrace));
-
-                Dune::FieldVector<RT,2*n> v(0);
-                for (int i = 0; i < 2*n; i++)
-                    for (int j = 0; j < 2*n; j++)
-                        v[i] += W[i][j]*faceVol[j]*(pressure[elemId] - pressTrace[j]);
-
-                (*velocity)[elemId] = v;
+                pressTrace[k] = (*u)[this->facemapper.template map<1>(*it, k)];
             }
+
+            // The notation is borrowed from Aarnes/Krogstadt/Lie 2006, Section 3.4.
+            // The matrix W developed here corresponds to one element-associated
+            // block of the matrix B^{-1} there.
+            Dune::FieldVector<DT,2*n> faceVol(0);
+            Dune::FieldMatrix<DT,2*n,2*n> W(0);
+            Dune::FieldVector<DT,2*n> c(0);
+            Dune::FieldMatrix<DT,2*n,2*n> Pi(0);
+            Dune::FieldVector<RT,2*n> F(0);
+            RT dinv = 0;
+            RT qmean = 0;
+            loc.assembleElementMatrices(*it, faceVol, W, c, Pi, dinv, F, qmean);
+
+            pressure[elemId] = dinv*(qmean + (F*pressTrace));
+
+            Dune::FieldVector<RT,2*n> v(0);
+            for (int i = 0; i < 2*n; i++)
+                for (int j = 0; j < 2*n; j++)
+                    v[i] += W[i][j]*faceVol[j]*(pressure[elemId] - pressTrace[j]);
+
+            (*velocity)[elemId] = v;
+        }
     }
 
 private:

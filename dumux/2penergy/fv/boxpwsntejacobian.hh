@@ -168,38 +168,38 @@ public:
         FieldVector<RT,n> teGrad(0);
 
         for (int comp = 0; comp < m; comp++)
-            {
-                FieldVector<RT, n> gravity = problem.gravity();
-                switch (comp){
-                case water:
-                    for (int k = 0; k < this->fvGeom.numVertices; k++) {
-                        FieldVector<DT,n> grad(this->fvGeom.subContVolFace[face].grad[k]);
-                        grad *= varNData[k].pW;
-                        pWGrad += grad;
-                    }
-                    // adjust by gravity
-                    gravity *= varNData[i].density[comp];
-                    pWGrad -= gravity;
-                    break;
-                case co2:
-                    for (int k = 0; k < this->fvGeom.numVertices; k++) {
-                        FieldVector<DT,n> grad(this->fvGeom.subContVolFace[face].grad[k]);
-                        grad *= varNData[k].pN;
-                        pCO2Grad += grad;
-                    }
-                    // adjust by gravity
-                    gravity *= varNData[i].density[comp];
-                    pCO2Grad -= gravity;
-                    break;
-                case heat:
-                    for (int k = 0; k < this->fvGeom.numVertices; k++) {
-                        FieldVector<DT,n> grad(this->fvGeom.subContVolFace[face].grad[k]);
-                        grad *= varNData[k].temp;
-                        teGrad += grad;
-                    }
-                    break;
+        {
+            FieldVector<RT, n> gravity = problem.gravity();
+            switch (comp){
+            case water:
+                for (int k = 0; k < this->fvGeom.numVertices; k++) {
+                    FieldVector<DT,n> grad(this->fvGeom.subContVolFace[face].grad[k]);
+                    grad *= varNData[k].pW;
+                    pWGrad += grad;
                 }
+                // adjust by gravity
+                gravity *= varNData[i].density[comp];
+                pWGrad -= gravity;
+                break;
+            case co2:
+                for (int k = 0; k < this->fvGeom.numVertices; k++) {
+                    FieldVector<DT,n> grad(this->fvGeom.subContVolFace[face].grad[k]);
+                    grad *= varNData[k].pN;
+                    pCO2Grad += grad;
+                }
+                // adjust by gravity
+                gravity *= varNData[i].density[comp];
+                pCO2Grad -= gravity;
+                break;
+            case heat:
+                for (int k = 0; k < this->fvGeom.numVertices; k++) {
+                    FieldVector<DT,n> grad(this->fvGeom.subContVolFace[face].grad[k]);
+                    grad *= varNData[k].temp;
+                    teGrad += grad;
+                }
+                break;
             }
+        }
 
         // calculate the flux using upwind
         RT s_w = pWGrad*Kij;

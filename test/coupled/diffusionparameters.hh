@@ -84,14 +84,14 @@ public:
         if (x[1] < 1 + 1e-6)
             return 0;
         else
-            {
-                Dune::FieldVector<RT,n> KGradU(0);
-                large.umv(exactGrad(x), KGradU);
+        {
+            Dune::FieldVector<RT,n> KGradU(0);
+            large.umv(exactGrad(x), KGradU);
 
-                // ASSUMING face-wise constant normal
-                Dune::FieldVector<DT, n-1> localDimM1(0);
-                return -(KGradU*intersectionIt->unitOuterNormal(localDimM1));
-            }
+            // ASSUMING face-wise constant normal
+            Dune::FieldVector<DT, n-1> localDimM1(0);
+            return -(KGradU*intersectionIt->unitOuterNormal(localDimM1));
+        }
     }
 
 private:

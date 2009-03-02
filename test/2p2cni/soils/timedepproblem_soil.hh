@@ -76,15 +76,15 @@ public:
 
         //Brooks-Corey parameters
         if (x[0] > 0.5)
-            {
-                param[0] = 1.8; // lambda
-                param[1] = 1.0e4; // entry-pressure
-            }
+        {
+            param[0] = 1.8; // lambda
+            param[1] = 1.0e4; // entry-pressure
+        }
         else
-            {
-                param[0] = 1.8;
-                param[1] = 1.0e4;
-            }
+        {
+            param[0] = 1.8;
+            param[1] = 1.0e4;
+        }
 
         return param;
     }

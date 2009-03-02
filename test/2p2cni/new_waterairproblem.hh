@@ -364,9 +364,9 @@ public:
 
         // negative values for injection
         if (globalPos[1] > 1.0 && globalPos[1] < 5.0)
-            {
-                values[switchIdx] = -1e-5;
-            }
+        {
+            values[switchIdx] = -1e-5;
+        }
     }
 
     /////////////////////////////

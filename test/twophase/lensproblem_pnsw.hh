@@ -69,9 +69,9 @@ public:
         FieldVector<BoundaryConditions::Flags, numEq> values(BoundaryConditions::neumann);
 
         if (x[0] < outerLowerLeft_[0] + eps_ || x[0] > outerUpperRight_[0] - eps_)
-            {
-                values = BoundaryConditions::dirichlet;
-            }
+        {
+            values = BoundaryConditions::dirichlet;
+        }
 
         return values;
     }
@@ -84,12 +84,12 @@ public:
         FieldVector<Scalar,numEq> values(0);
 
         if (x[0] < outerLowerLeft_[0] + eps_)
-            {
-                Scalar a = -(1 + 0.5/height_);
-                Scalar b = -a*outerUpperRight_[1];
-                values[sWIdx] = 1;
-                values[pNIdx] = -densityW_*gravity_[1]*(a*x[1] + b);    // pN = pW for sW = 1 and pC = 0
-            }
+        {
+            Scalar a = -(1 + 0.5/height_);
+            Scalar b = -a*outerUpperRight_[1];
+            values[sWIdx] = 1;
+            values[pNIdx] = -densityW_*gravity_[1]*(a*x[1] + b);    // pN = pW for sW = 1 and pC = 0
+        }
         else {
             Scalar a = -1;
             Scalar b = outerUpperRight_[1];

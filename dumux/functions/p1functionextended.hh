@@ -139,13 +139,13 @@ class P1ExtendOverlap {
             int alpha=vertexmapper.map(e);
             GIDSet& thisset = myids[alpha];
             for (typename GIDSet::iterator i=thisset.begin(); i!=thisset.end(); ++i)
+            {
+                typename std::map<IdType,int>::const_iterator oIt = owner.find(*i);
+                if (oIt != owner.end())
                 {
-                    typename std::map<IdType,int>::const_iterator oIt = owner.find(*i);
-                    if (oIt != owner.end())
-                        {
-                            buff.write(Pair(oIt->first,oIt->second));
-                        }
+                    buff.write(Pair(oIt->first,oIt->second));
                 }
+            }
         }
 
         /*! unpack data from message buffer to user
@@ -157,15 +157,15 @@ class P1ExtendOverlap {
         {
             //int alpha=vertexmapper.map(e);
             for (size_t i=0; i<n; i++)
+            {
+                Pair x;
+                buff.read(x);
+                typename std::map<IdType,int>::const_iterator oIt = owner.find(x.first);
+                if (oIt != owner.end())
                 {
-                    Pair x;
-                    buff.read(x);
-                    typename std::map<IdType,int>::const_iterator oIt = owner.find(x.first);
-                    if (oIt != owner.end())
-                        {
-                            owner[x.first] = std::max(owner[x.first], x.second);
-                        }
+                    owner[x.first] = std::max(owner[x.first], x.second);
                 }
+            }
         }
 
         //! constructor
@@ -219,19 +219,19 @@ class P1ExtendOverlap {
             int alpha=vertexmapper.map(e);
             GIDSet& thisset = myids[alpha];
             for (typename GIDSet::iterator i=thisset.begin(); i!=thisset.end(); ++i)
-                {
-                    int rankIdx = grid.comm().rank();
-                    typename std::map<IdType,int>::const_iterator g2iIt = gid2index.find(*i);
-                    int localIdx = g2iIt->second;
-                    typename std::map<int,int>::const_iterator d2OIt = doubled2Original.find(localIdx);
-                    if (d2OIt != doubled2Original.end())
-                        localIdx = d2OIt->second;
-                    if (partitionType[localIdx] == GhostEntity) {
-                        rankIdx = -1;//grid.comm().size();
-                    }
-                    buff.write(Pair(*i,rankIdx)); // I have these global ids
-                    owner[*i] = rankIdx;
+            {
+                int rankIdx = grid.comm().rank();
+                typename std::map<IdType,int>::const_iterator g2iIt = gid2index.find(*i);
+                int localIdx = g2iIt->second;
+                typename std::map<int,int>::const_iterator d2OIt = doubled2Original.find(localIdx);
+                if (d2OIt != doubled2Original.end())
+                    localIdx = d2OIt->second;
+                if (partitionType[localIdx] == GhostEntity) {
+                    rankIdx = -1;//grid.comm().size();
                 }
+                buff.write(Pair(*i,rankIdx)); // I have these global ids
+                owner[*i] = rankIdx;
+            }
             myprocs[alpha].insert(grid.comm().rank());
         }
 
@@ -246,16 +246,16 @@ class P1ExtendOverlap {
             GIDSet& thisset = myids[alpha];
             int source;
             for (size_t i=0; i<n; i++)
-                {
-                    Pair x;
-                    buff.read(x);
-                    thisset.insert(x.first);
-                    source=x.second;
-                    if (owner.find(x.first)==owner.end())
-                        owner[x.first] = source;
-                    else
-                        owner[x.first] = std::max(owner[x.first],source);
-                }
+            {
+                Pair x;
+                buff.read(x);
+                thisset.insert(x.first);
+                source=x.second;
+                if (owner.find(x.first)==owner.end())
+                    owner[x.first] = source;
+                else
+                    owner[x.first] = std::max(owner[x.first],source);
+            }
             myprocs[alpha].insert(source);
         }
 
@@ -269,9 +269,9 @@ class P1ExtendOverlap {
             partitionType.resize(vertexmapper.size()+extraDOFs);
             VIterator vendit = gridview.template end<n>();
             for (VIterator it = gridview.template begin<n>(); it!=vendit; ++it)
-                {
-                    partitionType[vertexmapper.map(*it)] = it->partitionType();
-                }
+            {
+                partitionType[vertexmapper.map(*it)] = it->partitionType();
+            }
 
             //          for (typename std::map<IdType,int>::const_iterator it = gid2index.begin(); it != gid2index.end(); ++it)
             //              std::cout << grid.comm().rank() << ": global = " << it->first << ", local = " << it->second << std::endl;
@@ -346,11 +346,11 @@ class P1ExtendOverlap {
         {
             GIDSet& myset = borderlinks[vertexmapper.map(e)];
             for (size_t i=0; i<n; i++)
-                {
-                    DataType x;
-                    buff.read(x);
-                    myset.insert(x);
-                }
+            {
+                DataType x;
+                buff.read(x);
+                myset.insert(x);
+            }
         }
 
         //! constructor
@@ -385,33 +385,33 @@ public:
         std::map<int,int> doubled2Original;
         VIterator ghostEndIt = gridview.template end<n>();
         for (VIterator ghostIt = gridview.template begin<n>(); ghostIt!=ghostEndIt; ++ghostIt)
+        {
+            if (ghostIt->partitionType() != GhostEntity)
+                continue;
+
+            int ghostIndex = vertexmapper.map(*ghostIt);
+
+            const IdType& ghostGlobalId = index2gid[ghostIndex];
+
+            VIterator realEndIt = gridview.template end<n>();
+            for (VIterator realIt = gridview.template begin<n>(); realIt!=realEndIt; ++realIt)
             {
-                if (ghostIt->partitionType() != GhostEntity)
+                if (realIt->partitionType() == InteriorEntity)
                     continue;
 
-                int ghostIndex = vertexmapper.map(*ghostIt);
+                int realIndex = vertexmapper.map(*realIt);
 
-                const IdType& ghostGlobalId = index2gid[ghostIndex];
+                if (realIndex == ghostIndex)
+                    continue;
 
-                VIterator realEndIt = gridview.template end<n>();
-                for (VIterator realIt = gridview.template begin<n>(); realIt!=realEndIt; ++realIt)
-                    {
-                        if (realIt->partitionType() == InteriorEntity)
-                            continue;
+                const IdType& realGlobalId = index2gid[realIndex];
 
-                        int realIndex = vertexmapper.map(*realIt);
-
-                        if (realIndex == ghostIndex)
-                            continue;
-
-                        const IdType& realGlobalId = index2gid[realIndex];
-
-                        if (realGlobalId == ghostGlobalId) {
-                            doubled2Original[std::max(realIndex, ghostIndex)] = std::min(realIndex, ghostIndex);
-                            break;
-                        }
-                    }
+                if (realGlobalId == ghostGlobalId) {
+                    doubled2Original[std::max(realIndex, ghostIndex)] = std::min(realIndex, ghostIndex);
+                    break;
+                }
             }
+        }
         // build a map of sets where each local index is assigned
         // a set of global ids which are neighbors of this vertex
         // At the same time assign to each local index to a set of processors
@@ -421,26 +421,26 @@ public:
         std::map<IdType,int> owner;
         Iterator eendit = gridview.template end<0>();
         for (Iterator it = gridview.template begin<0>(); it!=eendit; ++it)
-            {
-                Dune::GeometryType gt = it->type();
-                const typename Dune::ReferenceElementContainer<DT,n>::value_type&
-                    refelem = ReferenceElements<DT,n>::general(gt);
+        {
+            Dune::GeometryType gt = it->type();
+            const typename Dune::ReferenceElementContainer<DT,n>::value_type&
+                refelem = ReferenceElements<DT,n>::general(gt);
 
-                if (it->partitionType()==InteriorEntity)
-                    for (int i=0; i<refelem.size(n); i++)
+            if (it->partitionType()==InteriorEntity)
+                for (int i=0; i<refelem.size(n); i++)
+                {
+                    if (it->template entity<n>(i)->partitionType()==BorderEntity)
+                    {
+                        int alpha = vertexmapper.template map<n>(*it,i);
+                        GIDSet& thisset = myids[alpha];
+                        for (int j=0; j<refelem.size(n); j++)
                         {
-                            if (it->template entity<n>(i)->partitionType()==BorderEntity)
-                                {
-                                    int alpha = vertexmapper.template map<n>(*it,i);
-                                    GIDSet& thisset = myids[alpha];
-                                    for (int j=0; j<refelem.size(n); j++)
-                                        {
-                                            IdType beta = grid.globalIdSet().template subId<n>(*it,j);
-                                            thisset.insert(beta);
-                                        }
-                                }
+                            IdType beta = grid.globalIdSet().template subId<n>(*it,j);
+                            thisset.insert(beta);
                         }
-            }
+                    }
+                }
+        }
         IdExchange datahandle(grid,gridview,vertexmapper,myids,myprocs,owner,gid2index,index2gid,extraDOFs,doubled2Original);
         lc.template communicate<IdExchange>(datahandle,InteriorBorder_InteriorBorder_Interface,ForwardCommunication);
 
@@ -457,21 +457,21 @@ public:
                 gid2index[*j] = -1; // indicates "not assigned yet"
         VIterator vendit = gridview.template end<n>();
         for (VIterator it = gridview.template begin<n>(); it!=vendit; ++it)
+        {
+            IdType beta = grid.globalIdSet().id(*it);
+            if (gid2index.find(beta)!=gid2index.end())
             {
-                IdType beta = grid.globalIdSet().id(*it);
-                if (gid2index.find(beta)!=gid2index.end())
-                    {
-                        int alpha = vertexmapper.map(*it);
-                        gid2index[beta] = alpha; // assign existing local index
-                        index2gid[alpha] = beta;
-                    }
+                int alpha = vertexmapper.map(*it);
+                gid2index[beta] = alpha; // assign existing local index
+                index2gid[alpha] = beta;
             }
+        }
         for (typename std::map<IdType,int>::iterator i=gid2index.begin(); i!=gid2index.end(); ++i)
             if (i->second==-1)
-                {
-                    i->second = vertexmapper.size()+extraDOFs; // assign new local index
-                    extraDOFs++;
-                }
+            {
+                i->second = vertexmapper.size()+extraDOFs; // assign new local index
+                extraDOFs++;
+            }
 
         // build a set of all neighboring processors
         ProcSet neighbors;
@@ -484,44 +484,44 @@ public:
 
         // application: for all neighbors build a list of global ids
         for (typename ProcSet::iterator p=neighbors.begin(); p!=neighbors.end(); ++p)
-            {
-                GIDSet remote;
-                for (typename std::map<int,ProcSet>::iterator i=myprocs.begin(); i!=myprocs.end(); ++i)
-                    if ((i->second).find(*p)!=(i->second).end())
-                        {
-                            GIDSet& thisset = myids[i->first];
-                            for (typename GIDSet::iterator j=thisset.begin(); j!=thisset.end(); ++j)
-                                remote.insert(*j);
-                        }
-            }
+        {
+            GIDSet remote;
+            for (typename std::map<int,ProcSet>::iterator i=myprocs.begin(); i!=myprocs.end(); ++i)
+                if ((i->second).find(*p)!=(i->second).end())
+                {
+                    GIDSet& thisset = myids[i->first];
+                    for (typename GIDSet::iterator j=thisset.begin(); j!=thisset.end(); ++j)
+                        remote.insert(*j);
+                }
+        }
 
 
         // fill the info object
         std::set< tuple<IdType,int,int> > ownindices;
         for (typename std::map<int,GIDSet>::iterator i=myids.begin(); i!=myids.end(); ++i)
             for (typename GIDSet::iterator j=(i->second).begin(); j!=(i->second).end(); ++j)
-                {
-                    int a=slave;
-                    if (owner[*j]==grid.comm().rank()) a=master;
-                    int localIndex = gid2index[*j];
-                    // do not add double indices
-                    if (doubled2Original.find(localIndex) == doubled2Original.end())
-                        info.addLocalIndex(tuple<IdType,int,int>(*j,localIndex,a));
-                    else
-                        info.addLocalIndex(tuple<IdType,int,int>(*j,doubled2Original[localIndex],a));
-                }
+            {
+                int a=slave;
+                if (owner[*j]==grid.comm().rank()) a=master;
+                int localIndex = gid2index[*j];
+                // do not add double indices
+                if (doubled2Original.find(localIndex) == doubled2Original.end())
+                    info.addLocalIndex(tuple<IdType,int,int>(*j,localIndex,a));
+                else
+                    info.addLocalIndex(tuple<IdType,int,int>(*j,doubled2Original[localIndex],a));
+            }
         std::set< tuple<int,IdType,int> > remoteindices;
         for (typename std::map<int,ProcSet>::iterator i=myprocs.begin(); i!=myprocs.end(); ++i)
-            {
-                GIDSet& thisset = myids[i->first];
-                for (typename GIDSet::iterator j=thisset.begin(); j!=thisset.end(); ++j)
-                    for (typename ProcSet::iterator p=(i->second).begin(); p!=(i->second).end(); ++p)
-                        {
-                            int a=slave;
-                            if (owner[*j]==(*p)) a=master;
-                            if (*p!=grid.comm().rank()) info.addRemoteIndex(tuple<int,IdType,int>(*p,*j,a));
-                        }
-            }
+        {
+            GIDSet& thisset = myids[i->first];
+            for (typename GIDSet::iterator j=thisset.begin(); j!=thisset.end(); ++j)
+                for (typename ProcSet::iterator p=(i->second).begin(); p!=(i->second).end(); ++p)
+                {
+                    int a=slave;
+                    if (owner[*j]==(*p)) a=master;
+                    if (*p!=grid.comm().rank()) info.addRemoteIndex(tuple<int,IdType,int>(*p,*j,a));
+                }
+        }
 
         //        for (typename std::set< tuple<IdType,int,int> >::const_iterator it = info.localIndices().begin();
         //            it != info.localIndices().end(); ++it)
@@ -555,31 +555,31 @@ public:
         // build local borderlinks from mesh
         Iterator eendit = gridView.template end<0>();
         for (Iterator it = gridView.template begin<0>(); it!=eendit; ++it)
-            {
-                Dune::GeometryType gt = it->type();
-                const typename Dune::ReferenceElementContainer<DT,n>::value_type&
-                    refelem = ReferenceElements<DT,n>::general(gt);
+        {
+            Dune::GeometryType gt = it->type();
+            const typename Dune::ReferenceElementContainer<DT,n>::value_type&
+                refelem = ReferenceElements<DT,n>::general(gt);
 
-                // generate set of neighbors in global ids for border vertices
-                if (it->partitionType()==InteriorEntity)
-                    for (int i=0; i<refelem.size(n); i++)
-                        if (it->template entity<n>(i)->partitionType()==BorderEntity)
+            // generate set of neighbors in global ids for border vertices
+            if (it->partitionType()==InteriorEntity)
+                for (int i=0; i<refelem.size(n); i++)
+                    if (it->template entity<n>(i)->partitionType()==BorderEntity)
+                    {
+                        int alpha = vertexmapper.template map<n>(*it,i);
+                        GIDSet& myset = borderlinks[alpha];
+                        for (int j=0; j<refelem.size(n); j++)
+                            if (i!=j)
                             {
-                                int alpha = vertexmapper.template map<n>(*it,i);
-                                GIDSet& myset = borderlinks[alpha];
-                                for (int j=0; j<refelem.size(n); j++)
-                                    if (i!=j)
-                                        {
-                                            IdType beta = grid.globalIdSet().template subId<n>(*it,j);
-                                            myset.insert(beta);
-                                            //                           std::cout << g.comm().rank() << ": "
-                                            //                                     << "borderlink " << alpha
-                                            //                                     << " " << vertexmapper.template map<n>(*it,j)
-                                            //                                     << " " << beta
-                                            //                                     << std::endl;
-                                        }
+                                IdType beta = grid.globalIdSet().template subId<n>(*it,j);
+                                myset.insert(beta);
+                                //                           std::cout << g.comm().rank() << ": "
+                                //                                     << "borderlink " << alpha
+                                //                                     << " " << vertexmapper.template map<n>(*it,j)
+                                //                                     << " " << beta
+                                //                                     << std::endl;
                             }
-            }
+                    }
+        }
 
         // exchange neighbor info for border vertices
         BorderLinksExchange datahandle(grid,borderlinks,vertexmapper);
@@ -595,23 +595,23 @@ public:
         // check with ids we already have in the grid to find out extra vertices
         VIterator vendit = gridView.template end<n>();
         for (VIterator it = gridView.template begin<n>(); it!=gridView.template end<n>(); ++it)
+        {
+            IdType beta = grid.globalIdSet().id(*it);
+            if (gid2index.find(beta)!=gid2index.end())
             {
-                IdType beta = grid.globalIdSet().id(*it);
-                if (gid2index.find(beta)!=gid2index.end())
-                    {
-                        int alpha = vertexmapper.map(*it);
-                        gid2index[beta] = alpha;
-                    }
+                int alpha = vertexmapper.map(*it);
+                gid2index[beta] = alpha;
             }
+        }
 
         // assign index to extra DOFs
         extraDOFs = 0;
         for (typename std::map<IdType,int>::iterator i=gid2index.begin(); i!=gid2index.end(); ++i)
             if (i->second==-1)
-                {
-                    i->second = vertexmapper.size()+extraDOFs;
-                    extraDOFs++;
-                }
+            {
+                i->second = vertexmapper.size()+extraDOFs;
+                extraDOFs++;
+            }
 
         //           for (typename std::map<int,GIDSet>::iterator i=borderlinks.begin(); i!=borderlinks.end(); ++i)
         //             for (typename GIDSet::iterator j=(i->second).begin(); j!=(i->second).end(); ++j)
@@ -632,31 +632,31 @@ public:
         // build local borderlinks from mesh
         Iterator eendit = gridView.template end<0>();
         for (Iterator it = gridView.template begin<0>(); it!=eendit; ++it)
-            {
-                Dune::GeometryType gt = it->type();
-                const typename Dune::ReferenceElementContainer<DT,n>::value_type&
-                    refelem = ReferenceElements<DT,n>::general(gt);
+        {
+            Dune::GeometryType gt = it->type();
+            const typename Dune::ReferenceElementContainer<DT,n>::value_type&
+                refelem = ReferenceElements<DT,n>::general(gt);
 
-                // generate set of neighbors in global ids for border vertices
-                if (it->partitionType()==InteriorEntity)
-                    for (int i=0; i<refelem.size(n); i++)
-                        if (it->template entity<n>(i)->partitionType()==BorderEntity)
+            // generate set of neighbors in global ids for border vertices
+            if (it->partitionType()==InteriorEntity)
+                for (int i=0; i<refelem.size(n); i++)
+                    if (it->template entity<n>(i)->partitionType()==BorderEntity)
+                    {
+                        int alpha = vertexmapper.template map<n>(*it,i);
+                        GIDSet& myset = borderlinks[alpha];
+                        for (int j=0; j<refelem.size(n); j++)
+                            if (i!=j)
                             {
-                                int alpha = vertexmapper.template map<n>(*it,i);
-                                GIDSet& myset = borderlinks[alpha];
-                                for (int j=0; j<refelem.size(n); j++)
-                                    if (i!=j)
-                                        {
-                                            IdType beta = grid.globalIdSet().template subId<n>(*it,j);
-                                            myset.insert(beta);
-                                            //                           std::cout << g.comm().rank() << ": "
-                                            //                                     << "borderlink " << alpha
-                                            //                                     << " " << vertexmapper.template map<n>(*it,j)
-                                            //                                     << " " << beta
-                                            //                                     << std::endl;
-                                        }
+                                IdType beta = grid.globalIdSet().template subId<n>(*it,j);
+                                myset.insert(beta);
+                                //                           std::cout << g.comm().rank() << ": "
+                                //                                     << "borderlink " << alpha
+                                //                                     << " " << vertexmapper.template map<n>(*it,j)
+                                //                                     << " " << beta
+                                //                                     << std::endl;
                             }
-            }
+                    }
+        }
 
         // exchange neighbor info for border vertices
         BorderLinksExchange datahandle(grid,borderlinks,vertexmapper);
@@ -672,24 +672,24 @@ public:
         // check with ids we already have in the grid to find out extra vertices
         VIterator vendit = gridView.template end<n>();
         for (VIterator it = gridView.template begin<n>(); it!=gridView.template end<n>(); ++it)
+        {
+            IdType beta = grid.globalIdSet().id(*it);
+            if (gid2index.find(beta)!=gid2index.end())
             {
-                IdType beta = grid.globalIdSet().id(*it);
-                if (gid2index.find(beta)!=gid2index.end())
-                    {
-                        int alpha = vertexmapper.map(*it);
-                        gid2index[beta] = alpha;
-                        index2gid[alpha] = beta;
-                    }
+                int alpha = vertexmapper.map(*it);
+                gid2index[beta] = alpha;
+                index2gid[alpha] = beta;
             }
+        }
 
         // assign index to extra DOFs
         extraDOFs = 0;
         for (typename std::map<IdType,int>::iterator i=gid2index.begin(); i!=gid2index.end(); ++i)
             if (i->second==-1)
-                {
-                    i->second = vertexmapper.size()+extraDOFs;
-                    extraDOFs++;
-                }
+            {
+                i->second = vertexmapper.size()+extraDOFs;
+                extraDOFs++;
+            }
 
         //           for (typename std::map<int,GIDSet>::iterator i=borderlinks.begin(); i!=borderlinks.end(); ++i)
         //             for (typename GIDSet::iterator j=(i->second).begin(); j!=(i->second).end(); ++j)
@@ -783,15 +783,15 @@ public:
 
         // overlap extension
         if (extendoverlap)
-            {
-                // set of neighbors in global ids for border vertices
-                std::map<int,GIDSet> borderlinks;
-                std::map<IdType,int> gid2index;
+        {
+            // set of neighbors in global ids for border vertices
+            std::map<int,GIDSet> borderlinks;
+            std::map<IdType,int> gid2index;
 
-                // compute extension
-                P1ExtendOverlap<G,GV,VM,LC> extender(lc);
-                extender.extend(gv.grid(),gv,mapper_,borderlinks,extraDOFs,gid2index);
-            }
+            // compute extension
+            P1ExtendOverlap<G,GV,VM,LC> extender(lc);
+            extender.extend(gv.grid(),gv,mapper_,borderlinks,extraDOFs,gid2index);
+        }
 
         // allocate the vector
         oldcoeff = 0;
@@ -863,12 +863,12 @@ public:
         Dune::GeometryType gt = e.type(); // extract type of element
         y = 0;
         for (int i=0; i<Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt,1).size(); ++i)
-            {
-                RT basefuncvalue=Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt,1)[i].evaluateFunction(0,xi);
-                int index = mapper_.template map<n>(e,i);
-                for (int c=0; c<m; c++)
-                    y[c] += basefuncvalue * (*coeff)[index][c];
-            }
+        {
+            RT basefuncvalue=Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt,1)[i].evaluateFunction(0,xi);
+            int index = mapper_.template map<n>(e,i);
+            for (int c=0; c<m; c++)
+                y[c] += basefuncvalue * (*coeff)[index][c];
+        }
     }
 
     //! evaluate derivative in local coordinates
@@ -886,10 +886,10 @@ public:
         int dir=-1;
         int order=0;
         for (int i=0; i<n; i++)
-            {
-                order += d[i];
-                if (d[i]>0) dir=i;
-            }
+        {
+            order += d[i];
+            if (d[i]>0) dir=i;
+        }
         assert(dir != -1);
         if (order!=1) DUNE_THROW(GridError,"can only evaluate one derivative");
 
@@ -899,13 +899,13 @@ public:
             sfs=Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt,1);
         Dune::FieldMatrix<DT,n,n> jac = e.geometry().jacobianInverseTransposed(xi);
         for (int i=0; i<sfs.size(); ++i)
-            {
-                Dune::FieldVector<DT,n> grad(0),temp;
-                for (int l=0; l<n; l++)
-                    temp[l] = sfs[i].evaluateDerivative(0,l,xi);
-                jac.umv(temp,grad); // transform gradient to global ooordinates
-                value += grad[dir] * (*coeff)[mapper_.template map<n>(e,i)][comp];
-            }
+        {
+            Dune::FieldVector<DT,n> grad(0),temp;
+            for (int l=0; l<n; l++)
+                temp[l] = sfs[i].evaluateDerivative(0,l,xi);
+            jac.umv(temp,grad); // transform gradient to global ooordinates
+            value += grad[dir] * (*coeff)[mapper_.template map<n>(e,i)][comp];
+        }
         return value;
     }
 
@@ -925,17 +925,17 @@ public:
 
         Iterator eendit = gv.template end<0>();
         for (Iterator it = gv.template begin<0>(); it!=eendit; ++it)
-            {
-                Dune::GeometryType gt = it->type();
-                for (int i=0; i<Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt,1).size(); ++i)
-                    if (!visited[mapper_.template map<n>(*it,i)])
-                        {
-                            for (int c=0; c<m; c++)
-                                (*coeff)[mapper_.template map<n>(*it,i)][c] =
-                                    u.evallocal(c,*it,Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt,1)[i].position());
-                            visited[mapper_.template map<n>(*it,i)] = true;
-                        }
-            }
+        {
+            Dune::GeometryType gt = it->type();
+            for (int i=0; i<Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt,1).size(); ++i)
+                if (!visited[mapper_.template map<n>(*it,i)])
+                {
+                    for (int c=0; c<m; c++)
+                        (*coeff)[mapper_.template map<n>(*it,i)][c] =
+                            u.evallocal(c,*it,Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt,1)[i].position());
+                    visited[mapper_.template map<n>(*it,i)] = true;
+                }
+        }
     }
 
     /** \todo Please doc me! */
@@ -949,16 +949,16 @@ public:
             (*coeff)[i] = 0;
         Iterator eendit = gv.template end<0>();
         for (Iterator it = gv.template begin<0>(); it!=eendit; ++it)
+        {
+            Dune::GeometryType gt = it->type();
+            for (int i=0; i<Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt,1).size(); ++i)
             {
-                Dune::GeometryType gt = it->type();
-                for (int i=0; i<Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt,1).size(); ++i)
-                    {
-                        for (int c=0; c<m; c++)
-                            (*coeff)[mapper_.template map<n>(*it,i)][c] +=
-                                u.evallocal(c,*it,Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt,1)[i].position());
-                        counter[mapper_.template map<n>(*it,i)] += 1;
-                    }
+                for (int c=0; c<m; c++)
+                    (*coeff)[mapper_.template map<n>(*it,i)][c] +=
+                        u.evallocal(c,*it,Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt,1)[i].position());
+                counter[mapper_.template map<n>(*it,i)] += 1;
             }
+        }
         for (int i=0; i<counter.size(); i++)
             for (int c=0; c<m; c++)
                 (*coeff)[i][c] /= counter[i];
@@ -1026,16 +1026,16 @@ public:
 
         // overlap extension, recompute extra DOFs
         if (extendOverlap)
-            {
-                // set of neighbors in global ids for border vertices
-                std::map<int,GIDSet> borderlinks;
-                std::map<IdType,int> gid2index;
-                extraDOFs = 0;
+        {
+            // set of neighbors in global ids for border vertices
+            std::map<int,GIDSet> borderlinks;
+            std::map<IdType,int> gid2index;
+            extraDOFs = 0;
 
-                // compute extension
-                P1ExtendOverlap<G,GV,VM,LC> extender(lc);
-                extender.extend(gv.grid(),gv,mapper_,borderlinks,extraDOFs,gid2index);
-            }
+            // compute extension
+            P1ExtendOverlap<G,GV,VM,LC> extender(lc);
+            extender.extend(gv.grid(),gv,mapper_,borderlinks,extraDOFs,gid2index);
+        }
 
         // allocate data with new size (while keeping the old data ...)
         try {
@@ -1054,60 +1054,60 @@ public:
         // now loop over the NEW mesh to copy the data that was already in the OLD mesh
         VLeafIterator veendit = gv.grid().template leafend<n>();
         for (VLeafIterator it = gv.grid().template leafbegin<n>(); it!=veendit; ++it)
+        {
+            // lookup in mapper
+            int i;
+            if (manager.savedMap().contains(*it,i))
             {
-                // lookup in mapper
-                int i;
-                if (manager.savedMap().contains(*it,i))
-                    {
-                        //               std::cout << " found vertex=" << it->geometry().corner(0)
-                        //                         << " at i=" << i
-                        //                         << " oldindex=" << manager.oldIndex()[i]
-                        //                         << " newindex=" << mapper_.map(*it)
-                        //                         << std::endl;
-                        // the vertex existed already in the old mesh, copy data
-                        for (int c=0; c<m; c++)
-                            (*coeff)[mapper_.map(*it)][c] = (*oldcoeff)[manager.oldIndex()[i]][c];
-                        // ... and mark as visited
-                        visited[mapper_.map(*it)] = true;
-                    }
+                //               std::cout << " found vertex=" << it->geometry().corner(0)
+                //                         << " at i=" << i
+                //                         << " oldindex=" << manager.oldIndex()[i]
+                //                         << " newindex=" << mapper_.map(*it)
+                //                         << std::endl;
+                // the vertex existed already in the old mesh, copy data
+                for (int c=0; c<m; c++)
+                    (*coeff)[mapper_.map(*it)][c] = (*oldcoeff)[manager.oldIndex()[i]][c];
+                // ... and mark as visited
+                visited[mapper_.map(*it)] = true;
             }
+        }
 
         // now loop the second time to interpolate the new coefficients
         // new implementation using interpolation on codim 0
         for (int level=1; level<=gv.grid().maxLevel(); ++level)
+        {
+            ELevelIterator elendit = gv.grid().template lend<0>(level);
+            for (ELevelIterator it = gv.grid().template lbegin<0>(level); it!=elendit; ++it)
             {
-                ELevelIterator elendit = gv.grid().template lend<0>(level);
-                for (ELevelIterator it = gv.grid().template lbegin<0>(level); it!=elendit; ++it)
+                GeometryType gte = it->type();
+                for (int i=0; i<Dune::LagrangeShapeFunctions<DT,RT,n>::general(gte,1).size(); ++i)
+                {
+                    int index = mapper_.template map<n>(*it,i);
+                    if (!visited[index])
                     {
-                        GeometryType gte = it->type();
-                        for (int i=0; i<Dune::LagrangeShapeFunctions<DT,RT,n>::general(gte,1).size(); ++i)
-                            {
-                                int index = mapper_.template map<n>(*it,i);
-                                if (!visited[index])
-                                    {
-                                        // OK, this is a new vertex
-                                        EEntityPointer father=it->father(); // the father element
-                                        GeometryType gtf = father->type(); // fathers type
-                                        const FieldVector<DT,n>& cpos=Dune::LagrangeShapeFunctions<DT,RT,n>::general(gte,1)[i].position();
-                                        FieldVector<DT,n> pos = it->geometryInFather().global(cpos); // map corner to father element
-                                        for (int c=0; c<m; c++)
-                                            (*coeff)[index][c] = 0;
-                                        for (int j=0; j<Dune::LagrangeShapeFunctions<DT,RT,n>::general(gtf,1).size(); ++j)
-                                            {
-                                                RT basefuncvalue = Dune::LagrangeShapeFunctions<DT,RT,n>::general(gtf,1)[j].evaluateFunction(0,pos);
-                                                for (int c=0; c<m; c++)
-                                                    (*coeff)[index][c] += basefuncvalue * (*coeff)[mapper_.template map<n>(*father,j)][c];
-                                                //                       std::cout << "  corner=" << i
-                                                //                                 << " cpos=" << father->geometry().corner(i)
-                                                //                                 << " u=" << (*coeff)[mapper_.template map<n>(*father,i)]
-                                                //                                 << std::endl;
-                                            }
-                                        //                   std::cout << "index=" << mapper_.map(*it) << " value=" << value << std::endl;
-                                        visited[index] = true;
-                                    }
-                            }
+                        // OK, this is a new vertex
+                        EEntityPointer father=it->father(); // the father element
+                        GeometryType gtf = father->type(); // fathers type
+                        const FieldVector<DT,n>& cpos=Dune::LagrangeShapeFunctions<DT,RT,n>::general(gte,1)[i].position();
+                        FieldVector<DT,n> pos = it->geometryInFather().global(cpos); // map corner to father element
+                        for (int c=0; c<m; c++)
+                            (*coeff)[index][c] = 0;
+                        for (int j=0; j<Dune::LagrangeShapeFunctions<DT,RT,n>::general(gtf,1).size(); ++j)
+                        {
+                            RT basefuncvalue = Dune::LagrangeShapeFunctions<DT,RT,n>::general(gtf,1)[j].evaluateFunction(0,pos);
+                            for (int c=0; c<m; c++)
+                                (*coeff)[index][c] += basefuncvalue * (*coeff)[mapper_.template map<n>(*father,j)][c];
+                            //                       std::cout << "  corner=" << i
+                            //                                 << " cpos=" << father->geometry().corner(i)
+                            //                                 << " u=" << (*coeff)[mapper_.template map<n>(*father,i)]
+                            //                                 << std::endl;
+                        }
+                        //                   std::cout << "index=" << mapper_.map(*it) << " value=" << value << std::endl;
+                        visited[index] = true;
                     }
+                }
             }
+        }
 
         // now really delete old representation
         if (oldcoeff!=0) delete oldcoeff;
@@ -1230,9 +1230,9 @@ public:
         // now loop over all vertices and copy the index provided by the mapper
         VLeafIterator veendit = grid.template leafend<dim>();
         for (VLeafIterator it = grid.template leafbegin<dim>(); it!=veendit; ++it)
-            {
-                oldindex[savedmap.map(*it)] = mapper.map(*it);
-            }
+        {
+            oldindex[savedmap.map(*it)] = mapper.map(*it);
+        }
     }
 
     const GlobalUniversalMapper<G>& savedMap ()

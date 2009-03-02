@@ -267,19 +267,19 @@ public:
 
         if (ParentType::onLeftBoundary(globalPos) ||
             ParentType::onRightBoundary(globalPos))
-            {
-                values[0] = values[1] = Dune::BoundaryConditions::dirichlet;
+        {
+            values[0] = values[1] = Dune::BoundaryConditions::dirichlet;
 
 #if !USE_ORIG_PROB
-                Scalar relPosY = (globalPos[1] - ParentType::lowerLeft()[1])/ParentType::height();
-                if (relPosY < 0.80)
-                    {
-                        values[0] = values[1] = Dune::BoundaryConditions::neumann;
-                    }
+            Scalar relPosY = (globalPos[1] - ParentType::lowerLeft()[1])/ParentType::height();
+            if (relPosY < 0.80)
+            {
+                values[0] = values[1] = Dune::BoundaryConditions::neumann;
+            }
 #endif
 
 
-            }
+        }
         else {
             // upper or lower boundary of the grid
 
@@ -314,9 +314,9 @@ public:
 #if USE_ORIG_PROB
             Scalar relPosX = (ParentType::upperRight()[0] - globalPos[0])/ParentType::width();
             if (0.5 < relPosX && relPosX < 2.0/3.0)
-                {
-                    values[snIdx] = -0.04;
-                }
+            {
+                values[snIdx] = -0.04;
+            }
 #endif
         }
 #if !USE_ORIG_PROB
@@ -351,10 +351,10 @@ public:
         Scalar a, b;
 
         if (ParentType::onLeftBoundary(globalPos))
-            {
-                a = -(1 + 0.5/ParentType::height());
-                b = -a*ParentType::upperRight()[1];
-            }
+        {
+            a = -(1 + 0.5/ParentType::height());
+            b = -a*ParentType::upperRight()[1];
+        }
         else {
             a = -1;
             b = ParentType::upperRight()[1];

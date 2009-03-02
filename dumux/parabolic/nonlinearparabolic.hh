@@ -90,28 +90,28 @@ public:
         // iterate through leaf grid an evaluate c0 at cell center
         Iterator eendit = gridview.template end<0>();
         for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
-            {
-                // get geometry type
-                Dune::GeometryType gt = it->geometry().type();
+        {
+            // get geometry type
+            Dune::GeometryType gt = it->geometry().type();
 
-                const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type&
-                    sfs=Dune::LagrangeShapeFunctions<DT,RT,dim>::general(gt, 1);
-                int size = sfs.size();
+            const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type&
+                sfs=Dune::LagrangeShapeFunctions<DT,RT,dim>::general(gt, 1);
+            int size = sfs.size();
 
-                for (int i = 0; i < size; i++) {
-                    // get cell center in reference element
-                    const Dune::FieldVector<DT,dim>&
-                        local = sfs[i].position();
+            for (int i = 0; i < size; i++) {
+                // get cell center in reference element
+                const Dune::FieldVector<DT,dim>&
+                    local = sfs[i].position();
 
-                    // get global coordinate of cell center
-                    Dune::FieldVector<DT,dimworld> global = it->geometry().global(local);
+                // get global coordinate of cell center
+                Dune::FieldVector<DT,dimworld> global = it->geometry().global(local);
 
-                    int globalId = vertexmapper.template map<dim>(*it, sfs[i].entity());
+                int globalId = vertexmapper.template map<dim>(*it, sfs[i].entity());
 
-                    // initialize cell concentration
-                    (*(this->u))[globalId] = this->problem.initial(global, *it, local);
-                }
+                // initialize cell concentration
+                (*(this->u))[globalId] = this->problem.initial(global, *it, local);
             }
+        }
 
         *(this->uOldTimeStep) = *(this->u);
         return;

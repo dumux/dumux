@@ -75,32 +75,32 @@ public:
 
         switched_ = model.localJacobian().switchedGlobal;
         if (switched_)
+        {
+            model.localJacobian().switchBreak = true;
+            if(switchCount_ == 5)
             {
-                model.localJacobian().switchBreak = true;
-                if(switchCount_ == 5)
-                    {
-                        model.localJacobian().switchBreak = false;
-                        switchCount_ = 0;
-                        model.localJacobian().switchedGlobal = false;
-                        return ParentType::newtonProceed(u);
-                    }
-                else
-                    {
-
-                        switchCount_++;
-
-                        //                        if(defCheck < 1.)
-                        return true; // we always do at least five iterations
-
-                        //                        else
-                        //                        {
-                        //                             model.localJacobian().switchBreak = false;
-                        //                             switchCount_ = 0;
-                        //                             model.localJacobian().switchedGlobal = false;
-                        //                             return false;
-                        //                        }
-                    }
+                model.localJacobian().switchBreak = false;
+                switchCount_ = 0;
+                model.localJacobian().switchedGlobal = false;
+                return ParentType::newtonProceed(u);
             }
+            else
+            {
+
+                switchCount_++;
+
+                //                        if(defCheck < 1.)
+                return true; // we always do at least five iterations
+
+                //                        else
+                //                        {
+                //                             model.localJacobian().switchBreak = false;
+                //                             switchCount_ = 0;
+                //                             model.localJacobian().switchedGlobal = false;
+                //                             return false;
+                //                        }
+            }
+        }
         return ParentType::newtonProceed(u);
     }
 

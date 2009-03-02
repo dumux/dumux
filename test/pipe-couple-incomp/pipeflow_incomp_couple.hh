@@ -90,49 +90,49 @@ void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM,
     std::cout << "number of vertices out line = "<< vertexVectorOutLine.size() << std::endl;
 
     for (unsigned k = 0; k < vertexVectorOnLine.size(); k++)
+    {
+        std::cout << "vertice on line coord: " <<vertexVectorOnLine[k].nodePoint->geometry().corner(0) << std::endl;
+        std::cout << "       vertice on line: " << k << std::endl;
+        std::cout << "       globalId: " << vertexVectorOnLine[k].globalId << std::endl;
+        std::cout << "       vertexOnLineIndex: " << ((*mapperGlobalNodeIdtoOnPipeNodeIndex).find(vertexVectorOnLine[k].globalId))->second << std::endl;
+        for (unsigned n = 0; n < vertexVectorOnLine[k].parameter.size(); n++)
         {
-            std::cout << "vertice on line coord: " <<vertexVectorOnLine[k].nodePoint->geometry().corner(0) << std::endl;
-            std::cout << "       vertice on line: " << k << std::endl;
-            std::cout << "       globalId: " << vertexVectorOnLine[k].globalId << std::endl;
-            std::cout << "       vertexOnLineIndex: " << ((*mapperGlobalNodeIdtoOnPipeNodeIndex).find(vertexVectorOnLine[k].globalId))->second << std::endl;
-            for (unsigned n = 0; n < vertexVectorOnLine[k].parameter.size(); n++)
-                {
-                    std::cout << "       parameters: " << vertexVectorOnLine[k].parameter[n] << std::endl;
-                }
-            std::cout << "           boundary: " << vertexVectorOnLine[k].boundary() << std::endl;
-            if (vertexVectorOnLine[k].boundary())
-                {
-                    std::cout << "           normalBF: " << vertexVectorOnLine[k].normalBF(vertexVectorOnLine) << std::endl;
-                    std::cout << "           unitPDBF: " << vertexVectorOnLine[k].unitPDBF(vertexVectorOnLine) << std::endl;
-                }
-            std::cout << "             length: " << vertexVectorOnLine[k].length(vertexVectorOnLine) << std::endl;
-            std::cout << "             on line size: " << vertexVectorOnLine[k].lineVectorOnLine.size() << std::endl;
-            for (unsigned m = 0; m < vertexVectorOnLine[k].indexVertexVectorOnLine.size(); m++)
-                {
-                    std::cout << "                neighbour vertices on line: " << vertexVectorOnLine[k].indexVertexVectorOnLine[m] << std::endl;
-                    std::cout << "                normal vector: " << vertexVectorOnLine[k].normal(vertexVectorOnLine, vertexVectorOnLine[k].indexVertexVectorOnLine[m]) << std::endl;
-                    std::cout << "                unitPD vector: " << vertexVectorOnLine[k].unitPD(vertexVectorOnLine, vertexVectorOnLine[k].indexVertexVectorOnLine[m]) << std::endl;
-                }
-            std::cout << "             out line size: " << vertexVectorOnLine[k].lineVectorOutLine.size() << std::endl;
-            for (unsigned m = 0; m < vertexVectorOnLine[k].indexVertexVectorOutLine.size(); m++)
-                {
-                    std::cout << "                neighbour vertices out line: " << vertexVectorOnLine[k].indexVertexVectorOutLine[m] << std::endl;
-                    std::cout << "                normal vector: " << vertexVectorOnLine[k].normal(vertexVectorOutLine, vertexVectorOnLine[k].indexVertexVectorOutLine[m]) << std::endl;
-                }
+            std::cout << "       parameters: " << vertexVectorOnLine[k].parameter[n] << std::endl;
         }
+        std::cout << "           boundary: " << vertexVectorOnLine[k].boundary() << std::endl;
+        if (vertexVectorOnLine[k].boundary())
+        {
+            std::cout << "           normalBF: " << vertexVectorOnLine[k].normalBF(vertexVectorOnLine) << std::endl;
+            std::cout << "           unitPDBF: " << vertexVectorOnLine[k].unitPDBF(vertexVectorOnLine) << std::endl;
+        }
+        std::cout << "             length: " << vertexVectorOnLine[k].length(vertexVectorOnLine) << std::endl;
+        std::cout << "             on line size: " << vertexVectorOnLine[k].lineVectorOnLine.size() << std::endl;
+        for (unsigned m = 0; m < vertexVectorOnLine[k].indexVertexVectorOnLine.size(); m++)
+        {
+            std::cout << "                neighbour vertices on line: " << vertexVectorOnLine[k].indexVertexVectorOnLine[m] << std::endl;
+            std::cout << "                normal vector: " << vertexVectorOnLine[k].normal(vertexVectorOnLine, vertexVectorOnLine[k].indexVertexVectorOnLine[m]) << std::endl;
+            std::cout << "                unitPD vector: " << vertexVectorOnLine[k].unitPD(vertexVectorOnLine, vertexVectorOnLine[k].indexVertexVectorOnLine[m]) << std::endl;
+        }
+        std::cout << "             out line size: " << vertexVectorOnLine[k].lineVectorOutLine.size() << std::endl;
+        for (unsigned m = 0; m < vertexVectorOnLine[k].indexVertexVectorOutLine.size(); m++)
+        {
+            std::cout << "                neighbour vertices out line: " << vertexVectorOnLine[k].indexVertexVectorOutLine[m] << std::endl;
+            std::cout << "                normal vector: " << vertexVectorOnLine[k].normal(vertexVectorOutLine, vertexVectorOnLine[k].indexVertexVectorOutLine[m]) << std::endl;
+        }
+    }
 
     for (unsigned k = 0; k < vertexVectorOutLine.size(); k++)
+    {
+        std::cout << "vertice out line coord: " <<vertexVectorOutLine[k].nodePoint->geometry().corner(0) << std::endl;
+        std::cout << "       vertice out line: " << k << std::endl;
+        std::cout << "       globalId: " << vertexVectorOutLine[k].globalId << std::endl;
+        std::cout << "       vertexOutLineIndex: " << ((*mapperGlobalNodeIdtoOutPipeNodeIndex).find(vertexVectorOutLine[k].globalId))->second << std::endl;
+        std::cout << "          out line size: " << vertexVectorOutLine[k].lineVectorOutLine.size() << std::endl;
+        for (unsigned m = 0; m < vertexVectorOutLine[k].indexVertexVectorOnLine.size(); m++)
         {
-            std::cout << "vertice out line coord: " <<vertexVectorOutLine[k].nodePoint->geometry().corner(0) << std::endl;
-            std::cout << "       vertice out line: " << k << std::endl;
-            std::cout << "       globalId: " << vertexVectorOutLine[k].globalId << std::endl;
-            std::cout << "       vertexOutLineIndex: " << ((*mapperGlobalNodeIdtoOutPipeNodeIndex).find(vertexVectorOutLine[k].globalId))->second << std::endl;
-            std::cout << "          out line size: " << vertexVectorOutLine[k].lineVectorOutLine.size() << std::endl;
-            for (unsigned m = 0; m < vertexVectorOutLine[k].indexVertexVectorOnLine.size(); m++)
-                {
-                    std::cout << "             neighbour vertices on line: " << vertexVectorOutLine[k].indexVertexVectorOnLine[m] << std::endl;
-                }
+            std::cout << "             neighbour vertices on line: " << vertexVectorOutLine[k].indexVertexVectorOnLine[m] << std::endl;
         }
+    }
     return;
 }
 
@@ -140,11 +140,11 @@ template<class BCP, class BCV, class ICP, class ICV, class SST, class Press, cla
 void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM, MapperNodeGlobalIDtoOnOutIndexType, VertexVectorOnLineType, VertexVectorOutLineType>::SetInitialSolution ()
 {
     for (unsigned k = 0; k < vertexVectorOnLine.size(); k++)
-        {
-            typedef Dune::FieldVector<double,Grid::dimension>  FieldVector;
-            FieldVector global = vertexVectorOnLine[k].nodePoint->geometry().corner(0);
-            pressure[k] = initialConditionP(global);
-        }
+    {
+        typedef Dune::FieldVector<double,Grid::dimension>  FieldVector;
+        FieldVector global = vertexVectorOnLine[k].nodePoint->geometry().corner(0);
+        pressure[k] = initialConditionP(global);
+    }
     return;
 }
 
@@ -153,18 +153,18 @@ void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM,
 {
 
     for (unsigned k = 0; k < vertexVectorOnLine.size(); k++)
+    {
+        if (vertexVectorOnLine[k].boundary() )
         {
-            if (vertexVectorOnLine[k].boundary() )
-                {
-                    int boundaryId = (int) vertexVectorOnLine[k].parameter[1];
-                    int boundaryType;
-                    double boundaryValue = boundaryConditionP(boundaryId, t, boundaryType);
-                    if (boundaryType == 1) // if dirichlet boundary
-                        {
-                            pressure[k]=boundaryValue;
-                        }
-                }
+            int boundaryId = (int) vertexVectorOnLine[k].parameter[1];
+            int boundaryType;
+            double boundaryValue = boundaryConditionP(boundaryId, t, boundaryType);
+            if (boundaryType == 1) // if dirichlet boundary
+            {
+                pressure[k]=boundaryValue;
+            }
         }
+    }
     return;
 }
 
@@ -183,30 +183,30 @@ void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM,
     FieldVector globali = vertexVectorOnLine[indexi].nodePoint->geometry().corner(0);
 
     for (unsigned m = 0; m < vertexVectorOnLine[indexi].indexVertexVectorOnLine.size(); m++)
-        {
-            int indexj = vertexVectorOnLine[indexi].indexVertexVectorOnLine[m];
-            FieldVector globalj = vertexVectorOnLine[indexj].nodePoint->geometry().corner(0);
-            FieldVector distVect = globalj;
-            distVect -= globali;
-            double distVal = distVect.two_norm();
+    {
+        int indexj = vertexVectorOnLine[indexi].indexVertexVectorOnLine[m];
+        FieldVector globalj = vertexVectorOnLine[indexj].nodePoint->geometry().corner(0);
+        FieldVector distVect = globalj;
+        distVect -= globali;
+        double distVal = distVect.two_norm();
 
-            FieldVector unitOuterNormal = vertexVectorOnLine[k].normal(vertexVectorOnLine, indexj);
-            FieldVector unitPD = vertexVectorOnLine[k].unitPD(vertexVectorOnLine, indexj);
+        FieldVector unitOuterNormal = vertexVectorOnLine[k].normal(vertexVectorOnLine, indexj);
+        FieldVector unitPD = vertexVectorOnLine[k].unitPD(vertexVectorOnLine, indexj);
 
-            double sign = distVect * unitOuterNormal;
-            if (sign>0) sign=1.0;
-            else sign=-1.0;
-            double densityFace = density;
+        double sign = distVect * unitOuterNormal;
+        if (sign>0) sign=1.0;
+        else sign=-1.0;
+        double densityFace = density;
 
-            vFace[m]= kFace[m]* (-1.0) * (pressure[indexj] - pressure[indexi]) * sign/distVal + kFace[m] * densityFace * (gravity * unitPD);
+        vFace[m]= kFace[m]* (-1.0) * (pressure[indexj] - pressure[indexi]) * sign/distVal + kFace[m] * densityFace * (gravity * unitPD);
 
-        }
+    }
 
     // treat Neumann boundary
     if (vertexVectorOnLine[k].boundary() )
-        {
+    {
 
-        }
+    }
 
     return;
 }
@@ -232,25 +232,25 @@ void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM,
     double K_i = 1 / (2*q_i - 2*qex_i * density + TaoNoVel_i + localLoss_i);
 
     for (unsigned m = 0; m < vertexVectorOnLine[indexi].indexVertexVectorOnLine.size(); m++)
-        {
-            int indexj = vertexVectorOnLine[indexi].indexVertexVectorOnLine[m];
-            FieldVector globalj = vertexVectorOnLine[indexj].nodePoint->geometry().corner(0);
+    {
+        int indexj = vertexVectorOnLine[indexi].indexVertexVectorOnLine[m];
+        FieldVector globalj = vertexVectorOnLine[indexj].nodePoint->geometry().corner(0);
 
-            double TaoNoVel_j= 8 * viscosity * density /diameter * (PI * diameter) / crossArea; // Tao(no velocity inside) * perimeter / crossarea uniform
-            double localLoss_j= lambdaLocal(globalj, t) * density / 2 * crossArea;
-            double q_j = sourceSink(globalj, t);
-            double qex_j = alphaEX * (pressure[indexj]- pressurePorous[vertexVectorOnLine[indexj].globalId]);
-            double K_j = 1 / (2*q_j - 2*qex_j * density + TaoNoVel_j + localLoss_j);
+        double TaoNoVel_j= 8 * viscosity * density /diameter * (PI * diameter) / crossArea; // Tao(no velocity inside) * perimeter / crossarea uniform
+        double localLoss_j= lambdaLocal(globalj, t) * density / 2 * crossArea;
+        double q_j = sourceSink(globalj, t);
+        double qex_j = alphaEX * (pressure[indexj]- pressurePorous[vertexVectorOnLine[indexj].globalId]);
+        double K_j = 1 / (2*q_j - 2*qex_j * density + TaoNoVel_j + localLoss_j);
 
-            kFace[m]= 2*(K_i*K_j)/(K_i+K_j);
+        kFace[m]= 2*(K_i*K_j)/(K_i+K_j);
 
-        }
+    }
 
     // treat Neumann boundary
     if (vertexVectorOnLine[k].boundary() )
-        {
+    {
 
-        }
+    }
 
     return;
 }
@@ -289,44 +289,44 @@ void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM,
     VelocityFace<FaceVector>(k, kFace, vFace, t, dt);
 
     for (unsigned m = 0; m < vertexVectorOnLine[k].indexVertexVectorOnLine.size(); m++)
-        {
-            int indexj = vertexVectorOnLine[k].indexVertexVectorOnLine[m];
+    {
+        int indexj = vertexVectorOnLine[k].indexVertexVectorOnLine[m];
 
-            FieldVector globalj = vertexVectorOnLine[indexj].nodePoint->geometry().corner(0);
-            FieldVector distVect = globalj;
-            distVect -= globali;
-            double distVal = distVect.two_norm();
+        FieldVector globalj = vertexVectorOnLine[indexj].nodePoint->geometry().corner(0);
+        FieldVector distVect = globalj;
+        distVect -= globali;
+        double distVal = distVect.two_norm();
 
-            typedef Dune::FieldVector<double,dim> FieldVector;
-            FieldVector unitOuterNormal = vertexVectorOnLine[k].normal(vertexVectorOnLine, indexj);
-            FieldVector unitPD = vertexVectorOnLine[k].unitPD(vertexVectorOnLine, indexj);
+        typedef Dune::FieldVector<double,dim> FieldVector;
+        FieldVector unitOuterNormal = vertexVectorOnLine[k].normal(vertexVectorOnLine, indexj);
+        FieldVector unitPD = vertexVectorOnLine[k].unitPD(vertexVectorOnLine, indexj);
 
-            double sign = distVect * unitOuterNormal;
-            if (sign>0) sign=1.0;
-            else sign=-1.0;
+        double sign = distVect * unitOuterNormal;
+        if (sign>0) sign=1.0;
+        else sign=-1.0;
 
-            A[indexi][indexi] += 1.0 * kFace[m] * crossArea * 1.0 * sign / distVal;
-            A[indexi][indexj] += -1.0 * kFace[m] * crossArea * 1.0 * sign / distVal;
+        A[indexi][indexi] += 1.0 * kFace[m] * crossArea * 1.0 * sign / distVal;
+        A[indexi][indexj] += -1.0 * kFace[m] * crossArea * 1.0 * sign / distVal;
 
-            double gravitySign = unitPD * unitOuterNormal;
-            if (gravitySign>0) gravitySign=1.0;
-            else gravitySign=-1.0;
-            double densityFace = density;
-            f[indexi] += -1.0 * (kFace[m] * densityFace * (gravity*unitPD)) * crossArea * gravitySign; // effect of gravity Force on velocity
-        }
+        double gravitySign = unitPD * unitOuterNormal;
+        if (gravitySign>0) gravitySign=1.0;
+        else gravitySign=-1.0;
+        double densityFace = density;
+        f[indexi] += -1.0 * (kFace[m] * densityFace * (gravity*unitPD)) * crossArea * gravitySign; // effect of gravity Force on velocity
+    }
 
     // treat Neumann boundary
     if (vertexVectorOnLine[k].boundary() )
+    {
+        int boundaryId = (int) vertexVectorOnLine[k].parameter[1];
+        int boundaryType;
+        double boundaryValue = boundaryConditionP(boundaryId, t, boundaryType);
+        if (boundaryType == 2) // if neumann flow boundary
         {
-            int boundaryId = (int) vertexVectorOnLine[k].parameter[1];
-            int boundaryType;
-            double boundaryValue = boundaryConditionP(boundaryId, t, boundaryType);
-            if (boundaryType == 2) // if neumann flow boundary
-                {
 
-                    f[indexi] += -1 * crossArea * boundaryValue; // positiv boundaryValue --> out flow,  negativ boundaryValue --> in flow
-                }
+            f[indexi] += -1 * crossArea * boundaryValue; // positiv boundaryValue --> out flow,  negativ boundaryValue --> in flow
         }
+    }
 
     return;
 }
@@ -384,24 +384,24 @@ void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM,
         //        printvector(std::cout,velocity,"velocity","row",200,1);
 
         if (k%modulo==0)
+        {
+            // create pressureVtkOutput vector with 0 value , size=sizeOfBigGridNodes and copy pressure values from pipe pressure
+            int sizeOfNodes = mapperCDim->size();
+            std::cout <<sizeOfNodes << std::endl;
+            Press pressureVtkOutput(sizeOfNodes);
+            pressureVtkOutput = 0;
             {
-                // create pressureVtkOutput vector with 0 value , size=sizeOfBigGridNodes and copy pressure values from pipe pressure
-                int sizeOfNodes = mapperCDim->size();
-                std::cout <<sizeOfNodes << std::endl;
-                Press pressureVtkOutput(sizeOfNodes);
-                pressureVtkOutput = 0;
+                for (unsigned n = 0; n < vertexVectorOnLine.size(); n++)
                 {
-                    for (unsigned n = 0; n < vertexVectorOnLine.size(); n++)
-                        {
-                            pressureVtkOutput[vertexVectorOnLine[n].globalId] = pressure[n];
-                        }
+                    pressureVtkOutput[vertexVectorOnLine[n].globalId] = pressure[n];
                 }
-                vtkout_pipeflow(*grid, pressureVtkOutput, fileName,k/modulo);
-                //
-                sprintf(fileNameVTK,"%s-%05d.vtu", fileName, k/modulo);
-                multiFile << "   <DataSet timestep=\"" << t << "\" file=\""
-                          << fileNameVTK << "\"/>" << std::endl;
             }
+            vtkout_pipeflow(*grid, pressureVtkOutput, fileName,k/modulo);
+            //
+            sprintf(fileNameVTK,"%s-%05d.vtu", fileName, k/modulo);
+            multiFile << "   <DataSet timestep=\"" << t << "\" file=\""
+                      << fileNameVTK << "\"/>" << std::endl;
+        }
 
         {
             Iteration (t, dt, max_def);
@@ -426,44 +426,44 @@ void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM,
     Press pressureIt = pressure;
 
     for (int n = 0; n < 101; n++)
+    {
+        Press pressureOldIt = pressureIt;
+
+        IterationStep_Mass(t, dt, pressureIt);
+        //        printvector(std::cout, pressureIt, "PressureIt","row",100,1,4);
+
+        Press deltaPressure = pressureIt;
+        deltaPressure -= pressureOldIt;
+
+        double deltaPressureTwoNorm = deltaPressure.two_norm();
+        double pressureItTwoNorm = pressureIt.two_norm();
+        double defectPressure;
+
+        if (pressureItTwoNorm == 0.0)
         {
-            Press pressureOldIt = pressureIt;
-
-            IterationStep_Mass(t, dt, pressureIt);
-            //        printvector(std::cout, pressureIt, "PressureIt","row",100,1,4);
-
-            Press deltaPressure = pressureIt;
-            deltaPressure -= pressureOldIt;
-
-            double deltaPressureTwoNorm = deltaPressure.two_norm();
-            double pressureItTwoNorm = pressureIt.two_norm();
-            double defectPressure;
-
-            if (pressureItTwoNorm == 0.0)
-                {
-                    defectPressure = 0.0;
-                }
-            else
-                {
-                    defectPressure = deltaPressureTwoNorm/pressureItTwoNorm;
-                }
-
-            std::cout << "defectPressure=" << defectPressure << std::endl;
-
-            if (defectPressure < max_def)
-                {
-                    pressure= pressureIt;
-                    //            std::cout << "Converged in  n= " << n << "iterations" << std::endl;
-                    //            printvector(std::cout,pressure,"Pressure","row",100,1,4);
-                    break;
-                }
-            else if (n >= 100)
-                {
-                    Dune::Exception exception;
-                    exception.message("Diverged !!!!");
-                    throw exception;
-                }
+            defectPressure = 0.0;
         }
+        else
+        {
+            defectPressure = deltaPressureTwoNorm/pressureItTwoNorm;
+        }
+
+        std::cout << "defectPressure=" << defectPressure << std::endl;
+
+        if (defectPressure < max_def)
+        {
+            pressure= pressureIt;
+            //            std::cout << "Converged in  n= " << n << "iterations" << std::endl;
+            //            printvector(std::cout,pressure,"Pressure","row",100,1,4);
+            break;
+        }
+        else if (n >= 100)
+        {
+            Dune::Exception exception;
+            exception.message("Diverged !!!!");
+            throw exception;
+        }
+    }
 
     return;
 }
@@ -484,60 +484,60 @@ void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM,
 
     // determine matrix row sizes
     for (unsigned k = 0; k < vertexVectorOnLine.size(); k++)
-        {
-            // cell index
-            int indexi = k;
+    {
+        // cell index
+        int indexi = k;
 
-            // initialize row size = diagonal
-            int rowSize = systemSize;
+        // initialize row size = diagonal
+        int rowSize = systemSize;
 
-            A.setrowsize(indexi, rowSize);
-        }
+        A.setrowsize(indexi, rowSize);
+    }
     A.endrowsizes();
 
     // determine position of matrix entries
     for (int i = 0;i<systemSize; ++i)
+    {
+        for (int j = 0;j<systemSize; ++j)
         {
-            for (int j = 0;j<systemSize; ++j)
-                {
-                    A.addindex(i, j);
-                }
+            A.addindex(i, j);
         }
+    }
     A.endindices();
 
     //initiliaze A with 0
     for (int i = 0;i<systemSize; ++i)
+    {
+        f[i]= 0.0;
+        for (int j = 0;j<systemSize; ++j)
         {
-            f[i]= 0.0;
-            for (int j = 0;j<systemSize; ++j)
-                {
-                    A[i][j]= 0.0;
-                }
+            A[i][j]= 0.0;
         }
+    }
 
     // fill matrix
     for (unsigned k = 0; k < vertexVectorOnLine.size(); k++)
-        {
-            MassEquation<Dune::BCRSMatrix<MB> > (k, A, f, t, dt);
-        }   // end grid traversal
+    {
+        MassEquation<Dune::BCRSMatrix<MB> > (k, A, f, t, dt);
+    }   // end grid traversal
 
     // set dirichlet boundary in Matrix A and right hand side f
     for (unsigned k = 0; k < vertexVectorOnLine.size(); k++)
+    {
+        if (vertexVectorOnLine[k].boundary() )
         {
-            if (vertexVectorOnLine[k].boundary() )
-                {
-                    int boundaryId = (int) vertexVectorOnLine[k].parameter[1];
-                    int boundaryType;
-                    double boundaryConditionValue = boundaryConditionP(boundaryId, t, boundaryType);
-                    if (boundaryType == 1) // if dirichlet boundary
-                        {
-                            int indexi = k;
-                            A[indexi]=0;
-                            A[indexi][indexi]=1.0;
-                            f[indexi]= boundaryConditionValue;
-                        }
-                }
-        }   // end grid traversal
+            int boundaryId = (int) vertexVectorOnLine[k].parameter[1];
+            int boundaryType;
+            double boundaryConditionValue = boundaryConditionP(boundaryId, t, boundaryType);
+            if (boundaryType == 1) // if dirichlet boundary
+            {
+                int indexi = k;
+                A[indexi]=0;
+                A[indexi][indexi]=1.0;
+                f[indexi]= boundaryConditionValue;
+            }
+        }
+    }   // end grid traversal
 
     //    printvector(std::cout,f,"right hand side","row",200,1);
     //    printmatrix(std::cout,A,"matrix","",8,1);
@@ -559,9 +559,9 @@ void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM,
 
     //fill deltaVelocity
     for (int i = 0;i<nElem; ++i)
-        {
-            pressureIt[i]=SolutionVector[i];
-        }
+    {
+        pressureIt[i]=SolutionVector[i];
+    }
 
     //    printvector(std::cout,deltaVelocity,"deltaVelocity","row",200,1);
     //    printvector(std::cout,deltaPressure,"deltaPressure","row",200,1);

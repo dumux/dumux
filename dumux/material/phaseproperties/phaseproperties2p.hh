@@ -92,15 +92,15 @@ public:
         if (constDensity_)
             return constDensity_;
         else
-            {
-                double R = 0.54978284;
-                double temp = 284.43;
-                double rhog = p/(R*temp*1000.0);
-                if(rhog < 1e-15)
-                    rhog = 1e-15;
+        {
+            double R = 0.54978284;
+            double temp = 284.43;
+            double rhog = p/(R*temp*1000.0);
+            if(rhog < 1e-15)
+                rhog = 1e-15;
 
-                return(rhog);
-            }
+            return(rhog);
+        }
     }
 
     double enthalpy (double T=283.15, double p=1e5, double X = 1) const

@@ -103,14 +103,14 @@ int main(int argc, char** argv)
 #else
 
 int main (int argc , char **argv) try
-    {
-        std::cout << "Please install the UG library." << std::endl;
+ {
+     std::cout << "Please install the UG library." << std::endl;
 
-        return 1;
-    }
+     return 1;
+ }
  catch (...)
-     {
-         std::cerr << "Generic exception!" << std::endl;
-         return 2;
-     }
+ {
+     std::cerr << "Generic exception!" << std::endl;
+     return 2;
+ }
 #endif

@@ -55,9 +55,9 @@ public:
 
         // regions where dirichlet boundary conditions are applied
         if (x[0] < eps_)
-            {
-                values = BoundaryConditions::dirichlet;
-            }
+        {
+            values = BoundaryConditions::dirichlet;
+        }
 
         return values;
     }
@@ -88,11 +88,11 @@ public:
 
         // region where value for the water flux is not zero
         if (x[0]> Right_ - eps_)
-            {
+        {
 
-                values[0] = 0.;
-                values[1] = 3e-4;
-            }
+            values[0] = 0.;
+            values[1] = 3e-4;
+        }
         return values;
     }
 

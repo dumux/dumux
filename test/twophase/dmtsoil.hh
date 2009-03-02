@@ -27,28 +27,28 @@ public:
 
         std::vector<double>& parameters = gridPtr_.parameters(element);
         switch ((int)parameters[0])
+        {
+        case 1:
+            result[0][0] = result[1][1] = 1e-10;
+            break;
+        case 2:
+            result[0][0] = result[1][1] = 5e-12;
+            break;
+        case 3:
+            result[0][0] = result[1][1] = 5e-12;
+            break;
+        case 4:
+            if (x[1] >= 0.55)
             {
-            case 1:
-                result[0][0] = result[1][1] = 1e-10;
-                break;
-            case 2:
-                result[0][0] = result[1][1] = 5e-12;
-                break;
-            case 3:
-                result[0][0] = result[1][1] = 5e-12;
-                break;
-            case 4:
-                if (x[1] >= 0.55)
-                    {
-                        if ( x[0] >= 0.2)
-                            result[0][0] = result[1][1] = 1.0e-19;
-                        else
-                            result[0][0] = result[1][1] = 1.0e-7;
-                    }
+                if ( x[0] >= 0.2)
+                    result[0][0] = result[1][1] = 1.0e-19;
                 else
-                    result[0][0] = result[1][1] = 5.0e-12;
-                break;
+                    result[0][0] = result[1][1] = 1.0e-7;
             }
+            else
+                result[0][0] = result[1][1] = 5.0e-12;
+            break;
+        }
 
         return result;
     }
@@ -58,16 +58,16 @@ public:
         std::vector<double>& parameters = gridPtr_.parameters(element);
 
         switch ((int)parameters[0])
-            {
-            case 1:
-            case 2:
-            case 3:
-                return 0.3;
-                break;
-            case 4:
-                return 0.25;
-                break;
-            }
+        {
+        case 1:
+        case 2:
+        case 3:
+            return 0.3;
+            break;
+        case 4:
+            return 0.25;
+            break;
+        }
 
         return 0.0;
     }

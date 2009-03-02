@@ -121,113 +121,113 @@ void testadaptivity (G& grid, int maxsteps, int modulo, bool globalrefine=false,
 
     // adaptation loop
     for (int step=1; step<=1; step++)
-        {
+    {
 
-            // make  functions for solution and right hand side
-            LeafFunction u(grid);
-            LeafFunction f(grid);
-            *u = 0;
+        // make  functions for solution and right hand side
+        LeafFunction u(grid);
+        LeafFunction f(grid);
+        *u = 0;
 
-            std::cout << "=== [ STEP=" << step << " DOF=" <<  (*u).size() << std::endl;
-            Dune::gridinfo(grid," ");
+        std::cout << "=== [ STEP=" << step << " DOF=" <<  (*u).size() << std::endl;
+        Dune::gridinfo(grid," ");
 
-            typedef Dune::FieldVector<NumberType, dim> R1;
-            typedef Dune::LeafMultipleCodimMultipleGeomTypeMapper<G,P0Layout> MapperType;
-            typedef Dune::LeafP0Function<G,NumberType,(int)(0.5*dim*(dim+1))> KFineType;
-            typedef Dune::LevelP0Function<G,NumberType,(int)(0.5*dim*(dim+1))> KC;
-            MapperType mapper(grid);
-            TestModelProblem<G,NumberType> mp;
+        typedef Dune::FieldVector<NumberType, dim> R1;
+        typedef Dune::LeafMultipleCodimMultipleGeomTypeMapper<G,P0Layout> MapperType;
+        typedef Dune::LeafP0Function<G,NumberType,(int)(0.5*dim*(dim+1))> KFineType;
+        typedef Dune::LevelP0Function<G,NumberType,(int)(0.5*dim*(dim+1))> KC;
+        MapperType mapper(grid);
+        TestModelProblem<G,NumberType> mp;
 
-            // compute total time for each step and accumulate
-            total.reset();
+        // compute total time for each step and accumulate
+        total.reset();
 
-            LeafOperatorAssembler A(grid);
+        LeafOperatorAssembler A(grid);
 
-            LeafLocalStiffness lstiff(grid.leafView(),mp,false);
+        LeafLocalStiffness lstiff(grid.leafView(),mp,false);
 
-            A.assemble(lstiff,u,f);
+        A.assemble(lstiff,u,f);
 
-            // prepare solvers
-            typedef Dune::MatrixAdapter<MatrixType,VectorType,VectorType> Operator;
-            Operator op(*A);  // make operator out of matrix
-            double red=1E-10;
-            if (step==1) red=1E-14;
+        // prepare solvers
+        typedef Dune::MatrixAdapter<MatrixType,VectorType,VectorType> Operator;
+        Operator op(*A);  // make operator out of matrix
+        double red=1E-10;
+        if (step==1) red=1E-14;
 
-            // single level preconditioner
+        // single level preconditioner
 #if CGILU0
-            Dune::SeqILU0<MatrixType,VectorType,VectorType> ilu0(*A,1.0);// a precondtioner
-            Dune::CGSolver<VectorType> solver(op,ilu0,red,10000,1);         // an inverse operator
-            //Dune::BiCGSTABSolver<VectorType> solver(op,ilu0,red,10000,1);         // an inverse operator
+        Dune::SeqILU0<MatrixType,VectorType,VectorType> ilu0(*A,1.0);// a precondtioner
+        Dune::CGSolver<VectorType> solver(op,ilu0,red,10000,1);         // an inverse operator
+        //Dune::BiCGSTABSolver<VectorType> solver(op,ilu0,red,10000,1);         // an inverse operator
 #endif
 
-            // geometric multigrid
+        // geometric multigrid
 #if LOOPMGC
-            LevelLocalStiffness mglstiff(mp,true); // with level bnd as Dirichlet
-            Dune::SeqP1GeomMG<MatrixType,G,LevelLocalStiffness,VectorType,VectorType,1>
-                mgc(*A,grid,mglstiff,1,0,2,false);
-            Dune::LoopSolver<VectorType> solver(op,mgc,red,10000,1);
+        LevelLocalStiffness mglstiff(mp,true); // with level bnd as Dirichlet
+        Dune::SeqP1GeomMG<MatrixType,G,LevelLocalStiffness,VectorType,VectorType,1>
+            mgc(*A,grid,mglstiff,1,0,2,false);
+        Dune::LoopSolver<VectorType> solver(op,mgc,red,10000,1);
 #endif
 
 #if BICGMGC
-            LevelLocalStiffness mglstiff(grid.levelView(grid.maxLevel()),mp,true); // with level bnd as Dirichlet
-            Dune::SeqP1GeomMG<MatrixType,G,LevelLocalStiffness,VectorType,VectorType,1>
-                mgc(*A,grid,mglstiff,0,1,1,false);
-            Dune::CGSolver<VectorType> solver(op,mgc,red,10000,2);
+        LevelLocalStiffness mglstiff(grid.levelView(grid.maxLevel()),mp,true); // with level bnd as Dirichlet
+        Dune::SeqP1GeomMG<MatrixType,G,LevelLocalStiffness,VectorType,VectorType,1>
+            mgc(*A,grid,mglstiff,0,1,1,false);
+        Dune::CGSolver<VectorType> solver(op,mgc,red,10000,2);
 #endif
 
 #if CGBPX
-            LevelLocalStiffness mglstiff(grid.leafView(),mp,true); // with level bnd as Dirichlet
-            Dune::SeqP1GeomMG<MatrixType,G,LevelLocalStiffness,VectorType,VectorType,1>
-                bpx(*A,grid,mglstiff,1,1,0,true);
-            Dune::CGSolver<VectorType> solver(op,bpx,red,10000,1);         // an inverse operator
+        LevelLocalStiffness mglstiff(grid.leafView(),mp,true); // with level bnd as Dirichlet
+        Dune::SeqP1GeomMG<MatrixType,G,LevelLocalStiffness,VectorType,VectorType,1>
+            bpx(*A,grid,mglstiff,1,1,0,true);
+        Dune::CGSolver<VectorType> solver(op,bpx,red,10000,1);         // an inverse operator
 #endif
 
-            // algebraic multigrid
+        // algebraic multigrid
 #if CGAMG
-            typedef Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<MatrixType,
-                Dune::Amg::FirstDiagonal> > Criterion;
-            typedef Dune::SeqSSOR<MatrixType,VectorType,VectorType> Smoother;
-            typedef typename Dune::Amg::SmootherTraits<Smoother>::Arguments SmootherArgs;
-            SmootherArgs smootherArgs;
-            smootherArgs.iterations = 2;
-            int maxlevel = 20, coarsenTarget = 100;
-            Criterion criterion(maxlevel, coarsenTarget);
-            criterion.setMaxDistance(2);
-            typedef Dune::Amg::AMG<Operator,VectorType,Smoother> AMG;
-            AMG amg(op,criterion,smootherArgs,1,1);
-            Dune::CGSolver<VectorType> solver(op,amg,red,10000,1);
+        typedef Dune::Amg::CoarsenCriterion<Dune::Amg::SymmetricCriterion<MatrixType,
+            Dune::Amg::FirstDiagonal> > Criterion;
+        typedef Dune::SeqSSOR<MatrixType,VectorType,VectorType> Smoother;
+        typedef typename Dune::Amg::SmootherTraits<Smoother>::Arguments SmootherArgs;
+        SmootherArgs smootherArgs;
+        smootherArgs.iterations = 2;
+        int maxlevel = 20, coarsenTarget = 100;
+        Criterion criterion(maxlevel, coarsenTarget);
+        criterion.setMaxDistance(2);
+        typedef Dune::Amg::AMG<Operator,VectorType,Smoother> AMG;
+        AMG amg(op,criterion,smootherArgs,1,1);
+        Dune::CGSolver<VectorType> solver(op,amg,red,10000,1);
 #endif
 
-            // solve the linear system
-            Dune::InverseOperatorResult r;
-            //*u = 0;
-            solver.apply(*u,*f,r);
+        // solve the linear system
+        Dune::InverseOperatorResult r;
+        //*u = 0;
+        solver.apply(*u,*f,r);
 
-            std::cout << "=== TIME for assembly and solve " << total.elapsed() << " second(s)" << std::endl;
+        std::cout << "=== TIME for assembly and solve " << total.elapsed() << " second(s)" << std::endl;
 
-            //       double norm1 = L2Error(grid, u, LinearFunction<G,double,dim>(), 5);
-            //        double norm2 = H1Error(grid, u, LinearFunction<G,double,dim>(), 5);
-            //       std::cout << std::setw(8) << grid.size(codim) << "   L2 "
-            //             << std::scientific << std::showpoint << std::setprecision(10) << " " << norm1;
-            //       std::cout << std::setw(8) << "H1 " << std::scientific << std::showpoint << std::setprecision(10)
-            //             << " " << norm2 << "  time  " << watch.elapsed() << std::endl;
+        //       double norm1 = L2Error(grid, u, LinearFunction<G,double,dim>(), 5);
+        //        double norm2 = H1Error(grid, u, LinearFunction<G,double,dim>(), 5);
+        //       std::cout << std::setw(8) << grid.size(codim) << "   L2 "
+        //             << std::scientific << std::showpoint << std::setprecision(10) << " " << norm1;
+        //       std::cout << std::setw(8) << "H1 " << std::scientific << std::showpoint << std::setprecision(10)
+        //             << " " << norm2 << "  time  " << watch.elapsed() << std::endl;
 
-            if (picture)
-                {
-                    // graphics output
-                    std::ostringstream os;
-                    os << "u." << grid.name() << "." << dim << "d";
-                    if (globalrefine)
-                        os << ".global";
-                    else
-                        os << ".local";
-                    Dune::VTKWriter<typename G::LeafGridView> vtkwriter(grid.leafView());
-                    vtkwriter.addVertexData(*u,"solution");
-                    std::string s(os.str());
-                    vtkwriter.write(s.c_str(),Dune::VTKOptions::ascii);
-                }
-
+        if (picture)
+        {
+            // graphics output
+            std::ostringstream os;
+            os << "u." << grid.name() << "." << dim << "d";
+            if (globalrefine)
+                os << ".global";
+            else
+                os << ".local";
+            Dune::VTKWriter<typename G::LeafGridView> vtkwriter(grid.leafView());
+            vtkwriter.addVertexData(*u,"solution");
+            std::string s(os.str());
+            vtkwriter.write(s.c_str(),Dune::VTKOptions::ascii);
         }
+
+    }
 }
 
 
@@ -236,10 +236,10 @@ int main (int argc , char ** argv)
 {
     try {
         if (argc!=2)
-            {
-                std::cout << "usage: test_multigrid #steps" << std::endl;
-                return 1;
-            }
+        {
+            std::cout << "usage: test_multigrid #steps" << std::endl;
+            return 1;
+        }
         std::string arg2(argv[1]);
 
         std::istringstream is2(arg2);
@@ -268,9 +268,9 @@ int main (int argc , char ** argv)
         testadaptivity(grid, steps, 1, globalrefine, picture);
     }
     catch (Dune::Exception& error)
-        {
-            std::cout << error << std::endl;
-        }
+    {
+        std::cout << error << std::endl;
+    }
 
     return 0;
 

@@ -8,20 +8,20 @@ public:
     {
         // Left Boundary
         if (Id == 1)
-            {
-                boundaryType = 2;
-                return 0; // m3/(m2*s) for Neumann boundary
-            } // Right Boundary
+        {
+            boundaryType = 2;
+            return 0; // m3/(m2*s) for Neumann boundary
+        } // Right Boundary
         else if (Id == 2)
-            {
-                boundaryType = 1;
-                return 1.0e+5;
-            }
+        {
+            boundaryType = 1;
+            return 1.0e+5;
+        }
         else
-            {
-                boundaryType = 99;
-                return 0;
-            }
+        {
+            boundaryType = 99;
+            return 0;
+        }
     }
 
     PressureBoundary()
@@ -38,20 +38,20 @@ public:
     {
         // Left Boundary
         if (Id == 1)
-            {
-                boundaryType = 1;
-                return 0;
-            } // Right Boundary
+        {
+            boundaryType = 1;
+            return 0;
+        } // Right Boundary
         else if (Id == 1)
-            {
-                boundaryType = 1;
-                return 0;
-            }
+        {
+            boundaryType = 1;
+            return 0;
+        }
         else
-            {
-                boundaryType = 99;
-                return 0;
-            }
+        {
+            boundaryType = 99;
+            return 0;
+        }
     }
 
     VelocityBoundary()
@@ -68,9 +68,9 @@ public:
     double operator() (FieldVector x) const
     {
         if ( (x[0] > 2.0 - 1e-5 ) && (x[0] < 2.0 + 1e-5)  )
-            {
-                return 1.0e5;
-            }
+        {
+            return 1.0e5;
+        }
         else
             return 1.0e5;
     }
@@ -90,9 +90,9 @@ public:
     double operator() (FieldVector x) const
     {
         if ( (x[0] > 2.0 - 1e-5 ) && (x[0] < 2.0 + 1e-5)  )
-            {
-                return 9.0;
-            }
+        {
+            return 9.0;
+        }
         else
             return 9.0;
     }
@@ -113,19 +113,19 @@ public:
     {
 
         if ( (x[0] > 2.0 - 1e-5 ) && (x[0] < 2.0 + 1e-5)  )
-            {
-                if (t==0.0)
+        {
+            if (t==0.0)
+                return sourceSinkValue;
+            else
+                if(t<0.5)
                     return sourceSinkValue;
                 else
-                    if(t<0.5)
-                        return sourceSinkValue;
-                    else
-                        return sourceSinkValue;
-            }
+                    return sourceSinkValue;
+        }
         else
-            {
-                return 0;
-            }
+        {
+            return 0;
+        }
 
     }
 

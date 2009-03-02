@@ -82,30 +82,30 @@ template<class Grid, class Scalar>void UpscalingPreprocess<Grid,Scalar>::calcDis
 
     ElementIterator eItCoarseEnd = gridView.template end<0>();
     for (ElementIterator eItCoarse = gridView.template begin<0>(); eItCoarse != eItCoarseEnd; ++eItCoarse)
+    {
+        int globalIdxCoarse = indexSetCoarse.index(*eItCoarse);
+        //            std::cout<<"coarse cell "<<globalIdxCoarse<<std::endl;
+
+        Dune::SubGrid<dim,Grid> subGrid(grid_);
+
+        subGrid.createBegin();
+
+        HierarchicElementIterator eItEnd = eItCoarse-> hend(fineLev);
+        for (HierarchicElementIterator eIt = eItCoarse->hbegin(fineLev); eIt != eItEnd; ++eIt)
         {
-            int globalIdxCoarse = indexSetCoarse.index(*eItCoarse);
-            //            std::cout<<"coarse cell "<<globalIdxCoarse<<std::endl;
-
-            Dune::SubGrid<dim,Grid> subGrid(grid_);
-
-            subGrid.createBegin();
-
-            HierarchicElementIterator eItEnd = eItCoarse-> hend(fineLev);
-            for (HierarchicElementIterator eIt = eItCoarse->hbegin(fineLev); eIt != eItEnd; ++eIt)
-                {
-                    if (eIt->level() == fineLev)
-                        {
-                            subGrid.addPartial(eIt);
-                        }
-                }
-            subGrid.createEnd();
-
-            GlobalPosition lowerLeft = eItCoarse->geometry().corner(0);
-            GlobalPosition upperRight = eItCoarse->geometry().corner(3);
-
-            XProblem1(subGrid, fineLev, lowerLeft, upperRight,globalIdxCoarse, calcDispersion);
-            YProblem1(subGrid, fineLev, lowerLeft, upperRight, globalIdxCoarse, calcDispersion);
+            if (eIt->level() == fineLev)
+            {
+                subGrid.addPartial(eIt);
+            }
         }
+        subGrid.createEnd();
+
+        GlobalPosition lowerLeft = eItCoarse->geometry().corner(0);
+        GlobalPosition upperRight = eItCoarse->geometry().corner(3);
+
+        XProblem1(subGrid, fineLev, lowerLeft, upperRight,globalIdxCoarse, calcDispersion);
+        YProblem1(subGrid, fineLev, lowerLeft, upperRight, globalIdxCoarse, calcDispersion);
+    }
     return;
 }
 
@@ -126,135 +126,135 @@ template<class Grid, class Scalar>void UpscalingPreprocess<Grid,Scalar>::calcCon
 
     ElementIterator eItCoarseEnd = gridView.template end<0>();
     for (ElementIterator eItCoarse = gridView.template begin<0>(); eItCoarse != eItCoarseEnd; ++eItCoarse)
+    {
+        int globalIdxCoarse = indexSetCoarse.index(*eItCoarse);
+        //            std::cout<<"coarse cell "<<globalIdxCoarse<<std::endl;
+
+        IntersectionIterator isItCoarseEnd = gridView.template iend(*eItCoarse);
+        for (IntersectionIterator isItCoarse = gridView.ibegin(*eItCoarse); isItCoarse != isItCoarseEnd; ++isItCoarse)
         {
-            int globalIdxCoarse = indexSetCoarse.index(*eItCoarse);
-            //            std::cout<<"coarse cell "<<globalIdxCoarse<<std::endl;
+            if ( isItCoarse->neighbor() )
+            {
+                GeometryType gtCoarse = isItCoarse->intersectionSelfLocal().type();
+                FieldVector<Scalar,dim-1> faceLocalCoarse = ReferenceElements<Scalar,dim-1>::general(gtCoarse).position(0,0);
+                const GlobalPosition& globalPosFaceCoarse = isItCoarse->intersectionGlobal().global(faceLocalCoarse);
 
-            IntersectionIterator isItCoarseEnd = gridView.template iend(*eItCoarse);
-            for (IntersectionIterator isItCoarse = gridView.ibegin(*eItCoarse); isItCoarse != isItCoarseEnd; ++isItCoarse)
+                // local number of facet
+                int numberInSelf = isItCoarse->numberInSelf();
+                ElementPointer neighborPointer = isItCoarse->outside();
+
+                Dune::SubGrid<dim,Grid> subGrid(grid_);
+                subGrid.createBegin();
+
+                HierarchicElementIterator eItEnde = eItCoarse-> hend(fineLev);
+                for (HierarchicElementIterator eIt = eItCoarse->hbegin(fineLev); eIt != eItEnde; ++eIt)
                 {
-                    if ( isItCoarse->neighbor() )
-                        {
-                            GeometryType gtCoarse = isItCoarse->intersectionSelfLocal().type();
-                            FieldVector<Scalar,dim-1> faceLocalCoarse = ReferenceElements<Scalar,dim-1>::general(gtCoarse).position(0,0);
-                            const GlobalPosition& globalPosFaceCoarse = isItCoarse->intersectionGlobal().global(faceLocalCoarse);
-
-                            // local number of facet
-                            int numberInSelf = isItCoarse->numberInSelf();
-                            ElementPointer neighborPointer = isItCoarse->outside();
-
-                            Dune::SubGrid<dim,Grid> subGrid(grid_);
-                            subGrid.createBegin();
-
-                            HierarchicElementIterator eItEnde = eItCoarse-> hend(fineLev);
-                            for (HierarchicElementIterator eIt = eItCoarse->hbegin(fineLev); eIt != eItEnde; ++eIt)
-                                {
-                                    if (eIt->level() == fineLev)
-                                        {
-                                            subGrid.addPartial(eIt);
-                                        }
-                                }
-
-                            HierarchicElementIterator eItEnd = neighborPointer-> hend(fineLev);
-                            for (HierarchicElementIterator eIt = neighborPointer->hbegin(fineLev); eIt != eItEnd; ++eIt)
-                                {
-                                    if (eIt->level() == fineLev)
-                                        {
-                                            subGrid.addPartial(eIt);
-                                        }
-                                }
-                            subGrid.createEnd();
-
-                            GlobalPosition lowerLeftHelp = eItCoarse->geometry().corner(0);
-                            GlobalPosition upperRightHelp = eItCoarse->geometry().corner(3);
-
-                            if (globalPosFaceCoarse[0] <= lowerLeftHelp[0] + eps_ && globalPosFaceCoarse[0] >= lowerLeftHelp[0] - eps_)
-                                {
-                                    //                    std::cout<<"globalPosFaceCoarse[0] ="<<globalPosFaceCoarse[0]<<"lowerLeftHelp[0] = "<<lowerLeftHelp[0]<<std::endl;
-                                    GlobalPosition lowerLeft = neighborPointer->geometry().corner(0);
-                                    GlobalPosition upperRight = upperRightHelp;
-
-                                    //                    std::cout<<"lowerLeftx1 = "<<lowerLeft<<"upperRight = "<<upperRight<<std::endl;
-
-                                    XProblem1(subGrid, fineLev, lowerLeft, upperRight,globalIdxCoarse,calcConvection, numberInSelf, globalPosFaceCoarse);
-                                }
-                            if (globalPosFaceCoarse[0] <= upperRightHelp[0] + eps_ && globalPosFaceCoarse[0] >= upperRightHelp[0] - eps_)
-                                {
-                                    //                    std::cout<<"globalPosFaceCoarse[0] ="<<globalPosFaceCoarse[0]<<"upperRightHelp[0] = "<<upperRightHelp[0]<<std::endl;
-                                    GlobalPosition lowerLeft = lowerLeftHelp;
-                                    GlobalPosition upperRight = neighborPointer->geometry().corner(3);
-                                    //                    std::cout<<"lowerLeftx2 = "<<lowerLeft<<"upperRight = "<<upperRight<<std::endl;
-
-                                    XProblem2(subGrid, fineLev, lowerLeft, upperRight,globalIdxCoarse,calcConvection, numberInSelf,globalPosFaceCoarse);
-                                }
-                            if (globalPosFaceCoarse[1] <= lowerLeftHelp[1] + eps_ && globalPosFaceCoarse[1] >= lowerLeftHelp[1] - eps_)
-                                {
-                                    //                    std::cout<<"globalPosFaceCoarse[1] ="<<globalPosFaceCoarse[1]<<"lowerLeftHelp[1] = "<<lowerLeftHelp[1]<<std::endl;
-                                    GlobalPosition lowerLeft = neighborPointer->geometry().corner(0);
-                                    GlobalPosition upperRight = upperRightHelp;
-                                    //                    std::cout<<"lowerLefty1 = "<<lowerLeft<<"upperRight = "<<upperRight<<std::endl;
-
-                                    YProblem1(subGrid, fineLev, lowerLeft, upperRight, globalIdxCoarse,calcConvection, numberInSelf,globalPosFaceCoarse);
-                                }
-                            if (globalPosFaceCoarse[1] <= upperRightHelp[1] + eps_ && globalPosFaceCoarse[1] >= upperRightHelp[1] - eps_)
-                                {
-                                    //                    std::cout<<"globalPosFaceCoarse[1] ="<<globalPosFaceCoarse[1]<<"upperRightHelp[1] = "<<upperRightHelp[1]<<std::endl;
-                                    GlobalPosition lowerLeft = lowerLeftHelp;
-                                    GlobalPosition upperRight = neighborPointer->geometry().corner(3);
-                                    //                    std::cout<<"lowerLefty2 = "<<lowerLeft<<"upperRight = "<<upperRight<<std::endl;
-
-                                    YProblem2(subGrid, fineLev, lowerLeft, upperRight, globalIdxCoarse,calcConvection, numberInSelf,globalPosFaceCoarse);
-                                }
-                        }
-                    else
-                        {
-                            if (isItCoarse->boundary())
-                                {
-                                    bool isBoundary = true;
-
-                                    GeometryType gtCoarse = isItCoarse->intersectionSelfLocal().type();
-                                    FieldVector<Scalar,dim-1> faceLocalCoarse = ReferenceElements<Scalar,dim-1>::general(gtCoarse).position(0,0);
-                                    const GlobalPosition& globalPosFaceCoarse = isItCoarse->intersectionGlobal().global(faceLocalCoarse);
-
-                                    // local number of facet
-                                    int numberInSelf = isItCoarse->numberInSelf();
-
-                                    Dune::SubGrid<dim,Grid> subGrid(grid_);
-                                    subGrid.createBegin();
-
-                                    HierarchicElementIterator eItEnde = eItCoarse-> hend(fineLev);
-                                    for (HierarchicElementIterator eIt = eItCoarse->hbegin(fineLev); eIt != eItEnde; ++eIt)
-                                        {
-                                            if (eIt->level() == fineLev)
-                                                {
-                                                    subGrid.addPartial(eIt);
-                                                }
-                                        }
-                                    subGrid.createEnd();
-
-                                    GlobalPosition lowerLeft = eItCoarse->geometry().corner(0);
-                                    GlobalPosition upperRight = eItCoarse->geometry().corner(3);
-
-                                    if (globalPosFaceCoarse[0] <= lowerLeft[0] + eps_ && globalPosFaceCoarse[0] >= lowerLeft[0] - eps_)
-                                        {
-                                            XProblem1(subGrid, fineLev, lowerLeft, upperRight,globalIdxCoarse,calcConvection, numberInSelf, globalPosFaceCoarse,isBoundary);
-                                        }
-                                    if (globalPosFaceCoarse[0] <= upperRight[0] + eps_ && globalPosFaceCoarse[0] >= upperRight[0] - eps_)
-                                        {
-                                            XProblem2(subGrid, fineLev, lowerLeft, upperRight,globalIdxCoarse,calcConvection, numberInSelf,globalPosFaceCoarse, isBoundary);
-                                        }
-                                    if (globalPosFaceCoarse[1] <= lowerLeft[1] + eps_ && globalPosFaceCoarse[1] >= lowerLeft[1] - eps_)
-                                        {
-                                            YProblem1(subGrid, fineLev, lowerLeft, upperRight, globalIdxCoarse,calcConvection, numberInSelf,globalPosFaceCoarse,isBoundary);
-                                        }
-                                    if (globalPosFaceCoarse[1] <= upperRight[1] + eps_ && globalPosFaceCoarse[1] >= upperRight[1] - eps_)
-                                        {
-                                            YProblem2(subGrid, fineLev, lowerLeft, upperRight, globalIdxCoarse,calcConvection, numberInSelf,globalPosFaceCoarse,isBoundary);
-                                        }
-                                }
-                        }
+                    if (eIt->level() == fineLev)
+                    {
+                        subGrid.addPartial(eIt);
+                    }
                 }
+
+                HierarchicElementIterator eItEnd = neighborPointer-> hend(fineLev);
+                for (HierarchicElementIterator eIt = neighborPointer->hbegin(fineLev); eIt != eItEnd; ++eIt)
+                {
+                    if (eIt->level() == fineLev)
+                    {
+                        subGrid.addPartial(eIt);
+                    }
+                }
+                subGrid.createEnd();
+
+                GlobalPosition lowerLeftHelp = eItCoarse->geometry().corner(0);
+                GlobalPosition upperRightHelp = eItCoarse->geometry().corner(3);
+
+                if (globalPosFaceCoarse[0] <= lowerLeftHelp[0] + eps_ && globalPosFaceCoarse[0] >= lowerLeftHelp[0] - eps_)
+                {
+                    //                    std::cout<<"globalPosFaceCoarse[0] ="<<globalPosFaceCoarse[0]<<"lowerLeftHelp[0] = "<<lowerLeftHelp[0]<<std::endl;
+                    GlobalPosition lowerLeft = neighborPointer->geometry().corner(0);
+                    GlobalPosition upperRight = upperRightHelp;
+
+                    //                    std::cout<<"lowerLeftx1 = "<<lowerLeft<<"upperRight = "<<upperRight<<std::endl;
+
+                    XProblem1(subGrid, fineLev, lowerLeft, upperRight,globalIdxCoarse,calcConvection, numberInSelf, globalPosFaceCoarse);
+                }
+                if (globalPosFaceCoarse[0] <= upperRightHelp[0] + eps_ && globalPosFaceCoarse[0] >= upperRightHelp[0] - eps_)
+                {
+                    //                    std::cout<<"globalPosFaceCoarse[0] ="<<globalPosFaceCoarse[0]<<"upperRightHelp[0] = "<<upperRightHelp[0]<<std::endl;
+                    GlobalPosition lowerLeft = lowerLeftHelp;
+                    GlobalPosition upperRight = neighborPointer->geometry().corner(3);
+                    //                    std::cout<<"lowerLeftx2 = "<<lowerLeft<<"upperRight = "<<upperRight<<std::endl;
+
+                    XProblem2(subGrid, fineLev, lowerLeft, upperRight,globalIdxCoarse,calcConvection, numberInSelf,globalPosFaceCoarse);
+                }
+                if (globalPosFaceCoarse[1] <= lowerLeftHelp[1] + eps_ && globalPosFaceCoarse[1] >= lowerLeftHelp[1] - eps_)
+                {
+                    //                    std::cout<<"globalPosFaceCoarse[1] ="<<globalPosFaceCoarse[1]<<"lowerLeftHelp[1] = "<<lowerLeftHelp[1]<<std::endl;
+                    GlobalPosition lowerLeft = neighborPointer->geometry().corner(0);
+                    GlobalPosition upperRight = upperRightHelp;
+                    //                    std::cout<<"lowerLefty1 = "<<lowerLeft<<"upperRight = "<<upperRight<<std::endl;
+
+                    YProblem1(subGrid, fineLev, lowerLeft, upperRight, globalIdxCoarse,calcConvection, numberInSelf,globalPosFaceCoarse);
+                }
+                if (globalPosFaceCoarse[1] <= upperRightHelp[1] + eps_ && globalPosFaceCoarse[1] >= upperRightHelp[1] - eps_)
+                {
+                    //                    std::cout<<"globalPosFaceCoarse[1] ="<<globalPosFaceCoarse[1]<<"upperRightHelp[1] = "<<upperRightHelp[1]<<std::endl;
+                    GlobalPosition lowerLeft = lowerLeftHelp;
+                    GlobalPosition upperRight = neighborPointer->geometry().corner(3);
+                    //                    std::cout<<"lowerLefty2 = "<<lowerLeft<<"upperRight = "<<upperRight<<std::endl;
+
+                    YProblem2(subGrid, fineLev, lowerLeft, upperRight, globalIdxCoarse,calcConvection, numberInSelf,globalPosFaceCoarse);
+                }
+            }
+            else
+            {
+                if (isItCoarse->boundary())
+                {
+                    bool isBoundary = true;
+
+                    GeometryType gtCoarse = isItCoarse->intersectionSelfLocal().type();
+                    FieldVector<Scalar,dim-1> faceLocalCoarse = ReferenceElements<Scalar,dim-1>::general(gtCoarse).position(0,0);
+                    const GlobalPosition& globalPosFaceCoarse = isItCoarse->intersectionGlobal().global(faceLocalCoarse);
+
+                    // local number of facet
+                    int numberInSelf = isItCoarse->numberInSelf();
+
+                    Dune::SubGrid<dim,Grid> subGrid(grid_);
+                    subGrid.createBegin();
+
+                    HierarchicElementIterator eItEnde = eItCoarse-> hend(fineLev);
+                    for (HierarchicElementIterator eIt = eItCoarse->hbegin(fineLev); eIt != eItEnde; ++eIt)
+                    {
+                        if (eIt->level() == fineLev)
+                        {
+                            subGrid.addPartial(eIt);
+                        }
+                    }
+                    subGrid.createEnd();
+
+                    GlobalPosition lowerLeft = eItCoarse->geometry().corner(0);
+                    GlobalPosition upperRight = eItCoarse->geometry().corner(3);
+
+                    if (globalPosFaceCoarse[0] <= lowerLeft[0] + eps_ && globalPosFaceCoarse[0] >= lowerLeft[0] - eps_)
+                    {
+                        XProblem1(subGrid, fineLev, lowerLeft, upperRight,globalIdxCoarse,calcConvection, numberInSelf, globalPosFaceCoarse,isBoundary);
+                    }
+                    if (globalPosFaceCoarse[0] <= upperRight[0] + eps_ && globalPosFaceCoarse[0] >= upperRight[0] - eps_)
+                    {
+                        XProblem2(subGrid, fineLev, lowerLeft, upperRight,globalIdxCoarse,calcConvection, numberInSelf,globalPosFaceCoarse, isBoundary);
+                    }
+                    if (globalPosFaceCoarse[1] <= lowerLeft[1] + eps_ && globalPosFaceCoarse[1] >= lowerLeft[1] - eps_)
+                    {
+                        YProblem1(subGrid, fineLev, lowerLeft, upperRight, globalIdxCoarse,calcConvection, numberInSelf,globalPosFaceCoarse,isBoundary);
+                    }
+                    if (globalPosFaceCoarse[1] <= upperRight[1] + eps_ && globalPosFaceCoarse[1] >= upperRight[1] - eps_)
+                    {
+                        YProblem2(subGrid, fineLev, lowerLeft, upperRight, globalIdxCoarse,calcConvection, numberInSelf,globalPosFaceCoarse,isBoundary);
+                    }
+                }
+            }
         }
+    }
 
     return;
 }

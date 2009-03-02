@@ -108,21 +108,21 @@ public:
             return false;
         }
         else if (curPhysicalness_ < maxPhysicalness_)
-            {
-                if (probationCount_ > 1) {
-                    // an iterative solution was more physical
-                    // than the current solution and at least 2
-                    // others.
-                    return false;
-                }
-                else {
-                    // we are physical enough, but some earlier
-                    // solution was more physical, so we let the
-                    // solver continue on probation.
-                    ++probationCount_;
-                    return true;
-                }
+        {
+            if (probationCount_ > 1) {
+                // an iterative solution was more physical
+                // than the current solution and at least 2
+                // others.
+                return false;
             }
+            else {
+                // we are physical enough, but some earlier
+                // solution was more physical, so we let the
+                // solver continue on probation.
+                ++probationCount_;
+                return true;
+            }
+        }
         else {
             // everything's fine: the solution is physical
             // enough for the number of iterations we did and

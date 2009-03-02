@@ -64,10 +64,10 @@ public:
         l_wurz = ldry + sqrt(Sw)*(lsat-ldry);
 
         if(isnan(l_wurz))
-            {
-                std::cout <<"isnan heatcondwurzel \n"<<std::endl;
-                l_wurz = 0.0;
-            }
+        {
+            std::cout <<"isnan heatcondwurzel \n"<<std::endl;
+            l_wurz = 0.0;
+        }
         return(l_wurz);
     }
 

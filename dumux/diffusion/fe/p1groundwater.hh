@@ -116,12 +116,12 @@ public:
 
         // clear assemble data
         for (int i=0; i<sfs.size(); i++)
-            {
-                this->b[i] = 0;
-                this->bctype[i][0] = BoundaryConditions::neumann;
-                for (int j=0; j<sfs.size(); j++)
-                    this->A[i][j] = 0;
-            }
+        {
+            this->b[i] = 0;
+            this->bctype[i][0] = BoundaryConditions::neumann;
+            for (int j=0; j<sfs.size(); j++)
+                this->A[i][j] = 0;
+        }
 
         assembleV(e,k);
         assembleBC(e,k);
@@ -145,10 +145,10 @@ public:
 
         // clear assemble data
         for (int i=0; i<sfs.size(); i++)
-            {
-                this->b[i] = 0;
-                this->bctype[i][0] = BoundaryConditions::neumann;
-            }
+        {
+            this->b[i] = 0;
+            this->bctype[i][0] = BoundaryConditions::neumann;
+        }
 
         this->assembleBC(e,k);
     }
@@ -169,45 +169,45 @@ private:
         if (k>1) p=2*(k-1);
         int elemId = elementmapper.map(e);
         for (size_t g=0; g<Dune::QuadratureRules<DT,n>::rule(gt,p).size(); ++g) // run through all quadrature points
+        {
+            const Dune::FieldVector<DT,n>&
+                local = Dune::QuadratureRules<DT,n>::rule(gt,p)[g].position(); // pos of integration point
+            Dune::FieldVector<DT,n> global = e.geometry().global(local);     // ip in global coordinates
+            const Dune::FieldMatrix<DT,n,n>
+                jac = e.geometry().jacobianInverseTransposed(local);           // eval jacobian inverse
+            Dune::FieldMatrix<DT,n,n> K = problem.K(global,e,local);   // eval diffusion tensor
+            K *= problem.materialLaw.mobTotal(problem.variables.sat(global,e,local), global, e, local);
+            double weight = Dune::QuadratureRules<DT,n>::rule(gt,p)[g].weight();// weight of quadrature point
+            DT detjac = e.geometry().integrationElement(local);              // determinant of jacobian
+            RT q = problem.source(global,e,local);                                // source term
+            RT factor = weight*detjac;
+
+            // evaluate gradients at Gauss points
+            Dune::FieldVector<DT,n> grad[SIZE], temp, gv;
+            for (int i=0; i<sfs.size(); i++)
             {
-                const Dune::FieldVector<DT,n>&
-                    local = Dune::QuadratureRules<DT,n>::rule(gt,p)[g].position(); // pos of integration point
-                Dune::FieldVector<DT,n> global = e.geometry().global(local);     // ip in global coordinates
-                const Dune::FieldMatrix<DT,n,n>
-                    jac = e.geometry().jacobianInverseTransposed(local);           // eval jacobian inverse
-                Dune::FieldMatrix<DT,n,n> K = problem.K(global,e,local);   // eval diffusion tensor
-                K *= problem.materialLaw.mobTotal(problem.variables.sat(global,e,local), global, e, local);
-                double weight = Dune::QuadratureRules<DT,n>::rule(gt,p)[g].weight();// weight of quadrature point
-                DT detjac = e.geometry().integrationElement(local);              // determinant of jacobian
-                RT q = problem.source(global,e,local);                                // source term
-                RT factor = weight*detjac;
-
-                // evaluate gradients at Gauss points
-                Dune::FieldVector<DT,n> grad[SIZE], temp, gv;
-                for (int i=0; i<sfs.size(); i++)
-                    {
-                        for (int l=0; l<n; l++)
-                            temp[l] = sfs[i].evaluateDerivative(0,l,local);
-                        grad[i] = 0;
-                        jac.umv(temp,grad[i]); // transform gradient to global ooordinates
-                    }
-
-                for (int i=0; i<sfs.size(); i++) // loop over test function number
-                    {
-                        // rhs
-                        this->b[i] += q*sfs[i].evaluateFunction(0,local)*factor;
-
-                        // matrix
-                        gv = 0;    K.umv(grad[i],gv); // multiply with diffusion tensor
-                        this->A[i][i] += (grad[i]*gv)*factor;
-                        for (int j=0; j<i; j++)
-                            {
-                                RT t = (grad[j]*gv)*factor;
-                                this->A[i][j] += t;
-                                this->A[j][i] += t;
-                            }
-                    }
+                for (int l=0; l<n; l++)
+                    temp[l] = sfs[i].evaluateDerivative(0,l,local);
+                grad[i] = 0;
+                jac.umv(temp,grad[i]); // transform gradient to global ooordinates
             }
+
+            for (int i=0; i<sfs.size(); i++) // loop over test function number
+            {
+                // rhs
+                this->b[i] += q*sfs[i].evaluateFunction(0,local)*factor;
+
+                // matrix
+                gv = 0;    K.umv(grad[i],gv); // multiply with diffusion tensor
+                this->A[i][i] += (grad[i]*gv)*factor;
+                for (int j=0; j<i; j++)
+                {
+                    RT t = (grad[j]*gv)*factor;
+                    this->A[i][j] += t;
+                    this->A[j][i] += t;
+                }
+            }
+        }
     }
 
 
@@ -231,95 +231,95 @@ private:
         IntersectionIterator endit = IntersectionIteratorGetter<G,LeafTag>::end(e);
         for (IntersectionIterator it = IntersectionIteratorGetter<G,LeafTag>::begin(e);
              it!=endit; ++it)
+        {
+            // if we have a neighbor then we assume there is no boundary (forget interior boundaries)
+            // in level assemble treat non-level neighbors as boundary
+            if (it->neighbor())
             {
-                // if we have a neighbor then we assume there is no boundary (forget interior boundaries)
-                // in level assemble treat non-level neighbors as boundary
-                if (it->neighbor())
-                    {
-                        if (levelBoundaryAsDirichlet && it->outside()->level()==e.level())
-                            continue;
-                        if (!levelBoundaryAsDirichlet)
-                            continue;
-                    }
+                if (levelBoundaryAsDirichlet && it->outside()->level()==e.level())
+                    continue;
+                if (!levelBoundaryAsDirichlet)
+                    continue;
+            }
 
-                // determine boundary condition type for this face, initialize with processor boundary
-                typename BoundaryConditions::Flags bctypeface = BoundaryConditions::process;
+            // determine boundary condition type for this face, initialize with processor boundary
+            typename BoundaryConditions::Flags bctypeface = BoundaryConditions::process;
 
-                // handle face on exterior boundary, this assumes there are no interior boundaries
-                if (it->boundary())
+            // handle face on exterior boundary, this assumes there are no interior boundaries
+            if (it->boundary())
+            {
+                Dune::GeometryType gtface = it->intersectionSelfLocal().type();
+                for (size_t g=0; g<Dune::QuadratureRules<DT,n-1>::rule(gtface,p).size(); ++g)
+                {
+                    const Dune::FieldVector<DT,n-1>& facelocal = Dune::QuadratureRules<DT,n-1>::rule(gtface,p)[g].position();
+                    FieldVector<DT,n> local = it->intersectionSelfLocal().global(facelocal);
+                    FieldVector<DT,n> global = it->intersectionGlobal().global(facelocal);
+                    bctypeface = problem.bctype(global,e,local); // eval bctype
+
+
+                    if (bctypeface!=BoundaryConditions::neumann) break;
+
+                    RT J = problem.neumannPress(global,e,local);
+                    double weightface = Dune::QuadratureRules<DT,n-1>::rule(gtface,p)[g].weight();
+                    DT detjacface = it->intersectionGlobal().integrationElement(facelocal);
+                    for (int i=0; i<sfs.size(); i++) // loop over test function number
+                        if (this->bctype[i][0]==BoundaryConditions::neumann)
+                        {
+                            this->b[i] += J*sfs[i].evaluateFunction(0,local)*weightface*detjacface;
+                        }
+                }
+                if (bctypeface==BoundaryConditions::neumann) continue; // was a neumann face, go to next face
+            }
+
+            // If we are here, then it is
+            // (i)   an exterior boundary face with Dirichlet condition, or
+            // (ii)  a processor boundary (i.e. neither boundary() nor neighbor() was true), or
+            // (iii) a level boundary in case of level-wise assemble
+            // How processor boundaries are handled depends on the processor boundary mode
+            if (bctypeface==BoundaryConditions::process && procBoundaryAsDirichlet==false
+                && levelBoundaryAsDirichlet==false)
+                continue; // then it acts like homogeneous Neumann
+
+            // now handle exterior or interior Dirichlet boundary
+            for (int i=0; i<sfs.size(); i++) // loop over test function number
+            {
+                if (sfs[i].codim()==0) continue; // skip interior dof
+                if (sfs[i].codim()==1) // handle face dofs
+                {
+                    if (sfs[i].entity()==it->numberInSelf())
                     {
-                        Dune::GeometryType gtface = it->intersectionSelfLocal().type();
-                        for (size_t g=0; g<Dune::QuadratureRules<DT,n-1>::rule(gtface,p).size(); ++g)
+                        if (this->bctype[i][0]<bctypeface)
+                        {
+                            this->bctype[i][0] = bctypeface;
+                            if (bctypeface==BoundaryConditions::process)
+                                this->b[i] = 0;
+                            if (bctypeface==BoundaryConditions::dirichlet)
                             {
-                                const Dune::FieldVector<DT,n-1>& facelocal = Dune::QuadratureRules<DT,n-1>::rule(gtface,p)[g].position();
-                                FieldVector<DT,n> local = it->intersectionSelfLocal().global(facelocal);
-                                FieldVector<DT,n> global = it->intersectionGlobal().global(facelocal);
-                                bctypeface = problem.bctype(global,e,local); // eval bctype
-
-
-                                if (bctypeface!=BoundaryConditions::neumann) break;
-
-                                RT J = problem.neumannPress(global,e,local);
-                                double weightface = Dune::QuadratureRules<DT,n-1>::rule(gtface,p)[g].weight();
-                                DT detjacface = it->intersectionGlobal().integrationElement(facelocal);
-                                for (int i=0; i<sfs.size(); i++) // loop over test function number
-                                    if (this->bctype[i][0]==BoundaryConditions::neumann)
-                                        {
-                                            this->b[i] += J*sfs[i].evaluateFunction(0,local)*weightface*detjacface;
-                                        }
+                                Dune::FieldVector<DT,n> global = e.geometry().global(sfs[i].position());
+                                this->b[i] = problem.dirichletPress(global,e,sfs[i].position());
                             }
-                        if (bctypeface==BoundaryConditions::neumann) continue; // was a neumann face, go to next face
+                        }
                     }
-
-                // If we are here, then it is
-                // (i)   an exterior boundary face with Dirichlet condition, or
-                // (ii)  a processor boundary (i.e. neither boundary() nor neighbor() was true), or
-                // (iii) a level boundary in case of level-wise assemble
-                // How processor boundaries are handled depends on the processor boundary mode
-                if (bctypeface==BoundaryConditions::process && procBoundaryAsDirichlet==false
-                    && levelBoundaryAsDirichlet==false)
-                    continue; // then it acts like homogeneous Neumann
-
-                // now handle exterior or interior Dirichlet boundary
-                for (int i=0; i<sfs.size(); i++) // loop over test function number
+                    continue;
+                }
+                // handle subentities of this face
+                for (int j=0; j<ReferenceElements<DT,n>::general(gt).size(it->numberInSelf(),1,sfs[i].codim()); j++)
+                    if (sfs[i].entity()==ReferenceElements<DT,n>::general(gt).subEntity(it->numberInSelf(),1,j,sfs[i].codim()))
                     {
-                        if (sfs[i].codim()==0) continue; // skip interior dof
-                        if (sfs[i].codim()==1) // handle face dofs
+                        if (this->bctype[i][0]<bctypeface)
+                        {
+                            this->bctype[i][0] = bctypeface;
+                            if (bctypeface==BoundaryConditions::process)
+                                this->b[i] = 0;
+                            if (bctypeface==BoundaryConditions::dirichlet)
                             {
-                                if (sfs[i].entity()==it->numberInSelf())
-                                    {
-                                        if (this->bctype[i][0]<bctypeface)
-                                            {
-                                                this->bctype[i][0] = bctypeface;
-                                                if (bctypeface==BoundaryConditions::process)
-                                                    this->b[i] = 0;
-                                                if (bctypeface==BoundaryConditions::dirichlet)
-                                                    {
-                                                        Dune::FieldVector<DT,n> global = e.geometry().global(sfs[i].position());
-                                                        this->b[i] = problem.dirichletPress(global,e,sfs[i].position());
-                                                    }
-                                            }
-                                    }
-                                continue;
+                                Dune::FieldVector<DT,n> global = e.geometry().global(sfs[i].position());
+                                this->b[i] = problem.dirichletPress(global,e,sfs[i].position());
                             }
-                        // handle subentities of this face
-                        for (int j=0; j<ReferenceElements<DT,n>::general(gt).size(it->numberInSelf(),1,sfs[i].codim()); j++)
-                            if (sfs[i].entity()==ReferenceElements<DT,n>::general(gt).subEntity(it->numberInSelf(),1,j,sfs[i].codim()))
-                                {
-                                    if (this->bctype[i][0]<bctypeface)
-                                        {
-                                            this->bctype[i][0] = bctypeface;
-                                            if (bctypeface==BoundaryConditions::process)
-                                                this->b[i] = 0;
-                                            if (bctypeface==BoundaryConditions::dirichlet)
-                                                {
-                                                    Dune::FieldVector<DT,n> global = e.geometry().global(sfs[i].position());
-                                                    this->b[i] = problem.dirichletPress(global,e,sfs[i].position());
-                                                }
-                                        }
-                                }
+                        }
                     }
             }
+        }
     }
 
     // parameters given in constructor

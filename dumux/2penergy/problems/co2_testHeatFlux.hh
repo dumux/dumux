@@ -69,11 +69,11 @@ public:
     {
         FieldVector<BoundaryConditions::Flags, m> values(Dune::BoundaryConditions::dirichlet);
         if(x[0]<1.e-2 && x[1] > 1. && x[1] < 3.)
-            {
-                values[0] = Dune::BoundaryConditions::neumann;
-                values[1] = Dune::BoundaryConditions::neumann;
-                values[2] = Dune::BoundaryConditions::neumann;
-            }
+        {
+            values[0] = Dune::BoundaryConditions::neumann;
+            values[1] = Dune::BoundaryConditions::neumann;
+            values[2] = Dune::BoundaryConditions::neumann;
+        }
         return values;
     }
 

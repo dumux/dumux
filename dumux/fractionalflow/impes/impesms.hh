@@ -76,48 +76,48 @@ public:
         int iterTot = 0;
         updateOldIter = 0;
         while (!converg)
-            {
-                iter++;
-                iterTot++;
-                if (!this->diffproblem.materialLaw.isLinear())
-                    { // update pressure
-                        pressure(t);
-                        totalVelocity(t);
-                    }
-                Transport::update(t, dt, updateVec, cFLFactor);
-                if (this->iterFlag)
-                    {   // only needed if iteration has to be done
-                        this->diffproblem.variables.pressure *= this->omega;
-                        pressHelp = pressOldIter;
-                        pressHelp *= (1-this->omega);
-                        this->diffproblem.variables.pressure += pressHelp;
-                        updateHelp = updateVec;
-                        saturation = this->transproblem.variables.saturation;
-                        saturation += (updateHelp *= dt*cFLFactor);
-                        saturation *= this->omega;
-                        satHelp = satOldIter;
-                        satHelp *= (1-this->omega);
-                        saturation += satHelp;
-                        updateDiff = updateVec;
-                        updateDiff -= updateOldIter;
-                        satOldIter = saturation;
-                        pressOldIter = this->diffproblem.variables.pressure;
-                        updateOldIter = updateVec;
-                    }
-                // break criteria for iteration loop
-                if ( this->iterFlag==2 && dt*updateDiff.two_norm()/(saturation).two_norm() <= this->maxDefect )
-                    converg = true;
-                else if ( this->iterFlag==2 && iter > this->nIter )
-                    {
-                        std::cout << "Nonlinear loop in IMPES.update exceeded nIter = "
-                                  << this->nIter << " iterations." << std::endl;
-                        return 1;
-                    }
-                else if ( this->iterFlag==1 && iter > this->nIter )
-                    converg = true;
-                else if ( this->iterFlag==0 )
-                    converg = true;
+        {
+            iter++;
+            iterTot++;
+            if (!this->diffproblem.materialLaw.isLinear())
+            { // update pressure
+                pressure(t);
+                totalVelocity(t);
             }
+            Transport::update(t, dt, updateVec, cFLFactor);
+            if (this->iterFlag)
+            {   // only needed if iteration has to be done
+                this->diffproblem.variables.pressure *= this->omega;
+                pressHelp = pressOldIter;
+                pressHelp *= (1-this->omega);
+                this->diffproblem.variables.pressure += pressHelp;
+                updateHelp = updateVec;
+                saturation = this->transproblem.variables.saturation;
+                saturation += (updateHelp *= dt*cFLFactor);
+                saturation *= this->omega;
+                satHelp = satOldIter;
+                satHelp *= (1-this->omega);
+                saturation += satHelp;
+                updateDiff = updateVec;
+                updateDiff -= updateOldIter;
+                satOldIter = saturation;
+                pressOldIter = this->diffproblem.variables.pressure;
+                updateOldIter = updateVec;
+            }
+            // break criteria for iteration loop
+            if ( this->iterFlag==2 && dt*updateDiff.two_norm()/(saturation).two_norm() <= this->maxDefect )
+                converg = true;
+            else if ( this->iterFlag==2 && iter > this->nIter )
+            {
+                std::cout << "Nonlinear loop in IMPES.update exceeded nIter = "
+                          << this->nIter << " iterations." << std::endl;
+                return 1;
+            }
+            else if ( this->iterFlag==1 && iter > this->nIter )
+                converg = true;
+            else if ( this->iterFlag==0 )
+                converg = true;
+        }
         // outputs
         if (this->iterFlag==2)
             std::cout << "Iteration steps: "<< iterTot << std::endl;

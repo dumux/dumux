@@ -99,63 +99,63 @@ public:
         double Flux(0);
 
         for (Iterator it = gridview.template begin<0>(); it != eendit; ++it) // loop over all entities
+        {
+
+            // get geometry type
+            Dune::GeometryType gt = it->geometry().type();
+
+            // get entity
+            const Entity& entity = *it;
+
+            FVElementGeometry<G> fvGeom;
+            fvGeom.update(entity);
+
+            for (int k = 0; k < fvGeom.numEdges; k++)
             {
+                int i = fvGeom.subContVolFace[k].i;
 
-                // get geometry type
-                Dune::GeometryType gt = it->geometry().type();
+                int j = fvGeom.subContVolFace[k].j;
 
-                // get entity
-                const Entity& entity = *it;
+                int flag_i, flag_j;
 
-                FVElementGeometry<G> fvGeom;
-                fvGeom.update(entity);
+                // 2D case: give y or x value of the line over which flux is to be
+                //            calculated.
+                // up to now only flux calculation to lines or planes (3D) parallel to
+                // x, y and z axis possible
 
-                for (int k = 0; k < fvGeom.numEdges; k++)
-                    {
-                        int i = fvGeom.subContVolFace[k].i;
+                // Flux across plane with z = 80 m
+                if(fvGeom.subContVol[i].global[2] < 80.)
+                    flag_i = 1;
+                else flag_i = -1;
 
-                        int j = fvGeom.subContVolFace[k].j;
+                if(fvGeom.subContVol[j].global[2] < 80.)
+                    flag_j = 1;
+                else flag_j = -1;
 
-                        int flag_i, flag_j;
+                if(flag_i == flag_j)
+                {
+                    sign = 0;
+                }
+                else {
+                    if(flag_i > 0)
+                        sign = -1;
+                    else sign = 1; }
 
-                        // 2D case: give y or x value of the line over which flux is to be
-                        //            calculated.
-                        // up to now only flux calculation to lines or planes (3D) parallel to
-                        // x, y and z axis possible
+                // get variables
 
-                        // Flux across plane with z = 80 m
-                        if(fvGeom.subContVol[i].global[2] < 80.)
-                            flag_i = 1;
-                        else flag_i = -1;
-
-                        if(fvGeom.subContVol[j].global[2] < 80.)
-                            flag_j = 1;
-                        else flag_j = -1;
-
-                        if(flag_i == flag_j)
-                            {
-                                sign = 0;
-                            }
-                        else {
-                            if(flag_i > 0)
-                                sign = -1;
-                            else sign = 1; }
-
-                        // get variables
-
-                        if(flag_i != flag_j)
-                            {
-                                this->localJacobian().setLocalSolution(entity);
-                                this->localJacobian().computeElementData(entity);
-                                this->localJacobian().updateVariableData(entity, this->localJacobian().u);
+                if(flag_i != flag_j)
+                {
+                    this->localJacobian().setLocalSolution(entity);
+                    this->localJacobian().computeElementData(entity);
+                    this->localJacobian().updateVariableData(entity, this->localJacobian().u);
 
 
-                                flux = this->localJacobian().computeA(entity, this->localJacobian().u, k);
-                                Flux += sign*flux[1];
-                            }
-                    }
-
+                    flux = this->localJacobian().computeA(entity, this->localJacobian().u, k);
+                    Flux += sign*flux[1];
+                }
             }
+
+        }
         return Flux; // Co2 flux
     }
 
@@ -325,14 +325,14 @@ public:
 
         Iterator endIt = _grid.leafView().template end<dim>();
         for (Iterator it = _grid.leafView().template begin<dim>(); it != endIt;    ++it)
+        {
+            int index = vertexmapper.map(*it);
+            for (int i = 0; i < m;i++)
             {
-                int index = vertexmapper.map(*it);
-                for (int i = 0; i < m;i++)
-                    {
-                        data[index][i]=(*(this->u))[index][i];
-                    }
-                data[index][m]=this->localJacobian().sNDat[index].phaseState;
+                data[index][i]=(*(this->u))[index][i];
             }
+            data[index][m]=this->localJacobian().sNDat[index].phaseState;
+        }
         restartFileName = (boost::format("data-%05d")
                            %restartNum).str();
         exportToDGF(_grid.leafView(), data, (m+1), restartFileName, false);

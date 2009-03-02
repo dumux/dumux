@@ -20,23 +20,23 @@ public:
         double Re = fabs(velocity) * diameter / viscosity;
         double lambda;
         if (Re < 2000) // laminar
-            {
-                if (velocity != 0.0)
-                    lambda = 64/Re;
-                else
-                    lambda = 0.0;
+        {
+            if (velocity != 0.0)
+                lambda = 64/Re;
+            else
+                lambda = 0.0;
 
-                return lambda;
-            }
+            return lambda;
+        }
         else // turbulent
-            {
-                if (velocity != 0.0)
-                    lambda = pow( -2*log( 2*(roughness/diameter)/3.7 - 5.02/Re*log( 2* (roughness/diameter)/3.7+13/Re ) ) ,-2 );
-                else
-                    lambda = 0.0;
+        {
+            if (velocity != 0.0)
+                lambda = pow( -2*log( 2*(roughness/diameter)/3.7 - 5.02/Re*log( 2* (roughness/diameter)/3.7+13/Re ) ) ,-2 );
+            else
+                lambda = 0.0;
 
-                return lambda;
-            }
+            return lambda;
+        }
     }
 
     Lambda()
@@ -56,19 +56,19 @@ public:
     {
 
         if ( (globalPos[0] > 2.0 - 1e-5 ) && (globalPos[0] < 2.0 + 1e-5)  )
-            {
-                if (t==0.0)
+        {
+            if (t==0.0)
+                return lambdaLocal;
+            else
+                if(t<0.5)
                     return lambdaLocal;
                 else
-                    if(t<0.5)
-                        return lambdaLocal;
-                    else
-                        return lambdaLocal;
-            }
+                    return lambdaLocal;
+        }
         else
-            {
-                return 0;
-            }
+        {
+            return 0;
+        }
 
     }
 

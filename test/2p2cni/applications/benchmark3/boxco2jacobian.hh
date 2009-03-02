@@ -136,14 +136,14 @@ public:
         //DEBUG
 
         for(int j=0; j<3; j++)
+        {
+            if(isinf(result[j]))
             {
-                if(isinf(result[j]))
-                    {
-                        std::cout<<"INF in ComputeM \n" << "Coordinates:X="<< this->fvGeom.subContVol[node].global[0] <<" Y="<< this->fvGeom.subContVol[node].global[1] <<
-                            " Z="<<  this->fvGeom.subContVol[node].global[2]<<"\n"
-                                 <<"water pressure: " << varData[node].pW << "water saturation: "<< satW << "temperature: "<< varData[node].temperature << std::endl;
-                    }
+                std::cout<<"INF in ComputeM \n" << "Coordinates:X="<< this->fvGeom.subContVol[node].global[0] <<" Y="<< this->fvGeom.subContVol[node].global[1] <<
+                    " Z="<<  this->fvGeom.subContVol[node].global[2]<<"\n"
+                         <<"water pressure: " << varData[node].pW << "water saturation: "<< satW << "temperature: "<< varData[node].temperature << std::endl;
             }
+        }
 
         return result;
     };
@@ -238,47 +238,47 @@ public:
 
         // calculate FE gradient at subcontrolvolumeface
         for (int k = 0; k < this->fvGeom.numVertices; k++) // loop over adjacent nodes
+        {
+            // FEGradient at subcontrolvolumeface face
+            const FieldVector<DT,dim> feGrad(this->fvGeom.subContVolFace[face].grad[k]);
+            FieldVector<RT,2> pressure(0.0);
+
+            pressure[wPhase] = vNDat[k].pW;
+            pressure[nPhase] = vNDat[k].pN;
+
+            // compute pressure gradients for each phase at integration point of subcontrolvolumeface face
+            for (int phase = 0; phase < 2; phase++)
             {
-                // FEGradient at subcontrolvolumeface face
-                const FieldVector<DT,dim> feGrad(this->fvGeom.subContVolFace[face].grad[k]);
-                FieldVector<RT,2> pressure(0.0);
-
-                pressure[wPhase] = vNDat[k].pW;
-                pressure[nPhase] = vNDat[k].pN;
-
-                // compute pressure gradients for each phase at integration point of subcontrolvolumeface face
-                for (int phase = 0; phase < 2; phase++)
-                    {
-                        temp = feGrad;
-                        temp *= pressure[phase];
-                        pGrad[phase] += temp;
-                    }
-
-                // compute temperature gradient
                 temp = feGrad;
-                temp *= vNDat[k].temperature;
-                teGrad += temp;
-
-                // compute concentration gradients
-                // for diffusion of co2 in wetting phase
-                temp = feGrad;
-                temp *= vNDat[k].massfrac[co2][wPhase];
-                xGrad[wPhase] += temp;
-
-                // for diffusion of water in nonwetting phase
-                temp = feGrad;
-                temp *= vNDat[k].massfrac[water][nPhase];
-                xGrad[nPhase] += temp;
+                temp *= pressure[phase];
+                pGrad[phase] += temp;
             }
+
+            // compute temperature gradient
+            temp = feGrad;
+            temp *= vNDat[k].temperature;
+            teGrad += temp;
+
+            // compute concentration gradients
+            // for diffusion of co2 in wetting phase
+            temp = feGrad;
+            temp *= vNDat[k].massfrac[co2][wPhase];
+            xGrad[wPhase] += temp;
+
+            // for diffusion of water in nonwetting phase
+            temp = feGrad;
+            temp *= vNDat[k].massfrac[water][nPhase];
+            xGrad[nPhase] += temp;
+        }
 
         // deduce gravity*density of each phase
         FieldMatrix<RT,2,dim> contribComp(0);
         for (int phase=0; phase<2; phase++)
-            {
-                contribComp[phase] = problem.gravity();
-                contribComp[phase] *= avgDensity[phase];
-                pGrad[phase] -= contribComp[phase]; // grad p - rho*g
-            }
+        {
+            contribComp[phase] = problem.gravity();
+            contribComp[phase] *= avgDensity[phase];
+            pGrad[phase] -= contribComp[phase]; // grad p - rho*g
+        }
 
         // Darcy velocity in normal direction for each phase K*n(grad p -rho*g)
         VBlockType outward(0);
@@ -350,22 +350,22 @@ public:
         normDiffGrad[nPhase] = xGrad[nPhase]*normal;
 
         if (state_i == bothPhases && state_j == bothPhases)
-            {
-                diffusionAW = Daw * avgDensity[wPhase] * normDiffGrad[wPhase];
-                diffusionWW = - diffusionAW;
-                diffusionWN = Dwg * avgDensity[nPhase] * normDiffGrad[nPhase];
-                diffusionAN = - diffusionWN;
-            }
+        {
+            diffusionAW = Daw * avgDensity[wPhase] * normDiffGrad[wPhase];
+            diffusionWW = - diffusionAW;
+            diffusionWN = Dwg * avgDensity[nPhase] * normDiffGrad[nPhase];
+            diffusionAN = - diffusionWN;
+        }
         else if (state_i == waterPhase || state_j == waterPhase)
-            {
-                diffusionAW = Daw * avgDensity[wPhase] * normDiffGrad[wPhase];
-                diffusionWW = - diffusionAW;
-            }
+        {
+            diffusionAW = Daw * avgDensity[wPhase] * normDiffGrad[wPhase];
+            diffusionWW = - diffusionAW;
+        }
         else if (state_i == gasPhase || state_j == gasPhase)
-            {
-                diffusionWN = Dwg * avgDensity[nPhase] * normDiffGrad[nPhase];
-                diffusionAN = - diffusionWN;
-            }
+        {
+            diffusionWN = Dwg * avgDensity[nPhase] * normDiffGrad[nPhase];
+            diffusionAN = - diffusionWN;
+        }
 
         // Water conservation
         flux[water] += (diffusionWW + diffusionWN);
@@ -422,80 +422,80 @@ public:
     {
 
         if(!switchBreak)
+        {
+            switched = false;
+            int state = sNDat[global].phaseState;
+
+            RT pW = sol[local][pWIdx];
+            RT satW = 0.0;
+            if (state == bothPhases) satW = 1.0-sol[local][switchIdx];
+            if (state == waterPhase) satW = 1.0;
+            if (state == gasPhase) satW = 0.0;
+
+            RT pC = problem.materialLaw().pC(satW, this->fvGeom.subContVol[local].global, e, this->fvGeom.subContVol[local].local);
+            RT pN = pW + pC;
+
+            FVector Coordinates = this->fvGeom.subContVol[local].global;
+
+            switch(state)
             {
-                switched = false;
-                int state = sNDat[global].phaseState;
+            case gasPhase :
+                RT xWNmass;
+                xWNmass = sol[local][switchIdx];
 
-                RT pW = sol[local][pWIdx];
-                RT satW = 0.0;
-                if (state == bothPhases) satW = 1.0-sol[local][switchIdx];
-                if (state == waterPhase) satW = 1.0;
-                if (state == gasPhase) satW = 0.0;
+                if (xWNmass > 0.001 && switched == false)
+                {
+                    // appearance of water phase
+                    std::cout << "Water appears at node " << global << "  Coordinates: " << Coordinates << std::endl;
+                    sNDat[global].phaseState = bothPhases;
+                    sol[local][switchIdx] = 1.0 - 1.e-3; // initialize solution vector
+                    switched = true;
+                }
+                break;
 
-                RT pC = problem.materialLaw().pC(satW, this->fvGeom.subContVol[local].global, e, this->fvGeom.subContVol[local].local);
-                RT pN = pW + pC;
+            case waterPhase :
+                RT xAWmax, xAWmass;
+                xAWmass = sol[local][switchIdx];
+                xAWmax = problem.multicomp().xAW(pN, sol[local][teIdx]);
 
-                FVector Coordinates = this->fvGeom.subContVol[local].global;
+                if (xAWmass > xAWmax && switched == false)
+                {
+                    // appearance of gas phase
+                    std::cout << "Gas appears at node " << global << "  Coordinates: " << Coordinates << std::endl;
+                    sNDat[global].phaseState = bothPhases;
+                    sol[local][switchIdx] = 1.e-3; // initialize solution vector
+                    switched = true;
+                }
+                break;
 
-                switch(state)
-                    {
-                    case gasPhase :
-                        RT xWNmass;
-                        xWNmass = sol[local][switchIdx];
-
-                        if (xWNmass > 0.001 && switched == false)
-                            {
-                                // appearance of water phase
-                                std::cout << "Water appears at node " << global << "  Coordinates: " << Coordinates << std::endl;
-                                sNDat[global].phaseState = bothPhases;
-                                sol[local][switchIdx] = 1.0 - 1.e-3; // initialize solution vector
-                                switched = true;
-                            }
-                        break;
-
-                    case waterPhase :
-                        RT xAWmax, xAWmass;
-                        xAWmass = sol[local][switchIdx];
-                        xAWmax = problem.multicomp().xAW(pN, sol[local][teIdx]);
-
-                        if (xAWmass > xAWmax && switched == false)
-                            {
-                                // appearance of gas phase
-                                std::cout << "Gas appears at node " << global << "  Coordinates: " << Coordinates << std::endl;
-                                sNDat[global].phaseState = bothPhases;
-                                sol[local][switchIdx] = 1.e-3; // initialize solution vector
-                                switched = true;
-                            }
-                        break;
-
-                    case bothPhases :
-                        RT satN = sol[local][switchIdx];
-                        if (satN < 0.0  && switched == false)
-                            {
-                                // disappearance of gas phase
-                                std::cout << "Gas disappears at node " << global << "  Coordinates: " << Coordinates << std::endl;
-                                sNDat[global].phaseState = waterPhase;
-                                sol[local][switchIdx] = 1e-3; // initialize solution vector
-                                switched = true;
-                            }
-                        else if (satW < -1.e-5  && switched == false)
-                            {
-                                // disappearance of water phase
-                                std::cout << "Water disappears at node " << global << "  Coordinates: " << Coordinates << std::endl;
-                                sNDat[global].phaseState = gasPhase;
-                                sol[local][switchIdx] = 1e-8; // initialize solution vector
-                                switched = true;
-                            }
-                        break;
-                    }
-
-                if(switched)
-                    {
-                        // fill global solution vector with initialised local values
-                        BoxJacobian<ThisType,G,RT,m,BoxFunction>::localToGlobal(e, sol);
-                        switchedGlobal = true;
-                    }
+            case bothPhases :
+                RT satN = sol[local][switchIdx];
+                if (satN < 0.0  && switched == false)
+                {
+                    // disappearance of gas phase
+                    std::cout << "Gas disappears at node " << global << "  Coordinates: " << Coordinates << std::endl;
+                    sNDat[global].phaseState = waterPhase;
+                    sol[local][switchIdx] = 1e-3; // initialize solution vector
+                    switched = true;
+                }
+                else if (satW < -1.e-5  && switched == false)
+                {
+                    // disappearance of water phase
+                    std::cout << "Water disappears at node " << global << "  Coordinates: " << Coordinates << std::endl;
+                    sNDat[global].phaseState = gasPhase;
+                    sol[local][switchIdx] = 1e-8; // initialize solution vector
+                    switched = true;
+                }
+                break;
             }
+
+            if(switched)
+            {
+                // fill global solution vector with initialised local values
+                BoxJacobian<ThisType,G,RT,m,BoxFunction>::localToGlobal(e, sol);
+                switchedGlobal = true;
+            }
+        }
         return;
     }
 
@@ -507,9 +507,9 @@ public:
         for (int kx=0; kx<dim; kx++){
             for (int ky=0; ky<dim; ky++){
                 if (Ki[kx][ky] != Kj[kx][ky])
-                    {
-                        K[kx][ky] = 2 / (1/(Ki[kx][ky]+eps) + (1/(Kj[kx][ky]+eps)));
-                    }
+                {
+                    K[kx][ky] = 2 / (1/(Ki[kx][ky]+eps) + (1/(Kj[kx][ky]+eps)));
+                }
                 else K = Ki;
             }
         }
@@ -590,21 +590,21 @@ public:
 
             // if nodes are not already visited
             if (!sNDat[globalIdx].visited)
-                {
-                    // ASSUME porosity defined at nodes
-                    sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.subContVol[k].global, e, this->fvGeom.subContVol[k].local,k);
+            {
+                // ASSUME porosity defined at nodes
+                sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.subContVol[k].global, e, this->fvGeom.subContVol[k].local,k);
 
-                    sNDat[globalIdx].heatCap = problem.soil().heatCap(this->fvGeom.elementGlobal,e, this->fvGeom.elementLocal,k);
+                sNDat[globalIdx].heatCap = problem.soil().heatCap(this->fvGeom.elementGlobal,e, this->fvGeom.elementLocal,k);
 
-                    // global coordinates
-                    FieldVector<DT,dim> global_i = this->fvGeom.subContVol[k].global;
+                // global coordinates
+                FieldVector<DT,dim> global_i = this->fvGeom.subContVol[k].global;
 
-                    // evaluate primary variable switch
-                    primaryVarSwitch(e, globalIdx, sol, k);
+                // evaluate primary variable switch
+                primaryVarSwitch(e, globalIdx, sol, k);
 
-                    // mark elements that were already visited
-                    sNDat[globalIdx].visited = true;
-                }
+                // mark elements that were already visited
+                sNDat[globalIdx].visited = true;
+            }
         }
 
         return;
@@ -625,13 +625,13 @@ public:
 
             // if nodes are not already visited
             if (!sNDat[globalIdx].visited)
-                {
-                    // ASSUME porosity defined at nodes
-                    sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal,k);
+            {
+                // ASSUME porosity defined at nodes
+                sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal,k);
 
-                    // mark elements that were already visited
-                    sNDat[globalIdx].visited = true;
-                }
+                // mark elements that were already visited
+                sNDat[globalIdx].visited = true;
+            }
         }
 
         return;
@@ -779,15 +779,15 @@ public:
         int state;
         const int global = this->vertexMapper.template map<dim>(e, i);
         if (old)
-            {
-                state = sNDat[global].oldPhaseState;
-                updateVariableData(e, sol, i, oldVNDat, state);
-            }
+        {
+            state = sNDat[global].oldPhaseState;
+            updateVariableData(e, sol, i, oldVNDat, state);
+        }
         else
-            {
-                state = sNDat[global].phaseState;
-                updateVariableData(e, sol, i, vNDat, state);
-            }
+        {
+            state = sNDat[global].phaseState;
+            updateVariableData(e, sol, i, vNDat, state);
+        }
     }
 
     void updateVariableData(const Entity& e, const VBlockType* sol, bool old = false)

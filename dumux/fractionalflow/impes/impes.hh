@@ -66,52 +66,52 @@ public:
         int iterTot = 0;
         updateOldIter = 0;
         while (!converg)
-            {
-                iter++;
-                iterTot++;
-                // update pressure
-                pressure(t);
-                totalVelocity(t);
+        {
+            iter++;
+            iterTot++;
+            // update pressure
+            pressure(t);
+            totalVelocity(t);
 
-                Transport::update(t, dt, updateVec,cFLFactor);
-                if (iterFlag)
-                    { // only needed if iteration has to be done
-                        variables.pressure *= omega;
-                        pressHelp = pressOldIter;
-                        pressHelp *= (1-omega);
-                        variables.pressure += pressHelp;
-                        pressOldIter = variables.pressure;
+            Transport::update(t, dt, updateVec,cFLFactor);
+            if (iterFlag)
+            { // only needed if iteration has to be done
+                variables.pressure *= omega;
+                pressHelp = pressOldIter;
+                pressHelp *= (1-omega);
+                variables.pressure += pressHelp;
+                pressOldIter = variables.pressure;
 
-                        updateHelp = updateVec;
-                        saturation = variables.saturation;
-                        saturation += (updateHelp *= (dt*cFLFactor));
-                        saturation *= omega;
-                        satHelp = satOldIter;
-                        satHelp *= (1-omega);
-                        saturation += satHelp;
-                        updateDiff = updateVec;
-                        updateDiff -= updateOldIter;
-                        satOldIter = saturation;
-                        updateOldIter = updateVec;
-                    }
-                // break criteria for iteration loop
-                if (iterFlag==2&& dt*updateDiff.two_norm()/(saturation).two_norm() <= maxDefect )
-                    converg = true;
-                else if (iterFlag==2 && (saturation.infinity_norm()> 1 || saturation.two_norm()> 1))
-                    {
-                        converg = false;
-                    }
-                else if (iterFlag==2&& iter> nIter )
-                    {
-                        std::cout << "Nonlinear loop in IMPES.update exceeded nIter = "
-                                  << nIter << " iterations."<< std::endl;
-                        return 1;
-                    }
-                else if (iterFlag==1&& iter> nIter )
-                    converg = true;
-                else if (iterFlag==0)
-                    converg = true;
+                updateHelp = updateVec;
+                saturation = variables.saturation;
+                saturation += (updateHelp *= (dt*cFLFactor));
+                saturation *= omega;
+                satHelp = satOldIter;
+                satHelp *= (1-omega);
+                saturation += satHelp;
+                updateDiff = updateVec;
+                updateDiff -= updateOldIter;
+                satOldIter = saturation;
+                updateOldIter = updateVec;
             }
+            // break criteria for iteration loop
+            if (iterFlag==2&& dt*updateDiff.two_norm()/(saturation).two_norm() <= maxDefect )
+                converg = true;
+            else if (iterFlag==2 && (saturation.infinity_norm()> 1 || saturation.two_norm()> 1))
+            {
+                converg = false;
+            }
+            else if (iterFlag==2&& iter> nIter )
+            {
+                std::cout << "Nonlinear loop in IMPES.update exceeded nIter = "
+                          << nIter << " iterations."<< std::endl;
+                return 1;
+            }
+            else if (iterFlag==1&& iter> nIter )
+                converg = true;
+            else if (iterFlag==0)
+                converg = true;
+        }
         // outputs
         if (iterFlag==2)
             std::cout << "Iteration steps: "<< iterTot << std::endl;

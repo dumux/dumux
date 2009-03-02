@@ -33,6 +33,8 @@ $TMP
 
 (setq tab-width 4) ; make tabs 4 characters wide
 (setq-default indent-tabs-mode nil) ; don't use tabs for indentation
+(c-set-offset 'substatement-open 0) ; make braces for ifs and fors 
+                                    ; start at the same column as the statement
 (c-set-offset 'inline-open 0) ; don't indent inline opens
 (c-set-offset 'innamespace 0) ; don't indent namespaces
 (c-set-offset 'case-label 0) ; don't indent case labels further

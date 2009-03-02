@@ -63,14 +63,14 @@ public:
     {
 #ifndef NDEBUG
         if (!applies(x,y))
-            {
-                DUNE_THROW(NumericalProblem,
-                           "Attempt to get tabulated " << Traits::name << " value for ("
-                           << x << ", " << y
-                           << ") on a table of extend "
-                           << xMin() << " to " << xMax() << " times "
-                           << yMin() << " to " << yMax() << "\n");
-            };
+        {
+            DUNE_THROW(NumericalProblem,
+                       "Attempt to get tabulated " << Traits::name << " value for ("
+                       << x << ", " << y
+                       << ") on a table of extend "
+                       << xMin() << " to " << xMax() << " times "
+                       << yMin() << " to " << yMax() << "\n");
+        };
 #endif
 
         // use higher resolution if available

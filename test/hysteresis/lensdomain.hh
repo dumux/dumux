@@ -367,9 +367,9 @@ public:
         for (int i = 0; i < DomainTraits::dimWorld; ++i) {
             if (lensLowerLeft_[i] > coord[i] ||
                 lensUpperRight_[i] < coord[i])
-                {
-                    return false;
-                }
+            {
+                return false;
+            }
         }
         return true;
     }
@@ -591,12 +591,12 @@ private:
         for (int vertInFace = 0;
              vertInFace < numVerticesOfFace;
              vertInFace++)
-            {
-                int vertIdxInElement = refElem.subEntity(faceIdx, 1, vertInFace, dim);
+        {
+            int vertIdxInElement = refElem.subEntity(faceIdx, 1, vertInFace, dim);
 
-                vertexState(*interisIt.inside(), vertIdxInElement).addNeighbourElementIdx(inIdx);
-                vertexState(*interisIt.inside(), vertIdxInElement).addNeighbourElementIdx(outIdx);
-            }
+            vertexState(*interisIt.inside(), vertIdxInElement).addNeighbourElementIdx(inIdx);
+            vertexState(*interisIt.inside(), vertIdxInElement).addNeighbourElementIdx(outIdx);
+        }
     }
 #endif // !USE_NODE_PARAMETERS
 

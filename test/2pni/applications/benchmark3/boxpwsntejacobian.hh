@@ -191,36 +191,36 @@ public:
 
         // calculate FE gradient at subcontrolvolumeface
         for (int k = 0; k < this->fvGeom.numVertices; k++) // loop over adjacent nodes
+        {
+            // FEGradient at subcontrolvolumeface face
+            const FieldVector<DT,dim> feGrad(this->fvGeom.subContVolFace[face].grad[k]);
+            FieldVector<RT,2> pressure(0.0);
+
+            pressure[wPhase] = vNDat[k].pW;
+            pressure[nPhase] = vNDat[k].pN;
+
+            // compute pressure gradients for each phase at integration point of subcontrolvolumeface face
+            for (int phase = 0; phase < 2; phase++)
             {
-                // FEGradient at subcontrolvolumeface face
-                const FieldVector<DT,dim> feGrad(this->fvGeom.subContVolFace[face].grad[k]);
-                FieldVector<RT,2> pressure(0.0);
-
-                pressure[wPhase] = vNDat[k].pW;
-                pressure[nPhase] = vNDat[k].pN;
-
-                // compute pressure gradients for each phase at integration point of subcontrolvolumeface face
-                for (int phase = 0; phase < 2; phase++)
-                    {
-                        temp = feGrad;
-                        temp *= pressure[phase];
-                        pGrad[phase] += temp;
-                    }
-
-                // compute temperature gradient
                 temp = feGrad;
-                temp *= vNDat[k].temperature;
-                teGrad += temp;
+                temp *= pressure[phase];
+                pGrad[phase] += temp;
             }
+
+            // compute temperature gradient
+            temp = feGrad;
+            temp *= vNDat[k].temperature;
+            teGrad += temp;
+        }
 
         // deduce gravity*density of each phase
         FieldMatrix<RT,2,dim> contribComp(0);
         for (int phase=0; phase<2; phase++)
-            {
-                contribComp[phase] = problem.gravity();
-                contribComp[phase] *= avgDensity[phase];
-                pGrad[phase] -= contribComp[phase]; // grad p - rho*g
-            }
+        {
+            contribComp[phase] = problem.gravity();
+            contribComp[phase] *= avgDensity[phase];
+            pGrad[phase] -= contribComp[phase]; // grad p - rho*g
+        }
 
         // Darcy velocity in normal direction for each phase K*n(grad p -rho*g)
         VBlockType outward(0);
@@ -296,9 +296,9 @@ public:
         for (int kx=0; kx<dim; kx++){
             for (int ky=0; ky<dim; ky++){
                 if (Ki[kx][ky] != Kj[kx][ky])
-                    {
-                        K[kx][ky] = 2 / (1/(Ki[kx][ky]+eps) + (1/(Kj[kx][ky]+eps)));
-                    }
+                {
+                    K[kx][ky] = 2 / (1/(Ki[kx][ky]+eps) + (1/(Kj[kx][ky]+eps)));
+                }
                 else K = Ki;
             }
         }
@@ -349,15 +349,15 @@ public:
 
             // if nodes are not already visited
             if (!sNDat[globalIdx].visited)
-                {
-                    // ASSUME porosity defined at nodes
-                    sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.subContVol[k].global, e, this->fvGeom.subContVol[k].local,k);
+            {
+                // ASSUME porosity defined at nodes
+                sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.subContVol[k].global, e, this->fvGeom.subContVol[k].local,k);
 
-                    sNDat[globalIdx].heatCap = problem.soil().heatCap(this->fvGeom.subContVol[k].global,e, this->fvGeom.subContVol[k].local,k);
+                sNDat[globalIdx].heatCap = problem.soil().heatCap(this->fvGeom.subContVol[k].global,e, this->fvGeom.subContVol[k].local,k);
 
-                    // mark elements that were already visited
-                    sNDat[globalIdx].visited = true;
-                }
+                // mark elements that were already visited
+                sNDat[globalIdx].visited = true;
+            }
         }
 
         return;
@@ -376,13 +376,13 @@ public:
 
             // if nodes are not already visited
             if (!sNDat[globalIdx].visited)
-                {
-                    // ASSUME porosity defined at nodes
-                    sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal,k);
+            {
+                // ASSUME porosity defined at nodes
+                sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal,k);
 
-                    // mark elements that were already visited
-                    sNDat[globalIdx].visited = true;
-                }
+                // mark elements that were already visited
+                sNDat[globalIdx].visited = true;
+            }
         }
 
         return;

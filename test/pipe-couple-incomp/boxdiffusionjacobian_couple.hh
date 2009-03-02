@@ -72,13 +72,13 @@ public:
     {
         int globalId = problem.vertexMapper.template map<n>(e, node);
         for (unsigned k = 0; k < problem.vertexVectorOnLine.size(); k++)
+        {
+            if (globalId == problem.vertexVectorOnLine[k].globalId)
             {
-                if (globalId == problem.vertexVectorOnLine[k].globalId)
-                    {
-                        VBlockType result(problem.alphaEx*sol[node]);
-                        return result;
-                    }
+                VBlockType result(problem.alphaEx*sol[node]);
+                return result;
             }
+        }
 
         VBlockType result(0);
         return result;

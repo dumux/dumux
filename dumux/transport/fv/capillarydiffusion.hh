@@ -53,10 +53,10 @@ public:
         IntersectionIterator isItEnd = element.ilevelend();
         IntersectionIterator isIt = element.ilevelbegin();
         for (; isIt != isItEnd; ++isIt)
-            {
-                if(isIt->numberInSelf() == numberInSelf)
-                    break;
-            }
+        {
+            if(isIt->numberInSelf() == numberInSelf)
+                break;
+        }
 
         // get geometry type of face
         GeometryType faceGT = isIt->intersectionSelfLocal().type();

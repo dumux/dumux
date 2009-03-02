@@ -284,12 +284,12 @@ public:
         importFromDGF<GV>(data, "data", false);
 
         for (int i=0;i<size;i++)
+        {
+            for (int j=0;j<m;j++)
             {
-                for (int j=0;j<m;j++)
-                    {
-                        (*(this->u))[i][j]=data[i][j];
-                    }
+                (*(this->u))[i][j]=data[i][j];
             }
+        }
 
         // iterate through leaf grid an evaluate c0 at cell center
         Iterator eendit = gridview.template end<0>();
@@ -502,19 +502,19 @@ newtonMethod.execute();
         */
         bool newtonLoop = false;
         while(!newtonLoop)
-            {
-                nextDt = this->localJacobian().getDt();
-                NewtonMethod newton(*this);
-                NewtonController newtonCtl;
-                newtonLoop = newton.execute(*this, newtonCtl);
-                nextDt = newtonCtl.suggestTimeStepSize(nextDt);
-                this->localJacobian().setDt(nextDt);
-                if(!newtonLoop){
-                    *this->u = *this->uOldTimeStep;
-                    this->localJacobian().resetPhaseState();
-                }
-                std::cout<<"timeStep resized to: "<<nextDt<<std::endl;
+        {
+            nextDt = this->localJacobian().getDt();
+            NewtonMethod newton(*this);
+            NewtonController newtonCtl;
+            newtonLoop = newton.execute(*this, newtonCtl);
+            nextDt = newtonCtl.suggestTimeStepSize(nextDt);
+            this->localJacobian().setDt(nextDt);
+            if(!newtonLoop){
+                *this->u = *this->uOldTimeStep;
+                this->localJacobian().resetPhaseState();
             }
+            std::cout<<"timeStep resized to: "<<nextDt<<std::endl;
+        }
 
         double Flux(0), Mass(0);
         Flux = this->computeFlux();

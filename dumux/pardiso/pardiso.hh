@@ -86,17 +86,17 @@ public:
         RowIterator endi = A.end();
         int rows = 0;
         for (RowIterator i = A.begin(); i != endi; ++i)
-            {
-                rows++;
-                //if (A.rowdim(i.index()) != 1)
-                //    DUNE_THROW(NotImplemented, "SeqPardiso: row blocksize != 1.");
-                ColIterator endj = (*i).end();
-                for (ColIterator j = (*i).begin(); j != endj; ++j) {
-                    //if (A.coldim(j.index()) != 1)
-                    //    DUNE_THROW(NotImplemented, "SeqPardiso: column blocksize != 1.");
-                    nnz += systemsize_*systemsize_;
-                }
+        {
+            rows++;
+            //if (A.rowdim(i.index()) != 1)
+            //    DUNE_THROW(NotImplemented, "SeqPardiso: row blocksize != 1.");
+            ColIterator endj = (*i).end();
+            for (ColIterator j = (*i).begin(); j != endj; ++j) {
+                //if (A.coldim(j.index()) != 1)
+                //    DUNE_THROW(NotImplemented, "SeqPardiso: column blocksize != 1.");
+                nnz += systemsize_*systemsize_;
             }
+        }
         //std::cout << "rows = " << rows;
         std::cout << "SeqPardiso: dimension = " << n_ << ", number of nonzeros = " << nnz << std::endl;
 
@@ -106,20 +106,20 @@ public:
 
         int count = 0;
         for (RowIterator i = A.begin(); i != endi; ++i)
-            {
-                for (int iComp = 0; iComp < systemsize_; iComp++) {
-                    ia_[i.index()*systemsize_ + iComp] = count+1;
-                    ColIterator endj = (*i).end();
-                    for (ColIterator j = (*i).begin(); j != endj; ++j) {
-                        for (int jComp = 0; jComp < systemsize_; jComp++) {
-                            a_[count] = (*j)[iComp][jComp];
-                            ja_[count] = j.index()*systemsize_ + jComp + 1;
+        {
+            for (int iComp = 0; iComp < systemsize_; iComp++) {
+                ia_[i.index()*systemsize_ + iComp] = count+1;
+                ColIterator endj = (*i).end();
+                for (ColIterator j = (*i).begin(); j != endj; ++j) {
+                    for (int jComp = 0; jComp < systemsize_; jComp++) {
+                        a_[count] = (*j)[iComp][jComp];
+                        ja_[count] = j.index()*systemsize_ + jComp + 1;
 
-                            count++;
-                        }
+                        count++;
                     }
                 }
             }
+        }
         ia_[n_] = count+1;
 
         /*std::cout << "systemsize_ =" << systemsize_ << ", n_ = " << n_ << ", nnz_ = " << nnz << std::endl;
@@ -200,17 +200,17 @@ public:
         RowIterator endi = A.end();
         int rows = 0;
         for (RowIterator i = A.begin(); i != endi; ++i)
-            {
-                rows++;
-                //if (A.rowdim(i.index()) != 1)
-                //    DUNE_THROW(NotImplemented, "SeqPardiso: row blocksize != 1.");
-                ColIterator endj = (*i).end();
-                for (ColIterator j = (*i).begin(); j != endj; ++j) {
-                    //if (A.coldim(j.index()) != 1)
-                    //    DUNE_THROW(NotImplemented, "SeqPardiso: column blocksize != 1.");
-                    nnz += systemsize_*systemsize_;
-                }
+        {
+            rows++;
+            //if (A.rowdim(i.index()) != 1)
+            //    DUNE_THROW(NotImplemented, "SeqPardiso: row blocksize != 1.");
+            ColIterator endj = (*i).end();
+            for (ColIterator j = (*i).begin(); j != endj; ++j) {
+                //if (A.coldim(j.index()) != 1)
+                //    DUNE_THROW(NotImplemented, "SeqPardiso: column blocksize != 1.");
+                nnz += systemsize_*systemsize_;
             }
+        }
         //std::cout << "rows = " << rows;
         std::cout << "SeqPardiso: dimension = " << n_ << ", number of nonzeros = " << nnz << std::endl;
 
@@ -220,20 +220,20 @@ public:
 
         int count = 0;
         for (RowIterator i = A.begin(); i != endi; ++i)
-            {
-                for (int iComp = 0; iComp < systemsize_; iComp++) {
-                    ia_[i.index()*systemsize_ + iComp] = count+1;
-                    ColIterator endj = (*i).end();
-                    for (ColIterator j = (*i).begin(); j != endj; ++j) {
-                        for (int jComp = 0; jComp < systemsize_; jComp++) {
-                            a_[count] = (*j)[iComp][jComp];
-                            ja_[count] = j.index()*systemsize_ + jComp + 1;
+        {
+            for (int iComp = 0; iComp < systemsize_; iComp++) {
+                ia_[i.index()*systemsize_ + iComp] = count+1;
+                ColIterator endj = (*i).end();
+                for (ColIterator j = (*i).begin(); j != endj; ++j) {
+                    for (int jComp = 0; jComp < systemsize_; jComp++) {
+                        a_[count] = (*j)[iComp][jComp];
+                        ja_[count] = j.index()*systemsize_ + jComp + 1;
 
-                            count++;
-                        }
+                        count++;
                     }
                 }
             }
+        }
         ia_[n_] = count+1;
 
         /*std::cout << "systemsize_ =" << systemsize_ << ", n_ = " << n_ << ", nnz_ = " << nnz << std::endl;

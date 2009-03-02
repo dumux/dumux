@@ -44,17 +44,17 @@ double discreteError(const Grid& grid, const Solution& solution, const Problem& 
     VertexIterator endIt = gridview.template end<dim>();
     VertexIterator it = gridview.template begin<dim>();
     for (; it != endIt; ++it)
-        {
-            // get exact solution at vertex
-            FieldVector<double,dim> globalCoord = (*it).geometry().corner(0);
-            double exact = problem.exact(globalCoord);
+    {
+        // get exact solution at vertex
+        FieldVector<double,dim> globalCoord = (*it).geometry().corner(0);
+        double exact = problem.exact(globalCoord);
 
-            // get approximate solution at vertex
-            int globalId = vertexMapper.map(*it);
-            double approximate = (*solution)[globalId];
+        // get approximate solution at vertex
+        int globalId = vertexMapper.map(*it);
+        double approximate = (*solution)[globalId];
 
-            error += (exact - approximate)*(exact - approximate);
-        }
+        error += (exact - approximate)*(exact - approximate);
+    }
 
     return sqrt(error);
 }

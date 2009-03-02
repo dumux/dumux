@@ -41,10 +41,10 @@ public:
         if (x[0] < 1e-6)
             return velocity(x);
         else
-            {
-                FieldVector<RT,dim> result(0);
-                return result;
-            }
+        {
+            FieldVector<RT,dim> result(0);
+            return result;
+        }
     }
 
     virtual RT mu(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi) const

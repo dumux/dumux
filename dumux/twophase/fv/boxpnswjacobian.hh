@@ -114,34 +114,34 @@ public:
 
         VBlockType flux;
         for (int phase = 0; phase < numEq; phase++)
+        {
+            // calculate FE gradient of the pressure
+            FieldVector<Scalar, dim> pGrad(0);
+            Scalar densityIJ = 0;
+            for (int vert = 0; vert < this->fvGeom.numVertices; vert++)
             {
-                // calculate FE gradient of the pressure
-                FieldVector<Scalar, dim> pGrad(0);
-                Scalar densityIJ = 0;
-                for (int vert = 0; vert < this->fvGeom.numVertices; vert++)
-                    {
-                        FieldVector<Scalar,dim> grad(this->fvGeom.subContVolFace[face].grad[vert]);
-                        if (phase == nPhase)
-                            grad *= sol[vert][pNIdx];
-                        else if (phase == wPhase)
-                            grad *= varNData[vert].pW;
-                        pGrad += grad;
+                FieldVector<Scalar,dim> grad(this->fvGeom.subContVolFace[face].grad[vert]);
+                if (phase == nPhase)
+                    grad *= sol[vert][pNIdx];
+                else if (phase == wPhase)
+                    grad *= varNData[vert].pW;
+                pGrad += grad;
 
-                        densityIJ += varNData[vert].density[phase]*this->fvGeom.subContVolFace[face].shapeValue[vert];
-                    }
-
-                // adjust by gravity
-                FieldVector<Scalar, dim> gravity = problem.gravity();
-                gravity *= densityIJ;
-                pGrad -= gravity;
-
-                // calculate the flux using fully upwind
-                Scalar outward = pGrad*Kij;
-                if (outward < 0)
-                    flux[phase] = varNData[i].density[phase]*varNData[i].mobility[phase]*outward;
-                else
-                    flux[phase] = varNData[j].density[phase]*varNData[j].mobility[phase]*outward;
+                densityIJ += varNData[vert].density[phase]*this->fvGeom.subContVolFace[face].shapeValue[vert];
             }
+
+            // adjust by gravity
+            FieldVector<Scalar, dim> gravity = problem.gravity();
+            gravity *= densityIJ;
+            pGrad -= gravity;
+
+            // calculate the flux using fully upwind
+            Scalar outward = pGrad*Kij;
+            if (outward < 0)
+                flux[phase] = varNData[i].density[phase]*varNData[i].mobility[phase]*outward;
+            else
+                flux[phase] = varNData[j].density[phase]*varNData[j].mobility[phase]*outward;
+        }
 
         return flux;
     };

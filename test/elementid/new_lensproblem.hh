@@ -255,12 +255,12 @@ public:
 
         if (ParentType::onLeftBoundary(globalPos) ||
             ParentType::onRightBoundary(globalPos))
-            {
-                values[0] = values[1] = Dune::BoundaryConditions::dirichlet;
+        {
+            values[0] = values[1] = Dune::BoundaryConditions::dirichlet;
 
 
 
-            }
+        }
         else {
             // upper or lower boundary of the grid
 
@@ -287,9 +287,9 @@ public:
         if (ParentType::onUpperBoundary(globalPos)) {
             Scalar relPosX = (ParentType::upperRight()[0] - globalPos[0])/ParentType::width();
             if (0.5 < relPosX && relPosX < 2.0/3.0)
-                {
-                    values[snIdx] = -0.04;
-                }
+            {
+                values[snIdx] = -0.04;
+            }
         }
 
     }
@@ -312,10 +312,10 @@ public:
         Scalar a, b;
 
         if (ParentType::onLeftBoundary(globalPos))
-            {
-                a = -(1 + 0.5/ParentType::height());
-                b = -a*ParentType::upperRight()[1];
-            }
+        {
+            a = -(1 + 0.5/ParentType::height());
+            b = -a*ParentType::upperRight()[1];
+        }
         else {
             a = -1;
             b = ParentType::upperRight()[1];

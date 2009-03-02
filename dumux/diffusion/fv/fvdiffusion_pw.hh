@@ -209,9 +209,9 @@ template<class G, class RT, class VC> void DeprecatedFVDiffusion<G, RT, VC>::ass
         lambdaI=this->diffproblem.materialLaw.mobTotal(sati);
 
         if (hasGravity)
-            {
-                fractionalWI = this->diffproblem.materialLaw.fractionalW(sati);
-            }
+        {
+            fractionalWI = this->diffproblem.materialLaw.fractionalW(sati);
+        }
 
         IntersectionIterator
             endit = IntersectionIteratorGetter<G, LevelTag>::end(*it);
@@ -254,155 +254,155 @@ template<class G, class RT, class VC> void DeprecatedFVDiffusion<G, RT, VC>::ass
 
             // handle interior face
             if (is->neighbor())
+            {
+                // access neighbor
+                EntityPointer outside = is->outside();
+                int indexj = elementmapper.map(*outside);
+
+                // compute factor in neighbor
+                GeometryType nbgt = outside->geometry().type();
+                const FieldVector<ct,dim>&
+                    nblocal = ReferenceElements<ct,dim>::general(nbgt).position(0,0);
+
+                // neighbor cell center in global coordinates
+                FieldVector<ct,dimworld>
+                    nbglobal = outside->geometry().global(nblocal);
+
+                // distance vector between barycenters
+                FieldVector<ct,dimworld>
+                    distVec = global - nbglobal;
+
+                // compute distance between cell centers
+                double dist = distVec.two_norm();
+
+                // get absolute permeability
+                FieldMatrix<ct,dim,dim> Kj(this->diffproblem.K(nbglobal, *outside, nblocal));
+
+                // compute vectorized permeabilities
+                FieldVector<ct,dim> Knj(0);
+                Kj.umv(unitOuterNormal, Knj);
+                double K_n_i = Kni * unitOuterNormal;
+                double K_n_j = Knj * unitOuterNormal;
+                double Kn = 2 * K_n_i * K_n_j / (K_n_i + K_n_j);
+                // compute permeability tangential to intersection and take arithmetic mean
+                FieldVector<ct,dim> uON = unitOuterNormal;
+                FieldVector<ct,dim> K_t_i = Kni - (uON *= K_n_i);
+                uON = unitOuterNormal;
+                FieldVector<ct,dim> K_t_j = Knj - (uON *= K_n_j);
+                FieldVector<ct,dim> Kt = (K_t_i += K_t_j);
+                Kt *= 0.5;
+                // Build vectorized averaged permeability
+                uON = unitOuterNormal;
+                FieldVector<ct,dim> K = (Kt += (uON *=Kn));
+
+                //compute total mobility
+                double lambdaJ, fractionalWJ;
+                double satj = this->diffproblem.variables.saturation[indexj];
+                lambdaJ=this->diffproblem.materialLaw.mobTotal(satj);
+
+                if (hasGravity)
                 {
-                    // access neighbor
-                    EntityPointer outside = is->outside();
-                    int indexj = elementmapper.map(*outside);
+                    fractionalWJ = this->diffproblem.materialLaw.fractionalW(satj);
+                }
 
-                    // compute factor in neighbor
-                    GeometryType nbgt = outside->geometry().type();
-                    const FieldVector<ct,dim>&
-                        nblocal = ReferenceElements<ct,dim>::general(nbgt).position(0,0);
+                // compute averaged total mobility
+                // CAREFUL: Harmonic weightig can generate zero matrix entries,
+                // use arithmetic weighting instead:
+                double fractionalW;
+                double lambda = 0.5*(lambdaI + lambdaJ);
+                if (hasGravity)
+                {
+                    fractionalW = 0.5*(fractionalWI + fractionalWJ);
+                }
 
-                    // neighbor cell center in global coordinates
-                    FieldVector<ct,dimworld>
-                        nbglobal = outside->geometry().global(nblocal);
+                // update diagonal entry
+                double entry = fabs(lambda*faceVol*(K*distVec)/(dist*dist));
+                A[indexi][indexi] += entry;
 
-                    // distance vector between barycenters
-                    FieldVector<ct,dimworld>
-                        distVec = global - nbglobal;
+                // set off-diagonal entry
+                A[indexi][indexj] = -entry;
 
-                    // compute distance between cell centers
+                if (hasGravity) {
+                    double factor = fractionalW*(this->diffproblem.materialLaw.wettingPhase.density())
+                        + (1 - fractionalW)*(this->diffproblem.materialLaw.nonwettingPhase.density());
+                    f[indexi] -= factor*lambda*faceVol*(K*gravity);
+                }
+
+                if (this->diffproblem.capillarity) {
+                    // arithmetic average of the permeability
+                    K = ((Kni + Knj) *= 0.5);
+
+                    // capillary pressure w.r.t. saturation
+                    double pCI = this->diffproblem.materialLaw.pC(sati);
+                    double pCJ = this->diffproblem.materialLaw.pC(satj);
+
+                    // mobility of the nonwetting phase
+                    double lambdaN = 0.5*(this->diffproblem.materialLaw.mobN(1-sati)+this->diffproblem.materialLaw.mobN(1-satj));
+
+                    // calculate capillary pressure gradient
+                    FieldVector<ct,dim> pCGradient = distVec;
+                    pCGradient *= -(pCJ - pCI)/(dist*dist);
+
+                    f[indexi] += lambdaN*faceVol*(K*pCGradient);
+                }
+            }
+            // boundary face
+            else
+            {
+                // center of face in global coordinates
+                FieldVector<ct,dimworld>
+                    faceglobal = is->intersectionGlobal().global(facelocal);
+
+                // compute total mobility
+                double satBound = this->diffproblem.dirichletSat(faceglobal, *it, facelocalDim);
+                double fractionalW = 1.;
+                double lambda = this->diffproblem.materialLaw.mobTotal(satBound);
+
+                if (hasGravity) fractionalW = this->diffproblem.materialLaw.fractionalW(satBound);
+
+                //get boundary condition for boundary face center
+                BoundaryConditions::Flags bctype = this->diffproblem.bctype(faceglobal, *it, facelocalDim);
+                if (bctype == BoundaryConditions::dirichlet)
+                {
+                    FieldVector<ct,dimworld> distVec(global - faceglobal);
                     double dist = distVec.two_norm();
-
-                    // get absolute permeability
-                    FieldMatrix<ct,dim,dim> Kj(this->diffproblem.K(nbglobal, *outside, nblocal));
-
-                    // compute vectorized permeabilities
-                    FieldVector<ct,dim> Knj(0);
-                    Kj.umv(unitOuterNormal, Knj);
-                    double K_n_i = Kni * unitOuterNormal;
-                    double K_n_j = Knj * unitOuterNormal;
-                    double Kn = 2 * K_n_i * K_n_j / (K_n_i + K_n_j);
-                    // compute permeability tangential to intersection and take arithmetic mean
-                    FieldVector<ct,dim> uON = unitOuterNormal;
-                    FieldVector<ct,dim> K_t_i = Kni - (uON *= K_n_i);
-                    uON = unitOuterNormal;
-                    FieldVector<ct,dim> K_t_j = Knj - (uON *= K_n_j);
-                    FieldVector<ct,dim> Kt = (K_t_i += K_t_j);
-                    Kt *= 0.5;
-                    // Build vectorized averaged permeability
-                    uON = unitOuterNormal;
-                    FieldVector<ct,dim> K = (Kt += (uON *=Kn));
-
-                    //compute total mobility
-                    double lambdaJ, fractionalWJ;
-                    double satj = this->diffproblem.variables.saturation[indexj];
-                    lambdaJ=this->diffproblem.materialLaw.mobTotal(satj);
-
-                    if (hasGravity)
-                        {
-                            fractionalWJ = this->diffproblem.materialLaw.fractionalW(satj);
-                        }
-
-                    // compute averaged total mobility
-                    // CAREFUL: Harmonic weightig can generate zero matrix entries,
-                    // use arithmetic weighting instead:
-                    double fractionalW;
-                    double lambda = 0.5*(lambdaI + lambdaJ);
-                    if (hasGravity)
-                        {
-                            fractionalW = 0.5*(fractionalWI + fractionalWJ);
-                        }
-
-                    // update diagonal entry
-                    double entry = fabs(lambda*faceVol*(K*distVec)/(dist*dist));
-                    A[indexi][indexi] += entry;
-
-                    // set off-diagonal entry
-                    A[indexi][indexj] = -entry;
+                    A[indexi][indexi] -= lambda*faceVol*(Kni*distVec)/(dist*dist);
+                    double g = this->diffproblem.dirichletPress(faceglobal, *it, facelocalDim);
+                    f[indexi] -= lambda*faceVol*g*(Kni*distVec)/(dist*dist);
 
                     if (hasGravity) {
                         double factor = fractionalW*(this->diffproblem.materialLaw.wettingPhase.density())
                             + (1 - fractionalW)*(this->diffproblem.materialLaw.nonwettingPhase.density());
-                        f[indexi] -= factor*lambda*faceVol*(K*gravity);
+                        f[indexi] -= factor*lambda*faceVol*(Kni*gravity);
                     }
-
                     if (this->diffproblem.capillarity) {
-                        // arithmetic average of the permeability
-                        K = ((Kni + Knj) *= 0.5);
+                        // distance vector between barycenters
+                        FieldVector<ct,dimworld>
+                            distVec = global - faceglobal;
+
+                        // compute distance between cell centers
+                        double dist = distVec.two_norm();
 
                         // capillary pressure w.r.t. saturation
                         double pCI = this->diffproblem.materialLaw.pC(sati);
-                        double pCJ = this->diffproblem.materialLaw.pC(satj);
+                        double pCJ = this->diffproblem.materialLaw.pC(satBound);
 
                         // mobility of the nonwetting phase
-                        double lambdaN = 0.5*(this->diffproblem.materialLaw.mobN(1-sati)+this->diffproblem.materialLaw.mobN(1-satj));
+                        double lambdaN = 0.5*(this->diffproblem.materialLaw.mobN(1-sati)+this->diffproblem.materialLaw.mobN(1-satBound));
 
                         // calculate capillary pressure gradient
                         FieldVector<ct,dim> pCGradient = distVec;
                         pCGradient *= -(pCJ - pCI)/(dist*dist);
 
-                        f[indexi] += lambdaN*faceVol*(K*pCGradient);
+                        f[indexi] += lambdaN*faceVol*(Kni*pCGradient);
                     }
                 }
-            // boundary face
-            else
+                else
                 {
-                    // center of face in global coordinates
-                    FieldVector<ct,dimworld>
-                        faceglobal = is->intersectionGlobal().global(facelocal);
-
-                    // compute total mobility
-                    double satBound = this->diffproblem.dirichletSat(faceglobal, *it, facelocalDim);
-                    double fractionalW = 1.;
-                    double lambda = this->diffproblem.materialLaw.mobTotal(satBound);
-
-                    if (hasGravity) fractionalW = this->diffproblem.materialLaw.fractionalW(satBound);
-
-                    //get boundary condition for boundary face center
-                    BoundaryConditions::Flags bctype = this->diffproblem.bctype(faceglobal, *it, facelocalDim);
-                    if (bctype == BoundaryConditions::dirichlet)
-                        {
-                            FieldVector<ct,dimworld> distVec(global - faceglobal);
-                            double dist = distVec.two_norm();
-                            A[indexi][indexi] -= lambda*faceVol*(Kni*distVec)/(dist*dist);
-                            double g = this->diffproblem.dirichletPress(faceglobal, *it, facelocalDim);
-                            f[indexi] -= lambda*faceVol*g*(Kni*distVec)/(dist*dist);
-
-                            if (hasGravity) {
-                                double factor = fractionalW*(this->diffproblem.materialLaw.wettingPhase.density())
-                                    + (1 - fractionalW)*(this->diffproblem.materialLaw.nonwettingPhase.density());
-                                f[indexi] -= factor*lambda*faceVol*(Kni*gravity);
-                            }
-                            if (this->diffproblem.capillarity) {
-                                // distance vector between barycenters
-                                FieldVector<ct,dimworld>
-                                    distVec = global - faceglobal;
-
-                                // compute distance between cell centers
-                                double dist = distVec.two_norm();
-
-                                // capillary pressure w.r.t. saturation
-                                double pCI = this->diffproblem.materialLaw.pC(sati);
-                                double pCJ = this->diffproblem.materialLaw.pC(satBound);
-
-                                // mobility of the nonwetting phase
-                                double lambdaN = 0.5*(this->diffproblem.materialLaw.mobN(1-sati)+this->diffproblem.materialLaw.mobN(1-satBound));
-
-                                // calculate capillary pressure gradient
-                                FieldVector<ct,dim> pCGradient = distVec;
-                                pCGradient *= -(pCJ - pCI)/(dist*dist);
-
-                                f[indexi] += lambdaN*faceVol*(Kni*pCGradient);
-                            }
-                        }
-                    else
-                        {
-                            double J = this->diffproblem.neumannPress(faceglobal, *it, facelocalDim);
-                            f[indexi] -= faceVol*J;
-                        }
+                    double J = this->diffproblem.neumannPress(faceglobal, *it, facelocalDim);
+                    f[indexi] -= faceVol*J;
                 }
+            }
         }
         // end all intersections
     } // end grid traversal

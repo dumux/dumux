@@ -348,10 +348,10 @@ public:
         values = 0;
 
         if(globalPos[0] <= eps_ && globalPos[1] <= 5.)
-            {
-                values[pressureIdx] = 0.0;//-4.046e-5;
-                values[switchIdx] = -0.0002;
-            }
+        {
+            values[pressureIdx] = 0.0;//-4.046e-5;
+            values[switchIdx] = -0.0002;
+        }
     }
 
     /////////////////////////////

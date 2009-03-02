@@ -213,9 +213,9 @@ public:
         for (int kx=0; kx<dim; kx++){
             for (int ky=0; ky<dim; ky++){
                 if (Ki[kx][ky] != Kj[kx][ky])
-                    {
-                        Ki[kx][ky] = 2 / (1/(Ki[kx][ky]+eps) + (1/(Kj[kx][ky]+eps)));
-                    }
+                {
+                    Ki[kx][ky] = 2 / (1/(Ki[kx][ky]+eps) + (1/(Kj[kx][ky]+eps)));
+                }
             }
         }
         return Ki;
@@ -231,10 +231,10 @@ public:
         Tj = this->problem.soil().tortuosity(this->fvGeom.subContVol[j].global, element, this->fvGeom.subContVol[j].local);
 
         if (Ti != Tj)
-            {
-                Ti = (Ti + Tj)/2;
-                return Ti;
-            }
+        {
+            Ti = (Ti + Tj)/2;
+            return Ti;
+        }
         else{
             return Ti;
         }
@@ -250,10 +250,10 @@ public:
         Pj = this->problem.soil().porosity(this->fvGeom.subContVol[j].global, element, this->fvGeom.subContVol[j].local);
 
         if (Pi != Pj)
-            {
-                Pi = (Pi + Pj)/2;
-                return Pi;
-            }
+        {
+            Pi = (Pi + Pj)/2;
+            return Pi;
+        }
         else{
             return Pi;
         }

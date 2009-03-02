@@ -43,10 +43,10 @@ public:
     {
         Gradient result(0);
         if (comp == 0)
-            {
-                result[0] = 2.0*glob[1];
-                result[1] = 2.0*glob[0];
-            }
+        {
+            result[0] = 2.0*glob[1];
+            result[1] = 2.0*glob[0];
+        }
         else
             result[1] = -2.0*glob[1];
 
@@ -264,26 +264,26 @@ public:
         Gradient gV;
 
         if (comp==0)
-            {
-                gV[0]=(4*glob[1]*Dune::SQR(glob[1])-6*Dune::SQR(glob[1])+2*glob[1])
-                    *(4*glob[0]*Dune::SQR(glob[0])-6*Dune::SQR(glob[0])+2*glob[0]); // dudx
+        {
+            gV[0]=(4*glob[1]*Dune::SQR(glob[1])-6*Dune::SQR(glob[1])+2*glob[1])
+                *(4*glob[0]*Dune::SQR(glob[0])-6*Dune::SQR(glob[0])+2*glob[0]); // dudx
 
-                gV[1]=(Dune::SQR(glob[0])*Dune::SQR(glob[0])-2*glob[0]*Dune::SQR(glob[0])+Dune::SQR(glob[0]))
-                    *(2-12*glob[1]+12*Dune::SQR(glob[1])); // dudy
-                return gV;
-            }
+            gV[1]=(Dune::SQR(glob[0])*Dune::SQR(glob[0])-2*glob[0]*Dune::SQR(glob[0])+Dune::SQR(glob[0]))
+                *(2-12*glob[1]+12*Dune::SQR(glob[1])); // dudy
+            return gV;
+        }
 
         if (comp==1)
-            {
-                gV[0]=-(2-12*glob[0]+12*Dune::SQR(glob[0]))
-                    *(Dune::SQR(glob[1])*Dune::SQR(glob[1])-2*glob[1]*Dune::SQR(glob[1])+Dune::SQR(glob[1]));// dvdx
+        {
+            gV[0]=-(2-12*glob[0]+12*Dune::SQR(glob[0]))
+                *(Dune::SQR(glob[1])*Dune::SQR(glob[1])-2*glob[1]*Dune::SQR(glob[1])+Dune::SQR(glob[1]));// dvdx
 
-                gV[1]=-(4*glob[0]*Dune::SQR(glob[0])-6*Dune::SQR(glob[0])+2*glob[0])
-                    *(4*glob[1]*Dune::SQR(glob[1])-6*Dune::SQR(glob[1])+2*glob[1]); // dvdy
+            gV[1]=-(4*glob[0]*Dune::SQR(glob[0])-6*Dune::SQR(glob[0])+2*glob[0])
+                *(4*glob[1]*Dune::SQR(glob[1])-6*Dune::SQR(glob[1])+2*glob[1]); // dvdy
 
 
-                return gV;
-            }
+            return gV;
+        }
 
     }
 
@@ -446,20 +446,20 @@ public:
     ct velocity(int comp,const Point &glob)const
     {
         if (glob[1]>1-1E-8)
-            {
-                if (comp==0)
-                    return 1;
-                if (comp==1)
-                    return 0;
-            }
+        {
+            if (comp==0)
+                return 1;
+            if (comp==1)
+                return 0;
+        }
         else
-            {
-                if (comp==0)
-                    return 0;
-                if (comp==1)
-                    return 0;
+        {
+            if (comp==0)
+                return 0;
+            if (comp==1)
+                return 0;
 
-            }
+        }
 
     }
 
@@ -497,20 +497,20 @@ public:
     ct velocity(int comp,const Point &glob)const
     {
         if (glob[dim-1]>1.0-1E-8)
-            {
-                if (comp==0)
-                    return 1;
-                else
-                    return 0;
-            }
-        else
-            {
-                // if (comp==0)
-                //           return 0;
-                //         if (comp==1)
+        {
+            if (comp==0)
+                return 1;
+            else
                 return 0;
+        }
+        else
+        {
+            // if (comp==0)
+            //           return 0;
+            //         if (comp==1)
+            return 0;
 
-            }
+        }
 
     }
 

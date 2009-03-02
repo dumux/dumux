@@ -68,13 +68,13 @@ public:
         FieldVector<BoundaryConditions::Flags, numEq> values(BoundaryConditions::neumann);
 
         if (globalPos[0] < eps_)
-            {
-                values = BoundaryConditions::dirichlet;
-            }
+        {
+            values = BoundaryConditions::dirichlet;
+        }
         if (globalPos[1] < 5 && globalPos[0]> 10 - eps_)
-            {
-                values[heat] = BoundaryConditions::dirichlet;
-            }
+        {
+            values[heat] = BoundaryConditions::dirichlet;
+        }
         return values;
     }
 
@@ -100,11 +100,11 @@ public:
         FieldVector<Scalar,numEq> values(0);
 
         if (globalPos[1] < 5 && globalPos[0]> 10 - eps_)
-            {
-                values[wPhase] = 0.0;
-                values[nPhase] = -0.04;
-                values[heat] = 0.0;
-            }
+        {
+            values[wPhase] = 0.0;
+            values[nPhase] = -0.04;
+            values[heat] = 0.0;
+        }
 
         return values;
     }

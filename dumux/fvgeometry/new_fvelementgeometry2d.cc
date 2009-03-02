@@ -133,28 +133,28 @@ class NewFVElementGeometry<GridT,
 
         // fill the faces between the sub-control-volumes
         for (int scvFaceIdx = 0; scvFaceIdx < this->numEdges_; scvFaceIdx++)
-            {
-                int insideIdx = refElem.subEntity(scvFaceIdx, GridDim-1, 0, GridDim);
-                int outsideIdx = refElem.subEntity(scvFaceIdx, GridDim-1, 1, GridDim);
+        {
+            int insideIdx = refElem.subEntity(scvFaceIdx, GridDim-1, 0, GridDim);
+            int outsideIdx = refElem.subEntity(scvFaceIdx, GridDim-1, 1, GridDim);
 
-                this->subContVolFace_[scvFaceIdx].insideIdx_ = insideIdx;
-                this->subContVolFace_[scvFaceIdx].outsideIdx_ = outsideIdx;
+            this->subContVolFace_[scvFaceIdx].insideIdx_ = insideIdx;
+            this->subContVolFace_[scvFaceIdx].outsideIdx_ = outsideIdx;
 
-                // calculate the local integration point and
-                // the face normal.
-                //
-                // TODO: use a reference element instead of
-                // calculating this every time
-                ipLocal  = refElem.position(scvFaceIdx, GridDim-1);
-                ipLocal += this->elementLocal_;
-                ipLocal *= 0.5;
+            // calculate the local integration point and
+            // the face normal.
+            //
+            // TODO: use a reference element instead of
+            // calculating this every time
+            ipLocal  = refElem.position(scvFaceIdx, GridDim-1);
+            ipLocal += this->elementLocal_;
+            ipLocal *= 0.5;
 
-                this->subContVolFace_[scvFaceIdx].ipLocal = ipLocal;
+            this->subContVolFace_[scvFaceIdx].ipLocal = ipLocal;
 
-                diffVec = this->elementGlobal_ - this->edgeCoord[scvFaceIdx];
-                this->subContVolFace_[scvFaceIdx].normal[0] =  diffVec[1];
-                this->subContVolFace_[scvFaceIdx].normal[1] = -diffVec[0];
-            }
+            diffVec = this->elementGlobal_ - this->edgeCoord[scvFaceIdx];
+            this->subContVolFace_[scvFaceIdx].normal[0] =  diffVec[1];
+            this->subContVolFace_[scvFaceIdx].normal[1] = -diffVec[0];
+        }
     }
 
     void updateBoundaryFace_(IntersectionIterator &it,
@@ -165,21 +165,21 @@ class NewFVElementGeometry<GridT,
         int face = it->numberInSelf();
         int numVerticesOfFace = refElem.size(face, 1, GridDim);
         for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++)
-            {
-                int nodeInElement = refElem.subEntity(face, 1, nodeInFace, GridDim);
-                int bfIndex = this->_boundaryFaceIndex(face, nodeInFace);
+        {
+            int nodeInElement = refElem.subEntity(face, 1, nodeInFace, GridDim);
+            int bfIndex = this->_boundaryFaceIndex(face, nodeInFace);
 
-                // TODO: use reference element to find the local
-                // integration point
-                this->boundaryFace_[bfIndex].ipLocal_ = refElem.position(nodeInElement, GridDim);
-                this->boundaryFace_[bfIndex].ipLocal_ += refElem.position(face, 1);
-                this->boundaryFace_[bfIndex].ipLocal_ *= 0.5;
+            // TODO: use reference element to find the local
+            // integration point
+            this->boundaryFace_[bfIndex].ipLocal_ = refElem.position(nodeInElement, GridDim);
+            this->boundaryFace_[bfIndex].ipLocal_ += refElem.position(face, 1);
+            this->boundaryFace_[bfIndex].ipLocal_ *= 0.5;
 
-                this->boundaryFace_[bfIndex].area_ = 0.5*it->intersectionGlobal().volume();
+            this->boundaryFace_[bfIndex].area_ = 0.5*it->intersectionGlobal().volume();
 
-                this->boundaryFace_[bfIndex].ipGlobal_ =
-                    geometry.global(this->boundaryFace_[bfIndex].ipLocal_);
-            }
+            this->boundaryFace_[bfIndex].ipGlobal_ =
+                geometry.global(this->boundaryFace_[bfIndex].ipLocal_);
+        }
     }
 
 };

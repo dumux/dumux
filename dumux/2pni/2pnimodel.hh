@@ -154,13 +154,13 @@ public:
 
         VertexIterator endIt = _grid.leafView().template end<dim>();
         for (VertexIterator vIt = _grid.leafView().template begin<dim>(); vIt != endIt;    ++vIt)
+        {
+            int globalIdx = vertexmapper.map(*vIt);
+            for (int equationnumber = 0; equationnumber < numEq;equationnumber++)
             {
-                int globalIdx = vertexmapper.map(*vIt);
-                for (int equationnumber = 0; equationnumber < numEq;equationnumber++)
-                    {
-                        data[globalIdx][equationnumber]=(*(this->u))[globalIdx][equationnumber];
-                    }
+                data[globalIdx][equationnumber]=(*(this->u))[globalIdx][equationnumber];
             }
+        }
 
         restartFileName = (boost::format("data-%05d")
                            %restartNum).str();

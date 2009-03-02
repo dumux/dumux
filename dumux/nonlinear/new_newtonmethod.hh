@@ -302,31 +302,31 @@ protected:
         // execute the method as long as the controller thinks
         // that we should do another iteration
         while (ctl.newtonProceed(u))
-            {
-                // notify the controller that we're about to start
-                // a new timestep
-                ctl.newtonBeginStep();
+        {
+            // notify the controller that we're about to start
+            // a new timestep
+            ctl.newtonBeginStep();
 
-                // make the current solution to the old one
-                *uOld = *u;
-                *f = 0;
+            // make the current solution to the old one
+            *uOld = *u;
+            *f = 0;
 
-                // linearize the problem at the current solution
-                jacobianAsm.assemble(localJacobian, u, f);
+            // linearize the problem at the current solution
+            jacobianAsm.assemble(localJacobian, u, f);
 
-                // solve the resultuing linear equation system
-                ctl.newtonSolveLinear(*jacobianAsm, u, *f);
+            // solve the resultuing linear equation system
+            ctl.newtonSolveLinear(*jacobianAsm, u, *f);
 
-                Scalar tmp = (*u).two_norm2();
-                tmp = model.grid().comm().sum(tmp);
-                deflectionTwoNorm_ = sqrt(tmp);
+            Scalar tmp = (*u).two_norm2();
+            tmp = model.grid().comm().sum(tmp);
+            deflectionTwoNorm_ = sqrt(tmp);
 
-                // update the current solution. We use either
-                // a line search approach or the plain method.
-                updateMethod.update(*this, u, uOld, model);
+            // update the current solution. We use either
+            // a line search approach or the plain method.
+            updateMethod.update(*this, u, uOld, model);
 
-                ctl.newtonEndStep(u, uOld);
-            }
+            ctl.newtonEndStep(u, uOld);
+        }
         // tell the controller that we're done
         ctl.newtonEnd();
 

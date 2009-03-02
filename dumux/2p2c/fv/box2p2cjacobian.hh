@@ -177,52 +177,52 @@ public:
 
         // calculate FE gradient (grad p for each phase)
         for (int k = 0; k < this->fvGeom.numVertices; k++) // loop over adjacent nodes
+        {
+            // FEGradient at node k
+            const FieldVector<Scalar,dim> feGrad(this->fvGeom.subContVolFace[face].grad[k]);
+            FieldVector<Scalar,numEq> pressure(0.0), massfrac(0.0);
+
+            pressure[wPhase] = vNDat[k].pW;
+            pressure[nPhase] = vNDat[k].pN;
+
+            // compute sum of pressure gradients for each phase
+            for (int phase = 0; phase < numEq; phase++)
             {
-                // FEGradient at node k
-                const FieldVector<Scalar,dim> feGrad(this->fvGeom.subContVolFace[face].grad[k]);
-                FieldVector<Scalar,numEq> pressure(0.0), massfrac(0.0);
-
-                pressure[wPhase] = vNDat[k].pW;
-                pressure[nPhase] = vNDat[k].pN;
-
-                // compute sum of pressure gradients for each phase
-                for (int phase = 0; phase < numEq; phase++)
-                    {
-                        temp = feGrad;
-                        temp *= pressure[phase];
-                        pGrad[phase] += temp;
-
-                        densityIJ[phase] += vNDat[k].density[phase]*this->fvGeom.subContVolFace[face].shapeValue[k];
-                    }
-                // for diffusion of air in wetting phase
                 temp = feGrad;
-                temp *= vNDat[k].massfrac[air][wPhase];
-                xGrad[wPhase] += temp;
+                temp *= pressure[phase];
+                pGrad[phase] += temp;
 
-                // for diffusion of water in nonwetting phase
-                temp = feGrad;
-                temp *= vNDat[k].massfrac[water][nPhase];
-                xGrad[nPhase] += temp;
+                densityIJ[phase] += vNDat[k].density[phase]*this->fvGeom.subContVolFace[face].shapeValue[k];
             }
+            // for diffusion of air in wetting phase
+            temp = feGrad;
+            temp *= vNDat[k].massfrac[air][wPhase];
+            xGrad[wPhase] += temp;
+
+            // for diffusion of water in nonwetting phase
+            temp = feGrad;
+            temp *= vNDat[k].massfrac[water][nPhase];
+            xGrad[nPhase] += temp;
+        }
 
         // deduce gravity*density of each phase
         FieldMatrix<Scalar,numEq,dim> contribComp(0);
         for (int phase=0; phase<numEq; phase++)
-            {
-                contribComp[phase] = problem.gravity();
-                contribComp[phase] *= densityIJ[phase];
-                pGrad[phase] -= contribComp[phase]; // grad p - rho*g
-            }
+        {
+            contribComp[phase] = problem.gravity();
+            contribComp[phase] *= densityIJ[phase];
+            pGrad[phase] -= contribComp[phase]; // grad p - rho*g
+        }
 
         SolutionVector outward(0);  // Darcy velocity of each phase
 
         // calculate the advective flux using upwind: K*n(grad p -rho*g)
         for (int phase=0; phase<numEq; phase++)
-            {
-                FieldVector<Scalar,dim> v_tilde(0);
-                K.mv(pGrad[phase], v_tilde);  // v_tilde=K*gradP
-                outward[phase] = v_tilde*normal;
-            }
+        {
+            FieldVector<Scalar,dim> v_tilde(0);
+            K.mv(pGrad[phase], v_tilde);  // v_tilde=K*gradP
+            outward[phase] = v_tilde*normal;
+        }
 
         // evaluate upwind nodes
         int up_w, dn_w, up_n, dn_n;
@@ -362,71 +362,71 @@ public:
         Scalar pN = pW + pC;
 
         switch(state)
+        {
+        case gasPhase :
+            Scalar xWNmass, xWNmolar, pwn, pWSat; // auxiliary variables
+
+            xWNmass = sol[localIdx][switchIdx];
+            xWNmolar = problem.multicomp().convertMassToMoleFraction(xWNmass, gasPhase);
+            pwn = xWNmolar * pN;
+            pWSat = problem.multicomp().vaporPressure(temperature);
+
+            if (pwn > pWSat && !switched)// && switch_counter < 3)
             {
-            case gasPhase :
-                Scalar xWNmass, xWNmolar, pwn, pWSat; // auxiliary variables
-
-                xWNmass = sol[localIdx][switchIdx];
-                xWNmolar = problem.multicomp().convertMassToMoleFraction(xWNmass, gasPhase);
-                pwn = xWNmolar * pN;
-                pWSat = problem.multicomp().vaporPressure(temperature);
-
-                if (pwn > pWSat && !switched)// && switch_counter < 3)
-                    {
-                        // appearance of water phase
-                        std::cout << "Water appears at node " << globalIdx << "  Coordinates: " << global << std::endl;
-                        sNDat[globalIdx].phaseState = bothPhases;
-                        sol[localIdx][switchIdx] = 1.0 - 2e-5; // initialize solution vector
-                        sNDat[globalIdx].switched += 1;
-                        switched = true;
-                    }
-                break;
-
-            case waterPhase :
-                Scalar xAWmass, xAWmolar, henryInv, pbub; // auxiliary variables
-
-                xAWmass = sol[localIdx][switchIdx];
-                xAWmolar = problem.multicomp().convertMassToMoleFraction(xAWmass, waterPhase);
-
-                henryInv = problem.multicomp().henry(temperature);
-                pWSat = problem.multicomp().vaporPressure(temperature);
-                pbub = pWSat + xAWmolar/henryInv; // pWSat + pAW
-
-                if (pN < pbub && !switched)// && switch_counter < 3)
-                    {
-                        // appearance of gas phase
-                        std::cout << "Gas appears at node " << globalIdx << ",  Coordinates: " << global << std::endl;
-                        sNDat[globalIdx].phaseState = bothPhases;
-                        sol[localIdx][switchIdx] = 2e-5; // initialize solution vector
-                        sNDat[globalIdx].switched += 1;
-                        switched = true;
-                    }
-                break;
-
-            case bothPhases:
-                Scalar satN = sol[localIdx][switchIdx];
-
-                if (satN < -1e-5  && !switched)// && switch_counter < 3)
-                    {
-                        // disappearance of gas phase
-                        std::cout << "Gas disappears at node " << globalIdx << "  Coordinates: " << global << std::endl;
-                        sNDat[globalIdx].phaseState = waterPhase;
-                        sol[localIdx][switchIdx] = problem.multicomp().xAW(pN); // initialize solution vector
-                        sNDat[globalIdx].switched += 1;
-                        switched = true;
-                    }
-                else if (satW < -1e-5 && !switched)// && switch_counter < 3)
-                    {
-                        // disappearance of water phase
-                        std::cout << "Water disappears at node " << globalIdx << "  Coordinates: " << global << std::endl;
-                        sNDat[globalIdx].phaseState = gasPhase;
-                        sol[localIdx][switchIdx] = problem.multicomp().xWN(pN); // initialize solution vector
-                        sNDat[globalIdx].switched += 1;
-                        switched = true;
-                    }
-                break;
-
+                // appearance of water phase
+                std::cout << "Water appears at node " << globalIdx << "  Coordinates: " << global << std::endl;
+                sNDat[globalIdx].phaseState = bothPhases;
+                sol[localIdx][switchIdx] = 1.0 - 2e-5; // initialize solution vector
+                sNDat[globalIdx].switched += 1;
+                switched = true;
             }
+            break;
+
+        case waterPhase :
+            Scalar xAWmass, xAWmolar, henryInv, pbub; // auxiliary variables
+
+            xAWmass = sol[localIdx][switchIdx];
+            xAWmolar = problem.multicomp().convertMassToMoleFraction(xAWmass, waterPhase);
+
+            henryInv = problem.multicomp().henry(temperature);
+            pWSat = problem.multicomp().vaporPressure(temperature);
+            pbub = pWSat + xAWmolar/henryInv; // pWSat + pAW
+
+            if (pN < pbub && !switched)// && switch_counter < 3)
+            {
+                // appearance of gas phase
+                std::cout << "Gas appears at node " << globalIdx << ",  Coordinates: " << global << std::endl;
+                sNDat[globalIdx].phaseState = bothPhases;
+                sol[localIdx][switchIdx] = 2e-5; // initialize solution vector
+                sNDat[globalIdx].switched += 1;
+                switched = true;
+            }
+            break;
+
+        case bothPhases:
+            Scalar satN = sol[localIdx][switchIdx];
+
+            if (satN < -1e-5  && !switched)// && switch_counter < 3)
+            {
+                // disappearance of gas phase
+                std::cout << "Gas disappears at node " << globalIdx << "  Coordinates: " << global << std::endl;
+                sNDat[globalIdx].phaseState = waterPhase;
+                sol[localIdx][switchIdx] = problem.multicomp().xAW(pN); // initialize solution vector
+                sNDat[globalIdx].switched += 1;
+                switched = true;
+            }
+            else if (satW < -1e-5 && !switched)// && switch_counter < 3)
+            {
+                // disappearance of water phase
+                std::cout << "Water disappears at node " << globalIdx << "  Coordinates: " << global << std::endl;
+                sNDat[globalIdx].phaseState = gasPhase;
+                sol[localIdx][switchIdx] = problem.multicomp().xWN(pN); // initialize solution vector
+                sNDat[globalIdx].switched += 1;
+                switched = true;
+            }
+            break;
+
+        }
         if (switched){
             updateVariableData(element, sol, localIdx, vNDat, sNDat[globalIdx].phaseState);
             BoxJacobian<ThisType,Grid,Scalar,2,BoxFunction>::localToGlobal(element,sol);
@@ -444,9 +444,9 @@ public:
         for (int kx=0; kx<dim; kx++){
             for (int ky=0; ky<dim; ky++){
                 if (Ki[kx][ky] != Kj[kx][ky])
-                    {
-                        Ki[kx][ky] = 2 / (1/(Ki[kx][ky]+eps) + (1/(Kj[kx][ky]+eps)));
-                    }
+                {
+                    Ki[kx][ky] = 2 / (1/(Ki[kx][ky]+eps) + (1/(Kj[kx][ky]+eps)));
+                }
             }
         }
         return Ki;
@@ -516,19 +516,19 @@ public:
 
         // get local to global id map
         for (int k = 0; k < sfs.size(); k++)
+        {
+            const int globalIdx = this->vertexMapper.template map<dim>(element, sfs[k].entity());
+
+            // if nodes are not already visited
+            if (!sNDat[globalIdx].visited)
             {
-                const int globalIdx = this->vertexMapper.template map<dim>(element, sfs[k].entity());
+                // evaluate primary variable switch
+                primaryVarSwitch(element, globalIdx, sol, k);
 
-                // if nodes are not already visited
-                if (!sNDat[globalIdx].visited)
-                    {
-                        // evaluate primary variable switch
-                        primaryVarSwitch(element, globalIdx, sol, k);
-
-                        // mark elements that were already visited
-                        sNDat[globalIdx].visited = true;
-                    }
+                // mark elements that were already visited
+                sNDat[globalIdx].visited = true;
             }
+        }
 
         return;
     }
@@ -543,27 +543,27 @@ public:
 
         // get local to global id map
         for (int k = 0; k < sfs.size(); k++)
+        {
+            const int globalIdx = this->vertexMapper.template map<dim>(element, sfs[k].entity());
+
+            // if nodes are not already visited
+            if (!sNDat[globalIdx].visited)
             {
-                const int globalIdx = this->vertexMapper.template map<dim>(element, sfs[k].entity());
+                // ASSUME porosity defined at nodes
+                sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.elementGlobal, element, this->fvGeom.elementLocal);
 
-                // if nodes are not already visited
-                if (!sNDat[globalIdx].visited)
-                    {
-                        // ASSUME porosity defined at nodes
-                        sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.elementGlobal, element, this->fvGeom.elementLocal);
+                // set counter for variable switch to zero
+                sNDat[globalIdx].switched = 0;
 
-                        // set counter for variable switch to zero
-                        sNDat[globalIdx].switched = 0;
+                //               if (!checkSwitched())
+                //                  {
+                primaryVarSwitch(element, globalIdx, sol, k);
+                //                  }
 
-                        //               if (!checkSwitched())
-                        //                  {
-                        primaryVarSwitch(element, globalIdx, sol, k);
-                        //                  }
-
-                        // mark elements that were already visited
-                        sNDat[globalIdx].visited = true;
-                    }
+                // mark elements that were already visited
+                sNDat[globalIdx].visited = true;
             }
+        }
 
         return;
     }
@@ -671,15 +671,15 @@ public:
         int state;
         const int global = this->vertexMapper.template map<dim>(element, vertex);
         if (old)
-            {
-                state = sNDat[global].oldPhaseState;
-                updateVariableData(element, sol, vertex, oldVNDat, state);
-            }
+        {
+            state = sNDat[global].oldPhaseState;
+            updateVariableData(element, sol, vertex, oldVNDat, state);
+        }
         else
-            {
-                state = sNDat[global].phaseState;
-                updateVariableData(element, sol, vertex, vNDat, state);
-            }
+        {
+            state = sNDat[global].phaseState;
+            updateVariableData(element, sol, vertex, vNDat, state);
+        }
     }
 
     void updateVariableData(const Element& element, const SolutionVector* sol, bool old = false)

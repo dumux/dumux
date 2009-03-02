@@ -32,10 +32,10 @@ int main(int argc, char** argv)
 
         // read path for grid, total simulation time tEnd and timestep dt
         if (argc != 4)
-            {
-                std::cout << "usage: 2pni basefilename tEnd dt" << std::endl;
-                return 0;
-            }
+        {
+            std::cout << "usage: 2pni basefilename tEnd dt" << std::endl;
+            return 0;
+        }
         std::string arg1(argv[2]);
         std::istringstream is1(arg1);
         double tEnd;

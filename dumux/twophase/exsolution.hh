@@ -101,41 +101,41 @@ public:
 
         Iterator eendit = gridview.template end<0>();
         for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
+        {
+            // get entity
+            const Entity& entity = *it;
+
+            // get geometry type
+            Dune::GeometryType gt = it->geometry().type();
+
+            double cellvolume = entity.geometry().volume();
+
+            // cell center in reference element
+            const Dune::FieldVector<DT,n>
+                elementLocal = Dune::ReferenceElements<DT,n>::general(gt).position(0,0);
+
+            // get global coordinate of cell center
+            const Dune::FieldVector<DT,n> elementGlobal = it->geometry().global(elementLocal);
+
+            const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::value_type&
+                sfs=Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt, n);
+            int size = sfs.size();
+
+            // begin loop over vertices
+            for(int i=0; i < size; i++)
             {
-                // get entity
-                const Entity& entity = *it;
+                // local coordinate of vertex
+                const FieldVector<DT,n> vertexLocal = sfs[i].position();
 
-                // get geometry type
-                Dune::GeometryType gt = it->geometry().type();
+                // get global coordinate of vertex
+                const FieldVector<DT,n> vertexGlobal = it->geometry().global(vertexLocal);
 
-                double cellvolume = entity.geometry().volume();
+                int globalId = vertexmapper.template map<n>(entity, sfs[i].entity());
 
-                // cell center in reference element
-                const Dune::FieldVector<DT,n>
-                    elementLocal = Dune::ReferenceElements<DT,n>::general(gt).position(0,0);
-
-                // get global coordinate of cell center
-                const Dune::FieldVector<DT,n> elementGlobal = it->geometry().global(elementLocal);
-
-                const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::value_type&
-                    sfs=Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt, n);
-                int size = sfs.size();
-
-                // begin loop over vertices
-                for(int i=0; i < size; i++)
-                    {
-                        // local coordinate of vertex
-                        const FieldVector<DT,n> vertexLocal = sfs[i].position();
-
-                        // get global coordinate of vertex
-                        const FieldVector<DT,n> vertexGlobal = it->geometry().global(vertexLocal);
-
-                        int globalId = vertexmapper.template map<n>(entity, sfs[i].entity());
-
-                        elementvolume[globalId]+=cellvolume/size;
-                        //                  std::cout<<"elementvolume = "<<elementvolume[globalId]<<std::endl;
-                    }
+                elementvolume[globalId]+=cellvolume/size;
+                //                  std::cout<<"elementvolume = "<<elementvolume[globalId]<<std::endl;
             }
+        }
 
         double globalvolume = elementvolume.one_norm();
         //        std::cout<<"globalvolume = "<<globalvolume<<std::endl;

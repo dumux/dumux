@@ -178,138 +178,138 @@ template<class G, class RT, class VC> int DeprecatedFVTransport<G, RT, VC>::upda
 
             // handle interior face
             if (is->neighbor())
+            {
+                // access neighbor
+                EntityPointer outside = is->outside();
+                int indexj = elementmapper.map(*outside);
+
+                // compute flux from one side only
+                // this should become easier with the new IntersectionIterator functionality!
+                if ( it->level()>=outside->level() )
                 {
-                    // access neighbor
-                    EntityPointer outside = is->outside();
-                    int indexj = elementmapper.map(*outside);
+                    // compute factor in neighbor
+                    Dune::GeometryType nbgt = outside->geometry().type();
+                    const Dune::FieldVector<ct,dim>&
+                        nblocal = Dune::ReferenceElements<ct,dim>::general(nbgt).position(0,0);
 
-                    // compute flux from one side only
-                    // this should become easier with the new IntersectionIterator functionality!
-                    if ( it->level()>=outside->level() )
-                        {
-                            // compute factor in neighbor
-                            Dune::GeometryType nbgt = outside->geometry().type();
-                            const Dune::FieldVector<ct,dim>&
-                                nblocal = Dune::ReferenceElements<ct,dim>::general(nbgt).position(0,0);
+                    double velocityJI = std::max(-(this->transproblem.variables.vTotal(*it, numberInSelf)*integrationOuterNormal/volume), 0.0);
 
-                            double velocityJI = std::max(-(this->transproblem.variables.vTotal(*it, numberInSelf)*integrationOuterNormal/volume), 0.0);
+                    // cell center in global coordinates
+                    Dune::FieldVector<ct,dimworld> global = it->geometry().global(local);
 
-                            // cell center in global coordinates
-                            Dune::FieldVector<ct,dimworld> global = it->geometry().global(local);
+                    // neighbor cell center in global coordinates
+                    Dune::FieldVector<ct,dimworld> nbglobal = outside->geometry().global(nblocal);
 
-                            // neighbor cell center in global coordinates
-                            Dune::FieldVector<ct,dimworld> nbglobal = outside->geometry().global(nblocal);
+                    // distance vector between barycenters
+                    Dune::FieldVector<ct,dimworld> distVec = global - nbglobal;
 
-                            // distance vector between barycenters
-                            Dune::FieldVector<ct,dimworld> distVec = global - nbglobal;
+                    // compute distance between cell centers
+                    double dist = distVec.two_norm();
 
-                            // compute distance between cell centers
-                            double dist = distVec.two_norm();
+                    // get saturation value at cell center
+                    double satI = this->transproblem.variables.saturation[indexi];
 
-                            // get saturation value at cell center
-                            double satI = this->transproblem.variables.saturation[indexi];
+                    // get saturation value at neighbor cell center
+                    double satJ = this->transproblem.variables.saturation[indexj];
 
-                            // get saturation value at neighbor cell center
-                            double satJ = this->transproblem.variables.saturation[indexj];
+                    // calculate the saturation gradient
+                    Dune::FieldVector<ct,dim> satGradient = distVec;
+                    satGradient *= (satJ - satI)/(dist*dist);
 
-                            // calculate the saturation gradient
-                            Dune::FieldVector<ct,dim> satGradient = distVec;
-                            satGradient *= (satJ - satI)/(dist*dist);
+                    // the arithmetic average
+                    double satAvg = 0.5*(satI + satJ);
 
-                            // the arithmetic average
-                            double satAvg = 0.5*(satI + satJ);
+                    // get the diffusive part
+                    double diffPart = this->diffusivePart(*it, numberInSelf, satAvg, satGradient, t, satI, satJ)*integrationOuterNormal;
 
-                            // get the diffusive part
-                            double diffPart = this->diffusivePart(*it, numberInSelf, satAvg, satGradient, t, satI, satJ)*integrationOuterNormal;
-
-                            // CAREFUL: works only for axisymmetric grids
-                            if (reconstruct) {
-                                for (int k = 0; k < dim; k++)
-                                    if (fabs(distVec[k]) > 0.5*dist)
-                                        {
-                                            satI -= fabs(distVec[k])/distVec[k]*0.5*dist*slope[indexi][k];
-                                            satJ += fabs(distVec[k])/distVec[k]*0.5*dist*slope[indexj][k];
-                                        }
+                    // CAREFUL: works only for axisymmetric grids
+                    if (reconstruct) {
+                        for (int k = 0; k < dim; k++)
+                            if (fabs(distVec[k]) > 0.5*dist)
+                            {
+                                satI -= fabs(distVec[k])/distVec[k]*0.5*dist*slope[indexi][k];
+                                satJ += fabs(distVec[k])/distVec[k]*0.5*dist*slope[indexj][k];
                             }
+                    }
 
-                            double fI = this->transproblem.materialLaw.fractionalW(satI);
-                            double fJ = this->transproblem.materialLaw.fractionalW(satJ);
+                    double fI = this->transproblem.materialLaw.fractionalW(satI);
+                    double fJ = this->transproblem.materialLaw.fractionalW(satJ);
 
-                            diffFactor = diffPart / volume;
-                            factor = diffFactor
-                                + velocityJI*numFlux(satJ, satI, fJ, fI)
-                                - velocityIJ*numFlux(satI, satJ, fI, fJ);
-                            totfactor = velocityJI - velocityIJ;
-                            totfactor *= (fI-fJ)/(satI-satJ);
-                        }
+                    diffFactor = diffPart / volume;
+                    factor = diffFactor
+                        + velocityJI*numFlux(satJ, satI, fJ, fI)
+                        - velocityIJ*numFlux(satI, satJ, fI, fJ);
+                    totfactor = velocityJI - velocityIJ;
+                    totfactor *= (fI-fJ)/(satI-satJ);
                 }
+            }
 
             // handle boundary face
             if (is->boundary())
+            {
+                // center of face in global coordinates
+                Dune::FieldVector<ct,dimworld> faceglobal = is->intersectionGlobal().global(facelocal);
+
+                //get boundary type
+                BoundaryConditions::Flags bctype = this->transproblem.bctype(faceglobal, *it, facelocalDim);
+
+                if (bctype == BoundaryConditions::dirichlet)
                 {
-                    // center of face in global coordinates
-                    Dune::FieldVector<ct,dimworld> faceglobal = is->intersectionGlobal().global(facelocal);
+                    // get saturation value at cell center
+                    double satI = this->transproblem.variables.saturation[indexi];
 
-                    //get boundary type
-                    BoundaryConditions::Flags bctype = this->transproblem.bctype(faceglobal, *it, facelocalDim);
+                    double velocityJI = std::max(-(this->transproblem.variables.vTotal(*it, numberInSelf)*integrationOuterNormal/volume), 0.0);
 
-                    if (bctype == BoundaryConditions::dirichlet)
-                        {
-                            // get saturation value at cell center
-                            double satI = this->transproblem.variables.saturation[indexi];
+                    double satBound = this->transproblem.g(faceglobal, *it, facelocalDim);
 
-                            double velocityJI = std::max(-(this->transproblem.variables.vTotal(*it, numberInSelf)*integrationOuterNormal/volume), 0.0);
+                    // cell center in global coordinates
+                    Dune::FieldVector<ct,dimworld> global = it->geometry().global(local);
 
-                            double satBound = this->transproblem.g(faceglobal, *it, facelocalDim);
+                    // distance vector between barycenters
+                    Dune::FieldVector<ct,dimworld> distVec = global - faceglobal;
 
-                            // cell center in global coordinates
-                            Dune::FieldVector<ct,dimworld> global = it->geometry().global(local);
+                    // compute distance between cell centers
+                    double dist = distVec.two_norm();
 
-                            // distance vector between barycenters
-                            Dune::FieldVector<ct,dimworld> distVec = global - faceglobal;
+                    // calculate the saturation gradient
+                    Dune::FieldVector<ct,dim> satGradient = distVec;
+                    satGradient *= (satBound - satI)/(dist*dist);
 
-                            // compute distance between cell centers
-                            double dist = distVec.two_norm();
+                    // the arithmetic average
+                    double satAvg = 0.5*(satI + satBound);
 
-                            // calculate the saturation gradient
-                            Dune::FieldVector<ct,dim> satGradient = distVec;
-                            satGradient *= (satBound - satI)/(dist*dist);
+                    // get the diffusive part
+                    double diffPart = this->diffusivePart(*it, numberInSelf, satAvg, satGradient, t, satI, satBound)*integrationOuterNormal;
 
-                            // the arithmetic average
-                            double satAvg = 0.5*(satI + satBound);
-
-                            // get the diffusive part
-                            double diffPart = this->diffusivePart(*it, numberInSelf, satAvg, satGradient, t, satI, satBound)*integrationOuterNormal;
-
-                            // CAREFUL: works only for axisymmetric grids
-                            if (reconstruct) {
-                                for (int k = 0; k < dim; k++)
-                                    if (fabs(distVec[k]) > 0.5*dist)
-                                        {
-                                            //TODO remove DEBUG--->
-                                            //double gabagabahey = slope[indexi][k];
-                                            //<---DEBUG
-                                            satI -= fabs(distVec[k])/distVec[k]*dist*slope[indexi][k];
-                                        }
+                    // CAREFUL: works only for axisymmetric grids
+                    if (reconstruct) {
+                        for (int k = 0; k < dim; k++)
+                            if (fabs(distVec[k]) > 0.5*dist)
+                            {
+                                //TODO remove DEBUG--->
+                                //double gabagabahey = slope[indexi][k];
+                                //<---DEBUG
+                                satI -= fabs(distVec[k])/distVec[k]*dist*slope[indexi][k];
                             }
+                    }
 
-                            double fI = this->transproblem.materialLaw.fractionalW(satI);
-                            double fBound = this->transproblem.materialLaw.fractionalW(satBound);
-                            diffFactor = diffPart / volume;
-                            factor = diffFactor
-                                + velocityJI*numFlux(satBound, satI, fBound, fI)
-                                - velocityIJ*numFlux(satI, satBound, fI, fBound);
-                            totfactor = velocityJI - velocityIJ;
-                            totfactor *= (fI-fBound)/(satI-satBound);
-                        }
-                    else
-                        {
-                            //double J = this->transproblem.J(faceglobal, *it, facelocalDim);
-                            //factor = J*faceVol;
-                            factor = 0;
-                            totfactor = 0;
-                        }
+                    double fI = this->transproblem.materialLaw.fractionalW(satI);
+                    double fBound = this->transproblem.materialLaw.fractionalW(satBound);
+                    diffFactor = diffPart / volume;
+                    factor = diffFactor
+                        + velocityJI*numFlux(satBound, satI, fBound, fI)
+                        - velocityIJ*numFlux(satI, satBound, fI, fBound);
+                    totfactor = velocityJI - velocityIJ;
+                    totfactor *= (fI-fBound)/(satI-satBound);
                 }
+                else
+                {
+                    //double J = this->transproblem.J(faceglobal, *it, facelocalDim);
+                    //factor = J*faceVol;
+                    factor = 0;
+                    totfactor = 0;
+                }
+            }
 
             // add to update vector
             updateVec[indexi] += factor;
@@ -471,13 +471,13 @@ template<class G, class RT, class VC> void DeprecatedFVTransport<G, RT, VC>::Cal
                 // CAREFUL: works only for axiparallel grids
                 for (int k = 0; k < dim; k++)
                     if (faceglobal[k] - global[k] > 0.5*dist[numberInSelf])
-                        {
-                            location[2*k] = numberInSelf;
-                        }
+                    {
+                        location[2*k] = numberInSelf;
+                    }
                     else if (faceglobal[k] - global[k] < -0.5*dist[numberInSelf])
-                        {
-                            location[2*k + 1] = numberInSelf;
-                        }
+                    {
+                        location[2*k + 1] = numberInSelf;
+                    }
             }
         } // end all intersections
 

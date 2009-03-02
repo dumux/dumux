@@ -52,75 +52,75 @@ public:
         // loop 1 over all nodes of the first grid
         VIterator vendit = (this->firstGrid_).template leafend<dim>();
         for (VIterator firstIt = (this->firstGrid_).template leafbegin<dim>(); firstIt != vendit; ++firstIt)
-            {
-                // get the node pointer on the host grid
-                const HostVPointer& hostVPointer = (this->firstGrid_).template getHostEntity<dim>(*firstIt);
+        {
+            // get the node pointer on the host grid
+            const HostVPointer& hostVPointer = (this->firstGrid_).template getHostEntity<dim>(*firstIt);
 
-                // check if the node is also part of the second grid
-                if (!((this->secondGrid_).template contains<dim>(hostVPointer)))
-                    continue; // otherwise move on to the next node
+            // check if the node is also part of the second grid
+            if (!((this->secondGrid_).template contains<dim>(hostVPointer)))
+                continue; // otherwise move on to the next node
 
-                // get the indices of the node with respect to the two local matrices
-                int firstId = firstVM.map(*firstIt);
-                int secondId = secondVM.map(*firstIt);
+            // get the indices of the node with respect to the two local matrices
+            int firstId = firstVM.map(*firstIt);
+            int secondId = secondVM.map(*firstIt);
 
-                // set nontrivial rowsizes
-                A12.setrowsize(firstId, 1);
-                A21.setrowsize(secondId, (this->A11)[firstId].size());
+            // set nontrivial rowsizes
+            A12.setrowsize(firstId, 1);
+            A21.setrowsize(secondId, (this->A11)[firstId].size());
 
-                // generate some output
-                FieldVector<double,dim> globalCoord = (*firstIt).geometry().corner(0);
-            } // end loop 1 over all nodes of the first grid
+            // generate some output
+            FieldVector<double,dim> globalCoord = (*firstIt).geometry().corner(0);
+        } // end loop 1 over all nodes of the first grid
         A12.endrowsizes();
         A21.endrowsizes();
 
         // loop 2 over all nodes of the first grid
         for (VIterator firstIt = (this->firstGrid_).template leafbegin<dim>(); firstIt != vendit; ++firstIt)
-            {
-                // get the node pointer on the host grid
-                const HostVPointer& hostVPointer = (this->firstGrid_).template getHostEntity<dim>(*firstIt);
+        {
+            // get the node pointer on the host grid
+            const HostVPointer& hostVPointer = (this->firstGrid_).template getHostEntity<dim>(*firstIt);
 
-                // check if the node is also part of the second grid
-                if (!((this->secondGrid_).template contains<dim>(hostVPointer)))
-                    continue; // otherwise move on to the next node
+            // check if the node is also part of the second grid
+            if (!((this->secondGrid_).template contains<dim>(hostVPointer)))
+                continue; // otherwise move on to the next node
 
-                // get the indices of the node with respect to the two local matrices
-                int firstId = firstVM.map(*firstIt);
-                int secondId = secondVM.map(*firstIt);
+            // get the indices of the node with respect to the two local matrices
+            int firstId = firstVM.map(*firstIt);
+            int secondId = secondVM.map(*firstIt);
 
-                // add the index to A12
-                A12.addindex(firstId, secondId);
+            // add the index to A12
+            A12.addindex(firstId, secondId);
 
-                // add the indices to A21
-                ColIterator endJBlock = (this->A11)[firstId].end();
-                for (ColIterator jBlock = (this->A11)[firstId].begin(); jBlock != endJBlock; ++jBlock)
-                    A21.addindex(secondId, jBlock.index());
-            } // end loop 2 over all nodes of the first grid
+            // add the indices to A21
+            ColIterator endJBlock = (this->A11)[firstId].end();
+            for (ColIterator jBlock = (this->A11)[firstId].begin(); jBlock != endJBlock; ++jBlock)
+                A21.addindex(secondId, jBlock.index());
+        } // end loop 2 over all nodes of the first grid
         A12.endindices();
         A21.endindices();
 
         // loop 3 over all nodes of the first grid
         for (VIterator firstIt = (this->firstGrid_).template leafbegin<dim>(); firstIt != vendit; ++firstIt)
-            {
-                // get the node pointer on the host grid
-                const HostVPointer& hostVPointer = (this->firstGrid_).template getHostEntity<dim>(*firstIt);
+        {
+            // get the node pointer on the host grid
+            const HostVPointer& hostVPointer = (this->firstGrid_).template getHostEntity<dim>(*firstIt);
 
-                // check if the node is also part of the second grid
-                if (!((this->secondGrid_).template contains<dim>(hostVPointer)))
-                    continue; // otherwise move on to the next node
+            // check if the node is also part of the second grid
+            if (!((this->secondGrid_).template contains<dim>(hostVPointer)))
+                continue; // otherwise move on to the next node
 
-                // get the indices of the node with respect to the two local matrices
-                int firstId = firstVM.map(*firstIt);
-                int secondId = secondVM.map(*firstIt);
+            // get the indices of the node with respect to the two local matrices
+            int firstId = firstVM.map(*firstIt);
+            int secondId = secondVM.map(*firstIt);
 
-                // set the entries
-                A12[firstId][secondId] = -1.0;
-                A21[secondId] = (this->A11)[firstId];
-                (this->A11)[firstId] = 0.0;
-                (this->A11)[firstId][firstId] = 1.0;
-                (this->secondModel_).rhs()[secondId] += (this->firstModel_).rhs()[firstId];
-                (this->firstModel_).rhs()[firstId] = 0;
-            } // end loop 3 over all nodes of the first grid
+            // set the entries
+            A12[firstId][secondId] = -1.0;
+            A21[secondId] = (this->A11)[firstId];
+            (this->A11)[firstId] = 0.0;
+            (this->A11)[firstId][firstId] = 1.0;
+            (this->secondModel_).rhs()[secondId] += (this->firstModel_).rhs()[firstId];
+            (this->firstModel_).rhs()[firstId] = 0;
+        } // end loop 3 over all nodes of the first grid
 
     }
 
@@ -136,46 +136,46 @@ public:
 
 
         if (stationary_)
+        {
+            this->u *= -1;
+
+            const typename MatrixType::block_type::size_type rowsInBlock1 = MatrixType::block_type::rows;
+            const typename MatrixType::block_type::size_type rowsInBlock2 = MatrixType::block_type::rows;
+            typename MatrixType::size_type nOfBlockRows1 = (this->firstModel_).matrix().N();
+
+            Iterator dummyIT1((this->firstGrid_).template leafbegin<0>());
+            IntersectionIterator dummyIS1(IntersectionIteratorGetter<Grid,LeafTag>::begin(*dummyIT1));
+            VIterator endItV1 = (this->firstGrid_).template leafend<dim>();
+            for (VIterator it = (this->firstGrid_).template leafbegin<dim>(); it != endItV1; ++it)
             {
-                this->u *= -1;
+                FieldVector<double,dim> globalCoord = (*it).geometry().corner(0);
+                FieldVector<BoundaryConditions::Flags, rowsInBlock1> bctype = (this->firstModel_).problem.bctype(globalCoord, *dummyIT1, dummyIS1, globalCoord);
+                int firstId = firstVM.map(*it);
 
-                const typename MatrixType::block_type::size_type rowsInBlock1 = MatrixType::block_type::rows;
-                const typename MatrixType::block_type::size_type rowsInBlock2 = MatrixType::block_type::rows;
-                typename MatrixType::size_type nOfBlockRows1 = (this->firstModel_).matrix().N();
-
-                Iterator dummyIT1((this->firstGrid_).template leafbegin<0>());
-                IntersectionIterator dummyIS1(IntersectionIteratorGetter<Grid,LeafTag>::begin(*dummyIT1));
-                VIterator endItV1 = (this->firstGrid_).template leafend<dim>();
-                for (VIterator it = (this->firstGrid_).template leafbegin<dim>(); it != endItV1; ++it)
+                for (typename MatrixType::block_type::size_type i = 0; i < rowsInBlock1; i++)
+                    if (bctype[i] == BoundaryConditions::dirichlet)
                     {
-                        FieldVector<double,dim> globalCoord = (*it).geometry().corner(0);
-                        FieldVector<BoundaryConditions::Flags, rowsInBlock1> bctype = (this->firstModel_).problem.bctype(globalCoord, *dummyIT1, dummyIS1, globalCoord);
-                        int firstId = firstVM.map(*it);
-
-                        for (typename MatrixType::block_type::size_type i = 0; i < rowsInBlock1; i++)
-                            if (bctype[i] == BoundaryConditions::dirichlet)
-                                {
-                                    FieldVector<double, rowsInBlock1> dirichletBC = (this->firstModel_).problem.g(globalCoord, *dummyIT1, dummyIS1, globalCoord);
-                                    this->u[firstId*rowsInBlock1 + i] += dirichletBC[i];
-                                }
-                    }
-                Iterator dummyIT2((this->secondGrid_).template leafbegin<0>());
-                IntersectionIterator dummyIS2(IntersectionIteratorGetter<Grid,LeafTag>::begin(*dummyIT2));
-                VIterator endItV2 = (this->secondGrid_).template leafend<dim>();
-                for (VIterator it = (this->secondGrid_).template leafbegin<dim>(); it != endItV2; ++it)
-                    {
-                        FieldVector<double,dim> globalCoord = (*it).geometry().corner(0);
-                        FieldVector<BoundaryConditions::Flags, rowsInBlock1> bctype = (this->secondModel_).problem.bctype(globalCoord, *dummyIT2, dummyIS2, globalCoord);
-                        int secondId = secondVM.map(*it);
-
-                        for (typename MatrixType::block_type::size_type i = 0; i < rowsInBlock2; i++)
-                            if (bctype[i] == BoundaryConditions::dirichlet)
-                                {
-                                    FieldVector<double, rowsInBlock2> dirichletBC = (this->secondModel_).problem.g(globalCoord, *dummyIT2, dummyIS2, globalCoord);
-                                    this->u[rowsInBlock1*nOfBlockRows1 + secondId*rowsInBlock2 + i] += dirichletBC[i];
-                                }
+                        FieldVector<double, rowsInBlock1> dirichletBC = (this->firstModel_).problem.g(globalCoord, *dummyIT1, dummyIS1, globalCoord);
+                        this->u[firstId*rowsInBlock1 + i] += dirichletBC[i];
                     }
             }
+            Iterator dummyIT2((this->secondGrid_).template leafbegin<0>());
+            IntersectionIterator dummyIS2(IntersectionIteratorGetter<Grid,LeafTag>::begin(*dummyIT2));
+            VIterator endItV2 = (this->secondGrid_).template leafend<dim>();
+            for (VIterator it = (this->secondGrid_).template leafbegin<dim>(); it != endItV2; ++it)
+            {
+                FieldVector<double,dim> globalCoord = (*it).geometry().corner(0);
+                FieldVector<BoundaryConditions::Flags, rowsInBlock1> bctype = (this->secondModel_).problem.bctype(globalCoord, *dummyIT2, dummyIS2, globalCoord);
+                int secondId = secondVM.map(*it);
+
+                for (typename MatrixType::block_type::size_type i = 0; i < rowsInBlock2; i++)
+                    if (bctype[i] == BoundaryConditions::dirichlet)
+                    {
+                        FieldVector<double, rowsInBlock2> dirichletBC = (this->secondModel_).problem.g(globalCoord, *dummyIT2, dummyIS2, globalCoord);
+                        this->u[rowsInBlock1*nOfBlockRows1 + secondId*rowsInBlock2 + i] += dirichletBC[i];
+                    }
+            }
+        }
         // transfer to local solution vectors
         const typename MatrixType::block_type::size_type colsInBlock1 = MatrixType::block_type::cols;
         const typename MatrixType::block_type::size_type colsInBlock2 = MatrixType::block_type::cols;

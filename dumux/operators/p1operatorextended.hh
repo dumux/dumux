@@ -65,163 +65,163 @@ struct P1Operator_meta {
                              int hangingnodes, std::set<P1OperatorLink>& links, std::map<int,int>& doubled2Original)
     {
         if (refelem.type(0,0).isCube())
+        {
+            for (int i=0; i<refelem.size(c); i++) // loop over subentities of codim c of e
             {
-                for (int i=0; i<refelem.size(c); i++) // loop over subentities of codim c of e
+                int index = allmapper.template map<c>(e,i);
+                if (!visited[index])
+                {
+                    int corners = refelem.size(i,c,n);
+                    for (int j=0; j<corners/2; j++) // uses fact that diagonals are (0,corners-1), (1,corners-2) ...
                     {
-                        int index = allmapper.template map<c>(e,i);
-                        if (!visited[index])
-                            {
-                                int corners = refelem.size(i,c,n);
-                                for (int j=0; j<corners/2; j++) // uses fact that diagonals are (0,corners-1), (1,corners-2) ...
-                                    {
-                                        int alpha = vertexmapper.template map<n>(e,refelem.subEntity(i,c,j,n));
-                                        int beta = vertexmapper.template map<n>(e,refelem.subEntity(i,c,corners-1-j,n));
-                                        if (doubled2Original.find(alpha) != doubled2Original.end())
-                                            alpha = doubled2Original[alpha];
-                                        if (doubled2Original.find(beta) != doubled2Original.end())
-                                            beta = doubled2Original[beta];
-                                        A.incrementrowsize(alpha);
-                                        A.incrementrowsize(beta);
-                                        if (hangingnodes>0) // delete standard links
-                                            {
-                                                links.erase(P1OperatorLink(alpha,beta));
-                                                links.erase(P1OperatorLink(beta,alpha));
-                                            }
-                                    }
-                                visited[index] = true;
-                            }
+                        int alpha = vertexmapper.template map<n>(e,refelem.subEntity(i,c,j,n));
+                        int beta = vertexmapper.template map<n>(e,refelem.subEntity(i,c,corners-1-j,n));
+                        if (doubled2Original.find(alpha) != doubled2Original.end())
+                            alpha = doubled2Original[alpha];
+                        if (doubled2Original.find(beta) != doubled2Original.end())
+                            beta = doubled2Original[beta];
+                        A.incrementrowsize(alpha);
+                        A.incrementrowsize(beta);
+                        if (hangingnodes>0) // delete standard links
+                        {
+                            links.erase(P1OperatorLink(alpha,beta));
+                            links.erase(P1OperatorLink(beta,alpha));
+                        }
                     }
+                    visited[index] = true;
+                }
             }
+        }
         if (refelem.type(0,0).isPyramid() && c==1)
+        {
+            int index = allmapper.template map<c>(e,0);
+            if (!visited[index])
             {
-                int index = allmapper.template map<c>(e,0);
-                if (!visited[index])
-                    {
-                        int alpha = vertexmapper.template map<n>(e,0);
-                        int beta = vertexmapper.template map<n>(e,2);
-                        if (doubled2Original.find(alpha) != doubled2Original.end())
-                            alpha = doubled2Original[alpha];
-                        if (doubled2Original.find(beta) != doubled2Original.end())
-                            beta = doubled2Original[beta];
-                        A.incrementrowsize(alpha);
-                        A.incrementrowsize(beta);
-                        if (hangingnodes>0) // delete standard links
-                            {
-                                links.erase(P1OperatorLink(alpha,beta));
-                                links.erase(P1OperatorLink(beta,alpha));
-                            }
-                        alpha = vertexmapper.template map<n>(e,1);
-                        beta = vertexmapper.template map<n>(e,3);
-                        if (doubled2Original.find(alpha) != doubled2Original.end())
-                            alpha = doubled2Original[alpha];
-                        if (doubled2Original.find(beta) != doubled2Original.end())
-                            beta = doubled2Original[beta];
-                        A.incrementrowsize(alpha);
-                        A.incrementrowsize(beta);
-                        if (hangingnodes>0) // delete standard links
-                            {
-                                links.erase(P1OperatorLink(alpha,beta));
-                                links.erase(P1OperatorLink(beta,alpha));
-                            }
-                        visited[index] = true;
-                    }
+                int alpha = vertexmapper.template map<n>(e,0);
+                int beta = vertexmapper.template map<n>(e,2);
+                if (doubled2Original.find(alpha) != doubled2Original.end())
+                    alpha = doubled2Original[alpha];
+                if (doubled2Original.find(beta) != doubled2Original.end())
+                    beta = doubled2Original[beta];
+                A.incrementrowsize(alpha);
+                A.incrementrowsize(beta);
+                if (hangingnodes>0) // delete standard links
+                {
+                    links.erase(P1OperatorLink(alpha,beta));
+                    links.erase(P1OperatorLink(beta,alpha));
+                }
+                alpha = vertexmapper.template map<n>(e,1);
+                beta = vertexmapper.template map<n>(e,3);
+                if (doubled2Original.find(alpha) != doubled2Original.end())
+                    alpha = doubled2Original[alpha];
+                if (doubled2Original.find(beta) != doubled2Original.end())
+                    beta = doubled2Original[beta];
+                A.incrementrowsize(alpha);
+                A.incrementrowsize(beta);
+                if (hangingnodes>0) // delete standard links
+                {
+                    links.erase(P1OperatorLink(alpha,beta));
+                    links.erase(P1OperatorLink(beta,alpha));
+                }
+                visited[index] = true;
             }
+        }
         if (refelem.type(0,0).isPrism() && c==1)
+        {
+            int index = allmapper.template map<c>(e,1);
+            if (!visited[index])
             {
-                int index = allmapper.template map<c>(e,1);
-                if (!visited[index])
-                    {
-                        int alpha = vertexmapper.template map<n>(e,0);
-                        int beta = vertexmapper.template map<n>(e,4);
-                        if (doubled2Original.find(alpha) != doubled2Original.end())
-                            alpha = doubled2Original[alpha];
-                        if (doubled2Original.find(beta) != doubled2Original.end())
-                            beta = doubled2Original[beta];
-                        A.incrementrowsize(alpha);
-                        A.incrementrowsize(beta);
-                        if (hangingnodes>0) // delete standard links
-                            {
-                                links.erase(P1OperatorLink(alpha,beta));
-                                links.erase(P1OperatorLink(beta,alpha));
-                            }
-                        alpha = vertexmapper.template map<n>(e,1);
-                        beta = vertexmapper.template map<n>(e,3);
-                        if (doubled2Original.find(alpha) != doubled2Original.end())
-                            alpha = doubled2Original[alpha];
-                        if (doubled2Original.find(beta) != doubled2Original.end())
-                            beta = doubled2Original[beta];
-                        A.incrementrowsize(alpha);
-                        A.incrementrowsize(beta);
-                        if (hangingnodes>0) // delete standard links
-                            {
-                                links.erase(P1OperatorLink(alpha,beta));
-                                links.erase(P1OperatorLink(beta,alpha));
-                            }
-                        visited[index] = true;
-                    }
-                index = allmapper.template map<c>(e,2);
-                if (!visited[index])
-                    {
-                        int alpha = vertexmapper.template map<n>(e,1);
-                        int beta = vertexmapper.template map<n>(e,5);
-                        if (doubled2Original.find(alpha) != doubled2Original.end())
-                            alpha = doubled2Original[alpha];
-                        if (doubled2Original.find(beta) != doubled2Original.end())
-                            beta = doubled2Original[beta];
-                        A.incrementrowsize(alpha);
-                        A.incrementrowsize(beta);
-                        if (hangingnodes>0) // delete standard links
-                            {
-                                links.erase(P1OperatorLink(alpha,beta));
-                                links.erase(P1OperatorLink(beta,alpha));
-                            }
-                        alpha = vertexmapper.template map<n>(e,2);
-                        beta = vertexmapper.template map<n>(e,4);
-                        if (doubled2Original.find(alpha) != doubled2Original.end())
-                            alpha = doubled2Original[alpha];
-                        if (doubled2Original.find(beta) != doubled2Original.end())
-                            beta = doubled2Original[beta];
-                        A.incrementrowsize(alpha);
-                        A.incrementrowsize(beta);
-                        if (hangingnodes>0) // delete standard links
-                            {
-                                links.erase(P1OperatorLink(alpha,beta));
-                                links.erase(P1OperatorLink(beta,alpha));
-                            }
-                        visited[index] = true;
-                    }
-                index = allmapper.template map<c>(e,3);
-                if (!visited[index])
-                    {
-                        int alpha = vertexmapper.template map<n>(e,0);
-                        int beta = vertexmapper.template map<n>(e,5);
-                        if (doubled2Original.find(alpha) != doubled2Original.end())
-                            alpha = doubled2Original[alpha];
-                        if (doubled2Original.find(beta) != doubled2Original.end())
-                            beta = doubled2Original[beta];
-                        A.incrementrowsize(alpha);
-                        A.incrementrowsize(beta);
-                        if (hangingnodes>0) // delete standard links
-                            {
-                                links.erase(P1OperatorLink(alpha,beta));
-                                links.erase(P1OperatorLink(beta,alpha));
-                            }
-                        alpha = vertexmapper.template map<n>(e,2);
-                        beta = vertexmapper.template map<n>(e,3);
-                        if (doubled2Original.find(alpha) != doubled2Original.end())
-                            alpha = doubled2Original[alpha];
-                        if (doubled2Original.find(beta) != doubled2Original.end())
-                            beta = doubled2Original[beta];
-                        A.incrementrowsize(alpha);
-                        A.incrementrowsize(beta);
-                        if (hangingnodes>0) // delete standard links
-                            {
-                                links.erase(P1OperatorLink(alpha,beta));
-                                links.erase(P1OperatorLink(beta,alpha));
-                            }
-                        visited[index] = true;
-                    }
+                int alpha = vertexmapper.template map<n>(e,0);
+                int beta = vertexmapper.template map<n>(e,4);
+                if (doubled2Original.find(alpha) != doubled2Original.end())
+                    alpha = doubled2Original[alpha];
+                if (doubled2Original.find(beta) != doubled2Original.end())
+                    beta = doubled2Original[beta];
+                A.incrementrowsize(alpha);
+                A.incrementrowsize(beta);
+                if (hangingnodes>0) // delete standard links
+                {
+                    links.erase(P1OperatorLink(alpha,beta));
+                    links.erase(P1OperatorLink(beta,alpha));
+                }
+                alpha = vertexmapper.template map<n>(e,1);
+                beta = vertexmapper.template map<n>(e,3);
+                if (doubled2Original.find(alpha) != doubled2Original.end())
+                    alpha = doubled2Original[alpha];
+                if (doubled2Original.find(beta) != doubled2Original.end())
+                    beta = doubled2Original[beta];
+                A.incrementrowsize(alpha);
+                A.incrementrowsize(beta);
+                if (hangingnodes>0) // delete standard links
+                {
+                    links.erase(P1OperatorLink(alpha,beta));
+                    links.erase(P1OperatorLink(beta,alpha));
+                }
+                visited[index] = true;
             }
+            index = allmapper.template map<c>(e,2);
+            if (!visited[index])
+            {
+                int alpha = vertexmapper.template map<n>(e,1);
+                int beta = vertexmapper.template map<n>(e,5);
+                if (doubled2Original.find(alpha) != doubled2Original.end())
+                    alpha = doubled2Original[alpha];
+                if (doubled2Original.find(beta) != doubled2Original.end())
+                    beta = doubled2Original[beta];
+                A.incrementrowsize(alpha);
+                A.incrementrowsize(beta);
+                if (hangingnodes>0) // delete standard links
+                {
+                    links.erase(P1OperatorLink(alpha,beta));
+                    links.erase(P1OperatorLink(beta,alpha));
+                }
+                alpha = vertexmapper.template map<n>(e,2);
+                beta = vertexmapper.template map<n>(e,4);
+                if (doubled2Original.find(alpha) != doubled2Original.end())
+                    alpha = doubled2Original[alpha];
+                if (doubled2Original.find(beta) != doubled2Original.end())
+                    beta = doubled2Original[beta];
+                A.incrementrowsize(alpha);
+                A.incrementrowsize(beta);
+                if (hangingnodes>0) // delete standard links
+                {
+                    links.erase(P1OperatorLink(alpha,beta));
+                    links.erase(P1OperatorLink(beta,alpha));
+                }
+                visited[index] = true;
+            }
+            index = allmapper.template map<c>(e,3);
+            if (!visited[index])
+            {
+                int alpha = vertexmapper.template map<n>(e,0);
+                int beta = vertexmapper.template map<n>(e,5);
+                if (doubled2Original.find(alpha) != doubled2Original.end())
+                    alpha = doubled2Original[alpha];
+                if (doubled2Original.find(beta) != doubled2Original.end())
+                    beta = doubled2Original[beta];
+                A.incrementrowsize(alpha);
+                A.incrementrowsize(beta);
+                if (hangingnodes>0) // delete standard links
+                {
+                    links.erase(P1OperatorLink(alpha,beta));
+                    links.erase(P1OperatorLink(beta,alpha));
+                }
+                alpha = vertexmapper.template map<n>(e,2);
+                beta = vertexmapper.template map<n>(e,3);
+                if (doubled2Original.find(alpha) != doubled2Original.end())
+                    alpha = doubled2Original[alpha];
+                if (doubled2Original.find(beta) != doubled2Original.end())
+                    beta = doubled2Original[beta];
+                A.incrementrowsize(alpha);
+                A.incrementrowsize(beta);
+                if (hangingnodes>0) // delete standard links
+                {
+                    links.erase(P1OperatorLink(alpha,beta));
+                    links.erase(P1OperatorLink(beta,alpha));
+                }
+                visited[index] = true;
+            }
+        }
         P1Operator_meta<n,c-1>::addrowscube(e,vertexmapper,allmapper,refelem,A,visited,hangingnodes,links,doubled2Original);
         return;
     }
@@ -230,114 +230,114 @@ struct P1Operator_meta {
                                 const Refelem& refelem, Matrix& A, std::vector<bool>& visited, std::map<int,int>& doubled2Original)
     {
         if (refelem.type(0,0).isCube())
+        {
+            for (int i=0; i<refelem.size(c); i++)
             {
-                for (int i=0; i<refelem.size(c); i++)
+                int index = allmapper.template map<c>(e,i);
+                if (!visited[index])
+                {
+                    int corners = refelem.size(i,c,n);
+                    for (int j=0; j<corners/2; j++) // uses fact that diagonals are (0,corners-1), (1,corners-2) ...
                     {
-                        int index = allmapper.template map<c>(e,i);
-                        if (!visited[index])
-                            {
-                                int corners = refelem.size(i,c,n);
-                                for (int j=0; j<corners/2; j++) // uses fact that diagonals are (0,corners-1), (1,corners-2) ...
-                                    {
-                                        int alpha = vertexmapper.template map<n>(e,refelem.subEntity(i,c,j,n));
-                                        int beta = vertexmapper.template map<n>(e,refelem.subEntity(i,c,corners-1-j,n));
-                                        if (doubled2Original.find(alpha) != doubled2Original.end())
-                                            alpha = doubled2Original[alpha];
-                                        if (doubled2Original.find(beta) != doubled2Original.end())
-                                            beta = doubled2Original[beta];
-                                        A.addindex(alpha,beta);
-                                        A.addindex(beta,alpha);
-                                    }
-                                visited[index] = true;
-                            }
+                        int alpha = vertexmapper.template map<n>(e,refelem.subEntity(i,c,j,n));
+                        int beta = vertexmapper.template map<n>(e,refelem.subEntity(i,c,corners-1-j,n));
+                        if (doubled2Original.find(alpha) != doubled2Original.end())
+                            alpha = doubled2Original[alpha];
+                        if (doubled2Original.find(beta) != doubled2Original.end())
+                            beta = doubled2Original[beta];
+                        A.addindex(alpha,beta);
+                        A.addindex(beta,alpha);
                     }
+                    visited[index] = true;
+                }
             }
+        }
         if (refelem.type(0,0).isPyramid() && c==1)
+        {
+            int index = allmapper.template map<c>(e,0);
+            if (!visited[index])
             {
-                int index = allmapper.template map<c>(e,0);
-                if (!visited[index])
-                    {
-                        int alpha = vertexmapper.template map<n>(e,0);
-                        int beta = vertexmapper.template map<n>(e,2);
-                        if (doubled2Original.find(alpha) != doubled2Original.end())
-                            alpha = doubled2Original[alpha];
-                        if (doubled2Original.find(beta) != doubled2Original.end())
-                            beta = doubled2Original[beta];
-                        A.addindex(alpha,beta);
-                        A.addindex(beta,alpha);
-                        alpha = vertexmapper.template map<n>(e,1);
-                        beta = vertexmapper.template map<n>(e,3);
-                        A.addindex(alpha,beta);
-                        A.addindex(beta,alpha);
-                        visited[index] = true;
-                    }
+                int alpha = vertexmapper.template map<n>(e,0);
+                int beta = vertexmapper.template map<n>(e,2);
+                if (doubled2Original.find(alpha) != doubled2Original.end())
+                    alpha = doubled2Original[alpha];
+                if (doubled2Original.find(beta) != doubled2Original.end())
+                    beta = doubled2Original[beta];
+                A.addindex(alpha,beta);
+                A.addindex(beta,alpha);
+                alpha = vertexmapper.template map<n>(e,1);
+                beta = vertexmapper.template map<n>(e,3);
+                A.addindex(alpha,beta);
+                A.addindex(beta,alpha);
+                visited[index] = true;
             }
+        }
         if (refelem.type(0,0).isPrism() && c==1)
+        {
+            int index = allmapper.template map<c>(e,1);
+            if (!visited[index])
             {
-                int index = allmapper.template map<c>(e,1);
-                if (!visited[index])
-                    {
-                        int alpha = vertexmapper.template map<n>(e,0);
-                        int beta = vertexmapper.template map<n>(e,4);
-                        if (doubled2Original.find(alpha) != doubled2Original.end())
-                            alpha = doubled2Original[alpha];
-                        if (doubled2Original.find(beta) != doubled2Original.end())
-                            beta = doubled2Original[beta];
-                        A.addindex(alpha,beta);
-                        A.addindex(beta,alpha);
-                        alpha = vertexmapper.template map<n>(e,1);
-                        beta = vertexmapper.template map<n>(e,3);
-                        if (doubled2Original.find(alpha) != doubled2Original.end())
-                            alpha = doubled2Original[alpha];
-                        if (doubled2Original.find(beta) != doubled2Original.end())
-                            beta = doubled2Original[beta];
-                        A.addindex(alpha,beta);
-                        A.addindex(beta,alpha);
-                        visited[index] = true;
-                    }
-                index = allmapper.template map<c>(e,2);
-                if (!visited[index])
-                    {
-                        int alpha = vertexmapper.template map<n>(e,1);
-                        int beta = vertexmapper.template map<n>(e,5);
-                        if (doubled2Original.find(alpha) != doubled2Original.end())
-                            alpha = doubled2Original[alpha];
-                        if (doubled2Original.find(beta) != doubled2Original.end())
-                            beta = doubled2Original[beta];
-                        A.addindex(alpha,beta);
-                        A.addindex(beta,alpha);
-                        alpha = vertexmapper.template map<n>(e,2);
-                        beta = vertexmapper.template map<n>(e,4);
-                        if (doubled2Original.find(alpha) != doubled2Original.end())
-                            alpha = doubled2Original[alpha];
-                        if (doubled2Original.find(beta) != doubled2Original.end())
-                            beta = doubled2Original[beta];
-                        A.addindex(alpha,beta);
-                        A.addindex(beta,alpha);
-                        visited[index] = true;
-                    }
-                index = allmapper.template map<c>(e,3);
-                if (!visited[index])
-                    {
-                        int alpha = vertexmapper.template map<n>(e,0);
-                        int beta = vertexmapper.template map<n>(e,5);
-                        if (doubled2Original.find(alpha) != doubled2Original.end())
-                            alpha = doubled2Original[alpha];
-                        if (doubled2Original.find(beta) != doubled2Original.end())
-                            beta = doubled2Original[beta];
-                        A.addindex(alpha,beta);
-                        A.addindex(beta,alpha);
-                        alpha = vertexmapper.template map<n>(e,2);
-                        beta = vertexmapper.template map<n>(e,3);
-                        if (doubled2Original.find(alpha) != doubled2Original.end())
-                            alpha = doubled2Original[alpha];
-                        if (doubled2Original.find(beta) != doubled2Original.end())
-                            beta = doubled2Original[beta];
-                        A.addindex(alpha,beta);
-                        A.addindex(beta,alpha);
-                        visited[index] = true;
-                    }
+                int alpha = vertexmapper.template map<n>(e,0);
+                int beta = vertexmapper.template map<n>(e,4);
+                if (doubled2Original.find(alpha) != doubled2Original.end())
+                    alpha = doubled2Original[alpha];
+                if (doubled2Original.find(beta) != doubled2Original.end())
+                    beta = doubled2Original[beta];
+                A.addindex(alpha,beta);
+                A.addindex(beta,alpha);
+                alpha = vertexmapper.template map<n>(e,1);
+                beta = vertexmapper.template map<n>(e,3);
+                if (doubled2Original.find(alpha) != doubled2Original.end())
+                    alpha = doubled2Original[alpha];
+                if (doubled2Original.find(beta) != doubled2Original.end())
+                    beta = doubled2Original[beta];
+                A.addindex(alpha,beta);
+                A.addindex(beta,alpha);
+                visited[index] = true;
             }
+            index = allmapper.template map<c>(e,2);
+            if (!visited[index])
+            {
+                int alpha = vertexmapper.template map<n>(e,1);
+                int beta = vertexmapper.template map<n>(e,5);
+                if (doubled2Original.find(alpha) != doubled2Original.end())
+                    alpha = doubled2Original[alpha];
+                if (doubled2Original.find(beta) != doubled2Original.end())
+                    beta = doubled2Original[beta];
+                A.addindex(alpha,beta);
+                A.addindex(beta,alpha);
+                alpha = vertexmapper.template map<n>(e,2);
+                beta = vertexmapper.template map<n>(e,4);
+                if (doubled2Original.find(alpha) != doubled2Original.end())
+                    alpha = doubled2Original[alpha];
+                if (doubled2Original.find(beta) != doubled2Original.end())
+                    beta = doubled2Original[beta];
+                A.addindex(alpha,beta);
+                A.addindex(beta,alpha);
+                visited[index] = true;
+            }
+            index = allmapper.template map<c>(e,3);
+            if (!visited[index])
+            {
+                int alpha = vertexmapper.template map<n>(e,0);
+                int beta = vertexmapper.template map<n>(e,5);
+                if (doubled2Original.find(alpha) != doubled2Original.end())
+                    alpha = doubled2Original[alpha];
+                if (doubled2Original.find(beta) != doubled2Original.end())
+                    beta = doubled2Original[beta];
+                A.addindex(alpha,beta);
+                A.addindex(beta,alpha);
+                alpha = vertexmapper.template map<n>(e,2);
+                beta = vertexmapper.template map<n>(e,3);
+                if (doubled2Original.find(alpha) != doubled2Original.end())
+                    alpha = doubled2Original[alpha];
+                if (doubled2Original.find(beta) != doubled2Original.end())
+                    beta = doubled2Original[beta];
+                A.addindex(alpha,beta);
+                A.addindex(beta,alpha);
+                visited[index] = true;
+            }
+        }
         P1Operator_meta<n,c-1>::addindicescube(e,vertexmapper,allmapper,refelem,A,visited,doubled2Original);
         return;
     }
@@ -355,21 +355,21 @@ struct P1Operator_meta<n,0> {
         if (!refelem.type(0,0).isCube()) return;
         int corners = refelem.size(n);
         for (int j=0; j<corners/2; j++) // uses fact that diagonals are (0,corners-1), (1,corners-2) ...
+        {
+            int alpha = vertexmapper.template map<n>(e,refelem.subEntity(0,0,j,n));
+            int beta = vertexmapper.template map<n>(e,refelem.subEntity(0,0,corners-1-j,n));
+            if (doubled2Original.find(alpha) != doubled2Original.end())
+                alpha = doubled2Original[alpha];
+            if (doubled2Original.find(beta) != doubled2Original.end())
+                beta = doubled2Original[beta];
+            A.incrementrowsize(alpha);
+            A.incrementrowsize(beta);
+            if (hangingnodes>0) // delete standard links
             {
-                int alpha = vertexmapper.template map<n>(e,refelem.subEntity(0,0,j,n));
-                int beta = vertexmapper.template map<n>(e,refelem.subEntity(0,0,corners-1-j,n));
-                if (doubled2Original.find(alpha) != doubled2Original.end())
-                    alpha = doubled2Original[alpha];
-                if (doubled2Original.find(beta) != doubled2Original.end())
-                    beta = doubled2Original[beta];
-                A.incrementrowsize(alpha);
-                A.incrementrowsize(beta);
-                if (hangingnodes>0) // delete standard links
-                    {
-                        links.erase(P1OperatorLink(alpha,beta));
-                        links.erase(P1OperatorLink(beta,alpha));
-                    }
+                links.erase(P1OperatorLink(alpha,beta));
+                links.erase(P1OperatorLink(beta,alpha));
             }
+        }
         return;
     }
     template<class Entity, class VMapper, class AMapper, class Refelem, class Matrix>
@@ -379,16 +379,16 @@ struct P1Operator_meta<n,0> {
         if (!refelem.type(0,0).isCube()) return;
         int corners = refelem.size(n);
         for (int j=0; j<corners/2; j++) // uses fact that diagonals are (0,corners-1), (1,corners-2) ...
-            {
-                int alpha = vertexmapper.template map<n>(e,refelem.subEntity(0,0,j,n));
-                int beta = vertexmapper.template map<n>(e,refelem.subEntity(0,0,corners-1-j,n));
-                if (doubled2Original.find(alpha) != doubled2Original.end())
-                    alpha = doubled2Original[alpha];
-                if (doubled2Original.find(beta) != doubled2Original.end())
-                    beta = doubled2Original[beta];
-                A.addindex(alpha,beta);
-                A.addindex(beta,alpha);
-            }
+        {
+            int alpha = vertexmapper.template map<n>(e,refelem.subEntity(0,0,j,n));
+            int beta = vertexmapper.template map<n>(e,refelem.subEntity(0,0,corners-1-j,n));
+            if (doubled2Original.find(alpha) != doubled2Original.end())
+                alpha = doubled2Original[alpha];
+            if (doubled2Original.find(beta) != doubled2Original.end())
+                beta = doubled2Original[beta];
+            A.addindex(alpha,beta);
+            A.addindex(beta,alpha);
+        }
         return;
     }
 };
@@ -451,44 +451,44 @@ public:
         // LOOP 1 : Prepare hanging node detection
         Iterator eendit = gridView.template end<0>();
         for (Iterator it = gridView.template begin<0>(); it!=eendit; ++it)
-            {
-                Dune::GeometryType gt = it->type();
-                const typename Dune::ReferenceElementContainer<DT,n>::value_type&
-                    refelem = ReferenceElements<DT,n>::general(gt);
+        {
+            Dune::GeometryType gt = it->type();
+            const typename Dune::ReferenceElementContainer<DT,n>::value_type&
+                refelem = ReferenceElements<DT,n>::general(gt);
 
-                // compute S value in vertex
-                for (int i=0; i<refelem.size(n); i++)
-                    {
-                        int alpha = vertexmapper.template map<n>(*it,i);
-                        if (S[alpha]>it->level()) S[alpha] = it->level(); // compute minimum
-                    }
+            // compute S value in vertex
+            for (int i=0; i<refelem.size(n); i++)
+            {
+                int alpha = vertexmapper.template map<n>(*it,i);
+                if (S[alpha]>it->level()) S[alpha] = it->level(); // compute minimum
             }
+        }
 
         // LOOP 2 : second stage of detecting hanging nodes
         for (Iterator it = gridView.template begin<0>(); it!=eendit; ++it)
-            {
-                Dune::GeometryType gt = it->type();
-                const typename Dune::ReferenceElementContainer<DT,n>::value_type&
-                    refelem = ReferenceElements<DT,n>::general(gt);
+        {
+            Dune::GeometryType gt = it->type();
+            const typename Dune::ReferenceElementContainer<DT,n>::value_type&
+                refelem = ReferenceElements<DT,n>::general(gt);
 
-                // detect hanging nodes
-                IntersectionIterator endiit = end(*it);
-                for (IntersectionIterator iit = begin(*it); iit!=endiit; ++iit)
-                    if (iit->neighbor())
-                        {
-                            // check if neighbor is on lower level
-                            const EEntityPointer outside = iit->outside();
-                            if (it->level()<=outside->level()) continue;
+            // detect hanging nodes
+            IntersectionIterator endiit = end(*it);
+            for (IntersectionIterator iit = begin(*it); iit!=endiit; ++iit)
+                if (iit->neighbor())
+                {
+                    // check if neighbor is on lower level
+                    const EEntityPointer outside = iit->outside();
+                    if (it->level()<=outside->level()) continue;
 
-                            // loop over all vertices of this face
-                            for (int j=0; j<refelem.size(iit->numberInSelf(),1,n); j++)
-                                {
-                                    int alpha = vertexmapper.template map<n>(*it,refelem.subEntity(iit->numberInSelf(),1,j,n));
-                                    if (S[alpha]==it->level())
-                                        hanging[alpha] = true;
-                                }
-                        }
-            }
+                    // loop over all vertices of this face
+                    for (int j=0; j<refelem.size(iit->numberInSelf(),1,n); j++)
+                    {
+                        int alpha = vertexmapper.template map<n>(*it,refelem.subEntity(iit->numberInSelf(),1,j,n));
+                        if (S[alpha]==it->level())
+                            hanging[alpha] = true;
+                    }
+                }
+        }
 
         // local to global maps
         int l2g[Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::maxsize];
@@ -496,42 +496,42 @@ public:
 
         // LOOP 3 : determine additional links due to hanging nodes
         for (Iterator it = gridView.template begin<0>(); it!=eendit; ++it)
+        {
+            Dune::GeometryType gt = it->type();
+            const typename Dune::ReferenceElementContainer<DT,n>::value_type&
+                refelem = ReferenceElements<DT,n>::general(gt);
+
+            // build local to global map
+            bool hasHangingNodes = false; // flag set to true if this element has hanging nodes
+            for (int i=0; i<refelem.size(n); i++)
             {
-                Dune::GeometryType gt = it->type();
-                const typename Dune::ReferenceElementContainer<DT,n>::value_type&
-                    refelem = ReferenceElements<DT,n>::general(gt);
-
-                // build local to global map
-                bool hasHangingNodes = false; // flag set to true if this element has hanging nodes
-                for (int i=0; i<refelem.size(n); i++)
-                    {
-                        l2g[i] = vertexmapper.template map<n>(*it,i);
-                        if (hanging[l2g[i]]) hasHangingNodes=true;
-                    }
-                if (!hasHangingNodes) continue;
-
-                // handle father element if hanging nodes were detected
-                // get father element
-                const EEntityPointer father = it->father();
-
-                // build local to global map for father
-                for (int i=0; i<refelem.size(n); i++)
-                    fl2g[i] = vertexmapper.template map<n>(*father,i);
-
-                // a map that inverts l2g
-                std::map<int,int> g2l;
-                for (int i=0; i<refelem.size(n); i++)
-                    g2l[l2g[i]] = i;
-
-                // connect all fine nodes to all coarse nodes
-                for (int i=0; i<refelem.size(n); i++) // nodes in *it
-                    for (int j=0; j<refelem.size(n); j++) // nodes in *father
-                        if (g2l.find(fl2g[j])==g2l.end())
-                            {
-                                links.insert(P1OperatorLink(l2g[i],fl2g[j]));
-                                links.insert(P1OperatorLink(fl2g[j],l2g[i]));
-                            }
+                l2g[i] = vertexmapper.template map<n>(*it,i);
+                if (hanging[l2g[i]]) hasHangingNodes=true;
             }
+            if (!hasHangingNodes) continue;
+
+            // handle father element if hanging nodes were detected
+            // get father element
+            const EEntityPointer father = it->father();
+
+            // build local to global map for father
+            for (int i=0; i<refelem.size(n); i++)
+                fl2g[i] = vertexmapper.template map<n>(*father,i);
+
+            // a map that inverts l2g
+            std::map<int,int> g2l;
+            for (int i=0; i<refelem.size(n); i++)
+                g2l[l2g[i]] = i;
+
+            // connect all fine nodes to all coarse nodes
+            for (int i=0; i<refelem.size(n); i++) // nodes in *it
+                for (int j=0; j<refelem.size(n); j++) // nodes in *father
+                    if (g2l.find(fl2g[j])==g2l.end())
+                    {
+                        links.insert(P1OperatorLink(l2g[i],fl2g[j]));
+                        links.insert(P1OperatorLink(fl2g[j],l2g[i]));
+                    }
+        }
         // count hanging nodes
         hangingnodes = 0;
         for (int i=0; i<vertexmapper.size(); i++)
@@ -620,9 +620,9 @@ private:
         s += 2*is.size(n-1); // edges
 
         for (int c=0; c<n-1; c++)
-            {
-                s += 2*is.size(GeometryType(GeometryType::cube,G::dimension-c))*(1<<(n-c-1));
-            }
+        {
+            s += 2*is.size(GeometryType(GeometryType::cube,G::dimension-c))*(1<<(n-c-1));
+        }
 
         // hanging node correction
         s += links.size();
@@ -665,27 +665,27 @@ private:
         // compute additional links due to extended overlap
         watch.reset();
         if (extendOverlap)
-            {
-                // set of neighbors in global ids for border vertices
-                std::map<int,GIDSet> borderlinks;
+        {
+            // set of neighbors in global ids for border vertices
+            std::map<int,GIDSet> borderlinks;
 
-                // compute extension
-                P1ExtendOverlap<GV,VM,LC> extender(lc);
-                //#if HAVE_MPI
-                //          extender.extend(g,gv,vertexmapper,borderlinks,extraDOFs,gid2index,index2gid);
-                //#else
-                extender.extend(gv,vertexmapper,borderlinks,extraDOFs,gid2index);
-                //#endif
-                // put in extra links due to overlap
-                // loop over all neighbors of border vertices
-                for (typename std::map<int,GIDSet>::iterator i=borderlinks.begin(); i!=borderlinks.end(); ++i)
-                    for (typename GIDSet::iterator j=(i->second).begin(); j!=(i->second).end(); ++j)
-                        links.insert(P1OperatorLink(i->first,gid2index[*j]));
+            // compute extension
+            P1ExtendOverlap<GV,VM,LC> extender(lc);
+            //#if HAVE_MPI
+            //          extender.extend(g,gv,vertexmapper,borderlinks,extraDOFs,gid2index,index2gid);
+            //#else
+            extender.extend(gv,vertexmapper,borderlinks,extraDOFs,gid2index);
+            //#endif
+            // put in extra links due to overlap
+            // loop over all neighbors of border vertices
+            for (typename std::map<int,GIDSet>::iterator i=borderlinks.begin(); i!=borderlinks.end(); ++i)
+                for (typename GIDSet::iterator j=(i->second).begin(); j!=(i->second).end(); ++j)
+                    links.insert(P1OperatorLink(i->first,gid2index[*j]));
 
-                // insert diagonal links for extra DOFs
-                for (int i=0; i<extraDOFs; i++)
-                    links.insert(P1OperatorLink(vertexmapper.size()+i,vertexmapper.size()+i));
-            }
+            // insert diagonal links for extra DOFs
+            for (int i=0; i<extraDOFs; i++)
+                links.insert(P1OperatorLink(vertexmapper.size()+i,vertexmapper.size()+i));
+        }
 
         // Note: links contains now also connections that are standard.
         // So below we have throw out these connections again!
@@ -694,40 +694,40 @@ private:
         partitionType.resize(vertexmapper.size()+extraDOFs);
         VIterator vendit = gridView.template end<n>();
         for (VIterator it = gridView.template begin<n>(); it!=vendit; ++it)
-            {
-                partitionType[vertexmapper.map(*it)] = it->partitionType();
-            }
+        {
+            partitionType[vertexmapper.map(*it)] = it->partitionType();
+        }
 
         VIterator ghostEndIt = gridView.template end<n>();
         for (VIterator ghostIt = gridView.template begin<n>(); ghostIt!=ghostEndIt; ++ghostIt)
+        {
+            if (ghostIt->partitionType() != GhostEntity)
+                continue;
+
+            int ghostIndex = vertexmapper.map(*ghostIt);
+
+            const IdType& ghostGlobalId = index2gid[ghostIndex];
+
+            VIterator realEndIt = gridView.template end<n>();
+            for (VIterator realIt = gridView.template begin<n>(); realIt!=realEndIt; ++realIt)
             {
-                if (ghostIt->partitionType() != GhostEntity)
+                if (realIt->partitionType() == InteriorEntity)
                     continue;
 
-                int ghostIndex = vertexmapper.map(*ghostIt);
+                int realIndex = vertexmapper.map(*realIt);
 
-                const IdType& ghostGlobalId = index2gid[ghostIndex];
+                if (realIndex == ghostIndex)
+                    continue;
 
-                VIterator realEndIt = gridView.template end<n>();
-                for (VIterator realIt = gridView.template begin<n>(); realIt!=realEndIt; ++realIt)
-                    {
-                        if (realIt->partitionType() == InteriorEntity)
-                            continue;
+                const IdType& realGlobalId = index2gid[realIndex];
 
-                        int realIndex = vertexmapper.map(*realIt);
-
-                        if (realIndex == ghostIndex)
-                            continue;
-
-                        const IdType& realGlobalId = index2gid[realIndex];
-
-                        if (realGlobalId == ghostGlobalId) {
-                            doubled2Original[std::max(realIndex, ghostIndex)] = std::min(realIndex, ghostIndex);
-                            //                  if (realIt->partitionType() != GhostEntity)
-                            break;
-                        }
-                    }
+                if (realGlobalId == ghostGlobalId) {
+                    doubled2Original[std::max(realIndex, ghostIndex)] = std::min(realIndex, ghostIndex);
+                    //                  if (realIt->partitionType() != GhostEntity)
+                    break;
+                }
             }
+        }
 
         //      for (typename std::map<int,int>::const_iterator it=doubled2Original.begin(); it!=doubled2Original.end(); ++it)
         //          std::cout << grid.comm().rank() << ": doubled = " << it->first << ", original = " << it->second << std::endl;
@@ -796,12 +796,12 @@ private:
         {
             int i=vertexmapper.map(e);
             for (coliterator j=A[i].begin(); j!=A[i].end(); ++j)
-                {
-                    typename std::map<int,IdType>::const_iterator it=index2gid.find(j.index());
-                    if (it==index2gid.end())
-                        DUNE_THROW(GridError,"MatEntryExchange::gather(): index not in map");
-                    buff.write(MatEntry(it->second,*j));
-                }
+            {
+                typename std::map<int,IdType>::const_iterator it=index2gid.find(j.index());
+                if (it==index2gid.end())
+                    DUNE_THROW(GridError,"MatEntryExchange::gather(): index not in map");
+                buff.write(MatEntry(it->second,*j));
+            }
         }
 
         /*! unpack data from message buffer to user
@@ -814,15 +814,15 @@ private:
             int i=vertexmapper.map(e);
 
             for (size_t k=0; k<n; k++)
-                {
-                    MatEntry m;
-                    buff.read(m);
-                    typename std::map<IdType,int>::const_iterator it=gid2indexNew.find(m.first);
-                    if (it==gid2indexNew.end())
-                        DUNE_THROW(GridError,"MatEntryExchange::scatter(): gid not in map");
+            {
+                MatEntry m;
+                buff.read(m);
+                typename std::map<IdType,int>::const_iterator it=gid2indexNew.find(m.first);
+                if (it==gid2indexNew.end())
+                    DUNE_THROW(GridError,"MatEntryExchange::scatter(): gid not in map");
 
-                    A[i][it->second] += m.second;
-                }
+                A[i][it->second] += m.second;
+            }
         }
 
         //! constructor
@@ -883,53 +883,53 @@ public:
         watch.reset();
         Iterator eendit = gv.template end<0>();
         for (Iterator it = gv.template begin<0>(); it!=eendit; ++it)
+        {
+            Dune::GeometryType gt = it->type();
+            const typename Dune::ReferenceElementContainer<DT,n>::value_type&
+                refelem = ReferenceElements<DT,n>::general(gt);
+
+            // vertices, c=n
+            for (int i=0; i<refelem.size(n); i++)
             {
-                Dune::GeometryType gt = it->type();
-                const typename Dune::ReferenceElementContainer<DT,n>::value_type&
-                    refelem = ReferenceElements<DT,n>::general(gt);
-
-                // vertices, c=n
-                for (int i=0; i<refelem.size(n); i++)
-                    {
-                        int index = allmapper.template map<n>(*it,i);
-                        int alpha = vertexmapper.template map<n>(*it,i);
-                        //              std::cout << "index=" << index << " alpha=" << alpha << std::endl;
-                        if (!visited[index])
-                            {
-                                A.incrementrowsize(alpha);
-                                visited[index] = true;
-                                //                   printf("increment row %04d\n",alpha);
-                            }
-                    }
-
-                // edges for all element types, c=n-1
-                for (int i=0; i<refelem.size(n-1); i++)
-                    {
-                        int index = allmapper.template map<n-1>(*it,i);
-                        int alphaOld, betaOld;
-                        int alpha = alphaOld = vertexmapper.template map<n>(*it,refelem.subEntity(i,n-1,0,n));
-                        int beta = betaOld = vertexmapper.template map<n>(*it,refelem.subEntity(i,n-1,1,n));
-                        if (doubled2Original.find(alpha) != doubled2Original.end())
-                            alpha = doubled2Original[alpha];
-                        if (doubled2Original.find(beta) != doubled2Original.end())
-                            beta = doubled2Original[beta];
-                        if (!visited[index])
-                            {
-                                A.incrementrowsize(alpha);
-                                A.incrementrowsize(beta);
-                                visited[index] = true;
-                                if (hangingnodes>0 || extendOverlap) // delete standard links
-                                    {
-                                        links.erase(P1OperatorLink(alpha,beta));
-                                        links.erase(P1OperatorLink(beta,alpha));
-                                    }
-                            }
-                    }
-
-                // for codim n-2 to 0 we need a template metaprogram
-                if (!gt.isSimplex())
-                    P1Operator_meta<n,n-2>::addrowscube(*it,vertexmapper,allmapper,refelem,A,visited,hangingnodes+(extendOverlap),links,doubled2Original);
+                int index = allmapper.template map<n>(*it,i);
+                int alpha = vertexmapper.template map<n>(*it,i);
+                //              std::cout << "index=" << index << " alpha=" << alpha << std::endl;
+                if (!visited[index])
+                {
+                    A.incrementrowsize(alpha);
+                    visited[index] = true;
+                    //                   printf("increment row %04d\n",alpha);
+                }
             }
+
+            // edges for all element types, c=n-1
+            for (int i=0; i<refelem.size(n-1); i++)
+            {
+                int index = allmapper.template map<n-1>(*it,i);
+                int alphaOld, betaOld;
+                int alpha = alphaOld = vertexmapper.template map<n>(*it,refelem.subEntity(i,n-1,0,n));
+                int beta = betaOld = vertexmapper.template map<n>(*it,refelem.subEntity(i,n-1,1,n));
+                if (doubled2Original.find(alpha) != doubled2Original.end())
+                    alpha = doubled2Original[alpha];
+                if (doubled2Original.find(beta) != doubled2Original.end())
+                    beta = doubled2Original[beta];
+                if (!visited[index])
+                {
+                    A.incrementrowsize(alpha);
+                    A.incrementrowsize(beta);
+                    visited[index] = true;
+                    if (hangingnodes>0 || extendOverlap) // delete standard links
+                    {
+                        links.erase(P1OperatorLink(alpha,beta));
+                        links.erase(P1OperatorLink(beta,alpha));
+                    }
+                }
+            }
+
+            // for codim n-2 to 0 we need a template metaprogram
+            if (!gt.isSimplex())
+                P1Operator_meta<n,n-2>::addrowscube(*it,vertexmapper,allmapper,refelem,A,visited,hangingnodes+(extendOverlap),links,doubled2Original);
+        }
 
         // additional links due to hanging nodes
         for (typename std::set<P1OperatorLink>::iterator i=links.begin(); i!=links.end(); ++i)
@@ -945,50 +945,50 @@ public:
         // LOOP 5 : insert the nonzeros
         watch.reset();
         for (Iterator it = gv.template begin<0>(); it!=eendit; ++it)
+        {
+            Dune::GeometryType gt = it->type();
+            const typename Dune::ReferenceElementContainer<DT,n>::value_type&
+                refelem = ReferenceElements<DT,n>::general(gt);
+            //           std::cout << "ELEM " << GeometryName(gt) << std::endl;
+
+            // vertices, c=n
+            for (int i=0; i<refelem.size(n); i++)
             {
-                Dune::GeometryType gt = it->type();
-                const typename Dune::ReferenceElementContainer<DT,n>::value_type&
-                    refelem = ReferenceElements<DT,n>::general(gt);
-                //           std::cout << "ELEM " << GeometryName(gt) << std::endl;
-
-                // vertices, c=n
-                for (int i=0; i<refelem.size(n); i++)
-                    {
-                        int index = allmapper.template map<n>(*it,i);
-                        int alpha = vertexmapper.template map<n>(*it,i);
-                        //               std::cout << "vertex allindex " << index << std::endl;
-                        if (!visited[index])
-                            {
-                                A.addindex(alpha,alpha);
-                                visited[index] = true;
-                            }
-                    }
-
-                // edges for all element types, c=n-1
-                for (int i=0; i<refelem.size(n-1); i++)
-                    {
-                        int index = allmapper.template map<n-1>(*it,i);
-                        //               std::cout << "edge allindex " << index << std::endl;
-                        if (!visited[index])
-                            {
-                                int alpha = vertexmapper.template map<n>(*it,refelem.subEntity(i,n-1,0,n));
-                                int beta = vertexmapper.template map<n>(*it,refelem.subEntity(i,n-1,1,n));
-                                if (doubled2Original.find(alpha) != doubled2Original.end())
-                                    alpha = doubled2Original[alpha];
-                                if (doubled2Original.find(beta) != doubled2Original.end())
-                                    beta = doubled2Original[beta];
-                                A.addindex(alpha,beta);
-                                A.addindex(beta,alpha);
-                                visited[index] = true;
-                                //                   printf("adding (%04d,%04d) index=%04d\n",alpha,beta,index);
-                                //                   printf("adding (%04d,%04d) index=%04d\n",beta,alpha,index);
-                            }
-                    }
-
-                // for codim n-2 to 0 we need a template metaprogram
-                if (!gt.isSimplex())
-                    P1Operator_meta<n,n-2>::addindicescube(*it,vertexmapper,allmapper,refelem,A,visited,doubled2Original);
+                int index = allmapper.template map<n>(*it,i);
+                int alpha = vertexmapper.template map<n>(*it,i);
+                //               std::cout << "vertex allindex " << index << std::endl;
+                if (!visited[index])
+                {
+                    A.addindex(alpha,alpha);
+                    visited[index] = true;
+                }
             }
+
+            // edges for all element types, c=n-1
+            for (int i=0; i<refelem.size(n-1); i++)
+            {
+                int index = allmapper.template map<n-1>(*it,i);
+                //               std::cout << "edge allindex " << index << std::endl;
+                if (!visited[index])
+                {
+                    int alpha = vertexmapper.template map<n>(*it,refelem.subEntity(i,n-1,0,n));
+                    int beta = vertexmapper.template map<n>(*it,refelem.subEntity(i,n-1,1,n));
+                    if (doubled2Original.find(alpha) != doubled2Original.end())
+                        alpha = doubled2Original[alpha];
+                    if (doubled2Original.find(beta) != doubled2Original.end())
+                        beta = doubled2Original[beta];
+                    A.addindex(alpha,beta);
+                    A.addindex(beta,alpha);
+                    visited[index] = true;
+                    //                   printf("adding (%04d,%04d) index=%04d\n",alpha,beta,index);
+                    //                   printf("adding (%04d,%04d) index=%04d\n",beta,alpha,index);
+                }
+            }
+
+            // for codim n-2 to 0 we need a template metaprogram
+            if (!gt.isSimplex())
+                P1Operator_meta<n,n-2>::addindicescube(*it,vertexmapper,allmapper,refelem,A,visited,doubled2Original);
+        }
 
         // additional links due to hanging nodes
         for (typename std::set<P1OperatorLink>::iterator i=links.begin(); i!=links.end(); ++i) {
@@ -1142,10 +1142,10 @@ class P1OperatorAssembler : public P1OperatorBase<TypeTag,G,RT,GV,LC,m>
             int alpha = vertexmapper.map(e);
             for (int i=0; i<m; i++)
                 if (x.first[i]>essential[alpha][i])
-                    {
-                        essential[alpha][i] = x.first[i];
-                        f[alpha][i] = x.second[i];
-                    }
+                {
+                    essential[alpha][i] = x.first[i];
+                    f[alpha][i] = x.second[i];
+                }
         }
 
         //! constructor
@@ -1224,188 +1224,188 @@ public:
         // run over all leaf elements
         Iterator eendit = this->gv.template end<0>();
         for (Iterator it = this->gv.template begin<0>(); it!=eendit; ++it)
+        {
+            // parallelization
+            if (it->partitionType()==GhostEntity)
+                continue;
+
+            // get access to shape functions for P1 elements
+            Dune::GeometryType gt = it->type();
+            const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::value_type&
+                sfs=Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt,1);
+
+            // get local to global id map
+            for (int k=0; k<sfs.size(); k++)
             {
-                // parallelization
-                if (it->partitionType()==GhostEntity)
-                    continue;
-
-                // get access to shape functions for P1 elements
-                Dune::GeometryType gt = it->type();
-                const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::value_type&
-                    sfs=Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt,1);
-
-                // get local to global id map
-                for (int k=0; k<sfs.size(); k++)
-                    {
-                        if (sfs[k].codim()!=n) DUNE_THROW(MathError,"expected codim==dim");
-                        int alpha = this->vertexmapper.template map<n>(*it,sfs[k].entity());
-                        if (this->doubled2Original.find(alpha) != this->doubled2Original.end())
-                            alpha = this->doubled2Original[alpha];
-                        l2g[k] = alpha;
-                    }
-
-                // build local stiffness matrix for P1 elements
-                // inludes rhs and boundary condition information
-                loc.template assemble<TypeTag>(*it); // assemble local stiffness matrix
-
-                // assemble constraints in hanging nodes
-                // as a by-product determine the interpolation factors WITH RESPECT TO NODES OF FATHER
-                bool hasHangingNodes = false;
-                for (int k=0; k<sfs.size(); k++) // loop over rows, i.e. test functions
-                    {
-                        // process only hanging nodes
-                        if (!this->hanging[l2g[k]]) continue;
-                        hasHangingNodes = true;
-
-                        // determine position of hanging node in father
-                        EEntityPointer father=it->father(); // the father element
-                        GeometryType gtf = father->type(); // fathers type
-                        assert(gtf==gt); // in hanging node refinement the element type is preserved
-                        const FieldVector<DT,n>& cpos=Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt,1)[k].position();
-                        FieldVector<DT,n> pos = it->geometryInFather().global(cpos); // map corner to father element
-
-                        // evaluate interpolation factors and local to global mapping for father
-                        for (int i=0; i<Dune::LagrangeShapeFunctions<DT,RT,n>::general(gtf,1).size(); ++i)
-                            {
-                                alpha[i][k] = Dune::LagrangeShapeFunctions<DT,RT,n>::general(gtf,1)[i].evaluateFunction(0,pos);
-                                fl2g[i] = this->vertexmapper.template map<n>(*father,i);
-                                if (this->doubled2Original.find(fl2g[i]) != this->doubled2Original.end())
-                                    fl2g[i] = this->doubled2Original[fl2g[i]];
-                            }
-
-                        // assemble the constraint row once
-                        if (!treated[l2g[k]])
-                            {
-                                bool throwflag=false;
-                                for (int i=0; i<Dune::LagrangeShapeFunctions<DT,RT,n>::general(gtf,1).size(); ++i)
-                                    if (std::abs(alpha[i][k])>1E-4)
-                                        {
-                                            if (this->hanging[fl2g[i]])
-                                                {
-                                                    throwflag = true;
-                                                }
-                                            this->A[l2g[k]][fl2g[i]] = MFieldType(); // Note: Interpolation is done a posteriori
-                                        }
-                                if (throwflag)
-                                    DUNE_THROW(GridError,"hanging node interpolated from hanging node");
-                                for (int comp=0; comp<m; comp++)
-                                    this->A[l2g[k]][l2g[k]][comp][comp] = static_cast<MFieldType>(1);
-                                (*f)[l2g[k]] = 0;
-                                (*u)[l2g[k]] = 0;
-                                treated[l2g[k]] = true;
-                            }
-                    }
-
-                // accumulate local matrix into global matrix for non-hanging nodes
-                for (int i=0; i<sfs.size(); i++) // loop over rows, i.e. test functions
-                    {
-                        // process only non-hanging nodes
-                        if (this->hanging[l2g[i]]) continue;
-
-                        // accumulate matrix
-                        for (int j=0; j<sfs.size(); j++)
-                            {
-                                // process only non-hanging nodes
-                                if (this->hanging[l2g[j]]) continue;
-
-                                // the standard entry
-                                this->A[l2g[i]][l2g[j]] += loc.mat(i,j);
-                            }
-
-                        // essential boundary condition and rhs
-                        for (int comp=0; comp<m; comp++)
-                            {
-                                if (loc.bc(i)[comp]>essential[l2g[i]][comp])
-                                    {
-                                        essential[l2g[i]][comp] = loc.bc(i)[comp];
-                                        dirichletIndexGlobal[l2g[i]][comp] = loc.dirichletIdx(i)[comp];
-                                        (*f)[l2g[i]][comp] = loc.rhs(i)[comp];
-                                    }
-                                if (essential[l2g[i]][comp]==BoundaryConditions::neumann)
-                                    (*f)[l2g[i]][comp] += loc.rhs(i)[comp];
-                            }
-                    }
-
-                // add corrections for hanging nodes
-                if (hasHangingNodes)
-                    {
-                        // a map that inverts l2g
-                        std::map<int,int> g2l;
-                        for (int i=0; i<sfs.size(); i++)
-                            g2l[l2g[i]] = i;
-
-                        // a map that inverts fl2g
-                        std::map<int,int> fg2l;
-                        for (int i=0; i<sfs.size(); i++)
-                            fg2l[fl2g[i]] = i;
-
-                        EEntityPointer father=it->father(); // DEBUG
-
-                        // loop over nodes (rows) in father, assume father has same geometry type
-                        for (int i=0; i<sfs.size(); ++i)
-                            {
-                                // corrections to matrix
-                                // loop over all nodes (columns) in father, assume father has same geometry type
-                                for (int j=0; j<sfs.size(); ++j)
-                                    {
-                                        // loop over hanging nodes
-                                        for (int k=0; k<sfs.size(); k++)
-                                            {
-                                                // process only hanging nodes
-                                                if (!this->hanging[l2g[k]]) continue;
-
-                                                // first term, with i a coarse vertex
-                                                if ( std::abs(alpha[j][k])>1E-4 && g2l.find(fl2g[i])!=g2l.end() )
-                                                    {
-                                                        accumulate(this->A[fl2g[i]][fl2g[j]],alpha[j][k],loc.mat(g2l[fl2g[i]],k));
-                                                    }
-
-                                                // first term, with i a fine non-hanging vertex
-                                                if ( std::abs(alpha[j][k])>1E-4 && fg2l.find(l2g[i])==fg2l.end() && !this->hanging[l2g[i]])
-                                                    {
-                                                        accumulate(this->A[l2g[i]][fl2g[j]],alpha[j][k],loc.mat(i,k));
-                                                    }
-
-                                                // second term, with j a coarse vertex
-                                                if ( std::abs(alpha[i][k])>1E-4 && g2l.find(fl2g[j])!=g2l.end() )
-                                                    {
-                                                        accumulate(this->A[fl2g[i]][fl2g[j]],alpha[i][k],loc.mat(k,g2l[fl2g[j]]));
-                                                    }
-
-                                                // second term, with j a fine non-hanging vertex
-                                                if ( std::abs(alpha[i][k])>1E-4 && fg2l.find(l2g[j])==fg2l.end() && !this->hanging[l2g[j]])
-                                                    {
-                                                        accumulate(this->A[fl2g[i]][l2g[j]],alpha[i][k],loc.mat(k,j));
-                                                    }
-
-                                                // third term, loop over hanging nodes
-                                                for (int l=0; l<sfs.size(); l++)
-                                                    {
-                                                        // process only hanging nodes
-                                                        if (!this->hanging[l2g[l]]) continue;
-
-                                                        if ( std::abs(alpha[i][k])>1E-4 && std::abs(alpha[j][l])>1E-4 )
-                                                            {
-                                                                accumulate(this->A[fl2g[i]][fl2g[j]],alpha[i][k]*alpha[j][l],loc.mat(k,l));
-                                                            }
-                                                    }
-                                            }
-                                    }
-
-                                // corrections to rhs
-                                for (int comp=0; comp<m; comp++)
-                                    if (essential[fl2g[i]][comp]==BoundaryConditions::neumann)
-                                        for (int k=0; k<sfs.size(); k++)
-                                            {
-                                                // process only hanging nodes
-                                                if (!this->hanging[l2g[k]]) continue;
-
-                                                if ( std::abs(alpha[i][k])>1E-4 && loc.bc(k)[comp]==BoundaryConditions::neumann )
-                                                    (*f)[fl2g[i]][comp] += alpha[i][k]*loc.rhs(k)[comp];
-                                            }
-                            }
-                    }
+                if (sfs[k].codim()!=n) DUNE_THROW(MathError,"expected codim==dim");
+                int alpha = this->vertexmapper.template map<n>(*it,sfs[k].entity());
+                if (this->doubled2Original.find(alpha) != this->doubled2Original.end())
+                    alpha = this->doubled2Original[alpha];
+                l2g[k] = alpha;
             }
+
+            // build local stiffness matrix for P1 elements
+            // inludes rhs and boundary condition information
+            loc.template assemble<TypeTag>(*it); // assemble local stiffness matrix
+
+            // assemble constraints in hanging nodes
+            // as a by-product determine the interpolation factors WITH RESPECT TO NODES OF FATHER
+            bool hasHangingNodes = false;
+            for (int k=0; k<sfs.size(); k++) // loop over rows, i.e. test functions
+            {
+                // process only hanging nodes
+                if (!this->hanging[l2g[k]]) continue;
+                hasHangingNodes = true;
+
+                // determine position of hanging node in father
+                EEntityPointer father=it->father(); // the father element
+                GeometryType gtf = father->type(); // fathers type
+                assert(gtf==gt); // in hanging node refinement the element type is preserved
+                const FieldVector<DT,n>& cpos=Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt,1)[k].position();
+                FieldVector<DT,n> pos = it->geometryInFather().global(cpos); // map corner to father element
+
+                // evaluate interpolation factors and local to global mapping for father
+                for (int i=0; i<Dune::LagrangeShapeFunctions<DT,RT,n>::general(gtf,1).size(); ++i)
+                {
+                    alpha[i][k] = Dune::LagrangeShapeFunctions<DT,RT,n>::general(gtf,1)[i].evaluateFunction(0,pos);
+                    fl2g[i] = this->vertexmapper.template map<n>(*father,i);
+                    if (this->doubled2Original.find(fl2g[i]) != this->doubled2Original.end())
+                        fl2g[i] = this->doubled2Original[fl2g[i]];
+                }
+
+                // assemble the constraint row once
+                if (!treated[l2g[k]])
+                {
+                    bool throwflag=false;
+                    for (int i=0; i<Dune::LagrangeShapeFunctions<DT,RT,n>::general(gtf,1).size(); ++i)
+                        if (std::abs(alpha[i][k])>1E-4)
+                        {
+                            if (this->hanging[fl2g[i]])
+                            {
+                                throwflag = true;
+                            }
+                            this->A[l2g[k]][fl2g[i]] = MFieldType(); // Note: Interpolation is done a posteriori
+                        }
+                    if (throwflag)
+                        DUNE_THROW(GridError,"hanging node interpolated from hanging node");
+                    for (int comp=0; comp<m; comp++)
+                        this->A[l2g[k]][l2g[k]][comp][comp] = static_cast<MFieldType>(1);
+                    (*f)[l2g[k]] = 0;
+                    (*u)[l2g[k]] = 0;
+                    treated[l2g[k]] = true;
+                }
+            }
+
+            // accumulate local matrix into global matrix for non-hanging nodes
+            for (int i=0; i<sfs.size(); i++) // loop over rows, i.e. test functions
+            {
+                // process only non-hanging nodes
+                if (this->hanging[l2g[i]]) continue;
+
+                // accumulate matrix
+                for (int j=0; j<sfs.size(); j++)
+                {
+                    // process only non-hanging nodes
+                    if (this->hanging[l2g[j]]) continue;
+
+                    // the standard entry
+                    this->A[l2g[i]][l2g[j]] += loc.mat(i,j);
+                }
+
+                // essential boundary condition and rhs
+                for (int comp=0; comp<m; comp++)
+                {
+                    if (loc.bc(i)[comp]>essential[l2g[i]][comp])
+                    {
+                        essential[l2g[i]][comp] = loc.bc(i)[comp];
+                        dirichletIndexGlobal[l2g[i]][comp] = loc.dirichletIdx(i)[comp];
+                        (*f)[l2g[i]][comp] = loc.rhs(i)[comp];
+                    }
+                    if (essential[l2g[i]][comp]==BoundaryConditions::neumann)
+                        (*f)[l2g[i]][comp] += loc.rhs(i)[comp];
+                }
+            }
+
+            // add corrections for hanging nodes
+            if (hasHangingNodes)
+            {
+                // a map that inverts l2g
+                std::map<int,int> g2l;
+                for (int i=0; i<sfs.size(); i++)
+                    g2l[l2g[i]] = i;
+
+                // a map that inverts fl2g
+                std::map<int,int> fg2l;
+                for (int i=0; i<sfs.size(); i++)
+                    fg2l[fl2g[i]] = i;
+
+                EEntityPointer father=it->father(); // DEBUG
+
+                // loop over nodes (rows) in father, assume father has same geometry type
+                for (int i=0; i<sfs.size(); ++i)
+                {
+                    // corrections to matrix
+                    // loop over all nodes (columns) in father, assume father has same geometry type
+                    for (int j=0; j<sfs.size(); ++j)
+                    {
+                        // loop over hanging nodes
+                        for (int k=0; k<sfs.size(); k++)
+                        {
+                            // process only hanging nodes
+                            if (!this->hanging[l2g[k]]) continue;
+
+                            // first term, with i a coarse vertex
+                            if ( std::abs(alpha[j][k])>1E-4 && g2l.find(fl2g[i])!=g2l.end() )
+                            {
+                                accumulate(this->A[fl2g[i]][fl2g[j]],alpha[j][k],loc.mat(g2l[fl2g[i]],k));
+                            }
+
+                            // first term, with i a fine non-hanging vertex
+                            if ( std::abs(alpha[j][k])>1E-4 && fg2l.find(l2g[i])==fg2l.end() && !this->hanging[l2g[i]])
+                            {
+                                accumulate(this->A[l2g[i]][fl2g[j]],alpha[j][k],loc.mat(i,k));
+                            }
+
+                            // second term, with j a coarse vertex
+                            if ( std::abs(alpha[i][k])>1E-4 && g2l.find(fl2g[j])!=g2l.end() )
+                            {
+                                accumulate(this->A[fl2g[i]][fl2g[j]],alpha[i][k],loc.mat(k,g2l[fl2g[j]]));
+                            }
+
+                            // second term, with j a fine non-hanging vertex
+                            if ( std::abs(alpha[i][k])>1E-4 && fg2l.find(l2g[j])==fg2l.end() && !this->hanging[l2g[j]])
+                            {
+                                accumulate(this->A[fl2g[i]][l2g[j]],alpha[i][k],loc.mat(k,j));
+                            }
+
+                            // third term, loop over hanging nodes
+                            for (int l=0; l<sfs.size(); l++)
+                            {
+                                // process only hanging nodes
+                                if (!this->hanging[l2g[l]]) continue;
+
+                                if ( std::abs(alpha[i][k])>1E-4 && std::abs(alpha[j][l])>1E-4 )
+                                {
+                                    accumulate(this->A[fl2g[i]][fl2g[j]],alpha[i][k]*alpha[j][l],loc.mat(k,l));
+                                }
+                            }
+                        }
+                    }
+
+                    // corrections to rhs
+                    for (int comp=0; comp<m; comp++)
+                        if (essential[fl2g[i]][comp]==BoundaryConditions::neumann)
+                            for (int k=0; k<sfs.size(); k++)
+                            {
+                                // process only hanging nodes
+                                if (!this->hanging[l2g[k]]) continue;
+
+                                if ( std::abs(alpha[i][k])>1E-4 && loc.bc(k)[comp]==BoundaryConditions::neumann )
+                                    (*f)[fl2g[i]][comp] += alpha[i][k]*loc.rhs(k)[comp];
+                            }
+                }
+            }
+        }
 
         // accumulate matrix entries, should do also for systems ...
         if (this->extendOverlap)
@@ -1413,78 +1413,78 @@ public:
 
         // send around boundary conditions
         if (this->extendOverlap)
-            {
-                AccumulateBCFlags datahandle(this->grid,this->vertexmapper,essential,*f);
-                this->lc.template communicate<AccumulateBCFlags>(datahandle,InteriorBorder_InteriorBorder_Interface,ForwardCommunication);
-                // on a nonvoerlapping grid we have the correct BC at all interior and border vertices
-            }
+        {
+            AccumulateBCFlags datahandle(this->grid,this->vertexmapper,essential,*f);
+            this->lc.template communicate<AccumulateBCFlags>(datahandle,InteriorBorder_InteriorBorder_Interface,ForwardCommunication);
+            // on a nonvoerlapping grid we have the correct BC at all interior and border vertices
+        }
         // what about the overlapping case ?
 
         // muck up ghost vertices
         VIterator vendit = this->gv.template end<n>();
         for (VIterator it = this->gv.template begin<n>(); it!=vendit; ++it)
             if (it->partitionType()==GhostEntity)
-                {
-                    // index of this vertex
-                    int i=this->vertexmapper.map(*it);
+            {
+                // index of this vertex
+                int i=this->vertexmapper.map(*it);
 
-                    // muck up row
-                    coliterator endj=this->A[i].end();
-                    for (coliterator j=this->A[i].begin(); j!=endj; ++j)
-                        {
-                            (*j) = MFieldType();
-                            if ((int) j.index()==i)
-                                for (int comp=0; comp<m; comp++)
-                                    (*j)[comp][comp] = static_cast<MFieldType>(1);
-                        }
-                    (*f)[i] = 0;
+                // muck up row
+                coliterator endj=this->A[i].end();
+                for (coliterator j=this->A[i].begin(); j!=endj; ++j)
+                {
+                    (*j) = MFieldType();
+                    if ((int) j.index()==i)
+                        for (int comp=0; comp<m; comp++)
+                            (*j)[comp][comp] = static_cast<MFieldType>(1);
                 }
+                (*f)[i] = 0;
+            }
 
         // put in essential boundary conditions
         rowiterator endi=this->A.end();
         for (rowiterator i=this->A.begin(); i!=endi; ++i)
+        {
+            // muck up extra rows
+            if ((int) i.index()>=this->vertexmapper.size())
             {
-                // muck up extra rows
-                if ((int) i.index()>=this->vertexmapper.size())
+                coliterator endj=(*i).end();
+                for (coliterator j=(*i).begin(); j!=endj; ++j)
+                {
+                    (*j) = MFieldType();
+                    if (j.index()==i.index())
+                        for (int comp=0; comp<m; comp++)
+                            (*j)[comp][comp] = static_cast<MFieldType>(1);
+                }
+                (*f)[i.index()] = 0;
+                continue;
+            }
+
+            // insert dirichlet ans processor boundary conditions
+            if (!this->hanging[i.index()])
+            {
+                for (int icomp=0; icomp<m; icomp++)
+                    if (essential[i.index()][icomp]!=BoundaryConditions::neumann)
                     {
                         coliterator endj=(*i).end();
                         for (coliterator j=(*i).begin(); j!=endj; ++j)
+                            if (j.index()==i.index())
                             {
-                                (*j) = MFieldType();
-                                if (j.index()==i.index())
-                                    for (int comp=0; comp<m; comp++)
-                                        (*j)[comp][comp] = static_cast<MFieldType>(1);
+                                for (int jcomp=0; jcomp<m; jcomp++)
+                                    if (jcomp==dirichletIndexGlobal[i.index()][icomp])
+                                        //if (icomp==jcomp)
+                                        (*j)[icomp][jcomp] = static_cast<MFieldType>(1);
+                                    else
+                                        (*j)[icomp][jcomp] = MFieldType();
                             }
-                        (*f)[i.index()] = 0;
-                        continue;
-                    }
-
-                // insert dirichlet ans processor boundary conditions
-                if (!this->hanging[i.index()])
-                    {
-                        for (int icomp=0; icomp<m; icomp++)
-                            if (essential[i.index()][icomp]!=BoundaryConditions::neumann)
-                                {
-                                    coliterator endj=(*i).end();
-                                    for (coliterator j=(*i).begin(); j!=endj; ++j)
-                                        if (j.index()==i.index())
-                                            {
-                                                for (int jcomp=0; jcomp<m; jcomp++)
-                                                    if (jcomp==dirichletIndexGlobal[i.index()][icomp])
-                                                        //if (icomp==jcomp)
-                                                        (*j)[icomp][jcomp] = static_cast<MFieldType>(1);
-                                                    else
-                                                        (*j)[icomp][jcomp] = MFieldType();
-                                            }
-                                        else
-                                            {
-                                                for (int jcomp=0; jcomp<m; jcomp++)
-                                                    (*j)[icomp][jcomp] = MFieldType();
-                                            }
-                                    (*u)[i.index()][icomp] = (*f)[i.index()][icomp];
-                                }
+                            else
+                            {
+                                for (int jcomp=0; jcomp<m; jcomp++)
+                                    (*j)[icomp][jcomp] = MFieldType();
+                            }
+                        (*u)[i.index()][icomp] = (*f)[i.index()][icomp];
                     }
             }
+        }
     }
 
     //! assemble operator, rhs and Dirichlet boundary conditions
@@ -1497,37 +1497,37 @@ public:
         // run over all leaf elements
         Iterator eendit = this->gv.template end<0>();
         for (Iterator it = this->gv.template begin<0>(); it!=eendit; ++it)
+        {
+            // get access to shape functions for P1 elements
+            Dune::GeometryType gt = it->type();
+            const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::value_type&
+                sfs=Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt,1);
+
+            // determine the interpolation factors WITH RESPECT TO NODES OF FATHER
+            for (int k=0; k<sfs.size(); k++) // loop over rows, i.e. test functions
             {
-                // get access to shape functions for P1 elements
-                Dune::GeometryType gt = it->type();
-                const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::value_type&
-                    sfs=Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt,1);
+                int alpha = this->vertexmapper.template map<n>(*it,sfs[k].entity());
+                if (this->hanging[alpha] && !treated[alpha])
+                {
+                    // determine position of hanging node in father
+                    EEntityPointer father=it->father(); // the father element
+                    GeometryType gtf = father->type(); // fathers type
+                    assert(gtf==gt); // in hanging node refinement the element type is preserved
+                    const FieldVector<DT,n>& cpos=Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt,1)[k].position();
+                    FieldVector<DT,n> pos = it->geometryInFather().global(cpos); // map corner to father element
 
-                // determine the interpolation factors WITH RESPECT TO NODES OF FATHER
-                for (int k=0; k<sfs.size(); k++) // loop over rows, i.e. test functions
+                    // evaluate interpolation factors and local to global mapping for father
+                    VBlockType value; value=0;
+                    for (int i=0; i<Dune::LagrangeShapeFunctions<DT,RT,n>::general(gtf,1).size(); ++i)
                     {
-                        int alpha = this->vertexmapper.template map<n>(*it,sfs[k].entity());
-                        if (this->hanging[alpha] && !treated[alpha])
-                            {
-                                // determine position of hanging node in father
-                                EEntityPointer father=it->father(); // the father element
-                                GeometryType gtf = father->type(); // fathers type
-                                assert(gtf==gt); // in hanging node refinement the element type is preserved
-                                const FieldVector<DT,n>& cpos=Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt,1)[k].position();
-                                FieldVector<DT,n> pos = it->geometryInFather().global(cpos); // map corner to father element
-
-                                // evaluate interpolation factors and local to global mapping for father
-                                VBlockType value; value=0;
-                                for (int i=0; i<Dune::LagrangeShapeFunctions<DT,RT,n>::general(gtf,1).size(); ++i)
-                                    {
-                                        int beta = this->vertexmapper.template map<n>(*father,i);
-                                        value.axpy(Dune::LagrangeShapeFunctions<DT,RT,n>::general(gtf,1)[i].evaluateFunction(0,pos),(*u)[beta]);
-                                    }
-                                (*u)[alpha] = value;
-                                treated[alpha] = true;
-                            }
+                        int beta = this->vertexmapper.template map<n>(*father,i);
+                        value.axpy(Dune::LagrangeShapeFunctions<DT,RT,n>::general(gtf,1)[i].evaluateFunction(0,pos),(*u)[beta]);
                     }
+                    (*u)[alpha] = value;
+                    treated[alpha] = true;
+                }
             }
+        }
     }
 
     void preMark ()
@@ -1543,28 +1543,28 @@ public:
         int extra=0;
         Iterator eendit = this->gv.template end<0>();
         for (Iterator it = this->gv.template begin<0>(); it!=eendit; ++it)
+        {
+            // get access to shape functions for P1 elements
+            Dune::GeometryType gt = it->type();
+            //          if (gt!=Dune::simplex && gt!=Dune::triangle && gt!=Dune::tetrahedron) continue;
+
+            const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::value_type&
+                sfs=Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt,1);
+
+            // count nodes with mark
+            int count=0;
+            for (int k=0; k<sfs.size(); k++)
             {
-                // get access to shape functions for P1 elements
-                Dune::GeometryType gt = it->type();
-                //          if (gt!=Dune::simplex && gt!=Dune::triangle && gt!=Dune::tetrahedron) continue;
-
-                const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::value_type&
-                    sfs=Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt,1);
-
-                // count nodes with mark
-                int count=0;
-                for (int k=0; k<sfs.size(); k++)
-                    {
-                        int alpha = this->vertexmapper.template map<n>(*it,sfs[k].entity());
-                        if (marked[alpha]) count++;
-                    }
-
-                // refine if a marked edge exists
-                if (count>0) {
-                    extra++;
-                    g.mark(1,it);
-                }
+                int alpha = this->vertexmapper.template map<n>(*it,sfs[k].entity());
+                if (marked[alpha]) count++;
             }
+
+            // refine if a marked edge exists
+            if (count>0) {
+                extra++;
+                g.mark(1,it);
+            }
+        }
 
         marked.clear();
         return;
@@ -1586,10 +1586,10 @@ public:
             sfs=Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt,1);
         for (int k=0; k<sfs.size(); k++) // loop over rows, i.e. test functions
             if (this->hanging[this->vertexmapper.template map<n>(*it,sfs[k].entity())])
-                {
-                    hasHangingNodes = true;
-                    break;
-                }
+            {
+                hasHangingNodes = true;
+                break;
+            }
 
         // if no hanging nodes we are done
         if (!hasHangingNodes) return;
@@ -1597,15 +1597,15 @@ public:
         // mark all corners of father and element
         EEntityPointer father=it->father();
         for (int k=0; k<sfs.size(); k++) // same geometry type ...
-            {
-                int alpha=this->vertexmapper.template map<n>(*father,k);
-                marked[alpha] = true;
-            }
+        {
+            int alpha=this->vertexmapper.template map<n>(*father,k);
+            marked[alpha] = true;
+        }
         for (int k=0; k<sfs.size(); k++) // same geometry type ...
-            {
-                int alpha=this->vertexmapper.template map<n>(*it,k);
-                marked[alpha] = true;
-            }
+        {
+            int alpha=this->vertexmapper.template map<n>(*it,k);
+            marked[alpha] = true;
+        }
 
         return;
     }

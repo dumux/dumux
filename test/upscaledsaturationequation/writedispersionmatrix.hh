@@ -46,27 +46,27 @@ void writeDispersionMatrix(SoilType& soil,std::string data = "data")//, std::str
     soil.getMSat()=0;
 
     for (int i=0;i<lSize;i++)
+    {
+        for (int j=0;j<cSize;j++)
         {
-            for (int j=0;j<cSize;j++)
-                {
-                    //            soil.getDispersion()[i][j][0][0]=Dxx[i][j];
-                    //            soil.getDispersion()[i][j][1][1]=Dyy[i][j];
-                    soil.getDispersion()[i][j][0][0]=collectedData[i][j];
-                    soil.getDispersion()[i][j][1][1]=collectedData[i][j+cSize];
-                    soil.getDispersionSat()[i][j]= collectedData[i][j+2*cSize];
-                    soil.getM()[i][j][0]=collectedData[i][j+3*cSize];
-                    soil.getM()[i][j][1]=collectedData[i][j+4*cSize];
-                    soil.getM()[i][j][2]=collectedData[i][j+5*cSize];
-                    soil.getM()[i][j][3]=collectedData[i][j+6*cSize];
+            //            soil.getDispersion()[i][j][0][0]=Dxx[i][j];
+            //            soil.getDispersion()[i][j][1][1]=Dyy[i][j];
+            soil.getDispersion()[i][j][0][0]=collectedData[i][j];
+            soil.getDispersion()[i][j][1][1]=collectedData[i][j+cSize];
+            soil.getDispersionSat()[i][j]= collectedData[i][j+2*cSize];
+            soil.getM()[i][j][0]=collectedData[i][j+3*cSize];
+            soil.getM()[i][j][1]=collectedData[i][j+4*cSize];
+            soil.getM()[i][j][2]=collectedData[i][j+5*cSize];
+            soil.getM()[i][j][3]=collectedData[i][j+6*cSize];
 
-                    soil.getMSat()[i][j][0]= collectedData[i][j+7*cSize];
-                    soil.getMSat()[i][j][1]= collectedData[i][j+8*cSize];
-                    soil.getMSat()[i][j][2]= collectedData[i][j+9*cSize];
-                    soil.getMSat()[i][j][3]= collectedData[i][j+10*cSize];
-                    //            std::cout<<soil.getDispersionSat()[i][j]<<std::endl;
-                    //            std::cout<<soil.getDispersion()[i][j]<<std::endl;
-                }
+            soil.getMSat()[i][j][0]= collectedData[i][j+7*cSize];
+            soil.getMSat()[i][j][1]= collectedData[i][j+8*cSize];
+            soil.getMSat()[i][j][2]= collectedData[i][j+9*cSize];
+            soil.getMSat()[i][j][3]= collectedData[i][j+10*cSize];
+            //            std::cout<<soil.getDispersionSat()[i][j]<<std::endl;
+            //            std::cout<<soil.getDispersion()[i][j]<<std::endl;
         }
+    }
     return;
 }
 }

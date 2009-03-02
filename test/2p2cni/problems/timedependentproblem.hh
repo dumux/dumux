@@ -340,15 +340,15 @@ public:
                 localPos);
 
         if(globalPos[1] > eps_) // upper boundary
-            {
-                if (timeManager_.episode() == DrainEpisode)
-                    // drain water
-                    values[pWIdx] = 1e5;// + (depthBOR_ - globalPos[1])*densityW*9.81;
-                else if (timeManager_.episode() == ImbibEpisode) {
-                    // imbibition of water
-                    values[pWIdx] = 1.2e5;
-                }
+        {
+            if (timeManager_.episode() == DrainEpisode)
+                // drain water
+                values[pWIdx] = 1e5;// + (depthBOR_ - globalPos[1])*densityW*9.81;
+            else if (timeManager_.episode() == ImbibEpisode) {
+                // imbibition of water
+                values[pWIdx] = 1.2e5;
             }
+        }
     }
 
     /////////////////////////////

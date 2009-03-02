@@ -303,10 +303,10 @@ public:
 
         // regularization
         if(Se > 1.)
-            {
-                kr[0] = 1;
-                kr[1] = 0;
-            }
+        {
+            kr[0] = 1;
+            kr[1] = 0;
+        }
         if(Se < machineEps_) Se = machineEps_;
 
         // get Van Genuchten parameters
@@ -351,40 +351,40 @@ public:
         else asymptotic = 0;
 
         if (asymptotic) /* use pc_VanG = 1/alpha/pow(Se,1/(n-1)) */
+        {
+            if (Se > epsPC)
+                return(1.0 / (alpha * pow(Se, 1.0 / (n-1))));
+            else /* regularize with tangent */
             {
-                if (Se > epsPC)
-                    return(1.0 / (alpha * pow(Se, 1.0 / (n-1))));
-                else /* regularize with tangent */
-                    {
-                        pc  = 1.0 / (alpha * pow(epsPC, 1.0 / (n-1)));
-                        pc_prime = 1.0 / (pow(epsPC, n/(n-1)) * alpha * (1-n) * (1-Swr-Snr));
-                        return((Se - epsPC) * pc_prime + pc);
-                    }
+                pc  = 1.0 / (alpha * pow(epsPC, 1.0 / (n-1)));
+                pc_prime = 1.0 / (pow(epsPC, n/(n-1)) * alpha * (1-n) * (1-Swr-Snr));
+                return((Se - epsPC) * pc_prime + pc);
             }
+        }
         else
-            {    /* use correct van Genuchten curve */
-                if (Se > epsPC && Se < 1 - epsPC)
-                    {
-                        r = pow(Se, -1/m);
-                        x_ = r - 1;
-                        vgM = 1 - m;
-                        x_ = pow(x_, vgM);
-                        r = x_ / alpha;
-                        return(r);
-                    }
-                else
-                    {
-                        /* value and derivative at regularization point */
-                        if (Se <= epsPC) Se_regu = epsPC; else Se_regu = 1 - epsPC;
-                        pc       = pow(pow(Se_regu, -1/m) - 1, 1/n) / alpha;
-                        pc_prime = pow(pow(Se_regu, -1/m) - 1, 1/n-1) * pow(Se_regu, -1/m-1) * (-1/m) / alpha / (1-Snr-Swr);
-
-                        /* evaluate tangential */
-                        r        = (Se - Se_regu) * pc_prime + pc;
-                        if (r<0) r=0; // if Sw=1, pc with correct van Genuchten curve formulation is negatif
-                        return(r);
-                    }
+        {    /* use correct van Genuchten curve */
+            if (Se > epsPC && Se < 1 - epsPC)
+            {
+                r = pow(Se, -1/m);
+                x_ = r - 1;
+                vgM = 1 - m;
+                x_ = pow(x_, vgM);
+                r = x_ / alpha;
+                return(r);
             }
+            else
+            {
+                /* value and derivative at regularization point */
+                if (Se <= epsPC) Se_regu = epsPC; else Se_regu = 1 - epsPC;
+                pc       = pow(pow(Se_regu, -1/m) - 1, 1/n) / alpha;
+                pc_prime = pow(pow(Se_regu, -1/m) - 1, 1/n-1) * pow(Se_regu, -1/m-1) * (-1/m) / alpha / (1-Snr-Swr);
+
+                /* evaluate tangential */
+                r        = (Se - Se_regu) * pc_prime + pc;
+                if (r<0) r=0; // if Sw=1, pc with correct van Genuchten curve formulation is negatif
+                return(r);
+            }
+        }
     }
 
     double dPdS (double saturationW, const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi,
@@ -431,11 +431,11 @@ public:
         double x_ = pow(r-1,1/n);
         double pc = (x_/alpha);
         if (pC>=pc)
-            {
-                double pc_prime = (1-m)/alpha/pow(pow(QT1,-1/m)-1,m)/pow(QT1,1+1/m)*(-1/m);
-                double Se = (pC-pc)/pc_prime+QT1;
-                return (Se*(1.0-Swr-Snr)+Swr);
-            }
+        {
+            double pc_prime = (1-m)/alpha/pow(pow(QT1,-1/m)-1,m)/pow(QT1,1+1/m)*(-1/m);
+            double Se = (pC-pc)/pc_prime+QT1;
+            return (Se*(1.0-Swr-Snr)+Swr);
+        }
 
         /* check right part */
 
@@ -443,10 +443,10 @@ public:
         x_ = pow(r-1,1-m);
         pc = (x_/alpha);
         if (pC<=pc)
-            {
-                double Se = (1.0-pC/pc)*(1-QT2)+QT2;
-                return (Se*(1.0-Swr-Snr)+Swr);
-            }
+        {
+            double Se = (1.0-pC/pc)*(1-QT2)+QT2;
+            return (Se*(1.0-Swr-Snr)+Swr);
+        }
 
         /* do inversion ... */
 
@@ -473,9 +473,9 @@ public:
         double dswdpc = -(n-1)*pow(alpha*pC,n)*pow(1+pow(alpha*pC,n),-2+1/n)/pC*dsdSe;
 
         if (pC<pcReg)
-            {
-                dswdpc = (pC-pcReg)/pcReg*dswdpc_reg + dswdpc_reg;
-            }
+        {
+            dswdpc = (pC-pcReg)/pcReg*dswdpc_reg + dswdpc_reg;
+        }
 
         return dswdpc;
     }
@@ -529,10 +529,10 @@ public:
         if (Se > epsPC)
             return (std::min(p0*pow(Se, -1.0/lambda),maxpc));
         else
-            {
-                double dpCEps = dPdS(epsPC, x, e, xi, param, T);
-                return (std::min(dpCEps*(Se - epsPC) + p0*pow(epsPC, -1.0/lambda),maxpc));
-            }
+        {
+            double dpCEps = dPdS(epsPC, x, e, xi, param, T);
+            return (std::min(dpCEps*(Se - epsPC) + p0*pow(epsPC, -1.0/lambda),maxpc));
+        }
     }
 
 
@@ -554,10 +554,10 @@ public:
         if (Se > epsPC)
             return (-p0/lambda*pow(Se, -1.0/lambda-1)/(1-Snr-Swr));
         else
-            {
-                double dSedSwsquare=1/(1-Snr-Swr)/(1-Snr-Swr);
-                return (-p0*dSedSwsquare/lambda/pow(epsPC, (1+1/lambda)));
-            }
+        {
+            double dSedSwsquare=1/(1-Snr-Swr)/(1-Snr-Swr);
+            return (-p0*dSedSwsquare/lambda/pow(epsPC, (1+1/lambda)));
+        }
     }
 
     double saturationW (double pC, const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi, const double T=283.15) const
@@ -613,17 +613,17 @@ public:
         double Se = (saturationW - Srw) / (1 - Srw - Srn);
         // regularization
         if (Se > 1)
-            {
-                kr[0] = 1;
-                kr[1] = 0;
-                return kr;
-            }
+        {
+            kr[0] = 1;
+            kr[1] = 0;
+            return kr;
+        }
         if (Se < epsKr)
-            {
-                kr[0] = 0;
-                kr[1] = 1;
-                return kr;
-            }
+        {
+            kr[0] = 0;
+            kr[1] = 1;
+            return kr;
+        }
 
         double lambda = this->soil.paramRelPerm(x, e, xi, T)[0];
         double exponent = (2. + 3*lambda) / lambda;

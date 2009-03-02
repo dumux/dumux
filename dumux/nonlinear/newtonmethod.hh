@@ -43,50 +43,50 @@ public:
             while ((relDiff > diffTolerance || globalResiduum > resTolerance)
                    && relDiffIncreased < maxIncreased
                    && iter < maxIter)
-                {
-                    iter ++;
-                    double relDiffOld = relDiff;
-                    //int iiter = 0;
-                    num = 0;
-                    *uOldNewtonStep = *u;
-                    globalResiduumOld = globalResiduum;
-                    lambda = lambdaOld;
-                    //printvector(std::cout, *uOldNewtonStep, "uOldNewtonStep", "row", 200, 1, 3);
-                    //printvector(std::cout, *(model.uOldTimeStep), "uOldTimeStep", "row", 200, 1, 3);
-                    model.assemble();
-                    //                *(uOldNewtonStep) = 0.0;
-                    //                *(model.uOldTimeStep) = 1.0;
-                    //                (*A).mv(*(model.uOldTimeStep), *uOldNewtonStep);
-                    //                sprintf(buf, "rank %d, A*1: ", grid.comm().rank());
-                    //                printvector(std::cout, *uOldNewtonStep, buf, "row", 200, 1, 3);
+            {
+                iter ++;
+                double relDiffOld = relDiff;
+                //int iiter = 0;
+                num = 0;
+                *uOldNewtonStep = *u;
+                globalResiduumOld = globalResiduum;
+                lambda = lambdaOld;
+                //printvector(std::cout, *uOldNewtonStep, "uOldNewtonStep", "row", 200, 1, 3);
+                //printvector(std::cout, *(model.uOldTimeStep), "uOldTimeStep", "row", 200, 1, 3);
+                model.assemble();
+                //                *(uOldNewtonStep) = 0.0;
+                //                *(model.uOldTimeStep) = 1.0;
+                //                (*A).mv(*(model.uOldTimeStep), *uOldNewtonStep);
+                //                sprintf(buf, "rank %d, A*1: ", grid.comm().rank());
+                //                printvector(std::cout, *uOldNewtonStep, buf, "row", 200, 1, 3);
 
-                    if (grid.comm().rank() == 1) {
-                        printmatrix(std::cout, *A, "global stiffness matrix", "row", 11, 4);
-                        printvector(std::cout, *uOldNewtonStep, "uOldNewtonStep", "row", 3, 1, 3);
-                        printvector(std::cout, *f, "right hand side", "row", 3, 1, 3);
-                    }
-
-                    model.solve();
-                    relDiff = oneByMagnitude*((*u).two_norm());
-                    //                printvector(std::cout, *u, "update", "row", 3, 1, 3);
-                    *u *= -lambda; // hm, lambda is always 1.0, right???
-                    *u += *uOldNewtonStep;
-                    //                sprintf(buf, "rank %d, solution: ", grid.comm().rank());
-                    //                printvector(std::cout, *u, buf, "row", 3, 1, 3);
-                    model.globalDefect(defectGlobal);
-                    globalResiduum = residuumWeight*0.5*(*defectGlobal).two_norm();
-                    grid.comm().sum(&globalResiduum, 1);
-                    //                globalResiduum = residuumWeight*model.residual(defectGlobal);
-                    //                sprintf(buf, "rank %d, global Defect: ", grid.comm().rank());
-                    //                printvector(std::cout, *defectGlobal, buf, "row", 200, 1, 3);
-
-                    if (verbose && grid.comm().rank() == 0)
-                        std::cout << "Newton step "<< iter << ", residual = "
-                                  << globalResiduum << ", difference = "<< relDiff << std::endl;
-
-                    if (relDiff > relDiffOld)
-                        relDiffIncreased++;
+                if (grid.comm().rank() == 1) {
+                    printmatrix(std::cout, *A, "global stiffness matrix", "row", 11, 4);
+                    printvector(std::cout, *uOldNewtonStep, "uOldNewtonStep", "row", 3, 1, 3);
+                    printvector(std::cout, *f, "right hand side", "row", 3, 1, 3);
                 }
+
+                model.solve();
+                relDiff = oneByMagnitude*((*u).two_norm());
+                //                printvector(std::cout, *u, "update", "row", 3, 1, 3);
+                *u *= -lambda; // hm, lambda is always 1.0, right???
+                *u += *uOldNewtonStep;
+                //                sprintf(buf, "rank %d, solution: ", grid.comm().rank());
+                //                printvector(std::cout, *u, buf, "row", 3, 1, 3);
+                model.globalDefect(defectGlobal);
+                globalResiduum = residuumWeight*0.5*(*defectGlobal).two_norm();
+                grid.comm().sum(&globalResiduum, 1);
+                //                globalResiduum = residuumWeight*model.residual(defectGlobal);
+                //                sprintf(buf, "rank %d, global Defect: ", grid.comm().rank());
+                //                printvector(std::cout, *defectGlobal, buf, "row", 200, 1, 3);
+
+                if (verbose && grid.comm().rank() == 0)
+                    std::cout << "Newton step "<< iter << ", residual = "
+                              << globalResiduum << ", difference = "<< relDiff << std::endl;
+
+                if (relDiff > relDiffOld)
+                    relDiffIncreased++;
+            }
             if (relDiff > diffTolerance || globalResiduum > resTolerance) {
                 dt *= 0.5;
                 if (grid.comm().rank() == 0) {

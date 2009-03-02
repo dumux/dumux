@@ -20,24 +20,24 @@ public:
         // regularisations:
 
         if(pg > 2.5e8)
-            {
-                pg = 2.5e8;
-            }
+        {
+            pg = 2.5e8;
+        }
 
         if(pg < 2.e5)
-            {
-                pg = 2.e5;
-            }
+        {
+            pg = 2.e5;
+        }
 
         if(Temp < 275.)
-            {
-                Temp = 275;
-            }
+        {
+            Temp = 275;
+        }
 
         if(Temp > 600.)
-            {
-                Temp = 600;
-            }
+        {
+            Temp = 600;
+        }
         /* X_NaCl: salinity: mass fraction [-] */
         double x_NaCl;      /* salinity: mole fraction [-] */
         double mol_NaCl;    /* salinity: molality [mol/kg water] */
@@ -141,9 +141,9 @@ public:
         kb = 0.0;
 
         for (i = 0; i < 5; i++)
-            {
-                kb += C[i] * pow(Temp, i);
-            }
+        {
+            kb += C[i] * pow(Temp, i);
+        }
 
         /* calculation of Henry's constant of pure water (Kh) */
 
@@ -157,9 +157,9 @@ public:
         Kh = 0.0;
 
         for (i = 0; i < 6; i++)
-            {
-                Kh += B[i] * pow(Temp, i);
-            }
+        {
+            Kh += B[i] * pow(Temp, i);
+        }
 
         exponent = molality * kb;
 
@@ -298,41 +298,41 @@ public:
         {
             Vc = 0.1; Vd = Vc+0.0001;i=-1;
             for (n=1; n<=20; n++)
-                {
-                    c = Tr/(pr*Vc) * (1 + A/Vc + B/(Vc*Vc) + C/(Vc*Vc*Vc*Vc) + D/(Vc*Vc*Vc*Vc*Vc) + a13/(Tr*Tr*Tr*Vc*Vc)*(a14+a15/(Vc*Vc))*exp(-a15/(Vc*Vc))) - 1.0;
-                    d = Tr/(pr*Vd) * (1 + A/Vd + B/(Vd*Vd) + C/(Vd*Vd*Vd*Vd) + D/(Vd*Vd*Vd*Vd*Vd) + a13/(Tr*Tr*Tr*Vd*Vd)*(a14+a15/(Vd*Vd))*exp(-a15/(Vd*Vd))) - 1.0;
-                    Ve = Vc - (c*(Vd-Vc))/(d-c);
-                    e = Tr/(pr*Ve) * (1 + A/Ve + B/(Ve*Ve) + C/(Ve*Ve*Ve*Ve) + D/(Ve*Ve*Ve*Ve*Ve) + a13/(Tr*Tr*Tr*Ve*Ve)*(a14+a15/(Ve*Ve))*exp(-a15/(Ve*Ve))) - 1.0;
-                    if(fabs(e)<1.0E-4) break;
-                    Vc=Ve;
-                    Vd = Vc+0.0001*Vc;
-                }
+            {
+                c = Tr/(pr*Vc) * (1 + A/Vc + B/(Vc*Vc) + C/(Vc*Vc*Vc*Vc) + D/(Vc*Vc*Vc*Vc*Vc) + a13/(Tr*Tr*Tr*Vc*Vc)*(a14+a15/(Vc*Vc))*exp(-a15/(Vc*Vc))) - 1.0;
+                d = Tr/(pr*Vd) * (1 + A/Vd + B/(Vd*Vd) + C/(Vd*Vd*Vd*Vd) + D/(Vd*Vd*Vd*Vd*Vd) + a13/(Tr*Tr*Tr*Vd*Vd)*(a14+a15/(Vd*Vd))*exp(-a15/(Vd*Vd))) - 1.0;
+                Ve = Vc - (c*(Vd-Vc))/(d-c);
+                e = Tr/(pr*Ve) * (1 + A/Ve + B/(Ve*Ve) + C/(Ve*Ve*Ve*Ve) + D/(Ve*Ve*Ve*Ve*Ve) + a13/(Tr*Tr*Tr*Ve*Ve)*(a14+a15/(Ve*Ve))*exp(-a15/(Ve*Ve))) - 1.0;
+                if(fabs(e)<1.0E-4) break;
+                Vc=Ve;
+                Vd = Vc+0.0001*Vc;
+            }
             V1=Ve;Vr=V1;n1=n;e1=e;
         }
         ConstrelCO2 constrelCO2;
         ps = constrelCO2.satpressure(T);
         Vc = 0.1; Vd = 85.0; i=-1;
         for (n=1; n<=30; n++)
-            {
-                c = Tr/(pr*Vc) * (1 + A/Vc + B/(Vc*Vc) + C/(Vc*Vc*Vc*Vc) + D/(Vc*Vc*Vc*Vc*Vc) + a13/(Tr*Tr*Tr*Vc*Vc)*(a14+a15/(Vc*Vc))*exp(-a15/(Vc*Vc))) - 1.0;
-                d = Tr/(pr*Vd) * (1 + A/Vd + B/(Vd*Vd) + C/(Vd*Vd*Vd*Vd) + D/(Vd*Vd*Vd*Vd*Vd) + a13/(Tr*Tr*Tr*Vd*Vd)*(a14+a15/(Vd*Vd))*exp(-a15/(Vd*Vd))) - 1.0;
-                if (i<n) Ve = (Vc+Vd)/2;
-                else Ve = Vd-((Vd-Vc)*d)/(d-c);
-                e = Tr/(pr*Ve) * (1 + A/Ve + B/(Ve*Ve) + C/(Ve*Ve*Ve*Ve) + D/(Ve*Ve*Ve*Ve*Ve) + a13/(Tr*Tr*Tr*Ve*Ve)*(a14+a15/(Ve*Ve))*exp(-a15/(Ve*Ve))) - 1.0;
-                if(fabs(e)<1.0E-4) break;
-                if ((c*e)<0) Vd=Ve;
-                if ((d*e)<0) Vc=Ve;
-                i=-1.2*i;
-            }
+        {
+            c = Tr/(pr*Vc) * (1 + A/Vc + B/(Vc*Vc) + C/(Vc*Vc*Vc*Vc) + D/(Vc*Vc*Vc*Vc*Vc) + a13/(Tr*Tr*Tr*Vc*Vc)*(a14+a15/(Vc*Vc))*exp(-a15/(Vc*Vc))) - 1.0;
+            d = Tr/(pr*Vd) * (1 + A/Vd + B/(Vd*Vd) + C/(Vd*Vd*Vd*Vd) + D/(Vd*Vd*Vd*Vd*Vd) + a13/(Tr*Tr*Tr*Vd*Vd)*(a14+a15/(Vd*Vd))*exp(-a15/(Vd*Vd))) - 1.0;
+            if (i<n) Ve = (Vc+Vd)/2;
+            else Ve = Vd-((Vd-Vc)*d)/(d-c);
+            e = Tr/(pr*Ve) * (1 + A/Ve + B/(Ve*Ve) + C/(Ve*Ve*Ve*Ve) + D/(Ve*Ve*Ve*Ve*Ve) + a13/(Tr*Tr*Tr*Ve*Ve)*(a14+a15/(Ve*Ve))*exp(-a15/(Ve*Ve))) - 1.0;
+            if(fabs(e)<1.0E-4) break;
+            if ((c*e)<0) Vd=Ve;
+            if ((d*e)<0) Vc=Ve;
+            i=-1.2*i;
+        }
 
         V2=Ve;n2=n;
         if (T<=304.0 && ps>p) Vr=V2;
         else if (T>304.0) Vr=V2;
         /*    printf("%5e %5e %5e %5e %5e\n", p,test1,test2,Vtest1,Vtest2);*/
         if (e > 1.0E-4)
-            {
-                printf("Vorsicht: keine Loesung fuer Vr gefunden!!! \t p = %.2f bar T = %.2f K \n", p/1.0E5, T);
-            }
+        {
+            printf("Vorsicht: keine Loesung fuer Vr gefunden!!! \t p = %.2f bar T = %.2f K \n", p/1.0E5, T);
+        }
         return(Vr);
     }
 

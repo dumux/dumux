@@ -161,13 +161,13 @@ public:
             this->pW[i] = (*(this->u))[i][0];
             /* pc = -pw || pc = 0 for computing Sw */
             if (this->pW[i] >= 0)
-                {
-                    this->pC[i] = 0.0;
-                }
+            {
+                this->pC[i] = 0.0;
+            }
             else
-                {
-                    this->pC[i] = -this->pW[i];
-                }
+            {
+                this->pC[i] = -this->pW[i];
+            }
             //            satN[i] = (*(this->u))[i][1];
             //            satW[i] = 1 - satN[i];
             FieldVector<RT, dim> dummy (0);

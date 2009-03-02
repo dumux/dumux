@@ -173,25 +173,25 @@ public:
         s.precision(precision);
 
         for (int i=0; i<currentsize_; i++)
+        {
+            s << "FEM";    // start a new row
+            s << " ";      // space in front of each entry
+            s.width(4);    // set width for counter
+            s << i;        // number of first entry in a line
+            for (int j=0; j<currentsize_; j++)
             {
-                s << "FEM";    // start a new row
-                s << " ";      // space in front of each entry
-                s.width(4);    // set width for counter
-                s << i;        // number of first entry in a line
-                for (int j=0; j<currentsize_; j++)
-                    {
-                        s << " ";         // space in front of each entry
-                        s.width(width);   // set width for each entry anew
-                        s << mat(i,j);     // yeah, the number !
-                    }
                 s << " ";         // space in front of each entry
                 s.width(width);   // set width for each entry anew
-                s << rhs(i);
-                s << " ";         // space in front of each entry
-                s.width(width);   // set width for each entry anew
-                s << bc(i)[0];
-                s << std::endl;// start a new line
+                s << mat(i,j);     // yeah, the number !
             }
+            s << " ";         // space in front of each entry
+            s.width(width);   // set width for each entry anew
+            s << rhs(i);
+            s << " ";         // space in front of each entry
+            s.width(width);   // set width for each entry anew
+            s << bc(i)[0];
+            s << std::endl;// start a new line
+        }
 
 
         // reset the output format

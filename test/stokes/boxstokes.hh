@@ -126,86 +126,86 @@ public:
         // iterate through leaf grid an evaluate c0 at cell center
         Iterator eendit = gridview.template end<0>();
         for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
-            {
-                // get geometry type
-                Dune::GeometryType gt = it->geometry().type();
+        {
+            // get geometry type
+            Dune::GeometryType gt = it->geometry().type();
 
-                // get entity
-                const Element& entity = *it;
+            // get entity
+            const Element& entity = *it;
 
-                const typename Dune::LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::value_type&
-                    sfs=Dune::LagrangeShapeFunctions<Scalar,Scalar,dim>::general(gt, 1);
-                int size = sfs.size();
+            const typename Dune::LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::value_type&
+                sfs=Dune::LagrangeShapeFunctions<Scalar,Scalar,dim>::general(gt, 1);
+            int size = sfs.size();
 
-                IntersectionIterator is = IntersectionIteratorGetter<Grid,LeafTag>::end(entity);
+            IntersectionIterator is = IntersectionIteratorGetter<Grid,LeafTag>::end(entity);
 
-                for (int i = 0; i < size; i++) {
-                    // get cell center in reference element
-                    const Dune::FieldVector<Scalar,dim>&local = sfs[i].position();
+            for (int i = 0; i < size; i++) {
+                // get cell center in reference element
+                const Dune::FieldVector<Scalar,dim>&local = sfs[i].position();
 
-                    // get global coordinate of cell center
-                    Dune::FieldVector<Scalar,dimworld> global = it->geometry().global(local);
+                // get global coordinate of cell center
+                Dune::FieldVector<Scalar,dimworld> global = it->geometry().global(local);
 
-                    int globalId = vertexmapper.template map<dim>(entity, sfs[i].entity());
+                int globalId = vertexmapper.template map<dim>(entity, sfs[i].entity());
 
-                    for (int comp = 0; comp < dim; comp++)
-                        (*(this->u))[globalId][comp] = 0;//this->problem.velocity(global)[comp];
+                for (int comp = 0; comp < dim; comp++)
+                    (*(this->u))[globalId][comp] = 0;//this->problem.velocity(global)[comp];
 
-                    (*(this->u))[globalId][dim] = 0;
-                }
+                (*(this->u))[globalId][dim] = 0;
             }
+        }
         (*(this->u))[34][dim] = 0.75;
 
         // set Dirichlet boundary conditions
         for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
-            {
-                // get geometry type
-                Dune::GeometryType gt = it->geometry().type();
+        {
+            // get geometry type
+            Dune::GeometryType gt = it->geometry().type();
 
-                // get entity
-                const Element& entity = *it;
+            // get entity
+            const Element& entity = *it;
 
-                const typename Dune::LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::value_type&
-                    sfs=Dune::LagrangeShapeFunctions<Scalar,Scalar,dim>::general(gt, 1);
-                int size = sfs.size();
+            const typename Dune::LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::value_type&
+                sfs=Dune::LagrangeShapeFunctions<Scalar,Scalar,dim>::general(gt, 1);
+            int size = sfs.size();
 
-                // set type of boundary conditions
-                this->localJacobian().fvGeom.update(entity);
-                this->localJacobian().template assembleBC<LeafTag>(entity);
+            // set type of boundary conditions
+            this->localJacobian().fvGeom.update(entity);
+            this->localJacobian().template assembleBC<LeafTag>(entity);
 
-                IntersectionIterator endit = IntersectionIteratorGetter<Grid,LeafTag>::end(entity);
-                for (IntersectionIterator is = IntersectionIteratorGetter<Grid,LeafTag>::begin(entity);
-                     is!=endit; ++is)
-                    if (is->boundary())
-                        {
-                            for (int i = 0; i < size; i++)
-                                // handle subentities of this face
-                                for (int j = 0; j < ReferenceElements<Scalar,dim>::general(gt).size(is->numberInSelf(), 1, sfs[i].codim()); j++)
-                                    if (sfs[i].entity() == ReferenceElements<Scalar,dim>::general(gt).subEntity(is->numberInSelf(), 1, j, sfs[i].codim()))
-                                        {
-                                            if (this->localJacobian().bc(i)[1] == BoundaryConditions::dirichlet)
-                                                {
-                                                    // get cell center in reference element
-                                                    Dune::FieldVector<Scalar,dim> local = sfs[i].position();
+            IntersectionIterator endit = IntersectionIteratorGetter<Grid,LeafTag>::end(entity);
+            for (IntersectionIterator is = IntersectionIteratorGetter<Grid,LeafTag>::begin(entity);
+                 is!=endit; ++is)
+                if (is->boundary())
+                {
+                    for (int i = 0; i < size; i++)
+                        // handle subentities of this face
+                        for (int j = 0; j < ReferenceElements<Scalar,dim>::general(gt).size(is->numberInSelf(), 1, sfs[i].codim()); j++)
+                            if (sfs[i].entity() == ReferenceElements<Scalar,dim>::general(gt).subEntity(is->numberInSelf(), 1, j, sfs[i].codim()))
+                            {
+                                if (this->localJacobian().bc(i)[1] == BoundaryConditions::dirichlet)
+                                {
+                                    // get cell center in reference element
+                                    Dune::FieldVector<Scalar,dim> local = sfs[i].position();
 
-                                                    // get global coordinate of cell center
-                                                    Dune::FieldVector<Scalar,dimworld> global = it->geometry().global(local);
+                                    // get global coordinate of cell center
+                                    Dune::FieldVector<Scalar,dimworld> global = it->geometry().global(local);
 
-                                                    int globalId = vertexmapper.template map<dim>(entity, sfs[i].entity());
+                                    int globalId = vertexmapper.template map<dim>(entity, sfs[i].entity());
 
-                                                    BoundaryConditions::Flags bctype = this->problem.bctype(global, entity, is, local);
-                                                    if (bctype == BoundaryConditions::dirichlet) {
-                                                        FieldVector<Scalar,dim> dirichlet = this->problem.g(global, entity, is, local);
-                                                        for (int eq = 0; eq < dim; eq++)
-                                                            (*(this->u))[globalId][eq] = dirichlet[eq];
-                                                    }
-                                                    else {
-                                                        std::cout << global << " is considered to be a Neumann node." << std::endl;
-                                                    }
-                                                }
-                                        }
-                        }
-            }
+                                    BoundaryConditions::Flags bctype = this->problem.bctype(global, entity, is, local);
+                                    if (bctype == BoundaryConditions::dirichlet) {
+                                        FieldVector<Scalar,dim> dirichlet = this->problem.g(global, entity, is, local);
+                                        for (int eq = 0; eq < dim; eq++)
+                                            (*(this->u))[globalId][eq] = dirichlet[eq];
+                                    }
+                                    else {
+                                        std::cout << global << " is considered to be a Neumann node." << std::endl;
+                                    }
+                                }
+                            }
+                }
+        }
 
         *(this->uOldTimeStep) = *(this->u);
         return;

@@ -72,9 +72,9 @@ public:
         FieldVector<BoundaryConditions::Flags, m> values(Dune::BoundaryConditions::neumann);
 
         if(x[0] < 1e-10)
-            {
-                values = Dune::BoundaryConditions::dirichlet;
-            }
+        {
+            values = Dune::BoundaryConditions::dirichlet;
+        }
 
         //        if(x[1] < 1e-10)
         //        {
@@ -127,11 +127,11 @@ public:
 
         // negative values for injection
         if (x[1] > 1.0 && x[1] < 5.0)
-            {
-                values[pWIdx] = 0.0;
-                values[switchIdx] = -1e-5;
-                values[teIdx] = 0.0;
-            }
+        {
+            values[pWIdx] = 0.0;
+            values[switchIdx] = -1e-5;
+            values[teIdx] = 0.0;
+        }
 
         return values;
     }

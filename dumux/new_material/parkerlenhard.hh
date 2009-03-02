@@ -706,9 +706,9 @@ private:
         // PISC again.
         if (state.pisc()->next() == NULL ||
             state.pisc()->next()->Swe() < Swe)
-            {
-                return state.pisc();
-            }
+        {
+            return state.pisc();
+        }
 
         ScanningCurve *curve = state.csc()->next();
         while (true) {

@@ -60,22 +60,22 @@ public:
 
         if ((x[0] > innerLowerLeft_[0] && x[0] < innerUpperRight_[0])
             && (x[1] > innerLowerLeft_[1] && x[1] < innerUpperRight_[1]))
-            {
-                param[0] = 1-1/4.7;
-                param[1] = 4.7;
-                param[2] = 0.5;
-                param[3] = 1/3.;
-                param[4] = 0.0037;
-            }
+        {
+            param[0] = 1-1/4.7;
+            param[1] = 4.7;
+            param[2] = 0.5;
+            param[3] = 1/3.;
+            param[4] = 0.0037;
+        }
         else
-            {
-                param[0] = 1-1/7.3;
-                param[1] = 7.3;
-                param[2] = 1/2.;
-                param[3] = 1/3.;
-                param[4] = 0.00045;
+        {
+            param[0] = 1-1/7.3;
+            param[1] = 7.3;
+            param[2] = 1/2.;
+            param[3] = 1/3.;
+            param[4] = 0.00045;
 
-            }
+        }
 
         return param;
     }
@@ -87,10 +87,10 @@ public:
     {
         Kin_ = Kout_ = 0;
         for(int i = 0; i < dim; i++)
-            {
-                Kin_[i][i] = 1e-13;
-                Kout_[i][i] = 5e-10;
-            }
+        {
+            Kin_[i][i] = 1e-13;
+            Kout_[i][i] = 5e-10;
+        }
     }
 
     ~LensSoil()

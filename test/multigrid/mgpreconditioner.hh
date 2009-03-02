@@ -83,30 +83,30 @@ public:
 
         // create hierarchy
         for (int level = level0; level<=grid.maxLevel(); level++)
+        {
+            // allocate vectors and matrices
+            vHierarchy[level] = new Dune::LevelP1Function<G,field_type>(grid,level);
+            dHierarchy[level] = new Dune::LevelP1Function<G,field_type>(grid,level);
+            AHierarchy[level] = new Dune::LevelP1OperatorAssembler<G,field_type,m>(grid,level);
+
+            // assemble matrix
+            AHierarchy[level]->assemble(loc,*(vHierarchy[level]),*(dHierarchy[level]));
+
+            // assemble grid transfer operators
+            if (level>level0)
             {
-                // allocate vectors and matrices
-                vHierarchy[level] = new Dune::LevelP1Function<G,field_type>(grid,level);
-                dHierarchy[level] = new Dune::LevelP1Function<G,field_type>(grid,level);
-                AHierarchy[level] = new Dune::LevelP1OperatorAssembler<G,field_type,m>(grid,level);
-
-                // assemble matrix
-                AHierarchy[level]->assemble(loc,*(vHierarchy[level]),*(dHierarchy[level]));
-
-                // assemble grid transfer operators
-                if (level>level0)
-                    {
-                        pHierarchy[level] = new Dune::P1MGTransfer<G,field_type,m>(grid,level);
-                        pHierarchy[level]->assemble(loc);
-                    }
-
-                // create smoothers
-                if (level>level0)
-                    {
-                        presmoother[level] = new SeqSSOR<M,X,Y>(**AHierarchy[level],n1,1.0);
-                        postsmoother[level] = new SeqSSOR<M,X,Y>(**AHierarchy[level],n2,1.0);
-                        bpxsmoother[level] = new SeqJac<M,X,Y>(**AHierarchy[level],n1,1.0);
-                    }
+                pHierarchy[level] = new Dune::P1MGTransfer<G,field_type,m>(grid,level);
+                pHierarchy[level]->assemble(loc);
             }
+
+            // create smoothers
+            if (level>level0)
+            {
+                presmoother[level] = new SeqSSOR<M,X,Y>(**AHierarchy[level],n1,1.0);
+                postsmoother[level] = new SeqSSOR<M,X,Y>(**AHierarchy[level],n2,1.0);
+                bpxsmoother[level] = new SeqJac<M,X,Y>(**AHierarchy[level],n1,1.0);
+            }
+        }
         alloclevel = grid.maxLevel();
 
         // create the coarse grid solver objects
@@ -121,93 +121,93 @@ public:
 
         // transfer input defect to levels
         for (int level=level0; level<=grid.maxLevel(); level++)
+        {
+            // make a mapper for this level
+            LevelMapper levelmapper(grid,grid.levelIndexSet(level));
+
+            // allocate a flag vector to handle each vertex exactly once
+            std::vector<bool> treated(levelmapper.size(),false);
+
+            // traverse elements
+            for (ElementLevelIterator it = grid.template lbegin<0>(level);
+                 it!=grid.template lend<0>(level); ++it)
             {
-                // make a mapper for this level
-                LevelMapper levelmapper(grid,grid.levelIndexSet(level));
+                // need only consider leaf elements
+                if (!it->isLeaf()) continue;
 
-                // allocate a flag vector to handle each vertex exactly once
-                std::vector<bool> treated(levelmapper.size(),false);
+                // match level and leaf index for all vertices
+                for (int i=0; i<it->template count<n>(); i++)
+                {
+                    // compute index of vertex in level grid
+                    int levelindex = levelmapper.template map<n>(*it,i);
 
-                // traverse elements
-                for (ElementLevelIterator it = grid.template lbegin<0>(level);
-                     it!=grid.template lend<0>(level); ++it)
+                    // compute index of vertex in leaf grid
+                    int leafindex = leafmapper.template map<n>(*it,i);
+
+                    // handle each vertex only once
+                    if (treated[levelindex]) continue;
+                    treated[levelindex] = true;
+
+                    // on level 0 just copy
+                    if (level==level0)
                     {
-                        // need only consider leaf elements
-                        if (!it->isLeaf()) continue;
-
-                        // match level and leaf index for all vertices
-                        for (int i=0; i<it->template count<n>(); i++)
-                            {
-                                // compute index of vertex in level grid
-                                int levelindex = levelmapper.template map<n>(*it,i);
-
-                                // compute index of vertex in leaf grid
-                                int leafindex = leafmapper.template map<n>(*it,i);
-
-                                // handle each vertex only once
-                                if (treated[levelindex]) continue;
-                                treated[levelindex] = true;
-
-                                // on level 0 just copy
-                                if (level==level0)
-                                    {
-                                        leaftolevelmap[leafindex] = std::pair<int,int>(level,levelindex);
-                                        continue;
-                                    }
-
-                                // on higher levels consider the skip flags; THIS WORKS ONLY FOR  m=1 !!
-                                if (!pHierarchy[level]->skipFlag(0,levelindex))
-                                    //                     {
-                                    //                       // find entry
-                                    //                       for (typename PM::ColIterator cit=(**pHierarchy[level])[levelindex].begin();
-                                    //                            cit!=(**pHierarchy[level])[levelindex].end(); ++cit)
-                                    //                         if ( std::abs((*cit)[0][0]-1)<1E-6 && pHierarchy[level]->coarseSkipFlag(0,cit.index())==false )
-                                    //                           {
-                                    //                             std::cout << "Bingo: "
-                                    //                                       << " i_leaf=" << leafindex
-                                    //                                       << " i_fine=" << levelindex
-                                    //                                       << " i_coarse=" << cit.index()
-                                    //                                       << std::endl;
-                                    //                             // entries in leaf matrix
-                                    //                             for (typename Matrix::ConstColIterator lit=leafmat[leafindex].begin();
-                                    //                                  lit!=leafmat[leafindex].end(); ++lit)
-                                    //                               if (leaftolevelmap.find(lit.index())!=leaftolevelmap.end())
-                                    //                                 std::cout << "BingoBingo: "
-                                    //                                           << " i_leaf=" << leafindex
-                                    //                                           << " j_leaf=" << lit.index()
-                                    //                                           << " j_level=" << leaftolevelmap.find(lit.index())->second.first
-                                    //                                           << std::endl;
-                                    //                           }
-                                    //                     }
-                                    //                   else
-                                    {
-                                        if (leaftolevelmap.find(leafindex)!=leaftolevelmap.end())
-                                            {
-                                                std::cout << "leafindex alread in map: " << leafindex << " -> "
-                                                          << leaftolevelmap.find(leafindex)->second.first << ","
-                                                          << leaftolevelmap.find(leafindex)->second.second
-                                                          << std::endl;
-                                            }
-                                        leaftolevelmap[leafindex] = std::pair<int,int>(level,levelindex);
-                                    }
-                            }
+                        leaftolevelmap[leafindex] = std::pair<int,int>(level,levelindex);
+                        continue;
                     }
+
+                    // on higher levels consider the skip flags; THIS WORKS ONLY FOR  m=1 !!
+                    if (!pHierarchy[level]->skipFlag(0,levelindex))
+                        //                     {
+                        //                       // find entry
+                        //                       for (typename PM::ColIterator cit=(**pHierarchy[level])[levelindex].begin();
+                        //                            cit!=(**pHierarchy[level])[levelindex].end(); ++cit)
+                        //                         if ( std::abs((*cit)[0][0]-1)<1E-6 && pHierarchy[level]->coarseSkipFlag(0,cit.index())==false )
+                        //                           {
+                        //                             std::cout << "Bingo: "
+                        //                                       << " i_leaf=" << leafindex
+                        //                                       << " i_fine=" << levelindex
+                        //                                       << " i_coarse=" << cit.index()
+                        //                                       << std::endl;
+                        //                             // entries in leaf matrix
+                        //                             for (typename Matrix::ConstColIterator lit=leafmat[leafindex].begin();
+                        //                                  lit!=leafmat[leafindex].end(); ++lit)
+                        //                               if (leaftolevelmap.find(lit.index())!=leaftolevelmap.end())
+                        //                                 std::cout << "BingoBingo: "
+                        //                                           << " i_leaf=" << leafindex
+                        //                                           << " j_leaf=" << lit.index()
+                        //                                           << " j_level=" << leaftolevelmap.find(lit.index())->second.first
+                        //                                           << std::endl;
+                        //                           }
+                        //                     }
+                        //                   else
+                    {
+                        if (leaftolevelmap.find(leafindex)!=leaftolevelmap.end())
+                        {
+                            std::cout << "leafindex alread in map: " << leafindex << " -> "
+                                      << leaftolevelmap.find(leafindex)->second.first << ","
+                                      << leaftolevelmap.find(leafindex)->second.second
+                                      << std::endl;
+                        }
+                        leaftolevelmap[leafindex] = std::pair<int,int>(level,levelindex);
+                    }
+                }
             }
+        }
     }
 
     ~SeqP1GeomMG ()
     {
         // destroy hierarchy
         for (int level = level0; level<=alloclevel; level++)
-            {
-                delete AHierarchy[level];
-                delete vHierarchy[level];
-                delete dHierarchy[level];
-                if (level>level0) delete pHierarchy[level];
-                if (level>level0) delete presmoother[level];
-                if (level>level0) delete postsmoother[level];
-                if (level>level0) delete bpxsmoother[level];
-            }
+        {
+            delete AHierarchy[level];
+            delete vHierarchy[level];
+            delete dHierarchy[level];
+            if (level>level0) delete pHierarchy[level];
+            if (level>level0) delete presmoother[level];
+            if (level>level0) delete postsmoother[level];
+            if (level>level0) delete bpxsmoother[level];
+        }
         delete op0;
         delete prec0;
         delete solver0;
@@ -221,11 +221,11 @@ public:
     virtual void pre (X& x, Y& b)
     {
         for (int level = level0+1; level<=grid.maxLevel(); level++)
-            {
-                presmoother[level]->pre(**vHierarchy[level],**dHierarchy[level]);
-                postsmoother[level]->pre(**vHierarchy[level],**dHierarchy[level]);
-                bpxsmoother[level]->pre(**vHierarchy[level],**dHierarchy[level]);
-            }
+        {
+            presmoother[level]->pre(**vHierarchy[level],**dHierarchy[level]);
+            postsmoother[level]->pre(**vHierarchy[level],**dHierarchy[level]);
+            bpxsmoother[level]->pre(**vHierarchy[level],**dHierarchy[level]);
+        }
     }
 
     /*!
@@ -237,10 +237,10 @@ public:
     {
         // clear defect and solution on all levels
         for (int level=level0; level<=grid.maxLevel(); level++)
-            {
-                **vHierarchy[level] = 0;
-                **dHierarchy[level] = 0;
-            }
+        {
+            **vHierarchy[level] = 0;
+            **dHierarchy[level] = 0;
+        }
 
         // transfer input defect to levels
         for (LeafToLevelMap::iterator i=leaftolevelmap.begin(); i!=leaftolevelmap.end(); ++i)
@@ -265,11 +265,11 @@ public:
     virtual void post (X& x)
     {
         for (int level = level0+1; level<=grid.maxLevel(); level++)
-            {
-                presmoother[level]->post(**vHierarchy[level]);
-                postsmoother[level]->post(**vHierarchy[level]);
-                bpxsmoother[level]->post(**vHierarchy[level]);
-            }
+        {
+            presmoother[level]->post(**vHierarchy[level]);
+            postsmoother[level]->post(**vHierarchy[level]);
+            bpxsmoother[level]->post(**vHierarchy[level]);
+        }
     }
 
 private:
@@ -277,62 +277,62 @@ private:
     void mgc (int level)
     {
         if (level==level0)
-            {
-                // coarse grid solve
-                InverseOperatorResult r;
-                solver0->apply(**vHierarchy[level],**dHierarchy[level],r);
-            }
+        {
+            // coarse grid solve
+            InverseOperatorResult r;
+            solver0->apply(**vHierarchy[level],**dHierarchy[level],r);
+        }
         else
-            {
-                // pre smoothing
-                presmoother[level]->apply(**vHierarchy[level],**dHierarchy[level]);
+        {
+            // pre smoothing
+            presmoother[level]->apply(**vHierarchy[level],**dHierarchy[level]);
 
-                // recompute defect in a copy
-                Y d(**dHierarchy[level]);
-                (**AHierarchy[level]).mmv(**vHierarchy[level],d);
+            // recompute defect in a copy
+            Y d(**dHierarchy[level]);
+            (**AHierarchy[level]).mmv(**vHierarchy[level],d);
 
-                // restrict defect; coarse defect has been cleared, update is OK
-                (**pHierarchy[level]).umtv(d,**dHierarchy[level-1]);
+            // restrict defect; coarse defect has been cleared, update is OK
+            (**pHierarchy[level]).umtv(d,**dHierarchy[level-1]);
 
-                // recursive call; coarse grid solution has already been cleard in apply
-                mgc(level-1);
+            // recursive call; coarse grid solution has already been cleard in apply
+            mgc(level-1);
 
-                // prolongate correction; fine correction has been cleared above
-                (**pHierarchy[level]).umv(**vHierarchy[level-1],**vHierarchy[level]);
+            // prolongate correction; fine correction has been cleared above
+            (**pHierarchy[level]).umv(**vHierarchy[level-1],**vHierarchy[level]);
 
-                // fix dirichlet nodes to interpolated value
-                for (int i=0; i<(**vHierarchy[level]).size(); ++i)
-                    if (pHierarchy[level]->skipFlag(0,i))
-                        (**dHierarchy[level])[i] = (**vHierarchy[level])[i];
+            // fix dirichlet nodes to interpolated value
+            for (int i=0; i<(**vHierarchy[level]).size(); ++i)
+                if (pHierarchy[level]->skipFlag(0,i))
+                    (**dHierarchy[level])[i] = (**vHierarchy[level])[i];
 
-                // post smoothing
-                postsmoother[level]->apply(**vHierarchy[level],**dHierarchy[level]);
-            }
+            // post smoothing
+            postsmoother[level]->apply(**vHierarchy[level],**dHierarchy[level]);
+        }
     }
 
     // the multigrid cycle
     void bpx (int level)
     {
         if (level==level0)
-            {
-                // coarse grid solve
-                InverseOperatorResult r;
-                solver0->apply(**(vHierarchy)[level],**(dHierarchy)[level],r);
-            }
+        {
+            // coarse grid solve
+            InverseOperatorResult r;
+            solver0->apply(**(vHierarchy)[level],**(dHierarchy)[level],r);
+        }
         else
-            {
-                // restrict defect; coarse defect has been cleared, update is OK
-                (**pHierarchy[level]).umtv(**dHierarchy[level],**dHierarchy[level-1]);
+        {
+            // restrict defect; coarse defect has been cleared, update is OK
+            (**pHierarchy[level]).umtv(**dHierarchy[level],**dHierarchy[level-1]);
 
-                // smoothing
-                bpxsmoother[level]->apply(**vHierarchy[level],**dHierarchy[level]);
+            // smoothing
+            bpxsmoother[level]->apply(**vHierarchy[level],**dHierarchy[level]);
 
-                // recursive call; coarse grid solution has already cleared been cleard in apply
-                bpx(level-1);
+            // recursive call; coarse grid solution has already cleared been cleard in apply
+            bpx(level-1);
 
-                // prolongate correction; fine correction has been cleared above
-                (**pHierarchy[level]).umv(**vHierarchy[level-1],**vHierarchy[level]);
-            }
+            // prolongate correction; fine correction has been cleared above
+            (**pHierarchy[level]).umv(**vHierarchy[level-1],**vHierarchy[level]);
+        }
     }
 
     // parameters

@@ -41,39 +41,39 @@ public:
         else asymptotic=0;
 
         if (asymptotic) /* use pc_VanG = 1/alpha/pow(Se,1/(n-1)) */
+        {
+            if (Se>epsPC)
+                return(1.0/(alpha*pow(Se,1.0/(n-1))));
+            else /* regularize with tangent */
             {
-                if (Se>epsPC)
-                    return(1.0/(alpha*pow(Se,1.0/(n-1))));
-                else /* regularize with tangent */
-                    {
-                        pc  = 1.0/(alpha*pow(epsPC,1.0/(n-1)));
-                        pc_prime = 1.0/(pow(epsPC,n/(n-1))*alpha*(1-n)*(1-Swr-Snr));
-                        return((Se-epsPC)*pc_prime+pc);
-                    }
+                pc  = 1.0/(alpha*pow(epsPC,1.0/(n-1)));
+                pc_prime = 1.0/(pow(epsPC,n/(n-1))*alpha*(1-n)*(1-Swr-Snr));
+                return((Se-epsPC)*pc_prime+pc);
             }
+        }
         else
-            {    /* use correct van Genuchten curve */
-                if (Se>epsPC && Se<1-epsPC)
-                    {
-                        r = pow(Se,-1/m);
-                        x = r-1;
-                        vgM = 1-m;
-                        x = pow(x,vgM);
-                        r = x/alpha;
-                        return(r);
-                    }
-                else
-                    {
-                        /* value and derivative at regularization point */
-                        if (Se<=epsPC) Se_regu = epsPC; else Se_regu = 1-epsPC;
-                        pc       = pow(pow(Se_regu,-1/m)-1,1/n)/alpha;
-                        pc_prime = pow(pow(Se_regu,-1/m)-1,1/n-1)*pow(Se_regu,-1/m-1)*(-1/m)/alpha/(1-Snr-Swr);
-
-                        /* evaluate tangential */
-                        r        = (Se-Se_regu)*pc_prime+pc;
-                        return(r);
-                    }
+        {    /* use correct van Genuchten curve */
+            if (Se>epsPC && Se<1-epsPC)
+            {
+                r = pow(Se,-1/m);
+                x = r-1;
+                vgM = 1-m;
+                x = pow(x,vgM);
+                r = x/alpha;
+                return(r);
             }
+            else
+            {
+                /* value and derivative at regularization point */
+                if (Se<=epsPC) Se_regu = epsPC; else Se_regu = 1-epsPC;
+                pc       = pow(pow(Se_regu,-1/m)-1,1/n)/alpha;
+                pc_prime = pow(pow(Se_regu,-1/m)-1,1/n-1)*pow(Se_regu,-1/m-1)*(-1/m)/alpha/(1-Snr-Swr);
+
+                /* evaluate tangential */
+                r        = (Se-Se_regu)*pc_prime+pc;
+                return(r);
+            }
+        }
     }
 
     double pC (double saturationW, const FieldVector<double, 4>& parameters)
@@ -103,39 +103,39 @@ public:
         else asymptotic=0;
 
         if (asymptotic) /* use pc_VanG = 1/alpha/pow(Se,1/(n-1)) */
+        {
+            if (Se>epsPC)
+                return(1.0/(alpha*pow(Se,1.0/(vgN-1))));
+            else /* regularize with tangent */
             {
-                if (Se>epsPC)
-                    return(1.0/(alpha*pow(Se,1.0/(vgN-1))));
-                else /* regularize with tangent */
-                    {
-                        pc       = 1.0/(alpha*pow(epsPC,1.0/(vgN-1)));
-                        pc_prime = 1.0/(pow(epsPC,vgN/(vgN-1))*alpha*(1-vgN)*(1-Swr-Snr));
-                        return((Se-epsPC)*pc_prime+pc);
-                    }
+                pc       = 1.0/(alpha*pow(epsPC,1.0/(vgN-1)));
+                pc_prime = 1.0/(pow(epsPC,vgN/(vgN-1))*alpha*(1-vgN)*(1-Swr-Snr));
+                return((Se-epsPC)*pc_prime+pc);
             }
+        }
         else
-            {    /* use correct van Genuchten curve */
-                if (Se>epsPC && Se<1-epsPC)
-                    {
-                        r = pow(Se,-1/vgM);
-                        x = r-1;
-                        vgM = 1-vgM;
-                        x = pow(x,vgM);
-                        r = x/alpha;
-                        return(r);
-                    }
-                else
-                    {
-                        /* value and derivative at regularization point */
-                        if (Se<=epsPC) Se_regu = epsPC; else Se_regu = 1-epsPC;
-                        pc       = pow(pow(Se_regu,-1/vgM)-1,1/vgN)/alpha;
-                        pc_prime = pow(pow(Se_regu,-1/vgM)-1,1/vgN-1)*pow(Se_regu,-1/vgM-1)*(-1/vgM)/alpha/(1-Snr-Swr);
-
-                        /* evaluate tangential */
-                        r        = (Se-Se_regu)*pc_prime+pc;
-                        return(r);
-                    }
+        {    /* use correct van Genuchten curve */
+            if (Se>epsPC && Se<1-epsPC)
+            {
+                r = pow(Se,-1/vgM);
+                x = r-1;
+                vgM = 1-vgM;
+                x = pow(x,vgM);
+                r = x/alpha;
+                return(r);
             }
+            else
+            {
+                /* value and derivative at regularization point */
+                if (Se<=epsPC) Se_regu = epsPC; else Se_regu = 1-epsPC;
+                pc       = pow(pow(Se_regu,-1/vgM)-1,1/vgN)/alpha;
+                pc_prime = pow(pow(Se_regu,-1/vgM)-1,1/vgN-1)*pow(Se_regu,-1/vgM-1)*(-1/vgM)/alpha/(1-Snr-Swr);
+
+                /* evaluate tangential */
+                r        = (Se-Se_regu)*pc_prime+pc;
+                return(r);
+            }
+        }
     }
 
     double dPdS (double saturationW, double T=283.15, double p=1e5)

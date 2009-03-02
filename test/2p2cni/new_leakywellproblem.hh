@@ -308,18 +308,18 @@ public:
             globalPos[0] >  500 - 1e-3 ||
             globalPos[1] < -500 + 1e-3 ||
             globalPos[1] >  500 - 1e-3)
-            {
-                values = BoundaryConditions::dirichlet;
-            }
+        {
+            values = BoundaryConditions::dirichlet;
+        }
 
         if ((globalPos[0]+100.0)*(globalPos[0]+100.0) + globalPos[1]*globalPos[1] < 0.267 &&
             globalPos[2] < 31.0 &&
             globalPos[2] > -1.0)
-            {
-                values[pressureIdx] = BoundaryConditions::neumann;
-                values[switchIdx] = BoundaryConditions::neumann;
-                values[temperatureIdx] = BoundaryConditions::dirichlet;
-            }
+        {
+            values[pressureIdx] = BoundaryConditions::neumann;
+            values[switchIdx] = BoundaryConditions::neumann;
+            values[temperatureIdx] = BoundaryConditions::dirichlet;
+        }
     }
 
     /////////////////////////////
@@ -362,9 +362,9 @@ public:
              &&
              globalPos[2] < 31.0 &&
              globalPos[2] > -1.0)
-            {
-                values[switchIdx] = -0.27802;
-            }
+        {
+            values[switchIdx] = -0.27802;
+        }
     }
 
     /////////////////////////////

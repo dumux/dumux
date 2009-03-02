@@ -246,158 +246,158 @@ template<class Grid, class Scalar, class VC> void FVDiffusion<Grid, Scalar, VC>:
 
             // handle interior face
             if (isIt->neighbor())
+            {
+                // access neighbor
+                ElementPointer neighborPointer = isIt->outside();
+                int globalIdxJ = elementMapper.map(*neighborPointer);
+
+                // compute factor in neighbor
+                GeometryType neighborGT = neighborPointer->geometry().type();
+                const LocalPosition& localPosNeighbor = ReferenceElements<Scalar,dim>::general(neighborGT).position(0,0);
+
+                // neighbor cell center in global coordinates
+                const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().global(localPosNeighbor);
+
+                // distance vector between barycenters
+                FieldVector<Scalar,dimWorld>
+                    distVec = globalPos - globalPosNeighbor;
+
+                // compute distance between cell centers
+                Scalar dist = distVec.two_norm();
+
+                // get absolute permeability
+                FieldMatrix Kj(this->diffProblem.soil().K(globalPosNeighbor, *neighborPointer, localPosNeighbor));
+
+                // compute vectorized permeabilities
+                FieldVector<Scalar,dim> Knj(0);
+                Kj.umv(unitOuterNormal, Knj);
+                Scalar K_n_i = Kni * unitOuterNormal;
+                Scalar K_n_j = Knj * unitOuterNormal;
+                Scalar Kn = 2 * K_n_i * K_n_j / (K_n_i + K_n_j);
+                // compute permeability tangential to intersection and take arithmetic mean
+                FieldVector<Scalar,dim> uON = unitOuterNormal;
+                FieldVector<Scalar,dim> K_t_i = Kni - (uON *= K_n_i);
+                uON = unitOuterNormal;
+                FieldVector<Scalar,dim> K_t_j = Knj - (uON *= K_n_j);
+                FieldVector<Scalar,dim> Kt = (K_t_i += K_t_j);
+                Kt *= 0.5;
+                // Build vectorized averaged permeability
+                uON = unitOuterNormal;
+                FieldVector<Scalar,dim> K = (Kt += (uON *=Kn));
+
+                //compute total mobility
+                Scalar lambdaJ, fractionalWJ;
+                Scalar satJ = this->diffProblem.variables.saturation[globalIdxJ];
+
+                lambdaJ = this->diffProblem.materialLaw().mobTotal(satJ,globalPosNeighbor, *neighborPointer, localPosNeighbor);
+                if (hasGravity)
+                    fractionalWJ = this->diffProblem.materialLaw().fractionalW(satJ,globalPosNeighbor, *neighborPointer, localPosNeighbor);
+
+                // compute averaged total mobility
+                // CAREFUL: Harmonic weightig can generate zero matrix entries,
+                // use arithmetic weighting instead:
+                Scalar fractionalW;
+                Scalar lambda = 0.5*(lambdaI + lambdaJ);
+                if (hasGravity)
+                    fractionalW = 0.5*(fractionalWI + fractionalWJ);
+
+                // update diagonal entry
+                Scalar entry = fabs(lambda*faceVol*(K*distVec)/(dist*dist));
+                A[globalIdxI][globalIdxI] += entry;
+
+                // set off-diagonal entry
+                A[globalIdxI][globalIdxJ] = -entry;
+
+                if (hasGravity) {
+                    Scalar factor = fractionalW*(this->diffProblem.wettingPhase.density())
+                        + (1 - fractionalW)*(this->diffProblem.nonWettingPhase.density());
+                    f[globalIdxI] -= factor*lambda*faceVol*(K*gravity);
+                }
+
+                if (this->diffProblem.capillarity) {
+                    // calculate saturation gradient
+                    FieldVector<Scalar,dim> satGradient = distVec;
+                    satGradient *= (satJ - satI)/(dist*dist);
+
+                    // arithmetic average of the permeability
+                    K = ((Kni + Knj) *= 0.5);
+
+                    // capillary pressure w.r.t. saturation
+                    Scalar pCI = this->diffProblem.materialLaw().pC(satI,globalPos, *eIt, localPos);
+                    Scalar pCJ = this->diffProblem.materialLaw().pC(satJ,globalPosNeighbor, *neighborPointer, localPosNeighbor);
+
+                    // mobility of the nonwetting phase
+                    Scalar lambdaN = 0.5*(this->diffProblem.materialLaw().mobN(1 - satI,globalPos, *eIt, localPos)
+                                          + this->diffProblem.materialLaw().mobN(1 - satJ,globalPosNeighbor, *neighborPointer, localPosNeighbor));
+
+                    // calculate capillary pressure gradient
+                    FieldVector<Scalar,dim> pCGradient = distVec;
+                    pCGradient *= -(pCJ - pCI)/(dist*dist);
+
+                    f[globalIdxI] += lambdaN*faceVol*(K*pCGradient);
+                }
+            }
+            // boundary face
+            else
+            {
+                // center of face in global coordinates
+                const GlobalPosition& globalPosFace = isIt->intersectionGlobal().global(faceLocal);
+
+                // compute total mobility
+                Scalar fractionalW = 1.;
+                Scalar lambda = lambdaI;
+                if (hasGravity) fractionalW = fractionalWI;
+
+                //get boundary condition for boundary face center
+                BoundaryConditions::Flags bctype = this->diffProblem.bctypePress(globalPosFace, *eIt, localPosFace);
+                if (bctype == BoundaryConditions::dirichlet)
                 {
-                    // access neighbor
-                    ElementPointer neighborPointer = isIt->outside();
-                    int globalIdxJ = elementMapper.map(*neighborPointer);
-
-                    // compute factor in neighbor
-                    GeometryType neighborGT = neighborPointer->geometry().type();
-                    const LocalPosition& localPosNeighbor = ReferenceElements<Scalar,dim>::general(neighborGT).position(0,0);
-
-                    // neighbor cell center in global coordinates
-                    const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().global(localPosNeighbor);
-
-                    // distance vector between barycenters
-                    FieldVector<Scalar,dimWorld>
-                        distVec = globalPos - globalPosNeighbor;
-
-                    // compute distance between cell centers
+                    FieldVector<Scalar,dimWorld> distVec(globalPos - globalPosFace);
                     Scalar dist = distVec.two_norm();
-
-                    // get absolute permeability
-                    FieldMatrix Kj(this->diffProblem.soil().K(globalPosNeighbor, *neighborPointer, localPosNeighbor));
-
-                    // compute vectorized permeabilities
-                    FieldVector<Scalar,dim> Knj(0);
-                    Kj.umv(unitOuterNormal, Knj);
-                    Scalar K_n_i = Kni * unitOuterNormal;
-                    Scalar K_n_j = Knj * unitOuterNormal;
-                    Scalar Kn = 2 * K_n_i * K_n_j / (K_n_i + K_n_j);
-                    // compute permeability tangential to intersection and take arithmetic mean
-                    FieldVector<Scalar,dim> uON = unitOuterNormal;
-                    FieldVector<Scalar,dim> K_t_i = Kni - (uON *= K_n_i);
-                    uON = unitOuterNormal;
-                    FieldVector<Scalar,dim> K_t_j = Knj - (uON *= K_n_j);
-                    FieldVector<Scalar,dim> Kt = (K_t_i += K_t_j);
-                    Kt *= 0.5;
-                    // Build vectorized averaged permeability
-                    uON = unitOuterNormal;
-                    FieldVector<Scalar,dim> K = (Kt += (uON *=Kn));
-
-                    //compute total mobility
-                    Scalar lambdaJ, fractionalWJ;
-                    Scalar satJ = this->diffProblem.variables.saturation[globalIdxJ];
-
-                    lambdaJ = this->diffProblem.materialLaw().mobTotal(satJ,globalPosNeighbor, *neighborPointer, localPosNeighbor);
-                    if (hasGravity)
-                        fractionalWJ = this->diffProblem.materialLaw().fractionalW(satJ,globalPosNeighbor, *neighborPointer, localPosNeighbor);
-
-                    // compute averaged total mobility
-                    // CAREFUL: Harmonic weightig can generate zero matrix entries,
-                    // use arithmetic weighting instead:
-                    Scalar fractionalW;
-                    Scalar lambda = 0.5*(lambdaI + lambdaJ);
-                    if (hasGravity)
-                        fractionalW = 0.5*(fractionalWI + fractionalWJ);
-
-                    // update diagonal entry
-                    Scalar entry = fabs(lambda*faceVol*(K*distVec)/(dist*dist));
-                    A[globalIdxI][globalIdxI] += entry;
-
-                    // set off-diagonal entry
-                    A[globalIdxI][globalIdxJ] = -entry;
+                    A[globalIdxI][globalIdxI] -= lambda*faceVol*(Kni*distVec)/(dist*dist);
+                    Scalar g = this->diffProblem.dirichletPress(globalPosFace, *eIt, localPosFace);
+                    f[globalIdxI] -= lambda*faceVol*g*(Kni*distVec)/(dist*dist);
 
                     if (hasGravity) {
                         Scalar factor = fractionalW*(this->diffProblem.wettingPhase.density())
                             + (1 - fractionalW)*(this->diffProblem.nonWettingPhase.density());
-                        f[globalIdxI] -= factor*lambda*faceVol*(K*gravity);
+                        f[globalIdxI] -= factor*lambda*faceVol*(Kni*gravity);
                     }
-
                     if (this->diffProblem.capillarity) {
+                        Scalar satJ = this->diffProblem.dirichletSat(globalPosFace, *eIt, localPosFace);
+
+                        // distance vector between barycenters
+                        FieldVector<Scalar,dimWorld>
+                            distVec = globalPos - globalPosFace;
+
+                        // compute distance between cell centers
+                        Scalar dist = distVec.two_norm();
+
                         // calculate saturation gradient
                         FieldVector<Scalar,dim> satGradient = distVec;
                         satGradient *= (satJ - satI)/(dist*dist);
 
-                        // arithmetic average of the permeability
-                        K = ((Kni + Knj) *= 0.5);
-
                         // capillary pressure w.r.t. saturation
                         Scalar pCI = this->diffProblem.materialLaw().pC(satI,globalPos, *eIt, localPos);
-                        Scalar pCJ = this->diffProblem.materialLaw().pC(satJ,globalPosNeighbor, *neighborPointer, localPosNeighbor);
+                        Scalar pCJ = this->diffProblem.materialLaw().pC(satJ,globalPosFace, *eIt, localPosFace);
 
                         // mobility of the nonwetting phase
                         Scalar lambdaN = 0.5*(this->diffProblem.materialLaw().mobN(1 - satI,globalPos, *eIt, localPos)
-                                              + this->diffProblem.materialLaw().mobN(1 - satJ,globalPosNeighbor, *neighborPointer, localPosNeighbor));
+                                              + this->diffProblem.materialLaw().mobN(1 - satJ,globalPosFace, *eIt, localPosFace));
 
                         // calculate capillary pressure gradient
                         FieldVector<Scalar,dim> pCGradient = distVec;
                         pCGradient *= -(pCJ - pCI)/(dist*dist);
 
-                        f[globalIdxI] += lambdaN*faceVol*(K*pCGradient);
+                        f[globalIdxI] += lambdaN*faceVol*(Kni*pCGradient);
                     }
                 }
-            // boundary face
-            else
+                else
                 {
-                    // center of face in global coordinates
-                    const GlobalPosition& globalPosFace = isIt->intersectionGlobal().global(faceLocal);
-
-                    // compute total mobility
-                    Scalar fractionalW = 1.;
-                    Scalar lambda = lambdaI;
-                    if (hasGravity) fractionalW = fractionalWI;
-
-                    //get boundary condition for boundary face center
-                    BoundaryConditions::Flags bctype = this->diffProblem.bctypePress(globalPosFace, *eIt, localPosFace);
-                    if (bctype == BoundaryConditions::dirichlet)
-                        {
-                            FieldVector<Scalar,dimWorld> distVec(globalPos - globalPosFace);
-                            Scalar dist = distVec.two_norm();
-                            A[globalIdxI][globalIdxI] -= lambda*faceVol*(Kni*distVec)/(dist*dist);
-                            Scalar g = this->diffProblem.dirichletPress(globalPosFace, *eIt, localPosFace);
-                            f[globalIdxI] -= lambda*faceVol*g*(Kni*distVec)/(dist*dist);
-
-                            if (hasGravity) {
-                                Scalar factor = fractionalW*(this->diffProblem.wettingPhase.density())
-                                    + (1 - fractionalW)*(this->diffProblem.nonWettingPhase.density());
-                                f[globalIdxI] -= factor*lambda*faceVol*(Kni*gravity);
-                            }
-                            if (this->diffProblem.capillarity) {
-                                Scalar satJ = this->diffProblem.dirichletSat(globalPosFace, *eIt, localPosFace);
-
-                                // distance vector between barycenters
-                                FieldVector<Scalar,dimWorld>
-                                    distVec = globalPos - globalPosFace;
-
-                                // compute distance between cell centers
-                                Scalar dist = distVec.two_norm();
-
-                                // calculate saturation gradient
-                                FieldVector<Scalar,dim> satGradient = distVec;
-                                satGradient *= (satJ - satI)/(dist*dist);
-
-                                // capillary pressure w.r.t. saturation
-                                Scalar pCI = this->diffProblem.materialLaw().pC(satI,globalPos, *eIt, localPos);
-                                Scalar pCJ = this->diffProblem.materialLaw().pC(satJ,globalPosFace, *eIt, localPosFace);
-
-                                // mobility of the nonwetting phase
-                                Scalar lambdaN = 0.5*(this->diffProblem.materialLaw().mobN(1 - satI,globalPos, *eIt, localPos)
-                                                      + this->diffProblem.materialLaw().mobN(1 - satJ,globalPosFace, *eIt, localPosFace));
-
-                                // calculate capillary pressure gradient
-                                FieldVector<Scalar,dim> pCGradient = distVec;
-                                pCGradient *= -(pCJ - pCI)/(dist*dist);
-
-                                f[globalIdxI] += lambdaN*faceVol*(Kni*pCGradient);
-                            }
-                        }
-                    else
-                        {
-                            Scalar J = this->diffProblem.neumannPress(globalPosFace, *eIt, localPosFace);
-                            f[globalIdxI] -= faceVol*J;
-                        }
+                    Scalar J = this->diffProblem.neumannPress(globalPosFace, *eIt, localPosFace);
+                    f[globalIdxI] -= faceVol*J;
                 }
+            }
         }
         // end all intersections
     } // end grid traversal

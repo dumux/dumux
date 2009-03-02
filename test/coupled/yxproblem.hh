@@ -83,28 +83,28 @@ public:
         if (globalPos[0] > 1 - eps_)
             return result;
         else
-            {
-                // ASSUMING face-wise constant normal
-                FieldVector<Scalar, dim-1> localDimM1(0);
-                FieldVector<Scalar,dim> normal = intersectionIt->unitOuterNormal(localDimM1);
+        {
+            // ASSUMING face-wise constant normal
+            FieldVector<Scalar, dim-1> localDimM1(0);
+            FieldVector<Scalar,dim> normal = intersectionIt->unitOuterNormal(localDimM1);
 
-                FieldVector<Scalar,dim> pN = normal;
-                pN *= pressure(globalPos);
+            FieldVector<Scalar,dim> pN = normal;
+            pN *= pressure(globalPos);
 
-                FieldVector<Scalar,dim> muGradVN(0);
-                velocityGradient(globalPos).umv(normal, muGradVN);
-                muGradVN *= mu(globalPos, element, localPos);
+            FieldVector<Scalar,dim> muGradVN(0);
+            velocityGradient(globalPos).umv(normal, muGradVN);
+            muGradVN *= mu(globalPos, element, localPos);
 
-                //          Scalar muGradVNN = muGradVN*normal;
+            //          Scalar muGradVNN = muGradVN*normal;
 
-                result = muGradVN;
-                //          result = normal;
-                //          muGradVN.umv(normal, result);
-                //          result *= muGradVN;
-                result -= pN;
+            result = muGradVN;
+            //          result = normal;
+            //          muGradVN.umv(normal, result);
+            //          result *= muGradVN;
+            result -= pN;
 
-                return result;
-            }
+            return result;
+        }
     }
 
     //! evaluate Beavers-Joseph proportionality constant at given position

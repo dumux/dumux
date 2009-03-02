@@ -150,29 +150,29 @@ public:
     void vtkoutMultiLevel(const char* name, int k, int pressureLevel = 0, int satLevel = 0) const
     {
         if (pressureLevel == satLevel)
-            {
-                VTKWriter<typename Grid::LeafGridView> vtkwriter(grid.leafView());
-                char fname[128];
-                sprintf(fname, "%s-%05d", name, k);
-                vtkwriter.addCellData(saturation, "saturation");
-                vtkwriter.addCellData(pressure, "total pressure p~");
-                vtkwriter.write(fname, VTKOptions::ascii);
-            }
+        {
+            VTKWriter<typename Grid::LeafGridView> vtkwriter(grid.leafView());
+            char fname[128];
+            sprintf(fname, "%s-%05d", name, k);
+            vtkwriter.addCellData(saturation, "saturation");
+            vtkwriter.addCellData(pressure, "total pressure p~");
+            vtkwriter.write(fname, VTKOptions::ascii);
+        }
         else
-            {
-                Dune::VTKWriter<typename Grid::LevelGridView>
-                    vtkwriterpressure(grid.levelView(pressureLevel));
-                char fname[128];
-                sprintf(fname, "%s-press%05d", name, k);
-                vtkwriterpressure.addCellData(pressure, "total pressure p~");
-                vtkwriterpressure.write(fname, Dune::VTKOptions::ascii);
+        {
+            Dune::VTKWriter<typename Grid::LevelGridView>
+                vtkwriterpressure(grid.levelView(pressureLevel));
+            char fname[128];
+            sprintf(fname, "%s-press%05d", name, k);
+            vtkwriterpressure.addCellData(pressure, "total pressure p~");
+            vtkwriterpressure.write(fname, Dune::VTKOptions::ascii);
 
-                Dune::VTKWriter<typename Grid::LevelGridView>
-                    vtkwritersaturation(grid.levelView(satLevel));
-                sprintf(fname, "%s-%05d", name, k);
-                vtkwritersaturation.addCellData(saturation, "saturation");
-                vtkwritersaturation.write(fname, VTKOptions::ascii);
-            }
+            Dune::VTKWriter<typename Grid::LevelGridView>
+                vtkwritersaturation(grid.levelView(satLevel));
+            sprintf(fname, "%s-%05d", name, k);
+            vtkwritersaturation.addCellData(saturation, "saturation");
+            vtkwritersaturation.write(fname, VTKOptions::ascii);
+        }
         return;
     }
 
@@ -182,10 +182,10 @@ public:
         ScalarVectorType error(transSize);
 
         for (int i=0; i<transSize; i++)
-            {
-                saturationEx[i] = uEx[i][0];
-                error[i]=uEx[i][1];
-            }
+        {
+            saturationEx[i] = uEx[i][0];
+            error[i]=uEx[i][1];
+        }
         VTKWriter<typename Grid::LeafGridView> vtkwriter(grid.leafView());
         char fname[128];
         sprintf(fname, "%s-%05d", name, k);

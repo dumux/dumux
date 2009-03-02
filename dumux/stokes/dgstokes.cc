@@ -22,106 +22,106 @@ void DGFiniteElementMethod<G,v_order,p_order>::assembleVolumeTerm(Entity& ent, L
     //  #warning fixed quadrature order
     int qord=8;
     for (unsigned int nqp=0;nqp<Dune::QuadratureRules<ctype,dim>::rule(gt,qord).size();++nqp)
+    {
+        //local position of quad points
+        const Dune::FieldVector<ctype,dim> & quad_point_loc = Dune::QuadratureRules<ctype,dim>::rule(gt,qord)[nqp].position();
+        //global position
+        Dune::FieldVector<ctype,dim> quad_point_glob = ent.geometry().global(quad_point_loc);
+        // calculate inv jacobian
+        InverseJacobianMatrix inv_jac=ent.geometry().jacobianInverseTransposed(quad_point_loc);
+        // quadrature weight
+        double quad_wt=Dune::QuadratureRules<ctype,dim>::rule(gt,qord)[nqp].weight();
+        // get the determinant jacobian
+        ctype detjac=ent.geometry().integrationElement(quad_point_loc);
+
+        ctype rhsval[dim+1];
+
+
+        //================================================//
+        // source term: TERM:14 : f* v
+        // TERM 1 : \int (mu*grad_u*grad_v)
+        //================================================//
+        // dim velocity comps.
+        for(int dm=1;dm<=dim;++dm)
         {
-            //local position of quad points
-            const Dune::FieldVector<ctype,dim> & quad_point_loc = Dune::QuadratureRules<ctype,dim>::rule(gt,qord)[nqp].position();
-            //global position
-            Dune::FieldVector<ctype,dim> quad_point_glob = ent.geometry().global(quad_point_loc);
-            // calculate inv jacobian
-            InverseJacobianMatrix inv_jac=ent.geometry().jacobianInverseTransposed(quad_point_loc);
-            // quadrature weight
-            double quad_wt=Dune::QuadratureRules<ctype,dim>::rule(gt,qord)[nqp].weight();
-            // get the determinant jacobian
-            ctype detjac=ent.geometry().integrationElement(quad_point_loc);
+            for (int i=0;i<vsfs.size();++i)
+            {
+                //space dimension-sd
+                for (int sd=0; sd<dim; sd++)
+                    temp[sd] = vsfs[i].evaluateDerivative(0,sd,quad_point_loc);
+                grad_phi_ei[dm-1] = 0;
+                //matrix vect multiplication
+                // transform gradient to global coordinates by multiplying with inverse jacobian
+                inv_jac.umv(temp,grad_phi_ei[dm-1]);
+                int ii=(dm-1)*vsfs.size()+i;
+                // get the rhs value
+                rhsval[dm-1] = (problem_.q(quad_point_glob, ent, quad_point_loc))[dm-1];
+                Be[ii]+=rhsval[dm-1]*vsfs[i].evaluateFunction(0,quad_point_loc)*detjac*quad_wt;
+                for (int j=0;j<vsfs.size();++j)
+                {
+                    for (int sd=0; sd<dim; sd++)//space dimension -sd
+                        temp[sd] = vsfs[j].evaluateDerivative(0,sd,quad_point_loc);
+                    grad_phi_ej[dm-1] = 0;
+                    inv_jac.umv(temp,grad_phi_ej[dm-1]);
+                    int jj=(dm-1)*vsfs.size()+j;
+                    entry =parameter.mu*(grad_phi_ei[dm-1]*grad_phi_ej[dm-1])*detjac*quad_wt;
+                    Aee[ii][jj]+=entry;
 
-            ctype rhsval[dim+1];
+                }
+            }
+        }
+        //================================================//
+        // -  p * div v
+        //================================================//
+        for(int dm=1;dm<=dim;++dm)
+        {
+            for (int i=0;i<vsfs.size();++i)
+            {
+                int ii=(dm-1)*vsfs.size()+i;
+                for (int sd=0; sd<dim; sd++)//space dimension -sd
+                    temp[sd] = vsfs[i].evaluateDerivative(0,sd,quad_point_loc);
+                grad_phi_ei[dm-1] = 0;
+                inv_jac.umv(temp,grad_phi_ei[dm-1]);
+                for (int j=0;j<psfs.size();++j) // pressure shapefns
+                {
+                    int jj=vdof+j;
+                    psi_ej=psfs[j].evaluateFunction(0,quad_point_loc);
+                    entry =-(grad_phi_ei[dm-1][dm-1]*psi_ej)*detjac*quad_wt;
+                    Aee[ii][jj]+=entry;
+                }
+            }
+        }
 
 
-            //================================================//
-            // source term: TERM:14 : f* v
-            // TERM 1 : \int (mu*grad_u*grad_v)
-            //================================================//
-            // dim velocity comps.
+
+        //================================================//
+        //      -  q* div u
+        //================================================//
+
+        for (int i=0;i<psfs.size();++i) // pressure shapefns
+        {
+            int ii=vdof+i;
+            psi_ei=psfs[i].evaluateFunction(0,quad_point_loc);
             for(int dm=1;dm<=dim;++dm)
+            {
+                for (int j=0;j<vsfs.size();++j)
                 {
-                    for (int i=0;i<vsfs.size();++i)
-                        {
-                            //space dimension-sd
-                            for (int sd=0; sd<dim; sd++)
-                                temp[sd] = vsfs[i].evaluateDerivative(0,sd,quad_point_loc);
-                            grad_phi_ei[dm-1] = 0;
-                            //matrix vect multiplication
-                            // transform gradient to global coordinates by multiplying with inverse jacobian
-                            inv_jac.umv(temp,grad_phi_ei[dm-1]);
-                            int ii=(dm-1)*vsfs.size()+i;
-                            // get the rhs value
-                            rhsval[dm-1] = (problem_.q(quad_point_glob, ent, quad_point_loc))[dm-1];
-                            Be[ii]+=rhsval[dm-1]*vsfs[i].evaluateFunction(0,quad_point_loc)*detjac*quad_wt;
-                            for (int j=0;j<vsfs.size();++j)
-                                {
-                                    for (int sd=0; sd<dim; sd++)//space dimension -sd
-                                        temp[sd] = vsfs[j].evaluateDerivative(0,sd,quad_point_loc);
-                                    grad_phi_ej[dm-1] = 0;
-                                    inv_jac.umv(temp,grad_phi_ej[dm-1]);
-                                    int jj=(dm-1)*vsfs.size()+j;
-                                    entry =parameter.mu*(grad_phi_ei[dm-1]*grad_phi_ej[dm-1])*detjac*quad_wt;
-                                    Aee[ii][jj]+=entry;
-
-                                }
-                        }
+                    int jj=(dm-1)*vsfs.size()+j;
+                    for (int sd=0; sd<dim; sd++)//space dimension -sd
+                        temp[sd] = vsfs[j].evaluateDerivative(0,sd,quad_point_loc);
+                    grad_phi_ej[dm-1] = 0;
+                    inv_jac.umv(temp,grad_phi_ej[dm-1]);
+                    entry =-(grad_phi_ej[dm-1][dm-1]*psi_ei)*detjac*quad_wt;
+                    Aee[ii][jj]+=entry;
                 }
-            //================================================//
-            // -  p * div v
-            //================================================//
-            for(int dm=1;dm<=dim;++dm)
-                {
-                    for (int i=0;i<vsfs.size();++i)
-                        {
-                            int ii=(dm-1)*vsfs.size()+i;
-                            for (int sd=0; sd<dim; sd++)//space dimension -sd
-                                temp[sd] = vsfs[i].evaluateDerivative(0,sd,quad_point_loc);
-                            grad_phi_ei[dm-1] = 0;
-                            inv_jac.umv(temp,grad_phi_ei[dm-1]);
-                            for (int j=0;j<psfs.size();++j) // pressure shapefns
-                                {
-                                    int jj=vdof+j;
-                                    psi_ej=psfs[j].evaluateFunction(0,quad_point_loc);
-                                    entry =-(grad_phi_ei[dm-1][dm-1]*psi_ej)*detjac*quad_wt;
-                                    Aee[ii][jj]+=entry;
-                                }
-                        }
-                }
+            }
+        }
 
 
 
-            //================================================//
-            //      -  q* div u
-            //================================================//
+        //================================================//
 
-            for (int i=0;i<psfs.size();++i) // pressure shapefns
-                {
-                    int ii=vdof+i;
-                    psi_ei=psfs[i].evaluateFunction(0,quad_point_loc);
-                    for(int dm=1;dm<=dim;++dm)
-                        {
-                            for (int j=0;j<vsfs.size();++j)
-                                {
-                                    int jj=(dm-1)*vsfs.size()+j;
-                                    for (int sd=0; sd<dim; sd++)//space dimension -sd
-                                        temp[sd] = vsfs[j].evaluateDerivative(0,sd,quad_point_loc);
-                                    grad_phi_ej[dm-1] = 0;
-                                    inv_jac.umv(temp,grad_phi_ej[dm-1]);
-                                    entry =-(grad_phi_ej[dm-1][dm-1]*psi_ei)*detjac*quad_wt;
-                                    Aee[ii][jj]+=entry;
-                                }
-                        }
-                }
-
-
-
-            //================================================//
-
-        } // end of volume term quadrature
+    } // end of volume term quadrature
     //printmatrix(std::cout,Aee,"Matrix A: ","row");
     //printvector(std::cout,Be,"Volume Be: ","row");
 }// end of assemble volume term
@@ -159,252 +159,252 @@ void DGFiniteElementMethod<G,v_order,p_order>::assembleFaceTerm(Entity& ent, Int
 
 
     for (unsigned int qedg=0; qedg<Dune::QuadratureRules<ctype,dim-1>::rule(gtface,qord).size(); ++qedg)
+    {
+        //quadrature position on the edge/face in local=facelocal
+        //note that this is dim entity
+        const Dune::FieldVector<ctype,dim-1>& local = Dune::QuadratureRules<ctype,dim-1>::rule(gtface,qord)[qedg].position();
+        Dune:: FieldVector<ctype,dim> face_self_local = isit->intersectionSelfLocal().global(local);
+        Dune:: FieldVector<ctype,dim> face_neighbor_local = isit->intersectionNeighborLocal().global(local);
+
+        Dune::FieldVector<ctype,dim> global = isit->intersectionGlobal().global(local);
+        //std::cout<<"local: "<<local<<" face_self_local: "<<face_self_local
+        //<<"  face_neighbor_local: "<<face_neighbor_local<<"  glob: "<<global<<std::endl;
+        // calculating the inverse jacobian
+        InverseJacobianMatrix inv_jac= ent.geometry().jacobianInverseTransposed(face_self_local);
+        // get quadrature weight
+        ctype quad_wt_face = Dune::QuadratureRules<ctype,dim-1>::rule(gtface,qord)[qedg].weight();
+        ctype detjacface = isit->intersectionGlobal().integrationElement(local);
+        // get the face normal: unit normal.
+        Dune::FieldVector<ctype,dim> normal = isit->unitOuterNormal(local);
+        ctype norm_e= isit->intersectionGlobal().integrationElement(local);
+
+
+
+        //================================================//
+        // term to be evaluated : TERM:2
+        //- \mu \int average(\nabla u). normal . jump(v)
+        //================================================//
+        // diagonal block
+        // -mu* 0.5 * grad_phi_ei * normal* phi_ej
+        for(int dm=1;dm<=dim;++dm)
         {
-            //quadrature position on the edge/face in local=facelocal
-            //note that this is dim entity
-            const Dune::FieldVector<ctype,dim-1>& local = Dune::QuadratureRules<ctype,dim-1>::rule(gtface,qord)[qedg].position();
-            Dune:: FieldVector<ctype,dim> face_self_local = isit->intersectionSelfLocal().global(local);
-            Dune:: FieldVector<ctype,dim> face_neighbor_local = isit->intersectionNeighborLocal().global(local);
+            for (int i=0;i<vsfs.size();++i)
+            {
+                int ii=(dm-1)*vsfs.size()+i;
+                phi_ei[dm-1] = vsfs[i].evaluateFunction(0,face_self_local);
+                for (int j=0;j<vsfs.size();++j)
+                {
+                    int jj=(dm-1)*vsfs.size()+j;
+                    for (int sd=0; sd<dim; sd++)
+                        temp[sd] = vsfs[j].evaluateDerivative(0,sd,face_self_local);
+                    grad_phi_ej[dm-1] = 0;
+                    // transform gradient to global ooordinates by multiplying with inverse jacobian
+                    inv_jac.umv(temp,grad_phi_ej[dm-1]);
+                    entry =-0.5 * parameter.mu * ((grad_phi_ej[dm-1]*normal)*phi_ei[dm-1])*detjacface*quad_wt_face;
+                    //Aee.add(ii,jj,entry);
+                    Aee[ii][jj]+=entry;
+                }
+            }
+        }
+        // offdiagonal entry
+        // mu* 0.5 * grad_phi_ei * normal* phi_fj
+        for(int dm=1;dm<=dim;++dm)
+        {
+            for (int i=0;i<nbvsfs.size();++i)
+            {
+                int ii=(dm-1)*nbvsfs.size()+i;
+                phi_fi[dm-1] = nbvsfs[i].evaluateFunction(0,face_neighbor_local);
+                for (int j=0;j<vsfs.size();++j)
+                {
+                    int jj=(dm-1)*vsfs.size()+j;
+                    for (int sd=0; sd<dim; sd++)
+                        temp[sd] = vsfs[j].evaluateDerivative(0,sd,face_self_local);
+                    grad_phi_ej[dm-1] = 0;
+                    inv_jac.umv(temp,grad_phi_ej[dm-1]);
+                    entry =  0.5*parameter.mu*((grad_phi_ej[dm-1]*normal)*phi_fi[dm-1])*detjacface*quad_wt_face;
+                    //Afe.add(ii,jj,entry);
+                    Afe[ii][jj]+=entry;
+                }
+            }
+        }
+        //================================================//
+        // term to be evaluated TERM:4
+        // \mu \parameter.epsilon .\int average(\nabla v). normal . jump(u)
+        //================================================//
+        // diagonal term
+        // mu* 0.5 * parameter.epsilon* phi_ei * grad_phi_ej* normal
+        for(int dm=1;dm<=dim;++dm)
+        {
+            for (int i=0;i<vsfs.size();++i)
+            {
+                int ii=(dm-1)*vsfs.size()+i;
+                for (int sd=0; sd<dim; sd++)
+                    temp[sd] = vsfs[i].evaluateDerivative(0,sd,face_self_local);
+                grad_phi_ei[dm-1] = 0;
+                inv_jac.umv(temp,grad_phi_ei[dm-1]);
+                for (int j=0;j<vsfs.size();++j)
+                {
+                    int jj=(dm-1)*vsfs.size()+j;
+                    phi_ej[dm-1] = vsfs[j].evaluateFunction(0,face_self_local);
+                    entry=  0.5*parameter.mu*parameter.epsilon*(phi_ej[dm-1]*(grad_phi_ei[dm-1]*normal))*detjacface*quad_wt_face;
+                    Aee[ii][jj]+=entry;
+                }
+            }
+        }
+        // offdiagonal block
+        // -mu* 0.5 * parameter.epsilon * grad_phi_ej * normal* phi_fi
+        for(int dm=1;dm<=dim;++dm)
+        {
+            for (int i=0;i<vsfs.size();++i)
+            {
+                int ii=(dm-1)*vsfs.size()+i;
+                for (int sd=0; sd<dim; sd++)
+                    temp[sd] = vsfs[i].evaluateDerivative(0,sd,face_self_local);
+                grad_phi_ei[dm-1] = 0;
+                inv_jac.umv(temp,grad_phi_ei[dm-1]);
+                // note test fns are now from neighbor element
+                for (int j=0;j<nbvsfs.size();++j)
+                {
+                    int jj=(dm-1)*nbvsfs.size()+j;
+                    phi_fj[dm-1] = nbvsfs[j].evaluateFunction(0,face_neighbor_local);
+                    entry =-0.5*parameter.mu*parameter.epsilon*( phi_fj[dm-1]*(grad_phi_ei[dm-1]*normal))*detjacface*quad_wt_face;
+                    Aef[ii][jj]+=entry;
+                }
+            }
+        }
 
-            Dune::FieldVector<ctype,dim> global = isit->intersectionGlobal().global(local);
-            //std::cout<<"local: "<<local<<" face_self_local: "<<face_self_local
-            //<<"  face_neighbor_local: "<<face_neighbor_local<<"  glob: "<<global<<std::endl;
-            // calculating the inverse jacobian
-            InverseJacobianMatrix inv_jac= ent.geometry().jacobianInverseTransposed(face_self_local);
-            // get quadrature weight
-            ctype quad_wt_face = Dune::QuadratureRules<ctype,dim-1>::rule(gtface,qord)[qedg].weight();
-            ctype detjacface = isit->intersectionGlobal().integrationElement(local);
-            // get the face normal: unit normal.
-            Dune::FieldVector<ctype,dim> normal = isit->unitOuterNormal(local);
-            ctype norm_e= isit->intersectionGlobal().integrationElement(local);
+        //================================================//
+        // term to be evaluated TERM:6
+        //  term J0 =  \mu. (\parameter.sigma/norm(e)). jump(u). jump (v)
+        //================================================//
+        // Diagonalblock :
+        // \mu. (\parameter.sigma/abs(e)).\int phi_ie. phi_je  where abs(e) =  norm (e) ???
+        for(int dm=1;dm<=dim;++dm)
+        {
+            for (int i=0;i<vsfs.size();++i)
+            {
+                int ii=(dm-1)*vsfs.size()+i;
+                phi_ei[dm-1] = vsfs[i].evaluateFunction(0,face_self_local);
+                for (int j=0;j<vsfs.size();++j)
+                {
+                    int jj=(dm-1)*vsfs.size()+j;
+                    phi_ej[dm-1] = vsfs[j].evaluateFunction(0,face_self_local);
+                    entry=parameter.mu*(parameter.sigma/norm_e)*phi_ei[dm-1]*phi_ej[dm-1]*detjacface*quad_wt_face;
+                    Aee[ii][jj]+=entry;
+                }
+            }
+        }
+        // offdiagonal block
+        //- mu*(parameter.sigma/norm_e)*phi_ei*phi_fj*detjacface*quad_wt_face;
+        for(int dm=1;dm<=dim;++dm)
+        {
+            for (int i=0;i<vsfs.size();++i)
+            {
+                phi_ei[dm-1] = vsfs[i].evaluateFunction(0,face_self_local);
+                int ii=(dm-1)*vsfs.size()+i;
+                for (int j=0;j<nbvsfs.size();++j) // neighbor basis
+                {
+                    int jj=(dm-1)*nbvsfs.size()+j;
+                    phi_fj[dm-1] = nbvsfs[j].evaluateFunction(0,face_neighbor_local);
+                    entry=-parameter.mu*(parameter.sigma/norm_e)*phi_ei[dm-1]*phi_fj[dm-1]*detjacface*quad_wt_face;
+                    Aef[ii][jj]+=entry;
+                }
+            }
+        }
+        //================================================//
+        // term to be evaluated TERM:9
+        //edge  term from B(v,p)
+        // term \int average(p). jump(v).normal
+        //================================================//
+        //diagonal block
+        // term==  0.5 * psi_ei. phi_ej* normal
+        for(int dm=1;dm<=dim;++dm)
+        {
+            for (int i=0;i<vsfs.size();++i)
+            {
+                int ii=(dm-1)*vsfs.size()+i;
+                phi_ei[dm-1] = vsfs[i].evaluateFunction(0,face_self_local);
+                for (int j=0;j<psfs.size();++j)
+                {
+                    int jj=vdof+j;
+                    psi_ej = psfs[j].evaluateFunction(0,face_self_local);
+                    entry =0.5*(phi_ei[dm-1]*psi_ej*normal[dm-1])*detjacface*quad_wt_face;
+                    Aee[ii][jj]+=entry;
+                }
+            }
+        }
+
+        //offdiagonal block
+        // term==  -0.5 * psi_ei. phi_fj* normal
+        for(int dm=1;dm<=dim;++dm)
+        {
+            for (int i=0;i<nbvsfs.size();++i)
+            {
+                int ii=(dm-1)*nbvsfs.size()+i;
+                phi_fi[dm-1] = nbvsfs[i].evaluateFunction(0,face_neighbor_local);
+                for (int j=0;j<psfs.size();++j)
+                {
+                    int jj=vdof+j;
+                    psi_ej = psfs[j].evaluateFunction(0,face_self_local);
+                    entry = -0.5*(phi_fi[dm-1]*psi_ej*normal[dm-1])*detjacface*quad_wt_face;
+                    Afe[ii][jj]+=entry;
+                }
+            }
+        }
 
 
+        //================================================//
+        // term to be evaluated TERM:12
+        //edge  term from B(q,u)
+        // term \int average(q). jump(u).normal
+        // TERM:12
+        //================================================//
+        //diagonal block
+        // term==  0.5 * psi_ej. phi_ei* normal
 
-            //================================================//
-            // term to be evaluated : TERM:2
-            //- \mu \int average(\nabla u). normal . jump(v)
-            //================================================//
-            // diagonal block
-            // -mu* 0.5 * grad_phi_ei * normal* phi_ej
+        for (int i=0;i<psfs.size();++i)
+        {
+            int ii=vdof+i;
+            psi_ei = psfs[i].evaluateFunction(0,face_self_local);
             for(int dm=1;dm<=dim;++dm)
+            {
+                for (int j=0;j<vsfs.size();++j)
                 {
-                    for (int i=0;i<vsfs.size();++i)
-                        {
-                            int ii=(dm-1)*vsfs.size()+i;
-                            phi_ei[dm-1] = vsfs[i].evaluateFunction(0,face_self_local);
-                            for (int j=0;j<vsfs.size();++j)
-                                {
-                                    int jj=(dm-1)*vsfs.size()+j;
-                                    for (int sd=0; sd<dim; sd++)
-                                        temp[sd] = vsfs[j].evaluateDerivative(0,sd,face_self_local);
-                                    grad_phi_ej[dm-1] = 0;
-                                    // transform gradient to global ooordinates by multiplying with inverse jacobian
-                                    inv_jac.umv(temp,grad_phi_ej[dm-1]);
-                                    entry =-0.5 * parameter.mu * ((grad_phi_ej[dm-1]*normal)*phi_ei[dm-1])*detjacface*quad_wt_face;
-                                    //Aee.add(ii,jj,entry);
-                                    Aee[ii][jj]+=entry;
-                                }
-                        }
+                    int jj=(dm-1)*vsfs.size()+j;
+                    phi_ej[dm-1] = vsfs[j].evaluateFunction(0,face_self_local);
+                    entry =0.5*(phi_ej[dm-1]*psi_ei*normal[dm-1])*detjacface*quad_wt_face;
+                    Aee[ii][jj]+=entry;
                 }
-            // offdiagonal entry
-            // mu* 0.5 * grad_phi_ei * normal* phi_fj
+            }
+        }
+
+        //offdiagonal block
+        // term==  -0.5 * psi_ej. phi_fi* normal
+
+
+        for (int i=0;i<psfs.size();++i)
+        {
+            int ii=vdof+i;
+            psi_ei = psfs[i].evaluateFunction(0,face_self_local);
             for(int dm=1;dm<=dim;++dm)
+            {
+                for (int j=0;j<nbvsfs.size();++j) // neighbor
                 {
-                    for (int i=0;i<nbvsfs.size();++i)
-                        {
-                            int ii=(dm-1)*nbvsfs.size()+i;
-                            phi_fi[dm-1] = nbvsfs[i].evaluateFunction(0,face_neighbor_local);
-                            for (int j=0;j<vsfs.size();++j)
-                                {
-                                    int jj=(dm-1)*vsfs.size()+j;
-                                    for (int sd=0; sd<dim; sd++)
-                                        temp[sd] = vsfs[j].evaluateDerivative(0,sd,face_self_local);
-                                    grad_phi_ej[dm-1] = 0;
-                                    inv_jac.umv(temp,grad_phi_ej[dm-1]);
-                                    entry =  0.5*parameter.mu*((grad_phi_ej[dm-1]*normal)*phi_fi[dm-1])*detjacface*quad_wt_face;
-                                    //Afe.add(ii,jj,entry);
-                                    Afe[ii][jj]+=entry;
-                                }
-                        }
+                    phi_fj[dm-1] = nbvsfs[j].evaluateFunction(0,face_neighbor_local);
+                    int jj=(dm-1)*nbvsfs.size()+j;
+                    entry = -0.5*(phi_fj[dm-1]*psi_ei*normal[dm-1])*detjacface*quad_wt_face;
+                    Aef[ii][jj]+=entry;
                 }
-            //================================================//
-            // term to be evaluated TERM:4
-            // \mu \parameter.epsilon .\int average(\nabla v). normal . jump(u)
-            //================================================//
-            // diagonal term
-            // mu* 0.5 * parameter.epsilon* phi_ei * grad_phi_ej* normal
-            for(int dm=1;dm<=dim;++dm)
-                {
-                    for (int i=0;i<vsfs.size();++i)
-                        {
-                            int ii=(dm-1)*vsfs.size()+i;
-                            for (int sd=0; sd<dim; sd++)
-                                temp[sd] = vsfs[i].evaluateDerivative(0,sd,face_self_local);
-                            grad_phi_ei[dm-1] = 0;
-                            inv_jac.umv(temp,grad_phi_ei[dm-1]);
-                            for (int j=0;j<vsfs.size();++j)
-                                {
-                                    int jj=(dm-1)*vsfs.size()+j;
-                                    phi_ej[dm-1] = vsfs[j].evaluateFunction(0,face_self_local);
-                                    entry=  0.5*parameter.mu*parameter.epsilon*(phi_ej[dm-1]*(grad_phi_ei[dm-1]*normal))*detjacface*quad_wt_face;
-                                    Aee[ii][jj]+=entry;
-                                }
-                        }
-                }
-            // offdiagonal block
-            // -mu* 0.5 * parameter.epsilon * grad_phi_ej * normal* phi_fi
-            for(int dm=1;dm<=dim;++dm)
-                {
-                    for (int i=0;i<vsfs.size();++i)
-                        {
-                            int ii=(dm-1)*vsfs.size()+i;
-                            for (int sd=0; sd<dim; sd++)
-                                temp[sd] = vsfs[i].evaluateDerivative(0,sd,face_self_local);
-                            grad_phi_ei[dm-1] = 0;
-                            inv_jac.umv(temp,grad_phi_ei[dm-1]);
-                            // note test fns are now from neighbor element
-                            for (int j=0;j<nbvsfs.size();++j)
-                                {
-                                    int jj=(dm-1)*nbvsfs.size()+j;
-                                    phi_fj[dm-1] = nbvsfs[j].evaluateFunction(0,face_neighbor_local);
-                                    entry =-0.5*parameter.mu*parameter.epsilon*( phi_fj[dm-1]*(grad_phi_ei[dm-1]*normal))*detjacface*quad_wt_face;
-                                    Aef[ii][jj]+=entry;
-                                }
-                        }
-                }
+            }
+        }
 
-            //================================================//
-            // term to be evaluated TERM:6
-            //  term J0 =  \mu. (\parameter.sigma/norm(e)). jump(u). jump (v)
-            //================================================//
-            // Diagonalblock :
-            // \mu. (\parameter.sigma/abs(e)).\int phi_ie. phi_je  where abs(e) =  norm (e) ???
-            for(int dm=1;dm<=dim;++dm)
-                {
-                    for (int i=0;i<vsfs.size();++i)
-                        {
-                            int ii=(dm-1)*vsfs.size()+i;
-                            phi_ei[dm-1] = vsfs[i].evaluateFunction(0,face_self_local);
-                            for (int j=0;j<vsfs.size();++j)
-                                {
-                                    int jj=(dm-1)*vsfs.size()+j;
-                                    phi_ej[dm-1] = vsfs[j].evaluateFunction(0,face_self_local);
-                                    entry=parameter.mu*(parameter.sigma/norm_e)*phi_ei[dm-1]*phi_ej[dm-1]*detjacface*quad_wt_face;
-                                    Aee[ii][jj]+=entry;
-                                }
-                        }
-                }
-            // offdiagonal block
-            //- mu*(parameter.sigma/norm_e)*phi_ei*phi_fj*detjacface*quad_wt_face;
-            for(int dm=1;dm<=dim;++dm)
-                {
-                    for (int i=0;i<vsfs.size();++i)
-                        {
-                            phi_ei[dm-1] = vsfs[i].evaluateFunction(0,face_self_local);
-                            int ii=(dm-1)*vsfs.size()+i;
-                            for (int j=0;j<nbvsfs.size();++j) // neighbor basis
-                                {
-                                    int jj=(dm-1)*nbvsfs.size()+j;
-                                    phi_fj[dm-1] = nbvsfs[j].evaluateFunction(0,face_neighbor_local);
-                                    entry=-parameter.mu*(parameter.sigma/norm_e)*phi_ei[dm-1]*phi_fj[dm-1]*detjacface*quad_wt_face;
-                                    Aef[ii][jj]+=entry;
-                                }
-                        }
-                }
-            //================================================//
-            // term to be evaluated TERM:9
-            //edge  term from B(v,p)
-            // term \int average(p). jump(v).normal
-            //================================================//
-            //diagonal block
-            // term==  0.5 * psi_ei. phi_ej* normal
-            for(int dm=1;dm<=dim;++dm)
-                {
-                    for (int i=0;i<vsfs.size();++i)
-                        {
-                            int ii=(dm-1)*vsfs.size()+i;
-                            phi_ei[dm-1] = vsfs[i].evaluateFunction(0,face_self_local);
-                            for (int j=0;j<psfs.size();++j)
-                                {
-                                    int jj=vdof+j;
-                                    psi_ej = psfs[j].evaluateFunction(0,face_self_local);
-                                    entry =0.5*(phi_ei[dm-1]*psi_ej*normal[dm-1])*detjacface*quad_wt_face;
-                                    Aee[ii][jj]+=entry;
-                                }
-                        }
-                }
+        //================================================//
 
-            //offdiagonal block
-            // term==  -0.5 * psi_ei. phi_fj* normal
-            for(int dm=1;dm<=dim;++dm)
-                {
-                    for (int i=0;i<nbvsfs.size();++i)
-                        {
-                            int ii=(dm-1)*nbvsfs.size()+i;
-                            phi_fi[dm-1] = nbvsfs[i].evaluateFunction(0,face_neighbor_local);
-                            for (int j=0;j<psfs.size();++j)
-                                {
-                                    int jj=vdof+j;
-                                    psi_ej = psfs[j].evaluateFunction(0,face_self_local);
-                                    entry = -0.5*(phi_fi[dm-1]*psi_ej*normal[dm-1])*detjacface*quad_wt_face;
-                                    Afe[ii][jj]+=entry;
-                                }
-                        }
-                }
+    }// end of assemble face quadrature loop
 
-
-            //================================================//
-            // term to be evaluated TERM:12
-            //edge  term from B(q,u)
-            // term \int average(q). jump(u).normal
-            // TERM:12
-            //================================================//
-            //diagonal block
-            // term==  0.5 * psi_ej. phi_ei* normal
-
-            for (int i=0;i<psfs.size();++i)
-                {
-                    int ii=vdof+i;
-                    psi_ei = psfs[i].evaluateFunction(0,face_self_local);
-                    for(int dm=1;dm<=dim;++dm)
-                        {
-                            for (int j=0;j<vsfs.size();++j)
-                                {
-                                    int jj=(dm-1)*vsfs.size()+j;
-                                    phi_ej[dm-1] = vsfs[j].evaluateFunction(0,face_self_local);
-                                    entry =0.5*(phi_ej[dm-1]*psi_ei*normal[dm-1])*detjacface*quad_wt_face;
-                                    Aee[ii][jj]+=entry;
-                                }
-                        }
-                }
-
-            //offdiagonal block
-            // term==  -0.5 * psi_ej. phi_fi* normal
-
-
-            for (int i=0;i<psfs.size();++i)
-                {
-                    int ii=vdof+i;
-                    psi_ei = psfs[i].evaluateFunction(0,face_self_local);
-                    for(int dm=1;dm<=dim;++dm)
-                        {
-                            for (int j=0;j<nbvsfs.size();++j) // neighbor
-                                {
-                                    phi_fj[dm-1] = nbvsfs[j].evaluateFunction(0,face_neighbor_local);
-                                    int jj=(dm-1)*nbvsfs.size()+j;
-                                    entry = -0.5*(phi_fj[dm-1]*psi_ei*normal[dm-1])*detjacface*quad_wt_face;
-                                    Aef[ii][jj]+=entry;
-                                }
-                        }
-                }
-
-            //================================================//
-
-        }// end of assemble face quadrature loop
-
-    //  printmatrix(std::cout,Aee,"Matrix Aee: ","row");
-    //   printmatrix(std::cout,Aef,"Matrix Aef: ","row");
-    //   printmatrix(std::cout,Afe,"Matrix Afe: ","row");
+     //  printmatrix(std::cout,Aee,"Matrix Aee: ","row");
+     //   printmatrix(std::cout,Aef,"Matrix Aef: ","row");
+     //   printmatrix(std::cout,Afe,"Matrix Afe: ","row");
 
 
 }// end of assemble face term
@@ -437,180 +437,180 @@ void DGFiniteElementMethod<G,v_order,p_order>::assembleDirichletBoundaryTerm(Ent
     //specify the quadrature order ?
     int qord=8;
     for(unsigned int bq=0;bq<Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord).size();++bq)
+    {
+        const Dune::FieldVector<ctype,dim-1>& boundlocal = Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord)[bq].position();
+        Dune:: FieldVector<ctype,dim> blocal = isit->intersectionSelfLocal().global(boundlocal);
+        const Dune::FieldVector<ctype,dim> bglobal = isit->intersectionGlobal().global(boundlocal);
+        ctype norm_eb=isit->intersectionGlobal().integrationElement(boundlocal);
+        // calculating the inverse jacobian
+        InverseJacobianMatrix inv_jac= ent.geometry().jacobianInverseTransposed(blocal);
+        // get quadrature weight
+        ctype quad_wt_bound = Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord)[bq].weight();
+        ctype detjacbound = isit->intersectionGlobal().integrationElement(boundlocal);
+        // get the boundary normal
+        Dune::FieldVector<ctype,dim> boundnormal = isit->unitOuterNormal(boundlocal);
+        // velocity boundary condition
+        // dirichlet boundary
+        for(int i=0;i<dim;++i)
+            dirichlet[i] = (problem_.g(bglobal, ent, isit, blocal))[i];
+
+
+        //================================================//
+        //
+        // TERM:3
+        //- (\mu \int \nabla u. normal . v)
+        //================================================//
+
+        for(int dm=1;dm<=dim;++dm)
         {
-            const Dune::FieldVector<ctype,dim-1>& boundlocal = Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord)[bq].position();
-            Dune:: FieldVector<ctype,dim> blocal = isit->intersectionSelfLocal().global(boundlocal);
-            const Dune::FieldVector<ctype,dim> bglobal = isit->intersectionGlobal().global(boundlocal);
-            ctype norm_eb=isit->intersectionGlobal().integrationElement(boundlocal);
-            // calculating the inverse jacobian
-            InverseJacobianMatrix inv_jac= ent.geometry().jacobianInverseTransposed(blocal);
-            // get quadrature weight
-            ctype quad_wt_bound = Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord)[bq].weight();
-            ctype detjacbound = isit->intersectionGlobal().integrationElement(boundlocal);
-            // get the boundary normal
-            Dune::FieldVector<ctype,dim> boundnormal = isit->unitOuterNormal(boundlocal);
-            // velocity boundary condition
-            // dirichlet boundary
-            for(int i=0;i<dim;++i)
-                dirichlet[i] = (problem_.g(bglobal, ent, isit, blocal))[i];
+
+            for (int i=0;i<vsfs.size();++i)
+            {
+                int ii=(dm-1)*vsfs.size()+i;
+                phi_ei[dm-1] = vsfs[i].evaluateFunction(0,blocal);
+                for (int j=0;j<vsfs.size();++j)
+                {
+                    int jj=(dm-1)*vsfs.size()+j;
+                    for (int sd=0; sd<dim; sd++)
+                        temp[sd] = vsfs[j].evaluateDerivative(0,sd,blocal);
+                    grad_phi_ej[dm-1] = 0;
+                    inv_jac.umv(temp,grad_phi_ej[dm-1]);
+                    entry = ( - parameter.mu * ((grad_phi_ej[dm-1]*boundnormal)*phi_ei[dm-1])) * detjacbound*quad_wt_bound;
+                    Aee[ii][jj]+=entry;
+                }
+            }
+        }
+        //================================================//
+        //TERM:5=  \mu parameter.epsilon \nabla v . normal. u
+        //  TERM:15
+        // rhs entry:  parameter.mu * parameter.epsilon* g * \nabla v * n
+        //================================================//
+        for(int dm=1;dm<=dim;++dm)
+        {
+
+            for (int i=0;i<vsfs.size();++i)
+            {
+                int ii=(dm-1)*vsfs.size()+i;
+                for (int sd=0; sd<dim; sd++)
+                    temp[sd] = vsfs[i].evaluateDerivative(0,sd,blocal);
+                grad_phi_ei[dm-1] = 0;
+                inv_jac.umv(temp,grad_phi_ei[dm-1]);
+                for (int j=0;j<vsfs.size();++j)
+                {
+                    int jj=(dm-1)*vsfs.size()+j;
+                    phi_ej[dm-1] = vsfs[j].evaluateFunction(0,blocal);
+                    //TERM:5 \mu parameter.epsilon \nabla v . normal. u
+                    entry = parameter.mu *(parameter.epsilon*(grad_phi_ei[dm-1]*boundnormal)*phi_ej[dm-1] ) * detjacbound*quad_wt_bound;
+                    Aee[ii][jj]+=entry;
+                }
+                //------------------------------------
+                //  TERM:15
+                // rhs entry:  parameter.mu * parameter.epsilon* g * \nabla v * n
+                //------------------------------------
 
 
-            //================================================//
-            //
-            // TERM:3
-            //- (\mu \int \nabla u. normal . v)
-            //================================================//
+                Be[ii]+= (parameter.epsilon*parameter.mu*(dirichlet[dm-1])*(grad_phi_ei[dm-1]*boundnormal)) * detjacbound * quad_wt_bound;
+            }
+        }
 
+        //================================================//
+        //  TERM:7
+        // + \mu parameter.sigma/norm_e . v . u
+        // TERM:16
+        // rhs entry: mu*parameter.sigma/norm_e * g * v
+        //================================================//
+        for(int dm=1;dm<=dim;++dm)
+        {
+
+            for (int i=0;i<vsfs.size();++i)
+            {
+
+                phi_ei[dm-1] =  vsfs[i].evaluateFunction(0,blocal);
+                int ii=(dm-1)*vsfs.size()+i;
+                for (int j=0;j<vsfs.size();++j)
+                {
+
+                    int jj=(dm-1)*vsfs.size()+j;
+                    phi_ej[dm-1] = vsfs[j].evaluateFunction(0,blocal);
+                    entry = ((parameter.mu*(parameter.sigma/norm_eb)*phi_ej[dm-1]*phi_ei[dm-1]))* detjacbound*quad_wt_bound;
+                    Aee[ii][jj]+=entry;
+                }
+                //------------------------------------
+                // TERM:16
+                // rhs entry: mu*parameter.sigma/norm_e * g * v
+                //------------------------------------
+                Be[ii]+= (parameter.mu*(parameter.sigma/norm_eb)*(dirichlet[dm-1])*phi_ei[dm-1])* detjacbound * quad_wt_bound;
+
+            }
+
+        }
+
+        //================================================//
+        // TERM:10
+        //       \int p v n
+        //================================================//
+        for(int dm=1;dm<=dim;++dm)
+        {
+            for (int i=0;i<vsfs.size();++i)
+            {
+                int ii=(dm-1)*vsfs.size()+i;
+                phi_ei[dm-1] = vsfs[i].evaluateFunction(0,blocal);
+                for (int j=0;j<psfs.size();++j)
+                {
+                    psi_ej = psfs[j].evaluateFunction(0,blocal);
+                    int jj=vdof+j;
+                    entry= (psi_ej*(phi_ei[dm-1]*boundnormal[dm-1]))* detjacbound * quad_wt_bound;
+                    Aee[ii][jj]+=entry;
+                }
+            }
+        }
+
+        //================================================//
+        // \int q . u . n  --> TERM:13
+        // psi_ej * phi_ei * normal
+        //================================================//
+
+
+
+        for (int i=0;i<psfs.size();++i)
+        {
+            int ii=vdof+i;
+            psi_ei = psfs[i].evaluateFunction(0,blocal);
             for(int dm=1;dm<=dim;++dm)
+            {
+                for (int j=0;j<vsfs.size();++j)
                 {
-
-                    for (int i=0;i<vsfs.size();++i)
-                        {
-                            int ii=(dm-1)*vsfs.size()+i;
-                            phi_ei[dm-1] = vsfs[i].evaluateFunction(0,blocal);
-                            for (int j=0;j<vsfs.size();++j)
-                                {
-                                    int jj=(dm-1)*vsfs.size()+j;
-                                    for (int sd=0; sd<dim; sd++)
-                                        temp[sd] = vsfs[j].evaluateDerivative(0,sd,blocal);
-                                    grad_phi_ej[dm-1] = 0;
-                                    inv_jac.umv(temp,grad_phi_ej[dm-1]);
-                                    entry = ( - parameter.mu * ((grad_phi_ej[dm-1]*boundnormal)*phi_ei[dm-1])) * detjacbound*quad_wt_bound;
-                                    Aee[ii][jj]+=entry;
-                                }
-                        }
-                }
-            //================================================//
-            //TERM:5=  \mu parameter.epsilon \nabla v . normal. u
-            //  TERM:15
-            // rhs entry:  parameter.mu * parameter.epsilon* g * \nabla v * n
-            //================================================//
-            for(int dm=1;dm<=dim;++dm)
-                {
-
-                    for (int i=0;i<vsfs.size();++i)
-                        {
-                            int ii=(dm-1)*vsfs.size()+i;
-                            for (int sd=0; sd<dim; sd++)
-                                temp[sd] = vsfs[i].evaluateDerivative(0,sd,blocal);
-                            grad_phi_ei[dm-1] = 0;
-                            inv_jac.umv(temp,grad_phi_ei[dm-1]);
-                            for (int j=0;j<vsfs.size();++j)
-                                {
-                                    int jj=(dm-1)*vsfs.size()+j;
-                                    phi_ej[dm-1] = vsfs[j].evaluateFunction(0,blocal);
-                                    //TERM:5 \mu parameter.epsilon \nabla v . normal. u
-                                    entry = parameter.mu *(parameter.epsilon*(grad_phi_ei[dm-1]*boundnormal)*phi_ej[dm-1] ) * detjacbound*quad_wt_bound;
-                                    Aee[ii][jj]+=entry;
-                                }
-                            //------------------------------------
-                            //  TERM:15
-                            // rhs entry:  parameter.mu * parameter.epsilon* g * \nabla v * n
-                            //------------------------------------
-
-
-                            Be[ii]+= (parameter.epsilon*parameter.mu*(dirichlet[dm-1])*(grad_phi_ei[dm-1]*boundnormal)) * detjacbound * quad_wt_bound;
-                        }
-                }
-
-            //================================================//
-            //  TERM:7
-            // + \mu parameter.sigma/norm_e . v . u
-            // TERM:16
-            // rhs entry: mu*parameter.sigma/norm_e * g * v
-            //================================================//
-            for(int dm=1;dm<=dim;++dm)
-                {
-
-                    for (int i=0;i<vsfs.size();++i)
-                        {
-
-                            phi_ei[dm-1] =  vsfs[i].evaluateFunction(0,blocal);
-                            int ii=(dm-1)*vsfs.size()+i;
-                            for (int j=0;j<vsfs.size();++j)
-                                {
-
-                                    int jj=(dm-1)*vsfs.size()+j;
-                                    phi_ej[dm-1] = vsfs[j].evaluateFunction(0,blocal);
-                                    entry = ((parameter.mu*(parameter.sigma/norm_eb)*phi_ej[dm-1]*phi_ei[dm-1]))* detjacbound*quad_wt_bound;
-                                    Aee[ii][jj]+=entry;
-                                }
-                            //------------------------------------
-                            // TERM:16
-                            // rhs entry: mu*parameter.sigma/norm_e * g * v
-                            //------------------------------------
-                            Be[ii]+= (parameter.mu*(parameter.sigma/norm_eb)*(dirichlet[dm-1])*phi_ei[dm-1])* detjacbound * quad_wt_bound;
-
-                        }
+                    phi_ej[dm-1] = vsfs[j].evaluateFunction(0,blocal);
+                    int jj=(dm-1)*vsfs.size()+j;
+                    entry= (psi_ei*(phi_ej[dm-1]*boundnormal[dm-1]) )* detjacbound * quad_wt_bound;
+                    Aee[ii][jj]+=entry;
 
                 }
+            }
 
-            //================================================//
-            // TERM:10
-            //       \int p v n
-            //================================================//
-            for(int dm=1;dm<=dim;++dm)
-                {
-                    for (int i=0;i<vsfs.size();++i)
-                        {
-                            int ii=(dm-1)*vsfs.size()+i;
-                            phi_ei[dm-1] = vsfs[i].evaluateFunction(0,blocal);
-                            for (int j=0;j<psfs.size();++j)
-                                {
-                                    psi_ej = psfs[j].evaluateFunction(0,blocal);
-                                    int jj=vdof+j;
-                                    entry= (psi_ej*(phi_ei[dm-1]*boundnormal[dm-1]))* detjacbound * quad_wt_bound;
-                                    Aee[ii][jj]+=entry;
-                                }
-                        }
-                }
+        }
 
-            //================================================//
-            // \int q . u . n  --> TERM:13
-            // psi_ej * phi_ei * normal
-            //================================================//
+        //================================================//
+        //TERM:17 (rhs)
+        // \int q . g . n
+        //================================================//
+        for (int i=0;i<psfs.size();++i)
+        {
+            int ii=vdof+i;
+            psi_ei = psfs[i].evaluateFunction(0,blocal);
+            ctype val=0;
+            for (int dm=0;dm<dim;++dm)
+            {
+                val+=dirichlet[dm]*boundnormal[dm];
+                //std::cout<<"D: "<<dirichlet[dm]<<" BN: "<<boundnormal[dm]<<std::endl;
+            }
+            Be[ii]+=val*psi_ei*detjacbound*quad_wt_bound;
+            //Be[ii]+=(dirichlet[0]*boundnormal[0]+dirichlet[1]*boundnormal[1])*psi_ei*detjacbound*quad_wt_bound;
+            //std::cout<<"ii: "<<ii<<" val: "<<Be[ii]<<std::endl;
+        }
+    }// end of quadrature loop
 
-
-
-            for (int i=0;i<psfs.size();++i)
-                {
-                    int ii=vdof+i;
-                    psi_ei = psfs[i].evaluateFunction(0,blocal);
-                    for(int dm=1;dm<=dim;++dm)
-                        {
-                            for (int j=0;j<vsfs.size();++j)
-                                {
-                                    phi_ej[dm-1] = vsfs[j].evaluateFunction(0,blocal);
-                                    int jj=(dm-1)*vsfs.size()+j;
-                                    entry= (psi_ei*(phi_ej[dm-1]*boundnormal[dm-1]) )* detjacbound * quad_wt_bound;
-                                    Aee[ii][jj]+=entry;
-
-                                }
-                        }
-
-                }
-
-            //================================================//
-            //TERM:17 (rhs)
-            // \int q . g . n
-            //================================================//
-            for (int i=0;i<psfs.size();++i)
-                {
-                    int ii=vdof+i;
-                    psi_ei = psfs[i].evaluateFunction(0,blocal);
-                    ctype val=0;
-                    for (int dm=0;dm<dim;++dm)
-                        {
-                            val+=dirichlet[dm]*boundnormal[dm];
-                            //std::cout<<"D: "<<dirichlet[dm]<<" BN: "<<boundnormal[dm]<<std::endl;
-                        }
-                    Be[ii]+=val*psi_ei*detjacbound*quad_wt_bound;
-                    //Be[ii]+=(dirichlet[0]*boundnormal[0]+dirichlet[1]*boundnormal[1])*psi_ei*detjacbound*quad_wt_bound;
-                    //std::cout<<"ii: "<<ii<<" val: "<<Be[ii]<<std::endl;
-                }
-        }// end of quadrature loop
-
-    //printvector(std::cout,Be,"Vector Be: ","row");
+     //printvector(std::cout,Be,"Vector Be: ","row");
 }
 
 // template<class G, int v_order, int p_order>
@@ -697,38 +697,38 @@ void DGFiniteElementMethod<G,v_order,p_order>::assembleNeumannBoundaryTerm(Entit
     //specify the quadrature order ?
     int qord=8;
     for(unsigned int bq=0;bq<Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord).size();++bq)
-        {
-            const Dune::FieldVector<ctype,dim-1>& boundlocal = Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord)[bq].position();
-            Dune:: FieldVector<ctype,dim> blocal = isit->intersectionSelfLocal().global(boundlocal);
-            const Dune::FieldVector<ctype,dim> bglobal = isit->intersectionGlobal().global(boundlocal);
-            // calculating the inverse jacobian
-            InverseJacobianMatrix inv_jac= ent.geometry().jacobianInverseTransposed(blocal);
-            // get quadrature weight
-            ctype quad_wt_bound = Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord)[bq].weight();
-            ctype detjacbound = isit->intersectionGlobal().integrationElement(boundlocal);
-            // get the boundary normal
-            Dune::FieldVector<ctype,dim> boundnormal = isit->unitOuterNormal(boundlocal);
+    {
+        const Dune::FieldVector<ctype,dim-1>& boundlocal = Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord)[bq].position();
+        Dune:: FieldVector<ctype,dim> blocal = isit->intersectionSelfLocal().global(boundlocal);
+        const Dune::FieldVector<ctype,dim> bglobal = isit->intersectionGlobal().global(boundlocal);
+        // calculating the inverse jacobian
+        InverseJacobianMatrix inv_jac= ent.geometry().jacobianInverseTransposed(blocal);
+        // get quadrature weight
+        ctype quad_wt_bound = Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord)[bq].weight();
+        ctype detjacbound = isit->intersectionGlobal().integrationElement(boundlocal);
+        // get the boundary normal
+        Dune::FieldVector<ctype,dim> boundnormal = isit->unitOuterNormal(boundlocal);
 
-            //================================================//
-            // TERM:10
-            //       \int p v n
-            //================================================//
-            for(int dm=1;dm<=dim;++dm)
+        //================================================//
+        // TERM:10
+        //       \int p v n
+        //================================================//
+        for(int dm=1;dm<=dim;++dm)
+        {
+            for (int i=0;i<vsfs.size();++i)
+            {
+                int ii=(dm-1)*vsfs.size()+i;
+                phi_ei[dm-1] = vsfs[i].evaluateFunction(0,blocal);
+                for (int j=0;j<psfs.size();++j)
                 {
-                    for (int i=0;i<vsfs.size();++i)
-                        {
-                            int ii=(dm-1)*vsfs.size()+i;
-                            phi_ei[dm-1] = vsfs[i].evaluateFunction(0,blocal);
-                            for (int j=0;j<psfs.size();++j)
-                                {
-                                    psi_ej = psfs[j].evaluateFunction(0,blocal);
-                                    int jj=vdof+j;
-                                    entry= (psi_ej*(phi_ei[dm-1]*boundnormal[dm-1]))* detjacbound * quad_wt_bound;
-                                    Aee[ii][jj]+=entry;
-                                }
-                        }
+                    psi_ej = psfs[j].evaluateFunction(0,blocal);
+                    int jj=vdof+j;
+                    entry= (psi_ej*(phi_ei[dm-1]*boundnormal[dm-1]))* detjacbound * quad_wt_bound;
+                    Aee[ii][jj]+=entry;
                 }
+            }
         }
+    }
 }
 
 template<class G, int v_order, int p_order>
@@ -749,42 +749,42 @@ void DGFiniteElementMethod<G,v_order,p_order>::assembleInterfaceTerm(Entity& ent
     //specify the quadrature order ?
     int qord=8;
     for(unsigned int bq=0;bq<Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord).size();++bq)
-        {
-            const Dune::FieldVector<ctype,dim-1>& boundlocal = Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord)[bq].position();
-            Dune:: FieldVector<ctype,dim> blocal = isit->intersectionSelfLocal().global(boundlocal);
-            const Dune::FieldVector<ctype,dim> bglobal = isit->intersectionGlobal().global(boundlocal);
-            // calculating the inverse jacobian
-            InverseJacobianMatrix inv_jac= ent.geometry().jacobianInverseTransposed(blocal);
-            // get quadrature weight
-            ctype quad_wt_bound = Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord)[bq].weight();
-            ctype detjacbound = isit->intersectionGlobal().integrationElement(boundlocal);
-            // get the boundary normal
-            Dune::FieldVector<ctype,dim> boundnormal = isit->unitOuterNormal(boundlocal);
-            // Beavers-Joseph proportionality constant c = sqrt(k)/alpha such that u_t = - c (grad u . n)_t
-            ctype beaversJosephC = problem_.beaversJosephC(bglobal, ent, isit, blocal);
+    {
+        const Dune::FieldVector<ctype,dim-1>& boundlocal = Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord)[bq].position();
+        Dune:: FieldVector<ctype,dim> blocal = isit->intersectionSelfLocal().global(boundlocal);
+        const Dune::FieldVector<ctype,dim> bglobal = isit->intersectionGlobal().global(boundlocal);
+        // calculating the inverse jacobian
+        InverseJacobianMatrix inv_jac= ent.geometry().jacobianInverseTransposed(blocal);
+        // get quadrature weight
+        ctype quad_wt_bound = Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord)[bq].weight();
+        ctype detjacbound = isit->intersectionGlobal().integrationElement(boundlocal);
+        // get the boundary normal
+        Dune::FieldVector<ctype,dim> boundnormal = isit->unitOuterNormal(boundlocal);
+        // Beavers-Joseph proportionality constant c = sqrt(k)/alpha such that u_t = - c (grad u . n)_t
+        ctype beaversJosephC = problem_.beaversJosephC(bglobal, ent, isit, blocal);
 
-            //================================================//
-            // Beavers-Joseph interface condition
-            // \int 1/c u_t . v
-            //================================================//
-            for(int dm=1;dm<=dim;++dm)
+        //================================================//
+        // Beavers-Joseph interface condition
+        // \int 1/c u_t . v
+        //================================================//
+        for(int dm=1;dm<=dim;++dm)
+        {
+            for (int i=0;i<vsfs.size();++i)
+            {
+                phi_ei[dm-1] =  vsfs[i].evaluateFunction(0,blocal);
+                int ii=(dm-1)*vsfs.size()+i;
+                for (int j=0;j<vsfs.size();++j)
                 {
-                    for (int i=0;i<vsfs.size();++i)
-                        {
-                            phi_ei[dm-1] =  vsfs[i].evaluateFunction(0,blocal);
-                            int ii=(dm-1)*vsfs.size()+i;
-                            for (int j=0;j<vsfs.size();++j)
-                                {
-                                    int jj=(dm-1)*vsfs.size()+j;
-                                    phi_ej[dm-1] = vsfs[j].evaluateFunction(0,blocal);
-                                    ctype uN = phi_ej[dm-1]*boundnormal[dm-1];
-                                    ctype uT = phi_ej[dm-1] - uN*boundnormal[dm-1];
-                                    entry = 1.0/beaversJosephC * (uT*phi_ei[dm-1])* detjacbound*quad_wt_bound;
-                                    Aee[ii][jj]+=entry;
-                                }
-                        }
+                    int jj=(dm-1)*vsfs.size()+j;
+                    phi_ej[dm-1] = vsfs[j].evaluateFunction(0,blocal);
+                    ctype uN = phi_ej[dm-1]*boundnormal[dm-1];
+                    ctype uT = phi_ej[dm-1] - uN*boundnormal[dm-1];
+                    entry = 1.0/beaversJosephC * (uT*phi_ei[dm-1])* detjacbound*quad_wt_bound;
+                    Aee[ii][jj]+=entry;
                 }
+            }
         }
+    }
 }
 
 
@@ -825,30 +825,30 @@ void DGStokes<G,v_order,p_order>::assembleStokesSystem()
     //     ElementLevelIterator eitend = grid.template lend<0>(level);
 
     for (; eit != eitend; ++eit)
+    {
+        // insert a non zero entry for myself
+        //mit.insert(grid.levelIndexSet(level).index(*eit));
+        mit.insert(grid.leafIndexSet().index(*eit));
+        assert(mit != tmp.createend());
+
+        //IntersectionLevelIterator endit = eit->ilevelend();
+        //IntersectionLevelIterator iit = eit->ilevelbegin();
+        IntersectionIterator endit = eit->ileafend();
+        IntersectionIterator iit = eit->ileafbegin();
+
+
+        // insert a non zero entry for each neighbour
+        for(; iit != endit; ++iit)
         {
-            // insert a non zero entry for myself
-            //mit.insert(grid.levelIndexSet(level).index(*eit));
-            mit.insert(grid.leafIndexSet().index(*eit));
-            assert(mit != tmp.createend());
 
-            //IntersectionLevelIterator endit = eit->ilevelend();
-            //IntersectionLevelIterator iit = eit->ilevelbegin();
-            IntersectionIterator endit = eit->ileafend();
-            IntersectionIterator iit = eit->ileafbegin();
-
-
-            // insert a non zero entry for each neighbour
-            for(; iit != endit; ++iit)
-                {
-
-                    if (iit->neighbor())
-                        {
-                            //mit.insert(grid.levelIndexSet(level).index(*iit->outside()));
-                            mit.insert(grid.leafIndexSet().index(*iit->outside()));
-                        }
-                }
-            ++mit;
+            if (iit->neighbor())
+            {
+                //mit.insert(grid.levelIndexSet(level).index(*iit->outside()));
+                mit.insert(grid.leafIndexSet().index(*iit->outside()));
+            }
         }
+        ++mit;
+    }
 
 
 
@@ -874,43 +874,43 @@ void DGStokes<G,v_order,p_order>::assembleStokesSystem()
 
 
     for (; it != itend; ++it)
+    {
+        EntityPointer epointer = it;
+        //int eid = grid.levelIndexSet(level).index(*epointer);
+        int eid = grid.leafIndexSet().index(*epointer);
+
+        dgfem.assembleVolumeTerm(*it,A[eid][eid],b[eid]);
+        //IntersectionLevelIterator endis = it->ilevelend();
+        //   IntersectionLevelIterator is = it->ilevelbegin();
+        IntersectionIterator endis = it->ileafend();
+        IntersectionIterator is = it->ileafbegin();
+
+        for(; is != endis; ++is)
         {
-            EntityPointer epointer = it;
-            //int eid = grid.levelIndexSet(level).index(*epointer);
-            int eid = grid.leafIndexSet().index(*epointer);
+            if(is->neighbor())
+            {
+                int eid = grid.leafIndexSet().index(*is->inside());
+                int fid = grid.leafIndexSet().index(*is->outside());
+                dgfem.assembleFaceTerm(*it,is,A[eid][eid],A[eid][fid],A[fid][eid],b[eid]);
 
-            dgfem.assembleVolumeTerm(*it,A[eid][eid],b[eid]);
-            //IntersectionLevelIterator endis = it->ilevelend();
-            //   IntersectionLevelIterator is = it->ilevelbegin();
-            IntersectionIterator endis = it->ileafend();
-            IntersectionIterator is = it->ileafbegin();
+            }
+            if (is->boundary())
+            {
+                GeometryType gtf = is->intersectionSelfLocal().type();
+                const FieldVector<ctype,dim-1>& faceLocal = ReferenceElements<ctype,dim-1>::general(gtf).position(0,0);
+                FieldVector<ctype,dim> faceGlobal = is->intersectionGlobal().global(faceLocal);
+                const FieldVector<ctype,dim>& faceLocalDim = ReferenceElements<ctype,dim>::general(gtf).position(is->numberInSelf(),1);
+                BoundaryConditions::Flags bctype = dgfem.problem().bctype(faceGlobal, *it, is, faceLocalDim);
 
-            for(; is != endis; ++is)
-                {
-                    if(is->neighbor())
-                        {
-                            int eid = grid.leafIndexSet().index(*is->inside());
-                            int fid = grid.leafIndexSet().index(*is->outside());
-                            dgfem.assembleFaceTerm(*it,is,A[eid][eid],A[eid][fid],A[fid][eid],b[eid]);
-
-                        }
-                    if (is->boundary())
-                        {
-                            GeometryType gtf = is->intersectionSelfLocal().type();
-                            const FieldVector<ctype,dim-1>& faceLocal = ReferenceElements<ctype,dim-1>::general(gtf).position(0,0);
-                            FieldVector<ctype,dim> faceGlobal = is->intersectionGlobal().global(faceLocal);
-                            const FieldVector<ctype,dim>& faceLocalDim = ReferenceElements<ctype,dim>::general(gtf).position(is->numberInSelf(),1);
-                            BoundaryConditions::Flags bctype = dgfem.problem().bctype(faceGlobal, *it, is, faceLocalDim);
-
-                            if (bctype == BoundaryConditions::dirichlet)
-                                dgfem.assembleDirichletBoundaryTerm(*it,is,A[eid][eid],b[eid]);
-                            else if (bctype == BoundaryConditions::neumann)
-                                dgfem.assembleNeumannBoundaryTerm(*it,is,A[eid][eid],b[eid]);
-                            else // ASSUME that we are on a interface to porous media
-                                dgfem.assembleInterfaceTerm(*it,is,A[eid][eid],b[eid]);
-                        }
-                }
+                if (bctype == BoundaryConditions::dirichlet)
+                    dgfem.assembleDirichletBoundaryTerm(*it,is,A[eid][eid],b[eid]);
+                else if (bctype == BoundaryConditions::neumann)
+                    dgfem.assembleNeumannBoundaryTerm(*it,is,A[eid][eid],b[eid]);
+                else // ASSUME that we are on a interface to porous media
+                    dgfem.assembleInterfaceTerm(*it,is,A[eid][eid],b[eid]);
+            }
         }
+    }
 
 
 
@@ -925,19 +925,19 @@ void DGStokes<G,v_order,p_order>::assembleStokesSystem()
     //modify matrix for introducing pressure boundary condition
     for (typename LMatrix::RowIterator i=A.begin(); i!=A.end(); ++i)
         for (typename LMatrix::ColIterator j=(*i).begin(); j!=(*i).end(); ++j)
+        {
+            if(i.index()==0) // 0'th block
             {
-                if(i.index()==0) // 0'th block
+                for(int n=0;n<BlockSize;++n)
+                {
+                    A[i.index()][j.index()][vdof][n]=0.0;
+                    if((j.index()==0) &(n==vdof))
                     {
-                        for(int n=0;n<BlockSize;++n)
-                            {
-                                A[i.index()][j.index()][vdof][n]=0.0;
-                                if((j.index()==0) &(n==vdof))
-                                    {
-                                        A[i.index()][j.index()][vdof][n]=1.0;
-                                    }
-                            }
+                        A[i.index()][j.index()][vdof][n]=1.0;
                     }
+                }
             }
+        }
     //istl--------------
 
 
@@ -948,12 +948,12 @@ void DGStokes<G,v_order,p_order>::assembleStokesSystem()
     // changing rhs entry
     //printvector(std::cout,b,"Vector b: ","row");
     for(typename LVector::iterator i=b.begin();i!=b.end();++i)
+    {
+        if(i.index()==0)
         {
-            if(i.index()==0)
-                {
-                    b[i.index()][vdof]=0.0;
-                }
+            b[i.index()][vdof]=0.0;
         }
+    }
 
     //printvector(std::cout,b,"Vector b: ","row");
     //printmatrix(std::cout,A,"Matrix A: ","row");
@@ -1057,19 +1057,19 @@ DGFiniteElementMethod<G,v_order,p_order>::evaluateSolution(int variable,
     int ii;
     if (variable<dim)
         for (int i=0; i<nvsfs; ++i)
-            {
-                ii=variable*nvsfs+i;
-                value[variable] += xe[ii] * vsfs[i].evaluateFunction(0, coord);
-            }
+        {
+            ii=variable*nvsfs+i;
+            value[variable] += xe[ii] * vsfs[i].evaluateFunction(0, coord);
+        }
     else if(variable==dim)
         for (int i=0; i<npsfs; ++i)
-            {
-                ii=(dim*nvsfs)+i;
-                //std::cout<<"val: "<<value[variable];
-                value[variable] += xe[ii] * psfs[i].evaluateFunction(0, coord);
-                //std::cout<<"  xe: "<<xe[ii]<<"  coord:  "<<coord<<"  psfsvalue: "<<psfs[i].evaluateFunction(0, coord)<<std::endl;
-                //std::cout<<"value:  "<<value[variable]<<std::endl;
-            }
+        {
+            ii=(dim*nvsfs)+i;
+            //std::cout<<"val: "<<value[variable];
+            value[variable] += xe[ii] * psfs[i].evaluateFunction(0, coord);
+            //std::cout<<"  xe: "<<xe[ii]<<"  coord:  "<<coord<<"  psfsvalue: "<<psfs[i].evaluateFunction(0, coord)<<std::endl;
+            //std::cout<<"value:  "<<value[variable]<<std::endl;
+        }
     return value[variable];
 }
 
@@ -1093,17 +1093,17 @@ DGFiniteElementMethod<G,v_order,p_order>::evaluateGradient(int variable,
 
     if (variable<dim)
         for (int i=0; i<nvsfs; ++i)
-            {
-                Gradient temp;
-                int ii=variable*nvsfs+i;
-                for (int sd=0; sd<dim; sd++)
-                    temp[sd] = vsfs[i].evaluateDerivative(0, sd, coord);
-                grad_phi_ei[variable] = 0;
-                invj.umv(temp,grad_phi_ei[variable]);
-                for (int sd=0; sd<dim; sd++)
-                    grad[variable][sd] += grad_phi_ei[variable][sd] * xe[ii];
+        {
+            Gradient temp;
+            int ii=variable*nvsfs+i;
+            for (int sd=0; sd<dim; sd++)
+                temp[sd] = vsfs[i].evaluateDerivative(0, sd, coord);
+            grad_phi_ei[variable] = 0;
+            invj.umv(temp,grad_phi_ei[variable]);
+            for (int sd=0; sd<dim; sd++)
+                grad[variable][sd] += grad_phi_ei[variable][sd] * xe[ii];
 
-            }
+        }
 
     return grad[variable];
 }
@@ -1114,13 +1114,13 @@ void Dune::DGStokes<G,v_order,p_order>::convertToCellData(int variable, BlockVec
     ElementLevelIterator it = grid.template lbegin<0>(level);
     ElementLevelIterator itend = grid.template lend<0>(level);
     for (; it != itend; ++it)
-        {
-            GeometryType gt = it->geometry().type();
-            const FieldVector<ctype,dim>& local = ReferenceElements<ctype,dim>::general(gt).position(0, 0);
+    {
+        GeometryType gt = it->geometry().type();
+        const FieldVector<ctype,dim>& local = ReferenceElements<ctype,dim>::general(gt).position(0, 0);
 
-            int eid = grid.levelIndexSet(level).index(*it);
-            cellData[eid] = dgfem.evaluateSolution(variable, *it, local, solution[eid]);
-        }
+        int eid = grid.levelIndexSet(level).index(*it);
+        cellData[eid] = dgfem.evaluateSolution(variable, *it, local, solution[eid]);
+    }
 
     return;
 }

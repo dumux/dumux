@@ -423,10 +423,10 @@ class NLiquid_GL
         int size = n_w + n_a;
         double divisor;
         for (int i = 0; i < size; i++)
-            {
-                X[i] *= M_[i];
-                divisor += X[i];
-            }
+        {
+            X[i] *= M_[i];
+            divisor += X[i];
+        }
         X /= divisor;
         return X;
     }
@@ -440,10 +440,10 @@ class NLiquid_GL
         int size = n_w + n_a;
         double divisor;
         for (int i = 0; i < size; i++)
-            {
-                x[i] /= M_[i];
-                divisor += x[i];
-            }
+        {
+            x[i] /= M_[i];
+            divisor += x[i];
+        }
         x /= divisor;
         return x;
     }
@@ -626,10 +626,10 @@ class NGas_GL
         int size = n_w + n_a;
         double divisor;
         for (int i = 0; i < size; i++)
-            {
-                X[i] *= M_[i];
-                divisor += X[i];
-            }
+        {
+            X[i] *= M_[i];
+            divisor += X[i];
+        }
         X /= divisor;
         return X;
     }
@@ -643,10 +643,10 @@ class NGas_GL
         int size = n_w + n_a;
         double divisor;
         for (int i = 0; i < size; i++)
-            {
-                x[i] /= M_[i];
-                divisor += x[i];
-            }
+        {
+            x[i] /= M_[i];
+            divisor += x[i];
+        }
         x /= divisor;
         return x;
     }

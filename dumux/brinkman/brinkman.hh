@@ -59,20 +59,20 @@ public:
         double dampP = 0.35;
 
         while (error > tolerance && iter <= maxIter)
-            {
-                iter++;
-                computeVelocity();
-                computePressureCorrection();
-                computeVelocityCorrection();
-                pressureCorrection *= dampP;
-                velocityCorrection *= dampV;
-                pressure += pressureCorrection;
-                velocity += velocityCorrection;
+        {
+            iter++;
+            computeVelocity();
+            computePressureCorrection();
+            computeVelocityCorrection();
+            pressureCorrection *= dampP;
+            velocityCorrection *= dampV;
+            pressure += pressureCorrection;
+            velocity += velocityCorrection;
 
-                //correctVelocityAndPressure();
-                error = pressureCorrection.two_norm()/pressure.two_norm();
-                std::cout << "Iter = " << iter << ", \t Error = " << error << std::endl;
-            }
+            //correctVelocityAndPressure();
+            error = pressureCorrection.two_norm()/pressure.two_norm();
+            std::cout << "Iter = " << iter << ", \t Error = " << error << std::endl;
+        }
     }
 
     //! generate vtk output

@@ -47,17 +47,17 @@ double discreteError(const Grid& grid, const Solution& solution, const Problem& 
     VertexIterator endIt = gridview.template end<dim>();
     VertexIterator it = gridview.template begin<dim>();
     for (; it != endIt; ++it)
-        {
-            // get exact solution at vertex
-            FieldVector<double,dim> globalCoord = (*it).geometry()[0];
-            double exact = problem.exact(globalCoord);
+    {
+        // get exact solution at vertex
+        FieldVector<double,dim> globalCoord = (*it).geometry()[0];
+        double exact = problem.exact(globalCoord);
 
-            // get approximate solution at vertex
-            int globalId = vertexMapper.map(*it);
-            double approximate = solution[globalId];
+        // get approximate solution at vertex
+        int globalId = vertexMapper.map(*it);
+        double approximate = solution[globalId];
 
-            error += (exact - approximate)*(exact - approximate);
-        }
+        error += (exact - approximate)*(exact - approximate);
+    }
 
     return sqrt(error);
 }
@@ -148,14 +148,14 @@ int main(int argc, char** argv)
 #else
 
 int main (int argc , char **argv) try
-    {
-        std::cout << "This test is not finished yet." << std::endl;
+ {
+     std::cout << "This test is not finished yet." << std::endl;
 
-        return 1;
-    }
+     return 1;
+ }
  catch (...)
-     {
-         std::cerr << "Generic exception!" << std::endl;
-         return 2;
-     }
+ {
+     std::cerr << "Generic exception!" << std::endl;
+     return 2;
+ }
 #endif
