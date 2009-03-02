@@ -23,7 +23,7 @@ public:
         for (int i=0; i<dim; i++)
             for (int j=0; j<dim; j++)
                 if (i==j)
-                    permeability_[i][j] = 1.0;
+                    permeability_[i][j] = 1e0; // provide intrinsic K / mu
                 else
                     permeability_[i][j] = 0;
     }
@@ -44,7 +44,7 @@ public:
                                       const IntersectionIterator& intersectionIt,
                                       const FieldVector<Scalar,dim>& localPos) const
     {
-        if (globalPos[0] > 4 - eps_ || globalPos[1] < eps_)
+        if (globalPos[0] > 4 - eps_)
             return BoundaryConditions::dirichlet;
 
         return BoundaryConditions::neumann;
@@ -55,7 +55,7 @@ public:
               const IntersectionIterator& intersectionIt,
               const FieldVector<Scalar,dim>& localPos) const
     {
-        return exact(globalPos);
+        return 0;
     }
 
     // Neumann boundary conditions

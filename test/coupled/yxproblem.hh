@@ -95,12 +95,7 @@ public:
             velocityGradient(globalPos).umv(normal, muGradVN);
             muGradVN *= mu(globalPos, element, localPos);
 
-            //          Scalar muGradVNN = muGradVN*normal;
-
             result = muGradVN;
-            //          result = normal;
-            //          muGradVN.umv(normal, result);
-            //          result *= muGradVN;
             result -= pN;
 
             return result;

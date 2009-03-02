@@ -22,8 +22,8 @@ public:
     {
         FieldVector<Scalar,numEq> result(0);
 
-        result[0] = globalPos[1];
-        result[1] = globalPos[0];
+//        result[0] = globalPos[1];
+//        result[1] = globalPos[0];
 
         return result;
     }
@@ -32,7 +32,7 @@ public:
                                               const IntersectionIterator& intersectionIt,
                                               const FieldVector<Scalar,dim>& localPos) const
     {
-        if (globalPos[0] < 1e-6 || globalPos[0] > 4 - 1e-6 || globalPos[1] < 1e-6 || globalPos[1] > 1 - 1e-6)
+        if (globalPos[0] < 1e-6 || globalPos[1] < 1e-6 || globalPos[1] > 1 - 1e-6)
             return BoundaryConditions::dirichlet;
         else
             return BoundaryConditions::neumann;
@@ -75,42 +75,38 @@ public:
                                   const IntersectionIterator& intersectionIt,
                                   const FieldVector<Scalar,dim>& localPos) const
     {
-        //      if (globalPos[0] > 4 - 1e-6)
-        //          return 0;
-        //      else
-        //      {
-        // CHANGE also in the porous medium problem!
-        double permeability = 1.0;
         double alpha;
         if (globalPos[0] < 1.5 + 1e-6)
-            alpha = 2.0/3.0;
+            alpha = 1.0;
         else
-            alpha = -2.0;
+            return(-1.0); // realizes outflow bc
+
+        // CHANGE also in the porous medium problem!
+        double permeability = 1.0e-2;
 
         //TODO: divide by viscosity - check?
         return sqrt(permeability)/(alpha*mu(globalPos, element, localPos));
         //      }
     }
 
-    //TODO: this is not called yet
     virtual Scalar mu(const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos) const
     {
-        return 1.0;
+        return 0.01;
     }
 
     virtual FieldVector<Scalar,dim> velocity(const FieldVector<Scalar,dim>& globalPos) const
     {
         FieldVector<Scalar,dim> result(0);
 
-        result[0] = -globalPos[1];
-        result[1] = -globalPos[0];
+        //if (globalPos[0] < 1e-6 && globalPos[1] > 1e-6 && globalPos[1] < 1 - 1e-6)
+        result[0] = globalPos[1]*(1.0 - globalPos[1]);
 
         return result;
     }
 
     virtual Scalar pressure(const FieldVector<Scalar,dim>& globalPos) const
     {
-        return (globalPos[0]*globalPos[1]);
+        return (globalPos[0]);
     }
 
     virtual FieldMatrix<Scalar, dim, dim> velocityGradient(const FieldVector<Scalar,dim>& globalPos) const
