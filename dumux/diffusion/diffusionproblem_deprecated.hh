@@ -27,42 +27,42 @@
 
 namespace Dune
 {
-  /*! \ingroup diffusionProblems
-   * @brief base class that defines the parameters of a diffusion equation
-   *
-   * An interface for defining parameters for the stationary diffusion equation
-   * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = q, \f$,
-   * \f$p = g\f$ on \f$\Gamma_1\f$, and \f$\lambda K \text{grad}\, p = J\f$
-   * on \f$\Gamma_2\f$. Here,
-   * \f$p\f$ denotes the pressure, \f$K\f$ the absolute permeability,
-   * and \f$\lambda\f$ the total mobility, possibly depending on the
-   * saturation.
-   *
-   *    Template parameters are:
-   *
-   *    - Grid  a DUNE grid type
-   *    - RT    type used for return values
-   */
-  template<class Grid, class Scalar, class VC>
-  class DeprecatedDiffusionProblem {
+/*! \ingroup diffusionProblems
+ * @brief base class that defines the parameters of a diffusion equation
+ *
+ * An interface for defining parameters for the stationary diffusion equation
+ * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = q, \f$,
+ * \f$p = g\f$ on \f$\Gamma_1\f$, and \f$\lambda K \text{grad}\, p = J\f$
+ * on \f$\Gamma_2\f$. Here,
+ * \f$p\f$ denotes the pressure, \f$K\f$ the absolute permeability,
+ * and \f$\lambda\f$ the total mobility, possibly depending on the
+ * saturation.
+ *
+ *    Template parameters are:
+ *
+ *    - Grid  a DUNE grid type
+ *    - RT    type used for return values
+ */
+template<class Grid, class Scalar, class VC>
+class DeprecatedDiffusionProblem {
 
-  protected:
+protected:
     enum {dim=Grid::dimension, dimWorld=Grid::dimensionworld, numEq=1};
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
     typedef Dune::FieldVector<Scalar,dim> LocalPosition;
     typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
-  public:
+public:
     //! evaluate diffusion tensor
     /*! Evaluate the diffusion tensor at given location
       @param[in]  globalPos    position in global coordinates
       @param[in]  element    entity of codim 0
       @param[in]  localPos   position in reference element of element
       @param[out] D    diffusion tensor to be filled
-     */
+    */
     virtual FieldMatrix& K (const GlobalPosition& globalPos, const Element& element,
-                    const LocalPosition& localPos) = 0;
+                            const LocalPosition& localPos) = 0;
 
     //! evaluate source term
     /*! evaluate source term at given location
@@ -70,33 +70,33 @@ namespace Dune
       @param[in]  element    entity of codim 0
       @param[in]  localPos   position in reference element of element
       \return     value of source term
-     */
+    */
     virtual Scalar source  (const GlobalPosition& globalPos, const Element& element,
-                    const LocalPosition& localPos) = 0;
+                            const LocalPosition& localPos) = 0;
 
     //! return type of boundary condition at the given global coordinate
     /*! return type of boundary condition at the given global coordinate
       @param[in]  globalPos    position in global coordinates
       \return     boundary condition type given by enum in this class
-     */
+    */
     virtual BoundaryConditions::Flags bctype (const GlobalPosition& globalPos, const Element& element,
-                       const LocalPosition& localPos) const = 0;
+                                              const LocalPosition& localPos) const = 0;
 
     //! evaluate Dirichlet boundary condition at given position
     /*! evaluate Dirichlet boundary condition at given position
       @param[in]  globalPos    position in global coordinates
       \return     boundary condition value
-     */
+    */
     virtual Scalar dirichletPress (const GlobalPosition& globalPos, const Element& element,
-                  const LocalPosition& localPos) const = 0;
+                                   const LocalPosition& localPos) const = 0;
 
     //! evaluate Dirichlet boundary condition at given position
     /*! evaluate Dirichlet boundary condition at given position
       @param[in]  globalPos    position in global coordinates
       \return     boundary condition value
-     */
+    */
     virtual Scalar dirichletSat (const GlobalPosition& globalPos, const Element& element,
-                      const LocalPosition& localPos) const
+                                 const LocalPosition& localPos) const
     {
         return 1;
     }
@@ -105,9 +105,9 @@ namespace Dune
     /*! evaluate Neumann boundary condition at given position
       @param[in]  globalPos    position in global coordinates
       \return     boundary condition value
-     */
+    */
     virtual Scalar neumannPress (const GlobalPosition& globalPos, const Element& element,
-                  const LocalPosition& localPos) const = 0;
+                                 const LocalPosition& localPos) const = 0;
 
     const FieldVector<Scalar,dim>& gravity() const
     {
@@ -119,8 +119,8 @@ namespace Dune
      *  @param cap flag to include capillary forces.
      */
     DeprecatedDiffusionProblem(VC& variables, DeprecatedTwoPhaseRelations& materialLaw = *(new DeprecatedLinearLaw),
-            const bool capillarity = false, FieldVector<Scalar,dim> gravity = *(new FieldVector<Scalar,dim>(0)))
-    : variables(variables), materialLaw(materialLaw), capillarity(capillarity), gravity_(gravity)
+                               const bool capillarity = false, FieldVector<Scalar,dim> gravity = *(new FieldVector<Scalar,dim>(0)))
+        : variables(variables), materialLaw(materialLaw), capillarity(capillarity), gravity_(gravity)
     {    }
 
     //! always define virtual destructor in abstract base class
@@ -130,9 +130,9 @@ namespace Dune
     VC& variables;
     DeprecatedTwoPhaseRelations& materialLaw;
     const bool capillarity;
-  protected:
-      FieldVector<Scalar,dim> gravity_;
-  };
+protected:
+    FieldVector<Scalar,dim> gravity_;
+};
 
 }
 #endif

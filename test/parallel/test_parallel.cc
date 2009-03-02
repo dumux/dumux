@@ -31,134 +31,134 @@ struct P1Layout
 template<class Grid, class Solution, class Problem>
 double discreteError(const Grid& grid, const Solution& solution, const Problem& problem)
 {
-      enum{dim=Grid::dimension};
-        typedef typename Grid::LeafGridView GV;
-        typedef typename GV::IndexSet IS;
-        typedef typename GV::template Codim<dim>::Iterator VertexIterator;
-      typedef MultipleCodimMultipleGeomTypeMapper<Grid,IS,P1Layout> VM;
+    enum{dim=Grid::dimension};
+    typedef typename Grid::LeafGridView GV;
+    typedef typename GV::IndexSet IS;
+    typedef typename GV::template Codim<dim>::Iterator VertexIterator;
+    typedef MultipleCodimMultipleGeomTypeMapper<Grid,IS,P1Layout> VM;
 
-      VM vertexMapper(grid, grid.leafIndexSet());
-      double error = 0.0;
+    VM vertexMapper(grid, grid.leafIndexSet());
+    double error = 0.0;
 
-      VertexIterator endIt = grid.leafView().template end<dim>();
-      VertexIterator it = grid.leafView().template begin<dim>();
-      for (; it != endIt; ++it)
-      {
-        const PartitionType& partitionType = (*it).partitionType();
-        //std::cout << "type = " << partitionType << std::endl;
-
-        if (partitionType != GhostEntity)
+    VertexIterator endIt = grid.leafView().template end<dim>();
+    VertexIterator it = grid.leafView().template begin<dim>();
+    for (; it != endIt; ++it)
         {
-        // get exact solution at vertex
-          FieldVector<double,dim> globalCoord = (*it).geometry().corner(0);
-          double exact = problem.exact(globalCoord);
+            const PartitionType& partitionType = (*it).partitionType();
+            //std::cout << "type = " << partitionType << std::endl;
 
-          // get approximate solution at vertex
-          int globalId = vertexMapper.map(*it);
-          double approximate = (*solution)[globalId];
+            if (partitionType != GhostEntity)
+                {
+                    // get exact solution at vertex
+                    FieldVector<double,dim> globalCoord = (*it).geometry().corner(0);
+                    double exact = problem.exact(globalCoord);
 
-//          std::cout << grid.comm().rank() << ": id = " << globalId << ", coord = " << globalCoord << ", type = " << partitionType << std::endl;
+                    // get approximate solution at vertex
+                    int globalId = vertexMapper.map(*it);
+                    double approximate = (*solution)[globalId];
 
-          error += (exact - approximate)*(exact - approximate);
+                    //          std::cout << grid.comm().rank() << ": id = " << globalId << ", coord = " << globalCoord << ", type = " << partitionType << std::endl;
+
+                    error += (exact - approximate)*(exact - approximate);
+                }
         }
-    }
 
-      return sqrt(error)/(*solution).two_norm();
+    return sqrt(error)/(*solution).two_norm();
 }
 }
 
 int main(int argc, char** argv)
 {
-  try{
+    try{
 
-    Dune::MPIHelper::instance(argc, argv);
+        Dune::MPIHelper::instance(argc, argv);
 
-    // define the problem dimensions
-    const int dim=3;
-    typedef double NumberType;
-    if (argc != 2 && argc != 3) {
-      std::cout << "usage: test_parallel dgffilename/basefilename [refinementsteps]" << std::endl;
-      return 1;
+        // define the problem dimensions
+        const int dim=3;
+        typedef double NumberType;
+        if (argc != 2 && argc != 3) {
+            std::cout << "usage: test_parallel dgffilename/basefilename [refinementsteps]" << std::endl;
+            return 1;
+        }
+        int refinementSteps = 0;
+        if (argc == 3) {
+            std::string arg2(argv[2]);
+            std::istringstream is2(arg2);
+            is2 >> refinementSteps;
+        }
+
+        // instantiate a distributed grid with overlap
+        //    Dune::FieldVector<double,dim> length(8.0);
+        //    Dune::FieldVector<int,dim> size(refinementSteps);
+        //    Dune::FieldVector<bool,dim> periodic(false);
+        //    int overlap = 0;
+        //    typedef Dune::YaspGrid<dim,dim> GridType;
+        //    GridType grid(MPI_COMM_WORLD, length, size, periodic, overlap);
+
+        // create a grid object
+        typedef Dune::ALUSimplexGrid<dim,dim> GridType;
+        //typedef Dune::ALUCubeGrid<dim,dim> GridType;
+
+        // create grid pointer
+        Dune::GridPtr<GridType> gridPtr( argv[1], Dune::MPIHelper::getCommunicator() );
+        // grid reference
+        GridType& grid = *gridPtr;
+
+        grid.loadBalance();
+
+        if (refinementSteps)
+            grid.globalRefine(refinementSteps);
+
+        Dune::gridinfo(grid);
+
+        Dune::Timer timer;
+        timer.reset();
+
+        DiffusionParameters<GridType,NumberType> problem;
+
+        typedef Dune::LeafP1ParallelBoxDiffusion<GridType, NumberType> Diffusion;
+        Diffusion diffusion(grid, problem);
+        //    discreteError(grid, *diffusion, problem);
+
+        Dune::TimeLoop<GridType, Diffusion> timeloop(0, 1, 1, "test_parallel", 1);
+
+        timeloop.execute(diffusion);
+
+        double discreteErr = discreteError(grid, *diffusion, problem);
+        grid.comm().sum(&discreteErr, 1);
+        double elapsedTime = timer.elapsed();
+        grid.comm().max(&elapsedTime, 1);
+
+        if (grid.comm().rank() == 0) {
+            std::cout << "discrete error = " << discreteErr << std::endl;
+            std::cout << "Calculation took " << elapsedTime << " seconds." << std::endl;
+        }
+        //    char buffer[128];
+        //    sprintf(buffer, "rank %d :", grid.comm().rank());
+        //    printvector(std::cout, *(*diffusion), "solution", buffer, 200, 1, 3);
+
+        return 0;
     }
-    int refinementSteps = 0;
-    if (argc == 3) {
-        std::string arg2(argv[2]);
-        std::istringstream is2(arg2);
-        is2 >> refinementSteps;
+    catch (Dune::Exception &e){
+        std::cerr << "Dune reported error: " << e << std::endl;
     }
-
-    // instantiate a distributed grid with overlap
-//    Dune::FieldVector<double,dim> length(8.0);
-//    Dune::FieldVector<int,dim> size(refinementSteps);
-//    Dune::FieldVector<bool,dim> periodic(false);
-//    int overlap = 0;
-//    typedef Dune::YaspGrid<dim,dim> GridType;
-//    GridType grid(MPI_COMM_WORLD, length, size, periodic, overlap);
-
-    // create a grid object
-    typedef Dune::ALUSimplexGrid<dim,dim> GridType;
-    //typedef Dune::ALUCubeGrid<dim,dim> GridType;
-
-    // create grid pointer
-    Dune::GridPtr<GridType> gridPtr( argv[1], Dune::MPIHelper::getCommunicator() );
-    // grid reference
-    GridType& grid = *gridPtr;
-
-    grid.loadBalance();
-
-    if (refinementSteps)
-        grid.globalRefine(refinementSteps);
-
-    Dune::gridinfo(grid);
-
-    Dune::Timer timer;
-    timer.reset();
-
-    DiffusionParameters<GridType,NumberType> problem;
-
-    typedef Dune::LeafP1ParallelBoxDiffusion<GridType, NumberType> Diffusion;
-    Diffusion diffusion(grid, problem);
-//    discreteError(grid, *diffusion, problem);
-
-    Dune::TimeLoop<GridType, Diffusion> timeloop(0, 1, 1, "test_parallel", 1);
-
-    timeloop.execute(diffusion);
-
-    double discreteErr = discreteError(grid, *diffusion, problem);
-    grid.comm().sum(&discreteErr, 1);
-    double elapsedTime = timer.elapsed();
-    grid.comm().max(&elapsedTime, 1);
-
-    if (grid.comm().rank() == 0) {
-      std::cout << "discrete error = " << discreteErr << std::endl;
-      std::cout << "Calculation took " << elapsedTime << " seconds." << std::endl;
+    catch (...){
+        std::cerr << "Unknown exception thrown!" << std::endl;
     }
-//    char buffer[128];
-//    sprintf(buffer, "rank %d :", grid.comm().rank());
-//    printvector(std::cout, *(*diffusion), "solution", buffer, 200, 1, 3);
-
-    return 0;
-  }
-  catch (Dune::Exception &e){
-    std::cerr << "Dune reported error: " << e << std::endl;
-  }
-  catch (...){
-    std::cerr << "Unknown exception thrown!" << std::endl;
-  }
 }
 #else
 
 int main (int argc , char **argv) try
-{
-  std::cout << "This test is not finished yet." << std::endl;
-  //  std::cout << "Please install MPI." << std::endl;
+    {
+        std::cout << "This test is not finished yet." << std::endl;
+        //  std::cout << "Please install MPI." << std::endl;
 
-  return 1;
-}
-catch (...)
-{
-    std::cerr << "Generic exception!" << std::endl;
-    return 2;
-}
+        return 1;
+    }
+ catch (...)
+     {
+         std::cerr << "Generic exception!" << std::endl;
+         return 2;
+     }
 #endif
 

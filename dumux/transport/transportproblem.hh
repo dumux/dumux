@@ -15,30 +15,30 @@
 #include<dumux/material/twophaserelations.hh>
 
 /**
-* @file
-* @brief  Base class for defining an instance of the transport problem
-* @author Bernd Flemisch
-*/
+ * @file
+ * @brief  Base class for defining an instance of the transport problem
+ * @author Bernd Flemisch
+ */
 
 namespace Dune
 {
 /**  \ingroup transport
-*   \defgroup transportProblems Problems
-*/
+ *   \defgroup transportProblems Problems
+ */
 //! \ingroup transportProblems
 /**  @brief  base class that defines the parameters of a transport equation
-*   An interface for defining parameters for the scalar transport equation
-*  \f$S_t - \text{div}\, (f_\text{w}(S) \boldsymbol{v}_\text{total}) = 0\f$,
-* \f$S = g\f$ on \f$\Gamma_1\f$, and \f$S(t = 0) = S_0\f$. Here,
-* \f$S\f$ denotes the wetting phase saturation,
-* \f$\boldsymbol{v}_\text{total}\f$ the total velocity,
-* and \f$f_\text{w}\f$ the wetting phase fractional flow function.
-*
-*    Template parameters are:
-*
-*    - Grid  a DUNE grid type
-*    - RT    type used for return values
-*/
+ *   An interface for defining parameters for the scalar transport equation
+ *  \f$S_t - \text{div}\, (f_\text{w}(S) \boldsymbol{v}_\text{total}) = 0\f$,
+ * \f$S = g\f$ on \f$\Gamma_1\f$, and \f$S(t = 0) = S_0\f$. Here,
+ * \f$S\f$ denotes the wetting phase saturation,
+ * \f$\boldsymbol{v}_\text{total}\f$ the total velocity,
+ * and \f$f_\text{w}\f$ the wetting phase fractional flow function.
+ *
+ *    Template parameters are:
+ *
+ *    - Grid  a DUNE grid type
+ *    - RT    type used for return values
+ */
 template<class Grid, class Scalar, class VC>
 class TransportProblem {
     enum {dim=Grid::dimension, dimWorld=Grid::dimensionworld, numEq=1, blocksize=2*Grid::dimension};
@@ -50,35 +50,35 @@ class TransportProblem {
 public:
     //! return type of boundary condition at the given global coordinate
     /*! return type of boundary condition at the given global coordinate
-    @param[in]  globalPos    position in global coordinates
-    \return     boundary condition type given by enum in this class
+      @param[in]  globalPos    position in global coordinates
+      \return     boundary condition type given by enum in this class
     */
     virtual BoundaryConditions::Flags bctypeSat (const GlobalPosition& globalPos, const Element& element,
-            const LocalPosition& localPos) const = 0;
+                                                 const LocalPosition& localPos) const = 0;
 
     //! evaluate Dirichlet boundary condition at given position
     /*! evaluate Dirichlet boundary condition at given position
-    @param[in]  globalPos    position in global coordinates
-    \return     boundary condition value
+      @param[in]  globalPos    position in global coordinates
+      \return     boundary condition value
     */
     virtual Scalar dirichletSat (const GlobalPosition& globalPos, const Element& element,
-            const LocalPosition& localPos) const = 0;
+                                 const LocalPosition& localPos) const = 0;
 
     //! evaluate Neumann boundary condition at given position
     /*! evaluate Neumann boundary condition at given position
-    @param[in]  globalPos    position in global coordinates
-    \return     boundary condition value
+      @param[in]  globalPos    position in global coordinates
+      \return     boundary condition value
     */
     virtual Scalar neumannSat (const GlobalPosition& globalPos, const Element& element,
-            const LocalPosition& localPos, Scalar helpFactor) const = 0;
+                               const LocalPosition& localPos, Scalar helpFactor) const = 0;
 
     //! evaluate initial condition at given position
     /*! evaluate initial boundary condition at given position
-    @param[in]  globalPos    position in global coordinates
-    \return    initial condition value
+      @param[in]  globalPos    position in global coordinates
+      \return    initial condition value
     */
     virtual Scalar initSat (const GlobalPosition& globalPos, const Element& element,
-            const LocalPosition& localPos) const = 0;
+                            const LocalPosition& localPos) const = 0;
 
     const FieldVector<Scalar,dim>& gravity()
     {
@@ -88,9 +88,9 @@ public:
 
     //! evaluate velocity
     /*! Evaluate the velocity at the element faces
-    @param[in]  element              entity of codim 0
-    @param[in]  numberInSelf   local index of element face
-    @param[out] vTotal         velocity vector to be filled
+      @param[in]  element              entity of codim 0
+      @param[in]  numberInSelf   local index of element face
+      @param[out] vTotal         velocity vector to be filled
     */
 
     virtual BlockVector<FieldVector<Scalar, 2> >& getuEx()
@@ -112,7 +112,7 @@ public:
     }
 
     virtual Scalar g (const GlobalPosition& globalPos, const Element& element,
-            const LocalPosition& localPos) const
+                      const LocalPosition& localPos) const
     {
         return dirichletSat(globalPos, element, localPos);
     }
@@ -120,7 +120,7 @@ public:
     //! properties of the soil
     /*! properties of the soil
       \return    soil
-     */
+    */
     virtual Matrix2p<Grid, Scalar>& soil () const
     {
         return soil_;
@@ -129,7 +129,7 @@ public:
     //! object for definition of material law
     /*! object for definition of material law (e.g. Brooks-Corey, Van Genuchten, ...)
       \return    material law
-     */
+    */
     virtual TwoPhaseRelations<Grid, Scalar>& materialLaw () const
     {
         return materialLaw_;
@@ -137,11 +137,11 @@ public:
 
     //! constructor
     /** @param law implementation of material laws. Class TwoPhaseRelations or derived.
-    *  @param cap flag for including capillary forces.
-    */
+     *  @param cap flag for including capillary forces.
+     */
 
     TransportProblem(VC& var, Matrix2p<Grid, Scalar>& soil, TwoPhaseRelations<Grid,Scalar>& materialLaw  = *(new TwoPhaseRelations<Grid,Scalar>), const bool capillarity = false, const bool exsol = false)
-    : variables(var), capillarity(capillarity), materialLaw_(materialLaw), soil_(soil), exsolution(exsol), uE(0)
+        : variables(var), capillarity(capillarity), materialLaw_(materialLaw), soil_(soil), exsolution(exsol), uE(0)
     {    }
 
     //! always define virtual destructor in abstract base class

@@ -40,7 +40,7 @@ namespace Dune
 template<class Grid, class Scalar>
 class CO2Problem: public TwoPhaseProblem<Grid, Scalar>
 {
-typedef    typename Grid::ctype CoordScalar;
+    typedef    typename Grid::ctype CoordScalar;
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
     typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
     typedef BasicDomain<Grid, Scalar> ParentType;
@@ -50,14 +50,14 @@ typedef    typename Grid::ctype CoordScalar;
     typedef typename DomainTraits::GlobalPosition GlobalPosition;
 
     enum
-    {   dim=Grid::dimension, numEq=2};
+        {   dim=Grid::dimension, numEq=2};
 
 public:
     enum
-    {   wPhase = 0, nPhase = 1};
+        {   wPhase = 0, nPhase = 1};
 
     virtual FieldVector<Scalar,numEq> q (const GlobalPosition& globalPos, const Element& element,
-            const LocalPosition& localPos) const
+                                         const LocalPosition& localPos) const
     {
         FieldVector<Scalar,numEq> values(0);
 
@@ -65,29 +65,29 @@ public:
     }
 
     virtual FieldVector<BoundaryConditions::Flags, numEq> bctype (const GlobalPosition& globalPos, const Element& element,
-            const IntersectionIterator& isIt,
-            const LocalPosition& localPos) const
+                                                                  const IntersectionIterator& isIt,
+                                                                  const LocalPosition& localPos) const
     {
         FieldVector<BoundaryConditions::Flags, numEq> values(Dune::BoundaryConditions::neumann);
 
         if(globalPos[0] >= 300-1e-2 )
-        values = Dune::BoundaryConditions::dirichlet;
+            values = Dune::BoundaryConditions::dirichlet;
 
         return values;
     }
 
     virtual void dirichletIndex(const GlobalPosition& globalPos, const Element& element,
-            const IntersectionIterator& isIt,
-            const LocalPosition& localPos, FieldVector<int,numEq>& dirichletIndex) const
+                                const IntersectionIterator& isIt,
+                                const LocalPosition& localPos, FieldVector<int,numEq>& dirichletIndex) const
     {
         for (int equationNumber = 0; equationNumber < numEq; equationNumber++)
-        dirichletIndex[equationNumber]=equationNumber;
+            dirichletIndex[equationNumber]=equationNumber;
         return;
     }
 
     virtual FieldVector<Scalar,numEq> g (const GlobalPosition& globalPos, const Element& element,
-            const IntersectionIterator& isIt,
-            const LocalPosition& localPos) const
+                                         const IntersectionIterator& isIt,
+                                         const LocalPosition& localPos) const
     {
         FieldVector<Scalar,numEq> values(0);
 
@@ -98,20 +98,20 @@ public:
     }
 
     virtual FieldVector<Scalar,numEq> J (const GlobalPosition& globalPos, const Element& element,
-            const IntersectionIterator& isIt, const LocalPosition& localPos) const
+                                         const IntersectionIterator& isIt, const LocalPosition& localPos) const
     {
         FieldVector<Scalar,numEq> values(0);
         if(globalPos[0] < 1.e-2 && globalPos[1] < 30.)
-        {
-            values[wPhase] = 0.0;//-4.046e-5;
-            values[nPhase] = -0.02;
-        }
+            {
+                values[wPhase] = 0.0;//-4.046e-5;
+                values[nPhase] = -0.02;
+            }
         return values;
     }
 
     // Initial Conditions for global vector globalPos, element element and local vector localPos
     virtual FieldVector<Scalar,numEq> initial (const GlobalPosition& globalPos, const Element& element,
-            const LocalPosition& localPos) const
+                                               const LocalPosition& localPos) const
     {
         FieldVector<Scalar,numEq> values(0);
         values[wPhase] = 1.013e5 + (depthBOR_ - globalPos[1]) * 1045 * 9.81;
@@ -130,8 +130,8 @@ public:
     }
 
     CO2Problem(Fluid& liq1, Fluid& liq2, Matrix2p<Grid, Scalar>& soil,
-            TwoPhaseRelations<Grid, Scalar>& law = *(new TwoPhaseRelations<Grid, Scalar>), Scalar depthBOR = 0.0)
-    : TwoPhaseProblem<Grid,Scalar>(liq1, liq2, soil, law)
+               TwoPhaseRelations<Grid, Scalar>& law = *(new TwoPhaseRelations<Grid, Scalar>), Scalar depthBOR = 0.0)
+        : TwoPhaseProblem<Grid,Scalar>(liq1, liq2, soil, law)
 
     {
         depthBOR_ = depthBOR;

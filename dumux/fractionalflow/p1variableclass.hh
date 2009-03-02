@@ -29,16 +29,16 @@ class P1VariableClass
 
     template<int dim> struct VertexLayout
     {
-      bool contains(Dune::GeometryType gt)
-      {
-         return gt.dim() == 0;
-      }
+        bool contains(Dune::GeometryType gt)
+        {
+            return gt.dim() == 0;
+        }
     };
 
     enum
-    {
-        dim = Grid::dimension, dimWorld = Grid::dimensionworld
-    };
+        {
+            dim = Grid::dimension, dimWorld = Grid::dimensionworld
+        };
 
     typedef Dune::FieldVector<Scalar,dim> LocalPosition;
     typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
@@ -49,7 +49,7 @@ class P1VariableClass
     typedef    typename Grid::Traits::template Codim<dim>::Entity Vertex;
     typedef typename Grid::Traits::LevelIndexSet IndexSet;
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,IndexSet,ElementLayout> ElementMapper;
-     typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,IndexSet,VertexLayout> VertexMapper;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,IndexSet,VertexLayout> VertexMapper;
 
 public:
     typedef Dune::BlockVector< Dune::FieldVector<Scalar,1> > ScalarVectorType;
@@ -69,10 +69,10 @@ public:
     SlopeType slope;
 
     P1VariableClass(Grid& grid, Scalar& initialSat = *(new Scalar(0)), Scalar& initalPress = *(new Scalar(0)), Dune::FieldVector<Scalar, dim>& initialVel = *(new Dune::FieldVector<Scalar, dim> (0)), int transLev = -1, int diffLev = -1)
-    : grid(grid),
-    transLevel((transLev >= 0) ? transLev : grid.maxLevel()), diffLevel((diffLev >= 0) ? diffLev : grid.maxLevel()),
-    diffMapper(grid, (diffLev >= 0) ? grid.levelIndexSet(diffLev) : grid.levelIndexSet(grid.maxLevel())), transMapper(grid, (transLev >= 0) ? grid.levelIndexSet(transLev) : grid.levelIndexSet(grid.maxLevel())),
-    diffSize(diffMapper.size()),transSize(transMapper.size())
+        : grid(grid),
+          transLevel((transLev >= 0) ? transLev : grid.maxLevel()), diffLevel((diffLev >= 0) ? diffLev : grid.maxLevel()),
+          diffMapper(grid, (diffLev >= 0) ? grid.levelIndexSet(diffLev) : grid.levelIndexSet(grid.maxLevel())), transMapper(grid, (transLev >= 0) ? grid.levelIndexSet(transLev) : grid.levelIndexSet(grid.maxLevel())),
+          diffSize(diffMapper.size()),transSize(transMapper.size())
     {
         initSat(initialSat, transSize);
         initPress(initalPress, diffSize);
@@ -121,19 +121,19 @@ public:
     }
 
     const Dune::FieldVector<Scalar,1>& sat(const GlobalPosition globalPos,
-            const Element& element, const LocalPosition localPos) const
+                                           const Element& element, const LocalPosition localPos) const
     {
         return saturation[transMapper.map(element)];;
     }
 
     const Dune::FieldVector<Scalar,1>& press(const GlobalPosition globalPos,
-            const Vertex& vertex, const LocalPosition localPos) const
+                                             const Vertex& vertex, const LocalPosition localPos) const
     {
         return pressure[diffMapper.map(vertex)];
     }
 
     const Dune::FieldVector<Scalar,dim>& vTotal(const Element& element,
-            const int numberInSelf) const
+                                                const int numberInSelf) const
     {
         int elemId = transMapper.map(element);
 
@@ -159,29 +159,29 @@ public:
     void vtkoutMultiLevel(const char* name, int k, int pressureLevel = 0, int satLevel = 0) const
     {
         if (pressureLevel == satLevel)
-        {
-            VTKWriter<typename Grid::LeafGridView> vtkwriter(grid.leafView());
-            char fname[128];
-            sprintf(fname, "%s-%05d", name, k);
-            vtkwriter.addCellData(saturation, "saturation");
-            vtkwriter.addVertexData(pressure, "total pressure p~");
-            vtkwriter.write(fname, VTKOptions::ascii);
-        }
+            {
+                VTKWriter<typename Grid::LeafGridView> vtkwriter(grid.leafView());
+                char fname[128];
+                sprintf(fname, "%s-%05d", name, k);
+                vtkwriter.addCellData(saturation, "saturation");
+                vtkwriter.addVertexData(pressure, "total pressure p~");
+                vtkwriter.write(fname, VTKOptions::ascii);
+            }
         else
-        {
-            Dune::VTKWriter<typename Grid::LevelGridView>
-            vtkwriterpressure(grid.levelView(pressureLevel));
-            char fname[128];
-            sprintf(fname, "%s-press%05d", name, k);
-            vtkwriterpressure.addVertexData(pressure, "total pressure p~");
-            vtkwriterpressure.write(fname, Dune::VTKOptions::ascii);
+            {
+                Dune::VTKWriter<typename Grid::LevelGridView>
+                    vtkwriterpressure(grid.levelView(pressureLevel));
+                char fname[128];
+                sprintf(fname, "%s-press%05d", name, k);
+                vtkwriterpressure.addVertexData(pressure, "total pressure p~");
+                vtkwriterpressure.write(fname, Dune::VTKOptions::ascii);
 
-            Dune::VTKWriter<typename Grid::LevelGridView>
-            vtkwritersaturation(grid.levelView(satLevel));
-            sprintf(fname, "%s-%05d", name, k);
-            vtkwritersaturation.addCellData(saturation, "saturation");
-            vtkwritersaturation.write(fname, VTKOptions::ascii);
-        }
+                Dune::VTKWriter<typename Grid::LevelGridView>
+                    vtkwritersaturation(grid.levelView(satLevel));
+                sprintf(fname, "%s-%05d", name, k);
+                vtkwritersaturation.addCellData(saturation, "saturation");
+                vtkwritersaturation.write(fname, VTKOptions::ascii);
+            }
         return;
     }
 
@@ -191,10 +191,10 @@ public:
         ScalarVectorType error(transSize);
 
         for (int i=0; i<transSize; i++)
-        {
-            saturationEx[i] = uEx[i][0];
-            error[i]=uEx[i][1];
-        }
+            {
+                saturationEx[i] = uEx[i][0];
+                error[i]=uEx[i][1];
+            }
         VTKWriter<typename Grid::LeafGridView> vtkwriter(grid.leafView());
         char fname[128];
         sprintf(fname, "%s-%05d", name, k);

@@ -18,7 +18,7 @@ public:
     // function returning the intrinsic permeability tensor K
     // depending on the position within the domain
     const FieldMatrix<DT,n,n> &K (const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-coupled:permeability}@*/
-            const FieldVector<DT,n>& xi)
+                                  const FieldVector<DT,n>& xi)
     {
         return K_;
     }
@@ -26,7 +26,7 @@ public:
     // function returning the porosity of the porous matrix
     // depending on the position within the domain
     double porosity(const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-coupled:porosity}@*/
-            const FieldVector<DT,n>& xi) const
+                    const FieldVector<DT,n>& xi) const
     {
         return 0.2;
     }
@@ -34,7 +34,7 @@ public:
     // function returning the residual saturation of the wetting fluid
     // depending on the position within the domain and on the temperature
     double Sr_w(const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-coupled:srw}@*/
-            const FieldVector<DT,n>& xi, const double T = 283.15) const
+                const FieldVector<DT,n>& xi, const double T = 283.15) const
     {
         return 0;
     }
@@ -42,7 +42,7 @@ public:
     // function returning the residual saturation of the non-wetting fluid
     // depending on the position within the domain and on the temperature
     double Sr_n(const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-coupled:srn}@*/
-            const FieldVector<DT,n>& xi, const double T = 283.15) const
+                const FieldVector<DT,n>& xi, const double T = 283.15) const
     {
         return 0;
     }
@@ -51,7 +51,7 @@ public:
     // and the relative permeability functions
     // depending on the position within the domain and on the temperature
     std::vector<double> paramRelPerm(const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-coupled:parameters}@*/
-            const FieldVector<DT,n>& xi, const double T = 283.15) const
+                                     const FieldVector<DT,n>& xi, const double T = 283.15) const
     {
         std::vector<double> param(2);
 
@@ -60,8 +60,8 @@ public:
         param[1] = 0; // maximal capillary pressure
 
         //Brooks-Corey parameters
-//        param[0] = 2; // lambda
-//        param[1] = 0.; // entry-pressure
+        //        param[0] = 2; // lambda
+        //        param[1] = 0.; // entry-pressure
 
         return param;
     }
@@ -69,7 +69,7 @@ public:
     // function returning the kind of relation used for the calculation of the capillary
     // pressure and the relative permeabilities depending on the position within the domain
     typename Matrix2p<G,RT>::modelFlag relPermFlag(const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-coupled:flags}@*/
-            const FieldVector<DT,n>& xi) const
+                                                   const FieldVector<DT,n>& xi) const
     {
         return Matrix2p<G,RT>::linear; //flag types defined in
     }                                   //dumux/material/property_baseclasses.hh

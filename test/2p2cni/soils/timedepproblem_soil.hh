@@ -23,11 +23,11 @@ public:
 
     const FieldMatrix<CoordScalar,dim,dim> &K (const GlobalPosition &x, const Element& e, const LocalPosition &xi)
     {
-         if (x[0] > 0.5)
-           return permlocLow_;
+        if (x[0] > 0.5)
+            return permlocLow_;
 
-         else
-           return permlocHigh_;
+        else
+            return permlocHigh_;
     }
 
     double porosity(const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
@@ -48,8 +48,8 @@ public:
     virtual double heatCap(const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
     {
         return     (800 /* spec. heat cap. of sediment */
-                        * 2650 /* density of sediment */
-                        * (1-porosity(x, e, xi)));
+                    * 2650 /* density of sediment */
+                    * (1-porosity(x, e, xi)));
     }
 
     virtual double heatCond(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double sat) const
@@ -76,15 +76,15 @@ public:
 
         //Brooks-Corey parameters
         if (x[0] > 0.5)
-        {
-            param[0] = 1.8; // lambda
-            param[1] = 1.0e4; // entry-pressure
-        }
+            {
+                param[0] = 1.8; // lambda
+                param[1] = 1.0e4; // entry-pressure
+            }
         else
-        {
-            param[0] = 1.8;
-            param[1] = 1.0e4;
-        }
+            {
+                param[0] = 1.8;
+                param[1] = 1.0e4;
+            }
 
         return param;
     }
@@ -99,15 +99,15 @@ public:
         :HomogeneousSoil<Grid,Scalar>(),
          permlocHigh_(0.0), permlocLow_(0.0)
     {
-      for (int i = 0; i < dim; i++)
-        permlocLow_[i][i] = 2.0e-12;
+        for (int i = 0; i < dim; i++)
+            permlocLow_[i][i] = 2.0e-12;
 
-      for (int i = 0; i < dim; i++)
-        permlocHigh_[i][i] = 1.0e-11;
+        for (int i = 0; i < dim; i++)
+            permlocHigh_[i][i] = 1.0e-11;
 
     }
 
-    private:
+private:
     Dune::FieldMatrix<Scalar,dim,dim> permlocHigh_, permlocLow_ /*, permlocAquitard_*/;
 };
 } // end namespace

@@ -8,7 +8,7 @@ namespace Dune {
 //! \ingroup diffusionProblems
 //! example class for diffusion problems
 template<class G, class RT, class VC> class UpsSProblem :
-    public FractionalFlowProblem<G,RT,VC> {
+        public FractionalFlowProblem<G,RT,VC> {
 
     typedef typename G::ctype DT;
     enum {n=G::dimension};
@@ -16,19 +16,19 @@ template<class G, class RT, class VC> class UpsSProblem :
 
 public:
     UpsSProblem(VC& variableobj, Fluid& wp, Fluid& nwp, Matrix2p<G, RT>& s, TwoPhaseRelations<G, RT>& law = *(new TwoPhaseRelations<G,RT>), const FieldVector<DT,n> Left = 0,
-            const FieldVector<DT,n> Right = 0, const bool cap = false) :
+                const FieldVector<DT,n> Right = 0, const bool cap = false) :
         FractionalFlowProblem<G, RT, VC>(variableobj, wp, nwp, s, law, cap), Left_(Left[0]),
-                Right_(Right[0]), eps_(1e-8)
-                {}
+        Right_(Right[0]), eps_(1e-8)
+    {}
 
     virtual RT qPress  (const FieldVector<DT,n>& x, const Entity& e,
-                            const FieldVector<DT,n>& xi)
+                        const FieldVector<DT,n>& xi)
     {
         return 0;
     }
 
     typename BoundaryConditions::Flags bctypePress(const FieldVector<DT,n>& x,
-            const Entity& e, const FieldVector<DT,n>& xi) const {
+                                                   const Entity& e, const FieldVector<DT,n>& xi) const {
         if ((x[0] < eps_ ) || x[0] > (Right_ - eps_))
             return BoundaryConditions::dirichlet;
         // all other boundaries
@@ -36,16 +36,16 @@ public:
     }
 
     BoundaryConditions::Flags bctypeSat (const FieldVector<DT,n>& x, const Entity& e,
-                      const FieldVector<DT,n>& xi) const
+                                         const FieldVector<DT,n>& xi) const
     {
-      if (x[0] < eps_)
-    return Dune::BoundaryConditions::dirichlet;
-      else
-    return Dune::BoundaryConditions::neumann;
+        if (x[0] < eps_)
+            return Dune::BoundaryConditions::dirichlet;
+        else
+            return Dune::BoundaryConditions::neumann;
     }
 
     RT gPress(const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi) const {
+              const FieldVector<DT,n>& xi) const {
         if (x[0] < eps_)
             return 1;
         // all other boundaries
@@ -61,15 +61,15 @@ public:
     }
 
     RT JPress(const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi) const {
-//        if (x[0] > Right_ - eps_)
-//            return 3e-7;
+              const FieldVector<DT,n>& xi) const {
+        //        if (x[0] > Right_ - eps_)
+        //            return 3e-7;
         return 0;
     }
 
     RT JSat(const FieldVector<DT,n>& x, const Entity& e,
             const FieldVector<DT,n>& xi, RT& factor) const
-            {
+    {
         if (x[0] > (Right_ - eps_))
             return factor;
         // all other boundaries
@@ -77,12 +77,12 @@ public:
     }
 
     RT initSat (const FieldVector<DT,n>& x, const Entity& e,
-       const FieldVector<DT,n>& xi) const
+                const FieldVector<DT,n>& xi) const
     {
-//      if (x[0] < eps_)
-//    return 1;
-//      else
-    return 0;
+        //      if (x[0] < eps_)
+        //    return 1;
+        //      else
+        return 0;
     }
 
 private:

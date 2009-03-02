@@ -20,27 +20,27 @@
 
 namespace Dune
 {
-    /*!\ingroup fracflow
-     * \brief Standard two phase model.
-     *
-     * This class implements the standard two phase model
-     * for the pressure \f$p\f$ and the
-     * wetting phase saturation \f$S\f$, namely,
-     * \f{align*}
-     * - \text{div}\, (\lambda (S) K \text{grad}\, p ) &= 0, \\
-     * S_t - \text{div}\, (f_\text{w}(S) \boldsymbol{v}_t(p, S)) &= 0,
-     * \f}
-     * supplemented by appropriate initial and boundary conditions.
-     */
+/*!\ingroup fracflow
+ * \brief Standard two phase model.
+ *
+ * This class implements the standard two phase model
+ * for the pressure \f$p\f$ and the
+ * wetting phase saturation \f$S\f$, namely,
+ * \f{align*}
+ * - \text{div}\, (\lambda (S) K \text{grad}\, p ) &= 0, \\
+ * S_t - \text{div}\, (f_\text{w}(S) \boldsymbol{v}_t(p, S)) &= 0,
+ * \f}
+ * supplemented by appropriate initial and boundary conditions.
+ */
 
-  template<class G, class Diffusion, class Transport, class VC>
-  class FractionalFlow  : public Transport, public Diffusion {
-  public:
-      typedef typename Transport::RepresentationType RepresentationType;
-      typedef typename Diffusion::RepresentationType PressType;
-      typedef typename Diffusion::NumberType RT;
+template<class G, class Diffusion, class Transport, class VC>
+class FractionalFlow  : public Transport, public Diffusion {
+public:
+    typedef typename Transport::RepresentationType RepresentationType;
+    typedef typename Diffusion::RepresentationType PressType;
+    typedef typename Diffusion::NumberType RT;
 
-//      Diffusion& diffusion;
+    //      Diffusion& diffusion;
 
     //! \brief Calculate the pressure.
     /*!
@@ -51,25 +51,25 @@ namespace Dune
      *  subject to appropriate boundary and initial conditions.
      *  Employ the method \a pressure of Diffusion.
      */
-//    void pressure(const RT t=0)
-//    {
-//        Diffusion::pressure(t);
-//    }
+    //    void pressure(const RT t=0)
+    //    {
+    //        Diffusion::pressure(t);
+    //    }
 
 
-        virtual void initial() = 0;
+    virtual void initial() = 0;
 
-        //! return const reference to saturation vector
-        const RepresentationType& operator* () const
-        {
-          return this->transproblem.variables.saturation;
-        }
+    //! return const reference to saturation vector
+    const RepresentationType& operator* () const
+    {
+        return this->transproblem.variables.saturation;
+    }
 
-        //! return reference to saturation vector
-        RepresentationType& operator* ()
-        {
-          return this->transproblem.variables.saturation;
-        }
+    //! return reference to saturation vector
+    RepresentationType& operator* ()
+    {
+        return this->transproblem.variables.saturation;
+    }
 
 
     //! \brief Calculate the total velocity.
@@ -97,18 +97,18 @@ namespace Dune
     virtual void vtkout (const char* name, int k) const = 0;
 
     const G &grid() const
-        { return Transport::grid(); }
+    { return Transport::grid(); }
 
     //! Construct a FractionalFlow object.
     FractionalFlow (Diffusion& diff, Transport& trans)
-            : Transport(trans), Diffusion(diff)
+        : Transport(trans), Diffusion(diff)
     {
         if (trans.level() > diff.level())
-          DUNE_THROW(Exception,"from class Twophase (or derived): transport class level is higher than diffusion class level!");
+            DUNE_THROW(Exception,"from class Twophase (or derived): transport class level is higher than diffusion class level!");
     }
 
     //! always define virtual destructor in abstract base class
     virtual ~FractionalFlow () {}
-  };
+};
 }
 #endif

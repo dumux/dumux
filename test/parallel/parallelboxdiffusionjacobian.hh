@@ -23,44 +23,44 @@
 
 namespace Dune
 {
-  //! A class for computing local jacobian matrices
-  /*! A class for computing local jacobian matrix for the
-    diffusion equation
+//! A class for computing local jacobian matrices
+/*! A class for computing local jacobian matrix for the
+  diffusion equation
 
-        div j = q; j = -K grad u; in Omega
+  div j = q; j = -K grad u; in Omega
 
-        u = g on Gamma1; j*n = J on Gamma2.
+  u = g on Gamma1; j*n = J on Gamma2.
 
-    Uses the box method.
+  Uses the box method.
 
-    Template parameters are:
+  Template parameters are:
 
-    - G     a DUNE grid type
-    - RT    type used for return values
-  */
-  template<class G, class RT, class BoxFunction = LeafP1Function<G, RT, 1> >
-  class ParallelBoxDiffusionJacobian
+  - G     a DUNE grid type
+  - RT    type used for return values
+*/
+template<class G, class RT, class BoxFunction = LeafP1Function<G, RT, 1> >
+class ParallelBoxDiffusionJacobian
     : public BoxJacobian<ParallelBoxDiffusionJacobian<G,RT,BoxFunction>,G,RT,1,BoxFunction>
-  {
+{
     typedef typename G::ctype DT;
     typedef typename G::Traits::template Codim<0>::Entity Entity;
     typedef typename Entity::Geometry Geometry;
     typedef ParallelBoxDiffusionJacobian<G,RT,BoxFunction> ThisType;
     typedef typename LocalJacobian<ThisType,G,RT,1>::VBlockType VBlockType;
-     typedef FVElementGeometry<G> FVElementGeometry;
+    typedef FVElementGeometry<G> FVElementGeometry;
 
-  public:
+public:
     enum {n=G::dimension};
 
     //! Constructor
     ParallelBoxDiffusionJacobian (DiffusionParameters<G,RT>& params,
-                  bool levelBoundaryAsDirichlet_, const G& grid,
-                  BoxFunction& sol,
-                  bool procBoundaryAsDirichlet_=true)
-    : BoxJacobian<ThisType,G,RT,1,BoxFunction>(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_),
-      problem(params)
+                                  bool levelBoundaryAsDirichlet_, const G& grid,
+                                  BoxFunction& sol,
+                                  bool procBoundaryAsDirichlet_=true)
+        : BoxJacobian<ThisType,G,RT,1,BoxFunction>(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_),
+          problem(params)
     {
-      this->analytic = false;
+        this->analytic = false;
     }
 
     void clearVisited ()
@@ -119,10 +119,10 @@ namespace Dune
 
     struct ElementData {
         FieldMatrix<DT,n,n> K;
-       };
+    };
 
-       ElementData elData;
+    ElementData elData;
     DiffusionParameters<G,RT>& problem;
-  };
+};
 }
 #endif

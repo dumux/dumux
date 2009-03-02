@@ -34,38 +34,38 @@
 
 namespace Dune
 {
-  /** @addtogroup DISC_Disc
-   *
-   * @{
-   */
-  /**
-   * @brief compute local jacobian matrix for conforming finite elements for diffusion equation
-   *
-   */
+/** @addtogroup DISC_Disc
+ *
+ * @{
+ */
+/**
+ * @brief compute local jacobian matrix for conforming finite elements for diffusion equation
+ *
+ */
 
 
-  //! A class for computing local jacobian matrices
-  /*! A class for computing local jacobian matrix for the
-    diffusion equation
+//! A class for computing local jacobian matrices
+/*! A class for computing local jacobian matrix for the
+  diffusion equation
 
-        div j = q; j = -K grad u; in Omega
+  div j = q; j = -K grad u; in Omega
 
-        u = g on Gamma1; j*n = J on Gamma2.
+  u = g on Gamma1; j*n = J on Gamma2.
 
-    Uses conforming finite elements with the Lagrange shape functions.
-    It should work for all dimensions and element types.
-    All the numbering is with respect to the reference element and the
-    Lagrange shape functions
+  Uses conforming finite elements with the Lagrange shape functions.
+  It should work for all dimensions and element types.
+  All the numbering is with respect to the reference element and the
+  Lagrange shape functions
 
-    Template parameters are:
+  Template parameters are:
 
-    - Grid  a DUNE grid type
-    - RT    type used for return values
-  */
-  template<class G, class RT, class BoxFunction = LeafP1Function<G, RT, 2> >
-  class DeprecatedBoxPnSwJacobian
+  - Grid  a DUNE grid type
+  - RT    type used for return values
+*/
+template<class G, class RT, class BoxFunction = LeafP1Function<G, RT, 2> >
+class DeprecatedBoxPnSwJacobian
     : public BoxJacobian<DeprecatedBoxPnSwJacobian<G,RT,BoxFunction>,G,RT,2,BoxFunction>
-  {
+{
     typedef typename G::ctype DT;
     typedef typename G::Traits::template Codim<0>::Entity Entity;
     typedef typename Entity::Geometry Geometry;
@@ -75,24 +75,24 @@ namespace Dune
     enum {pnIdx = 0, satWIdx = 1};
 
 
-  public:
-        // define the number of components of your system, this is used outside
-        // to allocate the correct size of (dense) blocks with a FieldMatrix
-        enum {n=G::dimension};
-        enum {m=2};
-        enum {SIZE=LagrangeShapeFunctionSetContainer<DT,RT,n>::maxsize};
-        struct VariableNodeData;
+public:
+    // define the number of components of your system, this is used outside
+    // to allocate the correct size of (dense) blocks with a FieldMatrix
+    enum {n=G::dimension};
+    enum {m=2};
+    enum {SIZE=LagrangeShapeFunctionSetContainer<DT,RT,n>::maxsize};
+    struct VariableNodeData;
 
-         //! Constructor
+    //! Constructor
     DeprecatedBoxPnSwJacobian (DeprecatedTwoPhaseProblem<G,RT>& params,
-                  bool levelBoundaryAsDirichlet_, const G& grid,
-                  BoxFunction& sol,
-                  bool procBoundaryAsDirichlet_=true)
-    : BoxJacobian<ThisType,G,RT,2,BoxFunction>(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_),
-      problem(params),
-      statNData(this->vertexMapper.size()), varNData(SIZE), oldVarNData(SIZE)
+                               bool levelBoundaryAsDirichlet_, const G& grid,
+                               BoxFunction& sol,
+                               bool procBoundaryAsDirichlet_=true)
+        : BoxJacobian<ThisType,G,RT,2,BoxFunction>(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_),
+          problem(params),
+          statNData(this->vertexMapper.size()), varNData(SIZE), oldVarNData(SIZE)
     {
-      this->analytic = false;
+        this->analytic = false;
     }
 
     void clearVisited ()
@@ -101,7 +101,7 @@ namespace Dune
     }
 
     VBlockType computeM (const Entity& e, const VBlockType* sol,
-            int node, const std::vector<VariableNodeData>& varData)
+                         int node, const std::vector<VariableNodeData>& varData)
     {
         VBlockType result;
         //std::cout << "rhoW = " << varData[node].density[pnIdx] << ", rhoN = " << varData[node].density[satWIdx] << std::endl;
@@ -128,88 +128,88 @@ namespace Dune
     VBlockType computeA (const Entity& e, const VBlockType* sol, int face)
     {
         int i = this->fvGeom.subContVolFace[face].i;
-          int j = this->fvGeom.subContVolFace[face].j;
+        int j = this->fvGeom.subContVolFace[face].j;
 
-          // permeability in edge direction
-          FieldVector<DT,n> Kij(0);
-          elData.K.umv(this->fvGeom.subContVolFace[face].normal, Kij);
-//          FieldVector<DT,n> Ki(0);
-//          varNData[i].K.umv(this->fvGeom.subContVolFace[face].normal, Ki);
-//          FieldVector<DT,n> Kj(0);
-//          varNData[j].K.umv(this->fvGeom.subContVolFace[face].normal, Kj);
-//          FieldVector<DT,n> Kij(0);
-//          for (int k = 0; k < n; k++)
-//              if (fabs(Ki[k] + Kj[k]) > 0)
-//                  Kij[k] = 2.0*Ki[k]*Kj[k]/(Ki[k] + Kj[k]);
-
-
-          VBlockType flux;
-          for (int comp = 0; comp < m; comp++) {
-              // calculate FE gradient
-              FieldVector<RT, n> pGrad(0);
-              for (int k = 0; k < this->fvGeom.numVertices; k++) {
-                  FieldVector<DT,n> grad(this->fvGeom.subContVolFace[face].grad[k]);
-                  grad *= (comp) ? varNData[k].pW : sol[k][pnIdx];
-                  pGrad += grad;
-              }
-
-              // adjust by gravity
-              FieldVector<RT, n> gravity = problem.gravity();
-              gravity *= varNData[i].density[comp];
-              pGrad -= gravity;
-
-              // calculate the flux using upwind
-              RT outward = pGrad*Kij;
-              if (outward < 0)
-                  flux[comp] = varNData[i].density[comp]*varNData[i].mobility[comp]*outward;
-              else
-                  flux[comp] = varNData[j].density[comp]*varNData[j].mobility[comp]*outward;
-          }
-
-          return flux;
-   };
+        // permeability in edge direction
+        FieldVector<DT,n> Kij(0);
+        elData.K.umv(this->fvGeom.subContVolFace[face].normal, Kij);
+        //          FieldVector<DT,n> Ki(0);
+        //          varNData[i].K.umv(this->fvGeom.subContVolFace[face].normal, Ki);
+        //          FieldVector<DT,n> Kj(0);
+        //          varNData[j].K.umv(this->fvGeom.subContVolFace[face].normal, Kj);
+        //          FieldVector<DT,n> Kij(0);
+        //          for (int k = 0; k < n; k++)
+        //              if (fabs(Ki[k] + Kj[k]) > 0)
+        //                  Kij[k] = 2.0*Ki[k]*Kj[k]/(Ki[k] + Kj[k]);
 
 
+        VBlockType flux;
+        for (int comp = 0; comp < m; comp++) {
+            // calculate FE gradient
+            FieldVector<RT, n> pGrad(0);
+            for (int k = 0; k < this->fvGeom.numVertices; k++) {
+                FieldVector<DT,n> grad(this->fvGeom.subContVolFace[face].grad[k]);
+                grad *= (comp) ? varNData[k].pW : sol[k][pnIdx];
+                pGrad += grad;
+            }
 
-      // *********************************************************
-      // *                                                                            *
-      // *    Calculation of Data at Elements                                 *
-      // *                                                                             *
-      // *                                                                             *
-      // *********************************************************
+            // adjust by gravity
+            FieldVector<RT, n> gravity = problem.gravity();
+            gravity *= varNData[i].density[comp];
+            pGrad -= gravity;
 
-    void computeElementData (const Entity& e)
-    {
-           // ASSUME element-wise constant parameters for the material law
-          elData.parameters = problem.materialLawParameters(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
+            // calculate the flux using upwind
+            RT outward = pGrad*Kij;
+            if (outward < 0)
+                flux[comp] = varNData[i].density[comp]*varNData[i].mobility[comp]*outward;
+            else
+                flux[comp] = varNData[j].density[comp]*varNData[j].mobility[comp]*outward;
+        }
 
-         // ASSUMING element-wise constant permeability, evaluate K at the element center
-          elData.K = problem.K(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
-
-          elData.porosity = problem.porosity(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
+        return flux;
     };
 
 
-      // *********************************************************
-      // *                                                                            *
-      // *    Calculation of Data at Nodes that has to be                 *
-      // *    determined only once    (statNData)                                 *
-      // *                                                                             *
-      // *********************************************************
+
+    // *********************************************************
+    // *                                                                            *
+    // *    Calculation of Data at Elements                                 *
+    // *                                                                             *
+    // *                                                                             *
+    // *********************************************************
+
+    void computeElementData (const Entity& e)
+    {
+        // ASSUME element-wise constant parameters for the material law
+        elData.parameters = problem.materialLawParameters(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
+
+        // ASSUMING element-wise constant permeability, evaluate K at the element center
+        elData.K = problem.K(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
+
+        elData.porosity = problem.porosity(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
+    };
+
+
+    // *********************************************************
+    // *                                                                            *
+    // *    Calculation of Data at Nodes that has to be                 *
+    // *    determined only once    (statNData)                                 *
+    // *                                                                             *
+    // *********************************************************
 
     // analog to EvalStaticData in MUFTE
     void updateStaticData (const Entity& e, const VBlockType* sol)
     {
-      return;
+        return;
     }
 
 
-      //*********************************************************
-      //*                                                        *
-      //*    Calculation of variable Data at Nodes                 *
-      //*    (varNData)                                             *
-      //*                                                         *
-      //*********************************************************
+    //*********************************************************
+    //*                                                        *
+    //*    Calculation of variable Data at Nodes                 *
+    //*    (varNData)                                             *
+    //*                                                         *
+    //*********************************************************
 
 
     // the members of the struct are defined here
@@ -226,7 +226,7 @@ namespace Dune
 
     // analog to EvalPrimaryData in MUFTE, uses members of varNData
     void updateVariableData(const Entity& e, const VBlockType* sol,
-            int i, std::vector<VariableNodeData>& varData)
+                            int i, std::vector<VariableNodeData>& varData)
     {
         // ASSUME element-wise constant parameters for the material law
         varData[i].K = problem.K(this->fvGeom.subContVol[i].global, e, this->fvGeom.subContVol[i].local);
@@ -256,7 +256,7 @@ namespace Dune
         int size = this->fvGeom.numVertices;
 
         for (int i = 0; i < size; i++)
-                updateVariableData(e, sol, i, old);
+            updateVariableData(e, sol, i, old);
     }
 
     struct StaticNodeData
@@ -266,19 +266,19 @@ namespace Dune
 
     struct ElementData {
         RT cellVolume;
-         RT porosity;
+        RT porosity;
         RT gravity;
         FieldVector<RT, 4> parameters;
         FieldMatrix<DT,n,n> K;
-        } elData;
+    } elData;
 
-     // parameters given in constructor
-     DeprecatedTwoPhaseProblem<G,RT>& problem;
-     std::vector<StaticNodeData> statNData;
-     std::vector<VariableNodeData> varNData;
-     std::vector<VariableNodeData> oldVarNData;
-  };
+    // parameters given in constructor
+    DeprecatedTwoPhaseProblem<G,RT>& problem;
+    std::vector<StaticNodeData> statNData;
+    std::vector<VariableNodeData> varNData;
+    std::vector<VariableNodeData> oldVarNData;
+};
 
-  /** @} */
+/** @} */
 }
 #endif

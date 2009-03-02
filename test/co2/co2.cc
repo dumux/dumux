@@ -24,7 +24,7 @@
 
 int main(int argc, char** argv)
 {
-  try{
+    try{
         // define the problem dimensions
         const int dim=2;
         typedef double NumberType;
@@ -34,8 +34,8 @@ int main(int argc, char** argv)
         outerUpperRight[1] = 40;
 
         if (argc != 4) {
-          std::cout << "usage: 2p2cni basefilename tEnd dt" << std::endl;
-          return 0;
+            std::cout << "usage: 2p2cni basefilename tEnd dt" << std::endl;
+            return 0;
         }
         std::string arg1(argv[2]);
         std::istringstream is1(arg1);
@@ -57,44 +57,44 @@ int main(int argc, char** argv)
         //readStarFormat(grid, argv[1]);
         //grid.createLGMGrid(argv[1]);
 
-         Dune::gridinfo(grid);
+        Dune::gridinfo(grid);
 
-    Dune::Brine wPhase(1045., 2.535e-4);
-    Dune::CO2 nPhase(479., 3.95e-5);
-    Dune::Soil<GridType, NumberType> soil;
-    Dune::TwoPhaseRelations<GridType, NumberType> law(soil, wPhase, nPhase);
+        Dune::Brine wPhase(1045., 2.535e-4);
+        Dune::CO2 nPhase(479., 3.95e-5);
+        Dune::Soil<GridType, NumberType> soil;
+        Dune::TwoPhaseRelations<GridType, NumberType> law(soil, wPhase, nPhase);
 
-    Dune::CO2Problem<GridType, NumberType> problem(wPhase, nPhase, soil, law, depthBOR);
+        Dune::CO2Problem<GridType, NumberType> problem(wPhase, nPhase, soil, law, depthBOR);
 
-    typedef Dune::VtkMultiWriter<GridType::LeafGridView> MultiWriter;
-    typedef Dune::BoxPwSn<GridType, NumberType, MultiWriter> TwoPhase;
-    TwoPhase twoPhase(grid, problem);
+        typedef Dune::VtkMultiWriter<GridType::LeafGridView> MultiWriter;
+        typedef Dune::BoxPwSn<GridType, NumberType, MultiWriter> TwoPhase;
+        TwoPhase twoPhase(grid, problem);
 
-//    Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt, "co2-out", 1);
-    Dune::TimeLoop<GridType, TwoPhase, true> timeloop(0, tEnd, dt, "dummy", 1);
+        //    Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt, "co2-out", 1);
+        Dune::TimeLoop<GridType, TwoPhase, true> timeloop(0, tEnd, dt, "dummy", 1);
 
-    Dune::Timer timer;
-    timer.reset();
-//    timeloop.execute(twoPhase);
-    MultiWriter writer("co2-out");
+        Dune::Timer timer;
+        timer.reset();
+        //    timeloop.execute(twoPhase);
+        MultiWriter writer("co2-out");
 
-//  for timeloop.executeMultiWriter(twoPhase, writer, true) restart files are written
-//  for timeloop.executeMultiWriter(twoPhase, writer, true, true, #) initial values are
-//  read from restart file data-#.dgf
-//  at the moment this only works for SGrid in 2D and for ALUCubeGrid in 3D
-    timeloop.executeMultiWriter(twoPhase, writer);
-    std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
+        //  for timeloop.executeMultiWriter(twoPhase, writer, true) restart files are written
+        //  for timeloop.executeMultiWriter(twoPhase, writer, true, true, #) initial values are
+        //  read from restart file data-#.dgf
+        //  at the moment this only works for SGrid in 2D and for ALUCubeGrid in 3D
+        timeloop.executeMultiWriter(twoPhase, writer);
+        std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
 
-    //printvector(std::cout, *twoPhase.u, "u", "row", 2, 1, 3);
+        //printvector(std::cout, *twoPhase.u, "u", "row", 2, 1, 3);
 
-    return 0;
-  }
-  catch (Dune::Exception &e){
-    std::cerr << "Dune reported error: " << e << std::endl;
-  }
-  catch (...){
-    std::cerr << "Unknown exception thrown!" << std::endl;
-  }
+        return 0;
+    }
+    catch (Dune::Exception &e){
+        std::cerr << "Dune reported error: " << e << std::endl;
+    }
+    catch (...){
+        std::cerr << "Unknown exception thrown!" << std::endl;
+    }
 }
 //#else
 //

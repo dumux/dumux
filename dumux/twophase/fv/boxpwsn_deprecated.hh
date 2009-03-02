@@ -48,13 +48,13 @@
 namespace Dune {
 
 /**
- \brief Two phase model with Pw and Sn as primary unknowns
+   \brief Two phase model with Pw and Sn as primary unknowns
 
- This implements a two phase model with Pw and Sn as primary unknowns.
- */
+   This implements a two phase model with Pw and Sn as primary unknowns.
+*/
 template<class G, class RT>
 class DeprecatedBoxPwSn
-: public LeafP1TwoPhaseModel<G, RT, DeprecatedTwoPhaseProblem<G, RT>, DeprecatedBoxPwSnJacobian<G, RT> >
+    : public LeafP1TwoPhaseModel<G, RT, DeprecatedTwoPhaseProblem<G, RT>, DeprecatedBoxPwSnJacobian<G, RT> >
 {
 
 public:
@@ -65,7 +65,7 @@ public:
     typedef DeprecatedBoxPwSnJacobian<G, RT> LocalJacobian;
 
     typedef LeafP1TwoPhaseModel<G, RT, ProblemType, LocalJacobian>
-            ThisLeafP1TwoPhaseModel;
+    ThisLeafP1TwoPhaseModel;
 
     typedef typename ThisLeafP1TwoPhaseModel::FunctionType FunctionType;
 
@@ -83,7 +83,7 @@ public:
 
 
     DeprecatedBoxPwSn(const G& g, ProblemType& prob)
-    : ThisLeafP1TwoPhaseModel(g, prob)
+        : ThisLeafP1TwoPhaseModel(g, prob)
     {}
 
     virtual void solve() {
@@ -113,7 +113,7 @@ public:
         double upperMass, oldUpperMass;
         double totalMass = this->injected(upperMass, oldUpperMass);
         std::cout << totalMass << "\t"<< upperMass<< "\t"<< oldUpperMass
-                << "\t"; //# totalMass, upperMass, oldUpperMass"<< std::endl;
+                  << "\t"; //# totalMass, upperMass, oldUpperMass"<< std::endl;
         *(this->uOldTimeStep) = *(this->u);
 
         if (this->problem.exsolution)

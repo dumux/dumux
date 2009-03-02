@@ -25,87 +25,87 @@
 
 int main(int argc, char** argv)
 {
-  try{
-    // define the problem dimensions (geometry of problem)
-    const int dim=2;
-    typedef double NumberType;
-    Dune::FieldVector<NumberType, dim> outerLowerLeft(0.0);
-    Dune::FieldVector<NumberType, dim> outerUpperRight(60.0);
-    outerUpperRight[1] = 40.0;
-    double depthBOR = 800.0;
+    try{
+        // define the problem dimensions (geometry of problem)
+        const int dim=2;
+        typedef double NumberType;
+        Dune::FieldVector<NumberType, dim> outerLowerLeft(0.0);
+        Dune::FieldVector<NumberType, dim> outerUpperRight(60.0);
+        outerUpperRight[1] = 40.0;
+        double depthBOR = 800.0;
 
-//    For defining a SGrid ////////////////////////////////////////
-    typedef Dune::SGrid<dim,dim> GridType;
-    typedef Dune::FieldVector<GridType::ctype,dim> FieldVector;
-    Dune::FieldVector<int,dim> N(40); N[1]=40;
-    FieldVector L(0);
-    FieldVector H(300); H[1]=300;
-    GridType grid(N,L,H);
-////////////
+        //    For defining a SGrid ////////////////////////////////////////
+        typedef Dune::SGrid<dim,dim> GridType;
+        typedef Dune::FieldVector<GridType::ctype,dim> FieldVector;
+        Dune::FieldVector<int,dim> N(40); N[1]=40;
+        FieldVector L(0);
+        FieldVector H(300); H[1]=300;
+        GridType grid(N,L,H);
+        ////////////
 
-    // for defining e.g. a lense
-    Dune::FieldVector<NumberType, dim> innerLowerLeft(0.0);
-    innerLowerLeft[1] = 0.0;
-    Dune::FieldVector<NumberType, dim> innerUpperRight(0.0);
-    innerUpperRight[1] = 0.5;
+        // for defining e.g. a lense
+        Dune::FieldVector<NumberType, dim> innerLowerLeft(0.0);
+        innerLowerLeft[1] = 0.0;
+        Dune::FieldVector<NumberType, dim> innerUpperRight(0.0);
+        innerUpperRight[1] = 0.5;
 
-    if (argc != 4) {
-      std::cout << "usage: ./test_2p2c grid tEnd dt" << std::endl;
-      return 0;
+        if (argc != 4) {
+            std::cout << "usage: ./test_2p2c grid tEnd dt" << std::endl;
+            return 0;
+        }
+        // define tEnd
+        std::string arg1(argv[2]);
+        std::istringstream is1(arg1);
+        double tEnd;
+        is1 >> tEnd;
+        // define dt
+        std::string arg2(argv[3]);
+        std::istringstream is2(arg2);
+        double dt;
+        is2 >> dt;
+
+        // create a grid object
+        //typedef Dune::YaspGrid<dim,dim> GridType;
+        //    typedef Dune::UGGrid<dim> GridType;
+
+        // use grid defined in the arguments
+        //    Dune::GridPtr<GridType> gridPointer(argv[1]);
+        // grid reference
+        //    GridType& grid = *gridPointer;
+
+        Dune::gridinfo(grid);
+
+        // choose fluids and properties
+        Dune::Liq_WaterAir wPhase;
+        Dune::Gas_WaterAir nPhase;
+        Dune::BlobSoil<GridType, NumberType> soil;
+
+        Dune::TwoPhaseRelations<GridType, NumberType> materialLaw(soil, wPhase, nPhase);
+        Dune::CWaterAir multicomp(wPhase, nPhase);
+
+        // create problem properties and geometry
+        Dune::BlobProblem<GridType, NumberType> problem(wPhase, nPhase, soil, outerLowerLeft,
+                                                        outerUpperRight, innerLowerLeft, innerUpperRight, depthBOR, materialLaw, multicomp);
+
+        // create two-phase two-component problem
+        typedef Dune::VtkMultiWriter<GridType::LeafGridView> MultiWriter;
+        typedef Dune::Box2P2C<GridType, NumberType, MultiWriter> TwoPhaseTwoComp;
+        TwoPhaseTwoComp twoPhasetwoComp(grid, problem);
+
+        Dune::TimeLoop<GridType, TwoPhaseTwoComp, true> timeloop(0, tEnd, dt, "dummy", 1);
+
+        Dune::Timer timer;
+        timer.reset();
+        MultiWriter writer("out2p2c-blob");
+        timeloop.executeMultiWriter(twoPhasetwoComp, writer);
+        std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
+
+        return 0;
     }
-    // define tEnd
-    std::string arg1(argv[2]);
-    std::istringstream is1(arg1);
-    double tEnd;
-    is1 >> tEnd;
-    // define dt
-    std::string arg2(argv[3]);
-    std::istringstream is2(arg2);
-    double dt;
-    is2 >> dt;
-
-    // create a grid object
-    //typedef Dune::YaspGrid<dim,dim> GridType;
-//    typedef Dune::UGGrid<dim> GridType;
-
-    // use grid defined in the arguments
-//    Dune::GridPtr<GridType> gridPointer(argv[1]);
-    // grid reference
-//    GridType& grid = *gridPointer;
-
-    Dune::gridinfo(grid);
-
-    // choose fluids and properties
-    Dune::Liq_WaterAir wPhase;
-    Dune::Gas_WaterAir nPhase;
-    Dune::BlobSoil<GridType, NumberType> soil;
-
-    Dune::TwoPhaseRelations<GridType, NumberType> materialLaw(soil, wPhase, nPhase);
-    Dune::CWaterAir multicomp(wPhase, nPhase);
-
-    // create problem properties and geometry
-    Dune::BlobProblem<GridType, NumberType> problem(wPhase, nPhase, soil, outerLowerLeft,
-            outerUpperRight, innerLowerLeft, innerUpperRight, depthBOR, materialLaw, multicomp);
-
-    // create two-phase two-component problem
-    typedef Dune::VtkMultiWriter<GridType::LeafGridView> MultiWriter;
-    typedef Dune::Box2P2C<GridType, NumberType, MultiWriter> TwoPhaseTwoComp;
-    TwoPhaseTwoComp twoPhasetwoComp(grid, problem);
-
-    Dune::TimeLoop<GridType, TwoPhaseTwoComp, true> timeloop(0, tEnd, dt, "dummy", 1);
-
-    Dune::Timer timer;
-    timer.reset();
-    MultiWriter writer("out2p2c-blob");
-    timeloop.executeMultiWriter(twoPhasetwoComp, writer);
-    std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
-
-    return 0;
-  }
-  catch (Dune::Exception &e){
-    std::cerr << "Dune reported error: " << e << std::endl;
-  }
-  catch (...){
-    std::cerr << "Unknown exception thrown!" << std::endl;
-  }
+    catch (Dune::Exception &e){
+        std::cerr << "Dune reported error: " << e << std::endl;
+    }
+    catch (...){
+        std::cerr << "Unknown exception thrown!" << std::endl;
+    }
 }

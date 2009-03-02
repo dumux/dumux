@@ -14,28 +14,28 @@
 
 namespace Dune
 {
-  //! \ingroup diffusion
-  //! Base class for defining an instance of a numerical diffusion model.
-  /*! An interface for defining a numerical diffusion model for the
-   *  solution of equations of the form
-   * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = 0, \f$,
-   * \f$p = g\f$ on \f$\Gamma_1\f$, and \f$\lambda K \text{grad}\, p = J\f$
-   * on \f$\Gamma_2\f$. Here,
-   * \f$p\f$ denotes the pressure, \f$K\f$ the absolute permeability,
-   * and \f$\lambda\f$ the total mobility, possibly depending on the
-   * saturation.
-    Template parameters are:
+//! \ingroup diffusion
+//! Base class for defining an instance of a numerical diffusion model.
+/*! An interface for defining a numerical diffusion model for the
+ *  solution of equations of the form
+ * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = 0, \f$,
+ * \f$p = g\f$ on \f$\Gamma_1\f$, and \f$\lambda K \text{grad}\, p = J\f$
+ * on \f$\Gamma_2\f$. Here,
+ * \f$p\f$ denotes the pressure, \f$K\f$ the absolute permeability,
+ * and \f$\lambda\f$ the total mobility, possibly depending on the
+ * saturation.
+ Template parameters are:
 
-    - Grid      a DUNE grid type
-    - RT        type used for return values
-    - RepresentationType type of the vector holding the pressure values
-    - VelType   type of the vector holding the velocity values
+ - Grid      a DUNE grid type
+ - RT        type used for return values
+ - RepresentationType type of the vector holding the pressure values
+ - VelType   type of the vector holding the velocity values
 
-   */
-  template<class Grid, class Scalar,class VC>
-  class DiffusionSubProbs {
-  public:
-      typedef Scalar ScalarType;
+*/
+template<class Grid, class Scalar,class VC>
+class DiffusionSubProbs {
+public:
+    typedef Scalar ScalarType;
 
     //! \brief Calculate the pressure.
     /*!
@@ -75,7 +75,7 @@ namespace Dune
      * \param lev the grid level to work on
      */
     DiffusionSubProbs(Grid& grid, FractionalFlowProblemSubProbs<Grid, Scalar, VC>& problem)
-    : grid(grid), diffProblem(problem)
+        : grid(grid), diffProblem(problem)
     {
     }
 
@@ -85,9 +85,9 @@ namespace Dune
         return diffProblem.variables.diffLevel;
     }
 
-     const Grid& grid;
-     FractionalFlowProblemSubProbs<Grid, Scalar, VC>& diffProblem; //!< problem data
-  };
+    const Grid& grid;
+    FractionalFlowProblemSubProbs<Grid, Scalar, VC>& diffProblem; //!< problem data
+};
 
 }
 #endif

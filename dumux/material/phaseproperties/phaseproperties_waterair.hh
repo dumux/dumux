@@ -49,10 +49,10 @@ public:
         double H_a = 1005 * (T - 273.15);
         double H_w;
         H_w = constRelWater.enthalpy_water(T,p);
-//      if (T < 273.15)
-//          H_w = constRelWater.sp_enthalpy_IAPWS2(273.15, p) + 4000 * (T - 273.15);
-//      else
-//          H_w = constRelWater.sp_enthalpy_IAPWS2(T, p);
+        //      if (T < 273.15)
+        //          H_w = constRelWater.sp_enthalpy_IAPWS2(273.15, p) + 4000 * (T - 273.15);
+        //      else
+        //          H_w = constRelWater.sp_enthalpy_IAPWS2(T, p);
         return Xw * H_w + (1-Xw) * H_a;
     }
 
@@ -147,10 +147,10 @@ public:
         return T;
     }
 
-  Liq_WaterAir() : Liquid_GL()
+    Liq_WaterAir() : Liquid_GL()
     {
-    M_w = 0.018016;
-    M_a = 0.02896;
+        M_w = 0.018016;
+        M_a = 0.02896;
     }
 
 private:

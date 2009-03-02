@@ -24,12 +24,12 @@
 namespace Dune {
 
 template<class G, class RT> class BuckleyLeverettProblem :
-    public DeprecatedTwoPhaseProblem<G, RT> {
+        public DeprecatedTwoPhaseProblem<G, RT> {
     typedef typename G::ctype DT;
     enum {n=G::dimension, m=2};
     typedef typename G::Traits::template Codim<0>::Entity Entity;
     typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator
-            IntersectionIterator;
+    IntersectionIterator;
 
 public:
     enum {wPhaseIdx = 0, nwPhaseIdx = 1, pWIdx = 0, sNIdx = 1};
@@ -39,23 +39,23 @@ public:
     bool analytical_;
 
     virtual const FieldMatrix<DT,n,n>& K(const FieldVector<DT,n>& x,
-            const Entity& e, const FieldVector<DT,n>& xi) {
+                                         const Entity& e, const FieldVector<DT,n>& xi) {
         return K_;
     }
 
     virtual FieldVector<RT,m> q(const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi) const {
+                                const FieldVector<DT,n>& xi) const {
         FieldVector<RT,m> values(0);
 
         return values;
     }
 
     virtual FieldVector<BoundaryConditions::Flags, m> bctype(
-            const FieldVector<DT,n>& x, const Entity& e,
-            const IntersectionIterator& intersectionIt,
-            const FieldVector<DT,n>& xi) const {
+                                                             const FieldVector<DT,n>& x, const Entity& e,
+                                                             const IntersectionIterator& intersectionIt,
+                                                             const FieldVector<DT,n>& xi) const {
         FieldVector<BoundaryConditions::Flags, m> values(
-                BoundaryConditions::neumann);
+                                                         BoundaryConditions::neumann);
         if (x[0] < LowerLeft_[0] + eps_) {
             values[wPhaseIdx] = BoundaryConditions::dirichlet;
             values[nwPhaseIdx] = BoundaryConditions::dirichlet;
@@ -88,8 +88,8 @@ public:
     //    }
 
     virtual FieldVector<RT,m> g(const FieldVector<DT,n>& x, const Entity& e,
-            const IntersectionIterator& intersectionIt,
-            const FieldVector<DT,n>& xi) const {
+                                const IntersectionIterator& intersectionIt,
+                                const FieldVector<DT,n>& xi) const {
         FieldVector<RT,m> values(0);
 
         if (x[0] < LowerLeft_[0] + eps_) {
@@ -105,8 +105,8 @@ public:
     }
 
     virtual FieldVector<RT,m> J(const FieldVector<DT,n>& x, const Entity& e,
-            const IntersectionIterator& intersectionIt,
-            const FieldVector<DT,n>& xi) const {
+                                const IntersectionIterator& intersectionIt,
+                                const FieldVector<DT,n>& xi) const {
         FieldVector<RT,m> values(0);
 
         //if (x[0] < LowerLeft_[0] + eps_) {
@@ -121,7 +121,7 @@ public:
     }
 
     virtual FieldVector<RT,m> initial(const FieldVector<DT,n>& x,
-            const Entity& e, const FieldVector<DT,n>& xi) const {
+                                      const Entity& e, const FieldVector<DT,n>& xi) const {
 
         FieldVector<RT,m> values;
 
@@ -132,7 +132,7 @@ public:
     }
 
     double porosity(const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi) const {
+                    const FieldVector<DT,n>& xi) const {
         return Porosity_;
     }
 
@@ -141,7 +141,7 @@ public:
     }
 
     virtual FieldVector<RT,4> materialLawParameters(const FieldVector<DT,n>& x,
-            const Entity& e, const FieldVector<DT,n>& xi) const {
+                                                    const Entity& e, const FieldVector<DT,n>& xi) const {
         FieldVector<RT,4> values;
 
         if (chooselaw_) {
@@ -159,29 +159,29 @@ public:
     }
 
     BuckleyLeverettProblem(DeprecatedTwoPhaseRelations& law = *(new DeprecatedLinearLaw), const FieldVector<DT,n> LowerLeft = 0,
-            const FieldVector<DT,n> UpperRight = 0,
-            int chooselaw = BrooksCorey, bool analytic = false, RT K = 1e-7,
-            RT Swr = 0.2, RT Snr = 0.2, RT Porosity = 0.2, RT Lambda = 2.0,
-            RT p0 =0, RT Alpha = 80, RT N = 4, RT pwleftbc=2e5,
-            RT pwrightbc=1.999984e5) :
-            DeprecatedTwoPhaseProblem<G, RT>(law, analytic),
-            K_(K),
-            LowerLeft_(LowerLeft),
-            UpperRight_(UpperRight),
-            eps_(1e-8*UpperRight[0]),
-            densityW_(law.wettingPhase.density()),
-            densityN_(law.nonwettingPhase.density()),
-            Swr_(Swr),
-            Snr_(Snr),
-            Lambda_(Lambda),
-            p0_(p0),
-            Alpha_(Alpha),
-            N_(N),
-            pwleftbc_(pwleftbc),
-            pwrightbc_(pwrightbc),
-            chooselaw_(chooselaw),
-            Porosity_(Porosity)
-        {
+                           const FieldVector<DT,n> UpperRight = 0,
+                           int chooselaw = BrooksCorey, bool analytic = false, RT K = 1e-7,
+                           RT Swr = 0.2, RT Snr = 0.2, RT Porosity = 0.2, RT Lambda = 2.0,
+                           RT p0 =0, RT Alpha = 80, RT N = 4, RT pwleftbc=2e5,
+                           RT pwrightbc=1.999984e5) :
+        DeprecatedTwoPhaseProblem<G, RT>(law, analytic),
+        K_(K),
+        LowerLeft_(LowerLeft),
+        UpperRight_(UpperRight),
+        eps_(1e-8*UpperRight[0]),
+        densityW_(law.wettingPhase.density()),
+        densityN_(law.nonwettingPhase.density()),
+        Swr_(Swr),
+        Snr_(Snr),
+        Lambda_(Lambda),
+        p0_(p0),
+        Alpha_(Alpha),
+        N_(N),
+        pwleftbc_(pwleftbc),
+        pwrightbc_(pwrightbc),
+        chooselaw_(chooselaw),
+        Porosity_(Porosity)
+    {
         switch (n) {
         case 1: //1D
             width_ = UpperRight[0] - LowerLeft[0];

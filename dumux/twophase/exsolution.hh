@@ -47,7 +47,7 @@ template<class G, class RT> class ExSolution {
     };
 
     typedef Dune::LeafMultipleCodimMultipleGeomTypeMapper<G,P1Layout>
-            VertexMapper;
+    VertexMapper;
 
 
     //private accsess functions
@@ -71,7 +71,7 @@ public:
 
     ExSolution(const G &g) :
         grid(g), mapper(grid),uEx(0),error(0),elementvolume(0) {
-            uExInit();
+        uExInit();
     }
 
     virtual ~ExSolution() {
@@ -87,7 +87,7 @@ public:
     }
 
     void calcSatError (BVu &Approx)
-        {
+    {
         int size=mapper.size();
         error.resize(size);
         elementvolume.resize(size);
@@ -99,46 +99,46 @@ public:
         typedef MultipleCodimMultipleGeomTypeMapper<G,IS,P1Layout> VMapper;
         VMapper vertexmapper(grid,gridview.indexSet());
 
-         Iterator eendit = gridview.template end<0>();
-              for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
+        Iterator eendit = gridview.template end<0>();
+        for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
             {
-              // get entity
-              const Entity& entity = *it;
+                // get entity
+                const Entity& entity = *it;
 
-              // get geometry type
-              Dune::GeometryType gt = it->geometry().type();
+                // get geometry type
+                Dune::GeometryType gt = it->geometry().type();
 
-              double cellvolume = entity.geometry().volume();
+                double cellvolume = entity.geometry().volume();
 
-               // cell center in reference element
-              const Dune::FieldVector<DT,n>
-                elementLocal = Dune::ReferenceElements<DT,n>::general(gt).position(0,0);
+                // cell center in reference element
+                const Dune::FieldVector<DT,n>
+                    elementLocal = Dune::ReferenceElements<DT,n>::general(gt).position(0,0);
 
-              // get global coordinate of cell center
-              const Dune::FieldVector<DT,n> elementGlobal = it->geometry().global(elementLocal);
+                // get global coordinate of cell center
+                const Dune::FieldVector<DT,n> elementGlobal = it->geometry().global(elementLocal);
 
-              const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::value_type&
-                sfs=Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt, n);
-              int size = sfs.size();
+                const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::value_type&
+                    sfs=Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt, n);
+                int size = sfs.size();
 
-              // begin loop over vertices
-              for(int i=0; i < size; i++)
-                {
-                  // local coordinate of vertex
-                  const FieldVector<DT,n> vertexLocal = sfs[i].position();
+                // begin loop over vertices
+                for(int i=0; i < size; i++)
+                    {
+                        // local coordinate of vertex
+                        const FieldVector<DT,n> vertexLocal = sfs[i].position();
 
-                  // get global coordinate of vertex
-                  const FieldVector<DT,n> vertexGlobal = it->geometry().global(vertexLocal);
+                        // get global coordinate of vertex
+                        const FieldVector<DT,n> vertexGlobal = it->geometry().global(vertexLocal);
 
-                  int globalId = vertexmapper.template map<n>(entity, sfs[i].entity());
+                        int globalId = vertexmapper.template map<n>(entity, sfs[i].entity());
 
-                  elementvolume[globalId]+=cellvolume/size;
-//                  std::cout<<"elementvolume = "<<elementvolume[globalId]<<std::endl;
-                }
+                        elementvolume[globalId]+=cellvolume/size;
+                        //                  std::cout<<"elementvolume = "<<elementvolume[globalId]<<std::endl;
+                    }
             }
 
         double globalvolume = elementvolume.one_norm();
-//        std::cout<<"globalvolume = "<<globalvolume<<std::endl;
+        //        std::cout<<"globalvolume = "<<globalvolume<<std::endl;
 
         for (int i=0;i<size;i++){
             error[i]=uEx[i][1]-Approx[i][1];
@@ -150,8 +150,8 @@ public:
         for (int i=0;i<size;i++)
             uEx[i][2] = diffNorm * pow((elementvolume[i]/globalvolume),0.5);
 
-          return;
-        }
+        return;
+    }
 
 protected:
     const G &grid;

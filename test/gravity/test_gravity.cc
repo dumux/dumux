@@ -15,79 +15,79 @@
 
 int main(int argc, char** argv)
 {
-  try{
-    // define the problem dimensions
-    const int dim=2;
+    try{
+        // define the problem dimensions
+        const int dim=2;
 
-    // plotting parameters
-    const char* fileName = "with_gravity";
-    int modulo = 1;
+        // plotting parameters
+        const char* fileName = "with_gravity";
+        int modulo = 1;
 
-    // time loop parameters
-    const double tStart = 0;
-    const double tEnd = 3e3;
-    const double cFLFactor = 0.99;
+        // time loop parameters
+        const double tStart = 0;
+        const double tEnd = 3e3;
+        const double cFLFactor = 0.99;
 
-    // slope limiter parameters
-    bool reconstruct = false;
-    double alphaMax = 0.8;
+        // slope limiter parameters
+        bool reconstruct = false;
+        double alphaMax = 0.8;
 
-    // IMPES parameters
-    int iterFlag = 0;
-    int nIter = 1;
-    double maxDefect = 1e-5;
+        // IMPES parameters
+        int iterFlag = 0;
+        int nIter = 1;
+        double maxDefect = 1e-5;
 
-    // material law parameters
-    //double lambda = 2.0;
-    //double p0 = 5e3;
+        // material law parameters
+        //double lambda = 2.0;
+        //double p0 = 5e3;
 
-    // create a grid object
-    typedef double NumberType;
-    typedef Dune::SGrid<dim,dim> GridType;
-    typedef Dune::FieldVector<GridType::ctype,dim> FieldVector;
-    Dune::FieldVector<int,dim> N(100); N[0] = 16;
-    FieldVector L(0);
-    FieldVector H(10); H[0] = 1;
-    GridType grid(N,L,H);
+        // create a grid object
+        typedef double NumberType;
+        typedef Dune::SGrid<dim,dim> GridType;
+        typedef Dune::FieldVector<GridType::ctype,dim> FieldVector;
+        Dune::FieldVector<int,dim> N(100); N[0] = 16;
+        FieldVector L(0);
+        FieldVector H(10); H[0] = 1;
+        GridType grid(N,L,H);
 
-    grid.globalRefine(0);
+        grid.globalRefine(0);
 
-    DNAPL dnapl(0, 2e3, 5e-4);
-    Water water(0, 1e3, 5e-4);
-    Dune::DeprecatedLinearLaw materialLaw(water, dnapl);
+        DNAPL dnapl(0, 2e3, 5e-4);
+        Water water(0, 1e3, 5e-4);
+        Dune::DeprecatedLinearLaw materialLaw(water, dnapl);
 
-    typedef Dune::VariableClass<GridType, NumberType> VC;
-    double initsat = 1;
-    VC variables(grid,initsat);
+        typedef Dune::VariableClass<GridType, NumberType> VC;
+        double initsat = 1;
+        VC variables(grid,initsat);
 
-    Dune::InitialBallProblem<GridType, NumberType, VC> transportProblem(variables, grid, materialLaw);
-    FieldVector gravity(0);
-    gravity[dim-1] = -9.81;
-    Dune::GravityProblem<GridType, NumberType, VC> diffusionProblem(variables, &grid, materialLaw, gravity);
+        Dune::InitialBallProblem<GridType, NumberType, VC> transportProblem(variables, grid, materialLaw);
+        FieldVector gravity(0);
+        gravity[dim-1] = -9.81;
+        Dune::GravityProblem<GridType, NumberType, VC> diffusionProblem(variables, &grid, materialLaw, gravity);
 
-    typedef Dune::DeprecatedFVTransport<GridType, NumberType, VC> DeprecatedTransport;
-    Dune::GravityPart<GridType, NumberType, VC> gravityPart(diffusionProblem);
-    DeprecatedTransport transport(grid, transportProblem, grid.maxLevel(), gravityPart, reconstruct, alphaMax);
+        typedef Dune::DeprecatedFVTransport<GridType, NumberType, VC> DeprecatedTransport;
+        Dune::GravityPart<GridType, NumberType, VC> gravityPart(diffusionProblem);
+        DeprecatedTransport transport(grid, transportProblem, grid.maxLevel(), gravityPart, reconstruct, alphaMax);
 
-    typedef Dune::DeprecatedFVDiffusionVelocity<GridType, NumberType, VC> DeprecatedDiffusion;
-    DeprecatedDiffusion diffusion(grid, diffusionProblem, grid.maxLevel());
+        typedef Dune::DeprecatedFVDiffusionVelocity<GridType, NumberType, VC> DeprecatedDiffusion;
+        DeprecatedDiffusion diffusion(grid, diffusionProblem, grid.maxLevel());
 
-    typedef Dune::IMPES<GridType, DeprecatedDiffusion, DeprecatedTransport, VC> IMPES;
-    IMPES fractionalflow(diffusion, transport, iterFlag, nIter, maxDefect);
+        typedef Dune::IMPES<GridType, DeprecatedDiffusion, DeprecatedTransport, VC> IMPES;
+        IMPES fractionalflow(diffusion, transport, iterFlag, nIter, maxDefect);
 
-    Dune::TimeLoop<GridType, IMPES > timeloop(tStart, tEnd, fileName, modulo, cFLFactor);
+        Dune::TimeLoop<GridType, IMPES > timeloop(tStart, tEnd, fileName, modulo, cFLFactor);
 
-    Dune::Timer timer;
-    timer.reset();
-    timeloop.execute(fractionalflow);
-    std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
+        Dune::Timer timer;
+        timer.reset();
+        timeloop.execute(fractionalflow);
+        std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
 
-    return 0;
-  }
-  catch (Dune::Exception &e){
-    std::cerr << "Dune reported error: " << e << std::endl;
-  }
-  catch (...){
-    std::cerr << "Unknown exception thrown!" << std::endl;
-  }
+        return 0;
+    }
+    catch (Dune::Exception &e){
+        std::cerr << "Dune reported error: " << e << std::endl;
+    }
+    catch (...){
+        std::cerr << "Unknown exception thrown!" << std::endl;
+    }
 }

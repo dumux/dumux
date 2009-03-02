@@ -7,20 +7,20 @@ namespace Dune
 {
 //! \ingroup transportProblems
 //! @brief example class for a transport problem
-  template<class G, class RT>
-  class SimplerProblem : public TransportProblem<G, RT, Dune::BlockVector< Dune::FieldVector<Dune::FieldVector<double, G::dimension>, 2*G::dimension> > > {
-      typedef typename G::ctype DT;
-      enum {n=G::dimension, m=1};
-      typedef typename G::Traits::template Codim<0>::Entity Entity;
-      typedef typename Dune::BlockVector< Dune::FieldVector<Dune::FieldVector<double, n>, 2*n> > VelType;
-  private:
-      DT left;
-      DT right;
-      FieldVector<DT,n> vLoc;
+template<class G, class RT>
+class SimplerProblem : public TransportProblem<G, RT, Dune::BlockVector< Dune::FieldVector<Dune::FieldVector<double, G::dimension>, 2*G::dimension> > > {
+    typedef typename G::ctype DT;
+    enum {n=G::dimension, m=1};
+    typedef typename G::Traits::template Codim<0>::Entity Entity;
+    typedef typename Dune::BlockVector< Dune::FieldVector<Dune::FieldVector<double, n>, 2*n> > VelType;
+private:
+    DT left;
+    DT right;
+    FieldVector<DT,n> vLoc;
 
-  public:
+public:
     BoundaryConditions::Flags bctype (const FieldVector<DT,n>& x, const Entity& e,
-                       const FieldVector<DT,n>& xi) const
+                                      const FieldVector<DT,n>& xi) const
     {
         if (x[0] > right-1E-8 || x[0] < left+1e-8)
             return Dune::BoundaryConditions::dirichlet;
@@ -29,7 +29,7 @@ namespace Dune
     }
 
     RT g (const FieldVector<DT,n>& x, const Entity& e,
-           const FieldVector<DT,n>& xi) const
+          const FieldVector<DT,n>& xi) const
     {
         if (x[0] < left+1e-8)
             return 1;
@@ -38,7 +38,7 @@ namespace Dune
     }
 
     RT initSat (const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi) const
+                const FieldVector<DT,n>& xi) const
     {
         return 0;
     }
@@ -52,13 +52,13 @@ namespace Dune
     }
 
     SimplerProblem(const G& g, TwoPhaseRelations& law = *(new DeprecatedLinearLaw), const bool cap = false)
-    : TransportProblem<G, RT, VelType>(law, cap), left(0), right(600)
+        : TransportProblem<G, RT, VelType>(law, cap), left(0), right(600)
     {    }
 
     SimplerProblem(TwoPhaseRelations& law = *(new DeprecatedLinearLaw), const bool cap = false)
-    : TransportProblem<G, RT, VelType>(law, cap), left(0), right(1)
+        : TransportProblem<G, RT, VelType>(law, cap), left(0), right(1)
     {    }
-  };
+};
 
 }
 #endif

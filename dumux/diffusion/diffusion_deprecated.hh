@@ -17,27 +17,27 @@
 
 namespace Dune
 {
-  //! \ingroup diffusion
-  //! Base class for defining an instance of a numerical diffusion model.
-  /*! An interface for defining a numerical diffusion model for the
-   *  solution of equations of the form
-   * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = 0, \f$,
-   * \f$p = g\f$ on \f$\Gamma_1\f$, and \f$\lambda K \text{grad}\, p = J\f$
-   * on \f$\Gamma_2\f$. Here,
-   * \f$p\f$ denotes the pressure, \f$K\f$ the absolute permeability,
-   * and \f$\lambda\f$ the total mobility, possibly depending on the
-   * saturation.
-    Template parameters are:
+//! \ingroup diffusion
+//! Base class for defining an instance of a numerical diffusion model.
+/*! An interface for defining a numerical diffusion model for the
+ *  solution of equations of the form
+ * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = 0, \f$,
+ * \f$p = g\f$ on \f$\Gamma_1\f$, and \f$\lambda K \text{grad}\, p = J\f$
+ * on \f$\Gamma_2\f$. Here,
+ * \f$p\f$ denotes the pressure, \f$K\f$ the absolute permeability,
+ * and \f$\lambda\f$ the total mobility, possibly depending on the
+ * saturation.
+ Template parameters are:
 
-    - Grid      a DUNE grid type
-    - RT        type used for return values
-    - RepresentationType type of the vector holding the pressure values
-    - VelType   type of the vector holding the velocity values
+ - Grid      a DUNE grid type
+ - RT        type used for return values
+ - RepresentationType type of the vector holding the pressure values
+ - VelType   type of the vector holding the velocity values
 
-   */
-  template<class G, class RT,class VC>
-  class DeprecatedDiffusion {
-  public:
+*/
+template<class G, class RT,class VC>
+class DeprecatedDiffusion {
+public:
     DeprecatedDiffusionProblem<G, RT, VC>& diffproblem; //!< problem data
     typedef RT NumberType;
 
@@ -75,9 +75,9 @@ namespace Dune
     /**
      * \param g grid object of type G
      * \param prob a problem class object derived from DiffusionProblem
-    */
+     */
     DeprecatedDiffusion(const G& g, DeprecatedDiffusionProblem<G, RT, VC>& prob)
-    : grid_(g), diffproblem(prob), level_(g.maxLevel())
+        : grid_(g), diffproblem(prob), level_(g.maxLevel())
     {
     }
 
@@ -88,7 +88,7 @@ namespace Dune
      * \param lev the grid level to work on
      */
     DeprecatedDiffusion(const G& g, DeprecatedDiffusionProblem<G, RT, VC>& prob, int lev)
-    : diffproblem(prob), grid_(g), level_(lev)
+        : diffproblem(prob), grid_(g), level_(lev)
     {
     }
 
@@ -99,12 +99,12 @@ namespace Dune
     }
 
     const G &grid() const
-        { return grid_; }
+    { return grid_; }
 
-  protected:
-      const G& grid_;
-      const int level_;
-  };
+protected:
+    const G& grid_;
+    const int level_;
+};
 
 }
 #endif

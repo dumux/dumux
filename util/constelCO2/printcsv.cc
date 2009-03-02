@@ -49,13 +49,13 @@ int main(int argc, char **argv)
         printArray<Dune::Co2Tables::HiRes1EnthalpyTraits>();
     else if (argv[1][0] == '2')
         printArray<Dune::Co2Tables::HiRes2EnthalpyTraits>();
-/*    else if (argv[1][0] == '3')
-        printArray<Dune::Co2Tables::HiRes3EnthalpyTraits>();
-*/
+    /*    else if (argv[1][0] == '3')
+          printArray<Dune::Co2Tables::HiRes3EnthalpyTraits>();
+    */
 
     else if (argv[1][0] == 'a')
         printRange<Dune::Co2Tables::TabulatedEnthalpyTraits,
-                   Dune::ConstrelCO2>(100, 100);
+            Dune::ConstrelCO2>(100, 100);
 
     return 0;
 };

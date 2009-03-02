@@ -42,24 +42,24 @@ namespace Dune
 
 //! A class for computing local jacobian matrices
 /*! A class for computing local jacobian matrix for the
- fully coupled two-phase model with Pw, Sn and Te as primary variables
+  fully coupled two-phase model with Pw, Sn and Te as primary variables
 
- Uses the box scheme.
- It should work for all dimensions and element types.
- All the numbering is with respect to the reference element and the
- Lagrange shape functions
+  Uses the box scheme.
+  It should work for all dimensions and element types.
+  All the numbering is with respect to the reference element and the
+  Lagrange shape functions
 
- Template parameters are:
+  Template parameters are:
 
- - Grid  a DUNE grid type
- - Scalar    type used for return values
- */
+  - Grid  a DUNE grid type
+  - Scalar    type used for return values
+*/
 template<class Grid, class Scalar, class BoxFunktion = LeafP1Function<
-        Grid, Scalar, 3> >
+                                       Grid, Scalar, 3> >
 class BoxPwSnTeJacobian: public BoxJacobian<BoxPwSnTeJacobian<Grid, Scalar,
-        BoxFunktion> , Grid, Scalar, 3, BoxFunktion>
+                                                              BoxFunktion> , Grid, Scalar, 3, BoxFunktion>
 {
-typedef    typename Grid::ctype CoordScalar;
+    typedef    typename Grid::ctype CoordScalar;
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
     typedef typename Element::Geometry Geometry;
     typedef BoxPwSnTeJacobian<Grid,Scalar,BoxFunktion> ThisType;
@@ -67,29 +67,29 @@ typedef    typename Grid::ctype CoordScalar;
     typedef typename LocalJacobian<ThisType,Grid,Scalar,3>::VBlockType SolutionVector;
     typedef typename LocalJacobian<ThisType,Grid,Scalar,3>::MBlockType MBlockType;
     enum
-    {   wPhase = 0, nPhase = 1, temp = 2};
+        {   wPhase = 0, nPhase = 1, temp = 2};
 
 public:
     // define the number of components of your system, this is used outside
     // to allocate the correct size of (dense) blocks with a FieldMatrix
     enum
-    {   dim=Grid::dimension};
+        {   dim=Grid::dimension};
     enum
-    {   numEq=3};
+        {   numEq=3};
     enum
-    {   SIZE=LagrangeShapeFunctionSetContainer<CoordScalar,Scalar,dim>::maxsize};
+        {   SIZE=LagrangeShapeFunctionSetContainer<CoordScalar,Scalar,dim>::maxsize};
     struct VariableNodeData;
     typedef FieldMatrix<Scalar,dim,dim> FMatrix;
     typedef FieldVector<Scalar,dim> FVector;
 
     //! Constructor
     BoxPwSnTeJacobian (TwoPhaseHeatProblem<Grid,Scalar>& params,
-            bool levelBoundaryAsDirichlet_, const Grid& grid,
-            BoxFunktion& sol,
-            bool procBoundaryAsDirichlet_=true)
-    : BoxJacobian<ThisType,Grid,Scalar,numEq,BoxFunktion>(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_),
-    problem(params),
-    sNDat(this->vertexMapper.size()), vNDat(SIZE), oldVNDat(SIZE)
+                       bool levelBoundaryAsDirichlet_, const Grid& grid,
+                       BoxFunktion& sol,
+                       bool procBoundaryAsDirichlet_=true)
+        : BoxJacobian<ThisType,Grid,Scalar,numEq,BoxFunktion>(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_),
+          problem(params),
+          sNDat(this->vertexMapper.size()), vNDat(SIZE), oldVNDat(SIZE)
     {
         this->analytic = false;
     }
@@ -101,11 +101,11 @@ public:
      *  @return storage term
      */
     virtual VBlockType computeM (const Element& element, const SolutionVector* sol,
-            int idx, std::vector<VariableNodeData>& varData)
+                                 int idx, std::vector<VariableNodeData>& varData)
     {
         GeometryType gt = element.geometry().type();
         const typename LagrangeShapeFunctionSetContainer<CoordScalar,Scalar,dim>::value_type&
-        sfs=LagrangeShapeFunctions<CoordScalar,Scalar,dim>::general(gt,1);
+            sfs=LagrangeShapeFunctions<CoordScalar,Scalar,dim>::general(gt,1);
 
         int globalIdx = this->vertexMapper.template map<dim>(element, sfs[idx].entity());
 
@@ -115,15 +115,15 @@ public:
 
         // storage of component wPhase
         result[wPhase] =
-        sNDat[globalIdx].porosity*varData[idx].density[wPhase]*satW;
+            sNDat[globalIdx].porosity*varData[idx].density[wPhase]*satW;
         // storage of component co2
         result[nPhase] =
-        sNDat[globalIdx].porosity*varData[idx].density[nPhase]*satN;
+            sNDat[globalIdx].porosity*varData[idx].density[nPhase]*satN;
 
         // storage term of energy equation
         result[temp] = sNDat[globalIdx].porosity * (varData[idx].density[wPhase] * varData[idx].intenergy[wPhase] * satW
-                + varData[idx].density[nPhase] * varData[idx].intenergy[nPhase] * satN)
-        + elData.heatCap * varData[idx].temperature;
+                                                    + varData[idx].density[nPhase] * varData[idx].intenergy[nPhase] * satN)
+            + elData.heatCap * varData[idx].temperature;
         // soil properties defined at the elements!!!
 
         return result;
@@ -132,9 +132,9 @@ public:
     virtual VBlockType computeM (const Element& element, const SolutionVector* sol, int idx, bool old = false)
     {
         if (old)
-        return computeM(element, sol, idx, oldVNDat);
+            return computeM(element, sol, idx, oldVNDat);
         else
-        return computeM(element, sol, idx, vNDat);
+            return computeM(element, sol, idx, vNDat);
     }
 
     /** @brief compute fluxes and heat conduction, loop over subcontrol volume faces
@@ -152,7 +152,7 @@ public:
         const FieldVector<Scalar,dim> normal(this->fvGeom.subContVolFace[face].normal);
         GeometryType gt = element.geometry().type();
         const typename LagrangeShapeFunctionSetContainer<CoordScalar,Scalar,dim>::value_type&
-        sfs=LagrangeShapeFunctions<CoordScalar,Scalar,dim>::general(gt,1);
+            sfs=LagrangeShapeFunctions<CoordScalar,Scalar,dim>::general(gt,1);
 
         // global index of the subcontrolvolume face neighbour nodes in element element
         int globalIdx_i = this->vertexMapper.template map<dim>(element, sfs[idx_i].entity());
@@ -195,39 +195,39 @@ public:
         // calculate FE gradient at subcontrolvolumeface
         for (int idx = 0; idx < this->fvGeom.numVertices; idx++) // loop over adjacent nodes
 
-        {
-            // FEGradient at subcontrolvolumeface face
-            const FieldVector<CoordScalar,dim> feGrad(this->fvGeom.subContVolFace[face].grad[idx]);
-            FieldVector<Scalar,2> pressure(0.0);
-
-            pressure[wPhase] = vNDat[idx].pW;
-            pressure[nPhase] = vNDat[idx].pN;
-
-            // compute pressure gradients for each phase at integration point of subcontrolvolumeface face
-            for (int phase = 0; phase < 2; phase++)
             {
+                // FEGradient at subcontrolvolumeface face
+                const FieldVector<CoordScalar,dim> feGrad(this->fvGeom.subContVolFace[face].grad[idx]);
+                FieldVector<Scalar,2> pressure(0.0);
+
+                pressure[wPhase] = vNDat[idx].pW;
+                pressure[nPhase] = vNDat[idx].pN;
+
+                // compute pressure gradients for each phase at integration point of subcontrolvolumeface face
+                for (int phase = 0; phase < 2; phase++)
+                    {
+                        tmp = feGrad;
+                        tmp *= pressure[phase];
+                        pGrad[phase] += tmp;
+                    }
+
+                // compute temperature gradient
                 tmp = feGrad;
-                tmp *= pressure[phase];
-                pGrad[phase] += tmp;
+                tmp *= vNDat[idx].temperature;
+                teGrad += tmp;
+
+                densityIP[wPhase] += vNDat[idx].density[wPhase] * this->fvGeom.subContVolFace[face].shapeValue[idx];
+                densityIP[nPhase] += vNDat[idx].density[nPhase] * this->fvGeom.subContVolFace[face].shapeValue[idx];
             }
-
-            // compute temperature gradient
-            tmp = feGrad;
-            tmp *= vNDat[idx].temperature;
-            teGrad += tmp;
-
-            densityIP[wPhase] += vNDat[idx].density[wPhase] * this->fvGeom.subContVolFace[face].shapeValue[idx];
-            densityIP[nPhase] += vNDat[idx].density[nPhase] * this->fvGeom.subContVolFace[face].shapeValue[idx];
-        }
 
         // deduce gravity*density of each phase
         FieldMatrix<Scalar,2,dim> contribComp(0);
         for (int phase=0; phase<2; phase++)
-        {
-            contribComp[phase] = problem.gravity();
-            contribComp[phase] *= densityIP[phase];
-            pGrad[phase] -= contribComp[phase]; // grad p - rho*g
-        }
+            {
+                contribComp[phase] = problem.gravity();
+                contribComp[phase] *= densityIP[phase];
+                pGrad[phase] -= contribComp[phase]; // grad p - rho*g
+            }
 
         // Darcy velocity in normal direction for each phase K*n(grad p -rho*g)
         VBlockType outward(0);
@@ -246,13 +246,13 @@ public:
         // evaluate upwind nodes
         int up_w, dn_w, up_n, dn_n;
         if (outward[wPhase] <= 0)
-        {   up_w = idx_i; dn_w = idx_j;}
+            {   up_w = idx_i; dn_w = idx_j;}
         else
-        {   up_w = idx_j; dn_w = idx_i;};
+            {   up_w = idx_j; dn_w = idx_i;};
         if (outward[nPhase] <= 0)
-        {   up_n = idx_i; dn_n = idx_j;}
+            {   up_n = idx_i; dn_n = idx_j;}
         else
-        {   up_n = idx_j; dn_n = idx_i;};
+            {   up_n = idx_j; dn_n = idx_i;};
 
         Scalar alpha = 1.0; // Upwind parameter
 
@@ -260,19 +260,19 @@ public:
         // ADVECTIVE TRANSPORT
         // Water conservation
         flux[wPhase] = (alpha* vNDat[up_w].density[wPhase]*vNDat[up_w].mobility[wPhase]
-                + (1-alpha)* vNDat[dn_w].density[wPhase]*vNDat[dn_w].mobility[wPhase])
-        * outward[wPhase];
+                        + (1-alpha)* vNDat[dn_w].density[wPhase]*vNDat[dn_w].mobility[wPhase])
+            * outward[wPhase];
         // CO2 conservation
         flux[nPhase] = (alpha* vNDat[up_n].density[nPhase]*vNDat[up_n].mobility[nPhase]
-                + (1-alpha)* vNDat[dn_n].density[nPhase]*vNDat[dn_n].mobility[nPhase])
-        * outward[nPhase];
+                        + (1-alpha)* vNDat[dn_n].density[nPhase]*vNDat[dn_n].mobility[nPhase])
+            * outward[nPhase];
         // Heat conservation
         flux[temp] = (alpha* vNDat[up_n].density[nPhase]*vNDat[up_n].mobility[nPhase] * vNDat[up_n].enthalpy[nPhase]
-                + (1-alpha)* vNDat[dn_n].density[nPhase]*vNDat[dn_n].mobility[nPhase] * vNDat[dn_n].enthalpy[nPhase])
-        * outward[nPhase];
+                      + (1-alpha)* vNDat[dn_n].density[nPhase]*vNDat[dn_n].mobility[nPhase] * vNDat[dn_n].enthalpy[nPhase])
+            * outward[nPhase];
         flux[temp] += (alpha* vNDat[up_w].density[wPhase]*vNDat[up_w].mobility[wPhase] * vNDat[up_w].enthalpy[wPhase]
-                + (1-alpha)* vNDat[dn_w].density[wPhase]*vNDat[dn_w].mobility[wPhase] * vNDat[dn_w].enthalpy[wPhase])
-        * outward[wPhase];
+                       + (1-alpha)* vNDat[dn_w].density[wPhase]*vNDat[dn_w].mobility[wPhase] * vNDat[dn_w].enthalpy[wPhase])
+            * outward[wPhase];
 
         //////////////////////////////////////////////////////////////////////////////////////////////
         // HEAT CONDUCTION
@@ -300,25 +300,25 @@ public:
         double eps = 1e-20;
         FMatrix K(0.);
         for (int kx=0; kx<dim; kx++)
-        {
-            for (int ky=0; ky<dim; ky++)
             {
-                if (Ki[kx][ky] != Kj[kx][ky])
-                {
-                    K[kx][ky] = 2 / (1/(Ki[kx][ky]+eps) + (1/(Kj[kx][ky]+eps)));
-                }
-                else K = Ki;
+                for (int ky=0; ky<dim; ky++)
+                    {
+                        if (Ki[kx][ky] != Kj[kx][ky])
+                            {
+                                K[kx][ky] = 2 / (1/(Ki[kx][ky]+eps) + (1/(Kj[kx][ky]+eps)));
+                            }
+                        else K = Ki;
+                    }
             }
-        }
         return K;
     }
 
     virtual void clearVisited ()
     {
         for (int globalIdx = 0; globalIdx < this->vertexMapper.size(); globalIdx++)
-        {
-            sNDat[globalIdx].visited = false;
-        }
+            {
+                sNDat[globalIdx].visited = false;
+            }
         return;
     }
 
@@ -351,23 +351,23 @@ public:
         // get access to shape functions for P1 elements
         GeometryType gt = element.geometry().type();
         const typename LagrangeShapeFunctionSetContainer<CoordScalar,Scalar,dim>::value_type&
-        sfs=LagrangeShapeFunctions<CoordScalar,Scalar,dim>::general(gt,1);
+            sfs=LagrangeShapeFunctions<CoordScalar,Scalar,dim>::general(gt,1);
 
         // get local to global id map
         for (int idx = 0; idx < sfs.size(); idx++)
-        {
-            const int globalIdx = this->vertexMapper.template map<dim>(element, sfs[idx].entity());
-
-            // if nodes are not already visited
-            if (!sNDat[globalIdx].visited)
             {
-                // ASSUME porosity defined at nodes
-                sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.subContVol[idx].global, element, this->fvGeom.subContVol[idx].local);
+                const int globalIdx = this->vertexMapper.template map<dim>(element, sfs[idx].entity());
 
-                // mark elements that were already visited
-                sNDat[globalIdx].visited = true;
+                // if nodes are not already visited
+                if (!sNDat[globalIdx].visited)
+                    {
+                        // ASSUME porosity defined at nodes
+                        sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.subContVol[idx].global, element, this->fvGeom.subContVol[idx].local);
+
+                        // mark elements that were already visited
+                        sNDat[globalIdx].visited = true;
+                    }
             }
-        }
 
         return;
     }
@@ -377,23 +377,23 @@ public:
         // get access to shape functions for P1 elements
         GeometryType gt = element.geometry().type();
         const typename LagrangeShapeFunctionSetContainer<CoordScalar,Scalar,dim>::value_type&
-        sfs=LagrangeShapeFunctions<CoordScalar,Scalar,dim>::general(gt,1);
+            sfs=LagrangeShapeFunctions<CoordScalar,Scalar,dim>::general(gt,1);
 
         // get local to global id map
         for (int idx = 0; idx < sfs.size(); idx++)
-        {
-            const int globalIdx = this->vertexMapper.template map<dim>(element, sfs[idx].entity());
-
-            // if nodes are not already visited
-            if (!sNDat[globalIdx].visited)
             {
-                // ASSUME porosity defined at nodes
-                sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.elementGlobal, element, this->fvGeom.elementLocal);
+                const int globalIdx = this->vertexMapper.template map<dim>(element, sfs[idx].entity());
 
-                // mark elements that were already visited
-                sNDat[globalIdx].visited = true;
+                // if nodes are not already visited
+                if (!sNDat[globalIdx].visited)
+                    {
+                        // ASSUME porosity defined at nodes
+                        sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.elementGlobal, element, this->fvGeom.elementLocal);
+
+                        // mark elements that were already visited
+                        sNDat[globalIdx].visited = true;
+                    }
             }
-        }
 
         return;
     }
@@ -426,7 +426,7 @@ public:
 
     // analog to EvalPrimaryData in MUFTE, uses members of vNDat
     virtual void updateVariableData(const Element& element, const SolutionVector* sol,
-            int idx, std::vector<VariableNodeData>& varData)
+                                    int idx, std::vector<VariableNodeData>& varData)
     {
         const int global = this->vertexMapper.template map<dim>(element, idx);
 
@@ -472,11 +472,11 @@ public:
     void updateVariableData(const Element& element, const SolutionVector* sol, int idx, bool old = false)
     {
         if (old)
-        {
-            updateVariableData(element, sol, idx, oldVNDat);
-        }
+            {
+                updateVariableData(element, sol, idx, oldVNDat);
+            }
         else
-        updateVariableData(element, sol, idx, vNDat);
+            updateVariableData(element, sol, idx, vNDat);
     }
 
     void updateVariableData(const Element& element, const SolutionVector* sol, bool old = false)
@@ -484,7 +484,7 @@ public:
         int size = this->fvGeom.numVertices;
 
         for (int idx = 0; idx < size; idx++)
-        updateVariableData(element, sol, idx, old);
+            updateVariableData(element, sol, idx, old);
     }
 
     struct StaticNodeData

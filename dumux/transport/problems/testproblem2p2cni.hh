@@ -7,19 +7,19 @@
 
 namespace Dune
 {
-    //! Base class for the definition of nonisothermal 2p2c problems
-    /** This base class defines all boundary and initial functions which are needed
-     * for a decoupled nonisothermal 2p2c computation.
-     */
-  template<class G, class RT>
-  class TestProblem2p2cni: public TransportProblem2p2cni<G,RT>
-  {
+//! Base class for the definition of nonisothermal 2p2c problems
+/** This base class defines all boundary and initial functions which are needed
+ * for a decoupled nonisothermal 2p2c computation.
+ */
+template<class G, class RT>
+class TestProblem2p2cni: public TransportProblem2p2cni<G,RT>
+{
 
     typedef typename G::ctype DT;
     enum {n=G::dimension, m=1, blocksize=2*G::dimension};
     typedef typename G::Traits::template Codim<0>::Entity Entity;
 
-  public:
+public:
 
     virtual BoundaryConditions2p2c::Flags cbctype (const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
     {
@@ -64,10 +64,10 @@ namespace Dune
     {
         FieldVector<RT,3> J_(0);
         if (x[0]<1e-6)
-        {
-            J_[2] = 10;
-            J_[0] = 1;
-        }
+            {
+                J_[2] = 10;
+                J_[0] = 1;
+            }
         return J_;
     }
 
@@ -109,12 +109,12 @@ namespace Dune
      *
      */
     TestProblem2p2cni(Dune::VariableClass2p2cni<G, RT>& var, Liquid_GL& liq, Gas_GL& gas, Matrix2p<G, RT>& s, TwoPhaseRelations<G, RT>& law, const bool cap = false)
-    :TransportProblem2p2cni<G,RT>(var, liq, gas, s, law, cap)
+        :TransportProblem2p2cni<G,RT>(var, liq, gas, s, law, cap)
     {
         this->gravity_ = 0.;
     }
 
-  };
+};
 
 }
 #endif

@@ -15,11 +15,11 @@ namespace Dune {
 /** \todo Please doc me! */
 
 template<class Grid, class Scalar, class ProblemType, class LocalJacobian,
-        class FunctionType, class OperatorAssembler> class TwoPhaseHeatModel :
-    public NonlinearModel<Grid, Scalar, ProblemType, LocalJacobian, FunctionType, OperatorAssembler> {
+         class FunctionType, class OperatorAssembler> class TwoPhaseHeatModel :
+        public NonlinearModel<Grid, Scalar, ProblemType, LocalJacobian, FunctionType, OperatorAssembler> {
 public:
     typedef NonlinearModel<Grid, Scalar, ProblemType, LocalJacobian,
-    FunctionType, OperatorAssembler> ThisNonlinearModel;
+                           FunctionType, OperatorAssembler> ThisNonlinearModel;
 
     TwoPhaseHeatModel(const Grid& grid, ProblemType& prob) :
         ThisNonlinearModel(grid, prob), uOldTimeStep(grid) {
@@ -43,8 +43,8 @@ public:
 /** \todo Please doc me! */
 
 template<class Grid, class Scalar, class ProblemType, class LocalJac, int numEq=3> class LeafP1TwoPhaseModel :
-    public TwoPhaseHeatModel<Grid, Scalar, ProblemType, LocalJac,
-        LeafP1Function<Grid, Scalar, numEq>, LeafP1OperatorAssembler<Grid, Scalar, numEq> > {
+        public TwoPhaseHeatModel<Grid, Scalar, ProblemType, LocalJac,
+                                 LeafP1Function<Grid, Scalar, numEq>, LeafP1OperatorAssembler<Grid, Scalar, numEq> > {
 public:
     // define the function type:
     typedef LeafP1Function<Grid, Scalar, numEq> FunctionType;
@@ -53,7 +53,7 @@ public:
     typedef LeafP1OperatorAssembler<Grid, Scalar, numEq> OperatorAssembler;
 
     typedef TwoPhaseHeatModel<Grid, Scalar, ProblemType, LocalJac,
-    FunctionType, OperatorAssembler> ThisTwoPhaseHeatModel;
+                              FunctionType, OperatorAssembler> ThisTwoPhaseHeatModel;
 
     typedef LeafP1TwoPhaseModel<Grid, Scalar, ProblemType, LocalJac, numEq> ThisType;
 
@@ -70,16 +70,16 @@ public:
     typedef typename GridView::IndexSet IS;
     typedef MultipleCodimMultipleGeomTypeMapper<Grid,IS,P1Layout> VertexMapper;
     typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator
-            IntersectionIterator;
+    IntersectionIterator;
 
     LeafP1TwoPhaseModel(const Grid& grid, ProblemType& prob) :
         ThisTwoPhaseHeatModel(grid, prob), problem(prob), _grid(grid), vertexmapper(grid,    grid.leafIndexSet()), size((*(this->u)).size())
-        {
+    {
     }
 
-        virtual void update(double &dt) {
-            DUNE_THROW(NotImplemented, "This method is obsolete. Use updateModel()!");
-        }
+    virtual void update(double &dt) {
+        DUNE_THROW(NotImplemented, "This method is obsolete. Use updateModel()!");
+    }
 
     virtual void initial() {}
 
@@ -98,13 +98,13 @@ public:
         // allocate flag vector to hold flags for essential boundary conditions
         std::vector<BCBlockType> essential(this->vertexmapper.size());
         for (typename std::vector<BCBlockType>::size_type globalIdx=0; globalIdx
-                <essential.size(); globalIdx++)
+                 <essential.size(); globalIdx++)
             essential[globalIdx].assign(BoundaryConditions::neumann);
 
         // iterate through leaf grid
         ElementIterator eendit = gridview.template end<0>();
         for (ElementIterator eIt = gridview.template begin<0>(); eIt
-                != eendit; ++eIt) {
+                 != eendit; ++eIt) {
             // get geometry type
             Dune::GeometryType gt = eIt->geometry().type();
 
@@ -126,7 +126,7 @@ public:
                 for (int equationnumber = 0; equationnumber < numEq; equationnumber++) {
                     if (this->localJacobian().bc(idx)[equationnumber] == BoundaryConditions::neumann)
                         (*defectGlobal)[globalId][equationnumber]
-                                += this->localJacobian().def[idx][equationnumber];
+                            += this->localJacobian().def[idx][equationnumber];
                     else
                         essential[globalId].assign(BoundaryConditions::dirichlet);
                 }
@@ -134,10 +134,10 @@ public:
         }
 
         for (typename std::vector<BCBlockType>::size_type globalIdx=0; globalIdx
-                <essential.size(); globalIdx++)
+                 <essential.size(); globalIdx++)
             for (int equationnumber = 0; equationnumber < numEq; equationnumber++) {
-            if (essential[globalIdx][equationnumber] == BoundaryConditions::dirichlet)
-                (*defectGlobal)[globalIdx][equationnumber] = 0;
+                if (essential[globalIdx][equationnumber] == BoundaryConditions::dirichlet)
+                    (*defectGlobal)[globalIdx][equationnumber] = 0;
             }
     }
 
@@ -146,7 +146,7 @@ public:
         enum {dim = Grid::dimension};
         typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
 
-//        exportToDGF(_grid.leafView(), *(this->u), numEq, "primvar", false);
+        //        exportToDGF(_grid.leafView(), *(this->u), numEq, "primvar", false);
 
         const int size = vertexmapper.size();
         BlockVector<FieldVector<double, numEq> > data(size);
@@ -154,13 +154,13 @@ public:
 
         VertexIterator endIt = _grid.leafView().template end<dim>();
         for (VertexIterator vIt = _grid.leafView().template begin<dim>(); vIt != endIt;    ++vIt)
-        {
-            int globalIdx = vertexmapper.map(*vIt);
-            for (int equationnumber = 0; equationnumber < numEq;equationnumber++)
             {
-                data[globalIdx][equationnumber]=(*(this->u))[globalIdx][equationnumber];
+                int globalIdx = vertexmapper.map(*vIt);
+                for (int equationnumber = 0; equationnumber < numEq;equationnumber++)
+                    {
+                        data[globalIdx][equationnumber]=(*(this->u))[globalIdx][equationnumber];
+                    }
             }
-        }
 
         restartFileName = (boost::format("data-%05d")
                            %restartNum).str();
@@ -170,16 +170,16 @@ public:
     virtual void vtkout(const char* name, int k) {}
 
     const Grid &grid() const
-        { return _grid; }
+    { return _grid; }
 
 
 
 protected:
-  ProblemType& problem;
-  const Grid& _grid;
-  VertexMapper vertexmapper;
-  int size;
-  std::string restartFileName;
+    ProblemType& problem;
+    const Grid& _grid;
+    VertexMapper vertexmapper;
+    int size;
+    std::string restartFileName;
 
 };
 

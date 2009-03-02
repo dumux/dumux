@@ -16,7 +16,7 @@ int main(int argc, char** argv)
         typedef Dune::NewWaterAirProblem<Scalar>  Problem;
         typedef Problem::DomainTraits::Grid       Grid;
         typedef Dune::GridPtr<Grid>               GridPointer;
-        
+
         // initialize MPI, finalize is done automatically on exit
         Dune::MPIHelper::instance(argc, argv);
 

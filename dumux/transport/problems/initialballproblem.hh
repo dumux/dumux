@@ -9,36 +9,36 @@ namespace Dune
 {
 //! \ingroup transportProblems
 //! @brief example class for a transport problem
-  template<class G, class RT, class VC>
-  class InitialBallProblem
-  : public DeprecatedTransportProblem<G, RT, VC> {
-        template<int dim>
-        struct ElementLayout
+template<class G, class RT, class VC>
+class InitialBallProblem
+    : public DeprecatedTransportProblem<G, RT, VC> {
+    template<int dim>
+    struct ElementLayout
+    {
+        bool contains (Dune::GeometryType gt)
         {
-            bool contains (Dune::GeometryType gt)
-            {
-                return gt.dim() == dim;
-            }
-        };
+            return gt.dim() == dim;
+        }
+    };
 
-      typedef typename G::ctype DT;
-      enum {n=G::dimension, m=1, blocksize=2*G::dimension};
-      typedef typename G::Traits::template Codim<0>::Entity Entity;
-      typedef Dune::FieldVector<double, n> R1;
-      typedef Dune::BlockVector< Dune::FieldVector<R1, blocksize> > VelType;
-      typedef typename G::Traits::LevelIndexSet IS;
-      typedef Dune::MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout> EM;
+    typedef typename G::ctype DT;
+    enum {n=G::dimension, m=1, blocksize=2*G::dimension};
+    typedef typename G::Traits::template Codim<0>::Entity Entity;
+    typedef Dune::FieldVector<double, n> R1;
+    typedef Dune::BlockVector< Dune::FieldVector<R1, blocksize> > VelType;
+    typedef typename G::Traits::LevelIndexSet IS;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout> EM;
 
-  private:
-      DT left;
-      DT right;
-      DT bottom;
-      DT top;
-      EM elementmapper;
+private:
+    DT left;
+    DT right;
+    DT bottom;
+    DT top;
+    EM elementmapper;
 
-  public:
+public:
     BoundaryConditions::Flags bctype (const FieldVector<DT,n>& x, const Entity& e,
-                       const FieldVector<DT,n>& xi) const
+                                      const FieldVector<DT,n>& xi) const
     {
         if (x[1] > top-1E-8 || x[1] < bottom+1e-8)
             return Dune::BoundaryConditions::dirichlet;
@@ -47,13 +47,13 @@ namespace Dune
     }
 
     RT dirichlet (const FieldVector<DT,n>& x, const Entity& e,
-           const FieldVector<DT,n>& xi) const
+                  const FieldVector<DT,n>& xi) const
     {
-            return 0.8;
+        return 0.8;
     }
 
     RT initSat (const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi) const
+                const FieldVector<DT,n>& xi) const
     {
         FieldVector<DT,n> dist(0.5*(left + right));
         dist[1] = top - 2.0;
@@ -72,14 +72,14 @@ namespace Dune
     }
 
     InitialBallProblem(VC& variables, const G& g, DeprecatedTwoPhaseRelations& law = *(new DeprecatedLinearLaw),
-                                const int level = 0)
-    : DeprecatedTransportProblem<G, RT, VC>(variables, law), left((g.lowerLeft())[0]), right((g.upperRight())[0]),
-      bottom((g.lowerLeft())[1]), top((g.upperRight())[1]),
-      elementmapper(g, g.levelIndexSet(level))
+                       const int level = 0)
+        : DeprecatedTransportProblem<G, RT, VC>(variables, law), left((g.lowerLeft())[0]), right((g.upperRight())[0]),
+          bottom((g.lowerLeft())[1]), top((g.upperRight())[1]),
+          elementmapper(g, g.levelIndexSet(level))
     {
         this->variables.velocity.resize(elementmapper.size());
     }
-  };
+};
 
 }
 #endif

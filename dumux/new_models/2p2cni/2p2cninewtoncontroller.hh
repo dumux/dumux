@@ -26,120 +26,120 @@
 #include <dumux/nonlinear/new_newtoncontroller.hh>
 
 namespace Dune {
-    /*!
-     * \brief A 2p2c specific controller for the newton solver.
-     *
-     * This controller 'knows' what a 'physically meaningful' solution is
-     * which allows the newton method to abort quicker if the solution is
-     * way out of bounds.
-     */
-    template <class NewtonMethod>
-    class TwoPTwoCNINewtonController
-        : public NewtonControllerBase<NewtonMethod, TwoPTwoCNINewtonController<NewtonMethod> >
+/*!
+ * \brief A 2p2c specific controller for the newton solver.
+ *
+ * This controller 'knows' what a 'physically meaningful' solution is
+ * which allows the newton method to abort quicker if the solution is
+ * way out of bounds.
+ */
+template <class NewtonMethod>
+class TwoPTwoCNINewtonController
+    : public NewtonControllerBase<NewtonMethod, TwoPTwoCNINewtonController<NewtonMethod> >
+{
+public:
+    typedef TwoPTwoCNINewtonController<NewtonMethod>        ThisType;
+    typedef NewtonControllerBase<NewtonMethod, ThisType>  ParentType;
+
+    typedef typename ParentType::Scalar            Scalar;
+    typedef typename ParentType::Function          Function;
+    typedef typename ParentType::JacobianAssembler JacobianAssembler;
+
+    TwoPTwoCNINewtonController(Scalar tolerance = 1e-5,
+                               int targetSteps = 9,
+                               int maxSteps = 18)
+        : ParentType(tolerance, targetSteps, maxSteps)
+    {};
+
+    //! Suggest a new time stepsize based either on the number of newton
+    //! iterations required or on the variable switch
+    void newtonEndStep(Function &u, Function &uOld)
     {
-    public:
-        typedef TwoPTwoCNINewtonController<NewtonMethod>        ThisType;
-        typedef NewtonControllerBase<NewtonMethod, ThisType>  ParentType;
+        // call the method of the base class
+        ParentType::model().localJacobian().updateStaticData(u, uOld);
+        ParentType::newtonEndStep(u, uOld);
+    }
 
-        typedef typename ParentType::Scalar            Scalar;
-        typedef typename ParentType::Function          Function;
-        typedef typename ParentType::JacobianAssembler JacobianAssembler;
+    //! Suggest a new time stepsize based either on the number of newton
+    //! iterations required or on the variable switch
+    Scalar suggestTimeStepSize(Scalar oldTimeStep) const
+    {
+        /*
+          #warning "HACK: remove this:"
+          return std::min(1e6,
+          ParentType::suggestTimeStepSize(oldTimeStep));
+          // end hack
+          */
 
-        TwoPTwoCNINewtonController(Scalar tolerance = 1e-5,
-                                   int targetSteps = 9,
-                                   int maxSteps = 18)
-            : ParentType(tolerance, targetSteps, maxSteps)
-            {};
+        // use function of the newtoncontroller
+        return ParentType::suggestTimeStepSize(oldTimeStep);
+    }
 
-        //! Suggest a new time stepsize based either on the number of newton
-        //! iterations required or on the variable switch
-        void newtonEndStep(Function &u, Function &uOld)
+    //! Returns true iff another iteration should be done.
+    bool newtonProceed(Function &u)
+    {
+        return ParentType::newtonProceed(u);
+
+        bool baseProceed = ParentType::newtonProceed(u);
+
+        // if we just switched some primary variables we
+        // proceed for at least for newton iterations if
+        // before we give up.
+        if (!baseProceed &&
+            ParentType::model().switched() &&
+            ParentType::numSteps_ < 4 &&
+            !ParentType::newtonConverged())
             {
-                // call the method of the base class
-                ParentType::model().localJacobian().updateStaticData(u, uOld);
-                ParentType::newtonEndStep(u, uOld);
+                return true;
             }
 
-        //! Suggest a new time stepsize based either on the number of newton
-        //! iterations required or on the variable switch
-        Scalar suggestTimeStepSize(Scalar oldTimeStep) const
+        return baseProceed;
+    }
+
+    /** \todo Please doc me! */
+
+protected:
+    friend class NewtonControllerBase<NewtonMethod, ThisType>;
+    //! called by the base class the get an indication of how physical
+    //! an iterative solution is 1 means "completely physical", 0 means
+    //! "completely unphysical"
+    Scalar physicalness_(Function &u)
+    {
+        return 1.0;
+
+        const Scalar switchVarNormFactor = 1e-1; // standarization value
+
+        // the maximum distance of a Sn value to a physically
+        // meaningful value.
+        Scalar maxSwitchVarDelta = 0;
+        Scalar maxPwDelta = 0;
+        Scalar switchVar;
+        Scalar pW;
+
+        for (int idx = 0; idx < (int) (*u).size(); idx++)
             {
-/*
-#warning "HACK: remove this:"
-                return std::min(1e6,
-                                ParentType::suggestTimeStepSize(oldTimeStep));
-                // end hack
-                */
+                pW = (*u)[idx][0];
+                switchVar = (*u)[idx][1];
 
-                // use function of the newtoncontroller
-                return ParentType::suggestTimeStepSize(oldTimeStep);
-            }
-
-        //! Returns true iff another iteration should be done.
-        bool newtonProceed(Function &u)
-            {
-                return ParentType::newtonProceed(u);
-
-                bool baseProceed = ParentType::newtonProceed(u);
-
-                // if we just switched some primary variables we
-                // proceed for at least for newton iterations if
-                // before we give up.
-                if (!baseProceed &&
-                    ParentType::model().switched() &&
-                    ParentType::numSteps_ < 4 &&
-                    !ParentType::newtonConverged())
-                {
-                    return true;
+                if (switchVar < 0) {
+                    maxSwitchVarDelta = std::max(maxSwitchVarDelta, std::abs(switchVar));
                 }
-
-                return baseProceed;
-            }
-
-/** \todo Please doc me! */
-
-    protected:
-        friend class NewtonControllerBase<NewtonMethod, ThisType>;
-        //! called by the base class the get an indication of how physical
-        //! an iterative solution is 1 means "completely physical", 0 means
-        //! "completely unphysical"
-        Scalar physicalness_(Function &u)
-            {
-                return 1.0;
-
-                const Scalar switchVarNormFactor = 1e-1; // standarization value
-
-                // the maximum distance of a Sn value to a physically
-                // meaningful value.
-                Scalar maxSwitchVarDelta = 0;
-                Scalar maxPwDelta = 0;
-                Scalar switchVar;
-                Scalar pW;
-
-                for (int idx = 0; idx < (int) (*u).size(); idx++)
-                {
-                    pW = (*u)[idx][0];
-                    switchVar = (*u)[idx][1];
-
-                    if (switchVar < 0) {
-                        maxSwitchVarDelta = std::max(maxSwitchVarDelta, std::abs(switchVar));
-                    }
-                    else if (switchVar > 1) {
-                        maxSwitchVarDelta = std::max(maxSwitchVarDelta, std::abs(switchVar - 1));
-                    }
-                    if (pW < 0.0){
-                        maxPwDelta = std::max(maxPwDelta, std::abs(pW/1e5));
-                    }
+                else if (switchVar > 1) {
+                    maxSwitchVarDelta = std::max(maxSwitchVarDelta, std::abs(switchVar - 1));
                 }
-
-                // we accept solutions up to 1 percent bigger than 1
-                // or smaller than 0 as being physical for numerical
-                // reasons...
-                Scalar phys = 1.01 - maxSwitchVarDelta/switchVarNormFactor - maxPwDelta;
-
-                return std::min(1.0, phys);
+                if (pW < 0.0){
+                    maxPwDelta = std::max(maxPwDelta, std::abs(pW/1e5));
+                }
             }
-    };
+
+        // we accept solutions up to 1 percent bigger than 1
+        // or smaller than 0 as being physical for numerical
+        // reasons...
+        Scalar phys = 1.01 - maxSwitchVarDelta/switchVarNormFactor - maxPwDelta;
+
+        return std::min(1.0, phys);
+    }
+};
 }
 
 #endif

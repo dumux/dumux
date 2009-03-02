@@ -15,11 +15,11 @@ namespace Dune {
 /** \todo Please doc me! */
 
 template<class G, class RT, class ProblemType, class LocalJacobian,
-        class FunctionType, class OperatorAssembler> class TwoPhaseHeatModel :
-    public NonlinearModel<G, RT, ProblemType, LocalJacobian, FunctionType, OperatorAssembler> {
+         class FunctionType, class OperatorAssembler> class TwoPhaseHeatModel :
+        public NonlinearModel<G, RT, ProblemType, LocalJacobian, FunctionType, OperatorAssembler> {
 public:
     typedef NonlinearModel<G, RT, ProblemType, LocalJacobian,
-    FunctionType, OperatorAssembler> ThisNonlinearModel;
+                           FunctionType, OperatorAssembler> ThisNonlinearModel;
 
     TwoPhaseHeatModel(const G& g, ProblemType& prob) :
         ThisNonlinearModel(g, prob), uOldTimeStep(g) {
@@ -43,8 +43,8 @@ public:
 /** \todo Please doc me! */
 
 template<class G, class RT, class ProblemType, class LocalJac, int m=3> class LeafP1TwoPhaseModel :
-    public TwoPhaseHeatModel<G, RT, ProblemType, LocalJac,
-        LeafP1Function<G, RT, m>, LeafP1OperatorAssembler<G, RT, m> > {
+        public TwoPhaseHeatModel<G, RT, ProblemType, LocalJac,
+                                 LeafP1Function<G, RT, m>, LeafP1OperatorAssembler<G, RT, m> > {
 public:
     // define the function type:
     typedef LeafP1Function<G, RT, m> FunctionType;
@@ -53,7 +53,7 @@ public:
     typedef LeafP1OperatorAssembler<G, RT, m> OperatorAssembler;
 
     typedef TwoPhaseHeatModel<G, RT, ProblemType, LocalJac,
-    FunctionType, OperatorAssembler> ThisTwoPhaseHeatModel;
+                              FunctionType, OperatorAssembler> ThisTwoPhaseHeatModel;
 
     typedef LeafP1TwoPhaseModel<G, RT, ProblemType, LocalJac, m> ThisType;
 
@@ -70,22 +70,22 @@ public:
     typedef typename GV::IndexSet IS;
     typedef MultipleCodimMultipleGeomTypeMapper<G,IS,P1Layout> VertexMapper;
     typedef typename G::template Codim<0>::LeafIntersectionIterator
-            IntersectionIterator;
+    IntersectionIterator;
 
     LeafP1TwoPhaseModel(const G& g, ProblemType& prob) :
         ThisTwoPhaseHeatModel(g, prob), problem(prob), _grid(g), vertexmapper(g,    g.leafIndexSet()), size((*(this->u)).size())
-        {
+    {
     }
 
-        virtual void update(double &dt) {
-            DUNE_THROW(NotImplemented, "This method is obsolete. Use updateModel()!");
-        }
+    virtual void update(double &dt) {
+        DUNE_THROW(NotImplemented, "This method is obsolete. Use updateModel()!");
+    }
 
     virtual void initial() {}
 
     virtual void restart(int restartNum=0) {}
 
-     virtual double totalCO2Mass() {
+    virtual double totalCO2Mass() {
         typedef typename G::Traits::template Codim<0>::Entity Entity;
         typedef typename G::ctype DT;
         typedef typename GV::template Codim<0>::Iterator Iterator;
@@ -104,7 +104,7 @@ public:
         // iterate through leaf grid an evaluate c0 at element center
         Iterator eendit = gridview.template end<0>();
         for (Iterator it = gridview.template begin<0>(); it
-                != eendit; ++it) {
+                 != eendit; ++it) {
             // get geometry type
             Dune::GeometryType gt = it->geometry().type();
 
@@ -115,8 +115,8 @@ public:
             fvGeom.update(entity);
 
             const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type
-                    &sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(gt,
-                            1);
+                &sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(gt,
+                                                                        1);
             int size = sfs.size();
 
             for (int i = 0; i < size; i++) {
@@ -127,7 +127,7 @@ public:
                 Dune::FieldVector<DT,dimworld> global = it->geometry().global(local);
 
                 int globalId = vertexmapper.template map<dim>(entity,
-                        sfs[i].entity());
+                                                              sfs[i].entity());
 
                 RT vol = fvGeom.subContVol[i].volume;
                 RT poro = this->problem.soil().porosity(global, entity, local, i);
@@ -157,11 +157,11 @@ public:
 
         // print minimum and maximum values
         std::cout << "nonwetting phase saturation: min = "<< minSat
-                << ", max = "<< maxSat << std::endl;
+                  << ", max = "<< maxSat << std::endl;
         std::cout << "wetting phase pressure: min = "<< minP
-                << ", max = "<< maxP << std::endl;
+                  << ", max = "<< maxP << std::endl;
         std::cout << "temperature: min = "<< minTe
-                << ", max = "<< maxTe << std::endl;
+                  << ", max = "<< maxTe << std::endl;
 
         return totalMass;
     }
@@ -179,13 +179,13 @@ public:
         // allocate flag vector to hold flags for essential boundary conditions
         std::vector<BCBlockType> essential(this->vertexmapper.size());
         for (typename std::vector<BCBlockType>::size_type i=0; i
-                <essential.size(); i++)
+                 <essential.size(); i++)
             essential[i].assign(BoundaryConditions::neumann);
 
         // iterate through leaf grid
         Iterator eendit = gridview.template end<0>();
         for (Iterator it = gridview.template begin<0>(); it
-                != eendit; ++it) {
+                 != eendit; ++it) {
             // get geometry type
             Dune::GeometryType gt = it->geometry().type();
 
@@ -207,7 +207,7 @@ public:
                 for (int equationnumber = 0; equationnumber < m; equationnumber++) {
                     if (this->localJacobian().bc(i)[equationnumber] == BoundaryConditions::neumann)
                         (*defectGlobal)[globalId][equationnumber]
-                                += this->localJacobian().def[i][equationnumber];
+                            += this->localJacobian().def[i][equationnumber];
                     else
                         essential[globalId].assign(BoundaryConditions::dirichlet);
                 }
@@ -215,10 +215,10 @@ public:
         }
 
         for (typename std::vector<BCBlockType>::size_type i=0; i
-                <essential.size(); i++)
+                 <essential.size(); i++)
             for (int equationnumber = 0; equationnumber < m; equationnumber++) {
-            if (essential[i][equationnumber] == BoundaryConditions::dirichlet)
-                (*defectGlobal)[i][equationnumber] = 0;
+                if (essential[i][equationnumber] == BoundaryConditions::dirichlet)
+                    (*defectGlobal)[i][equationnumber] = 0;
             }
     }
 
@@ -227,7 +227,7 @@ public:
         enum {dim = G::dimension};
         typedef typename GV::template Codim<dim>::Iterator Iterator;
 
-//        exportToDGF(_grid.leafView(), *(this->u), m, "primvar", false);
+        //        exportToDGF(_grid.leafView(), *(this->u), m, "primvar", false);
 
         const int size = vertexmapper.size();
         BlockVector<FieldVector<double, m> > data(size);
@@ -235,29 +235,29 @@ public:
 
         Iterator endIt = _grid.leafView().template end<dim>();
         for (Iterator it = _grid.leafView().template begin<dim>(); it != endIt;    ++it)
-        {
-            int index = vertexmapper.map(*it);
-            for (int i = 0; i < m;i++)
             {
-                data[index][i]=(*(this->u))[index][i];
+                int index = vertexmapper.map(*it);
+                for (int i = 0; i < m;i++)
+                    {
+                        data[index][i]=(*(this->u))[index][i];
+                    }
             }
-        }
 
         restartFileName = (boost::format("data-%05d")
                            %restartNum).str();
         exportToDGF(_grid.leafView(), data, (m), restartFileName, false);
     }
     const G &grid() const
-        { return _grid; }
+    { return _grid; }
 
 
 
 protected:
-  ProblemType& problem;
-  const G& _grid;
-  VertexMapper vertexmapper;
-  int size;
-  std::string restartFileName;
+    ProblemType& problem;
+    const G& _grid;
+    VertexMapper vertexmapper;
+    int size;
+    std::string restartFileName;
 
 };
 

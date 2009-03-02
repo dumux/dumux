@@ -9,13 +9,13 @@
 namespace Dune {
 
 
-  /*! \brief The sequential Pardiso preconditioner.
+/*! \brief The sequential Pardiso preconditioner.
 
-     Put the Pardiso direct solver into the preconditioner framework.
-   */
-  template<class M, class X, class Y>
-  class SeqIdentity : public Preconditioner<X,Y> {
-  public:
+  Put the Pardiso direct solver into the preconditioner framework.
+*/
+template<class M, class X, class Y>
+class SeqIdentity : public Preconditioner<X,Y> {
+public:
     //! \brief The matrix type the preconditioner is for.
     typedef M matrix_type;
     //! \brief The domain type of the preconditioner.
@@ -30,19 +30,19 @@ namespace Dune {
 
     // define the category
     enum {
-      //! \brief The category the preconditioner is part of
-      category=SolverCategory::sequential
+        //! \brief The category the preconditioner is part of
+        category=SolverCategory::sequential
     };
 
     /*! \brief Constructor.
 
-    Constructor gets all parameters to operate the prec.
-    \param A The matrix to operate on.
-    \param n The number of iterations to perform.
-    \param w The relaxation factor.
+      Constructor gets all parameters to operate the prec.
+      \param A The matrix to operate on.
+      \param n The number of iterations to perform.
+      \param w The relaxation factor.
     */
     SeqIdentity (const M& A)
-      : A_(A)
+        : A_(A)
     {    }
 
     /*!
@@ -73,9 +73,9 @@ namespace Dune {
     ~SeqIdentity()
     { }
 
-  private:
+private:
     M A_; //!< The matrix we operate on.
-  };
+};
 
 }
 

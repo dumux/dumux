@@ -50,34 +50,34 @@ void discreteStokesError(const Grid& grid, const Problem& problem, Vector& solut
     Scalar constant = 0;
     ElementIterator endEIt = grid.template leafend<0>();
     for (ElementIterator eIt = grid.template leafbegin<0>(); eIt != endEIt; ++eIt)
-    {
-        const Element& element = *eIt;
+        {
+            const Element& element = *eIt;
 
-        Dune::GeometryType geomType = element.geometry().type();
+            Dune::GeometryType geomType = element.geometry().type();
 
-        const Dune::FieldVector<Scalar,dim>& local = Dune::ReferenceElements<Scalar,dim>::general(geomType).position(0, 0);
-        Dune::FieldVector<Scalar,dim> global = element.geometry().global(local);
+            const Dune::FieldVector<Scalar,dim>& local = Dune::ReferenceElements<Scalar,dim>::general(geomType).position(0, 0);
+            Dune::FieldVector<Scalar,dim> global = element.geometry().global(local);
 
-        Scalar volume = element.geometry().integrationElement(local)
-        *Dune::ReferenceElements<Scalar,dim>::general(geomType).volume();
+            Scalar volume = element.geometry().integrationElement(local)
+                *Dune::ReferenceElements<Scalar,dim>::general(geomType).volume();
 
-        int eIdx = elementMapper.map(element);
+            int eIdx = elementMapper.map(element);
 
-        Scalar approxPressure = solution.evallocal (2, element, local);
-        Scalar exactPressure = problem.pressure(global);
-        if (eIdx == 0)
-            constant = exactPressure - approxPressure;
-        approxPressure += constant;
-        errPressure += volume*(approxPressure - exactPressure)*(approxPressure - exactPressure);
+            Scalar approxPressure = solution.evallocal (2, element, local);
+            Scalar exactPressure = problem.pressure(global);
+            if (eIdx == 0)
+                constant = exactPressure - approxPressure;
+            approxPressure += constant;
+            errPressure += volume*(approxPressure - exactPressure)*(approxPressure - exactPressure);
 
-        Scalar approxXV = solution.evallocal (0, element, local);
-        Scalar exactXV = problem.velocity(global)[0];
-        errVelocity += volume*(approxXV - exactXV)*(approxXV - exactXV);
+            Scalar approxXV = solution.evallocal (0, element, local);
+            Scalar exactXV = problem.velocity(global)[0];
+            errVelocity += volume*(approxXV - exactXV)*(approxXV - exactXV);
 
-        Scalar approxYV = solution.evallocal (1, element, local);
-        Scalar exactYV = problem.velocity(global)[1];
-        errVelocity += volume*(approxYV - exactYV)*(approxYV - exactYV);
-    }
+            Scalar approxYV = solution.evallocal (1, element, local);
+            Scalar exactYV = problem.velocity(global)[1];
+            errVelocity += volume*(approxYV - exactYV)*(approxYV - exactYV);
+        }
 
     errPressure = sqrt(errPressure);
     errVelocity = sqrt(errVelocity);
@@ -101,17 +101,17 @@ double discreteDarcyError(const Grid& grid, const Solution& solution, const Prob
     VertexIterator endIt = gridview.template end<dim>();
     VertexIterator it = gridview.template begin<dim>();
     for (; it != endIt; ++it)
-    {
-        // get exact solution at vertex
-        FieldVector<double,dim> globalCoord = (*it).geometry().corner(0);
-        double exact = problem.exact(globalCoord);
+        {
+            // get exact solution at vertex
+            FieldVector<double,dim> globalCoord = (*it).geometry().corner(0);
+            double exact = problem.exact(globalCoord);
 
-        // get approximate solution at vertex
-        int globalId = vertexMapper.map(*it);
-        double approximate = solution[globalId];
+            // get approximate solution at vertex
+            int globalId = vertexMapper.map(*it);
+            double approximate = solution[globalId];
 
-        error += (exact - approximate)*(exact - approximate);
-    }
+            error += (exact - approximate)*(exact - approximate);
+        }
 
     return sqrt(error);
 }
@@ -180,9 +180,9 @@ int main(int argc, char** argv)
         timeloop.execute(coupledModel);
         std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
 
-//        printvector(std::cout, coupledModel.sol(), "global solution", "row", 200, 1, 3);
-//        printvector(std::cout, boxStokes.sol(), "local Stokes solution", "row", 200, 1, 3);
-//        printvector(std::cout, darcyModel.sol(), "local Darcy solution", "row", 200, 1, 3);
+        //        printvector(std::cout, coupledModel.sol(), "global solution", "row", 200, 1, 3);
+        //        printvector(std::cout, boxStokes.sol(), "local Stokes solution", "row", 200, 1, 3);
+        //        printvector(std::cout, darcyModel.sol(), "local Darcy solution", "row", 200, 1, 3);
 
         std::cout << "Darcy discrete error = " << discreteDarcyError(subGridDarcy, darcyModel.sol(), darcyParam) << std::endl;
         discreteStokesError(subGridStokes, stokesProblem, boxStokes.u);
@@ -199,14 +199,14 @@ int main(int argc, char** argv)
 #else
 
 int main (int argc , char **argv) try
-{
-    std::cout << "This test is not finished yet." << std::endl;
+    {
+        std::cout << "This test is not finished yet." << std::endl;
 
-    return 1;
-}
-catch (...)
-{
-    std::cerr << "Generic exception!" << std::endl;
-    return 2;
-}
+        return 1;
+    }
+ catch (...)
+     {
+         std::cerr << "Generic exception!" << std::endl;
+         return 2;
+     }
 #endif

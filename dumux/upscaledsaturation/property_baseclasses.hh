@@ -24,21 +24,21 @@ template<class G, class RT>
 class Matrix2p
 {
 public:
-typedef    typename G::ctype DT;
+    typedef    typename G::ctype DT;
     enum
-    {    n=G::dimension, m=2};
+        {    n=G::dimension, m=2};
     typedef typename G::Traits::template Codim<0>::Entity Entity;
 
     //! provides flags for the relative permeability and capillary pressure model
     enum modelFlag
-    {
-        linear = 0,
-        brooks_corey = 1,
-        van_genuchten = 2,
-        auxiliary1 = 3,
-        auxiliary2 = 4,
-        auxiliary3 = 5,
-    };
+        {
+            linear = 0,
+            brooks_corey = 1,
+            van_genuchten = 2,
+            auxiliary1 = 3,
+            auxiliary2 = 4,
+            auxiliary3 = 5,
+        };
 
     /** @brief Permeability tensor
      * @param x position in global coordinates
@@ -423,10 +423,10 @@ class NLiquid_GL
         int size = n_w + n_a;
         double divisor;
         for (int i = 0; i < size; i++)
-        {
-            X[i] *= M_[i];
-            divisor += X[i];
-        }
+            {
+                X[i] *= M_[i];
+                divisor += X[i];
+            }
         X /= divisor;
         return X;
     }
@@ -440,10 +440,10 @@ class NLiquid_GL
         int size = n_w + n_a;
         double divisor;
         for (int i = 0; i < size; i++)
-        {
-            x[i] /= M_[i];
-            divisor += x[i];
-        }
+            {
+                x[i] /= M_[i];
+                divisor += x[i];
+            }
         x /= divisor;
         return x;
     }
@@ -626,10 +626,10 @@ class NGas_GL
         int size = n_w + n_a;
         double divisor;
         for (int i = 0; i < size; i++)
-        {
-            X[i] *= M_[i];
-            divisor += X[i];
-        }
+            {
+                X[i] *= M_[i];
+                divisor += X[i];
+            }
         X /= divisor;
         return X;
     }
@@ -643,10 +643,10 @@ class NGas_GL
         int size = n_w + n_a;
         double divisor;
         for (int i = 0; i < size; i++)
-        {
-            x[i] /= M_[i];
-            divisor += x[i];
-        }
+            {
+                x[i] /= M_[i];
+                divisor += x[i];
+            }
         x /= divisor;
         return x;
     }

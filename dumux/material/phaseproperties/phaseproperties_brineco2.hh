@@ -33,11 +33,11 @@ public:
         return constRelCO2.viscosity(T, p); // see constrelco2.hh
     }
 
-/*    virtual double viscosityCO2(double T, double p, double rho, double Xw=0.) const // [kg / (m*s)]
-    {
-        return constRelCO2.viscosity(T,p,rho); // see constrelco2.hh
-    }
-*/
+    /*    virtual double viscosityCO2(double T, double p, double rho, double Xw=0.) const // [kg / (m*s)]
+          {
+          return constRelCO2.viscosity(T,p,rho); // see constrelco2.hh
+          }
+    */
 
     virtual double intEnergy(double T, double p, double Xw=0.) const
     {
@@ -65,7 +65,7 @@ public:
     }
 
     Gas_BrineCO2() : Gas_GL()
-        {}
+    {}
 private:
     ConstrelCO2 constRelCO2;
 };
@@ -123,9 +123,9 @@ public:
         return 0.;
     }
 
-  Liq_BrineCO2() : Liquid_GL()
+    Liq_BrineCO2() : Liquid_GL()
     {
-      Salinity = 0.1;
+        Salinity = 0.1;
     }
 
 private:

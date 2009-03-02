@@ -8,25 +8,25 @@ namespace Dune
 
 /** \todo Please doc me! */
 
-    template<class Grid, class Scalar>
-    class ConvectivePart
+template<class Grid, class Scalar>
+class ConvectivePart
+{
+private:
+    enum{dim = Grid::dimension, dimWorld = Grid::dimensionworld};
+    typedef typename Grid::Traits::template Codim<0>::Entity Element;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+
+public:
+
+    virtual Scalar operator() (const Element& element, const Scalar sat, const GlobalPosition& faceGlobal) const
     {
-    private:
-        enum{dim = Grid::dimension, dimWorld = Grid::dimensionworld};
-        typedef typename Grid::Traits::template Codim<0>::Entity Element;
-        typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+        Scalar trivial(0);
+        return trivial;
+    }
 
-    public:
-
-        virtual Scalar operator() (const Element& element, const Scalar sat, const GlobalPosition& faceGlobal) const
-        {
-            Scalar trivial(0);
-            return trivial;
-        }
-
-      virtual ~ConvectivePart()
-      { }
-    };
+    virtual ~ConvectivePart()
+    { }
+};
 }
 
 #endif

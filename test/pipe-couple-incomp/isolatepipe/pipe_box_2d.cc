@@ -31,7 +31,7 @@ public:
 template <class GridType>
 class VertexOnLine
 {
-    public:
+public:
     typedef typename GridType::template Codim<GridType::dimension>::EntityPointer VertexPointer;
     typedef typename GridType::template Codim<0>::LeafIntersectionIterator IntersectionIterator;
     VertexPointer nodePoint;
@@ -45,7 +45,7 @@ class VertexOnLine
     double length(VectorVertexOnLineType& vectorVertexOnLine);
     template<class VectorNeighbor> Dune::FieldVector<double,GridType::dimension> normal(VectorNeighbor& vectorNeighbor, unsigned index);
     VertexOnLine(VertexPointer node0)
-    : nodePoint(node0)
+        : nodePoint(node0)
     {
     }
 
@@ -68,12 +68,12 @@ double VertexOnLine<GridType>::length(VectorVertexOnLineType& vectorVertexOnLine
 {
     double l=0.0;
     for(unsigned i=0; i < indexVertexVectorOnLine.size(); i++)
-    {
-        Dune::FieldVector<double,GridType::dimension> distVec;
-        distVec = vectorVertexOnLine[indexVertexVectorOnLine[i]].nodePoint->geometry().corner(0] - nodePoint->geometry()[0);
-        double dist = distVec.two_norm();
-        l += dist/2.0;
-    }
+        {
+            Dune::FieldVector<double,GridType::dimension> distVec;
+            distVec = vectorVertexOnLine[indexVertexVectorOnLine[i]].nodePoint->geometry().corner(0] - nodePoint->geometry()[0);
+            double dist = distVec.two_norm();
+            l += dist/2.0;
+        }
     return l;
 };
 
@@ -91,14 +91,14 @@ Dune::FieldVector<double,GridType::dimension> VertexOnLine<GridType>::normal(Vec
 template <class GridType>
 class VertexOutLine
 {
-    public:
+public:
     typedef typename GridType::template Codim<GridType::dimension>::EntityPointer VertexPointer;
     typedef typename GridType::template Codim<0>::LeafIntersectionIterator IntersectionIterator;
     VertexPointer nodePoint;
     std::vector<unsigned> indexVertexVectorOnLine;
     std::vector<IntersectionIterator> lineVectorOutLine;
     VertexOutLine(VertexPointer node0)
-    : nodePoint(node0)
+        : nodePoint(node0)
     {
     }
 
@@ -120,7 +120,7 @@ void isolate (G& grid, GP& gridP, VerticeVectOnline& vertexVectorOnLine, Vertice
     typedef typename G::template Codim<dim>::EntityPointer HostVertexPointer;
     typedef typename G::template Codim<0>::LeafIntersectionIterator HostIntersectionIterator;
     typedef typename G::Traits::template Codim<0>::Entity Entity;
-//    typedef Edge<HostIntersectionIterator, HostVertexPointer> Edge;
+    //    typedef Edge<HostIntersectionIterator, HostVertexPointer> Edge;
 
 
     std::map<HostVertexPointer, unsigned, VertexCompare> mapVertexToIndexOnLine;
@@ -130,255 +130,255 @@ void isolate (G& grid, GP& gridP, VerticeVectOnline& vertexVectorOnLine, Vertice
 
     unsigned indexMapVerticesOnLine = 0;
     unsigned indexMapVerticesOutLine = 0;
-        for (HostElementIterator it = grid.template leafbegin<0>(); it!=grid.template leafend<0>(); ++it)
+    for (HostElementIterator it = grid.template leafbegin<0>(); it!=grid.template leafend<0>(); ++it)
         {
             // cell geometry type
             Dune::GeometryType gt = it->geometry().type();
 
             const Entity& element = *it;
             for (HostIntersectionIterator is = it->ileafbegin(); is!= it->ileafend(); ++is)
-            {
-                // get geometry type of face
-                Dune::GeometryType gtf = is.intersectionSelfLocal().type();
-                // get local id of line on element
-                int localIdLineonElement = is.numberInSelf();
-                // get local id of point on line
-                int    locaIdPoint0onElement = Dune::ReferenceElements<ct,dim>::general(gt).subEntity(localIdLineonElement, dim-1, 0, dim);
-                int    locaIdPoint1onElement = Dune::ReferenceElements<ct,dim>::general(gt).subEntity(localIdLineonElement, dim-1, 1, dim);
-                // get vertex pointers
-                HostVertexPointer vertexPoint0 = element.template entity<dim>(locaIdPoint0onElement);
-                HostVertexPointer vertexPoint1 = element.template entity<dim>(locaIdPoint1onElement);
-                // get parameters for nodes
-                std::vector<double>& param0 = gridP.parameters(*vertexPoint0);
-                std::vector<double>& param1 = gridP.parameters(*vertexPoint1);
-                double NodeParameter[1];
-                NodeParameter[0]= param0[0];
-                NodeParameter[1]= param1[0];
-
-                bool addpoint0onLine = false;
-                bool addpoint1onLine = false;
-                bool addpoint0outLine = false;
-                bool addpoint1outLine = false;
-                if ( NodeParameter[0]!=0  || NodeParameter[1]!=0)
                 {
-                    if(NodeParameter[0]!=0)
-                    {
-                        mapVertexIterator current  = mapVertexToIndexOnLine.find(vertexPoint0);
-                        if( current == mapVertexToIndexOnLine.end() )
-                        {
-                            mapVertexToIndexOnLine[vertexPoint0] = (indexMapVerticesOnLine++);
-                            vertexVectorOnLine.push_back(vertexPoint0);
-                            addpoint0onLine = true;
-                        }
-                    }
-                    else
-                    {
-                        mapVertexIterator current  = mapVertexToIndexOutLine.find(vertexPoint0);
-                        if( current == mapVertexToIndexOutLine.end() )
-                        {
-                            mapVertexToIndexOutLine[vertexPoint0] = (indexMapVerticesOutLine++);
-                            vertexVectorOutLine.push_back(vertexPoint0);
-                            addpoint0outLine = true;
-                        }
-                    }
+                    // get geometry type of face
+                    Dune::GeometryType gtf = is.intersectionSelfLocal().type();
+                    // get local id of line on element
+                    int localIdLineonElement = is.numberInSelf();
+                    // get local id of point on line
+                    int    locaIdPoint0onElement = Dune::ReferenceElements<ct,dim>::general(gt).subEntity(localIdLineonElement, dim-1, 0, dim);
+                    int    locaIdPoint1onElement = Dune::ReferenceElements<ct,dim>::general(gt).subEntity(localIdLineonElement, dim-1, 1, dim);
+                    // get vertex pointers
+                    HostVertexPointer vertexPoint0 = element.template entity<dim>(locaIdPoint0onElement);
+                    HostVertexPointer vertexPoint1 = element.template entity<dim>(locaIdPoint1onElement);
+                    // get parameters for nodes
+                    std::vector<double>& param0 = gridP.parameters(*vertexPoint0);
+                    std::vector<double>& param1 = gridP.parameters(*vertexPoint1);
+                    double NodeParameter[1];
+                    NodeParameter[0]= param0[0];
+                    NodeParameter[1]= param1[0];
 
-                    if(NodeParameter[1]!=0)
-                    {
-                        mapVertexIterator current  = mapVertexToIndexOnLine.find(vertexPoint1);
-                        if( current == mapVertexToIndexOnLine.end() )
+                    bool addpoint0onLine = false;
+                    bool addpoint1onLine = false;
+                    bool addpoint0outLine = false;
+                    bool addpoint1outLine = false;
+                    if ( NodeParameter[0]!=0  || NodeParameter[1]!=0)
                         {
-                            mapVertexToIndexOnLine[vertexPoint1] = (indexMapVerticesOnLine++);
-                            vertexVectorOnLine.push_back(vertexPoint1);
-                            addpoint1onLine = true;
-                        }
-                    }
-                    else
-                    {
-                        mapVertexIterator current  = mapVertexToIndexOutLine.find(vertexPoint1);
-                        if( current == mapVertexToIndexOutLine.end() )
-                        {
-                            mapVertexToIndexOutLine[vertexPoint1] = (indexMapVerticesOutLine++);
-                            vertexVectorOutLine.push_back(vertexPoint1);
-                            addpoint1outLine = true;
-                        }
-                    }
-                    // fill indexVertexVectorOnLine Vector and lineVectorOnline Vector in vertexVectorOnLine Vector
-                    if ( NodeParameter[0]!=0  && NodeParameter[1]!=0 )
-                    {
-                        mapVertexIterator current0  = mapVertexToIndexOnLine.find(vertexPoint0);
-                        mapVertexIterator current1  = mapVertexToIndexOnLine.find(vertexPoint1);
-                        unsigned indexVectorPoint0 = current0->second;
-                        unsigned indexVectorPoint1 = current1->second;
-                        if (addpoint0onLine || addpoint1onLine)
-                        {
-                        vertexVectorOnLine[indexVectorPoint0].indexVertexVectorOnLine.push_back(indexVectorPoint1);
-                        vertexVectorOnLine[indexVectorPoint1].indexVertexVectorOnLine.push_back(indexVectorPoint0);
-                        vertexVectorOnLine[indexVectorPoint0].lineVectorOnLine.push_back(is);
-                        vertexVectorOnLine[indexVectorPoint1].lineVectorOnLine.push_back(is);
-                        }
-                        else if(!addpoint0onLine && !addpoint1onLine) //fill the missing part where two points are there but no neighborhoot is stored
-                        {
-                            bool neighbourhoodAdded = false;
-                            for (unsigned i=0 ; i < vertexVectorOnLine[indexVectorPoint0].indexVertexVectorOnLine.size(); i++)
-                            {
-                                if(vertexVectorOnLine[indexVectorPoint0].indexVertexVectorOnLine[i] == indexVectorPoint1)
+                            if(NodeParameter[0]!=0)
                                 {
-                                    neighbourhoodAdded = true;
-                                    break;
+                                    mapVertexIterator current  = mapVertexToIndexOnLine.find(vertexPoint0);
+                                    if( current == mapVertexToIndexOnLine.end() )
+                                        {
+                                            mapVertexToIndexOnLine[vertexPoint0] = (indexMapVerticesOnLine++);
+                                            vertexVectorOnLine.push_back(vertexPoint0);
+                                            addpoint0onLine = true;
+                                        }
                                 }
-                            }
-                            if (!neighbourhoodAdded)
-                            {
-                                vertexVectorOnLine[indexVectorPoint0].indexVertexVectorOnLine.push_back(indexVectorPoint1);
-                                vertexVectorOnLine[indexVectorPoint1].indexVertexVectorOnLine.push_back(indexVectorPoint0);
-                                vertexVectorOnLine[indexVectorPoint0].lineVectorOnLine.push_back(is);
-                                vertexVectorOnLine[indexVectorPoint1].lineVectorOnLine.push_back(is);
-                            }
-                        }
-                    }
-                    // end filling indexVertexVectorOnLine Vector and lineVectorOnline Vector in vertexVectorOnLine Vector
+                            else
+                                {
+                                    mapVertexIterator current  = mapVertexToIndexOutLine.find(vertexPoint0);
+                                    if( current == mapVertexToIndexOutLine.end() )
+                                        {
+                                            mapVertexToIndexOutLine[vertexPoint0] = (indexMapVerticesOutLine++);
+                                            vertexVectorOutLine.push_back(vertexPoint0);
+                                            addpoint0outLine = true;
+                                        }
+                                }
 
-                    // fill indexVertexVectorOutLine Vector and lineVectorOutline Vector in vertexVectorOutLine Vector and in vertexVectorOnLine Vector
-                    if ( !(NodeParameter[0]!=0  && NodeParameter[1]!=0) )
-                    {
-                        if (NodeParameter[0]!=0)
-                        {
-                            mapVertexIterator current0  = mapVertexToIndexOnLine.find(vertexPoint0);
-                            mapVertexIterator current1  = mapVertexToIndexOutLine.find(vertexPoint1);
-                            unsigned indexVectorPoint0 = current0->second;
-                            unsigned indexVectorPoint1 = current1->second;
-                            if (addpoint0onLine || addpoint1outLine)
-                            {
-                            vertexVectorOnLine[indexVectorPoint0].indexVertexVectorOutLine.push_back(indexVectorPoint1);
-                            vertexVectorOutLine[indexVectorPoint1].indexVertexVectorOnLine.push_back(indexVectorPoint0);
-                            vertexVectorOnLine[indexVectorPoint0].lineVectorOutLine.push_back(is);
-                            vertexVectorOutLine[indexVectorPoint1].lineVectorOutLine.push_back(is);
-                            }
-                            else if(!addpoint0onLine && !addpoint1onLine)
-                            {
-                                bool neighbourhoodAdded = false;
-                                for (unsigned i=0 ; i < vertexVectorOnLine[indexVectorPoint0].indexVertexVectorOutLine.size(); i++)
+                            if(NodeParameter[1]!=0)
                                 {
-                                    if(vertexVectorOnLine[indexVectorPoint0].indexVertexVectorOutLine[i] == indexVectorPoint1)
-                                    {
-                                        neighbourhoodAdded = true;
-                                        break;
-                                    }
+                                    mapVertexIterator current  = mapVertexToIndexOnLine.find(vertexPoint1);
+                                    if( current == mapVertexToIndexOnLine.end() )
+                                        {
+                                            mapVertexToIndexOnLine[vertexPoint1] = (indexMapVerticesOnLine++);
+                                            vertexVectorOnLine.push_back(vertexPoint1);
+                                            addpoint1onLine = true;
+                                        }
                                 }
-                                if (!neighbourhoodAdded)
+                            else
                                 {
-                                    vertexVectorOnLine[indexVectorPoint0].indexVertexVectorOutLine.push_back(indexVectorPoint1);
-                                    vertexVectorOutLine[indexVectorPoint1].indexVertexVectorOnLine.push_back(indexVectorPoint0);
-                                    vertexVectorOnLine[indexVectorPoint0].lineVectorOutLine.push_back(is);
-                                    vertexVectorOutLine[indexVectorPoint1].lineVectorOutLine.push_back(is);
+                                    mapVertexIterator current  = mapVertexToIndexOutLine.find(vertexPoint1);
+                                    if( current == mapVertexToIndexOutLine.end() )
+                                        {
+                                            mapVertexToIndexOutLine[vertexPoint1] = (indexMapVerticesOutLine++);
+                                            vertexVectorOutLine.push_back(vertexPoint1);
+                                            addpoint1outLine = true;
+                                        }
                                 }
-                            }
+                            // fill indexVertexVectorOnLine Vector and lineVectorOnline Vector in vertexVectorOnLine Vector
+                            if ( NodeParameter[0]!=0  && NodeParameter[1]!=0 )
+                                {
+                                    mapVertexIterator current0  = mapVertexToIndexOnLine.find(vertexPoint0);
+                                    mapVertexIterator current1  = mapVertexToIndexOnLine.find(vertexPoint1);
+                                    unsigned indexVectorPoint0 = current0->second;
+                                    unsigned indexVectorPoint1 = current1->second;
+                                    if (addpoint0onLine || addpoint1onLine)
+                                        {
+                                            vertexVectorOnLine[indexVectorPoint0].indexVertexVectorOnLine.push_back(indexVectorPoint1);
+                                            vertexVectorOnLine[indexVectorPoint1].indexVertexVectorOnLine.push_back(indexVectorPoint0);
+                                            vertexVectorOnLine[indexVectorPoint0].lineVectorOnLine.push_back(is);
+                                            vertexVectorOnLine[indexVectorPoint1].lineVectorOnLine.push_back(is);
+                                        }
+                                    else if(!addpoint0onLine && !addpoint1onLine) //fill the missing part where two points are there but no neighborhoot is stored
+                                        {
+                                            bool neighbourhoodAdded = false;
+                                            for (unsigned i=0 ; i < vertexVectorOnLine[indexVectorPoint0].indexVertexVectorOnLine.size(); i++)
+                                                {
+                                                    if(vertexVectorOnLine[indexVectorPoint0].indexVertexVectorOnLine[i] == indexVectorPoint1)
+                                                        {
+                                                            neighbourhoodAdded = true;
+                                                            break;
+                                                        }
+                                                }
+                                            if (!neighbourhoodAdded)
+                                                {
+                                                    vertexVectorOnLine[indexVectorPoint0].indexVertexVectorOnLine.push_back(indexVectorPoint1);
+                                                    vertexVectorOnLine[indexVectorPoint1].indexVertexVectorOnLine.push_back(indexVectorPoint0);
+                                                    vertexVectorOnLine[indexVectorPoint0].lineVectorOnLine.push_back(is);
+                                                    vertexVectorOnLine[indexVectorPoint1].lineVectorOnLine.push_back(is);
+                                                }
+                                        }
+                                }
+                            // end filling indexVertexVectorOnLine Vector and lineVectorOnline Vector in vertexVectorOnLine Vector
+
+                            // fill indexVertexVectorOutLine Vector and lineVectorOutline Vector in vertexVectorOutLine Vector and in vertexVectorOnLine Vector
+                            if ( !(NodeParameter[0]!=0  && NodeParameter[1]!=0) )
+                                {
+                                    if (NodeParameter[0]!=0)
+                                        {
+                                            mapVertexIterator current0  = mapVertexToIndexOnLine.find(vertexPoint0);
+                                            mapVertexIterator current1  = mapVertexToIndexOutLine.find(vertexPoint1);
+                                            unsigned indexVectorPoint0 = current0->second;
+                                            unsigned indexVectorPoint1 = current1->second;
+                                            if (addpoint0onLine || addpoint1outLine)
+                                                {
+                                                    vertexVectorOnLine[indexVectorPoint0].indexVertexVectorOutLine.push_back(indexVectorPoint1);
+                                                    vertexVectorOutLine[indexVectorPoint1].indexVertexVectorOnLine.push_back(indexVectorPoint0);
+                                                    vertexVectorOnLine[indexVectorPoint0].lineVectorOutLine.push_back(is);
+                                                    vertexVectorOutLine[indexVectorPoint1].lineVectorOutLine.push_back(is);
+                                                }
+                                            else if(!addpoint0onLine && !addpoint1onLine)
+                                                {
+                                                    bool neighbourhoodAdded = false;
+                                                    for (unsigned i=0 ; i < vertexVectorOnLine[indexVectorPoint0].indexVertexVectorOutLine.size(); i++)
+                                                        {
+                                                            if(vertexVectorOnLine[indexVectorPoint0].indexVertexVectorOutLine[i] == indexVectorPoint1)
+                                                                {
+                                                                    neighbourhoodAdded = true;
+                                                                    break;
+                                                                }
+                                                        }
+                                                    if (!neighbourhoodAdded)
+                                                        {
+                                                            vertexVectorOnLine[indexVectorPoint0].indexVertexVectorOutLine.push_back(indexVectorPoint1);
+                                                            vertexVectorOutLine[indexVectorPoint1].indexVertexVectorOnLine.push_back(indexVectorPoint0);
+                                                            vertexVectorOnLine[indexVectorPoint0].lineVectorOutLine.push_back(is);
+                                                            vertexVectorOutLine[indexVectorPoint1].lineVectorOutLine.push_back(is);
+                                                        }
+                                                }
+                                        }
+                                    else if (NodeParameter[1]!=0)
+                                        {
+                                            mapVertexIterator current0  = mapVertexToIndexOutLine.find(vertexPoint0);
+                                            mapVertexIterator current1  = mapVertexToIndexOnLine.find(vertexPoint1);
+                                            unsigned indexVectorPoint0 = current0->second;
+                                            unsigned indexVectorPoint1 = current1->second;
+                                            if (addpoint0outLine || addpoint1onLine)
+                                                {
+                                                    vertexVectorOutLine[indexVectorPoint0].indexVertexVectorOnLine.push_back(indexVectorPoint1);
+                                                    vertexVectorOnLine[indexVectorPoint1].indexVertexVectorOutLine.push_back(indexVectorPoint0);
+                                                    vertexVectorOutLine[indexVectorPoint0].lineVectorOutLine.push_back(is);
+                                                    vertexVectorOnLine[indexVectorPoint1].lineVectorOutLine.push_back(is);
+                                                }
+                                            else if(!addpoint0onLine && !addpoint1onLine)
+                                                {
+                                                    bool neighbourhoodAdded = false;
+                                                    for (unsigned i=0 ; i < vertexVectorOnLine[indexVectorPoint1].indexVertexVectorOutLine.size(); i++)
+                                                        {
+                                                            if(vertexVectorOnLine[indexVectorPoint1].indexVertexVectorOutLine[i] == indexVectorPoint0)
+                                                                {
+                                                                    neighbourhoodAdded = true;
+                                                                    break;
+                                                                }
+                                                        }
+                                                    if (!neighbourhoodAdded)
+                                                        {
+                                                            vertexVectorOutLine[indexVectorPoint0].indexVertexVectorOnLine.push_back(indexVectorPoint1);
+                                                            vertexVectorOnLine[indexVectorPoint1].indexVertexVectorOutLine.push_back(indexVectorPoint0);
+                                                            vertexVectorOutLine[indexVectorPoint0].lineVectorOutLine.push_back(is);
+                                                            vertexVectorOnLine[indexVectorPoint1].lineVectorOutLine.push_back(is);
+                                                        }
+                                                }
+                                        }
+                                }
+                            // end filling indexVertexVectorOutLine Vector and lineVectorOutline Vector in vertexVectorOutLine Vector and in vertexVectorOnLine Vector
                         }
-                        else if (NodeParameter[1]!=0)
-                        {
-                            mapVertexIterator current0  = mapVertexToIndexOutLine.find(vertexPoint0);
-                            mapVertexIterator current1  = mapVertexToIndexOnLine.find(vertexPoint1);
-                            unsigned indexVectorPoint0 = current0->second;
-                            unsigned indexVectorPoint1 = current1->second;
-                            if (addpoint0outLine || addpoint1onLine)
-                            {
-                            vertexVectorOutLine[indexVectorPoint0].indexVertexVectorOnLine.push_back(indexVectorPoint1);
-                            vertexVectorOnLine[indexVectorPoint1].indexVertexVectorOutLine.push_back(indexVectorPoint0);
-                            vertexVectorOutLine[indexVectorPoint0].lineVectorOutLine.push_back(is);
-                            vertexVectorOnLine[indexVectorPoint1].lineVectorOutLine.push_back(is);
-                            }
-                            else if(!addpoint0onLine && !addpoint1onLine)
-                            {
-                                bool neighbourhoodAdded = false;
-                                for (unsigned i=0 ; i < vertexVectorOnLine[indexVectorPoint1].indexVertexVectorOutLine.size(); i++)
-                                {
-                                    if(vertexVectorOnLine[indexVectorPoint1].indexVertexVectorOutLine[i] == indexVectorPoint0)
-                                    {
-                                        neighbourhoodAdded = true;
-                                        break;
-                                    }
-                                }
-                                if (!neighbourhoodAdded)
-                                {
-                                    vertexVectorOutLine[indexVectorPoint0].indexVertexVectorOnLine.push_back(indexVectorPoint1);
-                                    vertexVectorOnLine[indexVectorPoint1].indexVertexVectorOutLine.push_back(indexVectorPoint0);
-                                    vertexVectorOutLine[indexVectorPoint0].lineVectorOutLine.push_back(is);
-                                    vertexVectorOnLine[indexVectorPoint1].lineVectorOutLine.push_back(is);
-                                }
-                            }
-                        }
-                    }
-                    // end filling indexVertexVectorOutLine Vector and lineVectorOutline Vector in vertexVectorOutLine Vector and in vertexVectorOnLine Vector
                 }
-            }
         }
 }
 
 int main(int argc, char** argv)
 {
-  try{
-    // set up the grid
-    const int dim = 2;
-    typedef double NumberType;
+    try{
+        // set up the grid
+        const int dim = 2;
+        typedef double NumberType;
 
-//    typedef Dune::ALUSimplexGrid<dim,dim> GridType;
-    typedef Dune::UGGrid<dim> GridType;
+        //    typedef Dune::ALUSimplexGrid<dim,dim> GridType;
+        typedef Dune::UGGrid<dim> GridType;
 
-    // create grid pointer, GridType is defined by gridtype.hh
-    Dune::GridPtr<GridType> gridPtr( "grids/rectangle_inner_manual_2d.dgf" );
+        // create grid pointer, GridType is defined by gridtype.hh
+        Dune::GridPtr<GridType> gridPtr( "grids/rectangle_inner_manual_2d.dgf" );
 
-    // grid reference
-    GridType& grid = *gridPtr;
+        // grid reference
+        GridType& grid = *gridPtr;
 
-    typedef VertexOnLine<GridType> VertexType1;
-    typedef VertexOutLine<GridType> VertexType2;
+        typedef VertexOnLine<GridType> VertexType1;
+        typedef VertexOutLine<GridType> VertexType2;
 
-    std::vector<VertexType1> vertexVectorOnLine;
-    std::vector<VertexType2> vertexVectorOutLine;
+        std::vector<VertexType1> vertexVectorOnLine;
+        std::vector<VertexType2> vertexVectorOutLine;
 
-    isolate(grid, gridPtr, vertexVectorOnLine, vertexVectorOutLine);
+        isolate(grid, gridPtr, vertexVectorOnLine, vertexVectorOutLine);
 
-    std::cout << "number of vertices on line = "<< vertexVectorOnLine.size() << std::endl;
-    std::cout << "number of vertices out line = "<< vertexVectorOutLine.size() << std::endl;
+        std::cout << "number of vertices on line = "<< vertexVectorOnLine.size() << std::endl;
+        std::cout << "number of vertices out line = "<< vertexVectorOutLine.size() << std::endl;
 
-    for (unsigned k = 0; k < vertexVectorOnLine.size(); k++)
-    {
-        std::cout << "vertice on line coord: " <<vertexVectorOnLine[k].nodePoint->geometry().corner(0) << std::endl;
-        std::cout << "       vertice on line: " << k << std::endl;
-        std::cout << "           boundary: " << vertexVectorOnLine[k].boundary() << std::endl;
-        std::cout << "             length: " << vertexVectorOnLine[k].length(vertexVectorOnLine) << std::endl;
-        std::cout << "             on line size: " << vertexVectorOnLine[k].lineVectorOnLine.size() << std::endl;
-        for (unsigned m = 0; m < vertexVectorOnLine[k].indexVertexVectorOnLine.size(); m++)
-        {
-            std::cout << "                neighbour vertices on line: " << vertexVectorOnLine[k].indexVertexVectorOnLine[m] << std::endl;
-            std::cout << "                normal vector: " << vertexVectorOnLine[k].normal(vertexVectorOnLine, vertexVectorOnLine[k].indexVertexVectorOnLine[m]) << std::endl;
-        }
-        std::cout << "             out line size: " << vertexVectorOnLine[k].lineVectorOutLine.size() << std::endl;
-        for (unsigned m = 0; m < vertexVectorOnLine[k].indexVertexVectorOutLine.size(); m++)
-        {
-            std::cout << "                neighbour vertices out line: " << vertexVectorOnLine[k].indexVertexVectorOutLine[m] << std::endl;
-            std::cout << "                normal vector: " << vertexVectorOnLine[k].normal(vertexVectorOutLine, vertexVectorOnLine[k].indexVertexVectorOutLine[m]) << std::endl;
-        }
+        for (unsigned k = 0; k < vertexVectorOnLine.size(); k++)
+            {
+                std::cout << "vertice on line coord: " <<vertexVectorOnLine[k].nodePoint->geometry().corner(0) << std::endl;
+                std::cout << "       vertice on line: " << k << std::endl;
+                std::cout << "           boundary: " << vertexVectorOnLine[k].boundary() << std::endl;
+                std::cout << "             length: " << vertexVectorOnLine[k].length(vertexVectorOnLine) << std::endl;
+                std::cout << "             on line size: " << vertexVectorOnLine[k].lineVectorOnLine.size() << std::endl;
+                for (unsigned m = 0; m < vertexVectorOnLine[k].indexVertexVectorOnLine.size(); m++)
+                    {
+                        std::cout << "                neighbour vertices on line: " << vertexVectorOnLine[k].indexVertexVectorOnLine[m] << std::endl;
+                        std::cout << "                normal vector: " << vertexVectorOnLine[k].normal(vertexVectorOnLine, vertexVectorOnLine[k].indexVertexVectorOnLine[m]) << std::endl;
+                    }
+                std::cout << "             out line size: " << vertexVectorOnLine[k].lineVectorOutLine.size() << std::endl;
+                for (unsigned m = 0; m < vertexVectorOnLine[k].indexVertexVectorOutLine.size(); m++)
+                    {
+                        std::cout << "                neighbour vertices out line: " << vertexVectorOnLine[k].indexVertexVectorOutLine[m] << std::endl;
+                        std::cout << "                normal vector: " << vertexVectorOnLine[k].normal(vertexVectorOutLine, vertexVectorOnLine[k].indexVertexVectorOutLine[m]) << std::endl;
+                    }
+            }
+
+        for (unsigned k = 0; k < vertexVectorOutLine.size(); k++)
+            {
+                std::cout << "vertice out line coord: " <<vertexVectorOutLine[k].nodePoint->geometry().corner(0) << std::endl;
+                std::cout << "       vertice out line: " << k << std::endl;
+                std::cout << "          out line size: " << vertexVectorOutLine[k].lineVectorOutLine.size() << std::endl;
+                for (unsigned m = 0; m < vertexVectorOutLine[k].indexVertexVectorOnLine.size(); m++)
+                    {
+                        std::cout << "             neighbour vertices on line: " << vertexVectorOutLine[k].indexVertexVectorOnLine[m] << std::endl;
+                    }
+            }
+
+
+        return 0;
     }
-
-    for (unsigned k = 0; k < vertexVectorOutLine.size(); k++)
-    {
-        std::cout << "vertice out line coord: " <<vertexVectorOutLine[k].nodePoint->geometry().corner(0) << std::endl;
-        std::cout << "       vertice out line: " << k << std::endl;
-        std::cout << "          out line size: " << vertexVectorOutLine[k].lineVectorOutLine.size() << std::endl;
-        for (unsigned m = 0; m < vertexVectorOutLine[k].indexVertexVectorOnLine.size(); m++)
-        {
-            std::cout << "             neighbour vertices on line: " << vertexVectorOutLine[k].indexVertexVectorOnLine[m] << std::endl;
-        }
+    catch (Dune::Exception &e){
+        std::cerr << "Dune reported error: " << e << std::endl;
     }
-
-
-    return 0;
-  }
-  catch (Dune::Exception &e){
-    std::cerr << "Dune reported error: " << e << std::endl;
-  }
-  catch (...){
-    std::cerr << "Unknown exception thrown!" << std::endl;
-  }
+    catch (...){
+        std::cerr << "Unknown exception thrown!" << std::endl;
+    }
 }

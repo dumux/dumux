@@ -43,26 +43,26 @@ namespace Dune
 //! Derived class for computing local jacobian matrices
 /*! A class for computing local jacobian matrix for the two-phase two-component flow equation
 
- div j = q; j = -K grad u; in Omega
+  div j = q; j = -K grad u; in Omega
 
- u = g on Gamma1; j*n = J on Gamma2.
+  u = g on Gamma1; j*n = J on Gamma2.
 
- Uses box scheme with the Lagrange shape functions.
- It should work for all dimensions and element types.
- All the numbering is with respect to the reference element and the
- Lagrange shape functions
+  Uses box scheme with the Lagrange shape functions.
+  It should work for all dimensions and element types.
+  All the numbering is with respect to the reference element and the
+  Lagrange shape functions
 
- Template parameters are:
+  Template parameters are:
 
- - Grid  a DUNE grid type
- - Scalar    type used for return values
- */
+  - Grid  a DUNE grid type
+  - Scalar    type used for return values
+*/
 template<class Grid, class Scalar, class BoxFunction = LeafP1Function<
-        Grid, Scalar, 3> >
+                                       Grid, Scalar, 3> >
 class Box2P2CNIJacobian: public BoxJacobian<Box2P2CNIJacobian<Grid, Scalar,
-        BoxFunction> , Grid, Scalar, 3, BoxFunction>
+                                                              BoxFunction> , Grid, Scalar, 3, BoxFunction>
 {
-typedef    typename Grid::ctype CoordScalar;
+    typedef    typename Grid::ctype CoordScalar;
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
     typedef typename Element::Geometry Geometry;
     typedef Box2P2CNIJacobian<Grid,Scalar,BoxFunction> ThisType;
@@ -70,23 +70,23 @@ typedef    typename Grid::ctype CoordScalar;
     typedef typename LocalJacobian<ThisType,Grid,Scalar,3>::MBlockType MBlockType;
 
     enum
-    {   pWIdx = 0, switchIdx = 1, teIdx=2}; // Solution vector index
+        {   pWIdx = 0, switchIdx = 1, teIdx=2}; // Solution vector index
     enum
-    {   wPhase = 0, nPhase = 1, temp = 2}; // Phase index
+        {   wPhase = 0, nPhase = 1, temp = 2}; // Phase index
     enum
-    {   gasPhase = 0, waterPhase = 1, bothPhases = 2}; // Phase state
+        {   gasPhase = 0, waterPhase = 1, bothPhases = 2}; // Phase state
     enum
-    {   wComp = 0, nComp = 1, heat = 2}; // Component index
+        {   wComp = 0, nComp = 1, heat = 2}; // Component index
 
 public:
     // define the number of phases (numEq) and components (numComp) of your system, this is used outside
     // to allocate the correct size of (dense) blocks with a FieldMatrix
     enum
-    {   dim=Grid::dimension};
+        {   dim=Grid::dimension};
     enum
-    {   numEq=3, numComp=2};
+        {   numEq=3, numComp=2};
     enum
-    {   SIZE=LagrangeShapeFunctionSetContainer<CoordScalar,Scalar,dim>::maxsize};
+        {   SIZE=LagrangeShapeFunctionSetContainer<CoordScalar,Scalar,dim>::maxsize};
     struct VariableNodeData;
 
     typedef FieldMatrix<Scalar,dim,dim> FMatrix;
@@ -94,12 +94,12 @@ public:
 
     //! Constructor
     Box2P2CNIJacobian (TwoPTwoCNIProblem<Grid,Scalar>& params,
-            bool levelBoundaryAsDirichlet_, const Grid& grid,
-            BoxFunction& sol,
-            bool procBoundaryAsDirichlet_=true)
-    : BoxJacobian<ThisType,Grid,Scalar,numEq,BoxFunction>(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_),
-    problem(params),
-    sNDat(this->vertexMapper.size()), vNDat(SIZE), oldVNDat(SIZE), switched(false), switchBreak(false), switchedGlobal(false)
+                       bool levelBoundaryAsDirichlet_, const Grid& grid,
+                       BoxFunction& sol,
+                       bool procBoundaryAsDirichlet_=true)
+        : BoxJacobian<ThisType,Grid,Scalar,numEq,BoxFunction>(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_),
+          problem(params),
+          sNDat(this->vertexMapper.size()), vNDat(SIZE), oldVNDat(SIZE), switched(false), switchBreak(false), switchedGlobal(false)
     {
         this->analytic = false;
     }
@@ -111,11 +111,11 @@ public:
      *  @return storage term
      */
     virtual VBlockType computeM (const Element& element, const VBlockType* sol,
-            int idx, std::vector<VariableNodeData>& varData)
+                                 int idx, std::vector<VariableNodeData>& varData)
     {
         GeometryType gt = element.geometry().type();
         const typename LagrangeShapeFunctionSetContainer<CoordScalar,Scalar,dim>::value_type&
-        sfs=LagrangeShapeFunctions<CoordScalar,Scalar,dim>::general(gt,1);
+            sfs=LagrangeShapeFunctions<CoordScalar,Scalar,dim>::general(gt,1);
 
         int globalIdx = this->vertexMapper.template map<dim>(element, sfs[idx].entity());
 
@@ -125,29 +125,29 @@ public:
 
         // storage of main component wetting phase
         result[wComp] =
-        sNDat[globalIdx].porosity*(varData[idx].density[wPhase]*satW*varData[idx].massfrac[wComp][wPhase]
-                +varData[idx].density[nPhase]*satN*varData[idx].massfrac[wComp][nPhase]);
+            sNDat[globalIdx].porosity*(varData[idx].density[wPhase]*satW*varData[idx].massfrac[wComp][wPhase]
+                                       +varData[idx].density[nPhase]*satN*varData[idx].massfrac[wComp][nPhase]);
         // storage of main component in nonwetting phase
         result[nComp] =
-        sNDat[globalIdx].porosity*(varData[idx].density[nPhase]*satN*varData[idx].massfrac[nComp][nPhase]
-                +varData[idx].density[wPhase]*satW*varData[idx].massfrac[nComp][wPhase]);
+            sNDat[globalIdx].porosity*(varData[idx].density[nPhase]*satN*varData[idx].massfrac[nComp][nPhase]
+                                       +varData[idx].density[wPhase]*satW*varData[idx].massfrac[nComp][wPhase]);
 
         // storage term of energy equation
         result[heat] = sNDat[globalIdx].porosity * (varData[idx].density[wPhase] * varData[idx].intenergy[wPhase] * satW
-                + varData[idx].density[nPhase] * varData[idx].intenergy[nPhase] * satN)
-        + elData.heatCap * varData[idx].temperature;
+                                                    + varData[idx].density[nPhase] * varData[idx].intenergy[nPhase] * satN)
+            + elData.heatCap * varData[idx].temperature;
         // soil properties defined at the elements!!!
 
         //DEBUG
-//        for(int j=0; j<3; j++)
-//        {
-//            if(isinf(result[j]))
-//            {
-//                std::cout<<"INF in ComputeM \n" << "Coordinates:X="<< this->fvGeom.subContVol[idx].global[0] <<" Y="<< this->fvGeom.subContVol[idx].global[1] <<
-//                " Z="<< this->fvGeom.subContVol[idx].global[2]<<"\n"
-//                <<"wetting phase pressure: " << varData[idx].pW << "wetting phase saturation: "<< satW << "temperature: "<< varData[idx].temperature << std::endl;
-//            }
-//        }
+        //        for(int j=0; j<3; j++)
+        //        {
+        //            if(isinf(result[j]))
+        //            {
+        //                std::cout<<"INF in ComputeM \n" << "Coordinates:X="<< this->fvGeom.subContVol[idx].global[0] <<" Y="<< this->fvGeom.subContVol[idx].global[1] <<
+        //                " Z="<< this->fvGeom.subContVol[idx].global[2]<<"\n"
+        //                <<"wetting phase pressure: " << varData[idx].pW << "wetting phase saturation: "<< satW << "temperature: "<< varData[idx].temperature << std::endl;
+        //            }
+        //        }
 
         return result;
     };
@@ -155,9 +155,9 @@ public:
     virtual VBlockType computeM (const Element& element, const VBlockType* sol, int idx, bool old = false)
     {
         if (old)
-        return computeM(element, sol, idx, oldVNDat);
+            return computeM(element, sol, idx, oldVNDat);
         else
-        return computeM(element, sol, idx, vNDat);
+            return computeM(element, sol, idx, vNDat);
     }
 
     /** @brief compute diffusive/advective fluxes, loop over subcontrol volume faces
@@ -175,7 +175,7 @@ public:
         const FieldVector<Scalar,dim> normal(this->fvGeom.subContVolFace[face].normal);
         GeometryType gt = element.geometry().type();
         const typename LagrangeShapeFunctionSetContainer<CoordScalar,Scalar,dim>::value_type&
-        sfs=LagrangeShapeFunctions<CoordScalar,Scalar,dim>::general(gt,1);
+            sfs=LagrangeShapeFunctions<CoordScalar,Scalar,dim>::general(gt,1);
 
         // global index of the subcontrolvolume face neighbour nodes in element element
         int globalIdx_i = this->vertexMapper.template map<dim>(element, sfs[idx_i].entity());
@@ -206,20 +206,20 @@ public:
         // calculate tortuosity at the nodes idx_i and idx_j needed for porous media diffusion coefficient
         Scalar tauW_i, tauW_j, tauN_i, tauN_j; // tortuosity of wetting and nonwetting phase
         tauW_i = pow(sNDat[globalIdx_i].porosity * vNDat[idx_i].satW,(7/3))/
-        (sNDat[globalIdx_i].porosity*sNDat[globalIdx_i].porosity);
+            (sNDat[globalIdx_i].porosity*sNDat[globalIdx_i].porosity);
         tauW_j = pow(sNDat[globalIdx_j].porosity * vNDat[idx_j].satW,(7/3))/
-        (sNDat[globalIdx_j].porosity*sNDat[globalIdx_j].porosity);
+            (sNDat[globalIdx_j].porosity*sNDat[globalIdx_j].porosity);
         tauN_i = pow(sNDat[globalIdx_i].porosity * vNDat[idx_i].satN,(7/3))/
-        (sNDat[globalIdx_i].porosity*sNDat[globalIdx_i].porosity);
+            (sNDat[globalIdx_i].porosity*sNDat[globalIdx_i].porosity);
         tauN_j = pow(sNDat[globalIdx_j].porosity * vNDat[idx_j].satN,(7/3))/
-        (sNDat[globalIdx_j].porosity*sNDat[globalIdx_j].porosity);
+            (sNDat[globalIdx_j].porosity*sNDat[globalIdx_j].porosity);
 
         // arithmetic mean of porous media diffusion coefficient
         Scalar Dwg, Daw;
         Dwg = 0.5*(sNDat[globalIdx_i].porosity * vNDat[idx_i].satN * tauN_i * vNDat[idx_i].diff[nPhase] +
-                sNDat[globalIdx_j].porosity * vNDat[idx_j].satN * tauN_j * vNDat[idx_j].diff[nPhase]);
+                   sNDat[globalIdx_j].porosity * vNDat[idx_j].satN * tauN_j * vNDat[idx_j].diff[nPhase]);
         Daw = 0.5*(sNDat[globalIdx_i].porosity * vNDat[idx_i].satW * tauW_i * vNDat[idx_i].diff[wPhase] +
-                sNDat[globalIdx_j].porosity * vNDat[idx_j].satW * tauW_j * vNDat[idx_j].diff[wPhase]);
+                   sNDat[globalIdx_j].porosity * vNDat[idx_j].satW * tauW_j * vNDat[idx_j].diff[wPhase]);
 
         // arithmetic mean of phase enthalpies (dissolved components neglected)
         Scalar enthW;
@@ -243,47 +243,47 @@ public:
         // calculate FE gradient at subcontrolvolumeface
         for (int k = 0; k < this->fvGeom.numVertices; k++) // loop over adjacent nodes
 
-        {
-            // FEGradient at subcontrolvolumeface face
-            const FieldVector<CoordScalar,dim> feGrad(this->fvGeom.subContVolFace[face].grad[k]);
-            FieldVector<Scalar,2> pressure(0.0);
-
-            pressure[wPhase] = vNDat[k].pW;
-            pressure[nPhase] = vNDat[k].pN;
-
-            // compute pressure gradients for each phase at integration point of subcontrolvolumeface face
-            for (int phase = 0; phase < 2; phase++)
             {
+                // FEGradient at subcontrolvolumeface face
+                const FieldVector<CoordScalar,dim> feGrad(this->fvGeom.subContVolFace[face].grad[k]);
+                FieldVector<Scalar,2> pressure(0.0);
+
+                pressure[wPhase] = vNDat[k].pW;
+                pressure[nPhase] = vNDat[k].pN;
+
+                // compute pressure gradients for each phase at integration point of subcontrolvolumeface face
+                for (int phase = 0; phase < 2; phase++)
+                    {
+                        tmp = feGrad;
+                        tmp *= pressure[phase];
+                        pGrad[phase] += tmp;
+                    }
+
+                // compute temperature gradient
                 tmp = feGrad;
-                tmp *= pressure[phase];
-                pGrad[phase] += tmp;
+                tmp *= vNDat[k].temperature;
+                teGrad += tmp;
+
+                // compute concentration gradients
+                // for diffusion of nComp in wetting phase
+                tmp = feGrad;
+                tmp *= vNDat[k].massfrac[nComp][wPhase];
+                xGrad[wPhase] += tmp;
+
+                // for diffusion of wetting phase in nonwetting phase
+                tmp = feGrad;
+                tmp *= vNDat[k].massfrac[wComp][nPhase];
+                xGrad[nPhase] += tmp;
             }
-
-            // compute temperature gradient
-            tmp = feGrad;
-            tmp *= vNDat[k].temperature;
-            teGrad += tmp;
-
-            // compute concentration gradients
-            // for diffusion of nComp in wetting phase
-            tmp = feGrad;
-            tmp *= vNDat[k].massfrac[nComp][wPhase];
-            xGrad[wPhase] += tmp;
-
-            // for diffusion of wetting phase in nonwetting phase
-            tmp = feGrad;
-            tmp *= vNDat[k].massfrac[wComp][nPhase];
-            xGrad[nPhase] += tmp;
-        }
 
         // deduce gravity*density of each phase
         FieldMatrix<Scalar,2,dim> contribComp(0);
         for (int phase=0; phase<2; phase++)
-        {
-            contribComp[phase] = problem.gravity();
-            contribComp[phase] *= avgDensity[phase];
-            pGrad[phase] -= contribComp[phase]; // grad p - rho*g
-        }
+            {
+                contribComp[phase] = problem.gravity();
+                contribComp[phase] *= avgDensity[phase];
+                pGrad[phase] -= contribComp[phase]; // grad p - rho*g
+            }
 
         // Darcy velocity in normal direction for each phase K*n(grad p -rho*g)
         VBlockType outward(0);
@@ -302,13 +302,13 @@ public:
         // evaluate upwind nodes
         int up_w, dn_w, up_n, dn_n;
         if (outward[wPhase] <= 0)
-        {   up_w = idx_i; dn_w = idx_j;}
+            {   up_w = idx_i; dn_w = idx_j;}
         else
-        {   up_w = idx_j; dn_w = idx_i;};
+            {   up_w = idx_j; dn_w = idx_i;};
         if (outward[nPhase] <= 0)
-        {   up_n = idx_i; dn_n = idx_j;}
+            {   up_n = idx_i; dn_n = idx_j;}
         else
-        {   up_n = idx_j; dn_n = idx_i;};
+            {   up_n = idx_j; dn_n = idx_i;};
 
         Scalar alpha = 1.0; // Upwind parameter
 
@@ -316,33 +316,33 @@ public:
         // ADVECTIVE TRANSPORT
         // Wetting Component conservation
         flux[wComp] = (alpha* vNDat[up_w].density[wPhase]*vNDat[up_w].mobility[wPhase]
-                * vNDat[up_w].massfrac[wComp][wPhase]
-                + (1-alpha)* vNDat[dn_w].density[wPhase]*vNDat[dn_w].mobility[wPhase]
-                * vNDat[dn_w].massfrac[wComp][wPhase])
-        * outward[wPhase];
+                       * vNDat[up_w].massfrac[wComp][wPhase]
+                       + (1-alpha)* vNDat[dn_w].density[wPhase]*vNDat[dn_w].mobility[wPhase]
+                       * vNDat[dn_w].massfrac[wComp][wPhase])
+            * outward[wPhase];
         flux[wComp] += (alpha* vNDat[up_n].density[nPhase]*vNDat[up_n].mobility[nPhase]
-                * vNDat[up_n].massfrac[wComp][nPhase]
-                + (1-alpha)* vNDat[dn_n].density[nPhase]*vNDat[dn_n].mobility[nPhase]
-                * vNDat[dn_n].massfrac[wComp][nPhase])
-        * outward[nPhase];
+                        * vNDat[up_n].massfrac[wComp][nPhase]
+                        + (1-alpha)* vNDat[dn_n].density[nPhase]*vNDat[dn_n].mobility[nPhase]
+                        * vNDat[dn_n].massfrac[wComp][nPhase])
+            * outward[nPhase];
         // Nonwetting Component conservation
         flux[nComp] = (alpha* vNDat[up_n].density[nPhase]*vNDat[up_n].mobility[nPhase]
-                * vNDat[up_n].massfrac[nComp][nPhase]
-                + (1-alpha)* vNDat[dn_n].density[nPhase]*vNDat[dn_n].mobility[nPhase]
-                * vNDat[dn_n].massfrac[nComp][nPhase])
-        * outward[nPhase];
+                       * vNDat[up_n].massfrac[nComp][nPhase]
+                       + (1-alpha)* vNDat[dn_n].density[nPhase]*vNDat[dn_n].mobility[nPhase]
+                       * vNDat[dn_n].massfrac[nComp][nPhase])
+            * outward[nPhase];
         flux[nComp] += (alpha* vNDat[up_w].density[wPhase]*vNDat[up_w].mobility[wPhase]
-                * vNDat[up_w].massfrac[nComp][wPhase]
-                + (1-alpha)* vNDat[dn_w].density[wPhase]*vNDat[dn_w].mobility[wPhase]
-                * vNDat[dn_w].massfrac[nComp][wPhase])
-        * outward[wPhase];
+                        * vNDat[up_w].massfrac[nComp][wPhase]
+                        + (1-alpha)* vNDat[dn_w].density[wPhase]*vNDat[dn_w].mobility[wPhase]
+                        * vNDat[dn_w].massfrac[nComp][wPhase])
+            * outward[wPhase];
         // Heat conservation
         flux[heat] = (alpha* vNDat[up_n].density[nPhase]*vNDat[up_n].mobility[nPhase] * vNDat[up_n].enthalpy[nPhase]
-                + (1-alpha)* vNDat[dn_n].density[nPhase]*vNDat[dn_n].mobility[nPhase] * vNDat[dn_n].enthalpy[nPhase])
-        * outward[nPhase];
+                      + (1-alpha)* vNDat[dn_n].density[nPhase]*vNDat[dn_n].mobility[nPhase] * vNDat[dn_n].enthalpy[nPhase])
+            * outward[nPhase];
         flux[heat] += (alpha* vNDat[up_w].density[wPhase]*vNDat[up_w].mobility[wPhase] * vNDat[up_w].enthalpy[wPhase]
-                + (1-alpha)* vNDat[dn_w].density[wPhase]*vNDat[dn_w].mobility[wPhase] * vNDat[dn_w].enthalpy[wPhase])
-        * outward[wPhase];
+                       + (1-alpha)* vNDat[dn_w].density[wPhase]*vNDat[dn_w].mobility[wPhase] * vNDat[dn_w].enthalpy[wPhase])
+            * outward[wPhase];
 
         /////////////////////////////////////////////////////////////////////////////////////////////////////////
         // DIFFUSIVE TRANSPORT
@@ -359,22 +359,22 @@ public:
         normDiffGrad[nPhase] = xGrad[nPhase]*normal;
 
         if (state_i == bothPhases && state_j == bothPhases)
-        {
-            diffusionAW = Daw * avgDensity[wPhase] * normDiffGrad[wPhase];
-            diffusionWW = - diffusionAW;
-            diffusionWN = Dwg * avgDensity[nPhase] * normDiffGrad[nPhase];
-            diffusionAN = - diffusionWN;
-        }
+            {
+                diffusionAW = Daw * avgDensity[wPhase] * normDiffGrad[wPhase];
+                diffusionWW = - diffusionAW;
+                diffusionWN = Dwg * avgDensity[nPhase] * normDiffGrad[nPhase];
+                diffusionAN = - diffusionWN;
+            }
         else if (state_i == waterPhase || state_j == waterPhase)
-        {
-            diffusionAW = Daw * avgDensity[wPhase] * normDiffGrad[wPhase];
-            diffusionWW = - diffusionAW;
-        }
+            {
+                diffusionAW = Daw * avgDensity[wPhase] * normDiffGrad[wPhase];
+                diffusionWW = - diffusionAW;
+            }
         else if (state_i == gasPhase || state_j == gasPhase)
-        {
-            diffusionWN = Dwg * avgDensity[nPhase] * normDiffGrad[nPhase];
-            diffusionAN = - diffusionWN;
-        }
+            {
+                diffusionWN = Dwg * avgDensity[nPhase] * normDiffGrad[nPhase];
+                diffusionAN = - diffusionWN;
+            }
 
         // Wetting Component conservation
         flux[wComp] += (diffusionWW + diffusionWN);
@@ -426,81 +426,81 @@ public:
     {
 
         if(!switchBreak)
-        {
-            switched = false;
-            int state = sNDat[globalIdx].phaseState;
-
-            Scalar pW = sol[idx][wPhase];
-            Scalar satW = 0.0;
-            if (state == bothPhases) satW = 1.0-sol[idx][nPhase];
-            if (state == waterPhase) satW = 1.0;
-            if (state == gasPhase) satW = 0.0;
-
-            Scalar pC = problem.materialLaw().pC(satW, this->fvGeom.subContVol[idx].global, element, this->fvGeom.subContVol[idx].local);
-            Scalar pN = pW + pC;
-
-            FVector Coordinates = this->fvGeom.subContVol[idx].global;
-
-            switch(state)
             {
-                case gasPhase :
-                Scalar xWNmass, xWNmax;
-                xWNmass = sol[idx][switchIdx];
-                xWNmax = problem.multicomp().xWN(pN, sol[idx][temp]);
+                switched = false;
+                int state = sNDat[globalIdx].phaseState;
 
-                if (xWNmass > xWNmax && switched == false)
-                {
-                    // appearance of wetting phase phase
-                    std::cout << "Wetting component appears at node " << globalIdx << "  Coordinates: " << Coordinates << std::endl;
-                    sNDat[globalIdx].phaseState = bothPhases;
-                    sol[idx][nPhase] = 1.0 - 1.e-3; // initialize solution vector
-                    switched = true;
-                }
-                break;
+                Scalar pW = sol[idx][wPhase];
+                Scalar satW = 0.0;
+                if (state == bothPhases) satW = 1.0-sol[idx][nPhase];
+                if (state == waterPhase) satW = 1.0;
+                if (state == gasPhase) satW = 0.0;
 
-                case waterPhase :
-                Scalar xAWmax, xAWmass;
-                xAWmass = sol[idx][switchIdx];
-                xAWmax = problem.multicomp().xAW(pN, sol[idx][temp]);
+                Scalar pC = problem.materialLaw().pC(satW, this->fvGeom.subContVol[idx].global, element, this->fvGeom.subContVol[idx].local);
+                Scalar pN = pW + pC;
 
-                if (xAWmass> xAWmax && switched == false)
-                {
-                    // appearance of gas phase
-                    std::cout << "Nonwetting component appears at node " << globalIdx << "  Coordinates: " << Coordinates << std::endl;
-                    sNDat[globalIdx].phaseState = bothPhases;
-                    sol[idx][nPhase] = 1.e-3; // initialize solution vector
-                    switched = true;
-                }
-                break;
+                FVector Coordinates = this->fvGeom.subContVol[idx].global;
 
-                case bothPhases :
-                Scalar satN = sol[idx][nPhase];
-                if (satN < 0.0 && switched == false)
-                {
-                    // disappearance of gas phase
-                    std::cout << "Nonwetting component disappears at node " << globalIdx << "  Coordinates: " << Coordinates << std::endl;
-                    sNDat[globalIdx].phaseState = waterPhase;
-                    sol[idx][switchIdx] = 1e-3; // initialize solution vector
-                    switched = true;
-                }
-                else if (satW < -1.e-5 && switched == false)
-                {
-                    // disappearance of wetting phase phase
-                    std::cout << "Wetting component disappears at node " << globalIdx << "  Coordinates: " << Coordinates << std::endl;
-                    sNDat[globalIdx].phaseState = gasPhase;
-                    sol[idx][switchIdx] = 1e-8; // initialize solution vector
-                    switched = true;
-                }
-                break;
+                switch(state)
+                    {
+                    case gasPhase :
+                        Scalar xWNmass, xWNmax;
+                        xWNmass = sol[idx][switchIdx];
+                        xWNmax = problem.multicomp().xWN(pN, sol[idx][temp]);
+
+                        if (xWNmass > xWNmax && switched == false)
+                            {
+                                // appearance of wetting phase phase
+                                std::cout << "Wetting component appears at node " << globalIdx << "  Coordinates: " << Coordinates << std::endl;
+                                sNDat[globalIdx].phaseState = bothPhases;
+                                sol[idx][nPhase] = 1.0 - 1.e-3; // initialize solution vector
+                                switched = true;
+                            }
+                        break;
+
+                    case waterPhase :
+                        Scalar xAWmax, xAWmass;
+                        xAWmass = sol[idx][switchIdx];
+                        xAWmax = problem.multicomp().xAW(pN, sol[idx][temp]);
+
+                        if (xAWmass> xAWmax && switched == false)
+                            {
+                                // appearance of gas phase
+                                std::cout << "Nonwetting component appears at node " << globalIdx << "  Coordinates: " << Coordinates << std::endl;
+                                sNDat[globalIdx].phaseState = bothPhases;
+                                sol[idx][nPhase] = 1.e-3; // initialize solution vector
+                                switched = true;
+                            }
+                        break;
+
+                    case bothPhases :
+                        Scalar satN = sol[idx][nPhase];
+                        if (satN < 0.0 && switched == false)
+                            {
+                                // disappearance of gas phase
+                                std::cout << "Nonwetting component disappears at node " << globalIdx << "  Coordinates: " << Coordinates << std::endl;
+                                sNDat[globalIdx].phaseState = waterPhase;
+                                sol[idx][switchIdx] = 1e-3; // initialize solution vector
+                                switched = true;
+                            }
+                        else if (satW < -1.e-5 && switched == false)
+                            {
+                                // disappearance of wetting phase phase
+                                std::cout << "Wetting component disappears at node " << globalIdx << "  Coordinates: " << Coordinates << std::endl;
+                                sNDat[globalIdx].phaseState = gasPhase;
+                                sol[idx][switchIdx] = 1e-8; // initialize solution vector
+                                switched = true;
+                            }
+                        break;
+                    }
+
+                if(switched)
+                    {
+                        // fill global solution vector with initialised local values
+                        BoxJacobian<ThisType,Grid,Scalar,numEq,BoxFunction>::localToGlobal(element, sol);
+                        switchedGlobal = true;
+                    }
             }
-
-            if(switched)
-            {
-                // fill global solution vector with initialised local values
-                BoxJacobian<ThisType,Grid,Scalar,numEq,BoxFunction>::localToGlobal(element, sol);
-                switchedGlobal = true;
-            }
-        }
         return;
     }
 
@@ -510,27 +510,27 @@ public:
         double eps = 1e-20;
         FMatrix K(0.);
         for (int kx=0; kx<dim; kx++)
-        {
-            for (int ky=0; ky<dim; ky++)
             {
-                if (Ki[kx][ky] != Kj[kx][ky])
-                {
-                    K[kx][ky] = 2 / (1/(Ki[kx][ky]+eps) + (1/(Kj[kx][ky]+eps)));
-                }
-                else K = Ki;
+                for (int ky=0; ky<dim; ky++)
+                    {
+                        if (Ki[kx][ky] != Kj[kx][ky])
+                            {
+                                K[kx][ky] = 2 / (1/(Ki[kx][ky]+eps) + (1/(Kj[kx][ky]+eps)));
+                            }
+                        else K = Ki;
+                    }
             }
-        }
         return K;
     }
 
     virtual void clearVisited ()
     {
         for (int globalIdx = 0; globalIdx < this->vertexMapper.size(); globalIdx++)
-        {
-            sNDat[globalIdx].visited = false;
-            if(problem.sequentialCoupling() == true)
-            sNDat[globalIdx].primVarSet = false;
-        }
+            {
+                sNDat[globalIdx].visited = false;
+                if(problem.sequentialCoupling() == true)
+                    sNDat[globalIdx].primVarSet = false;
+            }
         return;
     }
 
@@ -538,18 +538,18 @@ public:
     virtual void updatePhaseState ()
     {
         for (int globalIdx = 0; globalIdx < this->vertexMapper.size(); globalIdx++)
-        {
-            sNDat[globalIdx].oldPhaseState = sNDat[globalIdx].phaseState;
-        }
+            {
+                sNDat[globalIdx].oldPhaseState = sNDat[globalIdx].phaseState;
+            }
         return;
     }
 
     virtual void resetPhaseState ()
     {
         for (int globalIdx = 0; globalIdx < this->vertexMapper.size(); globalIdx++)
-        {
-            sNDat[globalIdx].phaseState = sNDat[globalIdx].oldPhaseState;
-        }
+            {
+                sNDat[globalIdx].phaseState = sNDat[globalIdx].oldPhaseState;
+            }
         return;
     }
     //*********************************************************
@@ -584,62 +584,62 @@ public:
         // get access to shape functions for P1 elements
         GeometryType gt = element.geometry().type();
         const typename LagrangeShapeFunctionSetContainer<CoordScalar,Scalar,dim>::value_type&
-        sfs=LagrangeShapeFunctions<CoordScalar,Scalar,dim>::general(gt,1);
+            sfs=LagrangeShapeFunctions<CoordScalar,Scalar,dim>::general(gt,1);
         Scalar result, corrTolerance;
         Scalar xCorrNew(1.), xCorrOld(0.);
         Scalar satCorrNew(1.), satCorrOld(0.);
         Scalar twoPNIDens, twoPNISatN;
         corrTolerance = 1.e-9;
         for (int idx = 0; idx < size; idx ++)
-        {
-            const int globalIdx = this->vertexMapper.template map<dim>(element, sfs[idx].entity());
-
-            if(sNDat[globalIdx].visited != true && sNDat[globalIdx].phaseState == bothPhases)
             {
-                twoPNIDens = vNDat[idx].density[nPhase]; // density like in 2pni model
-                twoPNISatN = vNDat[idx].satN; // saturation like in 2pni model
+                const int globalIdx = this->vertexMapper.template map<dim>(element, sfs[idx].entity());
 
-                while(std::fabs(satCorrNew - satCorrOld)> corrTolerance && satCorrNew> 0.)//for(int i=0; i<5; i++)  // iteration loop for correct saturation value to take
-                // capillary pressure effects into account
-
-                {
-                    satCorrOld = satCorrNew;
-                    satCorrNew = (twoPNIDens * twoPNISatN
-                            - vNDat[idx].density[wPhase] * vNDat[idx].massfrac[nComp][wPhase])/
-                    (vNDat[idx].density[nPhase] * vNDat[idx].massfrac[nComp][nPhase]
-                            - vNDat[idx].density[wPhase] * vNDat[idx].massfrac[nComp][wPhase]);
-
-                    // correction of densities and massfractions due to pressure changes
-                    vNDat[idx].satW = 1.0 - satCorrNew;
-                    vNDat[idx].pC = problem.materialLaw().pC(vNDat[idx].satW, this->fvGeom.subContVol[idx].global, element, this->fvGeom.subContVol[idx].local);
-                    vNDat[idx].pN = vNDat[idx].pW + vNDat[idx].pC;
-                    vNDat[idx].massfrac[nComp][wPhase] = problem.multicomp().xAW(vNDat[idx].pN, vNDat[idx].temperature);
-                    vNDat[idx].massfrac[wComp][nPhase] = problem.multicomp().xWN(vNDat[idx].pN, vNDat[idx].temperature);
-                    vNDat[idx].massfrac[wComp][wPhase] = 1.0 - vNDat[idx].massfrac[nComp][wPhase];
-                    vNDat[idx].massfrac[nComp][nPhase] = 1.0 - vNDat[idx].massfrac[wComp][nPhase];
-                    vNDat[idx].density[wPhase] = problem.wettingPhase().density(vNDat[idx].temperature, vNDat[idx].pW, vNDat[idx].massfrac[nComp][wPhase]);
-                    vNDat[idx].density[nPhase] = problem.nonwettingPhase().density(vNDat[idx].temperature, vNDat[idx].pN);
-                }
-                result = satCorrNew;
-
-                // if the resulting saturation becomes < 0 all co2 of the nPhase can
-                // be dissolved in the brine. The new mass fraction is calculated here
-                if(satCorrNew <= 0.0)
-                {
-                    sNDat[globalIdx].phaseState = waterPhase;
-                    sNDat[globalIdx].oldPhaseState = waterPhase;
-
-                    while(std::fabs(xCorrNew - xCorrOld)> corrTolerance)
+                if(sNDat[globalIdx].visited != true && sNDat[globalIdx].phaseState == bothPhases)
                     {
-                        xCorrOld = xCorrNew;
-                        xCorrNew = (twoPNIDens * twoPNISatN)/vNDat[idx].density[wPhase];
-                        vNDat[idx].density[wPhase] = problem.wettingPhase().density(vNDat[idx].temperature, vNDat[idx].pW, xCorrNew);
+                        twoPNIDens = vNDat[idx].density[nPhase]; // density like in 2pni model
+                        twoPNISatN = vNDat[idx].satN; // saturation like in 2pni model
+
+                        while(std::fabs(satCorrNew - satCorrOld)> corrTolerance && satCorrNew> 0.)//for(int i=0; i<5; i++)  // iteration loop for correct saturation value to take
+                            // capillary pressure effects into account
+
+                            {
+                                satCorrOld = satCorrNew;
+                                satCorrNew = (twoPNIDens * twoPNISatN
+                                              - vNDat[idx].density[wPhase] * vNDat[idx].massfrac[nComp][wPhase])/
+                                    (vNDat[idx].density[nPhase] * vNDat[idx].massfrac[nComp][nPhase]
+                                     - vNDat[idx].density[wPhase] * vNDat[idx].massfrac[nComp][wPhase]);
+
+                                // correction of densities and massfractions due to pressure changes
+                                vNDat[idx].satW = 1.0 - satCorrNew;
+                                vNDat[idx].pC = problem.materialLaw().pC(vNDat[idx].satW, this->fvGeom.subContVol[idx].global, element, this->fvGeom.subContVol[idx].local);
+                                vNDat[idx].pN = vNDat[idx].pW + vNDat[idx].pC;
+                                vNDat[idx].massfrac[nComp][wPhase] = problem.multicomp().xAW(vNDat[idx].pN, vNDat[idx].temperature);
+                                vNDat[idx].massfrac[wComp][nPhase] = problem.multicomp().xWN(vNDat[idx].pN, vNDat[idx].temperature);
+                                vNDat[idx].massfrac[wComp][wPhase] = 1.0 - vNDat[idx].massfrac[nComp][wPhase];
+                                vNDat[idx].massfrac[nComp][nPhase] = 1.0 - vNDat[idx].massfrac[wComp][nPhase];
+                                vNDat[idx].density[wPhase] = problem.wettingPhase().density(vNDat[idx].temperature, vNDat[idx].pW, vNDat[idx].massfrac[nComp][wPhase]);
+                                vNDat[idx].density[nPhase] = problem.nonwettingPhase().density(vNDat[idx].temperature, vNDat[idx].pN);
+                            }
+                        result = satCorrNew;
+
+                        // if the resulting saturation becomes < 0 all co2 of the nPhase can
+                        // be dissolved in the brine. The new mass fraction is calculated here
+                        if(satCorrNew <= 0.0)
+                            {
+                                sNDat[globalIdx].phaseState = waterPhase;
+                                sNDat[globalIdx].oldPhaseState = waterPhase;
+
+                                while(std::fabs(xCorrNew - xCorrOld)> corrTolerance)
+                                    {
+                                        xCorrOld = xCorrNew;
+                                        xCorrNew = (twoPNIDens * twoPNISatN)/vNDat[idx].density[wPhase];
+                                        vNDat[idx].density[wPhase] = problem.wettingPhase().density(vNDat[idx].temperature, vNDat[idx].pW, xCorrNew);
+                                    }
+                                result = xCorrNew;
+                            }
+                        sol[idx][switchIdx] = result;
                     }
-                    result = xCorrNew;
-                }
-                sol[idx][switchIdx] = result;
             }
-        }
         // fill global solution vector with corrected local values
         BoxJacobian<ThisType,Grid,Scalar,numEq,BoxFunction>::localToGlobal(element, sol);
     }
@@ -662,29 +662,29 @@ public:
         // get access to shape functions for P1 elements
         GeometryType gt = element.geometry().type();
         const typename LagrangeShapeFunctionSetContainer<CoordScalar,Scalar,dim>::value_type&
-        sfs=LagrangeShapeFunctions<CoordScalar,Scalar,dim>::general(gt,1);
+            sfs=LagrangeShapeFunctions<CoordScalar,Scalar,dim>::general(gt,1);
 
         // get local to global id map
         for (int k = 0; k < sfs.size(); k++)
-        {
-            const int globalIdx = this->vertexMapper.template map<dim>(element, sfs[k].entity());
-
-            // if nodes are not already visited
-            if (!sNDat[globalIdx].visited)
             {
-                // ASSUME porosity defined at nodes
-                sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.subContVol[k].global, element, this->fvGeom.subContVol[k].local);
+                const int globalIdx = this->vertexMapper.template map<dim>(element, sfs[k].entity());
 
-                // global coordinates
-                FieldVector<CoordScalar,dim> globalPos_i = this->fvGeom.subContVol[k].global;
+                // if nodes are not already visited
+                if (!sNDat[globalIdx].visited)
+                    {
+                        // ASSUME porosity defined at nodes
+                        sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.subContVol[k].global, element, this->fvGeom.subContVol[k].local);
 
-                // evaluate primary variable switch
-                primaryVarSwitch(element, globalIdx, sol, k);
+                        // global coordinates
+                        FieldVector<CoordScalar,dim> globalPos_i = this->fvGeom.subContVol[k].global;
 
-                // mark elements that were already visited
-                sNDat[globalIdx].visited = true;
+                        // evaluate primary variable switch
+                        primaryVarSwitch(element, globalIdx, sol, k);
+
+                        // mark elements that were already visited
+                        sNDat[globalIdx].visited = true;
+                    }
             }
-        }
 
         return;
     }
@@ -695,23 +695,23 @@ public:
         // get access to shape functions for P1 elements
         GeometryType gt = element.geometry().type();
         const typename LagrangeShapeFunctionSetContainer<CoordScalar,Scalar,dim>::value_type&
-        sfs=LagrangeShapeFunctions<CoordScalar,Scalar,dim>::general(gt,1);
+            sfs=LagrangeShapeFunctions<CoordScalar,Scalar,dim>::general(gt,1);
 
         // get local to global id map
         for (int k = 0; k < sfs.size(); k++)
-        {
-            const int globalIdx = this->vertexMapper.template map<dim>(element, sfs[k].entity());
-
-            // if nodes are not already visited
-            if (!sNDat[globalIdx].visited)
             {
-                // ASSUME porosity defined at nodes
-                sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.subContVol[k].global, element, this->fvGeom.subContVol[k].local);
+                const int globalIdx = this->vertexMapper.template map<dim>(element, sfs[k].entity());
 
-                // mark elements that were already visited
-                sNDat[globalIdx].visited = true;
+                // if nodes are not already visited
+                if (!sNDat[globalIdx].visited)
+                    {
+                        // ASSUME porosity defined at nodes
+                        sNDat[globalIdx].porosity = problem.soil().porosity(this->fvGeom.subContVol[k].global, element, this->fvGeom.subContVol[k].local);
+
+                        // mark elements that were already visited
+                        sNDat[globalIdx].visited = true;
+                    }
             }
-        }
 
         return;
     }
@@ -744,7 +744,7 @@ public:
 
     // analog to EvalPrimaryData in MUFTE, uses members of vNDat
     virtual void updateVariableData(const Element& element, const VBlockType* sol,
-            int idx, std::vector<VariableNodeData>& varData, int state)
+                                    int idx, std::vector<VariableNodeData>& varData, int state)
     {
         const int globalIdx = this->vertexMapper.template map<dim>(element, idx);
 
@@ -761,20 +761,20 @@ public:
 
         // Solubilities of components in phases
         if (state == bothPhases)
-        {
-            varData[idx].massfrac[nComp][wPhase] = problem.multicomp().xAW(varData[idx].pN, varData[idx].temperature);
-            varData[idx].massfrac[wComp][nPhase] = problem.multicomp().xWN(varData[idx].pN, varData[idx].temperature);
-        }
+            {
+                varData[idx].massfrac[nComp][wPhase] = problem.multicomp().xAW(varData[idx].pN, varData[idx].temperature);
+                varData[idx].massfrac[wComp][nPhase] = problem.multicomp().xWN(varData[idx].pN, varData[idx].temperature);
+            }
         if (state == waterPhase)
-        {
-            varData[idx].massfrac[wComp][nPhase] = 0.0;
-            varData[idx].massfrac[nComp][wPhase] = sol[idx][switchIdx];
-        }
+            {
+                varData[idx].massfrac[wComp][nPhase] = 0.0;
+                varData[idx].massfrac[nComp][wPhase] = sol[idx][switchIdx];
+            }
         if (state == gasPhase)
-        {
-            varData[idx].massfrac[wComp][nPhase] = sol[idx][switchIdx];
-            varData[idx].massfrac[nComp][wPhase] = 0.0;
-        }
+            {
+                varData[idx].massfrac[wComp][nPhase] = sol[idx][switchIdx];
+                varData[idx].massfrac[nComp][wPhase] = 0.0;
+            }
         varData[idx].massfrac[wComp][wPhase] = 1.0 - varData[idx].massfrac[nComp][wPhase];
         varData[idx].massfrac[nComp][nPhase] = 1.0 - varData[idx].massfrac[wComp][nPhase];
 
@@ -819,15 +819,15 @@ public:
         int state;
         const int globalIdx = this->vertexMapper.template map<dim>(element, idx);
         if (old)
-        {
-            state = sNDat[globalIdx].oldPhaseState;
-            updateVariableData(element, sol, idx, oldVNDat, state);
-        }
+            {
+                state = sNDat[globalIdx].oldPhaseState;
+                updateVariableData(element, sol, idx, oldVNDat, state);
+            }
         else
-        {
-            state = sNDat[globalIdx].phaseState;
-            updateVariableData(element, sol, idx, vNDat, state);
-        }
+            {
+                state = sNDat[globalIdx].phaseState;
+                updateVariableData(element, sol, idx, vNDat, state);
+            }
     }
 
     void updateVariableData(const Element& element, const VBlockType* sol, bool old = false)
@@ -835,7 +835,7 @@ public:
         int size = this->fvGeom.numVertices;
 
         for (int idx = 0; idx < size; idx++)
-        updateVariableData(element, sol, idx, old);
+            updateVariableData(element, sol, idx, old);
     }
 
     struct StaticNodeData

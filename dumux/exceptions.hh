@@ -24,13 +24,13 @@
 #include <dune/common/exceptions.hh>
 
 namespace Dune {
-    /*!
-     * \brief Exception thrown if a fixable numerical problem occurs.
-     *
-     * (e.g. time step too big, etc.)
-     */
-    class NumericalProblem : public Dune::Exception
-    { };
+/*!
+ * \brief Exception thrown if a fixable numerical problem occurs.
+ *
+ * (e.g. time step too big, etc.)
+ */
+class NumericalProblem : public Dune::Exception
+{ };
 }
 
 #endif

@@ -28,110 +28,110 @@
 
 int main(int argc, char** argv)
 {
-  try{
-    // define the problem dimensions (geometry of problem)
-    const int dim=2;
-    typedef double NumberType;
-    typedef GridType::ctype ctype;
+    try{
+        // define the problem dimensions (geometry of problem)
+        const int dim=2;
+        typedef double NumberType;
+        typedef GridType::ctype ctype;
 
-    Dune::FieldVector<NumberType, dim> outerLowerLeft(0);
-    Dune::FieldVector<NumberType, dim> outerUpperRight(60);
-    outerUpperRight[1] = 50;
-    double depthBOR = 1000.0;
+        Dune::FieldVector<NumberType, dim> outerLowerLeft(0);
+        Dune::FieldVector<NumberType, dim> outerUpperRight(60);
+        outerUpperRight[1] = 50;
+        double depthBOR = 1000.0;
 
-    // for defining e.g. a lense
-    Dune::FieldVector<NumberType, dim> innerLowerLeft(4);
-    innerLowerLeft[1] = 0.0;
-    Dune::FieldVector<NumberType, dim> innerUpperRight(6);
-    innerUpperRight[1] = 0.5;
+        // for defining e.g. a lense
+        Dune::FieldVector<NumberType, dim> innerLowerLeft(4);
+        innerLowerLeft[1] = 0.0;
+        Dune::FieldVector<NumberType, dim> innerUpperRight(6);
+        innerUpperRight[1] = 0.5;
 
-    // count number of arguments
-    if (argc != 2) {
-      std::cout << "usage: test_twophase tEnd" << std::endl;
-      return 0;
+        // count number of arguments
+        if (argc != 2) {
+            std::cout << "usage: test_twophase tEnd" << std::endl;
+            return 0;
+        }
+
+        // define tEnd
+        std::string arg1(argv[1]);
+        std::istringstream is1(arg1);
+        double tEnd; is1 >> tEnd;
+
+        // create a grid object
+        typedef Dune::SGrid<dim,dim> GridType;
+        //typedef Dune::YaspGrid<dim,dim> GridType;
+        //    typedef Dune::UGGrid<dim> GridType;
+
+        // use unitcube from grids (UGGrid)
+        std::stringstream dgfFileName;
+        dgfFileName << "grids/unitcube"
+            //    dgfFileName << "grids/unitcube"
+                    << GridType :: dimension << ".dgf";
+
+        // create grid pointer, GridType is defined by gridtype.hh
+        Dune::GridPtr<GridType> gridPtr( dgfFileName.str() );
+
+        // grid reference
+        GridType& grid = *gridPtr;
+
+        Dune::gridinfo(grid);
+
+        // time loop parameters
+        const double tStart = 0;
+        // const double tEnd = 2.5e9;
+        const double cFLFactor = 0.01;
+        // slope limiter parameters
+        bool reconstruct = false;
+        double alphaMax = 0.8;
+
+        // IMPES parameters
+        int iterFlag = 2;
+        int nIter = 500;
+        double maxDefect = 1e-5;
+        double omega=0.8;
+
+        // plotting parameters
+        const char* fileName = "injection";
+        int modulo = 20;
+
+        // choose fluids and properties
+        Water wPhase(0,1000); CO2 nwPhase(0,630,6e-5);
+
+        //    Dune::DeprecatedLinearLaw materialLaw(wphase,nwphase,10000);
+        Dune::DeprecatedBrooksCoreyLaw materialLaw(wPhase, nwPhase,2,10000);
+
+        typedef Dune::VariableClass<GridType, NumberType> VC;
+
+        VC variables(grid);
+
+        Dune::InjectionTransportProblem<GridType, NumberType, VC> transportProblem(variables, materialLaw, outerLowerLeft, outerUpperRight,
+                                                                                   innerLowerLeft, innerUpperRight);
+        Dune::InjectionDiffProblem<GridType, NumberType, VC> diffusionProblem(variables, materialLaw,outerLowerLeft, outerUpperRight,
+                                                                              innerLowerLeft, innerUpperRight,depthBOR, true);
+
+        typedef Dune::DeprecatedFVTransport<GridType, NumberType, VC> DeprecatedTransport;
+        DeprecatedTransport transport(grid, transportProblem, grid.maxLevel(),reconstruct, alphaMax);
+
+        typedef Dune::DeprecatedFVDiffusionVelocity<GridType, NumberType, VC> DeprecatedDiffusion;
+        DeprecatedDiffusion diffusion(grid, diffusionProblem,  grid.maxLevel());
+
+        typedef Dune::IMPES<GridType, DeprecatedDiffusion, DeprecatedTransport, VC> IMPES;
+        IMPES fractionalflow(diffusion, transport, iterFlag, nIter, maxDefect,omega);
+
+        Dune::TimeLoop<GridType, IMPES > timeloop(tStart, tEnd, fileName, modulo, cFLFactor);
+
+        Dune::Timer timer;
+        timer.reset();
+        timeloop.execute(fractionalflow);
+        std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
+
+        return 0;
     }
-
-    // define tEnd
-    std::string arg1(argv[1]);
-    std::istringstream is1(arg1);
-    double tEnd; is1 >> tEnd;
-
-    // create a grid object
-    typedef Dune::SGrid<dim,dim> GridType;
-    //typedef Dune::YaspGrid<dim,dim> GridType;
-//    typedef Dune::UGGrid<dim> GridType;
-
-    // use unitcube from grids (UGGrid)
-    std::stringstream dgfFileName;
-    dgfFileName << "grids/unitcube"
-//    dgfFileName << "grids/unitcube"
-        << GridType :: dimension << ".dgf";
-
-    // create grid pointer, GridType is defined by gridtype.hh
-    Dune::GridPtr<GridType> gridPtr( dgfFileName.str() );
-
-    // grid reference
-    GridType& grid = *gridPtr;
-
-    Dune::gridinfo(grid);
-
-    // time loop parameters
-    const double tStart = 0;
-    // const double tEnd = 2.5e9;
-    const double cFLFactor = 0.01;
-    // slope limiter parameters
-    bool reconstruct = false;
-    double alphaMax = 0.8;
-
-    // IMPES parameters
-    int iterFlag = 2;
-    int nIter = 500;
-    double maxDefect = 1e-5;
-    double omega=0.8;
-
-    // plotting parameters
-    const char* fileName = "injection";
-    int modulo = 20;
-
-    // choose fluids and properties
-     Water wPhase(0,1000); CO2 nwPhase(0,630,6e-5);
-
-//    Dune::DeprecatedLinearLaw materialLaw(wphase,nwphase,10000);
-    Dune::DeprecatedBrooksCoreyLaw materialLaw(wPhase, nwPhase,2,10000);
-
-    typedef Dune::VariableClass<GridType, NumberType> VC;
-
-    VC variables(grid);
-
-    Dune::InjectionTransportProblem<GridType, NumberType, VC> transportProblem(variables, materialLaw, outerLowerLeft, outerUpperRight,
-            innerLowerLeft, innerUpperRight);
-    Dune::InjectionDiffProblem<GridType, NumberType, VC> diffusionProblem(variables, materialLaw,outerLowerLeft, outerUpperRight,
-            innerLowerLeft, innerUpperRight,depthBOR, true);
-
-    typedef Dune::DeprecatedFVTransport<GridType, NumberType, VC> DeprecatedTransport;
-    DeprecatedTransport transport(grid, transportProblem, grid.maxLevel(),reconstruct, alphaMax);
-
-    typedef Dune::DeprecatedFVDiffusionVelocity<GridType, NumberType, VC> DeprecatedDiffusion;
-    DeprecatedDiffusion diffusion(grid, diffusionProblem,  grid.maxLevel());
-
-    typedef Dune::IMPES<GridType, DeprecatedDiffusion, DeprecatedTransport, VC> IMPES;
-    IMPES fractionalflow(diffusion, transport, iterFlag, nIter, maxDefect,omega);
-
-    Dune::TimeLoop<GridType, IMPES > timeloop(tStart, tEnd, fileName, modulo, cFLFactor);
-
-    Dune::Timer timer;
-    timer.reset();
-    timeloop.execute(fractionalflow);
-    std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
-
-    return 0;
-  }
-  catch (Dune::Exception &e){
-    std::cerr << "Dune reported error: " << e << std::endl;
-  }
-  catch (...){
-    std::cerr << "Unknown exception thrown!" << std::endl;
-  }
+    catch (Dune::Exception &e){
+        std::cerr << "Dune reported error: " << e << std::endl;
+    }
+    catch (...){
+        std::cerr << "Unknown exception thrown!" << std::endl;
+    }
 }
 //#else
 //

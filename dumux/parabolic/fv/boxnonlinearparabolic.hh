@@ -17,12 +17,12 @@ namespace Dune
 
 /** \todo Please doc me! */
 
-  template<class G, class RT>
-  class BoxNonlinearParabolic
-  : public LeafP1NonlinearParabolic<G, RT, ParabolicProblem<G, RT>,
-                                 BoxParabolicLocalJacobian<G, RT>, 1>
-  {
-  public:
+template<class G, class RT>
+class BoxNonlinearParabolic
+    : public LeafP1NonlinearParabolic<G, RT, ParabolicProblem<G, RT>,
+                                      BoxParabolicLocalJacobian<G, RT>, 1>
+{
+public:
     // define the problem type (also change the template argument above)
     typedef ParabolicProblem<G, RT> ProblemType;
 
@@ -33,10 +33,10 @@ namespace Dune
 
     typedef BoxNonlinearParabolic<G, RT> ThisType;
 
-        typedef typename LeafP1NonlinearParabolic::FunctionType FunctionType;
+    typedef typename LeafP1NonlinearParabolic::FunctionType FunctionType;
 
     BoxNonlinearParabolic(const G& g, ProblemType& prob)
-    : LeafP1NonlinearParabolic(g, prob)
+        : LeafP1NonlinearParabolic(g, prob)
     {     }
 
     void solve()
@@ -70,7 +70,7 @@ namespace Dune
         return;
     }
 
-  };
+};
 
 }
 #endif

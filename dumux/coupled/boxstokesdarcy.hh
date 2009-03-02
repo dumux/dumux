@@ -24,9 +24,9 @@ public:
 
     template <class FirstFV, class SecondFV>
     void localCoupling12(FirstFV& stokesSol, SecondFV& darcySol,
-            int stokesIndex, int darcyIndex,
-            FieldVector<double, dim> globalPos,
-            FieldVector<double, dim> normal, FirstFV& result)
+                         int stokesIndex, int darcyIndex,
+                         FieldVector<double, dim> globalPos,
+                         FieldVector<double, dim> normal, FirstFV& result)
     {
         result = 0;
 
@@ -40,9 +40,9 @@ public:
 
     template <class FirstFV, class SecondFV>
     void localCoupling21(FirstFV& stokesSol, SecondFV& darcySol,
-            int stokesIndex, int darcyIndex,
-            FieldVector<double, dim> globalPos,
-            FieldVector<double, dim> normal, SecondFV& result)
+                         int stokesIndex, int darcyIndex,
+                         FieldVector<double, dim> globalPos,
+                         FieldVector<double, dim> normal, SecondFV& result)
     {
         result = 0;
 
@@ -58,8 +58,8 @@ public:
 
     template <class FV, class FVGrad, class ElementT>
     void localBoundaryDefect1(FV& stokesSol, FVGrad& stokesSolGrad, int stokesIndex,
-            FieldVector<double, dim> globalPos, const ElementT& element,  FieldVector<double, dim> localPos,
-            FieldVector<double, dim> normal, FV& result)
+                              FieldVector<double, dim> globalPos, const ElementT& element,  FieldVector<double, dim> localPos,
+                              FieldVector<double, dim> normal, FV& result)
     {
         // extract velocity gradient
         FieldMatrix<Scalar, dim, dim> gradV;
@@ -117,8 +117,8 @@ public:
     }
 
     BoxStokesDarcy(const StokesGrid& stokesGrid, StokesModel& stokesModel,
-            const DarcyGrid& darcyGrid, DarcyModel& darcyModel, bool assembleGlobalSystem)
-    : BaseType(stokesGrid, stokesModel, darcyGrid, darcyModel, assembleGlobalSystem)
+                   const DarcyGrid& darcyGrid, DarcyModel& darcyModel, bool assembleGlobalSystem)
+        : BaseType(stokesGrid, stokesModel, darcyGrid, darcyModel, assembleGlobalSystem)
     {}
 };
 

@@ -16,25 +16,25 @@
 
 namespace Dune
 {
-  //! \ingroup transport
-  //! Base class for defining an instance of a numerical transport model.
-  /*! An interface for defining a numerical transport model for the
-   *  solution of equations of the form
-   *  \f$S_t - \text{div}\, (f_\text{w}(S) \boldsymbol{v}_\text{total}) = 0\f$,
-   * \f$S = g\f$ on \f$\Gamma_1\f$, and \f$S(t = 0) = S_0\f$. Here,
-   * \f$S\f$ denotes the wetting phase saturation,
-   * \f$\boldsymbol{v}_\text{total}\f$ the total velocity,
-   * and \f$f_\text{w}\f$ the wetting phase fractional flow function.
+//! \ingroup transport
+//! Base class for defining an instance of a numerical transport model.
+/*! An interface for defining a numerical transport model for the
+ *  solution of equations of the form
+ *  \f$S_t - \text{div}\, (f_\text{w}(S) \boldsymbol{v}_\text{total}) = 0\f$,
+ * \f$S = g\f$ on \f$\Gamma_1\f$, and \f$S(t = 0) = S_0\f$. Here,
+ * \f$S\f$ denotes the wetting phase saturation,
+ * \f$\boldsymbol{v}_\text{total}\f$ the total velocity,
+ * and \f$f_\text{w}\f$ the wetting phase fractional flow function.
 
-    - Grid      a DUNE grid type
-    - RT        type used for return values
-    - RepresentationType   type of the vector holding the saturation values
-    - VelType   type of the vector holding the velocity values
+ - Grid      a DUNE grid type
+ - RT        type used for return values
+ - RepresentationType   type of the vector holding the saturation values
+ - VelType   type of the vector holding the velocity values
 
-   */
-  template<class G, class RT, class VC>
-  class DeprecatedTransport {
-  public:
+*/
+template<class G, class RT, class VC>
+class DeprecatedTransport {
+public:
 
     typedef BlockVector< Dune::FieldVector<RT,1> > RepresentationType;
     DeprecatedTransportProblem<G, RT, VC>& transproblem; //!< problem data
@@ -62,13 +62,13 @@ namespace Dune
     //! return const reference to saturation vector
     virtual const RepresentationType& operator* () const
     {
-      return transproblem.variables.saturation;
+        return transproblem.variables.saturation;
     }
 
     //! return reference to saturation vector
     virtual RepresentationType& operator* ()
     {
-      return transproblem.variables.saturation;
+        return transproblem.variables.saturation;
     }
 
     virtual void vtkout(const char* name, int k) const {
@@ -83,8 +83,8 @@ namespace Dune
      *  @param g a DUNE grid object
      *  @param prob an object of class TransportProblem or derived
      */
-      DeprecatedTransport(const G& g, DeprecatedTransportProblem<G, RT, VC>& prob)
-    : grid_(g), transproblem(prob), level_(g.maxLevel())
+    DeprecatedTransport(const G& g, DeprecatedTransportProblem<G, RT, VC>& prob)
+        : grid_(g), transproblem(prob), level_(g.maxLevel())
     { }
 
     /*! @brief constructor
@@ -96,7 +96,7 @@ namespace Dune
      *  @param lev the grid level on which the Transport equation is to be solved.
      */
     DeprecatedTransport(const G& g, DeprecatedTransportProblem<G, RT, VC>& prob, int lev)
-    : transproblem(prob), grid_(g), level_(lev)
+        : transproblem(prob), grid_(g), level_(lev)
     { }
 
     //! returns the level on which the transport eqution is solved.
@@ -106,12 +106,12 @@ namespace Dune
     }
 
     const G &grid() const
-        { return grid_; }
+    { return grid_; }
 
-  protected:
-      const G& grid_;
-      const int level_;
-  };
+protected:
+    const G& grid_;
+    const int level_;
+};
 
 }
 #endif

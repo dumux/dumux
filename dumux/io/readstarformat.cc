@@ -40,7 +40,7 @@
  *
  *    Since currently the possibility does not exist, no boundary element data is
  *    passed to \a grid.
-*/
+ */
 template <int dim>
 void readStarFormat(Dune::UGGrid<dim>& grid, const std::string& fileName, bool verbose = true)
 {
@@ -151,8 +151,8 @@ void readStarFormat(Dune::UGGrid<dim>& grid, const std::string& fileName, bool v
     }
     if (verbose)
         std::cout << numberOfElements << " elements read: "
-            << numberOfSimplices << " simplices, " << numberOfPyramids << " pyramids, "
-            << numberOfPrisms << " prisms, " << numberOfCubes << " cubes." << std::endl;
+                  << numberOfSimplices << " simplices, " << numberOfPyramids << " pyramids, "
+                  << numberOfPrisms << " prisms, " << numberOfCubes << " cubes." << std::endl;
 
     // finish off the construction of the UGGrid object
     if (verbose)

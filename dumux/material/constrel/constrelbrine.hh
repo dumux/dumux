@@ -31,8 +31,8 @@ public:
         rhow = water.mass_density_water_Batzle (Temp, pw);
 
         rhoBrine = rhow + Xsw*(0.668 + 0.44*Xsw + 1.0E-6
-                *(300*pMPa - 2400*pMPa*Xsw+ TempC*(80.0 - 3*TempC - 3300*Xsw
-                        - 13*pMPa + 47*pMPa*Xsw)))*1000.;
+                               *(300*pMPa - 2400*pMPa*Xsw+ TempC*(80.0 - 3*TempC - 3300*Xsw
+                                                                  - 13*pMPa + 47*pMPa*Xsw)))*1000.;
 
         return (rhoBrine); /* unit: [kg/m^3] */
     }
@@ -44,7 +44,7 @@ public:
     /***********************************************************************/
 
     double mass_density_brine_CO2(double Temp, double pw, double S,
-            double x_CO2_w) const {
+                                  double x_CO2_w) const {
         double rho_brine, rho_pure, rho_wCO2, contribCO2, rho_brineCO2;
         ConstrelWater water;
         /* S : salinity as a mass fraction [-] */
@@ -79,9 +79,9 @@ public:
         double mu_brine;
 
         if(Temp <= 275.) // regularisation
-        {
-            Temp = 275;
-        }
+            {
+                Temp = 275;
+            }
 
         T_C = Temp - 273.15;
 
@@ -128,7 +128,7 @@ public:
 
         /*DAUBERT and DANNER*/
         /*U=*/h_NaCl = (3.6710E4*T + 0.5*(6.2770E1)*T*T - ((6.6670E-2)/3)*T*T*T
-                +((2.8000E-5)/4)*pow(T,4))/(58.44E3)- 2.045698e+02; /* kJ/kg */
+                        +((2.8000E-5)/4)*pow(T,4))/(58.44E3)- 2.045698e+02; /* kJ/kg */
 
         m = (1E3/58.44)*(X/(1-X));
         i = 0;
@@ -190,7 +190,7 @@ public:
 
         /*DAUBERT and DANNER*/
         /*U=*/h_NaCl = (3.6710E4*T + 0.5*(6.2770E1)*T*T - ((6.6670E-2)/3)*T*T*T
-                +((2.8000E-5)/4)*(T*T*T*T))/(58.44E3)- 2.045698e+02; /* kJ/kg */
+                        +((2.8000E-5)/4)*(T*T*T*T))/(58.44E3)- 2.045698e+02; /* kJ/kg */
 
         m = (1E3/58.44)*(X/(1-X));
         i = 0;

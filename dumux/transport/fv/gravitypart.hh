@@ -9,15 +9,15 @@
 //! \ingroup transport
 //! \defgroup diffPart Diffusive transport
 /**
-* @file
-* @brief  Base class for defining the diffusive part of an advection-diffusion equation
-* @author Bernd Flemisch, last changed by Markus Wolff
-*/
+ * @file
+ * @brief  Base class for defining the diffusive part of an advection-diffusion equation
+ * @author Bernd Flemisch, last changed by Markus Wolff
+ */
 namespace Dune
 {
 /*!\ingroup diffPart
-* @brief  Base class for defining the diffusive part of an advection-diffusion equation
-*/
+ * @brief  Base class for defining the diffusive part of an advection-diffusion equation
+ */
 template<class G, class RT, class VC>
 class GravityPart : public DiffusivePart<G,RT>
 {
@@ -30,9 +30,9 @@ class GravityPart : public DiffusivePart<G,RT>
 
 public:
     virtual FieldVector operator() (const Entity& entity, const int numberInSelf,
-            const RT satIntersection, const FieldVector& satGradient, const RT time,
-            const RT satI, const RT satJ) const
-{
+                                    const RT satIntersection, const FieldVector& satGradient, const RT time,
+                                    const RT satI, const RT satJ) const
+    {
         // cell geometry type
         GeometryType gt = entity.geometry().type();
 
@@ -48,10 +48,10 @@ public:
         IntersectionIterator endis = entity.ilevelend();
         IntersectionIterator is = entity.ilevelbegin();
         for (; is != endis; ++is)
-        {
-            if(is->numberInSelf() == numberInSelf)
-                break;
-        }
+            {
+                if(is->numberInSelf() == numberInSelf)
+                    break;
+            }
 
         // get geometry type of face
         GeometryType gtf = is->intersectionSelfLocal().type();
@@ -98,11 +98,11 @@ public:
             result *= mobbarJ;
 
         return result;
-}
+    }
 
     GravityPart (DeprecatedDiffusionProblem<G, RT, VC>& prob)
-    : problem(prob), constRel(problem.materialLaw), wettingPhase(constRel.wettingPhase),
-    nonwettingPhase(constRel.nonwettingPhase)
+        : problem(prob), constRel(problem.materialLaw), wettingPhase(constRel.wettingPhase),
+          nonwettingPhase(constRel.nonwettingPhase)
     {
         double rhoDiff = wettingPhase.density() - nonwettingPhase.density();
         gravity = problem.gravity();

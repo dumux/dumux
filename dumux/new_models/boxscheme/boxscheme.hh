@@ -33,332 +33,332 @@
 namespace Dune
 {
 
+/*!
+ * \brief The base class for the BOX hybrid finite element/finite volume discretization scheme
+ */
+template<class Implementation,
+         class BoxTraitsT,
+         class ProblemT,
+         class LocalJacobianT>
+class BoxScheme
+{
+    // copy the relevant problem specfific types from the problem
+    // controller class
+    typedef BoxScheme<Implementation,
+                      BoxTraitsT,
+                      ProblemT,
+                      LocalJacobianT> ThisType;
+    typedef ProblemT                  Problem;
+
+public:
     /*!
-     * \brief The base class for the BOX hybrid finite element/finite volume discretization scheme
+     * \brief The traits of the BOX scheme.
+     *
+     * This includes the shape functions to be used, etc.
      */
-    template<class Implementation,
-             class BoxTraitsT,
-             class ProblemT,
-             class LocalJacobianT>
-    class BoxScheme
+    typedef BoxTraitsT                     BoxTraits;
+    /*!
+     * \brief The traits of the spatial domain (grid type, etc)
+     */
+    typedef typename Problem::DomainTraits DomainTraits;
+
+    /*!
+     *  \brief This structure is Required to use models based on the BOX
+     *         scheme in conjunction with the newton Method.
+     */
+    struct NewtonTraits {
+        typedef LocalJacobianT                         LocalJacobian;
+        typedef typename BoxTraits::SpatialFunction    Function;
+        typedef typename BoxTraits::JacobianAssembler  JacobianAssembler;
+        typedef typename DomainTraits::Scalar          Scalar;
+    };
+
+private:
+    // copy the types from the traits for convenience
+    typedef typename DomainTraits::Scalar                      Scalar;
+    typedef typename DomainTraits::Grid                        Grid;
+    typedef typename DomainTraits::Element                     Element;
+    typedef typename DomainTraits::ReferenceElement            ReferenceElement;
+    typedef typename BoxTraits::FVElementGeometry              FVElementGeometry;
+    typedef typename DomainTraits::ElementIterator             ElementIterator;
+    typedef typename DomainTraits::IntersectionIterator        IntersectionIterator;
+    typedef typename DomainTraits::CoordScalar                 CoordScalar;
+    typedef typename DomainTraits::GlobalPosition              GlobalPosition;
+    typedef typename DomainTraits::LocalPosition               LocalPosition;
+
+    typedef typename BoxTraits::JacobianAssembler          JacobianAssembler;
+    typedef typename BoxTraits::SpatialFunction            SpatialFunction;
+    typedef typename SpatialFunction::RepresentationType   BoxFnRep;
+    typedef typename BoxTraits::LocalFunction              LocalFunction;
+
+    typedef typename BoxTraits::ShapeFunctionSetContainer  ShapeFunctionSetContainer;
+    typedef typename ShapeFunctionSetContainer::value_type ShapeFunctionSet;
+
+    typedef typename BoxTraits::SolutionVector      SolutionVector;
+    typedef typename BoxTraits::BoundaryTypeVector  BoundaryTypeVector;
+
+    typedef LocalJacobianT                          LocalJacobian;
+
+    // some constants
+    enum {
+        numEq = BoxTraits::numEq,
+
+        dim      = DomainTraits::dim,
+        dimWorld = DomainTraits::dimWorld
+    };
+
+public:
+    BoxScheme(Problem &prob, LocalJacobian &localJac)
+        : problem_(prob),
+          uCur_(prob.grid()),
+          uPrev_(prob.grid()),
+          f_(prob.grid()),
+          jacAsm_(prob.grid()),
+          localJacobian_(localJac)
     {
-        // copy the relevant problem specfific types from the problem
-        // controller class
-        typedef BoxScheme<Implementation,
-                          BoxTraitsT,
-                          ProblemT,
-                          LocalJacobianT> ThisType;
-        typedef ProblemT                  Problem;
+        Api::require<Api::BasicDomainTraits,
+            typename Problem::DomainTraits>();
+        //                Api::require<Api::PwSnBoxDomain>(prob);
 
-    public:
-        /*!
-         * \brief The traits of the BOX scheme.
-         *
-         * This includes the shape functions to be used, etc.
-         */
-        typedef BoxTraitsT                     BoxTraits;
-        /*!
-         * \brief The traits of the spatial domain (grid type, etc)
-         */
-        typedef typename Problem::DomainTraits DomainTraits;
+        // check grid partitioning
+        assert((prob.grid().comm().size() == 1) ||
+               (prob.grid().overlapSize(0) > 0) ||
+               (prob.grid().ghostSize(0) > 0));
+    }
 
-        /*!
-         *  \brief This structure is Required to use models based on the BOX
-         *         scheme in conjunction with the newton Method.
-         */
-        struct NewtonTraits {
-            typedef LocalJacobianT                         LocalJacobian;
-            typedef typename BoxTraits::SpatialFunction    Function;
-            typedef typename BoxTraits::JacobianAssembler  JacobianAssembler;
-            typedef typename DomainTraits::Scalar          Scalar;
-        };
+    /*!
+     * \brief Apply the initial conditions to the model.
+     */
+    void initial()
+    {
+        // initialize the static vert data of the box jacobian
+        this->localJacobian().setCurSolution(&uCur_);
+        this->localJacobian().setOldSolution(&uPrev_);
 
-    private:
-        // copy the types from the traits for convenience
-        typedef typename DomainTraits::Scalar                      Scalar;
-        typedef typename DomainTraits::Grid                        Grid;
-        typedef typename DomainTraits::Element                     Element;
-        typedef typename DomainTraits::ReferenceElement            ReferenceElement;
-        typedef typename BoxTraits::FVElementGeometry              FVElementGeometry;
-        typedef typename DomainTraits::ElementIterator             ElementIterator;
-        typedef typename DomainTraits::IntersectionIterator        IntersectionIterator;
-        typedef typename DomainTraits::CoordScalar                 CoordScalar;
-        typedef typename DomainTraits::GlobalPosition              GlobalPosition;
-        typedef typename DomainTraits::LocalPosition               LocalPosition;
+        this->localJacobian().initStaticData();
 
-        typedef typename BoxTraits::JacobianAssembler          JacobianAssembler;
-        typedef typename BoxTraits::SpatialFunction            SpatialFunction;
-        typedef typename SpatialFunction::RepresentationType   BoxFnRep;
-        typedef typename BoxTraits::LocalFunction              LocalFunction;
+        applyInitialSolution_(uCur_);
+        applyDirichletBoundaries_(uCur_);
 
-        typedef typename BoxTraits::ShapeFunctionSetContainer  ShapeFunctionSetContainer;
-        typedef typename ShapeFunctionSetContainer::value_type ShapeFunctionSet;
+        *uPrev_ = *uCur_;
 
-        typedef typename BoxTraits::SolutionVector      SolutionVector;
-        typedef typename BoxTraits::BoundaryTypeVector  BoundaryTypeVector;
+        // update the static vert data with the initial solution
+        this->localJacobian().updateStaticData(uCur_, uPrev_);
+    }
 
-        typedef LocalJacobianT                          LocalJacobian;
+    /*!
+     * \brief Reference to the current solution.
+     */
+    const SpatialFunction &currentSolution() const
+    { return uCur_; }
 
-        // some constants
-        enum {
-            numEq = BoxTraits::numEq,
+    /*!
+     * \brief Reference to the current solution.
+     */
+    SpatialFunction &currentSolution()
+    { return uCur_; }
 
-            dim      = DomainTraits::dim,
-            dimWorld = DomainTraits::dimWorld
-        };
+    /*!
+     * \brief Reference to the right hand side.
+     */
+    SpatialFunction &rightHandSide()
+    { return f_; }
 
-    public:
-        BoxScheme(Problem &prob, LocalJacobian &localJac)
-            : problem_(prob),
-              uCur_(prob.grid()),
-              uPrev_(prob.grid()),
-              f_(prob.grid()),
-              jacAsm_(prob.grid()),
-              localJacobian_(localJac)
+    /*!
+     * \brief Reference to solution of the previous time step.
+     */
+    SpatialFunction &previousSolution()
+    { return uPrev_; }
+
+    /*!
+     * \brief Reference to solution of the previous time step.
+     */
+    const SpatialFunction &previousSolution() const
+    { return uPrev_; }
+
+    /*!
+     * \brief Returns the operator assembler for the global jacobian of
+     *        the problem.
+     */
+    JacobianAssembler &jacobianAssembler()
+    { return jacAsm_; }
+
+    /*!
+     * \brief Returns the local jacobian which calculates the local
+     *        stiffness matrix for an arbitrary element.
+     *
+     * The local stiffness matrices of the element are used by
+     * the jacobian assembler to produce a global linerization of the
+     * problem.
+     */
+    LocalJacobian &localJacobian()
+    { return localJacobian_; }
+
+    /*!
+     * \brief Reference to the grid of the spatial domain.
+     */
+    const Grid &grid() const
+    { return problem_.grid(); }
+
+    /*!
+     * \brief Try to progress the model to the next timestep.
+     */
+    template<class NewtonMethod, class NewtonController>
+    void update(Scalar &dt, Scalar &nextDt, NewtonMethod &solver, NewtonController &controller)
+    {
+        asImp_().updateBegin();
+
+        int numRetries = 0;
+        while (true)
             {
-                Api::require<Api::BasicDomainTraits,
-                             typename Problem::DomainTraits>();
-//                Api::require<Api::PwSnBoxDomain>(prob);
-
-                // check grid partitioning
-                assert((prob.grid().comm().size() == 1) || 
-                       (prob.grid().overlapSize(0) > 0) || 
-                       (prob.grid().ghostSize(0) > 0));
-            }
-
-        /*!
-         * \brief Apply the initial conditions to the model.
-         */
-        void initial()
-            {
-                // initialize the static vert data of the box jacobian
-                this->localJacobian().setCurSolution(&uCur_);
-                this->localJacobian().setOldSolution(&uPrev_);
-
-                this->localJacobian().initStaticData();
-
-                applyInitialSolution_(uCur_);
-                applyDirichletBoundaries_(uCur_);
-
-                *uPrev_ = *uCur_;
-
-                // update the static vert data with the initial solution
-                this->localJacobian().updateStaticData(uCur_, uPrev_);
-            }
-
-        /*!
-         * \brief Reference to the current solution.
-         */
-        const SpatialFunction &currentSolution() const
-            { return uCur_; }
-
-        /*!
-         * \brief Reference to the current solution.
-         */
-        SpatialFunction &currentSolution()
-            { return uCur_; }
-
-        /*!
-         * \brief Reference to the right hand side.
-         */
-        SpatialFunction &rightHandSide()
-            { return f_; }
-
-        /*!
-         * \brief Reference to solution of the previous time step.
-         */
-        SpatialFunction &previousSolution()
-            { return uPrev_; }
-
-        /*!
-         * \brief Reference to solution of the previous time step.
-         */
-        const SpatialFunction &previousSolution() const
-            { return uPrev_; }
-
-        /*!
-         * \brief Returns the operator assembler for the global jacobian of
-         *        the problem.
-         */
-        JacobianAssembler &jacobianAssembler()
-            { return jacAsm_; }
-
-        /*!
-         * \brief Returns the local jacobian which calculates the local
-         *        stiffness matrix for an arbitrary element.
-         *
-         * The local stiffness matrices of the element are used by
-         * the jacobian assembler to produce a global linerization of the
-         * problem.
-         */
-        LocalJacobian &localJacobian()
-            { return localJacobian_; }
-
-        /*!
-         * \brief Reference to the grid of the spatial domain.
-         */
-        const Grid &grid() const
-            { return problem_.grid(); }
-
-        /*!
-         * \brief Try to progress the model to the next timestep.
-         */
-        template<class NewtonMethod, class NewtonController>
-        void update(Scalar &dt, Scalar &nextDt, NewtonMethod &solver, NewtonController &controller)
-            {
-                asImp_().updateBegin();
-
-                int numRetries = 0;
-                while (true)
-                {
-                    bool converged = solver.execute(this->asImp_(),
-                                                    controller);
-                    nextDt = controller.suggestTimeStepSize(dt);
-                    if (converged) {
-                        std::cout << boost::format("Newton solver converged for rank %d\n")
-                            %grid().comm().rank();
-                        break;
-                    }
-
-                    ++numRetries;
-                    if (numRetries > 10)
-                        DUNE_THROW(Dune::MathError,
-                                   "Newton solver didn't converge after 10 timestep divisions. dt=" << dt);
-
-                    problem_.setTimeStepSize(nextDt);
-                    dt = nextDt;
-
-                    asImp_().updateFailedTry();
-
-                    std::cout << boost::format("Newton didn't converge for rank %d. Retrying with timestep of %f\n")
-                        %grid().comm().rank()%dt;
+                bool converged = solver.execute(this->asImp_(),
+                                                controller);
+                nextDt = controller.suggestTimeStepSize(dt);
+                if (converged) {
+                    std::cout << boost::format("Newton solver converged for rank %d\n")
+                        %grid().comm().rank();
+                    break;
                 }
 
-                asImp_().updateSuccessful();
+                ++numRetries;
+                if (numRetries > 10)
+                    DUNE_THROW(Dune::MathError,
+                               "Newton solver didn't converge after 10 timestep divisions. dt=" << dt);
+
+                problem_.setTimeStepSize(nextDt);
+                dt = nextDt;
+
+                asImp_().updateFailedTry();
+
+                std::cout << boost::format("Newton didn't converge for rank %d. Retrying with timestep of %f\n")
+                    %grid().comm().rank()%dt;
             }
 
+        asImp_().updateSuccessful();
+    }
 
-        /*!
-         * \brief Called by the update() method before it tries to
-         *        apply the newton method. This is primary a hook
-         *        which the actual model can overload.
-         */
-        void updateBegin()
+
+    /*!
+     * \brief Called by the update() method before it tries to
+     *        apply the newton method. This is primary a hook
+     *        which the actual model can overload.
+     */
+    void updateBegin()
+    {
+        applyDirichletBoundaries_(uCur_);
+    }
+
+
+    /*!
+     * \brief Called by the update() method if it was
+     *        successful. This is primary a hook which the actual
+     *        model can overload.
+     */
+    void updateSuccessful()
+    {
+        // make the current solution the previous one.
+        *uPrev_ = *uCur_;
+    };
+
+    /*!
+     * \brief Called by the update() method if a try was
+     *         unsuccessful. This is primary a hook which the
+     *         actual model can overload.
+     */
+    void updateFailedTry()
+    {
+        // Reset the current solution to the one of the
+        // previous time step so that we can start the next
+        // update at a physically meaningful solution.
+        *uCur_ = *uPrev_;
+        applyDirichletBoundaries_(uCur_);
+    };
+
+    /*!
+     * \brief Calculate the global residual.
+     *
+     * The global deflection of the mass balance from zero.
+     */
+    void evalGlobalResidual(SpatialFunction &globResidual)
+    {
+        (*globResidual) = Scalar(0.0);
+
+        // iterate through leaf grid
+        ElementIterator        it     = problem_.elementBegin();
+        const ElementIterator &eendit = problem_.elementEnd();
+        for (; it != eendit; ++it)
             {
-                applyDirichletBoundaries_(uCur_);
-            }
+                // tell the local jacobian which element it should
+                // consider and evaluate the local residual for the
+                // element. in order to do this we first have to
+                // evaluate the element's local solutions for the
+                // current and the last timestep.
+                const Element& element = *it;
+                const int numVertices = element.template count<dim>();
+                LocalFunction localResidual(numVertices);
+                LocalFunction localU(numVertices);
+                LocalFunction localOldU(numVertices);
 
+                localJacobian_.setCurrentElement(element);
+                localJacobian_.restrictToElement(localU, currentSolution());
+                localJacobian_.restrictToElement(localOldU, previousSolution());
+                localJacobian_.setParams(element, localU, localOldU);
+                localJacobian_.evalLocalResidual(localResidual);
 
-        /*!
-         * \brief Called by the update() method if it was
-         *        successful. This is primary a hook which the actual
-         *        model can overload.
-         */
-        void updateSuccessful()
-            {
-                // make the current solution the previous one.
-                *uPrev_ = *uCur_;
-            };
-
-        /*!
-         * \brief Called by the update() method if a try was
-         *         unsuccessful. This is primary a hook which the
-         *         actual model can overload.
-         */
-        void updateFailedTry()
-            {
-                // Reset the current solution to the one of the
-                // previous time step so that we can start the next
-                // update at a physically meaningful solution.
-                *uCur_ = *uPrev_;
-                applyDirichletBoundaries_(uCur_);
-            };
-
-        /*!
-         * \brief Calculate the global residual.
-         *
-         * The global deflection of the mass balance from zero.
-         */
-        void evalGlobalResidual(SpatialFunction &globResidual)
-            {
-                (*globResidual) = Scalar(0.0);
-
-                // iterate through leaf grid
-                ElementIterator        it     = problem_.elementBegin();
-                const ElementIterator &eendit = problem_.elementEnd();
-                for (; it != eendit; ++it)
-                {
-                    // tell the local jacobian which element it should
-                    // consider and evaluate the local residual for the
-                    // element. in order to do this we first have to
-                    // evaluate the element's local solutions for the
-                    // current and the last timestep.
-                    const Element& element = *it;
-                    const int numVertices = element.template count<dim>();
-                    LocalFunction localResidual(numVertices);
-                    LocalFunction localU(numVertices);
-                    LocalFunction localOldU(numVertices);
-
-                    localJacobian_.setCurrentElement(element);
-                    localJacobian_.restrictToElement(localU, currentSolution());
-                    localJacobian_.restrictToElement(localOldU, previousSolution());
-                    localJacobian_.setParams(element, localU, localOldU);
-                    localJacobian_.evalLocalResidual(localResidual);
-
-                    // loop over the element's vertices, map them to the
-                    // corresponding grid's vert ids and add the
-                    // element's local residual at a vert the global
-                    // residual at this vert.
-                    int n = element.template count<dim>();
-                    for(int localId=0; localId < n; localId++)
+                // loop over the element's vertices, map them to the
+                // corresponding grid's vert ids and add the
+                // element's local residual at a vert the global
+                // residual at this vert.
+                int n = element.template count<dim>();
+                for(int localId=0; localId < n; localId++)
                     {
                         int globalId = problem_.vertexIdx(element, localId);
                         (*globResidual)[globalId] += localResidual[localId];
                     }
-                }
             }
+    }
 
-    protected:
-        void applyInitialSolution_(SpatialFunction &u)
+protected:
+    void applyInitialSolution_(SpatialFunction &u)
+    {
+        // first set the whole domain to zero. This is
+        // necessary in order to also get a meaningful value
+        // for ghost nodes (if we are running in parallel)
+        if (problem_.grid().comm().size() > 1) {
+            (*u) = Scalar(0.0);
+        }
+
+        // iterate through leaf grid and evaluate initial
+        // condition at the center of each sub control volume
+        //
+        // TODO: the initial condition needs to be unique for
+        // each vertex. we should think about the API...
+        ElementIterator it            = problem_.elementBegin();
+        const ElementIterator &eendit = problem_.elementEnd();
+        for (; it != eendit; ++it)
             {
-                // first set the whole domain to zero. This is
-                // necessary in order to also get a meaningful value
-                // for ghost nodes (if we are running in parallel)
-                if (problem_.grid().comm().size() > 1) {
-                    (*u) = Scalar(0.0);
-                }
-                
-                // iterate through leaf grid and evaluate initial
-                // condition at the center of each sub control volume
-                //
-                // TODO: the initial condition needs to be unique for
-                // each vertex. we should think about the API...
-                ElementIterator it            = problem_.elementBegin();
-                const ElementIterator &eendit = problem_.elementEnd();
-                for (; it != eendit; ++it)
-                {
-                    // deal with the current element
-                    applyInitialSolutionElement_(u, *it);
-                }
-            };
+                // deal with the current element
+                applyInitialSolutionElement_(u, *it);
+            }
+    };
 
-        // apply the initial solition for a single element
-        void applyInitialSolutionElement_(SpatialFunction &u,
-                                          const Element &element)
-        {
-            // HACK: set the current element for the local
-            // solution in order to get an updated FVElementGeometry
-            localJacobian_.setCurrentElement(element);
+    // apply the initial solition for a single element
+    void applyInitialSolutionElement_(SpatialFunction &u,
+                                      const Element &element)
+    {
+        // HACK: set the current element for the local
+        // solution in order to get an updated FVElementGeometry
+        localJacobian_.setCurrentElement(element);
 
-            // loop over all element vertices, i.e. sub control volumes
-            int numScv = element.template count<dim>();
-            for (int scvIdx = 0;
-                 scvIdx < numScv; 
-                 scvIdx++) 
+        // loop over all element vertices, i.e. sub control volumes
+        int numScv = element.template count<dim>();
+        for (int scvIdx = 0;
+             scvIdx < numScv;
+             scvIdx++)
             {
                 int globalIdx = this->problem_.vertexIdx(element,
                                                          scvIdx);
-                
+
                 const FVElementGeometry &fvElemGeom
                     = localJacobian_.curFvElementGeometry();
                 // use the problem for actually doing the
@@ -369,17 +369,17 @@ namespace Dune
                                        fvElemGeom,
                                        scvIdx);
             }
-        }
+    }
 
 
-        // apply dirichlet boundaries for the whole grid
-        void applyDirichletBoundaries_(SpatialFunction &u)
-        {
-            // set Dirichlet boundary conditions of the grid's
-            // outer boundaries
-            ElementIterator elementIt           = problem_.elementBegin();
-            const ElementIterator &elementEndIt = problem_.elementEnd();
-            for (; elementIt != elementEndIt; ++elementIt)
+    // apply dirichlet boundaries for the whole grid
+    void applyDirichletBoundaries_(SpatialFunction &u)
+    {
+        // set Dirichlet boundary conditions of the grid's
+        // outer boundaries
+        ElementIterator elementIt           = problem_.elementBegin();
+        const ElementIterator &elementEndIt = problem_.elementEnd();
+        for (; elementIt != elementEndIt; ++elementIt)
             {
                 // ignore elements which are not on the boundary of
                 // the domain
@@ -392,85 +392,85 @@ namespace Dune
                 // apply dirichlet boundary for the current element
                 applyDirichletElement_(u, *elementIt);
             }
-        };
-        
-        // apply dirichlet boundaries for a single element
-        void applyDirichletElement_(SpatialFunction &u,
-                                              const Element &element)
-        {
-            Dune::GeometryType      geoType = element.geometry().type();
-            const ReferenceElement &refElem = DomainTraits::referenceElement(geoType);
-            
-            // loop over all the element's surface patches
-            IntersectionIterator isIt = element.ileafbegin();
-            const IntersectionIterator &isEndIt = element.ileafend();
-            for (; isIt != isEndIt; ++isIt) {
-                // if the current intersection is not on the boundary,
-                // we ignore it
-                if (!isIt->boundary())
-                    continue;
+    };
 
-                // Assemble the boundary for all vertices of the
-                // current face
-                int faceIdx = isIt->numberInSelf();
-                int numVerticesOfFace = refElem.size(faceIdx, 1, dim);
-                for (int vertInFace = 0;
-                     vertInFace < numVerticesOfFace;
-                     vertInFace++)
+    // apply dirichlet boundaries for a single element
+    void applyDirichletElement_(SpatialFunction &u,
+                                const Element &element)
+    {
+        Dune::GeometryType      geoType = element.geometry().type();
+        const ReferenceElement &refElem = DomainTraits::referenceElement(geoType);
+
+        // loop over all the element's surface patches
+        IntersectionIterator isIt = element.ileafbegin();
+        const IntersectionIterator &isEndIt = element.ileafend();
+        for (; isIt != isEndIt; ++isIt) {
+            // if the current intersection is not on the boundary,
+            // we ignore it
+            if (!isIt->boundary())
+                continue;
+
+            // Assemble the boundary for all vertices of the
+            // current face
+            int faceIdx = isIt->numberInSelf();
+            int numVerticesOfFace = refElem.size(faceIdx, 1, dim);
+            for (int vertInFace = 0;
+                 vertInFace < numVerticesOfFace;
+                 vertInFace++)
                 {
                     // apply dirichlet boundaries for the current
                     // sub-control volume face
                     applyDirichletSCVF_(u, element, refElem, isIt, vertInFace);
                 }
-            }
         }
+    }
 
-        // apply dirichlet boundaries for a single boundary
-        // sub-control volume face of a finite volume cell.
-        void applyDirichletSCVF_(SpatialFunction &u,
-                                 const Element &element,
-                                 const ReferenceElement &refElem, 
-                                 const IntersectionIterator &isIt,
-                                 int faceVertIdx)
-        {
-            // apply dirichlet boundaries but make sure
-            // not to interfere with non-dirichlet
-            // boundaries...
-            const FVElementGeometry &fvElemGeom = 
-                localJacobian_.curFvElementGeometry();
+    // apply dirichlet boundaries for a single boundary
+    // sub-control volume face of a finite volume cell.
+    void applyDirichletSCVF_(SpatialFunction &u,
+                             const Element &element,
+                             const ReferenceElement &refElem,
+                             const IntersectionIterator &isIt,
+                             int faceVertIdx)
+    {
+        // apply dirichlet boundaries but make sure
+        // not to interfere with non-dirichlet
+        // boundaries...
+        const FVElementGeometry &fvElemGeom =
+            localJacobian_.curFvElementGeometry();
 
-            int elemVertIdx = refElem.subEntity(isIt->numberInSelf(),
-                                                1,
-                                                faceVertIdx,
-                                                dim);
-            int boundaryFaceIdx = fvElemGeom.boundaryFaceIndex(isIt->numberInSelf(), 
-                                                               faceVertIdx);
-            int globalVertexIdx = problem_.vertexIdx(element,
-                                                     elemVertIdx);
-            
+        int elemVertIdx = refElem.subEntity(isIt->numberInSelf(),
+                                            1,
+                                            faceVertIdx,
+                                            dim);
+        int boundaryFaceIdx = fvElemGeom.boundaryFaceIndex(isIt->numberInSelf(),
+                                                           faceVertIdx);
+        int globalVertexIdx = problem_.vertexIdx(element,
+                                                 elemVertIdx);
 
-            SolutionVector dirichletVal;
-            bool dirichletEvaluated = false;
-            for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
+
+        SolutionVector dirichletVal;
+        bool dirichletEvaluated = false;
+        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx)
             {
                 // ignore non-dirichlet boundary conditions
-                if (localJacobian_.bc(elemVertIdx)[eqIdx] != BoundaryConditions::dirichlet) 
+                if (localJacobian_.bc(elemVertIdx)[eqIdx] != BoundaryConditions::dirichlet)
                     continue;
-                
+
                 // make sure to evaluate the dirichlet boundary
                 // conditions exactly once (and only if the boundary
                 // type is actually dirichlet).
-                if (!dirichletEvaluated) 
-                {
-                    dirichletEvaluated = true;
-                    problem_.dirichlet(dirichletVal,
-                                       element,
-                                       fvElemGeom,
-                                       isIt,
-                                       elemVertIdx,
-                                       boundaryFaceIdx);
-                }
-                
+                if (!dirichletEvaluated)
+                    {
+                        dirichletEvaluated = true;
+                        problem_.dirichlet(dirichletVal,
+                                           element,
+                                           fvElemGeom,
+                                           isIt,
+                                           elemVertIdx,
+                                           boundaryFaceIdx);
+                    }
+
                 // copy the dirichlet value for the current equation
                 // to the global index.
                 //
@@ -479,32 +479,32 @@ namespace Dune
                 //       just overwriting the previous values...
                 (*u)[globalVertexIdx][eqIdx] = dirichletVal[eqIdx];
             }
-        }
+    }
 
-        Implementation &asImp_()
-            { return *static_cast<Implementation*>(this); }
-        const Implementation &asImp_() const
-            { return *static_cast<const Implementation*>(this); }
+    Implementation &asImp_()
+    { return *static_cast<Implementation*>(this); }
+    const Implementation &asImp_() const
+    { return *static_cast<const Implementation*>(this); }
 
-        // the problem we want to solve. defines the constitutive
-        // relations, material laws, etc.
-        Problem     &problem_;
+    // the problem we want to solve. defines the constitutive
+    // relations, material laws, etc.
+    Problem     &problem_;
 
-        // the solution we are looking for
+    // the solution we are looking for
 
-        // cur is the current solution, prev the solution of the
-        // previous time step
-        SpatialFunction uCur_;
-        SpatialFunction uPrev_;
+    // cur is the current solution, prev the solution of the
+    // previous time step
+    SpatialFunction uCur_;
+    SpatialFunction uPrev_;
 
-        // the right hand side
-        SpatialFunction  f_;
-        // Linearizes the problem at the current time step using the
-        // local jacobian
-        JacobianAssembler jacAsm_;
-        // calculates the local jacobian matrix for a given element
-        LocalJacobian    &localJacobian_;
-    };
+    // the right hand side
+    SpatialFunction  f_;
+    // Linearizes the problem at the current time step using the
+    // local jacobian
+    JacobianAssembler jacAsm_;
+    // calculates the local jacobian matrix for a given element
+    LocalJacobian    &localJacobian_;
+};
 }
 
 #endif

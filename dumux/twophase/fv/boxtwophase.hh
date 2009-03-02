@@ -16,12 +16,12 @@ namespace Dune
 {
 /** \todo Please doc me! */
 
-  template<class Grid, class Scalar>
-  class BoxTwoPhase
-  : public LeafP1TwoPhaseModel<Grid, Scalar, TwoPhaseProblem<Grid, Scalar>,
+template<class Grid, class Scalar>
+class BoxTwoPhase
+    : public LeafP1TwoPhaseModel<Grid, Scalar, TwoPhaseProblem<Grid, Scalar>,
                                  BoxTwoPhaseLocalJacobian<Grid, Scalar> >
-  {
-  public:
+{
+public:
     // define the problem type (also change the template argument above)
     typedef TwoPhaseProblem<Grid, Scalar> ProblemType;
 
@@ -33,7 +33,7 @@ namespace Dune
     typedef BoxTwoPhase<Grid, Scalar> ThisType;
 
     BoxTwoPhase(const Grid& grid, ProblemType& prob)
-    : LeafP1TwoPhaseModel(grid, prob)
+        : LeafP1TwoPhaseModel(grid, prob)
     {     }
 
     void solve()
@@ -63,7 +63,7 @@ namespace Dune
         return;
     }
 
-  };
+};
 
 }
 #endif

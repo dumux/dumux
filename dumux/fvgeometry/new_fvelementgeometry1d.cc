@@ -60,20 +60,20 @@ class NewFVElementGeometry<GridT,
     friend class NewFVElementGeometryBase< ThisType >;
 
     void updateVolumes_(const Cell &cell)
-        {
-            this->subContVol_[0].volume = 0.5*this->cellVolume_;
-            this->subContVol_[1].volume = 0.5*this->cellVolume_;
-        };
+    {
+        this->subContVol_[0].volume = 0.5*this->cellVolume_;
+        this->subContVol_[1].volume = 0.5*this->cellVolume_;
+    };
 
     void updateInteriorFaces_(const ShapeFunctionSet &sfs,
                               const ReferenceElement &refElem,
                               const CellGeometry &geometry)
-        {
-            WorldCoord diffVec;
-            LocalCoord temp;
+    {
+        WorldCoord diffVec;
+        LocalCoord temp;
 
-            // fill sub control volume face data
-            for (int scvFaceIdx = 0; scvFaceIdx < this->numEdges_; scvFaceIdx++)
+        // fill sub control volume face data
+        for (int scvFaceIdx = 0; scvFaceIdx < this->numEdges_; scvFaceIdx++)
             {
                 int insideIdx  = refElem.subEntity(scvFaceIdx, GridDim-1, 0, GridDim);
                 int outsideIdx = refElem.subEntity(scvFaceIdx, GridDim-1, 1, GridDim);
@@ -102,16 +102,16 @@ class NewFVElementGeometry<GridT,
                                this->subContVolFace_[scvFaceIdx].grad[node]);
                 }
             }
-        }
+    }
 
     void updateBoundaryFace_(IntersectionIterator &it,
                              const ReferenceElement &refElem,
                              const CellGeometry &geometry)
-        {
-            // fill boundary face data:
-            int face = it->numberInSelf();
-            int numVerticesOfFace = refElem.size(face, 1, GridDim);
-            for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++)
+    {
+        // fill boundary face data:
+        int face = it->numberInSelf();
+        int numVerticesOfFace = refElem.size(face, 1, GridDim);
+        for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++)
             {
                 int nodeInElement = refElem.subEntity(face, 1, nodeInFace, GridDim);
                 int bfIndex = this->boundaryFaceIndex(face, nodeInFace);
@@ -123,6 +123,6 @@ class NewFVElementGeometry<GridT,
                     geometry.global(this->boundaryFace_[bfIndex].ipLocal);
             }
 
-        }
+    }
 };
 

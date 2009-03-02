@@ -10,80 +10,80 @@ namespace Dune
 {
 //! \ingroup diffusionProblems
 //! example class for diffusion problems
-    template<class G, class RT, class VC>
-    class UniformProblem : public DiffusionProblem<G,RT,VC>
-    {
-      typedef typename G::ctype DT;
-      enum {n=G::dimension};
-      typedef typename G::Traits::template Codim<0>::Entity Entity;
+template<class G, class RT, class VC>
+class UniformProblem : public DiffusionProblem<G,RT,VC>
+{
+    typedef typename G::ctype DT;
+    enum {n=G::dimension};
+    typedef typename G::Traits::template Codim<0>::Entity Entity;
 
-    public:
-      UniformProblem(VC& variableobj, TwoPhaseRelations<G, RT>& law = *(new TwoPhaseRelations<G, RT> ), const bool cap = false)
+public:
+    UniformProblem(VC& variableobj, TwoPhaseRelations<G, RT>& law = *(new TwoPhaseRelations<G, RT> ), const bool cap = false)
         : DiffusionProblem<G,RT,VC>(variableobj,law, cap)
-        {
+    {
         permloc = 0;
         for (int k = 0; k < n; k++)
-          permloc[k][k] = 1e-10;
+            permloc[k][k] = 1e-10;
 
-        }
+    }
 
-      UniformProblem()
+    UniformProblem()
         : DiffusionProblem<G,RT,VC>()
-      {
+    {
         permloc = 0;
         for (int k = 0; k < n; k++)
-          permloc[k][k] = 1e-10;
-      }
+            permloc[k][k] = 1e-10;
+    }
 
-      Dune::FieldMatrix<DT,n,n>& K (const Dune::FieldVector<DT,n>& x, const Entity& e,
-                      const Dune::FieldVector<DT,n>& xi)
-      {
-          return permloc;
-      }
+    Dune::FieldMatrix<DT,n,n>& K (const Dune::FieldVector<DT,n>& x, const Entity& e,
+                                  const Dune::FieldVector<DT,n>& xi)
+    {
+        return permloc;
+    }
 
 
-      RT source   (const Dune::FieldVector<DT,n>& x, const Entity& e,
-                      const Dune::FieldVector<DT,n>& xi)
-      {
-//        Dune::FieldVector<DT,n> m(150);
-//        if ((x-m).two_norm()<1) return 1e-6;
+    RT source   (const Dune::FieldVector<DT,n>& x, const Entity& e,
+                 const Dune::FieldVector<DT,n>& xi)
+    {
+        //        Dune::FieldVector<DT,n> m(150);
+        //        if ((x-m).two_norm()<1) return 1e-6;
         return 0;
-      }
+    }
 
-      typename Dune::BoundaryConditions::Flags bctype (const Dune::FieldVector<DT,n>& x, const Entity& e,
-                           const Dune::FieldVector<DT,n>& xi) const
-      {
+    typename Dune::BoundaryConditions::Flags bctype (const Dune::FieldVector<DT,n>& x, const Entity& e,
+                                                     const Dune::FieldVector<DT,n>& xi) const
+    {
         if (x[0] > 1-1E-6 || x[0] < 1e-6)
-          return Dune::BoundaryConditions::dirichlet;
+            return Dune::BoundaryConditions::dirichlet;
         // all other boundaries
         return Dune::BoundaryConditions::neumann;
-      }
+    }
 
-      RT dirichletPress (const Dune::FieldVector<DT,n>& x, const Entity& e,
-                    const Dune::FieldVector<DT,n>& xi) const
-      {
-          return (1e5*(2.0 - x[0]));
-      }
+    RT dirichletPress (const Dune::FieldVector<DT,n>& x, const Entity& e,
+                       const Dune::FieldVector<DT,n>& xi) const
+    {
+        return (1e5*(2.0 - x[0]));
+    }
 
-        RT dirichletSat (const FieldVector<DT,n>& x, const Entity& e,
-               const FieldVector<DT,n>& xi) const
-        {
-            if (x[0] < 1e-6)
-                return 0.8;
-            else
-                return 0.2;
-        }
+    RT dirichletSat (const FieldVector<DT,n>& x, const Entity& e,
+                     const FieldVector<DT,n>& xi) const
+    {
+        if (x[0] < 1e-6)
+            return 0.8;
+        else
+            return 0.2;
+    }
 
-      RT neumannPress (const Dune::FieldVector<DT,n>& x, const Entity& e,
-                    const Dune::FieldVector<DT,n>& xi) const
-      {
+    RT neumannPress (const Dune::FieldVector<DT,n>& x, const Entity& e,
+                     const Dune::FieldVector<DT,n>& xi) const
+    {
         return 0;
-      }
+    }
 
 
-    private:
-        Dune::FieldMatrix<DT,n,n> permloc;
-    };
+private:
+    Dune::FieldMatrix<DT,n,n> permloc;
+};
 }
 
 #endif

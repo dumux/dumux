@@ -20,7 +20,7 @@ int main(int argc, char** argv)
         // or long double)
         const int dim = 2;
         typedef double                                Scalar;
-//        typedef Dune::ALUSimplexGrid<dim,dim>         Grid;
+        //        typedef Dune::ALUSimplexGrid<dim,dim>         Grid;
 #define USE_UG 1
 #if USE_UG
         typedef Dune::UGGrid<dim>                     Grid;
@@ -60,7 +60,7 @@ int main(int argc, char** argv)
                 factory.insertVertex(pos);
             }
         }
-    
+
         for (int i=0; i<n-1; i++) {
             for (int j=0; j<n-1; j++) {
                 std::vector<unsigned int> v(4);
@@ -98,7 +98,7 @@ int main(int argc, char** argv)
         Problem problem(&grid, dt, tEnd);
         if (!problem.simulate())
             return 2;
-        
+
         return 0;
     }
     catch (Dune::Exception &e) {
@@ -108,6 +108,6 @@ int main(int argc, char** argv)
         std::cerr << "Unknown exception thrown!\n";
         throw;
     }
-    
+
     return 3;
 }

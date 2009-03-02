@@ -33,10 +33,10 @@ class RandomPermeability
     };
 
     enum
-    {
-        dim = Grid::dimension, dimWorld = Grid::dimensionworld
-    };
-typedef    typename Grid::ctype Scalar;
+        {
+            dim = Grid::dimension, dimWorld = Grid::dimensionworld
+        };
+    typedef    typename Grid::ctype Scalar;
     typedef typename Grid::LeafGridView GridView;
     typedef P0Function<GridView,Scalar,1> PermType;
     typedef BlockVector<FieldVector<Scalar,1> > RepresentationType;
@@ -62,8 +62,8 @@ public:
      *  permeability at the cell center.
      */
     RandomPermeability(const Grid& grid, const char* name = "permeab.dat", const bool create = true)
-    : grid_(grid), fileName_(name), createNew_(create), perm_(grid_.leafView()), permLoc_(0),
-    elementMapper_(grid_, grid_.leafIndexSet())
+        : grid_(grid), fileName_(name), createNew_(create), perm_(grid_.leafView()), permLoc_(0),
+          elementMapper_(grid_, grid_.leafIndexSet())
     {
         typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
@@ -81,58 +81,58 @@ public:
         int foundSimSet = 0;
         int k = 0;
         while (!foundSimSet && k++ < 5)
-        {
-            strcpy(systemCommand, startCommand);
-            strcat(systemCommand, " -type f -name simset -exec dirname {} \\; >simsetloc.txt");
-            system(systemCommand);
-            std::ifstream simSetLoc("simSetLoc.txt");
-            simSetLoc.seekg (0, std::ios::end);
-            int length = simSetLoc.tellg();
-            simSetLoc.seekg (0, std::ios::beg);
-            if (length> 0)
             {
-                foundSimSet = 1;
-                simSetLoc.getline(simSetDir, 220);
+                strcpy(systemCommand, startCommand);
+                strcat(systemCommand, " -type f -name simset -exec dirname {} \\; >simsetloc.txt");
+                system(systemCommand);
+                std::ifstream simSetLoc("simSetLoc.txt");
+                simSetLoc.seekg (0, std::ios::end);
+                int length = simSetLoc.tellg();
+                simSetLoc.seekg (0, std::ios::beg);
+                if (length> 0)
+                    {
+                        foundSimSet = 1;
+                        simSetLoc.getline(simSetDir, 220);
+                    }
+                simSetLoc.close();
+                strcat(startCommand, "../");
             }
-            simSetLoc.close();
-            strcat(startCommand, "../");
-        }
 
         if (createNew_)
-        {
-            // SIMSET creates random permeabilities for given coordinates, so the coordinates of the center of gravity of each element
-            // are written to a file 'SIMKOR'
-            // open output stream for simset output file name
-            char namefileName[100];
-            strcpy(namefileName, simSetDir);
-            strcat(namefileName, "/SIMNAM");
-            std::ofstream namefile(namefileName);
-            // Choose simset output filename
-            namefile << fileName_ << std::endl;
-            namefile.close();
-            // open output stream for simset input file
-            char outfileName[100];
-            strcpy(outfileName, simSetDir);
-            strcat(outfileName, "/SIMKOR");
-            std::ofstream outfile(outfileName);
-            for (ElementIterator eIt = gridView.template begin<0>(); eIt != eItEnd; ++eIt)
             {
-                Dune::GeometryType gt = eIt->geometry().type();
+                // SIMSET creates random permeabilities for given coordinates, so the coordinates of the center of gravity of each element
+                // are written to a file 'SIMKOR'
+                // open output stream for simset output file name
+                char namefileName[100];
+                strcpy(namefileName, simSetDir);
+                strcat(namefileName, "/SIMNAM");
+                std::ofstream namefile(namefileName);
+                // Choose simset output filename
+                namefile << fileName_ << std::endl;
+                namefile.close();
+                // open output stream for simset input file
+                char outfileName[100];
+                strcpy(outfileName, simSetDir);
+                strcat(outfileName, "/SIMKOR");
+                std::ofstream outfile(outfileName);
+                for (ElementIterator eIt = gridView.template begin<0>(); eIt != eItEnd; ++eIt)
+                    {
+                        Dune::GeometryType gt = eIt->geometry().type();
 
-                const LocalPosition&
-                localPos = Dune::ReferenceElements<Scalar,dim>::general(gt).position(0,0);
+                        const LocalPosition&
+                            localPos = Dune::ReferenceElements<Scalar,dim>::general(gt).position(0,0);
 
-                // get global coordinate of cell center
-                const GlobalPosition& globalPos = eIt->geometry().global(localPos);
+                        // get global coordinate of cell center
+                        const GlobalPosition& globalPos = eIt->geometry().global(localPos);
 
-                outfile << globalPos[0] << "\t" << globalPos[1] << std::endl;
+                        outfile << globalPos[0] << "\t" << globalPos[1] << std::endl;
+                    }
+                outfile.close();
+                strcpy(systemCommand, "cd ");
+                strcat(systemCommand, simSetDir);
+                strcat(systemCommand, "; ./simset; cd $OLDPWD");
+                system(systemCommand);
             }
-            outfile.close();
-            strcpy(systemCommand, "cd ");
-            strcat(systemCommand, simSetDir);
-            strcat(systemCommand, "; ./simset; cd $OLDPWD");
-            system(systemCommand);
-        }
 
         // open input stream for simset output file
         char concd[100];
@@ -141,15 +141,15 @@ public:
         std::ifstream infile(strcat(concd, fileName_));
         std::cout << "Read permeability data from " << concd << std::endl;
         for (ElementIterator eIt = gridView.template begin<0>(); eIt != eItEnd; ++eIt)
-        {
-            int globalIdxI = elementMapper_.map(*eIt);
-            Scalar dummy1, dummy2, permi;
-            char zeile [221];
-            infile.getline(zeile, 220);
-            std::istringstream ist(zeile);
-            ist >> dummy1 >> dummy2 >> permi;
-            (*perm_)[globalIdxI] = pow(10.0, permi);
-        }
+            {
+                int globalIdxI = elementMapper_.map(*eIt);
+                Scalar dummy1, dummy2, permi;
+                char zeile [221];
+                infile.getline(zeile, 220);
+                std::istringstream ist(zeile);
+                ist >> dummy1 >> dummy2 >> permi;
+                (*perm_)[globalIdxI] = pow(10.0, permi);
+            }
         infile.close();
     }
 
@@ -171,7 +171,7 @@ public:
         Scalar permE = (*perm_)[elemId];
 
         for (int i = 0; i < dim; i++)
-        permLoc_[i][i] = permE;
+            permLoc_[i][i] = permE;
 
         return permLoc_;
     }
@@ -179,12 +179,12 @@ public:
     void vtkout (const char* name, const Grid& grid_) const
     {
         Dune::VTKWriter<typename Grid::LeafGridView>
-        vtkwriter(grid_.leafView());
+            vtkwriter(grid_.leafView());
         vtkwriter.addCellData(*perm_, "absolute permeability");
         int size = (*perm_).size();
         RepresentationType logPerm(size);
         for (int i = 0; i < size; i++)
-        logPerm[i] = log10((*perm_)[i]);
+            logPerm[i] = log10((*perm_)[i]);
         vtkwriter.addCellData(logPerm, "logarithm of permeability");
         vtkwriter.write(name, Dune::VTKOptions::ascii);
     }
@@ -218,7 +218,7 @@ class LevelRandomPermeability
     };
 
     enum
-    {   dim = Grid::dimension, dimWorld = Grid::dimensionworld};
+        {   dim = Grid::dimension, dimWorld = Grid::dimensionworld};
     typedef typename Grid::LevelGridView GridView;
     typedef typename Grid::ctype Scalar;
     typedef LevelP0Function<Grid,Scalar,1> PermType;
@@ -247,8 +247,8 @@ public:
      *  permeability at the cell center.
      */
     LevelRandomPermeability(const Grid& grid, const int lev, const char* name = "permeab.dat", const bool create = true)
-    : grid_(grid), level_(lev), fileName_(name), createNew_(create), perm_(grid_,lev), permLoc_(0),
-    elementMapper_(grid_, grid_.levelIndexSet(level_))
+        : grid_(grid), level_(lev), fileName_(name), createNew_(create), perm_(grid_,lev), permLoc_(0),
+          elementMapper_(grid_, grid_.levelIndexSet(level_))
     {
         if (level_> grid_.maxLevel() ) DUNE_THROW(Dune::Exception,"Level specified for permeability data is higher than maximum grid_ level!");
         typedef typename GridView::template Codim<0>::Iterator ElementIterator;
@@ -267,58 +267,58 @@ public:
         int foundSimSet = 0;
         int k = 0;
         while (!foundSimSet && k++ < 5)
-        {
-            strcpy(systemCommand, startCommand);
-            strcat(systemCommand, " -type f -name simset -exec dirname {} \\; >simSetLoc.txt");
-            system(systemCommand);
-            std::ifstream simSetLoc("simSetLoc.txt");
-            simSetLoc.seekg (0, std::ios::end);
-            int length = simSetLoc.tellg();
-            simSetLoc.seekg (0, std::ios::beg);
-            if (length> 0)
             {
-                foundSimSet = 1;
-                simSetLoc.getline(simSetDir, 220);
+                strcpy(systemCommand, startCommand);
+                strcat(systemCommand, " -type f -name simset -exec dirname {} \\; >simSetLoc.txt");
+                system(systemCommand);
+                std::ifstream simSetLoc("simSetLoc.txt");
+                simSetLoc.seekg (0, std::ios::end);
+                int length = simSetLoc.tellg();
+                simSetLoc.seekg (0, std::ios::beg);
+                if (length> 0)
+                    {
+                        foundSimSet = 1;
+                        simSetLoc.getline(simSetDir, 220);
+                    }
+                simSetLoc.close();
+                strcat(startCommand, "../");
             }
-            simSetLoc.close();
-            strcat(startCommand, "../");
-        }
 
         if (createNew_)
-        {
-            // SIMSET creates random permeabilities for given coordinates, so the coordinates of the center of gravity of each element
-            // are written to a file 'SIMKOR'
-            // open output stream for simset output file name
-            char namefileName[100];
-            strcpy(namefileName, simSetDir);
-            strcat(namefileName, "/SIMNAM");
-            std::ofstream namefile(namefileName);
-            // Choose simset output filename
-            namefile << fileName_ << std::endl;
-            namefile.close();
-            // open output stream for simset input file
-            char outfileName[100];
-            strcpy(outfileName, simSetDir);
-            strcat(outfileName, "/SIMKOR");
-            std::ofstream outfile(outfileName);
-            for (ElementIterator eIt = gridView.template begin<0>(); eIt != eItEnd; ++eIt)
             {
-                Dune::GeometryType gt = eIt->geometry().type();
+                // SIMSET creates random permeabilities for given coordinates, so the coordinates of the center of gravity of each element
+                // are written to a file 'SIMKOR'
+                // open output stream for simset output file name
+                char namefileName[100];
+                strcpy(namefileName, simSetDir);
+                strcat(namefileName, "/SIMNAM");
+                std::ofstream namefile(namefileName);
+                // Choose simset output filename
+                namefile << fileName_ << std::endl;
+                namefile.close();
+                // open output stream for simset input file
+                char outfileName[100];
+                strcpy(outfileName, simSetDir);
+                strcat(outfileName, "/SIMKOR");
+                std::ofstream outfile(outfileName);
+                for (ElementIterator eIt = gridView.template begin<0>(); eIt != eItEnd; ++eIt)
+                    {
+                        Dune::GeometryType gt = eIt->geometry().type();
 
-                const LocalPosition&
-                localPos = Dune::ReferenceElements<Scalar,dim>::general(gt).position(0,0);
+                        const LocalPosition&
+                            localPos = Dune::ReferenceElements<Scalar,dim>::general(gt).position(0,0);
 
-                // get global coordinate of cell center
-                const GlobalPosition& globalPos = eIt->geometry().global(localPos);
+                        // get global coordinate of cell center
+                        const GlobalPosition& globalPos = eIt->geometry().global(localPos);
 
-                outfile << globalPos[0] << "\t" << globalPos[1] << std::endl;
+                        outfile << globalPos[0] << "\t" << globalPos[1] << std::endl;
+                    }
+                outfile.close();
+                strcpy(systemCommand, "cd ");
+                strcat(systemCommand, simSetDir);
+                strcat(systemCommand, "; ./simset; cd $OLDPWD");
+                system(systemCommand);
             }
-            outfile.close();
-            strcpy(systemCommand, "cd ");
-            strcat(systemCommand, simSetDir);
-            strcat(systemCommand, "; ./simset; cd $OLDPWD");
-            system(systemCommand);
-        }
 
         // open input stream for simset output file
         char concd[100];
@@ -327,15 +327,15 @@ public:
         std::ifstream infile(strcat(concd, fileName_));
         std::cout << "Read permeability data from " << concd << std::endl;
         for (ElementIterator eIt = gridView.template begin<0>(); eIt != eItEnd; ++eIt)
-        {
-            int globalIdxI = elementMapper_.map(*eIt);
-            Scalar dummy1, dummy2, permi;
-            char zeile [221];
-            infile.getline(zeile, 220);
-            std::istringstream ist(zeile);
-            ist >> dummy1 >> dummy2 >> permi;
-            (*perm_)[globalIdxI] = pow(10.0, permi);
-        }
+            {
+                int globalIdxI = elementMapper_.map(*eIt);
+                Scalar dummy1, dummy2, permi;
+                char zeile [221];
+                infile.getline(zeile, 220);
+                std::istringstream ist(zeile);
+                ist >> dummy1 >> dummy2 >> permi;
+                (*perm_)[globalIdxI] = pow(10.0, permi);
+            }
         infile.close();
     }
 
@@ -361,21 +361,21 @@ public:
         int elemId;
         if (le < level_) DUNE_THROW(Dune::Exception, "Level of element lower than level of permeability discretisation, permeability not uniquely defined");
         else if (le> level_)
-        {
-            ElementPointer f = e.father();
-            le = f->level();
-            while (le> level_)
             {
-                f = f->father();
+                ElementPointer f = e.father();
                 le = f->level();
+                while (le> level_)
+                    {
+                        f = f->father();
+                        le = f->level();
+                    }
+                elemId = elementMapper_.map(*f);
             }
-            elemId = elementMapper_.map(*f);
-        }
         else elemId = elementMapper_.map(e);
         Scalar permE = (*perm_)[elemId];
 
         for (int i = 0; i < dim; i++)
-        permLoc_[i][i] = permE;
+            permLoc_[i][i] = permE;
 
         return permLoc_;
     }
@@ -383,12 +383,12 @@ public:
     void vtkout (const char* name, const Grid& grid_) const
     {
         Dune::VTKWriter<typename Grid::LeafGridView>
-        vtkwriter(grid_.leafView());
+            vtkwriter(grid_.leafView());
         int size = (*perm_).size();
         vtkwriter.addCellData(*perm_, "absolute permeability");
         RepresentationType logPerm(size);
         for (int i = 0; i < size; i++)
-        logPerm[i] = log10((*perm_)[i]);
+            logPerm[i] = log10((*perm_)[i]);
         vtkwriter.addCellData(logPerm, "logarithm of permeability");
         vtkwriter.write(name, Dune::VTKOptions::ascii);
     }

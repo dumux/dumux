@@ -72,7 +72,7 @@ int main(int argc, char** argv) {
         TwoPhase twoPhase(grid, problem);
 
         Dune::TimeLoop<GridType, TwoPhase> timeloop(0, tEnd, dt,
-                "fivespotcase1", 1);
+                                                    "fivespotcase1", 1);
 
         Dune::Timer timer;
         timer.reset();

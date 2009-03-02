@@ -47,460 +47,460 @@
 
 namespace Dune
 {
-    //! class that defines the parameters of an air waterair under a low permeable layer
-    /*! Problem definition of an air injection under a low permeable layer. Air enters the domain
-     * at the right boundary and migrates upwards.
-     * Problem was set up using the rect2d.dgf grid.
-     *
-     *    Template parameters are:
-     *
-     *    - ScalarT  Floating point type used for scalars
-     */
-    template<class ScalarT>
-    class NewWaterAirProblem : public BasicDomain<Dune::YaspGrid<2>,
-                                                  ScalarT>
+//! class that defines the parameters of an air waterair under a low permeable layer
+/*! Problem definition of an air injection under a low permeable layer. Air enters the domain
+ * at the right boundary and migrates upwards.
+ * Problem was set up using the rect2d.dgf grid.
+ *
+ *    Template parameters are:
+ *
+ *    - ScalarT  Floating point type used for scalars
+ */
+template<class ScalarT>
+class NewWaterAirProblem : public BasicDomain<Dune::YaspGrid<2>,
+                                              ScalarT>
+{
+    typedef Dune::YaspGrid<2>              Grid;
+    typedef BasicDomain<Grid, ScalarT>     ParentType;
+    typedef NewWaterAirProblem<ScalarT>    ThisType;
+#if !ISOTHERMAL
+    typedef TwoPTwoCNIBoxModel<ThisType>   Model;
+#else
+    typedef TwoPTwoCBoxModel<ThisType>   Model;
+#endif
+
+    typedef Dune::GridPtr<Grid>                    GridPointer;
+
+    typedef Dune::Liq_WaterAir                     WettingPhase;
+    typedef Dune::Gas_WaterAir                     NonwettingPhase;
+    typedef Dune::HomogeneousSoil<Grid, ScalarT>   Soil;
+    typedef Dune::TwoPhaseRelations<Grid, ScalarT> MaterialLaw;
+    typedef Dune::CWaterAir                        Multicomp;
+
+public:
+    // the domain traits of the domain
+    typedef typename ParentType::DomainTraits   DomainTraits;
+    // the traits of the BOX scheme
+    typedef typename Model::BoxTraits           BoxTraits;
+    // the traits of the Pw-Sn model
+#if !ISOTHERMAL
+    typedef typename Model::TwoPTwoCNITraits    TwoPTwoCNITraits;
+#else
+    typedef typename Model::TwoPTwoCTraits      TwoPTwoCNITraits;
+#endif
+
+private:
+    // some constants from the traits for convenience
+    enum {
+        numEq          = BoxTraits::numEq,
+        pressureIdx    = TwoPTwoCNITraits::pressureIdx,
+        switchIdx      = TwoPTwoCNITraits::switchIdx,
+#if !ISOTHERMAL
+        temperatureIdx = TwoPTwoCNITraits::temperatureIdx,
+#endif
+
+        // Phase State
+        WPhaseOnly = TwoPTwoCNITraits::wPhaseOnly,
+        NPhaseOnly = TwoPTwoCNITraits::nPhaseOnly,
+        BothPhases = TwoPTwoCNITraits::bothPhases,
+
+        // Grid and world dimension
+        dim  = DomainTraits::dim,
+        dimWorld = DomainTraits::dimWorld,
+
+        pWsN        = 0,
+        pNsW        = 1
+    };
+
+    // copy some types from the traits for convenience
+    typedef typename DomainTraits::Scalar                     Scalar;
+    typedef typename DomainTraits::Element                    Element;
+    typedef typename DomainTraits::ElementIterator            ElementIterator;
+    typedef typename DomainTraits::ReferenceElement           ReferenceElement;
+    typedef typename DomainTraits::Vertex                     Vertex;
+    typedef typename DomainTraits::VertexIterator             VertexIterator;
+    typedef typename DomainTraits::IntersectionIterator       IntersectionIterator;
+    typedef typename DomainTraits::LocalPosition              LocalPosition;
+    typedef typename DomainTraits::GlobalPosition             GlobalPosition;
+
+    typedef typename BoxTraits::FVElementGeometry             FVElementGeometry;
+    typedef typename BoxTraits::SpatialFunction               SpatialFunction;
+    typedef typename BoxTraits::SolutionVector                SolutionVector;
+    typedef typename BoxTraits::BoundaryTypeVector            BoundaryTypeVector;
+
+    typedef Dune::VtkMultiWriter<typename Grid::LeafGridView> VtkMultiWriter;
+
+    enum Episode {}; // the type of an episode of the simulation
+    typedef Dune::TimeManager<Episode>                  TimeManager;
+    typedef Dune::NewImplicitEulerStep<ThisType>        TimeIntegration;
+
+    typedef typename Model::NewtonMethod                NewtonMethod;
+    typedef TwoPTwoCNINewtonController<NewtonMethod>    NewtonController;
+
+public:
+    NewWaterAirProblem(Grid *grid,
+                       Scalar dtInitial,
+                       Scalar tEnd)
+        : ParentType(grid),
+          materialLaw_(soil_, wPhase_, nPhase_),
+          multicomp_(wPhase_, nPhase_),
+          timeManager_(this->grid().comm().rank() == 0),
+          model_(*this),
+          newtonMethod_(model_),
+          resultWriter_("new_waterair")
     {
-        typedef Dune::YaspGrid<2>              Grid;
-        typedef BasicDomain<Grid, ScalarT>     ParentType;
-        typedef NewWaterAirProblem<ScalarT>    ThisType;
-#if !ISOTHERMAL
-        typedef TwoPTwoCNIBoxModel<ThisType>   Model;
-#else
-        typedef TwoPTwoCBoxModel<ThisType>   Model;
-#endif
+        initialTimeStepSize_ = dtInitial;
+        endTime_ = tEnd;
 
-        typedef Dune::GridPtr<Grid>                    GridPointer;
+        // specify the grid dimensions
+        eps_    = 1e-8;
 
-        typedef Dune::Liq_WaterAir                     WettingPhase;
-        typedef Dune::Gas_WaterAir                     NonwettingPhase;
-        typedef Dune::HomogeneousSoil<Grid, ScalarT>   Soil;
-        typedef Dune::TwoPhaseRelations<Grid, ScalarT> MaterialLaw;
-        typedef Dune::CWaterAir                        Multicomp;
+        depthBOR_ = 1000.0;
 
-    public:
-        // the domain traits of the domain
-        typedef typename ParentType::DomainTraits   DomainTraits;
-        // the traits of the BOX scheme
-        typedef typename Model::BoxTraits           BoxTraits;
-        // the traits of the Pw-Sn model
-#if !ISOTHERMAL
-        typedef typename Model::TwoPTwoCNITraits    TwoPTwoCNITraits;
-#else
-        typedef typename Model::TwoPTwoCTraits      TwoPTwoCNITraits;
-#endif
+        gravity_[0] = 0;
+        gravity_[1] = -9.81;
 
-    private:
-        // some constants from the traits for convenience
-        enum {
-            numEq          = BoxTraits::numEq,
-            pressureIdx    = TwoPTwoCNITraits::pressureIdx,
-            switchIdx      = TwoPTwoCNITraits::switchIdx,
-#if !ISOTHERMAL
-            temperatureIdx = TwoPTwoCNITraits::temperatureIdx,
-#endif
+        // choose primary variables
+        formulation_ = pWsN;
+    }
 
-            // Phase State
-            WPhaseOnly = TwoPTwoCNITraits::wPhaseOnly,
-            NPhaseOnly = TwoPTwoCNITraits::nPhaseOnly,
-            BothPhases = TwoPTwoCNITraits::bothPhases,
+    ///////////////////////////////////
+    // Strings pulled by the TimeManager during the course of the
+    // simulation
+    ///////////////////////////////////
 
-            // Grid and world dimension
-            dim  = DomainTraits::dim,
-            dimWorld = DomainTraits::dimWorld,
+    //! called by the time manager in order to create the initial
+    //! solution
+    void init()
+    {
+        // set the episode length and initial time step size
+        timeManager_.setStepSize(initialTimeStepSize_);
 
-            pWsN        = 0,
-            pNsW        = 1
-        };
+        // set the initial condition
+        model_.initial();
 
-        // copy some types from the traits for convenience
-        typedef typename DomainTraits::Scalar                     Scalar;
-        typedef typename DomainTraits::Element                    Element;
-        typedef typename DomainTraits::ElementIterator            ElementIterator;
-        typedef typename DomainTraits::ReferenceElement           ReferenceElement;
-        typedef typename DomainTraits::Vertex                     Vertex;
-        typedef typename DomainTraits::VertexIterator             VertexIterator;
-        typedef typename DomainTraits::IntersectionIterator       IntersectionIterator;
-        typedef typename DomainTraits::LocalPosition              LocalPosition;
-        typedef typename DomainTraits::GlobalPosition             GlobalPosition;
+        // write the inital solution to disk
+        writeCurrentResult_();
+    }
 
-        typedef typename BoxTraits::FVElementGeometry             FVElementGeometry;
-        typedef typename BoxTraits::SpatialFunction               SpatialFunction;
-        typedef typename BoxTraits::SolutionVector                SolutionVector;
-        typedef typename BoxTraits::BoundaryTypeVector            BoundaryTypeVector;
+    /*!
+     * \brief Called by the TimeManager in order to get a time
+     *        integration on the model.
+     *
+     * \note timeStepSize and nextStepSize are references and may
+     *       be modified by the TimeIntegration. On exit of this
+     *       function 'timeStepSize' must contain the step size
+     *       actually used by the time integration for the current
+     *       steo, and 'nextStepSize' must contain the suggested
+     *       step size for the next time step.
+     */
+    void timeIntegration(Scalar &stepSize, Scalar &nextStepSize)
+    {
+        // execute the time integration (i.e. Runge-Kutta
+        // or Euler).  TODO/FIXME: Note that the time
+        // integration modifies the curTimeStepSize_ if it
+        // thinks that's appropriate. (IMHO, this is an
+        // incorrect abstraction, the simulation
+        // controller is responsible for adapting the time
+        // step size!)
+        timeIntegration_.execute(*this,
+                                 timeManager_.time(),
+                                 stepSize,
+                                 nextStepSize,
+                                 1e100, // firstDt or maxDt, TODO: WTF?
+                                 endTime_,
+                                 1.0); // CFL factor (not relevant since we use implicit euler)
 
-        typedef Dune::VtkMultiWriter<typename Grid::LeafGridView> VtkMultiWriter;
+    };
 
-        enum Episode {}; // the type of an episode of the simulation
-        typedef Dune::TimeManager<Episode>                  TimeManager;
-        typedef Dune::NewImplicitEulerStep<ThisType>        TimeIntegration;
+    //! called by the TimeIntegration::execute function to let
+    //! time pass.
+    void updateModel(Scalar &dt, Scalar &nextDt)
+    {
+        model_.update(dt, nextDt, newtonMethod_, newtonCtl_);
+    }
 
-        typedef typename Model::NewtonMethod                NewtonMethod;
-        typedef TwoPTwoCNINewtonController<NewtonMethod>    NewtonController;
+    //! called by the TimeManager whenever a solution for a
+    //! timestep has been computed
+    void timestepDone()
+    {
+        if (this->grid().comm().rank() == 0)
+            std::cout << "Writing result file for current time step\n";
 
-    public:
-        NewWaterAirProblem(Grid *grid,
-                           Scalar dtInitial,
-                           Scalar tEnd)
-            : ParentType(grid),
-              materialLaw_(soil_, wPhase_, nPhase_),
-              multicomp_(wPhase_, nPhase_),
-              timeManager_(this->grid().comm().rank() == 0),
-              model_(*this),
-              newtonMethod_(model_),
-              resultWriter_("new_waterair")
-            {
-                initialTimeStepSize_ = dtInitial;
-                endTime_ = tEnd;
+        // write the current result to disk
+        writeCurrentResult_();
 
-                // specify the grid dimensions
-                eps_    = 1e-8;
+        // update the domain with the current solution
+        //                updateDomain_();
 
-                depthBOR_ = 1000.0;
+        // stop the simulation if reach the end specified time
+        if (timeManager_.time() >= endTime_)
+            timeManager_.setFinished();
+    };
+    ///////////////////////////////////
+    // End of simulation control stuff
+    ///////////////////////////////////
 
-                gravity_[0] = 0;
-                gravity_[1] = -9.81;
+    ///////////////////////////////////
+    // Strings pulled by the TwoPTwoCBoxModel during the course of
+    // the simulation (-> boundary conditions, initial conditions,
+    // etc)
+    ///////////////////////////////////
+    //! Returns the current time step size in seconds
+    Scalar timeStepSize() const
+    { return timeManager_.stepSize(); }
 
-                // choose primary variables
-                formulation_ = pWsN;
-            }
-
-        ///////////////////////////////////
-        // Strings pulled by the TimeManager during the course of the
-        // simulation
-        ///////////////////////////////////
-
-        //! called by the time manager in order to create the initial
-        //! solution
-        void init()
-            {
-                // set the episode length and initial time step size
-                timeManager_.setStepSize(initialTimeStepSize_);
-
-                // set the initial condition
-                model_.initial();
-
-                // write the inital solution to disk
-                writeCurrentResult_();
-            }
-
-        /*!
-         * \brief Called by the TimeManager in order to get a time
-         *        integration on the model.
-         *
-         * \note timeStepSize and nextStepSize are references and may
-         *       be modified by the TimeIntegration. On exit of this
-         *       function 'timeStepSize' must contain the step size
-         *       actually used by the time integration for the current
-         *       steo, and 'nextStepSize' must contain the suggested
-         *       step size for the next time step.
-         */
-        void timeIntegration(Scalar &stepSize, Scalar &nextStepSize)
-            {
-                // execute the time integration (i.e. Runge-Kutta
-                // or Euler).  TODO/FIXME: Note that the time
-                // integration modifies the curTimeStepSize_ if it
-                // thinks that's appropriate. (IMHO, this is an
-                // incorrect abstraction, the simulation
-                // controller is responsible for adapting the time
-                // step size!)
-                timeIntegration_.execute(*this,
-                                         timeManager_.time(),
-                                         stepSize,
-                                         nextStepSize,
-                                         1e100, // firstDt or maxDt, TODO: WTF?
-                                         endTime_,
-                                         1.0); // CFL factor (not relevant since we use implicit euler)
-
-            };
-
-        //! called by the TimeIntegration::execute function to let
-        //! time pass.
-        void updateModel(Scalar &dt, Scalar &nextDt)
-            {
-                model_.update(dt, nextDt, newtonMethod_, newtonCtl_);
-            }
-
-        //! called by the TimeManager whenever a solution for a
-        //! timestep has been computed
-        void timestepDone()
-            {
-                if (this->grid().comm().rank() == 0)
-                    std::cout << "Writing result file for current time step\n";
-
-                // write the current result to disk
-                writeCurrentResult_();
-
-                // update the domain with the current solution
-//                updateDomain_();
-
-                // stop the simulation if reach the end specified time
-                if (timeManager_.time() >= endTime_)
-                    timeManager_.setFinished();
-            };
-        ///////////////////////////////////
-        // End of simulation control stuff
-        ///////////////////////////////////
-
-        ///////////////////////////////////
-        // Strings pulled by the TwoPTwoCBoxModel during the course of
-        // the simulation (-> boundary conditions, initial conditions,
-        // etc)
-        ///////////////////////////////////
-        //! Returns the current time step size in seconds
-        Scalar timeStepSize() const
-            { return timeManager_.stepSize(); }
-
-        //! Set the time step size in seconds.
-        void setTimeStepSize(Scalar dt)
-            { return timeManager_.setStepSize(dt); }
+    //! Set the time step size in seconds.
+    void setTimeStepSize(Scalar dt)
+    { return timeManager_.setStepSize(dt); }
 
 
-        //! properties of the wetting (liquid) phase
-        /*! properties of the wetting (liquid) phase
-          \return    wetting phase
-        */
-        const WettingPhase &wettingPhase() const
-            { return wPhase_; }
+    //! properties of the wetting (liquid) phase
+    /*! properties of the wetting (liquid) phase
+      \return    wetting phase
+    */
+    const WettingPhase &wettingPhase() const
+    { return wPhase_; }
 
-        //! properties of the nonwetting (liquid) phase
-        /*! properties of the nonwetting (liquid) phase
-          \return    nonwetting phase
-        */
-        const NonwettingPhase &nonwettingPhase() const
-            { return nPhase_; }
+    //! properties of the nonwetting (liquid) phase
+    /*! properties of the nonwetting (liquid) phase
+      \return    nonwetting phase
+    */
+    const NonwettingPhase &nonwettingPhase() const
+    { return nPhase_; }
 
 
-        //! properties of the soil
-        /*! properties of the soil
-          \return    soil
-        */
-        const Soil &soil() const
-            {  return soil_; }
+    //! properties of the soil
+    /*! properties of the soil
+      \return    soil
+    */
+    const Soil &soil() const
+    {  return soil_; }
 
-        //! properties of the soil
-        /*! properties of the soil
-          \return    soil
-        */
-        Soil &soil()
-            {  return soil_; }
+    //! properties of the soil
+    /*! properties of the soil
+      \return    soil
+    */
+    Soil &soil()
+    {  return soil_; }
 
-        //! object for multicomponent calculations
-        /*! object for multicomponent calculations including mass fractions,
-         * mole fractions and some basic laws
-         \return    multicomponent object
-        */
-        MultiComp &multicomp ()
-//        const MultiComp &multicomp () const
-            {
-                return multicomp_;
-            }
+    //! object for multicomponent calculations
+    /*! object for multicomponent calculations including mass fractions,
+     * mole fractions and some basic laws
+     \return    multicomponent object
+    */
+    MultiComp &multicomp ()
+    //        const MultiComp &multicomp () const
+    {
+        return multicomp_;
+    }
 
-        //! object for definition of material law
-        /*! object for definition of material law (e.g. Brooks-Corey, Van Genuchten, ...)
-          \return    material law
-        */
-        MaterialLaw &materialLaw ()
-//        const MaterialLaw &materialLaw () const
-            {
-                return materialLaw_;
-            }
+    //! object for definition of material law
+    /*! object for definition of material law (e.g. Brooks-Corey, Van Genuchten, ...)
+      \return    material law
+    */
+    MaterialLaw &materialLaw ()
+    //        const MaterialLaw &materialLaw () const
+    {
+        return materialLaw_;
+    }
 
-        void boundaryTypes(BoundaryTypeVector         &values,
-                           const Element              &element,
-                           const FVElementGeometry    &fvElemGeom,
-                           const IntersectionIterator &isIt,
-                           int                         scvIdx,
-                           int                         boundaryFaceIdx) const
-            {
-                const GlobalPosition &globalPos
-                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
-//                const LocalPosition &localPos
-//                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipLocal;
-
-                if(globalPos[0] < eps_)
-                    values = BoundaryConditions::dirichlet;
-                else
-                    values = BoundaryConditions::neumann;
-
-#if !ISOTHERMAL
-                values[temperatureIdx] = BoundaryConditions::dirichlet;
-#endif
-            }
-
-        /////////////////////////////
-        // DIRICHLET boundaries
-        /////////////////////////////
-        void dirichlet(SolutionVector             &values,
+    void boundaryTypes(BoundaryTypeVector         &values,
                        const Element              &element,
                        const FVElementGeometry    &fvElemGeom,
                        const IntersectionIterator &isIt,
                        int                         scvIdx,
                        int                         boundaryFaceIdx) const
-            {
-                const GlobalPosition &globalPos
-                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
-//                const LocalPosition &localPos
-//                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipLocal;
+    {
+        const GlobalPosition &globalPos
+            = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
+        //                const LocalPosition &localPos
+        //                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipLocal;
 
-                initial_(values, globalPos);
-            }
+        if(globalPos[0] < eps_)
+            values = BoundaryConditions::dirichlet;
+        else
+            values = BoundaryConditions::neumann;
 
-        /////////////////////////////
-        // NEUMANN boundaries
-        /////////////////////////////
-        void neumann(SolutionVector             &values,
-                     const Element              &element,
-                     const FVElementGeometry    &fvElemGeom,
-                     const IntersectionIterator &isIt,
-                     int                         scvIdx,
-                     int                         boundaryFaceIdx) const
-            {
-                const GlobalPosition &globalPos
-                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
-//                const LocalPosition &localPos
-//                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipLocal;
-
-                values = 0;
-
-                // negative values for injection
-                if (globalPos[1] > 1.0 && globalPos[1] < 5.0)
-                {
-                    values[switchIdx] = -1e-5;
-                }
-            }
-
-        /////////////////////////////
-        // sources and sinks
-        /////////////////////////////
-        void source(SolutionVector          &values,
-                    const Element           &element,
-                    const FVElementGeometry &fvElemGeom,
-                    int                      scvIdx) const
-            {
-                values = Scalar(0.0);
-            }
-
-        //////////////////////////////
-
-        /////////////////////////////
-        // INITIAL values
-        /////////////////////////////
-        void initial(SolutionVector          &values,
-                     const Element           &element,
-                     const FVElementGeometry &fvElemGeom,
-                     int                      scvIdx) const
-            {
-                const GlobalPosition &globalPos
-                    = fvElemGeom.subContVol[scvIdx].global;
-/*                const LocalPosition &localPos
-                    = fvElemGeom.subContVol[scvIdx].local;
-*/
-
-                initial_(values, globalPos);
-            }
-
-    private:
-        // internal method for the initial condition (reused for the
-        // dirichlet conditions!)
-        void initial_(SolutionVector       &values,
-                      const GlobalPosition &globalPos) const
-        {
-                Scalar densityW = 1000.0;
-                values[pressureIdx] = 1e5 + (depthBOR_ - globalPos[1])*densityW*9.81;
-                values[switchIdx] = 0.0;
 #if !ISOTHERMAL
-                values[temperatureIdx] = 283.0 + (depthBOR_ - globalPos[1])*0.03;
+        values[temperatureIdx] = BoundaryConditions::dirichlet;
 #endif
-        }
+    }
 
-    public:
-        Scalar porosity(const Element &element, int localIdx) const
+    /////////////////////////////
+    // DIRICHLET boundaries
+    /////////////////////////////
+    void dirichlet(SolutionVector             &values,
+                   const Element              &element,
+                   const FVElementGeometry    &fvElemGeom,
+                   const IntersectionIterator &isIt,
+                   int                         scvIdx,
+                   int                         boundaryFaceIdx) const
+    {
+        const GlobalPosition &globalPos
+            = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
+        //                const LocalPosition &localPos
+        //                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipLocal;
+
+        initial_(values, globalPos);
+    }
+
+    /////////////////////////////
+    // NEUMANN boundaries
+    /////////////////////////////
+    void neumann(SolutionVector             &values,
+                 const Element              &element,
+                 const FVElementGeometry    &fvElemGeom,
+                 const IntersectionIterator &isIt,
+                 int                         scvIdx,
+                 int                         boundaryFaceIdx) const
+    {
+        const GlobalPosition &globalPos
+            = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
+        //                const LocalPosition &localPos
+        //                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipLocal;
+
+        values = 0;
+
+        // negative values for injection
+        if (globalPos[1] > 1.0 && globalPos[1] < 5.0)
             {
-                // TODO/HACK: porosity should be defined on the verts
-                // as it is required on the verts!
-                const LocalPosition &local =
-                    DomainTraits::referenceElement(element.type()).position(localIdx, dim);
-                const GlobalPosition &globalPos = element.geometry().corner(localIdx);
-                return soil().porosity(globalPos, *(ParentType::elementBegin()), local);
-            };
-
-        Scalar pC(Scalar satW, int globalIdx, const GlobalPosition &globalPos)
-            {
-                // TODO/HACK: porosity should be defined on the verts
-                // as it is required on the verts!
-                const LocalPosition &local =
-                    DomainTraits::referenceElement(ParentType::elementBegin()->type()).position(0, dim);
-                return materialLaw().pC(satW, globalPos, *(ParentType::elementBegin()), local);
-            };
-
-
-        int initialPhaseState(const Vertex       &vert,
-                              int              &globalIdx,
-                              const GlobalPosition &globalPos) const
-            {
-                return WPhaseOnly;
+                values[switchIdx] = -1e-5;
             }
+    }
 
+    /////////////////////////////
+    // sources and sinks
+    /////////////////////////////
+    void source(SolutionVector          &values,
+                const Element           &element,
+                const FVElementGeometry &fvElemGeom,
+                int                      scvIdx) const
+    {
+        values = Scalar(0.0);
+    }
 
-        const GlobalPosition &gravity () const
-            {
-                return gravity_;
-            }
+    //////////////////////////////
 
-        double depthBOR () const
-            {
-                return depthBOR_;
-            }
+    /////////////////////////////
+    // INITIAL values
+    /////////////////////////////
+    void initial(SolutionVector          &values,
+                 const Element           &element,
+                 const FVElementGeometry &fvElemGeom,
+                 int                      scvIdx) const
+    {
+        const GlobalPosition &globalPos
+            = fvElemGeom.subContVol[scvIdx].global;
+        /*                const LocalPosition &localPos
+                          = fvElemGeom.subContVol[scvIdx].local;
+        */
 
-        bool simulate()
-            {
-                timeManager_.runSimulation(*this);
-                return true;
-            };
+        initial_(values, globalPos);
+    }
 
-        int formulation () const
-        {
-            return formulation_;
-        }
+private:
+    // internal method for the initial condition (reused for the
+    // dirichlet conditions!)
+    void initial_(SolutionVector       &values,
+                  const GlobalPosition &globalPos) const
+    {
+        Scalar densityW = 1000.0;
+        values[pressureIdx] = 1e5 + (depthBOR_ - globalPos[1])*densityW*9.81;
+        values[switchIdx] = 0.0;
+#if !ISOTHERMAL
+        values[temperatureIdx] = 283.0 + (depthBOR_ - globalPos[1])*0.03;
+#endif
+    }
 
-    private:
-        // write the fields current solution into an VTK output file.
-        void writeCurrentResult_()
-            {
-                resultWriter_.beginTimestep(timeManager_.time(),
-                                            ParentType::grid().leafView());
-
-                model_.addVtkFields(resultWriter_);
-
-                resultWriter_.endTimestep();
-            }
-
-
-        Scalar width_;
-        Scalar height_;
-        Scalar depthBOR_;
-        Scalar eps_;
-        int formulation_;
-        GlobalPosition  gravity_;
-
-        // fluids and material properties
-        WettingPhase    wPhase_;
-        NonwettingPhase nPhase_;
-        Soil            soil_;
-        MaterialLaw     materialLaw_;
-        Multicomp       multicomp_;
-
-        TimeManager     timeManager_;
-        TimeIntegration timeIntegration_;
-        Scalar          initialTimeStepSize_;
-        Scalar          endTime_;
-
-        Model            model_;
-        NewtonMethod     newtonMethod_;
-        NewtonController newtonCtl_;
-
-        VtkMultiWriter  resultWriter_;
+public:
+    Scalar porosity(const Element &element, int localIdx) const
+    {
+        // TODO/HACK: porosity should be defined on the verts
+        // as it is required on the verts!
+        const LocalPosition &local =
+            DomainTraits::referenceElement(element.type()).position(localIdx, dim);
+        const GlobalPosition &globalPos = element.geometry().corner(localIdx);
+        return soil().porosity(globalPos, *(ParentType::elementBegin()), local);
     };
+
+    Scalar pC(Scalar satW, int globalIdx, const GlobalPosition &globalPos)
+    {
+        // TODO/HACK: porosity should be defined on the verts
+        // as it is required on the verts!
+        const LocalPosition &local =
+            DomainTraits::referenceElement(ParentType::elementBegin()->type()).position(0, dim);
+        return materialLaw().pC(satW, globalPos, *(ParentType::elementBegin()), local);
+    };
+
+
+    int initialPhaseState(const Vertex       &vert,
+                          int              &globalIdx,
+                          const GlobalPosition &globalPos) const
+    {
+        return WPhaseOnly;
+    }
+
+
+    const GlobalPosition &gravity () const
+    {
+        return gravity_;
+    }
+
+    double depthBOR () const
+    {
+        return depthBOR_;
+    }
+
+    bool simulate()
+    {
+        timeManager_.runSimulation(*this);
+        return true;
+    };
+
+    int formulation () const
+    {
+        return formulation_;
+    }
+
+private:
+    // write the fields current solution into an VTK output file.
+    void writeCurrentResult_()
+    {
+        resultWriter_.beginTimestep(timeManager_.time(),
+                                    ParentType::grid().leafView());
+
+        model_.addVtkFields(resultWriter_);
+
+        resultWriter_.endTimestep();
+    }
+
+
+    Scalar width_;
+    Scalar height_;
+    Scalar depthBOR_;
+    Scalar eps_;
+    int formulation_;
+    GlobalPosition  gravity_;
+
+    // fluids and material properties
+    WettingPhase    wPhase_;
+    NonwettingPhase nPhase_;
+    Soil            soil_;
+    MaterialLaw     materialLaw_;
+    Multicomp       multicomp_;
+
+    TimeManager     timeManager_;
+    TimeIntegration timeIntegration_;
+    Scalar          initialTimeStepSize_;
+    Scalar          endTime_;
+
+    Model            model_;
+    NewtonMethod     newtonMethod_;
+    NewtonController newtonCtl_;
+
+    VtkMultiWriter  resultWriter_;
+};
 } //end namespace
 
 #endif

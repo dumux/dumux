@@ -13,25 +13,25 @@
 
 namespace Dune
 {
-  //! \ingroup transport
-  //! Base class for defining an instance of a numerical transport model.
-  /*! An interface for defining a numerical transport model for the
-   *  solution of equations of the form
-   *  \f$S_t - \text{div}\, (f_\text{w}(S) \boldsymbol{v}_\text{total}) = 0\f$,
-   * \f$S = g\f$ on \f$\Gamma_1\f$, and \f$S(t = 0) = S_0\f$. Here,
-   * \f$S\f$ denotes the wetting phase saturation,
-   * \f$\boldsymbol{v}_\text{total}\f$ the total velocity,
-   * and \f$f_\text{w}\f$ the wetting phase fractional flow function.
+//! \ingroup transport
+//! Base class for defining an instance of a numerical transport model.
+/*! An interface for defining a numerical transport model for the
+ *  solution of equations of the form
+ *  \f$S_t - \text{div}\, (f_\text{w}(S) \boldsymbol{v}_\text{total}) = 0\f$,
+ * \f$S = g\f$ on \f$\Gamma_1\f$, and \f$S(t = 0) = S_0\f$. Here,
+ * \f$S\f$ denotes the wetting phase saturation,
+ * \f$\boldsymbol{v}_\text{total}\f$ the total velocity,
+ * and \f$f_\text{w}\f$ the wetting phase fractional flow function.
 
-    - Grid      a DUNE grid type
-    - RT        type used for return values
-    - RepresentationType   type of the vector holding the saturation values
-    - VelType   type of the vector holding the velocity values
+ - Grid      a DUNE grid type
+ - RT        type used for return values
+ - RepresentationType   type of the vector holding the saturation values
+ - VelType   type of the vector holding the velocity values
 
-   */
-  template<class Grid, class Scalar, class VC>
-  class TransportSubProbs {
-  public:
+*/
+template<class Grid, class Scalar, class VC>
+class TransportSubProbs {
+public:
 
     typedef typename VC::ScalarVectorType RepresentationType;
 
@@ -58,13 +58,13 @@ namespace Dune
     //! return const reference to saturation vector
     virtual const RepresentationType& operator* () const
     {
-      return transProblem.variables.saturation;
+        return transProblem.variables.saturation;
     }
 
     //! return reference to saturation vector
     virtual RepresentationType& operator* ()
     {
-      return transProblem.variables.saturation;
+        return transProblem.variables.saturation;
     }
 
     //! always define virtual destructor in abstract base class
@@ -79,7 +79,7 @@ namespace Dune
      *  @param lev the grid level on which the Transport equation is to be solved.
      */
     TransportSubProbs(const Grid& grid, FractionalFlowProblemSubProbs<Grid, Scalar, VC>& problem)
-    : grid(grid), transProblem(problem)
+        : grid(grid), transProblem(problem)
     { }
 
     //! returns the level on which the transport eqution is solved.
@@ -90,7 +90,7 @@ namespace Dune
 
     const Grid& grid;
     FractionalFlowProblemSubProbs<Grid, Scalar, VC>& transProblem; //!< problem data
-  };
+};
 
 }
 #endif

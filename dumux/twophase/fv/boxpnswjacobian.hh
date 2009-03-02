@@ -24,37 +24,37 @@
 namespace Dune
 {
 /**
-   * @brief compute local jacobian matrix for the box method for two-phase equation
-   *
-   */
-   /*! A class for computing local jacobian matrix
-    * for the fully coupled two-phase model
-    * with Pn and Sw as primary variables
+ * @brief compute local jacobian matrix for the box method for two-phase equation
+ *
+ */
+/*! A class for computing local jacobian matrix
+ * for the fully coupled two-phase model
+ * with Pn and Sw as primary variables
 
-    Uses the box scheme.
-    It should work for all dimensions and element types.
-    All the numbering is with respect to the reference element and the
-    Lagrange shape functions
+ Uses the box scheme.
+ It should work for all dimensions and element types.
+ All the numbering is with respect to the reference element and the
+ Lagrange shape functions
 
-    Template parameters are:
+ Template parameters are:
 
-    - Grid    a DUNE grid type
-    - Scalar  type used for return values
-  */
+ - Grid    a DUNE grid type
+ - Scalar  type used for return values
+*/
 
-  template<class Grid, class Scalar, class BoxFunction = LeafP1Function<Grid, Scalar, 2> > class BoxPnSwJacobian
+template<class Grid, class Scalar, class BoxFunction = LeafP1Function<Grid, Scalar, 2> > class BoxPnSwJacobian
     : public BoxJacobian<BoxPnSwJacobian<Grid,Scalar,BoxFunction>,Grid,Scalar,2,BoxFunction>
-  {
+{
     typedef typename Grid::Traits::template Codim<0>::Entity Entity;
     typedef typename Entity::Geometry Geometry;
     typedef BoxPnSwJacobian<Grid,Scalar,BoxFunction> ThisType;
     typedef typename LocalJacobian<ThisType,Grid,Scalar,2>::VBlockType VBlockType;
     typedef typename LocalJacobian<ThisType,Grid,Scalar,2>::MBlockType MBlockType;
-     enum {pNIdx = 0, satWIdx = 1};
-     enum {nPhase = 0, wPhase = 1};
+    enum {pNIdx = 0, satWIdx = 1};
+    enum {nPhase = 0, wPhase = 1};
 
 
-  public:
+public:
     // define the number of components of your system, this is used outside
     // to allocate the correct size of (dense) blocks with a FieldMatrix
     enum {dim=Grid::dimension};
@@ -67,14 +67,14 @@ namespace Dune
 
     //! Constructor
     BoxPnSwJacobian (TwoPhaseProblem<Grid,Scalar>& params,
-                  bool levelBoundaryAsDirichlet_, const Grid& grid,
-                  BoxFunction& sol,
-                  bool procBoundaryAsDirichlet_=true)
-    : BoxJacobian<ThisType,Grid,Scalar,2,BoxFunction>(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_),
-      problem(params),
-      statNData(this->vertexMapper.size()), varNData(SIZE), oldVarNData(SIZE)
+                     bool levelBoundaryAsDirichlet_, const Grid& grid,
+                     BoxFunction& sol,
+                     bool procBoundaryAsDirichlet_=true)
+        : BoxJacobian<ThisType,Grid,Scalar,2,BoxFunction>(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_),
+          problem(params),
+          statNData(this->vertexMapper.size()), varNData(SIZE), oldVarNData(SIZE)
     {
-      this->analytic = false;
+        this->analytic = false;
     }
 
     void clearVisited ()
@@ -84,10 +84,10 @@ namespace Dune
 
     // compute storage term
     VBlockType computeStorage (const Entity& element, const VBlockType* sol,
-            int node, const std::vector<VariableNodeData>& varData)
+                               int node, const std::vector<VariableNodeData>& varData)
     {
         VBlockType result;
-     //std::cout << "rhoW = " << varData[node].density[sWIdx] << ", rhoN = " << varData[node].density[pNIdx] << std::endl;
+        //std::cout << "rhoW = " << varData[node].density[sWIdx] << ", rhoN = " << varData[node].density[pNIdx] << std::endl;
         result[nPhase] = varData[node].density[nPhase]*elData.porosity*varData[node].satN;
         result[wPhase] = varData[node].density[wPhase]*elData.porosity*varData[node].satW;
 
@@ -102,53 +102,53 @@ namespace Dune
             return computeM(element, sol, node, varNData);
     }
 
-      // compute flux term
+    // compute flux term
     VBlockType computeFlux (const Entity& element, const VBlockType* sol, int face)
     {
         int i = this->fvGeom.subContVolFace[face].i;
-          int j = this->fvGeom.subContVolFace[face].j;
+        int j = this->fvGeom.subContVolFace[face].j;
 
-          // permeability in edge direction
-          FieldVector<Scalar,dim> Kij(0);
-          elData.K.umv(this->fvGeom.subContVolFace[face].normal, Kij);
+        // permeability in edge direction
+        FieldVector<Scalar,dim> Kij(0);
+        elData.K.umv(this->fvGeom.subContVolFace[face].normal, Kij);
 
-          VBlockType flux;
-          for (int phase = 0; phase < numEq; phase++)
-          {
-              // calculate FE gradient of the pressure
-              FieldVector<Scalar, dim> pGrad(0);
-              Scalar densityIJ = 0;
-              for (int vert = 0; vert < this->fvGeom.numVertices; vert++)
-              {
-                  FieldVector<Scalar,dim> grad(this->fvGeom.subContVolFace[face].grad[vert]);
-                  if (phase == nPhase)
-                        grad *= sol[vert][pNIdx];
-                  else if (phase == wPhase)
-                        grad *= varNData[vert].pW;
-                  pGrad += grad;
+        VBlockType flux;
+        for (int phase = 0; phase < numEq; phase++)
+            {
+                // calculate FE gradient of the pressure
+                FieldVector<Scalar, dim> pGrad(0);
+                Scalar densityIJ = 0;
+                for (int vert = 0; vert < this->fvGeom.numVertices; vert++)
+                    {
+                        FieldVector<Scalar,dim> grad(this->fvGeom.subContVolFace[face].grad[vert]);
+                        if (phase == nPhase)
+                            grad *= sol[vert][pNIdx];
+                        else if (phase == wPhase)
+                            grad *= varNData[vert].pW;
+                        pGrad += grad;
 
-                  densityIJ += varNData[vert].density[phase]*this->fvGeom.subContVolFace[face].shapeValue[vert];
-              }
+                        densityIJ += varNData[vert].density[phase]*this->fvGeom.subContVolFace[face].shapeValue[vert];
+                    }
 
-              // adjust by gravity
-              FieldVector<Scalar, dim> gravity = problem.gravity();
-              gravity *= densityIJ;
-              pGrad -= gravity;
+                // adjust by gravity
+                FieldVector<Scalar, dim> gravity = problem.gravity();
+                gravity *= densityIJ;
+                pGrad -= gravity;
 
-              // calculate the flux using fully upwind
-              Scalar outward = pGrad*Kij;
-              if (outward < 0)
-                  flux[phase] = varNData[i].density[phase]*varNData[i].mobility[phase]*outward;
-              else
-                  flux[phase] = varNData[j].density[phase]*varNData[j].mobility[phase]*outward;
-          }
+                // calculate the flux using fully upwind
+                Scalar outward = pGrad*Kij;
+                if (outward < 0)
+                    flux[phase] = varNData[i].density[phase]*varNData[i].mobility[phase]*outward;
+                else
+                    flux[phase] = varNData[j].density[phase]*varNData[j].mobility[phase]*outward;
+            }
 
-          return flux;
-   };
+        return flux;
+    };
 
 
-      // compute sources/sinks
-      VBlockType computeSource (const Entity& element, const VBlockType* sol, const int& node)
+    // compute sources/sinks
+    VBlockType computeSource (const Entity& element, const VBlockType* sol, const int& node)
     {
         // ASSUME problem.q already contains \rho.q
         return problem.q(this->fvGeom.subContVol[node].global, element, this->fvGeom.subContVol[node].local);
@@ -156,85 +156,85 @@ namespace Dune
 
 
 
-      //*********************************************************
-      //*                                                                            *
-      //*    Calculation of Data at Elements                                 *
-      //*                                                                             *
-      //*                                                                             *
-      //*********************************************************
+    //*********************************************************
+    //*                                                                            *
+    //*    Calculation of Data at Elements                                 *
+    //*                                                                             *
+    //*                                                                             *
+    //*********************************************************
 
     void computeElementData (const Entity& element)
     {
-           // ASSUMING element-wise constant permeability and porosity, evaluate at the element center
-          elData.K = this->problem.soil().K(this->fvGeom.elementGlobal, element, this->fvGeom.elementLocal);
-          elData.porosity = this->problem.soil().porosity(this->fvGeom.elementGlobal, element, this->fvGeom.elementLocal);
+        // ASSUMING element-wise constant permeability and porosity, evaluate at the element center
+        elData.K = this->problem.soil().K(this->fvGeom.elementGlobal, element, this->fvGeom.elementLocal);
+        elData.porosity = this->problem.soil().porosity(this->fvGeom.elementGlobal, element, this->fvGeom.elementLocal);
     };
 
 
-      //*********************************************************
-      //*                                                                            *
-      //*    Calculation of Data at Nodes that has to be                 *
-      //*    determined only once    (statNData)                                 *
-      //*                                                                             *
-      //*********************************************************
+    //*********************************************************
+    //*                                                                            *
+    //*    Calculation of Data at Nodes that has to be                 *
+    //*    determined only once    (statNData)                                 *
+    //*                                                                             *
+    //*********************************************************
 
     // analog to EvalStaticData in MUFTE
     void updateStaticData (const Entity& element, const VBlockType* sol)
     {
-      return;
+        return;
     }
 
 
-      //*********************************************************
-      //*                                                                            *
-      //*    Calculation of variable Data at Nodes                         *
-      //*    (varNData)                                                             *
-      //*                                                                             *
-      //*********************************************************
+    //*********************************************************
+    //*                                                                            *
+    //*    Calculation of variable Data at Nodes                         *
+    //*    (varNData)                                                             *
+    //*                                                                             *
+    //*********************************************************
 
 
     // the members of the struct are defined here
- struct VariableNodeData
- {
-    Scalar satN;
-    Scalar satW;
-    Scalar pC;
-    Scalar pW;
-    Scalar pN;
-    VBlockType mobility;  //Vector with the number of phases
-    VBlockType density;
-    FieldMatrix<Scalar,dim,dim> K;
-  };
+    struct VariableNodeData
+    {
+        Scalar satN;
+        Scalar satW;
+        Scalar pC;
+        Scalar pW;
+        Scalar pN;
+        VBlockType mobility;  //Vector with the number of phases
+        VBlockType density;
+        FieldMatrix<Scalar,dim,dim> K;
+    };
 
     // analog to EvalPrimaryData in MUFTE, uses members of varNData
     void updateVariableData(const Entity& element, const VBlockType* sol,
-            int i, std::vector<VariableNodeData>& varData)
+                            int i, std::vector<VariableNodeData>& varData)
     {
-             const int globalIdx = this->vertexMapper.template map<dim>(element, i);
-         FVector& global = this->fvGeom.subContVol[i].global;
-              FVector& local = this->fvGeom.subContVol[i].local;
+        const int globalIdx = this->vertexMapper.template map<dim>(element, i);
+        FVector& global = this->fvGeom.subContVol[i].global;
+        FVector& local = this->fvGeom.subContVol[i].local;
 
-              varData[i].satW = sol[i][satWIdx];
-         varData[i].satN = 1.0 - sol[i][satWIdx];
-         varData[i].pC = problem.materialLaw().pC(varData[i].satW, global, element, local);
-         varData[i].pN = sol[i][pNIdx];
-         varData[i].pW = sol[i][pNIdx] - varData[i].pC;
-         varData[i].mobility[wPhase] = problem.materialLaw().mobW(varData[i].satW, global, element, local);
-         varData[i].mobility[nPhase] = problem.materialLaw().mobN(varData[i].satN, global, element, local);
-         varData[i].density[wPhase] = problem.wettingPhase().density(283.15, varData[i].pW);
-         varData[i].density[nPhase] = problem.nonwettingPhase().density(283.15, varData[i].pN);
+        varData[i].satW = sol[i][satWIdx];
+        varData[i].satN = 1.0 - sol[i][satWIdx];
+        varData[i].pC = problem.materialLaw().pC(varData[i].satW, global, element, local);
+        varData[i].pN = sol[i][pNIdx];
+        varData[i].pW = sol[i][pNIdx] - varData[i].pC;
+        varData[i].mobility[wPhase] = problem.materialLaw().mobW(varData[i].satW, global, element, local);
+        varData[i].mobility[nPhase] = problem.materialLaw().mobN(varData[i].satN, global, element, local);
+        varData[i].density[wPhase] = problem.wettingPhase().density(283.15, varData[i].pW);
+        varData[i].density[nPhase] = problem.nonwettingPhase().density(283.15, varData[i].pN);
 
-           // for output
-         (*outPressureW)[globalIdx] = varData[i].pW;
-         (*outCapillaryP)[globalIdx] = varData[i].pC;
-         (*outSaturationW)[globalIdx] = varData[i].satW;
-         (*outSaturationN)[globalIdx] = varData[i].satN;
-         (*outDensityW)[globalIdx] = varData[i].density[wPhase];
-         (*outDensityN)[globalIdx] = varData[i].density[nPhase];
-         (*outMobilityW)[globalIdx] = varData[i].mobility[wPhase];
-         (*outMobilityN)[globalIdx] = varData[i].mobility[nPhase];
+        // for output
+        (*outPressureW)[globalIdx] = varData[i].pW;
+        (*outCapillaryP)[globalIdx] = varData[i].pC;
+        (*outSaturationW)[globalIdx] = varData[i].satW;
+        (*outSaturationN)[globalIdx] = varData[i].satN;
+        (*outDensityW)[globalIdx] = varData[i].density[wPhase];
+        (*outDensityN)[globalIdx] = varData[i].density[nPhase];
+        (*outMobilityW)[globalIdx] = varData[i].mobility[wPhase];
+        (*outMobilityN)[globalIdx] = varData[i].mobility[nPhase];
 
-         return;
+        return;
     }
 
     void updateVariableData(const Entity& element, const VBlockType* sol, int i, bool old = false)
@@ -251,7 +251,7 @@ namespace Dune
         int size = this->fvGeom.numVertices;
 
         for (int i = 0; i < size; i++)
-                updateVariableData(element, sol, i, old);
+            updateVariableData(element, sol, i, old);
     }
 
     struct StaticNodeData
@@ -261,9 +261,9 @@ namespace Dune
 
     struct ElementData {
         Scalar cellVolume;
-     Scalar porosity;
+        Scalar porosity;
         FieldMatrix<Scalar,dim,dim> K;
-        } elData;
+    } elData;
 
     // parameters given in constructor
     TwoPhaseProblem<Grid,Scalar>& problem;
@@ -271,19 +271,19 @@ namespace Dune
     std::vector<VariableNodeData> varNData;
     std::vector<VariableNodeData> oldVarNData;
 
-     // for output files
-     BlockVector<FieldVector<Scalar, 1> > *outPressureW;
-     BlockVector<FieldVector<Scalar, 1> > *outCapillaryP;
-     BlockVector<FieldVector<Scalar, 1> > *outSaturationN;
-     BlockVector<FieldVector<Scalar, 1> > *outSaturationW;
-     BlockVector<FieldVector<Scalar, 1> > *outDensityW;
-     BlockVector<FieldVector<Scalar, 1> > *outDensityN;
-     BlockVector<FieldVector<Scalar, 1> > *outMobilityW;
-     BlockVector<FieldVector<Scalar, 1> > *outMobilityN;
+    // for output files
+    BlockVector<FieldVector<Scalar, 1> > *outPressureW;
+    BlockVector<FieldVector<Scalar, 1> > *outCapillaryP;
+    BlockVector<FieldVector<Scalar, 1> > *outSaturationN;
+    BlockVector<FieldVector<Scalar, 1> > *outSaturationW;
+    BlockVector<FieldVector<Scalar, 1> > *outDensityW;
+    BlockVector<FieldVector<Scalar, 1> > *outDensityN;
+    BlockVector<FieldVector<Scalar, 1> > *outMobilityW;
+    BlockVector<FieldVector<Scalar, 1> > *outMobilityN;
 
 
-  };
+};
 
-  /** @} */
+/** @} */
 }
 #endif

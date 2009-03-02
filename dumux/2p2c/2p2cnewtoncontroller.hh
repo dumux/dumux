@@ -26,120 +26,120 @@
 #include <dumux/nonlinear/new_newtoncontroller.hh>
 
 namespace Dune {
-    /*!
-     * \brief A 2p2c specific controller for the newton solver.
-     *
-     * This controller 'knows' what a 'physically meaningful' solution is
-     * which allows the newton method to abort quicker if the solution is
-     * way out of bounds.
-     */
-    template <class NewtonMethod>
-    class TwoPTwoCNewtonController
-        : public NewtonControllerBase<NewtonMethod, TwoPTwoCNewtonController<NewtonMethod> >
+/*!
+ * \brief A 2p2c specific controller for the newton solver.
+ *
+ * This controller 'knows' what a 'physically meaningful' solution is
+ * which allows the newton method to abort quicker if the solution is
+ * way out of bounds.
+ */
+template <class NewtonMethod>
+class TwoPTwoCNewtonController
+    : public NewtonControllerBase<NewtonMethod, TwoPTwoCNewtonController<NewtonMethod> >
+{
+public:
+    typedef TwoPTwoCNewtonController<NewtonMethod>        ThisType;
+    typedef NewtonControllerBase<NewtonMethod, ThisType>  ParentType;
+
+    typedef typename NewtonMethod::Model           Model;
+    typedef typename ParentType::Scalar            Scalar;
+    typedef typename ParentType::Function          Function;
+    typedef typename ParentType::JacobianAssembler JacobianAssembler;
+
+    TwoPTwoCNewtonController(Scalar tolerance = 1e-5,
+                             int targetSteps = 8,
+                             int maxSteps = 12)
+        : ParentType(tolerance, targetSteps, maxSteps), minStepsSwitch(8)
+    {};
+
+    //! Suggest a new time stepsize based either on the number of newton
+    //! iterations required or on the variable switch
+    Scalar suggestTimeStepSize(Scalar oldTimeStep) const
     {
-    public:
-        typedef TwoPTwoCNewtonController<NewtonMethod>        ThisType;
-        typedef NewtonControllerBase<NewtonMethod, ThisType>  ParentType;
+        /*
+          if (ParentType::model().checkSwitched()) {
+          return somethingSmall;
+          }
+        */
+        // use function of the newtoncontroller
+        return ParentType::suggestTimeStepSize(oldTimeStep);
+    }
 
-        typedef typename NewtonMethod::Model           Model;
-        typedef typename ParentType::Scalar            Scalar;
-        typedef typename ParentType::Function          Function;
-        typedef typename ParentType::JacobianAssembler JacobianAssembler;
+    //! Returns true if another iteration should be done.
+    bool newtonProceed(Function &u)
+    {
+        return ParentType::newtonProceed(u);
 
-        TwoPTwoCNewtonController(Scalar tolerance = 1e-5,
-                                 int targetSteps = 8,
-                                 int maxSteps = 12)
-            : ParentType(tolerance, targetSteps, maxSteps), minStepsSwitch(8)
-            {};
+        if (ParentType::newtonConverged()){
+            ParentType::model().clearSwitched();
+            return false;
+        }
+        if (ParentType::model().checkSwitched() && ParentType::numSteps_ <= minStepsSwitch && !ParentType::newtonConverged())
+            return true; // do at least some iterations after variable switch
+        else if (ParentType::model().checkSwitched() && ParentType::numSteps_ > minStepsSwitch) {
+            ParentType::model().clearSwitched();
+            return false; // if after some iterations no convergence was reached
+        }
+        else
+            return ParentType::newtonProceed(u);
+    }
 
-        //! Suggest a new time stepsize based either on the number of newton
-        //! iterations required or on the variable switch
-        Scalar suggestTimeStepSize(Scalar oldTimeStep) const
+    void newtonBeginStep()
+    {
+        ParentType::newtonBeginStep();
+
+        ParentType::model().localJacobian().clearVisited();;
+        ParentType::model().setSwitchedLocalToGlobal();
+    }
+
+
+protected:
+    friend class NewtonControllerBase<NewtonMethod, ThisType>;
+    int minStepsSwitch;
+
+    //! called by the base class the get an indication of how physical
+    //! an iterative solution is 1 means "completely physical", 0 means
+    //! "completely unphysical"
+    Scalar physicalness_(Function &u)
+    {
+        return 1.0;
+
+        const Scalar switchVarNormFactor = 1.0; // standarization value
+
+        // the maximum distance of a Sn value to a physically
+        // meaningful value.
+        Scalar maxSwitchVarDelta = 0;
+        Scalar maxPwDelta = 0;
+        Scalar switchVar;
+        Scalar pW;
+
+        for (int idx = 0; idx < (int) (*u).size(); idx++)
             {
-                /*
-                if (ParentType::model().checkSwitched()) {
-                    return somethingSmall;
+                pW = (*u)[idx][0];
+                switchVar = (*u)[idx][1];
+
+                if (switchVar < 0) {
+                    maxSwitchVarDelta = std::max(maxSwitchVarDelta, std::abs(switchVar));
                 }
-                */
-                // use function of the newtoncontroller
-                return ParentType::suggestTimeStepSize(oldTimeStep);
+                else if (switchVar > 1) {
+                    maxSwitchVarDelta = std::max(maxSwitchVarDelta, std::abs(switchVar - 1));
+                }
+                if (pW < 0.0){
+                    maxPwDelta = std::max(maxPwDelta, std::abs(pW/1e5));
+                }
             }
 
-        //! Returns true if another iteration should be done.
-        bool newtonProceed(Function &u)
-            {
-                return ParentType::newtonProceed(u);
+        // we accept solutions up to 0.2 percent bigger than 1
+        // or smaller than 0 as being physical for numerical
+        // reasons...
+        Scalar phys = 1.02 - maxSwitchVarDelta/switchVarNormFactor - maxPwDelta;
 
-                if (ParentType::newtonConverged()){
-                    ParentType::model().clearSwitched();
-                    return false;
-                }
-                if (ParentType::model().checkSwitched() && ParentType::numSteps_ <= minStepsSwitch && !ParentType::newtonConverged())
-                    return true; // do at least some iterations after variable switch
-                else if (ParentType::model().checkSwitched() && ParentType::numSteps_ > minStepsSwitch) {
-                    ParentType::model().clearSwitched();
-                    return false; // if after some iterations no convergence was reached
-                }
-                else
-                    return ParentType::newtonProceed(u);
-            }
-
-        void newtonBeginStep()
-            {
-                ParentType::newtonBeginStep();
-
-                ParentType::model().localJacobian().clearVisited();;
-                ParentType::model().setSwitchedLocalToGlobal();
-            }
-
-
-    protected:
-        friend class NewtonControllerBase<NewtonMethod, ThisType>;
-        int minStepsSwitch;
-
-        //! called by the base class the get an indication of how physical
-        //! an iterative solution is 1 means "completely physical", 0 means
-        //! "completely unphysical"
-        Scalar physicalness_(Function &u)
-            {
-                return 1.0;
-
-                const Scalar switchVarNormFactor = 1.0; // standarization value
-
-                // the maximum distance of a Sn value to a physically
-                // meaningful value.
-                Scalar maxSwitchVarDelta = 0;
-                Scalar maxPwDelta = 0;
-                Scalar switchVar;
-                Scalar pW;
-
-                for (int idx = 0; idx < (int) (*u).size(); idx++)
-                {
-                    pW = (*u)[idx][0];
-                    switchVar = (*u)[idx][1];
-
-                    if (switchVar < 0) {
-                        maxSwitchVarDelta = std::max(maxSwitchVarDelta, std::abs(switchVar));
-                    }
-                    else if (switchVar > 1) {
-                        maxSwitchVarDelta = std::max(maxSwitchVarDelta, std::abs(switchVar - 1));
-                    }
-                    if (pW < 0.0){
-                        maxPwDelta = std::max(maxPwDelta, std::abs(pW/1e5));
-                    }
-                }
-
-                // we accept solutions up to 0.2 percent bigger than 1
-                // or smaller than 0 as being physical for numerical
-                // reasons...
-                Scalar phys = 1.02 - maxSwitchVarDelta/switchVarNormFactor - maxPwDelta;
-
-                // we never return exactly zero, since we want to
-                // allow solutions which are "very close" to a
-                // physically meaningful one
-                return std::min(1.0, phys);
-            }
-    };
+        // we never return exactly zero, since we want to
+        // allow solutions which are "very close" to a
+        // physically meaningful one
+        return std::min(1.0, phys);
+    }
+};
 }
 
 #endif

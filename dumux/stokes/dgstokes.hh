@@ -30,12 +30,12 @@ namespace Dune
 /** \todo Please doc me! */
 
 template<class G,int v_order, int p_order>
-  class DGFiniteElementMethod
-  {
+class DGFiniteElementMethod
+{
     //dimension of grid
     enum {dim=G::dimension};
     enum { dimw=G::dimensionworld };
-  public:
+public:
     //Grid
     typedef G Grid;
     //coordinate type
@@ -73,7 +73,7 @@ template<class G,int v_order, int p_order>
 
 
     DGFiniteElementMethod (Grid &g, StokesProblem<Grid, ctype>& prob, const DGStokesParameters& par)
-    : grid(g), problem_(prob), parameter(par)
+        : grid(g), problem_(prob), parameter(par)
     {}
 
     //local assembly
@@ -88,39 +88,39 @@ template<class G,int v_order, int p_order>
     double evaluateSolution(int variable,const Entity& element,const Dune::FieldVector<ctype,dim>& local,
                             const LocalVectorBlock& xe) const;
     Gradient evaluateGradient(int variable,const Entity& element,const Dune::FieldVector<ctype,dim>& local,
-                            const LocalVectorBlock& xe) const;
+                              const LocalVectorBlock& xe) const;
     double evaluateL2error(int variable, const Entity& element, const LocalVectorBlock& xe)const;
 
     double evaluateH1error(int variable, const Entity& element, const LocalVectorBlock& xe)const;
 
     StokesProblem<Grid, ctype>& problem()
     {
-      return problem_;
+        return problem_;
     }
 
 
-  private:
+private:
     Grid& grid;
     StokesProblem<Grid, ctype>& problem_;
     Dune::MonomialShapeFunctionSetContainer<ctype,double,dim,v_order> vspace;
     Dune::MonomialShapeFunctionSetContainer<ctype,double,dim,(p_order)> pspace;
     DGStokesParameters parameter;
-  };
+};
 
 /** \todo Please doc me! */
 
 template<class G,int v_order,int p_order>
-  class DGStokes
-  {
+class DGStokes
+{
 
-  public:
+public:
     //dimension of grid
     enum {dimension=G::dimension};
     enum { dimensionworld=G::dimensionworld };
     enum{v_ordr = v_order};
     enum{p_ordr=p_order};
     typedef G Grid;
-  private:
+private:
     enum {dim=G::dimension};
     enum { dimw=G::dimensionworld };
     typedef typename Grid::ctype ctype;
@@ -145,39 +145,39 @@ template<class G,int v_order,int p_order>
     typedef Dune::BlockVector<LocalVectorBlock> LVector;
     typedef Dune::BCRSMatrix<LocalMatrixBlock> LMatrix;
 
-  public:
+public:
     typedef LMatrix MatrixType;
     typedef G GridType;
 
-      MatrixType& matrix()
-      {
-          return A;
-      }
+    MatrixType& matrix()
+    {
+        return A;
+    }
 
-      LVector& rhs()
-      {
-          return b;
-      }
+    LVector& rhs()
+    {
+        return b;
+    }
 
-      LVector& sol()
-      {
-          return solution;
-      }
+    LVector& sol()
+    {
+        return solution;
+    }
 
-      void initial()
-      {}
+    void initial()
+    {}
 
     DGStokes(Grid &g, StokesProblem<Grid, ctype>& prob, DGStokesParameters& par)
-      : grid(g),level(g.maxLevel()), dgfem(g,prob,par)
+        : grid(g),level(g.maxLevel()), dgfem(g,prob,par)
     {
-      if (par.sigma==1 & par.epsilon==1)
-    std::cout<<"You are using NIPG scheme"<<std::endl;
-  else if(par.sigma==1 & par.epsilon==-1)
-    std::cout<<"You are using SIPG scheme"<<std::endl;
-  else if(par.sigma==0 & par.epsilon==1)
-    std::cout<<"You are using OBB scheme"<<std::endl;
-  else
-    std::cout<<"check DG parameters epsilon and sigma"<<std::endl;
+        if (par.sigma==1 & par.epsilon==1)
+            std::cout<<"You are using NIPG scheme"<<std::endl;
+        else if(par.sigma==1 & par.epsilon==-1)
+            std::cout<<"You are using SIPG scheme"<<std::endl;
+        else if(par.sigma==0 & par.epsilon==1)
+            std::cout<<"You are using OBB scheme"<<std::endl;
+        else
+            std::cout<<"check DG parameters epsilon and sigma"<<std::endl;
     };
 
     // global assembly and solving
@@ -197,18 +197,18 @@ template<class G,int v_order,int p_order>
     void convertToCellData(int variable, BlockVector<FieldVector<double, 1> >& cellData);
     void vtkout (const char* name, int k);
 
-  private:
+private:
     typedef typename DGFiniteElementMethod<G,v_order,p_order>::ShapeFunctionSet ShapeFunctionSet;
     inline const ShapeFunctionSet & getVelocityShapeFunctionSet(const EntityPointer &ep) const;
     inline const ShapeFunctionSet & getPressureShapeFunctionSet(const EntityPointer &ep) const;
-  public:
+public:
     Grid & grid;
     int level;
     DGFiniteElementMethod<G,v_order,p_order> dgfem;
     LMatrix A;
     LVector b;
     LVector solution;
-  };
+};
 
 
 

@@ -22,33 +22,33 @@
 
 namespace Dune
 {
-  //! base class that defines the parameters of a diffusion equation
-  /*! An interface for defining parameters for the stationary diffusion equation
-   * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = q, \f$,
-   * \f$p = g\f$ on \f$\Gamma_1\f$, and \f$\lambda K \text{grad}\, p = J\f$
-   * on \f$\Gamma_2\f$. Here,
-   * \f$p\f$ denotes the pressure, \f$K\f$ the absolute permeability,
-   * and \f$\lambda\f$ the total mobility, possibly depending on the
-   * saturation.
-   *
-   *    Template parameters are:
-   *
-   *    - Grid  a DUNE grid type
-   *    - RT    type used for return values
-   */
-  template<class G, class RT>
-  class LensProblemWithID : public TwoPhaseProblem<G, RT> {
+//! base class that defines the parameters of a diffusion equation
+/*! An interface for defining parameters for the stationary diffusion equation
+ * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = q, \f$,
+ * \f$p = g\f$ on \f$\Gamma_1\f$, and \f$\lambda K \text{grad}\, p = J\f$
+ * on \f$\Gamma_2\f$. Here,
+ * \f$p\f$ denotes the pressure, \f$K\f$ the absolute permeability,
+ * and \f$\lambda\f$ the total mobility, possibly depending on the
+ * saturation.
+ *
+ *    Template parameters are:
+ *
+ *    - Grid  a DUNE grid type
+ *    - RT    type used for return values
+ */
+template<class G, class RT>
+class LensProblemWithID : public TwoPhaseProblem<G, RT> {
     typedef typename G::ctype DT;
     enum {n=G::dimension, m=2};
     typedef typename G::Traits::template Codim<0>::Entity Entity;
     typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
 
-  public:
+public:
     enum {pWIdx = 0, sNIdx = 1};
     enum {swrIdx = 0, snrIdx = 1, alphaIdx = 2, nIdx = 3};
 
     virtual const FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x, const Entity& e,
-                    const FieldVector<DT,n>& xi)
+                                          const FieldVector<DT,n>& xi)
     {
         if (x[0] > innerLowerLeft_[0] && x[0] < innerUpperRight_[0]
             && x[1] > innerLowerLeft_[1] && x[1] < innerUpperRight_[1])
@@ -58,7 +58,7 @@ namespace Dune
     }
 
     virtual FieldVector<RT,m> q (const FieldVector<DT,n>& x, const Entity& e,
-                    const FieldVector<DT,n>& xi) const
+                                 const FieldVector<DT,n>& xi) const
     {
         FieldVector<RT,m> values(0);
 
@@ -66,8 +66,8 @@ namespace Dune
     }
 
     virtual FieldVector<BoundaryConditions::Flags, m> bctype (const FieldVector<DT,n>& x, const Entity& e,
-                    const IntersectionIterator& intersectionIt,
-                       const FieldVector<DT,n>& xi) const
+                                                              const IntersectionIterator& intersectionIt,
+                                                              const FieldVector<DT,n>& xi) const
     {
         FieldVector<BoundaryConditions::Flags, m> values(BoundaryConditions::neumann);
 
@@ -84,8 +84,8 @@ namespace Dune
     }
 
     virtual FieldVector<RT,m> g (const FieldVector<DT,n>& x, const Entity& e,
-                const IntersectionIterator& intersectionIt,
-                  const FieldVector<DT,n>& xi) const
+                                 const IntersectionIterator& intersectionIt,
+                                 const FieldVector<DT,n>& xi) const
     {
         FieldVector<RT,m> values(0);
 
@@ -111,8 +111,8 @@ namespace Dune
     }
 
     virtual FieldVector<RT,m> J (const FieldVector<DT,n>& x, const Entity& e,
-                const IntersectionIterator& intersectionIt,
-                  const FieldVector<DT,n>& xi) const
+                                 const IntersectionIterator& intersectionIt,
+                                 const FieldVector<DT,n>& xi) const
     {
         FieldVector<RT,m> values(0);
 
@@ -123,7 +123,7 @@ namespace Dune
     }
 
     virtual FieldVector<RT,m> initial (const FieldVector<DT,n>& x, const Entity& e,
-                  const FieldVector<DT,n>& xi) const
+                                       const FieldVector<DT,n>& xi) const
     {
         FieldVector<RT,m> values;
 
@@ -139,7 +139,7 @@ namespace Dune
     }
 
     double porosity (const FieldVector<DT,n>& x, const Entity& e,
-              const FieldVector<DT,n>& xi) const
+                     const FieldVector<DT,n>& xi) const
     {
         if (x[0] > innerLowerLeft_[0] && x[0] < innerUpperRight_[0]
             && x[1] > innerLowerLeft_[1] && x[1] < innerUpperRight_[1])
@@ -154,7 +154,7 @@ namespace Dune
     }
 
     virtual FieldVector<RT,4> materialLawParameters (const FieldVector<DT,n>& x, const Entity& e,
-              const FieldVector<DT,n>& xi) const
+                                                     const FieldVector<DT,n>& xi) const
     {
         FieldVector<RT,4> values;
 
@@ -176,22 +176,22 @@ namespace Dune
     }
 
     LensProblemWithID(TwoPhaseRelations& law = *(new DeprecatedLinearLaw),
-            const FieldVector<DT,n> outerLowerLeft = 0, const FieldVector<DT,n> outerUpperRight = 0,
-            const FieldVector<DT,n> innerLowerLeft = 0, const FieldVector<DT,n> innerUpperRight = 0,
-            RT outerK = 4.6e-10, RT innerK = 9.05e-13,
-            RT outerSwr = 0.05, RT outerSnr = 0, RT innerSwr = 0.18, RT innerSnr = 0,
-            RT outerPorosity = 0.4, RT innerPorosity = 0.4,
-            RT outerAlpha = 0.0037, RT innerAlpha = 0.00045,
-            RT outerN = 4.7, RT innerN = 7.3)
-    : TwoPhaseProblem<G, RT>(law),
-      outerLowerLeft_(outerLowerLeft), outerUpperRight_(outerUpperRight),
-      innerLowerLeft_(innerLowerLeft), innerUpperRight_(innerUpperRight),
-      eps_(1e-8*outerUpperRight[0]),
-      densityW_(law.wettingPhase.density()), densityN_(law.nonwettingPhase.density()),
-      outerSwr_(outerSwr), outerSnr_(outerSnr), innerSwr_(innerSwr), innerSnr_(innerSnr),
-      outerPorosity_(outerPorosity), innerPorosity_(innerPorosity),
-      outerAlpha_(outerAlpha), innerAlpha_(innerAlpha),
-      outerN_(outerN), innerN_(innerN)
+                      const FieldVector<DT,n> outerLowerLeft = 0, const FieldVector<DT,n> outerUpperRight = 0,
+                      const FieldVector<DT,n> innerLowerLeft = 0, const FieldVector<DT,n> innerUpperRight = 0,
+                      RT outerK = 4.6e-10, RT innerK = 9.05e-13,
+                      RT outerSwr = 0.05, RT outerSnr = 0, RT innerSwr = 0.18, RT innerSnr = 0,
+                      RT outerPorosity = 0.4, RT innerPorosity = 0.4,
+                      RT outerAlpha = 0.0037, RT innerAlpha = 0.00045,
+                      RT outerN = 4.7, RT innerN = 7.3)
+        : TwoPhaseProblem<G, RT>(law),
+          outerLowerLeft_(outerLowerLeft), outerUpperRight_(outerUpperRight),
+          innerLowerLeft_(innerLowerLeft), innerUpperRight_(innerUpperRight),
+          eps_(1e-8*outerUpperRight[0]),
+          densityW_(law.wettingPhase.density()), densityN_(law.nonwettingPhase.density()),
+          outerSwr_(outerSwr), outerSnr_(outerSnr), innerSwr_(innerSwr), innerSnr_(innerSnr),
+          outerPorosity_(outerPorosity), innerPorosity_(innerPorosity),
+          outerAlpha_(outerAlpha), innerAlpha_(innerAlpha),
+          outerN_(outerN), innerN_(innerN)
     {
         outerK_[0][0] = outerK_[1][1] = outerK;
         outerK_[0][1] = outerK_[1][0] = 0;
@@ -206,22 +206,22 @@ namespace Dune
         gravity_[1] = -9.81;
     }
 
-    private:
-        FieldMatrix<DT,n,n> outerK_;
-        FieldMatrix<DT,n,n> innerK_;
-        FieldVector<DT,n> outerLowerLeft_;
-        FieldVector<DT,n> outerUpperRight_;
-        FieldVector<DT,n> innerLowerLeft_;
-        FieldVector<DT,n> innerUpperRight_;
-        DT width_, height_;
-        DT eps_;
-        RT densityW_, densityN_;
-        FieldVector<DT,n> gravity_;
-        RT outerSwr_, outerSnr_, innerSwr_, innerSnr_;
-        RT outerPorosity_, innerPorosity_;
-        RT outerAlpha_, innerAlpha_;
-        RT outerN_, innerN_;
-  };
+private:
+    FieldMatrix<DT,n,n> outerK_;
+    FieldMatrix<DT,n,n> innerK_;
+    FieldVector<DT,n> outerLowerLeft_;
+    FieldVector<DT,n> outerUpperRight_;
+    FieldVector<DT,n> innerLowerLeft_;
+    FieldVector<DT,n> innerUpperRight_;
+    DT width_, height_;
+    DT eps_;
+    RT densityW_, densityN_;
+    FieldVector<DT,n> gravity_;
+    RT outerSwr_, outerSnr_, innerSwr_, innerSnr_;
+    RT outerPorosity_, innerPorosity_;
+    RT outerAlpha_, innerAlpha_;
+    RT outerN_, innerN_;
+};
 
 }
 #endif

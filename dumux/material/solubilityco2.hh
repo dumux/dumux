@@ -20,25 +20,25 @@ public:
         // regularisations:
 
         if(pg > 2.5e8)
-        {
-            pg = 2.5e8;
-        }
+            {
+                pg = 2.5e8;
+            }
 
         if(pg < 2.e5)
-        {
-            pg = 2.e5;
-        }
+            {
+                pg = 2.e5;
+            }
 
         if(Temp < 275.)
-        {
-            Temp = 275;
-        }
+            {
+                Temp = 275;
+            }
 
         if(Temp > 600.)
-        {
-            Temp = 600;
-        }
-                            /* X_NaCl: salinity: mass fraction [-] */
+            {
+                Temp = 600;
+            }
+        /* X_NaCl: salinity: mass fraction [-] */
         double x_NaCl;      /* salinity: mole fraction [-] */
         double mol_NaCl;    /* salinity: molality [mol/kg water] */
         double Mw, Ms, MCO2;
@@ -117,55 +117,55 @@ public:
 
     double Henry_coeff(double Temp, double molality)
     {
-            int i;
-            double exponent;
-            double Henry;
-            double kb, Kh;
-            double B[6], C[5];
+        int i;
+        double exponent;
+        double Henry;
+        double kb, Kh;
+        double B[6], C[5];
 
-            /* Regularisierung */
-            if (Temp > 623.15) Temp = 623.15;
-            if (Temp < 273.15) Temp = 273.15;
+        /* Regularisierung */
+        if (Temp > 623.15) Temp = 623.15;
+        if (Temp < 273.15) Temp = 273.15;
 
-            Temp = Temp - 273.15;   /* Temp in [°C] */
+        Temp = Temp - 273.15;   /* Temp in [°C] */
 
 
-            /* calculation of kb (salting out coefficient) */
+        /* calculation of kb (salting out coefficient) */
 
-            C[0] =  1.19784E-1;
-            C[1] = -7.17823E-4;
-            C[2] =  4.93854E-6;
-            C[3] = -1.03826E-8;
-            C[4] =  1.08233E-11;
+        C[0] =  1.19784E-1;
+        C[1] = -7.17823E-4;
+        C[2] =  4.93854E-6;
+        C[3] = -1.03826E-8;
+        C[4] =  1.08233E-11;
 
-            kb = 0.0;
+        kb = 0.0;
 
-            for (i = 0; i < 5; i++)
+        for (i = 0; i < 5; i++)
             {
-                    kb += C[i] * pow(Temp, i);
+                kb += C[i] * pow(Temp, i);
             }
 
-            /* calculation of Henry's constant of pure water (Kh) */
+        /* calculation of Henry's constant of pure water (Kh) */
 
-            B[0] =  7.83666E7;
-            B[1] =  1.96025E6;
-            B[2] =  8.20574E4;
-            B[3] = -7.40674E2;
-            B[4] =  2.1838;
-            B[5] = -2.20999E-3;
+        B[0] =  7.83666E7;
+        B[1] =  1.96025E6;
+        B[2] =  8.20574E4;
+        B[3] = -7.40674E2;
+        B[4] =  2.1838;
+        B[5] = -2.20999E-3;
 
-            Kh = 0.0;
+        Kh = 0.0;
 
-            for (i = 0; i < 6; i++)
+        for (i = 0; i < 6; i++)
             {
-                    Kh += B[i] * pow(Temp, i);
+                Kh += B[i] * pow(Temp, i);
             }
 
-            exponent = molality * kb;
+        exponent = molality * kb;
 
-            Henry = Kh * pow(10, exponent);
+        Henry = Kh * pow(10, exponent);
 
-            return(Henry);
+        return(Henry);
     }
 
     /****************************************************************/
@@ -298,39 +298,39 @@ public:
         {
             Vc = 0.1; Vd = Vc+0.0001;i=-1;
             for (n=1; n<=20; n++)
-            {
-                c = Tr/(pr*Vc) * (1 + A/Vc + B/(Vc*Vc) + C/(Vc*Vc*Vc*Vc) + D/(Vc*Vc*Vc*Vc*Vc) + a13/(Tr*Tr*Tr*Vc*Vc)*(a14+a15/(Vc*Vc))*exp(-a15/(Vc*Vc))) - 1.0;
-                d = Tr/(pr*Vd) * (1 + A/Vd + B/(Vd*Vd) + C/(Vd*Vd*Vd*Vd) + D/(Vd*Vd*Vd*Vd*Vd) + a13/(Tr*Tr*Tr*Vd*Vd)*(a14+a15/(Vd*Vd))*exp(-a15/(Vd*Vd))) - 1.0;
-                Ve = Vc - (c*(Vd-Vc))/(d-c);
-                e = Tr/(pr*Ve) * (1 + A/Ve + B/(Ve*Ve) + C/(Ve*Ve*Ve*Ve) + D/(Ve*Ve*Ve*Ve*Ve) + a13/(Tr*Tr*Tr*Ve*Ve)*(a14+a15/(Ve*Ve))*exp(-a15/(Ve*Ve))) - 1.0;
-                if(fabs(e)<1.0E-4) break;
-                Vc=Ve;
-                Vd = Vc+0.0001*Vc;
-            }
+                {
+                    c = Tr/(pr*Vc) * (1 + A/Vc + B/(Vc*Vc) + C/(Vc*Vc*Vc*Vc) + D/(Vc*Vc*Vc*Vc*Vc) + a13/(Tr*Tr*Tr*Vc*Vc)*(a14+a15/(Vc*Vc))*exp(-a15/(Vc*Vc))) - 1.0;
+                    d = Tr/(pr*Vd) * (1 + A/Vd + B/(Vd*Vd) + C/(Vd*Vd*Vd*Vd) + D/(Vd*Vd*Vd*Vd*Vd) + a13/(Tr*Tr*Tr*Vd*Vd)*(a14+a15/(Vd*Vd))*exp(-a15/(Vd*Vd))) - 1.0;
+                    Ve = Vc - (c*(Vd-Vc))/(d-c);
+                    e = Tr/(pr*Ve) * (1 + A/Ve + B/(Ve*Ve) + C/(Ve*Ve*Ve*Ve) + D/(Ve*Ve*Ve*Ve*Ve) + a13/(Tr*Tr*Tr*Ve*Ve)*(a14+a15/(Ve*Ve))*exp(-a15/(Ve*Ve))) - 1.0;
+                    if(fabs(e)<1.0E-4) break;
+                    Vc=Ve;
+                    Vd = Vc+0.0001*Vc;
+                }
             V1=Ve;Vr=V1;n1=n;e1=e;
         }
         ConstrelCO2 constrelCO2;
         ps = constrelCO2.satpressure(T);
         Vc = 0.1; Vd = 85.0; i=-1;
         for (n=1; n<=30; n++)
-        {
-            c = Tr/(pr*Vc) * (1 + A/Vc + B/(Vc*Vc) + C/(Vc*Vc*Vc*Vc) + D/(Vc*Vc*Vc*Vc*Vc) + a13/(Tr*Tr*Tr*Vc*Vc)*(a14+a15/(Vc*Vc))*exp(-a15/(Vc*Vc))) - 1.0;
-            d = Tr/(pr*Vd) * (1 + A/Vd + B/(Vd*Vd) + C/(Vd*Vd*Vd*Vd) + D/(Vd*Vd*Vd*Vd*Vd) + a13/(Tr*Tr*Tr*Vd*Vd)*(a14+a15/(Vd*Vd))*exp(-a15/(Vd*Vd))) - 1.0;
-            if (i<n) Ve = (Vc+Vd)/2;
-            else Ve = Vd-((Vd-Vc)*d)/(d-c);
-            e = Tr/(pr*Ve) * (1 + A/Ve + B/(Ve*Ve) + C/(Ve*Ve*Ve*Ve) + D/(Ve*Ve*Ve*Ve*Ve) + a13/(Tr*Tr*Tr*Ve*Ve)*(a14+a15/(Ve*Ve))*exp(-a15/(Ve*Ve))) - 1.0;
-            if(fabs(e)<1.0E-4) break;
-            if ((c*e)<0) Vd=Ve;
-            if ((d*e)<0) Vc=Ve;
-            i=-1.2*i;
-        }
+            {
+                c = Tr/(pr*Vc) * (1 + A/Vc + B/(Vc*Vc) + C/(Vc*Vc*Vc*Vc) + D/(Vc*Vc*Vc*Vc*Vc) + a13/(Tr*Tr*Tr*Vc*Vc)*(a14+a15/(Vc*Vc))*exp(-a15/(Vc*Vc))) - 1.0;
+                d = Tr/(pr*Vd) * (1 + A/Vd + B/(Vd*Vd) + C/(Vd*Vd*Vd*Vd) + D/(Vd*Vd*Vd*Vd*Vd) + a13/(Tr*Tr*Tr*Vd*Vd)*(a14+a15/(Vd*Vd))*exp(-a15/(Vd*Vd))) - 1.0;
+                if (i<n) Ve = (Vc+Vd)/2;
+                else Ve = Vd-((Vd-Vc)*d)/(d-c);
+                e = Tr/(pr*Ve) * (1 + A/Ve + B/(Ve*Ve) + C/(Ve*Ve*Ve*Ve) + D/(Ve*Ve*Ve*Ve*Ve) + a13/(Tr*Tr*Tr*Ve*Ve)*(a14+a15/(Ve*Ve))*exp(-a15/(Ve*Ve))) - 1.0;
+                if(fabs(e)<1.0E-4) break;
+                if ((c*e)<0) Vd=Ve;
+                if ((d*e)<0) Vc=Ve;
+                i=-1.2*i;
+            }
 
         V2=Ve;n2=n;
         if (T<=304.0 && ps>p) Vr=V2;
         else if (T>304.0) Vr=V2;
-    /*    printf("%5e %5e %5e %5e %5e\n", p,test1,test2,Vtest1,Vtest2);*/
+        /*    printf("%5e %5e %5e %5e %5e\n", p,test1,test2,Vtest1,Vtest2);*/
         if (e > 1.0E-4)
-        {
+            {
                 printf("Vorsicht: keine Loesung fuer Vr gefunden!!! \t p = %.2f bar T = %.2f K \n", p/1.0E5, T);
             }
         return(Vr);
@@ -406,7 +406,7 @@ public:
 
         Z = pr*Vr/Tr;
 
-     /*   printf("p = %.2f bar T = %.2f C \t Vr = %.4f \t Z = %.4f \n", pg/1.0E5, Temp-273.15, Vr, Z);*/
+        /*   printf("p = %.2f bar T = %.2f C \t Vr = %.4f \t Z = %.4f \n", pg/1.0E5, Temp-273.15, Vr, Z);*/
 
 
         return Z;
@@ -451,7 +451,7 @@ public:
         D = a10 + a11/(Tr*Tr) + a12/(Tr*Tr*Tr);
 
         lnphiCO2 =  Z - 1 - log(Z) + A/Vr + B/(2*Vr*Vr) + C/(4*Vr*Vr*Vr*Vr) + D/(5*Vr*Vr*Vr*Vr*Vr)
-                  + a13/(2*Tr*Tr*Tr*a15) * ( a14 + 1 - (a14+1+a15/(Vr*Vr))*exp(-a15/(Vr*Vr)) );
+            + a13/(2*Tr*Tr*Tr*a15) * ( a14 + 1 - (a14+1+a15/(Vr*Vr))*exp(-a15/(Vr*Vr)) );
 
         phiCO2 = exp(lnphiCO2);
 
@@ -467,24 +467,24 @@ public:
 
     double pure_water_pressure (double Temp)
     {
-      double pcrit, Tcrit;
-      double c1, c2, c3, c4, c5;
-      double t, P;
+        double pcrit, Tcrit;
+        double c1, c2, c3, c4, c5;
+        double t, P;
 
-      pcrit = 2.2085E7;     /* critical pressure [Pa] */
-      Tcrit = 647.29;     /* critical temperature [K] */
+        pcrit = 2.2085E7;     /* critical pressure [Pa] */
+        Tcrit = 647.29;     /* critical temperature [K] */
 
-      c1    = -38.640844;
-      c2    = 5.8948420;
-      c3    = 59.876516;
-      c4    = 26.654627;
-      c5    = 10.637097;
+        c1    = -38.640844;
+        c2    = 5.8948420;
+        c3    = 59.876516;
+        c4    = 26.654627;
+        c5    = 10.637097;
 
-      t = (Temp - Tcrit)/Tcrit;
+        t = (Temp - Tcrit)/Tcrit;
 
-      P = pcrit*Temp/Tcrit * (1 + c1*pow(-t,1.9) + c2*t + c3*t*t + c4*t*t*t + c5*t*t*t*t);
+        P = pcrit*Temp/Tcrit * (1 + c1*pow(-t,1.9) + c2*t + c3*t*t + c4*t*t*t + c5*t*t*t*t);
 
-      return P;
+        return P;
     }
 
 };

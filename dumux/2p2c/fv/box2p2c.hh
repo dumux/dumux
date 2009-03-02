@@ -48,13 +48,13 @@
 namespace Dune
 {
 /**
-\brief Isothermal two phase two component model with Pw and Sn/X as primary unknowns
+   \brief Isothermal two phase two component model with Pw and Sn/X as primary unknowns
 
-This implements an isothermal two phase two component model with Pw and Sn/X as primary unknowns
+   This implements an isothermal two phase two component model with Pw and Sn/X as primary unknowns
 */
 template<class GridT, class ScalarT, class VtkMultiWriter>
 class Box2P2C
-: public LeafP1TwoPhaseModel<GridT, ScalarT, TwoPTwoCProblem<GridT, ScalarT>, Box2P2CJacobian<GridT, ScalarT> >
+    : public LeafP1TwoPhaseModel<GridT, ScalarT, TwoPTwoCProblem<GridT, ScalarT>, Box2P2CJacobian<GridT, ScalarT> >
 {
 public:
     // define the problem type (also change the template argument above)
@@ -110,7 +110,7 @@ public:
     //////////////////////
 
     Box2P2C(const Grid& grid, ProblemType& prob)
-    : ThisLeafP1TwoPhaseModel(grid, prob)// (this->size) vectors
+        : ThisLeafP1TwoPhaseModel(grid, prob)// (this->size) vectors
     { }
 
     void initial()
@@ -147,120 +147,120 @@ public:
         // iterate through leaf grid an evaluate c0 at cell center
         Iterator eendit = gridview.template end<0>();
         for (Iterator it = gridview.template begin<0>(); it
-        != eendit; ++it)
-        {
-            // get geometry type
-            Dune::GeometryType gt = it->geometry().type();
-
-            // get entity
-            const Entity& entity = *it;
-
-            this->localJacobian().fvGeom.update(entity);
-
-            const typename Dune::LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::value_type
-            &sfs=Dune::LagrangeShapeFunctions<Scalar, Scalar, dim>::general(gt,1);
-
-            int size = sfs.size();
-
-            for (int i = 0; i < size; i++)
+                 != eendit; ++it)
             {
-                // get cell center in reference element
-                const Dune::FieldVector<Scalar,dim>&local = sfs[i].position();
+                // get geometry type
+                Dune::GeometryType gt = it->geometry().type();
 
-                // get global coordinate of cell center
-                Dune::FieldVector<Scalar,dimworld> global = it->geometry().global(local);
+                // get entity
+                const Entity& entity = *it;
 
-                int globalId = this->vertexmapper.template map<dim>(entity,
-                        sfs[i].entity());
+                this->localJacobian().fvGeom.update(entity);
 
-                // initialize cell concentration
-                (*(this->u))[globalId] = this->problem.initial(
-                        global, entity, local);
+                const typename Dune::LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::value_type
+                    &sfs=Dune::LagrangeShapeFunctions<Scalar, Scalar, dim>::general(gt,1);
 
-                // initialize variable phaseState
-                this->localJacobian().sNDat[globalId].phaseState =
-                    this->problem.initialPhaseState(global, entity, local);
-                // initialize variable oldPhaseState
-                this->localJacobian().sNDat[globalId].oldPhaseState =
-                    this->problem.initialPhaseState(global, entity, local);
+                int size = sfs.size();
 
+                for (int i = 0; i < size; i++)
+                    {
+                        // get cell center in reference element
+                        const Dune::FieldVector<Scalar,dim>&local = sfs[i].position();
+
+                        // get global coordinate of cell center
+                        Dune::FieldVector<Scalar,dimworld> global = it->geometry().global(local);
+
+                        int globalId = this->vertexmapper.template map<dim>(entity,
+                                                                            sfs[i].entity());
+
+                        // initialize cell concentration
+                        (*(this->u))[globalId] = this->problem.initial(
+                                                                       global, entity, local);
+
+                        // initialize variable phaseState
+                        this->localJacobian().sNDat[globalId].phaseState =
+                            this->problem.initialPhaseState(global, entity, local);
+                        // initialize variable oldPhaseState
+                        this->localJacobian().sNDat[globalId].oldPhaseState =
+                            this->problem.initialPhaseState(global, entity, local);
+
+                    }
+                this->localJacobian().clearVisited();
+                this->localJacobian().setLocalSolution(entity);
+                this->localJacobian().updateStaticData(entity, this->localJacobian().u);
             }
-            this->localJacobian().clearVisited();
-            this->localJacobian().setLocalSolution(entity);
-            this->localJacobian().updateStaticData(entity, this->localJacobian().u);
-        }
         this->localJacobian().resetSwitchedLocal();
         this->localJacobian().resetSwitched();
 
         // set Dirichlet boundary conditions
         for (Iterator it = gridview.template begin<0>();
-        it != eendit; ++it)
-        {
-            // get geometry type
-            Dune::GeometryType gt = it->geometry().type();
+             it != eendit; ++it)
+            {
+                // get geometry type
+                Dune::GeometryType gt = it->geometry().type();
 
-            // get entity
-            const Entity& entity = *it;
+                // get entity
+                const Entity& entity = *it;
 
-            const typename Dune::LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::value_type
-            &sfs=Dune::LagrangeShapeFunctions<Scalar, Scalar, dim>::general(gt,1);
-            int size = sfs.size();
+                const typename Dune::LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::value_type
+                    &sfs=Dune::LagrangeShapeFunctions<Scalar, Scalar, dim>::general(gt,1);
+                int size = sfs.size();
 
-            // set type of boundary conditions
-            this->localJacobian().template assembleBC<LeafTag>(entity);
+                // set type of boundary conditions
+                this->localJacobian().template assembleBC<LeafTag>(entity);
 
-            IntersectionIterator
-            endit = IntersectionIteratorGetter<Grid, LeafTag>::end(entity);
+                IntersectionIterator
+                    endit = IntersectionIteratorGetter<Grid, LeafTag>::end(entity);
 
-            for (IntersectionIterator is = IntersectionIteratorGetter<Grid,
-                    LeafTag>::begin(entity); is!=endit; ++is)
-                if (is->boundary())
-                {
-                    for (int i = 0; i < size; i++)
-                        // handle subentities of this face
-                        for (int j = 0; j < ReferenceElements<Scalar,dim>::general(gt).size(is->numberInSelf(), 1, sfs[i].codim()); j++)
-                            if (sfs[i].entity()
-                                    == ReferenceElements<Scalar,dim>::general(gt).subEntity(is->numberInSelf(), 1,
-                                            j, sfs[i].codim()))
-                            {
-                                for (int equationNumber = 0; equationNumber<m; equationNumber++)
-                                {
-                                    if (this->localJacobian().bc(i)[equationNumber]
-                                                                    == BoundaryConditions::dirichlet)
-                                    {
-                                        // get cell center in reference element
-                                        Dune::FieldVector<Scalar,dim>
-                                        local = sfs[i].position();
-
-                                        // get global coordinate of cell center
-                                        Dune::FieldVector<Scalar,dimworld>
-                                        global = it->geometry().global(local);
-
-                                        int globalId = this->vertexmapper.template map<dim>(entity, sfs[i].entity());
-                                        FieldVector<int,m> dirichletIndex;
-                                        FieldVector<BoundaryConditions::Flags, m>
-                                        bctype = this->problem.bctype(global, entity, is, local);
-                                        this->problem.dirichletIndex(global, entity, is,
-                                                local, dirichletIndex);
-
-                                        if (bctype[equationNumber] == BoundaryConditions::dirichlet)
+                for (IntersectionIterator is = IntersectionIteratorGetter<Grid,
+                         LeafTag>::begin(entity); is!=endit; ++is)
+                    if (is->boundary())
+                        {
+                            for (int i = 0; i < size; i++)
+                                // handle subentities of this face
+                                for (int j = 0; j < ReferenceElements<Scalar,dim>::general(gt).size(is->numberInSelf(), 1, sfs[i].codim()); j++)
+                                    if (sfs[i].entity()
+                                        == ReferenceElements<Scalar,dim>::general(gt).subEntity(is->numberInSelf(), 1,
+                                                                                                j, sfs[i].codim()))
                                         {
-                                            FieldVector<Scalar,m>
-                                            ghelp = this->problem.g(
-                                                    global, entity, is,
-                                                    local);
-                                            (*(this->u))[globalId][dirichletIndex[equationNumber]]
-                                                                   = ghelp[dirichletIndex[equationNumber]];
-                                        }
-                                    }
-                                }
-                            }
-                }
-            this->localJacobian().setLocalSolution(entity);
-            for (int i = 0; i < size; i++)
-                this->localJacobian().updateVariableData(entity, this->localJacobian().u, i, false);
+                                            for (int equationNumber = 0; equationNumber<m; equationNumber++)
+                                                {
+                                                    if (this->localJacobian().bc(i)[equationNumber]
+                                                        == BoundaryConditions::dirichlet)
+                                                        {
+                                                            // get cell center in reference element
+                                                            Dune::FieldVector<Scalar,dim>
+                                                                local = sfs[i].position();
 
-        }
+                                                            // get global coordinate of cell center
+                                                            Dune::FieldVector<Scalar,dimworld>
+                                                                global = it->geometry().global(local);
+
+                                                            int globalId = this->vertexmapper.template map<dim>(entity, sfs[i].entity());
+                                                            FieldVector<int,m> dirichletIndex;
+                                                            FieldVector<BoundaryConditions::Flags, m>
+                                                                bctype = this->problem.bctype(global, entity, is, local);
+                                                            this->problem.dirichletIndex(global, entity, is,
+                                                                                         local, dirichletIndex);
+
+                                                            if (bctype[equationNumber] == BoundaryConditions::dirichlet)
+                                                                {
+                                                                    FieldVector<Scalar,m>
+                                                                        ghelp = this->problem.g(
+                                                                                                global, entity, is,
+                                                                                                local);
+                                                                    (*(this->u))[globalId][dirichletIndex[equationNumber]]
+                                                                        = ghelp[dirichletIndex[equationNumber]];
+                                                                }
+                                                        }
+                                                }
+                                        }
+                        }
+                this->localJacobian().setLocalSolution(entity);
+                for (int i = 0; i < size; i++)
+                    this->localJacobian().updateVariableData(entity, this->localJacobian().u, i, false);
+
+            }
 
         *(this->uOldTimeStep) = *(this->u);
 
@@ -292,19 +292,19 @@ public:
 
         bool newtonLoop = false;
         while(!newtonLoop)
-        {
-            nextDt = this->localJacobian().getDt();
-            NewtonMethod newton(*this); // *this means object itself (box2p2c)
-            NewtonController newtonCtl(1e-7, 6);
-            newtonLoop = newton.execute(*this, newtonCtl);
-            nextDt = newtonCtl.suggestTimeStepSize(nextDt);
-            this->localJacobian().setDt(nextDt);
-            if(!newtonLoop){
-                *this->u = *this->uOldTimeStep;
-                this->localJacobian().resetPhaseState();
+            {
+                nextDt = this->localJacobian().getDt();
+                NewtonMethod newton(*this); // *this means object itself (box2p2c)
+                NewtonController newtonCtl(1e-7, 6);
+                newtonLoop = newton.execute(*this, newtonCtl);
+                nextDt = newtonCtl.suggestTimeStepSize(nextDt);
+                this->localJacobian().setDt(nextDt);
+                if(!newtonLoop){
+                    *this->u = *this->uOldTimeStep;
+                    this->localJacobian().resetPhaseState();
+                }
+                std::cout<<"timeStep resized to: "<<nextDt<<std::endl;
             }
-            std::cout<<"timeStep resized to: "<<nextDt<<std::endl;
-        }
 
         //        double Flux(0), Mass(0);
         //        Flux = this->computeFlux();
@@ -341,7 +341,7 @@ public:
         // iterate through leaf grid an evaluate c0 at cell center
         Iterator eendit = gridview.template end<0>();
         for (Iterator it = gridview.template begin<0>(); it
-        != eendit; ++it) {
+                 != eendit; ++it) {
             // get geometry type
             Dune::GeometryType gt = it->geometry().type();
 
@@ -352,8 +352,8 @@ public:
             fvGeom.update(entity);
 
             const typename Dune::LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::value_type
-            &sfs=Dune::LagrangeShapeFunctions<Scalar, Scalar, dim>::general(gt,
-                    1);
+                &sfs=Dune::LagrangeShapeFunctions<Scalar, Scalar, dim>::general(gt,
+                                                                                1);
             int size = sfs.size();
 
             for (int i = 0; i < size; i++) {
@@ -364,7 +364,7 @@ public:
                 Dune::FieldVector<Scalar,dimworld> global = it->geometry().global(local);
 
                 int globalId = this->vertexmapper.template map<dim>(entity,
-                        sfs[i].entity());
+                                                                    sfs[i].entity());
 
                 int state;
                 state = this->localJacobian().sNDat[globalId].phaseState;
@@ -400,11 +400,11 @@ public:
 
         // print minimum and maximum values
         std::cout << "nonwetting phase saturation: min = "<< minSat
-        << ", max = "<< maxSat << std::endl;
+                  << ", max = "<< maxSat << std::endl;
         std::cout << "wetting phase pressure: min = "<< minP
-        << ", max = "<< maxP << std::endl;
+                  << ", max = "<< maxP << std::endl;
         std::cout << "mass fraction CO2: min = "<< minX
-        << ", max = "<< maxX << std::endl;
+                  << ", max = "<< maxX << std::endl;
         std::cout << "mass: "<< totalMass << std::endl;
 
         return totalMass;
@@ -441,53 +441,53 @@ public:
         //        importFromDGF<GV>(data, "data", false);
 
         for (int i=0;i<size;i++)
-        {
-            for (int j=0;j<m;j++)
             {
-                (*(this->u))[i][j]=data[i][j];
+                for (int j=0;j<m;j++)
+                    {
+                        (*(this->u))[i][j]=data[i][j];
+                    }
             }
-        }
 
         // iterate through leaf grid an evaluate c0 at cell center
         Iterator eendit = gridview.template end<0>();
         for (Iterator it = gridview.template begin<0>();
-        it != eendit; ++it)
-        {
-            // get geometry type
-            Dune::GeometryType gt = it->geometry().type();
-
-            // get entity
-            const Entity& entity = *it;
-
-            this->localJacobian().fvGeom.update(entity);
-
-            const typename Dune::LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::value_type
-            &sfs=Dune::LagrangeShapeFunctions<Scalar, Scalar, dim>::general(gt,1);
-            int size = sfs.size();
-
-            for (int i = 0; i < size; i++)
+             it != eendit; ++it)
             {
-                // get cell center in reference element
-                const Dune::FieldVector<Scalar,dim>&local = sfs[i].position();
+                // get geometry type
+                Dune::GeometryType gt = it->geometry().type();
 
-                // get global coordinate of cell center
-                Dune::FieldVector<Scalar,dimworld> global = it->geometry().global(local);
+                // get entity
+                const Entity& entity = *it;
 
-                int globalId = this->vertexmapper.template map<dim>(entity,
-                        sfs[i].entity());
+                this->localJacobian().fvGeom.update(entity);
 
-                // initialize cell concentration
+                const typename Dune::LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::value_type
+                    &sfs=Dune::LagrangeShapeFunctions<Scalar, Scalar, dim>::general(gt,1);
+                int size = sfs.size();
 
-                // initialize variable phaseState
-                this->localJacobian().sNDat[globalId].phaseState = data[globalId][m];
-                // initialize variable oldPhaseState
-                this->localJacobian().sNDat[globalId].oldPhaseState = data[globalId][m];
+                for (int i = 0; i < size; i++)
+                    {
+                        // get cell center in reference element
+                        const Dune::FieldVector<Scalar,dim>&local = sfs[i].position();
 
+                        // get global coordinate of cell center
+                        Dune::FieldVector<Scalar,dimworld> global = it->geometry().global(local);
+
+                        int globalId = this->vertexmapper.template map<dim>(entity,
+                                                                            sfs[i].entity());
+
+                        // initialize cell concentration
+
+                        // initialize variable phaseState
+                        this->localJacobian().sNDat[globalId].phaseState = data[globalId][m];
+                        // initialize variable oldPhaseState
+                        this->localJacobian().sNDat[globalId].oldPhaseState = data[globalId][m];
+
+                    }
+                this->localJacobian().clearVisited();
+                this->localJacobian().setLocalSolution(entity);
+                this->localJacobian().updateStaticData(entity, this->localJacobian().u);
             }
-            this->localJacobian().clearVisited();
-            this->localJacobian().setLocalSolution(entity);
-            this->localJacobian().updateStaticData(entity, this->localJacobian().u);
-        }
     }
 
     virtual void globalDefect(FunctionType& defectGlobal)
@@ -536,7 +536,7 @@ public:
         // iterate through leaf grid and evaluate c0 at cell center
         Iterator eendit = gridview.template end<0>();
         for (Iterator it = gridview.template begin<0>();
-        it != eendit; ++it) {
+             it != eendit; ++it) {
 
             const Entity& entity = *it;
             this->localJacobian().fvGeom.update(entity);

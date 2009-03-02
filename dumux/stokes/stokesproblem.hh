@@ -41,53 +41,53 @@ template<class Grid, class Scalar> class StokesProblem
     enum {dim=Grid::dimension, numEq=Grid::dimension+1};
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
     typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator
-            IntersectionIterator;
+    IntersectionIterator;
 
 public:
     //! evaluate source term of the momentum equation
     /*! evaluate source term of the momentum equation at given location
-     @param[in]  globalPos    position in global coordinates
-     @param[in]  element    entity of codim 0
-     @param[in]  localPos   position in reference element
-     \return     value of source term
-     */
+      @param[in]  globalPos    position in global coordinates
+      @param[in]  element    entity of codim 0
+      @param[in]  localPos   position in reference element
+      \return     value of source term
+    */
     virtual FieldVector<Scalar,numEq> q(const FieldVector<Scalar,dim>& globalPos, const Element& element,
-            const FieldVector<Scalar,dim>& localPos) const
+                                        const FieldVector<Scalar,dim>& localPos) const
     {
-     	DUNE_THROW(NotImplemented, "no q specified, but requested");
+        DUNE_THROW(NotImplemented, "no q specified, but requested");
 
-         FieldVector<Scalar,numEq> result(0);
-         return result;
-     }
+        FieldVector<Scalar,numEq> result(0);
+        return result;
+    }
 
     //! return type of boundary condition at the given global coordinate
     /*! return type of boundary condition at the given global coordinate
-     @param[in]  globalPos    position in global coordinates
-     \return     boundary condition type given by enum in this class
-     */
+      @param[in]  globalPos    position in global coordinates
+      \return     boundary condition type given by enum in this class
+    */
     virtual BoundaryConditions::Flags bctype (const FieldVector<Scalar,dim>& globalPos, const Element& element,
-            const IntersectionIterator& intersectionIt,
-            const FieldVector<Scalar,dim>& localPos) const = 0;
+                                              const IntersectionIterator& intersectionIt,
+                                              const FieldVector<Scalar,dim>& localPos) const = 0;
 
     //! evaluate velocity Dirichlet boundary condition at given position
     /*! evaluate velocity Dirichlet boundary condition at given position
-     @param[in]  globalPos    position in global coordinates
-     \return     boundary condition value
-     */
+      @param[in]  globalPos    position in global coordinates
+      \return     boundary condition value
+    */
     virtual FieldVector<Scalar,dim> g(const FieldVector<Scalar,dim>& globalPos, const Element& element,
-            const IntersectionIterator& intersectionIt,
-            const FieldVector<Scalar,dim>& localPos) const = 0;
+                                      const IntersectionIterator& intersectionIt,
+                                      const FieldVector<Scalar,dim>& localPos) const = 0;
 
     //! evaluate Neumann boundary condition at given position
     /*! evaluate Neumann boundary condition at given position
-     @param[in]  globalPos    position in global coordinates
-     \return     boundary condition value
-     */
+      @param[in]  globalPos    position in global coordinates
+      \return     boundary condition value
+    */
     virtual FieldVector<Scalar,dim> J(const FieldVector<Scalar,dim>& globalPos, const Element& element,
-            const IntersectionIterator& intersectionIt,
-            const FieldVector<Scalar,dim>& localPos)
+                                      const IntersectionIterator& intersectionIt,
+                                      const FieldVector<Scalar,dim>& localPos)
     {
-    	DUNE_THROW(NotImplemented, "no J specified, but requested");
+        DUNE_THROW(NotImplemented, "no J specified, but requested");
 
         FieldVector<Scalar,dim> result(0);
         return result;
@@ -95,91 +95,91 @@ public:
 
     //! evaluate normal force boundary condition at given position
     /*! evaluate normal force boundary condition \f$ p - \mu \vec{n}\cdot(\nabla\vec{u}\cdot\vec{n}) = J_n \f$ at given position
-     @param[in]  globalPos    position in global coordinates
-     \return     boundary condition value
-     */
+      @param[in]  globalPos    position in global coordinates
+      \return     boundary condition value
+    */
     virtual Scalar Jn(const FieldVector<Scalar,dim>& globalPos, const Element& element,
-            const IntersectionIterator& intersectionIt,
-            const FieldVector<Scalar,dim>& localPos) const
-        {
-      DUNE_THROW(NotImplemented, "no Jn specified, but requested");
+                      const IntersectionIterator& intersectionIt,
+                      const FieldVector<Scalar,dim>& localPos) const
+    {
+        DUNE_THROW(NotImplemented, "no Jn specified, but requested");
 
-      return 0;
+        return 0;
     }
 
     //! evaluate tangential force boundary condition at given position
     /*! evaluate tangential force boundary condition \f$- \mu (\nabla\vec{u}\cdot\vec{n})_\tau = \vec{J}_\tau \f$ at given position
-     @param[in]  globalPos    position in global coordinates
-     \return     boundary condition value
-     */
+      @param[in]  globalPos    position in global coordinates
+      \return     boundary condition value
+    */
     virtual FieldVector<Scalar,dim> Jt(const FieldVector<Scalar,dim>& globalPos, const Element& element,
-            const IntersectionIterator& intersectionIt,
-            const FieldVector<Scalar,dim>& localPos) const
-        {
-      DUNE_THROW(NotImplemented, "no Jt specified, but requested");
+                                       const IntersectionIterator& intersectionIt,
+                                       const FieldVector<Scalar,dim>& localPos) const
+    {
+        DUNE_THROW(NotImplemented, "no Jt specified, but requested");
 
-      FieldVector<Scalar,dim> result(0);
-      return result;
+        FieldVector<Scalar,dim> result(0);
+        return result;
     }
 
     //! evaluate Beavers-Joseph proportionality constant at given position
     /*! evaluate Beavers-Joseph proportionality constant \f$c = \sqrt(k)/\alpha\f$
       such that \f$u_\tau = - c (\mu \nabla u\cdot n)_\tau\f$
-     @param[in]  globalPos    position in global coordinates
-     \return     value of the proportionality constant
-     */
+      @param[in]  globalPos    position in global coordinates
+      \return     value of the proportionality constant
+    */
     virtual Scalar beaversJosephC(const FieldVector<Scalar,dim>& globalPos, const Element& element,
-            const IntersectionIterator& intersectionIt,
-            const FieldVector<Scalar,dim>& localPos) const
-        {
-      return 0;
+                                  const IntersectionIterator& intersectionIt,
+                                  const FieldVector<Scalar,dim>& localPos) const
+    {
+        return 0;
     }
 
     //! evaluate viscosity at given position
     /*! evaluate viscosity at given position
-     @param[in]  globalPos    position in global coordinates
-     \return     boundary condition value
-     */
+      @param[in]  globalPos    position in global coordinates
+      \return     boundary condition value
+    */
     virtual Scalar mu(const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos) const = 0;
 
-  virtual FieldVector<Scalar,dim> velocity(const FieldVector<Scalar,dim>& globalPos) const
-  {
-    DUNE_THROW(NotImplemented, "no exact solution available");
+    virtual FieldVector<Scalar,dim> velocity(const FieldVector<Scalar,dim>& globalPos) const
+    {
+        DUNE_THROW(NotImplemented, "no exact solution available");
 
-    FieldVector<Scalar,dim> result(0);
-    return result;
-  }
+        FieldVector<Scalar,dim> result(0);
+        return result;
+    }
 
-  virtual Scalar pressure(const FieldVector<Scalar,dim>& globalPos) const
-  {
-    DUNE_THROW(NotImplemented, "no exact solution available");
+    virtual Scalar pressure(const FieldVector<Scalar,dim>& globalPos) const
+    {
+        DUNE_THROW(NotImplemented, "no exact solution available");
 
-    return 0;
-  }
+        return 0;
+    }
 
-  virtual FieldMatrix<Scalar, dim, dim> velocityGradient(const FieldVector<Scalar,dim>& globalPos) const
-  {
-    DUNE_THROW(NotImplemented, "no exact solution available");
+    virtual FieldMatrix<Scalar, dim, dim> velocityGradient(const FieldVector<Scalar,dim>& globalPos) const
+    {
+        DUNE_THROW(NotImplemented, "no exact solution available");
 
-    FieldMatrix<Scalar, dim, dim> result(0);
-    return result;
-  }
+        FieldMatrix<Scalar, dim, dim> result(0);
+        return result;
+    }
 
-  virtual void dirichletIndex(const Dune::FieldVector<Scalar,dim>& globalPos, const Element& element,
-          const IntersectionIterator& intersectionIt,
-          const Dune::FieldVector<Scalar,dim>& localPos, Dune::FieldVector<int,numEq>& dirichletIndex) const
-  {
-      for (int i = 0; i < numEq; i++)
-          dirichletIndex[i]=i;
-      return;
-  }
+    virtual void dirichletIndex(const Dune::FieldVector<Scalar,dim>& globalPos, const Element& element,
+                                const IntersectionIterator& intersectionIt,
+                                const Dune::FieldVector<Scalar,dim>& localPos, Dune::FieldVector<int,numEq>& dirichletIndex) const
+    {
+        for (int i = 0; i < numEq; i++)
+            dirichletIndex[i]=i;
+        return;
+    }
 
     StokesProblem()
-        {}
+    {}
 
     //! always define virtual destructor in abstract base class
     virtual ~StokesProblem()
-        {}
+    {}
 
 protected:
 };

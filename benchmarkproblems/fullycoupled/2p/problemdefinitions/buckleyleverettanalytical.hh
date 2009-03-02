@@ -12,8 +12,8 @@
 namespace Dune {
 
 template<class G, class RT> class BLWithAnalytical : public ExSolution<G, RT>,
-    public
-        BuckleyLeverettProblem<G, RT> {
+                                                     public
+    BuckleyLeverettProblem<G, RT> {
 
     enum {BrooksCorey=0};
     enum {n=G::dimension,dimworld = G::dimensionworld,m=2};
@@ -25,10 +25,10 @@ template<class G, class RT> class BLWithAnalytical : public ExSolution<G, RT>,
 public:
 
     BLWithAnalytical(const G &g, DeprecatedTwoPhaseRelations &law = *(new DeprecatedLinearLaw), const FieldVector<DT,n> Left = 0,
-            const FieldVector<DT,n> Right = 0, int chooselaw = BrooksCorey,
-            RT totalvelocity = 3e-7) :
+                     const FieldVector<DT,n> Right = 0, int chooselaw = BrooksCorey,
+                     RT totalvelocity = 3e-7) :
         ExSolution<G, RT>(g), BuckleyLeverettProblem<G, RT>(law, Left, Right,
-                chooselaw, true), vtot(totalvelocity) {
+                                                            chooselaw, true), vtot(totalvelocity) {
         prepareanalytical();
     }
 
@@ -51,7 +51,7 @@ public:
         dfwdsw=0;
         for (int i=1; i<intervalnum; i++) {
             dfwdsw[i]=(fractionalW[i+1]-fractionalW[i-1])/(SatVec[i+1]
-                    -SatVec[i-1]);
+                                                           -SatVec[i-1]);
         }
         //std::cout<<"dfwdsw = "<<dfwdsw_<<std::endl;
         for (int i=0; i<pointnum; i++) {
@@ -105,7 +105,7 @@ public:
             A2=0;
             for (int i=xhelp; i<=xfmax-1; i++) {
                 A2+=(SatVec[xfmax]-SatVec[i]+SatVec[xfmax]-SatVec[i+1])*0.5
-                        *(xf[i+1]-xf[i]);
+                    *(xf[i+1]-xf[i]);
             }
             b=xf[xfmax];
             xhelp2=xfmax;
@@ -115,7 +115,7 @@ public:
             }
             for (int i=xfmax; i<=xhelp2; i++) {
                 A2+=(SatVec[i]-SatVec[xfmax]+SatVec[i+1]-SatVec[xfmax])*0.5
-                        *(xf[i]-xf[i+1]);
+                    *(xf[i]-xf[i+1]);
             }
             xhelpoldold=xhelpold;
             xhelpold=xhelp;
@@ -131,7 +131,7 @@ public:
         }
         //iterate over vertices and get analytical saturation solution
         for (Iterator it = this->grid.template leafbegin<n>(); it
-                != this->grid.template leafend<n>(); ++it) {
+                 != this->grid.template leafend<n>(); ++it) {
 
             //find index of current vertex
             int index = this->mapper.map(*it);

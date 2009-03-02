@@ -9,20 +9,20 @@ namespace Dune
 {
 //! \ingroup transportProblems
 //! @brief example class for a transport problem
-  template<class G, class RT, class VC>
-  class SimpleParabolicProblem : public DeprecatedTransportProblem<G, RT, VC > {
-      typedef typename G::ctype DT;
-      enum {n=G::dimension, m=1};
-      typedef typename G::Traits::template Codim<0>::Entity Entity;
-      typedef typename Dune::BlockVector< Dune::FieldVector<Dune::FieldVector<double, n>, 2*n> > VelType;
-  private:
-      DT left;
-      DT right;
-      FieldVector<DT,n> vLoc;
+template<class G, class RT, class VC>
+class SimpleParabolicProblem : public DeprecatedTransportProblem<G, RT, VC > {
+    typedef typename G::ctype DT;
+    enum {n=G::dimension, m=1};
+    typedef typename G::Traits::template Codim<0>::Entity Entity;
+    typedef typename Dune::BlockVector< Dune::FieldVector<Dune::FieldVector<double, n>, 2*n> > VelType;
+private:
+    DT left;
+    DT right;
+    FieldVector<DT,n> vLoc;
 
-  public:
+public:
     BoundaryConditions::Flags bctype (const FieldVector<DT,n>& x, const Entity& e,
-                       const FieldVector<DT,n>& xi) const
+                                      const FieldVector<DT,n>& xi) const
     {
         if (x[0] > right-1E-8 || x[0] < left+1e-8)
             return Dune::BoundaryConditions::dirichlet;
@@ -31,7 +31,7 @@ namespace Dune
     }
 
     RT dirichlet (const FieldVector<DT,n>& x, const Entity& e,
-           const FieldVector<DT,n>& xi) const
+                  const FieldVector<DT,n>& xi) const
     {
         if (x[0] < left+1e-8)
             return 1;
@@ -40,7 +40,7 @@ namespace Dune
     }
 
     RT initSat (const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi) const
+                const FieldVector<DT,n>& xi) const
     {
         return 0;
     }
@@ -54,13 +54,13 @@ namespace Dune
     }
 
     SimpleParabolicProblem(VC& variables, const G& g, DeprecatedTwoPhaseRelations& law = *(new DeprecatedLinearLaw), const bool cap = false)
-    : DeprecatedTransportProblem<G, RT, VC>(variables, law, cap), left((g.lowerLeft())[0]), right((g.upperRight())[0])
+        : DeprecatedTransportProblem<G, RT, VC>(variables, law, cap), left((g.lowerLeft())[0]), right((g.upperRight())[0])
     {    }
 
     SimpleParabolicProblem(VC& variables, DeprecatedTwoPhaseRelations& law = *(new DeprecatedLinearLaw), const bool cap = false)
-    : DeprecatedTransportProblem<G, RT, VC>(variables, law, cap), left(0), right(1)
+        : DeprecatedTransportProblem<G, RT, VC>(variables, law, cap), left(0), right(1)
     {    }
-  };
+};
 
 }
 #endif

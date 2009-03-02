@@ -41,59 +41,59 @@ template<class G, class RT, int m> class MincProblem {
     enum {n=G::dimension};
     typedef typename G::Traits::template Codim<0>::Entity Entity;
     typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator
-            IntersectionIterator;
+    IntersectionIterator;
 
 public:
     //! evaluate diffusion tensor
     /*! Evaluate the diffusion tensor at given location
-     @param[in]  x    position in global coordinates
-     @param[in]  e    entity of codim 0
-     @param[in]  xi   position in reference element of e
-     @param[out] D    diffusion tensor to be filled
-     */
+      @param[in]  x    position in global coordinates
+      @param[in]  e    entity of codim 0
+      @param[in]  xi   position in reference element of e
+      @param[out] D    diffusion tensor to be filled
+    */
     virtual const FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x) = 0;
     virtual const FieldMatrix<DT,n,n>& K1Fracture(const FieldVector<DT,n>& x) = 0;
     virtual const FieldMatrix<DT,n,n>& K1Matrix(const FieldVector<DT,n>& x) = 0;
 
     virtual const FieldMatrix<DT,n,n>& KFracture(const FieldVector<DT,n>& x,
-                const Entity& e, const FieldVector<DT,n>& xi) = 0;
+                                                 const Entity& e, const FieldVector<DT,n>& xi) = 0;
 
     virtual const FieldMatrix<DT,n,n>& KMatrix(const FieldVector<DT,n>& x,
-            const Entity& e, const FieldVector<DT,n>& xi) = 0;
+                                               const Entity& e, const FieldVector<DT,n>& xi) = 0;
 
     //! evaluate source term
     /*! evaluate source term at given location
-     @param[in]  x    position in global coordinates
-     @param[in]  e    entity of codim 0
-     @param[in]  xi   position in reference element of e
-     \return     value of source term
-     */
+      @param[in]  x    position in global coordinates
+      @param[in]  e    entity of codim 0
+      @param[in]  xi   position in reference element of e
+      \return     value of source term
+    */
     virtual FieldVector<RT,m> q(const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi) const = 0;
+                                const FieldVector<DT,n>& xi) const = 0;
 
     //! return type of boundary condition at the given global coordinate
     /*! return type of boundary condition at the given global coordinate
-     @param[in]  x    position in global coordinates
-     \return     boundary condition type given by enum in this class
-     */
+      @param[in]  x    position in global coordinates
+      \return     boundary condition type given by enum in this class
+    */
     //    virtual FieldVector<BoundaryConditions::Flags, m> bctype (const FieldVector<DT,n>& x, const Entity& e,
     //            const IntersectionIterator& intersectionIt,
     //            const FieldVector<DT,n>& xi) const = 0;
 
     virtual FieldVector<BoundaryConditions::Flags, m>bctype(
-            const FieldVector<DT,n>& x, const Entity& e,
-            const IntersectionIterator& intersectionIt,
-            const FieldVector<DT,n>& xi) const = 0;
+                                                            const FieldVector<DT,n>& x, const Entity& e,
+                                                            const IntersectionIterator& intersectionIt,
+                                                            const FieldVector<DT,n>& xi) const = 0;
 
     //! returns index of the primary variable corresponding to the dirichlet boundary condition at the given global coordinate
-        /*! returns index of the primary variable corresponding to the dirichlet boundary condition at the given global coordinate
-         @param[in]  x    position in global coordinates
-         \return     index of the primary variable
-         */
+    /*! returns index of the primary variable corresponding to the dirichlet boundary condition at the given global coordinate
+      @param[in]  x    position in global coordinates
+      \return     index of the primary variable
+    */
 
     virtual void dirichletIndex(const FieldVector<DT,n>& x, const Entity& e,
-            const IntersectionIterator& intersectionIt,
-            const FieldVector<DT,n>& xi, FieldVector<int,m>& dirichletIdx) const
+                                const IntersectionIterator& intersectionIt,
+                                const FieldVector<DT,n>& xi, FieldVector<int,m>& dirichletIdx) const
     {
         for (int i = 0; i < m; i++)
             dirichletIdx[i]=i;
@@ -102,49 +102,49 @@ public:
 
     //! evaluate Dirichlet boundary condition at given position
     /*! evaluate Dirichlet boundary condition at given position
-     @param[in]  x    position in global coordinates
-     \return     boundary condition value
-     */
+      @param[in]  x    position in global coordinates
+      \return     boundary condition value
+    */
     virtual FieldVector<RT,m> g(const FieldVector<DT,n>& x, const Entity& e,
-            const IntersectionIterator& intersectionIt,
-            const FieldVector<DT,n>& xi) const = 0;
+                                const IntersectionIterator& intersectionIt,
+                                const FieldVector<DT,n>& xi) const = 0;
 
     //! evaluate Neumann boundary condition at given position
     /*! evaluate Neumann boundary condition at given position
-     @param[in]  x    position in global coordinates
-     \return     boundary condition value
-     */
+      @param[in]  x    position in global coordinates
+      \return     boundary condition value
+    */
     virtual FieldVector<RT,m> J(const FieldVector<DT,n>& x, const Entity& e,
-            const IntersectionIterator& intersectionIt,
-            const FieldVector<DT,n>& xi) const = 0;
+                                const IntersectionIterator& intersectionIt,
+                                const FieldVector<DT,n>& xi) const = 0;
 
     //! evaluate initial condition at given position
     /*! evaluate initial boundary condition at given position
-     @param[in]  x    position in global coordinates
-     \return     boundary condition value
-     */
+      @param[in]  x    position in global coordinates
+      \return     boundary condition value
+    */
     virtual FieldVector<RT,m> initial(const FieldVector<DT,n>& x,
-            const Entity& e, const FieldVector<DT,n>& xi) const = 0;
+                                      const Entity& e, const FieldVector<DT,n>& xi) const = 0;
 
-//    virtual double porosity(const FieldVector<DT,n>& x, const Entity& e,
-//            const FieldVector<DT,n>& xi) const = 0;
+    //    virtual double porosity(const FieldVector<DT,n>& x, const Entity& e,
+    //            const FieldVector<DT,n>& xi) const = 0;
 
     virtual double porosityFracture(const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi) const = 0;
+                                    const FieldVector<DT,n>& xi) const = 0;
 
     virtual double porosityMatrix(const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi) const = 0;
-//
+                                  const FieldVector<DT,n>& xi) const = 0;
+    //
     virtual FieldVector<RT,n> gravity() const = 0;
 
-//    virtual FieldVector<RT,4> materialLawParameters(const FieldVector<DT,n>& x,
-//            const Entity& e, const FieldVector<DT,n>& xi) const = 0;
+    //    virtual FieldVector<RT,4> materialLawParameters(const FieldVector<DT,n>& x,
+    //            const Entity& e, const FieldVector<DT,n>& xi) const = 0;
 
     virtual FieldVector<RT,4> materialLawParametersFracture(const FieldVector<DT,n>& x,
-            const Entity& e, const FieldVector<DT,n>& xi) const = 0;
-//
+                                                            const Entity& e, const FieldVector<DT,n>& xi) const = 0;
+    //
     virtual FieldVector<RT,4> materialLawParametersMatrix(const FieldVector<DT,n>& x,
-            const Entity& e, const FieldVector<DT,n>& xi) const = 0;
+                                                          const Entity& e, const FieldVector<DT,n>& xi) const = 0;
 
     DeprecatedTwoPhaseRelations& materialLaw() {
         return materialLaw_;
@@ -158,15 +158,15 @@ public:
 
     //updates an exact/analytic solution
     virtual void updateExSol(double &dt,
-            BlockVector<FieldVector<RT, m> > &approxSol) {
+                             BlockVector<FieldVector<RT, m> > &approxSol) {
         DUNE_THROW(NotImplemented, "Ex(akt) Solution");
         return;
     }
 
-    MincProblem(DeprecatedTwoPhaseRelations& law = 
-                *(new DeprecatedLinearLaw), 
+    MincProblem(DeprecatedTwoPhaseRelations& law =
+                *(new DeprecatedLinearLaw),
                 const bool exsol = false) :
-      exsolution(exsol),  materialLaw_(law) {
+        exsolution(exsol),  materialLaw_(law) {
     }
 
     //! always define virtual destructor in abstract base class

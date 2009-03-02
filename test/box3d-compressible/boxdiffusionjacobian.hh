@@ -24,47 +24,47 @@
 
 namespace Dune
 {
-  //! A class for computing local jacobian matrices
-  /*! A class for computing local jacobian matrix for the
-    diffusion equation
+//! A class for computing local jacobian matrices
+/*! A class for computing local jacobian matrix for the
+  diffusion equation
 
-        div j = q; j = -K grad u; in Omega
+  div j = q; j = -K grad u; in Omega
 
-        u = g on Gamma1; j*n = J on Gamma2.
+  u = g on Gamma1; j*n = J on Gamma2.
 
-    Uses the box method.
+  Uses the box method.
 
-    Template parameters are:
+  Template parameters are:
 
-    - G     a DUNE grid type
-    - RT    type used for return values
-  */
-  template<class G, class RT, class BoxFunction = LeafP1Function<G, RT, 1> >
-  class BoxDiffusionJacobian
+  - G     a DUNE grid type
+  - RT    type used for return values
+*/
+template<class G, class RT, class BoxFunction = LeafP1Function<G, RT, 1> >
+class BoxDiffusionJacobian
     : public BoxJacobian<BoxDiffusionJacobian<G,RT,BoxFunction>,G,RT,1,BoxFunction>
-  {
+{
     typedef typename G::ctype DT;
     typedef typename G::Traits::template Codim<0>::Entity Entity;
     typedef typename Entity::Geometry Geometry;
     typedef BoxDiffusionJacobian<G,RT,BoxFunction> ThisType;
     typedef typename LocalJacobian<ThisType,G,RT,1>::VBlockType VBlockType;
-     typedef Dune::FVElementGeometry<G> FVElementGeometry;
-     enum {pIdx = 0};
+    typedef Dune::FVElementGeometry<G> FVElementGeometry;
+    enum {pIdx = 0};
 
-  public:
+public:
     enum {n=G::dimension};
     enum {SIZE=LagrangeShapeFunctionSetContainer<DT,RT,n>::maxsize};
     struct VariableNodeData;
 
     //! Constructor
     BoxDiffusionJacobian (DiffusionParameters<G,RT>& params,
-                  bool levelBoundaryAsDirichlet_, const G& grid,
-                  BoxFunction& sol,
-                  bool procBoundaryAsDirichlet_=true)
-    : BoxJacobian<ThisType,G,RT,1,BoxFunction>(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_),
-      problem(params), varNData(SIZE), oldVarNData(SIZE)
+                          bool levelBoundaryAsDirichlet_, const G& grid,
+                          BoxFunction& sol,
+                          bool procBoundaryAsDirichlet_=true)
+        : BoxJacobian<ThisType,G,RT,1,BoxFunction>(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_),
+          problem(params), varNData(SIZE), oldVarNData(SIZE)
     {
-      this->analytic = false;
+        this->analytic = false;
     }
 
     void clearVisited ()
@@ -131,33 +131,33 @@ namespace Dune
         elData.porosity = problem.porosity(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
     };
 
-      // *********************************************************
-      // *                                                                            *
-      // *    Calculation of Data at Nodes that has to be                 *
-      // *    determined only once    (statNData)                                 *
-      // *                                                                             *
-      // *********************************************************
+    // *********************************************************
+    // *                                                                            *
+    // *    Calculation of Data at Nodes that has to be                 *
+    // *    determined only once    (statNData)                                 *
+    // *                                                                             *
+    // *********************************************************
 
-  // analog to EvalStaticData in MUFTE
-  void updateStaticData (const Entity& e, const VBlockType* sol)
-  {
-      return;
-  }
+    // analog to EvalStaticData in MUFTE
+    void updateStaticData (const Entity& e, const VBlockType* sol)
+    {
+        return;
+    }
 
 
-      //*********************************************************
-      //*                                                        *
-      //*    Calculation of variable Data at Nodes                 *
-      //*    (varNData)                                             *
-      //*                                                         *
-      //*********************************************************
+    //*********************************************************
+    //*                                                        *
+    //*    Calculation of variable Data at Nodes                 *
+    //*    (varNData)                                             *
+    //*                                                         *
+    //*********************************************************
 
 
     // analog to EvalPrimaryData in MUFTE, uses members of varNData
     void updateVariableData(const Entity& e, const VBlockType* sol,
-            int i, std::vector<VariableNodeData>& varData)
+                            int i, std::vector<VariableNodeData>& varData)
     {
-           varData[i].density[pIdx] = problem.materialLaw().density(problem.Temp(), sol[i][pIdx]);
+        varData[i].density[pIdx] = problem.materialLaw().density(problem.Temp(), sol[i][pIdx]);
     }
 
     void updateVariableData(const Entity& e, const VBlockType* sol, int i, bool old = false)
@@ -174,7 +174,7 @@ namespace Dune
         int size = this->fvGeom.numVertices;
 
         for (int i = 0; i < size; i++)
-                updateVariableData(e, sol, i, old);
+            updateVariableData(e, sol, i, old);
     }
 
     struct StaticNodeData
@@ -190,15 +190,15 @@ namespace Dune
     struct ElementData {
         RT porosity;
         FieldMatrix<DT,n,n> K;
-       };
+    };
 
-       ElementData elData;
+    ElementData elData;
     DiffusionParameters<G,RT>& problem;
     std::vector<StaticNodeData> statNData;
     std::vector<VariableNodeData> varNData;
     std::vector<VariableNodeData> oldVarNData;
 
 
-  };
+};
 }
 #endif

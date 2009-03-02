@@ -29,34 +29,34 @@
 
 int main(int argc, char** argv)
 {
-	try{
-		// Initialize MPI
-		Dune::MPIHelper::instance(argc, argv);
+    try{
+        // Initialize MPI
+        Dune::MPIHelper::instance(argc, argv);
 
-		// set up the grid
-		const int dim = 3;
-		typedef double 							Scalar;
-		typedef Dune::ALUCubeGrid<dim,dim> 		Grid;
-//		typedef Dune::ALUSimplexGrid<dim,dim> 	Grid;
-//		typedef Dune::UGGrid<dim> 				Grid;
-		typedef Dune::GridPtr<Grid>  		GridPointer;
+        // set up the grid
+        const int dim = 3;
+        typedef double                             Scalar;
+        typedef Dune::ALUCubeGrid<dim,dim>         Grid;
+        //        typedef Dune::ALUSimplexGrid<dim,dim>     Grid;
+        //        typedef Dune::UGGrid<dim>                 Grid;
+        typedef Dune::GridPtr<Grid>          GridPointer;
 
-		if (argc != 5) {
-		      std::cout << "usage: pipe_richards_incomp_couple_timeloop dgffilename/basefilename tEnd dt dtmax" << std::endl;
-		      return 1;
-		    }
+        if (argc != 5) {
+            std::cout << "usage: pipe_richards_incomp_couple_timeloop dgffilename/basefilename tEnd dt dtmax" << std::endl;
+            return 1;
+        }
         double tEnd, dt, dtmax;
         const char *dgfFileName = argv[1];
         std::istringstream(argv[2]) >> tEnd;
         std::istringstream(argv[3]) >> dt;
         std::istringstream(argv[4]) >> dtmax;
 
-		// create grid pointer, Grid is defined by gridtype.hh
+        // create grid pointer, Grid is defined by gridtype.hh
         GridPointer gridPtr( dgfFileName );
 
-		// grid reference
-		Grid& grid = *gridPtr;
-	    Dune::gridinfo(grid);
+        // grid reference
+        Grid& grid = *gridPtr;
+        Dune::gridinfo(grid);
 
         typedef Dune::NewRichardsProblemPipe<Grid, Scalar>   Problem;
 
@@ -65,13 +65,13 @@ int main(int argc, char** argv)
         if (!problem.simulate())
             return 2;
 
-		return 0;
-	}
-	catch (Dune::Exception &e){
-		std::cerr << "Dune reported error: " << e << std::endl;
-	}
-	catch (...){
-		std::cerr << "Unknown exception thrown!" << std::endl;
-	}
+        return 0;
+    }
+    catch (Dune::Exception &e){
+        std::cerr << "Dune reported error: " << e << std::endl;
+    }
+    catch (...){
+        std::cerr << "Unknown exception thrown!" << std::endl;
+    }
 }
 

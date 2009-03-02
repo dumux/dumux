@@ -39,14 +39,14 @@ public:
     }
 
     virtual FieldVector<Scalar,numEq> q(const FieldVector<Scalar,dim>& globalPos, const Element& element,
-            const FieldVector<Scalar,dim>& localPos) const
-            {
+                                        const FieldVector<Scalar,dim>& localPos) const
+    {
         FieldVector<Scalar,numEq> result(0);
         result[0] = globalPos[1];
         result[1] = globalPos[0];
 
         return result;
-            }
+    }
 
     virtual Scalar mu(const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos) const
     {
@@ -54,8 +54,8 @@ public:
     }
 
     virtual BoundaryConditions::Flags bctype (const FieldVector<Scalar,dim>& globalPos, const Element& element,
-            const IntersectionIterator& intersectionIt,
-            const FieldVector<Scalar,dim>& localPos) const
+                                              const IntersectionIterator& intersectionIt,
+                                              const FieldVector<Scalar,dim>& localPos) const
     {
         if (globalPos[0] < eps_)// || globalPos[1] < eps_)// || globalPos[1] > 1 - eps_)
             return BoundaryConditions::dirichlet;
@@ -64,15 +64,15 @@ public:
     }
 
     virtual FieldVector<Scalar,dim> g(const FieldVector<Scalar,dim>& globalPos, const Element& element,
-            const IntersectionIterator& intersectionIt,
-            const FieldVector<Scalar,dim>& localPos) const
+                                      const IntersectionIterator& intersectionIt,
+                                      const FieldVector<Scalar,dim>& localPos) const
     {
         return velocity(globalPos);
     }
 
     virtual FieldVector<Scalar,dim> J(const FieldVector<Scalar,dim>& globalPos, const Element& element,
-            const IntersectionIterator& intersectionIt,
-            const FieldVector<Scalar,dim>& localPos)
+                                      const IntersectionIterator& intersectionIt,
+                                      const FieldVector<Scalar,dim>& localPos)
     {
         FieldVector<Scalar,dim> result(0);
 
@@ -98,13 +98,13 @@ public:
 
     //! evaluate Beavers-Joseph proportionality constant at given position
     /*! evaluate Beavers-Joseph proportionality constant \f$c = \sqrt(k)/\alpha\f$
-    such that \f$u_\tau = - c (\mu \nabla u\cdot n)_\tau\f$
-    @param[in]  globalPos    position in global coordinates
-    \return     value of the proportionality constant
+      such that \f$u_\tau = - c (\mu \nabla u\cdot n)_\tau\f$
+      @param[in]  globalPos    position in global coordinates
+      \return     value of the proportionality constant
     */
     virtual Scalar beaversJosephC(const FieldVector<Scalar,dim>& globalPos, const Element& element,
-            const IntersectionIterator& intersectionIt,
-            const FieldVector<Scalar,dim>& localPos) const
+                                  const IntersectionIterator& intersectionIt,
+                                  const FieldVector<Scalar,dim>& localPos) const
     {
         return (1.0/mu(globalPos, element, localPos));
     }

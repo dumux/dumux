@@ -14,11 +14,11 @@ namespace Dune {
 /** \todo Please doc me! */
 
 template<class G, class RT, class ProblemType, class LocalJacobian,
-        class FunctionType, class OperatorAssembler> class TwoPhaseHeatModel :
-    public NonlinearModel<G, RT, ProblemType, LocalJacobian, FunctionType, OperatorAssembler> {
+         class FunctionType, class OperatorAssembler> class TwoPhaseHeatModel :
+        public NonlinearModel<G, RT, ProblemType, LocalJacobian, FunctionType, OperatorAssembler> {
 public:
     typedef NonlinearModel<G, RT, ProblemType, LocalJacobian,
-    FunctionType, OperatorAssembler> ThisNonlinearModel;
+                           FunctionType, OperatorAssembler> ThisNonlinearModel;
 
     TwoPhaseHeatModel(const G& g, ProblemType& prob) :
         ThisNonlinearModel(g, prob), uOldTimeStep(g) {
@@ -40,8 +40,8 @@ public:
 /** \todo Please doc me! */
 
 template<class G, class RT, class ProblemType, class LocalJac, int m> class LeafP1TwoPhaseModel :
-    public TwoPhaseHeatModel<G, RT, ProblemType, LocalJac,
-        LeafP1Function<G, RT, m>, LeafP1OperatorAssembler<G, RT, m> > {
+        public TwoPhaseHeatModel<G, RT, ProblemType, LocalJac,
+                                 LeafP1Function<G, RT, m>, LeafP1OperatorAssembler<G, RT, m> > {
 public:
     // define the function type:
     typedef LeafP1Function<G, RT, m> FunctionType;
@@ -50,7 +50,7 @@ public:
     typedef LeafP1OperatorAssembler<G, RT, m> OperatorAssembler;
 
     typedef TwoPhaseHeatModel<G, RT, ProblemType, LocalJac,
-    FunctionType, OperatorAssembler> ThisTwoPhaseHeatModel;
+                              FunctionType, OperatorAssembler> ThisTwoPhaseHeatModel;
 
     typedef LeafP1TwoPhaseModel<G, RT, ProblemType, LocalJac, m> ThisType;
 
@@ -67,16 +67,16 @@ public:
     typedef typename GV::IndexSet IS;
     typedef MultipleCodimMultipleGeomTypeMapper<G,IS,P1Layout> VertexMapper;
     typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator
-            IntersectionIterator;
+    IntersectionIterator;
 
     LeafP1TwoPhaseModel(const G& g, ProblemType& prob) :
         ThisTwoPhaseHeatModel(g, prob), problem(prob), _grid(g), vertexmapper(g,    g.leafIndexSet()), size((*(this->u)).size())
-        {
+    {
     }
 
-        virtual void update(double &dt) {
-            DUNE_THROW(NotImplemented, "This method is obsolete. Use updateModel()!");
-        }
+    virtual void update(double &dt) {
+        DUNE_THROW(NotImplemented, "This method is obsolete. Use updateModel()!");
+    }
 
     virtual void initial() {
         typedef typename G::Traits::template Codim<0>::Entity Entity;
@@ -90,7 +90,7 @@ public:
         // iterate through leaf grid an evaluate c0 at cell center
         Iterator eendit = gridview.template end<0>();
         for (Iterator it = gridview.template begin<0>(); it
-                != eendit; ++it) {
+                 != eendit; ++it) {
             // get geometry type
             Dune::GeometryType gt = it->geometry().type();
 
@@ -98,8 +98,8 @@ public:
             const Entity& entity = *it;
 
             const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type
-                    &sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(gt,
-                            1);
+                &sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(gt,
+                                                                        1);
             int size = sfs.size();
 
             for (int i = 0; i < size; i++) {
@@ -110,11 +110,11 @@ public:
                 Dune::FieldVector<DT,dimworld> global = it->geometry().global(local);
 
                 int globalId = vertexmapper.template map<dim>(entity,
-                        sfs[i].entity());
+                                                              sfs[i].entity());
 
                 // initialize cell concentration
                 (*(this->u))[globalId] = this->problem.initial(
-                        global, entity, local);
+                                                               global, entity, local);
             }
             this->localJacobian().clearVisited();
             this->localJacobian().initiateStaticData(entity);
@@ -122,7 +122,7 @@ public:
 
         // set Dirichlet boundary conditions
         for (Iterator it = gridview.template begin<0>(); it
-                != eendit; ++it) {
+                 != eendit; ++it) {
             // get geometry type
             Dune::GeometryType gt = it->geometry().type();
 
@@ -130,54 +130,54 @@ public:
             const Entity& entity = *it;
 
             const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type
-                    &sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(gt,
-                            1);
+                &sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(gt,
+                                                                        1);
             int size = sfs.size();
 
             // set type of boundary conditions
             this->localJacobian().template assembleBC<LeafTag>(entity);
 
             IntersectionIterator
-                    endit = IntersectionIteratorGetter<G, LeafTag>::end(entity);
+                endit = IntersectionIteratorGetter<G, LeafTag>::end(entity);
             for (IntersectionIterator is = IntersectionIteratorGetter<G,
-                    LeafTag>::begin(entity); is!=endit; ++is)
+                     LeafTag>::begin(entity); is!=endit; ++is)
                 if (is->boundary()) {
                     for (int i = 0; i < size; i++)
                         // handle subentities of this face
                         for (int j = 0; j < ReferenceElements<DT,dim>::general(gt).size(is->numberInSelf(), 1, sfs[i].codim()); j++)
                             if (sfs[i].entity()
-                                    == ReferenceElements<DT,dim>::general(gt).subEntity(is->numberInSelf(), 1,
-                                            j, sfs[i].codim())) {
+                                == ReferenceElements<DT,dim>::general(gt).subEntity(is->numberInSelf(), 1,
+                                                                                    j, sfs[i].codim())) {
                                 for (int equationNumber = 0; equationNumber<m; equationNumber++) {
                                     if (this->localJacobian().bc(i)[equationNumber]
-                                            == BoundaryConditions::dirichlet) {
+                                        == BoundaryConditions::dirichlet) {
                                         // get cell center in reference element
                                         Dune::FieldVector<DT,dim>
-                                                local = sfs[i].position();
+                                            local = sfs[i].position();
 
                                         // get global coordinate of cell center
                                         Dune::FieldVector<DT,dimworld>
-                                                global = it->geometry().global(local);
+                                            global = it->geometry().global(local);
 
                                         int
-                                                globalId = vertexmapper.template map<dim>(
-                                                        entity, sfs[i].entity());
+                                            globalId = vertexmapper.template map<dim>(
+                                                                                      entity, sfs[i].entity());
                                         FieldVector<int,m> dirichletIndex;
                                         FieldVector<BoundaryConditions::Flags, m>
-                                                bctype = this->problem.bctype(
-                                                        global, entity, is,
-                                                        local);
-                                                this->problem.dirichletIndex(global, entity, is,
-                                                        local, dirichletIndex);
+                                            bctype = this->problem.bctype(
+                                                                          global, entity, is,
+                                                                          local);
+                                        this->problem.dirichletIndex(global, entity, is,
+                                                                     local, dirichletIndex);
 
                                         if (bctype[equationNumber]
-                                                == BoundaryConditions::dirichlet) {
+                                            == BoundaryConditions::dirichlet) {
                                             FieldVector<RT,m>
-                                                    ghelp = this->problem.g(
-                                                            global, entity, is,
-                                                            local);
+                                                ghelp = this->problem.g(
+                                                                        global, entity, is,
+                                                                        local);
                                             (*(this->u))[globalId][dirichletIndex[equationNumber]]
-                                                    = ghelp[dirichletIndex[equationNumber]];
+                                                = ghelp[dirichletIndex[equationNumber]];
                                         }
                                     }
                                 }
@@ -191,78 +191,78 @@ public:
 
 
     virtual double computeFlux ()
-     {
-          typedef typename G::Traits::template Codim<0>::Entity Entity;
-          typedef typename G::ctype DT;
-          typedef typename GV::template Codim<0>::Iterator Iterator;
-          enum{dim = G::dimension};
-          enum{dimworld = G::dimensionworld};
-             double sign;
-             const GV& gridview(_grid.leafView());
-          Iterator eendit = gridview.template end<0>();
-          FieldVector<RT,m> flux(0);
-          double Flux(0);
+    {
+        typedef typename G::Traits::template Codim<0>::Entity Entity;
+        typedef typename G::ctype DT;
+        typedef typename GV::template Codim<0>::Iterator Iterator;
+        enum{dim = G::dimension};
+        enum{dimworld = G::dimensionworld};
+        double sign;
+        const GV& gridview(_grid.leafView());
+        Iterator eendit = gridview.template end<0>();
+        FieldVector<RT,m> flux(0);
+        double Flux(0);
 
-          for (Iterator it = gridview.template begin<0>(); it != eendit; ++it) // loop over all entities
-          {
+        for (Iterator it = gridview.template begin<0>(); it != eendit; ++it) // loop over all entities
+            {
 
-                  // get geometry type
-                  Dune::GeometryType gt = it->geometry().type();
+                // get geometry type
+                Dune::GeometryType gt = it->geometry().type();
 
-                  // get entity
-                  const Entity& entity = *it;
+                // get entity
+                const Entity& entity = *it;
 
                 FVElementGeometry<G> fvGeom;
                 fvGeom.update(entity);
 
                 for (int k = 0; k < fvGeom.numEdges; k++)
-                 {
-                    int i = fvGeom.subContVolFace[k].i;
+                    {
+                        int i = fvGeom.subContVolFace[k].i;
 
-                    int j = fvGeom.subContVolFace[k].j;
+                        int j = fvGeom.subContVolFace[k].j;
 
-                    int flag_i, flag_j;
+                        int flag_i, flag_j;
 
-                    // 2D case: give y or x value of the line over which flux is to be
-                    //            calculated.
-                    // up to now only flux calculation to lines or planes (3D) parallel to
-                    // x, y and z axis possible
+                        // 2D case: give y or x value of the line over which flux is to be
+                        //            calculated.
+                        // up to now only flux calculation to lines or planes (3D) parallel to
+                        // x, y and z axis possible
 
-                    // Flux across plane with z = 80 m
-                     if(fvGeom.subContVol[i].global[2] < 80.)
-                             flag_i = 1;
-                         else flag_i = -1;
+                        // Flux across plane with z = 80 m
+                        if(fvGeom.subContVol[i].global[2] < 80.)
+                            flag_i = 1;
+                        else flag_i = -1;
 
-                         if(fvGeom.subContVol[j].global[2] < 80.)
-                             flag_j = 1;
-                         else flag_j = -1;
+                        if(fvGeom.subContVol[j].global[2] < 80.)
+                            flag_j = 1;
+                        else flag_j = -1;
 
-                         if(flag_i == flag_j)
-                          {
-                             sign = 0;
-                          }
-                         else {
-                                 if(flag_i > 0)
-                                     sign = -1;
-                                 else sign = 1; }
+                        if(flag_i == flag_j)
+                            {
+                                sign = 0;
+                            }
+                        else {
+                            if(flag_i > 0)
+                                sign = -1;
+                            else sign = 1; }
 
-                             // get variables
+                        // get variables
 
-                         if(flag_i != flag_j)
-                         {
-                        this->localJacobian().setLocalSolution(entity);
-                        this->localJacobian().computeElementData(entity);
-                        this->localJacobian().updateVariableData(entity, this->localJacobian().u);
+                        if(flag_i != flag_j)
+                            {
+                                this->localJacobian().setLocalSolution(entity);
+                                this->localJacobian().computeElementData(entity);
+                                this->localJacobian().updateVariableData(entity, this->localJacobian().u);
 
 
-                        flux = this->localJacobian().computeA(entity, this->localJacobian().u, k);
-                        Flux += sign*flux[1];
-                         }
-                 }
+                                flux = this->localJacobian().computeA(entity, this->localJacobian().u, k);
+                                Flux += sign*flux[1];
+                            }
+                    }
 
-          }
-          return Flux; // Co2 flux
-     }
+            }
+        return Flux; // Co2 flux
+    }
 
 
     virtual double totalCO2Mass() {
@@ -286,7 +286,7 @@ public:
         // iterate through leaf grid an evaluate c0 at cell center
         Iterator eendit = gridview.template end<0>();
         for (Iterator it = gridview.template begin<0>(); it
-                != eendit; ++it) {
+                 != eendit; ++it) {
             // get geometry type
             Dune::GeometryType gt = it->geometry().type();
 
@@ -297,8 +297,8 @@ public:
             fvGeom.update(entity);
 
             const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type
-                    &sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(gt,
-                            1);
+                &sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(gt,
+                                                                        1);
             int size = sfs.size();
 
             for (int i = 0; i < size; i++) {
@@ -309,12 +309,12 @@ public:
                 Dune::FieldVector<DT,dimworld> global = it->geometry().global(local);
 
                 int globalId = vertexmapper.template map<dim>(entity,
-                        sfs[i].entity());
+                                                              sfs[i].entity());
 
                 int state;
                 state = this->localJacobian().sNDat[globalId].phaseState;
                 RT vol = fvGeom.subContVol[i].volume;
-//                RT poro = this->problem.soil().porosity(global, entity, local);
+                //                RT poro = this->problem.soil().porosity(global, entity, local);
                 RT poro = this->problem.soil().porosity(global, entity, local);
                 RT rhoN = (*(this->localJacobian().outDensityN))[globalId];
                 RT rhoW = (*(this->localJacobian().outDensityW))[globalId];
@@ -345,13 +345,13 @@ public:
 
         // print minimum and maximum values
         std::cout << "nonwetting phase saturation: min = "<< minSat
-                << ", max = "<< maxSat << std::endl;
+                  << ", max = "<< maxSat << std::endl;
         std::cout << "wetting phase pressure: min = "<< minP
-                << ", max = "<< maxP << std::endl;
+                  << ", max = "<< maxP << std::endl;
         std::cout << "mole fraction CO2: min = "<< minX
-                << ", max = "<< maxX << std::endl;
+                  << ", max = "<< maxX << std::endl;
         std::cout << "temperature: min = "<< minTe
-                << ", max = "<< maxTe << std::endl;
+                  << ", max = "<< maxTe << std::endl;
 
         return totalMass;
     }
@@ -368,12 +368,12 @@ public:
         // allocate flag vector to hold flags for essential boundary conditions
         std::vector<BCBlockType> essential(this->vertexmapper.size());
         for (typename std::vector<BCBlockType>::size_type i=0; i
-                <essential.size(); i++)
+                 <essential.size(); i++)
             essential[i].assign(BoundaryConditions::neumann);
         // iterate through leaf grid
         Iterator eendit = gridview.template end<0>();
         for (Iterator it = gridview.template begin<0>(); it
-                != eendit; ++it) {
+                 != eendit; ++it) {
             // get geometry type
             Dune::GeometryType gt = it->geometry().type();
 
@@ -394,7 +394,7 @@ public:
                 for (int equationnumber = 0; equationnumber < m; equationnumber++) {
                     if (this->localJacobian().bc(i)[equationnumber] == BoundaryConditions::neumann)
                         (*defectGlobal)[globalId][equationnumber]
-                                += this->localJacobian().def[i][equationnumber];
+                            += this->localJacobian().def[i][equationnumber];
                     else
                         essential[globalId].assign(BoundaryConditions::dirichlet);
                 }
@@ -402,10 +402,10 @@ public:
         }
 
         for (typename std::vector<BCBlockType>::size_type i=0; i
-                <essential.size(); i++)
+                 <essential.size(); i++)
             for (int equationnumber = 0; equationnumber < m; equationnumber++) {
-            if (essential[i][equationnumber] == BoundaryConditions::dirichlet)
-                (*defectGlobal)[i][equationnumber] = 0;
+                if (essential[i][equationnumber] == BoundaryConditions::dirichlet)
+                    (*defectGlobal)[i][equationnumber] = 0;
             }
     }
 
@@ -418,7 +418,7 @@ public:
         enum {dim = G::dimension};
         typedef typename GV::template Codim<dim>::Iterator Iterator;
 
-//        exportToDGF(_grid.leafView(), *(this->u), m, "primvar", false);
+        //        exportToDGF(_grid.leafView(), *(this->u), m, "primvar", false);
 
         const int size = vertexmapper.size();
         BlockVector<FieldVector<double, m+1> > data(size);
@@ -426,24 +426,24 @@ public:
 
         Iterator endIt = _grid.leafView().template end<dim>();
         for (Iterator it = _grid.leafView().template begin<dim>(); it != endIt;    ++it)
-        {
-            int index = vertexmapper.map(*it);
-            for (int i = 0; i < m;i++)
             {
-                data[index][i]=(*(this->u))[index][i];
+                int index = vertexmapper.map(*it);
+                for (int i = 0; i < m;i++)
+                    {
+                        data[index][i]=(*(this->u))[index][i];
+                    }
+                data[index][m]=this->localJacobian().sNDat[index].phaseState;
             }
-            data[index][m]=this->localJacobian().sNDat[index].phaseState;
-        }
         exportToDGF(_grid.leafView(), data, (m+1), "data", false);
     }
     const G &grid() const
-        { return _grid; }
+    { return _grid; }
 
 protected:
-  ProblemType& problem;
-  const G& _grid;
-  VertexMapper vertexmapper;
-  int size;
+    ProblemType& problem;
+    const G& _grid;
+    VertexMapper vertexmapper;
+    int size;
 };
 
 }

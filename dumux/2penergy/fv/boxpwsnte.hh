@@ -46,21 +46,21 @@ namespace Dune
 {
 
 /**
- \brief Two phase model with Pw and Sn as primary unknowns
+   \brief Two phase model with Pw and Sn as primary unknowns
 
- This implements a two phase model with Pw and Sn as primary unknowns.
- */
-  template<class G, class RT>
-  class BoxPwSnTe
-  : public LeafP1TwoPhaseModel<G, RT, TwoPhaseHeatProblem<G, RT>, BoxPwSnTeJacobian<G, RT> >
-  {
-
-
+   This implements a two phase model with Pw and Sn as primary unknowns.
+*/
+template<class G, class RT>
+class BoxPwSnTe
+    : public LeafP1TwoPhaseModel<G, RT, TwoPhaseHeatProblem<G, RT>, BoxPwSnTeJacobian<G, RT> >
+{
 
 
 
 
-  public:
+
+
+public:
     // define the problem type (also change the template argument above)
     typedef TwoPhaseHeatProblem<G, RT> ProblemType;
 
@@ -76,15 +76,15 @@ namespace Dune
     enum{m = 3};
 
     typedef BoxPwSnTe<G, RT> ThisType;
-        typedef typename LeafP1TwoPhaseModel::FunctionType::RepresentationType VectorType;
-        typedef typename LeafP1TwoPhaseModel::OperatorAssembler::RepresentationType MatrixType;
-        typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator;
+    typedef typename LeafP1TwoPhaseModel::FunctionType::RepresentationType VectorType;
+    typedef typename LeafP1TwoPhaseModel::OperatorAssembler::RepresentationType MatrixType;
+    typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator;
 #ifdef HAVE_PARDISO
     SeqPardiso<MatrixType,VectorType,VectorType> pardiso;
 #endif
 
     BoxPwSnTe(const G& g, ProblemType& prob)
-    : LeafP1TwoPhaseModel(g, prob)
+        : LeafP1TwoPhaseModel(g, prob)
     {     }
 
     void solve()
@@ -97,10 +97,10 @@ namespace Dune
         double red=1E-8;
 
 #ifdef HAVE_PARDISO
-//    SeqPardiso<MatrixType,VectorType,VectorType> ilu0(*(this->A));
+        //    SeqPardiso<MatrixType,VectorType,VectorType> ilu0(*(this->A));
         pardiso.factorize(*(this->A));
         BiCGSTABSolver<VectorType> solver(op,pardiso,red,100,2);         // an inverse operator
-    //    SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A),1.0);// a precondtioner
+        //    SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A),1.0);// a precondtioner
         //LoopSolver<VectorType> solver(op, ilu0, red, 10, 2);
 #else
         SeqILU0<MatrixType,VectorType,VectorType> ilu0(*(this->A),1.0);// a precondtioner
@@ -124,19 +124,19 @@ namespace Dune
         double upperMass, oldUpperMass;
         double totalMass = this->injected(upperMass, oldUpperMass);
         std::cout << "total CO2 Mass: "<<totalMass << "\t" << std::endl;
-//        double MassFlux = 0;
-//        double upperValue[2], lowerValue[2];
-//        upperValue[0] = upperValue[1] = 0.;
-//        lowerValue[0] = lowerValue[1] = 0.;
-//        MassFlux = this->ComputeFlux(upperValue,lowerValue);
-//        std::cout << MassFlux <<" "<< upperValue[0] << " "<< upperValue[1] << " "<<
-//        lowerValue[0] <<" "<< lowerValue[1] <<" ";
+        //        double MassFlux = 0;
+        //        double upperValue[2], lowerValue[2];
+        //        upperValue[0] = upperValue[1] = 0.;
+        //        lowerValue[0] = lowerValue[1] = 0.;
+        //        MassFlux = this->ComputeFlux(upperValue,lowerValue);
+        //        std::cout << MassFlux <<" "<< upperValue[0] << " "<< upperValue[1] << " "<<
+        //        lowerValue[0] <<" "<< lowerValue[1] <<" ";
         *(this->uOldTimeStep) = *(this->u);
 
         return;
     }
 
-  };
+};
 
 }
 #endif

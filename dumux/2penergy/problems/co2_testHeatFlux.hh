@@ -26,37 +26,37 @@
 
 namespace Dune
 {
-  //! base class that defines the parameters of a diffusion equation
-  /*! An interface for defining parameters for the stationary diffusion equation
-   * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = q, \f$,
-   * \f$p = g\f$ on \f$\Gamma_1\f$, and \f$\lambda K \text{grad}\, p = J\f$
-   * on \f$\Gamma_2\f$. Here,
-   * \f$p\f$ denotes the pressure, \f$K\f$ the absolute permeability,
-   * and \f$\lambda\f$ the total mobility, possibly depending on the
-   * saturation.
-   *
-   *    Template parameters are:
-   *
-   *    - Grid  a DUNE grid type
-   *    - RT    type used for return values
-   */
-  template<class G, class RT>
-  class CO2Problem2D : public TwoPhaseHeatProblem<G, RT> {
+//! base class that defines the parameters of a diffusion equation
+/*! An interface for defining parameters for the stationary diffusion equation
+ * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = q, \f$,
+ * \f$p = g\f$ on \f$\Gamma_1\f$, and \f$\lambda K \text{grad}\, p = J\f$
+ * on \f$\Gamma_2\f$. Here,
+ * \f$p\f$ denotes the pressure, \f$K\f$ the absolute permeability,
+ * and \f$\lambda\f$ the total mobility, possibly depending on the
+ * saturation.
+ *
+ *    Template parameters are:
+ *
+ *    - Grid  a DUNE grid type
+ *    - RT    type used for return values
+ */
+template<class G, class RT>
+class CO2Problem2D : public TwoPhaseHeatProblem<G, RT> {
     typedef typename G::ctype DT;
     enum {n=G::dimension, m=3};
     enum {swrIdx=0, snrIdx=1, lamIdx=2, pbIdx=3};
     typedef typename G::Traits::template Codim<0>::Entity Entity;
     typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
 
-  public:
+public:
     virtual const FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x, const Entity& e,
-                    const FieldVector<DT,n>& xi)
+                                          const FieldVector<DT,n>& xi)
     {
         return permloc_;
     }
 
     virtual FieldVector<RT,m> q (const FieldVector<DT,n>& x, const Entity& e,
-                    const FieldVector<DT,n>& xi) const
+                                 const FieldVector<DT,n>& xi) const
     {
         FieldVector<RT,m> values(0);
 
@@ -64,22 +64,22 @@ namespace Dune
     }
 
     virtual FieldVector<BoundaryConditions::Flags, m> bctype (const FieldVector<DT,n>& x, const Entity& e,
-                    const IntersectionIterator& intersectionIt,
-                       const FieldVector<DT,n>& xi) const
+                                                              const IntersectionIterator& intersectionIt,
+                                                              const FieldVector<DT,n>& xi) const
     {
         FieldVector<BoundaryConditions::Flags, m> values(Dune::BoundaryConditions::dirichlet);
         if(x[0]<1.e-2 && x[1] > 1. && x[1] < 3.)
-        {
-            values[0] = Dune::BoundaryConditions::neumann;
-            values[1] = Dune::BoundaryConditions::neumann;
+            {
+                values[0] = Dune::BoundaryConditions::neumann;
+                values[1] = Dune::BoundaryConditions::neumann;
                 values[2] = Dune::BoundaryConditions::neumann;
-        }
+            }
         return values;
     }
 
     virtual void dirichletIndex(const FieldVector<DT,n>& x, const Entity& e,
-            const IntersectionIterator& intersectionIt,
-            const FieldVector<DT,n>& xi, FieldVector<int,m>& dirichletIndex) const
+                                const IntersectionIterator& intersectionIt,
+                                const FieldVector<DT,n>& xi, FieldVector<int,m>& dirichletIndex) const
     {
         for (int i = 0; i < m; i++)
             dirichletIndex[i]=i;
@@ -87,8 +87,8 @@ namespace Dune
     }
 
     virtual FieldVector<RT,m> g (const FieldVector<DT,n>& x, const Entity& e,
-                const IntersectionIterator& intersectionIt,
-                  const FieldVector<DT,n>& xi) const
+                                 const IntersectionIterator& intersectionIt,
+                                 const FieldVector<DT,n>& xi) const
     {
         FieldVector<RT,m> values(0);
 
@@ -100,7 +100,7 @@ namespace Dune
     }
 
     virtual FieldVector<RT,m> J (const FieldVector<DT,n>& x, const Entity& e,
-                const IntersectionIterator& intersectionIt, const FieldVector<DT,n>& xi) const
+                                 const IntersectionIterator& intersectionIt, const FieldVector<DT,n>& xi) const
     {
         FieldVector<RT,m> values(0);
 
@@ -113,7 +113,7 @@ namespace Dune
 
     // Initial Conditions for global vector x, element e and local vector xi
     virtual FieldVector<RT,m> initial (const FieldVector<DT,n>& x, const Entity& e,
-                  const FieldVector<DT,n>& xi) const
+                                       const FieldVector<DT,n>& xi) const
     {
         FieldVector<RT,m> values(0);
 
@@ -125,13 +125,13 @@ namespace Dune
     }
 
     double porosity (const FieldVector<DT,n>& x, const Entity& e,
-              const FieldVector<DT,n>& xi) const
+                     const FieldVector<DT,n>& xi) const
     {
         return 0.2;
     }
 
     virtual FieldVector<RT,4> soilParameters (const FieldVector<DT,n>& x, const Entity& e,
-              const FieldVector<DT,n>& xi) const
+                                              const FieldVector<DT,n>& xi) const
     {
         FieldVector<RT,4> values(0);
         enum{soilDensity = 0,soilHeatCap = 1,soilLambdaDry = 2, soilLambdaSw = 3};
@@ -154,7 +154,7 @@ namespace Dune
     }
 
     virtual FieldVector<RT,4> materialLawParameters (const FieldVector<DT,n>& x, const Entity& e,
-              const FieldVector<DT,n>& xi) const
+                                                     const FieldVector<DT,n>& xi) const
     {
         FieldVector<RT,4> values(0);
         values[swrIdx] = swr_;
@@ -166,7 +166,7 @@ namespace Dune
     }
 
     CO2Problem2D(TwoPhaseRelations& law = *(new DeprecatedBrooksCoreyLaw), RT pdown = 3.086e5, RT swr = 0.2, RT snr = 0.05, RT pb = 10000.0, RT lambda = 2.0 )
-    : TwoPhaseHeatProblem<G, RT>(law)
+        : TwoPhaseHeatProblem<G, RT>(law)
     {
         p0_ = pdown;
         swr_ = swr;
@@ -181,16 +181,16 @@ namespace Dune
 
     }
 
-    private:
-        Dune::FieldMatrix<DT,n,n> permloc_;
-        Dune::FieldMatrix<DT,n,n> permlocWell_;
-        Dune::FieldMatrix<DT,n,n> permlocAquitard_;
-        RT p0_;
-        RT swr_, snr_;
-        RT pb_, lambda_;
-        RT soilDens_, soilHeatCp_, soilLDry_, soilLSw_;
+private:
+    Dune::FieldMatrix<DT,n,n> permloc_;
+    Dune::FieldMatrix<DT,n,n> permlocWell_;
+    Dune::FieldMatrix<DT,n,n> permlocAquitard_;
+    RT p0_;
+    RT swr_, snr_;
+    RT pb_, lambda_;
+    RT soilDens_, soilHeatCp_, soilLDry_, soilLSw_;
 
-  };
+};
 
 }
 #endif

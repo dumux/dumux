@@ -13,51 +13,51 @@ namespace Dune
 
 /** \todo Please doc me! */
 
-  template<class Grid, class Scalar>
-  class TwoPHeatSoil: public Matrix2p<Grid,Scalar>
-  {
-  public:
-      typedef typename Grid::Traits::template Codim<0>::Entity Element;
-      typedef typename Grid::ctype CoordScalar;
+template<class Grid, class Scalar>
+class TwoPHeatSoil: public Matrix2p<Grid,Scalar>
+{
+public:
+    typedef typename Grid::Traits::template Codim<0>::Entity Element;
+    typedef typename Grid::ctype CoordScalar;
 
-      typedef BasicDomain<Grid, Scalar> ParentType;
-      // the domain traits of the domain
-      typedef typename ParentType::DomainTraits DomainTraits;
-      typedef typename DomainTraits::LocalPosition LocalPosition;
-      typedef typename DomainTraits::GlobalPosition GlobalPosition;
+    typedef BasicDomain<Grid, Scalar> ParentType;
+    // the domain traits of the domain
+    typedef typename ParentType::DomainTraits DomainTraits;
+    typedef typename DomainTraits::LocalPosition LocalPosition;
+    typedef typename DomainTraits::GlobalPosition GlobalPosition;
 
-      enum {dim=Grid::dimension, numEq=1};
+    enum {dim=Grid::dimension, numEq=1};
 
-      // define PERMEABILITY tensor
-      virtual const FieldMatrix<CoordScalar,dim,dim>& K (const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos)
-      {
-            return K_;
-      }
-      virtual double porosity(const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos) const
-      {
-          return 0.15;
-      }
+    // define PERMEABILITY tensor
+    virtual const FieldMatrix<CoordScalar,dim,dim>& K (const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos)
+    {
+        return K_;
+    }
+    virtual double porosity(const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos) const
+    {
+        return 0.15;
+    }
 
-      virtual double Sr_w(const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos, const double T) const
-      {
-              return 0.2;
-      }
+    virtual double Sr_w(const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos, const double T) const
+    {
+        return 0.2;
+    }
 
-      virtual double Sr_n(const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos, const double T) const
-      {
-          return 0.05;
-      }
+    virtual double Sr_n(const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos, const double T) const
+    {
+        return 0.05;
+    }
 
-      virtual typename Matrix2p<Grid,Scalar>::modelFlag relPermFlag(const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos) const
-      {
-          return Matrix2p<Grid,Scalar>::brooks_corey;
-      }
+    virtual typename Matrix2p<Grid,Scalar>::modelFlag relPermFlag(const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos) const
+    {
+        return Matrix2p<Grid,Scalar>::brooks_corey;
+    }
 
     virtual double heatCap(const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos) const
     {
         return     (800 /* spec. heat cap. of sediment */
-                        * 2650 /* density of sediment */
-                        * (1-porosity(globalPos, element, localPos)));
+                    * 2650 /* density of sediment */
+                    * (1-porosity(globalPos, element, localPos)));
     }
 
     virtual double heatCond(const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos, const double sat) const
@@ -78,33 +78,33 @@ namespace Dune
         return(l_wurz);
     }
 
-      virtual std::vector<double> paramRelPerm(const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos, const double T) const
-      {
-          // example for Brooks-Corey parameters
+    virtual std::vector<double> paramRelPerm(const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos, const double T) const
+    {
+        // example for Brooks-Corey parameters
         std::vector<double> param(5);
 
-            param[0] = 2.;
-            param[1] = 10000;
+        param[0] = 2.;
+        param[1] = 10000;
 
-          return param;
-      }
+        return param;
+    }
 
-      TwoPHeatSoil()
-      : Matrix2p<Grid,Scalar>()
-      {
-          K_ = 0;
-          for(int i = 0; i < dim; i++)
-          {
-              K_[i][i] = 2e-14;
-          }
-      }
+    TwoPHeatSoil()
+        : Matrix2p<Grid,Scalar>()
+    {
+        K_ = 0;
+        for(int i = 0; i < dim; i++)
+            {
+                K_[i][i] = 2e-14;
+            }
+    }
 
-      ~TwoPHeatSoil()
-      {}
+    ~TwoPHeatSoil()
+    {}
 
-  private:
-      FieldMatrix<CoordScalar,dim,dim> K_;
-   };
+private:
+    FieldMatrix<CoordScalar,dim,dim> K_;
+};
 
 } // end namespace
 #endif

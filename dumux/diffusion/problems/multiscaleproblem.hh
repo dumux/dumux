@@ -80,67 +80,67 @@ namespace Dune
 //    };
 
 template<class G, class RT,class VC>
-    class MultiscaleProblem : public DiffusionProblem<G,RT,VC>
-    {
-      typedef typename G::ctype DT;
-      enum {n=G::dimension};
-      typedef typename G::Traits::template Codim<0>::Entity Entity;
+class MultiscaleProblem : public DiffusionProblem<G,RT,VC>
+{
+    typedef typename G::ctype DT;
+    enum {n=G::dimension};
+    typedef typename G::Traits::template Codim<0>::Entity Entity;
 
-    public:
-      MultiscaleProblem(G& g, DiffusionProblem<G,RT>& p,const int diff_level, const int trans_level, TwoPhaseRelations& law = *(new DeprecatedLinearLaw), const bool cap = false)
+public:
+    MultiscaleProblem(G& g, DiffusionProblem<G,RT>& p,const int diff_level, const int trans_level, TwoPhaseRelations& law = *(new DeprecatedLinearLaw), const bool cap = false)
         : DiffusionProblem<G,RT,VC>(p.variabls,p.materialLaw, p.capillary), l_diffusion(diff_level), l_transport(trans_level)
-      {
-          problem = &p;
-      }
+    {
+        problem = &p;
+    }
 
-      const Dune::FieldMatrix<DT,n,n>& K (const Dune::FieldVector<DT,n>& x, const Entity& e,
-                      const Dune::FieldVector<DT,n>& xi)
-      {
-          return problem->K(x,e,xi);
-      }
+    const Dune::FieldMatrix<DT,n,n>& K (const Dune::FieldVector<DT,n>& x, const Entity& e,
+                                        const Dune::FieldVector<DT,n>& xi)
+    {
+        return problem->K(x,e,xi);
+    }
 
-      RT sat (const Dune::FieldVector<DT,n>& x, const Entity& e,
-                      const Dune::FieldVector<DT,n>& xi)
-      {
-          if (e.level() == l_transport)
-              return problem.variables.sat(x, e, xi);
-          typename Entity::EntityPointer f = e.father();
-          while (f.level() > l_transport) f = f->father();
-          return problem.variables.sat(x,*f,xi);
-      }
+    RT sat (const Dune::FieldVector<DT,n>& x, const Entity& e,
+            const Dune::FieldVector<DT,n>& xi)
+    {
+        if (e.level() == l_transport)
+            return problem.variables.sat(x, e, xi);
+        typename Entity::EntityPointer f = e.father();
+        while (f.level() > l_transport) f = f->father();
+        return problem.variables.sat(x,*f,xi);
+    }
 
-      RT q   (const Dune::FieldVector<DT,n>& x, const Entity& e,
-                      const Dune::FieldVector<DT,n>& xi)
-      {
+    RT q   (const Dune::FieldVector<DT,n>& x, const Entity& e,
+            const Dune::FieldVector<DT,n>& xi)
+    {
         return problem->q(x,e,xi);
-      }
+    }
 
-      typename Dune::BoundaryConditions::Flags bctype (const Dune::FieldVector<DT,n>& x, const Entity& e,
-                           const Dune::FieldVector<DT,n>& xi) const
-      {
+    typename Dune::BoundaryConditions::Flags bctype (const Dune::FieldVector<DT,n>& x, const Entity& e,
+                                                     const Dune::FieldVector<DT,n>& xi) const
+    {
         return problem->bctype(x,e,xi);
-      }
+    }
 
-      RT g (const Dune::FieldVector<DT,n>& x, const Entity& e,
-                    const Dune::FieldVector<DT,n>& xi) const
-      {
-          return problem->g(x,e,xi);
-      }
+    RT g (const Dune::FieldVector<DT,n>& x, const Entity& e,
+          const Dune::FieldVector<DT,n>& xi) const
+    {
+        return problem->g(x,e,xi);
+    }
 
 
-      RT J (const Dune::FieldVector<DT,n>& x, const Entity& e,
-                    const Dune::FieldVector<DT,n>& xi) const
-      {
+    RT J (const Dune::FieldVector<DT,n>& x, const Entity& e,
+          const Dune::FieldVector<DT,n>& xi) const
+    {
         return problem->J(x,e,xi);
-      }
+    }
 
 
-    private:
-        DiffusionProblem<G,RT>* problem;
-    public:
-                int l_transport;
-                int l_diffusion;
-    };
+private:
+    DiffusionProblem<G,RT>* problem;
+public:
+    int l_transport;
+    int l_diffusion;
+};
 
 }
 

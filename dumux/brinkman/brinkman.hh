@@ -15,27 +15,27 @@
 
 namespace Dune
 {
-  //! \ingroup diffusion
-  //! Base class for defining an instance of a numerical diffusion model.
-  /*! An interface for defining a numerical diffusion model for the
-   *  solution of equations of the form
-   * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = 0, \f$,
-   * \f$p = g\f$ on \f$\Gamma_1\f$, and \f$\lambda K \text{grad}\, p = J\f$
-   * on \f$\Gamma_2\f$. Here,
-   * \f$p\f$ denotes the pressure, \f$K\f$ the absolute permeability,
-   * and \f$\lambda\f$ the total mobility, possibly depending on the
-   * saturation.
-    Template parameters are:
+//! \ingroup diffusion
+//! Base class for defining an instance of a numerical diffusion model.
+/*! An interface for defining a numerical diffusion model for the
+ *  solution of equations of the form
+ * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = 0, \f$,
+ * \f$p = g\f$ on \f$\Gamma_1\f$, and \f$\lambda K \text{grad}\, p = J\f$
+ * on \f$\Gamma_2\f$. Here,
+ * \f$p\f$ denotes the pressure, \f$K\f$ the absolute permeability,
+ * and \f$\lambda\f$ the total mobility, possibly depending on the
+ * saturation.
+ Template parameters are:
 
-    - Grid      a DUNE grid type
-    - RT        type used for return values
-    - RepresentationType type of the vector holding the pressure values
-    - VelType   type of the vector holding the velocity values
+ - Grid      a DUNE grid type
+ - RT        type used for return values
+ - RepresentationType type of the vector holding the pressure values
+ - VelType   type of the vector holding the velocity values
 
-   */
-  template<class G, class RT, class RepresentationType, class VelType>
-  class Brinkman {
-  public:
+*/
+template<class G, class RT, class RepresentationType, class VelType>
+class Brinkman {
+public:
     RepresentationType pressure; //!< vector of pressure values
     RepresentationType pressureCorrection; //!< vector of pressure correction values
     VelType velocity;
@@ -59,20 +59,20 @@ namespace Dune
         double dampP = 0.35;
 
         while (error > tolerance && iter <= maxIter)
-        {
-            iter++;
-            computeVelocity();
-            computePressureCorrection();
-            computeVelocityCorrection();
-            pressureCorrection *= dampP;
-            velocityCorrection *= dampV;
-            pressure += pressureCorrection;
-            velocity += velocityCorrection;
+            {
+                iter++;
+                computeVelocity();
+                computePressureCorrection();
+                computeVelocityCorrection();
+                pressureCorrection *= dampP;
+                velocityCorrection *= dampV;
+                pressure += pressureCorrection;
+                velocity += velocityCorrection;
 
-            //correctVelocityAndPressure();
-            error = pressureCorrection.two_norm()/pressure.two_norm();
-            std::cout << "Iter = " << iter << ", \t Error = " << error << std::endl;
-        }
+                //correctVelocityAndPressure();
+                error = pressureCorrection.two_norm()/pressure.two_norm();
+                std::cout << "Iter = " << iter << ", \t Error = " << error << std::endl;
+            }
     }
 
     //! generate vtk output
@@ -81,13 +81,13 @@ namespace Dune
     //! return const reference to pressure vector
     const RepresentationType& operator* () const
     {
-      return pressure;
+        return pressure;
     }
 
     //! return reference to permeability vector
     RepresentationType& operator* ()
     {
-      return pressure;
+        return pressure;
     }
 
     //! always define virtual destructor in abstract base class
@@ -97,15 +97,15 @@ namespace Dune
     /**
      * \param g grid object of type G
      * \param prob a problem class object derived from BrinkmanProblem
-    */
+     */
     Brinkman(const G& g, BrinkmanProblem<G, RT>& prob)
-    : problem(prob), grid(g)
+        : problem(prob), grid(g)
     {
     }
 
-  protected:
-      const G& grid;
-  };
+protected:
+    const G& grid;
+};
 
 }
 #endif

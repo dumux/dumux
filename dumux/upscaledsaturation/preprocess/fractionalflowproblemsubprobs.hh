@@ -50,7 +50,7 @@ class FractionalFlowProblemSubProbs
 {
 public:
     enum
-    {    dim=Grid::dimension,dimWorld= Grid::dimensionworld,numEq=1};
+        {    dim=Grid::dimension,dimWorld= Grid::dimensionworld,numEq=1};
 protected:
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
     typedef typename Grid::HostGridType HostGrid;
@@ -60,75 +60,75 @@ protected:
 public:
     //! evaluate source term for the pressure equation
     /*! evaluate source term for the pressure equation at given location
-     @param[in]  globalPos    position in global coordinates
-     @param[in]  element    entity of codim 0
-     @param[in]  localPos   position in reference element of element
-     \return     value of source term
-     */
+      @param[in]  globalPos    position in global coordinates
+      @param[in]  element    entity of codim 0
+      @param[in]  localPos   position in reference element of element
+      \return     value of source term
+    */
     virtual Scalar sourcePress (const GlobalPosition& globalPos, const Element& element,
-            const LocalPosition& localPos) = 0;
+                                const LocalPosition& localPos) = 0;
 
     //! return type of boundary condition for the pressure equation at the given global coordinate
     /*! return type of boundary condition for the pressure equation at the given global coordinate
-     @param[in]  globalPos    position in global coordinates
-     \return     boundary condition type given by enum in this class
-     */
+      @param[in]  globalPos    position in global coordinates
+      \return     boundary condition type given by enum in this class
+    */
     virtual BoundaryConditions::Flags bctypePress (const GlobalPosition& globalPos, const Element& element,
-            const LocalPosition& localPos) const = 0;
+                                                   const LocalPosition& localPos) const = 0;
 
     //! return type of boundary condition for the saturation equation at the given global coordinate
     /*! return type of boundary condition for the saturation equation at the given global coordinate
-     @param[in]  globalPos    position in global coordinates
-     \return     boundary condition type given by enum in this class
-     */
+      @param[in]  globalPos    position in global coordinates
+      \return     boundary condition type given by enum in this class
+    */
     virtual BoundaryConditions::Flags bctypeSat (const GlobalPosition& globalPos, const Element& element,
-            const LocalPosition& localPos) const = 0;
+                                                 const LocalPosition& localPos) const = 0;
 
     //! evaluate Dirichlet boundary condition for the pressure equation at given position
     /*! evaluate Dirichlet boundary condition for the pressure equation at given position
-     @param[in]  globalPos    position in global coordinates
-     \return     boundary condition value
-     */
+      @param[in]  globalPos    position in global coordinates
+      \return     boundary condition value
+    */
     virtual Scalar dirichletPress (const GlobalPosition& globalPos, const Element& element,
-            const LocalPosition& localPos) const = 0;
+                                   const LocalPosition& localPos) const = 0;
 
     //! evaluate Dirichlet boundary condition for the saturation equation at given position
     /*! evaluate Dirichlet boundary condition for the saturation equation at given position
-     @param[in]  globalPos    position in global coordinates
-     \return     boundary condition value
-     */
+      @param[in]  globalPos    position in global coordinates
+      \return     boundary condition value
+    */
     virtual Scalar dirichletSat (const GlobalPosition& globalPos, const Element& element,
-            const LocalPosition& localPos) const
+                                 const LocalPosition& localPos) const
     {
         return 1;
     }
 
     //! evaluate Neumann boundary condition for the pressure equation at given position
     /*! evaluate Neumann boundary condition for the pressure equation at given position
-     @param[in]  globalPos    position in global coordinates
-     \return     boundary condition value
-     */
+      @param[in]  globalPos    position in global coordinates
+      \return     boundary condition value
+    */
     virtual Scalar neumannPress (const GlobalPosition& globalPos, const Element& element,
-            const LocalPosition& localPos) const = 0;
+                                 const LocalPosition& localPos) const = 0;
 
     //! evaluate initial condition for saturation at given position
     /*! evaluate initial condition for saturation at given position
-     @param[in]  globalPos    position in global coordinates
-     \return    initial condition value
-     */
+      @param[in]  globalPos    position in global coordinates
+      \return    initial condition value
+    */
     virtual Scalar initSat (const GlobalPosition& globalPos, const Element& element,
-            const LocalPosition& localPos) const = 0;
+                            const LocalPosition& localPos) const = 0;
 
     virtual Scalar neumannSat (const GlobalPosition& globalPos, const Element& element,
-            const LocalPosition& localPos, Scalar& factor) const
+                               const LocalPosition& localPos, Scalar& factor) const
     {
         return 0;
     }
 
     //! evaluate gravity
     /*! evaluate gravity
-     \return     gravity vector
-     */
+      \return     gravity vector
+    */
     const FieldVector<Scalar,dimWorld>& gravity() const
     {
         return gravity_;
@@ -139,7 +139,7 @@ public:
      *  @param cap flag to include capillary forces.
      */
     FractionalFlowProblemSubProbs(VC& variables, Fluid& wettingphase, Fluid& nonwettingphase, Matrix2p<typename Grid::HostGridType, Scalar>& soil, TwoPhaseRelations<typename Grid::HostGridType, Scalar>& materialLaw = *(new TwoPhaseRelations<typename Grid::HostGridType,Scalar>))
-    : variables(variables), wettingPhase(wettingphase), nonWettingPhase(nonwettingphase), soil(soil), materialLaw(materialLaw),gravity_(0)
+        : variables(variables), wettingPhase(wettingphase), nonWettingPhase(nonwettingphase), soil(soil), materialLaw(materialLaw),gravity_(0)
     {}
 
     //! always define virtual destructor in abstract base class

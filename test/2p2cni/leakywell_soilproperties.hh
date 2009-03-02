@@ -23,12 +23,12 @@ public:
 
     const FieldMatrix<CoordScalar,dim,dim> &K (const GlobalPosition &x, const Element& e, const LocalPosition &xi)
     {
-         if (x[0] > -0.2 && x[0] < 0.2 && x[1] > -0.2 && x[1] < 0.2)
-           return permlocWell_;
-//         else if (x[2] > 30.+1.e-2 && x[2] < 130-1.e-2)
-//           return permlocAquitard_;
-         else
-           return permloc_;
+        if (x[0] > -0.2 && x[0] < 0.2 && x[1] > -0.2 && x[1] < 0.2)
+            return permlocWell_;
+        //         else if (x[2] > 30.+1.e-2 && x[2] < 130-1.e-2)
+        //           return permlocAquitard_;
+        else
+            return permloc_;
     }
 
     double porosity(const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
@@ -49,8 +49,8 @@ public:
     virtual double heatCap(const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
     {
         return     (800 /* spec. heat cap. of sediment */
-                        * 2650 /* density of sediment */
-                        * (1-porosity(x, e, xi)));
+                    * 2650 /* density of sediment */
+                    * (1-porosity(x, e, xi)));
     }
 
     virtual double heatCond(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double sat) const
@@ -92,19 +92,19 @@ public:
         :HomogeneousSoil<Grid,Scalar>(),
          permloc_(0.0), permlocWell_(0.0)
     {
-      for (int i = 0; i < dim; i++)
-        permloc_[i][i] = 2.0e-14;
+        for (int i = 0; i < dim; i++)
+            permloc_[i][i] = 2.0e-14;
 
-      for (int i = 0; i < dim; i++)
-        permlocWell_[i][i] = 1.0e-12;
-/*
-      permlocAquitard_ = 0;
-      for (int i = 0; i < dim; i++)
-        permlocAquitard_[i][i] = 1.0e-18;
-*/
+        for (int i = 0; i < dim; i++)
+            permlocWell_[i][i] = 1.0e-12;
+        /*
+          permlocAquitard_ = 0;
+          for (int i = 0; i < dim; i++)
+          permlocAquitard_[i][i] = 1.0e-18;
+        */
     }
 
-    private:
+private:
     Dune::FieldMatrix<Scalar,dim,dim> permloc_, permlocWell_ /*, permlocAquitard_*/;
 };
 } // end namespace

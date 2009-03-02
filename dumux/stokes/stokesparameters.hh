@@ -25,21 +25,21 @@
 class DGStokesParameters
 {
 public:
-  DGStokesParameters() : mu(1.0), sigma(0.0), epsilon(1),dg_method("NIPG")
-  {}
-  //coeff of viscosity
-   double mu;
-  // sigma and epsilon are paremetrs for defining the different versions of DG
-   /*
-    if sigma > 0 and epsilon = +1 --> NIPG
-    if sigma > 0 and epsilon = -1 --> SIPG
-    if sigma = 0 and epsilon = +1 --> OBB
-  */
-  double sigma;
-  int epsilon;
-  std::string dg_method;
-  };
+    DGStokesParameters() : mu(1.0), sigma(0.0), epsilon(1),dg_method("NIPG")
+    {}
+    //coeff of viscosity
+    double mu;
+    // sigma and epsilon are paremetrs for defining the different versions of DG
+    /*
+      if sigma > 0 and epsilon = +1 --> NIPG
+      if sigma > 0 and epsilon = -1 --> SIPG
+      if sigma = 0 and epsilon = +1 --> OBB
+    */
+    double sigma;
+    int epsilon;
+    std::string dg_method;
+};
 
 
 
- #endif
+#endif

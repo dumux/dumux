@@ -26,40 +26,40 @@
 
 namespace Dune
 {
-  //! \ingroup diffusion
-  //! Base class for defining an instance of a numerical diffusion model.
-  /*! An interface for defining a numerical diffusion model for the
-   *  solution of equations of the form
-   * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = q, \f$,
-   * \f$p = g\f$ on \f$\Gamma_1\f$, and
-   * \f$\lambda K \text{grad}\, p \cdot \mathbf{n} = J\f$
-   * on \f$\Gamma_2\f$. Here,
-   * \f$p\f$ denotes the pressure, \f$K\f$ the absolute permeability,
-   * and \f$\lambda\f$ the total mobility, possibly depending on the
-   * saturation, \f$q\f$ the source term.
-    Template parameters are:
+//! \ingroup diffusion
+//! Base class for defining an instance of a numerical diffusion model.
+/*! An interface for defining a numerical diffusion model for the
+ *  solution of equations of the form
+ * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = q, \f$,
+ * \f$p = g\f$ on \f$\Gamma_1\f$, and
+ * \f$\lambda K \text{grad}\, p \cdot \mathbf{n} = J\f$
+ * on \f$\Gamma_2\f$. Here,
+ * \f$p\f$ denotes the pressure, \f$K\f$ the absolute permeability,
+ * and \f$\lambda\f$ the total mobility, possibly depending on the
+ * saturation, \f$q\f$ the source term.
+ Template parameters are:
 
-    - Grid      a DUNE grid type
-    - RT        type used for return values
-   */
-  template<class G, class RT, class VC, class Problem = FractionalFlowProblem<G, RT, VC>, class LocalStiffnessType = GroundwaterEquationLocalStiffness<G,RT,Problem> >
-  class FEDiffusion
-  : public Diffusion< G, RT, VC, Problem >
-  {
-      template<int dim>
-      struct ElementLayout
-      {
-          bool contains (GeometryType gt)
-          {
-              return gt.dim() == dim;
-          }
-      };
+ - Grid      a DUNE grid type
+ - RT        type used for return values
+*/
+template<class G, class RT, class VC, class Problem = FractionalFlowProblem<G, RT, VC>, class LocalStiffnessType = GroundwaterEquationLocalStiffness<G,RT,Problem> >
+class FEDiffusion
+    : public Diffusion< G, RT, VC, Problem >
+{
+    template<int dim>
+    struct ElementLayout
+    {
+        bool contains (GeometryType gt)
+        {
+            return gt.dim() == dim;
+        }
+    };
 
-      typedef LevelP1Function<G,RT,1> PressP1Type;
-      typedef LevelP1OperatorAssembler<G,RT,1> LevelOperatorAssembler;
+    typedef LevelP1Function<G,RT,1> PressP1Type;
+    typedef LevelP1OperatorAssembler<G,RT,1> LevelOperatorAssembler;
 
-  public:
-        typedef BlockVector< FieldVector<FieldVector<RT, G::dimension>, 2*G::dimension> > VelType;
+public:
+    typedef BlockVector< FieldVector<FieldVector<RT, G::dimension>, 2*G::dimension> > VelType;
     typedef BlockVector< FieldVector<RT,1> > RepresentationType;
 
     void assemble(const RT t=0)
@@ -82,7 +82,7 @@ namespace Dune
         InverseOperatorResult r;
         solver.apply(*pressP1, *f, r);
         //this->press = *pressP1;
-	this->diffProblem.variables.pressure = *pressP1;
+        this->diffProblem.variables.pressure = *pressP1;
 
         return;
     }
@@ -95,7 +95,7 @@ namespace Dune
     }
 
     void totalVelocity(VelType& velocity, const RT t=0) const;
-    
+
     void vtkout (const char* name, int k) const
     {
         VTKWriter<typename G::LevelGridView>
@@ -107,8 +107,8 @@ namespace Dune
     }
 
     FEDiffusion(G& g, Problem& prob)
-      : Diffusion<G, RT, VC, Problem>(g, prob),
-      pressP1(g, this->level()), f(g, this->level()), A(g, this->level())
+        : Diffusion<G, RT, VC, Problem>(g, prob),
+          pressP1(g, this->level()), f(g, this->level()), A(g, this->level())
     {
         *pressP1 = 0;
     }
@@ -116,7 +116,7 @@ namespace Dune
     PressP1Type pressP1;
     PressP1Type f;
     LevelOperatorAssembler A;
-  };
+};
 }
 
 #include "fediffusionvelocity.hh"

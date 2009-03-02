@@ -23,28 +23,28 @@
 
 namespace Dune
 {
-  //! base class that defines the parameters of a diffusion equation
-  /*! An interface for defining parameters for the stationary diffusion equation
-   * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = q, \f$,
-   * \f$p = g\f$ on \f$\Gamma_1\f$, and \f$\lambda K \text{grad}\, p = J\f$
-   * on \f$\Gamma_2\f$. Here,
-   * \f$p\f$ denotes the pressure, \f$K\f$ the absolute permeability,
-   * and \f$\lambda\f$ the total mobility, possibly depending on the
-   * saturation.
-   *
-   *    Template parameters are:
-   *
-   *    - Grid  a DUNE grid type
-   *    - RT    type used for return values
-   */
-  template<class G, class RT, int m>
-  class MincLensProblem : public MincProblem<G, RT, m> {
+//! base class that defines the parameters of a diffusion equation
+/*! An interface for defining parameters for the stationary diffusion equation
+ * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = q, \f$,
+ * \f$p = g\f$ on \f$\Gamma_1\f$, and \f$\lambda K \text{grad}\, p = J\f$
+ * on \f$\Gamma_2\f$. Here,
+ * \f$p\f$ denotes the pressure, \f$K\f$ the absolute permeability,
+ * and \f$\lambda\f$ the total mobility, possibly depending on the
+ * saturation.
+ *
+ *    Template parameters are:
+ *
+ *    - Grid  a DUNE grid type
+ *    - RT    type used for return values
+ */
+template<class G, class RT, int m>
+class MincLensProblem : public MincProblem<G, RT, m> {
     typedef typename G::ctype DT;
     enum {n=G::dimension};
     typedef typename G::Traits::template Codim<0>::Entity Entity;
     typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
 
-  public:
+public:
     enum {F = 0, M = 1};
     enum {pWFIdx = 0, sNFIdx = 1, pWMIdx = 2, sNMIdx = 3};
     enum {swrIdx = 0, snrIdx = 1, alphaIdx = 2, nIdx = 3};
@@ -77,7 +77,7 @@ namespace Dune
 
 
     virtual const FieldMatrix<DT,n,n>& KFracture (const FieldVector<DT,n>& x, const Entity& e,
-                    const FieldVector<DT,n>& xi)
+                                                  const FieldVector<DT,n>& xi)
     {
         if (x[0] > innerLowerLeft_[0] && x[0] < innerUpperRight_[0]
             && x[1] > innerLowerLeft_[1] && x[1] < innerUpperRight_[1])
@@ -87,7 +87,7 @@ namespace Dune
     }
 
     virtual const FieldMatrix<DT,n,n>& KMatrix (const FieldVector<DT,n>& x, const Entity& e,
-                    const FieldVector<DT,n>& xi)
+                                                const FieldVector<DT,n>& xi)
     {
         if (x[0] > innerLowerLeft_[0] && x[0] < innerUpperRight_[0]
             && x[1] > innerLowerLeft_[1] && x[1] < innerUpperRight_[1])
@@ -97,7 +97,7 @@ namespace Dune
     }
 
     virtual FieldVector<RT,m> q (const FieldVector<DT,n>& x, const Entity& e,
-                    const FieldVector<DT,n>& xi) const
+                                 const FieldVector<DT,n>& xi) const
     {
         FieldVector<RT,m> values(0);
 
@@ -105,8 +105,8 @@ namespace Dune
     }
 
     virtual FieldVector<BoundaryConditions::Flags, m> bctype (const FieldVector<DT,n>& x, const Entity& e,
-                    const IntersectionIterator& intersectionIt,
-                       const FieldVector<DT,n>& xi) const
+                                                              const IntersectionIterator& intersectionIt,
+                                                              const FieldVector<DT,n>& xi) const
     {
         FieldVector<BoundaryConditions::Flags, m> values(BoundaryConditions::neumann);
 
@@ -114,80 +114,80 @@ namespace Dune
             //std::cout << "Dirichlet: " << x << std::endl;
             values = BoundaryConditions::dirichlet;
         }
-//        if (values[0] == BoundaryConditions::dirichlet)
-//            std::cout << "Dirichlet: " << x[0] << ", " << x[1] << std::endl;
-//        else
-//            std::cout << "Neumann: " << x[0] << ", " << x[1] << std::endl;
+        //        if (values[0] == BoundaryConditions::dirichlet)
+        //            std::cout << "Dirichlet: " << x[0] << ", " << x[1] << std::endl;
+        //        else
+        //            std::cout << "Neumann: " << x[0] << ", " << x[1] << std::endl;
 
         return values;
     }
 
     virtual FieldVector<RT,m> g (const FieldVector<DT,n>& x, const Entity& e,
-                const IntersectionIterator& intersectionIt,
-                  const FieldVector<DT,n>& xi) const
+                                 const IntersectionIterator& intersectionIt,
+                                 const FieldVector<DT,n>& xi) const
     {
         FieldVector<RT,m> values(0);
 
         for (int nC=0; nC < m; nC+=2){
 
             if (x[0] > outerUpperRight_[0] - eps_) {
-            RT a = -1;
-            RT b = outerUpperRight_[1];
-            // Fracture domain
-            if (nC<2){
-            values[pWFIdx] = -densityW_*gravity_[1]*(a*x[1] + b);
-            values[sNFIdx] = outerSnrFracture_+0.0;}
-            // Matrix domain
-            else {
-            values[nC] = values[pWFIdx]*1.0;            //pWM = pWF
-            values[nC+1] = outerSnrMatrix_+0.0;
-            }
+                RT a = -1;
+                RT b = outerUpperRight_[1];
+                // Fracture domain
+                if (nC<2){
+                    values[pWFIdx] = -densityW_*gravity_[1]*(a*x[1] + b);
+                    values[sNFIdx] = outerSnrFracture_+0.0;}
+                // Matrix domain
+                else {
+                    values[nC] = values[pWFIdx]*1.0;            //pWM = pWF
+                    values[nC+1] = outerSnrMatrix_+0.0;
+                }
             }
         }
         return values;
     }
 
     virtual FieldVector<RT,m> J (const FieldVector<DT,n>& x, const Entity& e,
-                const IntersectionIterator& intersectionIt,
-                  const FieldVector<DT,n>& xi) const
+                                 const IntersectionIterator& intersectionIt,
+                                 const FieldVector<DT,n>& xi) const
     {
         FieldVector<RT,m> values(0);
 
-//        RT lambda = (outerUpperRight_[0] - x[0])/width_;
-            if (x[0] < outerLowerLeft_[0] + eps_) {
+        //        RT lambda = (outerUpperRight_[0] - x[0])/width_;
+        if (x[0] < outerLowerLeft_[0] + eps_) {
             values[sNFIdx] = -0.5;
             values[pWFIdx] = -0.0;
-            }
+        }
 
         return values;
     }
 
     virtual FieldVector<RT,m> initial (const FieldVector<DT,n>& x, const Entity& e,
-                  const FieldVector<DT,n>& xi) const
+                                       const FieldVector<DT,n>& xi) const
     {
 
         FieldVector<RT,m> values;
         for (int nC=0; nC<m; nC+=4){
-        values[nC] = -densityW_*gravity_[1]*(outerUpperRight_[1] - x[1])+0;
-        values[nC+1] = outerSnrFracture_+0.0;
-        values[nC+2] = (-densityW_*gravity_[1]*(outerUpperRight_[1] - x[1])+0)*0.9;
-        values[nC+3] = outerSnrMatrix_+0.0;
+            values[nC] = -densityW_*gravity_[1]*(outerUpperRight_[1] - x[1])+0;
+            values[nC+1] = outerSnrFracture_+0.0;
+            values[nC+2] = (-densityW_*gravity_[1]*(outerUpperRight_[1] - x[1])+0)*0.9;
+            values[nC+3] = outerSnrMatrix_+0.0;
         }
         return values;
     }
 
-//    double porosity (const FieldVector<DT,n>& x, const Entity& e,
-//              const FieldVector<DT,n>& xi) const
-//    {
-//        if (x[0] > innerLowerLeft_[0] && x[0] < innerUpperRight_[0]
-//            && x[1] > innerLowerLeft_[1] && x[1] < innerUpperRight_[1])
-//            return innerPorosity_;
-//        else
-//            return outerPorosity_;
-//    }
+    //    double porosity (const FieldVector<DT,n>& x, const Entity& e,
+    //              const FieldVector<DT,n>& xi) const
+    //    {
+    //        if (x[0] > innerLowerLeft_[0] && x[0] < innerUpperRight_[0]
+    //            && x[1] > innerLowerLeft_[1] && x[1] < innerUpperRight_[1])
+    //            return innerPorosity_;
+    //        else
+    //            return outerPorosity_;
+    //    }
 
     double porosityFracture (const FieldVector<DT,n>& x, const Entity& e,
-              const FieldVector<DT,n>& xi) const
+                             const FieldVector<DT,n>& xi) const
     {
         if (x[0] > innerLowerLeft_[0] && x[0] < innerUpperRight_[0]
             && x[1] > innerLowerLeft_[1] && x[1] < innerUpperRight_[1])
@@ -197,7 +197,7 @@ namespace Dune
     }
 
     double porosityMatrix (const FieldVector<DT,n>& x, const Entity& e,
-              const FieldVector<DT,n>& xi) const
+                           const FieldVector<DT,n>& xi) const
     {
         if (x[0] > innerLowerLeft_[0] && x[0] < innerUpperRight_[0]
             && x[1] > innerLowerLeft_[1] && x[1] < innerUpperRight_[1])
@@ -213,7 +213,7 @@ namespace Dune
     }
 
     virtual FieldVector<RT,4> materialLawParametersFracture (const FieldVector<DT,n>& x, const Entity& e,
-              const FieldVector<DT,n>& xi) const
+                                                             const FieldVector<DT,n>& xi) const
     {
         FieldVector<RT,4> values;
 
@@ -233,9 +233,9 @@ namespace Dune
 
         return values;
     }
-//
+    //
     virtual FieldVector<RT,4> materialLawParametersMatrix (const FieldVector<DT,n>& x, const Entity& e,
-              const FieldVector<DT,n>& xi) const
+                                                           const FieldVector<DT,n>& xi) const
     {
         FieldVector<RT,4> values;
 
@@ -257,37 +257,37 @@ namespace Dune
     }
 
     MincLensProblem(DeprecatedTwoPhaseRelations& law = *(new DeprecatedLinearLaw),
-            const FieldVector<DT,n> outerLowerLeft = 0, const FieldVector<DT,n> outerUpperRight = 0,
-            const FieldVector<DT,n> innerLowerLeft = 0, const FieldVector<DT,n> innerUpperRight = 0,
-            RT outerKFracture = 4.0e-10, RT innerKFracture = 9.0e-13,
-            RT outerKMatrix = 4.0e-10, RT innerKMatrix = 9.0e-13,
-            RT outerSwrFracture = 0.05, RT outerSnrFracture = 0,
-            RT innerSwrFracture = 0.18, RT innerSnrFracture = 0,
-            RT outerSwrMatrix = 0.05, RT outerSnrMatrix = 0,
-            RT innerSwrMatrix = 0.18, RT innerSnrMatrix = 0,
+                    const FieldVector<DT,n> outerLowerLeft = 0, const FieldVector<DT,n> outerUpperRight = 0,
+                    const FieldVector<DT,n> innerLowerLeft = 0, const FieldVector<DT,n> innerUpperRight = 0,
+                    RT outerKFracture = 4.0e-10, RT innerKFracture = 9.0e-13,
+                    RT outerKMatrix = 4.0e-10, RT innerKMatrix = 9.0e-13,
+                    RT outerSwrFracture = 0.05, RT outerSnrFracture = 0,
+                    RT innerSwrFracture = 0.18, RT innerSnrFracture = 0,
+                    RT outerSwrMatrix = 0.05, RT outerSnrMatrix = 0,
+                    RT innerSwrMatrix = 0.18, RT innerSnrMatrix = 0,
 
-            RT outerPorosityFracture = 0.2, RT innerPorosityFracture = 0.2,
-            RT outerPorosityMatrix = 0.2, RT innerPorosityMatrix = 0.2,
-            RT outerAlphaFracture = 0.0037, RT innerAlphaFracture = 0.00045,
-            RT outerAlphaMatrix = 0.0037, RT innerAlphaMatrix = 0.00045,
-            RT outerNFracture = 4.7, RT innerNFracture = 7.3,
-            RT outerNMatrix = 4.7, RT innerNMatrix = 7.3)
+                    RT outerPorosityFracture = 0.2, RT innerPorosityFracture = 0.2,
+                    RT outerPorosityMatrix = 0.2, RT innerPorosityMatrix = 0.2,
+                    RT outerAlphaFracture = 0.0037, RT innerAlphaFracture = 0.00045,
+                    RT outerAlphaMatrix = 0.0037, RT innerAlphaMatrix = 0.00045,
+                    RT outerNFracture = 4.7, RT innerNFracture = 7.3,
+                    RT outerNMatrix = 4.7, RT innerNMatrix = 7.3)
 
-    : MincProblem<G, RT, m>(law),
-      outerLowerLeft_(outerLowerLeft), outerUpperRight_(outerUpperRight),
-      innerLowerLeft_(innerLowerLeft), innerUpperRight_(innerUpperRight),
-      eps_(1e-8*outerUpperRight[0]),
-      densityW_(law.wettingPhase.density()), densityN_(law.nonwettingPhase.density()),
-      outerSwrFracture_(outerSwrFracture), outerSnrFracture_(outerSnrFracture),
-      innerSwrFracture_(innerSwrFracture), innerSnrFracture_(innerSnrFracture),
-      outerSwrMatrix_(outerSwrMatrix), outerSnrMatrix_(outerSnrMatrix),
-      innerSwrMatrix_(innerSwrMatrix), innerSnrMatrix_(innerSnrMatrix),
-      outerPorosityFracture_(outerPorosityFracture), innerPorosityFracture_(innerPorosityFracture),
-      outerPorosityMatrix_(outerPorosityMatrix), innerPorosityMatrix_(innerPorosityMatrix),
-      outerAlphaFracture_(outerAlphaFracture), innerAlphaFracture_(innerAlphaFracture),
-      outerAlphaMatrix_(outerAlphaMatrix), innerAlphaMatrix_(innerAlphaMatrix),
-      outerNFracture_(outerNFracture), innerNFracture_(innerNFracture),
-      outerNMatrix_(outerNMatrix), innerNMatrix_(innerNMatrix)
+        : MincProblem<G, RT, m>(law),
+          outerLowerLeft_(outerLowerLeft), outerUpperRight_(outerUpperRight),
+          innerLowerLeft_(innerLowerLeft), innerUpperRight_(innerUpperRight),
+          eps_(1e-8*outerUpperRight[0]),
+          densityW_(law.wettingPhase.density()), densityN_(law.nonwettingPhase.density()),
+          outerSwrFracture_(outerSwrFracture), outerSnrFracture_(outerSnrFracture),
+          innerSwrFracture_(innerSwrFracture), innerSnrFracture_(innerSnrFracture),
+          outerSwrMatrix_(outerSwrMatrix), outerSnrMatrix_(outerSnrMatrix),
+          innerSwrMatrix_(innerSwrMatrix), innerSnrMatrix_(innerSnrMatrix),
+          outerPorosityFracture_(outerPorosityFracture), innerPorosityFracture_(innerPorosityFracture),
+          outerPorosityMatrix_(outerPorosityMatrix), innerPorosityMatrix_(innerPorosityMatrix),
+          outerAlphaFracture_(outerAlphaFracture), innerAlphaFracture_(innerAlphaFracture),
+          outerAlphaMatrix_(outerAlphaMatrix), innerAlphaMatrix_(innerAlphaMatrix),
+          outerNFracture_(outerNFracture), innerNFracture_(innerNFracture),
+          outerNMatrix_(outerNMatrix), innerNMatrix_(innerNMatrix)
     {
         outerKFracture_[0][0] = outerKFracture_[1][1] = outerKFracture;
         outerKFracture_[0][1] = outerKFracture_[1][0] = 0;
@@ -310,34 +310,34 @@ namespace Dune
         volumefraction= 0.7; //The interacting continua volume is 70% of the controlvolume.
     }
 
-    private:
-        FieldMatrix<DT,n,n> outerK_;
-        FieldMatrix<DT,n,n> innerK_;
-        FieldMatrix<DT,n,n> outerKFracture_;
-        FieldMatrix<DT,n,n> innerKFracture_;
-        FieldMatrix<DT,n,n> outerKMatrix_;
-        FieldMatrix<DT,n,n> innerKMatrix_;
-        FieldVector<DT,n> outerLowerLeft_;
-        FieldVector<DT,n> outerUpperRight_;
-        FieldVector<DT,n> innerLowerLeft_;
-        FieldVector<DT,n> innerUpperRight_;
-        DT width_, height_;
-        DT eps_;
-        RT densityW_, densityN_;
-        FieldVector<DT,n> gravity_;
-        RT volumefraction;
+private:
+    FieldMatrix<DT,n,n> outerK_;
+    FieldMatrix<DT,n,n> innerK_;
+    FieldMatrix<DT,n,n> outerKFracture_;
+    FieldMatrix<DT,n,n> innerKFracture_;
+    FieldMatrix<DT,n,n> outerKMatrix_;
+    FieldMatrix<DT,n,n> innerKMatrix_;
+    FieldVector<DT,n> outerLowerLeft_;
+    FieldVector<DT,n> outerUpperRight_;
+    FieldVector<DT,n> innerLowerLeft_;
+    FieldVector<DT,n> innerUpperRight_;
+    DT width_, height_;
+    DT eps_;
+    RT densityW_, densityN_;
+    FieldVector<DT,n> gravity_;
+    RT volumefraction;
 
-//        RT outerSwr_, outerSnr_, innerSwr_, innerSnr_;
-        RT outerSwrFracture_, outerSnrFracture_, innerSwrFracture_, innerSnrFracture_;
-        RT outerSwrMatrix_, outerSnrMatrix_, innerSwrMatrix_, innerSnrMatrix_;
-//        RT outerPorosity_, innerPorosity_;
-        RT outerPorosityFracture_, innerPorosityFracture_;
-        RT outerPorosityMatrix_, innerPorosityMatrix_;
-        RT outerAlphaFracture_, innerAlphaFracture_;
-        RT outerAlphaMatrix_, innerAlphaMatrix_;
-        RT outerNFracture_, innerNFracture_;
-        RT outerNMatrix_, innerNMatrix_;
-  };
+    //        RT outerSwr_, outerSnr_, innerSwr_, innerSnr_;
+    RT outerSwrFracture_, outerSnrFracture_, innerSwrFracture_, innerSnrFracture_;
+    RT outerSwrMatrix_, outerSnrMatrix_, innerSwrMatrix_, innerSnrMatrix_;
+    //        RT outerPorosity_, innerPorosity_;
+    RT outerPorosityFracture_, innerPorosityFracture_;
+    RT outerPorosityMatrix_, innerPorosityMatrix_;
+    RT outerAlphaFracture_, innerAlphaFracture_;
+    RT outerAlphaMatrix_, innerAlphaMatrix_;
+    RT outerNFracture_, innerNFracture_;
+    RT outerNMatrix_, innerNMatrix_;
+};
 
 }
 #endif

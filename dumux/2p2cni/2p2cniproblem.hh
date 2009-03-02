@@ -42,9 +42,9 @@ namespace Dune
  */
 template<class Grid, class Scalar> class TwoPTwoCNIProblem
 {
-typedef    typename Grid::ctype CoordScalar;
+    typedef    typename Grid::ctype CoordScalar;
     enum
-    {   dim=Grid::dimension, numEq=3};
+        {   dim=Grid::dimension, numEq=3};
     typedef typename Grid::template Codim<0>::Entity Element;
     typedef typename Grid::template Codim<0>::LeafIntersectionIterator
     ElementIterator;
@@ -58,83 +58,83 @@ public:
 
     //! evaluate source term
     /*! evaluate source term at given location
-     @param[in]  globalPos    position in global coordinates
-     @param[in]  element    entity of codim 0
-     @param[in]  localPos   position in reference element of element
-     \return     value of source term
-     */
+      @param[in]  globalPos    position in global coordinates
+      @param[in]  element    entity of codim 0
+      @param[in]  localPos   position in reference element of element
+      \return     value of source term
+    */
     virtual FieldVector<Scalar,numEq> q(const GlobalPosition& globalPos, const Element& element,
-            const LocalPosition& localPos) const = 0;
+                                        const LocalPosition& localPos) const = 0;
 
     //! return type of boundary condition at the given global coordinate
     /*! return type of boundary condition at the given global coordinate
-     @param[in]  globalPos    position in global coordinates
-     \return     boundary condition type given by enum in this class
-     */
+      @param[in]  globalPos    position in global coordinates
+      \return     boundary condition type given by enum in this class
+    */
     //    virtual FieldVector<BoundaryConditions::Flags, numEq> bctype (const GlobalPosition& globalPos, const Element& element,
     //            const ElementIterator& intersectionIt,
     //            const LocalPosition& localPos) const = 0;
 
     virtual FieldVector<BoundaryConditions::Flags, numEq>bctype(
-            const GlobalPosition& globalPos, const Element& element,
-            const ElementIterator& intersectionIt,
-            const LocalPosition& localPos) const = 0;
+                                                                const GlobalPosition& globalPos, const Element& element,
+                                                                const ElementIterator& intersectionIt,
+                                                                const LocalPosition& localPos) const = 0;
 
     //! returns index of the primary variable corresponding to the dirichlet boundary condition at the given global coordinate
     /*! returns index of the primary variable corresponding to the dirichlet boundary condition at the given global coordinate
-     @param[in]  globalPos    position in global coordinates
-     \return     index of the primary variable
-     */
+      @param[in]  globalPos    position in global coordinates
+      \return     index of the primary variable
+    */
 
     virtual void dirichletIndex(const GlobalPosition& globalPos, const Element& element,
-            const ElementIterator& intersectionIt,
-            const LocalPosition& localPos, FieldVector<int,numEq>& dirichletIdx) const
+                                const ElementIterator& intersectionIt,
+                                const LocalPosition& localPos, FieldVector<int,numEq>& dirichletIdx) const
     {
         for (int equationnumber = 0; equationnumber < numEq; equationnumber++)
-        dirichletIdx[equationnumber]=equationnumber;
+            dirichletIdx[equationnumber]=equationnumber;
         return;
     }
 
     //! evaluate Dirichlet boundary condition at given position
     /*! evaluate Dirichlet boundary condition at given position
-     @param[in]  globalPos    position in global coordinates
-     \return     boundary condition value
-     */
+      @param[in]  globalPos    position in global coordinates
+      \return     boundary condition value
+    */
     virtual FieldVector<Scalar,numEq> g(const GlobalPosition& globalPos, const Element& element,
-            const ElementIterator& intersectionIt,
-            const LocalPosition& localPos) const = 0;
+                                        const ElementIterator& intersectionIt,
+                                        const LocalPosition& localPos) const = 0;
 
     //! evaluate Neumann boundary condition at given position
     /*! evaluate Neumann boundary condition at given position
-     @param[in]  globalPos    position in global coordinates
-     \return     boundary condition value
-     */
+      @param[in]  globalPos    position in global coordinates
+      \return     boundary condition value
+    */
     virtual FieldVector<Scalar,numEq> J(const GlobalPosition& globalPos, const Element& element,
-            const ElementIterator& intersectionIt,
-            const LocalPosition& localPos) const = 0;
+                                        const ElementIterator& intersectionIt,
+                                        const LocalPosition& localPos) const = 0;
 
     //! evaluate initial condition at given position
     /*! evaluate initial boundary condition at given position
-     @param[in]  globalPos    position in global coordinates
-     \return     boundary condition value
-     */
+      @param[in]  globalPos    position in global coordinates
+      \return     boundary condition value
+    */
     virtual FieldVector<Scalar,numEq> initial(const GlobalPosition& globalPos,
-            const Element& element, const LocalPosition& localPos) const = 0;
+                                              const Element& element, const LocalPosition& localPos) const = 0;
 
     //! initiate phase state at given position
     /*! initiate phase state at given position
-     @param[in]  globalPos    position in global coordinates
-     \return     initial phase state
-     */
+      @param[in]  globalPos    position in global coordinates
+      \return     initial phase state
+    */
     virtual int initialPhaseState(const GlobalPosition& globalPos,
-            const Element& element, const LocalPosition& localPos) const = 0;
+                                  const Element& element, const LocalPosition& localPos) const = 0;
 
     virtual FieldVector<Scalar,dim> gravity() const = 0;
 
     //! properties of the wetting (liquid) phase
     /*! properties of the wetting (liquid) phase
-     \return    wetting phase
-     */
+      \return    wetting phase
+    */
     virtual Liquid_GL& wettingPhase () const
     {
         return wettingPhase_;
@@ -142,8 +142,8 @@ public:
 
     //! properties of the nonwetting (liquid) phase
     /*! properties of the nonwetting (liquid) phase
-     \return    nonwetting phase
-     */
+      \return    nonwetting phase
+    */
     virtual Gas_GL& nonwettingPhase () const
     {
         return nonwettingPhase_;
@@ -151,8 +151,8 @@ public:
 
     //! properties of the soil
     /*! properties of the soil
-     \return    soil
-     */
+      \return    soil
+    */
     virtual Matrix2p<Grid, Scalar>& soil () const
     {
         return soil_;
@@ -162,7 +162,7 @@ public:
     /*! object for multicomponent calculations including mass fractions,
      * mole fractions and some basic laws
      \return    multicomponent object
-     */
+    */
     virtual MultiComp& multicomp ()
     {
         return multicomp_;
@@ -170,8 +170,8 @@ public:
 
     //! object for definition of material law
     /*! object for definition of material law (element.g. Brooks-Corey, Van Genuchten, ...)
-     \return    material law
-     */
+      \return    material law
+    */
     virtual TwoPhaseRelations<Grid, Scalar>& materialLaw () const
     {
         return materialLaw_;
@@ -186,7 +186,7 @@ public:
 
     //updates an exact/analytic solution
     virtual void updateExSol(double &dt,
-            BlockVector<FieldVector<Scalar, numEq> > &approxSol)
+                             BlockVector<FieldVector<Scalar, numEq> > &approxSol)
     {
         DUNE_THROW(NotImplemented, "Ex(akt) Solution");
         return;
@@ -198,11 +198,11 @@ public:
     }
 
     TwoPTwoCNIProblem(Liquid_GL& liq, Gas_GL& gas, Matrix2p<Grid, Scalar>& soil,
-            MultiComp& multicomp = *(new CWaterAir),
-            TwoPhaseRelations<Grid,Scalar>& materialLaw = *(new TwoPhaseRelations<Grid,Scalar>),
-            const bool exsol = false)
-    : exsolution(exsol), wettingPhase_(liq), nonwettingPhase_(gas), soil_(soil),
-    multicomp_(multicomp), materialLaw_(materialLaw)
+                      MultiComp& multicomp = *(new CWaterAir),
+                      TwoPhaseRelations<Grid,Scalar>& materialLaw = *(new TwoPhaseRelations<Grid,Scalar>),
+                      const bool exsol = false)
+        : exsolution(exsol), wettingPhase_(liq), nonwettingPhase_(gas), soil_(soil),
+          multicomp_(multicomp), materialLaw_(materialLaw)
     {}
 
     //! always define virtual destructor in abstract base class

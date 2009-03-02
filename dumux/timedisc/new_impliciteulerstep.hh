@@ -28,34 +28,34 @@
 #include <algorithm>
 
 namespace Dune {
-    /*!
-     * \brief Performs integration using implicit euler.
-     */
-    template<class Problem>
-    class NewImplicitEulerStep
+/*!
+ * \brief Performs integration using implicit euler.
+ */
+template<class Problem>
+class NewImplicitEulerStep
+{
+    typedef typename Problem::DomainTraits::Scalar Scalar;
+
+public:
+    //! excute an implicit euler integration.
+    static void execute(Problem &problem,
+                        Scalar t,
+                        Scalar &dt,
+                        Scalar &nextDt,
+                        Scalar maxDt,
+                        Scalar tEnd,
+                        Scalar cFLFactor)
     {
-        typedef typename Problem::DomainTraits::Scalar Scalar;
+        Scalar eps = 1e-8;
+        dt = std::min( dt, maxDt );
+        if (tEnd - t <= (1+eps)*dt)
+            dt = (1+eps)*(tEnd - t);
 
-    public:
-        //! excute an implicit euler integration.
-        static void execute(Problem &problem,
-                            Scalar t,
-                            Scalar &dt,
-                            Scalar &nextDt,
-                            Scalar maxDt,
-                            Scalar tEnd,
-                            Scalar cFLFactor)
-            {
-                Scalar eps = 1e-8;
-                dt = std::min( dt, maxDt );
-                if (tEnd - t <= (1+eps)*dt)
-                    dt = (1+eps)*(tEnd - t);
+        problem.updateModel(dt, nextDt);
 
-                problem.updateModel(dt, nextDt);
-
-                nextDt = std::min(nextDt, tEnd - t);
-                nextDt = std::min(nextDt, maxDt);
-            }
-    };
+        nextDt = std::min(nextDt, tEnd - t);
+        nextDt = std::min(nextDt, maxDt);
+    }
+};
 }
 #endif

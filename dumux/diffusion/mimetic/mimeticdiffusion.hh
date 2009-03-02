@@ -25,39 +25,39 @@
 
 namespace Dune
 {
-  //! \ingroup diffusion
-  //! Base class for defining an instance of a numerical diffusion model.
-  /*! An interface for defining a numerical diffusion model for the
-   *  solution of equations of the form
-   * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = 0, \f$,
-   * \f$p = g\f$ on \f$\Gamma_1\f$, and \f$\lambda K \text{grad}\, p = J\f$
-   * on \f$\Gamma_2\f$. Here,
-   * \f$p\f$ denotes the pressure, \f$K\f$ the absolute permeability,
-   * and \f$\lambda\f$ the total mobility, possibly depending on the
-   * saturation.
-    Template parameters are:
+//! \ingroup diffusion
+//! Base class for defining an instance of a numerical diffusion model.
+/*! An interface for defining a numerical diffusion model for the
+ *  solution of equations of the form
+ * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = 0, \f$,
+ * \f$p = g\f$ on \f$\Gamma_1\f$, and \f$\lambda K \text{grad}\, p = J\f$
+ * on \f$\Gamma_2\f$. Here,
+ * \f$p\f$ denotes the pressure, \f$K\f$ the absolute permeability,
+ * and \f$\lambda\f$ the total mobility, possibly depending on the
+ * saturation.
+ Template parameters are:
 
-    - Grid      a DUNE grid type
-    - RT        type used for return values
-   */
-  template<class G, class RT, class VC, class LocalStiffnessType = Dune::MimeticGroundwaterEquationLocalStiffness<G,RT,VC> >
-  class MimeticDiffusion
-  : public DeprecatedDiffusion< G, RT, VC>
-  {
-      template<int dim>
-      struct ElementLayout
-      {
-          bool contains (Dune::GeometryType gt)
-          {
-              return gt.dim() == dim;
-          }
-      };
+ - Grid      a DUNE grid type
+ - RT        type used for return values
+*/
+template<class G, class RT, class VC, class LocalStiffnessType = Dune::MimeticGroundwaterEquationLocalStiffness<G,RT,VC> >
+class MimeticDiffusion
+    : public DeprecatedDiffusion< G, RT, VC>
+{
+    template<int dim>
+    struct ElementLayout
+    {
+        bool contains (Dune::GeometryType gt)
+        {
+            return gt.dim() == dim;
+        }
+    };
 
-      typedef Dune::LevelCRFunction<G,RT,1> TraceType;
-      typedef Dune::LevelP0Function<G,RT,2*G::dimension> NormalVelType;
-      typedef Dune::MimeticOperatorAssembler<G,RT,1> LevelOperatorAssembler;
+    typedef Dune::LevelCRFunction<G,RT,1> TraceType;
+    typedef Dune::LevelP0Function<G,RT,2*G::dimension> NormalVelType;
+    typedef Dune::MimeticOperatorAssembler<G,RT,1> LevelOperatorAssembler;
 
-  public:
+public:
     typedef BlockVector< Dune::FieldVector<RT,1> > RepresentationType;
 
     void assemble(const RT t=0)
@@ -137,20 +137,20 @@ namespace Dune
     }
 
     MimeticDiffusion(G& g, DeprecatedDiffusionProblem<G, RT,VC>& prob, int lev = 0, bool calcPressure = true)
-      : DeprecatedDiffusion<G, RT, VC>(g, prob, lev), levell(lev),
-      pressTrace(g, levell), normalVelocity(g, levell), f(g, levell), A(g, levell)
+        : DeprecatedDiffusion<G, RT, VC>(g, prob, lev), levell(lev),
+          pressTrace(g, levell), normalVelocity(g, levell), f(g, levell), A(g, levell)
     {
         *pressTrace = 0;
         *f = 0;
     }
 
-//  private:
-      int levell;
-      TraceType pressTrace;         //!< vector of pressure traces
-      NormalVelType normalVelocity;
-      TraceType f;
-      LevelOperatorAssembler A;
-  };
+    //  private:
+    int levell;
+    TraceType pressTrace;         //!< vector of pressure traces
+    NormalVelType normalVelocity;
+    TraceType f;
+    LevelOperatorAssembler A;
+};
 
 }
 #endif

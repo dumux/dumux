@@ -41,26 +41,26 @@ public:
     }
 
     HomogeneousLinearSoil()
-    :HomogeneousSoil<Grid,Scalar>()
+        :HomogeneousSoil<Grid,Scalar>()
     {}
 };
 
 //! \ingroup transportProblems
 //! @brief example class for a transport problem
-  template<class Grid, class Scalar, class VC>
-  class SimpleProblem : public TransportProblem<Grid, Scalar, VC> {
-      enum {dim=Grid::dimension, numEq=1};
-      typedef typename Grid::Traits::template Codim<0>::Entity Element;
-      typedef FieldVector<Scalar,dim> LocalPosition;
-      typedef FieldVector<Scalar,dim> GlobalPosition;
+template<class Grid, class Scalar, class VC>
+class SimpleProblem : public TransportProblem<Grid, Scalar, VC> {
+    enum {dim=Grid::dimension, numEq=1};
+    typedef typename Grid::Traits::template Codim<0>::Entity Element;
+    typedef FieldVector<Scalar,dim> LocalPosition;
+    typedef FieldVector<Scalar,dim> GlobalPosition;
 
-  private:
-      Scalar left;
-      Scalar right;
+private:
+    Scalar left;
+    Scalar right;
 
-  public:
+public:
     BoundaryConditions::Flags bctypeSat (const GlobalPosition& globalPos, const Element& element,
-                       const LocalPosition& localPos) const
+                                         const LocalPosition& localPos) const
     {
         if (globalPos[0] > right-1E-8 || globalPos[0] < left+1e-8)
             return Dune::BoundaryConditions::dirichlet;
@@ -69,7 +69,7 @@ public:
     }
 
     Scalar dirichletSat (const GlobalPosition& globalPos, const Element& element,
-           const LocalPosition& localPos) const
+                         const LocalPosition& localPos) const
     {
         if (globalPos[0] < left+1e-8)
             return 1;
@@ -78,25 +78,25 @@ public:
     }
 
     virtual Scalar neumannSat (const GlobalPosition& globalPos, const Element& element,
-            const LocalPosition& localPos, Scalar helpFactor) const
+                               const LocalPosition& localPos, Scalar helpFactor) const
     {
         return 0;
     }
 
     Scalar initSat (const GlobalPosition& globalPos, const Element& element,
-            const LocalPosition& localPos) const
+                    const LocalPosition& localPos) const
     {
         return 0;
     }
 
     SimpleProblem(VC& variableobj, Matrix2p<Grid, Scalar>& soil, TwoPhaseRelations<Grid,Scalar>& materialLaw  = *(new TwoPhaseRelations<Grid,Scalar>), GlobalPosition& Left = 0, GlobalPosition& Right = 1, const bool cap = false)
-    : TransportProblem<Grid, Scalar, VC>(variableobj,soil,materialLaw, cap), left(Left[0]), right(Right[0])
+        : TransportProblem<Grid, Scalar, VC>(variableobj,soil,materialLaw, cap), left(Left[0]), right(Right[0])
     {    }
 
     SimpleProblem(VC& variableobj, Matrix2p<Grid, Scalar>& soil, TwoPhaseRelations<Grid,Scalar>& materialLaw  = *(new TwoPhaseRelations<Grid,Scalar>), const bool cap = false)
-    : TransportProblem<Grid, Scalar, VC>(variableobj,soil,materialLaw, cap), left(0), right(1)
+        : TransportProblem<Grid, Scalar, VC>(variableobj,soil,materialLaw, cap), left(0), right(1)
     {    }
-  };
+};
 
 }
 #endif

@@ -16,57 +16,57 @@
 
 int main(int argc, char** argv)
 {
-  try{
-    // define the problem dimensions
-    const int dim=2;
+    try{
+        // define the problem dimensions
+        const int dim=2;
 
-    // create a grid object
-    typedef double NumberType;
+        // create a grid object
+        typedef double NumberType;
 
-    typedef Dune::SGrid<dim,dim> GridType;
-    Dune::FieldVector<GridType::ctype,dim> L(0);
-    Dune::FieldVector<GridType::ctype,dim> R(1);
-    R[0]=2;
-    Dune::FieldVector<int,dim> N(20);
-    N[0]=40;
-    GridType grid(N,L,R);
+        typedef Dune::SGrid<dim,dim> GridType;
+        Dune::FieldVector<GridType::ctype,dim> L(0);
+        Dune::FieldVector<GridType::ctype,dim> R(1);
+        R[0]=2;
+        Dune::FieldVector<int,dim> N(20);
+        N[0]=40;
+        GridType grid(N,L,R);
 
-//    typedef Dune::UGGrid<dim> GridType;
-//    Dune::GridPtr<GridType> gridPtr( argv[1] );
-//    GridType& grid = *gridPtr;
+        //    typedef Dune::UGGrid<dim> GridType;
+        //    Dune::GridPtr<GridType> gridPtr( argv[1] );
+        //    GridType& grid = *gridPtr;
 
-    Dune::BrinkmanTestProblem<GridType, NumberType> problem;
+        Dune::BrinkmanTestProblem<GridType, NumberType> problem;
 
-    Dune::FVBrinkman<GridType, NumberType> brinkman(grid, problem);
-//    brinkman.pressure[0] = 0.75;
-//    brinkman.pressure[1] = 0.25;
-//    brinkman.pressure[2] = 0.75;
-//    brinkman.pressure[3] = 0.25;
+        Dune::FVBrinkman<GridType, NumberType> brinkman(grid, problem);
+        //    brinkman.pressure[0] = 0.75;
+        //    brinkman.pressure[1] = 0.25;
+        //    brinkman.pressure[2] = 0.75;
+        //    brinkman.pressure[3] = 0.25;
 
-    brinkman.SIMPLE();
-
-
-//     printmatrix(std::cout, brinkman.AV, "velocity matrix", "row", 11, 3);
-//     printvector(std::cout, brinkman.fV, "velocity RHS", "row", 200, 1, 3);
-
-//     printmatrix(std::cout, brinkman.AP, "pressure matrix", "row", 11, 3);
-//     printvector(std::cout, brinkman.fP, "pressure RHS", "row", 200, 1, 3);
+        brinkman.SIMPLE();
 
 
+        //     printmatrix(std::cout, brinkman.AV, "velocity matrix", "row", 11, 3);
+        //     printvector(std::cout, brinkman.fV, "velocity RHS", "row", 200, 1, 3);
 
- //    printvector(std::cout, *brinkman, "pressure", "row", 200, 1, 3);
-//     printvector(std::cout, brinkman.pressureCorrection, "pressure correction", "row", 200, 1, 3);
-//     printvector(std::cout, brinkman.velocity, "velocity", "row", 2, 1, 3);
-//     printvector(std::cout, brinkman.velocityCorrection, "velocity correction", "row", 2, 1, 3);
+        //     printmatrix(std::cout, brinkman.AP, "pressure matrix", "row", 11, 3);
+        //     printvector(std::cout, brinkman.fP, "pressure RHS", "row", 200, 1, 3);
 
-     brinkman.vtkout("brinkman", 0);
 
-    return 0;
-  }
-  catch (Dune::Exception &e){
-    std::cerr << "Dune reported error: " << e << std::endl;
-  }
-  catch (...){
-    std::cerr << "Unknown exception thrown!" << std::endl;
-  }
+
+        //    printvector(std::cout, *brinkman, "pressure", "row", 200, 1, 3);
+        //     printvector(std::cout, brinkman.pressureCorrection, "pressure correction", "row", 200, 1, 3);
+        //     printvector(std::cout, brinkman.velocity, "velocity", "row", 2, 1, 3);
+        //     printvector(std::cout, brinkman.velocityCorrection, "velocity correction", "row", 2, 1, 3);
+
+        brinkman.vtkout("brinkman", 0);
+
+        return 0;
+    }
+    catch (Dune::Exception &e){
+        std::cerr << "Dune reported error: " << e << std::endl;
+    }
+    catch (...){
+        std::cerr << "Unknown exception thrown!" << std::endl;
+    }
 }

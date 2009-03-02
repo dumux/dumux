@@ -1,21 +1,21 @@
 /*****************************************************************************
-*   Copyright (C) 2008 by Bernd Flemisch, Andreas Lauser                    *
-*   Institute of Hydraulic Engineering                                      *
-*   University of Stuttgart, Germany                                        *
-*   email: and _at_ poware.org                                              *
-*                                                                           *
-*   This program is free software; you can redistribute it and/or modify    *
-*   it under the terms of the GNU General Public License as published by    *
-*   the Free Software Foundation; either version 2 of the License, or       *
-*   (at your option) any later version, as long as this copyright notice    *
-*   is included in its original form.                                       *
-*                                                                           *
-*   This program is distributed WITHOUT ANY WARRANTY.                       *
-*****************************************************************************/
+ *   Copyright (C) 2008 by Bernd Flemisch, Andreas Lauser                    *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: and _at_ poware.org                                              *
+ *                                                                           *
+ *   This program is free software; you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by    *
+ *   the Free Software Foundation; either version 2 of the License, or       *
+ *   (at your option) any later version, as long as this copyright notice    *
+ *   is included in its original form.                                       *
+ *                                                                           *
+ *   This program is distributed WITHOUT ANY WARRANTY.                       *
+ *****************************************************************************/
 /*!
-* \file LensProblem.hh A Cube of fine sand embedded into a cube of
-*                      coarse sand.
-*/
+ * \file LensProblem.hh A Cube of fine sand embedded into a cube of
+ *                      coarse sand.
+ */
 #ifndef DUMUX_LENSPROBLEM_HH
 #define DUMUX_LENSPROBLEM_HH
 
@@ -93,11 +93,11 @@ private:
 
 public:
     PwSnLensProblem(Scalar initialTimeStepSize, Scalar endTime, const char *dgfFileName)
-    : timeManager_(this->grid().comm().rank() == 0),
-    model_(*this),
-    newtonMethod_(model_),
-    newtonCtl_(*this),
-    resultWriter_("lens")
+        : timeManager_(this->grid().comm().rank() == 0),
+          model_(*this),
+          newtonMethod_(model_),
+          newtonCtl_(*this),
+          resultWriter_("lens")
     {
         Api::require<Api::BasicDomainTraits, DomainTraits>();
         initGrid_();
@@ -140,16 +140,16 @@ public:
 
 
     /*!
-    * \brief Called by the TimeManager in order to get a time
-    *        integration on the model.
-    *
-    * \note timeStepSize and nextStepSize are references and may
-    *       be modified by the TimeIntegration. On exit of this
-    *       function 'timeStepSize' must contain the step size
-    *       actually used by the time integration for the current
-    *       steo, and 'nextStepSize' must contain the suggested
-    *       step size for the next time step.
-    */
+     * \brief Called by the TimeManager in order to get a time
+     *        integration on the model.
+     *
+     * \note timeStepSize and nextStepSize are references and may
+     *       be modified by the TimeIntegration. On exit of this
+     *       function 'timeStepSize' must contain the step size
+     *       actually used by the time integration for the current
+     *       steo, and 'nextStepSize' must contain the suggested
+     *       step size for the next time step.
+     */
     void timeIntegration(Scalar &stepSize, Scalar &nextStepSize)
     {
         // execute the time integration (i.e. Runge-Kutta
@@ -160,12 +160,12 @@ public:
         // controller is responsible for adapting the time
         // step size!)
         timeIntegration_.execute(*this,
-                timeManager_.time(),
-                stepSize,
-                nextStepSize,
-                1e100, // firstDt or maxDt, TODO: WTF?
-                        endTime_,
-                        1.0); // CFL factor (not relevant since we use implicit euler)
+                                 timeManager_.time(),
+                                 stepSize,
+                                 nextStepSize,
+                                 1e100, // firstDt or maxDt, TODO: WTF?
+                                 endTime_,
+                                 1.0); // CFL factor (not relevant since we use implicit euler)
     };
 
 
@@ -210,25 +210,25 @@ public:
 
     //! evaluate the initial condition for a vert
     void initial(SolutionVector          &values,
-            const Element           &element,
-            const FVElementGeometry &fvElemGeom,
-            int                      scvIdx) const
-            {
+                 const Element           &element,
+                 const FVElementGeometry &fvElemGeom,
+                 int                      scvIdx) const
+    {
         const GlobalPosition &globalPos
-        = fvElemGeom.subContVol[scvIdx].global;
+            = fvElemGeom.subContVol[scvIdx].global;
         /*                const LocalPosition &localPos
-                    = fvElemGeom.subContVol[scvIdx].local;
-         */
+                          = fvElemGeom.subContVol[scvIdx].local;
+        */
 
         Scalar pw = -ParentType::densityW() *
-        ParentType::gravity()[1] *
-        (ParentType::height() - globalPos[1]);
+            ParentType::gravity()[1] *
+            (ParentType::height() - globalPos[1]);
 
         if (ParentType::onLeftBoundary(globalPos)) {
             Scalar a = -(1 + 0.5/ParentType::height());
             Scalar b = -a*ParentType::upperRight()[1];
             pw = -ParentType::densityW()*
-            ParentType::gravity()[1]*(a*globalPos[1] + b);
+                ParentType::gravity()[1]*(a*globalPos[1] + b);
         }
 
         Scalar Sn;
@@ -236,48 +236,48 @@ public:
 
         values[pWIdx] = pw; // pw
         values[snIdx] = Sn; // Sn
-            }
+    }
 
 
     // Returns the type of an boundary condition for the wetting
     // phase pressure at a element face
     void boundaryTypes(BoundaryTypeVector         &values,
-            const Element              &element,
-            const FVElementGeometry    &fvElemGeom,
-            const IntersectionIterator &isIt,
-            int                         scvIdx,
-            int                         boundaryFaceIdx) const
-            {
+                       const Element              &element,
+                       const FVElementGeometry    &fvElemGeom,
+                       const IntersectionIterator &isIt,
+                       int                         scvIdx,
+                       int                         boundaryFaceIdx) const
+    {
         const GlobalPosition &globalPos
-        = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
+            = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
         //                const LocalPosition &localPos
         //                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipLocal;
 
         if (ParentType::onLeftBoundary(globalPos) ||
-                ParentType::onRightBoundary(globalPos))
-        {
-            values[0] = values[1] = Dune::BoundaryConditions::dirichlet;
+            ParentType::onRightBoundary(globalPos))
+            {
+                values[0] = values[1] = Dune::BoundaryConditions::dirichlet;
 
 
 
-        }
+            }
         else {
             // upper or lower boundary of the grid
 
             values[0] = values[1] = Dune::BoundaryConditions::neumann;
         }
-            }
+    }
 
     //! Evaluate a neumann boundary condition
     void neumann(SolutionVector             &values,
-            const Element              &element,
-            const FVElementGeometry    &fvElemGeom,
-            const IntersectionIterator &isIt,
-            int                         scvIdx,
-            int                         boundaryFaceIdx) const
-            {
+                 const Element              &element,
+                 const FVElementGeometry    &fvElemGeom,
+                 const IntersectionIterator &isIt,
+                 int                         scvIdx,
+                 int                         boundaryFaceIdx) const
+    {
         const GlobalPosition &globalPos
-        = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
+            = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
         //                const LocalPosition &localPos
         //                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipLocal;
 
@@ -287,52 +287,52 @@ public:
         if (ParentType::onUpperBoundary(globalPos)) {
             Scalar relPosX = (ParentType::upperRight()[0] - globalPos[0])/ParentType::width();
             if (0.5 < relPosX && relPosX < 2.0/3.0)
-            {
-                values[snIdx] = -0.04;
-            }
+                {
+                    values[snIdx] = -0.04;
+                }
         }
 
-            }
+    }
 
 
     //! Evaluate a dirichlet boundary condition at a vertex within
     //! an element's face
     void dirichlet(SolutionVector             &values,
-            const Element              &element,
-            const FVElementGeometry    &fvElemGeom,
-            const IntersectionIterator &isIt,
-            int                         scvIdx,
-            int                         boundaryFaceIdx) const
-            {
+                   const Element              &element,
+                   const FVElementGeometry    &fvElemGeom,
+                   const IntersectionIterator &isIt,
+                   int                         scvIdx,
+                   int                         boundaryFaceIdx) const
+    {
         const GlobalPosition &globalPos
-        = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
+            = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
         //                const LocalPosition &localPos
         //                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipLocal;
 
         Scalar a, b;
 
         if (ParentType::onLeftBoundary(globalPos))
-        {
-            a = -(1 + 0.5/ParentType::height());
-            b = -a*ParentType::upperRight()[1];
-        }
+            {
+                a = -(1 + 0.5/ParentType::height());
+                b = -a*ParentType::upperRight()[1];
+            }
         else {
             a = -1;
             b = ParentType::upperRight()[1];
         }
 
         values[pWIdx] = -ParentType::densityW()*
-        ParentType::gravity()[1]*
-        (a*globalPos[1] + b);
+            ParentType::gravity()[1]*
+            (a*globalPos[1] + b);
         values[snIdx] = 0;
-            }
+    }
 
     //! evaluate the mass injection rate of the fluids for a BOX
     //! sub control volume
     void source(SolutionVector          &values,
-            const Element           &element,
-            const FVElementGeometry &dualElement,
-            int                      scvIdx)
+                const Element           &element,
+                const FVElementGeometry &dualElement,
+                int                      scvIdx)
     {
         values[pWIdx] = values[snIdx] = 0;
     }
@@ -342,9 +342,9 @@ public:
     ///////////////////////////////////
 
     const FieldVector &gravity() const
-         {
-            return gravity_;
-         }
+    {
+        return gravity_;
+    }
 
     //! Return the capillary pressure for a given vert of a element
     Scalar pC(const Element &element,
@@ -352,48 +352,48 @@ public:
               int localVertIdx,
               int globalVertIdx,
               Scalar Sw) const
-        {
+    {
 
-        }
+    }
 
     // return the capillary pressure for a given element
     Scalar porosity(const Element &element) const
-        {
-        }
+    {
+    }
 
     // return the density of the wetting phase
     Scalar densityW() const
-        {
-        }
+    {
+    }
 
     // return the density of the non-wetting phase
     Scalar densityN() const
-        {
-        }
+    {
+    }
 
     // return the density of a phase given by an index. (lower
     // indices means that the phase is more wetting)
     Scalar density(int phase) const
-        {
-            return (phase == 0)? densityW() : densityN();
-        }
+    {
+        return (phase == 0)? densityW() : densityN();
+    }
 
     // return the viscosity of the wetting phase
     Scalar viscosityW() const
-        {
-        }
+    {
+    }
 
     // return the viscosity of the non-wetting phase
     Scalar viscosityN() const
-        {
-        }
+    {
+    }
 
     // return the viscosity of a phase given by an index. (lower
     // indices means that the phase is more wetting)
     Scalar viscosity(int phase) const
-        {
-            return (phase == 0)? viscosityW() : viscosityN();
-        }
+    {
+        return (phase == 0)? viscosityW() : viscosityN();
+    }
 
     // return the mobility of the wetting phase at a vert
     Scalar mobilityW(const Element &element,
@@ -401,8 +401,8 @@ public:
                      int localVertIdx,
                      int globalVertIdx,
                      Scalar Sw) const
-        {
-        }
+    {
+    }
 
     // return the mobility of the non-wetting phase at a vert
     Scalar mobilityN(const Element &element,
@@ -410,8 +410,8 @@ public:
                      int localVertIdx,
                      int globalVertIdx,
                      Scalar Sn) const
-        {
-        }
+    {
+    }
 
 
 private:
@@ -419,7 +419,7 @@ private:
     void writeCurrentResult_()
     {
         resultWriter_.beginTimestep(timeManager_.time(),
-                ParentType::grid().leafView());
+                                    ParentType::grid().leafView());
         writeVertexFields_(resultWriter_, model_.currentSolution());
         writeElementFields_(resultWriter_, model_.currentSolution());
         resultWriter_.endTimestep();
@@ -430,11 +430,11 @@ private:
     void writeVertexFields_(VtkMultiWriter &writer, SpatialFunction &u)
     {
         writer.addScalarVertexFunction("Sn",
-                u,
-                snIdx);
+                                       u,
+                                       snIdx);
         writer.addScalarVertexFunction("Pw",
-                u,
-                pWIdx);
+                                       u,
+                                       pWIdx);
 
     }
 

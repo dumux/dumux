@@ -29,20 +29,20 @@ namespace Dune
 /** \todo Please doc me! */
 
 template<class G, class RT, class ProblemType, class LocalJacobian,
-class FunctionType, class OperatorAssembler>
+         class FunctionType, class OperatorAssembler>
 class BoxDiffusion
-: public NonlinearModel<G, RT, ProblemType, LocalJacobian, FunctionType, OperatorAssembler>
+    : public NonlinearModel<G, RT, ProblemType, LocalJacobian, FunctionType, OperatorAssembler>
 {
 public:
     typedef Dune::NonlinearModel<G, RT, ProblemType, LocalJacobian,
                                  FunctionType, OperatorAssembler> NonlinearModel;
 
     BoxDiffusion(const G& g, ProblemType& prob)
-    : NonlinearModel(g, prob), uOldTimeStep(g)
+        : NonlinearModel(g, prob), uOldTimeStep(g)
     { }
 
     BoxDiffusion(const G& g, ProblemType& prob, int level)
-    : NonlinearModel(g, prob, level), uOldTimeStep(g, level)
+        : NonlinearModel(g, prob, level), uOldTimeStep(g, level)
     {     }
 
     virtual void initial() = 0;
@@ -58,7 +58,7 @@ public:
 
 template<class G, class RT, class GlobalToPipeMapper, class VertexMapper, class VertexVectorOnLineType, int m=1>
 class LeafP1BoxDiffusion : public BoxDiffusion<G, RT, DiffusionParameters<G, RT, GlobalToPipeMapper, VertexMapper, VertexVectorOnLineType>, BoxDiffusionJacobian<G, RT, GlobalToPipeMapper, VertexMapper, VertexVectorOnLineType>,
-LeafP1Function<G, RT, m>, LeafP1OperatorAssembler<G, RT, m> >
+                                               LeafP1Function<G, RT, m>, LeafP1OperatorAssembler<G, RT, m> >
 {
 public:
     // define the function type:
@@ -96,8 +96,8 @@ public:
 #endif
 
     LeafP1BoxDiffusion (const G& g, DiffusionParameters<G, RT, GlobalToPipeMapper, VertexMapper, VertexVectorOnLineType>& prob)
-    : BoxDiffusion(g, prob), grid_(g), vertexmapper(g, g.leafIndexSet()),
-    size((*(this->u)).size())
+        : BoxDiffusion(g, prob), grid_(g), vertexmapper(g, g.leafIndexSet()),
+          size((*(this->u)).size())
     { }
 
     virtual void initial()
@@ -113,77 +113,77 @@ public:
         // iterate through leaf grid an evaluate c0 at cell center
         Iterator eendit = gridview.template end<0>();
         for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
-        {
-            // get geometry type
-            Dune::GeometryType gt = it->geometry().type();
+            {
+                // get geometry type
+                Dune::GeometryType gt = it->geometry().type();
 
-            // get entity
-            const Entity& entity = *it;
+                // get entity
+                const Entity& entity = *it;
 
-            const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type&
-            sfs=Dune::LagrangeShapeFunctions<DT,RT,dim>::general(gt, 1);
-            int size = sfs.size();
+                const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type&
+                    sfs=Dune::LagrangeShapeFunctions<DT,RT,dim>::general(gt, 1);
+                int size = sfs.size();
 
-            for (int i = 0; i < size; i++) {
-                int globalId = vertexmapper.template map<dim>(entity, sfs[i].entity());
+                for (int i = 0; i < size; i++) {
+                    int globalId = vertexmapper.template map<dim>(entity, sfs[i].entity());
 
-                // initialize cell concentration
-                (*(this->u))[globalId] = 0;
+                    // initialize cell concentration
+                    (*(this->u))[globalId] = 0;
+                }
             }
-        }
 
         // set Dirichlet boundary conditions
         for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
-        {
-            // get geometry type
-            Dune::GeometryType gt = it->geometry().type();
+            {
+                // get geometry type
+                Dune::GeometryType gt = it->geometry().type();
 
-            // get entity
-            const Entity& entity = *it;
+                // get entity
+                const Entity& entity = *it;
 
-            const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type&
-            sfs=Dune::LagrangeShapeFunctions<DT,RT,dim>::general(gt, 1);
-            int size = sfs.size();
+                const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type&
+                    sfs=Dune::LagrangeShapeFunctions<DT,RT,dim>::general(gt, 1);
+                int size = sfs.size();
 
-            // set type of boundary conditions
-            this->localJacobian().fvGeom.update(entity);
-            this->localJacobian().template assembleBC<LeafTag>(entity);
+                // set type of boundary conditions
+                this->localJacobian().fvGeom.update(entity);
+                this->localJacobian().template assembleBC<LeafTag>(entity);
 
-            //               for (int i = 0; i < size; i++)
-            //                 std::cout << "bc[" << i << "] = " << this->localJacobian().bc(i) << std::endl;
+                //               for (int i = 0; i < size; i++)
+                //                 std::cout << "bc[" << i << "] = " << this->localJacobian().bc(i) << std::endl;
 
-            IntersectionIterator endit = IntersectionIteratorGetter<G,LeafTag>::end(entity);
-            for (IntersectionIterator is = IntersectionIteratorGetter<G,LeafTag>::begin(entity);
-            is!=endit; ++is)
-                if (is->boundary())
-                {
-                    for (int i = 0; i < size; i++)
-                        // handle subentities of this face
-                        for (int j = 0; j < ReferenceElements<DT,dim>::general(gt).size(is.numberInSelf(), 1, sfs[i].codim()); j++)
-                            if (sfs[i].entity() == ReferenceElements<DT,dim>::general(gt).subEntity(is.numberInSelf(), 1, j, sfs[i].codim()))
-                            {
-                                if (this->localJacobian().bc(i)[0] == BoundaryConditions::dirichlet)
-                                {
-                                    // get cell center in reference element
-                                    Dune::FieldVector<DT,dim> local = sfs[i].position();
+                IntersectionIterator endit = IntersectionIteratorGetter<G,LeafTag>::end(entity);
+                for (IntersectionIterator is = IntersectionIteratorGetter<G,LeafTag>::begin(entity);
+                     is!=endit; ++is)
+                    if (is->boundary())
+                        {
+                            for (int i = 0; i < size; i++)
+                                // handle subentities of this face
+                                for (int j = 0; j < ReferenceElements<DT,dim>::general(gt).size(is.numberInSelf(), 1, sfs[i].codim()); j++)
+                                    if (sfs[i].entity() == ReferenceElements<DT,dim>::general(gt).subEntity(is.numberInSelf(), 1, j, sfs[i].codim()))
+                                        {
+                                            if (this->localJacobian().bc(i)[0] == BoundaryConditions::dirichlet)
+                                                {
+                                                    // get cell center in reference element
+                                                    Dune::FieldVector<DT,dim> local = sfs[i].position();
 
-                                    // get global coordinate of cell center
-                                    Dune::FieldVector<DT,dimworld> global = it->geometry().global(local);
+                                                    // get global coordinate of cell center
+                                                    Dune::FieldVector<DT,dimworld> global = it->geometry().global(local);
 
-                                    int globalId = vertexmapper.template map<dim>(entity, sfs[i].entity());
+                                                    int globalId = vertexmapper.template map<dim>(entity, sfs[i].entity());
 
-                                    FieldVector<BoundaryConditions::Flags, m> bctype = this->problem.bctype(global, entity, is, local);
-                                    //                                 std::cout << "global = " << global << ", id = " << globalId << std::endl;
-                                    if (bctype[0] == BoundaryConditions::dirichlet) {
-                                        (*(this->u))[globalId] = this->problem.g(global, entity, is, local);
-                                    }
-                                    else {
-                                        //                                            std::cout << global << " is considered to be a Neumann node." << std::endl;
-                                    }
-                                }
-                            }
-                }
-        }
+                                                    FieldVector<BoundaryConditions::Flags, m> bctype = this->problem.bctype(global, entity, is, local);
+                                                    //                                 std::cout << "global = " << global << ", id = " << globalId << std::endl;
+                                                    if (bctype[0] == BoundaryConditions::dirichlet) {
+                                                        (*(this->u))[globalId] = this->problem.g(global, entity, is, local);
+                                                    }
+                                                    else {
+                                                        //                                            std::cout << global << " is considered to be a Neumann node." << std::endl;
+                                                    }
+                                                }
+                                        }
+                        }
+            }
 
         *(this->uOldTimeStep) = *(this->u);
         return;
@@ -238,13 +238,13 @@ public:
         // allocate flag vector to hold flags for essential boundary conditions
         std::vector<BCBlockType> essential(this->vertexmapper.size());
         for (typename std::vector<BCBlockType>::size_type i=0; i
-        <essential.size(); i++)
+                 <essential.size(); i++)
             essential[i].assign(BoundaryConditions::neumann);
 
         // iterate through leaf grid
         Iterator eendit = gridview.template end<0>();
         for (Iterator it = gridview.template begin<0>(); it
-        != eendit; ++it) {
+                 != eendit; ++it) {
             // get geometry type
             Dune::GeometryType gt = it->geometry().type();
 
@@ -264,7 +264,7 @@ public:
                 for (int equationnumber = 0; equationnumber < m; equationnumber++) {
                     if (this->localJacobian().bc(i)[equationnumber] == BoundaryConditions::neumann)
                         (*defectGlobal)[globalId][equationnumber]
-                                                  += this->localJacobian().def[i][equationnumber];
+                            += this->localJacobian().def[i][equationnumber];
                     else
                         essential[globalId].assign(BoundaryConditions::dirichlet);
                 }
@@ -272,7 +272,7 @@ public:
         }
 
         for (typename std::vector<BCBlockType>::size_type i=0; i
-        <essential.size(); i++)
+                 <essential.size(); i++)
             for (int equationnumber = 0; equationnumber < m; equationnumber++) {
                 if (essential[i][equationnumber] == BoundaryConditions::dirichlet)
                     (*defectGlobal)[i][equationnumber] = 0;
@@ -287,7 +287,7 @@ public:
     }
 
     const G& grid() const
-        { return grid_; }
+    { return grid_; }
 
 protected:
     const G& grid_;

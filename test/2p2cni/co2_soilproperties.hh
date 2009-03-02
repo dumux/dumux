@@ -13,11 +13,11 @@ template<class Grid, class Scalar>
 class CO2Soil: public HomogeneousSoil<Grid, Scalar>
 {
 public:
-typedef    typename Grid::Traits::template Codim<0>::Entity Element;
+    typedef    typename Grid::Traits::template Codim<0>::Entity Element;
     typedef typename Grid::ctype CoordScalar;
 
     enum
-    {   dim=Grid::dimension, dimWorld=Grid::dimensionworld};
+        {   dim=Grid::dimension, dimWorld=Grid::dimensionworld};
 
     typedef Dune::FieldVector<CoordScalar,dim> LocalPosition;
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
@@ -25,7 +25,7 @@ typedef    typename Grid::Traits::template Codim<0>::Entity Element;
     const FieldMatrix<CoordScalar,dim,dim> &K(const GlobalPosition &globalPos, const Element& element, const LocalPosition &localPos)
     {
         if (globalPos[0]> -0.2 && globalPos[0] < 0.2 && globalPos[1]> -0.2 && globalPos[1] < 0.2)
-        return permlocWell_;
+            return permlocWell_;
 
         return permloc_;
     }
@@ -64,10 +64,10 @@ typedef    typename Grid::Traits::template Codim<0>::Entity Element;
         l_wurz = ldry + sqrt(Sw)*(lsat-ldry);
 
         if(isnan(l_wurz))
-        {
-            std::cout <<"isnan heatcondwurzel \n"<<std::endl;
-            l_wurz = 0.0;
-        }
+            {
+                std::cout <<"isnan heatcondwurzel \n"<<std::endl;
+                l_wurz = 0.0;
+            }
         return(l_wurz);
     }
 
@@ -88,17 +88,17 @@ typedef    typename Grid::Traits::template Codim<0>::Entity Element;
     }
 
     CO2Soil()
-    :HomogeneousSoil<Grid,Scalar>()
+        :HomogeneousSoil<Grid,Scalar>()
     {
         permTest_ = 0;
         permloc_ = 0;
         permlocWell_ = 0;
         for (int i = 0; i < dim; i++)
-        permTest_[i][i] = 1.0e-15;
+            permTest_[i][i] = 1.0e-15;
         for (int i = 0; i < dim; i++)
-        permloc_[i][i] = 2.0e-14;
+            permloc_[i][i] = 2.0e-14;
         for (int i = 0; i < dim; i++)
-        permlocWell_[i][i] = 1.0e-12;
+            permlocWell_[i][i] = 1.0e-12;
     }
 
 private:

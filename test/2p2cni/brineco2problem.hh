@@ -44,7 +44,7 @@ namespace Dune
 template<class Grid, class Scalar>
 class BrineCO2Problem: public TwoPTwoCNIProblem<Grid, Scalar>
 {
-typedef    typename Grid::ctype CoordScalar;
+    typedef    typename Grid::ctype CoordScalar;
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
     typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
     typedef BasicDomain<Grid, Scalar> ParentType;
@@ -54,14 +54,14 @@ typedef    typename Grid::ctype CoordScalar;
     typedef typename DomainTraits::GlobalPosition GlobalPosition;
 
     enum
-    {   dim=Grid::dimension, numEq=3};
+        {   dim=Grid::dimension, numEq=3};
     enum
-    {   wComp = 0, nComp = 1, temp = 2};
+        {   wComp = 0, nComp = 1, temp = 2};
 
 public:
 
     virtual FieldVector<Scalar,numEq> q (const GlobalPosition& globalPos, const Element& element,
-            const LocalPosition& localPos) const
+                                         const LocalPosition& localPos) const
     {
         FieldVector<Scalar,numEq> values(0);
 
@@ -69,31 +69,31 @@ public:
     }
 
     virtual FieldVector<BoundaryConditions::Flags, numEq> bctype (const GlobalPosition& globalPos, const Element& element,
-            const IntersectionIterator& intersectionIt,
-            const LocalPosition& localPos) const
+                                                                  const IntersectionIterator& intersectionIt,
+                                                                  const LocalPosition& localPos) const
     {
         FieldVector<BoundaryConditions::Flags, numEq> values(Dune::BoundaryConditions::neumann);
 
         if(globalPos[0] >= 10-1e-2 )
-        values = Dune::BoundaryConditions::dirichlet;
+            values = Dune::BoundaryConditions::dirichlet;
         if(globalPos[0] < 1e-2 && globalPos[1] < 5)
-        values[temp] = Dune::BoundaryConditions::dirichlet;
+            values[temp] = Dune::BoundaryConditions::dirichlet;
 
         return values;
     }
 
     virtual void dirichletIndex(const GlobalPosition& globalPos, const Element& element,
-            const IntersectionIterator& intersectionIt,
-            const LocalPosition& localPos, FieldVector<int,numEq>& dirichletIndex) const
+                                const IntersectionIterator& intersectionIt,
+                                const LocalPosition& localPos, FieldVector<int,numEq>& dirichletIndex) const
     {
         for (int i = 0; i < numEq; i++)
-        dirichletIndex[i]=i;
+            dirichletIndex[i]=i;
         return;
     }
 
     virtual FieldVector<Scalar,numEq> g (const GlobalPosition& globalPos, const Element& element,
-            const IntersectionIterator& intersectionIt,
-            const LocalPosition& localPos) const
+                                         const IntersectionIterator& intersectionIt,
+                                         const LocalPosition& localPos) const
     {
         FieldVector<Scalar,numEq> values(0);
 
@@ -105,20 +105,20 @@ public:
     }
 
     virtual FieldVector<Scalar,numEq> J (const GlobalPosition& globalPos, const Element& element,
-            const IntersectionIterator& intersectionIt, const LocalPosition& localPos) const
+                                         const IntersectionIterator& intersectionIt, const LocalPosition& localPos) const
     {
         FieldVector<Scalar,numEq> values(0);
         if(globalPos[0] <= 1.e-2 && globalPos[1] <= 5.)
-        {
-            values[wComp] = 0.0;//-4.046e-5;
-            values[nComp] = -0.0002;
-        }
+            {
+                values[wComp] = 0.0;//-4.046e-5;
+                values[nComp] = -0.0002;
+            }
         return values;
     }
 
     // Initial Conditions for global vector globalPos, element element and local vector localPos
     virtual FieldVector<Scalar,numEq> initial (const GlobalPosition& globalPos, const Element& element,
-            const LocalPosition& localPos) const
+                                               const LocalPosition& localPos) const
     {
         FieldVector<Scalar,numEq> values(0);
         values[wComp] = 1.013e5 + (depthBOR_ - globalPos[1]) * 1045 * 9.81;
@@ -129,7 +129,7 @@ public:
     }
 
     int initialPhaseState (const GlobalPosition& globalPos, const Element& element,
-            const LocalPosition& localPos) const
+                           const LocalPosition& localPos) const
     {
         enum
         {   gasPhase = 0, waterPhase = 1, bothPhases = 2}; // Phase states
@@ -150,9 +150,9 @@ public:
     }
 
     BrineCO2Problem(Liquid_GL& liq, Gas_GL& gas, Matrix2p<Grid, Scalar>& soil,
-            TwoPhaseRelations<Grid, Scalar>& law = *(new TwoPhaseRelations<Grid, Scalar>),
-            MultiComp& multicomp = *(new CWaterAir), Scalar depthBOR = 0.0)
-    : TwoPTwoCNIProblem<Grid, Scalar>(liq, gas, soil, multicomp, law)
+                    TwoPhaseRelations<Grid, Scalar>& law = *(new TwoPhaseRelations<Grid, Scalar>),
+                    MultiComp& multicomp = *(new CWaterAir), Scalar depthBOR = 0.0)
+        : TwoPTwoCNIProblem<Grid, Scalar>(liq, gas, soil, multicomp, law)
     {
         depthBOR_ = depthBOR;
     }

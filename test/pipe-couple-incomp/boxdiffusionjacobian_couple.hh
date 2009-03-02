@@ -25,22 +25,22 @@ namespace Dune
 {
 //! A class for computing local jacobian matrices
 /*! A class for computing local jacobian matrix for the
-    diffusion equation
+  diffusion equation
 
-        div j = q; j = -K grad u; in Omega
+  div j = q; j = -K grad u; in Omega
 
-        u = g on Gamma1; j*n = J on Gamma2.
+  u = g on Gamma1; j*n = J on Gamma2.
 
-    Uses the box method.
+  Uses the box method.
 
-    Template parameters are:
+  Template parameters are:
 
-    - G     a DUNE grid type
-    - RT    type used for return values
- */
+  - G     a DUNE grid type
+  - RT    type used for return values
+*/
 template<class G, class RT, class GlobalToPipeMapper, class VertexMapper, class VertexVectorOnLineType, class BoxFunction = LeafP1Function<G, RT, 1> >
 class BoxDiffusionJacobian
-: public BoxJacobian<BoxDiffusionJacobian<G,RT,GlobalToPipeMapper,VertexMapper,VertexVectorOnLineType,BoxFunction>,G,RT,1,BoxFunction>
+    : public BoxJacobian<BoxDiffusionJacobian<G,RT,GlobalToPipeMapper,VertexMapper,VertexVectorOnLineType,BoxFunction>,G,RT,1,BoxFunction>
 {
     typedef typename G::ctype DT;
     typedef typename G::Traits::template Codim<0>::Entity Entity;
@@ -54,14 +54,14 @@ public:
 
     //! Constructor
     BoxDiffusionJacobian (DiffusionParameters<G,RT, GlobalToPipeMapper, VertexMapper, VertexVectorOnLineType>& params,
-            bool levelBoundaryAsDirichlet_, const G& grid,
-            BoxFunction& sol,
-            bool procBoundaryAsDirichlet_=true)
-            : BoxJacobian<ThisType,G,RT,1,BoxFunction>(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_),
-            problem(params)
-            {
+                          bool levelBoundaryAsDirichlet_, const G& grid,
+                          BoxFunction& sol,
+                          bool procBoundaryAsDirichlet_=true)
+        : BoxJacobian<ThisType,G,RT,1,BoxFunction>(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_),
+          problem(params)
+    {
         this->analytic = false;
-            }
+    }
 
     void clearVisited ()
     {
@@ -70,18 +70,18 @@ public:
 
     VBlockType computeM (const Entity& e, const VBlockType* sol, int node, bool old = false)
     {
-          int globalId = problem.vertexMapper.template map<n>(e, node);
-          for (unsigned k = 0; k < problem.vertexVectorOnLine.size(); k++)
-          {
-              if (globalId == problem.vertexVectorOnLine[k].globalId)
-              {
-                  VBlockType result(problem.alphaEx*sol[node]);
-                  return result;
-              }
-          }
+        int globalId = problem.vertexMapper.template map<n>(e, node);
+        for (unsigned k = 0; k < problem.vertexVectorOnLine.size(); k++)
+            {
+                if (globalId == problem.vertexVectorOnLine[k].globalId)
+                    {
+                        VBlockType result(problem.alphaEx*sol[node]);
+                        return result;
+                    }
+            }
 
-          VBlockType result(0);
-          return result;
+        VBlockType result(0);
+        return result;
     }
 
     VBlockType computeQ (const Entity& e, const VBlockType* sol, const int& node)
@@ -118,9 +118,9 @@ public:
         elData.K = problem.K(this->fvGeom.elementGlobal, e, this->fvGeom.elementLocal);
     };
 
-     virtual void updateVariableData(const Entity& e, const VBlockType* sol, int i, bool old = false)
+    virtual void updateVariableData(const Entity& e, const VBlockType* sol, int i, bool old = false)
     {
-         return;
+        return;
     }
 
     void updateVariableData(const Entity& e, const VBlockType* sol, bool old = false)

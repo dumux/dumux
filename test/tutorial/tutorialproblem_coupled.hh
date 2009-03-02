@@ -25,19 +25,19 @@ template<class G, class RT> class TutorialProblemCoupled /*@\label{tutorial-coup
     enum {n=G::dimension, m=2};
     typedef typename G::Traits::template Codim<0>::Entity Entity;
     typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator
-            IntersectionIterator;
-  public:
-      TutorialProblemCoupled(Fluid& wp, Fluid& nwp, Matrix2p<G, RT>& s,
-            TwoPhaseRelations<G, RT>& law = *(new TwoPhaseRelations<G, RT>),
-            const FieldVector<DT,n> Left = 0, const FieldVector<DT,n> Right = 0)
-    : TwoPhaseProblem<G,RT>(wp, nwp, s, law),
-    Left_(Left[0]), Right_(Right[0]), eps_(1e-8)
+    IntersectionIterator;
+public:
+    TutorialProblemCoupled(Fluid& wp, Fluid& nwp, Matrix2p<G, RT>& s,
+                           TwoPhaseRelations<G, RT>& law = *(new TwoPhaseRelations<G, RT>),
+                           const FieldVector<DT,n> Left = 0, const FieldVector<DT,n> Right = 0)
+        : TwoPhaseProblem<G,RT>(wp, nwp, s, law),
+          Left_(Left[0]), Right_(Right[0]), eps_(1e-8)
     {}
 
     // function returning source/sink terms for both mass balance equations
     // depending on the position within the domain
     virtual FieldVector<RT,m> q (const FieldVector<DT,n>& x, const Entity& e,  /*@\label{tutorial-coupled:q}@*/
-                    const FieldVector<DT,n>& xi) const
+                                 const FieldVector<DT,n>& xi) const
     {
         FieldVector<RT,m> values(0);
 
@@ -47,17 +47,17 @@ template<class G, class RT> class TutorialProblemCoupled /*@\label{tutorial-coup
     // function returning the boundary condition type for the solution of
     // both mass balance equations depending on the position within the domain
     virtual FieldVector<BoundaryConditions::Flags, m> bctype (const FieldVector<DT,n>& x, const Entity& e,
-                    const IntersectionIterator& intersectionIt,
-                       const FieldVector<DT,n>& xi) const /*@\label{tutorial-coupled:bctype}@*/
+                                                              const IntersectionIterator& intersectionIt,
+                                                              const FieldVector<DT,n>& xi) const /*@\label{tutorial-coupled:bctype}@*/
     {
         // boundary condition type is set to neumann
         FieldVector<BoundaryConditions::Flags, m> values(BoundaryConditions::neumann);
 
         // regions where dirichlet boundary conditions are applied
         if (x[0] < eps_)
-        {
-            values = BoundaryConditions::dirichlet;
-        }
+            {
+                values = BoundaryConditions::dirichlet;
+            }
 
         return values;
     }
@@ -65,8 +65,8 @@ template<class G, class RT> class TutorialProblemCoupled /*@\label{tutorial-coup
     // function returning the Dirichlet boundary condition for the solution of
     // both mass balance equations depending on the position within the domain
     virtual FieldVector<RT,m> g (const FieldVector<DT,n>& x, const Entity& e,  /*@\label{tutorial-coupled:g}@*/
-                const IntersectionIterator& intersectionIt,
-                  const FieldVector<DT,n>& xi) const
+                                 const IntersectionIterator& intersectionIt,
+                                 const FieldVector<DT,n>& xi) const
     {
         // values are set to zero
         FieldVector<RT,m> values(0);
@@ -80,26 +80,26 @@ template<class G, class RT> class TutorialProblemCoupled /*@\label{tutorial-coup
     // function returning the Neumann boundary condition for the solution
     // of the coupled system of balance equations depending on the position within the domain
     virtual FieldVector<RT,m> J (const FieldVector<DT,n>& x, const Entity& e,
-                const IntersectionIterator& intersectionIt,
-                  const FieldVector<DT,n>& xi) const /*@\label{tutorial-coupled:J}@*/
+                                 const IntersectionIterator& intersectionIt,
+                                 const FieldVector<DT,n>& xi) const /*@\label{tutorial-coupled:J}@*/
     {
         // values are set to zero
         FieldVector<RT,m> values(0);
 
         // region where value for the water flux is not zero
         if (x[0]> Right_ - eps_)
-        {
+            {
 
-              values[0] = 0.;
-            values[1] = 3e-4;
-        }
+                values[0] = 0.;
+                values[1] = 3e-4;
+            }
         return values;
     }
 
     // function returning the initial values for pressure and saturation
     // depending on the position within the domain
     virtual FieldVector<RT,m> initial (const FieldVector<DT,n>& x, const Entity& e,  /*@\label{tutorial-coupled:initial}@*/
-                  const FieldVector<DT,n>& xi) const
+                                       const FieldVector<DT,n>& xi) const
     {
         FieldVector<RT,m> values(0);
 
@@ -114,12 +114,12 @@ template<class G, class RT> class TutorialProblemCoupled /*@\label{tutorial-coup
         return gravity;
     }
 
-    private:
+private:
     DT Left_;
     DT Right_;
 
     RT eps_;
-  };
+};
 
 } // end namespace
 #endif

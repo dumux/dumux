@@ -12,9 +12,9 @@ class HeterogeneousSoil: public Matrix2p<G, RT>
 {
 public:
     enum
-    {
-        n = G::dimension, m = 1
-    };
+        {
+            n = G::dimension, m = 1
+        };
 
     typedef    typename G::Traits::template Codim<0>::Entity Entity;
     typedef typename G::ctype DT;
@@ -26,12 +26,12 @@ public:
 
     virtual FieldMatrix<DT,n,n> K (const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi)
     {
-//        FieldMatrix<DT,n,n> K(0);
-//
-//        for(int i = 0; i < n; i++)
-//        K[i][i] = 1e-10;
-//
-//        return K;
+        //        FieldMatrix<DT,n,n> K(0);
+        //
+        //        for(int i = 0; i < n; i++)
+        //        K[i][i] = 1e-10;
+        //
+        //        return K;
         return permeability.K(e);
     }
 
@@ -80,8 +80,8 @@ public:
     virtual double heatCap(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
     {
         return 790 /* spec. heat cap. of granite */
-        * 2700 /* density of granite */
-        * porosity(x, e, xi);
+            * 2700 /* density of granite */
+            * porosity(x, e, xi);
     }
 
     virtual double heatCond(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, const double sat) const
@@ -103,20 +103,20 @@ public:
         param[1] = 0.;
 
         //Brooks-Corey parameters
-//                    param[0] = 2; // lambda
-//                    param[1] = 0.; // entry-pressure
+        //                    param[0] = 2; // lambda
+        //                    param[1] = 0.; // entry-pressure
 
         return param;
     }
 
     typename Matrix2p<G,RT>::modelFlag relPermFlag(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
     {
-//                    return Matrix2p<G,RT>::brooks_corey;
+        //                    return Matrix2p<G,RT>::brooks_corey;
         return Matrix2p<G,RT>::linear;
     }
 
     HeterogeneousSoil(const G& g,const char* name = "permeab.dat", const bool create = true)
-    :Matrix2p<G,RT>(),permeability(g, g.maxLevel(), name, create),dispersion(),dispersionSat()
+        :Matrix2p<G,RT>(),permeability(g, g.maxLevel(), name, create),dispersion(),dispersionSat()
     {}
 
     ~HeterogeneousSoil()

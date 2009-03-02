@@ -27,77 +27,77 @@
 
 namespace Dune {
 namespace Lenhard {
-    /*!
-     * \brief A Pw-Sn specific controller for the newton solver for
-     * the lenhard problem.
-     *
-     * This  controller  is   basically  a  PwSnNewtonController,  but
-     * notifies the LenhardSimulation class  when a newton step has ended
-     * so that  the simulation has the  chance to write  some stuff to
-     * disc which aids to analyze the convergence behaviour.
-     */
-    template <class NewtonMethod, class Simulation>
-    class LenhardNewtonController
-        : public PwSnNewtonController<NewtonMethod>
+/*!
+ * \brief A Pw-Sn specific controller for the newton solver for
+ * the lenhard problem.
+ *
+ * This  controller  is   basically  a  PwSnNewtonController,  but
+ * notifies the LenhardSimulation class  when a newton step has ended
+ * so that  the simulation has the  chance to write  some stuff to
+ * disc which aids to analyze the convergence behaviour.
+ */
+template <class NewtonMethod, class Simulation>
+class LenhardNewtonController
+    : public PwSnNewtonController<NewtonMethod>
+{
+public:
+    typedef typename NewtonMethod::Model           Model;
+    typedef PwSnNewtonController<NewtonMethod>     ParentType;
+
+    typedef typename ParentType::Scalar            Scalar;
+    typedef typename ParentType::Function          Function;
+    typedef typename ParentType::JacobianAssembler JacobianAssembler;
+
+    LenhardNewtonController(Simulation &sim,
+                            Scalar tolerance = 1e-5,
+                            int targetSteps = 10,
+                            int maxSteps = 20)
+        : ParentType(tolerance, targetSteps, maxSteps), _sim(sim)
+    {};
+
+    //! Indicates that the newton method is started.
+    void newtonBegin(NewtonMethod *method, Function &u)
     {
-    public:
-        typedef typename NewtonMethod::Model           Model;
-        typedef PwSnNewtonController<NewtonMethod>     ParentType;
+        // notify the PwSnNewtonController
+        ParentType::newtonBegin(method, u);
 
-        typedef typename ParentType::Scalar            Scalar;
-        typedef typename ParentType::Function          Function;
-        typedef typename ParentType::JacobianAssembler JacobianAssembler;
+        // notify the simulation controller
+        _sim.newtonBegin();
+    }
 
-        LenhardNewtonController(Simulation &sim,
-                                Scalar tolerance = 1e-5,
-                                int targetSteps = 10,
-                                int maxSteps = 20)
-            : ParentType(tolerance, targetSteps, maxSteps), _sim(sim)
-            {};
+    //! Indicates that we're done solving one newton step.
+    void newtonEndStep(Function &u, Function &uOld)
+    {
+        // notify the PwSnNewtonController
+        ParentType::newtonEndStep(u, uOld);
 
-        //! Indicates that the newton method is started.
-        void newtonBegin(NewtonMethod *method, Function &u)
-            {
-                // notify the PwSnNewtonController
-                ParentType::newtonBegin(method, u);
-
-                // notify the simulation controller
-                _sim.newtonBegin();
-            }
-
-        //! Indicates that we're done solving one newton step.
-        void newtonEndStep(Function &u, Function &uOld)
-            {
-                // notify the PwSnNewtonController
-                ParentType::newtonEndStep(u, uOld);
-
-                // notify the simulation controller
-                _sim.newtonEndStep(u, uOld);
-            };
-
-        //! Indicates that the newton method has finished.
-        void newtonEnd()
-            {
-                // notify the PwSnNewtonController
-                ParentType::newtonEnd();
-
-                // notify the simulation controller
-                _sim.newtonEnd();
-            }
-
-        //! Indicates that we're done solving one newton step.
-        void newtonFail()
-            {
-                // notify the PwSnNewtonController
-                ParentType::newtonFail();
-
-                // notify the simulation controller
-                _sim.newtonEnd();
-            };
-
-    private:
-        Simulation &_sim;
+        // notify the simulation controller
+        _sim.newtonEndStep(u, uOld);
     };
+
+    //! Indicates that the newton method has finished.
+    void newtonEnd()
+    {
+        // notify the PwSnNewtonController
+        ParentType::newtonEnd();
+
+        // notify the simulation controller
+        _sim.newtonEnd();
+    }
+
+    //! Indicates that we're done solving one newton step.
+    void newtonFail()
+    {
+        // notify the PwSnNewtonController
+        ParentType::newtonFail();
+
+        // notify the simulation controller
+        _sim.newtonEnd();
+    };
+
+private:
+    Simulation &_sim;
+};
 }
 }
 

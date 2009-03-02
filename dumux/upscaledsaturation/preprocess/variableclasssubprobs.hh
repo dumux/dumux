@@ -23,9 +23,9 @@ template<class Grid, class Scalar> class VariableClassSubProbs
         }
     };
     enum
-    {
-        dim = Grid::dimension, dimWorld = Grid::dimensionworld
-    };
+        {
+            dim = Grid::dimension, dimWorld = Grid::dimensionworld
+        };
 
     typedef Dune::FieldVector<Scalar,dim> LocalPosition;
     typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
@@ -33,11 +33,11 @@ template<class Grid, class Scalar> class VariableClassSubProbs
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
     typedef typename Grid::Traits::LevelIndexSet IndexSet;
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,IndexSet,ElementLayout>
-            ElementMapper;
+    ElementMapper;
 
 public:
     typedef Dune::BlockVector< Dune::FieldVector<Scalar,1> > ScalarVectorType;
-     typedef Dune::BlockVector< FieldVector<FieldVector<Scalar, dim>, 2*dim> > VelType;
+    typedef Dune::BlockVector< FieldVector<FieldVector<Scalar, dim>, 2*dim> > VelType;
 
 
     Grid& grid;
@@ -53,9 +53,9 @@ public:
     VelType velocity;
 
     VariableClassSubProbs(Grid& grid, int lev)
-    : grid(grid), diffMapper(grid, grid.levelIndexSet(lev)), transMapper(grid, grid.levelIndexSet(lev)),
-      diffSize(diffMapper.size()),transSize(transMapper.size()),
-      diffLevel(lev),transLevel(lev)
+        : grid(grid), diffMapper(grid, grid.levelIndexSet(lev)), transMapper(grid, grid.levelIndexSet(lev)),
+          diffSize(diffMapper.size()),transSize(transMapper.size()),
+          diffLevel(lev),transLevel(lev)
     {
         initsat(transSize);
         initpress(diffSize);
@@ -98,19 +98,19 @@ public:
     }
 
     const Dune::FieldVector<Scalar,1>& sat(const GlobalPosition& globalPos,
-            const Element& element, const LocalPosition& localPos) const
+                                           const Element& element, const LocalPosition& localPos) const
     {
         return saturation[transMapper.map(element)];;
     }
 
     const Dune::FieldVector<Scalar,1>& press(const GlobalPosition& globalPos,
-            const Element& element, const LocalPosition& localPos) const
+                                             const Element& element, const LocalPosition& localPos) const
     {
         return pressure[diffMapper.map(element)];
     }
 
     const Dune::FieldVector<Scalar,dim>& vTotal(const Element& element,
-            const int numberInSelf) const
+                                                const int numberInSelf) const
     {
         int elemId = transMapper.map(element);
 

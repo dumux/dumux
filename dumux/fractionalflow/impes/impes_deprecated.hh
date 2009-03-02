@@ -22,7 +22,7 @@ namespace Dune {
  */
 
 template<class G, class Diffusion, class Transport, class VC> class IMPES :
-    public FractionalFlow<G, Diffusion, Transport, VC> {
+        public FractionalFlow<G, Diffusion, Transport, VC> {
     typedef typename Diffusion::RepresentationType PressType;
     typedef typename Diffusion::NumberType RT;
 
@@ -31,7 +31,7 @@ public:
 
     virtual void totalVelocity(const RT t=0) {
         this->calcTotalVelocity(t);
-//        std::cout<<"velocity= "<<this->variables().velocity<<std::endl;
+        //        std::cout<<"velocity= "<<this->variables().velocity<<std::endl;
         return;
     }
 
@@ -48,7 +48,7 @@ public:
     }
 
     virtual int update(const RT t, RT& dt, RepresentationType& updateVec,
-            RT cFLFactor = 1) {
+                       RT cFLFactor = 1) {
         int pressSize = variables().pressure.size();
         PressType pressOldIter(variables().pressure);
         PressType pressHelp(pressSize);
@@ -68,11 +68,11 @@ public:
         while (!converg) {
             iter++;
             iterTot++;
-//            if (!this->diffproblem.materialLaw.isLinear()
-//                    || this->diffproblem.capillary) { // update pressure
-                pressure(t);
-                totalVelocity(t);
-//            }
+            //            if (!this->diffproblem.materialLaw.isLinear()
+            //                    || this->diffproblem.capillary) { // update pressure
+            pressure(t);
+            totalVelocity(t);
+            //            }
             Transport::update(t, dt, updateVec,cFLFactor);
             if (iterFlag) { // only needed if iteration has to be done
                 variables().pressure *= omega;
@@ -98,7 +98,7 @@ public:
                 converg = true;
             else if (iterFlag==2&& iter > nIter ) {
                 std::cout << "Nonlinear loop in IMPES.update exceeded nIter = "
-                        << nIter << " iterations."<< std::endl;
+                          << nIter << " iterations."<< std::endl;
                 return 1;
             } else if (iterFlag==1&& iter > nIter )
                 converg = true;
@@ -130,9 +130,9 @@ public:
 
     //! Construct an IMPES object.
     IMPES(Diffusion& diff, Transport& trans, int flag = 0, int nIt = 2,
-            double maxDef = 1e-5, double om = 1) :
+          double maxDef = 1e-5, double om = 1) :
         FractionalFlow<G, Diffusion, Transport, VC>(diff, trans),
-                iterFlag(flag), nIter(nIt), maxDefect(maxDef), omega(om) {
+        iterFlag(flag), nIter(nIt), maxDefect(maxDef), omega(om) {
     }
 
 protected:

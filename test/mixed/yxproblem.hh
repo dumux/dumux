@@ -12,66 +12,66 @@ namespace Dune {
 template<class G, class RT>
 class YXProblem : public StokesProblem<G, RT>
 {
-  typedef typename G::ctype DT;
-  enum {dim=G::dimension, m=G::dimension+1};
-  typedef typename G::Traits::template Codim<0>::Entity Entity;
-  typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
+    typedef typename G::ctype DT;
+    enum {dim=G::dimension, m=G::dimension+1};
+    typedef typename G::Traits::template Codim<0>::Entity Entity;
+    typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
 
 public:
-  virtual FieldVector<RT,m> q(const FieldVector<DT,dim>& x, const Entity& e,
-                const FieldVector<DT,dim>& xi) const
-  {
-    FieldVector<RT,m> result(0);
-    result[0] = x[1];
-    result[1] = x[0];
+    virtual FieldVector<RT,m> q(const FieldVector<DT,dim>& x, const Entity& e,
+                                const FieldVector<DT,dim>& xi) const
+    {
+        FieldVector<RT,m> result(0);
+        result[0] = x[1];
+        result[1] = x[0];
 
-    return result;
-  }
+        return result;
+    }
 
-  virtual BoundaryConditions::Flags bctype (const FieldVector<DT,dim>& x, const Entity& e,
-                        const IntersectionIterator& intersectionIt,
-                        const FieldVector<DT,dim>& xi) const
-  {
-    return BoundaryConditions::dirichlet;
-  }
+    virtual BoundaryConditions::Flags bctype (const FieldVector<DT,dim>& x, const Entity& e,
+                                              const IntersectionIterator& intersectionIt,
+                                              const FieldVector<DT,dim>& xi) const
+    {
+        return BoundaryConditions::dirichlet;
+    }
 
-  virtual FieldVector<RT,dim> g(const FieldVector<DT,dim>& x, const Entity& e,
-                const IntersectionIterator& intersectionIt,
-                const FieldVector<DT,dim>& xi) const
-  {
-    return velocity(x);
-  }
+    virtual FieldVector<RT,dim> g(const FieldVector<DT,dim>& x, const Entity& e,
+                                  const IntersectionIterator& intersectionIt,
+                                  const FieldVector<DT,dim>& xi) const
+    {
+        return velocity(x);
+    }
 
-  virtual RT mu(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi) const
-  {
-    return 1.0;
-  }
+    virtual RT mu(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi) const
+    {
+        return 1.0;
+    }
 
-  virtual FieldVector<RT,dim> velocity(const FieldVector<DT,dim>& x) const
-  {
-    FieldVector<RT,dim> result(0);
-    result[0] = -x[1];
-    result[1] = -x[0];
+    virtual FieldVector<RT,dim> velocity(const FieldVector<DT,dim>& x) const
+    {
+        FieldVector<RT,dim> result(0);
+        result[0] = -x[1];
+        result[1] = -x[0];
 
-    return result;
-  }
+        return result;
+    }
 
-  virtual RT pressure(const FieldVector<DT,dim>& x) const
-  {
-    return (x[0]*x[1]);
-  }
+    virtual RT pressure(const FieldVector<DT,dim>& x) const
+    {
+        return (x[0]*x[1]);
+    }
 
-  virtual FieldMatrix<DT, dim, dim> velocityGradient(const FieldVector<DT,dim>& x) const
-  {
-    FieldMatrix<DT, dim, dim> result(0);
-    result[0][1] = -1.0;
-    result[1][0] = -1.0;
+    virtual FieldMatrix<DT, dim, dim> velocityGradient(const FieldVector<DT,dim>& x) const
+    {
+        FieldMatrix<DT, dim, dim> result(0);
+        result[0][1] = -1.0;
+        result[1][0] = -1.0;
 
-    return result;
-  }
+        return result;
+    }
 
-  YXProblem()
-  {}
+    YXProblem()
+    {}
 
 };
 

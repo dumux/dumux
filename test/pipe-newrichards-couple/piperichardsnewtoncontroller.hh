@@ -25,55 +25,55 @@
 #include <dumux/nonlinear/new_newtoncontroller.hh>
 
 namespace Dune {
-    /*!
-     * \brief A newton controller for the Richards model which is coupled
-     *        with a pipe flow.
-     */
-    template <class NewtonMethod>
-    class PipeRichardsNewtonController
-        : public NewtonControllerBase<NewtonMethod,
-                                      PipeRichardsNewtonController<NewtonMethod> >
+/*!
+ * \brief A newton controller for the Richards model which is coupled
+ *        with a pipe flow.
+ */
+template <class NewtonMethod>
+class PipeRichardsNewtonController
+    : public NewtonControllerBase<NewtonMethod,
+                                  PipeRichardsNewtonController<NewtonMethod> >
+{
+    typedef PipeRichardsNewtonController<NewtonMethod>     ThisType;
+    typedef NewtonControllerBase<NewtonMethod, ThisType>   ParentType;
+
+public:
+    typedef typename ParentType::Scalar            Scalar;
+    typedef typename ParentType::Function          Function;
+    typedef typename ParentType::JacobianAssembler JacobianAssembler;
+
+    PipeRichardsNewtonController(Scalar tolerance = 1e-5,
+                                 int targetSteps = 8,
+                                 int maxSteps = 12,
+                                 Scalar maxStepSize=1e100)
+        : ParentType(tolerance, targetSteps, maxSteps),
+          maxStepSize_(maxStepSize)
+    {};
+
+
+    //! Suggest a new time stepsize based on the number of newton
+    //! iterations required for the last time step and the old time
+    //! step size.
+    Scalar suggestTimeStepSize(Scalar oldTimeStep) const
     {
-        typedef PipeRichardsNewtonController<NewtonMethod>     ThisType;
-        typedef NewtonControllerBase<NewtonMethod, ThisType>   ParentType;
-
-    public:
-        typedef typename ParentType::Scalar            Scalar;
-        typedef typename ParentType::Function          Function;
-        typedef typename ParentType::JacobianAssembler JacobianAssembler;
-
-        PipeRichardsNewtonController(Scalar tolerance = 1e-5,
-                                     int targetSteps = 8,
-                                     int maxSteps = 12,
-									 Scalar maxStepSize=1e100)
-            : ParentType(tolerance, targetSteps, maxSteps),
-			  maxStepSize_(maxStepSize)
-        {};
+        Scalar tmp = ParentType::suggestTimeStepSize(oldTimeStep);
+        return std::min(tmp, maxStepSize_);
+    }
 
 
-		//! Suggest a new time stepsize based on the number of newton
-		//! iterations required for the last time step and the old time
-		//! step size.
-		Scalar suggestTimeStepSize(Scalar oldTimeStep) const
-		{
-			Scalar tmp = ParentType::suggestTimeStepSize(oldTimeStep);
-			return std::min(tmp, maxStepSize_);
-		}
+    //! Indicates that we're done solving one newton step.
+    void newtonBeginStep()
+    {
+        // update the pipe flow before each newton-raphson
+        // iteration
+        this->model().problem().updatePipeFlow();
 
-
-        //! Indicates that we're done solving one newton step.
-        void newtonBeginStep()
-        {
-            // update the pipe flow before each newton-raphson
-            // iteration
-            this->model().problem().updatePipeFlow();
-
-            // recycle the base class' beginStep method
-            ParentType::newtonBeginStep();
-        };
-    private:
-		Scalar maxStepSize_;
+        // recycle the base class' beginStep method
+        ParentType::newtonBeginStep();
     };
+private:
+    Scalar maxStepSize_;
+};
 }
 
 #endif

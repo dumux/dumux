@@ -21,11 +21,11 @@ namespace Dune
  */
 
 template<class Grid, class Diffusion, class Transport, class VC> class IMPES: public FractionalFlow<
-        Grid, Diffusion, Transport, VC>
+    Grid, Diffusion, Transport, VC>
 {
 
     typedef Dune::FractionalFlow<Grid, Diffusion, Transport, VC> FractionalFlow;
-typedef    typename FractionalFlow::RepresentationType PressType;
+    typedef    typename FractionalFlow::RepresentationType PressType;
     typedef typename FractionalFlow::Scalar Scalar;
 
 public:
@@ -47,7 +47,7 @@ public:
     }
 
     virtual int update(const Scalar t, Scalar& dt, RepresentationType& updateVec,
-            Scalar cFLFactor = 1)
+                       Scalar cFLFactor = 1)
     {
         int pressSize = variables.pressure.size();
         PressType pressOldIter(variables.pressure);
@@ -66,55 +66,55 @@ public:
         int iterTot = 0;
         updateOldIter = 0;
         while (!converg)
-        {
-            iter++;
-            iterTot++;
-            // update pressure
-            pressure(t);
-            totalVelocity(t);
-
-            Transport::update(t, dt, updateVec,cFLFactor);
-            if (iterFlag)
-            { // only needed if iteration has to be done
-                variables.pressure *= omega;
-                pressHelp = pressOldIter;
-                pressHelp *= (1-omega);
-                variables.pressure += pressHelp;
-                pressOldIter = variables.pressure;
-
-                updateHelp = updateVec;
-                saturation = variables.saturation;
-                saturation += (updateHelp *= (dt*cFLFactor));
-                saturation *= omega;
-                satHelp = satOldIter;
-                satHelp *= (1-omega);
-                saturation += satHelp;
-                updateDiff = updateVec;
-                updateDiff -= updateOldIter;
-                satOldIter = saturation;
-                updateOldIter = updateVec;
-            }
-            // break criteria for iteration loop
-            if (iterFlag==2&& dt*updateDiff.two_norm()/(saturation).two_norm() <= maxDefect )
-            converg = true;
-            else if (iterFlag==2 && (saturation.infinity_norm()> 1 || saturation.two_norm()> 1))
             {
-                converg = false;
+                iter++;
+                iterTot++;
+                // update pressure
+                pressure(t);
+                totalVelocity(t);
+
+                Transport::update(t, dt, updateVec,cFLFactor);
+                if (iterFlag)
+                    { // only needed if iteration has to be done
+                        variables.pressure *= omega;
+                        pressHelp = pressOldIter;
+                        pressHelp *= (1-omega);
+                        variables.pressure += pressHelp;
+                        pressOldIter = variables.pressure;
+
+                        updateHelp = updateVec;
+                        saturation = variables.saturation;
+                        saturation += (updateHelp *= (dt*cFLFactor));
+                        saturation *= omega;
+                        satHelp = satOldIter;
+                        satHelp *= (1-omega);
+                        saturation += satHelp;
+                        updateDiff = updateVec;
+                        updateDiff -= updateOldIter;
+                        satOldIter = saturation;
+                        updateOldIter = updateVec;
+                    }
+                // break criteria for iteration loop
+                if (iterFlag==2&& dt*updateDiff.two_norm()/(saturation).two_norm() <= maxDefect )
+                    converg = true;
+                else if (iterFlag==2 && (saturation.infinity_norm()> 1 || saturation.two_norm()> 1))
+                    {
+                        converg = false;
+                    }
+                else if (iterFlag==2&& iter> nIter )
+                    {
+                        std::cout << "Nonlinear loop in IMPES.update exceeded nIter = "
+                                  << nIter << " iterations."<< std::endl;
+                        return 1;
+                    }
+                else if (iterFlag==1&& iter> nIter )
+                    converg = true;
+                else if (iterFlag==0)
+                    converg = true;
             }
-            else if (iterFlag==2&& iter> nIter )
-            {
-                std::cout << "Nonlinear loop in IMPES.update exceeded nIter = "
-                << nIter << " iterations."<< std::endl;
-                return 1;
-            }
-            else if (iterFlag==1&& iter> nIter )
-            converg = true;
-            else if (iterFlag==0)
-            converg = true;
-        }
         // outputs
         if (iterFlag==2)
-        std::cout << "Iteration steps: "<< iterTot << std::endl;
+            std::cout << "Iteration steps: "<< iterTot << std::endl;
         std::cout.setf(std::ios::scientific, std::ios::floatfield);
 
         return 0;
@@ -128,9 +128,9 @@ public:
 
     //! Construct an IMPES object.
     IMPES(Diffusion& diffusion, Transport& transport, int flag = 0, int nIt = 2,
-            Scalar maxDef = 1e-5, Scalar om = 1) :
-    FractionalFlow(diffusion, transport),
-    iterFlag(flag), nIter(nIt), maxDefect(maxDef), omega(om), variables(this->transProblem.variables)
+          Scalar maxDef = 1e-5, Scalar om = 1) :
+        FractionalFlow(diffusion, transport),
+        iterFlag(flag), nIter(nIt), maxDefect(maxDef), omega(om), variables(this->transProblem.variables)
     {
     }
 

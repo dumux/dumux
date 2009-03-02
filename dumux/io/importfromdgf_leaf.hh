@@ -21,7 +21,7 @@ void importFromDGF(Data& data, std::string dataFileName, bool cellWise = true)
 #ifndef DUMUX_NO_RESTART
     enum{n = GV::dimension};
 
-//    typedef Dune::UGGrid<n> GInternal;
+    //    typedef Dune::UGGrid<n> GInternal;
     typedef Dune::UGGrid<n> GInternal;
     typedef typename GInternal::LeafGridView GridView;
     typedef    typename GInternal::ctype DT;
@@ -47,44 +47,44 @@ void importFromDGF(Data& data, std::string dataFileName, bool cellWise = true)
     int paramNum = 1;
     int elemNum = 1;
     if (cellWise)
-    {
-        ElementIterator eEndIt = gridView.template end<0>();
-        for (ElementIterator eIt = gridView.template begin<0>(); eIt != eEndIt; ++eIt)
         {
-            int elementIndex = indexSet.index(*eIt);
-            std::vector<double> parameters = getData.parameters(*eIt);
+            ElementIterator eEndIt = gridView.template end<0>();
+            for (ElementIterator eIt = gridView.template begin<0>(); eIt != eEndIt; ++eIt)
+                {
+                    int elementIndex = indexSet.index(*eIt);
+                    std::vector<double> parameters = getData.parameters(*eIt);
 
-            if (eIt == gridView.template begin<0>())
-            {
-                elemNum = indexSet.size(0);
-                paramNum = parameters.size();
-            }
+                    if (eIt == gridView.template begin<0>())
+                        {
+                            elemNum = indexSet.size(0);
+                            paramNum = parameters.size();
+                        }
 
-            for (int i = 0; i<paramNum;i++)
-            {
-                data[elementIndex][i]=parameters[i];
-            }
+                    for (int i = 0; i<paramNum;i++)
+                        {
+                            data[elementIndex][i]=parameters[i];
+                        }
+                }
         }
-    }
     if (!cellWise)
-    {
-        VertexIterator vEndIt = gridView.template end<n>();
-        for (VertexIterator vIt = gridView.template begin<n>(); vIt != vEndIt; ++vIt)
         {
-            std::vector<double> parameters = getData.parameters(*vIt);
-            int vertexIndex = indexSet.index(*vIt);
-            if (vIt == gridView.template begin<n>())
-            {
-                elemNum = indexSet.size(n);
-                paramNum = parameters.size();
-            }
+            VertexIterator vEndIt = gridView.template end<n>();
+            for (VertexIterator vIt = gridView.template begin<n>(); vIt != vEndIt; ++vIt)
+                {
+                    std::vector<double> parameters = getData.parameters(*vIt);
+                    int vertexIndex = indexSet.index(*vIt);
+                    if (vIt == gridView.template begin<n>())
+                        {
+                            elemNum = indexSet.size(n);
+                            paramNum = parameters.size();
+                        }
 
-            for (int i = 0; i<paramNum;i++)
-            {
-                data[vertexIndex][i]=parameters[i];
-            }
+                    for (int i = 0; i<paramNum;i++)
+                        {
+                            data[vertexIndex][i]=parameters[i];
+                        }
+                }
         }
-    }
     return;
 #endif // DUMUX_NO_RESTART
 }

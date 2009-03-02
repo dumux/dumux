@@ -11,7 +11,7 @@ function usage() {
     exit 1
 }
 
-if test $# -lt 1; then
+if test "$#" -lt 1; then
     usage
 fi
 
@@ -20,6 +20,8 @@ for TMP in $@; do
     echo "Sanitizing white space"
     sed -i \
 "
+s/^\(.*\)/ \1/; # add a space at the beginning of each line. this will
+                # later be correctly indented by emacs
 s/\t/    /g;  # replace all tabs by 4 spaces
 s/ *$//g; # remove all spaces at the end of a line
 " \

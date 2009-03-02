@@ -30,7 +30,7 @@ namespace Dune {
 
 template<class G, class RT, class MixedFunction = LeafMixedFunction<G, RT, 1> >
 class StokesJacobian :
-public LocalJacobian<StokesJacobian<G,RT,MixedFunction>,G,RT,1> {
+        public LocalJacobian<StokesJacobian<G,RT,MixedFunction>,G,RT,1> {
     // mapper: one data element per vertex
     template<int dim> struct P1Layout {
         bool contains(Dune::GeometryType gt) {
@@ -52,14 +52,14 @@ public:
 
     //! Constructor
     StokesJacobian(StokesProblem<G,RT>& prob, bool dummy1, const G& grid, MixedFunction& sol, bool dummy2 = false) :
-                vertexMapper(grid, grid.leafIndexSet()), problem(prob),
-                currentSolution(sol), oldSolution(grid), dt(1) {
+        vertexMapper(grid, grid.leafIndexSet()), problem(prob),
+        currentSolution(sol), oldSolution(grid), dt(1) {
     }
 
     template<class TypeTag>
     void localDefect(const Entity& e, const VBlockType* sol, bool withBC = true) {
         for (int i=0; i < e.geometry().corners() + 1; i++)
-                this->def[i] = 0.0;
+            this->def[i] = 0.0;
 
         return;
     }

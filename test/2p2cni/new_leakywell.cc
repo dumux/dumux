@@ -43,7 +43,7 @@ int main(int argc, char** argv)
         Problem problem(&(*gridPtr), dt, tEnd);
         if (!problem.simulate())
             return 2;
-        
+
         return 0;
     }
     catch (Dune::Exception &e) {

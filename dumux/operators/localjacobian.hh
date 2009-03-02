@@ -23,44 +23,44 @@
 #include"dumux/fvgeometry/fvelementgeometry.hh"
 
 /**
-* @file
-* @brief  defines a class for piecewise linear finite element functions
-* @author Peter Bastian
-*/
+ * @file
+ * @brief  defines a class for piecewise linear finite element functions
+ * @author Peter Bastian
+ */
 
 /*! @defgroup DISC_Operators Operators
-@ingroup DISC
-@brief
+  @ingroup DISC
+  @brief
 
-@section D1 Introduction
-<!--=================-->
+  @section D1 Introduction
+  <!--=================-->
 
-To be written
+  To be written
 */
 
 namespace Dune
 {
 /** @addtogroup DISC_Operators
-*
-* @{
-*/
+ *
+ * @{
+ */
 /**
-* @brief base class for assembling local jacobian matrices
-*
-*/
+ * @brief base class for assembling local jacobian matrices
+ *
+ */
 
 
 /*! @brief Base class for local assemblers
 
-This class serves as a base class for local assemblers. It provides
-space and access to the local jacobian matrix. The actual assembling is done
-in a derived class via the virtual assemble method.
+  This class serves as a base class for local assemblers. It provides
+  space and access to the local jacobian matrix. The actual assembling is done
+  in a derived class via the virtual assemble method.
 
-The template parameters are:
-- Imp  The implementation of the Interface with Barton-Nackman
-- Grid    A grid type
-- Scalar   The field type used in the elements of the jacobian matrix
-- numEq    number of degrees of freedom per node (system size)
+  The template parameters are:
+  - Imp  The implementation of the Interface with Barton-Nackman
+  - Grid    A grid type
+  - Scalar   The field type used in the elements of the jacobian matrix
+  - numEq    number of degrees of freedom per node (system size)
 */
 template<class Imp, class Grid, class Scalar, int numEq>
 class LocalJacobian : public LocalStiffness<Imp, Grid, Scalar, numEq>
@@ -117,13 +117,13 @@ public:
 
         SolutionVector bTemp[size];
         for (int i=0; i<size; i++)
-        {
-            for (int equationnumber = 0; equationnumber < numEq; equationnumber++)
-                if (this->bctype[i][equationnumber]==BoundaryConditions::neumann)
-                    bTemp[i][equationnumber] = this->def[i][equationnumber];
-                else
-                    bTemp[i][equationnumber] = 0;
-        }
+            {
+                for (int equationnumber = 0; equationnumber < numEq; equationnumber++)
+                    if (this->bctype[i][equationnumber]==BoundaryConditions::neumann)
+                        bTemp[i][equationnumber] = this->def[i][equationnumber];
+                    else
+                        bTemp[i][equationnumber] = 0;
+            }
 
         if (analytic) {
             analyticJacobian<TypeTag>(element, u);
@@ -137,35 +137,35 @@ public:
 
             for (int j = 0; j < size; j++)
                 for (int comp = 0; comp < numEq; comp++)
-                {
-                    Scalar eps = std::max(fabs(1e-5*u[j][comp]), 1e-5);
-                    for (int i = 0; i < size; i++) {
-                        uPlusEps[i] = u[i];
-                        uMinusEps[i] = u[i];
+                    {
+                        Scalar eps = std::max(fabs(1e-5*u[j][comp]), 1e-5);
+                        for (int i = 0; i < size; i++) {
+                            uPlusEps[i] = u[i];
+                            uMinusEps[i] = u[i];
+                        }
+                        uPlusEps[j][comp] += eps;
+                        uMinusEps[j][comp] -= eps;
+
+                        updateVariableData(element, uPlusEps, j);
+
+                        // calculate the defect without taking into account BCs
+                        // ASSUMES that BCs do not depend on the solution
+                        bool withoutBC = false;
+                        localDefect<TypeTag>(element, uPlusEps, withoutBC);
+                        SolutionVector defuPlusEps[size];
+                        for (int i = 0; i < size; i++)
+                            defuPlusEps[i] = def[i];
+
+                        updateVariableData(element, uMinusEps, j);
+                        localDefect<TypeTag>(element, uMinusEps, withoutBC);
+
+                        updateVariableData(element, u, j);
+
+                        Scalar oneByEps = 0.5/eps;
+                        for (int i = 0; i < size; i++)
+                            for (int compi = 0; compi < numEq; compi++)
+                                this->A[i][j][compi][comp] = oneByEps*(defuPlusEps[i][compi] - def[i][compi]);
                     }
-                    uPlusEps[j][comp] += eps;
-                    uMinusEps[j][comp] -= eps;
-
-                    updateVariableData(element, uPlusEps, j);
-
-                    // calculate the defect without taking into account BCs
-                    // ASSUMES that BCs do not depend on the solution
-                    bool withoutBC = false;
-                    localDefect<TypeTag>(element, uPlusEps, withoutBC);
-                    SolutionVector defuPlusEps[size];
-                    for (int i = 0; i < size; i++)
-                        defuPlusEps[i] = def[i];
-
-                    updateVariableData(element, uMinusEps, j);
-                    localDefect<TypeTag>(element, uMinusEps, withoutBC);
-
-                    updateVariableData(element, u, j);
-
-                    Scalar oneByEps = 0.5/eps;
-                    for (int i = 0; i < size; i++)
-                        for (int compi = 0; compi < numEq; compi++)
-                            this->A[i][j][compi][comp] = oneByEps*(defuPlusEps[i][compi] - def[i][compi]);
-                }
         }
 
         //        for (int i = 0; i < size; i++)
@@ -180,12 +180,12 @@ public:
 
 
         for (int i=0; i<size; i++)
-        {
-            for (int equationnumber = 0; equationnumber < numEq; equationnumber++)
-                if (this->bctype[i][equationnumber]==BoundaryConditions::neumann) {
-                    this->b[i][equationnumber] = bTemp[i][equationnumber];
-                }
-        }
+            {
+                for (int equationnumber = 0; equationnumber < numEq; equationnumber++)
+                    if (this->bctype[i][equationnumber]==BoundaryConditions::neumann) {
+                        this->b[i][equationnumber] = bTemp[i][equationnumber];
+                    }
+            }
 
         return;
     }
@@ -225,7 +225,7 @@ public:
 
     //! access defect for each dof
     /*! Access defect for each degree of freedom. Elements are
-    undefined without prior call to the assemble method.
+      undefined without prior call to the assemble method.
     */
     const SolutionVector& defect (int i) const
     {

@@ -11,33 +11,33 @@ namespace Dune {
 //! \ingroup diffusionProblems
 //! example class for diffusion problems
 template<class G, class RT, class VC> class LevelHetProblem :
-    public DeprecatedDiffusionProblem<G,RT,VC> {
+        public DeprecatedDiffusionProblem<G,RT,VC> {
     typedef typename G::ctype DT;
     enum {n=G::dimension};
     typedef typename G::Traits::template Codim<0>::Entity Entity;
 
 public:
     LevelHetProblem(VC& variableobj, const int level,
-            const char* name = "permeab.dat", const bool create = true,
-            DeprecatedTwoPhaseRelations& law = *(new DeprecatedLinearLaw), const bool cap = false) :
+                    const char* name = "permeab.dat", const bool create = true,
+                    DeprecatedTwoPhaseRelations& law = *(new DeprecatedLinearLaw), const bool cap = false) :
         DeprecatedDiffusionProblem<G, RT, VC>(variableobj, law, cap),
-                permeability(variableobj.grid, level, name, create) {
+        permeability(variableobj.grid, level, name, create) {
     }
 
     Dune::FieldMatrix<DT,n,n>& K(const Dune::FieldVector<DT,n>& x,
-            const Entity& e, const Dune::FieldVector<DT,n>& xi) {
+                                 const Entity& e, const Dune::FieldVector<DT,n>& xi) {
 
         return  permeability.K(e);
     }
 
     RT q(const Dune::FieldVector<DT,n>& x, const Entity& e,
-            const Dune::FieldVector<DT,n>& xi) {
+         const Dune::FieldVector<DT,n>& xi) {
         return 0;
     }
 
     typename Dune::BoundaryConditions::Flags bctype(
-            const Dune::FieldVector<DT,n>& x, const Entity& e,
-            const Dune::FieldVector<DT,n>& xi) const {
+                                                    const Dune::FieldVector<DT,n>& x, const Entity& e,
+                                                    const Dune::FieldVector<DT,n>& xi) const {
         if (x[0] > 300-1e-6|| x[0] < 1e-6)
             return Dune::BoundaryConditions::dirichlet;
         // all other boundaries
@@ -45,7 +45,7 @@ public:
     }
 
     RT g(const Dune::FieldVector<DT,n>& x, const Entity& e,
-            const Dune::FieldVector<DT,n>& xi) const {
+         const Dune::FieldVector<DT,n>& xi) const {
         return (x[0] < 1e-6) ? 2e6 : 1e6;
     }
 
@@ -58,7 +58,7 @@ public:
     }
 
     RT J(const Dune::FieldVector<DT,n>& x, const Entity& e,
-            const Dune::FieldVector<DT,n>& xi) const {
+         const Dune::FieldVector<DT,n>& xi) const {
         if (x[0]<1e-6)
             return 1e-4;
         return 0;

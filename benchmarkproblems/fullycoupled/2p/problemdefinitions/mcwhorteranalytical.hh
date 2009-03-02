@@ -12,8 +12,8 @@
 namespace Dune {
 
 template<class G, class RT> class McWWithAnalytical : public ExSolution<G, RT>,
-    public
-        McWhorterProblem<G, RT> {
+                                                      public
+    McWhorterProblem<G, RT> {
 
     enum {BrooksCorey=0};
     enum {n=G::dimension,dimworld = G::dimensionworld,m=2};
@@ -25,8 +25,8 @@ template<class G, class RT> class McWWithAnalytical : public ExSolution<G, RT>,
 public:
 
     McWWithAnalytical(const G &g, DeprecatedTwoPhaseRelations &law = *(new DeprecatedLinearLaw), const FieldVector<DT,n> Left = 0,
-            const FieldVector<DT,n> Right = 0, int chooselaw = BrooksCorey) :
-        ExSolution<G, RT>(g), 
+                      const FieldVector<DT,n> Right = 0, int chooselaw = BrooksCorey) :
+        ExSolution<G, RT>(g),
         McWhorterProblem<G, RT>(law, Left, Right,
                                 chooselaw, true), tolanalytic(1e-14), R(0) {
         prepareanalytical();
@@ -76,7 +76,7 @@ public:
         //diffusivity function
         for (int i=0; i<pointnum; i++) {
             D[i] = fractionalW[i]*this->materialLaw_.mobN(1-SatVec[i])
-                    *(-dpcdsw[i])*this->K_[0][0];
+                *(-dpcdsw[i])*this->K_[0][0];
         }
 
         for (int i=0; i<pointnum; i++) {
@@ -107,7 +107,7 @@ public:
             //std::cout<<" k = "<<k<<std::endl;
             if (k > 50000) {
                 std::cout<<"Analytical solution: Too many iteratioins!"
-                        <<std::endl;
+                         <<std::endl;
                 break;
             }
 
@@ -115,7 +115,7 @@ public:
             I0=0;
             for (int i=0; i<intervalnum; i++) {
                 a[i] = 0.5 * h * Sinit *(Gk[i] + Gk[i+1])+ pow(h, 2) / 6* ((3
-                        * i + 1) * Gk[i]+ (3 * i + 2) * Gk[i+1]);
+                                                                            * i + 1) * Gk[i]+ (3 * i + 2) * Gk[i+1]);
                 b[i] = 0.5 * h * (Gk[i] + Gk[i+1]);
                 I0 += (a[i] - Sinit * b[i]);
             }
@@ -148,7 +148,7 @@ public:
 
         //iterate over vertices and get analytical saturation solution
         for (Iterator it = this->grid.template leafbegin<n>(); it
-                != this->grid.template leafend<n>(); ++it) {
+                 != this->grid.template leafend<n>(); ++it) {
 
             //find index of current vertex
             int index = this->mapper.map(*it);

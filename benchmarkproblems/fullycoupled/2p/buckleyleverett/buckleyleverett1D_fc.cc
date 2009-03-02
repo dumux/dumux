@@ -42,9 +42,9 @@ int main(int argc, char** argv) {
         // create a grid object
         typedef Dune::OneDGrid GridType;
 
-//        const int numberofelements = 15;
-//        const int numberofelements = 30;
-//        const int numberofelements = 60;
+        //        const int numberofelements = 15;
+        //        const int numberofelements = 30;
+        //        const int numberofelements = 60;
         const int numberofelements = 120;
 
         //grid stretching factor:positiv -> smaller elements on the left, negativ -> smaller elements on the right
@@ -76,7 +76,7 @@ int main(int argc, char** argv) {
 
         Oil oil(0.2);
         Water water(0.2);
-//        Dune::DeprecatedBrooksCoreyLaw law(water, oil,2,0);
+        //        Dune::DeprecatedBrooksCoreyLaw law(water, oil,2,0);
         Dune::DeprecatedLinearLaw law(water, oil);
         //Dune::DeprecatedVanGenuchtenLaw law(water, oil);
 
@@ -84,7 +84,7 @@ int main(int argc, char** argv) {
         Dune::BLWithAnalytical<GridType, NumberType> problem(grid,law, Left, Right);
 
         //Calculate without analytical solution
-//        Dune::BuckleyLeverettProblem<GridType, NumberType> problem(law, Left, Right,/*VanGenuchten*/BrooksCorey);
+        //        Dune::BuckleyLeverettProblem<GridType, NumberType> problem(law, Left, Right,/*VanGenuchten*/BrooksCorey);
 
         typedef Dune::DeprecatedBoxPwSn<GridType, NumberType> TwoPhase;
         TwoPhase twoPhase(grid, problem);

@@ -23,79 +23,79 @@
 
 int main(int argc, char** argv)
 {
-  try{
-    // define the problem dimensions
-    const int dim=2;
-    typedef double NumberType;
-    Dune::FieldVector<NumberType, dim> outerLowerLeft(0);
-    Dune::FieldVector<NumberType, dim> outerUpperRight(6);
-    outerUpperRight[1] = 4;
-    Dune::FieldVector<NumberType, dim> innerLowerLeft(1);
-    innerLowerLeft[1] = 2;
-    Dune::FieldVector<NumberType, dim> innerUpperRight(4);
-    innerUpperRight[1] = 3;
+    try{
+        // define the problem dimensions
+        const int dim=2;
+        typedef double NumberType;
+        Dune::FieldVector<NumberType, dim> outerLowerLeft(0);
+        Dune::FieldVector<NumberType, dim> outerUpperRight(6);
+        outerUpperRight[1] = 4;
+        Dune::FieldVector<NumberType, dim> innerLowerLeft(1);
+        innerLowerLeft[1] = 2;
+        Dune::FieldVector<NumberType, dim> innerUpperRight(4);
+        innerUpperRight[1] = 3;
 
-    // read tEnd and initial time step from console
-    if (argc != 3) {
-      std::cout << "usage: test_twophase_pnsw tEnd dt" << std::endl;
-      return 0;
+        // read tEnd and initial time step from console
+        if (argc != 3) {
+            std::cout << "usage: test_twophase_pnsw tEnd dt" << std::endl;
+            return 0;
+        }
+        std::string arg1(argv[1]);
+        std::istringstream is1(arg1);
+        double tEnd;
+        is1 >> tEnd;
+        std::string arg2(argv[2]);
+        std::istringstream is2(arg2);
+        double dt;
+        is2 >> dt;
+
+        // create a grid object
+        typedef double NumberType;
+        typedef Dune::SGrid<dim,dim> GridType;
+        typedef Dune::FieldVector<GridType::ctype,dim> FieldVector;
+        Dune::FieldVector<int,dim> N(24); N[1] = 16; // number of cells
+        FieldVector L(0); //
+        FieldVector H(6); H[1] = 4;
+        GridType grid(N,L,H);
+
+        // print some information about the grid
+        Dune::gridinfo(grid);
+
+        // choose fluids
+        Dune::Water wPhase;
+        Dune::DNAPL nPhase;
+        // create soil object
+        Dune::LensSoil<GridType, NumberType> soil(outerLowerLeft,
+                                                  outerUpperRight, innerLowerLeft, innerUpperRight);
+        // create material law object
+        Dune::TwoPhaseRelations<GridType, NumberType> law(soil, wPhase, nPhase);
+
+        // create Problem object
+        Dune::LensProblem<GridType, NumberType> problem(wPhase, nPhase, soil, outerLowerLeft,
+                                                        outerUpperRight, innerLowerLeft, innerUpperRight, law);
+
+        typedef Dune::VtkMultiWriter<GridType::LeafGridView> MultiWriter;
+        typedef Dune::BoxPnSw<GridType, NumberType, MultiWriter> TwoPhase;
+        TwoPhase twoPhase(grid, problem);
+
+        Dune::TimeLoop<GridType, TwoPhase, true> timeloop(0, tEnd, dt, "dummy", 1);
+
+        Dune::Timer timer;
+        timer.reset();
+        MultiWriter writer("out-twophase-pnsw");
+        timeloop.executeMultiWriter(twoPhase, writer);
+        std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
+
+        //printvector(std::cout, *twoPhase.u, "u", "row", 2, 1, 3);
+
+        return 0;
     }
-    std::string arg1(argv[1]);
-	std::istringstream is1(arg1);
-	double tEnd;
-	is1 >> tEnd;
-	std::string arg2(argv[2]);
-	std::istringstream is2(arg2);
-	double dt;
-	is2 >> dt;
-
-    // create a grid object
-    typedef double NumberType;
-    typedef Dune::SGrid<dim,dim> GridType;
-    typedef Dune::FieldVector<GridType::ctype,dim> FieldVector;
-    Dune::FieldVector<int,dim> N(24); N[1] = 16; // number of cells
-    FieldVector L(0); //
-    FieldVector H(6); H[1] = 4;
-    GridType grid(N,L,H);
-
-    // print some information about the grid
-    Dune::gridinfo(grid);
-
-    // choose fluids
-    Dune::Water wPhase;
-    Dune::DNAPL nPhase;
-    // create soil object
-    Dune::LensSoil<GridType, NumberType> soil(outerLowerLeft,
-    		outerUpperRight, innerLowerLeft, innerUpperRight);
-    // create material law object
-    Dune::TwoPhaseRelations<GridType, NumberType> law(soil, wPhase, nPhase);
-
-    // create Problem object
-    Dune::LensProblem<GridType, NumberType> problem(wPhase, nPhase, soil, outerLowerLeft,
-    		outerUpperRight, innerLowerLeft, innerUpperRight, law);
-
-    typedef Dune::VtkMultiWriter<GridType::LeafGridView> MultiWriter;
-    typedef Dune::BoxPnSw<GridType, NumberType, MultiWriter> TwoPhase;
-    TwoPhase twoPhase(grid, problem);
-
-    Dune::TimeLoop<GridType, TwoPhase, true> timeloop(0, tEnd, dt, "dummy", 1);
-
-    Dune::Timer timer;
-    timer.reset();
-    MultiWriter writer("out-twophase-pnsw");
-    timeloop.executeMultiWriter(twoPhase, writer);
-    std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
-
-    //printvector(std::cout, *twoPhase.u, "u", "row", 2, 1, 3);
-
-    return 0;
-  }
-  catch (Dune::Exception &e){
-    std::cerr << "Dune reported error: " << e << std::endl;
-  }
-  catch (...){
-    std::cerr << "Unknown exception thrown!" << std::endl;
-  }
+    catch (Dune::Exception &e){
+        std::cerr << "Dune reported error: " << e << std::endl;
+    }
+    catch (...){
+        std::cerr << "Unknown exception thrown!" << std::endl;
+    }
 }
 //#else
 //

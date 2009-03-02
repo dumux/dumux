@@ -30,7 +30,7 @@ namespace Dune
  - Grid      a DUNE grid type
  - Scalar        type used for return values
 
- */
+*/
 template<class Grid, class Scalar, class VC, class Problem = FractionalFlowProblem<Grid, Scalar, VC> >
 class Diffusion
 {

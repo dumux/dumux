@@ -9,17 +9,17 @@
 template<class Grid>
 class RightHandSide
 {
-  enum{dim=Grid::dimension};
-  typedef typename Grid::ctype ct;
+    enum{dim=Grid::dimension};
+    typedef typename Grid::ctype ct;
 public:
 
-   RightHandSide(ExactSolution<ct,dim>& ex): exact(ex){}
+    RightHandSide(ExactSolution<ct,dim>& ex): exact(ex){}
 
-   typedef Dune::FieldVector<ct,dim> Point;
-  double rhsValue(int variable,  Point& global, const Point& local) const;
+    typedef Dune::FieldVector<ct,dim> Point;
+    double rhsValue(int variable,  Point& global, const Point& local) const;
 
 protected:
-   ExactSolution<ct,dim>& exact;
+    ExactSolution<ct,dim>& exact;
 };
 
 

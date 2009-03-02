@@ -22,8 +22,8 @@ class Water : public Fluid
 
 public:
     Water(double constDensity = 0,
-            double constViscosity = 0, double constEnthalpy = 0)
-    : constDensity_(constDensity), constViscosity_(constViscosity), constEnthalpy_(constEnthalpy)
+          double constViscosity = 0, double constEnthalpy = 0)
+        : constDensity_(constDensity), constViscosity_(constViscosity), constEnthalpy_(constEnthalpy)
     {}
 
     double viscosity (double T=283.15, double p=1e5, double X=1.0) const
@@ -61,9 +61,9 @@ public:
     }
 
 private:
-   double constDensity_;
-   double constViscosity_;
-   double constEnthalpy_;
+    double constDensity_;
+    double constViscosity_;
+    double constEnthalpy_;
 };
 
 /** \ingroup properties
@@ -76,7 +76,7 @@ class Methane : public Fluid
 public:
     Methane(double constDensity = 0,
             double constViscosity = 0, double constEnthalpy = 0)
-    : constDensity_(constDensity), constViscosity_(constViscosity), constEnthalpy_(constEnthalpy)
+        : constDensity_(constDensity), constViscosity_(constViscosity), constEnthalpy_(constEnthalpy)
     {}
 
     double viscosity (double T=283.15, double p=1e5, double X=1.0) const
@@ -92,15 +92,15 @@ public:
         if (constDensity_)
             return constDensity_;
         else
-        {
-        	double R = 0.54978284;
-        	double temp = 284.43;
-            double rhog = p/(R*temp*1000.0);
-            if(rhog < 1e-15) 
-            	rhog = 1e-15;
-            
-            return(rhog);
-        }
+            {
+                double R = 0.54978284;
+                double temp = 284.43;
+                double rhog = p/(R*temp*1000.0);
+                if(rhog < 1e-15)
+                    rhog = 1e-15;
+
+                return(rhog);
+            }
     }
 
     double enthalpy (double T=283.15, double p=1e5, double X = 1) const
@@ -122,9 +122,9 @@ public:
     }
 
 private:
-   double constDensity_;
-   double constViscosity_;
-   double constEnthalpy_;
+    double constDensity_;
+    double constViscosity_;
+    double constEnthalpy_;
 };
 
 /** \ingroup properties
@@ -136,8 +136,8 @@ class Air : public Fluid
 
 public:
     Air(double constDensity = 0,
-            double constViscosity = 0, double constEnthalpy = 0)
-    :constDensity_(constDensity), constViscosity_(constViscosity), constEnthalpy_(constEnthalpy)
+        double constViscosity = 0, double constEnthalpy = 0)
+        :constDensity_(constDensity), constViscosity_(constViscosity), constEnthalpy_(constEnthalpy)
     {}
 
     double viscosity ( double T=283.15, double p=1e5, double X=1.) const
@@ -178,9 +178,9 @@ public:
     }
 
 private:
-   double constDensity_;
-   double constViscosity_;
-   double constEnthalpy_;
+    double constDensity_;
+    double constViscosity_;
+    double constEnthalpy_;
 };
 
 /** \todo Please doc me! */
@@ -191,8 +191,8 @@ class Brine : public Fluid
 
 public:
     Brine(double constDensity = 0,
-            double constViscosity = 0, double constEnthalpy = 0)
-    :constDensity_(constDensity), constViscosity_(constViscosity), constEnthalpy_(constEnthalpy)
+          double constViscosity = 0, double constEnthalpy = 0)
+        :constDensity_(constDensity), constViscosity_(constViscosity), constEnthalpy_(constEnthalpy)
     {}
 
     double viscosity ( double T=283.15, double p=1e5, double X=1.) const
@@ -205,7 +205,7 @@ public:
             return constRelBrine.viscosity_brine(T,S);
         }
 
-//           return 2.535e-4; // [kg/(ms)]
+        //           return 2.535e-4; // [kg/(ms)]
     }
 
     double Salinity() const
@@ -244,9 +244,9 @@ public:
 
 private:
 
-   double constDensity_;
-   double constViscosity_;
-   double constEnthalpy_;
+    double constDensity_;
+    double constViscosity_;
+    double constEnthalpy_;
 };
 
 /** \todo Please doc me! */
@@ -255,8 +255,8 @@ class Oil : public Fluid
 {
 public:
     Oil(double constDensity = 0,
-            double constViscosity = 0, double constEnthalpy = 0)
-    : constDensity_(constDensity), constViscosity_(constViscosity), constEnthalpy_(constEnthalpy)
+        double constViscosity = 0, double constEnthalpy = 0)
+        : constDensity_(constDensity), constViscosity_(constViscosity), constEnthalpy_(constEnthalpy)
     {}
 
     double viscosity ( double T=283.15, double p=1e5, double X=1.0) const
@@ -279,9 +279,9 @@ public:
         if (constEnthalpy_)
             return constEnthalpy_;
         else {
-//            return constRelOil.enthalpy_brine(T,p,S);
-                    // TODO
-                    DUNE_THROW(Dune::NotImplemented, "Non-constant enthalpy of oil");
+            //            return constRelOil.enthalpy_brine(T,p,S);
+            // TODO
+            DUNE_THROW(Dune::NotImplemented, "Non-constant enthalpy of oil");
         }
     }
 
@@ -296,9 +296,9 @@ public:
     }
 
 private:
-   double constDensity_;
-   double constViscosity_;
-   double constEnthalpy_;
+    double constDensity_;
+    double constViscosity_;
+    double constEnthalpy_;
 };
 
 
@@ -310,7 +310,7 @@ class Uniform : public Fluid
 public:
     Uniform(double constDensity = 0,
             double constViscosity = 0, double constEnthalpy = 0)
-    : constDensity_(constDensity), constViscosity_(constViscosity), constEnthalpy_(constEnthalpy)
+        : constDensity_(constDensity), constViscosity_(constViscosity), constEnthalpy_(constEnthalpy)
     {}
 
     double viscosity ( double T=283.15, double p=1e5, double X=1.) const
@@ -348,9 +348,9 @@ public:
     }
 
 private:
-   double constDensity_;
-   double constViscosity_;
-   double constEnthalpy_;
+    double constDensity_;
+    double constViscosity_;
+    double constEnthalpy_;
 };
 
 /** \ingroup properties
@@ -360,8 +360,8 @@ class DNAPL : public Fluid
 {
 public:
     DNAPL(double constDensity = 0,
-            double constViscosity = 0, double constEnthalpy = 0)
-    : constDensity_(constDensity), constViscosity_(constViscosity), constEnthalpy_(constEnthalpy)
+          double constViscosity = 0, double constEnthalpy = 0)
+        : constDensity_(constDensity), constViscosity_(constViscosity), constEnthalpy_(constEnthalpy)
     {}
 
     double viscosity ( double T=283.15, double p=1e5, double X=1.) const
@@ -384,8 +384,8 @@ public:
         if (constEnthalpy_)
             return constEnthalpy_;
         else {
-//            return 1.0;
-                    DUNE_THROW(Dune::NotImplemented, "Non-constant enthalpy for DNAPL");
+            //            return 1.0;
+            DUNE_THROW(Dune::NotImplemented, "Non-constant enthalpy for DNAPL");
         }
     }
     double intEnergy( double T=283.15, double p=1e5, double X = 1) const
@@ -399,9 +399,9 @@ public:
     }
 
 private:
-   double constDensity_;
-   double constViscosity_;
-   double constEnthalpy_;
+    double constDensity_;
+    double constViscosity_;
+    double constEnthalpy_;
 };
 
 /** \ingroup properties
@@ -409,49 +409,49 @@ private:
  */
 class CO2 : public Fluid
 {
- ConstrelCO2 constRelCO2;
+    ConstrelCO2 constRelCO2;
 
- public:
-        CO2(double constDensity = 0,
-                double constViscosity = 0, double constEnthalpy = 0)
+public:
+    CO2(double constDensity = 0,
+        double constViscosity = 0, double constEnthalpy = 0)
         : constDensity_(constDensity), constViscosity_(constViscosity), constEnthalpy_(constEnthalpy)
-        {}
+    {}
 
-        double density ( double T=283.15, double p=1e5, double X=1.) const
-        {
-            if (constDensity_)
-                return constDensity_;
-            else
-                return constRelCO2.density(T,p);
-        }
+    double density ( double T=283.15, double p=1e5, double X=1.) const
+    {
+        if (constDensity_)
+            return constDensity_;
+        else
+            return constRelCO2.density(T,p);
+    }
     double viscosity ( double T=283.15, double p=1e5, double X=1.) const
-        {
-            if (constViscosity_)
-                return constViscosity_;
-            else
-                return constRelCO2.viscosity(T,p);
+    {
+        if (constViscosity_)
+            return constViscosity_;
+        else
+            return constRelCO2.viscosity(T,p);
+    }
+
+    double enthalpy ( double T=283.15, double p=1e5, double X = 1) const
+    {
+        if (constEnthalpy_)
+            return constEnthalpy_;
+        else {
+            return constRelCO2.enthalpy(T,p);
         }
+    }
 
-        double enthalpy ( double T=283.15, double p=1e5, double X = 1) const
-        {
-            if (constEnthalpy_)
-                return constEnthalpy_;
-            else {
-                return constRelCO2.enthalpy(T,p);
-            }
-        }
+    double intEnergy( double T=432, double p=3.086e7, double X = 1) const
+    {
+        double u;
+        double rho_mass = density(T,p);
+        double h = enthalpy(T,p);
 
-        double intEnergy( double T=432, double p=3.086e7, double X = 1) const
-        {
-            double u;
-            double rho_mass = density(T,p);
-            double h = enthalpy(T,p);
+        u = h - (p / rho_mass);
+        return u;
+    }
 
-            u = h - (p / rho_mass);
-            return u;
-        }
-
- private:
+private:
     double constDensity_;
     double constViscosity_;
     double constEnthalpy_;

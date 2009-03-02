@@ -26,10 +26,10 @@ protected:
 public:
 
     LocalJacobian &localJacobian()
-        { return localJacobian_; };
+    { return localJacobian_; };
 
     const LocalJacobian &localJacobian() const
-        { return localJacobian_; };
+    { return localJacobian_; };
 
     //! return const reference to solution vector
     const FunctionType& operator* () const
@@ -60,42 +60,42 @@ public:
         A.assemble(localJacobian(), u, f);
     }
 
-      virtual MatrixType& matrix()
-      {
-          return *A;
-      }
+    virtual MatrixType& matrix()
+    {
+        return *A;
+    }
 
-      virtual VectorType& rhs()
-      {
-          return *f;
-      }
+    virtual VectorType& rhs()
+    {
+        return *f;
+    }
 
-      virtual VectorType& sol()
-      {
-          return *u;
-      }
-      virtual void writerestartfile()
-      {
-          return;
-      }
-      virtual void restart()
-      {
-          return;
-      }
+    virtual VectorType& sol()
+    {
+        return *u;
+    }
+    virtual void writerestartfile()
+    {
+        return;
+    }
+    virtual void restart()
+    {
+        return;
+    }
 
     //! always define virtual destructor in abstract base class
     virtual ~NonlinearModel () {}
 
     NonlinearModel(const G& g, ProblemType& prob)
-: problem(prob), u(g, g.overlapSize(0)==0), f(g, g.overlapSize(0)==0), A(g, g.overlapSize(0)==0),
-localJacobian_(prob, false, g, u, g.overlapSize(0)>0)
-//: problem(prob), u(g), f(g), A(g),
-//localJacobian_(prob, false, g, u)
+        : problem(prob), u(g, g.overlapSize(0)==0), f(g, g.overlapSize(0)==0), A(g, g.overlapSize(0)==0),
+          localJacobian_(prob, false, g, u, g.overlapSize(0)>0)
+          //: problem(prob), u(g), f(g), A(g),
+          //localJacobian_(prob, false, g, u)
     { }
 
     NonlinearModel(const G& g, ProblemType& prob, int level)
-    : problem(prob), u(g, level, g.overlapSize(0)==0), f(g, level, g.overlapSize(0)==0), A(g, level, g.overlapSize(0)==0),
-    localJacobian_(prob, false, g, u, g.overlapSize(0)>0)
+        : problem(prob), u(g, level, g.overlapSize(0)==0), f(g, level, g.overlapSize(0)==0), A(g, level, g.overlapSize(0)==0),
+          localJacobian_(prob, false, g, u, g.overlapSize(0)>0)
     { }
 };
 
@@ -103,7 +103,7 @@ localJacobian_(prob, false, g, u, g.overlapSize(0)>0)
 
 template<class G, class RT, class ProblemType, class LocalJacobian, int m=1>
 class LeafP1NonlinearModel
-: public NonlinearModel<G, RT, ProblemType, LocalJacobian, LeafP1Function<G, RT, m>, LeafP1OperatorAssembler<G, RT, m> >
+    : public NonlinearModel<G, RT, ProblemType, LocalJacobian, LeafP1Function<G, RT, m>, LeafP1OperatorAssembler<G, RT, m> >
 {
 public:
     // define the function type:
@@ -115,7 +115,7 @@ public:
     typedef NonlinearModel<G, RT, ProblemType, LocalJacobian, FunctionType, OperatorAssembler> ThisNonlinearModel;
 
     LeafP1NonlinearModel (const G& g, ProblemType& prob)
-    : ThisNonlinearModel(g, prob)
+        : ThisNonlinearModel(g, prob)
     { }
 };
 
@@ -123,7 +123,7 @@ public:
 
 template<class G, class RT, class ProblemType, class LocalJacobian, int m=1>
 class MixedNonlinearModel
-: public NonlinearModel<G, RT, ProblemType, LocalJacobian, LeafMixedFunction<G, RT, m>, LeafMixedOperatorAssembler<G, RT, m> >
+    : public NonlinearModel<G, RT, ProblemType, LocalJacobian, LeafMixedFunction<G, RT, m>, LeafMixedOperatorAssembler<G, RT, m> >
 {
 public:
     // define the function type:
@@ -135,7 +135,7 @@ public:
     typedef NonlinearModel<G, RT, ProblemType, LocalJacobian, FunctionType, OperatorAssembler> ThisNonlinearModel;
 
     MixedNonlinearModel (const G& g, ProblemType& prob)
-    : ThisNonlinearModel(g, prob)
+        : ThisNonlinearModel(g, prob)
     { }
 };
 

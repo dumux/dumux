@@ -23,9 +23,9 @@ public:
     Medium& medium;
 
     DiffusionParameters (double alpha, BlockVector& pipePress, VertexVectorOnLineType *vertexVectorOnL,
-            GlobalToPipeMapper& map, VertexMapper& vm, Medium& law = *(new Uniform))
-    : alphaEx(alpha), pipePressure(pipePress),
-    mapGlobalIDtoPipeID(map), vertexMapper(vm), medium(law), materialLaw_(law)
+                         GlobalToPipeMapper& map, VertexMapper& vm, Medium& law = *(new Uniform))
+        : alphaEx(alpha), pipePressure(pipePress),
+          mapGlobalIDtoPipeID(map), vertexMapper(vm), medium(law), materialLaw_(law)
     {
         for (int i=0; i<n; i++)
             for (int j=0; j<n; j++)
@@ -43,10 +43,10 @@ public:
     }
 
     const Dune::FieldMatrix<DT,n,n>& K (const Dune::FieldVector<DT,n>& x, const Entity& e,
-            const Dune::FieldVector<DT,n>& xi) const
-            {
+                                        const Dune::FieldVector<DT,n>& xi) const
+    {
         return large;
-            }
+    }
 
     const Dune::FieldVector<RT,n>& gravity () const
     {
@@ -56,24 +56,24 @@ public:
 
     RT q   (const Dune::FieldVector<DT,n>& x, const Entity& e,
             const Dune::FieldVector<DT,n>& xi, const int& node) const
-            {
+    {
         int globalId = vertexMapper.template map<n>(e, node);
         for (unsigned k = 0; k < vertexVectorOnLine.size(); k++)
-        {
-            if (globalId == vertexVectorOnLine[k].globalId)
             {
-                int pipeId = ((mapGlobalIDtoPipeID).find(globalId))->second;
-                return alphaEx * pipePressure[pipeId];
+                if (globalId == vertexVectorOnLine[k].globalId)
+                    {
+                        int pipeId = ((mapGlobalIDtoPipeID).find(globalId))->second;
+                        return alphaEx * pipePressure[pipeId];
+                    }
             }
-        }
 
         return 0;
-            }
+    }
 
     Dune::BoundaryConditions::Flags bctype (const Dune::FieldVector<DT,n>& x, const Entity& e,
-            const IntersectionIterator& intersectionIt,
-            const Dune::FieldVector<DT,n>& xi) const
-            {
+                                            const IntersectionIterator& intersectionIt,
+                                            const Dune::FieldVector<DT,n>& xi) const
+    {
         Dune::FieldVector<Dune::BoundaryConditions::Flags, 1> values; //(Dune::BoundaryConditions::neumann);
 
         //        std::cout << "global coordinate "<< x << "bctype: boundaryId = " << intersectionIt.boundaryId() << std::endl;
@@ -88,16 +88,16 @@ public:
         }
 
         return values;
-            }
+    }
 
     virtual void dirichletIndex(const Dune::FieldVector<DT,n>& x, const Entity& e,
-            const IntersectionIterator& intersectionIt,
-            const Dune::FieldVector<DT,n>& xi, Dune::FieldVector<int,m>& dirichletIndex) const
-            {
+                                const IntersectionIterator& intersectionIt,
+                                const Dune::FieldVector<DT,n>& xi, Dune::FieldVector<int,m>& dirichletIndex) const
+    {
         for (int i = 0; i < m; i++)
             dirichletIndex[i]=i;
         return;
-            }
+    }
 
     RT exact(const Dune::FieldVector<DT,n>& x) const
     {
@@ -105,9 +105,9 @@ public:
     }
 
     RT g (const Dune::FieldVector<DT,n>& x, const Entity& e,
-            const IntersectionIterator& intersectionIt,
-            const Dune::FieldVector<DT,n>& xi) const
-            {
+          const IntersectionIterator& intersectionIt,
+          const Dune::FieldVector<DT,n>& xi) const
+    {
         RT values(0);
 
         switch (intersectionIt.boundaryId()) {
@@ -120,7 +120,7 @@ public:
         }
 
         return values;
-            }
+    }
 
     Dune::FieldVector<RT,n> exactGrad(const Dune::FieldVector<DT,n>& x) const
     {
@@ -134,9 +134,9 @@ public:
     }
 
     RT J (const Dune::FieldVector<DT,n>& x, const Entity& e,
-            const IntersectionIterator& intersectionIt,
-            const Dune::FieldVector<DT,n>& xi) const
-            {
+          const IntersectionIterator& intersectionIt,
+          const Dune::FieldVector<DT,n>& xi) const
+    {
         RT values(0);
 
         switch (intersectionIt.boundaryId()) {
@@ -146,7 +146,7 @@ public:
         }
 
         return values;
-            }
+    }
 
     Medium& materialLaw() {
         return materialLaw_;

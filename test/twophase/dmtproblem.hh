@@ -23,36 +23,36 @@
 
 namespace Dune
 {
-  //! base class that defines the parameters of a diffusion equation
-  /*! An interface for defining parameters for the stationary diffusion equation
-   * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = q, \f$,
-   * \f$p = g\f$ on \f$\Gamma_1\f$, and \f$\lambda K \text{grad}\, p = J\f$
-   * on \f$\Gamma_2\f$. Here,
-   * \f$p\f$ denotes the pressure, \f$K\f$ the absolute permeability,
-   * and \f$\lambda\f$ the total mobility, possibly depending on the
-   * saturation.
-   *
-   *    Template parameters are:
-   *
-   *    - Grid    a DUNE grid type
-   *    - Scalar  type used for return values
-   */
-  template<class Grid, class Scalar>
-  class DMTProblem : public TwoPhaseProblem<Grid, Scalar> {
+//! base class that defines the parameters of a diffusion equation
+/*! An interface for defining parameters for the stationary diffusion equation
+ * \f$ - \text{div}\, (\lambda K \text{grad}\, p ) = q, \f$,
+ * \f$p = g\f$ on \f$\Gamma_1\f$, and \f$\lambda K \text{grad}\, p = J\f$
+ * on \f$\Gamma_2\f$. Here,
+ * \f$p\f$ denotes the pressure, \f$K\f$ the absolute permeability,
+ * and \f$\lambda\f$ the total mobility, possibly depending on the
+ * saturation.
+ *
+ *    Template parameters are:
+ *
+ *    - Grid    a DUNE grid type
+ *    - Scalar  type used for return values
+ */
+template<class Grid, class Scalar>
+class DMTProblem : public TwoPhaseProblem<Grid, Scalar> {
     typedef typename Grid::ctype DT;
     enum {dim=Grid::dimension, numEq=2};
     typedef typename Grid::Traits::template Codim<0>::Entity Entity;
     typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
 
-  public:
+public:
     // Constructor
-    DMTProblem(Fluid& liq1, Fluid& liq2, Matrix2p<Grid, Scalar>& soil, 
-            TwoPhaseRelations<Grid, Scalar>& law = *(new TwoPhaseRelations<Grid, Scalar>))
-    : TwoPhaseProblem<Grid,Scalar>(liq1, liq2, soil, law)
+    DMTProblem(Fluid& liq1, Fluid& liq2, Matrix2p<Grid, Scalar>& soil,
+               TwoPhaseRelations<Grid, Scalar>& law = *(new TwoPhaseRelations<Grid, Scalar>))
+        : TwoPhaseProblem<Grid,Scalar>(liq1, liq2, soil, law)
     {
         gravity_[0] = 0;
         gravity_[1] = -9.81;
-        
+
         pAtm_ = 1.013e5;
     }
 
@@ -61,8 +61,8 @@ namespace Dune
 
     // function returning the BOUNDARY CONDITION TYPE depending on the position
     virtual FieldVector<BoundaryConditions::Flags, numEq> bctype (const FieldVector<DT,dim>& x, const Entity& element,
-                    const IntersectionIterator& intersectionIt,
-                       const FieldVector<DT,dim>& xi) const
+                                                                  const IntersectionIterator& intersectionIt,
+                                                                  const FieldVector<DT,dim>& xi) const
     {
         // boundary condition type is set to neumann
         FieldVector<BoundaryConditions::Flags, numEq> values(BoundaryConditions::neumann);
@@ -88,8 +88,8 @@ namespace Dune
 
     // definition of DIRICHLET boundary conditions depending on the position
     virtual FieldVector<Scalar,numEq> g (const FieldVector<DT,dim>& x, const Entity& element,
-                const IntersectionIterator& intersectionIt,
-                  const FieldVector<DT,dim>& xi) const
+                                         const IntersectionIterator& intersectionIt,
+                                         const FieldVector<DT,dim>& xi) const
     {
         FieldVector<Scalar,numEq> values(0);
 
@@ -105,8 +105,8 @@ namespace Dune
 
     // definition of NEUMANN boundary conditions depending on the position
     virtual FieldVector<Scalar,numEq> J (const FieldVector<DT,dim>& x, const Entity& element,
-                const IntersectionIterator& intersectionIt,
-                  const FieldVector<DT,dim>& xi) const
+                                         const IntersectionIterator& intersectionIt,
+                                         const FieldVector<DT,dim>& xi) const
     {
         FieldVector<Scalar,numEq> values(0);
 
@@ -115,11 +115,11 @@ namespace Dune
 
     // definition of INITIAL VALUES for pressure and saturation
     virtual FieldVector<Scalar,numEq> initial (const FieldVector<DT,dim>& x, const Entity& element,
-                  const FieldVector<DT,dim>& xi) const
+                                               const FieldVector<DT,dim>& xi) const
     {
 
         FieldVector<Scalar,numEq> values;
-        
+
         double rhoG = 0.68;
         values[pWIdx] = rhoG*gravity_[1]*x[1] + pAtm_;
         values[sNIdx] = 0.1;
@@ -130,7 +130,7 @@ namespace Dune
 
     // function returning SOURCE/SINK terms
     virtual FieldVector<Scalar,numEq> q (const FieldVector<DT,dim>& x, const Entity& element,
-                    const FieldVector<DT,dim>& xi) const
+                                         const FieldVector<DT,dim>& xi) const
     {
         FieldVector<Scalar,numEq> values(0);
 
@@ -142,10 +142,10 @@ namespace Dune
         return gravity_;
     }
 
-    private:
-        FieldVector<DT,dim> gravity_;
-        DT pAtm_;
-  };
+private:
+    FieldVector<DT,dim> gravity_;
+    DT pAtm_;
+};
 
 } // end namespace
 #endif

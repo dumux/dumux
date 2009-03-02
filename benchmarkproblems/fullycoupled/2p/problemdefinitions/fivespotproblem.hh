@@ -23,12 +23,12 @@
 namespace Dune {
 
 template<class G, class RT> class FiveSpotCase1Problem :
-    public DeprecatedTwoPhaseProblem<G, RT> {
+        public DeprecatedTwoPhaseProblem<G, RT> {
     typedef typename G::ctype DT;
     enum {n=G::dimension, m=2};
     typedef typename G::Traits::template Codim<0>::Entity Entity;
     typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator
-            IntersectionIterator;
+    IntersectionIterator;
 
 public:
     enum {wPhaseIdx = 0, nwPhaseIdx = 1,pWIdx = 0, sNIdx = 1};
@@ -37,44 +37,44 @@ public:
     enum {BrooksCorey = 0,lambdaIdx = 2, p0Idx = 3};
 
     virtual const FieldMatrix<DT,n,n>& K(const FieldVector<DT,n>& x,
-            const Entity& e, const FieldVector<DT,n>& xi) {
+                                         const Entity& e, const FieldVector<DT,n>& xi) {
         return K_;
     }
 
     virtual FieldVector<RT,m> q(const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi) const {
+                                const FieldVector<DT,n>& xi) const {
         FieldVector<RT,m> values(0);
 
         return values;
     }
 
     virtual FieldVector<BoundaryConditions::Flags, m> bctype(
-            const FieldVector<DT,n>& x, const Entity& e,
-            const IntersectionIterator& intersectionIt,
-            const FieldVector<DT,n>& xi) const {
+                                                             const FieldVector<DT,n>& x, const Entity& e,
+                                                             const IntersectionIterator& intersectionIt,
+                                                             const FieldVector<DT,n>& xi) const {
         FieldVector<BoundaryConditions::Flags, m> values(
-                BoundaryConditions::neumann);
+                                                         BoundaryConditions::neumann);
 
         if ((x[0] < LowerLeft_[0] + eps_ && x[1] < LowerLeft_[1] + bcf_)||(x[1]
-                < LowerLeft_[1] + eps_ && x[0] < LowerLeft_[0] + bcf_)) {
+                                                                           < LowerLeft_[1] + eps_ && x[0] < LowerLeft_[0] + bcf_)) {
             values[wPhaseIdx] = BoundaryConditions::dirichlet;
             values[nwPhaseIdx] = BoundaryConditions::dirichlet;
         }
-//        if ((x[0] > UpperRight_[0] - eps_ && x[1] > UpperRight_[1] - bcf_)
-//                ||(x[1] > UpperRight_[1] - eps_ && x[0] > UpperRight_[0] - bcf_)) {
-//            values[wPhaseIdx] = BoundaryConditions::dirichlet;
-//            values[nwPhaseIdx] = BoundaryConditions::dirichlet;
-//        }
+        //        if ((x[0] > UpperRight_[0] - eps_ && x[1] > UpperRight_[1] - bcf_)
+        //                ||(x[1] > UpperRight_[1] - eps_ && x[0] > UpperRight_[0] - bcf_)) {
+        //            values[wPhaseIdx] = BoundaryConditions::dirichlet;
+        //            values[nwPhaseIdx] = BoundaryConditions::dirichlet;
+        //        }
         return values;
     }
 
     virtual FieldVector<RT,m> g(const FieldVector<DT,n>& x, const Entity& e,
-            const IntersectionIterator& intersectionIt,
-            const FieldVector<DT,n>& xi) const {
+                                const IntersectionIterator& intersectionIt,
+                                const FieldVector<DT,n>& xi) const {
         FieldVector<RT,m> values(0);
 
         if ((x[0] < LowerLeft_[0] + eps_ && x[1] < LowerLeft_[1] + bcf_)||(x[1]
-                < LowerLeft_[1] + eps_ && x[0] < LowerLeft_[0] + bcf_)) {
+                                                                           < LowerLeft_[1] + eps_ && x[0] < LowerLeft_[0] + bcf_)) {
             values[pWIdx] = pwlowerleftbc_;
             values[sNIdx] = Snr_;
         }
@@ -90,8 +90,8 @@ public:
     }
 
     virtual FieldVector<RT,m> J(const FieldVector<DT,n>& x, const Entity& e,
-            const IntersectionIterator& intersectionIt,
-            const FieldVector<DT,n>& xi) const {
+                                const IntersectionIterator& intersectionIt,
+                                const FieldVector<DT,n>& xi) const {
         FieldVector<RT,m> values(0);
 
         //      if ((x[0] < LowerLeft_[0] + eps_ && x[1] < LowerLeft_[1] + bcf_) ||
@@ -99,7 +99,7 @@ public:
         //         values[wPhaseIdx] = -0.12;
         //      }
         if ((x[0] > UpperRight_[0] - eps_ && x[1] > UpperRight_[1] - bcf_)
-                ||(x[1] > UpperRight_[1] - eps_ && x[0] > UpperRight_[0] - bcf_)) {
+            ||(x[1] > UpperRight_[1] - eps_ && x[0] > UpperRight_[0] - bcf_)) {
             values[nwPhaseIdx] = 0.001;//15x15 cells: bcf 21;
             //    values[nwPhaseIdx] = 0.002;// 30x30 cells: bcf 11
             //    values[nwPhaseIdx] = 0.004;// 60x60 cells: bcf 6
@@ -108,7 +108,7 @@ public:
     }
 
     virtual FieldVector<RT,m> initial(const FieldVector<DT,n>& x,
-            const Entity& e, const FieldVector<DT,n>& xi) const {
+                                      const Entity& e, const FieldVector<DT,n>& xi) const {
 
         FieldVector<RT,m> values;
 
@@ -119,7 +119,7 @@ public:
     }
 
     double porosity(const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi) const {
+                    const FieldVector<DT,n>& xi) const {
         return Porosity_;
     }
 
@@ -128,7 +128,7 @@ public:
     }
 
     virtual FieldVector<RT,4> materialLawParameters(const FieldVector<DT,n>& x,
-            const Entity& e, const FieldVector<DT,n>& xi) const {
+                                                    const Entity& e, const FieldVector<DT,n>& xi) const {
         FieldVector<RT,4> values;
 
         if (chooselaw_) {
@@ -146,29 +146,29 @@ public:
     }
 
     FiveSpotCase1Problem(DeprecatedTwoPhaseRelations& law = *(new DeprecatedLinearLaw), const FieldVector<DT,n> LowerLeft = 0,
-            const FieldVector<DT,n> UpperRight = 0, RT bcf = 11,
-            int chooselaw = BrooksCorey, RT K = 1e-7, RT Swr = 0.2,
-            RT Snr = 0.2, RT Porosity = 0.2, RT Lambda = 2.0, RT p0 = 0,
-            RT Alpha = 0.0037, RT N = 4.7, RT pwlowerleftbc=2e5,
-            RT pwupperrightbc=1.999986e5) :
+                         const FieldVector<DT,n> UpperRight = 0, RT bcf = 11,
+                         int chooselaw = BrooksCorey, RT K = 1e-7, RT Swr = 0.2,
+                         RT Snr = 0.2, RT Porosity = 0.2, RT Lambda = 2.0, RT p0 = 0,
+                         RT Alpha = 0.0037, RT N = 4.7, RT pwlowerleftbc=2e5,
+                         RT pwupperrightbc=1.999986e5) :
         DeprecatedTwoPhaseProblem<G, RT>(law),
-                LowerLeft_(LowerLeft),
-                UpperRight_(UpperRight),
-                eps_(1e-8*UpperRight[0]),
-                bcf_(bcf),
-                densityW_(law.wettingPhase.density()),
-                densityN_(law.nonwettingPhase.density()),
-                Swr_(Swr),
-                Snr_(Snr),
-                Porosity_(Porosity),
-                Lambda_(Lambda),
-                p0_(p0),
-                Alpha_(Alpha),
-                N_(N),
-                pwlowerleftbc_(pwlowerleftbc),
-                pwupperrightbc_(pwupperrightbc),
-                chooselaw_(chooselaw)
-        {
+        LowerLeft_(LowerLeft),
+        UpperRight_(UpperRight),
+        eps_(1e-8*UpperRight[0]),
+        bcf_(bcf),
+        densityW_(law.wettingPhase.density()),
+        densityN_(law.nonwettingPhase.density()),
+        Swr_(Swr),
+        Snr_(Snr),
+        Porosity_(Porosity),
+        Lambda_(Lambda),
+        p0_(p0),
+        Alpha_(Alpha),
+        N_(N),
+        pwlowerleftbc_(pwlowerleftbc),
+        pwupperrightbc_(pwupperrightbc),
+        chooselaw_(chooselaw)
+    {
         K_[0][0]=K_[1][1]=K;
         K_[1][0]=K_[0][1]=0;
 
@@ -200,12 +200,12 @@ private:
     int chooselaw_;
 };
 template<class G, class RT> class FiveSpotCase2Problem :
-    public DeprecatedTwoPhaseProblem<G, RT> {
+        public DeprecatedTwoPhaseProblem<G, RT> {
     typedef typename G::ctype DT;
     enum {n=G::dimension, m=2};
     typedef typename G::Traits::template Codim<0>::Entity Entity;
     typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator
-            IntersectionIterator;
+    IntersectionIterator;
 
 public:
     enum {wPhaseIdx = 0, nwPhaseIdx = 1,pWIdx = 0, sNIdx = 1};
@@ -214,36 +214,36 @@ public:
     enum {BrooksCorey = 0,lambdaIdx = 2, p0Idx = 3};
 
     virtual const FieldMatrix<DT,n,n>& K(const FieldVector<DT,n>& x,
-            const Entity& e, const FieldVector<DT,n>& xi) {
+                                         const Entity& e, const FieldVector<DT,n>& xi) {
         return K_;
     }
 
     virtual FieldVector<RT,m> q(const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi) const {
+                                const FieldVector<DT,n>& xi) const {
         FieldVector<RT,m> values(0);
 
         return values;
     }
 
     virtual FieldVector<BoundaryConditions::Flags, m> bctype(
-            const FieldVector<DT,n>& x, const Entity& e,
-            const IntersectionIterator& intersectionIt,
-            const FieldVector<DT,n>& xi) const {
+                                                             const FieldVector<DT,n>& x, const Entity& e,
+                                                             const IntersectionIterator& intersectionIt,
+                                                             const FieldVector<DT,n>& xi) const {
         FieldVector<BoundaryConditions::Flags, m> values(
-                BoundaryConditions::neumann);
+                                                         BoundaryConditions::neumann);
 
-//        if ((x[0] < LowerLeft_[0] + eps_ && x[1] > UpperRight_[1] - bcf_) || //upper left
-//                (x[1] > UpperRight_[1] - eps_ && x[0] < LowerLeft_[0] + bcf_)|| //upper left
-//                (x[0] > UpperRight_[0] - eps_ && x[1] < LowerLeft_[1] + bcf_)|| //lower right
-//                (x[1] < LowerLeft_[1] + eps_ && x[0] > UpperRight_[0] - bcf_)) { //lower right
-//            values[wPhaseIdx] = BoundaryConditions::dirichlet;
-//            values[nwPhaseIdx] = BoundaryConditions::dirichlet;
-//        }
+        //        if ((x[0] < LowerLeft_[0] + eps_ && x[1] > UpperRight_[1] - bcf_) || //upper left
+        //                (x[1] > UpperRight_[1] - eps_ && x[0] < LowerLeft_[0] + bcf_)|| //upper left
+        //                (x[0] > UpperRight_[0] - eps_ && x[1] < LowerLeft_[1] + bcf_)|| //lower right
+        //                (x[1] < LowerLeft_[1] + eps_ && x[0] > UpperRight_[0] - bcf_)) { //lower right
+        //            values[wPhaseIdx] = BoundaryConditions::dirichlet;
+        //            values[nwPhaseIdx] = BoundaryConditions::dirichlet;
+        //        }
         if ((x[0] < LowerLeft_[0] + eps_ && x[1] < LowerLeft_[1] + bcf_) || //lower left
-                (x[1] < LowerLeft_[1] + eps_ && x[0] < LowerLeft_[0] + bcf_)|| //lower left
-                (x[0] > UpperRight_[0] - eps_ && x[1] > UpperRight_[1] - bcf_)
-                || //upper right
-                (x[1] > UpperRight_[1] - eps_ && x[0] > UpperRight_[0] - bcf_)) { //upper right
+            (x[1] < LowerLeft_[1] + eps_ && x[0] < LowerLeft_[0] + bcf_)|| //lower left
+            (x[0] > UpperRight_[0] - eps_ && x[1] > UpperRight_[1] - bcf_)
+            || //upper right
+            (x[1] > UpperRight_[1] - eps_ && x[0] > UpperRight_[0] - bcf_)) { //upper right
             values[wPhaseIdx] = BoundaryConditions::dirichlet;
             values[nwPhaseIdx] = BoundaryConditions::dirichlet;
         }
@@ -251,21 +251,21 @@ public:
     }
 
     virtual FieldVector<RT,m> g(const FieldVector<DT,n>& x, const Entity& e,
-            const IntersectionIterator& intersectionIt,
-            const FieldVector<DT,n>& xi) const {
+                                const IntersectionIterator& intersectionIt,
+                                const FieldVector<DT,n>& xi) const {
         FieldVector<RT,m> values(0);
 
-//        if ((x[0] < LowerLeft_[0] + eps_ && x[1] > UpperRight_[1] - bcf_)
-//                ||(x[1] > UpperRight_[1] - eps_ && x[0] < LowerLeft_[0] + bcf_)
-//                ||(x[0] > UpperRight_[0] - eps_ && x[1] < LowerLeft_[1] + bcf_)
-//                ||(x[1] < LowerLeft_[1] + eps_ && x[0] > UpperRight_[0] - bcf_)) {
-//            values[pWIdx] = pwoutbc_;
-//            values[sNIdx] = 1-Swr_;
-//        }
+        //        if ((x[0] < LowerLeft_[0] + eps_ && x[1] > UpperRight_[1] - bcf_)
+        //                ||(x[1] > UpperRight_[1] - eps_ && x[0] < LowerLeft_[0] + bcf_)
+        //                ||(x[0] > UpperRight_[0] - eps_ && x[1] < LowerLeft_[1] + bcf_)
+        //                ||(x[1] < LowerLeft_[1] + eps_ && x[0] > UpperRight_[0] - bcf_)) {
+        //            values[pWIdx] = pwoutbc_;
+        //            values[sNIdx] = 1-Swr_;
+        //        }
         if ((x[0] < LowerLeft_[0] + eps_ && x[1] < LowerLeft_[1] + bcf_) || //lower left
-                (x[1] < LowerLeft_[1] + eps_ && x[0] < LowerLeft_[0] + bcf_)|| //lower left
-                (x[0] > UpperRight_[0] - eps_ && x[1] > UpperRight_[1] - bcf_)|| //upper right
-                (x[1] > UpperRight_[1] - eps_ && x[0] > UpperRight_[0] - bcf_)) { //upper right
+            (x[1] < LowerLeft_[1] + eps_ && x[0] < LowerLeft_[0] + bcf_)|| //lower left
+            (x[0] > UpperRight_[0] - eps_ && x[1] > UpperRight_[1] - bcf_)|| //upper right
+            (x[1] > UpperRight_[1] - eps_ && x[0] > UpperRight_[0] - bcf_)) { //upper right
             values[pWIdx] = pwinbc_;
             values[sNIdx] = Snr_;
         }
@@ -273,22 +273,22 @@ public:
     }
 
     virtual FieldVector<RT,m> J(const FieldVector<DT,n>& x, const Entity& e,
-            const IntersectionIterator& intersectionIt,
-            const FieldVector<DT,n>& xi) const {
+                                const IntersectionIterator& intersectionIt,
+                                const FieldVector<DT,n>& xi) const {
         FieldVector<RT,m> values(0);
         if ((x[0] < LowerLeft_[0] + eps_ && x[1] > UpperRight_[1] - bcf_)
-                ||(x[1] > UpperRight_[1] - eps_ && x[0] < LowerLeft_[0] + bcf_)
-                ||(x[0] > UpperRight_[0] - eps_ && x[1] < LowerLeft_[1] + bcf_)
-                ||(x[1] < LowerLeft_[1] + eps_ && x[0] > UpperRight_[0] - bcf_)) {
+            ||(x[1] > UpperRight_[1] - eps_ && x[0] < LowerLeft_[0] + bcf_)
+            ||(x[0] > UpperRight_[0] - eps_ && x[1] < LowerLeft_[1] + bcf_)
+            ||(x[1] < LowerLeft_[1] + eps_ && x[0] > UpperRight_[0] - bcf_)) {
             values[nwPhaseIdx] = 0.001;//15x15 cells: bcf 21;
-//            values[nwPhaseIdx] = 0.002;// 30x30 cells: bcf 11
-//            values[nwPhaseIdx] = 0.004;// 60x60 cells: bcf 6
+            //            values[nwPhaseIdx] = 0.002;// 30x30 cells: bcf 11
+            //            values[nwPhaseIdx] = 0.004;// 60x60 cells: bcf 6
         }
         return values;
     }
 
     virtual FieldVector<RT,m> initial(const FieldVector<DT,n>& x,
-            const Entity& e, const FieldVector<DT,n>& xi) const {
+                                      const Entity& e, const FieldVector<DT,n>& xi) const {
 
         FieldVector<RT,m> values;
 
@@ -299,7 +299,7 @@ public:
     }
 
     double porosity(const FieldVector<DT,n>& x, const Entity& e,
-            const FieldVector<DT,n>& xi) const {
+                    const FieldVector<DT,n>& xi) const {
         return Porosity_;
     }
 
@@ -308,7 +308,7 @@ public:
     }
 
     virtual FieldVector<RT,4> materialLawParameters(const FieldVector<DT,n>& x,
-            const Entity& e, const FieldVector<DT,n>& xi) const {
+                                                    const Entity& e, const FieldVector<DT,n>& xi) const {
         FieldVector<RT,4> values;
 
         if (chooselaw_) {
@@ -326,21 +326,21 @@ public:
     }
 
     FiveSpotCase2Problem(DeprecatedTwoPhaseRelations& law = *(new DeprecatedLinearLaw), const FieldVector<DT,n> LowerLeft = 0,
-            const FieldVector<DT,n> UpperRight = 0, RT bcf = 11, int chooselaw = BrooksCorey, RT K = 1e-7,
-            RT Swr = 0.2, RT Snr = 0.2, RT Porosity = 0.2, RT Lambda = 2.0,
-            RT p0 = 0, RT Alpha = 0.0037, RT N = 4.7, RT pwinbc=2e5,
-            RT pwoutbc=2e5) :
+                         const FieldVector<DT,n> UpperRight = 0, RT bcf = 11, int chooselaw = BrooksCorey, RT K = 1e-7,
+                         RT Swr = 0.2, RT Snr = 0.2, RT Porosity = 0.2, RT Lambda = 2.0,
+                         RT p0 = 0, RT Alpha = 0.0037, RT N = 4.7, RT pwinbc=2e5,
+                         RT pwoutbc=2e5) :
         DeprecatedTwoPhaseProblem<G, RT>(law), LowerLeft_(LowerLeft),
-                UpperRight_(UpperRight), eps_(1e-8*UpperRight[0]), bcf_(bcf),
-                densityW_(law.wettingPhase.density()),
-                densityN_(law.nonwettingPhase.density()),
-                Swr_(Swr), Snr_(Snr),
-                Porosity_(Porosity), Lambda_(Lambda), p0_(p0), Alpha_(Alpha),
-                N_(N),
-                pwinbc_(pwinbc),
-                pwoutbc_(pwoutbc),
-                chooselaw_(chooselaw)
-        {
+        UpperRight_(UpperRight), eps_(1e-8*UpperRight[0]), bcf_(bcf),
+        densityW_(law.wettingPhase.density()),
+        densityN_(law.nonwettingPhase.density()),
+        Swr_(Swr), Snr_(Snr),
+        Porosity_(Porosity), Lambda_(Lambda), p0_(p0), Alpha_(Alpha),
+        N_(N),
+        pwinbc_(pwinbc),
+        pwoutbc_(pwoutbc),
+        chooselaw_(chooselaw)
+    {
         K_[0][0]=K_[1][1]=K;
         K_[1][0]=K_[0][1]=0;
 

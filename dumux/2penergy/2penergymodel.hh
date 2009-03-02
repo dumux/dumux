@@ -13,11 +13,11 @@ namespace Dune {
 /** \todo Please doc me! */
 
 template<class G, class RT, class ProblemType, class LocalJacobian,
-        class FunctionType, class OperatorAssembler> class TwoPhaseHeatModel :
-    public NonlinearModel<G, RT, ProblemType, LocalJacobian, FunctionType, OperatorAssembler> {
+         class FunctionType, class OperatorAssembler> class TwoPhaseHeatModel :
+        public NonlinearModel<G, RT, ProblemType, LocalJacobian, FunctionType, OperatorAssembler> {
 public:
     typedef NonlinearModel<G, RT, ProblemType, LocalJacobian,
-    FunctionType, OperatorAssembler> NonlinearModel;
+                           FunctionType, OperatorAssembler> NonlinearModel;
 
     TwoPhaseHeatModel(const G& g, ProblemType& prob) :
         NonlinearModel(g, prob), uOldTimeStep(g) {
@@ -39,8 +39,8 @@ public:
 /** \todo Please doc me! */
 
 template<class G, class RT, class ProblemType, class LocalJac, int m=3> class LeafP1TwoPhaseModel :
-    public TwoPhaseHeatModel<G, RT, ProblemType, LocalJac,
-        LeafP1Function<G, RT, m>, LeafP1OperatorAssembler<G, RT, m> > {
+        public TwoPhaseHeatModel<G, RT, ProblemType, LocalJac,
+                                 LeafP1Function<G, RT, m>, LeafP1OperatorAssembler<G, RT, m> > {
 public:
     // define the function type:
     typedef LeafP1Function<G, RT, m> FunctionType;
@@ -49,7 +49,7 @@ public:
     typedef LeafP1OperatorAssembler<G, RT, m> OperatorAssembler;
 
     typedef TwoPhaseHeatModel<G, RT, ProblemType, LocalJac,
-    FunctionType, OperatorAssembler> TwoPhaseHeatModel;
+                              FunctionType, OperatorAssembler> TwoPhaseHeatModel;
 
     typedef LeafP1TwoPhaseModel<G, RT, ProblemType, LocalJac, m> ThisType;
 
@@ -66,11 +66,11 @@ public:
     typedef typename GV::IndexSet IS;
     typedef MultipleCodimMultipleGeomTypeMapper<G,IS,P1Layout> VertexMapper;
     typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator
-            IntersectionIterator;
+    IntersectionIterator;
 
     LeafP1TwoPhaseModel(const G& g, ProblemType& prob) :
         TwoPhaseHeatModel(g, prob), problem(prob), grid(g), vertexmapper(g,    g.leafIndexSet()), size((*(this->u)).size()), pW(size), pN(size), pC(size),
-                satW(size), satN(size) , Temp(size){
+        satW(size), satN(size) , Temp(size){
     }
 
     virtual void initial() {
@@ -85,7 +85,7 @@ public:
         // iterate through leaf grid an evaluate c0 at cell center
         Iterator eendit = gridview.template end<0>();
         for (Iterator it = gridview.template begin<0>(); it
-                != eendit; ++it) {
+                 != eendit; ++it) {
             // get geometry type
             Dune::GeometryType gt = it->geometry().type();
 
@@ -93,8 +93,8 @@ public:
             const Entity& entity = *it;
 
             const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type
-                    &sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(gt,
-                            1);
+                &sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(gt,
+                                                                        1);
             int size = sfs.size();
 
             for (int i = 0; i < size; i++) {
@@ -105,17 +105,17 @@ public:
                 Dune::FieldVector<DT,dimworld> global = it->geometry().global(local);
 
                 int globalId = vertexmapper.template map<dim>(entity,
-                        sfs[i].entity());
+                                                              sfs[i].entity());
 
                 // initialize cell concentration
                 (*(this->u))[globalId] = this->problem.initial(
-                        global, entity, local);
+                                                               global, entity, local);
             }
         }
 
         // set Dirichlet boundary conditions
         for (Iterator it = gridview.template begin<0>(); it
-                != eendit; ++it) {
+                 != eendit; ++it) {
             // get geometry type
             Dune::GeometryType gt = it->geometry().type();
 
@@ -123,54 +123,54 @@ public:
             const Entity& entity = *it;
 
             const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type
-                    &sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(gt,
-                            1);
+                &sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(gt,
+                                                                        1);
             int size = sfs.size();
 
             // set type of boundary conditions
             this->localJacobian().template assembleBC<LeafTag>(entity);
 
             IntersectionIterator
-                    endit = IntersectionIteratorGetter<G, LeafTag>::end(entity);
+                endit = IntersectionIteratorGetter<G, LeafTag>::end(entity);
             for (IntersectionIterator is = IntersectionIteratorGetter<G,
-                    LeafTag>::begin(entity); is!=endit; ++is)
+                     LeafTag>::begin(entity); is!=endit; ++is)
                 if (is->boundary()) {
                     for (int i = 0; i < size; i++)
                         // handle subentities of this face
                         for (int j = 0; j < ReferenceElements<DT,dim>::general(gt).size(is->numberInSelf(), 1, sfs[i].codim()); j++)
                             if (sfs[i].entity()
-                                    == ReferenceElements<DT,dim>::general(gt).subEntity(is->numberInSelf(), 1,
-                                            j, sfs[i].codim())) {
+                                == ReferenceElements<DT,dim>::general(gt).subEntity(is->numberInSelf(), 1,
+                                                                                    j, sfs[i].codim())) {
                                 for (int equationNumber = 0; equationNumber<m; equationNumber++) {
                                     if (this->localJacobian().bc(i)[equationNumber]
-                                            == BoundaryConditions::dirichlet) {
+                                        == BoundaryConditions::dirichlet) {
                                         // get cell center in reference element
                                         Dune::FieldVector<DT,dim>
-                                                local = sfs[i].position();
+                                            local = sfs[i].position();
 
                                         // get global coordinate of cell center
                                         Dune::FieldVector<DT,dimworld>
-                                                global = it->geometry().global(local);
+                                            global = it->geometry().global(local);
 
                                         int
-                                                globalId = vertexmapper.template map<dim>(
-                                                        entity, sfs[i].entity());
+                                            globalId = vertexmapper.template map<dim>(
+                                                                                      entity, sfs[i].entity());
                                         FieldVector<int,m> dirichletIndex;
                                         FieldVector<BoundaryConditions::Flags, m>
-                                                bctype = this->problem.bctype(
-                                                        global, entity, is,
-                                                        local);
-                                                this->problem.dirichletIndex(global, entity, is,
-                                                        local, dirichletIndex);
+                                            bctype = this->problem.bctype(
+                                                                          global, entity, is,
+                                                                          local);
+                                        this->problem.dirichletIndex(global, entity, is,
+                                                                     local, dirichletIndex);
 
                                         if (bctype[equationNumber]
-                                                == BoundaryConditions::dirichlet) {
+                                            == BoundaryConditions::dirichlet) {
                                             FieldVector<RT,m>
-                                                    ghelp = this->problem.g(
-                                                            global, entity, is,
-                                                            local);
+                                                ghelp = this->problem.g(
+                                                                        global, entity, is,
+                                                                        local);
                                             (*(this->u))[globalId][dirichletIndex[equationNumber]]
-                                                    = ghelp[dirichletIndex[equationNumber]];
+                                                = ghelp[dirichletIndex[equationNumber]];
                                         }
                                     }
                                 }
@@ -195,13 +195,13 @@ public:
         // allocate flag vector to hold flags for essential boundary conditions
         std::vector<BCBlockType> essential(this->vertexmapper.size());
         for (typename std::vector<BCBlockType>::size_type i=0; i
-                <essential.size(); i++)
+                 <essential.size(); i++)
             essential[i].assign(BoundaryConditions::neumann);
 
         // iterate through leaf grid
         Iterator eendit = gridview.template end<0>();
         for (Iterator it = gridview.template begin<0>(); it
-                != eendit; ++it) {
+                 != eendit; ++it) {
             // get geometry type
             Dune::GeometryType gt = it->geometry().type();
 
@@ -223,7 +223,7 @@ public:
                 for (int equationnumber = 0; equationnumber < m; equationnumber++) {
                     if (this->localJacobian().bc(i)[equationnumber] == BoundaryConditions::neumann)
                         (*defectGlobal)[globalId][equationnumber]
-                                += this->localJacobian().def[i][equationnumber];
+                            += this->localJacobian().def[i][equationnumber];
                     else
                         essential[globalId].assign(BoundaryConditions::dirichlet);
                 }
@@ -231,10 +231,10 @@ public:
         }
 
         for (typename std::vector<BCBlockType>::size_type i=0; i
-                <essential.size(); i++)
+                 <essential.size(); i++)
             for (int equationnumber = 0; equationnumber < m; equationnumber++) {
-            if (essential[i][equationnumber] == BoundaryConditions::dirichlet)
-                (*defectGlobal)[i][equationnumber] = 0;
+                if (essential[i][equationnumber] == BoundaryConditions::dirichlet)
+                    (*defectGlobal)[i][equationnumber] = 0;
             }
     }
 
@@ -253,7 +253,7 @@ public:
         // iterate through leaf grid an evaluate c0 at cell center
         Iterator eendit = gridview.template end<0>();
         for (Iterator it = gridview.template begin<0>(); it
-                != eendit; ++it) {
+                 != eendit; ++it) {
             // get geometry type
             Dune::GeometryType gt = it->geometry().type();
 
@@ -264,8 +264,8 @@ public:
             fvGeom.update(entity);
 
             const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type
-                    &sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(gt,
-                            1);
+                &sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(gt,
+                                                                        1);
             int size = sfs.size();
 
             for (int i = 0; i < size; i++) {
@@ -276,7 +276,7 @@ public:
                 Dune::FieldVector<DT,dimworld> global = it->geometry().global(local);
 
                 int globalId = vertexmapper.template map<dim>(entity,
-                        sfs[i].entity());
+                                                              sfs[i].entity());
 
                 double volume = fvGeom.subContVol[i].volume;
 
@@ -299,7 +299,7 @@ public:
     }
 
     virtual void vtkout(const char* name, int k) {
-                VTKWriter<typename G::LeafGridView> vtkwriter(this->grid.leafView());
+        VTKWriter<typename G::LeafGridView> vtkwriter(this->grid.leafView());
         char fname[128];
         sprintf(fname, "%s-%05d", name, k);
         double minSat = 1e100;
@@ -308,64 +308,64 @@ public:
         double maxP = -1e100;
         double minT = 1e100;
         double maxT = -1e100;
-                typedef typename G::Traits::template Codim<0>::Entity Entity;
-                typedef typename G::ctype DT;
-                typedef typename GV::template Codim<0>::Iterator Iterator;
-                enum {dim = G::dimension};
-                enum {dimworld = G::dimensionworld};
+        typedef typename G::Traits::template Codim<0>::Entity Entity;
+        typedef typename G::ctype DT;
+        typedef typename GV::template Codim<0>::Iterator Iterator;
+        enum {dim = G::dimension};
+        enum {dimworld = G::dimensionworld};
 
-                const GV& gridview(this->grid.leafView());
-                // iterate through leaf grid an evaluate c0 at cell center
+        const GV& gridview(this->grid.leafView());
+        // iterate through leaf grid an evaluate c0 at cell center
 
-                for (int i = 0; i < size; i++) {
-                    bool flag;
-                    flag = true;
-                    Iterator eendit = gridview.template end<0>();
-                    for (Iterator it = gridview.template begin<0>(); it
-                            != eendit; ++it) {
-                        // get geometry type
-                        Dune::GeometryType gt = it->geometry().type();
-                        // get entity
-                        const Entity& entity = *it;
-                        const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type
-                                &sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(
-                                        gt, 1);
-                        int size_local = sfs.size();
-                        for (int j = 0; j < size_local; j++) {
-                            // get cell center in reference element
-                            const Dune::FieldVector<DT,dim>&local = sfs[j].position();
-                            // get global coordinate of cell center
-                            Dune::FieldVector<DT,dimworld> global = it->geometry().global(local);
-                            int globalId = vertexmapper.template map<dim>(entity,
-                                    sfs[j].entity());
-                            if (globalId == i && flag== true) {
-                                flag = false;
-                                FieldVector<RT, 4>
-                                        parameters = this->problem.materialLawParameters(
-                                                global, entity, local); // nur zum Test
+        for (int i = 0; i < size; i++) {
+            bool flag;
+            flag = true;
+            Iterator eendit = gridview.template end<0>();
+            for (Iterator it = gridview.template begin<0>(); it
+                     != eendit; ++it) {
+                // get geometry type
+                Dune::GeometryType gt = it->geometry().type();
+                // get entity
+                const Entity& entity = *it;
+                const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,dim>::value_type
+                    &sfs=Dune::LagrangeShapeFunctions<DT, RT, dim>::general(
+                                                                            gt, 1);
+                int size_local = sfs.size();
+                for (int j = 0; j < size_local; j++) {
+                    // get cell center in reference element
+                    const Dune::FieldVector<DT,dim>&local = sfs[j].position();
+                    // get global coordinate of cell center
+                    Dune::FieldVector<DT,dimworld> global = it->geometry().global(local);
+                    int globalId = vertexmapper.template map<dim>(entity,
+                                                                  sfs[j].entity());
+                    if (globalId == i && flag== true) {
+                        flag = false;
+                        FieldVector<RT, 4>
+                            parameters = this->problem.materialLawParameters(
+                                                                             global, entity, local); // nur zum Test
 
-                                        satN[i] = (*(this->u))[i][1];
-                                        satW[i] = 1 - satN[i];
-                                        pW[i] = (*(this->u))[i][0];
-                                        Temp[i] = (*(this->u))[i][2];
-                                        pC[i] = this->problem.materialLaw().pC(satW[i], parameters);
-                                        pN[i] = pW[i] + pC[i];
+                        satN[i] = (*(this->u))[i][1];
+                        satW[i] = 1 - satN[i];
+                        pW[i] = (*(this->u))[i][0];
+                        Temp[i] = (*(this->u))[i][2];
+                        pC[i] = this->problem.materialLaw().pC(satW[i], parameters);
+                        pN[i] = pW[i] + pC[i];
 
-                                        double satNI = satN[i];
-                                        double pWI = pW[i];
-                                        double TempI = Temp[i];
-                                        minSat = std::min(minSat, satNI);
-                                        maxSat = std::max(maxSat, satNI);
-                                        minP = std::min(minP, pWI);
-                                        maxP = std::max(maxP, pWI);
-                                        minT = std::min(minT, TempI);
-                                        maxT = std::max(maxT, TempI);
+                        double satNI = satN[i];
+                        double pWI = pW[i];
+                        double TempI = Temp[i];
+                        minSat = std::min(minSat, satNI);
+                        maxSat = std::max(maxSat, satNI);
+                        minP = std::min(minP, pWI);
+                        maxP = std::max(maxP, pWI);
+                        minT = std::min(minT, TempI);
+                        maxT = std::max(maxT, TempI);
 
 
-                            }
-                        }
                     }
                 }
+            }
+        }
 
 
         vtkwriter.addVertexData(pW, "wetting phase pressure");
@@ -376,26 +376,26 @@ public:
         vtkwriter.addVertexData(Temp, "temperature");
         vtkwriter.write(fname, VTKOptions::ascii);
         std::cout << "nonwetting phase saturation: min = "<< minSat
-                << ", max = "<< maxSat << "\n"
-                << "wetting phase pressure: min = "<< minP
-                << ", max = "<< maxP << "\n"
-                << "temperature: min = "<< minT
-                << "max = "<< maxT <<"\n"
-                <<std::endl;
+                  << ", max = "<< maxSat << "\n"
+                  << "wetting phase pressure: min = "<< minP
+                  << ", max = "<< maxP << "\n"
+                  << "temperature: min = "<< minT
+                  << "max = "<< maxT <<"\n"
+                  <<std::endl;
         if (minSat< -0.5 || maxSat > 1.5)DUNE_THROW(MathError, "Saturation exceeds range.");
     }
 
 protected:
-  ProblemType& problem;
-  const G& grid;
-  VertexMapper vertexmapper;
-  int size;
-  BlockVector<FieldVector<RT, 1> > pW;
-  BlockVector<FieldVector<RT, 1> > pN;
-  BlockVector<FieldVector<RT, 1> > pC;
-  BlockVector<FieldVector<RT, 1> > satW;
-  BlockVector<FieldVector<RT, 1> > satN;
-  BlockVector<FieldVector<RT, 1> > Temp;
+    ProblemType& problem;
+    const G& grid;
+    VertexMapper vertexmapper;
+    int size;
+    BlockVector<FieldVector<RT, 1> > pW;
+    BlockVector<FieldVector<RT, 1> > pN;
+    BlockVector<FieldVector<RT, 1> > pC;
+    BlockVector<FieldVector<RT, 1> > satW;
+    BlockVector<FieldVector<RT, 1> > satN;
+    BlockVector<FieldVector<RT, 1> > Temp;
 };
 
 }

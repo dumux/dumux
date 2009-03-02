@@ -8,7 +8,6 @@
  *   it under the terms of the GNU General Public License as published by    *
  *   the Free Software Foundation; either version 2 of the License, or       *
  *   (at your option) any later version, as long as this copyright notice    *
-#include "config.h"
  *   is included in its original form.                                       *
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
@@ -36,7 +35,7 @@ int main(int argc, char** argv)
         // Set the type for scalar values (should be one of float, double
         // or long double)
         typedef double Scalar;
-        
+
         // initialize MPI, finalize is done automatically on exit
         Dune::MPIHelper::instance(argc, argv);
 

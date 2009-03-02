@@ -27,86 +27,86 @@
 
 int main(int argc, char** argv)
 {
-   try{
-      // define the problem dimensions
-      const int dim=2;
-      typedef double NumberType;
-      Dune::FieldVector<NumberType, dim> LowerLeft(0);
-      Dune::FieldVector<NumberType, dim> UpperRight(300);
-      UpperRight[1]=70;
-      if (argc != 2) {
-         std::cout << "usage: tEnd" << std::endl;
-         return 0;
-      }
+    try{
+        // define the problem dimensions
+        const int dim=2;
+        typedef double NumberType;
+        Dune::FieldVector<NumberType, dim> LowerLeft(0);
+        Dune::FieldVector<NumberType, dim> UpperRight(300);
+        UpperRight[1]=70;
+        if (argc != 2) {
+            std::cout << "usage: tEnd" << std::endl;
+            return 0;
+        }
         std::string arg1(argv[1]);
-       std::istringstream is1(arg1);
-       int tEnd;
-       is1 >> tEnd;
-      // std::string arg2(argv[2]);
-      // std::istringstream is2(arg2);
-      // int dt;
-      // is2 >> dt;
+        std::istringstream is1(arg1);
+        int tEnd;
+        is1 >> tEnd;
+        // std::string arg2(argv[2]);
+        // std::istringstream is2(arg2);
+        // int dt;
+        // is2 >> dt;
 
-      // create a grid object
-      typedef Dune::SGrid<dim,dim> GridType;
+        // create a grid object
+        typedef Dune::SGrid<dim,dim> GridType;
 
-//      // use unitcube from grids
-      std::stringstream dgfFileName;
-      dgfFileName << "grids/unitcube" << GridType :: dimension << ".dgf";
-//
-//      // create grid pointer, GridType is defined by gridtype.hh
-      Dune::GridPtr<GridType> gridPtr( dgfFileName.str() );
-//
-//      // grid reference
-      GridType& grid = *gridPtr;
+        //      // use unitcube from grids
+        std::stringstream dgfFileName;
+        dgfFileName << "grids/unitcube" << GridType :: dimension << ".dgf";
+        //
+        //      // create grid pointer, GridType is defined by gridtype.hh
+        Dune::GridPtr<GridType> gridPtr( dgfFileName.str() );
+        //
+        //      // grid reference
+        GridType& grid = *gridPtr;
 
-      Dune::gridinfo(grid);
+        Dune::gridinfo(grid);
 
-      Oil oil(0.2);
-      Water water(0.2);
-//      Dune::BrooksCoreyLaw law(water, oil,2,0);
-      Dune::DeprecatedLinearLaw law(water, oil);
+        Oil oil(0.2);
+        Water water(0.2);
+        //      Dune::BrooksCoreyLaw law(water, oil,2,0);
+        Dune::DeprecatedLinearLaw law(water, oil);
 
-      typedef Dune::VariableClass<GridType, NumberType> VC;
+        typedef Dune::VariableClass<GridType, NumberType> VC;
 
-      VC variables(grid);
+        VC variables(grid);
 
-      Dune::BuckleyLeverettTransportProblem<GridType, NumberType, VC> transportProblem(variables, law,LowerLeft,UpperRight);
-      Dune::BuckleyLeverettDiffProblem<GridType, NumberType, VC> diffusionProblem(variables, law,LowerLeft,UpperRight);
+        Dune::BuckleyLeverettTransportProblem<GridType, NumberType, VC> transportProblem(variables, law,LowerLeft,UpperRight);
+        Dune::BuckleyLeverettDiffProblem<GridType, NumberType, VC> diffusionProblem(variables, law,LowerLeft,UpperRight);
 
-      typedef Dune::DeprecatedFVTransport<GridType, NumberType, VC> DeprecatedTransport;
-      DeprecatedTransport transport(grid, transportProblem, grid.maxLevel());
+        typedef Dune::DeprecatedFVTransport<GridType, NumberType, VC> DeprecatedTransport;
+        DeprecatedTransport transport(grid, transportProblem, grid.maxLevel());
 
-      typedef Dune::DeprecatedFVDiffusionVelocity<GridType, NumberType, VC> DeprecatedDiffusion;
-      DeprecatedDiffusion diffusion(grid, diffusionProblem, grid.maxLevel());
-//      typedef Dune::MimeticDiffusion<GridType, NumberType> DeprecatedDiffusion;
-//          DeprecatedDiffusion diffusion(grid, diffusionProblem, transportProblem);
+        typedef Dune::DeprecatedFVDiffusionVelocity<GridType, NumberType, VC> DeprecatedDiffusion;
+        DeprecatedDiffusion diffusion(grid, diffusionProblem, grid.maxLevel());
+        //      typedef Dune::MimeticDiffusion<GridType, NumberType> DeprecatedDiffusion;
+        //          DeprecatedDiffusion diffusion(grid, diffusionProblem, transportProblem);
 
-      int iterFlag = 2;
-      int nIter = 30;
-      double maxDefect = 1e-5;
-      typedef Dune::IMPES<GridType, DeprecatedDiffusion, DeprecatedTransport, VC> IMPES;
-      IMPES fractionalflow(diffusion, transport, iterFlag, nIter, maxDefect);
+        int iterFlag = 2;
+        int nIter = 30;
+        double maxDefect = 1e-5;
+        typedef Dune::IMPES<GridType, DeprecatedDiffusion, DeprecatedTransport, VC> IMPES;
+        IMPES fractionalflow(diffusion, transport, iterFlag, nIter, maxDefect);
 
-      double tStart = 0;
-      //double tEnd = 2.5e9;
-      const char* fileName = "buckleyleverett";
-      int modulo = 1;
-      double cFLFactor = 1;
-      Dune::TimeLoop<GridType, IMPES > timeloop(tStart, tEnd, fileName, modulo, cFLFactor);
+        double tStart = 0;
+        //double tEnd = 2.5e9;
+        const char* fileName = "buckleyleverett";
+        int modulo = 1;
+        double cFLFactor = 1;
+        Dune::TimeLoop<GridType, IMPES > timeloop(tStart, tEnd, fileName, modulo, cFLFactor);
 
-      Dune::Timer timer;
-      timer.reset();
-      timeloop.execute(fractionalflow);
-      std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
-      //printvector(std::cout, *fractionalflow, "saturation", "row", 200, 1);
+        Dune::Timer timer;
+        timer.reset();
+        timeloop.execute(fractionalflow);
+        std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
+        //printvector(std::cout, *fractionalflow, "saturation", "row", 200, 1);
 
-      return 0;
-   }
-   catch (Dune::Exception &e){
-      std::cerr << "Dune reported error: " << e << std::endl;
-   }
-   catch (...){
-      std::cerr << "Unknown exception thrown!" << std::endl;
-   }
+        return 0;
+    }
+    catch (Dune::Exception &e){
+        std::cerr << "Dune reported error: " << e << std::endl;
+    }
+    catch (...){
+        std::cerr << "Unknown exception thrown!" << std::endl;
+    }
 }

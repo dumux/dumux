@@ -25,76 +25,76 @@
 
 int main(int argc, char** argv)
 {
-  try{
-      // define the problem dimensions
-       const int dim = 2;
-       typedef double Scalar;
+    try{
+        // define the problem dimensions
+        const int dim = 2;
+        typedef double Scalar;
 
-       // read path for grid, total simulation time tEnd and timestep dt
-       if (argc != 4)
-       {
-           std::cout << "usage: 2pni basefilename tEnd dt" << std::endl;
-           return 0;
-       }
-       std::string arg1(argv[2]);
-       std::istringstream is1(arg1);
-       double tEnd;
-       is1 >> tEnd;
-       std::string arg2(argv[3]);
-       std::istringstream is2(arg2);
-       double dt;
-       is2 >> dt;
+        // read path for grid, total simulation time tEnd and timestep dt
+        if (argc != 4)
+            {
+                std::cout << "usage: 2pni basefilename tEnd dt" << std::endl;
+                return 0;
+            }
+        std::string arg1(argv[2]);
+        std::istringstream is1(arg1);
+        double tEnd;
+        is1 >> tEnd;
+        std::string arg2(argv[3]);
+        std::istringstream is2(arg2);
+        double dt;
+        is2 >> dt;
 
-       // create a grid object
-       typedef Dune::SGrid<dim,dim> GridType;
-       //typedef Dune::YaspGrid<dim,dim> GridType;
-       //typedef Dune::UGGrid<dim> GridType;
-       //typedef Dune::ALUSimplexGrid<dim,dim> GridType;
-       //typedef Dune::ALUCubeGrid<dim,dim> GridType;
+        // create a grid object
+        typedef Dune::SGrid<dim,dim> GridType;
+        //typedef Dune::YaspGrid<dim,dim> GridType;
+        //typedef Dune::UGGrid<dim> GridType;
+        //typedef Dune::ALUSimplexGrid<dim,dim> GridType;
+        //typedef Dune::ALUCubeGrid<dim,dim> GridType;
 
-       Dune::GridPtr<GridType> gridPointer(argv[1]);
-       GridType& grid = *gridPointer;
-       //readStarFormat(grid, argv[1]);
-       //grid.createLGMGrid(argv[1]);
+        Dune::GridPtr<GridType> gridPointer(argv[1]);
+        GridType& grid = *gridPointer;
+        //readStarFormat(grid, argv[1]);
+        //grid.createLGMGrid(argv[1]);
 
-       Dune::gridinfo(grid);
+        Dune::gridinfo(grid);
 
-    // choose fluids
-    Dune::Brine wPhase;
-    Dune::CO2 nPhase;
-    // create soil object
-    Dune::TwoPHeatSoil<GridType, Scalar> soil;
-    // create material law object
-    Dune::TwoPhaseRelations<GridType, Scalar> law(soil, wPhase, nPhase);
+        // choose fluids
+        Dune::Brine wPhase;
+        Dune::CO2 nPhase;
+        // create soil object
+        Dune::TwoPHeatSoil<GridType, Scalar> soil;
+        // create material law object
+        Dune::TwoPhaseRelations<GridType, Scalar> law(soil, wPhase, nPhase);
 
-    // create Prolem object
-    Dune::TwoPHeatProblem<GridType, Scalar> problem(wPhase, nPhase, soil, law);
+        // create Prolem object
+        Dune::TwoPHeatProblem<GridType, Scalar> problem(wPhase, nPhase, soil, law);
 
-    typedef Dune::VtkMultiWriter<GridType::LeafGridView> MultiWriter;
-    typedef Dune::BoxPwSnTe<GridType, Scalar, MultiWriter> TwoPhase;
-    TwoPhase twoPhase(grid, problem);
+        typedef Dune::VtkMultiWriter<GridType::LeafGridView> MultiWriter;
+        typedef Dune::BoxPwSnTe<GridType, Scalar, MultiWriter> TwoPhase;
+        TwoPhase twoPhase(grid, problem);
 
-    Dune::TimeLoop<GridType, TwoPhase, true> timeloop(0, tEnd, dt, "dummy", 1);
+        Dune::TimeLoop<GridType, TwoPhase, true> timeloop(0, tEnd, dt, "dummy", 1);
 
-    Dune::Timer timer;
-    timer.reset();
-    MultiWriter writer("out-2pni");
+        Dune::Timer timer;
+        timer.reset();
+        MultiWriter writer("out-2pni");
 
-//  for timeloop.executeMultiWriter(twoPhase, writer, true) restart files are written
-//  for timeloop.executeMultiWriter(twoPhase, writer, true, true, #) initial values are read
-//  from restart file with the number #
-//  at the moment this only works for SGrid in 2D and for ALUCubeGrid in 3D
-    timeloop.executeMultiWriter(twoPhase, writer);
-    std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
+        //  for timeloop.executeMultiWriter(twoPhase, writer, true) restart files are written
+        //  for timeloop.executeMultiWriter(twoPhase, writer, true, true, #) initial values are read
+        //  from restart file with the number #
+        //  at the moment this only works for SGrid in 2D and for ALUCubeGrid in 3D
+        timeloop.executeMultiWriter(twoPhase, writer);
+        std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
 
-    return 0;
-  }
-  catch (Dune::Exception &e){
-    std::cerr << "Dune reported error: " << e << std::endl;
-  }
-  catch (...){
-    std::cerr << "Unknown exception thrown!" << std::endl;
-  }
+        return 0;
+    }
+    catch (Dune::Exception &e){
+        std::cerr << "Dune reported error: " << e << std::endl;
+    }
+    catch (...){
+        std::cerr << "Unknown exception thrown!" << std::endl;
+    }
 }
 //#else
 //

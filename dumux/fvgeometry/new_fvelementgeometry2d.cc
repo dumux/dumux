@@ -75,64 +75,64 @@ class NewFVElementGeometry<GridT,
                               const WorldCoord& p1,
                               const WorldCoord& p2,
                               const WorldCoord& p3)
-        {
-            if (!Capabilities::IsUnstructured<Grid>::v) {
-                return this->cellVolume_ / 4.0;
-            }
-            else
-                return 0.5*fabs((p3[0] - p1[0])*(p2[1] - p0[1]) -
-                                (p3[1] - p1[1])*(p2[0] - p0[0]));
+    {
+        if (!Capabilities::IsUnstructured<Grid>::v) {
+            return this->cellVolume_ / 4.0;
         }
+        else
+            return 0.5*fabs((p3[0] - p1[0])*(p2[1] - p0[1]) -
+                            (p3[1] - p1[1])*(p2[0] - p0[0]));
+    }
 
     void updateVolumes_(const Cell &cell)
-        {
-            switch (cell.template count<GridDim>()) {
-                case 3: // 2D, triangle
-                    for (int k = 0; k < 3; k++)
-                        this->subContVol_[k].volume = this->cellVolume_ / 3.0;
-                    break;
+    {
+        switch (cell.template count<GridDim>()) {
+        case 3: // 2D, triangle
+            for (int k = 0; k < 3; k++)
+                this->subContVol_[k].volume = this->cellVolume_ / 3.0;
+            break;
 
-                case 4: // 2D, quadrilinear
-                    this->subContVol_[0].volume =
-                        quadrilateralArea_(this->subContVol_[0].global,
-                                           this->edgeCoord_[2],
-                                           this->elementGlobal_,
-                                           this->edgeCoord_[0]);
-                    this->subContVol_[1].volume =
-                        quadrilateralArea_(this->subContVol_[1].global,
-                                           this->edgeCoord_[1],
-                                           this->elementGlobal_,
-                                           this->edgeCoord_[2]);
-                    this->subContVol_[2].volume =
-                        quadrilateralArea_(this->subContVol_[2].global,
-                                           this->edgeCoord_[0],
-                                           this->elementGlobal_,
-                                           this->edgeCoord_[3]);
-                    this->subContVol_[3].volume =
-                        quadrilateralArea_(this->subContVol_[3].global,
-                                           this->edgeCoord_[3],
-                                           this->elementGlobal_,
-                                           this->edgeCoord_[1]);
-                    break;
+        case 4: // 2D, quadrilinear
+            this->subContVol_[0].volume =
+                quadrilateralArea_(this->subContVol_[0].global,
+                                   this->edgeCoord_[2],
+                                   this->elementGlobal_,
+                                   this->edgeCoord_[0]);
+            this->subContVol_[1].volume =
+                quadrilateralArea_(this->subContVol_[1].global,
+                                   this->edgeCoord_[1],
+                                   this->elementGlobal_,
+                                   this->edgeCoord_[2]);
+            this->subContVol_[2].volume =
+                quadrilateralArea_(this->subContVol_[2].global,
+                                   this->edgeCoord_[0],
+                                   this->elementGlobal_,
+                                   this->edgeCoord_[3]);
+            this->subContVol_[3].volume =
+                quadrilateralArea_(this->subContVol_[3].global,
+                                   this->edgeCoord_[3],
+                                   this->elementGlobal_,
+                                   this->edgeCoord_[1]);
+            break;
 
-                default:
-                    DUNE_THROW(NotImplemented,
-                               "updateVolumes_ dim = "
-                               << GridDim
-                               << ", numVertices = "
-                               << cell.template count<GridDim>());
-            }
-        };
+        default:
+            DUNE_THROW(NotImplemented,
+                       "updateVolumes_ dim = "
+                       << GridDim
+                       << ", numVertices = "
+                       << cell.template count<GridDim>());
+        }
+    };
 
     void updateInteriorFaces_(const ShapeFunctionSet &sfs,
                               const ReferenceElement &refElem,
                               const CellGeometry &geometry)
-        {
-            LocalCoord ipLocal;
-            WorldCoord diffVec;
+    {
+        LocalCoord ipLocal;
+        WorldCoord diffVec;
 
-            // fill the faces between the sub-control-volumes
-            for (int scvFaceIdx = 0; scvFaceIdx < this->numEdges_; scvFaceIdx++)
+        // fill the faces between the sub-control-volumes
+        for (int scvFaceIdx = 0; scvFaceIdx < this->numEdges_; scvFaceIdx++)
             {
                 int insideIdx = refElem.subEntity(scvFaceIdx, GridDim-1, 0, GridDim);
                 int outsideIdx = refElem.subEntity(scvFaceIdx, GridDim-1, 1, GridDim);
@@ -155,16 +155,16 @@ class NewFVElementGeometry<GridT,
                 this->subContVolFace_[scvFaceIdx].normal[0] =  diffVec[1];
                 this->subContVolFace_[scvFaceIdx].normal[1] = -diffVec[0];
             }
-        }
+    }
 
     void updateBoundaryFace_(IntersectionIterator &it,
                              const ReferenceElement &refElem,
                              const CellGeometry &geometry)
-        {
-            // fill boundary face data:
-            int face = it->numberInSelf();
-            int numVerticesOfFace = refElem.size(face, 1, GridDim);
-            for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++)
+    {
+        // fill boundary face data:
+        int face = it->numberInSelf();
+        int numVerticesOfFace = refElem.size(face, 1, GridDim);
+        for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++)
             {
                 int nodeInElement = refElem.subEntity(face, 1, nodeInFace, GridDim);
                 int bfIndex = this->_boundaryFaceIndex(face, nodeInFace);
@@ -180,6 +180,6 @@ class NewFVElementGeometry<GridT,
                 this->boundaryFace_[bfIndex].ipGlobal_ =
                     geometry.global(this->boundaryFace_[bfIndex].ipLocal_);
             }
-        }
+    }
 
 };

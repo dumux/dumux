@@ -32,9 +32,9 @@ namespace Dune
 template<class Grid, class Scalar>
 class TwoPHeatProblem: public TwoPhaseHeatProblem<Grid, Scalar>
 {
-typedef    typename Grid::ctype CoordScalar;
+    typedef    typename Grid::ctype CoordScalar;
     enum
-    {   dim=Grid::dimension, numEq=3};
+        {   dim=Grid::dimension, numEq=3};
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
     typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
 
@@ -47,9 +47,9 @@ typedef    typename Grid::ctype CoordScalar;
 public:
     // Constructor
     TwoPHeatProblem(Fluid& liq1, Fluid& liq2, Matrix2p<Grid, Scalar>& soil,
-            TwoPhaseRelations<Grid, Scalar>& law = *(new TwoPhaseRelations<Grid, Scalar>))
-    : TwoPhaseHeatProblem<Grid,Scalar>(liq1, liq2, soil, law),
-    eps_(1e-4)
+                    TwoPhaseRelations<Grid, Scalar>& law = *(new TwoPhaseRelations<Grid, Scalar>))
+        : TwoPhaseHeatProblem<Grid,Scalar>(liq1, liq2, soil, law),
+          eps_(1e-4)
     {
         gravity_[0] = 0;
         gravity_[1] = -9.81;
@@ -57,31 +57,31 @@ public:
 
     // indices for the two phases
     enum
-    {   wPhase = 0, nPhase = 1, heat = 2};
+        {   wPhase = 0, nPhase = 1, heat = 2};
 
     // function returning the BOUNDARY CONDITION TYPE depending on the position
     virtual FieldVector<BoundaryConditions::Flags, numEq> bctype (const GlobalPosition& globalPos, const Element& element,
-            const IntersectionIterator& intersectionIt,
-            const LocalPosition& localPos) const
+                                                                  const IntersectionIterator& intersectionIt,
+                                                                  const LocalPosition& localPos) const
     {
         // boundary condition type is set to neumann
         FieldVector<BoundaryConditions::Flags, numEq> values(BoundaryConditions::neumann);
 
         if (globalPos[0] < eps_)
-        {
-            values = BoundaryConditions::dirichlet;
-        }
+            {
+                values = BoundaryConditions::dirichlet;
+            }
         if (globalPos[1] < 5 && globalPos[0]> 10 - eps_)
-        {
-            values[heat] = BoundaryConditions::dirichlet;
-        }
+            {
+                values[heat] = BoundaryConditions::dirichlet;
+            }
         return values;
     }
 
     // definition of DIRICHLET boundary conditions depending on the position
     virtual FieldVector<Scalar,numEq> g (const GlobalPosition& globalPos, const Element& element,
-            const IntersectionIterator& intersectionIt,
-            const LocalPosition& localPos) const
+                                         const IntersectionIterator& intersectionIt,
+                                         const LocalPosition& localPos) const
     {
         FieldVector<Scalar,numEq> values(0);
 
@@ -94,24 +94,24 @@ public:
 
     // definition of NEUMANN boundary conditions depending on the position
     virtual FieldVector<Scalar,numEq> J (const GlobalPosition& globalPos, const Element& element,
-            const IntersectionIterator& intersectionIt,
-            const LocalPosition& localPos) const
+                                         const IntersectionIterator& intersectionIt,
+                                         const LocalPosition& localPos) const
     {
         FieldVector<Scalar,numEq> values(0);
 
         if (globalPos[1] < 5 && globalPos[0]> 10 - eps_)
-        {
-            values[wPhase] = 0.0;
-            values[nPhase] = -0.04;
-            values[heat] = 0.0;
-        }
+            {
+                values[wPhase] = 0.0;
+                values[nPhase] = -0.04;
+                values[heat] = 0.0;
+            }
 
         return values;
     }
 
     // definition of INITIAL VALUES for pressure and saturation
     virtual FieldVector<Scalar,numEq> initial (const GlobalPosition& globalPos, const Element& element,
-            const LocalPosition& localPos) const
+                                               const LocalPosition& localPos) const
     {
         FieldVector<Scalar,numEq> values;
 
@@ -124,7 +124,7 @@ public:
 
     // function returning SOURCE/SINK terms
     virtual FieldVector<Scalar,numEq> q (const GlobalPosition& globalPos, const Element& element,
-            const LocalPosition& localPos) const
+                                         const LocalPosition& localPos) const
     {
         FieldVector<Scalar,numEq> values(0);
 

@@ -20,7 +20,7 @@ public:
     // function returning the intrinsic permeability tensor K
     // depending on the position within the domain
     const FieldMatrix &K(const GlobalPosition& globalPos, const Element& element, /*@\label{tutorial-decoupled:permeability}@*/
-            const LocalPosition& localPos)
+                         const LocalPosition& localPos)
     {
         return K_;
     }
@@ -28,7 +28,7 @@ public:
     // function returning the porosity of the porous matrix
     // depending on the position within the domain
     double porosity(const GlobalPosition& globalPos, const Element& element, /*@\label{tutorial-decoupled:porosity}@*/
-            const LocalPosition& localPos) const
+                    const LocalPosition& localPos) const
     {
         return 0.2;
     }
@@ -36,7 +36,7 @@ public:
     // function returning the residual saturation of the wetting fluid
     // depending on the position within the domain and on the temperature
     double Sr_w(const GlobalPosition& globalPos, const Element& element, /*@\label{tutorial-decoupled:srw}@*/
-            const LocalPosition& localPos, const double T = 283.15) const
+                const LocalPosition& localPos, const double T = 283.15) const
     {
         return 0;
     }
@@ -44,7 +44,7 @@ public:
     // function returning the residual saturation of the non-wetting fluid
     // depending on the position within the domain and on the temperature
     double Sr_n(const GlobalPosition& globalPos, const Element& element, /*@\label{tutorial-decoupled:srn}@*/
-            const LocalPosition& localPos, const double T = 283.15) const
+                const LocalPosition& localPos, const double T = 283.15) const
     {
         return 0;
     }
@@ -53,7 +53,7 @@ public:
     // and the relative permeability functions
     // depending on the position within the domain and on the temperature
     std::vector<double> paramRelPerm(const GlobalPosition& globalPos, const Element& element, /*@\label{tutorial-decoupled:parameters}@*/
-            const LocalPosition& localPos, const double T = 283.15) const
+                                     const LocalPosition& localPos, const double T = 283.15) const
     {
         std::vector<double> param(2);
 
@@ -62,8 +62,8 @@ public:
         param[1] = 0; // maximal capillary pressure
 
         //Brooks-Corey parameters
-//        param[0] = 2; // lambda
-//        param[1] = 0.; // entry-pressure
+        //        param[0] = 2; // lambda
+        //        param[1] = 0.; // entry-pressure
 
         return param;
     }
@@ -71,7 +71,7 @@ public:
     // function returning the kind of relation used for the calculation of the capillary
     // pressure and the relative permeabilities depending on the position within the domain
     typename Matrix2p<Grid,Scalar>::modelFlag relPermFlag(const GlobalPosition& globalPos, const Element& e, /*@\label{tutorial-decoupled:flags}@*/
-            const LocalPosition& localPos) const
+                                                          const LocalPosition& localPos) const
     {
         return Matrix2p<Grid,Scalar>::linear; //flag types defined in
     }                                   //dumux/material/property_baseclasses.hh

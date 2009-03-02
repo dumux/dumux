@@ -29,13 +29,13 @@ namespace Dune
  - RepresentationType   type of the vector holding the saturation values
  - VelType   type of the vector holding the velocity values
 
- */
+*/
 template<class Grid, class Scalar, class VC, class Problem =  FractionalFlowProblem<Grid, Scalar, VC> >
 class Transport
 {
 public:
 
-typedef    typename VC::ScalarVectorType RepresentationType;
+    typedef    typename VC::ScalarVectorType RepresentationType;
 
     //! \brief Calculate the update vector.
     /*!
@@ -85,14 +85,14 @@ typedef    typename VC::ScalarVectorType RepresentationType;
     {}
 
     const Grid& grid() const
-        { return grid_; }
+    { return grid_; }
 
     /*! @brief constructor
      *  @param g a DUNE grid object
      *  @param prob an object of class TransportProblem or derived
      */
     Transport(const Grid& grid, Problem& problem)
-    : grid_(grid), transProblem(problem)
+        : grid_(grid), transProblem(problem)
     {}
 
     //! returns the level on which the transport eqution is solved.
