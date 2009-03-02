@@ -1,3 +1,5 @@
+
+
 #ifndef DUNE_MINCPROBLEM_HH
 #define DUNE_MINCPROBLEM_HH
 
@@ -12,8 +14,9 @@
 #include<dune/grid/common/referenceelements.hh>
 #include<dune/grid/utility/intersectiongetter.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
-#include<dumux/material/twophaserelations_deprecated.hh>
-#include<dumux/material/linearlaw_deprecated.hh>
+#include<dumux/material/twophaserelations.hh>
+#include<test/minc/minc_soilproperties.hh>
+
 
 /**
  * @file
@@ -34,140 +37,137 @@ namespace Dune {
  *    Template parameters are:
  *
  *    - Grid  a DUNE grid type
- *    - RT    type used for return values
+ *    - Scalar    type used for return values
  */
-template<class G, class RT, int m> class MincProblem {
-    typedef typename G::ctype DT;
-    enum {n=G::dimension};
-    typedef typename G::Traits::template Codim<0>::Entity Entity;
-    typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator
-    IntersectionIterator;
-
+template<class Grid, class Scalar, int numEq> class MincProblem {
+    typedef typename Grid::ctype DT;
+    enum {dim=Grid::dimension};
+    typedef typename Grid::Traits::template Codim<0>::Entity Element;
+    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator
+            IntersectionIterator;
 public:
-    //! evaluate diffusion tensor
-    /*! Evaluate the diffusion tensor at given location
-      @param[in]  x    position in global coordinates
-      @param[in]  e    entity of codim 0
-      @param[in]  xi   position in reference element of e
-      @param[out] D    diffusion tensor to be filled
-    */
-    virtual const FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x) = 0;
-    virtual const FieldMatrix<DT,n,n>& K1Fracture(const FieldVector<DT,n>& x) = 0;
-    virtual const FieldMatrix<DT,n,n>& K1Matrix(const FieldVector<DT,n>& x) = 0;
-
-    virtual const FieldMatrix<DT,n,n>& KFracture(const FieldVector<DT,n>& x,
-                                                 const Entity& e, const FieldVector<DT,n>& xi) = 0;
-
-    virtual const FieldMatrix<DT,n,n>& KMatrix(const FieldVector<DT,n>& x,
-                                               const Entity& e, const FieldVector<DT,n>& xi) = 0;
-
     //! evaluate source term
     /*! evaluate source term at given location
-      @param[in]  x    position in global coordinates
-      @param[in]  e    entity of codim 0
-      @param[in]  xi   position in reference element of e
-      \return     value of source term
-    */
-    virtual FieldVector<RT,m> q(const FieldVector<DT,n>& x, const Entity& e,
-                                const FieldVector<DT,n>& xi) const = 0;
+     @param[in]  x    position in global coordinates
+     @param[in]  e    entity of codim 0
+     @param[in]  xi   position in reference element of e
+     \return     value of source term
+     */
+    virtual FieldVector<Scalar,numEq> q(const FieldVector<Scalar,dim>& globalPos, const Element& element,
+            const FieldVector<Scalar,dim>& localPos) const = 0;
 
     //! return type of boundary condition at the given global coordinate
     /*! return type of boundary condition at the given global coordinate
-      @param[in]  x    position in global coordinates
-      \return     boundary condition type given by enum in this class
-    */
+     @param[in]  x    position in global coordinates
+     \return     boundary condition type given by enum in this class
+     */
     //    virtual FieldVector<BoundaryConditions::Flags, m> bctype (const FieldVector<DT,n>& x, const Entity& e,
     //            const IntersectionIterator& intersectionIt,
     //            const FieldVector<DT,n>& xi) const = 0;
 
-    virtual FieldVector<BoundaryConditions::Flags, m>bctype(
-                                                            const FieldVector<DT,n>& x, const Entity& e,
-                                                            const IntersectionIterator& intersectionIt,
-                                                            const FieldVector<DT,n>& xi) const = 0;
+    virtual FieldVector<BoundaryConditions::Flags, numEq>bctype(
+            const FieldVector<Scalar,dim>& globalPos, const Element& element,
+            const IntersectionIterator& intersectionIt,
+            const FieldVector<Scalar,dim>& localPos) const = 0;
 
     //! returns index of the primary variable corresponding to the dirichlet boundary condition at the given global coordinate
-    /*! returns index of the primary variable corresponding to the dirichlet boundary condition at the given global coordinate
-      @param[in]  x    position in global coordinates
-      \return     index of the primary variable
-    */
-
-    virtual void dirichletIndex(const FieldVector<DT,n>& x, const Entity& e,
-                                const IntersectionIterator& intersectionIt,
-                                const FieldVector<DT,n>& xi, FieldVector<int,m>& dirichletIdx) const
+        /*! returns index of the primary variable corresponding to the dirichlet boundary condition at the given global coordinate
+         @param[in]  x    position in global coordinates
+         \return     index of the primary variable
+         */
+    
+    virtual void dirichletIndex(const FieldVector<Scalar,dim>& globalPos, const Element& element,
+            const IntersectionIterator& intersectionIt,
+            const FieldVector<Scalar,dim>& localPos, FieldVector<int,numEq>& dirichletIdx) const
     {
-        for (int i = 0; i < m; i++)
+        for (int i = 0; i < numEq; i++)
             dirichletIdx[i]=i;
         return;
     }
-
+    
     //! evaluate Dirichlet boundary condition at given position
     /*! evaluate Dirichlet boundary condition at given position
-      @param[in]  x    position in global coordinates
-      \return     boundary condition value
-    */
-    virtual FieldVector<RT,m> g(const FieldVector<DT,n>& x, const Entity& e,
-                                const IntersectionIterator& intersectionIt,
-                                const FieldVector<DT,n>& xi) const = 0;
-
+     @param[in]  x    position in global coordinates
+     \return     boundary condition value
+     */
+    virtual FieldVector<Scalar,numEq> g(const FieldVector<Scalar,dim>& globalPos, const Element& element,
+            const IntersectionIterator& intersectionIt,
+            const FieldVector<Scalar,dim>& localPos) const = 0;
+    
     //! evaluate Neumann boundary condition at given position
     /*! evaluate Neumann boundary condition at given position
-      @param[in]  x    position in global coordinates
-      \return     boundary condition value
-    */
-    virtual FieldVector<RT,m> J(const FieldVector<DT,n>& x, const Entity& e,
-                                const IntersectionIterator& intersectionIt,
-                                const FieldVector<DT,n>& xi) const = 0;
-
+     @param[in]  x    position in global coordinates
+     \return     boundary condition value
+     */
+    virtual FieldVector<Scalar,numEq> J(const FieldVector<Scalar,dim>& globalPos, const Element& element,
+            const IntersectionIterator& intersectionIt,
+            const FieldVector<Scalar,dim>& localPos) const = 0;
+    
     //! evaluate initial condition at given position
     /*! evaluate initial boundary condition at given position
-      @param[in]  x    position in global coordinates
-      \return     boundary condition value
-    */
-    virtual FieldVector<RT,m> initial(const FieldVector<DT,n>& x,
-                                      const Entity& e, const FieldVector<DT,n>& xi) const = 0;
+     @param[in]  x    position in global coordinates
+     \return     boundary condition value
+     */
+    virtual FieldVector<Scalar,numEq> initial(const FieldVector<Scalar,dim>& globalPos,
+            const Element& element, const FieldVector<Scalar,dim>& localPos) const = 0;
+    
+    virtual FieldVector<Scalar,dim> gravity() const = 0;
 
-    //    virtual double porosity(const FieldVector<DT,n>& x, const Entity& e,
-    //            const FieldVector<DT,n>& xi) const = 0;
+    //! properties of the wetting (liquid) phase
+    /*! properties of the wetting (liquid) phase
+      \return    wetting phase
+     */
+    virtual Fluid& wettingPhase () const
+    {
+        return wettingPhase_;
+    }
 
-    virtual double porosityFracture(const FieldVector<DT,n>& x, const Entity& e,
-                                    const FieldVector<DT,n>& xi) const = 0;
+    //! properties of the nonwetting (liquid) phase
+    /*! properties of the nonwetting (liquid) phase
+      \return    nonwetting phase
+     */
+    virtual Fluid& nonwettingPhase () const
+    {
+        return nonwettingPhase_;
+    }
 
-    virtual double porosityMatrix(const FieldVector<DT,n>& x, const Entity& e,
-                                  const FieldVector<DT,n>& xi) const = 0;
-    //
-    virtual FieldVector<RT,n> gravity() const = 0;
+    //! properties of the soil
+    /*! properties of the soil
+      \return    soil
+     */
+    virtual MincLensSoil<Grid, Scalar>& soil () const
+    {
+        return soil_;
+    }
 
-    //    virtual FieldVector<RT,4> materialLawParameters(const FieldVector<DT,n>& x,
-    //            const Entity& e, const FieldVector<DT,n>& xi) const = 0;
-
-    virtual FieldVector<RT,4> materialLawParametersFracture(const FieldVector<DT,n>& x,
-                                                            const Entity& e, const FieldVector<DT,n>& xi) const = 0;
-    //
-    virtual FieldVector<RT,4> materialLawParametersMatrix(const FieldVector<DT,n>& x,
-                                                          const Entity& e, const FieldVector<DT,n>& xi) const = 0;
-
-    DeprecatedTwoPhaseRelations& materialLaw() {
+    //! object for definition of material law
+    /*! object for definition of material law (e.g. Brooks-Corey, Van Genuchten, ...)
+      \return    material law
+     */
+    virtual TwoPhaseRelations<Grid, Scalar>& materialLaw () const
+    {
         return materialLaw_;
     }
 
     //element-wise return of the values of an Exact solution
-    virtual RT uExOutVertex(int &ElementIndex, int VariableIndex) const {
+    virtual Scalar uExOutVertex(int &ElementIndex, int VariableIndex) const {
         DUNE_THROW(NotImplemented, "Ex(akt) Solution");
         return 0;
     }
 
     //updates an exact/analytic solution
     virtual void updateExSol(double &dt,
-                             BlockVector<FieldVector<RT, m> > &approxSol) {
+            BlockVector<FieldVector<Scalar, numEq> > &approxSol) {
         DUNE_THROW(NotImplemented, "Ex(akt) Solution");
         return;
     }
 
-    MincProblem(DeprecatedTwoPhaseRelations& law =
-                *(new DeprecatedLinearLaw),
-                const bool exsol = false) :
-        exsolution(exsol),  materialLaw_(law) {
-    }
+    MincProblem(Fluid& liq1, Fluid& liq2, MincLensSoil<Grid, Scalar>& soil,
+            TwoPhaseRelations<Grid,Scalar>& materialLaw = *(new TwoPhaseRelations<Grid,Scalar>),
+            const bool exsol = false)
+    : exsolution(exsol), wettingPhase_(liq1), nonwettingPhase_(liq2), soil_(soil),
+      materialLaw_(materialLaw)
+      {     }
 
     //! always define virtual destructor in abstract base class
     virtual ~MincProblem() {
@@ -176,7 +176,10 @@ public:
     const bool exsolution;
 
 protected:
-    DeprecatedTwoPhaseRelations& materialLaw_;
+    Fluid& wettingPhase_;
+    Fluid& nonwettingPhase_;
+    MincLensSoil<Grid, Scalar>& soil_;
+    TwoPhaseRelations<Grid, Scalar>& materialLaw_;
 };
 
 }
