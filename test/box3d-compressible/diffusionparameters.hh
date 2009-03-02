@@ -2,6 +2,9 @@
 #define DIFFUSIONPARAMETERS_HH
 #include <dumux/material/properties.hh>
 
+
+/** \todo Please doc me! */
+
 template<class G, class RT>
 class DiffusionParameters
 {
