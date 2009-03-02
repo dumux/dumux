@@ -36,10 +36,10 @@ int main(int argc, char** argv)
 		// set up the grid
 		const int dim = 3;
 		typedef double 							Scalar;
-		typedef Dune::ALUCubeGrid<dim,dim> 		GridType;
-//		typedef Dune::ALUSimplexGrid<dim,dim> 	GridType;
-//		typedef Dune::UGGrid<dim> 				GridType;
-		typedef Dune::GridPtr<GridType>  		GridPointer;
+		typedef Dune::ALUCubeGrid<dim,dim> 		Grid;
+//		typedef Dune::ALUSimplexGrid<dim,dim> 	Grid;
+//		typedef Dune::UGGrid<dim> 				Grid;
+		typedef Dune::GridPtr<Grid>  		GridPointer;
 
 		if (argc != 5) {
 		      std::cout << "usage: pipe_richards_incomp_couple_timeloop dgffilename/basefilename tEnd dt dtmax" << std::endl;
@@ -51,14 +51,14 @@ int main(int argc, char** argv)
         std::istringstream(argv[3]) >> dt;
         std::istringstream(argv[4]) >> dtmax;
 
-		// create grid pointer, GridType is defined by gridtype.hh
+		// create grid pointer, Grid is defined by gridtype.hh
         GridPointer gridPtr( dgfFileName );
 
 		// grid reference
-		GridType& grid = *gridPtr;
+		Grid& grid = *gridPtr;
 	    Dune::gridinfo(grid);
 
-        typedef Dune::NewRichardsProblemPipe<GridType, Scalar>   Problem;
+        typedef Dune::NewRichardsProblemPipe<Grid, Scalar>   Problem;
 
         // instantiate and run the concrete problem
         Problem problem(gridPtr, dt, dtmax, tEnd);

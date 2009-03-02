@@ -279,7 +279,7 @@ namespace Dune
               model_(*this),
               newtonMethod_(model_),
               newtonCtl_(1e-5, 8, 12, dtMax),
-              resultWriter_("new_richards"),
+              resultWriter_("new_richards_couple_pipe"),
               vertexMapper_(*gridPtr_)
         {
             initialTimeStepSize_ = dtInitial;

@@ -54,13 +54,13 @@ public:
 	}
 };
 
-template<class FieldVector>
+template<class GlobalPosition>
 class ICPressurePipe {
 public:
 
-	double operator() (FieldVector x) const
+	double operator() (GlobalPosition globalPos) const
 	{
-		if ( (x[0] > 2.0 - 1e-5 ) && (x[0] < 2.0 + 1e-5)  )
+		if ( (globalPos[0] > 2.0 - 1e-5 ) && (globalPos[0] < 2.0 + 1e-5)  )
 		{
 			return 1.0e5;
 		}
@@ -74,13 +74,13 @@ public:
 	}
 };
 
-template<class FieldVector>
+template<class GlobalPosition>
 class ICVelocityPipe {
 public:
 
-	double operator() (FieldVector x) const
+	double operator() (GlobalPosition globalPos) const
 	{
-		if ( (x[0] > 2.0 - 1e-5 ) && (x[0] < 2.0 + 1e-5)  )
+		if ( (globalPos[0] > 2.0 - 1e-5 ) && (globalPos[0] < 2.0 + 1e-5)  )
 		{
 			return 9.0;
 		}
@@ -93,15 +93,15 @@ public:
 	}
 };
 
-template<class FieldVector>
+template<class GlobalPosition>
 class sourceSinkPipe {
 public:
 	double sourceSinkValue;
 
-	double operator() (FieldVector x, double t) const
+	double operator() (GlobalPosition globalPos, double t) const
 	{
 
-		if ( (x[0] > 2.0 - 1e-5 ) && (x[0] < 2.0 + 1e-5)  )
+		if ( (globalPos[0] > 2.0 - 1e-5 ) && (globalPos[0] < 2.0 + 1e-5)  )
 		{
 			if (t==0.0)
 				return sourceSinkValue;

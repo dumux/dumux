@@ -45,15 +45,15 @@ public:
   }
 };
 
-template<class FieldVector>
+template<class GlobalPosition>
 class LambdaLocal {
 public:
 	double lambdaLocal;
 
-	double operator() (FieldVector x, double t) const
+	double operator() (GlobalPosition globalPos, double t) const
 	{
 
-		if ( (x[0] > 2.0 - 1e-5 ) && (x[0] < 2.0 + 1e-5)  )
+		if ( (globalPos[0] > 2.0 - 1e-5 ) && (globalPos[0] < 2.0 + 1e-5)  )
 		{
 			if (t==0.0)
 				return lambdaLocal;

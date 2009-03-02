@@ -2,11 +2,12 @@
 void TimeloopOptsPipe( double& tstart, double& tend, double& max_dt, double& first_dt, double& CFL_factor, int& flag,
                        int& n_iter, double& max_def, int& modulo, int& stages );
 
-template<class BCP, class BCV, class ICP, class ICV, class SST, class Press, class Lmbd, class LmbdLocal, class Grid, class MapperCDIM, class MapperNodeGlobalIDtoOnOutIndexType, class VertexVectorOnLineType, class VertexVectorOutLineType>
+template<class BCP, class BCV, class ICP, class ICV, class SST, class Press, class Lmbd, class LmbdLocal, class Grid, class VertexMapper, class MapperNodeGlobalIDtoOnOutIndexType, class VertexVectorOnLineType, class VertexVectorOutLineType>
 class PipeFlow {
 public:
+	typedef double 	Scalar;
 	const Grid& grid;         	//!< pointer to grid
-	MapperCDIM& mapperCDim;     //!< pointer to mapper
+	VertexMapper& vMap;     //!< pointer to mapper
 	MapperNodeGlobalIDtoOnOutIndexType& mapperGlobalNodeIdtoOnPipeNodeIndex;
 	MapperNodeGlobalIDtoOnOutIndexType& mapperGlobalNodeIdtoOutPipeNodeIndex;
 	VertexVectorOnLineType& vertexVectorOnLine;
@@ -15,41 +16,41 @@ public:
 	BCV boundaryConditionV; //!< functor for the boundary condition
 	ICP initialConditionP;  //!< functor for the initial condition pressure
 	ICV initialConditionV;  //!< functor for the initial condition velocity
-	SST sourceSink;			//!< functor for source/sink term
+	SST source;			//!< functor for source/sink term
 	Lmbd frictionCoef;		//!< functor for pipe friction coefficient
 	LmbdLocal lambdaLocal;  //!< functor for pipe local loss coefficient
 	Press pressurePorous;	//!< Pressure of porous media
 	Press mobility;
-	double alphaExchange;			//!< mass exchange factor for coupling
-	double Temp;			//!< gravity vector
-	double density;			//!< fluid property
-	double viscosity;		//!< fluid property
-	double roughness;		//!< pipe sand grain roughness
-	double diameter;		//!< pipe diameter
+	Scalar alphaExchange;			//!< mass exchange factor for coupling
+	Scalar temp;			//!< gravity vector
+	Scalar density;			//!< fluid property
+	Scalar viscosity;		//!< fluid property
+	Scalar roughness;		//!< pipe sand grain roughness
+	Scalar diameter;		//!< pipe diameter
 	Press pressure;   		//!< vector for the values of the pressure
 	Press velocity;      	//!< block vector for the total velocity
-	typedef Dune::FieldVector<double,Grid::dimension>  FieldVector;
+	typedef Dune::FieldVector<Scalar,Grid::dimension>  FieldVector;
 	FieldVector gravity;
 
 	void PrintVertexVector ();
 	//! sets the vector of unknowns to initial values.
 	void SetInitialSolution ();
 	// sets Boundary Condition for velocity, pressure boundary condition does not ly on the pressure index
-	void SetDrichletBoundary (double t);
+	void SetDrichletBoundary (Scalar t);
 
 	template<class Matrix>
-	void MassEquation (unsigned& k, Matrix& A, Press& f, double t, double dt);
+	void MassEquation (unsigned& k, Matrix& A, Press& f, Scalar t, Scalar dt);
 
 	template<class FaceVector>
-	void KFace (unsigned k, FaceVector& kFace, double t, double dt);
+	void KFace (unsigned k, FaceVector& kFace, Scalar t, Scalar dt);
 
 	template<class FaceVector>
-	void VelocityFace( unsigned k, FaceVector kFace, FaceVector& vFace, double t, double dt);
+	void VelocityFace( unsigned k, FaceVector kFace, FaceVector& vFace, Scalar t, Scalar dt);
 
 	//! \brief Calculate the pressure.
-	void IterationStep_Mass (double t, double dt, Press& pressureIt);
+	void IterationStep_Mass (Scalar t, Scalar dt, Press& pressureIt);
 
-	void Iteration (double t, double dt, double maxdef);
+	void Iteration (Scalar t, Scalar dt, Scalar maxdef);
 
 	//! calculate the update vector and estimate the time step size.
 	void update(void);
@@ -59,23 +60,23 @@ public:
     {
         // create pressureVtkOutput vector with 0 value , size=sizeOfBigGridNodes and copy pressure values from pipe pressure
         const int dim = Grid::dimension;
-        int sizeOfNodes = mapperCDim.size();
+        int sizeOfNodes = vMap.size();
 
-        typedef Dune::BlockVector<Dune::FieldVector<double,dim>  > VelocityVectorDIM;
-//        VelocityVectorDIM &velocityVectorVtkOutput = *writer.template createField<double, dim>(sizeOfNodes);
+        typedef Dune::BlockVector<Dune::FieldVector<Scalar,dim>  > VelocityVectorDIM;
+//        VelocityVectorDIM &velocityVectorVtkOutput = *writer.template createField<Scalar, dim>(sizeOfNodes);
         VelocityVectorDIM velocityVectorVtkOutput(sizeOfNodes);
         velocityVectorVtkOutput = 0;
 
-        typedef Dune::BlockVector<Dune::FieldVector<double,1>  > VelocityScalar;
-        VelocityScalar &velocityVectorVtkOutputX = *writer.template createField<double, 1>(sizeOfNodes);;
-        VelocityScalar &velocityVectorVtkOutputY = *writer.template createField<double, 1>(sizeOfNodes);;
-        VelocityScalar &velocityVectorVtkOutputZ = *writer.template createField<double, 1>(sizeOfNodes);;
+        typedef Dune::BlockVector<Dune::FieldVector<Scalar,1>  > VelocityScalar;
+        VelocityScalar &velocityVectorVtkOutputX = *writer.template createField<Scalar, 1>(sizeOfNodes);;
+        VelocityScalar &velocityVectorVtkOutputY = *writer.template createField<Scalar, 1>(sizeOfNodes);;
+        VelocityScalar &velocityVectorVtkOutputZ = *writer.template createField<Scalar, 1>(sizeOfNodes);;
         velocityVectorVtkOutputX = 0;
         velocityVectorVtkOutputY = 0;
         velocityVectorVtkOutputZ = 0;
 
-        Press &pressureVtkOutput = *writer.template createField<double, 1>(sizeOfNodes);;
-        Press &isPipeVtkOutput = *writer.template createField<double, 1>(sizeOfNodes);;
+        Press &pressureVtkOutput = *writer.template createField<Scalar, 1>(sizeOfNodes);;
+        Press &isPipeVtkOutput = *writer.template createField<Scalar, 1>(sizeOfNodes);;
         pressureVtkOutput = 0;
         isPipeVtkOutput = 0;
         for (unsigned n = 0; n < vertexVectorOnLine.size(); n++)
@@ -86,19 +87,19 @@ public:
             isPipeVtkOutput[vertexVectorOnLine[indexi].globalId] = 1;
 
             unsigned numNeighbor = vertexVectorOnLine[indexi].indexVertexVectorOnLine.size();
-            typedef Dune::BlockVector<Dune::FieldVector<double,1>  > FaceVector;
+            typedef Dune::BlockVector<Dune::FieldVector<Scalar,1>  > FaceVector;
             FaceVector kFace(numNeighbor), vFace(numNeighbor);
             kFace = 0;
             vFace = 0;
 
-            double t= 0;
-            double dt= 0;
+            Scalar t= 0;
+            Scalar dt= 0;
             KFace<FaceVector>(indexi, kFace, t, dt);
             VelocityFace<FaceVector>(indexi, kFace, vFace, t, dt);
 
             //					  VelocityVectorDIM vFaceVector(numNeighbor);
             //					  vFaceVector = 0;
-            typedef Dune::FieldVector<double,dim> FieldVectorDIM;
+            typedef Dune::FieldVector<Scalar,dim> FieldVectorDIM;
             FieldVectorDIM averageVelocityVector;
             averageVelocityVector = 0;
             for (unsigned m = 0; m < numNeighbor; m++)
@@ -145,30 +146,30 @@ public:
 	 */
 	PipeFlow(int nNodes,
              const Grid& g,
-             MapperCDIM& mCDim,
+             VertexMapper& mCDim,
              MapperNodeGlobalIDtoOnOutIndexType& mapGlobalNodeIDtoPipeNodeOnlineIndex,
              MapperNodeGlobalIDtoOnOutIndexType& mapGlobalNodeIDtoPipeNodeOutlineIndex,
              VertexVectorOnLineType& vertexVectorOnL,
              VertexVectorOutLineType& vertexVectorOutL,
-             double alpEx,
-             double tmp,
-             double dens,
-             double kinematicViscosity,
-             double roughn,
-             double diam,
+             Scalar alpEx,
+             Scalar tmp,
+             Scalar dens,
+             Scalar kinematicViscosity,
+             Scalar roughn,
+             Scalar diam,
              FieldVector grav)
-	: grid(g), mapperCDim(mCDim), mapperGlobalNodeIdtoOnPipeNodeIndex(mapGlobalNodeIDtoPipeNodeOnlineIndex),
+	: grid(g), vMap(mCDim), mapperGlobalNodeIdtoOnPipeNodeIndex(mapGlobalNodeIDtoPipeNodeOnlineIndex),
 	  mapperGlobalNodeIdtoOutPipeNodeIndex (mapGlobalNodeIDtoPipeNodeOutlineIndex),
 	  vertexVectorOnLine(vertexVectorOnL), vertexVectorOutLine (vertexVectorOutL),
 	  boundaryConditionP(), boundaryConditionV(),
-	  initialConditionP(), initialConditionV(), sourceSink(), lambdaLocal(),
+	  initialConditionP(), initialConditionV(), source(), lambdaLocal(),
 	  pressure(nNodes), velocity(nNodes)
 	{
         mobility.resize(mCDim.size());
         pressurePorous.resize(mCDim.size());
 
         alphaExchange = alpEx;
-		Temp = tmp;
+		temp = tmp;
 		density = dens;
 		viscosity = kinematicViscosity;
 		roughness = roughn;
@@ -177,8 +178,8 @@ public:
 	}
 };
 
-template<class BCP, class BCV, class ICP, class ICV, class SST, class Press, class Lmbd, class LmbdLocal, class Grid, class MapperCDIM, class MapperNodeGlobalIDtoOnOutIndexType, class VertexVectorOnLineType, class VertexVectorOutLineType>
-void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM, MapperNodeGlobalIDtoOnOutIndexType, VertexVectorOnLineType, VertexVectorOutLineType>::PrintVertexVector()
+template<class BCP, class BCV, class ICP, class ICV, class SST, class Press, class Lmbd, class LmbdLocal, class Grid, class VertexMapper, class MapperNodeGlobalIDtoOnOutIndexType, class VertexVectorOnLineType, class VertexVectorOutLineType>
+void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, VertexMapper, MapperNodeGlobalIDtoOnOutIndexType, VertexVectorOnLineType, VertexVectorOutLineType>::PrintVertexVector()
 {
 
     std::cout << "number of vertices on line = "<< vertexVectorOnLine.size() << std::endl;
@@ -231,20 +232,20 @@ void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM,
     return;
 }
 
-template<class BCP, class BCV, class ICP, class ICV, class SST, class Press, class Lmbd, class LmbdLocal, class Grid, class MapperCDIM, class MapperNodeGlobalIDtoOnOutIndexType, class VertexVectorOnLineType, class VertexVectorOutLineType>
-void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM, MapperNodeGlobalIDtoOnOutIndexType, VertexVectorOnLineType, VertexVectorOutLineType>::SetInitialSolution ()
+template<class BCP, class BCV, class ICP, class ICV, class SST, class Press, class Lmbd, class LmbdLocal, class Grid, class VertexMapper, class MapperNodeGlobalIDtoOnOutIndexType, class VertexVectorOnLineType, class VertexVectorOutLineType>
+void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, VertexMapper, MapperNodeGlobalIDtoOnOutIndexType, VertexVectorOnLineType, VertexVectorOutLineType>::SetInitialSolution ()
 {
     for (unsigned k = 0; k < vertexVectorOnLine.size(); k++)
     {
-    	typedef Dune::FieldVector<double,Grid::dimension>  FieldVector;
-    	FieldVector global = vertexVectorOnLine[k].nodePoint->geometry()[0];
-		pressure[k] = initialConditionP(global);
+    	typedef Dune::FieldVector<Scalar,Grid::dimension>  FieldVector;
+    	FieldVector globalPos = vertexVectorOnLine[k].nodePoint->geometry()[0];
+		pressure[k] = initialConditionP(globalPos);
     }
 	return;
 }
 
-template<class BCP, class BCV, class ICP, class ICV, class SST, class Press, class Lmbd, class LmbdLocal, class Grid, class MapperCDIM, class MapperNodeGlobalIDtoOnOutIndexType, class VertexVectorOnLineType, class VertexVectorOutLineType>
-void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM, MapperNodeGlobalIDtoOnOutIndexType, VertexVectorOnLineType, VertexVectorOutLineType>::SetDrichletBoundary (double t)
+template<class BCP, class BCV, class ICP, class ICV, class SST, class Press, class Lmbd, class LmbdLocal, class Grid, class VertexMapper, class MapperNodeGlobalIDtoOnOutIndexType, class VertexVectorOnLineType, class VertexVectorOutLineType>
+void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, VertexMapper, MapperNodeGlobalIDtoOnOutIndexType, VertexVectorOnLineType, VertexVectorOutLineType>::SetDrichletBoundary (Scalar t)
 {
 
     for (unsigned k = 0; k < vertexVectorOnLine.size(); k++)
@@ -253,7 +254,7 @@ void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM,
     	{
     		int boundaryId = (int) vertexVectorOnLine[k].parameter[1];
         	int boundaryType;
-           	double boundaryValue = boundaryConditionP(boundaryId, t, boundaryType);
+           	Scalar boundaryValue = boundaryConditionP(boundaryId, t, boundaryType);
            	if (boundaryType == 1) // if dirichlet boundary
            	{
                	pressure[k]=boundaryValue;
@@ -263,35 +264,35 @@ void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM,
 	return;
 }
 
-template<class BCP, class BCV, class ICP, class ICV, class SST, class Press, class Lmbd, class LmbdLocal, class Grid, class MapperCDIM, class MapperNodeGlobalIDtoOnOutIndexType, class VertexVectorOnLineType, class VertexVectorOutLineType>
+template<class BCP, class BCV, class ICP, class ICV, class SST, class Press, class Lmbd, class LmbdLocal, class Grid, class VertexMapper, class MapperNodeGlobalIDtoOnOutIndexType, class VertexVectorOnLineType, class VertexVectorOutLineType>
 template<class FaceVector>
-void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM, MapperNodeGlobalIDtoOnOutIndexType, VertexVectorOnLineType, VertexVectorOutLineType>::VelocityFace(unsigned k, FaceVector kFace, FaceVector& vFace, double t, double dt)
+void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, VertexMapper, MapperNodeGlobalIDtoOnOutIndexType, VertexVectorOnLineType, VertexVectorOutLineType>::VelocityFace(unsigned k, FaceVector kFace, FaceVector& vFace, Scalar t, Scalar dt)
 {
 	  // first we extract the dimensions of the grid
 	  const int dim = Grid::dimension;
 
 	  int indexi = k;
 
-//	  double PI = 3.14;
-//	  double crossArea = PI* diameter * diameter / 4;
-	  typedef Dune::FieldVector<double,dim> FieldVector;
-	  FieldVector globali = vertexVectorOnLine[indexi].nodePoint->geometry().corner(0);
+//	  Scalar PI = 3.14;
+//	  Scalar crossArea = PI* diameter * diameter / 4;
+	  typedef Dune::FieldVector<Scalar,dim> FieldVector;
+	  FieldVector globalPos_i = vertexVectorOnLine[indexi].nodePoint->geometry().corner(0);
 
 	  for (unsigned m = 0; m < vertexVectorOnLine[indexi].indexVertexVectorOnLine.size(); m++)
 	  {
 		  int indexj = vertexVectorOnLine[indexi].indexVertexVectorOnLine[m];
-		  const FieldVector &globalj = vertexVectorOnLine[indexj].nodePoint->geometry().corner(0);
-		  FieldVector distVect = globalj;
-		  distVect -= globali;
-		  double distVal = distVect.two_norm();
+		  const FieldVector &globalPos_j = vertexVectorOnLine[indexj].nodePoint->geometry().corner(0);
+		  FieldVector distVect = globalPos_j;
+		  distVect -= globalPos_i;
+		  Scalar distVal = distVect.two_norm();
 
 //		  FieldVector unitOuterNormal = vertexVectorOnLine[k].normal(vertexVectorOnLine, indexj);
 		  FieldVector unitPD = vertexVectorOnLine[k].unitPD(vertexVectorOnLine, indexj);
 
-		  double sign = distVect * unitPD;
+		  Scalar sign = distVect * unitPD;
 		  if (sign>0) sign=1.0;
 		  else sign=-1.0;
-		  double densityFace = density;
+		  Scalar densityFace = density;
 
 		  vFace[m]= kFace[m]* (-1.0) * (pressure[indexj] - pressure[indexi]) * sign/distVal + kFace[m] * densityFace * (gravity * unitPD);
 	  }
@@ -305,58 +306,58 @@ void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM,
 	return;
 }
 
-template<class BCP, class BCV, class ICP, class ICV, class SST, class Press, class Lmbd, class LmbdLocal, class Grid, class MapperCDIM, class MapperNodeGlobalIDtoOnOutIndexType, class VertexVectorOnLineType, class VertexVectorOutLineType>
+template<class BCP, class BCV, class ICP, class ICV, class SST, class Press, class Lmbd, class LmbdLocal, class Grid, class VertexMapper, class MapperNodeGlobalIDtoOnOutIndexType, class VertexVectorOnLineType, class VertexVectorOutLineType>
 template<class FaceVector>
-void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM, MapperNodeGlobalIDtoOnOutIndexType, VertexVectorOnLineType, VertexVectorOutLineType>::KFace(unsigned k, FaceVector& kFace, double t, double dt)
+void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, VertexMapper, MapperNodeGlobalIDtoOnOutIndexType, VertexVectorOnLineType, VertexVectorOutLineType>::KFace(unsigned k, FaceVector& kFace, Scalar t, Scalar dt)
 {
 	  // first we extract the dimensions of the grid
 	  const int dim = Grid::dimension;
 
 	  int indexi = k;
 
-	  double length_i =  vertexVectorOnLine[indexi].length(vertexVectorOnLine);
+	  Scalar length_i =  vertexVectorOnLine[indexi].length(vertexVectorOnLine);
 	  if (vertexVectorOnLine[indexi].boundary() )
 	  {
 		  length_i *= 2;
 	  }
-	  double crossArea = M_PI* diameter * diameter / 4;
-	  typedef Dune::FieldVector<double,dim> FieldVector;
-	  FieldVector globali = vertexVectorOnLine[indexi].nodePoint->geometry().corner(0);
+	  Scalar crossArea = M_PI* diameter * diameter / 4;
+	  typedef Dune::FieldVector<Scalar,dim> FieldVector;
+	  FieldVector globalPos_i = vertexVectorOnLine[indexi].nodePoint->geometry().corner(0);
 
-	  double TaoNoVel_i= 8 * viscosity * density /diameter * (M_PI * diameter) / crossArea; // Tao(no velocity inside) * perimeter / crossarea uniform
-	  double localLoss_i= lambdaLocal(globali, t) * density / 2 * crossArea;
-	  double q_i = sourceSink(globali, t);
-	  double alphaEXCHANGE_i = density * mobility[vertexVectorOnLine[indexi].globalId] * alphaExchange * (M_PI * diameter * length_i) / diameter;
-	  double alphaEXCHANGE_i_Prime = alphaEXCHANGE_i / (crossArea * length_i);
-	  double qex_i = alphaEXCHANGE_i_Prime * (pressure[indexi]- pressurePorous[vertexVectorOnLine[indexi].globalId]);
+	  Scalar TaoNoVel_i= 8 * viscosity * density /diameter * (M_PI * diameter) / crossArea; // Tao(no velocity inside) * perimeter / crossarea uniform
+	  Scalar localLoss_i= lambdaLocal(globalPos_i, t) * density / 2 * crossArea;
+	  Scalar q_i = source(globalPos_i, t);
+	  Scalar alphaEXCHANGE_i = density * mobility[vertexVectorOnLine[indexi].globalId] * alphaExchange * (M_PI * diameter * length_i) / diameter;
+	  Scalar alphaEXCHANGE_i_Prime = alphaEXCHANGE_i / (crossArea * length_i);
+	  Scalar qex_i = alphaEXCHANGE_i_Prime * (pressure[indexi]- pressurePorous[vertexVectorOnLine[indexi].globalId]);
 
 	  q_i = 0;
 	  qex_i = 0;
 
-	  double K_i = 1 / (2*q_i*density - 2*qex_i + TaoNoVel_i + localLoss_i);
+	  Scalar K_i = 1 / (2*q_i*density - 2*qex_i + TaoNoVel_i + localLoss_i);
 
 	  for (unsigned m = 0; m < vertexVectorOnLine[indexi].indexVertexVectorOnLine.size(); m++)
 	  {
 		  int indexj = vertexVectorOnLine[indexi].indexVertexVectorOnLine[m];
 
-		  double length_j =  vertexVectorOnLine[indexj].length(vertexVectorOnLine);
+		  Scalar length_j =  vertexVectorOnLine[indexj].length(vertexVectorOnLine);
 		  if (vertexVectorOnLine[indexj].boundary() )
 		  {
 			  length_j *= 2;
 		  }
-		  FieldVector globalj = vertexVectorOnLine[indexj].nodePoint->geometry().corner(0);
+		  FieldVector globalPos_j = vertexVectorOnLine[indexj].nodePoint->geometry().corner(0);
 
-		  double TaoNoVel_j= 8 * viscosity * density /diameter * (M_PI * diameter) / crossArea; // Tao(no velocity inside) * perimeter / crossarea uniform
-		  double localLoss_j= lambdaLocal(globalj, t) * density / 2 * crossArea;
-		  double q_j = sourceSink(globalj, t);
-		  double alphaEXCHANGE_j = density * mobility[vertexVectorOnLine[indexj].globalId] * alphaExchange * (M_PI * diameter * length_j) / diameter;
-		  double alphaEXCHANGE_j_Prime = alphaEXCHANGE_j / (crossArea * length_j);
-		  double qex_j = alphaEXCHANGE_j_Prime * (pressure[indexj]- pressurePorous[vertexVectorOnLine[indexj].globalId]);
+		  Scalar TaoNoVel_j= 8 * viscosity * density /diameter * (M_PI * diameter) / crossArea; // Tao(no velocity inside) * perimeter / crossarea uniform
+		  Scalar localLoss_j= lambdaLocal(globalPos_j, t) * density / 2 * crossArea;
+		  Scalar q_j = source(globalPos_j, t);
+		  Scalar alphaEXCHANGE_j = density * mobility[vertexVectorOnLine[indexj].globalId] * alphaExchange * (M_PI * diameter * length_j) / diameter;
+		  Scalar alphaEXCHANGE_j_Prime = alphaEXCHANGE_j / (crossArea * length_j);
+		  Scalar qex_j = alphaEXCHANGE_j_Prime * (pressure[indexj]- pressurePorous[vertexVectorOnLine[indexj].globalId]);
 
 		  q_j = 0;
 		  qex_j = 0;
 
-		  double K_j = 1 / (2*q_j*density - 2*qex_j + TaoNoVel_j + localLoss_j);
+		  Scalar K_j = 1 / (2*q_j*density - 2*qex_j + TaoNoVel_j + localLoss_j);
 
 		  kFace[m]= 2*(K_i*K_j)/(K_i+K_j);
 
@@ -372,36 +373,36 @@ void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM,
 }
 
 
-template<class BCP, class BCV, class ICP, class ICV, class SST, class Press, class Lmbd, class LmbdLocal, class Grid, class MapperCDIM, class MapperNodeGlobalIDtoOnOutIndexType, class VertexVectorOnLineType, class VertexVectorOutLineType>
+template<class BCP, class BCV, class ICP, class ICV, class SST, class Press, class Lmbd, class LmbdLocal, class Grid, class VertexMapper, class MapperNodeGlobalIDtoOnOutIndexType, class VertexVectorOnLineType, class VertexVectorOutLineType>
 template<class Matrix>
-void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM, MapperNodeGlobalIDtoOnOutIndexType, VertexVectorOnLineType, VertexVectorOutLineType>::MassEquation(unsigned& k, Matrix& A, Press& f, double t, double dt)
+void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, VertexMapper, MapperNodeGlobalIDtoOnOutIndexType, VertexVectorOnLineType, VertexVectorOutLineType>::MassEquation(unsigned& k, Matrix& A, Press& f, Scalar t, Scalar dt)
 {
 	  // first we extract the dimensions of the grid
 	  const int dim = Grid::dimension;
 
 	  int indexi = k;
 
-//	  double PI = 3.14;
+//	  Scalar PI = 3.14;
 
-	  double length =  vertexVectorOnLine[k].length(vertexVectorOnLine);
+	  Scalar length =  vertexVectorOnLine[k].length(vertexVectorOnLine);
 
-	  double crossArea = M_PI* diameter * diameter / 4;
+	  Scalar crossArea = M_PI* diameter * diameter / 4;
 
-	  typedef Dune::FieldVector<double,dim> FieldVector;
-	  FieldVector globali = vertexVectorOnLine[k].nodePoint->geometry().corner(0);
+	  typedef Dune::FieldVector<Scalar,dim> FieldVector;
+	  FieldVector globalPos_i = vertexVectorOnLine[k].nodePoint->geometry().corner(0);
 
-	  f[indexi] += sourceSink(globali, t) * density *length*crossArea; // sourceSink [m3/(m3*s)]
+	  f[indexi] += source(globalPos_i, t) * density *length*crossArea; // source [m3/(m3*s)]
 
-	  double alphaEXCHANGE = density * mobility[vertexVectorOnLine[k].globalId] * alphaExchange * (M_PI * diameter * length) / diameter;
+	  Scalar alphaEXCHANGE = density * mobility[vertexVectorOnLine[k].globalId] * alphaExchange * (M_PI * diameter * length) / diameter;
 	  f[indexi] += alphaEXCHANGE * pressurePorous[vertexVectorOnLine[k].globalId];
 
-//	  double prePor = pressurePorous[vertexVectorOnLine[k].globalId];
+//	  Scalar prePor = pressurePorous[vertexVectorOnLine[k].globalId];
 //	  std::cout<<"globalID "<< vertexVectorOnLine[k].globalId << " pressurePorous " << prePor <<std::endl;
 
 	  A[indexi][indexi] += alphaEXCHANGE * 1.0;
 
 	  unsigned numNeighbor = vertexVectorOnLine[k].indexVertexVectorOnLine.size();
-	  typedef Dune::BlockVector<Dune::FieldVector<double,1>  > FaceVector;
+	  typedef Dune::BlockVector<Dune::FieldVector<Scalar,1>  > FaceVector;
 	  FaceVector kFace(numNeighbor), vFace(numNeighbor);
 	  KFace<FaceVector>(k, kFace, t, dt);
 	  VelocityFace<FaceVector>(k, kFace, vFace, t, dt);
@@ -410,26 +411,26 @@ void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM,
 	  {
 		  int indexj = vertexVectorOnLine[k].indexVertexVectorOnLine[m];
 
-		  FieldVector globalj = vertexVectorOnLine[indexj].nodePoint->geometry().corner(0);
-		  FieldVector distVect = globalj;
-		  distVect -= globali;
-		  double distVal = distVect.two_norm();
+		  FieldVector globalPos_j = vertexVectorOnLine[indexj].nodePoint->geometry().corner(0);
+		  FieldVector distVect = globalPos_j;
+		  distVect -= globalPos_i;
+		  Scalar distVal = distVect.two_norm();
 
-		  typedef Dune::FieldVector<double,dim> FieldVector;
+		  typedef Dune::FieldVector<Scalar,dim> FieldVector;
 		  FieldVector unitOuterNormal = vertexVectorOnLine[k].normal(vertexVectorOnLine, indexj);
 		  FieldVector unitPD = vertexVectorOnLine[k].unitPD(vertexVectorOnLine, indexj);
 
-		  double sign = distVect * unitOuterNormal;
+		  Scalar sign = distVect * unitOuterNormal;
 		  if (sign>0) sign=1.0;
 		  else sign=-1.0;
 
 		  A[indexi][indexi] += 1.0 * density * kFace[m] * crossArea * 1.0 * sign / distVal;
 		  A[indexi][indexj] += -1.0 * density * kFace[m] * crossArea * 1.0 * sign / distVal;
 
-		  double gravitySign = unitPD * unitOuterNormal;
+		  Scalar gravitySign = unitPD * unitOuterNormal;
 		  if (gravitySign>0) gravitySign=1.0;
 		  else gravitySign=-1.0;
-		  double densityFace = density;
+		  Scalar densityFace = density;
 		  f[indexi] += -1.0 * density * (kFace[m] * densityFace * (gravity*unitPD)) * crossArea * gravitySign; // effect of gravity Force on velocity
 	  }
 
@@ -438,7 +439,7 @@ void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM,
 	  {
 		  int boundaryId = (int) vertexVectorOnLine[k].parameter[1];
 		  int boundaryType;
-		  double boundaryValue = boundaryConditionP(boundaryId, t, boundaryType);
+		  Scalar boundaryValue = boundaryConditionP(boundaryId, t, boundaryType);
 		  if (boundaryType == 2) // if neumann flow boundary
 		  {
 
@@ -450,17 +451,17 @@ void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM,
 }
 
 
-template<class BCP, class BCV, class ICP, class ICV, class SST, class Press, class Lmbd, class LmbdLocal, class Grid, class MapperCDIM, class MapperNodeGlobalIDtoOnOutIndexType, class VertexVectorOnLineType, class VertexVectorOutLineType>
-void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM, MapperNodeGlobalIDtoOnOutIndexType, VertexVectorOnLineType, VertexVectorOutLineType>::update(void)
+template<class BCP, class BCV, class ICP, class ICV, class SST, class Press, class Lmbd, class LmbdLocal, class Grid, class VertexMapper, class MapperNodeGlobalIDtoOnOutIndexType, class VertexVectorOnLineType, class VertexVectorOutLineType>
+void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, VertexMapper, MapperNodeGlobalIDtoOnOutIndexType, VertexVectorOnLineType, VertexVectorOutLineType>::update(void)
 {
-	double tstart;
-	double tend;
-	double max_dt;
-	double first_dt;
-	double CFL_factor;
+	Scalar tstart;
+	Scalar tend;
+	Scalar max_dt;
+	Scalar first_dt;
+	Scalar CFL_factor;
 	int flag;
 	int n_iter;
-	double max_def;
+	Scalar max_def;
 	int modulo, stages;
 
 	// get timeloop options
@@ -486,8 +487,8 @@ void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM,
 //	<< " <Collection>" << std::endl;
 
 	// now do the time steps
-	double dt = max_dt;
-	double t = tstart;
+	Scalar dt = max_dt;
+	Scalar t = tstart;
 //	int k = 0;
 //	std::cout.setf (std::ios::scientific, std::ios::floatfield);
 
@@ -508,7 +509,7 @@ void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM,
 //		if (k%modulo==0)
 //		{
 //			// create pressureVtkOutput vector with 0 value , size=sizeOfBigGridNodes and copy pressure values from pipe pressure
-//			int sizeOfNodes = mapperCDim.size();
+//			int sizeOfNodes = vMap.size();
 //			std::cout <<sizeOfNodes << std::endl;
 //			Press pressureVtkOutput(sizeOfNodes);
 //			pressureVtkOutput = 0;
@@ -539,8 +540,8 @@ void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM,
 	return;
 }
 
-template<class BCP, class BCV, class ICP, class ICV, class SST, class Press, class Lmbd, class LmbdLocal, class Grid, class MapperCDIM, class MapperNodeGlobalIDtoOnOutIndexType, class VertexVectorOnLineType, class VertexVectorOutLineType>
-void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM, MapperNodeGlobalIDtoOnOutIndexType, VertexVectorOnLineType, VertexVectorOutLineType>::Iteration (double t, double dt, double max_def)
+template<class BCP, class BCV, class ICP, class ICV, class SST, class Press, class Lmbd, class LmbdLocal, class Grid, class VertexMapper, class MapperNodeGlobalIDtoOnOutIndexType, class VertexVectorOnLineType, class VertexVectorOutLineType>
+void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, VertexMapper, MapperNodeGlobalIDtoOnOutIndexType, VertexVectorOnLineType, VertexVectorOutLineType>::Iteration (Scalar t, Scalar dt, Scalar max_def)
 {
 //	int nElem =  vertexVectorOnLine.size();
 //	int systemSize = nElem;
@@ -557,9 +558,9 @@ void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM,
 		Press deltaPressure = pressureIt;
 		deltaPressure -= pressureOldIt;
 
-		double deltaPressureTwoNorm = deltaPressure.two_norm();
-		double pressureItTwoNorm = pressureIt.two_norm();
-		double defectPressure;
+		Scalar deltaPressureTwoNorm = deltaPressure.two_norm();
+		Scalar pressureItTwoNorm = pressureIt.two_norm();
+		Scalar defectPressure;
 
 		if (pressureItTwoNorm == 0.0)
 		{
@@ -590,8 +591,8 @@ void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM,
   return;
 }
 
-template<class BCP, class BCV, class ICP, class ICV, class SST, class Press, class Lmbd, class LmbdLocal, class Grid, class MapperCDIM, class MapperNodeGlobalIDtoOnOutIndexType, class VertexVectorOnLineType, class VertexVectorOutLineType>
-void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM, MapperNodeGlobalIDtoOnOutIndexType, VertexVectorOnLineType, VertexVectorOutLineType>::IterationStep_Mass (double t, double dt, Press& pressureIt)
+template<class BCP, class BCV, class ICP, class ICV, class SST, class Press, class Lmbd, class LmbdLocal, class Grid, class VertexMapper, class MapperNodeGlobalIDtoOnOutIndexType, class VertexVectorOnLineType, class VertexVectorOutLineType>
+void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, VertexMapper, MapperNodeGlobalIDtoOnOutIndexType, VertexVectorOnLineType, VertexVectorOutLineType>::IterationStep_Mass (Scalar t, Scalar dt, Press& pressureIt)
 {
 	int nElem = vertexVectorOnLine.size();
 	int systemSize = nElem;
@@ -601,7 +602,7 @@ void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM,
 	Press SolutionVector(systemSize);
 	f=0;
 	SolutionVector=0;
-	typedef Dune::FieldMatrix<double,1,1> MB;
+	typedef Dune::FieldMatrix<Scalar,1,1> MB;
 	Dune::BCRSMatrix<MB> A(systemSize, systemSize, Dune::BCRSMatrix<MB>::random);
 
 	// determine matrix row sizes
@@ -650,7 +651,7 @@ void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM,
     	{
     		int boundaryId = (int) vertexVectorOnLine[k].parameter[1];
         	int boundaryType;
-           	double boundaryConditionValue = boundaryConditionP(boundaryId, t, boundaryType);
+           	Scalar boundaryConditionValue = boundaryConditionP(boundaryId, t, boundaryType);
            	if (boundaryType == 1) // if dirichlet boundary
            	{
            		int indexi = k;
@@ -664,7 +665,7 @@ void PipeFlow<BCP, BCV, ICP, ICV, SST, Press, Lmbd, LmbdLocal, Grid, MapperCDIM,
 //	printvector(std::cout,f,"right hand side","row",200,1);
 //	printmatrix(std::cout,A,"matrix","",8,1);
 	// set up the high-level solver objects
-	typedef Dune::FieldVector<double, 1> VB;
+	typedef Dune::FieldVector<Scalar, 1> VB;
 	typedef Dune::BlockVector<VB> Vector;
 	typedef Dune::BCRSMatrix<MB> Matrix;
 	Dune::MatrixAdapter<Matrix,Vector,Vector> op(A);        // make linear operator from A
