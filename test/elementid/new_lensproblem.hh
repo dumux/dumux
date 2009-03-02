@@ -36,6 +36,9 @@ namespace Dune
 namespace Lens
 {
 // The problem controller class
+
+/** \todo Please doc me! */
+
 template<class ScalarT = double>
 class PwSnLensProblem : public PwSnLensDomain<ScalarT>
 {
