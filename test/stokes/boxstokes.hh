@@ -25,6 +25,9 @@
 
 namespace Dune
 {
+
+/** \todo Please doc me! */
+
 template<class Grid, class Scalar, class ProblemType, class LocalJacobian,
          class FunctionType, class OperatorAssembler>
 class BoxStokes
@@ -59,7 +62,7 @@ public:
 
 
 
-
+/** \todo Please doc me! */
 
 template<class Grid, class Scalar, int dim>
 class LeafP1BoxStokes : public BoxStokes<Grid, Scalar, StokesProblem<Grid, Scalar>, BoxStokesJacobian<Grid, Scalar>,

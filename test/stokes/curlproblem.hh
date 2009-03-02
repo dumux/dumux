@@ -7,6 +7,8 @@
 
 namespace Dune {
 
+/** \todo Please doc me! */
+
 template<class G, class RT>
 class CurlProblem : public StokesProblem<G, RT>
 {
