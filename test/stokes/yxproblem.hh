@@ -57,7 +57,7 @@ public:
             const IntersectionIterator& intersectionIt,
             const FieldVector<Scalar,dim>& localPos) const
     {
-        if (globalPos[0] < eps_ || globalPos[1] < eps_ || globalPos[1] > 1 - eps_)
+        if (globalPos[0] < eps_)// || globalPos[1] < eps_)// || globalPos[1] > 1 - eps_)
             return BoundaryConditions::dirichlet;
         else
             return BoundaryConditions::neumann;
@@ -89,14 +89,8 @@ public:
 
         Scalar muGradVNN = muGradVN*normal;
 
-        if (globalPos[0] > 1 - eps_)
-        {
-            result = normal;
-            result *= muGradVNN;
-        }
-        else {
-            result = muGradVN;
-        }
+        result = normal;
+        result *= muGradVNN;
         result -= pN;
 
         return result;
@@ -112,10 +106,7 @@ public:
             const IntersectionIterator& intersectionIt,
             const FieldVector<Scalar,dim>& localPos) const
     {
-        if (globalPos[0] > 1 - eps_)
-            return (1.0/mu(globalPos, element, localPos));
-        else
-            return 0;
+        return (1.0/mu(globalPos, element, localPos));
     }
 
     YXProblem()

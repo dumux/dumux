@@ -8,8 +8,6 @@
 namespace Dune
 {
 
-/** \todo Please doc me! */
-
 template<class Grid, class Scalar>
 class DarcyParameters  : public CoupledPorousMediaProblem<Grid, Scalar>
 {
@@ -25,7 +23,7 @@ public:
         for (int i=0; i<dim; i++)
             for (int j=0; j<dim; j++)
                 if (i==j)
-                    permeability_[i][j] = 1.0;//5.0e-3;//5.88e-5;
+                    permeability_[i][j] = 1.0;
                 else
                     permeability_[i][j] = 0;
     }
@@ -46,9 +44,7 @@ public:
 			const IntersectionIterator& intersectionIt,
 			const FieldVector<Scalar,dim>& localPos) const
   {
- 	if (globalPos[0] > 2 - eps_)
-// 	        || (globalPos[1] > 1 - eps_ && globalPos[0] < 1.25)
-// 	       || (globalPos[1] < eps_ && globalPos[0]  < 1.25) )//4 - eps_)
+ 	if (globalPos[0] > 4 - eps_ || globalPos[1] < eps_)
 	  return BoundaryConditions::dirichlet;
 
 	return BoundaryConditions::neumann;
@@ -67,16 +63,16 @@ public:
             const IntersectionIterator& intersectionIt,
             const FieldVector<Scalar,dim>& localPos) const
   {
-        if (globalPos[0] > 1 + eps_)
-        {
-            FieldVector<Scalar,dim> KGradU(0);
-            permeability_.umv(exactGrad(globalPos), KGradU);
-
-            // ASSUMING face-wise constant normal
-            FieldVector<Scalar, dim-1> localDimM1(0);
-            return -(KGradU*intersectionIt->unitOuterNormal(localDimM1));
-        }
-        else
+//        if (globalPos[0] > 1 + eps_)
+//        {
+//            FieldVector<Scalar,dim> KGradU(0);
+//            permeability_.umv(exactGrad(globalPos), KGradU);
+//
+//            // ASSUMING face-wise constant normal
+//            FieldVector<Scalar, dim-1> localDimM1(0);
+//            return -(KGradU*intersectionIt->unitOuterNormal(localDimM1));
+//        }
+//        else
             return 0;
   }
 

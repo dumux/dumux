@@ -148,13 +148,13 @@ namespace Dune
 
                   int globalId = vertexmapper.template map<dim>(entity, sfs[i].entity());
 
-              	// initialize cell concentration
                   for (int comp = 0; comp < dim; comp++)
-                      (*(this->u))[globalId][comp] = this->problem.velocity(global)[comp];
+                      (*(this->u))[globalId][comp] = 0;//this->problem.velocity(global)[comp];
 
                   (*(this->u))[globalId][dim] = 0;
               }
           }
+          (*(this->u))[34][dim] = 0.75;
 
           // set Dirichlet boundary conditions
           for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
@@ -224,7 +224,7 @@ namespace Dune
           typedef typename GV::template Codim<0>::Iterator Iterator;
 
           Iterator it = gridview.template begin<0>();
-          unsigned int globalId = vertexmapper.template map<dim>(*it, 3);
+          unsigned int globalId = 34;//vertexmapper.template map<dim>(*it, 3);
 
           for (typename MatrixType::RowIterator i=A.begin(); i!=A.end(); ++i)
               if(i.index()==globalId)

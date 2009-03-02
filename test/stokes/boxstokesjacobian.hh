@@ -62,7 +62,7 @@ namespace Dune
     : BoxJacobianType(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_),
       problem(params)
     {
-    	alpha = 0;//-1e-3;
+    	alpha = -1.0e-3;
       this->analytic = false;
     }
 
@@ -128,7 +128,10 @@ namespace Dune
 				//std::cout << this->fvGeom.subContVol[vert].global << ": N = " << averagedNormal << ", cond = " << this->bctype[vert][0] << std::endl;
 
 				if (faces == 2 && this->fvGeom.numVertices == 4)
-					this->def[vert][dim] = sol[0][dim] + sol[3][dim] - sol[1][dim] - sol[2][dim];
+				{
+					//this->def[vert][1] = sol[0][1] + sol[3][1] - sol[1][1] - sol[2][1];
+                    this->def[vert][dim] = sol[0][dim] + sol[3][dim] - sol[1][dim] - sol[2][dim];
+				}
 				else if (this->bctype[vert][0] == BoundaryConditions::dirichlet)
 					this->def[vert][dim] = defect;
 				else // de-stabilize

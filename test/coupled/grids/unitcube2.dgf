@@ -1,7 +1,7 @@
 DGF
 Interval
 0 0   % first corner 
-2 1 % 4 1   % second corner
+4 1 % 4 1   % second corner
 16 8 % 120 30   % 24 cells in x and 16 in y direction
 # 
 

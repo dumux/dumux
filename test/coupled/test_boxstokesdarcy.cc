@@ -14,6 +14,7 @@
 #include <dumux/timedisc/timeloop.hh>
 #include <dumux/coupled/boxstokesdarcy.hh>
 #include "yxproblem.hh"
+#include "lshapedproblem.hh"
 #include "../stokes/boxstokes.hh"
 #include "boxdiffusion.hh"
 #include <boost/format.hpp>
@@ -153,7 +154,7 @@ int main(int argc, char** argv)
             Dune::GeometryType gt = it->geometry().type();
             const Dune::FieldVector<NumberType,dim>& local = Dune::ReferenceElements<NumberType,dim>::general(gt).position(0, 0);
             Dune::FieldVector<NumberType,dim> global = it->geometry().global(local);
-            if (global[0] < 1)
+            if (global[0] < 1.5 || global[1] > 0.5)
                 subGridStokes.addPartial(it);
             else
                 subGridDarcy.addPartial(it);
@@ -161,7 +162,7 @@ int main(int argc, char** argv)
         subGridStokes.createEnd();
         subGridDarcy.createEnd();
 
-        Dune::YXProblem<SubGridType, NumberType> stokesProblem;
+        Dune::LShapedProblem<SubGridType, NumberType> stokesProblem;
         typedef Dune::LeafP1BoxStokes<SubGridType, NumberType, dim> BoxStokes;
         BoxStokes boxStokes(subGridStokes, stokesProblem);
 
