@@ -25,6 +25,9 @@
 
 namespace Dune
 {
+
+/** \todo Please doc me! */
+
 template<class G, class RT, class ProblemType, class LocalJacobian,
 class FunctionType, class OperatorAssembler>
 class BoxDiffusion
@@ -51,6 +54,7 @@ public:
     FunctionType uOldTimeStep;
 };
 
+/** \todo Please doc me! */
 
 template<class G, class RT, class GlobalToPipeMapper, class VertexMapper, class VertexVectorOnLineType, int m=1>
 class LeafP1BoxDiffusion : public BoxDiffusion<G, RT, DiffusionParameters<G, RT, GlobalToPipeMapper, VertexMapper, VertexVectorOnLineType>, BoxDiffusionJacobian<G, RT, GlobalToPipeMapper, VertexMapper, VertexVectorOnLineType>,

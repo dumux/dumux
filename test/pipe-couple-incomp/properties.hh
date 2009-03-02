@@ -1,4 +1,6 @@
 
+/** \todo Please doc me! */
+
 class Water
 {
 public:
@@ -25,6 +27,8 @@ public:
   static const double molarMass = 0.018016; // [kg/mole]
 };
 
+/** \todo Please doc me! */
+
 class Air
 {
 public:
@@ -48,6 +52,8 @@ public:
   }
   static const double molarMass = 0.02896; // [kg/mole]
 };
+
+/** \todo Please doc me! */
 
 class Uniform
 {

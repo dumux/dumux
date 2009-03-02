@@ -1,5 +1,8 @@
 #include<dune/grid/common/mcmgmapper.hh>
 
+
+/** \todo Please doc me! */
+
 class GlobalNodeIdCompare {
 public:
     bool operator() (const unsigned& globalId1, const unsigned& globalId2) const
@@ -7,6 +10,8 @@ public:
         return (globalId1 < globalId2);
     }
 };
+
+/** \todo Please doc me! */
 
 class VertexCompare {
 public:
@@ -20,6 +25,8 @@ public:
         return strcmp(stringP1, stringP2) < 0;
     }
 };
+
+/** \todo Please doc me! */
 
 template <class GridType>
 class VertexOnLine
@@ -145,6 +152,8 @@ Dune::FieldVector<double,GridType::dimension> VertexOnLine<GridType>::unitPDBF(V
         throw exception;
     }
 };
+
+/** \todo Please doc me! */
 
 template <class GridType>
 class VertexOutLine
