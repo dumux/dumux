@@ -14,6 +14,8 @@
 namespace Dune
 {
 
+/** \todo Please doc me! */
+
 template<class G, class RT>
 class HomogeneousSoil: public Matrix2p<G,RT>
 {
@@ -92,6 +94,8 @@ private:
 	FieldMatrix<DT,n,n> K_;
 
 };
+
+/** \todo Please doc me! */
 
 template<class G, class RT>
 class HeterogeneousSoil: public Matrix2p<G,RT>
