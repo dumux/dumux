@@ -1,3 +1,6 @@
+
+/** \todo Please doc me! */
+
 class PressureBoundary{
 public:
     // boundaryType 1 -> Dirichlet, 2 -> Neumann [kg/(m2*s)], 3 -> FreeFlow
@@ -25,6 +28,8 @@ public:
     {
     }
 };
+
+/** \todo Please doc me! */
 
 class VelocityBoundary{
 public:
@@ -54,6 +59,8 @@ public:
     }
 };
 
+/** \todo Please doc me! */
+
 template<class GlobalPosition>
 class ICPressurePipe {
 public:
@@ -74,6 +81,8 @@ public:
     }
 };
 
+/** \todo Please doc me! */
+
 template<class GlobalPosition>
 class ICVelocityPipe {
 public:
@@ -92,6 +101,7 @@ public:
     {
     }
 };
+/** \todo Please doc me! */
 
 template<class GlobalPosition>
 class sourceSinkPipe {

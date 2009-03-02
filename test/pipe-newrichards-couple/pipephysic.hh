@@ -45,6 +45,8 @@ public:
     }
 };
 
+/** \todo Please doc me! */
+
 template<class GlobalPosition>
 class LambdaLocal {
 public:
