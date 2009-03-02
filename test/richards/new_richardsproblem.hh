@@ -373,7 +373,7 @@ namespace Dune
                        int                         boundaryFaceIdx) const
         {
             values[pWIdx] = -1e5;
-
+            
             switch (isIt->boundaryId()) {
             case 5:
 //			values[pWIdx] = 1.0e+5 - densityW_*gravity_[2]*(height_-x[2]);

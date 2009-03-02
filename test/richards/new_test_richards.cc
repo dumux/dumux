@@ -21,12 +21,12 @@ int main(int argc, char** argv)
         const int dim = 3;
         typedef double                                   Scalar;
         typedef Dune::ALUCubeGrid<dim, dim>              Grid;
-        //        typedef Dune::YaspGrid<dim>                      Grid;
-        //        typedef Dune::UGGrid<dim>                        Grid;
+//        typedef Dune::YaspGrid<dim>                      Grid;
+//        typedef Dune::UGGrid<dim>                        Grid;
         typedef Dune::NewRichardsProblem<Grid, Scalar>   Problem;
         typedef Problem::DomainTraits::GlobalPosition    GlobalPosition;
         typedef Dune::GridPtr<Grid>                      GridPointer;
-
+        
         // initialize MPI, finalize is done automatically on exit
         Dune::MPIHelper::instance(argc, argv);
 
