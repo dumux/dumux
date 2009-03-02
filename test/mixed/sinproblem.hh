@@ -7,6 +7,8 @@
 
 namespace Dune {
 
+/** \todo Please doc me! */
+
 template<class G, class RT>
 class SinProblem : public StokesProblem<G, RT>
 {
@@ -77,6 +79,8 @@ public:
 
   double pi;
 };
+
+/** \todo Please doc me! */
 
 template<class G, class RT>
 class SinProblem2 : public StokesProblem<G, RT>
