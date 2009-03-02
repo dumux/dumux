@@ -47,12 +47,12 @@ class RichardsPwProblem : public RichardsProblem<G, RT> {
 public:
     enum {pWIdx =0 };
 
-    virtual RT temperature() const
-    { return 283.15; /* [K] */ }
-
-    // reference presure
-    virtual RT pN() const
-    { return 1e5; /* [Pa] */ }
+//    virtual RT temperature() const
+//    { return 283.15; /* [K] */ }
+//
+//    // reference presure
+//    virtual RT pN() const
+//    { return 1e5; /* [Pa] */ }
 
     virtual FieldVector<RT,m> q (const FieldVector<DT,dim>& x, const Entity& e,
                                  const FieldVector<DT,dim>& xi) const
