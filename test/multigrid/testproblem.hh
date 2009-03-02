@@ -1,6 +1,9 @@
 #ifndef TESTPROBLEM_HH
 #define TESTPROBLEM_HH
 
+
+/** \todo Please doc me! */
+
 template<class G, class RT>
 class TestModelProblem : public Dune::GroundwaterEquationParameters<G,RT>
 {
@@ -55,6 +58,8 @@ public:
 private:
   Dune::FieldMatrix<DT,n,n> large;
 };
+
+/** \todo Please doc me! */
 
 template<class G, typename ct, int dim>
 class LinearFunction : virtual public Dune::C0GridFunction<G,double,1>,
