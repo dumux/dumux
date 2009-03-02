@@ -1,6 +1,9 @@
 #ifndef DIFFUSIONPARAMETERS_HH
 #define DIFFUSIONPARAMETERS_HH
 
+
+/** \todo Please doc me! */
+
 template<class G, class RT>
 class DiffusionParameters
 {

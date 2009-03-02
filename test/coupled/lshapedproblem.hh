@@ -7,6 +7,8 @@
 
 namespace Dune {
 
+/** \todo Please doc me! */
+
 template<class Grid, class Scalar>
 class LShapedProblem : public StokesProblem<Grid, Scalar>
 {
