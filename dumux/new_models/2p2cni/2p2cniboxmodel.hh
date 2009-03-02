@@ -270,7 +270,7 @@ template<class ProblemT,
          class TwoPTwoCNITraitsT = TwoPTwoCNITraits<typename ProblemT::DomainTraits::Scalar,
                                                     TwoPTwoCPwSnTraits<typename ProblemT::DomainTraits::Scalar> > >
 class TwoPTwoCNIBoxModel
-    : public BoxScheme<TwoPTwoCNIBoxModel, // Implementation of the box scheme
+    : public BoxScheme<TwoPTwoCNIBoxModel<ProblemT,TwoPTwoCNITraitsT>, // Implementation of the box scheme
 
                        // The Traits for the BOX method
                        P1BoxTraits<typename ProblemT::DomainTraits::Scalar,
