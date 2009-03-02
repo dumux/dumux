@@ -195,6 +195,18 @@ public:
     { return localJacobian_; }
 
     /*!
+     * \brief A reference to the problem on which the model is applied.
+     */
+    const Problem &problem() const
+    { return problem_; }
+
+    /*!
+     * \brief A reference to the problem on which the model is applied.
+     */
+    Problem &problem()
+    { return problem_; }
+
+    /*!
      * \brief Reference to the grid of the spatial domain.
      */
     const Grid &grid() const
