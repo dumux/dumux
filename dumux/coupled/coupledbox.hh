@@ -95,16 +95,16 @@ public:
         if (subCVF == 0)
         {
             firstSolAtQ = firstSol[0];
-            firstSolAtQ *= 3.0;
-            firstSolAtQ += firstSol[1];
-            firstSolAtQ *= 0.25;
+//            firstSolAtQ *= 3.0;
+//            firstSolAtQ += firstSol[1];
+//            firstSolAtQ *= 0.25;
         }
         else
         {
             firstSolAtQ = firstSol[1];
-            firstSolAtQ *= 3.0;
-            firstSolAtQ += firstSol[0];
-            firstSolAtQ *= 0.25;
+//            firstSolAtQ *= 3.0;
+//            firstSolAtQ += firstSol[0];
+//            firstSolAtQ *= 0.25;
         }
     }
 
@@ -143,16 +143,16 @@ public:
         if (subCVF == 0)
         {
             secondSolAtQ = secondSol[0];
-            secondSolAtQ *= 3.0;
-            secondSolAtQ += secondSol[1];
-            secondSolAtQ *= 0.25;
+//            secondSolAtQ *= 3.0;
+//            secondSolAtQ += secondSol[1];
+//            secondSolAtQ *= 0.25;
         }
         else
         {
             secondSolAtQ = secondSol[1];
-            secondSolAtQ *= 3.0;
-            secondSolAtQ += secondSol[0];
-            secondSolAtQ *= 0.25;
+//            secondSolAtQ *= 3.0;
+//            secondSolAtQ += secondSol[0];
+//            secondSolAtQ *= 0.25;
         }
     }
 

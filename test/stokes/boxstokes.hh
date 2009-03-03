@@ -236,24 +236,9 @@ public:
 
     virtual void assemble()
     {
-        MatrixType& A = *(this->A);
         *(this->f) = 0;
         this->localJacobian().clearVisited();
         this->A.assemble(this->localJacobian(), this->u, this->f);
-
-        //modify matrix for introducing pressure boundary condition
-        const GV& gridview(this->grid_.leafView());
-        typedef typename GV::template Codim<0>::Iterator Iterator;
-
-        Iterator it = gridview.template begin<0>();
-        unsigned int globalId = 136;//vertexmapper.template map<dim>(*it, 3);
-
-        for (typename MatrixType::RowIterator i=A.begin(); i!=A.end(); ++i)
-            if(i.index()==globalId)
-                for (typename MatrixType::ColIterator j=(*i).begin(); j!=(*i).end(); ++j)
-                    A[i.index()][j.index()][dim] = 0.0;
-        A[globalId][globalId][dim][dim] = 1.0;
-        (*(this->f))[globalId][dim] = 0.0;
     }
 
     virtual void update(double& dt)
@@ -270,7 +255,22 @@ public:
 
     virtual void solve()
     {
+        // modify matrix and rhs for introducing pressure boundary condition
+        // this is done here and not in the assembly step, since it is not needed for the coupled setting
+        const GV& gridview(this->grid_.leafView());
+        typedef typename GV::template Codim<0>::Iterator Iterator;
+
+        Iterator it = gridview.template begin<0>();
+        unsigned int globalId = vertexmapper.template map<dim>(*it, 3);
+
         MatrixType& A = *(this->A);
+        for (typename MatrixType::RowIterator i=A.begin(); i!=A.end(); ++i)
+            if(i.index()==globalId)
+                for (typename MatrixType::ColIterator j=(*i).begin(); j!=(*i).end(); ++j)
+                    A[i.index()][j.index()][dim] = 0.0;
+        A[globalId][globalId][dim][dim] = 1.0;
+        (*(this->f))[globalId][dim] = 0.0;
+
         Operator op(A);  // make operator out of matrix
         double red=1E-14;
 

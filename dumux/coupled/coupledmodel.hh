@@ -34,8 +34,8 @@ public:
 
         if (assembleGlobalSystem_)
         {
-            //            firstModel_.assemble();
-            //            secondModel_.assemble();
+            //firstModel_.assemble();
+            //secondModel_.assemble();
 
             const typename FirstMatrixType::block_type::size_type rowsInBlock1 = FirstMatrixType::block_type::rows;
             const typename FirstMatrixType::block_type::size_type colsInBlock1 = FirstMatrixType::block_type::cols;

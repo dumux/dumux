@@ -70,8 +70,8 @@ int main(int argc, char** argv)
         typedef double NumberType;
 
         // geometry
-        typedef Dune::ALUSimplexGrid<dim,dim> GridType;
-        //    typedef Dune::SGrid<dim,dim> GridType;
+        //typedef Dune::ALUSimplexGrid<dim,dim> GridType;
+        typedef Dune::SGrid<dim,dim> GridType;
         Dune::GridPtr<GridType> gridPtr( argv[1] );
         GridType& grid = *gridPtr;
 
@@ -100,13 +100,13 @@ int main(int argc, char** argv)
         const int vOrder = 2;
         const int pOrder = 1;
         DGStokesParameters parameters;
-        parameters.sigma = 1.0;
+        parameters.sigma = 0.1;
         parameters.mu = 0.01;
         Dune::LShapedProblem<SubGridType, double> stokesProblem;
         typedef Dune::DGStokes<SubGridType, vOrder, pOrder> DGStokes;
         DGStokes dGStokes(subGridLeft, stokesProblem, parameters);
 
-        DarcyParameters<SubGridType,NumberType> darcyParam;
+        Dune::DarcyParameters<SubGridType,NumberType> darcyParam;
         typedef Dune::LeafP1BoxDiffusion<SubGridType, NumberType> DarcyModel;
         DarcyModel darcyModel(subGridRight, darcyParam);
 

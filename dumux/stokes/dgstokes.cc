@@ -799,80 +799,10 @@ void DGStokes<G,v_order,p_order>::assembleStokesSystem()
     ShapeFunctionSet psfs(p_order); // for pressure
 
     int vdof=vsfs.size()*dim; // dim velocity components and total velocity sfs size
-    //int pdof=psfs.size();
-    //int ndof=vdof+pdof; // total dofs per element
-    //vsfs.print(std::cout);
-
-    // assembling on the finest level / leaf level
-    //level=grid.maxLevel();
-    //istl matrix
-    // N is = (the no of blocks of size=BlockSize) = no of elements
-    //BlockSize is ndof;
-    // N is now no of elements and each elements contain a block of ndof = BlockSize
-    //int N = grid.size(level, 0); // per level
-    int N = grid.size(0); // per leaf
-    std::cout<<"leaf size: "<<N<<" fine level size: "<<grid.size(level,0)<<std::endl;
-    LMatrix tmp(N,N,LMatrix::row_wise);
-    typename LMatrix::CreateIterator mit=tmp.createbegin();
-
-    // build up the matrix structure
-
-
-    ElementLeafIterator eit = grid.template leafbegin<0>();
-    ElementLeafIterator eitend = grid.template leafend<0>();
-
-    // ElementLevelIterator eit = grid.template lbegin<0>(level);
-    //     ElementLevelIterator eitend = grid.template lend<0>(level);
-
-    for (; eit != eitend; ++eit)
-    {
-        // insert a non zero entry for myself
-        //mit.insert(grid.levelIndexSet(level).index(*eit));
-        mit.insert(grid.leafIndexSet().index(*eit));
-        assert(mit != tmp.createend());
-
-        //IntersectionLevelIterator endit = eit->ilevelend();
-        //IntersectionLevelIterator iit = eit->ilevelbegin();
-        IntersectionIterator endit = eit->ileafend();
-        IntersectionIterator iit = eit->ileafbegin();
-
-
-        // insert a non zero entry for each neighbour
-        for(; iit != endit; ++iit)
-        {
-
-            if (iit->neighbor())
-            {
-                //mit.insert(grid.levelIndexSet(level).index(*iit->outside()));
-                mit.insert(grid.leafIndexSet().index(*iit->outside()));
-            }
-        }
-        ++mit;
-    }
-
-
-
-    tmp = 0.0;
-    A = tmp;
-    LVector tmpv(N);
-    b = tmpv;
-    // b.resize(N, false);
-    b = 0.0;
-    solution =tmpv;
-    solution =0;
-
-
 
     // loop over all elements or leaf
-
-
-    //  ElementLevelIterator it = grid.template lbegin<0>(level);
-    //   ElementLevelIterator itend = grid.template lend<0>(level);
-
     ElementLeafIterator it = grid.template leafbegin<0>();
     ElementLeafIterator itend = grid.template leafend<0>();
-
-
     for (; it != itend; ++it)
     {
         EntityPointer epointer = it;
@@ -905,65 +835,19 @@ void DGStokes<G,v_order,p_order>::assembleStokesSystem()
                 if (bctype == BoundaryConditions::dirichlet)
                     dgfem.assembleDirichletBoundaryTerm(*it,is,A[eid][eid],b[eid]);
                 else if (bctype == BoundaryConditions::neumann)
-                    dgfem.assembleNeumannBoundaryTerm(*it,is,A[eid][eid],b[eid]);
-                else // ASSUME that we are on a interface to porous media
-                    dgfem.assembleInterfaceTerm(*it,is,A[eid][eid],b[eid]);
-            }
-        }
-    }
-
-
-
-
-
-
-    //istl--------------
-
-    //printmatrix(std::cout,A,"Matrix A: ","row");
-
-    //printvector(std::cout,b,"Vector b: ","row");
-    //modify matrix for introducing pressure boundary condition
-    for (typename LMatrix::RowIterator i=A.begin(); i!=A.end(); ++i)
-        for (typename LMatrix::ColIterator j=(*i).begin(); j!=(*i).end(); ++j)
-        {
-            if(i.index()==0) // 0'th block
-            {
-                for(int n=0;n<BlockSize;++n)
                 {
-                    A[i.index()][j.index()][vdof][n]=0.0;
-                    if((j.index()==0) &(n==vdof))
-                    {
-                        A[i.index()][j.index()][vdof][n]=1.0;
-                    }
+                    ctype beaversJosephC = dgfem.problem().beaversJosephC(faceGlobal, *it, is, faceLocalDim);
+
+                    if (beaversJosephC == 0) // standard Neumann boundary
+                        dgfem.assembleNeumannBoundaryTerm(*it,is,A[eid][eid],b[eid]);
+                    else // ASSUME that we are on a interface to porous media
+                        dgfem.assembleInterfaceTerm(*it,is,A[eid][eid],b[eid]);
                 }
             }
         }
-    //istl--------------
-
-
-
-
-    //istl--------------
-    // applying pressure boundary condition
-    // changing rhs entry
-    //printvector(std::cout,b,"Vector b: ","row");
-    for(typename LVector::iterator i=b.begin();i!=b.end();++i)
-    {
-        if(i.index()==0)
-        {
-            b[i.index()][vdof]=0.0;
-        }
     }
 
-    //printvector(std::cout,b,"Vector b: ","row");
-    //printmatrix(std::cout,A,"Matrix A: ","row");
-    //istl--------------
-
-
     std::cout<<"Size of the Matrix(in blocks): "<<A.N()<<" X "<<A.M()<<" with blocksize = "<<BlockSize<<std::endl;
-
-
-
 }// end of assemble
 
 
@@ -971,6 +855,27 @@ void DGStokes<G,v_order,p_order>::assembleStokesSystem()
 template<class G, int v_order, int p_order>
 void DGStokes<G,v_order,p_order>::solveStokesSystem()
 {
+    ShapeFunctionSet vsfs(v_order);; //for  velocity
+    int vdof=vsfs.size()*dim; // dim velocity components and total velocity sfs size
+
+    //modify matrix and rhsfor introducing pressure boundary condition
+    for (typename LMatrix::RowIterator i=A.begin(); i!=A.end(); ++i)
+        for (typename LMatrix::ColIterator j=(*i).begin(); j!=(*i).end(); ++j)
+        {
+            if(i.index()==0) // 0'th block
+            {
+                b[i.index()][vdof]=0.0;
+                for(int n=0;n<BlockSize;++n)
+                {
+                    A[i.index()][j.index()][vdof][n]=0.0;
+                    if((j.index()==i.index()) &(n==vdof))
+                    {
+                        A[i.index()][j.index()][vdof][n]=1.0;
+                    }
+                }
+            }
+        }
+
     std::cout << "Solving Stokes System using ISTL solver\n";
     std::cout<<"============================================="<<std::endl;
 

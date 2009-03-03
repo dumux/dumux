@@ -164,8 +164,50 @@ public:
         return solution;
     }
 
+    LVector& solOldNewtonStep()
+    {
+        return uOldNewtonStep;
+    }
+
     void initial()
-    {}
+    {
+        int N = grid.size(0); // per leaf
+        std::cout<<"leaf size: "<<N<<" fine level size: "<<grid.size(level,0)<<std::endl;
+        LMatrix tmp(N,N,LMatrix::row_wise);
+        typename LMatrix::CreateIterator mit=tmp.createbegin();
+
+        ElementLeafIterator eit = grid.template leafbegin<0>();
+        ElementLeafIterator eitend = grid.template leafend<0>();
+
+        for (; eit != eitend; ++eit)
+        {
+            mit.insert(grid.leafIndexSet().index(*eit));
+            assert(mit != tmp.createend());
+
+            IntersectionIterator endit = eit->ileafend();
+            IntersectionIterator iit = eit->ileafbegin();
+
+            for(; iit != endit; ++iit)
+            {
+               if (iit->neighbor())
+                {
+                    mit.insert(grid.leafIndexSet().index(*iit->outside()));
+                }
+            }
+            ++mit;
+        }
+
+        tmp = 0;
+        A = tmp;
+        LVector tmpv(N);
+        b = tmpv;
+        // b.resize(N, false);
+        b = 0.0;
+        solution = tmpv;
+        solution = 0;
+        uOldNewtonStep = tmpv;
+        uOldNewtonStep = 0;
+    }
 
     DGStokes(Grid &g, StokesProblem<Grid, ctype>& prob, DGStokesParameters& par)
         : grid(g),level(g.maxLevel()), dgfem(g,prob,par)
@@ -208,6 +250,7 @@ public:
     LMatrix A;
     LVector b;
     LVector solution;
+    LVector uOldNewtonStep;
 };
 
 
