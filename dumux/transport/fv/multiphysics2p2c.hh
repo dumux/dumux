@@ -157,7 +157,7 @@ public:
 
     void satFlash(double sat, double p, double temp, double poro, double& C1, double& C2, double& Xw1, double& Xn1);
 
-    void postupdate(double t, double dt);
+    void postProcessUpdate(double t, double dt);
 
     // graphical output
     void vtkout(const char* name, int k)
@@ -177,7 +177,7 @@ public:
                 C1[i] = problem.variables.totalConcentration[i];
         }
 
-        Dune::VTKWriter<GV> vtkwriter(grid.levelView(0));
+        Dune::VTKWriter<GV> vtkwriter(grid_.levelView(0));
         vtkwriter.addCellData(problem.variables.saturation, "saturation [-]");
         vtkwriter.addCellData(problem.variables.pressure, "pressure[Pa]");
         vtkwriter.addCellData(C1, "total concentration 1 [kg/m^3]");
@@ -193,9 +193,12 @@ public:
         problem.variables.volErr /= timestep;
     }
 
+    const G& grid() const
+    { return grid_; }
+
 private:
     // common variables
-    G& grid;
+    G& grid_;
     int level_;
     const IS& indexset;
     EM elementmapper;
@@ -233,13 +236,13 @@ public:
                      const NumericalFlux<RT>& numFl = *(new Upwind<RT>),
                      const std::string solverName = "BiCGSTAB",
                      const std::string preconditionerName = "SeqILU0" )
-        :    grid(g), level_(lev), indexset(g.levelView(lev).indexSet()), reconstruct(rec),
-             numFlux(numFl), diffusivePart(diffPart), alphamax(amax),
-             problem(prob),
-             elementmapper(g, g.levelView(lev).indexSet()),
-             A(g.size(lev, 0),g.size(lev, 0), (2*dim+1)*g.size(lev, 0), BCRSMatrix<MB>::random), f(g.size(lev, 0)),
-             solverName_(solverName), preconditionerName_(preconditionerName),
-             T(283.15), mass("brkthrmp.dat")
+        :grid_(g), level_(lev), indexset(g.levelView(lev).indexSet()), reconstruct(rec),
+         numFlux(numFl), diffusivePart(diffPart), alphamax(amax),
+         problem(prob),
+         elementmapper(g, g.levelView(lev).indexSet()),
+         A(g.size(lev, 0),g.size(lev, 0), (2*dim+1)*g.size(lev, 0), BCRSMatrix<MB>::random), f(g.size(lev, 0)),
+         solverName_(solverName), preconditionerName_(preconditionerName),
+         T(283.15), mass("brkthrmp.dat")
     {
         problem.variables.volErr = 0;
         upd.resize(2 * indexset.size(0));
@@ -261,8 +264,8 @@ template<class G, class RT>
 void Multiphysics2p2c<G, RT>::initializeMatrix()
 {
     // determine matrix row sizes
-    Iterator eendit = grid.template lend<0>(level_);
-    for (Iterator it = grid.template lbegin<0>(level_); it != eendit; ++it)
+    Iterator eendit = grid_.template lend<0>(level_);
+    for (Iterator it = grid_.template lbegin<0>(level_); it != eendit; ++it)
     {
         // cell index
         int indexi = elementmapper.map(*it);
@@ -279,7 +282,7 @@ void Multiphysics2p2c<G, RT>::initializeMatrix()
     A.endrowsizes();
 
     // determine position of matrix entries
-    for (Iterator it = grid.template lbegin<0>(level_); it != eendit; ++it)
+    for (Iterator it = grid_.template lbegin<0>(level_); it != eendit; ++it)
     {
         // cell index
         int indexi = elementmapper.map(*it);
@@ -323,8 +326,8 @@ void Multiphysics2p2c<G, RT>::assemble(bool first, const RT t=0)
     if (first) problem.variables.pressure = 1e5;
 
     // iterate over all cells in the grid
-    Iterator eendit = grid.template lend<0>(level_);
-    Iterator it = grid.template lbegin<0>(level_);
+    Iterator eendit = grid_.template lend<0>(level_);
+    Iterator it = grid_.template lbegin<0>(level_);
     for (; it != eendit; ++it)
     {
         // get geometry infos about the cell...
@@ -734,8 +737,8 @@ void Multiphysics2p2c<G, RT>::totalVelocity(const RT t=0)
         if (gravity[k] != 0)
             hasGravity = true;
 
-    Iterator eendit = grid.template lend<0>(level_);
-    for (Iterator it = grid.template lbegin<0>(level_); it != eendit; ++it)
+    Iterator eendit = grid_.template lend<0>(level_);
+    for (Iterator it = grid_.template lbegin<0>(level_); it != eendit; ++it)
     {
 
         // some geometry infos about the cell
@@ -909,8 +912,8 @@ template<class G, class RT>
 void Multiphysics2p2c<G,RT>::initialguess()
 {
     // iterate through leaf grid an evaluate c0 at cell center
-    Iterator endit = grid.template lend<0>(level_);
-    for (Iterator it = grid.template lbegin<0>(level_); it != endit; ++it)
+    Iterator endit = grid_.template lend<0>(level_);
+    for (Iterator it = grid_.template lbegin<0>(level_); it != endit; ++it)
     {
         int index = indexset.index(*it);
 
@@ -962,8 +965,8 @@ template<class G, class RT>
 void Multiphysics2p2c<G,RT>::transportInitial()
 {
     // iterate through grid an evaluate c0 at cell center
-    Iterator endit = grid.template lend<0>(level_);
-    for (Iterator it = grid.template lbegin<0>(level_); it != endit; ++it)
+    Iterator endit = grid_.template lend<0>(level_);
+    for (Iterator it = grid_.template lbegin<0>(level_); it != endit; ++it)
     {
         int index = indexset.index(*it);
         int subI = subdomain[index];
@@ -1052,8 +1055,8 @@ int Multiphysics2p2c<G,RT>::concentrationUpdate(const RT t, RT& dt, Representati
     int which;
 
     // iterate over grid
-    Iterator endit = grid.template lend<0>(level_);
-    for (Iterator it = grid.template lbegin<0>(level_); it != endit; ++it)
+    Iterator endit = grid_.template lend<0>(level_);
+    for (Iterator it = grid_.template lbegin<0>(level_); it != endit; ++it)
     {
         // get cell geometry informations
         GeometryType gt = it->geometry().type(); //geometry type
@@ -1409,7 +1412,7 @@ void Multiphysics2p2c<G,RT>::satFlash(double sat, double p, double temp, double 
 }
 
 template<class G, class RT>
-void Multiphysics2p2c<G,RT>::postupdate(double t, double dt)
+void Multiphysics2p2c<G,RT>::postProcessUpdate(double t, double dt)
 {
     problem.variables.volErr = 0.;
     int size = elementmapper.size();
@@ -1419,8 +1422,8 @@ void Multiphysics2p2c<G,RT>::postupdate(double t, double dt)
     double viscosityL, viscosityG;
 
     // iterate through leaf grid an evaluate c0 at cell center
-    Iterator endit = grid.template lend<0>(level_);
-    for (Iterator it = grid.template lbegin<0>(level_); it != endit; ++it)
+    Iterator endit = grid_.template lend<0>(level_);
+    for (Iterator it = grid_.template lbegin<0>(level_); it != endit; ++it)
     {
         int indexi = indexset.index(*it);
         // get cell geometry informations
