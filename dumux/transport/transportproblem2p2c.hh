@@ -26,126 +26,115 @@ namespace Dune
 /** This base class defines all boundary and initial functions which are needed
  * for a decoupled 2p2c computation.
  */
-template<class G, class RT>
+template<class Grid, class Scalar>
 class TransportProblem2p2c
 {
-
-    typedef typename G::ctype DT;
-    enum {n=G::dimension, m=1, blocksize=2*G::dimension};
-    typedef typename G::Traits::template Codim<0>::Entity Entity;
+    enum {dim=Grid::dimension};
+    typedef typename Grid::Traits::template Codim<0>::Entity Entity;
 
 public:
     //! Type of concentration boundary condition.
     /**    either the concentration or the saturation have to be defined
      * on boundaries with dirichlet pressure BCs.
-     * @param x global coordinates
-     * @param e reference to the cell for which the function is to be evaluated
-     * @param xi local coordinates inside e
+     * @param globalPos global coordinates
+     * @param element reference to the cell for which the function is to be evaluated
+     * @param localPos local coordinates inside element
      */
-    virtual BoundaryConditions2p2c::Flags cbctype (const FieldVector<DT,n>& x, const Entity& e,
-                                                   const FieldVector<DT,n>& xi) const = 0;
+    virtual BoundaryConditions2p2c::Flags bc_type (const FieldVector<Scalar,dim>& globalPos, const Entity& element,
+                                                   const FieldVector<Scalar,dim>& localPos) const = 0;
 
     //! Type of concentration initisl condition.
     /**    either the concentration or the saturation have to be defined
      * as initial condition.
-     * @param x global coordinates
-     * @param e reference to the cell for which the function is to be evaluated
-     * @param xi local coordinates inside e
+     * @param globalPos global coordinates
+     * @param element reference to the cell for which the function is to be evaluated
+     * @param localPos local coordinates inside element
      */
-    virtual BoundaryConditions2p2c::Flags ictype (const FieldVector<DT,n>& x, const Entity& e,
-                                                  const FieldVector<DT,n>& xi) const = 0;
+    virtual BoundaryConditions2p2c::Flags initcond_type (const FieldVector<Scalar,dim>& globalPos, const Entity& element,
+                                                  const FieldVector<Scalar,dim>& localPos) const = 0;
 
     //! Type of pressure boundary condition.
     /**    Pressure (dirichlet) or flux (neumann) have to be defined on boundaries.
-     * @param x global coordinates
-     * @param e reference to the cell for which the function is to be evaluated
-     * @param xi local coordinates inside e
+     * @param globalPos global coordinates
+     * @param element reference to the cell for which the function is to be evaluated
+     * @param localPos local coordinates inside element
      */
-    virtual BoundaryConditions::Flags pbctype (const FieldVector<DT,n>& x, const Entity& e,
-                                               const FieldVector<DT,n>& xi) const = 0;
+    virtual BoundaryConditions::Flags press_bc_type (const FieldVector<Scalar,dim>& globalPos, const Entity& element,
+                                               const FieldVector<Scalar,dim>& localPos) const = 0;
 
     //! Permeability tensor \f$ [m^2] \f$
     /**
-     * @param x global coordinates
-     * @param e reference to the cell for which the function is to be evaluated
-     * @param xi local coordinates inside e
+     * @param globalPos global coordinates
+     * @param element reference to the cell for which the function is to be evaluated
+     * @param localPos local coordinates inside element
      */
-    //    virtual const FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
+    //    virtual const FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& globalPos, const Entity& element, const FieldVector<DT,n>& localPos) const
     //    {
-    //        return soil.K(x, e, xi);
+    //        return soil.K(globalPos, element, localPos);
     //    }
 
     //! Feed concentration boundary condition
     /** Feed concentration is the (global) mass fraction of component 1 in the mixture
-     * @param x global coordinates
-     * @param e reference to the cell for which the function is to be evaluated
-     * @param xi local coordinates inside e
+     * @param globalPos global coordinates
+     * @param element reference to the cell for which the function is to be evaluated
+     * @param localPos local coordinates inside element
      */
-    virtual RT gZ (const FieldVector<DT,n>& x, const Entity& e,
-                   const FieldVector<DT,n>& xi) const = 0;
+    virtual Scalar dirichletConcentration (const FieldVector<Scalar,dim>& globalPos, const Entity& element,
+                   const FieldVector<Scalar,dim>& localPos) const = 0;
 
     //! Saturation boundary condition
-    /** @param x global coordinates
-     * @param e reference to the cell for which the function is to be evaluated
-     * @param xi local coordinates inside e
+    /** @param globalPos global coordinates
+     * @param element reference to the cell for which the function is to be evaluated
+     * @param localPos local coordinates inside element
      */
-    virtual RT gS (const FieldVector<DT,n>& x, const Entity& e,
-                   const FieldVector<DT,n>& xi) const = 0;
+    virtual Scalar dirichletSat (const FieldVector<Scalar,dim>& globalPos, const Entity& element,
+                   const FieldVector<Scalar,dim>& localPos) const = 0;
 
     //! Pressure (dirichlet) boundary condition
-    /** @param x global coordinates
-     * @param e reference to the cell for which the function is to be evaluated
-     * @param xi local coordinates inside e
+    /** @param globalPos global coordinates
+     * @param element reference to the cell for which the function is to be evaluated
+     * @param localPos local coordinates inside element
      */
-    virtual RT gPress (const FieldVector<DT,n>& x, const Entity& e,
-                       const FieldVector<DT,n>& xi) const = 0;
+    virtual Scalar dirichlet (const FieldVector<Scalar,dim>& globalPos, const Entity& element,
+                       const FieldVector<Scalar,dim>& localPos) const = 0;
 
     //! Flux (neumann) boundary condition
-    /** @param x global coordinates
-     * @param e reference to the cell for which the function is to be evaluated
-     * @param xi local coordinates inside e
+    /** @param globalPos global coordinates
+     * @param element reference to the cell for which the function is to be evaluated
+     * @param localPos local coordinates inside element
      */
-    virtual FieldVector<RT,2> J (const FieldVector<DT,n>& x, const Entity& e,
-                                 const FieldVector<DT,n>& xi) const = 0;
+    virtual FieldVector<Scalar,2> neumann (const FieldVector<Scalar,dim>& globalPos, const Entity& element,
+                                 const FieldVector<Scalar,dim>& localPos) const = 0;
 
     //! Source of components
     /** Describes the source of the components per unit area
-     * @param x global coordinates
-     * @param e reference to the cell for which the function is to be evaluated
-     * @param xi local coordinates inside e
+     * @param globalPos global coordinates
+     * @param element reference to the cell for which the function is to be evaluated
+     * @param localPos local coordinates inside element
      */
-    virtual FieldVector<RT,2> q (const FieldVector<DT,n>& x, const Entity& e,
-                                 const FieldVector<DT,n>& xi) const = 0;
+    virtual FieldVector<Scalar,2> source (const FieldVector<Scalar,dim>& globalPos, const Entity& element,
+                                 const FieldVector<Scalar,dim>& localPos) const = 0;
 
     //! Saturation initial condition
-    /** @param x global coordinates
-     * @param e reference to the cell for which the function is to be evaluated
-     * @param xi local coordinates inside e
+    /** @param globalPos global coordinates
+     * @param element reference to the cell for which the function is to be evaluated
+     * @param localPos local coordinates inside element
      */
-    virtual RT S0 (const FieldVector<DT,n>& x, const Entity& e,
-                   const FieldVector<DT,n>& xi) const = 0;
+    virtual Scalar initSat (const FieldVector<Scalar,dim>& globalPos, const Entity& element,
+                   const FieldVector<Scalar,dim>& localPos) const = 0;
 
     //! Feed concentration initial condition
-    /** @param x global coordinates
-     * @param e reference to the cell for which the function is to be evaluated
-     * @param xi local coordinates inside e
+    /** @param globalPos global coordinates
+     * @param element reference to the cell for which the function is to be evaluated
+     * @param localPos local coordinates inside element
      */
-    virtual RT Z1_0 (const FieldVector<DT,n>& x, const Entity& e,
-                     const FieldVector<DT,n>& xi) const = 0;
-
-    //! Matrix porosity
-    /** @param x global coordinates
-     * @param e reference to the cell for which the function is to be evaluated
-     * @param xi local coordinates inside e
-     */
-    virtual RT porosity (const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
-    {
-        return soil.porosity(x, e, xi);
-    }
+    virtual Scalar initConcentration (const FieldVector<Scalar,dim>& globalPos, const Entity& element,
+                     const FieldVector<Scalar,dim>& localPos) const = 0;
 
     //! gravity vector
-    const FieldVector<DT,n>& gravity()
+    virtual const FieldVector<Scalar,dim> gravity()
     {
+        FieldVector<Scalar,dim> gravity_(0.);
         return gravity_;
     }
 
@@ -154,9 +143,10 @@ public:
     /**
      *
      */
-    TransportProblem2p2c(Dune::VariableClass2p2c<G, RT>& var, Liquid_GL& liq, Gas_GL& gas, Matrix2p<G, RT>& s, TwoPhaseRelations<G, RT>& law = *(new TwoPhaseRelations<G,RT>),
-                         const bool cap = false)
-        :variables(var), liquidPhase(liq), gasPhase(gas), soil(s), capillary(cap), materialLaw(law)
+
+    TransportProblem2p2c(Dune::VariableClass2p2c<Grid, Scalar>& var, Liquid_GL& liq, Gas_GL& gas, Matrix2p<Grid, Scalar>& s,
+            TwoPhaseRelations<Grid, Scalar>& law = *(new TwoPhaseRelations<Grid,Scalar>),const bool cap = false)
+        :variables(var), liquidPhase(liq), gasPhase(gas), soil(s), materialLaw(law), capillary(cap)
     {
     }
 
@@ -164,13 +154,12 @@ public:
     {
     }
 
-    FieldVector<DT,n> gravity_;
-    const bool capillary;
-    TwoPhaseRelations<G, RT>& materialLaw;
+    VariableClass2p2c<Grid, Scalar>& variables;
     Liquid_GL& liquidPhase;
     Gas_GL& gasPhase;
-    Matrix2p<G, RT>& soil;
-    VariableClass2p2c<G, RT>& variables;
+    Matrix2p<Grid, Scalar>& soil;
+    TwoPhaseRelations<Grid, Scalar>& materialLaw;
+    const bool capillary;
 };
 
 }

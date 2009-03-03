@@ -9,11 +9,10 @@
 namespace Dune
 {
 
-/** \todo Please doc me! */
-
-template<class G, class RT>
+//! Example problem class for decoupled 2p2c simulations
+template<class Grid, class Scalar>
 class Testproblem_2p2c
-    : public TransportProblem2p2c<G, RT>
+    : public TransportProblem2p2c<Grid, Scalar>
 {
     template<int dim>
     struct ElementLayout
@@ -24,103 +23,103 @@ class Testproblem_2p2c
         }
     };
 
-    typedef typename G::ctype DT;
-    enum {n=G::dimension, m=1, blocksize=2*G::dimension};
-    typedef typename G::Traits::template Codim<0>::Entity Entity;
-    typedef FieldVector<double, n> R1;
-    typedef typename G::Traits::LevelIndexSet IS;
-    typedef MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout> EM;
-
-private:
-    EM elementmapper;
+    enum {dim=Grid::dimension};
+    typedef typename Grid::Traits::template Codim<0>::Entity Entity;
 
 public:
 
-    BoundaryConditions2p2c::Flags cbctype (const FieldVector<DT,n>& x, const Entity& e,
-                                           const FieldVector<DT,n>& xi) const
+    virtual const FieldVector<Scalar,dim> gravity()
+    {
+        FieldVector<Scalar,dim> gravity_(0);
+        gravity_[1] = -10;
+        return gravity_;
+    }
+
+    BoundaryConditions2p2c::Flags bc_type (const FieldVector<Scalar, dim>& globalPos, const Entity& element,
+                                           const FieldVector<Scalar, dim>& localPos) const
     {
 
         return BoundaryConditions2p2c::concentration;
     }
 
-    BoundaryConditions2p2c::Flags ictype (const FieldVector<DT,n>& x, const Entity& e,
-                                          const FieldVector<DT,n>& xi) const
+    BoundaryConditions2p2c::Flags initcond_type (const FieldVector<Scalar, dim>& globalPos, const Entity& element,
+                                          const FieldVector<Scalar, dim>& localPos) const
     {
         return BoundaryConditions2p2c::concentration;
     }
 
-    BoundaryConditions::Flags pbctype (const Dune::FieldVector<DT,n>& x, const Entity& e,
-                                       const Dune::FieldVector<DT,n>& xi) const
+    BoundaryConditions::Flags press_bc_type (const Dune::FieldVector<Scalar, dim>& globalPos, const Entity& element,
+                                       const Dune::FieldVector<Scalar, dim>& localPos) const
     {
-        if (x[0] > 300-1E-6 || x[0] < 1e-6)
+        if (globalPos[0] > 300-1E-6 || globalPos[0] < 1e-6)
             return Dune::BoundaryConditions::dirichlet;
         // all other boundaries
         return Dune::BoundaryConditions::neumann;
     }
 
 
-    RT gPress (const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
+    Scalar dirichlet (const FieldVector<Scalar, dim>& globalPos, const Entity& element, const FieldVector<Scalar, dim>& localPos) const
     {
-        return (x[0] < 1e-6) ? 2e5 : 1e5;
+        return (globalPos[0] < 1e-6) ? 2e5 : 1e5;
     }
 
-    RT gZ (const FieldVector<DT,n>& x, const Entity& e,
-           const FieldVector<DT,n>& xi) const
+    Scalar dirichletConcentration (const FieldVector<Scalar, dim>& globalPos, const Entity& element,
+           const FieldVector<Scalar, dim>& localPos) const
     {
-        if (x[0] < 1e-6)
+        if (globalPos[0] < 1e-6)
             return 0;
         else
             return 1;
     }
 
-    RT gS (const FieldVector<DT,n>& x, const Entity& e,
-           const FieldVector<DT,n>& xi) const
+    Scalar dirichletSat (const FieldVector<Scalar, dim>& globalPos, const Entity& element,
+           const FieldVector<Scalar, dim>& localPos) const
     {
-        if (x[0] < 15)
+        if (globalPos[0] < 15)
             return 0;
         else
             return 0;
     }
 
-    virtual FieldVector<RT,2> J (const FieldVector<DT,n>& x, const Entity& e,
-                                 const FieldVector<DT,n>& xi) const
+    virtual FieldVector<Scalar,2> neumann (const FieldVector<Scalar, dim>& globalPos, const Entity& element,
+                                 const FieldVector<Scalar, dim>& localPos) const
     {
-        FieldVector<RT,2> J_(0);
+        FieldVector<Scalar,2> J_(0);
         return J_;
     }
 
-    virtual FieldVector<RT,2> q (const FieldVector<DT,n>& x, const Entity& e,
-                                 const FieldVector<DT,n>& xi) const
+    virtual FieldVector<Scalar,2> source (const FieldVector<Scalar, dim>& globalPos, const Entity& element,
+                                 const FieldVector<Scalar, dim>& localPos) const
     {
-        FieldVector<RT,2> q_(0);
-        //            FieldVector<DT,n> center(150); //center[1] = 200;
-        //            if ((x-center).two_norm()<8) q_[1] = 0.001;
+        FieldVector<Scalar,2> q_(0);
+        //            FieldVector<Scalar, dim> center(150); //center[1] = 200;
+        //            if ((globalPos-center).two_norm()<8) q_[1] = 0.001;
         return q_;
     }
 
-    RT S0 (const FieldVector<DT,n>& x, const Entity& e,
-           const FieldVector<DT,n>& xi) const
+    Scalar initSat (const FieldVector<Scalar, dim>& globalPos, const Entity& element,
+           const FieldVector<Scalar, dim>& localPos) const
     {
         return 0.999;
     }
 
-    RT Z1_0 (const FieldVector<DT,n>& x, const Entity& e,
-             const FieldVector<DT,n>& xi) const
+    Scalar initConcentration(const FieldVector<Scalar, dim>& globalPos, const Entity& element,
+             const FieldVector<Scalar, dim>& localPos) const
     {
-        //            FieldVector<DT,n> center(110); center[1] = 200;
-        //            if ((x-center).two_norm()<30) return 0;
-        //            if (fabs(x[0]-center[0])<30) return 1;
+        //            FieldVector<Scalar, dim> center(110); center[1] = 200;
+        //            if ((globalPos-center).two_norm()<30) return 0;
+        //            if (fabs(globalPos[0]-center[0])<30) return 1;
         return 1;
     }
 
-    Testproblem_2p2c(G& g, Dune::VariableClass2p2c<G, RT>& var, Liquid_GL& liq, Gas_GL& gas, Matrix2p<G, RT>& s, int level, TwoPhaseRelations<G, RT>& law = *(new TwoPhaseRelations<G, RT>),
-                     const bool cap = false)
-        : TransportProblem2p2c<G, RT>(var, liq, gas, s, law, cap),
-          elementmapper(g, g.levelIndexSet(level)), grid(g)
+    Testproblem_2p2c(Grid& g, Dune::VariableClass2p2c<Grid, Scalar>& var, Liquid_GL& liq, Gas_GL& gas, Matrix2p<Grid, Scalar>& s,
+            int level, TwoPhaseRelations<Grid, Scalar>& law = *(new TwoPhaseRelations<Grid, Scalar>),const bool cap = false)
+                     : TransportProblem2p2c<Grid, Scalar>(var, liq, gas, s, law, cap), grid(g)
     {
     }
+
 private:
-    G& grid;
+    Grid& grid;
 };
 
 }
