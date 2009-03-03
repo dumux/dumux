@@ -37,17 +37,17 @@ int main(int argc, char** argv)
         // parse the command line arguments
         if (argc < 3)
             usage(argv[0]);
-        
+
         int argPos = 1;
         bool restart = false;
         double restartTime = 0;
         if (std::string("--restart") == argv[argPos]) {
             restart = true;
             ++argPos;
-            
+
             std::istringstream(argv[argPos++]) >> restartTime;
         }
-        
+
         if (argc - argPos != 2) {
             usage(argv[0]);
         }
@@ -67,7 +67,7 @@ int main(int argc, char** argv)
         res[0]        = 20;
         upperRight[1] = 300.0;
         res[1]        = 20;
-        
+
         Dune::GridFactory<Grid> factory(&grid);
         for (int i=0; i<=res[0]; i++) {
             for (int j=0; j<=res[1]; j++) {
@@ -95,11 +95,11 @@ int main(int argc, char** argv)
         // instantiate and run the concrete problem
         ////////////////////////////////////////////////////////////
         Problem problem(&grid, dt, tEnd);
-        
+
         // load restart file if necessarry
         if (restart)
             problem.deserialize(restartTime);
-        
+
         if (!problem.simulate())
             return 2;
 

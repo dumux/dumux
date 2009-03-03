@@ -235,7 +235,7 @@ public:
         depthBOR_ = 800.0;
 
         gravity_ = 0;
-//        gravity_[dim - 1] = -9.81;
+        //        gravity_[dim - 1] = -9.81;
 
         wasRestarted_ = false;
     }
@@ -314,7 +314,7 @@ public:
         ++dummy;
         if (dummy % 5 == 0)
             serialize();
-        
+
         // stop the simulation if reach the end specified time
         if (timeManager_.time() >= endTime_)
             timeManager_.setFinished();
@@ -532,28 +532,28 @@ public:
     };
 
     Model &model()
-    { 
+    {
         return model_;
     }
 
     const Model &model() const
-    { 
+    {
         return model_;
     }
 
     void serialize()
     {
         typedef Dune::Restart<Grid> Restarter;
-        
+
         Restarter res;
-        res.serializeBegin(this->grid(), 
+        res.serializeBegin(this->grid(),
                            "newblob",
                            timeManager_.time());
 
         timeManager_.serialize(res);
         resultWriter_.serialize(res);
         model_.serialize(res);
-        
+
         res.serializeEnd();
     }
 
@@ -567,7 +567,7 @@ public:
         timeManager_.deserialize(res);
         resultWriter_.deserialize(res);
         model_.deserialize(res);
-        
+
         res.deserializeEnd();
 
         wasRestarted_ = true;

@@ -145,37 +145,37 @@ protected:
                                                                  dim);
 
         if (formulation == pWsN)
-            {
-                vertDat.pW = vertSol[pressureIdx];
-                if (phaseState == bothPhases) vertDat.satN = vertSol[switchIdx];
-                else if (phaseState == wPhaseOnly) vertDat.satN = 0.0;
-                else if (phaseState == nPhaseOnly) vertDat.satN = 1.0;
-                else DUNE_THROW(Dune::InvalidStateException, "Phase state " << phaseState << " is invalid.");
+        {
+            vertDat.pW = vertSol[pressureIdx];
+            if (phaseState == bothPhases) vertDat.satN = vertSol[switchIdx];
+            else if (phaseState == wPhaseOnly) vertDat.satN = 0.0;
+            else if (phaseState == nPhaseOnly) vertDat.satN = 1.0;
+            else DUNE_THROW(Dune::InvalidStateException, "Phase state " << phaseState << " is invalid.");
 
-                vertDat.satW = 1.0 - vertDat.satN;
-                vertDat.pC = problem.materialLaw().pC(vertDat.satW,
-                                                      global,
-                                                      element,
-                                                      local);
+            vertDat.satW = 1.0 - vertDat.satN;
+            vertDat.pC = problem.materialLaw().pC(vertDat.satW,
+                                                  global,
+                                                  element,
+                                                  local);
 
-                vertDat.pN = vertDat.pW + vertDat.pC;
-            }
+            vertDat.pN = vertDat.pW + vertDat.pC;
+        }
         else if (formulation == pNsW)
-            {
-                vertDat.pN = vertSol[pressureIdx];
-                if (phaseState == bothPhases) vertDat.satW = vertSol[switchIdx];
-                else if (phaseState == wPhaseOnly) vertDat.satW = 0.0;
-                else if (phaseState == nPhaseOnly) vertDat.satW = 1.0;
-                else DUNE_THROW(Dune::InvalidStateException, "Phase state " << phaseState << " is invalid.");
+        {
+            vertDat.pN = vertSol[pressureIdx];
+            if (phaseState == bothPhases) vertDat.satW = vertSol[switchIdx];
+            else if (phaseState == wPhaseOnly) vertDat.satW = 0.0;
+            else if (phaseState == nPhaseOnly) vertDat.satW = 1.0;
+            else DUNE_THROW(Dune::InvalidStateException, "Phase state " << phaseState << " is invalid.");
 
-                vertDat.satN = 1.0 - vertDat.satW;
-                vertDat.pC = problem.materialLaw().pC(vertDat.satW,
-                                                      global,
-                                                      element,
-                                                      local);
+            vertDat.satN = 1.0 - vertDat.satW;
+            vertDat.pC = problem.materialLaw().pC(vertDat.satW,
+                                                  global,
+                                                  element,
+                                                  local);
 
-                vertDat.pW = vertDat.pN - vertDat.pC;
-            }
+            vertDat.pW = vertDat.pN - vertDat.pC;
+        }
         else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
 
         // Solubilities of components in phases
@@ -390,48 +390,48 @@ public:
 
         // calculate FE gradient (grad p for each phase)
         for (int idx = 0; idx < this->curElementGeom_.numVertices; idx++) // loop over adjacent vertices
+        {
+            // FEGradient at vertex idx
+            const LocalPosition &feGrad = this->curElementGeom_.subContVolFace[faceId].grad[idx];
+
+            pressure[wPhase] = elemDat.vertex[idx].pW;
+            pressure[nPhase] = elemDat.vertex[idx].pN;
+
+            // compute sum of pressure gradients for each phase
+            for (int phase = 0; phase < numPhases; phase++)
             {
-                // FEGradient at vertex idx
-                const LocalPosition &feGrad = this->curElementGeom_.subContVolFace[faceId].grad[idx];
-
-                pressure[wPhase] = elemDat.vertex[idx].pW;
-                pressure[nPhase] = elemDat.vertex[idx].pN;
-
-                // compute sum of pressure gradients for each phase
-                for (int phase = 0; phase < numPhases; phase++)
-                    {
-                        // the pressure gradient
-                        tmp = feGrad;
-                        tmp *= pressure[phase];
-                        pGrad[phase] += tmp;
-                        densityIJ[phase] += elemDat.vertex[idx].density[phase] *
-                            this->curElementGeom_.subContVolFace[faceId].shapeValue[idx];
-                    }
-
-                // the concentration gradient of the non-wetting
-                // component in the wetting phase
+                // the pressure gradient
                 tmp = feGrad;
-                tmp *= elemDat.vertex[idx].massfrac[nComp][wPhase];
-                xGrad[wPhase] += tmp;
-
-                // the concentration gradient of the wetting component
-                // in the non-wetting phase
-                tmp = feGrad;
-                tmp *= elemDat.vertex[idx].massfrac[wComp][nPhase];
-                xGrad[nPhase] += tmp;
-
-                // temperature gradient
-                asImp_()->updateTempGrad(tempGrad, feGrad, this->curSol_, idx);
+                tmp *= pressure[phase];
+                pGrad[phase] += tmp;
+                densityIJ[phase] += elemDat.vertex[idx].density[phase] *
+                    this->curElementGeom_.subContVolFace[faceId].shapeValue[idx];
             }
+
+            // the concentration gradient of the non-wetting
+            // component in the wetting phase
+            tmp = feGrad;
+            tmp *= elemDat.vertex[idx].massfrac[nComp][wPhase];
+            xGrad[wPhase] += tmp;
+
+            // the concentration gradient of the wetting component
+            // in the non-wetting phase
+            tmp = feGrad;
+            tmp *= elemDat.vertex[idx].massfrac[wComp][nPhase];
+            xGrad[nPhase] += tmp;
+
+            // temperature gradient
+            asImp_()->updateTempGrad(tempGrad, feGrad, this->curSol_, idx);
+        }
 
         // correct the pressure gradients by the hydrostatic
         // pressure due to gravity
         for (int phase=0; phase < numPhases; phase++)
-            {
-                tmp = this->problem_.gravity();
-                tmp *= densityIJ[phase];
-                pGrad[phase] -= tmp;
-            }
+        {
+            tmp = this->problem_.gravity();
+            tmp *= densityIJ[phase];
+            pGrad[phase] -= tmp;
+        }
 
         // calculate the permeability tensor
         Tensor K         = this->problem_.soil().K(global_i, ParentType::curElement_(), local_i);
@@ -444,10 +444,10 @@ public:
         // temporary vector for the Darcy velocity
         GlobalPosition vDarcy;
         for (int phase=0; phase < numPhases; phase++)
-            {
-                K.mv(pGrad[phase], vDarcy);  // vDarcy = K * grad p
-                vDarcyOut[phase] = vDarcy*normal;
-            }
+        {
+            K.mv(pGrad[phase], vDarcy);  // vDarcy = K * grad p
+            vDarcyOut[phase] = vDarcy*normal;
+        }
 
         // find upsteam and downstream verts
         const VariableVertexData *upW = &vDat_i;
@@ -632,16 +632,16 @@ public:
         VertexIterator it = this->problem_.vertexBegin();
         VertexIterator endit = this->problem_.vertexEnd();
         for (; it != endit; ++it)
-            {
-                int globalIdx = this->problem_.vertexIdx(*it);
-                const GlobalPosition &globalPos = it->geometry().corner(0);
+        {
+            int globalIdx = this->problem_.vertexIdx(*it);
+            const GlobalPosition &globalPos = it->geometry().corner(0);
 
-                // initialize phase state
-                staticVertexDat_[globalIdx].phaseState =
-                    this->problem_.initialPhaseState(*it, globalIdx, globalPos);
-                staticVertexDat_[globalIdx].oldPhaseState =
-                    staticVertexDat_[globalIdx].phaseState;
-            }
+            // initialize phase state
+            staticVertexDat_[globalIdx].phaseState =
+                this->problem_.initialPhaseState(*it, globalIdx, globalPos);
+            staticVertexDat_[globalIdx].oldPhaseState =
+                staticVertexDat_[globalIdx].phaseState;
+        }
     }
 
     /*!
@@ -654,15 +654,15 @@ public:
 
         VertexIterator it = this->problem_.vertexBegin();
         for (; it != this->problem_.vertexEnd(); ++it)
-            {
-                int globalIdx = this->problem_.vertexIdx(*it);
-                const GlobalPosition &global = it->geometry().corner(0);
+        {
+            int globalIdx = this->problem_.vertexIdx(*it);
+            const GlobalPosition &global = it->geometry().corner(0);
 
-                wasSwitched = primaryVarSwitch_(curGlobalSol,
-                                                globalIdx,
-                                                global)
-                    || wasSwitched;
-            }
+            wasSwitched = primaryVarSwitch_(curGlobalSol,
+                                            globalIdx,
+                                            global)
+                || wasSwitched;
+        }
 
         // make sure that if there was a variable switch in an
         // other partition we will also set the switch flag
@@ -748,33 +748,33 @@ public:
 
         // calculate FE gradient (grad p for each phase)
         for (int idx = 0; idx < this->curElementGeom_.numVertices; idx++) // loop over vertices
+        {
+            // FEGradient at vertex idx
+            const LocalPosition &feGrad = this->curElementGeom_.subContVolFace[faceId].grad[idx];
+            pressure[wPhase] = elemDat.vertex[idx].pW;
+            pressure[nPhase] = elemDat.vertex[idx].pN;
+
+            // compute sum of pressure gradients for each phase
+            for (int phase = 0; phase < numPhases; phase++)
             {
-                // FEGradient at vertex idx
-                const LocalPosition &feGrad = this->curElementGeom_.subContVolFace[faceId].grad[idx];
-                pressure[wPhase] = elemDat.vertex[idx].pW;
-                pressure[nPhase] = elemDat.vertex[idx].pN;
+                // the pressure gradient
+                tmp = feGrad;
+                tmp *= pressure[phase];
 
-                // compute sum of pressure gradients for each phase
-                for (int phase = 0; phase < numPhases; phase++)
-                    {
-                        // the pressure gradient
-                        tmp = feGrad;
-                        tmp *= pressure[phase];
-
-                        pGrad[phase] += tmp;
-                        densityIJ[phase] += elemDat.vertex[idx].density[phase] *
-                            this->curElementGeom_.subContVolFace[faceId].shapeValue[idx];
-                    }
+                pGrad[phase] += tmp;
+                densityIJ[phase] += elemDat.vertex[idx].density[phase] *
+                    this->curElementGeom_.subContVolFace[faceId].shapeValue[idx];
             }
+        }
 
         // correct the pressure gradients by the hydrostatic
         // pressure due to gravity
         for (int phase=0; phase < numPhases; phase++)
-            {
-                tmp = this->problem_.gravity();
-                tmp *= densityIJ[phase];
-                pGrad[phase] -= tmp;
-            }
+        {
+            tmp = this->problem_.gravity();
+            tmp *= densityIJ[phase];
+            pGrad[phase] -= tmp;
+        }
 
         // calculate the permeability tensor
         Tensor K         = this->problem_.soil().K(global_i, ParentType::curElement_(), local_i);
@@ -787,10 +787,10 @@ public:
         // temporary vector for the Darcy velocity
         GlobalPosition vDarcy;
         for (int phase=0; phase < numPhases; phase++)
-            {
-                K.mv(pGrad[phase], vDarcy);  // vDarcy = K * grad p
-                vDarcyOut[phase] = vDarcy*normal;
-            }
+        {
+            K.mv(pGrad[phase], vDarcy);  // vDarcy = K * grad p
+            vDarcyOut[phase] = vDarcy*normal;
+        }
 
         // find upsteam and downstream verts
         const VariableVertexData *upW = &vDat_i;
@@ -872,59 +872,59 @@ public:
         ElementIterator endit = this->problem_.elementEnd();
 
         for (; elementIt != endit; ++elementIt)
+        {
+            int numLocalVerts = elementIt->template count<dim>();
+
+            setCurrentElement(*elementIt);
+            this->restrictToElement(curSol, globalSol);
+            updateElementData_(elemDat, curSol, false);
+
+            for (int i = 0; i < numLocalVerts; ++i)
             {
-                int numLocalVerts = elementIt->template count<dim>();
+                int globalIdx = this->problem_.vertexIdx(*elementIt, i);
 
-                setCurrentElement(*elementIt);
-                this->restrictToElement(curSol, globalSol);
-                updateElementData_(elemDat, curSol, false);
+                (*pW)[globalIdx] = elemDat.vertex[i].pW;
+                (*pN)[globalIdx] = elemDat.vertex[i].pN;
+                (*pC)[globalIdx] = elemDat.vertex[i].pC;
+                (*Sw)[globalIdx] = elemDat.vertex[i].satW;
+                (*Sn)[globalIdx] = elemDat.vertex[i].satN;
+                (*rhoW)[globalIdx] = elemDat.vertex[i].density[wPhase];
+                (*rhoN)[globalIdx] = elemDat.vertex[i].density[nPhase];
+                (*mobW)[globalIdx] = elemDat.vertex[i].mobility[wPhase];
+                (*mobN)[globalIdx] = elemDat.vertex[i].mobility[nPhase];
+                (*massfracAinW)[globalIdx] = elemDat.vertex[i].massfrac[nComp][wPhase];
+                (*massfracAinN)[globalIdx] = elemDat.vertex[i].massfrac[nComp][nPhase];
+                (*massfracWinW)[globalIdx] = elemDat.vertex[i].massfrac[wComp][wPhase];
+                (*massfracWinN)[globalIdx] = elemDat.vertex[i].massfrac[wComp][nPhase];
+                (*temperature)[globalIdx] = Implementation::temperature_((*globalSol)[globalIdx]);
+                (*phaseState)[globalIdx] = staticVertexDat_[globalIdx].phaseState;
+            };
 
-                for (int i = 0; i < numLocalVerts; ++i)
-                    {
-                        int globalIdx = this->problem_.vertexIdx(*elementIt, i);
+            // Vector containing the velocity at the element
+            GlobalPosition velocity[numPhases];
+            GlobalPosition elementVelocity[numPhases];
 
-                        (*pW)[globalIdx] = elemDat.vertex[i].pW;
-                        (*pN)[globalIdx] = elemDat.vertex[i].pN;
-                        (*pC)[globalIdx] = elemDat.vertex[i].pC;
-                        (*Sw)[globalIdx] = elemDat.vertex[i].satW;
-                        (*Sn)[globalIdx] = elemDat.vertex[i].satN;
-                        (*rhoW)[globalIdx] = elemDat.vertex[i].density[wPhase];
-                        (*rhoN)[globalIdx] = elemDat.vertex[i].density[nPhase];
-                        (*mobW)[globalIdx] = elemDat.vertex[i].mobility[wPhase];
-                        (*mobN)[globalIdx] = elemDat.vertex[i].mobility[nPhase];
-                        (*massfracAinW)[globalIdx] = elemDat.vertex[i].massfrac[nComp][wPhase];
-                        (*massfracAinN)[globalIdx] = elemDat.vertex[i].massfrac[nComp][nPhase];
-                        (*massfracWinW)[globalIdx] = elemDat.vertex[i].massfrac[wComp][wPhase];
-                        (*massfracWinN)[globalIdx] = elemDat.vertex[i].massfrac[wComp][nPhase];
-                        (*temperature)[globalIdx] = Implementation::temperature_((*globalSol)[globalIdx]);
-                        (*phaseState)[globalIdx] = staticVertexDat_[globalIdx].phaseState;
-                    };
+            // loop over the phases
+            for (int phase=0; phase < numPhases; phase++)
+            {
+                elementVelocity[phase] = 0;
 
-                // Vector containing the velocity at the element
-                GlobalPosition velocity[numPhases];
-                GlobalPosition elementVelocity[numPhases];
-
-                // loop over the phases
-                for (int phase=0; phase < numPhases; phase++)
-                    {
-                        elementVelocity[phase] = 0;
-
-                        int elementIdx = this->problem_.elementIdx(*elementIt);
-                        for (int faceId = 0; faceId< this->curElementGeom_.numEdges; faceId++)
-                            {
-                                velocity[phase] = 0;
-                                asImp_()->calculateDarcyVelocity(velocity[phase],
-                                                                 faceId);
-                                elementVelocity[phase] += velocity[phase];
-                            }
-                        elementVelocity[phase] *= 1.0/this->curElementGeom_.numEdges;
-                        (*velocityX)[elementIdx] = elementVelocity[0][phase];
-                        if (dim >= 2)
-                            (*velocityY)[elementIdx] = elementVelocity[1][phase];
-                        if (dim == 3)
-                            (*velocityZ)[elementIdx] = elementVelocity[2][phase];
-                    }
+                int elementIdx = this->problem_.elementIdx(*elementIt);
+                for (int faceId = 0; faceId< this->curElementGeom_.numEdges; faceId++)
+                {
+                    velocity[phase] = 0;
+                    asImp_()->calculateDarcyVelocity(velocity[phase],
+                                                     faceId);
+                    elementVelocity[phase] += velocity[phase];
+                }
+                elementVelocity[phase] *= 1.0/this->curElementGeom_.numEdges;
+                (*velocityX)[elementIdx] = elementVelocity[0][phase];
+                if (dim >= 2)
+                    (*velocityY)[elementIdx] = elementVelocity[1][phase];
+                if (dim == 3)
+                    (*velocityZ)[elementIdx] = elementVelocity[2][phase];
             }
+        }
 
         writer.addVertexData(pW, "pW");
         writer.addVertexData(pN, "pN");
@@ -992,67 +992,67 @@ protected:
         Scalar satN = 0;
 
         if (formulation == pWsN)
-            {
-                pW = (*globalSol)[globalIdx][pressureIdx];
-                if      (phaseState == bothPhases) satN = (*globalSol)[globalIdx][switchIdx];
-                else if (phaseState == wPhaseOnly) satN = 0.0;
-                else if (phaseState == nPhaseOnly) satN = 1.0;
+        {
+            pW = (*globalSol)[globalIdx][pressureIdx];
+            if      (phaseState == bothPhases) satN = (*globalSol)[globalIdx][switchIdx];
+            else if (phaseState == wPhaseOnly) satN = 0.0;
+            else if (phaseState == nPhaseOnly) satN = 1.0;
 
-                Scalar satW = 1 - satN;
+            Scalar satW = 1 - satN;
 
-                Scalar pC = this->problem_.pC(satW, globalIdx, globalPos);
-                pN = pW + pC;
-            }
+            Scalar pC = this->problem_.pC(satW, globalIdx, globalPos);
+            pN = pW + pC;
+        }
 
         // Evaluate saturation and pressures
         else if (formulation == pNsW)
-            {
-                pN = (*globalSol)[globalIdx][pressureIdx];
-                satW = 0.0;
-                if      (phaseState == bothPhases) satW = (*globalSol)[globalIdx][switchIdx];
-                else if (phaseState == wPhaseOnly) satW = 1.0;
-                else if (phaseState == nPhaseOnly) satW = 0.0;
+        {
+            pN = (*globalSol)[globalIdx][pressureIdx];
+            satW = 0.0;
+            if      (phaseState == bothPhases) satW = (*globalSol)[globalIdx][switchIdx];
+            else if (phaseState == wPhaseOnly) satW = 1.0;
+            else if (phaseState == nPhaseOnly) satW = 0.0;
 
-                satN = 1 - satW;
+            satN = 1 - satW;
 
-                Scalar pC = this->problem_.pC(satW, globalIdx, globalPos);
-                pW = pN - pC;
-            }
+            Scalar pC = this->problem_.pC(satW, globalIdx, globalPos);
+            pW = pN - pC;
+        }
         else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
 
         Scalar temperature = Implementation::temperature_((*globalSol)[globalIdx]);
 
         // phase state is checked and a switch is performed
         if (phaseState == nPhaseOnly)
-            {
-                Scalar xWN = (*globalSol)[globalIdx][switchIdx];
-                Scalar xWNmax = this->problem_.multicomp().xWN(pN, temperature);
+        {
+            Scalar xWN = (*globalSol)[globalIdx][switchIdx];
+            Scalar xWNmax = this->problem_.multicomp().xWN(pN, temperature);
 
-                if (xWN > xWNmax)
-                    {
-                        // wetting phase appears
-                        std::cout << "wetting phase appears at vertex " << globalIdx
-                                  << ", coordinates: " << globalPos << std::endl;
-                        newPhaseState = bothPhases;
-                        if (formulation == pNsW) (*globalSol)[globalIdx][switchIdx] = 1e-3;
-                        else if (formulation == pWsN) (*globalSol)[globalIdx][switchIdx] = 1 - 1e-3;
-                    };
-            }
+            if (xWN > xWNmax)
+            {
+                // wetting phase appears
+                std::cout << "wetting phase appears at vertex " << globalIdx
+                          << ", coordinates: " << globalPos << std::endl;
+                newPhaseState = bothPhases;
+                if (formulation == pNsW) (*globalSol)[globalIdx][switchIdx] = 1e-3;
+                else if (formulation == pWsN) (*globalSol)[globalIdx][switchIdx] = 1 - 1e-3;
+            };
+        }
         else if (phaseState == wPhaseOnly)
-            {
-                Scalar xAW = (*globalSol)[globalIdx][switchIdx];
-                Scalar xAWmax = this->problem_.multicomp().xAW(pN, temperature);
+        {
+            Scalar xAW = (*globalSol)[globalIdx][switchIdx];
+            Scalar xAWmax = this->problem_.multicomp().xAW(pN, temperature);
 
-                if (xAW > xAWmax)
-                    {
-                        // non-wetting phase appears
-                        std::cout << "Non-wetting phase appears at vertex " << globalIdx
-                                  << ", coordinates: " << globalPos << std::endl;
-                        if (formulation == pNsW) (*globalSol)[globalIdx][switchIdx] = 1 - 1e-3;
-                        else if (formulation == pWsN) (*globalSol)[globalIdx][switchIdx] = 1e-3;
-                        newPhaseState = bothPhases;
-                    }
+            if (xAW > xAWmax)
+            {
+                // non-wetting phase appears
+                std::cout << "Non-wetting phase appears at vertex " << globalIdx
+                          << ", coordinates: " << globalPos << std::endl;
+                if (formulation == pNsW) (*globalSol)[globalIdx][switchIdx] = 1 - 1e-3;
+                else if (formulation == pWsN) (*globalSol)[globalIdx][switchIdx] = 1e-3;
+                newPhaseState = bothPhases;
             }
+        }
         else if (phaseState == bothPhases) {
             if (satN < 0) {
                 // non-wetting phase disappears
@@ -1340,7 +1340,7 @@ public:
 
         // write phase state
         if (!outStream.good()) {
-            DUNE_THROW(IOError, 
+            DUNE_THROW(IOError,
                        "Could not serialize vertex "
                        << vertIdx);
         }
@@ -1362,11 +1362,11 @@ public:
 
         // read phase state
         if (!inStream.good()) {
-            DUNE_THROW(IOError, 
+            DUNE_THROW(IOError,
                        "Could not deserialize vertex "
                        << vertIdx);
         }
-        
+
         inStream >> twoPTwoCLocalJacobian_.staticVertexDat_[vertIdx].phaseState;
         twoPTwoCLocalJacobian_.staticVertexDat_[vertIdx].oldPhaseState
             = twoPTwoCLocalJacobian_.staticVertexDat_[vertIdx].phaseState;

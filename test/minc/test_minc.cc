@@ -25,84 +25,84 @@
 #define NUM_EQUATIONS (NUM_CONTINUA*2)
 int main(int argc, char** argv)
 {
-  try{
-    // define the problem dimensions
-    const int dim=2;
-    typedef double NumberType;
-    Dune::FieldVector<NumberType, dim> outerLowerLeft(0);
-    Dune::FieldVector<NumberType, dim> outerUpperRight(6.0);
-    outerUpperRight[1] = 4;
-    Dune::FieldVector<NumberType, dim> innerLowerLeft(1);
-    innerLowerLeft[1] = 2;
-    Dune::FieldVector<NumberType, dim> innerUpperRight(4);
-    innerUpperRight[1] = 3;
+    try{
+        // define the problem dimensions
+        const int dim=2;
+        typedef double NumberType;
+        Dune::FieldVector<NumberType, dim> outerLowerLeft(0);
+        Dune::FieldVector<NumberType, dim> outerUpperRight(6.0);
+        outerUpperRight[1] = 4;
+        Dune::FieldVector<NumberType, dim> innerLowerLeft(1);
+        innerLowerLeft[1] = 2;
+        Dune::FieldVector<NumberType, dim> innerUpperRight(4);
+        innerUpperRight[1] = 3;
 
-    if (argc != 3) {
-      std::cout << "usage: test_minc tEnd dt" << std::endl;
-      return 0;
-    }
+        if (argc != 3) {
+            std::cout << "usage: test_minc tEnd dt" << std::endl;
+            return 0;
+        }
         std::string arg1(argv[1]);
-    std::istringstream is1(arg1);
-    double tEnd;
-    is1 >> tEnd;
-    std::string arg2(argv[2]);
-    std::istringstream is2(arg2);
-    double dt;
-    is2 >> dt;
+        std::istringstream is1(arg1);
+        double tEnd;
+        is1 >> tEnd;
+        std::string arg2(argv[2]);
+        std::istringstream is2(arg2);
+        double dt;
+        is2 >> dt;
 
 
-    // create a grid object
-    typedef Dune::SGrid<dim,dim> GridType;
-    //typedef Dune::ALUSimplexGrid<dim,dim> GridType;
-    //typedef Dune::AlbertaGrid<dim,dim> GridType;
-//    typedef Dune::YaspGrid<dim,dim> GridType;
-    //typedef Dune::UGGrid<dim> GridType;
+        // create a grid object
+        typedef Dune::SGrid<dim,dim> GridType;
+        //typedef Dune::ALUSimplexGrid<dim,dim> GridType;
+        //typedef Dune::AlbertaGrid<dim,dim> GridType;
+        //    typedef Dune::YaspGrid<dim,dim> GridType;
+        //typedef Dune::UGGrid<dim> GridType;
 
-    // use unitcube from grids
-    std::stringstream dgfFileName;
-    dgfFileName << "/temp/tatomir/DUMUX/dune-mux/test/minc/grids/unitcube" << GridType :: dimension << ".dgf";
+        // use unitcube from grids
+        std::stringstream dgfFileName;
+        dgfFileName << "/temp/tatomir/DUMUX/dune-mux/test/minc/grids/unitcube" << GridType :: dimension << ".dgf";
 
-//    // create grid pointer, GridType is defined by gridtype.hh
-    Dune::GridPtr<GridType> gridPtr( dgfFileName.str() );
+        //    // create grid pointer, GridType is defined by gridtype.hh
+        Dune::GridPtr<GridType> gridPtr( dgfFileName.str() );
 
-    // grid reference
-    GridType& grid = *gridPtr;
+        // grid reference
+        GridType& grid = *gridPtr;
 
-    Dune::gridinfo(grid);
+        Dune::gridinfo(grid);
 
-    Dune::Water wPhase;
-    Dune::DNAPL nPhase;
-//    Dune::LinearLaw law(water, dnapl);
-    Dune::MincLensSoil<GridType, NumberType> soil(outerLowerLeft,
-    		outerUpperRight, innerLowerLeft, innerUpperRight);
-    Dune::TwoPhaseRelations<GridType, NumberType> law(soil, wPhase, nPhase);
-    
-    Dune::MincLensProblem<GridType, NumberType, NUM_EQUATIONS> problem(wPhase, nPhase, soil, outerLowerLeft,
-            outerUpperRight, innerLowerLeft, innerUpperRight, law);
-    
-    typedef Dune::VtkMultiWriter<GridType::LeafGridView> MultiWriter;
-    typedef Dune::BoxMinc<GridType, NumberType, NUM_EQUATIONS> Minc;
-    Minc minc(grid, problem);
+        Dune::Water wPhase;
+        Dune::DNAPL nPhase;
+        //    Dune::LinearLaw law(water, dnapl);
+        Dune::MincLensSoil<GridType, NumberType> soil(outerLowerLeft,
+                                                      outerUpperRight, innerLowerLeft, innerUpperRight);
+        Dune::TwoPhaseRelations<GridType, NumberType> law(soil, wPhase, nPhase);
 
-    Dune::TimeLoop<GridType, Minc> timeloop(0, tEnd, dt, "lens", 1);
+        Dune::MincLensProblem<GridType, NumberType, NUM_EQUATIONS> problem(wPhase, nPhase, soil, outerLowerLeft,
+                                                                           outerUpperRight, innerLowerLeft, innerUpperRight, law);
 
-    Dune::Timer timer;
-    timer.reset();
-//    MultiWriter writer("out-minctwophase");
-//    timeloop.executeMultiWriter(minc, writer);
-    timeloop.execute(minc);
-    std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
+        typedef Dune::VtkMultiWriter<GridType::LeafGridView> MultiWriter;
+        typedef Dune::BoxMinc<GridType, NumberType, NUM_EQUATIONS> Minc;
+        Minc minc(grid, problem);
 
-    //printvector(std::cout, *minc.u, "u", "row", 2, 1, 3);
+        Dune::TimeLoop<GridType, Minc> timeloop(0, tEnd, dt, "lens", 1);
 
-    return 0;
-  }
-  catch (Dune::Exception &e){
-    std::cerr << "Dune reported error: " << e << std::endl;
-  }
-  catch (...){
-    std::cerr << "Unknown exception thrown!" << std::endl;
-  }
+        Dune::Timer timer;
+        timer.reset();
+        //    MultiWriter writer("out-minctwophase");
+        //    timeloop.executeMultiWriter(minc, writer);
+        timeloop.execute(minc);
+        std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
+
+        //printvector(std::cout, *minc.u, "u", "row", 2, 1, 3);
+
+        return 0;
+    }
+    catch (Dune::Exception &e){
+        std::cerr << "Dune reported error: " << e << std::endl;
+    }
+    catch (...){
+        std::cerr << "Unknown exception thrown!" << std::endl;
+    }
 }
 //#else
 //

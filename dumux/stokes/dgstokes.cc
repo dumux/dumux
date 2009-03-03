@@ -402,9 +402,9 @@ void DGFiniteElementMethod<G,v_order,p_order>::assembleFaceTerm(Entity& ent, Int
 
     }// end of assemble face quadrature loop
 
-     //  printmatrix(std::cout,Aee,"Matrix Aee: ","row");
-     //   printmatrix(std::cout,Aef,"Matrix Aef: ","row");
-     //   printmatrix(std::cout,Afe,"Matrix Afe: ","row");
+    //  printmatrix(std::cout,Aee,"Matrix Aee: ","row");
+    //   printmatrix(std::cout,Aef,"Matrix Aef: ","row");
+    //   printmatrix(std::cout,Afe,"Matrix Afe: ","row");
 
 
 }// end of assemble face term
@@ -610,7 +610,7 @@ void DGFiniteElementMethod<G,v_order,p_order>::assembleDirichletBoundaryTerm(Ent
         }
     }// end of quadrature loop
 
-     //printvector(std::cout,Be,"Vector Be: ","row");
+    //printvector(std::cout,Be,"Vector Be: ","row");
 }
 
 // template<class G, int v_order, int p_order>

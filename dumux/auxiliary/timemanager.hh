@@ -347,8 +347,8 @@ public:
                                 >> episodeStartTime_
                                 >> currentTime_
                                 >> stepNum_;
-        
-        
+
+
         std::string dummy;
         std::getline(res.deserializeStream(), dummy);
         std::cerr << "eindex: " << episodeIndex_

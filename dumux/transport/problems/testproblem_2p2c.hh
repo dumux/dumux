@@ -43,13 +43,13 @@ public:
     }
 
     BoundaryConditions2p2c::Flags initcond_type (const FieldVector<Scalar, dim>& globalPos, const Entity& element,
-                                          const FieldVector<Scalar, dim>& localPos) const
+                                                 const FieldVector<Scalar, dim>& localPos) const
     {
         return BoundaryConditions2p2c::concentration;
     }
 
     BoundaryConditions::Flags press_bc_type (const Dune::FieldVector<Scalar, dim>& globalPos, const Entity& element,
-                                       const Dune::FieldVector<Scalar, dim>& localPos) const
+                                             const Dune::FieldVector<Scalar, dim>& localPos) const
     {
         if (globalPos[0] > 300-1E-6 || globalPos[0] < 1e-6)
             return Dune::BoundaryConditions::dirichlet;
@@ -64,7 +64,7 @@ public:
     }
 
     Scalar dirichletConcentration (const FieldVector<Scalar, dim>& globalPos, const Entity& element,
-           const FieldVector<Scalar, dim>& localPos) const
+                                   const FieldVector<Scalar, dim>& localPos) const
     {
         if (globalPos[0] < 1e-6)
             return 0;
@@ -73,7 +73,7 @@ public:
     }
 
     Scalar dirichletSat (const FieldVector<Scalar, dim>& globalPos, const Entity& element,
-           const FieldVector<Scalar, dim>& localPos) const
+                         const FieldVector<Scalar, dim>& localPos) const
     {
         if (globalPos[0] < 15)
             return 0;
@@ -82,14 +82,14 @@ public:
     }
 
     virtual FieldVector<Scalar,2> neumann (const FieldVector<Scalar, dim>& globalPos, const Entity& element,
-                                 const FieldVector<Scalar, dim>& localPos) const
+                                           const FieldVector<Scalar, dim>& localPos) const
     {
         FieldVector<Scalar,2> J_(0);
         return J_;
     }
 
     virtual FieldVector<Scalar,2> source (const FieldVector<Scalar, dim>& globalPos, const Entity& element,
-                                 const FieldVector<Scalar, dim>& localPos) const
+                                          const FieldVector<Scalar, dim>& localPos) const
     {
         FieldVector<Scalar,2> q_(0);
         //            FieldVector<Scalar, dim> center(150); //center[1] = 200;
@@ -98,13 +98,13 @@ public:
     }
 
     Scalar initSat (const FieldVector<Scalar, dim>& globalPos, const Entity& element,
-           const FieldVector<Scalar, dim>& localPos) const
+                    const FieldVector<Scalar, dim>& localPos) const
     {
         return 0.999;
     }
 
     Scalar initConcentration(const FieldVector<Scalar, dim>& globalPos, const Entity& element,
-             const FieldVector<Scalar, dim>& localPos) const
+                             const FieldVector<Scalar, dim>& localPos) const
     {
         //            FieldVector<Scalar, dim> center(110); center[1] = 200;
         //            if ((globalPos-center).two_norm()<30) return 0;
@@ -113,8 +113,8 @@ public:
     }
 
     Testproblem_2p2c(Grid& g, Dune::VariableClass2p2c<Grid, Scalar>& var, Liquid_GL& liq, Gas_GL& gas, Matrix2p<Grid, Scalar>& s,
-            int level, TwoPhaseRelations<Grid, Scalar>& law = *(new TwoPhaseRelations<Grid, Scalar>),const bool cap = false)
-                     : TransportProblem2p2c<Grid, Scalar>(var, liq, gas, s, law, cap), grid(g)
+                     int level, TwoPhaseRelations<Grid, Scalar>& law = *(new TwoPhaseRelations<Grid, Scalar>),const bool cap = false)
+        : TransportProblem2p2c<Grid, Scalar>(var, liq, gas, s, law, cap), grid(g)
     {
     }
 

@@ -283,7 +283,7 @@ public:
     {
         res.deserializeSection("VTKMultiWriter");
         res.deserializeStream() >> writerNum_;
-        
+
         std::string dummy;
         std::getline(res.deserializeStream(), dummy);
     };

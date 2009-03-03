@@ -35,8 +35,8 @@
 #include "dumux/operators/p1operatorextended.hh"
 #include <dune/disc/operators/boundaryconditions.hh>
 /* #include <dune/disc/groundwater/groundwater.hh>
-#include <dune/disc/groundwater/p1groundwater.hh>
-#include <dune/disc/groundwater/p1groundwaterestimator.hh>
+   #include <dune/disc/groundwater/p1groundwater.hh>
+   #include <dune/disc/groundwater/p1groundwaterestimator.hh>
 */
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/paamg/amg.hh>
@@ -50,41 +50,41 @@
 namespace Dune {
 
 /**
- \brief Two phase model with Pw and Sn as primary unknowns
+   \brief Two phase model with Pw and Sn as primary unknowns
 
- This implements a two phase model with Pw and Sn as primary unknowns.
- */
+   This implements a two phase model with Pw and Sn as primary unknowns.
+*/
 template<class GridT, class Scalar, int numEq>
 class BoxMinc :
-    public LeafP1MincModel<GridT, Scalar, MincProblem<GridT, Scalar, numEq>,
-        BoxMincJacobian<GridT, Scalar, numEq>, numEq > {
+        public LeafP1MincModel<GridT, Scalar, MincProblem<GridT, Scalar, numEq>,
+                               BoxMincJacobian<GridT, Scalar, numEq>, numEq > {
 
 public:
 
-//	typedef ScalarT Scalar;
-	typedef GridT Grid;
+    //    typedef ScalarT Scalar;
+    typedef GridT Grid;
 
-	// define the problem type (also change the template argument above)
+    // define the problem type (also change the template argument above)
     typedef MincProblem<Grid, Scalar, numEq> ProblemType;
 
     // define the local Jacobian (also change the template argument above)
     typedef BoxMincJacobian<Grid, Scalar, numEq> LocalJacobian;
 
     typedef Dune::LeafP1MincModel<Grid, Scalar, ProblemType, LocalJacobian, numEq>
-            LeafP1MincModel;
+    LeafP1MincModel;
 
     typedef typename LeafP1MincModel::FunctionType FunctionType;
 
     typedef typename Grid::LeafGridView GV;
     typedef typename GV::IndexSet IS;
 
-//    enum {m = 4};
+    //    enum {m = 4};
 
     typedef BoxMinc<GridT, Scalar, numEq> ThisType;
     typedef typename LeafP1MincModel::FunctionType::RepresentationType
-            VectorType;
+    VectorType;
     typedef typename LeafP1MincModel::OperatorAssembler::RepresentationType
-            MatrixType;
+    MatrixType;
     typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator;
 #ifdef HAVE_PARDISO
     SeqPardiso<MatrixType,VectorType,VectorType> pardiso;
@@ -126,7 +126,7 @@ public:
         double upperMass, oldUpperMass;
         double totalMass = this->injected(upperMass, oldUpperMass);
         std::cout << totalMass << "\t"<< upperMass<< "\t"<< oldUpperMass
-                << "\t# totalMass, upperMass, oldUpperMass"<< std::endl;
+                  << "\t# totalMass, upperMass, oldUpperMass"<< std::endl;
 
         *(this->uOldTimeStep) = *(this->u);
 
@@ -149,13 +149,13 @@ public:
         // allocate flag vector to hold flags for essential boundary conditions
         std::vector<BCBlockType> essential(this->vertexmapper.size());
         for (typename std::vector<BCBlockType>::size_type i=0; i
-                <essential.size(); i++)
+                 <essential.size(); i++)
             essential[i].assign(BoundaryConditions::neumann);
 
         // iterate through leaf grid
         Iterator eendit = gridview.template end<0>();
         for (Iterator it = gridview.template begin<0>(); it
-                != eendit; ++it) {
+                 != eendit; ++it) {
             // get geometry type
             Dune::GeometryType gt = it->geometry().type();
 
@@ -177,7 +177,7 @@ public:
                 for (int equationnumber = 0; equationnumber < numEq; equationnumber++) {
                     if (this->localJacobian().bc(i)[equationnumber] == BoundaryConditions::neumann)
                         (*defectGlobal)[globalId][equationnumber]
-                                += this->localJacobian().def[i][equationnumber];
+                            += this->localJacobian().def[i][equationnumber];
                     else
                         essential[globalId].assign(BoundaryConditions::dirichlet);
                 }
@@ -185,13 +185,13 @@ public:
         }
 
         for (typename std::vector<BCBlockType>::size_type i=0; i
-                <essential.size(); i++)
+                 <essential.size(); i++)
             for (int equationnumber = 0; equationnumber < numEq; equationnumber++) {
-            if (essential[i][equationnumber] == BoundaryConditions::dirichlet)
-                (*defectGlobal)[i][equationnumber] = 0;
+                if (essential[i][equationnumber] == BoundaryConditions::dirichlet)
+                    (*defectGlobal)[i][equationnumber] = 0;
             }
     }
-    };
+};
 
 }
 #endif

@@ -137,7 +137,7 @@ public:
         // initialize the static vert data of the box jacobian
         this->localJacobian().setCurSolution(&uCur_);
         this->localJacobian().setOldSolution(&uPrev_);
-        
+
 
         if (!wasRestarted_)
         {
@@ -349,7 +349,7 @@ public:
      */
     template <class Restarter>
     void deserialize(Restarter &res)
-    { 
+    {
         res.template deserializeEntities<dim>(asImp_(), this->grid());
         wasRestarted_ = true;
     }
@@ -365,7 +365,7 @@ public:
 
         // write phase state
         if (!outstream.good()) {
-            DUNE_THROW(IOError, 
+            DUNE_THROW(IOError,
                        "Could not serialize vertex "
                        << vertIdx);
         }
@@ -385,13 +385,13 @@ public:
         int vertIdx = problem_.vertexIdx(vert);
         for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {
             if (!instream.good())
-                DUNE_THROW(IOError, 
+                DUNE_THROW(IOError,
                            "Could not deserialize vertex "
                            << vertIdx);
             instream >> (*currentSolution())[vertIdx][eqIdx];
         }
     };
-    
+
 protected:
     void applyInitialSolution_(SpatialFunction &u)
     {

@@ -278,8 +278,8 @@ public:
             }// end hierarchic iteration
 
 
-            // evaluate mean velocities at coarse element edges
-            // and write them to the velocity struct.
+             // evaluate mean velocities at coarse element edges
+             // and write them to the velocity struct.
             for (int i = 0; i<2*dim; i++)
             {
                 this->diffProblem.variables.velocity[globalIdxICoarse][i] = fluxCoarse[i]/=faceAreaCoarse[i];

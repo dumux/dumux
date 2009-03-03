@@ -44,17 +44,17 @@ class Restart {
     //! \brief Create a magic cookie for restart files, so that it is
     //!        unlikely to load a restart file for an incorrectly.
     static const std::string magicRestartCookie_(const Grid &grid)
-    { 
+    {
         const std::string gridName = grid.name();
         const int dim = Grid::dimension;
-        
+
         int numVertices = grid.template size(dim);
         int numElements = grid.template size(0);
         int numEdges = grid.template size(dim-1);
         int numCPUs = grid.comm().size();
         int rank = grid.comm().rank();
-        
-        return 
+
+        return
             (boost::format("DuMux restart file: "
                            "gridName='%s' "
                            "numCPUs=%d "
@@ -81,7 +81,7 @@ class Restart {
                 %t
                 %rank).str();
     };
-    
+
 
 public:
     /*!
@@ -100,15 +100,15 @@ public:
 
         serializeSection(magicCookie);
     }
-    
+
     /*!
      * \brief The output stream to write the serialized data.
      */
     std::ostream &serializeStream()
-    { 
+    {
         return outStream_;
     }
-    
+
     /*!
      * \brief Start a new section in the serialized output.
      */
@@ -116,7 +116,7 @@ public:
     {
         outStream_ << cookie << "\n";
     }
-    
+
     /*!
      * \brief Serialize all leaf entities of a codim in a grid.
      *
@@ -128,10 +128,10 @@ public:
     {
         std::string cookie = (boost::format("Entities: Codim %d")%codim).str();
         serializeSection(cookie);
-        
+
         // write element data
         typedef typename Grid::template Codim<codim>::LeafIterator Iterator;
-        
+
         Iterator it = grid.template leafbegin<codim>();
         const Iterator &endIt = grid.template leafend<codim>();
         for (; it != endIt; ++it) {
@@ -139,16 +139,16 @@ public:
             outStream_ << "\n";
         };
     }
-    
+
     /*!
      * \brief Finish the restart file.
      */
-    void serializeEnd() 
+    void serializeEnd()
     {
         outStream_.close();
     };
 
-    
+
     /*!
      * \brief Start reading a restart file at a certain simulated
      *        time.
@@ -164,17 +164,17 @@ public:
         if (!inStream_.good()) {
 #warning This doesn't work. But why??
             /*            DUNE_THROW(Dune::IOError,
-                       "Restart file '" 
-                       << fileName
-                       "' could not be opened properly");
+                          "Restart file '"
+                          << fileName
+                          "' could not be opened properly");
             */
         }
-#if 0        
+#if 0
         // make sure that we don't open an empty file
         inStream_.seekg(0, std::ios::end);
         if (inStream_.tellg() == 0) {
             DUNE_THROW(IOError,
-                       "Restart file '" 
+                       "Restart file '"
                        << fileName
                        "' is empty");
         }
@@ -189,10 +189,10 @@ public:
      *        deserialized.
      */
     std::istream &deserializeStream()
-    { 
+    {
         return inStream_;
     }
-    
+
     /*!
      * \brief Start reading a new section of the restart file.
      */
@@ -203,11 +203,11 @@ public:
                        "Encountered unexpected EOF in restart file.");
         std::string buf;
         std::getline(inStream_, buf);
-        if (buf != cookie) 
+        if (buf != cookie)
             DUNE_THROW(IOError,
                        "Could not start section '" << cookie << "'");
     };
-    
+
 
     /*!
      * \brief Deserialize all leaf entities of a codim in a grid.
@@ -222,27 +222,27 @@ public:
         deserializeSection(cookie);
 
         std::string curLine;
-            
+
         // read entity data
         typedef typename Grid::template Codim<codim>::LeafIterator Iterator;
         Iterator it = grid.template leafbegin<codim>();
         const Iterator &endIt = grid.template leafend<codim>();
         for (; it != endIt; ++it) {
             if (!inStream_.good()) {
-                DUNE_THROW(IOError, 
+                DUNE_THROW(IOError,
                            "Restart file is corrupted");
             }
-            
+
             std::getline(inStream_, curLine);
             std::istringstream curLineStream(curLine);
             deserializer.deserializeEntity(curLineStream, *it);
         };
     }
-        
+
     /*!
      * \brief Stop reading the restart file.
      */
-    void deserializeEnd() 
+    void deserializeEnd()
     {
         inStream_.close();
     }
@@ -253,7 +253,7 @@ public:
     static void restartFileList(std::list<std::string> &fileList,
                                 const std::string directory=".")
     {
-        DUNE_THROW(NotImplemented, 
+        DUNE_THROW(NotImplemented,
                    "Dune::Restart::restartFileList()");
     };
 

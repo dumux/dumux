@@ -51,7 +51,7 @@ public:
      * @param localPos local coordinates inside element
      */
     virtual BoundaryConditions2p2c::Flags initcond_type (const FieldVector<Scalar,dim>& globalPos, const Entity& element,
-                                                  const FieldVector<Scalar,dim>& localPos) const = 0;
+                                                         const FieldVector<Scalar,dim>& localPos) const = 0;
 
     //! Type of pressure boundary condition.
     /**    Pressure (dirichlet) or flux (neumann) have to be defined on boundaries.
@@ -60,7 +60,7 @@ public:
      * @param localPos local coordinates inside element
      */
     virtual BoundaryConditions::Flags press_bc_type (const FieldVector<Scalar,dim>& globalPos, const Entity& element,
-                                               const FieldVector<Scalar,dim>& localPos) const = 0;
+                                                     const FieldVector<Scalar,dim>& localPos) const = 0;
 
     //! Permeability tensor \f$ [m^2] \f$
     /**
@@ -80,7 +80,7 @@ public:
      * @param localPos local coordinates inside element
      */
     virtual Scalar dirichletConcentration (const FieldVector<Scalar,dim>& globalPos, const Entity& element,
-                   const FieldVector<Scalar,dim>& localPos) const = 0;
+                                           const FieldVector<Scalar,dim>& localPos) const = 0;
 
     //! Saturation boundary condition
     /** @param globalPos global coordinates
@@ -88,7 +88,7 @@ public:
      * @param localPos local coordinates inside element
      */
     virtual Scalar dirichletSat (const FieldVector<Scalar,dim>& globalPos, const Entity& element,
-                   const FieldVector<Scalar,dim>& localPos) const = 0;
+                                 const FieldVector<Scalar,dim>& localPos) const = 0;
 
     //! Pressure (dirichlet) boundary condition
     /** @param globalPos global coordinates
@@ -96,7 +96,7 @@ public:
      * @param localPos local coordinates inside element
      */
     virtual Scalar dirichlet (const FieldVector<Scalar,dim>& globalPos, const Entity& element,
-                       const FieldVector<Scalar,dim>& localPos) const = 0;
+                              const FieldVector<Scalar,dim>& localPos) const = 0;
 
     //! Flux (neumann) boundary condition
     /** @param globalPos global coordinates
@@ -104,7 +104,7 @@ public:
      * @param localPos local coordinates inside element
      */
     virtual FieldVector<Scalar,2> neumann (const FieldVector<Scalar,dim>& globalPos, const Entity& element,
-                                 const FieldVector<Scalar,dim>& localPos) const = 0;
+                                           const FieldVector<Scalar,dim>& localPos) const = 0;
 
     //! Source of components
     /** Describes the source of the components per unit area
@@ -113,7 +113,7 @@ public:
      * @param localPos local coordinates inside element
      */
     virtual FieldVector<Scalar,2> source (const FieldVector<Scalar,dim>& globalPos, const Entity& element,
-                                 const FieldVector<Scalar,dim>& localPos) const = 0;
+                                          const FieldVector<Scalar,dim>& localPos) const = 0;
 
     //! Saturation initial condition
     /** @param globalPos global coordinates
@@ -121,7 +121,7 @@ public:
      * @param localPos local coordinates inside element
      */
     virtual Scalar initSat (const FieldVector<Scalar,dim>& globalPos, const Entity& element,
-                   const FieldVector<Scalar,dim>& localPos) const = 0;
+                            const FieldVector<Scalar,dim>& localPos) const = 0;
 
     //! Feed concentration initial condition
     /** @param globalPos global coordinates
@@ -129,7 +129,7 @@ public:
      * @param localPos local coordinates inside element
      */
     virtual Scalar initConcentration (const FieldVector<Scalar,dim>& globalPos, const Entity& element,
-                     const FieldVector<Scalar,dim>& localPos) const = 0;
+                                      const FieldVector<Scalar,dim>& localPos) const = 0;
 
     //! gravity vector
     virtual const FieldVector<Scalar,dim> gravity()
@@ -145,7 +145,7 @@ public:
      */
 
     TransportProblem2p2c(Dune::VariableClass2p2c<Grid, Scalar>& var, Liquid_GL& liq, Gas_GL& gas, Matrix2p<Grid, Scalar>& s,
-            TwoPhaseRelations<Grid, Scalar>& law = *(new TwoPhaseRelations<Grid,Scalar>),const bool cap = false)
+                         TwoPhaseRelations<Grid, Scalar>& law = *(new TwoPhaseRelations<Grid,Scalar>),const bool cap = false)
         :variables(var), liquidPhase(liq), gasPhase(gas), soil(s), materialLaw(law), capillary(cap)
     {
     }

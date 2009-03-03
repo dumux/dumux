@@ -189,7 +189,7 @@ public:
 
             for(; iit != endit; ++iit)
             {
-               if (iit->neighbor())
+                if (iit->neighbor())
                 {
                     mit.insert(grid.leafIndexSet().index(*iit->outside()));
                 }
