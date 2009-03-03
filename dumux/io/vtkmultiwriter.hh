@@ -71,7 +71,7 @@ public:
     {
         curGridView_ = &gridView;
 
-        if (writerNum_ == 0) {
+        if (!multiFile_.is_open()) {
             commRank_ = gridView.comm().rank();
             commSize_ = gridView.comm().size();
 
@@ -84,7 +84,6 @@ public:
 
         curWriter_ = new VtkWriter(gridView);
         ++writerNum_;
-        curTime_ = t;
 
         curOutFileName_ = fileName_();
 
@@ -95,14 +94,14 @@ public:
         if (commSize_ == 1) {
             fileName = curOutFileName_;
             multiFile_ << (boost::format("   <DataSet timestep=\"%lf\" file=\"%s.%s\"/>\n")
-                           %curTime_%fileName%suffix);
+                           %t%fileName%suffix);
         }
         if (commSize_ > 1 && commRank_ == 0)  {
             // only the first process updates the multi-file
             for (int part=0; part < commSize_; ++part) {
                 fileName = fileName_(part);
                 multiFile_ << (boost::format("   <DataSet part=\"%d\" timestep=\"%lf\" file=\"%s.%s\"/>\n")
-                               %part%curTime_%fileName%suffix);
+                               %part%t%fileName%suffix);
             }
         }
 
@@ -266,6 +265,29 @@ public:
         endMultiFile_();
     };
 
+    /*!
+     * \brief Write the multi-writer's state to a restart file.
+     */
+    template <class Restarter>
+    void serialize(Restarter &res)
+    {
+        res.serializeSection("VTKMultiWriter");
+        res.serializeStream() << writerNum_ - 1 << "\n";
+    };
+
+    /*!
+     * \brief Read the multi-writer's state from a restart file.
+     */
+    template <class Restarter>
+    void deserialize(Restarter &res)
+    {
+        res.deserializeSection("VTKMultiWriter");
+        res.deserializeStream() >> writerNum_;
+        
+        std::string dummy;
+        std::getline(res.deserializeStream(), dummy);
+    };
+
 
 private:
     std::string fileName_()
@@ -286,22 +308,6 @@ private:
         else {
             return (boost::format("%s-%05d")
                     %simName_%writerNum_).str();
-        }
-    }
-
-    std::string pvtuFileName_()
-    {
-        if (commSize_ > 1) {
-            std::string result;
-            for (int i = 0; i < commSize_; ++i)
-                result += (boost::format("s%04d:")%commSize_).str();
-            result += (boost::format("p0000:%s-%05d")
-                       %simName_
-                       %writerNum_).str();
-            return result;
-        }
-        else {
-            return fileName_(0);
         }
     }
 
@@ -387,7 +393,6 @@ private:
     int commSize_; // number of processes in the communicator
     int commRank_; // rank of the current process in the communicator
 
-    double          curTime_;
     VtkWriter     * curWriter_;
     const GridView* curGridView_;
     std::string     curOutFileName_;

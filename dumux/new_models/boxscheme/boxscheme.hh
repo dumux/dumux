@@ -78,6 +78,7 @@ private:
     typedef typename DomainTraits::Scalar                      Scalar;
     typedef typename DomainTraits::Grid                        Grid;
     typedef typename DomainTraits::Element                     Element;
+    typedef typename DomainTraits::Vertex                      Vertex;
     typedef typename DomainTraits::ReferenceElement            ReferenceElement;
     typedef typename BoxTraits::FVElementGeometry              FVElementGeometry;
     typedef typename DomainTraits::ElementIterator             ElementIterator;
@@ -120,6 +121,8 @@ public:
             typename Problem::DomainTraits>();
         //                Api::require<Api::PwSnBoxDomain>(prob);
 
+        wasRestarted_ = false;
+
         // check grid partitioning
         assert((prob.grid().comm().size() == 1) ||
                (prob.grid().overlapSize(0) > 0) ||
@@ -134,10 +137,14 @@ public:
         // initialize the static vert data of the box jacobian
         this->localJacobian().setCurSolution(&uCur_);
         this->localJacobian().setOldSolution(&uPrev_);
+        
 
-        this->localJacobian().initStaticData();
+        if (!wasRestarted_)
+        {
+            this->localJacobian().initStaticData();
+            applyInitialSolution_(uCur_);
+        }
 
-        applyInitialSolution_(uCur_);
         applyDirichletBoundaries_(uCur_);
 
         *uPrev_ = *uCur_;
@@ -330,6 +337,61 @@ public:
         }
     }
 
+    /*!
+     * \brief Serializes the current state of the model.
+     */
+    template <class Restarter>
+    void serialize(Restarter &res)
+    { res.template serializeEntities<dim>(asImp_(), this->grid()); }
+
+    /*!
+     * \brief Deserializes the state of the model.
+     */
+    template <class Restarter>
+    void deserialize(Restarter &res)
+    { 
+        res.template deserializeEntities<dim>(asImp_(), this->grid());
+        wasRestarted_ = true;
+    }
+
+    /*!
+     * \brief Write the current solution for a vertex to a restart
+     *        file.
+     */
+    void serializeEntity(std::ostream &outstream,
+                         const Vertex &vert)
+    {
+        int vertIdx = problem_.vertexIdx(vert);
+
+        // write phase state
+        if (!outstream.good()) {
+            DUNE_THROW(IOError, 
+                       "Could not serialize vertex "
+                       << vertIdx);
+        }
+
+        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {
+            outstream << (*currentSolution())[vertIdx][eqIdx] << " ";
+        }
+    };
+
+    /*!
+     * \brief Reads the current solution variables for a vertex from a
+     *        restart file.
+     */
+    void deserializeEntity(std::istream &instream,
+                           const Vertex &vert)
+    {
+        int vertIdx = problem_.vertexIdx(vert);
+        for (int eqIdx = 0; eqIdx < numEq; ++eqIdx) {
+            if (!instream.good())
+                DUNE_THROW(IOError, 
+                           "Could not deserialize vertex "
+                           << vertIdx);
+            instream >> (*currentSolution())[vertIdx][eqIdx];
+        }
+    };
+    
 protected:
     void applyInitialSolution_(SpatialFunction &u)
     {
@@ -516,6 +578,8 @@ protected:
     JacobianAssembler jacAsm_;
     // calculates the local jacobian matrix for a given element
     LocalJacobian    &localJacobian_;
+
+    bool wasRestarted_;
 };
 }
 

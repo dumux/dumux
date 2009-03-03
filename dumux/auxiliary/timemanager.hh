@@ -52,6 +52,7 @@ public:
                 double len = 1e100,
                 bool verbose = true)
     {
+        wasRestarted_ = false;
         verbose_ =
             verbose &&
             MPIHelper::getCollectiveCommunication().rank() == 0;
@@ -322,10 +323,46 @@ public:
                 %timer.elapsed();
     }
 
+    /*!
+     * \brief Write the time manager's state to a restart file.
+     */
+    template <class Restarter>
+    void serialize(Restarter &res)
+    {
+        res.serializeSection("TimeManager");
+        res.serializeStream() << episodeIndex_ << " "
+                              << episodeStartTime_ << " "
+                              << currentTime_ << " "
+                              << stepNum_ << "\n";
+    };
+
+    /*!
+     * \brief Read the time manager's state from a restart file.
+     */
+    template <class Restarter>
+    void deserialize(Restarter &res)
+    {
+        res.deserializeSection("TimeManager");
+        res.deserializeStream() >> episodeIndex_
+                                >> episodeStartTime_
+                                >> currentTime_
+                                >> stepNum_;
+        
+        
+        std::string dummy;
+        std::getline(res.deserializeStream(), dummy);
+        std::cerr << "eindex: " << episodeIndex_
+                  << "episodeStartTime_: " << episodeStartTime_
+                  << "currentTime_: " << currentTime_ << "\n";
+        wasRestarted_ = true;
+    };
 
 private:
     void init_()
     {
+        if (wasRestarted_)
+            return;
+
         episodeIndex_ = 0;
         episodeStartTime_ = 0;
         currentTime_ = 0.0;
@@ -344,6 +381,7 @@ private:
     int    stepNum_;
     bool   finished_;
     bool   verbose_;
+    bool   wasRestarted_;
 };
 }
 

@@ -22,9 +22,15 @@
 #include <dumux/auxiliary/apis.hh>
 
 #include <vector>
+#include <iostream>
 
 namespace Dune
 {
+
+// forward declartion of the 2p2c box model
+template<class ProblemT, class TwoPTwoCTraitsT>
+class TwoPTwoCBoxModel;
+
 
 ///////////////////////////////////////////////////////////////////////////
 // TwoPTwoCBoxJacobian (evaluate the local jacobian for the newton method.)
@@ -44,6 +50,8 @@ class TwoPTwoCBoxJacobianBase : public BoxJacobian<ProblemT,
                                                    Implementation >
 {
 protected:
+    friend class TwoPTwoCBoxModel<ProblemT, TwoPTwoCTraitsT>;
+
     typedef TwoPTwoCBoxJacobianBase<ProblemT,
                                     BoxTraitsT,
                                     TwoPTwoCTraitsT,
@@ -53,6 +61,7 @@ protected:
     typedef typename Problem::DomainTraits          DomTraits;
     typedef BoxTraitsT                              BoxTraits;
     typedef TwoPTwoCTraitsT                         TwoPTwoCTraits;
+
 
     enum {
         dim              = DomTraits::dim,
@@ -1134,6 +1143,7 @@ class TwoPTwoCBoxJacobian : public TwoPTwoCBoxJacobianBase<ProblemT,
     typedef BoxTraitsT                             BoxTraits;
 
     typedef typename DomTraits::Scalar             Scalar;
+    typedef typename DomTraits::Vertex             Vertex;
 
     typedef typename DomTraits::GlobalPosition     GlobalPosition;
     typedef typename DomTraits::LocalPosition      LocalPosition;
@@ -1253,6 +1263,7 @@ private:
 
     typedef typename ProblemT::DomainTraits              DomTraits;
     typedef typename DomTraits::Element                  Element;
+    typedef typename DomTraits::Vertex                   Vertex;
     typedef typename DomTraits::ElementIterator          ElementIterator;
     typedef typename DomTraits::LocalPosition            LocalPosition;
     typedef typename DomTraits::GlobalPosition           GlobalPosition;
@@ -1315,6 +1326,51 @@ public:
      */
     bool switched() const
     { return twoPTwoCLocalJacobian_.switched(); }
+
+    /*!
+     * \brief Write the current solution to a restart file.
+     */
+    void serializeEntity(std::ostream &outStream,
+                         const Vertex &vert)
+    {
+        // write primary variables
+        ParentType::serializeEntity(outStream, vert);
+
+        int vertIdx = this->problem().vertexIdx(vert);
+
+        // write phase state
+        if (!outStream.good()) {
+            DUNE_THROW(IOError, 
+                       "Could not serialize vertex "
+                       << vertIdx);
+        }
+        outStream << twoPTwoCLocalJacobian_.staticVertexDat_[vertIdx].phaseState
+                  << " ";
+    };
+
+    /*!
+     * \brief Reads the current solution for a vertex from a restart
+     *        file.
+     */
+    void deserializeEntity(std::istream &inStream,
+                           const Vertex &vert)
+    {
+        // read primary variables
+        ParentType::deserializeEntity(inStream, vert);
+
+        int vertIdx = this->problem().vertexIdx(vert);
+
+        // read phase state
+        if (!inStream.good()) {
+            DUNE_THROW(IOError, 
+                       "Could not deserialize vertex "
+                       << vertIdx);
+        }
+        
+        inStream >> twoPTwoCLocalJacobian_.staticVertexDat_[vertIdx].phaseState;
+        twoPTwoCLocalJacobian_.staticVertexDat_[vertIdx].oldPhaseState
+            = twoPTwoCLocalJacobian_.staticVertexDat_[vertIdx].phaseState;
+    };
 
 
 private:

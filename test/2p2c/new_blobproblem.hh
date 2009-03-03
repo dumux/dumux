@@ -15,8 +15,9 @@
 
 #include <dumux/material/multicomponentrelations.hh>
 
-#include <dumux/io/vtkmultiwriter.hh>
 #include <dumux/auxiliary/timemanager.hh>
+#include <dumux/io/vtkmultiwriter.hh>
+#include <dumux/io/restart.hh>
 
 #include <dune/common/timer.hh>
 #include <dune/grid/common/gridinfo.hh>
@@ -173,20 +174,20 @@ private:
     enum {
         numEq       = BoxTraits::numEq,
         pressureIdx = TwoPTwoCTraits::pressureIdx,
-        switchIdx = TwoPTwoCTraits::switchIdx,
+        switchIdx   = TwoPTwoCTraits::switchIdx,
 
         // Phase State
-        wPhaseOnly = TwoPTwoCTraits::wPhaseOnly,
-        nPhaseOnly = TwoPTwoCTraits::nPhaseOnly,
-        bothPhases = TwoPTwoCTraits::bothPhases,
+        wPhaseOnly  = TwoPTwoCTraits::wPhaseOnly,
+        nPhaseOnly  = TwoPTwoCTraits::nPhaseOnly,
+        bothPhases  = TwoPTwoCTraits::bothPhases,
 
         // Grid and world dimension
         dim         = DomainTraits::dim,
-        dimWorld     = DomainTraits::dimWorld,
+        dimWorld    = DomainTraits::dimWorld,
 
         // Choice of primary variables
-        pWsN           = TwoPTwoCTraits::pWsN,
-        pNsW            = TwoPTwoCTraits::pNsW
+        pWsN        = TwoPTwoCTraits::pWsN,
+        pNsW        = TwoPTwoCTraits::pNsW
     };
 
     // copy some types from the traits for convenience
@@ -233,11 +234,10 @@ public:
 
         depthBOR_ = 800.0;
 
-        gravity_[0] = 0;
-        gravity_[1] = 0;
+        gravity_ = 0;
+//        gravity_[dim - 1] = -9.81;
 
-        // choose primary variables
-        formulation_ = pWsN;
+        wasRestarted_ = false;
     }
 
     ///////////////////////////////////
@@ -256,8 +256,10 @@ public:
         // set the initial condition
         model_.initial();
 
-        // write the inital solution to disk
-        writeCurrentResult_();
+        if (!wasRestarted_) {
+            // write the inital solution to disk
+            writeCurrentResult_();
+        }
     }
 
     /*!
@@ -307,9 +309,12 @@ public:
         // write the current result to disk
         writeCurrentResult_();
 
-        // update the domain with the current solution
-        //                updateDomain_();
-
+        // write restart file after every five steps
+        static int dummy = 0;
+        ++dummy;
+        if (dummy % 5 == 0)
+            serialize();
+        
         // stop the simulation if reach the end specified time
         if (timeManager_.time() >= endTime_)
             timeManager_.setFinished();
@@ -520,17 +525,53 @@ public:
         return depthBOR_;
     }
 
-    int formulation () const
-    {
-        return formulation_;
-    }
-
     bool simulate()
     {
         timeManager_.runSimulation(*this);
         return true;
     };
 
+    Model &model()
+    { 
+        return model_;
+    }
+
+    const Model &model() const
+    { 
+        return model_;
+    }
+
+    void serialize()
+    {
+        typedef Dune::Restart<Grid> Restarter;
+        
+        Restarter res;
+        res.serializeBegin(this->grid(), 
+                           "newblob",
+                           timeManager_.time());
+
+        timeManager_.serialize(res);
+        resultWriter_.serialize(res);
+        model_.serialize(res);
+        
+        res.serializeEnd();
+    }
+
+    void deserialize(double t)
+    {
+        typedef Dune::Restart<Grid> Restarter;
+
+        Restarter res;
+        res.deserializeBegin(this->grid(), "newblob", t);
+
+        timeManager_.deserialize(res);
+        resultWriter_.deserialize(res);
+        model_.deserialize(res);
+        
+        res.deserializeEnd();
+
+        wasRestarted_ = true;
+    };
 
 private:
     bool isInsideBlob_(const GlobalPosition &globalPos) const
@@ -556,7 +597,6 @@ private:
 
     Scalar depthBOR_;
     Scalar eps_;
-    int formulation_;
     GlobalPosition  gravity_;
 
     // fluids and material properties
@@ -576,6 +616,8 @@ private:
     NewtonController newtonCtl_;
 
     VtkMultiWriter  resultWriter_;
+
+    bool wasRestarted_;
 };
 } //end namespace
 
