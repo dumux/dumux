@@ -162,7 +162,7 @@ private:
  */
 template<class GridT, class ScalarT>
 class NewCoupleProblemPipe : public BasicDomain<GridT,
-                                                  ScalarT>
+                                                ScalarT>
 {
     typedef GridT                                  Grid;
     typedef BasicDomain<Grid, ScalarT>             ParentType;
@@ -269,8 +269,8 @@ private:
 
 public:
     NewCoupleProblemPipe(GridPtr<Grid> gridPtr,
-                           Scalar dtInitial,
-                           Scalar tEnd)
+                         Scalar dtInitial,
+                         Scalar tEnd)
         : ParentType(&(*gridPtr)),
           gridPtr_(gridPtr),
           timeManager_(this->grid().comm().rank() == 0),
@@ -403,7 +403,7 @@ public:
                 // vertex is not on a pipe
                 continue;
 
-//            int pipeIdx = pipeIt->second; //TODO decrease mobility and porous media size to pipe size
+            //            int pipeIdx = pipeIt->second; //TODO decrease mobility and porous media size to pipe size
 
             pipeFlow_->mobility[vIdx][0] = 1.0;
         };

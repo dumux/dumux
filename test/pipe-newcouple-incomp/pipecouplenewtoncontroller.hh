@@ -43,9 +43,9 @@ public:
     typedef typename ParentType::JacobianAssembler JacobianAssembler;
 
     PipeCoupleNewtonController(Scalar tolerance = 1e-5,
-                                 int targetSteps = 8,
-                                 int maxSteps = 12,
-                                 Scalar maxStepSize=1e100)
+                               int targetSteps = 8,
+                               int maxSteps = 12,
+                               Scalar maxStepSize=1e100)
         : ParentType(tolerance, targetSteps, maxSteps),
           maxStepSize_(maxStepSize)
     {};
@@ -56,16 +56,16 @@ public:
     //! step size.
     Scalar suggestTimeStepSize(Scalar oldTimeStep) const
     {
-    	Scalar tmp = ParentType::suggestTimeStepSize(oldTimeStep);
-		return std::min(maxStepSize_, tmp);
+        Scalar tmp = ParentType::suggestTimeStepSize(oldTimeStep);
+        return std::min(maxStepSize_, tmp);
     }
 
     //! Called when the newton method broke down.
     void newtonFail()
     {
-		ParentType::newtonFail();
-		DUNE_THROW(MathError,
-	   			   "Model did not converge");
+        ParentType::newtonFail();
+        DUNE_THROW(MathError,
+                   "Model did not converge");
     }
 
     //! Indicates that we're done solving one newton step.
