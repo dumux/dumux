@@ -10,6 +10,7 @@ SUBDIRS = . \
 	  capillary \
 	  co2 \
 	  diffusion \
+	  dimltdimworld \
 	  elementid \
 	  fractionalflow \
 	  fvca5 \
@@ -21,7 +22,8 @@ SUBDIRS = . \
 	  parallel \
 	  pardiso \
 	  phasepressure_ff \
-	  pipe-couple-incomp \
+	  pipe-newcouple-incomp \
+	  pipe-newrichards-couple \
 	  richards \
 	  splitting \
 	  star2dgf \
