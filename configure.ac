@@ -120,7 +120,6 @@ AC_CONFIG_FILES([Makefile
     test/co2/Makefile
     test/coupled/Makefile
     test/diffusion/Makefile
-    test/dimltdimworld/Makefile
     test/elementid/Makefile
     test/fractionalflow/Makefile
     test/fvca5/Makefile
