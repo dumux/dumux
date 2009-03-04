@@ -133,7 +133,8 @@ AC_CONFIG_FILES([Makefile
     test/parallel/Makefile
     test/pardiso/Makefile
     test/phasepressure_ff/Makefile
-    test/pipe-couple-incomp/Makefile
+    test/pipe-newcouple-incomp/Makefile
+    test/pipe-newrichards-couple/Makefile
     test/richards/Makefile  
     test/splitting/Makefile
     test/star2dgf/Makefile
