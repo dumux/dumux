@@ -59,7 +59,7 @@ public:
                                               const IntersectionIterator& intersectionIt,
                                               const FieldVector<Scalar,dim>& localPos) const
     {
-        if (globalPos[0] < eps_)// || globalPos[1] < eps_)// || globalPos[1] > 1 - eps_)
+        if (globalPos[0] < eps_ || globalPos[1] < eps_ || globalPos[1] > 1 - eps_)
             return BoundaryConditions::dirichlet;
         else
             return BoundaryConditions::neumann;
