@@ -17,7 +17,7 @@
 #include "yxproblem.hh"
 #include "sinproblem.hh"
 #include "curlproblem.hh"
-//#include "analyticstokesproblem.hh"
+#include "channelflowproblem.hh"
 
 template<int dim>
 struct VertexLayout
@@ -123,7 +123,7 @@ int main(int argc, char** argv)
         if (refinementSteps)
             grid.globalRefine(refinementSteps);
 
-        Dune::YXProblem<GridType, double> problem;
+        Dune::ChannelFlowProblem<GridType, double> problem;
         typedef Dune::LeafP1BoxStokes<GridType, NumberType, dim> BoxStokes;
         BoxStokes boxStokes(grid, problem);
 

@@ -62,7 +62,7 @@ public:
         : BoxJacobianType(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_),
           problem(params)
     {
-        alpha = -1.0e1;
+        alpha = -1.0;
         this->analytic = false;
     }
 
@@ -354,7 +354,7 @@ public:
                     else
                     {
                         Scalar beaversJosephC = this->getImp().problem.beaversJosephC(this->fvGeom.boundaryFace[bfIdx].ipGlobal, element, it, this->fvGeom.boundaryFace[bfIdx].ipLocal);
-                        if (fabs(beaversJosephC) > 0) // realize Beavers-Joseph interface condition
+                        if (beaversJosephC > 0) // realize Beavers-Joseph interface condition
                         {
                             FieldVector<Scalar,dim> tangentialV = velocityValue;
                             //                            for (int comp = 0; comp < dim; comp++)

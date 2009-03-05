@@ -210,24 +210,24 @@ public:
                 }
         }
 
-        //set pressure condition (same node as in asseble())
-        Iterator it = gridview.template begin<0>();
-        unsigned int globalId = vertexmapper.template map<dim>(*it, 3);
-
-        //get global coordinates of node globalId
-        // get geometry type
-        Dune::GeometryType gt = it->geometry().type();
-        // get local coordinates of node globalId (element it, node 3)
-        Dune::FieldVector<Scalar,dim> local = ReferenceElements<Scalar, dim>::general(gt).position(3,dim);
-        //std::cout<<"local:"<<local<<std::endl;
-        // get global coordinates
-        Dune::FieldVector<Scalar, dimworld> global = it->geometry().global(local);
-        //std::cout<<"global:"<<global<<std::endl;
-
-        //set third position of u to pressure(globalID)
-        //std::cout<<"pressure:"<<this->problem.pressure(global)<<std::endl;
-        (*(this->u))[globalId][dim] = this->problem.pressure(global);
-        //std::cout<<"pressure:"<<(*(this->u))[globalId][dim]<<std::endl;
+//        //set pressure condition (same node as in asseble())
+//        Iterator it = gridview.template begin<0>();
+//        unsigned int globalId = vertexmapper.template map<dim>(*it, 3);
+//
+//        //get global coordinates of node globalId
+//        // get geometry type
+//        Dune::GeometryType gt = it->geometry().type();
+//        // get local coordinates of node globalId (element it, node 3)
+//        Dune::FieldVector<Scalar,dim> local = ReferenceElements<Scalar, dim>::general(gt).position(3,dim);
+//        //std::cout<<"local:"<<local<<std::endl;
+//        // get global coordinates
+//        Dune::FieldVector<Scalar, dimworld> global = it->geometry().global(local);
+//        //std::cout<<"global:"<<global<<std::endl;
+//
+//        //set third position of u to pressure(globalID)
+//        //std::cout<<"pressure:"<<this->problem.pressure(global)<<std::endl;
+//        (*(this->u))[globalId][dim] = this->problem.pressure(global);
+//        //std::cout<<"pressure:"<<(*(this->u))[globalId][dim]<<std::endl;
 
         *(this->uOldTimeStep) = *(this->u);
         return;
