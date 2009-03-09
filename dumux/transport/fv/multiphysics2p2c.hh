@@ -2,11 +2,13 @@
 #ifndef MULTIPHYSICS2P2C_HH
 #define MULTIPHYSICS2P2C_HH
 
-// commons:
+// standard library:
 #include <float.h>
 #include <cmath>
 #include <string>
 #include <fstream>
+
+// dune environment:
 #include <dune/common/helpertemplates.hh>
 #include <dune/common/typetraits.hh>
 #include <dune/grid/common/mcmgmapper.hh>
@@ -16,33 +18,37 @@
 #include <dune/common/fvector.hh>
 #include <dune/subgrid/subgrid.hh>
 #include <dune/common/stdstreams.hh>
-
-// transport:
-#include "dumux/transport/fv/numericalflux.hh"
-#include "dumux/transport/fv/diffusivepart.hh"
-#include "dumux/transport/transportproblem2p2c.hh"
-
-// pressure:
 #include <dune/disc/operators/boundaryconditions.hh>
 #include <dune/istl/operators.hh>
 #include <dune/istl/solvers.hh>
 #include <dune/istl/preconditioners.hh>
+
+// dumux enviroment:
+#include "dumux/transport/fv/numericalflux.hh"
+#include "dumux/transport/fv/diffusivepart.hh"
+#include "dumux/transport/transportproblem2p2c.hh"
 #include "dumux/pardiso/pardiso.hh"
 
 //! @author: Jochen Fritz
-// last change: 27.11.2008
+// last change: 09.03.2009
 
 namespace Dune
 {
 
 /*####################################################*
- *                                                                                                         *
- *     CLASS DECLARATION                                                            *
- *                                                                                                         *
+ *                                                    *
+ *     CLASS DECLARATION                              *
+ *                                                    *
  *####################################################*/
 
 //! Multiphysics model for two-phase two-component model and single-phase transport model
-template<class G, class RT>
+/**
+ * This class implements a compressible two-phase two-component model just as in class Decoupled2p2c connected with
+ * an incompressible one-phase transport model.
+ * The 2p2c model is applied everywhere, where two phases are present,the 1p transport model everywhere else. The choice
+ * of the corresponding subdomains is done automatically.
+ */
+template<class Grid, class Scalar>
 class Multiphysics2p2c
 {
     template<int dim>
@@ -54,41 +60,25 @@ class Multiphysics2p2c
         }
     };
 
-    enum{dim = G::dimension};
-    enum{dimworld = G::dimensionworld};
+    enum{dim = Grid::dimension};
+    enum{dimworld = Grid::dimensionworld};
 
     // grid typedefs
-    typedef typename G::LevelGridView GV;
-    typedef typename G::Traits::template Codim<0>::Entity Entity;
+    typedef typename Grid::LevelGridView GV;
     typedef typename GV::IndexSet IS;
-    typedef typename GV::template Codim<0>::Iterator Iterator;
-    typedef typename G::template Codim<0>::HierarchicIterator HierarchicIterator;
-    typedef MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout> EM;
-    typedef typename G::template Codim<0>::EntityPointer EntityPointer;
-    typedef typename IntersectionIteratorGetter<G,LevelTag>::IntersectionIterator IntersectionIterator;
-    typedef typename G::ctype ct;
-
-    // subgrid typedefs
-    typedef SubGrid<dim,G> SG;
-    typedef typename SG::Traits::LevelIndexSet SIS;
-    typedef typename SG::Traits::template Codim<0>::Entity SubEntity;
-    typedef typename SG::template Codim<0>::LevelIterator SubIterator;
-    typedef typename SG::template Codim<0>::LevelIntersectionIterator SubIntersectionIterator;
-    typedef typename SG::template Codim<0>::EntityPointer SubEntityPointer;
+    typedef typename GV::template Codim<0>::Iterator ElementIterator;
+    typedef typename Grid::template Codim<0>::EntityPointer EntityPointer;
+    typedef typename IntersectionIteratorGetter<Grid,LevelTag>::IntersectionIterator IntersectionIterator;
+    typedef typename Grid::ctype ct;
 
     // data typedefs
     typedef FieldMatrix<double,1,1> MB;
     typedef BCRSMatrix<MB> MatrixType;
-    typedef FieldVector<double, 1> VB;
-    typedef BlockVector<VB> Vector;
-    typedef FieldVector<double,dim> R2;
-    typedef BlockVector<R2> R3;
-    typedef BlockVector<R3> LocVelType;
 
 public:
-    typedef BlockVector< FieldVector<RT,1> > RepresentationType;
-    typedef BlockVector< FieldVector<FieldVector<RT, G::dimension>, 2*G::dimension> > VelocityType;
+    typedef BlockVector< FieldVector<Scalar,1> > RepresentationType;
 
+    //! initializes the model and computes initial state
     void initial()
     {
         dinfo << "initialization of the model's variables ..."<<std::endl;
@@ -99,17 +89,47 @@ public:
         initialguess();                dinfo << "first saturation guess"<<std::endl;
         pressure(true, 0);        dinfo << "first pressure guess"<<std::endl;
         transportInitial();        dinfo << "first guess for mass fractions"<<std::endl;
+#if DUNE_MINIMAL_DEBUG_LEVEL >= 3
+        vtkout("firstguessmp2p2c",0); // output of first pressure guess and first initial state estimation
+#endif
+        double dt;
+        concentrationUpdate(0, dt, upd);
+        upd *= dt;
         pressure(false,0);        dinfo << "final pressure initialization"<<std::endl;
         transportInitial();        dinfo << "final initializiation of saturations and mass fractions"<<std::endl;
-        totalVelocity(0.);
         dinfo << "initialization done."<<std::endl;
     }
 
+    //! evaluates the pressure equation and performs one transport time step
+    /**
+     *  The calculated pressure is stored in the variableclass2p2c object in the problem.
+     *  The derivative of the change of the total concentration is given back in the vector updateVec.
+     *  @param[in] t current time
+     *  @param[out] maximum time step size based on CFL-criterion
+     *  @param[out] updateVec derivative of the change of the total concentration
+     */
+    void update(double t, double& dt, RepresentationType& updateVec)
+    {
+        upd = 0;
+        concentrationUpdate(t, dt, upd);
+        upd *= dt;
+        timestep = dt;
+
+        pressure(false, t);
+        int which = concentrationUpdate(t, dt, updateVec);
+        dinfo << "timestep restricting cell: " << which << std::endl;
+    }
+
+    //! Post processing step must be called at the end of every timestep
+    void postProcessUpdate(double t, double dt);
+
+    //! grid level on which the simulation works
     int level()
     {
         return level_;
     }
 
+    //! gives acces to the totalConcentration vector
     RepresentationType& operator*()
     {
         return problem.variables.totalConcentration;
@@ -118,48 +138,11 @@ public:
     // pressure equation functions:
     void initializeMatrix();
 
-    void assemble(bool first, const RT t);
-
-    void solve();
-
-    void pressure(bool first, const RT t)
-    {
-        assemble(first, t);
-        solve();
-        return;
-    }
-
-    void totalVelocity(const RT t);
-
-    // transport equation functions:
-    void initialguess();
-
-    void transportInitial();
-
-    void update(double t, double& dt, RepresentationType& updateVec)
-    {
-        dinfo << "update procedure..." << std::endl;
-        upd = 0;
-        concentrationUpdate(t, dt, upd);        dinfo << "concentration guess"<<std::endl;
-        upd *= dt;
-        timestep = dt;
-
-        pressure(false, t);
-        totalVelocity(t);        dinfo << "calculation of total velocity" <<std::endl;
-        int which = concentrationUpdate(t, dt, updateVec);
-        dinfo << "timestep restricting cell: " << which << std::endl;
-        dinfo << "update done" << std::endl;
-    }
-
-    int concentrationUpdate(const RT t, RT& dt, RepresentationType& updateVec);
-
-    void flashCalculation(double Z1, double p, double temp, double poro, double& sat, double& C1, double& C2, double& Xw1, double& Xn1);
-
-    void satFlash(double sat, double p, double temp, double poro, double& C1, double& C2, double& Xw1, double& Xn1);
-
-    void postProcessUpdate(double t, double dt);
-
     // graphical output
+    /**
+     * @param name file name of output
+     * @param k number of output file
+     */
     void vtkout(const char* name, int k)
     {
         problem.variables.volErr *= timestep;
@@ -187,36 +170,63 @@ public:
         vtkwriter.addCellData(problem.variables.nonwet_X1, "mass fraction 1 in nonwetting phase [-]");
         vtkwriter.addCellData(problem.variables.density_wet, "wetting phase density [kg/m^3]");
         vtkwriter.addCellData(problem.variables.density_nonwet, "non-wetting phase density [kg/m^3]");
+        vtkwriter.addCellData(problem.variables.mobility_wet, "wetting phase mobility [m*s/kg]");
+        vtkwriter.addCellData(problem.variables.mobility_nonwet, "non-wetting phase mobility [m*s/kg]");
         vtkwriter.addCellData(subdomain, "subdomain");
         vtkwriter.write(fname, Dune::VTKOptions::ascii);
 
         problem.variables.volErr /= timestep;
     }
 
-    const G& grid() const
-    { return grid_; }
+    //! access to grid object
+    const Grid& grid() const
+    {
+        return grid_;
+    }
 
 private:
+    //********************************
+    // private function declarations
+    //********************************
+    void initialguess();
+
+    void transportInitial();
+
+    void pressure(bool first, const Scalar t)
+    {
+        assemble(first, t);
+        solve();
+        return;
+    }
+
+    void assemble(bool first, const Scalar t);
+
+    void solve();
+
+    int concentrationUpdate(const Scalar t, Scalar& dt, RepresentationType& updateVec);
+
+    void flashCalculation(double Z1, double p, double temp, double poro, double& sat, double& C1, double& C2, double& Xw1, double& Xn1);
+
+    void satFlash(double sat, double p, double temp, double poro, double& C1, double& C2, double& Xw1, double& Xn1);
+
+    //********************************
+    // private variables declarations
+    //********************************
+
     // common variables
-    G& grid_;
+    Grid& grid_;
     int level_;
     const IS& indexset;
-    EM elementmapper;
     double timestep;
     const double T; //Temperature
+    const FieldVector<Scalar,dim> gravity;
+
     // subdomain map
     BlockVector<FieldVector<bool,1> > subdomain;
 
-    std::ofstream mass;
-
     // variables for transport equation:
-    TransportProblem2p2c<G, RT>& problem;
+    TransportProblem2p2c<Grid, Scalar>& problem;
     RepresentationType upd;
-
-    bool reconstruct;
-    const NumericalFlux<RT>& numFlux;
-    const DiffusivePart<G, RT>& diffusivePart;
-    double alphamax;
 
     // variables for pressure equation:
     MatrixType A;
@@ -227,22 +237,14 @@ private:
 public:
     // constructor
     Multiphysics2p2c(
-                     G& g,
-                     TransportProblem2p2c<G, RT>& prob,
+                     Grid& g,
+                     TransportProblem2p2c<Grid, Scalar>& prob,
                      int lev = 0,
-                     DiffusivePart<G, RT>& diffPart = *(new DiffusivePart<G, RT>),
-                     bool rec = false,
-                     double amax = 0.8,
-                     const NumericalFlux<RT>& numFl = *(new Upwind<RT>),
                      const std::string solverName = "BiCGSTAB",
                      const std::string preconditionerName = "SeqILU0" )
-        :grid_(g), level_(lev), indexset(g.levelView(lev).indexSet()), reconstruct(rec),
-         numFlux(numFl), diffusivePart(diffPart), alphamax(amax),
-         problem(prob),
-         elementmapper(g, g.levelView(lev).indexSet()),
+        :grid_(g), level_(lev), indexset(g.levelView(lev).indexSet()), T(283.15), gravity(prob.gravity()), problem(prob),
          A(g.size(lev, 0),g.size(lev, 0), (2*dim+1)*g.size(lev, 0), BCRSMatrix<MB>::random), f(g.size(lev, 0)),
-         solverName_(solverName), preconditionerName_(preconditionerName),
-         T(283.15), mass("brkthrmp.dat")
+         solverName_(solverName), preconditionerName_(preconditionerName)
     {
         problem.variables.volErr = 0;
         upd.resize(2 * indexset.size(0));
@@ -255,52 +257,52 @@ public:
 
 
 /*####################################################*
- *                                                                                                         *
- *     FUNCTION DEFINITIONS 1: PRESSURE EQUATION            *
- *                                                                                                         *
+ *                                                    *
+ *     FUNCTION DEFINITIONS 1: PRESSURE EQUATION      *
+ *                                                    *
  *####################################################*/
 
-template<class G, class RT>
-void Multiphysics2p2c<G, RT>::initializeMatrix()
+template<class Grid, class Scalar>
+void Multiphysics2p2c<Grid, Scalar>::initializeMatrix()
 {
     // determine matrix row sizes
-    Iterator eendit = grid_.template lend<0>(level_);
-    for (Iterator it = grid_.template lbegin<0>(level_); it != eendit; ++it)
+    ElementIterator eItEnd = grid_.template lend<0>(level_);
+    for (ElementIterator eIt = grid_.template lbegin<0>(level_); eIt != eItEnd; ++eIt)
     {
         // cell index
-        int indexi = elementmapper.map(*it);
+        int globalIdxi = indexset.index(*eIt);
 
         // Initialize row size
         int rowSize = 1;
 
         // run through all intersections with neighbors
-        IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
-        for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it); is!=endit; ++is)
-            if (is.neighbor()) rowSize++;
-        A.setrowsize(indexi, rowSize);
+        IntersectionIterator endit = IntersectionIteratorGetter<Grid,LevelTag>::end(*eIt);
+        for (IntersectionIterator isIt = IntersectionIteratorGetter<Grid,LevelTag>::begin(*eIt); isIt!=endit; ++isIt)
+            if (isIt->neighbor()) rowSize++;
+        A.setrowsize(globalIdxi, rowSize);
     }
     A.endrowsizes();
 
     // determine position of matrix entries
-    for (Iterator it = grid_.template lbegin<0>(level_); it != eendit; ++it)
+    for (ElementIterator eIt = grid_.template lbegin<0>(level_); eIt != eItEnd; ++eIt)
     {
         // cell index
-        int indexi = elementmapper.map(*it);
+        int globalIdxi = indexset.index(*eIt);
 
         // add diagonal index
-        A.addindex(indexi, indexi);
+        A.addindex(globalIdxi, globalIdxi);
 
         // run through all intersections with neighbors
-        IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
-        for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it); is!=endit; ++is)
-            if (is.neighbor())
+        IntersectionIterator endit = IntersectionIteratorGetter<Grid,LevelTag>::end(*eIt);
+        for (IntersectionIterator isIt = IntersectionIteratorGetter<Grid,LevelTag>::begin(*eIt); isIt!=endit; ++isIt)
+            if (isIt->neighbor())
             {
                 // access neighbor
-                EntityPointer outside = is.outside();
-                int indexj = elementmapper.map(*outside);
+                EntityPointer outside = isIt->outside();
+                int globalIdxj = indexset.index(*outside);
 
                 // add off diagonal index
-                A.addindex(indexi, indexj);
+                A.addindex(globalIdxi, globalIdxj);
             }
     }
     A.endindices();
@@ -317,49 +319,40 @@ void Multiphysics2p2c<G, RT>::initializeMatrix()
  * =\sum_{\kappa}\frac{\partial V}{\partial m^{\kappa}}q^{\kappa}\] \f$. See Paper SPE 99619.
  * This is done to account for the volume effects which appear when gas and liquid are dissolved iin each other.
  */
-template<class G, class RT>
-void Multiphysics2p2c<G, RT>::assemble(bool first, const RT t=0)
+template<class Grid, class Scalar>
+void Multiphysics2p2c<Grid, Scalar>::assemble(bool first, const Scalar t=0)
 {
     // initialization: set matrix A to zero
     A = 0;
+    f = 0;
 
     if (first) problem.variables.pressure = 1e5;
 
     // iterate over all cells in the grid
-    Iterator eendit = grid_.template lend<0>(level_);
-    Iterator it = grid_.template lbegin<0>(level_);
-    for (; it != eendit; ++it)
+    ElementIterator eItEnd = grid_.template lend<0>(level_);
+    ElementIterator eIt = grid_.template lbegin<0>(level_);
+    for (; eIt != eItEnd; ++eIt)
     {
         // get geometry infos about the cell...
-        GeometryType gt = it->geometry().type(); // cell geometry type
+        GeometryType gt = eIt->geometry().type(); // cell geometry type
         const FieldVector<ct,dim>&
-            local = ReferenceElements<ct,dim>::general(gt).position(0,0); // cell center in reference element
-        FieldVector<ct,dim> global = it->geometry().global(local);             // global coordinate of cell center
-        double volume = it->geometry().integrationElement(local)
+            localPos = ReferenceElements<ct,dim>::general(gt).position(0,0); // cell center in reference element
+        FieldVector<ct,dim> globalPos = eIt->geometry().global(localPos);             // global coordinate of cell center
+        double volume = eIt->geometry().integrationElement(localPos)
             *ReferenceElements<ct,dim>::general(gt).volume(); // cell volume
 
         // cell index in host grid and subdomain flag
-        int indexi = indexset.index(*it);
-        bool subI = subdomain[indexi];
+        int globalIdxi = indexset.index(*eIt);
+        bool subI = subdomain[globalIdxi];
 
         // get absolute permeability
-        FieldMatrix<ct,dim,dim> Ki(this->problem.soil.K(global,*it,local));
+        FieldMatrix<ct,dim,dim> Ki(this->problem.soil.K(globalPos,*eIt,localPos));
 
         // get porosity
-        double poroI = problem.soil.porosity(global, *it, local);
-
-        // get mobilities and fractional flow factors
-        double lambdaI = problem.variables.mobility_wet[indexi] + problem.variables.mobility_nonwet[indexi];
-        double fw_I = problem.variables.mobility_wet[indexi] / lambdaI;
-        double fn_I = problem.variables.mobility_nonwet[indexi] / lambdaI;
+        double poroI = problem.soil.porosity(globalPos, *eIt, localPos);
 
         // get the cell's saturation
-        // if sub == true, the entity is contained in the subdomain! (see function initializeIndexMaps)
-        double satI;
-        if (subI) // entity is contained in subdomain
-            satI = problem.variables.saturation[indexi];
-        else //entity lies outside of subgrid
-            satI = 1.;
+        double satI = problem.variables.saturation[globalIdxi];
 
         // derivatives of the fluid volume with respect to mass of compnents and pressure
         double dV_dm1 = 0;
@@ -367,34 +360,43 @@ void Multiphysics2p2c<G, RT>::assemble(bool first, const RT t=0)
         double dV_dp = 0;
 
         // specific volume of the phases
-        double Vg, Vw;
+        double Vg = 1. / problem.variables.density_nonwet[globalIdxi];
+        double Vw = 1. / problem.variables.density_wet[globalIdxi];
 
-        if (first || !subI)
+        double lambdaI, fw_I, fn_I;
+
+        if (first)
         {
-            // specific volume of the phases
-            Vg = 1. / problem.gasPhase.density(T, problem.variables.pressure[indexi], 0.);
-            Vw = 1. / problem.liquidPhase.density(T, problem.variables.pressure[indexi], 0.);
+            // get mobilities and fractional flow factors
+            lambdaI = problem.variables.mobility_wet[globalIdxi] + problem.variables.mobility_nonwet[globalIdxi];
+            fw_I = problem.variables.mobility_wet[globalIdxi] / lambdaI;
+            fn_I = problem.variables.mobility_nonwet[globalIdxi] / lambdaI;
 
-            FieldVector<RT,2> q = problem.q(global,*it,local);
-            f[indexi] = volume * (q[0] * Vw + q[1] * Vg);
+            FieldVector<Scalar,2> q = problem.source(globalPos,*eIt,localPos);
+            f[globalIdxi] = volume * (q[0] * Vw + q[1] * Vg);
+        }
+        else if (!subI)
+        {
+            // assume that the source does not lead to a second phase!
+            FieldVector<Scalar,2> q = problem.source(globalPos,*eIt,localPos);
+            if (satI == 1)
+                f[globalIdxi] = volume * (q[0] + q[1]) * Vw;
+            else if (satI == 0)
+                f[globalIdxi] = volume * (q[0] + q[1]) * Vg;
         }
         else
         {
-            // specific volume of the phases
-            Vg = 1. / problem.variables.density_nonwet[indexi];
-            Vw = 1. / problem.variables.density_wet[indexi];
-
             // mass of components inside the cell
-            double m1 = problem.variables.totalConcentration[indexi] * volume * poroI;
-            double m2 = problem.variables.totalConcentration[indexi+indexset.size(0)] * volume * poroI;
+            double m1 = problem.variables.totalConcentration[globalIdxi] * volume / poroI;
+            double m2 = problem.variables.totalConcentration[globalIdxi+indexset.size(0)] * volume / poroI;
             // mass fraction of wetting phase
             double nuw1 = satI / Vw / (satI/Vw + (1-satI)/Vg);
             // actual fluid volume
             double volalt = (m1+m2) * (nuw1 * Vw + (1-nuw1) * Vg);
 
             // increments for numerical derivatives
-            double inc1 = (fabs(upd[indexi][0]) * poroI > 1e-8 /Vw) ?  upd[indexi][0] * poroI : 1e-8/Vw;
-            double inc2 =(fabs(upd[indexi+indexset.size(0)][0]) * poroI > 1e-8 / Vg) ?  upd[indexi+indexset.size(0)][0] * poroI : 1e-8 / Vg;
+            double inc1 = (fabs(upd[globalIdxi][0]) / poroI > 1e-8 /Vw) ?  upd[globalIdxi][0] / poroI : 1e-8/Vw;
+            double inc2 =(fabs(upd[globalIdxi+indexset.size(0)][0]) / poroI > 1e-8 / Vg) ?  upd[globalIdxi+indexset.size(0)][0] / poroI : 1e-8 / Vg;
             inc1 *= volume;
             inc2 *= volume;
 
@@ -402,7 +404,7 @@ void Multiphysics2p2c<G, RT>::assemble(bool first, const RT t=0)
             m1 +=  inc1;
             double Z1 = m1 / (m1 + m2);
             double dummy1, dummy2, dummy3, dummy4, satt;
-            flashCalculation(Z1, problem.variables.pressure[indexi], T, poroI, satt, dummy1, dummy2, dummy3, dummy4);
+            flashCalculation(Z1, problem.variables.pressure[globalIdxi], T, poroI, satt, dummy1, dummy2, dummy3, dummy4);
             double nuw = satt / Vw / (satt/Vw + (1-satt)/Vg);
             dV_dm1 = ((m1+m2) * (nuw * Vw + (1-nuw) * Vg) - volalt) /inc1;
             m1 -= inc1;
@@ -410,64 +412,63 @@ void Multiphysics2p2c<G, RT>::assemble(bool first, const RT t=0)
             // numerical derivative of fluid volume with respect to mass of component 2
             m2 += inc2;
             Z1 = m1 / (m1 + m2);
-            flashCalculation(Z1, problem.variables.pressure[indexi], 283.15, poroI, satt, dummy1, dummy2, dummy3, dummy4);
+            flashCalculation(Z1, problem.variables.pressure[globalIdxi], 283.15, poroI, satt, dummy1, dummy2, dummy3, dummy4);
             nuw = satt / Vw / (satt/Vw + (1-satt)/Vg);
             dV_dm2 = ((m1+m2) * (nuw * Vw + (1-nuw) * Vg) - volalt)/ inc2;
             m2 -= inc2;
 
             // numerical derivative of fluid volume with respect to pressure
             double incp = 1e-5;
-            double p_ = problem.variables.pressure[indexi] + incp;
-            double Vg_ = 1. / problem.gasPhase.density(T, p_, problem.variables.nonwet_X1[indexi]);
-            double Vw_ = 1. / problem.liquidPhase.density(T, p_, (1. - problem.variables.wet_X1[indexi]));
+            double p_ = problem.variables.pressure[globalIdxi] + incp;
+            double Vg_ = 1. / problem.gasPhase.density(T, p_, problem.variables.nonwet_X1[globalIdxi]);
+            double Vw_ = 1. / problem.liquidPhase.density(T, p_, (1. - problem.variables.wet_X1[globalIdxi]));
             dV_dp = ((m1+m2) * (nuw1 * Vw_ + (1-nuw1) * Vg_) - volalt) /incp;
 
             // right hand side entry: sources
-            FieldVector<RT,2> q = problem.q(global,*it,local);
-            f[indexi] = volume * (dV_dm1 * q[0] + dV_dm2 * q[1]);
+            FieldVector<Scalar,2> q = problem.source(globalPos,*eIt,localPos);
+            f[globalIdxi] = volume * (dV_dm1 * q[0] + dV_dm2 * q[1]);
         }
 
         // iterate over all faces of the cell
-        IntersectionIterator endis = it->ilevelend();
-        for (IntersectionIterator is = it->ilevelbegin(); is!=endis; ++is)
+        IntersectionIterator isItEnd = eIt->ilevelend();
+        for (IntersectionIterator isIt = eIt->ilevelbegin(); isIt!=isItEnd; ++isIt)
         {
             // some geometry informations of the face
-            GeometryType gtf = is.intersectionSelfLocal().type(); // get geometry type of face
-            const FieldVector<ct,dim-1>& facelocal = ReferenceElements<ct,dim-1>::general(gtf).position(0,0); // center in face's reference element
-            const FieldVector<ct,dim>& facelocalDim = ReferenceElements<ct,dim>::general(gtf).position(is.numberInSelf(),1); // center of face inside volume reference element
-            FieldVector<ct,dimworld> unitOuterNormal = is.unitOuterNormal(facelocal);// get normal vector
-            FieldVector<ct,dimworld> integrationOuterNormal = is.integrationOuterNormal(facelocal);
+            GeometryType gtf = isIt->intersectionSelfLocal().type(); // get geometry type of face
+            const FieldVector<ct,dim-1>& facelocalPos = ReferenceElements<ct,dim-1>::general(gtf).position(0,0); // center in face's reference element
+            const FieldVector<ct,dim>& facelocalDim = ReferenceElements<ct,dim>::general(gtf).position(isIt->numberInSelf(),1); // center of face inside volume reference element
+            FieldVector<ct,dimworld> unitOuterNormal = isIt->unitOuterNormal(facelocalPos);// get normal vector
+            FieldVector<ct,dimworld> integrationOuterNormal = isIt->integrationOuterNormal(facelocalPos);
             integrationOuterNormal *= ReferenceElements<ct,dim-1>::general(gtf).volume(); //normal vector scaled with volume
-            double faceVol = is.intersectionGlobal().volume(); // get face volume
+            double faceVol = isIt->intersectionGlobal().volume(); // get face volume
 
             // compute directed permeability vector Ki.n
             FieldVector<ct,dim> Kni(0);
             Ki.umv(unitOuterNormal, Kni);
 
             // handle interior face
-            if (is.neighbor())
+            if (isIt->neighbor())
             {
                 // acces neighbor
-                EntityPointer outside = is.outside();
+                EntityPointer outside = isIt->outside();
 
                 // cell index and subdomain flag of neighbor
-                int indexj = indexset.index(*outside);
-                int subJ = subdomain[indexj];
+                int globalIdxj = indexset.index(*outside);
 
                 // some geometry infos of the neighbor
                 GeometryType nbgt = outside->geometry().type();
-                const FieldVector<ct,dim>& nblocal = ReferenceElements<ct,dim>::general(nbgt).position(0,0);
+                const FieldVector<ct,dim>& nblocalPos = ReferenceElements<ct,dim>::general(nbgt).position(0,0);
                 FieldVector<ct,dimworld>
-                    nbglobal = outside->geometry().global(nblocal); // neighbor cell center in global coordinates
+                    nbGlobalPos = outside->geometry().global(nblocalPos); // neighbor cell center in global coordinates
 
                 // distance vector between barycenters
-                FieldVector<ct,dimworld> distVec = global - nbglobal;
+                FieldVector<ct,dimworld> distVec = nbGlobalPos - globalPos;
 
                 // compute distance between cell centers
                 double dist = distVec.two_norm();
 
                 // get absolute permeability
-                FieldMatrix<ct,dim,dim> Kj(problem.soil.K(nbglobal, *outside, nblocal));
+                FieldMatrix<ct,dim,dim> Kj(problem.soil.K(nbGlobalPos, *outside, nblocalPos));
 
                 // compute vectorized permeabilities
                 FieldVector<ct,dim> Knj(0);
@@ -486,168 +487,227 @@ void Multiphysics2p2c<G, RT>::assemble(bool first, const RT t=0)
                 uON = unitOuterNormal;
                 FieldVector<ct,dim> K = (Kt += (uON *=Kn));
 
-                //get saturation in neighbor
-                double satJ;
-
-                if (subJ)
-                    satJ = problem.variables.saturation[indexj];
-                else
-                    satJ = 1.;
-
-                double lambdaJ = problem.variables.mobility_wet[indexj] + problem.variables.mobility_nonwet[indexj];
-                double fw_J = problem.variables.mobility_wet[indexj] / lambdaJ;
-                double fn_J = problem.variables.mobility_nonwet[indexj] / lambdaJ;
-
-                // compute averaged total mobility
-                // CAREFUL: Harmonic weightig can generate zero matrix entries,
-                // use arithmetic weighting instead:
-                double lambda;
-                lambda = 0.5*(lambdaI + lambdaJ);
+                // phase densities in cell in neighbor
+                double rho_w_I = 1 / Vw;
+                double rho_n_I = 1 / Vg;
+                double rho_w_J = problem.variables.density_wet[globalIdxj];
+                double rho_n_J = problem.variables.density_nonwet[globalIdxj];
+                double rho_w = (rho_w_I + rho_w_J) / 2;
+                double rho_n = (rho_n_I + rho_n_J) / 2;
 
                 // update diagonal entry
                 double entry;
-                if (first || !subI) // first guess pressure calculation or the current cell is not contained in subgrid
-                    entry = fabs(lambda*faceVol*(K*distVec)/(dist*dist));
-                else if (subJ) // current cell and neighbor are contained in subgrid
+                if (first) // first guess pressure calculation
                 {
-                    // phase densities in cell in neighbor
-                    double rho_w_I = 1 / Vw;
-                    double rho_n_I = 1 / Vg;
-                    double rho_w_J = problem.variables.density_wet[indexj];
-                    double rho_n_J = problem.variables.density_nonwet[indexj];
+                    double lambdaJ = problem.variables.mobility_wet[globalIdxj] + problem.variables.mobility_nonwet[globalIdxj];
+                    double fw_J = problem.variables.mobility_wet[globalIdxj] / lambdaJ;
+                    double fn_J = problem.variables.mobility_nonwet[globalIdxj] / lambdaJ;
 
-                    if (problem.variables.pressure[indexi] > problem.variables.pressure[indexj])
-                    {
-                        entry = fabs(
-                                     dV_dm1 * ( rho_w_I * problem.variables.wet_X1[indexi] * fw_I + rho_n_I * problem.variables.nonwet_X1[indexi] * fn_I)
-                                     + dV_dm2 * ( rho_w_I * (1. - problem.variables.wet_X1[indexi]) * fw_I + rho_n_I * (1. - problem.variables.nonwet_X1[indexi]) * fn_I)
-                                     );
-                    }
-                    else
-                    {
-                        entry = fabs(
-                                     dV_dm1 * ( rho_w_J * problem.variables.wet_X1[indexj] * fw_J + rho_n_J * problem.variables.nonwet_X1[indexj] * fn_J)
-                                     + dV_dm2 * ( rho_w_J * (1. - problem.variables.wet_X1[indexj]) * fw_J + rho_n_J * (1. - problem.variables.nonwet_X1[indexj]) * fn_J)
-                                     );
-                    }
-                    entry *= lambda * fabs(faceVol*(K*distVec)/(dist*dist));
+                    entry = fabs(0.5 * (lambdaI + lambdaJ) * faceVol * (K * distVec) / (dist * dist));
+                    double factor = (fw_I + fw_J) * (rho_w) / 2 + (fn_I + fn_J) * (rho_n) / 2;
+                    f[globalIdxi] -= factor * 0.5 * (lambdaI + lambdaJ) * faceVol * (K * gravity);
                 }
-                else // current cell is contained in subgrid, neighbor is not
+                else if (!subI) //the current cell is not contained in subgrid
                 {
-                    // phase densities in cell in neighbor
-                    double rho_w_I = 1 / Vw;
-                    double rho_n_I = 1 / Vg;
-                    double rho_w_J = problem.variables.density_wet[indexj];
-                    double rho_n_J = problem.variables.density_nonwet[indexj];
+                    double potW = (unitOuterNormal * distVec) * (problem.variables.pressure[globalIdxi] - problem.variables.pressure[globalIdxj]) / (dist * dist);
+                    double potN = potW + rho_n * (unitOuterNormal * gravity);
+                    potW += rho_w * (unitOuterNormal * gravity);
 
-                    if (problem.variables.pressure[indexi] > problem.variables.pressure[indexj])
+                    double lambdaW, lambdaN;
+
+                    if (potW >= 0.)
+                        lambdaW = problem.variables.mobility_wet[globalIdxi];
+                    else
+                        lambdaW = problem.variables.mobility_wet[globalIdxj];
+
+                    if (potN >= 0.)
+                        lambdaN = problem.variables.mobility_nonwet[globalIdxi];
+                    else
+                        lambdaN = problem.variables.mobility_nonwet[globalIdxj];
+
+                    entry  = (lambdaW + lambdaN) * faceVol * (K * distVec) / (dist * dist);
+                    double rightentry = (rho_w * lambdaW + rho_n * lambdaN) * faceVol * (K * gravity);
+                    f[globalIdxi] -= rightentry;
+                }
+                else // current cell is contained in subgrid
+                {
+                    double potW = (unitOuterNormal * distVec) * (problem.variables.pressure[globalIdxi] - problem.variables.pressure[globalIdxj]) / (dist * dist);
+                    double potN = potW + rho_n * (unitOuterNormal * gravity);
+                    potW += rho_w * (unitOuterNormal * gravity);
+
+                    double lambdaW, lambdaN;
+                    double dV_w, dV_n;
+
+                    if (potW >= 0.)
                     {
-                        entry = fabs(
-                                     dV_dm1 * ( rho_w_I * problem.variables.wet_X1[indexi] * fw_I + rho_n_I * problem.variables.nonwet_X1[indexi] * fn_I)
-                                     + dV_dm2 * ( rho_w_I * (1. - problem.variables.wet_X1[indexi]) * fw_I + rho_n_I * (1. - problem.variables.nonwet_X1[indexi]) * fn_I)
-                                     );
+                        dV_w = rho_w_I * (dV_dm1 * problem.variables.wet_X1[globalIdxi] + dV_dm2 * (1. - problem.variables.wet_X1[globalIdxi]));
+                        lambdaW = problem.variables.mobility_wet[globalIdxi];
                     }
                     else
                     {
-                        entry = fabs(
-                                     dV_dm1 * ( rho_w_J * (1. - problem.variables.totalConcentration[indexj + indexset.size(0)]) * fw_J + rho_n_J * 0. * fn_J)
-                                     + dV_dm2 * ( rho_w_J * problem.variables.totalConcentration[indexj + indexset.size(0)] * fw_J + rho_n_J * 0. * fn_J)
-                                     );
+                        dV_w = rho_w_J * (dV_dm1 * problem.variables.wet_X1[globalIdxj] + dV_dm2 * (1. - problem.variables.wet_X1[globalIdxj]));
+                        lambdaW = problem.variables.mobility_wet[globalIdxj];
                     }
-                    entry *= lambda * fabs(faceVol*(K*distVec)/(dist*dist));
+                    if (potN >= 0.)
+                    {
+                        dV_n = rho_n_I * (dV_dm1 * problem.variables.nonwet_X1[globalIdxi] + dV_dm2 * (1. - problem.variables.nonwet_X1[globalIdxi]));
+                        lambdaN = problem.variables.mobility_nonwet[globalIdxi];
+                    }
+                    else
+                    {
+                        dV_n = rho_n_J * (dV_dm1 * problem.variables.nonwet_X1[globalIdxj] + dV_dm2 * (1. - problem.variables.nonwet_X1[globalIdxj]));
+                        lambdaN = problem.variables.mobility_nonwet[globalIdxj];
+                    }
+
+                    entry = lambdaW * dV_w + lambdaN * dV_n;
+                    entry *= fabs(faceVol*(K*distVec)/(dist*dist));
+                    double rightentry = rho_w * lambdaW * dV_w + rho_n * lambdaN * dV_n;
+                    rightentry *= faceVol * (K * gravity);
+                    f[globalIdxi] -= rightentry;
                 }
 
                 // set diagonal entry
-                A[indexi][indexi] += entry;
+                A[globalIdxi][globalIdxi] += entry;
 
                 // set off-diagonal entry
-                A[indexi][indexj] = -entry;
+                A[globalIdxi][globalIdxj] = -entry;
             }
 
             // boundary face
             else
             {
                 // center of face in global coordinates
-                FieldVector<ct,dimworld> faceglobal = is.intersectionGlobal().global(facelocal);
+                FieldVector<ct,dimworld> faceGlobalPos = isIt->intersectionGlobal().global(facelocalPos);
 
                 //get boundary condition for boundary face center
-                BoundaryConditions::Flags bctype = problem.pbctype(faceglobal, *it, facelocalDim);
+                BoundaryConditions::Flags bctype = problem.press_bc_type(faceGlobalPos, *eIt, facelocalDim);
 
 
                 if (bctype == BoundaryConditions::dirichlet) //dirichlet boundary
                 {
+                    double pressBC = problem.dirichlet(faceGlobalPos, *eIt, facelocalDim);
+
                     // distance vector to boundary face
-                    FieldVector<ct,dimworld> distVec(global - faceglobal);
+                    FieldVector<ct,dimworld> distVec(faceGlobalPos - globalPos);
                     double dist = distVec.two_norm();
-                    if (first || !subI)
+                    if (first)
                     {
-                        double lambda = lambdaI;
-                        A[indexi][indexi] -= lambda * faceVol * (Kni * distVec) / (dist * dist);
-                        double pressBC = problem.gPress(faceglobal, *it, facelocalDim);
-                        f[indexi] -= lambda * faceVol * pressBC * (Kni * distVec) / (dist * dist);
+                        A[globalIdxi][globalIdxi] += lambdaI * faceVol * (Kni * distVec) / (dist * dist);
+                        f[globalIdxi] += lambdaI * faceVol * pressBC * (Kni * distVec) / (dist * dist);
+                        f[globalIdxi] -= (fw_I * problem.variables.density_wet[globalIdxi] + fn_I * problem.variables.density_nonwet[globalIdxi]) * lambdaI * faceVol * (Kni * gravity);
                     }
                     else
                     {
-                        double pressBC = problem.gPress(faceglobal, *it, facelocalDim);
-
                         double satBound, C1Bound, C2Bound, Xw1Bound, Xn1Bound;
 
                         //get boundary condition type for compositional transport
-                        BoundaryConditions2p2c::Flags bctype = problem.cbctype(faceglobal, *it, facelocalDim);
+                        BoundaryConditions2p2c::Flags bctype = problem.bc_type(faceGlobalPos, *eIt, facelocalDim);
                         if (bctype == BoundaryConditions2p2c::saturation) // saturation given
                         {
-                            satBound = problem.gS(faceglobal, *it, facelocalDim);
-                            satFlash(satBound, pressBC, T, problem.soil.porosity(global, *it, local), C1Bound, C2Bound, Xw1Bound, Xn1Bound);
+                            satBound = problem.dirichletSat(faceGlobalPos, *eIt, facelocalDim);
+                            satFlash(satBound, pressBC, T, problem.soil.porosity(globalPos, *eIt, localPos), C1Bound, C2Bound, Xw1Bound, Xn1Bound);
                         }
                         if (bctype == BoundaryConditions2p2c::concentration) // mass fraction given
                         {
-                            double Z1Bound = problem.gZ(faceglobal, *it, facelocalDim);
-                            flashCalculation(Z1Bound, pressBC, T, problem.porosity(global, *it, local), satBound, C1Bound, C2Bound, Xw1Bound, Xn1Bound);
+                            double Z1Bound = problem.dirichletConcentration(faceGlobalPos, *eIt, facelocalDim);
+                            flashCalculation(Z1Bound, pressBC, T, problem.soil.porosity(globalPos, *eIt, localPos), satBound, C1Bound, C2Bound, Xw1Bound, Xn1Bound);
                         }
 
                         // fluid properties on boundary
-                        std::vector<double> kr = problem.materialLaw.kr(satBound, global, *it, local, T);
-                        double viscosityL = problem.liquidPhase.viscosity(T, pressBC , 1. - Xw1Bound);
-                        double viscosityG = problem.gasPhase.viscosity(T, pressBC, Xn1Bound);
-                        double lambdaB = kr[0] / viscosityL + kr[1] / viscosityG;
-                        double fwBound = kr[0] / viscosityL / lambdaB;
-                        double fnBound = kr[1] / viscosityG / lambdaB;
-
-                        double lambda = 0.5 * (lambdaI + lambdaB);
+                        std::vector<double> kr = problem.materialLaw.kr(satBound, globalPos, *eIt, localPos, T);
+                        double viscosityW = problem.liquidPhase.viscosity(T, pressBC , 1. - Xw1Bound);
+                        double viscosityN = problem.gasPhase.viscosity(T, pressBC, Xn1Bound);
 
                         // phase densities in cell and on boundary
                         double rho_w_I = 1 / Vw;
                         double rho_n_I = 1 / Vg;
                         double rho_w_J = problem.liquidPhase.density(T, pressBC, 1. - Xw1Bound);
                         double rho_n_J = problem.gasPhase.density(T, pressBC, Xn1Bound);
+                        double rho_w = (rho_w_I + rho_w_J) / 2;
+                        double rho_n = (rho_n_I + rho_n_J) / 2;
 
-                        double entry;
-                        if (problem.variables.pressure[indexi] > pressBC)
-                            entry = fabs(
-                                         dV_dm1 * ( rho_w_I * problem.variables.wet_X1[indexi] * fw_I + rho_n_I * problem.variables.nonwet_X1[indexi] * fn_I)
-                                         + dV_dm2 * ( rho_w_I * (1. - problem.variables.wet_X1[indexi]) * fw_I + rho_n_I * (1. - problem.variables.nonwet_X1[indexi]) * fn_I)
-                                         );
+                        if (!subI)
+                        {
+                            // gradient of total potential
+                            double potW = (unitOuterNormal * distVec) * (problem.variables.pressure[globalIdxi] - pressBC) / (dist * dist);
+                            double potN = potW + rho_n * (unitOuterNormal * gravity);
+                            potW += rho_w * (unitOuterNormal * gravity);
+
+                            double lambdaW, lambdaN;
+
+                            if (potW >= 0.)
+                                lambdaW = problem.variables.mobility_wet[globalIdxi];
+                            else
+                                lambdaW = satBound / viscosityW;
+
+                            if (potN >= 0.)
+                                lambdaN = problem.variables.mobility_nonwet[globalIdxi];
+                            else
+                                lambdaN = (1. - satBound) / viscosityN;
+
+                            A[globalIdxi][globalIdxi] += (lambdaW + lambdaN) * faceVol * (Kni * distVec) / (dist * dist);
+                            double rightentry = (rho_w * lambdaW + rho_n * lambdaN) * faceVol * (Kni * gravity);
+                            f[globalIdxi] -= rightentry;
+                            f[globalIdxi] += (lambdaW + lambdaN) * faceVol * pressBC * (Kni * distVec) / (dist * dist);
+                        }
                         else
-                            entry = fabs(
-                                         dV_dm1 * ( rho_w_J * Xw1Bound * fwBound + rho_n_J * Xn1Bound * fnBound)
-                                         + dV_dm2 * ( rho_w_J * (1. - Xw1Bound) * fwBound + rho_n_J * (1.- Xn1Bound) * fnBound)
-                                         );
+                        {
+                            // velocities
+                            double potW = (unitOuterNormal * distVec) * (problem.variables.pressure[globalIdxi] - pressBC) / (dist * dist);
+                            double potN = potW + rho_n * (unitOuterNormal * gravity);
+                            potW += rho_w * (unitOuterNormal * gravity);
 
-                        entry *= - lambda * faceVol*(Kni*distVec)/(dist*dist);
+                            double lambdaW, lambdaN;
+                            double dV_w, dV_n;
 
-                        // set diagonal entry and right hand side entry
-                        A[indexi][indexi] += entry;
-                        f[indexi] += entry * pressBC;
+                            if (potW >= 0.)
+                            {
+                                dV_w = rho_w_I * (dV_dm1 * problem.variables.wet_X1[globalIdxi] + dV_dm2 * (1. - problem.variables.wet_X1[globalIdxi]));
+                                lambdaW = problem.variables.mobility_wet[globalIdxi];
+                            }
+                            else
+                            {
+                                dV_w = rho_w_J * (dV_dm1 * Xw1Bound + dV_dm2 * (1. - Xw1Bound));
+                                lambdaW = satBound / viscosityW;
+                            }
+                            if (potN >= 0.)
+                            {
+                                dV_n = rho_n_I * (dV_dm1 * problem.variables.nonwet_X1[globalIdxi] + dV_dm2 * (1. - problem.variables.nonwet_X1[globalIdxi]));
+                                lambdaN = problem.variables.mobility_nonwet[globalIdxi];
+                            }
+                            else
+                            {
+                                dV_n = rho_n_J * (dV_dm1 * Xn1Bound + dV_dm2 * (1. - Xn1Bound));
+                                lambdaN = (1. - satBound) / viscosityN;
+                            }
+
+                            double entry = lambdaW * dV_w + lambdaN * dV_n;
+                            entry *= fabs(faceVol * (Kni * distVec) / (dist * dist));
+                            double rightentry = rho_w * lambdaW * dV_w + rho_n *lambdaN * dV_n;
+                            rightentry *= faceVol * (Kni * gravity);
+
+                            // set diagonal entry and right hand side entry
+                            A[globalIdxi][globalIdxi] += entry;
+                            f[globalIdxi] += entry * pressBC;
+                            f[globalIdxi] -= rightentry;
+                        }
                     }
                 }
                 else //neumann boundary
                 {
-                    FieldVector<RT,2> J = problem.J(faceglobal, *it, facelocalDim);
-                    if (first || !subI)
-                        f[indexi] += faceVol * (J[0] * Vw + J[1] * Vg);
+                    FieldVector<Scalar,2> J = problem.neumann(faceGlobalPos, *eIt, facelocalDim);
+                    if (first)
+                        f[globalIdxi] += faceVol * (J[0] * Vw + J[1] * Vg);
+                    else if (!subI)
+                    {
+                        if (satI == 1)
+                            f[globalIdxi] += faceVol * (J[0] + J[1]) * Vw;
+                        if (satI == 0)
+                            f[globalIdxi] += faceVol * (J[0] + J[1]) * Vg;
+                    }
                     else
                     {
-                        f[indexi] += faceVol* (J[0] * dV_dm1 + J[1] * dV_dm2);
+                        f[globalIdxi] += faceVol* (J[0] * dV_dm1 + J[1] * dV_dm2);
                     }
                 }
             }
@@ -658,17 +718,17 @@ void Multiphysics2p2c<G, RT>::assemble(bool first, const RT t=0)
         {
             if (timestep != 0.)
             {
-                A[indexi][indexi] -= dV_dp / timestep;
-                f[indexi] -= problem.variables.pressure[indexi] *dV_dp / timestep;
+                A[globalIdxi][globalIdxi] -= dV_dp / timestep;
+                f[globalIdxi] -= problem.variables.pressure[globalIdxi] *dV_dp / timestep;
             }
 
             // error reduction routine: volumetric error is damped and inserted to right hand side
             // if damping is not done, the solution method gets unstable!
             double maxErr = fabs(problem.variables.volErr.infinity_norm());
-            double erri = fabs(problem.variables.volErr[indexi]);
+            double erri = fabs(problem.variables.volErr[globalIdxi]);
             double x_lo = 0.6;
             double x_mi = 0.9;
-            double fac  = 0.5;
+            double fac  = 0.3;
             double lofac = 0.;
             double hifac = 0.;
             hifac /= fac;
@@ -677,23 +737,26 @@ void Multiphysics2p2c<G, RT>::assemble(bool first, const RT t=0)
                 if (erri > x_lo * maxErr)
                 {
                     if (erri <= x_mi * maxErr)
-                        f[indexi] += fac* (1-x_mi*(lofac/fac-1)/(x_lo-x_mi) + (lofac/fac-1)/(x_lo-x_mi)*erri/maxErr)* problem.variables.volErr[indexi]*volume;
+                        f[globalIdxi] += fac* (1-x_mi*(lofac/fac-1)/(x_lo-x_mi) + (lofac/fac-1)/(x_lo-x_mi)*erri/maxErr)* problem.variables.volErr[globalIdxi]*volume;
                     else
-                        f[indexi] += fac * (1 + x_mi - hifac*x_mi/(1-x_mi) + (hifac/(1-x_mi)-1)*erri/maxErr) * problem.variables.volErr[indexi]*volume;
+                        f[globalIdxi] += fac * (1 + x_mi - hifac*x_mi/(1-x_mi) + (hifac/(1-x_mi)-1)*erri/maxErr) * problem.variables.volErr[globalIdxi]*volume;
                 }
         }
     } // end grid traversal
 
-    //        printmatrix(std::cout,A,"stiffnesmatrix","row");
-    //        printvector(std::cout,f,"right hand side","row");
+//            printmatrix(std::cout,A,"stiffnesmatrix","row");
+//            printvector(std::cout,f,"right hand side","row");
 
     return;
 } // end function assemble
 
 
-template<class G, class RT>
-void Multiphysics2p2c<G, RT>::solve()
+template<class Grid, class Scalar>
+void Multiphysics2p2c<Grid, Scalar>::solve()
 {
+    typedef FieldVector<double, 1> VB;
+    typedef BlockVector<VB> Vector;
+
     MatrixAdapter<MatrixType,Vector,Vector> op(A);
     InverseOperatorResult r;
 
@@ -727,88 +790,208 @@ void Multiphysics2p2c<G, RT>::solve()
     return;
 }
 
-template<class G, class RT>
-void Multiphysics2p2c<G, RT>::totalVelocity(const RT t=0)
+/*####################################################*
+ *                                                    *
+ *     FUNCTION DEFINITIONS 2: TRANSPORT EQUATION     *
+ *                                                    *
+ *####################################################*/
+
+template<class Grid, class Scalar>
+void Multiphysics2p2c<Grid,Scalar>::initialguess()
 {
-    // find out whether gravity effects are relevant
-    bool hasGravity = false;
-    const FieldVector<ct,dim>& gravity = problem.gravity();
-    for (int k = 0; k < dim; k++)
-        if (gravity[k] != 0)
-            hasGravity = true;
+    // get viscosities
+    double viscosityL = problem.liquidPhase.viscosity(T, 1e5, 0.);
+    double viscosityG = problem.gasPhase.viscosity(T, 1e5, 0.);
 
-    Iterator eendit = grid_.template lend<0>(level_);
-    for (Iterator it = grid_.template lbegin<0>(level_); it != eendit; ++it)
+    // iterate through leaf grid an evaluate c0 at cell center
+    ElementIterator eItEnd = grid_.template lend<0>(level_);
+    for (ElementIterator eIt = grid_.template lbegin<0>(level_); eIt != eItEnd; ++eIt)
     {
+        int globalIdx = indexset.index(*eIt);
 
-        // some geometry infos about the cell
-        GeometryType gt = it->geometry().type();  // cell geometry type
-        const FieldVector<ct,dim>& local = ReferenceElements<ct,dim>::general(gt).position(0,0); // cell center in reference element
-        FieldVector<ct,dimworld> global = it->geometry().global(local);  // cell center in global coordinates
+        // get geometry information of cell
+        GeometryType gt = eIt->geometry().type();
+        const FieldVector<ct,dim>&
+            localPos = ReferenceElements<ct,dim>::general(gt).position(0,0);
+        FieldVector<ct,dimworld> globalPos = eIt->geometry().global(localPos);
+
+        // initial conditions
+        double sat_0;
+        double Z1_0;
+        BoundaryConditions2p2c::Flags ictype = problem.initcond_type(globalPos, *eIt, localPos); // get type of initial condition
+
+        if (ictype == BoundaryConditions2p2c::saturation)// saturation initial condition
+            sat_0 = problem.initSat(globalPos, *eIt, localPos);
+        else if(ictype == BoundaryConditions2p2c::concentration)            // saturation initial condition
+        {
+            Z1_0 = problem.initConcentration(globalPos, *eIt, localPos);
+            double rho_l = problem.liquidPhase.density(T, 1e5, 0.);
+            sat_0 = Z1_0 / rho_l;
+            sat_0 /= Z1_0 / rho_l + (1 - Z1_0) * problem.materialLaw.nonwettingPhase.density(T, 1e5, 0.);
+        }
+        else
+        {
+            DUNE_THROW(Dune::NotImplemented, "Boundary condition " << ictype);
+        }
+
+        // initialize cell saturation
+        this->problem.variables.saturation[globalIdx][0] = sat_0;
+
+        // get relative permeabilities and set mobilities.
+        std::vector<double> kr = problem.materialLaw.kr(problem.variables.saturation[globalIdx], globalPos, *eIt, localPos, T);
+        problem.variables.mobility_wet[globalIdx] = kr[0] / viscosityL;
+        problem.variables.mobility_nonwet[globalIdx] = kr[1] / viscosityG;
+    }
+
+    problem.variables.density_wet = problem.liquidPhase.density(T, 1e5, 0.);
+    problem.variables.density_nonwet = problem.gasPhase.density(T, 1e5, 0.);
+
+    return;
+}//end function initialguess
+
+
+template<class Grid, class Scalar>
+void Multiphysics2p2c<Grid,Scalar>::transportInitial()
+{
+    // iterate through grid an evaluate c0 at cell center
+    ElementIterator eItEnd = grid_.template lend<0>(level_);
+    for (ElementIterator eIt = grid_.template lbegin<0>(level_); eIt != eItEnd; ++eIt)
+    {
+        int globalIdx = indexset.index(*eIt);
+
+        // get geometry information of cell
+        GeometryType gt = eIt->geometry().type();
+        const FieldVector<ct,dim>&
+            localPos = Dune::ReferenceElements<ct,dim>::general(gt).position(0,0);
+        FieldVector<ct,dimworld> globalPos = eIt->geometry().global(localPos);
+
+        // initial conditions
+        double sat_0, C1_0, C2_0, viscosityL, viscosityG;
+        Dune::BoundaryConditions2p2c::Flags ictype = problem.initcond_type(globalPos, *eIt, localPos);            // get type of initial condition
+
+        if (ictype == Dune::BoundaryConditions2p2c::saturation)  // saturation initial condition
+        {
+            sat_0 = problem.initSat(globalPos, *eIt, localPos);
+            satFlash(sat_0, problem.variables.pressure[globalIdx], T, problem.soil.porosity(globalPos, *eIt, localPos), C1_0, C2_0, problem.variables.wet_X1[globalIdx][0], problem.variables.nonwet_X1[globalIdx][0]);
+        }
+        else if (ictype == Dune::BoundaryConditions2p2c::concentration) // concentration initial condition
+        {
+            double Z1_0 = problem.initConcentration(globalPos, *eIt, localPos);
+            flashCalculation(Z1_0, problem.variables.pressure[globalIdx], T, problem.soil.porosity(globalPos, *eIt, localPos), sat_0, C1_0, C2_0, problem.variables.wet_X1[globalIdx][0], problem.variables.nonwet_X1[globalIdx][0]);
+        }
+        // initialize cell concentration
+        problem.variables.totalConcentration[globalIdx] = C1_0;
+        problem.variables.totalConcentration[globalIdx + indexset.size(0)] = C2_0;
+        problem.variables.saturation[globalIdx][0] = sat_0;
+        problem.variables.density_wet[globalIdx] = problem.liquidPhase.density(T, problem.variables.pressure[globalIdx], 1. - problem.variables.wet_X1[globalIdx]);
+        problem.variables.density_nonwet[globalIdx] = problem.gasPhase.density(T, problem.variables.pressure[globalIdx], problem.variables.nonwet_X1[globalIdx][0]);
+
+        // get viscosities
+        viscosityL = problem.liquidPhase.viscosity(T, problem.variables.pressure[globalIdx], 1. - problem.variables.wet_X1[globalIdx]);
+        viscosityG = problem.gasPhase.viscosity(T, problem.variables.pressure[globalIdx], problem.variables.nonwet_X1[globalIdx]);
+
+        // get relative permeabilities and set mobilities.
+        std::vector<double> kr = problem.materialLaw.kr(problem.variables.saturation[globalIdx], globalPos, *eIt, localPos, T);
+        problem.variables.mobility_wet[globalIdx] = kr[0] / viscosityL;
+        problem.variables.mobility_nonwet[globalIdx] = kr[1] / viscosityG;
+    }
+    problem.variables.volErr = 0;
+    return;
+} //end function transportInitial
+
+template<class Grid, class Scalar>
+int Multiphysics2p2c<Grid,Scalar>::concentrationUpdate(const Scalar t, Scalar& dt, RepresentationType& updateVec)
+{
+    // initialize timestep dt very large
+    dt = 1E100;
+
+    // set update vector to zero
+    updateVec = 0;
+
+    int which;
+
+    // compute update vector
+    ElementIterator eItEnd = grid_.template lend<0>(level_);
+    for (ElementIterator eIt = grid_.template lbegin<0>(level_); eIt != eItEnd; ++eIt)
+    {
+        // get cell geometry informations
+        GeometryType gt = eIt->geometry().type(); //geometry type
+        const FieldVector<ct,dim>& localPos = ReferenceElements<ct,dim>::general(gt).position(0,0); // cell center in reference element
+        FieldVector<ct,dimworld> globalPos = eIt->geometry().global(localPos); // cell center in global coordinates
+        double volume = eIt->geometry().integrationElement(localPos) * ReferenceElements<ct,dim>::general(gt).volume(); // cell volume, assume linear map here
 
         // cell index
-        int indexi = indexset.index(*it);
-        int subI = subdomain[indexi];
+        int globalIdxi = indexset.index(*eIt);
 
-        // get pressure  in element
-        double pressi = this->problem.variables.pressure[indexi];
+        double pressi = problem.variables.pressure[globalIdxi];
+
+        // get source term
+        updateVec[globalIdxi] += problem.source(globalPos, *eIt, localPos)[0] * volume;
+        updateVec[globalIdxi+indexset.size(0)] += problem.source(globalPos, *eIt, localPos)[1] * volume;
+
+        // get saturation and concentration value at cell center
+        double satI = problem.variables.saturation[globalIdxi];
+        double Xw1_I = problem.variables.wet_X1[globalIdxi];
+        double Xn1_I = problem.variables.nonwet_X1[globalIdxi];
+
+        // phase densities in cell
+        double rho_w_I = problem.variables.density_wet[globalIdxi];
+        double rho_n_I = problem.variables.density_nonwet[globalIdxi];
+
+        // some variables for time step calculation
+        double sumfactorin = 0;
+        double sumfactorout = 0;
 
         // get absolute permeability
-        FieldMatrix<ct,dim,dim> Ki(problem.soil.K(global,*it,local));
-
-        double lambdaI = problem.variables.mobility_wet[indexi] + problem.variables.mobility_nonwet[indexi];
-
-        double faceVol[2*dim];
+        FieldMatrix<ct,dim,dim> Ki(problem.soil.K(globalPos,*eIt,localPos));
 
         // run through all intersections with neighbors and boundary
-        IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
-        for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it); is!=endit; ++is)
+        IntersectionIterator isItEnd = IntersectionIteratorGetter<Grid,LevelTag>::end(*eIt);
+        for (IntersectionIterator isIt = IntersectionIteratorGetter<Grid,LevelTag>::begin(*eIt); isIt!=isItEnd; ++isIt)
         {
-            // get geometry type of face
-            GeometryType gtf = is.intersectionSelfLocal().type();
+            // get geometry informations of face
+            GeometryType gtf = isIt->intersectionSelfLocal().type(); //geometry type
+            const FieldVector<ct,dim-1>& faceLocalPos = ReferenceElements<ct,dim-1>::general(gtf).position(0,0); // center in face's reference element
+            const FieldVector<ct,dim>& facelocalDim = ReferenceElements<ct,dim>::general(gtf).position(isIt->numberInSelf(),1); // center of face inside volume reference element
+            double faceVol = isIt->intersectionGlobal().volume(); // get face volume
+            FieldVector<ct,dimworld> unitOuterNormal = isIt->unitOuterNormal(faceLocalPos);
 
-            //Geometry dg = is.intersectionSelfLocal();
-            // local number of facet
-            int numberInSelf = is.numberInSelf();
+            // get normal vector scaled with volume of face
+            FieldVector<ct,dimworld> integrationOuterNormal = isIt->integrationOuterNormal(faceLocalPos);
+            integrationOuterNormal *= ReferenceElements<ct,dim-1>::general(gtf).volume();
 
-            faceVol[numberInSelf] = is.intersectionGlobal().volume();
+            // variables for timestep calculation
+            double factor[2], factorC1, factorC2;
 
-            // center in face's reference element
-            const FieldVector<ct,dim-1>& facelocal = ReferenceElements<ct,dim-1>::general(gtf).position(0,0);
-
-            // center of face inside volume reference element
-            const FieldVector<ct,dim>& facelocalDim = ReferenceElements<ct,dim>::general(gtf).position(numberInSelf,1);
-
-            // get normal vector
-            FieldVector<ct,dimworld> unitOuterNormal = is.unitOuterNormal(facelocal);
-
-            // center of face in global coordinates
-            FieldVector<ct,dimworld> faceglobal = is.intersectionGlobal().global(facelocal);
-
-            // handle interior face
-            if (is.neighbor())
+            if (isIt->neighbor()) // handle interior face
             {
                 // access neighbor
-                EntityPointer outside = is.outside();
-                int indexj = elementmapper.map(*outside);
-                int subJ = subdomain[indexj];
+                EntityPointer outside = isIt->outside();
+                int globalIdxj = indexset.index(*outside);
 
-                // get neighbor pressure and permeability
-                double pressj = this->problem.variables.pressure[indexj];
-
-                // geometry informations of neighbor
-                GeometryType nbgt = outside->geometry().type(); //geometry type
-                const FieldVector<ct,dim>& nblocal = ReferenceElements<ct,dim>::general(nbgt).position(0,0); // cell center in local coordinates
-                FieldVector<ct,dimworld> nbglobal = outside->geometry().global(nblocal); // neighbor cell center in global coordinates
+                // neighbor geometry informations
+                GeometryType nbgt = outside->geometry().type();
+                const FieldVector<ct,dim>& nbLocalPos = ReferenceElements<ct,dim>::general(nbgt).position(0,0);
+                FieldVector<ct,dimworld> nbGlobalPos = outside->geometry().global(nbLocalPos); // neighbor cell center in global coordinates
 
                 // distance vector between barycenters
-                FieldVector<ct,dimworld> distVec = global - nbglobal;
+                FieldVector<ct,dimworld> distVec = nbGlobalPos - globalPos;
 
-                // compute distance between cell centers
+                // distance between barycenters
                 double dist = distVec.two_norm();
 
+                double pressj = problem.variables.pressure[globalIdxj];
+
+                // get saturation and concentration value at neighbor cell center
+                double Xw1_J = problem.variables.wet_X1[globalIdxj];
+                double Xn1_J = problem.variables.nonwet_X1[globalIdxj];
+
+                // phase densities in neighbor
+                double rho_w_J = problem.variables.density_wet[globalIdxj];
+                double rho_n_J = problem.variables.density_nonwet[globalIdxj];
+
                 // get absolute permeability
-                FieldMatrix<ct,dim,dim> Kj(problem.soil.K(nbglobal, *outside, nblocal));
+                FieldMatrix<ct,dim,dim> Kj(problem.soil.K(nbGlobalPos, *outside, nbLocalPos));
 
                 // compute vectorized permeabilities
                 FieldVector<ct,dim> Kni(0);
@@ -830,524 +1013,192 @@ void Multiphysics2p2c<G, RT>::totalVelocity(const RT t=0)
                 uON = unitOuterNormal;
                 FieldVector<ct,dim> K = (Kt += (uON *=Kn));
 
-                double lambdaJ = problem.variables.mobility_wet[indexj] + problem.variables.mobility_nonwet[indexj];
+                double rho_w = (rho_w_I + rho_w_J) / 2;
+                double rho_n = (rho_n_I + rho_n_J) / 2;
 
-                // compute averaged total mobility
-                // CAREFUL: Harmonic weightig can generate zero matrix entries,
-                // use arithmetic weighting instead:
-                double lambda = 0.5 * (lambdaI + lambdaJ);
+                // velocities
+                double potW = (unitOuterNormal * distVec) * (pressi - pressj) / (dist * dist);
+                double potN = potW + rho_n * (unitOuterNormal * gravity);
+                potW += rho_w * (unitOuterNormal * gravity);
+                //                  lambda = 2 * lambdaI * lambdaJ / (lambdaI + lambdaJ);
 
-                FieldVector<ct,dimworld> vTotal(K);
-                vTotal *= lambda * (pressi - pressj) / dist;
-                problem.variables.velocity[indexi][numberInSelf] = vTotal;
-            }
-            // boundary face
-            else
-            {
-                //get boundary condition for boundary face center
-                BoundaryConditions::Flags bctype = problem.pbctype(faceglobal, *it, facelocalDim);
-                if (bctype == BoundaryConditions::dirichlet)
-                {
-                    // uniform direction vector between barycenters
-                    FieldVector<ct,dimworld> distVec = global - faceglobal;
-                    double dist = distVec.two_norm();
-                    distVec /= dist;
+                double lambdaW, lambdaN;
 
-                    double pressBC = problem.gPress(faceglobal, *it, facelocalDim);
-
-                    // compute directed permeability vector Ki.n
-                    FieldVector<ct,dim> Kni(0);
-                    Ki.umv(distVec, Kni);
-
-                    double satBound, C1Bound, C2Bound, Xw1Bound, Xn1Bound;
-
-                    //get boundary condition type for compositional transport
-                    BoundaryConditions2p2c::Flags bctype = problem.cbctype(faceglobal, *it, facelocalDim);
-                    if (bctype == BoundaryConditions2p2c::saturation) // saturation given
-                    {
-                        satBound = problem.gS(faceglobal, *it, facelocalDim);
-                        satFlash(satBound, pressBC, T, problem.soil.porosity(global, *it, local), C1Bound, C2Bound, Xw1Bound, Xn1Bound);
-                    }
-                    if (bctype == BoundaryConditions2p2c::concentration) // mass fraction given
-                    {
-                        double Z1Bound = problem.gZ(faceglobal, *it, facelocalDim);
-                        flashCalculation(Z1Bound, pressBC, T, problem.porosity(global, *it, local), satBound, C1Bound, C2Bound, Xw1Bound, Xn1Bound);
-                    }
-
-                    // fluid properties on boundary
-                    std::vector<double> kr = problem.materialLaw.kr(satBound, global, *it, local, T);
-                    double viscosityL = problem.liquidPhase.viscosity(T, pressBC , 1. - Xw1Bound);
-                    double viscosityG = problem.gasPhase.viscosity(T, pressBC, Xn1Bound);
-                    double lambdaB = kr[0] / viscosityL + kr[1] / viscosityG;
-                    double fwBound = kr[0] / viscosityL / lambdaB;
-                    double fnBound = kr[1] / viscosityG / lambdaB;
-
-                    // compute averaged total mobility
-                    double lambda = 0.5 * (lambdaI + lambdaB);
-
-                    FieldVector<ct,dim> vTotal(Kni);
-                    vTotal *= lambda * (pressBC - pressi) / dist;
-                    problem.variables.velocity[indexi][numberInSelf] = vTotal;
-                }
+                if (potW >= 0.)
+                    lambdaW = problem.variables.mobility_wet[globalIdxi];
                 else
-                {
-                    // for Neumann boundary, only mass inflow but no volumetric flow is known.
-                    // To avoid the use of wrong values, set velocity to nonsens value.
-                    problem.variables.velocity[indexi][numberInSelf] = DBL_MAX; // highest number in double precission.
-                }
-            }
-        } // end all intersections
-    } // end grid traversal
+                    lambdaW = problem.variables.mobility_wet[globalIdxj];
 
-    return;
-}
+                if (potN >= 0.)
+                    lambdaN = problem.variables.mobility_nonwet[globalIdxi];
+                else
+                    lambdaN = problem.variables.mobility_nonwet[globalIdxj];
 
-/*####################################################*
- *                                                                                                         *
- *     FUNCTION DEFINITIONS 2: TRANSPORT EQUATION            *
- *                                                                                                         *
- *####################################################*/
-
-template<class G, class RT>
-void Multiphysics2p2c<G,RT>::initialguess()
-{
-    // iterate through leaf grid an evaluate c0 at cell center
-    Iterator endit = grid_.template lend<0>(level_);
-    for (Iterator it = grid_.template lbegin<0>(level_); it != endit; ++it)
-    {
-        int index = indexset.index(*it);
-
-        // get geometry information of cell
-        GeometryType gt = it->geometry().type();
-        const FieldVector<ct,dim>&
-            local = ReferenceElements<ct,dim>::general(gt).position(0,0);
-        FieldVector<ct,dimworld> global = it->geometry().global(local);
-
-        // initial conditions
-        double sat_0;
-        double Z1_0;
-        BoundaryConditions2p2c::Flags ictype = problem.ictype(global, *it, local); // get type of initial condition
-
-        if (ictype == BoundaryConditions2p2c::saturation)// saturation initial condition
-            sat_0 = problem.S0(global, *it, local);
-        else if(ictype == BoundaryConditions2p2c::concentration)            // saturation initial condition
-        {
-            Z1_0 = problem.Z1_0(global, *it, local);
-            double rho_l = problem.liquidPhase.density(T, 1e5, 0.);
-            sat_0 = Z1_0 / rho_l;
-            sat_0 /= Z1_0 / rho_l + (1 - Z1_0) * problem.materialLaw.nonwettingPhase.density(T, 1e5, 0.);
-        }
-        else
-        {
-            DUNE_THROW(Dune::NotImplemented, "Boundary condition " << ictype);
-        }
-
-        // initialize cell saturation
-        this->problem.variables.saturation[index][0] = sat_0;
-
-        // get viscosities
-        double viscosityL = problem.liquidPhase.viscosity(T, 1e5, 0.);
-        double viscosityG = problem.gasPhase.viscosity(T, 1e5, 0.);
-        // get relative permeabilities and set mobilities.
-        std::vector<double> kr = problem.materialLaw.kr(problem.variables.saturation[index], global, *it, local, T);
-        problem.variables.mobility_wet[index] = kr[0] / viscosityL;
-        problem.variables.mobility_nonwet[index] = kr[1] / viscosityG;
-
-        problem.variables.density_wet[index] = problem.liquidPhase.density(T, 1e5, 0.);
-        problem.variables.density_nonwet[index] = problem.gasPhase.density(T, 1e5, 0.);
-    }
-    return;
-}//end function initialguess
-
-
-
-template<class G, class RT>
-void Multiphysics2p2c<G,RT>::transportInitial()
-{
-    // iterate through grid an evaluate c0 at cell center
-    Iterator endit = grid_.template lend<0>(level_);
-    for (Iterator it = grid_.template lbegin<0>(level_); it != endit; ++it)
-    {
-        int index = indexset.index(*it);
-        int subI = subdomain[index];
-
-        // get geometry information of cell
-        GeometryType gt = it->geometry().type();
-        const FieldVector<ct,dim>&
-            local = Dune::ReferenceElements<ct,dim>::general(gt).position(0,0);
-        FieldVector<ct,dimworld> global = it->geometry().global(local);
-
-        // initial conditions
-        double sat_0, C1_0, C2_0, viscosityL, viscosityG;
-        Dune::BoundaryConditions2p2c::Flags ictype = problem.ictype(global, *it, local);            // get type of initial condition
-
-        if (!subI) // this cell is not contained in subgrid
-        {
-            // initial conditions
-            double sat_0, C1_0, C2_0;
-            Dune::BoundaryConditions2p2c::Flags ictype = problem.ictype(global, *it, local);            // get type of initial condition
-
-            if (ictype == Dune::BoundaryConditions2p2c::saturation)  // saturation initial condition
-            {
-                std::cout<<"do not give saturation initial conditions for 1p domain! index no: "<< index <<" location: "<< global[0] << ", " << global[1] << std::endl;
-                sat_0 = problem.S0(global, *it, local);
-                double dummy1, dummy2;
-                satFlash(sat_0, problem.variables.pressure[index], T, problem.soil.porosity(global, *it, local), C1_0, C2_0, dummy1, dummy2);
-            }
-            else if (ictype == Dune::BoundaryConditions2p2c::concentration) // concentration initial condition
-            {
-                double Z1_0 = problem.Z1_0(global, *it, local);
-                double dummy1,dummy2, dummy3;
-                flashCalculation(Z1_0, problem.variables.pressure[index], T, problem.soil.porosity(global, *it, local), dummy1, C1_0, C2_0, dummy2, dummy3);
-                if (dummy1 != 1.)
-                    std::cout<<"Z1_0 to low, gas phase appears! index no: "<< index <<" location: "<< global[0] << ", " << global[1] << std::endl;
-            }
-            problem.variables.totalConcentration[index + indexset.size(0)] = C2_0;
-            problem.variables.density_wet[index] = problem.liquidPhase.density(T, problem.variables.pressure[index], 0.);
-            problem.variables.density_nonwet[index] = problem.gasPhase.density(T, problem.variables.pressure[index], 0.);
-
-            // get viscosities
-            viscosityL = problem.liquidPhase.viscosity(T, problem.variables.pressure[index], 0.);
-            viscosityG = problem.gasPhase.viscosity(T, problem.variables.pressure[index], 0.);
-        }
-        else // this cell is contained in subgrid
-        {
-            if (ictype == Dune::BoundaryConditions2p2c::saturation)  // saturation initial condition
-            {
-                sat_0 = problem.S0(global, *it, local);
-                satFlash(sat_0, problem.variables.pressure[index], T, problem.soil.porosity(global, *it, local), C1_0, C2_0, problem.variables.wet_X1[index][0], problem.variables.nonwet_X1[index][0]);
-            }
-            else if (ictype == Dune::BoundaryConditions2p2c::concentration) // concentration initial condition
-            {
-                double Z1_0 = problem.Z1_0(global, *it, local);
-                flashCalculation(Z1_0, problem.variables.pressure[index], T, problem.soil.porosity(global, *it, local), sat_0, C1_0, C2_0, problem.variables.wet_X1[index][0], problem.variables.nonwet_X1[index][0]);
-            }
-            // initialize cell concentration
-            problem.variables.totalConcentration[index] = C1_0;
-            problem.variables.totalConcentration[index + indexset.size(0)] = C2_0;
-            problem.variables.saturation[index][0] = sat_0;
-            problem.variables.density_wet[index] = problem.liquidPhase.density(T, problem.variables.pressure[index], 1. - problem.variables.wet_X1[index]);
-            problem.variables.density_nonwet[index] = problem.gasPhase.density(T, problem.variables.pressure[index], problem.variables.nonwet_X1[index][0]);
-
-            // get viscosities
-            viscosityL = problem.liquidPhase.viscosity(T, problem.variables.pressure[index], 1. - problem.variables.wet_X1[index]);
-            viscosityG = problem.gasPhase.viscosity(T, problem.variables.pressure[index], problem.variables.nonwet_X1[index]);
-        }
-
-        // get relative permeabilities and set mobilities.
-        std::vector<double> kr = problem.materialLaw.kr(problem.variables.saturation[index], global, *it, local, T);
-        problem.variables.mobility_wet[index] = kr[0] / viscosityL;
-        problem.variables.mobility_nonwet[index] = kr[1] / viscosityG;
-    }
-    return;
-} //end function transportInitial
-
-
-template<class G, class RT>
-int Multiphysics2p2c<G,RT>::concentrationUpdate(const RT t, RT& dt, RepresentationType& updateVec)
-{
-    // initialize timestep dt very large
-    dt = 1E100;
-
-    // set update vector to zero
-    updateVec = 0;
-
-    int which;
-
-    // iterate over grid
-    Iterator endit = grid_.template lend<0>(level_);
-    for (Iterator it = grid_.template lbegin<0>(level_); it != endit; ++it)
-    {
-        // get cell geometry informations
-        GeometryType gt = it->geometry().type(); //geometry type
-        const FieldVector<ct,dim>& local = ReferenceElements<ct,dim>::general(gt).position(0,0); // cell center in reference element
-        FieldVector<ct,dimworld> global = it->geometry().global(local); // cell center in global coordinates
-        double volume = it->geometry().integrationElement(local) * ReferenceElements<ct,dim>::general(gt).volume(); // cell volume, assume linear map here
-
-        // cell index
-        int indexi = indexset.index(*it);
-        int subI = subdomain[indexi];
-
-        // get source term
-        updateVec[indexi + indexset.size(0)] += problem.q(global, *it, local)[1] * volume;
-
-        // porosity
-        double poroI = problem.soil.porosity(global, *it, local);
-
-        double rho_w_I = problem.variables.density_wet[indexi];
-        double rho_n_I = problem.variables.density_nonwet[indexi];
-        double lambdaI = problem.variables.mobility_wet[indexi] + problem.variables.mobility_nonwet[indexi];
-        double fwI = problem.variables.mobility_wet[indexi] / lambdaI;
-        double fnI = problem.variables.mobility_nonwet[indexi] / lambdaI;
-
-        double satI, Xw1_I, Xn1_I;
-        if (!subI)
-        {
-            satI = 1.;
-        }
-        else
-        {
-            satI = problem.variables.saturation[indexi];
-            Xw1_I = problem.variables.wet_X1[indexi];
-            Xn1_I = problem.variables.nonwet_X1[indexi];
-        }
-
-        // some variables for time step calculation
-        double sumfactor = 0;
-        double sumfactor2 = 0;
-        double sumDiff = 0;
-        double sumDiff2 = 0;
-
-        // run through all intersections with neighbors and boundary
-        IntersectionIterator endis = IntersectionIteratorGetter<G,LevelTag>::end(*it);
-        for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it);    is!=endis; ++is)
-        {
-            // local number of facet
-            int numberInSelf = is.numberInSelf();
-
-            // get geometry informations of face
-            GeometryType gtf = is.intersectionSelfLocal().type(); //geometry type
-            const FieldVector<ct,dim-1>& facelocal = ReferenceElements<ct,dim-1>::general(gtf).position(0,0); // center in face's reference element
-            const FieldVector<ct,dim>& facelocalDim = ReferenceElements<ct,dim>::general(gtf).position(is.numberInSelf(),1); // center of face inside volume reference element
-
-            // get normal vector scaled with volume of face
-            FieldVector<ct,dimworld> integrationOuterNormal = is.integrationOuterNormal(facelocal);
-            integrationOuterNormal *= ReferenceElements<ct,dim-1>::general(gtf).volume();
-
-            // standardized velocity
-            double velocityIJ = std::max(problem.variables.velocity[indexi][numberInSelf] * integrationOuterNormal / (volume), 0.0);
-
-            // variables for timestep calculation
-            double factor, factorC1, factorC2;
-
-            if (is.neighbor()) // handle interior face
-            {
-                // access neighbor
-                EntityPointer outside = is.outside();
-
-                int indexj = elementmapper.map(*outside);
-                int subJ = subdomain[indexj];
-
-                // neighbor geometry informations
-                GeometryType nbgt = outside->geometry().type();
-                const FieldVector<ct,dim>& nblocal = ReferenceElements<ct,dim>::general(nbgt).position(0,0);
-                FieldVector<ct,dimworld> nbglobal = outside->geometry().global(nblocal); // neighbor cell center in global coordinates
+                double velocityW = lambdaW * ((K * distVec) * (pressi - pressj) / (dist * dist) + (K * gravity) * rho_w);
+                double velocityN = lambdaN * ((K * distVec) * (pressi - pressj) / (dist * dist) + (K * gravity) * rho_n);
 
                 // standardized velocity
-                double velocityJI = std::max(-(problem.variables.velocity[indexi][numberInSelf] * integrationOuterNormal / volume), 0.0);
-
-                // porosity
-                double poroJ = problem.soil.porosity(nbglobal, *outside, nblocal);
-
-                double rho_w_J = problem.variables.density_wet[indexj];
-                double rho_n_J = problem.variables.density_nonwet[indexj];
-
-                double satJ, fwJ, fnJ, Xw1_J, Xn1_J;
-                if (!subJ) //neighbor cell lies outside of subdomain.
-                {
-                    satJ = 1.;
-                    fwJ = 1.;
-                    fnJ = 0.;
-
-                    if (!subI) //current cell lise outside of subdomain
-                        factorC2 =
-                            velocityJI * problem.variables.totalConcentration[indexj + indexset.size(0)] / poroJ * numFlux(satJ, satI, fwJ, fwI)
-                            - velocityIJ * problem.variables.totalConcentration[indexi + indexset.size(0)] / poroI * numFlux(satI, satJ, fwI, fwJ);
-                    else // current cell lies inside subdomian
-                    {
-                        factorC2 =
-                            velocityJI * problem.variables.totalConcentration[indexj + indexset.size(0)] / poroJ * numFlux(satJ, satI, fwJ, fwI)
-                            - velocityIJ * rho_w_I * (1. - Xw1_I) * numFlux(satI, satJ, fwI, fwJ)
-                            - velocityIJ * rho_n_I * (1. - Xn1_I) * numFlux(1.-satI, 1.-satJ, fnI, fnJ);
-                        // actually, the last term must be zero!!! Otherwise the assumption of having only 1p transport in global domain is violated!
-                        factorC1 =
-                            velocityJI * (rho_w_J - problem.variables.totalConcentration[indexj + indexset.size(0)] / poroJ) * numFlux(satJ, satI, fwJ, fwI)
-                            -    velocityIJ * rho_w_I * Xw1_I * numFlux(satI, satJ, fwI, fwJ)
-                            -    velocityIJ * rho_n_I * Xn1_I * numFlux(1.-satI, 1.-satJ, fnI, fnJ);
-                        // actually, the last term must be zero!!! Otherwise the assumption of having only 1p transport in global domain is violated!
-                    }
-                }
-                else // neighbor cell lies inside subdomain
-                {
-                    satJ = problem.variables.saturation[indexj];
-                    double Xw1_J = problem.variables.wet_X1[indexj];
-                    double Xn1_J = problem.variables.nonwet_X1[indexj];
-                    double lambdaJ = problem.variables.mobility_wet[indexj] + problem.variables.mobility_nonwet[indexj];
-                    fwJ = problem.variables.mobility_wet[indexj] / lambdaJ;
-                    fnJ = problem.variables.mobility_nonwet[indexj] / lambdaJ;
-
-                    if (!subI) // current cell lies outside subdomain
-                    {
-                        factorC2 =
-                            velocityJI * rho_w_J * (1. - Xw1_J) * numFlux(satJ, satI, fwJ, fwI)
-                            - velocityIJ * (problem.variables.totalConcentration[indexi + indexset.size(0)] / poroI) * numFlux(satI, satJ, fwI, fwJ);
-                        + velocityJI * rho_n_J * (1. - Xn1_J) * numFlux(1.-satJ, 1.-satI, fnJ, fnI);
-                        // actually, the last term must be zero!!! Otherwise the assumption of having only 1p transport in global domain is violated!
-                    }
-                    else
-                    {
-                        factorC2 =
-                            velocityJI * rho_w_J * (1. - Xw1_J) * numFlux(satJ, satI, fwJ, fwI)
-                            - velocityIJ * rho_w_I * (1. - Xw1_I) * numFlux(satI, satJ, fwI, fwJ)
-                            + velocityJI * rho_n_J * (1. - Xn1_J) * numFlux(1.-satJ, 1.-satI, fnJ, fnI)
-                            - velocityIJ * rho_n_I * (1. - Xn1_I) * numFlux(1.-satI, 1.-satJ, fnI, fnJ);
-
-                        factorC1 =
-                            velocityJI * rho_w_J * Xw1_J * numFlux(satJ, satI, fwJ, fwI)
-                            - velocityIJ * rho_w_I * Xw1_I * numFlux(satI, satJ, fwI, fwJ)
-                            + velocityJI * rho_n_J * Xn1_J * numFlux(1.-satJ, 1.-satI, fnJ, fnI)
-                            - velocityIJ * rho_n_I * Xn1_I * numFlux(1.-satI, 1.-satJ, fnI, fnJ);
-                    }
-                }
+                double velocityJIw = std::max(-velocityW * faceVol / volume, 0.0);
+                double velocityIJw = std::max( velocityW * faceVol / volume, 0.0);
+                double velocityJIn = std::max(-velocityN * faceVol / volume, 0.0);
+                double velocityIJn = std::max( velocityN * faceVol / volume, 0.0);
 
                 // for timestep control
-                {
-                    double coeffW = fwI / satI;
-                    if(isinf(coeffW) || isnan(coeffW)) coeffW = 0;
-                    double coeffN = fnI / (1-satI);
-                    if(isinf(coeffN) || isnan(coeffN)) coeffN = 0;
-                    factor = (velocityJI - velocityIJ) * std::max(std::max(coeffW, coeffN),1.);
-                }
+                factor[0] = velocityJIw + velocityJIn;
+                double foutw = velocityIJw / (satI - problem.soil.Sr_w(globalPos, *eIt, localPos));
+                double foutn = velocityIJn / (1 - satI - problem.soil.Sr_n(globalPos, *eIt, localPos));
+                if (isnan(foutw) || isinf(foutw) || foutw < 0) foutw = 0;
+                if (isnan(foutn) || isinf(foutn) || foutn < 0) foutn = 0;
+                factor[1] = foutw + foutn;
+
+                factorC1 =
+                    velocityJIw * Xw1_J * rho_w_J
+                    - velocityIJw * Xw1_I * rho_w_I
+                    + velocityJIn * Xn1_J * rho_n_J
+                    - velocityIJn * Xn1_I * rho_n_I;
+                factorC2 =
+                    velocityJIw * (1. - Xw1_J) * rho_w_J
+                    - velocityIJw * (1. - Xw1_I) * rho_w_I
+                    + velocityJIn * (1. - Xn1_J) * rho_n_J
+                    - velocityIJn * (1. - Xn1_I) * rho_n_I;
             }
 
             else // handle boundary face
             {
-                // cell center in global coordinates
-                FieldVector<ct,dimworld> global = it->geometry().global(local);
-
                 // face center in globel coordinates
-                FieldVector<ct,dim> faceglobal = is.intersectionGlobal().global(facelocal);
+                FieldVector<ct,dim> faceGlobalPos = isIt->intersectionGlobal().global(faceLocalPos);
 
                 // distance vector between cell and face center
-                FieldVector<ct,dimworld> distVec = global - faceglobal;
+                FieldVector<ct,dimworld> distVec = faceGlobalPos - globalPos;
                 double dist = distVec.two_norm();
 
+                // compute directed permeability vector Ki.n
+                FieldVector<ct,dim> Kni(0);
+                Ki.umv(unitOuterNormal, Kni);
+
                 //get boundary conditions
-                BoundaryConditions::Flags pressBCtype = problem.pbctype(faceglobal, *it, facelocalDim);
+                BoundaryConditions::Flags pressBCtype = problem.press_bc_type(faceGlobalPos, *eIt, facelocalDim);
                 if (pressBCtype == BoundaryConditions::dirichlet)
                 {
-                    // standardized velocity
-                    double velocityJI = std::max(-(problem.variables.velocity[indexi][numberInSelf] * integrationOuterNormal / volume), 0.0);
-
-                    // get pressure on boundary
-                    double pressBound = problem.gPress(faceglobal, *it, facelocalDim);
+                    double pressBound = problem.dirichlet(faceGlobalPos, *eIt, facelocalDim);
 
                     double satBound, C1Bound, C2Bound, Xw1Bound, Xn1Bound;
-                    BoundaryConditions2p2c::Flags bctype = problem.cbctype(faceglobal, *it, facelocalDim);
+                    BoundaryConditions2p2c::Flags bctype = problem.bc_type(faceGlobalPos, *eIt, facelocalDim);
                     if (bctype == BoundaryConditions2p2c::saturation)
                     {
-                        if (!subI) std::cout << "boundary conditions for 1p domain is not allowed! index: "<< indexi << " position: " << faceglobal[0] << " ," << faceglobal[1] << std::endl;
-                        satBound = problem.gS(faceglobal, *it, facelocalDim);
-                        satFlash(satBound, pressBound, T, poroI, C1Bound, C2Bound, Xw1Bound, Xn1Bound);
+                        satBound = problem.dirichletSat(faceGlobalPos, *eIt, facelocalDim);
+                        satFlash(satBound, pressBound, T, problem.soil.porosity(globalPos, *eIt, localPos), C1Bound, C2Bound, Xw1Bound, Xn1Bound);
                     }
                     if (bctype == BoundaryConditions2p2c::concentration)
                     {
-                        double Z1Bound = problem.gZ(faceglobal, *it, facelocalDim);
-                        flashCalculation(Z1Bound, pressBound, T, poroI, satBound, C1Bound, C2Bound, Xw1Bound, Xn1Bound);
-                        if (!subI && satBound != 1.) std::cout << "gZ in 1p domain too low, gas appears! index: "<< indexi << " position: " << faceglobal[0] << " ," << faceglobal[1] << std::endl;
+                        double Z1Bound = problem.dirichletConcentration(faceGlobalPos, *eIt, facelocalDim);
+                        flashCalculation(Z1Bound, pressBound, T, problem.soil.porosity(globalPos, *eIt, localPos), satBound, C1Bound, C2Bound, Xw1Bound, Xn1Bound);
                     }
 
                     // phase densities on boundary
-                    double rho_w_Bound = problem.liquidPhase.density(T, pressBound, (1. - Xw1Bound));
+                    double rho_w_Bound = problem.liquidPhase.density(T, pressBound, 1. - Xw1Bound);
                     double rho_n_Bound = problem.gasPhase.density(T, pressBound, Xn1Bound);
 
-                    // fractional flow factors on boundary
-                    double viscosityG = problem.gasPhase.viscosity(T, pressBound, Xn1Bound);
-                    double viscosityL = problem.liquidPhase.viscosity(T, pressBound, 1. - Xw1Bound);
+                    // neighbor cell
+                    double viscosityW = problem.liquidPhase.viscosity(T, pressBound , 1. - Xw1Bound);
+                    double viscosityN = problem.gasPhase.viscosity(T, pressBound, Xn1Bound);
 
-                    if (!subI) // cell does not lie in subdomain
-                    {
-                        // get saturation value at cell center
-                        double satI = 1.;
+                    double rho_w = (rho_w_I + rho_w_Bound) / 2;
+                    double rho_n = (rho_n_I + rho_n_Bound) / 2;
 
-                        // fractional flow factors on boundary
-                        std::vector<double> kr = problem.materialLaw.kr(satBound, global, *it, local, T);
-                        double lambda = kr[0] / viscosityL + kr[1] / viscosityG;
-                        double fwBound = kr[0] / viscosityL / lambda;
-                        double fnBound = kr[1] / viscosityG / lambda;
+                    // velocities
+                    double potW = (unitOuterNormal * distVec) * (pressi - pressBound) / (dist * dist);
+                    double potN = potW + rho_n * (unitOuterNormal * gravity);
+                    potW += rho_w * (unitOuterNormal * gravity);
 
-                        // for timestep control
-                        {
-                            double coeffW = fwI / satI;
-                            if(isinf(coeffW) || isnan(coeffW)) coeffW = 0;
-                            double coeffN = fnI / (1-satI);
-                            if(isinf(coeffN) || isnan(coeffN)) coeffN = 0;
-                            factor = (velocityJI - velocityIJ) * std::max(std::max(coeffW, coeffN),1.);
-                        }
-                        factorC2 =
-                            velocityJI * (1. - Xw1Bound) * rho_w_Bound * numFlux(satBound, satI, fwBound, fwI)
-                            - velocityIJ * problem.variables.totalConcentration[indexi + indexset.size(0)] / poroI * numFlux(satI, satBound, fwI, fwBound);
-                    }
-                    else // cell lies in subdomain
-                    {
-                        // total mobility and fractional flow factors neighbor cell
-                        std::vector<double> kr = problem.materialLaw.kr(satBound, global, *it, local, T);
-                        double lambda = kr[0] / viscosityL + kr[1] / viscosityG;
-                        double fwBound = kr[0] / viscosityL / lambda;
-                        double fnBound = kr[1] / viscosityG / lambda;
+                    double lambdaW, lambdaN;
 
-                        factorC1 =
-                            + velocityJI * Xw1Bound * rho_w_Bound * numFlux(satBound, satI, fwBound, fwI)
-                            - velocityIJ * Xw1_I * rho_w_I * numFlux(satI, satBound, fwI, fwBound)
-                            + velocityJI * Xn1Bound * rho_n_Bound * numFlux(1.0-satBound, 1.0-satI, fnBound, fnI)
-                            - velocityIJ * Xn1_I * rho_n_I * numFlux(1.0-satI, 1.0-satBound, fnI, fnBound);
-                        factorC2 =
-                            velocityJI * (1. - Xw1Bound) * rho_w_Bound * numFlux(satBound, satI, fwBound, fwI)
-                            - velocityIJ * (1. - Xw1_I) * rho_w_I * numFlux(satI, satBound, fwI, fwBound)
-                            + velocityJI * (1. - Xn1Bound) * rho_n_Bound * numFlux(1.0-satBound, 1.0-satI, fnBound, fnI)
-                            - velocityIJ * (1. - Xn1_I) * rho_n_I * numFlux(1.0-satI, 1.0-satBound, fnI, fnBound);
-                    }
+                    if (potW >= 0.)
+                        lambdaW = problem.variables.mobility_wet[globalIdxi];
+                    else
+                        lambdaW = satBound / viscosityW;
+
+                    if (potN >= 0.)
+                        lambdaN = problem.variables.mobility_nonwet[globalIdxi];
+                    else
+                        lambdaN = (1. - satBound) / viscosityN;
+
+                    double velocityW = lambdaW * ((Kni * distVec) * (pressi - pressBound) / (dist * dist) + (Kni * gravity) * rho_w);
+                    double velocityN = lambdaN * ((Kni * distVec) * (pressi - pressBound) / (dist * dist) + (Kni * gravity) * rho_n);
+
+                    // standardized velocity
+                    double velocityJIw = std::max(-velocityW * faceVol / volume, 0.0);
+                    double velocityIJw = std::max( velocityW * faceVol / volume, 0.0);
+                    double velocityJIn = std::max(-velocityN * faceVol / volume, 0.0);
+                    double velocityIJn = std::max( velocityN* faceVol / volume, 0.0);
 
                     // for timestep control
-                    double coeffW = fwI / satI;
-                    if(isinf(coeffW) || isnan(coeffW)) coeffW = 0;
-                    double coeffN = fnI / (1-satI);
-                    if(isinf(coeffN) || isnan(coeffN)) coeffN = 0;
-                    factor = (velocityJI - velocityIJ) * std::max(std::max(coeffW, coeffN),1.);
+                    factor[0] = velocityJIw + velocityJIn;
+                    double foutw = velocityIJw / (satI - problem.soil.Sr_w(globalPos, *eIt, localPos));
+                    double foutn = velocityIJn / (1 - satI - problem.soil.Sr_n(globalPos, *eIt, localPos));
+                    if (isnan(foutw) || isinf(foutw) || foutw < 0) foutw = 0;
+                    if (isnan(foutn) || isinf(foutn) || foutn < 0) foutn = 0;
+                    factor[1] = foutw + foutn;
 
+                    factorC1 =
+                        + velocityJIw * Xw1Bound * rho_w_Bound
+                        - velocityIJw * Xw1_I * rho_w_I
+                        + velocityJIn * Xn1Bound * rho_n_Bound
+                        - velocityIJn * Xn1_I * rho_n_I ;
+                    factorC2 =
+                        velocityJIw * (1. - Xw1Bound) * rho_w_Bound
+                        - velocityIJw * (1. - Xw1_I) * rho_w_I
+                        + velocityJIn * (1. - Xn1Bound) * rho_n_Bound
+                        - velocityIJn * (1. - Xn1_I) * rho_n_I ;
                 }
                 else if (pressBCtype == BoundaryConditions::neumann)
                 {
-                    FieldVector<RT,2> J = problem.J(faceglobal, *it, facelocalDim);
+                    FieldVector<Scalar,2> J = problem.neumann(faceGlobalPos, *eIt, facelocalDim);
                     double faceVol = integrationOuterNormal.two_norm();
                     factorC1 = J[0] * faceVol / volume;
                     factorC2 = J[1] * faceVol / volume;
-                    factor = 0.;
+
+                    // for timestep control
+                    factor[0] = 0;
+                    factor[1] = 0;
                 }
 
                 else DUNE_THROW(NotImplemented, "there is no process boundary condition implemented");
             }
 
             // add to update vector
-            updateVec[indexi + indexset.size(0)] += factorC2;
-            if (subI)
-                updateVec[indexi] += factorC1;
+            updateVec[globalIdxi] += factorC1;
+            updateVec[indexset.size(0)+globalIdxi] += factorC2;
 
             // for time step calculation
-            if (factor>=0)
-                sumfactor += factor;
-            else
-                sumfactor2 += (-factor);
+            sumfactorin += factor[0];
+            sumfactorout += factor[1];
+
         } // end all intersections
 
-        // compute timestep restriction
-        sumfactor = std::max(sumfactor,sumfactor2) / poroI;
-        sumDiff = std::max(sumDiff,sumDiff2);
-        sumfactor = std::max(sumfactor,100*sumDiff);
-        if ( 1./sumfactor < dt)
+        // handle source term
+        FieldVector<double,2> q = problem.source(globalPos, *eIt, localPos);
+        updateVec[globalIdxi] += q[0];
+        updateVec[globalIdxi +  indexset.size(0)] += q[1];
+
+        // account for porosity
+        double poro = problem.soil.porosity(globalPos, *eIt, localPos);
+
+        sumfactorin = std::max(sumfactorin,sumfactorout) / poro;
+
+        if ( 1./sumfactorin < dt)
         {
-            dt = 1./sumfactor;
-            which= indexi;
+            dt = 1./sumfactorin;
+            which= globalIdxi;
         }
 
     } // end grid traversal
     //        printvector(std::cout,updateVec,"update","row");
-
     return which;
-} // end function "update"
+} // end function "concentrationUpdate"
 
-template<class G, class RT>
-void Multiphysics2p2c<G,RT>::flashCalculation(double Z1, double p, double temp, double poro, double& sat, double& C1, double& C2, double& Xw1, double& Xn1)
+template<class Grid, class Scalar>
+void Multiphysics2p2c<Grid,Scalar>::flashCalculation(double Z1, double p, double temp, double poro, double& sat, double& C1, double& C2, double& Xw1, double& Xn1)
 {
     double K1 = problem.liquidPhase.p_vap(temp) / p;
     double K2 = 1. / (p * problem.liquidPhase.henry(temp));
@@ -1387,8 +1238,8 @@ void Multiphysics2p2c<G,RT>::flashCalculation(double Z1, double p, double temp, 
 
 } // end function flashCalculation
 
-template<class G, class RT>
-void Multiphysics2p2c<G,RT>::satFlash(double sat, double p, double temp, double poro, double& C1, double& C2, double& Xw1, double& Xn1)
+template<class Grid, class Scalar>
+void Multiphysics2p2c<Grid,Scalar>::satFlash(double sat, double p, double temp, double poro, double& C1, double& C2, double& Xw1, double& Xn1)
 {
     if (sat <= 0 || sat >= 1)
         DUNE_THROW(RangeError,
@@ -1411,111 +1262,113 @@ void Multiphysics2p2c<G,RT>::satFlash(double sat, double p, double temp, double 
     C2  = poro* (sat * (1. - Xw1) * rho_w + (1-sat) * (1. - Xn1) * rho_n);
 }
 
-template<class G, class RT>
-void Multiphysics2p2c<G,RT>::postProcessUpdate(double t, double dt)
+template<class Grid, class Scalar>
+void Multiphysics2p2c<Grid,Scalar>::postProcessUpdate(double t, double dt)
 {
     problem.variables.volErr = 0.;
-    int size = elementmapper.size();
+    int size = indexset.size(0);
     BlockVector<FieldVector<bool,1> > nextsubdomain;
     nextsubdomain.resize(size);
     nextsubdomain = false;
     double viscosityL, viscosityG;
 
     // iterate through leaf grid an evaluate c0 at cell center
-    Iterator endit = grid_.template lend<0>(level_);
-    for (Iterator it = grid_.template lbegin<0>(level_); it != endit; ++it)
+    ElementIterator eItEnd = grid_.template lend<0>(level_);
+    for (ElementIterator eIt = grid_.template lbegin<0>(level_); eIt != eItEnd; ++eIt)
     {
-        int indexi = indexset.index(*it);
+        int globalIdxi = indexset.index(*eIt);
         // get cell geometry informations
-        GeometryType gt = it->geometry().type(); //geometry type
-        const FieldVector<ct,dim>& local = ReferenceElements<ct,dim>::general(gt).position(0,0); // cell center in reference element
-        FieldVector<ct,dimworld> global = it->geometry().global(local); // cell center in global coordinates
+        GeometryType gt = eIt->geometry().type(); //geometry type
+        const FieldVector<ct,dim>& localPos = ReferenceElements<ct,dim>::general(gt).position(0,0); // cell center in reference element
+        FieldVector<ct,dimworld> globalPos = eIt->geometry().global(localPos); // cell center in global coordinates
 
-        if (subdomain[indexi])
+        double poro = problem.soil.porosity(globalPos, *eIt, localPos);
+        double C1 = problem.variables.totalConcentration[globalIdxi][0];
+        double C2 = problem.variables.totalConcentration[indexset.size(0)+globalIdxi][0];
+        double Z1 = C1 / (C1 + C2);
+
+        if (subdomain[globalIdxi])
         {
             // get cell geometry informations
-            GeometryType gt = it->geometry().type(); //geometry type
-            const FieldVector<ct,dim>& local = ReferenceElements<ct,dim>::general(gt).position(0,0); // cell center in reference element
-            FieldVector<ct,dimworld> global = it->geometry().global(local); // cell center in global coordinates
+            GeometryType gt = eIt->geometry().type(); //geometry type
+            const FieldVector<ct,dim>& localPos = ReferenceElements<ct,dim>::general(gt).position(0,0); // cell center in reference element
+            FieldVector<ct,dimworld> globalPos = eIt->geometry().global(localPos); // cell center in global coordinates
 
-            double poro = problem.porosity(global, *it, local);
+            flashCalculation(Z1, problem.variables.pressure[globalIdxi], T, poro, problem.variables.saturation[globalIdxi][0], C1, C2, problem.variables.wet_X1[globalIdxi][0], problem.variables.nonwet_X1[globalIdxi][0]);
 
-            double Z1 = problem.variables.totalConcentration[indexi] / (problem.variables.totalConcentration[indexi] + problem.variables.totalConcentration[indexset.size(0)+indexi]);
-            double C1 = problem.variables.totalConcentration[indexi][0];
-            double C2 = problem.variables.totalConcentration[indexset.size(0)+indexi][0];
-            flashCalculation(Z1, problem.variables.pressure[indexi], T, poro, problem.variables.saturation[indexi][0], C1, C2, problem.variables.wet_X1[indexi][0], problem.variables.nonwet_X1[indexi][0]);
-
-            double rho_l = problem.liquidPhase.density(T, problem.variables.pressure[indexi][0],1. - problem.variables.wet_X1[indexi][0]);
-            double rho_g = problem.gasPhase.density(T, problem.variables.pressure[indexi][0],problem.variables.nonwet_X1[indexi][0]);
-            problem.variables.density_wet[indexi][0] = rho_l;
-            problem.variables.density_nonwet[indexi][0] = rho_g;
+            double rho_l = problem.liquidPhase.density(T, problem.variables.pressure[globalIdxi][0],1. - problem.variables.wet_X1[globalIdxi][0]);
+            double rho_g = problem.gasPhase.density(T, problem.variables.pressure[globalIdxi][0],problem.variables.nonwet_X1[globalIdxi][0]);
+            problem.variables.density_wet[globalIdxi][0] = rho_l;
+            problem.variables.density_nonwet[globalIdxi][0] = rho_g;
 
             // get viscosities
-            viscosityL = problem.liquidPhase.viscosity(T, problem.variables.pressure[indexi], 1. - problem.variables.wet_X1[indexi][0]);
-            viscosityG = problem.gasPhase.viscosity(T, problem.variables.pressure[indexi], problem.variables.nonwet_X1[indexi][0]);
+            viscosityL = problem.liquidPhase.viscosity(T, problem.variables.pressure[globalIdxi], 1. - problem.variables.wet_X1[globalIdxi][0]);
+            viscosityG = problem.gasPhase.viscosity(T, problem.variables.pressure[globalIdxi], problem.variables.nonwet_X1[globalIdxi][0]);
 
-            double nuw = problem.variables.saturation[indexi] * rho_l / (problem.variables.saturation[indexi] * rho_l + (1-problem.variables.saturation[indexi]) * rho_g);
-            double massw = (problem.variables.totalConcentration[indexi][0] + problem.variables.totalConcentration[indexset.size(0)+indexi][0]) * nuw;
-            double massn = (problem.variables.totalConcentration[indexi][0] + problem.variables.totalConcentration[indexset.size(0)+indexi][0]) * (1-nuw);
+            double nuw = problem.variables.saturation[globalIdxi] * rho_l / (problem.variables.saturation[globalIdxi] * rho_l + (1-problem.variables.saturation[globalIdxi]) * rho_g);
+            double massw = (problem.variables.totalConcentration[globalIdxi][0] + problem.variables.totalConcentration[indexset.size(0)+globalIdxi][0]) * nuw;
+            double massn = (problem.variables.totalConcentration[globalIdxi][0] + problem.variables.totalConcentration[indexset.size(0)+globalIdxi][0]) * (1-nuw);
             double vol = massw / rho_l + massn / rho_g;
-            problem.variables.volErr[indexi] = (vol - poro) / dt;
+            problem.variables.volErr[globalIdxi] = (vol - poro) / dt;
 
-            if (problem.variables.saturation[indexi] != 1. || fabs(problem.variables.volErr[indexi] * dt) > 5e-4)
+            if (problem.variables.saturation[globalIdxi] != 1. && problem.variables.saturation[globalIdxi] != 0. ||fabs(problem.variables.volErr[globalIdxi] * dt) > 5e-4)
             {
-                nextsubdomain[indexi] = true;
-                IntersectionIterator endis = IntersectionIteratorGetter<G,LevelTag>::end(*it);
-                for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it);    is!=endis; ++is)
+                nextsubdomain[globalIdxi] = true;
+                IntersectionIterator isItEnd = IntersectionIteratorGetter<Grid,LevelTag>::end(*eIt);
+                for (IntersectionIterator isIt = IntersectionIteratorGetter<Grid,LevelTag>::begin(*eIt);    isIt!=isItEnd; ++isIt)
                 {
-                    if (is.neighbor())
+                    if (isIt->neighbor())
                     {
-                        int indexj = indexset.index(*(is.outside()));
-                        if (!nextsubdomain[indexj] && !subdomain[indexj])
+                        int globalIdxj = indexset.index(*(isIt->outside()));
+                        if (!nextsubdomain[globalIdxj] && !subdomain[globalIdxj])
                         {
                             // get cell geometry informations
-                            GeometryType gt = it->geometry().type(); //geometry type
-                            const FieldVector<ct,dim>& local = ReferenceElements<ct,dim>::general(gt).position(0,0); // cell center in reference element
-                            FieldVector<ct,dimworld> global = it->geometry().global(local); // cell center in global coordinates
-                            double rho_lj = problem.liquidPhase.density(T, problem.variables.pressure[indexi][0], 0.);
-                            double poroJ = problem.porosity(global, *(is.outside()), local);
-                            problem.variables.wet_X1[indexj] = 1. - problem.variables.totalConcentration[indexj + size] / poroJ / rho_lj;
-                            problem.variables.totalConcentration[indexj] = problem.variables.wet_X1[indexj] * poroJ * rho_lj;
-                            problem.variables.saturation[indexj] = 1.;
-                            problem.variables.nonwet_X1[indexj] = 0.;
+                            GeometryType gt = eIt->geometry().type(); //geometry type
+                            const FieldVector<ct,dim>& localPos = ReferenceElements<ct,dim>::general(gt).position(0,0); // cell center in reference element
+                            FieldVector<ct,dimworld> globalPos = eIt->geometry().global(localPos); // cell center in global coordinates
+                            double rho_lj = problem.liquidPhase.density(T, problem.variables.pressure[globalIdxi][0], 0.);
+                            double poroJ = problem.soil.porosity(globalPos, *(isIt->outside()), localPos);
+                            problem.variables.wet_X1[globalIdxj] = 1. - problem.variables.totalConcentration[globalIdxj + size] / poroJ / rho_lj;
+                            problem.variables.totalConcentration[globalIdxj] = problem.variables.wet_X1[globalIdxj] * poroJ * rho_lj;
+                            problem.variables.saturation[globalIdxj] = 1.;
+                            problem.variables.nonwet_X1[globalIdxj] = 0.;
                         }
-                        nextsubdomain[indexj] = true;
+                        nextsubdomain[globalIdxj] = true;
                     }
                 }
             }
         }
         else
         {
-            // get viscosities
-            viscosityL = problem.liquidPhase.viscosity(T, problem.variables.pressure[indexi], 0.);
-            viscosityG = problem.gasPhase.viscosity(T, problem.variables.pressure[indexi], 0.);
+            if (problem.variables.saturation[globalIdxi] == 1.)
+            {
+                problem.variables.wet_X1[globalIdxi] = Z1;
+                problem.variables.nonwet_X1[globalIdxi] = 0.;
+            }
+            else
+            {
+                problem.variables.wet_X1[globalIdxi] = 0;
+                problem.variables.nonwet_X1[globalIdxi] = 1. - Z1;
+            }
 
-            problem.variables.density_wet[indexi] = problem.liquidPhase.density(T, problem.variables.pressure[indexi], 0.);
-            problem.variables.density_nonwet[indexi] = problem.gasPhase.density(T, problem.variables.pressure[indexi], 0.);
+            // get viscosities
+            viscosityL = problem.liquidPhase.viscosity(T, problem.variables.pressure[globalIdxi], 0.);
+            viscosityG = problem.gasPhase.viscosity(T, problem.variables.pressure[globalIdxi], 0.);
+
+            problem.variables.density_wet[globalIdxi] = problem.liquidPhase.density(T, problem.variables.pressure[globalIdxi], 0.);
+            problem.variables.density_nonwet[globalIdxi] = problem.gasPhase.density(T, problem.variables.pressure[globalIdxi], 0.);
         }
 
         // get relative permeabilities and set mobilities.
-        std::vector<double> kr = problem.materialLaw.kr(problem.variables.saturation[indexi], global, *it, local, T);
-        problem.variables.mobility_wet[indexi] = kr[0] / viscosityL;
-        problem.variables.mobility_nonwet[indexi] = kr[1] / viscosityG;
+        std::vector<double> kr = problem.materialLaw.kr(problem.variables.saturation[globalIdxi], globalPos, *eIt, localPos, T);
+        problem.variables.mobility_wet[globalIdxi] = kr[0] / viscosityL;
+        problem.variables.mobility_nonwet[globalIdxi] = kr[1] / viscosityG;
 
     }// end grid traversal
 
     subdomain = nextsubdomain;
 
     timestep = dt;
-
-    double mass1 = 0.;
-    double mass2 = 0.;
-    for (int i = 0; i < size; i++)
-    {
-        mass1 += problem.variables.totalConcentration[i];
-        mass2 += problem.variables.totalConcentration[i+size];
-    }
-    mass << t + dt << "\t" << mass1 << "\t" << mass2 << std::endl;
 }
 
 }//end namespace Dune

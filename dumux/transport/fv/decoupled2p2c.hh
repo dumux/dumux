@@ -136,6 +136,7 @@ public:
         return problem.variables.totalConcentration;
     }
 
+    //! Post processing step must be called at the end of every timestep
     void postProcessUpdate(double t, double dt);
 
     // graphical output
@@ -328,36 +329,26 @@ void Decoupled2p2c<Grid, Scalar>::assemble(bool first, const Scalar t=0)
         double dV_dp = 0;
 
         // specific volume of the phases
-        double Vg, Vw;
+        double Vg = 1. / problem.variables.density_nonwet[globalIdxi];
+        double Vw = 1. / problem.variables.density_wet[globalIdxi];
 
         if (first)
         {
-            // relative permeabilities
-            std::vector<double> kr(problem.materialLaw.kr(sati, globalPos, *eIt, localPos, T));
-            // total mobility and fractional flow factors
-            double viscosityL = problem.liquidPhase.viscosity(T, problem.variables.pressure[globalIdxi], 0.);
-            double viscosityG = problem.gasPhase.viscosity(T, problem.variables.pressure[globalIdxi], 0.);
-            lambdaI = kr[0] / viscosityL + kr[1] / viscosityG;
-            fw_I = kr[0] / viscosityL / lambdaI;
-            fn_I = kr[1] / viscosityG / lambdaI;
+            // get mobilities and fractional flow factors
+            lambdaI = problem.variables.mobility_wet[globalIdxi] + problem.variables.mobility_nonwet[globalIdxi];
+            fw_I = problem.variables.mobility_wet[globalIdxi] / lambdaI;
+            fn_I = problem.variables.mobility_nonwet[globalIdxi] / lambdaI;
 
             // specific volume of the phases
-            double Vg = 1. / problem.gasPhase.density(T, 1e5, 0.);
-            double Vw = 1. / problem.liquidPhase.density(T, 1e5, 0.);
+            Vg = 1. / problem.gasPhase.density(T, 1e5, 0.);
+            Vw = 1. / problem.liquidPhase.density(T, 1e5, 0.);
 
             FieldVector<Scalar,2> q = problem.source(globalPos,*eIt,localPos);
             f[globalIdxi] = volume * (q[0] * Vw + q[1] * Vg);
         }
         else
         {
-            // total mobility and fractional flow factors
-            lambdaI = problem.variables.mobility_wet[globalIdxi] + problem.variables.mobility_nonwet[globalIdxi];
-            fw_I = problem.variables.mobility_wet[globalIdxi] / lambdaI;
-            fn_I = problem.variables.mobility_nonwet[globalIdxi] / lambdaI;
-
-            // specific volume of the phases
-            Vg = 1. / problem.variables.density_nonwet[globalIdxi];
-            Vw = 1. / problem.variables.density_wet[globalIdxi];
+            double poroI = problem.soil.porosity(globalPos, *eIt, localPos);
 
             // mass of components inside the cell
             double m1 = problem.variables.totalConcentration[globalIdxi] * volume;
@@ -377,7 +368,7 @@ void Decoupled2p2c<Grid, Scalar>::assemble(bool first, const Scalar t=0)
             m1 +=  inc1;
             double Z1 = m1 / (m1 + m2);
             double dummy1, dummy2, dummy3, dummy4, satt;
-            flashCalculation(Z1, problem.variables.pressure[globalIdxi], T, problem.soil.porosity(globalPos, *eIt, localPos), satt, dummy1, dummy2, dummy3, dummy4);
+            flashCalculation(Z1, problem.variables.pressure[globalIdxi], T, poroI, satt, dummy1, dummy2, dummy3, dummy4);
             double nuw = satt / Vw / (satt/Vw + (1-satt)/Vg);
             dV_dm1 = ((m1+m2) * (nuw * Vw + (1-nuw) * Vg) - volalt) /inc1;
             m1 -= inc1;
@@ -385,13 +376,13 @@ void Decoupled2p2c<Grid, Scalar>::assemble(bool first, const Scalar t=0)
             // numerical derivative of fluid volume with respect to mass of component 2
             m2 += inc2;
             Z1 = m1 / (m1 + m2);
-            flashCalculation(Z1, problem.variables.pressure[globalIdxi], T, problem.soil.porosity(globalPos, *eIt, localPos), satt, dummy1, dummy2, dummy3, dummy4);
+            flashCalculation(Z1, problem.variables.pressure[globalIdxi], T, poroI, satt, dummy1, dummy2, dummy3, dummy4);
             nuw = satt / Vw / (satt/Vw + (1-satt)/Vg);
             dV_dm2 = ((m1+m2) * (nuw * Vw + (1-nuw) * Vg) - volalt)/ inc2;
             m2 -= inc2;
 
             // numerical derivative of fluid volume with respect to pressure
-            double incp = 1e-5;
+            double incp = 1e-2;
             double p_ = problem.variables.pressure[globalIdxi] + incp;
             double Vg_ = 1. / problem.gasPhase.density(T, p_, problem.variables.nonwet_X1[globalIdxi]);
             double Vw_ = 1. / problem.liquidPhase.density(T, p_, 1. - problem.variables.wet_X1[globalIdxi]);
@@ -473,12 +464,6 @@ void Decoupled2p2c<Grid, Scalar>::assemble(bool first, const Scalar t=0)
                     lambdaJ = kr[0] / viscosityL + kr[1] / viscosityG;
                     fw_J = kr[0] / viscosityL / lambdaJ;
                     fn_J = kr[1] / viscosityG / lambdaJ;
-                }
-                else
-                {
-                    lambdaJ = problem.variables.mobility_wet[globalIdxj] + problem.variables.mobility_nonwet[globalIdxj];
-                    fw_J = problem.variables.mobility_wet[globalIdxj] / lambdaJ;
-                    fn_J = problem.variables.mobility_nonwet[globalIdxj] / lambdaJ;
                 }
 
                 // phase densities in cell in neighbor
@@ -677,8 +662,8 @@ void Decoupled2p2c<Grid, Scalar>::assemble(bool first, const Scalar t=0)
             }
     } // end grid traversal
 
-    //        printmatrix(std::cout,A,"stiffnesmatrix","row");
-    //        printvector(std::cout,f,"right hand side","row");
+//            printmatrix(std::cout,A,"stiffnesmatrix","row",10,5);
+//            printvector(std::cout,f,"right hand side","row",1,10,5);
 
     return;
 } // end function assemble
@@ -734,6 +719,10 @@ void Decoupled2p2c<Grid, Scalar>::solve()
 template<class Grid, class Scalar>
 void Decoupled2p2c<Grid,Scalar>::initialguess()
 {
+    // get viscosities
+    double viscosityL = problem.liquidPhase.viscosity(T, 1e5, 0.);
+    double viscosityG = problem.gasPhase.viscosity(T, 1e5, 0.);
+
     // iterate through leaf grid an evaluate c0 at cell center
     ElementIterator eItEnd = grid_.template lend<0>(level_);
     for (ElementIterator eIt = grid_.template lbegin<0>(level_); eIt != eItEnd; ++eIt)
@@ -752,10 +741,10 @@ void Decoupled2p2c<Grid,Scalar>::initialguess()
         BoundaryConditions2p2c::Flags ictype = problem.initcond_type(globalPos, *eIt, localPos); // get type of initial condition
 
         if (ictype == BoundaryConditions2p2c::saturation)// saturation initial condition
-            sat_0 = problem.dirichletSat(globalPos, *eIt, localPos);
+            sat_0 = problem.initSat(globalPos, *eIt, localPos);
         else if(ictype == BoundaryConditions2p2c::concentration)            // saturation initial condition
         {
-            Z1_0 = problem.dirichletConcentration(globalPos, *eIt, localPos);
+            Z1_0 = problem.initConcentration(globalPos, *eIt, localPos);
             double rho_l = problem.liquidPhase.density(T, 1e5, 0.);
             sat_0 = Z1_0 / rho_l;
             sat_0 /= Z1_0 / rho_l + (1 - Z1_0) * problem.materialLaw.nonwettingPhase.density(T, 1e5, 0.);
@@ -767,6 +756,11 @@ void Decoupled2p2c<Grid,Scalar>::initialguess()
 
         // initialize cell saturation
         this->problem.variables.saturation[globalIdxi][0] = sat_0;
+
+        // get relative permeabilities and set mobilities.
+        std::vector<double> kr = problem.materialLaw.kr(problem.variables.saturation[globalIdxi], globalPos, *eIt, localPos, T);
+        problem.variables.mobility_wet[globalIdxi] = kr[0] / viscosityL;
+        problem.variables.mobility_nonwet[globalIdxi] = kr[1] / viscosityG;
     }
 
     problem.variables.density_wet = problem.liquidPhase.density(T, 1e5, 0.);
@@ -799,14 +793,14 @@ void Decoupled2p2c<Grid,Scalar>::transportInitial()
 
         if (ictype == Dune::BoundaryConditions2p2c::saturation)  // saturation initial condition
         {
-            sat_0 = problem.dirichletSat(globalPos, *eIt, localPos);
+            sat_0 = problem.initSat(globalPos, *eIt, localPos);
             satFlash(sat_0, problem.variables.pressure[globalIdxi], T, problem.soil.porosity(globalPos, *eIt, localPos), C1_0, C2_0, problem.variables.wet_X1[globalIdxi][0], problem.variables.nonwet_X1[globalIdxi][0]);
             rho_w = problem.liquidPhase.density(T, problem.variables.pressure[globalIdxi], 1. - problem.variables.wet_X1[globalIdxi][0]);
             rho_n = problem.gasPhase.density(T, problem.variables.pressure[globalIdxi], problem.variables.nonwet_X1[globalIdxi][0]);
         }
         else if (ictype == Dune::BoundaryConditions2p2c::concentration) // concentration initial condition
         {
-            double Z1_0 = problem.dirichletConcentration(globalPos, *eIt, localPos);
+            double Z1_0 = problem.initConcentration(globalPos, *eIt, localPos);
             flashCalculation(Z1_0, problem.variables.pressure[globalIdxi], T, problem.soil.porosity(globalPos, *eIt, localPos), sat_0, C1_0, C2_0, problem.variables.wet_X1[globalIdxi][0], problem.variables.nonwet_X1[globalIdxi][0]);
             rho_w = problem.liquidPhase.density(T, problem.variables.pressure[globalIdxi], 1. - problem.variables.wet_X1[globalIdxi][0]);
             rho_n = problem.gasPhase.density(T, problem.variables.pressure[globalIdxi], problem.variables.nonwet_X1[globalIdxi][0]);
@@ -984,7 +978,6 @@ int Decoupled2p2c<Grid,Scalar>::concentrationUpdate(const Scalar t, Scalar& dt, 
                 if (isnan(foutn) || isinf(foutn) || foutn < 0) foutn = 0;
                 factor[1] = foutw + foutn;
 
-                //  diffFactor =diffPart / volume; TODO include diffusion into timestep control
                 factorC1 =
                     velocityJIw * Xw1_J * rho_w_J
                     - velocityIJw * Xw1_I * rho_w_I
