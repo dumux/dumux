@@ -62,7 +62,7 @@ public:
         : BoxJacobianType(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_),
           problem(params)
     {
-        alpha = -1.0;
+        alpha = -1.0e1;
         this->analytic = false;
     }
 

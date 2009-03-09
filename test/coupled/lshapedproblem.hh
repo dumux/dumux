@@ -57,8 +57,8 @@ public:
                                   const FieldVector<Scalar,dim>& localPos) const
     {
         double alpha;
-        if (globalPos[0] < 1.5 + 1e-6)
-            alpha = 0.1;
+        if (globalPos[1] < 0.5 + 1e-6)
+            alpha = 1.0;
         else
             return(-1.0); // realizes outflow bc
 
