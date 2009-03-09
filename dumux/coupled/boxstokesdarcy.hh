@@ -98,7 +98,14 @@ public:
         this->firstModel().localJacobian().setOldSolution(this->firstModel().uOldTimeStep);
         this->secondModel().localJacobian().setDt(dt);
         this->secondModel().localJacobian().setOldSolution(this->secondModel().uOldTimeStep);
-        NewtonMethodMatrix<HostGrid, ThisType> newtonMethod(this->firstGrid().getHostGrid(), *this);
+        double dtol = 1e-3;
+        double rtol = 1e7;
+        int maxIt = 10;
+        double mindt = 1e-5;
+        int goodIt = 4;
+        int maxInc = 2;
+        NewtonMethodMatrix<HostGrid, ThisType> newtonMethod(this->firstGrid().getHostGrid(), *this,
+                dtol, rtol, maxIt, mindt, goodIt, maxInc);
         newtonMethod.execute();
         dt = this->firstModel().localJacobian().getDt();
         this->uOld = this->u;
