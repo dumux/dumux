@@ -3,7 +3,6 @@
 #include "new_blobproblem.hh"
 
 #include <dune/grid/common/gridinfo.hh>
-#include <dune/grid/io/file/dgfparser.hh>
 #include <dune/grid/uggrid.hh>
 
 #include <dune/common/exceptions.hh>
@@ -27,7 +26,6 @@ int main(int argc, char** argv)
         const int dim = 2;
         typedef double                                Scalar;
         typedef Dune::UGGrid<dim>                     Grid;
-        typedef Dune::GridPtr<Grid>                   GridPointer;
         typedef Dune::NewBlobProblem<Grid, Scalar>    Problem;
         typedef Problem::DomainTraits::GlobalPosition GlobalPosition;
 

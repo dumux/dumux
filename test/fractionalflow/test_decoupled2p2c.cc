@@ -49,11 +49,8 @@ int main(int argc, char** argv)
         typedef Dune::Testproblem_2p2c<GridType, NumberType> TransProb;
         TransProb problem(grid, var, wetmat, nonwetmat, soil, grid.maxLevel(), materialLaw, false);
 
-        Dune::DiffusivePart<GridType, NumberType> diffPart;
-        const Dune::Upwind<NumberType> numFl;
-
         typedef Dune::Decoupled2p2c<GridType, NumberType> ModelType;
-        ModelType model(grid, problem, grid.maxLevel(), diffPart, false, 0.8, numFl);
+        ModelType model(grid, problem, grid.maxLevel());//, diffPart, false, 0.8, numFl);
 
         Dune::ExplicitEulerStep<GridType, ModelType> timestep;
         Dune::TimeLoop<GridType, ModelType > timeloop(tStart, tEnd, "timeloop", modulo, cFLFactor, 1e100, 1e100, timestep);
