@@ -3,9 +3,7 @@
 #include <iomanip>
 #include <dune/grid/utility/gridtype.hh>
 #include <dune/grid/common/gridinfo.hh>
-#include <dune/grid/io/file/dgfparser/dgfparser.hh>
-#include <dune/grid/io/file/dgfparser/dgfalu.hh>
-#include <dune/grid/io/file/dgfparser/dgfug.hh>
+#include <dune/grid/albertagrid/dgfparser.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
@@ -32,7 +30,7 @@ int main(int argc, char** argv)
         innerUpperRight[1] = 3;
 
         if (argc != 4) {
-            std::cout << "usage: test_elementid basefilename tEnd dt" << std::endl;
+            std::cout << "usage: test_id dgffilename tEnd dt" << std::endl;
             return 0;
         }
         std::string arg1(argv[2]);
@@ -44,16 +42,13 @@ int main(int argc, char** argv)
         double dt;
         is2 >> dt;
 
-        typedef Dune::UGGrid<dim> GridType;
+        typedef Dune::AlbertaGrid<dim,dim> GridType;
         // create grid pointer, GridType is defined by gridtype.hh
         Dune::GridPtr<GridType> gridPtr( argv[1] );
 
         // grid reference
         GridType& grid = *gridPtr;
         grid.globalRefine(2);
-
-        // print some information about the grid
-        //Dune::gridinfo(grid);
 
         // choose fluids
         Dune::Water wPhase;
@@ -76,7 +71,7 @@ int main(int argc, char** argv)
 
         Dune::Timer timer;
         timer.reset();
-        MultiWriter writer("out-elementid");
+        MultiWriter writer("out-id");
         timeloop.executeMultiWriter(twoPhase, writer);
         std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
 

@@ -74,9 +74,11 @@ public:
         // boundary condition type is set to neumann
         FieldVector<BoundaryConditions::Flags, numEq> values(BoundaryConditions::neumann);
 
-        if (x[0] < outerLowerLeft_[0] + eps_ || x[0] > outerUpperRight_[0] - eps_)
-        {
+        switch (intersectionIt->boundaryId()) {
+        case 3:
+        case 4:
             values = BoundaryConditions::dirichlet;
+            break;
         }
 
         return values;
@@ -89,18 +91,20 @@ public:
     {
         FieldVector<Scalar,numEq> values(0);
 
-        if (x[0] < outerLowerLeft_[0] + eps_)
-        {
-            Scalar a = -(1 + 0.5/height_);
-            Scalar b = -a*outerUpperRight_[1];
+        Scalar a, b;
+        switch (intersectionIt->boundaryId()) {
+        case 3:
+            a = -(1 + 0.5/height_);
+            b = -a*outerUpperRight_[1];
             values[pWIdx] = -densityW_*gravity_[1]*(a*x[1] + b);
-            values[sNIdx] = 0;
-        }
-        else {
-            Scalar a = -1;
-            Scalar b = outerUpperRight_[1];
+            values[sNIdx] = 0.0;
+            break;
+        case 4:
+            a = -1;
+            b = outerUpperRight_[1];
             values[pWIdx] = -densityW_*gravity_[1]*(a*x[1] + b);
-            values[sNIdx] = 0;
+            values[sNIdx] = 0.0;
+            break;
         }
 
         return values;
@@ -113,10 +117,8 @@ public:
     {
         FieldVector<Scalar,numEq> values(0);
 
-        Scalar lambda = (outerUpperRight_[0] - x[0])/width_;
-        if (lambda > 0.5 && lambda < 2.0/3.0 && x[1] > outerUpperRight_[1] - eps_) {
+        if (intersectionIt->boundaryId() == 2)
             values[sNIdx] = -0.04;
-        }
 
         return values;
     }
@@ -138,9 +140,9 @@ public:
 
         if (x[0] > innerLowerLeft_[0] && x[0] < innerUpperRight_[0]
             && x[1] > innerLowerLeft_[1] && x[1] < innerUpperRight_[1])
-            values[sNIdx] = 0.0;//innerSnr_;
+            values[sNIdx] = 0.0;
         else
-            values[sNIdx] = 0.0;//outerSnr_;
+            values[sNIdx] = 0.0;
 
         return values;
     }

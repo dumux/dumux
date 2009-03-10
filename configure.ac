@@ -112,7 +112,6 @@ AC_CONFIG_FILES([Makefile
     test/2p2c/Makefile
     test/2p2cni/Makefile
     test/2pni/Makefile
-    test/boundaryid/Makefile
     test/box3d/Makefile
     test/box3d-compressible/Makefile
     test/brinkman/Makefile
@@ -120,11 +119,11 @@ AC_CONFIG_FILES([Makefile
     test/co2/Makefile
     test/coupled/Makefile
     test/diffusion/Makefile
-    test/elementid/Makefile
     test/fractionalflow/Makefile
     test/fvca5/Makefile
     test/gravity/Makefile
     test/hysteresis/Makefile
+    test/id/Makefile
     test/minc/Makefile
     test/mixed/Makefile
     test/multigrid/Makefile

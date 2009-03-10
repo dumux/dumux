@@ -3,18 +3,17 @@ SUBDIRS = . \
 	  1p2c \
 	  2p2c \
 	  2p2cni \
-	  boundaryid \
 	  box3d \
 	  box3d-compressible \
 	  brinkman \
 	  capillary \
 	  co2 \
 	  diffusion \
-	  elementid \
 	  fractionalflow \
 	  fvca5 \
 	  gravity \
 	  hysteresis \
+	  id \
 	  minc \
 	  mixed \
 	  newton \
