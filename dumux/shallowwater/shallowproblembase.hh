@@ -1,4 +1,4 @@
-// $Id: transportproblem.hh 689 2008-10-10 15:48:03Z lauser $
+// $Id$
 
 #ifndef DUNE_SHALLOWPROBLEMBASE_HH
 #define DUNE_SHALLOWPROBLEMBASE_HH
@@ -32,66 +32,59 @@ namespace Dune
  *	- DT    type used for return values
  */
 
-template<class G, class DT, class VC> class ShallowProblemBase
+template<class Grid, class Scalar, class VC> class ShallowProblemBase
 {
-	enum
-	{	dim=G::dimension, m=1, blocksize=2*G::dimension};
-	typedef typename G::Traits::template Codim<0>::Entity Entity;
-	typedef Dune::FieldVector<DT, dim> VelType;
-	typedef Dune::FieldVector<DT,dim+1> SystemType;
-
+    enum
+    {   dim=Grid::dimension, m=1, blocksize=2*Grid::dimension};
+    typedef typename Grid::Traits::template Codim<0>::Entity Element;
+    typedef FieldVector<Scalar,dim> LocalPosition;
+    typedef FieldVector<Scalar,dim> GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dim> VelType;
+    typedef Dune::FieldVector<Scalar,dim+1> SystemType;
 
 public:
-	typedef Dune::SolidSurfaceBase<G,DT> Surface;
-	
-	/*! return type of boundary condition at the given global coordinate
-	 @param[in]  x    position in global coordinates
-	 \return     boundary condition type given by enum in this class
-	 */
-	virtual BoundaryConditions::Flags bctype(const FieldVector<DT,dim>& x,
-			const Entity& e, const FieldVector<DT,dim>& xi) const = 0;
+    typedef Dune::SolidSurfaceBase<Grid,Scalar> Surface;
 
-	/*! evaluate Dirichlet boundary condition at given position
-	 @param[in]  x    position in global coordinates
-	 \return     boundary condition value
-	 */
-	virtual DT dirichlet(const FieldVector<DT,dim>& x, const Entity& e,
-			const FieldVector<DT,dim>& xi)const = 0;
+    // return type of boundary condition at the given global coordinate
 
-	/*! evaluate Neumann boundary condition at given position
-	 @param[in]  x    position in global coordinates
-	 \return     boundary condition value
-	 */
-	virtual SystemType neumann(const FieldVector<DT,dim>& x, const Entity& e,
-			const FieldVector<DT,dim>& xi) const = 0;
-	
-	/*! evaluate initial boundary condition at given position
-	 @param[in]  x position in global coordinates
-	 \return    initial condition value
-	 */
-	virtual DT setInitWDepth(const FieldVector<DT,dim>& x, const Entity& e,
-			const FieldVector<DT,dim>& xi) const = 0;
+    virtual BoundaryConditions::Flags bctype(const GlobalPosition& globalPos,
+            const Element& element, const LocalPosition& localPos) const = 0;
 
-	virtual VelType setInitVel(const FieldVector<DT,dim>& x, const Entity& e,
-			const FieldVector<DT,dim>& xi) const = 0; 
+    //! evaluate Dirichlet boundary condition at given position
+     
+    virtual Scalar dirichlet(const GlobalPosition& globalPos,
+            const Element& element, const LocalPosition& localPos) const = 0;
 
-	//Definition of sources
+    // evaluate Neumann boundary condition at given position
+  
+    virtual SystemType neumann(const GlobalPosition& globalPos,
+            const Element& element, const LocalPosition& localPos) const = 0;
 
-	virtual DT setSource(const FieldVector<DT,dim>& x, const Entity& e,
-			const FieldVector<DT,dim>& xi) const = 0;
+    // evaluate initial boundary condition at given position
+     
+    virtual Scalar setInitWDepth(const GlobalPosition& globalPos,
+            const Element& element, const LocalPosition& localPos) const = 0;
 
-	ShallowProblemBase(VC& variableobject, Surface& surfaceobject) :
-		variables(variableobject), surface(surfaceobject)
-	{
-	}
+    virtual VelType setInitVel(const GlobalPosition& globalPos,
+            const Element& element, const LocalPosition& localPos) const = 0;
 
-	//! always define virtual destructor in abstract base class
-	virtual ~ShallowProblemBase()
-	{
-	}
+    //Definition of sources
 
-	VC& variables;
-	Surface& surface;
+    virtual Scalar setSource(const GlobalPosition& globalPos,
+            const Element& element, const LocalPosition& localPos) const = 0;
+
+    ShallowProblemBase(VC& variableobject, Surface& surfaceobject) :
+        variables(variableobject), surface(surfaceobject)
+    {
+    }
+
+    //! always define virtual destructor in abstract base class
+    virtual ~ShallowProblemBase()
+    {
+    }
+
+    VC& variables;
+    Surface& surface;
 
 };
 }

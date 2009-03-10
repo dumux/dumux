@@ -1,4 +1,4 @@
-// $Id: matrixproperties.hh 605 2008-09-18 16:43:57Z melanie $
+// $Id$
 
 #ifndef SOLIDSURFACEPLAIN_HH
 #define SOLIDSURFACEPLAIN_HH
@@ -8,46 +8,54 @@
 namespace Dune
 {
 
-template<class G, class DT> class SolidSurfacePlain :
-	public SolidSurfaceBase<G,DT>
+template<class Grid, class Scalar> class SolidSurfacePlain :
+    public SolidSurfaceBase<Grid,Scalar>
 {
+    enum
+    {   dim=Grid::dimension};
+
+    enum
+    {   dimWorld = Grid::dimensionworld};
+
+    typedef typename Grid::Traits::template Codim<0>::Entity Element;
+    typedef FieldVector<Scalar,dim> LocalPosition;
+    typedef FieldVector<Scalar,dim> GlobalPosition;
+
 public:
-	typedef typename G::Traits::template Codim<0>::Entity Entity;
 
-	enum
-	{	dim=G::dimension};
+    Scalar evalBottomElevation(const GlobalPosition& globalPos,
+            const Element& element, const LocalPosition& localPos)
+    {
+        bottomElevation_ = 100 + crossSlope_*globalPos[0]+ longSlope_
+                *globalPos[1];
 
-	DT evalBottomElevation(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi)
-	{
+        return bottomElevation_;
 
-		bottomElevation = 100 + crossSlope*x[0]+ longSlope*x[1];
+    }
+    FieldVector<Scalar, dim> calcBottomSlopes(const GlobalPosition& globalPos,
+            const Element& element, const LocalPosition& localPos)
+    {
 
-		return bottomElevation;
+        bottomSlope_[0]=crossSlope_;
+        bottomSlope_[1]=longSlope_;
 
-	}
-	FieldVector<DT, dim> calcBottomSlopes(const FieldVector<DT,dim>& x,
-			const Entity& e, const FieldVector<DT,dim>& xi)
-	{
+        return bottomSlope_;
+    }
 
-		bottomSlope[0]=crossSlope;
-		bottomSlope[1]=longSlope;
+    SolidSurfacePlain() :
+        SolidSurfaceBase<Grid, Scalar>(), crossSlope_(-0.02), longSlope_(0.0),
+                eps_(1e-12)
+    {
 
-		return bottomSlope;
-	}
-
-	SolidSurfacePlain() :
-		SolidSurfaceBase<G, DT>(), crossSlope(-0.02), longSlope(0.0),eps(1e-12)
-	{
-
-	}
+    }
 
 private:
-	//Definition der Variablen für Quer- und Längsneigung
-	DT bottomElevation;
-	DT crossSlope;
-	DT longSlope;
-	FieldVector<DT, dim> bottomSlope;
-	DT eps;
+    //Definition der Variablen für Quer- und Längsneigung
+    Scalar bottomElevation_;
+    Scalar crossSlope_;
+    Scalar longSlope_;
+    FieldVector<Scalar, dim> bottomSlope_;
+    Scalar eps_;
 
 };
 

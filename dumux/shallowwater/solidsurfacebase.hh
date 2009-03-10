@@ -1,4 +1,4 @@
-// $Id: property_baseclasses.hh 703 2008-10-16 13:27:36Z jfritz $
+// $Id$
 
 #ifndef SOLIDSURFACEBASE_HH
 #define SOLIDSURFACEBASE_HH
@@ -6,34 +6,41 @@
 #include <dune/common/fvector.hh>
 #include <vector>
 
-
 namespace Dune
 {
 
-template<class G, class DT>
-class SolidSurfaceBase
+template<class Grid, class Scalar> class SolidSurfaceBase
 {
 public:
-	enum {dim=G::dimension};
-	
-	typedef typename G::Traits::template Codim<0>::Entity Entity;
+    enum
+    {   dim=Grid::dimension};
 
-	virtual DT frictionRelationType (const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi)
-	{
-		DUNE_THROW(NotImplemented, "friction term not implemented!");
-	}
+    typedef typename Grid::Traits::template Codim<0>::Entity Element;
+    typedef FieldVector<Scalar,dim> LocalPosition;
+    typedef FieldVector<Scalar,dim> GlobalPosition;
 
-	virtual DT friction (const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi)
-	{
-		DUNE_THROW(NotImplemented, "friction term not implemented!");
-	}
+    virtual Scalar frictionRelationType(const GlobalPosition& globalPos,
+            const Element& element, const LocalPosition& localPos)
+    {
+        DUNE_THROW(NotImplemented, "friction term not implemented!");
+    }
 
-	virtual DT evalBottomElevation(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi) = 0;
-	
-	virtual FieldVector<DT, dim> calcBottomSlopes(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi) = 0;
+    virtual Scalar friction(const GlobalPosition& globalPos,
+            const Element& element, const LocalPosition& localPos)
+    {
+        DUNE_THROW(NotImplemented, "friction term not implemented!");
+    }
 
-	virtual ~SolidSurfaceBase()
-	{}
+    virtual Scalar evalBottomElevation(const GlobalPosition& globalPos,
+            const Element& element, const LocalPosition& localPos) = 0;
+
+    virtual FieldVector<Scalar, dim> calcBottomSlopes(
+            const GlobalPosition& globalPos,
+                        const Element& element, const LocalPosition& localPos) = 0;
+
+    virtual ~SolidSurfaceBase()
+    {
+    }
 };
 
 } // end namespace

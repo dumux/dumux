@@ -1,4 +1,4 @@
-// $Id: variableclass.hh 670 2008-10-09 07:49:23Z markus $
+// $Id$
 
 #ifndef DUNE_SHALLOWVARIABLECLASS_HH
 #define DUNE_SHALLOWVARIABLECLASS_HH
@@ -12,166 +12,170 @@
 namespace Dune
 {
 
-template<class G, class DT> class ShallowVariableClass
+template<class Grid, class Scalar> class ShallowVariableClass
 {
-	enum
-	{	dim=G::dimension};
+    template<int dim> struct ElementLayout
+    {
+        bool contains(Dune::GeometryType gt)
+        {
+            return gt.dim() == dim;
+        }
+    };
 
-	typedef Dune::BlockVector<Dune::FieldVector<DT,1> > ScalarType;
-	typedef Dune::BlockVector<Dune::FieldVector<DT,dim> > VelType;
-	typedef Dune::BlockVector<Dune::FieldVector<DT,dim+1> > SolutionType;
-	typedef typename G::Traits::template Codim<0>::Entity Entity;
+    enum
+    {   dim=Grid::dimension};
+
+    typedef typename Grid::Traits::template Codim<0>::Entity Element;
+    typedef FieldVector<Scalar,dim> LocalPosition;
+    typedef FieldVector<Scalar,dim> GlobalPosition;
+    typedef typename Grid::LeafGridView GridView;
+    typedef typename GridView::IndexSet IndexSet;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,IndexSet,ElementLayout>
+            ElementMapper;
 
 public:
-	template<int dim> struct ElementLayout
-	{
-		bool contains(Dune::GeometryType gt)
-		{
-			return gt.dim() == dim;
-		}
-	};
+    typedef Dune::BlockVector<Dune::FieldVector<Scalar,1> > ScalarType;
+    typedef Dune::BlockVector<Dune::FieldVector<Scalar,dim> > VelType;
+    typedef Dune::BlockVector<Dune::FieldVector<Scalar,dim+1> > SolutionType;
 
-	typedef typename G::Traits::LeafIndexSet IS;
+    ElementMapper elementMapper;
 
-	typedef Dune::MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout>
-			ElementMapper;
-	ElementMapper elementmapper;
+    ScalarType wDepth;
+    VelType velocity;
+    SolutionType globalSolution;
 
-	ScalarType wDepth;
-	VelType velocity;
-	SolutionType globalSolution;
+    Grid& grid;
 
-	G& grid;
+    //Constructor: defines the initital values for the variables and the methods includes in the class
 
-	//Constructor: defines the initital values for the variables and the methods includes in the class
+    ShallowVariableClass(Grid& grid) :
+        elementMapper(grid, grid.leafIndexSet()), grid(grid),
+                size(elementMapper.size())
+    {
+        sizeInitWDepth(size);
+        sizeInitVel(size);
+        sizeInitGlobalSolution(size);
+    }
 
-	ShallowVariableClass(G& g) :
-		elementmapper(g, g.leafIndexSet()), grid(g), size(elementmapper.size())
-	{
-		sizeInitWDepth(size);
-		sizeInitVel(size);
-		sizeInitGlobalSolution(size);
-	}
+    //Definition of the methods to resize the vectors and fill with initial data. !!!Initial data is not the boundary condition, it´s just to initialize sth
 
-	//Definition of the methods to resize the vectors and fill with initial data. !!!Initial data is not the boundary condition, it´s just to initialize sth
+    void sizeInitWDepth(int size)
+    {
+        wDepth.resize(size);
+        wDepth=0;
+        return;
+    }
 
-	void sizeInitWDepth(int size)
-	{
-		wDepth.resize(size);
-		wDepth=0;
-		return;
-	}
+    void sizeInitVel(int size)
+    {
+        velocity.resize(size);
+        velocity=0;
+        return;
+    }
 
-	void sizeInitVel(int size)
-	{
-		velocity.resize(size);
-		velocity=0;
-		return;
-	}
+    void sizeInitGlobalSolution(int size)
+    {
+        globalSolution.resize(size);
+        globalSolution=0;
+        return;
+    }
 
-	void sizeInitGlobalSolution(int size)
-	{
-		globalSolution.resize(size);
-		globalSolution=0;
-		return;
-	}
+    //Declaration of methods to return variable values
 
-	//Declaration of methods to return variable values
+    ScalarType& returnWDepth()
+    {
+        return wDepth;
+    }
 
-	ScalarType& returnWDepth()
-	{
-		return wDepth;
-	}
+    VelType& returnVel()
+    {
+        return velocity;
+    }
 
-	VelType& returnVel()
-	{
-		return velocity;
-	}
+    SolutionType& returnGlobalSol()
+    {
+        return globalSolution;
+    }
 
-	SolutionType& returnGlobalSol()
-	{
-		return globalSolution;
-	}
+    //Definition of the return methods
 
-	//Definition of the return methods
+    const Scalar& returnWDepth(const GlobalPosition& globalPos,
+            const Element& element, const LocalPosition& localPos)
+    {
+        return wDepth[elementMapper.map(element)];
+    }
 
-	const DT& returnWDepth(const Dune::FieldVector<DT,dim>& x, const Entity& e,
-			const Dune::FieldVector<DT,dim>& xi)
-	{
-		return wDepth[elementmapper.map(e)];
-	}
+    const VelType& returnVel(const GlobalPosition& globalPos,
+            const Element& element, const LocalPosition& localPos)
+    {
+        return velocity[elementMapper.map(element)];
+    }
 
-	const VelType& returnVel(const Dune::FieldVector<DT,dim>& x,
-			const Entity& e, const Dune::FieldVector<DT,dim>& xi)
-	{
-		return velocity[elementmapper.map(e)];
-	}
+    const SolutionType& returnGlobalSol(const GlobalPosition& globalPos,
+            const Element& element, const LocalPosition& localPos)
+    {
+        return globalSolution[elementMapper.map(element)];
+    }
 
-	const SolutionType& returnGlobalSol(const Dune::FieldVector<DT,dim>& x,
-			const Entity& e, const Dune::FieldVector<DT,dim>& xi)
-	{
-		return globalSolution[elementmapper.map(e)];
-	}
+    void calcPrimVar()
+    {
+        for (i=0; i<size; i++)
+        {
 
-	void calcPrimVar()
-	{
-		for (i=0; i<size; i++)
-		{
+            if (globalSolution[i][0]> 0)
+            {
 
-			if (globalSolution[i][0]> 0)
-			{
+                wDepth[i]=globalSolution[i][0];
+                velocity[i][0]=globalSolution[i][1]/wDepth[i];
+                velocity[i][1]=globalSolution[i][2]/wDepth[i];
+            }
+            else
+            {
+                wDepth[i]=0;
+                velocity[i][0]=0;
+                velocity[i][1]=0;
+            }
 
-				wDepth[i]=globalSolution[i][0];
-				velocity[i][0]=globalSolution[i][1]/wDepth[i];
-				velocity[i][1]=globalSolution[i][2]/wDepth[i];
-			}
-			else
-			{
-				wDepth[i]=0;
-				velocity[i][0]=0;
-				velocity[i][1]=0;
-			}
+            //std::cout<<"global Solution of cell"<<i<<"= "<<globalSolution[i]<<std::endl;
 
-			//std::cout<<"global Solution of cell"<<i<<"= "<<globalSolution[i]<<std::endl;
+            //std::cout<<"wDepth = "<<wDepth[i]<<std::endl;
+            //std::cout<<"velX = "<<velocity[i][0]<<std::endl;
+            //std::cout<<"velY = "<<velocity[i][1]<<std::endl;
 
-			//std::cout<<"wDepth = "<<wDepth[i]<<std::endl;
-			//std::cout<<"velX = "<<velocity[i][0]<<std::endl;
-			//std::cout<<"velY = "<<velocity[i][1]<<std::endl;
+        }
+        return;
+    }
 
-		}
-		return;
-	}
+    void vtkout(const char* name, int k)
+    {
+        calcPrimVar();
+        VTKWriter<typename Grid::LeafGridView> vtkwriter(grid.leafView());
+        Dune::BlockVector<Dune::FieldVector<Scalar, 1> > vX(size);
+        Dune::BlockVector<Dune::FieldVector<Scalar, 1> > vY(size);
+        vX = 0;
+        vY = 0;
 
-	void vtkout(const char* name, int k)
-	{
-		calcPrimVar();
-		VTKWriter<typename G::LeafGridView> vtkwriter(grid.leafView());
-		Dune::BlockVector<Dune::FieldVector<DT, 1> > vX(size);
-		Dune::BlockVector<Dune::FieldVector<DT, 1> > vY(size);
-		vX = 0;
-		vY = 0;
+        for (int i = 0; i < size; i++)
+        {
+            std::cout<<"wDepth = "<<wDepth[i]<<std::endl;
+            std::cout<<"velX = "<<velocity[i][0]<<std::endl;
+            std::cout<<"velY = "<<velocity[i][1]<<std::endl;
+            vX[i] = velocity[i][0];
+            vY[i] = velocity[i][1];
+        }
+        char fname[128];
+        sprintf(fname, "%s-%05d", name, k);
+        vtkwriter.addCellData(vX, "Velocity_X");
+        vtkwriter.addCellData(vY, "Velocity_Y");
+        vtkwriter.addCellData(wDepth, "wDepth");
+        vtkwriter.write(fname, VTKOptions::ascii);
 
-		for (int i = 0; i < size; i++)
-		{
-			std::cout<<"wDepth = "<<wDepth[i]<<std::endl;
-			std::cout<<"velX = "<<velocity[i][0]<<std::endl;
-			std::cout<<"velY = "<<velocity[i][1]<<std::endl;
-			vX[i] = velocity[i][0];
-			vY[i] = velocity[i][1];
-		}
-		char fname[128];
-		sprintf(fname, "%s-%05d", name, k);
-		vtkwriter.addCellData(vX, "Velocity_X");
-		vtkwriter.addCellData(vY, "Velocity_Y");
-		vtkwriter.addCellData(wDepth, "wDepth");
-		vtkwriter.write(fname, VTKOptions::ascii);
-
-		return;
-	}
+        return;
+    }
 private:
-	int size;
-	int i;
-	double eps;
+    int size;
+    int i;
+    double eps;
 };
 }
 #endif

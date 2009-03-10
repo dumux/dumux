@@ -1,4 +1,4 @@
-// $Id: transport.hh 566 2008-09-11 11:38:31Z bernd $ 
+// $Id$ 
 
 #ifndef DUNE_SHALLOWTRANSPORT_HH
 #define DUNE_SHALLOWTRANSPORT_HH
@@ -19,24 +19,21 @@ namespace Dune
 	- RepresentationType   type of the vector holding the saturation values
 	- VelType   type of the vector holding the velocity values */
 	
-  template<class G, class RT, class VC>
+  template<class Grid, class Scalar, class VC>
   class ShallowTransport {
   public:
 
-	typedef BlockVector< Dune::FieldVector<RT,1> > RepresentationType;
-	typedef BlockVector< Dune::FieldVector<Dune::FieldVector<RT,1>, size > > UpdatevectorType;
-	ShallowProblemBase<G, RT, VC>& transproblem; //!< problem data
+	typedef BlockVector< Dune::FieldVector<Scalar,1> > RepresentationType;
+	typedef BlockVector< Dune::FieldVector<Dune::FieldVector<Scalar,1>, size > > UpdatevectorType;
+	ShallowProblemBase<Grid, Scalar, VC>& transproblem; //!< problem data
 
 	//! \brief Calculate the update vector.
 	/*!
 	 *  \param[in]  t         time
 	 *  \param[out] dt        time step size
 	 *  \param[out] updateVec vector for hte update values
-	 *
-	 *  Calculate the update vector, i.e., the discretization
-	 *  of \f$\text{div}\, (f_\text{w}(S) \boldsymbol{v}_t)\f$.
 	 */
-	virtual int update(const RT t, RT& dt, UpdatevectorType& updateVec, RT& CLFFac) = 0;
+	virtual int update(const Scalar t, Scalar& dt, UpdatevectorType& updateVec, Scalar& CLFFac) = 0;
 
 	void initial()
 	{
@@ -71,7 +68,7 @@ namespace Dune
 	 *  @param g a DUNE grid object
 	 *  @param prob an object of class TransportProblem or derived
 	 */
-	ShallowTransport(const G& g, ShallowProblemBase<G, RT, VC>& prob)
+	ShallowTransport(const Grid& g, ShallowProblemBase<Grid, Scalar, VC>& prob)
 	: grid(g), transproblem(prob), level_(g.maxLevel())
 	{ }
 
@@ -83,7 +80,7 @@ namespace Dune
 	 *  @param prob an object of class TransportProblem or derived
 	 *  @param lev the grid level on which the Transport equation is to be solved.
 	 */
-	ShallowTransport(const G& g, ShallowProblemBase<G, RT, VC>& prob, int lev)
+	ShallowTransport(const Grid& g, ShallowProblemBase<Grid, Scalar, VC>& prob, int lev)
 	: transproblem(prob), grid(g), level_(lev)
 	{ }
 
@@ -93,7 +90,7 @@ namespace Dune
 		return level_;
 	}
 
-	const G& grid;
+	const Grid& g;
 
   protected:
 	  const int level_;
