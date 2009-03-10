@@ -1,6 +1,13 @@
-dist_noinst_DATA = injection_ff
+# tests where program to build and program to run are equal
+NORMALTESTS = injection_ff
 
-noinst_PROGRAMS = injection_ff
+# list of tests to run
+#TESTS = $(NORMALTESTS)
+
+# programs just to build when "make check" is used
+check_PROGRAMS = $(NORMALTESTS)
+
+dist_noinst_DATA = injection_ff.cc
 
 injection_ffdir = $(includedir)/dune/dumux/test/phasepressure_ff
 injection_ff_HEADERS = injectiondiffproblem.hh injectiontransportproblem.hh
