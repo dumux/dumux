@@ -339,6 +339,7 @@ public:
                         FieldVector<Scalar,dim>  gradVN(0);
                         velocityGradient.umv(it->unitOuterNormal(faceLocal), gradVN);
                         gradVN *= this->fvGeom.boundaryFace[bfIdx].area;
+                        gradVN *= elData.mu;
 
                         for (int comp = 0; comp < dim; comp++)
                         {
