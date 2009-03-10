@@ -1,8 +1,14 @@
-dist_noinst_DATA = test_gravity.cc
+# tests where program to build and program to run are equal
+NORMALTESTS = test_gravity
+
+# list of tests to run
+#TESTS = $(NORMALTESTS)
+
+# programs just to build when "make check" is used
+check_PROGRAMS = $(NORMALTESTS)
+
+test_gravity_SOURCES = test_gravity.cc
 
 AM_LDFLAGS = @AM_LDFLAGS@ $(LOCAL_LIBS)
-
-noinst_PROGRAMS = test_gravity
-test_gravity_SOURCES = test_gravity.cc
 
 include $(top_srcdir)/am/global-rules
