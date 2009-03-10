@@ -1,8 +1,11 @@
-dist_noinst_DATA = test_diffusion.cc test_equilibrated.cc
+# tests where program to build and program to run are equal
+NORMALTESTS = test_diffusion test_equilibrated
 
-AM_LDFLAGS = @AM_LDFLAGS@ $(LOCAL_LIBS)
+# list of tests to run
+#TESTS = $(NORMALTESTS)
 
-noinst_PROGRAMS = test_diffusion test_equilibrated
+# programs just to build when "make check" is used
+check_PROGRAMS = $(NORMALTESTS)
 
 test_diffusion_SOURCES = test_diffusion.cc
 
