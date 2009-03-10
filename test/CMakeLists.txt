@@ -25,6 +25,6 @@ add_subdirectory("parallel")
 add_subdirectory("richards")
 add_subdirectory("tutorial")
 add_subdirectory("twophase")
-add_subdirectory("upscaledvelocity")
+#add_subdirectory("upscaledvelocity")
 #add_subdirectory("vtk")
 

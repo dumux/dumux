@@ -25,7 +25,12 @@ int main(int argc, char** argv)
         // or long double)
         const int dim = 2;
         typedef double                                Scalar;
+#define USE_UG 0
+#if USE_UG
         typedef Dune::UGGrid<dim>                     Grid;
+#else 
+        typedef Dune::YaspGrid<dim>                   Grid;
+#endif
         typedef Dune::NewBlobProblem<Grid, Scalar>    Problem;
         typedef Problem::DomainTraits::GlobalPosition GlobalPosition;
 
@@ -53,18 +58,20 @@ int main(int argc, char** argv)
         double tEnd, dt;
         std::istringstream(argv[argPos++]) >> tEnd;
         std::istringstream(argv[argPos++]) >> dt;
-
-        ////////////////////////////////////////////////////////////
-        // Make a uniform grid
-        ////////////////////////////////////////////////////////////
-        Grid grid;
+//        typedef Dune::UGGrid<dim>                     Grid;
 
         GlobalPosition upperRight;
         Dune::FieldVector<int,dim> res; // cell resolution
         upperRight[0] = 300.0;
-        res[0]        = 20;
+        res[0]        = 10;
         upperRight[1] = 300.0;
-        res[1]        = 20;
+        res[1]        = 10;
+
+#if USE_UG
+        ////////////////////////////////////////////////////////////
+        // Make a uniform grid
+        ////////////////////////////////////////////////////////////
+        Grid grid;
 
         Dune::GridFactory<Grid> factory(&grid);
         for (int i=0; i<=res[0]; i++) {
@@ -88,6 +95,16 @@ int main(int argc, char** argv)
         }
 
         factory.createGrid();
+#else
+        Grid grid(
+#ifdef HAVE_MPI
+                  Dune::MPIHelper::getCommunicator(),
+#endif
+                  upperRight, // upper right
+                  res, // number of cells
+                  Dune::FieldVector<bool,dim>(false), // periodic
+                  2); // overlap
+#endif
 
         ////////////////////////////////////////////////////////////
         // instantiate and run the concrete problem

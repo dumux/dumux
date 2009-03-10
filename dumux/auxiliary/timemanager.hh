@@ -61,10 +61,13 @@ public:
 
         time_ = 0.0;
         endTime_ = endTime;
+        wasRestarted_ = false;
 
         stepSize_ = 1.0;
         stepNum_ = 0;
         finished_ = false;
+
+        wasRestarted_ = false;
 
         episodeLength_ = 1e100;
     }
