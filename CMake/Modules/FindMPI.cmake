@@ -54,7 +54,7 @@
 
 # Try to find the MPI driver program
 find_program(MPI_COMPILER 
-  NAMES mpic++ mpicxx mpiCC mpicc
+  NAMES mpicxx mpiCC mpicc mpic++
   DOC "MPI compiler. Used only to detect MPI compilation flags.")
 mark_as_advanced(MPI_COMPILER)
 
@@ -107,9 +107,9 @@ elseif (MPI_COMPILER)
   if (MPI_COMPILER_RETURN EQUAL 0)
     # Do nothing: we have our command lines now
   else (MPI_COMPILER_RETURN EQUAL 0)
-    # MPICH uses "-show". Try it.
+    # MPICH uses "-compile-info". Try it.
     exec_program(${MPI_COMPILER} 
-      ARGS -show
+      ARGS -compile-info
       OUTPUT_VARIABLE MPI_COMPILE_CMDLINE
       RETURN_VALUE MPI_COMPILER_RETURN)
   endif (MPI_COMPILER_RETURN EQUAL 0)  
@@ -118,7 +118,15 @@ elseif (MPI_COMPILER)
     # We have our command lines, but we might need to copy
     # MPI_COMPILE_CMDLINE into MPI_LINK_CMDLINE, if the underlying
     if (NOT MPI_LINK_CMDLINE)
-      SET(MPI_LINK_CMDLINE ${MPI_COMPILE_CMDLINE})
+      # MPICH uses "-link-info". Try it.
+      exec_program(${MPI_COMPILER} 
+        ARGS -link-info
+        OUTPUT_VARIABLE MPI_LINK_CMDLINE
+        RETURN_VALUE MPI_COMPILER_RETURN)
+
+      if (NOT MPI_COMPILER_RETURN EQUAL 0)
+        message(STATUS "Unable to determine MPI from MPI driver ${MPI_COMPILER}")
+      endif (NOT MPI_COMPILER_RETURN EQUAL 0)
     endif (NOT MPI_LINK_CMDLINE)
   else (MPI_COMPILER_RETURN EQUAL 0)
     message(STATUS "Unable to determine MPI from MPI driver ${MPI_COMPILER}")
@@ -213,7 +221,7 @@ elseif (MPI_COMPILE_CMDLINE)
   foreach(LIB ${MPI_LIBNAMES})
     string(REGEX REPLACE "^-l" "" LIB ${LIB})
     set(MPI_LIB "MPI_LIB-NOTFOUND" CACHE FILEPATH "Cleared" FORCE)
-    find_library(MPI_LIB ${LIB} HINTS ${MPI_LINK_PATH})
+    find_library(MPI_LIB ${LIB} HINTS ${MPI_LINK_PATH} PATHS "/usr/lib64" "/lib64")
     if (MPI_LIB)
       list(APPEND MPI_LIBRARIES ${MPI_LIB})
     else (MPI_LIB)

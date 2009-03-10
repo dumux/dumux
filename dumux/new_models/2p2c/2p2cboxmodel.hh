@@ -718,6 +718,9 @@ public:
     void calculateDarcyVelocity(GlobalPosition &velocity,
                                 const int faceId)
     {
+        velocity = 0.0;
+        return ; // TODO;
+
         int i = this->curElementGeom_.subContVolFace[faceId].i;
         int j = this->curElementGeom_.subContVolFace[faceId].j;
 
