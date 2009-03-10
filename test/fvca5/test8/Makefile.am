@@ -1,11 +1,16 @@
-dist_noinst_DATA = fvca5_test8.cc
+# tests where program to build and program to run are equal
+NORMALTESTS = fvca5_test8
 
-AM_LDFLAGS = @AM_LDFLAGS@ $(LOCAL_LIBS)
+# list of tests to run
+#TESTS = $(NORMALTESTS)
 
-noinst_PROGRAMS = fvca5_test8
+# programs just to build when "make check" is used
+check_PROGRAMS = $(NORMALTESTS)
 
 fvca5_test8dir = $(includedir)/dune/dumux/test/fvca5/test8
 fvca5_test8_HEADERS = fvca5test8problem.hh
 fvca5_test8_SOURCES = fvca5_test8.cc
+
+AM_LDFLAGS = @AM_LDFLAGS@ $(LOCAL_LIBS)
 
 include $(top_srcdir)/am/global-rules
