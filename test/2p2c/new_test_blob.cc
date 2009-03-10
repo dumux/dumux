@@ -4,6 +4,7 @@
 
 #include <dune/grid/common/gridinfo.hh>
 #include <dune/grid/uggrid.hh>
+#include <dune/grid/yaspgrid.hh>
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/mpihelper.hh>

@@ -188,7 +188,6 @@ private:
 
     enum Episode {}; // the type of an episode of the simulation
     typedef Dune::TimeManager<Episode>                  TimeManager;
-    typedef Dune::NewImplicitEulerStep<ThisType>        TimeIntegration;
 
     typedef typename Model::NewtonMethod                NewtonMethod;
     typedef Dune::NewtonController<NewtonMethod>        NewtonController;
@@ -199,13 +198,12 @@ public:
                        Scalar tEnd)
         : ParentType(grid),
           materialLaw_(soil_, wPhase_, nPhase_),
-          timeManager_(this->grid().comm().rank() == 0),
+          timeManager_(tEnd, this->grid().comm().rank() == 0),
           model_(*this),
           newtonMethod_(model_),
           resultWriter_("new_richards")
     {
-        initialTimeStepSize_ = dtInitial;
-        endTime_ = tEnd;
+        timeManager_.setStepSize(dtInitial);
 
         gravity_ = 0;
         gravity_[dim - 1] = -9.81;
@@ -220,10 +218,6 @@ public:
     //! solution
     void init()
     {
-        // set the episode length and initial time step size
-        timeManager_.startNextEpisode(1e100);
-        timeManager_.setStepSize(initialTimeStepSize_);
-
         // set the initial condition
         model_.initial();
 
@@ -244,28 +238,7 @@ public:
      */
     void timeIntegration(Scalar &stepSize, Scalar &nextStepSize)
     {
-        // execute the time integration (i.e. Runge-Kutta
-        // or Euler).  TODO/FIXME: Note that the time
-        // integration modifies the curTimeStepSize_ if it
-        // thinks that's appropriate. (IMHO, this is an
-        // incorrect abstraction, the simulation
-        // controller is responsible for adapting the time
-        // step size!)
-        timeIntegration_.execute(*this,
-                                 timeManager_.time(),
-                                 stepSize,
-                                 nextStepSize,
-                                 1e100, // firstDt or maxDt, TODO: WTF?
-                                 endTime_,
-                                 1.0); // CFL factor (not relevant since we use implicit euler)
-
-    };
-
-    //! called by the TimeIntegration::execute function to let
-    //! time pass.
-    void updateModel(Scalar &dt, Scalar &nextDt)
-    {
-        model_.update(dt, nextDt, newtonMethod_, newtonCtl_);
+        model_.update(stepSize, nextStepSize, newtonMethod_, newtonCtl_);
     }
 
     //! called by the TimeManager whenever a solution for a
@@ -277,13 +250,6 @@ public:
 
         // write the current result to disk
         writeCurrentResult_();
-
-        // update the domain with the current solution
-        //                updateDomain_();
-
-        // stop the simulation if reach the end specified time
-        if (timeManager_.time() >= endTime_)
-            timeManager_.setFinished();
     };
     ///////////////////////////////////
     // End of simulation control stuff
@@ -499,9 +465,6 @@ private:
     MaterialLaw     materialLaw_;
 
     TimeManager     timeManager_;
-    TimeIntegration timeIntegration_;
-    Scalar          initialTimeStepSize_;
-    Scalar          endTime_;
 
     Model            model_;
     NewtonMethod     newtonMethod_;

@@ -101,7 +101,6 @@ private:
     };
 
     typedef Dune::TimeManager<Episode>           TimeManager;
-    typedef Dune::NewImplicitEulerStep<ThisType> TimeIntegration;
     typedef Dune::VtkMultiWriter<typename Grid::LeafGridView> VtkMultiWriter;
 
     //        typedef PwSnNewtonController<Model>   NewtonController;
@@ -110,7 +109,7 @@ private:
 
 public:
     PwSnLenhardProblem(Scalar initialTimeStepSize, Scalar endTime)
-        : timeManager_(this->grid().comm().rank() == 0),
+        : timeManager_(endTime, this->grid().comm().rank() == 0),
           model_(*this),
           newtonMethod_(model_),
           newtonCtl_(*this),
@@ -121,6 +120,7 @@ public:
 #endif
     {
         Api::require<Api::BasicDomainTraits, DomainTraits>();
+        timeManager_.setStepSize(initialTimeStepSize);
 
 #ifdef USE_NODE_PARAMETERS
         maxPc_ = ParkerLenhard::pC(ParentType::vertexState(0),
@@ -129,8 +129,6 @@ public:
         maxPc_ = ParkerLenhard::pC(ParentType::elementState(0),
                                    0.0);
 #endif
-        initialTimeStepSize_ = initialTimeStepSize;
-        endTime_ = endTime;
     };
 
     ~PwSnLenhardProblem()
@@ -141,14 +139,7 @@ public:
     //! to the TimeManager here.
     bool simulate()
     {
-        Dune::Timer timer;
-        timer.reset();
-
         timeManager_.runSimulation(*this);
-
-        std::cout <<
-            boost::format("LenhardSimulation took %.3f seconds\n")
-            %timer.elapsed();
         return true;
     }
 
@@ -185,28 +176,7 @@ public:
      */
     void timeIntegration(Scalar &stepSize, Scalar &nextStepSize)
     {
-        // execute the time integration (i.e. Runge-Kutta
-        // or Euler).  TODO/FIXME: Note that the time
-        // integration modifies the curTimeStepSize_ if it
-        // thinks that's appropriate. (IMHO, this is an
-        // incorrect abstraction, the simulation
-        // controller is responsible for adapting the time
-        // step size!)
-        timeIntegration_.execute(*this,
-                                 timeManager_.time(),
-                                 stepSize,
-                                 nextStepSize,
-                                 1e100, // firstDt or maxDt, TODO: WTF?
-                                 endTime_,
-                                 1.0); // CFL factor (not relevant since we use implicit euler)
-    };
-
-
-    //! called by the TimeIntegration::execute function to let
-    //! time pass.
-    void updateModel(Scalar &dt, Scalar &nextDt)
-    {
-        model_.update(dt, nextDt, newtonMethod_, newtonCtl_);
+        model_.update(stepSize, nextStepSize, newtonMethod_, newtonCtl_);
     }
 
     //! called by the TimeManager whenever a solution for a
@@ -437,16 +407,12 @@ private:
             // initial episode, we start at t=-3hours
             curHydraulicHead_ = 0.67;
             timeManager_.startNextEpisode(-3*60*60);
-            timeManager_.setStepSize(initialTimeStepSize_);
             return;
         }
         ++ i;
 
-        if (timeManager_.time() >= endTime_) {
-            timeManager_.setFinished();
-            return;
-        }
-        else if (!timeManager_.episodeIsOver())
+        if (timeManager_.finished() ||
+            !timeManager_.episodeIsOver())
             return;
 
         if (epiIdx < i + k) {
@@ -497,16 +463,12 @@ private:
             curHydraulicHead_ = 0.72;
             timeManager_.setTime(-10*60*60, 0);
             timeManager_.startNextEpisode(10*60*60);
-            timeManager_.setStepSize(initialTimeStepSize_);
             return;
         }
         ++ i;
 
-        if (timeManager_.time() >= endTime_) {
-            timeManager_.setFinished();
-            return;
-        }
-        else if (!timeManager_.episodeIsOver())
+        if (timeManager_.finished() ||
+            !timeManager_.episodeIsOver())
             return;
 
         int k = 13;
@@ -746,9 +708,6 @@ private:
 
     // simulated time control stuff
     TimeManager     timeManager_;
-    TimeIntegration timeIntegration_;
-    Scalar          initialTimeStepSize_;
-    Scalar          endTime_;
 
     Scalar curHydraulicHead_;
     Scalar maxPc_;

@@ -176,8 +176,6 @@ public:
     void executeMultiWriter(Model& model, MultiWriter& writer,
                             bool writeRestart = false, bool restart = false, int restartNum = 0)
     {
-        typedef NewImplicitEulerStep<Model> NewTimeStep;
-
         int k = 0;
         int countVtk = 0;
 
@@ -207,19 +205,13 @@ public:
         while (t < tEnd)
         {
             k++;
-            //              double dtOld = dt;
-
-            double nextDt;
             if (t == tStart)
-                NewTimeStep::execute(model, t, dt, nextDt, firstDt, tEnd,
-                                     cFLFactor);
+                timeStep.execute(model, t, dt, firstDt, tEnd, cFLFactor);
             else
-                NewTimeStep::execute(model, t, dt, nextDt, maxDt, tEnd,
-                                     cFLFactor);
+                timeStep.execute(model, t, dt, maxDt, tEnd, cFLFactor);
 
             t += dt;
             t = std::min(t, tEnd);
-            dt = nextDt;
             std::cout << ", timestep: " << k << "\t t=" << t << "\t dt=" << dt
                       << std::endl;
 
