@@ -1,6 +1,13 @@
-dist_noinst_DATA = test_minc.cc 
+# tests where program to build and program to run are equal
+NORMALTESTS = test_minc
 
-noinst_PROGRAMS = test_minc
+# list of tests to run
+#TESTS = $(NORMALTESTS)
+
+# programs just to build when "make check" is used
+check_PROGRAMS = $(NORMALTESTS)
+
+dist_noinst_DATA = test_minc.cc 
 
 test_mincdir = $(includedir)/dune/dumux/test/minc
 test_minc_HEADERS = minclensproblem.hh
