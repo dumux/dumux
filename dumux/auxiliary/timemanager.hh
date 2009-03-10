@@ -48,8 +48,7 @@ class TimeManager
 public:
     typedef EpisodeIdentiferT EpisodeIdentifer;
 
-    TimeManager(const EpisodeIdentifer &id,
-                double len = 1e100,
+    TimeManager(double endTime = 1e100,
                 bool verbose = true)
     {
         wasRestarted_ = false;
@@ -57,25 +56,16 @@ public:
             verbose &&
             MPIHelper::getCollectiveCommunication().rank() == 0;
 
-        init_();
+        episodeIndex_ = 0;
+        episodeStartTime_ = 0;
 
-        episode_ = id;
-        episodeLength_ = len;
-    }
+        time_ = 0.0;
+        endTime_ = endTime;
 
-    TimeManager(double len,
-                bool verbose = true)
-    {
-        verbose_ = verbose;
+        stepSize_ = 1.0;
+        stepNum_ = 0;
+        finished_ = false;
 
-        init_();
-        episodeLength_ = len;
-    }
-
-    TimeManager(bool verbose = true)
-    {
-        verbose_ = verbose;
-        init_();
         episodeLength_ = 1e100;
     }
 
@@ -89,26 +79,32 @@ public:
      * current time step number.
      */
     void setTime(double t)
-    { currentTime_ = t; }
+    { time_ = t; }
 
     /*!
      * \brief Set the current simulated time and the time step
      * number.
      */
     void setTime(double t, int stepNum)
-    { currentTime_ = t; stepNum_ = stepNum; }
+    { time_ = t; stepNum_ = stepNum; }
 
     /*!
      * \brief Let some simulated time pass.
      */
     void proceed(double curDt)
-    { currentTime_ += curDt; ++stepNum_; }
+    { time_ += curDt; ++stepNum_; }
 
     /*!
      * \brief Return the current simulated time.
      */
     double time() const
-    { return currentTime_; }
+    { return time_; }
+
+    /*!
+     * \brief Returns the number of (simulated) seconds which the simulation runs.
+     */
+    double endTime() const
+    { return endTime_; }
 
     /*!
      * \brief Set the suggested time step size to a fixed value.
@@ -158,7 +154,7 @@ public:
      * \brief Returns true if the simulation is finished.
      */
     bool finished() const
-    { return finished_; }
+    { return finished_ || time() >= endTime(); }
 
 
     /*!
@@ -197,7 +193,7 @@ public:
                           double len = 1e100)
     {
         ++ episodeIndex_;
-        episodeStartTime_ = currentTime_;
+        episodeStartTime_ = time_;
         episodeLength_ = len;
 
         episode_ = id;
@@ -212,7 +208,7 @@ public:
     void startNextEpisode(double len = 1e100)
     {
         ++ episodeIndex_;
-        episodeStartTime_ = currentTime_;
+        episodeStartTime_ = time_;
         episodeLength_ = len;
     }
 
@@ -248,13 +244,13 @@ public:
      *        simulated time.
      */
     double episodeLength() const
-    { return episodeLength_; }
+    { return std::min(episodeLength_,  endTime_ - episodeStartTime_); }
 
     /*!
      * \brief Returns true if the current episode is over.
      */
     bool episodeIsOver() const
-    { return time() + episodeLength_*1e-6 >= episodeStartTime_ + episodeLength_; }
+    { return time() >= episodeStartTime_ + (1-1e-6)*episodeLength(); }
 
     /*!
      * @}
@@ -278,10 +274,6 @@ public:
         Dune::Timer timer;
         timer.reset();
 
-
-        // reset the time manager
-        init_();
-
         // initialize them model and write the initial
         // condition to disk
         problem.init();
@@ -294,6 +286,7 @@ public:
             // execute the time integration (i.e. Runge-Kutta
             // or Euler).
             curStepSize = stepSize();
+            std::cerr << "currentStepSize: " << curStepSize << "\n";
             problem.timeIntegration(curStepSize, nextStepSize);
 
 
@@ -312,7 +305,7 @@ public:
 
             if (verbose_) {
                 std::cout <<
-                    boost::format("Timestep %d done: Realtime=%.2f, Simtime=%.2f StepSize=%.2g, NextStepSize=%.2g\n")
+                    boost::format("Timestep %d done: Realtime=%.2f, Simtime=%.4f StepSize=%.4f, NextStepSize=%.2f\n")
                     %stepNum()%timer.elapsed()%time()%curStepSize%stepSize();
             }
         }
@@ -332,7 +325,7 @@ public:
         res.serializeSection("TimeManager");
         res.serializeStream() << episodeIndex_ << " "
                               << episodeStartTime_ << " "
-                              << currentTime_ << " "
+                              << time_ << " "
                               << stepNum_ << "\n";
     };
 
@@ -345,38 +338,24 @@ public:
         res.deserializeSection("TimeManager");
         res.deserializeStream() >> episodeIndex_
                                 >> episodeStartTime_
-                                >> currentTime_
+                                >> time_
                                 >> stepNum_;
 
 
         std::string dummy;
         std::getline(res.deserializeStream(), dummy);
-        std::cerr << "eindex: " << episodeIndex_
-                  << "episodeStartTime_: " << episodeStartTime_
-                  << "currentTime_: " << currentTime_ << "\n";
         wasRestarted_ = true;
     };
 
 private:
-    void init_()
-    {
-        if (wasRestarted_)
-            return;
-
-        episodeIndex_ = 0;
-        episodeStartTime_ = 0;
-        currentTime_ = 0.0;
-        stepSize_ = 1.0;
-        stepNum_ = 0;
-        finished_ = false;
-    }
-
     int              episodeIndex_;
     double           episodeStartTime_;
     double           episodeLength_;
     EpisodeIdentifer episode_;
 
-    double currentTime_;
+    double time_;
+    double endTime_;
+
     double stepSize_;
     int    stepNum_;
     bool   finished_;
