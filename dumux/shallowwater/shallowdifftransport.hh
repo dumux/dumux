@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef DUNE_SHALLOWTRANSPORT_HH
 #define DUNE_SHALLOWTRANSPORT_HH
@@ -14,87 +14,87 @@
 
 namespace Dune
 {
-  	/*- Grid      a DUNE grid type
-	- RT        type used for return values
-	- RepresentationType   type of the vector holding the saturation values
-	- VelType   type of the vector holding the velocity values */
-	
-  template<class Grid, class Scalar, class VC>
-  class ShallowTransport {
-  public:
+/*- Grid      a DUNE grid type
+  - RT        type used for return values
+  - RepresentationType   type of the vector holding the saturation values
+  - VelType   type of the vector holding the velocity values */
 
-	typedef BlockVector< Dune::FieldVector<Scalar,1> > RepresentationType;
-	typedef BlockVector< Dune::FieldVector<Dune::FieldVector<Scalar,1>, size > > UpdatevectorType;
-	ShallowProblemBase<Grid, Scalar, VC>& transproblem; //!< problem data
+template<class Grid, class Scalar, class VC>
+class ShallowTransport {
+public:
 
-	//! \brief Calculate the update vector.
-	/*!
-	 *  \param[in]  t         time
-	 *  \param[out] dt        time step size
-	 *  \param[out] updateVec vector for hte update values
-	 */
-	virtual int update(const Scalar t, Scalar& dt, UpdatevectorType& updateVec, Scalar& CLFFac) = 0;
+    typedef BlockVector< Dune::FieldVector<Scalar,1> > RepresentationType;
+    typedef BlockVector< Dune::FieldVector<Dune::FieldVector<Scalar,1>, size > > UpdatevectorType;
+    ShallowProblemBase<Grid, Scalar, VC>& transproblem; //!< problem data
 
-	void initial()
-	{
-		initialTransport();
-		return;
-	}
+    //! \brief Calculate the update vector.
+    /*!
+     *  \param[in]  t         time
+     *  \param[out] dt        time step size
+     *  \param[out] updateVec vector for hte update values
+     */
+    virtual int update(const Scalar t, Scalar& dt, UpdatevectorType& updateVec, Scalar& CLFFac) = 0;
 
-	//! \brief Sets the initial solution \f$S_0\f$.
-	virtual void initialTransport() = 0;
+    void initial()
+    {
+        initialTransport();
+        return;
+    }
 
-	//! return const reference to saturation vector
-	virtual const RepresentationType& operator* () const
-	{
-	  return transproblem.variables.waterdepth;
-	}
+    //! \brief Sets the initial solution \f$S_0\f$.
+    virtual void initialTransport() = 0;
 
-	//! return reference to saturation vector
-	virtual RepresentationType& operator* ()
-	{
-	  return transproblem.variables.wDepth;
-	}
+    //! return const reference to saturation vector
+    virtual const RepresentationType& operator* () const
+    {
+        return transproblem.variables.waterdepth;
+    }
 
-	virtual void vtkout(const char* name, int k) const {
-		transproblem.variables.vtkout(name, k);
-		return;
-	}
+    //! return reference to saturation vector
+    virtual RepresentationType& operator* ()
+    {
+        return transproblem.variables.wDepth;
+    }
 
-	//! always define virtual destructor in abstract base class
-	virtual ~ShallowTransport () {}
+    virtual void vtkout(const char* name, int k) const {
+        transproblem.variables.vtkout(name, k);
+        return;
+    }
 
-	/*! @brief constructor
-	 *  @param g a DUNE grid object
-	 *  @param prob an object of class TransportProblem or derived
-	 */
-	ShallowTransport(const Grid& g, ShallowProblemBase<Grid, Scalar, VC>& prob)
-	: grid(g), transproblem(prob), level_(g.maxLevel())
-	{ }
+    //! always define virtual destructor in abstract base class
+    virtual ~ShallowTransport () {}
 
-	/*! @brief constructor
-	 *
-	 *  This constructor gives the additional possibility to specify a grid level on which
-	 *  the transport equation shall be solved. This especially important for multiscale methods.
-	 *  @param g a DUNE grid object
-	 *  @param prob an object of class TransportProblem or derived
-	 *  @param lev the grid level on which the Transport equation is to be solved.
-	 */
-	ShallowTransport(const Grid& g, ShallowProblemBase<Grid, Scalar, VC>& prob, int lev)
-	: transproblem(prob), grid(g), level_(lev)
-	{ }
+    /*! @brief constructor
+     *  @param g a DUNE grid object
+     *  @param prob an object of class TransportProblem or derived
+     */
+    ShallowTransport(const Grid& g, ShallowProblemBase<Grid, Scalar, VC>& prob)
+        : grid(g), transproblem(prob), level_(g.maxLevel())
+    { }
 
-	//! returns the level on which the transport eqution is solved.
-	int level() const
-	{
-		return level_;
-	}
+    /*! @brief constructor
+     *
+     *  This constructor gives the additional possibility to specify a grid level on which
+     *  the transport equation shall be solved. This especially important for multiscale methods.
+     *  @param g a DUNE grid object
+     *  @param prob an object of class TransportProblem or derived
+     *  @param lev the grid level on which the Transport equation is to be solved.
+     */
+    ShallowTransport(const Grid& g, ShallowProblemBase<Grid, Scalar, VC>& prob, int lev)
+        : transproblem(prob), grid(g), level_(lev)
+    { }
 
-	const Grid& g;
+    //! returns the level on which the transport eqution is solved.
+    int level() const
+    {
+        return level_;
+    }
 
-  protected:
-	  const int level_;
-  };
+    const Grid& g;
+
+protected:
+    const int level_;
+};
 
 }
 #endif

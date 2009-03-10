@@ -662,8 +662,8 @@ void Decoupled2p2c<Grid, Scalar>::assemble(bool first, const Scalar t=0)
             }
     } // end grid traversal
 
-//            printmatrix(std::cout,A,"stiffnesmatrix","row",10,5);
-//            printvector(std::cout,f,"right hand side","row",1,10,5);
+    //            printmatrix(std::cout,A,"stiffnesmatrix","row",10,5);
+    //            printvector(std::cout,f,"right hand side","row",1,10,5);
 
     return;
 } // end function assemble

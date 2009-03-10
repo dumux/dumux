@@ -16,10 +16,10 @@
 
 namespace Dune
 {
-//! \ingroup transport                                                                                                                                                                                                                                                                                                                                                                                            
+//! \ingroup transport
 //! The finite volume model for the solution of the transport equation
 template<class Grid, class Scalar, class VC> class FVShallowWater :
-    public ShallowWater< Grid, Scalar, VC>
+        public ShallowWater< Grid, Scalar, VC>
 {
     template<int dim> struct ElementLayout
     {
@@ -30,9 +30,9 @@ template<class Grid, class Scalar, class VC> class FVShallowWater :
     };
 
     enum
-    {   dim = Grid::dimension};
+        {   dim = Grid::dimension};
     enum
-    {   dimWorld = Grid::dimensionworld};
+        {   dimWorld = Grid::dimensionworld};
 
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
     typedef Dune::FieldVector<Scalar,dim> LocalPosition;
@@ -42,7 +42,7 @@ template<class Grid, class Scalar, class VC> class FVShallowWater :
     typedef typename GridView::IndexSet IndexSet;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,IndexSet,ElementLayout>
-            ElementMapper;
+    ElementMapper;
     typedef typename Grid::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
@@ -52,17 +52,17 @@ template<class Grid, class Scalar, class VC> class FVShallowWater :
 
 public:
     typedef Dune::BlockVector<Dune::FieldVector<Scalar,dim+1> >
-            RepresentationType;
+    RepresentationType;
 
     int update(const Scalar t, Scalar& dt, SolutionType& updateVec,
-            Scalar& cFLFac);
+               Scalar& cFLFac);
 
     void initialize();
 
     FVShallowWater(Grid& grid, ShallowProblemBase<Grid, Scalar, VC>& problem,
-            NumericalFlux<Grid,Scalar>& numFl = *(new FirstOrderUpwind<Grid,Scalar>)) :
+                   NumericalFlux<Grid,Scalar>& numFl = *(new FirstOrderUpwind<Grid,Scalar>)) :
         ShallowWater<Grid, Scalar, VC>(grid, problem), elementMapper(grid,
-                grid.leafIndexSet()), numFlux(numFl)
+                                                                     grid.leafIndexSet()), numFlux(numFl)
     {
     }
 
@@ -74,8 +74,8 @@ private:
 };
 
 template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
-        VC>::update(const Scalar t, Scalar& dt, SolutionType& updateVec,
-        Scalar& cFLFac = 1)
+                                                                VC>::update(const Scalar t, Scalar& dt, SolutionType& updateVec,
+                                                                            Scalar& cFLFac = 1)
 {
     // initialize dt very large, why?
     dt = 1e100;
@@ -109,20 +109,20 @@ template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
 
         // cell center in reference element
         const LocalPosition &localPos =
-                Dune::ReferenceElements<Scalar,dim>::general(gt).position(0, 0);
+            Dune::ReferenceElements<Scalar,dim>::general(gt).position(0, 0);
 
         GlobalPosition globalPos = eIt->geometry().global(localPos);
 
         // cell volume, assume linear map here
         Scalar volume = eIt->geometry().integrationElement(localPos)
-                *Dune::ReferenceElements<Scalar,dim>::general(gt).volume();
+            *Dune::ReferenceElements<Scalar,dim>::general(gt).volume();
 
         // cell index
         int globalIdxI = elementMapper.map(*eIt);
 
         //get bottomslopevector for entity
         bottomSlope =this->problem.surface.calcBottomSlopes(globalPos, *eIt,
-                localPos);
+                                                            localPos);
 
         // get waterdepth at cell center
         wDepthI = this->problem.variables.wDepth[globalIdxI];
@@ -133,30 +133,30 @@ template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
         // run through all intersections with neighbors and boundary
         IntersectionIterator isItEnd =gridView.template iend(*eIt);
         for (IntersectionIterator isIt = gridView.template ibegin(*eIt); isIt
-                !=isItEnd; ++isIt)
+                 !=isItEnd; ++isIt)
         {
 
             // local number of facet
-           // int numberInSelf = isIt->numberInSelf();
+            // int numberInSelf = isIt->numberInSelf();
 
             // get geometry type of face
             Dune::GeometryType gtf = isIt->intersectionSelfLocal().type();
 
             // center in face's reference element
             const Dune::FieldVector<Scalar,dim-1>& faceLocalPos =
-                    Dune::ReferenceElements<Scalar,dim-1>::general(gtf).position(0, 0);
+                Dune::ReferenceElements<Scalar,dim-1>::general(gtf).position(0, 0);
 
             // center of face inside volume reference element
             const LocalPosition& faceLocalDim =
-                    Dune::ReferenceElements<Scalar,dim>::general(gtf).position(isIt->numberInSelf(), 1);
+                Dune::ReferenceElements<Scalar,dim>::general(gtf).position(isIt->numberInSelf(), 1);
 
             //get normal vector of face
             Dune::FieldVector<Scalar,dimWorld> nVec =
-                    isIt->outerNormal(faceLocalPos);
+                isIt->outerNormal(faceLocalPos);
 
             // get normal vector scaled with volume
             Dune::FieldVector<Scalar,dimWorld> nVecScaled =
-                    isIt->integrationOuterNormal(faceLocalPos);
+                isIt->integrationOuterNormal(faceLocalPos);
             nVecScaled*=Dune::ReferenceElements<Scalar,dim-1>::general(gtf).volume();
 
             // handle interior face
@@ -168,15 +168,15 @@ template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
 
                 Dune::GeometryType nbgt = neighborPointer->geometry().type();
                 const LocalPosition& nbLocalPos =
-                        Dune::ReferenceElements<Scalar,dim>::general(nbgt).position(0, 0);
+                    Dune::ReferenceElements<Scalar,dim>::general(nbgt).position(0, 0);
 
                 // neighbor cell center in global coordinates
                 Dune::FieldVector<Scalar,dimWorld> nbGlobalPos =
-                        neighborPointer->geometry().global(nbLocalPos);
+                    neighborPointer->geometry().global(nbLocalPos);
 
                 // distance vector between barycenters
                 Dune::FieldVector<Scalar,dimWorld> distVec = globalPos
-                        - nbGlobalPos;
+                    - nbGlobalPos;
 
                 //compute distance between cell centers
                 //Scalar dist = distVec.two_norm();
@@ -204,20 +204,20 @@ template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
 
                 // distance vector between barycenters
                 Dune::FieldVector<Scalar,dimWorld> distVec = globalPos
-                        - faceGlobalPos;
+                    - faceGlobalPos;
 
                 //compute distance between cell centers
                 //Scalar dist = distVec.two_norm();
 
                 //get boundary type
                 BoundaryConditions::Flags bctype = this->problem.bctype(
-                        faceGlobalPos, *eIt, faceLocalDim);
+                                                                        faceGlobalPos, *eIt, faceLocalDim);
 
                 if (bctype == BoundaryConditions::dirichlet)
                 {
                     // get waterdepth at boundary
                     wDepthFace = this->problem.dirichlet(faceGlobalPos, *eIt,
-                            faceLocalDim);
+                                                         faceLocalDim);
 
                     Scalar conti = velFace * wDepthFace;
                     Scalar xMomentum = velFace[0] * wDepthFace*velFace;
@@ -240,7 +240,7 @@ template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
                 {
 
                     flux = this->problem.neumann(faceGlobalPos, *eIt,
-                            faceLocalDim);
+                                                 faceLocalDim);
 
                     //std::cout<<"flux_neumann of face "<<numberInSelf<<"="<<flux
                     //<<std::endl;
@@ -292,7 +292,7 @@ template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
 }
 
 template<class Grid, class Scalar, class VC> void FVShallowWater<Grid, Scalar,
-        VC>::initialize()
+                                                                 VC>::initialize()
 {
 
     const GridView& gridView= this->grid.leafView();
@@ -306,7 +306,7 @@ template<class Grid, class Scalar, class VC> void FVShallowWater<Grid, Scalar,
 
         // get cell center in reference element
         const LocalPosition &localPos =
-                Dune::ReferenceElements<Scalar,dim>::general(gt).position(0, 0);
+            Dune::ReferenceElements<Scalar,dim>::general(gt).position(0, 0);
 
         // get global coordinate of cell center
         GlobalPosition globalPos = eIt->geometry().global(localPos);
@@ -314,19 +314,19 @@ template<class Grid, class Scalar, class VC> void FVShallowWater<Grid, Scalar,
         int globalIdx = elementMapper.map(*eIt);
 
         Scalar initialWaterDepth=this->problem.setInitWDepth(globalPos, *eIt,
-                localPos);
+                                                             localPos);
         SlopeType initialVelocity=this->problem.setInitVel(globalPos, *eIt,
-                localPos);
+                                                           localPos);
 
         // initialize cell values
         this->problem.variables.wDepth[globalIdx] = initialWaterDepth;
         this->problem.variables.velocity[globalIdx] = initialVelocity;
         this->problem.variables.globalSolution[globalIdx][0]
-                = initialWaterDepth;
+            = initialWaterDepth;
         this->problem.variables.globalSolution[globalIdx][1]
-                = initialWaterDepth*initialVelocity[0];
+            = initialWaterDepth*initialVelocity[0];
         this->problem.variables.globalSolution[globalIdx][1]
-                = initialWaterDepth*initialVelocity[1];
+            = initialWaterDepth*initialVelocity[1];
     }
     return;
 }

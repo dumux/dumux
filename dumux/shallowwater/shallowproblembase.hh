@@ -29,13 +29,13 @@ namespace Dune
 /*! \ingroup transportProblems
  *   *- Template parameters are:
  *   *- Grid  a DUNE grid type
- *	- DT    type used for return values
+ *    - DT    type used for return values
  */
 
 template<class Grid, class Scalar, class VC> class ShallowProblemBase
 {
     enum
-    {   dim=Grid::dimension, m=1, blocksize=2*Grid::dimension};
+        {   dim=Grid::dimension, m=1, blocksize=2*Grid::dimension};
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
     typedef FieldVector<Scalar,dim> LocalPosition;
     typedef FieldVector<Scalar,dim> GlobalPosition;
@@ -48,30 +48,30 @@ public:
     // return type of boundary condition at the given global coordinate
 
     virtual BoundaryConditions::Flags bctype(const GlobalPosition& globalPos,
-            const Element& element, const LocalPosition& localPos) const = 0;
+                                             const Element& element, const LocalPosition& localPos) const = 0;
 
     //! evaluate Dirichlet boundary condition at given position
-     
+
     virtual Scalar dirichlet(const GlobalPosition& globalPos,
-            const Element& element, const LocalPosition& localPos) const = 0;
+                             const Element& element, const LocalPosition& localPos) const = 0;
 
     // evaluate Neumann boundary condition at given position
-  
+
     virtual SystemType neumann(const GlobalPosition& globalPos,
-            const Element& element, const LocalPosition& localPos) const = 0;
+                               const Element& element, const LocalPosition& localPos) const = 0;
 
     // evaluate initial boundary condition at given position
-     
+
     virtual Scalar setInitWDepth(const GlobalPosition& globalPos,
-            const Element& element, const LocalPosition& localPos) const = 0;
+                                 const Element& element, const LocalPosition& localPos) const = 0;
 
     virtual VelType setInitVel(const GlobalPosition& globalPos,
-            const Element& element, const LocalPosition& localPos) const = 0;
+                               const Element& element, const LocalPosition& localPos) const = 0;
 
     //Definition of sources
 
     virtual Scalar setSource(const GlobalPosition& globalPos,
-            const Element& element, const LocalPosition& localPos) const = 0;
+                             const Element& element, const LocalPosition& localPos) const = 0;
 
     ShallowProblemBase(VC& variableobject, Surface& surfaceobject) :
         variables(variableobject), surface(surfaceobject)

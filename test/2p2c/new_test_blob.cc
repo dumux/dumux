@@ -29,7 +29,7 @@ int main(int argc, char** argv)
 #define USE_UG 0
 #if USE_UG
         typedef Dune::UGGrid<dim>                     Grid;
-#else 
+#else
         typedef Dune::YaspGrid<dim>                   Grid;
 #endif
         typedef Dune::NewBlobProblem<Grid, Scalar>    Problem;
@@ -59,7 +59,7 @@ int main(int argc, char** argv)
         double tEnd, dt;
         std::istringstream(argv[argPos++]) >> tEnd;
         std::istringstream(argv[argPos++]) >> dt;
-//        typedef Dune::UGGrid<dim>                     Grid;
+        //        typedef Dune::UGGrid<dim>                     Grid;
 
         GlobalPosition upperRight;
         Dune::FieldVector<int,dim> res; // cell resolution

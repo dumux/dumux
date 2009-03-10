@@ -24,9 +24,9 @@
 namespace Dune
 {
 template<class Grid, class Scalar, class BoxFunction = LeafP1Function<Grid, Scalar, Grid::dimension+2> >
-  class BoxStokesTransportJacobian
+class BoxStokesTransportJacobian
     : public BoxJacobian<BoxStokesTransportJacobian<Grid,Scalar,BoxFunction>,Grid,Scalar,Grid::dimension+2,BoxFunction>
-  {
+{
     enum {dim=Grid::dimension};
     enum {numEq = dim+2};
     enum {SIZE=LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::maxsize};
@@ -40,21 +40,21 @@ template<class Grid, class Scalar, class BoxFunction = LeafP1Function<Grid, Scal
 
     enum {nPhase = 0};
 
-  public:
-	  struct VariableNodeData;
-	  typedef FieldVector<Scalar,dim> FVector;
-	  typedef FieldMatrix<Scalar,dim,dim> FMatrix;
+public:
+    struct VariableNodeData;
+    typedef FieldVector<Scalar,dim> FVector;
+    typedef FieldMatrix<Scalar,dim,dim> FMatrix;
 
     //! Constructor
     BoxStokesTransportJacobian (StokesTransportProblem<Grid,Scalar>& params,
-                  bool levelBoundaryAsDirichlet_, const Grid& grid,
-                  BoxFunction& sol,
-                  bool procBoundaryAsDirichlet_=true)
-    : BoxJacobianType(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_),
-      problem(params), varNData(SIZE), oldVarNData(SIZE)
+                                bool levelBoundaryAsDirichlet_, const Grid& grid,
+                                BoxFunction& sol,
+                                bool procBoundaryAsDirichlet_=true)
+        : BoxJacobianType(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_),
+          problem(params), varNData(SIZE), oldVarNData(SIZE)
     {
-      alpha = -1.0;
-      this->analytic = false;
+        alpha = -1.0;
+        this->analytic = false;
     }
 
     void clearVisited ()
@@ -64,159 +64,159 @@ template<class Grid, class Scalar, class BoxFunction = LeafP1Function<Grid, Scal
 
     template<class TypeTag>
     void localDefect(const Element& element, const SolutionVector* sol, bool withBC = true) {
-    	BoxJacobianType::template localDefect<TypeTag>(element, sol, withBC);
+        BoxJacobianType::template localDefect<TypeTag>(element, sol, withBC);
 
-    	this->template assembleBC<TypeTag>(element);
+        this->template assembleBC<TypeTag>(element);
 
-		Dune::GeometryType gt = element.geometry().type();
-		const typename ReferenceElementContainer<Scalar,dim>::value_type& referenceElement = ReferenceElements<Scalar, dim>::general(gt);
+        Dune::GeometryType gt = element.geometry().type();
+        const typename ReferenceElementContainer<Scalar,dim>::value_type& referenceElement = ReferenceElements<Scalar, dim>::general(gt);
 
-		for (int vert=0; vert < this->fvGeom.numVertices; vert++) // begin loop over vertices / sub control volumes
-			if (!this->fvGeom.subContVol[vert].inner)
-			{
-				typedef typename IntersectionIteratorGetter<Grid,TypeTag>::IntersectionIterator IntersectionIterator;
+        for (int vert=0; vert < this->fvGeom.numVertices; vert++) // begin loop over vertices / sub control volumes
+            if (!this->fvGeom.subContVol[vert].inner)
+            {
+                typedef typename IntersectionIteratorGetter<Grid,TypeTag>::IntersectionIterator IntersectionIterator;
 
-				FieldVector<Scalar,dim> averagedNormal(0);
-				int faces = 0;
-				IntersectionIterator endit = IntersectionIteratorGetter<Grid, TypeTag>::end(element);
-				for (IntersectionIterator it = IntersectionIteratorGetter<Grid, TypeTag>::begin(element); it!=endit; ++it)
-				{
-					// handle face on exterior boundary, this assumes there are no interior boundaries
-					if (it->boundary()) {
-						// get geometry type of face
-						GeometryType faceGT = it->intersectionSelfLocal().type();
+                FieldVector<Scalar,dim> averagedNormal(0);
+                int faces = 0;
+                IntersectionIterator endit = IntersectionIteratorGetter<Grid, TypeTag>::end(element);
+                for (IntersectionIterator it = IntersectionIteratorGetter<Grid, TypeTag>::begin(element); it!=endit; ++it)
+                {
+                    // handle face on exterior boundary, this assumes there are no interior boundaries
+                    if (it->boundary()) {
+                        // get geometry type of face
+                        GeometryType faceGT = it->intersectionSelfLocal().type();
 
-						// center in face's reference element
-						const FieldVector<Scalar,dim-1>& faceLocal = ReferenceElements<Scalar,dim-1>::general(faceGT).position(0,0);
+                        // center in face's reference element
+                        const FieldVector<Scalar,dim-1>& faceLocal = ReferenceElements<Scalar,dim-1>::general(faceGT).position(0,0);
 
-						int faceIdx = it->numberInSelf();
-						int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
-						for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++) {
-							int nodeInElement = referenceElement.subEntity(faceIdx, 1, nodeInFace, dim);
-							if (nodeInElement != vert)
-								continue;
-							int bfIdx = this->fvGeom.boundaryFaceIndex(faceIdx,    nodeInFace);
-							FieldVector<Scalar,dim> normal = it->unitOuterNormal(faceLocal);
-							normal *= this->fvGeom.boundaryFace[bfIdx].area;
-							averagedNormal += normal;
-							faces++;
-						}
-					}
-				}
-				Scalar defect = 0;
-				if (averagedNormal.two_norm())
-					averagedNormal /= averagedNormal.two_norm();
-				for (int k = 0; k < dim; k++)
-					defect += this->def[vert][k]*averagedNormal[k];
-//mass balance equation
-				if (faces == 2 && this->fvGeom.numVertices == 4)
-					this->def[vert][dim+1] = sol[0][dim+1] + sol[3][dim+1] - sol[1][dim+1] - sol[2][dim+1];
-				else if (this->bctype[vert][0] == BoundaryConditions::dirichlet)
-					this->def[vert][dim+1] = defect;
-				else // de-stabilize
-				{
-		            for (int face = 0; face < this->fvGeom.numEdges; face++)
-		            {
-		                int i = this->fvGeom.subContVolFace[face].i;
-		                int j = this->fvGeom.subContVolFace[face].j;
+                        int faceIdx = it->numberInSelf();
+                        int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
+                        for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++) {
+                            int nodeInElement = referenceElement.subEntity(faceIdx, 1, nodeInFace, dim);
+                            if (nodeInElement != vert)
+                                continue;
+                            int bfIdx = this->fvGeom.boundaryFaceIndex(faceIdx,    nodeInFace);
+                            FieldVector<Scalar,dim> normal = it->unitOuterNormal(faceLocal);
+                            normal *= this->fvGeom.boundaryFace[bfIdx].area;
+                            averagedNormal += normal;
+                            faces++;
+                        }
+                    }
+                }
+                Scalar defect = 0;
+                if (averagedNormal.two_norm())
+                    averagedNormal /= averagedNormal.two_norm();
+                for (int k = 0; k < dim; k++)
+                    defect += this->def[vert][k]*averagedNormal[k];
+                //mass balance equation
+                if (faces == 2 && this->fvGeom.numVertices == 4)
+                    this->def[vert][dim+1] = sol[0][dim+1] + sol[3][dim+1] - sol[1][dim+1] - sol[2][dim+1];
+                else if (this->bctype[vert][0] == BoundaryConditions::dirichlet)
+                    this->def[vert][dim+1] = defect;
+                else // de-stabilize
+                {
+                    for (int face = 0; face < this->fvGeom.numEdges; face++)
+                    {
+                        int i = this->fvGeom.subContVolFace[face].i;
+                        int j = this->fvGeom.subContVolFace[face].j;
 
-		                if (i != vert && j != vert)
-		                    continue;
+                        if (i != vert && j != vert)
+                            continue;
 
-		                FieldVector<Scalar, dim> pressGradient(0);
-		                for (int k = 0; k < this->fvGeom.numVertices; k++) {
-		                    FieldVector<Scalar,dim> grad(this->fvGeom.subContVolFace[face].grad[k]);
-		                    grad *= sol[k][dim+1];
-		                    pressGradient += grad;
-		                }
+                        FieldVector<Scalar, dim> pressGradient(0);
+                        for (int k = 0; k < this->fvGeom.numVertices; k++) {
+                            FieldVector<Scalar,dim> grad(this->fvGeom.subContVolFace[face].grad[k]);
+                            grad *= sol[k][dim+1];
+                            pressGradient += grad;
+                        }
 
-		                Scalar alphaH2 = 0.5*alpha*(this->fvGeom.subContVol[i].volume + this->fvGeom.subContVol[j].volume);
-		                pressGradient *= alphaH2;
-		                if (i == vert)
-		                    this->def[vert][dim+1] += pressGradient*this->fvGeom.subContVolFace[face].normal;
-		                else
+                        Scalar alphaH2 = 0.5*alpha*(this->fvGeom.subContVol[i].volume + this->fvGeom.subContVol[j].volume);
+                        pressGradient *= alphaH2;
+                        if (i == vert)
+                            this->def[vert][dim+1] += pressGradient*this->fvGeom.subContVolFace[face].normal;
+                        else
                             this->def[vert][dim+1] -= pressGradient*this->fvGeom.subContVolFace[face].normal;
-		            }
-				}
+                    }
+                }
 
-				//std::cout << "node " << i << ", coord = " << this->fvGeom.subContVol[i].global << ", N = " << averagedNormal << std::endl;
-			}
+                //std::cout << "node " << i << ", coord = " << this->fvGeom.subContVol[i].global << ", N = " << averagedNormal << std::endl;
+            }
 
-		return;
+        return;
     }
 
     // harmonic mean of the permeability computed directly
-    	virtual FMatrix harmonicMeanK (FMatrix& Ki, const FMatrix& Kj) const
-    	{
-    		double eps = 1e-20;
+    virtual FMatrix harmonicMeanK (FMatrix& Ki, const FMatrix& Kj) const
+    {
+        double eps = 1e-20;
 
-    		for (int kx=0; kx<dim; kx++)
-    			for (int ky=0; ky<dim; ky++)
-    				if (Ki[kx][ky] != Kj[kx][ky])
-    					Ki[kx][ky] = 2 / (1/(Ki[kx][ky]+eps) + (1/(Kj[kx][ky]+eps)));
+        for (int kx=0; kx<dim; kx++)
+            for (int ky=0; ky<dim; ky++)
+                if (Ki[kx][ky] != Kj[kx][ky])
+                    Ki[kx][ky] = 2 / (1/(Ki[kx][ky]+eps) + (1/(Kj[kx][ky]+eps)));
 
-    		return Ki;
-    	}
+        return Ki;
+    }
 
 
-// compute storage term
-      SolutionVector computeM (const Element& element, const SolutionVector* sol, int node, const std::vector<VariableNodeData>& varData)
-      {
-          SolutionVector result(0);
+    // compute storage term
+    SolutionVector computeM (const Element& element, const SolutionVector* sol, int node, const std::vector<VariableNodeData>& varData)
+    {
+        SolutionVector result(0);
 
-          //velocity u
-          result[0] = varData[node].density*sol[node][0];
-          //velocity v
-          result[1] = varData[node].density*sol[node][1];
-          //partial density
-          result[2] = sol[node][2];
-          //pressure p
-          result[3] = varData[node].density;
+        //velocity u
+        result[0] = varData[node].density*sol[node][0];
+        //velocity v
+        result[1] = varData[node].density*sol[node][1];
+        //partial density
+        result[2] = sol[node][2];
+        //pressure p
+        result[3] = varData[node].density;
 
-//          std::cout << "node " <<  node << " time dep = " << result << std::endl;
+        //          std::cout << "node " <<  node << " time dep = " << result << std::endl;
 
-          return result;
-      };
+        return result;
+    };
 
-      SolutionVector computeM (const Element& element, const SolutionVector* sol, int node, bool old = false)
-      {
-          if (old)
-              return computeM(element, sol, node, oldVarNData);
-          else
-              return computeM(element, sol, node, varNData);
-      }
+    SolutionVector computeM (const Element& element, const SolutionVector* sol, int node, bool old = false)
+    {
+        if (old)
+            return computeM(element, sol, node, oldVarNData);
+        else
+            return computeM(element, sol, node, varNData);
+    }
 
 
     SolutionVector computeQ (const Element& element, const SolutionVector* sol, const int& node)
     {
-    	SolutionVector result = problem.q(this->fvGeom.subContVol[node].global, element, this->fvGeom.subContVol[node].local);
-    	result *= -1.0;
+        SolutionVector result = problem.q(this->fvGeom.subContVol[node].global, element, this->fvGeom.subContVol[node].local);
+        result *= -1.0;
 
-    	Scalar alphaH2 = alpha*this->fvGeom.subContVol[node].volume;
-    	result[dim+1] *= alphaH2;
+        Scalar alphaH2 = alpha*this->fvGeom.subContVol[node].volume;
+        result[dim+1] *= alphaH2;
 
-    	SolutionVector flux = boundaryFlux(element, sol, node);
+        SolutionVector flux = boundaryFlux(element, sol, node);
 
-    	flux /= this->fvGeom.subContVol[node].volume;
-    	result -= flux;
+        flux /= this->fvGeom.subContVol[node].volume;
+        result -= flux;
 
-       return (result);
+        return (result);
     }
 
     SolutionVector computeA (const Element& element, const SolutionVector* sol, int face)
     {
-    	SolutionVector flux(0);
+        SolutionVector flux(0);
 
-    	Scalar pressValue = 0;
-    	FieldVector<Scalar, dim> velocityValue(0);
-    	FieldVector<Scalar, dim> xV(0);
-    	FieldVector<Scalar, dim> rhoV(0);
-    	FieldVector<Scalar, dim> gradX(0);
-    	FieldVector<Scalar, dim> gradP(0);
+        Scalar pressValue = 0;
+        FieldVector<Scalar, dim> velocityValue(0);
+        FieldVector<Scalar, dim> xV(0);
+        FieldVector<Scalar, dim> rhoV(0);
+        FieldVector<Scalar, dim> gradX(0);
+        FieldVector<Scalar, dim> gradP(0);
 
         // get global coordinates of nodes i,j
-    	int i = this->fvGeom.subContVolFace[face].i;
-    	int j = this->fvGeom.subContVolFace[face].j;
+        int i = this->fvGeom.subContVolFace[face].i;
+        int j = this->fvGeom.subContVolFace[face].j;
 
         const FieldVector<Scalar,dim> global_i = this->fvGeom.subContVol[i].global;
         const FieldVector<Scalar,dim> global_j = this->fvGeom.subContVol[j].global;
@@ -232,131 +232,131 @@ template<class Grid, class Scalar, class BoxFunction = LeafP1Function<Grid, Scal
 
         const FMatrix D = harmonicMeanK(Di, Dj);
 
-    	for (int k = 0; k < this->fvGeom.numVertices; k++)
-		{
-			pressValue += sol[k][dim+1]*this->fvGeom.subContVolFace[face].shapeValue[k];
-			FieldVector<Scalar,dim> grad(this->fvGeom.subContVolFace[face].grad[k]);
-			grad *= sol[k][dim];
-			gradX += grad;
-			grad = this->fvGeom.subContVolFace[face].grad[k];
-			grad *= sol[k][dim+1];
-			gradP += grad;
+        for (int k = 0; k < this->fvGeom.numVertices; k++)
+        {
+            pressValue += sol[k][dim+1]*this->fvGeom.subContVolFace[face].shapeValue[k];
+            FieldVector<Scalar,dim> grad(this->fvGeom.subContVolFace[face].grad[k]);
+            grad *= sol[k][dim];
+            gradX += grad;
+            grad = this->fvGeom.subContVolFace[face].grad[k];
+            grad *= sol[k][dim+1];
+            gradP += grad;
 
-			for (int comp = 0; comp < dim; comp++)
-			{
-				velocityValue[comp] += sol[k][comp]*this->fvGeom.subContVolFace[face].shapeValue[k];
-				rhoV[comp] += varNData[k].density*sol[k][comp]*this->fvGeom.subContVolFace[face].shapeValue[k];
-			}
-		}
+            for (int comp = 0; comp < dim; comp++)
+            {
+                velocityValue[comp] += sol[k][comp]*this->fvGeom.subContVolFace[face].shapeValue[k];
+                rhoV[comp] += varNData[k].density*sol[k][comp]*this->fvGeom.subContVolFace[face].shapeValue[k];
+            }
+        }
 
-    	Scalar xValue;
-    	Scalar outward = velocityValue*this->fvGeom.subContVolFace[face].normal;
+        Scalar xValue;
+        Scalar outward = velocityValue*this->fvGeom.subContVolFace[face].normal;
         if (outward > 0)
             xValue = sol[i][dim];
         else
             xValue = sol[j][dim];
 
         for (int comp = 0; comp < dim; comp++)
-    		xV[comp] = velocityValue[comp]*xValue;
+            xV[comp] = velocityValue[comp]*xValue;
 
-    	FieldVector<Scalar,dim> DgradX(0);
-    	D.mv(gradX, DgradX);  // DgradX=D*gradX
+        FieldVector<Scalar,dim> DgradX(0);
+        D.mv(gradX, DgradX);  // DgradX=D*gradX
 
-		// momentum balance:
-		for (int comp = 0; comp < dim; comp++)
-    	{
-    		FieldVector<Scalar, dim> gradVComp(0);
-    		for (int k = 0; k < this->fvGeom.numVertices; k++)
-    		{
-    			FieldVector<Scalar,dim> grad(this->fvGeom.subContVolFace[face].grad[k]);
-    			grad *= sol[k][comp];
-    			grad *= varNData[k].viscosity;
-    			gradVComp -= grad;
-    		}
+        // momentum balance:
+        for (int comp = 0; comp < dim; comp++)
+        {
+            FieldVector<Scalar, dim> gradVComp(0);
+            for (int k = 0; k < this->fvGeom.numVertices; k++)
+            {
+                FieldVector<Scalar,dim> grad(this->fvGeom.subContVolFace[face].grad[k]);
+                grad *= sol[k][comp];
+                grad *= varNData[k].viscosity;
+                gradVComp -= grad;
+            }
 
-    		FieldVector<Scalar, dim> pComp(0);
-    		pComp[comp] = pressValue;
-    		gradVComp += pComp;
-    		flux[comp] = gradVComp*this->fvGeom.subContVolFace[face].normal;
-    	}
+            FieldVector<Scalar, dim> pComp(0);
+            pComp[comp] = pressValue;
+            gradVComp += pComp;
+            flux[comp] = gradVComp*this->fvGeom.subContVolFace[face].normal;
+        }
 
-		//transport
-		flux[dim] = (DgradX - xV)*this->fvGeom.subContVolFace[face].normal;
+        //transport
+        flux[dim] = (DgradX - xV)*this->fvGeom.subContVolFace[face].normal;
 
-		// mass balance:
-    	Scalar alphaH2 = 0.5*alpha*(this->fvGeom.subContVol[i].volume + this->fvGeom.subContVol[j].volume);
-    	gradP *= alphaH2;
-    	rhoV += gradP;
-		flux[dim+1] = rhoV*this->fvGeom.subContVolFace[face].normal;
+        // mass balance:
+        Scalar alphaH2 = 0.5*alpha*(this->fvGeom.subContVol[i].volume + this->fvGeom.subContVol[j].volume);
+        gradP *= alphaH2;
+        rhoV += gradP;
+        flux[dim+1] = rhoV*this->fvGeom.subContVolFace[face].normal;
 
-    	return flux;
+        return flux;
     }
 
     void computeElementData (const Element& element)
     {
         // ASSUMING element-wise constant viscosity, evaluate mu at the cell center
-		// elData.mu = problem.mu(this->fvGeom.elementGlobal, element, this->fvGeom.elementLocal);
+        // elData.mu = problem.mu(this->fvGeom.elementGlobal, element, this->fvGeom.elementLocal);
     };
 
     // the members of the struct are defined here
-    	struct VariableNodeData
-    	 {
-    		Scalar pN;
-    		Scalar viscosity;
-    		Scalar density;
-    		Scalar massfrac;
-    		Scalar partialpressure;
-    		FieldMatrix<Scalar,dim,dim> D;
-    	 };
+    struct VariableNodeData
+    {
+        Scalar pN;
+        Scalar viscosity;
+        Scalar density;
+        Scalar massfrac;
+        Scalar partialpressure;
+        FieldMatrix<Scalar,dim,dim> D;
+    };
 
-     void updateVariableData(const Element& element, const SolutionVector* sol, int i, std::vector<VariableNodeData>& varData)
-     {
-    	 varData[i].pN = sol[i][3];
-    	 varData[i].density = 1.0;//problem.gasPhase().density(283.15, varData[i].pN);
-    	 varData[i].partialpressure = sol[i][2];
-    	 varData[i].viscosity = 1.0;//problem.gasPhase().viscosity(283.15, varData[i].pN, 0);
+    void updateVariableData(const Element& element, const SolutionVector* sol, int i, std::vector<VariableNodeData>& varData)
+    {
+        varData[i].pN = sol[i][3];
+        varData[i].density = 1.0;//problem.gasPhase().density(283.15, varData[i].pN);
+        varData[i].partialpressure = sol[i][2];
+        varData[i].viscosity = 1.0;//problem.gasPhase().viscosity(283.15, varData[i].pN, 0);
 
-//    	 std::cout << "node " << i << varData[i].pN << std::endl;
-// for output
-//    	 (*outDensityW)[globalIdx] = varData[i].density[wPhase];
-//    	 (*outDensityN)[globalIdx] = varData[i].density[nPhase];
+        //         std::cout << "node " << i << varData[i].pN << std::endl;
+        // for output
+        //         (*outDensityW)[globalIdx] = varData[i].density[wPhase];
+        //         (*outDensityN)[globalIdx] = varData[i].density[nPhase];
 
-    	 return;
-      }
+        return;
+    }
 
-      void updateVariableData(const Element& element, const SolutionVector* sol, int i, bool old = false)
-      {
-          if (old)
-        	  updateVariableData(element, sol, i, oldVarNData);
-          else
-        	  updateVariableData(element, sol, i, varNData);
-        }
+    void updateVariableData(const Element& element, const SolutionVector* sol, int i, bool old = false)
+    {
+        if (old)
+            updateVariableData(element, sol, i, oldVarNData);
+        else
+            updateVariableData(element, sol, i, varNData);
+    }
 
-        void updateVariableData(const Element& element, const SolutionVector* sol, bool old = false)
-        {
-            int size = this->fvGeom.numVertices;
+    void updateVariableData(const Element& element, const SolutionVector* sol, bool old = false)
+    {
+        int size = this->fvGeom.numVertices;
 
-            for (int i = 0; i < size; i++)
-                    updateVariableData(element, sol, i, old);
-        }
+        for (int i = 0; i < size; i++)
+            updateVariableData(element, sol, i, old);
+    }
 
     virtual void updateStaticData (const Element& element, const SolutionVector* sol)
     {
         return;
     }
 
-//    SolutionVector boundaryFlux(const Element& element, const SolutionVector* sol, int node, std::vector<VariableNodeData>& varData) {
-        SolutionVector boundaryFlux(const Element& element, const SolutionVector* sol, int node) {
-    	SolutionVector  result(0);
+    //    SolutionVector boundaryFlux(const Element& element, const SolutionVector* sol, int node, std::vector<VariableNodeData>& varData) {
+    SolutionVector boundaryFlux(const Element& element, const SolutionVector* sol, int node) {
+        SolutionVector  result(0);
 
         Dune::GeometryType gt = element.geometry().type();
         const typename Dune::LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::value_type
-        &sfs=Dune::LagrangeShapeFunctions<Scalar, Scalar, dim>::general(gt, 1);
+            &sfs=Dune::LagrangeShapeFunctions<Scalar, Scalar, dim>::general(gt, 1);
         setcurrentsize(sfs.size());
         this->fvGeom.update(element);
 
         const typename ReferenceElementContainer<Scalar,dim>::value_type
-        &referenceElement = ReferenceElements<Scalar, dim>::general(gt);
+            &referenceElement = ReferenceElements<Scalar, dim>::general(gt);
 
         // evaluate boundary conditions via intersection iterator
         typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
@@ -381,7 +381,7 @@ template<class Grid, class Scalar, class BoxFunction = LeafP1Function<Grid, Scal
                 for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++) {
                     int nodeInElement = referenceElement.subEntity(faceIdx, 1, nodeInFace, dim);
                     if (node != nodeInElement)
-                    	continue;
+                        continue;
 
                     int bfIdx = this->fvGeom.boundaryFaceIndex(faceIdx,    nodeInFace);
 
@@ -398,76 +398,76 @@ template<class Grid, class Scalar, class BoxFunction = LeafP1Function<Grid, Scal
 
                     for (int vert = 0; vert < this->fvGeom.numVertices; vert++)
                     {
-                    	pressureValue += sol[vert][dim+1]*this->fvGeom.boundaryFace[bfIdx].shapeValue[vert];
-            			FieldVector<Scalar,dim> grad(this->fvGeom.boundaryFace[bfIdx].grad[vert]);
-//            			grad *= sol[vert][dim+1];
-            			for (int comp = 0; comp < dim; comp++)
-            			{
-                    		velocityValue[comp] += sol[vert][comp]*this->fvGeom.boundaryFace[bfIdx].shapeValue[vert];
-                    		rhoV[comp] += varNData[vert].density*sol[vert][comp]*this->fvGeom.boundaryFace[bfIdx].shapeValue[vert];
-                    		FieldVector<Scalar,dim> gradVComp = grad;
-                    		gradVComp *= sol[vert][comp];
-                    		gradVComp *= varNData[vert].viscosity;
-                    		velocityGradient[comp] += gradVComp;
-            			}
+                        pressureValue += sol[vert][dim+1]*this->fvGeom.boundaryFace[bfIdx].shapeValue[vert];
+                        FieldVector<Scalar,dim> grad(this->fvGeom.boundaryFace[bfIdx].grad[vert]);
+                        //                        grad *= sol[vert][dim+1];
+                        for (int comp = 0; comp < dim; comp++)
+                        {
+                            velocityValue[comp] += sol[vert][comp]*this->fvGeom.boundaryFace[bfIdx].shapeValue[vert];
+                            rhoV[comp] += varNData[vert].density*sol[vert][comp]*this->fvGeom.boundaryFace[bfIdx].shapeValue[vert];
+                            FieldVector<Scalar,dim> gradVComp = grad;
+                            gradVComp *= sol[vert][comp];
+                            gradVComp *= varNData[vert].viscosity;
+                            velocityGradient[comp] += gradVComp;
+                        }
                     }
-             		FieldVector<Scalar, dim> massResidual = rhoV;
-                	Scalar alphaH2 = alpha*this->fvGeom.subContVol[node].volume;
-                 	SolutionVector source = problem.q(this->fvGeom.boundaryFace[bfIdx].ipGlobal, element, this->fvGeom.boundaryFace[bfIdx].ipLocal);
-                 	FieldVector<Scalar, dim> dimSource;
-                 	for (int comp = 0; comp < dim; comp++)
-                 		dimSource[comp] = source[comp];
-                 	dimSource *= alphaH2;
-                 	massResidual += dimSource;
+                    FieldVector<Scalar, dim> massResidual = rhoV;
+                    Scalar alphaH2 = alpha*this->fvGeom.subContVol[node].volume;
+                    SolutionVector source = problem.q(this->fvGeom.boundaryFace[bfIdx].ipGlobal, element, this->fvGeom.boundaryFace[bfIdx].ipLocal);
+                    FieldVector<Scalar, dim> dimSource;
+                    for (int comp = 0; comp < dim; comp++)
+                        dimSource[comp] = source[comp];
+                    dimSource *= alphaH2;
+                    massResidual += dimSource;
 
-             		result[dim+1] -= massResidual*it->unitOuterNormal(faceLocal)*this->fvGeom.boundaryFace[bfIdx].area;
+                    result[dim+1] -= massResidual*it->unitOuterNormal(faceLocal)*this->fvGeom.boundaryFace[bfIdx].area;
 
-                	FieldVector<Scalar,dim> gradVN(0);
-					velocityGradient.umv(it->unitOuterNormal(faceLocal), gradVN);
-					gradVN *= this->fvGeom.boundaryFace[bfIdx].area;
+                    FieldVector<Scalar,dim> gradVN(0);
+                    velocityGradient.umv(it->unitOuterNormal(faceLocal), gradVN);
+                    gradVN *= this->fvGeom.boundaryFace[bfIdx].area;
 
-                	for (int comp = 0; comp < dim; comp++)
-                	{
-						FieldVector<Scalar,dim>  pressVector(0);
-						pressVector[comp] = -pressureValue;
-						result[comp] += pressVector*it->unitOuterNormal(faceLocal)*this->fvGeom.boundaryFace[bfIdx].area;
-						if (alpha == 0)
-							result[comp] += gradVN[comp];
-                	}
+                    for (int comp = 0; comp < dim; comp++)
+                    {
+                        FieldVector<Scalar,dim>  pressVector(0);
+                        pressVector[comp] = -pressureValue;
+                        result[comp] += pressVector*it->unitOuterNormal(faceLocal)*this->fvGeom.boundaryFace[bfIdx].area;
+                        if (alpha == 0)
+                            result[comp] += gradVN[comp];
+                    }
 
-                	//transport
-                	Scalar pressValue = 0;
-					FieldVector<Scalar, dim> xV(0);
-					FieldVector<Scalar, dim> gradX(0);
+                    //transport
+                    Scalar pressValue = 0;
+                    FieldVector<Scalar, dim> xV(0);
+                    FieldVector<Scalar, dim> gradX(0);
 
-					const FieldVector<Scalar,dim> local = this->fvGeom.boundaryFace[bfIdx].ipLocal;
-					const FieldVector<Scalar,dim> global = this->fvGeom.boundaryFace[bfIdx].ipGlobal;
+                    const FieldVector<Scalar,dim> local = this->fvGeom.boundaryFace[bfIdx].ipLocal;
+                    const FieldVector<Scalar,dim> global = this->fvGeom.boundaryFace[bfIdx].ipGlobal;
 
-					const FMatrix D = this->problem.D(global,element,local);
+                    const FMatrix D = this->problem.D(global,element,local);
 
-					for (int k = 0; k < this->fvGeom.numVertices; k++)
-					{
-						pressValue += sol[k][dim+1]*this->fvGeom.boundaryFace[bfIdx].shapeValue[k];
-						FieldVector<Scalar,dim> grad(this->fvGeom.boundaryFace[bfIdx].grad[k]);
-						grad *= sol[k][dim];
-						gradX += grad;
-					}
+                    for (int k = 0; k < this->fvGeom.numVertices; k++)
+                    {
+                        pressValue += sol[k][dim+1]*this->fvGeom.boundaryFace[bfIdx].shapeValue[k];
+                        FieldVector<Scalar,dim> grad(this->fvGeom.boundaryFace[bfIdx].grad[k]);
+                        grad *= sol[k][dim];
+                        gradX += grad;
+                    }
 
-					// NOT CORRECT YET
-					Scalar xValue;
-					Scalar outward = velocityValue*this->fvGeom.boundaryFace[bfIdx].normal;
-			        if (outward > 0)
-			            xValue = sol[node][dim];
-			        else
-			            xValue = sol[node][dim];
+                    // NOT CORRECT YET
+                    Scalar xValue;
+                    Scalar outward = velocityValue*this->fvGeom.boundaryFace[bfIdx].normal;
+                    if (outward > 0)
+                        xValue = sol[node][dim];
+                    else
+                        xValue = sol[node][dim];
 
-					for (int comp = 0; comp < dim; comp++)
-						xV[comp] = velocityValue[comp]*xValue;
+                    for (int comp = 0; comp < dim; comp++)
+                        xV[comp] = velocityValue[comp]*xValue;
 
-					FieldVector<Scalar,dim> DgradX(0);
-					D.mv(gradX, DgradX);  // DgradX=D*gradX
+                    FieldVector<Scalar,dim> DgradX(0);
+                    D.mv(gradX, DgradX);  // DgradX=D*gradX
 
-					result[dim] = (DgradX - xV)*it->unitOuterNormal(faceLocal)*this->fvGeom.boundaryFace[bfIdx].area;
+                    result[dim] = (DgradX - xV)*it->unitOuterNormal(faceLocal)*this->fvGeom.boundaryFace[bfIdx].area;
 
 
                 }
@@ -480,12 +480,12 @@ template<class Grid, class Scalar, class BoxFunction = LeafP1Function<Grid, Scal
     template<class TypeTag> void assembleBC(const Element& element) {
         Dune::GeometryType gt = element.geometry().type();
         const typename Dune::LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::value_type
-        &sfs=Dune::LagrangeShapeFunctions<Scalar, Scalar, dim>::general(gt, 1);
+            &sfs=Dune::LagrangeShapeFunctions<Scalar, Scalar, dim>::general(gt, 1);
         setcurrentsize(sfs.size());
         this->fvGeom.update(element);
 
         const typename ReferenceElementContainer<Scalar,dim>::value_type
-        &referenceElement = ReferenceElements<Scalar, dim>::general(gt);
+            &referenceElement = ReferenceElements<Scalar, dim>::general(gt);
 
         for (int i = 0; i < sfs.size(); i++) {
             this->bctype[i].assign(BoundaryConditions::neumann);
@@ -529,10 +529,10 @@ template<class Grid, class Scalar, class BoxFunction = LeafP1Function<Grid, Scal
                                 break;
                             FieldVector<Scalar,dim+1> J = this->getImp().problem.J(global, element, it, local);
                             if (equationNumber < dim+1) {
-                            	J[equationNumber] *= this->fvGeom.boundaryFace[bfIdx].area;
-                            	this->b[nodeInElement][equationNumber] += J[equationNumber];
+                                J[equationNumber] *= this->fvGeom.boundaryFace[bfIdx].area;
+                                this->b[nodeInElement][equationNumber] += J[equationNumber];
                             }
-                       }
+                        }
                     }
                 }
 
@@ -556,8 +556,8 @@ template<class Grid, class Scalar, class BoxFunction = LeafP1Function<Grid, Scal
             for(int i=0; i<numEq; i++)
             {
                 if (bctypeface[i]==BoundaryConditions::process
-                        && this->procBoundaryAsDirichlet==false
-                        && this->levelBoundaryAsDirichlet==false)
+                    && this->procBoundaryAsDirichlet==false
+                    && this->levelBoundaryAsDirichlet==false)
                 {
                     pface = true;
                     break;
@@ -611,24 +611,24 @@ template<class Grid, class Scalar, class BoxFunction = LeafP1Function<Grid, Scal
 
     }
 
-	struct StaticNodeData
+    struct StaticNodeData
     {
-		FMatrix K;
-	};
+        FMatrix K;
+    };
 
 
     struct ElementData {
-    	Scalar mu;
-    	Scalar rho;
-       };
+        Scalar mu;
+        Scalar rho;
+    };
 
     ElementData elData;
     StokesTransportProblem<Grid,Scalar>& problem;
-	double alpha;
+    double alpha;
 
-	std::vector<VariableNodeData> varNData;
-	std::vector<VariableNodeData> oldVarNData;
+    std::vector<VariableNodeData> varNData;
+    std::vector<VariableNodeData> oldVarNData;
 
-  };
+};
 }
 #endif

@@ -18,7 +18,7 @@ class ChannelFlowProblem : public StokesProblem<Grid, Scalar>
 
 public:
     virtual FieldVector<Scalar,numEq> q(const FieldVector<Scalar,dim>& globalPos, const Element& element,
-                                const FieldVector<Scalar,dim>& localPos) const
+                                        const FieldVector<Scalar,dim>& localPos) const
     {
         FieldVector<Scalar,numEq> result(0);
 
@@ -36,8 +36,8 @@ public:
     }
 
     virtual FieldVector<Scalar,dim> g(const FieldVector<Scalar,dim>& globalPos, const Element& element,
-                                  const IntersectionIterator& intersectionIt,
-                                  const FieldVector<Scalar,dim>& localPos) const
+                                      const IntersectionIterator& intersectionIt,
+                                      const FieldVector<Scalar,dim>& localPos) const
     {
         if (globalPos[0] < 1e-6)
             return velocity(globalPos);

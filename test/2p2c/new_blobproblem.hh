@@ -221,7 +221,7 @@ public:
         : ParentType(grid),
           materialLaw_(soil_, wPhase_, nPhase_),
           multicomp_(wPhase_, nPhase_),
-          timeManager_(tEnd, 
+          timeManager_(tEnd,
                        this->grid().comm().rank() == 0),
           model_(*this),
           newtonMethod_(model_),
@@ -270,7 +270,7 @@ public:
      */
     void timeIntegration(Scalar &stepSize, Scalar &nextStepSize)
     {
-        model_.update(stepSize, 
+        model_.update(stepSize,
                       nextStepSize,
                       newtonMethod_,
                       newtonCtl_);

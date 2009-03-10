@@ -23,7 +23,7 @@ template<class Grid, class Scalar> class ShallowVariableClass
     };
 
     enum
-    {   dim=Grid::dimension};
+        {   dim=Grid::dimension};
 
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
     typedef FieldVector<Scalar,dim> LocalPosition;
@@ -31,7 +31,7 @@ template<class Grid, class Scalar> class ShallowVariableClass
     typedef typename Grid::LeafGridView GridView;
     typedef typename GridView::IndexSet IndexSet;
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,IndexSet,ElementLayout>
-            ElementMapper;
+    ElementMapper;
 
 public:
     typedef Dune::BlockVector<Dune::FieldVector<Scalar,1> > ScalarType;
@@ -50,7 +50,7 @@ public:
 
     ShallowVariableClass(Grid& grid) :
         elementMapper(grid, grid.leafIndexSet()), grid(grid),
-                size(elementMapper.size())
+        size(elementMapper.size())
     {
         sizeInitWDepth(size);
         sizeInitVel(size);
@@ -100,19 +100,19 @@ public:
     //Definition of the return methods
 
     const Scalar& returnWDepth(const GlobalPosition& globalPos,
-            const Element& element, const LocalPosition& localPos)
+                               const Element& element, const LocalPosition& localPos)
     {
         return wDepth[elementMapper.map(element)];
     }
 
     const VelType& returnVel(const GlobalPosition& globalPos,
-            const Element& element, const LocalPosition& localPos)
+                             const Element& element, const LocalPosition& localPos)
     {
         return velocity[elementMapper.map(element)];
     }
 
     const SolutionType& returnGlobalSol(const GlobalPosition& globalPos,
-            const Element& element, const LocalPosition& localPos)
+                                        const Element& element, const LocalPosition& localPos)
     {
         return globalSolution[elementMapper.map(element)];
     }

@@ -105,7 +105,7 @@ public:
         int goodIt = 4;
         int maxInc = 2;
         NewtonMethodMatrix<HostGrid, ThisType> newtonMethod(this->firstGrid().getHostGrid(), *this,
-                dtol, rtol, maxIt, mindt, goodIt, maxInc);
+                                                            dtol, rtol, maxIt, mindt, goodIt, maxInc);
         newtonMethod.execute();
         dt = this->firstModel().localJacobian().getDt();
         this->uOld = this->u;

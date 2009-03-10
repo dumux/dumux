@@ -1,4 +1,4 @@
-// $Id$ 
+// $Id$
 
 #ifndef NUMERICALFLUX_HH
 #define NUMERICALFLUX_HH
@@ -10,15 +10,15 @@ template<class Grid, class Scalar> class NumericalFlux
 public:
 
     enum
-    {   dim=Grid::dimension};
+        {   dim=Grid::dimension};
     enum
-    {   dimWorld = Grid::dimensionworld};
+        {   dimWorld = Grid::dimensionworld};
     typedef Dune::FieldVector<Scalar, dim> VelType;
     typedef Dune::FieldVector<Scalar, dim+1> SystemType;
     typedef typename Grid::Traits::template Codim<0>::Entity Entity;
 
     virtual SystemType operator()(VelType velFaceL, VelType velFaceR, Scalar wDepthFaceL,
-            Scalar wDepthFaceR, VelType nVecScaled, VelType nVec)=0;
+                                  Scalar wDepthFaceR, VelType nVecScaled, VelType nVec)=0;
 
     virtual ~NumericalFlux()
     {
@@ -29,7 +29,7 @@ public:
 template<class Grid, class Scalar> class FirstOrderUpwind : public NumericalFlux<Grid,Scalar>
 {
     enum
-    {   dim=Grid::dimension};
+        {   dim=Grid::dimension};
     typedef Dune::FieldVector<Scalar, dim> VelType;
     typedef Dune::FieldVector<Scalar, dim+1> SystemType; //System has 3 euqations -> 3 positions in a vector
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
@@ -51,7 +51,7 @@ public:
     }
 
     SystemType operator()(VelType velI, VelType velJ, Scalar wDepthI, Scalar wDepthJ,
-            VelType nVecScaled, VelType nVec)
+                          VelType nVecScaled, VelType nVec)
     {
 
         avgVel = velI*nVecScaled;
@@ -90,7 +90,7 @@ public:
 template<class Grid, class Scalar> class HllFlux : public NumericalFlux<Grid,Scalar>
 {
     enum
-    {   dim=Grid::dimension};
+        {   dim=Grid::dimension};
     typedef Dune::FieldVector<Scalar, dim> VelType;
     typedef Dune::FieldVector<Scalar, dim+1> SystemType; //System has 3 euqations -> 3 positions in a vector
     typedef typename Grid::Traits::template Codim<0>::Element Element;
@@ -110,7 +110,7 @@ public:
     Scalar sigVelI;
 
     SystemType operator()(VelType velFaceL, VelType velFaceR, Scalar wDepthFaceL,
-            Scalar wDepthFaceR, VelType nVecScaled, VelType nVec)
+                          Scalar wDepthFaceR, VelType nVecScaled, VelType nVec)
     {
 
         if (wDepthFaceL < eps && wDepthFaceR < eps)
@@ -164,16 +164,16 @@ public:
             {
 
                 sigVelI = std::min((velFaceR*nVec-sqrt(gravity *wDepthFaceR)),
-                        (velAvg-gravWDepthAvg));
+                                   (velAvg-gravWDepthAvg));
                 sigVelJ = std::max((velFaceL*nVec+sqrt(gravity *wDepthFaceL)),
-                        (velAvg+gravWDepthAvg));
+                                   (velAvg+gravWDepthAvg));
 
             }
 
             /*std::cout<<"velFaceL = "<<velFaceL<<" velFaceR = "<<velFaceR<<std::endl;
-             std::cout<<"sigVelI = "<<sigVelI<<" sigVelJ = "<<sigVelJ<<std::endl;
-             std::cout<<"velAvg = "<<velAvg<<std::endl;
-             */
+              std::cout<<"sigVelI = "<<sigVelI<<" sigVelJ = "<<sigVelJ<<std::endl;
+              std::cout<<"velAvg = "<<velAvg<<std::endl;
+            */
 
             //Compute the flux vector components Conti, XMomentum, YMomentum for the left and right state
             //Initialize vectors and fill with flux data
@@ -194,23 +194,23 @@ public:
 
                 VelType fluxXMomentumI(0);
                 fluxXMomentumI[0] = wDepthFaceL*pow(velFaceL[0], 2)+0.5*gravity
-                        *pow(wDepthFaceL, 2);
+                    *pow(wDepthFaceL, 2);
                 fluxXMomentumI[1] = wDepthFaceL*velFaceL[0]*velFaceL[1];
 
                 VelType fluxXMomentumJ(0);
                 fluxXMomentumJ[0] =wDepthFaceR*pow(velFaceR[0], 2)+0.5*gravity
-                        *pow(wDepthFaceR, 2);
+                    *pow(wDepthFaceR, 2);
                 fluxXMomentumJ[1] =wDepthFaceR*velFaceR[0]*velFaceR[1];
 
                 VelType fluxYMomentumI(0);
                 fluxYMomentumI[0] = wDepthFaceL*velFaceL[0]*velFaceL[1];
                 fluxYMomentumI[1] = wDepthFaceL*pow(velFaceL[1], 2)+0.5*gravity
-                        *pow(wDepthFaceL, 2);
+                    *pow(wDepthFaceL, 2);
 
                 VelType fluxYMomentumJ(0);
                 fluxYMomentumJ[0] =wDepthFaceR*velFaceR[0]*velFaceR[1];
                 fluxYMomentumJ[1] =wDepthFaceR*pow(velFaceR[1], 2)+0.5*gravity
-                        *pow(wDepthFaceR, 2);
+                    *pow(wDepthFaceR, 2);
 
                 //std::cout<<"Y_Mom_I ="<<fluxYMomentumI<<" Y_Mom_J = "<<fluxYMomentumJ<<std::endl;
 
@@ -224,7 +224,7 @@ public:
                 Scalar fluxXMomentum= (sigVelJ*(fluxXMomentumI*nVecScaled));
                 fluxXMomentum-= sigVelI*(fluxXMomentumJ*nVecScaled);
                 fluxXMomentum+= (sigVelJ*sigVelI*(wDepthFaceR*velFaceR[0]
-                        -wDepthFaceL *velFaceL[0]));
+                                                  -wDepthFaceL *velFaceL[0]));
                 fluxXMomentum/=(sigVelJ-sigVelI);
 
                 Scalar fluxYMomentum(0);
@@ -238,7 +238,7 @@ public:
                     fluxYMomentum = sigVelJ*(fluxYMomentumI*nVecScaled);
                     fluxYMomentum-= sigVelI*(fluxYMomentumJ*nVecScaled);
                     fluxYMomentum+= (sigVelJ*sigVelI*(wDepthFaceR*velFaceR[1]
-                            -wDepthFaceL *velFaceL[1]));
+                                                      -wDepthFaceL *velFaceL[1]));
                     fluxYMomentum/=(sigVelJ-sigVelI);
                 }
                 //Define Vector containing the components and return it to shallowfvtransport

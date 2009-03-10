@@ -72,47 +72,47 @@ public:
     }
 
     const Dune::FieldVector<RT,1>& sat(const Dune::FieldVector<DT,n>& x, const Entity& e,
-            const Dune::FieldVector<DT,n>& xi) const
+                                       const Dune::FieldVector<DT,n>& xi) const
     {
         return saturation[mapper.map(e)];;
     }
 
     const Dune::FieldVector<RT,1>& press(const Dune::FieldVector<DT,n>& x, const Entity& e,
-            const Dune::FieldVector<DT,n>& xi) const
+                                         const Dune::FieldVector<DT,n>& xi) const
     {
         return pressure[mapper.map(e)];
     }
 
-	/*! @brief writes all variables to a VTK File
-	 *
-	 *  The file name is "<name>-<k>.vtu" where k is an integer number.
-	 *  @param name specifies the name of the VTK file
-	 *  @param k specifies a number
-	 */
-	void vtkout(const char* name, int k) const
-	{
-			ScalarType C1, C2;
-			C1.resize(size); C2.resize(size);
-			for (int i = 0; i < size; i++)
-			{
-				C1[i] = totalConcentration[i];
-				C2[i] = totalConcentration[i + size];
-			}
-			VTKWriter<typename G::LevelGridView> vtkwriter(grid.levelView(0));
-			char fname[128];
-			sprintf(fname, "%s-%05d", name, k);
-			vtkwriter.addCellData(saturation, "saturation [-]");
-			vtkwriter.addCellData(pressure, "pressure [Pa]");
-			vtkwriter.addCellData(C1, "total concentration 1 [kg/m^3]");
-			vtkwriter.addCellData(C2, "total concentration 2 [kg/m^3]");
-			vtkwriter.addCellData(volErr, "volume error [%]");
-			vtkwriter.addCellData(wet_X1, "Mass fraction 1 in wetting phase [-]");
-			vtkwriter.addCellData(nonwet_X1, "Mass fraction 1 in non-wetting phase [-]");
-			vtkwriter.addCellData(density_wet, "wetting phase density [kg/m^3]");
-			vtkwriter.addCellData(density_nonwet, "non-wetting phase density [kg/m^3]");
-			vtkwriter.addCellData(mobility_wet, "wetting phase mobility [m*s/kg]");
-			vtkwriter.addCellData(mobility_nonwet, "non-wetting phase mobility [m*s/kg]");
-			vtkwriter.write(fname, VTKOptions::ascii);
+    /*! @brief writes all variables to a VTK File
+     *
+     *  The file name is "<name>-<k>.vtu" where k is an integer number.
+     *  @param name specifies the name of the VTK file
+     *  @param k specifies a number
+     */
+    void vtkout(const char* name, int k) const
+    {
+        ScalarType C1, C2;
+        C1.resize(size); C2.resize(size);
+        for (int i = 0; i < size; i++)
+        {
+            C1[i] = totalConcentration[i];
+            C2[i] = totalConcentration[i + size];
+        }
+        VTKWriter<typename G::LevelGridView> vtkwriter(grid.levelView(0));
+        char fname[128];
+        sprintf(fname, "%s-%05d", name, k);
+        vtkwriter.addCellData(saturation, "saturation [-]");
+        vtkwriter.addCellData(pressure, "pressure [Pa]");
+        vtkwriter.addCellData(C1, "total concentration 1 [kg/m^3]");
+        vtkwriter.addCellData(C2, "total concentration 2 [kg/m^3]");
+        vtkwriter.addCellData(volErr, "volume error [%]");
+        vtkwriter.addCellData(wet_X1, "Mass fraction 1 in wetting phase [-]");
+        vtkwriter.addCellData(nonwet_X1, "Mass fraction 1 in non-wetting phase [-]");
+        vtkwriter.addCellData(density_wet, "wetting phase density [kg/m^3]");
+        vtkwriter.addCellData(density_nonwet, "non-wetting phase density [kg/m^3]");
+        vtkwriter.addCellData(mobility_wet, "wetting phase mobility [m*s/kg]");
+        vtkwriter.addCellData(mobility_nonwet, "non-wetting phase mobility [m*s/kg]");
+        vtkwriter.write(fname, VTKOptions::ascii);
         return;
     }
 

@@ -23,7 +23,7 @@ int main(int argc, char** argv)
         // Set the type for scalar values (should be one of float, double
         // or long double)
         typedef double                            Scalar;
-        typedef Dune::NewBenchmark3Problem<Scalar>  	  Problem;
+        typedef Dune::NewBenchmark3Problem<Scalar>        Problem;
         typedef Problem::DomainTraits::Grid       Grid;
         typedef Dune::GridPtr<Grid>               GridPointer;
 
@@ -32,13 +32,13 @@ int main(int argc, char** argv)
 
         // parse the command line arguments for the program
         if (argc < 4)
-		usage(argv[0]);
+            usage(argv[0]);
 
         double tEnd, dt;
         bool restart = false;
         int argPos = 1;
         double restartTime = 0;
-                if (std::string("--restart") == argv[argPos]) {
+        if (std::string("--restart") == argv[argPos]) {
             restart = true;
             ++argPos;
 
