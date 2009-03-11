@@ -1,4 +1,4 @@
-// $Id:$
+// $Id$
 
 #ifndef DUNE_FVSHALLOWWATER_HH
 #define DUNE_FVSHALLOWWATER_HH
@@ -54,10 +54,11 @@ public:
     typedef Dune::BlockVector<Dune::FieldVector<Scalar,dim+1> >
     RepresentationType;
 
-    int update(const Scalar t, Scalar& dt, SolutionType& updateVec,
-               Scalar& cFLFac);
+    int update(const Scalar t, Scalar& dt, SolutionType& updateVec);
 
     void initialize();
+    
+    void postProcessUpdate(Scalar t, Scalar dt);
 
     FVShallowWater(Grid& grid, ShallowProblemBase<Grid, Scalar, VC>& problem,
                    NumericalFlux<Grid,Scalar>& numFl = *(new FirstOrderUpwind<Grid,Scalar>)) :
@@ -74,8 +75,7 @@ private:
 };
 
 template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
-                                                                VC>::update(const Scalar t, Scalar& dt, SolutionType& updateVec,
-                                                                            Scalar& cFLFac = 1)
+                                                                VC>::update(const Scalar t, Scalar& dt, SolutionType& updateVec)
 {
     // initialize dt very large, why?
     dt = 1e100;
@@ -327,6 +327,36 @@ template<class Grid, class Scalar, class VC> void FVShallowWater<Grid, Scalar,
             = initialWaterDepth*initialVelocity[0];
         this->problem.variables.globalSolution[globalIdx][1]
             = initialWaterDepth*initialVelocity[1];
+    }
+    return;
+}
+
+template<class Grid, class Scalar, class VC> void FVShallowWater<Grid, Scalar,
+                                                                 VC>::postProcessUpdate(Scalar t, Scalar dt)
+{
+    for (int i=0; i<this->problem.variables.size; i++)
+    {
+
+        if (this->problem.variables.globalSolution[i][0]> 0)
+        {
+
+            this->problem.variables.wDepth[i]=this->problem.variables.globalSolution[i][0];
+            this->problem.variables.velocity[i][0]=this->problem.variables.globalSolution[i][1]/this->problem.variables.wDepth[i];
+            this->problem.variables.velocity[i][1]=this->problem.variables.globalSolution[i][2]/this->problem.variables.wDepth[i];
+        }
+        else
+        {
+            this->problem.variables.wDepth[i]=0;
+            this->problem.variables.velocity[i][0]=0;
+            this->problem.variables.velocity[i][1]=0;
+        }
+
+        //std::cout<<"global Solution of cell"<<i<<"= "<<this->problem.variables.globalSolution[i]<<std::endl;
+
+        //std::cout<<"wDepth = "<<this->problem.variables.wDepth[i]<<std::endl;
+        //std::cout<<"velX = "<<this->problem.variables.velocity[i][0]<<std::endl;
+        //std::cout<<"velY = "<<this->problem.variables.velocity[i][1]<<std::endl;
+
     }
     return;
 }

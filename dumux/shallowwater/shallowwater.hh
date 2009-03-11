@@ -38,8 +38,7 @@ public:
 
 
 
-    virtual int update(const Scalar t, Scalar& dt, RepresentationType& updateVec,
-                       Scalar& CLFFac) = 0;
+    virtual int update(const Scalar t, Scalar& dt, RepresentationType& updateVec) = 0;
 
     void initial()
     {
@@ -49,6 +48,11 @@ public:
 
     //! \brief Sets the initial solution
     virtual void initialize() = 0 ;
+    
+    virtual void postProcessUpdate(Scalar t, Scalar dt)
+    {
+        return;
+    }
 
     //! return const reference to globalSolution vector
     //virtual const RepresentationType& operator*() const

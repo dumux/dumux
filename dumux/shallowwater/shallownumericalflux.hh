@@ -26,21 +26,21 @@ public:
 };
 
 //First Order Upwind Method
-template<class Grid, class Scalar> class FirstOrderUpwind : public NumericalFlux<Grid,Scalar>
+template<class Grid, class Scalar> class FirstOrderUpwind :
+    public NumericalFlux<Grid,Scalar>
 {
     enum
         {   dim=Grid::dimension};
     typedef Dune::FieldVector<Scalar, dim> VelType;
     typedef Dune::FieldVector<Scalar, dim+1> SystemType; //System has 3 euqations -> 3 positions in a vector
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
-    Scalar avgVel;
-    Scalar faceVel;
-    Scalar faceWDepth;
-    Scalar eps;
-    Scalar gravity;
-    Scalar conti;
-    Scalar xMomentum;
-    Scalar yMomentum;
+    VelType avgVel;
+    VelType faceVel;
+    VelType faceWDepth;
+    VelType eps;
+    VelType gravity;
+    Scalar  fluxConti;
+    VelType fluxMomentum;
 
 public:
 
@@ -55,7 +55,7 @@ public:
     {
 
         avgVel = velI*nVecScaled;
-        avgVel +=velJ;
+        avgVel +=velJ*nVecScaled;
         avgVel*= 0.5;
 
         if (avgVel >= eps)
@@ -69,16 +69,20 @@ public:
             faceWDepth = wDepthJ;
         }
 
-        conti = faceVel * faceWDepth;
-        xMomentum = faceVel * faceWDepth*faceVel;
-        xMomentum += gravity*faceWDepth*0.5;
+        fluxConti = faceVel * faceWDepth;
+        fluxMomentum[0] = faceVel * faceWDepth*faceVel;
+        fluxMomentum[0] += gravity*faceWDepth*0.5;
+        fluxMomentum[0] *= nVecScaled[0];
+        
+        fluxMomentum[1] = faceVel * faceWDepth*faceVel;
+        fluxMomentum[1] += gravity*faceWDepth*0.5;
+        fluxMomentum[1] *= nVecScaled[1];
 
-        Scalar fluxConti = conti;
-        Scalar fluxXMomentum = xMomentum;
+    
 
         SystemType fluxUpwindFace(0);
         fluxUpwindFace[0]=fluxConti;
-        fluxUpwindFace[1]=fluxXMomentum;
+        fluxUpwindFace[1]=fluxMomentum;
 
         return fluxUpwindFace;
 
@@ -87,7 +91,8 @@ public:
 };
 
 //HLL numerical flux: calculates flux vector through current intersection by means of reconstructed data
-template<class Grid, class Scalar> class HllFlux : public NumericalFlux<Grid,Scalar>
+template<class Grid, class Scalar> class HllFlux :
+    public NumericalFlux<Grid,Scalar>
 {
     enum
         {   dim=Grid::dimension};

@@ -117,38 +117,8 @@ public:
         return globalSolution[elementMapper.map(element)];
     }
 
-    void calcPrimVar()
-    {
-        for (i=0; i<size; i++)
-        {
-
-            if (globalSolution[i][0]> 0)
-            {
-
-                wDepth[i]=globalSolution[i][0];
-                velocity[i][0]=globalSolution[i][1]/wDepth[i];
-                velocity[i][1]=globalSolution[i][2]/wDepth[i];
-            }
-            else
-            {
-                wDepth[i]=0;
-                velocity[i][0]=0;
-                velocity[i][1]=0;
-            }
-
-            //std::cout<<"global Solution of cell"<<i<<"= "<<globalSolution[i]<<std::endl;
-
-            //std::cout<<"wDepth = "<<wDepth[i]<<std::endl;
-            //std::cout<<"velX = "<<velocity[i][0]<<std::endl;
-            //std::cout<<"velY = "<<velocity[i][1]<<std::endl;
-
-        }
-        return;
-    }
-
     void vtkout(const char* name, int k)
     {
-        calcPrimVar();
         VTKWriter<typename Grid::LeafGridView> vtkwriter(grid.leafView());
         Dune::BlockVector<Dune::FieldVector<Scalar, 1> > vX(size);
         Dune::BlockVector<Dune::FieldVector<Scalar, 1> > vY(size);
@@ -172,8 +142,9 @@ public:
 
         return;
     }
-private:
+
     int size;
+private:
     int i;
     double eps;
 };
