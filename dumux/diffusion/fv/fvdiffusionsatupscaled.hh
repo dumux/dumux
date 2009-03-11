@@ -11,6 +11,7 @@
 #include <dune/istl/preconditioners.hh>
 #include "dumux/diffusion/diffusion.hh"
 #include "dumux/pardiso/pardiso.hh"
+#include "dumux/fractionalflow/fractionalflowproblem.hh"
 
 namespace Dune
 {
@@ -29,9 +30,9 @@ namespace Dune
 
  - G         a DUNE grid type
  - RT        type used for return values
-*/
-template<class Grid, class Scalar, class VC> class FVDiffusion: public Diffusion<
-    Grid, Scalar, VC>
+ */
+template<class Grid, class Scalar, class VC, class Problem = Dune::FractionalFlowProblem<Grid, Scalar, VC> > class FVDiffusion: public Diffusion<
+        Grid, Scalar, VC, Problem>
 {
     template<int dim> struct ElementLayout
     {
@@ -42,15 +43,15 @@ template<class Grid, class Scalar, class VC> class FVDiffusion: public Diffusion
     };
 
     enum
-        {
-            dim = Grid::dimension
-        };
+    {
+        dim = Grid::dimension
+    };
     enum
-        {
-            dimWorld = Grid::dimensionworld
-        };
+    {
+        dimWorld = Grid::dimensionworld
+    };
 
-    typedef    typename Grid::Traits::template Codim<0>::Entity Element;
+typedef    typename Grid::Traits::template Codim<0>::Entity Element;
     typedef typename Grid::LevelGridView GridView;
     typedef typename GridView::IndexSet IndexSet;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
@@ -85,24 +86,24 @@ public:
 
     void initializeMatrix();
 
-    FVDiffusion(Grid& grid, FractionalFlowProblem<Grid, Scalar, VC>& prob) :
-        Diffusion<Grid, Scalar, VC>(grid, prob),
-        elementMapper(grid, grid.levelIndexSet(this->level())),
-        globalMatrix_(grid.size(this->level(), 0), grid.size(this->level(), 0), (2*dim+1)*grid.size(this->level(), 0), BCRSMatrix<MB>::random),
-        rightHandSide_(grid.size(this->level(), 0)), solverName_("Loop"),
-        preconditionerName_("SeqPardiso")
+    FVDiffusion(Grid& grid, Problem& prob) :
+    Diffusion<Grid, Scalar, VC, Problem>(grid, prob),
+    elementMapper(grid, grid.levelIndexSet(this->level())),
+    globalMatrix_(grid.size(this->level(), 0), grid.size(this->level(), 0), (2*dim+1)*grid.size(this->level(), 0), BCRSMatrix<MB>::random),
+    rightHandSide_(grid.size(this->level(), 0)), solverName_("Loop"),
+    preconditionerName_("SeqPardiso")
     {
         initializeMatrix();
     }
 
-    FVDiffusion(Grid& grid, FractionalFlowProblem<Grid, Scalar, VC>& prob, std::string solverName,
-                std::string preconditionerName) :
-        Diffusion<Grid, Scalar, VC>(grid, prob),
-        elementMapper(grid, grid.levelIndexSet(this->level())),globalMatrix_(grid.size(
-                                                                                       this->level(), 0), grid.size(this->level(), 0), (2*dim+1)
-                                                                             *grid.size(this->level(), 0), BCRSMatrix<MB>::random),
-        rightHandSide_(grid.size(this->level(), 0)), solverName_(solverName),
-        preconditionerName_(preconditionerName)
+    FVDiffusion(Grid& grid, Problem& prob, std::string solverName,
+            std::string preconditionerName) :
+    Diffusion<Grid, Scalar, VC, Problem>(grid, prob),
+    elementMapper(grid, grid.levelIndexSet(this->level())),globalMatrix_(grid.size(
+                    this->level(), 0), grid.size(this->level(), 0), (2*dim+1)
+            *grid.size(this->level(), 0), BCRSMatrix<MB>::random),
+    rightHandSide_(grid.size(this->level(), 0)), solverName_(solverName),
+    preconditionerName_(preconditionerName)
     {
         initializeMatrix();
     }
@@ -116,7 +117,7 @@ private:
     std::string preconditionerName_;
 };
 
-template<class Grid, class Scalar, class VC> void FVDiffusion<Grid, Scalar, VC>::initializeMatrix()
+template<class Grid, class Scalar, class VC, class Problem> void FVDiffusion<Grid, Scalar, VC, Problem>::initializeMatrix()
 {
 
     const GridView& gridView = this->grid.levelView(this->level());
@@ -133,12 +134,12 @@ template<class Grid, class Scalar, class VC> void FVDiffusion<Grid, Scalar, VC>:
 
         // run through all intersections with neighbors
         IntersectionIterator
-            isItEnd = gridView.template iend(*eIt);
+        isItEnd = gridView.template iend(*eIt);
         for (IntersectionIterator
-                 isIt = gridView.template ibegin(*eIt); isIt
-                 !=isItEnd; ++isIt)
-            if (isIt->neighbor())
-                rowSize++;
+                isIt = gridView.template ibegin(*eIt); isIt
+                !=isItEnd; ++isIt)
+        if (isIt->neighbor())
+        rowSize++;
         globalMatrix_.setrowsize(globalIdxI, rowSize);
     }
     globalMatrix_.endrowsizes();
@@ -154,26 +155,26 @@ template<class Grid, class Scalar, class VC> void FVDiffusion<Grid, Scalar, VC>:
 
         // run through all intersections with neighbors
         IntersectionIterator
-            isItEnd = gridView.template iend(*eIt);
+        isItEnd = gridView.template iend(*eIt);
         for (IntersectionIterator
-                 isIt = gridView.template ibegin(*eIt); isIt
-                 !=isItEnd; ++isIt)
-            if (isIt->neighbor())
-            {
-                // access neighbor
-                ElementPointer outside = isIt->outside();
-                int globalIdxJ = elementMapper.map(*outside);
+                isIt = gridView.template ibegin(*eIt); isIt
+                !=isItEnd; ++isIt)
+        if (isIt->neighbor())
+        {
+            // access neighbor
+            ElementPointer outside = isIt->outside();
+            int globalIdxJ = elementMapper.map(*outside);
 
-                // add off diagonal index
-                globalMatrix_.addindex(globalIdxI, globalIdxJ);
-            }
+            // add off diagonal index
+            globalMatrix_.addindex(globalIdxI, globalIdxJ);
+        }
     }
     globalMatrix_.endindices();
 
     return;
 }
 
-template<class Grid, class Scalar, class VC> void FVDiffusion<Grid, Scalar, VC>::assemble(const Scalar t=0)
+template<class Grid, class Scalar, class VC, class Problem> void FVDiffusion<Grid, Scalar, VC, Problem>::assemble(const Scalar t=0)
 {
     // initialization: set matrix globalMatrix_ to zero
     globalMatrix_ = 0;
@@ -184,8 +185,8 @@ template<class Grid, class Scalar, class VC> void FVDiffusion<Grid, Scalar, VC>:
     bool hasGravity = false;
     const FieldVector<Scalar,dim>& gravity = this->diffProblem.gravity();
     for (int k = 0; k < dim; k++)
-        if (gravity[k] != 0)
-            hasGravity = true;
+    if (gravity[k] != 0)
+    hasGravity = true;
 
     ElementIterator eItEnd = gridView.template end<0>();
     for (ElementIterator eIt = gridView.template begin<0>(); eIt != eItEnd; ++eIt)
@@ -221,47 +222,47 @@ template<class Grid, class Scalar, class VC> void FVDiffusion<Grid, Scalar, VC>:
         rightHandSide_[globalIdxI] = volume*this->diffProblem.sourcePress(globalPos, *eIt, localPos);
 
         // get absolute permeability
-        FieldMatrix kI(this->diffProblem.soil.K(globalPos, *eIt, localPos));
+        FieldMatrix kI(this->diffProblem.soil().K(globalPos, *eIt, localPos));
 
         //compute total mobility
         Scalar lambdaI, fractionalWI;
         Scalar satI = this->diffProblem.variables.saturation[globalIdxCoarseI];
-        lambdaI = this->diffProblem.materialLaw.mobTotal(satI,globalPos, *eIt, localPos);
+        lambdaI = this->diffProblem.materialLaw().mobTotal(satI,globalPos, *eIt, localPos);
         if (hasGravity)
-            fractionalWI = this->diffProblem.materialLaw.fractionalW(satI,globalPos, *eIt, localPos);
+        fractionalWI = this->diffProblem.materialLaw().fractionalW(satI,globalPos, *eIt, localPos);
 
         IntersectionIterator
-            isItEnd = gridView.template iend(*eIt);
+        isItEnd = gridView.template iend(*eIt);
         for (IntersectionIterator
-                 isIt = gridView.template ibegin(*eIt); isIt
-                 !=isItEnd; ++isIt)
+                isIt = gridView.template ibegin(*eIt); isIt
+                !=isItEnd; ++isIt)
         {
             // get geometry type of face
             GeometryType faceGT = isIt->intersectionSelfLocal().type();
 
             // center in face's reference element
             const FieldVector<Scalar,dim-1>&
-                faceLocal = ReferenceElements<Scalar,dim-1>::general(faceGT).position(0,0);
+            faceLocal = ReferenceElements<Scalar,dim-1>::general(faceGT).position(0,0);
 
             // center of face inside volume reference element
             const LocalPosition& localPosFace = ReferenceElements<Scalar,dim>::general(faceGT).position(isIt->numberInSelf(),1);
 
             // get normal vector
             FieldVector<Scalar,dimWorld> unitOuterNormal
-                = isIt->unitOuterNormal(faceLocal);
+            = isIt->unitOuterNormal(faceLocal);
 
             // get normal vector scaled with volume
             FieldVector<Scalar,dimWorld> integrationOuterNormal
-                = isIt->integrationOuterNormal(faceLocal);
+            = isIt->integrationOuterNormal(faceLocal);
             integrationOuterNormal
-                *= ReferenceElements<Scalar,dim-1>::general(faceGT).volume();
+            *= ReferenceElements<Scalar,dim-1>::general(faceGT).volume();
 
             // get face volume
             Scalar faceVol = 1;
             switch (Grid::dimension)
             {
-            case 1: break;
-            default: faceVol = isIt->intersectionGlobal().volume();
+                case 1: break;
+                default: faceVol = isIt->intersectionGlobal().volume();
                 break;
             }
 
@@ -291,21 +292,21 @@ template<class Grid, class Scalar, class VC> void FVDiffusion<Grid, Scalar, VC>:
                 // compute factor in neighbor
                 GeometryType neighborGT = neighborPointer->geometry().type();
                 const LocalPosition&
-                    localPosNeighbor = ReferenceElements<Scalar,dim>::general(neighborGT).position(0,0);
+                localPosNeighbor = ReferenceElements<Scalar,dim>::general(neighborGT).position(0,0);
 
                 // neighbor cell center in globalPos coordinates
                 const GlobalPosition&
-                    globalPosNeighbor = neighborPointer->geometry().global(localPosNeighbor);
+                globalPosNeighbor = neighborPointer->geometry().global(localPosNeighbor);
 
                 // distance vector between barycenters
                 FieldVector<Scalar,dimWorld>
-                    distVec = globalPos - globalPosNeighbor;
+                distVec = globalPos - globalPosNeighbor;
 
                 // compute distance between cell centers
                 Scalar dist = distVec.two_norm();
 
                 // get absolute permeability
-                FieldMatrix kJ(this->diffProblem.soil.K(globalPosNeighbor, *neighborPointer, localPosNeighbor));
+                FieldMatrix kJ(this->diffProblem.soil().K(globalPosNeighbor, *neighborPointer, localPosNeighbor));
 
                 // compute vectorized permeabilities
                 FieldVector<Scalar,dim> kNJ(0);
@@ -328,10 +329,10 @@ template<class Grid, class Scalar, class VC> void FVDiffusion<Grid, Scalar, VC>:
                 Scalar lambdaJ, fractionalWJ;
                 Scalar satJ = this->diffProblem.variables.saturation[globalIdxCoarseJ];
 
-                lambdaJ = this->diffProblem.materialLaw.mobTotal(satJ,globalPosNeighbor, *neighborPointer, localPosNeighbor);
+                lambdaJ = this->diffProblem.materialLaw().mobTotal(satJ,globalPosNeighbor, *neighborPointer, localPosNeighbor);
                 if (hasGravity)
                 {
-                    fractionalWJ = this->diffProblem.materialLaw.fractionalW(satJ,globalPosNeighbor, *neighborPointer, localPosNeighbor);
+                    fractionalWJ = this->diffProblem.materialLaw().fractionalW(satJ,globalPosNeighbor, *neighborPointer, localPosNeighbor);
                 }
 
                 // compute averaged total mobility
@@ -354,7 +355,7 @@ template<class Grid, class Scalar, class VC> void FVDiffusion<Grid, Scalar, VC>:
                 if (hasGravity)
                 {
                     Scalar factor = fractionalW*(this->diffProblem.wettingPhase.density())
-                        + (1 - fractionalW)*(this->diffProblem.nonWettingPhase.density());
+                    + (1 - fractionalW)*(this->diffProblem.nonWettingPhase.density());
                     rightHandSide_[globalIdxI] += factor*lambda*faceVol*(permeability*gravity);
                 }
             }
@@ -383,7 +384,7 @@ template<class Grid, class Scalar, class VC> void FVDiffusion<Grid, Scalar, VC>:
                     if (hasGravity)
                     {
                         Scalar factor = fractionalW*(this->diffProblem.wettingPhase.density())
-                            + (1 - fractionalW)*(this->diffProblem.nonWettingPhase.density());
+                        + (1 - fractionalW)*(this->diffProblem.nonWettingPhase.density());
                         rightHandSide_[globalIdxI] += factor*lambda*faceVol*(kNI*gravity);
                     }
                 }
@@ -399,7 +400,7 @@ template<class Grid, class Scalar, class VC> void FVDiffusion<Grid, Scalar, VC>:
     return;
 }
 
-template<class Grid, class Scalar, class VC> void FVDiffusion<Grid, Scalar, VC>::solve()
+template<class Grid, class Scalar, class VC, class Problem> void FVDiffusion<Grid, Scalar, VC, Problem>::solve()
 {
     MatrixAdapter<MatrixType,Vector,Vector> op(globalMatrix_);
     InverseOperatorResult r;
@@ -418,8 +419,8 @@ template<class Grid, class Scalar, class VC> void FVDiffusion<Grid, Scalar, VC>:
             solver.apply((this->diffProblem.variables.pressure), rightHandSide_, r);
         }
         else
-            DUNE_THROW(NotImplemented, "FVDiffusion :: solve : combination "
-                       << preconditionerName_<< " and "<< solverName_ << ".");
+        DUNE_THROW(NotImplemented, "FVDiffusion :: solve : combination "
+                << preconditionerName_<< " and "<< solverName_ << ".");
     }
     else if (preconditionerName_ == "SeqPardiso")
     {
@@ -430,12 +431,12 @@ template<class Grid, class Scalar, class VC> void FVDiffusion<Grid, Scalar, VC>:
             solver.apply(this->diffProblem.variables.pressure, rightHandSide_, r);
         }
         else
-            DUNE_THROW(NotImplemented, "FVDiffusion :: solve : combination "
-                       << preconditionerName_<< " and "<< solverName_ << ".");
+        DUNE_THROW(NotImplemented, "FVDiffusion :: solve : combination "
+                << preconditionerName_<< " and "<< solverName_ << ".");
     }
     else
-        DUNE_THROW(NotImplemented, "FVDiffusion :: solve : preconditioner "
-                   << preconditionerName_ << ".");
+    DUNE_THROW(NotImplemented, "FVDiffusion :: solve : preconditioner "
+            << preconditionerName_ << ".");
     //    printmatrix(std::cout, globalMatrix_, "global stiffness matrix", "row", 11, 3);
     //    printvector(std::cout, rightHandSide_, "right hand side", "row", 200, 1, 3);
     //    printvector(std::cout, (this->diffProblem.variables.pressure), "pressure", "row", 200, 1, 3);

@@ -2,15 +2,16 @@
 #ifndef DUNE_FVDIFFUSIONVELOCITYUPSCALED_HH
 #define DUNE_FVDIFFUSIONVELOCITYUPSCALED_HH
 
-#include "dumux/diffusion/fv/fvdiffusion.hh"
+#include "dumux/fractionalflow/fractionalflowproblem.hh"
+#include "dumux/diffusion/fv/fvdiffusionsatupscaled.hh"
 #include <../../../../dune-subgrid/subgrid/subgrid.hh>
 
 namespace Dune
 {
 /** \todo Please doc me! */
 
-template<class Grid, class Scalar, class VC>
-class FVDiffusionVelocityUpscaled: public FVDiffusion<Grid, Scalar, VC>
+template<class Grid, class Scalar, class VC, class Problem = Dune::FractionalFlowProblem<Grid, Scalar, VC> >
+class FVDiffusionVelocityUpscaled: public FVDiffusion<Grid, Scalar, VC, Problem>
 {
 
     enum
@@ -38,8 +39,8 @@ class FVDiffusionVelocityUpscaled: public FVDiffusion<Grid, Scalar, VC>
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
 public:
-    FVDiffusionVelocityUpscaled(Grid& grid, FractionalFlowProblem<Grid, Scalar, VC>& problem)
-        : FVDiffusion<Grid,Scalar,VC>(grid, problem)
+    FVDiffusionVelocityUpscaled(Grid& grid, Problem& problem)
+        : FVDiffusion<Grid,Scalar,VC, Problem>(grid, problem)
     {}
 
     void calcTotalVelocity(const Scalar t) const
@@ -126,10 +127,10 @@ public:
                             // get pressure and permeability and total mobility in fine-scale element
                             Scalar pressI = this->diffProblem.variables.pressure[globalIdxI];
 
-                            FieldMatrix permeabilityI = this->diffProblem.soil.K(globalPos,*eIt,localPos);
+                            FieldMatrix permeabilityI = this->diffProblem.soil().K(globalPos,*eIt,localPos);
 
                             Scalar satI = this->diffProblem.variables.saturation[globalIdxICoarse];
-                            Scalar lambdaI = this->diffProblem.materialLaw.mobTotal(satI,globalPos,*eIt,localPos);
+                            Scalar lambdaI = this->diffProblem.materialLaw().mobTotal(satI,globalPos,*eIt,localPos);
 
                             Scalar faceAreaFine;
                             // run through all intersections with neighbors and boundary
@@ -149,7 +150,7 @@ public:
                             // get neighbor pressure and permeability
                             Scalar pressJ = this->diffProblem.variables.pressure[globalIdxJ];
 
-                            FieldMatrix permeabilityJ = this->diffProblem.soil.K(globalPosNeighbor,*neighborPointer,localPosNeighbor);
+                            FieldMatrix permeabilityJ = this->diffProblem.soil().K(globalPosNeighbor,*neighborPointer,localPosNeighbor);
 
                             // compute vectorized permeabilities
                             FieldVector<Scalar,dim> normalPermeabilityI(0);
@@ -179,7 +180,7 @@ public:
                             Scalar dist = distVec.two_norm();
                             // get averaged total mobility
                             Scalar satJ = this->diffProblem.variables.saturation[globalIdxNeighborCoarse];
-                            Scalar lambdaJ = this->diffProblem.materialLaw.mobTotal(satJ,globalPosNeighbor,*neighborPointer,localPosNeighbor);
+                            Scalar lambdaJ = this->diffProblem.materialLaw().mobTotal(satJ,globalPosNeighbor,*neighborPointer,localPosNeighbor);
                             Scalar meanLambda = 0.5 * (lambdaI + lambdaJ);
                             // compute total velocity with Darcy's Law
                             FieldVector<Scalar, dim> velocityFine(permeability);
@@ -214,10 +215,10 @@ public:
                             // get pressure and permeability and total mobility in fine-scale element
                             Scalar pressI = this->diffProblem.variables.pressure[globalIdxI];
 
-                            FieldMatrix permeabilityI = this->diffProblem.soil.K(globalPos,*eIt,localPos);
+                            FieldMatrix permeabilityI = this->diffProblem.soil().K(globalPos,*eIt,localPos);
 
                             Scalar satI = this->diffProblem.variables.saturation[globalIdxICoarse];
-                            Scalar lambdaI = this->diffProblem.materialLaw.mobTotal(satI,globalPos,*eIt,localPos);
+                            Scalar lambdaI = this->diffProblem.materialLaw().mobTotal(satI,globalPos,*eIt,localPos);
 
                             Scalar faceAreaFine;
 
