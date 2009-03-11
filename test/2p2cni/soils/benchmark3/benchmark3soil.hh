@@ -13,7 +13,7 @@ namespace Dune
 /** \todo Please doc me! */
 
 template<class Grid, class Scalar>
-class Benchmark3Soil: public HeterogeneousSoil<Grid, Scalar>
+class Benchmark3Soil: public HeterogeneousSoil2<Grid, Scalar>
 {
 public:
 
@@ -29,18 +29,20 @@ public:
     typedef typename GV::IndexSet IS;
 
 
-    FieldMatrix<CoordScalar,dim,dim> &K(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const int idx=0)
+    FieldMatrix<CoordScalar,dim,dim> &K(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const int idx)
     {
         const GV& gridView(_grid.leafView());
         const IndexSet& indexSet = gridView.indexSet();
         int index = indexSet.index(*((e).template entity<dim>(idx)));
 
-        permloc_ = perm_[index]*1e-15;
+         permloc_ = 0;
+         for (int i = 0; i < dim; i++)
+             permloc_[i][i] = perm_[index]*1e-15;
 
         return permloc_;
     }
 
-    double porosity(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const int idx=0)    const
+    double porosity(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const int idx)    const
     {
         double phi;
         const GV& gridView(_grid.leafView());
@@ -61,14 +63,14 @@ public:
         return 0.05;
     }
 
-    virtual double heatCap(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const int idx = 0) const
+    virtual double heatCap(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const int idx) const
     {
         return     (800 /* spec. heat cap. of sediment */
                     * 2650 /* density of sediment */
                     * (1-porosity(x, e, xi, idx)));
     }
 
-    virtual double heatCond(const GlobalPosition &x, const Vertex& v, const LocalPosition &xi, const double sat, const int idx = 0) const
+    virtual double heatCond(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double sat, const int idx) const
     {
         static const double ldry = 0.32;
         static const double lsat = 2.7;
@@ -118,6 +120,8 @@ public:
 
             strs >> soilProps_[j][0] >> soilProps_[j][1] >> soilProps_[j][2] >>
                 soilProps_[j][3] >> soilProps_[j][4];
+//            std::cout << soilProps_[j][0] << " " << soilProps_[j][1] << " "<< soilProps_[j][2] << "\n "
+//            << soilProps_[j][3] << " " << soilProps_[j][4] << std::endl;
         }
         return;
     }
@@ -153,22 +157,14 @@ public:
         return read_;
     }
     Benchmark3Soil(const Grid& g, const bool read, const char* filename)
-        :HeterogeneousSoil<Grid,Scalar>(g, read, filename), _grid(g), properties_file_(filename), read_(read)
+        :HeterogeneousSoil2<Grid,Scalar>(g, read, filename), _grid(g), properties_file_(filename), read_(read)
     {
-        permTest_ = 0;
         permloc_ = 0;
-        permlocWell_ = 0;
-        for (int i = 0; i < dim; i++)
-            permTest_[i][i] = 1.0e-15;
-        for (int i = 0; i < dim; i++)
-            permloc_[i][i] = 2.0e-14;
-        for (int i = 0; i < dim; i++)
-            permlocWell_[i][i] = 1.0e-12;
     }
 
 
 private:
-    Dune::FieldMatrix<Scalar,dim,dim> permloc_, permlocWell_, permTest_;
+    Dune::FieldMatrix<Scalar,dim,dim> permloc_;
     std::vector<double> perm_;
     std::vector<double> poro_;
     Dune::BlockVector<FieldVector<double, 5> > soilProps_;
