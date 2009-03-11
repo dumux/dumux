@@ -320,6 +320,8 @@ int FVTransport<Grid, Scalar, VC, Problem>::update(const Scalar t, Scalar& dt,
                     totFactor = 0;
                     if (factor)
                     {
+//                        std::cout<<"factor = "<<factor<<std::endl;
+//                        std::cout<<"updateVec = "<<updateVec[globalIdxI]<<std::endl;
                         totFactor = velocityJI-velocityIJ;
                     }
                 }

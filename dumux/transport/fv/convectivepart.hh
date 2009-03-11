@@ -18,7 +18,7 @@ private:
 
 public:
 
-    virtual Scalar operator() (const Element& element, const Scalar sat, const GlobalPosition& faceGlobal) const
+    virtual Scalar operator() (const Element& element, const Scalar sat, const int faceNumber) const
     {
         Scalar trivial(0);
         return trivial;
