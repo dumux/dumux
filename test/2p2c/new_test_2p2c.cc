@@ -2,10 +2,15 @@
 
 #include "new_injectionproblem.hh"
 
-#include <dune/grid/common/gridinfo.hh>
-#include <dune/grid/io/file/dgfparser.hh>
 
-#include <dune/grid/yaspgrid.hh>
+//#include <dune/grid/yaspgrid.hh>
+#include<dune/grid/uggrid.hh>
+//#include<dune/grid/sgrid.hh>
+
+#include<dune/grid/common/grid.hh>
+#include <dune/grid/io/file/dgfparser/dgfug.hh>
+#include <dune/grid/common/gridinfo.hh>
+
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/mpihelper.hh>
@@ -23,6 +28,7 @@ int main(int argc, char** argv)
         //        typedef Dune::ALUSimplexGrid<dim, dim>           Grid;
         //        typedef Dune::YaspGrid<dim>                      Grid;
         typedef Dune::UGGrid<dim>                        Grid;
+//        typedef Dune::SGrid<dim>                        Grid;
         typedef Dune::NewInjectionProblem<Grid, Scalar>  Problem;
         typedef Problem::DomainTraits::GlobalPosition    GlobalPosition;
         typedef Dune::GridPtr<Grid>                      GridPointer;
@@ -32,7 +38,7 @@ int main(int argc, char** argv)
 
         // parse the command line arguments for the program
         if (argc != 4) {
-            std::cout << boost::format("usage: %s tEnd dt grid\n")%argv[0];
+            std::cout << boost::format("usage: %s grid tEnd dt\n")%argv[0];
             return 1;
         }
         double tEnd, dt;
@@ -62,8 +68,7 @@ int main(int argc, char** argv)
         */
 
         // load the grid from file
-        GridPointer gridPtr =  GridPointer(dgfFileName,
-                                           Dune::MPIHelper::getCommunicator());
+        GridPointer gridPtr =  GridPointer(dgfFileName);
         Dune::gridinfo(*gridPtr);
 
 
