@@ -25,6 +25,7 @@
 #include <dumux/io/restart.hh>
 
 #include <dune/common/timer.hh>
+#include <dune/common/collectivecommunication.hh>
 #include <dune/grid/common/gridinfo.hh>
 #include <dune/grid/io/file/dgfparser/dgfalu.hh>
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
@@ -65,6 +66,7 @@ class NewBenchmark3Problem : public BasicDomain<Dune::UGGrid<3>,
     typedef Dune::UGGrid<3>              Grid;
     typedef BasicDomain<Grid, ScalarT>     ParentType;
     typedef NewBenchmark3Problem<ScalarT>    ThisType;
+    typedef CollectiveCommunication<ThisType> CollectiveCommunication;
 #if !ISOTHERMAL
     typedef TwoPTwoCNIBoxModel<ThisType>   Model;
 #else
@@ -511,8 +513,11 @@ private:
 
         Dune::FieldVector<Scalar, 4> mass;
         model_.calculateMass(mass);
+
+        if(collectiveCom_.rank() == 0){
         std::cout<< "Mass[kg] (nC, nC in nP, wC, wC in wP):"
         << mass[0] <<", "<<mass[1]<<", "<< mass[2]<<", "<< mass[3] <<". ";
+        }
 
         resultWriter_.endTimestep();
     }
@@ -539,6 +544,7 @@ private:
     NewtonController newtonCtl_;
 
     VtkMultiWriter  resultWriter_;
+    CollectiveCommunication collectiveCom_;
 
     bool wasRestarted_;
 };
