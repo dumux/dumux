@@ -9,6 +9,7 @@
 #include<map>
 #include<stdio.h>
 #include<stdlib.h>
+#include <boost/format.hpp>
 
 #include <dune/disc/functions/p0function.hh>
 
@@ -85,7 +86,7 @@ public:
             strcpy(systemCommand, startCommand);
             strcat(systemCommand, " -type f -name simset -exec dirname {} \\; >simsetloc.txt");
             system(systemCommand);
-            std::ifstream simSetLoc("simSetLoc.txt");
+            std::ifstream simSetLoc("simsetloc.txt");
             simSetLoc.seekg (0, std::ios::end);
             int length = simSetLoc.tellg();
             simSetLoc.seekg (0, std::ios::beg);
@@ -407,6 +408,206 @@ private:
     Dune::FieldMatrix<Scalar,dim,dim> permLoc_;
     ElementMapper elementMapper_;
 };
+
+
+/*! \brief providing a random permeability field for 1-D, 2-D or 3-D using gstat for gaussian simulation.
+ *  \author Jochen Fritz
+ *  gstat is an open source software tool which can (among other things) generate
+ *  geostatistical random fields. This functionality is used for this class. See www.gstat.org.
+ *  To use this class, unpack the zipped gstat tarball in the external directory and build gstat
+ *  according to the README file. You have to provide a control file for gstat (examples can be found
+ *  in the gstat tarball in the subdirectory DUMUX_stuff).
+ */
+template<class Grid>
+class GstatRandomPermeability
+{
+    template<int dim>
+    struct ElementLayout
+    {
+        bool contains(Dune::GeometryType gt)
+        {
+            return gt.dim() == dim;
+        }
+    };
+
+    enum
+        {
+            dim = Grid::dimension, dimWorld = Grid::dimensionworld
+        };
+    typedef    typename Grid::ctype Scalar;
+    typedef typename Grid::LeafGridView GridView;
+    typedef P0Function<GridView,Scalar,1> PermType;
+    typedef BlockVector<FieldVector<Scalar,1> > RepresentationType;
+    typedef typename Grid::Traits::template Codim<0>::Entity Element;
+    typedef typename Grid::Traits::template Codim<0>::EntityPointer ElementPointer;
+    typedef typename GridView::IndexSet IndexSet;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,IndexSet,ElementLayout> ElementMapper;
+
+    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+
+public:
+    /*! \brief Constructor.
+     *  If a randompermeability field is to be generated, three filenames must be known:
+     *  - a control file, where the commands and the input and output files for gstat are specified.
+     *  - a gstat input file (this filename must be same as in the control file). This class writes
+     *  the coordinates of the cell centers into the gstat input file and gstat computes
+     *  realizations of the random variable at those coordinates.
+     *  - a gstat output file (this filename must be same as in the control file). gstat writes the
+     *  random values to this file.
+     *  If there already is a random field in a gstat output file and you want to reuse it, simply
+     *  set create to false and specify the filename.
+     *  \param grid reference to grid
+     *  \param create set true to create a new field.
+     *  \param gstatOut name of the gstat output file
+     *  \param gstatCon name of control file for gstat
+     *  \param gstatIn name of input file for gstat
+     */
+    GstatRandomPermeability(const Grid& grid, const bool create = true, const char* gstatOut = "permeab.dat", const char* gstatCon = "gstatControl.txt", const char* gstatIn = "gstatInput.txt")
+        : grid_(grid), createNew_(create), perm_(grid_.leafView()), permLoc_(0),
+          elementMapper_(grid_, grid_.leafIndexSet())
+    {
+        init(gstatCon, gstatIn, gstatOut, create);
+    }
+
+    void init(const char* gstatCon = "gstatControl.txt", const char* gstatIn = "gstatInput.txt", const char* gstatOut = "permeab.dat", const bool create = true)
+    {
+        typedef typename GridView::template Codim<0>::Iterator ElementIterator;
+
+         const GridView& gridView(grid_.leafView());
+         ElementIterator eItEnd = gridView.template end<0>();
+
+         char* pwd(getenv("PWD"));
+         char startCommand[220];
+         strcpy(startCommand, "find ");
+         strcat(startCommand, pwd);
+         strcat(startCommand, "/");
+         char systemCommand[220];
+
+         char gstatDir[221];
+         int foundGstat = 0;
+         int k = 0;
+         while (!foundGstat && k++ < 5)
+         {
+             strcpy(systemCommand, startCommand);
+             strcat(systemCommand, " -type f -name gstat -exec dirname {} \\; >gstatloc.txt");
+             system(systemCommand);
+             std::ifstream gstatLoc("gstatloc.txt");
+             gstatLoc.seekg (0, std::ios::end);
+             int length = gstatLoc.tellg();
+             gstatLoc.seekg (0, std::ios::beg);
+             if (length> 0)
+             {
+                 foundGstat = 1;
+                 gstatLoc.getline(gstatDir, 220);
+             }
+             gstatLoc.close();
+             strcat(startCommand, "../");
+         }
+
+         if (createNew_)
+         {
+             // open output stream for simset input file
+             char outfileName[100];
+             strcpy(outfileName, gstatIn);
+             std::ofstream outfile(outfileName);
+             for (ElementIterator eIt = gridView.template begin<0>(); eIt != eItEnd; ++eIt)
+             {
+                 Dune::GeometryType gt = eIt->geometry().type();
+
+                 const LocalPosition&
+                     localPos = Dune::ReferenceElements<Scalar,dim>::general(gt).position(0,0);
+
+                 // get global coordinate of cell center
+                 const GlobalPosition& globalPos = eIt->geometry().global(localPos);
+
+                 for (int d = 0; d < dim; d++) outfile << globalPos[d] << " "<< std::flush;
+                 outfile << std::endl;
+             }
+             outfile.close();
+
+             std::string syscom;
+             syscom = gstatDir;
+             syscom += "/gstat ";
+             syscom += gstatCon;
+             system(syscom.c_str());
+             syscom = (boost::format("cat %s | python %s/../DUMUX_stuff/stripcrap.py %s %d > mothersLittleHelper.txt; mv mothersLittleHelper.txt %s")
+                 %gstatOut%gstatDir%gstatIn%int(dim)%gstatOut).str();
+             system(syscom.c_str());
+         }
+
+         char concd[100];
+         strcpy(concd, gstatOut);
+         std::ifstream infile(gstatOut);
+         std::cout << "Read permeability data from " << concd << std::endl;
+
+         std::string zeile;
+         std::getline(infile, zeile);
+
+         for (ElementIterator eIt = gridView.template begin<0>(); eIt != eItEnd; ++eIt)
+         {
+             int globalIdxI = elementMapper_.map(*eIt);
+             Scalar dummy1, dummy2, dummy3, permi;
+             std::getline(infile, zeile);
+             std::istringstream ist(zeile);
+             if (dim == 1)
+                 ist >> dummy1 >> permi;
+             else if (dim == 2)
+                 ist >> dummy1 >> dummy2 >> permi;
+             else if (dim == 3)
+                 ist >> dummy1 >> dummy2 >> dummy3 >> permi;
+             else
+                 DUNE_THROW(Dune::NotImplemented, "randompermeability is not implemented for dimension > 3");
+             (*perm_)[globalIdxI] = pow(10.0, permi);
+         }
+
+         infile.close();
+    }
+
+    //! return const reference to permeability vector
+    const RepresentationType& operator* () const
+    {
+        return (*perm_);
+    }
+
+    //! return reference to permeability vector
+    RepresentationType& operator* ()
+    {
+        return (*perm_);
+    }
+
+    Dune::FieldMatrix<Scalar,dim,dim>& K (const Element& e)
+    {
+        int elemId = elementMapper_.map(e);
+        Scalar permE = (*perm_)[elemId];
+
+        for (int i = 0; i < dim; i++)
+            permLoc_[i][i] = permE;
+
+        return permLoc_;
+    }
+
+    void vtkout (const char* name, const Grid& grid_) const
+    {
+        Dune::VTKWriter<typename Grid::LeafGridView>
+            vtkwriter(grid_.leafView());
+        vtkwriter.addCellData(*perm_, "absolute permeability");
+        int size = (*perm_).size();
+        RepresentationType logPerm(size);
+        for (int i = 0; i < size; i++)
+            logPerm[i] = log10((*perm_)[i]);
+        vtkwriter.addCellData(logPerm, "logarithm of permeability");
+        vtkwriter.write(name, Dune::VTKOptions::ascii);
+    }
+
+private:
+    const Grid& grid_;
+    PermType perm_;
+    Dune::FieldMatrix<Scalar,dim,dim> permLoc_;
+    const bool createNew_;
+    ElementMapper elementMapper_;
+};
+
 }
 
 #endif
