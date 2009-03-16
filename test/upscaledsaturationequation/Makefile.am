@@ -1,17 +1,15 @@
-# tests where program to build and program to run are equal
-NORMALTESTS = test_upscaledsaturation
+dist_noinst_DATA = test_upscaledsaturation.cc test_heterogeneoussoil.cc
 
-# list of tests to run
-#TESTS = $(NORMALTESTS)
+AM_LDFLAGS = @AM_LDFLAGS@ $(LOCAL_LIBS)
 
-# programs just to build when "make check" is used
-check_PROGRAMS = $(NORMALTESTS)
-
-dist_noinst_DATA = test_upscaledsaturation.cc
+noinst_PROGRAMS = test_upscaledsaturation test_heterogeneoussoil
 
 test_upscaledsaturation_SOURCES = test_upscaledsaturation.cc
 test_upscaledsaturation_DEPENDENCIES = $(LOCAL_LIBS)
+test_upscaledsaturation_CXXFLAGS = $(MPI_CPPFLAGS) 
+test_upscaledsaturation_LDADD = $(MPI_LDFLAGS) 
 
-AM_LDFLAGS = @AM_LDFLAGS@ $(LOCAL_LIBS)
+test_heterogeneoussoil_SOURCES = test_heterogeneoussoil.cc
+test_heterogeneoussoil_DEPENDENCIES = $(LOCAL_LIBS)
 
 include $(top_srcdir)/am/global-rules
