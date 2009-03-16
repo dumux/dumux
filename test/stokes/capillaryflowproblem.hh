@@ -9,78 +9,108 @@ namespace Dune {
 
 /** \todo Please doc me! */
 
-template<class G, class RT>
-class CapillaryFlowProblem : public StokesProblem<G, RT>
+template<class Grid, class Scalar>
+class CapillaryFlowProblem : public StokesProblem<Grid, Scalar>
 {
-    typedef typename G::ctype DT;
-    enum {dim=G::dimension, numEq=G::dimension+1};
-    typedef typename G::Traits::template Codim<0>::Entity Entity;
-    typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
+    enum {dim=Grid::dimension, numEq=Grid::dimension+1};
+    typedef typename Grid::Traits::template Codim<0>::Entity Element;
+    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
 
 public:
-    virtual FieldVector<RT,numEq> q(const FieldVector<DT,dim>& x, const Entity& e,
-                                    const FieldVector<DT,dim>& xi) const
+    virtual FieldVector<Scalar,numEq> q(const FieldVector<Scalar,dim>& globalPos, const Element& element,
+                                    const FieldVector<Scalar,dim>& localPos) const
     {
-        FieldVector<RT,numEq> result(0);
+        FieldVector<Scalar,numEq> result(0);
 
         return result;
     }
 
-    virtual BoundaryConditions::Flags bctype (const FieldVector<DT,dim>& x, const Entity& e,
+    virtual BoundaryConditions::Flags bctype (const FieldVector<Scalar,dim>& globalPos, const Element& element,
                                               const IntersectionIterator& intersectionIt,
-                                              const FieldVector<DT,dim>& xi) const
+                                              const FieldVector<Scalar,dim>& localPos) const
     {
-        if (x[0] > 0.0009999)
-            return BoundaryConditions::neumann;
+        if (globalPos[0] < 1e-10 || globalPos[1] > 0.00001 - 1e-10)// || globalPos[1] < 1e-10)
+            return BoundaryConditions::dirichlet;
 
-        return BoundaryConditions::dirichlet;
+        return BoundaryConditions::neumann;
     }
 
-    virtual FieldVector<RT,dim> g(const FieldVector<DT,dim>& x, const Entity& e,
+    virtual FieldVector<Scalar,dim> g(const FieldVector<Scalar,dim>& globalPos, const Element& element,
                                   const IntersectionIterator& intersectionIt,
-                                  const FieldVector<DT,dim>& xi) const
+                                  const FieldVector<Scalar,dim>& localPos) const
     {
-        if (x[0] < 1.0e-8)
-            return velocity(x);
+        if (globalPos[0] < 1.0e-10)
+            return velocity(globalPos);
         else
         {
-            FieldVector<RT,dim> result(0);
+            FieldVector<Scalar,dim> result(0);
             return result;
         }
     }
 
-    virtual FieldVector<RT,dim> J(const FieldVector<DT,dim>& x, const Entity& e,
+    virtual FieldVector<Scalar,dim> J(const FieldVector<Scalar,dim>& globalPos, const Element& element,
                                   const IntersectionIterator& intersectionIt,
-                                  const FieldVector<DT,dim>& xi)
+                                  const FieldVector<Scalar,dim>& localPos)
     {
-        FieldVector<RT,dim> result(0);
+        FieldVector<Scalar,dim> result(0);
+
+        if (globalPos[1] < 1e-10)
+        {
+            // ASSUMING face-wise constant normal
+            FieldVector<Scalar, dim-1> localDimM1(0);
+            FieldVector<Scalar,dim> normal = intersectionIt->unitOuterNormal(localDimM1);
+
+            FieldVector<Scalar,dim> pN = normal;
+            pN *= pressure(globalPos);
+
+            FieldVector<Scalar,dim> muGradVN(0);
+            velocityGradient(globalPos).umv(normal, muGradVN);
+            muGradVN *= mu(globalPos, element, localPos);
+
+            Scalar muGradVNN = muGradVN*normal;
+
+            //result = normal;
+            result = muGradVN;
+            result -= pN;
+        }
+
         return result;
     }
 
-    virtual RT mu(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi) const
+    virtual Scalar mu(const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos) const
     {
         return 0.016625;
     }
 
-    virtual FieldVector<RT,dim> velocity(const FieldVector<DT,dim>& x) const
+    virtual Scalar beaversJosephC(const FieldVector<Scalar,dim>& globalPos, const Element& element,
+                              const IntersectionIterator& intersectionIt,
+                              const FieldVector<Scalar,dim>& localPos) const
     {
-        FieldVector<RT,dim> result(0);
-        result[0] = -60000000.0 * x[1] * x[1] + 600.0 * x[1]; //entspricht v_m = 1 mm/s
+        if (globalPos[1] < 1e-10)
+            return 0;
+        else
+            return -1.0;
+    }
+
+    virtual FieldVector<Scalar,dim> velocity(const FieldVector<Scalar,dim>& globalPos) const
+    {
+        FieldVector<Scalar,dim> result(0);
+        result[0] = -60000000.0 * globalPos[1] * globalPos[1] + 600.0 * globalPos[1]; //entspricht v_m = 1 mm/s
         result[1] = 0.0;
 
 
         return result;
     }
 
-    virtual RT pressure(const FieldVector<DT,dim>& x) const
+    virtual Scalar pressure(const FieldVector<Scalar,dim>& globalPos) const
     {
-        return (-1995000.0*x[0]);
+        return (-1995000.0*globalPos[0]);
     }
 
-    virtual FieldMatrix<DT, dim, dim> velocityGradient(const FieldVector<DT,dim>& x) const
+    virtual FieldMatrix<Scalar, dim, dim> velocityGradient(const FieldVector<Scalar,dim>& globalPos) const
     {
-        FieldMatrix<DT, dim, dim> result(0);
-        result[0][1] = -120000000.0 * x[1] + 600.0;
+        FieldMatrix<Scalar, dim, dim> result(0);
+        result[0][1] = -120000000.0 * globalPos[1] + 600.0;
 
         return result;
     }

@@ -39,11 +39,17 @@ public:
                                       const IntersectionIterator& intersectionIt,
                                       const FieldVector<Scalar,dim>& localPos) const
     {
+        FieldVector<Scalar,dim> result(0);
+
         if (globalPos[0] < 1e-6)
-            return velocity(globalPos);
+        {
+            result[0] = 1;
+            return result;
+//            return velocity(globalPos);
+        }
         else
         {
-            FieldVector<Scalar,dim> result(0);
+//            FieldVector<Scalar,dim> result(0);
             return result;
         }
     }
