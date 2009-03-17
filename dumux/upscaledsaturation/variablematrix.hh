@@ -1,4 +1,4 @@
-// $Id:$
+// $Id$
 #ifndef DUNE_VARIABLEMATRIX_HH
 #define DUNE_VARIABLEMATRIX_HH
 
@@ -68,31 +68,22 @@ public:
         {
             int columnSize = std::max(variableMatrix_[i].size(),
                     summand[i].size());
-            std::cout<<"columnSize = "<<columnSize<<std::endl;
-            std::cout << "columnSizeA = " << variableMatrix_[i].size()
-                    << std::endl;
-            std::cout << "columnSizeB = " << summand[i].size() << std::endl;
             sum[i].resize(columnSize);
         }
         sum = *this + summand;
         *this = sum;
-        std::cout << "test" << std::endl;
+
         return;
     }
 
     ThisType operator+(const ThisType& summand) const
     {
-        std::cout << "I am here 2" << std::endl;
         ThisType sum;
         sum.resizeRows(rowSize_);
         for (int i = 0; i < rowSize_; i++)
         {
             int columnSize = std::max(variableMatrix_[i].size(),
                     summand[i].size());
-            std::cout << "columnSizeA = " << variableMatrix_[i].size()
-                    << std::endl;
-            std::cout << "columnSizeB = " << summand[i].size() << std::endl;
-            std::cout << "columnSize = " << columnSize << std::endl;
             sum[i].resize(columnSize);
         }
         for (int i = 0; i < rowSize_; i++)
@@ -103,7 +94,6 @@ public:
             int columnSize = std::max(columnSizeA, columnSizeB);
             for (int j = 0; j < columnSize; j++)
             {
-                std::cout << "I am here 4" << std::endl;
                 if (columnSizeA < columnSize)
                 {
                     if (j < columnSizeA)
@@ -132,13 +122,11 @@ public:
                 }
             }
         }
-        std::cout << "test" << std::endl;
         return sum;
     }
 
     void addEntry(EntryType newEntry, int rowNum, int columnNum)
     {
-//        std::cout<<"rowNum = "<<rowNum<<"columnNum = "<<columnNum<<std::endl;
         checkRowSizeValue();
         while (rowSize_ < rowNum + 1)
         {
@@ -148,7 +136,6 @@ public:
             rowSize_++;
         }
         int columnSize = variableMatrix_[rowNum].size();
-//        std::cout<<"columnSizeAdd = "<<columnSize<<std::endl;
         while (columnSize < columnNum + 1)
         {
             EntryType addEntry(0);

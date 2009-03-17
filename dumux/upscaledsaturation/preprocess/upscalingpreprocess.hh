@@ -52,8 +52,8 @@ public:
     {}
 
 #ifdef PARALLEL
-    UpscalingPreprocess(Grid& grid, Dune::CollectiveCommunication<MPI_Comm>& comm,Fluid& wettingPhase , Fluid& nonWettingPhase, Matrix2p<Grid, Scalar>& soil, CoarseScaleParameterType& coarseParams, TwoPhaseRelations<Grid, Scalar>& materialLaw = *(new TwoPhaseRelations<Grid, Scalar>), Scalar tEnd = 1e6)
-    :grid_(grid), communicator_(comm),wettingPhase_(wettingPhase), nonWettingPhase_(nonWettingPhase),soil_(soil),coarseParameters_(coarseParams),materialLaw_(materialLaw),eps_(1e-6)
+    UpscalingPreprocess(Grid& grid, Dune::CollectiveCommunication<MPI_Comm>& comm, int* allRanks, Fluid& wettingPhase , Fluid& nonWettingPhase, Matrix2p<Grid, Scalar>& soil, CoarseScaleParameterType& coarseParams, TwoPhaseRelations<Grid, Scalar>& materialLaw = *(new TwoPhaseRelations<Grid, Scalar>), Scalar tEnd = 1e6)
+    :grid_(grid), communicator_(comm), numProc_(comm.size()), allRanks_(allRanks), wettingPhase_(wettingPhase), nonWettingPhase_(nonWettingPhase),soil_(soil),coarseParameters_(coarseParams),materialLaw_(materialLaw),eps_(1e-6)
     {}
 #endif
 
@@ -68,15 +68,17 @@ public:
 
 private:
     Grid& grid_;
+#ifdef PARALLEL
+    const Dune::CollectiveCommunication<MPI_Comm>& communicator_;
+    const int numProc_;
+    int* allRanks_;
+#endif
     Fluid& wettingPhase_;
     Fluid& nonWettingPhase_;
     Matrix2p<Grid, Scalar>& soil_;
     CoarseScaleParameterType& coarseParameters_;
     TwoPhaseRelations<Grid, Scalar>& materialLaw_;
     Scalar eps_;
-#ifdef PARALLEL
-    const Dune::CollectiveCommunication<MPI_Comm>& communicator_;
-#endif
 };
 
 template<class Grid, class Scalar, class CoarseScaleParameterType>void UpscalingPreprocess<Grid,Scalar,CoarseScaleParameterType>::calcDispersiveFluxCorrection(int coarseLev,int fineLev)
@@ -94,10 +96,6 @@ template<class Grid, class Scalar, class CoarseScaleParameterType>void Upscaling
     coarseParameters_.getDispersion().resizeRows(size);
     coarseParameters_.getDispersionSat().resizeRows(size);
 
-#ifdef PARALLEL
-    int numProc = communicator_.size();
-#endif
-
     ElementIterator eItCoarseEnd = gridView.template end<0>();
     for (ElementIterator eItCoarse = gridView.template begin<0>(); eItCoarse != eItCoarseEnd; ++eItCoarse)
     {
@@ -108,11 +106,15 @@ template<class Grid, class Scalar, class CoarseScaleParameterType>void Upscaling
         int rank = communicator_.rank();
         bool takeEntity = false;
 
-        for (int i = 0;i<numProc;i++)
+//        for (int i=0;i<numProc_;i++)
+//        {
+//        std::cout<<"allRanks = "<<allRanks_[i]<<std::endl;
+//        }
+        for (int i = 0;i<numProc_;i++)
         {
-            if (rank == i)
+            if (rank == allRanks_[i])
             {
-                if (globalIdxCoarse >= size/numProc*i && globalIdxCoarse < size/numProc*(i+1))
+                if (globalIdxCoarse >= size/numProc_*i && globalIdxCoarse < size/numProc_*(i+1))
                 {
                     takeEntity = true;
                 }
@@ -167,10 +169,6 @@ template<class Grid, class Scalar, class CoarseScaleParameterType>void Upscaling
     coarseParameters_.getFluxCorr().resizeRows(size);
     coarseParameters_.getFluxCorrSat().resizeRows(size);
 
-#ifdef PARALLEL
-    int numProc = communicator_.size();
-#endif
-
     ElementIterator eItCoarseEnd = gridView.template end<0>();
     for (ElementIterator eItCoarse = gridView.template begin<0>(); eItCoarse != eItCoarseEnd; ++eItCoarse)
     {
@@ -180,11 +178,11 @@ template<class Grid, class Scalar, class CoarseScaleParameterType>void Upscaling
         int rank = communicator_.rank();
         bool takeEntity = false;
 
-        for (int i = 0;i<numProc;i++)
+        for (int i = 0;i<numProc_;i++)
         {
-            if (rank == i)
+            if (rank == allRanks_[i])
             {
-                if (globalIdxCoarse >= size/numProc*i && globalIdxCoarse < size/numProc*(i+1))
+                if (globalIdxCoarse >= size/numProc_*i && globalIdxCoarse < size/numProc_*(i+1))
                 {
                     takeEntity = true;
                 }
@@ -482,7 +480,7 @@ template<class Grid, class Scalar, class CoarseScaleParameterType>void Upscaling
         }
     }
 
-    if (communicator_.rank()==0)
+    if (communicator_.rank()==allRanks_[0])
     {
         exportToFile(dispersion.getMatrix(), "dataDispersion");
         exportToFile(dispersionSat.getMatrix(), "dataDispersionSat");
