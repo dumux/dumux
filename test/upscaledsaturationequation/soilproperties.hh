@@ -23,13 +23,13 @@ typedef    typename Grid::Traits::template Codim<0>::Entity Element;
 
     virtual const FieldMatrix& K (const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos)
     {
-        for(int i = 0; i < dim; i++)
-        {
-            constPermeability[i][i] = 1e-10;
-        }
-
-        return constPermeability;
-//        return randomPermeability.K(element);
+//        for(int i = 0; i < dim; i++)
+//        {
+//            constPermeability[i][i] = 1e-10;
+//        }
+//
+//        return constPermeability;
+        return randomPermeability.K(element);
     }
 
     virtual Scalar porosity(const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos) const

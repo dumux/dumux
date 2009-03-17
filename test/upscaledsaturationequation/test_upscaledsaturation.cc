@@ -1,7 +1,7 @@
 #include "config.h"
 #include <iostream>
 
-//#define PARALLEL
+#define PARALLEL
 
 #include <dune/common/mpihelper.hh>
 //#include <mpi.h>
@@ -44,6 +44,42 @@ int main(int argc, char** argv)
         Dune::MPIHelper::instance(argc, argv);
         Dune::CollectiveCommunication<MPI_Comm> communicator(Dune::MPIHelper::getCommunicator());
 
+        int numProc = communicator.size();
+        int allRanks [numProc];
+        int rank = communicator.rank();
+        int maxRank = communicator.max(rank);
+        int ProcIdx = 0;
+
+        for (int i=0;i<numProc;i++)
+        {
+            allRanks[i] = 0;
+        }
+
+        for (int i = 0;i<=maxRank;i++)
+        {
+            if (i == rank)
+            {
+                if (ProcIdx < numProc)
+                {
+                    allRanks[ProcIdx] = rank;
+                    ProcIdx++;
+                }
+                else
+                {
+                    std::cerr << "Dune reported error: ProcIdx larger than number of processes!"<< std::endl;
+                }
+            }
+            if (rank != i)
+            {
+                ProcIdx = 0;
+            }
+            communicator.sum(&ProcIdx,1);
+        }
+        for (int i=0;i<numProc;i++)
+        {
+            communicator.sum(&allRanks[i],1);
+        }
+
         // define the problem dimensions
         const int dim = 2;
 
@@ -67,7 +103,7 @@ int main(int argc, char** argv)
 
         GridType grid(N,L,H);
 
-        grid.globalRefine(2);
+        grid.globalRefine(3);
 
         Dune::Water wetmat;
         Dune::Oil nonwetmat;
@@ -85,12 +121,12 @@ int main(int argc, char** argv)
         CoarseScaleParameters coarseParameters;
 
         Dune::UpscalingPreprocess<GridType, Scalar, CoarseScaleParameters>
-        preprocess(grid, communicator, wetmat, nonwetmat, soil, coarseParameters,
+        preprocess(grid, communicator, allRanks, wetmat, nonwetmat, soil, coarseParameters,
                 materialLaw, 1e6);
 
         preprocess.preprocessexecute();
 
-        if (communicator.rank() == 0)
+        if (communicator.rank() == allRanks[0])
         {
             Dune::writeCorrection<CoarseScaleParameters, GridType>(
                     coarseParameters);
@@ -137,7 +173,7 @@ int main(int argc, char** argv)
             //
             double tStart = 0;
             //    double tEnd = 1.295e8;
-            char* fileName("test_upscaledsaturation-testwithcorr-large");
+            const char* fileName("test_upscaledsaturation-testwithcorr-large");
             //      char* fileName("test_upscaledsaturation-testnocorr-large");
 
             double cFLFactor = 0.8;
@@ -207,7 +243,7 @@ int main(int argc, char** argv)
                 Problem;
         Problem problem(variables, wetmat, nonwetmat, soil, coarseParameters,
                 materialLaw, L, H, false);
-        //          soil.randomPermeability.vtkout("permeability", grid);
+                  soil.randomPermeability.vtkout("permeability", grid);
         //
         //    typedef Dune::FVDiffusionVelocity<GridType, Scalar, VariableType> DiffusionType;
         typedef Dune::FVDiffusionVelocityUpscaled<GridType, Scalar, VariableType,Problem>
