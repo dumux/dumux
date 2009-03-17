@@ -50,47 +50,10 @@ public:
         for (int comp = 0; comp < dim; comp++)
             stokesVel[comp] = stokesSol[comp];
 
-        //std::cout << "q = " << qGlobal << ", stokesVel = " << stokesVel << ", normal = " << normal<< std::endl;
         result = -(stokesVel*normal);
 
         return;
     }
-
-    template <class FV, class FVGrad, class ElementT>
-    void localBoundaryDefect1(FV& stokesSol, FVGrad& stokesSolGrad, int stokesIndex,
-                              FieldVector<double, dim> globalPos, const ElementT& element,  FieldVector<double, dim> localPos,
-                              FieldVector<double, dim> normal, FV& result)
-    {
-        // extract velocity gradient
-        FieldMatrix<Scalar, dim, dim> gradV;
-        for (int i = 0; i < dim; i++)
-            for (int j = 0; j < dim; j++)
-                gradV[i][j] = stokesSolGrad[i][j];
-
-        //std::cout << "gradV = " << gradV << std::endl;
-        // calculate mu . grad v
-        gradV *= this->firstModel().problem.mu(globalPos, element, localPos);
-
-        // (mu . grad v) . n
-        FieldVector<Scalar, dim> gradVN(0);
-        gradV.umv(normal, gradVN);
-
-        // the normal component ((mu . grad v) . n) . n
-        Scalar gradVNN = gradVN*normal;
-
-        for (int i = 0; i < dim; i++)
-            result[i] = normal[i];
-
-        result *= -(stokesSol[dim] - gradVNN);
-
-        return;
-    }
-
-    //    template <class A12Type, class A21Type>
-    //    void assembleCoupling(A12Type& A_12, A21Type& A_21)
-    //    {
-    //        BaseType::template assembleCoupling<A12Type, A21Type>(A_12, A_21);
-    //    }
 
     virtual void update(double& dt)
     {
@@ -98,7 +61,7 @@ public:
         this->firstModel().localJacobian().setOldSolution(this->firstModel().uOldTimeStep);
         this->secondModel().localJacobian().setDt(dt);
         this->secondModel().localJacobian().setOldSolution(this->secondModel().uOldTimeStep);
-        double dtol = 1e-3;
+        double dtol = 1e-1;
         double rtol = 1e7;
         int maxIt = 10;
         double mindt = 1e-5;

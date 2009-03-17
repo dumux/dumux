@@ -72,15 +72,6 @@ public:
                                                                   firstIndex, secondIndex, qGlobal, normal, result);
     }
 
-    template <class FV, class FVGrad, class ElementT>
-    void localBoundaryDefect1(FV& firstSol, FVGrad& firstSolGrad, int firstIndex,
-                              FieldVector<double, dim> qGlobal, const ElementT& element, FieldVector<double, dim> qLocal,
-                              FieldVector<double, dim> normal, FV& result)
-    {
-        this->getImp().template localBoundaryDefect1<FV,FVGrad>(firstSol, firstSolGrad,
-                                                                firstIndex, qGlobal, element, qLocal, normal, result);
-    }
-
     template <class FirstFV, class SecondFV>
     void localCoupling21(FirstFV& firstSol, SecondFV& secondSol, int firstIndex, int secondIndex,
                          FieldVector<double, dim> qGlobal, FieldVector<double, dim> normal, SecondFV& result)
@@ -95,16 +86,16 @@ public:
         if (subCVF == 0)
         {
             firstSolAtQ = firstSol[0];
-            //            firstSolAtQ *= 3.0;
-            //            firstSolAtQ += firstSol[1];
-            //            firstSolAtQ *= 0.25;
+            firstSolAtQ *= 3.0;
+            firstSolAtQ += firstSol[1];
+            firstSolAtQ *= 0.25;
         }
         else
         {
             firstSolAtQ = firstSol[1];
-            //            firstSolAtQ *= 3.0;
-            //            firstSolAtQ += firstSol[0];
-            //            firstSolAtQ *= 0.25;
+            firstSolAtQ *= 3.0;
+            firstSolAtQ += firstSol[0];
+            firstSolAtQ *= 0.25;
         }
     }
 
@@ -122,8 +113,6 @@ public:
             int globalId = firstVertexMapper_.map(*vertexPointer);
 
             FieldVector<double, firstNumEq> vertexSol = this->firstModel().sol()[globalId];
-
-            //std::cout << "vert " << vert << ": sol " << vertexSol << ", shapeGrad = " << shapeGrad << std::endl;
 
             for (int equation = 0; equation < firstNumEq; equation++)
             {
@@ -143,27 +132,22 @@ public:
         if (subCVF == 0)
         {
             secondSolAtQ = secondSol[0];
-            //            secondSolAtQ *= 3.0;
-            //            secondSolAtQ += secondSol[1];
-            //            secondSolAtQ *= 0.25;
+            secondSolAtQ *= 3.0;
+            secondSolAtQ += secondSol[1];
+            secondSolAtQ *= 0.25;
         }
         else
         {
             secondSolAtQ = secondSol[1];
-            //            secondSolAtQ *= 3.0;
-            //            secondSolAtQ += secondSol[0];
-            //            secondSolAtQ *= 0.25;
+            secondSolAtQ *= 3.0;
+            secondSolAtQ += secondSol[0];
+            secondSolAtQ *= 0.25;
         }
     }
 
     template <class A12Type, class A21Type>
     void assembleCoupling(A12Type& A_12, A21Type& A_21)
     {
-        count ++;
-        //std::cout << "count = " << count << std::endl;
-        //printvector(std::cout, this->firstModel().sol(), "Stokes solution", "row", 3, 1, 3);
-        //printvector(std::cout, this->secondModel().sol(), "Darcy solution", "row", 100, 1, 3);
-
         // intialize rowsizes with 0
         for (typename A12Type::size_type i = 0; i < A_12.N(); i++)
             A_12.setrowsize(i, 0);
@@ -405,9 +389,6 @@ public:
                         calculateFirstSolGradientAtQ(*firstIt, firstFVGeom, bfIdx, firstSolGradientAtQ);
                         calculateSecondSolAtQ(secondSol, subCVF, secondSolAtQ);
                         FieldVector<double, firstNumEq> boundaryDefect1(0);
-                        //                        if (count < 3)
-                        //                            localBoundaryDefect1(firstSolAtQ, firstSolGradientAtQ, firstIndex, qGlobal, *firstIt, firstQLocal, normal, boundaryDefect1);
-                        //                        else
                         localCoupling12(firstSolAtQ, secondSolAtQ, firstIndex, secondIndex, qGlobal, normal, boundaryDefect1);
                         (this->firstModel().rhs())[firstIndex] += boundaryDefect1;
                         FieldVector<double, secondNumEq> boundaryDefect2(0);
@@ -518,13 +499,12 @@ public:
                bool assembleGlobalSystem)
         : BaseType(firstGrid, firstModel, secondGrid, secondModel, assembleGlobalSystem),
           firstVertexMapper_(firstGrid, firstGrid.leafIndexSet()),
-          secondVertexMapper_(secondGrid, secondGrid.leafIndexSet()), count(0)
+          secondVertexMapper_(secondGrid, secondGrid.leafIndexSet())
     {}
 
 private:
     FirstVertexMapper firstVertexMapper_;
     SecondVertexMapper secondVertexMapper_;
-    int count;
 };
 
 }

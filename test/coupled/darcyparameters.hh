@@ -18,20 +18,28 @@ class DarcyParameters  : public CoupledPorousMediaProblem<Grid, Scalar>
 public:
     DarcyParameters ()
     {
-        eps_ = 1e-6;
+        eps_ = 1e-10;
         // CHANGE also in the Stokes problem!
         for (int i=0; i<dim; i++)
             for (int j=0; j<dim; j++)
                 if (i==j)
-                    permeability_[i][j] = 1e0; // provide intrinsic K / mu
+                {
+                    permTissue_[i][j] = 5e-15; // provide intrinsic K / mu
+                    permSmall_[i][j] = 1e-20;
+                }
                 else
-                    permeability_[i][j] = 0;
+                {
+                    permTissue_[i][j] = permSmall_[i][j] = 0;
+                }
     }
 
     const FieldMatrix<Scalar,dim,dim>& K (const FieldVector<Scalar,dim>& globalPos, const Element& element,
                                           const FieldVector<Scalar,dim>& localPos) const
     {
-        return permeability_;
+        if (globalPos[0] > 0.2e-3 && globalPos[0] < 0.8e-3)
+            return permTissue_;
+        else
+            return permSmall_;
     }
 
     Scalar q (const FieldVector<Scalar,dim>& globalPos, const Element& element,
@@ -44,7 +52,7 @@ public:
                                       const IntersectionIterator& intersectionIt,
                                       const FieldVector<Scalar,dim>& localPos) const
     {
-        if (globalPos[0] > 4 - eps_)
+        if (globalPos[1] < -3e-5 + eps_)// || globalPos[0] < 1e-10 || globalPos[0] > 1e-3 - 1e-10)
             return BoundaryConditions::dirichlet;
 
         return BoundaryConditions::neumann;
@@ -55,7 +63,12 @@ public:
               const IntersectionIterator& intersectionIt,
               const FieldVector<Scalar,dim>& localPos) const
     {
-        return 0;
+        if (globalPos[0] < 1e-10)
+            return ((-1330.0 - 266.0)/(-3e-5)*globalPos[1] + 266.0);
+        else if (globalPos[0] > 1e-3 - 1e-10)
+            return ((-1330.0 + 1729.0)/(-3e-5)*globalPos[1] - 1729.0);
+        else
+            return -1330.0;
     }
 
     // Neumann boundary conditions
@@ -63,36 +76,24 @@ public:
               const IntersectionIterator& intersectionIt,
               const FieldVector<Scalar,dim>& localPos) const
     {
-        //        if (globalPos[0] > 1 + eps_)
-        //        {
-        //            FieldVector<Scalar,dim> KGradU(0);
-        //            permeability_.umv(exactGrad(globalPos), KGradU);
-        //
-        //            // ASSUMING face-wise constant normal
-        //            FieldVector<Scalar, dim-1> localDimM1(0);
-        //            return -(KGradU*intersectionIt->unitOuterNormal(localDimM1));
-        //        }
-        //        else
         return 0;
     }
 
     Scalar exact(const FieldVector<Scalar,dim>& globalPos) const
     {
-        return (globalPos[0]*globalPos[1]);
+        return (0);
     }
 
     FieldVector<Scalar,dim> exactGrad(const FieldVector<Scalar,dim>& globalPos) const
     {
-        FieldVector<Scalar,dim> grad;
-
-        grad[0] = globalPos[1];
-        grad[1] = globalPos[0];
+        FieldVector<Scalar,dim> grad(0);
 
         return grad;
     }
 
 private:
-    FieldMatrix<Scalar,dim,dim> permeability_;
+    FieldMatrix<Scalar,dim,dim> permTissue_;
+    FieldMatrix<Scalar,dim,dim> permSmall_;
     Scalar eps_;
 };
 } // end namespace

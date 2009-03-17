@@ -47,6 +47,7 @@ class BoxDiffusionJacobian
     typedef typename Element::Geometry Geometry;
     typedef BoxDiffusionJacobian<Grid,Scalar,BoxFunction> ThisType;
     typedef typename LocalJacobian<ThisType,Grid,Scalar,1>::VBlockType SolutionVector;
+    typedef BoxJacobian<ThisType,Grid,Scalar,1,BoxFunction> BoxJacobianType;
     typedef Dune::FVElementGeometry<Grid> FVElementGeometry;
 
 public:
@@ -65,6 +66,47 @@ public:
 
     void clearVisited ()
     {
+        return;
+    }
+
+    template<class TypeTag>
+    void localDefect(const Element& element, const SolutionVector* sol, bool withBC = true) {
+        BoxJacobianType::template localDefect<TypeTag>(element, sol, withBC);
+
+        this->template assembleBC<TypeTag>(element);
+
+        Dune::GeometryType gt = element.geometry().type();
+        const typename ReferenceElementContainer<Scalar,dim>::value_type& referenceElement = ReferenceElements<Scalar, dim>::general(gt);
+
+        for (int vert=0; vert < this->fvGeom.numVertices; vert++) // begin loop over vertices / sub control volumes
+            if (!this->fvGeom.subContVol[vert].inner)
+            {
+                typedef typename IntersectionIteratorGetter<Grid,TypeTag>::IntersectionIterator IntersectionIterator;
+
+                FieldVector<Scalar,dim> averagedNormal(0);
+                int faces = 0;
+                IntersectionIterator endit = IntersectionIteratorGetter<Grid, TypeTag>::end(element);
+                for (IntersectionIterator it = IntersectionIteratorGetter<Grid, TypeTag>::begin(element); it!=endit; ++it)
+                {
+                    if (it->boundary()) {
+                        int faceIdx = it->numberInSelf();
+                        int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
+                        for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++) {
+                            int nodeInElement = referenceElement.subEntity(faceIdx, 1, nodeInFace, dim);
+                            if (nodeInElement != vert)
+                                continue;
+
+                            faces++;
+                        }
+                    }
+                }
+
+                if (faces == 2 && this->fvGeom.numVertices == 4)
+                {
+                    this->def[vert] = sol[0] + sol[3] - sol[1] - sol[2];
+                }
+            }
+
         return;
     }
 
