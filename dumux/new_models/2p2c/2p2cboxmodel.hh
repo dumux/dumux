@@ -27,7 +27,7 @@
 namespace Dune
 {
 
-// forward declartion of the 2p2c box model
+// forward declaration of the 2p2c box model
 template<class ProblemT, class TwoPTwoCTraitsT>
 class TwoPTwoCBoxModel;
 
@@ -164,8 +164,8 @@ protected:
         {
             vertDat.pN = vertSol[pressureIdx];
             if (phaseState == bothPhases) vertDat.satW = vertSol[switchIdx];
-            else if (phaseState == wPhaseOnly) vertDat.satW = 0.0;
-            else if (phaseState == nPhaseOnly) vertDat.satW = 1.0;
+            else if (phaseState == wPhaseOnly) vertDat.satW = 1.0;
+            else if (phaseState == nPhaseOnly) vertDat.satW = 0.0;
             else DUNE_THROW(Dune::InvalidStateException, "Phase state " << phaseState << " is invalid.");
 
             vertDat.satN = 1.0 - vertDat.satW;
@@ -197,10 +197,9 @@ protected:
         vertDat.massfrac[nComp][nPhase] = 1.0 - vertDat.massfrac[wComp][nPhase];
         //                    vertDat.phaseState = phaseState;
 
-        // Density of Water is set constant here!
-        vertDat.density[wPhase] = 1000;//problem.wettingPhase().density(temperature,
-        //vertDat.pW,
-        //vertDat.massfrac[nComp][wPhase]);
+        vertDat.density[wPhase] = problem.wettingPhase().density(temperature,
+																 vertDat.pW,
+																 vertDat.massfrac[nComp][wPhase]);
         vertDat.density[nPhase] = problem.nonwettingPhase().density(temperature,
                                                                     vertDat.pN,
                                                                     vertDat.massfrac[wComp][nPhase]);
@@ -219,7 +218,7 @@ protected:
                                                               temperature,
                                                               vertDat.pN);
 
-        // diffusion coefficents
+        // diffusion coefficients
         vertDat.diffCoeff[wPhase] = problem.wettingPhase().diffCoeff(temperature, vertDat.pW);
         vertDat.diffCoeff[nPhase] = problem.nonwettingPhase().diffCoeff(temperature, vertDat.pN);
     }
@@ -536,7 +535,7 @@ public:
         Scalar diffusionAW(0.0), diffusionAN(0.0); // diffusion of gas
         SolutionVector avgDensity;
 
-        // Diffusion coefficent
+        // Diffusion coefficient
 
         // calculate tortuosity at the nodes i and j needed
         // for porous media diffusion coefficient
@@ -580,19 +579,13 @@ public:
         if (vDat_i.satW == 0 || vDat_j.satW == 0)
             Daw = 0;
 
-
-        // projection of the diffusion gradient on the normal
-        // of the FV face
-        normDiffGrad[wPhase] = xGrad[wPhase]*normal;
-        normDiffGrad[nPhase] = xGrad[nPhase]*normal;
-
         // calculate the arithmetic mean of densities
         avgDensity[wPhase] = 0.5*(vDat_i.density[wPhase] + vDat_j.density[wPhase]);
         avgDensity[nPhase] = 0.5*(vDat_i.density[nPhase] + vDat_j.density[nPhase]);
 
-        diffusionAW = Daw * avgDensity[wPhase] * normDiffGrad[wPhase];
+        diffusionAW = Daw * avgDensity[wPhase] * (xGrad[wPhase] * normal);
         diffusionWW = - diffusionAW;
-        diffusionWN = Dwn * avgDensity[nPhase] * normDiffGrad[nPhase];
+        diffusionWN = Dwn * avgDensity[nPhase] * (xGrad[nPhase] * normal);
         diffusionAN = - diffusionWN;
 
         // add diffusion of water to water flux
@@ -1051,8 +1044,10 @@ protected:
                 // non-wetting phase appears
                 std::cout << "Non-wetting phase appears at vertex " << globalIdx
                           << ", coordinates: " << globalPos << std::endl;
-                if (formulation == pNsW) (*globalSol)[globalIdx][switchIdx] = 1 - 1e-3;
-                else if (formulation == pWsN) (*globalSol)[globalIdx][switchIdx] = 1e-3;
+                if (formulation == pNsW)
+                	(*globalSol)[globalIdx][switchIdx] = 1 - 1e-3;
+                else if (formulation == pWsN)
+                	(*globalSol)[globalIdx][switchIdx] = 1e-3;
                 newPhaseState = bothPhases;
             }
         }
