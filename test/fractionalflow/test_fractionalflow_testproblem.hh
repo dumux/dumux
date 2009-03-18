@@ -1,12 +1,12 @@
-#ifndef TESTPROBLEM_UPSS_HH
-#define TESTPROBLEM_UPSS_HH
+#ifndef TEST_FRACTIONALFLOW_TESTPROBLEM_HH
+#define TEST_FRACTIONALFLOW_TESTPROBLEM_HH
 
 #include "dumux/fractionalflow/fractionalflowproblem.hh"
 
 namespace Dune {
 //! \ingroup diffusionProblems
 //! example class for diffusion problems
-template<class Grid, class Scalar, class VC> class UpsSProblem :
+template<class Grid, class Scalar, class VC> class FractionalFlowTestProblem :
         public FractionalFlowProblem<Grid,Scalar,VC> {
 
     enum {dim=Grid::dimension, dimWorld=Grid::dimensionworld};
@@ -15,7 +15,7 @@ template<class Grid, class Scalar, class VC> class UpsSProblem :
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;
 
 public:
-    UpsSProblem(VC& variables, Fluid& wettingphase, Fluid& nonwettingphase, Matrix2p<Grid, Scalar>& soil, TwoPhaseRelations<Grid, Scalar>& materialLaw = *(new TwoPhaseRelations<Grid,Scalar>), const GlobalPosition LowerLeft = 0,
+    FractionalFlowTestProblem(VC& variables, Fluid& wettingphase, Fluid& nonwettingphase, Matrix2p<Grid, Scalar>& soil, TwoPhaseRelations<Grid, Scalar>& materialLaw = *(new TwoPhaseRelations<Grid,Scalar>), const GlobalPosition LowerLeft = 0,
                 const GlobalPosition UpperRight = 0, const bool capillarity = false) :
         FractionalFlowProblem<Grid, Scalar, VC>(variables, wettingphase, nonwettingphase, soil, materialLaw, capillarity), Left_(LowerLeft[0]),
         Right_(UpperRight[0]), eps_(1e-8)
@@ -55,7 +55,7 @@ public:
     Scalar dirichletSat(const GlobalPosition& globalPos, const Element& element,
                         const LocalPosition& localPos) const {
         if (globalPos[0] < eps_)
-            return 1;
+            return 0.8;
         // all other boundaries
         return 0;
     }

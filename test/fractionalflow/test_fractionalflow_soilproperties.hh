@@ -1,5 +1,5 @@
-#ifndef MATRIXPROPERTIES
-#define MATRIXPROPERTIES
+#ifndef TEST_FRACTIONALFLOW_SOILPROPERTIES_HH
+#define TEST_FRACTIONALFLOW_SOILPROPERTIES_HH
 
 #include <dumux/material/property_baseclasses.hh>
 
@@ -9,7 +9,7 @@ namespace Dune
 /** \todo Please doc me! */
 
 template<class Grid, class Scalar>
-class HeterogeneousSoil: public Matrix2p<Grid, Scalar>
+class FractionalFlowTestSoil: public Matrix2p<Grid, Scalar>
 {
 public:
     enum
@@ -22,7 +22,11 @@ public:
 
     virtual const FieldMatrix &K (const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos)
     {
-        return K_;
+        for(int i = 0; i < dim; i++)
+        {
+            constPermeability[i][i] = 1e-7;
+        }
+        return constPermeability;
     }
     virtual double porosity(const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos) const
     {
@@ -39,41 +43,23 @@ public:
         return 0.2;
     }
 
-    /* ATTENTION: define heat capacity per cubic meter! Be sure, that it corresponds to porosity!
-     * Best thing will be to define heatCap = (specific heatCapacity of material) * density * porosity*/
-    virtual double heatCap(const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos) const
-    {
-        return 790 /* spec. heat cap. of granite */
-            * 2700 /* density of granite */
-            * porosity(globalPos, element, localPos);
-    }
-
-    virtual double heatCond(const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos, const double sat) const
-    {
-        static const double lWater = 0.6;
-        static const double lGranite = 2.8;
-        double poro = porosity(globalPos, element, localPos);
-        double lsat = pow(lGranite, (1-poro)) * pow(lWater, poro);
-        double ldry = pow(lGranite, (1-poro));
-        return ldry + sqrt(sat) * (ldry - lsat);
-    }
 
     virtual std::vector<double> paramRelPerm(const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos, const double T = 283.15) const
     {
 
         std::vector<double> param(2);
-        if (globalPos[0]<=300)
-        {
-            //linear parameters
-            param[0] = 0.2;
-            param[1] = 0.;
-        }
-        else
-        {
+//        if (globalPos[0]<=300)
+//        {
+//            //linear parameters
+////            param[0] = 0.2;
+////            param[1] = 0.;
+//        }
+//        else
+//        {
             //Brooks-Corey parameters
-            param[0] = 3; // lambda
+            param[0] = 0; // lambda
             param[1] = 0.; // entry-pressure
-        }
+//        }
         return param;
     }
 
@@ -82,18 +68,15 @@ public:
         //        if (x[0]<=300)
         //            return 1;
         //        else
-        return Matrix2p<Grid, Scalar>::brooks_corey;
+        return Matrix2p<Grid, Scalar>::linear;
     }
 
-    HeterogeneousSoil()
-        :Matrix2p<Grid,Scalar>(),K_(1e-7)//,permeability(g, name, create)
-    {}
-
-    ~HeterogeneousSoil()
+    FractionalFlowTestSoil()
+        :Matrix2p<Grid,Scalar>(),constPermeability(0)//,permeability(g, name, create)
     {}
 
 private:
-    FieldMatrix K_;
+    FieldMatrix constPermeability;
 
 public:
 
