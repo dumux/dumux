@@ -5,10 +5,27 @@
 #include "dumux/timedisc/timestep.hh"
 #include "dumux/timedisc/rungekuttastep.hh"
 
+/**
+ * @file
+ * @brief  Timeloop class for solving a local fine-scale problem within a local-global upscaling approach.
+ * @author Markus Wolff
+ */
+
 namespace Dune
 {
-
-/** \todo Please doc me! */
+//! \ingroup MultiMulti
+/*!  Timeloop class for solving a local fine-scale problem within a local-global upscaling approach.
+ * Local fine-scale problems are solved in order to obtain coarse-scale quantities.
+ * Local problems consisting of one coarse cell and
+ * local problems consisting of two coarse cells are solved.
+ * The coarse scale quantities are calculated according to the following paper:
+ *
+ * Efendiev and Durlofsky, "A Generalized Convection-Diffusion Model for Subgrid Transport in Porous Media", SIAM Multiscale Modeling and Simulation, Vol. 3, 504 - 526, 2003.*/
+/*! Template parameters are:
+ *  - Grid                       a Dune::subgrid grid type
+ *  - Model                      the model type (here of type IMPESSubProbs)
+ *  - CoarseScaleParameterType   a class type defining the course scale quantities
+ */
 
 template<class Grid, class Model, class CoarseScaleParameterType>
 class TimeLoopSubProbs
@@ -26,10 +43,13 @@ typedef    typename Model::Scalar Scalar;
 
 public:
 
+    //!calculates a saturation dependent macro dispersion coefficient from the solution of the local fine-scale problems
     void calculateMacroDispersion(Model&, const int, const int&, const GlobalPosition&, const GlobalPosition&);
 
+    //!calculates a saturation dependent convective flux correction from the solution of the local fine-scale problems
     void calculateFluxCorrection(Model&, const int,const int&, const int&, const GlobalPosition&, const GlobalPosition&, const GlobalPosition&);
 
+    //!start calculations for a subproblem
     void execute(Model& model, const int& subProblemNumber,const int& globalIdxCoarseCurrent, const GlobalPosition& lowerLeft, const GlobalPosition& upperRight, bool correctionType, const int& faceNumberCurrent, const GlobalPosition& globalPosFaceCoarseCurrent, Scalar& tEnd = *(new Scalar(1e6)))
     {
         typedef typename Grid::LevelGridView GridView;
@@ -48,8 +68,10 @@ public:
         Scalar t = tStart_;
         int k = 0;
 
+        //bool variables for timeloop control
         bool reachedTEnd = false;
         bool stop = true;
+
         while (stop)
         {
             k++;
@@ -61,16 +83,16 @@ public:
 
             timeStep_.execute(model, t, dt_, maxDt_, tEnd_, cFLFactor_);
 
-            if (correctionType)
+            if (correctionType)// correctionType = true -> subproblem for macro dispersion
             {
                 calculateMacroDispersion(model, subProblemNumber, globalIdxCoarseCurrent, lowerLeft, upperRight);
             }
-            else
+            else// correctionType = false -> subproblem for convective flux correction
             {
                 calculateFluxCorrection(model, subProblemNumber, globalIdxCoarseCurrent, faceNumberCurrent, globalPosFaceCoarseCurrent, lowerLeft, upperRight);
             }
 
-            // generate output
+            // determine time t
             t += dt_;
             t = std::min(t, tEnd_);
 
@@ -79,11 +101,14 @@ public:
                 reachedTEnd = true;
             }
 
+            //check whether the subdomain is sufficiently saturated with the infiltrating fluid, if tEnd is reached.
+            //if that is not the case, enlarge tEnd
             if (reachedTEnd && meanSat_ <= minMaxMeanSat_)
             {
                 tEnd_+=2*dt_;
                 reachedTEnd = false;
             }
+            //if that is the case, stop the time loop
             if (meanSat_> minMaxMeanSat_)
             {
                 stop = false;
@@ -108,12 +133,13 @@ public:
             //            }
         }
         //			std::cout<<"saturation ="<<model.variables.saturation<<"pressure = "<<model.variables.pressure<<std::endl;
-        if (correctionType)
+
+        if (correctionType)// correctionType = true -> subproblem for macro dispersion
         {
             std::cout << ",dispersion subproblem timestep: " << k << "\t t=" << t
             << "\t dt_=" << dt_ << std::endl;
         }
-        else
+        else// correctionType = false -> subproblem for convective flux correction
         {
             std::cout << ",convection subproblem timestep: " << k << "\t t=" << t
             << "\t dt_=" << dt_ << std::endl;
@@ -122,6 +148,12 @@ public:
         return;
     }
 
+    /**
+     * \param coarseParams object of type CoarseScaleParameterType containing the coarse-scale parameters to be computed
+     * \param mMMeanSat minimum averaged saturation which has to be reached within a sub domain
+     * \param cfl cfl-security-factor
+     * TimeStep object defining the time-discretisation scheme
+     */
     TimeLoopSubProbs(CoarseScaleParameterType& coarseParams, const Scalar mMMeanSat = 0.99,
             const Scalar cfl = 0.99, TimeStep<Grid,
             Model>& tist = *(new RungeKuttaStep<Grid, Model> (1))) :
@@ -144,6 +176,7 @@ private:
     Scalar eps_;
 };
 
+//!calculates a saturation dependent macro dispersion coefficient from the solution of the local fine-scale problems
 template<class Grid, class Model,class CoarseScaleParameterType>void TimeLoopSubProbs<Grid, Model, CoarseScaleParameterType>::calculateMacroDispersion(Model& model, const int subProblemNumber, const int& globalIdxCoarseCurrent, const GlobalPosition& lowerLeft, const GlobalPosition& upperRight)
 {
     typedef typename Element::Geometry Geometry;
@@ -161,26 +194,28 @@ template<class Grid, class Model,class CoarseScaleParameterType>void TimeLoopSub
     typedef typename HostGridView::IndexSet HostIndexSet;
     int fineLev = model.variables.diffLevel;
 
+    //get the gridView
     const GridView& gridViewFine(model.variables.grid.levelView(fineLev));
 
+    //some variable declarations
     meanSat_=0;
-    Scalar fWMean=0;// fractional flow function values of mean saturation
-    FieldVector<Scalar, dim> velocityMean(0);
-    FieldVector<Scalar, dim> vTimesFWMean(0);//mean of finescale velocity v times fine scale fractional flow function f
+    Scalar fWMean=0;// fractional flow function values dependent on mean saturation
+    FieldVector<Scalar, dim> velocityMean(0); //fine scale velocity averaged over current coarse cell
+    FieldVector<Scalar, dim> vTimesFWMean(0);//mean of fine-scale velocity v times fine scale fractional flow function f
 
     Scalar elementVolumeCoarse = 1;
-    Scalar elementVolumeFaceCoarse=0;
+    Scalar elementVolumeFaceCoarse=0;//volume of the fine cells at a coarse face
 
-    Scalar satIn=0;
-    Scalar satOut=0;
+    Scalar satIn=0;//saturation averaged over the coarse inlet face
+    Scalar satOut=0;//saturation averaged over the coarse outlet face
 
+    //start iteration over fine cells
     ElementIterator eItEnd = gridViewFine.template end<0>();
     ElementIterator eItBegin = gridViewFine.template begin<0>();
     for (ElementIterator eIt = eItBegin; eIt != eItEnd; ++eIt)
     {
         // element geometry
         const Geometry& geometry = eIt->geometry();
-
         GeometryType gt = geometry.type();
 
         // cell center in reference element
@@ -189,14 +224,18 @@ template<class Grid, class Model,class CoarseScaleParameterType>void TimeLoopSub
         // get global coordinate of cell center
         const GlobalPosition& globalPos = geometry.global(localPos);
 
+        //get host element (global)
         const HostElementPointer& eItHost = model.variables.grid.template getHostEntity<0>(*eIt);
+
 
         int globalIdx = model.variables.diffMapper.map(*eIt);
 
         Scalar elementVolume = geometry.integrationElement(localPos)*Dune::ReferenceElements<Scalar,dim>::general(gt).volume();
 
+        //get saturation
         Scalar sat = (*model)[globalIdx];
 
+        //get the coarse scale entity the fine scale entity belongs to
         HostElement& hostElement = *eItHost;
         HostElementPointer fatherPointer = hostElement.father();
         int fatherLevel = fatherPointer.level();
@@ -212,12 +251,17 @@ template<class Grid, class Model,class CoarseScaleParameterType>void TimeLoopSub
         const LocalPosition &localPosCoarse = Dune::ReferenceElements<Scalar,dim>::general(fatherPointer->geometry().type()).position(0, 0);
 
         elementVolumeCoarse = fatherPointer->geometry().integrationElement(localPosCoarse)*Dune::ReferenceElements<Scalar,dim>::general(gt).volume();
+
+        //weight saturation with fine cell volume
         meanSat_ += sat*elementVolume;
-        //        fWMean += model.diffProblem.materialLaw.fractionalW(sat, globalPos, *eItHost, localPos)*elementVolume;
+
+        //get fWMean as function of the average Saturation
         fWMean=model.diffProblem.materialLaw.fractionalW((meanSat_/elementVolumeCoarse), globalPos, *eItHost, localPos);
 
+        //fluxVector for calculation of the element velocity
         FieldVector<Scalar,dim*2> fluxVector(0);
 
+        //start iteration over faces of the current fine-scale element
         IntersectionIterator
         isItEnd = gridViewFine.template iend(*eIt);
         for (IntersectionIterator
@@ -241,6 +285,7 @@ template<class Grid, class Model,class CoarseScaleParameterType>void TimeLoopSub
             // get normal vector
             FieldVector<Scalar,dim> unitOuterNormal = isIt->unitOuterNormal(faceLocal);
 
+            //store flux for calculation of the element velocity
             fluxVector[faceNumber] = model.variables.velocity[globalIdx][faceNumber] * unitOuterNormal;
             fluxVector[faceNumber] *= faceArea;
 
@@ -253,6 +298,7 @@ template<class Grid, class Model,class CoarseScaleParameterType>void TimeLoopSub
                 //get boundary type
                 BoundaryConditions::Flags bctype = model.diffProblem.bctypeSat(globalPosFace, *eIt, localPosFace);
 
+                //get saturation at inlet and outlet -> inlet and outlet correspond to dirichlet boundaries
                 if (bctype == BoundaryConditions::dirichlet)
                 {
                     Scalar eps = 1e-6;
@@ -287,7 +333,7 @@ template<class Grid, class Model,class CoarseScaleParameterType>void TimeLoopSub
                 }
 
             }
-        }
+        }//end of intersection iterator
         // calculate velocity on reference element
         FieldVector<Scalar,dim> refVelocity;
         refVelocity[0] = 0.5*(fluxVector[1] - fluxVector[0]);
@@ -303,12 +349,15 @@ template<class Grid, class Model,class CoarseScaleParameterType>void TimeLoopSub
         jacobianT.umtv(refVelocity, elementVelocity);
         elementVelocity /= geometry.integrationElement(localPos);
 
+        //weight by element volume
         for (int i=0; i<dim; i++)
         {
             velocityMean[i] += elementVelocity[i]*elementVolume;
             vTimesFWMean[i] += (elementVelocity[i] * model.diffProblem.materialLaw.fractionalW(sat, globalPos, *eItHost, localPos))*elementVolume;
         }
-    }
+    }//end of element iterator
+
+    //determine the distance between inlet and outlet
     Scalar dist;
     switch (subProblemNumber)
     {
@@ -320,6 +369,7 @@ template<class Grid, class Model,class CoarseScaleParameterType>void TimeLoopSub
         break;
     }
 
+    //fine scale velocities were weighted with the element volume!
     velocityMean /= elementVolumeCoarse;
     vTimesFWMean /= elementVolumeCoarse;
     meanSat_ /= elementVolumeCoarse;
@@ -327,16 +377,19 @@ template<class Grid, class Model,class CoarseScaleParameterType>void TimeLoopSub
     //            std::cout<<vTimesFWMean<<std::endl;
     //        std::cout<<"fWMean = "<<fWMean<<std::endl;
 
+    //calculate the term consisting of the product of the averaged quantities
     FieldVector<Scalar, dim> vMeanTimesFWMean = velocityMean;
     vMeanTimesFWMean *= fWMean;
-
     //                std::cout<<"vMeanTimesFWMean ="<<vMeanTimesFWMean<<std::endl;
+
+    //get macro dispersion
     FieldVector<Scalar, dim> D = vMeanTimesFWMean - vTimesFWMean;
     //    std::cout<<"D ="<<D<<std::endl;
 
-    //divide by pressure gradient = 1/distance
+    //scale macrodispersion with pressure gradient = 1/distance
     D *= dist;
     //    std::cout<<"D ="<<D<<std::endl;
+
     //calculate saturation gradient
     satIn /= (0.5*elementVolumeFaceCoarse);
     satOut /= (0.5*elementVolumeFaceCoarse);
@@ -347,6 +400,7 @@ template<class Grid, class Model,class CoarseScaleParameterType>void TimeLoopSub
     D /= satGrad;
 //                         std::cout<<"D ="<<D<<std::endl;
 
+    //store D dependent on the averaged saturation
     switch (subProblemNumber)
     {
         case 1:
@@ -356,19 +410,19 @@ template<class Grid, class Model,class CoarseScaleParameterType>void TimeLoopSub
         case 3:
         coarseParameters_.getDispersion().addEntry(D, globalIdxCoarseCurrent,timeStepCounter_);
         coarseParameters_.getDispersionSat().addEntry(meanSat_, globalIdxCoarseCurrent, timeStepCounter_);
-        coarseParameters_.getDispersionSat()[globalIdxCoarseCurrent][timeStepCounter_]*=0.5;
+        coarseParameters_.getDispersionSat()[globalIdxCoarseCurrent][timeStepCounter_]*=0.5;//arithmetic mean of the averaged saturation of the subproblem in x- and y-direction
         break;
         default:
         break;
     }
 
+    //update timeStepCounter
     timeStepCounter_++;
-}
+}//end of dispersion function
 
+//!calculates a saturation dependent convective flux correction from the solution of the local fine-scale problems
 template<class Grid, class Model,class CoarseScaleParameterType>void TimeLoopSubProbs<Grid, Model, CoarseScaleParameterType>::calculateFluxCorrection(Model& model, const int subProblemNumber,const int& globalIdxCoarseCurrent,const int& faceNumberCurrent, const GlobalPosition& globalPosFaceCoarseCurrent,const GlobalPosition& lowerLeft, const GlobalPosition& upperRight)
 {
-    //std::cout<<"numberinself = "<<faceNumberCurrent<<"globalIdxCoarseCurrent = "<<globalIdxCoarseCurrent<<std::endl;
-
     typedef typename Element::Geometry Geometry;
     typedef typename Grid::LevelGridView GridView;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
@@ -384,34 +438,37 @@ template<class Grid, class Model,class CoarseScaleParameterType>void TimeLoopSub
     typedef typename HostGridView::IndexSet HostIndexSet;
     int fineLev = model.variables.diffLevel;
 
+    //gridViews for coarse and fine subgrid and for coarse global grid
     const GridView& gridViewCoarse(model.variables.grid.levelView(0));
     const GridView& gridViewFine(model.variables.grid.levelView(fineLev));
     const HostGridView& gridViewHost(gridViewCoarse.grid().getHostGrid().levelView(0));
 
+    //index sets for coarse subgrid and coarse global grid
     const IndexSet& indexSetCoarse = gridViewCoarse.indexSet();
     const HostIndexSet& indexSetCoarseHost = gridViewHost.indexSet();
 
+    //some variable declarations
     meanSat_=0;
 
-    FieldVector<Scalar, dim> velocityMean(0);
-    Scalar fWMean=0;// fractional flow function values of mean saturation
-    FieldVector<Scalar, dim> vTimesFWMean(0);//mean of finescale velocity v times fine scale fractional flow function f
+    FieldVector<Scalar, dim> velocityMean(0);//fine scale velocity averaged over current coarse cell
+    Scalar fWMean=0;// fractional flow function values dependent on mean saturation
+    FieldVector<Scalar, dim> vTimesFWMean(0);//mean of fine-scale velocity v times fine scale fractional flow function f
 
-    Scalar pressureIn=0;
-    Scalar pressureOut=0;
-    Scalar satIn = 0;
-    Scalar satOut = 0;
+    Scalar pressureIn=0;//mean pressure of the coarse inlet cell
+    Scalar pressureOut=0;//mean pressure of the current coarse cell
+    Scalar satIn = 0;//mean saturation of the coarse inlet cell
+    Scalar satOut = 0;//mean saturation of the current coarse cell
 
-    Scalar elementVolumeCoarse = 1;
-    Scalar elementVolumeFaceCoarse=0;
+    Scalar elementVolumeCoarse = 1;//just initialise with value != 0
+    Scalar elementVolumeFaceCoarse=0;//sum of volumes of the fine cells at the interface
 
+    //start iteration over the fine grid elements
     ElementIterator eItEnd = gridViewFine.template end<0>();
     ElementIterator eItBegin = gridViewFine.template begin<0>();
     for (ElementIterator eIt = eItBegin; eIt != eItEnd; ++eIt)
     {
         // element geometry
         const Geometry& geometry = eIt->geometry();
-
         GeometryType gt = geometry.type();
 
         // cell center in reference element
@@ -426,9 +483,11 @@ template<class Grid, class Model,class CoarseScaleParameterType>void TimeLoopSub
 
         Scalar elementVolume = geometry.integrationElement(localPos)*Dune::ReferenceElements<Scalar,dim>::general(gt).volume();
 
+        //get saturation and pressure
         Scalar sat = (*model)[globalIdx];
         Scalar pressure = model.variables.pressure[globalIdx];
 
+        //get the coarse scale entity the fine scale entity belongs to
         HostElement& hostElement = *eItHost;
         HostElementPointer fatherPointerHost = hostElement.father();
         Element& element = *eIt;
@@ -452,29 +511,36 @@ template<class Grid, class Model,class CoarseScaleParameterType>void TimeLoopSub
 
         const LocalPosition &localPosCoarse = Dune::ReferenceElements<Scalar,dim>::general(fatherPointerHost->geometry().type()).position(0, 0);
 
-        //				std::cout<<"globalIdxCoarseHost = "<<globalIdxCoarseHost<<"globalIdxCoarseCurrent = "<<globalIdxCoarseCurrent<<std::endl;
+        //decide on which coarse scale element the fine scale element is located
         if (globalIdxCoarseHost != globalIdxCoarseCurrent)
         {
+            //weight saturation and pressure with fine cell volume
             satIn+=sat*elementVolume;
             pressureIn+=pressure*elementVolume;
         }
         if (globalIdxCoarseHost == globalIdxCoarseCurrent)
         {
+            //weight saturation and pressure with fine cell volume
             satOut+=sat*elementVolume;
             pressureOut+=pressure*elementVolume;
+            //get volume of coarse element
             elementVolumeCoarse = fatherPointerHost->geometry().integrationElement(localPosCoarse)*Dune::ReferenceElements<Scalar,dim>::general(gt).volume();
             meanSat_ += sat*elementVolume;
+            //f as function of the mean saturation: is updated until meanSat_ is completely calculated
             fWMean=model.diffProblem.materialLaw.fractionalW((meanSat_/elementVolumeCoarse), globalPos, *eItHost, localPos);
         }
 
+        //fluxVector for calculation of the element velocity
         FieldVector<Scalar, dim*2> fluxVector;
 
+        //start iteration over faces of the current fine-scale element
         IntersectionIterator
         isItEnd = gridViewFine.template iend(*eIt);
         for (IntersectionIterator
                 isIt = gridViewFine.template ibegin(*eIt); isIt
                 !=isItEnd; ++isIt)
         {
+            //make sure that the fine scale element is located at the current coarse scale element.
             if (globalIdxCoarseHost == globalIdxCoarseCurrent)
             {
                 // get geometry type of face
@@ -494,48 +560,9 @@ template<class Grid, class Model,class CoarseScaleParameterType>void TimeLoopSub
                 // get normal vector
                 FieldVector<Scalar,dim> unitOuterNormal = isIt->unitOuterNormal(faceLocal);
 
+                //store flux for calculation of the element velocity
                 fluxVector[faceNumber] = model.variables.velocity[globalIdx][faceNumber] * unitOuterNormal;
                 fluxVector[faceNumber] *= faceArea;
-
-                if (isIt->neighbor())
-                {
-                    // neighbor's properties
-                    ElementPointer neighborPointer = isIt->outside();
-                    ElementPointer neighborPointerCoarse = (*neighborPointer).father();
-                    int neighborFatherLevel = neighborPointerCoarse.level();
-                    while(neighborFatherLevel != 0)
-                    {
-                        Element& neighborFatherElement = *neighborPointerCoarse;
-                        neighborPointerCoarse = neighborFatherElement.father();
-                        neighborFatherLevel = neighborPointerCoarse.level();
-                    }
-
-                    int globalIdxNeighborCoarse = indexSetCoarse.index(*neighborPointerCoarse);
-
-                    if(globalIdxCoarse != globalIdxNeighborCoarse && globalIdxCoarseHost == globalIdxCoarseCurrent)
-                    {
-                        satIn += sat*elementVolume;
-                        pressureIn += pressure*elementVolume;
-                        elementVolumeFaceCoarse += elementVolume;
-                    }
-
-                }
-                if (isIt->boundary())
-                {
-                    // center of face inside volume reference element
-                    const LocalPosition&
-                    localPosFace = Dune::ReferenceElements<Scalar,dim>::general(faceGT).position(faceNumber,1);
-
-                    //get boundary type
-                    BoundaryConditions::Flags bctype = model.diffProblem.bctypeSat(globalPosFace, *eIt, localPosFace);
-
-                    if (bctype == BoundaryConditions::dirichlet)
-                    {
-                        satOut += sat*elementVolume;
-                        pressureOut += pressure*elementVolume;
-                        elementVolumeFaceCoarse += elementVolume;
-                    }
-                }
             }
         }
         if (globalIdxCoarseHost == globalIdxCoarseCurrent)
@@ -555,6 +582,7 @@ template<class Grid, class Model,class CoarseScaleParameterType>void TimeLoopSub
             jacobianT.umtv(refVelocity, elementVelocity);
             elementVelocity /= geometry.integrationElement(localPos);
 
+            //weight by element volume
             for (int i=0; i<dim; i++)
             {
                 velocityMean[i] += elementVelocity[i]*elementVolume;
@@ -563,19 +591,16 @@ template<class Grid, class Model,class CoarseScaleParameterType>void TimeLoopSub
         }
     }
 
+    //dispersion coefficient of coarse inlet and outlet cell
     Dune::FieldVector<Scalar,dim> DIn(0);
     Dune::FieldVector<Scalar,dim> DOut(0);
 
+    //divide values through total volume
     meanSat_ /= elementVolumeCoarse;
-    //    std::cout<<"meanSat = "<<meanSat_<<std::endl;
-    //    meanSatHelp /= elementVolumeCoarse;
-
     satIn /= elementVolumeCoarse;
     satOut /= elementVolumeCoarse;
 
-    //    satIn /= (0.5*elementVolumeFaceCoarse);
-    //    satOut /= (0.5*elementVolumeFaceCoarse);
-
+    //calculate the saturation gradient -> gradient between two coarse cells
     FieldVector<Scalar, dim> satGrad(0);
     GlobalPosition distVec(0);
     switch (subProblemNumber)
@@ -602,11 +627,9 @@ template<class Grid, class Model,class CoarseScaleParameterType>void TimeLoopSub
         break;
     }
     Scalar dist = distVec.two_norm();
-
-    //        std::cout<<"distVec = "<<distVec<<"dist = "<<dist<<std::endl;
-
     satGrad /= (dist*dist);
 
+    //determine dispersion coefficients of the two neighbouring coarse cells
     ElementIterator eItCoarseEnd = gridViewCoarse.template end<0>();
     for (ElementIterator eItCoarse = gridViewCoarse.template begin<0>(); eItCoarse != eItCoarseEnd; ++eItCoarse)
     {
@@ -685,60 +708,51 @@ template<class Grid, class Model,class CoarseScaleParameterType>void TimeLoopSub
                 }
             }
         }
-    }
+    }//end iteration over coarse cells -> dispersion coefficients
 
+    //divide by total volume (one coarse cell) -> fine scale velocities were weighted with the element volume!
     velocityMean /= elementVolumeCoarse;
     vTimesFWMean /= elementVolumeCoarse;
     //        std::cout<<"vTimesFWMean ="<<vTimesFWMean<<std::endl;
     //        std::cout<<"velocityMean = "<<velocityMean<<std::endl;
 
-    //    fWMean/=elementVolumeCoarse;
+    //calculate the term consisting of the product of the averaged quantities
     FieldVector<Scalar, dim> vMeanTimesFWMean = velocityMean;
     vMeanTimesFWMean *= fWMean;
     //        std::cout<<"meanveltimesfwmean ="<<vMeanTimesFWMean<<std::endl;
 
+    //calculate fluctuation
     FieldVector<Scalar, dim> fluxCorrection = vMeanTimesFWMean - vTimesFWMean;
     //                std::cout<<"m1 = "<<fluxCorrection<<std::endl;
 
+    //divide by total volume (one coarse cell) to get the average
     pressureIn /= elementVolumeCoarse;
     pressureOut /= elementVolumeCoarse;
 
-    //    pressureIn /= (0.5*elementVolumeFaceCoarse);
-    //    pressureOut /= (0.5*elementVolumeFaceCoarse);
-
+    //calculate the pressure gradient between the two coarse cells
     Scalar pressureGrad = (pressureIn - pressureOut)/dist;
     //    			std::cout<<"pressureGrad = "<<pressureGrad<<std::endl;
 
-    //scale by pressure gradient = 1/dist!!!
+    //scale by pressure gradient
     if (pressureGrad != 0)
     {
         fluxCorrection /= pressureGrad;
     }
     //        		std::cout<<"m2 = "<<fluxCorrection<<std::endl;
 
-
-    //    FieldVector<Scalar, dim> dispersiveFlux(0);
-
+    //arithmetic average of the dispersion coefficients
     Scalar dispersiveFlux = DIn*satGrad;
     dispersiveFlux += DOut*satGrad;
     dispersiveFlux *= 0.5;
 
-    //    std::cout<<"satGrad = "<<satGrad<<std::endl;
-    //    std::cout<<"dispersiveFlux = "<<D<<std::endl;
-    //    for (int i = 0; i<dim; i++)
-    //    {
-    //        dispersiveFlux[i] = D[i]*satGrad[i];
-    //    }
-
-    //    fluxCorrection -= dispersiveFlux;
-    //    std::cout<<"dispersiveFlux = "<<dispersiveFlux<<std::endl;
-
+    //get absolute value of the normal to make the flux correction a scalar
     FieldVector<Scalar, dim> normal(distVec);
     normal /= dist;
     //    std::cout<<"normal = "<<normal<<std::endl;
 
     //                std::cout<<"fluxCorrection = "<<fluxCorrection<<std::endl;
 
+    //store convective flux correction
     FieldVector<Scalar, 2*dim> newEntry(0);
     newEntry[faceNumberCurrent] = (fluxCorrection*normal-dispersiveFlux);
     coarseParameters_.getFluxCorr().addEntry(newEntry, globalIdxCoarseCurrent, timeStepCounter_);
@@ -748,8 +762,7 @@ template<class Grid, class Model,class CoarseScaleParameterType>void TimeLoopSub
     coarseParameters_.getFluxCorrSat().addEntry(newEntry, globalIdxCoarseCurrent, timeStepCounter_);
 
     timeStepCounter_++;
-
-}
+}//end convective fluxCorrection function
 
 }
 #endif
