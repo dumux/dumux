@@ -1,5 +1,5 @@
-#ifndef DUNE_BOXDIFFUSIONJACOBIAN_HH
-#define DUNE_BOXDIFFUSIONJACOBIAN_HH
+#ifndef DUNE_BOXDARCYJACOBIAN_HH
+#define DUNE_BOXDARCYJACOBIAN_HH
 
 #include<map>
 #include<iostream>
@@ -17,10 +17,7 @@
 
 #include<dune/disc/shapefunctions/lagrangeshapefunctions.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
-
 #include<dumux/operators/boxjacobian.hh>
-//#include "diffusionparameters.hh"
-#include "darcyparameters.hh"
 
 namespace Dune
 {
@@ -40,12 +37,12 @@ namespace Dune
   - Scalar    type used for return values
 */
 template<class Grid, class Scalar, class BoxFunction = LeafP1Function<Grid, Scalar, 1> >
-class BoxDiffusionJacobian
-    : public BoxJacobian<BoxDiffusionJacobian<Grid,Scalar,BoxFunction>,Grid,Scalar,1,BoxFunction>
+class BoxDarcyJacobian
+    : public BoxJacobian<BoxDarcyJacobian<Grid,Scalar,BoxFunction>,Grid,Scalar,1,BoxFunction>
 {
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
     typedef typename Element::Geometry Geometry;
-    typedef BoxDiffusionJacobian<Grid,Scalar,BoxFunction> ThisType;
+    typedef BoxDarcyJacobian<Grid,Scalar,BoxFunction> ThisType;
     typedef typename LocalJacobian<ThisType,Grid,Scalar,1>::VBlockType SolutionVector;
     typedef BoxJacobian<ThisType,Grid,Scalar,1,BoxFunction> BoxJacobianType;
     typedef Dune::FVElementGeometry<Grid> FVElementGeometry;
@@ -54,7 +51,7 @@ public:
     enum {dim=Grid::dimension};
 
     //! Constructor
-    BoxDiffusionJacobian (DarcyParameters<Grid,Scalar>& params,
+    BoxDarcyJacobian (CoupledPorousMediaProblem<Grid,Scalar>& params,
                           bool levelBoundaryAsDirichlet_, const Grid& grid,
                           BoxFunction& sol,
                           bool procBoundaryAsDirichlet_=true)
@@ -163,7 +160,7 @@ public:
     };
 
     ElementData elData;
-    DarcyParameters<Grid,Scalar>& problem;
+    CoupledPorousMediaProblem<Grid,Scalar>& problem;
 };
 }
 #endif

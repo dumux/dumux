@@ -1,5 +1,5 @@
-#ifndef DARCYPARAMETERS_HH
-#define DARCYPARAMETERS_HH
+#ifndef CAPILLARYDARCYPROBLEM_HH
+#define CAPILLARYDARCYPROBLEM_HH
 
 #include<dumux/coupled/coupledporousmediaproblem.hh>
 #include<dune/common/exceptions.hh>
@@ -9,14 +9,14 @@ namespace Dune
 {
 
 template<class Grid, class Scalar>
-class DarcyParameters  : public CoupledPorousMediaProblem<Grid, Scalar>
+class CapillaryDarcyProblem  : public CoupledPorousMediaProblem<Grid, Scalar>
 {
     enum {dim=Grid::dimension, numEq=1};
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
     typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
 
 public:
-    DarcyParameters ()
+    CapillaryDarcyProblem ()
     {
         eps_ = 1e-10;
         // CHANGE also in the Stokes problem!

@@ -2,7 +2,7 @@ DGF
 Interval
 0 0   % first corner 
 4 1 % 4 1   % second corner
-16 4 % 120 30   % 24 cells in x and 16 in y direction
+64 16 % 120 30   % 24 cells in x and 16 in y direction
 # 
 
 BOUNDARYDOMAIN

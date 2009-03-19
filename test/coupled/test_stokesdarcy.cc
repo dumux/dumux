@@ -18,7 +18,8 @@
 #include <dumux/timedisc/timeloop.hh>
 #include <dumux/coupled/coupledstokesdarcy.hh>
 #include "lshapedproblem.hh"
-#include "boxdiffusion.hh"
+#include "darcyproblem.hh"
+#include "boxdarcy.hh"
 
 namespace Dune
 {
@@ -106,9 +107,9 @@ int main(int argc, char** argv)
         typedef Dune::DGStokes<SubGridType, vOrder, pOrder> DGStokes;
         DGStokes dGStokes(subGridLeft, stokesProblem, parameters);
 
-        Dune::DarcyParameters<SubGridType,NumberType> darcyParam;
-        typedef Dune::LeafP1BoxDiffusion<SubGridType, NumberType> DarcyModel;
-        DarcyModel darcyModel(subGridRight, darcyParam);
+        Dune::DarcyProblem<SubGridType,NumberType> darcyProblem;
+        typedef Dune::LeafP1BoxDarcy<SubGridType, NumberType> DarcyModel;
+        DarcyModel darcyModel(subGridRight, darcyProblem);
 
         typedef Dune::CoupledStokesDarcy<DGStokes,DarcyModel> CoupledModel;
         bool assembleGlobalMatrix = true;
@@ -134,7 +135,7 @@ int main(int argc, char** argv)
             std::cout << dGStokes.h1errorStokesSystem(i) << ", ";
         std::cout << std::endl;
 
-        std::cout << "Darcy discrete error = " << discreteError(subGridRight, darcyModel.sol(), darcyParam) << std::endl;
+        std::cout << "Darcy discrete error = " << discreteError(subGridRight, darcyModel.sol(), darcyProblem) << std::endl;
 
         return 0;
     }

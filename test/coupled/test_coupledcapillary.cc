@@ -13,10 +13,10 @@
 #include "dumux/operators/p1operatorextended.hh"
 #include <dumux/timedisc/timeloop.hh>
 #include <dumux/coupled/boxstokesdarcy.hh>
-#include "yxproblem.hh"
-#include "capillaryflowproblem.hh"
+#include "capillarydarcyproblem.hh"
+#include "capillarystokesproblem.hh"
 #include "../stokes/boxstokes.hh"
-#include "boxdiffusion.hh"
+#include "boxdarcy.hh"
 #include <boost/format.hpp>
 
 namespace Dune
@@ -171,17 +171,17 @@ int main(int argc, char** argv)
         subGridDarcy.createEnd();
         std::cout << "The grid consists of " << stokesElements << " Stokes and " << darcyElements << " Darcy elements." << std::endl;
 
-        Dune::CapillaryFlowProblem<SubGridType, NumberType> stokesProblem;
-        typedef Dune::LeafP1BoxStokes<SubGridType, NumberType, dim> BoxStokes;
-        BoxStokes boxStokes(subGridStokes, stokesProblem);
+        Dune::CapillaryStokesProblem<SubGridType, NumberType> stokesProblem;
+        typedef Dune::LeafP1BoxStokes<SubGridType, NumberType, dim> StokesModel;
+        StokesModel stokesModel(subGridStokes, stokesProblem);
 
-        Dune::DarcyParameters<SubGridType,NumberType> darcyParam;
-        typedef Dune::LeafP1BoxDiffusion<SubGridType, NumberType> DarcyModel;
-        DarcyModel darcyModel(subGridDarcy, darcyParam);
+        Dune::CapillaryDarcyProblem<SubGridType,NumberType> darcyProblem;
+        typedef Dune::LeafP1BoxDarcy<SubGridType, NumberType> DarcyModel;
+        DarcyModel darcyModel(subGridDarcy, darcyProblem);
 
-        typedef Dune::BoxStokesDarcy<BoxStokes,DarcyModel,NumberType> CoupledModel;
+        typedef Dune::BoxStokesDarcy<StokesModel, DarcyModel, NumberType> CoupledModel;
         bool assembleGlobalMatrix = true;
-        CoupledModel coupledModel(subGridStokes, boxStokes, subGridDarcy, darcyModel, assembleGlobalMatrix);
+        CoupledModel coupledModel(subGridStokes, stokesModel, subGridDarcy, darcyModel, assembleGlobalMatrix);
 
         Dune::TimeLoop<GridType, CoupledModel, false> timeloop(0, 1, 1, "test_boxstokesdarcy", 1);
         Dune::Timer timer;
@@ -193,8 +193,8 @@ int main(int argc, char** argv)
         //        printvector(std::cout, boxStokes.sol(), "local Stokes solution", "row", 200, 1, 3);
         //        printvector(std::cout, darcyModel.sol(), "local Darcy solution", "row", 200, 1, 3);
 
-        std::cout << "Darcy discrete error = " << discreteDarcyError(subGridDarcy, darcyModel.sol(), darcyParam) << std::endl;
-        discreteStokesError(subGridStokes, stokesProblem, boxStokes.u);
+        std::cout << "Darcy discrete error = " << discreteDarcyError(subGridDarcy, darcyModel.sol(), darcyProblem) << std::endl;
+        discreteStokesError(subGridStokes, stokesProblem, stokesModel.u);
 
         return 0;
     }

@@ -1,16 +1,17 @@
 // $Id: capillaryflowproblem.hh 733 2009-02-09 08:45:27Z kathinka $
 
-#ifndef DUNE_CAPILLARYFLOWPROBLEM_HH
-#define DUNE_CAPILLARYFLOWPROBLEM_HH
+#ifndef DUNE_CAPILLARYSTOKESPROBLEM_HH
+#define DUNE_CAPILLARYSTOKESPROBLEM_HH
 
 #include"dumux/stokes/stokesproblem.hh"
 
-namespace Dune {
+namespace Dune
+{
 
 /** \todo Please doc me! */
 
 template<class Grid, class Scalar>
-class CapillaryFlowProblem : public StokesProblem<Grid, Scalar>
+class CapillaryStokesProblem : public StokesProblem<Grid, Scalar>
 {
     enum {dim=Grid::dimension, numEq=Grid::dimension+1};
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
@@ -108,7 +109,7 @@ public:
         return result;
     }
 
-    CapillaryFlowProblem()
+    CapillaryStokesProblem()
     {}
 };
 

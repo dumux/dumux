@@ -12,11 +12,11 @@
 #include <../../../dune-subgrid/subgrid/subgrid.hh>
 #include "dumux/operators/p1operatorextended.hh"
 #include <dumux/timedisc/timeloop.hh>
+#include "darcyproblem.hh"
 #include <dumux/coupled/boxstokesdarcy.hh>
-#include "yxproblem.hh"
 #include "lshapedproblem.hh"
 #include "../stokes/boxstokes.hh"
-#include "boxdiffusion.hh"
+#include "boxdarcy.hh"
 #include <boost/format.hpp>
 
 namespace Dune
@@ -163,16 +163,16 @@ int main(int argc, char** argv)
         subGridDarcy.createEnd();
 
         Dune::LShapedProblem<SubGridType, NumberType> stokesProblem;
-        typedef Dune::LeafP1BoxStokes<SubGridType, NumberType, dim> BoxStokes;
-        BoxStokes boxStokes(subGridStokes, stokesProblem);
+        typedef Dune::LeafP1BoxStokes<SubGridType, NumberType, dim> StokesModel;
+        StokesModel stokesModel(subGridStokes, stokesProblem);
 
-        Dune::DarcyParameters<SubGridType,NumberType> darcyParam;
-        typedef Dune::LeafP1BoxDiffusion<SubGridType, NumberType> DarcyModel;
-        DarcyModel darcyModel(subGridDarcy, darcyParam);
+        Dune::DarcyProblem<SubGridType,NumberType> darcyProblem;
+        typedef Dune::LeafP1BoxDarcy<SubGridType, NumberType> DarcyModel;
+        DarcyModel darcyModel(subGridDarcy, darcyProblem);
 
-        typedef Dune::BoxStokesDarcy<BoxStokes,DarcyModel,NumberType> CoupledModel;
+        typedef Dune::BoxStokesDarcy<StokesModel, DarcyModel, NumberType> CoupledModel;
         bool assembleGlobalMatrix = true;
-        CoupledModel coupledModel(subGridStokes, boxStokes, subGridDarcy, darcyModel, assembleGlobalMatrix);
+        CoupledModel coupledModel(subGridStokes, stokesModel, subGridDarcy, darcyModel, assembleGlobalMatrix);
 
         coupledModel.vtkout("initial", 0);
         
@@ -183,11 +183,11 @@ int main(int argc, char** argv)
         std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
 
         //        printvector(std::cout, coupledModel.sol(), "global solution", "row", 200, 1, 3);
-        //        printvector(std::cout, boxStokes.sol(), "local Stokes solution", "row", 200, 1, 3);
+        //        printvector(std::cout, boxModel.sol(), "local Stokes solution", "row", 200, 1, 3);
         //        printvector(std::cout, darcyModel.sol(), "local Darcy solution", "row", 200, 1, 3);
 
-        std::cout << "Darcy discrete error = " << discreteDarcyError(subGridDarcy, darcyModel.sol(), darcyParam) << std::endl;
-        discreteStokesError(subGridStokes, stokesProblem, boxStokes.u);
+        std::cout << "Darcy discrete error = " << discreteDarcyError(subGridDarcy, darcyModel.sol(), darcyProblem) << std::endl;
+        discreteStokesError(subGridStokes, stokesProblem, stokesModel.u);
 
         return 0;
     }
