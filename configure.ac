@@ -81,6 +81,7 @@ AC_CONFIG_FILES([Makefile
     doc/Makefile 
     dumux/Makefile 
     test/Makefile
+    appl/Makefile
     doc/doxygen/Makefile 
     doc/handbook/Makefile
     dumux/1p2c/Makefile 
@@ -113,35 +114,28 @@ AC_CONFIG_FILES([Makefile
     test/2p2cni/Makefile
     test/2pni/Makefile
     test/box3d/Makefile
-    test/box3d-compressible/Makefile
     test/brinkman/Makefile
-    test/capillary/Makefile
-    test/co2/Makefile
     test/coupled/Makefile
     test/diffusion/Makefile
     test/fractionalflow/Makefile
     test/fvca5/Makefile
-    test/gravity/Makefile
-    test/hysteresis/Makefile
     test/id/Makefile
     test/minc/Makefile
-    test/mixed/Makefile
-    test/multigrid/Makefile
-    test/newton/Makefile
-    test/parallel/Makefile
     test/pardiso/Makefile
     test/phasepressure_ff/Makefile
     test/pipe-newcouple-incomp/Makefile
     test/pipe-newrichards-couple/Makefile
     test/richards/Makefile  
     test/splitting/Makefile
-    test/star2dgf/Makefile
     test/star2uggrid/Makefile
     test/stokes/Makefile
     test/transport/Makefile
     test/tutorial/Makefile
     test/twophase/Makefile
     test/vtk/Makefile
+    appl/box3d-compressible/Makefile
+    appl/co2/Makefile
+    appl/hysteresis/Makefile
 	 dumux/brinkman/fv/Makefile
 	 dumux/1p2c/fv/Makefile
 	 dumux/2p2c/fv/Makefile

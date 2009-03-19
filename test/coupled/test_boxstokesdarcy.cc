@@ -154,7 +154,7 @@ int main(int argc, char** argv)
             Dune::GeometryType gt = it->geometry().type();
             const Dune::FieldVector<NumberType,dim>& local = Dune::ReferenceElements<NumberType,dim>::general(gt).position(0, 0);
             Dune::FieldVector<NumberType,dim> global = it->geometry().global(local);
-            if (global[0] < 1.5 || global[1] > 0.5)
+            if (global[1] < 0.5)// || global[1] > 0.5)
                 subGridStokes.addPartial(it);
             else
                 subGridDarcy.addPartial(it);
@@ -174,6 +174,8 @@ int main(int argc, char** argv)
         bool assembleGlobalMatrix = true;
         CoupledModel coupledModel(subGridStokes, boxStokes, subGridDarcy, darcyModel, assembleGlobalMatrix);
 
+        coupledModel.vtkout("initial", 0);
+        
         Dune::TimeLoop<GridType, CoupledModel, false> timeloop(0, 1, 1, "test_boxstokesdarcy", 1);
         Dune::Timer timer;
         timer.reset();

@@ -1,5 +1,5 @@
 # tests where program to build and program to run are equal
-NORMALTESTS = new_leakywell new_test_2p2cni test_2p2cni test_co2
+NORMALTESTS = new_leakywell new_test_2p2cni test_2p2cni
 
 # list of tests to run
 #TESTS = $(NORMALTESTS)
@@ -15,7 +15,5 @@ new_leakywell_SOURCES = new_leakywell.cc
 new_test_2p2cni_SOURCES = new_test_2p2cni.cc 
 
 test_2p2cni_SOURCES = test_2p2cni.cc 
-
-test_co2_SOURCES = test_co2.cc
 
 include $(top_srcdir)/am/global-rules

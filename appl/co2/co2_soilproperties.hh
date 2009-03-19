@@ -1,4 +1,4 @@
-/// $Id$
+/// $Id: co2_soilproperties.hh 1327 2009-03-02 14:26:47Z lauser $
 #ifndef CO2_SOIL
 #define CO2_SOIL
 
