@@ -23,6 +23,7 @@
 #include <dumux/auxiliary/timemanager.hh>
 
 #include <dune/common/timer.hh>
+#include <dune/common/collectivecommunication.hh>
 
 #include<dumux/new_models/2p2cni/2p2cniboxmodel.hh>
 #include<dumux/new_models/2p2cni/2p2cninewtoncontroller.hh>
@@ -59,6 +60,7 @@ class NimasProblem : public BasicDomain<GridT,ScalarT>
     typedef BasicDomain<Grid, ScalarT>     ParentType;
     typedef NimasProblem<Grid, ScalarT>    ThisType;
     typedef TwoPTwoCPnSwTraits<ScalarT>    Formulation;
+    typedef CollectiveCommunication<ThisType> CollectiveCommunication;
 #if !ISOTHERMAL
     typedef TwoPTwoCNIBoxModel<ThisType, Formulation>   Model;
 #else
@@ -182,7 +184,6 @@ public:
         	if(globalPos[1] > depthBOR_ - eps_)
 					values = BoundaryConditions::dirichlet;
         }
-
 #if !ISOTHERMAL
         values[temperatureIdx] = BoundaryConditions::dirichlet;
 #endif
@@ -270,7 +271,7 @@ private:
     {
         Scalar densityW = 1000.0;
 
-        values[pressureIdx] = 1e5 - (depthBOR_ - globalPos[1])*densityW*gravity_[1];
+        values[pressureIdx] = 1.5e5 - (depthBOR_ - globalPos[1])*densityW*gravity_[1];
         values[switchIdx] = 1.0 - 1e-2;
         //        std::cout << globalPos[0] << ", " << globalPos[1] << ": " << values[pressureIdx] << std::endl;
 
@@ -472,6 +473,15 @@ private:
 
         model_.addVtkFields(resultWriter_);
 
+        Dune::FieldVector<Scalar, 4> mass;
+        model_.calculateMass(mass);
+
+        if(collectiveCom_.rank() == 0)
+        {
+            std::cout<< "Mass[kg] (nC, nC in nP, wC, wC in wP):"
+            << mass[0] <<", "<<mass[1]<<", "<< mass[2]<<", "<< mass[3] <<". \n";
+        }
+
         resultWriter_.endTimestep();
     }
 
@@ -497,6 +507,7 @@ private:
     NewtonController newtonCtl_;
 
     VtkMultiWriter  resultWriter_;
+    CollectiveCommunication collectiveCom_;
 };
 } //end namespace
 
