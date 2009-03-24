@@ -21,6 +21,7 @@ SUBDIRS = . \
 	  transport \
 	  tutorial \
 	  twophase \
+	  linearelasticity \
 	  vtk
 
 include $(top_srcdir)/am/global-rules
