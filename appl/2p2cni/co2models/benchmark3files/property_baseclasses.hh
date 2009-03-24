@@ -1,0 +1,733 @@
+// $Id: property_baseclasses.hh 1329 2009-03-02 15:14:45Z lauser $
+
+#ifndef PROPERTY_BASECLASSES
+#define PROPERTY_BASECLASSES
+
+#include <dune/common/fvector.hh>
+#include <vector>
+
+/**
+ * \ingroup properties
+ * \author Jochen Fritz
+ */
+
+namespace Dune
+{
+/**\ingroup properties
+ * @brief Base class for matrix properties in case of two fluid phases
+ * phases are denoted by
+ * w for wetting phase
+ * dim for non-wetting phase
+ */
+template<class Grid, class ScalarT>
+class Matrix2p
+{
+public:
+    typedef    typename Grid::ctype Scalar;
+    enum
+        {    dim=Grid::dimension, m=2};
+    typedef typename Grid::Traits::template Codim<0>::Entity Element;
+
+    //! provides flags for the relative permeability and capillary pressure model
+    enum modelFlag
+        {
+            linear = 0,
+            brooks_corey = 1,
+            van_genuchten = 2,
+            auxiliary1 = 3,
+            auxiliary2 = 4,
+            auxiliary3 = 5,
+        };
+
+    /** @brief Permeability tensor
+     * @param globalPos position in global coordinates
+     * @param element codim 0 entity for which the value is sought
+     * @param localPos position in local coordinates in element
+     */
+    virtual const FieldMatrix<Scalar,dim,dim> &K (const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos)
+    {    DUNE_THROW(NotImplemented, "Permeability not implemented!"); }
+
+    /** @brief Permeability tensor
+	 * @param globalPos position in global coordinates
+	 * @param element codim 0 entity for which the value is sought
+	 * @param localPos position in local coordinates in element
+	 * @param idx local index in element
+	 */
+	virtual const FieldMatrix<Scalar,dim,dim> &K (const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos, const int idx)
+	{    DUNE_THROW(NotImplemented, "Permeability not implemented!"); }
+
+    /** @brief interface - Permeability tensor
+     * @param globalPos position in global coordinates
+     * @param element codim 0 entity for which the value is sought
+     * @param localPos position in local coordinates in element
+     */
+    virtual const FieldMatrix<Scalar,dim,dim> &Kwn (const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos)
+    {    DUNE_THROW(NotImplemented, "Permeability not implemented!"); }
+
+    /**@brief matrix porosity
+     * @param globalPos position in global coordinates
+     * @param element codim 0 entity for which the value is sought
+     * @param localPos position in local coordinates in element
+     */
+    virtual double porosity(const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos) const
+    {    DUNE_THROW(NotImplemented, "Porosity not implemented!"); }
+
+    /**@brief matrix porosity
+	 * @param globalPos position in global coordinates
+	 * @param element codim 0 entity for which the value is sought
+	 * @param localPos position in local coordinates in element
+	 * @param idx local index in element
+	 */
+	virtual double porosity(const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos, const int idx) const
+    {    DUNE_THROW(NotImplemented, "Porosity not implemented!"); }
+
+    /**@brief Wetting phase residual saturation
+     * @param globalPos position in global coordinates
+     * @param element codim 0 entity for which the value is sought
+     * @param localPos position in local coordinates in element
+     * @param T temperature in [K]
+     */
+    virtual double Sr_w(const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos, const double T = 283.15) const = 0;
+
+    /**@brief Nonwetting phase residual saturation
+     * @param globalPos position in global coordinates
+     * @param element codim 0 entity for which the value is sought
+     * @param localPos position in local coordinates in element
+     * @param T temperature in [K]
+     */
+    virtual double Sr_n(const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos, const double T = 283.15) const = 0;
+
+    /**@brief Matrix heat capacity in [kJ / (m^3 K)]
+     * ATTENTION: define heat capacity per cubic meter! Be sure, that it corresponds to porosity!
+     * Best thing will be to define heatCap = (specific heatCapacity of material) * density * porosity
+     * @param globalPos position in global coordinates
+     * @param element codim 0 entity for which the value is sought
+     * @param localPos position in local coordinates in element
+     */
+    /* ATTENTION: define heat capacity per cubic meter! Be sure, that it corresponds to porosity!
+     * Best thing will be to define heatCap = (specific heatCapacity of material) * density * porosity*/
+    virtual double heatCap(const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos) const
+    {
+        DUNE_THROW(NotImplemented, "heat capacity function not implemented!");
+    }
+
+    	/**@brief Matrix heat capacity in [kJ / (m^3 K)]
+	 * ATTENTION: define heat capacity per cubic meter! Be sure, that it corresponds to porosity!
+	 * Best thing will be to define heatCap = (specific heatCapacity of material) * density * porosity
+	 * @param globalPos position in global coordinates
+	 * @param element codim 0 entity for which the value is sought
+	 * @param localPos position in local coordinates in element
+	 * @param idx local index in element
+	 */
+	/* ATTENTION: define heat capacity per cubic meter! Be sure, that it corresponds to porosity!
+	 * Best thing will be to define heatCap = (specific heatCapacity of material) * density * porosity*/
+    virtual double heatCap(const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos, const int idx) const
+    {
+        DUNE_THROW(NotImplemented, "heat capacity function not implemented!");
+    }
+
+    /**@brief Heat conductivity of matrix AND fluid phases [ W / (m * K)]
+     * @param globalPos position in global coordinates
+     * @param element codim 0 entity for which the value is sought
+     * @param localPos position in local coordinates in element
+     * @param sat wetting Phase saturation
+     */
+    virtual double heatCond(const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos, const double sat) const
+    {
+        DUNE_THROW(NotImplemented, "heat conductivity function not implemented!");
+    }
+
+	/**@brief Heat conductivity of matrix AND fluid phases [ W / (m * K)]
+	 * @param globalPos position in global coordinates
+	 * @param element codim 0 entity for which the value is sought
+	 * @param localPos position in local coordinates in element
+	 * @param sat wetting Phase saturation
+	 */
+    virtual double heatCond(const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos, const double sat, const int idx) const
+    {
+        DUNE_THROW(NotImplemented, "heat conductivity function not implemented!");
+    }
+
+    /**@brief Tortuosity of matrix
+     * @param globalPos position in global coordinates
+     * @param element codim 0 entity for which the value is sought
+     * @param localPos position in local coordinates in element
+     */
+    virtual double tortuosity(const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos) const
+    {
+        DUNE_THROW(NotImplemented, "tortuosity function not implemented!");
+    }
+
+    /**@brief parameters for relative permeabilty models
+     * @param globalPos position in global coordinates
+     * @param element codim 0 entity for which the value is sought
+     * @param localPos position in local coordinates in element
+     * @param T Temperature
+     */
+    virtual std::vector<double> paramRelPerm(const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos, const double T = 283.15) const = 0;
+
+    /**@brief parameters for interfacial area surfaces
+     * @param globalPos position in global coordinates
+     * @param element codim 0 entity for which the value is sought
+     * @param localPos position in local coordinates in element
+     * @param T Temperature
+     */
+    virtual std::vector<double> awnParam(const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos) const
+    {
+        DUNE_THROW(NotImplemented, "awn-surface function not implemented!");
+    }
+
+    /**@brief Flag for determining the relative permeability model
+     * @param globalPos position in global coordinates
+     * @param element codim 0 entity for which the value is sought
+     * @param localPos position in local coordinates in element
+     */
+    virtual modelFlag relPermFlag(const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos) const
+    {
+        return linear;
+    }
+    /**@brief parameters for relative permeabilty models
+     * @param globalPos position in global coordinates
+     * @param element codim 0 entity for which the value is sought
+     * @param localPos position in local coordinates in element
+     * @param T Temperature
+     */
+    virtual std::vector<double> paramRelPerm2(const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos, const double T = 283.15) const
+    {
+        DUNE_THROW(NotImplemented, "second Pc-Sw rel");
+    }
+
+
+    /**@brief Flag for determining primary drainage or primary imbibition curve
+     * @param bool flag to distinguish between drainage or imbibition
+     */
+    virtual void setDrainFlag(bool flag)
+    {
+        DUNE_THROW(NotImplemented, "flag for imbibition/drainage not implemented");
+    }
+
+    virtual bool readPropertiesFlag()
+    {
+        DUNE_THROW(NotImplemented, "flag for reading soil properties from file");
+    }
+
+    /**@brief function for reading soil properties from file
+     */
+    virtual void readSoilProperties()
+    {
+        DUNE_THROW(NotImplemented, "read soil properties from file");
+    }
+
+    /**@brief function for assigning soil properties from file to model parameters
+     */
+    virtual void setSoilProperties()
+    {
+        DUNE_THROW(NotImplemented, "read soil properties from file");
+    }
+
+    virtual ~Matrix2p()
+    {}
+};
+
+/**ingroup properties
+ * @brief baseclass for fluid phases.
+ */
+class Fluid
+{
+public:
+    /** @brief dynamic viscosity in [kg / (m*s)]
+     * @param T Temperature \f$ \left[ K \right] \f$
+     * @param p Pressure \f$ \left[ Pa \right] \f$
+     *  @param Xa mass fraction of dissolved component
+     * @return kinematic viscosity \f$ \left[ \frac{kg}{ms} \right] \f$
+     */
+    virtual double viscosity (double T = 283.15, double p = 1e5, double X = 0.) const = 0;
+
+    //! dynamic viscosity in [kg / (m*s)]
+    /** by specification of the phase density, the internal density calculation can be avoided
+     *  @param p pressure [Pa]
+     *  @param T temperature [K]
+     *  @param rho Phase density [kg / m^3]
+     *  @param X mass fraction of dissolved component
+     */
+    virtual double viscosityCO2(double T, double p, double rho, double X = 0.) const // [kg / (m*s)]
+    {
+        return 0;
+    }
+
+    /** @brief density
+     * @param T Temperature \f$ \left[ K \right] \f$
+     * @param p Pressure \f$ \left[ Pa \right] \f$
+     * @param X mass fraction of dissolved component
+     * @return density \f$ \left[ \frac{kg}{m^3} \right] \f$
+     */
+    virtual double density (double T = 283.15, double p = 1e5, double X = 0.) const = 0;
+
+    /** @brief enthalpy
+     * @param T Temperature \f$ \left[ K \right] \f$
+     * @param p Pressure \f$ \left[ Pa \right] \f$
+     * @return enthalpy \f$ \left[ \frac{J}{kg} \right] \f$
+     */
+    virtual double enthalpy (double T=283.15, double p=1e5, double X = 1.) const
+    {
+        DUNE_THROW(NotImplemented, "enthalpy function not implemented!");
+    }
+
+    /** @brief enthalpy
+     * @param T Temperature \f$ \left[ K \right] \f$
+     * @param p Pressure \f$ \left[ Pa \right] \f$
+     * @return enthalpy \f$ \left[ \frac{J}{kg} \right] \f$
+     */
+    virtual double intEnergy(double T=283.15, double p=1e5, double X = 1.) const
+    {
+        DUNE_THROW(NotImplemented, "internal energy function not implemented!");
+    }
+
+
+    virtual ~Fluid()
+    {}
+};
+
+/**\ingroup properties
+ * @brief Base class for liquid phase of a binary gas liquid mixture
+ * Base class for a liquid phase made up of two components, where one
+ * is a solved gas.
+ * The components are denoted by
+ * w for the main (liquid) component and
+ * a for the dissolved (gaseous) component.
+ */
+class Liquid_GL : public Fluid
+{
+public:
+
+    /** @brief dynamic viscosity in [kg / (m*s)]
+     * @param T Temperature \f$ \left[ K \right] \f$
+     * @param p Pressure \f$ \left[ Pa \right] \f$
+     *  @param Xa mass fraction of dissolved component
+     * @return kinematic viscosity \f$ \left[ \frac{kg}{ms} \right] \f$
+     */
+    virtual double viscosity (double T, double p, double X = 0.) const = 0;
+
+    /** @brief density
+     * @param T Temperature \f$ \left[ K \right] \f$
+     * @param p Pressure \f$ \left[ Pa \right] \f$
+     * @param X mass fraction of dissolved component
+     * @return density \f$ \left[ \frac{kg}{m^3} \right] \f$
+     */
+    virtual double density (double T, double p, double X = 0.) const = 0;
+
+    /** @brief enthalpy
+     * @param T Temperature \f$ \left[ K \right] \f$
+     * @param p Pressure \f$ \left[ Pa \right] \f$
+     * @return enthalpy \f$ \left[ \frac{J}{kg} \right] \f$
+     */
+    virtual double enthalpy (double T, double p, double Xa = 0.) const = 0;
+
+    //! Specific internal energy in [N * m / kg]
+    /** @param p pressure [Pa]
+     *  @param T temperature [K]
+     *  @param Xa mass fraction of dissolved component
+     */
+    virtual double intEnergy(double T, double p, double Xa = 0.) const = 0; // [N * m / kg]
+
+    //! Diffusion coefficient for component a [m^2 / s]
+    /** @param p pressure [Pa]
+     *  @param T temperature [K]
+     */
+    virtual double diffCoeff(double T=283.15, double p=1e5) const = 0; // [m^2 / s]
+
+    //! Solubility of component a [kg / kg]
+    /** @param p pressure [Pa]
+     *  @param T temperature [K]
+     */
+    virtual double Xa_Max(double T, double p) const = 0; // [kg / kg]
+
+    //! vapour pressure of liquid component in [Pa]
+    /** @param T temperature in [K]
+     */
+    virtual double p_vap(double T) const = 0; // [Pa]
+
+    //! Henry coefficient of component a [1 / Pa]
+    /** @param T temperature [K]
+     */
+    virtual double henry(double T) const = 0; // [1 / Pa]
+
+    //! Boiling point temperature of liquid components in [K]
+    /** @param pressure in [Pa]
+     */
+    virtual double T_vap(double p) const = 0; // [K]
+
+    //! Molar mass of liquid component
+    virtual double molarMass_w()
+    {
+        return M_w;
+    }
+
+    //! Molar mass of gaseous solute
+    virtual double molarMass_a()
+    {
+        return M_a;
+    }
+
+    //! Molar mass of both components where the first entry is the liquid component
+    virtual FieldVector<double,2> molarMass()
+    {
+        FieldVector<double,2> M;
+        M[0] = M_w;
+        M[1] = M_a;
+        return M;
+    }
+
+    //! Conversion from mole fractions to mass fractions
+    /** @param x mole fractions of the components. The first entry represents the liquid component
+     */
+    inline FieldVector<double,2> x2X(FieldVector<double,2> x) const
+    {
+        if (x[0]+x[1] != 1.)
+            DUNE_THROW(Dune::MathError, "mole fractions do not sum up to unity!");
+        FieldVector<double,2> X;
+        X[0] = 1 / (1 + x[1] * M_a / (x[0] * M_w));
+        X[1] = 1 - X[0];
+        return X;
+    }
+
+    //! Conversion from mass fractions to mole fractions
+    /** @param X mass fractions of the components. The first entry represents the liquid component
+     */
+    inline FieldVector<double,2> X2x(FieldVector<double,2> X) const
+    {
+        if (X[0]+X[1] != 1.) DUNE_THROW(Dune::MathError, "mole fractions do not sum up to unity!");
+        FieldVector<double,2> x;
+        x[0] = 1 / (1 + X[1] / M_a / (X[0] / M_w));
+        x[1] = 1 - x[0];
+        return x;
+    }
+
+    Liquid_GL() : M_w(1.0), M_a(1.0)
+    {
+    }
+
+protected:
+    double M_w;
+    double M_a;
+};
+
+/**\ingroup properties
+ * @brief Base class for the liquid phase of a gas liquid mixture
+ * Base class for a liquid phase made up of two sorts of components:
+ * The liquid components, denoted by "w" and the dissolved
+ * gaseous components, denoted by "a"
+ * Template parameters:
+ * n_w : number of liquid components
+ * n_a : number of gaseous components
+ */
+template <int n_w, int n_a>
+class NLiquid_GL
+{
+    //! Phase density in [kg / m^3]
+    /** @param p pressure [Pa]
+     *  @param T temperature [K]
+     *  @param X phase composition: mass fractions of components
+     */
+    virtual double density(double T, double p, FieldVector<double,(n_w + n_a)> X) = 0;
+
+    //! Dynamic viscosity in [kg / (m*s)]
+    /** @param p pressure [Pa]
+     *  @param T temperature [K]
+     *  @param X phase composition: mass fractions of components
+     */
+    virtual double viscosity(double T, double p, FieldVector<double,(n_w + n_a)> X) = 0;
+
+    /** @brief enthalpy
+     * @param T Temperature \f$ \left[ K \right] \f$
+     * @param p Pressure \f$ \left[ Pa \right] \f$
+     * @return enthalpy \f$ \left[ \frac{J}{kg} \right] \f$
+     */
+    virtual double enthalpy (double T, double p, double Xa) const = 0;
+
+    //! Specific internal energy in [N * m / kg]
+    /** @param p pressure [Pa]
+     *  @param T temperature [K]
+     *  @param X phase composition: mass fractions of components
+     */
+    virtual double intEnergy(double T, double p, FieldVector<double,(n_w + n_a)> X) = 0;
+
+    //! Diffusion coefficient for component a [m^2 / s]
+    /** @param p pressure [Pa]
+     *  @param T temperature [K]
+     */
+    virtual FieldVector<double,(n_w + n_a)> diffCoeff(double p, double T) = 0;
+
+    //! Solubility of component a [kg / kg]
+    /** @param p pressure [Pa]
+     *  @param T temperature [K]
+     */
+    virtual FieldVector<double,n_a> Xa_Max(double p, double T, FieldVector<double,n_w> Xw) = 0;
+
+    //! vapour pressure of liquid components in [Pa]
+    /** @param T temperature in [K]
+     */
+    virtual FieldVector<double, n_w> p_vap(double T) = 0; // [Pa]
+
+    //! Boiling point temperature of liquid components in [K]
+    /** @param pressure in [Pa]
+     */
+    virtual FieldVector<double, n_w> T_vap(double p) = 0; // [K]
+
+    //! Henry coefficient of component a [1 / Pa]
+    /** @param T temperature [K]
+     */
+    virtual FieldVector<double,n_a> henry(double T, FieldVector<double,n_w> Xw) = 0;
+
+    //! Molar masses of components
+    FieldVector<double,(n_w+n_a)> molarMass()
+    {
+        return M_;
+    }
+
+    //! Conversion from mole fractions to mass fractions
+    /** @param x mole fractions of components (have to be in same order as molar masses in private vector M_ !)
+     */
+    FieldVector<double,(n_w+n_a)> x2X(FieldVector<double,(n_w+n_a)> x)
+    {
+        FieldVector<double,(n_w+n_a)> X(x);
+        int size = n_w + n_a;
+        double divisor;
+        for (int i = 0; i < size; i++)
+        {
+            X[i] *= M_[i];
+            divisor += X[i];
+        }
+        X /= divisor;
+        return X;
+    }
+
+    //! Conversion from mass fractions to mole fractions
+    /** @param X mass fractions of components (have to be in same order as molar masses in private vector M_ !)
+     */
+    FieldVector<double,(n_w+n_a)> X2x(FieldVector<double,(n_w+n_a)> X)
+    {
+        FieldVector<double,(n_w+n_a)> x(X);
+        int size = n_w + n_a;
+        double divisor;
+        for (int i = 0; i < size; i++)
+        {
+            x[i] /= M_[i];
+            divisor += x[i];
+        }
+        x /= divisor;
+        return x;
+    }
+
+private:
+    Dune::FieldVector<double,(n_w + n_a)> M_;
+};
+
+/**\ingroup properties
+ * @brief Base class for the gas phase of a binary gas liquid mixture
+ * Base class for a gaseous phase made up of two components, where one
+ * is a vaporized liquid.
+ * The components are denoted by
+ * w for the dissolved (liquid) component and
+ * a for the main (gaseous) component.
+ */
+class Gas_GL : public Fluid
+{
+public:
+    /** @brief dynamic viscosity in [kg / (m*s)]
+     * @param T Temperature \f$ \left[ K \right] \f$
+     * @param p Pressure \f$ \left[ Pa \right] \f$
+     *  @param Xa mass fraction of dissolved component
+     * @return kinematic viscosity \f$ \left[ \frac{kg}{ms} \right] \f$
+     */
+    virtual double viscosity (double T, double p, double X = 0.) const = 0;
+
+    /** @brief dynamic viscosity in [kg / (m*s)] (by specification of the phase density, the internal density calculation can be avoided)
+     *  @param p pressure [Pa]
+     *  @param T temperature [K]
+     *  @param rho Phase density [kg / m^3]
+     *  @param X mass fraction of dissolved component
+     */
+    virtual double viscosityCO2(double T, double p, double rho, double X = 0.) const // [kg / (m*s)]
+    {
+        return 0;
+    }
+    /** @brief density
+     * @param T Temperature \f$ \left[ K \right] \f$
+     * @param p Pressure \f$ \left[ Pa \right] \f$
+     * @param X mass fraction of dissolved component
+     * @return density \f$ \left[ \frac{kg}{m^3} \right] \f$
+     */
+    virtual double density (double T, double p, double X = 0.) const = 0;
+
+    //! Specific internal energy in [N * m / kg]
+    /** @param p pressure [Pa]
+     *  @param T temperature [K]
+     *  @param Xw mass fraction of dissolved component
+     */
+    virtual double intEnergy(double T, double p, double Xw = 0.) const = 0; // [N * m / kg]
+
+    //! Specific enthalpy in [N * m / kg]
+    /** @param p pressure [Pa]
+     *  @param T temperature [K]
+     *  @param Xw mass fraction of dissolved component
+     */
+    virtual double enthalpy(double T, double p, double Xw = 0.) const = 0; // [N * m / kg]
+
+    //! Diffusion coefficient for component a [m^2 / s]
+    /** @param p pressure [Pa]
+     *  @param T temperature [K]
+     */
+    virtual double diffCoeff(double T=283.15, double p=1e5) const = 0; // [m^2 / s]
+
+    //! Solubility of component w [kg / kg]
+    /** @param p pressure [Pa]
+     *  @param T temperature [K]
+     */
+    virtual double Xw_Max(double T, double p) const = 0; // [kg / kg]
+
+    //! Molar mass of liquid solute
+    double molarMass_w() const
+    {
+        return M_w;
+    }
+
+    //! Molar mass of gaseous component
+    double molarMass_a() const
+    {
+        return M_a;
+    }
+
+    //! Molar mass of both components where the first entry is the liquid component
+    FieldVector<double,2> molarMass() const
+    {
+        FieldVector<double,2> M;
+        M[0] = M_w;
+        M[1] = M_a;
+        return M;
+    }
+
+    //! Conversion from mole fractions to mass fractions
+    /** @param x mole fractions of the components. The first entry represents the liquid component
+     */
+    inline FieldVector<double,2> x2X(FieldVector<double,2> x) const
+    {
+        if (x[0]+x[1] != 1.) DUNE_THROW(MathError, "mole fractions do not sum up to unity!");
+        FieldVector<double,2> X;
+        X[0] = 1 / (1 + x[1] * M_a / (x[0] * M_w));
+        X[1] = 1 - X[0];
+        return X;
+    }
+
+    //! Conversion from mass fractions to mole fractions
+    /** @param X mass fractions of the components. The first entry represents the liquid component
+     */
+    inline FieldVector<double,2> X2x(FieldVector<double,2> X) const
+    {
+        if (X[0]+X[1] != 1.)
+            DUNE_THROW(MathError, "mass fractions do not sum up to unity!");
+        FieldVector<double,2> x;
+        x[0] = 1 / (1 + X[1] / M_a / (X[0] / M_w));
+        x[1] = 1 - x[0];
+        return x;
+    }
+
+    Gas_GL():M_w(1.), M_a(1.)
+    {
+    }
+
+protected:
+    double M_w;
+    double M_a;
+};
+
+/**\ingroup properties
+ * @brief Base class for the gaseous phase of a gas liquid mixture
+ * Base class for a gaseous phase made up of two sorts of components:
+ * The gaseous components, denoted by "a" and the
+ * dissolved liquid components, denoted by "w"
+ * Template parameters:
+ * n_w : number of liquid components
+ * n_a : number of gaseous components
+ */
+template <int n_w, int n_a>
+class NGas_GL
+{
+    //! Phase density in [kg / m^3]
+    /** @param p pressure [Pa]
+     *  @param T temperature [K]
+     *  @param X phase composition: mass fractions of components
+     */
+    virtual double density(double T, double p, FieldVector<double,(n_w + n_a)> X) = 0;
+
+    //! Dynamic viscosity in [kg / (m*s)]
+    /** @param p pressure [Pa]
+     *  @param T temperature [K]
+     *  @param X phase composition: mass fractions of components
+     */
+    virtual double viscosity(double T, double p, FieldVector<double,(n_w + n_a)> X) = 0;
+
+    //! Specific internal energy in [N * m / kg]
+    /** @param p pressure [Pa]
+     *  @param T temperature [K]
+     *  @param X phase composition: mass fractions of components
+     */
+    virtual double intEnergy(double T, double p, FieldVector<double,(n_w + n_a)> X) = 0;
+
+    //! Diffusion coefficient for component a [m^2 / s]
+    /** @param p pressure [Pa]
+     *  @param T temperature [K]
+     */
+    virtual FieldVector<double,(n_w + n_a)> diffCoeff(double p, double T) = 0;
+
+    //! Solubility of component a [kg / kg]
+    /** @param p pressure [Pa]
+     *  @param T temperature [K]
+     */
+    virtual FieldVector<double,n_w> Xw_Max(double p, double T, FieldVector<double,n_w> Xw) = 0;
+
+    //! Molar masses of components
+    FieldVector<double,(n_w+n_a)> molarMass()
+    {
+        return M_;
+    }
+
+    //! Conversion from mole fractions to mass fractions
+    /** @param x mole fractions of components (have to be in same order as molar masses in private vector M_ !)
+     */
+    FieldVector<double,(n_w+n_a)> x2X(FieldVector<double,(n_w+n_a)> x)
+    {
+        FieldVector<double,(n_w+n_a)> X(x);
+        int size = n_w + n_a;
+        double divisor;
+        for (int i = 0; i < size; i++)
+        {
+            X[i] *= M_[i];
+            divisor += X[i];
+        }
+        X /= divisor;
+        return X;
+    }
+
+    //! Conversion from mass fractions to mole fractions
+    /** @param X mass fractions of components (have to be in same order as molar masses in private vector M_ !)
+     */
+    FieldVector<double,(n_w+n_a)> X2x(FieldVector<double,(n_w+n_a)> X)
+    {
+        FieldVector<double,(n_w+n_a)> x(X);
+        int size = n_w + n_a;
+        double divisor;
+        for (int i = 0; i < size; i++)
+        {
+            x[i] /= M_[i];
+            divisor += x[i];
+        }
+        x /= divisor;
+        return x;
+    }
+
+private:
+    FieldVector<double,(n_w + n_a)> M_;
+};
+} // end namespace
+#endif /*PROPERTY_BASECLASSES*/
