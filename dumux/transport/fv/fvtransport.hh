@@ -7,7 +7,6 @@
 #include <dune/common/typetraits.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
-#include <dune/grid/utility/intersectiongetter.hh>
 #include <dune/istl/bvector.hh>
 #include "dumux/transport/transport.hh"
 #include "dumux/transport/fv/numericalflux.hh"
