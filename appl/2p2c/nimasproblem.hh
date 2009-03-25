@@ -25,6 +25,7 @@
 #include <dune/common/timer.hh>
 #include <dune/common/collectivecommunication.hh>
 
+#include<dumux/new_models/2p2c/2p2cboxmodel.hh>
 #include<dumux/new_models/2p2cni/2p2cniboxmodel.hh>
 #include<dumux/new_models/2p2cni/2p2cninewtoncontroller.hh>
 

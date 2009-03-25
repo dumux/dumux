@@ -20,9 +20,7 @@
 #ifndef DUMUX_NEW_2P2CNI_BOX_MODEL_HH
 #define DUMUX_NEW_2P2CNI_BOX_MODEL_HH
 
-#include <dumux/new_models/2p2c/2p2cboxmodel.hh>
-
-#include <dumux/new_models/2p2c/2p2ctraits.hh>
+#include <dumux/new_models/2p2c/2p2cboxjacobianbase.hh>
 
 namespace Dune
 {
@@ -360,6 +358,15 @@ public:
     void addVtkFields(MultiWriter &writer)
     {
         twoPTwoCLocalJacobian_.addVtkFields(writer, this->currentSolution());
+    }
+
+    /*!
+     * \brief Calculate the masses in the system for
+     *        the current timestep.
+     */
+    void calculateMass(Dune::FieldVector<Scalar, 4> &mass)
+    {
+        twoPTwoCLocalJacobian_.calculateMass(this->currentSolution(), mass);
     }
 
     /*!
