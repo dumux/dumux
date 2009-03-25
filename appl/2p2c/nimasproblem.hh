@@ -56,11 +56,11 @@ namespace Dune
 template<class GridT, class ScalarT>
 class NimasProblem : public BasicDomain<GridT,ScalarT>
 {
-    typedef GridT                          Grid;
-    typedef BasicDomain<Grid, ScalarT>     ParentType;
-    typedef NimasProblem<Grid, ScalarT>    ThisType;
-    typedef TwoPTwoCPnSwTraits<ScalarT>    Formulation;
-    typedef CollectiveCommunication<ThisType> CollectiveCommunication;
+    typedef GridT                          			Grid;
+    typedef BasicDomain<Grid, ScalarT>     			ParentType;
+    typedef NimasProblem<Grid, ScalarT>    			ThisType;
+    typedef TwoPTwoCPnSwTraits<ScalarT>    			Formulation;
+    typedef Dune::CollectiveCommunication<ThisType> CollectiveCommunication;
 #if !ISOTHERMAL
     typedef TwoPTwoCNIBoxModel<ThisType, Formulation>   Model;
 #else

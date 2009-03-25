@@ -61,7 +61,7 @@ protected:
     typedef typename Problem::DomainTraits          DomTraits;
     typedef BoxTraitsT                              BoxTraits;
     typedef TwoPTwoCTraitsT                         TwoPTwoCTraits;
-    typedef CollectiveCommunication<Problem>        CollectiveCommunication;
+    typedef Dune::CollectiveCommunication<Problem>  CollectiveCommunication;
 
 
     enum {
