@@ -3,6 +3,7 @@
 
 #include <dune/grid/common/gridinfo.hh>
 #include <dune/grid/uggrid.hh>
+#include <dune/grid/yaspgrid.hh>
 #include <dune/grid/sgrid.hh>
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
@@ -21,8 +22,8 @@ int main(int argc, char** argv)
         // or long double)
         typedef double                            Scalar;
         typedef Dune::UGGrid<dim>                 Grid;
-        typedef Dune::GridPtr<Grid>               GridPointer;
 //        typedef Dune::SGrid<dim,dim>              Grid;
+        typedef Dune::GridPtr<Grid>               GridPointer;
         typedef Dune::NimasProblem<Grid, Scalar>  Problem;
 
         //    For the definition of a SGrid ////////////////////////////////////////
@@ -52,7 +53,19 @@ int main(int argc, char** argv)
 
         GridPointer gridPtr =  GridPointer(dgfFileName);
         Dune::gridinfo(*gridPtr);
-//        Dune::gridinfo(grid);
+
+        // do refinement
+        typedef Grid::Codim<0>::LeafIterator Iterator;
+        Iterator eendit = (*gridPtr).leafend<0>();
+        for (Iterator it = (*gridPtr).leafbegin<0>(); it != eendit; ++it)
+        {
+            Dune::GeometryType gt = it->geometry().type();
+            const Dune::FieldVector<Scalar,dim>& local = Dune::ReferenceElements<Scalar,dim>::general(gt).position(0, 0);
+            Dune::FieldVector<Scalar,dim> global = it->geometry().global(local);
+            if (global[1] > 0.2)
+                (*gridPtr).mark(1, *it);
+        }
+        (*gridPtr).adapt();
 
         // instantiate and run the concrete problem
         Problem problem(&(*gridPtr), dt, tEnd);

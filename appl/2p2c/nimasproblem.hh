@@ -125,11 +125,12 @@ private:
 
     typedef Dune::VtkMultiWriter<typename Grid::LeafGridView> VtkMultiWriter;
 
-    enum Episode {
+    enum Episode // the type of an episode of the simulation
+    {
         ConstantRateEpisode,  // an episode where imbibition of water takes place
         FallingRateEpisode,  // an episode where drainage of water takes place
         WaitEpisode    // an episode with neither drainage nor imbibition
-    }; // the type of an episode of the simulation
+    };
 
     typedef Dune::TimeManager<Episode>                  TimeManager;
 
@@ -146,7 +147,7 @@ public:
           timeManager_(tEnd, this->grid().comm().rank() == 0),
           model_(*this),
           newtonMethod_(model_),
-          resultWriter_("out_nimasproblem_lowXwn_50")
+          resultWriter_("out_nimasproblem_refined50")
     {
         timeManager_.setStepSize(dtInitial);
         endTime_ = tEnd;
@@ -209,7 +210,7 @@ public:
         if (timeManager_.episode() == FallingRateEpisode)
         {
         	if(globalPos[1] > depthBOR_ - eps_)
-					values[switchIdx] = 5e-4;
+					values[switchIdx] = 5e-5;
 //        	if(globalPos[1] > depthBOR_ - eps_)
 //					values[switchIdx] = 0.032;
         }
@@ -271,7 +272,7 @@ private:
     {
         Scalar densityW = 1000.0;
 
-        values[pressureIdx] = 1.5e5 - (depthBOR_ - globalPos[1])*densityW*gravity_[1];
+        values[pressureIdx] = 1.5e5 - (depthBOR_ - globalPos[1]) * densityW * gravity_[1];
         values[switchIdx] = 1.0 - 1e-2;
         //        std::cout << globalPos[0] << ", " << globalPos[1] << ": " << values[pressureIdx] << std::endl;
 
@@ -432,7 +433,7 @@ public:
     void init()
     {
         // set the initial condition
-        timeManager_.startNextEpisode(ConstantRateEpisode, 0.901e6);//8.05e5);//1.15e6);//1036800);
+        timeManager_.startNextEpisode(ConstantRateEpisode, 1.0087e6);//8.05e5);//1.15e6);//1036800);
         model_.initial();
 
         // write the inital solution to disk
@@ -475,11 +476,12 @@ private:
 
         Dune::FieldVector<Scalar, 4> mass;
         model_.calculateMass(mass);
+        double curTime = timeManager_.time();
 
         if(collectiveCom_.rank() == 0)
         {
-            std::cout<< "Mass[kg] (nC, nC in nP, wC, wC in wP):"
-            << mass[0] <<", "<<mass[1]<<", "<< mass[2]<<", "<< mass[3] <<". \n";
+            std::cout<< "Mass[kg] (nC, nC in nP, wC, wC in wP): "
+            << curTime << ", "<< mass[0] <<", "<<mass[1]<<", "<< mass[2]<<", "<< mass[3] <<". \n";
         }
 
         resultWriter_.endTimestep();
