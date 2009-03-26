@@ -197,13 +197,12 @@ protected:
         vertDat.massfrac[nComp][nPhase] = 1.0 - vertDat.massfrac[wComp][nPhase];
         //                    vertDat.phaseState = phaseState;
 
-        // Density of Water is set constant here!
-        vertDat.density[wPhase] = 1000;//problem.wettingPhase().density(temperature,
-        //vertDat.pW,
-        //vertDat.massfrac[nComp][wPhase]);
-        vertDat.density[nPhase] = 1.19;//problem.nonwettingPhase().density(temperature,
-                                         //                           vertDat.pN,
-                                          //                          vertDat.massfrac[wComp][nPhase]);
+        vertDat.density[wPhase] = problem.wettingPhase().density(temperature,
+                                                                 vertDat.pW,
+                                                                 vertDat.massfrac[nComp][wPhase]);
+        vertDat.density[nPhase] = problem.nonwettingPhase().density(temperature,
+                                                                    vertDat.pN,
+                                                                    vertDat.massfrac[wComp][nPhase]);
 
         // Mobilities
         vertDat.mobility[wPhase] = problem.materialLaw().mobW(vertDat.satW,
