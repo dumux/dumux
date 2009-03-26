@@ -23,7 +23,7 @@ template<class Grid, class Scalar> class ShallowVariableClass
     };
 
     enum
-        {   dim=Grid::dimension};
+    {   dim=Grid::dimension};
 
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
     typedef FieldVector<Scalar,dim> LocalPosition;
@@ -31,7 +31,7 @@ template<class Grid, class Scalar> class ShallowVariableClass
     typedef typename Grid::LeafGridView GridView;
     typedef typename GridView::IndexSet IndexSet;
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,IndexSet,ElementLayout>
-    ElementMapper;
+            ElementMapper;
 
 public:
     typedef Dune::BlockVector<Dune::FieldVector<Scalar,1> > ScalarType;
@@ -39,37 +39,37 @@ public:
     typedef Dune::BlockVector<Dune::FieldVector<Scalar,dim+1> > SolutionType;
 
     ElementMapper elementMapper;
-
-    ScalarType wDepth;
+    ScalarType waterDepth;
     VelType velocity;
     SolutionType globalSolution;
 
     Grid& grid;
 
-    //Constructor: defines the initital values for the variables and the methods includes in the class
-
-    ShallowVariableClass(Grid& grid) :
+    ShallowVariableClass(Grid& grid, Scalar& initialWDepth = *(new Scalar(0)), Dune::FieldVector<Scalar, dim>& initialVel = *(new Dune::FieldVector<Scalar,dim>(0))) :
         elementMapper(grid, grid.leafIndexSet()), grid(grid),
-        size(elementMapper.size())
+                size(elementMapper.size())
     {
-        sizeInitWDepth(size);
-        sizeInitVel(size);
+        sizeInitWDepth(initialWDepth, size);
+        sizeInitVel(initialVel, size);
         sizeInitGlobalSolution(size);
+
     }
 
     //Definition of the methods to resize the vectors and fill with initial data. !!!Initial data is not the boundary condition, it´s just to initialize sth
 
-    void sizeInitWDepth(int size)
+    void sizeInitWDepth(Scalar& initialWDepth, int size)
     {
-        wDepth.resize(size);
-        wDepth=0;
+        waterDepth.resize(size);
+        waterDepth=initialWDepth;
         return;
     }
 
-    void sizeInitVel(int size)
+    void sizeInitVel(Dune::FieldVector<Scalar, dim>& initialVel, int size)
     {
         velocity.resize(size);
-        velocity=0;
+        velocity[0]=initialVel[0];
+        velocity[1]=initialVel[1];
+
         return;
     }
 
@@ -80,11 +80,11 @@ public:
         return;
     }
 
-    //Declaration of methods to return variable values
+    //Declaration of return methods 
 
     ScalarType& returnWDepth()
     {
-        return wDepth;
+        return waterDepth;
     }
 
     VelType& returnVel()
@@ -97,22 +97,23 @@ public:
         return globalSolution;
     }
 
-    //Definition of the return methods
+    //Definition of return methods
 
-    const Scalar& returnWDepth(const GlobalPosition& globalPos,
-                               const Element& element, const LocalPosition& localPos)
+    const ScalarType& returnWDepth(const GlobalPosition& globalPos,
+            const Element& element, const LocalPosition& localPos)
     {
-        return wDepth[elementMapper.map(element)];
+        return waterDepth[elementMapper.map(element)];
+
     }
 
     const VelType& returnVel(const GlobalPosition& globalPos,
-                             const Element& element, const LocalPosition& localPos)
+            const Element& element, const LocalPosition& localPos)
     {
         return velocity[elementMapper.map(element)];
     }
 
     const SolutionType& returnGlobalSol(const GlobalPosition& globalPos,
-                                        const Element& element, const LocalPosition& localPos)
+            const Element& element, const LocalPosition& localPos)
     {
         return globalSolution[elementMapper.map(element)];
     }
@@ -121,23 +122,23 @@ public:
     {
         VTKWriter<typename Grid::LeafGridView> vtkwriter(grid.leafView());
         Dune::BlockVector<Dune::FieldVector<Scalar, 1> > vX(size);
-        Dune::BlockVector<Dune::FieldVector<Scalar, 1> > vY(size);
+        //Dune::BlockVector<Dune::FieldVector<Scalar, 1> > vY(size);
         vX = 0;
-        vY = 0;
+        //  vY = 0;
 
         for (int i = 0; i < size; i++)
         {
-            std::cout<<"wDepth = "<<wDepth[i]<<std::endl;
-            std::cout<<"velX = "<<velocity[i][0]<<std::endl;
-            std::cout<<"velY = "<<velocity[i][1]<<std::endl;
+            //std::cout<<"waterDepth = "<<waterDepth[i]<<std::endl;
+            //std::cout<<"velX = "<<velocity[i][0]<<std::endl;
+            //std::cout<<"velY = "<<velocity[i][1]<<std::endl;
             vX[i] = velocity[i][0];
-            vY[i] = velocity[i][1];
+            // vY[i] = velocity[i][1];
         }
         char fname[128];
         sprintf(fname, "%s-%05d", name, k);
         vtkwriter.addCellData(vX, "Velocity_X");
-        vtkwriter.addCellData(vY, "Velocity_Y");
-        vtkwriter.addCellData(wDepth, "wDepth");
+        //vtkwriter.addCellData(vY, "Velocity_Y");
+        vtkwriter.addCellData(waterDepth, "waterDepth");
         vtkwriter.write(fname, VTKOptions::ascii);
 
         return;

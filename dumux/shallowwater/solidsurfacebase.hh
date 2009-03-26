@@ -13,30 +13,35 @@ template<class Grid, class Scalar> class SolidSurfaceBase
 {
 public:
     enum
-        {   dim=Grid::dimension};
+    {   dim=Grid::dimension};
 
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
     typedef FieldVector<Scalar,dim> LocalPosition;
     typedef FieldVector<Scalar,dim> GlobalPosition;
 
     virtual Scalar frictionRelationType(const GlobalPosition& globalPos,
-                                        const Element& element, const LocalPosition& localPos)
+            const Element& element, const LocalPosition& localPos)
     {
         DUNE_THROW(NotImplemented, "friction term not implemented!");
     }
 
     virtual Scalar friction(const GlobalPosition& globalPos,
-                            const Element& element, const LocalPosition& localPos)
+            const Element& element, const LocalPosition& localPos)
     {
         DUNE_THROW(NotImplemented, "friction term not implemented!");
     }
 
     virtual Scalar evalBottomElevation(const GlobalPosition& globalPos,
-                                       const Element& element, const LocalPosition& localPos) = 0;
+            const Element& element, const LocalPosition& localPos) = 0;
+    
+    virtual FieldVector<Scalar, dim> evalBottomSlopes() = 0;
 
     virtual FieldVector<Scalar, dim> calcBottomSlopes(
-                                                      const GlobalPosition& globalPos,
-                                                      const Element& element, const LocalPosition& localPos) = 0;
+            const GlobalPosition& globalPos,
+            const Element& element, const LocalPosition& localPos)
+            {
+        DUNE_THROW(NotImplemented, "calculation of bottom slopes not implemented!");
+            }
 
     virtual ~SolidSurfaceBase()
     {

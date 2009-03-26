@@ -16,29 +16,23 @@ namespace Dune
 {
 //! \ingroup transport
 //! Base class for defining an instance of a numerical transport model.
-/*! An interface for defining a numerical transport model for the
- *  solution of equations of the form
 
- - Grid      a DUNE grid type
- - RT        type used for return values
- - RepresentationType   type of the vector holding the saturation values
- - VelType   type of the vector holding the velocity values
-
-*/
 template<class Grid, class Scalar, class VC> class ShallowWater
 {
 public:
 
-    enum {dim = Grid::dimension};
+    enum
+    {   dim = Grid::dimension};
     typedef Dune::BlockVector<Dune::FieldVector<Scalar,dim+1> > SolutionType;
-    typedef Dune::BlockVector<Dune::FieldVector<Scalar,dim+1> > RepresentationType;
+    typedef Dune::BlockVector<Dune::FieldVector<Scalar,dim+1> >
+            RepresentationType;
     const Grid& grid;
 
     typename Dune::ShallowProblemBase<Grid,Scalar,VC>& problem;
 
-
-
-    virtual int update(const Scalar t, Scalar& dt, RepresentationType& updateVec) = 0;
+    //updates the solution vector
+    virtual int
+            update(const Scalar t, Scalar& dt, RepresentationType& updateVec) = 0;
 
     void initial()
     {
@@ -46,19 +40,13 @@ public:
         return;
     }
 
-    //! \brief Sets the initial solution
-    virtual void initialize() = 0 ;
-    
+    //initializes the variables 
+    virtual void initialize() = 0;
+
     virtual void postProcessUpdate(Scalar t, Scalar dt)
     {
         return;
     }
-
-    //! return const reference to globalSolution vector
-    //virtual const RepresentationType& operator*() const
-    //{
-    //return problem.variables.globalSolution;
-    //}
 
     //! return reference to globalSolution vector
     virtual RepresentationType& operator*()
@@ -81,11 +69,10 @@ public:
      *  @param g a DUNE grid object
      *  @param prob an object of class TransportProblem or derived
      */
-    ShallowWater(const Grid& grid, ShallowProblemBase<Grid, Scalar, VC>& problem):
+    ShallowWater(const Grid& grid, ShallowProblemBase<Grid, Scalar, VC>& problem) :
         grid(grid), problem(problem)
     {
     }
-
 
 };
 
