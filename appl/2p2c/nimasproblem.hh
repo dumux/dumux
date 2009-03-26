@@ -61,7 +61,6 @@ class NimasProblem : public BasicDomain<GridT,ScalarT>
     typedef BasicDomain<Grid, ScalarT>     			ParentType;
     typedef NimasProblem<Grid, ScalarT>    			ThisType;
     typedef TwoPTwoCPnSwTraits<ScalarT>    			Formulation;
-    typedef Dune::CollectiveCommunication<ThisType> CollectiveCommunication;
 #if !ISOTHERMAL
     typedef TwoPTwoCNIBoxModel<ThisType, Formulation>   Model;
 #else
@@ -85,6 +84,7 @@ public:
 #else
     typedef typename Model::TwoPTwoCTraits      TwoPTwoCNITraits;
 #endif
+    typedef typename Grid::CollectiveCommunication  CollectiveCommunication;
 
 private:
     // some constants from the traits for convenience

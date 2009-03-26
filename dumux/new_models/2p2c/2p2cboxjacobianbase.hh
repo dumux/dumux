@@ -61,8 +61,6 @@ protected:
     typedef typename Problem::DomainTraits          DomTraits;
     typedef BoxTraitsT                              BoxTraits;
     typedef TwoPTwoCTraitsT                         TwoPTwoCTraits;
-    typedef Dune::CollectiveCommunication<Problem>  CollectiveCommunication;
-
 
     enum {
         dim              = DomTraits::dim,
@@ -106,6 +104,7 @@ protected:
     typedef typename BoxTraits::FVElementGeometry   FVElementGeometry;
     typedef typename BoxTraits::SpatialFunction     SpatialFunction;
     typedef typename BoxTraits::LocalFunction       LocalFunction;
+    typedef typename Grid::CollectiveCommunication  CollectiveCommunication;
 
     typedef typename TwoPTwoCTraits::PhasesVector        PhasesVector;
     typedef typename TwoPTwoCTraits::VariableVertexData  VariableVertexData;
@@ -198,12 +197,13 @@ protected:
         vertDat.massfrac[nComp][nPhase] = 1.0 - vertDat.massfrac[wComp][nPhase];
         //                    vertDat.phaseState = phaseState;
 
-        vertDat.density[wPhase] = problem.wettingPhase().density(temperature,
-                                                                 vertDat.pW,
-                                                                 vertDat.massfrac[nComp][wPhase]);
-        vertDat.density[nPhase] = problem.nonwettingPhase().density(temperature,
-                                                                    vertDat.pN,
-                                                                    vertDat.massfrac[wComp][nPhase]);
+        // Density of Water is set constant here!
+        vertDat.density[wPhase] = 1000;//problem.wettingPhase().density(temperature,
+        //vertDat.pW,
+        //vertDat.massfrac[nComp][wPhase]);
+        vertDat.density[nPhase] = 1.19;//problem.nonwettingPhase().density(temperature,
+                                         //                           vertDat.pN,
+                                          //                          vertDat.massfrac[wComp][nPhase]);
 
         // Mobilities
         vertDat.mobility[wPhase] = problem.materialLaw().mobW(vertDat.satW,
@@ -905,30 +905,20 @@ public:
                         minTe = std::min(minTe, Te);
                         maxTe = std::max(maxTe, Te);
 
-                        // IF PARALLEL: check all processors to get minimum and maximum
-                        //values of primary variables
-                        // also works for sequential calculation
-                        minSat = collectiveCom_.min(minSat);
-                        maxSat = collectiveCom_.max(maxSat);
-                        minP = collectiveCom_.min(minP);
-                        maxP = collectiveCom_.max(maxP);
-                        minX = collectiveCom_.min(minX);
-                        maxX = collectiveCom_.max(maxX);
-                        minTe = collectiveCom_.min(minTe);
-                        maxTe = collectiveCom_.max(maxTe);
-
                         // calculate total mass
                         mass[0] += massNComp;       // total mass of nonwetting component
                         mass[1] += massNCompNPhase; // mass of nonwetting component in nonwetting phase
                         mass[2] += massWComp;       // total mass of wetting component
                         mass[3] += massWCompWPhase; // mass of wetting component in wetting phase
 
-                        // IF PARALLEL: calculate total mass including all processors
-                        // also works for sequential calculation
-                        mass = collectiveCom_.sum(mass);
                     }
 
             }
+
+        // IF PARALLEL: calculate total mass including all processors
+        // also works for sequential calculation
+        mass = collectiveCom_.sum(mass);
+
         if(collectiveCom_.rank() == 0) // IF PARALLEL: only print by processor with rank() == 0
             {
                 // print minimum and maximum values
