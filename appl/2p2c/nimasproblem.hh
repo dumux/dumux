@@ -148,7 +148,7 @@ public:
           timeManager_(tEnd, this->grid().comm().rank() == 0),
           model_(*this),
           newtonMethod_(model_),
-          resultWriter_("out_nimasproblem_refined50")
+          resultWriter_("out_nimasproblem_refined100_Xwn005")
     {
         timeManager_.setStepSize(dtInitial);
         endTime_ = tEnd;
@@ -184,7 +184,10 @@ public:
         else if (timeManager_.episode() == FallingRateEpisode)
         {
         	if(globalPos[1] > depthBOR_ - eps_)
-					values = BoundaryConditions::dirichlet;
+        	{
+					values[pressureIdx] = BoundaryConditions::dirichlet;
+                    values[switchIdx] = BoundaryConditions::dirichlet;
+        	}
         }
 #if !ISOTHERMAL
         values[temperatureIdx] = BoundaryConditions::dirichlet;
@@ -211,7 +214,7 @@ public:
         if (timeManager_.episode() == FallingRateEpisode)
         {
         	if(globalPos[1] > depthBOR_ - eps_)
-					values[switchIdx] = 5e-5;
+					values[switchIdx] = 0.0025;//1e-5;
 //        	if(globalPos[1] > depthBOR_ - eps_)
 //					values[switchIdx] = 0.032;
         }
@@ -288,7 +291,7 @@ public:
                           int                  &globalIdx,
                           const GlobalPosition &globalPos) const
     {
-        return BothPhases;
+            return BothPhases;
     }
 
     Scalar porosity(const Element &element, int localIdx) const
@@ -434,7 +437,7 @@ public:
     void init()
     {
         // set the initial condition
-        timeManager_.startNextEpisode(ConstantRateEpisode, 1.0087e6);//8.05e5);//1.15e6);//1036800);
+        timeManager_.startNextEpisode(ConstantRateEpisode, 822358.5);//8.05e5);//1.15e6);//1036800);
         model_.initial();
 
         // write the inital solution to disk

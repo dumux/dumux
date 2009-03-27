@@ -87,14 +87,13 @@ public:
         return Matrix2p<Grid,Scalar>::van_genuchten;
     }
 
-
     NimasSoil()
         :Matrix2p<Grid,Scalar>(),
          permeability_(0.0),
          permeability2_(0.0)
     {
         for (int i = 0; i < dim; i++){
-            permeability_[i][i] = 1.0e-12;
+            permeability_[i][i] = 0.5e-12;
             permeability2_[i][i] = 1.0e-13;
         }
     }
