@@ -8,7 +8,7 @@ NORMALTESTS = new_leakywell new_test_2p2cni test_2p2cni
 check_PROGRAMS = $(NORMALTESTS)
 
 test_2p2cnidir = $(includedir)/dune/dumux/test/2p2cni
-test_2p2cni_HEADERS = brineco2problem.hh co2_soilproperties.hh waterairproblem.hh
+test_2p2cni_HEADERS = waterairproblem.hh
 
 new_leakywell_SOURCES = new_leakywell.cc 
 
