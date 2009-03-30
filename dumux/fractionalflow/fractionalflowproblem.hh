@@ -128,7 +128,7 @@ public:
     /*! evaluate gravity
       \return     gravity vector
     */
-    const FieldVector<Scalar,dimWorld>& gravity() const
+    virtual const FieldVector<Scalar,dimWorld>& gravity() const
     {
         return gravity_;
     }
