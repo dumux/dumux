@@ -40,87 +40,75 @@ namespace Dune
  *    - RT    type used for return values
  */
 template<class Grid, class Scalar, class VC>
-class TransportProblem {
-    enum {dim=Grid::dimension, dimWorld=Grid::dimensionworld, numEq=1, blocksize=2*Grid::dimension};
+class TransportProblem
+{
+    enum
+    {
+        dim = Grid::dimension,
+        dimWorld = Grid::dimensionworld,
+        numEq = 1,
+        blocksize = 2 * Grid::dimension
+    };
 
-    typedef typename Grid::Traits::template Codim<0>::Entity Element;
+typedef    typename Grid::Traits::template Codim<0>::Entity Element;
     typedef Dune::FieldVector<Scalar,dim> LocalPosition;
     typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
 
 public:
     //! return type of boundary condition at the given global coordinate
     /*! return type of boundary condition at the given global coordinate
-      @param[in]  globalPos    position in global coordinates
-      \return     boundary condition type given by enum in this class
-    */
+     @param[in]  globalPos    position in global coordinates
+     \return     boundary condition type given by enum in this class
+     */
     virtual BoundaryConditions::Flags bctypeSat (const GlobalPosition& globalPos, const Element& element,
-                                                 const LocalPosition& localPos) const = 0;
+            const LocalPosition& localPos) const = 0;
 
     //! evaluate Dirichlet boundary condition at given position
     /*! evaluate Dirichlet boundary condition at given position
-      @param[in]  globalPos    position in global coordinates
-      \return     boundary condition value
-    */
+     @param[in]  globalPos    position in global coordinates
+     \return     boundary condition value
+     */
     virtual Scalar dirichletSat (const GlobalPosition& globalPos, const Element& element,
-                                 const LocalPosition& localPos) const = 0;
+            const LocalPosition& localPos) const = 0;
 
     //! evaluate Neumann boundary condition at given position
     /*! evaluate Neumann boundary condition at given position
-      @param[in]  globalPos    position in global coordinates
-      \return     boundary condition value
-    */
+     @param[in]  globalPos    position in global coordinates
+     \return     boundary condition value
+     */
     virtual Scalar neumannSat (const GlobalPosition& globalPos, const Element& element,
-                               const LocalPosition& localPos, Scalar helpFactor) const = 0;
+            const LocalPosition& localPos, Scalar helpFactor) const = 0;
 
     //! evaluate initial condition at given position
     /*! evaluate initial boundary condition at given position
-      @param[in]  globalPos    position in global coordinates
-      \return    initial condition value
-    */
+     @param[in]  globalPos    position in global coordinates
+     \return    initial condition value
+     */
     virtual Scalar initSat (const GlobalPosition& globalPos, const Element& element,
-                            const LocalPosition& localPos) const = 0;
+            const LocalPosition& localPos) const = 0;
 
     const FieldVector<Scalar,dim>& gravity()
     {
-        FieldVector<Scalar,dim> gravity_ = 0;
         return gravity_;
     }
 
     //! evaluate velocity
     /*! Evaluate the velocity at the element faces
-      @param[in]  element              entity of codim 0
-      @param[in]  numberInSelf   local index of element face
-      @param[out] vTotal         velocity vector to be filled
-    */
-
-    virtual BlockVector<FieldVector<Scalar, 2> >& getuEx()
-    {
-        DUNE_THROW(NotImplemented, "Ex(akt) Solution");
-        return uE;
-    }
-
-    //updates an exact/analytic solution
-    virtual void updateExSol() {
-        DUNE_THROW(NotImplemented, "Ex(akt) Solution");
-        return;
-    }
-
-    virtual void settime(double &dt)
-    {
-        DUNE_THROW(NotImplemented, "Ex(akt) Solution");
-        return;
-    }
+     @param[in]  element              entity of codim 0
+     @param[in]  numberInSelf   local index of element face
+     @param[out] vTotal         velocity vector to be filled
+     */
 
     virtual Scalar g (const GlobalPosition& globalPos, const Element& element,
-                      const LocalPosition& localPos) const
+            const LocalPosition& localPos) const
     {
         return dirichletSat(globalPos, element, localPos);
     }
 
     //! properties of the soil
     /*! properties of the soil
-      \return    soil
-    */
+     \return    soil
+     */
     virtual Matrix2p<Grid, Scalar>& soil () const
     {
         return soil_;
@@ -128,8 +116,8 @@ public:
 
     //! object for definition of material law
     /*! object for definition of material law (e.g. Brooks-Corey, Van Genuchten, ...)
-      \return    material law
-    */
+     \return    material law
+     */
     virtual TwoPhaseRelations<Grid, Scalar>& materialLaw () const
     {
         return materialLaw_;
@@ -140,19 +128,22 @@ public:
      *  @param cap flag for including capillary forces.
      */
 
-    TransportProblem(VC& var, Matrix2p<Grid, Scalar>& soil, TwoPhaseRelations<Grid,Scalar>& materialLaw  = *(new TwoPhaseRelations<Grid,Scalar>), const bool capillarity = false, const bool exsol = false)
-        : variables(var), capillarity(capillarity), materialLaw_(materialLaw), soil_(soil), exsolution(exsol), uE(0)
-    {    }
+    TransportProblem(VC& variables,Fluid& wettingphase, Fluid& nonwettingphase, Matrix2p<Grid, Scalar>& soil, TwoPhaseRelations<Grid, Scalar>& materialLaw = *(new TwoPhaseRelations<Grid,Scalar>))
+    : variables(variables), wettingPhase(wettingphase), nonWettingPhase(nonwettingphase), soil_(soil), materialLaw_(materialLaw),gravity_(0)
+    {}
 
     //! always define virtual destructor in abstract base class
-    virtual ~TransportProblem () {}
+    virtual ~TransportProblem ()
+    {}
 
     VC& variables;
-    const bool capillarity;
+    Fluid& wettingPhase;
+    Fluid& nonWettingPhase;
+protected:
     TwoPhaseRelations<Grid,Scalar>& materialLaw_;
     Matrix2p<Grid, Scalar>& soil_;
-    const bool exsolution;
-    BlockVector<FieldVector<Scalar, 2> > uE;
+private:
+    FieldVector<Scalar,dimWorld> gravity_;
 };
 
 }

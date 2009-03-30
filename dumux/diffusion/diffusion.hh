@@ -3,7 +3,7 @@
 #ifndef DUNE_DIFFUSION_HH
 #define DUNE_DIFFUSION_HH
 
-#include "dumux/fractionalflow/fractionalflowproblem.hh"
+#include "dumux/diffusion/diffusionproblem.hh"
 
 /**
  * @file
@@ -31,7 +31,7 @@ namespace Dune
  - Scalar        type used for return values
 
 */
-template<class Grid, class Scalar, class VC, class Problem = FractionalFlowProblem<Grid, Scalar, VC> >
+template<class Grid, class Scalar, class VC, class Problem = DiffusionProblem<Grid, Scalar, VC> >
 class Diffusion
 {
 public:

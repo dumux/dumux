@@ -53,15 +53,6 @@ protected:
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
 public:
-    //! evaluate diffusion tensor
-    /*! Evaluate the diffusion tensor at given location
-      @param[in]  globalPos    position in global coordinates
-      @param[in]  element    entity of codim 0
-      @param[in]  localPos   position in reference element of element
-      @param[out] D    diffusion tensor to be filled
-    */
-    virtual FieldMatrix& K (const GlobalPosition& globalPos, const Element& element,
-                            const LocalPosition& localPos) = 0;
 
     //! evaluate source term
     /*! evaluate source term at given location
@@ -113,23 +104,44 @@ public:
         return gravity_;
     }
 
+    //! properties of the soil
+    /*! properties of the soil
+      \return    soil
+    */
+    virtual Matrix2p<Grid, Scalar>& soil () const
+    {
+        return soil_;
+    }
+
+    //! object for definition of material law
+    /*! object for definition of material law (e.g. Brooks-Corey, Van Genuchten, ...)
+      \return    material law
+    */
+    virtual TwoPhaseRelations<Grid, Scalar>& materialLaw () const
+    {
+        return materialLaw_;
+    }
+
     //! constructor
     /** @param law implementation of Material laws. Class TwoPhaseRelations or derived.
      *  @param cap flag to include capillary forces.
      */
-    DiffusionProblem(VC& variables, TwoPhaseRelations<Grid,Scalar>& materialLaw = *(new TwoPhaseRelations<Grid,Scalar>),
-                     const bool capillarity = false, FieldVector<Scalar,dim> gravity = *(new FieldVector<Scalar,dim>(0)))
-        : variables(variables), materialLaw(materialLaw), capillarity(capillarity), gravity_(gravity)
-    {    }
+    DiffusionProblem(VC& variables,Fluid& wettingphase, Fluid& nonwettingphase, Matrix2p<Grid, Scalar>& soil, TwoPhaseRelations<Grid, Scalar>& materialLaw = *(new TwoPhaseRelations<Grid,Scalar>),
+                     const bool capillarity = false)
+        : variables(variables), wettingPhase(wettingphase), nonWettingPhase(nonwettingphase), soil_(soil), capillarity(capillarity), materialLaw_(materialLaw), capillarity(capillarity),gravity_(0)
+    {}
 
     //! always define virtual destructor in abstract base class
     virtual ~DiffusionProblem () {}
 
     //! a class describing relations between two phases and the porous medium
     VC& variables;
-    TwoPhaseRelations<Grid,Scalar>& materialLaw;
-    const bool capillarity;
+    Fluid& wettingPhase;
+    Fluid& nonWettingPhase;
 protected:
+    Matrix2p<Grid, Scalar>& soil_;
+    TwoPhaseRelations<Grid,Scalar>& materialLaw_;
+    const bool capillarity;
     FieldVector<Scalar,dim> gravity_;
 };
 

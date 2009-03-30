@@ -3,7 +3,7 @@
 #ifndef DUNE_TRANSPORT_HH
 #define DUNE_TRANSPORT_HH
 
-#include "dumux/fractionalflow/fractionalflowproblem.hh"
+#include "dumux/transport/transportproblem.hh"
 
 /**
  * @file
@@ -30,7 +30,7 @@ namespace Dune
  - VelType   type of the vector holding the velocity values
 
 */
-template<class Grid, class Scalar, class VC, class Problem =  FractionalFlowProblem<Grid, Scalar, VC> >
+template<class Grid, class Scalar, class VC, class Problem =  TransportProblem<Grid, Scalar, VC> >
 class Transport
 {
 public:

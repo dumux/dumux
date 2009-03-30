@@ -4,13 +4,14 @@
 #define DUNE_DIFFUSIONVELOCITYPROBLEM_HH
 
 #include "dumux/diffusion/fv/fvdiffusion.hh"
+#include "dumux/diffusion/diffusionproblem.hh"
 
 namespace Dune
 {
 /** \todo Please doc me! */
 
-template<class Grid, class Scalar, class VC> class FVDiffusionVelocity: public FVDiffusion<
-    Grid, Scalar, VC>
+template<class Grid, class Scalar, class VC, class Problem = DiffusionProblem<Grid, Scalar, VC> > class FVDiffusionVelocity: public FVDiffusion<
+    Grid, Scalar, VC, Problem>
 {
 
     typedef    typename Grid::Traits::template Codim<0>::Entity Element;
@@ -30,13 +31,13 @@ template<class Grid, class Scalar, class VC> class FVDiffusionVelocity: public F
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
 public:
-    FVDiffusionVelocity(Grid& grid, FractionalFlowProblem<Grid, Scalar, VC>& problem)
-        : FVDiffusion<Grid,Scalar,VC>(grid, problem)
+    FVDiffusionVelocity(Grid& grid, Problem& problem)
+        : FVDiffusion<Grid,Scalar,VC, Problem>(grid, problem)
     {}
 
-    FVDiffusionVelocity(Grid& grid, FractionalFlowProblem<Grid, Scalar, VC>& problem, std::string solverName,
+    FVDiffusionVelocity(Grid& grid, Problem& problem, std::string solverName,
                         std::string preconditionerName)
-        : FVDiffusion<Grid,Scalar,VC>(grid, problem,solverName,preconditionerName)
+        : FVDiffusion<Grid,Scalar,VC, Problem>(grid, problem,solverName,preconditionerName)
     {}
 
     void calcTotalVelocity(const Scalar t=0) const
@@ -64,7 +65,7 @@ public:
             const GlobalPosition& globalPos = eIt->geometry().global(localPos);
 
             // cell index
-            int globalIdxI = this->elementMapper.map(*eIt);
+            int globalIdxI = this->diffProblem.variables.diffMapper.map(*eIt);
 
             // get pressure and permeability in element
             double pressI = this->diffProblem.variables.pressure[globalIdxI];
@@ -86,19 +87,13 @@ public:
             for (IntersectionIterator isIt = gridView.template ibegin(*eIt); isIt!=isItEnd; ++isIt)
             {
                 // get geometry type of face
-                GeometryType faceGT = isIt->intersectionSelfLocal().type();
+                GeometryType faceGT = isIt->geometryInInside().type();
 
                 //Geometry dg = isIt->intersectionSelfLocal();
                 // local number of facet
-                int numberInSelf = isIt->numberInSelf();
+                int numberInSelf = isIt->numberInInside();
 
-                switch (Grid::dimension)
-                {
-                case 1:
-                    faceVol[numberInSelf] = 1;
-                default:
-                    faceVol[numberInSelf] = isIt->intersectionGlobal().volume();
-                }
+                    faceVol[numberInSelf] =  isIt->geometry().volume();
 
                 // center in face's reference element
                 const FieldVector<Scalar,dim-1>&
@@ -114,14 +109,14 @@ public:
 
                 // center of face in globalPos coordinates
                 const GlobalPosition&
-                    globalPosFace = isIt->intersectionGlobal().global(faceLocal);
+                    globalPosFace = isIt->geometry().global(faceLocal);
 
                 // handle interior face
                 if (isIt->neighbor())
                 {
                     // access neighbor
                     ElementPointer neighborPointer = isIt->outside();
-                    int globalIdxJ = this->elementMapper.map(*neighborPointer);
+                    int globalIdxJ = this->diffProblem.variables.diffMapper.map(*neighborPointer);
 
                     // get neighbor pressure and permeability
                     double pressJ = this->diffProblem.variables.pressure[globalIdxJ];

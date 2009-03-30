@@ -11,22 +11,15 @@
 #include "dumux/transport/transport.hh"
 #include "dumux/transport/fv/numericalflux.hh"
 #include "dumux/transport/fv/diffusivepart.hh"
+#include "dumux/transport/transportproblem.hh"
 
 namespace Dune
 {
 //! \ingroup transport
 //! The finite volume model for the solution of the transport equation
-template<class Grid, class Scalar, class VC, class Problem =  FractionalFlowProblem<Grid, Scalar, VC> >
+template<class Grid, class Scalar, class VC, class Problem =  TransportProblem<Grid, Scalar, VC> >
 class FVTransport: public Transport<Grid, Scalar, VC, Problem>
 {
-    template<int dim> struct ElementLayout
-    {
-        bool contains(Dune::GeometryType gt)
-        {
-            return gt.dim() == dim;
-        }
-    };
-
     enum
         {
             dim = Grid::dimension
@@ -41,7 +34,6 @@ class FVTransport: public Transport<Grid, Scalar, VC, Problem>
     typedef typename Grid::LevelGridView GridView;
     typedef typename GridView::IndexSet IndexSet;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,IndexSet,ElementLayout> ElementMapper;
     typedef typename Grid::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef BlockVector< Dune::FieldVector<Scalar,dim> > SlopeType;
@@ -87,11 +79,10 @@ public:
      * @param amax alphamax parameter for slope limiter in TVD
      * @param numFl an object of class Numerical Flux or derived
      */
-    FVTransport(Grid& grid, Problem& problem, int level = 0,
+    FVTransport(Grid& grid, Problem& problem,
                 DiffusivePart<Grid,Scalar>& diffPart = *(new DiffusivePart<Grid, Scalar>), bool rec = false,
                 Scalar aMax = 0.8, const NumericalFlux<Scalar>& numFl = *(new Upwind<Scalar>)) :
         Transport<Grid, Scalar, VC, Problem>(grid, problem),
-        elementMapper_(grid, grid.levelIndexSet(level)),
         reconstruct_(rec),numFlux_(numFl), diffusivePart_(diffPart), alphaMax_(aMax)
     {}
 
@@ -99,7 +90,6 @@ private:
 
     void calculateSlopes(SlopeType& slope, Scalar t, Scalar& cFLFactor);
 
-    ElementMapper elementMapper_;
     bool reconstruct_;
     const NumericalFlux<Scalar>& numFlux_;
     const DiffusivePart<Grid, Scalar>& diffusivePart_;
@@ -117,7 +107,7 @@ int FVTransport<Grid, Scalar, VC, Problem>::update(const Scalar t, Scalar& dt,
     // set update vector to zero
     updateVec = 0;
 
-    SlopeType slope(elementMapper_.size());
+    SlopeType slope(this->transProblem.variables.transMapper.size());
     calculateSlopes(slope, t,cFLFac);
 
     // compute update vector
@@ -139,7 +129,7 @@ int FVTransport<Grid, Scalar, VC, Problem>::update(const Scalar t, Scalar& dt,
             *Dune::ReferenceElements<Scalar,dim>::general(gt).volume();
 
         // cell index
-        int globalIdxI = elementMapper_.map(*eIt);
+        int globalIdxI = this->transProblem.variables.transMapper.map(*eIt);
 
         // for time step calculation
         Scalar sumFactor = 0;
@@ -155,10 +145,10 @@ int FVTransport<Grid, Scalar, VC, Problem>::update(const Scalar t, Scalar& dt,
                  !=isItEnd; ++isIt)
         {
             // local number of facet
-            int numberInSelf = isIt->numberInSelf();
+            int numberInSelf = isIt->numberInInside();
 
             // get geometry type of face
-            Dune::GeometryType faceGT = isIt->intersectionSelfLocal().type();
+            Dune::GeometryType faceGT = isIt->geometryInInside().type();
 
             // center in face's reference element
             const Dune::FieldVector<Scalar,dim-1>&
@@ -166,7 +156,7 @@ int FVTransport<Grid, Scalar, VC, Problem>::update(const Scalar t, Scalar& dt,
 
             // center of face inside volume reference element
             const LocalPosition&
-                localPosFace = Dune::ReferenceElements<Scalar,dim>::general(faceGT).position(isIt->numberInSelf(),1);
+                localPosFace = Dune::ReferenceElements<Scalar,dim>::general(faceGT).position(numberInSelf,1);
 
             // get normal vector scaled with volume
             Dune::FieldVector<Scalar,dimWorld> integrationOuterNormal = isIt->integrationOuterNormal(faceLocal);
@@ -182,7 +172,7 @@ int FVTransport<Grid, Scalar, VC, Problem>::update(const Scalar t, Scalar& dt,
             {
                 // access neighbor
                 ElementPointer neighborPointer = isIt->outside();
-                int globalIdxJ = elementMapper_.map(*neighborPointer);
+                int globalIdxJ = this->transProblem.variables.transMapper.map(*neighborPointer);
 
                 // compute flux from one side only
                 // this should become easier with the new IntersectionIterator functionality!
@@ -251,7 +241,7 @@ int FVTransport<Grid, Scalar, VC, Problem>::update(const Scalar t, Scalar& dt,
             if (isIt->boundary())
             {
                 // center of face in global coordinates
-                GlobalPosition globalPosFace = isIt->intersectionGlobal().global(faceLocal);
+                GlobalPosition globalPosFace = isIt->geometry().global(faceLocal);
 
                 //get boundary type
                 BoundaryConditions::Flags bctype = this->transProblem.bctypeSat(globalPosFace, *eIt, localPosFace);
@@ -370,7 +360,7 @@ void FVTransport<Grid, Scalar, VC, Problem>::initialTransport()
         GlobalPosition globalPos = eIt->geometry().global(localPos);
 
         // initialize cell concentration
-        this->transProblem.variables.saturation[elementMapper_.map(*eIt)] = this->transProblem.initSat(globalPos, *eIt, localPos);
+        this->transProblem.variables.saturation[this->transProblem.variables.transMapper.map(*eIt)] = this->transProblem.initSat(globalPos, *eIt, localPos);
     }
     return;
 }
@@ -390,7 +380,7 @@ void FVTransport<Grid, Scalar, VC, Problem>::calculateSlopes(
         const LocalPosition
             &localPos = Dune::ReferenceElements<Scalar,dim>::general(gt).position(0, 0);
         GlobalPosition globalPos = eIt->geometry().global(localPos);
-        int globalIdxI = elementMapper_.map(*eIt);
+        int globalIdxI = this->transProblem.variables.transMapper.map(*eIt);
 
         // vector containing the distances to the neighboring cells
         Dune::FieldVector<Scalar, 2*dim> dist;
@@ -410,14 +400,14 @@ void FVTransport<Grid, Scalar, VC, Problem>::calculateSlopes(
                  !=isItEnd; ++isIt)
         {
             // local number of facet
-            int numberInSelf = isIt->numberInSelf();
+            int numberInSelf = isIt->numberInInside();
 
             // handle interior face
             if (isIt->neighbor())
             {
                 // access neighbor
                 ElementPointer neighborPointer = isIt->outside();
-                int globalIdxJ = elementMapper_.map(*neighborPointer);
+                int globalIdxJ = this->transProblem.variables.transMapper.map(*neighborPointer);
 
                 // get saturation value
                 saturation[numberInSelf] = this->transProblem.variables.saturation[globalIdxJ];
@@ -452,7 +442,7 @@ void FVTransport<Grid, Scalar, VC, Problem>::calculateSlopes(
             if (isIt->boundary())
             {
                 // get geometry type of face
-                Dune::GeometryType faceGT = isIt->intersectionSelfLocal().type();
+                Dune::GeometryType faceGT = isIt->geometryInInside().type();
 
                 // center in face's reference element
                 const Dune::FieldVector<Scalar,dim-1>&
@@ -460,7 +450,7 @@ void FVTransport<Grid, Scalar, VC, Problem>::calculateSlopes(
 
                 // center of face in global coordinates
                 const GlobalPosition&
-                    globalPosFace = isIt->intersectionGlobal().global(faceLocal);
+                    globalPosFace = isIt->geometry().global(faceLocal);
 
                 // get saturation value
                 saturation[numberInSelf] = this->transProblem.variables.saturation[globalIdxI];

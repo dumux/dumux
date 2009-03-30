@@ -39,7 +39,7 @@ class VariableClass
 
     typedef    typename Grid::Traits::template Codim<0>::Entity Element;
     typedef typename Grid::Traits::LevelIndexSet IndexSet;
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,IndexSet,ElementLayout>
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<typename Grid::LevelGridView,ElementLayout>
     ElementMapper;
 
 public:
@@ -62,7 +62,7 @@ public:
     VariableClass(Grid& grid, Scalar& initialSat = *(new Scalar(0)), Scalar& initalPress = *(new Scalar(0)), Dune::FieldVector<Scalar, dim>& initialVel = *(new Dune::FieldVector<Scalar, dim> (0)), int transLev = -1, int diffLev = -1)
         : grid(grid),
           transLevel((transLev >= 0) ? transLev : grid.maxLevel()), diffLevel((diffLev >= 0) ? diffLev : grid.maxLevel()),
-          diffMapper(grid, (diffLev >= 0) ? grid.levelIndexSet(diffLev) : grid.levelIndexSet(grid.maxLevel())), transMapper(grid, (transLev >= 0) ? grid.levelIndexSet(transLev) : grid.levelIndexSet(grid.maxLevel())),
+          diffMapper((diffLev >= 0) ? grid.levelView(diffLev) : grid.levelView(grid.maxLevel())), transMapper((transLev >= 0) ? grid.levelView(transLev) : grid.levelView(grid.maxLevel())),
           diffSize(diffMapper.size()),transSize(transMapper.size())
     {
         initSat(initialSat, transSize);

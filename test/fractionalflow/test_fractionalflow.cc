@@ -25,15 +25,15 @@ int main(int argc, char** argv)
 {
     try{
         // define the problem dimensions
-        const int dim=1;
+        const int dim=2;
 
         // create a grid object
         typedef double NumberType;
         typedef Dune::SGrid<dim,dim> GridType;
         typedef Dune::FieldVector<GridType::ctype,dim> FieldVector;
-        Dune::FieldVector<int,dim> N(0); N[0] = 120;
+        Dune::FieldVector<int,dim> N(4); N[0] = 30;
         FieldVector L(0);
-        FieldVector H(0); H[0] = 300;
+        FieldVector H(100); H[0] = 300;
         GridType grid(N,L,H);
 
         grid.globalRefine(0);
@@ -53,10 +53,10 @@ int main(int argc, char** argv)
         Problem problem(variables, wetmat, nonwetmat, soil, materialLaw,L, H, false);
         //    soil.permeability.vtkout("permeability", grid);
 
-        typedef Dune::FVDiffusionVelocity<GridType, NumberType, VariableType> DiffusionType;
+        typedef Dune::FVDiffusionVelocity<GridType, NumberType, VariableType, Problem> DiffusionType;
         DiffusionType diffusion(grid, problem);
 
-        typedef Dune::FVTransport<GridType, NumberType, VariableType> TransportType;
+        typedef Dune::FVTransport<GridType, NumberType, VariableType, Problem> TransportType;
         TransportType transport(grid, problem);
 
         int iterFlag = 2;
