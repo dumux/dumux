@@ -16,7 +16,7 @@
 #include<dumux/material/property_baseclasses.hh>
 /**
  * @file
- * @brief  Base class for defining an instance of the 2P2C problem
+ * @brief  Base class for defining an instance of the 1P2C problem
  * @author Bernd Flemisch, Karin Erbertseder
  */
 
