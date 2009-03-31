@@ -78,7 +78,7 @@ public:
     // define the operator assembler type:
     typedef LeafP1OperatorAssembler<Grid, Scalar, numEq> OperatorAssembler;
 
-    typedef Dune::BoxStokes<Grid, Scalar, StokesProblem<Grid, Scalar>, BoxStokesJacobian<Grid, Scalar>,
+    typedef BoxStokes<Grid, Scalar, StokesProblem<Grid, Scalar>, BoxStokesJacobian<Grid, Scalar>,
                             FunctionType, OperatorAssembler> BoxStokes;
 
     typedef LeafP1BoxStokes<Grid, Scalar, dim> ThisType;
@@ -117,7 +117,7 @@ public:
         return uOldNewtonStep;
     }
 
-    virtual void initial()
+    void initial()
     {
         typedef typename Grid::Traits::template Codim<0>::Entity Element;
         typedef typename GV::template Codim<0>::Iterator Iterator;
@@ -196,7 +196,8 @@ public:
                                     BoundaryConditions::Flags bctype = this->problem.bctype(global, entity, is, local);
                                     if (bctype == BoundaryConditions::dirichlet) {
                                         FieldVector<Scalar,numEq> dirichlet = this->problem.g(global, entity, is, local);
-                                        for (int eq = 0; eq < numEq; eq++)
+                            //TODO: dim or numEq for the following loop??
+                                        for (int eq = 0; eq < dim; eq++)
                                             (*(this->u))[globalId][eq] = dirichlet[eq];
                                     }
                                     else {
@@ -231,7 +232,7 @@ public:
     }
 
 
-    virtual void assemble()
+    void assemble()
     {
         *(this->f) = 0;
         this->localJacobian().clearVisited();
@@ -252,7 +253,7 @@ public:
 //        (*(this->f))[globalId][dim] = 0.0;
     }
 
-    virtual void update(double& dt)
+    void update(double& dt)
     {
         this->localJacobian().setDt(dt);
         this->localJacobian().setOldSolution(this->uOldTimeStep);
@@ -271,7 +272,7 @@ public:
         return;
     }
 
-    virtual void solve()
+    void solve()
     {
         // modify matrix and rhs for introducing pressure boundary condition
         // this is done here and not in the assembly step, since it is not needed for the coupled setting
@@ -305,7 +306,7 @@ public:
         return;
     }
 
-    virtual void globalDefect(FunctionType& defectGlobal) {
+    void globalDefect(FunctionType& defectGlobal) {
         typedef typename Grid::Traits::template Codim<0>::Entity Element;
         typedef typename GV::template Codim<0>::Iterator Iterator;
         typedef typename BoundaryConditions::Flags BCBlockType;
@@ -355,7 +356,7 @@ public:
                     (*defectGlobal)[i][equationnumber] = 0;
     }
 
-    virtual void vtkout (const char* name, int k)
+    void vtkout (const char* name, int k)
     {
         for (int i = 0; i < size; i++) {
             pressure[i] = (*(this->u))[i][dim];

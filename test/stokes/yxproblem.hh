@@ -4,6 +4,7 @@
 #define DUNE_YXPROBLEM_HH
 
 #include"dumux/stokes/stokesproblem.hh"
+#include <dune/grid/common/intersectioniterator.hh>
 
 namespace Dune {
 
@@ -14,12 +15,13 @@ class YXProblem : public StokesProblem<Grid, Scalar>
 {
     enum {dim=Grid::dimension, numEq=Grid::dimension+1};
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
-    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
+    typedef typename Grid::template Codim<0>::LeafIntersectionIterator::IntersectionIterator
+    IntersectionIterator;
 
 public:
-    virtual FieldVector<Scalar,dim> velocity(const FieldVector<Scalar,dim>& globalPos) const
+    virtual FieldVector<Scalar,numEq> velocity(const FieldVector<Scalar,dim>& globalPos) const
     {
-        FieldVector<Scalar,dim> result(0);
+        FieldVector<Scalar,numEq> result(0);
         result[0] = -globalPos[1];
         result[1] = -globalPos[0];
 
@@ -65,18 +67,19 @@ public:
             return BoundaryConditions::neumann;
     }
 
-    virtual FieldVector<Scalar,dim> g(const FieldVector<Scalar,dim>& globalPos, const Element& element,
+    virtual FieldVector<Scalar,numEq> g(const FieldVector<Scalar,dim>& globalPos, const Element& element,
                                       const IntersectionIterator& intersectionIt,
                                       const FieldVector<Scalar,dim>& localPos) const
     {
         return velocity(globalPos);
     }
 
-    virtual FieldVector<Scalar,dim> J(const FieldVector<Scalar,dim>& globalPos, const Element& element,
+    virtual FieldVector<Scalar,numEq> J(const FieldVector<Scalar,dim>& globalPos, const Element& element,
                                       const IntersectionIterator& intersectionIt,
                                       const FieldVector<Scalar,dim>& localPos)
     {
-        FieldVector<Scalar,dim> result(0);
+        FieldVector<Scalar,numEq> result(0);
+        FieldVector<Scalar,dim> temp(0);
 
         // ASSUMING face-wise constant normal
         FieldVector<Scalar, dim-1> localDimM1(0);
@@ -91,9 +94,14 @@ public:
 
         Scalar muGradVNN = muGradVN*normal;
 
-        result = normal;
-        result *= muGradVNN;
-        result -= pN;
+        temp = normal;
+        temp *= muGradVNN;
+        temp -= pN;
+
+        // this is some workaround for the boxjacobian
+        // and the instantiation of the function assembleBoundaryCondition
+        for (int i=0; i < dim; ++i)
+            result[i] = temp[i];
 
         return result;
     }

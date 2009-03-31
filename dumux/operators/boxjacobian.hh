@@ -207,7 +207,8 @@ public:
         return this->getImp().updateStaticData(e, sol);
     }
 
-  void assembleBoundaryCondition(const Element& e, int k = 1) {
+    virtual void assembleBoundaryCondition(const Element& e, int k = 1)
+    {
         Dune::GeometryType gt = e.geometry().type();
         const typename Dune::LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::value_type
             &sfs=Dune::LagrangeShapeFunctions<Scalar, Scalar, dim>::general(gt, 1);
@@ -262,11 +263,7 @@ public:
                             //                                                           << ", bctypeface = " << bctypeface << std::endl;
                             if (bctypeface[equationNumber]!=BoundaryConditions::neumann)
                                 break;
-			    VBlockType J =
-			      this->getImp().problem.J(global,
-						       e,
-						       it,
-						       local);
+                            VBlockType J = this->getImp().problem.J(global, e, it, local);
                             J[equationNumber] *= this->fvGeom.boundaryFace[bfIdx].area;
                             this->b[nodeInElement][equationNumber] += J[equationNumber];
                         }

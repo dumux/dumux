@@ -14,7 +14,8 @@ class ChannelFlowProblem : public StokesProblem<Grid, Scalar>
 {
     enum {dim=Grid::dimension, numEq=Grid::dimension+1};
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
-    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
+    typedef typename Grid::template Codim<0>::LeafIntersectionIterator::IntersectionIterator
+        IntersectionIterator;
 
 public:
     virtual FieldVector<Scalar,numEq> q(const FieldVector<Scalar,dim>& globalPos, const Element& element,
@@ -35,11 +36,11 @@ public:
         return BoundaryConditions::neumann;
     }
 
-    virtual FieldVector<Scalar,dim> g(const FieldVector<Scalar,dim>& globalPos, const Element& element,
+    virtual FieldVector<Scalar,numEq> g(const FieldVector<Scalar,dim>& globalPos, const Element& element,
                                       const IntersectionIterator& intersectionIt,
                                       const FieldVector<Scalar,dim>& localPos) const
     {
-        FieldVector<Scalar,dim> result(0);
+        FieldVector<Scalar,numEq> result(0);
 
         if (globalPos[0] < 1e-6)
         {
@@ -54,11 +55,11 @@ public:
         }
     }
 
-    virtual FieldVector<Scalar,dim> J(const FieldVector<Scalar,dim>& globalPos, const Element& element,
+    virtual FieldVector<Scalar,numEq> J(const FieldVector<Scalar,dim>& globalPos, const Element& element,
                                       const IntersectionIterator& intersectionIt,
                                       const FieldVector<Scalar,dim>& localPos)
     {
-        FieldVector<Scalar,dim> result(0);
+        FieldVector<Scalar,numEq> result(0);
 
         return result;
     }
@@ -75,9 +76,9 @@ public:
         return 1.0;
     }
 
-    virtual FieldVector<Scalar,dim> velocity(const FieldVector<Scalar,dim>& globalPos) const
+    virtual FieldVector<Scalar,numEq> velocity(const FieldVector<Scalar,dim>& globalPos) const
     {
-        FieldVector<Scalar,dim> result(0);
+        FieldVector<Scalar,numEq> result(0);
         result[0] = 4.0*(globalPos[1] - globalPos[1]*globalPos[1]);
         result[1] = 0.0;
 

@@ -141,11 +141,11 @@ public:
     */
     virtual Scalar mu(const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos) const = 0;
 
-    virtual FieldVector<Scalar,dim> velocity(const FieldVector<Scalar,dim>& globalPos) const
+    virtual FieldVector<Scalar,numEq> velocity(const FieldVector<Scalar,dim>& globalPos) const
     {
         DUNE_THROW(NotImplemented, "no exact solution available");
 
-        FieldVector<Scalar,dim> result(0);
+        FieldVector<Scalar,numEq> result(0);
         return result;
     }
 

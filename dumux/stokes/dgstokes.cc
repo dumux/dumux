@@ -149,9 +149,9 @@ void DGFiniteElementMethod<G,v_order,p_order>::assembleFaceTerm(Entity& ent, Int
     //get parameter
     // DGStokesParameters parameter;
     //get the geometry type of the face
-    Dune::GeometryType gtface = isit->intersectionSelfLocal().type();
+    Dune::GeometryType gtface = isit->geometryInInside().type();
     //std::cout<<"----gtface: "<<gtface<<std::endl;
-    Dune::GeometryType nbgtface = isit->intersectionNeighborLocal().type();
+    Dune::GeometryType nbgtface = isit->geometryInOutside().type();
     //specify the quadrature order ?
     // #warning now fixed quadrature order
     int qord=8;
@@ -163,20 +163,20 @@ void DGFiniteElementMethod<G,v_order,p_order>::assembleFaceTerm(Entity& ent, Int
         //quadrature position on the edge/face in local=facelocal
         //note that this is dim entity
         const Dune::FieldVector<ctype,dim-1>& local = Dune::QuadratureRules<ctype,dim-1>::rule(gtface,qord)[qedg].position();
-        Dune:: FieldVector<ctype,dim> face_self_local = isit->intersectionSelfLocal().global(local);
-        Dune:: FieldVector<ctype,dim> face_neighbor_local = isit->intersectionNeighborLocal().global(local);
+        Dune:: FieldVector<ctype,dim> face_self_local = isit->geometryInInside().global(local);
+        Dune:: FieldVector<ctype,dim> face_neighbor_local = isit->geometryInOutside().global(local);
 
-        Dune::FieldVector<ctype,dim> global = isit->intersectionGlobal().global(local);
+        Dune::FieldVector<ctype,dim> global = isit->geometry().global(local);
         //std::cout<<"local: "<<local<<" face_self_local: "<<face_self_local
         //<<"  face_neighbor_local: "<<face_neighbor_local<<"  glob: "<<global<<std::endl;
         // calculating the inverse jacobian
         InverseJacobianMatrix inv_jac= ent.geometry().jacobianInverseTransposed(face_self_local);
         // get quadrature weight
         ctype quad_wt_face = Dune::QuadratureRules<ctype,dim-1>::rule(gtface,qord)[qedg].weight();
-        ctype detjacface = isit->intersectionGlobal().integrationElement(local);
+        ctype detjacface = isit->geometry().integrationElement(local);
         // get the face normal: unit normal.
         Dune::FieldVector<ctype,dim> normal = isit->unitOuterNormal(local);
-        ctype norm_e= isit->intersectionGlobal().integrationElement(local);
+        ctype norm_e= isit->geometry().integrationElement(local);
 
 
 
@@ -432,21 +432,21 @@ void DGFiniteElementMethod<G,v_order,p_order>::assembleDirichletBoundaryTerm(Ent
     //DGStokesParameters parameter;
 
     //get the geometry type of the face
-    Dune::GeometryType gtboundary = isit->intersectionSelfLocal().type();
+    Dune::GeometryType gtboundary = isit->geometryInInside().type();
 
     //specify the quadrature order ?
     int qord=8;
     for(unsigned int bq=0;bq<Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord).size();++bq)
     {
         const Dune::FieldVector<ctype,dim-1>& boundlocal = Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord)[bq].position();
-        Dune:: FieldVector<ctype,dim> blocal = isit->intersectionSelfLocal().global(boundlocal);
-        const Dune::FieldVector<ctype,dim> bglobal = isit->intersectionGlobal().global(boundlocal);
-        ctype norm_eb=isit->intersectionGlobal().integrationElement(boundlocal);
+        Dune:: FieldVector<ctype,dim> blocal = isit->geometryInInside().global(boundlocal);
+        const Dune::FieldVector<ctype,dim> bglobal = isit->geometry().global(boundlocal);
+        ctype norm_eb=isit->geometry().integrationElement(boundlocal);
         // calculating the inverse jacobian
         InverseJacobianMatrix inv_jac= ent.geometry().jacobianInverseTransposed(blocal);
         // get quadrature weight
         ctype quad_wt_bound = Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord)[bq].weight();
-        ctype detjacbound = isit->intersectionGlobal().integrationElement(boundlocal);
+        ctype detjacbound = isit->geometry().integrationElement(boundlocal);
         // get the boundary normal
         Dune::FieldVector<ctype,dim> boundnormal = isit->unitOuterNormal(boundlocal);
         // velocity boundary condition
@@ -626,20 +626,20 @@ void DGFiniteElementMethod<G,v_order,p_order>::assembleDirichletBoundaryTerm(Ent
 //     //neighbor shape functions
 
 //     //get the geometry type of the face
-//     Dune::GeometryType gtboundary = isit->intersectionSelfLocal().type();
+//     Dune::GeometryType gtboundary = isit->geometryInInside().type();
 
 //     //specify the quadrature order ?
 //     int qord=8;
 //     for(unsigned int bq=0;bq<Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord).size();++bq)
 //     {
 //         const Dune::FieldVector<ctype,dim-1>& boundlocal = Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord)[bq].position();
-//         Dune:: FieldVector<ctype,dim> blocal = isit->intersectionSelfLocal().global(boundlocal);
-//         const Dune::FieldVector<ctype,dim> bglobal = isit->intersectionGlobal().global(boundlocal);
+//         Dune:: FieldVector<ctype,dim> blocal = isit->geometryInInside().global(boundlocal);
+//         const Dune::FieldVector<ctype,dim> bglobal = isit->geometry().global(boundlocal);
 //         // calculating the inverse jacobian
 //         InverseJacobianMatrix inv_jac= ent.geometry().jacobianInverseTransposed(blocal);
 //         // get quadrature weight
 //         ctype quad_wt_bound = Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord)[bq].weight();
-//         ctype detjacbound = isit->intersectionGlobal().integrationElement(boundlocal);
+//         ctype detjacbound = isit->geometry().integrationElement(boundlocal);
 //         // get the boundary normal
 //         Dune::FieldVector<ctype,dim> boundnormal = isit->unitOuterNormal(boundlocal);
 //         // normal traction BC
@@ -692,20 +692,20 @@ void DGFiniteElementMethod<G,v_order,p_order>::assembleNeumannBoundaryTerm(Entit
     int vdof=vsfs.size()*dim; // two velocity components and total velocity sfs size
 
     //get the geometry type of the face
-    Dune::GeometryType gtboundary = isit->intersectionSelfLocal().type();
+    Dune::GeometryType gtboundary = isit->geometryInInside().type();
 
     //specify the quadrature order ?
     int qord=8;
     for(unsigned int bq=0;bq<Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord).size();++bq)
     {
         const Dune::FieldVector<ctype,dim-1>& boundlocal = Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord)[bq].position();
-        Dune:: FieldVector<ctype,dim> blocal = isit->intersectionSelfLocal().global(boundlocal);
-        const Dune::FieldVector<ctype,dim> bglobal = isit->intersectionGlobal().global(boundlocal);
+        Dune:: FieldVector<ctype,dim> blocal = isit->geometryInInside().global(boundlocal);
+        const Dune::FieldVector<ctype,dim> bglobal = isit->geometry().global(boundlocal);
         // calculating the inverse jacobian
         InverseJacobianMatrix inv_jac= ent.geometry().jacobianInverseTransposed(blocal);
         // get quadrature weight
         ctype quad_wt_bound = Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord)[bq].weight();
-        ctype detjacbound = isit->intersectionGlobal().integrationElement(boundlocal);
+        ctype detjacbound = isit->geometry().integrationElement(boundlocal);
         // get the boundary normal
         Dune::FieldVector<ctype,dim> boundnormal = isit->unitOuterNormal(boundlocal);
 
@@ -744,20 +744,20 @@ void DGFiniteElementMethod<G,v_order,p_order>::assembleInterfaceTerm(Entity& ent
     //neighbor shape functions
 
     //get the geometry type of the face
-    Dune::GeometryType gtboundary = isit->intersectionSelfLocal().type();
+    Dune::GeometryType gtboundary = isit->geometryInInside().type();
 
     //specify the quadrature order ?
     int qord=8;
     for(unsigned int bq=0;bq<Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord).size();++bq)
     {
         const Dune::FieldVector<ctype,dim-1>& boundlocal = Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord)[bq].position();
-        Dune:: FieldVector<ctype,dim> blocal = isit->intersectionSelfLocal().global(boundlocal);
-        const Dune::FieldVector<ctype,dim> bglobal = isit->intersectionGlobal().global(boundlocal);
+        Dune:: FieldVector<ctype,dim> blocal = isit->geometryInInside().global(boundlocal);
+        const Dune::FieldVector<ctype,dim> bglobal = isit->geometry().global(boundlocal);
         // calculating the inverse jacobian
         InverseJacobianMatrix inv_jac= ent.geometry().jacobianInverseTransposed(blocal);
         // get quadrature weight
         ctype quad_wt_bound = Dune::QuadratureRules<ctype,dim-1>::rule(gtboundary,qord)[bq].weight();
-        ctype detjacbound = isit->intersectionGlobal().integrationElement(boundlocal);
+        ctype detjacbound = isit->geometry().integrationElement(boundlocal);
         // get the boundary normal
         Dune::FieldVector<ctype,dim> boundnormal = isit->unitOuterNormal(boundlocal);
         // Beavers-Joseph proportionality constant c = sqrt(k)/alpha such that u_t = - c (grad u . n)_t
@@ -826,10 +826,10 @@ void DGStokes<G,v_order,p_order>::assembleStokesSystem()
             }
             if (is->boundary())
             {
-                GeometryType gtf = is->intersectionSelfLocal().type();
+                GeometryType gtf = is->geometryInInside().type();
                 const FieldVector<ctype,dim-1>& faceLocal = ReferenceElements<ctype,dim-1>::general(gtf).position(0,0);
-                FieldVector<ctype,dim> faceGlobal = is->intersectionGlobal().global(faceLocal);
-                const FieldVector<ctype,dim>& faceLocalDim = ReferenceElements<ctype,dim>::general(gtf).position(is->numberInSelf(),1);
+                FieldVector<ctype,dim> faceGlobal = is->geometry().global(faceLocal);
+                const FieldVector<ctype,dim>& faceLocalDim = ReferenceElements<ctype,dim>::general(gtf).position(is->numberInInside(),1);
                 BoundaryConditions::Flags bctype = dgfem.problem().bctype(faceGlobal, *it, is, faceLocalDim);
 
                 if (bctype == BoundaryConditions::dirichlet)

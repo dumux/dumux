@@ -78,21 +78,21 @@ public:
     enum {SIZE=8};
 
     void computeElementData(const Element& element) {
-        return this->getImp().computeElementData(element);
+        return getImp().computeElementData(element);
     }
 
     virtual void updateVariableData(const Element& element, const SolutionVector* sol, int i, bool old = false)
     {
-        return this->getImp().updateVariableData(element, sol, i, old);
+        return getImp().updateVariableData(element, sol, i, old);
     }
 
     void updateVariableData(const Element& element, const SolutionVector* sol, bool old = false)
     {
-        return this->getImp().updateVariableData(element, sol, old);
+        return getImp().updateVariableData(element, sol, old);
     }
 
-    void assemble (const Element& e, 
-		   const BlockVector<SolutionVector>& localSolution, 
+    void assemble (const Element& e,
+		   const BlockVector<SolutionVector>& localSolution,
 		   int k=1)
   {
     assemble(e, k); // HACK
@@ -199,22 +199,22 @@ public:
 
     void localDefect (const Element& element, const SolutionVector* sol, bool withBC = true)
     {
-        this->getImp().localDefect(element, sol, withBC);
+        getImp().localDefect(element, sol, withBC);
     }
 
     void setLocalSolution (const Element& element)
     {
-        this->getImp().setLocalSolution(element);
+        getImp().setLocalSolution(element);
     }
 
-    void assembleBoundaryCondition (const Element& element)
+    virtual void assembleBoundaryCondition (const Element& element, int k = 1)
     {
-        this->getImp().assembleBoundaryCondition(element);
+        getImp().assembleBoundaryCondition(element);
     }
 
     void analyticJacobian (const Element& element, const SolutionVector* sol)
     {
-        this->getImp().analyticJacobian(element, sol);
+        getImp().analyticJacobian(element, sol);
     }
 
     virtual void updateStaticData (const Element& element, SolutionVector* sol)
@@ -238,12 +238,12 @@ public:
 
     void setDt(double d)
     {
-        this->getImp().setDt(d);
+        getImp().setDt(d);
     }
 
     virtual double getDt()
     {
-        return this->getImp().getDt();
+        return getImp().getDt();
     }
 
     ElementGeometry fvGeom;
@@ -254,9 +254,9 @@ public:
 
 protected:
     Imp &getImp()
-    { return *reinterpret_cast<Imp*>(this); } 
+    { return *reinterpret_cast<Imp*>(this); }
 
-    const Imp &getImp() const 
+    const Imp &getImp() const
     { return *reinterpret_cast<const Imp*>(this); }
 };
 

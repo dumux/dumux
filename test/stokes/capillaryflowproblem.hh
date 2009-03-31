@@ -14,7 +14,8 @@ class CapillaryFlowProblem : public StokesProblem<Grid, Scalar>
 {
     enum {dim=Grid::dimension, numEq=Grid::dimension+1};
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
-    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
+    typedef typename Grid::template Codim<0>::LeafIntersectionIterator::IntersectionIterator
+        IntersectionIterator;
 
 public:
     virtual FieldVector<Scalar,numEq> q(const FieldVector<Scalar,dim>& globalPos, const Element& element,
@@ -35,7 +36,7 @@ public:
         return BoundaryConditions::neumann;
     }
 
-    virtual FieldVector<Scalar,dim> g(const FieldVector<Scalar,dim>& globalPos, const Element& element,
+    virtual FieldVector<Scalar,numEq> g(const FieldVector<Scalar,dim>& globalPos, const Element& element,
                                   const IntersectionIterator& intersectionIt,
                                   const FieldVector<Scalar,dim>& localPos) const
     {
@@ -43,16 +44,17 @@ public:
             return velocity(globalPos);
         else
         {
-            FieldVector<Scalar,dim> result(0);
+            FieldVector<Scalar,numEq> result(0);
             return result;
         }
     }
 
-    virtual FieldVector<Scalar,dim> J(const FieldVector<Scalar,dim>& globalPos, const Element& element,
+    virtual FieldVector<Scalar,numEq> J(const FieldVector<Scalar,dim>& globalPos, const Element& element,
                                   const IntersectionIterator& intersectionIt,
                                   const FieldVector<Scalar,dim>& localPos)
     {
-        FieldVector<Scalar,dim> result(0);
+        FieldVector<Scalar,numEq> result(0);
+        FieldVector<Scalar,dim> temp(0);	
 
         if (globalPos[1] < 1e-10)
         {
@@ -70,10 +72,16 @@ public:
             Scalar muGradVNN = muGradVN*normal;
 
             //result = normal;
-            result = muGradVN;
-            result -= pN;
+            temp = muGradVN;
+            temp -= pN;
+            
         }
 
+        // this is some workaround for the boxjacobian
+        // and the instantiation of the function assembleBoundaryCondition
+        for (int i=0; i < dim; ++i)
+            result[i] = temp[i];
+            
         return result;
     }
 
@@ -92,9 +100,9 @@ public:
             return -1.0;
     }
 
-    virtual FieldVector<Scalar,dim> velocity(const FieldVector<Scalar,dim>& globalPos) const
+    virtual FieldVector<Scalar,numEq> velocity(const FieldVector<Scalar,dim>& globalPos) const
     {
-        FieldVector<Scalar,dim> result(0);
+        FieldVector<Scalar,numEq> result(0);
         result[0] = -60000000.0 * globalPos[1] * globalPos[1] + 600.0 * globalPos[1]; //entspricht v_m = 1 mm/s
         result[1] = 0.0;
 

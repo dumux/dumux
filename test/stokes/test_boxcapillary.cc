@@ -8,7 +8,6 @@
 #include <dune/grid/sgrid.hh>
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
-#include <dune/grid/io/file/dgfparser/dgfalberta.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
@@ -43,14 +42,15 @@ void calculateError(const Grid& grid, const Problem& problem, Vector& solution)
     typedef typename Grid::ctype Scalar;
     enum {dim=Grid::dimension};
     typedef typename Grid::template Codim<0>::Entity Element;
-    typedef typename Grid::LeafGridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename Grid::LeafGridView::template Codim<dim>::Iterator VertexIterator;
-    typedef typename Grid::LeafGridView::IndexSet IS;
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,IS,ElementLayout> ElementMapper;
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,IS,VertexLayout> VertexMapper;
+    typedef typename Grid::LeafGridView GridView;
+    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
+    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
+    typedef typename GridView::IndexSet IS;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView,ElementLayout> ElementMapper;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView,VertexLayout> VertexMapper;
 
-    VertexMapper vertexMapper(grid, grid.leafView().indexSet());
-    ElementMapper elementMapper(grid, grid.leafView().indexSet());
+    VertexMapper vertexMapper(grid.leafView());
+    ElementMapper elementMapper(grid.leafView());
 
     Scalar errPressure = 0;
     Scalar errVelocity = 0;

@@ -13,7 +13,6 @@
 #include<dune/grid/common/referenceelements.hh>
 #include<dune/common/geometrytype.hh>
 #include<dune/grid/common/quadraturerules.hh>
-//#include <dune/grid/utility/intersectiongetter.hh>
 
 #include<dune/disc/shapefunctions/lagrangeshapefunctions.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
@@ -397,7 +396,8 @@ public:
     }
 
 
-    void assembleBoundaryCondition(const Element& element) {
+    void assembleBoundaryCondition(const Element& element, int k = 1)
+    {
         Dune::GeometryType gt = element.geometry().type();
         const typename Dune::LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::value_type
             &sfs=Dune::LagrangeShapeFunctions<Scalar, Scalar, dim>::general(gt, 1);
@@ -450,7 +450,8 @@ public:
                                 break;
                             FieldVector<Scalar,numEq> J = this->getImp().problem.J(global, element, it, local);
                             //                            std::cout << "J = " << J << std::endl;
-                            if (equationNumber < numEq) {
+                            if (equationNumber < dim)
+                            {
                                 J[equationNumber] *= this->fvGeom.boundaryFace[bfIdx].area;
                                 this->b[nodeInElement][equationNumber] += J[equationNumber];
                             }

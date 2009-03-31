@@ -9,19 +9,19 @@ namespace Dune {
 
 /** \todo Please doc me! */
 
-template<class G, class RT>
-class CurlProblem : public StokesProblem<G, RT>
+template<class Grid, class Scalar>
+class CurlProblem : public StokesProblem<Grid, Scalar>
 {
-    typedef typename G::ctype DT;
-    enum {dim=G::dimension, numEq=G::dimension+1};
-    typedef typename G::Traits::template Codim<0>::Entity Entity;
-    typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
+    enum {dim=Grid::dimension, numEq=Grid::dimension+1};
+    typedef typename Grid::Traits::template Codim<0>::Entity Entity;
+    typedef typename Grid::template Codim<0>::LeafIntersectionIterator::IntersectionIterator
+        IntersectionIterator;
 
 public:
-    virtual FieldVector<RT,numEq> q(const FieldVector<DT,dim>& x, const Entity& e,
-                                    const FieldVector<DT,dim>& xi) const
+    virtual FieldVector<Scalar,numEq> q(const FieldVector<Scalar,dim>& x, const Entity& e,
+                                    const FieldVector<Scalar,dim>& xi) const
     {
-        FieldVector<RT,numEq> result(0);
+        FieldVector<Scalar,numEq> result(0);
         result[0] = -200.0*(2.0*(1.0 - 6.0*x[0] + 6.0*x[0]*x[0])*(x[1] - 3.0*x[1]*x[1] + 2.0*x[1]*x[1]*x[1])
                             + (12.0*x[1] - 6.0)*(x[0]*x[0] - 2.0*x[0]*x[0]*x[0] + x[0]*x[0]*x[0]*x[0]))
             + 4.0*pi*cos(4.0*pi*(x[0] + x[1]));
@@ -33,50 +33,50 @@ public:
         return result;
     }
 
-    virtual BoundaryConditions::Flags bctype (const FieldVector<DT,dim>& x, const Entity& e,
+    virtual BoundaryConditions::Flags bctype (const FieldVector<Scalar,dim>& x, const Entity& e,
                                               const IntersectionIterator& intersectionIt,
-                                              const FieldVector<DT,dim>& xi) const
+                                              const FieldVector<Scalar,dim>& xi) const
     {
         return BoundaryConditions::dirichlet;
     }
 
-    virtual FieldVector<RT,dim> g(const FieldVector<DT,dim>& x, const Entity& e,
+    virtual FieldVector<Scalar,numEq> g(const FieldVector<Scalar,dim>& x, const Entity& e,
                                   const IntersectionIterator& intersectionIt,
-                                  const FieldVector<DT,dim>& xi) const
+                                  const FieldVector<Scalar,dim>& xi) const
     {
         return velocity(x);
     }
 
-    virtual FieldVector<RT,dim> J(const FieldVector<DT,dim>& x, const Entity& e,
+    virtual FieldVector<Scalar,numEq> J(const FieldVector<Scalar,dim>& x, const Entity& e,
                                   const IntersectionIterator& intersectionIt,
-                                  const FieldVector<DT,dim>& xi)
+                                  const FieldVector<Scalar,dim>& xi)
     {
-        FieldVector<RT,dim> result(0);
+        FieldVector<Scalar,numEq> result(0);
         return result;
     }
 
-    virtual RT mu(const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi) const
+    virtual Scalar mu(const FieldVector<Scalar,dim>& x, const Entity& e, const FieldVector<Scalar,dim>& xi) const
     {
         return 1.0;
     }
 
-    virtual FieldVector<RT,dim> velocity(const FieldVector<DT,dim>& x) const
+    virtual FieldVector<Scalar,dim> velocity(const FieldVector<Scalar,dim>& x) const
     {
-        FieldVector<RT,dim> result(0);
+        FieldVector<Scalar,dim> result(0);
         result[0] = 200.0*((x[1]*(1.0 - x[1])*(1.0 - x[1]) - x[1]*x[1]*(1.0 - x[1]))*x[0]*x[0]*(1.0 - x[0])*(1.0 - x[0]));
         result[1] = -200.0*((x[0]*(1.0 - x[0])*(1.0 - x[0]) - x[0]*x[0]*(1.0 - x[0]))*x[1]*x[1]*(1.0 - x[1])*(1.0 - x[1]));
 
         return result;
     }
 
-    virtual RT pressure(const FieldVector<DT,dim>& x) const
+    virtual Scalar pressure(const FieldVector<Scalar,dim>& x) const
     {
         return (sin(4.0*pi*(x[0] + x[1])));
     }
 
-    virtual FieldMatrix<DT, dim, dim> velocityGradient(const FieldVector<DT,dim>& x) const
+    virtual FieldMatrix<Scalar, dim, dim> velocityGradient(const FieldVector<Scalar,dim>& x) const
     {
-        FieldMatrix<DT, dim, dim> result(0);
+        FieldMatrix<Scalar, dim, dim> result(0);
 
         return result;
     }
