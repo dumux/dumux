@@ -43,7 +43,7 @@ class RandomPermeability
     typedef BlockVector<FieldVector<Scalar,1> > RepresentationType;
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::IndexSet IndexSet;
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,IndexSet,ElementLayout> ElementMapper;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView,ElementLayout> ElementMapper;
 
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
@@ -64,7 +64,7 @@ public:
      */
     RandomPermeability(const Grid& grid, const char* name = "permeab.dat", const bool create = true)
         : grid_(grid), fileName_(name), createNew_(create), perm_(grid_.leafView()), permLoc_(0),
-          elementMapper_(grid_, grid_.leafIndexSet())
+          elementMapper_(grid_.leafView())
     {
         typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
@@ -227,7 +227,7 @@ class LevelRandomPermeability
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
     typedef typename Grid::Traits::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::IndexSet IndexSet;
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,IndexSet,ElementLayout> ElementMapper;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView,ElementLayout> ElementMapper;
 
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
@@ -249,7 +249,7 @@ public:
      */
     LevelRandomPermeability(const Grid& grid, const int lev, const char* name = "permeab.dat", const bool create = true)
         : grid_(grid), level_(lev), fileName_(name), createNew_(create), perm_(grid_,lev), permLoc_(0),
-          elementMapper_(grid_, grid_.levelIndexSet(level_))
+          elementMapper_(grid_.levelView(level_))
     {
         if (level_> grid_.maxLevel() ) DUNE_THROW(Dune::Exception,"Level specified for permeability data is higher than maximum grid_ level!");
         typedef typename GridView::template Codim<0>::Iterator ElementIterator;
@@ -441,7 +441,7 @@ class GstatRandomPermeability
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
     typedef typename Grid::Traits::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::IndexSet IndexSet;
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,IndexSet,ElementLayout> ElementMapper;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, ElementLayout> ElementMapper;
 
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
@@ -465,7 +465,7 @@ public:
      */
     GstatRandomPermeability(const Grid& grid, const bool create = true, const char* gstatOut = "permeab.dat", const char* gstatCon = "gstatControl.txt", const char* gstatIn = "gstatInput.txt")
         : grid_(grid), createNew_(create), perm_(grid_.leafView()), permLoc_(0),
-          elementMapper_(grid_, grid_.leafIndexSet())
+          elementMapper_(grid_.leafView())
     {
         init(gstatCon, gstatIn, gstatOut, create);
     }

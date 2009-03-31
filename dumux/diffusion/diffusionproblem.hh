@@ -13,6 +13,7 @@
 #include<dune/grid/common/referenceelements.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
 #include<dumux/material/twophaserelations.hh>
+#include <dumux/material/property_baseclasses.hh>
 
 /**
  * @file
@@ -46,7 +47,7 @@ template<class Grid, class Scalar, class VC>
 class DiffusionProblem {
 
 protected:
-    enum {dim=Grid::dimension, dimWorld=Grid::dimensionworld, numEq=1};
+    enum {dim=Grid::dimension, dimWorld=Grid::dimensionworld};
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
     typedef Dune::FieldVector<Scalar,dim> LocalPosition;
     typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
@@ -61,7 +62,7 @@ public:
       @param[in]  localPos   position in reference element of element
       \return     value of source term
     */
-    virtual Scalar source  (const GlobalPosition& globalPos, const Element& element,
+    virtual Scalar sourcePress  (const GlobalPosition& globalPos, const Element& element,
                             const LocalPosition& localPos) = 0;
 
     //! return type of boundary condition at the given global coordinate
@@ -69,7 +70,7 @@ public:
       @param[in]  globalPos    position in global coordinates
       \return     boundary condition type given by enum in this class
     */
-    virtual BoundaryConditions::Flags bctype (const GlobalPosition& globalPos, const Element& element,
+    virtual BoundaryConditions::Flags bctypePress (const GlobalPosition& globalPos, const Element& element,
                                               const LocalPosition& localPos) const = 0;
 
     //! evaluate Dirichlet boundary condition at given position
@@ -126,9 +127,9 @@ public:
     /** @param law implementation of Material laws. Class TwoPhaseRelations or derived.
      *  @param cap flag to include capillary forces.
      */
-    DiffusionProblem(VC& variables,Fluid& wettingphase, Fluid& nonwettingphase, Matrix2p<Grid, Scalar>& soil, TwoPhaseRelations<Grid, Scalar>& materialLaw = *(new TwoPhaseRelations<Grid,Scalar>),
+    DiffusionProblem(VC& variables,Fluid& wettingPhase, Fluid& nonwettingPhase, Matrix2p<Grid, Scalar>& soil, TwoPhaseRelations<Grid, Scalar>& materialLaw = *(new TwoPhaseRelations<Grid,Scalar>),
                      const bool capillarity = false)
-        : variables(variables), wettingPhase(wettingphase), nonWettingPhase(nonwettingphase), soil_(soil), capillarity(capillarity), materialLaw_(materialLaw), capillarity(capillarity),gravity_(0)
+        : variables(variables), wettingPhase(wettingPhase), nonWettingPhase(nonwettingPhase), soil_(soil), materialLaw_(materialLaw), capillarity(capillarity),gravity_(0)
     {}
 
     //! always define virtual destructor in abstract base class
@@ -138,10 +139,10 @@ public:
     VC& variables;
     Fluid& wettingPhase;
     Fluid& nonWettingPhase;
-protected:
     Matrix2p<Grid, Scalar>& soil_;
     TwoPhaseRelations<Grid,Scalar>& materialLaw_;
     const bool capillarity;
+private:
     FieldVector<Scalar,dim> gravity_;
 };
 

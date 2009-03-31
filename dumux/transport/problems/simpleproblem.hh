@@ -5,6 +5,7 @@
 
 #include <dumux/material/matrixproperties.hh>
 #include "dumux/transport/transportproblem.hh"
+#include <dumux/material/property_baseclasses.hh>
 
 namespace Dune
 {
@@ -89,12 +90,12 @@ public:
         return 0;
     }
 
-    SimpleProblem(VC& variableobj, Matrix2p<Grid, Scalar>& soil, TwoPhaseRelations<Grid,Scalar>& materialLaw  = *(new TwoPhaseRelations<Grid,Scalar>), GlobalPosition& Left = 0, GlobalPosition& Right = 1, const bool cap = false)
-        : TransportProblem<Grid, Scalar, VC>(variableobj,soil,materialLaw, cap), left(Left[0]), right(Right[0])
+    SimpleProblem(VC& variableobj, Fluid& wettingPhase, Fluid& nonwettingPhase, Matrix2p<Grid,Scalar>& soil, TwoPhaseRelations<Grid,Scalar>& materialLaw  = *(new TwoPhaseRelations<Grid,Scalar>), GlobalPosition& Left = 0, GlobalPosition& Right = 1)
+        : TransportProblem<Grid, Scalar, VC>(variableobj, wettingPhase, nonwettingPhase, soil, materialLaw), left(Left[0]), right(Right[0])
     {    }
 
-    SimpleProblem(VC& variableobj, Matrix2p<Grid, Scalar>& soil, TwoPhaseRelations<Grid,Scalar>& materialLaw  = *(new TwoPhaseRelations<Grid,Scalar>), const bool cap = false)
-        : TransportProblem<Grid, Scalar, VC>(variableobj,soil,materialLaw, cap), left(0), right(1)
+    SimpleProblem(VC& variableobj,Fluid& wettingPhase, Fluid& nonwettingPhase, Matrix2p<Grid, Scalar>& soil, TwoPhaseRelations<Grid,Scalar>& materialLaw  = *(new TwoPhaseRelations<Grid,Scalar>))
+        : TransportProblem<Grid, Scalar, VC>(variableobj, wettingPhase, nonwettingPhase, soil,materialLaw), left(0), right(1)
     {    }
 };
 

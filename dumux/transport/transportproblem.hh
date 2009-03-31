@@ -13,6 +13,7 @@
 #include<dune/grid/common/referenceelements.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
 #include<dumux/material/twophaserelations.hh>
+#include <dumux/material/property_baseclasses.hh>
 
 /**
  * @file
@@ -46,8 +47,6 @@ class TransportProblem
     {
         dim = Grid::dimension,
         dimWorld = Grid::dimensionworld,
-        numEq = 1,
-        blocksize = 2 * Grid::dimension
     };
 
 typedef    typename Grid::Traits::template Codim<0>::Entity Element;
@@ -87,7 +86,7 @@ public:
     virtual Scalar initSat (const GlobalPosition& globalPos, const Element& element,
             const LocalPosition& localPos) const = 0;
 
-    const FieldVector<Scalar,dim>& gravity()
+    virtual const FieldVector<Scalar,dim>& gravity()
     {
         return gravity_;
     }
@@ -98,12 +97,6 @@ public:
      @param[in]  numberInSelf   local index of element face
      @param[out] vTotal         velocity vector to be filled
      */
-
-    virtual Scalar g (const GlobalPosition& globalPos, const Element& element,
-            const LocalPosition& localPos) const
-    {
-        return dirichletSat(globalPos, element, localPos);
-    }
 
     //! properties of the soil
     /*! properties of the soil
@@ -139,9 +132,8 @@ public:
     VC& variables;
     Fluid& wettingPhase;
     Fluid& nonWettingPhase;
-protected:
-    TwoPhaseRelations<Grid,Scalar>& materialLaw_;
     Matrix2p<Grid, Scalar>& soil_;
+    TwoPhaseRelations<Grid,Scalar>& materialLaw_;
 private:
     FieldVector<Scalar,dimWorld> gravity_;
 };
