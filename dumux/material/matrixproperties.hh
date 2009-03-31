@@ -80,11 +80,44 @@ public:
         return Matrix2p<G,RT>::brooks_corey;
     }
 
-    HomogeneousSoil():Matrix2p<G,RT>()
+    HomogeneousSoil(const double k = 1e-12):Matrix2p<G,RT>()
     {
         K_ = 0;
         for(int i = 0; i < n; i++)
-            K_[i][i] = 1e-12;
+            K_[i][i] = k;
+    }
+
+    HomogeneousSoil(const double k1 = 1e-12, const double k2 = 1e-12, const double k3 = 0, const double k4 = 0, const double k5 = 0, const double k6 = 0, const double k7 = 0, const double k8 = 0, const double k9 = 0):Matrix2p<G,RT>()
+    {
+        K_ = 0;
+
+        if (n == 1)
+        {
+            K_[0][0] = k1;
+        }
+        else if (n == 2)
+        {
+            K_[0][0] = k1;
+            K_[1][1] = k2;
+            K_[0][1] = k3;
+            K_[1][0] = k4;
+        }
+        else if (n == 3)
+        {
+            K_[0][0] = k1;
+            K_[1][1] = k2;
+            K_[2][2] = k3;
+            K_[0][1] = k4;
+            K_[0][2] = k5;
+            K_[1][0] = k6;
+            K_[1][2] = k7;
+            K_[2][0] = k8;
+            K_[2][1] = k9;     
+        }
+        else
+        {
+            std::cout << "Dimension " << n << " is not considered." << std::endl;
+        }
     }
 
     ~HomogeneousSoil()
