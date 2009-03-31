@@ -13,7 +13,7 @@ class DarcyProblem  : public CoupledPorousMediaProblem<Grid, Scalar>
 {
     enum {dim=Grid::dimension, numEq=1};
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
-    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
+    typedef typename Grid::template Codim<0>::LeafIntersectionIterator IntersectionIterator;
 
 public:
     DarcyProblem ()
@@ -60,8 +60,8 @@ public:
 
     // Neumann boundary conditions
     Scalar J (const FieldVector<Scalar,dim>& globalPos, const Element& element,
-              const IntersectionIterator& intersectionIt,
-              const FieldVector<Scalar,dim>& localPos) const
+	      const IntersectionIterator& intersectionIt,
+	      const FieldVector<Scalar,dim>& localPos) const
     {
         return 0;
     }
@@ -100,9 +100,9 @@ namespace Dune
 template<class Grid, class Scalar>
 class DarcyParameters  : public CoupledPorousMediaProblem<Grid, Scalar>
 {
-    enum {dim=Grid::dimension, numEq=1};
+  enum {dim=Grid::dimension,dimworld=Grid::dimensionworld, numEq=1};
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
-    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
+    typedef typename Grid::template Codim<0>::LeafIntersectionIteratorGetter IntersectionIterator;
 
 public:
     DarcyParameters ()
@@ -148,7 +148,8 @@ public:
     }
 
     // Neumann boundary conditions
-    Scalar J (const FieldVector<Scalar,dim>& globalPos, const Element& element,
+    Scalar J (const FieldVector<Scalar,dimworld>& globalPos,
+	      const Element& element,
               const IntersectionIterator& intersectionIt,
               const FieldVector<Scalar,dim>& localPos) const
     {

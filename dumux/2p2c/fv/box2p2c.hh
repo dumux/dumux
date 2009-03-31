@@ -32,7 +32,7 @@
 #include <dune/grid/common/scsgmapper.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/disc/functions/functions.hh>
-#include "dumux/operators/p1operatorextended.hh"
+#include "dune/disc/operators/p1operator.hh"
 #include <dune/disc/operators/boundaryconditions.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/paamg/amg.hh>
@@ -124,6 +124,7 @@ public:
 
         const GV& gridview(this->grid().leafView());
 
+        std::cerr << "create:" << this->size << "!!\n";
         this->localJacobian().outPressureN = vtkMultiWriter->template createField<Scalar, 1>(this->size);
         this->localJacobian().outCapillaryP = vtkMultiWriter->template createField<Scalar, 1>(this->size);
         this->localJacobian().outSaturationW = vtkMultiWriter->template createField<Scalar, 1>(this->size);
@@ -207,20 +208,18 @@ public:
             int size = sfs.size();
 
             // set type of boundary conditions
-            this->localJacobian().template assembleBC<LeafTag>(entity);
+            this->localJacobian().assembleBoundaryCondition(entity);
 
-            IntersectionIterator
-                endit = IntersectionIteratorGetter<Grid, LeafTag>::end(entity);
+            IntersectionIterator endit = entity.ileafend();
 
-            for (IntersectionIterator is = IntersectionIteratorGetter<Grid,
-                     LeafTag>::begin(entity); is!=endit; ++is)
+            for (IntersectionIterator is = entity.ileafbegin(); is!=endit; ++is)
                 if (is->boundary())
                 {
                     for (int i = 0; i < size; i++)
                         // handle subentities of this face
-                        for (int j = 0; j < ReferenceElements<Scalar,dim>::general(gt).size(is->numberInSelf(), 1, sfs[i].codim()); j++)
+                        for (int j = 0; j < ReferenceElements<Scalar,dim>::general(gt).size(is->numberInInside(), 1, sfs[i].codim()); j++)
                             if (sfs[i].entity()
-                                == ReferenceElements<Scalar,dim>::general(gt).subEntity(is->numberInSelf(), 1,
+                                == ReferenceElements<Scalar,dim>::general(gt).subEntity(is->numberInInside(), 1,
                                                                                         j, sfs[i].codim()))
                             {
                                 for (int equationNumber = 0; equationNumber<m; equationNumber++)
@@ -269,6 +268,7 @@ public:
 
     void updateModel (double& dt, double& nextDt)
     {
+        std::cerr << "create:" << this->size << "!!\n";
         this->localJacobian().outPressureN = vtkMultiWriter->template createField<Scalar, 1>(this->size);
         this->localJacobian().outCapillaryP = vtkMultiWriter->template createField<Scalar, 1>(this->size);
         this->localJacobian().outSaturationW = vtkMultiWriter->template createField<Scalar, 1>(this->size);
@@ -415,13 +415,13 @@ public:
     {
         typedef typename Grid::Traits::template Codim<0>::Entity Entity;
         typedef typename GV::template Codim<0>::Iterator Iterator;
-        typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
 
         enum {dim = Grid::dimension};
         enum {dimworld = Grid::dimensionworld};
 
         const GV& gridview(this->grid().leafView());
 
+        std::cerr << "create:" << this->size << "!!\n";
         this->localJacobian().outPressureN = vtkMultiWriter->template createField<Scalar, 1>(this->size);
         this->localJacobian().outCapillaryP = vtkMultiWriter->template createField<Scalar, 1>(this->size);
         this->localJacobian().outSaturationW = vtkMultiWriter->template createField<Scalar, 1>(this->size);
@@ -492,7 +492,8 @@ public:
 
     virtual void globalDefect(FunctionType& defectGlobal)
     {
-        ThisLeafP1TwoPhaseModel::globalDefect(defectGlobal);
+    	DUNE_THROW(NotImplemented, "global defect in 2p2c model");
+//    	ThisLeafP1TwoPhaseModel::globalDefect(defectGlobal);
     }
 
     void solve()
@@ -527,7 +528,6 @@ public:
     {
         typedef typename Grid::Traits::template Codim<0>::Entity Entity;
         typedef typename GV::template Codim<0>::Iterator Iterator;
-        typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
 
         enum {dim = Grid::dimension};
         enum {dimworld = Grid::dimensionworld};
@@ -573,6 +573,8 @@ public:
 
         //        writer.addScalarVertexFunction("nonwetting phase saturation", this->u, 1);
         writer.addScalarVertexFunction("pressure wetting phase", this->u, 0);
+
+        std::cerr << "write!!\n";
 
         //        writer.addVertexData(&satW,"wetting phase saturation");
         writer.addVertexData(this->localJacobian().outPressureN,"pressure non-wetting phase");

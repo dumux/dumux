@@ -658,7 +658,7 @@ public:
         for (IntersectionIterator it = e.ileafbegin(); it != endit; ++it)
             if (it->boundary())
             {
-                int face = it->numberInSelf();
+                int face = it->numberInInside();
                 int numVerticesOfFace = referenceElement.size(face, 1, dim);
                 for (int vertInFace = 0; vertInFace < numVerticesOfFace; vertInFace++)
                 {
@@ -674,7 +674,7 @@ public:
                         boundaryFace[bfIdx].ipLocal = referenceElement.position(vertInElement, dim)
                             + referenceElement.position(face, 1);
                         boundaryFace[bfIdx].ipLocal *= 0.5;
-                        boundaryFace[bfIdx].area = 0.5*it->intersectionGlobal().volume();
+                        boundaryFace[bfIdx].area = 0.5*it->geometry().volume();
                         break;
                     case 3:
                         int leftEdge;

@@ -3,6 +3,8 @@
 
 #include<dune/common/exceptions.hh>
 
+#include<dune/disc/operators/boundaryconditions.hh>
+
 namespace Dune {
 
 template<class Grid, class Scalar>
@@ -10,7 +12,7 @@ class CoupledPorousMediaProblem
 {
     enum {dim=Grid::dimension, numEq=1};
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
-    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
+    typedef typename Grid::template Codim<0>::LeafIntersectionIterator IntersectionIterator;
 
 public:
     //TODO Permeability can be defined here. This is only preliminary.

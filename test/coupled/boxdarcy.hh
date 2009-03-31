@@ -2,7 +2,7 @@
 #define DUNE_BOXDARCY_HH
 
 #include <dune/disc/shapefunctions/lagrangeshapefunctions.hh>
-#include "dumux/operators/p1operatorextended.hh"
+#include <dune/disc/operators/p1operator.hh>
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
 #include <dune/istl/bvector.hh>
@@ -21,6 +21,7 @@
 #include "dumux/nonlinear/newtonmethod.hh"
 #include "boxdarcyjacobian.hh"
 #include "dumux/pardiso/pardiso.hh"
+
 
 namespace Dune
 {
@@ -51,11 +52,11 @@ void calculateDarcyVelocity(const Grid& grid, const Problem& problem, PressureFu
     typedef typename Grid::LeafGridView::template Codim<0>::Iterator ElementIterator;
     typedef typename Grid::LeafGridView::template Codim<dim>::Iterator VertexIterator;
     typedef typename Grid::LeafGridView::IndexSet IS;
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,IS,ElementLayout> ElementMapper;
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,IS,VertexLayout> VertexMapper;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<typename Grid::LeafGridView,ElementLayout> ElementMapper;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<typename Grid::LeafGridView,VertexLayout> VertexMapper;
 
-    VertexMapper vertexMapper(grid, grid.leafView().indexSet());
-    ElementMapper elementMapper(grid, grid.leafView().indexSet());
+    VertexMapper vertexMapper(grid.leafView());
+    ElementMapper elementMapper(grid.leafView());
 
     ElementIterator endEIt = grid.template leafend<0>();
     for (ElementIterator eIt = grid.template leafbegin<0>(); eIt != endEIt; ++eIt)
@@ -136,6 +137,7 @@ public:
     //    typedef DiffusionParameters<Grid, Scalar> ProblemType;
 
     typedef Grid GridType;
+    typedef typename FunctionType::RepresentationType VectorType;
 
     typedef Dune::BoxDarcy<Grid, Scalar, ProblemType, BoxDarcyJacobian<Grid, Scalar>,
                            FunctionType, OperatorAssembler> BoxDarcy;
@@ -156,14 +158,13 @@ public:
 
     typedef typename Grid::LeafGridView GridView;
     typedef typename GridView::IndexSet IS;
-    typedef MultipleCodimMultipleGeomTypeMapper<Grid,IS,P1Layout> VertexMapper;
-    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
-    typedef typename ThisType::FunctionType::RepresentationType VectorType;
+    typedef MultipleCodimMultipleGeomTypeMapper<typename Grid::LeafGridView,P1Layout> VertexMapper;
+    typedef typename Grid::template Codim<0>::LeafIntersectionIterator IntersectionIterator;
     typedef typename ThisType::OperatorAssembler::RepresentationType MatrixType;
     typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator;
 
     LeafP1BoxDarcy (const Grid& grid, CoupledPorousMediaProblem<Grid, Scalar>& prob)
-        : BoxDarcy(grid, prob), grid_(grid), vertexmapper(grid, grid.leafIndexSet()),
+      : BoxDarcy(grid, prob), grid_(grid), vertexmapper(grid.leafView()),
           size((*(this->u)).size()), uOldNewtonStep(size)
     { }
 
@@ -223,17 +224,17 @@ public:
 
                 // set type of boundary conditions
                 this->localJacobian().fvGeom.update(element);
-                this->localJacobian().template assembleBC<LeafTag>(element);
+                this->localJacobian().assembleBoundaryCondition(element);
 
-                IntersectionIterator endit = IntersectionIteratorGetter<Grid,LeafTag>::end(element);
-                for (IntersectionIterator is = IntersectionIteratorGetter<Grid,LeafTag>::begin(element);
+                IntersectionIterator endit = element.ileafend();
+                for (IntersectionIterator is = element.ileafbegin();
                      is!=endit; ++is)
                     if (is->boundary())
                         {
                             for (int i = 0; i < size; i++)
                                 // handle subentities of this face
-                                for (int j = 0; j < ReferenceElements<Scalar,dim>::general(gt).size(is->numberInSelf(), 1, sfs[i].codim()); j++)
-                                    if (sfs[i].entity() == ReferenceElements<Scalar,dim>::general(gt).subEntity(is->numberInSelf(), 1, j, sfs[i].codim()))
+                                for (int j = 0; j < ReferenceElements<Scalar,dim>::general(gt).size(is->numberInInside(), 1, sfs[i].codim()); j++)
+                                    if (sfs[i].entity() == ReferenceElements<Scalar,dim>::general(gt).subEntity(is->numberInInside(), 1, j, sfs[i].codim()))
                                         {
                                             if (this->localJacobian().bc(i)[0] == BoundaryConditions::dirichlet)
                                                 {
@@ -322,7 +323,7 @@ public:
             this->localJacobian().setLocalSolution(element);
             this->localJacobian().computeElementData(element);
             this->localJacobian().updateVariableData(element, this->localJacobian().u);
-            this->localJacobian().template localDefect<LeafTag>(element, this->localJacobian().u);
+            this->localJacobian().localDefect(element, this->localJacobian().u);
 
             // begin loop over vertices
             for (int i=0; i < size; i++) {

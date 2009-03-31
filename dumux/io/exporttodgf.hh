@@ -122,14 +122,14 @@ void exportToDGF(const GridView& gridView, const Data& data, int paramnumber = 1
                     (*iIt).boundaryId()<< " ";
 
                 int vertexOnElement = (*eIt).geometry().corners();
-                int vertexOnIntersection = (*iIt).intersectionGlobal().corners();
+                int vertexOnIntersection = (*iIt).geometry().corners();
 
                 for (int i=0; i<vertexOnElement;i++)
                 {
                     Dune::FieldVector<DT,n> globalE = eIt->geometry().corner(i);
                     for(int j = 0;j<vertexOnIntersection;j++)
                     {
-                        Dune::FieldVector<DT,n> globalV = iIt->intersectionGlobal().corner(j);
+                        Dune::FieldVector<DT,n> globalV = iIt->geometry().corner(j);
                         if (globalE == globalV)
                         {
                             int vertexIndex = indexSet.index(*((*eIt).template entity<n>(i) ));

@@ -13,7 +13,6 @@
 #include<dune/grid/common/referenceelements.hh>
 #include<dune/common/geometrytype.hh>
 #include<dune/grid/common/quadraturerules.hh>
-#include <dune/grid/utility/intersectiongetter.hh>
 
 #include<dune/disc/shapefunctions/lagrangeshapefunctions.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
@@ -47,6 +46,8 @@ class BoxDarcyJacobian
     typedef BoxJacobian<ThisType,Grid,Scalar,1,BoxFunction> BoxJacobianType;
     typedef Dune::FVElementGeometry<Grid> FVElementGeometry;
 
+    typedef typename Grid::template Codim<0>::LeafIntersectionIterator IntersectionIterator;
+
 public:
     enum {dim=Grid::dimension};
 
@@ -66,11 +67,11 @@ public:
         return;
     }
 
-    template<class TypeTag>
-    void localDefect(const Element& element, const SolutionVector* sol, bool withBC = true) {
-        BoxJacobianType::template localDefect<TypeTag>(element, sol, withBC);
+    void localDefect(const Element& element, const SolutionVector* sol, bool withBC = true)
+    {
+        BoxJacobianType::localDefect(element, sol, withBC);
 
-        this->template assembleBC<TypeTag>(element);
+        this->assembleBoundaryCondition(element);
 
         Dune::GeometryType gt = element.geometry().type();
         const typename ReferenceElementContainer<Scalar,dim>::value_type& referenceElement = ReferenceElements<Scalar, dim>::general(gt);
@@ -78,15 +79,13 @@ public:
         for (int vert=0; vert < this->fvGeom.numVertices; vert++) // begin loop over vertices / sub control volumes
             if (!this->fvGeom.subContVol[vert].inner)
             {
-                typedef typename IntersectionIteratorGetter<Grid,TypeTag>::IntersectionIterator IntersectionIterator;
-
                 FieldVector<Scalar,dim> averagedNormal(0);
                 int faces = 0;
-                IntersectionIterator endit = IntersectionIteratorGetter<Grid, TypeTag>::end(element);
-                for (IntersectionIterator it = IntersectionIteratorGetter<Grid, TypeTag>::begin(element); it!=endit; ++it)
+                IntersectionIterator endit = element.ileafend();
+                for (IntersectionIterator it = element.ileafbegin(); it!=endit; ++it)
                 {
                     if (it->boundary()) {
-                        int faceIdx = it->numberInSelf();
+                        int faceIdx = it->numberInInside();
                         int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
                         for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++) {
                             int nodeInElement = referenceElement.subEntity(faceIdx, 1, nodeInFace, dim);

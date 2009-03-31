@@ -2,7 +2,6 @@
 #define DUNE_BOXSTOKES_HH
 
 #include <dune/disc/shapefunctions/lagrangeshapefunctions.hh>
-#include "dumux/operators/p1operatorextended.hh"
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
 #include <dune/istl/bvector.hh>
@@ -98,8 +97,8 @@ public:
 
     typedef typename Grid::LeafGridView GV;
     typedef typename GV::IndexSet IS;
-    typedef MultipleCodimMultipleGeomTypeMapper<Grid,IS,P1Layout> VertexMapper;
-    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
+    typedef MultipleCodimMultipleGeomTypeMapper<GV,P1Layout> VertexMapper;
+    typedef typename GV::IntersectionIterator IntersectionIterator;
     typedef typename ThisType::FunctionType::RepresentationType VectorType;
     typedef typename ThisType::OperatorAssembler::RepresentationType MatrixType;
     typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator;
@@ -108,7 +107,7 @@ public:
 #endif
 
     LeafP1BoxStokes (const Grid& grid, StokesProblem<Grid, Scalar>& prob)
-        : BoxStokes(grid, prob), grid_(grid), vertexmapper(grid, grid.leafIndexSet()),
+        : BoxStokes(grid, prob), grid_(grid), vertexmapper(grid.leafView()),
           size((*(this->u)).size()), pressure(size), xVelocity(size), yVelocity(size),
           uOldNewtonStep(size)
     { }
@@ -139,8 +138,6 @@ public:
             const typename Dune::LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::value_type&
                 sfs=Dune::LagrangeShapeFunctions<Scalar,Scalar,dim>::general(gt, 1);
             int size = sfs.size();
-
-            IntersectionIterator is = IntersectionIteratorGetter<Grid,LeafTag>::end(entity);
 
             for (int i = 0; i < size; i++) {
                 // get cell center in reference element
@@ -174,17 +171,17 @@ public:
 
             // set type of boundary conditions
             this->localJacobian().fvGeom.update(entity);
-            this->localJacobian().template assembleBC<LeafTag>(entity);
+            this->localJacobian().assembleBoundaryCondition(entity);
 
-            IntersectionIterator endit = IntersectionIteratorGetter<Grid,LeafTag>::end(entity);
-            for (IntersectionIterator is = IntersectionIteratorGetter<Grid,LeafTag>::begin(entity);
+            IntersectionIterator endit = entity.ileafend();
+            for (IntersectionIterator is = entity.ileafbegin();
                  is!=endit; ++is)
                 if (is->boundary())
                 {
                     for (int i = 0; i < size; i++)
                         // handle subentities of this face
-                        for (int j = 0; j < ReferenceElements<Scalar,dim>::general(gt).size(is->numberInSelf(), 1, sfs[i].codim()); j++)
-                            if (sfs[i].entity() == ReferenceElements<Scalar,dim>::general(gt).subEntity(is->numberInSelf(), 1, j, sfs[i].codim()))
+                        for (int j = 0; j < ReferenceElements<Scalar,dim>::general(gt).size(is->numberInInside(), 1, sfs[i].codim()); j++)
+                            if (sfs[i].entity() == ReferenceElements<Scalar,dim>::general(gt).subEntity(is->numberInInside(), 1, j, sfs[i].codim()))
                             {
                                 if (this->localJacobian().bc(i)[1] == BoundaryConditions::dirichlet)
                                 {
@@ -198,8 +195,8 @@ public:
 
                                     BoundaryConditions::Flags bctype = this->problem.bctype(global, entity, is, local);
                                     if (bctype == BoundaryConditions::dirichlet) {
-                                        FieldVector<Scalar,dim> dirichlet = this->problem.g(global, entity, is, local);
-                                        for (int eq = 0; eq < dim; eq++)
+                                        FieldVector<Scalar,numEq> dirichlet = this->problem.g(global, entity, is, local);
+                                        for (int eq = 0; eq < numEq; eq++)
                                             (*(this->u))[globalId][eq] = dirichlet[eq];
                                     }
                                     else {
@@ -337,7 +334,7 @@ public:
             this->localJacobian().setLocalSolution(entity);
             this->localJacobian().computeElementData(entity);
             this->localJacobian().updateVariableData(entity, this->localJacobian().u);
-            this->localJacobian().template localDefect<LeafTag>(entity, this->localJacobian().u);
+            this->localJacobian().localDefect(entity, this->localJacobian().u);
 
             // begin loop over vertices
             for (int i=0; i < size; i++) {

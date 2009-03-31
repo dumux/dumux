@@ -12,7 +12,6 @@
 #include<dune/common/exceptions.hh>
 #include<dune/grid/common/grid.hh>
 #include<dune/grid/common/referenceelements.hh>
-#include<dune/grid/utility/intersectiongetter.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
 
 /**
@@ -40,7 +39,7 @@ template<class Grid, class Scalar> class StokesProblem
 {
     enum {dim=Grid::dimension, numEq=Grid::dimension+1};
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
-    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator
+    typedef typename Grid::template Codim<0>::LeafIntersectionIterator::IntersectionIterator
     IntersectionIterator;
 
 public:
@@ -74,22 +73,22 @@ public:
       @param[in]  globalPos    position in global coordinates
       \return     boundary condition value
     */
-    virtual FieldVector<Scalar,dim> g(const FieldVector<Scalar,dim>& globalPos, const Element& element,
-                                      const IntersectionIterator& intersectionIt,
-                                      const FieldVector<Scalar,dim>& localPos) const = 0;
+    virtual FieldVector<Scalar,numEq> g(const FieldVector<Scalar,dim>& globalPos, const Element& element,
+					const IntersectionIterator& intersectionIt,
+					const FieldVector<Scalar,dim>& localPos) const = 0;
 
     //! evaluate Neumann boundary condition at given position
     /*! evaluate Neumann boundary condition at given position
       @param[in]  globalPos    position in global coordinates
       \return     boundary condition value
     */
-    virtual FieldVector<Scalar,dim> J(const FieldVector<Scalar,dim>& globalPos, const Element& element,
-                                      const IntersectionIterator& intersectionIt,
-                                      const FieldVector<Scalar,dim>& localPos)
+    virtual FieldVector<Scalar,numEq> J(const FieldVector<Scalar,dim>& globalPos, const Element& element,
+					const IntersectionIterator& intersectionIt,
+					const FieldVector<Scalar,dim>& localPos)
     {
         DUNE_THROW(NotImplemented, "no J specified, but requested");
 
-        FieldVector<Scalar,dim> result(0);
+        FieldVector<Scalar,numEq> result(0);
         return result;
     }
 

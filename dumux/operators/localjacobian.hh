@@ -63,7 +63,7 @@ namespace Dune
   - numEq    number of degrees of freedom per node (system size)
 */
 template<class Imp, class Grid, class Scalar, int numEq>
-class LocalJacobian : public LocalStiffness<Imp, Grid, Scalar, numEq>
+class LocalJacobian : public LocalStiffness<typename Grid::LeafGridView, Scalar, numEq>
 {
     // grid types
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
@@ -71,7 +71,7 @@ class LocalJacobian : public LocalStiffness<Imp, Grid, Scalar, numEq>
 
 public:
     // types for matrics, vectors and boundary conditions
-    typedef LocalStiffness<Imp, Grid, Scalar, numEq> ThisLocalStiffness;
+    typedef LocalStiffness<typename Grid::LeafGridView, Scalar, numEq> ThisLocalStiffness;
     typedef FieldVector<Scalar,numEq> SolutionVector;                        // one entry in the global vectors
     typedef array<BoundaryConditions::Flags,numEq> BCBlockType; // componentwise boundary conditions
     typedef FVElementGeometry<Grid> ElementGeometry;
@@ -91,7 +91,14 @@ public:
         return this->getImp().updateVariableData(element, sol, old);
     }
 
-    template<class TypeTag>
+    void assemble (const Element& e, 
+		   const BlockVector<SolutionVector>& localSolution, 
+		   int k=1)
+  {
+    assemble(e, k); // HACK
+  }
+
+
     void assemble (const Element& element, int k = 1)
     {
         fvGeom.update(element);
@@ -113,7 +120,7 @@ public:
         updateVariableData(element, uold, old);
         updateVariableData(element, u);
 
-        localDefect<TypeTag>(element, u);
+        localDefect(element, u);
 
         SolutionVector bTemp[size];
         for (int i=0; i<size; i++)
@@ -126,7 +133,7 @@ public:
         }
 
         if (analytic) {
-            analyticJacobian<TypeTag>(element, u);
+            analyticJacobian(element, u);
         }
         else {
             SolutionVector defu[size];
@@ -151,13 +158,13 @@ public:
                     // calculate the defect without taking into account BCs
                     // ASSUMES that BCs do not depend on the solution
                     bool withoutBC = false;
-                    localDefect<TypeTag>(element, uPlusEps, withoutBC);
+                    localDefect(element, uPlusEps, withoutBC);
                     SolutionVector defuPlusEps[size];
                     for (int i = 0; i < size; i++)
                         defuPlusEps[i] = def[i];
 
                     updateVariableData(element, uMinusEps, j);
-                    localDefect<TypeTag>(element, uMinusEps, withoutBC);
+                    localDefect(element, uMinusEps, withoutBC);
 
                     updateVariableData(element, u, j);
 
@@ -190,10 +197,9 @@ public:
         return;
     }
 
-    template<class TypeTag>
     void localDefect (const Element& element, const SolutionVector* sol, bool withBC = true)
     {
-        this->getImp().template localDefect<TypeTag>(element, sol, withBC);
+        this->getImp().localDefect(element, sol, withBC);
     }
 
     void setLocalSolution (const Element& element)
@@ -201,16 +207,14 @@ public:
         this->getImp().setLocalSolution(element);
     }
 
-    template<class TypeTag>
-    void assembleBC (const Element& element)
+    void assembleBoundaryCondition (const Element& element)
     {
-        this->getImp().template assembleBC<TypeTag>(element);
+        this->getImp().assembleBoundaryCondition(element);
     }
 
-    template<class TypeTag>
     void analyticJacobian (const Element& element, const SolutionVector* sol)
     {
-        this->getImp().template analyticJacobian<TypeTag>(element, sol);
+        this->getImp().analyticJacobian(element, sol);
     }
 
     virtual void updateStaticData (const Element& element, SolutionVector* sol)
@@ -247,6 +251,13 @@ public:
     SolutionVector u[SIZE];
     SolutionVector uold[SIZE];
     bool analytic;
+
+protected:
+    Imp &getImp()
+    { return *reinterpret_cast<Imp*>(this); } 
+
+    const Imp &getImp() const 
+    { return *reinterpret_cast<const Imp*>(this); }
 };
 
 

@@ -52,7 +52,7 @@ double Dune::DGStokes<G,v_order,p_order>::h1errorStokesSystem(int variable) cons
     //std::cout<<"level:::"<<level;
     for (; it != itend; ++it)
     {
-        int eid = grid.levelIndexSet(level).index(*it);
+      int eid = grid.levelIndexSet(level).template index<0>(*it);
         //std::cout<<" eid: "<<eid<<std::endl;
         error[variable]+=dgfem.evaluateH1error(variable,*it,solution[eid]);
     }

@@ -3,7 +3,7 @@
 #ifndef DUNE_NONLINEARMODEL_HH
 #define DUNE_NONLINEARMODEL_HH
 
-#include"dumux/operators/p1operatorextended.hh"
+#include <dune/disc/operators/p1operator.hh>
 #include"dumux/operators/mixedoperator.hh"
 
 namespace Dune

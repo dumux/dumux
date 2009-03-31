@@ -181,7 +181,7 @@ public:
 
         for (; eit != eitend; ++eit)
         {
-            mit.insert(grid.leafIndexSet().index(*eit));
+  	    mit.insert(grid.leafIndexSet().template index<0>(*eit));
             assert(mit != tmp.createend());
 
             IntersectionIterator endit = eit->ileafend();
@@ -191,7 +191,7 @@ public:
             {
                 if (iit->neighbor())
                 {
-                    mit.insert(grid.leafIndexSet().index(*iit->outside()));
+		  mit.insert(grid.leafIndexSet().template index<0>(*iit->outside()));
                 }
             }
             ++mit;

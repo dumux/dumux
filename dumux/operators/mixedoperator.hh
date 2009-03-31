@@ -17,7 +17,6 @@
 #include<dune/common/geometrytype.hh>
 #include<dune/grid/common/grid.hh>
 #include<dune/grid/common/mcmgmapper.hh>
-#include<dune/grid/utility/intersectiongetter.hh>
 #include<dune/istl/bvector.hh>
 #include<dune/istl/operators.hh>
 #include<dune/istl/bcrsmatrix.hh>
@@ -62,7 +61,7 @@ namespace Dune
   <dt>LevelTag</dt> We assemble on a grid level.
   <dt>LeafTag</dt> We assemble on the leaf entities of the grid
 */
-template<typename TypeTag, class G, class RT, class GV, class LC, int m=1>
+template<class G, class RT, class GV, class LC, int m=1>
 class MixedOperatorBase
 {
 public:
@@ -119,10 +118,10 @@ public:
     typedef typename G::Traits::GlobalIdSet IDS;
     typedef typename IDS::IdType IdType;
     typedef std::set<IdType> GIDSet;
-    typedef MultipleCodimMultipleGeomTypeMapper<G,IS,FaceLayout> FaceMapper;
-    typedef MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout> ElementMapper;
-    typedef MultipleCodimMultipleGeomTypeMapper<G,IS,ElementAndFaceLayout> ElementAndFaceMapper;
-    typedef MultipleCodimMultipleGeomTypeMapper<G,IS,AllLayout> AllMapper;
+    typedef MultipleCodimMultipleGeomTypeMapper<GV,FaceLayout> FaceMapper;
+    typedef MultipleCodimMultipleGeomTypeMapper<GV,ElementLayout> ElementMapper;
+    typedef MultipleCodimMultipleGeomTypeMapper<GV,ElementAndFaceLayout> ElementAndFaceMapper;
+    typedef MultipleCodimMultipleGeomTypeMapper<GV,AllLayout> AllMapper;
 
 private:
 
@@ -259,8 +258,8 @@ protected:
  * <dt>LevelTag</dt> We assemble on a grid level.
  * <dt>LeafTag</dt> We assemble on the leaf entities of the grid
  */
-template<typename TypeTag, class G, class RT, class GV, class LC, int m>
-class MixedOperatorAssembler : public MixedOperatorBase<TypeTag,G,RT,GV,LC,m>
+template<class G, class RT, class GV, class LC, int m>
+class MixedOperatorAssembler : public MixedOperatorBase<G,RT,GV,LC,m>
 {
     typedef typename G::ctype Scalar;
     enum {n=G::dimension};
@@ -271,7 +270,7 @@ class MixedOperatorAssembler : public MixedOperatorBase<TypeTag,G,RT,GV,LC,m>
     typedef typename G::template Codim<0>::EntityPointer ElementPointer;
     typedef typename MixedFunction<G,RT,GV,LC,m>::RepresentationType VectorType;
     typedef typename VectorType::block_type VBlockType;
-    typedef typename MixedOperatorBase<TypeTag,G,RT,GV,LC,m>::RepresentationType MatrixType;
+    typedef typename MixedOperatorBase<G,RT,GV,LC,m>::RepresentationType MatrixType;
     typedef typename MatrixType::block_type MBlockType;
     typedef typename MatrixType::RowIterator rowiterator;
     typedef typename MatrixType::ColIterator coliterator;
@@ -280,7 +279,7 @@ class MixedOperatorAssembler : public MixedOperatorBase<TypeTag,G,RT,GV,LC,m>
 
 public:
     MixedOperatorAssembler (const G& g, const GV& gridview, LC lcomm)
-        : MixedOperatorBase<TypeTag,G,RT,GV,LC,m>(g,gridview,lcomm)
+        : MixedOperatorBase<G,RT,GV,LC,m>(g,gridview,lcomm)
     {    }
 
 
@@ -418,11 +417,11 @@ public:
   - m    number of degrees of freedom per node (system size)
 */
 template<class G, class RT, int m>
-class LeafMixedOperatorAssembler : public MixedOperatorAssembler<LeafTag,G,RT,typename G::LeafGridView,LeafCommunicate<G>,m>
+class LeafMixedOperatorAssembler : public MixedOperatorAssembler<G,RT,typename G::LeafGridView,LeafCommunicate<G>,m>
 {
 public:
     LeafMixedOperatorAssembler (const G& grid, bool overlap = false)
-        : MixedOperatorAssembler<LeafTag,G,RT,typename G::LeafGridView,LeafCommunicate<G>,m>(grid,grid.leafView(),LeafCommunicate<G>(grid))
+        : MixedOperatorAssembler<G,RT,typename G::LeafGridView,LeafCommunicate<G>,m>(grid,grid.leafView(),LeafCommunicate<G>(grid))
     {}
 };
 
@@ -440,11 +439,11 @@ public:
   - m    number of degrees of freedom per node (system size)
 */
 template<class G, class RT, int m>
-class LevelMixedOperatorAssembler : public MixedOperatorAssembler<LevelTag,G,RT,typename G::LevelGridView,LevelCommunicate<G>,m>
+class LevelMixedOperatorAssembler : public MixedOperatorAssembler<G,RT,typename G::LevelGridView,LevelCommunicate<G>,m>
 {
 public:
     LevelMixedOperatorAssembler (const G& grid, int level)
-        : MixedOperatorAssembler<LevelTag,G,RT,typename G::LevelGridView,LevelCommunicate<G>,m>(grid,grid.levelView(level),LevelCommunicate<G>(grid,level))
+        : MixedOperatorAssembler<G,RT,typename G::LevelGridView,LevelCommunicate<G>,m>(grid,grid.levelView(level),LevelCommunicate<G>(grid,level))
     {}
 };
 

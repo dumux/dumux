@@ -3,6 +3,7 @@
 #ifndef DUNE_TWOPHASEMODEL_HH
 #define DUNE_TWOPHASEMODEL_HH
 
+#include<dune/grid/common/mcmgmapper.hh>
 #include <dune/disc/shapefunctions/lagrangeshapefunctions.hh>
 #include "dumux/nonlinear/nonlinearmodel.hh"
 #include "dumux/nonlinear/newtonmethod.hh"
@@ -67,26 +68,35 @@ public:
         }
     };
 
-    typedef typename Grid::LeafGridView GV;
-    typedef typename GV::IndexSet IS;
-    typedef MultipleCodimMultipleGeomTypeMapper<Grid,IS,P1Layout> VertexMapper;
-    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator
-    IntersectionIterator;
+    typedef typename Grid::LeafGridView GridView;
+    typedef typename GridView::IndexSet IS;
+    typedef typename Grid::template Codim<0>::LeafIntersectionIterator IntersectionIterator;
+    typedef MultipleCodimMultipleGeomTypeMapper<GridView, P1Layout> VertexMapper;
 
     LeafP1TwoPhaseModel(const Grid& grid, ProblemType& prob) :
-        ThisTwoPhaseModel(grid, prob), problem(prob), grid_(grid), vertexmapper(grid,
-                                                                                grid.leafIndexSet()), size((*(this->u)).size()), pW(size), pN(size), pC(size),
-        satW(size), satN(size), satEx(0), pEx(0), satError(0) {
-    }
+        ThisTwoPhaseModel(grid, prob),
+        problem(prob),
+        grid_(grid),
+        vertexmapper(grid_.leafView()),
+        size((*(this->u)).size()),
+        pW(size),
+        pN(size),
+        pC(size),
+        satW(size),
+        satN(size),
+        satEx(0),
+        pEx(0),
+        satError(0)
+        {   }
 
     virtual void initial() {
         typedef typename Grid::Traits::template Codim<0>::Entity Entity;
         typedef typename Grid::ctype DT;
-        typedef typename GV::template Codim<0>::Iterator Iterator;
+        typedef typename GridView::template Codim<0>::Iterator Iterator;
         enum {dim = Grid::dimension};
         enum {dimworld = Grid::dimensionworld};
 
-        const GV& gridview(this->grid_.leafView());
+        const GridView& gridview(this->grid_.leafView());
 
         // iterate through leaf grid an evaluate c0 at cell center
         Iterator eendit = gridview.template end<0>();
@@ -134,18 +144,17 @@ public:
             int size = sfs.size();
 
             // set type of boundary conditions
-            this->localJacobian().template assembleBC<LeafTag>(entity);
+            this->localJacobian().assembleBoundaryCondition(entity);
 
             IntersectionIterator
-                endit = IntersectionIteratorGetter<Grid, LeafTag>::end(entity);
-            for (IntersectionIterator is = IntersectionIteratorGetter<Grid,
-                     LeafTag>::begin(entity); is!=endit; ++is)
+                endit = entity.ileafend();
+            for (IntersectionIterator is = entity.ileafbegin(); is!=endit; ++is)
                 if (is->boundary()) {
                     for (int i = 0; i < size; i++)
                         // handle subentities of this face
-                        for (int j = 0; j < ReferenceElements<DT,dim>::general(gt).size(is->numberInSelf(), 1, sfs[i].codim()); j++)
+                        for (int j = 0; j < ReferenceElements<DT,dim>::general(gt).size(is->numberInInside(), 1, sfs[i].codim()); j++)
                             if (sfs[i].entity()
-                                == ReferenceElements<DT,dim>::general(gt).subEntity(is->numberInSelf(), 1,
+                                == ReferenceElements<DT,dim>::general(gt).subEntity(is->numberInInside(), 1,
                                                                                     j, sfs[i].codim())) {
                                 for (int equationNumber = 0; equationNumber<numEq; equationNumber++) {
                                     if (this->localJacobian().bc(i)[equationNumber]
@@ -207,11 +216,11 @@ public:
     virtual void globalDefect(FunctionType& defectGlobal) {
         typedef typename Grid::Traits::template Codim<0>::Entity Entity;
         typedef typename Grid::ctype DT;
-        typedef typename GV::template Codim<0>::Iterator Iterator;
+        typedef typename GridView::template Codim<0>::Iterator Iterator;
         enum {dim = Grid::dimension};
         typedef array<BoundaryConditions::Flags, numEq> BCBlockType;
 
-        const GV& gridview(this->grid_.leafView());
+        const GridView& gridview(this->grid_.leafView());
         (*defectGlobal)=0;
 
         // allocate flag vector to hold flags for essential boundary conditions
@@ -237,7 +246,7 @@ public:
             bool old = true;
             this->localJacobian().updateVariableData(entity, this->localJacobian().uold, old);
             this->localJacobian().updateVariableData(entity, this->localJacobian().u);
-            this->localJacobian().template localDefect<LeafTag>(entity, this->localJacobian().u);
+            this->localJacobian().localDefect(entity, this->localJacobian().u);
 
             // begin loop over vertices
             for (int i=0; i < size; i++) {
@@ -263,11 +272,11 @@ public:
     virtual double injected(double& upperMass, double& oldUpperMass) {
         typedef typename Grid::Traits::template Codim<0>::Entity Entity;
         typedef typename Grid::ctype DT;
-        typedef typename GV::template Codim<0>::Iterator Iterator;
+        typedef typename GridView::template Codim<0>::Iterator Iterator;
         enum {dim = Grid::dimension};
         enum {dimworld = Grid::dimensionworld};
 
-        const GV& gridview(this->grid_.leafView());
+        const GridView& gridview(this->grid_.leafView());
         double totalMass = 0;
         upperMass = 0;
         oldUpperMass = 0;
@@ -361,7 +370,7 @@ public:
     void writerestartfile(int restartNum=0)
     {
         enum {dim = Grid::dimension};
-        typedef typename GV::template Codim<dim>::Iterator Iterator;
+        typedef typename GridView::template Codim<dim>::Iterator Iterator;
 
         //        exportToDGF(_grid.leafView(), *(this->u), numEq, "primvar", false);
 

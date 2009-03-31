@@ -43,8 +43,8 @@ public:
     typedef typename FirstGV::template Codim<0>::Iterator FirstIterator;
     typedef typename FirstGrid::Traits::template Codim<0>::Entity FirstElement;
     typedef typename FirstGrid::template Codim<dim>::EntityPointer FirstVPointer;
-    typedef typename IntersectionIteratorGetter<FirstGrid,LeafTag>::IntersectionIterator FirstIntersectionIterator;
-    typedef MultipleCodimMultipleGeomTypeMapper<FirstGrid,FirstIS,NodeLayout> FirstVertexMapper;
+    typedef typename FirstGV::IntersectionIterator FirstIntersectionIterator;
+    typedef MultipleCodimMultipleGeomTypeMapper<FirstGV,NodeLayout> FirstVertexMapper;
     typedef typename FirstGrid::HostGridType FirstHostGrid;
     typedef typename FirstHostGrid::template Codim<0>::EntityPointer FirstHostPointer;
 
@@ -55,14 +55,14 @@ public:
     typedef typename SecondGrid::template Codim<0>::EntityPointer SecondElementPointer;
     typedef typename SecondGrid::template Codim<dim>::EntityPointer SecondVPointer;
     typedef typename SecondGV::template Codim<dim>::Iterator SecondVIterator;
-    typedef typename IntersectionIteratorGetter<SecondGrid,LeafTag>::IntersectionIterator SecondIntersectionIterator;
-    typedef MultipleCodimMultipleGeomTypeMapper<SecondGrid,SecondIS,NodeLayout> SecondVertexMapper;
+    typedef typename SecondGV::IntersectionIterator SecondIntersectionIterator;
+    typedef MultipleCodimMultipleGeomTypeMapper<SecondGV,NodeLayout> SecondVertexMapper;
 
     typedef typename SecondGrid::HostGridType HostGrid;
     typedef typename HostGrid::template Codim<0>::Entity HostElement;
     typedef typename HostGrid::template Codim<0>::EntityPointer HostPointer;
     typedef typename HostGrid::template Codim<dim>::EntityPointer HostVPointer;
-    typedef typename IntersectionIteratorGetter<HostGrid,LeafTag>::IntersectionIterator HostIntersectionIterator;
+    typedef typename HostGrid::LeafGridView::IntersectionIterator HostIntersectionIterator;
 
     template <class FirstFV, class SecondFV>
     void localCoupling12(FirstFV& firstSol, SecondFV& secondSol, int firstIndex, int secondIndex,
@@ -175,7 +175,7 @@ public:
 
                 // In the following, it is determined whether the intersection really is on the interface.
                 // Every node of the corresponding face is checked whether it also belongs to the Second grid.
-                int faceIdx = firstIsIt->numberInSelf();
+                int faceIdx = firstIsIt->numberInInside();
                 int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
                 int numVerticesInSecondGrid = 0;
                 int secondIds[numVerticesOfFace];
@@ -248,7 +248,7 @@ public:
 
                 // In the following, it is determined whether the intersection really is on the interface.
                 // Every node of the corresponding face is checked whether it also belongs to the Second grid.
-                int faceIdx = firstIsIt->numberInSelf();
+                int faceIdx = firstIsIt->numberInInside();
                 int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
                 int numVerticesInSecondGrid = 0;
                 int secondIds[numVerticesOfFace];
@@ -312,7 +312,7 @@ public:
 
                 // In the following, it is determined whether the intersection really is on the interface.
                 // Every node of the corresponding face is checked whether it also belongs to the Second grid.
-                int faceIdx = firstIsIt->numberInSelf();
+                int faceIdx = firstIsIt->numberInInside();
                 int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
                 int numVerticesInSecondGrid = 0;
                 int secondIds[numVerticesOfFace];
@@ -347,7 +347,7 @@ public:
                 firstFVGeom.update(*firstIt);
 
                 // get the geometry type of the face
-                GeometryType geomTypeBoundary = firstIsIt->intersectionSelfLocal().type();
+                GeometryType geomTypeBoundary = firstIsIt->type();
 
                 // The coupling is realized in the FV way.
                 // The unknown First normal velocity is evaluated in the center of the subcontrolvolume face.
@@ -498,8 +498,8 @@ public:
                const SecondGrid& secondGrid, SecondModel& secondModel,
                bool assembleGlobalSystem)
         : BaseType(firstGrid, firstModel, secondGrid, secondModel, assembleGlobalSystem),
-          firstVertexMapper_(firstGrid, firstGrid.leafIndexSet()),
-          secondVertexMapper_(secondGrid, secondGrid.leafIndexSet())
+          firstVertexMapper_(firstGrid.leafView()),
+          secondVertexMapper_(secondGrid.leafView())
     {}
 
 private:

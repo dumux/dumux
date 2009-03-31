@@ -807,7 +807,7 @@ void DGStokes<G,v_order,p_order>::assembleStokesSystem()
     {
         EntityPointer epointer = it;
         //int eid = grid.levelIndexSet(level).index(*epointer);
-        int eid = grid.leafIndexSet().index(*epointer);
+        int eid = grid.leafIndexSet().template index<0>(*epointer);
 
         dgfem.assembleVolumeTerm(*it,A[eid][eid],b[eid]);
         //IntersectionLevelIterator endis = it->ilevelend();
@@ -819,8 +819,8 @@ void DGStokes<G,v_order,p_order>::assembleStokesSystem()
         {
             if(is->neighbor())
             {
-                int eid = grid.leafIndexSet().index(*is->inside());
-                int fid = grid.leafIndexSet().index(*is->outside());
+	      int eid = grid.leafIndexSet().template index<0>(*is->inside());
+                int fid = grid.leafIndexSet().template index<0>(*is->outside());
                 dgfem.assembleFaceTerm(*it,is,A[eid][eid],A[eid][fid],A[fid][eid],b[eid]);
 
             }
@@ -1023,7 +1023,7 @@ void Dune::DGStokes<G,v_order,p_order>::convertToCellData(int variable, BlockVec
         GeometryType gt = it->geometry().type();
         const FieldVector<ctype,dim>& local = ReferenceElements<ctype,dim>::general(gt).position(0, 0);
 
-        int eid = grid.levelIndexSet(level).index(*it);
+        int eid = grid.levelIndexSet(level).template index<0>(*it);
         cellData[eid] = dgfem.evaluateSolution(variable, *it, local, solution[eid]);
     }
 

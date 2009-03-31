@@ -39,8 +39,8 @@ public:
     typedef typename StokesGV::IndexSet StokesIS;
     typedef typename StokesGV::template Codim<0>::Iterator StokesIterator;
     typedef typename StokesGrid::template Codim<dim>::EntityPointer StokesVPointer;
-    typedef typename IntersectionIteratorGetter<StokesGrid,LeafTag>::IntersectionIterator StokesIntersectionIterator;
-    typedef MultipleCodimMultipleGeomTypeMapper<StokesGrid,StokesIS,ElementLayout> StokesEM;
+    typedef typename StokesGV::IntersectionIterator StokesIntersectionIterator;
+    typedef MultipleCodimMultipleGeomTypeMapper<StokesGV,ElementLayout> StokesEM;
     typedef typename StokesGrid::HostGridType StokesHostGrid;
     typedef typename StokesHostGrid::template Codim<0>::EntityPointer StokesHostPointer;
 
@@ -48,8 +48,8 @@ public:
     typedef typename DarcyGV::IndexSet DarcyIS;
     typedef typename DarcyGV::template Codim<0>::Iterator DarcyIterator;
     typedef typename DarcyGV::template Codim<dim>::Iterator DarcyVIterator;
-    typedef typename IntersectionIteratorGetter<DarcyGrid,LeafTag>::IntersectionIterator DarcyIntersectionIterator;
-    typedef MultipleCodimMultipleGeomTypeMapper<DarcyGrid,DarcyIS,NodeLayout> DarcyVM;
+    typedef typename DarcyGV::IntersectionIterator DarcyIntersectionIterator;
+    typedef MultipleCodimMultipleGeomTypeMapper<DarcyGV,NodeLayout> DarcyVM;
 
     typedef typename DarcyGrid::HostGridType HostGrid;
     typedef typename HostGrid::template Codim<0>::EntityPointer HostPointer;
@@ -306,7 +306,7 @@ public:
         int rowsInBlock1 = BaseType::FirstMatrixType::block_type::rows;
         int nOfBlockRows1 = (this->firstModel_).matrix().N();
         DarcyIterator dummyIT2((this->darcyGrid_).template leafbegin<0>());
-        DarcyIntersectionIterator dummyIS2(IntersectionIteratorGetter<DarcyGrid,LeafTag>::begin(*dummyIT2));
+        DarcyIntersectionIterator dummyIS2(dummyIT2->ileafbegin());
         DarcyVIterator endItV2 = (this->darcyGrid_).template leafend<dim>();
         for (DarcyVIterator it = (this->darcyGrid_).template leafbegin<dim>(); it != endItV2; ++it)
         {
@@ -347,7 +347,7 @@ public:
                        bool assembleGlobalSystem)
         : BaseType(stokesGrid, stokesModel, darcyGrid, darcyModel, assembleGlobalSystem),
           stokesGrid_(this->firstGrid_), darcyGrid_(this->secondGrid_),
-          stokesEM_(stokesGrid_, stokesGrid_.leafIndexSet()), darcyVM_(darcyGrid_, darcyGrid_.leafIndexSet())
+          stokesEM_(stokesGrid_.leafView()), darcyVM_(darcyGrid_.leafView())
     {}
 
 private:

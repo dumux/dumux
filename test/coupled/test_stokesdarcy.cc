@@ -14,7 +14,6 @@
 #include "dumux/stokes/dgstokes.hh"
 #include "dumux/stokes/l2error.hh"
 #include "dumux/stokes/h1error.hh"
-#include "dumux/operators/p1operatorextended.hh"
 #include <dumux/timedisc/timeloop.hh>
 #include <dumux/coupled/coupledstokesdarcy.hh>
 #include "lshapedproblem.hh"
@@ -38,12 +37,12 @@ double discreteError(const Grid& grid, const Solution& solution, const Problem& 
     enum{dim=Grid::dimension};
     typedef typename Grid::LeafGridView GV;
     typedef typename GV::IndexSet IS;
-    typedef MultipleCodimMultipleGeomTypeMapper<Grid,IS,P1Layout> VM;
+    typedef MultipleCodimMultipleGeomTypeMapper<GV,P1Layout> VM;
     typedef typename GV::template Codim<dim>::Iterator VertexIterator;
 
-    VM vertexMapper(grid, grid.leafIndexSet());
     double error = 0.0;
     const GV& gridview(grid.leafView());
+    VM vertexMapper(gridview);
 
     VertexIterator endIt = gridview.template end<dim>();
     VertexIterator it = gridview.template begin<dim>();

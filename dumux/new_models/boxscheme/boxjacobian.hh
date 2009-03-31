@@ -212,7 +212,7 @@ public:
 
             // Assemble the boundary for all verts of the
             // current face
-            int faceIdx = isIt->numberInSelf();
+            int faceIdx = isIt->numberInInside();
             int numFaceVerts = refElem.size(faceIdx, 1, dim);
             for (int faceVertIdx = 0;
                  faceVertIdx < numFaceVerts;
@@ -449,7 +449,7 @@ private:
                 continue;
 
             // Set the bctype for all vertices of the face
-            int faceIdx = isIt->numberInSelf();
+            int faceIdx = isIt->numberInInside();
             int numFaceVerts = refElem.size(faceIdx, 1, dim);
             for (int faceVertIdx = 0;
                  faceVertIdx < numFaceVerts;

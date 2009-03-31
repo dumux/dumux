@@ -1,5 +1,6 @@
 #include "config.h"
 #include <iostream>
+#include <boost/format.hpp>
 #define DUMMY
 #ifdef DUMMY
 #include <dune/grid/common/gridinfo.hh>
@@ -10,14 +11,13 @@
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/solvers.hh>
 #include <../../../dune-subgrid/subgrid/subgrid.hh>
-#include "dumux/operators/p1operatorextended.hh"
 #include <dumux/timedisc/timeloop.hh>
+
 #include "darcyproblem.hh"
-#include <dumux/coupled/boxstokesdarcy.hh>
+#include "boxdarcy.hh"
 #include "lshapedproblem.hh"
 #include "../stokes/boxstokes.hh"
-#include "boxdarcy.hh"
-#include <boost/format.hpp>
+#include <dumux/coupled/boxstokesdarcy.hh>
 
 namespace Dune
 {
@@ -39,19 +39,19 @@ void discreteStokesError(const Grid& grid, const Problem& problem, Vector& solut
     typedef typename Grid::LeafGridView::template Codim<0>::Iterator ElementIterator;
     typedef typename Grid::LeafGridView::template Codim<dim>::Iterator VertexIterator;
     typedef typename Grid::LeafGridView::IndexSet IS;
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,IS,ElementLayout> ElementMapper;
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,IS,VertexLayout> VertexMapper;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<typename Grid::LeafGridView,ElementLayout> ElementMapper;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<typename Grid::LeafGridView,VertexLayout> VertexMapper;
 
-    VertexMapper vertexMapper(grid, grid.leafView().indexSet());
-    ElementMapper elementMapper(grid, grid.leafView().indexSet());
+    VertexMapper vertexMapper(grid.leafView());
+    ElementMapper elementMapper(grid.leafView());
 
     Scalar errPressure = 0;
     Scalar errVelocity = 0;
     Scalar constant = 0;
     ElementIterator endEIt = grid.template leafend<0>();
-    for (ElementIterator eIt = grid.template leafbegin<0>(); eIt != endEIt; ++eIt)
+    for (ElementIterator elementIt = grid.template leafbegin<0>(); elementIt != endEIt; ++elementIt)
     {
-        const Element& element = *eIt;
+        const Element& element = *elementIt;
 
         Dune::GeometryType geomType = element.geometry().type();
 
@@ -91,23 +91,23 @@ double discreteDarcyError(const Grid& grid, const Solution& solution, const Prob
     enum{dim=Grid::dimension};
     typedef typename Grid::LeafGridView GV;
     typedef typename GV::IndexSet IS;
-    typedef MultipleCodimMultipleGeomTypeMapper<Grid,IS,P1Layout> VM;
+    typedef MultipleCodimMultipleGeomTypeMapper<GV,P1Layout> VM;
     typedef typename GV::template Codim<dim>::Iterator VertexIterator;
 
-    VM vertexMapper(grid, grid.leafIndexSet());
     double error = 0.0;
     const GV& gridview(grid.leafView());
+    VM vertexMapper(gridview);
 
     VertexIterator endIt = gridview.template end<dim>();
-    VertexIterator it = gridview.template begin<dim>();
-    for (; it != endIt; ++it)
+    VertexIterator vertexIt = gridview.template begin<dim>();
+    for (; vertexIt != endIt; ++vertexIt)
     {
         // get exact solution at vertex
-        FieldVector<double,dim> globalCoord = (*it).geometry().corner(0);
+        FieldVector<double,dim> globalCoord = (*vertexIt).geometry().corner(0);
         double exact = problem.exact(globalCoord);
 
         // get approximate solution at vertex
-        int globalId = vertexMapper.map(*it);
+        int globalId = vertexMapper.map(*vertexIt);
         double approximate = solution[globalId];
 
         error += (exact - approximate)*(exact - approximate);
@@ -127,9 +127,9 @@ struct NodeLayout
 
 int main(int argc, char** argv)
 {
-    try{
+  //    try{
         const int dim=2;
-        typedef double NumberType;
+        typedef double Scalar;
 
         // geometry
         //typedef Dune::ALUSimplexGrid<dim,dim> GridType;
@@ -150,32 +150,32 @@ int main(int argc, char** argv)
         subGridDarcy.createBegin();
         typedef GridType::Codim<0>::LeafIterator Iterator;
         Iterator eendit = grid.leafend<0>();
-        for (Iterator it = grid.leafbegin<0>(); it != eendit; ++it) {
-            Dune::GeometryType gt = it->geometry().type();
-            const Dune::FieldVector<NumberType,dim>& local = Dune::ReferenceElements<NumberType,dim>::general(gt).position(0, 0);
-            Dune::FieldVector<NumberType,dim> global = it->geometry().global(local);
-            if (global[1] < 0.5)// || global[1] > 0.5)
-                subGridStokes.addPartial(it);
+        for (Iterator elementIt = grid.leafbegin<0>(); elementIt != eendit; ++elementIt) {
+            Dune::GeometryType gt = elementIt->geometry().type();
+            const Dune::FieldVector<Scalar,dim>& local = Dune::ReferenceElements<Scalar,dim>::general(gt).position(0, 0);
+            Dune::FieldVector<Scalar,dim> global = elementIt->geometry().global(local);
+            if (global[0] < 1.5 || global[1] > 0.5)
+                subGridStokes.insert(*elementIt);
             else
-                subGridDarcy.addPartial(it);
+                subGridDarcy.insert(*elementIt);
         }
         subGridStokes.createEnd();
         subGridDarcy.createEnd();
 
-        Dune::LShapedProblem<SubGridType, NumberType> stokesProblem;
-        typedef Dune::LeafP1BoxStokes<SubGridType, NumberType, dim> StokesModel;
+        Dune::LShapedProblem<SubGridType, Scalar> stokesProblem;
+        typedef Dune::LeafP1BoxStokes<SubGridType, Scalar, dim> StokesModel;
         StokesModel stokesModel(subGridStokes, stokesProblem);
 
-        Dune::DarcyProblem<SubGridType,NumberType> darcyProblem;
-        typedef Dune::LeafP1BoxDarcy<SubGridType, NumberType> DarcyModel;
+        Dune::DarcyProblem<SubGridType,Scalar> darcyProblem;
+        typedef Dune::LeafP1BoxDarcy<SubGridType, Scalar> DarcyModel;
         DarcyModel darcyModel(subGridDarcy, darcyProblem);
 
-        typedef Dune::BoxStokesDarcy<StokesModel, DarcyModel, NumberType> CoupledModel;
+        typedef Dune::BoxStokesDarcy<StokesModel, DarcyModel, Scalar> CoupledModel;
         bool assembleGlobalMatrix = true;
         CoupledModel coupledModel(subGridStokes, stokesModel, subGridDarcy, darcyModel, assembleGlobalMatrix);
 
         coupledModel.vtkout("initial", 0);
-        
+
         Dune::TimeLoop<GridType, CoupledModel, false> timeloop(0, 1, 1, "test_boxstokesdarcy", 1);
         Dune::Timer timer;
         timer.reset();
@@ -190,13 +190,13 @@ int main(int argc, char** argv)
         discreteStokesError(subGridStokes, stokesProblem, stokesModel.u);
 
         return 0;
-    }
+	/*    }
     catch (Dune::Exception &e){
         std::cerr << "Dune reported error: " << e << std::endl;
     }
     catch (...){
         std::cerr << "Unknown exception thrown!" << std::endl;
-    }
+	}*/
 }
 #else
 

@@ -166,7 +166,8 @@ private:
     template<int dim>
     struct VertexLayout_
     { bool contains (Dune::GeometryType gt) { return gt.dim() == 0; } };
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,ElementIdxSet_,VertexLayout_> VertexMap;
+    typedef typename Grid::LeafGridView GridView;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, VertexLayout_> VertexMap;
 
 public:
     BasicDomain()
@@ -334,7 +335,7 @@ public:
 
         // create the element and vert index sets for the grid
         elementMap_ = new ElementMap(*grid_);
-        vertMap_ = new VertexMap(*grid_, grid_->leafIndexSet());
+        vertMap_ = new VertexMap(grid_->leafView());
     }
 
     /*!

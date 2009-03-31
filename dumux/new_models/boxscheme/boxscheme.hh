@@ -486,7 +486,7 @@ protected:
 
             // Assemble the boundary for all vertices of the
             // current face
-            int faceIdx = isIt->numberInSelf();
+            int faceIdx = isIt->numberInInside();
             int numVerticesOfFace = refElem.size(faceIdx, 1, dim);
             for (int vertInFace = 0;
                  vertInFace < numVerticesOfFace;
@@ -513,11 +513,11 @@ protected:
         const FVElementGeometry &fvElemGeom =
             localJacobian_.curFvElementGeometry();
 
-        int elemVertIdx = refElem.subEntity(isIt->numberInSelf(),
+        int elemVertIdx = refElem.subEntity(isIt->numberInInside(),
                                             1,
                                             faceVertIdx,
                                             dim);
-        int boundaryFaceIdx = fvElemGeom.boundaryFaceIndex(isIt->numberInSelf(),
+        int boundaryFaceIdx = fvElemGeom.boundaryFaceIndex(isIt->numberInInside(),
                                                            faceVertIdx);
         int globalVertexIdx = problem_.vertexIdx(element,
                                                  elemVertIdx);

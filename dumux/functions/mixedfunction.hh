@@ -467,7 +467,7 @@ class MixedFunction : virtual public ElementwiseCInfinityFunction<GV,RT,m>,
 public:
     typedef FieldVector<RT,m> BlockType;
     typedef BlockVector<BlockType> RepresentationType;
-    typedef MultipleCodimMultipleGeomTypeMapper<G,IS,ElementAndFaceLayout> ElementAndFaceMapper;
+    typedef MultipleCodimMultipleGeomTypeMapper<GV,ElementAndFaceLayout> ElementAndFaceMapper;
     typedef typename MixedExtendOverlap<G,GV,ElementAndFaceMapper,LC>::MixedIndexInfoFromGrid MixedIndexInfoFromGrid;
 
     //! allocate data

@@ -53,7 +53,7 @@ double Dune::DGStokes<G,v_order,p_order>::l2errorStokesSystem(int variable) cons
     ElementLevelIterator itend = grid.template lend<0>(level);
     for (; it != itend; ++it)
     {
-        int eid = grid.levelIndexSet(level).index(*it);
+        int eid = grid.levelIndexSet(level).template index<0>(*it);
         error[variable]+=dgfem.evaluateL2error(variable,*it,solution[eid]);
     }
     return sqrt(error[variable]);
