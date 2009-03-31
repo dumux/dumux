@@ -15,6 +15,7 @@
 #include "dumux/diffusion/fv/fvdiffusion.hh"
 #include "dumux/diffusion/fv/fvdiffusionvelocity.hh"
 #include "dumux/transport/fv/fvtransport.hh"
+#include "dumux/transport/fv/capillarydiffusion.hh"
 #include "dumux/fractionalflow/impes/impes.hh"
 #include <dune/disc/operators/boundaryconditions.hh>
 #include "dumux/timedisc/expliciteulerstep.hh"
@@ -33,7 +34,7 @@ int main(int argc, char** argv)
         typedef Dune::FieldVector<GridType::ctype,dim> FieldVector;
         Dune::FieldVector<int,dim> N(4); N[0] = 30;
         FieldVector L(0);
-        FieldVector H(100); H[0] = 300;
+        FieldVector H(100 ); H[0] = 300;
         GridType grid(N,L,H);
 
         grid.globalRefine(0);
@@ -56,8 +57,10 @@ int main(int argc, char** argv)
         typedef Dune::FVDiffusionVelocity<GridType, NumberType, VariableType, Problem> DiffusionType;
         DiffusionType diffusion(grid, problem);
 
+        Dune::CapillaryDiffusion<GridType, NumberType, VariableType, Problem> capillaryDiffusion(problem, soil);
+
         typedef Dune::FVTransport<GridType, NumberType, VariableType, Problem> TransportType;
-        TransportType transport(grid, problem);
+        TransportType transport(grid, problem, capillaryDiffusion);
 
         int iterFlag = 2;
         int nIter = 30;
@@ -66,10 +69,10 @@ int main(int argc, char** argv)
         IMPESType impes(diffusion, transport, iterFlag, nIter, maxDefect);
 
         double tStart = 0;
-        double tEnd = 4.32e7;
+        double tEnd = 3e6;
         const char* fileName = "test_fractionalflow";
-        int modulo = 1;
-        double cFLFactor = 1;
+        int modulo = 10;
+        double cFLFactor = 0.95;
         Dune::TimeLoop<GridType, IMPESType > timeloop(tStart, tEnd, fileName, modulo, cFLFactor);
 
         Dune::Timer timer;

@@ -54,12 +54,12 @@ int main(int argc, char** argv)
 
         VC variables(grid,initsat,initpress,vel);
 
-        Dune::SimpleProblem<GridType, NumberType, VC> problem(variables, soil, materialLaw,L,H);
+        Dune::SimpleProblem<GridType, NumberType, VC> problem(variables, mat, mat , soil, materialLaw,L,H);
 
         typedef Dune::TransportProblem<GridType, NumberType, VC> TransportProblem;
         typedef Dune::FVTransport<GridType, NumberType, VC, TransportProblem> Transport;
 
-        Transport transport(grid, problem, grid.maxLevel());
+        Transport transport(grid, problem);
 
 
         Dune::TimeLoop<GridType, Transport > timeloop(tStart, tEnd, "timeloop", modulo, cFLFactor, maxDT, maxDT);

@@ -12,16 +12,15 @@
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
-#include "dumux/material/properties.hh"
-#include "dumux/material/linearlaw_deprecated.hh"
-#include "dumux/material/brookscoreylaw_deprecated.hh"
-#include "dumux/material/vangenuchtenlaw_deprecated.hh"
-#include "dumux/material/randompermeability.hh"
-#include "dumux/diffusion/fv/fvdiffusion_deprecated.hh"
-#include "dumux/diffusion/fv/fvdiffusionvelocity_deprecated.hh"
+#include "dumux/material/phaseproperties/phaseproperties2p.hh"
+#include <dumux/material/matrixproperties.hh>
+//
+#include "dumux/diffusion/fv/fvdiffusion.hh"
+#include "dumux/diffusion/fv/fvdiffusionvelocity.hh"
 //#include "dumux/diffusion/fe/fediffusion.hh"
-#include "dumux/diffusion/mimetic/mimeticdiffusion.hh"
-#include "dumux/diffusion/problems/heterogeneousproblem.hh"
+//
+//#include "dumux/diffusion/mimetic/mimeticdiffusion.hh"
+//
 #include "dumux/diffusion/problems/uniformproblem.hh"
 #include "dumux/fractionalflow/variableclass.hh"
 
@@ -41,9 +40,14 @@ int main(int argc, char** argv)
         GridType grid(N,L,R);
 
         //Uniform mat;
-        //Dune::DeprecatedVanGenuchtenLaw materialLaw(mat, mat);
-        //Dune::DeprecatedBrooksCoreyLaw materialLaw(mat, mat);
-        //Dune::DeprecatedLinearLaw materialLaw(mat, mat);
+        Dune::Uniform mat;
+
+        Dune::HomogeneousSoil<GridType, NumberType> soil;
+//        Dune::HeterogeneousSoil<GridType, NumberType> soil(grid, "permeab.dat", true);
+//        printvector(std::cout, *(soil.permeability), "permeability", "row", 200, 1);
+//        soil.permeability.vtkout("permeability", grid);
+
+        Dune::TwoPhaseRelations<GridType, NumberType> materialLaw(soil, mat, mat);
 
         typedef Dune::VariableClass<GridType, NumberType> VC;
 
@@ -51,16 +55,13 @@ int main(int argc, char** argv)
 
         VC variables(grid,initsat);
 
-        //Dune::HeterogeneousProblem<GridType, NumberType> problem(grid, "permeab.dat", true);
-        //printvector(std::cout, *(problem.permeability), "permeability", "row", 200, 1);
-        Dune::UniformProblem<GridType, NumberType, VC> problem(variables);
-        //problem.permeability.vtkout("permeability", grid);
+        Dune::UniformProblem<GridType, NumberType, VC> problem(variables, mat, mat, soil, materialLaw);
 
         Dune::Timer timer;
         timer.reset();
         //Dune::FEDiffusion<GridType, NumberType> diffusion(grid, problem);
-        //Dune::DeprecatedFVDiffusion<GridType, NumberType, VC> diffusion(grid, problem, grid.maxLevel());
-        Dune::DeprecatedFVDiffusionVelocity<GridType, NumberType, VC> diffusion(grid, problem, grid.maxLevel());
+        //Dune::FVDiffusion<GridType, NumberType, VC> diffusion(grid, problem);
+        Dune::FVDiffusionVelocity<GridType, NumberType, VC> diffusion(grid, problem);
         //Dune::MimeticDiffusion<GridType, NumberType, VC> diffusion(grid, problem, grid.maxLevel());
 
 
