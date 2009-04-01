@@ -25,99 +25,8 @@ public:
     }
 };
 
-//First Order Upwind Method
-template<class Grid, class Scalar> class FirstOrderUpwindModified :
-    public NumericalFlux<Grid,Scalar>
-{
-    enum
-    {   dim=Grid::dimension};
-    typedef Dune::FieldVector<Scalar, dim> VelType;
-    typedef Dune::FieldVector<Scalar, dim+1> SystemType; //System has 3 equations -> 3 positions in a vector
-    typedef typename Grid::Traits::template Codim<0>::Entity Element;
 
-    VelType velocityI;
-    VelType velocityJ;
-    Scalar waterDepthI;
-    Scalar waterDepthJ;
-
-private:
-    Scalar eps;
-    Scalar gravity;
-
-public:
-
-    FirstOrderUpwindModified() :
-        NumericalFlux<Grid, Scalar>(), gravity(9.81), eps(1e-8)
-    {
-
-    }
-    SystemType operator()(VelType velocityI, VelType velocityJ, Scalar waterDepthI,
-            Scalar waterDepthJ, VelType nVec)
-    {
-        Scalar direction =0;
-        VelType unityVector=1;
-        Scalar contiI =0;
-        Scalar contiJ =0;
-        Scalar momentumI=0;
-        Scalar momentumJ=0;
-
-        Scalar fluxConti=0;
-        Scalar fluxMomentumXI=0;
-        Scalar fluxMomentum=0;
-        SystemType fluxUpwindFace(0);
-
-        direction= nVec;
-        direction*= unityVector;
-        Scalar help=0;
-
-        contiI = velocityI*waterDepthI;
-        contiJ = velocityJ*waterDepthJ;
-        momentumI = waterDepthI*pow(velocityI, 2)+0.5*gravity*pow(waterDepthI,
-                2);
-        momentumJ = waterDepthJ*pow(velocityJ, 2)+0.5*gravity*pow(waterDepthJ,
-                2);
-
-        if (direction >0)
-        {
-            fluxConti = std::max(contiI, 0.0)+std::max(contiJ*(-1), 0.0);
-
-            if (momentumI==momentumJ)
-            {
-                fluxMomentum = momentumI;
-            }
-            else
-            {
-                fluxMomentum = std::max(momentumI, 0.0) +std::max(momentumJ,
-                        0.0);
-            }
-
-        }
-        if (direction <0)
-        {
-            fluxConti = std::max(contiJ, 0.0)+std::max(contiI*(-1), 0.0);
-
-            if (momentumI==momentumJ)
-            {
-                fluxMomentum = momentumI;
-            }
-            else
-            {
-                fluxMomentum = std::max(momentumI, 0.0) +std::max(momentumJ,
-                        0.0);
-            }
-        }
-
-        fluxUpwindFace[0]=fluxConti*(-1)*nVec;
-        fluxUpwindFace[1]=fluxMomentum*(-1)*nVec;
-
-        //   std::cout<<fluxUpwindFace<<std::endl;
-        return fluxUpwindFace;
-
-    }
-
-};
-
-//First Order Upwind Method
+//First Order Upwind (not working well)
 template<class Grid, class Scalar> class FirstOrderUpwind :
     public NumericalFlux<Grid,Scalar>
 {
@@ -206,7 +115,7 @@ public:
     }
 };
 
-//HLL numerical flux: calculates flux vector through current intersection by means of reconstructed data
+//HLL Flux (it seems to work in 1D
 template<class Grid, class Scalar> class HllFlux :
     public NumericalFlux<Grid,Scalar>
 {
@@ -230,8 +139,8 @@ public:
     SystemType operator()(VelType velocityI, VelType velocityJ, Scalar waterDepthI,
             Scalar waterDepthJ, VelType nVec)
     {
-        Scalar sigVelL=0;
-        Scalar sigVelR=0;
+        Scalar signalVelocityL=0;
+        Scalar signalVelocityR=0;
         Scalar waterDepthFaceL=0;
         Scalar waterDepthFaceR=0;
         Scalar velocityFaceR=0;
@@ -244,8 +153,8 @@ public:
         Scalar partMomentumL =0;
         Scalar partContiR=0;
         Scalar partMomentumR =0;
-        Scalar velAvg = 0;
-        Scalar gravWDepthAvg = 0;
+        Scalar starVelocity = 0;
+        Scalar starWaveCelerity = 0;
         Scalar help1 = 0;
         Scalar help2 =0;
 
@@ -271,115 +180,124 @@ public:
             velocityFaceR = velocityI;
         }
 
-        //Calculate HLL Average Values for velocity and waterdepth
+        //Calculate HLL Values for the star region for velocity and wavecelerity
 
-        velAvg=(velocityFaceL+velocityFaceR)*nVec;
-        velAvg*=0.5;
-        velAvg += sqrt(gravity*waterDepthFaceL);
-        velAvg -= sqrt(gravity*waterDepthFaceR);
+        starVelocity=(velocityFaceL+velocityFaceR);
+        starVelocity*=0.5;
+        starVelocity += sqrt(gravity*waterDepthFaceL);
+        starVelocity -= sqrt(gravity*waterDepthFaceR);
 
-        //std::cout<<"velAvg = "<<velAvg<<std::endl;
+        //std::cout<<"starVelocity = "<<starVelocity<<std::endl;
 
-        help1 =(velocityFaceL-velocityFaceR)*nVec;
+        help1 =(velocityFaceL-velocityFaceR);
         help1 *=0.25;
-        help2 = sqrt(gravity*waterDepthFaceL)+sqrt(gravity *waterDepthFaceR);
+        help2 = sqrt(gravity*waterDepthFaceL)+sqrt(gravity*waterDepthFaceR);
         help2 *=0.5;
-        gravWDepthAvg=(help1+help2);
+        starWaveCelerity=(help1+help2);
 
-        //    std::cout<<"VelAvg "<<velAvg<<std::endl;
-        //     std::cout<<"gravWDepthAvg "<<gravWDepthAvg<<std::endl;
+        std::cout<<"starVelocity "<<starVelocity<<std::endl;
+        std::cout<<"starWaveCelerity "<<starWaveCelerity<<std::endl;
+        //   std::cout<<"waterDepthFaceR "<<waterDepthFaceR<<std::endl;
+        //   std::cout<<"waterDepthFaceL "<<waterDepthFaceL<<std::endl;
 
 
         //Calculate signal velocities used in HLL-flux calculation
 
         if (waterDepthFaceL == 0)
         {
-            sigVelR=velocityFaceR*nVec;
-            sigVelR+=sqrt(gravity*waterDepthFaceR);
+            signalVelocityR =velocityFaceR;
+            signalVelocityR +=sqrt(gravity*waterDepthFaceR);
 
-            sigVelL = sqrt(gravity*waterDepthFaceR);
-            sigVelL*=(-2);
-            sigVelL+=velocityFaceR*nVec;
+            signalVelocityL = sqrt(gravity*waterDepthFaceR);
+            signalVelocityL*=(-2);
+            signalVelocityL+=velocityFaceR;
 
         }
         if (waterDepthFaceR == 0)
         {
-            sigVelR=sqrt(gravity*waterDepthFaceL);
-            sigVelR *=(2);
-            sigVelR +=velocityFaceL*nVec;
+            signalVelocityR=sqrt(gravity*waterDepthFaceL);
+            signalVelocityR *=(2);
+            signalVelocityR +=velocityFaceL;
 
-            sigVelL = velocityFaceL*nVec;
-            sigVelL-=sqrt(gravity*waterDepthFaceL);
+            signalVelocityL = velocityFaceL;
+            signalVelocityL-=sqrt(gravity*waterDepthFaceL);
         }
 
         else
         {
-            sigVelL = std::min((velocityFaceL*nVec -sqrt(gravity
-                    *waterDepthFaceL)), (velAvg-gravWDepthAvg));
-            sigVelR = std::max((velocityFaceR*nVec +sqrt(gravity
-                    *waterDepthFaceR)), (velAvg+gravWDepthAvg));
+            signalVelocityL = std::min((velocityFaceL* -sqrt(gravity
+                    *waterDepthFaceL)), (starVelocity-starWaveCelerity));
+            signalVelocityR = std::max((velocityFaceR* +sqrt(gravity
+                    *waterDepthFaceR)), (starVelocity+starWaveCelerity));
         }
 
-        std::cout<<"sigVelL "<<sigVelL<<std::endl;
-        std::cout<<"sigVelR "<<sigVelR<<std::endl;
+        std::cout<<"signalVelocityL "<<signalVelocityL<<std::endl;
+        std::cout<<"signalVelocityR "<<signalVelocityR<<std::endl;
 
         //Compute the flux vector components Conti, XMomentum, YMomentum for the left and right state
-        //Initialize vectors and fill with flux data
 
 
-        if (sigVelL >= 0 && sigVelR ==0)
+        if (signalVelocityL >= 0)
         {
             partConti = velocityFaceL*waterDepthFaceL;
-            fluxConti=partContiL*nVec;
+            fluxConti=partConti;
 
-            partMomentum = waterDepthFaceL*pow(velocityFaceL, 2) +0.5 *gravity
-                    *pow(waterDepthFaceL, 2);
-            fluxMomentum = partMomentum*nVec;
+            partMomentum = waterDepthFaceL*(velocityFaceL*velocityFaceL) + 0.5 * gravity
+                    * (waterDepthFaceL*waterDepthFaceL);
+            fluxMomentum = partMomentum;
         }
-
-        if (sigVelL <= 0 <= sigVelR)
+        else if (signalVelocityL <= 0 && signalVelocityR >= 0)
         {
             partContiL = velocityFaceL*waterDepthFaceL;
 
             partContiR = velocityFaceR*waterDepthFaceR;
 
-            partMomentumL = waterDepthFaceL*pow(velocityFaceL, 2) +0.5 *gravity
-                    *pow(waterDepthFaceL, 2);
+            partMomentumL = waterDepthFaceL*(velocityFaceL*velocityFaceL) +0.5 *gravity
+                    *(waterDepthFaceL*waterDepthFaceL);
 
-            partMomentumR =waterDepthFaceR*pow(velocityFaceR, 2)+0.5 *gravity
-                    *pow(waterDepthFaceR, 2);
+            partMomentumR =waterDepthFaceR*(velocityFaceR*velocityFaceR)+0.5 *gravity
+                    *(waterDepthFaceR*waterDepthFaceR);
 
-            fluxConti=sigVelR*(partContiL*nVec);
-            fluxConti -= sigVelL*(partContiR*nVec);
-            fluxConti += (sigVelR*sigVelL*(waterDepthFaceR-waterDepthFaceL)*nVec);
-            fluxConti/= (sigVelR-sigVelL);
+            Scalar denominator = (signalVelocityR-signalVelocityL);
+            
+            fluxConti=signalVelocityR*(partContiL);
+            fluxConti -= signalVelocityL*(partContiR);
+            fluxConti += (signalVelocityR*signalVelocityL*(waterDepthFaceR
+                    -waterDepthFaceL));
+            fluxConti/= denominator;
 
-            fluxMomentum=sigVelR*(partMomentumL*nVec);
-            fluxMomentum-= sigVelL*(partMomentumR*nVec);
-            fluxMomentum+= (sigVelR*sigVelL*(waterDepthFaceR *velocityFaceR
-                    -waterDepthFaceL *velocityFaceL)*nVec);
-            fluxMomentum/=(sigVelR-sigVelL);
+            fluxMomentum=signalVelocityR*(partMomentumL);
+            fluxMomentum-= signalVelocityL*(partMomentumR);
+            fluxMomentum+= (signalVelocityR*signalVelocityL*(waterDepthFaceR
+                    *velocityFaceR - waterDepthFaceL *velocityFaceL));
+            fluxMomentum/= denominator;
 
         }
-        if (sigVelR <= 0 && sigVelL == 0)
+        else if (signalVelocityR <= 0)
         {
             partConti = velocityFaceR *waterDepthFaceR;
-            fluxConti=partContiR*nVec;
+            fluxConti=partConti;
 
-            partMomentum = waterDepthFaceR*pow(velocityFaceR, 2) +0.5 *gravity
-                    *pow(waterDepthFaceR, 2);
-            fluxMomentum = partMomentumR*nVec;
+            partMomentum = waterDepthFaceR*(velocityFaceR*velocityFaceR) +0.5 *gravity
+                    *(waterDepthFaceR*waterDepthFaceR);
+            fluxMomentum = partMomentumR;
+        }
+        else
+        {
+            DUNE_THROW(NotImplemented, "Flux Range");
         }
 
         //      std::cout<<"partContiL "<<partContiL<<std::endl;
         //     std::cout<<"partContiR "<<partContiR<<std::endl;
         //    std::cout<<"fluxConti "<<fluxConti<<std::endl;
-        //   std::cout<<"fluxMomentum "<<fluxMomentum<<std::endl;
+        //    std::cout<<"fluxMomentum "<<fluxMomentum<<std::endl;
+        //   std::cout<<"partMomentumL "<<partMomentumL<<std::endl;
+        //   std::cout<<"partMomentumR "<<partMomentumR<<std::endl;
 
 
         SystemType fluxHllFace(0);
-        fluxHllFace[0]=fluxConti*(-1);
-        fluxHllFace[1]=fluxMomentum*(-1);
+        fluxHllFace[0]=fluxConti*nVec;
+        fluxHllFace[1]=fluxMomentum*nVec;
 
         std::cout<<"Hll flux="<<fluxHllFace<<std::endl;
 
