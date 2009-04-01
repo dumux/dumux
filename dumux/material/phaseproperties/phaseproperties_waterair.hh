@@ -22,50 +22,53 @@ namespace Dune
 class Gas_WaterAir : public Gas_GL
 {
 public:
-    virtual double density(double T, double p, double Xw=0.) const // [kg / m^3]
+    virtual double density(double temperature, double p, double Xwg=0.) const // [kg / m^3]
     {
-        double Rsm = R * (Xw / M_w + (1-Xw) / M_a); // medium specific gas constant
-        return p / Rsm / T;
+        double Rsm = R * (Xwg / M_w + (1-Xwg) / M_a); // medium specific gas constant
+        return p / Rsm / temperature;
     }
 
-    virtual double viscosity(double T, double p, double Xw=0.) const // [kg / (m*s)]
+    virtual double viscosity(double temperature, double p, double Xwg=0.) const // [kg / (m*s)]
     {
-        double v_a = constRelAir.viscosity_air(T); // see constrelair.hh
-        double v_w = constRelAir.visco_w_vap(T);    // see constrelair.hh
-        FieldVector<double,2> X(Xw); X[1] = (1-Xw);
+        double v_a = constRelAir.viscosity_air(temperature); // see constrelair.hh
+        double v_w = constRelAir.visco_w_vap(temperature);    // see constrelair.hh
+        FieldVector<double,2> X(Xwg); X[1] = (1-Xwg);
         X = X2x(X);
         X[0] *= sqrt(M_w);
         X[1] *= sqrt(M_a);
+
         return (v_w * X[0] + v_a * X[1]) / (X[0] + X[1]); // after Herning & Zipperer, 1936
     }
 
-    virtual double intEnergy(double T, double p, double Xw=0.) const
+    virtual double intEnergy(double temperature, double p, double Xwg=0.) const
     {
-        return enthalpy(T,p,Xw) - p/density(T,p,Xw);
+        return enthalpy(temperature,p,Xwg) - p/density(temperature,p,Xwg);
     }
 
-    virtual double enthalpy(double T, double p, double Xw=0.) const
+    virtual double enthalpy(double temperature, double p, double Xwg=0.) const
     {
-        double H_a = 1005 * (T - 273.15);
+        double H_a = 1005 * (temperature - 273.15);
         double H_w;
-        H_w = constRelWater.enthalpy_water(T,p);
-        //      if (T < 273.15)
-        //          H_w = constRelWater.sp_enthalpy_IAPWS2(273.15, p) + 4000 * (T - 273.15);
+	//TODO: Attention, not valid for superheated steam!!
+        H_w = constRelAir.hsat(temperature);
+        //      if (temperature < 273.15)
+        //          H_w = constRelWater.sp_enthalpy_IAPWS2(273.15, p) + 4000 * (temperature - 273.15);
         //      else
-        //          H_w = constRelWater.sp_enthalpy_IAPWS2(T, p);
-        return Xw * H_w + (1-Xw) * H_a;
+        //          H_w = constRelWater.sp_enthalpy_IAPWS2(temperature, p);
+
+        return Xwg * H_w + (1-Xwg) * H_a;
     }
 
-    virtual double diffCoeff(double T, double p) const
+    virtual double diffCoeff(double temperature, double p) const
     {
-        // D ~ T^(3/2) / see Atkins:Physical Chemistry p.778!
+        // D ~ temperature^(3/2) / see Atkins:Physical Chemistry p.778!
         // for H2O and O2: D(273.15 K, 1e5 Pa) = 2.25 e-5
-        return 2.25e-5 * pow(T/273.15, 2/3) * 1e5 / p;
+        return 2.25e-5 * pow(temperature/273.15, 2/3) * 1e5 / p;
     }
 
-    virtual double Xw_Max(double T, double p) const
+    virtual double Xw_Max(double temperature, double p) const
     {
-        double pwsat = constRelAir.pwsat(T);
+        double pwsat = constRelAir.pwsat(temperature);
         FieldVector<double,2> x(std::min(pwsat / p, 1.)); x[1] = 1-x[0];
         x = x2X(x);
         return x[0];
@@ -90,49 +93,49 @@ private:
 class Liq_WaterAir : public Liquid_GL
 {
 public:
-    virtual double density(double T, double p, double Xa=0.) const // [kg / m^3]
+    virtual double density(double temperature, double p, double Xa=0.) const // [kg / m^3]
     {
-        return constRelWater.mass_density_water_IAPWS(T, p);
+        return constRelWater.mass_density_water_IAPWS(temperature, p);
     }
 
-    virtual double viscosity(double T, double p, double Xa=0.) const
+    virtual double viscosity(double temperature, double p, double Xa=0.) const
     {
-        return constRelWater.viscosity_water(T,p);
+        return constRelWater.viscosity_water(temperature,p);
     }
 
-    virtual double intEnergy(double T, double p, double Xa=0.) const
+    virtual double intEnergy(double temperature, double p, double Xa=0.) const
     {
-        if (T < 273.15) return 4000 * (T-273.15);
-        return constRelWater.enthalpy_water(T,p);
+        if (temperature < 273.15) return 4000 * (temperature-273.15);
+        return constRelWater.enthalpy_water(temperature,p);
     }
 
-    virtual double enthalpy(double T, double p, double Xa=0.) const
+    virtual double enthalpy(double temperature, double p, double Xa=0.) const
     {
-        if (T < 273.15) return 4000 * (T-273.15);
-        return constRelWater.enthalpy_water(T,p);
+        if (temperature < 273.15) return 4000 * (temperature-273.15);
+        return constRelWater.enthalpy_water(temperature,p);
     }
 
-    virtual double diffCoeff(double T, double p) const
+    virtual double diffCoeff(double temperature, double p) const
     {
-        return 2e-9 * T / 273.15;
+        return 2e-9 * temperature / 273.15;
     }
 
-    virtual double henry(double T) const
+    virtual double henry(double temperature) const
     {
         // after Finsterle 1993
-        return (0.8942 + 1.47 * exp(-0.04394*T) )*1e-10; // [1/Pa]
+        return (0.8942 + 1.47 * exp(-0.04394*temperature) )*1e-10; // [1/Pa]
     }
 
-    virtual double Xa_Max(double T, double p) const
+    virtual double Xa_Max(double temperature, double p) const
     {
-        FieldVector<double,2> x(henry(T) * p); x[1] = 1- x[0];
+        FieldVector<double,2> x(henry(temperature) * p); x[1] = 1- x[0];
         x = this->x2X(x);
         return x[0];
     }
 
-    virtual double p_vap(double T) const
+    virtual double p_vap(double temperature) const
     {
-        return constRelAir.pwsat_antoine(T); //[Pa]
+        return constRelAir.pwsat_antoine(temperature); //[Pa]
     }
 
     virtual double T_vap(double p) const
@@ -142,9 +145,9 @@ public:
         static const double C = 233.436;
 
         p /= 100; // 100 Pa = 1 mbar
-        double T = B / (A-log10(p)) - C; // [°C]
-        T += 273.15; // [K]
-        return T;
+        double temperature = B / (A-log10(p)) - C; // [°C]
+        temperature += 273.15; // [K]
+        return temperature;
     }
 
     Liq_WaterAir() : Liquid_GL()
