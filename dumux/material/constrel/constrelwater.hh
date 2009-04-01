@@ -163,6 +163,7 @@ public:
     /*                                    */
     /************************************************************************/
 
+
     double enthalpy_water (double temperature, double pw) const
     {
         double tau;
@@ -449,7 +450,7 @@ public:
     }
 
 
-    //! enthalpy of steam according to IAPWS 97
+    //! enthalpy of steam according to IAPWS 97, with T=383.15 K as reference temperature
     double sp_enthalpy_IAPWS2(double temperature, double pg) const
     {
         static const double J0[10]={0.,0.,1.,-5.,-4.,-3.,-2.,-1.,2.,3.};
