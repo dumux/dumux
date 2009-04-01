@@ -87,7 +87,7 @@ public:
             K_[i][i] = 1e-12;
     }
 
-    HomogeneousSoil(const double k1 = 1e-12, const double k2 = 1e-12, const double k3 = 0, const double k4 = 0, const double k5 = 0, const double k6 = 0, const double k7 = 0, const double k8 = 0, const double k9 = 0):Matrix2p<G,RT>()
+    HomogeneousSoil(const double k1, const double k2, const double k3, const double k4 = 0, const double k5 = 0, const double k6 = 0, const double k7 = 0, const double k8 = 0, const double k9 = 0):Matrix2p<G,RT>()
     {
         K_ = 0;
 
