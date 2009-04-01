@@ -80,11 +80,11 @@ public:
         return Matrix2p<G,RT>::brooks_corey;
     }
 
-    HomogeneousSoil(const double k = 1e-12):Matrix2p<G,RT>()
+    HomogeneousSoil():Matrix2p<G,RT>()
     {
         K_ = 0;
         for(int i = 0; i < n; i++)
-            K_[i][i] = k;
+            K_[i][i] = 1e-12;
     }
 
     HomogeneousSoil(const double k1 = 1e-12, const double k2 = 1e-12, const double k3 = 0, const double k4 = 0, const double k5 = 0, const double k6 = 0, const double k7 = 0, const double k8 = 0, const double k9 = 0):Matrix2p<G,RT>()
