@@ -13,7 +13,7 @@ class CapillaryDarcyProblem  : public CoupledPorousMediaProblem<Grid, Scalar>
 {
     enum {dim=Grid::dimension, numEq=1};
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
-    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
+    typedef typename Grid::template Codim<0>::LeafIntersectionIterator IntersectionIterator;
 
 public:
     CapillaryDarcyProblem ()
