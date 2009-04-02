@@ -658,7 +658,7 @@ public:
         for (IntersectionIterator it = e.ileafbegin(); it != endit; ++it)
             if (it->boundary())
             {
-                int face = it->numberInInside();
+                int face = it->indexInInside();
                 int numVerticesOfFace = referenceElement.size(face, 1, dim);
                 for (int vertInFace = 0; vertInFace < numVerticesOfFace; vertInFace++)
                 {

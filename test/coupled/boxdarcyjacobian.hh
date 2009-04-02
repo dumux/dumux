@@ -85,7 +85,7 @@ public:
                 for (IntersectionIterator it = element.ileafbegin(); it!=endit; ++it)
                 {
                     if (it->boundary()) {
-                        int faceIdx = it->numberInInside();
+                        int faceIdx = it->indexInInside();
                         int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
                         for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++) {
                             int nodeInElement = referenceElement.subEntity(faceIdx, 1, nodeInFace, dim);

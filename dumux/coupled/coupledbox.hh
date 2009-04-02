@@ -175,7 +175,7 @@ public:
 
                 // In the following, it is determined whether the intersection really is on the interface.
                 // Every node of the corresponding face is checked whether it also belongs to the Second grid.
-                int faceIdx = firstIsIt->numberInInside();
+                int faceIdx = firstIsIt->indexInInside();
                 int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
                 int numVerticesInSecondGrid = 0;
                 int secondIds[numVerticesOfFace];
@@ -248,7 +248,7 @@ public:
 
                 // In the following, it is determined whether the intersection really is on the interface.
                 // Every node of the corresponding face is checked whether it also belongs to the Second grid.
-                int faceIdx = firstIsIt->numberInInside();
+                int faceIdx = firstIsIt->indexInInside();
                 int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
                 int numVerticesInSecondGrid = 0;
                 int secondIds[numVerticesOfFace];
@@ -312,7 +312,7 @@ public:
 
                 // In the following, it is determined whether the intersection really is on the interface.
                 // Every node of the corresponding face is checked whether it also belongs to the Second grid.
-                int faceIdx = firstIsIt->numberInInside();
+                int faceIdx = firstIsIt->indexInInside();
                 int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
                 int numVerticesInSecondGrid = 0;
                 int secondIds[numVerticesOfFace];
