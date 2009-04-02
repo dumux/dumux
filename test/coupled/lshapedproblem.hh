@@ -39,12 +39,12 @@ public:
                                       const IntersectionIterator& intersectionIt,
                                       const FieldVector<Scalar,dim>& localPos) const
     {
-      FieldVector<Scalar, dim> vel = velocity(globalPos);
-      FieldVector<Scalar, numEq> res(0);
-      for (int i = 0; i < dim; ++i) // TODO: pressure
-	res[i] = vel[i];
-      
-      return res;
+      FieldVector<Scalar, numEq> vel = velocity(globalPos);
+//      FieldVector<Scalar, numEq> res(0);
+//      for (int i = 0; i < dim; ++i) // TODO: pressure
+//	res[i] = vel[i];
+
+      return vel;
     }
 
     virtual FieldVector<Scalar,numEq> J(const FieldVector<Scalar,dim>& globalPos, const Element& element,
@@ -79,9 +79,9 @@ public:
         return 0.01;
     }
 
-    virtual FieldVector<Scalar,dim> velocity(const FieldVector<Scalar,dim>& globalPos) const
+    virtual FieldVector<Scalar,numEq> velocity(const FieldVector<Scalar,dim>& globalPos) const
     {
-        FieldVector<Scalar,dim> result(0);
+        FieldVector<Scalar,numEq> result(0);
 
         result[0] = 4.0*globalPos[1]*(1.0 - globalPos[1]);
 

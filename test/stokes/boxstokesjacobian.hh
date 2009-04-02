@@ -94,7 +94,7 @@ public:
                         // center in face's reference element
                         const FieldVector<Scalar,dim-1>& faceLocal = ReferenceElements<Scalar,dim-1>::general(faceGT).position(0,0);
 
-                        int faceIdx = it->numberInInside();
+                        int faceIdx = it->indexInInside();
                         int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
                         for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++) {
                             int nodeInElement = referenceElement.subEntity(faceIdx, 1, nodeInFace, dim);
@@ -281,7 +281,7 @@ public:
 
             // handle face on exterior boundary, this assumes there are no interior boundaries
             if (it->boundary()) {
-                int faceIdx = it->numberInInside();
+                int faceIdx = it->indexInInside();
 
                 int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
                 for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++) {
@@ -432,7 +432,7 @@ public:
 
             // handle face on exterior boundary, this assumes there are no interior boundaries
             if (it->boundary()) {
-                int faceIdx = it->numberInInside();
+                int faceIdx = it->indexInInside();
                 int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
                 for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++) {
                     int nodeInElement = referenceElement.subEntity(faceIdx, 1, nodeInFace, dim);
@@ -499,7 +499,7 @@ public:
                         continue; // skip interior dof
                     if (sfs[i].codim()==1) // handle face dofs
                     {
-                        if (sfs[i].entity()==it->numberInInside()) {
+                        if (sfs[i].entity()==it->indexInInside()) {
                             if (this->bctype[i][equationNumber] < bctypeface[equationNumber]) {
                                 this->bctype[i][equationNumber] = bctypeface[equationNumber];
                                 // this->dirichletIndex[i][equationNumber] = dirichletIdx[equationNumber];
@@ -514,8 +514,8 @@ public:
                         continue;
                     }
                     // handle subentities of this face
-                    for (int j=0; j<ReferenceElements<Scalar,dim>::general(gt).size(it->numberInInside(), 1, sfs[i].codim()); j++)
-                        if (sfs[i].entity()==ReferenceElements<Scalar,dim>::general(gt).subEntity(it->numberInInside(), 1, j, sfs[i].codim()))
+                    for (int j=0; j<ReferenceElements<Scalar,dim>::general(gt).size(it->indexInInside(), 1, sfs[i].codim()); j++)
+                        if (sfs[i].entity()==ReferenceElements<Scalar,dim>::general(gt).subEntity(it->indexInInside(), 1, j, sfs[i].codim()))
                         {
                             if (this->bctype[i][equationNumber] < bctypeface[equationNumber]) {
                                 this->bctype[i][equationNumber] = bctypeface[equationNumber];
