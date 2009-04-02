@@ -221,9 +221,9 @@ public:
                 {
                     for (int idx = 0; idx < size; idx++)
                         // handle subentities of this face
-                        for (int j = 0; j < ReferenceElements<CoordScalar,dim>::general(gt).size(isIt->numberInSelf(), 1, sfs[idx].codim()); j++)
+                        for (int j = 0; j < ReferenceElements<CoordScalar,dim>::general(gt).size(isIt->indexInInside(), 1, sfs[idx].codim()); j++)
                             if (sfs[idx].entity()
-                                == ReferenceElements<CoordScalar,dim>::general(gt).subEntity(isIt->numberInSelf(), 1,
+                                == ReferenceElements<CoordScalar,dim>::general(gt).subEntity(isIt->indexInInside(), 1,
                                                                                              j, sfs[idx].codim()))
                             {
                                 for (int equationNumber = 0; equationNumber<numEq; equationNumber++)
@@ -429,9 +429,9 @@ public:
                     {
                         for (int idx = 0; idx < size; idx++)
                             // handle subentities of this face
-                            for (int j = 0; j < ReferenceElements<CoordScalar,dim>::general(gt).size(isIt->numberInSelf(), 1, sfs[idx].codim()); j++)
+                            for (int j = 0; j < ReferenceElements<CoordScalar,dim>::general(gt).size(isIt->indexInInside(), 1, sfs[idx].codim()); j++)
                                 if (sfs[idx].entity()
-                                    == ReferenceElements<CoordScalar,dim>::general(gt).subEntity(isIt->numberInSelf(), 1,
+                                    == ReferenceElements<CoordScalar,dim>::general(gt).subEntity(isIt->indexInInside(), 1,
                                                                                                  j, sfs[idx].codim()))
                                 {
                                     for (int equationNumber = 0; equationNumber<numEq; equationNumber++)

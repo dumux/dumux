@@ -40,7 +40,7 @@ namespace Dune {
 template<class Grid, class Scalar> class TwoPhaseProblem {
     enum {dim=Grid::dimension, numEq=2};
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
-    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator
+    typedef typename Grid::template Codim<0>::LeafIntersectionIterator::IntersectionIterator
     IntersectionIterator;
 
 public:
