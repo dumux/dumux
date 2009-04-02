@@ -92,12 +92,31 @@ public:
         return 0;
     }
 
+  virtual Scalar Qg(const FieldVector<Scalar,dim>& x, const Element& e,
+				    const FieldVector<Scalar,dim>& xi) const
+   {
+     DUNE_THROW(NotImplemented, "no exact solution available");
+
+     return 0;
+   }
+
+
     virtual Scalar partialdensity(const FieldVector<Scalar,dim>& x) const
     {
         DUNE_THROW(NotImplemented, "no exact solution available");
 
         return 0;
     }
+
+  virtual Scalar density(const FieldVector<Scalar,dim>& x, const Element& e,
+          const FieldVector<Scalar,dim>& xi) const
+    {
+      DUNE_THROW(NotImplemented, "no exact solution available");
+
+      return 0;
+    }
+
+  virtual Scalar gravity() const= 0;
 
     virtual FieldVector<Scalar,numEq> velocitypressuremassfrac(const FieldVector<Scalar,dim>& x) const
     {

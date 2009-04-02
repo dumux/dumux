@@ -22,6 +22,7 @@
 
 #include "boxstokestransport.hh"
 #include "analyticproblem.hh"
+#include "analyticproblemP.hh"
 #include "transportproblem.hh"
 
 template<int dim>
@@ -111,8 +112,8 @@ int main(int argc, char** argv)
         // define the problem dimensions
         const int dim = 2;
         double tStart = 0;
-        double tEnd = 50;
-        double dt = 10;
+        double tEnd = 1;
+        double dt = 1;
         int modulo = 1; // print every modulo'th time step
 
         // create a grid object
@@ -142,7 +143,7 @@ int main(int argc, char** argv)
 
         Dune::CWaterAir multicomp(dummyPhase, gasPhase);
 
-        Dune::TransportProblem<GridType, double> problem(gasPhase, multicomp);
+    Dune::AnalyticProblemP<GridType, double> problem(gasPhase, multicomp);
         typedef Dune::LeafP1BoxStokesTransport<GridType, NumberType, dim> BoxStokesTransport;
         BoxStokesTransport boxStokesTransport(grid, problem);
 
@@ -151,7 +152,7 @@ int main(int argc, char** argv)
         timeloop.execute(boxStokesTransport);
 
         //printvector(std::cout, *(boxStokes.u), "solution", "row", 200, 1, 3);
-        //calculateError(grid, problem, boxStokesTransport.u);
+    calculateError(grid, problem, boxStokesTransport.u);
 
         return 0;
     }

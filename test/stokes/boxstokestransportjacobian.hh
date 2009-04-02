@@ -258,7 +258,8 @@ template<class Grid, class Scalar, class BoxFunction = LeafP1Function<Grid, Scal
 
     	Scalar xValue;
     	Scalar outward = velocityValue*this->fvGeom.subContVolFace[face].normal;
-        if (outward > 0)
+        //if (outward > 0)
+    	if (outward <= 0)
             xValue = sol[i][dim];
         else
             xValue = sol[j][dim];
@@ -288,7 +289,8 @@ template<class Grid, class Scalar, class BoxFunction = LeafP1Function<Grid, Scal
     	}
 
 		//transport
-		flux[dim] = (DgradX - xV)*this->fvGeom.subContVolFace[face].normal;
+		//flux[dim] = (DgradX - xV)*this->fvGeom.subContVolFace[face].normal;
+		flux[dim] = (xV - DgradX)*this->fvGeom.subContVolFace[face].normal;
 
 		// mass balance:
     	Scalar alphaH2 = 0.5*alpha*(this->fvGeom.subContVol[i].volume + this->fvGeom.subContVol[j].volume);

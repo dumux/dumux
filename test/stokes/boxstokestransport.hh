@@ -236,7 +236,7 @@ public:
     {
         this->localJacobian().setDt(dt);
         this->localJacobian().setOldSolution(this->uOldTimeStep);
-        double dtol = 1e-8;
+        double dtol = 1e-10;
         double rtol = 1e7;
         int maxIt = 10;
         double mindt = 1e-5;
