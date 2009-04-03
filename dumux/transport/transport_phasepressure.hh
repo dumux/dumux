@@ -1,7 +1,7 @@
-// $Id: transport.hh 1327 2009-03-02 14:26:47Z lauser $
+// $Id$
 
-#ifndef DUNE_TRANSPORT_HH
-#define DUNE_TRANSPORT_HH
+#ifndef DUNE_TRANSPORT_PHASEPRESSURE_HH
+#define DUNE_TRANSPORT_PHASEPRESSURE_HH
 
 #include "dumux/transport/transportproblem.hh"
 

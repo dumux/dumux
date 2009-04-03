@@ -1,7 +1,7 @@
-// $Id: impes.hh 1329 2009-03-02 15:14:45Z lauser $
+// $Id$
 
-#ifndef DUNE_IMPES2P_HH
-#define DUNE_IMPES2P_HH
+#ifndef DUNE_IMPES_PHASEPRESSURE_HH
+#define DUNE_IMPES_PHASEPRESSURE_HH
 
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include "dumux/fractionalflow/fractionalflow_phasepressure.hh"

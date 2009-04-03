@@ -1,7 +1,7 @@
 // $Id$
 
-#ifndef DUNE_FVDIFFUSIONPHASEPRESSURE_HH
-#define DUNE_FVDIFFUSIONPHASEPRESSURE_HH
+#ifndef DUNE_FVDIFFUSION_PW_HH
+#define DUNE_FVDIFFUSION_PW_HH
 
 // dune environent:
 #include <dune/common/helpertemplates.hh>

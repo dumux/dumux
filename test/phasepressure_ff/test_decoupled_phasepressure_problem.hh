@@ -1,6 +1,6 @@
-// $Id: test_fractionalflow_testproblem.hh 1475 2009-03-18 14:05:01Z markus $
-#ifndef TEST_FRACTIONALFLOW_TESTPROBLEM_HH
-#define TEST_FRACTIONALFLOW_TESTPROBLEM_HH
+// $Id$
+#ifndef TEST_DECOUPLED_PHASEPRESSURE_PROBLEM_HH
+#define TEST_DECOUPLED_PHASEPRESSURE_PROBLEM_HH
 
 #include "dumux/fractionalflow/fractionalflowproblem.hh"
 

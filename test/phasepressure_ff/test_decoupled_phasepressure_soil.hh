@@ -1,6 +1,6 @@
-// $Id: test_fractionalflow_soilproperties.hh 1512 2009-03-31 09:26:10Z markus $
-#ifndef TEST_FRACTIONALFLOW_SOILPROPERTIES_HH
-#define TEST_FRACTIONALFLOW_SOILPROPERTIES_HH
+// $Id$
+#ifndef TEST_DECOUPLED_PHASEPRESSURE_SOIL_HH
+#define TEST_DECOUPLED_PHASEPRESSURE_SOIL_HH
 
 #include <dumux/material/property_baseclasses.hh>
 

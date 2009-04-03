@@ -1,6 +1,6 @@
-// $Id: variableclass.hh 1329 2009-03-02 15:14:45Z lauser $
-#ifndef DUNE_VARIABLECLASS_HH
-#define DUNE_VARIABLECLASS_HH
+// $Id$
+#ifndef DUNE_VARIABLECLASS2P_NEW_HH
+#define DUNE_VARIABLECLASS2P_NEW_HH
 
 #include <dune/istl/bvector.hh>
 #include <dune/grid/common/mcmgmapper.hh>

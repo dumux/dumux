@@ -1,7 +1,7 @@
-// $Id: fractionalflow.hh 1327 2009-03-02 14:26:47Z lauser $
+// $Id$
 
-#ifndef DUNE_FRACTIONALFLOW_HH
-#define DUNE_FRACTIONALFLOW_HH
+#ifndef DUNE_FRACTIONALFLOW_PHASEPRESSURE_HH
+#define DUNE_FRACTIONALFLOW_PHASEPRESSURE_HH
 
 #include "dumux/diffusion/diffusion_phasepressure.hh"
 #include "dumux/transport/transport_phasepressure.hh"

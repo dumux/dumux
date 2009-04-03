@@ -1,7 +1,7 @@
-// $Id: diffusion.hh 1327 2009-03-02 14:26:47Z lauser $
+// $Id$
 
-#ifndef DUNE_DIFFUSION_HH
-#define DUNE_DIFFUSION_HH
+#ifndef DUNE_DIFFUSION_PHASEPRESSURE_HH
+#define DUNE_DIFFUSION_PHASEPRESSURE_HH
 
 #include "dumux/diffusion/diffusionproblem.hh"
 

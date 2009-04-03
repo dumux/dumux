@@ -1,3 +1,4 @@
+// $Id$
 #include "config.h"
 #include <iostream>
 //#ifdef HAVE_UG

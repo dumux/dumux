@@ -1,7 +1,7 @@
-// $Id: fvtransport.hh 1452 2009-03-11 11:11:14Z markus $
+// $Id$
 
-#ifndef DUNE_FVTRANSPORT_HH
-#define DUNE_FVTRANSPORT_HH
+#ifndef DUNE_FVTRANSPORT_WETTINGPHASE_HH
+#define DUNE_FVTRANSPORT_WETTINGPHASE_HH
 
 #include <dune/common/helpertemplates.hh>
 #include <dune/common/typetraits.hh>
