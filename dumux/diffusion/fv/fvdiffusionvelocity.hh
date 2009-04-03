@@ -91,7 +91,7 @@ public:
 
                 //Geometry dg = isIt->intersectionSelfLocal();
                 // local number of facet
-                int numberInSelf = isIt->numberInInside();
+                int numberInSelf = isIt->indexInInside();
 
                     faceVol[numberInSelf] =  isIt->geometry().volume();
 
