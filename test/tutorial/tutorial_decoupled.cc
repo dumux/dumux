@@ -47,11 +47,11 @@ int main(int argc, char** argv)
         Problem problem(variables, wettingfluid, nonwettingfluid, soil, materialLaw,L, H); /*@\label{tutorial-decoupled:problem}@*/
 
         // create object including the discretisation of the pressure equation
-        typedef Dune::FVDiffusionVelocity<GridType, NumberType, VariableType> DiffusionType;
+        typedef Dune::FVDiffusionVelocity<GridType, NumberType, VariableType, Problem> DiffusionType;
         DiffusionType diffusion(grid, problem); /*@\label{tutorial-decoupled:diffusion}@*/
 
         // create object including the space discretisation of the saturation equation
-        typedef Dune::FVTransport<GridType, NumberType, VariableType> TransportType;
+        typedef Dune::FVTransport<GridType, NumberType, VariableType, Problem> TransportType;
         TransportType transport(grid, problem); /*@\label{tutorial-decoupled:transport}@*/
 
         // some parameters used in the IMPES-object

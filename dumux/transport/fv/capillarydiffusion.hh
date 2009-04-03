@@ -11,7 +11,7 @@
 /**
  * @file
  * @brief  Base class for defining the diffusive part of an advection-diffusion equation
- * @author Bernd Flemisch, last changed by Markus Wolff
+ * @author Bernd Flemisch, Markus Wolff
  */
 namespace Dune
 {
@@ -52,7 +52,7 @@ public:
         IntersectionIterator isIt = element.ilevelbegin();
         for (; isIt != isItEnd; ++isIt)
         {
-            if(isIt->numberInInside() == faceNumber)
+            if(isIt->indexInInside() == faceNumber)
                 break;
         }
 
