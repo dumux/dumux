@@ -145,7 +145,7 @@ int FVTransport<Grid, Scalar, VC, Problem>::update(const Scalar t, Scalar& dt,
                  !=isItEnd; ++isIt)
         {
             // local number of facet
-            int numberInSelf = isIt->numberInInside();
+            int numberInSelf = isIt->indexInInside();
 
             // get geometry type of face
             Dune::GeometryType faceGT = isIt->geometryInInside().type();
@@ -400,7 +400,7 @@ void FVTransport<Grid, Scalar, VC, Problem>::calculateSlopes(
                  !=isItEnd; ++isIt)
         {
             // local number of facet
-            int numberInSelf = isIt->numberInInside();
+            int numberInSelf = isIt->indexInInside();
 
             // handle interior face
             if (isIt->neighbor())

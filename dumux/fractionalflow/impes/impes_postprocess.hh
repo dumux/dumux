@@ -64,17 +64,17 @@ typedef    typename Grid::LevelGridView GridView;
                 // boundary face
                 if (isItCoarse->boundary())
                 {
-                    int faceNumberCoarse = isItCoarse->numberInSelf();
+                    int faceNumberCoarse = isItCoarse->indexInInside();
 
-                    Scalar faceAreaCoarse = (*isItCoarse).intersectionGlobal().volume();
+                    Scalar faceAreaCoarse = (*isItCoarse).geometry().volume();
                     // get normal vector scaled with volume
 
-                    GeometryType faceGTCoarse = isItCoarse->intersectionSelfLocal().type();
+                    GeometryType faceGTCoarse = isItCoarse->geometryInInside().type();
 
                     const FieldVector<Scalar,dim-1>& faceLocalCoarse
                     = ReferenceElements<Scalar,dim-1>::general(faceGTCoarse).position(0,0);
 
-                    const GlobalPosition& globalPosFaceCoarse= isItCoarse->intersectionGlobal().global(faceLocalCoarse); // globalPosFace coordinate of face center
+                    const GlobalPosition& globalPosFaceCoarse= isItCoarse->geometry().global(faceLocalCoarse); // globalPosFace coordinate of face center
 
                     const LocalPosition&
                     localPosFaceCoarse = ReferenceElements<Scalar,dim>::general(faceGTCoarse).position(faceNumberCoarse,1);
@@ -122,14 +122,14 @@ typedef    typename Grid::LevelGridView GridView;
                     // boundary face
                     if (isIt->boundary())
                     {
-                        GeometryType faceGT = isIt->intersectionSelfLocal().type();
+                        GeometryType faceGT = isIt->geometryInInside().type();
 
                         const FieldVector<Scalar,dim-1>& faceLocal
                         = ReferenceElements<Scalar,dim-1>::general(faceGT).position(0,0);
 
-                        const GlobalPosition& globalPosFace= isIt->intersectionGlobal().global(faceLocal); // globalPosFace coordinate of face center
+                        const GlobalPosition& globalPosFace= isIt->geometry().global(faceLocal); // globalPosFace coordinate of face center
 
-                        int faceNumberFine = isIt->numberInSelf();
+                        int faceNumberFine = isIt->indexInInside();
 
                         // get pressure and permeability and total mobility in fine-scale element
                         Scalar pressI = pressure_[globalIdxI];
@@ -139,7 +139,7 @@ typedef    typename Grid::LevelGridView GridView;
                         Scalar satI = saturation_[globalIdxICoarse];
                         Scalar lambdaI = this->transProblem.materialLaw().mobN((1-satI),globalPos,*eItCoarse,localPos);
 
-                        Scalar faceAreaFine=isIt->intersectionGlobal().volume(); // volume of face
+                        Scalar faceAreaFine=isIt->geometry().volume(); // volume of face
 
                         FieldVector<Scalar,dim> unitOuterNormal
                         = isIt->unitOuterNormal(faceLocal); // normal vector of unit length
@@ -201,14 +201,14 @@ typedef    typename Grid::LevelGridView GridView;
                         // boundary face
                         if (isIt->boundary())
                         {
-                            GeometryType faceGT = isIt->intersectionSelfLocal().type();
+                            GeometryType faceGT = isIt->geometryInInside().type();
 
                             const FieldVector<Scalar,dim-1>& faceLocal
                             = ReferenceElements<Scalar,dim-1>::general(faceGT).position(0,0);
 
-                            const GlobalPosition& globalPosFace= isIt->intersectionGlobal().global(faceLocal); // globalPosFace coordinate of face center
+                            const GlobalPosition& globalPosFace= isIt->geometry().global(faceLocal); // globalPosFace coordinate of face center
 
-                            int faceNumberFine = isIt->numberInSelf();
+                            int faceNumberFine = isIt->indexInInside();
 
                             // get pressure and permeability and total mobility in fine-scale element
                             Scalar pressI = pressure_[globalIdxI];
@@ -218,7 +218,7 @@ typedef    typename Grid::LevelGridView GridView;
                             Scalar satI = saturation_[globalIdxICoarse];
                             Scalar lambdaI = this->transProblem.materialLaw().mobN((1-satI),globalPos,*eIt,localPos);
 
-                            Scalar faceAreaFine=isIt->intersectionGlobal().volume(); // volume of face
+                            Scalar faceAreaFine=isIt->geometry().volume(); // volume of face
 
                             FieldVector<Scalar,dim> unitOuterNormal
                             = isIt->unitOuterNormal(faceLocal); // normal vector of unit length
