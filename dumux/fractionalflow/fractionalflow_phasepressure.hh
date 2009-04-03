@@ -3,8 +3,8 @@
 #ifndef DUNE_FRACTIONALFLOW_HH
 #define DUNE_FRACTIONALFLOW_HH
 
-#include "dumux/diffusion/diffusion2p.hh"
-#include "dumux/transport/transport2p.hh"
+#include "dumux/diffusion/diffusion_phasepressure.hh"
+#include "dumux/transport/transport_phasepressure.hh"
 
 /**
  * @file

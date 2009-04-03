@@ -234,7 +234,7 @@ template<class Grid, class Scalar, class VC, class Problem> void FVDiffusion<Gri
             faceLocal = ReferenceElements<Scalar,dim-1>::general(faceGT).position(0,0);
 
             // center of face inside volume reference element
-            const LocalPosition& localPosFace = ReferenceElements<Scalar,dim>::general(faceGT).position(isIt->numberInInside(),1);
+            const LocalPosition& localPosFace = ReferenceElements<Scalar,dim>::general(faceGT).position(isIt->indexInInside(),1);
 
             // get normal vector
             FieldVector<Scalar,dimWorld> unitOuterNormal

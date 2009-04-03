@@ -132,7 +132,7 @@ int FVTransport<Grid, Scalar, VC, Problem>::update(const Scalar t, Scalar& dt,
                 !=isItEnd; ++isIt)
         {
             // local number of facet
-            int numberInInside = isIt->numberInInside();
+            int indexInInside = isIt->indexInInside();
 
             // get geometry type of face
             Dune::GeometryType faceGT = isIt->geometryInInside().type();
@@ -143,7 +143,7 @@ int FVTransport<Grid, Scalar, VC, Problem>::update(const Scalar t, Scalar& dt,
 
             // center of face inside volume reference element
             const LocalPosition&
-            localPosFace = Dune::ReferenceElements<Scalar,dim>::general(faceGT).position(numberInInside,1);
+            localPosFace = Dune::ReferenceElements<Scalar,dim>::general(faceGT).position(indexInInside,1);
 
             Dune::FieldVector<Scalar,dimWorld> unitOuterNormal = isIt->unitOuterNormal(faceLocal);
 
