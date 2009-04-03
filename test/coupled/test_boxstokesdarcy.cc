@@ -127,11 +127,11 @@ struct NodeLayout
 
 int main(int argc, char** argv)
 {
-  //    try{
+    try{
         const int dim=2;
         typedef double Scalar;
 
-        // geometry
+        // grid and geometry
         //typedef Dune::ALUSimplexGrid<dim,dim> GridType;
         typedef Dune::SGrid<dim,dim> GridType;
 
@@ -149,6 +149,7 @@ int main(int argc, char** argv)
         subGridStokes.createBegin();
         subGridDarcy.createBegin();
         typedef GridType::Codim<0>::LeafIterator Iterator;
+
         Iterator eendit = grid.leafend<0>();
         for (Iterator elementIt = grid.leafbegin<0>(); elementIt != eendit; ++elementIt) {
             Dune::GeometryType gt = elementIt->geometry().type();
@@ -190,13 +191,13 @@ int main(int argc, char** argv)
         discreteStokesError(subGridStokes, stokesProblem, stokesModel.u);
 
         return 0;
-	/*    }
+    }
     catch (Dune::Exception &e){
         std::cerr << "Dune reported error: " << e << std::endl;
     }
     catch (...){
         std::cerr << "Unknown exception thrown!" << std::endl;
-	}*/
+    }
 }
 #else
 

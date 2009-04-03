@@ -5,7 +5,8 @@
 
 #include"dumux/stokes/stokesproblem.hh"
 
-namespace Dune {
+namespace Dune 
+{
 
 /** \todo Please doc me! */
 

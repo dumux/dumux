@@ -13,11 +13,11 @@
 #include <../../../dune-subgrid/subgrid/subgrid.hh>
 #include <dumux/timedisc/timeloop.hh>
 
-#include "capillarydarcyproblem.hh"
-#include <dumux/coupled/boxstokesdarcy.hh>
 #include "capillarystokesproblem.hh"
 #include "../stokes/boxstokes.hh"
+#include "capillarydarcyproblem.hh"
 #include "boxdarcy.hh"
+#include <dumux/coupled/boxstokesdarcy.hh>
 
 namespace Dune
 {
@@ -150,9 +150,10 @@ int main(int argc, char** argv)
         subGridDarcy.createBegin();
         typedef GridType::Codim<0>::LeafIterator Iterator;
 
-        Iterator eendit = grid.leafend<0>();
         int stokesElements = 0;
         int darcyElements = 0;
+
+        Iterator eendit = grid.leafend<0>();
         for (Iterator elementIt = grid.leafbegin<0>(); elementIt != eendit; ++elementIt) {
             Dune::GeometryType gt = elementIt->geometry().type();
             const Dune::FieldVector<Scalar,dim>& local = Dune::ReferenceElements<Scalar,dim>::general(gt).position(0, 0);
@@ -164,7 +165,7 @@ int main(int argc, char** argv)
             }
             else
             {
-                subGridDarcy.insert(*elementIt);
+                subGridStokes.insert(*elementIt);
                 darcyElements++;
             }
         }
