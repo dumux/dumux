@@ -138,6 +138,7 @@ AC_CONFIG_FILES([Makefile
     appl/box3d-compressible/Makefile
     appl/co2/Makefile
     appl/hysteresis/Makefile
+    appl/phasepressure_ff/Makefile
 	 dumux/brinkman/fv/Makefile
 	 dumux/1p2c/fv/Makefile
 	 dumux/2p2c/fv/Makefile
