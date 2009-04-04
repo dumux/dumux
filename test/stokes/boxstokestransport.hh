@@ -178,8 +178,8 @@ public:
                 {
                     for (int i = 0; i < size; i++)
                         // handle subentities of this face
-                        for (int j = 0; j < ReferenceElements<Scalar,dim>::general(gt).size(is->numberInSelf(), 1, sfs[i].codim()); j++)
-                            if (sfs[i].entity() == ReferenceElements<Scalar,dim>::general(gt).subEntity(is->numberInSelf(), 1, j, sfs[i].codim()))
+                        for (int j = 0; j < ReferenceElements<Scalar,dim>::general(gt).size(is->indexInInside(), 1, sfs[i].codim()); j++)
+                            if (sfs[i].entity() == ReferenceElements<Scalar,dim>::general(gt).subEntity(is->indexInInside(), 1, j, sfs[i].codim()))
                             {
                                 if (this->localJacobian().bc(i)[1] == BoundaryConditions::dirichlet)
                                 {
