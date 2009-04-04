@@ -17,7 +17,7 @@
 #include<dune/disc/shapefunctions/lagrangeshapefunctions.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
 
-#include<dumux/operators/boxjacobianOLD.hh>
+#include<dumux/operators/boxjacobian.hh>
 #include "dumux/stokes/stokesproblem.hh"
 
 namespace Dune
@@ -39,7 +39,7 @@ namespace Dune
 */
 template<class Grid, class Scalar, class BoxFunction = LeafP1Function<Grid, Scalar, Grid::dimension+1> >
 class BoxStokesJacobian
-    : public BoxJacobianOld<BoxStokesJacobian<Grid,Scalar,BoxFunction>,Grid,Scalar,Grid::dimension+1,BoxFunction>
+    : public BoxJacobian<BoxStokesJacobian<Grid,Scalar,BoxFunction>,Grid,Scalar,Grid::dimension+1,BoxFunction>
 {
     enum {dim=Grid::dimension};
     enum {numEq = dim+1};
@@ -49,7 +49,7 @@ class BoxStokesJacobian
     typedef typename Element::Geometry Geometry;
     typedef BoxStokesJacobian<Grid,Scalar,BoxFunction> ThisType;
     typedef typename LocalJacobian<ThisType,Grid,Scalar,numEq>::VBlockType SolutionVector;
-    typedef BoxJacobianOld<ThisType,Grid,Scalar,numEq,BoxFunction> BoxJacobianType;
+    typedef BoxJacobian<ThisType,Grid,Scalar,numEq,BoxFunction> BoxJacobianType;
     typedef Dune::FVElementGeometry<Grid> FVElementGeometry;
 
 public:

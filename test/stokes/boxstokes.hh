@@ -78,7 +78,7 @@ public:
     // define the operator assembler type:
     typedef LeafP1OperatorAssembler<Grid, Scalar, numEq> OperatorAssembler;
 
-    typedef BoxStokes<Grid, Scalar, StokesProblem<Grid, Scalar>, BoxStokesJacobian<Grid, Scalar>,
+    typedef Dune::BoxStokes<Grid, Scalar, StokesProblem<Grid, Scalar>, BoxStokesJacobian<Grid, Scalar>,
                             FunctionType, OperatorAssembler> BoxStokes;
 
     typedef LeafP1BoxStokes<Grid, Scalar, dim> ThisType;
@@ -97,8 +97,8 @@ public:
 
     typedef typename Grid::LeafGridView GV;
     typedef typename GV::IndexSet IS;
-    typedef MultipleCodimMultipleGeomTypeMapper<GV,P1Layout> VertexMapper;
     typedef typename GV::IntersectionIterator IntersectionIterator;
+    typedef MultipleCodimMultipleGeomTypeMapper<GV,P1Layout> VertexMapper;
     typedef typename ThisType::FunctionType::RepresentationType VectorType;
     typedef typename ThisType::OperatorAssembler::RepresentationType MatrixType;
     typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator;
@@ -139,7 +139,8 @@ public:
                 sfs=Dune::LagrangeShapeFunctions<Scalar,Scalar,dim>::general(gt, 1);
             int size = sfs.size();
 
-            for (int i = 0; i < size; i++) {
+            for (int i = 0; i < size; i++)
+            {
                 // get cell center in reference element
                 const Dune::FieldVector<Scalar,dim>&local = sfs[i].position();
 

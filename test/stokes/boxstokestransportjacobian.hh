@@ -17,14 +17,14 @@
 #include<dune/disc/shapefunctions/lagrangeshapefunctions.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
 
-#include<dumux/operators/boxjacobianOLD.hh>
+#include<dumux/operators/boxjacobian.hh>
 #include "dumux/stokes/stokestransportproblem.hh"
 
 namespace Dune
 {
 template<class Grid, class Scalar, class BoxFunction = LeafP1Function<Grid, Scalar, Grid::dimension+2> >
   class BoxStokesTransportJacobian
-    : public BoxJacobianOld<BoxStokesTransportJacobian<Grid,Scalar,BoxFunction>,Grid,Scalar,Grid::dimension+2,BoxFunction>
+    : public BoxJacobian<BoxStokesTransportJacobian<Grid,Scalar,BoxFunction>,Grid,Scalar,Grid::dimension+2,BoxFunction>
   {
     enum {dim=Grid::dimension};
     enum {numEq = dim+2};
@@ -35,7 +35,7 @@ template<class Grid, class Scalar, class BoxFunction = LeafP1Function<Grid, Scal
     typedef typename Element::Geometry Geometry;
     typedef BoxStokesTransportJacobian<Grid,Scalar,BoxFunction> ThisType;
     typedef typename LocalJacobian<ThisType,Grid,Scalar,numEq>::VBlockType SolutionVector;
-    typedef BoxJacobianOld<ThisType,Grid,Scalar,numEq,BoxFunction> BoxJacobianType;
+    typedef BoxJacobian<ThisType,Grid,Scalar,numEq,BoxFunction> BoxJacobianType;
     typedef Dune::FVElementGeometry<Grid> FVElementGeometry;
 
     enum {nPhase = 0};
@@ -75,73 +75,74 @@ template<class Grid, class Scalar, class BoxFunction = LeafP1Function<Grid, Scal
 			if (!this->fvGeom.subContVol[vert].inner)
 			{
 
-				FieldVector<Scalar,dim> averagedNormal(0);
-				int faces = 0;
-				IntersectionIterator endit = element.ileafend();
-				for (IntersectionIterator it = element.ileafbegin(); it!=endit; ++it)
-				{
-					// handle face on exterior boundary, this assumes there are no interior boundaries
-					if (it->boundary()) {
-						// get geometry type of face
+
+			    FieldVector<Scalar,dim> averagedNormal(0);
+			    int faces = 0;
+			    IntersectionIterator endit = element.ileafend();
+			    for (IntersectionIterator it = element.ileafbegin(); it!=endit; ++it)
+			    {
+				    // handle face on exterior boundary, this assumes there are no interior boundaries
+				    if (it->boundary()) {
+					    // get geometry type of face
 						GeometryType faceGT = it->geometryInInside().type();
 
-						// center in face's reference element
-						const FieldVector<Scalar,dim-1>& faceLocal = ReferenceElements<Scalar,dim-1>::general(faceGT).position(0,0);
+					    // center in face's reference element
+					    const FieldVector<Scalar,dim-1>& faceLocal = ReferenceElements<Scalar,dim-1>::general(faceGT).position(0,0);
 
-						int faceIdx = it->numberInInside();
-						int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
-						for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++) {
-							int nodeInElement = referenceElement.subEntity(faceIdx, 1, nodeInFace, dim);
-							if (nodeInElement != vert)
-								continue;
-							int bfIdx = this->fvGeom.boundaryFaceIndex(faceIdx,    nodeInFace);
-							FieldVector<Scalar,dim> normal = it->unitOuterNormal(faceLocal);
-							normal *= this->fvGeom.boundaryFace[bfIdx].area;
-							averagedNormal += normal;
-							faces++;
-						}
-					}
-				}
-				Scalar defect = 0;
-				if (averagedNormal.two_norm())
-					averagedNormal /= averagedNormal.two_norm();
-				for (int k = 0; k < dim; k++)
-					defect += this->def[vert][k]*averagedNormal[k];
-//mass balance equation
-				if (faces == 2 && this->fvGeom.numVertices == 4)
-					this->def[vert][dim+1] = sol[0][dim+1] + sol[3][dim+1] - sol[1][dim+1] - sol[2][dim+1];
-				else if (this->bctype[vert][0] == BoundaryConditions::dirichlet)
-					this->def[vert][dim+1] = defect;
-				else // de-stabilize
-				{
-		            for (int face = 0; face < this->fvGeom.numEdges; face++)
-		            {
-		                int i = this->fvGeom.subContVolFace[face].i;
-		                int j = this->fvGeom.subContVolFace[face].j;
+					    int faceIdx = it->indexInInside();
+					    int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
+					    for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++) {
+						    int nodeInElement = referenceElement.subEntity(faceIdx, 1, nodeInFace, dim);
+						    if (nodeInElement != vert)
+							    continue;
+						    int bfIdx = this->fvGeom.boundaryFaceIndex(faceIdx,    nodeInFace);
+						    FieldVector<Scalar,dim> normal = it->unitOuterNormal(faceLocal);
+						    normal *= this->fvGeom.boundaryFace[bfIdx].area;
+						    averagedNormal += normal;
+						    faces++;
+					    }
+				    }
+			    }
+			    Scalar defect = 0;
+			    if (averagedNormal.two_norm())
+				    averagedNormal /= averagedNormal.two_norm();
+			    for (int k = 0; k < dim; k++)
+				    defect += this->def[vert][k]*averagedNormal[k];
+			    //mass balance equation
+			    if (faces == 2 && this->fvGeom.numVertices == 4)
+				    this->def[vert][dim+1] = sol[0][dim+1] + sol[3][dim+1] - sol[1][dim+1] - sol[2][dim+1];
+			    else if (this->bctype[vert][0] == BoundaryConditions::dirichlet)
+				    this->def[vert][dim+1] = defect;
+			    else // de-stabilize
+			    {
+			for (int face = 0; face < this->fvGeom.numEdges; face++)
+			{
+			    int i = this->fvGeom.subContVolFace[face].i;
+			    int j = this->fvGeom.subContVolFace[face].j;
 
-		                if (i != vert && j != vert)
-		                    continue;
+			    if (i != vert && j != vert)
+				continue;
 
-		                FieldVector<Scalar, dim> pressGradient(0);
-		                for (int k = 0; k < this->fvGeom.numVertices; k++) {
-		                    FieldVector<Scalar,dim> grad(this->fvGeom.subContVolFace[face].grad[k]);
-		                    grad *= sol[k][dim+1];
-		                    pressGradient += grad;
-		                }
+			    FieldVector<Scalar, dim> pressGradient(0);
+			    for (int k = 0; k < this->fvGeom.numVertices; k++) {
+				FieldVector<Scalar,dim> grad(this->fvGeom.subContVolFace[face].grad[k]);
+				grad *= sol[k][dim+1];
+				pressGradient += grad;
+			    }
 
-		                Scalar alphaH2 = 0.5*alpha*(this->fvGeom.subContVol[i].volume + this->fvGeom.subContVol[j].volume);
-		                pressGradient *= alphaH2;
-		                if (i == vert)
-		                    this->def[vert][dim+1] += pressGradient*this->fvGeom.subContVolFace[face].normal;
-		                else
-                            this->def[vert][dim+1] -= pressGradient*this->fvGeom.subContVolFace[face].normal;
-		            }
-				}
-
-				//std::cout << "node " << i << ", coord = " << this->fvGeom.subContVol[i].global << ", N = " << averagedNormal << std::endl;
+			    Scalar alphaH2 = 0.5*alpha*(this->fvGeom.subContVol[i].volume + this->fvGeom.subContVol[j].volume);
+			    pressGradient *= alphaH2;
+			    if (i == vert)
+				this->def[vert][dim+1] += pressGradient*this->fvGeom.subContVolFace[face].normal;
+			    else
+			this->def[vert][dim+1] -= pressGradient*this->fvGeom.subContVolFace[face].normal;
 			}
+			    }
 
-		return;
+			    //std::cout << "node " << i << ", coord = " << this->fvGeom.subContVol[i].global << ", N = " << averagedNormal << std::endl;
+		    }
+
+	    return;
     }
 
     // harmonic mean of the permeability computed directly
@@ -381,7 +382,7 @@ template<class Grid, class Scalar, class BoxFunction = LeafP1Function<Grid, Scal
 
             // handle face on exterior boundary, this assumes there are no interior boundaries
             if (it->boundary()) {
-                int faceIdx = it->numberInInside();
+                int faceIdx = it->indexInInside();
 
                 int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
                 for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++) {
@@ -518,7 +519,7 @@ template<class Grid, class Scalar, class BoxFunction = LeafP1Function<Grid, Scal
 
             // handle face on exterior boundary, this assumes there are no interior boundaries
             if (it->boundary()) {
-                int faceIdx = it->numberInInside();
+                int faceIdx = it->indexInInside();
                 int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
                 for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++) {
                     int nodeInElement = referenceElement.subEntity(faceIdx, 1, nodeInFace, dim);
@@ -581,7 +582,7 @@ template<class Grid, class Scalar, class BoxFunction = LeafP1Function<Grid, Scal
                         continue; // skip interior dof
                     if (sfs[i].codim()==1) // handle face dofs
                     {
-                        if (sfs[i].entity()==it->numberInInside()) {
+                        if (sfs[i].entity()==it->indexInInside()) {
                             if (this->bctype[i][equationNumber] < bctypeface[equationNumber]) {
                                 this->bctype[i][equationNumber] = bctypeface[equationNumber];
                                 //this->dirichletIndex[i][equationNumber] = dirichletIdx[equationNumber];
@@ -596,8 +597,8 @@ template<class Grid, class Scalar, class BoxFunction = LeafP1Function<Grid, Scal
                         continue;
                     }
                     // handle subentities of this face
-                    for (int j=0; j<ReferenceElements<Scalar,dim>::general(gt).size(it->numberInInside(), 1, sfs[i].codim()); j++)
-                        if (sfs[i].entity()==ReferenceElements<Scalar,dim>::general(gt).subEntity(it->numberInInside(), 1, j, sfs[i].codim()))
+                    for (int j=0; j<ReferenceElements<Scalar,dim>::general(gt).size(it->indexInInside(), 1, sfs[i].codim()); j++)
+                        if (sfs[i].entity()==ReferenceElements<Scalar,dim>::general(gt).subEntity(it->indexInInside(), 1, j, sfs[i].codim()))
                         {
                             if (this->bctype[i][equationNumber] < bctypeface[equationNumber]) {
                                 this->bctype[i][equationNumber] = bctypeface[equationNumber];
