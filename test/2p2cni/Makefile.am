@@ -1,5 +1,5 @@
 # tests where program to build and program to run are equal
-NORMALTESTS = new_leakywell new_test_2p2cni test_2p2cni
+NORMALTESTS = new_test_2p2cni test_2p2cni
 
 # list of tests to run
 #TESTS = $(NORMALTESTS)
@@ -9,8 +9,6 @@ check_PROGRAMS = $(NORMALTESTS)
 
 test_2p2cnidir = $(includedir)/dune/dumux/test/2p2cni
 test_2p2cni_HEADERS = waterairproblem.hh
-
-new_leakywell_SOURCES = new_leakywell.cc 
 
 new_test_2p2cni_SOURCES = new_test_2p2cni.cc 
 
