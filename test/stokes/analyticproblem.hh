@@ -11,7 +11,7 @@ class AnalyticProblem : public StokesTransportProblem<Grid, Scalar>
 public:
     enum {dim=Grid::dimension, numEq=Grid::dimension+2};
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
-    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
+    typedef typename Grid::LeafGridView::IntersectionIterator IntersectionIterator;
 
 
     virtual FieldVector<Scalar,numEq> initial (const FieldVector<Scalar,dim>& x, const Element& e,
@@ -44,18 +44,18 @@ public:
         return BoundaryConditions::dirichlet;
     }
 
-    virtual FieldVector<Scalar,dim+1> g(const FieldVector<Scalar,dim>& x, const Element& e,
+    virtual FieldVector<Scalar,numEq> g(const FieldVector<Scalar,dim>& x, const Element& e,
                                         const IntersectionIterator& intersectionIt,
                                         const FieldVector<Scalar,dim>& xi) const
     {
         return velocitymassfrac(x);
     }
 
-    virtual FieldVector<Scalar,dim+1> J(const FieldVector<Scalar,dim>& x, const Element& e,
+    virtual FieldVector<Scalar,numEq> J(const FieldVector<Scalar,dim>& x, const Element& e,
                                         const IntersectionIterator& intersectionIt,
                                         const FieldVector<Scalar,dim>& xi)
     {
-        FieldVector<Scalar,dim+1> result(0);
+        FieldVector<Scalar,numEq> result(0);
         return result;
     }
 
