@@ -10,7 +10,6 @@
 #include<dune/common/exceptions.hh>
 #include<dune/grid/common/grid.hh>
 #include<dune/grid/common/referenceelements.hh>
-#include<dune/grid/utility/intersectiongetter.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
 #include<dumux/material/twophaserelations.hh>
 #include<dumux/material/phaseproperties/phaseproperties_waterair.hh>
@@ -22,7 +21,7 @@ template<class Grid, class Scalar> class StokesTransportProblem {
 
 public:
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
-    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
+    typedef typename Grid::LeafGridView::IntersectionIterator IntersectionIterator;
     enum {dim=Grid::dimension, numEq=Grid::dimension+2};
 
     virtual FieldVector<Scalar,numEq> q(const FieldVector<Scalar,dim>& x, const Element& e,
@@ -47,17 +46,17 @@ public:
         return result;
     }
 
-    virtual FieldVector<Scalar,dim+1> g(const FieldVector<Scalar,dim>& x, const Element& e,
+    virtual FieldVector<Scalar,numEq> g(const FieldVector<Scalar,dim>& x, const Element& e,
                                         const IntersectionIterator& intersectionIt,
                                         const FieldVector<Scalar,dim>& xi) const = 0;
 
-    virtual FieldVector<Scalar,dim+1> J(const FieldVector<Scalar,dim>& x, const Element& e,
+    virtual FieldVector<Scalar,numEq> J(const FieldVector<Scalar,dim>& x, const Element& e,
                                         const IntersectionIterator& intersectionIt,
                                         const FieldVector<Scalar,dim>& xi)
     {
         DUNE_THROW(NotImplemented, "no J specified, but requested");
 
-        FieldVector<Scalar,dim+1> result(0);
+        FieldVector<Scalar,numEq> result(0);
         return result;
     }
 
@@ -126,10 +125,10 @@ public:
         return result;
     }
 
-    virtual FieldVector<Scalar,dim+1> velocitymassfrac(const FieldVector<Scalar,dim>& x) const
+    virtual FieldVector<Scalar,numEq> velocitymassfrac(const FieldVector<Scalar,dim>& x) const
     {
         DUNE_THROW(NotImplemented, "no exact solution available");
-        FieldVector<Scalar,dim+1> result(0);
+        FieldVector<Scalar,numEq> result(0);
 
         return result;
     }
