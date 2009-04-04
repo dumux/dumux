@@ -109,7 +109,7 @@ class NewFVElementGeometry<GridT,
                              const CellGeometry &geometry)
     {
         // fill boundary face data:
-        int face = it->numberInSelf();
+        int face = it->indexInInside();
         int numVerticesOfFace = refElem.size(face, 1, GridDim);
         for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++)
         {

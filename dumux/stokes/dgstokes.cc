@@ -829,7 +829,7 @@ void DGStokes<G,v_order,p_order>::assembleStokesSystem()
                 GeometryType gtf = is->geometryInInside().type();
                 const FieldVector<ctype,dim-1>& faceLocal = ReferenceElements<ctype,dim-1>::general(gtf).position(0,0);
                 FieldVector<ctype,dim> faceGlobal = is->geometry().global(faceLocal);
-                const FieldVector<ctype,dim>& faceLocalDim = ReferenceElements<ctype,dim>::general(gtf).position(is->numberInInside(),1);
+                const FieldVector<ctype,dim>& faceLocalDim = ReferenceElements<ctype,dim>::general(gtf).position(is->indexInInside(),1);
                 BoundaryConditions::Flags bctype = dgfem.problem().bctype(faceGlobal, *it, is, faceLocalDim);
 
                 if (bctype == BoundaryConditions::dirichlet)

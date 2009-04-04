@@ -80,7 +80,7 @@ public:
 
                 // In the following, it is determined whether the intersection really is on the interface.
                 // Every node of the corresponding face is checked whether it also belongs to the Darcy grid.
-                int faceIdx = stokesIsIt->numberInSelf();
+                int faceIdx = stokesIsIt->indexInInside();
                 int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
                 int numVerticesInDarcyGrid = 0;
                 int darcyIds[numVerticesOfFace];
@@ -136,7 +136,7 @@ public:
 
                 // In the following, it is determined whether the intersection really is on the interface.
                 // Every node of the corresponding face is checked whether it also belongs to the Darcy grid.
-                int faceIdx = stokesIsIt->numberInSelf();
+                int faceIdx = stokesIsIt->indexInInside();
                 int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
                 int numVerticesInDarcyGrid = 0;
                 int darcyIds[numVerticesOfFace];
@@ -195,7 +195,7 @@ public:
 
                 // In the following, it is determined whether the intersection really is on the interface.
                 // Every node of the corresponding face is checked whether it also belongs to the Darcy grid.
-                int faceIdx = stokesIsIt->numberInSelf();
+                int faceIdx = stokesIsIt->indexInInside();
                 int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
                 int numVerticesInDarcyGrid = 0;
                 int darcyIds[numVerticesOfFace];

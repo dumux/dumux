@@ -195,9 +195,9 @@ public:
                 {
                     for (int i = 0; i < size; i++)
                         // handle subentities of this face
-                        for (int j = 0; j < ReferenceElements<CoordScalar,dim>::general(gt).size(is->numberInSelf(), 1, sfs[i].codim()); j++)
+                        for (int j = 0; j < ReferenceElements<CoordScalar,dim>::general(gt).size(is->indexInInside(), 1, sfs[i].codim()); j++)
                             if (sfs[i].entity()
-                                == ReferenceElements<CoordScalar,dim>::general(gt).subEntity(is->numberInSelf(), 1,
+                                == ReferenceElements<CoordScalar,dim>::general(gt).subEntity(is->indexInInside(), 1,
                                                                                              j, sfs[i].codim()))
                             {
                                 for (int equationNumber = 0; equationNumber<numEq; equationNumber++)

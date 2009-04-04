@@ -581,7 +581,7 @@ class NewFVElementGeometry<GridT,
 
         // split finite element face into the sub faces of the
         // sub control volumes
-        int face = it->numberInSelf();
+        int face = it->indexInInside();
         int numVerticesOfFace = refElem.size(face, 1, GridDim);
         for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++)
         {

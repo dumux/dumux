@@ -137,7 +137,7 @@ public:
 
                     // center of face inside volume reference element
                     const FieldVector<ct,dim>&
-                        facelocalDim = ReferenceElements<ct,dim>::general(gtf).position(is->numberInSelf(),1);
+                        facelocalDim = ReferenceElements<ct,dim>::general(gtf).position(is->indexInInside(),1);
 
                     // center of face in global coordinates
                     FieldVector<ct,dimworld>
@@ -235,7 +235,7 @@ public:
             for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it);
                  is!=endit; ++is)
             {
-                int faceIdx = is->numberInSelf();
+                int faceIdx = is->indexInInside();
 
                 // handle interior face
                 if (is->neighbor())
@@ -259,7 +259,7 @@ public:
 
                     // center of face inside volume reference element
                     const FieldVector<ct,dim>&
-                        facelocalDim = ReferenceElements<ct,dim>::general(gtf).position(is->numberInSelf(),1);
+                        facelocalDim = ReferenceElements<ct,dim>::general(gtf).position(is->indexInInside(),1);
 
                     // center of face in global coordinates
                     FieldVector<ct,dimworld>
@@ -327,7 +327,7 @@ public:
                  is!=endit; ++is)
             {
                 // eastIndex for 0,1: 0, for 2,3: 2, for 4,5: 4
-                int faceIdx = is->numberInSelf();
+                int faceIdx = is->indexInInside();
                 int eastIndex = faceIdx/2;
                 eastIndex *= 2;
                 int westIndex = eastIndex + 1;
@@ -401,7 +401,7 @@ public:
 
                     // center of face inside volume reference element
                     const FieldVector<ct,dim>&
-                        facelocalDim = ReferenceElements<ct,dim>::general(gtf).position(is->numberInSelf(),1);
+                        facelocalDim = ReferenceElements<ct,dim>::general(gtf).position(is->indexInInside(),1);
 
                     // center of face in global coordinates
                     FieldVector<ct,dimworld>
@@ -460,7 +460,7 @@ public:
             for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it);
                  is!=endit; ++is)
             {
-                int faceIdx = is->numberInSelf();
+                int faceIdx = is->indexInInside();
 
                 // get geometry type of face
                 GeometryType gtf = is->intersectionSelfLocal().type();
@@ -524,7 +524,7 @@ public:
 
                     // center of face inside volume reference element
                     const FieldVector<ct,dim>&
-                        facelocalDim = ReferenceElements<ct,dim>::general(gtf).position(is->numberInSelf(),1);
+                        facelocalDim = ReferenceElements<ct,dim>::general(gtf).position(is->indexInInside(),1);
 
                     // center of face in global coordinates
                     FieldVector<ct,dimworld>
@@ -759,7 +759,7 @@ void FVBrinkman<G, RT>::assembleMatrices()
 
             // center of face inside volume reference element
             const FieldVector<ct,dim>&
-                facelocalDim = ReferenceElements<ct,dim>::general(gtf).position(is->numberInSelf(),1);
+                facelocalDim = ReferenceElements<ct,dim>::general(gtf).position(is->indexInInside(),1);
 
             // get normal vector
             FieldVector<ct,dimworld> unitOuterNormal
@@ -907,7 +907,7 @@ void FVBrinkman<G, RT>::assembleMatrices()
 
             // center of face inside volume reference element
             const FieldVector<ct,dim>&
-                facelocalDim = ReferenceElements<ct,dim>::general(gtf).position(is->numberInSelf(),1);
+                facelocalDim = ReferenceElements<ct,dim>::general(gtf).position(is->indexInInside(),1);
 
             if (is->neighbor())
             {

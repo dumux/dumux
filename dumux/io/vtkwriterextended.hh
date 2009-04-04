@@ -702,7 +702,7 @@ public:
             IntersectionIterator endit = IntersectionIteratorGetter<Grid,LeafTag>::end(*cit);
             for (IntersectionIterator it = IntersectionIteratorGetter<Grid,LeafTag>::begin(*cit); it!=endit; ++it)
             {
-                int indexi=it->numberInSelf();
+                int indexi=it->indexInInside();
                 faceVolume[indexi] = it->intersectionGlobal().volume();
                 outernormal[indexi]=it->unitOuterNormal(loc);
             }

@@ -359,7 +359,7 @@ private:
                 if (sfs[i].codim()==0) continue; // skip interior dof
                 if (sfs[i].codim()==1) // handle face dofs
                 {
-                    if (sfs[i].entity()==it.numberInSelf())
+                    if (sfs[i].entity()==it.indexInInside())
                     {
                         if (this->bctype[i][0]<bctypeface[0])
                         {
@@ -375,8 +375,8 @@ private:
                     continue;
                 }
                 // handle subentities of this face
-                for (int j=0; j<ReferenceElements<Scalar,dim>::general(gt).size(it.numberInSelf(),1,sfs[i].codim()); j++)
-                    if (sfs[i].entity()==ReferenceElements<Scalar,dim>::general(gt).subEntity(it.numberInSelf(),1,j,sfs[i].codim()))
+                for (int j=0; j<ReferenceElements<Scalar,dim>::general(gt).size(it.indexInInside(),1,sfs[i].codim()); j++)
+                    if (sfs[i].entity()==ReferenceElements<Scalar,dim>::general(gt).subEntity(it.indexInInside(),1,j,sfs[i].codim()))
                     {
                         if (this->bctype[i][0]<bctypeface[0])
                         {

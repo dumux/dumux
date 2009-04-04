@@ -481,9 +481,9 @@ public:
                     if (it->level()<=outside->level()) continue;
 
                     // loop over all vertices of this face
-                    for (int j=0; j<refelem.size(iit->numberInSelf(),1,n); j++)
+                    for (int j=0; j<refelem.size(iit->indexInInside(),1,n); j++)
                     {
-                        int alpha = vertexmapper.template map<n>(*it,refelem.subEntity(iit->numberInSelf(),1,j,n));
+                        int alpha = vertexmapper.template map<n>(*it,refelem.subEntity(iit->indexInInside(),1,j,n));
                         if (S[alpha]==it->level())
                             hanging[alpha] = true;
                     }

@@ -83,19 +83,19 @@ public:
         for (IntersectionIterator isIt = element.ileafbegin(); isIt != endIsIt; ++isIt)
         {
             // the local face number:
-            int numberInSelf = isIt->numberInSelf();
+            int indexInInside = isIt->indexInInside();
 
             // geometry data of the face:
             GeometryType geomType = isIt->intersectionSelfLocal().type();
             const FieldVector<Scalar,dim-1>& localDimM1 = ReferenceElements<Scalar,dim-1>::general(geomType).position(0,0);
-            const FieldVector<Scalar,dim>& local = ReferenceElements<Scalar,dim>::general(geomType).position(numberInSelf, 1);
+            const FieldVector<Scalar,dim>& local = ReferenceElements<Scalar,dim>::general(geomType).position(indexInInside, 1);
             FieldVector<Scalar,dim> global = isIt->intersectionGlobal().global(localDimM1);
 
             // get the source term from the problem:
             FieldVector<Scalar,dim+1> source = problem_.q(global, element, local);
 
             // set the right hand side:
-            this->b[numberInSelf] = 0.5*volume*source[numberInSelf/2];
+            this->b[indexInInside] = 0.5*volume*source[indexInInside/2];
 
             // after this, only boundary elements should be considered:
             if (isIt->neighbor())
@@ -110,8 +110,8 @@ public:
                 FieldVector<Scalar,dim> velocity = problem_.g(global, element, isIt, local);
 
                 // set the right hand side and the boundary condition type:
-                this->b[numberInSelf] = velocity[numberInSelf/2];
-                this->bctype[numberInSelf].assign(BoundaryConditions::dirichlet);
+                this->b[indexInInside] = velocity[indexInInside/2];
+                this->bctype[indexInInside].assign(BoundaryConditions::dirichlet);
             }
             else
             {
