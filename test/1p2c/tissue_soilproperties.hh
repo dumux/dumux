@@ -7,7 +7,7 @@
 namespace Dune
 {
 
-/** \todo Please doc me! */
+/** definition of the properties of the human tissue */
 
 template<class Grid, class Scalar>
 class TissueSoil: public Matrix2p<Grid, Scalar>
