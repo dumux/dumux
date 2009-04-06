@@ -47,6 +47,24 @@
 
 namespace Dune
 {
+template<int dim>
+struct VertexLayout
+{
+    bool contains (Dune::GeometryType gt)
+    {
+        return (gt.dim() == 0);
+    }
+};
+
+template<int dim>
+struct ElementLayout
+{
+    bool contains (Dune::GeometryType gt)
+    {
+        return (gt.dim() == dim);
+    }
+};
+
 /**
    \brief Isothermal two phase two component model with Pw and Sn/X as primary unknowns
 
@@ -60,6 +78,7 @@ public:
     // define the problem type (also change the template argument above)
     typedef ScalarT Scalar;
     typedef GridT   Grid;
+    typedef GridT 	GridType;
     typedef TwoPTwoCProblem<Grid, Scalar> ProblemType;
 
     // define the local Jacobian (also change the template argument above)
@@ -110,8 +129,15 @@ public:
     //////////////////////
 
     Box2P2C(const Grid& grid, ProblemType& prob)
-        : ThisLeafP1TwoPhaseModel(grid, prob)// (this->size) vectors
+        : ThisLeafP1TwoPhaseModel(grid, prob),
+		  size((*(this->u)).size()),
+		  uOldNewtonStep(size)// (this->size) vectors
     { }
+
+    VectorType& solOldNewtonStep()
+    {
+        return uOldNewtonStep;
+    }
 
     void initial()
     {
@@ -629,6 +655,8 @@ public:
     { vtkMultiWriter = writer; }
 
 protected:
+    int size;
+    VectorType uOldNewtonStep;
     VtkMultiWriter *vtkMultiWriter;
     bool switchFlag;
 };
