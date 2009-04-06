@@ -16,8 +16,8 @@
 
 #include "2p2cdarcyproblem.hh"
 #include <dumux/2p2c/fv/box2p2c.hh>
-#include "lshapedproblem.hh"
-#include "../stokes/boxstokes.hh"
+#include "2cstokesproblem.hh"
+#include <test/stokes/boxstokestransport.hh>
 #include <dumux/coupled/boxstokesdarcytransport.hh>
 
 namespace Dune
@@ -37,11 +37,12 @@ void discreteStokesError(const Grid& grid, const Problem& problem, Vector& solut
     typedef typename Grid::ctype Scalar;
     enum {dim=Grid::dimension};
     typedef typename Grid::template Codim<0>::Entity Element;
-    typedef typename Grid::LeafGridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename Grid::LeafGridView::template Codim<dim>::Iterator VertexIterator;
-    typedef typename Grid::LeafGridView::IndexSet IS;
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<typename Grid::LeafGridView,ElementLayout> ElementMapper;
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<typename Grid::LeafGridView,VertexLayout> VertexMapper;
+    typedef typename Grid::LeafGridView GridView;
+    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
+    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
+    typedef typename GridView::IndexSet IS;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView,ElementLayout> ElementMapper;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView,VertexLayout> VertexMapper;
 
     VertexMapper vertexMapper(grid.leafView());
     ElementMapper elementMapper(grid.leafView());
@@ -72,11 +73,11 @@ void discreteStokesError(const Grid& grid, const Problem& problem, Vector& solut
         errPressure += volume*(approxPressure - exactPressure)*(approxPressure - exactPressure);
 
         Scalar approxXV = solution.evallocal (0, element, local);
-        Scalar exactXV = problem.velocity(global)[0];
+        Scalar exactXV = problem.velocity(global, element, local)[0];
         errVelocity += volume*(approxXV - exactXV)*(approxXV - exactXV);
 
         Scalar approxYV = solution.evallocal (1, element, local);
-        Scalar exactYV = problem.velocity(global)[1];
+        Scalar exactYV = problem.velocity(global, element, local)[1];
         errVelocity += volume*(approxYV - exactYV)*(approxYV - exactYV);
     }
 
@@ -90,13 +91,13 @@ template<class Grid, class Solution, class Problem>
 double discreteDarcyError(const Grid& grid, const Solution& solution, const Problem& problem)
 {
     enum{dim=Grid::dimension};
-    typedef typename Grid::LeafGridView GV;
-    typedef typename GV::IndexSet IS;
-    typedef MultipleCodimMultipleGeomTypeMapper<GV,P1Layout> VM;
-    typedef typename GV::template Codim<dim>::Iterator VertexIterator;
+    typedef typename Grid::LeafGridView GridView;
+    typedef typename GridView::IndexSet IS;
+    typedef MultipleCodimMultipleGeomTypeMapper<GridView,P1Layout> VM;
+    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
 
     double error = 0.0;
-    const GV& gridview(grid.leafView());
+    const GridView& gridview(grid.leafView());
     VM vertexMapper(gridview);
 
     VertexIterator endIt = gridview.template end<dim>();
@@ -133,23 +134,25 @@ int main(int argc, char** argv)
         typedef double Scalar;
 
         // grid and geometry
-        //typedef Dune::ALUSimplexGrid<dim,dim> GridType;
-        typedef Dune::SGrid<dim,dim> GridType;
+        //typedef Dune::ALUSimplexGrid<dim,dim> Grid;
+        typedef Dune::SGrid<dim,dim> Grid;
+        typedef Grid::LeafGridView GridView;
+        typedef Dune::VtkMultiWriter<GridView> MultiWriter;
 
         if (argc != 2) {
             std::cout << boost::format("usage: %s grid\n")%argv[0];
             return 1;
         }
-        Dune::GridPtr<GridType> gridPtr( argv[1] );
-        GridType& grid = *gridPtr;
+        Dune::GridPtr<Grid> gridPtr( argv[1] );
+        Grid& grid = *gridPtr;
 
         // subdivide grid in subgrids
-        typedef Dune::SubGrid<dim,GridType> SubGridType;
-        SubGridType subGridStokes(grid);
-        SubGridType subGridDarcy(grid);
+        typedef Dune::SubGrid<dim,Grid> SubGrid;
+        SubGrid subGridStokes(grid);
+        SubGrid subGridDarcy(grid);
         subGridStokes.createBegin();
         subGridDarcy.createBegin();
-        typedef GridType::Codim<0>::LeafIterator Iterator;
+        typedef Grid::Codim<0>::LeafIterator Iterator;
 
         Iterator eendit = grid.leafend<0>();
         for (Iterator elementIt = grid.leafbegin<0>(); elementIt != eendit; ++elementIt) {
@@ -167,22 +170,21 @@ int main(int argc, char** argv)
         // choose fluids and properties
         Dune::Liq_WaterAir wPhase;
         Dune::Gas_WaterAir nPhase;
-        Dune::TwoPTwoCDarcySoil<SubGridType, Scalar> soil;
+        Dune::TwoPTwoCDarcySoil<SubGrid, Scalar> soil;
 
-        Dune::TwoPhaseRelations<SubGridType, Scalar> materialLaw(soil, wPhase, nPhase);
+        // create twophase and multicomponent relations
+        Dune::TwoPhaseRelations<SubGrid, Scalar> materialLaw(soil, wPhase, nPhase);
         Dune::CWaterAir multicomp(wPhase, nPhase);
         Scalar depthBOR = 1.0;
 
-        Dune::LShapedProblem<SubGridType, Scalar> stokesProblem;
-        typedef Dune::LeafP1BoxStokes<SubGridType, Scalar, dim> StokesModel;
+        Dune::TwoCStokesProblem<SubGrid, Scalar> stokesProblem(nPhase, soil, multicomp);
+        typedef Dune::LeafP1BoxStokesTransport<SubGrid, Scalar, dim> StokesModel;
         StokesModel stokesModel(subGridStokes, stokesProblem);
 
-        Dune::TwoPTwoCDarcyProblem<SubGridType,Scalar> darcyProblem(wPhase, nPhase, soil,
-														depthBOR, materialLaw, multicomp);
-        // create two-phase two-component problem
-        typedef Dune::VtkMultiWriter<GridType::LeafGridView> MultiWriter;
-        typedef Dune::Box2P2C<SubGridType, Scalar, MultiWriter> DarcyModel;
-//        typedef Dune::LeafP1BoxDarcyTransport<SubGridType, Scalar> DarcyModel;
+        // create two-phase two-component problem and multiwriter
+        Dune::TwoPTwoCDarcyProblem<SubGrid,Scalar> darcyProblem(wPhase, nPhase, soil,
+								depthBOR, materialLaw, multicomp);
+        typedef Dune::Box2P2C<SubGrid, Scalar, MultiWriter> DarcyModel;
         DarcyModel darcyModel(subGridDarcy, darcyProblem);
 
         typedef Dune::BoxStokesDarcyTransport<StokesModel, DarcyModel, Scalar> CoupledModel;
@@ -191,7 +193,7 @@ int main(int argc, char** argv)
 
         coupledModel.vtkout("initial", 0);
 
-        Dune::TimeLoop<GridType, CoupledModel, false> timeloop(0, 1, 1, "test_boxstokesdarcy", 1);
+        Dune::TimeLoop<Grid, CoupledModel, false> timeloop(0, 1, 1, "test_boxstokesdarcy", 1);
         Dune::Timer timer;
         timer.reset();
         timeloop.execute(coupledModel);

@@ -53,9 +53,9 @@ public:
 
     //! Constructor
     BoxDarcyJacobian (CoupledPorousMediaProblem<Grid,Scalar>& params,
-                          bool levelBoundaryAsDirichlet_, const Grid& grid,
-                          BoxFunction& sol,
-                          bool procBoundaryAsDirichlet_=true)
+                      bool levelBoundaryAsDirichlet_, const Grid& grid,
+                      BoxFunction& sol,
+                      bool procBoundaryAsDirichlet_=true)
         : BoxJacobian<ThisType,Grid,Scalar,1,BoxFunction>(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_),
           problem(params)
     {

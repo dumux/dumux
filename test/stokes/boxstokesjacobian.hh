@@ -94,7 +94,9 @@ public:
                         // center in face's reference element
                         const FieldVector<Scalar,dim-1>& faceLocal = ReferenceElements<Scalar,dim-1>::general(faceGT).position(0,0);
 
+                        // return the face number with respect to the generic reference element
                         int faceIdx = it->indexInInside();
+
                         int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
                         for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++) {
                             int nodeInElement = referenceElement.subEntity(faceIdx, 1, nodeInFace, dim);

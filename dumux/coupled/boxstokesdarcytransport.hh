@@ -87,7 +87,7 @@ public:
     }
 
     BoxStokesDarcyTransport(const StokesGrid& stokesGrid, StokesModel& stokesModel,
-                   const DarcyGrid& darcyGrid, DarcyModel& darcyModel, bool assembleGlobalSystem)
+                            const DarcyGrid& darcyGrid, DarcyModel& darcyModel, bool assembleGlobalSystem)
         : BaseType(stokesGrid, stokesModel, darcyGrid, darcyModel, assembleGlobalSystem)
     {}
 };

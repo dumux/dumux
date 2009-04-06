@@ -108,7 +108,7 @@ public:
         {
             FieldVector<double, dim> shapeGrad = fvGeom.boundaryFace[bfIdx].grad[vert];
 
-            const FirstVPointer& vertexPointer = element.template entity<dim>(vert);
+            const FirstVPointer& vertexPointer = element.template subEntity<dim>(vert);
 
             int globalId = firstVertexMapper_.map(*vertexPointer);
 
@@ -185,7 +185,7 @@ public:
                     int nodeInElement = referenceElement.subEntity(faceIdx, 1, nodeInFace, dim);
 
                     // get the node pointer on the First grid
-                    const FirstVPointer& firstVPointer = (*firstIt).template entity<dim>(nodeInElement);
+                    const FirstVPointer& firstVPointer = (*firstIt).template subEntity<dim>(nodeInElement);
 
                     // get the node pointer on the host grid
                     const HostVPointer& hostVPointer = (this->firstGrid()).template getHostEntity<dim>(*firstVPointer);
@@ -258,7 +258,7 @@ public:
                     int nodeInElement = referenceElement.subEntity(faceIdx, 1, nodeInFace, dim);
 
                     // get the node pointer on the First grid
-                    const FirstVPointer& firstVPointer = (*firstIt).template entity<dim>(nodeInElement);
+                    const FirstVPointer& firstVPointer = (*firstIt).template subEntity<dim>(nodeInElement);
 
                     // get the node pointer on the host grid
                     const HostVPointer& hostVPointer = (this->firstGrid()).template getHostEntity<dim>(*firstVPointer);
@@ -322,7 +322,7 @@ public:
                     int nodeInElement = referenceElement.subEntity(faceIdx, 1, nodeInFace, dim);
 
                     // get the node pointer on the First grid
-                    const FirstVPointer& firstVPointer = (*firstIt).template entity<dim>(nodeInElement);
+                    const FirstVPointer& firstVPointer = (*firstIt).template subEntity<dim>(nodeInElement);
 
                     // get the node pointer on the host grid
                     const HostVPointer& hostVPointer = (this->firstGrid()).template getHostEntity<dim>(*firstVPointer);
@@ -379,15 +379,18 @@ public:
                     // WARNING: ASSUMES that Dirichlet nodes are always on both sides
                     if (bctypeNode == BoundaryConditions::neumann)
                     {
-                        // add coupling defect to rhs:
                         int firstIndex = firstIds[subCVF];
                         int secondIndex = secondIds[subCVF];
                         FieldVector<double, firstNumEq>  firstSolAtQ(0);
                         FieldMatrix<double, firstNumEq, dim>  firstSolGradientAtQ(0);
                         FieldVector<double, secondNumEq>  secondSolAtQ(0);
+
+                        // calculate solutions at integration points
                         calculateFirstSolAtQ(firstSol, subCVF, firstSolAtQ);
                         calculateFirstSolGradientAtQ(*firstIt, firstFVGeom, bfIdx, firstSolGradientAtQ);
                         calculateSecondSolAtQ(secondSol, subCVF, secondSolAtQ);
+
+                        // add coupling defect to rhs:
                         FieldVector<double, firstNumEq> boundaryDefect1(0);
                         localCoupling12(firstSolAtQ, secondSolAtQ, firstIndex, secondIndex, qGlobal, normal, boundaryDefect1);
                         (this->firstModel().rhs())[firstIndex] += boundaryDefect1;

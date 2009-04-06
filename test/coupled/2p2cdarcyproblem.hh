@@ -41,6 +41,9 @@ class TwoPTwoCDarcyProblem : public TwoPTwoCProblem<Grid, Scalar>
     enum {dim=Grid::dimension, numEq=2};
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
     typedef typename Grid::LeafGridView::IntersectionIterator IntersectionIterator;
+    typedef FieldVector<Scalar,dim> GlobalPosition;
+    typedef FieldVector<Scalar,dim> LocalPosition;
+    typedef FieldVector<Scalar,numEq> SolutionVector;
 
 public:
     enum {pWIdx = 0, switchIdx = 1}; // phase index
@@ -50,16 +53,14 @@ public:
     /////////////////////////////
     // TYPE of the boundaries
     /////////////////////////////
-    virtual FieldVector<BoundaryConditions::Flags, numEq> bctype (const FieldVector<Scalar,dim>& globalPos, const Element& element,
+    virtual FieldVector<BoundaryConditions::Flags, numEq> bctype (const GlobalPosition& globalPos, const Element& element,
                                                                   const IntersectionIterator& intersectionIt,
-                                                                  const FieldVector<Scalar,dim>& localPos) const
+                                                                  const LocalPosition& localPos) const
     {
         FieldVector<BoundaryConditions::Flags, numEq> values(BoundaryConditions::neumann);
 
-        if (globalPos[0] < eps_)
+        if (globalPos[0] > 4 - eps_)
             values = BoundaryConditions::dirichlet;
-        //        if (globalPos[1] < eps_)
-        //            values = BoundaryConditions::dirichlet;
 
         return values;
     }
@@ -67,37 +68,23 @@ public:
     /////////////////////////////
     // DIRICHLET boundaries
     /////////////////////////////
-    virtual FieldVector<Scalar,numEq> g (const FieldVector<Scalar,dim>& globalPos, const Element& element,
-                                         const IntersectionIterator& intersectionIt,
-                                         const FieldVector<Scalar,dim>& localPos) const
+    virtual SolutionVector g (const GlobalPosition& globalPos, const Element& element,
+                              const IntersectionIterator& intersectionIt,
+                              const LocalPosition& localPos) const
     {
-        FieldVector<Scalar,numEq> values(0);
-        Scalar densityW_ = 1000.0;
-
-        values[pWIdx] = 1e5 - densityW_*gravity_[1]*(depthBOR_ - globalPos[1]);
-        values[switchIdx] = 1e-8;  // may be Sn, Xaw or Xwn!!
-
-        //        if (globalPos[1] >= innerLowerLeft_[1] && globalPos[1] <= innerUpperRight_[1]
-        //         && globalPos[0] >= innerLowerLeft_[0])
-        //            values[switchIdx] = 0.2;
-        //        else
-        //            values[switchIdx] = 1e-6;
-
-        return values;
+        return initial(globalPos, element, localPos);
     }
 
     /////////////////////////////
     // NEUMANN boundaries
     /////////////////////////////
-    virtual FieldVector<Scalar,numEq> J (const FieldVector<Scalar,dim>& globalPos, const Element& element,
-                                         const IntersectionIterator& intersectionIt,
-                                         const FieldVector<Scalar,dim>& localPos) const
+    virtual SolutionVector J (const GlobalPosition& globalPos, const Element& element,
+                              const IntersectionIterator& intersectionIt,
+                              const LocalPosition& localPos) const
     {
-        FieldVector<Scalar,numEq> values(0);
+        SolutionVector values(0);
 
-        //Scalar lambda = (globalPos[1])/height_;
-
-        if (globalPos[1] < 15 && globalPos[1] > 5)
+        if (globalPos[0] < 2.0)
             values[switchIdx] = -1e-3;
 
         return values;
@@ -106,56 +93,36 @@ public:
     /////////////////////////////
     // INITIAL values
     /////////////////////////////
-    virtual FieldVector<Scalar,numEq> initial (const FieldVector<Scalar,dim>& globalPos, const Element& element,
-                                               const FieldVector<Scalar,dim>& localPos) const
+    virtual SolutionVector initial (const GlobalPosition& globalPos, const Element& element,
+                                    const LocalPosition& localPos) const
     {
 
-        FieldVector<Scalar,numEq> values;
+        SolutionVector values;
         Scalar densityW_ = 1000.0;
 
         values[pWIdx] = 1e5 - densityW_*gravity_[1]*(depthBOR_ - globalPos[1]);
         values[switchIdx] = 1e-8;
 
-        //        if ((globalPos[0] > 60.0 - eps_) && (globalPos[1] < 10 && globalPos[1] > 5))
-        //            values[switchIdx] = 0.05;
-
-        //            if (globalPos[1] >= innerLowerLeft_[1] && globalPos[1] <= innerUpperRight_[1]
-        //             && globalPos[0] >= innerLowerLeft_[0])
-        //                values[switchIdx] = 0.2;
-        //            else
-        //                values[switchIdx] = 1e-6;
-
         return values;
     }
 
 
-    int initialPhaseState (const FieldVector<Scalar,dim>& globalPos, const Element& element,
-                           const FieldVector<Scalar,dim>& localPos) const
+    int initialPhaseState (const GlobalPosition& globalPos, const Element& element,
+                           const LocalPosition& localPos) const
     {
 
         enum {gasPhase = 0, waterPhase = 1, bothPhases = 2}; // Phase states
-        int state;
 
-        //        state = bothPhases;
-        state = waterPhase;
-
-        //        if ((globalPos[0] > 60.0 - eps_) && (globalPos[1] < 10 && globalPos[1] > 5))
-        //            state = bothPhases;
-        //            if (globalPos[1] >= innerLowerLeft_[1] && globalPos[1] <= innerUpperRight_[1]
-        //                  && globalPos[0] >= innerLowerLeft_[0])
-        //                state = 2;
-        //            else
-
-        return state;
+        return bothPhases;
     }
 
     /////////////////////////////
     // sources and sinks
     /////////////////////////////
-    virtual FieldVector<Scalar,numEq> q (const FieldVector<Scalar,dim>& globalPos, const Element& element,
-                                         const FieldVector<Scalar,dim>& localPos) const
+    virtual SolutionVector q (const GlobalPosition& globalPos, const Element& element,
+                              const LocalPosition& localPos) const
     {
-        FieldVector<Scalar,numEq> values(0);
+        SolutionVector values(0);
 
         return values;
     }
@@ -173,10 +140,10 @@ public:
     }
 
     TwoPTwoCDarcyProblem(Liquid_GL& liq, Gas_GL& gas, Matrix2p<Grid, Scalar>& soil, Scalar depthBOR,
-						 TwoPhaseRelations<Grid, Scalar>& law = *(new TwoPhaseRelations<Grid, Scalar>),
-						 MultiComp& multicomp = *(new CWaterAir))
-       : TwoPTwoCProblem<Grid,Scalar>(liq, gas, soil, multicomp, law),
-		 depthBOR_(depthBOR)
+                         TwoPhaseRelations<Grid, Scalar>& law = *(new TwoPhaseRelations<Grid, Scalar>),
+                         MultiComp& multicomp = *(new CWaterAir))
+        : TwoPTwoCProblem<Grid,Scalar>(liq, gas, soil, multicomp, law),
+          depthBOR_(depthBOR)
     {
         gravity_[0] = 0;
         gravity_[1] = -9.81;
@@ -186,10 +153,10 @@ public:
 
 private:
     //      Scalar densityW_, densityN_;
-		FieldVector<Scalar,dim> gravity_;
-		Scalar depthBOR_;
-		Scalar eps_;
-    };
+    FieldVector<Scalar,dim> gravity_;
+    Scalar depthBOR_;
+    Scalar eps_;
+};
 
 //////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////--SOIL--//////////////////////////////////////////////
@@ -200,52 +167,34 @@ private:
 template<class Grid, class Scalar>
 class TwoPTwoCDarcySoil: public Matrix2p<Grid,Scalar>
 {
-public:
-    typedef typename Grid::Traits::template Codim<0>::Entity Element;
     enum {dim=Grid::dimension, numEq=1};
 
-    virtual const FieldMatrix<Scalar,dim,dim> &K (const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos)
+public:
+    typedef typename Grid::Traits::template Codim<0>::Entity Element;
+    typedef FieldVector<Scalar,dim> GlobalPosition;
+    typedef FieldVector<Scalar,dim> LocalPosition;
+    typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
+
+    virtual const FieldMatrix &K (const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos)
     {
-        if (globalPos[1] < layerBottom_)
-            return highK_;
-        else
-            return lowK_;
+        return permeability_;
     }
-    virtual double porosity(const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos) const
+    virtual double porosity(const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos) const
     {
         return 0.3;
     }
 
-    virtual double Sr_w(const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos, const double T) const
+    virtual double Sr_w(const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos, const double T) const
     {
         return 0.2;
     }
 
-    virtual double Sr_n(const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos, const double T) const
+    virtual double Sr_n(const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos, const double T) const
     {
         return 0.0;
     }
 
-    /* ATTENTION: define heat capacity per cubic meter! Be sure, that it corresponds to porosity!
-     * Best thing will be to define heatCap = (specific heatCapacity of material) * density * porosity*/
-    virtual double heatCap(const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos) const
-    {
-        return     790 /* spec. heat cap. of granite */
-            * 2700 /* density of granite */
-            * (1 - porosity(globalPos, element, localPos));
-    }
-
-    virtual double heatCond(const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos, const double sat) const
-    {
-        static const double lWater = 0.6;
-        static const double lGranite = 2.8;
-        double poro = porosity(globalPos, element, localPos);
-        double lsat = pow(lGranite, (1-poro)) * pow(lWater, poro);
-        double ldry = pow(lGranite, (1-poro));
-        return ldry + sqrt(sat) * (ldry - lsat);
-    }
-
-    virtual std::vector<double> paramRelPerm(const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos, const double T) const
+    virtual std::vector<double> paramRelPerm(const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos, const double T) const
     {
         // example for Brooks-Corey parameters
         std::vector<double> param(2);
@@ -255,27 +204,23 @@ public:
         return param;
     }
 
-    virtual typename Matrix2p<Grid,Scalar>::modelFlag relPermFlag(const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos) const
+    virtual typename Matrix2p<Grid,Scalar>::modelFlag relPermFlag(const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos) const
     {
         return Matrix2p<Grid,Scalar>::brooks_corey;
     }
 
     TwoPTwoCDarcySoil():Matrix2p<Grid,Scalar>()
     {
-        lowK_ = highK_ = 0.;
-        for(int i = 0; i < dim; i++){
-            lowK_[i][i] = 1e-13;
-            highK_[i][i] = 1e-12;
-        }
-        layerBottom_ = 22.0;
+        permeability_ = 0.;
+        for(int i = 0; i < dim; i++)
+            permeability_[i][i] = 1e-2;
     }
 
     ~TwoPTwoCDarcySoil()
     {}
 
 private:
-    FieldMatrix<Scalar,dim,dim> lowK_, highK_;
-    double layerBottom_;
+    FieldMatrix permeability_;
 };
 
 
