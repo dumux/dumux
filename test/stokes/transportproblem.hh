@@ -42,22 +42,22 @@ public:
         return BoundaryConditions::dirichlet;
     }
 
-    virtual FieldVector<Scalar,dim+1> g(const FieldVector<Scalar,dim>& x, const Element& e,
+    virtual FieldVector<Scalar,numEq> g(const FieldVector<Scalar,dim>& x, const Element& e,
                                         const IntersectionIterator& intersectionIt,
                                         const FieldVector<Scalar,dim>& xi) const
     {
-        FieldVector<Scalar,dim+1> result(0);
+        FieldVector<Scalar,numEq> result(0);
 
         result[0] = 1.0e-3;
 
         return result;
     }
 
-    virtual FieldVector<Scalar,dim+1> J(const FieldVector<Scalar,dim>& x, const Element& e,
+    virtual FieldVector<Scalar,numEq> J(const FieldVector<Scalar,dim>& x, const Element& e,
                                         const IntersectionIterator& intersectionIt,
                                         const FieldVector<Scalar,dim>& xi)
     {
-        FieldVector<Scalar,dim+1> result(0);
+        FieldVector<Scalar,numEq> result(0);
         return result;
     }
 

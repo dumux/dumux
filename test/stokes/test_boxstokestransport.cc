@@ -13,16 +13,12 @@
 #include <dune/common/timer.hh>
 #include "dumux/timedisc/timeloop.hh"
 #include "boxstokes.hh"
-#include "yxproblem.hh"
-#include "sinproblem.hh"
-#include "curlproblem.hh"
 #include "dumux/material/phaseproperties/phaseproperties_waterair.hh"
 #include "dumux/material/multicomponentrelations.hh"
 
 #include "boxstokestransport.hh"
-//#include "analyticproblem.hh"
-#include "analyticproblemP.hh"
-//#include "transportproblem.hh"
+//#include "analyticproblemP.hh"
+#include "transportproblem.hh"
 
 template<int dim>
 struct VertexLayout
