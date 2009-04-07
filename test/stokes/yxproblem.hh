@@ -68,15 +68,15 @@ public:
     }
 
     virtual FieldVector<Scalar,numEq> g(const FieldVector<Scalar,dim>& globalPos, const Element& element,
-                                      const IntersectionIterator& intersectionIt,
-                                      const FieldVector<Scalar,dim>& localPos) const
+                                        const IntersectionIterator& intersectionIt,
+                                        const FieldVector<Scalar,dim>& localPos) const
     {
         return velocity(globalPos);
     }
 
     virtual FieldVector<Scalar,numEq> J(const FieldVector<Scalar,dim>& globalPos, const Element& element,
-                                      const IntersectionIterator& intersectionIt,
-                                      const FieldVector<Scalar,dim>& localPos)
+                                        const IntersectionIterator& intersectionIt,
+                                        const FieldVector<Scalar,dim>& localPos)
     {
         FieldVector<Scalar,numEq> result(0);
         FieldVector<Scalar,dim> temp(0);

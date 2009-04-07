@@ -73,6 +73,27 @@ public:
 
         return res;
     }
+    //------------------additional----------------
+    virtual Scalar Qg(const FieldVector<Scalar,dim>& x, const Element& e,
+                      const FieldVector<Scalar,dim>& xi) const
+    {
+        Scalar result = 0;
+        return result;
+    }
+
+    virtual Scalar gravity() const
+    {
+        return 0;//-9.8;
+    }
+
+    virtual Scalar density(const FieldVector<Scalar,dim>& x, const Element& e,
+                           const FieldVector<Scalar,dim>& xi) const
+    {
+        Scalar result = 1;
+        return result;
+    }
+    //------------------additional----------------
+
 
     /*
       virtual FieldMatrix<Scalar, dim, dim> velocityGradient(const FieldVector<Scalar,dim>& x) const

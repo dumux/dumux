@@ -15,11 +15,11 @@ class CurlProblem : public StokesProblem<Grid, Scalar>
     enum {dim=Grid::dimension, numEq=Grid::dimension+1};
     typedef typename Grid::Traits::template Codim<0>::Entity Entity;
     typedef typename Grid::template Codim<0>::LeafIntersectionIterator::IntersectionIterator
-        IntersectionIterator;
+    IntersectionIterator;
 
 public:
     virtual FieldVector<Scalar,numEq> q(const FieldVector<Scalar,dim>& x, const Entity& e,
-                                    const FieldVector<Scalar,dim>& xi) const
+                                        const FieldVector<Scalar,dim>& xi) const
     {
         FieldVector<Scalar,numEq> result(0);
         result[0] = -200.0*(2.0*(1.0 - 6.0*x[0] + 6.0*x[0]*x[0])*(x[1] - 3.0*x[1]*x[1] + 2.0*x[1]*x[1]*x[1])
@@ -41,15 +41,15 @@ public:
     }
 
     virtual FieldVector<Scalar,numEq> g(const FieldVector<Scalar,dim>& x, const Entity& e,
-                                  const IntersectionIterator& intersectionIt,
-                                  const FieldVector<Scalar,dim>& xi) const
+                                        const IntersectionIterator& intersectionIt,
+                                        const FieldVector<Scalar,dim>& xi) const
     {
         return velocity(x);
     }
 
     virtual FieldVector<Scalar,numEq> J(const FieldVector<Scalar,dim>& x, const Entity& e,
-                                  const IntersectionIterator& intersectionIt,
-                                  const FieldVector<Scalar,dim>& xi)
+                                        const IntersectionIterator& intersectionIt,
+                                        const FieldVector<Scalar,dim>& xi)
     {
         FieldVector<Scalar,numEq> result(0);
         return result;

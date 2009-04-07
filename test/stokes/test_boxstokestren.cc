@@ -74,7 +74,7 @@ void calculateError(const Grid& grid, const Problem& problem, Vector& solution)
         Dune::FieldVector<Scalar,dim> global = element.geometry().global(local);
 
         Scalar volume = element.geometry().integrationElement(local)
-                *Dune::ReferenceElements<Scalar,dim>::general(geomType).volume();
+            *Dune::ReferenceElements<Scalar,dim>::general(geomType).volume();
 
         int eIdx = elementMapper.map(element);
 
@@ -115,68 +115,70 @@ void calculateError(const Grid& grid, const Problem& problem, Vector& solution)
 
 int main(int argc, char** argv)
 {
-  try{
-    // define the problem dimensions
-    const int dim = 2;
-    double tStart = 0;
-    double tEnd = 1;
-    double dt = 0.1;
-    int modulo = 1; // print every modulo'th time step
+    try{
+        // define the problem dimensions
+        const int dim = 2;
+        double tStart = 0;
+        double tEnd = 1;
+        double dt = 1;
+        int modulo = 1; // print every modulo'th time step
 
-    // create a grid object
-    typedef double NumberType;
-    typedef Dune::SGrid<dim,dim> GridType;
-    //typedef Dune::AlbertaGrid<dim,dim> GridType;
+        // create a grid object
+        typedef double NumberType;
+        typedef Dune::SGrid<dim,dim> GridType;
+        //typedef Dune::AlbertaGrid<dim,dim> GridType;
 
-    if (argc != 2 && argc != 3) {
-        std::cout << "Usage: test_boxstokestren dgffilename [refinementsteps]" << std::endl;
-        return (1);
+        if (argc != 2 && argc != 3) {
+            std::cout << "Usage: test_boxstokestren dgffilename [refinementsteps]" << std::endl;
+            return (1);
+        }
+        int refinementSteps = 0;
+        if (argc == 3) {
+            std::string arg2(argv[2]);
+            std::istringstream is2(arg2);
+            is2 >> refinementSteps;
+        }
+
+        Dune::GridPtr<GridType> gridPtr( argv[1] );
+        GridType& grid = *gridPtr;
+
+        if (refinementSteps)
+            grid.globalRefine(refinementSteps);
+
+        Dune::Liq_WaterAir dummyPhase;
+        Dune::Gas_WaterAir gasPhase;
+
+        Dune::CWaterAir multicomp(dummyPhase, gasPhase);
+
+        //    Dune::FFProblem<GridType, double> problem(gasPhase, multicomp);
+        Dune::SteProblem<GridType, double> problem(gasPhase, multicomp);
+        typedef Dune::LeafP1BoxStokesTrEn<GridType, NumberType, dim> BoxStokesTrEn;
+
+        BoxStokesTrEn boxStokesTrEn(grid, problem);
+
+        Dune::TimeLoop<GridType, BoxStokesTrEn> timeloop(tStart, tEnd, dt, "test_boxstokestren", modulo);
+
+        timeloop.execute(boxStokesTrEn);
+
+        //printvector(std::cout, *(boxStokes.u), "solution", "row", 200, 1, 3);
+        calculateError(grid, problem, boxStokesTrEn.u);
+
+        return 0;
     }
-    int refinementSteps = 0;
-    if (argc == 3) {
-        std::string arg2(argv[2]);
-        std::istringstream is2(arg2);
-        is2 >> refinementSteps;
+    catch (Dune::Exception &e){
+        std::cerr << "Dune reported error: " << e << std::endl;
     }
-
-    Dune::GridPtr<GridType> gridPtr( argv[1] );
-    GridType& grid = *gridPtr;
-
-    if (refinementSteps)
-        grid.globalRefine(refinementSteps);
-
-    Dune::Liq_WaterAir dummyPhase;
-    Dune::Gas_WaterAir gasPhase;
-
-    Dune::CWaterAir multicomp(dummyPhase, gasPhase);
-
-    Dune::SteProblem<GridType, double> problem(gasPhase, multicomp);
-    typedef Dune::LeafP1BoxStokesTrEn<GridType, NumberType, dim> BoxStokesTrEn;
-    BoxStokesTrEn boxStokesTrEn(grid, problem);
-
-    Dune::TimeLoop<GridType, BoxStokesTrEn> timeloop(tStart, tEnd, dt, "test_boxstokestren", modulo);
-
-    timeloop.execute(boxStokesTrEn);
-
-    //printvector(std::cout, *(boxStokes.u), "solution", "row", 200, 1, 3);
-    calculateError(grid, problem, boxStokesTrEn.u);
-
-    return 0;
-  }
-  catch (Dune::Exception &e){
-    std::cerr << "Dune reported error: " << e << std::endl;
-  }
-  catch (...){
-    std::cerr << "Unknown exception thrown!" << std::endl;
-  }
+    catch (...){
+        std::cerr << "Unknown exception thrown!" << std::endl;
+    }
 }
 #else
 
 int main (int argc , char **argv) try
 {
-  std::cout << "This test is not finished yet." << std::endl;
+    std::cout << "This test is not finished yet." << std::endl;
 
-  return 1;
+    return 1;
 }
 catch (...)
 {

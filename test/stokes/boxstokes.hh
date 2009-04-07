@@ -197,7 +197,7 @@ public:
                                     BoundaryConditions::Flags bctype = this->problem.bctype(global, entity, is, local);
                                     if (bctype == BoundaryConditions::dirichlet) {
                                         FieldVector<Scalar,numEq> dirichlet = this->problem.g(global, entity, is, local);
-                            //TODO: dim or numEq for the following loop??
+                                        //TODO: dim or numEq for the following loop??
                                         for (int eq = 0; eq < dim; eq++)
                                             (*(this->u))[globalId][eq] = dirichlet[eq];
                                     }
@@ -209,24 +209,24 @@ public:
                 }
         }
 
-//        //set pressure condition (same node as in asseble())
-//        Iterator it = gridview.template begin<0>();
-//        unsigned int globalId = vertexmapper.template map<dim>(*it, 3);
-//
-//        //get global coordinates of node globalId
-//        // get geometry type
-//        Dune::GeometryType gt = it->geometry().type();
-//        // get local coordinates of node globalId (element it, node 3)
-//        Dune::FieldVector<Scalar,dim> local = ReferenceElements<Scalar, dim>::general(gt).position(3,dim);
-//        //std::cout<<"local:"<<local<<std::endl;
-//        // get global coordinates
-//        Dune::FieldVector<Scalar, dimworld> global = it->geometry().global(local);
-//        //std::cout<<"global:"<<global<<std::endl;
-//
-//        //set third position of u to pressure(globalID)
-//        //std::cout<<"pressure:"<<this->problem.pressure(global)<<std::endl;
-//        (*(this->u))[globalId][dim] = this->problem.pressure(global);
-//        //std::cout<<"pressure:"<<(*(this->u))[globalId][dim]<<std::endl;
+        //        //set pressure condition (same node as in asseble())
+        //        Iterator it = gridview.template begin<0>();
+        //        unsigned int globalId = vertexmapper.template map<dim>(*it, 3);
+        //
+        //        //get global coordinates of node globalId
+        //        // get geometry type
+        //        Dune::GeometryType gt = it->geometry().type();
+        //        // get local coordinates of node globalId (element it, node 3)
+        //        Dune::FieldVector<Scalar,dim> local = ReferenceElements<Scalar, dim>::general(gt).position(3,dim);
+        //        //std::cout<<"local:"<<local<<std::endl;
+        //        // get global coordinates
+        //        Dune::FieldVector<Scalar, dimworld> global = it->geometry().global(local);
+        //        //std::cout<<"global:"<<global<<std::endl;
+        //
+        //        //set third position of u to pressure(globalID)
+        //        //std::cout<<"pressure:"<<this->problem.pressure(global)<<std::endl;
+        //        (*(this->u))[globalId][dim] = this->problem.pressure(global);
+        //        //std::cout<<"pressure:"<<(*(this->u))[globalId][dim]<<std::endl;
 
         *(this->uOldTimeStep) = *(this->u);
         return;
@@ -239,19 +239,19 @@ public:
         this->localJacobian().clearVisited();
         this->A.assemble(this->localJacobian(), this->u, this->f);
 
-//        const GV& gridview(this->grid_.leafView());
-//        typedef typename GV::template Codim<0>::Iterator Iterator;
-//
-//        Iterator it = gridview.template begin<0>();
-//        unsigned int globalId = 81;//vertexmapper.template map<dim>(*it, 3);
-//
-//        MatrixType& A = *(this->A);
-//        for (typename MatrixType::RowIterator i=A.begin(); i!=A.end(); ++i)
-//            if(i.index()==globalId)
-//                for (typename MatrixType::ColIterator j=(*i).begin(); j!=(*i).end(); ++j)
-//                    A[i.index()][j.index()][dim] = 0.0;
-//        A[globalId][globalId][dim][dim] = 1.0;
-//        (*(this->f))[globalId][dim] = 0.0;
+        //        const GV& gridview(this->grid_.leafView());
+        //        typedef typename GV::template Codim<0>::Iterator Iterator;
+        //
+        //        Iterator it = gridview.template begin<0>();
+        //        unsigned int globalId = 81;//vertexmapper.template map<dim>(*it, 3);
+        //
+        //        MatrixType& A = *(this->A);
+        //        for (typename MatrixType::RowIterator i=A.begin(); i!=A.end(); ++i)
+        //            if(i.index()==globalId)
+        //                for (typename MatrixType::ColIterator j=(*i).begin(); j!=(*i).end(); ++j)
+        //                    A[i.index()][j.index()][dim] = 0.0;
+        //        A[globalId][globalId][dim][dim] = 1.0;
+        //        (*(this->f))[globalId][dim] = 0.0;
     }
 
     void update(double& dt)
@@ -265,7 +265,7 @@ public:
         int goodIt = 4;
         int maxInc = 2;
         NewtonMethod<Grid, ThisType> newtonMethod(this->grid_, *this,
-                                                 dtol, rtol, maxIt, mindt, goodIt, maxInc);
+                                                  dtol, rtol, maxIt, mindt, goodIt, maxInc);
         newtonMethod.execute();
         dt = this->localJacobian().getDt();
         *(this->uOldTimeStep) = *(this->u);

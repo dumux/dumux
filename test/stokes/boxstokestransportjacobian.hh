@@ -162,16 +162,16 @@ public:
     SolutionVector computeM (const Element& element, const SolutionVector* sol, int node, const std::vector<VariableNodeData>& varData)
     {
         SolutionVector result(0);
-        /*
+
         //velocity u
-        result[0] = varData[node].density*sol[node][0];
+        result[0] = -1*varData[node].density*sol[node][0];
         //velocity v
-        result[1] = varData[node].density*sol[node][1];
+        result[1] = -1*varData[node].density*sol[node][1];
         //partial density
-        result[2] = sol[node][2];
+        result[2] = -1*sol[node][2];
         //pressure p
-        result[3] = varData[node].density;
-        */
+        result[3] = -1*varData[node].density;
+
         //          std::cout << "node " <<  node << " time dep = " << result << std::endl;
 
         return result;
@@ -257,8 +257,8 @@ public:
 
         Scalar xValue;
         Scalar outward = velocityValue*this->fvGeom.subContVolFace[face].normal;
-        //if (outward > 0)
-        if (outward <= 0)
+        if (outward > 0)
+            //if (outward <= 0)
             xValue = sol[i][dim];
         else
             xValue = sol[j][dim];
@@ -595,7 +595,7 @@ public:
                         }
                         continue;
                     }
-                    // handle sub entities of this face
+                    // handle subentities of this face
                     for (int j=0; j<ReferenceElements<Scalar,dim>::general(gt).size(it->indexInInside(), 1, sfs[i].codim()); j++)
                         if (sfs[i].entity()==ReferenceElements<Scalar,dim>::general(gt).subEntity(it->indexInInside(), 1, j, sfs[i].codim()))
                         {

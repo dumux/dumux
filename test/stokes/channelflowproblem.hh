@@ -15,7 +15,7 @@ class ChannelFlowProblem : public StokesProblem<Grid, Scalar>
     enum {dim=Grid::dimension, numEq=Grid::dimension+1};
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
     typedef typename Grid::template Codim<0>::LeafIntersectionIterator::IntersectionIterator
-        IntersectionIterator;
+    IntersectionIterator;
 
 public:
     virtual FieldVector<Scalar,numEq> q(const FieldVector<Scalar,dim>& globalPos, const Element& element,
@@ -37,8 +37,8 @@ public:
     }
 
     virtual FieldVector<Scalar,numEq> g(const FieldVector<Scalar,dim>& globalPos, const Element& element,
-                                      const IntersectionIterator& intersectionIt,
-                                      const FieldVector<Scalar,dim>& localPos) const
+                                        const IntersectionIterator& intersectionIt,
+                                        const FieldVector<Scalar,dim>& localPos) const
     {
         FieldVector<Scalar,numEq> result(0);
 
@@ -46,18 +46,18 @@ public:
         {
             result[0] = 1;
             return result;
-//            return velocity(globalPos);
+            //            return velocity(globalPos);
         }
         else
         {
-//            FieldVector<Scalar,dim> result(0);
+            //            FieldVector<Scalar,dim> result(0);
             return result;
         }
     }
 
     virtual FieldVector<Scalar,numEq> J(const FieldVector<Scalar,dim>& globalPos, const Element& element,
-                                      const IntersectionIterator& intersectionIt,
-                                      const FieldVector<Scalar,dim>& localPos)
+                                        const IntersectionIterator& intersectionIt,
+                                        const FieldVector<Scalar,dim>& localPos)
     {
         FieldVector<Scalar,numEq> result(0);
 
