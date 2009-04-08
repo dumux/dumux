@@ -1,5 +1,5 @@
 # tests where program to build and program to run are equal
-NORMALTESTS = tissue_tumor
+NORMALTESTS = tissue_tumor new_tissue_tumor
 
 # list of tests to run
 #TESTS = $(NORMALTESTS)
@@ -8,5 +8,6 @@ NORMALTESTS = tissue_tumor
 check_PROGRAMS = $(NORMALTESTS)
 
 tissue_tumor_SOURCES = tissue_tumor.cc
+new_tissue_tumor_SOURCES = new_tissue_tumor.cc
 
 include $(top_srcdir)/am/global-rules
