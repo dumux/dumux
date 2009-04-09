@@ -15,10 +15,19 @@ C  VERSION 1.2      1.6.1988
 C                            INCLUDING BLOCK SIMULATION (1.1)
 C                            GENERATING SEVERAL REALIZATIONS
 C
+C  UPDATE for MONTE CARLO USE 
+C   ********************************************
+C     Monte Carlo - Loop is controled by DUMUX
+C     DUMUX passes 2 arguments to the Permeability 
+C     field generator Simset on
+C   ********************************************
+C    --> written by Rainer Enzenhoefer
+C    --> 05.01.2009
+C
 C *********************************************************************
 C * FIRST MODUL
 C * CONTROLS PROGRAM FLOW
-C * INPUT DESCRIBED SEPARATELY
+C * INPUT DESCRIBED SEPARATEL
 C *********************************************************************
       COMMON /FURA/ XF(300),YF(300),ZF(300),ZFS(300),NF,ATZ,SRZ
       COMMON /PARAM/ KR,HSX,HSY,NK,DMAX,NPO,VMAX
@@ -27,23 +36,98 @@ C *********************************************************************
       COMMON /FDAT/ PE(257),PS(257),IPREV
       DIMENSION IHOL(100)
       CHARACTER F110*60,FILNAM*18
-      DOUBLE PRECISION RSEED
+      DOUBLE PRECISION RSEED, SL, RSD(1000), argumeins
+      INTEGER NLIN, IOS, ITA
+      CHARACTER*7 xflag, flag
+      CHARACTER*12 argum
+
+      WRITE(*,*)
+      WRITE(*,*)
+      WRITE(*,*)
+      WRITE(*,*)
+      WRITE(*,*)
+      WRITE(*,*) '***********************************************'
+      WRITE(*,*) '********    SIMSET   **************************'
+      WRITE(*,*) '***********************************************'
+      WRITE(*,*)
+
       OPEN(15,FILE='SIMNAM',STATUS='OLD')
-      WRITE(*,194)
- 194  FORMAT(/,' RANDOM NUMBER SEED  [NOT 0.00] =>')
-      READ(*,*) RS
-      RSEED=RS
-      WRITE(*,193)
- 193  FORMAT(/,' ENTER NUMBER OF BANDS ')
-      READ(*,*) NLIN
-111     READ(15,'(A18)',END=912) FILNAM
-      WRITE(*,'(A18)') FILNAM
+111   READ(15,'(A18)',END=912) FILNAM
+      WRITE(*,'(2X,2A18)') 'Output-Filename = ', FILNAM
       OPEN(10,FILE='PARAME',STATUS='OLD')
       OPEN(13,FILE='DATEXP3',STATUS='OLD')
       OPEN(12,FILE='DATGAU2',STATUS='OLD')
       OPEN(20,FILE=FILNAM)
-C     RS=0.5
+
+C *** get the two arguments via the command line: argum, xflag
+      flag = ".true."
+C     xflag = input of random seed automatically (=.true.) or manually (=.false.)
+C     argum = Random Seed 
+      CALL GET_COMMAND_ARGUMENT(1,xflag)
+      CALL GET_COMMAND_ARGUMENT(2,argum)
+
+C *** if xflag = .true., the random seed is read in automatically     
+      IF(xflag .EQ. flag) THEN
+C *** A) Arguments from C-File --> argument 1 = Test/Flag, argument 2 = RSEED
+         write(*,*) 'xflag is .true. --> ZZ is read automatically! '
+         write(*,*)
+
+C        Turning Band   
+         NLIN = 36
+         WRITE(*,'(A18,I9)') 'number of Turning Bands = ',NLIN
+
+C        Random Seed 
+         read(argum,*) argumeins
+         RSEED = argumeins
+         WRITE(*,'(A20,E17.6)') 'RANDOM Number SEED: ',RSEED
+
+C *** B) ITA ist Inkrementor, liest ZZ aus Datei
+c         ITA = 1
+c         OPEN(18,FILE='ZZ.dat',ERR=282,STATUS='OLD',ACCESS='SEQUENTIAL')
+c101      CONTINUE
+c         READ (18, 195, END=202) RSD(ITA)
+c195      FORMAT(E17.6)
+c         WRITE (*,'(A3,I6,1X,E17.6)') 'ZZ', ITA, RSD(ITA)
+c         ITA=ITA+1 
+c         GOTO 101 
+c202      CLOSE(18)
+c         ITA=ITA-1
+c         RSEED = RSD(ITA)
+
+      ELSE
+         WRITE(*,194)
+194      FORMAT(/,' RANDOM NUMBER SEED  [NOT 0.00] =>')
+         READ(*,*) RS
+         RSEED=RS
+         WRITE(*,193)
+193      FORMAT(/,' ENTER NUMBER OF BANDS ')
+         READ(*,*) NLIN
+      ENDIF
+
+C *** new Random Number is generated
       SL=DRAND(RSEED)
+      WRITE(*,'(A12,E17.6)') 'new ZZ= ',SL
+
+C *** Zufallszahlen werden wieder ausgegeben
+c      OPEN(18,FILE='ZZ.dat',ERR=282,STATUS='OLD',ACCESS='SEQUENTIAL')
+c      
+c      DO 76 NN=1,ITA
+c          WRITE(18,195) RSD(NN) 
+c76    CONTINUE
+C      dun = 0.0
+C      dun = 2.0+SL
+c      WRITE(18,195) SL
+c      GOTO 533     
+
+c442   WRITE (*,*) 'Sonstiger Fehler'
+c      GOTO 533
+c
+c282   WRITE (*,*) 'Fehler beim Öffnen der Datei'
+c      GOTO 533
+c
+c533   CLOSE(18)
+C *** End of my update 
+
       READ(13,1945)(PE(I),I=1,256)
       READ(12,1945)(PS(I),I=1,256)
       CLOSE(12)
@@ -63,6 +147,7 @@ C DMAX = Search radius
 C
       READ(10,1000) IKS,IVS,KR,NK,NPO,NST,DMAX,HSX,HSY
       WRITE(*,1000) IKS,IVS,KR,NK,NPO,NST,DMAX,HSX,HSY
+      write(*,*) IVS, KR
       IF(NK.GT.40) NK=40
       IF(NST.GT.5) NST=5
       DO 1 I=1,NST
