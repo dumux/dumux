@@ -33,7 +33,8 @@ public:
         for (int comp = 0; comp < dim; comp++)
             result[comp] = normal[comp];
 
-        result *= -darcySol[1];
+        // pressure times normal
+        result *= -darcySol[0];
 
         return;
     }
@@ -50,6 +51,7 @@ public:
         for (int comp = 0; comp < dim; comp++)
             stokesVel[comp] = stokesSol[comp];
 
+        // velocity times normal
         result = -(stokesVel*normal);
 
         return;
