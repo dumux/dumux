@@ -113,7 +113,7 @@ public:
 
         enum {gasPhase = 0, waterPhase = 1, bothPhases = 2}; // Phase states
 
-        return bothPhases;
+        return gasPhase;
     }
 
     /////////////////////////////

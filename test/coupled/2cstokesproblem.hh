@@ -115,6 +115,13 @@ public:
         return res;
     }
 
+    Scalar Qg(const GlobalPosition& globalPos, const Element& element,
+                      const LocalPosition& localPos) const
+    {
+        Scalar result = 0;
+        return result;
+    }
+
     Fluid& gasPhase () const
     {
         return gasPhase_;
