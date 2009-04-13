@@ -59,7 +59,7 @@ public:
     {
         FieldVector<BoundaryConditions::Flags, numEq> values(BoundaryConditions::neumann);
 
-        if (globalPos[0] > 4 - eps_)
+        if (globalPos[1] < eps_)
             values = BoundaryConditions::dirichlet;
 
         return values;
@@ -84,9 +84,6 @@ public:
     {
         SolutionVector values(0);
 
-        if (globalPos[0] < 2.0)
-            values[switchIdx] = -1e-3;
-
         return values;
     }
 
@@ -101,7 +98,7 @@ public:
         Scalar densityW_ = 1000.0;
 
         values[pWIdx] = 1e5 - densityW_*gravity_[1]*(depthBOR_ - globalPos[1]);
-        values[switchIdx] = 1e-8;
+        values[switchIdx] = 1e-6;
 
         return values;
     }
@@ -146,7 +143,7 @@ public:
           depthBOR_(depthBOR)
     {
         gravity_[0] = 0;
-        gravity_[1] = -9.81;
+        gravity_[1] = 0;//-9.81;
 
         eps_ = 1e-10;
     }

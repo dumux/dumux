@@ -8,24 +8,26 @@ namespace Dune {
 template<class Grid, class Scalar>
 class TwoCStokesProblem : public StokesTransportProblem<Grid, Scalar>
 {
-public:
+    enum {velocityXIdx=0, velocityYIdx=1, partialDensityIdx=2, pressureIdx=3};
     enum {dim=Grid::dimension, numEq=Grid::dimension+2};
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
     typedef typename Grid::LeafGridView::IntersectionIterator IntersectionIterator;
     typedef FieldVector<Scalar,dim> GlobalPosition;
     typedef FieldVector<Scalar,dim> LocalPosition;
     typedef FieldVector<Scalar,numEq> SolutionVector;
+public:
 
 
     SolutionVector initial (const GlobalPosition& globalPos, const Element& element,
                             const LocalPosition& localPos) const
     {
-        SolutionVector result(0);
 
-        result[0] = 1.0e-3;
+	SolutionVector result(0);
 
-        if (globalPos[0] > 0.4 && globalPos[0] < 0.6 && globalPos[1] > 0.4 && globalPos[1] < 0.6 )
-            result[dim] = 1;
+        result[velocityXIdx] = 1.0e-3;
+        result[velocityYIdx] = 0;
+        result[partialDensityIdx] = 0.1;
+        result[pressureIdx] = 1e5;
 
         return result;
     }
@@ -43,7 +45,7 @@ public:
                                       const IntersectionIterator& intersectionIt,
                                       const LocalPosition& localPos) const
     {
-        if (globalPos[0] < 1e-6 || globalPos[1] < 1e-6 || globalPos[1] > 1 - 1e-6)
+        if (globalPos[0] < eps_ || globalPos[1] < eps_ || globalPos[1] > 1 - eps_ || globalPos[0] > 5.5 - eps_)
             return BoundaryConditions::dirichlet;
         else
             return BoundaryConditions::neumann;
@@ -55,7 +57,10 @@ public:
     {
         SolutionVector result(0);
 
-        result = velocity(globalPos, element, localPos);
+        result[velocityXIdx] = velocity(globalPos, element, localPos)[0];
+        result[velocityYIdx] = velocity(globalPos, element, localPos)[1];
+        result[partialDensityIdx] = 0.1;
+//        result[pressureIdx] = 1e5;
 
         return result;
     }
@@ -75,9 +80,11 @@ public:
                                   const LocalPosition& localPos) const
     {
         Scalar alpha;
-        if (globalPos[1] < 0.5 + 1e-6)
+        // tangential face of porous media
+        if (globalPos[0] < 4.0 + eps_ && globalPos[1] < 0.5 + eps_)
             alpha = 0.1;
-        else
+
+        else // right boundary
             return(-1.0); // realizes outflow boundary condition
 
         //TODO: uses only Kxx, extend to permeability tensor
@@ -97,7 +104,7 @@ public:
     {
         SolutionVector result(0);
 
-        result[0] = 4.0*globalPos[1]*(1.0 - globalPos[1]);
+        result[velocityXIdx] = 4.0*globalPos[1]*(1.0 - globalPos[1]);
 
         return result;
     }
@@ -159,7 +166,8 @@ public:
         soil_(soil),
         multicomp_(multicomp)
     {
-        gravity_ = 9.81;
+        gravity_ = 0;//9.81;
+        eps_ = 1e-6;
         //    for (int i=0; i<dim; ++i)
         //        gravity_[i] = 0;
         //    gravity_[dim] = -9.81;
@@ -172,6 +180,7 @@ protected:
     Gas_GL& gasPhase_;
     Matrix2p<Grid, Scalar>& soil_;
     MultiComp& multicomp_;
+    Scalar eps_;
 };
 
 }
