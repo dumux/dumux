@@ -17,7 +17,7 @@
 #include "dumux/material/multicomponentrelations.hh"
 
 #include "boxstokestransport.hh"
-//#include "analyticproblemP.hh"
+#include "analyticproblemP.hh"
 #include "transportproblem.hh"
 
 template<int dim>
@@ -149,7 +149,7 @@ int main(int argc, char** argv)
         timeloop.execute(boxStokesTransport);
 
         //printvector(std::cout, *(boxStokes.u), "solution", "row", 200, 1, 3);
-        //calculateError(grid, problem, boxStokesTransport.u);
+       // calculateError(grid, problem, boxStokesTransport.u);
 
         return 0;
     }

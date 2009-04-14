@@ -35,12 +35,14 @@ public:
         return result;
     }
 
-    virtual BoundaryConditions::Flags bctype (const FieldVector<Scalar,dim>& x, const Element& e,
-                                              const IntersectionIterator& intersectionIt,
-                                              const FieldVector<Scalar,dim>& xi) const
-    {
-        return BoundaryConditions::dirichlet;
-    }
+    virtual FieldVector<BoundaryConditions::Flags, numEq> bctype (const FieldVector<Scalar,dim>& x, const Element& e,
+                                                                      const IntersectionIterator& intersectionIt,
+                                                                      const FieldVector<Scalar,dim>& xi) const
+        {
+        	FieldVector<BoundaryConditions::Flags, numEq> values(BoundaryConditions::dirichlet);
+
+            return values;
+        }
 
     virtual FieldVector<Scalar,numEq> g(const FieldVector<Scalar,dim>& x, const Element& e,
                                         const IntersectionIterator& intersectionIt,
@@ -59,6 +61,13 @@ public:
     {
         FieldVector<Scalar,numEq> result(0);
         return result;
+    }
+
+    virtual Scalar pressure(const FieldVector<Scalar,dim>& x) const
+    {
+            Scalar result = 0;
+
+            return result;
     }
 
     virtual FieldMatrix<Scalar,dim,dim> D (const FieldVector<Scalar,dim>& x, const Element& e,
@@ -81,10 +90,21 @@ public:
         return result;
     }
 
-    virtual Scalar gravity() const
-    {
-        return 0;//-9.8;
-    }
+    virtual FieldVector<Scalar,dim> gravity(const FieldVector<Scalar,dim>& x) const
+       {
+           FieldVector<Scalar,dim> result(0);
+           result[dim-1] = -9.81;
+
+           return result;
+       }
+
+    virtual Scalar viscosity(const FieldVector<Scalar,dim>& x, const Element& e,
+                                 const FieldVector<Scalar,dim>& xi) const
+        {
+            Scalar result = 1;
+
+            return result;
+        }
 
     virtual Scalar density(const FieldVector<Scalar,dim>& x, const Element& e,
                            const FieldVector<Scalar,dim>& xi) const

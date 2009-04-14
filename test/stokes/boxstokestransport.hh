@@ -186,8 +186,7 @@ public:
                                     Dune::FieldVector<Scalar,dimworld> global = it->geometry().global(local);
 
                                     int globalId = vertexmapper.template map<dim>(element, sfs[i].entity());
-
-                                    BoundaryConditions::Flags bctype = this->problem.bctype(global, element, is, local);
+/*                                  BoundaryConditions::Flags bctype(this->problem.bctype(global, element, is, local));
                                     if (bctype == BoundaryConditions::dirichlet) {
                                         FieldVector<Scalar,numEq> dirichlet = this->problem.g(global, element, is, local);
                                         for (int eq = 0; eq < dim+1; eq++)
@@ -196,10 +195,44 @@ public:
                                     else {
                                         std::cout << global << " is considered to be a Neumann node." << std::endl;
                                     }
+*/
+                                    FieldVector<BoundaryConditions::Flags, numEq> bctype(this->problem.bctype(global, element, is, local));
+
+                                    FieldVector<Scalar,numEq> dirichlet = this->problem.g(global, element, is, local);
+
+                                    for (int eq = 0; eq < numEq; eq++)
+                                    {
+                                    	if (bctype[eq] == BoundaryConditions::dirichlet)
+                                    	{
+                                    		(*(this->u))[globalId][eq] = dirichlet[eq];
+                                    	}
+                                    	else
+                                    	{
+                                          std::cout << global << " is considered to be a Neumann node." << std::endl;
+                                    	}
+                                    }
                                 }
                             }
                 }
         }
+//-------------do we need this? -----------------
+      //set pressure condition (same node as in asseble())
+        Iterator it = gridview.template begin<0>();
+        unsigned int globalId = vertexmapper.template map<dim>(*it, 3);
+
+        //get global coordinates of node globalId
+        // get geometry type
+        Dune::GeometryType gt = it->geometry().type();
+        // get local coordinates of node globalId (element it, node 3)
+        Dune::FieldVector<Scalar,dim> local = ReferenceElements<Scalar, dim>::general(gt).position(3,dim);
+        // get global coordinates
+        Dune::FieldVector<Scalar, dimworld> global = it->geometry().global(local);
+
+        //set third position of u to pressure(globalID)
+        (*(this->u))[globalId][dim] = this->problem.pressure(global);
+
+//-------------do we need this? -----------------
+
 
         *(this->uOldTimeStep) = *(this->u);
         return;
@@ -226,6 +259,7 @@ public:
                     A[i.index()][j.index()][dim+1] = 0.0;
         A[globalId][globalId][dim+1][dim+1] = 1.0;
         (*(this->f))[globalId][dim+1] = 0.0;
+
     }
 
     virtual void update(double& dt)
@@ -250,6 +284,7 @@ public:
     virtual void solve()
     {
         MatrixType& A = *(this->A);
+
         Operator op(A);  // make operator out of matrix
         double red=1E-18;
 

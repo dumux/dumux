@@ -33,10 +33,14 @@ public:
         return result;
     }
 
+    virtual FieldVector<BoundaryConditions::Flags, numEq> bctype (const FieldVector<Scalar,dim>& x, const Element& e,
+            const IntersectionIterator& intersectionIt,
+            const FieldVector<Scalar,dim>& xi) const = 0;
+/*
     virtual BoundaryConditions::Flags bctype (const FieldVector<Scalar,dim>& x, const Element& e,
                                               const IntersectionIterator& intersectionIt,
                                               const FieldVector<Scalar,dim>& xi) const = 0;
-
+*/
     virtual FieldVector<Scalar,numEq> initial(const FieldVector<Scalar,dim>& x, const Element& e,
                                               const FieldVector<Scalar,dim>& xi) const
     {
@@ -107,7 +111,7 @@ public:
         return 0;
     }
 
-  virtual Scalar density(const FieldVector<Scalar,dim>& x, const Element& e,
+    virtual Scalar density(const FieldVector<Scalar,dim>& x, const Element& e,
           const FieldVector<Scalar,dim>& xi) const
     {
       DUNE_THROW(NotImplemented, "no exact solution available");
@@ -115,7 +119,21 @@ public:
       return 0;
     }
 
-  virtual Scalar gravity() const= 0;
+    virtual Scalar viscosity(const FieldVector<Scalar,dim>& x, const Element& e,
+							 const FieldVector<Scalar,dim>& xi) const
+    {
+		DUNE_THROW(NotImplemented, "no exact solution available");
+
+		return 0;
+	}
+
+	virtual FieldVector<Scalar,dim> gravity(const FieldVector<Scalar,dim>& x) const
+    {
+		DUNE_THROW(NotImplemented, "no exact solution available");
+		FieldVector<Scalar,dim> result(0);
+
+		return result;
+    }
 
     virtual FieldVector<Scalar,numEq> velocitypressuremassfrac(const FieldVector<Scalar,dim>& x) const
     {
