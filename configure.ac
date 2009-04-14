@@ -116,6 +116,7 @@ AC_CONFIG_FILES([Makefile
     test/box3d/Makefile
     test/brinkman/Makefile
     test/coupled/Makefile
+    test/coupledtransport/Makefile
     test/diffusion/Makefile
     test/fractionalflow/Makefile
     test/fvca5/Makefile
