@@ -12,7 +12,6 @@
 #include<dune/common/exceptions.hh>
 #include<dune/grid/common/grid.hh>
 #include<dune/grid/common/referenceelements.hh>
-#include<dune/grid/utility/intersectiongetter.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
 #include<dumux/material/twophaserelations.hh>
 
