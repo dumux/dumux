@@ -9,19 +9,14 @@
 #include <dune/grid/sgrid.hh>
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
-#include "dumux/material/properties.hh"
-#include "dumux/material/linearlaw_deprecated.hh"
-#include "dumux/material/brookscoreylaw_deprecated.hh"
-#include "dumux/material/vangenuchtenlaw_deprecated.hh"
-#include "dumux/transport/fv/fvtransport_deprecated.hh"
-#include "dumux/diffusion/fv/fvdiffusion_deprecated.hh"
-#include "dumux/diffusion/fv/fvdiffusionvelocity_deprecated.hh"
-//#include "dumux/diffusion/mimetic/mimeticdiffusion.hh"
-#include "dumux/fractionalflow/impes/impes_deprecated.hh"
-#include "../problemdefinitions/fivespottransportproblem.hh"
-#include "../problemdefinitions/fivespotdiffproblem.hh"
+#include "dumux/material/phaseproperties/phaseproperties2p.hh"
+#include "dumux/material/twophaserelations.hh"
+#include "dumux/transport/fv/fvtransport.hh"
+#include "dumux/diffusion/fv/fvdiffusionvelocity.hh"
+#include "dumux/fractionalflow/impes/impes.hh"
+#include "../problemdefinitions/fivespotproblem.hh"
+#include "../problemdefinitions/fivespot_soilproperties.hh"
 #include "dumux/timedisc/timeloop.hh"
-#include "dumux/timedisc/rungekuttastep.hh"
 #include "dumux/fractionalflow/variableclass.hh"
 
 int main(int argc, char** argv)
@@ -30,9 +25,6 @@ int main(int argc, char** argv)
         // define the problem dimensions
         const int dim=2;
         typedef double NumberType;
-        //      Dune::FieldVector<NumberType, dim> LowerLeft(0);
-        //      Dune::FieldVector<NumberType, dim> UpperRight(300);
-        //      UpperRight[1]=70;
         if (argc < 2) {
             std::cout << "usage: tEnd" << std::endl;
             return 0;
@@ -41,6 +33,7 @@ int main(int argc, char** argv)
             std::cout << "usage: boundaryconditionfactor bcf" << std::endl;
             return 0;
         }
+
         std::string arg1(argv[1]);
         std::istringstream is1(arg1);
         int tEnd;
@@ -65,36 +58,37 @@ int main(int argc, char** argv)
 
         Dune::gridinfo(grid);
 
-        Oil oil(0.2);
-        Water water(0.2);
-        Dune::DeprecatedBrooksCoreyLaw materialLaw(water, oil,2.0,0.0);
-        //Dune::LinearLaw materialLaw(water,oil);
+        Dune::Oil oil(1000,1e-3);
+        Dune::Water water(1000,1e-3);
+
+        Dune::FivespotSoil<GridType, NumberType> soil;
+
+         Dune::TwoPhaseRelations<GridType, NumberType> materialLaw(soil, water, oil);
 
         typedef Dune::VariableClass<GridType, NumberType> VC;
 
         VC variables(grid);
 
-        Dune::Fivespotcase1TransportProblem<GridType, NumberType, VC> transportProblem(variables, materialLaw, bcf);
-        Dune::Fivespotcase1DiffProblem<GridType, NumberType, VC> diffusionProblem(variables, materialLaw, bcf);
+        typedef Dune::FivespotProblemCase1<GridType, NumberType, VC> Problem;
+        Problem problem(variables, water, oil, soil, materialLaw, bcf);
 
-        typedef Dune::DeprecatedFVTransport<GridType, NumberType, VC> DeprecatedTransport;
-        DeprecatedTransport transport(grid, transportProblem, grid.maxLevel());
+        typedef Dune::FVDiffusionVelocity<GridType, NumberType, VC, Problem> Diffusion;
+        Diffusion diffusion(grid, problem,"CG","SeqILU0");
 
-        //typedef Dune::MimeticDiffusion<GridType, NumberType, VC> DeprecatedDiffusion;
-        typedef Dune::DeprecatedFVDiffusionVelocity<GridType, NumberType, VC> DeprecatedDiffusion;
-        DeprecatedDiffusion diffusion(grid, diffusionProblem, grid.maxLevel());
+        typedef Dune::FVTransport<GridType, NumberType, VC, Problem> Transport;
+        Transport transport(grid, problem);
 
         int iterFlag = 2;
         int nIter = 100;
         double maxDefect = 1e-5;
-        typedef Dune::IMPES<GridType, DeprecatedDiffusion, DeprecatedTransport, VC> IMPES;
+        typedef Dune::IMPES<GridType, Diffusion, Transport, VC> IMPES;
         IMPES fractionalflow(diffusion, transport, iterFlag, nIter, maxDefect);
 
         double tStart = 0;
         //double tEnd = 2.5e9;
         const char* fileName = "fivespotcase1";
         int modulo = 1;
-        double cFLFactor = 0.3;
+        double cFLFactor = 0.8;
         Dune::TimeLoop<GridType, IMPES > timeloop(tStart, tEnd, fileName, modulo, cFLFactor);
 
         Dune::Timer timer;
