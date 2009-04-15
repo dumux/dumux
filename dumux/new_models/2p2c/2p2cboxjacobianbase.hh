@@ -1096,7 +1096,7 @@ protected:
                 else if (phaseState == wPhaseOnly) satN = 0.0;
                 else if (phaseState == nPhaseOnly) satN = 1.0;
 
-                Scalar satW = 1 - satN;
+                satW = 1 - satN;
 
                 Scalar pC = this->problem_.pC(satW, globalIdx, globalPos);
                 pN = pW + pC;
