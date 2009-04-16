@@ -326,7 +326,7 @@ public:
         varData[i].pN = sol[i][pressureIdx];
         varData[i].density = 1.23;//problem.density(this->fvGeom.elementGlobal, element, this->fvGeom.elementLocal);//1.0; sol[i][pressureIdx]+1;
         varData[i].partialpressure = sol[i][partialDensityIdx];
-        varData[i].viscosity = 1.0;//problem.gasPhase().viscosity(283.15, varData[i].pN, 0);
+        varData[i].viscosity = 0.01;//problem.gasPhase().viscosity(283.15, varData[i].pN, 0);
 
         //         std::cout << "node " << i << "   " << varData[i].density << std::endl;
         // for output
@@ -358,7 +358,8 @@ public:
     }
 
     //    SolutionVector boundaryFlux(const Element& element, const SolutionVector* sol, int node, std::vector<VariableNodeData>& varData) {
-    SolutionVector boundaryFlux(const Element& element, const SolutionVector* sol, int node) {
+    SolutionVector boundaryFlux(const Element& element, const SolutionVector* sol, int node)
+    {
         SolutionVector  result(0);
 
         Dune::GeometryType gt = element.geometry().type();
@@ -439,7 +440,7 @@ public:
                     {
 	                    FieldVector<Scalar,dim> gradVN(0);
         	            velocityGradient.umv(it->unitOuterNormal(faceLocal), gradVN);
-                	    gradVN *= this->fvGeom.boundaryFace[bfIdx].area;
+                	    gradVN *= 0.01*this->fvGeom.boundaryFace[bfIdx].area;
 			//TODO: multiply gradVN by mu?
                     	for (int comp = 0; comp < dim; comp++)
                     	{
@@ -449,7 +450,6 @@ public:
                         	if (alpha == 0)
                             		result[comp] += gradVN[comp];
                     	}
-                    }
                     //transport
                     Scalar pressValue = 0;
                     FieldVector<Scalar, dim> xV(0);
@@ -483,6 +483,47 @@ public:
                     D.mv(gradX, DgradX);  // DgradX=D*gradX
 
                     result[partialDensityIdx] = (DgradX - xV)*it->unitOuterNormal(faceLocal)*this->fvGeom.boundaryFace[bfIdx].area;
+					}
+                    else
+                    {
+                        Scalar beaversJosephC = this->getImp().problem.beaversJosephC(this->fvGeom.boundaryFace[bfIdx].ipGlobal, element, it, this->fvGeom.boundaryFace[bfIdx].ipLocal);
+                        if (beaversJosephC > 0) // realize Beavers-Joseph interface condition
+                        {
+                            FieldVector<Scalar,dim> tangentialV = velocityValue;
+                            //                            for (int comp = 0; comp < dim; comp++)
+                            //                            {
+                            //                                tangentialV[comp] = sol[node][comp];
+                            //                            }
+
+                            // normal n
+                            FieldVector<Scalar,dim> normal = it->unitOuterNormal(faceLocal);
+
+                            // v.n
+                            Scalar normalComp = tangentialV*normal;
+
+                            // (v.n)n
+                            FieldVector<Scalar,dim> normalV = normal;
+                            normalV *= normalComp;
+
+                            // v_tau = v - (v.n)n
+                            tangentialV -= normalV;
+
+                            for (int comp = 0; comp < dim; comp++)
+                            {
+                                result[comp] -= 1.0/beaversJosephC*this->fvGeom.boundaryFace[bfIdx].area*tangentialV[comp];
+                            }
+                        }
+                        else if (beaversJosephC < 0)
+                        {
+                            for (int comp = 0; comp < dim; comp++)
+                            {
+                                FieldVector<Scalar,dim>  pressVector(0);
+                                pressVector[comp] = -pressureValue;
+
+                                result[comp] += pressVector*it->unitOuterNormal(faceLocal)*this->fvGeom.boundaryFace[bfIdx].area;
+                            }
+                        }
+                    }
                 }
             }
         }

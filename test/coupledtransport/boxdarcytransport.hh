@@ -42,7 +42,7 @@
 #include "test/coupledtransport/boxdarcytransportjacobian.hh"
 
 #include "dumux/nonlinear/new_newtonmethod.hh"
-#include "dumux/2p2c/2p2cnewtoncontroller.hh"
+#include "dumux/new_models/2p2c/2p2cnewtoncontroller.hh"
 #include "dumux/io/importfromdgf_leaf.hh"
 
 namespace Dune

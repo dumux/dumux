@@ -130,7 +130,7 @@ public:
 
                 if (faces == 2 && this->fvGeom.numVertices == 4)
                 {
-                    this->def[vert] = sol[0] + sol[3] - sol[1] - sol[2];
+                    this->def[vert][pWIdx] = sol[0][pWIdx] + sol[3][pWIdx] - sol[1][pWIdx] - sol[2][pWIdx];
                 }
             }
 

@@ -185,16 +185,30 @@ public:
                                     Dune::FieldVector<Scalar,dimworld> global = it->geometry().global(local);
 
                                     int globalId = vertexmapper.template map<dim>(element, sfs[i].entity());
-
-                                    BoundaryConditions::Flags bctype = this->problem.bctype(global, element, is, local);
-                                    if (bctype == BoundaryConditions::dirichlet)
-                                    {
+/*                                  BoundaryConditions::Flags bctype(this->problem.bctype(global, element, is, local));
+                                    if (bctype == BoundaryConditions::dirichlet) {
                                         FieldVector<Scalar,numEq> dirichlet = this->problem.g(global, element, is, local);
                                         for (int eq = 0; eq < dim+1; eq++)
                                             (*(this->u))[globalId][eq] = dirichlet[eq];
                                     }
                                     else {
                                         std::cout << global << " is considered to be a Neumann node." << std::endl;
+                                    }
+*/
+                                    FieldVector<BoundaryConditions::Flags, numEq> bctype(this->problem.bctype(global, element, is, local));
+
+                                    FieldVector<Scalar,numEq> dirichlet = this->problem.g(global, element, is, local);
+
+                                    for (int eq = 0; eq < numEq; eq++)
+                                    {
+                                    	if (bctype[eq] == BoundaryConditions::dirichlet)
+                                    	{
+                                    		(*(this->u))[globalId][eq] = dirichlet[eq];
+                                    	}
+                                    	else
+                                    	{
+                                          std::cout << global << " is considered to be a Neumann node." << std::endl;
+                                    	}
                                     }
                                 }
                             }
@@ -249,20 +263,7 @@ public:
 
     virtual void solve()
     {
-	//modify matrix for introducing pressure boundary condition
-	const GridView& gridview(this->grid_.leafView());
-	typedef typename GridView::template Codim<0>::Iterator Iterator;
-
-	Iterator it = gridview.template begin<0>();
-	unsigned int globalId = vertexmapper.template map<dim>(*it, 3);
-
-	MatrixType& A = *(this->A);
-	for (typename MatrixType::RowIterator i=A.begin(); i!=A.end(); ++i)
-	    if(i.index()==globalId)
-		for (typename MatrixType::ColIterator j=(*i).begin(); j!=(*i).end(); ++j)
-		    A[i.index()][j.index()][dim+1] = 0.0;
-	A[globalId][globalId][dim+1][dim+1] = 1.0;
-	(*(this->f))[globalId][dim+1] = 0.0;
+        MatrixType& A = *(this->A);
 
         Operator op(A);  // make operator out of matrix
         double red=1E-18;
@@ -290,7 +291,8 @@ public:
 
         // allocate flag vector to hold flags for essential boundary conditions
         std::vector<BCBlockType> essential(this->vertexmapper.size());
-        for (typename std::vector<BCBlockType>::size_type i=0; i<essential.size(); i++)
+        for (typename std::vector<BCBlockType>::size_type i=0; i
+                 <essential.size(); i++)
             essential[i] = BoundaryConditions::neumann;
 
         // iterate through leaf grid

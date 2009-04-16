@@ -40,15 +40,21 @@ public:
         return result;
     }
 
-    //TODO: implement bcs as FieldVector with numEq entries
-    BoundaryConditions::Flags bctype (const GlobalPosition& globalPos, const Element& element,
+    virtual FieldVector<BoundaryConditions::Flags, numEq> bctype (const GlobalPosition& globalPos, const Element& element,
                                       const IntersectionIterator& intersectionIt,
                                       const LocalPosition& localPos) const
     {
-        if (globalPos[0] < eps_ || globalPos[1] < eps_ || globalPos[1] > 1 - eps_ || globalPos[0] > 5.5 - eps_)
-            return BoundaryConditions::dirichlet;
-        else
-            return BoundaryConditions::neumann;
+    	FieldVector<BoundaryConditions::Flags, numEq> values(BoundaryConditions::dirichlet);
+
+    	if (globalPos[0] > eps_ || globalPos[1] > eps_ || globalPos[1] < 1 - eps_ || globalPos[0] < 5.5 - eps_)
+    	{
+            values[0] = BoundaryConditions::neumann;
+            values[1] = BoundaryConditions::neumann;
+            values[2] = BoundaryConditions::neumann;
+            values[3] = BoundaryConditions::neumann;
+    	}
+
+    	return values;
     }
 
     SolutionVector g(const GlobalPosition& globalPos, const Element& element,
