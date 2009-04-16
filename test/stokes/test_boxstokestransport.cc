@@ -108,8 +108,8 @@ int main(int argc, char** argv)
         // define the problem dimensions
         const int dim = 2;
         double tStart = 0;
-        double tEnd = 50;
-        double dt = 10;
+        double tEnd = 100;
+        double dt = 5;
         int modulo = 1; // print every modulo'th time step
 
         // create a grid object
@@ -148,7 +148,7 @@ int main(int argc, char** argv)
 
         timeloop.execute(boxStokesTransport);
 
-        //printvector(std::cout, *(boxStokes.u), "solution", "row", 200, 1, 3);
+       // printvector(std::cout, *(boxStokes.u), "solution", "row", 200, 1, 3);
        // calculateError(grid, problem, boxStokesTransport.u);
 
         return 0;

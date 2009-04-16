@@ -70,6 +70,13 @@ public:
             return result;
     }
 
+    virtual Scalar beaversJosephC(const FieldVector<Scalar,dim>& globalPos, const Element& element,
+                                         const IntersectionIterator& intersectionIt,
+                                         const FieldVector<Scalar,dim>& localPos) const
+           {
+               return (-1.0);
+           }
+
     virtual FieldMatrix<Scalar,dim,dim> D (const FieldVector<Scalar,dim>& x, const Element& e,
                                            const FieldVector<Scalar,dim>& xi) const
     {

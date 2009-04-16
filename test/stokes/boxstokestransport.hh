@@ -106,7 +106,7 @@ public:
     LeafP1BoxStokesTransport (const Grid& grid, StokesTransportProblem<Grid, Scalar>& prob)
         : BoxStokesTransport(grid, prob), grid_(grid), vertexmapper(grid.leafView()),
           size((*(this->u)).size()), pressure(size), xVelocity(size), yVelocity(size),
-          partialDensity(size), uOldNewtonStep(size)
+          Xg(size), uOldNewtonStep(size)
     { }
 
     VectorType& solOldNewtonStep()
@@ -357,14 +357,14 @@ public:
             pressure[i] = (*(this->u))[i][dim+1];
             xVelocity[i] = (*(this->u))[i][0];
             yVelocity[i] = (*(this->u))[i][1];
-            partialDensity[i]  = (*(this->u))[i][dim];
+            Xg[i]  = (*(this->u))[i][dim];
         }
 
         VTKWriter<typename Grid::LeafGridView> vtkwriter(this->grid_.leafView());
         vtkwriter.addVertexData(pressure,"pressure");
         vtkwriter.addVertexData(xVelocity,"xVelocity");
         vtkwriter.addVertexData(yVelocity,"yVelocity");
-        vtkwriter.addVertexData(partialDensity,"partialDensity");
+        vtkwriter.addVertexData(Xg,"Xg");
         char fname[128];
         sprintf(fname, "%s-%05d", name, k);
         vtkwriter.write(fname, VTKOptions::ascii);
@@ -382,7 +382,7 @@ protected:
     BlockVector<FieldVector<Scalar, 1> > pressure;
     BlockVector<FieldVector<Scalar, 1> > xVelocity;
     BlockVector<FieldVector<Scalar, 1> > yVelocity;
-    BlockVector<FieldVector<Scalar, 1> > partialDensity;
+    BlockVector<FieldVector<Scalar, 1> > Xg;
     VectorType uOldNewtonStep;
 };
 
