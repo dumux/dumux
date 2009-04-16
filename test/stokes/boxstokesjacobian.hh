@@ -62,7 +62,7 @@ public:
         : BoxJacobianType(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_),
           problem(params)
     {
-        alpha = -1e3;
+        alpha = -1;
         this->analytic = false;
     }
 
@@ -128,8 +128,8 @@ public:
 
                 if (faces == 2 && this->fvGeom.numVertices == 4)
                 {
-                    this->def[vert][0] = sol[0][0] + sol[3][0] - sol[1][0] - sol[2][0];
-                    this->def[vert][1] = sol[0][1] + sol[3][1] - sol[1][1] - sol[2][1];
+                    //this->def[vert][0] = sol[0][0] + sol[3][0] - sol[1][0] - sol[2][0];
+                    //this->def[vert][1] = sol[0][1] + sol[3][1] - sol[1][1] - sol[2][1];
                     this->def[vert][dim] = sol[0][dim] + sol[3][dim] - sol[1][dim] - sol[2][dim];
                 }
                 else if (this->bctype[vert][0] == BoundaryConditions::dirichlet)
@@ -153,11 +153,20 @@ public:
 
                         Scalar alphaH2 = 0.5*alpha*(this->fvGeom.subContVol[i].volume + this->fvGeom.subContVol[j].volume);
                         pressGradient *= alphaH2;
-                        if (i == vert)
-                            this->def[vert][dim] += pressGradient*this->fvGeom.subContVolFace[face].normal;
-                        else
+                        // SIGN ?????
+                        if (vert == i)
+                        {
                             this->def[vert][dim] -= pressGradient*this->fvGeom.subContVolFace[face].normal;
+                        }
+                        else
+                        {
+                            this->def[vert][dim] += pressGradient*this->fvGeom.subContVolFace[face].normal;
+                        }
                     }
+
+                    SolutionVector source = problem.q(this->fvGeom.subContVol[vert].global, element, this->fvGeom.subContVol[vert].local);
+                    Scalar alphaH2 = alpha*this->fvGeom.subContVol[vert].volume;
+                    this->def[vert][dim] -= alphaH2*source[dim]*this->fvGeom.subContVol[vert].volume;
                 }
             }
 
@@ -412,7 +421,6 @@ public:
         for (int i = 0; i < sfs.size(); i++) {
             this->bctype[i].assign(BoundaryConditions::neumann);
             this->b[i] = 0;
-            // this->dirichletIndex[i] = 0;
         }
 
         // evaluate boundary conditions via intersection iterator
@@ -430,7 +438,6 @@ public:
 
             // determine boundary condition type for this face, initialize with processor boundary
             FieldVector<typename BoundaryConditions::Flags, numEq> bctypeface(BoundaryConditions::process);
-            // FieldVector<int,numEq> dirichletIdx(0);
 
             // handle face on exterior boundary, this assumes there are no interior boundaries
             if (it->boundary()) {
@@ -444,14 +451,11 @@ public:
                             FieldVector<Scalar,dim> local = this->fvGeom.boundaryFace[bfIdx].ipLocal;
                             FieldVector<Scalar,dim> global = this->fvGeom.boundaryFace[bfIdx].ipGlobal;
                             bctypeface = this->getImp().problem.bctype(global, element, it, local); // eval bctype
-                            // this->getImp().problem.dirichletIndex(global, element, it, local, dirichletIdx); // eval bctype
-                            //                            std::cout << "faceIdx = " << faceIdx << ", nodeInElement = " << nodeInElement
-                            //                                      << ", bfIdx = " << bfIdx << ", local = " << local << ", global = " << global
-                            //                                      << ", bctypeface = " << bctypeface << std::endl;
+
                             if (bctypeface[equationNumber]!=BoundaryConditions::neumann)
                                 break;
                             FieldVector<Scalar,numEq> J = this->getImp().problem.J(global, element, it, local);
-                            //                            std::cout << "J = " << J << std::endl;
+
                             if (equationNumber < dim)
                             {
                                 J[equationNumber] *= this->fvGeom.boundaryFace[bfIdx].area;

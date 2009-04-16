@@ -92,16 +92,15 @@ public:
         velocityGradient(globalPos).umv(normal, muGradVN);
         muGradVN *= mu(globalPos, element, localPos);
 
-        Scalar muGradVNN = muGradVN*normal;
-
-        temp = normal;
-        temp *= muGradVNN;
+        temp = muGradVN;
         temp -= pN;
 
         // this is some workaround for the boxjacobian
         // and the instantiation of the function assembleBoundaryCondition
         for (int i=0; i < dim; ++i)
             result[i] = temp[i];
+
+        //std::cout << "x = " << globalPos << ", J = " << result << std::endl;
 
         return result;
     }
@@ -116,7 +115,7 @@ public:
                                   const IntersectionIterator& intersectionIt,
                                   const FieldVector<Scalar,dim>& localPos) const
     {
-        return (1.0/mu(globalPos, element, localPos));
+        return (0);
     }
 
     YXProblem()
