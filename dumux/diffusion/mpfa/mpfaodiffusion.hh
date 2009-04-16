@@ -18,8 +18,8 @@
  * @file
  * @brief  Base class for defining an instance of a numerical diffusion model
  * @brief  MPFA O-method 
- * @brief  Remark1: only for 2-D quadrilateral grid; 
- * @brief  Remark2: can use UGGrid or SGrid (YaspGrid); variable 'ch' is chosen to decide which grid will be used
+ * @brief  Remark1: only for 2-D quadrilateral grid.
+ * @brief  Remark2: can use UGGrid or SGrid (YaspGrid); variable 'ch' is chosen to decide which grid will be used.
  * @brief  Remark3: without capillary pressure and gravity!
  * @author Yufei Cao
  */
