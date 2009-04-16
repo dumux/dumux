@@ -1,5 +1,5 @@
 # tests where program to build and program to run are equal
-NORMALTESTS = test_diffusion test_equilibrated
+NORMALTESTS = test_diffusion test_mpfa test_equilibrated
 
 # list of tests to run
 #TESTS = $(NORMALTESTS)
@@ -8,6 +8,8 @@ NORMALTESTS = test_diffusion test_equilibrated
 check_PROGRAMS = $(NORMALTESTS)
 
 test_diffusion_SOURCES = test_diffusion.cc
+
+test_mpfa_SOURCES = test_mpfa.cc
 
 test_equilibrated_SOURCES = test_equilibrated.cc
 
