@@ -385,7 +385,7 @@ public:
 
                             for (int comp = 0; comp < dim; comp++)
                             {
-                                result[comp] += 1.0/beaversJosephC*this->fvGeom.boundaryFace[bfIdx].area*tangentialV[comp];
+                                result[comp] -= 1.0/beaversJosephC*this->fvGeom.boundaryFace[bfIdx].area*tangentialV[comp];
                             }
                         }
                         else if (beaversJosephC < 0)
