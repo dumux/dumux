@@ -149,6 +149,7 @@ AC_CONFIG_FILES([Makefile
     dumux/diffusion/fv/Makefile 
     dumux/diffusion/fe/Makefile 
     dumux/diffusion/mimetic/Makefile 
+    dumux/diffusion/mpfa/Makefile
     dumux/diffusion/problems/Makefile 
     dumux/material/constrel/Makefile 
     dumux/material/phaseproperties/Makefile 
