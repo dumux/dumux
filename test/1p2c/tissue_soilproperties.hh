@@ -72,5 +72,6 @@ public:
 private:
     Dune::FieldMatrix<CoordScalar,dim,dim> permloc_, permlocWell_;
 };
+
 } // end namespace
 #endif
