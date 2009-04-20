@@ -32,7 +32,7 @@
 #include <dune/grid/common/scsgmapper.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/disc/functions/functions.hh>
-#include "dumux/operators/p1operatorextended.hh"
+#include <dune/disc/operators/p1operator.hh>
 #include <dune/disc/operators/boundaryconditions.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/paamg/amg.hh>
@@ -120,7 +120,7 @@ public:
         typedef typename GridT::Traits::template Codim<0>::Entity Element;
         typedef typename GridT::ctype CoordScalar;
         typedef typename GV::template Codim<0>::Iterator Iterator;
-        typedef typename IntersectionIteratorGetter<GridT,LeafTag>::IntersectionIterator IntersectionIterator;
+        typedef typename GridT::template Codim<0>::LeafIntersectionIterator IntersectionIterator;
 
         enum {dim = GridT::dimension};
         enum {dimworld = GridT::dimensionworld};
@@ -184,13 +184,12 @@ public:
             int size = sfs.size();
 
             // set type of boundary conditions
-            this->localJacobian().template assembleBC<LeafTag>(element);
+            this->localJacobian().assembleBoundaryCondition(element);
 
-            IntersectionIterator
-                endit = IntersectionIteratorGetter<GridT, LeafTag>::end(element);
+            typedef typename GridT::template Codim<0>::LeafIntersectionIterator IntersectionIterator;
 
-            for (IntersectionIterator is = IntersectionIteratorGetter<GridT,
-                     LeafTag>::begin(element); is!=endit; ++is)
+            IntersectionIterator endit = element.ileafend();
+            for (IntersectionIterator is = element.ileafbegin(); is!=endit; ++is)
                 if (is->boundary())
                 {
                     for (int i = 0; i < size; i++)
@@ -388,7 +387,7 @@ public:
         typedef typename GridT::Traits::template Codim<0>::Entity Element;
         typedef typename GridT::ctype CoordScalar;
         typedef typename GV::template Codim<0>::Iterator Iterator;
-        typedef typename IntersectionIteratorGetter<GridT,LeafTag>::IntersectionIterator IntersectionIterator;
+        typedef typename GridT::template Codim<0>::LeafIntersectionIterator IntersectionIterator;
 
         enum {dim = GridT::dimension};
         enum {dimworld = GridT::dimensionworld};
