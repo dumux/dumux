@@ -3,7 +3,8 @@ SUBDIRS = . \
      box3d-compressible \
 	  co2 \
 	  hysteresis \
-	  phasepressure_ff
+	  phasepressure_ff \
+	  shallowwater
 	  
 include $(top_srcdir)/am/global-rules
 
