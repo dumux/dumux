@@ -68,13 +68,13 @@ public:
 
     typedef typename Grid::LeafGridView GV;
     typedef typename GV::IndexSet IS;
-    typedef MultipleCodimMultipleGeomTypeMapper<Grid,IS,P1Layout> VertexMapper;
-    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator
-    IntersectionIterator;
+    typedef MultipleCodimMultipleGeomTypeMapper<GV,P1Layout> VertexMapper;
+    typedef typename Grid::template Codim<0>::LeafIntersectionIterator IntersectionIterator;
 
     LeafP1OnePhaseModel(const Grid& grid, ProblemType& prob) :
-        ThisOnePhaseModel(grid, prob), problem(prob), grid_(grid), vertexmapper(grid,
-                                                                                grid.leafIndexSet()), size((*(this->u)).size()), p(size), x(size) { }
+        ThisOnePhaseModel(grid, prob), problem(prob), grid_(grid), vertexmapper(grid_.leafView()),
+		size((*(this->u)).size()), p(size), x(size)
+		{ }
 
     virtual void initial() {
         typedef typename Grid::Traits::template Codim<0>::Entity Element;
@@ -131,12 +131,10 @@ public:
             int size = sfs.size();
 
             // set type of boundary conditions
-            this->localJacobian().template assembleBC<LeafTag>(element);
+            this->localJacobian().assembleBoundaryCondition(element);
 
-            IntersectionIterator
-                endit = IntersectionIteratorGetter<Grid, LeafTag>::end(element);
-            for (IntersectionIterator is = IntersectionIteratorGetter<Grid,
-                     LeafTag>::begin(element); is!=endit; ++is)
+            IntersectionIterator endit = element.ileafend();
+            for (IntersectionIterator is = element.ileafbegin(); is!=endit; ++is)
                 if (is->boundary()) {
                     for (int i = 0; i < size; i++)
                         // handle subentities of this face
@@ -232,7 +230,7 @@ public:
             bool old = true;
             this->localJacobian().updateVariableData(element, this->localJacobian().uold, old);
             this->localJacobian().updateVariableData(element, this->localJacobian().u);
-            this->localJacobian().template localDefect<LeafTag>(element, this->localJacobian().u);
+            this->localJacobian().localDefect(element, this->localJacobian().u);
 
             // begin loop over vertices
             for (int i=0; i < size; i++) {
