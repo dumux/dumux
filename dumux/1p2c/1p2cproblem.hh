@@ -11,7 +11,6 @@
 #include<dune/common/exceptions.hh>
 #include<dune/grid/common/grid.hh>
 #include<dune/grid/common/referenceelements.hh>
-#include<dune/grid/utility/intersectiongetter.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
 #include<dumux/material/property_baseclasses.hh>
 /**
@@ -41,7 +40,8 @@ class OnePTwoCProblem {
     typedef typename Grid::ctype CoordScalar;
     enum {dim=Grid::dimension, numEq=2};
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
-    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
+    typedef typename Grid::template Codim<0>::LeafIntersectionIterator::IntersectionIterator
+    IntersectionIterator;
 
 public:
     //    //! evaluate diffusion tensor
