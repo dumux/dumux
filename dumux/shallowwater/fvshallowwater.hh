@@ -7,12 +7,9 @@
 #include <dune/common/typetraits.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
-#include <dune/grid/utility/intersectiongetter.hh>
 #include <dune/istl/bvector.hh>
 #include "dumux/shallowwater/shallowwater.hh"
 #include "dumux/shallowwater/shallownumericalflux.hh"
-#include "dumux/shallowwater/shallowproblemplain.hh"
-#include "dumux/shallowwater/shallowvariableclass.hh"
 
 namespace Dune
 {
@@ -46,7 +43,7 @@ template<class Grid, class Scalar, class VC> class FVShallowWater :
     typedef typename Grid::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 
-    typedef Dune::FieldVector<Scalar,dim> SlopeType;
+    typedef Dune::FieldVector<Scalar,dim> VelType;
     typedef Dune::FieldVector<Scalar,dim+1> SystemType;
     typedef Dune::BlockVector<Dune::FieldVector<Scalar,dim+1> > SolutionType;
 
@@ -61,7 +58,7 @@ public:
     void postProcessUpdate(Scalar t, Scalar dt);
 
     FVShallowWater(Grid& grid, ShallowProblemBase<Grid, Scalar, VC>& problem,
-            NumericalFlux<Grid,Scalar>& numFl = *(new HllFlux<Grid,Scalar>)) :
+            NumericalFlux<Grid,Scalar>& numFl = *(new HllFlux2d<Grid,Scalar>)) :
         ShallowWater<Grid, Scalar, VC>(grid, problem), elementMapper(grid,
                 grid.leafIndexSet()), numFlux(numFl)
     {
@@ -88,22 +85,23 @@ template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
     ElementIterator eItEnd = gridView.template end<0>();
     for (ElementIterator eIt = gridView.template begin<0>(); eIt != eItEnd; ++eIt)
     {
-        Scalar dist=0;
+
         Scalar waterDepthI=0;
-        Scalar waterDepthJ=0;
-        Scalar waterDepthFace=0;
-        //Scalar waterDepthFaceI;
-        //Scalar waterDepthFaceJ;
-        SlopeType velocityI(0);
-        SlopeType velocityJ(0);
-        SlopeType velocityFace(0);
-        SlopeType bottomSlope(0); //real bottomslope
+        Scalar waterLevelI = 0;
+        Scalar bottomElevationI=0;
+        Scalar gravity=9.81;
+        Scalar dist=0;
+        Scalar froudeNumber = 0;
+
+        VelType velocityI(0);
+        VelType bottomSlope(0);
+        VelType bottomSlopeVector(0);
+        VelType divergenceTerm(0);
+        VelType summedDivergenceTerm(0);
+
+        SystemType summedFluxes(0);
         SystemType sourceTermVector(0);//all sources including rainfall, slope terms and later on friction terms
         SystemType flux(0);
-        SlopeType divergenceTerm(0);
-        SystemType summedFluxes(0);
-        Scalar gravity=9.81;
-        Scalar cflTimeStep=0;
 
         // cell geometry type
         Dune::GeometryType gt = eIt->geometry().type();
@@ -113,27 +111,41 @@ template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
                 Dune::ReferenceElements<Scalar,dim>::general(gt).position(0, 0);
 
         GlobalPosition globalPos = eIt->geometry().global(localPos);
+        //std::cout<<"globalPos "<<globalPos<<std::endl;
 
         // cell volume, assume linear map here
         Scalar volume = eIt->geometry().integrationElement(localPos)
                 *Dune::ReferenceElements<Scalar,dim>::general(gt).volume();
-
         //  std::cout<<volume<<std::endl;
 
         // cell index
         int globalIdxI = elementMapper.map(*eIt);
+        //std::cout<<globalIdxI<<std::endl;
 
-        //get bottomslopevector for entity
-        bottomSlope =this->problem.surface.evalBottomSlopes();
-        //std::cout<<"bottom slope"<<bottomSlope<<std::endl;
+        //get bottomElevation
+        bottomElevationI = this->problem.variables.bottomElevation[globalIdxI];
+        //std::cout<<"bottomElevationI "<<bottomElevationI<<std::endl;
 
         // get waterdepth at cell center
         waterDepthI = this->problem.variables.waterDepth[globalIdxI];
         //std::cout<<"waterDepthI="<<waterDepthI<<std::endl;
 
+        // determine water level of cell
+        waterLevelI = waterDepthI + bottomElevationI;
+
         // get velocity at cell center
         velocityI = this->problem.variables.velocity[globalIdxI];
-        //std::cout<<"velocityI="<<velocityI<<std::endl;
+        std::cout<<"velocityI="<<velocityI<<std::endl;
+
+        //determine Froude Number of cell
+        //  froudeNumber = fabs(velocityI);
+        //froudeNumber /= sqrt(gravity*waterDepthI);
+        // std::cout<<"froudeNumber of Cell"<<globalIdxI<<" "<<froudeNumber<<std::endl;
+
+        //get bottomslopevector for entity
+        // bottomSlope =this->problem.surface.evalBottomSlopes();
+        //std::cout<<"bottom slope"<<bottomSlope<<std::endl;
+
 
         // run through all intersections with neighbors and boundary
         IntersectionIterator isItEnd =gridView.template iend(*eIt);
@@ -142,7 +154,7 @@ template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
         {
 
             // local number of facet
-            int numberInSelf = isIt->numberInSelf();
+            //    int numberInSelf = isIt->numberInSelf();//numberInInside
 
             // get geometry type of face
             Dune::GeometryType gtf = isIt->intersectionSelfLocal().type();
@@ -152,10 +164,8 @@ template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
                     Dune::ReferenceElements<Scalar,dim-1>::general(gtf).position(0, 0);
 
             //determine volume of face to multiply it with the flux
-      //      Scalar faceVolume = Dune::ReferenceElements<Scalar,dim-1>::general(gtf).volume();
-           
-                    Scalar faceVolume = isIt->intersectionGlobal().volume();   
-                   //  std::cout<<faceVolume<<std::endl; //ok
+            Scalar faceVolume = isIt->intersectionGlobal().volume(); //geometry() 
+            //  std::cout<<faceVolume<<std::endl; //ok
 
             // center of face inside volume reference element
             const LocalPosition& faceLocalDim =
@@ -164,9 +174,17 @@ template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
             //get normal vector of face
             Dune::FieldVector<Scalar,dimWorld> nVec =
                     isIt->unitOuterNormal(faceLocalPos);
+            // std::cout<<nVec<<std::endl;
 
-            // std::cout<<nVec<<std::endl; // ok
+            Scalar waterDepthJ=0;
+            Scalar waterDepthFace=0;
+            Scalar waterDepthFaceDivergence=0;
+            Scalar bottomSlope(0);
+            Scalar bottomElevationJ;
+            Scalar bottomElevationFace=0;
 
+            VelType velocityJ(0);
+            VelType velocityFace(0);
 
             // handle interior face
             if (isIt->neighbor())
@@ -189,8 +207,16 @@ template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
 
                 //compute distance between cell centers
                 dist = distVec.two_norm();
+                //std::cout<<dist<<std::endl;    
 
-                // std::cout<<dist<<std::endl;
+                //get bottomElevation
+                bottomElevationJ
+                        = this->problem.variables.bottomElevation[globalIdxJ];
+                // std::cout<<"bottomElevationJ "<<bottomElevationJ<<std::endl;
+
+                //calculate bottom slope 
+                bottomSlope = (bottomElevationJ - bottomElevationI)/dist;
+                //std::cout<<"bottomslope "<<bottomSlope<<std::endl;
 
                 // get waterdepth at neighbor cell center
                 waterDepthJ = this->problem.variables.waterDepth[globalIdxJ];
@@ -199,20 +225,62 @@ template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
                 velocityJ = this->problem.variables.velocity[globalIdxJ];
 
                 //fluxVector for a given scheme (Upwind or different will be catched from numericalflux)
-
                 flux = (numFlux(velocityI, velocityJ, waterDepthI, waterDepthJ,
                         nVec));
+
                 flux*=faceVolume;
 
-                //   std::cout<<"cell "<<globalIdxI<<"flux_interior of face "
-                //    <<numberInSelf<<"=" <<flux<<std::endl;
+                //    std::cout<<"cell "<<globalIdxI<<"flux_interior of face "
+                //   <<numberInSelf<<"=" <<flux<<std::endl;
+
+                //******************************************************************************************
+
+                //these steps are only relevant if divergence term for bedslope is considered 
+
+                //determine bottomelevation at face
+                Scalar bottomElevationFace =
+                        (bottomElevationI+bottomElevationJ)/2;
+
+                //determine water Depth at face for divergence term purposes
+                Scalar waterDepthFaceDivergence = waterLevelI
+                        - bottomElevationFace;
+                // std::cout<<"waterDepthFaceDivergence "
+                //       <<waterDepthFaceDivergence<<std::endl;
+
+                //determine divergence Term
+                switch (dim)
+                {
+                case 1:
+                    divergenceTerm[0] = 0.5*gravity*(waterDepthFaceDivergence
+                            *waterDepthFaceDivergence);
+                    divergenceTerm[0]*= nVec[0];
+                    divergenceTerm[0]*= faceVolume;
+                    break;
+                case 2:
+                    divergenceTerm[0] = 0.5*gravity*(waterDepthFaceDivergence
+                            *waterDepthFaceDivergence);
+                    divergenceTerm[0]*= nVec[0];
+                    divergenceTerm[0]*= faceVolume;
+
+                    divergenceTerm[1] = 0.5*gravity *(waterDepthFaceDivergence
+                            *waterDepthFaceDivergence);
+                    divergenceTerm[1]*= nVec[1];
+                    divergenceTerm[1]*= faceVolume;
+                    break;
+                }
+
+                //std::cout<<divergenceTerm<<std::endl;
+
+                //******************************************************************************************
 
             }
+
             // handle boundary face
             if (isIt->boundary())
             {
                 // center of face in global coordinates
                 GlobalPosition faceGlobalPos = isIt->intersectionGlobal().global(faceLocalPos);
+                // std::cout<<"FaceGlobalPos "<<faceGlobalPos<<std::endl;
 
                 // distance vector between barycenters
                 Dune::FieldVector<Scalar,dimWorld> distVec = globalPos
@@ -221,111 +289,304 @@ template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
                 //compute distance between cell centers
                 dist = distVec.two_norm();
 
-                //get boundary type
-                BoundaryConditions::Flags bctype = this->problem.bctype(
-                        faceGlobalPos, *eIt, faceLocalDim);
+                //get boundary type for conti part*************************************************+++
+                BoundaryConditions::Flags bctypeConti =
+                        this->problem.bctypeConti(faceGlobalPos, *eIt,
+                                faceLocalDim);
 
-                if (bctype == BoundaryConditions::dirichlet)
+                //get boundary type for momentum part*************************************************+++
+                BoundaryConditions::Flags bctypeMomentum =
+                        this->problem.bctypeMomentum(faceGlobalPos, *eIt,
+                                faceLocalDim);
+
+                // std::cout<<"bctypeConti"<<bctypeConti <<std::endl;
+                //  std::cout<<"bctypeMomentum "<<bctypeMomentum<<std::endl;
+
+                // if waterdepth and momentum are given, velocity can be determined
+
+                if (bctypeConti == BoundaryConditions::dirichlet
+                        && bctypeMomentum == BoundaryConditions::dirichlet)
                 {
-                    // get waterdepth at boundary
-                    //  waterDepthFace
-                    //      = this->problem.dirichletWaterDepth(faceGlobalPos);
+                    waterDepthJ = this->problem.dirichletConti(faceGlobalPos,
+                            *eIt, faceLocalDim);
 
-                    velocityFace
-                            = this->problem.dirichletVelocity(faceGlobalPos);
+                    VelType momentumJ(0);
 
-                    waterDepthFace=waterDepthI;
+                    momentumJ = this->problem.dirichletMomentum(faceGlobalPos,
+                            *eIt, faceLocalDim);
 
-                    flux = numFlux(velocityI, velocityFace, waterDepthI,
-                            waterDepthFace, nVec);
-                    flux*=faceVolume;
+                    velocityJ = momentumJ;
+                    velocityJ /= waterDepthJ;
 
-                    //    std::cout<<"flux_dirichlet of face "<<numberInSelf<<"="
-                    //  <<flux<<std::endl;
+                    switch (dim)
+                    {
+                    case 1:
+
+                        flux[0] = momentumJ[0]*nVec[0];
+
+                        flux[1] = velocityJ[0]*momentumJ[0]+0.5 *9.81
+                                *waterDepthJ *waterDepthJ;
+                        break;
+                    case 2:
+
+                        flux[0] = momentumJ[0]*nVec[0]+momentumJ[1]*nVec[1];
+
+                        flux[1]= (velocityJ[0]*momentumJ[0] +0.5*9.81
+                                *waterDepthJ*waterDepthJ)*nVec[0]
+                                +(momentumJ[0]*velocityJ[1]) *nVec[1];
+                        flux[2]= (momentumJ[1] *velocityJ[0] )*nVec[0]
+                                +(velocityJ[1] *momentumJ[0] +0.5*9.8
+                                        *waterDepthJ *waterDepthJ)*nVec[1];
+                        break;
+                    }
+
+                    flux*= faceVolume;
+                }
+
+                if (bctypeConti == BoundaryConditions::dirichlet
+                        && bctypeMomentum == BoundaryConditions::neumann)
+                {
+                    waterDepthJ = this->problem.dirichletConti(faceGlobalPos,
+                            *eIt, faceLocalDim);
+                    velocityJ = velocityI;
+
+                    Scalar contiFlux(0);
+                    VelType momentumFlux(0);
+
+                    switch (dim)
+                    {
+                    case 1:
+
+                        contiFlux = velocityJ[0] * waterDepthJ*nVec[0];
+                        momentumFlux =(velocityJ*velocityJ*waterDepthJ+0.5
+                                *9.81*waterDepthJ*waterDepthJ)*nVec[0];
+                        break;
+                    case 2:
+
+                        contiFlux = waterDepthJ*velocityJ[0]*nVec[0]
+                                +waterDepthJ*velocityJ[1]*nVec[1];
+
+                        momentumFlux[0]= (velocityJ[0]*velocityJ[0]*waterDepthJ
+                                +0.5*9.81*waterDepthJ*waterDepthJ)*nVec[0]
+                                +(waterDepthJ *velocityJ[0]*velocityJ[1])
+                                        *nVec[1];
+                        momentumFlux[1]= (waterDepthJ *velocityJ[0]
+                                *velocityJ[1])*nVec[0]+(velocityJ[1]
+                                *velocityJ[1]*waterDepthJ +0.5*9.8*waterDepthJ
+                                *waterDepthJ)*nVec[1];
+                        break;
+                    }
+
+                    /*   contiFlux = this->problem.neumannConti(faceGlobalPos, *eIt,
+                     faceLocalDim);
+                     */
+                    momentumFlux = this->problem.neumannMomentum(globalPos,
+                            *eIt, faceLocalDim, momentumFlux);
+
+                    flux[0]=contiFlux;
+
+                    for (int i=0; i<dim; i++)
+                    {
+                        flux[i+1]=momentumFlux[i];
+                    }
+
+                    flux*= faceVolume;
+                }
+
+                if (bctypeConti == BoundaryConditions::neumann
+                        && bctypeMomentum == BoundaryConditions::dirichlet)
+                {
+                    Scalar contiFlux(0);
+                    VelType momentumFlux(0);
+
+                    VelType contiFaceFlux(0);
+
+                    contiFaceFlux = this->problem.neumannConti(faceGlobalPos,
+                            *eIt, faceLocalDim);
+
+                    waterDepthJ = waterDepthI;
+
+                    velocityJ= contiFaceFlux;
+                    velocityJ /= waterDepthJ;
+
+                    switch (dim)
+                    {
+                    case 1:
+
+                        contiFlux = contiFaceFlux[0]*nVec[0];
+                        momentumFlux =(velocityJ*contiFaceFlux+0.5 *9.81
+                                *waterDepthJ *waterDepthJ)*nVec[0];
+                        break;
+                    case 2:
+
+                        contiFlux = contiFaceFlux[0]*nVec[0]+contiFaceFlux[1]
+                                *nVec[1];
+
+                        momentumFlux[0]= (velocityJ[0]*contiFaceFlux[0] +0.5
+                                *9.81*waterDepthJ*waterDepthJ)*nVec[0]
+                                +(contiFaceFlux[0]*velocityJ[1]) *nVec[1];
+                        momentumFlux[1]= (contiFaceFlux[1] *velocityJ[0] )
+                                *nVec[0]+(velocityJ[1] *contiFaceFlux[1] +0.5
+                                *9.8*waterDepthJ *waterDepthJ)*nVec[1];
+                        break;
+                    }
+                    flux[0]= contiFlux;
+
+                    for (int i=0; i<dim; i++)
+                    {
+                        flux[i+1]=momentumFlux[i];
+                    }
+
+                    flux*= faceVolume;
 
                 }
-                if (bctype == BoundaryConditions::neumann) //free flow through boundary
 
+                if (bctypeConti == BoundaryConditions::neumann
+                        && bctypeMomentum == BoundaryConditions::neumann)
                 {
-                    waterDepthFace = waterDepthI;
-                    velocityFace = velocityI;
+                    waterDepthJ = waterDepthI;
+                    velocityJ = velocityI;
 
-                    SystemType helpFlux = numFlux(velocityI, velocityFace,
-                            waterDepthI, waterDepthFace, nVec);
+                    VelType unityVector(0);
+                    unityVector[0]= nVec[0]*nVec[0];
+                    unityVector[1]= nVec[1]*nVec[1];
 
-                    flux = this->problem.neumannFlux(faceGlobalPos, helpFlux);
-                    flux*=faceVolume;
+                    flux = numFlux(velocityI, velocityJ, waterDepthI,
+                            waterDepthJ, nVec);
 
-                    //     std::cout<<"flux_neumann of face "<<numberInSelf<<"="<<flux
-                    //       <<std::endl;
+                    VelType contiFlux(flux[0]);
+                    contiFlux = this->problem.neumannConti(globalPos, *eIt,
+                            faceLocalDim, contiFlux);
+
+                    flux[0] = contiFlux*unityVector;
+
+                    VelType momentumFlux(0);
+                    for (int i=0; i<dim; i++)
+                    {
+                        momentumFlux[i]=flux[i+1];
+                    }
+
+                    momentumFlux = this->problem.neumannMomentum(globalPos,
+                            *eIt, faceLocalDim, momentumFlux);
+
+                    for (int i=0; i<dim; i++)
+                    {
+                        flux[i+1]=momentumFlux[i];
+                    }
+
+                    flux*= faceVolume;
+
                 }
+                // std::cout<<"waterDepthFace " <<waterDepthFace<<std::endl;
+                // std::cout<<"velocityFace " <<velocityFace<<std::endl;
 
+
+                //std::cout<<flux<<std::endl;
+
+                //determine divergence Term
+                //assumption: bottomelevation at face is same as of cell
+                Scalar bottomElevationFace = bottomElevationI;
+
+                //determine water Depth at face for divergence term purposes
+                Scalar waterDepthFaceDivergence = waterLevelI
+                        - bottomElevationFace;
+                // std::cout<<"waterDepthFaceDivergence "
+                //       <<waterDepthFaceDivergence<<std::endl;
+
+                //determine divergence Term
+                switch (dim)
+                {
+                case 1:
+                    divergenceTerm[0] = 0.5*gravity*(waterDepthFaceDivergence
+                            *waterDepthFaceDivergence);
+                    divergenceTerm[0]*= nVec[0];
+                    divergenceTerm[0]*= faceVolume;
+                    break;
+                case 2:
+                    divergenceTerm[0] = 0.5*gravity*(waterDepthFaceDivergence
+                            *waterDepthFaceDivergence);
+                    divergenceTerm[0]*= nVec[0];
+                    divergenceTerm[0]*= faceVolume;
+
+                    divergenceTerm[1] = 0.5*gravity*(waterDepthFaceDivergence
+                            *waterDepthFaceDivergence);
+                    divergenceTerm[1]*= nVec[1];
+                    divergenceTerm[1]*= faceVolume;
+                    break;
+                }
             }
-            //   std::cout<<flux<<std::endl;
+
+            //  std::cout<<flux<<std::endl;
+
             summedFluxes += flux;
+            summedDivergenceTerm+=divergenceTerm;
+
         }
 
-        //  std::cout<<"summedfluxes of cell_"<<globalIdxI<<" = "<<summedFluxes
-        //        <<std::endl;
+        // std::cout<<"summedDivergenceTerm "<<globalIdxI<<" "
+        //     <<summedDivergenceTerm <<std::endl;
+
+
+        //     std::cout<<"summedfluxes of cell_"<<globalIdxI<<" = "<<summedFluxes
+        //    <<std::endl;
 
         //Quelle einbinden und in Systemvektor konvertieren
-        Scalar sourceTerm = 0;//this->problem.setSource(globalPos, *eIt, localPos);
+        Scalar sourceTerm = this->problem.setSource(globalPos, *eIt, localPos);
 
-        //  switch (dim)
-        //  {
-        //  case 1:
-        sourceTermVector[0]=sourceTerm;
-        sourceTermVector[1]=9.81;
-        sourceTermVector[1]*=bottomSlope[0]*(-1);
-        sourceTermVector[1]*=(waterDepthI);
+        switch (dim)
+        {
+        case 1:
+            sourceTermVector[0]=sourceTerm;
+            sourceTermVector[1]=summedDivergenceTerm[0];
+            break;
+        case 2:
+            sourceTermVector[0]=sourceTerm;
+            sourceTermVector[1]=summedDivergenceTerm[0];
+            sourceTermVector[2]=summedDivergenceTerm[1];
+            break;
+        }
 
-        //  break;
+        //   std::cout<<"Source Term Vector of cell"<<globalIdxI<<"= "
+        //     <<sourceTermVector<<std::endl;
 
-        /*  case 2:
-         sourceTermVector[0]=sourceTerm;
-         sourceTermVector[1]=9.81;
-         sourceTermVector[1]*=bottomSlope[0]*(-1);
-         sourceTermVector[1]*=(waterDepthI);
+        //Update of cell values************************************************************** 
 
-         sourceTermVector[2]=9.81;
-         sourceTermVector[2]*=bottomSlope[1]*(-1);
-         sourceTermVector[2]*=(waterDepthI);
+        updateVec[globalIdxI] -= summedFluxes;
+        updateVec[globalIdxI] += sourceTermVector;
+        updateVec[globalIdxI] /= volume;
 
-         break;
-         }*/
+        //       std::cout<<"update for cell"<<globalIdxI<<" = "<<updateVec[globalIdxI]
+        //            <<std::endl;
 
-        //      std::cout<<"Source Term Vector of cell"<<globalIdxI<<"= "
-        //          <<sourceTermVector<<std::endl;
+        //cfl-criterium**********************************************************************
 
-        updateVec[globalIdxI]+=summedFluxes;
-        updateVec[globalIdxI]+= sourceTermVector;
-        updateVec[globalIdxI]/=(volume);
+        VelType cflVelocity(0);
+        Scalar finalCflVelocity = 0;
+        Scalar cflTimeStep = 0;
 
-        //   std::cout<<"update for cell"<<globalIdxI<<" = "<<updateVec[globalIdxI]
-        //          <<std::endl;
+        switch (dim)
+        {
+        case 1:
+            cflVelocity[0]= fabs(velocityI[0])+sqrt(fabs(gravity*waterDepthI));
+            finalCflVelocity = cflVelocity[0];
+            break;
 
-        //cfl-criterium
+        case 2:
+            cflVelocity[0]= fabs(velocityI[0])+sqrt(fabs(gravity*waterDepthI)); //Calculate cfl velocity (convective velocity + wave velocity)
+            cflVelocity[1]= fabs(velocityI[1])+sqrt(fabs(gravity*waterDepthI));
 
-        Scalar cflVelocity;
+            finalCflVelocity = std::max(cflVelocity[0], cflVelocity[1]);
+            break;
+        }
 
-        cflVelocity = fabs(velocityI[0])+sqrt(fabs(gravity*waterDepthI)); //Calculate cfl velocity (convective velocity + wave velocity)
-        //   cflVelocity +=sqrt(gravity*waterDepthI);
+        cflTimeStep = dist/finalCflVelocity;
+        dt = std::min(dt, cflTimeStep); //calculate time step with cfl criterium
 
- //       if (cflVelocity > 0)
-   //     {
-            cflTimeStep = dist/cflVelocity;            
-            dt = std::min(dt, cflTimeStep); //calculate time step with cfl criterium
+        // std::cout<<"cflvelocity "<< cflVelocity<<std::endl;
+        // std::cout<<"cflTimeStep "<< cflTimeStep<<std::endl;
+        // std::cout<<"dt "<<dt<<std::endl;
+        // std::cout<<"dist "<< dist<<std::endl;
 
-           
-     //   }
- //       else
-  //      {
-    //        dt = 0.001;
-      //  }
-         std::cout<<"cflvelocity "<< cflVelocity<<std::endl;
-   //      std::cout<<"cflTimeStep "<< cflTimeStep<<std::endl;
-     //    std::cout<<"dt "<<dt<<std::endl;
-        //  std::cout<<"dist "<< dist<<std::endl;
     }
 
     // end grid traversal
@@ -357,8 +618,12 @@ template<class Grid, class Scalar, class VC> void FVShallowWater<Grid, Scalar,
 
         Scalar initialWaterDepth=this->problem.setInitialWaterDepth(globalPos,
                 *eIt, localPos);
-        SlopeType initialVelocity=this->problem.setInitialVelocity(globalPos,
+        VelType initialVelocity=this->problem.setInitialVelocity(globalPos,
                 *eIt, localPos);
+        Scalar initialBottomElevation =
+                this->problem.surface.evalBottomElevation(globalPos);
+
+        Scalar initialWaterLevel = initialWaterDepth+initialBottomElevation;
 
         // initialize cell values
         this->problem.variables.waterDepth[globalIdx] = initialWaterDepth;
@@ -367,8 +632,12 @@ template<class Grid, class Scalar, class VC> void FVShallowWater<Grid, Scalar,
                 = initialWaterDepth;
         this->problem.variables.globalSolution[globalIdx][1]
                 = initialWaterDepth*initialVelocity[0];
-        // this->problem.variables.globalSolution[globalIdx][2]
-        //     = initialWaterDepth*initialVelocity[1];
+        this->problem.variables.globalSolution[globalIdx][dim]
+                = initialWaterDepth*initialVelocity[dim-1];
+        this->problem.variables.bottomElevation[globalIdx]
+                = initialBottomElevation;
+        this->problem.variables.waterLevel[globalIdx] = initialWaterLevel;
+
     }
     return;
 }
@@ -387,25 +656,28 @@ template<class Grid, class Scalar, class VC> void FVShallowWater<Grid, Scalar,
             this->problem.variables.velocity[i][0]
                     =this->problem.variables.globalSolution[i][1]
                             /this->problem.variables.waterDepth[i];
-            // this->problem.variables.velocity[i][1]
-            //       =this->problem.variables.globalSolution[i][2]
-            //           /this->problem.variables.waterDepth[i];
+            this->problem.variables.velocity[i][dim-1]
+                    =this->problem.variables.globalSolution[i][dim]
+                            /this->problem.variables.waterDepth[i];
+            this->problem.variables.waterLevel[i]
+                    =this->problem.variables.waterDepth[i]
+                            +this->problem.variables.bottomElevation[i];
         }
         else
         {
 
             this->problem.variables.waterDepth[i]=0;
             this->problem.variables.velocity[i][0]=0;
-            // this->problem.variables.velocity[i][1]=0;
+            this->problem.variables.velocity[i][dim-1]=0;
 
         }
 
         //      std::cout<<"global Solution of cell"<<i<<"= "
         //           <<this->problem.variables.globalSolution[i]<<std::endl;
 
-  //      std::cout<<"waterDepth = "<<this->problem.variables.waterDepth[i]
-    //            <<std::endl;
-  //     std::cout<<"velX = "<<this->problem.variables.velocity[i][0]<<std::endl;
+        //      std::cout<<"waterDepth = "<<this->problem.variables.waterDepth[i]
+        //             <<std::endl;
+        //     std::cout<<"velX = "<<this->problem.variables.velocity[i][0]<<std::endl;
         // std::cout<<"velY = "<<this->problem.variables.velocity[i][1]<<std::endl;
 
     }

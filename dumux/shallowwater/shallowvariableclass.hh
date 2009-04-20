@@ -40,19 +40,22 @@ public:
 
     ElementMapper elementMapper;
     ScalarType waterDepth;
+    ScalarType bottomElevation;
+    ScalarType waterLevel;
     VelType velocity;
     SolutionType globalSolution;
 
     Grid& grid;
 
-    ShallowVariableClass(Grid& grid, Scalar& initialWDepth = *(new Scalar(0)), Dune::FieldVector<Scalar, dim>& initialVel = *(new Dune::FieldVector<Scalar,dim>(0))) :
+    ShallowVariableClass(Grid& grid, Scalar& initialWDepth = *(new Scalar(0)), Scalar& initialBottomElevation = *(new Scalar(0)), Scalar& initialWaterLevel = *(new Scalar(0)), Dune::FieldVector<Scalar, dim>& initialVel = *(new Dune::FieldVector<Scalar,dim>(0))) :
         elementMapper(grid, grid.leafIndexSet()), grid(grid),
                 size(elementMapper.size())
     {
         sizeInitWDepth(initialWDepth, size);
+        sizeInitBottomElevation(initialBottomElevation, size);
+        sizeInitWaterLevel(initialWaterLevel, size);
         sizeInitVel(initialVel, size);
         sizeInitGlobalSolution(size);
-
     }
 
     //Definition of the methods to resize the vectors and fill with initial data. !!!Initial data is not the boundary condition, it´s just to initialize sth
@@ -63,13 +66,24 @@ public:
         waterDepth=initialWDepth;
         return;
     }
+    void sizeInitBottomElevation(Scalar& initialBottomElevation, int size)
+    {
+        bottomElevation.resize(size);
+        bottomElevation=initialBottomElevation;
+        return;
+    }
+    void sizeInitWaterLevel(Scalar& initialWaterLevel, int size)
+    {
+        waterLevel.resize(size);
+        waterLevel=initialWaterLevel;
+        return;
+    }
 
     void sizeInitVel(Dune::FieldVector<Scalar, dim>& initialVel, int size)
     {
         velocity.resize(size);
         velocity[0]=initialVel[0];
         velocity[1]=initialVel[1];
-
         return;
     }
 
@@ -85,6 +99,14 @@ public:
     ScalarType& returnWDepth()
     {
         return waterDepth;
+    }
+    ScalarType& returnBottomElevation()
+    {
+        return bottomElevation;
+    }
+    ScalarType& returnWaterLevel()
+    {
+        return waterLevel;
     }
 
     VelType& returnVel()
@@ -104,6 +126,19 @@ public:
     {
         return waterDepth[elementMapper.map(element)];
 
+    }
+
+    const ScalarType& returnBottomElevation(const GlobalPosition& globalPos,
+            const Element& element, const LocalPosition& localPos)
+    {
+        return bottomElevation[elementMapper.map(element)];
+
+    }
+    const ScalarType& returnWaterLevel(const GlobalPosition& globalPos,
+            const Element& element, const LocalPosition& localPos)
+    {
+        waterLevel = bottomElevation[elementMapper.map(element)]+ waterDepth[elementMapper.map(element)];
+        return waterLevel;
     }
 
     const VelType& returnVel(const GlobalPosition& globalPos,
@@ -139,6 +174,8 @@ public:
         vtkwriter.addCellData(vX, "Velocity_X");
         //vtkwriter.addCellData(vY, "Velocity_Y");
         vtkwriter.addCellData(waterDepth, "waterDepth");
+        vtkwriter.addCellData(bottomElevation, "bottomElevation");
+        vtkwriter.addCellData(waterLevel, "waterLevel");
         vtkwriter.write(fname, VTKOptions::ascii);
 
         return;

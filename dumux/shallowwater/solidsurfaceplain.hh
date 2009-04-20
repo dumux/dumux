@@ -23,12 +23,44 @@ template<class Grid, class Scalar> class SolidSurfacePlain :
 
 public:
 
-    Scalar evalBottomElevation(const GlobalPosition& globalPos,
-            const Element& element, const LocalPosition& localPos)
+    Scalar evalBottomElevation(const GlobalPosition& globalPos)
     {
-        bottomElevation_ = 100 + crossSlope_*globalPos[0]+ longSlope_
-                *globalPos[1];
+        int bottomConfiguration;
 
+        bottomConfiguration = 2;
+
+        switch (bottomConfiguration)
+        {
+        case 1: //plain
+            bottomElevation_=0;
+            return bottomElevation_;
+            break;
+
+        case 2: //bump
+
+            if (globalPos[0]<8 ||globalPos[0]>12)
+            {
+                bottomElevation_ = 0*globalPos[0];
+                return bottomElevation_;
+            }
+            if (8 <= globalPos[0]<= 12)
+            {
+                bottomElevation_= 0.2 - 0.05*((globalPos[0]-10)*(globalPos[0]-10));
+                return bottomElevation_;
+            }
+            break;
+        case 3: //constant slope
+            
+            if (globalPos[0]<20)
+            {
+                bottomElevation_= 0. - 0.02*globalPos[0];
+            }
+            else
+            {
+                bottomElevation_= 0.1;
+            }                       
+            break;
+        }
         return bottomElevation_;
 
     }
@@ -49,8 +81,8 @@ public:
     }
 
     SolidSurfacePlain() :
-        SolidSurfaceBase<Grid, Scalar>(), crossSlope_(-0.0), longSlope_(0.5),
-                eps_(1e-12)
+        SolidSurfaceBase<Grid, Scalar>(), bottomElevation_(0),
+                crossSlope_(-0.0), longSlope_(0.0), eps_(1e-12)
     {
 
     }

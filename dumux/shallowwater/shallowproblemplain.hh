@@ -28,123 +28,134 @@ private:
     Scalar eps_;
 
 public:
-    BoundaryConditions::Flags bctype(const GlobalPosition& faceGlobalPos,
+
+    BoundaryConditions::Flags bctypeConti(const GlobalPosition& faceGlobalPos,
             const Element& element, const LocalPosition& localPos) const
     {
 
-        int boundarySetting;
+        if (faceGlobalPos[0] < eps_ )
+        {
+            return Dune::BoundaryConditions::neumann;
+        }
+        else if (faceGlobalPos[0] > upperRight_[0]- eps_)
+        {
+            return Dune::BoundaryConditions::dirichlet;
+        }
+        else
+        {
+            // DUNE_THROW(NotImplemented,"Problem with BC!");
+        }
+
+    }
+
+    BoundaryConditions::Flags bctypeMomentum(
+            const GlobalPosition& faceGlobalPos, const Element& element,
+            const LocalPosition& localPos) const
+    {
+
+        if (faceGlobalPos[0] < eps_)
+        {
+            return Dune::BoundaryConditions::dirichlet;
+        }
+        else if (faceGlobalPos[0] > upperRight_[0]- eps_)
+        {
+            return Dune::BoundaryConditions::neumann;
+        }
+
+        else
+        {
+            //DUNE_THROW(NotImplemented, "Problem with BC!");
+        }
+    }
+
+    Scalar dirichletConti(const GlobalPosition& faceGlobalPos,
+            const Element& element, const LocalPosition& localPos) const
+    {
+        return 0.33;
+
+    }
+
+    VelType neumannConti(const GlobalPosition& faceGlobalPos,
+            const Element& element, const LocalPosition& localPos, VelType flux = 0) const
+    {
+        VelType hu(0.18);
         
-        boundarySetting =2;
-
-        switch (boundarySetting)
-        {
-        case 1:
-
-            if (faceGlobalPos[0] < eps_)
-            {
-                return Dune::BoundaryConditions::dirichlet;
-            }
-
-            if (faceGlobalPos[0] >= upperRight_[0] - eps_)
-            {
-                return Dune::BoundaryConditions::neumann;
-            }
-            break;
-
-        case 2:
-
-            if (faceGlobalPos[0]< eps_ || faceGlobalPos[0] >= upperRight_[0]
-                    - eps_)
-            {
-                return Dune::BoundaryConditions::neumann;
-            }
-            break;
-        }
+        return hu;
     }
 
-    Scalar dirichletWaterDepth(const GlobalPosition& faceGlobalPos) const
+    VelType dirichletMomentum(const GlobalPosition& faceGlobalPos,
+            const Element& element, const LocalPosition& localPos) const
     {
-        return 0;
+        // return momentum (neumann boundary condition for conti part = hu)
+         VelType hu(0.18);  
+
+        return hu;
     }
 
-    Scalar dirichletVelocity(const GlobalPosition& faceGlobalPos) const
+    VelType neumannMomentum(const GlobalPosition& faceGlobalPos,
+            const Element& element, const LocalPosition& localPos, VelType flux = 0) const
     {
-        return 0.0;
+        VelType boundaryFlux_(0);
+        
+        //free flow condition
+            boundaryFlux_ = flux;
+            return boundaryFlux_;      
     }
-
-    SystemType neumannWaterDepth(const GlobalPosition& faceGlobalPos) const
-    {
-        SystemType boundaryFlux(0);
-        return boundaryFlux;
-    }
-
-    SystemType neumannVelocity(const GlobalPosition& faceGlobalPos) const
-    {
-        SystemType boundaryFlux(0);
-        return boundaryFlux;
-    }
-
-    SystemType neumannFlux(const GlobalPosition& faceGlobalPos,
-            SystemType& helpFlux) const
-    {
-        if (faceGlobalPos[0] <= lowerLeft_+eps_)
-        {
-            SystemType boundaryFlux(0);
-            return helpFlux;
-        }
-
-        if (faceGlobalPos[0]>= upperRight_[0] - eps_)
-        {
-            SystemType boundaryFlux(0);
-            return helpFlux;
-        }
-
-    }
-
+          
+        
     Scalar setInitialWaterDepth(const GlobalPosition& globalPos,
             const Element& element, const LocalPosition& localPos) const
     {
-        int waterDepthDistribution; // 1 = constant, 2 = high at left side, 3 = high in the middle
+        int waterDepthDistribution; // type of waterdepth distribution, options see below
 
-        waterDepthDistribution = 2;
+        waterDepthDistribution = 4;
+        Scalar initWaterDepth = 0;
 
         switch (waterDepthDistribution)
         {
-        case 1:
-            return 0.0001;
+        case 1: //costant
+
+            initWaterDepth = 0.0;
+            return initWaterDepth;
             break;
-        case 2:
-            if (globalPos[0]< 40)
+
+        case 2: // dam 
+            if (globalPos[0]<= 100 /*&& globalPos[dim-1]< 20*/)
             {
-                return 0.5;
+                initWaterDepth = 1;
             }
             else
             {
-                return 0;
+                initWaterDepth = 0;
             }
             break;
-        case 3:
-            if (globalPos[0] > 45 && globalPos[0]<55 )
+
+        case 3: // pulse
+            if (globalPos[0]> 11 && globalPos[dim-1]> 11 && globalPos[0]< 14
+                    && globalPos[dim-1]< 14)
             {
-                return 0.5;
+                initWaterDepth = 0.5;
             }
             else
             {
-                return 0.2;
+                initWaterDepth = 0.2;
             }
+            break;
+        case 4: //constant water level over irregular topography          
+
+            initWaterDepth = 0.33-this->surface.evalBottomElevation(globalPos);
             break;
         }
 
+        return initWaterDepth;
     }
 
     VelType setInitialVelocity(const GlobalPosition& globalPos,
             const Element& element, const LocalPosition& localPos) const
     {
-
         VelType initialVelocity(0);
 
         return initialVelocity;
-
     }
 
     Scalar setSource(const GlobalPosition& globalPos, const Element& element,

@@ -31,8 +31,7 @@ public:
         DUNE_THROW(NotImplemented, "friction term not implemented!");
     }
 
-    virtual Scalar evalBottomElevation(const GlobalPosition& globalPos,
-            const Element& element, const LocalPosition& localPos) = 0;
+    virtual Scalar evalBottomElevation(const GlobalPosition& globalPos) = 0;
     
     virtual FieldVector<Scalar, dim> evalBottomSlopes() = 0;
 
