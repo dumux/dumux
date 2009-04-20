@@ -15,6 +15,7 @@ SUBDIRS = . \
 	  pipe-newcouple-incomp \
 	  pipe-newrichards-couple \
 	  richards \
+	  shallowwater \
 	  splitting \
 	  star2uggrid \
 	  stokes \
