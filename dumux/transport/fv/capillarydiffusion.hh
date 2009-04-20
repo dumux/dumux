@@ -57,7 +57,7 @@ public:
         }
 
         // get geometry type of face
-        GeometryType faceGT = isIt->geometry().type();
+        GeometryType faceGT = isIt->geometryInInside().type();
 
         // center in face's reference element
         const Dune::FieldVector<Scalar,dim-1>& faceLocal = ReferenceElements<Scalar,dim-1>::general(faceGT).position(0,0);
