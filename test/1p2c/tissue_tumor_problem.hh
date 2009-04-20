@@ -35,7 +35,7 @@ template<class Grid, class Scalar>
 class TissueTumorProblem : public OnePTwoCProblem<Grid, Scalar> {
     typedef typename Grid::ctype CoordScalar;
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
-    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
+    typedef typename Grid::template Codim<0>::LeafIntersectionIterator::IntersectionIterator IntersectionIterator;
     enum {dim=Grid::dimension, numEq=2};
     enum {konti = 0, transport = 1};    // Solution vector index
 
