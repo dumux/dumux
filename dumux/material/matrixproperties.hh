@@ -24,7 +24,7 @@ public:
     typedef typename G::ctype DT;
     enum {n=G::dimension, m=1};
 
-    virtual const FieldMatrix<DT,n,n> &K(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi)
+    virtual const FieldMatrix<DT,n,n> &K(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
     {
         return K_;
     }
@@ -138,7 +138,7 @@ public:
     typedef typename G::ctype DT;
     enum {n=G::dimension, m=1};
 
-    const virtual FieldMatrix<DT,n,n> &K (const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi)
+    virtual const FieldMatrix<DT,n,n> &K (const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
     {
         return permeability.K(e);
     }
@@ -220,7 +220,7 @@ public:
     typedef typename G::ctype DT;
     enum {n=G::dimension, m=1};
 
-    virtual FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi)
+    virtual FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
     {
           return permeability.K(e);
     }

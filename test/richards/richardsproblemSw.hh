@@ -170,7 +170,7 @@ public:
     typedef typename G::ctype DT;
     enum {dim=G::dimension, m=1};
 
-    virtual const FieldMatrix<DT,dim,dim> &K (const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi)
+    virtual const FieldMatrix<DT,dim,dim> &K (const FieldVector<DT,dim>& x, const Entity& e, const FieldVector<DT,dim>& xi) const
     {
         return Kout_;
     }

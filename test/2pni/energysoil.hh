@@ -29,7 +29,7 @@ public:
     enum {dim=Grid::dimension, numEq=1};
 
     // define PERMEABILITY tensor
-    virtual const FieldMatrix<CoordScalar,dim,dim>& K (const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos)
+    virtual const FieldMatrix<CoordScalar,dim,dim>& K (const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos) const
     {
         return K_;
     }

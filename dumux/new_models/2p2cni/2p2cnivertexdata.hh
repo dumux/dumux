@@ -51,6 +51,12 @@ class TwoPTwoCNIVertexData : public TwoPTwoCVertexData<TwoPTwoCNITraits, Problem
     typedef Dune::FieldVector<Scalar, Grid::dimensionworld>  GlobalPosition;
     typedef Dune::FieldVector<Scalar, Grid::dimension>       LocalPosition;
 
+    typedef TwoPTwoCVertexData<TwoPTwoCNITraits, Problem> ParentType;
+
+    enum {
+        dim = Grid::dimension
+    };
+
 public:
     /*!
      * \brief Update all quantities for a given control volume.
@@ -78,28 +84,29 @@ public:
 
         temperature = sol[Tr::temperatureIdx];
         
-        heatCond = problem.soil().heatCond(global, 
-                                         element,
-                                         local,
-                                         this->saturation[Tr::wPhase]);
+        heatCond = jac.problem().soil().heatCond(global, 
+                                                 element,
+                                                 local,
+                                                 this->saturation[Tr::wPhase]);
         
-        enthalpy[Tr::wPhase] = problem.wettingPhase().enthalpy(temperature,
-                                                               this->pressure[Tr::wPhase],
-                                                               this->massfrac[Tr::nComp][Tr::wPhase]);
-        enthalpy[Tr::nPhase] = problem.nonwettingPhase().enthalpy(temperature,
-                                                                  this->pressure[Tr::nPhase],
-                                                                  this->massfrac[Tr::wComp][Tr::nPhase]);
-        intEnergy[Tr::wPhase] = problem.wettingPhase().intEnergy(temperature,
-                                                                 this->pressure[Tr::wPhase],
-                                                                 this->massfrac[Tr::nComp][Tr::wPhase]);
-        intEnergy[Tr::nPhase] = problem.nonwettingPhase().intEnergy(temperature,
-                                                                    this->pressure[Tr::nPhase],
-                                                                    this->massfrac[Tr::wComp][Tr::nPhase]);
+        enthalpy[Tr::wPhase] = jac.problem().wettingPhase().enthalpy(temperature,
+                                                                     this->pressure[Tr::wPhase],
+                                                                     this->massfrac[Tr::nComp][Tr::wPhase]);
+        enthalpy[Tr::nPhase] = jac.problem().nonwettingPhase().enthalpy(temperature,
+                                                                        this->pressure[Tr::nPhase],
+                                                                        this->massfrac[Tr::wComp][Tr::nPhase]);
+        intEnergy[Tr::wPhase] = jac.problem().wettingPhase().intEnergy(temperature,
+                                                                       this->pressure[Tr::wPhase],
+                                                                       this->massfrac[Tr::nComp][Tr::wPhase]);
+        intEnergy[Tr::nPhase] = jac.problem().nonwettingPhase().intEnergy(temperature,
+                                                                          this->pressure[Tr::nPhase],
+                                                                          this->massfrac[Tr::wComp][Tr::nPhase]);
     }
 
     PhasesVector intEnergy; //!< Internal energy.
     PhasesVector enthalpy;  //!< Enthalpy.
-    Scalar       lambda; //!< Total heat conductivity.
+    Scalar       temperature; //!< The temperature. We assume thermal equilibrium
+    Scalar       heatCond; //!< Total heat conductivity.
 };
 
 } // end namepace

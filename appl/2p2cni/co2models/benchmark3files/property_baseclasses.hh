@@ -44,7 +44,7 @@ public:
      * @param element codim 0 entity for which the value is sought
      * @param localPos position in local coordinates in element
      */
-    virtual const FieldMatrix<Scalar,dim,dim> &K (const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos)
+    virtual const FieldMatrix<Scalar,dim,dim> &K (const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos)  const
     {    DUNE_THROW(NotImplemented, "Permeability not implemented!"); }
 
     /** @brief Permeability tensor
@@ -53,7 +53,7 @@ public:
 	 * @param localPos position in local coordinates in element
 	 * @param idx local index in element
 	 */
-	virtual const FieldMatrix<Scalar,dim,dim> &K (const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos, const int idx)
+	virtual const FieldMatrix<Scalar,dim,dim> &K (const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos, const int idx) const
 	{    DUNE_THROW(NotImplemented, "Permeability not implemented!"); }
 
     /** @brief interface - Permeability tensor
@@ -61,7 +61,7 @@ public:
      * @param element codim 0 entity for which the value is sought
      * @param localPos position in local coordinates in element
      */
-    virtual const FieldMatrix<Scalar,dim,dim> &Kwn (const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos)
+    virtual const FieldMatrix<Scalar,dim,dim> &Kwn (const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos) const
     {    DUNE_THROW(NotImplemented, "Permeability not implemented!"); }
 
     /**@brief matrix porosity

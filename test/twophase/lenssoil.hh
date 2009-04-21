@@ -21,7 +21,7 @@ public:
     enum {dim=Grid::dimension, numEq=1};
 
     // define PERMEABILITY tensor
-    virtual const FieldMatrix<DT,dim,dim> &K (const FieldVector<DT,dim>& x, const Entity& element, const FieldVector<DT,dim>& xi)
+    virtual const FieldMatrix<DT,dim,dim> &K (const FieldVector<DT,dim>& x, const Entity& element, const FieldVector<DT,dim>& xi) const
     {
         if ((x[0] > innerLowerLeft_[0] && x[0] < innerUpperRight_[0])
             && (x[1] > innerLowerLeft_[1] && x[1] < innerUpperRight_[1]))

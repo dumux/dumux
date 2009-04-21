@@ -21,7 +21,7 @@ public:
     typedef Dune::FieldVector<CoordScalar,dim>      LocalPosition;
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
 
-    const FieldMatrix<CoordScalar,dim,dim> &K (const GlobalPosition &x, const Element& e, const LocalPosition &xi)
+    const FieldMatrix<CoordScalar,dim,dim> &K (const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
     {
         if (x[0] > -0.2 && x[0] < 0.2 && x[1] > -0.2 && x[1] < 0.2)
             return permlocWell_;

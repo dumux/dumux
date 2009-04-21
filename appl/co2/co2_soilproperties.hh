@@ -24,7 +24,7 @@ public:
     enum
         {    dim=Grid::dimension, numEq=2};
 
-    const FieldMatrix<CoordScalar,dim,dim>& K(const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos)
+    const FieldMatrix<CoordScalar,dim,dim>& K(const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos) const
     {
         return permloc_;
     }

@@ -22,7 +22,7 @@ public:
     enum {dim=Grid::dimension, numEq=1};
 
     // define PERMEABILITY tensor
-    virtual const FieldMatrix<DT,dim,dim> &K (const FieldVector<DT,dim>& x, const Entity& element, const FieldVector<DT,dim>& xi)
+    virtual const FieldMatrix<DT,dim,dim> &K (const FieldVector<DT,dim>& x, const Entity& element, const FieldVector<DT,dim>& xi) const
     {
         if (numberOfParameters_) {
             std::vector<double>& parameters = gridPtr_.parameters(element);

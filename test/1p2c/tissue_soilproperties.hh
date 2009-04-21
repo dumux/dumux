@@ -18,7 +18,7 @@ public:
     enum
         {    dim=Grid::dimension, numEq=2};
 
-    const FieldMatrix<CoordScalar,dim,dim> &K (const FieldVector<CoordScalar,dim>& globalPos, const Element& element, const FieldVector<CoordScalar,dim>& localPos)
+    const FieldMatrix<CoordScalar,dim,dim> &K (const FieldVector<CoordScalar,dim>& globalPos, const Element& element, const FieldVector<CoordScalar,dim>& localPos) const
     {
         if (10<globalPos[0] && globalPos[0]<12 && 10<globalPos[1] && globalPos[1]<12)
             return permloc_;                        //tumor tissue

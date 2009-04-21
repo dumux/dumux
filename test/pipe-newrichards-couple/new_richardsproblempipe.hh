@@ -93,7 +93,7 @@ public:
     ~RichardsSoil()
     {}
 
-    const FieldMatrix<CoordScalar,dim,dim> &K (const GlobalPosition &x, const Element& e, const LocalPosition &xi)
+    const FieldMatrix<CoordScalar,dim,dim> &K (const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
     {
         return Kout_;
     }

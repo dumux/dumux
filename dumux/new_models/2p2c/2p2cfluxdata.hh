@@ -55,7 +55,6 @@ class TwoPTwoCFluxData
     typedef Dune::FieldVector<Scalar, dim>                   GlobalPosition;
     typedef Dune::FieldVector<Scalar, localDim>              LocalPosition;
 
-
     typedef typename Dune::FVElementGeometry<Grid>           FVElementGeometry;
     typedef typename FVElementGeometry::SubControlVolume     SCV;
     typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;

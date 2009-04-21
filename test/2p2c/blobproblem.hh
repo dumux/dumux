@@ -192,7 +192,7 @@ public:
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
     enum {dim=Grid::dimension};
 
-    virtual const FieldMatrix<Scalar,dim,dim> &K (const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos)
+    virtual const FieldMatrix<Scalar,dim,dim> &K (const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos) const
     {
         return K_;
     }

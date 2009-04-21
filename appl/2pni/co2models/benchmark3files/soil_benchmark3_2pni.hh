@@ -30,7 +30,7 @@ public:
     typedef typename GV::IndexSet IS;
 
 
-    const FieldMatrix<CoordScalar,dim,dim> &K(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const int idx=0)
+    const FieldMatrix<CoordScalar,dim,dim> &K(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const int idx=0) const
     {
         const GV& gridView(_grid.leafView());
         const IndexSet& indexSet = gridView.indexSet();

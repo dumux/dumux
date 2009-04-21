@@ -97,9 +97,6 @@ public:
     static const int numEq = 3;  //!< Override the mumber of primary variables: We also have temperature
     // Primary variable indices
     static const int temperatureIdx = 2; //! The index for temperature in solution vectors.
-    
-    typedef typename BaseTraits::PhasesVector PhasesVector;
-    
 };
 
 }

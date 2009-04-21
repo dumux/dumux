@@ -21,7 +21,7 @@ public:
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
-    virtual const FieldMatrix &K (const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos)
+    virtual const FieldMatrix &K (const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos) const
     {
         if (globalPos[0] >= innerLowerLeft_[0] && globalPos[0] <= innerUpperRight_[0] && globalPos[1]
             >= innerLowerLeft_[1] && globalPos[1] <= innerUpperRight_[1])

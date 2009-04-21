@@ -46,40 +46,47 @@ template <class TwoPTwoCNITraits,
 class TwoPTwoCNIFluxData : public TwoPTwoCFluxData<TwoPTwoCNITraits, ProblemT, VertexData>
 {
     typedef typename ProblemT::DomainTraits::Scalar  Scalar;
+    typedef typename ProblemT::DomainTraits::Grid    Grid;
     typedef ProblemT                                 Problem;
     typedef typename Grid::template Codim<0>::Entity Element;
     typedef std::vector<VertexData>                  VertexDataArray;
 
     static const int dim = Grid::dimensionworld;
-    typedef Dune::FieldVector<Scalar, dim>           GlobalPosition;
+    static const int localDim = Grid::dimension;
+    typedef Dune::FieldVector<Scalar, dim>                   GlobalPosition;
+    typedef Dune::FieldVector<Scalar, localDim>              LocalPosition;
+
+    typedef typename Dune::FVElementGeometry<Grid>           FVElementGeometry;
+    typedef typename FVElementGeometry::SubControlVolume     SCV;
+    typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
+
+    typedef TwoPTwoCFluxData<TwoPTwoCNITraits, Problem, VertexData> ParentType;
 
     typedef TwoPTwoCNITraits Tr;
-    typedef TwoPTwoCFluxData<TwoPTwoCNITraits, ProblemT, VertexData> ParentT;
+    typedef Dune::FieldVector<Scalar, Tr::numPhases> PhasesVector;
 
 public:
-    TwoPTwoCFluxData(const Problem &problem,
-                     const Element &element,
-                     const FVElementGeometry &elemGeom,
-                     int faceIdx,
-                     const VertexDataArray &elemDat)
+    TwoPTwoCNIFluxData(const Problem &problem,
+                       const Element &element,
+                       const FVElementGeometry &elemGeom,
+                       int faceIdx,
+                       const VertexDataArray &elemDat)
         : ParentType(problem, element, elemGeom, faceIdx, elemDat)
     {
-        tempGrad = 0;
+        temperatureGrad = 0;
 
         // Harmonic mean of the heat conducitivities of the
         // sub control volumes adjacent to the face
-        heatCondAtIp = harmonicMean(eDat.vertex[i].heatCond,
-                                    eDat.vertex[j].heatCond);
+        heatCondAtIp = harmonicMean(elemDat[this->face->i].heatCond,
+                                    elemDat[this->face->j].heatCond);
         
         // calculate temperature gradient
         GlobalPosition tmp(0.0);
-        for (int idx = 0; 
-             idx < this->fvElemGeom.numVertices;
-             idx++) // loop over adjacent vertices
+        for (int idx = 0; idx < this->fvElemGeom.numVertices; idx++) 
         {
-            tmp = face->grad[idx];
-            tmp *= elemDat_[vertIdx].temperature;
-            tempGrad += tmp;
+            tmp = this->face->grad[idx];
+            tmp *= elemDat[idx].temperature;
+            temperatureGrad += tmp;
         }
     }
       
@@ -87,7 +94,7 @@ public:
     GlobalPosition temperatureGrad;
     
     //! heat conductivity at integration point
-    Scalar heatContAtIp;
+    Scalar heatCondAtIp;
 };
 
 } // end namepace

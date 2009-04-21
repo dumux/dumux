@@ -347,8 +347,8 @@ public:
     {
         const GlobalPosition &globalPos
             = element.geometry().corner(scvIdx);
-        const LocalPosition &localPos
-            = DomainTraits::referenceElement(element.geometry().type()).position(dim,scvIdx);
+        //const LocalPosition &localPos
+        //    = DomainTraits::referenceElement(element.geometry().type()).position(dim,scvIdx);
 
         values = BoundaryConditions::neumann;
 
@@ -373,13 +373,12 @@ public:
         
         values[pressureIdx] = 1e5;
         values[switchIdx] = 0.0;
-/*
+
         if (globalPos[0] < eps_)
         {
             values[pressureIdx] = 1e5 + 50;
             values[switchIdx] = 0;  // may be Sn, Xaw or Xwn, depending on the phase state
         }
-*/
     }
 
     /////////////////////////////
@@ -449,8 +448,6 @@ public:
     {
         return 283.15; // -> 10°C
     };
-
-
 
     const GlobalPosition &gravity () const
     {

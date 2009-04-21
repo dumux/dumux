@@ -73,7 +73,7 @@ public:
     ~InjectionSoil()
     {}
 
-    const FieldMatrix<CoordScalar,dim,dim> &K (const GlobalPosition &x, const Element& e, const LocalPosition &xi)
+    const FieldMatrix<CoordScalar,dim,dim> &K (const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
     {
         if (x[1] < layerBottom_)
             return highK_;
@@ -488,15 +488,14 @@ public:
         return state;
     }
 
+    Scalar temperature() const
+    {
+        return 283.15; // -> 10°C
+    };
 
     const GlobalPosition &gravity () const
     {
         return gravity_;
-    }
-
-    double depthBOR () const
-    {
-        return depthBOR_;
     }
 
     bool simulate()

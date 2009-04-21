@@ -22,6 +22,10 @@
 
 #include <dumux/new_models/2p2c/2p2cboxjacobianbase.hh>
 
+#include <dumux/new_models/2p2cni/2p2cnielementdata.hh>
+#include <dumux/new_models/2p2cni/2p2cnivertexdata.hh>
+#include <dumux/new_models/2p2cni/2p2cnifluxdata.hh>
+
 namespace Dune
 {
 
@@ -37,19 +41,37 @@ template<class ProblemT,
 class TwoPTwoCNIBoxJacobian : public TwoPTwoCBoxJacobianBase<ProblemT,
                                                              BoxTraitsT,
                                                              TwoPTwoCNITraitsT,
+                                                             TwoPTwoCNIElementData<TwoPTwoCNITraitsT,
+                                                                                   ProblemT>,
+                                                             TwoPTwoCNIVertexData<TwoPTwoCNITraitsT,
+                                                                                  ProblemT>,
+                                                             TwoPTwoCNIFluxData<TwoPTwoCNITraitsT,
+                                                                                ProblemT,
+                                                                                TwoPTwoCNIVertexData<TwoPTwoCNITraitsT,
+                                                                                                     ProblemT> >,
+                                                             
                                                              TwoPTwoCNIBoxJacobian<ProblemT,
                                                                                    BoxTraitsT,
-                                                                                   TwoPTwoCNITraitsT>
-                                                             >
+                                                                                   TwoPTwoCNITraitsT> >
 {
     typedef TwoPTwoCNITraitsT TwoPTwoCNITraits;
     typedef TwoPTwoCNIBoxJacobian<ProblemT,
                                   BoxTraitsT,
-                                  TwoPTwoCNITraits> ThisType;
+                                  TwoPTwoCNITraits>  ThisType;
+    typedef TwoPTwoCNIElementData<TwoPTwoCNITraitsT,
+                                  ProblemT>          ElementData;
+    typedef TwoPTwoCNIVertexData<TwoPTwoCNITraitsT,
+                                 ProblemT>           VertexData;
+    typedef TwoPTwoCNIFluxData<TwoPTwoCNITraitsT,
+                               ProblemT,
+                               VertexData >          FluxData;
     typedef TwoPTwoCBoxJacobianBase<ProblemT,
                                     BoxTraitsT,
-                                    TwoPTwoCNITraits,
-                                    ThisType> ParentType;
+                                    TwoPTwoCNITraitsT,
+                                    ElementData,
+                                    VertexData,
+                                    FluxData,
+                                    ThisType>     ParentType;
 
 
     typedef ProblemT                       Problem;
@@ -80,12 +102,11 @@ class TwoPTwoCNIBoxJacobian : public TwoPTwoCBoxJacobianBase<ProblemT,
 
     typedef BoxTraitsT                              BoxTraits;
     typedef typename BoxTraits::SolutionVector      SolutionVector;
-    typedef typename TwoPTwoCNITraits::PhasesVector PhasesVector;
 
     typedef typename ParentType::LocalFunction       LocalFunction;
-    typedef typename ParentType::ElementData         ElementData;
 
-    typedef typename ParentType::VariableVertexData  VariableVertexData;
+    typedef typename ParentType::VertexDataArray     VertexDataArray;
+
     typedef typename BoxTraits::FVElementGeometry    FVElementGeometry;
 
     typedef typename DomTraits::GlobalPosition        GlobalPosition;
@@ -121,11 +142,11 @@ public:
 
         result[temperatureIdx] =
             vertDat.porosity*(vertDat.density[wPhase] *
-                              vertDat.intenergy[wPhase] *
+                              vertDat.intEnergy[wPhase] *
                               vertDat.saturation[wPhase]
                               +
                               vertDat.density[nPhase] *
-                              vertDat.intenergy[nPhase] *
+                              vertDat.intEnergy[nPhase] *
                               vertDat.saturation[nPhase])
             +
             vertDat.temperature *
@@ -147,10 +168,10 @@ public:
         // advective heat flux in all phases
         const Scalar alpha = TwoPTwoCNITraits::upwindAlpha;      
         flux[temperatureIdx] = 0;
-        for (phase = 0; phase < numPhases; ++phase) {
+        for (int phase = 0; phase < numPhases; ++phase) {
             // vertex data of the upstream and the downstream vertices
-            const VertexData &up = this->vertexData_(vars.upstreamIdx[phase]);
-            const VertexData &dn = this->vertexData_(vars.downstreamIdx[phase]);
+            const VertexData &up = this->curElemDat_[fluxData.upstreamIdx[phase]];
+            const VertexData &dn = this->curElemDat_[fluxData.downstreamIdx[phase]];
             
             flux[temperatureIdx] +=
                 fluxData.vDarcyNormal[phase] * (
@@ -177,53 +198,12 @@ public:
         ParentType::computeDiffusiveFlux(flux, fluxData);
 
         // diffusive heat flux
-        flux[temperatureIdx] += (fluxData.temperatureGrad*fluxData.face->normal)*fluxData.heatCondAtIP;
+        flux[temperatureIdx] += (fluxData.temperatureGrad*fluxData.face->normal)*fluxData.heatCondAtIp;
     }
-
-public:
+    
     // internal method!
-    void updateVarVertexData_(VariableVertexData &vertDat,
-                              const SolutionVector &vertSol,
-                              int phaseState,
-                              const Element &element,
-                              int localIdx,
-                              Problem &problem,
-                              Scalar temperature) const
-    {
-        // update data for the isothermal stuff
-        ParentType::updateVarVertexData_(vertDat,
-                                         vertSol,
-                                         phaseState,
-                                         element,
-                                         localIdx,
-                                         problem,
-                                         temperature);
-
-        const LocalPosition &local =
-            DomTraits::referenceElement(element.type()).position(localIdx,
-                                                                 dim);
-        const GlobalPosition &global =
-            element.geometry().corner(localIdx);
-
-        // update data for the energy equation
-        vertDat.lambda = problem.soil().heatCond(global, element, local, vertDat.satW);
-        vertDat.enthalpy[pressureIdx] = problem.wettingPhase().enthalpy(temperature,
-                                                                        vertDat.pW,
-                                                                        vertDat.massfrac[nComp][wPhase]);
-        vertDat.enthalpy[switchIdx] = problem.nonwettingPhase().enthalpy(temperature,
-                                                                         vertDat.pN,
-                                                                         vertDat.massfrac[wComp][nPhase]);
-        vertDat.intenergy[pressureIdx] = problem.wettingPhase().intEnergy(temperature,
-                                                                          vertDat.pW,
-                                                                          vertDat.massfrac[nComp][wPhase]);
-        vertDat.intenergy[switchIdx] = problem.nonwettingPhase().intEnergy(temperature,
-                                                                           vertDat.pN,
-                                                                           vertDat.massfrac[wComp][nPhase]);
-    }
-
-
-    // internal method!
-    static Scalar temperature_(const SolutionVector &sol)
+    template <class SolutionVector>
+    Scalar temperature(const SolutionVector &sol)
     { return sol[temperatureIdx]; }
 };
 

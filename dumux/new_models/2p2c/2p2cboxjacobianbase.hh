@@ -121,10 +121,7 @@ protected:
     typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
     typedef ElementDataT         ElementData;
     typedef VertexDataT          VertexData;
-    
-    typedef TwoPTwoCFluxData<TwoPTwoCTraits, 
-                             Problem,
-                             VertexData> FluxData;
+    typedef FluxDataT            FluxData;
 
     typedef std::vector<VertexData> VertexDataArray;
 
@@ -200,7 +197,7 @@ public:
      *        a face of a subcontrol volume.
      */
     void computeAdvectiveFlux(SolutionVector &flux, 
-                              FluxData       &vars) const
+                              const FluxData &vars) const
     {
         ////////
         // advective fluxes of all components in all phases
@@ -233,7 +230,7 @@ public:
      * \brief Adds the diffusive mass flux of all components over
      *        a face of a subcontrol volume.
      */
-    void computeDiffusiveFlux(SolutionVector &flux, FluxData &vars) const
+    void computeDiffusiveFlux(SolutionVector &flux, const FluxData &vars) const
     {        
         // add diffusive flux of non-wetting component in wetting phase
         Scalar tmp = 
@@ -269,6 +266,7 @@ public:
      * \brief Return the temperature given the solution vector of a
      *        finite volume.
      */
+    template <class SolutionVector>
     Scalar temperature(const SolutionVector &sol)
     { return this->problem_.temperature(); /* constant temperature */ }
 

@@ -22,7 +22,6 @@
  *        constant within a finite element in the non-isothermal
  *        two-phase, two-component model.
  */
- */
 #ifndef DUMUX_2P2CNI_ELEMENT_DATA_HH
 #define DUMUX_2P2CNI_ELEMENT_DATA_HH
 
