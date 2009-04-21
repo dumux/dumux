@@ -109,6 +109,7 @@ AC_CONFIG_FILES([Makefile
     dumux/transport/Makefile 
     dumux/twophase/Makefile
     test/1p/Makefile 
+    test/2p/Makefile 
     test/1p2c/Makefile 
     test/2p2c/Makefile
     test/2p2cni/Makefile

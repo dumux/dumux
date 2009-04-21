@@ -46,28 +46,6 @@ public:
     static const int nPhase = 1;  //!< Phase index of the non-wetting phase
 
     typedef FieldVector<Scalar, numPhases>  PhasesVector;
-
-    /*!
-     * \brief Data which is attached to each vertex of an
-     *        element. These quantities are coincidental with the
-     *        averaged quantities inside a FV box.
-     */
-    struct VertexData
-    {
-        Scalar satW;
-        Scalar satN;
-        Scalar pC;
-        Scalar porosity;
-        
-        PhasesVector density;
-        PhasesVector pressure;
-        PhasesVector mobility;
-    };
-
-    /*!
-     * \brief Data at the each vertex of an element.
-     */
-    typedef std::vector<VertexData> ElementData;
 };
 
 /*!

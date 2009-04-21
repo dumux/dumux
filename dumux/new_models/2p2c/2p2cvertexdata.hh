@@ -118,7 +118,6 @@ public:
         porosity = jac.problem().soil().porosity(global,
                                                  element,
                                                  local);
-
     }
 
     /*!

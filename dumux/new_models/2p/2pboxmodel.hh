@@ -23,7 +23,10 @@
 #include <dumux/new_models/boxscheme/boxscheme.hh>
 #include <dumux/new_models/boxscheme/p1boxtraits.hh>
 
+#include <dumux/auxiliary/math.hh>
+
 #include "2ptraits.hh"
+#include "2pvertexdata.hh"
 
 #include <dumux/auxiliary/apis.hh>
 
@@ -43,18 +46,17 @@ template<class ProblemT, class BoxTraitsT, class TwoPTraitsT>
 class TwoPBoxJacobian : public BoxJacobian<ProblemT, 
                                            BoxTraitsT,
                                            TwoPBoxJacobian<ProblemT, BoxTraitsT, TwoPTraitsT>,
-                                           typename TwoPTraitsT::ElementData,
-                                           typename TwoPTraitsT::VertexData >
+                                           TwoPVertexData<TwoPTraitsT, ProblemT> >
 {
 private:
     typedef TwoPBoxJacobian<ProblemT,
                             BoxTraitsT,
-                            TwoPTraitsT>                   ThisType;
+                            TwoPTraitsT>            ThisType;
+    typedef TwoPVertexData<TwoPTraitsT, ProblemT>   VertexData;
     typedef BoxJacobian<ProblemT, 
                         BoxTraitsT, 
                         ThisType,
-                        typename TwoPTraitsT::ElementData,
-                        typename TwoPTraitsT::VertexData>   ParentType;
+                        VertexData>   ParentType;
 
     typedef ProblemT                       Problem;
     typedef typename Problem::DomainTraits DomTraits;
@@ -96,9 +98,6 @@ private:
     typedef typename BoxTraits::LocalFunction       LocalFunction;
 
     typedef FieldMatrix<Scalar, dim, dim>  Tensor;
-
-    typedef typename TwoPTraits::VertexData   VertexData;
-    typedef typename TwoPTraits::ElementData  ElementData;
 
 public:
     TwoPBoxJacobian(ProblemT &problem)
@@ -146,9 +145,10 @@ public:
         const LocalPosition &local_j = this->curElementGeom_.subContVol[j].local;
 
         // calculate the permeability tensor
-        Tensor K         = this->problem_.soil().K(global_i, ParentType::curElement_(), local_i);
+        const Tensor &Ki = this->problem_.soil().K(global_i, ParentType::curElement_(), local_i);
         const Tensor &Kj = this->problem_.soil().K(global_j, ParentType::curElement_(), local_j);
-        harmonicMeanK_(K, Kj);
+        Tensor K;
+        harmonicMeanMatrix(K, Ki, Kj);
         
         GlobalPosition Kij;
         K.mv(face.normal, Kij); // Kij = K*normal
@@ -203,6 +203,15 @@ public:
                               localVertexIdx);
     }
 
+    /*!
+     * \brief Return the temperature given the solution vector of a
+     *        finite volume.
+     */
+    template <class SolutionVector>
+    Scalar temperature(const SolutionVector &sol)
+    {
+        return this->problem_.temperature(); /* constant temperature */ 
+    }
 
     /*!
      * \brief Add the mass fraction of air in water to VTK output of
@@ -251,85 +260,6 @@ public:
         writer.addVertexData(Sw, "SW");
         writer.addVertexData(Sn, "SN");
     }
-
-    void updateVertexData_(ElementData         &dest,
-                           const LocalFunction &sol,
-                           int                  vertIdx,
-                           bool                 isOldSol) // index of the subvolume/grid vertex
-    {
-        // Current cache at sub-controlvolume
-        VertexData &vertDat = dest[vertIdx];
-        // Current solution for sub-controlvolume
-        const SolutionVector &vertSol = sol[vertIdx];
-        
-        // get local coordinates of the vertex
-        const GlobalPosition &globalPos = this->curElementGeom_.subContVol[vertIdx].global;
-        const LocalPosition &localPos = this->curElementGeom_.subContVol[vertIdx].local;
-
-        if (formulation == TwoPTraits::pWsN) {
-            vertDat.satN = vertSol[saturationIdx];
-            vertDat.satW = 1.0 - vertDat.satN;
-            vertDat.pC = this->problem_.materialLaw().pC(vertDat.satW,
-                                                         globalPos,
-                                                         this->curElement_(),
-                                                         localPos);
-            vertDat.pressure[wPhase] = vertSol[pressureIdx];
-            vertDat.pressure[nPhase] = vertDat.pressure[wPhase] + vertDat.pC;
-        }
-        else if (formulation == TwoPTraits::pNsW) {
-            vertDat.satW = vertSol[saturationIdx];
-            vertDat.satN = 1.0 - vertDat.satW;
-            vertDat.pC = this->problem_.materialLaw().pC(vertDat.satW,
-                                                         globalPos,
-                                                         this->curElement_(),
-                                                         localPos);
-            vertDat.pressure[nPhase] = vertSol[pressureIdx];
-            vertDat.pressure[wPhase] = vertDat.pressure[nPhase] - vertDat.pC;
-        }
-
-        vertDat.porosity = this->problem_.porosity(this->curElement_(), 
-                                                   vertIdx);
-
-        vertDat.density[wPhase] = this->problem_.wettingPhase().density(283.15, // temperature,
-                                                                        vertDat.pressure[wPhase]);
-        vertDat.density[nPhase] = this->problem_.nonwettingPhase().density(283.15, //temperature,
-                                                                           vertDat.pressure[nPhase]);
-
-        vertDat.mobility[wPhase] = this->problem_.materialLaw().mobW(vertDat.satW,
-                                                                     globalPos,
-                                                                     this->curElement_(),
-                                                                     localPos,
-                                                                     283.15, // temperature,
-                                                                     vertDat.pressure[wPhase]);
-        vertDat.mobility[nPhase] = this->problem_.materialLaw().mobN(vertDat.satN,
-                                                                     globalPos,
-                                                                     this->curElement_(),
-                                                                     localPos,
-                                                                     283.15, // temperature,
-                                                                     vertDat.pressure[nPhase]);
-    }
-
-private:
-    // harmonic mean of the permeability computed directly.  the
-    // first parameter is used to store the result.
-    static void harmonicMeanK_(Tensor &Ki, const Tensor &Kj)
-    {
-        for (int kx=0; kx < Tensor::rows; kx++){
-            for (int ky=0; ky< Tensor::cols; ky++){
-                if (Ki[kx][ky] != Kj[kx][ky]) {
-                    Ki[kx][ky] = harmonicMean_(Ki[kx][ky], Kj[kx][ky]);
-                }
-            }
-        }
-    }
-
-    // returns the harmonic mean of two scalars
-    static Scalar harmonicMean_(Scalar x, Scalar y)
-    {
-        if (x == 0 || y == 0)
-            return 0;
-        return (2*x*y)/(x + y);
-    };
 };
 
 

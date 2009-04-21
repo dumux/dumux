@@ -4,6 +4,10 @@ add_definitions(-DYASPGRID -DGRIDDIM=2 -DENABLE_UG)
 ADD_EXECUTABLE("test_twophase" test_twophase.cc)
 TARGET_LINK_LIBRARIES("test_twophase" ${DumuxLinkLibraries})
 
+# build target for the simple twophase lens problem
+ADD_EXECUTABLE("new_test_lens" new_test_lens.cc)
+TARGET_LINK_LIBRARIES("new_test_lens" ${DumuxLinkLibraries})
+
 # add required libraries and includes to the build flags 
 LINK_DIRECTORIES(${DumuxLinkDirectories})
 INCLUDE_DIRECTORIES(${DumuxIncludeDirectories})

@@ -2,6 +2,7 @@
 # (they also don't compile if using the old build system)!
 
 add_subdirectory("1p")
+add_subdirectory("2p")
 add_subdirectory("2p2c")
 add_subdirectory("2p2cni")
 #add_subdirectory("2penergy")
@@ -24,7 +25,6 @@ add_subdirectory("minc")
 #add_subdirectory("parallel")
 add_subdirectory("richards")
 add_subdirectory("tutorial")
-add_subdirectory("twophase")
 #add_subdirectory("upscaledvelocity")
 #add_subdirectory("vtk")
 

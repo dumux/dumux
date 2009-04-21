@@ -1,151 +1,44 @@
-#ifndef DUNE_NEW_BLOBPROBLEM_HH
-#define DUNE_NEW_BLOBPROBLEM_HH
+#ifndef DUNE_NEW_LENSPROBLEM_HH
+#define DUNE_NEW_LENSPROBLEM_HH
 
 //#include <dumux/material/property_baseclasses.hh>
 #include <dumux/material/matrixproperties.hh>
 #include <dumux/material/twophaserelations.hh>
-#include <dumux/material/multicomponentrelations.hh>
-
 #include <dumux/material/phaseproperties/phaseproperties2p.hh>
+
 
 #include <dumux/auxiliary/timemanager.hh>
 #include <dumux/io/vtkmultiwriter.hh>
 #include <dumux/io/restart.hh>
 
-#include <dumux/new_models/2p2c/2p2cboxmodel.hh>
-#include <dumux/new_models/2p2c/2p2cnewtoncontroller.hh>
+#include <dumux/new_models/2p/2pboxmodel.hh>
 
 #include <dumux/nonlinear/new_newtonmethod.hh>
+#include <dumux/nonlinear/new_newtoncontroller.hh>
 
 #include <dumux/auxiliary/timemanager.hh>
 #include <dumux/auxiliary/basicdomain.hh>
 
-/**
- * @file
- *
- * @brief Definition of a problem, where a blob of gas is enclosed by
- * a zone completely saturated with water. The gas saturation within
- * the blob is below the residual saturation, bit gas gets transported
- * away anyway because it is partially miscible with water.
- *
- * @author Bernd Flemisch, Klaus Mosthaf
- */
+#include "lenssoil.hh"
 
 namespace Dune
 {
-//////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////--SOIL--//////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////
-
-/** \todo Please doc me! */
-
-template<class Grid, class ScalarT>
-class BlobSoil: public Matrix2p<Grid,ScalarT>
-{
-public:
-    typedef typename Grid::Traits::template Codim<0>::Entity Element;
-    typedef ScalarT Scalar;
-
-    enum {dim=Grid::dimension, dimWorld=Grid::dimensionworld};
-
-    typedef Dune::FieldVector<Scalar,dim>      LocalPosition;
-    typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
-
-    BlobSoil()
-        : Matrix2p<Grid,Scalar>(),
-          K_(0.0)
-    {
-        for(int i = 0; i < dim; i++)
-            K_[i][i] = 1e-12;
-    }
-
-    ~BlobSoil()
-    {}
-
-    virtual const FieldMatrix<Scalar,dim,dim> &K (const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
-    {
-        return K_;
-    }
-    virtual double porosity(const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
-    {
-        return 0.3;
-    }
-
-    virtual double Sr_w(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double T) const
-    {
-        return 0;
-    }
-
-    virtual double Sr_n(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double T) const
-    {
-        return 0.1;
-    }
-
-    /* ATTENTION: define heat capacity per cubic meter! Be sure, that it corresponds to porosity!
-     * Best thing will be to define heatCap = (specific heatCapacity of material) * density * porosity*/
-    virtual double heatCap(const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
-    {
-        return     790 /* spec. heat cap. of granite */
-            * 2700 /* density of granite */
-            * (1 - porosity(x, e, xi));
-    }
-
-    virtual double heatCond(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double sat) const
-    {
-        static const double lWater = 0.6;
-        static const double lGranite = 2.8;
-        double poro = porosity(x, e, xi);
-        double lsat = pow(lGranite, (1-poro)) * pow(lWater, poro);
-        double ldry = pow(lGranite, (1-poro));
-        return ldry + sqrt(sat) * (ldry - lsat);
-    }
-
-    virtual std::vector<double> paramRelPerm(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double T) const
-    {
-        // example for Brooks-Corey parameters
-        std::vector<double> param(2);
-        param[0] = 2.; // lambda
-        param[1] = 0.; // entry-pressures
-
-        //        if (x[0] > 150)
-        //            param[0] = 0.5;
-
-        return param;
-    }
-
-    virtual typename Matrix2p<Grid,Scalar>::modelFlag relPermFlag(const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
-    {
-        return Matrix2p<Grid,Scalar>::brooks_corey;
-    }
-
-private:
-    FieldMatrix<Scalar,dim,dim> K_;
-};
-
 /*!
- * @brief Definition of a problem, where a blob of gas is enclosed by
- * a zone completely saturated with water. The gas saturation within
- * the blob is below the residual saturation, bit gas gets transported
- * away anyway because it is partially miscible with water.
- *
- *    Template parameters are:
- *
- *    - ScalarT  Floating point type used for scalars
+ * \todo Please doc me!
  */
 template<class GridT, class ScalarT>
-class NewBlobProblem : public BasicDomain<GridT,
+class NewLensProblem : public BasicDomain<GridT,
                                           ScalarT>
 {
     typedef GridT                          Grid;
     typedef BasicDomain<Grid, ScalarT>     ParentType;
-    typedef NewBlobProblem<Grid, ScalarT>  ThisType;
-    typedef TwoPTwoCBoxModel<ThisType>     Model;
+    typedef NewLensProblem<Grid, ScalarT>  ThisType;
+    typedef TwoPBoxModel<ThisType>         Model;
 
-    typedef Dune::Liq_WaterAir                     WettingPhase;
-    typedef Dune::Gas_WaterAir                     NonwettingPhase;
-    typedef Dune::BlobSoil<Grid, ScalarT>          Soil;
+    typedef Water                    WettingPhase;
+    typedef DNAPL                    NonwettingPhase;
+    typedef Dune::LensSoil<Grid, ScalarT>  Soil;
     typedef Dune::TwoPhaseRelations<Grid, ScalarT> MaterialLaw;
-    typedef Dune::CWaterAir                        Multicomp;
 
 public:
     // the domain traits of the domain
@@ -153,27 +46,21 @@ public:
     // the traits of the BOX scheme
     typedef typename Model::BoxTraits           BoxTraits;
     // the traits of the Pw-Sn model
-    typedef typename Model::TwoPTwoCTraits      TwoPTwoCTraits;
+    typedef typename Model::TwoPTraits          TwoPTraits;
 
 private:
     // some constants from the traits for convenience
     enum {
         numEq       = BoxTraits::numEq,
-        pressureIdx = TwoPTwoCTraits::pressureIdx,
-        switchIdx   = TwoPTwoCTraits::switchIdx,
+        pressureIdx = TwoPTraits::pressureIdx,
+        switchIdx   = TwoPTraits::saturationIdx,
 
-        // Phase State
-        wPhaseOnly  = TwoPTwoCTraits::wPhaseOnly,
-        nPhaseOnly  = TwoPTwoCTraits::nPhaseOnly,
-        bothPhases  = TwoPTwoCTraits::bothPhases,
+        pWIdx       = TwoPTraits::pressureIdx,
+        sNIdx       = TwoPTraits::saturationIdx,
 
         // Grid and world dimension
         dim         = DomainTraits::dim,
         dimWorld    = DomainTraits::dimWorld,
-
-        // Choice of primary variables
-        pWsN        = TwoPTwoCTraits::pWsN,
-        pNsW        = TwoPTwoCTraits::pNsW
     };
 
     // copy some types from the traits for convenience
@@ -198,28 +85,37 @@ private:
     typedef Dune::TimeManager<Episode>                  TimeManager;
 
     typedef typename Model::NewtonMethod                NewtonMethod;
-    typedef TwoPTwoCNewtonController<NewtonMethod>      NewtonController;
+    typedef Dune::NewtonController<NewtonMethod>        NewtonController;
 
 public:
-    NewBlobProblem(Grid *grid,
+    NewLensProblem(Grid *grid,
+                   const GlobalPosition &outerLowerLeft,
+                   const GlobalPosition &outerUpperRight,
+                   const GlobalPosition &innerLowerLeft,
+                   const GlobalPosition &innerUpperRight,
                    Scalar dtInitial,
                    Scalar tEnd)
         : ParentType(grid),
+
+          outerLowerLeft_(outerLowerLeft),
+          outerUpperRight_(outerUpperRight),
+
+          soil_(outerLowerLeft, outerUpperRight, innerLowerLeft, innerUpperRight),
+
           materialLaw_(soil_, wPhase_, nPhase_),
-          multicomp_(wPhase_, nPhase_),
           timeManager_(tEnd,
                        this->grid().comm().rank() == 0),
           model_(*this),
           newtonMethod_(model_),
-          resultWriter_("newblob")
+          resultWriter_("newlens")
     {
         timeManager_.setStepSize(dtInitial);
 
         eps_    = 1e-8 * 300.0;
 
         gravity_ = 0;
-        //        gravity_[dim - 1] = -9.81;
-
+        gravity_[dim - 1] = -9.81;
+        
         wasRestarted_ = false;
     }
 
@@ -281,7 +177,7 @@ public:
     ///////////////////////////////////
 
     ///////////////////////////////////
-    // Strings pulled by the TwoPTwoCBoxModel during the course of
+    // Strings pulled by the TwoPBoxModel during the course of
     // the simulation (-> boundary conditions, initial conditions,
     // etc)
     ///////////////////////////////////
@@ -323,14 +219,6 @@ public:
     Soil &soil()
     {  return soil_; }
 
-    //! object for multicomponent calculations
-    /*! object for multicomponent calculations including mass fractions,
-     * mole fractions and some basic laws
-     \return    multicomponent object
-    */
-    MultiComp &multicomp ()
-    { return multicomp_;  }
-
     //! object for definition of material law
     /*! object for definition of material law (e.g. Brooks-Corey, Van Genuchten, ...)
       \return    material law
@@ -352,7 +240,7 @@ public:
 
         values = BoundaryConditions::neumann;
 
-        if ((globalPos[0] < eps_) || (globalPos[0] > (3 - eps_)))
+        if (onLeftBoundary_(globalPos) || onRightBoundary_(globalPos))
             values = BoundaryConditions::dirichlet;
     }
 
@@ -371,14 +259,26 @@ public:
         //const LocalPosition &localPos
         //    = DomainTraits::referenceElement(element.geometry().type()).position(dim,scvIdx);
         
-        values[pressureIdx] = 1e5;
-        values[switchIdx] = 0.0;
-
-        if (globalPos[0] < eps_)
+        Scalar densityW = wettingPhase().density();
+        
+        if (onLeftBoundary_(globalPos))
         {
-            values[pressureIdx] = 1e5 + 50;
-            values[switchIdx] = 0;  // may be Sn, Xaw or Xwn, depending on the phase state
+            Scalar height = outerUpperRight_[1] - outerLowerLeft_[1];
+            
+            Scalar a = -(1 + 0.5/height);
+            Scalar b = -a*outerUpperRight_[1];
+            values[pWIdx] = -densityW*gravity_[1]*(a*globalPos[1] + b);
+            values[sNIdx] = 0;
         }
+        else if (onRightBoundary_(globalPos))
+        {
+            Scalar a = -1;
+            Scalar b = outerUpperRight_[1];
+            values[pWIdx] = -densityW*gravity_[1]*(a*globalPos[1] + b);
+            values[sNIdx] = 0;
+        }
+        else
+            values = 0.0;
     }
 
     /////////////////////////////
@@ -391,12 +291,15 @@ public:
                  int                         scvIdx,
                  int                         boundaryFaceIdx) const
     {
-        //const GlobalPosition &globalPos
-        //    = element.geometry().corner(scvIdx);
+        const GlobalPosition &globalPos
+            = element.geometry().corner(scvIdx);
         //const LocalPosition &localPos
         //    = DomainTraits::referenceElement(element.geometry().type()).position(dim,scvIdx);
 
         values = 0.0;
+        if (onInlet_(globalPos)) {
+            values[sNIdx] = -0.04; // kg / (m * s)
+        }
     }
 
     /////////////////////////////
@@ -425,23 +328,18 @@ public:
         //const LocalPosition &localPos
         //    = DomainTraits::referenceElement(element.geometry().type()).position(dim,scvIdx);
 
-        values[pressureIdx] = 1e5;
-        values[switchIdx] = 0;
 
-        if (isInsideBlob_(globalPos))
-        {
-            values[switchIdx] = 0.1;
+        Scalar densityW = wettingPhase().density();
+        Scalar height = outerUpperRight_[1] - outerLowerLeft_[1];
+        values[pWIdx] = -densityW*gravity_[1]*(height - globalPos[1]);
+
+        if (!onLeftBoundary_(globalPos)) {
+            Scalar a = -(1 + 0.5/height);
+            Scalar b = -a*outerUpperRight_[1];
+            values[pWIdx] = -densityW*gravity_[1]*(a*globalPos[1] + b);
         }
-    }
-
-    int initialPhaseState(const Vertex         &vert,
-                          int                  &globalIdx,
-                          const GlobalPosition &globalPos) const
-    {
-        if (isInsideBlob_(globalPos))
-            return bothPhases;
-
-        return wPhaseOnly;
+        
+        values[sNIdx] = 0.0;
     }
 
     Scalar temperature() const
@@ -476,7 +374,7 @@ public:
 
         Restarter res;
         res.serializeBegin(this->grid(),
-                           "newblob",
+                           "newlens",
                            timeManager_.time());
 
         timeManager_.serialize(res);
@@ -491,7 +389,7 @@ public:
         typedef Dune::Restart<Grid> Restarter;
 
         Restarter res;
-        res.deserializeBegin(this->grid(), "newblob", t);
+        res.deserializeBegin(this->grid(), "newlens", t);
 
         timeManager_.deserialize(res);
         resultWriter_.deserialize(res);
@@ -503,15 +401,33 @@ public:
     };
 
 private:
-    bool isInsideBlob_(const GlobalPosition &globalPos) const
+    bool onLeftBoundary_(const GlobalPosition &globalPos) const
     {
-        return (globalPos[0] >= 0.59 &&
-                globalPos[0] <= 1.21 &&
-                globalPos[1] >= 1.19 &&
-                globalPos[1] <= 1.81);
+        return globalPos[0] < outerLowerLeft_[0] + eps_;
     }
 
+    bool onRightBoundary_(const GlobalPosition &globalPos) const
+    {
+        return globalPos[0] > outerUpperRight_[0] - eps_;
+    }
 
+    bool onLowerBoundary_(const GlobalPosition &globalPos) const
+    {
+        return globalPos[1] < outerLowerLeft_[1] + eps_;
+    }
+
+    bool onUpperBoundary_(const GlobalPosition &globalPos) const
+    {
+        return globalPos[1] > outerUpperRight_[1] - eps_;
+    }
+
+    bool onInlet_(const GlobalPosition &globalPos) const
+    {
+        Scalar width = outerUpperRight_[0] - outerLowerLeft_[0];
+        Scalar lambda = (outerUpperRight_[0] - globalPos[0])/width;
+        return onUpperBoundary_(globalPos) && 0.5 < lambda  && lambda < 2.0/3.0;
+    }
+    
     // write the fields current solution into an VTK output file.
     void writeCurrentResult_()
     {
@@ -527,12 +443,14 @@ private:
     Scalar eps_;
     GlobalPosition  gravity_;
 
+    GlobalPosition outerLowerLeft_;
+    GlobalPosition outerUpperRight_;
+
     // fluids and material properties
     WettingPhase    wPhase_;
     NonwettingPhase nPhase_;
     Soil            soil_;
     MaterialLaw     materialLaw_;
-    Multicomp       multicomp_;
 
     TimeManager     timeManager_;
 
