@@ -5,8 +5,8 @@
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/io.hh>
 #include "dumux/shallowwater/fvshallowwater.hh"
-#include "2dbump_problem.hh"
-#include "solidsurface_irregular.hh"
+#include "2dpulse_problem.hh"
+#include "solidsurfaceplain.hh"
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/timedisc/expliciteulerstep.hh"
 #include "dumux/shallowwater/shallowvariableclass.hh"

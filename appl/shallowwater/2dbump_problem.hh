@@ -41,13 +41,13 @@ public:
         {
             return Dune::BoundaryConditions::dirichlet;
         }
-        if (faceGlobalPos[1]< eps_ && faceGlobalPos[1] > upperRight_[1]- eps_)
+        if (faceGlobalPos[1]< eps_ || faceGlobalPos[1] > upperRight_[1]- eps_)
         {
             return Dune::BoundaryConditions::neumann;
         }
         else
         {
-            // DUNE_THROW(NotImplemented,"Problem with BC!");
+             DUNE_THROW(NotImplemented,"Problem with BC!");
         }
 
     }
@@ -71,7 +71,7 @@ public:
         }
         else
         {
-            // DUNE_THROW(NotImplemented,"Problem with BC!");
+             DUNE_THROW(NotImplemented,"Problem with BC!");
         }
     }
 

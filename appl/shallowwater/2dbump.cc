@@ -19,8 +19,8 @@ int main(int argc, char** argv)
      
     // time loop parameters
     const double tStart = 0;
-    const double tEnd = 10;
-    const double cFLFactor = 0.8;
+    const double tEnd = 40;
+    const double cFLFactor = 0.4;
     double maxDt = 5;
     double firstDt =1 ;
     int modulo = 2;
