@@ -47,6 +47,7 @@ FIND_PACKAGE(ALUGrid)
 # Find the required include files
 INCLUDE (CheckIncludeFileCXX)
 CHECK_INCLUDE_FILE_CXX("malloc.h" HAVE_MALLOC_H)
+CHECK_INCLUDE_FILE_CXX("valgrind/memcheck.h" HAVE_VALGRIND)
 #CHECK_INCLUDE_FILE_CXX("tr1/array" HAVE_TR1_ARRAY)
 ##############
 

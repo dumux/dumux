@@ -18,7 +18,6 @@
 
 namespace Dune
 {
-
 ///////////////////////////////////////////////////////////////////////////
 // two-phase two-component traits (central place for names and
 // indices required by the TwoPTwoCBoxJacobian and TwoPTwoCBoxModel)
@@ -31,13 +30,13 @@ class TwoPTwoCBaseTraits
 {
 public:
     enum {
-        numEq          = 2,  //!< Number of primary variables / equations
+        numEq         = 2,  //!< Number of primary variables / equations
         numPhases     = 2,  //!< Number of fluid phases
         numComponents = 2   //!< Number of fluid components within a phase
     };
     enum { // Primary variable indices
-        pressureIdx = 0,       //!< Idx for either wetting or non-wetting phase pressure (depending on formulation) in a solution vector
-        switchIdx = 1,       //!< Idx for the wetting phase quantity
+        pressureIdx = 0,     //!< Index for wetting/non-wetting phase pressure (depending on formulation) in a solution vector
+        switchIdx   = 1,     //!< Index of the either the saturation or the mass fraction of the non-wetting/wetting phase
     };
     enum { // present phases
         nPhaseOnly = 0, //!< Only the non-wetting phase is present
@@ -49,26 +48,29 @@ public:
         pNsW = 1,  //!< Pn and Sw as primary variables
     };
 
-    typedef FieldVector<Scalar, numPhases>         PhasesVector;
+    typedef FieldVector<Scalar, numPhases>  PhasesVector;
 
     /*!
-     * \brief Data which is attached to each vert of the and can
-     *        be shared between multiple calculations and should
-     *        thus be cached in order to increase efficency.
+     * \brief Data which is attached to each vertex of an
+     *        element. These quantities are coincidental with the
+     *        averaged quantities inside a FV box.
      */
-    struct VariableVertexData
+    struct VertexData
     {
-        Scalar satN;
-        Scalar satW;
-        Scalar pW;
+        PhasesVector saturation;
+        PhasesVector pressure;
         Scalar pC;
-        Scalar pN;
-        PhasesVector mobility;  //FieldVector with the number of phases
+        Scalar porosity;
+        PhasesVector mobility;
         PhasesVector density;
         PhasesVector diffCoeff; // diffusion coefficients for the phases
         Dune::FieldMatrix<Scalar, numComponents, numPhases> massfrac;
     };
 
+    /*!
+     * \brief Data at the each vertex of an element.
+     */
+    typedef std::vector<VertexData> ElementData;
 };
 
 

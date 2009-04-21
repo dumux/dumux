@@ -6,15 +6,6 @@ TARGET_LINK_LIBRARIES("test_2p2cni" ${DumuxLinkLibraries})
 ADD_EXECUTABLE("new_test_2p2cni" new_test_2p2cni.cc)
 TARGET_LINK_LIBRARIES("new_test_2p2cni" ${DumuxLinkLibraries})
 
-#ADD_EXECUTABLE("test_co2_2p2cni" test_co2.cc)
-#TARGET_LINK_LIBRARIES("test_co2_2p2cni" ${DumuxLinkLibraries})
-
-ADD_EXECUTABLE("new_test_co2" new_test_co2.cc)
-TARGET_LINK_LIBRARIES("new_test_co2" ${DumuxLinkLibraries})
-
-ADD_EXECUTABLE("new_leakywell" new_leakywell.cc)
-TARGET_LINK_LIBRARIES("new_leakywell" ${DumuxLinkLibraries})
-
 # add required libraries and includes to the build flags 
 LINK_DIRECTORIES(${DumuxLinkDirectories})
 INCLUDE_DIRECTORIES(${DumuxIncludeDirectories})

@@ -30,6 +30,13 @@
 
 #include <boost/format.hpp>
 
+#ifdef HAVE_VALGRIND
+#include <valgrind/memcheck.h>
+#elif !defined VALGRIND_CHECK_MEM_IS_DEFINED
+#define VALGRIND_CHECK_MEM_IS_DEFINED(addr, s)
+#define VALGRIND_MAKE_MEM_UNDEFINED(addr, s)
+#endif // HAVE_VALGRIND
+
 namespace Dune
 {
 
@@ -225,6 +232,12 @@ public:
     template<class NewtonMethod, class NewtonController>
     void update(Scalar &dt, Scalar &nextDt, NewtonMethod &solver, NewtonController &controller)
     {
+#if HAVE_VALGRIND
+        for (size_t i = 0; i < (*currentSolution()).size(); ++i)
+            VALGRIND_CHECK_MEM_IS_DEFINED(&(*currentSolution())[i],
+                                          sizeof(SolutionVector));
+#endif // HAVE_VALGRIND
+
         asImp_().updateBegin();
 
         int numRetries = 0;
@@ -254,6 +267,13 @@ public:
         }
 
         asImp_().updateSuccessful();
+
+#if HAVE_VALGRIND
+        for (size_t i = 0; i < (*currentSolution()).size(); ++i) {
+            VALGRIND_CHECK_MEM_IS_DEFINED(&(*currentSolution())[i],
+                                          sizeof(SolutionVector));
+        }
+#endif // HAVE_VALGRIND
     }
 
 
@@ -315,13 +335,17 @@ public:
             const Element& element = *it;
             const int numVertices = element.template count<dim>();
             LocalFunction localResidual(numVertices);
+
             LocalFunction localU(numVertices);
             LocalFunction localOldU(numVertices);
 
             localJacobian_.setCurrentElement(element);
             localJacobian_.restrictToElement(localU, currentSolution());
             localJacobian_.restrictToElement(localOldU, previousSolution());
-            localJacobian_.setParams(element, localU, localOldU);
+
+            localJacobian_.setCurrentSolution(localU);
+            localJacobian_.setPreviousSolution(localOldU);
+
             localJacobian_.evalLocalResidual(localResidual);
 
             // loop over the element's vertices, map them to the

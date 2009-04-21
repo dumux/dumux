@@ -31,7 +31,6 @@ namespace Dune
 //template<class ProblemT, class TwoPTwoCTraitsT>
 //class TwoPTwoCBoxModel;
 
-
 ///////////////////////////////////////////////////////////////////////////
 // TwoPTwoCBoxJacobian (evaluate the local jacobian for the newton method.)
 ///////////////////////////////////////////////////////////////////////////
@@ -47,16 +46,22 @@ template<class ProblemT,
          class Implementation>
 class TwoPTwoCBoxJacobianBase : public BoxJacobian<ProblemT,
                                                    BoxTraitsT,
-                                                   Implementation >
+                                                   Implementation,
+                                                   typename TwoPTwoCTraitsT::ElementData,
+                                                   typename TwoPTwoCTraitsT::VertexData>
+
 {
 protected:
-//    friend class TwoPTwoCBoxModel<ProblemT, TwoPTwoCTraitsT>;
-
     typedef TwoPTwoCBoxJacobianBase<ProblemT,
                                     BoxTraitsT,
                                     TwoPTwoCTraitsT,
                                     Implementation>              ThisType;
-    typedef BoxJacobian<ProblemT, BoxTraitsT, Implementation>    ParentType;
+    typedef BoxJacobian<ProblemT, 
+                        BoxTraitsT,
+                        Implementation,
+                        typename TwoPTwoCTraitsT::ElementData,
+                        typename TwoPTwoCTraitsT::VertexData>    ParentType;
+    
     typedef ProblemT                                Problem;
     typedef typename Problem::DomainTraits          DomTraits;
     typedef BoxTraitsT                              BoxTraits;
@@ -93,6 +98,7 @@ protected:
     typedef typename DomTraits::Scalar                Scalar;
     typedef typename DomTraits::CoordScalar           CoordScalar;
     typedef typename DomTraits::Grid                  Grid;
+    typedef typename DomTraits::Vertex                Vertex;
     typedef typename DomTraits::Element               Element;
     typedef typename DomTraits::ElementIterator       ElementIterator;
     typedef typename Element::EntityPointer           ElementPointer;
@@ -107,16 +113,10 @@ protected:
     typedef typename Grid::CollectiveCommunication  CollectiveCommunication;
 
     typedef typename TwoPTwoCTraits::PhasesVector        PhasesVector;
-    typedef typename TwoPTwoCTraits::VariableVertexData  VariableVertexData;
-    typedef FieldMatrix<Scalar, dim, dim>  Tensor;
+    typedef typename TwoPTwoCTraits::ElementData         ElementData;
+    typedef typename TwoPTwoCTraits::VertexData          VertexData;
 
-    /*!
-     * \brief Cached data for the each vertex of the element.
-     */
-    struct ElementData
-    {
-        VariableVertexData vertex[BoxTraits::ShapeFunctionSetContainer::maxsize];
-    };
+    typedef FieldMatrix<Scalar, dim, dim>  Tensor;
 
     /*!
      * \brief Data which is attached to each vertex and is not only
@@ -127,61 +127,80 @@ protected:
         int oldPhaseState;
     };
 
+public:
+    TwoPTwoCBoxJacobianBase(ProblemT &problem)
+        : ParentType(problem),
+          staticVertexDat_(problem.numVertices())
+    {
+        switchFlag_ = false;
+    };
+
     /*!
      * \brief Function to update variable data of the vertices of the
-     *        the current element (essentially secondary variables)
+     *        the current element (essentially all secondary variables)
      */
-    void updateVarVertexData_(VariableVertexData &vertDat,
-                              const SolutionVector &vertSol,
-                              int phaseState,
-                              const Element &element,
-                              int localIdx,
-                              Problem &problem,
-                              Scalar temperature) const
+    void updateVertexData_(ElementData &elemDat,
+                           const LocalFunction &sol,
+                           int vertIdx,
+                           bool isOldSol) const
     {
-        const GlobalPosition &global = element.geometry().corner(localIdx);
-        const LocalPosition &local =
-            DomTraits::referenceElement(element.type()).position(localIdx,
+        const Element       &element = this->curElement_();
+        const GlobalPosition &global = element.geometry().corner(vertIdx);
+        const LocalPosition   &local =
+            DomTraits::referenceElement(element.type()).position(vertIdx,
                                                                  dim);
+        
+        VertexData           &vertDat = elemDat[vertIdx];
+        const SolutionVector &vertSol = sol[vertIdx];
+        int globalVertIdx = this->problem_.vertexIdx(this->curElement_(), 
+                                                     vertIdx);
+
+        Scalar temperature = asImp_()->temperature(vertSol);
+
+        int phaseState;
+        if (isOldSol)
+            phaseState = staticVertexDat_[globalVertIdx].oldPhaseState;
+        else
+            phaseState = staticVertexDat_[globalVertIdx].phaseState;
 
         if (formulation == pWsN)
-            {
-                vertDat.pW = vertSol[pressureIdx];
-                if (phaseState == bothPhases) vertDat.satN = vertSol[switchIdx];
-                else if (phaseState == wPhaseOnly) vertDat.satN = 0.0;
-                else if (phaseState == nPhaseOnly) vertDat.satN = 1.0;
-                else DUNE_THROW(Dune::InvalidStateException, "Phase state " << phaseState << " is invalid.");
+        {
+            vertDat.pressure[wPhase] = vertSol[pressureIdx];
+            if (phaseState == bothPhases) vertDat.saturation[nPhase] = vertSol[switchIdx];
+            else if (phaseState == wPhaseOnly) vertDat.saturation[nPhase] = 0.0;
+            else if (phaseState == nPhaseOnly) vertDat.saturation[nPhase] = 1.0;
+            else DUNE_THROW(Dune::InvalidStateException, "Phase state " << phaseState << " is invalid.");
 
-                vertDat.satW = 1.0 - vertDat.satN;
-                vertDat.pC = problem.materialLaw().pC(vertDat.satW,
-                                                      global,
-                                                      element,
-                                                      local);
-
-                vertDat.pN = vertDat.pW + vertDat.pC;
-            }
+            vertDat.saturation[wPhase] = 1.0 - vertDat.saturation[nPhase];
+            vertDat.pC = this->problem_.materialLaw().pC(vertDat.saturation[wPhase],
+                                                         global,
+                                                         element,
+                                                         local);
+            
+            vertDat.pressure[nPhase] = vertDat.pressure[wPhase] + vertDat.pC;
+        }
         else if (formulation == pNsW)
-            {
-                vertDat.pN = vertSol[pressureIdx];
-                if (phaseState == bothPhases) vertDat.satW = vertSol[switchIdx];
-                else if (phaseState == wPhaseOnly) vertDat.satW = 1.0;
-                else if (phaseState == nPhaseOnly) vertDat.satW = 0.0;
-                else DUNE_THROW(Dune::InvalidStateException, "Phase state " << phaseState << " is invalid.");
+        {
+            vertDat.pressure[nPhase] = vertSol[pressureIdx];
+            if (phaseState == bothPhases) vertDat.saturation[wPhase] = vertSol[switchIdx];
+            else if (phaseState == wPhaseOnly) vertDat.saturation[wPhase] = 1.0;
+            else if (phaseState == nPhaseOnly) vertDat.saturation[wPhase] = 0.0;
+            else DUNE_THROW(Dune::InvalidStateException, "Phase state " << phaseState << " is invalid.");
 
-                vertDat.satN = 1.0 - vertDat.satW;
-                vertDat.pC = problem.materialLaw().pC(vertDat.satW,
-                                                      global,
-                                                      element,
-                                                      local);
+            vertDat.saturation[nPhase] = 1.0 - vertDat.saturation[wPhase];
+            vertDat.pC = this->problem_.materialLaw().pC(vertDat.saturation[wPhase],
+                                                         global,
+                                                         element,
+                                                         local);
 
-                vertDat.pW = vertDat.pN - vertDat.pC;
-            }
+            vertDat.pressure[wPhase] = vertDat.pressure[nPhase] - vertDat.pC;
+        }
         else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
 
         // Solubilities of components in phases
         if (phaseState == bothPhases) {
-            vertDat.massfrac[wComp][nPhase] = problem.multicomp().xWN(vertDat.pN, temperature);
-            vertDat.massfrac[nComp][wPhase] = problem.multicomp().xAW(vertDat.pN, temperature);
+            vertDat.massfrac[wComp][nPhase] = this->problem_.multicomp().xWN(vertDat.pressure[nPhase], temperature);
+            vertDat.massfrac[nComp][wPhase] = this->problem_.multicomp().xAW(vertDat.pressure[nPhase], temperature);
         }
         else if (phaseState == wPhaseOnly) {
             vertDat.massfrac[wComp][nPhase] = 0.0;
@@ -195,410 +214,387 @@ protected:
 
         vertDat.massfrac[wComp][wPhase] = 1.0 - vertDat.massfrac[nComp][wPhase];
         vertDat.massfrac[nComp][nPhase] = 1.0 - vertDat.massfrac[wComp][nPhase];
-        //                    vertDat.phaseState = phaseState;
 
-        vertDat.density[wPhase] = problem.wettingPhase().density(temperature,
-                                                                 vertDat.pW,
-                                                                 vertDat.massfrac[nComp][wPhase]);
-        vertDat.density[nPhase] = problem.nonwettingPhase().density(temperature,
-                                                                    vertDat.pN,
-                                                                    vertDat.massfrac[wComp][nPhase]);
+        // Densities
+        vertDat.density[wPhase] = this->problem_.wettingPhase().density(temperature,
+                                                                        vertDat.pressure[wPhase],
+                                                                        vertDat.massfrac[nComp][wPhase]);
+        vertDat.density[nPhase] = this->problem_.nonwettingPhase().density(temperature,
+                                                                           vertDat.pressure[nPhase],
+                                                                           vertDat.massfrac[wComp][nPhase]);
 
         // Mobilities
-        vertDat.mobility[wPhase] = problem.materialLaw().mobW(vertDat.satW,
-                                                              global,
-                                                              element,
-                                                              local,
-                                                              temperature,
-                                                              vertDat.pW);
-        vertDat.mobility[nPhase] = problem.materialLaw().mobN(vertDat.satN,
-                                                              global,
-                                                              element,
-                                                              local,
-                                                              temperature,
-                                                              vertDat.pN);
+        vertDat.mobility[wPhase] = this->problem_.materialLaw().mobW(vertDat.saturation[wPhase],
+                                                                     global,
+                                                                     element,
+                                                                     local,
+                                                                     temperature,
+                                                                     vertDat.pressure[wPhase]);
+        vertDat.mobility[nPhase] = this->problem_.materialLaw().mobN(vertDat.saturation[nPhase],
+                                                                     global,
+                                                                     element,
+                                                                     local,
+                                                                     temperature,
+                                                                     vertDat.pressure[nPhase]);
 
-        // diffusion coefficients
-        vertDat.diffCoeff[wPhase] = problem.wettingPhase().diffCoeff(temperature, vertDat.pW);
-        vertDat.diffCoeff[nPhase] = problem.nonwettingPhase().diffCoeff(temperature, vertDat.pN);
+        // diffusion coefficents
+        vertDat.diffCoeff[wPhase] = this->problem_.wettingPhase().diffCoeff(temperature, vertDat.pressure[wPhase]);
+        vertDat.diffCoeff[nPhase] = this->problem_.nonwettingPhase().diffCoeff(temperature, vertDat.pressure[nPhase]);
+
+        // porosity
+        vertDat.porosity = this->problem_.soil().porosity(global,
+                                                          this->curElement_(), 
+                                                          local);
+
     }
 
-public:
-    TwoPTwoCBoxJacobianBase(ProblemT &problem)
-        : ParentType(problem),
-          staticVertexDat_(problem.numVertices())
+    struct FluxVars
     {
-        switchFlag_ = false;
-    };
+        typedef typename FVElementGeometry::SubControlVolume     SCV;
+        typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
 
-    /*!
-     * \brief Set the current grid element.
-     */
-    void setCurrentElement(const Element &element)
-    {
-        ParentType::setCurrentElement_(element);
-    };
+        FluxVars(const FVElementGeometry &elemGeom,
+                 int faceIdx)
+            : fvElemGeom(elemGeom)
+        {
+            face = &fvElemGeom.subContVolFace[faceIdx];
 
-    /*!
-     * \brief Set the parameters for the calls to the remaining
-     *        members.
-     */
-    void setParams(const Element &element, LocalFunction &curSol, LocalFunction &prevSol)
-    {
-        setCurrentElement(element);
+            int i = face->i;
+            int j = face->j;
+            
+            insideSCV = &fvElemGeom.subContVol[i];
+            outsideSCV = &fvElemGeom.subContVol[j];
 
-        // TODO: scheme which allows not to copy curSol and
-        // prevSol all the time
-        curSol_ = curSol;
-        updateElementData_(curElemDat_, curSol_, false);
-        curSolDeflected_ = false;
-
-        prevSol_ = prevSol;
-        updateElementData_(prevElemDat_, prevSol_, true);
-    };
-
-    /*!
-     * \brief Vary a single component of a single vertex of the
-     *        local solution for the current element.
-     *
-     * This method is a optimization, since if varying a single
-     * component at a degree of freedom not the whole element cache
-     * needs to be recalculated. (Updating the element cache is very
-     * expensive since material laws need to be evaluated.)
-     */
-    void deflectCurSolution(int vert, int component, Scalar value)
-    {
-        // make sure that the original state can be restored
-        if (!curSolDeflected_) {
-            curSolDeflected_ = true;
-
-            curSolOrigValue_ = curSol_[vert][component];
-            curSolOrigVarData_ = curElemDat_.vertex[vert];
-        }
-
-        int globalIdx = ParentType::problem_.vertexIdx(ParentType::curElement_(),
-                                                       vert);
-
-        curSol_[vert][component] = value;
-        asImp_()->updateVarVertexData_(curElemDat_.vertex[vert],
-                                       curSol_[vert],
-                                       staticVertexDat_[globalIdx].phaseState,
-                                       this->curElement_(),
-                                       vert,
-                                       this->problem_,
-                                       Implementation::temperature_(curSol_[vert]));
-    }
-
-    /*!
-     * \brief Restore the local jacobian to the state before
-     *        deflectCurSolution() was called.
-     *
-     * This only works if deflectSolution was only called with
-     * (vertex, component) as arguments.
-     */
-    void restoreCurSolution(int vert, int component)
-    {
-        curSolDeflected_ = false;
-        curSol_[vert][component] = curSolOrigValue_;
-        curElemDat_.vertex[vert] = curSolOrigVarData_;
-    };
-
-    /*!
-     * \brief Evaluate the rate of change of all conservation
-     *        quantites (e.g. phase mass) within a sub control
-     *        volume of a finite volume element in the 2P-2C
-     *        model.
-     *
-     * This function should not include the source and sink terms.
-     */
-    void computeStorage(SolutionVector &result, int scvId, bool usePrevSol) const
-    {
-        result = Scalar(0);
-
-        // if flag usePrevSol is set, the solution from the previous time step is used,
-        // otherwise the current solution is used. The secondary variables are used accordingly.
-        // This computes the derivative of the storage term.
-        const LocalFunction &sol   = usePrevSol ? this->prevSol_ : this->curSol_;
-        const ElementData &elementCache = usePrevSol ? prevElemDat_  : curElemDat_;
-
-        Scalar satN = elementCache.vertex[scvId].satN;
-        Scalar satW = elementCache.vertex[scvId].satW;
-
-        // assume porosity defined at vertices
-        Scalar porosity =
-            this->problem_.porosity(this->curElement_(), scvId);
-
-        // storage of component water
-        result[wComp] =
-            porosity*(elementCache.vertex[scvId].density[wPhase]*
-                      satW*
-                      elementCache.vertex[scvId].massfrac[wComp][wPhase]
-                      + elementCache.vertex[scvId].density[nPhase]*
-                      satN*
-                      elementCache.vertex[scvId].massfrac[wComp][nPhase]);
-
-        // storage of component air
-        result[nComp] =
-            porosity*(elementCache.vertex[scvId].density[nPhase]*
-                      satN*
-                      elementCache.vertex[scvId].massfrac[nComp][nPhase]
-                      + elementCache.vertex[scvId].density[wPhase]*
-                      satW*
-                      elementCache.vertex[scvId].massfrac[nComp][wPhase]);
-
-        // storage of energy (if nonisothermal model is used)
-        asImp_()->heatStorage(result, scvId, sol, elementCache);
-    }
-
-    /*!
-     * \brief Evaluates the mass flux over a face of a subcontrol
-     *        volume.
-     */
-    void computeFlux(SolutionVector &flux, int faceId) const
-    {
-        // set flux vector to zero
-        int i = this->curElementGeom_.subContVolFace[faceId].i;
-        int j = this->curElementGeom_.subContVolFace[faceId].j;
-
-        // normal vector, value of the area of the scvf
-        const GlobalPosition &normal(this->curElementGeom_.subContVolFace[faceId].normal);
-
-        // get global coordinates of verts i,j
-        const GlobalPosition &global_i = this->curElementGeom_.subContVol[i].global;
-        const GlobalPosition &global_j = this->curElementGeom_.subContVol[j].global;
-
-        // get local coordinates of verts i,j
-        const LocalPosition &local_i = this->curElementGeom_.subContVol[i].local;
-        const LocalPosition &local_j = this->curElementGeom_.subContVol[j].local;
-
-        const ElementData &elemDat = this->curElemDat_;
-        const VariableVertexData &vDat_i = elemDat.vertex[i];
-        const VariableVertexData &vDat_j = elemDat.vertex[j];
-
-        GlobalPosition pGrad[numPhases];
-        GlobalPosition xGrad[numPhases];
-        GlobalPosition tempGrad(0.0);
-        for (int phase = 0; phase < numPhases; ++phase) {
-            pGrad[phase] = Scalar(0);
-            xGrad[phase] = Scalar(0);
-        }
-
-        GlobalPosition tmp(0.0);
-        PhasesVector pressure(0.0), massfrac(0.0);
-        PhasesVector densityIJ(0.);
-
-        // calculate FE gradient (grad p for each phase)
-        for (int idx = 0; idx < this->curElementGeom_.numVertices; idx++) // loop over adjacent vertices
+            temperatureGrad = Scalar(0.0);
+            for (int phase = 0; phase < numPhases; ++phase) {
+                pressureGrad[phase] = Scalar(0);
+                concentrationGrad[phase] = Scalar(0);
+            }
+        };
+        
+        void calculateGradients(const Problem &problem,
+                                const Element &element,
+                                const ElementData &elemDat)
+        {
+            // calculate gradients
+            GlobalPosition tmp(0.0);
+            for (int idx = 0; 
+                 idx < fvElemGeom.numVertices;
+                 idx++) // loop over adjacent vertices
             {
-                // FEGradient at vertex idx
-                const LocalPosition &feGrad = this->curElementGeom_.subContVolFace[faceId].grad[idx];
-
-                pressure[wPhase] = elemDat.vertex[idx].pW;
-                pressure[nPhase] = elemDat.vertex[idx].pN;
+                // FE gradient at vertex idx
+                const LocalPosition &feGrad = face->grad[idx];
 
                 // compute sum of pressure gradients for each phase
                 for (int phase = 0; phase < numPhases; phase++)
-                    {
-                        // the pressure gradient
-                        tmp = feGrad;
-                        tmp *= pressure[phase];
-                        pGrad[phase] += tmp;
-                        densityIJ[phase] += elemDat.vertex[idx].density[phase] *
-                            this->curElementGeom_.subContVolFace[faceId].shapeValue[idx];
-                    }
+                {
+                    // the pressure gradient
+                    tmp = feGrad;
+                    tmp *= elemDat[idx].pressure[phase];
+                    pressureGrad[phase] += tmp;
+
+                    // phase density
+                    densityAtIP[phase] 
+                        += 
+                        elemDat[idx].density[phase] *
+                        face->shapeValue[idx];
+                }
 
                 // the concentration gradient of the non-wetting
                 // component in the wetting phase
                 tmp = feGrad;
-                tmp *= elemDat.vertex[idx].massfrac[nComp][wPhase];
-                xGrad[wPhase] += tmp;
+                tmp *= elemDat[idx].massfrac[nComp][wPhase];
+                concentrationGrad[wPhase] += tmp;
 
                 // the concentration gradient of the wetting component
                 // in the non-wetting phase
                 tmp = feGrad;
-                tmp *= elemDat.vertex[idx].massfrac[wComp][nPhase];
-                xGrad[nPhase] += tmp;
+                tmp *= elemDat[idx].massfrac[wComp][nPhase];
+                concentrationGrad[nPhase] += tmp;
 
                 // temperature gradient
-                asImp_()->updateTempGrad(tempGrad, feGrad, this->curSol_, idx);
+                // TODO
+                /*
+                jac.asImp_().updateTempGrad(temperatureGrad,
+                                            feGrad, 
+                                            jac.curSol_, 
+                                            idx);
+                */
             }
 
-        // correct the pressure gradients by the hydrostatic
-        // pressure due to gravity
-        for (int phase=0; phase < numPhases; phase++)
+            // correct the pressure gradients by the hydrostatic
+            // pressure due to gravity
+            for (int phase=0; phase < numPhases; phase++)
             {
-                tmp = this->problem_.gravity();
-                tmp *= densityIJ[phase];
-                pGrad[phase] -= tmp;
+                tmp = problem.gravity();
+                tmp *= densityAtIP[phase];
+
+                pressureGrad[phase] -= tmp;
             }
+        }
 
-        // calculate the permeability tensor
-        Tensor K         = this->problem_.soil().K(global_i, ParentType::curElement_(), local_i);
-        const Tensor &Kj = this->problem_.soil().K(global_j, ParentType::curElement_(), local_j);
-        harmonicMeanK_(K, Kj);
-
-        // magnitute of darcy velocity of each phase projected
-        // on the normal of the sub-control volume's face
-        PhasesVector vDarcyOut;
-        // temporary vector for the Darcy velocity
-        GlobalPosition vDarcy;
-        for (int phase=0; phase < numPhases; phase++)
+        void calculateVelocities(const Problem &problem,
+                                 const Element &element,
+                                 const ElementData &elemDat)
+        {
+            // calculate the permeability tensor
+            Tensor K         = problem.soil().K(insideSCV->global,
+                                                element,
+                                                insideSCV->local);
+            const Tensor &Kj = problem.soil().K(outsideSCV->global, 
+                                                element, 
+                                                outsideSCV->local);
+            harmonicMeanK_(K, Kj);
+            
+            // temporary vector for the Darcy velocity
+            GlobalPosition vDarcy;
+            for (int phase=0; phase < numPhases; phase++)
             {
-                K.mv(pGrad[phase], vDarcy);  // vDarcy = K * grad p
-                vDarcyOut[phase] = vDarcy*normal;
+                K.mv(pressureGrad[phase], vDarcy);  // vDarcy = K * grad p
+                vDarcyNormal[phase] = vDarcy*face->normal;
             }
 
-        // find upsteam and downstream verts
-        const VariableVertexData *upW = &vDat_i;
-        const VariableVertexData *dnW = &vDat_j;
-        const VariableVertexData *upN = &vDat_i;
-        const VariableVertexData *dnN = &vDat_j;
+            // upstream and downstream vertices
+            for (int phase = 0; phase < numPhases; ++phase)
+            {
+                upstreamIdx[phase] = face->i;
+                downstreamIdx[phase] = face->j;
+                if (vDarcyNormal[phase] > 0) {
+                    std::swap(upstreamIdx[phase],
+                              downstreamIdx[phase]);
+                }
+            }
+        }
 
-        if (vDarcyOut[wPhase] > 0) {
-            std::swap(upW, dnW);
-        };
-        if (vDarcyOut[nPhase] > 0)  {
-            std::swap(upN, dnN);
-        };
+        void calculateDiffCoeffPM(const Problem &problem,
+                                  const Element &element,
+                                  const ElementData &elemDat)
+        {
+            const VertexData &vDat_i = elemDat[face->i];
+            const VertexData &vDat_j = elemDat[face->j];
+
+            for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx)
+            {
+                // make sure to only calculate diffusion coefficents
+                // for phases which exist in both finite volumes
+                if (vDat_i.saturation[phaseIdx] == 0 ||
+                    vDat_j.saturation[phaseIdx] == 0) 
+                {
+                    diffCoeffPM[phaseIdx] = 0.0;
+                    continue;
+                }
+                
+                // calculate tortuosity at the nodes i and j needed
+                // for porous media diffusion coefficient
+                Scalar tau_i = 
+                    1.0/vDat_i.porosity *
+                    pow(vDat_i.porosity * vDat_i.saturation[phaseIdx], 7.0/3);
+                Scalar tau_j = 
+                    1.0/vDat_j.porosity *
+                    pow(vDat_j.porosity * vDat_j.saturation[phaseIdx], 7.0/3);
+        
+                // Diffusion coefficient in the porous medium
+                
+                // -> arithmetic mean
+                diffCoeffPM[phaseIdx]
+                    = 1./2*(vDat_i.porosity * vDat_i.saturation[phaseIdx] * tau_i * vDat_i.diffCoeff[phaseIdx] +
+                            vDat_j.porosity * vDat_j.saturation[phaseIdx] * tau_j * vDat_j.diffCoeff[phaseIdx]);
+                // -> harmonic mean
+                // = harmonicMean_(vDat_i.porosity * vDat_i.saturation[phaseIdx] * tau_i * vDat_i.diffCoeff[phaseIdx],
+                //                 vDat_j.porosity * vDat_j.saturation[phaseIdx] * tau_j * vDat_j.diffCoeff[phaseIdx]);
+            }
+        }
+
+        const FVElementGeometry &fvElemGeom;
+        const SCVFace *face;
+        const SCV     *insideSCV;
+        const SCV     *outsideSCV;
+        
+        // gradients
+        GlobalPosition pressureGrad[numPhases];
+        GlobalPosition concentrationGrad[numPhases];
+        GlobalPosition temperatureGrad;
+
+        // density of each face at the integration point
+        PhasesVector densityAtIP;
+        
+        // darcy velocity in direction of the face normal
+        PhasesVector vDarcyNormal;
 
         // Upwind parameter
-        Scalar alpha = 1.0; // -> use only the upstream vertex
+        static const Scalar upwindAlpha = 1.0; // -> use only the upstream vertex
+
+        // local index of the upwind vertex for each phase
+        int upstreamIdx[numPhases];
+        // local index of the downwind vertex for each phase
+        int downstreamIdx[numPhases];
+
+        // the diffusion coefficient for the porous medium
+        PhasesVector diffCoeffPM;
+    };
+
+
+    /*!
+     * \brief Evaluate the amount all conservation quantites
+     *        (e.g. phase mass) within a sub-control volume.
+     *
+     * The result should be averaged over the volume (e.g. phase mass
+     * inside a sub control volume divided by the volume)
+     */
+    void computeStorage(SolutionVector &result, int scvIdx, bool usePrevSol) const
+    {
+        // if flag usePrevSol is set, the solution from the previous
+        // time step is used, otherwise the current solution is
+        // used. The secondary variables are used accordingly.  This
+        // is required to compute the derivative of the storage term
+        // using the implicit euler method.
+        const ElementData &elemDat = usePrevSol ? this->prevElemDat_  : this->curElemDat_;
+        const VertexData  &vertDat = elemDat[scvIdx];
+        
+        // storage of component water
+        result[wComp] =
+            vertDat.porosity*(vertDat.density[wPhase]*
+                              vertDat.saturation[wPhase]*
+                              vertDat.massfrac[wComp][wPhase]
+                              +
+                              vertDat.density[nPhase]*
+                              vertDat.saturation[nPhase]*
+                              vertDat.massfrac[wComp][nPhase]);
+
+        // storage of component air
+        result[nComp] =
+            vertDat.porosity*(vertDat.density[nPhase]*
+                              vertDat.saturation[nPhase]*
+                              vertDat.massfrac[nComp][nPhase]
+                              + 
+                              vertDat.density[wPhase]*
+                              vertDat.saturation[wPhase]*
+                              vertDat.massfrac[nComp][wPhase]);
+        
+        // storage of energy (if nonisothermal model is used)
+        asImp_()->heatStorage(result, scvIdx, elemDat);
+    }
+
+    /*!
+     * \brief Evaluates the total flux of all conservation quantities
+     *        over a face of a subcontrol volume.
+     */
+    void computeFlux(SolutionVector &flux, int faceIdx) const
+    {
+        FluxVars vars(this->curElementGeom_, faceIdx);
+        vars.calculateGradients(this->problem_,
+                                this->curElement_(),
+                                this->curElemDat_);
+        vars.calculateVelocities(this->problem_,
+                                 this->curElement_(),
+                                 this->curElemDat_);
+        vars.calculateDiffCoeffPM(this->problem_,
+                                  this->curElement_(),
+                                  this->curElemDat_);
+
+        flux = 0;
+        asImp_()->computeAdvectiveFlux(flux, vars);
+        asImp_()->computeDiffusiveFlux(flux, vars);
+    }
+    
+    /*!
+     * \brief Evaluates the advective mass flux of all components over
+     *        a face of a subcontrol volume.
+     */
+    void computeAdvectiveFlux(SolutionVector &flux, 
+                              FluxVars       &vars) const
+    {
+        // required variables of the upstream and the downstream
+        // vertices
+        const VertexData &upW = this->curElemDat_[vars.upstreamIdx[wPhase]];
+        const VertexData &dnW = this->curElemDat_[vars.downstreamIdx[wPhase]];
+
+        const VertexData &upN = this->curElemDat_[vars.upstreamIdx[nPhase]];
+        const VertexData &dnN = this->curElemDat_[vars.downstreamIdx[nPhase]];
 
         ////////
         // advective flux of the wetting component
         ////////
 
         // flux in the wetting phase
-        flux[wComp] =  vDarcyOut[wPhase] * (
-                                            alpha* // upstream verts
-                                            (  upW->density[wPhase] *
-                                               upW->mobility[wPhase] *
-                                               upW->massfrac[wComp][wPhase])
-                                            +
-                                            (1-alpha)* // downstream verts
-                                            (  dnW->density[wPhase] *
-                                               dnW->mobility[wPhase] *
-                                               dnW->massfrac[wComp][wPhase]));
-
+        flux[wComp] +=  
+            vars.vDarcyNormal[wPhase] * (
+                vars.upwindAlpha* // upstream vertex
+                (  upW.density[wPhase] *
+                   upW.mobility[wPhase] *
+                   upW.massfrac[wComp][wPhase])
+                +
+                (1 - vars.upwindAlpha)* // downstream vertex
+                (  dnW.density[wPhase] *
+                   dnW.mobility[wPhase] *
+                   dnW.massfrac[wComp][wPhase]));
+        
         // flux in the non-wetting phase
-        flux[wComp] += vDarcyOut[nPhase] * (
-                                            alpha* // upstream vert
-                                            (  upN->density[nPhase] *
-                                               upN->mobility[nPhase] *
-                                               upN->massfrac[wComp][nPhase])
-                                            +
-                                            (1-alpha)* // downstream vert
-                                            (  dnN->density[nPhase] *
-                                               dnN->mobility[nPhase] *
-                                               dnN->massfrac[wComp][nPhase]) );
-
+        flux[wComp] += 
+            vars.vDarcyNormal[nPhase] * (
+                vars.upwindAlpha* // upstream vertex
+                (  upN.density[nPhase] *
+                   upN.mobility[nPhase] *
+                   upN.massfrac[wComp][nPhase])
+                +
+                (1 - vars.upwindAlpha)* // downstream vertex
+                (  dnN.density[nPhase] *
+                   dnN.mobility[nPhase] *
+                   dnN.massfrac[wComp][nPhase]) );
+        
         ////////
         // advective flux of the non-wetting component
         ////////
 
-        // flux in the wetting phase
-        flux[nComp]   = vDarcyOut[nPhase] * (
-                                             alpha * // upstream verts
-                                             (  upN->density[nPhase] *
-                                                upN->mobility[nPhase] *
-                                                upN->massfrac[nComp][nPhase])
-                                             +
-                                             (1-alpha) * // downstream vert
-                                             (  dnN->density[nPhase] *
-                                                dnN->mobility[nPhase] *
-                                                dnN->massfrac[nComp][nPhase]) );
-
         // flux in the non-wetting phase
-        flux[nComp]  += vDarcyOut[wPhase] * (
-                                             alpha * // upstream vert
-                                             (  upW->density[wPhase] *
-                                                upW->mobility[wPhase] *
-                                                upW->massfrac[nComp][wPhase])
-                                             +
-                                             (1-alpha) * // downstream vert
-                                             (  dnW->density[wPhase] *
-                                                dnW->mobility[wPhase] *
-                                                dnW->massfrac[nComp][wPhase]) );
+        flux[nComp]  += 
+            vars.vDarcyNormal[nPhase] * (
+                vars.upwindAlpha * // upstream vertex
+                (  upN.density[nPhase] *
+                   upN.mobility[nPhase] *
+                   upN.massfrac[nComp][nPhase])
+                +
+                (1 - vars.upwindAlpha) * // downstream vertex
+                (  dnN.density[nPhase] *
+                   dnN.mobility[nPhase] *
+                   dnN.massfrac[nComp][nPhase]) );
+        
+        // flux in the wetting phase
+        flux[nComp] += 
+            vars.vDarcyNormal[wPhase] * (
+                vars.upwindAlpha * // upstream vertex
+                (  upW.density[wPhase] *
+                   upW.mobility[wPhase] *
+                   upW.massfrac[nComp][wPhase])
+                +
+                (1 - vars.upwindAlpha) * // downstream vertex
+                (  dnW.density[wPhase] *
+                   dnW.mobility[wPhase] *
+                   dnW.massfrac[nComp][wPhase]) );
+    }
 
-        ////////
-        // advective flux of energy
-        ////////
-        asImp_()->advectiveHeatFlux(flux, vDarcyOut, alpha, upW, dnW, upN, dnN);
+    /*!
+     * \brief Adds the diffusive mass flux of all components over
+     *        a face of a subcontrol volume.
+     */
+    void computeDiffusiveFlux(SolutionVector &flux, FluxVars &vars) const
+    {        
+        // add diffusive flux of non-wetting component in wetting phase
+        Scalar tmp = vars.diffCoeffPM[wPhase] * vars.densityAtIP[wPhase] * 
+            (vars.concentrationGrad[wPhase]*vars.face->normal);
+        flux[nComp] += tmp; 
+        flux[wComp] -= tmp;
+        
+        // add diffusive flux of wetting component in non-wetting phase
+        tmp = vars.diffCoeffPM[nPhase] * vars.densityAtIP[nPhase] * 
+            (vars.concentrationGrad[nPhase]*vars.face->normal);;
+        flux[wComp] += tmp;
+        flux[nComp] -= tmp;
 
-        /////////////////////////////
-        // DIFFUSION
-        /////////////////////////////
-
-        SolutionVector normDiffGrad;
-
-        Scalar diffusionWW(0.0), diffusionWN(0.0); // diffusion of liquid
-        Scalar diffusionAW(0.0), diffusionAN(0.0); // diffusion of gas
-        SolutionVector avgDensity;
-
-        // Diffusion coefficient
-
-        // calculate tortuosity at the nodes i and j needed
-        // for porous media diffusion coefficient
-        Scalar tauW_i, tauW_j;
-        Scalar tauN_i, tauN_j;
-
-        Scalar porosity_i = this->problem_.porosity(this->curElement_(), i);
-        Scalar porosity_j = this->problem_.porosity(this->curElement_(), j);
-
-        tauW_i = pow(porosity_i * vDat_i.satW,
-                     7.0/3) / porosity_i;
-        tauW_j = pow(porosity_j * vDat_j.satW,
-                     7.0/3) / porosity_j;
-        tauN_i = pow(porosity_i * vDat_i.satN,
-                     7.0/3) / porosity_i;
-        tauN_j = pow(porosity_j * vDat_j.satN,
-                     7.0/3) / porosity_j;
-
-        // arithmetic mean of porous media diffusion coefficient
-        Scalar Dwn, Daw;
-
-        // approximate the effective cross sections for
-        // diffusion by the harmonic mean of the volume
-        // occupied by the phases
-        /*
-          Dwn = harmonicMean_(vDat_i.satN * tauN_i * vDat_i.diffCoeff[nPhase],
-          vDat_j.satN * tauN_j * vDat_j.diffCoeff[nPhase]);
-          Daw = harmonicMean_(vDat_i.satW * tauW_i * vDat_i.diffCoeff[wPhase],
-          vDat_j.satW * tauW_j * vDat_j.diffCoeff[wPhase]);
-
-          //                std::cout << "Daw: " << Daw << ", Dwn: " << Dwn << "\n";
-          */
-
-        // arithmetic mean (2e-7)
-        Dwn = 1./2*(porosity_i * vDat_i.satN * tauN_i * vDat_i.diffCoeff[nPhase] +
-                    porosity_j * vDat_j.satN * tauN_j * vDat_j.diffCoeff[nPhase]);
-        Daw = 1./2*(porosity_i * vDat_i.satW * tauW_i * vDat_i.diffCoeff[wPhase] +
-                    porosity_j * vDat_j.satW * tauW_j * vDat_j.diffCoeff[wPhase]);
-        if (vDat_i.satN == 0 || vDat_j.satN == 0)
-            Dwn = 0;
-        if (vDat_i.satW == 0 || vDat_j.satW == 0)
-            Daw = 0;
-
-        // calculate the arithmetic mean of densities
-        avgDensity[wPhase] = 0.5*(vDat_i.density[wPhase] + vDat_j.density[wPhase]);
-        avgDensity[nPhase] = 0.5*(vDat_i.density[nPhase] + vDat_j.density[nPhase]);
-
-        diffusionAW = Daw * avgDensity[wPhase] * (xGrad[wPhase] * normal);
-        diffusionWW = - diffusionAW;
-        diffusionWN = Dwn * avgDensity[nPhase] * (xGrad[nPhase] * normal);
-        diffusionAN = - diffusionWN;
-
-        // add diffusion of water to water flux
-        flux[wComp] += diffusionWW + diffusionWN;
-
-        // add diffusion of air to air flux
-        flux[nComp] += diffusionAN + diffusionAW;
-
-        ////////
-        // diffusive flux of energy (only for non-isothermal
-        // models)
-        ////////
-        asImp_()->diffusiveHeatFlux(flux, faceId, tempGrad);
+        // TODO: the diffusive flux of the wetting component in the
+        // wetting phase does rarly exhibit the same mass as the flux
+        // of the non-wetting component, which means that it is not
+        // -tmp
     }
 
     /*!
@@ -638,8 +634,7 @@ public:
     }
 
     /*!
-     * \brief Update the static data of a single vert and do a
-     *        variable switch if necessary.
+     * \brief Update the static data of all vertices in the grid.
      */
     void updateStaticData(SpatialFunction &curGlobalSol, SpatialFunction &oldGlobalSol)
     {
@@ -676,7 +671,9 @@ public:
     }
 
     /*!
-     * \brief Reset the current phase state of all verts to the old one after an update failed
+     * \brief Reset the current phase state of all vertices to the old one.
+     *
+     * This is done after an update failed.
      */
     void resetPhaseState()
     {
@@ -686,8 +683,8 @@ public:
     }
 
     /*!
-     * \brief Return true if the primary variables were switched
-     *        after the last timestep.
+     * \brief Return true if the primary variables were switched for
+     *        at least one vertex after the last timestep.
      */
     bool switched() const
     {
@@ -704,132 +701,6 @@ public:
     }
 
     /*!
-     * \brief Compute Darcy velocity for output
-     *
-     */
-    //    template<class PressureFunction, class Vector, class Grid, class Problem>
-    void calculateDarcyVelocity(GlobalPosition &velocity,
-                                const int faceId)
-    {
-        velocity = 0.0;
-        return ; // TODO;
-
-        int i = this->curElementGeom_.subContVolFace[faceId].i;
-        int j = this->curElementGeom_.subContVolFace[faceId].j;
-
-        // normal vector of value of the area of the scvf
-        const GlobalPosition &normal(this->curElementGeom_.subContVolFace[faceId].normal);
-
-        // get global coordinates of verts i,j
-        const GlobalPosition &global_i = this->curElementGeom_.subContVol[i].global;
-        const GlobalPosition &global_j = this->curElementGeom_.subContVol[j].global;
-
-        // get local coordinates of verts i,j
-        const LocalPosition &local_i = this->curElementGeom_.subContVol[i].local;
-        const LocalPosition &local_j = this->curElementGeom_.subContVol[j].local;
-
-        const ElementData &elemDat = this->curElemDat_;
-        const VariableVertexData &vDat_i = elemDat.vertex[i];
-        const VariableVertexData &vDat_j = elemDat.vertex[j];
-
-        GlobalPosition pGrad[numPhases];
-        GlobalPosition tempGrad(0.0);
-        for (int phase = 0; phase < numPhases; ++phase) {
-            pGrad[phase] = Scalar(0);
-        }
-
-        GlobalPosition tmp(0.0);
-        PhasesVector pressure(0.0);
-        PhasesVector densityIJ(0.);
-
-        // calculate FE gradient (grad p for each phase)
-        for (int idx = 0; idx < this->curElementGeom_.numVertices; idx++) // loop over vertices
-            {
-                // FEGradient at vertex idx
-                const LocalPosition &feGrad = this->curElementGeom_.subContVolFace[faceId].grad[idx];
-                pressure[wPhase] = elemDat.vertex[idx].pW;
-                pressure[nPhase] = elemDat.vertex[idx].pN;
-
-                // compute sum of pressure gradients for each phase
-                for (int phase = 0; phase < numPhases; phase++)
-                    {
-                        // the pressure gradient
-                        tmp = feGrad;
-                        tmp *= pressure[phase];
-
-                        pGrad[phase] += tmp;
-                        densityIJ[phase] += elemDat.vertex[idx].density[phase] *
-                            this->curElementGeom_.subContVolFace[faceId].shapeValue[idx];
-                    }
-            }
-
-        // correct the pressure gradients by the hydrostatic
-        // pressure due to gravity
-        for (int phase=0; phase < numPhases; phase++)
-            {
-                tmp = this->problem_.gravity();
-                tmp *= densityIJ[phase];
-                pGrad[phase] -= tmp;
-            }
-
-        // calculate the permeability tensor
-        Tensor K         = this->problem_.soil().K(global_i, ParentType::curElement_(), local_i);
-        const Tensor &Kj = this->problem_.soil().K(global_j, ParentType::curElement_(), local_j);
-        harmonicMeanK_(K, Kj);
-
-        // magnitude of Darcy velocity of each phase projected
-        // on the normal of the sub-control volume's face
-        PhasesVector vDarcyOut;
-        // temporary vector for the Darcy velocity
-        GlobalPosition vDarcy;
-        for (int phase=0; phase < numPhases; phase++)
-            {
-                K.mv(pGrad[phase], vDarcy);  // vDarcy = K * grad p
-                vDarcyOut[phase] = vDarcy*normal;
-            }
-
-        // find upsteam and downstream verts
-        const VariableVertexData *upW = &vDat_i;
-        const VariableVertexData *dnW = &vDat_j;
-        const VariableVertexData *upN = &vDat_i;
-        const VariableVertexData *dnN = &vDat_j;
-
-        if (vDarcyOut[wPhase] > 0) {
-            std::swap(upW, dnW);
-        };
-        if (vDarcyOut[nPhase] > 0)  {
-            std::swap(upN, dnN);
-        };
-
-        // Upwind parameter
-        Scalar alpha = 1.0; // -> use only the upstream vertex
-
-        ////////
-        // advective flux of the wetting component
-        ////////
-
-        // flux in the wetting phase
-        velocity[wPhase] =  vDarcyOut[wPhase] * (
-                                                 alpha* // upstream verts
-                                                 (  upW->density[wPhase] *
-                                                    upW->mobility[wPhase])
-                                                 +
-                                                 (1-alpha)* // downstream vert
-                                                 (  dnW->density[wPhase] *
-                                                    dnW->mobility[wPhase]));
-
-        // flux in the non-wetting phase
-        velocity[nPhase] =  vDarcyOut[nPhase] * (
-                                                 alpha* // upstream verts
-                                                 (  upN->density[nPhase] *
-                                                    upN->mobility[nPhase])
-                                                 +
-                                                 (1-alpha)* // downstream vert
-                                                 (  dnN->density[nPhase] *
-                                                    dnN->mobility[nPhase]));
-    }
-
-    /*!
      * \brief Calculate mass of both components in the whole model domain
      *         and get minimum and maximum values of primary variables
      *
@@ -841,7 +712,7 @@ public:
         unsigned numVertices = this->problem_.numVertices();
         LocalFunction curSol(numVertices);
         ElementData   elemDat;
-        VariableVertexData tmp;
+        VertexData tmp;
         int state;
         Scalar vol, poro, rhoN, rhoW, satN, satW, xAW, xWW, xWN, xAN, pW, Te;
         Scalar massNComp(0.), massNCompNPhase(0.), massWComp(0.), massWCompWPhase(0.);
@@ -861,76 +732,75 @@ public:
 
         // Loop over elements
         for (; elementIt != endit; ++elementIt)
+        {
+
+            setCurrentElement(*elementIt);
+            this->restrictToElement(curSol, globalSol);
+            updateElementData_(elemDat, curSol, false);
+            // get geometry type
+
+            int numLocalVerts = elementIt->template count<dim>();
+
+            // Loop over element vertices
+            for (int i = 0; i < numLocalVerts; ++i)
             {
+                int globalIdx = this->problem_.vertexIdx(*elementIt, i);
 
-                setCurrentElement(*elementIt);
-                this->restrictToElement(curSol, globalSol);
-                updateElementData_(elemDat, curSol, false);
-                // get geometry type
+                vol = this->curElementGeom_.subContVol[i].volume;
 
-                int numLocalVerts = elementIt->template count<dim>();
+                state =  staticVertexDat_[globalIdx].phaseState;
+                poro = this->problem_.porosity(this->curElement_(), i);
+                rhoN = elemDat[i].density[nPhase];
+                rhoW = elemDat[i].density[wPhase];
+                satN = elemDat[i].saturation[nPhase];
+                satW = elemDat[i].saturation[wPhase];
+                xAW = elemDat[i].massfrac[nComp][wPhase];
+                xWW = elemDat[i].massfrac[wComp][wPhase];
+                xWN = elemDat[i].massfrac[wComp][nPhase];
+                xAN = elemDat[i].massfrac[nComp][nPhase];
+                pW = elemDat[i].pressure[wPhase];
+                Te = Implementation::temperature_((*globalSol)[globalIdx]);
+                massNComp = vol * poro * (satN * rhoN * xAN + satW * rhoW * xAW);
+                massNCompNPhase = vol * poro * satN * rhoN * xAN;
+                massWComp = vol * poro * (satW * rhoW * xWW + satN * rhoN * xWN);
+                massWCompWPhase = vol * poro * satW * rhoW * xWW;
 
-                // Loop over element vertices
-                for (int i = 0; i < numLocalVerts; ++i)
-                    {
-                        int globalIdx = this->problem_.vertexIdx(*elementIt, i);
+                // get minimum and maximum values of primary variables
+                minSat = std::min(minSat, satN);
+                maxSat = std::max(maxSat, satN);
+                minP = std::min(minP, pW);
+                maxP = std::max(maxP, pW);
+                minX = std::min(minX, xAW);
+                maxX = std::max(maxX, xAW);
+                minTe = std::min(minTe, Te);
+                maxTe = std::max(maxTe, Te);
 
-                        vol = this->curElementGeom_.subContVol[i].volume;
-
-                        state =  staticVertexDat_[globalIdx].phaseState;
-                        poro = this->problem_.porosity(this->curElement_(), i);
-                        rhoN = elemDat.vertex[i].density[nPhase];
-                        rhoW = elemDat.vertex[i].density[wPhase];
-                        satN = elemDat.vertex[i].satN;
-                        satW = elemDat.vertex[i].satW;
-                        xAW = elemDat.vertex[i].massfrac[nComp][wPhase];
-                        xWW = elemDat.vertex[i].massfrac[wComp][wPhase];
-                        xWN = elemDat.vertex[i].massfrac[wComp][nPhase];
-                        xAN = elemDat.vertex[i].massfrac[nComp][nPhase];
-                        pW = elemDat.vertex[i].pW;
-                        Te = Implementation::temperature_((*globalSol)[globalIdx]);
-                        massNComp = vol * poro * (satN * rhoN * xAN + satW * rhoW * xAW);
-                        massNCompNPhase = vol * poro * satN * rhoN * xAN;
-                        massWComp = vol * poro * (satW * rhoW * xWW + satN * rhoN * xWN);
-                        massWCompWPhase = vol * poro * satW * rhoW * xWW;
-
-                        // get minimum and maximum values of primary variables
-                        minSat = std::min(minSat, satN);
-                        maxSat = std::max(maxSat, satN);
-                        minP = std::min(minP, pW);
-                        maxP = std::max(maxP, pW);
-                        minX = std::min(minX, xAW);
-                        maxX = std::max(maxX, xAW);
-                        minTe = std::min(minTe, Te);
-                        maxTe = std::max(maxTe, Te);
-
-                        // calculate total mass
-                        mass[0] += massNComp;       // total mass of nonwetting component
-                        mass[1] += massNCompNPhase; // mass of nonwetting component in nonwetting phase
-                        mass[2] += massWComp;       // total mass of wetting component
-                        mass[3] += massWCompWPhase; // mass of wetting component in wetting phase
-
-                    }
-
+                // calculate total mass
+                mass[0] += massNComp;       // total mass of nonwetting component
+                mass[1] += massNCompNPhase; // mass of nonwetting component in nonwetting phase
+                mass[2] += massWComp;       // total mass of wetting component
+                mass[3] += massWCompWPhase; // mass of wetting component in wetting phase
             }
+        }
+        
+// IF PARALLEL: calculate total mass including all processors
+// also works for sequential calculation
+mass = collectiveCom_.sum(mass);
 
-        // IF PARALLEL: calculate total mass including all processors
-        // also works for sequential calculation
-        mass = collectiveCom_.sum(mass);
-
-        if(collectiveCom_.rank() == 0) // IF PARALLEL: only print by processor with rank() == 0
-            {
-                // print minimum and maximum values
-                std::cout << "nonwetting phase saturation: min = "<< minSat
-                          << ", max = "<< maxSat << std::endl;
-                std::cout << "wetting phase pressure: min = "<< minP
-                          << ", max = "<< maxP << std::endl;
-                std::cout << "mass fraction nComp: min = "<< minX
-                          << ", max = "<< maxX << std::endl;
-                std::cout << "temperature: min = "<< minTe
-                          << ", max = "<< maxTe << std::endl;
-            }
+if(collectiveCom_.rank() == 0) // IF PARALLEL: only print by processor with rank() == 0
+{
+        // print minimum and maximum values
+        std::cout << "nonwetting phase saturation: min = "<< minSat
+                  << ", max = "<< maxSat << std::endl;
+        std::cout << "wetting phase pressure: min = "<< minP
+                  << ", max = "<< maxP << std::endl;
+        std::cout << "mass fraction nComp: min = "<< minX
+                  << ", max = "<< maxX << std::endl;
+        std::cout << "temperature: min = "<< minTe
+                  << ", max = "<< maxTe << std::endl;
     }
+
+
     /*!
      * \brief Add the mass fraction of air in water to VTK output of
      *        the current timestep.
@@ -962,67 +832,69 @@ public:
         ScalarField *velocityY    = writer.template createField<Scalar, 1>(numElements);
         ScalarField *velocityZ    = writer.template createField<Scalar, 1>(numElements);
 
-        LocalFunction curSol(numVertices);
-        ElementData   elemDat;
-        VariableVertexData tmp;
+        LocalFunction tmpSol;
+        ElementData   elemDat(BoxTraits::ShapeFunctionSetContainer::maxsize);
+        VertexData    tmp;
 
         ElementIterator elementIt = this->problem_.elementBegin();
         ElementIterator endit = this->problem_.elementEnd();
 
         for (; elementIt != endit; ++elementIt)
+        {
+            int numLocalVerts = elementIt->template count<dim>();
+            tmpSol.resize(numLocalVerts);
+
+            setCurrentElement(*elementIt);
+            this->restrictToElement(tmpSol, globalSol);
+            updateElementData_(elemDat, tmpSol, false);
+
+            for (int i = 0; i < numLocalVerts; ++i)
             {
-                int numLocalVerts = elementIt->template count<dim>();
+                int globalIdx = this->problem_.vertexIdx(*elementIt, i);
 
-                setCurrentElement(*elementIt);
-                this->restrictToElement(curSol, globalSol);
-                updateElementData_(elemDat, curSol, false);
+                (*pW)[globalIdx] = elemDat[i].pressure[wPhase];
+                (*pN)[globalIdx] = elemDat[i].pressure[nPhase];
+                (*pC)[globalIdx] = elemDat[i].pC;
+                (*Sw)[globalIdx] = elemDat[i].saturation[wPhase];
+                (*Sn)[globalIdx] = elemDat[i].saturation[nPhase];
+                (*rhoW)[globalIdx] = elemDat[i].density[wPhase];
+                (*rhoN)[globalIdx] = elemDat[i].density[nPhase];
+                (*mobW)[globalIdx] = elemDat[i].mobility[wPhase];
+                (*mobN)[globalIdx] = elemDat[i].mobility[nPhase];
+                (*massfracAinW)[globalIdx] = elemDat[i].massfrac[nComp][wPhase];
+                (*massfracAinN)[globalIdx] = elemDat[i].massfrac[nComp][nPhase];
+                (*massfracWinW)[globalIdx] = elemDat[i].massfrac[wComp][wPhase];
+                (*massfracWinN)[globalIdx] = elemDat[i].massfrac[wComp][nPhase];
+                (*temperature)[globalIdx] = asImp_()->temperature((*globalSol)[globalIdx]);
+                (*phaseState)[globalIdx] = staticVertexDat_[globalIdx].phaseState;
+            };
 
-                for (int i = 0; i < numLocalVerts; ++i)
-                    {
-                        int globalIdx = this->problem_.vertexIdx(*elementIt, i);
+            // Vector containing the velocity at the element
+            GlobalPosition velocity[numPhases];
+            GlobalPosition elementVelocity[numPhases];
 
-                        (*pW)[globalIdx] = elemDat.vertex[i].pW;
-                        (*pN)[globalIdx] = elemDat.vertex[i].pN;
-                        (*pC)[globalIdx] = elemDat.vertex[i].pC;
-                        (*Sw)[globalIdx] = elemDat.vertex[i].satW;
-                        (*Sn)[globalIdx] = elemDat.vertex[i].satN;
-                        (*rhoW)[globalIdx] = elemDat.vertex[i].density[wPhase];
-                        (*rhoN)[globalIdx] = elemDat.vertex[i].density[nPhase];
-                        (*mobW)[globalIdx] = elemDat.vertex[i].mobility[wPhase];
-                        (*mobN)[globalIdx] = elemDat.vertex[i].mobility[nPhase];
-                        (*massfracAinW)[globalIdx] = elemDat.vertex[i].massfrac[nComp][wPhase];
-                        (*massfracAinN)[globalIdx] = elemDat.vertex[i].massfrac[nComp][nPhase];
-                        (*massfracWinW)[globalIdx] = elemDat.vertex[i].massfrac[wComp][wPhase];
-                        (*massfracWinN)[globalIdx] = elemDat.vertex[i].massfrac[wComp][nPhase];
-                        (*temperature)[globalIdx] = Implementation::temperature_((*globalSol)[globalIdx]);
-                        (*phaseState)[globalIdx] = staticVertexDat_[globalIdx].phaseState;
-                    };
+            // loop over the phases
+            for (int phase=0; phase < numPhases; phase++)
+            {
+                elementVelocity[phase] = 0;
 
-                // Vector containing the velocity at the element
-                GlobalPosition velocity[numPhases];
-                GlobalPosition elementVelocity[numPhases];
-
-                // loop over the phases
-                for (int phase=0; phase < numPhases; phase++)
-                    {
-                        elementVelocity[phase] = 0;
-
-                        int elementIdx = this->problem_.elementIdx(*elementIt);
-                        for (int faceId = 0; faceId< this->curElementGeom_.numEdges; faceId++)
-                            {
-                                velocity[phase] = 0;
-                                asImp_()->calculateDarcyVelocity(velocity[phase],
-                                                                 faceId);
-                                elementVelocity[phase] += velocity[phase];
-                            }
-                        elementVelocity[phase] *= 1.0/this->curElementGeom_.numEdges;
-                        (*velocityX)[elementIdx] = elementVelocity[0][phase];
-                        if (dim >= 2)
-                            (*velocityY)[elementIdx] = elementVelocity[1][phase];
-                        if (dim == 3)
-                            (*velocityZ)[elementIdx] = elementVelocity[2][phase];
-                    }
+                int elementIdx = this->problem_.elementIdx(*elementIt);
+                for (int faceIdx = 0; faceIdx< this->curElementGeom_.numEdges; faceIdx++)
+                {
+                    velocity[phase] = 0;
+                    /* asImp_().calculateDarcyVelocity(velocity[phase],
+                                                     faceIdx);
+                    */
+                    elementVelocity[phase] += velocity[phase];
+                }
+                elementVelocity[phase] *= 1.0/this->curElementGeom_.numEdges;
+                (*velocityX)[elementIdx] = elementVelocity[0][phase];
+                if (dim >= 2)
+                    (*velocityY)[elementIdx] = elementVelocity[1][phase];
+                if (dim == 3)
+                    (*velocityZ)[elementIdx] = elementVelocity[2][phase];
             }
+        }
 
         writer.addVertexData(pW, "pW");
         writer.addVertexData(pN, "pN");
@@ -1046,33 +918,108 @@ public:
             writer.addCellData(velocityZ, "Vz");
     }
 
+    /*!
+     * \brief The storage term of heat
+     */
+    void heatStorage(SolutionVector &result,
+                     int scvIdx,
+                     const ElementData &elementData) const
+    {
+        // only relevant for the non-isothermal model!
+    }
+
+    /*!
+     * \brief Update the temperature gradient at a face of a FV
+     *        element.
+     */
+    void updateTempGrad(GlobalPosition &tempGrad,
+                        const GlobalPosition &feGrad,
+                        int vertexIdx) const
+    {
+        // only relevant for the non-isothermal model!
+    }
+
+    /*!
+     * \brief Sets the temperature term of the flux vector to the
+     *        heat flux due to advection of the fluids.
+     */
+    void advectiveHeatFlux(SolutionVector &flux,
+                           const PhasesVector &darcyOut,
+                           Scalar alpha, // upwind parameter
+                           const VertexData *upW, // up/downstream verts
+                           const VertexData *dnW,
+                           const VertexData *upN,
+                           const VertexData *dnN) const
+    {
+        // only relevant for the non-isothermal model!
+    }
+
+    /*!
+     * \brief Adds the diffusive heat flux to the flux vector over
+     *        the face of a sub-control volume.
+     */
+    void diffusiveHeatFlux(SolutionVector &flux,
+                           int faceIdx,
+                           const GlobalPosition &tempGrad) const
+    {
+        // only relevant for the non-isothermal model!
+    }
+
+    /*!
+     * \brief Returns the temperature.
+     *
+     * This is an isothermal model, we let the problem decide which
+     * temperature we've got.
+     */
+    Scalar temperature(const SolutionVector &sol) const
+    { return this->problem_.temperature(); }
+
+    /*!
+     * \brief Reads the current solution for a vertex from a restart
+     *        file.
+     */
+    void deserializeEntity(std::istream &inStream,
+                           const Vertex &vert)
+    {
+        int vertIdx = this->problem_.vertexIdx(vert);
+
+        // read phase state
+        if (!inStream.good()) {
+            DUNE_THROW(IOError,
+                       "Could not deserialize vertex "
+                       << vertIdx);
+        }
+
+        inStream >> staticVertexDat_[vertIdx].phaseState;
+        staticVertexDat_[vertIdx].oldPhaseState
+            = staticVertexDat_[vertIdx].phaseState;
+    };
+
+    /*!
+     * \brief Write the current phase state of an vertex to a restart
+     *        file.
+     */
+    void serializeEntity(std::ostream &outStream,
+                         const Vertex &vert)
+    {
+        int vertIdx = this->problem_.vertexIdx(vert);
+
+        if (!outStream.good()) {
+            DUNE_THROW(IOError,
+                       "Could not serialize vertex "
+                       << vertIdx);
+        }
+        
+        outStream << staticVertexDat_[vertIdx].phaseState
+                  << " ";
+    };
+
 
 protected:
     Implementation *asImp_()
     { return static_cast<Implementation *>(this); }
     const Implementation *asImp_() const
     { return static_cast<const Implementation *>(this); }
-
-
-    void updateElementData_(ElementData &dest, const LocalFunction &sol, bool isOldSol)
-    {
-        int phaseState;
-        int numVertices = this->curElement_().template count<dim>();
-        for (int i = 0; i < numVertices; i++) {
-            int iGlobal = ParentType::problem_.vertexIdx(ParentType::curElement_(), i);
-            if (isOldSol)
-                phaseState = staticVertexDat_[iGlobal].oldPhaseState;
-            else
-                phaseState = staticVertexDat_[iGlobal].phaseState;
-            asImp_()->updateVarVertexData_(dest.vertex[i],
-                                           sol[i],
-                                           phaseState,
-                                           this->curElement_(),
-                                           i,
-                                           this->problem_,
-                                           Implementation::temperature_(sol[i]));
-        }
-    }
 
 
     //  perform variable switch at a vertex; Returns true if a
@@ -1090,76 +1037,82 @@ protected:
         Scalar satN = 0;
 
         if (formulation == pWsN)
-            {
-                pW = (*globalSol)[globalIdx][pressureIdx];
-                if      (phaseState == bothPhases) satN = (*globalSol)[globalIdx][switchIdx];
-                else if (phaseState == wPhaseOnly) satN = 0.0;
-                else if (phaseState == nPhaseOnly) satN = 1.0;
+        {
+            pW = (*globalSol)[globalIdx][pressureIdx];
+            if      (phaseState == bothPhases) satN = (*globalSol)[globalIdx][switchIdx];
+            else if (phaseState == wPhaseOnly) satN = 0.0;
+            else if (phaseState == nPhaseOnly) satN = 1.0;
 
                 satW = 1 - satN;
-
-                Scalar pC = this->problem_.pC(satW, globalIdx, globalPos);
-                pN = pW + pC;
-            }
+            
+            LocalPosition local(0);// HACK
+            Scalar pC = this->problem_.materialLaw().pC(satW,
+                                                        globalPos,
+                                                        this->curElement_(), // HACK
+                                                        local);
+            pN = pW + pC;
+        }
 
         // Evaluate saturation and pressures
         else if (formulation == pNsW)
-            {
-                pN = (*globalSol)[globalIdx][pressureIdx];
-                satW = 0.0;
-                if      (phaseState == bothPhases) satW = (*globalSol)[globalIdx][switchIdx];
-                else if (phaseState == wPhaseOnly) satW = 1.0;
-                else if (phaseState == nPhaseOnly) satW = 0.0;
+        {
+            pN = (*globalSol)[globalIdx][pressureIdx];
+            satW = 0.0;
+            if      (phaseState == bothPhases) satW = (*globalSol)[globalIdx][switchIdx];
+            else if (phaseState == wPhaseOnly) satW = 1.0;
+            else if (phaseState == nPhaseOnly) satW = 0.0;
 
-                satN = 1 - satW;
+            satN = 1 - satW;
 
-                Scalar pC = this->problem_.pC(satW, globalIdx, globalPos);
-                pW = pN - pC;
-            }
+            LocalPosition local(0);// HACK
+            Scalar pC = this->problem_.materialLaw().pC(satW,
+                                                        globalPos,
+                                                        this->curElement_(), // HACK
+                                                        local);
+            pW = pN - pC;
+        }
         else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << formulation << " is invalid.");
 
-        Scalar temperature = Implementation::temperature_((*globalSol)[globalIdx]);
+        Scalar temperature = asImp_()->temperature((*globalSol)[globalIdx]);
 
         // phase state is checked and a switch is performed
         if (phaseState == nPhaseOnly)
-            {
-                Scalar xWN = (*globalSol)[globalIdx][switchIdx];
-                Scalar xWNmax = this->problem_.multicomp().xWN(pN, temperature);
+        {
+            Scalar xWN = (*globalSol)[globalIdx][switchIdx];
+            Scalar xWNmax = this->problem_.multicomp().xWN(pN, temperature);
 
-                if (xWN > xWNmax)
-                    {
-                        // wetting phase appears
-                        std::cout << "wetting phase appears at vertex " << globalIdx
-                                  << ", coordinates: " << globalPos << std::endl;
-                        newPhaseState = bothPhases;
-                        if (formulation == pNsW) (*globalSol)[globalIdx][switchIdx] = 1e-3;
-                        else if (formulation == pWsN) (*globalSol)[globalIdx][switchIdx] = 1 - 1e-3;
-                    };
-            }
+            if (xWN > xWNmax)
+            {
+                // wetting phase appears
+                std::cout << "wetting phase appears at vertex " << globalIdx
+                          << ", coordinates: " << globalPos << std::endl;
+                newPhaseState = bothPhases;
+                if (formulation == pNsW) (*globalSol)[globalIdx][switchIdx] = 0.0;
+                else if (formulation == pWsN) (*globalSol)[globalIdx][switchIdx] = 1.;
+            };
+        }
         else if (phaseState == wPhaseOnly)
-            {
-                Scalar xAW = (*globalSol)[globalIdx][switchIdx];
-                Scalar xAWmax = this->problem_.multicomp().xAW(pN, temperature);
+        {
+            Scalar xAW = (*globalSol)[globalIdx][switchIdx];
+            Scalar xAWmax = this->problem_.multicomp().xAW(pN, temperature);
 
-                if (xAW > xAWmax)
-                    {
-                        // non-wetting phase appears
-                        std::cout << "Non-wetting phase appears at vertex " << globalIdx
-                                  << ", coordinates: " << globalPos << std::endl;
-                        if (formulation == pNsW)
-                            (*globalSol)[globalIdx][switchIdx] = 1 - 1e-3;
-                        else if (formulation == pWsN)
-                            (*globalSol)[globalIdx][switchIdx] = 1e-3;
-                        newPhaseState = bothPhases;
-                    }
+            if (xAW > xAWmax)
+            {
+                // non-wetting phase appears
+                std::cout << "Non-wetting phase appears at vertex " << globalIdx
+                          << ", coordinates: " << globalPos << std::endl;
+                if (formulation == pNsW) (*globalSol)[globalIdx][switchIdx] = 1.0;
+                else if (formulation == pWsN) (*globalSol)[globalIdx][switchIdx] = 0.0;
+                newPhaseState = bothPhases;
             }
+        }
         else if (phaseState == bothPhases) {
             if (satN < 0) {
                 // non-wetting phase disappears
                 std::cout << "Non-wetting phase disappears at vertex " << globalIdx
                           << ", coordinates: " << globalPos << std::endl;
                 (*globalSol)[globalIdx][switchIdx]
-                    = this->problem_.multicomp().xAW(pN, temperature)*(1 - 1e-2);
+                    = this->problem_.multicomp().xAW(pN, temperature);
                 newPhaseState = wPhaseOnly;
             }
             else if (satW < 0) {
@@ -1167,7 +1120,7 @@ protected:
                 std::cout << "Wetting phase disappears at vertex " << globalIdx
                           << ", coordinates: " << globalPos << std::endl;
                 (*globalSol)[globalIdx][switchIdx]
-                    = this->problem_.multicomp().xWN(pN, temperature)*(1 - 1e-2);
+                    = this->problem_.multicomp().xWN(pN, temperature);
                 newPhaseState = nPhaseOnly;
             }
         }
@@ -1202,20 +1155,6 @@ protected:
     std::vector<StaticVertexData> staticVertexDat_;
     bool                          switchFlag_;
     int                           formulation_;
-
-    // current solution
-    LocalFunction      curSol_;
-    ElementData        curElemDat_;
-
-    // needed for restoreCurSolution()
-    bool               curSolDeflected_;
-    Scalar             curSolOrigValue_;
-    VariableVertexData curSolOrigVarData_;
-
-    // previous solution
-    LocalFunction      prevSol_;
-    ElementData        prevElemDat_;
-    CollectiveCommunication collectiveCom_;
 };
 
 

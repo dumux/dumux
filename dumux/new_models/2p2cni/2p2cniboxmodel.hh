@@ -137,11 +137,10 @@ public:
      */
     void updateTempGrad(GlobalPosition &tempGrad,
                         const GlobalPosition &feGrad,
-                        const LocalFunction &sol,
                         int vertIdx) const
     {
         GlobalPosition tmp = feGrad;
-        tmp *= sol[vertIdx][temperatureIdx];
+        tmp *= this->curElemDat_[vertIdx].temperature;
         tempGrad += tmp;
     }
 

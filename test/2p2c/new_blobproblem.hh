@@ -1,35 +1,21 @@
 #ifndef DUNE_NEW_BLOBPROBLEM_HH
 #define DUNE_NEW_BLOBPROBLEM_HH
 
-#include<iostream>
-#include<iomanip>
-
-#include<dune/grid/common/grid.hh>
-
-#include<dumux/material/property_baseclasses.hh>
-#include<dumux/material/relperm_pc_law.hh>
-
-#include <dumux/material/phaseproperties/phaseproperties_waterair.hh>
+//#include <dumux/material/property_baseclasses.hh>
 #include <dumux/material/matrixproperties.hh>
 #include <dumux/material/twophaserelations.hh>
-
 #include <dumux/material/multicomponentrelations.hh>
+
+#include <dumux/material/phaseproperties/phaseproperties_waterair.hh>
 
 #include <dumux/auxiliary/timemanager.hh>
 #include <dumux/io/vtkmultiwriter.hh>
 #include <dumux/io/restart.hh>
 
-#include <dune/common/timer.hh>
-#include <dune/grid/common/gridinfo.hh>
-#include <dune/grid/uggrid.hh>
-#include <dune/grid/sgrid.hh>
-#include <dune/istl/io.hh>
+#include <dumux/new_models/2p2c/2p2cboxmodel.hh>
+#include <dumux/new_models/2p2c/2p2cnewtoncontroller.hh>
 
-#include<dumux/new_models/2p2c/2p2cboxmodel.hh>
-#include<dumux/new_models/2p2c/2p2cnewtoncontroller.hh>
-
-#include<dumux/timedisc/new_impliciteulerstep.hh>
-#include<dumux/nonlinear/new_newtonmethod.hh>
+#include <dumux/nonlinear/new_newtonmethod.hh>
 
 #include <dumux/auxiliary/timemanager.hh>
 #include <dumux/auxiliary/basicdomain.hh>
@@ -76,7 +62,7 @@ public:
     ~BlobSoil()
     {}
 
-    virtual const FieldMatrix<Scalar,dim,dim> &K (const GlobalPosition &x, const Element& e, const LocalPosition &xi)
+    virtual const FieldMatrix<Scalar,dim,dim> &K (const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
     {
         return K_;
     }
@@ -192,14 +178,14 @@ private:
 
     // copy some types from the traits for convenience
     typedef typename DomainTraits::Scalar                     Scalar;
-    typedef typename DomainTraits::Element                       Element;
-    typedef typename DomainTraits::ElementIterator               ElementIterator;
+    typedef typename DomainTraits::Element                    Element;
+    typedef typename DomainTraits::ElementIterator            ElementIterator;
     typedef typename DomainTraits::ReferenceElement           ReferenceElement;
-    typedef typename DomainTraits::Vertex                       Vertex;
-    typedef typename DomainTraits::VertexIterator               VertexIterator;
+    typedef typename DomainTraits::Vertex                     Vertex;
+    typedef typename DomainTraits::VertexIterator             VertexIterator;
     typedef typename DomainTraits::IntersectionIterator       IntersectionIterator;
-    typedef typename DomainTraits::LocalPosition                 LocalPosition;
-    typedef typename DomainTraits::GlobalPosition                 GlobalPosition;
+    typedef typename DomainTraits::LocalPosition              LocalPosition;
+    typedef typename DomainTraits::GlobalPosition             GlobalPosition;
 
     typedef typename BoxTraits::FVElementGeometry             FVElementGeometry;
     typedef typename BoxTraits::SpatialFunction               SpatialFunction;
@@ -230,8 +216,6 @@ public:
         timeManager_.setStepSize(dtInitial);
 
         eps_    = 1e-8 * 300.0;
-
-        depthBOR_ = 800.0;
 
         gravity_ = 0;
         //        gravity_[dim - 1] = -9.81;
@@ -374,7 +358,7 @@ public:
 
         values = BoundaryConditions::neumann;
 
-        if ((globalPos[0] < eps_) || (globalPos[0] > (300 - eps_)))
+        if ((globalPos[0] < eps_) || (globalPos[0] > (3 - eps_)))
             values = BoundaryConditions::dirichlet;
     }
 
@@ -398,8 +382,8 @@ public:
 
         if (globalPos[0] < eps_)
         {
-            values[pressureIdx] = 1e5 + 50; // used to be 2e5, but then diffusion is negligible
-            values[switchIdx] = 0;  // may be Sn, Xaw or Xwn!!
+            values[pressureIdx] = 1e5 + 50;
+            values[switchIdx] = 0;  // may be Sn, Xaw or Xwn, depending on the phase state
         }
     }
 
@@ -448,7 +432,7 @@ public:
                           = fvElemGeom.subContVol[scvIdx].local;
         */
 
-        values[pressureIdx] = 1e5;//(600-globalPos[0])/300 * 1e5;
+        values[pressureIdx] = 1e5;
         values[switchIdx] = 0;
 
         if (isInsideBlob_(globalPos))
@@ -467,23 +451,9 @@ public:
         return wPhaseOnly;
     }
 
-    Scalar porosity(const Element &element, int localIdx) const
+    Scalar temperature() const
     {
-        // TODO/HACK: porosity should be defined on the verts
-        // as it is required on the verts!
-        const LocalPosition &local =
-            DomainTraits::referenceElement(element.type()).position(localIdx, dim);
-        const GlobalPosition &globalPos = element.geometry().corner(localIdx);
-        return soil().porosity(globalPos, *(ParentType::elementBegin()), local);
-    };
-
-    Scalar pC(Scalar satW, int globalIdx, const GlobalPosition &globalPos)
-    {
-        // TODO/HACK: porosity should be defined on the verts
-        // as it is required on the verts!
-        const LocalPosition &local =
-            DomainTraits::referenceElement(ParentType::elementBegin()->type()).position(0, dim);
-        return materialLaw().pC(satW, globalPos, *(ParentType::elementBegin()), local);
+        return 283.15; // -> 10°C
     };
 
 
@@ -491,11 +461,6 @@ public:
     const GlobalPosition &gravity () const
     {
         return gravity_;
-    }
-
-    double depthBOR () const
-    {
-        return depthBOR_;
     }
 
     bool simulate()
@@ -549,10 +514,10 @@ public:
 private:
     bool isInsideBlob_(const GlobalPosition &globalPos) const
     {
-        return globalPos[0] >= 59.0 &&
-            globalPos[0] <= 121 &&
-            globalPos[1] >= 119 &&
-            globalPos[1] <= 181;
+        return (globalPos[0] >= 0.59 &&
+                globalPos[0] <= 1.21 &&
+                globalPos[1] >= 1.19 &&
+                globalPos[1] <= 1.81);
     }
 
 
@@ -568,7 +533,6 @@ private:
     }
 
 
-    Scalar depthBOR_;
     Scalar eps_;
     GlobalPosition  gravity_;
 

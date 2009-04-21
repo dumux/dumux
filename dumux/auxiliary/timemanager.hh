@@ -289,7 +289,6 @@ public:
             // execute the time integration (i.e. Runge-Kutta
             // or Euler).
             curStepSize = stepSize();
-            std::cerr << "currentStepSize: " << curStepSize << "\n";
             problem.timeIntegration(curStepSize, nextStepSize);
 
 

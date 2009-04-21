@@ -4,8 +4,8 @@ add_definitions(-DYASPGRID -DGRIDDIM=2 -DENABLE_UG)
 #ADD_EXECUTABLE("test_fractionalflow" test_fractionalflow.cc)
 #TARGET_LINK_LIBRARIES("test_fractionalflow" ${DumuxLinkLibraries})
 
-ADD_EXECUTABLE("test_2p2c_decoupled" test_2p2c_decoupled.cc)
-TARGET_LINK_LIBRARIES("test_2p2c_decoupled" ${DumuxLinkLibraries})
+#ADD_EXECUTABLE("test_2p2c_decoupled" test_2p2c_decoupled.cc)
+#TARGET_LINK_LIBRARIES("test_2p2c_decoupled" ${DumuxLinkLibraries})
 
 #ADD_EXECUTABLE("test_heterogeneoussoil" test_heterogeneoussoil.cc)
 #TARGET_LINK_LIBRARIES("test_heterogeneoussoil" ${DumuxLinkLibraries})

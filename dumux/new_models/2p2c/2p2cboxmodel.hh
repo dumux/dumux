@@ -20,8 +20,13 @@
 namespace Dune
 {
 
-/** \todo Please doc me! */
-
+/*!
+ * \brief The local jacobian operator for the isothermal two-phase,
+ *        two-component model.
+ *
+ * This is basically just a wrapper for TwoPTwoCBoxJacobianBase so
+ * that it can be instantiated.
+ */
 template<class ProblemT,
          class BoxTraitsT,
          class TwoPTwoCTraitsT>
@@ -34,110 +39,32 @@ class TwoPTwoCBoxJacobian : public TwoPTwoCBoxJacobianBase<ProblemT,
 {
     typedef TwoPTwoCBoxJacobian<ProblemT,
                                 BoxTraitsT,
-                                TwoPTwoCTraitsT> ThisType;
+                                TwoPTwoCTraitsT>  ThisType;
     typedef TwoPTwoCBoxJacobianBase<ProblemT,
                                     BoxTraitsT,
                                     TwoPTwoCTraitsT,
-                                    ThisType>      ParentType;
-
-    typedef ProblemT                               Problem;
-
-    typedef typename Problem::DomainTraits         DomTraits;
-    typedef TwoPTwoCTraitsT                        TwoPTwoCTraits;
-    typedef BoxTraitsT                             BoxTraits;
-
-    typedef typename DomTraits::Scalar             Scalar;
-    typedef typename DomTraits::Vertex             Vertex;
-
-    typedef typename DomTraits::GlobalPosition     GlobalPosition;
-    typedef typename DomTraits::LocalPosition      LocalPosition;
-
-    typedef typename BoxTraits::SolutionVector     SolutionVector;
-    typedef typename BoxTraits::FVElementGeometry  FVElementGeometry;
-
-    typedef typename ParentType::VariableVertexData  VariableVertexData;
-    typedef typename ParentType::LocalFunction       LocalFunction;
-    typedef typename ParentType::ElementData         ElementData;
-
-    typedef typename TwoPTwoCTraits::PhasesVector  PhasesVector;
-
-
+                                    ThisType>     ParentType;
 public:
     TwoPTwoCBoxJacobian(ProblemT &problem)
         : ParentType(problem)
     {
     };
-
-
-    /*!
-     * \brief The storage term of heat
-     */
-    void heatStorage(SolutionVector &result,
-                     int scvId,
-                     const LocalFunction &sol,
-                     const ElementData &elementCache) const
-    {
-        // only relevant for the non-isothermal model!
-    }
-
-    /*!
-     * \brief Update the temperature gradient at a face of a FV
-     *        element.
-     */
-    void updateTempGrad(GlobalPosition &tempGrad,
-                        const GlobalPosition &feGrad,
-                        const LocalFunction &sol,
-                        int vertexIdx) const
-    {
-        // only relevant for the non-isothermal model!
-    }
-
-    /*!
-     * \brief Sets the temperature term of the flux vector to the
-     *        heat flux due to advection of the fluids.
-     */
-    void advectiveHeatFlux(SolutionVector &flux,
-                           const PhasesVector &darcyOut,
-                           Scalar alpha, // upwind parameter
-                           const VariableVertexData *upW, // up/downstream verts
-                           const VariableVertexData *dnW,
-                           const VariableVertexData *upN,
-                           const VariableVertexData *dnN) const
-    {
-        // only relevant for the non-isothermal model!
-    }
-
-    /*!
-     * \brief Adds the diffusive heat flux to the flux vector over
-     *        the face of a sub-control volume.
-     */
-    void diffusiveHeatFlux(SolutionVector &flux,
-                           int faceIdx,
-                           const GlobalPosition &tempGrad) const
-    {
-        // only relevant for the non-isothermal model!
-    }
-
-    // internal method!
-    static Scalar temperature_(const SolutionVector &sol)
-    { return 283.15; /* -> 10 °C */ }
 };
 
-///////////////////////////////////////////////////////////////////////////
-// TwoPTwoCBoxModel (The actual numerical model.)
-///////////////////////////////////////////////////////////////////////////
 /**
- * \brief Isothermal two phase two component model with Pw and
- *        Sn/X as primary unknowns.
+ * \brief Isothermal two-phase two-component model.
  *
- * This implements an isothermal two phase two component model
- * with Pw and Sn/X as primary unknowns.
+ * This implements an isothermal two phase two component
+ * model. Depending on which traits are used the primary variables are
+ * either $p_w$ and $S_n;X$ or $p_n$ or $S_w;X$. By default they are
+ * $p_w$ and $S_n$
  */
-template<class ProblemT, class TwoPTwoCTraitsT = TwoPTwoCPwSnTraits<typename ProblemT::DomainTraits::Scalar> >
+template<class ProblemT,
+         class TwoPTwoCTraitsT = TwoPTwoCPwSnTraits<typename ProblemT::DomainTraits::Scalar> >
 class TwoPTwoCBoxModel
     : public BoxScheme<TwoPTwoCBoxModel<ProblemT, TwoPTwoCTraitsT>, // Implementation of the box scheme
 
-                       // The Traits for the BOX method
+                       // The traits for the BOX method
                        P1BoxTraits<typename ProblemT::DomainTraits::Scalar,
                                    typename ProblemT::DomainTraits::Grid,
                                    TwoPTwoCTraitsT::numEq>,
@@ -148,7 +75,8 @@ class TwoPTwoCBoxModel
                        TwoPTwoCBoxJacobian<ProblemT,
                                            P1BoxTraits<typename ProblemT::DomainTraits::Scalar,
                                                        typename ProblemT::DomainTraits::Grid,
-                                                       TwoPTwoCTraitsT::numEq>, TwoPTwoCTraitsT > >
+                                                       TwoPTwoCTraitsT::numEq>,
+                                           TwoPTwoCTraitsT > >
 {
     typedef typename ProblemT::DomainTraits::Grid       Grid;
     typedef typename ProblemT::DomainTraits::Scalar     Scalar;
@@ -213,7 +141,6 @@ public:
         twoPTwoCLocalJacobian_.setSwitched(false);
     }
 
-
     /*!
      * \brief Add the mass fraction of air in water to VTK output of
      *        the current timestep.
@@ -248,17 +175,8 @@ public:
     {
         // write primary variables
         ParentType::serializeEntity(outStream, vert);
-
-        int vertIdx = this->problem().vertexIdx(vert);
-
-        // write phase state
-        if (!outStream.good()) {
-            DUNE_THROW(IOError,
-                       "Could not serialize vertex "
-                       << vertIdx);
-        }
-        outStream << twoPTwoCLocalJacobian_.staticVertexDat_[vertIdx].phaseState
-                  << " ";
+        
+        twoPTwoCLocalJacobian_.serializeEntity(outStream, vert);
     };
 
     /*!
@@ -271,18 +189,7 @@ public:
         // read primary variables
         ParentType::deserializeEntity(inStream, vert);
 
-        int vertIdx = this->problem().vertexIdx(vert);
-
-        // read phase state
-        if (!inStream.good()) {
-            DUNE_THROW(IOError,
-                       "Could not deserialize vertex "
-                       << vertIdx);
-        }
-
-        inStream >> twoPTwoCLocalJacobian_.staticVertexDat_[vertIdx].phaseState;
-        twoPTwoCLocalJacobian_.staticVertexDat_[vertIdx].oldPhaseState
-            = twoPTwoCLocalJacobian_.staticVertexDat_[vertIdx].phaseState;
+        twoPTwoCLocalJacobian_.deserializeEntity(inStream, vert);
     };
 
 
