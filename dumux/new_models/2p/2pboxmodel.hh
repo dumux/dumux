@@ -32,15 +32,9 @@
 
 namespace Dune
 {
-///////////////////////////////////////////////////////////////////////////
-// PwSnBoxJacobian (evaluate the local jacobian for the newton method.)
-///////////////////////////////////////////////////////////////////////////
 /*!
- * \brief pw-Sn formulation specific details needed to
- *        approximately calculate the local jacobian in the BOX
- *        scheme.
- *
- * This class is used to fill the gaps in BoxJacobian for the Pw-Sn twophase flow.
+ * \brief Calculate the local Jacobian for the two phase model in the
+ *        BOX scheme.
  */
 template<class ProblemT, class BoxTraitsT, class TwoPTraitsT>
 class TwoPBoxJacobian : public BoxJacobian<ProblemT, 
@@ -97,6 +91,7 @@ private:
     typedef typename BoxTraits::SpatialFunction     SpatialFunction;
     typedef typename BoxTraits::LocalFunction       LocalFunction;
 
+    typedef std::vector<VertexData>        VertexDataArray;
     typedef FieldMatrix<Scalar, dim, dim>  Tensor;
 
 public:
@@ -108,19 +103,27 @@ public:
      * \brief Evaluate the amount all conservation quantites
      *        (e.g. phase mass) within a finite volume.
      */
-    void computeStorage(SolutionVector &result, int scvId, bool usePrevSol) const
+    void computeStorage(SolutionVector &result, int scvIdx, bool usePrevSol) const
     {
+        // if flag usePrevSol is set, the solution from the previous
+        // time step is used, otherwise the current solution is
+        // used. The secondary variables are used accordingly.  This
+        // is required to compute the derivative of the storage term
+        // using the implicit euler method.
+        const VertexDataArray &elemDat = usePrevSol ? this->prevElemDat_  : this->curElemDat_;
+        const VertexData  &vertDat = elemDat[scvIdx];
+   
         // wetting phase mass
         result[wMassIdx] =
-            this->curElemDat_[scvId].density[wPhase]
-            * this->curElemDat_[scvId].porosity
-            * this->curElemDat_[scvId].satW;
+            vertDat.density[wPhase]
+            * vertDat.porosity
+            * vertDat.satW;
 
         // non-wetting phase mass
         result[nMassIdx] = 
-            this->curElemDat_[scvId].density[nPhase]
-            * this->curElemDat_[scvId].porosity
-            * this->curElemDat_[scvId].satN;
+            vertDat.density[nPhase]
+            * vertDat.porosity
+            * vertDat.satN;
     }
 
     /*!
@@ -144,36 +147,62 @@ public:
         const LocalPosition &local_i = this->curElementGeom_.subContVol[i].local;
         const LocalPosition &local_j = this->curElementGeom_.subContVol[j].local;
 
+        GlobalPosition pressureGrad[numPhases];
+        Scalar densityAtIP[numPhases];
+        for (int i = 0; i < numPhases; ++i) {
+            pressureGrad[i] = 0;
+            densityAtIP[i] = 0;
+        }
+
+        // calculate pressure gradients
+        GlobalPosition tmp(0.0);
+        for (int idx = 0; 
+             idx < this->curElementGeom_.numVertices;
+             idx++) // loop over adjacent vertices
+        {
+            // FE gradient at vertex idx
+            const LocalPosition &feGrad = face.grad[idx];
+
+            // compute sum of pressure gradients for each phase
+            for (int phase = 0; phase < numPhases; phase++)
+            {
+                // the pressure gradient
+                tmp = feGrad;
+                tmp *= this->curElemDat_[idx].pressure[phase];
+                pressureGrad[phase] += tmp;
+
+                // phase density
+                densityAtIP[phase] 
+                    += 
+                    this->curElemDat_[idx].density[phase] *
+                    face.shapeValue[idx];
+            }
+        }
+        
+        // correct the pressure gradients by the hydrostatic
+        // pressure due to gravity
+        for (int phase=0; phase < numPhases; phase++)
+        {
+            tmp = this->problem_.gravity();
+            tmp *= densityAtIP[phase];
+            
+            pressureGrad[phase] -= tmp;
+        }
+
+
         // calculate the permeability tensor
         const Tensor &Ki = this->problem_.soil().K(global_i, ParentType::curElement_(), local_i);
         const Tensor &Kj = this->problem_.soil().K(global_j, ParentType::curElement_(), local_j);
         Tensor K;
         harmonicMeanMatrix(K, Ki, Kj);
         
-        GlobalPosition Kij;
-        K.mv(face.normal, Kij); // Kij = K*normal
-        
-        for (int phase = 0; phase < numPhases; phase++) {
-            // calculate FE gradient
-            LocalPosition pGrad(0);
-            Scalar densityIJ = 0.0;
-            for (int k = 0; k < ParentType::curElementGeom_.numVertices; k++) {
-                LocalPosition grad(face.grad[k]);
-                grad *= this->curElemDat_[k].pressure[phase];
-                pGrad += grad;
-
-                densityIJ += 
-                    this->curElemDat_[k].density[phase] *
-                    this->curElementGeom_.subContVolFace[faceId].shapeValue[k];
-            }
-
-            // adjust pressure gradient by gravity force
-            GlobalPosition tmp = ParentType::problem_.gravity();
-            tmp   *= densityIJ;
-            pGrad -= tmp;
+        for (int phase = 0; phase < numPhases; phase++) 
+        {
+            GlobalPosition vDarcy;
+            K.mv(pressureGrad[phase], vDarcy);  // vDarcy = K * grad p
 
             // calculate the flux using upwind
-            Scalar vDarcyOut = pGrad*Kij;
+            Scalar vDarcyOut = vDarcy*face.normal;
             int upwindIdx;
             if (vDarcyOut < 0)
                 upwindIdx = i;
@@ -181,11 +210,11 @@ public:
                 upwindIdx = j;
             
             Scalar fluxVal =
-                this->curElemDat_[upwindIdx].density[phase]*
+                1000.0* //this->curElemDat_[upwindIdx].density[phase]*
                 this->curElemDat_[upwindIdx].mobility[phase]*
                 vDarcyOut;
-            std::cout << "density: " << this->curElemDat_[upwindIdx].density[phase] << "\n";
-            std::cout << "mobility: " << this->curElemDat_[upwindIdx].mobility[phase] << "\n";
+//            std::cout << "density: " << this->curElemDat_[upwindIdx].density[phase] << "\n";
+//            std::cout << "mobility: " << this->curElemDat_[upwindIdx].mobility[phase] << "\n";
             if (phase == wPhase)
                 flux[wMassIdx] = fluxVal;
             else if (phase == nPhase)

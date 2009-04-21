@@ -67,8 +67,8 @@ int main(int argc, char** argv)
         upperRight[1] = 4.0;
 
         Dune::FieldVector<int,dim> res; // cell resolution
-        res[0]        = 8;
-        res[1]        = 2;
+        res[0]        = 24;
+        res[1]        = 16;
 
 #if USE_UG
         ////////////////////////////////////////////////////////////

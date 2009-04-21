@@ -312,6 +312,8 @@ protected:
             // linearize the problem at the current solution
             jacobianAsm.assemble(localJacobian, u, f);
 
+//            printSparseMatrix(std::cout, *jacobianAsm, "Global Matrix", "row", 10);
+            
             // solve the resultuing linear equation system
             ctl.newtonSolveLinear(*jacobianAsm, u, *f);
 

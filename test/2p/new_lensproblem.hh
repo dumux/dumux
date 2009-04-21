@@ -268,14 +268,14 @@ public:
             Scalar a = -(1 + 0.5/height);
             Scalar b = -a*outerUpperRight_[1];
             values[pWIdx] = -densityW*gravity_[1]*(a*globalPos[1] + b);
-            values[sNIdx] = 0;
+            values[sNIdx] = 0.0;
         }
         else if (onRightBoundary_(globalPos))
         {
             Scalar a = -1;
             Scalar b = outerUpperRight_[1];
             values[pWIdx] = -densityW*gravity_[1]*(a*globalPos[1] + b);
-            values[sNIdx] = 0;
+            values[sNIdx] = 0.0;
         }
         else
             values = 0.0;
@@ -297,10 +297,9 @@ public:
         //    = DomainTraits::referenceElement(element.geometry().type()).position(dim,scvIdx);
 
         values = 0.0;
-        /* if (onInlet_(globalPos)) {
+        if (onInlet_(globalPos)) {
             values[sNIdx] = -0.04; // kg / (m * s)
         }
-        */
     }
 
     /////////////////////////////
