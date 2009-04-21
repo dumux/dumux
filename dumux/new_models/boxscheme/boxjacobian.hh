@@ -120,11 +120,13 @@ private:
     typedef typename BoxTraits::ShapeFunctionSetContainer  ShapeFunctionSetContainer;
     typedef typename ShapeFunctionSetContainer::value_type ShapeFunctionSet;
 
+    typedef typename std::vector<VertexData> VertexDataArray;
+
 public:
     BoxJacobian(Problem &problem)
         : problem_(problem),
           curElementPtr_(problem.elementEnd()),
-
+          
           curElemDat_(BoxTraits::ShapeFunctionSetContainer::maxsize),
           prevElemDat_(BoxTraits::ShapeFunctionSetContainer::maxsize),
 
@@ -440,7 +442,7 @@ public:
      * \brief Update the model specific vertex data of a whole
      *        element.
      */
-    void updateElementData_(ElementData &dest, const LocalFunction &sol, bool isOldSol)
+    void updateElementData_(VertexDataArray &dest, const LocalFunction &sol, bool isOldSol)
     {
 #ifdef ENABLE_VALGRIND
         for (int i = 0; i < elemDat.size(); ++i)
@@ -450,10 +452,11 @@ public:
 
         int numVertices = this->curElement_().template count<dim>();
         for (int vertIdx = 0; vertIdx < numVertices; vertIdx++) {
-            asImp_().updateVertexData_(dest,
-                                       sol,
-                                       vertIdx,
-                                       isOldSol);
+            dest[vertIdx].update(sol[vertIdx],
+                                 this->curElement_(),
+                                 vertIdx,
+                                 isOldSol,
+                                 asImp_());
         }
     }
 
@@ -505,10 +508,12 @@ public:
         
         VALGRIND_MAKE_MEM_UNDEFINED(&curElemDat_[vertIdx], 
                                     sizeof(VertexData));
-        asImp_().updateVertexData_(curElemDat_, 
-                                   curSol, 
-                                   vertIdx, 
-                                   false);
+
+        curElemDat_[vertIdx].template update<JacobianImp>(curSol[vertIdx], 
+                                                          this->curElement_(),
+                                                          vertIdx, 
+                                                          false,
+                                                          asImp_());
         VALGRIND_CHECK_MEM_IS_DEFINED(&curElemDat_[vertIdx], 
                                       sizeof(VertexData));
     }
@@ -529,6 +534,17 @@ public:
         curElemDat_[vertIdx] = curVertexDataStash_;
     };
 
+    /*!
+     * \brief Returns a reference to the problem.
+     */
+    Problem &problem()
+    { return problem_; };
+
+    /*!
+     * \brief Returns a reference to the problem.
+     */
+    const Problem &problem() const
+    { return problem_; };
 
 protected:
     const Element &curElement_() const
@@ -541,8 +557,8 @@ protected:
     FVElementGeometry curElementGeom_;
 
     // current and previous element data. (this is model specific.)
-    ElementData  curElemDat_;
-    ElementData  prevElemDat_;
+    VertexDataArray  curElemDat_;
+    VertexDataArray  prevElemDat_;
     
     // temporary variable to store the variable vertex data
     VertexData   curVertexDataStash_;

@@ -33,6 +33,15 @@ template<class ProblemT,
 class TwoPTwoCBoxJacobian : public TwoPTwoCBoxJacobianBase<ProblemT,
                                                            BoxTraitsT,
                                                            TwoPTwoCTraitsT,
+                                                           TwoPTwoCElementData<TwoPTwoCTraitsT,
+                                                                               ProblemT>,
+                                                           TwoPTwoCVertexData<TwoPTwoCTraitsT,
+                                                                              ProblemT>,
+                                                           TwoPTwoCFluxData<TwoPTwoCTraitsT,
+                                                                            ProblemT,
+                                                                            TwoPTwoCVertexData<TwoPTwoCTraitsT,
+                                                                                               ProblemT> >,
+                                                           
                                                            TwoPTwoCBoxJacobian<ProblemT,
                                                                                BoxTraitsT,
                                                                                TwoPTwoCTraitsT> >
@@ -40,9 +49,20 @@ class TwoPTwoCBoxJacobian : public TwoPTwoCBoxJacobianBase<ProblemT,
     typedef TwoPTwoCBoxJacobian<ProblemT,
                                 BoxTraitsT,
                                 TwoPTwoCTraitsT>  ThisType;
+
+    typedef TwoPTwoCElementData<TwoPTwoCTraitsT,
+                                ProblemT>         ElementData;
+    typedef TwoPTwoCVertexData<TwoPTwoCTraitsT,
+                               ProblemT>          VertexData;
+    typedef TwoPTwoCFluxData<TwoPTwoCTraitsT,
+                             ProblemT,
+                             VertexData >          FluxData;
     typedef TwoPTwoCBoxJacobianBase<ProblemT,
                                     BoxTraitsT,
                                     TwoPTwoCTraitsT,
+                                    ElementData,
+                                    VertexData,
+                                    FluxData,
                                     ThisType>     ParentType;
 public:
     TwoPTwoCBoxJacobian(ProblemT &problem)

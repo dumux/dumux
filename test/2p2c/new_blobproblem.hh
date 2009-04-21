@@ -329,20 +329,14 @@ public:
      \return    multicomponent object
     */
     MultiComp &multicomp ()
-    //        const MultiComp &multicomp () const
-    {
-        return multicomp_;
-    }
+    { return multicomp_;  }
 
     //! object for definition of material law
     /*! object for definition of material law (e.g. Brooks-Corey, Van Genuchten, ...)
       \return    material law
     */
     MaterialLaw &materialLaw ()
-    //        const MaterialLaw &materialLaw () const
-    {
-        return materialLaw_;
-    }
+    { return materialLaw_; }
 
     void boundaryTypes(BoundaryTypeVector         &values,
                        const Element              &element,
