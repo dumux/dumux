@@ -62,7 +62,7 @@ public:
         : BoxJacobianType(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_),
           problem(params)
     {
-        alpha = -1;
+        alpha = -1e0;
         this->analytic = false;
     }
 
@@ -73,8 +73,6 @@ public:
 
     void localDefect(const Element& element, const SolutionVector* sol, bool withBC = true) {
         BoxJacobianType::localDefect(element, sol, withBC);
-
-        this->assembleBoundaryCondition(element);
 
         Dune::GeometryType gt = element.geometry().type();
         const typename ReferenceElementContainer<Scalar,dim>::value_type& referenceElement = ReferenceElements<Scalar, dim>::general(gt);
@@ -134,40 +132,40 @@ public:
                 }
                 else if (this->bctype[vert][0] == BoundaryConditions::dirichlet)
                     this->def[vert][dim] = defect;
-                else // de-stabilize
-                {
-                    for (int face = 0; face < this->fvGeom.numEdges; face++)
-                    {
-                        int i = this->fvGeom.subContVolFace[face].i;
-                        int j = this->fvGeom.subContVolFace[face].j;
-
-                        if (i != vert && j != vert)
-                            continue;
-
-                        FieldVector<Scalar, dim> pressGradient(0);
-                        for (int k = 0; k < this->fvGeom.numVertices; k++) {
-                            FieldVector<Scalar,dim> grad(this->fvGeom.subContVolFace[face].grad[k]);
-                            grad *= sol[k][dim];
-                            pressGradient += grad;
-                        }
-
-                        Scalar alphaH2 = 0.5*alpha*(this->fvGeom.subContVol[i].volume + this->fvGeom.subContVol[j].volume);
-                        pressGradient *= alphaH2;
-                        // SIGN ?????
-                        if (vert == i)
-                        {
-                            this->def[vert][dim] -= pressGradient*this->fvGeom.subContVolFace[face].normal;
-                        }
-                        else
-                        {
-                            this->def[vert][dim] += pressGradient*this->fvGeom.subContVolFace[face].normal;
-                        }
-                    }
-
-                    SolutionVector source = problem.q(this->fvGeom.subContVol[vert].global, element, this->fvGeom.subContVol[vert].local);
-                    Scalar alphaH2 = alpha*this->fvGeom.subContVol[vert].volume;
-                    this->def[vert][dim] -= alphaH2*source[dim]*this->fvGeom.subContVol[vert].volume;
-                }
+//                else // de-stabilize
+//                {
+//                    for (int face = 0; face < this->fvGeom.numEdges; face++)
+//                    {
+//                        int i = this->fvGeom.subContVolFace[face].i;
+//                        int j = this->fvGeom.subContVolFace[face].j;
+//
+//                        if (i != vert && j != vert)
+//                            continue;
+//
+//                        FieldVector<Scalar, dim> pressGradient(0);
+//                        for (int k = 0; k < this->fvGeom.numVertices; k++) {
+//                            FieldVector<Scalar,dim> grad(this->fvGeom.subContVolFace[face].grad[k]);
+//                            grad *= sol[k][dim];
+//                            pressGradient += grad;
+//                        }
+//
+//                        Scalar alphaH2 = 0.5*alpha*(this->fvGeom.subContVol[i].volume + this->fvGeom.subContVol[j].volume);
+//                        pressGradient *= alphaH2;
+//                        // SIGN ?????
+//                        if (vert == i)
+//                        {
+//                            this->def[vert][dim] -= pressGradient*this->fvGeom.subContVolFace[face].normal;
+//                        }
+//                        else
+//                        {
+//                            this->def[vert][dim] += pressGradient*this->fvGeom.subContVolFace[face].normal;
+//                        }
+//                    }
+//
+//                    SolutionVector source = problem.q(this->fvGeom.subContVol[vert].global, element, this->fvGeom.subContVol[vert].local);
+//                    Scalar alphaH2 = alpha*this->fvGeom.subContVol[vert].volume;
+//                    this->def[vert][dim] -= alphaH2*source[dim]*this->fvGeom.subContVol[vert].volume;
+//                }
             }
 
         return;
@@ -333,13 +331,15 @@ public:
                     }
                     FieldVector<Scalar, dim> massResidual = velocityValue;
                     Scalar alphaH2 = alpha*this->fvGeom.subContVol[node].volume;
-                    SolutionVector source = problem.q(this->fvGeom.boundaryFace[bfIdx].ipGlobal, element, this->fvGeom.boundaryFace[bfIdx].ipLocal);
-                    FieldVector<Scalar, dim> dimSource;
-                    for (int comp = 0; comp < dim; comp++)
-                        dimSource[comp] = source[comp];
-                    dimSource *= alphaH2;
-                    massResidual += dimSource;
-                    result[dim] -= massResidual*it->unitOuterNormal(faceLocal)*this->fvGeom.boundaryFace[bfIdx].area;
+//                    SolutionVector source = problem.q(this->fvGeom.boundaryFace[bfIdx].ipGlobal, element, this->fvGeom.boundaryFace[bfIdx].ipLocal);
+//                    FieldVector<Scalar, dim> dimSource;
+//                    for (int comp = 0; comp < dim; comp++)
+//                        dimSource[comp] = source[comp];
+//                    dimSource *= alphaH2;
+//                    massResidual += dimSource;
+                    pressGradient *= alphaH2;
+                    massResidual += pressGradient;
+                   result[dim] -= massResidual*it->unitOuterNormal(faceLocal)*this->fvGeom.boundaryFace[bfIdx].area;
 
                     if (bctypeface[0] == BoundaryConditions::dirichlet)
                     {
@@ -350,13 +350,13 @@ public:
 
                         for (int comp = 0; comp < dim; comp++)
                         {
-                            FieldVector<Scalar,dim>  pressVector(0);
-                            pressVector[comp] = -pressureValue;
+                                FieldVector<Scalar,dim>  pressVector(0);
+                                pressVector[comp] = -pressureValue;
 
-                            result[comp] += pressVector*it->unitOuterNormal(faceLocal)*this->fvGeom.boundaryFace[bfIdx].area;
+                                result[comp] += pressVector*it->unitOuterNormal(faceLocal)*this->fvGeom.boundaryFace[bfIdx].area;
 
-                            if (alpha == 0)
-                                result[comp] += gradVN[comp];
+                                if (alpha == 0)
+                                    result[comp] += gradVN[comp];
                         }
                     }
                     else

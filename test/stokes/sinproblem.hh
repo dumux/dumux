@@ -125,7 +125,7 @@ template<class Grid, class Scalar>
 class SinProblem2 : public StokesProblem<Grid, Scalar>
 {
     enum {dim=Grid::dimension, numEq=Grid::dimension+1};
-    typedef typename Grid::Traits::template Codim<0>::Element Element;
+    typedef typename Grid::Traits::template Codim<0>::Entity Element;
     typedef typename Grid::template Codim<0>::LeafIntersectionIterator::IntersectionIterator
     IntersectionIterator;
 
@@ -145,21 +145,41 @@ public:
                                               const IntersectionIterator& intersectionIt,
                                               const FieldVector<Scalar,dim>& localPos) const
     {
-        return BoundaryConditions::dirichlet;
+        if (globalPos[0] < 1e-6 || globalPos[1] < 1e-6 || globalPos[0] > 1 - 1e-6)
+            return BoundaryConditions::dirichlet;
+
+        return BoundaryConditions::neumann;
     }
 
-    virtual FieldVector<Scalar,dim> g(const FieldVector<Scalar,dim>& globalPos, const Element& element,
+    virtual FieldVector<Scalar,numEq> g(const FieldVector<Scalar,dim>& globalPos, const Element& element,
                                       const IntersectionIterator& intersectionIt,
                                       const FieldVector<Scalar,dim>& localPos) const
     {
         return velocity(globalPos);
     }
 
-    virtual FieldVector<Scalar,dim> J(const FieldVector<Scalar,dim>& globalPos, const Element& element,
+    virtual FieldVector<Scalar,numEq> J(const FieldVector<Scalar,dim>& globalPos, const Element& element,
                                       const IntersectionIterator& intersectionIt,
                                       const FieldVector<Scalar,dim>& localPos)
     {
-        FieldVector<Scalar,dim> result(0);
+        FieldVector<Scalar,numEq> result(0);
+
+        FieldVector<Scalar, dim-1> localDimM1(0);
+        FieldVector<Scalar,dim> normal = intersectionIt->unitOuterNormal(localDimM1);
+
+        FieldVector<Scalar,dim> pN = normal;
+        pN *= pressure(globalPos);
+
+        FieldVector<Scalar,dim> muGradVN(0);
+        velocityGradient(globalPos).umv(normal, muGradVN);
+        muGradVN *= mu(globalPos, element, localPos);
+
+        FieldVector<Scalar,dim> temp = muGradVN;
+        temp -= pN;
+
+        for (int i=0; i < dim; ++i)
+            result[i] = temp[i];
+
         return result;
     }
 
@@ -168,9 +188,9 @@ public:
         return 1.0;
     }
 
-    virtual FieldVector<Scalar,dim> velocity(const FieldVector<Scalar,dim>& globalPos) const
+    virtual FieldVector<Scalar,numEq> velocity(const FieldVector<Scalar,dim>& globalPos) const
     {
-        FieldVector<Scalar,dim> result(0);
+        FieldVector<Scalar,numEq> result(0);
         result[0] = cos(2.0*pi*globalPos[0])*sin(pi*globalPos[1]);
         result[1] = -2.0*sin(2.0*pi*globalPos[0])*cos(pi*globalPos[1]);
 
@@ -185,6 +205,10 @@ public:
     virtual FieldMatrix<Scalar, dim, dim> velocityGradient(const FieldVector<Scalar,dim>& globalPos) const
     {
         FieldMatrix<Scalar, dim, dim> result(0);
+        result[0][0] = -2.0*pi*sin(2.0*pi*globalPos[0])*sin(pi*globalPos[1]);
+        result[0][1] = pi*cos(2.0*pi*globalPos[0])*cos(pi*globalPos[1]);
+        result[1][0] = -4.0*pi*cos(2.0*pi*globalPos[0])*cos(pi*globalPos[1]);
+        result[1][1] = 2.0*pi*sin(2.0*pi*globalPos[0])*sin(pi*globalPos[1]);
 
         return result;
     }
