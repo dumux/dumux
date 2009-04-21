@@ -50,7 +50,6 @@ template<class ProblemT,
 class TwoPTwoCBoxJacobianBase : public BoxJacobian<ProblemT,
                                                    BoxTraitsT,
                                                    Implementation,
-                                                   ElementDataT,
                                                    VertexDataT>
 
 {
@@ -65,7 +64,6 @@ protected:
     typedef BoxJacobian<ProblemT, 
                         BoxTraitsT,
                         Implementation,
-                        ElementDataT,
                         VertexDataT>    ParentType;
     
     typedef ProblemT                                Problem;

@@ -78,7 +78,6 @@ namespace Dune
 template<class Problem, 
          class BoxTraitsT, 
          class JacobianImp,
-         class ElementData,
          class VertexData>
 class BoxJacobian : public Dune::LocalStiffness<typename Problem::DomainTraits::Grid::LeafGridView,
                                                 typename Problem::DomainTraits::Scalar,
