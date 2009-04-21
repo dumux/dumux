@@ -783,24 +783,24 @@ public:
             }
         }
         
-// IF PARALLEL: calculate total mass including all processors
-// also works for sequential calculation
-mass = collectiveCom_.sum(mass);
-
-if(collectiveCom_.rank() == 0) // IF PARALLEL: only print by processor with rank() == 0
-{
-        // print minimum and maximum values
-        std::cout << "nonwetting phase saturation: min = "<< minSat
-                  << ", max = "<< maxSat << std::endl;
-        std::cout << "wetting phase pressure: min = "<< minP
-                  << ", max = "<< maxP << std::endl;
-        std::cout << "mass fraction nComp: min = "<< minX
-                  << ", max = "<< maxX << std::endl;
-        std::cout << "temperature: min = "<< minTe
-                  << ", max = "<< maxTe << std::endl;
+        // IF PARALLEL: calculate total mass including all processors
+        // also works for sequential calculation
+        mass = this->problem_.grid().comm().sum(mass);
+        
+        if(this->problem_.grid().comm() == 0) // IF PARALLEL: only print by processor with rank() == 0
+        {
+            // print minimum and maximum values
+            std::cout << "nonwetting phase saturation: min = "<< minSat
+                      << ", max = "<< maxSat << std::endl;
+            std::cout << "wetting phase pressure: min = "<< minP
+                      << ", max = "<< maxP << std::endl;
+            std::cout << "mass fraction nComp: min = "<< minX
+                      << ", max = "<< maxX << std::endl;
+            std::cout << "temperature: min = "<< minTe
+                      << ", max = "<< maxTe << std::endl;
+        }
     }
-
-
+    
     /*!
      * \brief Add the mass fraction of air in water to VTK output of
      *        the current timestep.
@@ -1150,7 +1150,7 @@ protected:
             return 0;
         return (2*x*y)/(x + y);
     };
-
+    
     // parameters given in constructor
     std::vector<StaticVertexData> staticVertexDat_;
     bool                          switchFlag_;

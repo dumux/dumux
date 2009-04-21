@@ -165,8 +165,11 @@ if (MPI_FOUND)
    separate_arguments(TMP)
    add_definitions(${TMP})
    add_definitions(-DENABLE_MPI=1)
+   add_definitions(-DModelP) # tell UG that the model is parallelized
+
    set(DumuxLinkLibraries ${DumuxLinkLibraries} ${MPI_LIBRARIES})
    set(DumuxIncludeDirectories ${DumuxIncludeDirectories} ${MPI_INCLUDE_PATH})
+
 endif (MPI_FOUND)
 
 # actually write the config.h file to disk 

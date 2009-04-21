@@ -1,10 +1,5 @@
 add_definitions(-DYASPGRID -DENABLE_ALBERTA -DENABLE_ALUGRID -DENABLE_UG)
 
-if (MPI_FOUND)
-  # tell UG that the model is parallelized
-  add_definitions(-DModelP)
-endif (MPI_FOUND)
-
 # build target for the twophase-twocomponent test problem
 ADD_EXECUTABLE("test_2p2c" test_2p2c.cc)
 TARGET_LINK_LIBRARIES("test_2p2c" ${DumuxLinkLibraries})

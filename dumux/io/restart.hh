@@ -162,24 +162,22 @@ public:
         // open input file and read magic cookie
         inStream_.open(fileName.c_str());
         if (!inStream_.good()) {
-#warning This doesn't work. But why??
-            /*            DUNE_THROW(Dune::IOError,
-                          "Restart file '"
-                          << fileName
-                          "' could not be opened properly");
-            */
+            DUNE_THROW(Dune::IOError,
+                       "Restart file '"
+                       << fileName
+                       << "' could not be opened properly");
         }
-#if 0
+
         // make sure that we don't open an empty file
         inStream_.seekg(0, std::ios::end);
         if (inStream_.tellg() == 0) {
             DUNE_THROW(IOError,
                        "Restart file '"
                        << fileName
-                       "' is empty");
+                       << "' is empty");
         }
         inStream_.seekg(0, std::ios::beg);
-#endif
+
         const std::string magicCookie = magicRestartCookie_(grid);
         deserializeSection(magicCookie);
     }
