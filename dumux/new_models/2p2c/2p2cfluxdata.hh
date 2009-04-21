@@ -81,6 +81,7 @@ public:
         insideSCV = &fvElemGeom.subContVol[i];
         outsideSCV = &fvElemGeom.subContVol[j];
 
+        densityAtIP = 0;
         for (int phase = 0; phase < numPhases; ++phase) {
             pressureGrad[phase] = Scalar(0);
             concentrationGrad[phase] = Scalar(0);
@@ -139,7 +140,7 @@ private:
         {
             tmp = problem.gravity();
             tmp *= densityAtIP[phase];
-
+            
             pressureGrad[phase] -= tmp;
         }
     }
@@ -173,6 +174,7 @@ private:
         {
             upstreamIdx[phase] = face->i;
             downstreamIdx[phase] = face->j;
+            
             if (vDarcyNormal[phase] > 0) {
                 std::swap(upstreamIdx[phase],
                           downstreamIdx[phase]);
