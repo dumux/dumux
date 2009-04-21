@@ -30,7 +30,7 @@ template<class Grid, class Scalar> class ShallowVariableClass
     typedef FieldVector<Scalar,dim> GlobalPosition;
     typedef typename Grid::LeafGridView GridView;
     typedef typename GridView::IndexSet IndexSet;
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,IndexSet,ElementLayout>
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView,ElementLayout>
             ElementMapper;
 
 public:
@@ -48,7 +48,7 @@ public:
     Grid& grid;
 
     ShallowVariableClass(Grid& grid, Scalar& initialWDepth = *(new Scalar(0)), Scalar& initialBottomElevation = *(new Scalar(0)), Scalar& initialWaterLevel = *(new Scalar(0)), Dune::FieldVector<Scalar, dim>& initialVel = *(new Dune::FieldVector<Scalar,dim>(0))) :
-        elementMapper(grid, grid.leafIndexSet()), grid(grid),
+        elementMapper(grid.leafView()), grid(grid),
                 size(elementMapper.size())
     {
         sizeInitWDepth(initialWDepth, size);
@@ -94,7 +94,7 @@ public:
         return;
     }
 
-    //Declaration of return methods 
+    //Declaration of return methods
 
     ScalarType& returnWDepth()
     {

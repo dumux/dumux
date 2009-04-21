@@ -38,7 +38,7 @@ template<class Grid, class Scalar, class VC> class FVShallowWater :
     typedef typename Grid::LeafGridView GridView;
     typedef typename GridView::IndexSet IndexSet;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,IndexSet,ElementLayout>
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView,ElementLayout>
             ElementMapper;
     typedef typename Grid::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
@@ -59,8 +59,7 @@ public:
 
     FVShallowWater(Grid& grid, ShallowProblemBase<Grid, Scalar, VC>& problem,
             NumericalFlux<Grid,Scalar>& numFl = *(new HllFlux2d<Grid,Scalar>)) :
-        ShallowWater<Grid, Scalar, VC>(grid, problem), elementMapper(grid,
-                grid.leafIndexSet()), numFlux(numFl)
+        ShallowWater<Grid, Scalar, VC>(grid, problem), elementMapper(grid.leafView()), numFlux(numFl)
     {
     }
 
@@ -164,7 +163,7 @@ template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
                     Dune::ReferenceElements<Scalar,dim-1>::general(gtf).position(0, 0);
 
             //determine volume of face to multiply it with the flux
-            Scalar faceVolume = isIt->intersectionGlobal().volume(); //geometry() 
+            Scalar faceVolume = isIt->intersectionGlobal().volume(); //geometry()
             //  std::cout<<faceVolume<<std::endl; //ok
 
             // center of face inside volume reference element
@@ -207,14 +206,14 @@ template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
 
                 //compute distance between cell centers
                 dist = distVec.two_norm();
-                //std::cout<<dist<<std::endl;    
+                //std::cout<<dist<<std::endl;
 
                 //get bottomElevation
                 bottomElevationJ
                         = this->problem.variables.bottomElevation[globalIdxJ];
                 // std::cout<<"bottomElevationJ "<<bottomElevationJ<<std::endl;
 
-                //calculate bottom slope 
+                //calculate bottom slope
                 bottomSlope = (bottomElevationJ - bottomElevationI)/dist;
                 //std::cout<<"bottomslope "<<bottomSlope<<std::endl;
 
@@ -235,7 +234,7 @@ template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
 
                 //******************************************************************************************
 
-                //these steps are only relevant if divergence term for bedslope is considered 
+                //these steps are only relevant if divergence term for bedslope is considered
 
                 //determine bottomelevation at face
                 Scalar bottomElevationFace =
@@ -549,7 +548,7 @@ template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
         //   std::cout<<"Source Term Vector of cell"<<globalIdxI<<"= "
         //     <<sourceTermVector<<std::endl;
 
-        //Update of cell values************************************************************** 
+        //Update of cell values**************************************************************
 
         updateVec[globalIdxI] -= summedFluxes;
         updateVec[globalIdxI] += sourceTermVector;
