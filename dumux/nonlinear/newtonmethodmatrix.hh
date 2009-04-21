@@ -94,7 +94,7 @@ public:
                     std::cout << "Retry same time step with reduced size of " << dt << std::endl;
                 }
                 model.setDt(dt);
-                u = model.solOld();
+                u = model.uOldTimeStep;
                 divided = true;
             }
             else {
