@@ -64,9 +64,9 @@ int main(int argc, char** argv)
         GlobalPosition upperRight;
         Dune::FieldVector<int,dim> res; // cell resolution
         upperRight[0] = 3.0;
-        res[0]        = 20;
+        res[0]        = 10;
         upperRight[1] = 3.0;
-        res[1]        = 20;
+        res[1]        = 10;
 
 #if USE_UG
         ////////////////////////////////////////////////////////////

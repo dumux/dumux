@@ -376,7 +376,7 @@ public:
 
         if (globalPos[0] < eps_)
         {
-            values[pressureIdx] = 2e5; // 1e5 + 50;
+            values[pressureIdx] = 1e5 + 50;
             values[switchIdx] = 0;  // may be Sn, Xaw or Xwn, depending on the phase state
         }
     }

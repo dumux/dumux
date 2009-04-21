@@ -176,8 +176,6 @@ public:
                     vertDat.saturation[phaseIdx]*
                     vertDat.massfrac[compIdx][phaseIdx];
         result *= vertDat.porosity;
-        if (vertDat.saturation[nPhase] > 0)
-            std::cerr << "storage " << result << "\n";
     }
 
     /*!
@@ -194,7 +192,7 @@ public:
         
         flux = 0;
         asImp_()->computeAdvectiveFlux(flux, vars);
-//        asImp_()->computeDiffusiveFlux(flux, vars);
+        asImp_()->computeDiffusiveFlux(flux, vars);
     }
     
     /*!
@@ -204,7 +202,7 @@ public:
     void computeAdvectiveFlux(SolutionVector &flux, 
                               FluxData       &vars) const
     {
-       ////////
+        ////////
         // advective fluxes of all components in all phases
         ////////
         for (int phaseIdx = 0; phaseIdx < numPhases; ++phaseIdx) {
@@ -229,7 +227,6 @@ public:
                            dn.massfrac[compIdx][phaseIdx]));
             }
         }
-//        std::cerr << flux << "\n";
     }
 
     /*!
@@ -696,8 +693,6 @@ protected:
             }
         }
         else if (phaseState == bothPhases) {
-            std::cerr << "primaryVarSwitch_: " << vertexData.saturation << "\n";
-
             if (vertexData.saturation[nPhase] <= 0) {
                 // non-wetting phase disappears
                 std::cout << "Non-wetting phase disappears at vertex " << globalIdx

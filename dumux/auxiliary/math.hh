@@ -51,6 +51,8 @@ void harmonicMeanMatrix(Dune::FieldMatrix<Scalar, m, n> &K,
                     harmonicMean(Ki[rowIdx][colIdx],
                                  Kj[rowIdx][colIdx]);
             }
+            else 
+                K[rowIdx][colIdx] = Ki[rowIdx][colIdx];
         }
     }
 }
