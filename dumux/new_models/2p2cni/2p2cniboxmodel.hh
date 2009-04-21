@@ -100,110 +100,84 @@ public:
     };
 
     /*!
-     * \brief The storage term of heat
+     * \brief Evaluate the amount all conservation quantites
+     *        (e.g. phase mass) within a sub-control volume.
+     *
+     * The result should be averaged over the volume (e.g. phase mass
+     * inside a sub control volume divided by the volume)
      */
-    void heatStorage(SolutionVector &result,
-                     int scvId,
-                     const LocalFunction &sol,
-                     const ElementData &elementCache) const
+    void computeStorage(SolutionVector &result, int scvIdx, bool usePrevSol) const
     {
-        const VariableVertexData &vertDat = elementCache.vertex[scvId];
+        // compute the storage term for phase mass
+        ParentType::computeStorage(result, scvIdx, usePrevSol);
 
-        Scalar satN = vertDat.satN;
-        Scalar satW = vertDat.satW;
-
-        // assume porosity defined at verts
-        Scalar porosity =
-            this->problem_.porosity(this->curElement_(), scvId);
+        // if flag usePrevSol is set, the solution from the previous
+        // time step is used, otherwise the current solution is
+        // used. The secondary variables are used accordingly.  This
+        // is required to compute the derivative of the storage term
+        // using the implicit euler method.
+        const VertexDataArray &elemDat = usePrevSol ? this->prevElemDat_  : this->curElemDat_;
+        const VertexData  &vertDat = elemDat[scvIdx];
 
         result[temperatureIdx] =
-            porosity*(vertDat.density[wPhase] *
-                      vertDat.intenergy[wPhase] *
-                      satW
-                      +
-                      vertDat.density[nPhase] *
-                      vertDat.intenergy[nPhase] *
-                      satN)
+            vertDat.porosity*(vertDat.density[wPhase] *
+                              vertDat.intenergy[wPhase] *
+                              vertDat.saturation[wPhase]
+                              +
+                              vertDat.density[nPhase] *
+                              vertDat.intenergy[nPhase] *
+                              vertDat.saturation[nPhase])
             +
+            vertDat.temperature *
             this->problem_.soil().heatCap(this->curElementGeom_.elementGlobal,
                                           this->curElement_(),
-                                          this->curElementGeom_.elementLocal)*
-            this->temperature_(sol[scvId]);
-    }
-
-    /*!
-     * \brief Update the temperature gradient at a face of an FV
-     *        element.
-     */
-    void updateTempGrad(GlobalPosition &tempGrad,
-                        const GlobalPosition &feGrad,
-                        int vertIdx) const
-    {
-        GlobalPosition tmp = feGrad;
-        tmp *= this->curElemDat_[vertIdx].temperature;
-        tempGrad += tmp;
+                                          this->curElementGeom_.elementLocal);
     }
 
     /*!
      * \brief Sets the temperature term of the flux vector to the
      *        heat flux due to advection of the fluids.
      */
-    void advectiveHeatFlux(SolutionVector &flux,
-                           const PhasesVector &darcyOut,
-                           Scalar alpha, // upwind parameter
-                           const VariableVertexData *upW, // up/downstream vertices
-                           const VariableVertexData *dnW,
-                           const VariableVertexData *upN,
-                           const VariableVertexData *dnN) const
+    void computeAdvectiveFlux(SolutionVector &flux,
+                              const FluxData &fluxData) const
     {
-        // heat flux in non-wetting phase
-        flux[temperatureIdx]  =  darcyOut[nPhase] * (
-                                                     alpha * // upstream vertex
-                                                     (  upN->density[nPhase] *
-                                                        upN->mobility[nPhase] *
-                                                        upN->enthalpy[nPhase])
-                                                     +
-                                                     (1-alpha) * // downstream vertex
-                                                     (  dnN->density[nPhase] *
-                                                        dnN->mobility[nPhase] *
-                                                        dnN->enthalpy[nPhase]) );
+        // advective mass flux
+        ParentType::computeAdvectiveFlux(flux, fluxData);
 
-        // advective heat flux in wetting phase
-        flux[temperatureIdx] +=  darcyOut[wPhase] * (
-                                                     alpha * // upstream vertex
-                                                     (  upW->density[wPhase] *
-                                                        upW->mobility[wPhase] *
-                                                        upW->enthalpy[wPhase] )
-                                                     +
-                                                     (1-alpha) * // downstream vertex
-                                                     (  dnW->density[wPhase] *
-                                                        dnW->mobility[wPhase] *
-                                                        dnW->enthalpy[wPhase]) );
+        // advective heat flux in all phases
+        const Scalar alpha = TwoPTwoCNITraits::upwindAlpha;      
+        flux[temperatureIdx] = 0;
+        for (phase = 0; phase < numPhases; ++phase) {
+            // vertex data of the upstream and the downstream vertices
+            const VertexData &up = this->vertexData_(vars.upstreamIdx[phase]);
+            const VertexData &dn = this->vertexData_(vars.downstreamIdx[phase]);
+            
+            flux[temperatureIdx] +=
+                fluxData.vDarcyNormal[phase] * (
+                    alpha * // upstream vertex
+                    (  up.density[phase] *
+                       up.mobility[phase] *
+                       up.enthalpy[phase])
+                    +
+                    (1-alpha) * // downstream vertex
+                    (  dn.density[phase] *
+                       dn.mobility[phase] *
+                       dn.enthalpy[phase]) );
+        }
     }
 
     /*!
      * \brief Adds the diffusive heat flux to the flux vector over
      *        the face of a sub-control volume.
      */
-    void diffusiveHeatFlux(SolutionVector &flux,
-                           int faceIdx,
-                           const GlobalPosition &tempGrad) const
+    void computeDiffusiveFlux(SolutionVector &flux,
+                              const FluxData &fluxData) const 
     {
-        const ElementData &eDat = this->curElemDat_;
-        const FVElementGeometry &fvGeom = this->curElementGeom_;
-        int i = fvGeom.subContVolFace[faceIdx].i;
-        int j = fvGeom.subContVolFace[faceIdx].j;
+        // diffusive mass flux
+        ParentType::computeDiffusiveFlux(flux, fluxData);
 
-        // unit normal vector of the face
-        const GlobalPosition &normal = fvGeom.subContVolFace[faceIdx].normal;
-
-        // Harmonic mean of the heat conducitivities of the
-        // sub control volumes adjacent to the face
-        Scalar lambda =  ParentType::harmonicMean_(eDat.vertex[i].lambda,
-                                                   eDat.vertex[j].lambda);
-
-        // heat conduction
-        flux[temperatureIdx] += (tempGrad*normal) * lambda;;
+        // diffusive heat flux
+        flux[temperatureIdx] += (fluxData.temperatureGrad*fluxData.face->normal)*fluxData.heatCondAtIP;
     }
 
 public:

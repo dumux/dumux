@@ -26,7 +26,7 @@ int main(int argc, char** argv)
         // or long double)
         const int dim = 2;
         typedef double                                Scalar;
-#define USE_UG 1
+#define USE_UG 0
 #if USE_UG
         typedef Dune::UGGrid<dim>                     Grid;
 #else

@@ -28,6 +28,7 @@
 #include <dumux/new_models/2p2c/2p2ctraits.hh>
 #include <dumux/auxiliary/math.hh>
 
+#include <dumux/material/multicomponentrelations.hh>
 #include <dumux/auxiliary/apis.hh>
 #include <dune/common/collectivecommunication.hh>
 #include <vector>
@@ -49,7 +50,7 @@ class TwoPTwoCVertexData
     typedef typename Problem::DomainTraits::Grid Grid;
 
     typedef typename Grid::template Codim<0>::Entity Element;
-
+    
     typedef Dune::FieldVector<Scalar, Tr::numEq>      SolutionVector;
     typedef Dune::FieldVector<Scalar, Tr::numPhases>  PhasesVector;
 
@@ -67,113 +68,46 @@ public:
                 bool                    isOldSol,
                 JacobianImp            &jac) 
     {
-        update_(sol,
-                element,
-                vertIdx,
-                isOldSol,
-                jac,
-                jac.problem().temperature());
-    }
-
-protected:
-    template <class JacobianImp>
-    void update_(const SolutionVector   &sol,
-                 const Element          &element,
-                 int                     vertIdx,
-                 bool                    isOldSol,
-                 JacobianImp            &jac,
-                 Scalar                  temperature)
-    {
         const GlobalPosition &global = element.geometry().corner(vertIdx);
         const LocalPosition   &local =
             Problem::DomainTraits::referenceElement(element.type()).position(vertIdx,
                                                                              Grid::dimension);
-        
         int globalVertIdx = jac.problem().vertexIdx(element, vertIdx);
         int phaseState = jac.phaseState(globalVertIdx, isOldSol);
+        Scalar temperature = jac.temperature(sol);
 
-        if (Tr::formulation == Tr::pWsN)
-        {
-            pressure[Tr::wPhase] = sol[Tr::pressureIdx];
-            if (phaseState == Tr::bothPhases) 
-                saturation[Tr::nPhase] = sol[Tr::switchIdx];
-            else if (phaseState == Tr::wPhaseOnly)
-                saturation[Tr::nPhase] = 0.0;
-            else if (phaseState == Tr::nPhaseOnly) 
-                saturation[Tr::nPhase] = 1.0;
-            else
-                DUNE_THROW(Dune::InvalidStateException, "Phase state " << phaseState << " is invalid.");
-
-            saturation[Tr::wPhase] = 1.0 - saturation[Tr::nPhase];
-            pC = jac.problem().materialLaw().pC(saturation[Tr::wPhase],
-                                                global,
-                                                element,
-                                                local);
-            
-            pressure[Tr::nPhase] = pressure[Tr::wPhase] + pC;
-        }
-        else if (Tr::formulation == Tr::pNsW)
-        {
-            pressure[Tr::nPhase] = sol[Tr::pressureIdx];
-            if (phaseState == Tr::bothPhases)
-                saturation[Tr::wPhase] = sol[Tr::switchIdx];
-            else if (phaseState == Tr::wPhaseOnly)
-                saturation[Tr::wPhase] = 1.0;
-            else if (phaseState == Tr::nPhaseOnly) 
-                saturation[Tr::wPhase] = 0.0;
-            else
-                DUNE_THROW(Dune::InvalidStateException, "Phase state " << phaseState << " is invalid.");
-
-            saturation[Tr::nPhase] = 1.0 - saturation[Tr::wPhase];
-            pC = jac.problem().materialLaw().pC(saturation[Tr::wPhase],
-                                                global,
-                                                element,
-                                                local);
-
-            pressure[Tr::wPhase] = pressure[Tr::nPhase] - pC;
-        }
-        else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << Tr::formulation << " is invalid.");
-
-        // Solubilities of components in phases
-        if (phaseState == Tr::bothPhases) {
-            massfrac[Tr::wComp][Tr::nPhase] = jac.problem().multicomp().xWN(pressure[Tr::nPhase], temperature);
-            massfrac[Tr::nComp][Tr::wPhase] = jac.problem().multicomp().xAW(pressure[Tr::nPhase], temperature);
-        }
-        else if (phaseState == Tr::wPhaseOnly) {
-            massfrac[Tr::wComp][Tr::nPhase] = 0.0;
-            massfrac[Tr::nComp][Tr::wPhase] = sol[Tr::switchIdx];
-        }
-        else if (phaseState == Tr::nPhaseOnly){
-            massfrac[Tr::wComp][Tr::nPhase] = sol[Tr::switchIdx];
-            massfrac[Tr::nComp][Tr::wPhase] = 0.0;
-        }
-        else DUNE_THROW(Dune::InvalidStateException, "Phase state " << phaseState << " is invalid.");
-
-        massfrac[Tr::wComp][Tr::wPhase] = 1.0 - massfrac[Tr::nComp][Tr::wPhase];
-        massfrac[Tr::nComp][Tr::nPhase] = 1.0 - massfrac[Tr::wComp][Tr::nPhase];
-
+        // update saturations, pressures and mass fractions
+        updateSaturations(sol, phaseState);
+        Scalar pC = jac.problem().materialLaw().pC(saturation[Tr::wPhase],
+                                                   global,
+                                                   element,
+                                                   local, 
+                                                   temperature);
+        updatePressures(sol, pC);
+        updateMassFracs(sol, jac.problem().multicomp(), phaseState, temperature);
+        
         // Densities
         density[Tr::wPhase] = jac.problem().wettingPhase().density(temperature,
-                                                             pressure[Tr::wPhase],
-                                                             massfrac[Tr::nComp][Tr::wPhase]);
+                                                                   pressure[Tr::wPhase],
+                                                                   massfrac[Tr::nComp][Tr::wPhase]);
         density[Tr::nPhase] = jac.problem().nonwettingPhase().density(temperature,
-                                                                pressure[Tr::nPhase],
-                                                                massfrac[Tr::wComp][Tr::nPhase]);
-
+                                                                      pressure[Tr::nPhase],
+                                                                      massfrac[Tr::wComp][Tr::nPhase]);
+        
         // Mobilities
         mobility[Tr::wPhase] = jac.problem().materialLaw().mobW(saturation[Tr::wPhase],
-                                                          global,
-                                                          element,
-                                                          local,
-                                                          temperature,
-                                                          pressure[Tr::wPhase]);
+                                                                global,
+                                                                element,
+                                                                local,
+                                                                temperature,
+                                                                pressure[Tr::wPhase]);
         mobility[Tr::nPhase] = jac.problem().materialLaw().mobN(saturation[Tr::nPhase],
-                                                          global,
-                                                          element,
-                                                          local,
-                                                          temperature,
-                                                          pressure[Tr::nPhase]);
-
+                                                                global,
+                                                                element,
+                                                                local,
+                                                                temperature,
+                                                                pressure[Tr::nPhase]);
+        
         // binary diffusion coefficents
         diffCoeff[Tr::wPhase] = 
             jac.problem().wettingPhase().diffCoeff(temperature, pressure[Tr::wPhase]);
@@ -187,6 +121,93 @@ protected:
 
     }
 
+    /*!
+     * \brief Update saturations. 
+     */
+    void updateSaturations(const SolutionVector &sol, 
+                           int phaseState)
+    {
+        // update saturations
+        if (Tr::formulation == Tr::pWsN)
+        {
+            if (phaseState == Tr::bothPhases) 
+                saturation[Tr::nPhase] = sol[Tr::switchIdx];
+            else if (phaseState == Tr::wPhaseOnly)
+                saturation[Tr::nPhase] = 0.0;
+            else if (phaseState == Tr::nPhaseOnly) 
+                saturation[Tr::nPhase] = 1.0;
+            else
+                DUNE_THROW(Dune::InvalidStateException, "Phase state " << phaseState << " is invalid.");
+
+            saturation[Tr::wPhase] = 1.0 - saturation[Tr::nPhase];
+        }
+        else if (Tr::formulation == Tr::pNsW)
+        {
+            if (phaseState == Tr::bothPhases)
+                saturation[Tr::wPhase] = sol[Tr::switchIdx];
+            else if (phaseState == Tr::wPhaseOnly)
+                saturation[Tr::wPhase] = 1.0;
+            else if (phaseState == Tr::nPhaseOnly) 
+                saturation[Tr::wPhase] = 0.0;
+            else
+                DUNE_THROW(Dune::InvalidStateException, "Phase state " << phaseState << " is invalid.");
+
+            saturation[Tr::nPhase] = 1.0 - saturation[Tr::wPhase];
+        }
+        else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << Tr::formulation << " is invalid.");
+    }
+
+    /*!
+     * \brief Update phase pressures. 
+     *
+     * Requires up to date saturations.
+     */
+    void updatePressures(const SolutionVector &sol,
+                         Scalar capillaryPressure)
+    {
+        // update pressures
+        pC = capillaryPressure;
+
+        if (Tr::formulation == Tr::pWsN) {
+            pressure[Tr::wPhase] = sol[Tr::pressureIdx];
+            pressure[Tr::nPhase] = pressure[Tr::wPhase] + pC;
+        }
+        else if (Tr::formulation == Tr::pNsW) {
+            pressure[Tr::nPhase] = sol[Tr::pressureIdx];
+            pressure[Tr::wPhase] = pressure[Tr::nPhase] - pC;
+        }
+        else DUNE_THROW(Dune::InvalidStateException, "Formulation: " << Tr::formulation << " is invalid.");
+    }
+
+    /*!
+     * \brief Update mass fraction matrix.
+     *
+     * Requires up to date pressures and saturations.
+     */
+    void updateMassFracs(const SolutionVector &sol,
+                         MultiComp &multicomp,
+                         int phaseState,
+                         Scalar temperature)
+    {
+        // Solubilities of components in phases
+        if (phaseState == Tr::bothPhases) {
+            massfrac[Tr::wComp][Tr::nPhase] = multicomp.xWN(pressure[Tr::nPhase], temperature);
+            massfrac[Tr::nComp][Tr::wPhase] = multicomp.xAW(pressure[Tr::nPhase], temperature);
+        }
+        else if (phaseState == Tr::wPhaseOnly) {
+            massfrac[Tr::wComp][Tr::nPhase] = 0.0;
+            massfrac[Tr::nComp][Tr::wPhase] = sol[Tr::switchIdx];
+        }
+        else if (phaseState == Tr::nPhaseOnly) {
+            massfrac[Tr::wComp][Tr::nPhase] = sol[Tr::switchIdx];
+            massfrac[Tr::nComp][Tr::wPhase] = 0.0;
+        }
+        else DUNE_THROW(Dune::InvalidStateException, "Phase state " << phaseState << " is invalid.");
+
+        massfrac[Tr::wComp][Tr::wPhase] = 1.0 - massfrac[Tr::nComp][Tr::wPhase];
+        massfrac[Tr::nComp][Tr::nPhase] = 1.0 - massfrac[Tr::wComp][Tr::nPhase];
+    };
+    
 public:
     PhasesVector saturation;//!< Effective phase saturations within the control volume
     PhasesVector pressure;  //!< Effective phase pressures within the control volume

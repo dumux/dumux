@@ -65,8 +65,8 @@ public:
     static const int wPhase      = 0;    //!< Index of the wetting phase in a phase vector
     static const int nPhase      = 1;    //!< Index of the non-wetting phase in a phase vector
 
-    static const int wComp       = 0; //!< Index of the wetting component in a solution vector
-    static const int nComp       = 1; //!< Index of the non-wetting component in a solution vector
+    static const int wComp       = 0; //!< Index of the wetting component in a component vector
+    static const int nComp       = 1; //!< Index of the non-wetting component in a compent vector
 };
 
 /*!
@@ -100,13 +100,6 @@ public:
     
     typedef typename BaseTraits::PhasesVector PhasesVector;
     
-    //! extended vertex data for the 2p2cni model
-    struct VertexData : public BaseTraits::VariableVertexData
-    {
-        PhasesVector intenergy; //!< Internal energy.
-        PhasesVector enthalpy;  //!< Enthalpy.
-        Scalar       lambda; //!< Total heat conductivity.
-    };
 };
 
 }

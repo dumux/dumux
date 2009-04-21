@@ -66,8 +66,11 @@ class TwoPTwoCFluxData
     typedef TwoPTwoCTraits Tr;
 
 public:
-    TwoPTwoCFluxData(const FVElementGeometry &elemGeom,
-                     int faceIdx)
+    TwoPTwoCFluxData(const Problem &problem,
+                     const Element &element,
+                     const FVElementGeometry &elemGeom,
+                     int faceIdx,
+                     const VertexDataArray &elemDat)
         : fvElemGeom(elemGeom)
     {
         face = &fvElemGeom.subContVolFace[faceIdx];
@@ -82,11 +85,16 @@ public:
             pressureGrad[phase] = Scalar(0);
             concentrationGrad[phase] = Scalar(0);
         }
-    };
         
-    void calculateGradients(const Problem &problem,
-                            const Element &element,
-                            const VertexDataArray &elemDat)
+        calculateGradients_(problem, element, elemDat);
+        calculateVelocities_(problem, element, elemDat);
+        calculateDiffCoeffPM_(problem, element, elemDat);
+    };
+    
+private:
+    void calculateGradients_(const Problem &problem,
+                             const Element &element,
+                             const VertexDataArray &elemDat)
     {
         // calculate gradients
         GlobalPosition tmp(0.0);
@@ -136,9 +144,9 @@ public:
         }
     }
 
-    void calculateVelocities(const Problem &problem,
-                             const Element &element,
-                             const VertexDataArray &elemDat)
+    void calculateVelocities_(const Problem &problem,
+                              const Element &element,
+                              const VertexDataArray &elemDat)
     {
         // calculate the permeability tensor. TODO: this should be
         // more flexible
@@ -172,9 +180,9 @@ public:
         }
     }
 
-    void calculateDiffCoeffPM(const Problem &problem,
-                              const Element &element,
-                              const VertexDataArray &elemDat)
+    void calculateDiffCoeffPM_(const Problem &problem,
+                               const Element &element,
+                               const VertexDataArray &elemDat)
     {
         const VertexData &vDat_i = elemDat[face->i];
         const VertexData &vDat_j = elemDat[face->j];
@@ -211,6 +219,7 @@ public:
         }
     }
 
+public:
     const FVElementGeometry &fvElemGeom;
     const SCVFace *face;
     const SCV     *insideSCV;
@@ -219,7 +228,6 @@ public:
     // gradients
     GlobalPosition pressureGrad[numPhases];
     GlobalPosition concentrationGrad[numPhases];
-    GlobalPosition temperatureGrad;
 
     // density of each face at the integration point
     PhasesVector densityAtIP;
