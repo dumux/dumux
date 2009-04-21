@@ -95,9 +95,14 @@ public:
             const Element& element, const LocalPosition& localPos) const
     {
         Scalar initWaterDepth = 0;
-
-        if (globalPos[0]> 23 && globalPos[dim-1]> 23 && globalPos[0]< 27
-                && globalPos[dim-1]< 27)
+        Scalar help = -(globalPos[0]-20)*(globalPos[0]-20)-(globalPos[1]-20)*(globalPos[1]-20);
+        help /=4;
+        
+        initWaterDepth = 1.5 + 1.5 *0.5* exp(help);
+        
+        
+        /*    if (globalPos[0]> 24 && globalPos[dim-1]> 24 && globalPos[0]< 26
+                && globalPos[dim-1]< 26)
         {
             initWaterDepth = 0.5;
         }
@@ -105,6 +110,7 @@ public:
         {
             initWaterDepth = 0.2;
         }
+        */
         return initWaterDepth;
     }
 

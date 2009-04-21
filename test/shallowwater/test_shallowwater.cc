@@ -29,9 +29,9 @@ int main(int argc, char** argv)
     typedef double NumberType;
     typedef Dune::SGrid<dim,dim> GridType;
     typedef Dune::FieldVector<GridType::ctype,dim> FieldVector;
-    Dune::FieldVector<int,dim> N(100);  N[0] = 100; N[1] = 100;
+    Dune::FieldVector<int,dim> N(100);  N[0] = 80; N[1] = 80;
     FieldVector L(0);
-    FieldVector H(0); H[0] = 50; H[1] = 50;
+    FieldVector H(0); H[0] = 40; H[1] = 40;
     GridType grid(N,L,H);
 
 //    std::stringstream dgfFileName;
