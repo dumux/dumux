@@ -500,7 +500,6 @@ public:
 
         LocalFunction   tmpSol;
         VertexDataArray elemDat(BoxTraits::ShapeFunctionSetContainer::maxsize);
-        VertexData      tmp;
 
         ElementIterator elementIt = this->problem_.elementBegin();
         ElementIterator endit = this->problem_.elementEnd();

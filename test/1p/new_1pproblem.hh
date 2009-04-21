@@ -158,8 +158,8 @@ public:
 private:
     // some constants from the traits for convenience
     enum {
-        numEq     = BoxTraits::numEq,
-        pIdx      = OnePTraits::pIdx,
+        numEq       = BoxTraits::numEq,
+        pressureIdx = OnePTraits::pressureIdx,
 
         // Grid and world dimension
         dim      = DomainTraits::dim,
@@ -320,11 +320,11 @@ public:
                    int                         scvIdx,
                    int                         boundaryFaceIdx) const
     {
-        values[pIdx] = 1e5;
+        values[pressureIdx] = 1e5;
 
         switch (isIt->boundaryId()) {
         case 5:
-            values[pIdx] = 2e+5;
+            values[pressureIdx] = 2e+5;
             break;
         }
     }
@@ -345,10 +345,10 @@ public:
         case 2:
         case 3:
         case 4:
-            values[pIdx] = 0;
+            values[pressureIdx] = 0;
             break;
             /*                case 5:
-                              values[pIdx] = -1.0;
+                              values[pressureIdx] = -1.0;
                               break;
             */
         }
@@ -375,7 +375,7 @@ public:
                  const FVElementGeometry &fvElemGeom,
                  int                      scvIdx) const
     {
-        values[pIdx] = 1e+5;
+        values[pressureIdx] = 1e+5;
     }
 
 

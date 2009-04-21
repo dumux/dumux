@@ -297,9 +297,10 @@ public:
         //    = DomainTraits::referenceElement(element.geometry().type()).position(dim,scvIdx);
 
         values = 0.0;
-        if (onInlet_(globalPos)) {
+        /* if (onInlet_(globalPos)) {
             values[sNIdx] = -0.04; // kg / (m * s)
         }
+        */
     }
 
     /////////////////////////////

@@ -23,7 +23,7 @@
 #include <dumux/new_models/boxscheme/boxscheme.hh>
 #include <dumux/new_models/boxscheme/p1boxtraits.hh>
 
-#include <dumux/auxiliary/apis.hh>
+#include <dumux/auxiliary/math.hh>
 
 namespace Dune
 {
@@ -31,7 +31,7 @@ namespace Dune
 // traits for the single phase isothermal model
 ///////////////////////////////////////////////////////////////////////////
 /*!
- * \brief The pw-Sn specific traits.
+ * \brief The single phase specific traits.
  */
 class OnePTraits
 {
@@ -41,9 +41,64 @@ public:
         numPhases = 1,    //!< Number of fluid phases
     };
     enum {
-        pIdx = 0  //!< Index for the fluid pressure in a field vector
+        pressureIdx = 0  //!< Index for the fluid pressure in a field vector
     };
 };
+
+/*!
+ * \brief Data which is attached to each vert of the and can
+ *        be shared between multiple calculations and should
+ *        thus be cached in order to increase efficency.
+ */
+template <class OnePTraits, 
+          class Problem>
+class OnePVertexData
+{
+    typedef OnePTraits Tr;
+    typedef typename Problem::DomainTraits::Scalar Scalar;
+    typedef typename Problem::DomainTraits::Grid Grid;
+
+    typedef typename Grid::template Codim<0>::Entity Element;
+
+    typedef Dune::FieldVector<Scalar, Tr::numEq>      SolutionVector;
+    typedef Dune::FieldVector<Scalar, Tr::numPhases>  PhasesVector;
+
+    typedef Dune::FieldVector<Scalar, Grid::dimensionworld>  GlobalPosition;
+    typedef Dune::FieldVector<Scalar, Grid::dimension>       LocalPosition;
+
+public:
+    /*!
+     * \brief Update all quantities for a given control volume.
+     */
+    template <class JacobianImp>
+    void update(const SolutionVector   &sol,
+                const Element          &element,
+                int                     vertIdx,
+                bool                    isOldSol,
+                JacobianImp            &jac) 
+    {
+        const GlobalPosition &global = element.geometry().corner(vertIdx);
+        const LocalPosition   &local =
+            Problem::DomainTraits::referenceElement(element.type()).position(vertIdx,
+                                                                             Grid::dimension);
+
+        pressure = sol[Tr::pressureIdx];
+        density = jac.problem().fluid().density(jac.temperature(sol),
+                                                pressure);
+        viscosity = jac.problem().fluid().viscosity(jac.temperature(sol),
+                                                    pressure);
+        // porosity
+        porosity = jac.problem().soil().porosity(global,
+                                                 element,
+                                                 local);
+    };
+
+    Scalar pressure;
+    Scalar density;
+    Scalar viscosity;
+    Scalar porosity;
+};
+
 
 ///////////////////////////////////////////////////////////////////////////
 // OnePBoxJacobian (evaluate the local jacobian for the newton method.)
@@ -56,11 +111,16 @@ class OnePBoxJacobian : public BoxJacobian<ProblemT,
                                            BoxTraitsT,
                                            OnePBoxJacobian<ProblemT,
                                                            BoxTraitsT,
-                                                           OnePTraitsT> >
+                                                           OnePTraitsT>,
+                                           OnePVertexData<OnePTraitsT, ProblemT> >
 {
 private:
     typedef OnePBoxJacobian<ProblemT, BoxTraitsT, OnePTraitsT>  ThisType;
-    typedef BoxJacobian<ProblemT, BoxTraitsT, ThisType >        ParentType;
+    typedef OnePVertexData<OnePTraitsT, ProblemT>               VertexData;
+    typedef BoxJacobian<ProblemT, 
+                        BoxTraitsT,
+                        ThisType,
+                        VertexData>                 ParentType;
 
     typedef ProblemT                                Problem;
     typedef typename Problem::DomainTraits          DomTraits;
@@ -74,7 +134,7 @@ private:
         numEq          = BoxTraits::numEq,
 
         numPhases      = OnePTraits::numPhases,
-        pIdx           = OnePTraits::pIdx,
+        pressureIdx    = OnePTraits::pressureIdx,
     };
 
     typedef typename DomTraits::Scalar              Scalar;
@@ -91,82 +151,14 @@ private:
     typedef typename BoxTraits::LocalFunction       LocalFunction;
     typedef typename BoxTraits::SolutionVector      SolutionVector;
 
+
+    typedef std::vector<VertexData>        VertexDataArray;
     typedef FieldMatrix<Scalar, dim, dim>  Tensor;
-
-    /*!
-     * \brief Data which is attached to each vert of the and can
-     *        be shared between multiple calculations and should
-     *        thus be cached in order to increase efficency.
-     */
-    struct VariableVertexData
-    {
-        Scalar density;
-        Scalar viscosity;
-    };
-
 
 public:
     OnePBoxJacobian(ProblemT &problem)
         : ParentType(problem)
     {};
-
-    /*!
-     * \brief Set the parameters for the calls to the remaining
-     *        members.
-     */
-    void setParams(const Element &element, LocalFunction &curSol, LocalFunction &prevSol)
-    {
-        setCurrentElement(element);
-
-        curSol_ = &curSol;
-        updateElementData_(curElemDat_, *curSol_);
-        curSolDeflected_ = false;
-
-        prevSol_ = &prevSol;
-        updateElementData_(prevElemDat_, *prevSol_);
-    };
-
-    /*!
-     * \brief Vary a single component of a single vert of the
-     *        local solution for the current element.
-     *
-     * This method is a optimization, since if varying a single
-     * component at a degree of freedom not the whole element cache
-     * needs to be recalculated. (Updating the element cache is very
-     * expensive since material laws need to be evaluated.)
-     */
-    void deflectCurSolution(int vert, int component, Scalar value)
-    {
-        // make sure that the orignal state can be restored
-        if (!curSolDeflected_) {
-            curSolDeflected_ = true;
-
-            curSolOrigValue_ = (*curSol_)[vert][component];
-            curSolOrigVarData_ = curElemDat_.vertex[vert];
-        }
-
-        (*curSol_)[vert][component] = value;
-        updateVarVertexData_(curElemDat_.vertex[vert],
-                             (*curSol_)[vert],
-                             vert,
-                             ParentType::problem_.vertexIdx(ParentType::curElement_(),
-                                                            vert));
-
-    }
-
-    /*!
-     * \brief Restore the local jacobian to the state before
-     *        deflectCurSolution() was called.
-     *
-     * This only works if deflectSolution was only called with
-     * (vert, component) as arguments.
-     */
-    void restoreCurSolution(int vert, int component)
-    {
-        curSolDeflected_ = false;
-        (*curSol_)[vert][component] = curSolOrigValue_;
-        curElemDat_.vertex[vert] = curSolOrigVarData_;
-    };
 
     /*!
      * \brief Evaluate the rate of change of all conservation
@@ -176,13 +168,18 @@ public:
      *
      * This function should not include the source and sink terms.
      */
-    void computeStorage(SolutionVector &result, int scvId, bool usePrevSol) const
+    void computeStorage(SolutionVector &result, int scvIdx, bool usePrevSol) const
     {
-        //            LocalFunction *sol = usePrevSol?prevSol_:curSol_;
-        const VariableVertexData &vertDat = usePrevSol?prevElemDat_.vertex[scvId]:curElemDat_.vertex[scvId];
-
+        // if flag usePrevSol is set, the solution from the previous
+        // time step is used, otherwise the current solution is
+        // used. The secondary variables are used accordingly.  This
+        // is required to compute the derivative of the storage term
+        // using the implicit euler method.
+        const VertexDataArray &elemDat = usePrevSol ? this->prevElemDat_  : this->curElemDat_;
+        const VertexData  &vertDat = elemDat[scvIdx];
+        
         // partial time derivative of the wetting phase mass
-        result[pIdx] =  vertDat.density * ParentType::problem_.porosity(*this->curElementPtr_, scvId);
+        result[pressureIdx] =  vertDat.density * vertDat.porosity;
     }
 
 
@@ -215,11 +212,11 @@ public:
         LocalPosition pGrad(0);
         for (int k = 0; k < ParentType::curElementGeom_.numVertices; k++) {
             LocalPosition grad(face.grad[k]);
-            grad *= (*curSol_)[k][pIdx];
+            grad *= this->curElemDat_[k].pressure;
             pGrad += grad;
 
-            densityIJ += curElemDat_.vertex[k].density*face.shapeValue[k];
-            viscosityIJ += curElemDat_.vertex[k].viscosity*face.shapeValue[k];
+            densityIJ += this->curElemDat_[k].density*face.shapeValue[k];
+            viscosityIJ += this->curElemDat_[k].viscosity*face.shapeValue[k];
         }
 
         // adjust pressure gradient by gravity force
@@ -228,9 +225,10 @@ public:
         pGrad   -= gravity;
 
         // calculate darcy velocity
-        Tensor K         = this->problem_.soil().K(global_i, ParentType::curElement_(), local_i);
+        const Tensor &Ki = this->problem_.soil().K(global_i, ParentType::curElement_(), local_i);
         const Tensor &Kj = this->problem_.soil().K(global_j, ParentType::curElement_(), local_j);
-        harmonicMeanK_(K, Kj);
+        Tensor K;
+        harmonicMeanMatrix(K, Ki, Kj);
 
         // temporary vector for the Darcy velocity
         GlobalPosition vDarcy;
@@ -238,7 +236,7 @@ public:
         K.mv(pGrad, vDarcy);  // vDarcy = K * grad p
         vDarcy /= viscosityIJ;
 
-        flux[pIdx] = densityIJ * (vDarcy * normal);
+        flux[pressureIdx] = densityIJ * (vDarcy * normal);
     }
 
     /*!
@@ -253,11 +251,19 @@ public:
     }
 
     /*!
+     * \brief Return the temperature given the solution vector of a
+     *        finite volume.
+     */
+    template <class SolutionVector>
+    Scalar temperature(const SolutionVector &sol)
+    { return this->problem_.temperature(); /* constant temperature */ }
+
+    /*!
      * \brief All relevant primary and secondary of a given
      *        solution to an ouput writer.
      */
     template <class MultiWriter>
-    void addVtkFields(MultiWriter &writer, const SpatialFunction &globalSol) const
+    void addVtkFields(MultiWriter &writer, const SpatialFunction &globalSol)
     {
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
 
@@ -265,19 +271,23 @@ public:
         unsigned numVertices = this->problem_.numVertices();
         ScalarField *p = writer.template createField<Scalar, 1>(numVertices);
 
-        VariableVertexData tmp;
-        ElementIterator it = this->problem_.elementBegin();
+        LocalFunction   tmpSol;
+        VertexDataArray elemDat(BoxTraits::ShapeFunctionSetContainer::maxsize);
+
+        ElementIterator elementIt = this->problem_.elementBegin();
         ElementIterator endit = this->problem_.elementEnd();
-        for (; it != endit; ++it) {
-            for (int i = 0; i < it->template count<dim>(); ++i) {
-                int globalI = this->problem_.vertexIdx(*it, i);
+        for (; elementIt != endit; ++elementIt) {
+            int numLocalVerts = elementIt->template count<dim>();
+            tmpSol.resize(numLocalVerts);
 
-                asImp_().updateVarVertexData_(tmp,
-                                              (*globalSol)[globalI],
-                                              i,
-                                              globalI);
+            setCurrentElement(*elementIt);
+            this->restrictToElement(tmpSol, globalSol);
+            updateElementData_(elemDat, tmpSol, false);
 
-                (*p)[globalI] = (*globalSol)[globalI][pIdx];
+            for (int i = 0; i < elementIt->template count<dim>(); ++i) {
+                int globalIdx = this->problem_.vertexIdx(*elementIt, i);
+
+                (*p)[globalIdx] = elemDat[i].pressure;
             };
         }
 
@@ -285,60 +295,6 @@ public:
     }
 
 private:
-    // harmonic mean of the permeability computed directly.  the
-    // first parameter is used to store the result.
-    static void harmonicMeanK_(Tensor &Ki, const Tensor &Kj)
-    {
-        for (int kx=0; kx < Tensor::rows; kx++){
-            for (int ky=0; ky< Tensor::cols; ky++){
-                if (Ki[kx][ky] != Kj[kx][ky]) {
-                    Ki[kx][ky] = harmonicMean_(Ki[kx][ky], Kj[kx][ky]);
-                }
-            }
-        }
-    }
-
-    // returns the harmonic mean of two scalars
-    static Scalar harmonicMean_(Scalar x, Scalar y)
-    {
-        if (x == 0 || y == 0)
-            return 0;
-        return (2*x*y)/(x + y);
-    };
-
-    /*!
-     * \brief Pre-compute the element cache data.
-     *
-     * This method is called by BoxJacobian (which in turn is
-     * called by the operator assembler) every time the current
-     * element changes.
-     */
-    void updateElementData_(ElementData &dest, const LocalFunction &sol)
-    {
-        for (int i = 0; i < ParentType::curElementGeom_.numVertices; i++) {
-            int iGlobal = ParentType::problem_.vertexIdx(ParentType::curElement_(), i);
-            updateVarVertexData_(dest.vertex[i],
-                                 sol[i],
-                                 i,        // index of sub volume to update,
-                                 iGlobal); // global vert index of the sub volume's grid vert
-        }
-    }
-
-
-    void updateVarVertexData_(VariableVertexData   &vertexData,
-                              const SolutionVector &sol,
-                              int                  i, // local index of the subvolume/grid vertex
-                              int                  iGlobal) const // global index of the sub-volume's vertex
-    {
-        //            const GlobalPosition &global = this->curElementGeom_.subContVol[i].global;
-        //            const LocalPosition &local = this->curElementGeom_.subContVol[i].local;
-
-        vertexData.density = this->problem_.fluid().density(asImp_().temperature_(),
-                                                            sol[pIdx]);
-        vertexData.viscosity = this->problem_.fluid().viscosity(asImp_().temperature_(),
-                                                                sol[pIdx]);
-    }
-
     Scalar temperature_() const
     { return this->problem_.temperature(); }
 
@@ -405,7 +361,7 @@ public:
      *        solution to an ouput writer.
      */
     template <class MultiWriter>
-    void addVtkFields(MultiWriter &writer) const
+    void addVtkFields(MultiWriter &writer) 
     {
         richardsLocalJacobian_.addVtkFields(writer, this->currentSolution());
     }
