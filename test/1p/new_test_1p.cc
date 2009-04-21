@@ -6,7 +6,7 @@
 //#include <dune/grid/io/file/dgfparser.hh>
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
-#include <dune/grid/io/file/dgfparser/dgfalu.hh>
+//#include <dune/grid/io/file/dgfparser/dgfalu.hh>
 //#include <dune/grid/io/file/dgfparser/dgfalberta.hh>
 #include <dune/grid/yaspgrid.hh>
 
@@ -23,9 +23,9 @@ int main(int argc, char** argv)
         // or long double)
         const int dim = 3;
         typedef double                                   Scalar;
-        typedef Dune::ALUCubeGrid<dim, dim>              Grid;
-        //        typedef Dune::YaspGrid<dim>                      Grid;
-        //        typedef Dune::UGGrid<dim>                        Grid;
+        //typedef Dune::ALUCubeGrid<dim, dim>              Grid;
+        //typedef Dune::YaspGrid<dim>                      Grid;
+        typedef Dune::UGGrid<dim>                        Grid;
         typedef Dune::NewOnePProblem<Grid, Scalar>       Problem;
         typedef Problem::DomainTraits::GlobalPosition    GlobalPosition;
         typedef Dune::GridPtr<Grid>                      GridPointer;

@@ -104,13 +104,6 @@ private:
         Scalar viscosity;
     };
 
-    /*!
-     * \brief Cached data for the each vert of the element.
-     */
-    struct ElementData
-    {
-        VariableVertexData  vertex[BoxTraits::ShapeFunctionSetContainer::maxsize];
-    };
 
 public:
     OnePBoxJacobian(ProblemT &problem)
@@ -354,16 +347,6 @@ private:
 
     const ThisType &asImp_() const
     { return *static_cast<const ThisType *>(this); }
-
-    LocalFunction   *curSol_;
-    ElementData      curElemDat_;
-
-    bool               curSolDeflected_;
-    Scalar             curSolOrigValue_;
-    VariableVertexData curSolOrigVarData_;
-
-    LocalFunction    *prevSol_;
-    ElementData       prevElemDat_;
 };
 
 
