@@ -59,7 +59,8 @@ public:
 
     FVShallowWater(Grid& grid, ShallowProblemBase<Grid, Scalar, VC>& problem,
             NumericalFlux<Grid,Scalar>& numFl = *(new HllFlux2d<Grid,Scalar>)) :
-        ShallowWater<Grid, Scalar, VC>(grid, problem), elementMapper(grid.leafView()), numFlux(numFl)
+        ShallowWater<Grid, Scalar, VC>(grid, problem),
+                elementMapper(grid.leafView()), numFlux(numFl)
     {
     }
 
@@ -90,7 +91,7 @@ template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
         Scalar bottomElevationI=0;
         Scalar gravity=9.81;
         Scalar dist=0;
-        Scalar froudeNumber = 0;
+        //  Scalar froudeNumber = 0;
 
         VelType velocityI(0);
         VelType bottomSlope(0);
@@ -134,7 +135,7 @@ template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
 
         // get velocity at cell center
         velocityI = this->problem.variables.velocity[globalIdxI];
-        std::cout<<"velocityI="<<velocityI<<std::endl;
+        //std::cout<<"velocityI="<<velocityI<<std::endl;
 
         //determine Froude Number of cell
         //  froudeNumber = fabs(velocityI);
@@ -176,11 +177,8 @@ template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
             // std::cout<<nVec<<std::endl;
 
             Scalar waterDepthJ=0;
-            Scalar waterDepthFace=0;
-            Scalar waterDepthFaceDivergence=0;
             Scalar bottomSlope(0);
             Scalar bottomElevationJ;
-            Scalar bottomElevationFace=0;
 
             VelType velocityJ(0);
             VelType velocityFace(0);
