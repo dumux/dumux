@@ -370,9 +370,9 @@ public:
                        int                         boundaryFaceIdx) const
     {
         const GlobalPosition &globalPos
-            = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
+            = element.geometry().corner(scvIdx);
         //                const LocalPosition &localPos
-        //                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipLocal;
+        //                    = DomainTraits::referenceElement(element.geometry().type()).position(dim,scvIdx);
 
         if (globalPos[0] < eps_)
             values = BoundaryConditions::dirichlet;
@@ -391,9 +391,9 @@ public:
                    int                         boundaryFaceIdx) const
     {
         const GlobalPosition &globalPos
-            = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
+            = element.geometry().corner(scvIdx);
         //                const LocalPosition &localPos
-        //                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipLocal;
+        //                    = DomainTraits::referenceElement(element.geometry().type()).position(dim,scvIdx);
 
         initial_(values, globalPos);
     }
@@ -409,9 +409,9 @@ public:
                  int                         boundaryFaceIdx) const
     {
         const GlobalPosition &globalPos
-            = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
+            = element.geometry().corner(scvIdx);
         //                const LocalPosition &localPos
-        //                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipLocal;
+        //                    = DomainTraits::referenceElement(element.geometry().type()).position(dim,scvIdx);
         values = 0;
 
         //Scalar lambda = (globalPos[1])/height_;
@@ -442,9 +442,9 @@ public:
                  int                      scvIdx) const
     {
         const GlobalPosition &globalPos
-            = fvElemGeom.subContVol[scvIdx].global;
+            = element.geometry().corner(scvIdx);
         /*                const LocalPosition &localPos
-                          = fvElemGeom.subContVol[scvIdx].local;
+                          = DomainTraits::referenceElement(element.geometry().type()).position(dim,scvIdx);
         */
         initial_(values, globalPos);
     }

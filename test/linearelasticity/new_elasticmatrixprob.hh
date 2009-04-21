@@ -211,9 +211,9 @@ namespace Dune
                            int                         boundaryFaceIdx) const
             {
                 const GlobalPosition &globalPos
-                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
+                    = element.geometry().corner(scvIdx);
                 const LocalPosition &localPos
-                   = fvElemGeom.boundaryFace[boundaryFaceIdx].ipLocal;
+                   = DomainTraits::referenceElement(element.geometry().type()).position(dim,scvIdx);
 
                 if (globalPos[0] > 1.)
                     values = BoundaryConditions::neumann;
@@ -232,7 +232,7 @@ namespace Dune
                        int                         boundaryFaceIdx) const
             {
                 const GlobalPosition &globalPos
-                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
+                    = element.geometry().corner(scvIdx);
 
                 initial_(values, globalPos);
 
@@ -250,7 +250,7 @@ namespace Dune
                      int                         boundaryFaceIdx) const
             {
                 const GlobalPosition &globalPos
-                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
+                    = element.geometry().corner(scvIdx);
                 values = 0.0;
                 if(globalPos[0] > 10-eps_)
                 {
@@ -280,7 +280,7 @@ namespace Dune
                      int                      scvIdx) const
             {
                 const GlobalPosition &globalPos
-                    = fvElemGeom.subContVol[scvIdx].global;
+                    = element.geometry().corner(scvIdx);
                 initial_(values, globalPos);
             }
 

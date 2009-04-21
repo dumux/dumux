@@ -346,9 +346,9 @@ public:
                        int                         boundaryFaceIdx) const
     {
         const GlobalPosition &globalPos
-            = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
-        //                const LocalPosition &localPos
-        //                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipLocal;
+            = element.geometry().corner(scvIdx);
+        const LocalPosition &localPos
+            = DomainTraits::referenceElement(element.geometry().type()).position(dim,scvIdx);
 
         values = BoundaryConditions::neumann;
 
@@ -367,18 +367,19 @@ public:
                    int                         boundaryFaceIdx) const
     {
         const GlobalPosition &globalPos
-            = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
-        //                const LocalPosition &localPos
-        //                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipLocal;
-
+            = element.geometry().corner(scvIdx);
+        //const LocalPosition &localPos
+        //    = DomainTraits::referenceElement(element.geometry().type()).position(dim,scvIdx);
+        
         values[pressureIdx] = 1e5;
         values[switchIdx] = 0.0;
-
+/*
         if (globalPos[0] < eps_)
         {
             values[pressureIdx] = 1e5 + 50;
             values[switchIdx] = 0;  // may be Sn, Xaw or Xwn, depending on the phase state
         }
+*/
     }
 
     /////////////////////////////
@@ -391,10 +392,10 @@ public:
                  int                         scvIdx,
                  int                         boundaryFaceIdx) const
     {
-        //                const GlobalPosition &globalPos
-        //                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
-        //                const LocalPosition &localPos
-        //                    = fvElemGeom.boundaryFace[boundaryFaceIdx].ipLocal;
+        //const GlobalPosition &globalPos
+        //    = element.geometry().corner(scvIdx);
+        //const LocalPosition &localPos
+        //    = DomainTraits::referenceElement(element.geometry().type()).position(dim,scvIdx);
 
         values = 0.0;
     }
@@ -421,10 +422,9 @@ public:
                  int                      scvIdx) const
     {
         const GlobalPosition &globalPos
-            = fvElemGeom.subContVol[scvIdx].global;
-        /*                const LocalPosition &localPos
-                          = fvElemGeom.subContVol[scvIdx].local;
-        */
+            = element.geometry().corner(scvIdx);
+        //const LocalPosition &localPos
+        //    = DomainTraits::referenceElement(element.geometry().type()).position(dim,scvIdx);
 
         values[pressureIdx] = 1e5;
         values[switchIdx] = 0;
@@ -435,8 +435,8 @@ public:
         }
     }
 
-    int initialPhaseState(const Vertex       &vert,
-                          int              &globalIdx,
+    int initialPhaseState(const Vertex         &vert,
+                          int                  &globalIdx,
                           const GlobalPosition &globalPos) const
     {
         if (isInsideBlob_(globalPos))
