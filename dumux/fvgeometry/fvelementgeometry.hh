@@ -508,8 +508,8 @@ public:
         FV local; //!< local vert position
         FV global; //!< global vert position
         Scalar volume; //!< volume of scv
-        FV grad; //! derivative of shape function associated with the sub control volume
-        Scalar shapeValue; //! value of shape function associated with the sub control volume
+        FieldVector<FV, maxNC> grad; //! derivative of shape function associated with the sub control volume
+        FieldVector<Scalar, maxNC> shapeValue; //! value of shape function associated with the sub control volume
         bool inner;
     };
 
@@ -764,12 +764,16 @@ public:
 
                 FieldMatrix<Scalar,dim,dim> jacInvT = geometry.jacobianInverseTransposed(subContVol[vert].local);
 
-                FV grad(0),temp;
-                for (int l = 0; l < dim; l++)
-                    temp[l] = sfs[vert].evaluateDerivative(0, l, subContVol[vert].local);
-                jacInvT.umv(temp, grad);
-                subContVol[vert].grad = grad;
-                subContVol[vert].shapeValue = sfs[vert].evaluateFunction(0, subContVol[vert].local);
+                for (int nodeI = 0; nodeI < numVertices; nodeI++)
+                 {
+                     FV grad(0),temp;
+                     for (int l = 0; l < dim; l++)
+                         temp[l] = sfs[nodeI].evaluateDerivative(0, l, subContVol[vert].local);
+                     jacInvT.umv(temp, grad);
+                     subContVol[vert].grad[nodeI] = grad;
+                     subContVol[vert].shapeValue[nodeI] = sfs[nodeI].evaluateFunction(0, subContVol[vert].local);
+                 }
+
             }
 
     }

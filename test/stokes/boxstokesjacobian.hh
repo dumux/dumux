@@ -62,7 +62,8 @@ public:
         : BoxJacobianType(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_),
           problem(params)
     {
-        alpha = -1e0;
+        alpha = -1e1;
+        beta = 1e2;
         this->analytic = false;
     }
 
@@ -132,40 +133,36 @@ public:
                 }
                 else if (this->bctype[vert][0] == BoundaryConditions::dirichlet)
                     this->def[vert][dim] = defect;
-//                else // de-stabilize
-//                {
-//                    for (int face = 0; face < this->fvGeom.numEdges; face++)
-//                    {
-//                        int i = this->fvGeom.subContVolFace[face].i;
-//                        int j = this->fvGeom.subContVolFace[face].j;
-//
-//                        if (i != vert && j != vert)
-//                            continue;
-//
-//                        FieldVector<Scalar, dim> pressGradient(0);
-//                        for (int k = 0; k < this->fvGeom.numVertices; k++) {
-//                            FieldVector<Scalar,dim> grad(this->fvGeom.subContVolFace[face].grad[k]);
-//                            grad *= sol[k][dim];
-//                            pressGradient += grad;
-//                        }
-//
-//                        Scalar alphaH2 = 0.5*alpha*(this->fvGeom.subContVol[i].volume + this->fvGeom.subContVol[j].volume);
-//                        pressGradient *= alphaH2;
-//                        // SIGN ?????
-//                        if (vert == i)
-//                        {
-//                            this->def[vert][dim] -= pressGradient*this->fvGeom.subContVolFace[face].normal;
-//                        }
-//                        else
-//                        {
-//                            this->def[vert][dim] += pressGradient*this->fvGeom.subContVolFace[face].normal;
-//                        }
-//                    }
-//
-//                    SolutionVector source = problem.q(this->fvGeom.subContVol[vert].global, element, this->fvGeom.subContVol[vert].local);
-//                    Scalar alphaH2 = alpha*this->fvGeom.subContVol[vert].volume;
-//                    this->def[vert][dim] -= alphaH2*source[dim]*this->fvGeom.subContVol[vert].volume;
-//                }
+                else // de-stabilize
+                {
+                    for (int face = 0; face < this->fvGeom.numEdges; face++)
+                    {
+                        int i = this->fvGeom.subContVolFace[face].i;
+                        int j = this->fvGeom.subContVolFace[face].j;
+
+                        if (i != vert && j != vert)
+                            continue;
+
+							FieldVector<Scalar, dim> pressGradient(0);
+							for (int k = 0; k < this->fvGeom.numVertices; k++) {
+								FieldVector<Scalar,dim> grad(this->fvGeom.subContVolFace[face].grad[k]);
+								grad *= sol[k][dim];
+								pressGradient += grad;
+							}
+
+							Scalar alphaH2 = 0.5*alpha*(this->fvGeom.subContVol[i].volume + this->fvGeom.subContVol[j].volume);
+							pressGradient *= alphaH2;
+
+							if (vert == i)
+								this->def[vert][dim] += pressGradient*this->fvGeom.subContVolFace[face].normal;
+							else
+								this->def[vert][dim] -= pressGradient*this->fvGeom.subContVolFace[face].normal;
+                    }
+
+                    SolutionVector source = problem.q(this->fvGeom.subContVol[vert].global, element, this->fvGeom.subContVol[vert].local);
+                    Scalar alphaH2 = alpha*this->fvGeom.subContVol[vert].volume;
+                    this->def[vert][dim] -= alphaH2*source[dim]*this->fvGeom.subContVol[vert].volume;
+                }
             }
 
         return;
@@ -185,6 +182,16 @@ public:
 
         Scalar alphaH2 = alpha*this->fvGeom.subContVol[node].volume;
         result[dim] *= alphaH2;
+
+        if (!this->fvGeom.subContVol[node].inner)
+        {
+            Scalar pressValue = 0;
+            for (int k = 0; k < this->fvGeom.numVertices; k++) {
+                pressValue += sol[k][dim]*0.25;//this->fvGeom.subContVol[node].shapeValue[k];
+            }
+        	result[dim] += beta*0.5*pressValue/this->fvGeom.subContVol[node].volume;
+//        	result[dim] += beta*0.5*sol[node][dim]/this->fvGeom.subContVol[node].volume;
+        }
 
         SolutionVector flux = boundaryFlux(element, sol, node);
 
@@ -337,17 +344,17 @@ public:
 //                        dimSource[comp] = source[comp];
 //                    dimSource *= alphaH2;
 //                    massResidual += dimSource;
-                    pressGradient *= alphaH2;
-                    massResidual += pressGradient;
+//                    pressGradient *= alphaH2;
+//                    massResidual += pressGradient;
                    result[dim] -= massResidual*it->unitOuterNormal(faceLocal)*this->fvGeom.boundaryFace[bfIdx].area;
+
+                   FieldVector<Scalar,dim>  gradVN(0);
+                   velocityGradient.umv(it->unitOuterNormal(faceLocal), gradVN);
+                   gradVN *= this->fvGeom.boundaryFace[bfIdx].area;
+                   gradVN *= elData.mu;
 
                     if (bctypeface[0] == BoundaryConditions::dirichlet)
                     {
-                        FieldVector<Scalar,dim>  gradVN(0);
-                        velocityGradient.umv(it->unitOuterNormal(faceLocal), gradVN);
-                        gradVN *= this->fvGeom.boundaryFace[bfIdx].area;
-                        gradVN *= elData.mu;
-
                         for (int comp = 0; comp < dim; comp++)
                         {
                                 FieldVector<Scalar,dim>  pressVector(0);
@@ -362,7 +369,20 @@ public:
                     else
                     {
                         Scalar beaversJosephC = this->getImp().problem.beaversJosephC(this->fvGeom.boundaryFace[bfIdx].ipGlobal, element, it, this->fvGeom.boundaryFace[bfIdx].ipLocal);
-                        if (beaversJosephC > 0) // realize Beavers-Joseph interface condition
+                        if (beaversJosephC == 0)
+                        {
+                        	result[dim] -= beta*0.5*(gradVN*it->unitOuterNormal(faceLocal))/this->fvGeom.boundaryFace[bfIdx].area;
+
+                        	FieldVector<Scalar,numEq> neumann = this->getImp().problem.J(this->fvGeom.boundaryFace[bfIdx].ipGlobal, element, it, this->fvGeom.boundaryFace[bfIdx].ipLocal);
+
+                        	for (int comp = 0; comp < dim; comp++)
+                        		result[dim] -= beta*0.5*neumann[comp]*it->unitOuterNormal(faceLocal)[comp];
+//                            for (int comp = 0; comp < dim; comp++)
+//                            {
+//                                 result[comp] += gradVN[comp];
+//                            }
+                        }
+                        else if (beaversJosephC > 0) // realize Beavers-Joseph interface condition
                         {
                             FieldVector<Scalar,dim> tangentialV = velocityValue;
                             //                            for (int comp = 0; comp < dim; comp++)
@@ -548,6 +568,7 @@ public:
     ElementData elData;
     StokesProblem<Grid,Scalar>& problem;
     double alpha;
+    double beta;
 };
 }
 #endif
