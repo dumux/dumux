@@ -118,10 +118,10 @@ private:
 public:
     BoxScheme(Problem &prob, LocalJacobian &localJac)
         : problem_(prob),
-          uCur_(prob.grid()),
-          uPrev_(prob.grid()),
-          f_(prob.grid()),
-          jacAsm_(prob.grid()),
+          uCur_(prob.grid(), prob.grid().overlapSize(0) == 0),
+          uPrev_(prob.grid(), prob.grid().overlapSize(0) == 0),
+          f_(prob.grid(), prob.grid().overlapSize(0) == 0),
+          jacAsm_(prob.grid(), prob.grid().overlapSize(0) == 0),
           localJacobian_(localJac)
     {
         Api::require<Api::BasicDomainTraits,

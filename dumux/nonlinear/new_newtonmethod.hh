@@ -128,18 +128,17 @@ public:
         // for unconstrained optimization and nonlinear
         // equations", 1, Prentice-Hall, 1983 pp. 126-127.
         if (newResidual2Norm2 > oldResidual2Norm2_*1.0001) {
-            //                    std::cerr << boost::format("oldResidual2Norm2_ %f newResidual2Norm2: %f")%oldResidual2Norm2_%newResidual2Norm2;
             // undo the full newton step
             *u -= *uOld;
             *u *= -1;
 
             // calulate $\hat f \prime(0)$
-            Function tmp(model.grid());
+            Function tmp(model.grid(), model.grid().overlapSize(0) == 0);
             (*tmp) = typename Function::RepresentationType::field_type(Scalar(0.0));
             // tmp = (\grad F(x_i))^T F(x_i), where F(x) is the residual at x
             newton.currentJacobian().umtv(*u, *tmp);
             Scalar fHatPrime0 = ((*tmp) * (*u));
-            //                    fHatPrime0 = std::min(-Scalar(1e-1), fHatPrime0);
+            //  fHatPrime0 = std::min(-Scalar(1e-1), fHatPrime0);
 
             Scalar lambdaHat = - fHatPrime0 / (2*(newResidual2Norm2 - oldResidual2Norm2_ - fHatPrime0));
             lambdaHat = std::max(Scalar(1/10.0), lambdaHat);
@@ -151,8 +150,6 @@ public:
 
             newton.setResidualObsolete();
             newResidual2Norm2 = (*newton.residual()).two_norm2();
-
-            //                    std::cerr << boost::format(" after line search %f\n")%newResidual2Norm2;
         }
         oldResidual2Norm2_ = newResidual2Norm2;
 
@@ -187,8 +184,8 @@ public:
 
 public:
     NewNewtonMethod(Model &model)
-        : uOld(model.grid()),
-          f(model.grid())
+        : uOld(model.grid(), model.grid().overlapSize(0) == 0),
+          f(model.grid(), model.grid().overlapSize(0) == 0)
     {
         deflectionTwoNorm_ = 1e100;
         residual_ = NULL;
@@ -263,7 +260,8 @@ public:
     {
         if (!residualUpToDate_) {
             if (!residual_)
-                residual_ = new Function(model_->grid(), 0.0);
+                residual_ = new Function(model_->grid(), 
+                                         model().grid().overlapSize(0) == 0);
             // update the residual
             model_->evalGlobalResidual(*residual_);
             residualUpToDate_ = true;
