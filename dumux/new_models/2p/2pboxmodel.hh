@@ -210,11 +210,9 @@ public:
                 upwindIdx = j;
             
             Scalar fluxVal =
-                1000.0* //this->curElemDat_[upwindIdx].density[phase]*
+                this->curElemDat_[upwindIdx].density[phase]*
                 this->curElemDat_[upwindIdx].mobility[phase]*
                 vDarcyOut;
-//            std::cout << "density: " << this->curElemDat_[upwindIdx].density[phase] << "\n";
-//            std::cout << "mobility: " << this->curElemDat_[upwindIdx].mobility[phase] << "\n";
             if (phase == wPhase)
                 flux[wMassIdx] = fluxVal;
             else if (phase == nPhase)
