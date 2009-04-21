@@ -96,8 +96,8 @@ public:
     {
         Scalar initWaterDepth = 0;
 
-        if (globalPos[0]> 16 && globalPos[dim-1]> 16 && globalPos[0]< 24
-                && globalPos[dim-1]< 24)
+        if (globalPos[0]> 23 && globalPos[dim-1]> 23 && globalPos[0]< 27
+                && globalPos[dim-1]< 27)
         {
             initWaterDepth = 0.5;
         }
