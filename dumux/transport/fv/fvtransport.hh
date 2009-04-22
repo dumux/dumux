@@ -114,7 +114,7 @@ int FVTransport<Grid, Scalar, VC, Problem>::update(const Scalar t, Scalar& dt,
     Scalar viscosityW = this->transProblem.wettingPhase.viscosity();
     Scalar viscosityNW = this->transProblem.nonWettingPhase.viscosity();
 
-    Scalar viscosityMin = std::min(viscosityW,viscosityNW);
+    Scalar viscosityRatio = 1 - fabs(viscosityW-viscosityNW)/(viscosityW+viscosityNW);
 
     // compute update vector
     ElementIterator eItEnd = gridView.template end<0>();
@@ -239,10 +239,13 @@ int FVTransport<Grid, Scalar, VC, Problem>::update(const Scalar t, Scalar& dt,
                     - velocityIJ*numFlux_(satI, satJ, fI, fJ);
                     factor/= this->transProblem.soil().porosity(globalPos, *eIt,localPos);
 
-                    Scalar mobilityI = this->transProblem.materialLaw().mobTotal(satI, globalPos, *eIt,localPos);
-                    Scalar mobilityJ = this->transProblem.materialLaw().mobTotal(satJ, globalPosNeighbor, *neighborPointer,localPosNeighbor);
+                    std::vector<Scalar> relPermI = this->transProblem.materialLaw().kr(satI, globalPos, *eIt,localPos);
+                    std::vector<Scalar> relPermJ = this->transProblem.materialLaw().kr(satJ, globalPosNeighbor, *neighborPointer,localPosNeighbor);
 
-                    totFactor = velocityJI/(mobilityJ*viscosityMin) - velocityIJ/(mobilityI*viscosityMin);
+                    Scalar relPermFactorI = (relPermI[0] + relPermI[1])*viscosityRatio;
+                    Scalar relPermFactorJ = (relPermJ[0] + relPermJ[1])*viscosityRatio;
+
+                    totFactor = velocityJI/relPermFactorJ - velocityIJ/relPermFactorI;
                 }
             }
 
@@ -304,10 +307,13 @@ int FVTransport<Grid, Scalar, VC, Problem>::update(const Scalar t, Scalar& dt,
                     - velocityIJ*numFlux_(satI, satBound, fI, fBound);
                     factor/= this->transProblem.soil().porosity(globalPos, *eIt,localPos);
 
-                    Scalar mobilityI = this->transProblem.materialLaw().mobTotal(satI, globalPos, *eIt,localPos);
-                    Scalar mobilityBound = this->transProblem.materialLaw().mobTotal(satBound, globalPosFace, *eIt,localPosFace);
+                    std::vector<Scalar> relPermI = this->transProblem.materialLaw().kr(satI, globalPos, *eIt,localPos);
+                    std::vector<Scalar> relPermJ = this->transProblem.materialLaw().kr(satBound, globalPosFace, *eIt,localPosFace);
 
-                    totFactor = velocityJI/(mobilityBound*viscosityMin) - velocityIJ/(mobilityI*viscosityMin);
+                    Scalar relPermFactorI = (relPermI[0] + relPermI[1])*viscosityRatio;
+                    Scalar relPermFactorJ = (relPermJ[0] + relPermJ[1])*viscosityRatio;
+
+                    totFactor = velocityJI/relPermFactorJ - velocityIJ/relPermFactorI;
                 }
                 else
                 {
