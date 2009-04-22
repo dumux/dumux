@@ -23,10 +23,6 @@ public:
 
     virtual const FieldMatrix &K (const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos) const
     {
-        for(int i = 0; i < dim; i++)
-        {
-            constPermeability[i][i] = 1e-7;
-        }
         return constPermeability;
     }
     virtual double porosity(const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos) const
@@ -52,14 +48,14 @@ public:
 //        if (globalPos[0]<=300)
 //        {
             //linear parameters
-            param[0] = 0.;
-            param[1] = 100.;
+//            param[0] = 0.;
+//            param[1] = 100.;
 //        }
 //        else
 //        {
             //Brooks-Corey parameters
-//            param[0] = 0; // lambda
-//            param[1] = 0.; // entry-pressure
+            param[0] = 0; // lambda
+            param[1] = 0.; // entry-pressure
 //        }
         return param;
     }
@@ -74,7 +70,12 @@ public:
 
     FractionalFlowTestSoil()
         :Matrix2p<Grid,Scalar>(),constPermeability(0)//,permeability(g, name, create)
-    {}
+    {
+        for(int i = 0; i < dim; i++)
+        {
+            constPermeability[i][i] = 1e-7;
+        }
+    }
 
 private:
     FieldMatrix constPermeability;
