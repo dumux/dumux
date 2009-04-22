@@ -111,6 +111,11 @@ int FVTransport<Grid, Scalar, VC, Problem>::update(const Scalar t, Scalar& dt,
     SlopeType slope(this->transProblem.variables.transMapper.size());
     calculateSlopes(slope, t,cFLFac);
 
+    Scalar viscosityW = this->transProblem.wettingPhase.viscosity();
+    Scalar viscosityNW = this->transProblem.nonWettingPhase.viscosity();
+
+    Scalar viscosityMin = std::min(viscosityW,viscosityNW);
+
     // compute update vector
     ElementIterator eItEnd = gridView.template end<0>();
     for (ElementIterator eIt = gridView.template begin<0>(); eIt != eItEnd; ++eIt)
@@ -234,13 +239,10 @@ int FVTransport<Grid, Scalar, VC, Problem>::update(const Scalar t, Scalar& dt,
                     - velocityIJ*numFlux_(satI, satJ, fI, fJ);
                     factor/= this->transProblem.soil().porosity(globalPos, *eIt,localPos);
 
-                    std::vector<Scalar> relativePermeabilitiesI = this->transProblem.materialLaw().kr(satI, globalPos, *eIt,localPos);
-                    std::vector<Scalar> relativePermeabilitiesJ = this->transProblem.materialLaw().kr(satJ, globalPosNeighbor, *neighborPointer,localPosNeighbor);
+                    Scalar mobilityI = this->transProblem.materialLaw().mobTotal(satI, globalPos, *eIt,localPos);
+                    Scalar mobilityJ = this->transProblem.materialLaw().mobTotal(satJ, globalPosNeighbor, *neighborPointer,localPosNeighbor);
 
-                    Scalar krSumI = relativePermeabilitiesI[0] + relativePermeabilitiesI[1];
-                    Scalar krSumJ = relativePermeabilitiesJ[0] + relativePermeabilitiesJ[1];
-
-                    totFactor = velocityJI/krSumJ - velocityIJ/krSumI;
+                    totFactor = velocityJI/(mobilityJ*viscosityMin) - velocityIJ/(mobilityI*viscosityMin);
                 }
             }
 
@@ -302,13 +304,10 @@ int FVTransport<Grid, Scalar, VC, Problem>::update(const Scalar t, Scalar& dt,
                     - velocityIJ*numFlux_(satI, satBound, fI, fBound);
                     factor/= this->transProblem.soil().porosity(globalPos, *eIt,localPos);
 
-                    std::vector<Scalar> relativePermeabilitiesI = this->transProblem.materialLaw().kr(satI, globalPos, *eIt,localPos);
-                    std::vector<Scalar> relativePermeabilitiesBound = this->transProblem.materialLaw().kr(satBound, globalPosFace, *eIt,localPosFace);
+                    Scalar mobilityI = this->transProblem.materialLaw().mobTotal(satI, globalPos, *eIt,localPos);
+                    Scalar mobilityBound = this->transProblem.materialLaw().mobTotal(satBound, globalPosFace, *eIt,localPosFace);
 
-                    Scalar krSumI = relativePermeabilitiesI[0] + relativePermeabilitiesI[1];
-                    Scalar krSumBound = relativePermeabilitiesBound[0] + relativePermeabilitiesBound[1];
-
-                    totFactor = velocityJI/krSumBound - velocityIJ/krSumI;
+                    totFactor = velocityJI/(mobilityBound*viscosityMin) - velocityIJ/(mobilityI*viscosityMin);
                 }
                 else
                 {
