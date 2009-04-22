@@ -55,7 +55,6 @@ int main(int argc, char** argv)
 
         Transport transport(grid, problem);
 
-
         Dune::TimeLoop<GridType, Transport > timeloop(tStart, tEnd, "timeloop", modulo, cFLFactor, maxDT, maxDT);
 
         timeloop.execute(transport);
