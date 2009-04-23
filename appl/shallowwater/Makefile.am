@@ -1,10 +1,15 @@
-dist_noinst_DATA = 2dbump.cc 2dpulse.cc
+# tests where program to build and program to run are equal
+NORMALTESTS = 2dbump 2dpulse
 
-noinst_PROGRAMS = 2dbump 2dpulse
-test_shallowwaterdir = $(includedir)/dune/dumux/appl/shallowwater
+# list of tests to run
+#TESTS = $(NORMALTESTS)
+
+# programs just to build when "make check" is used
+check_PROGRAMS = $(NORMALTESTS)
 
 2dbump_SOURCES = 2dbump.cc
 
 2dpulse_SOURCES = 2dpulse.cc
 
 include $(top_srcdir)/am/global-rules
+

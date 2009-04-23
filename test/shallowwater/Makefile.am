@@ -1,8 +1,13 @@
-dist_noinst_DATA = test_shallowwater.cc
+# tests where program to build and program to run are equal
+NORMALTESTS = test_shallowwater
 
-noinst_PROGRAMS = test_shallowwater
-test_shallowwaterdir = $(includedir)/dune/dumux/test/shallowwater
+# list of tests to run
+#TESTS = $(NORMALTESTS)
+
+# programs just to build when "make check" is used
+check_PROGRAMS = $(NORMALTESTS)
 
 test_shallowwater_SOURCES = test_shallowwater.cc
 
 include $(top_srcdir)/am/global-rules
+

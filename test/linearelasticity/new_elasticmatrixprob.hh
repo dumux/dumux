@@ -30,7 +30,6 @@
 #include<dumux/new_models/linearelasticity/elasticboxmodel.hh>
 #include<dumux/new_models/linearelasticity/elasticnewtoncontroller.hh>
 
-#include<dumux/timedisc/new_impliciteulerstep.hh>
 #include<dumux/nonlinear/new_newtonmethod.hh>
 
 #include <dumux/auxiliary/timemanager.hh>

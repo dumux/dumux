@@ -128,12 +128,12 @@ AC_CONFIG_FILES([Makefile
     test/pipe-newcouple-incomp/Makefile
     test/pipe-newrichards-couple/Makefile
     test/richards/Makefile  
+    test/shallowwater/Makefile  
     test/splitting/Makefile
     test/star2uggrid/Makefile
     test/stokes/Makefile
     test/transport/Makefile
     test/tutorial/Makefile
-    test/twophase/Makefile
     test/vtk/Makefile
     test/linearelasticity/Makefile
 	 appl/2p2c/Makefile
@@ -141,6 +141,7 @@ AC_CONFIG_FILES([Makefile
     appl/co2/Makefile
     appl/hysteresis/Makefile
     appl/phasepressure_ff/Makefile
+    appl/shallowwater/Makefile  
 	 dumux/brinkman/fv/Makefile
 	 dumux/1p2c/fv/Makefile
 	 dumux/2p2c/fv/Makefile
