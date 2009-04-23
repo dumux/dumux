@@ -61,11 +61,11 @@ protected:
                                     VertexDataT,
                                     FluxDataT,
                                     Implementation>   ThisType;
-    typedef BoxJacobian<ProblemT, 
+    typedef BoxJacobian<ProblemT,
                         BoxTraitsT,
                         Implementation,
                         VertexDataT>    ParentType;
-    
+
     typedef ProblemT                                Problem;
     typedef typename Problem::DomainTraits          DomTraits;
     typedef BoxTraitsT                              BoxTraits;
@@ -161,7 +161,7 @@ public:
         // using the implicit euler method.
         const VertexDataArray &elemDat = usePrevSol ? this->prevElemDat_  : this->curElemDat_;
         const VertexData  &vertDat = elemDat[scvIdx];
-        
+
         // compute storage term of all components within all phases
         result = 0;
         for (int phaseIdx = 0; phaseIdx < numPhases; ++ phaseIdx)
@@ -171,7 +171,7 @@ public:
                     vertDat.saturation[phaseIdx]*
                     vertDat.massfrac[compIdx][phaseIdx];
         result *= vertDat.porosity;
-    }
+         }
 
     /*!
      * \brief Evaluates the total flux of all conservation quantities
@@ -184,17 +184,17 @@ public:
                       this->curElementGeom_,
                       faceIdx,
                       this->curElemDat_);
-        
+
         flux = 0;
         asImp_()->computeAdvectiveFlux(flux, vars);
         asImp_()->computeDiffusiveFlux(flux, vars);
     }
-    
+
     /*!
      * \brief Evaluates the advective mass flux of all components over
      *        a face of a subcontrol volume.
      */
-    void computeAdvectiveFlux(SolutionVector &flux, 
+    void computeAdvectiveFlux(SolutionVector &flux,
                               const FluxData &vars) const
     {
         ////////
@@ -209,7 +209,7 @@ public:
             for (int  compIdx = 0; compIdx < numComponents; ++compIdx) {
                 // add advective flux of current component in current
                 // phase
-                flux[compIdx] +=  
+                flux[compIdx] +=
                     vars.vDarcyNormal[phaseIdx] * (
                         upwindAlpha* // upstream vertex
                         (  up.density[phaseIdx] *
@@ -222,23 +222,23 @@ public:
                            dn.massfrac[compIdx][phaseIdx]));
             }
         }
-    }
+        }
 
     /*!
      * \brief Adds the diffusive mass flux of all components over
      *        a face of a subcontrol volume.
      */
     void computeDiffusiveFlux(SolutionVector &flux, const FluxData &vars) const
-    {        
+    {
         // add diffusive flux of non-wetting component in wetting phase
-        Scalar tmp = 
-            vars.diffCoeffPM[wPhase] * vars.densityAtIP[wPhase] * 
+        Scalar tmp =
+            vars.diffCoeffPM[wPhase] * vars.densityAtIP[wPhase] *
             (vars.concentrationGrad[wPhase]*vars.face->normal);
-        flux[nComp] += tmp; 
+        flux[nComp] += tmp;
         flux[wComp] -= tmp;
-        
+
         // add diffusive flux of wetting component in non-wetting phase
-        tmp = vars.diffCoeffPM[nPhase] * vars.densityAtIP[nPhase] * 
+        tmp = vars.diffCoeffPM[nPhase] * vars.densityAtIP[nPhase] *
             (vars.concentrationGrad[nPhase]*vars.face->normal);;
         flux[wComp] += tmp;
         flux[nComp] -= tmp;
@@ -283,7 +283,7 @@ public:
         {
             int globalIdx = this->problem_.vertexIdx(*it);
             const GlobalPosition &globalPos = it->geometry().corner(0);
-            
+
             // initialize phase state
             staticVertexDat_[globalIdx].phaseState =
                 this->problem_.initialPhaseState(*it, globalIdx, globalPos);
@@ -304,7 +304,7 @@ public:
         {
             int globalIdx = this->problem_.vertexIdx(*it);
             const GlobalPosition &global = it->geometry().corner(0);
-            
+
             wasSwitched = primaryVarSwitch_(curGlobalSol,
                                             globalIdx,
                                             global)
@@ -333,7 +333,7 @@ public:
      * \brief Returns the phase state of the current or the old solution of a vertex.
      */
     int phaseState(int globalVertexIdx, bool oldSol) const
-    { 
+    {
         return
             oldSol?
             staticVertexDat_[globalVertexIdx].oldPhaseState :
@@ -381,7 +381,7 @@ public:
         ElementIterator endit = this->problem_.elementEnd();
         unsigned numVertices = this->problem_.numVertices();
         LocalFunction curSol(numVertices);
-        ElementData   elemDat;
+        VertexDataArray elemDat(BoxTraits::ShapeFunctionSetContainer::maxsize);
         VertexData tmp;
         int state;
         Scalar vol, poro, rhoN, rhoW, satN, satW, xAW, xWW, xWN, xAN, pW, Te;
@@ -448,12 +448,10 @@ public:
                 mass[3] += massWCompWPhase; // mass of wetting component in wetting phase
             }
         }
-        
-        // IF PARALLEL: calculate total mass including all processors
-        // also works for sequential calculation
-        mass = this->problem_.grid().comm().sum(mass);
-        
-        if(this->problem_.grid().comm() == 0) // IF PARALLEL: only print by processor with rank() == 0
+
+        // IF PARALLEL: mass calculation still needs to be adjusted
+
+        if(this->problem_.grid().comm().rank() == 0) // IF PARALLEL: only print by processor with rank() == 0
         {
             // print minimum and maximum values
             std::cout << "nonwetting phase saturation: min = "<< minSat
@@ -466,7 +464,7 @@ public:
                       << ", max = "<< maxTe << std::endl;
         }
     }
-    
+
     /*!
      * \brief Add the mass fraction of air in water to VTK output of
      *        the current timestep.
@@ -618,7 +616,7 @@ public:
                        "Could not serialize vertex "
                        << vertIdx);
         }
-        
+
         outStream << staticVertexDat_[vertIdx].phaseState
                   << " ";
     };
@@ -648,7 +646,7 @@ protected:
         Scalar pC = this->problem_.materialLaw().pC(vertexData.saturation[wPhase],
                                                     globalPos,
                                                     * (this->problem_.elementBegin()), // HACK
-                                                    localPos, 
+                                                    localPos,
                                                     temperature);
         vertexData.updatePressures((*globalSol)[globalIdx], pC);
         vertexData.updateMassFracs((*globalSol)[globalIdx],
@@ -666,7 +664,7 @@ protected:
                 std::cout << "wetting phase appears at vertex " << globalIdx
                           << ", coordinates: " << globalPos << std::endl;
                 newPhaseState = bothPhases;
-                if (formulation == pNsW) 
+                if (formulation == pNsW)
                     (*globalSol)[globalIdx][switchIdx] = 0.0;
                 else if (formulation == pWsN)
                     (*globalSol)[globalIdx][switchIdx] = 1.0;
