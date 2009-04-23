@@ -4,7 +4,7 @@
 #define DUNE_TWOPHASEHEATMODEL_HH
 
 #include <dune/disc/shapefunctions/lagrangeshapefunctions.hh>
-#include "dumux/operators/p1operatorextended.hh"
+#include <dune/disc/operators/p1operator.hh>
 #include "dumux/nonlinear/nonlinearmodel.hh"
 #include "dumux/fvgeometry/fvelementgeometry.hh"
 #include "dumux/io/exporttodgf.hh"
@@ -68,12 +68,12 @@ public:
 
     typedef typename G::LeafGridView GV;
     typedef typename GV::IndexSet IS;
-    typedef MultipleCodimMultipleGeomTypeMapper<G,IS,P1Layout> VertexMapper;
+    typedef MultipleCodimMultipleGeomTypeMapper<GV,P1Layout> VertexMapper;
     typedef typename G::template Codim<0>::LeafIntersectionIterator
     IntersectionIterator;
 
     LeafP1TwoPhaseModel(const G& g, ProblemType& prob) :
-        ThisTwoPhaseHeatModel(g, prob), problem(prob), _grid(g), vertexmapper(g,    g.leafIndexSet()), size((*(this->u)).size())
+        ThisTwoPhaseHeatModel(g, prob), problem(prob), _grid(g), vertexmapper(    g.leafIndexSet()), size((*(this->u)).size())
     {
     }
 
@@ -199,7 +199,7 @@ public:
             bool old = true;
             this->localJacobian().updateVariableData(entity, this->localJacobian().uold, old);
             this->localJacobian().updateVariableData(entity, this->localJacobian().u);
-            this->localJacobian().template localDefect<LeafTag>(entity, this->localJacobian().u);
+            this->localJacobian().localDefect(entity, this->localJacobian().u);
 
             // begin loop over vertices
             for (int i=0; i < size; i++) {

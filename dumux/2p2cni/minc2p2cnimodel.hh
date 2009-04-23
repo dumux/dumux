@@ -4,7 +4,7 @@
 #define DUNE_TWOPHASEHEATMODEL_HH
 
 #include <dune/disc/shapefunctions/lagrangeshapefunctions.hh>
-#include "dumux/operators/p1operatorextended.hh"
+#include <dune/disc/operators/p1operator.hh>
 #include "dumux/nonlinear/nonlinearmodel.hh"
 #include "dumux/fvgeometry/fvelementgeometry.hh"
 #include "dumux/io/exporttodgf.hh"
@@ -65,12 +65,12 @@ public:
 
     typedef typename G::LeafGridView GV;
     typedef typename GV::IdxSet IS;
-    typedef MultipleCodimMultipleGeomTypeMapper<G,IS,P1Layout> VertexMapper;
-    typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator
+    typedef MultipleCodimMultipleGeomTypeMapper<GV,P1Layout> VertexMapper;
+    typedef typename G::LeafGridView::IntersectionIterator
     IntersectionIterator;
 
     LeafP1TwoPhaseModel(const G& g, ProblemType& prob) :
-        ThisTwoPhaseHeatModel(g, prob), problem(prob), _grid(g), vertexmapper(g,    g.leafIdxSet()), size((*(this->u)).size())
+        ThisTwoPhaseHeatModel(g, prob), problem(prob), _grid(g), vertexmapper(    g.leafIdxSet()), size((*(this->u)).size())
     {
     }
 
@@ -135,7 +135,7 @@ public:
             int size = sfs.size();
 
             // set type of boundary conditions
-            this->localJacobian().template assembleBC<LeafTag>(entity);
+            this->localJacobian().assembleBoundaryCondition(entity);
 
             IntersectionIterator
                 endit = IntersectionIteratorGetter<G, LeafTag>::end(entity);
@@ -386,7 +386,7 @@ public:
             bool old = true;
             this->localJacobian().updateVariableData(entity, this->localJacobian().uold, old);
             this->localJacobian().updateVariableData(entity, this->localJacobian().u);
-            this->localJacobian().template localDefect<LeafTag>(entity, this->localJacobian().u);
+            this->localJacobian().localDefect(entity, this->localJacobian().u);
 
             // begin loop over vertices
             for (int i=0; i < size; i++) {

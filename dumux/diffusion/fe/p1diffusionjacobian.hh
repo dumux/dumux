@@ -75,7 +75,7 @@ class P1DiffusionLocalJacobian
     typedef typename G::Traits::template Codim<0>::Entity Entity;
     typedef Dune::BlockVector< Dune::FieldVector<double,1> > SatType;
     typedef typename G::Traits::LevelIndexSet IS;
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout> EM;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GV,ElementLayout> EM;
     typedef typename LocalJacobian<P1DiffusionLocalJacobian<G,RT>,G,RT,1>::VBlockType VBlockType;
     typedef typename LocalJacobian<P1DiffusionLocalJacobian<G,RT>,G,RT,1>::MBlockType MBlockType;
 

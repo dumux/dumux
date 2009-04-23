@@ -33,7 +33,7 @@
 #include <dune/grid/common/scsgmapper.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/disc/functions/functions.hh>
-#include "dumux/operators/p1operatorextended.hh"
+#include <dune/disc/operators/p1operator.hh>
 #include <dune/disc/operators/boundaryconditions.hh>
 #include <dune/istl/paamg/amg.hh>
 #include "dumux/pardiso/pardiso.hh"
@@ -174,7 +174,7 @@ public:
         typedef typename Grid::Traits::template Codim<0>::Entity Entity;
         typedef typename Grid::ctype DT;
         typedef typename GV::template Codim<0>::Iterator Iterator;
-        typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
+        typedef typename Grid::LeafGridView::IntersectionIterator IntersectionIterator;
 
         enum {dim = Grid::dimension};
         enum {dimworld = Grid::dimensionworld};
@@ -237,12 +237,11 @@ public:
             int size = sfs.size();
 
             // set type of boundary conditions
-            this->localJacobian().template assembleBC<LeafTag>(entity);
+            this->localJacobian().assembleBoundaryCondition(entity);
 
             IntersectionIterator
-                endit = IntersectionIteratorGetter<Grid, LeafTag>::end(entity);
-            for (IntersectionIterator is = IntersectionIteratorGetter<Grid,
-                     LeafTag>::begin(entity); is!=endit; ++is)
+                endit = entity.ileafend();
+            for (IntersectionIterator is = entity.ileafbegin(); is!=endit; ++is)
                 if (is->boundary()) {
                     for (int i = 0; i < size; i++)
                         // handle subentities of this face
@@ -300,7 +299,7 @@ public:
         typedef typename Grid::Traits::template Codim<0>::Entity Entity;
         typedef typename Grid::ctype DT;
         typedef typename GV::template Codim<0>::Iterator Iterator;
-        typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
+        typedef typename Grid::LeafGridView::IntersectionIterator IntersectionIterator;
 
         enum {dim = Grid::dimension};
         enum {dimworld = Grid::dimensionworld};
@@ -381,12 +380,11 @@ public:
             int size = sfs.size();
 
             // set type of boundary conditions
-            this->localJacobian().template assembleBC<LeafTag>(entity);
+            this->localJacobian().assembleBoundaryCondition(entity);
 
             IntersectionIterator
-                endit = IntersectionIteratorGetter<Grid, LeafTag>::end(entity);
-            for (IntersectionIterator is = IntersectionIteratorGetter<Grid,
-                     LeafTag>::begin(entity); is!=endit; ++is)
+                endit = entity.ileafend();
+            for (IntersectionIterator is = entity.ileafbegin(); is!=endit; ++is)
                 if (is->boundary()) {
                     for (int i = 0; i < size; i++)
                         // handle subentities of this face

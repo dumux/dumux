@@ -7,7 +7,7 @@
 #include <dune/common/typetraits.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
-#include <dune/grid/utility/intersectiongetter.hh>
+
 #include <dune/istl/bvector.hh>
 #include "dumux/transport/transport_deprecated.hh"
 #include "dumux/transport/fv/numericalflux.hh"
@@ -59,9 +59,9 @@ namespace Dune {
   typedef typename G::LevelGridView GV;
   typedef typename GV::IndexSet IS;
   typedef typename GV::template Codim<0>::Iterator Iterator;
-  typedef Dune::MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout> EM;
+  typedef Dune::MultipleCodimMultipleGeomTypeMapper<GV,ElementLayout> EM;
   typedef typename G::template Codim<0>::EntityPointer EntityPointer;
-    typedef typename IntersectionIteratorGetter<G,LevelTag>::IntersectionIterator IntersectionIterator;
+    typedef typename G::LevelGridView::IntersectionIterator IntersectionIterator;
     typedef typename std::template list<ChNode>::iterator ListIterator;
   typedef typename G::ctype ct;
  typedef Dune::FieldVector<RT,dim> VType;
@@ -106,7 +106,7 @@ public:
 			DiffusivePart<G,RT>& diffPart = *(new DiffusivePart<G, RT>), bool rec = false,
 		    double amax = 0.8, const NumericalFlux<RT>& numFl = *(new Upwind<RT>), int K=1000) :
 	  Transport<G, RT, VC>(g, prob, lev),
-				elementmapper(g, g.levelIndexSet(lev)), gridview(g.levelView(lev)),
+				elementmapper( g.levelView(lev)), gridview(g.levelView(lev)),
 				indexset(gridview.indexSet()), reconstruct(rec),
 	  numFlux(numFl), diffusivePart(diffPart), alphamax(amax),K(K),grid(g)
 				{}
@@ -431,8 +431,8 @@ private:
     i.Sat=this->transproblem.variables.saturation[indexi];
   
     //setze Geschwindigkeit und x-Koordinaten für das Ausgangselement
-    IntersectionIterator endis=IntersectionIteratorGetter<G,LevelTag>::end(*it);
-    for(IntersectionIterator is=IntersectionIteratorGetter<G,LevelTag>::begin(*it);is!=endis;++is)
+    IntersectionIterator endis=it->ilevelend();
+    for(IntersectionIterator is=it->ilevelbegin();is!=endis;++is)
     {
       GeometryType gtf = is->intersectionSelfLocal().type();
       const Dune::FieldVector<ct,dim-1>& facelocal = Dune::ReferenceElements<RT,dim-1>::general(gtf).position(0,0);

@@ -467,7 +467,7 @@ class CRFunction : virtual public ElementwiseCInfinityFunction<GV,RT,m>,
 public:
     typedef FieldVector<RT,m> BlockType;
     typedef BlockVector<BlockType> RepresentationType;
-    typedef MultipleCodimMultipleGeomTypeMapper<G,IS,CRLayout> VM;
+    typedef MultipleCodimMultipleGeomTypeMapper<GV,CRLayout> VM;
     typedef typename CRExtendOverlap<G,GV,VM,LC>::CRIndexInfoFromGrid CRIndexInfoFromGrid;
 
     //! allocate data

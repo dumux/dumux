@@ -15,7 +15,7 @@
 #include<dune/grid/common/referenceelements.hh>
 #include<dune/common/geometrytype.hh>
 #include<dune/grid/common/quadraturerules.hh>
-#include <dune/grid/utility/intersectiongetter.hh>
+
 
 #include<dune/disc/shapefunctions/lagrangeshapefunctions.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
@@ -288,7 +288,7 @@ private:
         // determine quadrature order
         int p=2;
         // evaluate boundary conditions via intersection iterator
-        typedef typename IntersectionIteratorGetter<Grid,TypeTag>::IntersectionIterator
+        typedef typename Grid::LeafGridView::IntersectionIterator
             IntersectionIterator;
 
         IntersectionIterator endit = IntersectionIteratorGetter<Grid,TypeTag>::end(element);

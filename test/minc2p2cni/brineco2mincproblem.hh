@@ -46,7 +46,7 @@ template<class Grid, class Scalar, int numEq>
 class BrineCO2Problem : public TwoPTwoCNIProblem<Grid, Scalar, numEq> {
     typedef typename Grid::ctype DT;
     typedef typename Grid::Traits::template Codim<0>::Entity Entity;
-    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
+    typedef typename Grid::LeafGridView::IntersectionIterator IntersectionIterator;
     enum {dim=Grid::dimension};
     enum {numCont = numEq/3};
     //    enum {wPhase = 0, nPhase = 1};

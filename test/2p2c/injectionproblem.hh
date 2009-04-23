@@ -40,7 +40,7 @@ class InjectionProblem : public TwoPTwoCProblem<Grid, Scalar>
 {
     enum {dim=Grid::dimension, numEq=2};
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
-    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
+    typedef typename Grid::LeafGridView::IntersectionIterator IntersectionIterator;
 
 public:
     enum {pWIdx = 0, switchIdx = 1}; // phase index

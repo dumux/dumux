@@ -17,7 +17,7 @@
 #include "sinproblem.hh"
 #include "curlproblem.hh"
 #include "channelflowproblem.hh"
-#include "aps.hh"
+//#include "aps.hh"
 
 template<int dim>
 struct VertexLayout

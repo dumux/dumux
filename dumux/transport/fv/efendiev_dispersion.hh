@@ -28,7 +28,7 @@ class EfendievDurlovskiDispersion : public DiffusivePart<G,RT>
 private:
     enum{dim = G::dimension};
     typedef typename G::Traits::template Codim<0>::Entity Entity;
-    typedef typename IntersectionIteratorGetter<G,LevelTag>::IntersectionIterator IntersectionIterator;
+    typedef typename G::LevelGridView::IntersectionIterator IntersectionIterator;
     typedef typename G::template Codim<1>::EntityPointer EntityPointer;
     typedef BlockVector< BlockVector<FieldVector<RT, dim> > > VelType;
     typedef FieldVector<RT, dim> FieldVector;

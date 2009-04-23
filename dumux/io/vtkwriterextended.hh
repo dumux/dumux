@@ -17,7 +17,7 @@
 #include <dune/common/iteratorfacades.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/common/referenceelements.hh>
-#include <dune/grid/utility/intersectiongetter.hh>
+
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 
 
@@ -479,7 +479,7 @@ private:
     template<class V>
     class P2VectorWrapper : public VTKFunction
     {
-        typedef MultipleCodimMultipleGeomTypeMapper<Grid,IndexSet,P0Layout> VM2;
+        typedef MultipleCodimMultipleGeomTypeMapper<GV,P0Layout> VM2;
     public:
         //! return number of components
         virtual int ncomps () const
@@ -522,7 +522,7 @@ private:
     template<class V>
     class P3VectorWrapper : public VTKFunction
     {
-        typedef MultipleCodimMultipleGeomTypeMapper<Grid,IndexSet,P1Layout> VM3;
+        typedef MultipleCodimMultipleGeomTypeMapper<GV,P1Layout> VM3;
     public:
         //! return number of components
         virtual int ncomps () const
@@ -680,8 +680,8 @@ public:
         w=0; z=0;
 
         int dim=Grid::dimension;
-        MultipleCodimMultipleGeomTypeMapper<Grid,IndexSet,P0Layout> mapper(grid,is);
-        VertexMapper vertexmapper(grid,is);
+        MultipleCodimMultipleGeomTypeMapper<GV,P0Layout> mapper(is);
+        VertexMapper vertexmapper(is);
         std::vector<DT> volume(vertexmapper.size(),0);
 
         for(CellIterator cit=cellBegin();cit!=cellEnd();++cit)
@@ -698,7 +698,7 @@ public:
             //ReferenceData
             std::vector<Dune::FieldVector<DT,n> > outernormal(nlfaces,0);
             Dune::FieldVector<DT,n-1> loc(0);
-            typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
+            typedef typename Grid::LeafGridView::IntersectionIterator IntersectionIterator;
             IntersectionIterator endit = IntersectionIteratorGetter<Grid,LeafTag>::end(*cit);
             for (IntersectionIterator it = IntersectionIteratorGetter<Grid,LeafTag>::begin(*cit); it!=endit; ++it)
             {

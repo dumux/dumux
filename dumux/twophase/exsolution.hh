@@ -11,7 +11,7 @@
 #include<dune/common/exceptions.hh>
 #include<dune/grid/common/grid.hh>
 #include<dune/grid/common/referenceelements.hh>
-#include<dune/grid/utility/intersectiongetter.hh>
+
 #include<dumux/material/twophaserelations_deprecated.hh>
 #include<dumux/material/linearlaw_deprecated.hh>
 #include<disc/shapefunctions/lagrangeshapefunctions.hh>
@@ -96,8 +96,8 @@ public:
         elementvolume=0;
 
         const GV& gridview(grid.leafView());
-        typedef MultipleCodimMultipleGeomTypeMapper<G,IS,P1Layout> VMapper;
-        VMapper vertexmapper(grid,gridview.indexSet());
+        typedef MultipleCodimMultipleGeomTypeMapper<GV,P1Layout> VMapper;
+        VMapper vertexmapper(gridview);
 
         Iterator eendit = gridview.template end<0>();
         for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)

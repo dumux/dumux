@@ -11,7 +11,7 @@
 #include<dune/common/exceptions.hh>
 #include<dune/grid/common/grid.hh>
 #include<dune/grid/common/referenceelements.hh>
-#include<dune/grid/utility/intersectiongetter.hh>
+
 #include<dune/disc/operators/boundaryconditions.hh>
 #include<dumux/material/twophaserelations.hh>
 #include<dumux/material/multicomponentrelations.hh>
@@ -44,7 +44,7 @@ template<class G, class RT> class TwoPTwoCNIProblem {
     typedef typename G::ctype DT;
     enum {dim=G::dimension, m=6};
     typedef typename G::Traits::template Codim<0>::Entity Entity;
-    typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator
+    typedef typename G::LeafGridView::IntersectionIterator
     IntersectionIterator;
 
 public:

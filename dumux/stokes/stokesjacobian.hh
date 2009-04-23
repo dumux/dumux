@@ -51,7 +51,7 @@ public:
 
     //! Constructor
     StokesJacobian(StokesProblem<G,RT>& prob, bool dummy1, const G& grid, MixedFunction& sol, bool dummy2 = false) :
-        vertexMapper(grid, grid.leafIndexSet()), problem(prob),
+        vertexMapper(grid.leafView()), problem(prob),
         currentSolution(sol), oldSolution(grid), dt(1) {
     }
 

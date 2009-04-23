@@ -42,7 +42,7 @@ class CO2Problem: public TwoPhaseProblem<Grid, Scalar>
 {
     typedef    typename Grid::ctype CoordScalar;
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
-    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
+    typedef typename Grid::LeafGridView::IntersectionIterator IntersectionIterator;
     typedef BasicDomain<Grid, Scalar> ParentType;
     // the domain traits of the domain
     typedef typename ParentType::DomainTraits DomainTraits;

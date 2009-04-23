@@ -11,7 +11,7 @@ class FFProblem : public StokesTrEnProblem<Grid, Scalar>
 public:
     enum {dim=Grid::dimension, numEq=Grid::dimension+3};
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
-    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
+    typedef typename Grid::LeafGridView::IntersectionIterator IntersectionIterator;
 
 
     virtual FieldVector<Scalar,numEq> initial (const FieldVector<Scalar,dim>& x, const Element& e,

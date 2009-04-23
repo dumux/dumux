@@ -77,7 +77,7 @@ class MimeticGroundwaterEquationLocalStiffness
     typedef typename G::Traits::template Codim<0>::Entity Entity;
     typedef Dune::LevelP0Function<G,DT,(int)(0.5*n*(n+1))> KType;
     typedef typename G::Traits::LevelIndexSet IS;
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout> EM;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GV,ElementLayout> EM;
 
 public:
     // define the number of components of your system, this is used outside
@@ -91,7 +91,7 @@ public:
                                               bool procBoundaryAsDirichlet_=true)
         : problem(params),levelBoundaryAsDirichlet(levelBoundaryAsDirichlet_),
           procBoundaryAsDirichlet(procBoundaryAsDirichlet_),
-          elementmapper(grid, grid.levelIndexSet(level))
+          elementmapper(grid.levelView(level))
     {    }
 
 
@@ -195,10 +195,10 @@ public:
 
         //       std::cout << "element " << elemId << ": center " << centerGlobal << std::endl;;
 
-        typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
+        typedef typename G::LeafGridView::IntersectionIterator IntersectionIterator;
 
-        IntersectionIterator endit = IntersectionIteratorGetter<G,LeafTag>::end(e);
-        for (IntersectionIterator it = IntersectionIteratorGetter<G,LeafTag>::begin(e); it!=endit; ++it)
+        IntersectionIterator endit = e.ileafend();
+        for (IntersectionIterator it = e.ileafbegin(); it!=endit; ++it)
         {
             // get geometry type of face
             Dune::GeometryType gtf = it->intersectionSelfLocal().type();
@@ -413,12 +413,12 @@ private:
         int p=0;
 
         // evaluate boundary conditions via intersection iterator
-        typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator
+        typedef typename G::LeafGridView::IntersectionIterator
             IntersectionIterator;
 
         //std::cout << "new element." << std::endl;
-        IntersectionIterator endit = IntersectionIteratorGetter<G,LeafTag>::end(e);
-        for (IntersectionIterator it = IntersectionIteratorGetter<G,LeafTag>::begin(e);
+        IntersectionIterator endit = e.ileafend();
+        for (IntersectionIterator it = e.ileafbegin();
              it!=endit; ++it)
         {
             //std::cout << "\tnew intersection iterator." << std::endl;

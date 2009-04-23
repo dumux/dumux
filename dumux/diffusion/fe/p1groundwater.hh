@@ -20,6 +20,7 @@
 #include <dune/disc/operators/boundaryconditions.hh>
 #include <dune/disc/operators/localstiffness.hh>
 #include "dumux/fractionalflow/variableclass.hh"
+#include "dumux/fractionalflow/fractionalflowproblem.hh"
 #include "dumux/diffusion/diffusionproblem.hh"
 
 /**
@@ -73,10 +74,11 @@ class GroundwaterEquationLocalStiffness
     };
 
     // grid types
+    typedef typename G::LevelGridView GV;
     typedef typename G::ctype DT;
     typedef typename G::Traits::template Codim<0>::Entity Entity;
     typedef typename G::Traits::LevelIndexSet IS;
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout> EM;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GV,ElementLayout> EM;
     typedef Dune::VariableClass<G, RT> VC;
 
 public:
@@ -92,7 +94,7 @@ public:
                                        int level = 0,
                                        bool procBoundaryAsDirichlet_=true)
         : problem(params),levelBoundaryAsDirichlet(levelBoundaryAsDirichlet_),
-          procBoundaryAsDirichlet(procBoundaryAsDirichlet_), elementmapper(grid, grid.levelIndexSet(level))
+          procBoundaryAsDirichlet(procBoundaryAsDirichlet_), elementmapper(grid.levelView(level))
     {}
 
 
@@ -176,7 +178,11 @@ private:
             const Dune::FieldMatrix<DT,n,n>
                 jac = e.geometry().jacobianInverseTransposed(local);           // eval jacobian inverse
             Dune::FieldMatrix<DT,n,n> K = problem.K(global,e,local);   // eval diffusion tensor
-            K *= problem.materialLaw.mobTotal(problem.variables.sat(global,e,local), global, e, local);
+            K *= problem.materialLaw_.mobTotal(
+                    problem.variables.sat(global,e,local), 
+                    global, 
+                    e, 
+                    local);
             double weight = Dune::QuadratureRules<DT,n>::rule(gt,p)[g].weight();// weight of quadrature point
             DT detjac = e.geometry().integrationElement(local);              // determinant of jacobian
             RT q = problem.source(global,e,local);                                // source term
@@ -225,11 +231,11 @@ private:
         if (k>1) p=2*(k-1);
 
         // evaluate boundary conditions via intersection iterator
-        typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator
+        typedef typename G::LeafGridView::IntersectionIterator
             IntersectionIterator;
 
-        IntersectionIterator endit = IntersectionIteratorGetter<G,LeafTag>::end(e);
-        for (IntersectionIterator it = IntersectionIteratorGetter<G,LeafTag>::begin(e);
+        IntersectionIterator endit = e.ileafend();
+        for (IntersectionIterator it = e.ileafbegin();
              it!=endit; ++it)
         {
             // if we have a neighbor then we assume there is no boundary (forget interior boundaries)

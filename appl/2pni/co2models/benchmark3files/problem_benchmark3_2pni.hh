@@ -44,7 +44,7 @@ class ProblemBenchmark3_2pni : public TwoPhaseHeatProblem<Grid, RT> {
     typedef typename Grid::ctype Scalar;
     enum {dim=Grid::dimension, m=3};
     typedef typename Grid::Traits::template Codim<0>::Entity Entity;
-    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
+    typedef typename Grid::LeafGridView::IntersectionIterator IntersectionIterator;
 
 public:
 

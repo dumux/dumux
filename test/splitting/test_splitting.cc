@@ -70,7 +70,7 @@ int main(int argc, char** argv)
         Dune::SimpleParabolicProblem<GridType, NumberType, VC> hyperbolicProblem(variables, materialLaw, true);
         HyperbolicPart hyperbolicPart(grid, hyperbolicProblem, grid.maxLevel(), diffPart, reconstruct, alphaMax);
 
-        Dune::UniformProblem<GridType, NumberType, VC> diffusionProblem(variables, materialLaw, true);
+        Dune::UniformProblem<GridType, NumberType, VC> diffusionProblem;//(variables, materialLaw, true);
         //Dune::DiffusivePart<GridType, NumberType> diffPart2;
         Dune::CapillaryDiffusion<GridType, NumberType, VC> diffPart2(diffusionProblem); // use CapillaryDiffusion
         Dune::SimpleParabolicProblem<GridType, NumberType, VC> parabolicProblem(variables, grid, materialLaw);

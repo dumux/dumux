@@ -9,7 +9,7 @@
 #include <dune/common/typetraits.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
-#include <dune/grid/utility/intersectiongetter.hh>
+
 #include <dune/istl/operators.hh>
 #include <dune/istl/solvers.hh>
 #include <dune/istl/preconditioners.hh>
@@ -58,9 +58,9 @@ template<class G, class RT, class VC> class DeprecatedFVDiffusion :
     typedef typename GV::template Codim<0>::Iterator Iterator;
     typedef typename G::template Codim<0>::HierarchicIterator
     HierarchicIterator;
-    typedef MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout> EM;
+    typedef MultipleCodimMultipleGeomTypeMapper<GV,ElementLayout> EM;
     typedef typename G::template Codim<0>::EntityPointer EntityPointer;
-    typedef typename IntersectionIteratorGetter<G,LevelTag>::IntersectionIterator
+    typedef typename G::LevelGridView::IntersectionIterator
     IntersectionIterator;
     typedef typename G::ctype ct;
     typedef FieldMatrix<double,1,1> MB;
@@ -90,7 +90,7 @@ public:
 
     DeprecatedFVDiffusion(G& g, DeprecatedDiffusionProblem<G, RT, VC>& prob, int lev = -1, bool calcPressure = false) :
         DeprecatedDiffusion<G, RT, VC>(g, prob, lev == -1 ? g.maxLevel() : lev),
-        elementmapper(g, g.levelIndexSet(this->level())), gridview(g.levelView(this->level())),
+        elementmapper( g.levelView(this->level())), gridview(g.levelView(this->level())),
         indexset(gridview.indexSet()), A(g.size(
                                                 this->level(), 0), g.size(this->level(), 0), (2*dim+1)
                                          *g.size(this->level(), 0), BCRSMatrix<MB>::random),
@@ -102,7 +102,7 @@ public:
     DeprecatedFVDiffusion(G& g, DeprecatedDiffusionProblem<G, RT, VC>& prob, std::string solverName,
                           std::string preconditionerName, int lev = -1, bool calcPressure = false) :
         DeprecatedDiffusion<G, RT, VC>(g, prob, lev == -1 ? g.maxLevel() : lev),
-        elementmapper(g, g.levelIndexSet(this->level())), gridview(g.levelView(this->level())),
+        elementmapper( g.levelView(this->level())), gridview(g.levelView(this->level())),
         indexset(gridview.indexSet()), A(g.size(
                                                 this->level(), 0), g.size(this->level(), 0), (2*dim+1)
                                          *g.size(this->level(), 0), BCRSMatrix<MB>::random),
@@ -135,9 +135,9 @@ template<class G, class RT, class VC> void DeprecatedFVDiffusion<G, RT, VC>::ini
 
         // run through all intersections with neighbors
         IntersectionIterator
-            endit = IntersectionIteratorGetter<G, LevelTag>::end(*it);
+            endit = it->ilevelend();
         for (IntersectionIterator
-                 is = IntersectionIteratorGetter<G, LevelTag>::begin(*it); is
+                 is = it->ilevelbegin(); is
                  !=endit; ++is)
             if (is->neighbor())
                 rowSize++;
@@ -155,9 +155,9 @@ template<class G, class RT, class VC> void DeprecatedFVDiffusion<G, RT, VC>::ini
 
         // run through all intersections with neighbors
         IntersectionIterator
-            endit = IntersectionIteratorGetter<G, LevelTag>::end(*it);
+            endit = it->ilevelend();
         for (IntersectionIterator
-                 is = IntersectionIteratorGetter<G, LevelTag>::begin(*it); is
+                 is = it->ilevelbegin(); is
                  !=endit; ++is)
             if (is->neighbor()) {
                 // access neighbor
@@ -215,9 +215,9 @@ template<class G, class RT, class VC> void DeprecatedFVDiffusion<G, RT, VC>::ass
             fractionalWI = this->diffproblem.materialLaw.fractionalW(sati);
 
         IntersectionIterator
-            endit = IntersectionIteratorGetter<G, LevelTag>::end(*it);
+            endit = it->ilevelend();
         for (IntersectionIterator
-                 is = IntersectionIteratorGetter<G, LevelTag>::begin(*it); is
+                 is = it->ilevelbegin(); is
                  !=endit; ++is) {
 
             // get geometry type of face

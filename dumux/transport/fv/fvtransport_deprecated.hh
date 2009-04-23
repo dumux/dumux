@@ -9,7 +9,7 @@
 #include <dune/common/typetraits.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
-#include <dune/grid/utility/intersectiongetter.hh>
+
 #include <dune/istl/bvector.hh>
 #include "dumux/transport/transport_deprecated.hh"
 #include "dumux/transport/fv/numericalflux.hh"
@@ -36,9 +36,9 @@ template<class G, class RT, class VC> class DeprecatedFVTransport :
     typedef typename G::LevelGridView GV;
     typedef typename GV::IndexSet IS;
     typedef typename GV::template Codim<0>::Iterator Iterator;
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout> EM;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GV,ElementLayout> EM;
     typedef typename G::template Codim<0>::EntityPointer EntityPointer;
-    typedef typename IntersectionIteratorGetter<G,LevelTag>::IntersectionIterator
+    typedef typename G::LevelGridView::IntersectionIterator
     IntersectionIterator;
     typedef typename G::ctype ct;
     typedef BlockVector< Dune::FieldVector<RT,dim> > SlopeType;
@@ -86,7 +86,7 @@ public:
                           DiffusivePart<G,RT>& diffPart = *(new DiffusivePart<G, RT>), bool rec = false,
                           double amax = 0.8, const NumericalFlux<RT>& numFl = *(new Upwind<RT>)) :
         DeprecatedTransport<G, RT, VC>(g, prob, lev),
-        elementmapper(g, g.levelIndexSet(lev)), gridview(g.levelView(lev)),
+        elementmapper( g.levelView(lev)), gridview(g.levelView(lev)),
         indexset(gridview.indexSet()), reconstruct(rec),
         numFlux(numFl), diffusivePart(diffPart), alphamax(amax)
     {}
@@ -149,9 +149,9 @@ template<class G, class RT, class VC> int DeprecatedFVTransport<G, RT, VC>::upda
 
         // run through all intersections with neighbors and boundary
         IntersectionIterator
-            endit = IntersectionIteratorGetter<G, LevelTag>::end(*it);
+            endit = it->ilevelend();
         for (IntersectionIterator
-                 is = IntersectionIteratorGetter<G, LevelTag>::begin(*it); is
+                 is = it->ilevelbegin(); is
                  !=endit; ++is) {
             // local number of facet
             int numberInSelf = is->numberInSelf();
@@ -407,9 +407,9 @@ template<class G, class RT, class VC> void DeprecatedFVTransport<G, RT, VC>::Cal
 
         // run through all intersections with neighbors and boundary
         IntersectionIterator
-            isend = IntersectionIteratorGetter<G, LevelTag>::end(*it);
+            isend = it->ilevelend();
         for (IntersectionIterator
-                 is = IntersectionIteratorGetter<G, LevelTag>::begin(*it); is
+                 is = it->ilevelbegin(); is
                  !=isend; ++is) {
             // local number of facet
             int numberInSelf = is->numberInSelf();

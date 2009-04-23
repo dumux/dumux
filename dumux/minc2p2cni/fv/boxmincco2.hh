@@ -32,7 +32,7 @@
 #include <dune/grid/common/scsgmapper.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/disc/functions/functions.hh>
-#include "dumux/operators/p1operatorextended.hh"
+#include <dune/disc/operators/p1operator.hh>
 #include <dune/disc/operators/boundaryconditions.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/paamg/amg.hh>
@@ -118,7 +118,7 @@ public:
         typedef typename ThisGrid::Traits::template Codim<0>::Entity Entity;
         typedef typename ThisGrid::ctype DT;
         typedef typename GridView::template Codim<0>::Iterator Iterator;
-        typedef typename IntersectionIteratorGetter<ThisGrid,LeafTag>::IntersectionIterator IntersectionIterator;
+        typedef typename ThisGrid::LeafGridView::IntersectionIterator IntersectionIterator;
 
         enum {dim = ThisGrid::dimension};
         enum {dimworld = ThisGrid::dimensionworld};
@@ -195,7 +195,7 @@ public:
             int size = sfs.size();
 
             // set type of boundary conditions
-            this->localJacobian().template assembleBC<LeafTag>(entity);
+            this->localJacobian().assembleBoundaryCondition(entity);
 
             IntersectionIterator
                 endit = IntersectionIteratorGetter<ThisGrid, LeafTag>::end(entity);
@@ -259,7 +259,7 @@ public:
         typedef typename ThisGrid::Traits::template Codim<0>::Entity Entity;
         typedef typename ThisGrid::ctype DT;
         typedef typename GridView::template Codim<0>::Iterator Iterator;
-        typedef typename IntersectionIteratorGetter<ThisGrid,LeafTag>::IntersectionIterator IntersectionIterator;
+        typedef typename ThisGrid::LeafGridView::IntersectionIterator IntersectionIterator;
 
         enum {dim = ThisGrid::dimension};
         enum {dimworld = ThisGrid::dimensionworld};
@@ -348,7 +348,7 @@ public:
             int size = sfs.size();
 
             // set type of boundary conditions
-            this->localJacobian().template assembleBC<LeafTag>(entity);
+            this->localJacobian().assembleBoundaryCondition(entity);
 
             IntersectionIterator
                 endit = IntersectionIteratorGetter<ThisGrid, LeafTag>::end(entity);
@@ -412,7 +412,7 @@ public:
         typedef typename ThisGrid::Traits::template Codim<0>::Entity Entity;
         typedef typename ThisGrid::ctype DT;
         typedef typename GridView::template Codim<0>::Iterator Iterator;
-        typedef typename IntersectionIteratorGetter<ThisGrid,LeafTag>::IntersectionIterator IntersectionIterator;
+        typedef typename ThisGrid::LeafGridView::IntersectionIterator IntersectionIterator;
 
         enum {dim = ThisGrid::dimension};
         enum {dimworld = ThisGrid::dimensionworld};

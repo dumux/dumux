@@ -10,6 +10,8 @@ check_PROGRAMS = $(NORMALTESTS)
 dist_noinst_DATA = new_test_lens.cc test_twophase.cc test_twophase_pnsw.cc test_dmt.cc
 
 new_test_lens_SOURCES = new_test_lens.cc
+new_test_lens_CXXFLAGS = $(MPI_CPPFLAGS) 
+new_test_lens_LDADD = $(MPI_LDFLAGS) 
 
 test_twophase_SOURCES = test_twophase.cc
 

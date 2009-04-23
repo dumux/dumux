@@ -19,7 +19,7 @@
 #include<dune/common/geometrytype.hh>
 #include<dune/grid/common/grid.hh>
 #include<dune/grid/common/mcmgmapper.hh>
-#include<dune/grid/utility/intersectiongetter.hh>
+
 //#include<dune/grid/common/datahandleif.hh>
 #include<dune/istl/bvector.hh>
 #include<dune/istl/operators.hh>
@@ -103,8 +103,8 @@ public:
     typedef typename G::Traits::GlobalIdSet IDS;
     typedef typename IDS::IdType IdType;
     typedef std::set<IdType> GIDSet;
-    typedef MultipleCodimMultipleGeomTypeMapper<G,IS,CRLayout> EM;
-    typedef MultipleCodimMultipleGeomTypeMapper<G,IS,AllLayout> AM;
+    typedef MultipleCodimMultipleGeomTypeMapper<GV,CRLayout> EM;
+    typedef MultipleCodimMultipleGeomTypeMapper<GV,AllLayout> AM;
 
 private:
 
@@ -132,7 +132,7 @@ private:
 public:
 
     CROperatorBase (const G& g, const GV& gv, LC lcomm)
-        : grid(g), gridview(gv), is(gv.indexSet()), lc(lcomm), facemapper(g,is), allmapper(g,is),
+        : grid(g), gridview(gv), is(gv.indexSet()), lc(lcomm), facemapper(is), allmapper(is),
           A(size(), size(), nnz(is), RepresentationType::random)
     {
         // Check for the TypeTag

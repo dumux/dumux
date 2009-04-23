@@ -12,7 +12,7 @@
 #include <dune/common/typetraits.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
-#include <dune/grid/utility/intersectiongetter.hh>
+
 #include <dune/istl/bvector.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/stdstreams.hh>
@@ -67,9 +67,9 @@ class Decoupled2p2c
     typedef typename GV::IndexSet IS;
     typedef typename GV::template Codim<0>::Iterator Iterator;
     typedef typename G::template Codim<0>::HierarchicIterator HierarchicIterator;
-    typedef MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout> EM;
+    typedef MultipleCodimMultipleGeomTypeMapper<GV,ElementLayout> EM;
     typedef typename G::template Codim<0>::EntityPointer EntityPointer;
-    typedef typename IntersectionIteratorGetter<G,LevelTag>::IntersectionIterator IntersectionIterator;
+    typedef typename G::LevelGridView::IntersectionIterator IntersectionIterator;
     typedef typename G::ctype ct;
     typedef FieldMatrix<double,1,1> MB;
     typedef BCRSMatrix<MB> MatrixType;
@@ -203,7 +203,7 @@ public:
         :    grid(g), level_(lev), indexset(g.levelView(lev).indexSet()), reconstruct(rec),
              numFlux(numFl), diffusivePart(diffPart), alphamax(amax),
              problem(prob),
-             elementmapper(g, g.levelView(lev).indexSet()),
+             elementmapper( g.levelView(lev).indexSet()),
              A(g.size(lev, 0),g.size(lev, 0), (2*dim+1)*g.size(lev, 0), BCRSMatrix<MB>::random), f(g.size(lev, 0)),
              solverName_(solverName), preconditionerName_(preconditionerName),
              T(283.15), mass("brkthr2p2c.dat")
@@ -237,8 +237,8 @@ void Decoupled2p2c<G, RT>::initializeMatrix()
         int rowSize = 1;
 
         // run through all intersections with neighbors
-        IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
-        for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it); is!=endit; ++is)
+        IntersectionIterator endit = it->ilevelend();
+        for (IntersectionIterator is = it->ilevelbegin(); is!=endit; ++is)
             if (is.neighbor()) rowSize++;
         A.setrowsize(indexi, rowSize);
     }
@@ -254,8 +254,8 @@ void Decoupled2p2c<G, RT>::initializeMatrix()
         A.addindex(indexi, indexi);
 
         // run through all intersections with neighbors
-        IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
-        for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it); is!=endit; ++is)
+        IntersectionIterator endit = it->ilevelend();
+        for (IntersectionIterator is = it->ilevelbegin(); is!=endit; ++is)
             if (is.neighbor())
             {
                 // access neighbor
@@ -397,8 +397,8 @@ void Decoupled2p2c<G, RT>::assemble(bool first, const RT t=0)
         }
 
         // iterate over all faces of the cell
-        IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
-        for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it);
+        IntersectionIterator endit = it->ilevelend();
+        for (IntersectionIterator is = it->ilevelbegin();
              is!=endit; ++is)
         {
             // some geometry informations of the face
@@ -886,8 +886,8 @@ int Decoupled2p2c<G,RT>::concentrationUpdate(const RT t, RT& dt, RepresentationT
         FieldMatrix<ct,dim,dim> Ki(problem.soil.K(global,*it,local));
 
         // run through all intersections with neighbors and boundary
-        IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
-        for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it); is!=endit; ++is)
+        IntersectionIterator endit = it->ilevelend();
+        for (IntersectionIterator is = it->ilevelbegin(); is!=endit; ++is)
         {
             // local number of facet
             int numberInSelf = is.numberInSelf();

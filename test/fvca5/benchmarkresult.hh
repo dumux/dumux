@@ -67,8 +67,8 @@ struct BenchmarkResult
 
         const GV& gridview(grid.levelView(grid.maxLevel()));
         const IS& indexset(gridview.indexSet());
-        EM elementmapper(grid,indexset);
-        FM facemapper(grid,indexset);
+        EM elementmapper(indexset);
+        FM facemapper(indexset);
 
         uMean = 0;
         double domainVolume = 0;

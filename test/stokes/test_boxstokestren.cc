@@ -50,12 +50,12 @@ void calculateError(const Grid& grid, const Problem& problem, Vector& solution)
     typedef typename Grid::template Codim<0>::Entity Element;
     typedef typename Grid::LeafGridView::template Codim<0>::Iterator ElementIterator;
     typedef typename Grid::LeafGridView::template Codim<dim>::Iterator VertexIterator;
-    typedef typename Grid::LeafGridView::IndexSet IS;
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,IS,ElementLayout> ElementMapper;
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,IS,VertexLayout> VertexMapper;
+    typedef typename Grid::LeafGridView GV;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GV,ElementLayout> ElementMapper;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GV,VertexLayout> VertexMapper;
 
-    VertexMapper vertexMapper(grid, grid.leafView().indexSet());
-    ElementMapper elementMapper(grid, grid.leafView().indexSet());
+    VertexMapper vertexMapper(grid.leafView());
+    ElementMapper elementMapper(grid.leafView());
 
     Scalar errPressure = 0;
     Scalar errVelocity = 0;

@@ -67,13 +67,13 @@ public:
 
     typedef typename Grid::LeafGridView GV;
     typedef typename GV::IndexSet IS;
-    typedef MultipleCodimMultipleGeomTypeMapper<Grid,IS,P1Layout> VertexMapper;
-    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator
+    typedef MultipleCodimMultipleGeomTypeMapper<GV,P1Layout> VertexMapper;
+    typedef typename Grid::LeafGridView::IntersectionIterator
     IntersectionIterator;
 
     LeafP1MincModel(const Grid& grid, ProblemType& prob) :
-        MincModel(grid, prob), problem(prob), grid_(grid), vertexmapper(grid,
-                                                                        grid.leafIndexSet()), size((*(this->u)).size()), satExFracture(0), pExFracture(0), satErrorFracture(0) {
+        MincModel(grid, prob), problem(prob), grid_(grid), 
+        vertexmapper(grid.leafView()), size((*(this->u)).size()), satExFracture(0), pExFracture(0), satErrorFracture(0) {
         for (int i = 0; i < m/2; ++i) {
             pWFracture[i].resize(size);
             pNFracture[i].resize(size);
@@ -136,12 +136,11 @@ public:
             int size = sfs.size();
 
             // set type of boundary conditions
-            this->localJacobian().template assembleBC<LeafTag>(entity);
+            this->localJacobian().assembleBoundaryCondition(entity);
 
             IntersectionIterator
-                endit = IntersectionIteratorGetter<Grid, LeafTag>::end(entity);
-            for (IntersectionIterator is = IntersectionIteratorGetter<Grid,
-                     LeafTag>::begin(entity); is!=endit; ++is)
+                endit = entity.ileafend();
+            for (IntersectionIterator is = entity.ileafbegin(); is!=endit; ++is)
                 if (is->boundary()) {
                     for (int i = 0; i < size; i++)
                         // handle subentities of this face

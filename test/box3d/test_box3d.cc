@@ -9,7 +9,7 @@
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/solvers.hh>
 
-#include "dumux/operators/p1operatorextended.hh"
+#include <dune/disc/operators/p1operator.hh>
 //#include <dune/disc/groundwater/p1groundwater.hh>
 
 #include <dumux/io/readstarformat.cc>
@@ -34,10 +34,10 @@ double discreteError(const Grid& grid, const Solution& solution, const Problem& 
     enum{dim=Grid::dimension};
     typedef typename Grid::LeafGridView GV;
     typedef typename GV::IndexSet IS;
-    typedef MultipleCodimMultipleGeomTypeMapper<Grid,IS,P1Layout> VM;
+    typedef MultipleCodimMultipleGeomTypeMapper<GV,P1Layout> VM;
     typedef typename GV::template Codim<dim>::Iterator VertexIterator;
 
-    VM vertexMapper(grid, grid.leafIndexSet());
+    VM vertexMapper(grid.leafView());
     double error = 0.0;
     const GV& gridview(grid.leafView());
 

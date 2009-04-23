@@ -2,7 +2,7 @@
 #define DUNE_BOXTRANSPORT_HH
 
 #include <dune/disc/shapefunctions/lagrangeshapefunctions.hh>
-#include "dumux/operators/p1operatorextended.hh"
+#include <dune/disc/operators/p1operator.hh>
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
 #include <dune/istl/bvector.hh>
@@ -20,7 +20,6 @@
 #include "dumux/fvgeometry/fvelementgeometry.hh"
 #include "dumux/nonlinear/newtonmethod.hh"
 #include "boxtransportjacobian.hh"
-#include "dumux/transport/transportproblem.hh"
 #include "dumux/pardiso/pardiso.hh"
 
 namespace Dune
@@ -62,8 +61,8 @@ public:
 
 /** \todo Please doc me! */
 
-template<class G, class RT, class VC, int m=1>
-class LeafP1BoxTransport : public BoxTransport<G, RT, TransportProblem<G, RT, VC>, BoxTransportJacobian<G, RT, VC>,
+template<class G, class RT, class VC, class Problem, int m=1>
+class LeafP1BoxTransport : public BoxTransport<G, RT, Problem, BoxTransportJacobian<G, RT, VC, Problem>,
                                                LeafP1Function<G, RT, m>, LeafP1OperatorAssembler<G, RT, m> >
 {
 public:
@@ -73,12 +72,12 @@ public:
     // define the operator assembler type:
     typedef LeafP1OperatorAssembler<G, RT, m> OperatorAssembler;
 
-    typedef Dune::BoxTransport<G, RT, TransportProblem<G, RT, VC>, BoxTransportJacobian<G, RT, VC>,
+    typedef Dune::BoxTransport<G, RT, Problem, BoxTransportJacobian<G, RT, VC, Problem>,
                                FunctionType, OperatorAssembler> BoxTransport;
 
-    typedef LeafP1BoxTransport<G, RT, VC, m> ThisType;
+    typedef LeafP1BoxTransport<G, RT, VC, Problem, m> ThisType;
 
-    typedef BoxTransportJacobian<G, RT, VC> LocalJacobian;
+    typedef BoxTransportJacobian<G, RT, VC, Problem> LocalJacobian;
 
     // mapper: one data element per vertex
     template<int dim>
@@ -92,8 +91,8 @@ public:
 
     typedef typename G::LeafGridView GV;
     typedef typename GV::IndexSet IS;
-    typedef MultipleCodimMultipleGeomTypeMapper<G,IS,P1Layout> VertexMapper;
-    typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
+    typedef MultipleCodimMultipleGeomTypeMapper<GV,P1Layout> VertexMapper;
+    typedef typename G::LeafGridView::IntersectionIterator IntersectionIterator;
     typedef typename ThisType::FunctionType::RepresentationType VectorType;
     typedef typename ThisType::OperatorAssembler::RepresentationType MatrixType;
     typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator;
@@ -101,8 +100,8 @@ public:
     SeqPardiso<MatrixType,VectorType,VectorType> pardiso;
 #endif
 
-    LeafP1BoxTransport (const G& g, TransportProblem<G, RT, VC>& prob)
-        : BoxTransport(g, prob), grid_(g), vertexmapper(g, g.leafIndexSet()),
+    LeafP1BoxTransport (const G& g, Problem& prob)
+        : BoxTransport(g, prob), grid_(g), vertexmapper(g.leafView()),
           size((*(this->u)).size())
     { }
 
@@ -159,13 +158,13 @@ public:
 
             // set type of boundary conditions
             this->localJacobian().fvGeom.update(entity);
-            this->localJacobian().template assembleBC<LeafTag>(entity);
+            this->localJacobian().assembleBoundaryCondition(entity);
 
             //               for (int i = 0; i < size; i++)
             //                 std::cout << "bc[" << i << "] = " << this->localJacobian().bc(i) << std::endl;
 
-            IntersectionIterator endit = IntersectionIteratorGetter<G,LeafTag>::end(entity);
-            for (IntersectionIterator is = IntersectionIteratorGetter<G,LeafTag>::begin(entity);
+            IntersectionIterator endit = entity.ileafend();
+            for (IntersectionIterator is = entity.ileafbegin();
                  is!=endit; ++is)
                 if (is->boundary())
                 {
@@ -263,7 +262,7 @@ public:
             this->localJacobian().setLocalSolution(entity);
             this->localJacobian().computeElementData(entity);
             this->localJacobian().updateVariableData(entity, this->localJacobian().u);
-            this->localJacobian().template localDefect<LeafTag>(entity, this->localJacobian().u);
+            this->localJacobian().localDefect(entity, this->localJacobian().u);
 
             // begin loop over vertices
             for (int i=0; i < size; i++) {

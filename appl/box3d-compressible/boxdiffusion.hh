@@ -2,7 +2,7 @@
 #define DUNE_BOXDIFFUSION_HH
 
 #include <dune/disc/shapefunctions/lagrangeshapefunctions.hh>
-#include "dumux/operators/p1operatorextended.hh"
+#include <dune/disc/operators/p1operator.hh>
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
 #include <dune/istl/bvector.hh>
@@ -88,8 +88,8 @@ public:
 
     typedef typename G::LeafGridView GV;
     typedef typename GV::IndexSet IS;
-    typedef MultipleCodimMultipleGeomTypeMapper<G,IS,P1Layout> VertexMapper;
-    typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
+    typedef MultipleCodimMultipleGeomTypeMapper<GV,P1Layout> VertexMapper;
+    typedef typename G::LeafGridView::IntersectionIterator IntersectionIterator;
     typedef typename ThisType::FunctionType::RepresentationType VectorType;
     typedef typename ThisType::OperatorAssembler::RepresentationType MatrixType;
     typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator;
@@ -98,7 +98,7 @@ public:
     //#endif
 
     LeafP1BoxDiffusion (const G& g, DiffusionParameters<G, RT>& prob)
-        : BoxDiffusion(g, prob), grid_(g), vertexmapper(g, g.leafIndexSet()),
+        : BoxDiffusion(g, prob), grid_(g), vertexmapper(g.leafView()),
           size((*(this->u)).size())
     { }
 
@@ -159,13 +159,13 @@ public:
 
             // set type of boundary conditions
             this->localJacobian().fvGeom.update(entity);
-            this->localJacobian().template assembleBC<LeafTag>(entity);
+            this->localJacobian().assembleBoundaryCondition(entity);
 
             //               for (int i = 0; i < size; i++)
             //                 std::cout << "bc[" << i << "] = " << this->localJacobian().bc(i) << std::endl;
 
-            IntersectionIterator endit = IntersectionIteratorGetter<G,LeafTag>::end(entity);
-            for (IntersectionIterator is = IntersectionIteratorGetter<G,LeafTag>::begin(entity);
+            IntersectionIterator endit = entity.ileafend();
+            for (IntersectionIterator is = entity.ileafbegin();
                  is!=endit; ++is)
                 if (is->boundary())
                 {
@@ -266,7 +266,7 @@ public:
             bool old = true;
             this->localJacobian().updateVariableData(entity, this->localJacobian().uold, old);
             this->localJacobian().updateVariableData(entity, this->localJacobian().u);
-            this->localJacobian().template localDefect<LeafTag>(entity, this->localJacobian().u);
+            this->localJacobian().localDefect(entity, this->localJacobian().u);
 
             // begin loop over vertices
             for (int i=0; i < size; i++) {

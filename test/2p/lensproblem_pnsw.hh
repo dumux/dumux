@@ -36,7 +36,7 @@ class LensProblem : public TwoPhaseProblem<Grid, Scalar> {
     typedef typename Grid::ctype DT;
     enum {dim=Grid::dimension, numEq=2};
     typedef typename Grid::Traits::template Codim<0>::Entity Entity;
-    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
+    typedef typename Grid::LeafGridView::IntersectionIterator IntersectionIterator;
 
 public:
     // Constructor

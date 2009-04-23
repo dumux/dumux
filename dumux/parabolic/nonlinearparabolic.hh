@@ -71,10 +71,10 @@ public:
 
     typedef typename G::LeafGridView GV;
     typedef typename GV::IndexSet IS;
-    typedef MultipleCodimMultipleGeomTypeMapper<G,IS,P1Layout> VertexMapper;
+    typedef MultipleCodimMultipleGeomTypeMapper<GV,P1Layout> VertexMapper;
 
     LeafP1NonlinearParabolic (const G& g, ProblemType& prob)
-        : NonlinearParabolic(g, prob), grid_(g), vertexmapper(g, g.leafIndexSet())
+        : NonlinearParabolic(g, prob), grid_(g), vertexmapper(g.leafView())
     { }
 
     virtual void initial()

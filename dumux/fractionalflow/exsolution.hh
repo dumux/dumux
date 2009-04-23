@@ -11,7 +11,7 @@
 #include<dune/common/exceptions.hh>
 #include<dune/grid/common/grid.hh>
 #include<dune/grid/common/referenceelements.hh>
-#include<dune/grid/utility/intersectiongetter.hh>
+
 #include<dumux/material/twophaserelations_deprecated.hh>
 #include<dumux/material/linearlaw_deprecated.hh>
 
@@ -46,7 +46,7 @@ template<class G, class RT> class ExSolution
             return gt.dim() == dim;
         }
     };
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout>
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GV,ElementLayout>
     ElementMapper;
 
     //private accsess functions
@@ -72,7 +72,7 @@ protected:
 public:
 
     ExSolution(const G &g, int lev = 0) :
-        grid(g), mapper(grid, grid.levelIndexSet(lev)), uEx(0), error(0),
+        grid(g), mapper( grid.levelIndexSet(lev)), uEx(0), error(0),
         elementvolume(0)
     {
         uExInit();

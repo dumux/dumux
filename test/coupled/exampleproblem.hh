@@ -14,7 +14,7 @@ class ExampleProblem : public StokesProblem<Grid, Scalar>
 {
     enum {dim=Grid::dimension, numEq=Grid::dimension+1};
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
-    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
+    typedef typename Grid::LeafGridView::IntersectionIterator IntersectionIterator;
 
 public:
     virtual FieldVector<Scalar,dim> q(const FieldVector<Scalar,dim>& globalPos, const Element& element,

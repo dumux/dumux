@@ -1,5 +1,5 @@
 # tests where program to build and program to run are equal
-NORMALTESTS = test_transport test_boxtransport test_chtransport test_implicitfvtransport
+NORMALTESTS = test_transport test_boxtransport test_chtransport #test_implicitfvtransport
 
 # list of tests to run
 #TESTS = $(NORMALTESTS)

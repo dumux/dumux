@@ -765,7 +765,7 @@ class P1FunctionExtended
 public:
     typedef FieldVector<RT,m> BlockType;
     typedef BlockVector<BlockType> RepresentationType;
-    typedef MultipleCodimMultipleGeomTypeMapper<G,IS,P1Layout> VM;
+    typedef MultipleCodimMultipleGeomTypeMapper<GV,P1Layout> VM;
     typedef typename P1ExtendOverlap<G,GV,VM,LC>::P1IndexInfoFromGrid P1IndexInfoFromGrid;
 
     //! allocate data
@@ -1219,7 +1219,7 @@ class P1FunctionExtendedManager {
 public:
 
     //! manages nothing
-    P1FunctionExtendedManager (const G& g) : mapper(g,g.leafIndexSet()), grid(g), savedmap(g)
+    P1FunctionExtendedManager (const G& g) : mapper(g.leafIndexSet()), grid(g), savedmap(g)
     {
         // allocate index array to correct size (this possible for vertex data)
         oldindex.resize(mapper.size());

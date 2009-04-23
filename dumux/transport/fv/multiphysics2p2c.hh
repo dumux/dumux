@@ -13,7 +13,7 @@
 #include <dune/common/typetraits.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
-#include <dune/grid/utility/intersectiongetter.hh>
+
 #include <dune/istl/bvector.hh>
 #include <dune/common/fvector.hh>
 #include <dune/subgrid/subgrid.hh>
@@ -68,7 +68,7 @@ class Multiphysics2p2c
     typedef typename GV::IndexSet IS;
     typedef typename GV::template Codim<0>::Iterator ElementIterator;
     typedef typename Grid::template Codim<0>::EntityPointer EntityPointer;
-    typedef typename IntersectionIteratorGetter<Grid,LevelTag>::IntersectionIterator IntersectionIterator;
+    typedef typename Grid::LevelGridView::IntersectionIterator IntersectionIterator;
     typedef typename Grid::ctype ct;
 
     // data typedefs
@@ -276,8 +276,8 @@ void Multiphysics2p2c<Grid, Scalar>::initializeMatrix()
         int rowSize = 1;
 
         // run through all intersections with neighbors
-        IntersectionIterator endit = IntersectionIteratorGetter<Grid,LevelTag>::end(*eIt);
-        for (IntersectionIterator isIt = IntersectionIteratorGetter<Grid,LevelTag>::begin(*eIt); isIt!=endit; ++isIt)
+        IntersectionIterator endit = eIt->ilevelend();
+        for (IntersectionIterator isIt = eIt->ilevelbegin(); isIt!=endit; ++isIt)
             if (isIt->neighbor()) rowSize++;
         A.setrowsize(globalIdxi, rowSize);
     }
@@ -293,8 +293,8 @@ void Multiphysics2p2c<Grid, Scalar>::initializeMatrix()
         A.addindex(globalIdxi, globalIdxi);
 
         // run through all intersections with neighbors
-        IntersectionIterator endit = IntersectionIteratorGetter<Grid,LevelTag>::end(*eIt);
-        for (IntersectionIterator isIt = IntersectionIteratorGetter<Grid,LevelTag>::begin(*eIt); isIt!=endit; ++isIt)
+        IntersectionIterator endit = eIt->ilevelend();
+        for (IntersectionIterator isIt = eIt->ilevelbegin(); isIt!=endit; ++isIt)
             if (isIt->neighbor())
             {
                 // access neighbor
@@ -946,8 +946,8 @@ int Multiphysics2p2c<Grid,Scalar>::concentrationUpdate(const Scalar t, Scalar& d
         FieldMatrix<ct,dim,dim> Ki(problem.soil.K(globalPos,*eIt,localPos));
 
         // run through all intersections with neighbors and boundary
-        IntersectionIterator isItEnd = IntersectionIteratorGetter<Grid,LevelTag>::end(*eIt);
-        for (IntersectionIterator isIt = IntersectionIteratorGetter<Grid,LevelTag>::begin(*eIt); isIt!=isItEnd; ++isIt)
+        IntersectionIterator isItEnd = eIt->ilevelend();
+        for (IntersectionIterator isIt = eIt->ilevelbegin(); isIt!=isItEnd; ++isIt)
         {
             // get geometry informations of face
             GeometryType gtf = isIt->intersectionSelfLocal().type(); //geometry type
@@ -1314,8 +1314,8 @@ void Multiphysics2p2c<Grid,Scalar>::postProcessUpdate(double t, double dt)
             if (problem.variables.saturation[globalIdxi] != 1. && problem.variables.saturation[globalIdxi] != 0. ||fabs(problem.variables.volErr[globalIdxi] * dt) > 5e-4)
             {
                 nextsubdomain[globalIdxi] = true;
-                IntersectionIterator isItEnd = IntersectionIteratorGetter<Grid,LevelTag>::end(*eIt);
-                for (IntersectionIterator isIt = IntersectionIteratorGetter<Grid,LevelTag>::begin(*eIt);    isIt!=isItEnd; ++isIt)
+                IntersectionIterator isItEnd = eIt->ilevelend();
+                for (IntersectionIterator isIt = eIt->ilevelbegin();    isIt!=isItEnd; ++isIt)
                 {
                     if (isIt->neighbor())
                     {

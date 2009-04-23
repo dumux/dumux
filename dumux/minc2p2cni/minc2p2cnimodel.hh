@@ -4,7 +4,7 @@
 #define DUNE_TWOPHASEHEATMODEL_HH
 
 #include <dune/disc/shapefunctions/lagrangeshapefunctions.hh>
-#include "dumux/operators/p1operatorextended.hh"
+#include <dune/disc/operators/p1operator.hh>
 #include "dumux/nonlinear/nonlinearmodel.hh"
 #include "dumux/fvgeometry/fvelementgeometry.hh"
 #include "dumux/io/exporttodgf.hh"
@@ -62,12 +62,12 @@ public:
 
     typedef typename Grid::LeafGridView GridView;
     typedef typename GridView::IndexSet IS;
-    typedef MultipleCodimMultipleGeomTypeMapper<Grid,IS,P1Layout> VertexMapper;
-    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator
+    typedef MultipleCodimMultipleGeomTypeMapper<GV,P1Layout> VertexMapper;
+    typedef typename Grid::LeafGridView::IntersectionIterator
     IntersectionIterator;
 
     LeafP1TwoPhaseModel(const Grid& g, ProblemType& prob) :
-        ThisTwoPhaseHeatModel(g, prob), problem(prob), _grid(g), vertexmapper(g,    g.leafIndexSet()), size((*(this->u)).size())
+        ThisTwoPhaseHeatModel(g, prob), problem(prob), _grid(g), vertexmapper(    g.leafIndexSet()), size((*(this->u)).size())
     {
     }
 
@@ -132,10 +132,10 @@ public:
             int size = sfs.size();
 
             // set type of boundary conditions
-            this->localJacobian().template assembleBC<LeafTag>(entity);
+            this->localJacobian().assembleBoundaryCondition(entity);
 
             IntersectionIterator
-                endit = IntersectionIteratorGetter<Grid, LeafTag>::end(entity);
+                endit = entity.ileafend();
             for (IntersectionIterator is = IntersectionIteratorGetter<Grid,
                      LeafTag>::begin(entity); is!=endit; ++is)
                 if (is->boundary()) {
@@ -387,7 +387,7 @@ public:
             bool old = true;
             this->localJacobian().updateVariableData(entity, this->localJacobian().uold, old);
             this->localJacobian().updateVariableData(entity, this->localJacobian().u);
-            this->localJacobian().template localDefect<LeafTag>(entity, this->localJacobian().u);
+            this->localJacobian().localDefect(entity, this->localJacobian().u);
 
             // begin loop over vertices
             for (int idx=0; idx < size; idx++) {

@@ -2,7 +2,7 @@
 #define DUNE_BOXSTOKESTREN_HH
 
 #include <dune/disc/shapefunctions/lagrangeshapefunctions.hh>
-#include "dumux/operators/p1operatorextended.hh"
+#include <dune/disc/operators/p1operator.hh>
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
 #include <dune/istl/bvector.hh>
@@ -95,8 +95,8 @@ public:
 
     typedef typename Grid::LeafGridView GV;
     typedef typename GV::IndexSet IS;
-    typedef MultipleCodimMultipleGeomTypeMapper<Grid,IS,P1Layout> VertexMapper;
-    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
+    typedef MultipleCodimMultipleGeomTypeMapper<GV,P1Layout> VertexMapper;
+    typedef typename Grid::LeafGridView::IntersectionIterator IntersectionIterator;
     typedef typename ThisType::FunctionType::RepresentationType VectorType;
     typedef typename ThisType::OperatorAssembler::RepresentationType MatrixType;
     typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator;
@@ -105,7 +105,7 @@ public:
 #endif
 
     LeafP1BoxStokesTrEn (const Grid& grid, StokesTrEnProblem<Grid, Scalar>& prob)
-        : BoxStokesTrEn(grid, prob), grid_(grid), vertexmapper(grid, grid.leafIndexSet()),
+        : BoxStokesTrEn(grid, prob), grid_(grid), vertexmapper(grid.leafView()),
           size((*(this->u)).size()), pressure(size), xVelocity(size), yVelocity(size),
           partialDensity(size), temperature(size), uOldNewtonStep(size)
     { }
@@ -137,7 +137,7 @@ public:
                 sfs=Dune::LagrangeShapeFunctions<Scalar,Scalar,dim>::general(gt, 1);
             int size = sfs.size();
 
-            IntersectionIterator is = IntersectionIteratorGetter<Grid,LeafTag>::end(entity);
+            IntersectionIterator is = entity.ileafend();
 
             for (int i = 0; i < size; i++)
             {
@@ -169,10 +169,10 @@ public:
 
             // set type of boundary conditions
             this->localJacobian().fvGeom.update(entity);
-            this->localJacobian().template assembleBC<LeafTag>(entity);
+            this->localJacobian().assembleBoundaryCondition(entity);
 
-            IntersectionIterator endit = IntersectionIteratorGetter<Grid,LeafTag>::end(entity);
-            for (IntersectionIterator is = IntersectionIteratorGetter<Grid,LeafTag>::begin(entity);
+            IntersectionIterator endit = entity.ileafend();
+            for (IntersectionIterator is = entity.ileafbegin();
                  is!=endit; ++is)
                 if (is->boundary())
                 {
@@ -193,7 +193,7 @@ public:
 
                                     BoundaryConditions::Flags bctype = this->problem.bctype(global, entity, is, local);
                                     if (bctype == BoundaryConditions::dirichlet) {
-                                        FieldVector<Scalar,dim+2> dirichlet = this->problem.g(global, entity, is, local);
+                                        FieldVector<Scalar,dim+3> dirichlet = this->problem.g(global, entity, is, local);
                                         for (int eq = 0; eq < dim+2; eq++)
                                             (*(this->u))[globalId][eq] = dirichlet[eq];
                                     }
@@ -299,7 +299,7 @@ public:
             this->localJacobian().setLocalSolution(entity);
             this->localJacobian().computeElementData(entity);
             this->localJacobian().updateVariableData(entity, this->localJacobian().u);
-            this->localJacobian().template localDefect<LeafTag>(entity, this->localJacobian().u);
+            this->localJacobian().localDefect(entity, this->localJacobian().u);
 
             // begin loop over vertices
             for (int i=0; i < size; i++) {

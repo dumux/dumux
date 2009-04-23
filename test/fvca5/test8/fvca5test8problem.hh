@@ -23,11 +23,11 @@ class FVCA5Test8Problem : public DeprecatedDiffusionProblem<G,RT,VC>
     enum {n=G::dimension};
     typedef typename G::Traits::template Codim<0>::Entity Entity;
     typedef typename G::Traits::LevelIndexSet IS;
-    typedef MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout> EM;
+    typedef MultipleCodimMultipleGeomTypeMapper<GV,ElementLayout> EM;
 
 public:
     FVCA5Test8Problem(VC& variables, G& grid)
-        : DeprecatedDiffusionProblem<G,RT,VC>(variables), elementmapper(grid, grid.levelIndexSet(grid.maxLevel()))
+        : DeprecatedDiffusionProblem<G,RT,VC>(variables), elementmapper( grid.levelIndexSet(grid.maxLevel()))
     {
         permloc_[0][0] = permloc_[1][1] = 1.0;
         permloc_[0][1] = permloc_[1][0] = 0.0;

@@ -4,7 +4,7 @@
 #define DUNE_ONEPHASEMODEL_HH
 
 #include <dune/disc/shapefunctions/lagrangeshapefunctions.hh>
-#include "dumux/operators/p1operatorextended.hh"
+#include <dune/disc/operators/p1operator.hh>
 #include "dumux/nonlinear/nonlinearmodel.hh"
 #include "dumux/nonlinear/newtonmethod.hh"
 #include "dumux/fvgeometry/fvelementgeometry.hh"

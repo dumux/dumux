@@ -17,7 +17,7 @@
 #include<dune/common/geometrytype.hh>
 #include<dune/grid/common/grid.hh>
 #include<dune/grid/common/mcmgmapper.hh>
-#include<dune/grid/utility/intersectiongetter.hh>
+
 #include<dune/istl/bvector.hh>
 #include<dune/istl/operators.hh>
 #include<dune/istl/bcrsmatrix.hh>
@@ -61,12 +61,12 @@ class MimeticOperatorAssembler : public LevelCROperatorAssembler<G, RT, m>
     typedef LevelP0Function<G,RT,2*n> VType;
     typedef BlockVector< FieldVector<RT,1> > PType;
     typedef typename GV::template Codim<0>::Iterator Iterator;
-    typedef MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout> EM;
+    typedef MultipleCodimMultipleGeomTypeMapper<GV,ElementLayout> EM;
 
 public:
 
     MimeticOperatorAssembler (const G& grid, int level)
-        : LevelCROperatorAssembler<G, RT, m>(grid, level), elementmapper(grid, grid.levelIndexSet(level))
+        : LevelCROperatorAssembler<G, RT, m>(grid, level), elementmapper(grid.levelView(level))
     {}
 
     template<class I>

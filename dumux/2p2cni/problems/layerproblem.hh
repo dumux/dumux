@@ -43,7 +43,7 @@ class LayerProblem : public TwoPTwoCProblem<G, RT> {
     typedef typename G::ctype DT;
     enum {dim=G::dimension, m=2};
     typedef typename G::Traits::template Codim<0>::Entity Entity;
-    typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
+    typedef typename G::LeafGridView::IntersectionIterator IntersectionIterator;
 
 public:
     enum {pWIdx = 0, satNIdx = 1};

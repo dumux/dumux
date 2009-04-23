@@ -54,6 +54,7 @@ class SimpleProblem : public TransportProblem<Grid, Scalar, VC> {
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
     typedef FieldVector<Scalar,dim> LocalPosition;
     typedef FieldVector<Scalar,dim> GlobalPosition;
+    typedef typename Grid::template Codim<0>::LeafIntersectionIterator IntersectionIterator;
 
 private:
     Scalar left;
@@ -90,7 +91,21 @@ public:
         return 0;
     }
 
-    SimpleProblem(VC& variableobj, Fluid& wettingPhase, Fluid& nonwettingPhase, Matrix2p<Grid,Scalar>& soil, TwoPhaseRelations<Grid,Scalar>& materialLaw  = *(new TwoPhaseRelations<Grid,Scalar>), GlobalPosition& Left = 0, GlobalPosition& Right = 1)
+    virtual Scalar J (const GlobalPosition& globalPos, const Element& element,
+            const IntersectionIterator& intersectionIt,
+                               const LocalPosition& localPos) const
+    {
+        return neumannSat(globalPos, element, localPos, 0);
+    }
+
+    BoundaryConditions::Flags bctype (const GlobalPosition& globalPos, const Element& element,
+                const IntersectionIterator& intersectionIt,
+                                   const LocalPosition& localPos) const
+        {
+            return bctypeSat(globalPos, element, localPos);
+        }
+
+     SimpleProblem(VC& variableobj, Fluid& wettingPhase, Fluid& nonwettingPhase, Matrix2p<Grid,Scalar>& soil, TwoPhaseRelations<Grid,Scalar>& materialLaw  = *(new TwoPhaseRelations<Grid,Scalar>), GlobalPosition& Left = 0, GlobalPosition& Right = 1)
         : TransportProblem<Grid, Scalar, VC>(variableobj, wettingPhase, nonwettingPhase, soil, materialLaw), left(Left[0]), right(Right[0])
     {    }
 

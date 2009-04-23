@@ -36,7 +36,7 @@ class TwoPHeatProblem: public TwoPhaseHeatProblem<Grid, Scalar>
     enum
         {   dim=Grid::dimension, numEq=3};
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
-    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
+    typedef typename Grid::LeafGridView::IntersectionIterator IntersectionIterator;
 
     typedef BasicDomain<Grid, Scalar> ParentType;
     // the domain traits of the domain

@@ -129,7 +129,20 @@ public:
      */
     DiffusionProblem(VC& variables,Fluid& wettingPhase, Fluid& nonwettingPhase, Matrix2p<Grid, Scalar>& soil, TwoPhaseRelations<Grid, Scalar>& materialLaw = *(new TwoPhaseRelations<Grid,Scalar>),
                      const bool capillarity = false)
-        : variables(variables), wettingPhase(wettingPhase), nonWettingPhase(nonwettingPhase), soil_(soil), materialLaw_(materialLaw), capillarity(capillarity),gravity_(0)
+        : variables(variables), materialLaw_(materialLaw), 
+            wettingPhase(wettingPhase), nonWettingPhase(nonwettingPhase), soil_(soil), 
+            capillarity(capillarity),gravity_(0)
+    {}
+
+    //! constructor
+    /** @param law implementation of Material laws. Class TwoPhaseRelations or derived.
+     *  @param cap flag to include capillary forces.
+     */
+    DiffusionProblem(VC& variables, TwoPhaseRelations<Grid, Scalar>& materialLaw = *(new TwoPhaseRelations<Grid,Scalar>),
+                     const bool capillarity = false)
+        : variables(variables), materialLaw_(materialLaw), 
+        wettingPhase(materialLaw_.wettingPhase), nonWettingPhase(materialLaw.nonwettingPhase), soil_(materialLaw.soil), 
+        capillarity(capillarity),gravity_(0)
     {}
 
     //! always define virtual destructor in abstract base class
@@ -137,10 +150,10 @@ public:
 
     //! a class describing relations between two phases and the porous medium
     VC& variables;
+    TwoPhaseRelations<Grid,Scalar>& materialLaw_;
     Fluid& wettingPhase;
     Fluid& nonWettingPhase;
     Matrix2p<Grid, Scalar>& soil_;
-    TwoPhaseRelations<Grid,Scalar>& materialLaw_;
     const bool capillarity;
 private:
     FieldVector<Scalar,dim> gravity_;

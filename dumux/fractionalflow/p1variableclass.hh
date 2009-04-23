@@ -48,8 +48,9 @@ class P1VariableClass
     typedef    typename Grid::Traits::template Codim<0>::Entity Element;
     typedef    typename Grid::Traits::template Codim<dim>::Entity Vertex;
     typedef typename Grid::Traits::LevelIndexSet IndexSet;
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,IndexSet,ElementLayout> ElementMapper;
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,IndexSet,VertexLayout> VertexMapper;
+    typedef typename Grid::LevelGridView GV;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GV,ElementLayout> ElementMapper;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GV,VertexLayout> VertexMapper;
 
 public:
     typedef Dune::BlockVector< Dune::FieldVector<Scalar,1> > ScalarVectorType;
@@ -71,7 +72,7 @@ public:
     P1VariableClass(Grid& grid, Scalar& initialSat = *(new Scalar(0)), Scalar& initalPress = *(new Scalar(0)), Dune::FieldVector<Scalar, dim>& initialVel = *(new Dune::FieldVector<Scalar, dim> (0)), int transLev = -1, int diffLev = -1)
         : grid(grid),
           transLevel((transLev >= 0) ? transLev : grid.maxLevel()), diffLevel((diffLev >= 0) ? diffLev : grid.maxLevel()),
-          diffMapper(grid, (diffLev >= 0) ? grid.levelIndexSet(diffLev) : grid.levelIndexSet(grid.maxLevel())), transMapper(grid, (transLev >= 0) ? grid.levelIndexSet(transLev) : grid.levelIndexSet(grid.maxLevel())),
+          diffMapper((diffLev >= 0) ? grid.levelView(diffLev) : grid.levelView(grid.maxLevel())), transMapper((transLev >= 0) ? grid.levelView(transLev) : grid.levelView(grid.maxLevel())),
           diffSize(diffMapper.size()),transSize(transMapper.size())
     {
         initSat(initialSat, transSize);

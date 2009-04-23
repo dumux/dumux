@@ -59,6 +59,23 @@ public:
         return Dune::BoundaryConditions::neumann;
     }
 
+    RT sourcePress   (const Dune::FieldVector<DT,n>& x, const Entity& e,
+                 const Dune::FieldVector<DT,n>& xi)
+    {
+        //        Dune::FieldVector<DT,n> m(150);
+        //        if ((x-m).two_norm()<1) return 1e-6;
+        return 0;
+    }
+
+    typename Dune::BoundaryConditions::Flags bctypePress (const Dune::FieldVector<DT,n>& x, const Entity& e,
+                                                     const Dune::FieldVector<DT,n>& xi) const
+    {
+        if (x[0] > 1-1E-6 || x[0] < 1e-6)
+            return Dune::BoundaryConditions::dirichlet;
+        // all other boundaries
+        return Dune::BoundaryConditions::neumann;
+    }
+
     RT dirichletPress (const Dune::FieldVector<DT,n>& x, const Entity& e,
                        const Dune::FieldVector<DT,n>& xi) const
     {

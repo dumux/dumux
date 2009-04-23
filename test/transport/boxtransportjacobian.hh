@@ -13,13 +13,12 @@
 #include<dune/grid/common/referenceelements.hh>
 #include<dune/common/geometrytype.hh>
 #include<dune/grid/common/quadraturerules.hh>
-#include <dune/grid/utility/intersectiongetter.hh>
+
 
 #include<dune/disc/shapefunctions/lagrangeshapefunctions.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
 
 #include<dumux/operators/boxjacobian.hh>
-#include<dumux/transport/transportproblem.hh>
 
 namespace Dune
 {
@@ -38,16 +37,16 @@ namespace Dune
   - Grid     a DUNE grid type
   - Scalar    type used for return values
 */
-template<class Grid, class Scalar, class VC, class BoxFunction = LeafP1Function<Grid, Scalar, 1> >
+template<class Grid, class Scalar, class VC, class Problem, class BoxFunction = LeafP1Function<Grid, Scalar, 1> >
 class BoxTransportJacobian
-    : public BoxJacobian<BoxTransportJacobian<Grid,Scalar,VC,BoxFunction>,Grid,Scalar,1,BoxFunction>
+    : public BoxJacobian<BoxTransportJacobian<Grid,Scalar,VC,Problem,BoxFunction>,Grid,Scalar,1,BoxFunction>
 {
     typedef typename Grid::Traits::template Codim<0>::Entity Entity;
     enum {dim=Grid::dimension};
     enum {numEq = 1};
     enum {SIZE=LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::maxsize};
     typedef typename Entity::Geometry Geometry;
-    typedef BoxTransportJacobian<Grid,Scalar,VC,BoxFunction> ThisType;
+    typedef BoxTransportJacobian<Grid,Scalar,VC,Problem,BoxFunction> ThisType;
     typedef typename LocalJacobian<ThisType,Grid,Scalar,1>::VBlockType VBlockType;
     typedef Dune::FVElementGeometry<Grid> FVElementGeometry;
     typedef FieldMatrix<Scalar,dim,dim> FMatrix;
@@ -56,7 +55,7 @@ class BoxTransportJacobian
 public:
 
     //! Constructor
-    BoxTransportJacobian (TransportProblem<Grid,Scalar,VC>& params,
+    BoxTransportJacobian (Problem& params,
                           bool levelBoundaryAsDirichlet_, const Grid& grid,
                           BoxFunction& sol,
                           bool procBoundaryAsDirichlet_=true)
@@ -180,7 +179,7 @@ public:
         return;
     }
 
-    template<class TypeTag> void assembleBC(const Entity& e) {
+    void assembleBoundaryCondition(const Entity& e) {
         Dune::GeometryType gt = e.geometry().type();
         const typename Dune::LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::value_type
             &sfs=Dune::LagrangeShapeFunctions<Scalar, Scalar, dim>::general(gt, 1);
@@ -193,14 +192,13 @@ public:
         for (int i = 0; i < sfs.size(); i++) {
             this->bctype[i].assign(BoundaryConditions::neumann);
             this->b[i] = 0;
-            this->dirichletIndex[i] = 0;
         }
 
         // evaluate boundary conditions via intersection iterator
-        typedef typename IntersectionIteratorGetter<Grid,TypeTag>::IntersectionIterator IntersectionIterator;
+        typedef typename Grid::LeafGridView::IntersectionIterator IntersectionIterator;
 
-        IntersectionIterator endit = IntersectionIteratorGetter<Grid, TypeTag>::end(e);
-        for (IntersectionIterator it = IntersectionIteratorGetter<Grid, TypeTag>::begin(e); it!=endit; ++it)
+        IntersectionIterator endit = e.ileafend();
+        for (IntersectionIterator it = e.ileafbegin(); it!=endit; ++it)
         {
             // if we have a neighbor then we assume there is no boundary (forget interior boundaries)
             // in level assemble treat non-level neighbors as boundary
@@ -213,7 +211,6 @@ public:
 
             // determine boundary condition type for this face, initialize with processor boundary
             FieldVector<typename BoundaryConditions::Flags, numEq> bctypeface(BoundaryConditions::process);
-            FieldVector<int,numEq> dirichletIdx(0);
 
             // handle face on exterior boundary, this assumes there are no interior boundaries
             if (it->boundary()) {
@@ -285,8 +282,7 @@ public:
                         if (sfs[i].entity()==it->numberInSelf()) {
                             if (this->bctype[i][equationNumber] < bctypeface[equationNumber]) {
                                 this->bctype[i][equationNumber] = bctypeface[equationNumber];
-                                this->dirichletIndex[i][equationNumber] = dirichletIdx[equationNumber];
-
+ 
                                 if (bctypeface[equationNumber] == BoundaryConditions::process)
                                     this->b[i][equationNumber] = 0;
                                 if (bctypeface[equationNumber] == BoundaryConditions::dirichlet) {
@@ -302,7 +298,6 @@ public:
                         {
                             if (this->bctype[i][equationNumber] < bctypeface[equationNumber]) {
                                 this->bctype[i][equationNumber] = bctypeface[equationNumber];
-                                this->dirichletIndex[i][equationNumber] = dirichletIdx[equationNumber];
                                 if (bctypeface[equationNumber] == BoundaryConditions::process)
                                     this->b[i][equationNumber] = 0;
                                 if (bctypeface[equationNumber] == BoundaryConditions::dirichlet) {
@@ -325,7 +320,7 @@ public:
     ElementData elData;
     std::vector<VariableNodeData> varNData;
     std::vector<VariableNodeData> oldVarNData;
-    TransportProblem<Grid,Scalar,VC>& problem;
+    Problem& problem;
 };
 }
 #endif

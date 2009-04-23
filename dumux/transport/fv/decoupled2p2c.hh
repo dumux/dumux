@@ -14,7 +14,7 @@
 #include <dune/common/typetraits.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
-#include <dune/grid/utility/intersectiongetter.hh>
+
 #include <dune/istl/bvector.hh>
 #include <dune/common/fvector.hh>
 #include <dune/common/stdstreams.hh>
@@ -68,7 +68,7 @@ class Decoupled2p2c
     typedef typename GV::IndexSet IS;
     typedef typename GV::template Codim<0>::Iterator ElementIterator;
     typedef typename Grid::template Codim<0>::EntityPointer EntityPointer;
-    typedef typename IntersectionIteratorGetter<Grid,LevelTag>::IntersectionIterator IntersectionIterator;
+    typedef typename Grid::LevelGridView::IntersectionIterator IntersectionIterator;
 
     // the number type used in the grid class
     typedef typename Grid::ctype ct;
@@ -249,8 +249,8 @@ void Decoupled2p2c<Grid, Scalar>::initializeMatrix()
         int rowSize = 1;
 
         // run through all intersections with neighbors
-        IntersectionIterator isItEnd = IntersectionIteratorGetter<Grid,LevelTag>::end(*eIt);
-        for (IntersectionIterator isIt = IntersectionIteratorGetter<Grid,LevelTag>::begin(*eIt); isIt != isItEnd; ++isIt)
+        IntersectionIterator isItEnd = eIt->ilevelend();
+        for (IntersectionIterator isIt = eIt->ilevelbegin(); isIt != isItEnd; ++isIt)
             if (isIt->neighbor()) rowSize++;
         A.setrowsize(globalIdxi, rowSize);
     }
@@ -266,8 +266,8 @@ void Decoupled2p2c<Grid, Scalar>::initializeMatrix()
         A.addindex(globalIdxi, globalIdxi);
 
         // run through all intersections with neighbors
-        IntersectionIterator isItEnd = IntersectionIteratorGetter<Grid,LevelTag>::end(*eIt);
-        for (IntersectionIterator isIt = IntersectionIteratorGetter<Grid,LevelTag>::begin(*eIt); isIt!=isItEnd; ++isIt)
+        IntersectionIterator isItEnd = eIt->ilevelend();
+        for (IntersectionIterator isIt = eIt->ilevelbegin(); isIt!=isItEnd; ++isIt)
             if (isIt->neighbor())
             {
                 // access neighbor
@@ -394,8 +394,8 @@ void Decoupled2p2c<Grid, Scalar>::assemble(bool first, const Scalar t=0)
         }
 
         // iterate over all faces of the cell
-        IntersectionIterator isItEnd = IntersectionIteratorGetter<Grid,LevelTag>::end(*eIt);
-        for (IntersectionIterator isIt = IntersectionIteratorGetter<Grid,LevelTag>::begin(*eIt);
+        IntersectionIterator isItEnd = eIt->ilevelend();
+        for (IntersectionIterator isIt = eIt->ilevelbegin();
              isIt!=isItEnd; ++isIt)
         {
             // some geometry informations of the face
@@ -873,8 +873,8 @@ int Decoupled2p2c<Grid,Scalar>::concentrationUpdate(const Scalar t, Scalar& dt, 
         FieldMatrix<ct,dim,dim> Ki(problem.soil.K(globalPos,*eIt,localPos));
 
         // run through all intersections with neighbors and boundary
-        IntersectionIterator isItEnd = IntersectionIteratorGetter<Grid,LevelTag>::end(*eIt);
-        for (IntersectionIterator isIt = IntersectionIteratorGetter<Grid,LevelTag>::begin(*eIt); isIt!=isItEnd; ++isIt)
+        IntersectionIterator isItEnd = eIt->ilevelend();
+        for (IntersectionIterator isIt = eIt->ilevelbegin(); isIt!=isItEnd; ++isIt)
         {
             // get geometry informations of face
             GeometryType gtf = isIt->intersectionSelfLocal().type(); //geometry type

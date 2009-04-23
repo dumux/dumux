@@ -23,7 +23,7 @@ class FVCA5Test9Problem : public DeprecatedDiffusionProblem<G,RT,VC>
     enum {n=G::dimension};
     typedef typename G::Traits::template Codim<0>::Entity Entity;
     typedef typename G::Traits::LevelIndexSet IS;
-    typedef MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout> EM;
+    typedef MultipleCodimMultipleGeomTypeMapper<GV,ElementLayout> EM;
 
 public:
     FVCA5Test9Problem(VC& variables, double delta = 1.0e-3, double theta = 1.178097245096172418)

@@ -10,7 +10,7 @@ class DiffusionParameters
     typedef typename G::ctype DT;
     enum {n=G::dimension, m=1};
     typedef typename G::Traits::template Codim<0>::Entity Entity;
-    typedef typename Dune::IntersectionIteratorGetter<G,Dune::LeafTag>::IntersectionIterator IntersectionIterator;
+    typedef typename G::LeafGridView::IntersectionIterator IntersectionIterator;
 
 public:
     DiffusionParameters ()

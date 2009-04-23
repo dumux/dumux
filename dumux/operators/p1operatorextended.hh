@@ -17,7 +17,7 @@
 #include<dune/common/geometrytype.hh>
 #include<dune/grid/common/grid.hh>
 #include<dune/grid/common/mcmgmapper.hh>
-#include<dune/grid/utility/intersectiongetter.hh>
+
 #include<dune/istl/bvector.hh>
 #include<dune/istl/operators.hh>
 #include<dune/istl/bcrsmatrix.hh>
@@ -606,8 +606,8 @@ public:
     typedef typename G::Traits::GlobalIdSet IDS;
     typedef typename IDS::IdType IdType;
     typedef std::set<IdType> GIDSet;
-    typedef MultipleCodimMultipleGeomTypeMapper<G,IS,P1Layout> VM;
-    typedef MultipleCodimMultipleGeomTypeMapper<G,IS,AllLayout> AM;
+    typedef MultipleCodimMultipleGeomTypeMapper<GV,P1Layout> VM;
+    typedef MultipleCodimMultipleGeomTypeMapper<GV,AllLayout> AM;
 
 private:
 
@@ -855,7 +855,7 @@ private:
 public:
 
     P1OperatorBase (const G& g, const GV& gridView, LC lcomm, bool extendoverlap=false)
-        : grid(g),gv(gridView),lc(lcomm),vertexmapper(g,gridView.indexSet()),allmapper(g,gridView.indexSet()),links(),
+        : grid(g),gv(gridView),lc(lcomm),vertexmapper(gridView.indexSet()),allmapper(gridView.indexSet()),links(),
           initialized(init(g,gridView,lc,extendoverlap)),A(size(),size(),nnz(gridView.indexSet()),RepresentationType::random)
 
     {

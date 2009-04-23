@@ -43,7 +43,7 @@ template<class Grid, class Scalar, class VC> class FVTransSubProbs: public Trans
     typedef typename GridView::IndexSet IndexSet;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,IndexSet,ElementLayout> ElementMapper;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GV,ElementLayout> ElementMapper;
     typedef typename Grid::template Codim<0>::EntityPointer ElementPointer;
     typedef typename HostGrid::template Codim<0>::EntityPointer HostElementPointer;
     typedef typename GridView::IntersectionIterator IntersectionIterator;

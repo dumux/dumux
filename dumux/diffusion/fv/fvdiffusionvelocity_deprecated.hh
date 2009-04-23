@@ -19,7 +19,7 @@ template<class G, class RT, class VC> class DeprecatedFVDiffusionVelocity :
     typedef typename G::LevelGridView GV;
     typedef typename GV::IndexSet IS;
     typedef typename GV::template Codim<0>::Iterator Iterator;
-    typedef typename IntersectionIteratorGetter<G,LevelTag>::IntersectionIterator
+    typedef typename G::LevelGridView::IntersectionIterator
     IntersectionIterator;
     typedef typename G::template Codim<0>::EntityPointer EntityPointer;
 
@@ -72,7 +72,7 @@ public:
             double faceVol[2*dim];
 
             // run through all intersections with neighbors and boundary
-            IntersectionIterator endit = IntersectionIteratorGetter<G, LevelTag>::end(*it);
+            IntersectionIterator endit = it->ilevelend();
             for (IntersectionIterator is = IntersectionIteratorGetter<G,
                      LevelTag>::begin(*it); is!=endit; ++is) {
                 // get geometry type of face

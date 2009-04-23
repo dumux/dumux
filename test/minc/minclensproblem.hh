@@ -43,7 +43,7 @@ class MincLensProblem : public MincProblem<Grid, Scalar, numEq> {
     enum {dim=Grid::dimension};
     enum {nCont = numEq/2};
     typedef typename Grid::Traits::template Codim<0>::Entity Entity;
-    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
+    typedef typename Grid::LeafGridView::IntersectionIterator IntersectionIterator;
 
 public:
     // Constructor

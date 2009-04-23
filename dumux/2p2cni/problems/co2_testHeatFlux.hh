@@ -46,7 +46,7 @@ class CO2Problem2D : public TwoPhaseHeatProblem<G, RT> {
     enum {n=G::dimension, m=3};
     enum {swrIdx=0, snrIdx=1, lamIdx=2, pbIdx=3};
     typedef typename G::Traits::template Codim<0>::Entity Entity;
-    typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator IntersectionIterator;
+    typedef typename G::LeafGridView::IntersectionIterator IntersectionIterator;
 
 public:
     virtual const FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& x, const Entity& e,

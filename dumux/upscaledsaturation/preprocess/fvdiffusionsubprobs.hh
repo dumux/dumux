@@ -65,7 +65,7 @@ template<class Grid, class Scalar, class VC> class FVDiffSubProbs: public Diffus
     typedef typename GridView::IndexSet IndexSet;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
-    typedef MultipleCodimMultipleGeomTypeMapper<Grid,IndexSet,ElementLayout> ElementMapper;
+    typedef MultipleCodimMultipleGeomTypeMapper<GV,ElementLayout> ElementMapper;
     typedef typename Grid::template Codim<0>::EntityPointer ElementPointer;
     typedef typename HostGrid::template Codim<0>::EntityPointer HostElementPointer;
     typedef typename GridView::IntersectionIterator IntersectionIterator;

@@ -14,7 +14,7 @@ class YXProblem : public StokesProblem<Grid, Scalar>
 {
     enum {dim=Grid::dimension, numEq=Grid::dimension+1};
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
-    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
+    typedef typename Grid::LeafGridView::IntersectionIterator IntersectionIterator;
 
 public:
     virtual FieldVector<Scalar,dim> velocity(const FieldVector<Scalar,dim>& globalPos) const

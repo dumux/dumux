@@ -12,7 +12,7 @@
 #include<dune/common/exceptions.hh>
 #include<dune/grid/common/grid.hh>
 #include<dune/grid/common/referenceelements.hh>
-#include<dune/grid/utility/intersectiongetter.hh>
+
 #include<dune/disc/operators/boundaryconditions.hh>
 #include<dumux/material/twophaserelations.hh>
 
@@ -41,7 +41,7 @@ template<class G, class RT> class RichardsProblem {
     typedef typename G::ctype DT;
     enum {n=G::dimension, m=1};
     typedef typename G::Traits::template Codim<0>::Entity Entity;
-    typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator
+    typedef typename G::LeafGridView::IntersectionIterator
     IntersectionIterator;
 
 public:

@@ -42,7 +42,7 @@ template<class Grid, class Scalar>
 class LensProblem : public TwoPhaseProblem<Grid, Scalar> {
     enum {dim=Grid::dimension, numEq=2};
     typedef typename Grid::Traits::template Codim<0>::Entity Entity;
-    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
+    typedef typename Grid::LeafGridView::IntersectionIterator IntersectionIterator;
 
 public:
     enum {pWIdx = 0, sNIdx = 1};

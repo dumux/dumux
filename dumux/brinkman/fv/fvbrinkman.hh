@@ -8,7 +8,7 @@
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 //#include "dumux/io/vtkwriterextended.hh"
-#include <dune/grid/utility/intersectiongetter.hh>
+
 #include <dune/istl/operators.hh>
 #include <dune/istl/solvers.hh>
 #include <dune/istl/preconditioners.hh>
@@ -59,9 +59,9 @@ class FVBrinkman
     typedef typename GV::IndexSet IS;
     typedef typename GV::template Codim<0>::Iterator Iterator;
     typedef typename G::template Codim<0>::HierarchicIterator HierarchicIterator;
-    typedef MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout> EM;
+    typedef MultipleCodimMultipleGeomTypeMapper<GV,ElementLayout> EM;
     typedef typename G::template Codim<0>::EntityPointer EntityPointer;
-    typedef typename IntersectionIteratorGetter<G,LevelTag>::IntersectionIterator IntersectionIterator;
+    typedef typename G::LevelGridView::IntersectionIterator IntersectionIterator;
     typedef typename G::ctype ct;
     typedef FieldMatrix<double,1,1> MB;
     typedef BCRSMatrix<MB> PressureMatrixType;
@@ -97,8 +97,8 @@ public:
 
             RT pI = this->pressure[indexi];
 
-            IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
-            for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it);
+            IntersectionIterator endit = it->ilevelend();
+            for (IntersectionIterator is = it->ilevelbegin();
                  is!=endit; ++is)
             {
 
@@ -231,8 +231,8 @@ public:
 
             RT pI = this->pressure[indexi];
 
-            IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
-            for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it);
+            IntersectionIterator endit = it->ilevelend();
+            for (IntersectionIterator is = it->ilevelbegin();
                  is!=endit; ++is)
             {
                 int faceIdx = is->indexInInside();
@@ -322,8 +322,8 @@ public:
             RT pI = this->pressure[indexi];
             FieldVector<RT,dim> velI = this->velocity[indexi];
 
-            IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
-            for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it);
+            IntersectionIterator endit = it->ilevelend();
+            for (IntersectionIterator is = it->ilevelbegin();
                  is!=endit; ++is)
             {
                 // eastIndex for 0,1: 0, for 2,3: 2, for 4,5: 4
@@ -456,8 +456,8 @@ public:
 
             RT pCI = this->pressureCorrection[indexi];
 
-            IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
-            for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it);
+            IntersectionIterator endit = it->ilevelend();
+            for (IntersectionIterator is = it->ilevelbegin();
                  is!=endit; ++is)
             {
                 int faceIdx = is->indexInInside();
@@ -617,7 +617,7 @@ public:
     FVBrinkman(G& g, BrinkmanProblem<G, RT>& prob)
         : Brinkman<G, RT, RepresentationType, VelType>(g, prob),
           gridview(g.levelView(0)),
-          elementmapper(g, gridview.indexSet()),
+          elementmapper(gridview),
           AV(g.size(0), g.size(0), (2*dim+1)*g.size(0), BCRSMatrix<MBV>::random),
           AP(g.size(0), g.size(0), (2*dim+1)*g.size(0), BCRSMatrix<MB>::random),
           fP(g.size(0)), fV(g.size(0)), fVBound(g.size(0))
@@ -662,8 +662,8 @@ void FVBrinkman<G, RT>::initializeMatrices()
         int rowSize = 1;
 
         // run through all intersections with neighbors
-        IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
-        for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it);
+        IntersectionIterator endit = it->ilevelend();
+        for (IntersectionIterator is = it->ilevelbegin();
              is!=endit; ++is)
             if (is->neighbor())
                 rowSize++;
@@ -684,8 +684,8 @@ void FVBrinkman<G, RT>::initializeMatrices()
         AP.addindex(indexi, indexi);
 
         // run through all intersections with neighbors
-        IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
-        for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it);
+        IntersectionIterator endit = it->ilevelend();
+        for (IntersectionIterator is = it->ilevelbegin();
              is!=endit; ++is)
             if (is->neighbor())
             {
@@ -745,8 +745,8 @@ void FVBrinkman<G, RT>::assembleMatrices()
 
         AV[indexi][indexi] = KinvI;
 
-        IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
-        for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it);
+        IntersectionIterator endit = it->ilevelend();
+        for (IntersectionIterator is = it->ilevelbegin();
              is!=endit; ++is)
         {
 
@@ -883,8 +883,8 @@ void FVBrinkman<G, RT>::assembleMatrices()
 
         double AVI = AV[indexi][indexi][0][0];
 
-        IntersectionIterator endit = IntersectionIteratorGetter<G,LevelTag>::end(*it);
-        for (IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*it);
+        IntersectionIterator endit = it->ilevelend();
+        for (IntersectionIterator is = it->ilevelbegin();
              is!=endit; ++is)
         {
             // cell geometry type

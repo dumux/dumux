@@ -32,7 +32,7 @@ template<class Grid, class Scalar> class VariableClassSubProbs
 
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
     typedef typename Grid::Traits::LevelIndexSet IndexSet;
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<Grid,IndexSet,ElementLayout>
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GV,ElementLayout>
     ElementMapper;
 
 public:

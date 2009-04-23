@@ -32,7 +32,7 @@
 #include <dune/disc/functions/functions.hh>
 #include <dune/disc/functions/p0function.hh>
 //#include <dune/disc/functions/p1function.hh>
-#include "dumux/operators/p1operatorextended.hh"
+#include <dune/disc/operators/p1operator.hh>
 #include <dune/disc/operators/boundaryconditions.hh>
 /* #include <dune/disc/groundwater/groundwater.hh>
    #include <dune/disc/groundwater/p1groundwater.hh>
@@ -169,7 +169,7 @@ public:
             bool old = true;
             this->localJacobian().updateVariableData(entity, this->localJacobian().uold, old);
             this->localJacobian().updateVariableData(entity, this->localJacobian().u);
-            this->localJacobian().template localDefect<LeafTag>(entity, this->localJacobian().u);
+            this->localJacobian().localDefect(entity, this->localJacobian().u);
 
             // begin loop over vertices
             for (int i=0; i < size; i++) {

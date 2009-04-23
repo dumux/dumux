@@ -27,7 +27,7 @@ class InitialBallProblem
     typedef Dune::FieldVector<double, n> R1;
     typedef Dune::BlockVector< Dune::FieldVector<R1, blocksize> > VelType;
     typedef typename G::Traits::LevelIndexSet IS;
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout> EM;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GV,ElementLayout> EM;
 
 private:
     DT left;
@@ -75,7 +75,7 @@ public:
                        const int level = 0)
         : DeprecatedTransportProblem<G, RT, VC>(variables, law), left((g.lowerLeft())[0]), right((g.upperRight())[0]),
           bottom((g.lowerLeft())[1]), top((g.upperRight())[1]),
-          elementmapper(g, g.levelIndexSet(level))
+          elementmapper( g.levelView(level))
     {
         this->variables.velocity.resize(elementmapper.size());
     }

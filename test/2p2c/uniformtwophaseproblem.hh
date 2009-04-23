@@ -43,7 +43,7 @@ class UniformTwoPhaseProblem : public TwoPhaseProblem<Grid, RT> {
     typedef typename Grid::ctype Scalar;
     enum {n=Grid::dimension, m=2};
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
-    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
+    typedef typename Grid::LeafGridView::IntersectionIterator IntersectionIterator;
 
 public:
     virtual const FieldMatrix<Scalar,n,n>& K (const FieldVector<Scalar,n>& x, const Element& e,

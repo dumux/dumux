@@ -12,7 +12,7 @@
 #include<dune/common/exceptions.hh>
 #include<dune/grid/common/grid.hh>
 #include<dune/grid/common/referenceelements.hh>
-#include<dune/grid/utility/intersectiongetter.hh>
+
 #include<dune/disc/operators/boundaryconditions.hh>
 #include<dumux/material/twophaserelations.hh>
 #include<test/minc/minc_soilproperties.hh>
@@ -43,7 +43,7 @@ template<class Grid, class Scalar, int numEq> class MincProblem {
     typedef typename Grid::ctype DT;
     enum {dim=Grid::dimension};
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
-    typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator
+    typedef typename Grid::LeafGridView::IntersectionIterator
     IntersectionIterator;
 public:
     //! evaluate source term

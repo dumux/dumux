@@ -36,7 +36,8 @@ public:
     };
 
     typedef typename G::LevelGridView::IndexSet IS;
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout>    ElementMapper;
+    typedef typename G::LevelGridView GV;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GV,ElementLayout>    ElementMapper;
     G& grid;
     ElementMapper mapper;
 
@@ -45,7 +46,7 @@ private:
 public:
 
     VariableClass2p2c(G& g, int lev = 0) :
-        grid(g), mapper(g, g.levelIndexSet(lev)), size(mapper.size())
+        grid(g), mapper( g.levelView(lev)), size(mapper.size())
     {
         saturation.resize(size);
         pressure.resize(size);

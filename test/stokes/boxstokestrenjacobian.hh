@@ -13,7 +13,7 @@
 #include<dune/grid/common/referenceelements.hh>
 #include<dune/common/geometrytype.hh>
 #include<dune/grid/common/quadraturerules.hh>
-#include <dune/grid/utility/intersectiongetter.hh>
+
 
 #include<dune/disc/shapefunctions/lagrangeshapefunctions.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
@@ -62,11 +62,10 @@ public:
         return;
     }
 
-    template<class TypeTag>
     void localDefect(const Element& element, const SolutionVector* sol, bool withBC = true) {
-        BoxJacobianType::template localDefect<TypeTag>(element, sol, withBC);
+        BoxJacobianType::localDefect(element, sol, withBC);
 
-        this->template assembleBC<TypeTag>(element);
+        assembleBoundaryCondition(element);
 
         Dune::GeometryType gt = element.geometry().type();
         const typename ReferenceElementContainer<Scalar,dim>::value_type& referenceElement = ReferenceElements<Scalar, dim>::general(gt);
@@ -74,12 +73,12 @@ public:
         for (int vert=0; vert < this->fvGeom.numVertices; vert++) // begin loop over vertices / sub control volumes
             if (!this->fvGeom.subContVol[vert].inner)
             {
-                typedef typename IntersectionIteratorGetter<Grid,TypeTag>::IntersectionIterator IntersectionIterator;
+                typedef typename Grid::LeafGridView::IntersectionIterator IntersectionIterator;
 
                 FieldVector<Scalar,dim> averagedNormal(0);
                 int faces = 0;
-                IntersectionIterator endit = IntersectionIteratorGetter<Grid, TypeTag>::end(element);
-                for (IntersectionIterator it = IntersectionIteratorGetter<Grid, TypeTag>::begin(element); it!=endit; ++it)
+                IntersectionIterator endit = element.ileafend();
+                for (IntersectionIterator it = element.ileafbegin(); it!=endit; ++it)
                 {
                     // handle face on exterior boundary, this assumes there are no interior boundaries
                     if (it->boundary()) {
@@ -411,10 +410,10 @@ public:
             &referenceElement = ReferenceElements<Scalar, dim>::general(gt);
 
         // evaluate boundary conditions via intersection iterator
-        typedef typename IntersectionIteratorGetter<Grid,LeafTag>::IntersectionIterator IntersectionIterator;
+        typedef typename Grid::LeafGridView::IntersectionIterator IntersectionIterator;
 
-        IntersectionIterator endit = IntersectionIteratorGetter<Grid, LeafTag>::end(element);
-        for (IntersectionIterator it = IntersectionIteratorGetter<Grid, LeafTag>::begin(element); it!=endit; ++it)
+        IntersectionIterator endit = element.ileafend();
+        for (IntersectionIterator it = element.ileafbegin(); it!=endit; ++it)
         {
             // if we have a neighbor then we assume there is no boundary (forget interior boundaries)
             // in level assemble treat non-level neighbors as boundary
@@ -552,7 +551,7 @@ public:
     }
 
 
-    template<class TypeTag> void assembleBC(const Element& element) {
+    void assembleBoundaryCondition(const Element& element, int k = 1) {
         Dune::GeometryType gt = element.geometry().type();
         const typename Dune::LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::value_type
             &sfs=Dune::LagrangeShapeFunctions<Scalar, Scalar, dim>::general(gt, 1);
@@ -565,14 +564,13 @@ public:
         for (int i = 0; i < sfs.size(); i++) {
             this->bctype[i].assign(BoundaryConditions::neumann);
             this->b[i] = 0;
-            this->dirichletIndex[i] = 0;
         }
 
         // evaluate boundary conditions via intersection iterator
-        typedef typename IntersectionIteratorGetter<Grid,TypeTag>::IntersectionIterator IntersectionIterator;
+        typedef typename Grid::LeafGridView::IntersectionIterator IntersectionIterator;
 
-        IntersectionIterator endit = IntersectionIteratorGetter<Grid, TypeTag>::end(element);
-        for (IntersectionIterator it = IntersectionIteratorGetter<Grid, TypeTag>::begin(element); it!=endit; ++it)
+        IntersectionIterator endit = element.ileafend();
+        for (IntersectionIterator it = element.ileafbegin(); it!=endit; ++it)
         {
             // if we have a neighbor then we assume there is no boundary (forget interior boundaries)
             // in level assemble treat non-level neighbors as boundary
@@ -602,7 +600,7 @@ public:
                             this->getImp().problem.dirichletIndex(global, element, it, local, dirichletIdx); // eval bctype
                             if (bctypeface[equationNumber]!=BoundaryConditions::neumann)
                                 break;
-                            FieldVector<Scalar,dim+2> J = this->getImp().problem.J(global, element, it, local);
+                            FieldVector<Scalar,dim+3> J = this->getImp().problem.J(global, element, it, local);
                             if (equationNumber < dim+2) {
                                 J[equationNumber] *= this->fvGeom.boundaryFace[bfIdx].area;
                                 this->b[nodeInElement][equationNumber] += J[equationNumber];
@@ -655,7 +653,6 @@ public:
                         if (sfs[i].entity()==it->numberInSelf()) {
                             if (this->bctype[i][equationNumber] < bctypeface[equationNumber]) {
                                 this->bctype[i][equationNumber] = bctypeface[equationNumber];
-                                this->dirichletIndex[i][equationNumber] = dirichletIdx[equationNumber];
 
                                 if (bctypeface[equationNumber] == BoundaryConditions::process)
                                     this->b[i][equationNumber] = 0;
@@ -672,8 +669,7 @@ public:
                         {
                             if (this->bctype[i][equationNumber] < bctypeface[equationNumber]) {
                                 this->bctype[i][equationNumber] = bctypeface[equationNumber];
-                                this->dirichletIndex[i][equationNumber] = dirichletIdx[equationNumber];
-                                if (bctypeface[equationNumber] == BoundaryConditions::process)
+                               if (bctypeface[equationNumber] == BoundaryConditions::process)
                                     this->b[i][equationNumber] = 0;
                                 if (bctypeface[equationNumber] == BoundaryConditions::dirichlet) {
                                     this->b[i][equationNumber] = 0;

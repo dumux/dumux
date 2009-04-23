@@ -33,7 +33,7 @@
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/disc/functions/functions.hh>
 
-#include "dumux/operators/p1operatorextended.hh"
+#include <dune/disc/operators/p1operator.hh>
 #include <dune/disc/operators/boundaryconditions.hh>
 #include <dune/istl/paamg/amg.hh>
 #include "dumux/pardiso/pardiso.hh"
@@ -127,7 +127,7 @@ public:
         typedef typename ThisGrid::Traits::template Codim<0>::Entity Element;
         typedef typename ThisGrid::ctype CoordScalar;
         typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-        typedef typename IntersectionIteratorGetter<ThisGrid,LeafTag>::IntersectionIterator IntersectionIterator;
+        typedef typename ThisGrid::LeafGridView::IntersectionIterator IntersectionIterator;
 
         enum
         {   dim = ThisGrid::dimension};
@@ -197,12 +197,11 @@ public:
             int size = sfs.size();
 
             // set type of boundary conditions
-            this->localJacobian().template assembleBC<LeafTag>(element);
+            this->localJacobian().assembleBoundaryCondition(element);
 
             IntersectionIterator
-                endit = IntersectionIteratorGetter<ThisGrid, LeafTag>::end(element);
-            for (IntersectionIterator isIt = IntersectionIteratorGetter<ThisGrid,
-                     LeafTag>::begin(element); isIt!=endit; ++isIt)
+                endit = element.ileafend();
+            for (IntersectionIterator isIt = element.ileafbegin(); isIt!=endit; ++isIt)
                 if (isIt->boundary())
                 {
                     for (int idx = 0; idx < size; idx++)
@@ -266,7 +265,7 @@ public:
         typedef typename ThisGrid::Traits::template Codim<0>::Entity Element;
         typedef typename ThisGrid::ctype CoordScalar;
         typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-        typedef typename IntersectionIteratorGetter<ThisGrid,LeafTag>::IntersectionIterator IntersectionIterator;
+        typedef typename ThisGrid::LeafGridView::IntersectionIterator IntersectionIterator;
 
         enum
         {   dim = ThisGrid::dimension};
@@ -351,12 +350,11 @@ public:
             int size = sfs.size();
 
             // set type of boundary conditions
-            this->localJacobian().template assembleBC<LeafTag>(element);
+            this->localJacobian().assembleBoundaryCondition(element);
 
             IntersectionIterator
-                endit = IntersectionIteratorGetter<ThisGrid, LeafTag>::end(element);
-            for (IntersectionIterator isIt = IntersectionIteratorGetter<ThisGrid,
-                     LeafTag>::begin(element); isIt!=endit; ++isIt)
+                endit = element.ileafend();
+            for (IntersectionIterator isIt = element.ileafbegin(); isIt!=endit; ++isIt)
                 if (isIt->boundary())
                 {
                     for (int idx = 0; idx < size; idx++)

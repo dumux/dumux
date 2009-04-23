@@ -58,7 +58,7 @@ typedef    typename Grid::Traits::template Codim<0>::Entity Element;
     typedef typename Grid::template Codim<0>::HierarchicIterator
     HierarchicIterator;
 
-    typedef MultipleCodimMultipleGeomTypeMapper<Grid,IndexSet,ElementLayout> ElementMapper;
+    typedef MultipleCodimMultipleGeomTypeMapper<GV,ElementLayout> ElementMapper;
     typedef typename Grid::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
 

@@ -6,7 +6,7 @@
 #warning this file is deprecated, please use twophasemodel.hh instead
 
 #include <dune/disc/shapefunctions/lagrangeshapefunctions.hh>
-#include "dumux/operators/p1operatorextended.hh"
+#include <dune/disc/operators/p1operator.hh>
 #include "dumux/nonlinear/nonlinearmodel.hh"
 #include "dumux/fvgeometry/fvelementgeometry.hh"
 
@@ -63,12 +63,12 @@ public:
 
     typedef typename G::LeafGridView GV;
     typedef typename GV::IndexSet IS;
-    typedef MultipleCodimMultipleGeomTypeMapper<G,IS,P1Layout> VertexMapper;
-    typedef typename IntersectionIteratorGetter<G,LeafTag>::IntersectionIterator
+    typedef MultipleCodimMultipleGeomTypeMapper<GV,P1Layout> VertexMapper;
+    typedef typename G::LeafGridView::IntersectionIterator
     IntersectionIterator;
 
     LeafP1TwoPhaseModel(const G& g, ProblemType& prob) :
-        ThisTwoPhaseModel(g, prob), problem(prob), grid_(g), vertexmapper(g,
+        ThisTwoPhaseModel(g, prob), problem(prob), grid_(g), vertexmapper(
                                                                           g.leafIndexSet()), size((*(this->u)).size()), pW(size), pN(size), pC(size),
         satW(size), satN(size), satEx(0), pEx(0), satError(0) {
     }
@@ -128,7 +128,7 @@ public:
             int size = sfs.size();
 
             // set type of boundary conditions
-            this->localJacobian().template assembleBC<LeafTag>(entity);
+            this->localJacobian().assembleBoundaryCondition(entity);
 
             IntersectionIterator
                 endit = IntersectionIteratorGetter<G, LeafTag>::end(entity);
@@ -229,7 +229,7 @@ public:
             bool old = true;
             this->localJacobian().updateVariableData(entity, this->localJacobian().uold, old);
             this->localJacobian().updateVariableData(entity, this->localJacobian().u);
-            this->localJacobian().template localDefect<LeafTag>(entity, this->localJacobian().u);
+            this->localJacobian().localDefect(entity, this->localJacobian().u);
 
             // begin loop over vertices
             for (int i=0; i < size; i++) {
