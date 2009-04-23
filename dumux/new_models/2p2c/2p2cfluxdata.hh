@@ -15,7 +15,7 @@
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
 /*!
- * \file 
+ * \file
  *
  * \brief This file contains the data which is required to calculate
  *        all fluxes of components over a face of a finite volume.
@@ -39,7 +39,7 @@ namespace Dune
  * This means pressure and concentration gradients, phase densities at
  * the intergration point, etc.
  */
-template <class TwoPTwoCTraits, 
+template <class TwoPTwoCTraits,
           class ProblemT,
           class VertexData>
 class TwoPTwoCFluxData
@@ -76,7 +76,7 @@ public:
 
         int i = face->i;
         int j = face->j;
-            
+
         insideSCV = &fvElemGeom.subContVol[i];
         outsideSCV = &fvElemGeom.subContVol[j];
 
@@ -85,12 +85,12 @@ public:
             pressureGrad[phase] = Scalar(0);
             concentrationGrad[phase] = Scalar(0);
         }
-        
+
         calculateGradients_(problem, element, elemDat);
         calculateVelocities_(problem, element, elemDat);
         calculateDiffCoeffPM_(problem, element, elemDat);
     };
-    
+
 private:
     void calculateGradients_(const Problem &problem,
                              const Element &element,
@@ -98,7 +98,7 @@ private:
     {
         // calculate gradients
         GlobalPosition tmp(0.0);
-        for (int idx = 0; 
+        for (int idx = 0;
              idx < fvElemGeom.numVertices;
              idx++) // loop over adjacent vertices
         {
@@ -114,8 +114,8 @@ private:
                 pressureGrad[phase] += tmp;
 
                 // phase density
-                densityAtIP[phase] 
-                    += 
+                densityAtIP[phase]
+                    +=
                     elemDat[idx].density[phase] *
                     face->shapeValue[idx];
             }
@@ -139,7 +139,7 @@ private:
         {
             tmp = problem.gravity();
             tmp *= densityAtIP[phase];
-            
+
             pressureGrad[phase] -= tmp;
         }
     }
@@ -155,11 +155,11 @@ private:
         const Tensor &Ki = problem.soil().K(insideSCV->global,
                                             element,
                                             insideSCV->local);
-        const Tensor &Kj = problem.soil().K(outsideSCV->global, 
-                                            element, 
+        const Tensor &Kj = problem.soil().K(outsideSCV->global,
+                                            element,
                                             outsideSCV->local);
         Dune::harmonicMeanMatrix(K, Ki, Kj);
-            
+
         // temporary vector for the Darcy velocity
         GlobalPosition vDarcy;
         for (int phase=0; phase < numPhases; phase++)
@@ -173,7 +173,7 @@ private:
         {
             upstreamIdx[phase] = face->i;
             downstreamIdx[phase] = face->j;
-            
+
             if (vDarcyNormal[phase] > 0) {
                 std::swap(upstreamIdx[phase],
                           downstreamIdx[phase]);
@@ -192,24 +192,24 @@ private:
         {
             // make sure to only calculate diffusion coefficents
             // for phases which exist in both finite volumes
-            if (vDat_i.saturation[phaseIdx] == 0 ||
-                vDat_j.saturation[phaseIdx] == 0) 
+            if (vDat_i.saturation[phaseIdx] <= 0 ||
+                vDat_j.saturation[phaseIdx] <= 0)
             {
                 diffCoeffPM[phaseIdx] = 0.0;
                 continue;
             }
-                
+
             // calculate tortuosity at the nodes i and j needed
             // for porous media diffusion coefficient
-            Scalar tau_i = 
-                1.0/vDat_i.porosity *
+
+            Scalar tau_i =
+                1.0/(vDat_i.porosity * vDat_i.porosity) *
                 pow(vDat_i.porosity * vDat_i.saturation[phaseIdx], 7.0/3);
-            Scalar tau_j = 
-                1.0/vDat_j.porosity *
+            Scalar tau_j =
+                1.0/(vDat_j.porosity * vDat_j.porosity) *
                 pow(vDat_j.porosity * vDat_j.saturation[phaseIdx], 7.0/3);
-        
             // Diffusion coefficient in the porous medium
-                
+
             // -> arithmetic mean
             diffCoeffPM[phaseIdx]
                 = 1./2*(vDat_i.porosity * vDat_i.saturation[phaseIdx] * tau_i * vDat_i.diffCoeff[phaseIdx] +
@@ -217,6 +217,7 @@ private:
             // -> harmonic mean
             // = harmonicMean_(vDat_i.porosity * vDat_i.saturation[phaseIdx] * tau_i * vDat_i.diffCoeff[phaseIdx],
             //                 vDat_j.porosity * vDat_j.saturation[phaseIdx] * tau_j * vDat_j.diffCoeff[phaseIdx]);
+
         }
     }
 
@@ -225,14 +226,14 @@ public:
     const SCVFace *face;
     const SCV     *insideSCV;
     const SCV     *outsideSCV;
-        
+
     // gradients
     GlobalPosition pressureGrad[numPhases];
     GlobalPosition concentrationGrad[numPhases];
 
     // density of each face at the integration point
     PhasesVector densityAtIP;
-        
+
     // darcy velocity in direction of the face normal
     PhasesVector vDarcyNormal;
 
