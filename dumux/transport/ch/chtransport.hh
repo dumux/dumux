@@ -133,9 +133,7 @@ private:
     int solveRP(Scalar& mch, std::list<ChNode>& chrar,Scalar sat0,Scalar sat1, GlobalPosition globalPos, ElementIterator eIt, LocalPosition localPos);
     Scalar linearflux(Scalar sat, GlobalPosition globalPos, ElementIterator eIt, LocalPosition localPos);
     int fronttracking(const Scalar& dt, Scalar v, GlobalPosition globalPos, ElementIterator eIt, LocalPosition localPos);
-    int gelb(RepresentationType& updateVec,int indexi);
-    int blau(RepresentationType& updateVec,int indexi);
-    int rot(RepresentationType& updateVec,RepresentationType& dxtt);
+    int approxSol(RepresentationType& updateVec,RepresentationType& dxtt);
 private:
     EM elementmapper;
     const NumericalFlux<Scalar>& numFlux;
@@ -287,6 +285,8 @@ int ChTransport<Grid,Scalar,VC, Problem>::solveRP(Scalar& mch, std::list<ChNode>
             if(j1==j2 && fsl+mch*(b[j1]-sl) >= fb[j1])
             return 0;
         }
+	//lower value on the left side:
+	//build concave envelope
         else
         {
             double n = (fb[j2-1]-fsh)/(b[j2-1]-sh);
@@ -302,6 +302,8 @@ int ChTransport<Grid,Scalar,VC, Problem>::solveRP(Scalar& mch, std::list<ChNode>
             return 0;
         }
 
+	//it's a rarefaction wave
+	// m contains the maximal and minimal propagation speed
         m[low]=(fb[j1]-fsl)/(b[j1]-sl);
         m[high]=(fb[j2]-fsh)/(b[j2]-sh);
 
@@ -310,10 +312,9 @@ int ChTransport<Grid,Scalar,VC, Problem>::solveRP(Scalar& mch, std::list<ChNode>
         c0.m[high]=m[high];
         c0.m[low]=m[low];
         chrar.push_front(c0);
-        //konstruiere neue Zellen für die zusätzlichen Schocks welche die
-        //Verdünnungswelle approximieren
-        //  std::cout<<b[j1]<<" ; "<<b[j2]<<std::endl;
-        if(j1!=j2)
+
+	//build new nodes with addidional shocks
+	if(j1!=j2)
         {
             chrar.front().m[high]=(fb[j1+1]-fb[j1])*K;
             j1++;
@@ -360,52 +361,52 @@ int ChTransport<Grid,Scalar,VC, Problem>::solveRP(Scalar& mch, std::list<ChNode>
             }
         }
     }
-
+    //there is one new node but the propagation speed left and right are the same.
+    //it's a numerical error. it's a shock.
     if(chrar.size()==1 && fabs(chrar.front().m[0]-chrar.back().m[1])<1e-5)
     chrar.clear();
     return 0;
 }
 
+
+//calcm() calculates the propagation speed of discontinuities in the dynamic grid
 template<class Grid,class Scalar,class VC, class Problem>
 int ChTransport<Grid,Scalar,VC, Problem>::calcm(GlobalPosition globalPos, ElementIterator eIt, LocalPosition localPos)
 {
 
-    //berechne Steigungen der Charakteristiken
+  
     ListIterator lit=ch.begin();
     ListIterator lit2(lit);
     lit2++;
+    //slope over the elements of the dynamic grid
     while(lit2!=ch.end())
     {
         std::list<ChNode> chrar;
         Scalar m;
 
+	//solving the Riemannproblem
         solveRP(m,chrar,lit->Sat,lit2->Sat,globalPos, eIt, localPos);
 
         if(chrar.empty())
         {
-            if(m!=0)
-            //Schock
-
-            {
-                lit->m[1]=m;
-                lit2->m[0]=m;
-            }
-            else
-            //Sättigungen sind identisch, Elemente können vereinigt werden
-            //(kann in Abhängigkeit vom Ausgangselement vorkommen)
-
-            {
+	  //shock wave
+	  if(m!=0)
+          {
+	    lit->m[1]=m;
+	    lit2->m[0]=m;
+	  }
+	  //saturations left and right are idential.
+	  //unifying the two elements 
+	  else
+          {
                 lit2->m[0]=lit->m[0];
                 lit2->x[0][0]=lit->x[0][0];
-                lit=ch.erase(lit);
-
-                //  ch.front().x[0][0]=ch.front().x[0][1];
-                //ch.back().x[0][1]=ch.back().x[0][0];
-            }
+                lit=ch.erase(lit);	      
+	  }
         }
+	//rarefaction wave 
+	//new nodes for addidional shocks
         else
-        //Verdünnungswelle, berechne zusätzliche Schocks
-
         {
             lit->m[1]=chrar.front().m[0];
             lit2->m[0]=chrar.back().m[1];
@@ -415,17 +416,22 @@ int ChTransport<Grid,Scalar,VC, Problem>::calcm(GlobalPosition globalPos, Elemen
 
             ch.insert(lit2,chrar.begin(),chrar.end());
         }
-        ch.front().m[0] = solveRP(m,chrar,ch.front().Sat,ch.front().Sat,globalPos, eIt, localPos);
-        ch.back().m[1] = solveRP(m,chrar,ch.back().Sat,ch.back().Sat,globalPos, eIt, localPos);
-        //      ch.front().m[0] = ch.front().m[1];
-        //ch.back().m[1]=ch.back().m[0];
 
         lit=lit2;
         lit2++;
     }
-    return 0;
+    //in boundary elements set the propagation speed of boundary fronts so
+    //that discontinuity curves run in a parallel way
+    ch.front().m[0] = ch.front().m[1];
+    ch.back().m[1]=ch.back().m[0];
+    
+return 0;
 }
 
+
+//for one dimensional problems you don't need streamlines. 
+//init() build the dynamic grid, which contains the exact solution of
+//the discretized problem.
 template<class Grid,class Scalar,class VC, class Problem>
 int ChTransport<Grid,Scalar,VC, Problem>::init(const Scalar dt,const Scalar lambda, EntityPointer& eIt)
 {
@@ -436,21 +442,19 @@ int ChTransport<Grid,Scalar,VC, Problem>::init(const Scalar dt,const Scalar lamb
 
     const GV& gridView = this->grid_.levelView(this->level());
 
-    //Bilde Ausgangselement in der Charakteristikenliste
+    //build the basic element of the dynamic grid
     ChNode i;
     i.Sat=this->transProblem.variables.saturation[indexi];
 
-    //setze Geschwindigkeit und x-Koordinaten für das Ausgangselement
+    //set position and propagation speed of the basic element
     IntersectionIterator endis = gridView.template iend(*eIt);
     for(IntersectionIterator is=gridView.template ibegin(*eIt);is!=endis;++is)
     {
         GeometryType gtf = is->geometryInInside().type();
         const Dune::FieldVector<ct,dim-1>& facelocal = Dune::ReferenceElements<Scalar,dim-1>::general(gtf).position(0,0);
         const VType& faceglobal = is->geometry().global(facelocal);
-        //      const VType& faceInElem = eIt->geometry().local(faceglobal);
         int numberInSelf = is->indexInInside();
 
-        //linke Kante
         if(numberInSelf == 0)
         i.x[0][0] = faceglobal[0];
         else
@@ -458,14 +462,15 @@ int ChTransport<Grid,Scalar,VC, Problem>::init(const Scalar dt,const Scalar lamb
     }
     ch.push_front(i);
 
+    //use the streamline list for this problem to use the same approximation function 
     slNode s;
     s.index=indexi;
     s.xi=ch.front().x[0];
     sl.push_front(s);
 
-    //std::vector<double> gdat(2,0);
-    //beginne beim Ausgangselement und laufe solange nach links bzw rechts, bis eine Randkante kommt
-    //trifft man auf einen Sättigungssprung, so nehme dies in die Charakteristikenliste mit auf
+    //running through the elements of the basic grid in one direction by hitting a boundary point
+    //then the same procedure in the other direction
+    //build new elements for the dynamic grid if there's a discontinuity jump
     for(int p=0;p<2;++p)
     {
         int abb=1;
@@ -484,32 +489,34 @@ int ChTransport<Grid,Scalar,VC, Problem>::init(const Scalar dt,const Scalar lamb
                 GeometryType gtf = is->geometryInInside().type();
                 const Dune::FieldVector<ct,dim-1>& facelocal = Dune::ReferenceElements<Scalar,dim-1>::general(gtf).position(0,0);
                 const VType& faceglobal = is->geometry().global(facelocal);
-                //      const VType& faceInElem = eIt->geometry().local(faceglobal);
                 int numberInSelf = is->indexInInside();
 
                 s.xi[numberInSelf]=faceglobal[0];
 
-                if (numberInSelf == p) // left face
-
+		//p==0 -> running through in left direction
+		//p==1 -> running through in right direction
+                if (numberInSelf == p) 
                 {
                     j.x[0][0] = faceglobal[0];
                     j.x[0][1] = j.x[0][0];
-                    //Scalar satJ=0;
+                 
+		    //there's a neighbor element
                     if(is->neighbor())
                     {
                         ep=is->outside();
                         indexi=elementmapper.map(*ep);
                         j.Sat=this->transProblem.variables.saturation[indexi];
                     }
+		    //it's the boundary point. Break off the running in this direction
                     else
                     {
-                        //gdat[p] = faceglobal[0];
-
+                        
                         const Dune::FieldVector<ct,dim>& facelocalDim = Dune::ReferenceElements<ct,dim>::general(gtf).position(numberInSelf,1);
                         j.Sat =this->transProblem.dirichletSat(faceglobal,*ep,facelocalDim);
                         abb=-1;
                     }
 
+		    //if there's a saturation jump build a new node for the dynamic grid
                     if(fabs(satI-j.Sat)>1e-5)
                     {
                         if(p==0)
@@ -526,16 +533,19 @@ int ChTransport<Grid,Scalar,VC, Problem>::init(const Scalar dt,const Scalar lamb
                     }
                 }
             }
+	    
             if(p==0 && s.index != sl.front().index)
-            sl.push_front(s);
+	      sl.push_front(s);
             else
-            if(p == 1 && s.index != sl.back().index)
-            sl.push_back(s);
+	      if(p == 1 && s.index != sl.back().index)
+		sl.push_back(s);
         }//end while
     }//end for
 
+    //set the boundary points of the dynamic grid far enough to cover the static grid all the time
     ch.front().x[0][0] -= lambda*dt;
     ch.back().x[0][1] += lambda*dt;
+
 
     if(ch.size()<2)
     {
@@ -547,6 +557,10 @@ int ChTransport<Grid,Scalar,VC, Problem>::init(const Scalar dt,const Scalar lamb
 
 }
 
+
+//in more dimensions you need a streamline method to translate the more dimensional problem in a one dimensional.
+//calcStreamline() approximates the streamlines in the velocity field by backtracking particles.
+//in each node one particle is positioned in element midpoint at point of time dt.
 template<class Grid,class Scalar,class VC, class Problem>
 int ChTransport<Grid,Scalar,VC, Problem>::calcStreamline(const Scalar dt,const Scalar lambda, EntityPointer& eIt)
 {
@@ -558,13 +572,9 @@ int ChTransport<Grid,Scalar,VC, Problem>::calcStreamline(const Scalar dt,const S
     EntityPointer ep(eIt);
     Scalar xi = 0;
 
-    // cell geometry type
     Dune::GeometryType gt = eIt->geometry().type();
-    // cell center in reference element
     const LocalPosition
         &localPos = Dune::ReferenceElements<Scalar,dim>::general(gt).position(0, 0);
-
-    //
     const GlobalPosition& globalPos = eIt->geometry().global(localPos);
 
     int indexi = elementmapper.map(*eIt);
@@ -572,7 +582,7 @@ int ChTransport<Grid,Scalar,VC, Problem>::calcStreamline(const Scalar dt,const S
     Dune::FieldVector<ct,dim> global = eIt->geometry().global(local);
     VType xq(global);
 
-    //Bilde Ausgangselement, ausgehend von dem Element dessen Sättigung berechnet werden soll
+    //build basic nodes of the dynamic grid and the streamline information list
     ChNode i;
     i.Sat=this->transProblem.variables.saturation[indexi];
     i.x[0][0] = xi;
@@ -584,22 +594,20 @@ int ChTransport<Grid,Scalar,VC, Problem>::calcStreamline(const Scalar dt,const S
     j.xi[1] = xi;
     sl.push_front(j);
 
-    //Es wird so lange die Stromlinie zurückverfolgt, wie ein Partikel in der Zeit t zurücklegen konnte.
-    //lambda stellt die höchste "Geschwindigkeit" eines Partikels dar ( max(f'(u)) )
+    //the particle is backtracked till -lambda*dt. so it's sure, that each element has a solution at time dt.
+    //lambda is the minimum time multiplicated with a safety factor.
     while(xi> -lambda*dt)
     {
-        //std::cout<<xi<<std::endl;
         Dune::FieldVector<VType,2*dim> xx;
         Dune::FieldVector<VType,2*dim> vx;
 
-        //Setzen der Positionen und Geschwindigkeiten an den Elementkanten
+        //set positions and velocities of the edges of the current element
         IntersectionIterator endis = gridView.template iend(*ep);
         for(IntersectionIterator is=gridView.template ibegin(*ep);is!=endis;++is)
         {
             GeometryType gtf = is->geometryInInside().type();
             const Dune::FieldVector<ct,dim-1>& facelocal = Dune::ReferenceElements<Scalar,dim-1>::general(gtf).position(0,0);
             const VType& faceglobal = is->geometry().global(facelocal);
-            //      const VType& faceInElem = eIt->geometry().local(faceglobal);
             int numberInSelf = is->indexInInside();
 
             xx[numberInSelf] = faceglobal;
@@ -607,7 +615,7 @@ int ChTransport<Grid,Scalar,VC, Problem>::calcStreamline(const Scalar dt,const S
             vx[numberInSelf] = this->transProblem.variables.vTotal(*ep,numberInSelf);
             vx[numberInSelf] /= this->transProblem.soil().porosity(globalPos, *eIt, localPos);
         }
-        //Berechnung des Geschwindigkeitsgradienten und der Partikelgeschwindigkeit
+	//calculation of the gradient of velocity and the velocity of the particle
         VType Ax(0);
         VType vxq(0);
 
@@ -618,39 +626,39 @@ int ChTransport<Grid,Scalar,VC, Problem>::calcStreamline(const Scalar dt,const S
 
         }
 
-        //Berechnung aus welcher Richtung das Partikel ins Element gelangt ist. Für negativen Gradienten/negative
-        //Geschwindigkeit kam das Partikel von rechts/oben, andernfalls von links/unten.
-        //kant speichert den entsprechenden Kantenindex pro Richtung.
-        //dtx berechnet pro Richtung die Zeit, welche das Partikel von der entsprechenden Kante zur momentanen
-        //Partikelposition gebraucht hat.
+	//calculation of the direction the particle comes from. If vxq<0, the particle comes from the right or upper neighbor element,
+	//otherwise from the left or lower neighbor element
+        //kant contains the index of the accordant edges
+        //dtx contains the time of flight, from the accordant edge to the current position.
         VType dtx(-2*lambda*dt);
         Dune::FieldVector<int,dim> kant(-1);
 
         for(int i = 0;i<dim;++i)
         {
+	  //constant velocity in i-th direction
             if(fabs(Ax[i])<1e-5)
-            //konstante Geschwindigkeit in i-Richtung innerhalb des Elements
-
             {
                 if(vxq[i]<0)
-                //v < 0.. Partikel muss rechts/oben eingetreten sein
-                dtx[i] = (xx[2*i+1][i]-xq[i])/vxq[i];
+		  dtx[i] = (xx[2*i+1][i]-xq[i])/vxq[i];
                 else if(vxq[i]>0)
-                //Partikel muss links/unten eingetreten sein
-                dtx[i] = (xx[2*i][i]-xq[i])/vxq[i];
+		  dtx[i] = (xx[2*i][i]-xq[i])/vxq[i];
             }
+	    //gradient unequal zero in i-th direction
             else
-            dtx[i] = 1./Ax[i]*log(vx[i*2+1][i]/vxq[i]);
+	      dtx[i] = 1./Ax[i]*log(vx[i*2+1][i]/vxq[i]);
 
+	    //set the accordant edge index
             if(vxq[i]<0)
-            kant[i] = 2*i+1;
+	      kant[i] = 2*i+1;
             else if(vxq[i]>0)
-            kant[i] = 2*i;
+	      kant[i] = 2*i;
         }
 
-        //Berechnung der Zeit von der Eintrittskante zum gewuenschten Position
-        int m = 0; //Kantenindex
-        Scalar dte = dtx[m]; //Time-of-Flight
+        //calculation of time of flight
+	//m contains the edge index of the actual entry edge
+	//dte contains the actual time of flight
+        int m = 0; 
+        Scalar dte = dtx[m]; 
         for(int i=1;i<dim;++i)
         if(dtx[i]>dte)
         {
@@ -658,7 +666,7 @@ int ChTransport<Grid,Scalar,VC, Problem>::calcStreamline(const Scalar dt,const S
             dte=dtx[i];
         }
 
-        //Berechnung der Position der Eintrittsstelle
+        //calculating the position of the entry point
         int n = -1;
         if(dim>1)
         {
@@ -671,17 +679,18 @@ int ChTransport<Grid,Scalar,VC, Problem>::calcStreamline(const Scalar dt,const S
                 n = 17;
             }
             else
-            if(fabs(Ax[i])>1e-5)
-            xq[i] = xq[i]+1./Ax[i]*(vxq[i]*exp(Ax[i]*dte)-vx[i*dim][i]);
-            else
-            xq[i] = xq[i]+vxq[i]*dte;
+	      if(fabs(Ax[i])>1e-5)
+		xq[i] = xq[i]+1./Ax[i]*(vxq[i]*exp(Ax[i]*dte)-vx[i*dim][i]);
+	      else
+		xq[i] = xq[i]+vxq[i]*dte;
         }
+	//in one dimension position of entry point and entry edge are identical
         else
-        //im 1D ist Eintrittstelle = Kante
-        xq = xx[kant[m]];
+	  xq = xx[kant[m]];
 
-        //Berechnung der Eintrittszeit, Bildung der neuen Knotenpunkte für die Listen
+        //calcuting the entry time 
         xi = xi+dte;
+	//building new nodes for the dynamic grid and the streamline information list
         ch.front().x[0][0]=xi;
         ChNode j;
         j.x[0][0]=xi;
@@ -691,35 +700,40 @@ int ChTransport<Grid,Scalar,VC, Problem>::calcStreamline(const Scalar dt,const S
         s.xi=j.x[0];
         s.index = -1;
 
+	//searching saturation jumps
         for(IntersectionIterator is = gridView.template ibegin(*ep);is!=endis;++is)
         {
             int indexInInside = is->indexInInside();
-            if(indexInInside == kant[m])
-            if(is->neighbor())
-            {
-                ep = is->outside();
 
-                if(n> 0)
+            if(indexInInside == kant[m])
+	      if(is->neighbor())
+	      {
+                ep = is->outside();
+		//the entry is not a edge of the element but a element point
+		//the neighbor element is the diagonal element
+                if(n > 0)
                 {
                     for(int i=0;i<dim;++i)
-                    if(i!=m && fabs(dtx[i]-dte)<1e-7)
-                    {
+		      if(i!=m && fabs(dtx[i]-dte)<1e-7)
+		      {
                         IntersectionIterator endir = gridView.template iend(*ep);
                         for(IntersectionIterator ir = gridView.template ibegin(*ep);ir!=endir;++ir)
                         {
+			  //setting informations of the diagonal element
                             int nIS = ir->indexInInside();
 
                             if(nIS == kant[i])
-                            if(ir->neighbor())
-                            {
+			      if(ir->neighbor())
+			      {
                                 ep = ir->outside();
                                 indexi = elementmapper.map(*ep);
                                 j.Sat = this->transProblem.variables.saturation[indexi];
 
                                 s.index=indexi;
-                            }
-                            else
-                            {
+			      }
+			    //boundary conditions
+			      else
+			      {
                                 GeometryType gtf = ir->geometryInInside().type();
                                 const Dune::FieldVector<ct,dim-1>& facelocal = Dune::ReferenceElements<Scalar,dim-1>::general(gtf).position(0,0);
                                 const VType& faceglobal = ir->geometry().global(facelocal);
@@ -727,15 +741,16 @@ int ChTransport<Grid,Scalar,VC, Problem>::calcStreamline(const Scalar dt,const S
 
                                 j.Sat = this->transProblem.dirichletSat(faceglobal,*ep,facelocalDim);
                                 if(xi>-lambda*dt)
-                                {
-                                    xi = -2*lambda*dt;
-                                    j.x[0][0]=xi;
+				{
+				  xi = -2*lambda*dt;
+				  j.x[0][0]=xi;
                                 }
                             }//end if ir->neighbor()
                         }//end ir
                     }//end i!=m
                 }//if n>0
 
+		//neighbor element is the entry element
                 else
                 {
                     indexi = elementmapper.map(*ep);
@@ -744,7 +759,8 @@ int ChTransport<Grid,Scalar,VC, Problem>::calcStreamline(const Scalar dt,const S
                     s.index=indexi;
                 }
             }//if is->neighbor()
-
+	    
+	    //particle comes from boundary
             else
             {
                 GeometryType gtf = is->geometryInInside().type();
@@ -760,6 +776,7 @@ int ChTransport<Grid,Scalar,VC, Problem>::calcStreamline(const Scalar dt,const S
                 }
             }
         }//end is
+
         if(s.index != -1)
         sl.push_front(s);
 
@@ -767,6 +784,8 @@ int ChTransport<Grid,Scalar,VC, Problem>::calcStreamline(const Scalar dt,const S
         ch.push_front(j);
 
     }//end while
+
+    //boundary front of the streamline section
     ch.front().x[0][0] = xi;
     sl.front().xi[0] = xi;
 
@@ -779,84 +798,85 @@ int ChTransport<Grid,Scalar,VC, Problem>::calcStreamline(const Scalar dt,const S
     return 0;
 }
 
+
+//fronttracking() tracks the discontinuities and calculates new shock fronts if there are crossings.
+//at the end at point of time dt there is an exact solution 
+
 template<class Grid,class Scalar,class VC, class Problem>
 int ChTransport<Grid,Scalar,VC, Problem>::fronttracking(const Scalar& dt, Scalar v, GlobalPosition globalPos, ElementIterator eIt, LocalPosition localPos)
 {
+    //calculating the propagation speeds of the discontinuities
     calcm(globalPos, eIt, localPos);
 
-    //berechne Postion der Schocks zum  Zeitpunkt dt
+    //position of each shock front at point of time dt
     ListIterator lit;
-
     for(lit=ch.begin();lit!=ch.end();++lit)
     for(int q=0;q<2;++q)
     lit->x[1][q]=lit->x[0][q]+lit->m[q]*dt*v;
-    //da eventuell Makrozeitschritte berechnet werden:
-    //tau=Makrozeitpunkt, t1=vorherige Makrozeitpunkt,dtau=tau-t1
-    //x[0] gibt die Position der Shocks zum Zeitpunkt t1 an
-    //x[1] gibt die Position der Shocks zum Zeipunkt tau an
 
-
+    //t1 is the current point of time where an exact solution is given.
     Scalar t1=0;
     while(t1<dt)
     {
         Scalar dtau=dt;
         ListIterator merk;
-        //berechne kleinsten Zeitschritt, bei dem sich die Shocks schneiden.
-        //merk gibt an, zu welcher Zelle die entsprechenden Shocks gehören
+        //if the left front of an element is at the right side of the right
+	//front at dtau, there's a crossing in [t1,t1+dtau]
+	//calculation of the minimal time of crossings 
         for(lit=ch.begin();lit!=ch.end();++lit)
         if(lit->x[0][0]<=lit->x[0][1] && lit->x[1][0]>lit->x[1][1] )
         {
             Scalar dch = lit->m[0]-lit->m[1];
             Scalar tt=dt;
             if(dch!=0)
-            tt=(lit->x[0][1]-lit->x[0][0])/dch;
+	      tt=(lit->x[0][1]-lit->x[0][0])/dch;
             if(tt<dtau)
             {
                 dtau=tt;
                 merk=lit;
             }
         }
-
+	
+	//no further crossings in [t1,dtau]
         if(t1+dtau>=dt)
         dtau=dt-t1;
 
-        //berechne Position der Shocks zum Zeitpunkt tau
-        //xt=x+ch*n*dtau
-        //setze x für nächsten Zeitschritt
+        //calculation of the position at point of time t1+dtau
+        //xt=x+m*dtau
+        //set the next point of time an exact solution will be given: t1 = t1+dtau
         for(lit=ch.begin();lit!=ch.end();++lit)
         for(int p=0;p<2;++p)
         {
             lit->x[1][p]=lit->x[0][p]+lit->m[p]*dtau*v;
             lit->x[0][p]=lit->x[1][p];
         }
-        //Verkleinerung des Zeitfensters in dem Schnitte auftreten können.
         t1=t1+dtau;
 
+	//no further crossings. at point of time dt is an exact solution given
         if(t1>=dt)
-        return 0;
-        ListIterator chend = ch.end();
-        //berechne neue Charakteristik an der Schnittstelle
-        lit=merk;
+	  return 0;
 
+	//calculating new front / fronts at the crossing point
+        ListIterator chend = ch.end();
+        lit=merk;
+	//it's not a boundary element
         if(merk!=ch.begin() && merk!=--chend)
         {
             ListIterator merk2(lit);
-            merk--; //merk ist nun lit-1
-            merk2++; //merk ist nun lit+1
+            merk--; 
+            merk2++; 
 
             std::list<ChNode> chrar;
             Scalar m;
 
-            //   std::cout<<merk->Sat<<" ; "<<merk2->Sat<<std::endl;
-
+	    //solving the Riemannproblem with initial data merk.sat, merk2.sat
             solveRP(m,chrar,merk->Sat,merk2->Sat,globalPos, eIt, localPos);
 
-            //setze neue Steigungen
+            //set propagation speed
             if(chrar.empty())
             {
+	      //shock, deleting the element with crossing fronts 
                 if(m!=-0)
-                //Schock
-
                 {
                     merk->m[1]=m;
                     merk2->m[0]=m;
@@ -865,19 +885,18 @@ int ChTransport<Grid,Scalar,VC, Problem>::fronttracking(const Scalar& dt, Scalar
                     merk2->x[0][0]=0.5*(merk->x[0][1]+merk2->x[0][0]);
                     merk->x[0][1] = merk2->x[0][0];
                 }
+		//saturation is identical, unifying the elements
                 else
-                //Sättigungen identisch (kommt eigtl nicht vor)
-
-                {
-                    merk2->m[0]=merk->m[0];
-                    merk2->x[0][0]=merk->x[0][0];
-
-                    ch.erase(lit);
+		{
+		  merk2->m[0]=merk->m[0];
+		  merk2->x[0][0]=merk->x[0][0];
+		  
+		  ch.erase(lit);
                 }
             }
+	    //rarefaction wave. deleting the element with crossing fronts
+	    //inserting the additional elements for approximation
             else
-            //Verdünnungswelle
-
             {
                 merk->m[1]=chrar.front().m[0];
                 merk2->m[0]=chrar.back().m[1];
@@ -890,104 +909,24 @@ int ChTransport<Grid,Scalar,VC, Problem>::fronttracking(const Scalar& dt, Scalar
             }
             chrar.clear();
         }
+	//deleting the boundary element with crossing fronts
         else
-        ch.erase(lit);
-        //  solveRP(ch.front().m[0],chrar,ch.front().Sat,ch.front().Sat);
-        //solveRP(ch.back().m[1],chrar,ch.back().Sat,ch.back().Sat);
-        //ch.front().m[0]=ch.front().m[1];
-        //ch.back().m[1]=ch.back().m[0];
+	  ch.erase(lit);
 
-
-        //berechne Position der Schocks zum Zeitpunkt dt
+        //calculation the shock front positions at point of time dt
         for(lit=ch.begin();lit!=ch.end();++lit)
-        for(int q=0;q<2;++q)
-        lit->x[1][q]=lit->x[0][q]+lit->m[q]*(dt-t1)*v;
+	  for(int q=0;q<2;++q)
+	    lit->x[1][q]=lit->x[0][q]+lit->m[q]*(dt-t1)*v;
     }
 
     return 0;
 }
 
+
+//approxSol() approximates the solution of the dynamic grid as piecewise constant at the static grid.
+//The function works with integral conservation.
 template<class Grid, class Scalar, class VC, class Problem>
-int ChTransport<Grid,Scalar,VC, Problem>::blau(RepresentationType& updateVec, int indexi)
-{
-
-    Scalar sat = 0;
-
-    if(ch.front().x[1][0] <= 0 && 0 < ch.front().x[1][1])
-    {
-        //die Zelle liegt vor dem ersten Schock -> linke Randsättigung
-        sat=ch.front().Sat;
-    }
-    else if(ch.back().x[1][0] < 0 && 0 <= ch.back().x[1][1])
-    //die Zelle liegt nach dem letzten Schock -> rechte Randsättigung
-    sat=ch.back().Sat;
-
-    else
-    {
-        ListIterator lit=ch.begin();
-        ++lit;
-        ListIterator lit2(lit);
-        ++lit2;
-        while(lit2!=ch.end() && sat == 0)
-        {
-            Scalar xt0=lit->x[1][0];
-            Scalar xt1=lit->x[1][1];
-
-            if(xt0 <= 0 && 0 <= xt1)
-            {
-                Scalar xt05=0.5*(xt0+xt1);
-                Scalar st05=lit->Sat;
-
-                ListIterator merk(lit),merk2(lit);
-                merk--;
-                merk2++;
-                Scalar sx0,sx1,xx0,xx1;
-
-                //berechnet die Lösung an der Stelle x über lineare Interpolation der
-                //Stützstellen des dualen Gitters
-
-                if(0<xt05)
-                {
-                    if(merk->x[1][0]==ch.front().x[1][0])
-                    {
-                        xx0 = merk->x[1][1];
-                        //  sx0 = 0.5*(lit->Sat+merk->Sat);
-                        sx0=merk->Sat;
-                    }
-                    else
-                    {
-                        xx0 = 0.5*(merk->x[1][1] + merk->x[1][0]);
-                        sx0 = merk->Sat;
-                    }
-                    sat=(st05*(0-xx0)-sx0*(0-xt05))/(xt05-xx0);
-                }
-                else
-                {
-                    if(merk2->x[1][1] == ch.back().x[1][1])
-                    {
-                        xx1=merk2->x[1][0];
-                        //	      sx1=0.5*(lit->Sat+merk2->Sat);
-                        sx1 = merk2->Sat;
-                    }
-                    else
-                    {
-                        xx1 = 0.5*(merk2->x[1][0] + merk2->x[1][1]);
-                        sx1 = merk2->Sat;
-                    }
-                    sat=(sx1*(0-xt05)-st05*(0-xx1))/(xx1-xt05);
-                }
-            }//end if(xt0<= x < xt1)
-            ++lit;
-            ++lit2;
-        }//end while
-    }
-    updateVec[indexi]=sat - this->transProblem.variables.saturation[indexi];
-
-    return 0;
-}
-
-template<class Grid, class Scalar, class VC, class Problem>
-int ChTransport<Grid,Scalar,VC, Problem>::rot(RepresentationType& updateVec,RepresentationType& dxtt)
+int ChTransport<Grid,Scalar,VC, Problem>::approxSol(RepresentationType& updateVec,RepresentationType& dxtt)
 {
 
     typedef typename std::template list<slNode>::iterator SlistIterator;
@@ -1000,6 +939,7 @@ int ChTransport<Grid,Scalar,VC, Problem>::rot(RepresentationType& updateVec,Repr
         Scalar sat=0;
         Scalar dxt=0;
 
+	//integral conservation over the different grids. 
         ListIterator lit = ch.begin();
         while(dxt<dx && lit!=ch.end())
         {
@@ -1015,6 +955,8 @@ int ChTransport<Grid,Scalar,VC, Problem>::rot(RepresentationType& updateVec,Repr
             ++lit;
         }
 
+	//sat contains the saturation
+	//dxtt contains the width of the streamline section in the element
         if(dxt>0)
         {
             updateVec[slit->index]+=sat;
@@ -1029,32 +971,28 @@ int ChTransport<Grid,Scalar,VC, Problem>::update(const Scalar t, Scalar& dt, Rep
 {
     const GV& gridView = this->grid_.levelView(this->level());
 
+    //setting of the timestep 
+    //if the problem allow it, use only one timestep!!!
     if(t==0)
-    // dt=8.64e6;
-    // dt = 2.16e7;
-    dt = 2.5e9;
-    //dt = 4.32e7;
+      // dt = 4.32e7;
+      dt = 0.2;
 
     // set update vector to zero
     updateVec = 0;
     RepresentationType dxtt(updateVec);
     dxtt=0;
 
-    ElementIterator eendit = gridView.template end<0>();
+    //one dimensional case
     if(Grid::dimension == 1)
     {
 
         ElementIterator eIt = gridView.template begin<0>();
-
-        // cell geometry type
         Dune::GeometryType gt = eIt->geometry().type();
-        // cell center in reference element
         const LocalPosition
             &localPos = Dune::ReferenceElements<Scalar,dim>::general(gt).position(0, 0);
+	const GlobalPosition& globalPos = eIt->geometry().global(localPos);
 
-        //
-        const GlobalPosition& globalPos = eIt->geometry().global(localPos);
-
+	//calculation of the maximal propagation velocity of a shock front
         Scalar maxa = 0;
         for(int l=1;l<K;++l)
         {
@@ -1064,28 +1002,33 @@ int ChTransport<Grid,Scalar,VC, Problem>::update(const Scalar t, Scalar& dt, Rep
             maxa = a;
         }
 
+	//build dynamic grid
         init(dt,maxa,eIt);
 
+	//constant velocity in the velocity field
         Scalar fv = this->transProblem.variables.vTotal(*eIt,0)[0];
         fv /= this->transProblem.soil().porosity(globalPos, *eIt, localPos);
 
+	//tracking the discontinuities to get an exact solution on the dynamic grid
         fronttracking(dt, fv, globalPos,eIt, localPos);
-        rot(updateVec,dxtt);
-        //blau nur für streamlines möglich
+	//approximating the solution on the dynamic grid as piecewise constant 
+	//on the static grid
+        approxSol(updateVec,dxtt);
+        
     }
+    //more dimensional case
     else
-
-    for (ElementIterator eIt = gridView.template begin<0>(); eIt != eendit; ++eIt)
     {
-        // cell geometry type
+      //calculation streamlines for each element
+      ElementIterator eendit = gridView.template end<0>();
+      for (ElementIterator eIt = gridView.template begin<0>(); eIt != eendit; ++eIt)
+      {
         Dune::GeometryType gt = eIt->geometry().type();
-        // cell center in reference element
         const LocalPosition
             &localPos = Dune::ReferenceElements<Scalar,dim>::general(gt).position(0, 0);
-
-        //
         const GlobalPosition& globalPos = eIt->geometry().global(localPos);
 
+	//calculating the maximal propagation speed of a shock front
         Scalar maxa = 0;
         for(int l=1;l<K;++l)
         {
@@ -1094,31 +1037,22 @@ int ChTransport<Grid,Scalar,VC, Problem>::update(const Scalar t, Scalar& dt, Rep
             if(a>maxa)
             maxa = a;
         }
-
         calcStreamline(dt,1.4*maxa,eIt);
 
+	//if there are saturation jumps, solving the exact solutions
+	// and approximating it on the static grid
         if(ch.size()>0)
         {
-            //  	  typedef typename std::template list<slNode>::iterator SlistIterator;
-            //    	  for(SlistIterator slit=sl.begin();slit!=sl.end();++slit)
-            //           {
-            //     	std::cout<<"index:"<<slit->index<<std::endl;
-            //    	std::cout<<"xi:"<<slit->xi<<std::endl;
-            //     	std::cout<<"Sat:"<<this->transProblem.variables.saturation[slit->index]<<std::endl;
-            //           }
             fronttracking(dt,1.0, globalPos, eIt, localPos);
-            //  	  for(ListIterator klit = ch.begin(); klit != ch.end();++klit)
-            //            {
-            //      	std::cout<<"Sättigung: "<<klit->Sat<<std::endl;
-            //      	std::cout<<"Position: "<<klit->x[1]<<std::endl;
-            //      	std::cout<<"Steigung: "<<klit->m<<std::endl;
-            //      	std::cout<<std::endl;
-            //            }
-            rot(updateVec,dxtt);
-            // blau(updateVec,indexi);
+            approxSol(updateVec,dxtt);
+       
         }
+      }
     }
-
+    //the different solutions of the streamline are weightend over the length of the
+    //accordant streamline sections
+    //updateVec = (Sat_new-Sat_old)/dt
+    ElementIterator eendit = gridView.template end<0>();
     for (ElementIterator eIt = gridView.template begin<0>(); eIt != eendit; ++eIt)
     {
         int indexi = elementmapper.map(*eIt);
@@ -1139,11 +1073,6 @@ int ChTransport<Grid,Scalar,VC, Problem>::update(const Scalar t, Scalar& dt, Rep
 template<class Grid, class Scalar, class VC, class Problem>
 void ChTransport<Grid, Scalar, VC, Problem>::initialTransport()
 {
-    //	std::cout<<"initsat = "<<&this->transProblem.variables.saturation<<std::endl;
-    // iterate through leaf grid an evaluate c0 at cell center
-
-#define IMP
-#ifdef IMP
 
     ElementIterator eendit = this->grid_.template lend<0>(this->level());
     for (ElementIterator eIt = this->grid_.template lbegin<0>(this->level()); eIt != eendit; ++eIt)
@@ -1161,17 +1090,6 @@ void ChTransport<Grid, Scalar, VC, Problem>::initialTransport()
         // initialize cell concentration
         this->transProblem.variables.saturation[elementmapper.map(*eIt)] = this->transProblem.initSat(global, *eIt, local);
     }
-#else
-    char impFileName[120];
-    strcpy(impFileName, "data2.dgf");
-
-    FILE* dataFile;
-    dataFile=fopen(impFileName, "r");
-    //      dataFile.open(impFileName.c_str());
-    for(int i=0;i<this->transProblem.variables.saturation.size();++i)
-    fscanf(dataFile,"%lf",&this->transProblem.variables.saturation[i]);
-    fclose(dataFile);
-#endif
     return;
 }
 
