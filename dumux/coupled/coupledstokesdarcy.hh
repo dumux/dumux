@@ -317,7 +317,7 @@ public:
 
             if (bctype == BoundaryConditions::dirichlet)
             {
-                double dirichletBC = (this->secondModel_).problem.g(globalCoord, *dummyIT2, dummyIS2, globalCoord);
+                double dirichletBC = (this->secondModel_).problem.dirichlet(globalCoord, *dummyIT2, dummyIS2, globalCoord);
                 this->u[rowsInBlock1*nOfBlockRows1 + darcyId] += dirichletBC;
             }
         }

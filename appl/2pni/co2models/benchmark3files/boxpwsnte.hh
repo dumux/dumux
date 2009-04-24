@@ -236,7 +236,7 @@ public:
                                         if (bctype[equationNumber]
                                             == BoundaryConditions::dirichlet) {
                                             FieldVector<RT,m>
-                                                ghelp = this->problem.g(
+                                                ghelp = this->problem.dirichlet(
                                                                         global, entity, is,
                                                                         local);
                                             (*(this->u))[globalId][dirichletIndex[equationNumber]]
@@ -387,7 +387,7 @@ public:
                                         if (bctype[equationNumber]
                                             == BoundaryConditions::dirichlet) {
                                             FieldVector<RT,m>
-                                                ghelp = this->problem.g(
+                                                ghelp = this->problem.dirichlet(
                                                                         global, entity, is,
                                                                         local);
                                             (*(this->u))[globalId][dirichletIndex[equationNumber]]

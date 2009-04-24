@@ -239,7 +239,7 @@ public:
                                             == BoundaryConditions::dirichlet)
                                         {
                                             FieldVector<ThisScalar,numEq>
-                                                ghelp = this->problem.g(
+                                                ghelp = this->problem.dirichlet(
                                                                         globalPos, element, isIt,
                                                                         localPos);
                                             (*(this->u))[globalId][dirichletIndex[equationNumber]]
@@ -392,7 +392,7 @@ public:
                                             == BoundaryConditions::dirichlet)
                                         {
                                             FieldVector<ThisScalar,numEq>
-                                                ghelp = this->problem.g(
+                                                ghelp = this->problem.dirichlet(
                                                                         globalPos, element, isIt,
                                                                         localPos);
                                             (*(this->u))[globalId][dirichletIndex[equationNumber]]

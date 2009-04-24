@@ -53,7 +53,7 @@ public:
         return BoundaryConditions::dirichlet;
     }
 
-    virtual FieldVector<Scalar,dim+2> g(const FieldVector<Scalar,dim>& x, const Element& e,
+    virtual FieldVector<Scalar,dim+2>dirichlet(const FieldVector<Scalar,dim>& x, const Element& e,
                                         const IntersectionIterator& intersectionIt,
                                         const FieldVector<Scalar,dim>& xi) const
     {
@@ -74,7 +74,7 @@ public:
         return result;
     }
 
-    virtual FieldVector<Scalar,dim+2> J(const FieldVector<Scalar,dim>& x, const Element& e,
+    virtual FieldVector<Scalar,dim+2> neumann(const FieldVector<Scalar,dim>& x, const Element& e,
                                         const IntersectionIterator& intersectionIt,
                                         const FieldVector<Scalar,dim>& xi)
     {

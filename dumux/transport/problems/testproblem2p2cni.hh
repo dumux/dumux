@@ -60,7 +60,7 @@ public:
         return 290.15;
     }
 
-    virtual FieldVector<RT,3> J (const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
+    virtual FieldVector<RT,3> neumann(const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi) const
     {
         FieldVector<RT,3> J_(0);
         if (x[0]<1e-6)

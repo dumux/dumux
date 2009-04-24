@@ -28,7 +28,7 @@ public:
             return Dune::BoundaryConditions::neumann;
     }
 
-    RT g (const FieldVector<DT,n>& x, const Entity& e,
+    RTdirichlet(const FieldVector<DT,n>& x, const Entity& e,
           const FieldVector<DT,n>& xi) const
     {
         if (x[0] < left+1e-8)

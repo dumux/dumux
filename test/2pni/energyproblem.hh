@@ -79,7 +79,7 @@ public:
     }
 
     // definition of DIRICHLET boundary conditions depending on the position
-    virtual FieldVector<Scalar,numEq> g (const GlobalPosition& globalPos, const Element& element,
+    virtual FieldVector<Scalar,numEq>dirichlet(const GlobalPosition& globalPos, const Element& element,
                                          const IntersectionIterator& intersectionIt,
                                          const LocalPosition& localPos) const
     {
@@ -93,7 +93,7 @@ public:
     }
 
     // definition of NEUMANN boundary conditions depending on the position
-    virtual FieldVector<Scalar,numEq> J (const GlobalPosition& globalPos, const Element& element,
+    virtual FieldVector<Scalar,numEq> neumann(const GlobalPosition& globalPos, const Element& element,
                                          const IntersectionIterator& intersectionIt,
                                          const LocalPosition& localPos) const
     {

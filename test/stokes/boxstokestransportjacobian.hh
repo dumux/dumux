@@ -628,7 +628,7 @@ public:
                             //this->getImp().problem.dirichletIndex(global, element, it, local, dirichletIdx); // eval bctype
                             if (bctypeface[equationNumber]!=BoundaryConditions::neumann)
                                 break;
-                            FieldVector<Scalar,numEq> J = this->getImp().problem.J(global, element, it, local);
+                            FieldVector<Scalar,numEq> J = this->getImp().problem.neumann(global, element, it, local);
 //                            if (equationNumber < dim+1) {
                                 J[equationNumber] *= this->fvGeom.boundaryFace[bfIdx].area;
                                 this->b[nodeInElement][equationNumber] += J[equationNumber];

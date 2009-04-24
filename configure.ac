@@ -99,7 +99,6 @@ AC_CONFIG_FILES([Makefile
     dumux/minc/Makefile 
     dumux/nonlinear/Makefile 
     dumux/operators/Makefile 
-    dumux/parabolic/Makefile 
     dumux/pardiso/Makefile 
     dumux/richards/Makefile
     dumux/shapefunctions/Makefile 
@@ -156,9 +155,6 @@ AC_CONFIG_FILES([Makefile
     dumux/material/constrel/Makefile 
     dumux/material/phaseproperties/Makefile 
     dumux/minc/box/Makefile 
-    dumux/parabolic/fe/Makefile 
-    dumux/parabolic/fv/Makefile 
-    dumux/parabolic/problems/Makefile 
     dumux/richards/fv/Makefile
     dumux/richards/problems/Makefile    
     dumux/twophase/fv/Makefile 

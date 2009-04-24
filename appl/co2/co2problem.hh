@@ -85,7 +85,7 @@ public:
         return;
     }
 
-    virtual FieldVector<Scalar,numEq> g (const GlobalPosition& globalPos, const Element& element,
+    virtual FieldVector<Scalar,numEq>dirichlet(const GlobalPosition& globalPos, const Element& element,
                                          const IntersectionIterator& isIt,
                                          const LocalPosition& localPos) const
     {
@@ -97,7 +97,7 @@ public:
         return values;
     }
 
-    virtual FieldVector<Scalar,numEq> J (const GlobalPosition& globalPos, const Element& element,
+    virtual FieldVector<Scalar,numEq> neumann(const GlobalPosition& globalPos, const Element& element,
                                          const IntersectionIterator& isIt, const LocalPosition& localPos) const
     {
         FieldVector<Scalar,numEq> values(0);

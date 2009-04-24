@@ -306,10 +306,10 @@ template<class Grid, class Scalar, class VC, class Problem> void FVDiffusion<Gri
                 Scalar dist = distVec.two_norm();
 
                 // get absolute permeability
-                FieldMatrix kJ(this->diffProblem.soil().K(globalPosNeighbor, *neighborPointer, localPosNeighbor));
+                FieldMatrix kneumann(this->diffProblem.soil().K(globalPosNeighbor, *neighborPointer, localPosNeighbor));
 
                 // compute vectorized permeabilities
-                FieldVector<Scalar,dim> kNJ(0);
+                FieldVector<Scalar,dim> kNneumann(0);
                 kJ.umv(unitOuterNormal, kNJ);
                 Scalar k_N_I = kNI * unitOuterNormal;
                 Scalar k_N_J = kNJ * unitOuterNormal;

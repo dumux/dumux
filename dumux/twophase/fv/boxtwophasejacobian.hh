@@ -322,7 +322,7 @@ private:
 
                     if (bctypeface[0]!=BoundaryConditions::neumann) break;
 
-                    SolutionVector J = problem.J(global,element,it,local);
+                    SolutionVector J = problem.neumann(global,element,it,local);
                     if (J.two_norm() < 1e-10)
                         continue;
                     double weightface = Dune::QuadratureRules<Scalar,dim-1>::rule(gtface,p)[g].weight();

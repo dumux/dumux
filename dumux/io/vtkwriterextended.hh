@@ -400,7 +400,7 @@ private:
 
         //! construct from a vector and a name
         P0VectorWrapper ( const Grid &g_, const IndexSet &is_, const V &v_, std::string s_)
-            : g(g_), is(is_), v(v_), s(s_), mapper(g_,is_)
+            :dirichlet(g_), is(is_), v(v_), s(s_), mapper(g_,is_)
         {
             if (v.size()!=(unsigned int)mapper.size())
                 DUNE_THROW(IOError,"VTKWriterExtended::P0VectorWrapper: size mismatch");
@@ -458,7 +458,7 @@ private:
 
         //! construct from a vector and a name
         P1VectorWrapper ( const Grid &g_, const IndexSet &is_, const V &v_, std::string s_ )
-            : g(g_), is(is_), v(v_), s(s_), mapper(g_,is_)
+            :dirichlet(g_), is(is_), v(v_), s(s_), mapper(g_,is_)
         {
             if (v.size()!=mapper.size())
                 DUNE_THROW(IOError,"VTKWriterExtended::P1VectorWrapper: size mismatch");
@@ -501,7 +501,7 @@ private:
 
         //! construct from a vector and a name
         P2VectorWrapper (const Grid& g_, const IndexSet &is_, const V& v_, std::string s_)
-            : g(g_), is(is_), v(v_), s(s_), mapper(g_,is_)
+            :dirichlet(g_), is(is_), v(v_), s(s_), mapper(g_,is_)
         {
             if ((int) v.size()!=(int) mapper.size())
                 DUNE_THROW(IOError,"VTKWriterExtended::P2VectorWrapper: size mismatch");
@@ -558,7 +558,7 @@ private:
 
         //! construct from a vector and a name
         P3VectorWrapper (const Grid& g_, const IndexSet& is_, const V& v_, std::string s_)
-            : g(g_), is(is_), v(v_), s(s_), mapper(g_,is_)
+            :dirichlet(g_), is(is_), v(v_), s(s_), mapper(g_,is_)
         {
             if ((int)v.size()!=(int)mapper.size())
                 DUNE_THROW(IOError,"VTKWriterExtended::P3VectorWrapper: size mismatch");

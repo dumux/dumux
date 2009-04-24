@@ -170,7 +170,7 @@ public:
                                         if (bctype[equationNumber]
                                             == BoundaryConditions::dirichlet) {
                                             FieldVector<Scalar,numEq>
-                                                ghelp = this->problem.g(
+                                                ghelp = this->problem.dirichlet(
                                                                         global, entity, is,
                                                                         local);
                                             (*(this->u))[globalIdx][dirichletIndex[equationNumber]]

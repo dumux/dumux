@@ -59,7 +59,7 @@ public:
         return (-x[0]*x[1]);
     }
 
-    RT g (const Dune::FieldVector<DT,n>& x, const Entity& e,
+    RTdirichlet(const Dune::FieldVector<DT,n>& x, const Entity& e,
           const IntersectionIterator& intersectionIt,
           const Dune::FieldVector<DT,n>& xi) const
     {
@@ -77,7 +77,7 @@ public:
         return grad;
     }
 
-    RT J (const Dune::FieldVector<DT,n>& x, const Entity& e,
+    RT neumann(const Dune::FieldVector<DT,n>& x, const Entity& e,
           const IntersectionIterator& intersectionIt,
           const Dune::FieldVector<DT,n>& xi) const
     {

@@ -44,7 +44,7 @@ public:
         return Dune::BoundaryConditions::neumann;
     }
 
-    RT g(const Dune::FieldVector<DT,n>& x, const Entity& e,
+    RTdirichlet(const Dune::FieldVector<DT,n>& x, const Entity& e,
          const Dune::FieldVector<DT,n>& xi) const {
         return (x[0] < 1e-6) ? 2e6 : 1e6;
     }
@@ -57,7 +57,7 @@ public:
             return 0.2;
     }
 
-    RT J(const Dune::FieldVector<DT,n>& x, const Entity& e,
+    RT neumann(const Dune::FieldVector<DT,n>& x, const Entity& e,
          const Dune::FieldVector<DT,n>& xi) const {
         if (x[0]<1e-6)
             return 1e-4;

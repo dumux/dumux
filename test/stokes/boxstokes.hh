@@ -196,7 +196,7 @@ public:
 
                                     BoundaryConditions::Flags bctype = this->problem.bctype(global, entity, is, local);
                                     if (bctype == BoundaryConditions::dirichlet) {
-                                        FieldVector<Scalar,numEq> dirichlet = this->problem.g(global, entity, is, local);
+                                        FieldVector<Scalar,numEq> dirichlet = this->problem.dirichlet(global, entity, is, local);
                                         //TODO: dim or numEq for the following loop??
                                         for (int eq = 0; eq < dim; eq++)
                                             (*(this->u))[globalId][eq] = dirichlet[eq];

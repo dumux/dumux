@@ -263,7 +263,7 @@ public:
                             //                                                           << ", bctypeface = " << bctypeface << std::endl;
                             if (bctypeface[equationNumber]!=BoundaryConditions::neumann)
                                 break;
-                            VBlockType J = this->getImp().problem.J(global, e, it, local);
+                            VBlockType J = this->getImp().problem.neumann(global, e, it, local);
                             J[equationNumber] *= this->fvGeom.boundaryFace[bfIdx].area;
                             this->b[nodeInElement][equationNumber] += J[equationNumber];
                         }

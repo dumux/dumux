@@ -37,7 +37,7 @@ public:
         return BoundaryConditions::dirichlet;
     }
 
-    virtual FieldVector<Scalar,dim> g(const FieldVector<Scalar,dim>& globalPos, const Element& element,
+    virtual FieldVector<Scalar,dim>dirichlet(const FieldVector<Scalar,dim>& globalPos, const Element& element,
                                       const IntersectionIterator& intersectionIt,
                                       const FieldVector<Scalar,dim>& localPos) const
     {
@@ -74,7 +74,7 @@ public:
             if (fabs(tGradUnT) < 1e-12)
                 DUNE_THROW(MathError, "analytic Beavers-Joseph does not work for tGradUnT == 0");
 
-            FieldVector<Scalar,dim> u = g(globalPos, element, intersectionIt, localPos);
+            FieldVector<Scalar,dim> u =dirichlet(globalPos, element, intersectionIt, localPos);
             Scalar uT = u[0]*normal[1] - u[1]*normal[0];
 
             Scalar c = -uT/tGradUnT;

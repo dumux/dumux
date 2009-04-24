@@ -28,22 +28,6 @@ public:
     };
 
     typedef FieldVector<Scalar, numPhases>         PhasesVector;
-
-    /*!
-     * \brief Data which is attached to each vert of the and can
-     *        be shared between multiple calculations and should
-     *        thus be cached in order to increase efficency.
-     */
-    struct VariableVertexData
-    {
-        Scalar porosity;
-        Scalar viscosity;
-        Scalar tortuosity;
-        Scalar diffCoeff;
-        Scalar molefraction;
-        Scalar pressure;
-    };
-
 };
 
 

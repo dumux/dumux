@@ -83,7 +83,7 @@ public:
         return;
     }
 
-    virtual FieldVector<RT,m> g (const FieldVector<Scalar,dim>& x, const Entity& e,
+    virtual FieldVector<RT,m>dirichlet(const FieldVector<Scalar,dim>& x, const Entity& e,
                                  const IntersectionIterator& intersectionIt,
                                  const FieldVector<Scalar,dim>& xi) const
     {
@@ -95,7 +95,7 @@ public:
         return values;
     }
 
-    virtual FieldVector<RT,m> J (const FieldVector<Scalar,dim>& x, const Entity& e,
+    virtual FieldVector<RT,m> neumann(const FieldVector<Scalar,dim>& x, const Entity& e,
                                  const IntersectionIterator& intersectionIt, const FieldVector<Scalar,dim>& xi) const
     {
         FieldVector<RT,m> values(0);

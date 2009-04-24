@@ -181,7 +181,7 @@ public:
                                     FieldVector<BoundaryConditions::Flags, m> bctype = this->problem.bctype(global, entity, is, local);
                                     //                                 std::cout << "global = " << global << ", id = " << globalId << std::endl;
                                     if (bctype[0] == BoundaryConditions::dirichlet) {
-                                        (*(this->u))[globalId] = this->problem.g(global, entity, is, local);
+                                        (*(this->u))[globalId] = this->problem.dirichlet(global, entity, is, local);
                                     }
                                     else {
                                         std::cout << global << " is considered to be a Neumann node." << std::endl;

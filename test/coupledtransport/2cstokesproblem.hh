@@ -57,7 +57,7 @@ public:
     	return values;
     }
 
-    SolutionVector g(const GlobalPosition& globalPos, const Element& element,
+    SolutionVectordirichlet(const GlobalPosition& globalPos, const Element& element,
                      const IntersectionIterator& intersectionIt,
                      const LocalPosition& localPos) const
     {
@@ -71,7 +71,7 @@ public:
         return result;
     }
 
-    SolutionVector J(const GlobalPosition& globalPos, const Element& element,
+    SolutionVector neumann(const GlobalPosition& globalPos, const Element& element,
                      const IntersectionIterator& intersectionIt,
                      const LocalPosition& localPos)
     {

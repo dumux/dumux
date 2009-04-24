@@ -384,7 +384,7 @@ public:
 
         GlobalPosition tmp(0.0);
         PhasesVector pressure(0.0), massfrac(0.0);
-        PhasesVector densityIJ(0.);
+        PhasesVector densityIneumann(0.);
 
         // calculate FE gradient (grad p for each phase)
         for (int idx = 0; idx < this->curElementGeom_.numVertices; idx++) // loop over adjacent vertices
@@ -745,7 +745,7 @@ public:
 
         GlobalPosition tmp(0.0);
         PhasesVector pressure(0.0);
-        PhasesVector densityIJ(0.);
+        PhasesVector densityIneumann(0.);
 
         // calculate FE gradient (grad p for each phase)
         for (int idx = 0; idx < this->curElementGeom_.numVertices; idx++) // loop over vertices

@@ -66,7 +66,7 @@ public:
 
     // function returning the Dirichlet boundary condition for the solution of
     // both mass balance equations depending on the position within the domain
-    virtual FieldVector<RT,m> g (const FieldVector<DT,n>& x, const Entity& e,  /*@\label{tutorial-coupled:g}@*/
+    virtual FieldVector<RT,m>dirichlet(const FieldVector<DT,n>& x, const Entity& e,  /*@\label{tutorial-coupled:g}@*/
                                  const IntersectionIterator& intersectionIt,
                                  const FieldVector<DT,n>& xi) const
     {
@@ -81,7 +81,7 @@ public:
 
     // function returning the Neumann boundary condition for the solution
     // of the coupled system of balance equations depending on the position within the domain
-    virtual FieldVector<RT,m> J (const FieldVector<DT,n>& x, const Entity& e,
+    virtual FieldVector<RT,m> neumann(const FieldVector<DT,n>& x, const Entity& e,
                                  const IntersectionIterator& intersectionIt,
                                  const FieldVector<DT,n>& xi) const /*@\label{tutorial-coupled:J}@*/
     {

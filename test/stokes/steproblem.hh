@@ -58,14 +58,14 @@ public:
         return BoundaryConditions::dirichlet;
     }
 
-    virtual FieldVector<Scalar,dim+3> g(const FieldVector<Scalar,dim>& x, const Element& e,
+    virtual FieldVector<Scalar,dim+3>dirichlet(const FieldVector<Scalar,dim>& x, const Element& e,
                                         const IntersectionIterator& intersectionIt,
                                         const FieldVector<Scalar,dim>& xi) const
     {
         return velocitymassfractemp(x);
     }
 
-    virtual FieldVector<Scalar,dim+3> J(const FieldVector<Scalar,dim>& x, const Element& e,
+    virtual FieldVector<Scalar,dim+3> neumann(const FieldVector<Scalar,dim>& x, const Element& e,
                                         const IntersectionIterator& intersectionIt,
                                         const FieldVector<Scalar,dim>& xi)
     {

@@ -84,7 +84,7 @@ public:
       @param[in]  x    position in global coordinates
       \return     boundary condition value
     */
-    virtual FieldVector<Scalar,numEq> g(const GlobalPosition& globalPos, const Element& element,
+    virtual FieldVector<Scalar,numEq>dirichlet(const GlobalPosition& globalPos, const Element& element,
                                         const IntersectionIterator& isIt,
                                         const LocalPosition& localPos) const = 0;
 
@@ -93,7 +93,7 @@ public:
       @param[in]  x    position in global coordinates
       \return     boundary condition value
     */
-    virtual FieldVector<Scalar,numEq> J(const GlobalPosition& globalPos, const Element& element,
+    virtual FieldVector<Scalar,numEq> neumann(const GlobalPosition& globalPos, const Element& element,
                                         const IntersectionIterator& isIt,
                                         const LocalPosition& localPos) const = 0;
 

@@ -193,7 +193,7 @@ public:
 
                                     BoundaryConditions::Flags bctype = this->problem.bctype(global, entity, is, local);
                                     if (bctype == BoundaryConditions::dirichlet) {
-                                        FieldVector<Scalar,dim+3> dirichlet = this->problem.g(global, entity, is, local);
+                                        FieldVector<Scalar,dim+3> dirichlet = this->problem.dirichlet(global, entity, is, local);
                                         for (int eq = 0; eq < dim+2; eq++)
                                             (*(this->u))[globalId][eq] = dirichlet[eq];
                                     }

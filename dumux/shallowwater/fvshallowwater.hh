@@ -180,7 +180,7 @@ template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
             Scalar bottomSlope(0);
             Scalar bottomElevationJ;
 
-            VelType velocityJ(0);
+            VelType velocityneumann(0);
             VelType velocityFace(0);
 
             // handle interior face
@@ -307,7 +307,7 @@ template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
                     waterDepthJ = this->problem.dirichletConti(faceGlobalPos,
                             *eIt, faceLocalDim);
 
-                    VelType momentumJ(0);
+                    VelType momentumneumann(0);
 
                     momentumJ = this->problem.dirichletMomentum(faceGlobalPos,
                             *eIt, faceLocalDim);

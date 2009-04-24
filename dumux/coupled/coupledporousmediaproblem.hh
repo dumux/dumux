@@ -50,7 +50,7 @@ public:
       @param[in]  globalPos    position in global coordinates
       \return     boundary condition value
     */
-    virtual Scalar g (const FieldVector<Scalar,dim>& globalPos, const Element& element,
+    virtual Scalardirichlet(const FieldVector<Scalar,dim>& globalPos, const Element& element,
                       const IntersectionIterator& intersectionIt,
                       const FieldVector<Scalar,dim>& localPos) const = 0;
 
@@ -59,7 +59,7 @@ public:
       @param[in]  globalPos    position in global coordinates
       \return     boundary condition value
     */
-    virtual Scalar J (const FieldVector<Scalar,dim>& globalPos, const Element& element,
+    virtual Scalar neumann(const FieldVector<Scalar,dim>& globalPos, const Element& element,
                       const IntersectionIterator& intersectionIt,
                       const FieldVector<Scalar,dim>& localPos) const = 0;
 

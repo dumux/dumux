@@ -91,7 +91,7 @@ public:
         return 0;
     }
 
-    virtual Scalar J (const GlobalPosition& globalPos, const Element& element,
+    virtual Scalar neumann(const GlobalPosition& globalPos, const Element& element,
             const IntersectionIterator& intersectionIt,
                                const LocalPosition& localPos) const
     {

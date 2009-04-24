@@ -235,7 +235,7 @@ private:
 
                     if (bctypeface!=BoundaryConditions::neumann) break;
 
-                    RT J = problem.J(global,e,local);
+                    RT J = problem.neumann(global,e,local);
                     double weightface = Dune::QuadratureRules<DT,n-1>::rule(gtface,p)[g].weight();
                     DT detjacface = it.geometry().integrationElement(facelocal);
                     for (int i=0; i<sfs.size(); i++) // loop over test function number

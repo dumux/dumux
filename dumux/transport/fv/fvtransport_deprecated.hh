@@ -260,7 +260,7 @@ template<class G, class RT, class VC> int DeprecatedFVTransport<G, RT, VC>::upda
 
                     double velocityJI = std::max(-(this->transproblem.variables.vTotal(*it, numberInSelf)*integrationOuterNormal/volume), 0.0);
 
-                    double satBound = this->transproblem.g(faceglobal, *it, facelocalDim);
+                    double satBound = this->transproblem.dirichlet(faceglobal, *it, facelocalDim);
 
                     // cell center in global coordinates
                     Dune::FieldVector<ct,dimworld> global = it->geometry().global(local);
@@ -304,7 +304,7 @@ template<class G, class RT, class VC> int DeprecatedFVTransport<G, RT, VC>::upda
                 }
                 else
                 {
-                    //double J = this->transproblem.J(faceglobal, *it, facelocalDim);
+                    //double J = this->transproblem.neumann(faceglobal, *it, facelocalDim);
                     //factor = J*faceVol;
                     factor = 0;
                     totfactor = 0;
@@ -460,7 +460,7 @@ template<class G, class RT, class VC> void DeprecatedFVTransport<G, RT, VC>::Cal
                     faceglobal = is->geometry().global(facelocal);
 
                 // get saturation value
-                saturation[numberInSelf] = this->transproblem.variables.saturation[indexi];//this->transproblem.g(faceglobal, *it, facelocalDim);
+                saturation[numberInSelf] = this->transproblem.variables.saturation[indexi];//this->transproblem.dirichlet(faceglobal, *it, facelocalDim);
 
                 // distance vector between barycenters
                 Dune::FieldVector<ct,dimworld> distVec = global - faceglobal;

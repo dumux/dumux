@@ -190,10 +190,10 @@ int FVTransport<Grid, Scalar, VC, Problem>::update(const Scalar t, Scalar& dt,
                     Scalar dist = distVec.two_norm();
 
                     // get absolute permeability
-                    FieldMatrix<Scalar,dim,dim> permeabilityJ(this->transProblem.soil().K(globalPosNeighbor, *neighborPointer, localPosNeighbor));
+                    FieldMatrix<Scalar,dim,dim> permeabilityneumann(this->transProblem.soil().K(globalPosNeighbor, *neighborPointer, localPosNeighbor));
 
                     // compute vectorized permeabilities
-                    FieldVector<Scalar,dim> normalPermeabilityJ(0);
+                    FieldVector<Scalar,dim> normalPermeabilityneumann(0);
                     permeabilityJ.umv(unitOuterNormal, normalPermeabilityJ);
                     // compute permeability normal to intersection and take harmonic mean
                     Scalar normalComponentPermeabilityI = normalPermeabilityI * unitOuterNormal;

@@ -373,7 +373,7 @@ public:
                         {
                         	result[dim] -= beta*0.5*(gradVN*it->unitOuterNormal(faceLocal))/this->fvGeom.boundaryFace[bfIdx].area;
 
-                        	FieldVector<Scalar,numEq> neumann = this->getImp().problem.J(this->fvGeom.boundaryFace[bfIdx].ipGlobal, element, it, this->fvGeom.boundaryFace[bfIdx].ipLocal);
+                        	FieldVector<Scalar,numEq> neumann = this->getImp().problem.neumann(this->fvGeom.boundaryFace[bfIdx].ipGlobal, element, it, this->fvGeom.boundaryFace[bfIdx].ipLocal);
 
                         	for (int comp = 0; comp < dim; comp++)
                         		result[dim] -= beta*0.5*neumann[comp]*it->unitOuterNormal(faceLocal)[comp];
@@ -474,7 +474,7 @@ public:
 
                             if (bctypeface[equationNumber]!=BoundaryConditions::neumann)
                                 break;
-                            FieldVector<Scalar,numEq> J = this->getImp().problem.J(global, element, it, local);
+                            FieldVector<Scalar,numEq> J = this->getImp().problem.neumann(global, element, it, local);
 
                             if (equationNumber < dim)
                             {

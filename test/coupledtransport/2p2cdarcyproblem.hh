@@ -68,7 +68,7 @@ public:
     /////////////////////////////
     // DIRICHLET boundaries
     /////////////////////////////
-    virtual SolutionVector g (const GlobalPosition& globalPos, const Element& element,
+    virtual SolutionVectordirichlet(const GlobalPosition& globalPos, const Element& element,
                               const IntersectionIterator& intersectionIt,
                               const LocalPosition& localPos) const
     {
@@ -78,7 +78,7 @@ public:
     /////////////////////////////
     // NEUMANN boundaries
     /////////////////////////////
-    virtual SolutionVector J (const GlobalPosition& globalPos, const Element& element,
+    virtual SolutionVector neumann(const GlobalPosition& globalPos, const Element& element,
                               const IntersectionIterator& intersectionIt,
                               const LocalPosition& localPos) const
     {

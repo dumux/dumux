@@ -99,7 +99,7 @@ public:
      * @param e reference to the cell for which the function is to be evaluated
      * @param xi local coordinates inside e
      */
-    virtual FieldVector<RT,3> J (const FieldVector<DT,n>& x, const Entity& e,
+    virtual FieldVector<RT,3> neumann(const FieldVector<DT,n>& x, const Entity& e,
                                  const FieldVector<DT,n>& xi) const = 0;
 
     //! Source of components

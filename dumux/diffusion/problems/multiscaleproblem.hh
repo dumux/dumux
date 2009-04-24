@@ -56,16 +56,16 @@ namespace Dune
 //          return problem.bctype(x,e,xi);
 //      }
 //
-//      RT g (const FieldVector<DT,n>& x, const Entity& e,
+//      RTdirichlet(const FieldVector<DT,n>& x, const Entity& e,
 //                        const FieldVector<DT,n>& xi)
 //      {
-//            return problem.g(x,e,xi);
+//            return problem.dirichlet(x,e,xi);
 //      }
 //
-//      RT J (const FieldVector<DT,n>& x, const Entity& e,
+//      RT neumann(const FieldVector<DT,n>& x, const Entity& e,
 //                        const FieldVector<DT,n>& xi)
 //      {
-//          return problem.J(x,e,xi);
+//          return problem.neumann(x,e,xi);
 //      }
 //
 //      const FieldVector<DT,n>& gravity()
@@ -121,17 +121,17 @@ public:
         return problem->bctype(x,e,xi);
     }
 
-    RT g (const Dune::FieldVector<DT,n>& x, const Entity& e,
+    RTdirichlet(const Dune::FieldVector<DT,n>& x, const Entity& e,
           const Dune::FieldVector<DT,n>& xi) const
     {
         return problem->g(x,e,xi);
     }
 
 
-    RT J (const Dune::FieldVector<DT,n>& x, const Entity& e,
+    RT neumann(const Dune::FieldVector<DT,n>& x, const Entity& e,
           const Dune::FieldVector<DT,n>& xi) const
     {
-        return problem->J(x,e,xi);
+        return problem->neumann(x,e,xi);
     }
 
 

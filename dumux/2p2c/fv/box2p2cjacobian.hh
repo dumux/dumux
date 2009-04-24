@@ -166,7 +166,7 @@ public:
         FieldMatrix<Scalar,numEq,dim> pGrad(0.), xGrad(0.);
         FieldVector<Scalar,dim> temp(0.);
         SolutionVector flux(0.);
-        FieldVector<Scalar,numEq> densityIJ(0.);
+        FieldVector<Scalar,numEq> densityIneumann(0.);
         FMatrix Ki(0), Kj(0);
 
         // calculate harmonic mean of permeabilities of nodes i and j

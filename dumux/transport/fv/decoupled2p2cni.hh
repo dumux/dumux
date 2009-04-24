@@ -639,7 +639,7 @@ void Decoupled2p2cni<G, RT>::assemble(bool first, const RT t=0)
                 }
                 else
                 {
-                    FieldVector<RT,3> J = problem.J(faceglobal, *it, facelocalDim);
+                    FieldVector<RT,3> J = problem.neumann(faceglobal, *it, facelocalDim);
                     if (first)
                         f[indexi] += faceVol * (J[0] * Vw + J[1] * Vg);
                     else
@@ -1235,7 +1235,7 @@ int Decoupled2p2cni<G,RT>::concentrationUpdate(const RT t, RT& dt, Representatio
                 }
                 else if (pressBCtype == BoundaryConditions::neumann)
                 {
-                    FieldVector<RT,3> J = problem.J(faceglobal, *it, facelocalDim);
+                    FieldVector<RT,3> J = problem.neumann(faceglobal, *it, facelocalDim);
                     double faceVol = integrationOuterNormal.two_norm();
                     factorC1 = J[0] * faceVol / volume;
                     factorC2 = J[1] * faceVol / volume;

@@ -72,7 +72,7 @@ public:
         return;
     }
 
-    virtual FieldVector<Scalar,numEq> g (const FieldVector<CoordScalar,dim>& golbalPos, const Element& element,
+    virtual FieldVector<Scalar,numEq>dirichlet(const FieldVector<CoordScalar,dim>& golbalPos, const Element& element,
                                          const IntersectionIterator& intersectionIt,
                                          const FieldVector<CoordScalar,dim>& localPos) const
     {
@@ -98,7 +98,7 @@ public:
         return values;
     }
 
-    virtual FieldVector<Scalar,numEq> J (const FieldVector<CoordScalar,dim>& golbalPos, const Element& element,
+    virtual FieldVector<Scalar,numEq> neumann(const FieldVector<CoordScalar,dim>& golbalPos, const Element& element,
                                          const IntersectionIterator& intersectionIt, const FieldVector<CoordScalar,dim>& localPos) const
     {
         FieldVector<Scalar,numEq> values(0);

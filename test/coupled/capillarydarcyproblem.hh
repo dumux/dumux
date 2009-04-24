@@ -59,7 +59,7 @@ public:
     }
 
     // Dirichlet boundary conditions
-    Scalar g (const FieldVector<Scalar,dim>& globalPos, const Element& element,
+    Scalardirichlet(const FieldVector<Scalar,dim>& globalPos, const Element& element,
               const IntersectionIterator& intersectionIt,
               const FieldVector<Scalar,dim>& localPos) const
     {
@@ -72,7 +72,7 @@ public:
     }
 
     // Neumann boundary conditions
-    Scalar J (const FieldVector<Scalar,dim>& globalPos, const Element& element,
+    Scalar neumann(const FieldVector<Scalar,dim>& globalPos, const Element& element,
               const IntersectionIterator& intersectionIt,
               const FieldVector<Scalar,dim>& localPos) const
     {

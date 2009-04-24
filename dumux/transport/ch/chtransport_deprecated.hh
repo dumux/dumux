@@ -497,7 +497,7 @@ private:
 	      //gdat[p] = faceglobal[0];
 
 	      const Dune::FieldVector<ct,dim>& facelocalDim = Dune::ReferenceElements<ct,dim>::general(gtf).position(numberInSelf,1);
-	      j.Sat =this->transproblem.g(faceglobal,*ep,facelocalDim);
+	      j.Sat =this->transproblem.dirichlet(faceglobal,*ep,facelocalDim);
 	      abb=-1;
 	    }	  	
 	
@@ -709,7 +709,7 @@ private:
 			const VType& faceglobal = ir->geometry().global(facelocal);
 			const Dune::FieldVector<ct,dim>& facelocalDim = Dune::ReferenceElements<ct,dim>::general(gtf).position(numberInSelf,1);
 			  
-			j.Sat = this->transproblem.g(faceglobal,*ep,facelocalDim);
+			j.Sat = this->transproblem.dirichlet(faceglobal,*ep,facelocalDim);
 			if(xi>-lambda*dt)
 			{
 			  xi = -2*lambda*dt;
@@ -733,7 +733,7 @@ private:
 	    const Dune::FieldVector<ct,dim-1>& facelocal = Dune::ReferenceElements<RT,dim-1>::general(gtf).position(0,0);
 	    const VType& faceglobal = is->geometry().global(facelocal);
 	    const Dune::FieldVector<ct,dim>& facelocalDim = Dune::ReferenceElements<ct,dim>::general(gtf).position(numberInSelf,1);
-	    j.Sat = this->transproblem.g(faceglobal,*ep,facelocalDim);
+	    j.Sat = this->transproblem.dirichlet(faceglobal,*ep,facelocalDim);
 
 	    if(xi>-lambda*dt)
 	    {

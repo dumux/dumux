@@ -19,6 +19,62 @@ namespace Dune
 //template<class ProblemT, class OnePTwoCTraitsT>
 //class OnePTwoCBoxModel;
 
+/*!
+ * \brief Contains the quantities which are are constant within a
+ *        finite volume in the single-phase, two-component model.
+ */
+template <class OnePTwoCTraits, 
+          class Problem>
+class OnePTwoCVertexData
+{
+    typedef OnePTwoCTraits Tr;
+    typedef typename Problem::DomainTraits::Scalar Scalar;
+    typedef typename Problem::DomainTraits::Grid Grid;
+
+    typedef typename Grid::template Codim<0>::Entity Element;
+    
+    typedef Dune::FieldVector<Scalar, Tr::numEq>      SolutionVector;
+    typedef Dune::FieldVector<Scalar, Tr::numPhases>  PhasesVector;
+
+    typedef Dune::FieldVector<Scalar, Grid::dimensionworld>  GlobalPosition;
+    typedef Dune::FieldVector<Scalar, Grid::dimension>       LocalPosition;
+
+public:
+    /*!
+     * \brief Update all quantities for a given control volume.
+     */
+    template <class JacobianImp>
+    void update(const SolutionVector   &sol,
+                const Element          &element,
+                int                     vertIdx,
+                bool                    isOldSol,
+                JacobianImp            &jac) 
+    {
+        const GlobalPosition &global = element.geometry().corner(vertIdx);
+        const LocalPosition   &local =
+            Problem::DomainTraits::referenceElement(element.type()).position(vertIdx,
+                                                                             Grid::dimension);
+
+        double T = 273;
+        double p = 1e-5;
+
+        porosity = jac.problem.soil().porosity(global,element,local);
+        viscosity = jac.problem.phase().viscosity(T,p);
+        tortuosity = jac.problem.soil().tortuosity(global,element,local);
+        diffCoeff = jac.problem.phase().diffCoeff();
+        molefraction = vertSol[transport];
+        pressure = vertSol[konti];
+    }
+
+    
+    Scalar porosity;
+        Scalar viscosity;
+        Scalar tortuosity;
+        Scalar diffCoeff;
+        Scalar molefraction;
+        Scalar pressure;
+    };
+
 
 ///////////////////////////////////////////////////////////////////////////
 // OnePTwoCBoxJacobian (evaluate the local jacobian for the newton method.)
@@ -34,6 +90,7 @@ template<class ProblemT,
          class OnePTwoCTraitsT>
 class OnePTwoCBoxJacobian : public BoxJacobian<ProblemT,
                                                    BoxTraitsT,
+                                                   OnePTwoCVertexData<OnePTwoCTraitsT, ProblemT>,
                                                    OnePTwoCBoxJacobian<ProblemT,BoxTraitsT,OnePTwoCTraitsT> >
 {
 protected:
@@ -82,13 +139,6 @@ protected:
     typedef FieldMatrix<Scalar, dim, dim>  Tensor;
     typedef FieldVector<Scalar,dim> FieldVector;
 
-    /*!
-     * \brief Cached data for the each vertex of the element.
-     */
-    struct ElementData
-    {
-        VariableVertexData vertex[BoxTraits::ShapeFunctionSetContainer::maxsize];
-    };
 
     /*!
      * \brief Data which is attached to each vertex and is not only
@@ -98,32 +148,6 @@ protected:
 
     };
 
-    /*!
-     * \brief Function to update variable data of the vertices of the
-     *        the current element (essentially secondary variables)
-     */
-    void updateVarVertexData_(VariableVertexData &vertDat,
-                              const SolutionVector &vertSol,
-                              const Element &element,
-                              int localIdx,
-                              Problem &problem) const
-    {
-        const GlobalPosition &global = element.geometry().corner(localIdx);
-        const LocalPosition &local =
-            DomTraits::referenceElement(element.type()).position(localIdx,
-                                                                 dim);
-
-        double T = 273;
-        double p = 1e-5;
-
-        vertDat.porosity = problem.soil().porosity(global,element,local);
-        vertDat.viscosity = problem.phase().viscosity(T,p);
-        vertDat.tortuosity = problem.soil().tortuosity(global,element,local);
-        vertDat.diffCoeff = problem.phase().diffCoeff();
-        vertDat.molefraction = vertSol[transport];
-        vertDat.pressure = vertSol[konti];
-
-    }
 
 public:
     OnePTwoCBoxJacobian(ProblemT &problem)
@@ -133,73 +157,6 @@ public:
 
     };
 
-    /*!
-     * \brief Set the current grid element.
-     */
-    void setCurrentElement(const Element &element)
-    {
-        ParentType::setCurrentElement_(element);
-    };
-
-    /*!
-     * \brief Set the parameters for the calls to the remaining
-     *        members.
-     */
-    void setParams(const Element &element, LocalFunction &curSol, LocalFunction &prevSol)
-    {
-        setCurrentElement(element);
-
-        // TODO: scheme which allows not to copy curSol and
-        // prevSol all the time
-        curSol_ = curSol;
-        updateElementData_(curElemDat_, curSol_, false);
-        curSolDeflected_ = false;
-
-        prevSol_ = prevSol;
-        updateElementData_(prevElemDat_, prevSol_, true);
-    };
-
-    /*!
-     * \brief Vary a single component of a single vertex of the
-     *        local solution for the current element.
-     *
-     * This method is a optimization, since if varying a single
-     * component at a degree of freedom not the whole element cache
-     * needs to be recalculated. (Updating the element cache is very
-     * expensive since material laws need to be evaluated.)
-     */
-    void deflectCurSolution(int vert, int component, Scalar value)
-    {
-        // make sure that the original state can be restored
-        if (!curSolDeflected_) {
-            curSolDeflected_ = true;
-
-            curSolOrigValue_ = curSol_[vert][component];
-            curSolOrigVarData_ = curElemDat_.vertex[vert];
-        }
-
-
-        curSol_[vert][component] = value;
-        asImp_()->updateVarVertexData_(curElemDat_.vertex[vert],
-                                               curSol_[vert],
-                                               this->curElement_(),
-                                               vert,
-                                               this->problem_);
-    }
-
-    /*!
-     * \brief Restore the local jacobian to the state before
-     *        deflectCurSolution() was called.
-     *
-     * This only works if deflectSolution was only called with
-     * (vertex, component) as arguments.
-     */
-    void restoreCurSolution(int vert, int component)
-    {
-        curSolDeflected_ = false;
-        curSol_[vert][component] = curSolOrigValue_;
-        curElemDat_.vertex[vert] = curSolOrigVarData_;
-    };
 
     /*!
      * \brief Evaluate the rate of change of all conservation
@@ -335,62 +292,6 @@ public:
 
 
     /*!
-     * \brief Initialize the static data with the initial solution.
-     *
-     * Called by TwoPTwoCBoxModel::initial()
-     */
-    void initStaticData()
-    {
-
-    }
-
-    /*!
-     * \brief Update the static data of a single vert and do a
-     *        variable switch if necessary.
-     */
-    void updateStaticData(SpatialFunction &curGlobalSol, SpatialFunction &oldGlobalSol)
-    {
-
-    }
-
-    /*!
-     * \brief Set the old phase of all verts state to the current one.
-     */
-    void updateOldPhaseState()
-    {
-
-    }
-
-    /*!
-     * \brief Reset the current phase state of all verts to the old one after an update failed
-     */
-    void resetPhaseState()
-    {
-
-    }
-
-    /*!
-     * \brief Return true if the primary variables were switched
-     *        after the last timestep.
-     */
-    bool switched() const
-    {
-        return;
-    }
-
-    /*!
-     * \brief Set whether there was a primary variable switch after in the last
-     *        timestep.
-     */
-    void setSwitched(bool yesno)
-    {
-
-    }
-
-
-
-
-    /*!
      * \brief Add the mass fraction of air in water to VTK output of
      *        the current timestep.
      */
@@ -436,9 +337,6 @@ public:
 
         writer.addVertexData(pressure, "pressure");
         writer.addVertexData(molefraction, "molefraction");
-
-
-
     }
 
 
@@ -447,69 +345,6 @@ protected:
     { return static_cast<Implementation *>(this); }
     const Implementation *asImp_() const
     { return static_cast<const Implementation *>(this); }
-
-
-    void updateElementData_(ElementData &dest, const LocalFunction &sol, bool isOldSol)
-    {
-
-        int numVertices = this->curElement_().template count<dim>();
-        for (int i = 0; i < numVertices; i++) {
-
-            asImp_()->updateVarVertexData_(dest.vertex[i],
-                                           sol[i],
-                                           this->curElement_(),
-                                           i,
-                                           this->problem_);
-        }
-    }
-
-
-    //  perform variable switch at a vertex; Returns true if a
-    //  variable switch was performed.
-    bool primaryVarSwitch_(SpatialFunction &globalSol,
-                           int globalIdx,
-                           const GlobalPosition &globalPos)
-    {
-    	return;
-    }
-
-    // harmonic mean of the permeability computed directly.  the
-    // first parameter is used to store the result.
-    static void harmonicMeanK_(Tensor &Ki, const Tensor &Kj)
-    {
-        for (int kx=0; kx < Tensor::rows; kx++){
-            for (int ky=0; ky< Tensor::cols; ky++){
-                if (Ki[kx][ky] != Kj[kx][ky]) {
-                    Ki[kx][ky] = harmonicMean_(Ki[kx][ky], Kj[kx][ky]);
-                }
-            }
-        }
-    }
-
-    // returns the harmonic mean of two scalars
-    static Scalar harmonicMean_(Scalar x, Scalar y)
-    {
-        if (x == 0 || y == 0)
-            return 0;
-        return (2*x*y)/(x + y);
-    };
-
-    // parameters given in constructor
-    std::vector<StaticVertexData> staticVertexDat_;
-
-    // current solution
-    LocalFunction      curSol_;
-    ElementData        curElemDat_;
-
-    // needed for restoreCurSolution()
-    bool               curSolDeflected_;
-    Scalar             curSolOrigValue_;
-    VariableVertexData curSolOrigVarData_;
-
-    // previous solution
-    LocalFunction      prevSol_;
-    ElementData        prevElemDat_;
-    CollectiveCommunication collectiveCom_;
 };
 
 

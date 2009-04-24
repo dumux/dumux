@@ -187,7 +187,7 @@ public:
                                     int globalId = vertexmapper.template map<dim>(element, sfs[i].entity());
 /*                                  BoundaryConditions::Flags bctype(this->problem.bctype(global, element, is, local));
                                     if (bctype == BoundaryConditions::dirichlet) {
-                                        FieldVector<Scalar,numEq> dirichlet = this->problem.g(global, element, is, local);
+                                        FieldVector<Scalar,numEq> dirichlet = this->problem.dirichlet(global, element, is, local);
                                         for (int eq = 0; eq < dim+1; eq++)
                                             (*(this->u))[globalId][eq] = dirichlet[eq];
                                     }
@@ -197,7 +197,7 @@ public:
 */
                                     FieldVector<BoundaryConditions::Flags, numEq> bctype(this->problem.bctype(global, element, is, local));
 
-                                    FieldVector<Scalar,numEq> dirichlet = this->problem.g(global, element, is, local);
+                                    FieldVector<Scalar,numEq> dirichlet = this->problem.dirichlet(global, element, is, local);
 
                                     for (int eq = 0; eq < numEq; eq++)
                                     {

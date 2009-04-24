@@ -485,11 +485,11 @@ template<class Grid, class Scalar, class VC> void FVDiffSubProbs<Grid, Scalar, V
                 Scalar dist = distVec.two_norm();
 
                 // get absolute permeability
-                FieldMatrix kJ(this->diffProblem.soil.K(globalPosNeighbor, *neighborPointerHost, localPosNeighbor));
+                FieldMatrix kneumann(this->diffProblem.soil.K(globalPosNeighbor, *neighborPointerHost, localPosNeighbor));
 
                 // compute vectorized permeabilities
                 FieldVector<Scalar,dim> kNI(0);
-                FieldVector<Scalar,dim> kNJ(0);
+                FieldVector<Scalar,dim> kNneumann(0);
                 kI.umv(unitOuterNormal, kNI);
                 kJ.umv(unitOuterNormal, kNJ);
                 // compute permeability normal to intersection and take harmonic mean

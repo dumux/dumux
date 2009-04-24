@@ -98,7 +98,7 @@ int main(int argc, char** argv)
         factory.createGrid();
 #else
         Grid grid(
-#ifdef HAVE_MPI
+#if HAVE_MPI
                   Dune::MPIHelper::getCommunicator(),
 #endif
                   upperRight, // upper right
