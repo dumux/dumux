@@ -154,10 +154,10 @@ template<class G, class RT, class VC> int DeprecatedFVTransport<G, RT, VC>::upda
                  is = it->ilevelbegin(); is
                  !=endit; ++is) {
             // local number of facet
-            int numberInSelf = is->numberInSelf();
+            int numberInSelf = is->indexInInside();
 
             // get geometry type of face
-            Dune::GeometryType gtf = is->intersectionSelfLocal().type();
+            Dune::GeometryType gtf = is->geometryInInside().type();
 
             // center in face's reference element
             const Dune::FieldVector<ct,dim-1>&
@@ -165,7 +165,7 @@ template<class G, class RT, class VC> int DeprecatedFVTransport<G, RT, VC>::upda
 
             // center of face inside volume reference element
             const Dune::FieldVector<ct,dim>&
-                facelocalDim = Dune::ReferenceElements<ct,dim>::general(gtf).position(is->numberInSelf(),1);
+                facelocalDim = Dune::ReferenceElements<ct,dim>::general(gtf).position(is->indexInInside(),1);
 
             // get normal vector scaled with volume
             Dune::FieldVector<ct,dimworld> integrationOuterNormal = is->integrationOuterNormal(facelocal);
@@ -248,7 +248,7 @@ template<class G, class RT, class VC> int DeprecatedFVTransport<G, RT, VC>::upda
             if (is->boundary())
             {
                 // center of face in global coordinates
-                Dune::FieldVector<ct,dimworld> faceglobal = is->intersectionGlobal().global(facelocal);
+                Dune::FieldVector<ct,dimworld> faceglobal = is->geometry().global(facelocal);
 
                 //get boundary type
                 BoundaryConditions::Flags bctype = this->transproblem.bctype(faceglobal, *it, facelocalDim);
@@ -412,7 +412,7 @@ template<class G, class RT, class VC> void DeprecatedFVTransport<G, RT, VC>::Cal
                  is = it->ilevelbegin(); is
                  !=isend; ++is) {
             // local number of facet
-            int numberInSelf = is->numberInSelf();
+            int numberInSelf = is->indexInInside();
 
             // handle interior face
             if (is->neighbor()) {
@@ -449,7 +449,7 @@ template<class G, class RT, class VC> void DeprecatedFVTransport<G, RT, VC>::Cal
             // handle boundary face
             if (is->boundary()) {
                 // get geometry type of face
-                Dune::GeometryType gtf = is->intersectionSelfLocal().type();
+                Dune::GeometryType gtf = is->geometryInInside().type();
 
                 // center in face's reference element
                 const Dune::FieldVector<ct,dim-1>&
@@ -457,7 +457,7 @@ template<class G, class RT, class VC> void DeprecatedFVTransport<G, RT, VC>::Cal
 
                 // center of face in global coordinates
                 Dune::FieldVector<ct,dimworld>
-                    faceglobal = is->intersectionGlobal().global(facelocal);
+                    faceglobal = is->geometry().global(facelocal);
 
                 // get saturation value
                 saturation[numberInSelf] = this->transproblem.variables.saturation[indexi];//this->transproblem.g(faceglobal, *it, facelocalDim);

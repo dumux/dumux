@@ -152,14 +152,14 @@ public:
   //! Here returned element is in LOCAL coordinates of the element
   //! where iteration started.
     const LocalGeometry& intersectionSelfLocal () const {
-        intersectionSelfLocal_.setPosition( (numberInSelf() == 0) ? 0 : 1 );
+        intersectionSelfLocal_.setPosition( (indexInInside() == 0) ? 0 : 1 );
         return intersectionSelfLocal_;
     }
 
   //! intersection of codimension 1 of this neighbor with element where iteration started.
   //! Here returned element is in LOCAL coordinates of neighbor
     const LocalGeometry& intersectionNeighborLocal () const {
-        intersectionNeighborLocal_.setPosition( (numberInSelf() == 0) ? 1 : 0 );
+        intersectionNeighborLocal_.setPosition( (indexInInside() == 0) ? 1 : 0 );
         return intersectionNeighborLocal_;
     }
 
@@ -222,7 +222,7 @@ private:
     /** \brief Count on which neighbor we are lookin' at.  Can be only 0 or 1. */
     int neighbor_;
 
-    /** \brief The geometry that's being returned when intersectionSelfLocal() is called
+    /** \brief The geometry that's being returned when geometryInInside() is called
     */
     mutable OneDInNDMakeableGeometry<0,GridImp> intersectionSelfLocal_;
 
@@ -412,14 +412,14 @@ public:
   //! Here returned element is in LOCAL coordinates of the element
   //! where iteration started.
     const LocalGeometry& intersectionSelfLocal () const {
-        intersectionSelfLocal_.setPosition( (numberInSelf() == 0) ? 0 : 1 );
+        intersectionSelfLocal_.setPosition( (indexInInside() == 0) ? 0 : 1 );
         return intersectionSelfLocal_;
     }
 
   //! intersection of codimension 1 of this neighbor with element where iteration started.
   //! Here returned element is in LOCAL coordinates of neighbor
     const LocalGeometry& intersectionNeighborLocal () const {
-        intersectionNeighborLocal_.setPosition( (numberInSelf() == 0) ? 1 : 0 );
+        intersectionNeighborLocal_.setPosition( (indexInInside() == 0) ? 1 : 0 );
         return intersectionNeighborLocal_;
     }
 
@@ -485,7 +485,7 @@ private:
     if they differ from the level neighbors. */
     int neighbor_;
 
-    /** \brief The geometry that's being returned when intersectionSelfLocal() is called
+    /** \brief The geometry that's being returned when geometryInInside() is called
     */
     mutable OneDInNDMakeableGeometry<0,GridImp> intersectionSelfLocal_;
 

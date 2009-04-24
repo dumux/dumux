@@ -213,9 +213,9 @@ void isolate (G& grid, GP& gridP, VM& vertexmapper, MapperGlobalNodeIDtoPipeNode
         for (HostIntersectionIterator is = it->ileafbegin(); is!= it->ileafend(); ++is)
         {
             // get geometry type of face
-            Dune::GeometryType gtf = is->intersectionSelfLocal().type();
+            Dune::GeometryType gtf = is->geometryInInside().type();
             // get local id of line on element
-            int localIdFaceonElement = is->numberInSelf();
+            int localIdFaceonElement = is->indexInInside();
             int numLeaf = Dune::ReferenceElements<ct,dim>::general(gt).size(localIdFaceonElement,dim-2,dim-1);
 
             // start line loop

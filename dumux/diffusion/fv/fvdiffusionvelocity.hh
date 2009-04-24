@@ -89,7 +89,7 @@ public:
                 // get geometry type of face
                 GeometryType faceGT = isIt->geometryInInside().type();
 
-                //Geometry dg = isIt->intersectionSelfLocal();
+                //Geometry dg = isIt->geometryInInside();
                 // local number of facet
                 int numberInSelf = isIt->indexInInside();
 

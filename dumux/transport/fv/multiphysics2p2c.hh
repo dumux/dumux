@@ -434,13 +434,13 @@ void Multiphysics2p2c<Grid, Scalar>::assemble(bool first, const Scalar t=0)
         for (IntersectionIterator isIt = eIt->ilevelbegin(); isIt!=isItEnd; ++isIt)
         {
             // some geometry informations of the face
-            GeometryType gtf = isIt->intersectionSelfLocal().type(); // get geometry type of face
+            GeometryType gtf = isIt->geometryInInside().type(); // get geometry type of face
             const FieldVector<ct,dim-1>& facelocalPos = ReferenceElements<ct,dim-1>::general(gtf).position(0,0); // center in face's reference element
-            const FieldVector<ct,dim>& facelocalDim = ReferenceElements<ct,dim>::general(gtf).position(isIt->numberInSelf(),1); // center of face inside volume reference element
+            const FieldVector<ct,dim>& facelocalDim = ReferenceElements<ct,dim>::general(gtf).position(isIt->indexInInside(),1); // center of face inside volume reference element
             FieldVector<ct,dimworld> unitOuterNormal = isIt->unitOuterNormal(facelocalPos);// get normal vector
             FieldVector<ct,dimworld> integrationOuterNormal = isIt->integrationOuterNormal(facelocalPos);
             integrationOuterNormal *= ReferenceElements<ct,dim-1>::general(gtf).volume(); //normal vector scaled with volume
-            double faceVol = isIt->intersectionGlobal().volume(); // get face volume
+            double faceVol = isIt->geometry().volume(); // get face volume
 
             // compute directed permeability vector Ki.n
             FieldVector<ct,dim> Kni(0);
@@ -577,7 +577,7 @@ void Multiphysics2p2c<Grid, Scalar>::assemble(bool first, const Scalar t=0)
             else
             {
                 // center of face in global coordinates
-                FieldVector<ct,dimworld> faceGlobalPos = isIt->intersectionGlobal().global(facelocalPos);
+                FieldVector<ct,dimworld> faceGlobalPos = isIt->geometry().global(facelocalPos);
 
                 //get boundary condition for boundary face center
                 BoundaryConditions::Flags bctype = problem.press_bc_type(faceGlobalPos, *eIt, facelocalDim);
@@ -950,10 +950,10 @@ int Multiphysics2p2c<Grid,Scalar>::concentrationUpdate(const Scalar t, Scalar& d
         for (IntersectionIterator isIt = eIt->ilevelbegin(); isIt!=isItEnd; ++isIt)
         {
             // get geometry informations of face
-            GeometryType gtf = isIt->intersectionSelfLocal().type(); //geometry type
+            GeometryType gtf = isIt->geometryInInside().type(); //geometry type
             const FieldVector<ct,dim-1>& faceLocalPos = ReferenceElements<ct,dim-1>::general(gtf).position(0,0); // center in face's reference element
-            const FieldVector<ct,dim>& facelocalDim = ReferenceElements<ct,dim>::general(gtf).position(isIt->numberInSelf(),1); // center of face inside volume reference element
-            double faceVol = isIt->intersectionGlobal().volume(); // get face volume
+            const FieldVector<ct,dim>& facelocalDim = ReferenceElements<ct,dim>::general(gtf).position(isIt->indexInInside(),1); // center of face inside volume reference element
+            double faceVol = isIt->geometry().volume(); // get face volume
             FieldVector<ct,dimworld> unitOuterNormal = isIt->unitOuterNormal(faceLocalPos);
 
             // get normal vector scaled with volume of face
@@ -1066,7 +1066,7 @@ int Multiphysics2p2c<Grid,Scalar>::concentrationUpdate(const Scalar t, Scalar& d
             else // handle boundary face
             {
                 // face center in globel coordinates
-                FieldVector<ct,dim> faceGlobalPos = isIt->intersectionGlobal().global(faceLocalPos);
+                FieldVector<ct,dim> faceGlobalPos = isIt->geometry().global(faceLocalPos);
 
                 // distance vector between cell and face center
                 FieldVector<ct,dimworld> distVec = faceGlobalPos - globalPos;

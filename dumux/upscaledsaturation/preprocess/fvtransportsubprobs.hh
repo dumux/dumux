@@ -157,10 +157,10 @@ template<class Grid, class Scalar, class VC> int FVTransSubProbs<Grid, Scalar, V
                  !=isItEnd; ++isIt)
         {
             // local number of facet
-            int numberInSelf = isIt->numberInSelf();
+            int numberInSelf = isIt->indexInInside();
 
             // get geometry type of face
-            Dune::GeometryType faceGT = isIt->intersectionSelfLocal().type();
+            Dune::GeometryType faceGT = isIt->geometryInInside().type();
 
             // center in face's reference element
             const Dune::FieldVector<Scalar,dim-1>&
@@ -168,7 +168,7 @@ template<class Grid, class Scalar, class VC> int FVTransSubProbs<Grid, Scalar, V
 
             // center of face inside volume reference element
             const LocalPosition&
-                localPosFace = Dune::ReferenceElements<Scalar,dim>::general(faceGT).position(isIt->numberInSelf(),1);
+                localPosFace = Dune::ReferenceElements<Scalar,dim>::general(faceGT).position(isIt->indexInInside(),1);
 
             // get normal vector scaled with volume
             Dune::FieldVector<Scalar,dimWorld> integrationOuterNormal
@@ -249,7 +249,7 @@ template<class Grid, class Scalar, class VC> int FVTransSubProbs<Grid, Scalar, V
             if (isIt->boundary())
             {
                 // center of face in global coordinates
-                GlobalPosition globalPosFace = isIt->intersectionGlobal().global(faceLocal);
+                GlobalPosition globalPosFace = isIt->geometry().global(faceLocal);
 
                 //get boundary type
                 BoundaryConditions::Flags bctype = this->transProblem.bctypeSat(globalPosFace, *eIt, localPosFace);
@@ -398,7 +398,7 @@ template<class Grid, class Scalar, class VC> void FVTransSubProbs<Grid, Scalar, 
 //                !=isItEnd; ++isIt)
 //        {
 //            // local number of facet
-//            int numberInSelf = isIt->numberInSelf();
+//            int numberInSelf = isIt->indexInInside();
 //
 //            // handle interior face
 //            if (isIt->neighbor())
@@ -440,7 +440,7 @@ template<class Grid, class Scalar, class VC> void FVTransSubProbs<Grid, Scalar, 
 //            if (isIt->boundary())
 //            {
 //                // get geometry type of face
-//                Dune::GeometryType faceGT = isIt->intersectionSelfLocal().type();
+//                Dune::GeometryType faceGT = isIt->geometryInInside().type();
 //
 //                // center in face's reference element
 //                const Dune::FieldVector<Scalar,dim-1>&
@@ -448,7 +448,7 @@ template<class Grid, class Scalar, class VC> void FVTransSubProbs<Grid, Scalar, 
 //
 //                // center of face in global coordinates
 //                const GlobalPosition&
-//                globalPosFace = isIt->intersectionGlobal().global(faceLocal);
+//                globalPosFace = isIt->geometry().global(faceLocal);
 //
 //                // get saturation value
 //                saturation[numberInSelf] = this->transProblem.variables.saturation[globalIdxI];

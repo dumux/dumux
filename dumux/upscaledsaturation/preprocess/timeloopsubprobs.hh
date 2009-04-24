@@ -269,18 +269,18 @@ template<class Grid, class Model,class CoarseScaleParameterType>void TimeLoopSub
                 !=isItEnd; ++isIt)
         {
             // get geometry type of face
-            Dune::GeometryType faceGT = isIt->intersectionSelfLocal().type();
+            Dune::GeometryType faceGT = isIt->geometryInInside().type();
 
             // center in face's reference element
             const Dune::FieldVector<Scalar,dim-1>&
             faceLocal = Dune::ReferenceElements<Scalar,dim-1>::general(faceGT).position(0,0);
 
             // center of face in global coordinates
-            const GlobalPosition& globalPosFace = isIt->intersectionGlobal().global(faceLocal);
+            const GlobalPosition& globalPosFace = isIt->geometry().global(faceLocal);
 
-            Scalar faceArea = isIt->intersectionGlobal().volume();
+            Scalar faceArea = isIt->geometry().volume();
 
-            int faceNumber = isIt->numberInSelf();
+            int faceNumber = isIt->indexInInside();
 
             // get normal vector
             FieldVector<Scalar,dim> unitOuterNormal = isIt->unitOuterNormal(faceLocal);
@@ -544,18 +544,18 @@ template<class Grid, class Model,class CoarseScaleParameterType>void TimeLoopSub
             if (globalIdxCoarseHost == globalIdxCoarseCurrent)
             {
                 // get geometry type of face
-                Dune::GeometryType faceGT = isIt->intersectionSelfLocal().type();
+                Dune::GeometryType faceGT = isIt->geometryInInside().type();
 
                 // center in face's reference element
                 const Dune::FieldVector<Scalar,dim-1>&
                 faceLocal = Dune::ReferenceElements<Scalar,dim-1>::general(faceGT).position(0,0);
 
                 // center of face in global coordinates
-                const GlobalPosition& globalPosFace = isIt->intersectionGlobal().global(faceLocal);
+                const GlobalPosition& globalPosFace = isIt->geometry().global(faceLocal);
 
-                Scalar faceArea = isIt->intersectionGlobal().volume();
+                Scalar faceArea = isIt->geometry().volume();
 
-                int faceNumber = isIt->numberInSelf();
+                int faceNumber = isIt->indexInInside();
 
                 // get normal vector
                 FieldVector<Scalar,dim> unitOuterNormal = isIt->unitOuterNormal(faceLocal);

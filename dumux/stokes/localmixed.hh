@@ -86,10 +86,10 @@ public:
             int indexInInside = isIt->indexInInside();
 
             // geometry data of the face:
-            GeometryType geomType = isIt->intersectionSelfLocal().type();
+            GeometryType geomType = isIt->geometryInInside().type();
             const FieldVector<Scalar,dim-1>& localDimM1 = ReferenceElements<Scalar,dim-1>::general(geomType).position(0,0);
             const FieldVector<Scalar,dim>& local = ReferenceElements<Scalar,dim>::general(geomType).position(indexInInside, 1);
-            FieldVector<Scalar,dim> global = isIt->intersectionGlobal().global(localDimM1);
+            FieldVector<Scalar,dim> global = isIt->geometry().global(localDimM1);
 
             // get the source term from the problem:
             FieldVector<Scalar,dim+1> source = problem_.q(global, element, local);

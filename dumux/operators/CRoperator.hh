@@ -66,7 +66,7 @@ namespace Dune
   <dt>LevelTag</dt> We assemble on a grid level.
   <dt>LeafTag</dt> We assemble on the leaf entities of the grid
 */
-template<typename TypeTag, class G, class RT, class GV, class LC, int m=1>
+template<class G, class RT, class GV, class LC, int m=1>
 class CROperatorBase
 {
 public:
@@ -132,14 +132,9 @@ private:
 public:
 
     CROperatorBase (const G& g, const GV& gv, LC lcomm)
-        : grid(g), gridview(gv), is(gv.indexSet()), lc(lcomm), facemapper(is), allmapper(is),
+        : grid(g), gridview(gv), is(gv.indexSet()), lc(lcomm), facemapper(gv), allmapper(gv),
           A(size(), size(), nnz(is), RepresentationType::random)
     {
-        // Check for the TypeTag
-        dune_static_assert((is_same<TypeTag,LeafTag>::value
-                            || is_same<TypeTag,LevelTag>::value), "TypeTag must be LeafTag or LevelTag");
-        //      IsTrue<SameType<TypeTag,LeafTag>::value || SameType<TypeTag,LevelTag>::value>::yes();
-
         // be verbose
         std::cout << g.comm().rank() << ": " << "making " << size() << "x"
                   << size() << " matrix with " << nnz(is) << " nonzeros" << std::endl;
@@ -259,8 +254,8 @@ protected:
  * <dt>LevelTag</dt> We assemble on a grid level.
  * <dt>LeafTag</dt> We assemble on the leaf entities of the grid
  */
-template<typename TypeTag, class G, class RT, class GV, class LC, int m>
-class CROperatorAssembler : public CROperatorBase<TypeTag,G,RT,GV,LC,m>
+template<class G, class RT, class GV, class LC, int m>
+class CROperatorAssembler : public CROperatorBase<G,RT,GV,LC,m>
 {
     typedef typename G::ctype DT;
     enum {n=G::dimension};
@@ -271,7 +266,7 @@ class CROperatorAssembler : public CROperatorBase<TypeTag,G,RT,GV,LC,m>
     typedef typename G::template Codim<0>::EntityPointer EEntityPointer;
     typedef typename CRFunction<G,RT,GV,LC,m>::RepresentationType VectorType;
     typedef typename VectorType::block_type VBlockType;
-    typedef typename CROperatorBase<TypeTag,G,RT,GV,LC,m>::RepresentationType MatrixType;
+    typedef typename CROperatorBase<G,RT,GV,LC,m>::RepresentationType MatrixType;
     typedef typename MatrixType::block_type MBlockType;
     typedef typename MatrixType::RowIterator rowiterator;
     typedef typename MatrixType::ColIterator coliterator;
@@ -280,7 +275,7 @@ class CROperatorAssembler : public CROperatorBase<TypeTag,G,RT,GV,LC,m>
 
 public:
     CROperatorAssembler (const G& g, const GV& gridview, LC lcomm)
-        : CROperatorBase<TypeTag,G,RT,GV,LC,m>(g,gridview,lcomm)
+        : CROperatorBase<G,RT,GV,LC,m>(g,gridview,lcomm)
     {    }
 
 
@@ -501,11 +496,11 @@ private:
   - m    number of degrees of freedom per node (system size)
 */
 template<class G, class RT, int m>
-class LeafCROperatorAssembler : public CROperatorAssembler<LeafTag,G,RT,typename G::LeafGridView,LeafCommunicate<G>,m>
+class LeafCROperatorAssembler : public CROperatorAssembler<G,RT,typename G::LeafGridView,LeafCommunicate<G>,m>
 {
 public:
     LeafCROperatorAssembler (const G& grid)
-        : CROperatorAssembler<LeafTag,G,RT,typename G::LeafGridView,LeafCommunicate<G>,m>(grid,grid.leafView(),LeafCommunicate<G>(grid))
+        : CROperatorAssembler<G,RT,typename G::LeafGridView,LeafCommunicate<G>,m>(grid,grid.leafView(),LeafCommunicate<G>(grid))
     {}
 };
 
@@ -523,11 +518,11 @@ public:
   - m    number of degrees of freedom per node (system size)
 */
 template<class G, class RT, int m>
-class LevelCROperatorAssembler : public CROperatorAssembler<LevelTag,G,RT,typename G::LevelGridView,LevelCommunicate<G>,m>
+class LevelCROperatorAssembler : public CROperatorAssembler<G,RT,typename G::LevelGridView,LevelCommunicate<G>,m>
 {
 public:
     LevelCROperatorAssembler (const G& grid, int level)
-        : CROperatorAssembler<LevelTag,G,RT,typename G::LevelGridView,LevelCommunicate<G>,m>(grid,grid.levelView(level),LevelCommunicate<G>(grid,level))
+        : CROperatorAssembler<G,RT,typename G::LevelGridView,LevelCommunicate<G>,m>(grid,grid.levelView(level),LevelCommunicate<G>(grid,level))
     {}
 };
 

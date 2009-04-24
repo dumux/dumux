@@ -58,17 +58,17 @@ struct BenchmarkResult
         typedef typename GridType::LevelGridView GV;
         typedef typename GV::IndexSet IS;
         typedef typename GV::template Codim<0>::Iterator Iterator;
-        typedef typename IntersectionIteratorGetter<GridType,LeafTag>::IntersectionIterator IntersectionIterator;
-        typedef MultipleCodimMultipleGeomTypeMapper<GridType,IS,ElementLayout> EM;
-        typedef MultipleCodimMultipleGeomTypeMapper<GridType,IS,FaceLayout> FM;
+        typedef typename GridType::LeafGridView::IntersectionIterator IntersectionIterator;
+        typedef MultipleCodimMultipleGeomTypeMapper<GV,ElementLayout> EM;
+        typedef MultipleCodimMultipleGeomTypeMapper<GV,FaceLayout> FM;
         typedef typename GridType::ctype ct;
 
         enum{dim = GridType::dimension};
 
         const GV& gridview(grid.levelView(grid.maxLevel()));
         const IS& indexset(gridview.indexSet());
-        EM elementmapper(indexset);
-        FM facemapper(indexset);
+        EM elementmapper(gridview);
+        FM facemapper(gridview);
 
         uMean = 0;
         double domainVolume = 0;
@@ -167,21 +167,21 @@ struct BenchmarkResult
 
             FieldVector<ct,2*dim> fluxVector;
             FieldVector<ct,dim> exactGradient;
-            IntersectionIterator endis = IntersectionIteratorGetter<GridType,LeafTag>::end(element);
-            for (IntersectionIterator is = IntersectionIteratorGetter<GridType,LeafTag>::begin(element); is!=endis; ++is)
+            IntersectionIterator endis = element.ileafend();
+            for (IntersectionIterator is = element.ileafbegin(); is!=endis; ++is)
             {
                 // get geometry type of face
-                GeometryType gtf = is->intersectionSelfLocal().type();
+                GeometryType gtf = is->geometryInInside().type();
 
                 // local number of facet
-                int i = is->numberInSelf();
+                int i = is->indexInInside();
 
                 // global number of face
                 int faceIndex = facemapper.template map<1>(element, i);
 
                 const FieldVector<double,dim>& faceLocal = sfs[i].position();
                 FieldVector<double,dim> faceGlobal = geometry.global(faceLocal);
-                double faceVol = is->intersectionGlobal().volume();
+                double faceVol = is->geometry().volume();
 
                 // center in face's reference element
                 const FieldVector<double,dim-1>& faceLocalNm1 = ReferenceElements<double,dim-1>::general(gtf).position(0,0);

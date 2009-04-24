@@ -447,15 +447,15 @@ void Decoupled2p2cni<G, RT>::assemble(bool first, const RT t=0)
              is!=endit; ++is)
         {
             // some geometry informations of the face
-            GeometryType gtf = is.intersectionSelfLocal().type(); // get geometry type of face
+            GeometryType gtf = is.geometryInInside().type(); // get geometry type of face
             const FieldVector<ct,dim-1>&
                 facelocal = ReferenceElements<ct,dim-1>::general(gtf).position(0,0); // center in face's reference element
             const FieldVector<ct,dim>&
-                facelocalDim = ReferenceElements<ct,dim>::general(gtf).position(is.numberInSelf(),1); // center of face inside volume reference element
+                facelocalDim = ReferenceElements<ct,dim>::general(gtf).position(is.indexInInside(),1); // center of face inside volume reference element
             FieldVector<ct,dimworld> unitOuterNormal = is.unitOuterNormal(facelocal);// get normal vector
             FieldVector<ct,dimworld> integrationOuterNormal = is.integrationOuterNormal(facelocal);
             integrationOuterNormal *= ReferenceElements<ct,dim-1>::general(gtf).volume(); //normal vector scaled with volume
-            double faceVol = is.intersectionGlobal().volume(); // get face volume
+            double faceVol = is.geometry().volume(); // get face volume
 
             // compute directed permeability vector Ki.n
             FieldVector<ct,dim> Kni(0);
@@ -566,7 +566,7 @@ void Decoupled2p2cni<G, RT>::assemble(bool first, const RT t=0)
             {
                 // center of face in global coordinates
                 FieldVector<ct,dimworld>
-                    faceglobal = is.intersectionGlobal().global(facelocal);
+                    faceglobal = is.geometry().global(facelocal);
 
                 // compute total mobility
                 double lambda = lambdaI;
@@ -769,13 +769,13 @@ void Decoupled2p2cni<G, RT>::totalVelocity(const RT t=0)
         for (IntersectionIterator is = it->ilevelbegin(); is!=endit; ++is)
         {
             // get geometry type of face
-            GeometryType gtf = is.intersectionSelfLocal().type();
+            GeometryType gtf = is.geometryInInside().type();
 
-            //Geometry dg = is.intersectionSelfLocal();
+            //Geometry dg = is.geometryInInside();
             // local number of facet
-            int numberInSelf = is.numberInSelf();
+            int numberInSelf = is.indexInInside();
 
-            faceVol[numberInSelf] = is.intersectionGlobal().volume();
+            faceVol[numberInSelf] = is.geometry().volume();
 
             // center in face's reference element
             const FieldVector<ct,dim-1>& facelocal = ReferenceElements<ct,dim-1>::general(gtf).position(0,0);
@@ -787,7 +787,7 @@ void Decoupled2p2cni<G, RT>::totalVelocity(const RT t=0)
             FieldVector<ct,dimworld> unitOuterNormal = is.unitOuterNormal(facelocal);
 
             // center of face in global coordinates
-            FieldVector<ct,dimworld> faceglobal = is.intersectionGlobal().global(facelocal);
+            FieldVector<ct,dimworld> faceglobal = is.geometry().global(facelocal);
 
             // handle interior face
             if (is.neighbor())
@@ -1061,12 +1061,12 @@ int Decoupled2p2cni<G,RT>::concentrationUpdate(const RT t, RT& dt, Representatio
              is!=endit; ++is)
         {
             // local number of facet
-            int numberInSelf = is.numberInSelf();
+            int numberInSelf = is.indexInInside();
 
             // get geometry informations of face
-            GeometryType gtf = is.intersectionSelfLocal().type(); //geometry type
+            GeometryType gtf = is.geometryInInside().type(); //geometry type
             const FieldVector<ct,dim-1>& facelocal = ReferenceElements<ct,dim-1>::general(gtf).position(0,0); // center in face's reference element
-            const FieldVector<ct,dim>& facelocalDim = ReferenceElements<ct,dim>::general(gtf).position(is.numberInSelf(),1); // center of face inside volume reference element
+            const FieldVector<ct,dim>& facelocalDim = ReferenceElements<ct,dim>::general(gtf).position(is.indexInInside(),1); // center of face inside volume reference element
 
             // get normal vector scaled with volume of face
             FieldVector<ct,dimworld> integrationOuterNormal = is.integrationOuterNormal(facelocal);
@@ -1148,7 +1148,7 @@ int Decoupled2p2cni<G,RT>::concentrationUpdate(const RT t, RT& dt, Representatio
                     + velocityJI * problem.variables.enthalpy_g[indexj] * rho_n_J * numFlux(1.0-satJ, 1.0-satI, fnJ, fnI)
                     - velocityIJ * problem.variables.enthalpy_g[indexi] * rho_n_I * numFlux(1.0-satI, 1.0-satJ, fnI, fnJ);
 
-                FieldVector<ct,dimworld> faceglobal = is.intersectionGlobal().global(facelocal);
+                FieldVector<ct,dimworld> faceglobal = is.geometry().global(facelocal);
 
             }
 
@@ -1158,7 +1158,7 @@ int Decoupled2p2cni<G,RT>::concentrationUpdate(const RT t, RT& dt, Representatio
                 FieldVector<ct,dimworld> global = it->geometry().global(local);
 
                 // face center in globel coordinates
-                FieldVector<ct,dim> faceglobal = is.intersectionGlobal().global(facelocal);
+                FieldVector<ct,dim> faceglobal = is.geometry().global(facelocal);
 
                 // distance vector between cell and face center
                 FieldVector<ct,dimworld> distVec = global - faceglobal;

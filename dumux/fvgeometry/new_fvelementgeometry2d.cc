@@ -175,7 +175,7 @@ class NewFVElementGeometry<GridT,
             this->boundaryFace_[bfIndex].ipLocal_ += refElem.position(face, 1);
             this->boundaryFace_[bfIndex].ipLocal_ *= 0.5;
 
-            this->boundaryFace_[bfIndex].area_ = 0.5*it->intersectionGlobal().volume();
+            this->boundaryFace_[bfIndex].area_ = 0.5*it->geometry().volume();
 
             this->boundaryFace_[bfIndex].ipGlobal_ =
                 geometry.global(this->boundaryFace_[bfIndex].ipLocal_);

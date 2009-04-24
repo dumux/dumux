@@ -230,7 +230,7 @@ public:
 
 
                 // get the geometry type of the face
-                GeometryType geomTypeBoundary = stokesIsIt->intersectionSelfLocal().type();
+                GeometryType geomTypeBoundary = stokesIsIt->geometryInInside().type();
 
                 // The coupling Stokes <- Darcy is realized in the FE way.
                 // The unknown Darcy pressure is the piecewise linear FE interpolant.
@@ -239,9 +239,9 @@ public:
                 for(unsigned int qNode = 0; qNode < QuadratureRules<double,dim-1>::rule(geomTypeBoundary,qOrder).size(); ++qNode)
                 {
                     const FieldVector<double,dim-1>& qLocalDimM1 = QuadratureRules<double,dim-1>::rule(geomTypeBoundary,qOrder)[qNode].position();
-                    FieldVector<double,dim> qLocal = stokesIsIt->intersectionSelfLocal().global(qLocalDimM1);
+                    FieldVector<double,dim> qLocal = stokesIsIt->geometryInInside().global(qLocalDimM1);
                     double qWeight = QuadratureRules<double,dim-1>::rule(geomTypeBoundary,qOrder)[qNode].weight();
-                    double qDetJac = stokesIsIt->intersectionGlobal().integrationElement(qLocalDimM1);
+                    double qDetJac = stokesIsIt->geometry().integrationElement(qLocalDimM1);
                     FieldVector<double,dim> normal = stokesIsIt->unitOuterNormal(qLocalDimM1);
                     const typename LagrangeShapeFunctionSetContainer<double,double,dim>::value_type&
                         pressShapeFuncSet = LagrangeShapeFunctions<double,double,dim>::general(gt,1);

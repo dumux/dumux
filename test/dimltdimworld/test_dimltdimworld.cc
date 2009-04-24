@@ -63,7 +63,7 @@ int main(int argc, char** argv)
     for (IntersectionIterator is = it->ileafbegin(); is!=isend; ++is)
       {
         const Dune::FieldVector<CType,dim>&
-          localInRef = Dune::ReferenceElements<CType,dim>::general(gt).position(is->numberInSelf(),1);
+          localInRef = Dune::ReferenceElements<CType,dim>::general(gt).position(is->indexInInside(),1);
 
         // get global coordinate of face
         Dune::FieldVector<CType,dimworld> faceglobal = it->geometry().global(localInRef);
@@ -72,7 +72,7 @@ int main(int argc, char** argv)
 
         Dune::FieldVector<CType,dimworld> unitOuterNormal = is->unitOuterNormal(facelocal);
 
-        std::cout << "local face id: " << is->numberInSelf() << ", faceglobal = " << faceglobal
+        std::cout << "local face id: " << is->indexInInside() << ", faceglobal = " << faceglobal
               << ", normal " << unitOuterNormal << std::endl;
       }
     }

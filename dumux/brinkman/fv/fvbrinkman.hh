@@ -103,7 +103,7 @@ public:
             {
 
                 // get geometry type of face
-                GeometryType gtf = is->intersectionSelfLocal().type();
+                GeometryType gtf = is->geometryInInside().type();
 
                 // center in face's reference element
                 const FieldVector<ct,dim-1>&
@@ -129,7 +129,7 @@ public:
                 else
                 {
                     // get geometry type of face
-                    GeometryType gtf = is->intersectionSelfLocal().type();
+                    GeometryType gtf = is->geometryInInside().type();
 
                     // center in face's reference element
                     const FieldVector<ct,dim-1>&
@@ -141,7 +141,7 @@ public:
 
                     // center of face in global coordinates
                     FieldVector<ct,dimworld>
-                        faceglobal = is->intersectionGlobal().global(facelocal);
+                        faceglobal = is->geometry().global(facelocal);
 
                     //get boundary condition for boundary face center
                     BoundaryConditions::Flags bctype = this->problem.bctype(faceglobal, *it, facelocalDim);
@@ -172,7 +172,7 @@ public:
                                 distVec = global - faceglobal;
 
                             //                              FieldVector<ct,dimworld>
-                            //                              faceglobal = is->intersectionGlobal().global(facelocal);
+                            //                              faceglobal = is->geometry().global(facelocal);
 
                             // compute distance between cell centers
                             double dist = distVec.two_norm();
@@ -251,7 +251,7 @@ public:
                 else
                 {
                     // get geometry type of face
-                    GeometryType gtf = is->intersectionSelfLocal().type();
+                    GeometryType gtf = is->geometryInInside().type();
 
                     // center in face's reference element
                     const FieldVector<ct,dim-1>&
@@ -263,7 +263,7 @@ public:
 
                     // center of face in global coordinates
                     FieldVector<ct,dimworld>
-                        faceglobal = is->intersectionGlobal().global(facelocal);
+                        faceglobal = is->geometry().global(facelocal);
 
                     //get boundary condition for boundary face center
                     BoundaryConditions::Flags bctype = this->problem.bctype(faceglobal, *it, facelocalDim);
@@ -333,7 +333,7 @@ public:
                 int westIndex = eastIndex + 1;
 
                 // get geometry type of face
-                GeometryType gtf = is->intersectionSelfLocal().type();
+                GeometryType gtf = is->geometryInInside().type();
 
                 // center in face's reference element
                 const FieldVector<ct,dim-1>&
@@ -393,7 +393,7 @@ public:
                 else
                 {
                     // get geometry type of face
-                    GeometryType gtf = is->intersectionSelfLocal().type();
+                    GeometryType gtf = is->geometryInInside().type();
 
                     // center in face's reference element
                     const FieldVector<ct,dim-1>&
@@ -405,7 +405,7 @@ public:
 
                     // center of face in global coordinates
                     FieldVector<ct,dimworld>
-                        faceglobal = is->intersectionGlobal().global(facelocal);
+                        faceglobal = is->geometry().global(facelocal);
 
                     //get boundary condition for boundary face center
                     BoundaryConditions::Flags bctype = this->problem.bctype(faceglobal, *it, facelocalDim);
@@ -463,7 +463,7 @@ public:
                 int faceIdx = is->indexInInside();
 
                 // get geometry type of face
-                GeometryType gtf = is->intersectionSelfLocal().type();
+                GeometryType gtf = is->geometryInInside().type();
 
                 // handle interior face
                 if (is->neighbor())
@@ -516,7 +516,7 @@ public:
                 else
                 {
                     // get geometry type of face
-                    GeometryType gtf = is->intersectionSelfLocal().type();
+                    GeometryType gtf = is->geometryInInside().type();
 
                     // center in face's reference element
                     const FieldVector<ct,dim-1>&
@@ -528,7 +528,7 @@ public:
 
                     // center of face in global coordinates
                     FieldVector<ct,dimworld>
-                        faceglobal = is->intersectionGlobal().global(facelocal);
+                        faceglobal = is->geometry().global(facelocal);
 
                     //get boundary condition for boundary face center
                     BoundaryConditions::Flags bctype = this->problem.bctype(faceglobal, *it, facelocalDim);
@@ -751,7 +751,7 @@ void FVBrinkman<G, RT>::assembleMatrices()
         {
 
             // get geometry type of face
-            GeometryType gtf = is->intersectionSelfLocal().type();
+            GeometryType gtf = is->geometryInInside().type();
 
             // center in face's reference element
             const FieldVector<ct,dim-1>&
@@ -770,7 +770,7 @@ void FVBrinkman<G, RT>::assembleMatrices()
                 = is->integrationOuterNormal(facelocal);
 
             // get face volume
-            double faceVol = is->intersectionGlobal().volume();
+            double faceVol = is->geometry().volume();
 
             // handle interior face
             if (is->neighbor())
@@ -820,7 +820,7 @@ void FVBrinkman<G, RT>::assembleMatrices()
             {
                 // center of face in global coordinates
                 FieldVector<ct,dimworld>
-                    faceglobal = is->intersectionGlobal().global(facelocal);
+                    faceglobal = is->geometry().global(facelocal);
 
                 //get boundary condition for boundary face center
                 BoundaryConditions::Flags bctype = this->problem.bctype(faceglobal, *it, facelocalDim);
@@ -899,7 +899,7 @@ void FVBrinkman<G, RT>::assembleMatrices()
             FieldVector<ct,dim> global = it->geometry().global(local);                  // compute factor in neighbor
 
             // get geometry type of face
-            GeometryType gtf = is->intersectionSelfLocal().type();
+            GeometryType gtf = is->geometryInInside().type();
 
             // center in face's reference element
             const FieldVector<ct,dim-1>&
@@ -945,7 +945,7 @@ void FVBrinkman<G, RT>::assembleMatrices()
             {
                 // center of face in global coordinates
                 FieldVector<ct,dimworld>
-                    faceglobal = is->intersectionGlobal().global(facelocal);
+                    faceglobal = is->geometry().global(facelocal);
 
                 //get boundary condition for boundary face center
                 BoundaryConditions::Flags bctype = this->problem.bctype(faceglobal, *it, facelocalDim);

@@ -77,6 +77,7 @@ class MimeticGroundwaterEquationLocalStiffness
     typedef typename G::Traits::template Codim<0>::Entity Entity;
     typedef Dune::LevelP0Function<G,DT,(int)(0.5*n*(n+1))> KType;
     typedef typename G::Traits::LevelIndexSet IS;
+    typedef typename G::LevelGridView GV;
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<GV,ElementLayout> EM;
 
 public:
@@ -201,14 +202,14 @@ public:
         for (IntersectionIterator it = e.ileafbegin(); it!=endit; ++it)
         {
             // get geometry type of face
-            Dune::GeometryType gtf = it->intersectionSelfLocal().type();
+            Dune::GeometryType gtf = it->geometryInInside().type();
 
             // local number of facet
-            int i = it->numberInSelf();
+            int i = it->indexInInside();
 
             const Dune::FieldVector<DT,n>& faceLocal = sfs[i].position();
             Dune::FieldVector<DT,n> faceGlobal = e.geometry().global(faceLocal);
-            faceVol[i] = it->intersectionGlobal().volume();
+            faceVol[i] = it->geometry().volume();
 
             //           std::cout << "  face " << i << ": local = " << faceLocal << ", global = " << faceGlobal << std::endl;
             //           std::cout << "    boundary = " << it.boundary() << ", neighbor = " << it->neighbor() << std::endl;
@@ -443,12 +444,12 @@ private:
             if (!it->neighbor())
             {
                 //std::cout << "\t\t\tsurvived second if-statements." << std::endl;
-                Dune::GeometryType gtface = it->intersectionSelfLocal().type();
+                Dune::GeometryType gtface = it->geometryInInside().type();
                 for (size_t g = 0; g < Dune::QuadratureRules<DT,n-1>::rule(gtface,p).size(); ++g)
                 {
                     const Dune::FieldVector<DT,n-1>& faceLocalNm1 = Dune::QuadratureRules<DT,n-1>::rule(gtface,p)[g].position();
-                    FieldVector<DT,n> local = it->intersectionSelfLocal().global(faceLocalNm1);
-                    FieldVector<DT,n> global = it->intersectionGlobal().global(faceLocalNm1);
+                    FieldVector<DT,n> local = it->geometryInInside().global(faceLocalNm1);
+                    FieldVector<DT,n> global = it->geometry().global(faceLocalNm1);
                     bctypeface = problem.bctype(global,e,local); // eval bctype
                     //std::cout << "\t\t\tlocal = " << local << ", global = " << global << ", bctypeface = " << bctypeface
                     //        << ", size = " << Dune::QuadratureRules<DT,n-1>::rule(gtface,p).size() << std::endl;
@@ -458,7 +459,7 @@ private:
 
                     RT J = problem.neumannPress(global,e,local);
                     double weightface = Dune::QuadratureRules<DT,n-1>::rule(gtface,p)[g].weight();
-                    DT detjacface = it->intersectionGlobal().integrationElement(faceLocalNm1);
+                    DT detjacface = it->geometry().integrationElement(faceLocalNm1);
                     for (int i=0; i<sfs.size(); i++) // loop over test function number
                         if (this->bctype[i][0]==BoundaryConditions::neumann)
                         {
@@ -483,7 +484,7 @@ private:
                 if (sfs[i].codim()==0) continue; // skip interior dof
                 if (sfs[i].codim()==1) // handle face dofs
                 {
-                    if (sfs[i].entity()==it->numberInSelf())
+                    if (sfs[i].entity()==it->indexInInside())
                     {
                         if (this->bctype[i][0]<bctypeface)
                         {
@@ -501,8 +502,8 @@ private:
                     continue;
                 }
                 // handle subentities of this face
-                for (int j=0; j<ReferenceElements<DT,n>::general(gt).size(it->numberInSelf(),1,sfs[i].codim()); j++)
-                    if (sfs[i].entity()==ReferenceElements<DT,n>::general(gt).subEntity(it->numberInSelf(),1,j,sfs[i].codim()))
+                for (int j=0; j<ReferenceElements<DT,n>::general(gt).size(it->indexInInside(),1,sfs[i].codim()); j++)
+                    if (sfs[i].entity()==ReferenceElements<DT,n>::general(gt).subEntity(it->indexInInside(),1,j,sfs[i].codim()))
                     {
                         if (this->bctype[i][0]<bctypeface)
                         {

@@ -276,12 +276,12 @@ template<class Grid, class Scalar, class CoarseScaleParameterType>void Upscaling
         {
             if ( isItCoarse->neighbor() )
             {
-                GeometryType gtCoarse = isItCoarse->intersectionSelfLocal().type();
+                GeometryType gtCoarse = isItCoarse->geometryInInside().type();
                 FieldVector<Scalar,dim-1> faceLocalCoarse = ReferenceElements<Scalar,dim-1>::general(gtCoarse).position(0,0);
-                const GlobalPosition& globalPosFaceCoarse = isItCoarse->intersectionGlobal().global(faceLocalCoarse);
+                const GlobalPosition& globalPosFaceCoarse = isItCoarse->geometry().global(faceLocalCoarse);
 
                 // local number of face
-                int faceNumberCoarse = isItCoarse->numberInSelf();
+                int faceNumberCoarse = isItCoarse->indexInInside();
                 ElementPointer neighborPointer = isItCoarse->outside();
 
                 //create a subgrid which contains coarse cell and its neighbouring cell on the interface "faceNumberCoarse"

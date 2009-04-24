@@ -213,31 +213,31 @@ FieldVector<RT, G::dimension > EfendievDurlovskiDispersion<G, RT, TransportProbl
         for (IntersectionIterator is = nextElem->ilevelbegin(); is != endis; ++is)
         {
 
-            gtf = is.intersectionSelfLocal().type();
+            gtf = is.geometryInInside().type();
             facelocal = Dune::ReferenceElements<RT,dim-1>::general(gtf).position(0,0);
-            faceglobal = is.intersectionGlobal().global(facelocal);
+            faceglobal = is.geometry().global(facelocal);
             faceInElem = nextElem->geometry().local(faceglobal);
-            int numberInSelf = is.numberInSelf();
+            int numberInSelf = is.indexInInside();
 
             // calculate total velocities at faces of current cell
             if (faceInElem[0] < 1e-5) // left face
             {
-                x0 = is.intersectionGlobal().global(facelocal)[0];
+                x0 = is.geometry().global(facelocal)[0];
                 vx0 = tranProb.vTotal(*nextElem, numberInSelf)[0];
             }
             if (faceInElem[0] > 1. - 1e-5) // right face
             {
-                x1 = is.intersectionGlobal().global(facelocal)[0];
+                x1 = is.geometry().global(facelocal)[0];
                 vx1 = tranProb.vTotal(*nextElem, numberInSelf)[0] ;
             }
             if (faceInElem[1] < 1e-5) // lower face
             {
-                y0 = is.intersectionGlobal().global(facelocal)[1];
+                y0 = is.geometry().global(facelocal)[1];
                 vy0 = tranProb.vTotal(*nextElem, numberInSelf)[1] ;
             }
             if (faceInElem[1] > 1. - 1e-5) // upper face
             {
-                y1 = is.intersectionGlobal().global(facelocal)[1];
+                y1 = is.geometry().global(facelocal)[1];
                 vy1 = tranProb.vTotal(*nextElem, numberInSelf)[1] ;
             }
         }
@@ -267,9 +267,9 @@ FieldVector<RT, G::dimension > EfendievDurlovskiDispersion<G, RT, TransportProbl
         {
             //get time of flight (TOF)
             double tof;
-            gtf = is.intersectionSelfLocal().type();
+            gtf = is.geometryInInside().type();
             facelocal = Dune::ReferenceElements<RT,dim-1>::general(gtf).position(0,0);
-            faceglobal = is.intersectionGlobal().global(facelocal);
+            faceglobal = is.geometry().global(facelocal);
             faceInElem = nextElem->geometry().local(faceglobal);
             if (faceInElem[0] < 1e-5)
             {
@@ -356,7 +356,7 @@ FieldVector<RT, G::dimension > EfendievDurlovskiDispersion<G, RT, TransportProbl
             pos_in[1] = pos_out[1] - v_out[1] * (exp(B * TOF) - 1.) / B;
         }
         // regularisation to make sure that entry point lies on inflow face
-        gtf = inface.intersectionSelfLocal().type();
+        gtf = inface.geometryInInside().type();
         facelocal = Dune::ReferenceElements<RT,dim-1>::general(gtf).position(0,0);
         if (facelocal[0] == 0.) pos_in = 0.;
         if (facelocal[0] == 1.) pos_in = 1.;
@@ -448,19 +448,19 @@ Dune::FieldVector<RT,G::dimension> EfendievDurlovskiDispersion<G, RT, TransportP
                 for (IntersectionIterator is = it->ilevelbegin(); is!=isend; ++is)
                 {
                     // get some face properties
-                    Dune::GeometryType gtf = is.intersectionSelfLocal().type();
-                    int numberInSelf = is.numberInSelf();
+                    Dune::GeometryType gtf = is.geometryInInside().type();
+                    int numberInSelf = is.indexInInside();
                     const Dune::FieldVector<RT,dim-1>&
                         facelocal = Dune::ReferenceElements<RT,dim-1>::general(gtf).position(0,0);
                     FieldVector unitOuterNormal = is.unitOuterNormal(facelocal);
                     Dune::FieldVector<RT,dim>
-                        faceglobal = is.intersectionGlobal().global(facelocal); // center of face in global coordinates
+                        faceglobal = is.geometry().global(facelocal); // center of face in global coordinates
 
                     // check if face lies on one of father's faces
                     for (LevelIntersectionIterator cis = cit->ilevelbegin(); cis != cit->ilevelend();  ++cis)
                     {
                         // checking if leafelement face *is lies on level-zero element face *cis
-                        Dune::GeometryType cgtf = cis.intersectionSelfLocal().type();
+                        Dune::GeometryType cgtf = cis.geometryInInside().type();
                         Dune::FieldVector<RT,dim-1> cfacelocal = Dune::ReferenceElements<RT,dim-1>::general(cgtf).position(0,0);
                         bool isInCis;
                         if ( cis.neighbor() )
@@ -504,7 +504,7 @@ Dune::FieldVector<RT,G::dimension> EfendievDurlovskiDispersion<G, RT, TransportP
                                 uON = unitOuterNormal;
                                 FieldVector K = (Kt += (uON *=Kn));
 
-                                int coarseNumberInSelf = cis.numberInSelf();
+                                int coarseNumberInSelf = cis.indexInInside();
                                 int hits =  hitcount[coarseNumberInSelf];
                                 fineOnCoarse[coarseNumberInSelf][hits] = K;
                                 hitcount[coarseNumberInSelf] += 1;
@@ -522,7 +522,7 @@ Dune::FieldVector<RT,G::dimension> EfendievDurlovskiDispersion<G, RT, TransportP
                                 FieldMatrix<RT,dim,dim> Ki = problem.K(global, *it, local);
                                 FieldVector Kni(0);
                                 Ki.umv(unitOuterNormal, Kni);
-                                int coarseNumberInSelf = cis.numberInSelf();
+                                int coarseNumberInSelf = cis.indexInInside();
                                 int hits =  hitcount[coarseNumberInSelf];
                                 fineOnCoarse[coarseNumberInSelf][hits] = Kni;
                                 hitcount[coarseNumberInSelf] += 1;

@@ -221,7 +221,7 @@ template<class G, class RT, class VC> void DeprecatedFVDiffusion<G, RT, VC>::ass
                  !=endit; ++is) {
 
             // get geometry type of face
-            GeometryType gtf = is->intersectionSelfLocal().type();
+            GeometryType gtf = is->geometryInInside().type();
 
             // center in face's reference element
             const FieldVector<ct,dim-1>&
@@ -229,7 +229,7 @@ template<class G, class RT, class VC> void DeprecatedFVDiffusion<G, RT, VC>::ass
 
             // center of face inside volume reference element
             const FieldVector<ct,dim>&
-                facelocalDim = ReferenceElements<ct,dim>::general(gtf).position(is->numberInSelf(),1);
+                facelocalDim = ReferenceElements<ct,dim>::general(gtf).position(is->indexInInside(),1);
 
             // get normal vector
             FieldVector<ct,dimworld> unitOuterNormal
@@ -245,7 +245,7 @@ template<class G, class RT, class VC> void DeprecatedFVDiffusion<G, RT, VC>::ass
             double faceVol = 1;
             switch (G::dimension) {
             case 1: break;
-            default: faceVol = is->intersectionGlobal().volume();
+            default: faceVol = is->geometry().volume();
                 break;
             }
 
@@ -353,7 +353,7 @@ template<class G, class RT, class VC> void DeprecatedFVDiffusion<G, RT, VC>::ass
             {
                 // center of face in global coordinates
                 FieldVector<ct,dimworld>
-                    faceglobal = is->intersectionGlobal().global(facelocal);
+                    faceglobal = is->geometry().global(facelocal);
 
                 // compute total mobility
                 double fractionalW = 1.;

@@ -238,14 +238,14 @@ template<class Grid, class Scalar, class VC, class Problem> void FVDiffusion<Gri
                 !=isItEnd; ++isIt)
         {
             // get geometry type of face
-            GeometryType faceGT = isIt->intersectionSelfLocal().type();
+            GeometryType faceGT = isIt->geometryInInside().type();
 
             // center in face's reference element
             const FieldVector<Scalar,dim-1>&
             faceLocal = ReferenceElements<Scalar,dim-1>::general(faceGT).position(0,0);
 
             // center of face inside volume reference element
-            const LocalPosition& localPosFace = ReferenceElements<Scalar,dim>::general(faceGT).position(isIt->numberInSelf(),1);
+            const LocalPosition& localPosFace = ReferenceElements<Scalar,dim>::general(faceGT).position(isIt->indexInInside(),1);
 
             // get normal vector
             FieldVector<Scalar,dimWorld> unitOuterNormal
@@ -262,7 +262,7 @@ template<class Grid, class Scalar, class VC, class Problem> void FVDiffusion<Gri
             switch (Grid::dimension)
             {
                 case 1: break;
-                default: faceVol = isIt->intersectionGlobal().volume();
+                default: faceVol = isIt->geometry().volume();
                 break;
             }
 
@@ -364,7 +364,7 @@ template<class Grid, class Scalar, class VC, class Problem> void FVDiffusion<Gri
             else
             {
                 // center of face in global coordinates
-                const GlobalPosition& globalPosFace = isIt->intersectionGlobal().global(faceLocal);
+                const GlobalPosition& globalPosFace = isIt->geometry().global(faceLocal);
 
                 // compute total mobility
                 Scalar fractionalW = 1.;

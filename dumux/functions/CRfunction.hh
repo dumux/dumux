@@ -472,7 +472,7 @@ public:
 
     //! allocate data
     CRFunction (const G& g, const GV& gv, LC lcomm, bool extendoverlap=false)
-        : grid_(g), gridview(gv), is(gv.indexSet()), mapper_(g,is), lc(lcomm), oldcoeff(0)
+        : grid_(g), gridview(gv), is(gv.indexSet()), mapper_(gv), lc(lcomm), oldcoeff(0)
     {
         // check if overlap extension is possible
         if (extendoverlap && g.overlapSize(0)>0)

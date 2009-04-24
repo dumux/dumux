@@ -76,17 +76,17 @@ public:
             for (IntersectionIterator is = IntersectionIteratorGetter<G,
                      LevelTag>::begin(*it); is!=endit; ++is) {
                 // get geometry type of face
-                GeometryType gtf = is->intersectionSelfLocal().type();
+                GeometryType gtf = is->geometryInInside().type();
 
-                //Geometry dg = is->intersectionSelfLocal();
+                //Geometry dg = is->geometryInInside();
                 // local number of facet
-                int numberInSelf = is->numberInSelf();
+                int numberInSelf = is->indexInInside();
 
                 switch (G::dimension) {
                 case 1:
                     faceVol[numberInSelf] = 1;
                 default:
-                    faceVol[numberInSelf] = is->intersectionGlobal().volume();
+                    faceVol[numberInSelf] = is->geometry().volume();
                 }
 
                 // center in face's reference element
@@ -103,7 +103,7 @@ public:
 
                 // center of face in global coordinates
                 FieldVector<ct,dimworld>
-                    faceglobal = is->intersectionGlobal().global(facelocal);
+                    faceglobal = is->geometry().global(facelocal);
 
                 // handle interior face
                 if (is->neighbor())

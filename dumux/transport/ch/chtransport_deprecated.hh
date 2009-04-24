@@ -434,11 +434,11 @@ private:
     IntersectionIterator endis=it->ilevelend();
     for(IntersectionIterator is=it->ilevelbegin();is!=endis;++is)
     {
-      GeometryType gtf = is->intersectionSelfLocal().type();
+      GeometryType gtf = is->geometryInInside().type();
       const Dune::FieldVector<ct,dim-1>& facelocal = Dune::ReferenceElements<RT,dim-1>::general(gtf).position(0,0);
-      const VType& faceglobal = is->intersectionGlobal().global(facelocal);
+      const VType& faceglobal = is->geometry().global(facelocal);
       //      const VType& faceInElem = it->geometry().local(faceglobal);
-      int numberInSelf = is->numberInSelf();
+      int numberInSelf = is->indexInInside();
 
       //linke Kante
       if(numberInSelf == 0)	     
@@ -473,11 +473,11 @@ private:
 	for(IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*ep);is!=endis;++is)
         {
 
-	  GeometryType gtf = is->intersectionSelfLocal().type();
+	  GeometryType gtf = is->geometryInInside().type();
 	  const Dune::FieldVector<ct,dim-1>& facelocal = Dune::ReferenceElements<RT,dim-1>::general(gtf).position(0,0);
-	  const VType& faceglobal = is->intersectionGlobal().global(facelocal);
+	  const VType& faceglobal = is->geometry().global(facelocal);
 	  //  const VType& faceInElem = ep->geometry().local(faceglobal);
-	  int numberInSelf = is->numberInSelf();	  
+	  int numberInSelf = is->indexInInside();	  
 			
 	  s.xi[numberInSelf]=faceglobal[0];
 
@@ -579,11 +579,11 @@ private:
       IntersectionIterator endis=IntersectionIteratorGetter<G,LevelTag>::end(*ep);
       for(IntersectionIterator is=IntersectionIteratorGetter<G,LevelTag>::begin(*ep);is!=endis;++is)
       {
-	GeometryType gtf = is->intersectionSelfLocal().type();
+	GeometryType gtf = is->geometryInInside().type();
 	const Dune::FieldVector<ct,dim-1>& facelocal = Dune::ReferenceElements<RT,dim-1>::general(gtf).position(0,0);
-	const VType& faceglobal = is->intersectionGlobal().global(facelocal);
+	const VType& faceglobal = is->geometry().global(facelocal);
 
-	int numberInSelf = is->numberInSelf();
+	int numberInSelf = is->indexInInside();
 	xx[numberInSelf] = faceglobal;
       
 	vx[numberInSelf] = this->transproblem.variables.vTotal(*ep,numberInSelf);
@@ -677,7 +677,7 @@ private:
 
       for(IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*ep);is!=endis;++is)
       {
-	int numberInSelf = is->numberInSelf();
+	int numberInSelf = is->indexInInside();
 	if(numberInSelf == kant[m])
 	  if(is->neighbor())
 	  {
@@ -691,7 +691,7 @@ private:
 		  IntersectionIterator endir = IntersectionIteratorGetter<G,LevelTag>::end(*ep);
 		  for(IntersectionIterator ir = IntersectionIteratorGetter<G,LevelTag>::begin(*ep);ir!=endir;++ir)
 		  {
-		    int nIS = ir->numberInSelf();
+		    int nIS = ir->indexInInside();
 		    
 		    if(nIS == kant[i])
 		      if(ir->neighbor())
@@ -704,9 +704,9 @@ private:
 		      }
 		      else
 		      {
-			GeometryType gtf = ir->intersectionSelfLocal().type();
+			GeometryType gtf = ir->geometryInInside().type();
 			const Dune::FieldVector<ct,dim-1>& facelocal = Dune::ReferenceElements<RT,dim-1>::general(gtf).position(0,0);
-			const VType& faceglobal = ir->intersectionGlobal().global(facelocal);
+			const VType& faceglobal = ir->geometry().global(facelocal);
 			const Dune::FieldVector<ct,dim>& facelocalDim = Dune::ReferenceElements<ct,dim>::general(gtf).position(numberInSelf,1);
 			  
 			j.Sat = this->transproblem.g(faceglobal,*ep,facelocalDim);
@@ -729,9 +729,9 @@ private:
 	  }//if is->neighbor()
 	  else
 	  {
-	    GeometryType gtf = is->intersectionSelfLocal().type();
+	    GeometryType gtf = is->geometryInInside().type();
 	    const Dune::FieldVector<ct,dim-1>& facelocal = Dune::ReferenceElements<RT,dim-1>::general(gtf).position(0,0);
-	    const VType& faceglobal = is->intersectionGlobal().global(facelocal);
+	    const VType& faceglobal = is->geometry().global(facelocal);
 	    const Dune::FieldVector<ct,dim>& facelocalDim = Dune::ReferenceElements<ct,dim>::general(gtf).position(numberInSelf,1);
 	    j.Sat = this->transproblem.g(faceglobal,*ep,facelocalDim);
 

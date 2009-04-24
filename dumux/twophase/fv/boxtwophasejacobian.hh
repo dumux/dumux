@@ -311,12 +311,12 @@ private:
             // handle face on exterior boundary, this assumes there are no interior boundaries
             if (it.boundary())
             {
-                Dune::GeometryType gtface = it.intersectionSelfLocal().type();
+                Dune::GeometryType gtface = it.geometryInInside().type();
                 for (size_t g=0; g<Dune::QuadratureRules<Scalar,dim-1>::rule(gtface,p).size(); ++g)
                 {
                     const Dune::FieldVector<Scalar,dim-1>& facelocal = Dune::QuadratureRules<Scalar,dim-1>::rule(gtface,p)[g].position();
-                    FieldVector<Scalar,dim> local = it.intersectionSelfLocal().global(facelocal);
-                    FieldVector<Scalar,dim> global = it.intersectionGlobal().global(facelocal);
+                    FieldVector<Scalar,dim> local = it.geometryInInside().global(facelocal);
+                    FieldVector<Scalar,dim> global = it.geometry().global(facelocal);
                     bctypeface = problem.bctype(global,element,it,local); // eval bctype
 
 
@@ -326,7 +326,7 @@ private:
                     if (J.two_norm() < 1e-10)
                         continue;
                     double weightface = Dune::QuadratureRules<Scalar,dim-1>::rule(gtface,p)[g].weight();
-                    Scalar detjacface = it.intersectionGlobal().integrationElement(facelocal);
+                    Scalar detjacface = it.geometry().integrationElement(facelocal);
                     for (int i=0; i<sfs.size(); i++) // loop over test function number
                         if (this->bctype[i][0]==BoundaryConditions::neumann)
                         {

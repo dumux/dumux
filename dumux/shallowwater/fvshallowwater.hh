@@ -154,22 +154,22 @@ template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
         {
 
             // local number of facet
-            //    int numberInSelf = isIt->numberInSelf();//numberInInside
+            //    int numberInSelf = isIt->indexInInside();//numberInInside
 
             // get geometry type of face
-            Dune::GeometryType gtf = isIt->intersectionSelfLocal().type();
+            Dune::GeometryType gtf = isIt->geometryInInside().type();
 
             // center in face's reference element
             const Dune::FieldVector<Scalar,dim-1>& faceLocalPos =
                     Dune::ReferenceElements<Scalar,dim-1>::general(gtf).position(0, 0);
 
             //determine volume of face to multiply it with the flux
-            Scalar faceVolume = isIt->intersectionGlobal().volume(); //geometry()
+            Scalar faceVolume = isIt->geometry().volume(); //geometry()
             //  std::cout<<faceVolume<<std::endl; //ok
 
             // center of face inside volume reference element
             const LocalPosition& faceLocalDim =
-                    Dune::ReferenceElements<Scalar,dim>::general(gtf).position(isIt->numberInSelf(), 1);
+                    Dune::ReferenceElements<Scalar,dim>::general(gtf).position(isIt->indexInInside(), 1);
 
             //get normal vector of face
             Dune::FieldVector<Scalar,dimWorld> nVec =
@@ -276,7 +276,7 @@ template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
             if (isIt->boundary())
             {
                 // center of face in global coordinates
-                GlobalPosition faceGlobalPos = isIt->intersectionGlobal().global(faceLocalPos);
+                GlobalPosition faceGlobalPos = isIt->geometry().global(faceLocalPos);
                 // std::cout<<"FaceGlobalPos "<<faceGlobalPos<<std::endl;
 
                 // distance vector between barycenters

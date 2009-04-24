@@ -119,7 +119,7 @@ void checkIntersectionIterator(const GridPartType& gridPart,
         // //////////////////////////////////////////////////////////////////////
         const int interDim = IntersectionIterator::LocalGeometry::mydimension;
         const QuadratureRule<double, interDim>& quad
-            = QuadratureRules<double, interDim>::rule(iIt.intersectionSelfLocal().type(), interDim);
+            = QuadratureRules<double, interDim>::rule(iIt.geometryInInside().type(), interDim);
 
         for (size_t i=0; i<quad.size(); i++)
             sumNormal.axpy(quad[i].weight(), iIt.integrationOuterNormal(quad[i].position()));
@@ -154,7 +154,7 @@ void checkIntersectionIterator(const GridPartType& gridPart,
 
                 if (outsideIIt.neighbor() && outsideIIt.outside() == iIt.inside()) {
 
-                    if (outsideIIt.numberInSelf() != iIt.numberInNeighbor())
+                    if (outsideIIt.indexInInside() != iIt.numberInNeighbor())
                         DUNE_THROW(GridError, "outside()->outside() == inside(), but with incorrect numbering!");
                     else
                         insideFound = true;
@@ -184,7 +184,7 @@ void checkIntersectionIterator(const GridPartType& gridPart,
         if ( GridPartType::conforming && iIt.neighbor() )
         {
             EntityPointer outside = iIt.outside();
-            int numberInSelf     = iIt.numberInSelf();
+            int numberInSelf     = iIt.indexInInside();
             int numberInNeighbor = iIt.numberInNeighbor();
 
             assert(indexSet.template subIndex<1>(*eIt, numberInSelf)
@@ -199,21 +199,21 @@ void checkIntersectionIterator(const GridPartType& gridPart,
         }
 
         // //////////////////////////////////////////////////////////
-        //   Check the geometry returned by intersectionGlobal()
+        //   Check the geometry returned by geometry()
         // //////////////////////////////////////////////////////////
         typedef typename IntersectionIterator::Geometry Geometry;
-        const Geometry& intersectionGlobal = iIt.intersectionGlobal();
+        const Geometry& intersectionGlobal = iIt.geometry();
 
         checkGeometry(intersectionGlobal);
 
         // //////////////////////////////////////////////////////////
-        //   Check the geometry returned by intersectionSelfLocal()
+        //   Check the geometry returned by geometryInInside()
         // //////////////////////////////////////////////////////////
 
-        const typename IntersectionIterator::LocalGeometry& intersectionSelfLocal = iIt.intersectionSelfLocal();
+        const typename IntersectionIterator::LocalGeometry& intersectionSelfLocal = iIt.geometryInInside();
         checkGeometry(intersectionSelfLocal);
 
-        //  Check the consistency of intersectionSelfLocal() and intersectionGlobal
+        //  Check the consistency of geometryInInside() and intersectionGlobal
 
         if (intersectionSelfLocal.corners() != intersectionGlobal.corners())
             DUNE_THROW(GridError, "Geometry of intersection is inconsistent from left hand side and global view!");

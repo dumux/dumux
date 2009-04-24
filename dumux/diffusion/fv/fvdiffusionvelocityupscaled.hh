@@ -99,7 +99,7 @@ public:
                         if(globalIdxICoarse != globalIdxNeighborCoarse)
                         {
                             //                            std::cout<<globalIdxICoarse<<globalIdxNeighborCoarse<<std::endl;
-                            int faceNumberFine = isIt->numberInSelf();
+                            int faceNumberFine = isIt->indexInInside();
 
                             //numbering of the faces is the same for different levels
                             int faceNumberCoarse = faceNumberFine;
@@ -110,7 +110,7 @@ public:
                                 faceAreaCoarse[faceNumberCoarse] = (*coarseFace).geometry().volume();
                             }
 
-                            GeometryType faceGT = isIt->intersectionSelfLocal().type();
+                            GeometryType faceGT = isIt->geometryInInside().type();
 
                             const FieldVector<Scalar,dim-1>& faceLocal
                                 = ReferenceElements<Scalar,dim-1>::general(faceGT).position(0,0);
@@ -140,7 +140,7 @@ public:
                             {
                             case 1: faceAreaFine = 1;
                                 break;
-                            default: faceAreaFine = isIt->intersectionGlobal().volume(); // volume of face
+                            default: faceAreaFine = isIt->geometry().volume(); // volume of face
                                 break;
                             }
 
@@ -195,14 +195,14 @@ public:
                     {
                         if (isIt->boundary())
                         {
-                            GeometryType faceGT = isIt->intersectionSelfLocal().type();
+                            GeometryType faceGT = isIt->geometryInInside().type();
 
                             const FieldVector<Scalar,dim-1>& faceLocal
                                 = ReferenceElements<Scalar,dim-1>::general(faceGT).position(0,0);
 
-                            const GlobalPosition& globalPosFace= isIt->intersectionGlobal().global(faceLocal); // globalPosFace coordinate of face center
+                            const GlobalPosition& globalPosFace= isIt->geometry().global(faceLocal); // globalPosFace coordinate of face center
 
-                            int faceNumberFine = isIt->numberInSelf();
+                            int faceNumberFine = isIt->indexInInside();
                             //numbering of the faces is the same for different levels
                             int faceNumberCoarse = faceNumberFine;
 
@@ -227,7 +227,7 @@ public:
                             {
                             case 1: faceAreaFine = 1;
                                 break;
-                            default: faceAreaFine = isIt->intersectionGlobal().volume(); // volume of face
+                            default: faceAreaFine = isIt->geometry().volume(); // volume of face
                                 break;
                             }
 

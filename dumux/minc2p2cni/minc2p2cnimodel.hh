@@ -141,9 +141,9 @@ public:
                 if (is->boundary()) {
                     for (int idx = 0; idx < size; idx++)
                         // handle subentities of this face
-                        for (int j = 0; j < ReferenceElements<CoordScalar,dim>::general(gt).size(is->numberInSelf(), 1, sfs[idx].codim()); j++)
+                        for (int j = 0; j < ReferenceElements<CoordScalar,dim>::general(gt).size(is->indexInInside(), 1, sfs[idx].codim()); j++)
                             if (sfs[idx].entity()
-                                == ReferenceElements<CoordScalar,dim>::general(gt).subEntity(is->numberInSelf(), 1,
+                                == ReferenceElements<CoordScalar,dim>::general(gt).subEntity(is->indexInInside(), 1,
                                                                                              j, sfs[idx].codim())) {
                                 for (int equationNumber = 0; equationNumber<numEq; equationNumber++) {
                                     if (this->localJacobian().bc(idx)[equationNumber]

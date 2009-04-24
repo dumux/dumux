@@ -49,12 +49,12 @@ public:
         IntersectionIterator is = entity.ilevelbegin();
         for (; is != endis; ++is)
         {
-            if(is->numberInSelf() == numberInSelf)
+            if(is->indexInInside() == numberInSelf)
                 break;
         }
 
         // get geometry type of face
-        GeometryType gtf = is->intersectionSelfLocal().type();
+        GeometryType gtf = is->geometryInInside().type();
 
         // center in face's reference element
         const Dune::FieldVector<RT,dim-1>& facelocal = ReferenceElements<RT,dim-1>::general(gtf).position(0,0);

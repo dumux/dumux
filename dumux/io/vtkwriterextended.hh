@@ -703,7 +703,7 @@ public:
             for (IntersectionIterator it = IntersectionIteratorGetter<Grid,LeafTag>::begin(*cit); it!=endit; ++it)
             {
                 int indexi=it->indexInInside();
-                faceVolume[indexi] = it->intersectionGlobal().volume();
+                faceVolume[indexi] = it->geometry().volume();
                 outernormal[indexi]=it->unitOuterNormal(loc);
             }
 

@@ -83,12 +83,12 @@ public:
                     // handle face on exterior boundary, this assumes there are no interior boundaries
                     if (it->boundary()) {
                         // get geometry type of face
-                        GeometryType faceGT = it->intersectionSelfLocal().type();
+                        GeometryType faceGT = it->geometryInInside().type();
 
                         // center in face's reference element
                         const FieldVector<Scalar,dim-1>& faceLocal = ReferenceElements<Scalar,dim-1>::general(faceGT).position(0,0);
 
-                        int faceIdx = it->numberInSelf();
+                        int faceIdx = it->indexInInside();
                         int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
                         for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++) {
                             int nodeInElement = referenceElement.subEntity(faceIdx, 1, nodeInFace, dim);
@@ -426,7 +426,7 @@ public:
 
             // handle face on exterior boundary, this assumes there are no interior boundaries
             if (it->boundary()) {
-                int faceIdx = it->numberInSelf();
+                int faceIdx = it->indexInInside();
 
                 int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
                 for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++) {
@@ -437,7 +437,7 @@ public:
                     int bfIdx = this->fvGeom.boundaryFaceIndex(faceIdx,    nodeInFace);
 
                     // get geometry type of face
-                    GeometryType faceGT = it->intersectionSelfLocal().type();
+                    GeometryType faceGT = it->geometryInInside().type();
 
                     // center in face's reference element
                     const FieldVector<Scalar,dim-1>& faceLocal = ReferenceElements<Scalar,dim-1>::general(faceGT).position(0,0);
@@ -587,7 +587,7 @@ public:
 
             // handle face on exterior boundary, this assumes there are no interior boundaries
             if (it->boundary()) {
-                int faceIdx = it->numberInSelf();
+                int faceIdx = it->indexInInside();
                 int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
                 for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++) {
                     int nodeInElement = referenceElement.subEntity(faceIdx, 1, nodeInFace, dim);
@@ -650,7 +650,7 @@ public:
                         continue; // skip interior dof
                     if (sfs[i].codim()==1) // handle face dofs
                     {
-                        if (sfs[i].entity()==it->numberInSelf()) {
+                        if (sfs[i].entity()==it->indexInInside()) {
                             if (this->bctype[i][equationNumber] < bctypeface[equationNumber]) {
                                 this->bctype[i][equationNumber] = bctypeface[equationNumber];
 
@@ -664,8 +664,8 @@ public:
                         continue;
                     }
                     // handle subentities of this face
-                    for (int j=0; j<ReferenceElements<Scalar,dim>::general(gt).size(it->numberInSelf(), 1, sfs[i].codim()); j++)
-                        if (sfs[i].entity()==ReferenceElements<Scalar,dim>::general(gt).subEntity(it->numberInSelf(), 1, j, sfs[i].codim()))
+                    for (int j=0; j<ReferenceElements<Scalar,dim>::general(gt).size(it->indexInInside(), 1, sfs[i].codim()); j++)
+                        if (sfs[i].entity()==ReferenceElements<Scalar,dim>::general(gt).subEntity(it->indexInInside(), 1, j, sfs[i].codim()))
                         {
                             if (this->bctype[i][equationNumber] < bctypeface[equationNumber]) {
                                 this->bctype[i][equationNumber] = bctypeface[equationNumber];

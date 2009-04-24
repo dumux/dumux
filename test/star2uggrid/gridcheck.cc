@@ -249,11 +249,11 @@ struct IntersectionIteratorInterface
         if(i.neighbor()) i.outside();
 
         // geometry
-        i.intersectionSelfLocal();
+        i.geometryInInside();
         if(i.neighbor()) i.intersectionNeighborLocal();
-        i.intersectionGlobal();
+        i.geometry();
 
-        i.numberInSelf();
+        i.indexInInside();
         if(i.neighbor()) i.numberInNeighbor();
 
         Dune::FieldVector<ct, dim-1> v(0);
@@ -696,13 +696,13 @@ void assertNeighbor (Grid &g)
                 for(; it != endit; ++it)
                 {
                     // mark visited face
-                    visited[it.numberInSelf()] = true;
+                    visited[it.indexInInside()] = true;
                     // check id
                     assert(globalid.id(*(it.inside())) ==
                            globalid.id(*e));
 
                     // numbering
-                    int num = it.numberInSelf();
+                    int num = it.indexInInside();
                     assert( num >= 0 && num < e->template count<1> () );
 
                     if(it.neighbor())
@@ -715,8 +715,8 @@ void assertNeighbor (Grid &g)
                     }
 
                     // geometry
-                    it.intersectionSelfLocal();
-                    it.intersectionGlobal();
+                    it.geometryInInside();
+                    it.geometry();
 
                     // normal vectors
                     Dune::FieldVector<ct, dim-1> v(0);
