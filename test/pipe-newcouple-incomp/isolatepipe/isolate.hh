@@ -223,17 +223,17 @@ void isolate (G& grid, GP& gridP, VM& vertexmapper, MapperGlobalNodeIDtoPipeNode
             {
                 int localIdLineonElement= Dune::ReferenceElements<ct,dim>::general(gt).subEntity(localIdFaceonElement, dim-2, i, dim-1);
 
-                //                HostLinePointer linePointer = element.template entity<dim-1>(localIdLineonElement);
+                //                HostLinePointer linePointer = element.template subEntity<dim-1>(localIdLineonElement);
 
                 // get local id of point on line
                 int    locaIdPoint0onElement = Dune::ReferenceElements<ct,dim>::general(gt).subEntity(localIdLineonElement, dim-1, 0, dim);
                 int    locaIdPoint1onElement = Dune::ReferenceElements<ct,dim>::general(gt).subEntity(localIdLineonElement, dim-1, 1, dim);
                 // get vertex pointers
-                //                HostVertexPointer vertexPoint0 = element.template entity<dim>(locaIdPoint0onElement);
-                //                HostVertexPointer vertexPoint1 = element.template entity<dim>(locaIdPoint1onElement);
+                //                HostVertexPointer vertexPoint0 = element.template subEntity<dim>(locaIdPoint0onElement);
+                //                HostVertexPointer vertexPoint1 = element.template subEntity<dim>(locaIdPoint1onElement);
                 // get parameters for nodes
-                std::vector<double>& param0 = gridP.parameters(*element.template entity<dim>(locaIdPoint0onElement));
-                std::vector<double>& param1 = gridP.parameters(*element.template entity<dim>(locaIdPoint1onElement));
+                std::vector<double>& param0 = gridP.parameters(*element.template subEntity<dim>(locaIdPoint0onElement));
+                std::vector<double>& param1 = gridP.parameters(*element.template subEntity<dim>(locaIdPoint1onElement));
 
                 double NodeParameter[1];
                 NodeParameter[0]= param0[0];
@@ -247,26 +247,26 @@ void isolate (G& grid, GP& gridP, VM& vertexmapper, MapperGlobalNodeIDtoPipeNode
                 {
                     if(NodeParameter[0]!=0)
                     {
-                        mapVertexIterator current  = mapVertexToIndexOnLine.find(element.template entity<dim>(locaIdPoint0onElement));
+                        mapVertexIterator current  = mapVertexToIndexOnLine.find(element.template subEntity<dim>(locaIdPoint0onElement));
                         if( current == mapVertexToIndexOnLine.end() ) //check wheter the point is already added or not
                         {
-                            VertexOnLine<G> vertex(element.template entity<dim>(locaIdPoint0onElement), param0); //create the vertex class
+                            VertexOnLine<G> vertex(element.template subEntity<dim>(locaIdPoint0onElement), param0); //create the vertex class
                             vertex.globalId = vertexmapper.template map<dim>(*it, locaIdPoint0onElement); // find the global id of the point on the big grid
                             mapGlobalNodeIDtoPipeNodeOnlineIndex[vertex.globalId] = indexMapVerticesOnLine; // map global id of point to index online
-                            mapVertexToIndexOnLine[element.template entity<dim>(locaIdPoint0onElement)] = (indexMapVerticesOnLine++); // map vertex pointer to index online
+                            mapVertexToIndexOnLine[element.template subEntity<dim>(locaIdPoint0onElement)] = (indexMapVerticesOnLine++); // map vertex pointer to index online
                             vertexVectorOnLine.push_back(vertex); // add vertex object to vertexVectorOnline
                             addpoint0onLine = true;
                         }
                     }
                     else
                     {
-                        mapVertexIterator current  = mapVertexToIndexOutLine.find(element.template entity<dim>(locaIdPoint0onElement));
+                        mapVertexIterator current  = mapVertexToIndexOutLine.find(element.template subEntity<dim>(locaIdPoint0onElement));
                         if( current == mapVertexToIndexOutLine.end() )
                         {
-                            VertexOutLine<G> vertex(element.template entity<dim>(locaIdPoint0onElement));
+                            VertexOutLine<G> vertex(element.template subEntity<dim>(locaIdPoint0onElement));
                             vertex.globalId = vertexmapper.template map<dim>(*it, locaIdPoint0onElement);
                             mapGlobalNodeIDtoPipeNodeOutlineIndex[vertex.globalId] = indexMapVerticesOutLine;
-                            mapVertexToIndexOutLine[element.template entity<dim>(locaIdPoint0onElement)] = (indexMapVerticesOutLine++);
+                            mapVertexToIndexOutLine[element.template subEntity<dim>(locaIdPoint0onElement)] = (indexMapVerticesOutLine++);
                             vertexVectorOutLine.push_back(vertex);
                             addpoint0outLine = true;
                         }
@@ -274,26 +274,26 @@ void isolate (G& grid, GP& gridP, VM& vertexmapper, MapperGlobalNodeIDtoPipeNode
 
                     if(NodeParameter[1]!=0)
                     {
-                        mapVertexIterator current  = mapVertexToIndexOnLine.find(element.template entity<dim>(locaIdPoint1onElement));
+                        mapVertexIterator current  = mapVertexToIndexOnLine.find(element.template subEntity<dim>(locaIdPoint1onElement));
                         if( current == mapVertexToIndexOnLine.end() )
                         {
-                            VertexOnLine<G> vertex(element.template entity<dim>(locaIdPoint1onElement), param1);
+                            VertexOnLine<G> vertex(element.template subEntity<dim>(locaIdPoint1onElement), param1);
                             vertex.globalId = vertexmapper.template map<dim>(*it, locaIdPoint1onElement);
                             mapGlobalNodeIDtoPipeNodeOnlineIndex[vertex.globalId] = indexMapVerticesOnLine;
-                            mapVertexToIndexOnLine[element.template entity<dim>(locaIdPoint1onElement)] = (indexMapVerticesOnLine++);
+                            mapVertexToIndexOnLine[element.template subEntity<dim>(locaIdPoint1onElement)] = (indexMapVerticesOnLine++);
                             vertexVectorOnLine.push_back(vertex);
                             addpoint1onLine = true;
                         }
                     }
                     else
                     {
-                        mapVertexIterator current  = mapVertexToIndexOutLine.find(element.template entity<dim>(locaIdPoint1onElement));
+                        mapVertexIterator current  = mapVertexToIndexOutLine.find(element.template subEntity<dim>(locaIdPoint1onElement));
                         if( current == mapVertexToIndexOutLine.end() )
                         {
-                            VertexOutLine<G> vertex(element.template entity<dim>(locaIdPoint1onElement));
+                            VertexOutLine<G> vertex(element.template subEntity<dim>(locaIdPoint1onElement));
                             vertex.globalId = vertexmapper.template map<dim>(*it, locaIdPoint1onElement);
                             mapGlobalNodeIDtoPipeNodeOutlineIndex[vertex.globalId] = indexMapVerticesOutLine;
-                            mapVertexToIndexOutLine[element.template entity<dim>(locaIdPoint1onElement)] = (indexMapVerticesOutLine++);
+                            mapVertexToIndexOutLine[element.template subEntity<dim>(locaIdPoint1onElement)] = (indexMapVerticesOutLine++);
                             vertexVectorOutLine.push_back(vertex);
                             addpoint1outLine = true;
                         }
@@ -302,16 +302,16 @@ void isolate (G& grid, GP& gridP, VM& vertexmapper, MapperGlobalNodeIDtoPipeNode
                     // fill indexVertexVectorOnLine Vector and lineVectorOnline Vector in vertexVectorOnLine Vector
                     if ( NodeParameter[0]!=0  && NodeParameter[1]!=0 )
                     {
-                        mapVertexIterator current0  = mapVertexToIndexOnLine.find(element.template entity<dim>(locaIdPoint0onElement));
-                        mapVertexIterator current1  = mapVertexToIndexOnLine.find(element.template entity<dim>(locaIdPoint1onElement));
+                        mapVertexIterator current0  = mapVertexToIndexOnLine.find(element.template subEntity<dim>(locaIdPoint0onElement));
+                        mapVertexIterator current1  = mapVertexToIndexOnLine.find(element.template subEntity<dim>(locaIdPoint1onElement));
                         unsigned indexVectorPoint0 = current0->second;
                         unsigned indexVectorPoint1 = current1->second;
                         if (addpoint0onLine || addpoint1onLine) // if at least one of the point is new
                         {
                             vertexVectorOnLine[indexVectorPoint0].indexVertexVectorOnLine.push_back(indexVectorPoint1);
                             vertexVectorOnLine[indexVectorPoint1].indexVertexVectorOnLine.push_back(indexVectorPoint0);
-                            vertexVectorOnLine[indexVectorPoint0].lineVectorOnLine.push_back(element.template entity<dim-1>(localIdLineonElement));
-                            vertexVectorOnLine[indexVectorPoint1].lineVectorOnLine.push_back(element.template entity<dim-1>(localIdLineonElement));
+                            vertexVectorOnLine[indexVectorPoint0].lineVectorOnLine.push_back(element.template subEntity<dim-1>(localIdLineonElement));
+                            vertexVectorOnLine[indexVectorPoint1].lineVectorOnLine.push_back(element.template subEntity<dim-1>(localIdLineonElement));
                         }
                         else if(!addpoint0onLine && !addpoint1onLine) // if none of the points are new (fill the missing part where two points are there but no neighborhood is stored)
                         {
@@ -328,8 +328,8 @@ void isolate (G& grid, GP& gridP, VM& vertexmapper, MapperGlobalNodeIDtoPipeNode
                             {
                                 vertexVectorOnLine[indexVectorPoint0].indexVertexVectorOnLine.push_back(indexVectorPoint1);
                                 vertexVectorOnLine[indexVectorPoint1].indexVertexVectorOnLine.push_back(indexVectorPoint0);
-                                vertexVectorOnLine[indexVectorPoint0].lineVectorOnLine.push_back(element.template entity<dim-1>(localIdLineonElement));
-                                vertexVectorOnLine[indexVectorPoint1].lineVectorOnLine.push_back(element.template entity<dim-1>(localIdLineonElement));
+                                vertexVectorOnLine[indexVectorPoint0].lineVectorOnLine.push_back(element.template subEntity<dim-1>(localIdLineonElement));
+                                vertexVectorOnLine[indexVectorPoint1].lineVectorOnLine.push_back(element.template subEntity<dim-1>(localIdLineonElement));
                             }
                         }
                     }
@@ -340,16 +340,16 @@ void isolate (G& grid, GP& gridP, VM& vertexmapper, MapperGlobalNodeIDtoPipeNode
                     {
                         if (NodeParameter[0]!=0)
                         {
-                            mapVertexIterator current0  = mapVertexToIndexOnLine.find(element.template entity<dim>(locaIdPoint0onElement));
-                            mapVertexIterator current1  = mapVertexToIndexOutLine.find(element.template entity<dim>(locaIdPoint1onElement));
+                            mapVertexIterator current0  = mapVertexToIndexOnLine.find(element.template subEntity<dim>(locaIdPoint0onElement));
+                            mapVertexIterator current1  = mapVertexToIndexOutLine.find(element.template subEntity<dim>(locaIdPoint1onElement));
                             unsigned indexVectorPoint0 = current0->second;
                             unsigned indexVectorPoint1 = current1->second;
                             if (addpoint0onLine || addpoint1outLine)
                             {
                                 vertexVectorOnLine[indexVectorPoint0].indexVertexVectorOutLine.push_back(indexVectorPoint1);
                                 vertexVectorOutLine[indexVectorPoint1].indexVertexVectorOnLine.push_back(indexVectorPoint0);
-                                vertexVectorOnLine[indexVectorPoint0].lineVectorOutLine.push_back(element.template entity<dim-1>(localIdLineonElement));
-                                vertexVectorOutLine[indexVectorPoint1].lineVectorOutLine.push_back(element.template entity<dim-1>(localIdLineonElement));
+                                vertexVectorOnLine[indexVectorPoint0].lineVectorOutLine.push_back(element.template subEntity<dim-1>(localIdLineonElement));
+                                vertexVectorOutLine[indexVectorPoint1].lineVectorOutLine.push_back(element.template subEntity<dim-1>(localIdLineonElement));
                             }
                             else if(!addpoint0onLine && !addpoint1onLine)
                             {
@@ -366,23 +366,23 @@ void isolate (G& grid, GP& gridP, VM& vertexmapper, MapperGlobalNodeIDtoPipeNode
                                 {
                                     vertexVectorOnLine[indexVectorPoint0].indexVertexVectorOutLine.push_back(indexVectorPoint1);
                                     vertexVectorOutLine[indexVectorPoint1].indexVertexVectorOnLine.push_back(indexVectorPoint0);
-                                    vertexVectorOnLine[indexVectorPoint0].lineVectorOutLine.push_back(element.template entity<dim-1>(localIdLineonElement));
-                                    vertexVectorOutLine[indexVectorPoint1].lineVectorOutLine.push_back(element.template entity<dim-1>(localIdLineonElement));
+                                    vertexVectorOnLine[indexVectorPoint0].lineVectorOutLine.push_back(element.template subEntity<dim-1>(localIdLineonElement));
+                                    vertexVectorOutLine[indexVectorPoint1].lineVectorOutLine.push_back(element.template subEntity<dim-1>(localIdLineonElement));
                                 }
                             }
                         }
                         else if (NodeParameter[1]!=0)
                         {
-                            mapVertexIterator current0  = mapVertexToIndexOutLine.find(element.template entity<dim>(locaIdPoint0onElement));
-                            mapVertexIterator current1  = mapVertexToIndexOnLine.find(element.template entity<dim>(locaIdPoint1onElement));
+                            mapVertexIterator current0  = mapVertexToIndexOutLine.find(element.template subEntity<dim>(locaIdPoint0onElement));
+                            mapVertexIterator current1  = mapVertexToIndexOnLine.find(element.template subEntity<dim>(locaIdPoint1onElement));
                             unsigned indexVectorPoint0 = current0->second;
                             unsigned indexVectorPoint1 = current1->second;
                             if (addpoint0outLine || addpoint1onLine)
                             {
                                 vertexVectorOutLine[indexVectorPoint0].indexVertexVectorOnLine.push_back(indexVectorPoint1);
                                 vertexVectorOnLine[indexVectorPoint1].indexVertexVectorOutLine.push_back(indexVectorPoint0);
-                                vertexVectorOutLine[indexVectorPoint0].lineVectorOutLine.push_back(element.template entity<dim-1>(localIdLineonElement));
-                                vertexVectorOnLine[indexVectorPoint1].lineVectorOutLine.push_back(element.template entity<dim-1>(localIdLineonElement));
+                                vertexVectorOutLine[indexVectorPoint0].lineVectorOutLine.push_back(element.template subEntity<dim-1>(localIdLineonElement));
+                                vertexVectorOnLine[indexVectorPoint1].lineVectorOutLine.push_back(element.template subEntity<dim-1>(localIdLineonElement));
                             }
                             else if(!addpoint0onLine && !addpoint1onLine)
                             {
@@ -399,8 +399,8 @@ void isolate (G& grid, GP& gridP, VM& vertexmapper, MapperGlobalNodeIDtoPipeNode
                                 {
                                     vertexVectorOutLine[indexVectorPoint0].indexVertexVectorOnLine.push_back(indexVectorPoint1);
                                     vertexVectorOnLine[indexVectorPoint1].indexVertexVectorOutLine.push_back(indexVectorPoint0);
-                                    vertexVectorOutLine[indexVectorPoint0].lineVectorOutLine.push_back(element.template entity<dim-1>(localIdLineonElement));
-                                    vertexVectorOnLine[indexVectorPoint1].lineVectorOutLine.push_back(element.template entity<dim-1>(localIdLineonElement));
+                                    vertexVectorOutLine[indexVectorPoint0].lineVectorOutLine.push_back(element.template subEntity<dim-1>(localIdLineonElement));
+                                    vertexVectorOnLine[indexVectorPoint1].lineVectorOutLine.push_back(element.template subEntity<dim-1>(localIdLineonElement));
                                 }
                             }
                         }

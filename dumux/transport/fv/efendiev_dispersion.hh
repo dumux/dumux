@@ -102,7 +102,7 @@ Dune::FieldVector<RT, G::dimension > EfendievDurlovskiDispersion<G, RT, Transpor
     double fw_ss = (fw_i+fw_k-2*fw_j) / (1e-5*1e-5);
 
     //get position of face center
-    EntityPointer is = entity.template entity<1>(numberInSelf);
+    EntityPointer is = entity.template subEntity<1>(numberInSelf);
     Dune::GeometryType gtf = (*is).type();
     const Dune::FieldVector<RT,dim-1>&
         facelocal = Dune::ReferenceElements<RT,dim-1>::general(gtf).position(0,0);

@@ -106,7 +106,7 @@ public:
 
                             if (!faceAreaCoarse[faceNumberCoarse])
                             {
-                                FacePointer coarseFace = (*eItCoarse).template entity<1>(faceNumberCoarse);
+                                FacePointer coarseFace = (*eItCoarse).template subEntity<1>(faceNumberCoarse);
                                 faceAreaCoarse[faceNumberCoarse] = (*coarseFace).geometry().volume();
                             }
 
@@ -208,7 +208,7 @@ public:
 
                             if (!faceAreaCoarse[faceNumberCoarse])
                             {
-                                FacePointer coarseFace = (*eItCoarse).template entity<1>(faceNumberCoarse);
+                                FacePointer coarseFace = (*eItCoarse).template subEntity<1>(faceNumberCoarse);
                                 faceAreaCoarse[faceNumberCoarse] = (*coarseFace).geometry().volume();
                             }
 

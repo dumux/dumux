@@ -138,7 +138,7 @@ struct ZeroEntityMethodCheck
         typedef typename Entity::EntityPointer EntityPointer;
 
         e.template count<cd>();
-        e.template entity<cd>(0);
+        e.template subEntity<cd>(0);
 
         // recursively check on
         ZeroEntityMethodCheck<Grid, cd - 1,
@@ -187,7 +187,7 @@ struct ZeroEntityMethodCheck<Grid, 0, true>
         typedef typename Entity::EntityPointer EntityPointer;
 
         e.template count<0>();
-        e.template entity<0>(0);
+        e.template subEntity<0>(0);
 
     }
     ZeroEntityMethodCheck ()
@@ -211,7 +211,7 @@ struct ZeroEntityMethodCheck<Grid, 0, false>
         typedef typename Entity::EntityPointer EntityPointer;
 
         e.template count<0>();
-        e.template entity<0>(0);
+        e.template subEntity<0>(0);
     }
     ZeroEntityMethodCheck ()
     {
@@ -250,11 +250,11 @@ struct IntersectionIteratorInterface
 
         // geometry
         i.geometryInInside();
-        if(i.neighbor()) i.intersectionNeighborLocal();
+        if(i.neighbor()) i.geometryInOutside();
         i.geometry();
 
         i.indexInInside();
-        if(i.neighbor()) i.numberInNeighbor();
+        if(i.neighbor()) i.indexInOutside();
 
         Dune::FieldVector<ct, dim-1> v(0);
         i.outerNormal(v);
@@ -551,17 +551,17 @@ struct subIndexCheck
         const int imax = e.template count<cd>();
         for (int i=0; i<imax; ++i)
         {
-            if( g.levelIndexSet(e.level()).index( *(e.template entity<cd>(i)) )
+            if( g.levelIndexSet(e.level()).index( *(e.template subEntity<cd>(i)) )
                 != g.levelIndexSet(e.level()).template subIndex<cd>(e,i) )
             {
                 int id_e =
                     g.levelIndexSet(e.level()).index(e);
                 int id_e_i =
-                    g.levelIndexSet(e.level()).index( *(e.template entity<cd>(i)) );
+                    g.levelIndexSet(e.level()).index( *(e.template subEntity<cd>(i)) );
                 int subid_e_i =
                     g.levelIndexSet(e.level()).template subIndex<cd>(e,i);
                 DUNE_THROW(CheckError,
-                           "g.levelIndexSet.index( *(e.template entity<cd>(i)) ) "
+                           "g.levelIndexSet.index( *(e.template subEntity<cd>(i)) ) "
                            << "== g.levelIndexSet.template subIndex<cd>(e,i) failed "
                            << "[with cd=" << cd << ", i=" << i << "]"
                            << " ... index(e)=" << id_e
@@ -615,17 +615,17 @@ void zeroEntityConsistency (Grid &g)
     for (; it!=endit; ++it)
     {
         // Entity::entity<0>(0) == Entity
-        assert( g.levelIndexSet(g.maxLevel()).index( *(it->template entity<0>(0)) )
+        assert( g.levelIndexSet(g.maxLevel()).index( *(it->template subEntity<0>(0)) )
                 == g.levelIndexSet(g.maxLevel()).index( *it ) );
-        assert( g.leafIndexSet().index( *(it->template entity<0>(0)) )
+        assert( g.leafIndexSet().index( *(it->template subEntity<0>(0)) )
                 == g.leafIndexSet().index( *it ) );
 
-        assert( g.globalIdSet().id( *(it->template entity<0>(0)) )
+        assert( g.globalIdSet().id( *(it->template subEntity<0>(0)) )
                 == g.globalIdSet().id( *it ) );
 
-        assert( g.localIdSet().id( *(it->template entity<0>(0)) )
+        assert( g.localIdSet().id( *(it->template subEntity<0>(0)) )
                 == g.localIdSet().id( *it ) );
-        assert( it->template entity<0>(0)->level() == it->level() );
+        assert( it->template subEntity<0>(0)->level() == it->level() );
         // Entity::count<dim>() == Entity::geometry().corners();
         assert( it->template count<Grid::dimension>() == it->geometry().corners() );
         // Entity::geometry().corner(c] == Entity::entity<dim>.geometry()[0);
@@ -633,7 +633,7 @@ void zeroEntityConsistency (Grid &g)
         for (int c=0; c<cmax; ++c)
         {
             Dune::FieldVector<typename Grid::ctype, Grid::dimensionworld> c1(it->geometry().corner(c));
-            Dune::FieldVector<typename Grid::ctype, Grid::dimensionworld> c2(it->template entity<Grid::dimension>(c)->geometry().corner(0));
+            Dune::FieldVector<typename Grid::ctype, Grid::dimensionworld> c2(it->template subEntity<Grid::dimension>(c)->geometry().corner(0));
             if( (c2-c1).two_norm() > 10 * std::numeric_limits<typename Grid::ctype>::epsilon() )
             {
                 DUNE_THROW(CheckError, "geometry[i] == entity<dim>(i) failed: || c1-c2 || = || " <<
@@ -708,9 +708,9 @@ void assertNeighbor (Grid &g)
                     if(it.neighbor())
                     {
                         // geometry
-                        it.intersectionNeighborLocal();
+                        it.geometryInOutside();
                         // numbering
-                        num = it.numberInNeighbor();
+                        num = it.indexInOutside();
                         assert( num >= 0 && num < it.outside()->template count<1> () );
                     }
 

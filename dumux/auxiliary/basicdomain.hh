@@ -301,7 +301,7 @@ public:
      *        vert' local index.
      */
     const Vertex &vertex(const Element &element, int localVertIdx)
-    { return *element.template entity<dim>(localVertIdx); };
+    { return *element.template subEntity<dim>(localVertIdx); };
 
     /*!
      * \brief Given a vert return its position in world coodinates.

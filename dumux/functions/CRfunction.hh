@@ -243,7 +243,7 @@ public:
             if (it->partitionType()==InteriorEntity)
                 for (int i=0; i<refelem.size(n); i++)
                 {
-                    if (it->template entity<n>(i)->partitionType()==BorderEntity)
+                    if (it->template subEntity<n>(i)->partitionType()==BorderEntity)
                     {
                         int alpha = vertexmapper.template map<n>(*it,i);
                         GIDSet& thisset = myids[alpha];
@@ -357,7 +357,7 @@ public:
             // generate set of neighbors in global ids for border vertices
             if (it->partitionType()==InteriorEntity)
                 for (int i=0; i<refelem.size(n); i++)
-                    if (it->template entity<n>(i)->partitionType()==BorderEntity)
+                    if (it->template subEntity<n>(i)->partitionType()==BorderEntity)
                     {
                         int alpha = vertexmapper.template map<n>(*it,i);
                         GIDSet& myset = borderlinks[alpha];

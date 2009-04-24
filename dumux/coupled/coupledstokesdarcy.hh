@@ -89,7 +89,7 @@ public:
                     int nodeInElement = referenceElement.subEntity(faceIdx, 1, nodeInFace, dim);
 
                     // get the node pointer on the Stokes grid
-                    const StokesVPointer& stokesVPointer = (*stokesIt).template entity<dim>(nodeInElement);
+                    const StokesVPointer& stokesVPointer = (*stokesIt).template subEntity<dim>(nodeInElement);
 
                     // get the node pointer on the host grid
                     const HostVPointer& hostVPointer = (this->stokesGrid_).template getHostEntity<dim>(*stokesVPointer);
@@ -145,7 +145,7 @@ public:
                     int nodeInElement = referenceElement.subEntity(faceIdx, 1, nodeInFace, dim);
 
                     // get the node pointer on the Stokes grid
-                    const StokesVPointer& stokesVPointer = (*stokesIt).template entity<dim>(nodeInElement);
+                    const StokesVPointer& stokesVPointer = (*stokesIt).template subEntity<dim>(nodeInElement);
 
                     // get the node pointer on the host grid
                     const HostVPointer& hostVPointer = (this->stokesGrid_).template getHostEntity<dim>(*stokesVPointer);
@@ -204,7 +204,7 @@ public:
                     int nInEl = referenceElement.subEntity(faceIdx, 1, nodeInFace, dim);
 
                     // get the node pointer on the Stokes grid
-                    const StokesVPointer& stokesVPointer = (*stokesIt).template entity<dim>(nInEl);
+                    const StokesVPointer& stokesVPointer = (*stokesIt).template subEntity<dim>(nInEl);
 
                     // get the node pointer on the host grid
                     const HostVPointer& hostVPointer = (this->stokesGrid_).template getHostEntity<dim>(*stokesVPointer);

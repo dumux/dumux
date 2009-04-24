@@ -226,7 +226,7 @@ private:
     */
     mutable OneDInNDMakeableGeometry<0,GridImp> intersectionSelfLocal_;
 
-    /** \brief The geometry that's being returned when intersectionNeighborLocal() is called
+    /** \brief The geometry that's being returned when geometryInOutside() is called
     */
     mutable OneDInNDMakeableGeometry<0,GridImp> intersectionNeighborLocal_;
 
@@ -489,7 +489,7 @@ private:
     */
     mutable OneDInNDMakeableGeometry<0,GridImp> intersectionSelfLocal_;
 
-    /** \brief The geometry that's being returned when intersectionNeighborLocal() is called
+    /** \brief The geometry that's being returned when geometryInOutside() is called
     */
     mutable OneDInNDMakeableGeometry<0,GridImp> intersectionNeighborLocal_;
 

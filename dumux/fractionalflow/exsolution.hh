@@ -72,7 +72,7 @@ protected:
 public:
 
     ExSolution(const G &g, int lev = 0) :
-        grid(g), mapper( grid.levelIndexSet(lev)), uEx(0), error(0),
+        grid(g), mapper(grid.levelView(lev)), uEx(0), error(0),
         elementvolume(0)
     {
         uExInit();

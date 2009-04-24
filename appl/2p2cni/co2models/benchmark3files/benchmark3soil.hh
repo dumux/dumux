@@ -33,7 +33,7 @@ public:
     {
         const GV& gridView(_grid.leafView());
         const IndexSet& indexSet = gridView.indexSet();
-        int index = indexSet.index(*((e).template entity<dim>(idx)));
+        int index = indexSet.index(*((e).template subEntity<dim>(idx)));
 
          permloc_ = 0;
          for (int i = 0; i < dim; i++)
@@ -47,7 +47,7 @@ public:
         double phi;
         const GV& gridView(_grid.leafView());
         const IndexSet& indexSet = gridView.indexSet();
-        int index = indexSet.index(*((e).template entity<dim>(idx)));
+        int index = indexSet.index(*((e).template subEntity<dim>(idx)));
 
         phi = poro_[index];
         return phi;

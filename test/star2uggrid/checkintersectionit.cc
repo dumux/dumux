@@ -154,7 +154,7 @@ void checkIntersectionIterator(const GridPartType& gridPart,
 
                 if (outsideIIt.neighbor() && outsideIIt.outside() == iIt.inside()) {
 
-                    if (outsideIIt.indexInInside() != iIt.numberInNeighbor())
+                    if (outsideIIt.indexInInside() != iIt.indexInOutside())
                         DUNE_THROW(GridError, "outside()->outside() == inside(), but with incorrect numbering!");
                     else
                         insideFound = true;
@@ -185,7 +185,7 @@ void checkIntersectionIterator(const GridPartType& gridPart,
         {
             EntityPointer outside = iIt.outside();
             int numberInSelf     = iIt.indexInInside();
-            int numberInNeighbor = iIt.numberInNeighbor();
+            int numberInNeighbor = iIt.indexInOutside();
 
             assert(indexSet.template subIndex<1>(*eIt, numberInSelf)
                    == indexSet.template subIndex<1>(*outside, numberInNeighbor));
@@ -238,13 +238,13 @@ void checkIntersectionIterator(const GridPartType& gridPart,
         }
 
         // ////////////////////////////////////////////////////////////////
-        //   Check the geometry returned by intersectionNeighborLocal()
+        //   Check the geometry returned by geometryInOutside()
         // ////////////////////////////////////////////////////////////////
 
         if (iIt.neighbor() )
         {
 
-            const typename IntersectionIterator::LocalGeometry& intersectionNeighborLocal = iIt.intersectionNeighborLocal();
+            const typename IntersectionIterator::LocalGeometry& intersectionNeighborLocal = iIt.geometryInOutside();
 
             checkGeometry(intersectionNeighborLocal);
 

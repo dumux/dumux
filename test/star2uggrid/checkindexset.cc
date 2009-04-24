@@ -97,7 +97,7 @@ void checkSubEntity ( const GridType & grid,
 
             SubEntityKeyType globalSubEntity =
                 SubEntityKeyType ( lset.template subIndex<codim>(en,subEntity),
-                                   (en.template entity<codim> (subEntity))->geometry().type());
+                                   (en.template subEntity<codim> (subEntity))->geometry().type());
             assert( globalSubEntity.first >= 0 );
             sout << "local subentity " << subEntity << " consider subentity with global key (" << globalSubEntity.first << "," << globalSubEntity.second << ") on en = " << lset.index(en) << "\n";
 
@@ -113,7 +113,7 @@ void checkSubEntity ( const GridType & grid,
                 {
                     // get entity pointer of sub entity codim=dim (Vertex)
                     typedef typename GridType :: template Codim<dim> :: EntityPointer VertexPointerType;
-                    VertexPointerType vxp = en.template entity<dim> (local[j]);
+                    VertexPointerType vxp = en.template subEntity<dim> (local[j]);
 
                     FieldVector<coordType,dim> vx ( vxp->geometry().corner(0));
                     if(vertexCoordsMap.find(global[j]) != vertexCoordsMap.end())
@@ -128,7 +128,7 @@ void checkSubEntity ( const GridType & grid,
                 }
 
                 typedef typename GridType :: template Codim<codim> :: EntityPointer SubEnPointerType;
-                SubEnPointerType subenp = en.template entity<codim> (subEntity);
+                SubEnPointerType subenp = en.template subEntity<codim> (subEntity);
 
                 // assert that all sub entities have the same level
                 // otherwise one of the theoretical conditions is violated
@@ -298,7 +298,7 @@ void checkIndexSetForCodim ( const GridType &grid , const IndexSetType & lset,
             int suben = it->template count<codim> ();
             for(int i=0 ;i<suben; i++)
             {
-                IdType id = grid.localIdSet().id ( *(it->template entity<codim>(i) ) );
+                IdType id = grid.localIdSet().id ( *(it->template subEntity<codim>(i) ) );
                 if( entityfound.find(id) == entityfound.end())
                 {
                     mycount ++ ;
@@ -415,7 +415,7 @@ void checkIndexSetForCodim ( const GridType &grid , const IndexSetType & lset,
             {
                 // get entity pointer of sub entity codim=dim (Vertex)
                 typedef typename GridType :: template Codim<dim> :: EntityPointer VertexPointerType;
-                VertexPointerType vxp = it->template entity<dim> (i);
+                VertexPointerType vxp = it->template subEntity<dim> (i);
 
                 // get coordinates of entity pointer
                 FieldVector<coordType,dim> vx (vxp->geometry().corner(0));
