@@ -210,10 +210,11 @@ public:
         h_ls1 =(1-X)*hw + X*h_NaCl + X*delta_h; /* kJ/kg */
 
         /* Enthalpy of CO2 */
+        delta_hCO2 = (-57.4375 + T * 0.1325) * 1000/44;
         hg = co2.enthalpy(T, p)/1E3- delta_hCO2;
 
         /* Enthalpy of brine with dissolved CO2 */
-        h_ls = (h_ls1*(1-X_CO2_w)+ hg*X_CO2_w)*1E3; /*J/kg*/
+        h_ls = (h_ls1 - X_CO2_w*hw + hg*X_CO2_w)*1E3; /*J/kg*/
 
         return (h_ls);
     }
