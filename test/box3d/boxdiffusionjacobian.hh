@@ -68,18 +68,18 @@ public:
         return;
     }
 
-    VBlockType computeM (const Entity& e, const VBlockType* sol, int node, bool old = false)
+    VBlockType computeStorage (const Entity& e, const VBlockType* sol, int node, bool old = false)
     {
         VBlockType result(0);
         return result;
     }
 
-    VBlockType computeQ (const Entity& e, const VBlockType* sol, const int& node)
+    VBlockType computeSource (const Entity& e, const VBlockType* sol, const int& node)
     {
         return problem.q(this->fvGeom.subContVol[node].global, e, this->fvGeom.subContVol[node].local);
     }
 
-    VBlockType computeA (const Entity& e, const VBlockType* sol, int face)
+    VBlockType computeFlux (const Entity& e, const VBlockType* sol, int face)
     {
         FieldVector<RT, n> gradP(0);
         for (int k = 0; k < this->fvGeom.numVertices; k++) {

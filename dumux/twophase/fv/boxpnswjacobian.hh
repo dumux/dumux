@@ -97,9 +97,9 @@ public:
     VBlockType computeStorage (const Entity& element, const VBlockType* sol, int node, bool old = false)
     {
         if (old)
-            return computeM(element, sol, node, oldVarNData);
+            return computeStorage(element, sol, node, oldVarNData);
         else
-            return computeM(element, sol, node, varNData);
+            return computeStorage(element, sol, node, varNData);
     }
 
     // compute flux term

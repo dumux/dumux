@@ -101,7 +101,7 @@ public:
         {
             // implicit Euler
             bool old = true;
-            VBlockType massContrib = computeM(e, this->uold, i, old);
+            VBlockType massContrib = computeStorage(e, this->uold, i, old);
             massContrib *= -1.0;
             this->def[i] = massContrib;
         }
@@ -109,12 +109,12 @@ public:
         //updateVariableData(e, sol);
         for (int i=0; i < this->fvGeom.numVertices; i++) // begin loop over vertices / sub control volumes
         {
-            VBlockType massContrib = computeM(e, sol, i);
+            VBlockType massContrib = computeStorage(e, sol, i);
             this->def[i] += massContrib;
             this->def[i] *= this->fvGeom.subContVol[i].volume/dt;
 
             // get source term
-            VBlockType q = computeQ(e, sol, i);
+            VBlockType q = computeSource(e, sol, i);
             q *= this->fvGeom.subContVol[i].volume;
             this->def[i] -= q;
         } // end loop over vertices / sub control volumes
@@ -124,7 +124,7 @@ public:
             int i = this->fvGeom.subContVolFace[k].i;
             int j = this->fvGeom.subContVolFace[k].j;
 
-            VBlockType flux = computeA(e, sol, k);
+            VBlockType flux = computeFlux(e, sol, k);
 
             // add to defect
             this->def[i] -= flux;
@@ -190,16 +190,16 @@ public:
         *oldSolution = *uOld;
     }
 
-    VBlockType computeM(const Element& e, const VBlockType* sol, int node, bool old = false) {
-        return this->getImp().computeM(e, sol, node, old);
+    VBlockType computeStorage(const Element& e, const VBlockType* sol, int node, bool old = false) {
+        return this->getImp().computeStorage(e, sol, node, old);
     }
 
-    VBlockType computeQ(const Element& e, const VBlockType* sol, int node) {
-        return this->getImp().computeQ(e, sol, node);
+    VBlockType computeSource(const Element& e, const VBlockType* sol, int node) {
+        return this->getImp().computeSource(e, sol, node);
     }
 
-    VBlockType computeA(const Element& e, const VBlockType* sol, int face) {
-        return this->getImp().computeA(e, sol, face);
+    VBlockType computeFlux(const Element& e, const VBlockType* sol, int face) {
+        return this->getImp().computeFlux(e, sol, face);
     }
 
     // analog to EvalStaticData in MUFTE

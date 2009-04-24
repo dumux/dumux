@@ -255,7 +255,7 @@ public:
                     this->localJacobian().updateVariableData(entity, this->localJacobian().u);
 
 
-                    flux = this->localJacobian().computeA(entity, this->localJacobian().u, k);
+                    flux = this->localJacobian().computeFlux(entity, this->localJacobian().u, k);
                     Flux += sign*flux[1];
                 }
             }

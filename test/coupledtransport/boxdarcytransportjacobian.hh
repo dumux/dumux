@@ -143,7 +143,7 @@ public:
      *  @param node local node id
      *  @return storage term
      */
-    SolutionVector computeM (const Element& element, const SolutionVector* sol,
+    SolutionVector computeStorage (const Element& element, const SolutionVector* sol,
                                      int node, std::vector<VariableNodeData>& varData)
     {
         GeometryType gt = element.geometry().type();
@@ -169,12 +169,12 @@ public:
         return result;
     };
 
-    SolutionVector computeM (const Element& element, const SolutionVector* sol, int node, bool old = false)
+    SolutionVector computeStorage (const Element& element, const SolutionVector* sol, int node, bool old = false)
     {
         if (old)
-            return computeM(element, sol, node, oldVNDat);
+            return computeStorage(element, sol, node, oldVNDat);
         else
-            return computeM(element, sol, node, vNDat);
+            return computeStorage(element, sol, node, vNDat);
     }
 
     /** @brief compute diffusive/advective fluxes, loop over subcontrol volume faces
@@ -183,7 +183,7 @@ public:
      *  @param face face id
      *  @return flux term
      */
-    SolutionVector computeA (const Element& element, const SolutionVector* sol, int face)
+    SolutionVector computeFlux (const Element& element, const SolutionVector* sol, int face)
     {
         int i = this->fvGeom.subContVolFace[face].i;
         int j = this->fvGeom.subContVolFace[face].j;
@@ -370,7 +370,7 @@ public:
      *  @param node local node id
      *  @return source/sink term
      */
-    SolutionVector computeQ (const Element& element, const SolutionVector* sol, const int node)
+    SolutionVector computeSource (const Element& element, const SolutionVector* sol, const int node)
     {
         // ASSUME problem.q already contains \rho.q
         return problem.q(this->fvGeom.subContVol[node].global, element, this->fvGeom.subContVol[node].local);

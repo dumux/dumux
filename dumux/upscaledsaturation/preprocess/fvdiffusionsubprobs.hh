@@ -485,7 +485,7 @@ template<class Grid, class Scalar, class VC> void FVDiffSubProbs<Grid, Scalar, V
                 Scalar dist = distVec.two_norm();
 
                 // get absolute permeability
-                FieldMatrix kneumann(this->diffProblem.soil.K(globalPosNeighbor, *neighborPointerHost, localPosNeighbor));
+                FieldMatrix kNneumann(this->diffProblem.soil.K(globalPosNeighbor, *neighborPointerHost, localPosNeighbor));
 
                 // compute vectorized permeabilities
                 FieldVector<Scalar,dim> kNI(0);

@@ -216,7 +216,7 @@ public:
      *  @param node local node id
      *  @return storage term
      */
-    virtual VBlockType computeM(const Entity& element, const VBlockType* sol,
+    virtual VBlockType computeStorage(const Entity& element, const VBlockType* sol,
                                 int idx, std::vector<VariableNodeData>& varData) {
         GeometryType gt = element.geometry().type();
         const typename LagrangeShapeFunctionSetContainer<DT,Scalar,dim>::value_type
@@ -266,12 +266,12 @@ public:
 
     };
 
-    virtual VBlockType computeM(const Entity& element, const VBlockType* sol,
+    virtual VBlockType computeStorage(const Entity& element, const VBlockType* sol,
                                 int idx, bool old = false) {
         if (old)
-            return computeM(element, sol, idx, oldVNDat);
+            return computeStorage(element, sol, idx, oldVNDat);
         else
-            return computeM(element, sol, idx, vNDat);
+            return computeStorage(element, sol, idx, vNDat);
     }
     //************************************************************************************************************************************//
     /** @brief compute diffusive/advective fluxes, loop over subcontrol volume faces
@@ -280,7 +280,7 @@ public:
      *  @param face face id
      *  @return flux term
      */
-    virtual VBlockType computeA(const Entity& element, const VBlockType* sol, int face) {
+    virtual VBlockType computeFlux(const Entity& element, const VBlockType* sol, int face) {
         int i = this->fvGeom.subContVolFace[face].i;
         int j = this->fvGeom.subContVolFace[face].j;
 
@@ -548,7 +548,7 @@ public:
     /////////////////////////////////////////////////////////////////////////////////////////
     //    INTERPOROSITY FLUX
 
-    virtual VBlockType computeQ(const Entity& element, const VBlockType* sol,
+    virtual VBlockType computeSource(const Entity& element, const VBlockType* sol,
                                 const int& idx) {
         // ASSUME problem.q already contains \rho.q
         VBlockType q(0.0);

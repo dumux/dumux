@@ -70,17 +70,17 @@ public:
         return;
     }
 
-    VBlockType computeM (const Entity& element, const VBlockType* sol, int node, bool old = false)
+    VBlockType computeStorage (const Entity& element, const VBlockType* sol, int node, bool old = false)
     {
         return (elData.porosity*sol[node]);
     }
 
-    VBlockType computeQ (const Entity& element, const VBlockType* sol, const int& node)
+    VBlockType computeSource (const Entity& element, const VBlockType* sol, const int& node)
     {
         return 0;
     }
 
-    VBlockType computeA (const Entity& element, const VBlockType* sol, int face)
+    VBlockType computeFlux (const Entity& element, const VBlockType* sol, int face)
     {
         FieldVector<Scalar, dim> gradS(0);
         Scalar lambdaBarFace = 0;

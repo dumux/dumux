@@ -57,7 +57,7 @@ public:
     	return values;
     }
 
-    SolutionVectordirichlet(const GlobalPosition& globalPos, const Element& element,
+    SolutionVector dirichlet(const GlobalPosition& globalPos, const Element& element,
                      const IntersectionIterator& intersectionIt,
                      const LocalPosition& localPos) const
     {

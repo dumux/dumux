@@ -56,7 +56,7 @@ namespace Dune
 //          return problem.bctype(x,e,xi);
 //      }
 //
-//      RTdirichlet(const FieldVector<DT,n>& x, const Entity& e,
+//      RT dirichlet(const FieldVector<DT,n>& x, const Entity& e,
 //                        const FieldVector<DT,n>& xi)
 //      {
 //            return problem.dirichlet(x,e,xi);
@@ -121,7 +121,7 @@ public:
         return problem->bctype(x,e,xi);
     }
 
-    RTdirichlet(const Dune::FieldVector<DT,n>& x, const Entity& e,
+    RT dirichlet(const Dune::FieldVector<DT,n>& x, const Entity& e,
           const Dune::FieldVector<DT,n>& xi) const
     {
         return problem->g(x,e,xi);

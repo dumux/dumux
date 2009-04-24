@@ -73,7 +73,7 @@ public:
     }
 
 
-    VBlockType computeM (const Entity& e, const VBlockType* sol, int node, const std::vector<VariableNodeData>& varData)
+    VBlockType computeStorage (const Entity& e, const VBlockType* sol, int node, const std::vector<VariableNodeData>& varData)
     {
         VBlockType result(0);
         result[0] = varData[node].density[pIdx]*elData.porosity;
@@ -81,21 +81,21 @@ public:
         return result;
     };
 
-    VBlockType computeM (const Entity& e, const VBlockType* sol, int node, bool old = false)
+    VBlockType computeStorage (const Entity& e, const VBlockType* sol, int node, bool old = false)
     {
         if (old)
-            return computeM(e, sol, node, oldVarNData);
+            return computeStorage(e, sol, node, oldVarNData);
         else
-            return computeM(e, sol, node, varNData);
+            return computeStorage(e, sol, node, varNData);
     }
 
 
-    VBlockType computeQ (const Entity& e, const VBlockType* sol, const int& node)
+    VBlockType computeSource (const Entity& e, const VBlockType* sol, const int& node)
     {
         return problem.q(this->fvGeom.subContVol[node].global, e, this->fvGeom.subContVol[node].local);
     }
 
-    VBlockType computeA (const Entity& e, const VBlockType* sol, int face)
+    VBlockType computeFlux (const Entity& e, const VBlockType* sol, int face)
     {
         FieldVector<RT, n> gradP(0);
         for (int k = 0; k < this->fvGeom.numVertices; k++) {

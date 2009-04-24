@@ -205,7 +205,7 @@ public:
         return;
     }
 
-    virtual VBlockType computeM (const Entity& e, const VBlockType* sol,
+    virtual VBlockType computeStorage (const Entity& e, const VBlockType* sol,
                                  int node, std::vector<VariableNodeData>& vNData)
     {
         VBlockType AccumulationTerm;
@@ -228,16 +228,16 @@ public:
         return AccumulationTerm;
     };
 
-    virtual VBlockType computeM (const Entity& e, const VBlockType* sol, int node, bool old = false)
+    virtual VBlockType computeStorage (const Entity& e, const VBlockType* sol, int node, bool old = false)
     {
         if (old)
-            return computeM(e, sol, node, oldVNData);
+            return computeStorage(e, sol, node, oldVNData);
         else
-            return computeM(e, sol, node, vNData);
+            return computeStorage(e, sol, node, vNData);
     }
 
     //***********************************************************************************************//
-    virtual VBlockType computeA (const Entity& e, const VBlockType* sol, int face)
+    virtual VBlockType computeFlux (const Entity& e, const VBlockType* sol, int face)
     {
         int i = this->fvGeom.subContVolFace[face].i;
         int j = this->fvGeom.subContVolFace[face].j;
@@ -330,7 +330,7 @@ public:
     //******************************************************************************************//
     //******************************************************************************************//
 
-    virtual VBlockType computeQ (const Entity& e, const VBlockType* sol, const int& node)
+    virtual VBlockType computeSource (const Entity& e, const VBlockType* sol, const int& node)
     {
         // ASSUME problem.q already contains \rho.q
         VBlockType q(0);

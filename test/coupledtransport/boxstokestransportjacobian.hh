@@ -163,7 +163,7 @@ public:
 
 
     // compute storage term
-    SolutionVector computeM (const Element& element, const SolutionVector* sol, int node, const std::vector<VariableNodeData>& varData)
+    SolutionVector computeStorage (const Element& element, const SolutionVector* sol, int node, const std::vector<VariableNodeData>& varData)
     {
         SolutionVector result(0);
 
@@ -181,15 +181,15 @@ public:
         return result;
     };
 
-    SolutionVector computeM (const Element& element, const SolutionVector* sol, int node, bool old = false)
+    SolutionVector computeStorage (const Element& element, const SolutionVector* sol, int node, bool old = false)
     {
         if (old)
-            return computeM(element, sol, node, oldVarNData);
+            return computeStorage(element, sol, node, oldVarNData);
         else
-            return computeM(element, sol, node, varNData);
+            return computeStorage(element, sol, node, varNData);
     }
 
-    SolutionVector computeQ (const Element& element, const SolutionVector* sol, const int& node)
+    SolutionVector computeSource (const Element& element, const SolutionVector* sol, const int& node)
     {
         SolutionVector result = problem.q(this->fvGeom.subContVol[node].global, element, this->fvGeom.subContVol[node].local);
         result *= -1.0;
@@ -213,7 +213,7 @@ public:
         return (result);
     }
 
-    SolutionVector computeA (const Element& element, const SolutionVector* sol, int face)
+    SolutionVector computeFlux (const Element& element, const SolutionVector* sol, int face)
     {
         SolutionVector flux(0);
 

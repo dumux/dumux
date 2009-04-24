@@ -95,7 +95,7 @@ public:
     }
 
     // compute storage term
-    VBlockType computeM (const Entity& element, const VBlockType* sol,
+    VBlockType computeStorage (const Entity& element, const VBlockType* sol,
                          int node, const std::vector<VariableNodeData>& varData)
     {
         VBlockType result;
@@ -106,16 +106,16 @@ public:
         return result;
     };
 
-    VBlockType computeM (const Entity& element, const VBlockType* sol, int node, bool old = false)
+    VBlockType computeStorage (const Entity& element, const VBlockType* sol, int node, bool old = false)
     {
         if (old)
-            return computeM(element, sol, node, oldVarNData);
+            return computeStorage(element, sol, node, oldVarNData);
         else
-            return computeM(element, sol, node, varNData);
+            return computeStorage(element, sol, node, varNData);
     }
 
     // compute flux term
-    VBlockType computeA (const Entity& element, const VBlockType* sol, int face)
+    VBlockType computeFlux (const Entity& element, const VBlockType* sol, int face)
     {
         int i = this->fvGeom.subContVolFace[face].i;
         int j = this->fvGeom.subContVolFace[face].j;
@@ -160,7 +160,7 @@ public:
 
 
     // compute sources/sinks
-    VBlockType computeQ (const Entity& element, const VBlockType* sol, const int& node)
+    VBlockType computeSource (const Entity& element, const VBlockType* sol, const int& node)
     {
         // ASSUME problem.q already contains \rho.q
         return problem.q(this->fvGeom.subContVol[node].global, element, this->fvGeom.subContVol[node].local);

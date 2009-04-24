@@ -106,13 +106,13 @@ public:
         return;
     }
 
-    SolutionVector computeM (const Element& e, const SolutionVector* sol, int node, bool old = false)
+    SolutionVector computeStorage (const Element& e, const SolutionVector* sol, int node, bool old = false)
     {
         SolutionVector result(0);
         return result;
     }
 
-    SolutionVector computeA (const Element& e, const SolutionVector* sol, int face)
+    SolutionVector computeFlux (const Element& e, const SolutionVector* sol, int face)
     {
         FieldVector<Scalar, dim> gradP(0);
         for (int k = 0; k < this->fvGeom.numVertices; k++) {
@@ -128,7 +128,7 @@ public:
         return flux;
     }
 
-    SolutionVector computeQ (const Element& e, const SolutionVector* sol, const int& node)
+    SolutionVector computeSource (const Element& e, const SolutionVector* sol, const int& node)
     {
         return problem.q(this->fvGeom.subContVol[node].global, e, this->fvGeom.subContVol[node].local);
     }

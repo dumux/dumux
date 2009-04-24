@@ -169,7 +169,7 @@ public:
                     this->localJacobian().computeElementData(element);
                     this->localJacobian().updateVariableData(element, this->localJacobian().u);
 
-                    flux = this->localJacobian().computeA(element, this->localJacobian().u, k);
+                    flux = this->localJacobian().computeFlux(element, this->localJacobian().u, k);
                     Flux += sign*flux[1];
                 }
             }

@@ -44,7 +44,7 @@ public:
         return Dune::BoundaryConditions::neumann;
     }
 
-    RTdirichlet(const Dune::FieldVector<DT,n>& x, const Entity& e,
+    RT dirichlet(const Dune::FieldVector<DT,n>& x, const Entity& e,
          const Dune::FieldVector<DT,n>& xi) const {
         return (x[0] < 1e-6) ? 2e6 : 1e6;
     }

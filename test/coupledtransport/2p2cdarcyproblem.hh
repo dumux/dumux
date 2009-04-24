@@ -68,7 +68,7 @@ public:
     /////////////////////////////
     // DIRICHLET boundaries
     /////////////////////////////
-    virtual SolutionVectordirichlet(const GlobalPosition& globalPos, const Element& element,
+    virtual SolutionVector dirichlet(const GlobalPosition& globalPos, const Element& element,
                               const IntersectionIterator& intersectionIt,
                               const LocalPosition& localPos) const
     {
