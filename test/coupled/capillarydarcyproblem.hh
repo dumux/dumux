@@ -59,7 +59,7 @@ public:
     }
 
     // Dirichlet boundary conditions
-    Scalardirichlet(const FieldVector<Scalar,dim>& globalPos, const Element& element,
+    Scalar dirichlet(const FieldVector<Scalar,dim>& globalPos, const Element& element,
               const IntersectionIterator& intersectionIt,
               const FieldVector<Scalar,dim>& localPos) const
     {

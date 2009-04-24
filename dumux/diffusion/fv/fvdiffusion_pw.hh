@@ -277,7 +277,7 @@ template<class Grid, class Scalar, class VC, class Problem> void FVDiffusion<Gri
                 FieldMatrix permeabilityJ = this->diffProblem.soil().K(globalPosNeighbor,*neighborPointer,localPosNeighbor);
 
                 // compute vectorized permeabilities
-                FieldVector<Scalar,dim> normalPermeabilityneumann(0);
+                FieldVector<Scalar,dim> normalPermeabilityJ(0);
                 permeabilityJ.umv(unitOuterNormal, normalPermeabilityJ);
                 // compute permeability normal to intersection and take harmonic mean
                 Scalar normalComponentPermeabilityI = normalPermeabilityI * unitOuterNormal;

@@ -15,7 +15,9 @@ class CapillaryStokesProblem : public StokesProblem<Grid, Scalar>
 {
     enum {dim=Grid::dimension, numEq=Grid::dimension+1};
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
-    typedef typename Grid::template Codim<0>::LeafIntersectionIterator IntersectionIterator;
+    //typedef typename Grid::template Codim<0>::LeafIntersectionIterator IntersectionIterator;
+    typedef typename Grid::LeafGridView GV;
+    typedef typename GV::IntersectionIterator IntersectionIterator;
 
 public:
     virtual FieldVector<Scalar,numEq> q(const FieldVector<Scalar,dim>& globalPos, const Element& element,

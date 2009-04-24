@@ -154,7 +154,7 @@ public:
 
                             // compute vectorized permeabilities
                             FieldVector<Scalar,dim> normalPermeabilityI(0);
-                            FieldVector<Scalar,dim> normalPermeabilityneumann(0);
+                            FieldVector<Scalar,dim> normalPermeabilityJ(0);
                             permeabilityI.umv(unitOuterNormal, normalPermeabilityI);
                             permeabilityJ.umv(unitOuterNormal, normalPermeabilityJ);
                             // compute permeability normal to intersection and take harmonic mean

@@ -106,7 +106,7 @@ public:
         return;
     }
 
-    virtual Scalardirichlet(const GlobalPosition& globalPos, const Element& e,
+    virtual Scalar dirichlet(const GlobalPosition& globalPos, const Element& e,
                       const LocalPosition& localPos) const
     {
         return dirichlet(globalPos, e, localPos);

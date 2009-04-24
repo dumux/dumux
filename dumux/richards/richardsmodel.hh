@@ -68,8 +68,7 @@ public:
     IntersectionIterator;
 
     LeafP1TwoPhaseModel(const G& g, ProblemType& prob) :
-        ThisRichardsModel(g, prob), problem(prob), grid_(g), vertexmapper(
-                                                                          g.leafIndexSet()), size((*(this->u)).size()), pW(size), pC(size),
+        ThisRichardsModel(g, prob), problem(prob), grid_(g), vertexmapper(g.leafView()), size((*(this->u)).size()), pW(size), pC(size),
         satW(size), satEx(0), pEx(0), satError(0) {
     }
 
@@ -130,10 +129,8 @@ public:
             // set type of boundary conditions
             this->localJacobian().assembleBoundaryCondition(entity);
 
-            IntersectionIterator
-                endit = IntersectionIteratorGetter<G, LeafTag>::end(entity);
-            for (IntersectionIterator is = IntersectionIteratorGetter<G,
-                     LeafTag>::begin(entity); is!=endit; ++is)
+            IntersectionIterator endit = entity.ileafend();
+            for (IntersectionIterator is = entity.ileafbegin(); is!=endit; ++is)
                 if (is->boundary()) {
                     for (int i = 0; i < size; i++)
                         // handle subentities of this face

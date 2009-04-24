@@ -107,7 +107,7 @@ public:
             if (bctype == BoundaryConditions::dirichlet)
             {
                 // get the boundary value from the problem:
-                FieldVector<Scalar,dim> velocity = problem_.g(global, element, isIt, local);
+                FieldVector<Scalar,dim> velocity = problem_.dirichlet(global, element, isIt, local);
 
                 // set the right hand side and the boundary condition type:
                 this->b[indexInInside] = velocity[indexInInside/2];

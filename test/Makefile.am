@@ -4,12 +4,16 @@ SUBDIRS = . \
 	  2p \
 	  2p2c \
 	  2p2cni \
+	  2pni \
 	  box3d \
 	  brinkman \
+	  coupled \
+	  coupledtransport \
 	  diffusion \
 	  fractionalflow \
 	  fvca5 \
 	  id \
+	  linearelasticity \
 	  minc \
 	  pardiso \
 	  phasepressure_ff \
@@ -22,7 +26,6 @@ SUBDIRS = . \
 	  stokes \
 	  transport \
 	  tutorial \
-	  #linearelasticity \
 	  vtk
 
 include $(top_srcdir)/am/global-rules

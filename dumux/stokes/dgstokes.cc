@@ -452,7 +452,7 @@ void DGFiniteElementMethod<G,v_order,p_order>::assembleDirichletBoundaryTerm(Ent
         // velocity boundary condition
         // dirichlet boundary
         for(int i=0;i<dim;++i)
-            dirichlet[i] = (problem_.g(bglobal, ent, isit, blocal))[i];
+            dirichlet[i] = (problem_.dirichlet(bglobal, ent, isit, blocal))[i];
 
 
         //================================================//

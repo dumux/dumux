@@ -50,7 +50,7 @@ public:
       @param[in]  globalPos    position in global coordinates
       \return     boundary condition value
     */
-    virtual Scalardirichlet(const FieldVector<Scalar,dim>& globalPos, const Element& element,
+    virtual Scalar dirichlet(const FieldVector<Scalar,dim>& globalPos, const Element& element,
                       const IntersectionIterator& intersectionIt,
                       const FieldVector<Scalar,dim>& localPos) const = 0;
 
