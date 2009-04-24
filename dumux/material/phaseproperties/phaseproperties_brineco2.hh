@@ -88,12 +88,12 @@ public:
 
     virtual double intEnergy(double T, double p, double Xa=0.) const
     {
-        return constRelBrine.enthalpy_brine(T,p,Salinity);
+        return constRelBrine.enthalpy_brine_CO2(T,p,Salinity,Xa);
     }
 
     virtual double enthalpy(double T, double p, double Xa=0.) const
     {
-        return constRelBrine.enthalpy_brine(T,p,Salinity);
+        return constRelBrine.enthalpy_brine_CO2(T,p,Salinity,Xa);
     }
 
     virtual double diffCoeff(double T=283.15, double p=1e5) const
