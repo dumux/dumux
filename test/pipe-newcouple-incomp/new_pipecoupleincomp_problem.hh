@@ -184,7 +184,7 @@ private:
     // some constants from the traits for convenience
     enum {
         numEq     = BoxTraits::numEq,
-        pIdx      = OnePTraits::pIdx,
+        pIdx      = OnePTraits::pressureIdx,
 
         // Grid and world dimension
         dim      = DomainTraits::dim,
