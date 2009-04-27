@@ -10,6 +10,8 @@ check_PROGRAMS = $(NORMALTESTS)
 test_coupledcapillary_SOURCES = test_coupledcapillary.cc
 test_stokesdarcy_SOURCES = test_stokesdarcy.cc
 test_boxstokesdarcy_SOURCES = test_boxstokesdarcy.cc
+test_boxstokesdarcy_CXXFLAGS = $(MPI_CPPFLAGS) 
+test_boxstokesdarcy_LDADD = $(MPI_LDFLAGS) 
 
 AM_LDFLAGS = @AM_LDFLAGS@ $(LOCAL_LIBS)
 

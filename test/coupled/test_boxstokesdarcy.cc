@@ -129,6 +129,9 @@ struct NodeLayout
 int main(int argc, char** argv)
 {
     try{
+        // initialize MPI, finalize is done automatically on exit
+        Dune::MPIHelper::instance(argc, argv);
+
         const int dim=2;
         typedef double Scalar;
 
