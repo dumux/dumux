@@ -1,5 +1,5 @@
 # tests where program to build and program to run are equal
-NORMALTESTS = test_2pni
+NORMALTESTS = test_2pni new_test_2pni
 
 # list of tests to run
 #TESTS = $(NORMALTESTS)
@@ -8,5 +8,6 @@ NORMALTESTS = test_2pni
 check_PROGRAMS = $(NORMALTESTS)
 
 test_2pni_SOURCES = test_2pni.cc
+new_test_2pni_SOURCES = new_test_2pni.cc
 
 include $(top_srcdir)/am/global-rules
