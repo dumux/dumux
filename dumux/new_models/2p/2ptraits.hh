@@ -1,3 +1,4 @@
+//$Id:$
 /*****************************************************************************
  *   Copyright (C) 2008 by Klaus Mosthaf, Andreas Lauser, Bernd Flemisch                    *
  *   Institute of Hydraulic Engineering                                      *
@@ -32,11 +33,11 @@ public:
     // basic constants
     static const int numEq = 2;              //!< Number of primary variables
     static const int numPhases = numPhases_; //!< Number of fluid phases
-    
+
     // Indices of the primary variables
     static const int pressureIdx = 0;   //!< Index for either wetting or non-wetting phase pressure (depending on formulation) in a solution vector
     static const int saturationIdx = 1; //!< Index for the non-wetting phase saturation in a field vector
-    
+
     // formulations
     static const int pWsN = 0; //!< Pw and Sn as primary variables
     static const int pNsW = 1; //!< Pn and Sw as primary variables
@@ -46,6 +47,8 @@ public:
     static const int nPhase = 1;  //!< Phase index of the non-wetting phase
 
     typedef FieldVector<Scalar, numPhases>  PhasesVector;
+    // Upwind parameter
+    static const Scalar upwindAlpha = 1.0; //!< Upwind parameter. 1.0 means fully the upstream.
 };
 
 /*!
