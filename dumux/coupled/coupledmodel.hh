@@ -156,7 +156,7 @@ public:
 
         }
 
-        uOld = u;
+        uOldTimeStep = u;
     }
 
     template <class A12Type, class A21Type>
@@ -328,7 +328,7 @@ public:
 
     GlobalVectorType& solOld()
     {
-        return uOld;
+        return uOldTimeStep;
     }
 
     virtual void vtkout (const char* name, int k)
@@ -347,6 +347,11 @@ public:
           A11(firstModel_.matrix()), A22(secondModel_.matrix()), assembleGlobalSystem_(assembleGlobalSystem)
     {}
 
+    GlobalMatrixType A;
+    GlobalVectorType u;
+    GlobalVectorType f;
+    GlobalVectorType uOldTimeStep;
+
 protected:
     const FirstGrid& firstGrid_;
     const SecondGrid& secondGrid_;
@@ -355,10 +360,6 @@ protected:
     FirstMatrixType& A11;
     SecondMatrixType& A22;
     bool assembleGlobalSystem_;
-    GlobalMatrixType A;
-    GlobalVectorType u;
-    GlobalVectorType f;
-    GlobalVectorType uOld;
 
     Imp& getImp()
     {

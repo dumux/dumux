@@ -550,8 +550,8 @@ private:
         const ElementIterator &endElementIt = ParentType::elementEnd();
         for (; elementIt != endElementIt; ++elementIt) {
             // loop over all faces of the current element
-            IntersectionIterator isIt = IntersectionIteratorGetter::begin(*elementIt);
-            const IntersectionIterator &endFaceIt = IntersectionIteratorGetter::end(*elementIt);
+            IntersectionIterator isIt = elementIt->ileafbegin();
+            const IntersectionIterator &endFaceIt = elementIt->ileafend();
             for (; isIt != endFaceIt; ++ isIt) {
                 // make sure the face not on the boundary of
                 // the grid

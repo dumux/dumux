@@ -284,7 +284,7 @@ public:
     //        typedef typename GridT::Traits::template Codim<0>::Entity Element;
     //        typedef typename GridT::ctype CoordScalar;
     //        typedef typename GV::template Codim<0>::Iterator Iterator;
-    //        typedef typename IntersectionIteratorGetter<GridT,LeafTag>::IntersectionIterator IntersectionIterator;
+    //        typedef typename GV::IntersectionIterator IntersectionIterator;
     //
     //        enum {dim = GridT::dimension};
     //        enum {dimworld = GridT::dimensionworld};

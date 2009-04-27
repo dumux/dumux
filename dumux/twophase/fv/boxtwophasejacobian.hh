@@ -291,8 +291,8 @@ private:
         typedef typename Grid::LeafGridView::IntersectionIterator
             IntersectionIterator;
 
-        IntersectionIterator endit = IntersectionIteratorGetter<Grid,TypeTag>::end(element);
-        for (IntersectionIterator it = IntersectionIteratorGetter<Grid,TypeTag>::begin(element);
+        IntersectionIterator endit = element.ileafend();
+        for (IntersectionIterator it = element.ileafbegin();
              it!=endit; ++it)
         {
             // if we have a neighbor then we assume there is no boundary (forget interior boundaries)

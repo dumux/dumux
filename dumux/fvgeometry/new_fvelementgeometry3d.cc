@@ -26,8 +26,8 @@ class NewFVElementGeometry<GridT,
     typedef typename ShapeFunctionSetContainer::value_type  ShapeFunctionSet;
     typedef typename Cell::Geometry                         CellGeometry;
 
-    typedef Dune::IntersectionIteratorGetter<Grid,Dune::LeafTag>      IntersectionIteratorGetter;
-    typedef typename IntersectionIteratorGetter::IntersectionIterator IntersectionIterator;
+    
+    typedef typename Grid::LeafGridView::IntersectionIterator IntersectionIterator;
 
     typedef typename ShapeFunctionSet::ResultType           Scalar;
     typedef typename Grid::ctype                            CoordScalar;

@@ -197,10 +197,8 @@ public:
             // set type of boundary conditions
             this->localJacobian().assembleBoundaryCondition(entity);
 
-            IntersectionIterator
-                endit = IntersectionIteratorGetter<ThisGrid, LeafTag>::end(entity);
-            for (IntersectionIterator is = IntersectionIteratorGetter<ThisGrid,
-                     LeafTag>::begin(entity); is!=endit; ++is)
+            IntersectionIterator endit = entity.ileafend();
+            for (IntersectionIterator is = entity.ileafbegin(); is!=endit; ++is)
                 if (is->boundary()) {
                     for (int i = 0; i < size; i++)
                         // handle subentities of this face
@@ -350,10 +348,8 @@ public:
             // set type of boundary conditions
             this->localJacobian().assembleBoundaryCondition(entity);
 
-            IntersectionIterator
-                endit = IntersectionIteratorGetter<ThisGrid, LeafTag>::end(entity);
-            for (IntersectionIterator is = IntersectionIteratorGetter<ThisGrid,
-                     LeafTag>::begin(entity); is!=endit; ++is)
+            IntersectionIterator endit = entity.ileafend();
+            for (IntersectionIterator is = entity.ileafbegin(); is!=endit; ++is)
                 if (is->boundary()) {
                     for (int i = 0; i < size; i++)
                         // handle subentities of this face

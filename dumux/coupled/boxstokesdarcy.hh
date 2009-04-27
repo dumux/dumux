@@ -71,7 +71,7 @@ public:
                                                             dtol, rtol, maxIt, mindt, goodIt, maxInc);
         newtonMethod.execute();
         dt = this->firstModel().localJacobian().getDt();
-        this->uOld = this->u;
+        this->uOldTimeStep = this->u;
 
         return;
     }

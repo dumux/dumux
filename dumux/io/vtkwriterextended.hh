@@ -699,8 +699,8 @@ public:
             std::vector<Dune::FieldVector<DT,n> > outernormal(nlfaces,0);
             Dune::FieldVector<DT,n-1> loc(0);
             typedef typename Grid::LeafGridView::IntersectionIterator IntersectionIterator;
-            IntersectionIterator endit = IntersectionIteratorGetter<Grid,LeafTag>::end(*cit);
-            for (IntersectionIterator it = IntersectionIteratorGetter<Grid,LeafTag>::begin(*cit); it!=endit; ++it)
+            IntersectionIterator endit = cit->ileafend();
+            for (IntersectionIterator it = cit->ileafbegin(); it!=endit; ++it)
             {
                 int indexi=it->indexInInside();
                 faceVolume[indexi] = it->geometry().volume();

@@ -73,8 +73,7 @@ public:
 
             // run through all intersections with neighbors and boundary
             IntersectionIterator endit = it->ilevelend();
-            for (IntersectionIterator is = IntersectionIteratorGetter<G,
-                     LevelTag>::begin(*it); is!=endit; ++is) {
+            for (IntersectionIterator is = it->ilevelbegin(); is!=endit; ++is) {
                 // get geometry type of face
                 GeometryType gtf = is->geometryInInside().type();
 

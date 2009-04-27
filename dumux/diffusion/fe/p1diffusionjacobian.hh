@@ -201,11 +201,11 @@ private:
         int p=2;
         if (gt.isSimplex()) p=1;
         // evaluate boundary conditions via intersection iterator
-        typedef typename IntersectionIteratorGetter<G,TypeTag>::IntersectionIterator
+        typedef typename G::LevelGridView::IntersectionIterator
             IntersectionIterator;
 
-        IntersectionIterator endit = IntersectionIteratorGetter<G,TypeTag>::end(e);
-        for (IntersectionIterator it = IntersectionIteratorGetter<G,TypeTag>::begin(e);
+        IntersectionIterator endit = e.ilevelend();
+        for (IntersectionIterator it = e.ilevelbegin();
              it!=endit; ++it)
         {
             // if we have a neighbor then we assume there is no boundary (forget interior boundaries)

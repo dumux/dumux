@@ -8,6 +8,7 @@
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
 #include <dune/grid/io/file/dgfparser/dgfalu.hh>
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
+#include <dune/grid/io/file/dgfparser/dgfug.hh>
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/solvers.hh>
 #include <../../../dune-subgrid/subgrid/subgrid.hh>
@@ -133,7 +134,8 @@ int main(int argc, char** argv)
 
         // grid and geometry
         //typedef Dune::ALUSimplexGrid<dim,dim> GridType;
-        typedef Dune::SGrid<dim,dim> GridType;
+        //typedef Dune::SGrid<dim,dim> GridType;
+        typedef Dune::UGGrid<dim> GridType;
 
         if (argc != 2) {
             std::cout << boost::format("usage: %s grid\n")%argv[0];

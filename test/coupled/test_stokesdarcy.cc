@@ -8,6 +8,7 @@
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
 #include <dune/grid/io/file/dgfparser/dgfalu.hh>
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
+#include <dune/grid/io/file/dgfparser/dgfug.hh>
 #include <dune/istl/preconditioners.hh>
 #include <dune/istl/solvers.hh>
 #include <../../../dune-subgrid/subgrid/subgrid.hh>
@@ -71,7 +72,8 @@ int main(int argc, char** argv)
 
         // geometry
         //typedef Dune::ALUSimplexGrid<dim,dim> GridType;
-        typedef Dune::SGrid<dim,dim> GridType;
+        //typedef Dune::SGrid<dim,dim> GridType;
+        typedef Dune::UGGrid<dim> GridType;
         Dune::GridPtr<GridType> gridPtr( argv[1] );
         GridType& grid = *gridPtr;
 

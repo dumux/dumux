@@ -484,8 +484,8 @@ private:
 	slNode s;
 	s.index=indexi;
 	
-	IntersectionIterator endis = IntersectionIteratorGetter<G,LevelTag>::end(*ep);
-	for(IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*ep);is!=endis;++is)
+	IntersectionIterator endis = ep->ilevelend();
+	for(IntersectionIterator is = ep->ilevelbegin();is!=endis;++is)
         {
 
 	  GeometryType gtf = is->geometryInInside().type();
@@ -597,8 +597,8 @@ private:
       Dune::FieldVector<VType,2*dim> vx;
      
       //set positions and velocities of the edges of the current element
-      IntersectionIterator endis=IntersectionIteratorGetter<G,LevelTag>::end(*ep);
-      for(IntersectionIterator is=IntersectionIteratorGetter<G,LevelTag>::begin(*ep);is!=endis;++is)
+      IntersectionIterator endis=ep->ilevelend();
+      for(IntersectionIterator is=ep->ilevelbegin();is!=endis;++is)
       {
 	GeometryType gtf = is->geometryInInside().type();
 	const Dune::FieldVector<ct,dim-1>& facelocal = Dune::ReferenceElements<RT,dim-1>::general(gtf).position(0,0);
@@ -697,7 +697,7 @@ private:
       s.index = -1;
       
       //searching saturation jumps
-      for(IntersectionIterator is = IntersectionIteratorGetter<G,LevelTag>::begin(*ep);is!=endis;++is)
+      for(IntersectionIterator is = ep->ilevelbegin();is!=endis;++is)
       {
 	int numberInSelf = is->indexInInside();
 	if(numberInSelf == kant[m])
@@ -711,8 +711,8 @@ private:
 	      for(int i=0;i<dim;++i)
 		if(i!=m && fabs(dtx[i]-dte)<1e-7)
 		{
-		  IntersectionIterator endir = IntersectionIteratorGetter<G,LevelTag>::end(*ep);
-		  for(IntersectionIterator ir = IntersectionIteratorGetter<G,LevelTag>::begin(*ep);ir!=endir;++ir)
+		  IntersectionIterator endir = ep->ilevelend();
+		  for(IntersectionIterator ir = ep->ilevelbegin();ir!=endir;++ir)
 		  {
 		    //setting informations of the diagonal element
 		    int nIS = ir->indexInInside();
