@@ -62,7 +62,7 @@ public:
         : BoxJacobianType(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_),
           problem(params)
     {
-        alpha = -1e1;
+        alpha = -1e0;
         beta = 1e2;
         this->analytic = false;
     }
@@ -189,8 +189,8 @@ public:
             for (int k = 0; k < this->fvGeom.numVertices; k++) {
                 pressValue += sol[k][dim]*0.25;//this->fvGeom.subContVol[node].shapeValue[k];
             }
-        	result[dim] += beta*0.5*pressValue/this->fvGeom.subContVol[node].volume;
-//        	result[dim] += beta*0.5*sol[node][dim]/this->fvGeom.subContVol[node].volume;
+//        	result[dim] += beta*0.5*pressValue/this->fvGeom.subContVol[node].volume;
+        	result[dim] += beta*0.5*sol[node][dim]/this->fvGeom.subContVol[node].volume;
         }
 
         SolutionVector flux = boundaryFlux(element, sol, node);
@@ -352,6 +352,13 @@ public:
                    velocityGradient.umv(it->unitOuterNormal(faceLocal), gradVN);
                    gradVN *= this->fvGeom.boundaryFace[bfIdx].area;
                    gradVN *= elData.mu;
+                   FieldVector<Scalar,dim>  tangent(0);
+                   tangent[0] = it->unitOuterNormal(faceLocal)[1];
+                   tangent[1] = -(it->unitOuterNormal(faceLocal)[0]);
+                   FieldVector<Scalar,dim>  gradVT(0);
+                   velocityGradient.umv(tangent, gradVT);
+                   gradVT *= this->fvGeom.boundaryFace[bfIdx].area;
+                   gradVT *= elData.mu;
 
                     if (bctypeface[0] == BoundaryConditions::dirichlet)
                     {
@@ -371,7 +378,8 @@ public:
                         Scalar beaversJosephC = this->getImp().problem.beaversJosephC(this->fvGeom.boundaryFace[bfIdx].ipGlobal, element, it, this->fvGeom.boundaryFace[bfIdx].ipLocal);
                         if (beaversJosephC == 0)
                         {
-                        	result[dim] -= beta*0.5*(gradVN*it->unitOuterNormal(faceLocal))/this->fvGeom.boundaryFace[bfIdx].area;
+                        	//result[dim] -= beta*0.5*(gradVN*it->unitOuterNormal(faceLocal))/this->fvGeom.boundaryFace[bfIdx].area;
+                            result[dim] += beta*0.5*(gradVT*tangent)/this->fvGeom.boundaryFace[bfIdx].area;
 
                         	FieldVector<Scalar,numEq> neumann = this->getImp().problem.neumann(this->fvGeom.boundaryFace[bfIdx].ipGlobal, element, it, this->fvGeom.boundaryFace[bfIdx].ipLocal);
 
