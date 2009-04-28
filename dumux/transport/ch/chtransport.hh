@@ -967,7 +967,7 @@ int ChTransport<Grid,Scalar,VC, Problem>::approxSol(RepresentationType& updateVe
 }
 
 template<class Grid, class Scalar, class VC, class Problem>
-int ChTransport<Grid,Scalar,VC, Problem>::update(const Scalar t, Scalar& dt, RepresentationType& updateVec, Scalar& cFLFactor)
+int ChTransport<Grid,Scalar,VC, Problem>::update(const Scalar t, Scalar& dt, RepresentationType& updateVec, Scalar& cFLFac = 1)
 {
     const GV& gridView = this->grid_.levelView(this->level());
 
@@ -1064,7 +1064,7 @@ int ChTransport<Grid,Scalar,VC, Problem>::update(const Scalar t, Scalar& dt, Rep
     }
     updateVec /= dt;
 
-    dt/=cFLFactor;
+    dt/=cFLFac;
 
     return 0;
 
