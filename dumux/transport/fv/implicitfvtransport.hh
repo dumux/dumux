@@ -621,7 +621,6 @@ void ImplicitFVTransport<Grid, Scalar, VC, Problem>:: update()
         uOldTimeStep = u;
         NewtonMethodMatrix<Grid, ThisType> newtonMethod(this->grid_, *this);
         newtonMethod.execute();
-	this->transProblem.variables.saturation = u;
 
         return;
     }
