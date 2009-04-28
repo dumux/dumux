@@ -172,7 +172,7 @@ int ImplicitFVTransport<Grid, Scalar, VC, Problem>::update(const Scalar t, Scala
 
 	dt = dt_;
 
-	return 1;
+	return 0;
 }
 
 template<class Grid, class Scalar, class VC, class Problem>
