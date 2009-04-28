@@ -21,8 +21,9 @@ int main(int argc, char** argv)
         // time loop parameters
         const double tStart = 0;
         const double tEnd = 2.5e9;
-        const double cFLFactor = 1.0;
-        double maxDT = 1e100;
+        double dt = 2.5e9;
+	double firstDt = dt;
+	double maxDt = dt;
         int modulo = 1;
 
         // create a grid object
@@ -55,7 +56,8 @@ int main(int argc, char** argv)
 
         Transport transport(grid, problem);
 
-        Dune::TimeLoop<GridType, Transport > timeloop(tStart, tEnd, "timeloop", modulo, cFLFactor, maxDT, maxDT);
+	Dune::RungeKuttaStep<GridType, Transport> timeStep(1);
+        Dune::TimeLoop<GridType, Transport > timeloop(tStart, tEnd, dt, "chtransport", modulo, maxDt, firstDt, timeStep);
 
         timeloop.execute(transport);
 
