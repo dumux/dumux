@@ -149,11 +149,11 @@ public:
      * \brief Sets the temperature term of the flux vector to the
      *        heat flux due to advection of the fluids.
      */
-    void computeAdvectiveFlux(SolutionVector &flux,
+    void computeFluxdvectiveFlux(SolutionVector &flux,
                               const FluxData &fluxData) const
     {
         // advective mass flux
-        ParentType::computeAdvectiveFlux(flux, fluxData);
+        ParentType::computeFluxdvectiveFlux(flux, fluxData);
 
         // advective heat flux in all phases
         const Scalar alpha = TwoPNITraits::upwindAlpha;
