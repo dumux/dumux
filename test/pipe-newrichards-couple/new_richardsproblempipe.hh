@@ -294,7 +294,7 @@ public:
         pipeDiameter_ = 0.01; // in [m]
 
         // fluid exchange parameter
-        alphaExchange_ = 5.0e-10 * 1.0e-2;
+            alphaExchange_ = 5.0e-10 * 1.0e-0;
 
         pipeFlow_ = NULL;
 
@@ -531,20 +531,28 @@ public:
                        int                         scvIdx,
                        int                         boundaryFaceIdx) const
     {
-        values = Dune::BoundaryConditions::neumann;
-        switch (isIt->boundaryId()) {
-            /*                case 1:
-                              case 2:
-                              case 3:
-                              case 4:
-                              values = Dune::BoundaryConditions::neumann;
-                              break;
-            */
-        case 5:
-        case 6:
-            values = Dune::BoundaryConditions::dirichlet;
-            break;
-        }
+//            values = Dune::BoundaryConditions::neumann;
+//            switch (isIt->boundaryId()) {
+///*                case 1:
+//                  case 2:
+//                  case 3:
+//                  case 4:
+//                  values = Dune::BoundaryConditions::neumann;
+//                  break;
+//*/
+//            case 5:
+//            case 6:
+//                values = Dune::BoundaryConditions::dirichlet;
+//                break;
+//            }
+        	double eps = 1.0e-3;
+            const GlobalPosition &globalPos
+                = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
+
+            if (globalPos[2] < eps || globalPos[2] > 1.2 - eps)
+                values = BoundaryConditions::neumann;
+            else
+                values = BoundaryConditions::dirichlet;
     }
 
     /////////////////////////////
@@ -557,13 +565,25 @@ public:
                    int                         scvIdx,
                    int                         boundaryFaceIdx) const
     {
-        values[pWIdx] = -5.0e+2;;
+//            values[pWIdx] = -5.0e+2;;
+//
+//            switch (isIt->boundaryId()) {
+//            case 5:
+//                values[pWIdx] = -5.0e+2;;
+//                break;
+//            }
+        	double eps = 1.0e-3;
+            const GlobalPosition &globalPos
+                = element.geometry().corner(scvIdx);
+            values[pWIdx] = -1000.0;
 
-        switch (isIt->boundaryId()) {
-        case 5:
-            values[pWIdx] = -5.0e+2;;
-            break;
-        }
+            //Scalar lambda = (globalPos[1])/height_;
+//            if (globalPos[0] < eps) {
+//                values[pWIdx] = -5.0e+2;
+//            }
+//            else if (globalPos[0] > 1.2 -eps) {
+//            	values[pWIdx] = -5.0e+2;
+//            }
     }
 
     /////////////////////////////
@@ -576,19 +596,23 @@ public:
                  int                         scvIdx,
                  int                         boundaryFaceIdx) const
     {
-        values = 0;
-        switch (isIt->boundaryId()) {
-        case 1:
-        case 2:
-        case 3:
-        case 4:
-            values[pWIdx] = 0;
-            break;
-            /*                case 5:
-                              values[pWIdx] = -1.0;
-                              break;
-            */
-        }
+//            values = 0;
+//            switch (isIt->boundaryId()) {
+//            case 1:
+//            case 2:
+//            case 3:
+//            case 4:
+//                values[pWIdx] = 0;
+//                break;
+///*                case 5:
+//                  values[pWIdx] = -1.0;
+//                  break;
+//*/
+//        	  }
+        const GlobalPosition &globalPos
+            = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
+
+             values = 0;
     }
 
     /////////////////////////////
@@ -642,7 +666,7 @@ public:
                  const FVElementGeometry &fvElemGeom,
                  int                      scvIdx) const
     {
-        values[pWIdx] = -5e+2;
+            values[pWIdx] = -1000;
     }
 
 

@@ -1,5 +1,5 @@
 # tests where program to build and program to run are equal
-NORMALTESTS = pipe-newrichards-couple
+NORMALTESTS = pipe_newrichards_couple
 
 # list of tests to run
 #TESTS = $(NORMALTESTS)
