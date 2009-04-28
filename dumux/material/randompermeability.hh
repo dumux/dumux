@@ -41,7 +41,7 @@ class RandomPermeability
     typedef typename Grid::LeafGridView GridView;
     typedef P0Function<GridView,Scalar,1> PermType;
     typedef BlockVector<FieldVector<Scalar,1> > RepresentationType;
-    typedef typename Grid::Traits::template Codim<0>::Entity Element;
+    typedef typename Grid::Traits::template Codim<0>::Element Element;
     typedef typename GridView::IndexSet IndexSet;
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView,ElementLayout> ElementMapper;
 
@@ -224,7 +224,7 @@ class LevelRandomPermeability
     typedef typename Grid::ctype Scalar;
     typedef LevelP0Function<Grid,Scalar,1> PermType;
     typedef BlockVector<FieldVector<Scalar,1> > RepresentationType;
-    typedef typename Grid::Traits::template Codim<0>::Entity Element;
+    typedef typename Grid::Traits::template Codim<0>::Element Element;
     typedef typename Grid::Traits::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::IndexSet IndexSet;
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView,ElementLayout> ElementMapper;
@@ -414,7 +414,7 @@ private:
 // **********************************************************************
 // new class for Monte Carlo approach
 
-template<class G>
+template<class Grid>
     class MonCarRandomPermeability {
         template<int dim>
         struct ElementLayout
@@ -425,14 +425,14 @@ template<class G>
           }
         };
 
-        enum{n = G::dimension};
-        typedef typename G::ctype DT;
-        typedef LeafP0Function<G,DT,1> PermType;
-        typedef BlockVector<FieldVector<DT,1> > RepresentationType;
-        typedef typename G::Traits::template Codim<0>::Entity Entity;
-        typedef typename G::LeafGridView GV;
-        typedef typename GV::IndexSet IS;
-        typedef Dune::MultipleCodimMultipleGeomTypeMapper<G,IS,ElementLayout> EM;
+        enum{n = Grid::dimension};
+        typedef typename Grid::LevelGridView GridView;
+        typedef typename Grid::ctype Scalar;
+        typedef LevelP0Function<Grid,Scalar,1> PermType;
+        typedef BlockVector<FieldVector<Scalar,1> > RepresentationType;
+        typedef typename Grid::Traits::template Codim<0>::Element Element;
+        typedef typename GridView::IndexSet IndexSet;
+        typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView,ElementLayout> ElementMapper;
 
 	public:
 	/*! \brief Constructor.
@@ -460,13 +460,13 @@ template<class G>
         //       tells which random seed should be picked from file or by c++ random generator (zzType)
         //       ID-Range:  1 <= seedId <= 1000 
 
-	MonCarRandomPermeability(const G& g, int runId, const char* name = "permeab.dat", 
+	MonCarRandomPermeability(const Grid& g, int runId, const char* name = "permeab.dat", 
                                   const bool create = true, const bool zzAuto = true) 
 	: grid(g), perm(g), permloc(0), createNew(create),
 	  fileName(name), elementmapper(g, g.leafIndexSet()), xFlag(zzAuto), seedId(runId)
 	{
-             typedef typename GV::template Codim<0>::Iterator Iterator;
-             const GV& gridview(grid.leafView());
+             typedef typename GridView::template Codim<0>::Iterator Iterator;
+             const GridView& gridview(grid.leafView());
              Iterator eendit = gridview.template end<0>();
 
       // *** INPUT - Set the FLAGS
@@ -534,10 +534,10 @@ template<class G>
 		 for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
 		 { //*** writes the coordinates to SIMKOR-File 
                      Dune::GeometryType gt = it->geometry().type();
-		     const Dune::FieldVector<DT,n>&
-		     local = Dune::ReferenceElements<DT,n>::general(gt).position(0,0);
+		     const Dune::FieldVector<Scalar,n>&
+		     local = Dune::ReferenceElements<Scalar,n>::general(gt).position(0,0);
 		     // get global coordinate of cell center
-		     Dune::FieldVector<DT,n> global = it->geometry().global(local);
+		     Dune::FieldVector<Scalar,n> global = it->geometry().global(local);
                   // outfile = SIMKOR, the coordinates are getting written in the file 
                   // from the Dune code
 		     outfile << global[0] << "\t" << global[1] << std::endl;
@@ -758,10 +758,10 @@ template<class G>
           return (*perm);
         }
 
-        Dune::FieldMatrix<DT,n,n>& K (const Entity& e)
+        Dune::FieldMatrix<Scalar,n,n>& K (const Element& e)
         {
             int elemId = elementmapper.map(e);
-            DT permE = (*perm)[elemId];
+            Scalar permE = (*perm)[elemId];
 
             for (int i = 0; i < n; i++)
                 permloc[i][i] = permE;
@@ -770,9 +770,9 @@ template<class G>
         }
 
        // name = permeab.dat --> uses the permeability file
-        void vtkout (const char* name, const G& grid) const
+        void vtkout (const char* name, const Grid& grid) const
         {
-	    Dune::VTKWriter<typename G::LeafGridView>
+	    Dune::VTKWriter<typename Grid::LeafGridView>
 	    vtkwriter(grid.leafView());
 	    vtkwriter.addCellData(*perm, "absolute permeability");
 	    int size = (*perm).size();
@@ -787,12 +787,12 @@ template<class G>
                int seedId;
 
 	private:
-		const G& grid;
+		const Grid& grid;
 		PermType perm;
-		Dune::FieldMatrix<DT,n,n> permloc;
+		Dune::FieldMatrix<Scalar,n,n> permloc;
 		const bool createNew;
 		const char* fileName;
-		EM elementmapper;
+		ElementMapper elementmapper;
                 const bool xFlag;
                 char kfDirectory[221];
 
@@ -828,7 +828,7 @@ class GstatRandomPermeability
     typedef typename Grid::LeafGridView GridView;
     typedef P0Function<GridView,Scalar,1> PermType;
     typedef BlockVector<FieldVector<Scalar,1> > RepresentationType;
-    typedef typename Grid::Traits::template Codim<0>::Entity Element;
+    typedef typename Grid::Traits::template Codim<0>::Element Element;
     typedef typename Grid::Traits::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::IndexSet IndexSet;
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, ElementLayout> ElementMapper;
