@@ -23,27 +23,15 @@
 #include <dumux/new_models/boxscheme/boxscheme.hh>
 #include <dumux/new_models/boxscheme/p1boxtraits.hh>
 
+#include <dumux/auxiliary/math.hh>
+
+#include "richardstraits.hh"
+#include "richardsvertexdata.hh"
+
 #include <dumux/auxiliary/apis.hh>
 
 namespace Dune
 {
-///////////////////////////////////////////////////////////////////////////
-// traits for the single phase isothermal model
-///////////////////////////////////////////////////////////////////////////
-/*!
- * \brief The pw-Sn specific traits.
- */
-class RichardsTraits
-{
-public:
-    enum {
-        numEq = 1,        //!< Number of primary variables
-        numPhases = 1,    //!< Number of fluid phases
-    };
-    enum {
-        pWIdx = 0  //!< Index for the fluid pressure in a field vector
-    };
-};
 
 ///////////////////////////////////////////////////////////////////////////
 // RichardsBoxJacobian (evaluate the local jacobian for the newton method.)
@@ -54,13 +42,13 @@ public:
 template<class ProblemT, class BoxTraitsT, class RichardsTraitsT>
 class RichardsBoxJacobian : public BoxJacobian<ProblemT,
                                                BoxTraitsT,
-                                               RichardsBoxJacobian<ProblemT,
-                                                                   BoxTraitsT,
-                                                                   RichardsTraitsT> >
+                                               RichardsBoxJacobian<ProblemT, BoxTraitsT, RichardsTraitsT>,
+                                               RichardsVertexData<RichardsTraitsT, ProblemT> >
 {
 private:
     typedef RichardsBoxJacobian<ProblemT, BoxTraitsT, RichardsTraitsT>  ThisType;
-    typedef BoxJacobian<ProblemT, BoxTraitsT, ThisType >                ParentType;
+    typedef RichardsVertexData<RichardsTraitsT, ProblemT>  VertexData;
+    typedef BoxJacobian<ProblemT, BoxTraitsT, ThisType, VertexData >  ParentType;
 
     typedef ProblemT                                Problem;
     typedef typename Problem::DomainTraits          DomTraits;
@@ -91,93 +79,13 @@ private:
     typedef typename BoxTraits::LocalFunction       LocalFunction;
     typedef typename BoxTraits::SolutionVector      SolutionVector;
 
+    typedef std::vector<VertexData>        VertexDataArray;
     typedef FieldMatrix<Scalar, dim, dim>  Tensor;
-
-    /*!
-     * \brief Data which is attached to each vert of the and can
-     *        be shared between multiple calculations and should
-     *        thus be cached in order to increase efficency.
-     */
-    struct VariableVertexData
-    {
-        Scalar Sw;
-        Scalar pC;
-        Scalar dSwdpC;
-
-        Scalar densityW;
-        Scalar mobilityW;  //FieldVector with the number of phases
-    };
-
-    /*!
-     * \brief Cached data for the each vert of the element.
-     */
-    struct ElementData
-    {
-        VariableVertexData  vertex[BoxTraits::ShapeFunctionSetContainer::maxsize];
-    };
 
 public:
     RichardsBoxJacobian(ProblemT &problem)
         : ParentType(problem)
     {};
-
-    /*!
-     * \brief Set the parameters for the calls to the remaining
-     *        members.
-     */
-    void setParams(const Element &element, LocalFunction &curSol, LocalFunction &prevSol)
-    {
-        setCurrentElement(element);
-
-        curSol_ = &curSol;
-        updateElementData_(curElemDat_, *curSol_);
-        curSolDeflected_ = false;
-
-        prevSol_ = &prevSol;
-        updateElementData_(prevElemDat_, *prevSol_);
-    };
-
-    /*!
-     * \brief Vary a single component of a single vert of the
-     *        local solution for the current element.
-     *
-     * This method is a optimization, since if varying a single
-     * component at a degree of freedom not the whole element cache
-     * needs to be recalculated. (Updating the element cache is very
-     * expensive since material laws need to be evaluated.)
-     */
-    void deflectCurSolution(int vert, int component, Scalar value)
-    {
-        // make sure that the orignal state can be restored
-        if (!curSolDeflected_) {
-            curSolDeflected_ = true;
-
-            curSolOrigValue_ = (*curSol_)[vert][component];
-            curSolOrigVarData_ = curElemDat_.vertex[vert];
-        }
-
-        (*curSol_)[vert][component] = value;
-        updateVarVertexData_(curElemDat_.vertex[vert],
-                             (*curSol_)[vert],
-                             vert,
-                             ParentType::problem_.vertexIdx(ParentType::curElement_(),
-                                                            vert));
-
-    }
-
-    /*!
-     * \brief Restore the local jacobian to the state before
-     *        deflectCurSolution() was called.
-     *
-     * This only works if deflectSolution was only called with
-     * (vert, component) as arguments.
-     */
-    void restoreCurSolution(int vert, int component)
-    {
-        curSolDeflected_ = false;
-        (*curSol_)[vert][component] = curSolOrigValue_;
-        curElemDat_.vertex[vert] = curSolOrigVarData_;
-    };
 
     /*!
      * \brief Evaluate the rate of change of all conservation
@@ -187,16 +95,21 @@ public:
      *
      * This function should not include the source and sink terms.
      */
-    void computeStorage(SolutionVector &result, int scvId, bool usePrevSol) const
+    void computeStorage(SolutionVector &result, int scvIdx, bool usePrevSol) const
     {
-        LocalFunction *sol = usePrevSol?prevSol_:curSol_;
-        const VariableVertexData &vertDat = usePrevSol?prevElemDat_.vertex[scvId]:curElemDat_.vertex[scvId];
+        // if flag usePrevSol is set, the solution from the previous
+        // time step is used, otherwise the current solution is
+        // used. The secondary variables are used accordingly.  This
+        // is required to compute the derivative of the storage term
+        // using the implicit euler method.
+        const VertexDataArray &elemDat = usePrevSol ? this->prevElemDat_  : this->curElemDat_;
+        const VertexData  &vertDat = elemDat[scvIdx];
 
         // partial time derivative of the wetting phase mass
         result[pWIdx] = -vertDat.densityW
-            * ParentType::problem_.porosity(*this->curElementPtr_, scvId)
-            * prevElemDat_.vertex[scvId].dSwdpC // TODO: use derivative for the current solution
-            * (*sol)[scvId][pWIdx];
+            * vertDat.porosity
+            * this->prevElemDat_[scvIdx].dSwdpC // TODO: use derivative for the current solution
+            * vertDat.pW;
     }
 
 
@@ -226,12 +139,12 @@ public:
         // calculate FE gradient
         Scalar densityIJ = 0;
         LocalPosition pGrad(0);
-        for (int k = 0; k < ParentType::curElementGeom_.numVertices; k++) {
+        for (int k = 0; k < this->curElementGeom_.numVertices; k++) {
             LocalPosition grad(face.grad[k]);
-            grad *= (*curSol_)[k][pWIdx];
+            grad *= this->curElemDat_[k].pW;
             pGrad += grad;
 
-            densityIJ += curElemDat_.vertex[k].densityW*face.shapeValue[k];
+            densityIJ += this->curElemDat_[k].densityW*face.shapeValue[k];
         }
 
         // adjust pressure gradient by gravity force
@@ -256,13 +169,13 @@ public:
         // calculate the flux using upwind
         if (vDarcyOut < 0)
             flux[pWIdx] =
-                curElemDat_.vertex[i].densityW
-                * curElemDat_.vertex[i].mobilityW
+            	this->curElemDat_[i].densityW
+                * this->curElemDat_[i].mobilityW
                 * vDarcyOut;
         else
             flux[pWIdx] =
-                curElemDat_.vertex[j].densityW
-                * curElemDat_.vertex[j].mobilityW
+            	this->curElemDat_[j].densityW
+                * this->curElemDat_[j].mobilityW
                 * vDarcyOut;
     }
 
@@ -282,7 +195,7 @@ public:
      *        solution to an ouput writer.
      */
     template <class MultiWriter>
-    void addVtkFields(MultiWriter &writer, const SpatialFunction &globalSol) const
+    void addVtkFields(MultiWriter &writer, const SpatialFunction &globalSol)
     {
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
 
@@ -296,25 +209,29 @@ public:
         ScalarField *rhoW =         writer.template createField<Scalar, 1>(numVertices);
         ScalarField *mobW =         writer.template createField<Scalar, 1>(numVertices);
 
-        VariableVertexData tmp;
-        ElementIterator it = this->problem_.elementBegin();
+        LocalFunction tmpSol;
+        ElementIterator elementIt = this->problem_.elementBegin();
         ElementIterator endit = this->problem_.elementEnd();
-        for (; it != endit; ++it) {
-            for (int i = 0; i < it->template count<dim>(); ++i) {
-                int globalI = this->problem_.vertexIdx(*it, i);
+        for (; elementIt != endit; ++elementIt)
+        {
+            int numLocalVerts = elementIt->template count<dim>();
+            tmpSol.resize(numLocalVerts);
 
-                asImp_().updateVarVertexData_(tmp,
-                                              (*globalSol)[globalI],
-                                              i,
-                                              globalI);
+            setCurrentElement(*elementIt);
+            this->restrictToElement(tmpSol, globalSol);
+            this->setCurrentSolution(tmpSol);
 
-                (*Sw)[globalI] = tmp.Sw;
-                (*Sn)[globalI] = 1.0 - tmp.Sw;
-                (*pC)[globalI] = tmp.pC;
-                (*pW)[globalI] = asImp_().pNreference_() + (*globalSol)[globalI][pWIdx];
-                (*dSwdpC)[globalI] = tmp.dSwdpC;
-                (*rhoW)[globalI] = tmp.densityW;
-                (*mobW)[globalI] = tmp.mobilityW;
+            for (int i = 0; i < numLocalVerts; ++i)
+            {
+                int globalIdx = this->problem_.vertexIdx(*elementIt, i);
+
+                (*Sw)[globalIdx] = this->curElemDat_[i].Sw;
+                (*Sn)[globalIdx] = 1.0 - this->curElemDat_[i].Sw;
+                (*pC)[globalIdx] = this->curElemDat_[i].pC;
+                (*pW)[globalIdx] = this->problem_.pNreference() + this->curElemDat_[i].pW;
+                (*dSwdpC)[globalIdx] = this->curElemDat_[i].dSwdpC;
+                (*rhoW)[globalIdx] = this->curElemDat_[i].densityW;
+                (*mobW)[globalIdx] = this->curElemDat_[i].mobilityW;
             };
         }
 
@@ -350,78 +267,13 @@ private:
         return (2*x*y)/(x + y);
     };
 
-    /*!
-     * \brief Pre-compute the element cache data.
-     *
-     * This method is called by BoxJacobian (which in turn is
-     * called by the operator assembler) every time the current
-     * element changes.
-     */
-    void updateElementData_(ElementData &dest, const LocalFunction &sol)
-    {
-        for (int i = 0; i < ParentType::curElementGeom_.numVertices; i++) {
-            int iGlobal = ParentType::problem_.vertexIdx(ParentType::curElement_(), i);
-            updateVarVertexData_(dest.vertex[i],
-                                 sol[i],
-                                 i,        // index of sub volume to update,
-                                 iGlobal); // global vert index of the sub volume's grid vert
-        }
-    }
-
-
-    void updateVarVertexData_(VariableVertexData   &vertexData,
-                              const SolutionVector &sol,
-                              int                  i, // local index of the subvolume/grid vertex
-                              int                  iGlobal) const // global index of the sub-volume's vertex
-    {
-        /* pc = -pw || pc = 0 for computing Sw */
-        if (sol[pWIdx] >= 0)
-            vertexData.pC = 0.0;
-        else
-            vertexData.pC = -sol[pWIdx];
-
-        const GlobalPosition &global = this->curElementGeom_.subContVol[i].global;
-        const LocalPosition &local = this->curElementGeom_.subContVol[i].local;
-        vertexData.dSwdpC = this->problem_.materialLaw().dSdP(vertexData.pC,
-                                                              global,
-                                                              *(this->curElementPtr_),
-                                                              local);
-        vertexData.Sw = this->problem_.materialLaw().saturationW(vertexData.pC,
-                                                                 global,
-                                                                 *(this->curElementPtr_),
-                                                                 local);
-        vertexData.mobilityW = this->problem_.materialLaw().mobW(vertexData.Sw,
-                                                                 global,
-                                                                 *(this->curElementPtr_),
-                                                                 local,
-                                                                 asImp_().temperature_(),
-                                                                 sol[pWIdx] + asImp_().pNreference_());
-        vertexData.densityW = this->problem_.wettingPhase().density(asImp_().temperature_(),
-                                                                    sol[pWIdx] + asImp_().pNreference_());
-    }
-
-    Scalar temperature_() const
-    { return this->problem_.temperature(); }
-
-    Scalar pNreference_() const
-    { return this->problem_.pNreference(); }
-
     ThisType &asImp_()
     { return *static_cast<ThisType *>(this); }
 
     const ThisType &asImp_() const
     { return *static_cast<const ThisType *>(this); }
 
-    LocalFunction   *curSol_;
-    ElementData      curElemDat_;
-
-    bool               curSolDeflected_;
-    Scalar             curSolOrigValue_;
-    VariableVertexData curSolOrigVarData_;
-
-    LocalFunction    *prevSol_;
-    ElementData       prevElemDat_;
-};
+ };
 
 
 ///////////////////////////////////////////////////////////////////////////
@@ -479,7 +331,7 @@ public:
      *        solution to an ouput writer.
      */
     template <class MultiWriter>
-    void addVtkFields(MultiWriter &writer) const
+    void addVtkFields(MultiWriter &writer)
     {
         richardsLocalJacobian_.addVtkFields(writer, this->currentSolution());
     }
