@@ -501,7 +501,7 @@ private:
       int inIdx = elementIdx(*interisIt.inside());
       int outIdx = elementIdx(*interisIt.outside());
 
-      int faceIdx = interisIt.indexInInside();
+      int faceIdx = interisIt->indexInInside();
       int numVerticesOfFace = refElem.size(faceIdx, 1, dim);
       for (int vertInFace = 0;
       vertInFace < numVerticesOfFace;

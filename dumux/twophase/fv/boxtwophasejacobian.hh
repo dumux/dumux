@@ -311,12 +311,12 @@ private:
             // handle face on exterior boundary, this assumes there are no interior boundaries
             if (it.boundary())
             {
-                Dune::GeometryType gtface = it.geometryInInside().type();
+                Dune::GeometryType gtface = it->geometryInInside().type();
                 for (size_t g=0; g<Dune::QuadratureRules<Scalar,dim-1>::rule(gtface,p).size(); ++g)
                 {
                     const Dune::FieldVector<Scalar,dim-1>& facelocal = Dune::QuadratureRules<Scalar,dim-1>::rule(gtface,p)[g].position();
-                    FieldVector<Scalar,dim> local = it.geometryInInside().global(facelocal);
-                    FieldVector<Scalar,dim> global = it.geometry().global(facelocal);
+                    FieldVector<Scalar,dim> local = it->geometryInInside().global(facelocal);
+                    FieldVector<Scalar,dim> global = it->geometry().global(facelocal);
                     bctypeface = problem.bctype(global,element,it,local); // eval bctype
 
 
@@ -326,7 +326,7 @@ private:
                     if (J.two_norm() < 1e-10)
                         continue;
                     double weightface = Dune::QuadratureRules<Scalar,dim-1>::rule(gtface,p)[g].weight();
-                    Scalar detjacface = it.geometry().integrationElement(facelocal);
+                    Scalar detjacface = it->geometry().integrationElement(facelocal);
                     for (int i=0; i<sfs.size(); i++) // loop over test function number
                         if (this->bctype[i][0]==BoundaryConditions::neumann)
                         {
@@ -359,7 +359,7 @@ private:
                 if (sfs[i].codim()==0) continue; // skip interior dof
                 if (sfs[i].codim()==1) // handle face dofs
                 {
-                    if (sfs[i].entity()==it.indexInInside())
+                    if (sfs[i].entity()==it->indexInInside())
                     {
                         if (this->bctype[i][0]<bctypeface[0])
                         {
@@ -375,8 +375,8 @@ private:
                     continue;
                 }
                 // handle subentities of this face
-                for (int j=0; j<ReferenceElements<Scalar,dim>::general(gt).size(it.indexInInside(),1,sfs[i].codim()); j++)
-                    if (sfs[i].entity()==ReferenceElements<Scalar,dim>::general(gt).subEntity(it.indexInInside(),1,j,sfs[i].codim()))
+                for (int j=0; j<ReferenceElements<Scalar,dim>::general(gt).size(it->indexInInside(),1,sfs[i].codim()); j++)
+                    if (sfs[i].entity()==ReferenceElements<Scalar,dim>::general(gt).subEntity(it->indexInInside(),1,j,sfs[i].codim()))
                     {
                         if (this->bctype[i][0]<bctypeface[0])
                         {
