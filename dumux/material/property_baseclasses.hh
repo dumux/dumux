@@ -47,6 +47,7 @@ public:
     virtual const FieldMatrix<Scalar,dim,dim> &K (const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos) const
     {    DUNE_THROW(NotImplemented, "Permeability not implemented!"); }
 
+
     /** @brief interface - Permeability tensor
      * @param globalPos position in global coordinates
      * @param element codim 0 entity for which the value is sought
@@ -114,6 +115,17 @@ public:
     {
         DUNE_THROW(NotImplemented, "tortuosity function not implemented!");
     }
+
+
+	/**@brief Dispersivity of matrix
+	 * @param globalPos position in global coordinates
+	 * @param element codim 0 entity for which the value is sought
+	 * @param localPos position in local coordinates in element
+	 */
+	virtual FieldVector<Scalar,dim> dispersivity(const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos) const
+	{
+		DUNE_THROW(NotImplemented, "dispersivity function not implemented!");
+	}
 
     /**@brief parameters for relative permeabilty models
      * @param globalPos position in global coordinates
@@ -220,6 +232,17 @@ public:
      */
     virtual double density (double T = 283.15, double p = 1e5, double X = 0.) const = 0;
 
+
+	//! Diffusion coefficient for component a [m^2 / s]
+	/** @param p pressure [Pa]
+	 *  @param T temperature [K]
+	 */
+	virtual double diffCoeff(double T=283.15, double p=1e5) const  // [m^2 / s]
+	{
+		return 0;
+	}
+
+
     /** @brief enthalpy
      * @param T Temperature \f$ \left[ K \right] \f$
      * @param p Pressure \f$ \left[ Pa \right] \f$
@@ -229,6 +252,7 @@ public:
     {
         DUNE_THROW(NotImplemented, "enthalpy function not implemented!");
     }
+
 
     /** @brief enthalpy
      * @param T Temperature \f$ \left[ K \right] \f$
