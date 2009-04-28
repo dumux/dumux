@@ -9,8 +9,6 @@
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/bvector.hh>
 #include "dumux/transport/transport.hh"
-#include "dumux/transport/fv/numericalflux.hh"
-#include "dumux/transport/fv/diffusivepart.hh"
 #include "dumux/transport/transportproblem.hh"
 
 /**
@@ -118,11 +116,9 @@ public:
      * @param diffPart an object of class DiffusivePart or derived. This determines the diffusive flux incorporated in the transport.
      * @param numFl an object of class Numerical Flux or derived
      */
-    ChTransport(Grid& g, Problem& prob,
-            DiffusivePart<Grid,Scalar>& diffPart = *(new DiffusivePart<Grid, Scalar>),
-            const NumericalFlux<Scalar>& numFl = *(new Upwind<Scalar>), int K=1000) :
+    ChTransport(Grid& g, Problem& prob, int K=1000) :
     Transport<Grid, Scalar, VC, Problem>(g, prob),
-    elementmapper(g.levelView(this->level())), numFlux(numFl), diffusivePart(diffPart),K(K)
+    elementmapper(g.levelView(this->level())), K(K)
     {}
 
 private:
@@ -136,10 +132,6 @@ private:
     int approxSol(RepresentationType& updateVec,RepresentationType& dxtt);
 private:
     EM elementmapper;
-    const NumericalFlux<Scalar>& numFlux;
-    const DiffusivePart<Grid, Scalar>& diffusivePart;
-
-
     int K;
     std::list<ChNode> ch;
     std::list<slNode> sl;
@@ -971,11 +963,12 @@ int ChTransport<Grid,Scalar,VC, Problem>::update(const Scalar t, Scalar& dt, Rep
 {
     const GV& gridView = this->grid_.levelView(this->level());
 
+    //comment out the timestep setting and now the timestep is given by parameter 'dt'---Yufei
     //setting of the timestep 
     //if the problem allow it, use only one timestep!!!
-    if(t==0)
+    //if(t==0)
       // dt = 4.32e7;
-      dt = 0.2;
+      // dt = 0.2;
 
     // set update vector to zero
     updateVec = 0;
