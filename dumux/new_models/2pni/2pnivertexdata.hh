@@ -23,8 +23,8 @@
  *        finite volume in the non-isothermal two-phase, two-component
  *        model.
  */
-#ifndef DUMUX_2P2CNI_VERTEX_DATA_HH
-#define DUMUX_2P2CNI_VERTEX_DATA_HH
+#ifndef DUMUX_2PNI_VERTEX_DATA_HH
+#define DUMUX_2PNI_VERTEX_DATA_HH
 
 #include <dumux/new_models/2p2c/2p2cvertexdata.hh>
 
