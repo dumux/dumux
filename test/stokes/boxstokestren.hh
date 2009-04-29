@@ -2,7 +2,6 @@
 #define DUNE_BOXSTOKESTREN_HH
 
 #include <dune/disc/shapefunctions/lagrangeshapefunctions.hh>
-#include <dune/disc/operators/p1operator.hh>
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
 #include <dune/istl/bvector.hh>
@@ -22,7 +21,7 @@
 #include "boxstokesjacobian.hh"
 #include "dumux/stokes/stokesproblem.hh"
 #include "dumux/pardiso/pardiso.hh"
-
+#include <dune/grid/common/mcmgmapper.hh>
 #include "boxstokestrenjacobian.hh"
 #include "dumux/stokes/stokestrenproblem.hh"
 
@@ -93,10 +92,10 @@ public:
         }
     };
 
-    typedef typename Grid::LeafGridView GV;
-    typedef typename GV::IndexSet IS;
-    typedef MultipleCodimMultipleGeomTypeMapper<GV,P1Layout> VertexMapper;
-    typedef typename Grid::LeafGridView::IntersectionIterator IntersectionIterator;
+    typedef typename Grid::LeafGridView GridView;
+    typedef typename GridView::IndexSet IS;
+    typedef typename GridView::IntersectionIterator IntersectionIterator;
+    typedef MultipleCodimMultipleGeomTypeMapper<GridView,P1Layout> VertexMapper;
     typedef typename ThisType::FunctionType::RepresentationType VectorType;
     typedef typename ThisType::OperatorAssembler::RepresentationType MatrixType;
     typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator;
@@ -118,10 +117,10 @@ public:
     virtual void initial()
     {
         typedef typename Grid::Traits::template Codim<0>::Entity Element;
-        typedef typename GV::template Codim<0>::Iterator Iterator;
+        typedef typename GridView::template Codim<0>::Iterator Iterator;
         enum{dimworld = Grid::dimensionworld};
 
-        const GV& gridview(this->grid_.leafView());
+        const GridView& gridview(this->grid_.leafView());
         std::cout << "initializing solution." << std::endl;
         // iterate through leaf grid an evaluate c0 at cell center
         Iterator eendit = gridview.template end<0>();
@@ -130,14 +129,12 @@ public:
             // get geometry type
             Dune::GeometryType gt = it->geometry().type();
 
-            // get entity
-            const Element& entity = *it;
+            // get element
+            const Element& element = *it;
 
             const typename Dune::LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::value_type&
                 sfs=Dune::LagrangeShapeFunctions<Scalar,Scalar,dim>::general(gt, 1);
             int size = sfs.size();
-
-            IntersectionIterator is = entity.ileafend();
 
             for (int i = 0; i < size; i++)
             {
@@ -147,10 +144,10 @@ public:
                 // get global coordinate of cell center
                 Dune::FieldVector<Scalar,dimworld> global = it->geometry().global(local);
 
-                int globalId = vertexmapper.template map<dim>(entity, sfs[i].entity());
+                int globalId = vertexmapper.template map<dim>(element, sfs[i].entity());
 
                 // initialize cell concentration
-                (*(this->u))[globalId] = this->problem.initial(global, entity, local); //0;
+                (*(this->u))[globalId] = this->problem.initial(global, element, local); //0;
             }
         }
 
@@ -160,20 +157,19 @@ public:
             // get geometry type
             Dune::GeometryType gt = it->geometry().type();
 
-            // get entity
-            const Element& entity = *it;
+            // get element
+            const Element& element = *it;
 
             const typename Dune::LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::value_type&
                 sfs=Dune::LagrangeShapeFunctions<Scalar,Scalar,dim>::general(gt, 1);
             int size = sfs.size();
 
             // set type of boundary conditions
-            this->localJacobian().fvGeom.update(entity);
-            this->localJacobian().assembleBoundaryCondition(entity);
+            this->localJacobian().fvGeom.update(element);
+            this->localJacobian().assembleBoundaryCondition(element);
 
-            IntersectionIterator endit = entity.ileafend();
-            for (IntersectionIterator is = entity.ileafbegin();
-                 is!=endit; ++is)
+            IntersectionIterator endit = element.ileafend();
+            for (IntersectionIterator is = element.ileafbegin(); is!=endit; ++is)
                 if (is->boundary())
                 {
                     for (int i = 0; i < size; i++)
@@ -189,12 +185,12 @@ public:
                                     // get global coordinate of cell center
                                     Dune::FieldVector<Scalar,dimworld> global = it->geometry().global(local);
 
-                                    int globalId = vertexmapper.template map<dim>(entity, sfs[i].entity());
+                                    int globalId = vertexmapper.template map<dim>(element, sfs[i].entity());
 
-                                    BoundaryConditions::Flags bctype = this->problem.bctype(global, entity, is, local);
+                                    BoundaryConditions::Flags bctype = this->problem.bctype(global, element, is, local);
                                     if (bctype == BoundaryConditions::dirichlet) {
-                                        FieldVector<Scalar,dim+3> dirichlet = this->problem.dirichlet(global, entity, is, local);
-                                        for (int eq = 0; eq < dim+2; eq++)
+                                        FieldVector<Scalar,numEq> dirichlet = this->problem.g(global, element, is, local);
+                                        for (int eq = 0; eq < numEq; eq++)
                                             (*(this->u))[globalId][eq] = dirichlet[eq];
                                     }
                                     else {
@@ -218,8 +214,8 @@ public:
         this->A.assemble(this->localJacobian(), this->u, this->f);
 
         //modify matrix for introducing pressure boundary condition
-        const GV& gridview(this->grid_.leafView());
-        typedef typename GV::template Codim<0>::Iterator Iterator;
+        const GridView& gridview(this->grid_.leafView());
+        typedef typename GridView::template Codim<0>::Iterator Iterator;
 
         Iterator it = gridview.template begin<0>();
         unsigned int globalId = vertexmapper.template map<dim>(*it, 3);
@@ -272,10 +268,10 @@ public:
 
     virtual void globalDefect(FunctionType& defectGlobal) {
         typedef typename Grid::Traits::template Codim<0>::Entity Element;
-        typedef typename GV::template Codim<0>::Iterator Iterator;
+        typedef typename GridView::template Codim<0>::Iterator Iterator;
         typedef typename BoundaryConditions::Flags BCBlockType;
 
-        const GV& gridview(this->grid_.leafView());
+        const GridView& gridview(this->grid_.leafView());
         (*defectGlobal)=0;
 
         // allocate flag vector to hold flags for essential boundary conditions
@@ -291,19 +287,19 @@ public:
             // get geometry type
             Dune::GeometryType gt = it->geometry().type();
 
-            // get entity
-            const Element& entity = *it;
-            this->localJacobian().fvGeom.update(entity);
+            // get element
+            const Element& element = *it;
+            this->localJacobian().fvGeom.update(element);
             int size = this->localJacobian().fvGeom.numVertices;
 
-            this->localJacobian().setLocalSolution(entity);
-            this->localJacobian().computeElementData(entity);
-            this->localJacobian().updateVariableData(entity, this->localJacobian().u);
-            this->localJacobian().localDefect(entity, this->localJacobian().u);
+            this->localJacobian().setLocalSolution(element);
+            this->localJacobian().computeElementData(element);
+            this->localJacobian().updateVariableData(element, this->localJacobian().u);
+            this->localJacobian().localDefect(element, this->localJacobian().u);
 
             // begin loop over vertices
             for (int i=0; i < size; i++) {
-                int globalId = this->vertexmapper.template map<dim>(entity,i);
+                int globalId = this->vertexmapper.template map<dim>(element,i);
                 for (int equationnumber = 0; equationnumber < numEq; equationnumber++) {
                     if (this->localJacobian().bc(i)[equationnumber] == BoundaryConditions::neumann)
                         (*defectGlobal)[globalId][equationnumber]

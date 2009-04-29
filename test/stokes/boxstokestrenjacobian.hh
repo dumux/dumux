@@ -14,7 +14,6 @@
 #include<dune/common/geometrytype.hh>
 #include<dune/grid/common/quadraturerules.hh>
 
-
 #include<dune/disc/shapefunctions/lagrangeshapefunctions.hh>
 #include<dune/disc/operators/boundaryconditions.hh>
 
@@ -32,6 +31,7 @@ class BoxStokesTrEnJacobian
     enum {SIZE=LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::maxsize};
 
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
+    typedef typename Grid::LeafGridView::IntersectionIterator IntersectionIterator;
     typedef typename Element::Geometry Geometry;
     typedef BoxStokesTrEnJacobian<Grid,Scalar,BoxFunction> ThisType;
     typedef typename LocalJacobian<ThisType,Grid,Scalar,numEq>::VBlockType SolutionVector;
@@ -62,10 +62,11 @@ public:
         return;
     }
 
-    void localDefect(const Element& element, const SolutionVector* sol, bool withBC = true) {
+    void localDefect(const Element& element, const SolutionVector* sol, bool withBC = true)
+    {
         BoxJacobianType::localDefect(element, sol, withBC);
 
-        assembleBoundaryCondition(element);
+        this->getImp().assembleBoundaryCondition(element);
 
         Dune::GeometryType gt = element.geometry().type();
         const typename ReferenceElementContainer<Scalar,dim>::value_type& referenceElement = ReferenceElements<Scalar, dim>::general(gt);
@@ -73,8 +74,6 @@ public:
         for (int vert=0; vert < this->fvGeom.numVertices; vert++) // begin loop over vertices / sub control volumes
             if (!this->fvGeom.subContVol[vert].inner)
             {
-                typedef typename Grid::LeafGridView::IntersectionIterator IntersectionIterator;
-
                 FieldVector<Scalar,dim> averagedNormal(0);
                 int faces = 0;
                 IntersectionIterator endit = element.ileafend();
@@ -159,7 +158,7 @@ public:
 
 
     // compute storage term
-    SolutionVector computeStorage (const Element& element, const SolutionVector* sol, int node, const std::vector<VariableNodeData>& varData)
+    SolutionVector computeM (const Element& element, const SolutionVector* sol, int node, const std::vector<VariableNodeData>& varData)
     {
         SolutionVector result(0);
 
@@ -179,15 +178,15 @@ public:
         return result;
     };
 
-    SolutionVector computeStorage (const Element& element, const SolutionVector* sol, int node, bool old = false)
+    SolutionVector computeM (const Element& element, const SolutionVector* sol, int node, bool old = false)
     {
         if (old)
-            return computeStorage(element, sol, node, oldVarNData);
+            return computeM(element, sol, node, oldVarNData);
         else
-            return computeStorage(element, sol, node, varNData);
+            return computeM(element, sol, node, varNData);
     }
 
-    SolutionVector computeSource (const Element& element, const SolutionVector* sol, const int& node)
+    SolutionVector computeQ (const Element& element, const SolutionVector* sol, const int& node)
     {
         SolutionVector result = problem.q(this->fvGeom.subContVol[node].global, element, this->fvGeom.subContVol[node].local);
         result *= -1.0;
@@ -212,7 +211,7 @@ public:
         return (result);
     }
 
-    SolutionVector computeFlux (const Element& element, const SolutionVector* sol, int face)
+    SolutionVector computeA (const Element& element, const SolutionVector* sol, int face)
     {
         SolutionVector flux(0);
 
@@ -347,15 +346,16 @@ public:
     void updateVariableData(const Element& element, const SolutionVector* sol, int i, std::vector<VariableNodeData>& varData)
     {
         //analytic problem
+    	/*
         varData[i].pN = sol[i][4];
         varData[i].density = problem.density(this->fvGeom.elementGlobal, element, this->fvGeom.elementLocal);
         varData[i].viscosity = 1.0;
         varData[i].internalenergy = problem.internalenergy(this->fvGeom.elementGlobal, element, this->fvGeom.elementLocal);
         varData[i].enthalpy = problem.enthalpy(this->fvGeom.elementGlobal, element, this->fvGeom.elementLocal);
         varData[i].heatconductivity = problem.heatConductivity(this->fvGeom.elementGlobal, element, this->fvGeom.elementLocal);
+*/
 
-        /*
-        //real problem
+    	//real problem
         varData[i].pN = sol[i][4];
         varData[i].T = sol[i][dim+1];
         varData[i].Xg = sol[i][dim];
@@ -364,7 +364,7 @@ public:
         varData[i].internalenergy = problem.gasPhase().intEnergy(varData[i].T, varData[i].pN, varData[i].Xg);
         varData[i].enthalpy = problem.gasPhase().enthalpy(varData[i].T, varData[i].pN, varData[i].Xg);
         varData[i].heatconductivity = problem.heatConductivity(this->fvGeom.elementGlobal, element, this->fvGeom.elementLocal);
-        */
+
 
         //         std::cout << "enthalpy, " << i << "   = " << varData[i].enthalpy << std::endl;
         //         std::cout << "internal energy, " << i << "   = " << varData[i].internalenergy << std::endl;
@@ -410,8 +410,6 @@ public:
             &referenceElement = ReferenceElements<Scalar, dim>::general(gt);
 
         // evaluate boundary conditions via intersection iterator
-        typedef typename Grid::LeafGridView::IntersectionIterator IntersectionIterator;
-
         IntersectionIterator endit = element.ileafend();
         for (IntersectionIterator it = element.ileafbegin(); it!=endit; ++it)
         {
@@ -551,7 +549,7 @@ public:
     }
 
 
-    void assembleBoundaryCondition(const Element& element, int k = 1) {
+    void assembleBoundaryCondition(const Element& element) {
         Dune::GeometryType gt = element.geometry().type();
         const typename Dune::LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::value_type
             &sfs=Dune::LagrangeShapeFunctions<Scalar, Scalar, dim>::general(gt, 1);
@@ -564,11 +562,10 @@ public:
         for (int i = 0; i < sfs.size(); i++) {
             this->bctype[i].assign(BoundaryConditions::neumann);
             this->b[i] = 0;
+        //this->dirichletIndex[i] = 0;
         }
 
         // evaluate boundary conditions via intersection iterator
-        typedef typename Grid::LeafGridView::IntersectionIterator IntersectionIterator;
-
         IntersectionIterator endit = element.ileafend();
         for (IntersectionIterator it = element.ileafbegin(); it!=endit; ++it)
         {
@@ -597,11 +594,11 @@ public:
                             FieldVector<Scalar,dim> local = this->fvGeom.boundaryFace[bfIdx].ipLocal;
                             FieldVector<Scalar,dim> global = this->fvGeom.boundaryFace[bfIdx].ipGlobal;
                             bctypeface = this->getImp().problem.bctype(global, element, it, local); // eval bctype
-                            this->getImp().problem.dirichletIndex(global, element, it, local, dirichletIdx); // eval bctype
+                            //this->getImp().problem.dirichletIndex(global, element, it, local, dirichletIdx); // eval bctype
                             if (bctypeface[equationNumber]!=BoundaryConditions::neumann)
                                 break;
-                            FieldVector<Scalar,dim+3> J = this->getImp().problem.neumann(global, element, it, local);
-                            if (equationNumber < dim+2) {
+                            FieldVector<Scalar,numEq> J = this->getImp().problem.J(global, element, it, local);
+                            if (equationNumber < numEq) {
                                 J[equationNumber] *= this->fvGeom.boundaryFace[bfIdx].area;
                                 this->b[nodeInElement][equationNumber] += J[equationNumber];
                             }
@@ -653,6 +650,7 @@ public:
                         if (sfs[i].entity()==it->indexInInside()) {
                             if (this->bctype[i][equationNumber] < bctypeface[equationNumber]) {
                                 this->bctype[i][equationNumber] = bctypeface[equationNumber];
+                                //this->dirichletIndex[i][equationNumber] = dirichletIdx[equationNumber];
 
                                 if (bctypeface[equationNumber] == BoundaryConditions::process)
                                     this->b[i][equationNumber] = 0;
@@ -669,7 +667,8 @@ public:
                         {
                             if (this->bctype[i][equationNumber] < bctypeface[equationNumber]) {
                                 this->bctype[i][equationNumber] = bctypeface[equationNumber];
-                               if (bctypeface[equationNumber] == BoundaryConditions::process)
+                                //this->dirichletIndex[i][equationNumber] = dirichletIdx[equationNumber];
+                                if (bctypeface[equationNumber] == BoundaryConditions::process)
                                     this->b[i][equationNumber] = 0;
                                 if (bctypeface[equationNumber] == BoundaryConditions::dirichlet) {
                                     this->b[i][equationNumber] = 0;

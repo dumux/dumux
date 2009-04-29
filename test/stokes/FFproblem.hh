@@ -53,11 +53,11 @@ public:
         return BoundaryConditions::dirichlet;
     }
 
-    virtual FieldVector<Scalar,dim+2>dirichlet(const FieldVector<Scalar,dim>& x, const Element& e,
+    virtual FieldVector<Scalar,numEq> dirichlet(const FieldVector<Scalar,dim>& x, const Element& e,
                                         const IntersectionIterator& intersectionIt,
                                         const FieldVector<Scalar,dim>& xi) const
     {
-        FieldVector<Scalar,dim+2> result(0);
+        FieldVector<Scalar,numEq> result(0);
         Scalar xV = 0;
 
         if ((x[0] == 0)||(x[0] == 1.0))
@@ -74,11 +74,11 @@ public:
         return result;
     }
 
-    virtual FieldVector<Scalar,dim+2> neumann(const FieldVector<Scalar,dim>& x, const Element& e,
+    virtual FieldVector<Scalar,numEq> neumann(const FieldVector<Scalar,dim>& x, const Element& e,
                                         const IntersectionIterator& intersectionIt,
                                         const FieldVector<Scalar,dim>& xi)
     {
-        FieldVector<Scalar,dim+2> result(0);
+        FieldVector<Scalar,numEq> result(0);
         return result;
     }
 
@@ -199,9 +199,9 @@ public:
         return result;
     }
 
-    virtual FieldVector<Scalar,dim+2> velocitymassfractemp(const FieldVector<Scalar,dim>& x) const
+    virtual FieldVector<Scalar,numEq> velocitymassfractemp(const FieldVector<Scalar,dim>& x) const
     {
-        FieldVector<Scalar,dim+2> result(0);
+        FieldVector<Scalar,numEq> result(0);
         FieldVector<Scalar,dim> velocityValue(velocity(x));
 
         result[0] = velocityValue[0];

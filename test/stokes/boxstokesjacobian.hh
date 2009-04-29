@@ -62,8 +62,8 @@ public:
         : BoxJacobianType(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_),
           problem(params)
     {
-        alpha = -1e0;
-        beta = 1e2;
+        alpha = -1;
+        beta = 1;
         this->analytic = false;
     }
 
@@ -82,6 +82,7 @@ public:
             if (!this->fvGeom.subContVol[vert].inner)
             {
                 FieldVector<Scalar,dim> averagedNormal(0);
+                FieldMatrix<Scalar,dim,dim> velocityGradient(0);
                 int faces = 0;
                 IntersectionIterator endit = element.ileafend();
                 for (IntersectionIterator it = element.ileafbegin(); it!=endit; ++it)
@@ -95,6 +96,7 @@ public:
 
                         // return the face number with respect to the generic reference element
                         int faceIdx = it->indexInInside();
+
 
                         int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
                         for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++) {
@@ -112,18 +114,38 @@ public:
                                 FieldVector<Scalar,dim> normal = it->unitOuterNormal(faceLocal);
                                 normal *= this->fvGeom.boundaryFace[bfIdx].area;
                                 averagedNormal += normal;
+
+                                for (int k = 0; k < this->fvGeom.numVertices; k++) {
+                                    FieldVector<Scalar,dim> grad(this->fvGeom.boundaryFace[bfIdx].grad[k]);
+
+                                    for (int comp = 0; comp < dim; comp++)
+                                    {
+                                        FieldVector<Scalar,dim> gradVComp = grad;
+                                        gradVComp *= sol[k][comp];
+                                        velocityGradient[comp] += gradVComp;
+                                    }
+                                }
+
+
                             }
                             faces++;
+
+
                         }
                     }
                 }
                 Scalar defect = 0;
-                if (averagedNormal.two_norm())
-                    averagedNormal /= averagedNormal.two_norm();
+                Scalar normalLength = averagedNormal.two_norm();
+                if (normalLength)
+                    averagedNormal /= normalLength;
+
+                FieldVector<Scalar,dim>  tangent(0);
+                tangent[0] = averagedNormal[1];
+                tangent[1] = -averagedNormal[0];
+
                 for (int k = 0; k < dim; k++)
                     defect += this->def[vert][k]*averagedNormal[k];
-
-                //std::cout << this->fvGeom.subContVol[vert].global << ": N = " << averagedNormal << ", cond = " << this->bctype[vert][0] << std::endl;
+               //std::cout << this->fvGeom.subContVol[vert].global << ": N = " << averagedNormal << ", cond = " << this->bctype[vert][0] << std::endl;
 
                 if (faces == 2 && this->fvGeom.numVertices == 4)
                 {
@@ -132,7 +154,20 @@ public:
                     this->def[vert][dim] = sol[0][dim] + sol[3][dim] - sol[1][dim] - sol[2][dim];
                 }
                 else if (this->bctype[vert][0] == BoundaryConditions::dirichlet)
+                {
+                    FieldVector<Scalar,dim>  gradVN(0);
+                    velocityGradient.umv(averagedNormal, gradVN);
+                    gradVN *= normalLength;
+                    gradVN *= elData.mu;
+                    FieldVector<Scalar,dim>  gradVT(0);
+                    velocityGradient.umv(tangent, gradVT);
+                    gradVT *= normalLength;
+                    gradVT *= elData.mu;
+
+                    defect -= gradVT*tangent;
+
                     this->def[vert][dim] = defect;
+                }
                 else // de-stabilize
                 {
                     for (int face = 0; face < this->fvGeom.numEdges; face++)
@@ -184,14 +219,7 @@ public:
         result[dim] *= alphaH2;
 
         if (!this->fvGeom.subContVol[node].inner)
-        {
-            Scalar pressValue = 0;
-            for (int k = 0; k < this->fvGeom.numVertices; k++) {
-                pressValue += sol[k][dim]*0.25;//this->fvGeom.subContVol[node].shapeValue[k];
-            }
-//        	result[dim] += beta*0.5*pressValue/this->fvGeom.subContVol[node].volume;
         	result[dim] += beta*0.5*sol[node][dim]/this->fvGeom.subContVol[node].volume;
-        }
 
         SolutionVector flux = boundaryFlux(element, sol, node);
 
@@ -367,10 +395,11 @@ public:
                                 FieldVector<Scalar,dim>  pressVector(0);
                                 pressVector[comp] = -pressureValue;
 
+//                                result[comp] += pressVector*it->unitOuterNormal(faceLocal)*this->fvGeom.boundaryFace[bfIdx].area;
                                 result[comp] += pressVector*it->unitOuterNormal(faceLocal)*this->fvGeom.boundaryFace[bfIdx].area;
 
-                                if (alpha == 0)
-                                    result[comp] += gradVN[comp];
+//                                if (alpha == 0)
+//                                    result[comp] += gradVN[comp];
                         }
                     }
                     else
@@ -379,7 +408,7 @@ public:
                         if (beaversJosephC == 0)
                         {
                         	//result[dim] -= beta*0.5*(gradVN*it->unitOuterNormal(faceLocal))/this->fvGeom.boundaryFace[bfIdx].area;
-                            result[dim] += beta*0.5*(gradVT*tangent)/this->fvGeom.boundaryFace[bfIdx].area;
+                            result[dim] -= beta*0.5*(gradVT*tangent)/this->fvGeom.boundaryFace[bfIdx].area;
 
                         	FieldVector<Scalar,numEq> neumann = this->getImp().problem.neumann(this->fvGeom.boundaryFace[bfIdx].ipGlobal, element, it, this->fvGeom.boundaryFace[bfIdx].ipLocal);
 

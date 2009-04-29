@@ -8,7 +8,6 @@
 #include <dune/grid/sgrid.hh>
 #include <dune/grid/io/file/dgfparser/dgfparser.hh>
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
-#include <dune/grid/io/file/dgfparser/dgfalberta.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
@@ -48,11 +47,12 @@ void calculateError(const Grid& grid, const Problem& problem, Vector& solution)
     typedef typename Grid::ctype Scalar;
     enum {dim=Grid::dimension};
     typedef typename Grid::template Codim<0>::Entity Element;
-    typedef typename Grid::LeafGridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename Grid::LeafGridView::template Codim<dim>::Iterator VertexIterator;
-    typedef typename Grid::LeafGridView GV;
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GV,ElementLayout> ElementMapper;
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GV,VertexLayout> VertexMapper;
+    typedef typename Grid::LeafGridView GridView;
+    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
+    typedef typename GridView::template Codim<dim>::Iterator VertexIterator;
+    typedef typename GridView::IndexSet IS;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView,ElementLayout> ElementMapper;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView,VertexLayout> VertexMapper;
 
     VertexMapper vertexMapper(grid.leafView());
     ElementMapper elementMapper(grid.leafView());
@@ -119,7 +119,7 @@ int main(int argc, char** argv)
         // define the problem dimensions
         const int dim = 2;
         double tStart = 0;
-        double tEnd = 1;
+        double tEnd = 10;
         double dt = 1;
         int modulo = 1; // print every modulo'th time step
 
@@ -150,8 +150,8 @@ int main(int argc, char** argv)
 
         Dune::CWaterAir multicomp(dummyPhase, gasPhase);
 
-        //    Dune::FFProblem<GridType, double> problem(gasPhase, multicomp);
-        Dune::SteProblem<GridType, double> problem(gasPhase, multicomp);
+        Dune::FFProblem<GridType, double> problem(gasPhase, multicomp);
+        //Dune::SteProblem<GridType, double> problem(gasPhase, multicomp);
         typedef Dune::LeafP1BoxStokesTrEn<GridType, NumberType, dim> BoxStokesTrEn;
 
         BoxStokesTrEn boxStokesTrEn(grid, problem);
