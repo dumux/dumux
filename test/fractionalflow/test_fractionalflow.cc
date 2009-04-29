@@ -57,10 +57,12 @@ int main(int argc, char** argv)
         typedef Dune::FVDiffusionVelocity<GridType, NumberType, VariableType, Problem> DiffusionType;
         DiffusionType diffusion(grid, problem);
 
-        Dune::CapillaryDiffusion<GridType, NumberType, VariableType, Problem> capillaryDiffusion(problem, soil);
+        //Dune::CapillaryDiffusion<GridType, NumberType, VariableType, Problem> capillaryDiffusion(problem, soil);
+        Dune::DiffusivePart<GridType, NumberType> diffusivePart;
 
         typedef Dune::FVTransport<GridType, NumberType, VariableType, Problem> TransportType;
-        TransportType transport(grid, problem, capillaryDiffusion);
+        //TransportType transport(grid, problem, capillaryDiffusion);
+        TransportType transport(grid, problem, diffusivePart);
 
         int iterFlag = 2;
         int nIter = 30;
