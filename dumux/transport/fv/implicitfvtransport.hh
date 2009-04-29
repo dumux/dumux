@@ -619,7 +619,16 @@ template<class Grid, class Scalar, class VC, class Problem>
 void ImplicitFVTransport<Grid, Scalar, VC, Problem>:: update()
     {
         uOldTimeStep = u;
-        NewtonMethodMatrix<Grid, ThisType> newtonMethod(this->grid_, *this);
+        //NewtonMethodMatrix<Grid, ThisType> newtonMethod(this->grid_, *this);
+
+        //In order to not enlarge the timestep in the Newton step
+        double dtol = 1e-7;
+        double rtol = 1e7;
+        int maxIt = 20;
+        double mindt = 1;
+        int goodIt = 1;
+        NewtonMethodMatrix<Grid, ThisType> newtonMethod(this->grid_, *this, dtol, rtol, maxIt, mindt, goodIt);
+
         newtonMethod.execute();
 
         return;
