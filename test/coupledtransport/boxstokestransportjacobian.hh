@@ -54,7 +54,9 @@ public:
         : BoxJacobianType(levelBoundaryAsDirichlet_, grid, sol, procBoundaryAsDirichlet_),
           problem(params), varNData(SIZE), oldVarNData(SIZE)
     {
-        alpha = -1e3;//-1.0;
+	// factor for stabilization
+	// set to zero, when no stabilization is neccessary
+        alpha = 0; // -1e3;//-1.0;
         this->analytic = false;
     }
 
@@ -97,9 +99,17 @@ public:
                             if (nodeInElement != vert)
                                 continue;
                             int bfIdx = this->fvGeom.boundaryFaceIndex(faceIdx,    nodeInFace);
+                            FieldVector<Scalar,dim> local = this->fvGeom.boundaryFace[bfIdx].ipLocal;
+                            FieldVector<Scalar,dim> global = this->fvGeom.boundaryFace[bfIdx].ipGlobal;
+                            FieldVector<BoundaryConditions::Flags,numEq> bctypeface = this->getImp().problem.bctype(global, element, it, local);
+
+			// TODO: is this always valid??
+                            if (bctypeface[velocityXIdx] == BoundaryConditions::dirichlet)
+                            {
                             FieldVector<Scalar,dim> normal = it->unitOuterNormal(faceLocal);
                             normal *= this->fvGeom.boundaryFace[bfIdx].area;
                             averagedNormal += normal;
+                           	}
                             faces++;
                         }
                     }
@@ -139,9 +149,9 @@ public:
                         Scalar alphaH2 = 0.5*alpha*(this->fvGeom.subContVol[i].volume + this->fvGeom.subContVol[j].volume);
                         pressGradient *= alphaH2;
                         if (i == vert)
-                            this->def[vert][pressureIdx] += pressGradient*this->fvGeom.subContVolFace[face].normal;
-                        else
                             this->def[vert][pressureIdx] -= pressGradient*this->fvGeom.subContVolFace[face].normal;
+                        else
+                            this->def[vert][pressureIdx] += pressGradient*this->fvGeom.subContVolFace[face].normal;
                     }
                 }
 
@@ -194,14 +204,18 @@ public:
         SolutionVector result = problem.q(this->fvGeom.subContVol[node].global, element, this->fvGeom.subContVol[node].local);
         result *= -1.0;
 
-        Scalar gravity = problem.gravity()*varNData[node].density;
-        result[dim-1] += gravity;
+        FieldVector<Scalar,dim> gravityVector(problem.gravity(this->fvGeom.subContVol[node].global));
+
+        gravityVector[dim-1] *= varNData[node].density;
+
+        result[dim-1] -= gravityVector[dim-1]; //sign???
 
         Scalar alphaH2 = alpha*this->fvGeom.subContVol[node].volume;
-        result[pressureIdx] *= alphaH2;
+//        result[dim+1] *= alphaH2;
 
         Scalar MassST = problem.Qg(this->fvGeom.subContVol[node].global, element, this->fvGeom.subContVol[node].local);
         MassST *= -1;
+        MassST *= alphaH2;
 
         result[pressureIdx] += MassST;
 
@@ -319,6 +333,7 @@ public:
         Scalar massfrac;
         Scalar partialpressure;
         FieldMatrix<Scalar,dim,dim> D;
+        Scalar Xg;
     };
 
     void updateVariableData(const Element& element, const SolutionVector* sol, int i, std::vector<VariableNodeData>& varData)

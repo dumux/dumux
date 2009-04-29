@@ -94,7 +94,7 @@ public:
             return(-1.0); // realizes outflow boundary condition
 
         //TODO: uses only Kxx, extend to permeability tensor
-        Scalar permeability = soil().K(globalPos, element, localPos)[0][0];
+        Scalar permeability = 1e-2;//soil().K(globalPos, element, localPos)[0][0];
 
         return sqrt(permeability)/(alpha*viscosity(globalPos, element, localPos));
     }
@@ -147,7 +147,7 @@ public:
 
     //TODO: gravity vector instead of scalar
     //    FieldVector<Scalar,dim>& gravity() const
-    Scalar gravity () const
+    FieldVector<Scalar,dim> gravity(const FieldVector<Scalar,dim>& x) const
     {
         return gravity_;
     }
@@ -172,17 +172,16 @@ public:
         soil_(soil),
         multicomp_(multicomp)
     {
-        gravity_ = 0;//9.81;
         eps_ = 1e-6;
-        //    for (int i=0; i<dim; ++i)
-        //        gravity_[i] = 0;
-        //    gravity_[dim] = -9.81;
+
+        for (int i=0; i<dim; ++i)
+	    gravity_[i] = 0;
+//	gravity_[dim] = -9.81;
     }
 
 
 protected:
-    //    FieldVector<Scalar,dim> gravity_;
-    Scalar gravity_;
+    FieldVector<Scalar,dim> gravity_;
     Gas_GL& gasPhase_;
     Matrix2p<Grid, Scalar>& soil_;
     MultiComp& multicomp_;

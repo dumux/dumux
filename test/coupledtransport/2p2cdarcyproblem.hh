@@ -126,6 +126,11 @@ public:
 
     //////////////////////////////
 
+    virtual Matrix2p<Grid, Scalar>& soil () const
+    {
+	return soil_;
+    }
+
     virtual FieldVector<Scalar,dim> gravity () const
     {
         return gravity_;
@@ -140,7 +145,9 @@ public:
                          TwoPhaseRelations<Grid, Scalar>& law = *(new TwoPhaseRelations<Grid, Scalar>),
                          MultiComp& multicomp = *(new CWaterAir))
         : TwoPTwoCProblem<Grid,Scalar>(liq, gas, soil, multicomp, law),
-          depthBOR_(depthBOR)
+	    soil_(soil),
+	    depthBOR_(depthBOR)
+
     {
         gravity_[0] = 0;
         gravity_[1] = 0;//-9.81;
@@ -150,9 +157,11 @@ public:
 
 private:
     //      Scalar densityW_, densityN_;
+    Matrix2p<Grid, Scalar>& soil_;
     FieldVector<Scalar,dim> gravity_;
     Scalar depthBOR_;
     Scalar eps_;
+
 };
 
 //////////////////////////////////////////////////////////////////////////////////////////////
