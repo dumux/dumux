@@ -138,12 +138,14 @@ public:
         return gravity_;
     }
 
+    //! Temperature
+    virtual Scalar temp(const FieldVector<Scalar,dim>& globalPos, const Entity& element,
+                                      const FieldVector<Scalar,dim>& localPos) = 0;
 
     //! Constructor
     /**
      *
      */
-
     TransportProblem2p2c(Dune::VariableClass2p2c<Grid, Scalar>& var, Liquid_GL& liq, Gas_GL& gas, Matrix2p<Grid, Scalar>& s,
                          TwoPhaseRelations<Grid, Scalar>& law = *(new TwoPhaseRelations<Grid,Scalar>),const bool cap = false)
         :variables(var), liquidPhase(liq), gasPhase(gas), soil(s), materialLaw(law), capillary(cap)

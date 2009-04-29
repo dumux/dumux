@@ -4,7 +4,6 @@
 #define TESTPROBLEM_2P2C_HH
 
 #include "dumux/transport/transportproblem2p2c.hh"
-//#include <dumux/material/randompermeability.hh>
 
 namespace Dune
 {
@@ -33,6 +32,12 @@ public:
         FieldVector<Scalar,dim> gravity_(0);
         gravity_[1] = -10;
         return gravity_;
+    }
+
+    Scalar temp(const FieldVector<Scalar, dim>& globalPos, const Entity& element,
+                                           const FieldVector<Scalar, dim>& localPos)
+    {
+        return 283.15;
     }
 
     BoundaryConditions2p2c::Flags bc_type (const FieldVector<Scalar, dim>& globalPos, const Entity& element,
