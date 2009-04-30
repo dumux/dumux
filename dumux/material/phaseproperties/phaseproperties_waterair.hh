@@ -66,6 +66,53 @@ public:
         return 2.25e-5 * pow(temperature/273.15, 2/3) * 1e5 / p;
     }
 
+    virtual double diffCoeff_alternative_1(double temperature, double p) const
+    {
+    	// experimental result by method of Vargaftik(1975) and Walker et al.(1981) see Reid et al.(1987)
+        return 2.13e-5 * pow(temperature/273.15, 1.8) * 1e5 / p;
+    }
+
+    virtual double diffCoeff_alternative_2(double temperature, double p) const
+    {
+    	// Binary diffusivities Dg_aw according to Poling et al. [2001]
+    	// Bruce E. Poling, John M. Prausnitz, and John P. O´Connell. The properties of gases and liquids. McGRAW-HILL, 2001.
+
+        double M_a, M_w;
+        double sigma_w, T_scal_w, sigma_a, sigma_aw;
+        double T_scal_a, T_scal_aw, T_star, B_, Mr, D_aw;
+        double Omega;		/* collision integral */
+
+        if (temperature > 500.)
+    	temperature = 500.;		/* Regularization */
+        if (p < 0.)
+    	p = 0.;		/* Regularization */
+        if (p > 1.E8)
+    	p = 1.E8;		/* Regularization */
+
+        M_a = 28.97;		/* [g/mol] molecular weight of air */
+        M_w = 18.0;			/* [g/mol] molecular weight of water */
+        sigma_a = 3.711;		/* [A°] Kollisionsquerschnitt air */
+        sigma_w = 2.641;		/* [A°] Kollisionsquerschnitt water */
+        T_scal_a = 78.6;		/* [K] (molec. energy of attraction/Boltzmann constant) */
+        T_scal_w = 809.1;		/* [K] (molec. energy of attraction/Boltzmann constant) */
+
+        sigma_aw = (sigma_a + sigma_w) / 2.;
+        T_scal_aw = pow((T_scal_a * T_scal_w), 0.5);
+        T_star = temperature / T_scal_aw;
+        if (T_star < 0.00001)
+    	T_star = 0.00001;	/* Regularization */
+        Omega = 1.06036 / pow(T_star, 0.1561)
+                + 0.193 / exp(T_star * 0.47635)
+    	        + 1.03587 / exp(T_star * 1.52996)
+    	        + 1.76474 / exp(T_star * 3.89411);
+        B_ = 0.00217 - 0.0005 * pow((1 / M_a + 1 / M_w), 0.5);
+        Mr = (M_w + M_a) / (M_w * M_a);
+        D_aw = (B_ * pow(temperature, 1.5) * pow(Mr, 0.5)) / ((p / 1.E5) * pow(sigma_aw, 2.) * Omega);	/* [cm^2/s] */
+        D_aw = D_aw * 1.E-4;	/*  [m^2/s] */
+
+        return D_aw;
+    }
+
     virtual double Xw_Max(double temperature, double p) const
     {
         double pwsat = constRelAir.pwsat(temperature);
