@@ -330,11 +330,10 @@ void Multiphysics2p2c<Grid, Scalar>::assemble(bool first, const Scalar t=0)
     double maxErr = fabs(problem.variables.volErr.infinity_norm());
 
     int size = indexset.size(0);
-    double dV_[size][2];
+    double dV_[size][3];
     for (int i = 0; i < size; i++)
     {
         dV_[i][0] = 0;
-        dV_[i][1] = 0;
     }
 
     // iterate over all cells in the grid
@@ -398,8 +397,10 @@ void Multiphysics2p2c<Grid, Scalar>::assemble(bool first, const Scalar t=0)
         }
         else
         {
-            if (dV_[globalIdxi][0] == 0) volumeDerivatives(globalPos, *eIt, localPos, Ti, dV_[globalIdxi][0], dV_[globalIdxi][1], dV_dp);
-
+            if (dV_[globalIdxi][0] == 0) volumeDerivatives(globalPos, *eIt, localPos, Ti, dV_[globalIdxi][0], dV_[globalIdxi][1], dV_[globalIdxi][2]);
+            dV_dm1 = dV_[globalIdxi][0];
+            dV_dm2 = dV_[globalIdxi][1];
+            dV_dp = dV_[globalIdxi][2];
             // right hand side entry: sources
             FieldVector<Scalar,2> q = problem.source(globalPos,*eIt,localPos);
             f[globalIdxi] = volume * (dV_dm1 * q[0] + dV_dm2 * q[1]);
@@ -954,10 +955,6 @@ int Multiphysics2p2c<Grid,Scalar>::concentrationUpdate(const Scalar t, Scalar& d
         int globalIdxi = indexset.index(*eIt);
 
         double pressi = problem.variables.pressure[globalIdxi];
-
-        // get source term
-//        updateVec[globalIdxi] += problem.source(globalPos, *eIt, localPos)[0] * volume;
-//        updateVec[globalIdxi+indexset.size(0)] += problem.source(globalPos, *eIt, localPos)[1] * volume;
 
         // get saturation and concentration value at cell center
         double satI = problem.variables.saturation[globalIdxi];
