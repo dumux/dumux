@@ -1,5 +1,5 @@
 # tests where program to build and program to run are equal
-NORMALTESTS = test_fractionalflow test_decoupled2p2c
+NORMALTESTS = test_fractionalflow test_decoupled2p2c test_multiphysics2p2c
 
 # list of tests to run
 #TESTS = $(NORMALTESTS)
@@ -13,6 +13,8 @@ test_fractionalflowdir = $(includedir)/dune/dumux/test/fractionalflow
 test_fractionalflow_SOURCES = test_fractionalflow.cc
 
 test_decoupled2p2c_SOURCES = test_decoupled2p2c.cc
+
+test_multiphysics2p2c_SOURCES = test_multiphysics2p2c.cc
 
 AM_LDFLAGS = @AM_LDFLAGS@ $(LOCAL_LIBS)
 
