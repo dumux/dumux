@@ -1,87 +1,79 @@
-#define DUNE_DEVEL_MODE
+// $Id$
+
 #include "config.h"
+// std lib includes:
 #include <iostream>
 #include <iomanip>
+// dune stuff:
 #include <dune/grid/sgrid.hh>
-#include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
+// dumux time discretization:
 #include "dumux/timedisc/timeloop.hh"
+#include "dumux/timedisc/expliciteulerstep.hh"
+// material properties:
 #include "dumux/material/phaseproperties/phaseproperties_waterair.hh"
-#include <dumux/mystuff/material/matrixproperties.hh>
+#include <dumux/material/matrixproperties.hh>
 #include <dumux/material/twophaserelations.hh>
+// problem definition and model:
 #include "dumux/transport/problems/testproblem_2p2c.hh"
 #include "dumux/transport/fv/multiphysics2p2c.hh"
-#include <dune/disc/operators/boundaryconditions.hh>
-#include "dumux/timedisc/expliciteulerstep.hh"
 
-//  @author Jochen Fritz
-//    last change: 27.11.2008
-//
+/***********************************************
+ * Jochen Fritz, 2009                          *
+ * Test application to class Multiphysics2p2c  *
+ ***********************************************/
 
 int main(int argc, char** argv)
 {
-    try{
-        // define the problem dimensions
-        const int dim=2;
+  try{
+    // define the problem dimensions
+    const int dim=3;
 
-        // create a grid object
-        typedef double NumberType;
-        typedef Dune::SGrid<dim,dim> GridType;
-        typedef Dune::FieldVector<GridType::ctype,dim> FieldVector;
-        Dune::FieldVector<int,dim> N(100); N[0] = 100;
-        FieldVector L(0);
-        FieldVector H(300); H[0] = 300;
-        GridType grid(N,L,H);
+//    // create a grid object
+    typedef double NumberType;
+    typedef Dune::SGrid<dim,dim> GridType;
+    typedef Dune::FieldVector<GridType::ctype,dim> FieldVector;
+    Dune::FieldVector<int,dim> N(10);
+    FieldVector L(0);
+    FieldVector H(10);
+    GridType grid(N,L,H);
 
-        grid.globalRefine(0);
+    double tStart = 0;
+    double tEnd = 3e4;
+    int modulo = 1;
+    double cFLFactor = 0.7;
 
-        double tStart = 0;
-        double tEnd = 5e6;
-        int modulo = 5;
-        double cFLFactor = 0.9;
+    Dune::Liq_WaterAir wetmat;
+    Dune::Gas_WaterAir nonwetmat;
+    Dune::HomogeneousSoil<GridType, NumberType> soil;
 
-        Dune::Liq_WaterAir wetmat;
-        Dune::Gas_WaterAir nonwetmat;
-        //    Dune::HomogeneousSoil<GridType, NumberType> soil;
-        Dune::HeterogeneousSoil<GridType, NumberType> soil(grid, "permeab.dat", true);
-        soil.permeability.vtkout("perm",grid);
+    Dune::TwoPhaseRelations<GridType, NumberType> materialLaw(soil, wetmat, nonwetmat);
 
-        //    std::ofstream outf("permeab.dat");
-        //    for(int i = 0;i<grid.size(0); i++)
-        //    {
-        //        outf<<(*(soil.permeability))[i]<<","<<std::endl;
-        //    }
+    Dune::VariableClass2p2c<GridType,NumberType> var(grid);
 
-        Dune::TwoPhaseRelations<GridType, NumberType> materialLaw(soil, wetmat, nonwetmat);
+    typedef Dune::Testproblem_2p2c<GridType, NumberType> TransProb;
+    TransProb problem(grid, var, wetmat, nonwetmat, soil, grid.maxLevel(), materialLaw, false);
 
-        Dune::VariableClass2p2c<GridType,NumberType> var(grid);
+    typedef Dune::Multiphysics2p2c<GridType, NumberType> ModelType;
+    ModelType model(grid, problem, grid.maxLevel());
 
-        typedef Dune::Testproblem_2p2c<GridType, NumberType> TransProb;
-        TransProb problem(grid, var, wetmat, nonwetmat, soil, grid.maxLevel(), materialLaw, false);
+    Dune::ExplicitEulerStep<GridType, ModelType> timestep;
+    Dune::TimeLoop<GridType, ModelType > timeloop(tStart, tEnd, "mp", modulo, cFLFactor, 1e100, 1e100, timestep);
 
-        Dune::DiffusivePart<GridType, NumberType> diffPart;
-        const Dune::Upwind<NumberType> numFl;
+    Dune::Timer timer;
+    timer.reset();
+    timeloop.execute(model);
+    std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
 
-        typedef Dune::Multiphysics2p2c<GridType, NumberType> ModelType;
-        ModelType model(grid, problem, grid.maxLevel(), diffPart, false, 0.8, numFl);
-
-        Dune::ExplicitEulerStep<GridType, ModelType> timestep;
-        Dune::TimeLoop<GridType, ModelType > timeloop(tStart, tEnd, "mp", modulo, cFLFactor, 1e100, 1e100, timestep);
-
-        Dune::Timer timer;
-        timer.reset();
-        timeloop.execute(model);
-        std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
-
-        return 0;
-    }
-    catch (Dune::Exception &e){
-        std::cerr << "Dune reported error: " << e << std::endl;
-        return 1;
-    }
-    catch (...){
-        std::cerr << "Unknown exception thrown!" << std::endl;
-        return 1;
-    }
+    return 0;
+  }
+  catch (Dune::Exception &e){
+    std::cerr << "Dune reported error: " << e << std::endl;
+    return 1;
+  }
+  catch (...){
+    std::cerr << "Unknown exception thrown!" << std::endl;
+    return 1;
+  }
 }
