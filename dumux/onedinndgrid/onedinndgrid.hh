@@ -1,9 +1,8 @@
-// $Id: onedinndgrid.hh 1227 2009-02-13 12:01:13Z anneli $
-
 #ifndef DUNE_ONE_D_IN_N_D_GRID_HH
 #define DUNE_ONE_D_IN_N_D_GRID_HH
 
 #include <vector>
+#include <list>
 
 #include <dune/common/misc.hh>
 #include <dune/grid/common/capabilities.hh>
@@ -15,11 +14,10 @@
  * \brief The OneDInNDGrid class
  */
 
-namespace Dune
+namespace Dune 
 {
-/** \todo Please doc me! */
 
-// forward declarations
+// forward declarations 
     template<int codim, int dim, class GridImp> class OneDInNDGridEntity;
     template<int codim, class GridImp> class OneDInNDGridEntityPointer;
     template<int codim, PartitionIteratorType pitype, class GridImp> class OneDInNDGridLevelIterator;
@@ -27,14 +25,14 @@ namespace Dune
     template<int mydim, int coorddim, class GridImp>            class OneDInNDGridGeometry;
     template<class GridImp>            class OneDInNDGridHierarchicIterator;
     template<class GridImp, bool LeafIterator> class OneDInNDGridIntersectionIterator;
-
-    template <int dimworld>
-    class OneDInNDGrid;
+    template<int dimworld> class OneDInNDGrid;
 
     template<int codim>                        class OneDInNDGridLevelIteratorFactory;
 
-}  // namespace Dune
+}
 
+#include "onedinndgridlist.hh"
+#include "nulliteratorfactory.hh"
 #include "onedinndgridentity.hh"
 #include "onedinndgridentitypointer.hh"
 #include "onedinndgridgeometry.hh"
@@ -43,142 +41,31 @@ namespace Dune
 #include "onedinndgridleafiterator.hh"
 #include "onedinndgridhieriterator.hh"
 #include "onedinndgridindexsets.hh"
+// #include "gridfunctions.hh"
 
 namespace Dune {
 
-    // A simple double linked list
-    template<class T>
-    class List
-    {
-
-    public:
-
-        List() : numelements(0), begin(0), rbegin(0) {}
-
-        int size() const {return numelements;}
-
-        T* insert_after (T* i, T* t) {
-
-            // Teste Eingabe
-            if (i==0 && begin!=0)
-                DUNE_THROW(DoubleLinkedListError, "invalid iterator for insert_after");
-
-            // einfuegen
-            if (begin==0) {
-    // einfuegen in leere Liste
-    begin = t;
-                rbegin = t;
-            }
-            else
-                {
-                    // nach Element i.p einsetzen
-                    t->pred_ = i;
-                    t->succ_ = i->succ_;
-                    i->succ_ = t;
-
-                    if (t->succ_!=0)
-                        t->succ_->pred_ = t;
-
-                    // tail neu ?
-                    if (rbegin==i)
-                        rbegin = t;
-                }
-
-            // Groesse und Rueckgabeiterator
-            numelements = numelements+1;
-
-            return t;
-        }
-
-        T* insert_before (T* i, T* t) {
-
-            // Teste Eingabe
-            if (i==0 && begin!=0)
-                DUNE_THROW(DoubleLinkedListError,
-                           "invalid iterator for insert_before");
-
-            // einfuegen
-            if (begin==0)
-                {
-                    // einfuegen in leere Liste
-                    begin=t;
-                    rbegin=t;
-                }
-            else
-                {
-                    // vor Element i.p einsetzen
-                    t->succ_ = i;
-                    t->pred_ = i->pred_;
-                    i->pred_ = t;
-
-                    if (t->pred_!=0)
-                        t->pred_->succ_ = t;
-                    // head neu ?
-                    if (begin==i)
-                        begin = t;
-                }
-
-            // Groesse und Rueckgabeiterator
-            numelements = numelements+1;
-            return t;
-        }
-
-        void remove (T* i)
-        {
-            // Teste Eingabe
-            if (i==0)
-                return;
-
-            // Ausfaedeln
-            if (i->succ_!=0)
-                i->succ_->pred_ = i->pred_;
-            if (i->pred_!=0)
-                i->pred_->succ_ = i->succ_;
-
-            // head & tail
-            if (begin==i)
-                begin=i->succ_;
-            if (rbegin==i)
-                rbegin = i->pred_;
-
-            // Groesse
-            numelements = numelements-1;
-        }
-
-
-        int numelements;
-
-        T* begin;
-        T* rbegin;
-
-    };
-
-template<int dim, int dimw>
+template<int dim, int dimworld>
 struct OneDInNDGridFamily
 {
-    typedef GridTraits< dim,
-                         dimw,
-                         Dune::OneDInNDGrid<dimw>,
-                         OneDInNDGridGeometry,
-                         OneDInNDGridEntity,
-                         OneDInNDGridEntityPointer,
-                         OneDInNDGridLevelIterator,
-                         OneDInNDGridLeafIntersectionIterator, // leaf  intersection iter
-                         OneDInNDGridLevelIntersectionIterator, // level intersection iter
-                         OneDInNDGridLeafIntersectionIterator, // leaf  intersection iter
-                         OneDInNDGridLevelIntersectionIterator, // level intersection iter
-                         OneDInNDGridHierarchicIterator,
-                         OneDInNDGridLeafIterator,
-                         OneDInNDGridLevelIndexSet<const OneDInNDGrid<dimw> >,
-                         OneDInNDGridLevelIndexSetTypes<const OneDInNDGrid<dimw> >,
-                         OneDInNDGridLeafIndexSet<const OneDInNDGrid<dimw> >,
-                         OneDInNDGridLeafIndexSetTypes<const OneDInNDGrid<dimw> >,
-                         OneDInNDGridIdSet<const OneDInNDGrid<dimw> >,
-                         unsigned int,
-                         OneDInNDGridIdSet<const OneDInNDGrid<dimw> >,
-                         unsigned int,
-                         CollectiveCommunication<Dune::OneDInNDGrid<dimw> >
-                       >
+    typedef GridTraits<dim,dimworld,Dune::OneDInNDGrid<dimworld> ,
+                       OneDInNDGridGeometry,
+                       OneDInNDGridEntity,
+                       OneDInNDGridEntityPointer,
+                       OneDInNDGridLevelIterator,
+                       OneDInNDGridLeafIntersectionIterator, // leaf  intersection 
+                       OneDInNDGridLevelIntersectionIterator, // level intersection 
+                       OneDInNDGridLeafIntersectionIterator, // leaf  intersection iter 
+                       OneDInNDGridLevelIntersectionIterator, // level intersection iter 
+                       OneDInNDGridHierarchicIterator,
+                       OneDInNDGridLeafIterator,
+                       OneDInNDGridLevelIndexSet<const OneDInNDGrid<dimworld> >,
+                       OneDInNDGridLeafIndexSet<const OneDInNDGrid<dimworld> >,
+                       OneDInNDGridIdSet<const OneDInNDGrid<dimworld> >,
+                       unsigned int,
+                       OneDInNDGridIdSet<const OneDInNDGrid<dimworld> >,
+                       unsigned int,
+                       CollectiveCommunication<Dune::OneDInNDGrid<dimworld> > > 
   Traits;
 };
 
@@ -189,10 +76,10 @@ struct OneDInNDGridFamily
 //**********************************************************************
 
 /**
- \brief [<em> provides Grid </em>]
+ \brief [<em> provides \ref Dune::Grid </em>]
  Onedimensional adaptive grid
  \ingroup GridImplementations
-
+ 
  This implementation of the grid interface provides one-dimensional
  grids only.  No matter what the values of dim and dimworld may be,
  you'll always get a 1D-grid in a 1D-world.  Unlike SGrid, however,
@@ -200,24 +87,24 @@ struct OneDInNDGridFamily
  and provides local mesh refinement and coarsening.
  */
 template<int dimworld>
-class OneDInNDGrid : public GridDefaultImplementation <1, dimworld, double,OneDInNDGridFamily<1, dimworld> >
+class OneDInNDGrid : public GridDefaultImplementation <1, dimworld, double,OneDInNDGridFamily<1,dimworld> >
 {
     // Grid and world dimension are hardwired in this grid
-    enum {dim = 1};
+  enum {dim = 1};
 
     typedef OneDInNDGrid<dimworld> ThisClass;
 
-    friend class OneDInNDGridLevelIteratorFactory <0>;
-    friend class OneDInNDGridLevelIteratorFactory <1>;
-    friend class OneDInNDGridEntity <0,dim,ThisClass>;
-    friend class OneDInNDGridEntity <dim,dim,ThisClass>;
-    friend class OneDInNDGridHierarchicIterator<ThisClass>;
-    friend class OneDInNDGridLeafIntersectionIterator<ThisClass>;
-    friend class OneDInNDGridLevelIntersectionIterator<ThisClass>;
+  friend class OneDInNDGridLevelIteratorFactory <0>;
+  friend class OneDInNDGridLevelIteratorFactory <1>;
+    template <int codim_, int dim_, class GridImp_>
+    friend class OneDInNDGridEntity;
+    friend class OneDInNDGridHierarchicIterator<OneDInNDGrid<dimworld> >;
+    friend class OneDInNDGridLeafIntersectionIterator<const OneDInNDGrid<dimworld> >;
+    friend class OneDInNDGridLevelIntersectionIterator<const OneDInNDGrid<dimworld> >;
 
-    friend class OneDInNDGridLevelIndexSet<const ThisClass>;
-    friend class OneDInNDGridLeafIndexSet<const ThisClass>;
-    friend class OneDInNDGridIdSet<const ThisClass>;
+    friend class OneDInNDGridLevelIndexSet<const OneDInNDGrid<dimworld> >;
+    friend class OneDInNDGridLeafIndexSet<const OneDInNDGrid<dimworld> >;
+    friend class OneDInNDGridIdSet<const OneDInNDGrid<dimworld> >;
 
     template <int codim_, PartitionIteratorType PiType_, class GridImp_>
     friend class OneDInNDGridLeafIterator;
@@ -225,36 +112,41 @@ class OneDInNDGrid : public GridDefaultImplementation <1, dimworld, double,OneDI
     template<int codim_, int dim_, class GridImp_, template<int,int,class> class EntityImp_>
     friend class Entity;
 
-    /** \brief The type used by to store coordinates */
-    typedef double OneDInNDCType;
+  typedef double OneDInNDInNDCType;
 
     // **********************************************************
     // The Interface Methods
     // **********************************************************
 
-public:
+public:  
+
+    /** \brief The type used to store coordinates
+
+    If you ever want OneDInNDGrid to use a different type for coordinates,
+    you need to change this type and the third template argument of
+    the base class.
+    */
+    typedef double ctype;
+
     /** \brief GridFamily of OneDInNDGrid */
     typedef OneDInNDGridFamily<dim,dimworld> GridFamily;
 
-    /** \brief Provides the standard grid types */
+    //Provides the standard grid types 
     typedef typename GridFamily::Traits Traits;
-    //typedef typename OneDInNDGridFamily<dim,dimworld>::Traits Traits;
 
     /** \brief Constructor with an explicit set of coordinates */
-//    OneDInNDGrid(const std::vector<OneDInNDCType>& coords);
+  //    OneDInNDGrid(const std::vector<ctype>& coords);
 
     /** \brief Constructor for a uniform grid */
-//    OneDInNDGrid(int numElements, double leftBoundary, double rightBoundary);
-
-    /** \brief Constructor for a uniform grid */
+    //OneDInNDGrid(int numElements, const ctype& leftBoundary, const ctype& rightBoundary);
     OneDInNDGrid(int numElements, FieldVector<double, dimworld> leftBoundary, FieldVector<double, dimworld> rightBoundary);
 
-    //! Destructor
+    //! Destructor 
     ~OneDInNDGrid();
+   
+    /** \brief Return maximum level defined in this grid. 
 
-    /** \brief Return maximum level defined in this grid.
-
-    Levels are numbered 0 ... maxlevel with 0 the coarsest level.
+    Levels are numbered 0 ... maxlevel with 0 the coarsest level.  
     */
     int maxLevel() const {return vertices.size()-1;}
 
@@ -298,7 +190,7 @@ public:
 
         if (codim==0)
             return elements[level].size();
-
+        
         return vertices[level].size();
     }
 
@@ -364,7 +256,7 @@ public:
     {
         if (! levelIndexSets_[level]) {
             levelIndexSets_[level] =
-                new OneDInNDGridLevelIndexSet<const ThisClass>(*this, level);
+                new OneDInNDGridLevelIndexSet<const OneDInNDGrid<dimworld> >(*this, level);
             levelIndexSets_[level]->update();
         }
 
@@ -381,19 +273,19 @@ public:
     /** \brief Mark entity for refinement
      *
      * \param refCount if >0 mark for refinement, if <0 mark for coarsening
-     * \param e EntityPointer to the entity you want to mark
+     * \param e Entity to the entity you want to mark
      *
      * \return True, if marking was successfull
      */
-    bool mark(int refCount, const typename Traits::template Codim<0>::EntityPointer& e );
+    bool mark(int refCount, const typename Traits::template Codim<0>::Entity& e );
 
-    /** \brief return current adaptation marker of given entity
-
+    /** \brief return current adaptation marker of given entity 
+      
         \param e Entity to the entity you want to mark
-
+        
         \return int current adaptation marker of entity pointer e
     */
-    int getMark(const typename Traits::template Codim<0>::EntityPointer & e ) const;
+    int getMark(const typename Traits::template Codim<0>::Entity& e ) const;
 
     //! Does nothing except return true if some element has been marked for refinement
     bool preAdapt();
@@ -406,11 +298,11 @@ public:
 
     /** \brief grid identification */
     std::string name () const { return "OneDInNDGrid"; }
-
+    
     // **********************************************************
     // End of Interface Methods
     // **********************************************************
-
+    
        /** \brief The different forms of grid refinement supported by OneDInNDGrid */
     enum RefinementType {
         /** \brief New level consists only of the refined elements */
@@ -442,7 +334,7 @@ public:
   {
   }
 
-  const CollectiveCommunication<ThisClass>& comm () const
+  const CollectiveCommunication<ThisClass> &comm () const
   {
   return ccobj;
   }
@@ -458,31 +350,32 @@ private:
     unsigned int getNextFreeId(int codim) {
         return (codim==0) ? freeElementIdCounter_++ : freeVertexIdCounter_++;
     }
-
+        
    //! The type of grid refinement currently in use
     RefinementType refinementType_;
 
-    OneDInNDEntityImp<0, dimworld>* getLeftUpperVertex(const OneDInNDEntityImp<1, dimworld>* eIt);
+  typename OneDInNDGridList<OneDInNDEntityImp<0, dimworld> >::iterator getLeftUpperVertex(const OneDInNDEntityImp<1,dimworld>* eIt);
 
-    OneDInNDEntityImp<0, dimworld>* getRightUpperVertex(const OneDInNDEntityImp<1, dimworld>* eIt);
+  typename OneDInNDGridList<OneDInNDEntityImp<0, dimworld> >::iterator getRightUpperVertex(const OneDInNDEntityImp<1,dimworld>* eIt);
 
-    /** \brief Returns an iterator the the first element on the left of
+    /** \brief Returns an iterator to the first element on the left of
         the input element which has sons.
     */
-    OneDInNDEntityImp<1, dimworld>* getLeftNeighborWithSon(OneDInNDEntityImp<1, dimworld>* eIt);
+  typename OneDInNDGridList<OneDInNDEntityImp<1, dimworld> >::iterator getLeftNeighborWithSon(typename OneDInNDGridList<OneDInNDEntityImp<1,dimworld> >::iterator eIt);
 
     // The vertices of the grid hierarchy
-    std::vector<List<OneDInNDEntityImp<0, dimworld> > > vertices;
+  std::vector<OneDInNDGridList<OneDInNDEntityImp<0, dimworld> > > vertices;
+    //std::vector<std::list<OneDInNDEntityImp<0, dimworld> > > vertices;
 
     // The elements of the grid hierarchy
-    std::vector<List<OneDInNDEntityImp<1, dimworld> > > elements;
+  std::vector<OneDInNDGridList<OneDInNDEntityImp<1, dimworld> > > elements;
 
     // Our set of level indices
-    mutable std::vector<OneDInNDGridLevelIndexSet<const ThisClass>* > levelIndexSets_;
+    mutable std::vector<OneDInNDGridLevelIndexSet<const OneDInNDGrid<dimworld> >* > levelIndexSets_;
 
-    OneDInNDGridLeafIndexSet<const ThisClass> leafIndexSet_;
+    OneDInNDGridLeafIndexSet<const OneDInNDGrid<dimworld> > leafIndexSet_;
 
-    OneDInNDGridIdSet<const ThisClass> idSet_;
+    OneDInNDGridIdSet<const OneDInNDGrid<dimworld> > idSet_;
 
     unsigned int freeVertexIdCounter_;
 
@@ -495,7 +388,7 @@ namespace Capabilities
   /** \struct hasBackupRestoreFacilities
   \ingroup OneDInNDGrid
   */
-
+  
   /** \struct IsUnstructured
   \ingroup OneDInNDGrid
   */
@@ -508,7 +401,7 @@ namespace Capabilities
   {
     static const bool v = true;
   };
-
+  
   /** \brief OneDInNDGrid is not parallel
   \ingroup OneDInNDGrid
   */
