@@ -25,8 +25,8 @@ int main(int argc, char** argv)
     grid.globalRefine(1);
 
     typedef GridType::Codim<0>::LeafIterator Iterator;
-    Iterator ebeginit = grid.leafbegin<0>();
-    Iterator eendit = grid.leafend<0>();
+    Iterator ebeginit = grid.leafView().begin<0>();
+    Iterator eendit = grid.leafView().end<0>();
     Iterator lastit(eendit);
     for (Iterator it = ebeginit; it != eendit; ++it)
       lastit = it;
@@ -57,7 +57,7 @@ int main(int argc, char** argv)
     std::cout << "element center: local = " << local << ", global = " << global << std::endl;
 
     // intersection iterator type
-    typedef GridType::Codim<0>::LeafIntersectionIterator IntersectionIterator;
+    typedef GridType::LeafGridView::IntersectionIterator IntersectionIterator;
 
     IntersectionIterator isend = it->ileafend();
     for (IntersectionIterator is = it->ileafbegin(); is!=isend; ++is)
