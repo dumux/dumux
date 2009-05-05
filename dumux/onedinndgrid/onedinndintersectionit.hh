@@ -2,8 +2,8 @@
 #define DUNE_ONE_D_GRID_INTERSECTIONIT_HH
 
 /** \file
- * \brief The OneDInNDGridIntersectionIterator class
- */
+* \brief The OneDInNDGridIntersectionIterator class
+*/
 
 namespace Dune {
 
@@ -11,54 +11,54 @@ namespace Dune {
 //
 // --OneDInNDGridIntersectionIterator
 // --IntersectionIterator
-  /** \brief Iterator over all element neighbors
-   * \ingroup OneDInNDGrid
-  Mesh entities of codimension 0 ("elements") allow to visit all neighbors, where
-  a neighbor is an entity of codimension 0 which has a common entity of codimension
-  These neighbors are accessed via a IntersectionIterator. This allows the implement
-  non-matching meshes. The number of neigbors may be different from the number
-  of an element!
- */
+/** \brief Iterator over all element neighbors
+* \ingroup OneDInNDGrid
+Mesh entities of codimension 0 ("elements") allow to visit all neighbors, where
+a neighbor is an entity of codimension 0 which has a common entity of codimension
+These neighbors are accessed via a IntersectionIterator. This allows the implement
+non-matching meshes. The number of neigbors may be different from the number
+of an element!
+*/
 template<class GridImp>
 class OneDInNDGridLevelIntersectionIterator
 {
-  enum { dim=GridImp::dimension };
-  enum { dimworld=GridImp::dimensionworld };
+    enum { dim=GridImp::dimension };
+    enum { dimworld=GridImp::dimensionworld };
 
     friend class OneDInNDGridEntity<0,dim,GridImp>;
 
     //! Constructor for a given grid entity and a given neighbor
-  OneDInNDGridLevelIntersectionIterator(OneDInNDEntityImp<1, dimworld>* center, int nb) 
-        : center_(center), neighbor_(nb),
-          intersectionSelfLocal_(OneDInNDGridGeometry<0,dimworld,GridImp>()),
-          intersectionNeighborLocal_(OneDInNDGridGeometry<0,dimworld,GridImp>()),
-          intersectionGlobal_(OneDInNDGridGeometry<0,dimworld,GridImp>())
+    OneDInNDGridLevelIntersectionIterator(OneDInNDEntityImp<1, dimworld>* center, int nb)
+    : center_(center), neighbor_(nb),
+    intersectionSelfLocal_(OneDInNDGridGeometry<0,dimworld,GridImp>()),
+    intersectionNeighborLocal_(OneDInNDGridGeometry<0,dimworld,GridImp>()),
+    intersectionGlobal_(OneDInNDGridGeometry<0,dimworld,GridImp>())
     {}
 
     /** \brief Constructor creating the 'one-after-last'-iterator */
-  OneDInNDGridLevelIntersectionIterator(OneDInNDEntityImp<1,dimworld>* center) 
-        : center_(center), neighbor_(2),
-          intersectionSelfLocal_(OneDInNDGridGeometry<0,dimworld,GridImp>()),
-          intersectionNeighborLocal_(OneDInNDGridGeometry<0,dimworld,GridImp>()),
-          intersectionGlobal_(OneDInNDGridGeometry<0,dimworld,GridImp>())
+    OneDInNDGridLevelIntersectionIterator(OneDInNDEntityImp<1,dimworld>* center)
+    : center_(center), neighbor_(2),
+    intersectionSelfLocal_(OneDInNDGridGeometry<0,dimworld,GridImp>()),
+    intersectionNeighborLocal_(OneDInNDGridGeometry<0,dimworld,GridImp>()),
+    intersectionGlobal_(OneDInNDGridGeometry<0,dimworld,GridImp>())
     {}
 
 public:
 
-  typedef Dune::Geometry<0, dimworld, const Dune::OneDInNDGrid<dimworld>, Dune::OneDInNDGridGeometry> Geometry;
-  //typedef typename GridImp::template Codim<1>::Geometry Geometry;
+    typedef Geometry<0, dimworld, const OneDInNDGrid<dimworld>, Dune::OneDInNDGridGeometry> Geometry;
+    //typedef typename GridImp::template Codim<1>::Geometry Geometry;
     typedef typename GridImp::template Codim<1>::LocalGeometry LocalGeometry;
     typedef typename GridImp::template Codim<0>::EntityPointer EntityPointer;
     typedef typename GridImp::template Codim<0>::Entity Entity;
-    typedef Dune::Intersection<const GridImp, Dune::OneDInNDGridLevelIntersectionIterator> Intersection;
+    typedef Intersection<const GridImp, Dune::OneDInNDGridLevelIntersectionIterator> Intersection;
 
-  //! The Destructor 
-  ~OneDInNDGridLevelIntersectionIterator() {};
+    //! The Destructor
+    ~OneDInNDGridLevelIntersectionIterator() {};
 
-  //! equality
-  bool equals(const OneDInNDGridLevelIntersectionIterator<GridImp>& other) const {
-      return (center_ == other.center_) && (neighbor_ == other.neighbor_);
-  }
+    //! equality
+    bool equals(const OneDInNDGridLevelIntersectionIterator<GridImp>& other) const {
+        return (center_ == other.center_) && (neighbor_ == other.neighbor_);
+    }
 
     //! prefix increment
     void increment() {
@@ -71,19 +71,19 @@ public:
         return reinterpret_cast<const Intersection&>(*this);
     }
 
-  OneDInNDEntityImp<1, dimworld>* target() const {
+    OneDInNDEntityImp<1, dimworld>* target() const {
         const bool isValid = center_ && neighbor_>=0 && neighbor_<2;
 
         if (!isValid)
             return center_;
-        else if (neighbor_==0) 
+        else if (neighbor_==0)
             return center_->pred_;
-        else 
+        else
             return center_->succ_;
 
     }
 
-  //! return true if intersection is with boundary.
+    //! return true if intersection is with boundary.
     bool boundary () const {
 
         // Check whether we're on the left boundary
@@ -107,7 +107,7 @@ public:
             // We have reached level 0.  If there is no element of the left
             // we're truly on the boundary
             return !ancestor->pred_;
-        } 
+        }
 
         // ////////////////////////////////
         //   Same for the right boundary
@@ -123,14 +123,14 @@ public:
             // Check if we're the left son of our father
             if (ancestor != ancestor->father_->sons_[1])
                 return false;
-            
+
             ancestor = ancestor->father_;
         }
 
         // We have reached level 0.  If there is no element of the left
         // we're truly on the boundary
         return !ancestor->succ_;
-        
+
     }
 
     //! return true if across the edge a neighbor on this level exists
@@ -138,54 +138,54 @@ public:
         assert(neighbor_ >= 0 && neighbor_ < 2);
 
         return (neighbor_==0)
-            ? center_->pred_ && center_->pred_->vertex_[1] == center_->vertex_[0]
-            : center_->succ_ && center_->succ_->vertex_[0] == center_->vertex_[1];
+        ? center_->pred_ && center_->pred_->vertex_[1] == center_->vertex_[0]
+                                                                           : center_->succ_ && center_->succ_->vertex_[0] == center_->vertex_[1];
 
     }
 
-  //! return true if intersection is conform.
-  bool conforming () const {
-    return true;
-  }
+    //! return true if intersection is conform.
+    bool conforming () const {
+        return true;
+    }
 
-  //! return EntityPointer to the Entity on the inside of this intersection
-  //! (that is the Entity where we started this Iterator)
-  EntityPointer inside() const
+    //! return EntityPointer to the Entity on the inside of this intersection
+    //! (that is the Entity where we started this Iterator)
+    EntityPointer inside() const
     {
-      return OneDInNDGridEntityPointer<0,GridImp>(center_);
+        return OneDInNDGridEntityPointer<0,GridImp>(center_);
     }
 
-  //! return EntityPointer to the Entity on the outside of this intersection
-  //! (that is the neighboring Entity)
-  EntityPointer outside() const
+    //! return EntityPointer to the Entity on the outside of this intersection
+    //! (that is the neighboring Entity)
+    EntityPointer outside() const
     {
-      assert(neighbor());
-      return OneDInNDGridEntityPointer<0,GridImp>(target());
+        assert(neighbor());
+        return OneDInNDGridEntityPointer<0,GridImp>(target());
     }
-  
-  //! return information about the Boundary 
-  int boundaryId () const {
-    return 1;
-  }
- 
-  //! Here returned element is in LOCAL coordinates of the element
-  //! where iteration started.
+
+    //! return information about the Boundary
+    int boundaryId () const {
+        return 1;
+    }
+
+    //! Here returned element is in LOCAL coordinates of the element
+    //! where iteration started.
     const LocalGeometry &geometryInInside () const
     {
         GridImp::getRealImplementation(intersectionSelfLocal_).setPosition( (indexInInside() == 0) ? 0 : 1 );
         return intersectionSelfLocal_;
     }
 
-  //! intersection of codimension 1 of this neighbor with element where iteration started. 
-  //! Here returned element is in LOCAL coordinates of neighbor
+    //! intersection of codimension 1 of this neighbor with element where iteration started.
+    //! Here returned element is in LOCAL coordinates of neighbor
     const LocalGeometry &geometryInOutside () const
     {
         GridImp::getRealImplementation(intersectionNeighborLocal_).setPosition( (indexInInside() == 0) ? 1 : 0 );
         return intersectionNeighborLocal_;
     }
 
-  //! intersection of codimension 1 of this neighbor with element where iteration started. 
-  //! Here returned element is in GLOBAL coordinates of the element where iteration started.
+    //! intersection of codimension 1 of this neighbor with element where iteration started.
+    //! Here returned element is in GLOBAL coordinates of the element where iteration started.
     const Geometry &geometry () const
     {
         GridImp::getRealImplementation(intersectionGlobal_).target_ = center_->vertex_[neighbor_];
@@ -195,48 +195,65 @@ public:
     /** \brief obtain the type of reference element for this intersection */
     GeometryType type () const
     {
-      return GeometryType( 0 );
+        return GeometryType( 0 );
     }
 
-  //! local index of codim 1 entity in self where intersection is contained in 
+    //! local index of codim 1 entity in self where intersection is contained in
     int indexInInside () const
     {
-      return neighbor_;
+        return neighbor_;
     }
 
-  //! local index of codim 1 entity in neighbor where intersection is contained
+    //! local index of codim 1 entity in neighbor where intersection is contained
     int indexInOutside () const
     {
         // If numberInSelf is 0 then numberInNeighbor is 1 and vice versa
         return 1-neighbor_;
     }
-  
-  //! return outer normal
+
+    //! return outer normal
     const FieldVector<typename GridImp::ctype, dimworld>& outerNormal (const FieldVector<typename GridImp::ctype, dim-1>& local) const {
-        outerNormal_[0] = (neighbor_==0) ? -1 : 1;
+        //outerNormal_[0] = (neighbor_==0) ? -1 : 1;
+
+        Dune::FieldVector<typename GridImp::ctype, 0> localCoord(0);
+
+        GridImp::getRealImplementation(intersectionGlobal_).target_ = center_->vertex_[neighbor_];
+        //intersectionGlobal_.setToTarget(center_->vertex_[neighbor_]);
+        FieldVector<typename GridImp::ctype, dimworld> coordSelf = intersectionGlobal_.global(localCoord);
+
+        GridImp::getRealImplementation(intersectionGlobal_).target_ = center_->vertex_[1 - neighbor_];
+        //intersectionGlobal_.setToTarget(center_->vertex_[1 - neighbor_]);
+        FieldVector<typename GridImp::ctype, dimworld> coordOther = intersectionGlobal_.global(localCoord);
+
+        outerNormal_ = coordSelf - coordOther;
+
         return outerNormal_;
     }
 
-  //! Return outer normal scaled with the integration element
-  const FieldVector<typename GridImp::ctype, dimworld>& integrationOuterNormal (const FieldVector<typename GridImp::ctype, dim-1>& local) const
+    //! Return outer normal scaled with the integration element
+    const FieldVector<typename GridImp::ctype, dimworld>& integrationOuterNormal (const FieldVector<typename GridImp::ctype, dim-1>& local) const
     {
         return outerNormal(local);
     }
 
     //! return unit outer normal
     const FieldVector<typename GridImp::ctype, dimworld>& unitOuterNormal (const FieldVector<typename GridImp::ctype, dim-1>& local) const {
-        return outerNormal(local);
+        unitNormal_ = this->outerNormal(local);
+        unitNormal_ *= (1.0/unitNormal_.two_norm());
+
+        return unitNormal_;
     }
 
 private:
-  //**********************************************************
-  //  private methods 
-  //**********************************************************
+    //**********************************************************
+    //  private methods
+    //**********************************************************
 
-  OneDInNDEntityImp<1, dimworld>* center_;
- 
-    //! vector storing the outer normal 
+    OneDInNDEntityImp<1, dimworld>* center_;
+
+    //! vector storing the outer normal
     mutable FieldVector<typename GridImp::ctype, dimworld> outerNormal_;
+    mutable FieldVector<typename GridImp::ctype, dimworld> unitNormal_;
 
     /** \brief Count on which neighbor we are lookin' at.  Can be only 0 or 1. */
     int neighbor_;
@@ -248,7 +265,7 @@ private:
     /** \brief The geometry that's being returned when intersectionNeighborLocal() is called
     */
     mutable MakeableInterfaceObject<LocalGeometry> intersectionNeighborLocal_;
-    
+
     //! The geometry that's being returned when intersectionSelfGlobal() is called
     mutable MakeableInterfaceObject<Geometry> intersectionGlobal_;
 
@@ -258,48 +275,48 @@ private:
 template<class GridImp>
 class OneDInNDGridLeafIntersectionIterator
 {
-  enum { dim=GridImp::dimension };
-  enum { dimworld=GridImp::dimensionworld };
+    enum { dim=GridImp::dimension };
+    enum { dimworld=GridImp::dimensionworld };
 
     friend class OneDInNDGridEntity<0,dim,GridImp>;
 
     //! Constructor for a given grid entity and a given neighbor
-  OneDInNDGridLeafIntersectionIterator(OneDInNDEntityImp<1,dimworld>* center, int nb) 
-        : center_(center), neighbor_(nb),
-          intersectionSelfLocal_(OneDInNDGridGeometry<0,dimworld,GridImp>()),
+    OneDInNDGridLeafIntersectionIterator(OneDInNDEntityImp<1,dimworld>* center, int nb)
+    : center_(center), neighbor_(nb),
+    intersectionSelfLocal_(OneDInNDGridGeometry<0,dimworld,GridImp>()),
 
-          intersectionNeighborLocal_(OneDInNDGridGeometry<0,dimworld,GridImp>()),
+    intersectionNeighborLocal_(OneDInNDGridGeometry<0,dimworld,GridImp>()),
 
-          intersectionGlobal_(OneDInNDGridGeometry<0,dimworld,GridImp>())
+    intersectionGlobal_(OneDInNDGridGeometry<0,dimworld,GridImp>())
     {}
 
     /** \brief Constructor creating the 'one-after-last'-iterator */
-  OneDInNDGridLeafIntersectionIterator(OneDInNDEntityImp<1, dimworld>* center) 
-        : center_(center), neighbor_(2),
-          intersectionSelfLocal_(OneDInNDGridGeometry<0,dimworld,GridImp>()),
+    OneDInNDGridLeafIntersectionIterator(OneDInNDEntityImp<1, dimworld>* center)
+    : center_(center), neighbor_(2),
+    intersectionSelfLocal_(OneDInNDGridGeometry<0,dimworld,GridImp>()),
 
-          intersectionNeighborLocal_(OneDInNDGridGeometry<0,dimworld,GridImp>()),
+    intersectionNeighborLocal_(OneDInNDGridGeometry<0,dimworld,GridImp>()),
 
-          intersectionGlobal_(OneDInNDGridGeometry<0,dimworld,GridImp>())
+    intersectionGlobal_(OneDInNDGridGeometry<0,dimworld,GridImp>())
     {}
 
 public:
 
-  typedef Dune::Geometry<0, dimworld, const Dune::OneDInNDGrid<dimworld>, Dune::OneDInNDGridGeometry> Geometry;
-  typedef Dune::Geometry<0, dimworld, const Dune::OneDInNDGrid<dimworld>, Dune::OneDInNDGridGeometry> LocalGeometry;
-  //typedef typename GridImp::template Codim<1>::Geometry Geometry;
-  //typedef typename GridImp::template Codim<1>::LocalGeometry LocalGeometry;
+    typedef Geometry<0, dimworld, const OneDInNDGrid<dimworld>, Dune::OneDInNDGridGeometry> Geometry;
+    typedef Geometry LocalGeometry;
+    //typedef typename GridImp::template Codim<1>::Geometry Geometry;
+    //typedef typename GridImp::template Codim<1>::LocalGeometry LocalGeometry;
     typedef typename GridImp::template Codim<0>::EntityPointer EntityPointer;
     typedef typename GridImp::template Codim<0>::Entity Entity;
-    typedef Dune::Intersection<const GridImp, Dune::OneDInNDGridLeafIntersectionIterator> Intersection;
+    typedef Intersection<const GridImp, Dune::OneDInNDGridLeafIntersectionIterator> Intersection;
 
-  //! The Destructor 
-  ~OneDInNDGridLeafIntersectionIterator() {};
+    //! The Destructor
+    ~OneDInNDGridLeafIntersectionIterator() {};
 
-  //! equality
-  bool equals(const OneDInNDGridLeafIntersectionIterator<GridImp>& other) const {
-      return (center_ == other.center_) && (neighbor_ == other.neighbor_);
-  }
+    //! equality
+    bool equals(const OneDInNDGridLeafIntersectionIterator<GridImp>& other) const {
+        return (center_ == other.center_) && (neighbor_ == other.neighbor_);
+    }
 
     //! prefix increment
     void increment() {
@@ -312,27 +329,27 @@ public:
         return reinterpret_cast<const Intersection&>(*this);
     }
 
-  OneDInNDEntityImp<1, dimworld>* target() const {
+    OneDInNDEntityImp<1, dimworld>* target() const {
         const bool isValid = center_ && neighbor_>=0 && neighbor_<2;
 
         if (!isValid)
             return center_;
 
         if (neighbor_==0) {
-            
+
             // Get left leaf neighbor
             if (center_->pred_ && center_->pred_->vertex_[1] == center_->vertex_[0]) {
-                
-	      OneDInNDEntityImp<1, dimworld>* leftLeafNeighbor = center_->pred_;
+
+                OneDInNDEntityImp<1, dimworld>* leftLeafNeighbor = center_->pred_;
                 while (!leftLeafNeighbor->isLeaf()) {
-                    assert (leftLeafNeighbor->sons_[1] != NULL);	
+                    assert (leftLeafNeighbor->sons_[1] != NULL);
                     leftLeafNeighbor = leftLeafNeighbor->sons_[1];
                 }
                 return leftLeafNeighbor;
-                
+
             } else {
-                
-	      OneDInNDEntityImp<1, dimworld>* ancestor = center_;
+
+                OneDInNDEntityImp<1, dimworld>* ancestor = center_;
                 while (ancestor->father_) {
                     ancestor = ancestor->father_;
                     if (ancestor->pred_ && ancestor->pred_->vertex_[1] == ancestor->vertex_[0]) {
@@ -340,7 +357,7 @@ public:
                         return ancestor->pred_;
                     }
                 }
-                
+
                 DUNE_THROW(GridError, "Programming error, apparently we're on the left boundary, neighbor_==2 should not occur!");
             }
 
@@ -349,7 +366,7 @@ public:
             // Get right leaf neighbor
             if (center_->succ_ && center_->succ_->vertex_[0] == center_->vertex_[1]) {
 
-	      OneDInNDEntityImp<1, dimworld>* rightLeafNeighbor = center_->succ_;
+                OneDInNDEntityImp<1, dimworld>* rightLeafNeighbor = center_->succ_;
                 while (!rightLeafNeighbor->isLeaf()) {
                     assert (rightLeafNeighbor->sons_[0] != NULL);
                     rightLeafNeighbor = rightLeafNeighbor->sons_[0];
@@ -357,8 +374,8 @@ public:
                 return rightLeafNeighbor;
 
             } else {
-                
-	      OneDInNDEntityImp<1, dimworld>* ancestor = center_;
+
+                OneDInNDEntityImp<1, dimworld>* ancestor = center_;
                 while (ancestor->father_) {
                     ancestor = ancestor->father_;
                     if (ancestor->succ_ && ancestor->succ_->vertex_[0] == ancestor->vertex_[1]) {
@@ -374,7 +391,7 @@ public:
 
     }
 
-  //! return true if intersection is with boundary.
+    //! return true if intersection is with boundary.
     bool boundary () const {
 
         // Check whether we're on the left boundary
@@ -398,7 +415,7 @@ public:
             // We have reached level 0.  If there is no element of the left
             // we're truly on the boundary
             return !ancestor->pred_;
-        } 
+        }
 
         // ////////////////////////////////
         //   Same for the right boundary
@@ -414,14 +431,14 @@ public:
             // Check if we're the left son of our father
             if (ancestor != ancestor->father_->sons_[1])
                 return false;
-            
+
             ancestor = ancestor->father_;
         }
 
         // We have reached level 0.  If there is no element of the left
         // we're truly on the boundary
         return !ancestor->succ_;
-        
+
     }
 
     //! return true if across the edge an neighbor on this level exists
@@ -429,48 +446,48 @@ public:
         return !boundary();
     }
 
-  //! return true if intersection is conform.
-  bool conforming () const {
-    return true;
-  }
-
-  //! return EntityPointer to the Entity on the inside of this intersection
-  //! (that is the Entity where we started this Iterator)
-  EntityPointer inside() const
-    {
-      return OneDInNDGridEntityPointer<0,GridImp>(center_);
+    //! return true if intersection is conform.
+    bool conforming () const {
+        return true;
     }
 
-  //! return EntityPointer to the Entity on the outside of this intersection
-  //! (that is the neighboring Entity)
-  EntityPointer outside() const
+    //! return EntityPointer to the Entity on the inside of this intersection
+    //! (that is the Entity where we started this Iterator)
+    EntityPointer inside() const
     {
-      return OneDInNDGridEntityPointer<0,GridImp>(target());
+        return OneDInNDGridEntityPointer<0,GridImp>(center_);
     }
-  
-  //! return information about the Boundary 
-  int boundaryId () const {
-    return 1;
-  }
- 
-  //! Here returned element is in LOCAL coordinates of the element
-  //! where iteration started.
+
+    //! return EntityPointer to the Entity on the outside of this intersection
+    //! (that is the neighboring Entity)
+    EntityPointer outside() const
+    {
+        return OneDInNDGridEntityPointer<0,GridImp>(target());
+    }
+
+    //! return information about the Boundary
+    int boundaryId () const {
+        return 1;
+    }
+
+    //! Here returned element is in LOCAL coordinates of the element
+    //! where iteration started.
     const LocalGeometry &geometryInInside () const
     {
         GridImp::getRealImplementation(intersectionSelfLocal_).setPosition( (indexInInside() == 0) ? 0 : 1 );
         return intersectionSelfLocal_;
     }
 
-  //! intersection of codimension 1 of this neighbor with element where iteration started. 
-  //! Here returned element is in LOCAL coordinates of neighbor
+    //! intersection of codimension 1 of this neighbor with element where iteration started.
+    //! Here returned element is in LOCAL coordinates of neighbor
     const LocalGeometry &geometryInOutside () const
     {
         GridImp::getRealImplementation(intersectionNeighborLocal_).setPosition( (indexInInside() == 0) ? 1 : 0 );
         return intersectionNeighborLocal_;
     }
 
-  //! intersection of codimension 1 of this neighbor with element where iteration started. 
-  //! Here returned element is in GLOBAL coordinates of the element where iteration started.
+    //! intersection of codimension 1 of this neighbor with element where iteration started.
+    //! Here returned element is in GLOBAL coordinates of the element where iteration started.
     const Geometry &geometry () const
     {
         GridImp::getRealImplementation(intersectionGlobal_).target_ = center_->vertex_[neighbor_%2];
@@ -480,52 +497,69 @@ public:
     /** \brief obtain the type of reference element for this intersection */
     GeometryType type () const
     {
-      return GeometryType( 0 );
+        return GeometryType( 0 );
     }
 
-  //! local index of codim 1 entity in self where intersection is contained in 
+    //! local index of codim 1 entity in self where intersection is contained in
     int indexInInside () const
     {
-      return neighbor_ % 2;
+        return neighbor_ % 2;
     }
 
-  //! local index of codim 1 entity in neighbor where intersection is contained
+    //! local index of codim 1 entity in neighbor where intersection is contained
     int indexInOutside () const
     {
-      // If numberInSelf is 0 then numberInNeighbor is 1 and vice versa
-      return 1-(neighbor_ % 2);
+        // If numberInSelf is 0 then numberInNeighbor is 1 and vice versa
+        return 1-(neighbor_ % 2);
     }
-  
-  //! return outer normal
+
+    //! return outer normal
     const FieldVector<typename GridImp::ctype, dimworld>& outerNormal (const FieldVector<typename GridImp::ctype, dim-1>& local) const {
-        outerNormal_[0] = ((neighbor_%2)==0) ? -1 : 1;
+        //outerNormal_[0] = ((neighbor_%2)==0) ? -1 : 1;
+
+        Dune::FieldVector<typename GridImp::ctype, 0> localCoord(0);
+
+        GridImp::getRealImplementation(intersectionGlobal_).target_ = center_->vertex_[neighbor_%2];
+        //intersectionGlobal_.setToTarget(center_->vertex_[neighbor_]);
+        FieldVector<typename GridImp::ctype, dimworld> coordSelf = intersectionGlobal_.global(localCoord);
+
+        GridImp::getRealImplementation(intersectionGlobal_).target_ = center_->vertex_[1 - neighbor_%2];
+        //intersectionGlobal_.setToTarget(center_->vertex_[1 - neighbor_]);
+        FieldVector<typename GridImp::ctype, dimworld> coordOther = intersectionGlobal_.global(localCoord);
+
+        outerNormal_ = coordSelf - coordOther;
+
         return outerNormal_;
     }
 
-  //! Return outer normal scaled with the integration element
-  const FieldVector<typename GridImp::ctype, dimworld>& integrationOuterNormal (const FieldVector<typename GridImp::ctype, dim-1>& local) const
+    //! Return outer normal scaled with the integration element
+    const FieldVector<typename GridImp::ctype, dimworld>& integrationOuterNormal (const FieldVector<typename GridImp::ctype, dim-1>& local) const
     {
         return outerNormal(local);
     }
 
     //! return unit outer normal
     const FieldVector<typename GridImp::ctype, dimworld>& unitOuterNormal (const FieldVector<typename GridImp::ctype, dim-1>& local) const {
-        return outerNormal(local);
+        unitNormal_ = this->outerNormal(local);
+        unitNormal_ *= (1.0/unitNormal_.two_norm());
+
+        return unitNormal_;
     }
 
 private:
-  //**********************************************************
-  //  private methods 
-  //**********************************************************
+    //**********************************************************
+    //  private methods
+    //**********************************************************
 
-  OneDInNDEntityImp<1, dimworld>* center_;
- 
-    //! vector storing the outer normal 
+    OneDInNDEntityImp<1, dimworld>* center_;
+
+    //! vector storing the outer normal
     mutable FieldVector<typename GridImp::ctype, dimworld> outerNormal_;
+    mutable FieldVector<typename GridImp::ctype, dimworld> unitNormal_;
 
     /** \brief Count on which neighbor we are lookin' at
 
-    0,1 are the level neighbors, 2 and 3 are the leaf neighbors, 
+    0,1 are the level neighbors, 2 and 3 are the leaf neighbors,
     if they differ from the level neighbors. */
     int neighbor_;
 
@@ -536,10 +570,10 @@ private:
     /** \brief The geometry that's being returned when intersectionNeighborLocal() is called
     */
     mutable MakeableInterfaceObject<LocalGeometry> intersectionNeighborLocal_;
-    
+
     //! The geometry that's being returned when intersectionSelfGlobal() is called
     mutable MakeableInterfaceObject<Geometry> intersectionGlobal_;
-  //mutable MakeableInterfaceObject<OneDInNDGridGeometry<0,dimworld,GridImp> > intersectionGlobal_;
+    //mutable MakeableInterfaceObject<OneDInNDGridGeometry<0,dimworld,GridImp> > intersectionGlobal_;
 
 };
 

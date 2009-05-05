@@ -8,7 +8,7 @@
 #include <stack>
 
 namespace Dune {
-  
+
   //**********************************************************************
     //
     // --OneDInNDGridHierarchicIterator
@@ -22,63 +22,63 @@ namespace Dune {
     */
   template<class GridImp>
   class OneDInNDGridHierarchicIterator :
-    public Dune::OneDInNDGridEntityPointer <0,GridImp>
+    public OneDInNDGridEntityPointer <0,GridImp>
   {
     enum { dim = GridImp::dimension };
     enum { dimworld = GridImp::dimensionworld };
     friend class OneDInNDGridEntity<0,dim,GridImp>;
-    
+
     // Stack entry
     typedef typename OneDInNDGridList<OneDInNDEntityImp<1,dimworld> >::iterator StackEntry;
-    
+
   public:
-    
+
     typedef typename GridImp::template Codim<0>::Entity Entity;
-    
+
     //! Constructor
     OneDInNDGridHierarchicIterator(int maxlevel) : OneDInNDGridEntityPointer<0,GridImp>(OneDInNDGridNullIteratorFactory<1, dimworld>::null()),
                                                maxlevel_(maxlevel), elemStack()
     {}
-    
+
     //! prefix increment
     void increment() {
-      
+
       if (elemStack.empty())
 	return;
-      
+
       StackEntry old_target = elemStack.top();
       elemStack.pop();
-      
+
       // Traverse the tree no deeper than maxlevel
       if (old_target->level_ < maxlevel_) {
-	
+
 	// Load sons of old target onto the iterator stack
 	if (!old_target->isLeaf()) {
-	  
+
 	  elemStack.push(old_target->sons_[0]);
-          
+
 	  // Add the second son only if it is different from the first one
 	  // i.e. the son is not just a copy of the father
 	  if (old_target->sons_[0] != old_target->sons_[1])
 	    elemStack.push(old_target->sons_[1]);
-	  
+
 	}
-        
+
       }
-      
-      this->virtualEntity_.setToTarget((elemStack.empty()) 
+
+      this->virtualEntity_.setToTarget((elemStack.empty())
 				       ? OneDInNDGridNullIteratorFactory<1, dimworld>::null() : elemStack.top());
     }
-    
+
   private:
-    
-    //! max level to go down 
+
+    //! max level to go down
     int maxlevel_;
-    
+
     std::stack<StackEntry> elemStack;
-    
+
   };
-  
+
 }  // end namespace Dune
 
 #endif

@@ -14,10 +14,10 @@
  * \brief The OneDInNDGrid class
  */
 
-namespace Dune 
+namespace Dune
 {
 
-// forward declarations 
+// forward declarations
     template<int codim, int dim, class GridImp> class OneDInNDGridEntity;
     template<int codim, class GridImp> class OneDInNDGridEntityPointer;
     template<int codim, PartitionIteratorType pitype, class GridImp> class OneDInNDGridLevelIterator;
@@ -48,15 +48,15 @@ namespace Dune {
 template<int dim, int dimworld>
 struct OneDInNDGridFamily
 {
-    typedef GridTraits<dim,dimworld,Dune::OneDInNDGrid<dimworld> ,
+    typedef GridTraits<dim,dimworld,OneDInNDGrid<dimworld> ,
                        OneDInNDGridGeometry,
                        OneDInNDGridEntity,
                        OneDInNDGridEntityPointer,
                        OneDInNDGridLevelIterator,
-                       OneDInNDGridLeafIntersectionIterator, // leaf  intersection 
-                       OneDInNDGridLevelIntersectionIterator, // level intersection 
-                       OneDInNDGridLeafIntersectionIterator, // leaf  intersection iter 
-                       OneDInNDGridLevelIntersectionIterator, // level intersection iter 
+                       OneDInNDGridLeafIntersectionIterator, // leaf  intersection
+                       OneDInNDGridLevelIntersectionIterator, // level intersection
+                       OneDInNDGridLeafIntersectionIterator, // leaf  intersection iter
+                       OneDInNDGridLevelIntersectionIterator, // level intersection iter
                        OneDInNDGridHierarchicIterator,
                        OneDInNDGridLeafIterator,
                        OneDInNDGridLevelIndexSet<const OneDInNDGrid<dimworld> >,
@@ -65,7 +65,7 @@ struct OneDInNDGridFamily
                        unsigned int,
                        OneDInNDGridIdSet<const OneDInNDGrid<dimworld> >,
                        unsigned int,
-                       CollectiveCommunication<Dune::OneDInNDGrid<dimworld> > > 
+                       CollectiveCommunication<OneDInNDGrid<dimworld> > >
   Traits;
 };
 
@@ -79,7 +79,7 @@ struct OneDInNDGridFamily
  \brief [<em> provides \ref Dune::Grid </em>]
  Onedimensional adaptive grid
  \ingroup GridImplementations
- 
+
  This implementation of the grid interface provides one-dimensional
  grids only.  No matter what the values of dim and dimworld may be,
  you'll always get a 1D-grid in a 1D-world.  Unlike SGrid, however,
@@ -118,7 +118,7 @@ class OneDInNDGrid : public GridDefaultImplementation <1, dimworld, double,OneDI
     // The Interface Methods
     // **********************************************************
 
-public:  
+public:
 
     /** \brief The type used to store coordinates
 
@@ -131,7 +131,7 @@ public:
     /** \brief GridFamily of OneDInNDGrid */
     typedef OneDInNDGridFamily<dim,dimworld> GridFamily;
 
-    //Provides the standard grid types 
+    //Provides the standard grid types
     typedef typename GridFamily::Traits Traits;
 
     /** \brief Constructor with an explicit set of coordinates */
@@ -141,12 +141,12 @@ public:
     //OneDInNDGrid(int numElements, const ctype& leftBoundary, const ctype& rightBoundary);
     OneDInNDGrid(int numElements, FieldVector<double, dimworld> leftBoundary, FieldVector<double, dimworld> rightBoundary);
 
-    //! Destructor 
+    //! Destructor
     ~OneDInNDGrid();
-   
-    /** \brief Return maximum level defined in this grid. 
 
-    Levels are numbered 0 ... maxlevel with 0 the coarsest level.  
+    /** \brief Return maximum level defined in this grid.
+
+    Levels are numbered 0 ... maxlevel with 0 the coarsest level.
     */
     int maxLevel() const {return vertices.size()-1;}
 
@@ -190,7 +190,7 @@ public:
 
         if (codim==0)
             return elements[level].size();
-        
+
         return vertices[level].size();
     }
 
@@ -279,10 +279,10 @@ public:
      */
     bool mark(int refCount, const typename Traits::template Codim<0>::Entity& e );
 
-    /** \brief return current adaptation marker of given entity 
-      
+    /** \brief return current adaptation marker of given entity
+
         \param e Entity to the entity you want to mark
-        
+
         \return int current adaptation marker of entity pointer e
     */
     int getMark(const typename Traits::template Codim<0>::Entity& e ) const;
@@ -298,11 +298,11 @@ public:
 
     /** \brief grid identification */
     std::string name () const { return "OneDInNDGrid"; }
-    
+
     // **********************************************************
     // End of Interface Methods
     // **********************************************************
-    
+
        /** \brief The different forms of grid refinement supported by OneDInNDGrid */
     enum RefinementType {
         /** \brief New level consists only of the refined elements */
@@ -350,7 +350,7 @@ private:
     unsigned int getNextFreeId(int codim) {
         return (codim==0) ? freeElementIdCounter_++ : freeVertexIdCounter_++;
     }
-        
+
    //! The type of grid refinement currently in use
     RefinementType refinementType_;
 
@@ -388,7 +388,7 @@ namespace Capabilities
   /** \struct hasBackupRestoreFacilities
   \ingroup OneDInNDGrid
   */
-  
+
   /** \struct IsUnstructured
   \ingroup OneDInNDGrid
   */
@@ -401,7 +401,7 @@ namespace Capabilities
   {
     static const bool v = true;
   };
-  
+
   /** \brief OneDInNDGrid is not parallel
   \ingroup OneDInNDGrid
   */
@@ -441,5 +441,7 @@ namespace Capabilities
 }
 
 } // namespace Dune
+
+#include "onedinndgrid.cc"
 
 #endif

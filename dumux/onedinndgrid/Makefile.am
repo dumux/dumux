@@ -2,12 +2,13 @@
 
 noinst_LTLIBRARIES = libonedinndgrid.la
 
-libonedinndgrid_la_SOURCES = onedinndgrid.cc nulliteratorfactory.cc
+libonedinndgrid_la_SOURCES = nulliteratorfactory.cc
+libonedinndgrid_la_LIBADD = $(DUNE_COMMON_LIBS)
 
 onedinndgriddir = $(includedir)/dune/dumux/onedinndgrid/
-onedinndgrid_HEADERS = \
+onedinndgrid_HEADERS = nulliteratorfactory.hh \
    onedinndgrid.hh onedinndgridgeometry.hh onedinndgridentity.hh onedinndgridhieriterator.hh \
    onedinndgridleveliterator.hh onedinndintersectionit.hh onedinndgridentitypointer.hh \
-   onedinndgridindexsets.hh onedinndgridleafiterator.hh nulliteratorfactory.hh
+   onedinndgridindexsets.hh onedinndgridleafiterator.hh 
 
 include $(top_srcdir)/am/global-rules
