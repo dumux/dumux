@@ -359,7 +359,7 @@ void Decoupled2p2c<Grid, Scalar>::assemble(bool first, const Scalar t=0)
         }
         else
         {
-            if (dV_[globalIdxi][0] == 0) volumeDerivatives(globalPos, *eIt, localPos, Ti, dV_[globalIdxi][0], dV_[globalIdxi][1], dV_dp);
+            if (dV_[globalIdxi][0] == 0) volumeDerivatives(globalPos, *eIt, localPos, Ti, dV_[globalIdxi][0], dV_[globalIdxi][1], dV_[globalIdxi][2]);
 
             dV_dm1 = dV_[globalIdxi][0];
             dV_dm2 = dV_[globalIdxi][1];

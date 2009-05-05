@@ -73,6 +73,7 @@ class Multiphysics2p2c
     // data typedefs
     typedef FieldMatrix<double,1,1> MB;
     typedef BCRSMatrix<MB> MatrixType;
+    typedef FieldMatrix<ct,dim,dim> FMatrix;
 
 public:
     typedef BlockVector< FieldVector<Scalar,1> > RepresentationType;
@@ -210,6 +211,8 @@ private:
     void flashCalculation(double Z1, double p, double temp, double poro, double& sat, double& C1, double& C2, double& Xw1, double& Xn1);
 
     void satFlash(double sat, double p, double temp, double poro, double& C1, double& C2, double& Xw1, double& Xn1);
+
+    FMatrix harmonicMeanK (FieldMatrix<ct,dim,dim>& Ki, const FieldMatrix<ct,dim,dim>& Kj) const;
 
     //********************************
     // private variables declarations
@@ -419,10 +422,6 @@ void Multiphysics2p2c<Grid, Scalar>::assemble(bool first, const Scalar t=0)
             integrationOuterNormal *= ReferenceElements<ct,dim-1>::general(gtf).volume(); //normal vector scaled with volume
             double faceVol = isIt->geometry().volume(); // get face volume
 
-            // compute directed permeability vector Ki.n
-            FieldVector<ct,dim> Kni(0);
-            Ki.umv(unitOuterNormal, Kni);
-
             // handle interior face
             if (isIt->neighbor())
             {
@@ -447,22 +446,10 @@ void Multiphysics2p2c<Grid, Scalar>::assemble(bool first, const Scalar t=0)
                 // get absolute permeability
                 FieldMatrix<ct,dim,dim> Kj(problem.soil.K(nbGlobalPos, *outside, nblocalPos));
 
-                // compute vectorized permeabilities
-                FieldVector<ct,dim> Knj(0);
-                Kj.umv(unitOuterNormal, Knj);
-                double K_n_i = Kni * unitOuterNormal;
-                double K_n_j = Knj * unitOuterNormal;
-                double Kn    = 2 * K_n_i * K_n_j / (K_n_i + K_n_j);
-                // compute permeability tangential to intersection and take arithmetic mean
-                FieldVector<ct,dim> uON = unitOuterNormal;
-                FieldVector<ct,dim> K_t_i = Kni - (uON *= K_n_i);
-                uON = unitOuterNormal;
-                FieldVector<ct,dim> K_t_j = Knj - (uON *= K_n_j);
-                FieldVector<ct,dim> Kt = (K_t_i += K_t_j);
-                Kt *= 0.5;
-                // Build vectorized averaged permeability
-                uON = unitOuterNormal;
-                FieldVector<ct,dim> K = (Kt += (uON *=Kn));
+                // compute mean permeability
+                FieldMatrix<ct,dim,dim> K_(harmonicMeanK(Ki, Kj));
+                FieldVector<ct,dim> K(0);
+                K_.umv(unitOuterNormal,K);
 
                 // phase densities in cell in neighbor
                 double rho_w_I = 1 / Vw;
@@ -616,14 +603,17 @@ void Multiphysics2p2c<Grid, Scalar>::assemble(bool first, const Scalar t=0)
                 {
                     double pressBC = problem.dirichlet(faceGlobalPos, *eIt, facelocalDim);
 
+                    FieldVector<ct,dim> K(0);
+                    Ki.umv(unitOuterNormal,K);
+
                     // distance vector to boundary face
                     FieldVector<ct,dimworld> distVec(faceGlobalPos - globalPos);
                     double dist = distVec.two_norm();
                     if (first)
                     {
-                        A[globalIdxi][globalIdxi] += lambdaI * faceVol * (Kni * distVec) / (dist * dist);
-                        f[globalIdxi] += lambdaI * faceVol * pressBC * (Kni * distVec) / (dist * dist);
-                        f[globalIdxi] -= (fw_I * problem.variables.density_wet[globalIdxi] + fn_I * problem.variables.density_nonwet[globalIdxi]) * lambdaI * faceVol * (Kni * gravity);
+                        A[globalIdxi][globalIdxi] += lambdaI * faceVol * (K * distVec) / (dist * dist);
+                        f[globalIdxi] += lambdaI * faceVol * pressBC * (K * distVec) / (dist * dist);
+                        f[globalIdxi] -= (fw_I * problem.variables.density_wet[globalIdxi] + fn_I * problem.variables.density_nonwet[globalIdxi]) * lambdaI * faceVol * (K * gravity);
                     }
                     else
                     {
@@ -675,10 +665,10 @@ void Multiphysics2p2c<Grid, Scalar>::assemble(bool first, const Scalar t=0)
                             else
                                 lambdaN = (1. - satBound) / viscosityN;
 
-                            A[globalIdxi][globalIdxi] += (lambdaW + lambdaN) * faceVol * (Kni * distVec) / (dist * dist);
-                            double rightentry = (rho_w * lambdaW + rho_n * lambdaN) * faceVol * (Kni * gravity);
+                            A[globalIdxi][globalIdxi] += (lambdaW + lambdaN) * faceVol * (K * distVec) / (dist * dist);
+                            double rightentry = (rho_w * lambdaW + rho_n * lambdaN) * faceVol * (K * gravity);
                             f[globalIdxi] -= rightentry;
-                            f[globalIdxi] += (lambdaW + lambdaN) * faceVol * pressBC * (Kni * distVec) / (dist * dist);
+                            f[globalIdxi] += (lambdaW + lambdaN) * faceVol * pressBC * (K * distVec) / (dist * dist);
                         }
                         else
                         {
@@ -712,9 +702,9 @@ void Multiphysics2p2c<Grid, Scalar>::assemble(bool first, const Scalar t=0)
                             }
 
                             double entry = lambdaW * dV_w + lambdaN * dV_n;
-                            entry *= fabs(faceVol * (Kni * distVec) / (dist * dist));
+                            entry *= fabs(faceVol * (K * distVec) / (dist * dist));
                             double rightentry = rho_w * lambdaW * dV_w + rho_n *lambdaN * dV_n;
-                            rightentry *= faceVol * (Kni * gravity);
+                            rightentry *= faceVol * (K * gravity);
 
                             // set diagonal entry and right hand side entry
                             A[globalIdxi][globalIdxi] += entry;
@@ -1020,25 +1010,10 @@ int Multiphysics2p2c<Grid,Scalar>::concentrationUpdate(const Scalar t, Scalar& d
                 // get absolute permeability
                 FieldMatrix<ct,dim,dim> Kj(problem.soil.K(nbGlobalPos, *outside, nbLocalPos));
 
-                // compute vectorized permeabilities
-                FieldVector<ct,dim> Kni(0);
-                FieldVector<ct,dim> Knj(0);
-                Ki.umv(unitOuterNormal, Kni);
-                Kj.umv(unitOuterNormal, Knj);
-                // compute permeability normal to intersection and take harmonic mean
-                double K_n_i = Kni * unitOuterNormal;
-                double K_n_j = Knj * unitOuterNormal;
-                double Kn    = 2 * K_n_i * K_n_j / (K_n_i + K_n_j);
-                // compute permeability tangential to intersection and take arithmetic mean
-                FieldVector<ct,dim> uON = unitOuterNormal;
-                FieldVector<ct,dim> K_t_i = Kni - (uON *= K_n_i);
-                uON = unitOuterNormal;
-                FieldVector<ct,dim> K_t_j = Knj - (uON *= K_n_j);
-                FieldVector<ct,dim> Kt = (K_t_i += K_t_j);
-                Kt *= 0.5;
-                // Build vectorized averaged permeability
-                uON = unitOuterNormal;
-                FieldVector<ct,dim> K = (Kt += (uON *=Kn));
+                // compute mean permeability
+                FieldMatrix<ct,dim,dim> K_(harmonicMeanK(Ki, Kj));
+                FieldVector<ct,dim> K(0);
+                K_.umv(unitOuterNormal,K);
 
                 double rho_w = (rho_w_I + rho_w_J) / 2;
                 double rho_n = (rho_n_I + rho_n_J) / 2;
@@ -1452,6 +1427,24 @@ void Multiphysics2p2c<Grid,Scalar>::postProcessUpdate(double t, double dt)
     subdomain = nextsubdomain;
 
     timestep = dt;
+}
+
+
+// harmonic mean of the permeability computed directly
+template<class Grid, class Scalar>
+typename Multiphysics2p2c<Grid,Scalar>::FMatrix Multiphysics2p2c<Grid,Scalar>::harmonicMeanK (FMatrix& Ki, const FMatrix& Kj) const
+{
+    double eps = 1e-20;
+
+    for (int kx=0; kx<dim; kx++){
+        for (int ky=0; ky<dim; ky++){
+            if (Ki[kx][ky] != Kj[kx][ky])
+            {
+                Ki[kx][ky] = 2 / (1/(Ki[kx][ky]+eps) + (1/(Kj[kx][ky]+eps)));
+            }
+        }
+    }
+    return Ki;
 }
 
 }//end namespace Dune
