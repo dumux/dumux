@@ -603,8 +603,8 @@ public:
             /(1. - soil_.Sr_w(globalPos, element, localPos, temperature) - soil_.Sr_n(globalPos, element, localPos, temperature));
 
         //regularisation
-        if (Se > 1) return 0.0;
-        if (Se < epsKr_) return 1.0;
+        if (Se > 1) return 1.0;
+        if (Se < epsKr_) return 0.0;
 
         double lambda = soil_.paramRelPerm(globalPos, element, localPos, temperature)[0];
         double exponent = (2. + lambda) / lambda;
