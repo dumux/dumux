@@ -42,52 +42,8 @@ struct OneDInNDGridLevelIteratorFactory<0>
 
 }
 
-// template <int dimworld>
-// Dune::OneDInNDGrid<dimworld>::OneDInNDGrid(int numElements, const ctype& leftBoundary, const ctype& rightBoundary)
-//     : refinementType_(LOCAL),
-//       leafIndexSet_(*this),
-//       idSet_(*this),
-//       freeVertexIdCounter_(0),
-//       freeElementIdCounter_(0)
-// {
-//     if (numElements<1)
-//         DUNE_THROW(GridError, "Nonpositive number of elements requested!");
-
-//     if (leftBoundary >= rightBoundary)
-//         DUNE_THROW(GridError, "The left boundary coordinate has to be strictly less than the right boundary one!");
-//     // Init grid hierarchy
-//     vertices.resize(1);
-//     elements.resize(1);
-
-//     // Init vertex set
-//     for (int i=0; i<numElements+1; i++) {
-//         ctype newCoord = leftBoundary + i*(rightBoundary-leftBoundary) / numElements;
-
-//         OneDInNDEntityImp<0, dimworld> newVertex(0, newCoord);
-//         newVertex.id_ = getNextFreeId(1);
-//         vertices[0].push_back(newVertex);
-
-//     }
-
-//     // Init element set
-//     typename OneDInNDGridList<OneDInNDEntityImp<0, dimworld> >::iterator it = vertices[0].begin();
-//     for (int i=0; i<numElements; i++) {
-
-//       OneDInNDEntityImp<1, dimworld> newElement(0, getNextFreeId(0));
-//         newElement.vertex_[0] = it;
-//         it = it->succ_;
-//         newElement.vertex_[1] = it;
-
-//         elements[0].push_back(newElement);
-
-//     }
-
-//     setIndices();
-// }
-
-
-template<int dimworld>
-Dune::OneDInNDGrid<dimworld>::OneDInNDGrid(int numElements, Dune::FieldVector<double, dimworld> leftBoundary, Dune::FieldVector<double, dimworld> rightBoundary)
+template <int dimworld>
+Dune::OneDInNDGrid<dimworld>::OneDInNDGrid(int numElements, const ctype& leftBoundary, const ctype& rightBoundary)
     : refinementType_(LOCAL),
       leafIndexSet_(*this),
       idSet_(*this),
@@ -97,41 +53,37 @@ Dune::OneDInNDGrid<dimworld>::OneDInNDGrid(int numElements, Dune::FieldVector<do
     if (numElements<1)
         DUNE_THROW(GridError, "Nonpositive number of elements requested!");
 
+    if (leftBoundary >= rightBoundary)
+        DUNE_THROW(GridError, "The left boundary coordinate has to be strictly less than the right boundary one!");
     // Init grid hierarchy
     vertices.resize(1);
     elements.resize(1);
 
     // Init vertex set
     for (int i=0; i<numElements+1; i++) {
-        Dune::FieldVector<double, dimworld> newCoord;
-        for (int k = 0; k < dimworld; k++)
-            newCoord[k] = leftBoundary[k] + i*(rightBoundary[k]-leftBoundary[k]) / numElements;
+        ctype newCoord = leftBoundary + i*(rightBoundary-leftBoundary) / numElements;
 
-        OneDInNDEntityImp<0, dimworld>* newVertex = new OneDInNDEntityImp<0, dimworld>(0, newCoord);
-        newVertex->id_ = getNextFreeId(1);
-        vertices[0].insert_after(vertices[0].rbegin, newVertex);
+        OneDInNDEntityImp<0, dimworld> newVertex(0, newCoord);
+        newVertex.id_ = getNextFreeId(1);
+        vertices[0].push_back(newVertex);
 
     }
 
     // Init element set
-    OneDInNDEntityImp<0, dimworld>* it = vertices[0].begin;
+    typename OneDInNDGridList<OneDInNDEntityImp<0, dimworld> >::iterator it = vertices[0].begin();
     for (int i=0; i<numElements; i++) {
 
-        OneDInNDEntityImp<1, dimworld>* newElement = new OneDInNDEntityImp<1, dimworld>(0, getNextFreeId(0));
-        newElement->vertex_[0] = it;
+      OneDInNDEntityImp<1, dimworld> newElement(0, getNextFreeId(0));
+        newElement.vertex_[0] = it;
         it = it->succ_;
-        newElement->vertex_[1] = it;
+        newElement.vertex_[1] = it;
 
-        elements[0].insert_after(elements[0].rbegin, newElement);
+        elements[0].push_back(newElement);
 
     }
 
     setIndices();
 }
-
-
-
-
 // template<int dimworld>
 // Dune::OneDInNDGrid::OneDInNDGrid(const std::vector<ctype>& coords) 
 //     : refinementType_(LOCAL),
