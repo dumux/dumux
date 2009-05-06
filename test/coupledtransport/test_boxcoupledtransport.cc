@@ -20,24 +20,6 @@
 #include "boxstokestransport.hh"
 #include <dumux/coupled/boxstokesdarcytransport.hh>
 
-//namespace Dune
-//{
-//template<int dim>
-//struct P1Layout
-//{
-//    bool contains (Dune::GeometryType gt)
-//    {
-//        return gt.dim() == 0;
-//    }
-//};
-
-//template<int dim>
-//struct NodeLayout
-//{
-//    bool contains(Dune::GeometryType gt) {
-//        return gt.dim() == 0;
-//    }
-//};
 
 int main(int argc, char** argv)
 {
@@ -47,7 +29,8 @@ int main(int argc, char** argv)
 
         // grid and geometry
         //typedef Dune::ALUSimplexGrid<dim,dim> Grid;
-        typedef Dune::SGrid<dim,dim> Grid;
+        typedef Dune::UGGrid<dim> Grid;
+//        typedef Dune::SGrid<dim,dim> Grid;
         typedef Grid::LeafGridView GridView;
         typedef Dune::VtkMultiWriter<GridView> MultiWriter;
 

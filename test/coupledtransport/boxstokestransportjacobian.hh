@@ -29,7 +29,7 @@ class BoxStokesTransportJacobian
     enum {dim=Grid::dimension};
     enum {numEq = dim+2};
     enum {SIZE=LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::maxsize};
-    enum {velocityXIdx=0, velocityYIdx=1, partialDensityIdx=dim, pressureIdx=dim+1};
+    enum {velocityXIdx=0, velocityYIdx=1, velocityZIdx=2, massFracIdx=dim, pressureIdx=dim+1};
 
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
     typedef typename Grid::LeafGridView::IntersectionIterator IntersectionIterator;
@@ -90,7 +90,6 @@ public:
                         // center in face's reference element
                         const FieldVector<Scalar,dim-1>& faceLocal = ReferenceElements<Scalar,dim-1>::general(faceGT).position(0,0);
 
-                        // return the face number with respect to the generic reference element
                         int faceIdx = it->indexInInside();
                         int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
                         for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++)
@@ -101,14 +100,24 @@ public:
                             int bfIdx = this->fvGeom.boundaryFaceIndex(faceIdx,    nodeInFace);
                             FieldVector<Scalar,dim> local = this->fvGeom.boundaryFace[bfIdx].ipLocal;
                             FieldVector<Scalar,dim> global = this->fvGeom.boundaryFace[bfIdx].ipGlobal;
-                            FieldVector<BoundaryConditions::Flags,numEq> bctypeface = this->getImp().problem.bctype(global, element, it, local);
+//                            FieldVector<BoundaryConditions::Flags,numEq> bctypeface = this->getImp().problem.bctype(global, element, it, local);
 
-			// TODO: is this always valid??
-                            if (bctypeface[velocityXIdx] == BoundaryConditions::dirichlet)
+                            // Checks if boundary conditions of ALL equations are DIRICHLET
+                            bool onlyDirichlet = true;
+                            FieldVector<BoundaryConditions::Flags, numEq>  bctypeNode = this->getImp().problem.bctype(global, element, it, local);
+                            for (int i=0; i<dim; ++i)
                             {
-                            FieldVector<Scalar,dim> normal = it->unitOuterNormal(faceLocal);
-                            normal *= this->fvGeom.boundaryFace[bfIdx].area;
-                            averagedNormal += normal;
+                            	if (bctypeNode[i] != BoundaryConditions::neumann)
+                            		onlyDirichlet = false;
+                            }
+
+                            // TODO: is this always valid?? Checks only bctype of first primary variable
+                            if (onlyDirichlet)
+//                            if (bctypeface[velocityXIdx] == BoundaryConditions::dirichlet)
+                            {
+                            	FieldVector<Scalar,dim> normal = it->unitOuterNormal(faceLocal);
+                            	normal *= this->fvGeom.boundaryFace[bfIdx].area;
+                            	averagedNormal += normal;
                            	}
                             faces++;
                         }
@@ -122,9 +131,9 @@ public:
                 //mass balance equation
                 if (faces == 2 && this->fvGeom.numVertices == 4)
                 {
-                    this->def[vert][velocityXIdx] = sol[0][velocityXIdx] + sol[3][velocityXIdx] - sol[1][velocityXIdx] - sol[2][velocityXIdx];
-                    this->def[vert][velocityYIdx] = sol[0][velocityYIdx] + sol[3][velocityYIdx] - sol[1][velocityYIdx] - sol[2][velocityYIdx];
-                    this->def[vert][partialDensityIdx] = sol[0][partialDensityIdx] + sol[3][partialDensityIdx] - sol[1][partialDensityIdx] - sol[2][partialDensityIdx];
+//                    this->def[vert][velocityXIdx] = sol[0][velocityXIdx] + sol[3][velocityXIdx] - sol[1][velocityXIdx] - sol[2][velocityXIdx];
+//                    this->def[vert][velocityYIdx] = sol[0][velocityYIdx] + sol[3][velocityYIdx] - sol[1][velocityYIdx] - sol[2][velocityYIdx];
+//                    this->def[vert][massFracIdx] = sol[0][massFracIdx] + sol[3][massFracIdx] - sol[1][massFracIdx] - sol[2][massFracIdx];
                     this->def[vert][pressureIdx] = sol[0][pressureIdx] + sol[3][pressureIdx] - sol[1][pressureIdx] - sol[2][pressureIdx];
                 }
                 else if (this->bctype[vert][0] == BoundaryConditions::dirichlet)
@@ -182,7 +191,7 @@ public:
         //velocity v
         result[velocityYIdx] = -1*varData[node].density*sol[node][velocityYIdx];
         //partial density
-        result[partialDensityIdx] = -1*sol[node][partialDensityIdx];
+        result[massFracIdx] = -1*sol[node][massFracIdx];
         //pressure p
         result[pressureIdx] = -1*varData[node].density;
 
@@ -231,11 +240,11 @@ public:
     {
         SolutionVector flux(0);
 
-        Scalar pressValue = 0;
+        Scalar pressureValue = 0;
         FieldVector<Scalar, dim> velocityValue(0);
         FieldVector<Scalar, dim> xV(0);
         FieldVector<Scalar, dim> rhoV(0);
-        FieldVector<Scalar, dim> gradX(0);
+        FieldVector<Scalar, dim> gradRhoX(0);
         FieldVector<Scalar, dim> gradP(0);
 
         // get global coordinates of nodes i,j
@@ -258,10 +267,11 @@ public:
 
         for (int k = 0; k < this->fvGeom.numVertices; k++)
         {
-            pressValue += sol[k][pressureIdx]*this->fvGeom.subContVolFace[face].shapeValue[k];
+            pressureValue += sol[k][pressureIdx]*this->fvGeom.subContVolFace[face].shapeValue[k];
             FieldVector<Scalar,dim> grad(this->fvGeom.subContVolFace[face].grad[k]);
-            grad *= sol[k][partialDensityIdx];
-            gradX += grad;
+            grad *= sol[k][massFracIdx];
+            grad *= varNData[k].density;
+            gradRhoX += grad;
             grad = this->fvGeom.subContVolFace[face].grad[k];
             grad *= sol[k][pressureIdx];
             gradP += grad;
@@ -276,16 +286,15 @@ public:
         Scalar xValue;
         Scalar outward = velocityValue*this->fvGeom.subContVolFace[face].normal;
         if (outward > 0)
-            //if (outward <= 0)
-            xValue = sol[i][partialDensityIdx];
+            xValue = sol[i][massFracIdx];
         else
-            xValue = sol[j][partialDensityIdx];
+            xValue = sol[j][massFracIdx];
 
         for (int comp = 0; comp < dim; comp++)
-            xV[comp] = velocityValue[comp]*xValue;
+            xV[comp] = rhoV[comp]*xValue;
 
         FieldVector<Scalar,dim> DgradX(0);
-        D.mv(gradX, DgradX);  // DgradX=D*gradX
+        D.mv(gradRhoX, DgradX);  // DgradX=D*gradX
 
         // momentum balance:
         for (int comp = 0; comp < dim; comp++)
@@ -300,14 +309,13 @@ public:
             }
 
             FieldVector<Scalar, dim> pComp(0);
-            pComp[comp] = pressValue;
+            pComp[comp] = pressureValue;
             gradVComp += pComp;
             flux[comp] = gradVComp*this->fvGeom.subContVolFace[face].normal;
         }
 
         //transport
-        //flux[partialDensityIdx] = (DgradX - xV)*this->fvGeom.subContVolFace[face].normal;
-        flux[partialDensityIdx] = (xV - DgradX)*this->fvGeom.subContVolFace[face].normal;
+        flux[massFracIdx] = (xV - DgradX)*this->fvGeom.subContVolFace[face].normal;
 
         // mass balance:
         Scalar alphaH2 = 0.5*alpha*(this->fvGeom.subContVol[i].volume + this->fvGeom.subContVol[j].volume);
@@ -338,10 +346,10 @@ public:
 
     void updateVariableData(const Element& element, const SolutionVector* sol, int i, std::vector<VariableNodeData>& varData)
     {
-        varData[i].pN = sol[i][pressureIdx];
-        varData[i].density = 1.23;//problem.density(this->fvGeom.elementGlobal, element, this->fvGeom.elementLocal);//1.0; sol[i][pressureIdx]+1;
-        varData[i].partialpressure = sol[i][partialDensityIdx];
-        varData[i].viscosity = 0.01;//problem.gasPhase().viscosity(283.15, varData[i].pN, 0);
+    	 varData[i].pN = sol[i][3];
+    	 varData[i].Xg = sol[i][2];
+    	 varData[i].density = problem.density(this->fvGeom.elementGlobal, element, this->fvGeom.elementLocal);
+    	 varData[i].viscosity = problem.viscosity(this->fvGeom.elementGlobal, element, this->fvGeom.elementLocal);
 
         //         std::cout << "node " << i << "   " << varData[i].density << std::endl;
         // for output
@@ -422,82 +430,99 @@ public:
 
                     Scalar pressureValue = 0;
                     FieldVector<Scalar,dim>  velocityValue(0);
+                    FieldVector<Scalar,dim>  xV(0);
                     FieldVector<Scalar,dim>  rhoV(0);
-                    FieldMatrix<Scalar,dim,dim> velocityGradient(0);
-
-                    for (int vert = 0; vert < this->fvGeom.numVertices; vert++)
-                    {
-                        pressureValue += sol[vert][pressureIdx]*this->fvGeom.boundaryFace[bfIdx].shapeValue[vert];
-                        FieldVector<Scalar,dim> grad(this->fvGeom.boundaryFace[bfIdx].grad[vert]);
-                        //                        grad *= sol[vert][pressureIdx];
-                        for (int comp = 0; comp < dim; comp++)
-                        {
-                            velocityValue[comp] += sol[vert][comp]*this->fvGeom.boundaryFace[bfIdx].shapeValue[vert];
-                            rhoV[comp] += varNData[vert].density*sol[vert][comp]*this->fvGeom.boundaryFace[bfIdx].shapeValue[vert];
-                            FieldVector<Scalar,dim> gradVComp = grad;
-                            gradVComp *= sol[vert][comp];
-                            gradVComp *= varNData[vert].viscosity;
-                            velocityGradient[comp] += gradVComp;
-                        }
-                    }
-                    FieldVector<Scalar, dim> massResidual = rhoV;
-                    Scalar alphaH2 = alpha*this->fvGeom.subContVol[node].volume;
-                    SolutionVector source = problem.q(this->fvGeom.boundaryFace[bfIdx].ipGlobal, element, this->fvGeom.boundaryFace[bfIdx].ipLocal);
-                    FieldVector<Scalar, dim> dimSource;
-                    for (int comp = 0; comp < dim; comp++)
-                        dimSource[comp] = source[comp];
-                    dimSource *= alphaH2;
-                    massResidual += dimSource;
-
-                    result[pressureIdx] -= massResidual*it->unitOuterNormal(faceLocal)*this->fvGeom.boundaryFace[bfIdx].area;
-
-                    if (bctypeface[0] == BoundaryConditions::dirichlet)
-                    {
-	                    FieldVector<Scalar,dim> gradVN(0);
-        	            velocityGradient.umv(it->unitOuterNormal(faceLocal), gradVN);
-                	    gradVN *= 0.01*this->fvGeom.boundaryFace[bfIdx].area;
-			//TODO: multiply gradVN by mu?
-                    	for (int comp = 0; comp < dim; comp++)
-                    	{
-                        	FieldVector<Scalar,dim>  pressVector(0);
-                       	 	pressVector[comp] = -pressureValue;
-                        	result[comp] += pressVector*it->unitOuterNormal(faceLocal)*this->fvGeom.boundaryFace[bfIdx].area;
-                        	if (alpha == 0)
-                            		result[comp] += gradVN[comp];
-                    	}
-                    //transport
-                    Scalar pressValue = 0;
-                    FieldVector<Scalar, dim> xV(0);
-                    FieldVector<Scalar, dim> gradX(0);
+                    FieldVector<Scalar,dim>  gradRhoX(0);
+                    FieldVector<Scalar,dim>  gradP(0);
 
                     const FieldVector<Scalar,dim> local = this->fvGeom.boundaryFace[bfIdx].ipLocal;
                     const FieldVector<Scalar,dim> global = this->fvGeom.boundaryFace[bfIdx].ipGlobal;
-
                     const FMatrix D = this->problem.D(global,element,local);
+
+                    FMatrix velocityGradient(0);
 
                     for (int k = 0; k < this->fvGeom.numVertices; k++)
                     {
-                        pressValue += sol[k][pressureIdx]*this->fvGeom.boundaryFace[bfIdx].shapeValue[k];
+                        pressureValue += sol[k][dim+1]*this->fvGeom.boundaryFace[bfIdx].shapeValue[k];
                         FieldVector<Scalar,dim> grad(this->fvGeom.boundaryFace[bfIdx].grad[k]);
-                        grad *= sol[k][partialDensityIdx];
-                        gradX += grad;
+                        grad *= sol[k][dim];
+                        grad *= varNData[k].density;
+                        gradRhoX += grad;
+
+                        grad = this->fvGeom.boundaryFace[bfIdx].grad[k];
+                        grad *= sol[k][dim+1];
+						gradP += grad;
+
+						grad = this->fvGeom.boundaryFace[bfIdx].grad[k];
+
+                        for (int comp = 0; comp < dim; comp++)
+                        {
+                            velocityValue[comp] += sol[k][comp]*this->fvGeom.boundaryFace[bfIdx].shapeValue[k];
+                            rhoV[comp] += varNData[k].density*sol[k][comp]*this->fvGeom.boundaryFace[bfIdx].shapeValue[k];
+
+                            FieldVector<Scalar,dim> gradVComp = grad;
+                            gradVComp *= sol[k][comp];
+                            velocityGradient[comp] += gradVComp;
+                        }
                     }
 
-                    // NOT CORRECT YET
                     Scalar xValue;
                     Scalar outward = velocityValue*this->fvGeom.boundaryFace[bfIdx].normal;
                     if (outward > 0)
-                        xValue = sol[node][partialDensityIdx];
+                    	xValue = sol[node][dim];
                     else
-                        xValue = sol[node][partialDensityIdx];
+                    	xValue = sol[node][dim];
 
                     for (int comp = 0; comp < dim; comp++)
-                        xV[comp] = velocityValue[comp]*xValue;
+                    	xV[comp] = rhoV[comp]*xValue;
 
                     FieldVector<Scalar,dim> DgradX(0);
-                    D.mv(gradX, DgradX);  // DgradX=D*gradX
+                    D.mv(gradRhoX, DgradX);
 
-                    result[partialDensityIdx] = (DgradX - xV)*it->unitOuterNormal(faceLocal)*this->fvGeom.boundaryFace[bfIdx].area;
+//momentum balance
+                    if (bctypeface[0] == BoundaryConditions::dirichlet)
+                    {
+/*
+	                    FieldVector<Scalar,dim> gradVN(0);
+        	            velocityGradient.umv(it->unitOuterNormal(faceLocal), gradVN);
+                    	gradVN *= this->fvGeom.boundaryFace[bfIdx].area;
+                    	//mutiply with mu !!!!!!!!!!!!! TODO
+                    	for (int comp = 0; comp < dim; comp++)
+                    	{
+						//	FieldVector<Scalar,dim> gradVComp(0);
+						//	for (int k = 0; k < this->fvGeom.numVertices; k++)
+						//	{
+						//		FieldVector<Scalar,dim> grad(this->fvGeom.boundaryFace[bfIdx].grad[k]);
+						//		grad *= sol[k][comp];
+						//		grad *= varNData[k].viscosity;
+						//	}
+						//
+							FieldVector<Scalar,dim> pComp(0);
+							pComp[comp] = -pressureValue;
+							result[comp] = pComp*this->fvGeom.boundaryFace[bfIdx].normal;
+
+                        	if (alpha == 0)
+								result[comp] += gradVN[comp];// *this->fvGeom.boundaryFace[bfIdx].normal;
+                    	}
+   */
+                    	for (int comp = 0; comp < dim; comp++)
+						{
+							FieldVector<Scalar,dim> gradVComp(0);
+                    for (int k = 0; k < this->fvGeom.numVertices; k++)
+                    {
+                        FieldVector<Scalar,dim> grad(this->fvGeom.boundaryFace[bfIdx].grad[k]);
+								grad *= sol[k][comp];
+								grad *= varNData[k].viscosity;
+								gradVComp = grad;
+                    }
+
+							FieldVector<Scalar,dim> pComp(0);
+							pComp[comp] = -pressureValue;
+							result[comp] = pComp*this->fvGeom.boundaryFace[bfIdx].normal;
+
+							if (alpha == 0)
+								result[comp] += gradVComp*this->fvGeom.boundaryFace[bfIdx].normal;
+						}
 					}
                     else
                     {
@@ -505,10 +530,6 @@ public:
                         if (beaversJosephC > 0) // realize Beavers-Joseph interface condition
                         {
                             FieldVector<Scalar,dim> tangentialV = velocityValue;
-                            //                            for (int comp = 0; comp < dim; comp++)
-                            //                            {
-                            //                                tangentialV[comp] = sol[node][comp];
-                            //                            }
 
                             // normal n
                             FieldVector<Scalar,dim> normal = it->unitOuterNormal(faceLocal);
@@ -525,7 +546,7 @@ public:
 
                             for (int comp = 0; comp < dim; comp++)
                             {
-                                result[comp] -= 1.0/beaversJosephC*this->fvGeom.boundaryFace[bfIdx].area*tangentialV[comp];
+                            	result[comp] += 1.0/beaversJosephC*this->fvGeom.boundaryFace[bfIdx].area*tangentialV[comp];
                             }
                         }
                         else if (beaversJosephC < 0)
@@ -533,12 +554,24 @@ public:
                             for (int comp = 0; comp < dim; comp++)
                             {
                                 FieldVector<Scalar,dim>  pressVector(0);
-                                pressVector[comp] = -pressureValue;
-
+                    			pressVector[comp] = -pressureValue;
                                 result[comp] += pressVector*it->unitOuterNormal(faceLocal)*this->fvGeom.boundaryFace[bfIdx].area;
                             }
                         }
                     }
+//transport
+                    result[dim] = (xV - DgradX)*this->fvGeom.boundaryFace[bfIdx].normal;
+
+//mass balance
+                    FieldVector<Scalar,dim> massResidual = velocityValue;
+					Scalar alphaH2 = alpha*this->fvGeom.subContVol[node].volume;
+					SolutionVector source = problem.q(this->fvGeom.boundaryFace[bfIdx].ipGlobal, element, this->fvGeom.boundaryFace[bfIdx].ipLocal);
+					FieldVector<Scalar,dim> dimSource;
+					for (int comp = 0; comp < dim; comp++)
+						dimSource[comp] = source[comp];
+					dimSource *= alphaH2;
+					massResidual += dimSource;
+					result[dim+1] -= massResidual*it->unitOuterNormal(faceLocal)*this->fvGeom.boundaryFace[bfIdx].area;
                 }
             }
         }
@@ -596,13 +629,13 @@ public:
                             if (bctypeface[equationNumber]!=BoundaryConditions::neumann)
                                 break;
                             FieldVector<Scalar,numEq> J = this->getImp().problem.neumann(global, element, it, local);
-                            if (equationNumber < dim+1) {
+//                            if (equationNumber < dim+1) {
                                 J[equationNumber] *= this->fvGeom.boundaryFace[bfIdx].area;
                                 this->b[nodeInElement][equationNumber] += J[equationNumber];
+//                            }
                             }
                         }
                     }
-                }
 
                 bool nface(true); // check if face is a neumann face
                 for(int i=0; i<numEq; i++)

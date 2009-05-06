@@ -373,11 +373,17 @@ public:
                     FieldVector<double, dim> nodeGlobal = firstIt->geometry().corner(nodeInElement);
                     FieldVector<double, dim> nodeLocal = firstIt->geometry().local(nodeGlobal);
 
-                    // WARNING: ASSUMES scalar BoundaryConditions flags for firstModel
-                    typename BoundaryConditions::Flags bctypeNode = this->firstModel().problem.bctype(nodeGlobal, *firstIt, firstIsIt, nodeLocal);
+                    // Checks if boundary conditions of ALL equations are NEUMANN
+                    bool onlyNeumann = true;
+                    FieldVector<BoundaryConditions::Flags, firstNumEq>  bctypeNode = this->firstModel().problem.bctype(nodeGlobal, *firstIt, firstIsIt, nodeLocal);
+                    for (int i=0; i<firstNumEq; ++i)
+                    {
+                    	if (bctypeNode[i] != BoundaryConditions::neumann)
+                    		onlyNeumann = false;
+                    }
 
                     // WARNING: ASSUMES that Dirichlet nodes are always on both sides
-                    if (bctypeNode == BoundaryConditions::neumann)
+                    if (onlyNeumann)
                     {
                         int firstIndex = firstIds[subCVF];
                         int secondIndex = secondIds[subCVF];
