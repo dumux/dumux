@@ -5,7 +5,7 @@
 
 #include"dumux/stokes/stokesproblem.hh"
 
-namespace Dune 
+namespace Dune
 {
 
 /** \todo Please doc me! */
@@ -14,6 +14,7 @@ template<class Grid, class Scalar>
 class LShapedProblem : public StokesProblem<Grid, Scalar>
 {
     enum {dim=Grid::dimension, numEq=Grid::dimension+1};
+    enum {velocityXIdx=0, velocityYIdx=1, velocityZIdx=2, pressureIdx=dim};
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
     typedef typename Grid::template Codim<0>::LeafIntersectionIterator IntersectionIterator;
 
@@ -26,14 +27,20 @@ public:
         return result;
     }
 
-    virtual BoundaryConditions::Flags bctype (const FieldVector<Scalar,dim>& globalPos, const Element& element,
+    FieldVector<BoundaryConditions::Flags, numEq> bctype (const FieldVector<Scalar,dim>& globalPos, const Element& element,
                                               const IntersectionIterator& intersectionIt,
                                               const FieldVector<Scalar,dim>& localPos) const
     {
-        if (globalPos[0] < 1e-6 || globalPos[1] < 1e-6 || globalPos[1] > 1 - 1e-6)
-            return BoundaryConditions::dirichlet;
-        else
-            return BoundaryConditions::neumann;
+    	FieldVector<BoundaryConditions::Flags, numEq> values(BoundaryConditions::neumann);
+
+    	if (globalPos[0] < eps_ || globalPos[1] < eps_ || globalPos[1] > 1 - eps_)
+    	{
+            values[velocityXIdx] = BoundaryConditions::dirichlet;
+            values[velocityYIdx] = BoundaryConditions::dirichlet;
+            values[pressureIdx] = BoundaryConditions::dirichlet;
+    	}
+
+        return values;
     }
 
     virtual FieldVector<Scalar,numEq>dirichlet(const FieldVector<Scalar,dim>& globalPos, const Element& element,
@@ -41,9 +48,10 @@ public:
                                       const FieldVector<Scalar,dim>& localPos) const
     {
       FieldVector<Scalar, numEq> vel = velocity(globalPos);
-//      FieldVector<Scalar, numEq> res(0);
-//      for (int i = 0; i < dim; ++i) // TODO: pressure
-//	res[i] = vel[i];
+
+      //      FieldVector<Scalar, numEq> res(0);
+      //      for (int i = 0; i < dim; ++i) // TODO: pressure
+      //	res[i] = vel[i];
 
       return vel;
     }
@@ -63,7 +71,7 @@ public:
                                   const FieldVector<Scalar,dim>& localPos) const
     {
         double alpha;
-        if (globalPos[1] < 0.5 + 1e-6)
+        if (globalPos[1] < 0.5 + eps_)
             alpha = 0.1;
         else
             return(-1.0); // realizes outflow bc
@@ -84,7 +92,7 @@ public:
     {
         FieldVector<Scalar,numEq> result(0);
 
-        result[0] = 4.0*globalPos[1]*(1.0 - globalPos[1]);
+        result[velocityXIdx] = 4.0*globalPos[1]*(1.0 - globalPos[1]);
 
         return result;
     }
@@ -104,8 +112,11 @@ public:
     }
 
     LShapedProblem()
-    {}
-
+    {
+        eps_ = 1e-6;
+    }
+protected:
+    Scalar eps_;
 };
 
 }
