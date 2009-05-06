@@ -29,14 +29,18 @@ public:
         return result;
     }
 
-    virtual BoundaryConditions::Flags bctype (const FieldVector<Scalar,dim>& globalPos, const Element& element,
+    FieldVector<BoundaryConditions::Flags, numEq> bctype (const FieldVector<Scalar,dim>& globalPos, const Element& element,
                                               const IntersectionIterator& intersectionIt,
                                               const FieldVector<Scalar,dim>& localPos) const
     {
-    	if (globalPos[0] < 1e-6 || globalPos[1] < 1e-6 || globalPos[1] > 1 - 1e-6)
-            return BoundaryConditions::dirichlet;
+    	FieldVector<BoundaryConditions::Flags, numEq> values(BoundaryConditions::dirichlet);
+    	if (globalPos[0] > 1-1e-6){
+            values[0] = BoundaryConditions::neumann;
+			values[1] = BoundaryConditions::neumann;
+			values[2] = BoundaryConditions::neumann;
+    	}
 
-        return BoundaryConditions::neumann;
+    	return values;
     }
 
     virtual FieldVector<Scalar,numEq>dirichlet(const FieldVector<Scalar,dim>& globalPos, const Element& element,

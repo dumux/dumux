@@ -64,8 +64,9 @@ template<class Grid, class Scalar, int dim>
 class LeafP1BoxStokesTransport : public BoxStokesTransport<Grid, Scalar, StokesTransportProblem<Grid, Scalar>, BoxStokesTransportJacobian<Grid, Scalar>,
                                                            LeafP1Function<Grid, Scalar, dim+2>, LeafP1OperatorAssembler<Grid, Scalar, dim+2> >
 {
+    enum {velocityXIdx=0, velocityYIdx=1, partialDensityIdx=dim, pressureIdx=dim+1};
+    enum {numEq = dim+2};
 public:
-    enum{numEq = dim+2};
 
     typedef Grid GridType;
 
@@ -317,8 +318,8 @@ public:
 
         // iterate through leaf grid
         Iterator eendit = gridview.template end<0>();
-        for (Iterator it = gridview.template begin<0>(); it
-                 != eendit; ++it) {
+        for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
+        {
             // get geometry type
             Dune::GeometryType gt = it->geometry().type();
 

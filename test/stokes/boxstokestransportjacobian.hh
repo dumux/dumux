@@ -29,6 +29,7 @@ class BoxStokesTransportJacobian
     enum {dim=Grid::dimension};
     enum {numEq = dim+2};
     enum {SIZE=LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::maxsize};
+    enum {velocityXIdx=0, velocityYIdx=1, velocityZIdx=2, massFracIdx=dim, pressureIdx=dim+1};
 
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
     typedef typename Grid::LeafGridView::IntersectionIterator IntersectionIterator;
@@ -99,7 +100,7 @@ public:
                             FieldVector<Scalar,dim> global = this->fvGeom.boundaryFace[bfIdx].ipGlobal;
                             FieldVector<BoundaryConditions::Flags,numEq> bctypeface = this->getImp().problem.bctype(global, element, it, local);
 
-                            if (bctypeface[0] == BoundaryConditions::dirichlet)
+                            if (bctypeface[velocityXIdx] == BoundaryConditions::dirichlet)
                             {
                             	FieldVector<Scalar,dim> normal = it->unitOuterNormal(faceLocal);
                             	normal *= this->fvGeom.boundaryFace[bfIdx].area;
@@ -117,12 +118,13 @@ public:
                 //mass balance equation
                 if (faces == 2 && this->fvGeom.numVertices == 4)
                 {
-                	//this->def[vert][0] = sol[0][0] + sol[3][0] - sol[1][0] - sol[2][0];
-                	//this->def[vert][1] = sol[0][1] + sol[3][1] - sol[1][1] - sol[2][1];
-                	this->def[vert][dim+1] = sol[0][dim+1] + sol[3][dim+1] - sol[1][dim+1] - sol[2][dim+1];
+//                    this->def[vert][velocityXIdx] = sol[0][velocityXIdx] + sol[3][velocityXIdx] - sol[1][velocityXIdx] - sol[2][velocityXIdx];
+//                    this->def[vert][velocityYIdx] = sol[0][velocityYIdx] + sol[3][velocityYIdx] - sol[1][velocityYIdx] - sol[2][velocityYIdx];
+//                    this->def[vert][massFracIdx] = sol[0][massFracIdx] + sol[3][massFracIdx] - sol[1][massFracIdx] - sol[2][massFracIdx];
+                    this->def[vert][pressureIdx] = sol[0][pressureIdx] + sol[3][pressureIdx] - sol[1][pressureIdx] - sol[2][pressureIdx];
                 }
                 else if (this->bctype[vert][0] == BoundaryConditions::dirichlet)
-                    this->def[vert][dim+1] = defect;
+                    this->def[vert][pressureIdx] = defect;
                 else // de-stabilize
                 {
                     for (int face = 0; face < this->fvGeom.numEdges; face++)
@@ -136,7 +138,7 @@ public:
                         FieldVector<Scalar, dim> pressGradient(0);
                         for (int k = 0; k < this->fvGeom.numVertices; k++) {
                             FieldVector<Scalar,dim> grad(this->fvGeom.subContVolFace[face].grad[k]);
-                            grad *= sol[k][dim+1];
+                            grad *= sol[k][pressureIdx];
                             pressGradient += grad;
                         }
 
@@ -144,9 +146,9 @@ public:
                         pressGradient *= alphaH2;
                         //SIGN???
                         if (i == vert)
-                            this->def[vert][dim+1] -= pressGradient*this->fvGeom.subContVolFace[face].normal;
+                            this->def[vert][pressureIdx] -= pressGradient*this->fvGeom.subContVolFace[face].normal;
                         else
-                            this->def[vert][dim+1] += pressGradient*this->fvGeom.subContVolFace[face].normal;
+                            this->def[vert][pressureIdx] += pressGradient*this->fvGeom.subContVolFace[face].normal;
                     }
 //                    SolutionVector source = problem.q(this->fvGeom.subContVol[vert].global, element, this->fvGeom.subContVol[vert].local);
 //                    Scalar alphaH2 = alpha*this->fvGeom.subContVol[vert].volume;
@@ -167,13 +169,10 @@ public:
     // harmonic mean of the permeability computed directly
     virtual FMatrix harmonicMeanK (FMatrix& Ki, const FMatrix& Kj) const
     {
-        double eps = 1e-20;
-
         for (int kx=0; kx<dim; kx++)
             for (int ky=0; ky<dim; ky++)
                 if (Ki[kx][ky] != Kj[kx][ky])
-                    Ki[kx][ky] = 2 / (1/(Ki[kx][ky]+eps) + (1/(Kj[kx][ky]+eps)));
-
+		    Ki[kx][ky] = 2*Ki[kx][ky]*Kj[kx][ky] / (Ki[kx][ky]+Kj[kx][ky]);
         return Ki;
     }
 
@@ -184,13 +183,13 @@ public:
         SolutionVector result(0);
 
         //velocity u
-        result[0] = -1*varData[node].density*sol[node][0];
+        result[velocityXIdx] = -1*varData[node].density*sol[node][velocityXIdx];
         //velocity v
-        result[1] = -1*varData[node].density*sol[node][1];
+        result[velocityYIdx] = -1*varData[node].density*sol[node][velocityYIdx];
         //partial density
-        result[2] = -1*varData[node].density*sol[node][2];
+        result[massFracIdx] = -1*sol[node][massFracIdx];
         //pressure p
-        result[3] = -1*varData[node].density;
+        result[pressureIdx] = -1*varData[node].density;
 
         //          std::cout << "node " <<  node << " time dep = " << result << std::endl;
 
@@ -223,7 +222,7 @@ public:
         MassST *= -1;
         MassST *= alphaH2;
 
-        result[dim+1] += MassST;
+        result[pressureIdx] += MassST;
 
         SolutionVector flux = boundaryFlux(element, sol, node);
 
@@ -264,13 +263,13 @@ public:
 
         for (int k = 0; k < this->fvGeom.numVertices; k++)
         {
-            pressValue += sol[k][dim+1]*this->fvGeom.subContVolFace[face].shapeValue[k];
+            pressValue += sol[k][pressureIdx]*this->fvGeom.subContVolFace[face].shapeValue[k];
             FieldVector<Scalar,dim> grad(this->fvGeom.subContVolFace[face].grad[k]);
-            grad *= sol[k][dim];
+            grad *= sol[k][massFracIdx];
             grad *= varNData[k].density;
             gradRhoX += grad;
             grad = this->fvGeom.subContVolFace[face].grad[k];
-            grad *= sol[k][dim+1];
+            grad *= sol[k][pressureIdx];
             gradP += grad;
 
             for (int comp = 0; comp < dim; comp++)
@@ -283,9 +282,9 @@ public:
         Scalar xValue;
         Scalar outward = velocityValue*this->fvGeom.subContVolFace[face].normal;
         if (outward > 0)
-            xValue = sol[i][dim];
+            xValue = sol[i][massFracIdx];
         else
-            xValue = sol[j][dim];
+            xValue = sol[j][massFracIdx];
 
         for (int comp = 0; comp < dim; comp++)
             xV[comp] = rhoV[comp]*xValue;
@@ -312,13 +311,13 @@ public:
         }
 
         //transport
-        flux[dim] = (xV - DgradX)*this->fvGeom.subContVolFace[face].normal;
+        flux[massFracIdx] = (xV - DgradX)*this->fvGeom.subContVolFace[face].normal;
 
         // mass balance:
         Scalar alphaH2 = 0.5*alpha*(this->fvGeom.subContVol[i].volume + this->fvGeom.subContVol[j].volume);
         gradP *= alphaH2;
         rhoV += gradP;
-        flux[dim+1] = rhoV*this->fvGeom.subContVolFace[face].normal;
+        flux[pressureIdx] = rhoV*this->fvGeom.subContVolFace[face].normal;
 
         return flux;
     }
@@ -501,7 +500,7 @@ public:
 							result[comp] = pComp*this->fvGeom.boundaryFace[bfIdx].normal;
 
 							if (alpha == 0)
-								result[comp] += gradVN[comp];//*this->fvGeom.boundaryFace[bfIdx].normal;
+								result[comp] += gradVN[comp]; // *this->fvGeom.boundaryFace[bfIdx].normal;
 						}
    */
                     	for (int comp = 0; comp < dim; comp++)
