@@ -720,47 +720,47 @@ public:
         for (int vert = 0; vert < numVertices; vert++)
             if (dim == 2)
             {
-                if (!subContVol[vert].inner) {
-                    switch (vert)
-                    {
-                    case 0:
-                        if (numVertices == 4) {
-                            subContVol[vert].local[0] = 0.25;
-                            subContVol[vert].local[1] = 0.25;
-                        }
-                        else {
-                            subContVol[vert].local[0] = 1.0/6.0;
-                            subContVol[vert].local[1] = 1.0/6.0;
-                        }
-                        break;
-                    case 1:
-                        if (numVertices == 4) {
-                            subContVol[vert].local[0] = 0.75;
-                            subContVol[vert].local[1] = 0.25;
-                        }
-                        else {
-                            subContVol[vert].local[0] = 4.0/6.0;
-                            subContVol[vert].local[1] = 1.0/6.0;
-                        }
-                        break;
-                    case 2:
-                        if (numVertices == 4) {
-                            subContVol[vert].local[0] = 0.25;
-                            subContVol[vert].local[1] = 0.75;
-                        }
-                        else {
-                            subContVol[vert].local[0] = 1.0/6.0;
-                            subContVol[vert].local[1] = 4.0/6.0;
-                        }
-                        break;
-                    case 3:
-                        subContVol[vert].local[0] = 0.75;
-                        subContVol[vert].local[1] = 0.75;
-                        break;
-                    }
-                }
-
-                subContVol[vert].global = geometry.global(subContVol[vert].local);
+//                if (!subContVol[vert].inner) {
+//                    switch (vert)
+//                    {
+//                    case 0:
+//                        if (numVertices == 4) {
+//                            subContVol[vert].local[0] = 0.25;
+//                            subContVol[vert].local[1] = 0.25;
+//                        }
+//                        else {
+//                            subContVol[vert].local[0] = 1.0/6.0;
+//                            subContVol[vert].local[1] = 1.0/6.0;
+//                        }
+//                        break;
+//                    case 1:
+//                        if (numVertices == 4) {
+//                            subContVol[vert].local[0] = 0.75;
+//                            subContVol[vert].local[1] = 0.25;
+//                        }
+//                        else {
+//                            subContVol[vert].local[0] = 4.0/6.0;
+//                            subContVol[vert].local[1] = 1.0/6.0;
+//                        }
+//                        break;
+//                    case 2:
+//                        if (numVertices == 4) {
+//                            subContVol[vert].local[0] = 0.25;
+//                            subContVol[vert].local[1] = 0.75;
+//                        }
+//                        else {
+//                            subContVol[vert].local[0] = 1.0/6.0;
+//                            subContVol[vert].local[1] = 4.0/6.0;
+//                        }
+//                        break;
+//                    case 3:
+//                        subContVol[vert].local[0] = 0.75;
+//                        subContVol[vert].local[1] = 0.75;
+//                        break;
+//                    }
+//                }
+//
+//                subContVol[vert].global = geometry.global(subContVol[vert].local);
 
                 FieldMatrix<Scalar,dim,dim> jacInvT = geometry.jacobianInverseTransposed(subContVol[vert].local);
 
