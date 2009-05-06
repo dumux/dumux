@@ -321,10 +321,6 @@ template<class Grid, class Scalar, class VC,class Problem> void FVDiffusion<Grid
 
                 if (this->diffProblem.capillarity)
                 {
-                    // calculate saturation gradient
-                    FieldVector<Scalar,dim> satGradient = distVec;
-                    satGradient *= (satJ - satI)/(dist*dist);
-
                     // arithmetic average of the permeability
                     K = ((Kni + Knj) *= 0.5);
 
@@ -344,7 +340,6 @@ template<class Grid, class Scalar, class VC,class Problem> void FVDiffusion<Grid
                 }
             }
             // boundary face
-
             else
             {
                 // center of face in global coordinates
@@ -381,10 +376,6 @@ template<class Grid, class Scalar, class VC,class Problem> void FVDiffusion<Grid
 
                         // compute distance between cell centers
                         Scalar dist = distVec.two_norm();
-
-                        // calculate saturation gradient
-                        FieldVector<Scalar,dim> satGradient = distVec;
-                        satGradient *= (satJ - satI)/(dist*dist);
 
                         // capillary pressure w.r.t. saturation
                         Scalar pCI = this->diffProblem.materialLaw().pC(satI,globalPos, *eIt, localPos);
