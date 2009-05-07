@@ -59,9 +59,9 @@ public:
         return Xwg * H_w + (1-Xwg) * H_a;
     }
 
-    virtual double diffCoeff(double temperature, double p, int alternative=1) const
+    virtual double diffCoeff(double temperature, double p) const
     {
-		switch (alternative) {
+		switch (diffCoeffFormulation_) {
 			case 1:
 				// D ~ temperature^(3/2) / see Atkins:Physical Chemistry p.778!
 				// for H2O and O2: D(273.15 K, 1e5 Pa) = 2.25 e-5
@@ -120,10 +120,6 @@ public:
 		}
     }
 
-    virtual double diffCoeff_alternative_2(double temperature, double p) const
-    {
-    }
-
     virtual double Xw_Max(double temperature, double p) const
     {
         double pwsat = constRelAir.pwsat(temperature);
@@ -132,16 +128,18 @@ public:
         return x[0];
     }
 
-    Gas_WaterAir() : Gas_GL()
+    Gas_WaterAir(int diffCoeffFormulation = 1) : Gas_GL()
     {
         M_w = 0.018016;
         M_a = 0.02896;
+        diffCoeffFormulation_ = diffCoeffFormulation;
     }
 
 private:
     ConstrelAir constRelAir;
     ConstrelWater constRelWater;
 
+    int diffCoeffFormulation_;
     static const double R = 8.314472; // universal gas constant [J / (mole * K)]
 };
 
