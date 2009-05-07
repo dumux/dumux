@@ -414,7 +414,8 @@ template<class Grid, class Scalar, class VC, class Problem> void FVDiffusion<Gri
                         }
                         else
                         {
-                            lambdaW = satBoundEff / viscosityW;
+                            lambdaW = this->diffProblem.materialLaw().mobW(satBound,globalPosFace, *eIt, localPosFace);
+//                            lambdaW = satBoundEff / viscosityW;
                         }
                         if (potentialNW >= 0.)
                         {
@@ -422,7 +423,8 @@ template<class Grid, class Scalar, class VC, class Problem> void FVDiffusion<Gri
                         }
                         else
                         {
-                            lambdaNW = (1 - satBoundEff) / viscosityNW;
+                            lambdaNW = this->diffProblem.materialLaw().mobN((1-satBound),globalPosFace, *eIt, localPosFace);
+                            //lambdaNW = (1 - satBoundEff) / viscosityNW;
                         }
 
                         Scalar entry = (lambdaW + lambdaNW) * fabs(faceVol * (normalPermeabilityI * distVec) / (dist * dist));

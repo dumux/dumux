@@ -12,7 +12,6 @@
 #include "dumux/transport/fv/numericalflux.hh"
 #include "dumux/transport/fv/diffusivepart.hh"
 
-
 /**
  * @file
  * @brief  Finite Volume Diffusion Model
@@ -216,7 +215,7 @@ int FVTransport<Grid, Scalar, VC, Problem>::update(const Scalar t, Scalar& dt,
                     //calculate velocities
                     Scalar potentialW = (unitOuterNormal * distVec) * (pressI - pressJ) / (dist * dist);
                     Scalar potentialNW = (unitOuterNormal * distVec) * (pressI + pcI - pressJ -pcJ) / (dist * dist);
-                     potentialW += densityW * (unitOuterNormal * gravity);
+                    potentialW += densityW * (unitOuterNormal * gravity);
                     potentialNW += densityNW * (unitOuterNormal * gravity);
 
                     Scalar lambdaW, lambdaNW;
@@ -240,7 +239,7 @@ int FVTransport<Grid, Scalar, VC, Problem>::update(const Scalar t, Scalar& dt,
                     }
 
                     Scalar velocityW = lambdaW * ((permeability * distVec) * (pressI - pressJ) / (dist * dist) + (permeability * gravity) * densityW);
-                     Scalar velocityNW = lambdaNW * ((permeability * distVec) * (pressI + pcI - pressJ - pcJ) / (dist * dist) + (permeability * gravity) * densityW);
+                    Scalar velocityNW = lambdaNW * ((permeability * distVec) * (pressI + pcI - pressJ - pcJ) / (dist * dist) + (permeability * gravity) * densityW);
 
                     factor = velocityW * faceArea / (volume*porosity);
 
@@ -320,7 +319,7 @@ int FVTransport<Grid, Scalar, VC, Problem>::update(const Scalar t, Scalar& dt,
                     }
                     else
                     {
-                        lambdaW = satBoundEff / viscosityW;
+                        lambdaW = this->transProblem.materialLaw().mobW(satBound,globalPosFace, *eIt, localPosFace);
                     }
                     if (potentialNW >= 0.)
                     {
@@ -328,12 +327,13 @@ int FVTransport<Grid, Scalar, VC, Problem>::update(const Scalar t, Scalar& dt,
                     }
                     else
                     {
-                        lambdaNW = (1 - satBoundEff) / viscosityNW;
+                        lambdaNW = this->transProblem.materialLaw().mobN((1-satBound),globalPosFace, *eIt, localPosFace);
+                        // lambdaNW = (1 - satBoundEff) / viscosityNW;
                     }
 
                     velocityW = lambdaW * ((normalPermeabilityI * distVec) * (pressI - pressBound) / (dist * dist) - (normalPermeabilityI * gravity) * densityW);
                     velocityNW = lambdaNW * ((normalPermeabilityI * distVec) * (pressI + pcI - pressBound - pcBound) / (dist * dist) - (normalPermeabilityI * gravity) * densityW);
-                 }
+                }
                 else
                 {
                     Scalar J = this->transProblem.neumannPress(globalPosFace, *eIt, localPosFace);
@@ -361,11 +361,29 @@ int FVTransport<Grid, Scalar, VC, Problem>::update(const Scalar t, Scalar& dt,
                 }
                 if (velocityW < 0)
                 {
-                    timestepFactorIn -= factor;
+                    Scalar krSum = 1;
+                    if (bcTypePress == BoundaryConditions::dirichlet)
+                    {
+                        krSum = lambdaW*viscosityW+lambdaNW*viscosityNW;
+                    }
+                    else
+                    {
+                        krSum = this->transProblem.variables.mobilityWetting[globalIdxI]*viscosityW + this->transProblem.variables.mobilityNonWetting[globalIdxI]*viscosityNW;
+                    }
+                    timestepFactorIn -= factor/krSum;
                 }
                 if (velocityNW < 0)
                 {
-                    timestepFactorIn -= velocityNW * faceArea / (volume*porosity);
+                    Scalar krSum = 1;
+                    if (bcTypePress == BoundaryConditions::dirichlet)
+                    {
+                        krSum = lambdaW*viscosityW+lambdaNW*viscosityNW;
+                    }
+                    else
+                    {
+                        krSum = this->transProblem.variables.mobilityWetting[globalIdxI]*viscosityW + this->transProblem.variables.mobilityNonWetting[globalIdxI]*viscosityNW;
+                    }
+                    timestepFactorIn -= velocityNW * faceArea / (volume*porosity*krSum);
                 }
 
                 if (bcTypeSat == BoundaryConditions::neumann)
