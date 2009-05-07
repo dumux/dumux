@@ -21,9 +21,9 @@ public:
     /*! \brief Realizes the numerical flux function.
      *
      *  \param element cell I
-     *  \param faceNumber index of faceIJ between cell I and cell J
-     *  \param satI usually the saturation value of cell I
-     *  \param satJ usually the saturation value of cell J
+     *  \param saturationW the saturation of the wetting phase
+     *  \param T temperature
+     *  \param p pressure
      */
 private:
     enum{dim = Grid::dimension, dimWorld = Grid::dimensionworld};

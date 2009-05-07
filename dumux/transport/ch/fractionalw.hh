@@ -28,7 +28,10 @@ class FractionalW : public FluxFunction<Grid,Scalar> {
 
 public:
     /*!
-     * Fractional flow function.
+     *  \param saturationW the saturation of the wetting phase
+     *  \param T temperature
+     *  \param p pressure
+     *  \return the fractional flow function of the wetting phase
      */
     virtual Scalar operator() (Scalar saturationW, const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos, Scalar T=283.15, Scalar p=1e5) const
     {
