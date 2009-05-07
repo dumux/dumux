@@ -65,15 +65,14 @@ public:
         molefraction = vertSol[transport];
         pressure = vertSol[konti];
     }
-
     
     Scalar porosity;
-        Scalar viscosity;
-        Scalar tortuosity;
-        Scalar diffCoeff;
-        Scalar molefraction;
-        Scalar pressure;
-    };
+    Scalar viscosity;
+    Scalar tortuosity;
+    Scalar diffCoeff;
+    Scalar molefraction;
+    Scalar pressure;
+};
 
 
 ///////////////////////////////////////////////////////////////////////////
@@ -89,9 +88,9 @@ template<class ProblemT,
          class BoxTraitsT,
          class OnePTwoCTraitsT>
 class OnePTwoCBoxJacobian : public BoxJacobian<ProblemT,
-                                                   BoxTraitsT,
-                                                   OnePTwoCVertexData<OnePTwoCTraitsT, ProblemT>,
-                                                   OnePTwoCBoxJacobian<ProblemT,BoxTraitsT,OnePTwoCTraitsT> >
+                                               BoxTraitsT,
+                                               OnePTwoCBoxJacobian<ProblemT,BoxTraitsT,OnePTwoCTraitsT>,
+                                               OnePTwoCVertexData<OnePTwoCTraitsT, ProblemT> >
 {
 protected:
 //    friend class OnePTwoCBoxModel<ProblemT, OnePTwoCTraitsT>;
