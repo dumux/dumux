@@ -561,18 +561,6 @@ public:
      */
     virtual double diffCoeff(double T=283.15, double p=1e5) const = 0; // [m^2 / s]
 
-    //! Diffusion coefficient for component a [m^2 / s]
-    /** @param p pressure [Pa]
-     *  @param T temperature [K]
-     */
-    virtual double diffCoeff_alternative_1(double T=283.15, double p=1e5) const = 0; // [m^2 / s]
-
-    //! Diffusion coefficient for component a [m^2 / s]
-    /** @param p pressure [Pa]
-     *  @param T temperature [K]
-     */
-    virtual double diffCoeff_alternative_2(double T=283.15, double p=1e5) const = 0; // [m^2 / s]
-
     //! Solubility of component w [kg / kg]
     /** @param p pressure [Pa]
      *  @param T temperature [K]
