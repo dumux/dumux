@@ -559,7 +559,7 @@ public:
     /** @param p pressure [Pa]
      *  @param T temperature [K]
      */
-    virtual double diffCoeff(double T=283.15, double p=1e5) const = 0; // [m^2 / s]
+    virtual double diffCoeff(double T=283.15, double p=1e5, int alternative=1) const = 0; // [m^2 / s]
 
     //! Solubility of component w [kg / kg]
     /** @param p pressure [Pa]
