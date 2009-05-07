@@ -68,7 +68,7 @@ class LeafP1BoxStokes : public BoxStokes<Grid, Scalar, StokesProblem<Grid, Scala
                                          LeafP1Function<Grid, Scalar, dim+1>, LeafP1OperatorAssembler<Grid, Scalar, dim+1> >
 {
 public:
-    enum {velocityXIdx=0, velocityYIdx=1, partialDensityIdx=dim, pressureIdx=dim+1};
+    enum {velocityXIdx=0, velocityYIdx=1, pressureIdx=dim};
     enum {numEq = dim+1};
 
     typedef Grid GridType;
@@ -121,14 +121,14 @@ public:
     void initial()
     {
         typedef typename Grid::Traits::template Codim<0>::Entity Element;
-        typedef typename GV::template Codim<0>::Iterator Iterator;
+        typedef typename GV::template Codim<0>::Iterator ElementIterator;
         enum{dimworld = Grid::dimensionworld};
 
         const GV& gridview(this->grid_.leafView());
         std::cout << "initializing solution." << std::endl;
         // iterate through leaf grid an evaluate c0 at cell center
-        Iterator eendit = gridview.template end<0>();
-        for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
+        ElementIterator eendit = gridview.template end<0>();
+        for (ElementIterator it = gridview.template begin<0>(); it != eendit; ++it)
             {
                 // get geometry type
                 Dune::GeometryType gt = it->geometry().type();
@@ -159,7 +159,7 @@ public:
         //        (*(this->u))[116][dim] = 0.2;
 
         // set Dirichlet boundary conditions
-        for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
+        for (ElementIterator it = gridview.template begin<0>(); it != eendit; ++it)
             {
                 // get geometry type
                 Dune::GeometryType gt = it->geometry().type();
@@ -195,18 +195,16 @@ public:
 
                                                     int globalId = vertexmapper.template map<dim>(element, sfs[i].entity());
 
-                                                    FieldVector<BoundaryConditions::Flags, numEq> bctype(this->problem.bctype(global, element, is, local));
-
-                                                    FieldVector<Scalar,numEq> dirichlet = this->problem.dirichlet(global, element, is, local);
-
-                                                    for (int eq = 0; eq < numEq; eq++)
-                                                        {
-                                                            if (bctype[eq] == BoundaryConditions::dirichlet)
-                                                                {
+                                    FieldVector<BoundaryConditions::Flags, numEq> bctype(this->problem.bctype(global, element, is, local));
+									// TODO: checks only first equation!!
+                                    if (bctype[0] == BoundaryConditions::dirichlet)
+                                    {
+                                        FieldVector<Scalar,numEq> dirichlet = this->problem.dirichlet(global, element, is, local);
+                                        //TODO: dim or numEq for the following loop??
+                                        for (int eq = 0; eq < dim; eq++)
                                                                     (*(this->u))[globalId][eq] = dirichlet[eq];
                                                                 }
-                                                            else
-                                                                {
+                                    else {
                                                                     std::cout << global << " is considered to be a Neumann node." << std::endl;
                                                                 }
                                                         }
@@ -220,13 +218,13 @@ public:
                                                     //                                    else {
                                                     //                                        std::cout << global << " is considered to be a Neumann node." << std::endl;
                                                     //                                    }
-                                                }
+													//										}
                                         }
                         }
             }
 
         //set pressure condition (same node as in asseble())
-        Iterator it = gridview.template begin<0>();
+        ElementIterator it = gridview.template begin<0>();
         unsigned int globalId = vertexmapper.template map<dim>(*it, 3);
 
         //get global coordinates of node globalId
@@ -256,9 +254,9 @@ public:
         this->A.assemble(this->localJacobian(), this->u, this->f);
 
         //        const GV& gridview(this->grid_.leafView());
-        //        typedef typename GV::template Codim<0>::Iterator Iterator;
+        //        typedef typename GV::template Codim<0>::Iterator ElementIterator;
         //
-        //        Iterator it = gridview.template begin<0>();
+        //        ElementIterator it = gridview.template begin<0>();
         //        unsigned int globalId = 81;//vertexmapper.template map<dim>(*it, 3);
         //
         //        MatrixType& A = *(this->A);
@@ -294,9 +292,9 @@ public:
         // modify matrix and rhs for introducing pressure boundary condition
         // this is done here and not in the assembly step, since it is not needed for the coupled setting
         const GV& gridview(this->grid_.leafView());
-        typedef typename GV::template Codim<0>::Iterator Iterator;
+        typedef typename GV::template Codim<0>::Iterator ElementIterator;
 
-        Iterator it = gridview.template begin<0>();
+        ElementIterator it = gridview.template begin<0>();
         unsigned int globalId = vertexmapper.template map<dim>(*it, 3);
 
         MatrixType& A = *(this->A);
@@ -325,7 +323,7 @@ public:
 
     void globalDefect(FunctionType& defectGlobal) {
         typedef typename Grid::Traits::template Codim<0>::Entity Element;
-        typedef typename GV::template Codim<0>::Iterator Iterator;
+        typedef typename GV::template Codim<0>::Iterator ElementIterator;
         typedef typename BoundaryConditions::Flags BCBlockType;
 
         const GV& gridview(this->grid_.leafView());
@@ -338,8 +336,8 @@ public:
             essential[i] = BoundaryConditions::neumann;
 
         // iterate through leaf grid
-        Iterator eendit = gridview.template end<0>();
-        for (Iterator it = gridview.template begin<0>(); it
+        ElementIterator eendit = gridview.template end<0>();
+        for (ElementIterator it = gridview.template begin<0>(); it
                  != eendit; ++it) {
             // get geometry type
             Dune::GeometryType gt = it->geometry().type();
