@@ -113,9 +113,7 @@ public:
      *
      * @param grid a DUNE grid object
      * @param problem an object of class TransportProblem or derived
-     * @param lev the grid level on which the Transport equation is to be solved.
-     * @param diffPart an object of class DiffusivePart or derived. This determines the diffusive flux incorporated in the transport.
-     * @param numFl an object of class Numerical Flux or derived
+     * @param fluxFunc an object of flux function
      */
     ChTransport(Grid& grid, Problem& problem, FluxFunction<Grid,Scalar>& fluxFunc = *(new FluxFunction<Grid,Scalar>), int K=1000) :
     Transport<Grid, Scalar, VC, Problem>(grid, problem),
