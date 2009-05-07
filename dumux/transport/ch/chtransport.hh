@@ -10,12 +10,13 @@
 #include <dune/istl/bvector.hh>
 #include "dumux/transport/transport.hh"
 #include "dumux/transport/transportproblem.hh"
+#include "dumux/transport/ch/fluxfunction.hh"
 
 /**
  * @file
  * @brief  Base class for defining an instance of a numerical transport model
  * @brief  Forward characteristics method
- * @author Annika Fuchs
+ * @author Annika Fuchs; last changed by Yufei Cao
  * \defgroup transport Transport
  */
 
@@ -95,9 +96,9 @@ public:
      *  by the block vector \a velocity, containing values at each cell face. The fractional flow
      *  function \f$f_\text{w}\f$ is realized by the numerical flux function \a numericalFlux such
      *  that the \f$i\f$-th entry of the vector update is obtained by calculating
-     *  \f[ \sum_{j \in \mathcal{N}(i)} v_{ij}g(S_i, S_j) - v_{ji}g(S_j, S_i), \f]
+     *  \f[ \sum_{j \in \mathcal{N}(i)} v_{ij}grid(S_i, S_j) - v_{ji}grid(S_j, S_i), \f]
      *  where \f$\mathcal{N}(i)\f$ denotes the set of neighbors of the cell \f$i\f$ and
-     *  \f$g\f$ stands for \a numericalFlux. The normal velocities \f$v_{ij}\f$ and \f$v_{ji}\f$
+     *  \f$grid\f$ stands for \a numericalFlux. The normal velocities \f$v_{ij}\f$ and \f$v_{ji}\f$
      *  are given by
      *  \f{align*} v_{ij} = \int_{\Gamma_{ij}} \max(\boldsymbol{v}_\text{t}{\cdot}\boldsymbol{n}_{ij}, \, 0), \qquad
      *  v_{ji} = \int_{\Gamma_{ij}} \min(\boldsymbol{v}_\text{t}{\cdot}\boldsymbol{n}_{ij}, \, 0), \f}
@@ -110,15 +111,15 @@ public:
 
     /*! @brief constructor
      *
-     * @param g a DUNE grid object
-     * @param prob an object of class TransportProblem or derived
+     * @param grid a DUNE grid object
+     * @param problem an object of class TransportProblem or derived
      * @param lev the grid level on which the Transport equation is to be solved.
      * @param diffPart an object of class DiffusivePart or derived. This determines the diffusive flux incorporated in the transport.
      * @param numFl an object of class Numerical Flux or derived
      */
-    ChTransport(Grid& g, Problem& prob, int K=1000) :
-    Transport<Grid, Scalar, VC, Problem>(g, prob),
-    elementmapper(g.levelView(this->level())), K(K)
+    ChTransport(Grid& grid, Problem& problem, FluxFunction<Grid,Scalar>& fluxFunc = *(new FluxFunction<Grid,Scalar>), int K=1000) :
+    Transport<Grid, Scalar, VC, Problem>(grid, problem),
+    elementmapper(grid.levelView(this->level())), fluxFunc_(fluxFunc), K(K)
     {}
 
 private:
@@ -132,6 +133,7 @@ private:
     int approxSol(RepresentationType& updateVec,RepresentationType& dxtt);
 private:
     EM elementmapper;
+    const FluxFunction<Grid, Scalar>& fluxFunc_;
     int K;
     std::list<ChNode> ch;
     std::list<slNode> sl;
@@ -149,8 +151,8 @@ Scalar ChTransport<Grid,Scalar,VC, Problem>::linearflux(Scalar sat, GlobalPositi
     satA=i*1.0/K;
 
     //calculation of f(satA), f(satA+i/K)
-    double fa=this->transProblem.materialLaw().fractionalW(satA, globalPos, *eIt, localPos);
-    double fb=this->transProblem.materialLaw().fractionalW(satA+1.0/K, globalPos, *eIt, localPos);
+    double fa = fluxFunc_(satA, globalPos, *eIt, localPos);
+    double fb = fluxFunc_(satA+1.0/K, globalPos, *eIt, localPos);
 
     //evaluation at sat
     double fsat=fa+(sat-satA)*K*(fb-fa);
@@ -218,7 +220,7 @@ int ChTransport<Grid,Scalar,VC, Problem>::solveRP(Scalar& mch, std::list<ChNode>
     //one node between sat0 and sat1
     if(il==ih)
     {
-        Scalar satil = this->transProblem.materialLaw().fractionalW(il*1.0/K, globalPos, *eIt, localPos);
+        Scalar satil = fluxFunc_(il*1.0/K, globalPos, *eIt, localPos);
         //Rankine Hugoniot condition: shockfront
         if(sat0> sat1 && (fsl+mch*(il*1.0/K-sl) >= satil))
         return 0;
@@ -252,7 +254,7 @@ int ChTransport<Grid,Scalar,VC, Problem>::solveRP(Scalar& mch, std::list<ChNode>
         for(int i=0;i<len;++i)
         {
             b[i]=(il+i)*1.0/K;
-            fb[i]=this->transProblem.materialLaw().fractionalW(b[i], globalPos, *eIt, localPos);
+            fb[i]= fluxFunc_(b[i], globalPos, *eIt, localPos);
         }
 
         int j1 = 0;
@@ -963,12 +965,8 @@ int ChTransport<Grid,Scalar,VC, Problem>::update(const Scalar t, Scalar& dt, Rep
 {
     const GV& gridView = this->grid_.levelView(this->level());
 
-    //comment out the timestep setting and now the timestep is given by parameter 'dt'---Yufei
-    //setting of the timestep 
+    // the timestep is given by parameter 'dt'
     //if the problem allow it, use only one timestep!!!
-    //if(t==0)
-      // dt = 4.32e7;
-      // dt = 0.2;
 
     // set update vector to zero
     updateVec = 0;
@@ -990,7 +988,7 @@ int ChTransport<Grid,Scalar,VC, Problem>::update(const Scalar t, Scalar& dt, Rep
         for(int l=1;l<K;++l)
         {
             Scalar a;
-            a = (this->transProblem.materialLaw().fractionalW(l*1.0/K, globalPos, *eIt, localPos)-this->transProblem.materialLaw().fractionalW((l-1)*1.0/K, globalPos, *eIt, localPos))*K;
+            a = (fluxFunc_(l*1.0/K, globalPos, *eIt, localPos)-fluxFunc_((l-1)*1.0/K, globalPos, *eIt, localPos))*K;
             if(a>maxa)
             maxa = a;
         }
@@ -1026,7 +1024,7 @@ int ChTransport<Grid,Scalar,VC, Problem>::update(const Scalar t, Scalar& dt, Rep
         for(int l=1;l<K;++l)
         {
             Scalar a;
-            a = (this->transProblem.materialLaw().fractionalW(l*1.0/K, globalPos, *eIt, localPos)-this->transProblem.materialLaw().fractionalW((l-1)*1.0/K, globalPos, *eIt, localPos))*K;
+            a = (fluxFunc_(l*1.0/K, globalPos, *eIt, localPos)-fluxFunc_((l-1)*1.0/K, globalPos, *eIt, localPos))*K;
             if(a>maxa)
             maxa = a;
         }
