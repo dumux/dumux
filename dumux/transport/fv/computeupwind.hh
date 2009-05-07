@@ -109,13 +109,12 @@ public:
         return (fI * velocityIJ - fJ * velocityJI);
     }
 
-    ComputeUpwind (Problem& problem, Matrix2p<Grid, Scalar>& soil)
-        : problem_(problem), soil_(soil)
+    ComputeUpwind (Problem& problem)
+        : problem_(problem)
     { }
 
 private:
     Problem& problem_;
-    Matrix2p<Grid, Scalar>& soil_;
 };
 }
 
