@@ -64,7 +64,7 @@ public:
       @param[in]  globalPos    position in global coordinates
       \return     boundary condition type given by enum in this class
     */
-    virtual BoundaryConditions::Flags bctype (const FieldVector<Scalar,dim>& globalPos, const Element& element,
+    virtual FieldVector<BoundaryConditions::Flags, numEq> bctype (const FieldVector<Scalar,dim>& globalPos, const Element& element,
                                               const IntersectionIterator& intersectionIt,
                                               const FieldVector<Scalar,dim>& localPos) const = 0;
 
