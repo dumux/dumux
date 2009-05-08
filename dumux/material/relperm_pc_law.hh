@@ -153,7 +153,9 @@ public:
 
     double krn (double saturationN, const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos, double temperature=283.15) const
     {
-        return 1.0 - krw(1.0 - saturationN, globalPos, element, localPos, temperature);
+        double Sr_w = soil_.Sr_w(globalPos, element, localPos, temperature);
+        double Sr_n = soil_.Sr_n(globalPos, element, localPos, temperature);
+        return std::max(std::min((saturationN - Sr_n)/(1- Sr_w - Sr_n), 1.), 0.);
     }
 
     std::vector<double> kr (const double saturationW, const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos, double temperature=283.15) const
@@ -269,7 +271,25 @@ public:
 
     double krn (double saturationN, const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos, double temperature=283.15) const
     {
-        return 1.0 - krw(1.0 - saturationN, globalPos, element, localPos, temperature);
+        double Swr = soil_.Sr_w(globalPos, element, localPos, temperature);
+        double Snr = soil_.Sr_n(globalPos, element, localPos, temperature);
+
+        double Se, r;
+
+        /* effective values */
+        Se = (1 - saturationN - Swr) / (1 - Snr - Swr);
+
+        /* effective Saturation Se has to be between 0 and 1! */
+        if(Se > 1.) Se = 1.;
+        if(Se < machineEps_) Se = machineEps_;
+
+        std::vector<double> param = soil_.paramRelPerm(globalPos, element, localPos, temperature);
+        double m = param[0];
+        double gamma = param[3];
+
+        /* compute value */
+        r   = 1 - pow(Se, 1/m);
+        return pow(1-Se, gamma) * pow(r, 2*m);
     }
 
     std::vector<double> kr (const double saturationW, const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos, double temperature=283.15) const
@@ -579,7 +599,16 @@ public:
 
     double krn (double saturationN, const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos, const double temperature=283.15) const
     {
-        return 1.0 - krw(1.0 - saturationN, globalPos, element, localPos, temperature);
+        double Se = ((1.-saturationN) - soil_.Sr_w(globalPos, element, localPos, temperature))
+            /(1. - soil_.Sr_w(globalPos, element, localPos, temperature) - soil_.Sr_n(globalPos, element, localPos, temperature));
+
+        //regularisation
+        if (Se > 1) return 0.0;
+        if (Se < epsKr_) return 1.0;
+
+        double lambda = soil_.paramRelPerm(globalPos, element, localPos, temperature)[0];
+        double exponent = (2. + lambda) / lambda;
+        return pow(1.-Se, 2) * ( 1. - pow(Se, exponent) );
     }
 
     std::vector<double> kr (const double saturationW, const FieldVector<Scalar,dim>& globalPos, const Element& element, const FieldVector<Scalar,dim>& localPos, const double temperature=283.15) const
