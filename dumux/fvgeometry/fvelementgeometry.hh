@@ -717,9 +717,9 @@ public:
             }
 
 
-        for (int vert = 0; vert < numVertices; vert++)
-            if (dim == 2)
-            {
+//        for (int vert = 0; vert < numVertices; vert++)
+//            if (dim == 2)
+//            {
 //                if (!subContVol[vert].inner) {
 //                    switch (vert)
 //                    {
@@ -761,20 +761,20 @@ public:
 //                }
 //
 //                subContVol[vert].global = geometry.global(subContVol[vert].local);
-
-                FieldMatrix<Scalar,dim,dim> jacInvT = geometry.jacobianInverseTransposed(subContVol[vert].local);
-
-                for (int nodeI = 0; nodeI < numVertices; nodeI++)
-                 {
-                     FV grad(0),temp;
-                     for (int l = 0; l < dim; l++)
-                         temp[l] = sfs[nodeI].evaluateDerivative(0, l, subContVol[vert].local);
-                     jacInvT.umv(temp, grad);
-                     subContVol[vert].grad[nodeI] = grad;
-                     subContVol[vert].shapeValue[nodeI] = sfs[nodeI].evaluateFunction(0, subContVol[vert].local);
-                 }
-
-            }
+//
+//                FieldMatrix<Scalar,dim,dim> jacInvT = geometry.jacobianInverseTransposed(subContVol[vert].local);
+//
+//                for (int nodeI = 0; nodeI < numVertices; nodeI++)
+//                 {
+//                     FV grad(0),temp;
+//                     for (int l = 0; l < dim; l++)
+//                         temp[l] = sfs[nodeI].evaluateDerivative(0, l, subContVol[vert].local);
+//                     jacInvT.umv(temp, grad);
+//                     subContVol[vert].grad[nodeI] = grad;
+//                     subContVol[vert].shapeValue[nodeI] = sfs[nodeI].evaluateFunction(0, subContVol[vert].local);
+//                 }
+//
+//            }
 
     }
 
