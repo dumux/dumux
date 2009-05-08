@@ -29,11 +29,13 @@ class BoxStokesTransportJacobian
     enum {dim=Grid::dimension};
     enum {numEq = dim+2};
     enum {SIZE=LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::maxsize};
-    enum {velocityXIdx=0, velocityYIdx=1, velocityZIdx=2, massFracIdx=dim, pressureIdx=dim+1};
+    enum {velocityXIdx=0, velocityYIdx=1, velocityZIdx=2,
+    	  massFracIdx=dim, pressureIdx=dim+1};
 
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
     typedef typename Grid::LeafGridView::IntersectionIterator IntersectionIterator;
     typedef typename Element::Geometry Geometry;
+
     typedef BoxStokesTransportJacobian<Grid,Scalar,BoxFunction> ThisType;
     typedef typename LocalJacobian<ThisType,Grid,Scalar,numEq>::VBlockType SolutionVector;
     typedef BoxJacobian<ThisType,Grid,Scalar,numEq,BoxFunction> BoxJacobianType;
@@ -97,23 +99,22 @@ public:
                             int nodeInElement = referenceElement.subEntity(faceIdx, 1, nodeInFace, dim);
                             if (nodeInElement != vert)
                                 continue;
+
                             int bfIdx = this->fvGeom.boundaryFaceIndex(faceIdx,    nodeInFace);
                             FieldVector<Scalar,dim> local = this->fvGeom.boundaryFace[bfIdx].ipLocal;
                             FieldVector<Scalar,dim> global = this->fvGeom.boundaryFace[bfIdx].ipGlobal;
-//                            FieldVector<BoundaryConditions::Flags,numEq> bctypeface = this->getImp().problem.bctype(global, element, it, local);
 
-                            // Checks if boundary conditions of ALL equations are DIRICHLET
-                            bool onlyDirichlet = true;
-                            FieldVector<BoundaryConditions::Flags, numEq>  bctypeNode = this->getImp().problem.bctype(global, element, it, local);
-                            for (int i=0; i<dim; ++i)
-                            {
-                            	if (bctypeNode[i] != BoundaryConditions::neumann)
-                            		onlyDirichlet = false;
-                            }
-
-                            // TODO: is this always valid?? Checks only bctype of first primary variable
-                            if (onlyDirichlet)
-//                            if (bctypeface[velocityXIdx] == BoundaryConditions::dirichlet)
+                            FieldVector<BoundaryConditions::Flags, numEq>  bctypeface = this->getImp().problem.bctype(global, element, it, local);
+// TODO: Which boundary conditions need to be checked here?
+// Check if boundary conditions of ALL equations for the velocity are DIRICHLET ?
+//                            bool onlyDirichlet = true;
+//                            for (int i=0; i<dim; ++i)
+//                            {
+//                            	if (bctypeNode[i] != BoundaryConditions::dirichlet)
+//                            		onlyDirichlet = false;
+//                            }
+//                    		if (onlyDirichlet)
+                            if (bctypeface[velocityXIdx] == BoundaryConditions::dirichlet)
                             {
                             	FieldVector<Scalar,dim> normal = it->unitOuterNormal(faceLocal);
                             	normal *= this->fvGeom.boundaryFace[bfIdx].area;
@@ -128,6 +129,7 @@ public:
                     averagedNormal /= averagedNormal.two_norm();
                 for (int k = 0; k < dim; k++)
                     defect += this->def[vert][k]*averagedNormal[k];
+
                 //mass balance equation
                 if (faces == 2 && this->fvGeom.numVertices == 4)
                 {
@@ -136,7 +138,7 @@ public:
 //                    this->def[vert][massFracIdx] = sol[0][massFracIdx] + sol[3][massFracIdx] - sol[1][massFracIdx] - sol[2][massFracIdx];
                     this->def[vert][pressureIdx] = sol[0][pressureIdx] + sol[3][pressureIdx] - sol[1][pressureIdx] - sol[2][pressureIdx];
                 }
-                else if (this->bctype[vert][0] == BoundaryConditions::dirichlet)
+                else if (this->bctype[vert][velocityXIdx] == BoundaryConditions::dirichlet)
                     this->def[vert][pressureIdx] = defect;
                 else // de-stabilize
                 {
@@ -190,7 +192,7 @@ public:
         result[velocityXIdx] = -1*varData[node].density*sol[node][velocityXIdx];
         //velocity v
         result[velocityYIdx] = -1*varData[node].density*sol[node][velocityYIdx];
-        //partial density
+        //mass fraction
         result[massFracIdx] = -1*sol[node][massFracIdx];
         //pressure p
         result[pressureIdx] = -1*varData[node].density;

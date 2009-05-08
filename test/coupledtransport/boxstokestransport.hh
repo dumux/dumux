@@ -68,17 +68,12 @@ public:
 
     typedef Grid GridType;
 
-    // define the function type:
+    // define the function  and operator assembler type:
     typedef LeafP1Function<Grid, Scalar, numEq> FunctionType;
-
-    // define the operator assembler type:
     typedef LeafP1OperatorAssembler<Grid, Scalar, numEq> OperatorAssembler;
-
     typedef Dune::BoxStokesTransport<Grid, Scalar, StokesTransportProblem<Grid, Scalar>, BoxStokesTransportJacobian<Grid, Scalar>,
                                      FunctionType, OperatorAssembler> BoxStokesTransport;
-
     typedef LeafP1BoxStokesTransport<Grid, Scalar, dim> ThisType;
-
     typedef BoxStokesTransportJacobian<Grid, Scalar> LocalJacobian;
 
     // mapper: one data element per vertex
@@ -94,10 +89,13 @@ public:
     typedef typename Grid::LeafGridView GridView;
     typedef typename GridView::IndexSet IS;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
+    typedef typename Grid::Traits::template Codim<0>::Entity Element;
+    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef MultipleCodimMultipleGeomTypeMapper<GridView,P1Layout> VertexMapper;
     typedef typename ThisType::FunctionType::RepresentationType VectorType;
     typedef typename ThisType::OperatorAssembler::RepresentationType MatrixType;
     typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator;
+
 #ifdef HAVE_PARDISO
     //    SeqPardiso<MatrixType,VectorType,VectorType> pardiso;
 #endif
@@ -115,43 +113,38 @@ public:
 
     virtual void initial()
     {
-        typedef typename Grid::Traits::template Codim<0>::Entity Element;
-        typedef typename GridView::template Codim<0>::Iterator Iterator;
         enum{dimworld = Grid::dimensionworld};
 
         const GridView& gridview(this->grid_.leafView());
         std::cout << "initializing Stokes solution." << std::endl;
-        // iterate through leaf grid an evaluate c0 at cell center
-        Iterator eendit = gridview.template end<0>();
-        for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
-        {
-            // get geometry type
-            Dune::GeometryType gt = it->geometry().type();
 
-            // get element
+        // iterate through leaf grid an evaluate c0 at cell center
+        ElementIterator eendit = gridview.template end<0>();
+        for (ElementIterator it = gridview.template begin<0>(); it != eendit; ++it)
+        {
+            // get geometry type and element
+            Dune::GeometryType gt = it->geometry().type();
             const Element& element = *it;
 
             const typename Dune::LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::value_type&
                 sfs=Dune::LagrangeShapeFunctions<Scalar,Scalar,dim>::general(gt, 1);
-            int size = sfs.size();
+			int size = sfs.size();
 
             for (int i = 0; i < size; i++)
             {
                 // get cell center in reference element
                 const Dune::FieldVector<Scalar,dim>&local = sfs[i].position();
-
-                // get global coordinate of cell center
                 Dune::FieldVector<Scalar,dimworld> global = it->geometry().global(local);
 
                 int globalId = vertexmapper.template map<dim>(element, sfs[i].entity());
 
                 // initialize cell concentration
-                (*(this->u))[globalId] = this->problem.initial(global, element, local); //0;
+                (*(this->u))[globalId] = this->problem.initial(global, element, local);
             }
         }
 
         // set Dirichlet boundary conditions
-        for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
+        for (ElementIterator it = gridview.template begin<0>(); it != eendit; ++it)
         {
             // get geometry type
             Dune::GeometryType gt = it->geometry().type();
@@ -172,7 +165,7 @@ public:
                 if (is->boundary())
                 {
                     for (int i = 0; i < size; i++)
-                        // handle subentities of this face
+                        // handle sub entities of this face
                         for (int j = 0; j < ReferenceElements<Scalar,dim>::general(gt).size(is->indexInInside(), 1, sfs[i].codim()); j++)
                             if (sfs[i].entity() == ReferenceElements<Scalar,dim>::general(gt).subEntity(is->indexInInside(), 1, j, sfs[i].codim()))
                             {
@@ -185,16 +178,7 @@ public:
                                     Dune::FieldVector<Scalar,dimworld> global = it->geometry().global(local);
 
                                     int globalId = vertexmapper.template map<dim>(element, sfs[i].entity());
-/*                                  BoundaryConditions::Flags bctype(this->problem.bctype(global, element, is, local));
-                                    if (bctype == BoundaryConditions::dirichlet) {
-                                        FieldVector<Scalar,numEq> dirichlet = this->problem.dirichlet(global, element, is, local);
-                                        for (int eq = 0; eq < dim+1; eq++)
-                                            (*(this->u))[globalId][eq] = dirichlet[eq];
-                                    }
-                                    else {
-                                        std::cout << global << " is considered to be a Neumann node." << std::endl;
-                                    }
-*/
+
                                     FieldVector<BoundaryConditions::Flags, numEq> bctype(this->problem.bctype(global, element, is, local));
 
                                     FieldVector<Scalar,numEq> dirichlet = this->problem.dirichlet(global, element, is, local);
@@ -222,16 +206,15 @@ public:
 
     virtual void assemble()
     {
-        MatrixType& A = *(this->A);
+//        MatrixType& A = *(this->A);
         *(this->f) = 0;
         this->localJacobian().clearVisited();
         this->A.assemble(this->localJacobian(), this->u, this->f);
 //
 //        //modify matrix for introducing pressure boundary condition
 //        const GridView& gridview(this->grid_.leafView());
-//        typedef typename GridView::template Codim<0>::Iterator Iterator;
 //
-//        Iterator it = gridview.template begin<0>();
+//        ElementIterator it = gridview.template begin<0>();
 //        unsigned int globalId = vertexmapper.template map<dim>(*it, 3);
 //
 //        for (typename MatrixType::RowIterator i=A.begin(); i!=A.end(); ++i)
@@ -241,6 +224,7 @@ public:
 //        A[globalId][globalId][dim+1][dim+1] = 1.0;
 //        (*(this->f))[globalId][dim+1] = 0.0; // set error to zero
     }
+
 
     virtual void update(double& dt)
     {
@@ -282,8 +266,6 @@ public:
     }
 
     virtual void globalDefect(FunctionType& defectGlobal) {
-        typedef typename Grid::Traits::template Codim<0>::Entity Element;
-        typedef typename GridView::template Codim<0>::Iterator Iterator;
         typedef typename BoundaryConditions::Flags BCBlockType;
 
         const GridView& gridview(this->grid_.leafView());
@@ -296,8 +278,8 @@ public:
             essential[i] = BoundaryConditions::neumann;
 
         // iterate through leaf grid
-        Iterator eendit = gridview.template end<0>();
-        for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
+        ElementIterator eendit = gridview.template end<0>();
+        for (ElementIterator it = gridview.template begin<0>(); it != eendit; ++it)
         {
             // get geometry type
             Dune::GeometryType gt = it->geometry().type();
