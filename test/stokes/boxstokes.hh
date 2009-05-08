@@ -176,8 +176,7 @@ public:
                 this->localJacobian().assembleBoundaryCondition(element);
 
                 IntersectionIterator endit = element.ileafend();
-                for (IntersectionIterator is = element.ileafbegin();
-                     is!=endit; ++is)
+                for (IntersectionIterator is = element.ileafbegin(); is!=endit; ++is)
                     if (is->boundary())
                         {
                             for (int i = 0; i < size; i++)
@@ -185,6 +184,7 @@ public:
                                 for (int j = 0; j < ReferenceElements<Scalar,dim>::general(gt).size(is->indexInInside(), 1, sfs[i].codim()); j++)
                                     if (sfs[i].entity() == ReferenceElements<Scalar,dim>::general(gt).subEntity(is->indexInInside(), 1, j, sfs[i].codim()))
                                         {
+                                            //TODO: what is done here??
                                             if (this->localJacobian().bc(i)[velocityYIdx] == BoundaryConditions::dirichlet)
                                                 {
                                                     // get cell center in reference element
@@ -195,30 +195,20 @@ public:
 
                                                     int globalId = vertexmapper.template map<dim>(element, sfs[i].entity());
 
-                                    FieldVector<BoundaryConditions::Flags, numEq> bctype(this->problem.bctype(global, element, is, local));
-									// TODO: checks only first equation!!
-                                    if (bctype[0] == BoundaryConditions::dirichlet)
-                                    {
-                                        FieldVector<Scalar,numEq> dirichlet = this->problem.dirichlet(global, element, is, local);
-                                        //TODO: dim or numEq for the following loop??
-                                        for (int eq = 0; eq < dim; eq++)
+                                                    FieldVector<BoundaryConditions::Flags, numEq> bctype(this->problem.bctype(global, element, is, local));
+                                                    //TODO: dim or numEq for the following loop??
+                                                    for (int eq = 0; eq < dim; eq++)
+                                                        {
+                                                            if (bctype[eq] == BoundaryConditions::dirichlet)
+                                                                {
+                                                                    FieldVector<Scalar,numEq> dirichlet = this->problem.dirichlet(global, element, is, local);
+
                                                                     (*(this->u))[globalId][eq] = dirichlet[eq];
                                                                 }
-                                    else {
-                                                                    std::cout << global << " is considered to be a Neumann node." << std::endl;
-                                                                }
+                                                            else
+                                                                std::cout << global << " is considered to be a Neumann node." << std::endl;
                                                         }
-                                                    //                                      BoundaryConditions::Flags bctype = this->problem.bctype(global, element, is, local);
-                                                    //                                    if (bctype == BoundaryConditions::dirichlet) {
-                                                    //                                        FieldVector<Scalar,numEq> dirichlet = this->problem.dirichlet(global, element, is, local);
-                                                    //                                        //TODO: dim or numEq for the following loop??
-                                                    //                                        for (int eq = 0; eq < dim; eq++)
-                                                    //                                            (*(this->u))[globalId][eq] = dirichlet[eq];
-                                                    //                                    }
-                                                    //                                    else {
-                                                    //                                        std::cout << global << " is considered to be a Neumann node." << std::endl;
-                                                    //                                    }
-													//										}
+                                                }
                                         }
                         }
             }

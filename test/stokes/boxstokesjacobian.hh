@@ -24,7 +24,7 @@ namespace Dune
 {
 //! A class for computing local jacobian matrices
 /*! A class for computing local jacobian matrix for the
-   Stokes equation
+  Stokes equation
 
   div (-mu grad u + pI) = f;  div u = 0; in Omega
 
@@ -116,29 +116,29 @@ public:
                                     bool onlyDirichlet = true;
                                     FieldVector<BoundaryConditions::Flags, numEq>  bctypeNode = this->getImp().problem.bctype(global, element, it, local);
                                     for (int i=0; i<dim; ++i)
-                                    {
-                                    	if (bctypeNode[i] != BoundaryConditions::dirichlet)
-                                    		onlyDirichlet = false;
-                                    }
+                                        {
+                                            if (bctypeNode[i] != BoundaryConditions::dirichlet)
+                                                onlyDirichlet = false;
+                                        }
 
                                     if (onlyDirichlet)
-                                    {
-                                    	FieldVector<Scalar,dim> normal = it->unitOuterNormal(faceLocal);
-                                        normal *= this->fvGeom.boundaryFace[bfIdx].area;
-                                        averagedNormal += normal;
-
-                                        for (int k = 0; k < this->fvGeom.numVertices; k++)
                                         {
-                                        	FieldVector<Scalar,dim> grad(this->fvGeom.boundaryFace[bfIdx].grad[k]);
+                                            FieldVector<Scalar,dim> normal = it->unitOuterNormal(faceLocal);
+                                            normal *= this->fvGeom.boundaryFace[bfIdx].area;
+                                            averagedNormal += normal;
 
-                                        	for (int comp = 0; comp < dim; comp++)
-                                        	{
-                                        		FieldVector<Scalar,dim> gradVComp = grad;
-                                        		gradVComp *= sol[k][comp];
-                                        		velocityGradient[comp] += gradVComp;
-                                        	}
+                                            for (int k = 0; k < this->fvGeom.numVertices; k++)
+                                                {
+                                                    FieldVector<Scalar,dim> grad(this->fvGeom.boundaryFace[bfIdx].grad[k]);
+
+                                                    for (int comp = 0; comp < dim; comp++)
+                                                        {
+                                                            FieldVector<Scalar,dim> gradVComp = grad;
+                                                            gradVComp *= sol[k][comp];
+                                                            velocityGradient[comp] += gradVComp;
+                                                        }
+                                                }
                                         }
-                                   }
                                     faces++;
                                 }
                             }
@@ -152,7 +152,7 @@ public:
                     tangent[0] = averagedNormal[1];
                     tangent[1] = -averagedNormal[0];
 
-                	// on the Dirichlet boundary Gamma_D we use momentum equation
+                    // on the Dirichlet boundary Gamma_D we use momentum equation
                     // multiplied by the averaged normal vector
                     for (int k = 0; k < dim; k++)
                         defect += this->def[vert][k]*averagedNormal[k];
@@ -160,53 +160,53 @@ public:
                     // in the corners, reduce the degree of the polynomials
                     // approximating pressure to 1 (remove term xy)
                     if (faces == 2 && this->fvGeom.numVertices == 4)
-                    {
-                    	this->def[vert][dim] = sol[0][dim] + sol[3][dim] - sol[1][dim] - sol[2][dim];
-                    }
-                    else
-                       	if (this->bctype[vert][0] == BoundaryConditions::dirichlet)
                         {
-                       		// from boundaryFlux we have p.n on the boundary
-                       		// here we compute mu*gradVT*tangent instead of -mu*gradVN*n
-                       		FieldVector<Scalar,dim>  gradVT(0);
-                            velocityGradient.umv(tangent, gradVT);
-                            gradVT *= normalLength;
-                            gradVT *= elData.mu;
-							defect -= gradVT*tangent;
-
-                            this->def[vert][dim] = defect;
+                            this->def[vert][dim] = sol[0][dim] + sol[3][dim] - sol[1][dim] - sol[2][dim];
                         }
-                    else // de-stabilize (remove alpha*grad p - alpha div f from computeFlux on the boundary)
-                    	 // use mass balance equation without any stabilization on the boundary
-                    	{
-                            for (int face = 0; face < this->fvGeom.numEdges; face++)
-                                {
-                                    int i = this->fvGeom.subContVolFace[face].i;
-                                    int j = this->fvGeom.subContVolFace[face].j;
+                    else
+                        if (this->bctype[vert][0] == BoundaryConditions::dirichlet)
+                            {
+                                // from boundaryFlux we have p.n on the boundary
+                                // here we compute mu*gradVT*tangent instead of -mu*gradVN*n
+                                FieldVector<Scalar,dim>  gradVT(0);
+                                velocityGradient.umv(tangent, gradVT);
+                                gradVT *= normalLength;
+                                gradVT *= elData.mu;
+                                defect -= gradVT*tangent;
 
-                                    if (i != vert && j != vert)
-                                        continue;
+                                this->def[vert][dim] = defect;
+                            }
+                        else // de-stabilize (remove alpha*grad p - alpha div f from computeFlux on the boundary)
+                            // use mass balance equation without any stabilization on the boundary
+                            {
+                                for (int face = 0; face < this->fvGeom.numEdges; face++)
+                                    {
+                                        int i = this->fvGeom.subContVolFace[face].i;
+                                        int j = this->fvGeom.subContVolFace[face].j;
 
-                                    FieldVector<Scalar, dim> pressGradient(0);
-                                    for (int k = 0; k < this->fvGeom.numVertices; k++) {
-                                        FieldVector<Scalar,dim> grad(this->fvGeom.subContVolFace[face].grad[k]);
-                                        grad *= sol[k][dim];
-                                        pressGradient += grad;
+                                        if (i != vert && j != vert)
+                                            continue;
+
+                                        FieldVector<Scalar, dim> pressGradient(0);
+                                        for (int k = 0; k < this->fvGeom.numVertices; k++) {
+                                            FieldVector<Scalar,dim> grad(this->fvGeom.subContVolFace[face].grad[k]);
+                                            grad *= sol[k][dim];
+                                            pressGradient += grad;
+                                        }
+
+                                        Scalar alphaH2 = 0.5*alpha*(this->fvGeom.subContVol[i].volume + this->fvGeom.subContVol[j].volume);
+                                        pressGradient *= alphaH2;
+
+                                        if (vert == i)
+                                            this->def[vert][dim] += pressGradient*this->fvGeom.subContVolFace[face].normal;
+                                        else
+                                            this->def[vert][dim] -= pressGradient*this->fvGeom.subContVolFace[face].normal;
                                     }
 
-                                    Scalar alphaH2 = 0.5*alpha*(this->fvGeom.subContVol[i].volume + this->fvGeom.subContVol[j].volume);
-                                    pressGradient *= alphaH2;
-
-                                    if (vert == i)
-                                        this->def[vert][dim] += pressGradient*this->fvGeom.subContVolFace[face].normal;
-                                    else
-                                        this->def[vert][dim] -= pressGradient*this->fvGeom.subContVolFace[face].normal;
-                                }
-
-                            SolutionVector source = problem.q(this->fvGeom.subContVol[vert].global, element, this->fvGeom.subContVol[vert].local);
-                            Scalar alphaH2 = alpha*this->fvGeom.subContVol[vert].volume;
-                            this->def[vert][dim] -= alphaH2*source[dim]*this->fvGeom.subContVol[vert].volume;
-                        }
+                                SolutionVector source = problem.q(this->fvGeom.subContVol[vert].global, element, this->fvGeom.subContVol[vert].local);
+                                Scalar alphaH2 = alpha*this->fvGeom.subContVol[vert].volume;
+                                this->def[vert][dim] -= alphaH2*source[dim]*this->fvGeom.subContVol[vert].volume;
+                            }
                 }
 
         return;
@@ -221,10 +221,10 @@ public:
 
     SolutionVector computeSource (const Element& element, const SolutionVector* sol, const int& node)
     {
-    	// calculate source term and take into account flux calculated on the boundary
-    	// source term for mass balance equation: problem.q[dim] = div f
-    	// should be multiplied with stabilization parameter alpha
-    	SolutionVector result = problem.q(this->fvGeom.subContVol[node].global, element, this->fvGeom.subContVol[node].local);
+        // calculate source term and take into account flux calculated on the boundary
+        // source term for mass balance equation: problem.q[dim] = div f
+        // should be multiplied with stabilization parameter alpha
+        SolutionVector result = problem.q(this->fvGeom.subContVol[node].global, element, this->fvGeom.subContVol[node].local);
         result *= -1.0;
 
         Scalar alphaH2 = alpha*this->fvGeom.subContVol[node].volume;
@@ -316,9 +316,9 @@ public:
 
     SolutionVector boundaryFlux(const Element& element, const SolutionVector* sol, int node)
     {
-    	// calculate flux on the boundary for momentum balance equations
-    	// and mass balance equation
-    	SolutionVector  result(0);
+        // calculate flux on the boundary for momentum balance equations
+        // and mass balance equation
+        SolutionVector  result(0);
 
         Dune::GeometryType gt = element.geometry().type();
         const typename Dune::LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::value_type
@@ -368,18 +368,18 @@ public:
                         FieldVector<Scalar,dim>  pressGradient(0);
                         FieldMatrix<Scalar,dim,dim> velocityGradient(0);
                         for (int vert = 0; vert < this->fvGeom.numVertices; vert++)
-                        {
-                            pressureValue += sol[vert][dim]*this->fvGeom.boundaryFace[bfIdx].shapeValue[vert];
-                            FieldVector<Scalar,dim> grad(this->fvGeom.boundaryFace[bfIdx].grad[vert]);
+                            {
+                                pressureValue += sol[vert][dim]*this->fvGeom.boundaryFace[bfIdx].shapeValue[vert];
+                                FieldVector<Scalar,dim> grad(this->fvGeom.boundaryFace[bfIdx].grad[vert]);
 
-                            for (int comp = 0; comp < dim; comp++)
-                                {
-                                    velocityValue[comp] += sol[vert][comp]*this->fvGeom.boundaryFace[bfIdx].shapeValue[vert];
-                                    FieldVector<Scalar,dim> gradVComp = grad;
-                                    gradVComp *= sol[vert][comp];
-                                    velocityGradient[comp] += gradVComp;
-                                }
-                        }
+                                for (int comp = 0; comp < dim; comp++)
+                                    {
+                                        velocityValue[comp] += sol[vert][comp]*this->fvGeom.boundaryFace[bfIdx].shapeValue[vert];
+                                        FieldVector<Scalar,dim> gradVComp = grad;
+                                        gradVComp *= sol[vert][comp];
+                                        velocityGradient[comp] += gradVComp;
+                                    }
+                            }
                         FieldVector<Scalar, dim> massResidual = velocityValue;
                         result[dim] -= massResidual*it->unitOuterNormal(faceLocal)*this->fvGeom.boundaryFace[bfIdx].area;
 
@@ -403,8 +403,8 @@ public:
                                     }
                             }
                         else // for the natural boundary Gamma_N we have
-                        	 // g_N*n = mu*gradVN*n - p*n (this equation is added to mass balance with factor beta)
-                        	 // -u*n - 0.5*beta*gradVT*tangent - 0.5*beta*g_N*n, the rest (0.5*beta*p) is in computeSource
+                             // g_N*n = mu*gradVN*n - p*n (this equation is added to mass balance with factor beta)
+                             // -u*n - 0.5*beta*gradVT*tangent - 0.5*beta*g_N*n, the rest (0.5*beta*p) is in computeSource
                             {
                                 Scalar beaversJosephC = this->getImp().problem.beaversJosephC(this->fvGeom.boundaryFace[bfIdx].ipGlobal, element, it, this->fvGeom.boundaryFace[bfIdx].ipLocal);
                                 if (beaversJosephC == 0)
@@ -495,24 +495,25 @@ public:
                     int numVerticesOfFace = referenceElement.size(faceIdx, 1, dim);
                     for (int nodeInFace = 0; nodeInFace < numVerticesOfFace; nodeInFace++) {
                         int nodeInElement = referenceElement.subEntity(faceIdx, 1, nodeInFace, dim);
-                        for (int equationNumber = 0; equationNumber < numEq; equationNumber++) {
-                            if (this->bctype[nodeInElement][equationNumber] == BoundaryConditions::neumann) {
-                                int bfIdx = this->fvGeom.boundaryFaceIndex(faceIdx,    nodeInFace);
-                                FieldVector<Scalar,dim> local = this->fvGeom.boundaryFace[bfIdx].ipLocal;
-                                FieldVector<Scalar,dim> global = this->fvGeom.boundaryFace[bfIdx].ipGlobal;
-                                bctypeface = this->getImp().problem.bctype(global, element, it, local); // eval bctype
+                        for (int equationNumber = 0; equationNumber < numEq; equationNumber++)
+                            {
+                                if (this->bctype[nodeInElement][equationNumber] == BoundaryConditions::neumann) {
+                                    int bfIdx = this->fvGeom.boundaryFaceIndex(faceIdx,    nodeInFace);
+                                    FieldVector<Scalar,dim> local = this->fvGeom.boundaryFace[bfIdx].ipLocal;
+                                    FieldVector<Scalar,dim> global = this->fvGeom.boundaryFace[bfIdx].ipGlobal;
+                                    bctypeface = this->getImp().problem.bctype(global, element, it, local); // eval bctype
 
-                                if (bctypeface[equationNumber]!=BoundaryConditions::neumann)
-                                    break;
-                                FieldVector<Scalar,numEq> J = this->getImp().problem.neumann(global, element, it, local);
+                                    if (bctypeface[equationNumber]!=BoundaryConditions::neumann)
+                                        break;
+                                    FieldVector<Scalar,numEq> J = this->getImp().problem.neumann(global, element, it, local);
 
-                                if (equationNumber < dim)
-                                    {
-                                        J[equationNumber] *= this->fvGeom.boundaryFace[bfIdx].area;
-                                        this->b[nodeInElement][equationNumber] += J[equationNumber];
-                                    }
+                                    if (equationNumber < dim)
+                                        {
+                                            J[equationNumber] *= this->fvGeom.boundaryFace[bfIdx].area;
+                                            this->b[nodeInElement][equationNumber] += J[equationNumber];
+                                        }
+                                }
                             }
-                        }
                     }
 
                     bool nface(true); // check if face is a neumann face
