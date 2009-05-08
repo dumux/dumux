@@ -43,6 +43,23 @@ public:
     	return values;
     }
 
+/*
+    virtual FieldVector<BoundaryConditions::Flags, numEq> bctype (const FieldVector<Scalar,dim>& x, const Element& e,
+                                                                      const IntersectionIterator& intersectionIt,
+                                                                      const FieldVector<Scalar,dim>& xi) const
+        {
+//           	if (x[0] < 1e-6 || x[1] < 1e-6 || x[1] > 1 - 1e-6)
+//        	{
+           		FieldVector<BoundaryConditions::Flags, numEq> values(BoundaryConditions::dirichlet);
+           		return values;
+//        	}
+//        	else
+//        	{
+//        		FieldVector<BoundaryConditions::Flags, numEq> values(BoundaryConditions::neumann);
+//        		return values;
+//        	}
+         }
+*/
     virtual FieldVector<Scalar,numEq>dirichlet(const FieldVector<Scalar,dim>& globalPos, const Element& element,
                                         const IntersectionIterator& intersectionIt,
                                         const FieldVector<Scalar,dim>& localPos) const
