@@ -49,7 +49,7 @@ class TwoPTwoCNIBoxJacobian : public TwoPTwoCBoxJacobianBase<ProblemT,
                                                                                 ProblemT,
                                                                                 TwoPTwoCNIVertexData<TwoPTwoCNITraitsT,
                                                                                                      ProblemT> >,
-                                                             
+
                                                              TwoPTwoCNIBoxJacobian<ProblemT,
                                                                                    BoxTraitsT,
                                                                                    TwoPTwoCNITraitsT> >
@@ -159,20 +159,20 @@ public:
      * \brief Sets the temperature term of the flux vector to the
      *        heat flux due to advection of the fluids.
      */
-    void computeFluxdvectiveFlux(SolutionVector &flux,
+    void computeAdvectiveFlux(SolutionVector &flux,
                               const FluxData &fluxData) const
     {
         // advective mass flux
-        ParentType::computeFluxdvectiveFlux(flux, fluxData);
+        ParentType::computeAdvectiveFlux(flux, fluxData);
 
         // advective heat flux in all phases
-        const Scalar alpha = TwoPTwoCNITraits::upwindAlpha;      
+        const Scalar alpha = TwoPTwoCNITraits::upwindAlpha;
         flux[temperatureIdx] = 0;
         for (int phase = 0; phase < numPhases; ++phase) {
             // vertex data of the upstream and the downstream vertices
             const VertexData &up = this->curElemDat_[fluxData.upstreamIdx[phase]];
             const VertexData &dn = this->curElemDat_[fluxData.downstreamIdx[phase]];
-            
+
             flux[temperatureIdx] +=
                 fluxData.vDarcyNormal[phase] * (
                     alpha * // upstream vertex
@@ -192,7 +192,7 @@ public:
      *        the face of a sub-control volume.
      */
     void computeDiffusiveFlux(SolutionVector &flux,
-                              const FluxData &fluxData) const 
+                              const FluxData &fluxData) const
     {
         // diffusive mass flux
         ParentType::computeDiffusiveFlux(flux, fluxData);
@@ -200,7 +200,7 @@ public:
         // diffusive heat flux
         flux[temperatureIdx] += (fluxData.temperatureGrad*fluxData.face->normal)*fluxData.heatCondAtIp;
     }
-    
+
     // internal method!
     template <class SolutionVector>
     Scalar temperature(const SolutionVector &sol)
@@ -260,6 +260,7 @@ private:
     typedef typename DomTraits::ElementIterator       ElementIterator;
     typedef typename DomTraits::LocalPosition         LocalPosition;
     typedef typename DomTraits::GlobalPosition        GlobalPosition;
+    typedef typename DomTraits::Vertex                Vertex;
 
     enum {
         dim          = DomTraits::dim,
@@ -329,6 +330,48 @@ public:
     bool switched() const
     { return twoPTwoCLocalJacobian_.switched(); }
 
+    void serializeEntity(std::ostream &outStream,
+                         const Vertex &vert)
+    {
+        // write primary variables
+        ParentType::serializeEntity(outStream, vert);
+
+        int vertIdx = this->problem().vertexIdx(vert);
+
+        // write phase state
+        if (!outStream.good()) {
+            DUNE_THROW(IOError,
+                       "Could not serialize vertex "
+                       << vertIdx);
+        }
+        outStream << twoPTwoCLocalJacobian_.staticVertexDat_[vertIdx].phaseState
+                  << " ";
+    };
+
+    /*!
+     * \brief Reads the current solution for a vertex from a restart
+     *        file.
+     */
+    void deserializeEntity(std::istream &inStream,
+                           const Vertex &vert)
+    {
+        // read primary variables
+        ParentType::deserializeEntity(inStream, vert);
+
+        int vertIdx = this->problem().vertexIdx(vert);
+
+        // read phase state
+        if (!inStream.good()) {
+            DUNE_THROW(IOError,
+                       "Could not deserialize vertex "
+                       << vertIdx);
+        }
+
+        inStream >> twoPTwoCLocalJacobian_.staticVertexDat_[vertIdx].phaseState;
+        twoPTwoCLocalJacobian_.staticVertexDat_[vertIdx].oldPhaseState
+            = twoPTwoCLocalJacobian_.staticVertexDat_[vertIdx].phaseState;
+
+    };
 
 private:
     // calculates the jacobian matrix at a given position
