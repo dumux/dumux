@@ -40,8 +40,8 @@ int main(int argc, char** argv)
         grid.globalRefine(0);
 
         Dune::Uniform mat(0.2);
-        Dune::HomogeneousLinearSoil<GridType, NumberType> soil;
-        //Dune::HomogeneousNonlinearSoil<GridType, NumberType> soil;
+        //Dune::HomogeneousLinearSoil<GridType, NumberType> soil;
+        Dune::HomogeneousNonlinearSoil<GridType, NumberType> soil;
         Dune::TwoPhaseRelations<GridType, NumberType> materialLaw(soil, mat, mat);
 
         typedef Dune::VariableClass<GridType, NumberType> VC;
@@ -53,8 +53,8 @@ int main(int argc, char** argv)
 
         VC variables(grid,initsat,initpress,vel);
 
-        Dune::SimpleProblem<GridType, NumberType, VC> problem(variables, mat, mat , soil, materialLaw,L,H);
-        //Dune::SimpleNonlinearProblem<GridType, NumberType, VC> problem(variables, mat, mat , soil, materialLaw,L,H);
+        //Dune::SimpleProblem<GridType, NumberType, VC> problem(variables, mat, mat , soil, materialLaw,L,H);
+        Dune::SimpleNonlinearProblem<GridType, NumberType, VC> problem(variables, mat, mat , soil, materialLaw,L,H);
 
         Dune::DiffusivePart<GridType, NumberType> diffusivePart;
         Dune::ComputeUpwind<GridType, NumberType, VC> computeNumFlux(problem);

@@ -32,7 +32,7 @@ int main(int argc, char** argv)
         typedef double NumberType;
         typedef Dune::SGrid<dim,dim> GridType;
         typedef Dune::FieldVector<GridType::ctype,dim> FieldVector;
-        Dune::FieldVector<int,dim> N(3); N[0] = 200;
+        Dune::FieldVector<int,dim> N(1); N[0] = 64;
         FieldVector L(0);
         FieldVector H(300); H[0] = 600;
         GridType grid(N,L,H);
