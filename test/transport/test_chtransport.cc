@@ -8,7 +8,9 @@
 #include <dune/istl/io.hh>
 #include "dumux/material/phaseproperties/phaseproperties2p.hh"
 #include "dumux/transport/ch/chtransport.hh"
+#include "dumux/transport/ch/fractionalw.hh"
 #include "dumux/transport/problems/simpleproblem.hh"
+#include "dumux/transport/problems/simplenonlinearproblem.hh"
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/fractionalflow/variableclass.hh"
 
@@ -30,7 +32,7 @@ int main(int argc, char** argv)
         typedef double NumberType;
         typedef Dune::SGrid<dim,dim> GridType;
         typedef Dune::FieldVector<GridType::ctype,dim> FieldVector;
-        Dune::FieldVector<int,dim> N(1); N[0] = 64;
+        Dune::FieldVector<int,dim> N(3); N[0] = 200;
         FieldVector L(0);
         FieldVector H(300); H[0] = 600;
         GridType grid(N,L,H);
@@ -38,7 +40,8 @@ int main(int argc, char** argv)
         grid.globalRefine(0);
 
         Dune::Uniform mat(0.2);
-        Dune::HomogeneousLinearSoil<GridType, NumberType> soil;
+        //Dune::HomogeneousLinearSoil<GridType, NumberType> soil;
+        Dune::HomogeneousNonlinearSoil<GridType, NumberType> soil;
         Dune::TwoPhaseRelations<GridType, NumberType> materialLaw(soil, mat, mat);
 
         typedef Dune::VariableClass<GridType, NumberType> VC;
@@ -50,11 +53,14 @@ int main(int argc, char** argv)
 
         VC variables(grid,initsat,initpress,vel);
 
-        Dune::SimpleProblem<GridType, NumberType, VC> problem(variables, mat, mat , soil, materialLaw,L,H);
+        //Dune::SimpleProblem<GridType, NumberType, VC> problem(variables, mat, mat , soil, materialLaw,L,H);
+        Dune::SimpleNonlinearProblem<GridType, NumberType, VC> problem(variables, mat, mat , soil, materialLaw,L,H);
+
+        Dune::FractionalW<GridType, NumberType, VC> fractionalW(problem);
 
         typedef Dune::ChTransport<GridType, NumberType, VC> Transport;
 
-        Transport transport(grid, problem);
+        Transport transport(grid, problem, fractionalW);
 
 	Dune::RungeKuttaStep<GridType, Transport> timeStep(1);
         Dune::TimeLoop<GridType, Transport > timeloop(tStart, tEnd, dt, "chtransport", modulo, maxDt, firstDt, timeStep);

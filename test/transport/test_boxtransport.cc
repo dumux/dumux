@@ -6,6 +6,7 @@
 #include <dune/istl/io.hh>
 #include "dumux/material/phaseproperties/phaseproperties2p.hh"
 #include "dumux/transport/problems/simpleproblem.hh"
+#include "dumux/transport/problems/simplenonlinearproblem.hh"
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/fractionalflow/variableclass.hh"
 #include "boxtransport.hh"
@@ -42,7 +43,8 @@ int main(int argc, char** argv)
         grid.globalRefine(0);
 
         Dune::Uniform mat(0.2);
-        Dune::HomogeneousLinearSoil<GridType, NumberType> soil;
+        //Dune::HomogeneousLinearSoil<GridType, NumberType> soil;
+        Dune::HomogeneousNonlinearSoil<GridType, NumberType> soil;
         Dune::TwoPhaseRelations<GridType, NumberType> materialLaw(soil, mat, mat);
 
         typedef Dune::VariableClass<GridType, NumberType> VC;
@@ -54,11 +56,12 @@ int main(int argc, char** argv)
 
         VC variables(grid,initsat,initpress,vel);
 
-        Dune::SimpleProblem<GridType, NumberType, VC> problem(variables, mat, mat, soil, materialLaw,L,H);
+        //typedef Dune::SimpleProblem<GridType, NumberType, VC> TransportProblem;
+        typedef Dune::SimpleNonlinearProblem<GridType, NumberType, VC> TransportProblem;
 
-        typedef Dune::SimpleProblem<GridType, NumberType, VC> TransportProblem;
+        TransportProblem problem(variables, mat, mat , soil, materialLaw,L,H);
+
         typedef Dune::LeafP1BoxTransport<GridType, NumberType, VC, TransportProblem> Transport;
-
         Transport transport(grid, problem);
 
 
