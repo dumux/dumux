@@ -7,6 +7,7 @@
 #include "dumux/material/phaseproperties/phaseproperties2p.hh"
 #include "dumux/transport/fv/fvtransport.hh"
 #include "dumux/transport/problems/simpleproblem.hh"
+#include "dumux/transport/problems/simplenonlinearproblem.hh"
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/fractionalflow/variableclass.hh"
 
@@ -19,9 +20,9 @@ int main(int argc, char** argv)
         // time loop parameters
         const double tStart = 0;
         const double tEnd = 2.5e9;
-        const double cFLFactor = 1.0;
+        const double cFLFactor = 0.5;
         double maxDT = 1e100;
-        int modulo = 10;
+        int modulo = 1;
 
         // slope limiter parameters
         //    bool reconstruct = true;
@@ -42,7 +43,8 @@ int main(int argc, char** argv)
         grid.globalRefine(0);
 
         Dune::Uniform mat(0.2);
-        Dune::HomogeneousLinearSoil<GridType, NumberType> soil;
+        //Dune::HomogeneousLinearSoil<GridType, NumberType> soil;
+        Dune::HomogeneousNonlinearSoil<GridType, NumberType> soil;
         Dune::TwoPhaseRelations<GridType, NumberType> materialLaw(soil, mat, mat);
 
         typedef Dune::VariableClass<GridType, NumberType> VC;
@@ -54,7 +56,8 @@ int main(int argc, char** argv)
 
         VC variables(grid,initsat,initpress,vel);
 
-        Dune::SimpleProblem<GridType, NumberType, VC> problem(variables, mat, mat , soil, materialLaw,L,H);
+        //Dune::SimpleProblem<GridType, NumberType, VC> problem(variables, mat, mat , soil, materialLaw,L,H);
+        Dune::SimpleNonlinearProblem<GridType, NumberType, VC> problem(variables, mat, mat , soil, materialLaw,L,H);
 
         typedef Dune::TransportProblem<GridType, NumberType, VC> TransportProblem;
         typedef Dune::FVTransport<GridType, NumberType, VC, TransportProblem> Transport;
