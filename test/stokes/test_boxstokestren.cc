@@ -150,8 +150,8 @@ int main(int argc, char** argv)
 
         Dune::CWaterAir multicomp(dummyPhase, gasPhase);
 
-        Dune::FFProblem<GridType, double> problem(gasPhase, multicomp);
-        //Dune::SteProblem<GridType, double> problem(gasPhase, multicomp);
+        //Dune::FFProblem<GridType, double> problem(gasPhase, multicomp);
+        Dune::SteProblem<GridType, double> problem(gasPhase, multicomp);
         typedef Dune::LeafP1BoxStokesTrEn<GridType, NumberType, dim> BoxStokesTrEn;
 
         BoxStokesTrEn boxStokesTrEn(grid, problem);
