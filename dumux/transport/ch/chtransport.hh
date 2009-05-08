@@ -16,7 +16,7 @@
  * @file
  * @brief  Base class for defining an instance of a numerical transport model
  * @brief  Forward characteristics method
- * @author Annika Fuchs; last changed by Yufei Cao
+ * @author Annika Fuchs; 
  * \defgroup transport Transport
  */
 
