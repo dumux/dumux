@@ -5,7 +5,7 @@
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/io.hh>
 #include "dumux/shallowwater/fvshallowwater.hh"
-#include "2dpulse_problem.hh"
+#include "2d_pulse_noflow_problem.hh"
 #include "solidsurfaceplain.hh"
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/timedisc/expliciteulerstep.hh"
@@ -19,7 +19,7 @@ int main(int argc, char** argv)
      
     // time loop parameters
     const double tStart = 0;
-    const double tEnd = 10;
+    const double tEnd = 30;
     const double cFLFactor = 0.8;
     double maxDt = 5;
     double firstDt =1 ;
@@ -29,7 +29,7 @@ int main(int argc, char** argv)
     typedef double NumberType;
     typedef Dune::SGrid<dim,dim> GridType;
     typedef Dune::FieldVector<GridType::ctype,dim> FieldVector;
-    Dune::FieldVector<int,dim> N(100);  N[0] = 80; N[1] = 80;
+    Dune::FieldVector<int,dim> N(100);  N[0] = 60; N[1] = 60;
     FieldVector L(0);
     FieldVector H(0); H[0] = 40; H[1] = 40;
     GridType grid(N,L,H);
