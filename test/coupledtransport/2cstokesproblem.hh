@@ -45,12 +45,15 @@ public:
     {
         FieldVector<BoundaryConditions::Flags, numEq> values(BoundaryConditions::dirichlet);
 
-        if (globalPos[0] > eps_ || globalPos[1] > eps_ || globalPos[1] < 1 - eps_ || globalPos[0] < 5.5 - eps_)
+        // pressure should always be NEUMANN boundary type
+        values[pressureIdx] = BoundaryConditions::neumann;
+
+        if (globalPos[0] > eps_ && globalPos[0] < 5.5 - eps_ && globalPos[1] > eps_ && globalPos[1] < 1 - eps_)
             {
+                //            both components of the velocity must have same type
                 values[velocityXIdx] = BoundaryConditions::neumann;
                 values[velocityYIdx] = BoundaryConditions::neumann;
-                values[massFracIdx] = BoundaryConditions::neumann;
-                //            values[pressureIdx] = BoundaryConditions::neumann;
+//                values[massFracIdx] = BoundaryConditions::neumann;
             }
 
         return values;
@@ -65,7 +68,6 @@ public:
         result[velocityXIdx] = velocity(globalPos, element, localPos)[0];
         result[velocityYIdx] = velocity(globalPos, element, localPos)[1];
         result[massFracIdx] = 1e-6;
-        //        result[pressureIdx] = 1e5;
 
         return result;
     }
@@ -109,7 +111,7 @@ public:
     {
         SolutionVector result(0);
 
-        result[velocityXIdx] = 1;//4.0*globalPos[1]*(1.0 - globalPos[1]);
+        result[velocityXIdx] = 4.0*globalPos[1]*(1.0 - globalPos[1]);
 
         return result;
     }
@@ -130,6 +132,7 @@ public:
     Scalar density(const FieldVector<Scalar,dim>& globalPos, const Element& element,
                    const FieldVector<Scalar,dim>& localPos) const
     {
+        //TODO: get density from fluid properties!
         Scalar result = 1;
         return result;
     }
@@ -163,13 +166,6 @@ public:
       return result;
       }
     */
-    //------------------additional----------------
-    //    virtual Scalar Qg(const FieldVector<Scalar,dim>& globalPos, const Element& element,
-    //                      const FieldVector<Scalar,dim>& localPos) const
-    //    {
-    //        Scalar result = 0;
-    //        return result;
-    //    }
 
     TwoCStokesProblem(Gas_GL& gasPhase, Matrix2p<Grid, Scalar>& soil, MultiComp& multicomp = *(new CWaterAir))
         :
@@ -178,7 +174,7 @@ public:
         soil_(soil),
         multicomp_(multicomp)
     {
-        eps_ = 1e-6;
+        eps_ = 1e-8;
 
         for (int i=0; i<dim; ++i)
             gravity_[i] = 0;

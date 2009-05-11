@@ -150,7 +150,7 @@ public:
         const typename LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::value_type&
             sfs=LagrangeShapeFunctions<Scalar,Scalar,dim>::general(gt,1);
 
-        int globalIdx = this->vertexMapper.template map<dim>(element, sfs[node].entity());
+        int globalIdx = this->vertexMapper.map(element, sfs[node].entity(), dim);
 
         SolutionVector result;
         Scalar satN = varData[node].satN;
@@ -195,8 +195,8 @@ public:
             sfs=LagrangeShapeFunctions<Scalar,Scalar,dim>::general(gt,1);
 
         // global index of the subcontrolvolume face neighbor nodes in element element
-        int globalIdx_i = this->vertexMapper.template map<dim>(element, sfs[i].entity());
-        int globalIdx_j = this->vertexMapper.template map<dim>(element, sfs[j].entity());
+        int globalIdx_i = this->vertexMapper.map(element, sfs[i].entity(), dim);
+        int globalIdx_j = this->vertexMapper.map(element, sfs[j].entity(), dim);
 
         // get global coordinates of nodes i,j
         const FieldVector<Scalar,dim> global_i = this->fvGeom.subContVol[i].global;
@@ -555,7 +555,7 @@ public:
         // get local to global id map
         for (int k = 0; k < sfs.size(); k++)
             {
-                const int globalIdx = this->vertexMapper.template map<dim>(element, sfs[k].entity());
+                const int globalIdx = this->vertexMapper.map(element, sfs[k].entity(), dim);
 
                 // if nodes are not already visited
                 if (!sNDat[globalIdx].visited)
@@ -582,7 +582,7 @@ public:
         // get local to global id map
         for (int k = 0; k < sfs.size(); k++)
             {
-                const int globalIdx = this->vertexMapper.template map<dim>(element, sfs[k].entity());
+                const int globalIdx = this->vertexMapper.map(element, sfs[k].entity(), dim);
 
                 // if nodes are not already visited
                 if (!sNDat[globalIdx].visited)
@@ -707,7 +707,7 @@ public:
     void updateVariableData(const Element& element, const SolutionVector* sol, int vertex, bool old = false)
     {
         int state;
-        const int global = this->vertexMapper.template map<dim>(element, vertex);
+        const int global = this->vertexMapper.map(element, vertex, dim);
         if (old)
             {
                 state = sNDat[global].oldPhaseState;

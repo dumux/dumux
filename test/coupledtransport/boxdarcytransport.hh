@@ -244,7 +244,7 @@ public:
                         const Dune::FieldVector<Scalar,dim>&local = sfs[i].position();
                         Dune::FieldVector<Scalar,dimworld> global = it->geometry().global(local);
 
-                        int globalId = this->vertexmapper.template map<dim>(entity, sfs[i].entity());
+                        int globalId = this->vertexmapper.map(entity, sfs[i].entity(), dim);
 
                         // initialize cell concentration
                         (*(this->u))[globalId] = this->problem.initial(global, entity, local);
@@ -306,7 +306,7 @@ public:
                                                             Dune::FieldVector<Scalar,dimworld>
                                                                 global = it->geometry().global(local);
 
-                                                            int globalId = this->vertexmapper.template map<dim>(entity, sfs[i].entity());
+                                                            int globalId = this->vertexmapper.map(entity, sfs[i].entity(), dim);
                                                             FieldVector<int,m> dirichletIndex;
                                                             FieldVector<BoundaryConditions::Flags, m>
                                                                 bctype = this->problem.bctype(global, entity, is, local);
@@ -431,8 +431,7 @@ public:
         //                // get global coordinate of cell center
         //                Dune::FieldVector<Scalar,dimworld> global = it->geometry().global(local);
         //
-        //                int globalId = this->vertexmapper.template map<dim>(entity,
-        //                                                                    sfs[i].entity());
+        //                int globalId = this->vertexmapper.map(entity, sfs[i].entity(), dim);
         //
         //                int state;
         //                state = this->localJacobian().sNDat[globalId].phaseState;
@@ -542,8 +541,7 @@ public:
         //                // get global coordinate of cell center
         //                Dune::FieldVector<Scalar,dimworld> global = it->geometry().global(local);
         //
-        //                int globalId = this->vertexmapper.template map<dim>(entity,
-        //                                                                    sfs[i].entity());
+        //                int globalId = this->vertexmapper.map(entity, sfs[i].entity(), dim);
         //
         //                // initialize cell concentration
         //

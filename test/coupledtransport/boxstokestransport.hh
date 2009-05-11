@@ -169,7 +169,8 @@ public:
                                 for (int j = 0; j < ReferenceElements<Scalar,dim>::general(gt).size(is->indexInInside(), 1, sfs[i].codim()); j++)
                                     if (sfs[i].entity() == ReferenceElements<Scalar,dim>::general(gt).subEntity(is->indexInInside(), 1, j, sfs[i].codim()))
                                         {
-                                            if (this->localJacobian().bc(i)[1] == BoundaryConditions::dirichlet)
+											//TODO: why is only the second component of the boundaries checked??
+											if (this->localJacobian().bc(i)[1] == BoundaryConditions::dirichlet)
                                                 {
                                                     // get cell center in reference element
                                                     Dune::FieldVector<Scalar,dim> local = sfs[i].position();
@@ -210,19 +211,6 @@ public:
         *(this->f) = 0;
         this->localJacobian().clearVisited();
         this->A.assemble(this->localJacobian(), this->u, this->f);
-        //
-        //        //modify matrix for introducing pressure boundary condition
-        //        const GridView& gridview(this->grid_.leafView());
-        //
-        //        ElementIterator it = gridview.template begin<0>();
-        //        unsigned int globalId = vertexmapper.template map<dim>(*it, 3);
-        //
-        //        for (typename MatrixType::RowIterator i=A.begin(); i!=A.end(); ++i)
-        //            if(i.index()==globalId)
-        //                for (typename MatrixType::ColIterator j=(*i).begin(); j!=(*i).end(); ++j)
-        //                    A[i.index()][j.index()][dim+1] = 0.0;
-        //        A[globalId][globalId][dim+1][dim+1] = 1.0;
-        //        (*(this->f))[globalId][dim+1] = 0.0; // set error to zero
     }
 
 

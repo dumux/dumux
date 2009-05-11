@@ -58,7 +58,6 @@ public:
     {
         // factor for stabilization
         // set to zero, when no stabilization is neccessary
-        alpha = -1e3;//-1.0;
         this->analytic = false;
     }
 
@@ -70,8 +69,6 @@ public:
     void localDefect(const Element& element, const SolutionVector* sol, bool withBC = true)
     {
         BoxJacobianType::localDefect(element, sol, withBC);
-
-        this->getImp().assembleBoundaryCondition(element);
 
         Dune::GeometryType gt = element.geometry().type();
         const typename ReferenceElementContainer<Scalar,dim>::value_type& referenceElement = ReferenceElements<Scalar, dim>::general(gt);
@@ -158,8 +155,6 @@ public:
                                         pressGradient += grad;
                                     }
 
-                                    Scalar alphaH2 = 0.5*alpha*(this->fvGeom.subContVol[i].volume + this->fvGeom.subContVol[j].volume);
-                                    pressGradient *= alphaH2;
                                     if (i == vert)
                                         this->def[vert][pressureIdx] -= pressGradient*this->fvGeom.subContVolFace[face].normal;
                                     else
@@ -221,15 +216,6 @@ public:
         gravityVector[dim-1] *= varNData[node].density;
 
         result[dim-1] -= gravityVector[dim-1]; //sign???
-
-        //        Scalar alphaH2 = alpha*this->fvGeom.subContVol[node].volume;
-        //        result[pressureIdx] *= alphaH2;
-
-        //        Scalar MassST = problem.Qg(this->fvGeom.subContVol[node].global, element, this->fvGeom.subContVol[node].local);
-        //        MassST *= -1;
-        //        MassST *= alphaH2;
-        //
-        //        result[pressureIdx] += MassST;
 
         SolutionVector flux = boundaryFlux(element, sol, node);
 
@@ -317,9 +303,6 @@ public:
                 flux[comp] = gradVComp*this->fvGeom.subContVolFace[face].normal;
             }
 
-        // mass balance:
-        Scalar alphaH2 = 0.5*alpha*(this->fvGeom.subContVol[i].volume + this->fvGeom.subContVol[j].volume);
-        gradP *= alphaH2;
         rhoV += gradP;
         flux[pressureIdx] = rhoV*this->fvGeom.subContVolFace[face].normal;
 
@@ -501,8 +484,7 @@ public:
                                         pComp[comp] = -pressureValue;
                                         result[comp] = pComp*this->fvGeom.boundaryFace[bfIdx].normal;
 
-                                        if (alpha == 0)
-                                            result[comp] += gradVComp*this->fvGeom.boundaryFace[bfIdx].normal;
+                                        result[comp] += gradVComp*this->fvGeom.boundaryFace[bfIdx].normal;
                                     }
                             }
                         else
@@ -545,12 +527,10 @@ public:
 
                         //mass balance
                         FieldVector<Scalar,dim> massResidual = velocityValue;
-                        Scalar alphaH2 = alpha*this->fvGeom.subContVol[node].volume;
                         SolutionVector source = problem.q(this->fvGeom.boundaryFace[bfIdx].ipGlobal, element, this->fvGeom.boundaryFace[bfIdx].ipLocal);
                         FieldVector<Scalar,dim> dimSource;
                         for (int comp = 0; comp < dim; comp++)
                             dimSource[comp] = source[comp];
-                        dimSource *= alphaH2;
                         massResidual += dimSource;
                         result[pressureIdx] -= massResidual*it->unitOuterNormal(faceLocal)*this->fvGeom.boundaryFace[bfIdx].area;
                     }
@@ -707,7 +687,6 @@ public:
 
     ElementData elData;
     StokesTransportProblem<Grid,Scalar>& problem;
-    double alpha;
 
     std::vector<VariableNodeData> varNData;
     std::vector<VariableNodeData> oldVarNData;

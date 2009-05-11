@@ -21,7 +21,13 @@ public:
     typedef BlockVector<FieldVector<Scalar, 1> > VectorType;
     typedef BCRSMatrix<FieldMatrix<Scalar, 1, 1> > MatrixType;
     enum {dim = StokesGrid::dimension};
+    // indices for Stokes domain (1)
+    enum {velocityXIdx1=0, velocityYIdx1=1, velocityZIdx1=2,
+    	  massFracIdx1=dim, pressureIdx1=dim+1};
+    // indices for Darcy domain (2)
+    enum {pressureIdx2 = 0, switchIdx2 = 1};
 
+    /** \todo Please doc me! */
     template <class FirstFV, class SecondFV>
     void localCoupling12(FirstFV& stokesSol, SecondFV& darcySol,
                          int stokesIndex, int darcyIndex,
@@ -33,12 +39,14 @@ public:
         for (int comp = 0; comp < dim; comp++)
             result[comp] = normal[comp];
 
-        // pressure times normal
-        result *= -darcySol[0];
+        // pressure times normal, continuity of normal traction
+        // this is used as NEUMANN condition for the Stokes domain (momentum balance)
+        result *= -darcySol[pressureIdx2];
 
         return;
     }
 
+    /** \todo Please doc me! */
     template <class FirstFV, class SecondFV>
     void localCoupling21(FirstFV& stokesSol, SecondFV& darcySol,
                          int stokesIndex, int darcyIndex,
@@ -51,8 +59,13 @@ public:
         for (int comp = 0; comp < dim; comp++)
             stokesVel[comp] = stokesSol[comp];
 
+        Scalar xWG = stokesSol[massFracIdx1];
+        Scalar xAG = 1-xWG;
+
+        //TODO: multiply by density, fluid properties?
         // velocity times normal
-        result = -(stokesVel*normal);
+        result[pressureIdx2] = -xWG*(stokesVel*normal);
+        result[switchIdx2] = -xAG*(stokesVel*normal);
 
         return;
     }
@@ -63,7 +76,7 @@ public:
         this->firstModel().localJacobian().setOldSolution(this->firstModel().uOldTimeStep);
         this->secondModel().localJacobian().setDt(dt);
         this->secondModel().localJacobian().setOldSolution(this->secondModel().uOldTimeStep);
-        double dtol = 1e-1;
+        double dtol = 1e3;
         double rtol = 1e7;
         int maxIt = 10;
         double mindt = 1e-5;
