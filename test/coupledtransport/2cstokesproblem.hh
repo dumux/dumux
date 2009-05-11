@@ -21,11 +21,11 @@ public:
                             const LocalPosition& localPos) const
     {
 
-	SolutionVector result(0);
+        SolutionVector result(0);
 
-        result[velocityXIdx] = 1.0e-3;
+        result[velocityXIdx] = 1.0;
         result[velocityYIdx] = 0;
-        result[massFracIdx] = 0.1;
+        result[massFracIdx] = 1e-6;
         result[pressureIdx] = 1e5;
 
         return result;
@@ -40,39 +40,39 @@ public:
     }
 
     FieldVector<BoundaryConditions::Flags, numEq> bctype (const GlobalPosition& globalPos, const Element& element,
-                                      const IntersectionIterator& intersectionIt,
-                                      const LocalPosition& localPos) const
+                                                          const IntersectionIterator& intersectionIt,
+                                                          const LocalPosition& localPos) const
     {
-    	FieldVector<BoundaryConditions::Flags, numEq> values(BoundaryConditions::dirichlet);
+        FieldVector<BoundaryConditions::Flags, numEq> values(BoundaryConditions::dirichlet);
 
-    	if (globalPos[0] > eps_ || globalPos[1] > eps_ || globalPos[1] < 1 - eps_ || globalPos[0] < 5.5 - eps_)
-    	{
-            values[0] = BoundaryConditions::neumann;
-            values[1] = BoundaryConditions::neumann;
-            values[2] = BoundaryConditions::neumann;
-            values[3] = BoundaryConditions::neumann;
-    	}
+        if (globalPos[0] > eps_ || globalPos[1] > eps_ || globalPos[1] < 1 - eps_ || globalPos[0] < 5.5 - eps_)
+            {
+                values[velocityXIdx] = BoundaryConditions::neumann;
+                values[velocityYIdx] = BoundaryConditions::neumann;
+                values[massFracIdx] = BoundaryConditions::neumann;
+                //            values[pressureIdx] = BoundaryConditions::neumann;
+            }
 
-    	return values;
+        return values;
     }
 
     SolutionVector dirichlet(const GlobalPosition& globalPos, const Element& element,
-                     const IntersectionIterator& intersectionIt,
-                     const LocalPosition& localPos) const
+                             const IntersectionIterator& intersectionIt,
+                             const LocalPosition& localPos) const
     {
         SolutionVector result(0);
 
         result[velocityXIdx] = velocity(globalPos, element, localPos)[0];
         result[velocityYIdx] = velocity(globalPos, element, localPos)[1];
-        result[massFracIdx] = 0.1;
-//        result[pressureIdx] = 1e5;
+        result[massFracIdx] = 1e-6;
+        //        result[pressureIdx] = 1e5;
 
         return result;
     }
 
     SolutionVector neumann(const GlobalPosition& globalPos, const Element& element,
-                     const IntersectionIterator& intersectionIt,
-                     const LocalPosition& localPos)
+                           const IntersectionIterator& intersectionIt,
+                           const LocalPosition& localPos)
     {
         SolutionVector result(0);
 
@@ -86,8 +86,8 @@ public:
     {
         Scalar alpha;
         // tangential face of porous media
-        if (globalPos[0] < 4.0 + eps_ && globalPos[1] < 0.5 + eps_)
-            alpha = 0.1;
+        if (globalPos[0] > 1.5 + eps_ && globalPos[0] < 4.0 + eps_ && globalPos[1] < 0.5 + eps_)
+            alpha = 1.0;
 
         else // right boundary
             return(-1.0); // realizes outflow boundary condition
@@ -109,7 +109,7 @@ public:
     {
         SolutionVector result(0);
 
-        result[velocityXIdx] = 4.0*globalPos[1]*(1.0 - globalPos[1]);
+        result[velocityXIdx] = 1;//4.0*globalPos[1]*(1.0 - globalPos[1]);
 
         return result;
     }
@@ -128,7 +128,7 @@ public:
     }
 
     Scalar density(const FieldVector<Scalar,dim>& globalPos, const Element& element,
-                           const FieldVector<Scalar,dim>& localPos) const
+                   const FieldVector<Scalar,dim>& localPos) const
     {
         Scalar result = 1;
         return result;
@@ -164,12 +164,12 @@ public:
       }
     */
     //------------------additional----------------
-    virtual Scalar Qg(const FieldVector<Scalar,dim>& globalPos, const Element& element,
-                      const FieldVector<Scalar,dim>& localPos) const
-    {
-        Scalar result = 0;
-        return result;
-    }
+    //    virtual Scalar Qg(const FieldVector<Scalar,dim>& globalPos, const Element& element,
+    //                      const FieldVector<Scalar,dim>& localPos) const
+    //    {
+    //        Scalar result = 0;
+    //        return result;
+    //    }
 
     TwoCStokesProblem(Gas_GL& gasPhase, Matrix2p<Grid, Scalar>& soil, MultiComp& multicomp = *(new CWaterAir))
         :
@@ -181,8 +181,8 @@ public:
         eps_ = 1e-6;
 
         for (int i=0; i<dim; ++i)
-	    gravity_[i] = 0;
-//	gravity_[dim] = -9.81;
+            gravity_[i] = 0;
+        //        gravity_[dim] = -9.81;
     }
 
 

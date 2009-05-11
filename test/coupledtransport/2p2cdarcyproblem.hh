@@ -69,8 +69,8 @@ public:
     // DIRICHLET boundaries
     /////////////////////////////
     virtual SolutionVector dirichlet(const GlobalPosition& globalPos, const Element& element,
-                              const IntersectionIterator& intersectionIt,
-                              const LocalPosition& localPos) const
+                                     const IntersectionIterator& intersectionIt,
+                                     const LocalPosition& localPos) const
     {
         return initial(globalPos, element, localPos);
     }
@@ -79,8 +79,8 @@ public:
     // NEUMANN boundaries
     /////////////////////////////
     virtual SolutionVector neumann(const GlobalPosition& globalPos, const Element& element,
-                              const IntersectionIterator& intersectionIt,
-                              const LocalPosition& localPos) const
+                                   const IntersectionIterator& intersectionIt,
+                                   const LocalPosition& localPos) const
     {
         SolutionVector values(0);
 
@@ -97,7 +97,7 @@ public:
         SolutionVector values;
         Scalar densityW_ = 1000.0;
 
-        values[pWIdx] = 1e5 - densityW_*gravity_[1]*(depthBOR_ - globalPos[1]);
+        values[pWIdx] = 1e5;// - densityW_*gravity_[1]*(depthBOR_ - globalPos[1]);
         values[switchIdx] = 1e-6;
 
         return values;
@@ -128,7 +128,7 @@ public:
 
     virtual Matrix2p<Grid, Scalar>& soil () const
     {
-	return soil_;
+        return soil_;
     }
 
     virtual FieldVector<Scalar,dim> gravity () const
@@ -145,8 +145,8 @@ public:
                          TwoPhaseRelations<Grid, Scalar>& law = *(new TwoPhaseRelations<Grid, Scalar>),
                          MultiComp& multicomp = *(new CWaterAir))
         : TwoPTwoCProblem<Grid,Scalar>(liq, gas, soil, multicomp, law),
-	    soil_(soil),
-	    depthBOR_(depthBOR)
+          soil_(soil),
+          depthBOR_(depthBOR)
 
     {
         gravity_[0] = 0;
