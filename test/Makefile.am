@@ -10,11 +10,13 @@ SUBDIRS = . \
 	  coupled \
 	  coupledtransport \
 	  diffusion \
+	  dimltdimworld \
 	  fractionalflow \
 	  fvca5 \
 	  id \
 	  linearelasticity \
 	  minc \
+	  ml \
 	  pardiso \
 	  phasepressure_ff \
 	  pipe-newcouple-incomp \

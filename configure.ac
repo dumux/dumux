@@ -98,6 +98,7 @@ AC_CONFIG_FILES([Makefile
     dumux/material/Makefile 
     dumux/minc/Makefile 
     dumux/nonlinear/Makefile 
+    dumux/onedinndgrid/Makefile 
     dumux/operators/Makefile 
     dumux/pardiso/Makefile 
     dumux/richards/Makefile
@@ -118,10 +119,12 @@ AC_CONFIG_FILES([Makefile
     test/coupled/Makefile
     test/coupledtransport/Makefile
     test/diffusion/Makefile
+    test/dimltdimworld/Makefile
     test/fractionalflow/Makefile
     test/fvca5/Makefile
     test/id/Makefile
     test/minc/Makefile
+    test/ml/Makefile
     test/pardiso/Makefile
     test/phasepressure_ff/Makefile
     test/pipe-newcouple-incomp/Makefile
