@@ -22,7 +22,9 @@
 #ifndef DUNE_NEW_NEWTONMETHOD_HH
 #define DUNE_NEW_NEWTONMETHOD_HH
 
+#include <limits>
 #include <dumux/exceptions.hh>
+
 
 namespace Dune
 {
@@ -88,9 +90,7 @@ public:
                         Function &uInitial,
                         Model &model)
     {
-        newton.setResidualObsolete();
-        oldResidual2Norm2_ = (*newton.residual()).two_norm2();
-        nIterations_ = 0;
+        uNormMin_ = std::numeric_limits<Scalar>::max();
     };
 
 
@@ -99,66 +99,27 @@ public:
                 Function &uOld,
                 Model &model)
     {
-        // First try a normal newton step
-        *u *= - 1;
+        Scalar lambda = 1.0;
+
+        Scalar uNorm = (*u).two_norm();
+        if (uNorm < uNormMin_) {
+            uNormMin_ = uNorm;
+            
+            lambda = 1.0;
+        }
+        else { 
+            lambda = uNormMin_ / uNorm / 2.0;
+            std::cout << boost::format("Newton: use line search, lambda=%f\n")%lambda;
+        }
+        
+        *u *= - lambda;
         *u += *uOld;
-
-        if (nIterations_ >= 2) {
-            // do not attempt a line search if we have done more
-            // than 3 iterations
-            return true;
-        }
-        ++ nIterations_;
-        newton.setResidualObsolete();
-        // TODO (?): weight the residual with the value of the
-        // component of the solution instead of just taking
-        // the squared two norm (i.e. we want the residual
-        // small in relative but not necessarily in absolute
-        // terms.)
-        Scalar newResidual2Norm2 = (*newton.residual()).two_norm2();
-        // if the new global residual is larger than the old
-        // one, do a line search. this is done by assuming
-        // that the square of the residual is a second order
-        // polynomial. The at the current newton step the
-        // derivative (i.e. the jacobian) and the squared
-        // residual are known, and at the next newton
-        // iteration, the square of the residual is known.
-        // for details, see:
-        // J. E. Dennis, R. B. Schnabel: "Numerical methods
-        // for unconstrained optimization and nonlinear
-        // equations", 1, Prentice-Hall, 1983 pp. 126-127.
-        if (newResidual2Norm2 > oldResidual2Norm2_*1.0001) {
-            // undo the full newton step
-            *u -= *uOld;
-            *u *= -1;
-
-            // calulate $\hat f \prime(0)$
-            Function tmp(model.grid(), model.grid().overlapSize(0) == 0);
-            (*tmp) = typename Function::RepresentationType::field_type(Scalar(0.0));
-            // tmp = (\grad F(x_i))^T F(x_i), where F(x) is the residual at x
-            newton.currentJacobian().umtv(*u, *tmp);
-            Scalar fHatPrime0 = ((*tmp) * (*u));
-            //  fHatPrime0 = std::min(-Scalar(1e-1), fHatPrime0);
-
-            Scalar lambdaHat = - fHatPrime0 / (2*(newResidual2Norm2 - oldResidual2Norm2_ - fHatPrime0));
-            lambdaHat = std::max(Scalar(1/10.0), lambdaHat);
-            lambdaHat = std::min(Scalar(.5), lambdaHat);
-
-            // do step with a step size reduced by lambdaHat
-            *u *= -lambdaHat;
-            *u += *uOld;
-
-            newton.setResidualObsolete();
-            newResidual2Norm2 = (*newton.residual()).two_norm2();
-        }
-        oldResidual2Norm2_ = newResidual2Norm2;
 
         return true;
     };
 
 private:
-    Scalar oldResidual2Norm2_;
-    int    nIterations_;
+    Scalar uNormMin_;
 };
 
 /*!
@@ -166,7 +127,7 @@ private:
  *
  * In order to use the method you need a \ref NewtonController.
  */
-template<class ModelT, bool useLineSearch=false>
+template<class ModelT, bool useLineSearch=true>
 class NewNewtonMethod
 {
 public:
