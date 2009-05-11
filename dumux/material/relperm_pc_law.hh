@@ -530,14 +530,18 @@ public:
 
         double lambda = param[0];
         double p0 = param[1];
-        double maxpc = 5e5;
 
-        if (Se > epsPC_)
-            return (std::min(p0*pow(Se, -1.0/lambda),maxpc));
+        if (Se > SweMin_)
+            return brooksCorey_(Se, p0, lambda);
         else
         {
-            double dpCEps = dPdS(epsPC_, globalPos, element, localPos, param, temperature);
-            return (std::min(dpCEps*(Se - epsPC_) + p0*pow(epsPC_, -1.0/lambda),maxpc));
+            // todo (0): better: use a splines between [SweMin/2, SweMin]
+            double pC_0 = brooksCorey_(SweMin_/2, p0, lambda);
+            double pC_1 = brooksCorey_(SweMin_, p0, lambda);
+
+            double m = (pC_1 - pC_0)/(SweMin_/2);
+            double b = pC_1 - m*(SweMin_/2);
+            return m*Se + b;
         }
     }
 
@@ -557,12 +561,12 @@ public:
         if(Se<0.0) Se = 0.0;
         if(Se>1.0) Se = 1.0;
 
-        if (Se > epsPC_)
+        if (Se > SweMin_)
             return (-p0/lambda*pow(Se, -1.0/lambda-1)/(1-Snr-Swr));
         else
         {
             double dSedSwsquare=1/(1-Snr-Swr)/(1-Snr-Swr);
-            return (-p0*dSedSwsquare/lambda/pow(epsPC_, (1+1/lambda)));
+            return (-p0*dSedSwsquare/lambda/pow(SweMin_, (1+1/lambda)));
         }
     }
 
@@ -645,7 +649,12 @@ public:
     }
 
 private:
-    static const double epsPC_ = 0.0001;
+    double brooksCorey_(double Swe, double p0, double lambda) const
+    { 
+        return p0*pow(Swe, -1.0/lambda);
+    }
+
+    static const double SweMin_ = 0.10;
     static const double epsKr_ = 1e-15;
     const Matrix2p<Grid,double>& soil_;
 };
