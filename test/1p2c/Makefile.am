@@ -9,5 +9,7 @@ check_PROGRAMS = $(NORMALTESTS)
 
 tissue_tumor_SOURCES = tissue_tumor.cc
 new_tissue_tumor_SOURCES = new_tissue_tumor.cc
+new_tissue_tumor_CXXFLAGS = $(MPI_CPPFLAGS) 
+new_tissue_tumor_LDADD = $(MPI_LDFLAGS) 
 
 include $(top_srcdir)/am/global-rules
