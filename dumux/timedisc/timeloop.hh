@@ -7,8 +7,6 @@
 #include "dumux/timedisc/rungekuttastep.hh"
 #include "dumux/timedisc/impliciteulerstep.hh"
 
-#include "dumux/nonlinear/new_newtonmethod.hh"
-
 
 namespace Dune
 {
