@@ -48,24 +48,24 @@ public:
     // return type of boundary condition at the given global coordinate
 
     virtual BoundaryConditions::Flags bctypeConti(const GlobalPosition& globalPos,
-            const Element& element, const LocalPosition& localPos) const = 0;
+            const Element& element, const LocalPosition& localPos, const Scalar& froudeNumber) const = 0;
     
     virtual BoundaryConditions::Flags bctypeMomentum(const GlobalPosition& globalPos,
-                const Element& element, const LocalPosition& localPos) const = 0;
+                const Element& element, const LocalPosition& localPos, const Scalar& froudeNumber) const = 0;
     
     //! evaluate Dirichlet and Neumann boundary condition at given position
     
     virtual Scalar dirichletConti(const GlobalPosition& globalPos,
             const Element& element, const LocalPosition& localPos) const = 0;
     
-    virtual VelType neumannConti(const GlobalPosition& globalPos,
-            const Element& element, const LocalPosition& localPos, VelType flux = VelType(0.0)) const = 0;
+    virtual Scalar neumannConti(const GlobalPosition& globalPos,
+            const Element& element, const LocalPosition& localPos, Scalar flux = 0) const = 0;
         
     virtual VelType dirichletMomentum(const GlobalPosition& globalPos,
             const Element& element, const LocalPosition& localPos) const = 0;
     
     virtual VelType neumannMomentum(const GlobalPosition& globalPos,
-            const Element& element, const LocalPosition& localPos, VelType flux = VelType(0.0)) const = 0;
+            const Element& element, const LocalPosition& localPos, const Scalar& waterDepth, VelType flux = VelType(0.0)) const = 0;
                 
     // set initial condition at given position
 

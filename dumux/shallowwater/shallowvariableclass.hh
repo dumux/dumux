@@ -33,12 +33,15 @@ template<class Grid, class Scalar> class ShallowVariableClass
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView,ElementLayout>
             ElementMapper;
 
+private:
+    double eps_;
+    ElementMapper elementMapper_;
+
 public:
     typedef Dune::BlockVector<Dune::FieldVector<Scalar,1> > ScalarType;
     typedef Dune::BlockVector<Dune::FieldVector<Scalar,dim> > VelType;
     typedef Dune::BlockVector<Dune::FieldVector<Scalar,dim+1> > SolutionType;
 
-    ElementMapper elementMapper;
     ScalarType waterDepth;
     ScalarType bottomElevation;
     ScalarType waterLevel;
@@ -48,8 +51,8 @@ public:
     Grid& grid;
 
     ShallowVariableClass(Grid& grid, Scalar& initialWDepth = *(new Scalar(0)), Scalar& initialBottomElevation = *(new Scalar(0)), Scalar& initialWaterLevel = *(new Scalar(0)), Dune::FieldVector<Scalar, dim>& initialVel = *(new Dune::FieldVector<Scalar,dim>(0))) :
-        elementMapper(grid.leafView()), grid(grid),
-                size(elementMapper.size())
+        elementMapper_(grid.leafView()), grid(grid),
+                size(elementMapper_.size())
     {
         sizeInitWDepth(initialWDepth, size);
         sizeInitBottomElevation(initialBottomElevation, size);
@@ -124,42 +127,42 @@ public:
     const ScalarType& returnWDepth(const GlobalPosition& globalPos,
             const Element& element, const LocalPosition& localPos)
     {
-        return waterDepth[elementMapper.map(element)];
+        return waterDepth[elementMapper_.map(element)];
 
     }
 
     const ScalarType& returnBottomElevation(const GlobalPosition& globalPos,
             const Element& element, const LocalPosition& localPos)
     {
-        return bottomElevation[elementMapper.map(element)];
+        return bottomElevation[elementMapper_.map(element)];
 
     }
     const ScalarType& returnWaterLevel(const GlobalPosition& globalPos,
             const Element& element, const LocalPosition& localPos)
     {
-        waterLevel = bottomElevation[elementMapper.map(element)]+ waterDepth[elementMapper.map(element)];
+        waterLevel = bottomElevation[elementMapper_.map(element)]+ waterDepth[elementMapper_.map(element)];
         return waterLevel;
     }
 
     const VelType& returnVel(const GlobalPosition& globalPos,
             const Element& element, const LocalPosition& localPos)
     {
-        return velocity[elementMapper.map(element)];
+        return velocity[elementMapper_.map(element)];
     }
 
     const SolutionType& returnGlobalSol(const GlobalPosition& globalPos,
             const Element& element, const LocalPosition& localPos)
     {
-        return globalSolution[elementMapper.map(element)];
+        return globalSolution[elementMapper_.map(element)];
     }
 
     void vtkout(const char* name, int k)
     {
-        VTKWriter<typename Grid::LeafGridView> vtkwriter(grid.leafView());
+        VTKWriter<GridView> vtkwriter(grid.leafView());
         Dune::BlockVector<Dune::FieldVector<Scalar, 1> > vX(size);
-        //Dune::BlockVector<Dune::FieldVector<Scalar, 1> > vY(size);
+        Dune::BlockVector<Dune::FieldVector<Scalar, 1> > vY(size);
         vX = 0;
-        //  vY = 0;
+        vY = 0;
 
         for (int i = 0; i < size; i++)
         {
@@ -167,24 +170,21 @@ public:
             //std::cout<<"velX = "<<velocity[i][0]<<std::endl;
             //std::cout<<"velY = "<<velocity[i][1]<<std::endl;
             vX[i] = velocity[i][0];
-            // vY[i] = velocity[i][1];
+            vY[i] = velocity[i][1];
         }
         char fname[128];
         sprintf(fname, "%s-%05d", name, k);
         vtkwriter.addCellData(vX, "Velocity_X");
-        //vtkwriter.addCellData(vY, "Velocity_Y");
-        vtkwriter.addCellData(waterDepth, "waterDepth");
+        vtkwriter.addCellData(vY, "Velocity_Y");
+        //  vtkwriter.addCellData(waterDepth, "waterDepth");
         vtkwriter.addCellData(bottomElevation, "bottomElevation");
         vtkwriter.addCellData(waterLevel, "waterLevel");
         vtkwriter.write(fname, VTKOptions::ascii);
 
         return;
     }
-
     int size;
-private:
     int i;
-    double eps;
 };
 }
 #endif
