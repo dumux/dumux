@@ -7,6 +7,11 @@
 #include <dumux/new_models/boxscheme/p1boxtraits.hh>
 #include <dumux/new_models/1p2c/1p2ctraits.hh>
 
+#include <dumux/new_models/1p2c/1p2cvertexdata.hh>
+#include <dumux/new_models/1p2c/1p2celementdata.hh>
+
+#include <dumux/auxiliary/math.hh>
+
 #include <dumux/auxiliary/apis.hh>
 #include <dune/common/collectivecommunication.hh>
 #include <vector>
@@ -19,62 +24,6 @@ namespace Dune
 //template<class ProblemT, class OnePTwoCTraitsT>
 //class OnePTwoCBoxModel;
 
-/*!
- * \brief Contains the quantities which are are constant within a
- *        finite volume in the single-phase, two-component model.
- */
-template <class OnePTwoCTraits, 
-          class Problem>
-class OnePTwoCVertexData
-{
-    typedef OnePTwoCTraits Tr;
-    typedef typename Problem::DomainTraits::Scalar Scalar;
-    typedef typename Problem::DomainTraits::Grid Grid;
-
-    typedef typename Grid::template Codim<0>::Entity Element;
-    
-    typedef Dune::FieldVector<Scalar, Tr::numEq>      SolutionVector;
-    typedef Dune::FieldVector<Scalar, Tr::numPhases>  PhasesVector;
-
-    typedef Dune::FieldVector<Scalar, Grid::dimensionworld>  GlobalPosition;
-    typedef Dune::FieldVector<Scalar, Grid::dimension>       LocalPosition;
-
-public:
-    /*!
-     * \brief Update all quantities for a given control volume.
-     */
-    template <class JacobianImp>
-    void update(const SolutionVector   &sol,
-                const Element          &element,
-                int                     vertIdx,
-                bool                    isOldSol,
-                JacobianImp            &jac) 
-    {
-        const GlobalPosition &global = element.geometry().corner(vertIdx);
-        const LocalPosition   &local =
-            Problem::DomainTraits::referenceElement(element.type()).position(vertIdx,
-                                                                             Grid::dimension);
-
-        double T = 273;
-        double p = 1e-5;
-
-        porosity = jac.problem.soil().porosity(global,element,local);
-        viscosity = jac.problem.phase().viscosity(T,p);
-        tortuosity = jac.problem.soil().tortuosity(global,element,local);
-        diffCoeff = jac.problem.phase().diffCoeff();
-        molefraction = vertSol[transport];
-        pressure = vertSol[konti];
-    }
-    
-    Scalar porosity;
-    Scalar viscosity;
-    Scalar tortuosity;
-    Scalar diffCoeff;
-    Scalar molefraction;
-    Scalar pressure;
-};
-
-
 ///////////////////////////////////////////////////////////////////////////
 // OnePTwoCBoxJacobian (evaluate the local jacobian for the newton method.)
 ///////////////////////////////////////////////////////////////////////////
@@ -86,19 +35,24 @@ public:
  */
 template<class ProblemT,
          class BoxTraitsT,
-         class OnePTwoCTraitsT>
+         class OnePTwoCTraitsT,
+         class ElementDataT,
+         class VertexDataT>
 class OnePTwoCBoxJacobian : public BoxJacobian<ProblemT,
                                                BoxTraitsT,
-                                               OnePTwoCBoxJacobian<ProblemT,BoxTraitsT,OnePTwoCTraitsT>,
-                                               OnePTwoCVertexData<OnePTwoCTraitsT, ProblemT> >
+                                               OnePTwoCBoxJacobian<ProblemT,BoxTraitsT,OnePTwoCTraitsT,
+                                               ElementDataT,VertexDataT>,
+                                               VertexDataT>
 {
 protected:
 //    friend class OnePTwoCBoxModel<ProblemT, OnePTwoCTraitsT>;
 
     typedef OnePTwoCBoxJacobian<ProblemT,
-                                    BoxTraitsT,
-                                    OnePTwoCTraitsT>             Implementation;
-    typedef BoxJacobian<ProblemT, BoxTraitsT, OnePTwoCBoxJacobian>    ParentType;
+                                BoxTraitsT,
+                                OnePTwoCTraitsT,
+                                ElementDataT,
+                                VertexDataT>             Implementation;
+    typedef BoxJacobian<ProblemT, BoxTraitsT, OnePTwoCBoxJacobian, VertexDataT>    ParentType;
     typedef ProblemT                                Problem;
     typedef typename Problem::DomainTraits          DomTraits;
     typedef BoxTraitsT                              BoxTraits;
@@ -133,10 +87,12 @@ protected:
     typedef typename BoxTraits::LocalFunction       LocalFunction;
     typedef typename Grid::CollectiveCommunication  CollectiveCommunication;
 
-    typedef typename OnePTwoCTraits::PhasesVector        PhasesVector;
-    typedef typename OnePTwoCTraits::VariableVertexData  VariableVertexData;
-    typedef FieldMatrix<Scalar, dim, dim>  Tensor;
-    typedef FieldVector<Scalar,dim> FieldVector;
+    typedef typename OnePTwoCTraits::PhasesVector       PhasesVector;
+    typedef ElementDataT								ElementData;
+    typedef VertexDataT 								VertexData;
+    typedef std::vector<VertexData>						VertexDataArray;
+    typedef Dune::FieldMatrix<Scalar, dim, dim>  		Tensor;
+    typedef Dune::FieldVector<Scalar, dim> 				FieldVector;
 
 
     /*!
@@ -160,12 +116,12 @@ public:
     /*!
      * \brief Evaluate the rate of change of all conservation
      *        quantites (e.g. phase mass) within a sub control
-     *        volume of a finite volume element in the 2P-2C
+     *        volume of a finite volume element in the 1P-2C
      *        model.
      *
      * This function should not include the source and sink terms.
      */
-    void computeStorage(SolutionVector &result, int scvId, bool usePrevSol) const
+    void computeStorage(SolutionVector &result, int scvIdx, bool usePrevSol) const
     {
     	result = Scalar(0);
 
@@ -173,13 +129,15 @@ public:
         // otherwise the current solution is used. The secondary variables are used accordingly.
         // This computes the derivative of the storage term.
         //const LocalFunction &sol   = usePrevSol ? this->prevSol_ : this->curSol_;
-        const ElementData &elementCache = usePrevSol ? prevElemDat_  : curElemDat_;
+
+    	 const VertexDataArray &elemDat = usePrevSol ? this->prevElemDat_  : this->curElemDat_;
+    	 const VertexData  &vertDat = elemDat[scvIdx];
 
         // storage term of continuity equation
         result[konti] = 0;
 
         // storage term of the transport equation
-        result[transport] = elementCache.vertex[scvId].porosity * elementCache.vertex[scvId].molefraction;
+        result[transport] = vertDat.porosity * vertDat.molefraction;
 
     }
 
@@ -187,14 +145,14 @@ public:
      * \brief Evaluates the mass flux over a face of a subcontrol
      *        volume.
      */
-    void computeFlux(SolutionVector &flux, int faceId) const
+    void computeFlux(SolutionVector &flux, int faceIdx) const
     {
         // set flux vector to zero
-        int i = this->curElementGeom_.subContVolFace[faceId].i;
-        int j = this->curElementGeom_.subContVolFace[faceId].j;
+        int i = this->curElementGeom_.subContVolFace[faceIdx].i;
+        int j = this->curElementGeom_.subContVolFace[faceIdx].j;
 
         // normal vector, value of the area of the scvf
-        const GlobalPosition &normal(this->curElementGeom_.subContVolFace[faceId].normal);
+        const GlobalPosition &normal(this->curElementGeom_.subContVolFace[faceIdx].normal);
 
         // get global coordinates of verts i,j
         const GlobalPosition &global_i = this->curElementGeom_.subContVol[i].global;
@@ -204,9 +162,9 @@ public:
         const LocalPosition &local_i = this->curElementGeom_.subContVol[i].local;
         const LocalPosition &local_j = this->curElementGeom_.subContVol[j].local;
 
-        const ElementData &elemDat = this->curElemDat_;
-        const VariableVertexData &vDat_i = elemDat.vertex[i];
-        const VariableVertexData &vDat_j = elemDat.vertex[j];
+        const VertexDataArray &elemDat  = this->curElemDat_;
+        const VertexData &vDat_i 		= this->curElemDat_[i];
+        const VertexData &vDat_j 		= this->curElemDat_[j];
 
         GlobalPosition pGrad;
         GlobalPosition xGrad;
@@ -225,34 +183,35 @@ public:
         for (int idx = 0; idx < this->curElementGeom_.numVertices; idx++) // loop over adjacent vertices
             {
                 // FEGradient at vertex idx
-                const LocalPosition &feGrad = this->curElementGeom_.subContVolFace[faceId].grad[idx];
+                const LocalPosition &feGrad = this->curElementGeom_.subContVolFace[faceIdx].grad[idx];
 
 
                 // the pressure gradient
                 tmp = feGrad;
-                tmp *= elemDat.vertex[idx].pressure;
+                tmp *= elemDat[idx].pressure;
                 pGrad += tmp;
 
 
                 // the concentration gradient
                 tmp = feGrad;
-                tmp *= elemDat.vertex[idx].molefraction;
+                tmp *= elemDat[idx].molefraction;
                 xGrad += tmp;
 
             }
 
 
         // calculate the permeability tensor
-        Tensor K         = this->problem_.soil().K(global_i, ParentType::curElement_(), local_i);
+        Tensor K;
+        const Tensor &Ki = this->problem_.soil().K(global_i, ParentType::curElement_(), local_i);
         const Tensor &Kj = this->problem_.soil().K(global_j, ParentType::curElement_(), local_j);
-        harmonicMeanK_(K, Kj);
+        Dune::harmonicMeanMatrix(K, Ki, Kj);
 
         ///////////////////////
         // calculation of the flux of the continuity equation
         //////////////////////
 
         K.mv(pGrad, KpGrad);  // KpGrad = K * grad p
-        flux[konti] = (KpGrad*normal)/elemDat.vertex[i].viscosity;
+        flux[konti] = (KpGrad*normal)/elemDat[i].viscosity;
 
 
 
@@ -308,8 +267,8 @@ public:
 
 
 
-        LocalFunction curSol(numVertices);
-        ElementData   elemDat;
+        LocalFunction 	  tmpSol;
+        VertexDataArray   elemDat(BoxTraits::ShapeFunctionSetContainer::maxsize);
         //VariableVertexData tmp;
 
         ElementIterator elementIt = this->problem_.elementBegin();
@@ -318,17 +277,18 @@ public:
         for (; elementIt != endit; ++elementIt)
             {
                 int numLocalVerts = elementIt->template count<dim>();
+                tmpSol.resize(numLocalVerts);
 
                 setCurrentElement(*elementIt);
-                this->restrictToElement(curSol, globalSol);
-                updateElementData_(elemDat, curSol, false);
+                this->restrictToElement(tmpSol, globalSol);
+                updateElementData_(elemDat, tmpSol, false);
 
                 for (int i = 0; i < numLocalVerts; ++i)
                     {
                         int globalIdx = this->problem_.vertexIdx(*elementIt, i);
 
-                        (*pressure)[globalIdx] = elemDat.vertex[i].pressure;
-                        (*molefraction)[globalIdx] = elemDat.vertex[i].molefraction;
+                        (*pressure)[globalIdx] = elemDat[i].pressure;
+                        (*molefraction)[globalIdx] = elemDat[i].molefraction;
 
                     };
 
@@ -344,6 +304,9 @@ protected:
     { return static_cast<Implementation *>(this); }
     const Implementation *asImp_() const
     { return static_cast<const Implementation *>(this); }
+
+    // parameters given in constructor
+    std::vector<StaticVertexData> staticVertexDat_;
 };
 
 
