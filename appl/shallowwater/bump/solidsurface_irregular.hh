@@ -12,7 +12,7 @@ template<class Grid, class Scalar> class SolidSurfacePlain :
     public SolidSurfaceBase<Grid,Scalar>
 {
     enum
-    {   dim=Grid::dimension};
+    {   dim=Grid::dimension, oneD = 1, twoD = 2};
 
     enum
     {   dimWorld = Grid::dimensionworld};
@@ -43,10 +43,10 @@ public:
     {
         switch (dim)
         {
-        case 1:
+        case oneD:
             bottomSlope_=crossSlope_;
             break;
-        case 2:
+        case twoD:
             bottomSlope_[0]=crossSlope_;
             bottomSlope_[1]=longSlope_;
             break;

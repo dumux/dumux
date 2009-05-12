@@ -30,12 +30,13 @@ template<class Grid, class Scalar> class HllFlux :
     public NumericalFlux<Grid,Scalar>
 {
     enum
-    {   dim=Grid::dimension};
+    {   dim=Grid::dimension, oneD = 1, twoD = 2};
+
     typedef Dune::FieldVector<Scalar, dim> VelType;
     typedef Dune::FieldVector<Scalar, dim+1> SystemType; //System has 3 equations -> 3 positions in a vector
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
 
-    Scalar gravity_;
+    const Scalar& gravity_;
     Scalar eps_;
 
 public:
@@ -50,8 +51,8 @@ public:
             Scalar waterDepthJ, VelType nVec)
     {
 
-        //Hll is an approximate Riemann solver 
-        //It needs the states of the variables on the left and right side of the interface. 
+        //Hll is an approximate Riemann solver
+        //It needs the states of the variables on the left and right side of the interface.
         //If there is no reconstruction, these values coincide with the I, J values of teh cell centers
         //L = left side, R = right side
 
@@ -86,7 +87,7 @@ public:
 
         direction = nVec*unityVector;
 
-        //determine left and right side value of a face, 
+        //determine left and right side value of a face,
         //depends on direction of the normal vector
         if (direction > 0)
         {
@@ -106,12 +107,12 @@ public:
 
         switch (dim)
         {
-        case 1:
+        case oneD:
             primVelocityFaceL = velocityFaceL[0];
             primVelocityFaceR = velocityFaceR[0];
             break;
 
-        case 2:
+        case twoD:
             if (nVec[0] != 0)
             {
                 primVelocityFaceL = velocityFaceL[0]; //dominating velocity (e.g. in x-direction u)
@@ -213,7 +214,7 @@ public:
 
             switch (dim)
             {
-            case 1:
+            case oneD:
 
                 partMomentumX = waterDepthFaceL*(primVelocityFaceL
                         *primVelocityFaceL) + 0.5 * gravity_ * (waterDepthFaceL
@@ -221,7 +222,7 @@ public:
                 fluxMomentumX = partMomentumX;
                 break;
 
-            case 2:
+            case twoD:
 
                 if (nVec[0] !=0)
                 {
@@ -256,7 +257,7 @@ public:
 
             switch (dim)
             {
-            case 1:
+            case oneD:
                 partMomentumXL = waterDepthFaceL*(primVelocityFaceL
                         *primVelocityFaceL) +0.5 *gravity_ *(waterDepthFaceL
                         *waterDepthFaceL);
@@ -279,7 +280,7 @@ public:
                 fluxMomentumX /= denominator;
                 break;
 
-            case 2:
+            case twoD:
                 if (nVec[0] !=0)
                 {
                     //std::cout<<"x-direction"<<std::endl;
@@ -363,14 +364,14 @@ public:
 
             switch (dim)
             {
-            case 1:
+            case oneD:
                 partMomentumX = waterDepthFaceR*(primVelocityFaceR
                         *primVelocityFaceR) +0.5 *gravity_ *(waterDepthFaceR
                         *waterDepthFaceR);
                 fluxMomentumX = partMomentumX;
                 break;
 
-            case 2:
+            case twoD:
                 if (nVec[0] !=0)
                 {
                     partMomentumX = waterDepthFaceR*(primVelocityFaceR
@@ -406,12 +407,12 @@ public:
 
         switch (dim)
         {
-        case 1:
+        case oneD:
             fluxHllFace[0]=fluxConti*nVec[0];
             fluxHllFace[1]=fluxMomentumX*nVec[0];
             break;
 
-        case 2:
+        case twoD:
             fluxHllFace[0]=fluxConti*(nVec[0]+nVec[1]);
             fluxHllFace[1]=fluxMomentumX*(nVec[0]+nVec[1]);
             fluxHllFace[2]=fluxMomentumY*(nVec[0]+nVec[1]);

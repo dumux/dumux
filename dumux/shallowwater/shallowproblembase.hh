@@ -49,24 +49,24 @@ public:
 
     virtual BoundaryConditions::Flags bctypeConti(const GlobalPosition& globalPos,
             const Element& element, const LocalPosition& localPos, const Scalar& froudeNumber) const = 0;
-    
+
     virtual BoundaryConditions::Flags bctypeMomentum(const GlobalPosition& globalPos,
                 const Element& element, const LocalPosition& localPos, const Scalar& froudeNumber) const = 0;
-    
+
     //! evaluate Dirichlet and Neumann boundary condition at given position
-    
+
     virtual Scalar dirichletConti(const GlobalPosition& globalPos,
             const Element& element, const LocalPosition& localPos) const = 0;
-    
+
     virtual Scalar neumannConti(const GlobalPosition& globalPos,
             const Element& element, const LocalPosition& localPos, Scalar flux = 0) const = 0;
-        
+
     virtual VelType dirichletMomentum(const GlobalPosition& globalPos,
             const Element& element, const LocalPosition& localPos) const = 0;
-    
+
     virtual VelType neumannMomentum(const GlobalPosition& globalPos,
             const Element& element, const LocalPosition& localPos, const Scalar& waterDepth, VelType flux = VelType(0.0)) const = 0;
-                
+
     // set initial condition at given position
 
     virtual Scalar setInitialWaterDepth(const GlobalPosition& globalPos,
@@ -79,11 +79,14 @@ public:
 
     virtual Scalar setSource(const GlobalPosition& globalPos,
             const Element& element, const LocalPosition& localPos) const = 0;
-    
-    virtual Scalar defineGravity() const = 0;
-        
+
+    const Scalar& gravityConstant() const
+    {
+        return gravity_;
+    }
+
     ShallowProblemBase(VC& variableobject, Surface& surfaceobject) :
-        variables(variableobject), surface(surfaceobject)
+        variables(variableobject), surface(surfaceobject), gravity_(9.81)
     {
     }
 
@@ -95,6 +98,8 @@ public:
     VC& variables;
     Surface& surface;
 
+private:
+    const Scalar gravity_;
 };
 }
 #endif

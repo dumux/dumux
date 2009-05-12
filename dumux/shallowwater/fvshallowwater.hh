@@ -15,7 +15,7 @@ namespace Dune
 {
 //! \ingroup transport
 
-template<class Grid, class Scalar, class VC> class FVShallowWater :
+template<class Grid, class Scalar, class VC, class Problem = ShallowProblemBase<Grid, Scalar, VC> > class FVShallowWater :
     public ShallowWater< Grid, Scalar, VC>
 {
     template<int dim> struct ElementLayout
@@ -27,7 +27,7 @@ template<class Grid, class Scalar, class VC> class FVShallowWater :
     };
 
     enum
-    {   dim = Grid::dimension};
+    {   dim = Grid::dimension, oneD = 1, twoD = 2};
     enum
     {   dimWorld = Grid::dimensionworld};
 
@@ -59,23 +59,23 @@ public:
 
     void postProcessUpdate(Scalar t, Scalar dt);
 
-    FVShallowWater(Grid& grid, ShallowProblemBase<Grid, Scalar, VC>& problem,
-            NumericalFlux<Grid,Scalar>& numFl = *(new HllFlux<Grid,Scalar>), Scalar gravity_ = 9.81) :
+    FVShallowWater(Grid& grid, Problem& problem,
+            NumericalFlux<Grid,Scalar>& numFl = *(new HllFlux<Grid,Scalar>)) :
         ShallowWater<Grid, Scalar, VC>(grid, problem),
                 elementMapper_(grid.leafView()), numFlux_(numFl),
-                gravity_(9.81)
+                gravity_(problem.gravityConstant())
     {
     }
 
 private:
     ElementMapper elementMapper_;
     NumericalFlux<Grid,Scalar>& numFlux_;
-    Scalar gravity_;
+    const Scalar& gravity_;
 };
 
 //update method computes the update factors for the whole grid in one time step
-template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
-        VC>::update(const Scalar t, Scalar& dt, SolutionType& updateVec)
+template<class Grid, class Scalar, class VC, class Problem> int FVShallowWater<Grid, Scalar,
+        VC, Problem>::update(const Scalar t, Scalar& dt, SolutionType& updateVec)
 {
     // initialize dt very large so model is forced to take the cfl timestep
     dt = 1e100;
@@ -93,8 +93,7 @@ template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
         Scalar waterDepthI=0; //water depth of entity
         Scalar waterLevelI = 0; //water level of entitiy = water depth + bottom elevation
         VelType velocityI(0);
-        VelType cflVelocityI(0); // cfl velocity of entity = velocity + wave celerity
-        Scalar maxCflVelocityIComponent=0; //decisive velocity component x or y
+        Scalar maxCflVelocity=0; //decisive velocity component x or y
         Scalar dist=0;
         Scalar froudeNumber = 0;
         VelType divergenceTerm(0); //term computed when applying the divergence form of bed slope term
@@ -146,31 +145,33 @@ template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
         // Compute Cfl Velocity for Entitiy
         switch (dim)
         {
-        case 1:
-            cflVelocityI[0]= fabs(velocityI[0])
-                    +sqrt(fabs(gravity_*waterDepthI));
-            maxCflVelocityIComponent = cflVelocityI[0];
+        case oneD:
+            maxCflVelocity = std::max(fabs(velocityI[0])
+                    +sqrt(fabs(gravity_*waterDepthI)), maxCflVelocity);
             break;
 
-        case 2:
-            cflVelocityI[0]= fabs(velocityI[0])
+        case twoD:
+            Scalar cflVelocityIX = fabs(velocityI[0])
                     +sqrt(fabs(gravity_*waterDepthI)); //Calculate cfl velocity (convective velocity + wave velocity)
-            cflVelocityI[1]= fabs(velocityI[1])
+            Scalar cflVelocityIY= fabs(velocityI[1])
                     +sqrt(fabs(gravity_*waterDepthI));
 
-            maxCflVelocityIComponent = std::max(cflVelocityI[0],
-                    cflVelocityI[1]);
+            Scalar cflVelocity = std::max(cflVelocityIX,
+                    cflVelocityIY);
+
+            maxCflVelocity = std::max(maxCflVelocity,
+                    cflVelocity);
             break;
         }
-        // std::cout<<"maxCflVelocityIComponent "<<maxCflVelocityIComponent<<std::endl;
+        // std::cout<<"maxCflVelocity "<<maxCflVelocity<<std::endl;
 
         // Compute Froude-Number for Entity
         switch (dim)
         {
-        case 1:
+        case oneD:
             froudeNumber = fabs(velocityI[0])/(sqrt(gravity_*waterDepthI));
             break;
-        case 2:
+        case twoD:
             Scalar froudeX = fabs(velocityI[0])/(sqrt(gravity_*waterDepthI));
             Scalar froudeY = fabs(velocityI[1])/(sqrt(gravity_*waterDepthI));
             froudeNumber = std::max(froudeX, froudeY);
@@ -183,15 +184,13 @@ template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
         Scalar bottomElevationJ;
         VelType velocityJ(0);
         VelType cflVelocityFace(0);
-        Scalar maxCflVelocityFaceComponent = 0;
-        Scalar maxCflVelocityFace = 0;
 
         IntersectionIterator isItEnd =gridView.template iend(*eIt);
         for (IntersectionIterator isIt = gridView.template ibegin(*eIt); isIt
                 !=isItEnd; ++isIt)
         {
             // local number of facet
-            int indexInInside = isIt->indexInInside();//numberInInside
+//            int indexInInside = isIt->indexInInside();//numberInInside
 
             // get geometry type of face
             Dune::GeometryType gtf = isIt->geometryInInside().type();
@@ -256,9 +255,9 @@ template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
                 //has to be of higher order than 1
                 //compute variables waterDepthFaceI, waterDepthFaceJ, velocityFaceI, velocityFaceJ
                 //and commit it to numerical flux function
-                //************************************************************************                             
-                
-                
+                //************************************************************************
+
+
                 //get flux computed in numerical flux
                 flux = (numFlux_(velocityI, velocityJ, waterDepthI,
                         waterDepthJ, nVec));
@@ -277,16 +276,16 @@ template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
                 // std::cout<<"waterDepthFaceDivergence "
                 //       <<waterDepthFaceDivergence<<std::endl;
 
-                // Compute Divergence Term for Interior Faces 
+                // Compute Divergence Term for Interior Faces
                 switch (dim)
                 {
-                case 1:
+                case oneD:
                     divergenceTerm[0] = 0.5*gravity_*(waterDepthFaceDivergence
                             *waterDepthFaceDivergence);
                     divergenceTerm[0]*= nVec[0];
                     divergenceTerm[0]*= faceVolume;
                     break;
-                case 2:
+                case twoD:
                     divergenceTerm[0] = 0.5*gravity_*(waterDepthFaceDivergence
                             *waterDepthFaceDivergence);
                     divergenceTerm[0]*= nVec[0];
@@ -350,14 +349,14 @@ template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
 
                     switch (dim)
                     {
-                    case 1:
+                    case oneD:
 
                         contiFlux = velocityFace[0] * waterDepthFace*nVec[0];
                         momentumFlux =(velocityFace[0] * velocityFace[0]
                                 * waterDepthFace +0.5 * gravity_
                                 * waterDepthFace * waterDepthFace) *nVec[0];
                         break;
-                    case 2:
+                    case twoD:
 
                         contiFlux = waterDepthFace*velocityFace[0]*nVec[0]
                                 +waterDepthFace * velocityFace[1]*nVec[1];
@@ -394,13 +393,13 @@ template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
 
                     switch (dim)
                     {
-                    case 1:
+                    case oneD:
                         contiFlux = velocityFace[0] * waterDepthFace*nVec[0];
                         momentumFlux =(velocityFace*velocityFace*waterDepthFace
                                 +0.5 *gravity_*waterDepthFace*waterDepthFace)
                                 *nVec[0];
                         break;
-                    case 2:
+                    case twoD:
                         contiFlux = waterDepthFace*velocityFace[0]*nVec[0]
                                 +waterDepthFace*velocityFace[1]*nVec[1];
 
@@ -442,13 +441,13 @@ template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
 
                     switch (dim)
                     {
-                    case 1:
+                    case oneD:
                         contiFlux = waterDepthFace*velocityFace[0]*nVec[0];
                         momentumFlux =(velocityFace[0]*waterDepthFace
                                 *velocityFace[0]+0.5 *gravity_ *waterDepthFace
                                 *waterDepthFace)*nVec[0];
                         break;
-                    case 2:
+                    case twoD:
 
                         contiFlux = waterDepthFace*velocityFace[0]*nVec[0]
                                 +waterDepthFace*velocityFace[1] *nVec[1];
@@ -481,13 +480,13 @@ template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
 
                     switch (dim)
                     {
-                    case 1:
+                    case oneD:
                         contiFlux = waterDepthFace*velocityFace[0]*nVec[0];
                         momentumFlux =(velocityFace[0]*waterDepthFace
                                 *velocityFace[0]+0.5 *gravity_ *waterDepthFace
                                 *waterDepthFace)*nVec[0];
                         break;
-                    case 2:
+                    case twoD:
                         contiFlux = waterDepthFace*velocityFace[0]*nVec[0]
                                 +waterDepthFace*velocityFace[1] *nVec[1];
 
@@ -539,13 +538,13 @@ template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
 
                 switch (dim)
                 {
-                case 1:
+                case oneD:
                     divergenceTerm[0] = 0.5*gravity_*(waterDepthFaceDivergence
                             *waterDepthFaceDivergence);
                     divergenceTerm[0]*= nVec[0];
                     divergenceTerm[0]*= faceVolume;
                     break;
-                case 2:
+                case twoD:
                     divergenceTerm[0] = 0.5*gravity_*(waterDepthFaceDivergence
                             *waterDepthFaceDivergence);
                     divergenceTerm[0]*= nVec[0];
@@ -561,27 +560,24 @@ template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
                 // Determine cflVelocity at faces and store the maximum
                 switch (dim)
                 {
-                case 1:
-                    cflVelocityFace[0]= fabs(velocityFace[0])
-                            +sqrt(fabs(gravity_ *waterDepthFace));
-                    maxCflVelocityFaceComponent = cflVelocityFace[0];
+                case oneD:
+                    maxCflVelocity = std::max(maxCflVelocity, fabs(velocityFace[0])
+                            +sqrt(fabs(gravity_ *waterDepthFace)));
                     break;
 
-                case 2:
-                    cflVelocityFace[0]= fabs(velocityFace[0])
+                case twoD:
+                    Scalar cflVelocityFaceX= fabs(velocityFace[0])
                             +sqrt(fabs(gravity_ *waterDepthFace)); //Calculate cfl velocity (convective velocity + wave velocity)
-                    cflVelocityFace[1]= fabs(velocityFace[1])
+                    Scalar cflVelocityFaceY= fabs(velocityFace[1])
                             +sqrt(fabs(gravity_ *waterDepthFace));
+                    Scalar cflVelocity = std::max(cflVelocityFaceX, cflVelocityFaceY);
 
-                    maxCflVelocityFaceComponent = std::max(cflVelocityFace[0],
-                            cflVelocityFace[1]);
+                    maxCflVelocity = std::max(maxCflVelocity,
+                            cflVelocity);
                     break;
                 }
             }
 
-            // store maximum cfl velocity at faces
-            maxCflVelocityFace = std::max(maxCflVelocityFace,
-                    maxCflVelocityFaceComponent);
             // sum the fluxes over the faces
             summedFluxes += flux;
             // sum divergence term over faces
@@ -603,11 +599,11 @@ template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
 
         switch (dim)
         {
-        case 1:
+        case oneD:
             sourceTermVector[0]=sourceTerm;
             sourceTermVector[1]=summedDivergenceTerm[0];
             break;
-        case 2:
+        case twoD:
             sourceTermVector[0]=sourceTerm;
             sourceTermVector[1]=summedDivergenceTerm[0];
             sourceTermVector[2]=summedDivergenceTerm[1];
@@ -628,13 +624,9 @@ template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
         //   <<std::endl;
 
         //*****determine dt with cfl criterium considering the velocities of entities and faces ***********
-        Scalar maxCflVelocityI = 0;
-        Scalar finalCflVelocity = 0;
         Scalar cflTimeStep = 0;
 
-        maxCflVelocityI = std::max(maxCflVelocityI, maxCflVelocityIComponent);
-        finalCflVelocity = std::max(maxCflVelocityI, maxCflVelocityFace);
-        cflTimeStep = dist/finalCflVelocity;
+        cflTimeStep = dist/maxCflVelocity;
         dt = std::min(dt, cflTimeStep);
 
         /* std::cout<<"finalCflVelocity "<< finalCflVelocity<<std::endl;
@@ -651,8 +643,8 @@ template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
 }
 
 //initialize method gets initial values from variableclass
-template<class Grid, class Scalar, class VC> void FVShallowWater<Grid, Scalar,
-        VC>::initialize()
+template<class Grid, class Scalar, class VC, class Problem> void FVShallowWater<Grid, Scalar,
+        VC, Problem>::initialize()
 {
     const GridView& gridView= this->grid.leafView();
 
@@ -696,11 +688,11 @@ template<class Grid, class Scalar, class VC> void FVShallowWater<Grid, Scalar,
     return;
 }
 
-// postProcessUpdate changes the results of the update method which are 
+// postProcessUpdate changes the results of the update method which are
 // conserved variables (h, hu, hv) in primary variables (h, u ,v)
 
-template<class Grid, class Scalar, class VC> void FVShallowWater<Grid, Scalar,
-        VC>::postProcessUpdate(Scalar t, Scalar dt)
+template<class Grid, class Scalar, class VC, class Problem> void FVShallowWater<Grid, Scalar,
+        VC, Problem>::postProcessUpdate(Scalar t, Scalar dt)
 {
     for (int i=0; i<this->problem.variables.size; i++)
     {

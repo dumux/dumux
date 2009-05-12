@@ -32,7 +32,7 @@ public:
     BoundaryConditions::Flags bctypeConti(const GlobalPosition& faceGlobalPos,
             const Element& element, const LocalPosition& localPos, const Scalar& froudeNumber) const
     {
-                     
+
         if (faceGlobalPos[0]< eps_ || faceGlobalPos[0] > upperRight_[0]- eps_)
         {
             return Dune::BoundaryConditions::dirichlet;
@@ -104,13 +104,13 @@ public:
         if (faceGlobalPos[1] > upperRight_[1]- eps_) //upper boundary, normal vector positive //if bc is no-flow then only return 0.5*g*h^2
         {
             momentumFlux_[0] = 0;
-            momentumFlux_[1] = 0.5*9.81*waterDepth*waterDepth;
+            momentumFlux_[1] = 0;//0.5*9.81*waterDepth*waterDepth;
         }
 
         else if (faceGlobalPos[1]< eps_) //lower boundary, normal vector negative//if bc is no-flow then only return 0.5*g*h^2
         {
             momentumFlux_[0] = 0;
-            momentumFlux_[1] = 0.5*9.81*waterDepth*waterDepth*(-1);
+            momentumFlux_[1] = 0;//.5*9.81*waterDepth*waterDepth*(-1);
         }
         else
         {
