@@ -114,10 +114,13 @@ public:
      * @param grid a DUNE grid object
      * @param problem an object of class TransportProblem or derived
      * @param fluxFunc an object of flux function
+     * @param slLengthFactor a factor to control the length of streamline 
+     * @param K a factor to define how fine the piecewise linear approximation of the flux function is
      */
-    ChTransport(Grid& grid, Problem& problem, FluxFunction<Grid,Scalar>& fluxFunc = *(new FluxFunction<Grid,Scalar>), int K=1000) :
+    ChTransport(Grid& grid, Problem& problem, FluxFunction<Grid,Scalar>& fluxFunc = *(new FluxFunction<Grid,Scalar>), Scalar slLengthFactor = 1.4, int K=1000) :
     Transport<Grid, Scalar, VC, Problem>(grid, problem),
-    elementmapper(grid.levelView(this->level())), fluxFunc_(fluxFunc), K(K)
+    elementmapper(grid.levelView(this->level())), fluxFunc_(fluxFunc), 
+    slLengthFactor_(slLengthFactor), K(K)
     {}
 
 private:
@@ -132,6 +135,7 @@ private:
 private:
     EM elementmapper;
     const FluxFunction<Grid, Scalar>& fluxFunc_;
+    Scalar slLengthFactor_;
     int K;
     std::list<ChNode> ch;
     std::list<slNode> sl;
@@ -1026,7 +1030,10 @@ int ChTransport<Grid,Scalar,VC, Problem>::update(const Scalar t, Scalar& dt, Rep
             if(a>maxa)
             maxa = a;
         }
-        calcStreamline(dt,1.4*maxa,eIt);
+
+        // slLengthFactor controls the length of streamline
+        // one should enlarge this factor when time step is smaller
+        calcStreamline(dt,slLengthFactor*maxa,eIt);
 
 	//if there are saturation jumps, solving the exact solutions
 	// and approximating it on the static grid
