@@ -202,7 +202,7 @@ public:
 
         // calculate the permeability tensor
         Tensor K;
-        const Tensor &Ki = this->problem_.soil().K(global_i, ParentType::curElement_(), local_i);
+        const Tensor Ki = this->problem_.soil().K(global_i, ParentType::curElement_(), local_i);
         const Tensor &Kj = this->problem_.soil().K(global_j, ParentType::curElement_(), local_j);
         Dune::harmonicMeanMatrix(K, Ki, Kj);
 
