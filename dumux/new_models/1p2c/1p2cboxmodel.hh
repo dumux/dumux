@@ -29,7 +29,10 @@ class OnePTwoCBoxModel
                        OnePTwoCBoxJacobian<ProblemT,
                                            P1BoxTraits<typename ProblemT::DomainTraits::Scalar,
                                                        typename ProblemT::DomainTraits::Grid,
-                                                       OnePTwoCTraitsT::numEq>, OnePTwoCTraitsT > >
+                                                       OnePTwoCTraitsT::numEq>,
+                                           OnePTwoCTraitsT,
+                                           OnePTwoCElementData<OnePTwoCTraitsT,ProblemT>,
+                                           OnePTwoCVertexData<OnePTwoCTraitsT,ProblemT> > >
 {
     typedef typename ProblemT::DomainTraits::Grid       Grid;
     typedef typename ProblemT::DomainTraits::Scalar     Scalar;
@@ -38,9 +41,12 @@ class OnePTwoCBoxModel
 public:
     typedef OnePTwoCTraitsT                                  OnePTwoCTraits;
     typedef P1BoxTraits<Scalar, Grid, OnePTwoCTraits::numEq> BoxTraits;
+    typedef OnePTwoCElementData<OnePTwoCTraitsT,ProblemT> 	 ElementData;
+    typedef OnePTwoCVertexData<OnePTwoCTraitsT,ProblemT>	 VertexData;
+
 
 private:
-    typedef OnePTwoCBoxJacobian<ProblemT, BoxTraits, OnePTwoCTraits>  OnePTwoCLocalJacobian;
+    typedef OnePTwoCBoxJacobian<ProblemT, BoxTraits, OnePTwoCTraits, ElementData, VertexData>  OnePTwoCLocalJacobian;
     typedef BoxScheme<ThisType,
                       BoxTraits,
                       ProblemT,
