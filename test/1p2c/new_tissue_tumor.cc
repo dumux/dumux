@@ -41,7 +41,7 @@ int main(int argc, char** argv)
         typedef Dune::GridPtr<Grid>                      GridPointer;
 
         // initialize MPI, finalize is done automatically on exit
-        //Dune::MPIHelper::instance(argc, argv);
+        Dune::MPIHelper::instance(argc, argv);
 
         // parse the command line arguments for the program
         if (argc != 4) {
@@ -86,11 +86,14 @@ int main(int argc, char** argv)
 
         return 0;
     }
+
     catch (Dune::Exception &e) {
         std::cerr << "Dune reported error: " << e << std::endl;
     }
     catch (...) {
         std::cerr << "Unknown exception thrown!\n";
     }
+
     return 3;
+
 }
