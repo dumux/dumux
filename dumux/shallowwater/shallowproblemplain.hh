@@ -26,6 +26,7 @@ private:
     FieldVector<Scalar,dim> lowerLeft_;
     FieldVector<Scalar,dim> upperRight_;
     Scalar eps_;
+    Scalar gravity_;
 
 public:
 
@@ -163,11 +164,16 @@ public:
     {
         return 0.0000; //der Umrechnungsfaktor von l/(s ha) auf m/s ist 1E-7, Standardwert für Stuttgart 125 l/(s ha)
     }
-
+    
+    Scalar defineGravity() const
+    {
+        return gravity_;
+    }
+    
     ShallowProblemPlain(VC& variableobject, Surface& surfaceobject,
             FieldVector<Scalar,dim>& L, FieldVector<Scalar,dim>& H) :
         ShallowProblemBase<Grid, Scalar, VC>(variableobject, surfaceobject),
-                lowerLeft_(L), upperRight_(H), eps_(1e-8)
+                lowerLeft_(L), upperRight_(H), eps_(1e-8), gravity_(9.81)
     {
     }
 

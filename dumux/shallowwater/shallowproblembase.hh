@@ -79,7 +79,9 @@ public:
 
     virtual Scalar setSource(const GlobalPosition& globalPos,
             const Element& element, const LocalPosition& localPos) const = 0;
-
+    
+    virtual Scalar defineGravity() const = 0;
+        
     ShallowProblemBase(VC& variableobject, Surface& surfaceobject) :
         variables(variableobject), surface(surfaceobject)
     {

@@ -117,7 +117,7 @@ template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
 
         // cell volume, assume linear map here
         Scalar volume = eIt->geometry().integrationElement(localPos)
-        *Dune::ReferenceElements<Scalar,dim>::general(gt).volume()
+        *Dune::ReferenceElements<Scalar,dim>::general(gt).volume();
         //        std::cout<<volume<<std::endl;
 
         // cell index
@@ -133,7 +133,7 @@ template<class Grid, class Scalar, class VC> int FVShallowWater<Grid, Scalar,
         //        std::cout<<"bottom slope"<<bottomSlope<<std::endl;
 
         // get waterdepth at cell center
-        waterDepthI = this->problem.variables.waterDepth[globalIdxI]
+        waterDepthI = this->problem.variables.waterDepth[globalIdxI];
         //        std::cout<<"waterDepthI="<<waterDepthI<<std::endl;
 
         // determine water level of cell
