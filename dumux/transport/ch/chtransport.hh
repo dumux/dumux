@@ -1033,7 +1033,7 @@ int ChTransport<Grid,Scalar,VC, Problem>::update(const Scalar t, Scalar& dt, Rep
 
         // slLengthFactor controls the length of streamline
         // one should enlarge this factor when time step is smaller
-        calcStreamline(dt,slLengthFactor*maxa,eIt);
+        calcStreamline(dt,slLengthFactor_*maxa,eIt);
 
 	//if there are saturation jumps, solving the exact solutions
 	// and approximating it on the static grid
