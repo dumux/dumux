@@ -124,7 +124,6 @@ AC_CONFIG_FILES([Makefile
     test/fvca5/Makefile
     test/id/Makefile
     test/minc/Makefile
-    test/ml/Makefile
     test/pardiso/Makefile
     test/phasepressure_ff/Makefile
     test/pipe-newcouple-incomp/Makefile
@@ -141,6 +140,7 @@ AC_CONFIG_FILES([Makefile
 	 appl/2p2c/Makefile
     appl/box3d-compressible/Makefile
     appl/co2/Makefile
+    appl/dynamic_pc/Makefile
     appl/hysteresis/Makefile
     appl/phasepressure_ff/Makefile
     appl/shallowwater/Makefile  

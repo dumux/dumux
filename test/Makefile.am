@@ -16,7 +16,6 @@ SUBDIRS = . \
 	  id \
 	  linearelasticity \
 	  minc \
-	  ml \
 	  pardiso \
 	  phasepressure_ff \
 	  pipe-newcouple-incomp \
