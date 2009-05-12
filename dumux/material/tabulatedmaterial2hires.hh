@@ -2,7 +2,7 @@
  *   Copyright (C) 2008 by Andreas Lauser                                    *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
- *   email: and _at_ poware.org                                              *
+ *   email: andreas.lauser _at_ iws.uni-stuttgart.de                         *
  *                                                                           *
  *   This program is free software; you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -79,8 +79,9 @@ protected:
         // we need the tWidth variable to avoid a bogus
         // division by zero warning in gcc
         Scalar tWidth = Traits::transitionNorth;
-
-        return std::min(1.0, (y - Traits::yMin)/tWidth);
+        Scalar relPos = (y - Traits::yMin)/tWidth;
+        
+        return transitionFn_(relPos);
     }
 
     /*!
@@ -99,8 +100,9 @@ protected:
         // we need the tWidth variable to avoid a bogus
         // division by zero warning in gcc
         Scalar tWidth = Traits::transitionSouth;
+        Scalar relPos = (Traits::yMax - y)/tWidth;
 
-        return std::min(1.0, (Traits::yMax - y)/tWidth);
+        return transitionFn_(relPos);
     }
 
     /*!
@@ -119,7 +121,9 @@ protected:
         // we need the tWidth variable to avoid a bogus
         // division by zero warning in gcc
         Scalar tWidth = Traits::transitionWest;
-        return std::min(1.0, (x - Traits::xMin)/tWidth);
+        Scalar relPos = (x - Traits::xMin)/tWidth;
+
+        return transitionFn_(relPos);
     }
 
     /*!
@@ -138,9 +142,22 @@ protected:
         // we need the tWidth variable to avoid a bogus
         // division by zero warning in gcc
         Scalar tWidth = Traits::transitionEast;
+        Scalar relPos = (Traits::xMax - x)/tWidth;
 
-        return std::min(1.0, (Traits::xMax - x)/tWidth);
+        return transitionFn_(relPos);
     }
+    
+    /*!
+     * \brief Returns the highres weight given a relative positon in
+     *        the transition zone. 
+     *
+     *  We use a quadratic function which quickly decreases the weight
+     *  of the lowres table. TODO (?): a spline would probably be a
+     *  good idea since it is C1 continous...
+     */
+    Scalar transitionFn(Scalar relPos)
+    {  return std::min(1.0,  1 - (1 - relPos)*(1 - relPos)); }
+
 };
 }
 
