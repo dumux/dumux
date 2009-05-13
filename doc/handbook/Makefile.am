@@ -57,7 +57,7 @@ dumux-handbook.html:  $(DOCSOURCE) dune.cfg tex4ht.env
 #	sed $(srcdir)/Makefile.dist.am -e 's/Makefile\.dist/Makefile/g' > $(distdir)/Makefile.am
 #	sed $(srcdir)/Makefile.dist.in -e 's/Makefile\.dist/Makefile/g' > $(distdir)/Makefile.in
 
-EXTRA_TEXINPUTS:=$(top_srcdir)
+EXTRA_TEXINPUTS=$(top_srcdir)
 
 include $(top_srcdir)/am/global-rules
 include $(top_srcdir)/am/webstuff

@@ -155,7 +155,7 @@ protected:
      *  of the lowres table. TODO (?): a spline would probably be a
      *  good idea since it is C1 continous...
      */
-    Scalar transitionFn(Scalar relPos)
+    Scalar transitionFn_(Scalar relPos) const
     {  return std::min(1.0,  1 - (1 - relPos)*(1 - relPos)); }
 
 };

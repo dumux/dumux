@@ -57,7 +57,7 @@ DEPENDON = -name \*.cc -o -name \*.hh -o -name \*.png
 
 # as all doxygen files fill be installed in the html subdirectory
 # the BASEDIR has to be adjusted
-%.build: FORCE
+.build: FORCE
 	$(MAKE) $* BASEDIR=../../..
 
 # check dependency ourself to be robust

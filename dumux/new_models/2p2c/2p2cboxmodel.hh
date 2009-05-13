@@ -132,7 +132,6 @@ public:
         : ParentType(prob, twoPTwoCLocalJacobian_),
           twoPTwoCLocalJacobian_(prob)
     {
-        Api::require<Api::BasicDomainTraits, typename ProblemT::DomainTraits>();
     }
 
 

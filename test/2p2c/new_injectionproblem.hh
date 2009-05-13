@@ -262,7 +262,7 @@ public:
         model_.initial();
 
         // write the inital solution to disk
-        //                writeCurrentResult_(); // TODO
+        writeCurrentResult_();
     }
 
     /*!

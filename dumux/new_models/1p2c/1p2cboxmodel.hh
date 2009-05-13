@@ -71,7 +71,6 @@ public:
         : ParentType(prob, onePTwoCLocalJacobian_),
           onePTwoCLocalJacobian_(prob)
     {
-        Api::require<Api::BasicDomainTraits, typename ProblemT::DomainTraits>();
     }
 
 

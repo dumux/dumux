@@ -144,7 +144,7 @@ public:
         model_.initial();
 
         // write the inital solution to disk
-        //                writeCurrentResult_(); // TODO
+        writeCurrentResult_();
     }
 
     /*!
@@ -172,9 +172,6 @@ public:
 
         // write the current result to disk
         writeCurrentResult_();
-
-        // update the domain with the current solution
-        //                updateDomain_();
     };
     ///////////////////////////////////
     // End of simulation control stuff

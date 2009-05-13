@@ -3,7 +3,7 @@
 
 #Name of the module
 Module: dune-mux
-Version: 0.1
-Maintainer: bernd
+Version: 1.0-svn
+Maintainer: "Bernd Flemisch <bernd.flemisch@iws.uni-stuttgart.de>"
 #depending on 
-Depends: dune-common dune-grid dune-istl dune-disc dune-subgrid
+Depends: dune-common dune-grid dune-istl dune-disc

@@ -1,4 +1,4 @@
 iodir = $(includedir)/dune/dumux/io
-io_HEADERS = readstarformat.cc vtkmultiwriter.hh vtkwriterextended.hh
+io_HEADERS = vtkmultiwriter.hh restart.hh
 
 include $(top_srcdir)/am/global-rules

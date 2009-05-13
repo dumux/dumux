@@ -28,8 +28,6 @@
 #include "richardstraits.hh"
 #include "richardsvertexdata.hh"
 
-#include <dumux/auxiliary/apis.hh>
-
 namespace Dune
 {
 
@@ -323,12 +321,11 @@ public:
         : ParentType(prob, richardsLocalJacobian_),
           richardsLocalJacobian_(prob)
     {
-        Api::require<Api::BasicDomainTraits, typename ProblemT::DomainTraits>();
     }
 
     /*!
-     * \brief All relevant primary and secondary of the current
-     *        solution to an ouput writer.
+     * \brief Append all relevant primary and secondary variables for
+     *        the current solution to an VTK writer.
      */
     template <class MultiWriter>
     void addVtkFields(MultiWriter &writer)

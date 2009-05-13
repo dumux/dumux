@@ -79,119 +79,42 @@ LIBS="$DUNE_LIBS $ALL_PKG_LIBS $PARDISO_LIBS"
 
 AC_CONFIG_FILES([Makefile
     doc/Makefile 
-    dumux/Makefile 
     test/Makefile
-    appl/Makefile
     doc/doxygen/Makefile 
     doc/handbook/Makefile
-    dumux/1p2c/Makefile 
-    dumux/2p2c/Makefile
-    dumux/2p2cni/Makefile
-    dumux/2pni/Makefile
-    dumux/brinkman/Makefile 
-    dumux/coupled/Makefile 
+    dumux/Makefile 
     dumux/diffusion/Makefile 
-    dumux/fractionalflow/Makefile 
-    dumux/functions/Makefile 
-    dumux/fvgeometry/Makefile 
-    dumux/io/Makefile 
-    dumux/material/Makefile 
-    dumux/minc/Makefile 
-    dumux/nonlinear/Makefile 
-    dumux/onedinndgrid/Makefile 
-    dumux/operators/Makefile 
-    dumux/pardiso/Makefile 
-    dumux/richards/Makefile
-    dumux/shapefunctions/Makefile 
-    dumux/simset/Makefile 
-    dumux/stokes/Makefile 
-    dumux/timedisc/Makefile 
-    dumux/transport/Makefile 
-    dumux/twophase/Makefile
-    test/1p/Makefile 
-    test/2p/Makefile 
-    test/1p2c/Makefile 
-    test/2p2c/Makefile
-    test/2p2cni/Makefile
-    test/2pni/Makefile
-    test/box3d/Makefile
-    test/brinkman/Makefile
-    test/coupled/Makefile
-    test/coupledtransport/Makefile
-    test/diffusion/Makefile
-    test/dimltdimworld/Makefile
-    test/fractionalflow/Makefile
-    test/fvca5/Makefile
-    test/id/Makefile
-    test/minc/Makefile
-    test/pardiso/Makefile
-    test/phasepressure_ff/Makefile
-    test/pipe-newcouple-incomp/Makefile
-    test/pipe-newrichards-couple/Makefile
-    test/richards/Makefile  
-    test/shallowwater/Makefile  
-    test/splitting/Makefile
-    test/star2uggrid/Makefile
-    test/stokes/Makefile
-    test/transport/Makefile
-    test/tutorial/Makefile
-    test/vtk/Makefile
-    test/linearelasticity/Makefile
-	 appl/2p2c/Makefile
-    appl/box3d-compressible/Makefile
-    appl/co2/Makefile
-    appl/dynamic_pc/Makefile
-    appl/hysteresis/Makefile
-    appl/phasepressure_ff/Makefile
-    appl/shallowwater/Makefile  
-	 dumux/brinkman/fv/Makefile
-	 dumux/1p2c/fv/Makefile
-	 dumux/2p2c/fv/Makefile
-	 dumux/2p2c/problems/Makefile
-	 dumux/2p2cni/fv/Makefile
-	 dumux/2p2cni/problems/Makefile
     dumux/diffusion/fv/Makefile 
     dumux/diffusion/fe/Makefile 
     dumux/diffusion/mimetic/Makefile 
     dumux/diffusion/mpfa/Makefile
     dumux/diffusion/problems/Makefile 
+    dumux/fractionalflow/impes/Makefile 
+    dumux/fractionalflow/Makefile 
+    dumux/fvgeometry/Makefile 
+    dumux/io/Makefile 
+    dumux/material/Makefile 
     dumux/material/constrel/Makefile 
     dumux/material/phaseproperties/Makefile 
-    dumux/minc/box/Makefile 
-    dumux/richards/fv/Makefile
-    dumux/richards/problems/Makefile    
-    dumux/twophase/fv/Makefile 
-    dumux/twophase/problems/Makefile 
-    dumux/2pni/fv/Makefile
+    dumux/nonlinear/Makefile 
+    dumux/onedinndgrid/Makefile 
+    dumux/pardiso/Makefile 
+    dumux/transport/Makefile 
     dumux/transport/fv/Makefile 
     dumux/transport/problems/Makefile 
-    dumux/fractionalflow/impes/Makefile 
-    dumux/shapefunctions/cr/Makefile
-    test/fvca5/test1/Makefile
-    test/fvca5/test2/Makefile
-    test/fvca5/test3/Makefile
-    test/fvca5/test4/Makefile
-    test/fvca5/test5/Makefile
-    test/fvca5/test6/Makefile
-    test/fvca5/test7/Makefile
-    test/fvca5/test8/Makefile
-    test/fvca5/test9/Makefile
+    test/1p/Makefile 
+    test/2p/Makefile 
+    test/2pni/Makefile
+    test/1p2c/Makefile 
+    test/2p2c/Makefile
+    test/2p2cni/Makefile
+    test/diffusion/Makefile
+    test/fractionalflow/Makefile
+    test/richards/Makefile  
+    test/transport/Makefile
+    test/tutorial/Makefile
     m4/Makefile
     dune-mux.pc])
-
-#    benchmarkproblems/Makefile
-#    benchmarkproblems/fractionalflow/Makefile
-#    benchmarkproblems/fullycoupled/Makefile
-#    benchmarkproblems/fullycoupled/2p/Makefile
-#    benchmarkproblems/fractionalflow/2p/Makefile
-#    benchmarkproblems/fullycoupled/2p/buckleyleverett/Makefile
-#    benchmarkproblems/fractionalflow/2p/buckleyleverett/Makefile
-#    benchmarkproblems/fullycoupled/2p/fivespot/Makefile
-#    benchmarkproblems/fractionalflow/2p/fivespot/Makefile    
-#    benchmarkproblems/fullycoupled/2p/convectiondiffusion/Makefile  
-#    benchmarkproblems/fractionalflow/2p/convectiondiffusion/Makefile      
-#    benchmarkproblems/fullycoupled/2p/mcwhorter/Makefile
-#    benchmarkproblems/fractionalflow/2p/mcwhorter/Makefile
 
 AC_OUTPUT
 # finally print the summary information

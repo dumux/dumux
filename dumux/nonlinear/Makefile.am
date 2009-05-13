@@ -1,4 +1,4 @@
 nonlineardir = $(includedir)/dune/dumux/nonlinear
-nonlinear_HEADERS = newtonmethod.hh nonlinearmodel.hh
+nonlinear_HEADERS = 
 
 include $(top_srcdir)/am/global-rules

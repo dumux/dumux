@@ -29,7 +29,6 @@
 #include <dumux/new_models/2p/2pvertexdata.hh>
 #include <dumux/new_models/2p/2pfluxdata.hh>
 
-#include <dumux/auxiliary/apis.hh>
 #include <dune/common/collectivecommunication.hh>
 #include <vector>
 #include <iostream>

@@ -353,7 +353,6 @@ public:
         : ParentType(prob, richardsLocalJacobian_),
           richardsLocalJacobian_(prob)
     {
-        Api::require<Api::BasicDomainTraits, typename ProblemT::DomainTraits>();
     }
 
     /*!

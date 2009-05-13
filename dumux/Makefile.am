@@ -1,8 +1,17 @@
-SUBDIRS = 1p2c 2p2c 2p2cni 2pni brinkman coupled diffusion fractionalflow functions fvgeometry io material minc nonlinear onedinndgrid operators pardiso shapefunctions simset stokes timedisc transport twophase .
+SUBDIRS = diffusion \
+	fractionalflow \
+	fvgeometry \
+	io \
+	material \
+	nonlinear \
+	onedinndgrid \
+	pardiso \
+	transport \
+	.
 
 # the standard debug streams are put into the libdune
 noinst_LTLIBRARIES = libdumux.la
-SUBLIBS = shapefunctions/libshapefunctions.la onedinndgrid/libonedinndgrid.la
+SUBLIBS = onedinndgrid/libonedinndgrid.la
 
 libdumux_la_SOURCES =
 libdumux_la_LIBADD = $(SUBLIBS)

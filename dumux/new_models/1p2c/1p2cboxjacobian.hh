@@ -12,7 +12,6 @@
 
 #include <dumux/auxiliary/math.hh>
 
-#include <dumux/auxiliary/apis.hh>
 #include <dune/common/collectivecommunication.hh>
 #include <vector>
 #include <iostream>

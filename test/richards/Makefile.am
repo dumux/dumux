@@ -1,16 +1,7 @@
-# tests where program to build and program to run are equal
-NORMALTESTS = new_test_richards richards
-
-# list of tests to run
-#TESTS = $(NORMALTESTS)
-
-# programs just to build when "make check" is used
-check_PROGRAMS = $(NORMALTESTS)
-
-dist_noinst_DATA = new_test_richards.cc richards.cc
-
-richards_SOURCES = richards.cc
+bin_PROGRAMS = new_test_richards
 
 new_test_richards_SOURCES = new_test_richards.cc
+new_test_richards_CXXFLAGS = $(MPI_CPPFLAGS) 
+new_test_richards_LDADD = $(MPI_LDFLAGS) 
 
 include $(top_srcdir)/am/global-rules

@@ -23,7 +23,6 @@
 #include <dumux/new_models/boxscheme/boxjacobian.hh>
 #include <dumux/auxiliary/basicdomain.hh>
 #include <dumux/nonlinear/new_newtonmethod.hh>
-#include <dumux/auxiliary/apis.hh>
 
 #include <dune/istl/operators.hh>
 #include <dune/disc/operators/p1operator.hh>
@@ -124,10 +123,6 @@ public:
           jacAsm_(prob.grid(), prob.grid().overlapSize(0) == 0),
           localJacobian_(localJac)
     {
-        Api::require<Api::BasicDomainTraits,
-            typename Problem::DomainTraits>();
-        //                Api::require<Api::PwSnBoxDomain>(prob);
-
         wasRestarted_ = false;
 
         // check grid partitioning

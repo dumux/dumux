@@ -263,27 +263,7 @@ public:
         : ParentType(prob, twoPLocalJacobian_),
           twoPLocalJacobian_(prob)
     {
-        Api::require<Api::BasicDomainTraits, typename ProblemT::DomainTraits>();
     }
-
-
-    /*!
-     * \brief Called by the update() method if applying the newton
-     *         method was unsuccessful.
-     */
-    void updateFailedTry()
-    {
-        ParentType::updateFailedTry();
-    };
-
-    /*!
-     * \brief Called by the BoxScheme's update method.
-     */
-    void updateSuccessful()
-    {
-        ParentType::updateSuccessful();
-    }
-
 
     /*!
      * \brief Add the mass fraction of air in water to VTK output of

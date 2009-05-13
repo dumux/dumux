@@ -19,8 +19,6 @@
 #ifndef DUMUX_BASIC_DOMAIN_HH
 #define DUMUX_BASIC_DOMAIN_HH
 
-#include <dumux/auxiliary/apis.hh>
-
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
 
@@ -34,37 +32,6 @@
 
 namespace Dune
 {
-namespace Api {
-BEGIN_API_DEF(BasicDomainTraits)
-{
-    typedef Implementation I;
-
-    // make sure the required constants exist
-    int i;
-    i = I::dim;
-    i = I::dimWorld;
-
-    // make sure the required types exist
-    {typename I::Grid                       *x;x=NULL;}
-    {typename I::Scalar                     *x;x=NULL;}
-    {typename I::CoordScalar                *x;x=NULL;}
-    {typename I::LocalPosition              *x;x=NULL;}
-    {typename I::GlobalPosition             *x;x=NULL;}
-    {typename I::Element                    *x;x=NULL;}
-    {typename I::ElementIterator            *x;x=NULL;}
-    {typename I::Vertex                     *x;x=NULL;}
-    {typename I::VertexIterator             *x;x=NULL;}
-    {typename I::ReferenceElement           *x;x=NULL;}
-    {typename I::ReferenceElementContainer  *x;x=NULL;}
-    {typename I::IntersectionIterator       *x;x=NULL;}
-    {typename I::FieldVector                *x;x=NULL;}
-    {typename I::FieldMatrix                *x;x=NULL;}
-
-    {const typename I::ReferenceElementContainer *x = &I::referenceElement; x=NULL;}
-}
-END_API_DEF
-};
-
 /*!
  * \brief Provides some convenient interfaces to elements and vertices of grids.
  *
@@ -172,16 +139,12 @@ private:
 public:
     BasicDomain()
     {
-        Api::require<Api::BasicDomainTraits, DomainTraits>();
-
         elementMap_ = NULL;
         vertMap_ = NULL;
     };
 
     BasicDomain(Grid *grid)
     {
-        Api::require<Api::BasicDomainTraits, DomainTraits>();
-
         elementMap_ = NULL;
         vertMap_ = NULL;
         setGrid(grid);
