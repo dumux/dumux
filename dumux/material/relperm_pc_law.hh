@@ -540,7 +540,7 @@ public:
             double pC_1 = brooksCorey_(SweMin_, p0, lambda);
 
             double m = (pC_1 - pC_0)/(SweMin_/2);
-            double b = pC_1 - m*(SweMin_/2);
+            double b = pC_1 - m*(SweMin_);
             return m*Se + b;
         }
     }
@@ -650,7 +650,7 @@ public:
 
 private:
     double brooksCorey_(double Swe, double p0, double lambda) const
-    { 
+    {
         return p0*pow(Swe, -1.0/lambda);
     }
 
