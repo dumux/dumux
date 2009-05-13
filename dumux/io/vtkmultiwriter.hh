@@ -50,9 +50,13 @@ public:
     {
         simName_ = (simName.empty())?"sim":simName;
         multiFileName_ = multiFileName;
+        if (multiFileName_.empty())
+            multiFileName_ = (boost::format("%s.pvd")%simName_).str();
+
         writerNum_ = 0;
         commRank_ = 0;
         commSize_ = 1;
+        wasRestarted_ = false;
     }
 
     ~VtkMultiWriter()
@@ -74,10 +78,7 @@ public:
         if (!multiFile_.is_open()) {
             commRank_ = gridView.comm().rank();
             commSize_ = gridView.comm().size();
-
-            if (multiFileName_.empty())
-                multiFileName_ = (boost::format("%s.pvd")%simName_).str();
-
+            
             beginMultiFile_(multiFileName_);
         }
 
@@ -271,8 +272,25 @@ public:
     template <class Restarter>
     void serialize(Restarter &res)
     {
+        std::cerr << "serialize\n";
         res.serializeSection("VTKMultiWriter");
         res.serializeStream() << writerNum_ - 1 << "\n";
+
+        if (commRank_ == 0) {
+            // write the meta file into the restart file
+            size_t filePos = multiFile_.tellp();
+            multiFile_.seekp(0, std::ios::end);
+            size_t fileLen = multiFile_.tellp();
+            multiFile_.seekp(filePos);
+            
+            res.serializeStream() << fileLen << "  " << filePos << "\n";
+
+            std::ifstream multiFileIn(multiFileName_.c_str());
+            char *tmp = new char[fileLen];
+            multiFileIn.read(tmp, fileLen);
+            res.serializeStream().write(tmp, fileLen);
+            delete[] tmp;
+        }
     };
 
     /*!
@@ -281,11 +299,31 @@ public:
     template <class Restarter>
     void deserialize(Restarter &res)
     {
+        std::cerr << "deserialize\n";
+        wasRestarted_ = true;
+
         res.deserializeSection("VTKMultiWriter");
         res.deserializeStream() >> writerNum_;
 
         std::string dummy;
         std::getline(res.deserializeStream(), dummy);
+
+        if (commRank_ == 0) {
+            // recreate the meta file from the restart file
+            size_t filePos, fileLen;
+            res.deserializeStream() >> fileLen >> filePos;
+            std::getline(res.deserializeStream(), dummy);
+
+            multiFile_.close();
+            multiFile_.open(multiFileName_.c_str());
+
+            char *tmp = new char[fileLen];
+            res.deserializeStream().read(tmp, fileLen);
+            multiFile_.write(tmp, fileLen);
+            delete[] tmp;
+            
+            multiFile_.seekp(filePos);
+        }
     };
 
 
@@ -319,6 +357,11 @@ private:
 
     void beginMultiFile_(const std::string &multiFileName)
     {
+        // if the multi writer was deserialized from a restart file,
+        // we don't create a new multi file, but recycle the old one..
+        if (wasRestarted_)
+            return;
+
         // only the first process writes to the multi-file
         if (commRank_ == 0) {
             // generate one meta vtk-file holding the individual timesteps
@@ -385,6 +428,8 @@ private:
     };
     // end hack
     ////////////////////////////////////
+
+    bool wasRestarted_;
 
     std::string     simName_;
     std::ofstream   multiFile_;

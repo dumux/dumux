@@ -271,7 +271,7 @@ public:
      *        respective global index.
      */
     int vertexIdx(const Element &e, int localVertexId) const
-    { return vertMap_->template map<dim>(e, localVertexId); }
+    { return vertMap_->map(e, localVertexId, dim); }
 
     /*!
      * \brief Given a vert index within a element, return the
