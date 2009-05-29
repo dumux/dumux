@@ -12,14 +12,13 @@
 #include <dumux/material/twophaserelations.hh>
 #include "test_fractionalflow_testproblem.hh"
 #include "dumux/timedisc/timeloop.hh"
-#include "dumux/diffusion/fv/fvdiffusion.hh"
-#include "dumux/diffusion/fv/fvdiffusionvelocity.hh"
-#include "dumux/transport/fv/fvtransport.hh"
+#include "dumux/diffusion/fv/fvtotalvelocity2p.hh"
+#include "dumux/transport/fv/fvsaturationwetting2p.hh"
 #include "dumux/transport/fv/capillarydiffusion.hh"
 #include "dumux/fractionalflow/impes/impes.hh"
 #include <dune/disc/operators/boundaryconditions.hh>
 #include "dumux/timedisc/expliciteulerstep.hh"
-#include "dumux/fractionalflow/variableclass.hh"
+#include "dumux/fractionalflow/variableclass2p.hh"
 
 
 int main(int argc, char** argv)
@@ -31,50 +30,52 @@ int main(int argc, char** argv)
         // create a grid object
         typedef double NumberType;
         typedef Dune::SGrid<dim,dim> GridType;
+        typedef GridType::LevelGridView GridView;
         typedef Dune::FieldVector<GridType::ctype,dim> FieldVector;
-        Dune::FieldVector<int,dim> N(4); N[0] = 30;
+
+        Dune::FieldVector<int,dim> N(4); N[0] = 26;
         FieldVector L(0);
-        FieldVector H(100 ); H[0] = 300;
+        FieldVector H(1); H[0] = 2.6;
         GridType grid(N,L,H);
 
         grid.globalRefine(0);
+        GridView gridView(grid.levelView(0));
 
-        Dune::Water wetmat;
-        Dune::Oil nonwetmat;
+        Dune::Water wetmat(1000, 1e-3);
+        Dune::Oil nonwetmat(1000, 1e-3);
 
         Dune::FractionalFlowTestSoil<GridType, NumberType> soil;
 
         Dune::TwoPhaseRelations<GridType, NumberType> materialLaw(soil, wetmat, nonwetmat);
 
-        typedef Dune::VariableClass<GridType, NumberType> VariableType;
+        typedef Dune::VariableClass<GridView, NumberType> VariableType;
 
-        VariableType variables(grid);
+        VariableType variables(gridView);
 
-        typedef Dune::FractionalFlowTestProblem<GridType, NumberType, VariableType> Problem;
-        Problem problem(variables, wetmat, nonwetmat, soil, materialLaw,L, H, false);
+        typedef Dune::FractionalFlowTestProblem<GridView, NumberType, VariableType> Problem;
+        Problem problem(variables, wetmat, nonwetmat, soil, materialLaw,L, H);
         //    soil.permeability.vtkout("permeability", grid);
 
-        typedef Dune::FVDiffusionVelocity<GridType, NumberType, VariableType, Problem> DiffusionType;
-        DiffusionType diffusion(grid, problem);
+        typedef Dune::FVTotalVelocity2P<GridView, NumberType, VariableType, Problem> DiffusionType;
+        DiffusionType diffusion(gridView, problem, "pglobal");
 
-        //Dune::CapillaryDiffusion<GridType, NumberType, VariableType, Problem> capillaryDiffusion(problem, soil);
-        Dune::DiffusivePart<GridType, NumberType> diffusivePart;
+        Dune::CapillaryDiffusion<GridView, NumberType, VariableType, Problem> capillaryDiffusion(problem, soil);
 
-        typedef Dune::FVTransport<GridType, NumberType, VariableType, Problem> TransportType;
-        //TransportType transport(grid, problem, capillaryDiffusion);
-        TransportType transport(grid, problem, diffusivePart);
+        typedef Dune::FVSaturationWetting2P<GridView, NumberType, VariableType, Problem> TransportType;
+        TransportType transport(gridView, problem, "vt", capillaryDiffusion);
+//        TransportType transport(gridView, problem, "vt");
 
         int iterFlag = 2;
         int nIter = 30;
         double maxDefect = 1e-5;
-        typedef Dune::IMPES<GridType, DiffusionType, TransportType, VariableType> IMPESType;
+        typedef Dune::IMPES<GridView, DiffusionType, TransportType, VariableType> IMPESType;
         IMPESType impes(diffusion, transport, iterFlag, nIter, maxDefect);
 
         double tStart = 0;
-        double tEnd = 4.32e7;
+        double tEnd = 1e4;
         const char* fileName = "test_fractionalflow";
-        int modulo = 1;
-        double cFLFactor = 1;
+        int modulo = 10;
+        double cFLFactor = 0.8;
         Dune::TimeLoop<GridType, IMPESType > timeloop(tStart, tEnd, fileName, modulo, cFLFactor);
 
         Dune::Timer timer;

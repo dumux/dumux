@@ -40,16 +40,17 @@ namespace Dune
  *    - Grid  a DUNE grid type
  *    - RT    type used for return values
  */
-template<class Grid, class Scalar, class VC>
+template<class GridView, class Scalar, class VC>
 class TransportProblem
 {
     enum
     {
-        dim = Grid::dimension,
-        dimWorld = Grid::dimensionworld,
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld,
     };
 
-typedef    typename Grid::Traits::template Codim<0>::Entity Element;
+    typedef typename GridView::Grid Grid;
+typedef    typename GridView::Traits::template Codim<0>::Entity Element;
     typedef Dune::FieldVector<Scalar,dim> LocalPosition;
     typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
 
@@ -115,26 +116,38 @@ public:
     {
         return materialLaw_;
     }
+    virtual VC& variables ()
+    {
+        return variables_;
+    }
+    virtual Fluid& wettingPhase () const
+    {
+        return wettingPhase_;
+    }
+    virtual Fluid& nonWettingPhase () const
+    {
+        return nonWettingPhase_;
+    }
 
     //! constructor
     /** @param law implementation of material laws. Class TwoPhaseRelations or derived.
      *  @param cap flag for including capillary forces.
      */
 
-    TransportProblem(VC& variables,Fluid& wettingphase, Fluid& nonwettingphase, Matrix2p<Grid, Scalar>& soil, TwoPhaseRelations<Grid, Scalar>& materialLaw = *(new TwoPhaseRelations<Grid,Scalar>))
-    : variables(variables), wettingPhase(wettingphase), nonWettingPhase(nonwettingphase), soil_(soil), materialLaw_(materialLaw),gravity_(0)
+    TransportProblem(VC& variables,Fluid& wettingPhase, Fluid& nonWettingPhase, Matrix2p<Grid, Scalar>& soil, TwoPhaseRelations<Grid, Scalar>& materialLaw = *(new TwoPhaseRelations<Grid,Scalar>))
+    : variables_(variables), wettingPhase_(wettingPhase), nonWettingPhase_(nonWettingPhase), soil_(soil), materialLaw_(materialLaw),gravity_(0)
     {}
 
     //! always define virtual destructor in abstract base class
     virtual ~TransportProblem ()
     {}
 
-    VC& variables;
-    Fluid& wettingPhase;
-    Fluid& nonWettingPhase;
+private:
+    VC& variables_;
+    Fluid& wettingPhase_;
+    Fluid& nonWettingPhase_;
     Matrix2p<Grid, Scalar>& soil_;
     TwoPhaseRelations<Grid,Scalar>& materialLaw_;
-private:
     FieldVector<Scalar,dimWorld> gravity_;
 };
 

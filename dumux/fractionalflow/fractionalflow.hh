@@ -31,7 +31,7 @@ namespace Dune
  * supplemented by appropriate initial and boundary conditions.
  */
 
-template<class Grid, class Diffusion, class Transport, class VC>
+template<class GridView, class Diffusion, class Transport, class VC>
 class FractionalFlow  : public Transport, public Diffusion {
 public:
     typedef typename VC::ScalarVectorType RepresentationType;
@@ -43,26 +43,14 @@ public:
     //! return const reference to saturation vector
     const RepresentationType& operator* () const
     {
-        return this->transProblem.variables.saturation;
+        return this->transProblem.variables().saturation();
     }
 
     //! return reference to saturation vector
     RepresentationType& operator* ()
     {
-        return this->transProblem.variables.saturation;
+        return this->transProblem.variables().saturation();
     }
-
-
-    //! \brief Calculate the total velocity.
-    /*!
-     *  \param t time
-     *
-     *  Given the piecewise constant pressure \f$p\f$ in form of the vector \a pressure,
-     *  this method calculates the total velocity according to the formula
-     *  \f$\boldsymbol{v}_\text{t} = - \lambda(S) K \text{grad}\, p\f$.
-     *  Employ the method \a totalVelocity of Diffusion.
-     */
-    virtual void totalVelocity(const Scalar t=0) = 0;
 
     //! \brief Calculate the update vector.
     /*!
@@ -83,19 +71,14 @@ public:
 
     virtual void vtkout (const char* name, int k) const = 0;
 
+
     //! Construct a FractionalFlow object.
     FractionalFlow (Diffusion& diffusion, Transport& transport)
         : Transport(transport), Diffusion(diffusion)
-    {
-        if (transport.level() > diffusion.level())
-            DUNE_THROW(Exception,"from class Twophase (or derived): transport class level is higher than diffusion class level!");
-    }
+    {}
 
     //! always define virtual destructor in abstract base class
     virtual ~FractionalFlow () {}
-
-    const Grid& grid() const
-    { return Transport::grid(); }
 
 };
 }

@@ -26,32 +26,31 @@
  * @author Yufei Cao, Bernd Flemisch
  */
 
-
 namespace Dune
 {
 //! \ingroup transport
 //! The finite volume model for the solution of the transport equation
-template<class Grid, class Scalar, class VC, class Problem = TransportProblem<
-        Grid, Scalar, VC> >
-class ImplicitFVTransport: public Transport<Grid, Scalar, VC, Problem>
+template<class GridView, class Scalar, class VC,
+        class Problem = TransportProblem<GridView, Scalar, VC> >
+class ImplicitFVTransport: public Transport<GridView, Scalar, VC, Problem>
 {
 public:
     enum
     {
-        dim = Grid::dimension
+        dim = GridView::dimension
     };
     enum
     {
-        dimWorld = Grid::dimensionworld
+        dimWorld = GridView::dimensionworld
     };
 
-    typedef typename VC::ScalarVectorType RepresentationType;
+typedef    typename VC::ScalarVectorType RepresentationType;
     typedef typename VC::VelType VelType;
-    typedef typename Grid::Traits::template Codim<0>::Entity Element;
-    typedef typename Grid::LevelGridView GridView;
+    typedef typename GridView::Traits::template Codim<0>::Entity Element;
+    typedef typename GridView::Grid Grid;
     typedef typename GridView::IndexSet IndexSet;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-    typedef typename Grid::template Codim<0>::EntityPointer ElementPointer;
+    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef BlockVector< Dune::FieldVector<Scalar,dim> > SlopeType;
 
@@ -63,7 +62,7 @@ public:
     typedef BlockVector<Dune::FieldVector<Scalar, 1> > VectorType;
 
     typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator;
-    typedef ImplicitFVTransport<Grid, Scalar, VC, Problem> ThisType;
+    typedef ImplicitFVTransport<GridView, Scalar, VC, Problem> ThisType;
 
     MatrixType A;
     VectorType f;
@@ -92,7 +91,7 @@ public:
      *  Additionally to the \a update vector, the recommended time step size \a dt is calculated
      *  employing the usual CFL condition.
      */
-    int update(const Scalar t, Scalar& dt, RepresentationType& updateVec, Scalar& cFLFac);
+    int update(const Scalar t, Scalar& dt, RepresentationType& updateVec, Scalar& cFLFac, bool impes);
 
     void initializeMatrix();
 
@@ -106,12 +105,12 @@ public:
 
     const Scalar getDt()
     {
-	return dt_;
+        return dt_;
     }
 
     void setDt(const Scalar dt)
     {
-	dt_ = dt;
+        dt_ = dt;
     }
 
     MatrixType& matrix()
@@ -129,6 +128,14 @@ public:
         return u;
     }
 
+    void updateMaterialLaws();
+
+    virtual void vtkout(const char* name, int k) const
+    {
+        this->transProblem.variables().vtkout(name, k);
+        return;
+    }
+
     /*! @brief constructor
      *
      * @param grid a DUNE grid object
@@ -138,64 +145,60 @@ public:
      * @param numFl an object of class Numerical Flux or derived
      * @param storage an object of class ComputeStorage or derived
      */
-    ImplicitFVTransport(Grid& grid, Problem& problem, const Scalar time,
-            DiffusivePart<Grid,Scalar>& diffPart = *(new DiffusivePart<Grid, Scalar>), 
-            ComputeNumFlux<Grid,Scalar>& numFl = *(new ComputeNumFlux<Grid,Scalar>),
+    ImplicitFVTransport(GridView& gridView, Problem& problem, const Scalar time,
+            DiffusivePart<GridView,Scalar>& diffPart = *(new DiffusivePart<GridView, Scalar>),
+            ComputeNumFlux<GridView,Scalar>& numFl = *(new ComputeNumFlux<GridView,Scalar>),
             ComputeStorage<Scalar>& storage = *(new ComputeStorage<Scalar>)):
-    Transport<Grid, Scalar, VC, Problem>(grid, problem), 
-    A(grid.size(this->level(), 0), grid.size(this->level(), 0), (2*dim+1)*grid.size(this->level(), 0), BCRSMatrix<MB>::random),
-    f(grid.size(this->level(), 0)), u(grid.size(this->level(), 0)), uOldTimeStep(grid.size(this->level(), 0)),
-    grid_(grid), dt_(time), diffusivePart_(diffPart), numFlux_(numFl), storage_(storage)
+    Transport<GridView, Scalar, VC, Problem>(gridView, problem),
+    A(problem.variables().gridSizeTransport(), problem.variables().gridSizeTransport(), (2*dim+1)*problem.variables().gridSizeTransport(), BCRSMatrix<MB>::random),
+    f(problem.variables().gridSizeDiffusion()), u(problem.variables().gridSizeDiffusion()), uOldTimeStep(problem.variables().gridSizeTransport()),
+    dt_(time), diffusivePart_(diffPart), numFlux_(numFl), storage_(storage)
     {
-	initializeMatrix();
+        initializeMatrix();
     }
 
 private:
-    const Grid& grid_;
     Scalar dt_;
-    const DiffusivePart<Grid, Scalar>& diffusivePart_;
-    const ComputeNumFlux<Grid, Scalar>& numFlux_;
+    const DiffusivePart<GridView, Scalar>& diffusivePart_;
+    const ComputeNumFlux<GridView, Scalar>& numFlux_;
     const ComputeStorage<Scalar>& storage_;
 };
 
-template<class Grid, class Scalar, class VC, class Problem>
-int ImplicitFVTransport<Grid, Scalar, VC, Problem>::update(const Scalar t, Scalar& dt,
-        RepresentationType& updateVec, Scalar& cFLFac = 1)
+template<class GridView, class Scalar, class VC, class Problem>
+int ImplicitFVTransport<GridView, Scalar, VC, Problem>::update(const Scalar t, Scalar& dt,
+        RepresentationType& updateVec, Scalar& cFLFac = 1, bool impes = false)
 {
-	update(); 
+    update();
 
-	updateVec = u; 
-	updateVec -= uOldTimeStep;
+    updateVec = u;
+    updateVec -= uOldTimeStep;
 
-	// divide by the fixed timestep 
-	updateVec /= dt_; 
+    // divide by the fixed timestep
+    updateVec /= dt_;
 
-	dt = dt_;
+    dt = dt_;
 
-	return 0;
+    return 0;
 }
 
-template<class Grid, class Scalar, class VC, class Problem>
-void ImplicitFVTransport<Grid, Scalar, VC, Problem>::initializeMatrix()
+template<class GridView, class Scalar, class VC, class Problem>
+void ImplicitFVTransport<GridView, Scalar, VC, Problem>::initializeMatrix()
 {
-
-    const GridView& gridView = this->grid_.levelView(this->level());
-
     // determine matrix row sizes
-    ElementIterator eItEnd = gridView.template end<0>();
-    for (ElementIterator eIt = gridView.template begin<0>(); eIt != eItEnd; ++eIt)
+    ElementIterator eItEnd = this->gridView.template end<0>();
+    for (ElementIterator eIt = this->gridView.template begin<0>(); eIt != eItEnd; ++eIt)
     {
         // cell index
-        int globalIdxI = this->transProblem.variables.diffMapper.map(*eIt);
+        int globalIdxI = this->transProblem.variables().indexTransport(*eIt);
 
         // initialize row size
         int rowSize = 1;
 
         // run through all intersections with neighbors
         IntersectionIterator
-        isItEnd = gridView.template iend(*eIt);
+        isItEnd = this->gridView.template iend(*eIt);
         for (IntersectionIterator
-                isIt = gridView.template ibegin(*eIt); isIt
+                isIt = this->gridView.template ibegin(*eIt); isIt
                 !=isItEnd; ++isIt)
         if (isIt->neighbor())
         rowSize++;
@@ -204,25 +207,25 @@ void ImplicitFVTransport<Grid, Scalar, VC, Problem>::initializeMatrix()
     A.endrowsizes();
 
     // determine position of matrix entries
-    for (ElementIterator eIt = gridView.template begin<0>(); eIt != eItEnd; ++eIt)
+    for (ElementIterator eIt = this->gridView.template begin<0>(); eIt != eItEnd; ++eIt)
     {
         // cell index
-        int globalIdxI = this->transProblem.variables.diffMapper.map(*eIt);
+        int globalIdxI = this->transProblem.variables().indexTransport(*eIt);
 
         // add diagonal index
         A.addindex(globalIdxI, globalIdxI);
 
         // run through all intersections with neighbors
         IntersectionIterator
-        isItEnd = gridView.template iend(*eIt);
+        isItEnd = this->gridView.template iend(*eIt);
         for (IntersectionIterator
-                isIt = gridView.template ibegin(*eIt); isIt
+                isIt = this->gridView.template ibegin(*eIt); isIt
                 !=isItEnd; ++isIt)
         if (isIt->neighbor())
         {
             // access neighbor
             ElementPointer outside = isIt->outside();
-            int globalIdxJ = this->transProblem.variables.diffMapper.map(*outside);
+            int globalIdxJ = this->transProblem.variables().indexTransport(*outside);
 
             // add off diagonal index
             A.addindex(globalIdxI, globalIdxJ);
@@ -233,18 +236,15 @@ void ImplicitFVTransport<Grid, Scalar, VC, Problem>::initializeMatrix()
     return;
 }
 
-
-template<class Grid, class Scalar, class VC, class Problem>
-void ImplicitFVTransport<Grid, Scalar, VC, Problem>::assemble()
+template<class GridView, class Scalar, class VC, class Problem>
+void ImplicitFVTransport<GridView, Scalar, VC, Problem>::assemble()
 {
     // initialization: set matrix A to zero
     A = 0;
 
-    const GridView& gridView = this->grid_.levelView(this->level());
-
-    // loop over elements 
-    ElementIterator eItEnd = gridView.template end<0>();
-    for (ElementIterator eIt = gridView.template begin<0>(); eIt != eItEnd; ++eIt)
+    // loop over elements
+    ElementIterator eItEnd = this->gridView.template end<0>();
+    for (ElementIterator eIt = this->gridView.template begin<0>(); eIt != eItEnd; ++eIt)
     {
         // cell geometry type
         Dune::GeometryType gt = eIt->geometry().type();
@@ -261,13 +261,13 @@ void ImplicitFVTransport<Grid, Scalar, VC, Problem>::assemble()
         *Dune::ReferenceElements<Scalar,dim>::general(gt).volume();
 
         // cell index
-        int globalIdxI = this->transProblem.variables.transMapper.map(*eIt);
+        int globalIdxI = this->transProblem.variables().indexTransport(*eIt);
 
-	// get saturation value at cell center
+        // get saturation value at cell center
         Scalar satI = u[globalIdxI];
         Scalar satOldI = uOldTimeStep[globalIdxI];
 
-        // get residual saturation 
+        // get residual saturation
         Scalar residualSatW = this->transProblem.soil().Sr_w(globalPos, *eIt, localPos);
         Scalar residualSatNW = this->transProblem.soil().Sr_n(globalPos, *eIt, localPos);
 
@@ -277,30 +277,30 @@ void ImplicitFVTransport<Grid, Scalar, VC, Problem>::assemble()
         // set f_i
         f[globalIdxI] = storageU * this->transProblem.soil().porosity(globalPos, *eIt,localPos) * volume / dt_;
 
-	// calculate epsilon 
-	Scalar epsilon = 1e-5;
+        // calculate epsilon
+        Scalar epsilon = 1e-5;
 
-	// add epsilon*e_i to the solution 
+        // add epsilon*e_i to the solution
         Scalar satIPlus = satI + epsilon;
 
-	// storage term 
-	Scalar storageUPlusEps = storage_(satIPlus)- storage_(satOldI);
+        // storage term
+        Scalar storageUPlusEps = storage_(satIPlus)- storage_(satOldI);
 
-	// subtract epsilon*e_i from the solution 
+        // subtract epsilon*e_i from the solution
         Scalar satIMinus = satI - epsilon;
 
-	// storage term 
-	Scalar storageUMinusEps = storage_(satIMinus)- storage_(satOldI);
+        // storage term
+        Scalar storageUMinusEps = storage_(satIMinus)- storage_(satOldI);
 
-	// set A_ii
- 	A[globalIdxI][globalIdxI] += 0.5/epsilon*(storageUPlusEps - storageUMinusEps);
+        // set A_ii
+        A[globalIdxI][globalIdxI] += 0.5/epsilon*(storageUPlusEps - storageUMinusEps);
 
         A[globalIdxI][globalIdxI] *= this->transProblem.soil().porosity(globalPos, *eIt,localPos) * volume;
         A[globalIdxI][globalIdxI] /= dt_;
 
         // run through all intersections with neighbors and boundary
-        IntersectionIterator isItEnd = gridView.template iend(*eIt);
-        for (IntersectionIterator isIt = gridView.template ibegin(*eIt); isIt != isItEnd; ++isIt)
+        IntersectionIterator isItEnd = this->gridView.template iend(*eIt);
+        for (IntersectionIterator isIt = this->gridView.template ibegin(*eIt); isIt != isItEnd; ++isIt)
         {
             // local number of facet
             int indexInInside = isIt->indexInInside();
@@ -316,7 +316,7 @@ void ImplicitFVTransport<Grid, Scalar, VC, Problem>::assemble()
             const LocalPosition&
             localPosFace = Dune::ReferenceElements<Scalar,dim>::general(faceGT).position(indexInInside,1);
 
-            // get normal vector 
+            // get normal vector
             Dune::FieldVector<Scalar,dimWorld> integrationOuterNormal = isIt->integrationOuterNormal(faceLocal);
             integrationOuterNormal *= Dune::ReferenceElements<Scalar,dim-1>::general(faceGT).volume();
 
@@ -331,13 +331,13 @@ void ImplicitFVTransport<Grid, Scalar, VC, Problem>::assemble()
             {
                 // access neighbor
                 ElementPointer neighborPointer = isIt->outside();
-                int globalIdxJ = this->transProblem.variables.transMapper.map(*neighborPointer);
+                int globalIdxJ = this->transProblem.variables().indexTransport(*neighborPointer);
 
                 // compute factor in neighbor
                 Dune::GeometryType neighborGT = neighborPointer->geometry().type();
                 const LocalPosition&
                 localPosNeighbor = Dune::ReferenceElements<Scalar,dim>::general(neighborGT).position(0,0);
-               
+
                 // cell center in global coordinates
                 const GlobalPosition& globalPos = eIt->geometry().global(localPos);
 
@@ -350,111 +350,111 @@ void ImplicitFVTransport<Grid, Scalar, VC, Problem>::assemble()
                 // compute distance between cell centers
                 Scalar dist = distVec.two_norm();
 
-	        // get saturation value at cell center
+                // get saturation value at cell center
                 Scalar satJ = u[globalIdxJ];
 
                 // calculate the saturation gradient
                 Dune::FieldVector<Scalar,dim> satGradient = distVec;
                 satGradient *= (satJ - satI)/(dist*dist);
 
-		// flux term 
-		Scalar fluxU = numFlux_(*eIt, indexInInside, satI, satJ) -
-                               diffusivePart_(*eIt, indexInInside, satAvg, satGradient, dt_, satI, satJ) 
-                               * integrationOuterNormal;
+                // flux term
+                Scalar fluxU = numFlux_(*eIt, indexInInside, satI, satJ) -
+                diffusivePart_(*eIt, indexInInside, satAvg, satGradient, dt_, satI, satJ)
+                * integrationOuterNormal;
 
                 // add to f_i
                 f[globalIdxI] += fluxU;
 
-		// flux term 
-		Scalar fluxUIPlusEps;
-		if (satIPlus > 1.0-residualSatNW)
-		{
-			fluxUIPlusEps = fluxU; 
-			epsilon *= 0.5;
-		}
-		else 
+                // flux term
+                Scalar fluxUIPlusEps;
+                if (satIPlus> 1.0-residualSatNW)
                 {
-                        // calculate the saturation gradient
-                        Dune::FieldVector<Scalar,dim> satGradientIPlus = distVec;
-                        satGradientIPlus *= (satJ - satIPlus)/(dist*dist);
+                    fluxUIPlusEps = fluxU;
+                    epsilon *= 0.5;
+                }
+                else
+                {
+                    // calculate the saturation gradient
+                    Dune::FieldVector<Scalar,dim> satGradientIPlus = distVec;
+                    satGradientIPlus *= (satJ - satIPlus)/(dist*dist);
 
- 			fluxUIPlusEps = numFlux_(*eIt, indexInInside, satIPlus, satJ) -
-                                       diffusivePart_(*eIt, indexInInside, satAvg, satGradientIPlus, dt_, satIPlus, satJ) 
-                                       * integrationOuterNormal;
+                    fluxUIPlusEps = numFlux_(*eIt, indexInInside, satIPlus, satJ) -
+                    diffusivePart_(*eIt, indexInInside, satAvg, satGradientIPlus, dt_, satIPlus, satJ)
+                    * integrationOuterNormal;
                 }
 
-		// flux term 
-		Scalar fluxUIMinusEps;
-		if (satIMinus < residualSatW)
-		{
-			fluxUIMinusEps = fluxU; 
-			epsilon *= 0.5;
-		}
-		else 
+                // flux term
+                Scalar fluxUIMinusEps;
+                if (satIMinus < residualSatW)
                 {
-                        // calculate the saturation gradient
-                        Dune::FieldVector<Scalar,dim> satGradientIMinus = distVec;
-                        satGradientIMinus *= (satJ - satIMinus)/(dist*dist);
+                    fluxUIMinusEps = fluxU;
+                    epsilon *= 0.5;
+                }
+                else
+                {
+                    // calculate the saturation gradient
+                    Dune::FieldVector<Scalar,dim> satGradientIMinus = distVec;
+                    satGradientIMinus *= (satJ - satIMinus)/(dist*dist);
 
- 			fluxUIMinusEps = numFlux_(*eIt, indexInInside, satIMinus, satJ) -
-                                        diffusivePart_(*eIt, indexInInside, satAvg, satGradientIMinus, dt_, satIMinus, satJ) 
-                                        * integrationOuterNormal;
+                    fluxUIMinusEps = numFlux_(*eIt, indexInInside, satIMinus, satJ) -
+                    diffusivePart_(*eIt, indexInInside, satAvg, satGradientIMinus, dt_, satIMinus, satJ)
+                    * integrationOuterNormal;
                 }
 
-	 	A[globalIdxI][globalIdxI] += 0.5/epsilon*(fluxUIPlusEps - fluxUIMinusEps);
+                A[globalIdxI][globalIdxI] += 0.5/epsilon*(fluxUIPlusEps - fluxUIMinusEps);
 
-		// restore epsilon 
-		if (satIPlus > 1.0-residualSatNW || satIMinus < residualSatW)
-			epsilon *= 2.0;
+                // restore epsilon
+                if (satIPlus> 1.0-residualSatNW || satIMinus < residualSatW)
+                epsilon *= 2.0;
 
-		// add epsilon*e_j to the solution 
+                // add epsilon*e_j to the solution
                 Scalar satJPlus = satJ + epsilon;
 
-		// flux term 
-		Scalar fluxUJPlusEps;
-		if (satJPlus > 1.0-residualSatNW)
-		{
-			fluxUJPlusEps = fluxU;
-			epsilon *= 0.5;
-		}
-		else
+                // flux term
+                Scalar fluxUJPlusEps;
+                if (satJPlus> 1.0-residualSatNW)
                 {
-                        // calculate the saturation gradient
-                        Dune::FieldVector<Scalar,dim> satGradientJPlus = distVec;
-                	satGradientJPlus *= (satJPlus - satI)/(dist*dist);
- 
- 			fluxUJPlusEps = numFlux_(*eIt, indexInInside, satI, satJPlus) -
-                                       diffusivePart_(*eIt, indexInInside, satAvg, satGradientJPlus, dt_, satI, satJPlus)
-                                       * integrationOuterNormal;
+                    fluxUJPlusEps = fluxU;
+                    epsilon *= 0.5;
+                }
+                else
+                {
+                    // calculate the saturation gradient
+                    Dune::FieldVector<Scalar,dim> satGradientJPlus = distVec;
+                    satGradientJPlus *= (satJPlus - satI)/(dist*dist);
+
+                    fluxUJPlusEps = numFlux_(*eIt, indexInInside, satI, satJPlus) -
+                    diffusivePart_(*eIt, indexInInside, satAvg, satGradientJPlus, dt_, satI, satJPlus)
+                    * integrationOuterNormal;
                 }
 
-		// subtract epsilon*e_j from the solution 
+                // subtract epsilon*e_j from the solution
                 Scalar satJMinus = satJ - epsilon;
 
-		// flux term 
-		Scalar fluxUJMinusEps;
-		if (satJMinus < residualSatW)
-		{
-			fluxUJMinusEps = fluxU;
-			epsilon *= 0.5;
-		}
-		else 
+                // flux term
+                Scalar fluxUJMinusEps;
+                if (satJMinus < residualSatW)
                 {
-                	// calculate the saturation gradient
-                	Dune::FieldVector<Scalar,dim> satGradientJMinus = distVec;
-                	satGradientJMinus *= (satJMinus - satI)/(dist*dist);
+                    fluxUJMinusEps = fluxU;
+                    epsilon *= 0.5;
+                }
+                else
+                {
+                    // calculate the saturation gradient
+                    Dune::FieldVector<Scalar,dim> satGradientJMinus = distVec;
+                    satGradientJMinus *= (satJMinus - satI)/(dist*dist);
 
- 			fluxUJMinusEps  = numFlux_(*eIt, indexInInside, satI, satJMinus) -
-                                        diffusivePart_(*eIt, indexInInside, satAvg, satGradientJMinus, dt_, satI, satJMinus)
-                                        * integrationOuterNormal;
-		}
+                    fluxUJMinusEps = numFlux_(*eIt, indexInInside, satI, satJMinus) -
+                    diffusivePart_(*eIt, indexInInside, satAvg, satGradientJMinus, dt_, satI, satJMinus)
+                    * integrationOuterNormal;
+                }
 
-		// add to A_ij
-	 	A[globalIdxI][globalIdxJ] += 0.5/epsilon*(fluxUJPlusEps - fluxUJMinusEps);
+                // add to A_ij
+                A[globalIdxI][globalIdxJ] += 0.5/epsilon*(fluxUJPlusEps - fluxUJMinusEps);
 
-		// restore epsilon 
-		if (satJPlus > 1.0-residualSatNW || satJMinus < residualSatW)
-			epsilon *= 2.0;
+                // restore epsilon
+                if (satJPlus> 1.0-residualSatNW || satJMinus < residualSatW)
+                epsilon *= 2.0;
             }
 
             // handle boundary face
@@ -479,79 +479,81 @@ void ImplicitFVTransport<Grid, Scalar, VC, Problem>::assemble()
 
                     // calculate the saturation gradient
                     Dune::FieldVector<Scalar,dim> satGradient = distVec;
-                    satGradient *= (satBound - satI)/(dist*dist);      
+                    satGradient *= (satBound - satI)/(dist*dist);
 
-                    // flux term 
-	            Scalar fluxU = numFlux_(*eIt, indexInInside, satI, satBound) -
-                                   diffusivePart_(*eIt, indexInInside, satAvg, satGradient, dt_, satI, satBound) 
-                                   * integrationOuterNormal;
+                    // flux term
+                    Scalar fluxU = numFlux_(*eIt, indexInInside, satI, satBound) -
+                    diffusivePart_(*eIt, indexInInside, satAvg, satGradient, dt_, satI, satBound)
+                    * integrationOuterNormal;
 
                     // add to f_i
                     f[globalIdxI] += fluxU;
 
-                    // flux term 
-	            Scalar fluxUIPlusEps;
-		    if (satIPlus > 1.0-residualSatNW)
-		    {
-			fluxUIPlusEps = fluxU; 
-			epsilon *= 0.5;
-		    }
-		    else 
+                    // flux term
+                    Scalar fluxUIPlusEps;
+                    if (satIPlus> 1.0-residualSatNW)
+                    {
+                        fluxUIPlusEps = fluxU;
+                        epsilon *= 0.5;
+                    }
+                    else
                     {
                         // calculate the saturation gradient
                         Dune::FieldVector<Scalar,dim> satGradientIPlus = distVec;
                         satGradientIPlus *= (satBound - satIPlus)/(dist*dist);
 
- 			fluxUIPlusEps = numFlux_(*eIt, indexInInside, satIPlus, satBound) -
-                                        diffusivePart_(*eIt, indexInInside, satAvg, satGradientIPlus, dt_, satIPlus, satBound) 
-                                        * integrationOuterNormal;
-	            }
+                        fluxUIPlusEps = numFlux_(*eIt, indexInInside, satIPlus, satBound) -
+                        diffusivePart_(*eIt, indexInInside, satAvg, satGradientIPlus, dt_, satIPlus, satBound)
+                        * integrationOuterNormal;
+                    }
 
-		    // flux term 
-		    Scalar fluxUIMinusEps;
-		    if (satIMinus < residualSatW)
-		    {
-	                fluxUIMinusEps = fluxU; 
-			epsilon *= 0.5;
-		    }
-		    else 
+                    // flux term
+                    Scalar fluxUIMinusEps;
+                    if (satIMinus < residualSatW)
+                    {
+                        fluxUIMinusEps = fluxU;
+                        epsilon *= 0.5;
+                    }
+                    else
                     {
                         // calculate the saturation gradient
                         Dune::FieldVector<Scalar,dim> satGradientIMinus = distVec;
                         satGradientIMinus *= (satBound - satIMinus)/(dist*dist);
 
- 			fluxUIMinusEps = numFlux_(*eIt, indexInInside, satIMinus, satBound) -
-                                         diffusivePart_(*eIt, indexInInside, satAvg, satGradientIMinus, dt_, satIMinus, satBound) 
-                                         * integrationOuterNormal;
-                    }                    
+                        fluxUIMinusEps = numFlux_(*eIt, indexInInside, satIMinus, satBound) -
+                        diffusivePart_(*eIt, indexInInside, satAvg, satGradientIMinus, dt_, satIMinus, satBound)
+                        * integrationOuterNormal;
+                    }
 
                     // get the flux through the boundary
-                    Scalar velocity = this->transProblem.variables.vTotal(*eIt, indexInInside)*integrationOuterNormal;
+                    Scalar velocity = this->transProblem.variables().vTotalElementFace(*eIt, indexInInside)*integrationOuterNormal;
 
-		    // add to A_ii
+                    // add to A_ii
                     // outflow boundary
                     if (velocity >= 0.0)
-                        A[globalIdxI][globalIdxI] += 0.0;
+                    A[globalIdxI][globalIdxI] += 0.0;
                     // inflow boundary
-                    else
-	 	        A[globalIdxI][globalIdxI] += 0.5/epsilon*(fluxUIPlusEps - fluxUIMinusEps);         
 
-		    // restore epsilon 
-		    if (satIPlus > 1.0-residualSatNW || satIMinus < residualSatW)
-			epsilon *= 2.0;
-		}
+                    else
+                    A[globalIdxI][globalIdxI] += 0.5/epsilon*(fluxUIPlusEps - fluxUIMinusEps);
+
+                    // restore epsilon
+                    if (satIPlus> 1.0-residualSatNW || satIMinus < residualSatW)
+                    epsilon *= 2.0;
+                }
                 // Neumann boundary
+
                 else
                 {
                     // handling 1: assume the domain is big enough
                     // outflow boundary is constant Neumann boundary
-		    // add to A_ii
-	 	    A[globalIdxI][globalIdxI] += 0.0;     
+                    // add to A_ii
+                    A[globalIdxI][globalIdxI] += 0.0;
 
                     // in fact, for this case, helpFactor is not used !
-                    Scalar helpFactor = 0;      
+                    Scalar helpFactor = 0;
 
-                    // get the Neumann boundary value               
+                    // get the Neumann boundary value
                     Scalar fluxU = this->transProblem.neumannSat(globalPosFace, *eIt, localPosFace, helpFactor) * faceVol;
 
                     // add to f_i
@@ -566,14 +568,12 @@ void ImplicitFVTransport<Grid, Scalar, VC, Problem>::assemble()
     //printvector(std::cout, f, "right hand side", "row", 200, 1, 3);
 }
 
-template<class Grid, class Scalar, class VC, class Problem>
-void ImplicitFVTransport<Grid, Scalar, VC, Problem>::initialTransport()
+template<class GridView, class Scalar, class VC, class Problem>
+void ImplicitFVTransport<GridView, Scalar, VC, Problem>::initialTransport()
 {
-    const GridView& gridView = this->grid_.levelView(this->level());
-
     // iterate through leaf grid an evaluate c0 at cell center
-    ElementIterator eItEnd = gridView.template end<0>();
-    for (ElementIterator eIt = gridView.template begin<0>(); eIt != eItEnd; ++eIt)
+    ElementIterator eItEnd = this->gridView.template end<0>();
+    for (ElementIterator eIt = this->gridView.template begin<0>(); eIt != eItEnd; ++eIt)
     {
         // get geometry type
         Dune::GeometryType gt = eIt->geometry().type();
@@ -586,52 +586,82 @@ void ImplicitFVTransport<Grid, Scalar, VC, Problem>::initialTransport()
         GlobalPosition globalPos = eIt->geometry().global(localPos);
 
         // initialize cell concentration
-        this->transProblem.variables.saturation[this->transProblem.variables.transMapper.map(*eIt)] = this->transProblem.initSat(globalPos, *eIt, localPos);
+        this->transProblem.variables().saturation()[this->transProblem.variables().indexTransport(*eIt)] = this->transProblem.initSat(globalPos, *eIt, localPos);
     }
 
-    u = this->transProblem.variables.saturation;
+    u = this->transProblem.variables().saturation();
 
     return;
 }
 
-
-template<class Grid, class Scalar, class VC, class Problem>
-void ImplicitFVTransport<Grid, Scalar, VC, Problem>:: solve()
-    {
-        Operator op(A);  // make operator out of matrix
-        double red=1E-12;
+template<class GridView, class Scalar, class VC, class Problem>
+void ImplicitFVTransport<GridView, Scalar, VC, Problem>:: solve()
+{
+    Operator op(A); // make operator out of matrix
+    double red=1E-12;
 
 #ifdef HAVE_PARDISO
-        SeqPardiso<MatrixType,VectorType,VectorType> pardiso(A);
-        LoopSolver<VectorType> solver(op, pardiso, red, 10, 2);
+    SeqPardiso<MatrixType,VectorType,VectorType> pardiso(A);
+    LoopSolver<VectorType> solver(op, pardiso, red, 10, 2);
 #else
-        SeqILU0<MatrixType,VectorType,VectorType> ilu0(A,1.0);// a precondtioner
-        BiCGSTABSolver<VectorType> solver(op,ilu0,red,10000,1);         // an inverse operator
+    SeqILU0<MatrixType,VectorType,VectorType> ilu0(A,1.0);// a precondtioner
+    BiCGSTABSolver<VectorType> solver(op,ilu0,red,10000,1); // an inverse operator
 #endif
-        InverseOperatorResult r;
-        solver.apply(u, f, r);
+    InverseOperatorResult r;
+    solver.apply(u, f, r);
 
-        return;
-    }
+    return;
+}
 
+template<class GridView, class Scalar, class VC, class Problem>
+void ImplicitFVTransport<GridView, Scalar, VC, Problem>:: update()
+{
+    uOldTimeStep = u;
+    //NewtonMethodMatrix<Grid, ThisType> newtonMethod(this->grid_, *this);
 
-template<class Grid, class Scalar, class VC, class Problem>
-void ImplicitFVTransport<Grid, Scalar, VC, Problem>:: update()
+    //In order to not enlarge the timestep in the Newton step
+    double dtol = 1e-7;
+    double rtol = 1e7;
+    int maxIt = 20;
+    double mindt = 1;
+    int goodIt = 1;
+    NewtonMethodMatrix<Grid, ThisType> newtonMethod(this->gridView.grid(), *this, dtol, rtol, maxIt, mindt, goodIt);
+
+    newtonMethod.execute();
+
+    return;
+}
+template<class GridView, class Scalar, class VC, class Problem>
+void ImplicitFVTransport<GridView, Scalar, VC, Problem>:: updateMaterialLaws()
+{
+    // iterate through leaf grid an evaluate c0 at cell center
+    ElementIterator eItEnd = this->gridView.template end<0>();
+    for (ElementIterator eIt = this->gridView.template begin<0>(); eIt != eItEnd; ++eIt)
     {
-        uOldTimeStep = u;
-        //NewtonMethodMatrix<Grid, ThisType> newtonMethod(this->grid_, *this);
+        // get geometry type
+        Dune::GeometryType gt = eIt->geometry().type();
 
-        //In order to not enlarge the timestep in the Newton step
-        double dtol = 1e-7;
-        double rtol = 1e7;
-        int maxIt = 20;
-        double mindt = 1;
-        int goodIt = 1;
-        NewtonMethodMatrix<Grid, ThisType> newtonMethod(this->grid_, *this, dtol, rtol, maxIt, mindt, goodIt);
+        // get cell center in reference element
+        const LocalPosition
+        &localPos = Dune::ReferenceElements<Scalar,dim>::general(gt).position(0, 0);
 
-        newtonMethod.execute();
+        // get global coordinate of cell center
+        GlobalPosition globalPos = eIt->geometry().global(localPos);
 
-        return;
+        int globalIdx = this->transProblem.variables().indexDiffusion(*eIt);
+
+        Scalar sat = this->transProblem.variables().saturation()[globalIdx];
+
+        std::vector<Scalar> mobilities = this->transProblem.materialLaw().mob(sat, globalPos, *eIt, localPos);
+
+        // initialize mobilities
+        this->transProblem.variables().mobilityWetting()[globalIdx]= mobilities[0];
+        this->transProblem.variables().mobilityNonWetting()[globalIdx]= mobilities[1];
+        this->transProblem.variables().capillaryPressure()[globalIdx]= this->transProblem.materialLaw().pC(sat, globalPos, *eIt, localPos);
+        this->transProblem.variables().fracFlowFuncWetting()[globalIdx]= mobilities[0]/(mobilities[0]+mobilities[1]);
+        this->transProblem.variables().fracFlowFuncNonWetting()[globalIdx]= mobilities[1]/(mobilities[0]+mobilities[1]);
     }
+    return;
+}
 }
 #endif

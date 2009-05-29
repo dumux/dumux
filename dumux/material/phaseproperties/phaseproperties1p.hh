@@ -81,7 +81,7 @@ public:
 
     double viscosity (double T, double p, double X = 0.) const
     {
-        return 0.00069152;
+        return 0.0069152;
     }
 
 
@@ -105,7 +105,7 @@ public:
 
     double diffCoeff(double T=283.15, double p=1e5) const
     {
-        return 3.7378e-6;
+        return 2.7378e-6;
     }
 
 

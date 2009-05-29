@@ -12,9 +12,8 @@
 #include "dumux/diffusion/problems/uniformproblem.hh"
 #include "dumux/material/phaseproperties/phaseproperties2p.hh"
 #include <dumux/material/matrixproperties.hh>
-#include "dumux/diffusion/mpfa/mpfaodiffusion.hh"
 #include "dumux/diffusion/mpfa/mpfaodiffusionvelocity.hh"
-#include "dumux/fractionalflow/variableclass.hh"
+#include "dumux/fractionalflow/variableclass2p.hh"
 
 /**
  * @file
@@ -30,7 +29,8 @@ int main(int argc, char** argv)
 
     // create a grid object
     typedef double NumberType; 
-    typedef Dune::UGGrid<dim> GridType; 
+    typedef Dune::UGGrid<dim> GridType;
+    typedef GridType::LevelGridView GridView; 
 
     std::stringstream dgfFileName;
     dgfFileName << "./grids/quadrilateral.dgf";
@@ -43,9 +43,11 @@ int main(int argc, char** argv)
 
     //Dune::gridinfo(grid);
 
-    int level = 0;
- 
+    int level = 2;
+
     grid.globalRefine(level);
+
+    GridView gridView(grid.levelView(level));
 
     //Uniform mat;
     Dune::Uniform mat;
@@ -56,12 +58,12 @@ int main(int argc, char** argv)
 
     double initsat = 1;
 
-    typedef Dune::VariableClass<GridType, NumberType> VariableType;
-    VariableType variables(grid,initsat);
+    typedef Dune::VariableClass<GridView, NumberType> VariableType;
+    VariableType variables(gridView,initsat);
 
-    Dune::UniformProblem<GridType, NumberType, VariableType> problem(variables, mat, mat, soil, materialLaw);
+    Dune::UniformProblem<GridView, NumberType, VariableType> problem(variables, mat, mat, soil, materialLaw);
 
-    Dune::MPFAODiffusionVelocity<GridType, NumberType, VariableType> diffusion(grid, problem);
+    Dune::MPFAODiffusionVelocity<GridView, NumberType, VariableType> diffusion(gridView, problem);
     
     // calculate pressure on each cell
     Dune::Timer timer;
@@ -72,7 +74,7 @@ int main(int argc, char** argv)
     
     // calculate velocity on each side
     diffusion.calcTotalVelocity();
-    printvector(std::cout, variables.velocity, "velocity", "row", 4, 1, 3);
+    //printvector(std::cout, variables.velocity(), "velocity", "row", 4, 1, 3);
     
     return 0;
   }

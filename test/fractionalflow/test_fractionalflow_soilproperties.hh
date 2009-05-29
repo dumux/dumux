@@ -27,17 +27,17 @@ public:
     }
     virtual double porosity(const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos) const
     {
-        return 0.2;
+        return 0.3;
     }
 
     virtual double Sr_w(const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos, const double T = 283.15) const
     {
-        return 0.2;
+        return 0.0;
     }
 
     virtual double Sr_n(const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos, const double T = 283.15) const
     {
-        return 0.2;
+        return 0.0;
     }
 
 
@@ -54,8 +54,8 @@ public:
 //        else
 //        {
             //Brooks-Corey parameters
-            param[0] = 0; // lambda
-            param[1] = 0.; // entry-pressure
+            param[0] = 2; // lambda
+            param[1] = 5000.; // entry-pressure
 //        }
         return param;
     }
@@ -65,7 +65,7 @@ public:
         //        if (x[0]<=300)
         //            return 1;
         //        else
-        return Matrix2p<Grid, Scalar>::linear;
+        return Matrix2p<Grid, Scalar>::brooks_corey;
     }
 
     FractionalFlowTestSoil()
@@ -73,7 +73,7 @@ public:
     {
         for(int i = 0; i < dim; i++)
         {
-            constPermeability[i][i] = 1e-7;
+            constPermeability[i][i] = 1e-10;
         }
     }
 

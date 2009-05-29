@@ -15,7 +15,6 @@
 #include<dumux/material/twophaserelations.hh>
 
 #include <dumux/material/property_baseclasses.hh>
-//#include "dumux/fractionalflow/variableclass.hh"
 
 /**
  * @file
@@ -45,14 +44,15 @@ namespace Dune
  *    - Grid  a DUNE grid type
  *    - Scalar    type used for return values
  */
-template<class Grid, class Scalar, class VC>
+template<class GridView, class Scalar, class VC>
 class FractionalFlowProblem
 {
 public:
     enum
-        {    dim=Grid::dimension,dimWorld= Grid::dimensionworld,numEq=1};
+        {    dim=GridView::dimension,dimWorld= GridView::dimensionworld,numEq=1};
 protected:
-    typedef typename Grid::Traits::template Codim<0>::Entity Element;
+    typedef typename GridView::Grid Grid;
+    typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef Dune::FieldVector<Scalar,dim> LocalPosition;
     typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
 
@@ -151,26 +151,37 @@ public:
         return materialLaw_;
     }
 
+    virtual VC& variables ()
+    {
+        return variables_;
+    }
+    virtual Fluid& wettingPhase () const
+    {
+        return wettingPhase_;
+    }
+    virtual Fluid& nonWettingPhase () const
+    {
+        return nonWettingPhase_;
+    }
+
     //! constructor
     /** @param law implementation of Material laws. Class TwoPhaseRelations or derived.
      *  @param cap flag to include capillary forces.
      */
-    FractionalFlowProblem(VC& variables, Fluid& wettingphase, Fluid& nonwettingphase, Matrix2p<Grid, Scalar>& soil, TwoPhaseRelations<Grid, Scalar>& materialLaw = *(new TwoPhaseRelations<Grid,Scalar>), const bool capillarity = false)
-        : variables(variables), wettingPhase(wettingphase), nonWettingPhase(nonwettingphase), soil_(soil), capillarity(capillarity), materialLaw_(materialLaw),gravity_(0)
+    FractionalFlowProblem(VC& variables, Fluid& wettingPhase, Fluid& nonWettingPhase, Matrix2p<Grid, Scalar>& soil, TwoPhaseRelations<Grid, Scalar>& materialLaw = *(new TwoPhaseRelations<Grid,Scalar>))
+        : variables_(variables), wettingPhase_(wettingPhase), nonWettingPhase_(nonWettingPhase), soil_(soil), materialLaw_(materialLaw),gravity_(0)
     {}
 
     //! always define virtual destructor in abstract base class
     virtual ~FractionalFlowProblem ()
     {}
 
-    //! a class describing relations between two phases and the porous medium
-    VC& variables;
-    Fluid& wettingPhase;
-    Fluid& nonWettingPhase;
-    Matrix2p<Grid, Scalar>& soil_;
-    const bool capillarity;
-    TwoPhaseRelations<Grid, Scalar>& materialLaw_;
 private:
+    VC& variables_;
+    Fluid& wettingPhase_;
+    Fluid& nonWettingPhase_;
+    Matrix2p<Grid, Scalar>& soil_;
+    TwoPhaseRelations<Grid, Scalar>& materialLaw_;
     FieldVector<Scalar,dimWorld> gravity_;
 
 };

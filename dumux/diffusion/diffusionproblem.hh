@@ -43,12 +43,17 @@ namespace Dune
  *    - Grid  a DUNE grid type
  *    - RT    type used for return values
  */
-template<class Grid, class Scalar, class VC>
-class DiffusionProblem {
+template<class GridView, class Scalar, class VC>
+class DiffusionProblem
+{
 
 protected:
-    enum {dim=Grid::dimension, dimWorld=Grid::dimensionworld};
-    typedef typename Grid::Traits::template Codim<0>::Entity Element;
+    enum
+    {
+        dim = GridView::dimension, dimWorld = GridView::dimensionworld
+    };
+typedef    typename GridView::Grid Grid;
+    typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef Dune::FieldVector<Scalar,dim> LocalPosition;
     typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
@@ -57,58 +62,69 @@ public:
 
     //! evaluate source term
     /*! evaluate source term at given location
-      @param[in]  globalPos    position in global coordinates
-      @param[in]  element    entity of codim 0
-      @param[in]  localPos   position in reference element of element
-      \return     value of source term
-    */
-    virtual Scalar sourcePress  (const GlobalPosition& globalPos, const Element& element,
-                            const LocalPosition& localPos) = 0;
+     @param[in]  globalPos    position in global coordinates
+     @param[in]  element    entity of codim 0
+     @param[in]  localPos   position in reference element of element
+     \return     value of source term
+     */
+    virtual Scalar sourcePress (const GlobalPosition& globalPos, const Element& element,
+            const LocalPosition& localPos) = 0;
 
     //! return type of boundary condition at the given global coordinate
     /*! return type of boundary condition at the given global coordinate
-      @param[in]  globalPos    position in global coordinates
-      \return     boundary condition type given by enum in this class
-    */
+     @param[in]  globalPos    position in global coordinates
+     \return     boundary condition type given by enum in this class
+     */
     virtual BoundaryConditions::Flags bctypePress (const GlobalPosition& globalPos, const Element& element,
-                                              const LocalPosition& localPos) const = 0;
+            const LocalPosition& localPos) const = 0;
+
+    //! return type of boundary condition at the given global coordinate
+    /*! return type of boundary condition at the given global coordinate
+     @param[in]  globalPos    position in global coordinates
+     \return     boundary condition type given by enum in this class
+     */
+    virtual BoundaryConditions::Flags bctypeSat (const GlobalPosition& globalPos, const Element& element,
+            const LocalPosition& localPos) const
+    {
+        return BoundaryConditions::dirichlet;
+    }
 
     //! evaluate Dirichlet boundary condition at given position
     /*! evaluate Dirichlet boundary condition at given position
-      @param[in]  globalPos    position in global coordinates
-      \return     boundary condition value
-    */
+     @param[in]  globalPos    position in global coordinates
+     \return     boundary condition value
+     */
     virtual Scalar dirichletPress (const GlobalPosition& globalPos, const Element& element,
-                                   const LocalPosition& localPos) const = 0;
+            const LocalPosition& localPos) const = 0;
 
     //! evaluate Dirichlet boundary condition at given position
     /*! evaluate Dirichlet boundary condition at given position
-      @param[in]  globalPos    position in global coordinates
-      \return     boundary condition value
-    */
+     @param[in]  globalPos    position in global coordinates
+     \return     boundary condition value
+     */
     virtual Scalar dirichletSat (const GlobalPosition& globalPos, const Element& element,
-                                 const LocalPosition& localPos) const
+            const LocalPosition& localPos) const
     {
         return 1;
     }
 
     //! evaluate Neumann boundary condition at given position
     /*! evaluate Neumann boundary condition at given position
-      @param[in]  globalPos    position in global coordinates
-      \return     boundary condition value
-    */
+     @param[in]  globalPos    position in global coordinates
+     \return     boundary condition value
+     */
     virtual Scalar neumannPress (const GlobalPosition& globalPos, const Element& element,
-                                 const LocalPosition& localPos) const = 0;
+            const LocalPosition& localPos) const = 0;
 
-    const FieldVector<Scalar,dim>& gravity() const
+    virtual const FieldVector<Scalar,dim>& gravity() const
     {
         return gravity_;
     }
 
     //! properties of the soil
     /*! properties of the soil
-      \return    soil
-    */
+     \return    soil
+     */
     virtual Matrix2p<Grid, Scalar>& soil () const
     {
         return soil_;
@@ -116,46 +132,55 @@ public:
 
     //! object for definition of material law
     /*! object for definition of material law (e.g. Brooks-Corey, Van Genuchten, ...)
-      \return    material law
-    */
+     \return    material law
+     */
     virtual TwoPhaseRelations<Grid, Scalar>& materialLaw () const
     {
         return materialLaw_;
+    }
+    virtual VC& variables ()
+    {
+        return variables_;
+    }
+    virtual Fluid& wettingPhase () const
+    {
+        return wettingPhase_;
+    }
+    virtual Fluid& nonWettingPhase () const
+    {
+        return nonWettingPhase_;
     }
 
     //! constructor
     /** @param law implementation of Material laws. Class TwoPhaseRelations or derived.
      *  @param cap flag to include capillary forces.
      */
-    DiffusionProblem(VC& variables,Fluid& wettingPhase, Fluid& nonwettingPhase, Matrix2p<Grid, Scalar>& soil, TwoPhaseRelations<Grid, Scalar>& materialLaw = *(new TwoPhaseRelations<Grid,Scalar>),
-                     const bool capillarity = false)
-        : variables(variables), materialLaw_(materialLaw), 
-            wettingPhase(wettingPhase), nonWettingPhase(nonwettingPhase), soil_(soil), 
-            capillarity(capillarity),gravity_(0)
+    DiffusionProblem(VC& variables,Fluid& wettingPhase, Fluid& nonWettingPhase, Matrix2p<Grid, Scalar>& soil, TwoPhaseRelations<Grid, Scalar>& materialLaw = *(new TwoPhaseRelations<Grid,Scalar>))
+    : variables_(variables), materialLaw_(materialLaw),
+    wettingPhase_(wettingPhase), nonWettingPhase_(nonWettingPhase), soil_(soil),
+    gravity_(0)
     {}
 
     //! constructor
     /** @param law implementation of Material laws. Class TwoPhaseRelations or derived.
      *  @param cap flag to include capillary forces.
      */
-    DiffusionProblem(VC& variables, TwoPhaseRelations<Grid, Scalar>& materialLaw = *(new TwoPhaseRelations<Grid,Scalar>),
-                     const bool capillarity = false)
-        : variables(variables), materialLaw_(materialLaw), 
-        wettingPhase(materialLaw_.wettingPhase), nonWettingPhase(materialLaw.nonwettingPhase), soil_(materialLaw.soil), 
-        capillarity(capillarity),gravity_(0)
+    DiffusionProblem(VC& variables, TwoPhaseRelations<Grid, Scalar>& materialLaw = *(new TwoPhaseRelations<Grid,Scalar>))
+    : variables_(variables), materialLaw_(materialLaw),
+    wettingPhase_(materialLaw_.wettingPhase), nonWettingPhase_(materialLaw.nonwettingPhase), soil_(materialLaw.soil), gravity_(0)
     {}
 
     //! always define virtual destructor in abstract base class
-    virtual ~DiffusionProblem () {}
+    virtual ~DiffusionProblem ()
+    {}
 
     //! a class describing relations between two phases and the porous medium
-    VC& variables;
-    TwoPhaseRelations<Grid,Scalar>& materialLaw_;
-    Fluid& wettingPhase;
-    Fluid& nonWettingPhase;
-    Matrix2p<Grid, Scalar>& soil_;
-    const bool capillarity;
 private:
+    VC& variables_;
+    TwoPhaseRelations<Grid,Scalar>& materialLaw_;
+    Fluid& wettingPhase_;
+    Fluid& nonWettingPhase_;
+    Matrix2p<Grid, Scalar>& soil_;
     FieldVector<Scalar,dim> gravity_;
 };
 

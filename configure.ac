@@ -109,11 +109,12 @@ AC_CONFIG_FILES([Makefile
     test/2p2c/Makefile
     test/2p2cni/Makefile
     test/diffusion/Makefile
-    test/doublecontinuum/Makefile
     test/fractionalflow/Makefile
     test/richards/Makefile  
     test/transport/Makefile
     test/tutorial/Makefile
+    appl/shallowwater/bump/Makefile  
+    appl/shallowwater/pulse/Makefile  
     m4/Makefile
     dune-mux.pc])
 

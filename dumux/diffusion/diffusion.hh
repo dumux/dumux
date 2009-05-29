@@ -31,7 +31,7 @@ namespace Dune
  - Scalar        type used for return values
 
 */
-template<class Grid, class Scalar, class VC, class Problem = DiffusionProblem<Grid, Scalar, VC> >
+template<class GridView, class Scalar, class VC, class Problem = DiffusionProblem<GridView, Scalar, VC> >
 class Diffusion
 {
 public:
@@ -46,7 +46,11 @@ public:
      *  \f[ - \text{div}\, (\lambda K \text{grad}\, p ) = 0, \f]
      *  subject to appropriate boundary and initial conditions.
      */
-    virtual void pressure(const Scalar t = 0) = 0;
+
+    virtual void pressure(bool first, const Scalar t = 0)
+    {
+        return;
+    }
 
     //! \brief Calculate the total velocity.
     /*!
@@ -60,7 +64,7 @@ public:
      *  The method is used in FractionalFlow to provide the velocity field required for the saturation equation.
      */
 
-    virtual void calcTotalVelocity(const Scalar t = 0) const
+    virtual void calculateVelocity(const Scalar t = 0) const
     {
         return;
     }
@@ -70,6 +74,7 @@ public:
         return;
     }
 
+
     //! always define virtual destructor in abstract base class
     virtual ~Diffusion()
     {
@@ -77,20 +82,16 @@ public:
 
     //! without specification of a level, the class works on the leaf grid.
     /**
-     * \param grid grid object of type Grid
+     * \param grid gridView object of type GridView
      * \param prob a problem class object derived from DiffusionProblem
      */
-    Diffusion(const Grid& grid, Problem& prob) :
-        grid(grid), diffProblem(prob)
+    Diffusion(GridView& gView, Problem& prob) :
+        gridView(gView), diffProblem(prob)
     {
     }
 
-    //! Returns the grid level on which the class works
-    int& level() const
-    {
-        return diffProblem.variables.diffLevel;
-    }
-    const Grid& grid;
+protected:
+    const GridView& gridView;
     Problem& diffProblem; //!< problem data
 };
 

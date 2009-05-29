@@ -12,7 +12,7 @@
 #include "dumux/transport/problems/simpleproblem.hh"
 #include "dumux/transport/problems/simplenonlinearproblem.hh"
 #include "dumux/timedisc/timeloop.hh"
-#include "dumux/fractionalflow/variableclass.hh"
+#include "dumux/fractionalflow/variableclass2p.hh"
 
 int main(int argc, char** argv)
 {
@@ -31,6 +31,7 @@ int main(int argc, char** argv)
         // create a grid object
         typedef double NumberType;
         typedef Dune::SGrid<dim,dim> GridType;
+        typedef GridType::LevelGridView GridView;
         typedef Dune::FieldVector<GridType::ctype,dim> FieldVector;
         Dune::FieldVector<int,dim> N(1); N[0] = 64;
         FieldVector L(0);
@@ -39,29 +40,30 @@ int main(int argc, char** argv)
 
         grid.globalRefine(0);
 
+        GridView gridView(grid.levelView(0));
+
         Dune::Uniform mat(0.2);
         //Dune::HomogeneousLinearSoil<GridType, NumberType> soil;
         Dune::HomogeneousNonlinearSoil<GridType, NumberType> soil;
         Dune::TwoPhaseRelations<GridType, NumberType> materialLaw(soil, mat, mat);
 
-        typedef Dune::VariableClass<GridType, NumberType> VC;
+        typedef Dune::VariableClass<GridView, NumberType> VC;
 
         double initsat=0;
-        double initpress=0;
         Dune::FieldVector<double,dim> vel(0);
         vel[0] = 1.0/6.0*1e-6;
 
-        VC variables(grid,initsat,initpress,vel);
+        VC variables(gridView,initsat,vel);
 
-        //Dune::SimpleProblem<GridType, NumberType, VC> problem(variables, mat, mat , soil, materialLaw,L,H);
-        Dune::SimpleNonlinearProblem<GridType, NumberType, VC> problem(variables, mat, mat , soil, materialLaw,L,H);
+        //Dune::SimpleProblem<GridView, NumberType, VC> problem(variables, mat, mat , soil, materialLaw,L,H);
+        Dune::SimpleNonlinearProblem<GridView, NumberType, VC> problem(variables, mat, mat , soil, materialLaw,L,H);
 
-        Dune::DiffusivePart<GridType, NumberType> diffusivePart;
-        Dune::ComputeUpwind<GridType, NumberType, VC> computeNumFlux(problem);
+        Dune::DiffusivePart<GridView, NumberType> diffusivePart;
+        Dune::ComputeUpwind<GridView, NumberType, VC> computeNumFlux(problem);
 
-        typedef Dune::ImplicitFVTransport<GridType, NumberType, VC> Transport;
+        typedef Dune::ImplicitFVTransport<GridView, NumberType, VC> Transport;
 
-        Transport transport(grid, problem, dt, diffusivePart, computeNumFlux);
+        Transport transport(gridView, problem, dt, diffusivePart, computeNumFlux);
 
 	Dune::RungeKuttaStep<GridType, Transport> timeStep(1);
 	//Dune::ImplicitEulerStep<GridType, Transport> timeStep;
@@ -69,7 +71,7 @@ int main(int argc, char** argv)
 
         timeloop.execute(transport);
 
-        printvector(std::cout, variables.saturation, "saturation", "row", 200, 1);
+        printvector(std::cout, variables.saturation(), "saturation", "row", 200, 1);
 
         return 0;
     }

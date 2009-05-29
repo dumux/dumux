@@ -108,7 +108,11 @@ public:
             lambda = 1.0;
         }
         else { 
-            lambda = uNormMin_ / uNorm / 2.0;
+            lambda = uNormMin_ / uNorm;
+            if (lambda < 0.05) {
+                DUNE_THROW(NumericalProblem, 
+                           "Increase of relative defect of " << 1./lambda << " is too much!");
+            };
             std::cout << boost::format("Newton: use line search, lambda=%f\n")%lambda;
         }
         

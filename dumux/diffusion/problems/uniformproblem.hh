@@ -12,26 +12,27 @@ namespace Dune
 {
 //! \ingroup diffusionProblems
 //! example class for diffusion problems
-template<class Grid, class Scalar, class VC>
-class UniformProblem: public DiffusionProblem<Grid, Scalar, VC>
+template<class GridView, class Scalar, class VC>
+class UniformProblem: public DiffusionProblem<GridView, Scalar, VC>
 {
 protected:
     enum
     {
-        dim = Grid::dimension, dimWorld = Grid::dimensionworld
+        dim = GridView::dimension, dimWorld = GridView::dimensionworld
     };
-typedef    typename Grid::Traits::template Codim<0>::Entity Element;
+    typedef typename GridView::Grid Grid;
+typedef    typename GridView::Traits::template Codim<0>::Entity Element;
     typedef Dune::FieldVector<Scalar,dim> LocalPosition;
     typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
 public:
-    UniformProblem(VC& variables,Fluid& wettingPhase, Fluid& nonwettingPhase, Matrix2p<Grid, Scalar>& soil, TwoPhaseRelations<Grid, Scalar>& materialLaw = *(new TwoPhaseRelations<Grid,Scalar>), const bool capillarity = false)
-    : DiffusionProblem<Grid,Scalar,VC>(variables, wettingPhase, nonwettingPhase, soil, materialLaw, capillarity)
+    UniformProblem(VC& variables,Fluid& wettingPhase, Fluid& nonwettingPhase, Matrix2p<Grid, Scalar>& soil, TwoPhaseRelations<Grid, Scalar>& materialLaw = *(new TwoPhaseRelations<Grid,Scalar>))
+    : DiffusionProblem<GridView,Scalar,VC>(variables, wettingPhase, nonwettingPhase, soil, materialLaw)
     {}
 
     UniformProblem()
-    : DiffusionProblem<Grid,Scalar,VC>()
+    : DiffusionProblem<GridView,Scalar,VC>()
     {}
 
     Scalar sourcePress(const GlobalPosition& globalPos, const Element& element,

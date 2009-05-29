@@ -14,38 +14,35 @@
 
 namespace Dune {
 
-template<class Grid, class Scalar, class VC, class Problem = DiffusionProblem<Grid, Scalar, VC> > class MPFAODiffusionVelocity :
-	public MPFAODiffusion<Grid, Scalar, VC, Problem> {
+template<class GridView, class Scalar, class VC, class Problem = DiffusionProblem<GridView, Scalar, VC> > class MPFAODiffusionVelocity :
+	public MPFAODiffusion<GridView, Scalar, VC, Problem> {
 	
-	typedef typename Grid::Traits::template Codim<0>::Entity Element;
-	typedef typename Grid::LevelGridView GridView;
+	typedef typename GridView::Traits::template Codim<0>::Entity Element;
         typedef typename GridView::IndexSet IndexSet;
 	typedef typename GridView::template Codim<0>::Iterator ElementIterator;
         typedef typename GridView::IntersectionIterator IntersectionIterator;
-	typedef typename Grid::template Codim<0>::EntityPointer ElementPointer;
+	typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
 	
-	enum {dim = Grid::dimension};
-	enum {dimWorld = Grid::dimensionworld};
+	enum {dim = GridView::dimension};
+	enum {dimWorld = GridView::dimensionworld};
 
 	typedef Dune::FieldVector<Scalar,dim> LocalPosition;
 	typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
 	typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 	
 public:	
-	MPFAODiffusionVelocity(Grid& grid, Problem& problem) 
-	: MPFAODiffusion<Grid,Scalar,VC,Problem>(grid, problem)
+	MPFAODiffusionVelocity(GridView& gridView, Problem& problem) 
+	: MPFAODiffusion<GridView,Scalar,VC,Problem>(gridView, problem)
 	{}
 
-	MPFAODiffusionVelocity(Grid& grid, Problem& problem, std::string solverName, std::string preconditionerName)
-	  : MPFAODiffusion<Grid, Scalar, VC, Problem>(grid, problem, solverName, preconditionerName)
+	MPFAODiffusionVelocity(GridView& gridView, Problem& problem, std::string solverName, std::string preconditionerName)
+	  : MPFAODiffusion<GridView, Scalar, VC, Problem>(gridView, problem, solverName, preconditionerName)
 	{}
 
 
 	void calcTotalVelocity(const Scalar t=0) const {
           // input character to decide which grid to use; 's' for SGrid, 'u' for UGGrid
           char ch = 'u';
-
-          const GridView& gridView = this->grid.levelView(this->level());
 
 	  // introduce matrix R for vector rotation and R is initialized as zero matrix        
           FieldMatrix R(0);
@@ -59,8 +56,8 @@ public:
 	      }
 	      
 	  // run through all elements
-	  ElementIterator eItEnd = gridView.template end<0>();
-	  for (ElementIterator eIt = gridView.template begin<0>(); eIt != eItEnd; ++eIt)
+	  ElementIterator eItEnd = this->gridView.template end<0>();
+	  for (ElementIterator eIt = this->gridView.template begin<0>(); eIt != eItEnd; ++eIt)
 	    {
 	                // get common geometry information for the following computation
 
@@ -79,10 +76,10 @@ public:
 			  *Dune::ReferenceElements<Scalar,dim>::general(gt1).volume();
 
 			// cell 1 index
-			int globalIdx1 = this->diffProblem.variables.diffMapper.map(*eIt);
+			int globalIdx1 = this->diffProblem.variables().indexDiffusion(*eIt);
 
 			// get pressure value
-			double press1 = this->diffProblem.variables.pressure[globalIdx1];
+			double press1 = this->diffProblem.variables().pressure()[globalIdx1];
 
 			// get right hand side
 			double q1 = this->diffProblem.sourcePress(globalPos1, *eIt, localPos1);
@@ -92,14 +89,14 @@ public:
 	
 			// compute total mobility of cell 1
 			double lambda1;
-                        double sat1 = this->diffProblem.variables.saturation[globalIdx1];
+                        double sat1 = this->diffProblem.variables().saturation()[globalIdx1];
 	                lambda1 = this->diffProblem.materialLaw().mobTotal(sat1, globalPos1,*eIt,localPos1);
 
                         // this 'for' loop can be deleted since velocity is
                         // initiated in variableclass.hh
                         for (int i=0; i<2*dim; i++)
                           {
-                            this->diffProblem.variables.velocity[globalIdx1][i] = 0;
+                            this->diffProblem.variables().velocity()[globalIdx1][i] = 0;
                           }
 
                         // the following two variables are used to check local conservation
@@ -107,8 +104,8 @@ public:
 			FieldVector<Scalar,dimWorld> unitOuterNormal[2*dim]; 
 
 			
-			IntersectionIterator isItBegin = gridView.template ibegin(*eIt);
-			IntersectionIterator isItEnd = gridView.template iend(*eIt);
+			IntersectionIterator isItBegin = this->gridView.template ibegin(*eIt);
+			IntersectionIterator isItEnd = this->gridView.template iend(*eIt);
 			for (IntersectionIterator isIt = isItBegin; isIt!=isItEnd; ++isIt)
 			  {
 			    // intersection iterator 'nextisIt' is used to get geometry information
@@ -242,10 +239,10 @@ public:
 			    {
 			      // access neighbor cell 2 of 'isIt'
 			      ElementPointer outside = isIt->outside();
-                              int globalIdx2 = this->diffProblem.variables.diffMapper.map(*outside);
+                              int globalIdx2 = this->diffProblem.variables().indexDiffusion(*outside);
                   
 			      // get pressure value
-			      double press2 = this->diffProblem.variables.pressure[globalIdx2];
+			      double press2 = this->diffProblem.variables().pressure()[globalIdx2];
 
 			      // neighbor cell 2 geometry type
                               Dune::GeometryType gt2 = outside->geometry().type();
@@ -263,7 +260,7 @@ public:
 
 			      // get total mobility of neighbor cell 2
                               double lambda2;
-                              double sat2 = this->diffProblem.variables.saturation[globalIdx2];
+                              double sat2 = this->diffProblem.variables().saturation()[globalIdx2];
 	                      lambda2 = this->diffProblem.materialLaw().mobTotal(sat2, globalPos2, *outside, localPos2);
 		            
 
@@ -274,10 +271,10 @@ public:
 				  // neighbor cell 3
 				  // access neighbor cell 3
 				  ElementPointer nextisItoutside = nextisIt->outside();
-				  int globalIdx3 = this->diffProblem.variables.diffMapper.map(*nextisItoutside);
+				  int globalIdx3 = this->diffProblem.variables().indexDiffusion(*nextisItoutside);
 
 				  // get pressure value
-				  double press3 = this->diffProblem.variables.pressure[globalIdx3];
+				  double press3 = this->diffProblem.variables().pressure()[globalIdx3];
 
 				  // neighbor cell 3 geometry type
 				  Dune::GeometryType gt3 = nextisItoutside->geometry().type();
@@ -295,7 +292,7 @@ public:
 
 				  // get total mobility of neighbor cell 3
 				  double lambda3;
-                                  double sat3 = this->diffProblem.variables.saturation[globalIdx3];
+                                  double sat3 = this->diffProblem.variables().saturation()[globalIdx3];
 	                          lambda3 = this->diffProblem.materialLaw().mobTotal(sat3, globalPos3, *nextisItoutside, localPos3);
 				  
 
@@ -305,11 +302,11 @@ public:
 				  double lambda4;
 				  int globalIdx4;
 
-                                  IntersectionIterator innerisItEnd = gridView.template iend(*outside);
-                                  IntersectionIterator innernextisItEnd = gridView.template iend(*nextisItoutside);
-                                  for (IntersectionIterator innerisIt = gridView.template ibegin(*outside);
+                                  IntersectionIterator innerisItEnd = this->gridView.template iend(*outside);
+                                  IntersectionIterator innernextisItEnd = this->gridView.template iend(*nextisItoutside);
+                                  for (IntersectionIterator innerisIt = this->gridView.template ibegin(*outside);
                                        innerisIt!=innerisItEnd; ++innerisIt )
-                                    for (IntersectionIterator innernextisIt = gridView.template ibegin(*nextisItoutside); 
+                                    for (IntersectionIterator innernextisIt = this->gridView.template ibegin(*nextisItoutside); 
                                          innernextisIt!=innernextisItEnd; ++innernextisIt)
 				      { 
                                         if (innerisIt->neighbor() && innernextisIt->neighbor())
@@ -321,7 +318,7 @@ public:
 					    if (innerisItoutside == innernextisItoutside && innerisItoutside != isIt->inside())
 					      {
 					        // access neighbor cell 4
-					        globalIdx4 = this->diffProblem.variables.diffMapper.map(*innerisItoutside);
+					        globalIdx4 = this->diffProblem.variables().indexDiffusion(*innerisItoutside);
 
 					        // neighbor cell 4 geometry type
 					        Dune::GeometryType gt4 = innerisItoutside->geometry().type();
@@ -337,7 +334,7 @@ public:
 					        K4 += this->diffProblem.soil().K(globalPos4, *innerisItoutside, localPos4);
 
 					        // get total mobility of neighbor cell 4
-                                                double sat4 = this->diffProblem.variables.saturation[globalIdx4];
+                                                double sat4 = this->diffProblem.variables().saturation()[globalIdx4];
 	                                        lambda4 = this->diffProblem.materialLaw().mobTotal(sat4, globalPos4, *innerisItoutside, localPos4);
 					        
                                               }
@@ -345,15 +342,15 @@ public:
 				      }
 
 				  // get pressure value
-				  double press4 = this->diffProblem.variables.pressure[globalIdx4];
+				  double press4 = this->diffProblem.variables().pressure()[globalIdx4];
 
 				  // computation of flux through the first half edge of 'isIt' and the flux
                                   // through the second half edge of 'nextisIt'
 				    						
 				  // get the information of the face 'isIt24' between cell2 and cell4 (locally numbered)
-				  IntersectionIterator isIt24 = gridView.template ibegin(*outside);
+				  IntersectionIterator isIt24 = this->gridView.template ibegin(*outside);
 
-				  for (IntersectionIterator innerisIt = gridView.template ibegin(*outside);
+				  for (IntersectionIterator innerisIt = this->gridView.template ibegin(*outside);
                                        innerisIt != innerisItEnd; ++innerisIt)
 				    {
 				      if (innerisIt->neighbor())
@@ -392,9 +389,9 @@ public:
                                     *= Dune::ReferenceElements<Scalar,dim-1>::general(gtf24).volume()/2.0;
 				 
 				  // get the information of the face 'isIt34' between cell3 and cell4 (locally numbered)
-				  IntersectionIterator isIt34 = gridView.template ibegin(*nextisItoutside);
+				  IntersectionIterator isIt34 = this->gridView.template ibegin(*nextisItoutside);
 
-				  for (IntersectionIterator innerisIt = gridView.template ibegin(*nextisItoutside);
+				  for (IntersectionIterator innerisIt = this->gridView.template ibegin(*nextisItoutside);
                                        innerisIt != innernextisItEnd; ++innerisIt)
 				    {
 				      if (innerisIt->neighbor())
@@ -568,12 +565,12 @@ public:
                                   // evaluate velocity of facet 'isIt'
 				  FieldVector<Scalar,dim> vector1 = unitOuterNormaln1;
 				  vector1 *= Tu[0]/face12vol;
-				  this->diffProblem.variables.velocity[globalIdx1][indexInInside] += vector1; 
+				  this->diffProblem.variables().velocity()[globalIdx1][indexInInside] += vector1; 
 
                                   // evaluate velocity of facet 'nextisIt'
 				  FieldVector<Scalar,dim> vector3 = unitOuterNormaln3;
 				  vector3 *= Tu[2]/face13vol;
-				  this->diffProblem.variables.velocity[globalIdx1][nextindexInInside] += vector3; 
+				  this->diffProblem.variables().velocity()[globalIdx1][nextindexInInside] += vector3; 
 				 
 				}
 			      // 'nextisIt' is on the boundary			      
@@ -584,9 +581,9 @@ public:
 				   
                                   // get common geometry information for the following computation 				
 				  // get the information of the face 'isIt24' between cell2 and cell4 (locally numbered)
-				  IntersectionIterator isIt24 = gridView.template ibegin(*outside);
-                                  IntersectionIterator innerisItEnd = gridView.template iend(*outside);
-				  for (IntersectionIterator innerisIt = gridView.template ibegin(*outside);
+				  IntersectionIterator isIt24 = this->gridView.template ibegin(*outside);
+                                  IntersectionIterator innerisItEnd = this->gridView.template iend(*outside);
+				  for (IntersectionIterator innerisIt = this->gridView.template ibegin(*outside);
                                        innerisIt != innerisItEnd; ++innerisIt)
 				    {
 				      if (innerisIt->boundary())
@@ -719,7 +716,7 @@ public:
                                           // evaluate velocity of facet 'isIt'
 				          FieldVector<Scalar,dim> vector1 = unitOuterNormaln1;
 				          vector1 *= f1/face12vol;
-				          this->diffProblem.variables.velocity[globalIdx1][indexInInside] += vector1; 
+				          this->diffProblem.variables().velocity()[globalIdx1][indexInInside] += vector1; 
 
                                         }
                                       // 'isIt24': Dirichlet boundary
@@ -800,7 +797,7 @@ public:
                                           // evaluate velocity of facet 'isIt'
 				          FieldVector<Scalar,dim> vector1 = unitOuterNormaln1;
 				          vector1 *= f1/face12vol;
-				          this->diffProblem.variables.velocity[globalIdx1][indexInInside] += vector1; 
+				          this->diffProblem.variables().velocity()[globalIdx1][indexInInside] += vector1; 
                                                            
                                         }                                       				     
 				    }
@@ -897,12 +894,12 @@ public:
                                           // evaluate velocity of facet 'isIt'
 				          FieldVector<Scalar,dim> vector1 = unitOuterNormaln1;
 				          vector1 *= f1/face12vol;
-				          this->diffProblem.variables.velocity[globalIdx1][indexInInside] += vector1; 
+				          this->diffProblem.variables().velocity()[globalIdx1][indexInInside] += vector1; 
 
                                           // evaluate velocity of facet 'nextisIt'
 				          FieldVector<Scalar,dim> vector3 = unitOuterNormaln3;
 				          vector3 *= f3/face13vol;
-				          this->diffProblem.variables.velocity[globalIdx1][nextindexInInside] += vector3; 
+				          this->diffProblem.variables().velocity()[globalIdx1][nextindexInInside] += vector3; 
 
                                         }
                                       // 'isIt24': Dirichlet boundary
@@ -976,12 +973,12 @@ public:
                                           // evaluate velocity of facet 'isIt'
 				          FieldVector<Scalar,dim> vector1 = unitOuterNormaln1;
 				          vector1 *= f1/face12vol;
-				          this->diffProblem.variables.velocity[globalIdx1][indexInInside] += vector1; 
+				          this->diffProblem.variables().velocity()[globalIdx1][indexInInside] += vector1; 
 
                                           // evaluate velocity of facet 'nextisIt'
 				          FieldVector<Scalar,dim> vector3 = unitOuterNormaln3;
 				          vector3 *= f3/face13vol;
-				          this->diffProblem.variables.velocity[globalIdx1][nextindexInInside] += vector3; 
+				          this->diffProblem.variables().velocity()[globalIdx1][nextindexInInside] += vector3; 
   
                                         }	
                                     }
@@ -1002,7 +999,7 @@ public:
                                   // evaluate velocity of facet 'isIt'
                                   FieldVector<Scalar,dim> vector1 = unitOuterNormaln1;
                                   vector1 *= -J1;
-                                  this->diffProblem.variables.velocity[globalIdx1][indexInInside] -= vector1; 
+                                  this->diffProblem.variables().velocity()[globalIdx1][indexInInside] -= vector1; 
 				  
                                   // 'nextisIt' is on boundary
 				  if (nextisIt->boundary())
@@ -1048,7 +1045,7 @@ public:
                                           // evaluate velocity of facet 'nextisIt'
 				          FieldVector<Scalar,dim> vector3 = unitOuterNormaln3;
 				          vector3 *= f3/face13vol;
-				          this->diffProblem.variables.velocity[globalIdx1][nextindexInInside] += vector3; 
+				          this->diffProblem.variables().velocity()[globalIdx1][nextindexInInside] += vector3; 
 
 					}
 				    }
@@ -1058,10 +1055,10 @@ public:
 				      // neighbor cell 3
 				      // access neighbor cell 3
 				      ElementPointer nextisItoutside = nextisIt->outside();
-				      int globalIdx3 = this->diffProblem.variables.diffMapper.map(*nextisItoutside);
+				      int globalIdx3 = this->diffProblem.variables().indexDiffusion(*nextisItoutside);
 
 			              // get pressure value
-			              double press3 = this->diffProblem.variables.pressure[globalIdx3];
+			              double press3 = this->diffProblem.variables().pressure()[globalIdx3];
 
 				      // neighbor cell 3 geometry type
 				      Dune::GeometryType gt3 = nextisItoutside->geometry().type();
@@ -1079,13 +1076,13 @@ public:
 
 				      // get total mobility of neighbor cell 3
 				      double lambda3;
-                                      double sat3 = this->diffProblem.variables.saturation[globalIdx3];
+                                      double sat3 = this->diffProblem.variables().saturation()[globalIdx3];
 	                              lambda3 = this->diffProblem.materialLaw().mobTotal(sat3, globalPos3, *nextisItoutside, localPos3);
 				      
 				      // get the information of the face 'isIt34' between cell3 and cell4 (locally numbered)
-				      IntersectionIterator isIt34 = gridView.template ibegin(*nextisItoutside);
-                                      IntersectionIterator innernextisItEnd = gridView.template iend(*nextisItoutside);
-				      for (IntersectionIterator innerisIt = gridView.template ibegin(*nextisItoutside);
+				      IntersectionIterator isIt34 = this->gridView.template ibegin(*nextisItoutside);
+                                      IntersectionIterator innernextisItEnd = this->gridView.template iend(*nextisItoutside);
+				      for (IntersectionIterator innerisIt = this->gridView.template ibegin(*nextisItoutside);
                                            innerisIt != innernextisItEnd; ++innerisIt)
 				        {
 				          if (innerisIt->boundary())
@@ -1225,7 +1222,7 @@ public:
                                           // evaluate velocity of facet 'nextisIt'
 				          FieldVector<Scalar,dim> vector3 = unitOuterNormaln3;
 				          vector3 *= f3/face13vol;
-				          this->diffProblem.variables.velocity[globalIdx1][nextindexInInside] += vector3; 
+				          this->diffProblem.variables().velocity()[globalIdx1][nextindexInInside] += vector3; 
 
                                         }
                                       // 'isIt34': Dirichlet boundary
@@ -1320,7 +1317,7 @@ public:
                                           // evaluate velocity of facet 'nextisIt'
 				          FieldVector<Scalar,dim> vector3 = unitOuterNormaln3;
 				          vector3 *= f3/face13vol;
-				          this->diffProblem.variables.velocity[globalIdx1][nextindexInInside] += vector3; 
+				          this->diffProblem.variables().velocity()[globalIdx1][nextindexInInside] += vector3; 
 					 
                                         }                                      
                                     }
@@ -1387,12 +1384,12 @@ public:
                                           // evaluate velocity of facet 'isIt'
 				          FieldVector<Scalar,dim> vector1 = unitOuterNormaln1;
 				          vector1 *= f1/face12vol;
-				          this->diffProblem.variables.velocity[globalIdx1][indexInInside] += vector1; 
+				          this->diffProblem.variables().velocity()[globalIdx1][indexInInside] += vector1; 
                                                                
                                           // evaluate velocity of facet 'nextisIt'
 				          FieldVector<Scalar,dim> vector3 = unitOuterNormaln3;
 				          vector3 *= f3/face13vol;
-				          this->diffProblem.variables.velocity[globalIdx1][nextindexInInside] += vector3; 
+				          this->diffProblem.variables().velocity()[globalIdx1][nextindexInInside] += vector3; 
 
                                         }
                                       // 'nextisIt': Neumann boundary
@@ -1433,7 +1430,7 @@ public:
                                           // evaluate velocity of facet 'isIt'
 				          FieldVector<Scalar,dim> vector1 = unitOuterNormaln1;
 				          vector1 *= f1/face12vol;
-				          this->diffProblem.variables.velocity[globalIdx1][indexInInside] += vector1; 
+				          this->diffProblem.variables().velocity()[globalIdx1][indexInInside] += vector1; 
 
                                         }
                                     }
@@ -1443,10 +1440,10 @@ public:
 				      // neighbor cell 3
 				      // access neighbor cell 3
 				      ElementPointer nextisItoutside = nextisIt->outside();
-				      int globalIdx3 = this->diffProblem.variables.diffMapper.map(*nextisItoutside);
+				      int globalIdx3 = this->diffProblem.variables().indexDiffusion(*nextisItoutside);
 
 			              // get pressure value
-			              double press3 = this->diffProblem.variables.pressure[globalIdx3];
+			              double press3 = this->diffProblem.variables().pressure()[globalIdx3];
 
 				      // neighbor cell 3 geometry type
 				      Dune::GeometryType gt3 = nextisItoutside->geometry().type();
@@ -1464,14 +1461,14 @@ public:
 
 				      // get total mobility of neighbor cell 3
 				      double lambda3;
-                                      double sat3 = this->diffProblem.variables.saturation[globalIdx3];
+                                      double sat3 = this->diffProblem.variables().saturation()[globalIdx3];
 	                              lambda3 = this->diffProblem.materialLaw().mobTotal(sat3, globalPos3, *nextisItoutside, localPos3);
 				      
 
 				      // get the information of the face 'isIt34' between cell3 and cell4 (locally numbered)
-				      IntersectionIterator isIt34 = gridView.template ibegin(*nextisItoutside);
-                                      IntersectionIterator innernextisItEnd = gridView.template iend(*nextisItoutside);
-				      for (IntersectionIterator innerisIt = gridView.template ibegin(*nextisItoutside);
+				      IntersectionIterator isIt34 = this->gridView.template ibegin(*nextisItoutside);
+                                      IntersectionIterator innernextisItEnd = this->gridView.template iend(*nextisItoutside);
+				      for (IntersectionIterator innerisIt = this->gridView.template ibegin(*nextisItoutside);
                                            innerisIt != innernextisItEnd; ++innerisIt)
 				        {
 				          if (innerisIt->boundary())
@@ -1586,12 +1583,12 @@ public:
                                           // evaluate velocity of facet 'isIt'
 				          FieldVector<Scalar,dim> vector1 = unitOuterNormaln1;
 				          vector1 *= f1/face12vol;
-				          this->diffProblem.variables.velocity[globalIdx1][indexInInside] += vector1; 
+				          this->diffProblem.variables().velocity()[globalIdx1][indexInInside] += vector1; 
                                                                
                                           // evaluate velocity of facet 'nextisIt'
 				          FieldVector<Scalar,dim> vector3 = unitOuterNormaln3;
 				          vector3 *= f3/face13vol;
-				          this->diffProblem.variables.velocity[globalIdx1][nextindexInInside] += vector3; 
+				          this->diffProblem.variables().velocity()[globalIdx1][nextindexInInside] += vector3; 
                  			  
                                         }
                                       // 'isIt34': Neumann boundary
@@ -1673,12 +1670,12 @@ public:
                                           // evaluate velocity of facet 'isIt'
 				          FieldVector<Scalar,dim> vector1 = unitOuterNormaln1;
 				          vector1 *= f1/face12vol;
-				          this->diffProblem.variables.velocity[globalIdx1][indexInInside] += vector1; 
+				          this->diffProblem.variables().velocity()[globalIdx1][indexInInside] += vector1; 
                                                                
                                           // evaluate velocity of facet 'nextisIt'
 				          FieldVector<Scalar,dim> vector3 = unitOuterNormaln3;
 				          vector3 *= f3/face13vol;
-				          this->diffProblem.variables.velocity[globalIdx1][nextindexInInside] += vector3; 
+				          this->diffProblem.variables().velocity()[globalIdx1][nextindexInInside] += vector3; 
                                      
                                         } 
                                      } 		   
@@ -1690,24 +1687,24 @@ public:
                          // check if local mass conservative
  			 if (dim == 2) 
  			 {
- 			   double diff = fabs(this->diffProblem.variables.velocity[globalIdx1][0]*unitOuterNormal[0]*facevol[0] 
- 					      + this->diffProblem.variables.velocity[globalIdx1][1]*unitOuterNormal[1]*facevol[1]
- 					      + this->diffProblem.variables.velocity[globalIdx1][2]*unitOuterNormal[2]*facevol[2] 
- 					      + this->diffProblem.variables.velocity[globalIdx1][3]*unitOuterNormal[3]*facevol[3]-q1*volume1)
- 			               /(fabs(this->diffProblem.variables.velocity[globalIdx1][0]*unitOuterNormal[0]*facevol[0]) 
- 					 + fabs(this->diffProblem.variables.velocity[globalIdx1][1]*unitOuterNormal[1]*facevol[1]) 
- 					 + fabs(this->diffProblem.variables.velocity[globalIdx1][2]*unitOuterNormal[2]*facevol[2]) 
- 					 + fabs(this->diffProblem.variables.velocity[globalIdx1][3]*unitOuterNormal[3]*facevol[3])
+ 			   double diff = fabs(this->diffProblem.variables().velocity()[globalIdx1][0]*unitOuterNormal[0]*facevol[0] 
+ 					      + this->diffProblem.variables().velocity()[globalIdx1][1]*unitOuterNormal[1]*facevol[1]
+ 					      + this->diffProblem.variables().velocity()[globalIdx1][2]*unitOuterNormal[2]*facevol[2] 
+ 					      + this->diffProblem.variables().velocity()[globalIdx1][3]*unitOuterNormal[3]*facevol[3]-q1*volume1)
+ 			               /(fabs(this->diffProblem.variables().velocity()[globalIdx1][0]*unitOuterNormal[0]*facevol[0]) 
+ 					 + fabs(this->diffProblem.variables().velocity()[globalIdx1][1]*unitOuterNormal[1]*facevol[1]) 
+ 					 + fabs(this->diffProblem.variables().velocity()[globalIdx1][2]*unitOuterNormal[2]*facevol[2]) 
+ 					 + fabs(this->diffProblem.variables().velocity()[globalIdx1][3]*unitOuterNormal[3]*facevol[3])
                                          + fabs(q1*volume1));
 
                                  // without source/sink
  				 if (diff > 1e-8) 
  				 {
  					 std::cout << "NOT conservative!!! diff = " << diff << ", globalIdxI = " << globalIdx1 << std::endl;
- 					 std::cout << this->diffProblem.variables.velocity[globalIdx1][0]*unitOuterNormal[0]*facevol[0] << ", " 
- 						   << this->diffProblem.variables.velocity[globalIdx1][1]*unitOuterNormal[1]*facevol[1] << ", " 
- 						   << this->diffProblem.variables.velocity[globalIdx1][2]*unitOuterNormal[2]*facevol[2] << ", " 
- 						   << this->diffProblem.variables.velocity[globalIdx1][3]*unitOuterNormal[3]*facevol[3] <<  std::endl;
+ 					 std::cout << this->diffProblem.variables().velocity()[globalIdx1][0]*unitOuterNormal[0]*facevol[0] << ", " 
+ 						   << this->diffProblem.variables().velocity()[globalIdx1][1]*unitOuterNormal[1]*facevol[1] << ", " 
+ 						   << this->diffProblem.variables().velocity()[globalIdx1][2]*unitOuterNormal[2]*facevol[2] << ", " 
+ 						   << this->diffProblem.variables().velocity()[globalIdx1][3]*unitOuterNormal[3]*facevol[3] <<  std::endl;
  				 }
 			 }		    
 	    } // end grid traversal

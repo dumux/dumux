@@ -3,8 +3,8 @@
 #include "config.h"
 #include <iostream>
 #include <iomanip>
-#include <dune/grid/sgrid.hh> // load sgrid definition
-#include <dune/grid/yaspgrid.hh> // load yaspgrid definition
+#include <dune/grid/utility/gridtype.hh>
+#include <dune/grid/onedgrid.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/io.hh>
 #include "dumux/material/phaseproperties/phaseproperties2p.hh"
@@ -19,38 +19,58 @@ int main(int argc, char** argv)
 {
     try{
         // define the problem dimensions
-        const int dim=2;
+        const int dim=1;
+        typedef double NumberType;
 
         // time loop parameters
         const double tStart = 0;
         const double tEnd = 1.5e9;
-        double dt = 3e8;
+        double dt = 1.5e9;
 	double firstDt = dt;
 	double maxDt = dt;
         int modulo = 1;
-	double slLengthFactor = 10;
+
+        Dune::FieldVector<NumberType, dim> Left(0);
+        Dune::FieldVector<NumberType, dim> Right(600);
 
         // create a grid object
-        typedef double NumberType;
-
-        Dune::FieldVector<int,dim> N(1); N[0] = 100;
-        Dune::FieldVector<NumberType,dim> L(0);
-        Dune::FieldVector<NumberType,dim> H(300); H[0] = 600;
-
-
-        typedef Dune::SGrid<dim,dim> GridType;
+        typedef Dune::OneDGrid GridType;
+        typedef GridType::ctype ctype;
         typedef GridType::LevelGridView GridView;
-        GridType grid(N,L,H);
-        //typedef Dune::YaspGrid<dim> GridType;
-        //GridType grid(H, N, Dune::FieldVector<bool,dim>(false), 0);
+
+        //deffinition of a stretched grid
+        const int numberofelements = 30;
+        double strfactor = 0;
+
+        //vector with coordinates
+        std::vector<ctype> coord;
+        coord.resize(numberofelements+1);
+        coord[0]=0;
+        coord[1]=1;
+
+        //generate coordinates for a stretched grid
+        for (int i=2;i<numberofelements+1;i++){
+            coord[i]=coord[i-1]+(coord[i-1]-coord[i-2])*(1+strfactor);
+        }
+
+        //scale coordinates to geometry
+        for (int i=0;i<numberofelements+1;i++){
+            coord[i]*=Right[0]/coord[numberofelements];
+            //std::cout << "coordinates =  " << coord[i] << std::endl;
+        }
+
+        const std::vector<ctype>& coordinates(coord);
+
+        // grid
+        GridType grid(coordinates);
 
         grid.globalRefine(0);
 
         GridView gridView(grid.levelView(0));
 
         Dune::Uniform mat(0.2);
-        //Dune::HomogeneousLinearSoil<GridType, NumberType> soil;
-        Dune::HomogeneousNonlinearSoil<GridType, NumberType> soil;
+        Dune::HomogeneousLinearSoil<GridType, NumberType> soil;
+        //Dune::HomogeneousNonlinearSoil<GridType, NumberType> soil;
         Dune::TwoPhaseRelations<GridType, NumberType> materialLaw(soil, mat, mat);
 
         typedef Dune::VariableClass<GridView, NumberType> VC;
@@ -61,17 +81,17 @@ int main(int argc, char** argv)
 
         VC variables(gridView,initsat,vel);
 
-        //Dune::SimpleProblem<GridType, NumberType, VC> problem(variables, mat, mat , soil, materialLaw,L,H);
-        Dune::SimpleNonlinearProblem<GridView, NumberType, VC> problem(variables, mat, mat , soil, materialLaw,L,H);
+        Dune::SimpleProblem<GridView, NumberType, VC> problem(variables, mat, mat , soil, materialLaw,Left,Right);
+        //Dune::SimpleNonlinearProblem<GridView, NumberType, VC> problem(variables, mat, mat , soil, materialLaw,Left,Right);
 
         Dune::FractionalW<GridView, NumberType, VC> fractionalW(problem);
 
         typedef Dune::ChTransport<GridView, NumberType, VC> Transport;
 
-        Transport transport(gridView, problem, fractionalW, slLengthFactor);
+        Transport transport(gridView, problem, fractionalW);
 
 	Dune::RungeKuttaStep<GridType, Transport> timeStep(1);
-        Dune::TimeLoop<GridType, Transport > timeloop(tStart, tEnd, dt, "chtransport", modulo, maxDt, firstDt, timeStep);
+        Dune::TimeLoop<GridType, Transport > timeloop(tStart, tEnd, dt, "chtransport1D", modulo, maxDt, firstDt, timeStep);
 
         timeloop.execute(transport);
 

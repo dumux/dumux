@@ -19,12 +19,12 @@ namespace Dune
 /*!\ingroup transport
  * @brief  Base class for defining the numerical flux of an advection-diffusion equation
  */
-template<class Grid, class Scalar, class VC, class Problem = TransportProblem<Grid, Scalar, VC> >
-class ComputeUpwind : public ComputeNumFlux<Grid,Scalar> {
-    enum{dim = Grid::dimension,dimWorld = Grid::dimensionworld};
-    typedef typename Grid::Traits::template Codim<0>::Entity Element;
-    typedef typename Grid::template Codim<0>::EntityPointer ElementPointer;
-    typedef typename Grid::LevelGridView GridView;
+template<class GridView, class Scalar, class VC, class Problem = TransportProblem<GridView, Scalar, VC> >
+class ComputeUpwind : public ComputeNumFlux<GridView,Scalar> {
+    enum{dim = GridView::dimension,dimWorld = GridView::dimensionworld};
+    typedef typename GridView::Traits::template Codim<0>::Entity Element;
+    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
+    typedef typename GridView::Grid Grid;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
@@ -67,8 +67,8 @@ public:
         integrationOuterNormal *= Dune::ReferenceElements<Scalar,dim-1>::general(faceGT).volume();
 
         // get the flux through the faceIJ
-        Scalar velocityIJ = std::max(problem_.variables.vTotal(element, faceNumber)*integrationOuterNormal, 0.0);
-        Scalar velocityJI = std::max(-(problem_.variables.vTotal(element, faceNumber)*integrationOuterNormal), 0.0);
+        Scalar velocityIJ = std::max(problem_.variables().vTotalElementFace(element, faceNumber)*integrationOuterNormal, 0.0);
+        Scalar velocityJI = std::max(-(problem_.variables().vTotalElementFace(element, faceNumber)*integrationOuterNormal), 0.0);
 
         Scalar fJ;
 

@@ -30,7 +30,7 @@ namespace Dune
  - VelType   type of the vector holding the velocity values
 
 */
-template<class Grid, class Scalar, class VC, class Problem =  TransportProblem<Grid, Scalar, VC> >
+template<class GridView, class Scalar, class VC, class Problem =  TransportProblem<GridView, Scalar, VC> >
 class Transport
 {
 public:
@@ -46,7 +46,8 @@ public:
      *  Calculate the update vector, i.e., the discretization
      *  of \f$\text{div}\, (f_\text{w}(S) \boldsymbol{v}_t)\f$.
      */
-    virtual int update(const Scalar t, Scalar& dt, RepresentationType& updateVec, Scalar& CLFFac) = 0;
+
+    virtual int update(const Scalar t, Scalar& dt, RepresentationType& updateVec, Scalar& CLFFac, bool impes) = 0;
 
     void initial()
     {
@@ -60,19 +61,13 @@ public:
     //! return const reference to saturation vector
     virtual const RepresentationType& operator* () const
     {
-        return transProblem.variables.saturation;
+        return transProblem.variables().saturation();
     }
 
     //! return reference to saturation vector
     virtual RepresentationType& operator* ()
     {
-        return transProblem.variables.saturation;
-    }
-
-    virtual void vtkout(const char* name, int k) const
-    {
-        transProblem.variables.vtkout(name, k);
-        return;
+        return transProblem.variables().saturation();
     }
 
     virtual void postProcessUpdate(Scalar t, Scalar dt)
@@ -80,28 +75,22 @@ public:
         return;
     }
 
+    virtual void vtkout(const char* name, int k)const = 0;
+
     //! always define virtual destructor in abstract base class
     virtual ~Transport ()
     {}
 
-    const Grid& grid() const
-    { return grid_; }
-
     /*! @brief constructor
-     *  @param g a DUNE grid object
+     *  @param gridView a DUNE gridview object
      *  @param prob an object of class TransportProblem or derived
      */
-    Transport(const Grid& grid, Problem& problem)
-        : grid_(grid), transProblem(problem)
+    Transport(const GridView& gridView, Problem& problem)
+        : gridView(gridView), transProblem(problem)
     {}
 
-    //! returns the level on which the transport eqution is solved.
-    int& level() const
-    {
-        return transProblem.variables.transLevel;
-    }
-
-    const Grid& grid_;
+protected:
+    const GridView& gridView;
     Problem& transProblem; //!< problem data
 };
 

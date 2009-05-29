@@ -18,13 +18,17 @@ namespace Dune
 /*!\ingroup diffPart
  * @brief  Base class for defining the diffusive part of an advection-diffusion equation
  */
-template<class Grid, class Scalar, class VC, class Problem = TransportProblem<Grid, Scalar, VC> >
-class CapillaryDiffusion : public DiffusivePart<Grid,Scalar>
+template<class GridView, class Scalar, class VC,
+        class Problem = TransportProblem<GridView, Scalar, VC> >
+class CapillaryDiffusion: public DiffusivePart<GridView, Scalar>
 {
-    enum{dim = Grid::dimension,dimWorld = Grid::dimensionworld};
-    typedef typename Grid::Traits::template Codim<0>::Entity Element;
-    typedef typename Grid::template Codim<0>::EntityPointer ElementPointer;
-    typedef typename Grid::LevelGridView GridView;
+    enum
+    {
+        dim = GridView::dimension, dimWorld = GridView::dimensionworld
+    };
+typedef    typename GridView::Grid Grid;
+    typedef typename GridView::Traits::template Codim<0>::Entity Element;
+    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
     typedef typename GridView::IntersectionIterator IntersectionIterator;
     typedef Dune::FieldVector<Scalar, dim> FieldVector;
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;
@@ -32,9 +36,7 @@ class CapillaryDiffusion : public DiffusivePart<Grid,Scalar>
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
 public:
-    virtual FieldVector operator() (const Element& element, const int faceNumber,
-                                    const Scalar satIntersection, const FieldVector& satGradient, const Scalar time,
-                                    const Scalar satI, const Scalar satJ) const
+    virtual FieldVector operator() (const Element& element, const int indexInInside, Scalar satI, Scalar satJ, const FieldVector& pcGradient) const
     {
         // cell geometry type
         GeometryType gt = element.geometry().type();
@@ -46,15 +48,16 @@ public:
         const GlobalPosition& globalPos = element.geometry().global(localPos);
 
         // get absolute permeability of cell
-        FieldMatrix K(soil_.K(globalPos,element,localPos));
+        FieldMatrix permeability(soil_.K(globalPos,element,localPos));
 
         IntersectionIterator isItEnd = element.ilevelend();
         IntersectionIterator isIt = element.ilevelbegin();
         for (; isIt != isItEnd; ++isIt)
         {
-            if(isIt->indexInInside() == faceNumber)
-                break;
+            if(isIt->indexInInside() == indexInInside)
+            break;
         }
+        int globalIdxI = problem_.variables().indexTransport(element);
 
         // get geometry type of face
         GeometryType faceGT = isIt->geometryInInside().type();
@@ -63,19 +66,17 @@ public:
         const Dune::FieldVector<Scalar,dim-1>& faceLocal = ReferenceElements<Scalar,dim-1>::general(faceGT).position(0,0);
 
         FieldVector unitOuterNormal = isIt->unitOuterNormal(faceLocal);
-        //std::cout<<"unitOuterNormaldiff"<<unitOuterNormal<<std::endl;
 
-        //get capillary pressure gradient
-        Scalar dPdSI=problem_.materialLaw().dPdS(satI,globalPos,element,localPos);
         //get lambda_bar = lambda_n*f_w
-        Scalar mobBarI=problem_.materialLaw().mobN(1-satI,globalPos,element,localPos)*problem_.materialLaw().fractionalW(satI,globalPos,element,localPos);
-
-        Scalar dPdSJ;
+        Scalar mobBarI=problem_.variables().mobilityWetting()[globalIdxI]*problem_.variables().fracFlowFuncNonWetting()[globalIdxI];
         Scalar mobBarJ;
 
-        if (isIt->neighbor()) {
+        if (isIt->neighbor())
+        {
             // access neighbor
             ElementPointer neighborPointer = isIt->outside();
+
+            int globalIdxJ = problem_.variables().indexTransport(*neighborPointer);
 
             // compute factor in neighbor
             GeometryType neighborGT = neighborPointer->geometry().type();
@@ -85,44 +86,39 @@ public:
             const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().global(localPosNeighbor);
 
             // take arithmetic average of absolute permeability
-            K += soil_.K(globalPosNeighbor, *neighborPointer, localPosNeighbor);
-            K *= 0.5;
+            permeability += soil_.K(globalPosNeighbor, *neighborPointer, localPosNeighbor);
+            permeability *= 0.5;
 
-            //get capillary pressure gradient
-            dPdSJ=problem_.materialLaw().dPdS(satJ, globalPosNeighbor, *neighborPointer, localPosNeighbor);
             //get lambda_bar = lambda_n*f_w
-            mobBarJ=problem_.materialLaw().mobN(1-satJ, globalPosNeighbor, *neighborPointer, localPosNeighbor)*problem_.materialLaw().fractionalW(satJ, globalPosNeighbor, *neighborPointer, localPosNeighbor);
+            mobBarJ=problem_.variables().mobilityWetting()[globalIdxJ]*problem_.variables().fracFlowFuncNonWetting()[globalIdxJ];
         }
         else
         {
-            dPdSJ = dPdSI;
-            mobBarJ = mobBarI;
+            //calculate lambda_n*f_w at the boundary: use a regularization with regularizationparamter eps_
+            std::vector<Scalar> mobI = problem_.materialLaw().mob((eps_*satJ + (1-eps_)*satI), globalPos, element, localPos);
+            std::vector<Scalar> mobJ = problem_.materialLaw().mob((eps_*satI + (1-eps_)*satJ), globalPos, element, localPos);
+            mobBarI = mobI[0]*mobI[1]/(mobI[0]+mobI[1]);
+            mobBarJ = mobJ[0]*mobJ[1]/(mobJ[0]+mobJ[1]);
         }
 
-        // set result to grad(S)
-        FieldVector helpResult(satGradient);
-
-        // set result to (dp_c/dS)*grad(S)
-        helpResult *= (dPdSI+dPdSJ)*0.5;
-
-        // set result to K*((dp_c/dS)*grad(S))
+        // set result to K*grad(pc)
         FieldVector result(0);
-        K.umv(helpResult, result);
+        permeability.umv(pcGradient, result);
 
-        // set result to f_w*lambda_n*K*((dp_c/dS)*grad(S))
+        // set result to f_w*lambda_n*K*grad(pc)
         result *= (mobBarI+mobBarJ)*0.5;
 
         return result;
     }
 
     CapillaryDiffusion (Problem& problem, Matrix2p<Grid, Scalar>& soil)
-        : problem_(problem), soil_(soil)
-    { }
+    : problem_(problem), soil_(soil), eps_(0.05)
+    {}
 
 private:
     Problem& problem_;
     Matrix2p<Grid, Scalar>& soil_;
-
+    Scalar eps_;
 };
 }
 

@@ -15,7 +15,7 @@ namespace Dune
 {
 //! \ingroup transport
 //! Compute the flux function of the transport equation
-template<class Grid, class Scalar>
+template<class GridView, class Scalar>
 class FluxFunction {
 public:
     /*! \brief Realizes the numerical flux function.
@@ -26,8 +26,8 @@ public:
      *  \param p pressure
      */
 private:
-    enum{dim = Grid::dimension, dimWorld = Grid::dimensionworld};
-    typedef typename Grid::Traits::template Codim<0>::Entity Element;
+    enum{dim = GridView::dimension, dimWorld = GridView::dimensionworld};
+    typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 

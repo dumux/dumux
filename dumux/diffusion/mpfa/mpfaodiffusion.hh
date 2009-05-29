@@ -39,20 +39,19 @@ namespace Dune
    * saturation.
 	Template parameters are:
 
-	- Grid      a DUNE grid type
+	- GridView      a DUNE gridView type
 	- Scalar        type used for return values 
    */
-  template<class Grid, class Scalar, class VC, class Problem = DiffusionProblem<Grid, Scalar, VC> >
+  template<class GridView, class Scalar, class VC, class Problem = DiffusionProblem<GridView, Scalar, VC> >
   class MPFAODiffusion 
-  : public Diffusion< Grid, Scalar, VC, Problem> 
+  : public Diffusion< GridView, Scalar, VC, Problem> 
   {	  
-	  enum{dim = Grid::dimension};	
-	  enum{dimWorld = Grid::dimensionworld};
-	  typedef typename Grid::Traits::template Codim<0>::Entity Element;
-          typedef typename Grid::LevelGridView GridView;
+	  enum{dim = GridView::dimension};	
+	  enum{dimWorld = GridView::dimensionworld};
+	  typedef typename GridView::Traits::template Codim<0>::Entity Element;
 	  typedef typename GridView::IndexSet IndexSet;
 	  typedef typename GridView::template Codim<0>::Iterator ElementIterator;
-	  typedef typename Grid::template Codim<0>::EntityPointer ElementPointer;
+	  typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
           typedef typename GridView::IntersectionIterator IntersectionIterator;
 
 	  typedef Dune::FieldVector<Scalar,dim> LocalPosition;
@@ -77,31 +76,31 @@ namespace Dune
 
                 timer.reset();
 		assemble(t);
-                std::cout << "assembling MPFA O-matrix on level" << this->level() << " took " << timer.elapsed() << " seconds" << std::endl;
+                std::cout << "assembling MPFA O-matrix on level" << this->gridView.grid().maxLevel() << " took " << timer.elapsed() << " seconds" << std::endl;
 
                 timer.reset();
 		solve();
-                std::cout << "solving MPFA O-matrix on level" << this->level() << " took " << timer.elapsed() << " seconds" << std::endl;
+                std::cout << "solving MPFA O-matrix on level" << this->gridView.grid().maxLevel() << " took " << timer.elapsed() << " seconds" << std::endl;
 
 		return;
 	}
 	
 	void initializeMatrix();
 
-	MPFAODiffusion(Grid& grid, Problem& problem)
-	  : Diffusion<Grid, Scalar, VC, Problem>(grid, problem), 
-	  M(grid.size(this->level(), 0), grid.size(this->level(), 0), (4*dim+(dim-1))*grid.size(this->level(), 0), Dune::BCRSMatrix<MB>::random), 
-	  f(grid.size(this->level(), 0)),
+	MPFAODiffusion(GridView& gridView, Problem& problem)
+	  : Diffusion<GridView, Scalar, VC, Problem>(gridView, problem), 
+	  M(problem.variables().gridSizeDiffusion(), problem.variables().gridSizeDiffusion(), (4*dim+(dim-1))*problem.variables().gridSizeDiffusion(), Dune::BCRSMatrix<MB>::random), 
+	  f(problem.variables().gridSizeDiffusion()),
           solverName_("BiCGSTAB"),
 	  preconditionerName_("SeqPardiso")
 	{
 		initializeMatrix();
 	}
 
-	MPFAODiffusion(Grid& grid, Problem& problem, std::string solverName, std::string preconditionerName)
-	  : Diffusion<Grid, Scalar, VC, Problem>(grid, problem), 
-	    M(grid.size(this->level(), 0), grid.size(this->level(), 0), (4*dim+(dim-1))*grid.size(this->level(), 0), Dune::BCRSMatrix<MB>::random), 
-	    f(grid.size(this->level(), 0)),
+	MPFAODiffusion(GridView& gridView, Problem& problem, std::string solverName, std::string preconditionerName)
+	  : Diffusion<GridView, Scalar, VC, Problem>(gridView, problem), 
+	    M(problem.variables().gridSizeDiffusion(), problem.variables().gridSizeDiffusion(), (4*dim+(dim-1))*problem.variables().gridSizeDiffusion(), Dune::BCRSMatrix<MB>::random), 
+	    f(problem.variables().gridSizeDiffusion()),
             solverName_(solverName),
 	    preconditionerName_(preconditionerName) 
 	{
@@ -117,28 +116,26 @@ private:
   };
 
 
-  template<class Grid, class Scalar, class VC, class Problem>
-  void MPFAODiffusion<Grid, Scalar, VC, Problem>::initializeMatrix()
+  template<class GridView, class Scalar, class VC, class Problem>
+  void MPFAODiffusion<GridView, Scalar, VC, Problem>::initializeMatrix()
   {
             // input character to decide which grid to use; 's' for SGrid, 'u' for UGGrid
             char ch = 'u';
 
-            const GridView& gridView = this->grid.levelView(this->level());
-
 	    // determine matrix row sizes 
-	    ElementIterator eItBegin = gridView.template begin<0>();
-	    ElementIterator eItEnd = gridView.template end<0>();
+	    ElementIterator eItBegin = this->gridView.template begin<0>();
+	    ElementIterator eItEnd = this->gridView.template end<0>();
 	    for (ElementIterator eIt = eItBegin; eIt != eItEnd; ++eIt)
 	      {
 			// cell index
-			int globalIdxI = this->diffProblem.variables.diffMapper.map(*eIt);
+			int globalIdxI = this->diffProblem.variables().indexDiffusion(*eIt);
 	
 			// initialize row size
 			int rowSize = 1;
 			
 			// run through all intersections with neighbors 
-                        IntersectionIterator isItBegin = gridView.template ibegin(*eIt);
-			IntersectionIterator isItEnd = gridView.template iend(*eIt);
+                        IntersectionIterator isItBegin = this->gridView.template ibegin(*eIt);
+			IntersectionIterator isItEnd = this->gridView.template iend(*eIt);
 			for (IntersectionIterator isIt = isItBegin; isIt!=isItEnd; ++isIt)
 			  {
                             IntersectionIterator tempisIt = isIt;
@@ -196,14 +193,14 @@ private:
 	    for (ElementIterator eIt = eItBegin; eIt != eItEnd; ++eIt)
 	      {
 			// cell index
-			int globalIdxI = this->diffProblem.variables.diffMapper.map(*eIt);
+			int globalIdxI = this->diffProblem.variables().indexDiffusion(*eIt);
 	
 			// add diagonal index
 			M.addindex(globalIdxI, globalIdxI);
 		
 			// run through all intersections with neighbors 
-                        IntersectionIterator isItBegin = gridView.template ibegin(*eIt);
-			IntersectionIterator isItEnd = gridView.template iend(*eIt);
+                        IntersectionIterator isItBegin = this->gridView.template ibegin(*eIt);
+			IntersectionIterator isItEnd = this->gridView.template iend(*eIt);
 			for (IntersectionIterator isIt = isItBegin; isIt!=isItEnd; ++isIt)
 			  {
                             IntersectionIterator tempisIt = isIt;
@@ -249,7 +246,7 @@ private:
 			      {
 					// access neighbor
 					ElementPointer outside = isIt->outside();
-					int globalIdxJ = this->diffProblem.variables.diffMapper.map(*outside);
+					int globalIdxJ = this->diffProblem.variables().indexDiffusion(*outside);
 		
 					// add off diagonal index
 					// add index (row,col) to the matrix 
@@ -262,12 +259,12 @@ private:
                                 ElementPointer outside = isIt->outside();
 				ElementPointer nextisItoutside = nextisIt->outside();
                                     
-                                IntersectionIterator innerisItEnd = gridView.template iend(*outside);
-                                IntersectionIterator innernextisItEnd = gridView.template iend(*nextisItoutside);
+                                IntersectionIterator innerisItEnd = this->gridView.template iend(*outside);
+                                IntersectionIterator innernextisItEnd = this->gridView.template iend(*nextisItoutside);
 
-				for (IntersectionIterator innerisIt = gridView.template ibegin(*outside);
+				for (IntersectionIterator innerisIt = this->gridView.template ibegin(*outside);
 				     innerisIt!=innerisItEnd; ++innerisIt )
-				  for (IntersectionIterator innernextisIt = gridView.template ibegin(*nextisItoutside);
+				  for (IntersectionIterator innernextisIt = this->gridView.template ibegin(*nextisItoutside);
 				       innernextisIt!=innernextisItEnd; ++innernextisIt)
 				    {
 				      if (innerisIt->neighbor() && innernextisIt->neighbor())
@@ -277,7 +274,7 @@ private:
 
 					  if (innerisItoutside == innernextisItoutside && innerisItoutside != isIt->inside())
 					    {
-					      int globalIdxJ = this->diffProblem.variables.diffMapper.map(*innerisItoutside);
+					      int globalIdxJ = this->diffProblem.variables().indexDiffusion(*innerisItoutside);
 					      
 					      M.addindex(globalIdxI, globalIdxJ);
                                             }
@@ -295,13 +292,11 @@ private:
 
   
   // only for 2-D general quadrilateral
-  template<class Grid, class Scalar, class VC, class Problem>
-  void MPFAODiffusion<Grid, Scalar, VC, Problem>::assemble(const Scalar t=0)
+  template<class GridView, class Scalar, class VC, class Problem>
+  void MPFAODiffusion<GridView, Scalar, VC, Problem>::assemble(const Scalar t=0)
 	{
           // input character to decide which grid to use; 's' for SGrid, 'u' for UGGrid
           char ch = 'u';
-
-          const GridView& gridView = this->grid.levelView(this->level());
 
 	  // initialization: set global matrix M to zero
 	  M = 0;
@@ -318,8 +313,8 @@ private:
 	      }
 	      
 	  // run through all elements
-	  ElementIterator eItEnd = gridView.template end<0>();
-	  for (ElementIterator eIt = gridView.template begin<0>(); eIt != eItEnd; ++eIt)
+	  ElementIterator eItEnd = this->gridView.template end<0>();
+	  for (ElementIterator eIt = this->gridView.template begin<0>(); eIt != eItEnd; ++eIt)
 	    {
 	                // get common geometry information for the following computation
 
@@ -338,7 +333,7 @@ private:
 			  *Dune::ReferenceElements<Scalar,dim>::general(gt1).volume();			  
 			  			
 			// cell 1 index
-			int globalIdx1 = this->diffProblem.variables.diffMapper.map(*eIt);
+			int globalIdx1 = this->diffProblem.variables().indexDiffusion(*eIt);
 
 			// evaluate right hand side
 			f[globalIdx1] = this->diffProblem.sourcePress(globalPos1, *eIt, localPos1)*volume1;
@@ -348,7 +343,7 @@ private:
 	
 			//compute total mobility of cell 1
 			double lambda1;
-                        double sat1 = this->diffProblem.variables.saturation[globalIdx1];
+                        double sat1 = this->diffProblem.variables().saturation()[globalIdx1];
 	                lambda1 = this->diffProblem.materialLaw().mobTotal(sat1, globalPos1,*eIt,localPos1); 
 
 			// if K1 is zero, no flux through cell1
@@ -359,8 +354,8 @@ private:
                             continue;
                           }
 
-			IntersectionIterator isItBegin = gridView.template ibegin(*eIt);
-			IntersectionIterator isItEnd = gridView.template iend(*eIt);
+			IntersectionIterator isItBegin = this->gridView.template ibegin(*eIt);
+			IntersectionIterator isItEnd = this->gridView.template iend(*eIt);
 			for (IntersectionIterator isIt = isItBegin; isIt!=isItEnd; ++isIt)
 			  {
 			    // intersection iterator 'nextisIt' is used to get geometry information
@@ -472,7 +467,7 @@ private:
 			    {
 			      // access neighbor cell 2 of 'isIt'
 			      ElementPointer outside = isIt->outside();
-                              int globalIdx2 = this->diffProblem.variables.diffMapper.map(*outside);
+                              int globalIdx2 = this->diffProblem.variables().indexDiffusion(*outside);
                   
 			      // neighbor cell 2 geometry type
                               Dune::GeometryType gt2 = outside->geometry().type();
@@ -490,7 +485,7 @@ private:
 
 			      // get total mobility of neighbor cell 2
                               double lambda2;
-                              double sat2 = this->diffProblem.variables.saturation[globalIdx2];
+                              double sat2 = this->diffProblem.variables().saturation()[globalIdx2];
 	                      lambda2 = this->diffProblem.materialLaw().mobTotal(sat2, globalPos2, *outside, localPos2);		        
 
 			      // 'nextisIt' is an interior face
@@ -500,7 +495,7 @@ private:
 				  // neighbor cell 3
 				  // access neighbor cell 3
 				  ElementPointer nextisItoutside = nextisIt->outside();
-				  int globalIdx3 = this->diffProblem.variables.diffMapper.map(*nextisItoutside);
+				  int globalIdx3 = this->diffProblem.variables().indexDiffusion(*nextisItoutside);
 
 				  // neighbor cell 3 geometry type
 				  Dune::GeometryType gt3 = nextisItoutside->geometry().type();
@@ -518,7 +513,7 @@ private:
 
 				  // get total mobility of neighbor cell 3
 				  double lambda3;
-                                  double sat3 = this->diffProblem.variables.saturation[globalIdx3];
+                                  double sat3 = this->diffProblem.variables().saturation()[globalIdx3];
 	                          lambda3 = this->diffProblem.materialLaw().mobTotal(sat3, globalPos3, *nextisItoutside, localPos3);
 				  
 				  // neighbor cell 4
@@ -527,11 +522,11 @@ private:
 				  double lambda4;
 				  int globalIdx4;
 
-                                  IntersectionIterator innerisItEnd = gridView.template iend(*outside);
-                                  IntersectionIterator innernextisItEnd = gridView.template iend(*nextisItoutside);
-                                  for (IntersectionIterator innerisIt = gridView.template ibegin(*outside);
+                                  IntersectionIterator innerisItEnd = this->gridView.template iend(*outside);
+                                  IntersectionIterator innernextisItEnd = this->gridView.template iend(*nextisItoutside);
+                                  for (IntersectionIterator innerisIt = this->gridView.template ibegin(*outside);
                                        innerisIt!=innerisItEnd; ++innerisIt )
-                                    for (IntersectionIterator innernextisIt = gridView.template ibegin(*nextisItoutside); 
+                                    for (IntersectionIterator innernextisIt = this->gridView.template ibegin(*nextisItoutside); 
                                          innernextisIt!=innernextisItEnd; ++innernextisIt)
 				      { 
                                         if (innerisIt->neighbor() && innernextisIt->neighbor())
@@ -543,7 +538,7 @@ private:
 					    if (innerisItoutside == innernextisItoutside && innerisItoutside != isIt->inside())
 					      {
 					        // access neighbor cell 4
-					        globalIdx4 = this->diffProblem.variables.diffMapper.map(*innerisItoutside);
+					        globalIdx4 = this->diffProblem.variables().indexDiffusion(*innerisItoutside);
 
 					        // neighbor cell 4 geometry type
 					        Dune::GeometryType gt4 = innerisItoutside->geometry().type();
@@ -559,7 +554,7 @@ private:
 					        K4 += this->diffProblem.soil().K(globalPos4, *innerisItoutside, localPos4);
 
 					        // get total mobility of neighbor cell 4
-                                                double sat4 = this->diffProblem.variables.saturation[globalIdx4];
+                                                double sat4 = this->diffProblem.variables().saturation()[globalIdx4];
 	                                        lambda4 = this->diffProblem.materialLaw().mobTotal(sat4, globalPos4, *innerisItoutside, localPos4);	
                                               }
 					  }
@@ -569,9 +564,9 @@ private:
                                   // through the second half edge of 'nextisIt'
 				    						
 				  // get the information of the face 'isIt24' between cell2 and cell4 (locally numbered)
-				  IntersectionIterator isIt24 = gridView.template ibegin(*outside);
+				  IntersectionIterator isIt24 = this->gridView.template ibegin(*outside);
 
-				  for (IntersectionIterator innerisIt = gridView.template ibegin(*outside);
+				  for (IntersectionIterator innerisIt = this->gridView.template ibegin(*outside);
                                        innerisIt != innerisItEnd; ++innerisIt)
 				    {
 				      if (innerisIt->neighbor())
@@ -610,9 +605,9 @@ private:
                                     *= Dune::ReferenceElements<Scalar,dim-1>::general(gtf24).volume()/2.0;
 
 				  // get the information of the face 'isIt34' between cell3 and cell4 (locally numbered)
-				  IntersectionIterator isIt34 = gridView.template ibegin(*nextisItoutside);
+				  IntersectionIterator isIt34 = this->gridView.template ibegin(*nextisItoutside);
 
-				  for (IntersectionIterator innerisIt = gridView.template ibegin(*nextisItoutside);
+				  for (IntersectionIterator innerisIt = this->gridView.template ibegin(*nextisItoutside);
                                        innerisIt != innernextisItEnd; ++innerisIt)
 				    {
 				      if (innerisIt->neighbor())
@@ -788,9 +783,9 @@ private:
 				   
                                   // get common geometry information for the following computation 				
 				  // get the information of the face 'isIt24' between cell2 and cell4 (locally numbered)
-				  IntersectionIterator isIt24 = gridView.template ibegin(*outside);
-                                  IntersectionIterator innerisItEnd = gridView.template iend(*outside);
-				  for (IntersectionIterator innerisIt = gridView.template ibegin(*outside);
+				  IntersectionIterator isIt24 = this->gridView.template ibegin(*outside);
+                                  IntersectionIterator innerisItEnd = this->gridView.template iend(*outside);
+				  for (IntersectionIterator innerisIt = this->gridView.template ibegin(*outside);
                                        innerisIt != innerisItEnd; ++innerisIt)
 				    {
 				      if (innerisIt->boundary())
@@ -1229,7 +1224,7 @@ private:
 				      // neighbor cell 3
 				      // access neighbor cell 3
 				      ElementPointer nextisItoutside = nextisIt->outside();
-				      int globalIdx3 = this->diffProblem.variables.diffMapper.map(*nextisItoutside);
+				      int globalIdx3 = this->diffProblem.variables().indexDiffusion(*nextisItoutside);
 
 				      // neighbor cell 3 geometry type
 				      Dune::GeometryType gt3 = nextisItoutside->geometry().type();
@@ -1247,14 +1242,14 @@ private:
 
 				      // get total mobility of neighbor cell 3
 				      double lambda3;
-                                      double sat3 = this->diffProblem.variables.saturation[globalIdx3];     
+                                      double sat3 = this->diffProblem.variables().saturation()[globalIdx3];     
 	                              lambda3 = this->diffProblem.materialLaw().mobTotal(sat3, globalPos3, *nextisItoutside, localPos3);
 				      
 
 				      // get the information of the face 'isIt34' between cell3 and cell4 (locally numbered)
-				      IntersectionIterator isIt34 = gridView.template ibegin(*nextisItoutside);
-                                      IntersectionIterator innernextisItEnd = gridView.template iend(*nextisItoutside);
-				      for (IntersectionIterator innerisIt = gridView.template ibegin(*nextisItoutside);
+				      IntersectionIterator isIt34 = this->gridView.template ibegin(*nextisItoutside);
+                                      IntersectionIterator innernextisItEnd = this->gridView.template iend(*nextisItoutside);
+				      for (IntersectionIterator innerisIt = this->gridView.template ibegin(*nextisItoutside);
                                            innerisIt != innernextisItEnd; ++innerisIt)
 				        {
 				          if (innerisIt->boundary())
@@ -1590,7 +1585,7 @@ private:
 				      // neighbor cell 3
 				      // access neighbor cell 3
 				      ElementPointer nextisItoutside = nextisIt->outside();
-				      int globalIdx3 = this->diffProblem.variables.diffMapper.map(*nextisItoutside);
+				      int globalIdx3 = this->diffProblem.variables().indexDiffusion(*nextisItoutside);
 
 				      // neighbor cell 3 geometry type
 				      Dune::GeometryType gt3 = nextisItoutside->geometry().type();
@@ -1608,13 +1603,13 @@ private:
 
 				      // get total mobility of neighbor cell 3
 				      double lambda3;
-                                      double sat3 = this->diffProblem.variables.saturation[globalIdx3];
+                                      double sat3 = this->diffProblem.variables().saturation()[globalIdx3];
 	                              lambda3 = this->diffProblem.materialLaw().mobTotal(sat3, globalPos3, *nextisItoutside, localPos3);
 				      
 				      // get the information of the face 'isIt34' between cell3 and cell4 (locally numbered)
-				      IntersectionIterator isIt34 = gridView.template ibegin(*nextisItoutside);
-                                      IntersectionIterator innernextisItEnd = gridView.template iend(*nextisItoutside);
-				      for (IntersectionIterator innerisIt = gridView.template ibegin(*nextisItoutside);
+				      IntersectionIterator isIt34 = this->gridView.template ibegin(*nextisItoutside);
+                                      IntersectionIterator innernextisItEnd = this->gridView.template iend(*nextisItoutside);
+				      for (IntersectionIterator innerisIt = this->gridView.template ibegin(*nextisItoutside);
                                            innerisIt != innernextisItEnd; ++innerisIt)
 				        {
 				          if (innerisIt->boundary())
@@ -1814,17 +1809,17 @@ private:
 	  double num_nonzero = 0;
 	  
 	  // determine position of matrix entries 
-	  for (ElementIterator eIt = this->diffProblem.variables.grid.template lbegin<0>(this->level()); eIt != eItEnd; ++eIt)
+	  for (ElementIterator eIt = this->gridView.template begin<0>(); eIt != this->gridView.template end<0>(); ++eIt)
 	    {
 	              // cell index
-		      int globalIdxI = this->diffProblem.variables.diffMapper.map(*eIt);
+		      int globalIdxI = this->diffProblem.variables().indexDiffusion(*eIt);
 
 		      if (M[globalIdxI][globalIdxI] != 0)
 		        ++num_nonzero;
 				
 		      // run through all intersections with neighbors 
-                      IntersectionIterator isItBegin = gridView.template ibegin(*eIt);
-	              IntersectionIterator isItEnd = gridView.template iend(*eIt);
+                      IntersectionIterator isItBegin = this->gridView.template ibegin(*eIt);
+	              IntersectionIterator isItEnd = this->gridView.template iend(*eIt);
 		      for (IntersectionIterator isIt = isItBegin; isIt!=isItEnd; ++isIt)
 			{
                           IntersectionIterator tempisIt = isIt;
@@ -1870,7 +1865,7 @@ private:
 			    {
 			              // access neighbor
 			              ElementPointer outside = isIt->outside();
-				      int globalIdxJ = this->diffProblem.variables.diffMapper.map(*outside);
+				      int globalIdxJ = this->diffProblem.variables().indexDiffusion(*outside);
 		
 		                      if (M[globalIdxI][globalIdxJ] != 0)
 				        ++num_nonzero;
@@ -1882,12 +1877,12 @@ private:
                               ElementPointer outside = isIt->outside();
 		              ElementPointer nextisItoutside = nextisIt->outside();
                                     
-                              IntersectionIterator innerisItEnd = gridView.template iend(*outside);
-                              IntersectionIterator innernextisItEnd = gridView.template iend(*nextisItoutside);
+                              IntersectionIterator innerisItEnd = this->gridView.template iend(*outside);
+                              IntersectionIterator innernextisItEnd = this->gridView.template iend(*nextisItoutside);
 
-			      for (IntersectionIterator innerisIt = gridView.template ibegin(*outside);
+			      for (IntersectionIterator innerisIt = this->gridView.template ibegin(*outside);
 				   innerisIt!=innerisItEnd; ++innerisIt )
-				for (IntersectionIterator innernextisIt = gridView.template ibegin(*nextisItoutside);
+				for (IntersectionIterator innernextisIt = this->gridView.template ibegin(*nextisItoutside);
 				     innernextisIt!=innernextisItEnd; ++innernextisIt)
 				  {
 				    if (innerisIt->neighbor() && innernextisIt->neighbor())
@@ -1897,7 +1892,7 @@ private:
 
 					if (innerisItoutside == innernextisItoutside && innerisItoutside != isIt->inside())
 					  {
-					    int globalIdxJ = this->diffProblem.variables.diffMapper.map(*innerisItoutside);
+					    int globalIdxJ = this->diffProblem.variables().indexDiffusion(*innerisItoutside);
 					      
 					    if (M[globalIdxI][globalIdxJ] != 0)
 				              ++num_nonzero; 
@@ -1908,14 +1903,14 @@ private:
 			  } // end of 'for' IntersectionIterator
 	      } // end of 'for' ElementIterator
 	  
-	  std::cout << "number of nonzero terms in the MPFA O-matrix on level " << this->level() <<" nnmat: " << num_nonzero << std::endl;
+	  std::cout << "number of nonzero terms in the MPFA O-matrix on level " << this->gridView.grid().maxLevel() <<" nnmat: " << num_nonzero << std::endl;
 	  
 	  return;	    
 	}
 	
 
-  template<class Grid, class Scalar, class VC, class Problem>
-  void MPFAODiffusion<Grid, Scalar, VC, Problem>::solve()
+  template<class GridView, class Scalar, class VC, class Problem>
+  void MPFAODiffusion<GridView, Scalar, VC, Problem>::solve()
   {
 	Dune::MatrixAdapter<MatrixType,Vector,Vector> op(M);        // make linear operator from M
         Dune::InverseOperatorResult r;
@@ -1926,10 +1921,10 @@ private:
 		if (solverName_ == "CG") {
                         // an inverse operator 
 			CGSolver<Vector> solver(op, preconditioner, 1E-14, 1000, 1);
-			solver.apply(this->diffProblem.variables.pressure, f, r);
+			solver.apply(this->diffProblem.variables().pressure(), f, r);
 		} else if (solverName_ == "BiCGSTAB") {
 			BiCGSTABSolver<Vector> solver(op, preconditioner, 1E-14, 1000, 1);
-			solver.apply(this->diffProblem.variables.pressure, f, r);
+			solver.apply(this->diffProblem.variables().pressure(), f, r);
 		} else
 			DUNE_THROW(NotImplemented, "MPFAODiffusion :: solve : combination "
 					<< preconditionerName_<< " and "<< solverName_ << ".");
@@ -1937,10 +1932,10 @@ private:
 		SeqPardiso<MatrixType,Vector,Vector> preconditioner(M);
 		if (solverName_ == "Loop") {
 			LoopSolver<Vector> solver(op, preconditioner, 1E-14, 1000, 1);
-			solver.apply(this->diffProblem.variables.pressure, f, r);
+			solver.apply(this->diffProblem.variables().pressure(), f, r);
 		}else if (solverName_ == "BiCGSTAB") {
 			BiCGSTABSolver<Vector> solver(op, preconditioner, 1E-14, 1000, 1);
-			solver.apply(this->diffProblem.variables.pressure, f, r);
+			solver.apply(this->diffProblem.variables().pressure(), f, r);
 		} else
 			DUNE_THROW(NotImplemented, "MPFAODiffusion :: solve : combination "
 					<< preconditionerName_<< " and "<< solverName_ << ".");

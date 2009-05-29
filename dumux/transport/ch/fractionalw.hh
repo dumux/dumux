@@ -19,10 +19,10 @@ namespace Dune
 /*!\ingroup transport
  * @brief  Base class for defining the flux function of an advection-diffusion equation
  */
-template<class Grid, class Scalar, class VC, class Problem = TransportProblem<Grid, Scalar, VC> >
-class FractionalW : public FluxFunction<Grid,Scalar> {
-    enum{dim = Grid::dimension,dimWorld = Grid::dimensionworld};
-    typedef typename Grid::Traits::template Codim<0>::Entity Element;
+template<class GridView, class Scalar, class VC, class Problem = TransportProblem<GridView, Scalar, VC> >
+class FractionalW : public FluxFunction<GridView,Scalar> {
+    enum{dim = GridView::dimension,dimWorld = GridView::dimensionworld};
+    typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 

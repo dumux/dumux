@@ -16,7 +16,7 @@ namespace Dune
 {
 //! \ingroup transport
 //! Compute the numerical flux of the transport equation
-template<class Grid, class Scalar>
+template<class GridView, class Scalar>
 class ComputeNumFlux {
 public:
     /*! \brief Realizes the numerical flux function.
@@ -27,8 +27,8 @@ public:
      *  \param satJ usually the saturation value of cell J
      */
 private:
-    enum{dim = Grid::dimension};
-    typedef typename Grid::Traits::template Codim<0>::Entity Element;
+    enum{dim = GridView::dimension};
+    typedef typename GridView::Traits::template Codim<0>::Entity Element;
 
 public:
     virtual Scalar operator() (const Element& element, const int faceNumber, const Scalar satI, const Scalar satJ) const

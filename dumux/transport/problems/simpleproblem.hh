@@ -48,13 +48,14 @@ public:
 
 //! \ingroup transportProblems
 //! @brief example class for a transport problem
-template<class Grid, class Scalar, class VC>
-class SimpleProblem : public TransportProblem<Grid, Scalar, VC> {
-    enum {dim=Grid::dimension, numEq=1};
-    typedef typename Grid::Traits::template Codim<0>::Entity Element;
+template<class GridView, class Scalar, class VC>
+class SimpleProblem : public TransportProblem<GridView, Scalar, VC> {
+    enum {dim=GridView::dimension, numEq=1};
+    typedef typename GridView::Grid Grid;
+    typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef FieldVector<Scalar,dim> LocalPosition;
     typedef FieldVector<Scalar,dim> GlobalPosition;
-    typedef typename Grid::template Codim<0>::LeafIntersectionIterator IntersectionIterator;
+    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
 private:
     Scalar left;
@@ -106,11 +107,11 @@ public:
         }
 
      SimpleProblem(VC& variableobj, Fluid& wettingPhase, Fluid& nonwettingPhase, Matrix2p<Grid,Scalar>& soil, TwoPhaseRelations<Grid,Scalar>& materialLaw  = *(new TwoPhaseRelations<Grid,Scalar>), GlobalPosition& Left = 0, GlobalPosition& Right = 1)
-        : TransportProblem<Grid, Scalar, VC>(variableobj, wettingPhase, nonwettingPhase, soil, materialLaw), left(Left[0]), right(Right[0])
+        : TransportProblem<GridView, Scalar, VC>(variableobj, wettingPhase, nonwettingPhase, soil, materialLaw), left(Left[0]), right(Right[0])
     {    }
 
     SimpleProblem(VC& variableobj,Fluid& wettingPhase, Fluid& nonwettingPhase, Matrix2p<Grid, Scalar>& soil, TwoPhaseRelations<Grid,Scalar>& materialLaw  = *(new TwoPhaseRelations<Grid,Scalar>))
-        : TransportProblem<Grid, Scalar, VC>(variableobj, wettingPhase, nonwettingPhase, soil,materialLaw), left(0), right(1)
+        : TransportProblem<GridView, Scalar, VC>(variableobj, wettingPhase, nonwettingPhase, soil,materialLaw), left(0), right(1)
     {    }
 };
 
