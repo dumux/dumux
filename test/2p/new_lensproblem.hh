@@ -1,7 +1,30 @@
+/*****************************************************************************
+ *   Copyright (C) 2007-2008 by Klaus Mosthaf                                *
+ *   Copyright (C) 2007-2008 by Bernd Flemisch                               *
+ *   Copyright (C) 2008-2009 by Andreas Lauser                               *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
+ *                                                                           *
+ *   This program is free software; you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by    *
+ *   the Free Software Foundation; either version 2 of the License, or       *
+ *   (at your option) any later version, as long as this copyright notice    *
+ *   is included in its original form.                                       *
+ *                                                                           *
+ *   This program is distributed WITHOUT ANY WARRANTY.                       *
+ *****************************************************************************/
 #ifndef DUNE_NEW_LENSPROBLEM_HH
 #define DUNE_NEW_LENSPROBLEM_HH
 
-//#include <dumux/material/property_baseclasses.hh>
+#define USE_UG 1
+
+#ifdef USE_UG
+#include <dune/grid/io/file/dgfparser/dgfug.hh>
+#else
+#include <dune/grid/yaspgrid.hh>
+#endif
+
 #include <dumux/material/matrixproperties.hh>
 #include <dumux/material/twophaserelations.hh>
 #include <dumux/material/phaseproperties/phaseproperties2p.hh>
@@ -23,69 +46,86 @@
 
 namespace Dune
 {
+
+template <class TypeTag>
+class NewLensProblem;
+
+namespace Properties
+{
+NEW_TYPE_TAG(LensProblem, INHERITS_FROM(BoxTwoP));
+
+
+SET_PROP(LensProblem, Grid)
+{
+#if USE_UG
+    typedef Dune::UGGrid<2> type;
+#else // USE_UG
+    typedef Dune::YaspGrid<2> type;
+#endif
+};
+
+SET_PROP(LensProblem, Problem)
+{
+    typedef Dune::NewLensProblem<TTAG(LensProblem)> type;
+};
+}
+
+
 /*!
  * \todo Please doc me!
  */
-template<class GridT, class ScalarT>
-class NewLensProblem : public BasicDomain<GridT,
-                                          ScalarT>
+template <class TypeTag = TTAG(LensProblem) >
+class NewLensProblem : public BasicDomain<typename GET_PROP_TYPE(TypeTag, PTAG(Grid)),
+                                          typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) >
 {
-    typedef GridT                          Grid;
-    typedef BasicDomain<Grid, ScalarT>     ParentType;
-    typedef NewLensProblem<Grid, ScalarT>  ThisType;
-    typedef TwoPBoxModel<ThisType>         Model;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))     Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView))   GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model))      Model;
+    typedef typename GridView::Grid                           Grid;
 
-    typedef Water                    WettingPhase;
-    typedef DNAPL                    NonwettingPhase;
-    typedef Dune::LensSoil<Grid, ScalarT>  Soil;
-    typedef Dune::TwoPhaseRelations<Grid, ScalarT> MaterialLaw;
+    typedef BasicDomain<Grid, Scalar>    ParentType;
+    typedef NewLensProblem<TypeTag>      ThisType;
 
-public:
-    // the domain traits of the domain
-    typedef typename ParentType::DomainTraits   DomainTraits;
-    // the traits of the BOX scheme
-    typedef typename Model::BoxTraits           BoxTraits;
-    // the traits of the Pw-Sn model
-    typedef typename Model::TwoPTraits          TwoPTraits;
-
-private:
-    // some constants from the traits for convenience
+    // copy some indices for convenience
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
     enum {
-        numEq       = BoxTraits::numEq,
-        pressureIdx = TwoPTraits::pressureIdx,
-        switchIdx   = TwoPTraits::saturationIdx,
+        numEq       = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
+        pressureIdx   = Indices::pressureIdx,
+        saturationIdx = Indices::saturationIdx,
 
-        pWIdx       = TwoPTraits::pressureIdx,
-        sNIdx       = TwoPTraits::saturationIdx,
+        pWIdx = pressureIdx,
+        sNIdx = saturationIdx,
 
         // Grid and world dimension
-        dim         = DomainTraits::dim,
-        dimWorld    = DomainTraits::dimWorld,
+        dim         = GridView::dimension,
+        dimWorld    = GridView::dimensionworld,
     };
 
-    // copy some types from the traits for convenience
-    typedef typename DomainTraits::Scalar                     Scalar;
-    typedef typename DomainTraits::Element                    Element;
-    typedef typename DomainTraits::ElementIterator            ElementIterator;
-    typedef typename DomainTraits::ReferenceElement           ReferenceElement;
-    typedef typename DomainTraits::Vertex                     Vertex;
-    typedef typename DomainTraits::VertexIterator             VertexIterator;
-    typedef typename DomainTraits::IntersectionIterator       IntersectionIterator;
-    typedef typename DomainTraits::LocalPosition              LocalPosition;
-    typedef typename DomainTraits::GlobalPosition             GlobalPosition;
+    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
+    typedef typename SolutionTypes::PrimaryVarVector        PrimaryVarVector;
+    typedef typename SolutionTypes::BoundaryTypeVector      BoundaryTypeVector;
 
-    typedef typename BoxTraits::FVElementGeometry             FVElementGeometry;
-    typedef typename BoxTraits::SpatialFunction               SpatialFunction;
-    typedef typename BoxTraits::SolutionVector                SolutionVector;
-    typedef typename BoxTraits::BoundaryTypeVector            BoundaryTypeVector;
+    typedef typename GridView::template Codim<0>::Entity        Element;
+    typedef typename GridView::template Codim<dim>::Entity      Vertex;
+    typedef typename GridView::IntersectionIterator             IntersectionIterator;
+  
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
 
-    typedef Dune::VtkMultiWriter<typename Grid::LeafGridView> VtkMultiWriter;
+    typedef Dune::FieldVector<Scalar, dim>       LocalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
 
     enum Episode {}; // the type of an episode of the simulation
-    typedef Dune::TimeManager<Episode>                  TimeManager;
+    typedef Dune::TimeManager<Episode>      TimeManager;
+    typedef Dune::VtkMultiWriter<GridView>  VtkMultiWriter;
 
-    typedef typename Model::NewtonMethod                NewtonMethod;
-    typedef Dune::NewtonController<NewtonMethod>        NewtonController;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonMethod))      NewtonMethod;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonController))  NewtonController;
+
+    // material properties
+    typedef Water                                  WettingPhase;
+    typedef DNAPL                                  NonwettingPhase;
+    typedef Dune::LensSoil<Grid, Scalar>           Soil;
+    typedef Dune::TwoPhaseRelations<Grid, Scalar>  MaterialLaw;
 
 public:
     NewLensProblem(Grid *grid,
@@ -110,8 +150,6 @@ public:
           resultWriter_("newlens")
     {
         timeManager_.setStepSize(dtInitial);
-
-        eps_    = 1e-8 * 300.0;
 
         gravity_ = 0;
         gravity_[dim - 1] = -9.81;
@@ -247,7 +285,7 @@ public:
     /////////////////////////////
     // DIRICHLET boundaries
     /////////////////////////////
-    void dirichlet(SolutionVector             &values,
+    void dirichlet(PrimaryVarVector           &values,
                    const Element              &element,
                    const FVElementGeometry    &fvElemGeom,
                    const IntersectionIterator &isIt,
@@ -284,7 +322,7 @@ public:
     /////////////////////////////
     // NEUMANN boundaries
     /////////////////////////////
-    void neumann(SolutionVector             &values,
+    void neumann(PrimaryVarVector           &values,
                  const Element              &element,
                  const FVElementGeometry    &fvElemGeom,
                  const IntersectionIterator &isIt,
@@ -305,8 +343,8 @@ public:
     /////////////////////////////
     // sources and sinks
     /////////////////////////////
-    void source(SolutionVector &values,
-                const Element &element,
+    void source(PrimaryVarVector        &values,
+                const Element           &element,
                 const FVElementGeometry &,
                 int subControlVolumeIdx) const
     {
@@ -318,7 +356,7 @@ public:
     /////////////////////////////
     // INITIAL values
     /////////////////////////////
-    void initial(SolutionVector         &values,
+    void initial(PrimaryVarVector        &values,
                  const Element           &element,
                  const FVElementGeometry &fvElemGeom,
                  int                      scvIdx) const
@@ -370,10 +408,10 @@ public:
 
     void serialize()
     {
-        typedef Dune::Restart<Grid> Restarter;
+        typedef Dune::Restart<GridView> Restarter;
 
         Restarter res;
-        res.serializeBegin(this->grid(),
+        res.serializeBegin(this->gridView(),
                            "newlens",
                            timeManager_.time());
 
@@ -386,10 +424,10 @@ public:
 
     void deserialize(double t)
     {
-        typedef Dune::Restart<Grid> Restarter;
+        typedef Dune::Restart<GridView> Restarter;
 
         Restarter res;
-        res.deserializeBegin(this->grid(), "newlens", t);
+        res.deserializeBegin(this->gridView(), "newlens", t);
 
         timeManager_.deserialize(res);
         resultWriter_.deserialize(res);
@@ -440,7 +478,7 @@ private:
     }
 
 
-    Scalar eps_;
+    static const Scalar eps_ = 3e-6;
     GlobalPosition  gravity_;
 
     GlobalPosition outerLowerLeft_;

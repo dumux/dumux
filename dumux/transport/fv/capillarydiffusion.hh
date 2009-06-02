@@ -65,8 +65,6 @@ public:
         // center in face's reference element
         const Dune::FieldVector<Scalar,dim-1>& faceLocal = ReferenceElements<Scalar,dim-1>::general(faceGT).position(0,0);
 
-        FieldVector unitOuterNormal = isIt->unitOuterNormal(faceLocal);
-
         //get lambda_bar = lambda_n*f_w
         Scalar mobBarI=problem_.variables().mobilityWetting()[globalIdxI]*problem_.variables().fracFlowFuncNonWetting()[globalIdxI];
         Scalar mobBarJ;

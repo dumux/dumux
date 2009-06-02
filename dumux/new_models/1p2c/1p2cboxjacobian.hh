@@ -1,16 +1,29 @@
-// $Id$
-
-#ifndef DUMUX_NEW_1P2C_BOX_JACOBIAN_HH
-#define DUMUX_NEW_1P2C_BOX_JACOBIAN_HH
+/*****************************************************************************
+ *   Copyright (C) 2009 by Karin Erbertseder                                 *
+ *   Copyright (C) 2009 by Andreas Lauser                                    *
+ *   Copyright (C) 2008 by Bernd Flemisch                                    *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
+ *                                                                           *
+ *   This program is free software; you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by    *
+ *   the Free Software Foundation; either version 2 of the License, or       *
+ *   (at your option) any later version, as long as this copyright notice    *
+ *   is included in its original form.                                       *
+ *                                                                           *
+ *   This program is distributed WITHOUT ANY WARRANTY.                       *
+ *****************************************************************************/
+#ifndef DUMUX_ONEP_TWOC_BOX_JACOBIAN_HH
+#define DUMUX_ONEP_TWOC_BOX_JACOBIAN_HH
 
 #include <dumux/new_models/boxscheme/boxscheme.hh>
-#include <dumux/new_models/boxscheme/p1boxtraits.hh>
-#include <dumux/new_models/1p2c/1p2ctraits.hh>
+
+#include <dumux/new_models/1p2c/1p2cproperties.hh>
 
 #include <dumux/new_models/1p2c/1p2cvertexdata.hh>
 #include <dumux/new_models/1p2c/1p2celementdata.hh>
-
-#include <dumux/auxiliary/math.hh>
+#include <dumux/new_models/1p2c/1p2cfluxdata.hh>
 
 #include <dune/common/collectivecommunication.hh>
 #include <vector>
@@ -18,228 +31,123 @@
 
 namespace Dune
 {
-
-// forward declaration of the 1p2c box model
-//template<class ProblemT, class OnePTwoCTraitsT>
-//class OnePTwoCBoxModel;
-
-///////////////////////////////////////////////////////////////////////////
-// OnePTwoCBoxJacobian (evaluate the local jacobian for the newton method.)
-///////////////////////////////////////////////////////////////////////////
 /*!
- * \brief 1P-2C specific details needed to approximately calculate
- *        the local jacobian in the BOX scheme.
- *
- * This class is used to fill the gaps in BoxJacobian for the 1P-2C onephase flow.
+ * \brief Calculate the local Jacobian for the single-phase,
+ *        two-component model in the BOX scheme.
  */
-template<class ProblemT,
-         class BoxTraitsT,
-         class OnePTwoCTraitsT,
-         class ElementDataT,
-         class VertexDataT>
-class OnePTwoCBoxJacobian : public BoxJacobian<ProblemT,
-                                               BoxTraitsT,
-                                               OnePTwoCBoxJacobian<ProblemT,BoxTraitsT,OnePTwoCTraitsT,
-                                               ElementDataT,VertexDataT>,
-                                               VertexDataT>
+template<class TypeTag>
+class OnePTwoCBoxJacobian : public BoxJacobian<TypeTag, OnePTwoCBoxJacobian<TypeTag> >
 {
 protected:
-//    friend class OnePTwoCBoxModel<ProblemT, OnePTwoCTraitsT>;
+    typedef OnePTwoCBoxJacobian<TypeTag>     ThisType;
+    typedef BoxJacobian<TypeTag, ThisType>   ParentType;
 
-    typedef OnePTwoCBoxJacobian<ProblemT,
-                                BoxTraitsT,
-                                OnePTwoCTraitsT,
-                                ElementDataT,
-                                VertexDataT>             Implementation;
-    typedef BoxJacobian<ProblemT, BoxTraitsT, OnePTwoCBoxJacobian, VertexDataT>    ParentType;
-    typedef ProblemT                                Problem;
-    typedef typename Problem::DomainTraits          DomTraits;
-    typedef BoxTraitsT                              BoxTraits;
-    typedef OnePTwoCTraitsT                         OnePTwoCTraits;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem))      Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePTwoCIndices))  Indices;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))       Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView))     GridView;
 
     enum {
-        dim              = DomTraits::dim,
-        dimWorld         = DomTraits::dimWorld,
+        dim            = GridView::dimension,
+        dimWorld       = GridView::dimensionworld,
 
-        numEq            = BoxTraits::numEq,
-        numPhases        = OnePTwoCTraits::numPhases,
-        numComponents    = OnePTwoCTraits::numComponents,
+        numEq          = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
+        numPhases      = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
+        numComponents  = GET_PROP_VALUE(TypeTag, PTAG(NumComponents)),
 
-        konti      		 = OnePTwoCTraits::konti,
-        transport        = OnePTwoCTraits::transport
+        konti          = Indices::konti,
+        transport      = Indices::transport,
     };
 
-    typedef typename DomTraits::Scalar                Scalar;
-    typedef typename DomTraits::CoordScalar           CoordScalar;
-    typedef typename DomTraits::Grid                  Grid;
-    typedef typename DomTraits::Element               Element;
-    typedef typename DomTraits::ElementIterator       ElementIterator;
-    typedef typename Element::EntityPointer           ElementPointer;
-    typedef typename DomTraits::LocalPosition         LocalPosition;
-    typedef typename DomTraits::GlobalPosition        GlobalPosition;
-    typedef typename DomTraits::VertexIterator        VertexIterator;
+    typedef typename GridView::template Codim<0>::Entity   Element;
+    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
+    typedef FieldVector<Scalar, dim>       LocalPosition;
+    typedef FieldVector<Scalar, dimWorld>  GlobalPosition;
 
-    typedef typename BoxTraits::SolutionVector      SolutionVector;
-    typedef typename BoxTraits::FVElementGeometry   FVElementGeometry;
-    typedef typename BoxTraits::SpatialFunction     SpatialFunction;
-    typedef typename BoxTraits::LocalFunction       LocalFunction;
-    typedef typename Grid::CollectiveCommunication  CollectiveCommunication;
+    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
+    typedef typename SolutionTypes::PrimaryVarVector        PrimaryVarVector;
+    typedef typename SolutionTypes::SolutionFunction        SolutionFunction;
+    typedef typename SolutionTypes::SolutionOnElement       SolutionOnElement;
 
-    typedef typename OnePTwoCTraits::PhasesVector       PhasesVector;
-    typedef ElementDataT								ElementData;
-    typedef VertexDataT 								VertexData;
-    typedef std::vector<VertexData>						VertexDataArray;
-    typedef Dune::FieldMatrix<Scalar, dim, dim>  		Tensor;
-    typedef Dune::FieldVector<Scalar, dim> 				FieldVector;
+    typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
 
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexData))   VertexData;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(ElementData))  ElementData;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluxData))     FluxData;
 
-    /*!
-     * \brief Data which is attached to each vertex and is not only
-     *        stored locally.
-     */
-    struct StaticVertexData {
+    typedef std::vector<VertexData>        VertexDataArray;
+    typedef FieldMatrix<Scalar, dim, dim>  Tensor;
 
-    };
-
+    static const Scalar upwindAlpha = GET_PROP_VALUE(TypeTag, PTAG(UpwindAlpha));
 
 public:
-    OnePTwoCBoxJacobian(ProblemT &problem)
-        : ParentType(problem),
-          staticVertexDat_(problem.numVertices())
+    OnePTwoCBoxJacobian(Problem &problem)
+        : ParentType(problem)
     {
-
     };
 
-
     /*!
-     * \brief Evaluate the rate of change of all conservation
-     *        quantites (e.g. phase mass) within a sub control
-     *        volume of a finite volume element in the 1P-2C
-     *        model.
-     *
-     * This function should not include the source and sink terms.
+     * \brief Evaluate the amount all conservation quantites
+     *        (e.g. phase mass) within a finite volume.
      */
-    void computeStorage(SolutionVector &result, int scvIdx, bool usePrevSol) const
+    void computeStorage(PrimaryVarVector &result, int scvIdx, bool usePrevSol) const
     {
-    	result = Scalar(0);
-
-        // if flag usePrevSol is set, the solution from the previous time step is used,
-        // otherwise the current solution is used. The secondary variables are used accordingly.
-        // This computes the derivative of the storage term.
-        //const LocalFunction &sol   = usePrevSol ? this->prevSol_ : this->curSol_;
-
-    	 const VertexDataArray &elemDat = usePrevSol ? this->prevElemDat_  : this->curElemDat_;
-    	 const VertexData  &vertDat = elemDat[scvIdx];
+        // if flag usePrevSol is set, the solution from the previous
+        // time step is used, otherwise the current solution is
+        // used. The secondary variables are used accordingly.  This
+        // is required to compute the derivative of the storage term
+        // using the implicit euler method.
+        const VertexDataArray &elemDat = usePrevSol ? this->prevElemDat_  : this->curElemDat_;
+        const VertexData  &vertDat = elemDat[scvIdx];
 
         // storage term of continuity equation
         result[konti] = 0;
 
         // storage term of the transport equation
         result[transport] = vertDat.porosity * vertDat.molefraction;
-
     }
 
     /*!
      * \brief Evaluates the mass flux over a face of a subcontrol
      *        volume.
      */
-    void computeFlux(SolutionVector &flux, int faceIdx) const
+    void computeFlux(PrimaryVarVector &flux, int faceId) const
     {
-        // set flux vector to zero
-        int i = this->curElementGeom_.subContVolFace[faceIdx].i;
-        int j = this->curElementGeom_.subContVolFace[faceIdx].j;
+		FluxData vars(this->problem_,
+                      this->curElement_(),
+                      this->curElementGeom_,
+                      faceId,
+                      this->curElemDat_);
+        flux = 0;
 
-        // normal vector, value of the area of the scvf
-        const GlobalPosition &normal(this->curElementGeom_.subContVolFace[faceIdx].normal);
+        // data attached to upstream and the downstream vertices
+        // of the current phase
+        const VertexData &up = this->curElemDat_[vars.upstreamIdx];
+        const VertexData &dn = this->curElemDat_[vars.downstreamIdx];
 
-        // get global coordinates of verts i,j
-        const GlobalPosition &global_i = this->curElementGeom_.subContVol[i].global;
-        const GlobalPosition &global_j = this->curElementGeom_.subContVol[j].global;
+        flux[konti] = vars.vDarcyNormal / vars.viscosityAtIP;
 
-        // get local coordinates of verts i,j
-        const LocalPosition &local_i = this->curElementGeom_.subContVol[i].local;
-        const LocalPosition &local_j = this->curElementGeom_.subContVol[j].local;
-
-        const VertexDataArray &elemDat  = this->curElemDat_;
-        const VertexData &vDat_i 		= this->curElemDat_[i];
-        const VertexData &vDat_j 		= this->curElemDat_[j];
-
-        GlobalPosition pGrad;
-        GlobalPosition xGrad;
-        GlobalPosition KpGrad;
-
-        pGrad = Scalar(0);
-        xGrad = Scalar(0);
-        KpGrad = Scalar(0);
-
-
-        GlobalPosition tmp(0.0);
-        PhasesVector pressure(0.0), molefraction(0.0);
-
-
-        // calculate FE gradient (grad p)
-        for (int idx = 0; idx < this->curElementGeom_.numVertices; idx++) // loop over adjacent vertices
-            {
-                // FEGradient at vertex idx
-                const LocalPosition &feGrad = this->curElementGeom_.subContVolFace[faceIdx].grad[idx];
-
-
-                // the pressure gradient
-                tmp = feGrad;
-                tmp *= elemDat[idx].pressure;
-                pGrad += tmp;
-
-
-                // the concentration gradient
-                tmp = feGrad;
-                tmp *= elemDat[idx].molefraction;
-                xGrad += tmp;
-
-            }
-
-
-        // calculate the permeability tensor
-        Tensor K;
-        const Tensor Ki = this->problem_.soil().K(global_i, ParentType::curElement_(), local_i);
-        const Tensor &Kj = this->problem_.soil().K(global_j, ParentType::curElement_(), local_j);
-        Dune::harmonicMeanMatrix(K, Ki, Kj);
-
-        ///////////////////////
-        // calculation of the flux of the continuity equation
-        //////////////////////
-
-        K.mv(pGrad, KpGrad);  // KpGrad = K * grad p
-        flux[konti] = (KpGrad*normal)/elemDat[i].viscosity;
-
-
-
-        /////////////////////////////
-        // calculation of the flux of the transport equation
-        /////////////////////////////
-
-		//arithmetic mean of the tortuosity
-		Scalar avgTortuosity = 0.5 * (vDat_i.tortuosity + vDat_j.tortuosity);
-
-		//arithmetic mean of the porosity
-		Scalar avgPorosity = 0.5 * (vDat_i.porosity + vDat_j.porosity);
-
-		Scalar outward = KpGrad * normal;
-
-		//upwinding of the advective flux
-		if(outward<0)
-			flux[transport] = (outward * vDat_i.molefraction / vDat_i.viscosity) +
-			(avgTortuosity * avgPorosity * vDat_i.diffCoeff * (xGrad * normal));
-		else
-			flux[transport] = (outward * vDat_j.molefraction /vDat_j.viscosity) +
-			(avgTortuosity * avgPorosity * vDat_i.diffCoeff * (xGrad * normal));
-
+        // advective flux
+        flux[transport] += 
+            vars.vDarcyNormal *
+            (  upwindAlpha*
+               (  up.molefraction/up.viscosity )
+               +
+               (1 - upwindAlpha)*
+               (  dn.molefraction/dn.viscosity ) );
+        
+        // diffusive flux
+        flux[transport] += 
+            vars.diffCoeffPM* 
+            (vars.concentrationGrad*vars.face->normal);
     }
 
     /*!
      * \brief Calculate the source term of the equation
      */
-    void computeSource(SolutionVector &q, int localVertexIdx)
+    void computeSource(PrimaryVarVector &q, int localVertexIdx)
     {
         this->problem_.source(q,
                               this->curElement_(),
@@ -247,16 +155,25 @@ public:
                               localVertexIdx);
     }
 
+    /*!
+     * \brief Return the temperature given the solution vector of a
+     *        finite volume.
+     */
+    template <class PrimaryVarVector>
+    Scalar temperature(const PrimaryVarVector &sol)
+    {
+        return this->problem_.temperature(); /* constant temperature */
+    }
 
     /*!
      * \brief Add the mass fraction of air in water to VTK output of
      *        the current timestep.
      */
     template <class MultiWriter>
-    void addVtkFields(MultiWriter &writer, const SpatialFunction &globalSol)
+    void addVtkFields(MultiWriter &writer, const SolutionFunction &globalSol)
     {
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
-
+        
         // create the required scalar fields
         unsigned numVertices = this->problem_.numVertices();
         //unsigned numElements = this->problem_.numElements();
@@ -264,51 +181,36 @@ public:
         ScalarField *pressure = writer.template createField<Scalar, 1>(numVertices);
         ScalarField *molefraction = writer.template createField<Scalar, 1>(numVertices);
 
-
-
-        LocalFunction 	  tmpSol;
-        VertexDataArray   elemDat(BoxTraits::ShapeFunctionSetContainer::maxsize);
-        //VariableVertexData tmp;
+        SolutionOnElement tmpSol;
+        VertexDataArray   elemDat;
 
         ElementIterator elementIt = this->problem_.elementBegin();
         ElementIterator endit = this->problem_.elementEnd();
-
         for (; elementIt != endit; ++elementIt)
+        {
+            int numLocalVerts = elementIt->template count<dim>();
+            tmpSol.resize(numLocalVerts);
+            
+            setCurrentElement(*elementIt);
+            this->restrictToElement(tmpSol, globalSol);
+            updateElementData_(elemDat, tmpSol, false);
+            
+            for (int i = 0; i < numLocalVerts; ++i)
             {
-                int numLocalVerts = elementIt->template count<dim>();
-                tmpSol.resize(numLocalVerts);
-
-                setCurrentElement(*elementIt);
-                this->restrictToElement(tmpSol, globalSol);
-                updateElementData_(elemDat, tmpSol, false);
-
-                for (int i = 0; i < numLocalVerts; ++i)
-                    {
-                        int globalIdx = this->problem_.vertexIdx(*elementIt, i);
-
-                        (*pressure)[globalIdx] = elemDat[i].pressure;
-                        (*molefraction)[globalIdx] = elemDat[i].molefraction;
-
-                    };
-
-            }
+                int globalIdx = this->problem_.vertexIdx(*elementIt, i);
+                
+                (*pressure)[globalIdx] = elemDat[i].pressure;
+                (*molefraction)[globalIdx] = elemDat[i].molefraction;
+                
+            };
+        }
 
         writer.addVertexData(pressure, "pressure");
         writer.addVertexData(molefraction, "molefraction");
+
     }
-
-
-protected:
-    Implementation *asImp_()
-    { return static_cast<Implementation *>(this); }
-    const Implementation *asImp_() const
-    { return static_cast<const Implementation *>(this); }
-
-    // parameters given in constructor
-    std::vector<StaticVertexData> staticVertexDat_;
 };
 
-
-} // end namepace
+}
 
 #endif

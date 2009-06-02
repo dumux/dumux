@@ -75,6 +75,11 @@ public:
         return;
     }
 
+    virtual void updateMaterialLaws()
+    {
+        return;
+    }
+
     virtual void vtkout(const char* name, int k)const = 0;
 
     //! always define virtual destructor in abstract base class

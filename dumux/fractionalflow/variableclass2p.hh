@@ -265,7 +265,7 @@ public:
             Dune::VTKWriter<GridView> vtkwriterpressure(gridViewDiffusion_);
             char fname[128];
             sprintf(fname, "%s-press%05d", name, k);
-            vtkwriterpressure.addCellData(pressure_, "total pressure p~");
+            vtkwriterpressure.addCellData(pressure_, "pressure");
             vtkwriterpressure.write(fname, Dune::VTKOptions::ascii);
 
             Dune::VTKWriter<GridView> vtkwritersaturation(gridViewTransport_);
@@ -279,7 +279,7 @@ public:
             char fname[128];
             sprintf(fname, "%s-%05d", name, k);
             vtkwriter.addCellData(saturation_, "saturation");
-            vtkwriter.addCellData(pressure_, "total pressure p~");
+            vtkwriter.addCellData(pressure_, "pressure");
             vtkwriter.write(fname, VTKOptions::ascii);
         }
 

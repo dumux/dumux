@@ -1,18 +1,24 @@
+/*****************************************************************************
+ *   Copyright (C) 2008 by Klaus Mosthaf                                     *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
+ *                                                                           *
+ *   This program is free software; you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by    *
+ *   the Free Software Foundation; either version 2 of the License, or       *
+ *   (at your option) any later version, as long as this copyright notice    *
+ *   is included in its original form.                                       *
+ *                                                                           *
+ *   This program is distributed WITHOUT ANY WARRANTY.                       *
+ *****************************************************************************/
 #include "config.h"
 
 #include "new_injectionproblem.hh"
 
-
-//#include <dune/grid/yaspgrid.hh>
-#include<dune/grid/uggrid.hh>
-//#include<dune/grid/sgrid.hh>
-
-#include<dune/grid/common/grid.hh>
-#include <dune/grid/io/file/dgfparser/dgfug.hh>
+#include <dune/common/exceptions.hh>
 #include <dune/grid/common/gridinfo.hh>
 
-
-#include <dune/common/exceptions.hh>
 #include <dune/common/mpihelper.hh>
 
 #include <iostream>
@@ -21,17 +27,11 @@
 int main(int argc, char** argv)
 {
     try {
-        // Set the type for scalar values (should be one of float, double
-        // or long double)
-        const int dim = 2;
-        typedef double                                   Scalar;
-        //        typedef Dune::ALUSimplexGrid<dim, dim>           Grid;
-        //        typedef Dune::YaspGrid<dim>                      Grid;
-        typedef Dune::UGGrid<dim>                        Grid;
-//        typedef Dune::SGrid<dim>                        Grid;
-        typedef Dune::NewInjectionProblem<Grid, Scalar>  Problem;
-        typedef Problem::DomainTraits::GlobalPosition    GlobalPosition;
-        typedef Dune::GridPtr<Grid>                      GridPointer;
+        typedef GET_PROP_TYPE(TTAG(InjectionProblem), PTAG(Scalar))  Scalar;
+        typedef GET_PROP_TYPE(TTAG(InjectionProblem), PTAG(Grid))    Grid;
+        typedef GET_PROP_TYPE(TTAG(InjectionProblem), PTAG(Problem)) Problem;
+        typedef Dune::FieldVector<Scalar, Grid::dimensionworld> GlobalPosition;
+        typedef Dune::GridPtr<Grid>                             GridPointer;
 
         // initialize MPI, finalize is done automatically on exit
         Dune::MPIHelper::instance(argc, argv);
@@ -48,26 +48,7 @@ int main(int argc, char** argv)
 
         // create grid
 
-        /*
-          GlobalPosition upperRight;
-          Dune::FieldVector<int,dim> res; // cell resolution
-          upperRight[0] = 60.0;
-          res[0]        = 24;
-
-          upperRight[1] = 40.0;
-          res[1]        = 16;
-
-          Grid grid(
-          #ifdef HAVE_MPI
-          Dune::MPIHelper::getCommunicator(),
-          #endif
-          upperRight, // upper right
-          res, // number of cells
-          Dune::FieldVector<bool,dim>(false), // periodic
-          2); // overlap
-        */
-
-        // load the grid from file
+        // -> load the grid from file
         GridPointer gridPtr =  GridPointer(dgfFileName);
         Dune::gridinfo(*gridPtr);
 

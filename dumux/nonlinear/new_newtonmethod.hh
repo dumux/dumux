@@ -2,7 +2,7 @@
  *   Copyright (C) 2008 by Andreas Lauser, Bernd Flemisch                    *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
- *   email: and _at_ poware.org                                              *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software; you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -149,8 +149,9 @@ public:
 
 public:
     NewNewtonMethod(Model &model)
-        : uOld(model.grid(), model.grid().overlapSize(0) == 0),
-          f(model.grid(), model.grid().overlapSize(0) == 0)
+#warning "we should use model.gridView().overlapSize()"
+        : uOld(model.gridView(), model.gridView(), model.gridView().grid().overlapSize(0) == 0),
+          f(model.gridView(), model.gridView(), model.gridView().grid().overlapSize(0) == 0)
     {
         deflectionTwoNorm_ = 1e100;
         residual_ = NULL;
@@ -179,7 +180,7 @@ public:
      *        about what it is going on;
      */
     bool verbose() const
-    { return (model().grid().comm().rank() == 0); }
+    { return (model().gridView().comm().rank() == 0); }
 
     /*!
      * \brief Run the newton method. The controller is responsible
@@ -248,7 +249,7 @@ protected:
         model_ = &model;
 
         // TODO (?): u shouldn't be hard coded to the model
-        Function          &u             = model.currentSolution();
+        Function          &u             = model.curSolFunction();
         LocalJacobian     &localJacobian = model.localJacobian();
         JacobianAssembler &jacobianAsm   = model.jacobianAssembler();
 
@@ -281,7 +282,7 @@ protected:
             ctl.newtonSolveLinear(*jacobianAsm, u, *f);
 
             Scalar tmp = (*u).two_norm2();
-            tmp = model.grid().comm().sum(tmp);
+            tmp = model.gridView().comm().sum(tmp);
             deflectionTwoNorm_ = sqrt(tmp);
 
             // update the current solution. We use either

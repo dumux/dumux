@@ -1,84 +1,81 @@
 // $Id$
-
+/*****************************************************************************
+ *   Copyright (C) 2009 by Karin Erbertseder                                 *
+ *   Copyright (C) 2009 by Andreas Lauser                                    *
+ *   Copyright (C) 2008 by Bernd Flemisch                                    *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
+ *                                                                           *
+ *   This program is free software; you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by    *
+ *   the Free Software Foundation; either version 2 of the License, or       *
+ *   (at your option) any later version, as long as this copyright notice    *
+ *   is included in its original form.                                       *
+ *                                                                           *
+ *   This program is distributed WITHOUT ANY WARRANTY.                       *
+ *****************************************************************************/
 #include "config.h"
 
 #include "new_tissue_tumor_problem.hh"
 
-
-//#include <dune/grid/yaspgrid.hh>
-#include<dune/grid/uggrid.hh>
-//#include<dune/grid/sgrid.hh>
-
-#include<dune/grid/common/grid.hh>
-#include <dune/grid/io/file/dgfparser/dgfug.hh>
+#include <dune/common/exceptions.hh>
 #include <dune/grid/common/gridinfo.hh>
 
-
-#include <dune/common/exceptions.hh>
-//#include <dune/common/mpihelper.hh>
+#include <dune/common/mpihelper.hh>
 
 #include <iostream>
 #include <boost/format.hpp>
 
+void usage(const char *progname)
+{
+    std::cout << boost::format("usage: %s [--restart restartTime] gridFile.dgf tEnd dt\n")%progname;
+    exit(1);
+};
+
 int main(int argc, char** argv)
 {
     try {
-        // Set the type for scalar values (should be one of float, double
-        // or long double)
-        const int dim = 2;
-        typedef double                                   Scalar;
-
-
-        //create a grid object
-
-        //        typedef Dune::ALUSimplexGrid<dim, dim>           Grid;
-        //        typedef Dune::YaspGrid<dim>                      Grid;
-        typedef Dune::UGGrid<dim>                        Grid;
-        //        typedef Dune::SGrid<dim>                        Grid;
-
-        typedef Dune::NewTissueTumorProblem<Grid, Scalar>  Problem;
-        typedef Problem::DomainTraits::GlobalPosition    GlobalPosition;
-        typedef Dune::GridPtr<Grid>                      GridPointer;
+        typedef TTAG(TissueTumorProblem)              TypeTag;
+        typedef GET_PROP_TYPE(TypeTag, PTAG(Scalar))  Scalar;
+        typedef GET_PROP_TYPE(TypeTag, PTAG(Grid))    Grid;
+        typedef GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+        typedef Dune::FieldVector<Scalar, Grid::dimensionworld> GlobalPosition;
+        typedef Dune::GridPtr<Grid>                             GridPointer;
 
         // initialize MPI, finalize is done automatically on exit
         Dune::MPIHelper::instance(argc, argv);
 
         // parse the command line arguments for the program
-        if (argc != 4) {
-            std::cout << boost::format("usage: %s grid tEnd dt\n")%argv[0];
-            return 1;
+        if (argc < 4)
+            usage(argv[0]);
+
+        // deal with the restart stuff
+        int argPos = 1;
+        bool restart = false;
+        double restartTime = 0;
+        if (std::string("--restart") == argv[argPos]) {
+            restart = true;
+            ++argPos;
+
+            std::istringstream(argv[argPos++]) >> restartTime;
         }
+
+        if (argc - argPos != 3) {
+            usage(argv[0]);
+        }
+
         double tEnd, dt;
-        const char *dgfFileName = argv[1];
-        std::istringstream(argv[2]) >> tEnd;
-        std::istringstream(argv[3]) >> dt;
+        const char *dgfFileName = argv[argPos++];
+        std::istringstream(argv[argPos++]) >> tEnd;
+        std::istringstream(argv[argPos++]) >> dt;
 
         // create grid
 
-        /*
-          GlobalPosition upperRight;
-          Dune::FieldVector<int,dim> res; // cell resolution
-          upperRight[0] = 60.0;
-          res[0]        = 24;
-
-          upperRight[1] = 40.0;
-          res[1]        = 16;
-
-          Grid grid(
-          #ifdef HAVE_MPI
-          Dune::MPIHelper::getCommunicator(),
-          #endif
-          upperRight, // upper right
-          res, // number of cells
-          Dune::FieldVector<bool,dim>(false), // periodic
-          2); // overlap
-        */
-
-        // load the grid from file
+        // -> load the grid from file
         GridPointer gridPtr =  GridPointer(dgfFileName);
         Dune::gridinfo(*gridPtr);
-
-
+        
         // instantiate and run the concrete problem
         Problem problem(&(*gridPtr), dt, tEnd);
         if (!problem.simulate())
@@ -86,7 +83,6 @@ int main(int argc, char** argv)
 
         return 0;
     }
-
     catch (Dune::Exception &e) {
         std::cerr << "Dune reported error: " << e << std::endl;
     }
@@ -95,5 +91,4 @@ int main(int argc, char** argv)
     }
 
     return 3;
-
 }

@@ -1,78 +1,99 @@
-// $Id$
-
+//$Id:$
+/*****************************************************************************
+ *   Copyright (C) 2009 by Karin Erbertseder                                 *
+ *   Copyright (C) 2009 by Andreas Lauser                                    *
+ *   Copyright (C) 2008 by Bernd Flemisch                                    *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
+ *                                                                           *
+ *   This program is free software; you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by    *
+ *   the Free Software Foundation; either version 2 of the License, or       *
+ *   (at your option) any later version, as long as this copyright notice    *
+ *   is included in its original form.                                       *
+ *                                                                           *
+ *   This program is distributed WITHOUT ANY WARRANTY.                       *
+ *****************************************************************************/
 /*!
  * \file
  *
- * \brief Contains the quantities which are are constant within a
- *        finite volume in the two-phase, two-component model.
+ * \brief Quantities required by the single-phase, two-component box
+ *        model defined on a vertex.
  */
-
 #ifndef DUMUX_1P2C_VERTEX_DATA_HH
 #define DUMUX_1P2C_VERTEX_DATA_HH
 
-#include <dumux/new_models/boxscheme/boxscheme.hh>
-#include <dumux/new_models/boxscheme/p1boxtraits.hh>
-#include <dumux/new_models/1p2c/1p2ctraits.hh>
-#include <dumux/auxiliary/math.hh>
-
-#include <dune/common/collectivecommunication.hh>
-#include <vector>
-#include <iostream>
+#include <dumux/new_models/tags.hh>
+#include "1p2cproperties.hh"
 
 namespace Dune
 {
 
 /*!
  * \brief Contains the quantities which are are constant within a
- *        finite volume in the two-phase, two-component model.
+ *        finite volume in the single-phase, two-component model.
  */
-
-template <class OnePTwoCTraits,
-          class Problem>
+template <class TypeTag>
 class OnePTwoCVertexData
 {
-    typedef OnePTwoCTraits Tr;
-    typedef typename Problem::DomainTraits::Scalar Scalar;
-    typedef typename Problem::DomainTraits::Grid Grid;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))   Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
-    typedef typename Grid::template Codim<0>::Entity Element;
+    typedef typename GridView::template Codim<0>::Entity Element;
+    
+    enum {
+        numEq         = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
+        numPhases     = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
+        numComponents = GET_PROP_VALUE(TypeTag, PTAG(NumComponents)),
 
-    typedef Dune::FieldVector<Scalar, Tr::numEq>      SolutionVector;
-    typedef Dune::FieldVector<Scalar, Tr::numPhases>  PhasesVector;
+        dim           = GridView::dimension,
+        dimWorld      = GridView::dimensionworld,
+    };
+    
+    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))     SolutionTypes;
+    typedef typename GET_PROP(TypeTag, PTAG(ReferenceElements)) RefElemProp;
+    typedef typename RefElemProp::Container                     ReferenceElements;
 
-    typedef Dune::FieldVector<Scalar, Grid::dimensionworld>  GlobalPosition;
-    typedef Dune::FieldVector<Scalar, Grid::dimension>       LocalPosition;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePTwoCIndices)) Indices;
+    typedef typename SolutionTypes::PrimaryVarVector  PrimaryVarVector;
+    typedef Dune::FieldVector<Scalar, numPhases>      PhasesVector;
 
+    typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dim>       LocalPosition;
+    
 public:
     /*!
      * \brief Update all quantities for a given control volume.
      */
     template <class JacobianImp>
-    void update(const SolutionVector   &sol,
+    void update(const PrimaryVarVector &sol,
                 const Element          &element,
                 int                     vertIdx,
                 bool                    isOldSol,
-                JacobianImp            &jac)
+                JacobianImp            &jac) 
     {
+        typedef Indices I;
+        
+        // coordinates of the vertex
         const GlobalPosition &global = element.geometry().corner(vertIdx);
         const LocalPosition   &local =
-            Problem::DomainTraits::referenceElement(element.type()).position(vertIdx,
-                                                                             Grid::dimension);
+            ReferenceElements::general(element.type()).position(vertIdx,
+                                                                dim);
+        
+        double T = jac.temperature(sol);
 
-        double T = 273;
-        double p = 1e-5;
-
+        pressure = sol[I::konti];
+        molefraction = sol[I::transport];
         porosity = jac.problem().soil().porosity(global,element,local);
-        viscosity = jac.problem().phase().viscosity(T,p);
+        density = jac.problem().fluid().density(T, pressure);
+        diffCoeff = jac.problem().fluid().diffCoeff(T, pressure);
+        viscosity = jac.problem().fluid().viscosity(T, pressure);
         tortuosity = jac.problem().soil().tortuosity(global,element,local);
-        diffCoeff = jac.problem().phase().diffCoeff();
-        molefraction = sol[Tr::transport];
-        pressure = sol[Tr::konti];
     }
 
-
-public:
     Scalar porosity;
+    Scalar density;
     Scalar viscosity;
     Scalar tortuosity;
     Scalar diffCoeff;
@@ -80,7 +101,6 @@ public:
     Scalar pressure;
 };
 
-
-} // end namepace
+}
 
 #endif

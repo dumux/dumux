@@ -2,7 +2,7 @@
  *   Copyright (C) 2008 by Bernd Flemisch, Andreas Lauser                    *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
- *   email: and _at_ poware.org                                              *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software; you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -86,11 +86,11 @@ public:
             return true; // we always do at least two iterations
         else if (numSteps_ > maxSteps_)
             return false; // we have exceeded the allowed number of steps
-        else if (newtonConverged())
+        else if (asImp_().newtonConverged())
             return false; // we are below the desired tolerance
 
         Scalar tmp = asImp_().physicalness_(u);
-        curPhysicalness_ = model().grid().comm().min(tmp);
+        curPhysicalness_ = model().gridView().comm().min(tmp);
         curPhysicalness_ = std::min(curPhysicalness_, 1.0);
 
 
@@ -126,7 +126,7 @@ public:
             // enough for the number of iterations we did and
             // it is the most physical so far.
             maxPhysicalness_ = curPhysicalness_;
-            probationCount_ = std::min(0, probationCount_ - 1);
+            probationCount_ = std::max(0, probationCount_ - 1);
 
             return true; // do another round
         };
@@ -150,7 +150,7 @@ public:
         curPhysicalness_ = 0;
 
         Scalar tmp = (*u).two_norm2();
-        tmp = sqrt(model().grid().comm().sum(tmp));
+        tmp = sqrt(model().gridView().comm().sum(tmp));
         oneByMagnitude_ = 1.0/std::max(tmp, 1e-5);
     }
 

@@ -36,13 +36,13 @@ typedef    typename GridView::Traits::template Codim<0>::Entity Element;
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
 public:
-    FVTotalVelocity2P(GridView& gridView, Problem& problem, std::string pressureType)
-    : FVPressure2P<GridView,Scalar,VC, Problem>(gridView, problem, pressureType)
+    FVTotalVelocity2P(GridView& gridView, Problem& problem, std::string pressureType, std::string satType = "Sw")
+    : FVPressure2P<GridView,Scalar,VC, Problem>(gridView, problem, pressureType, satType)
     {}
 
-    FVTotalVelocity2P(GridView& gridView, Problem& problem, std::string pressureType, std::string solverName,
+    FVTotalVelocity2P(GridView& gridView, Problem& problem, std::string pressureType, std::string satType, std::string solverName,
             std::string preconditionerName)
-    : FVPressure2P<GridView,Scalar,VC, Problem>(gridView, problem, pressureType, solverName, preconditionerName)
+    : FVPressure2P<GridView,Scalar,VC, Problem>(gridView, problem, pressureType, satType, solverName, preconditionerName)
     {}
 
     void calculateVelocity(const Scalar t=0) const
@@ -176,7 +176,7 @@ public:
                     FieldVector<Scalar,dimWorld> gravityTerm(this->gravity);
                     for (int i=0;i<dim;i++)
                     {
-                        gravityTerm[i] *= permeability[i];
+                        gravityTerm[i] *= permeability[i]*unitOuterNormal[i];
                     }
 
                     if (this->pressureType == pw)
@@ -259,7 +259,7 @@ public:
                         FieldVector<Scalar,dimWorld> gravityTerm(this->gravity);
                         for (int i=0;i<dim;i++)
                         {
-                            gravityTerm[i] *= normalPermeabilityI[i];
+                            gravityTerm[i] *= normalPermeabilityI[i]*unitOuterNormal[i];
                         }
                         if (this->pressureType == pw)
                         {

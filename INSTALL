@@ -1,45 +1,50 @@
-We use CMake 2.6 or higher as our main build system. It can be
-downloaded at www.cmake.org
+Installation Instructions
+=========================
 
-After installing cmake on your system, make sure that the 'cmake'
-executable is in your PATH. To configure the project, create a 
-new empty directory which will be used to store the files from
-the build process and run
+This file describes how to compile and install DuMuX using DUNE's
+standard autotools based build system. If you would like to use the
+alternative CMake based build system, please read the file
+INSTALL.cmake.
 
-cd path/to/empty/build/directory
-cmake path/to/DUMUX/source/directory
+DuMuX is a implemented as an ordinary DUNE module. For a full
+explanation of the DUNE installation process, please read the
+installation notes on the internet [0]. The following introduction is
+meant for the impatient.
 
-If this was successfull, the project can be build by 
+Getting started
+---------------
 
-make
+In order to compile DuMuX, you first have to download and extract the
+following DUNE modules into your source directory:
+ 
+  - DUNE-common      from [1]
+  - DUNE-grid        from [1]
+  - DUNE-istl        from [1]
+  - DUNE-disc        from [3]
 
-You might want to set a few parameters if you didn't install the
-required libraries system wide. CMake cache variables can be set using
-the "-D" command line switch to 'cmake'. The most important paramerters
-are probably:
+Since many simulators of DuMuX use the UG grid manager, you also need
+to install it first [4].
 
-DUNE_DIR        Path where all DUNE modules have been compiled and can be
-                found in subdirectories with the module name
-DUNE_common_DIR Path where the DUNE-common module can be found. If there 
-                is a 'dune-common' subdirectory in $DUNE_DIR, this is not
-                required.
-(All other DUNE modules are analogous)
+Next, you need to decide whether you want to compile in debug or in
+optimized mode and adapt the option file for the DUNE build system to
+the path where you installed UG. The files are located in
+dune-mux/optim.opts and dune-mux/debug.opts respectively. Next,
+compile everything using
 
-BOOST_ROOT        Path where the BOOST libraries from www.boost.org reside
-UG_DIR            Location of the UG grid manager
-ALUGrid_DIR       Location of the ALUGrid grid manager
-METIS_DIR         Location of the METIS graph partioning library (required
-                  for the parallel version of ALUGrid)
-CMAKE_BUILD_TYPE  Type of build. Either 'debug' or 'release', default is 
-                  'release'.
+  ./dune-common/bin/dunecontrol --opts=dune-mux/optim.opts --module=dune-mux all
 
-Examples
-========
+Finally, install DUNE and DuMuX headers to your system using
 
-cd path/to/empty/build/directory
-cmake -DCMAKE_BUILD_TYPE=debug \
-      -DDUNE_DIR=/usr/local/dune/ \
-      -DUG_DIR=/usr/local/ug \
-      -DALUGrid_DIR=/usr/local/alugrid \
-      -DMETIS_DIR=/usr/local/metis \
-      path/to/DUMUX/source/directory
+  ./dune-common/bin/dunecontrol --module=dune-mux make install
+
+A more comprehensive introduction to the DUNE build system can be
+found in [2].
+
+Links
+-----
+
+0. http://www.dune-project.org/doc/installation-notes.html
+1. http://www.dune-project.org/download.html
+2. http://www.dune-project.org/doc/buildsystem/buildsystem.pdf
+3. http://www.dune-project.org/downloadext.html
+4. http://www.dune-project.org/external_libraries/install_ug.html

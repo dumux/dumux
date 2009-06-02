@@ -8,7 +8,8 @@
 #include<iostream>
 #include<iomanip>
 
-#include<dune/grid/common/grid.hh>
+#include<dune/grid/uggrid.hh>
+#include<dune/grid/io/file/dgfparser/dgfug.hh>
 
 #include<dumux/material/property_baseclasses.hh>
 #include<dumux/material/relperm_pc_law.hh>
@@ -42,6 +43,27 @@
 
 namespace Dune
 {
+
+template <class TypeTag>
+class NewInjectionProblem;
+
+namespace Properties
+{
+NEW_TYPE_TAG(InjectionProblem, INHERITS_FROM(BoxTwoPTwoC));
+
+
+SET_PROP(InjectionProblem, Grid)
+{
+    typedef Dune::UGGrid<2> type;
+};
+
+SET_PROP(InjectionProblem, Problem)
+{
+    typedef Dune::NewInjectionProblem<TTAG(InjectionProblem)> type;
+};
+}
+
+
 //////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////--SOIL--//////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////////////////
@@ -144,73 +166,61 @@ private:
  *
  *    - ScalarT  Floating point type used for scalars
  */
-template<class GridT, class ScalarT>
-class NewInjectionProblem : public BasicDomain<GridT,
-                                               ScalarT>
+template <class TypeTag = TTAG(InjectionProblem) >
+class NewInjectionProblem : public BasicDomain<typename GET_PROP_TYPE(TypeTag, PTAG(Grid)),
+                                               typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) >
 {
-    typedef GridT                               Grid;
-    typedef BasicDomain<Grid, ScalarT>          ParentType;
-    typedef NewInjectionProblem<GridT, ScalarT> ThisType;
-    typedef TwoPTwoCBoxModel<ThisType>          Model;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))     Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView))   GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model))      Model;
+    typedef typename GridView::Grid                           Grid;
+
+    typedef BasicDomain<Grid, Scalar>    ParentType;
+    typedef NewInjectionProblem<TypeTag> ThisType;
+
+    // copy some indices for convenience
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
+    enum {
+        numEq       = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
+        pressureIdx = Indices::pressureIdx,
+        switchIdx   = Indices::switchIdx,
+
+        // Phase State
+        wPhaseOnly  = Indices::wPhaseOnly,
+        nPhaseOnly  = Indices::nPhaseOnly,
+        bothPhases  = Indices::bothPhases,
+
+        // Grid and world dimension
+        dim         = GridView::dimension,
+        dimWorld    = GridView::dimensionworld,
+    };
+
+    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
+    typedef typename SolutionTypes::PrimaryVarVector        PrimaryVarVector;
+    typedef typename SolutionTypes::BoundaryTypeVector      BoundaryTypeVector;
+
+    typedef typename GridView::template Codim<0>::Entity        Element;
+    typedef typename GridView::template Codim<dim>::Entity      Vertex;
+    typedef typename GridView::IntersectionIterator             IntersectionIterator;
+  
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
+
+    typedef Dune::FieldVector<Scalar, dim>       LocalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
 
     typedef Dune::Liq_WaterAir                     WettingPhase;
     typedef Dune::Gas_WaterAir                     NonwettingPhase;
-    typedef Dune::InjectionSoil<Grid, ScalarT>     Soil;
-    typedef Dune::TwoPhaseRelations<Grid, ScalarT> MaterialLaw;
+    typedef Dune::InjectionSoil<Grid, Scalar>      Soil;
+    typedef Dune::TwoPhaseRelations<Grid, Scalar>  MaterialLaw;
     typedef Dune::CWaterAir                        Multicomp;
-
-public:
-    // the domain traits of the domain
-    typedef typename ParentType::DomainTraits   DomainTraits;
-    // the traits of the BOX scheme
-    typedef typename Model::BoxTraits           BoxTraits;
-    // the traits of the Pw-Sn model
-    typedef typename Model::TwoPTwoCTraits      TwoPTwoCTraits;
-
-private:
-    // some constants from the traits for convenience
-    enum {
-        numEq       = BoxTraits::numEq,
-        pressureIdx = TwoPTwoCTraits::pressureIdx,
-        switchIdx   = TwoPTwoCTraits::switchIdx,
-
-        // Phase State
-        wPhaseOnly = TwoPTwoCTraits::wPhaseOnly,
-        nPhaseOnly = TwoPTwoCTraits::nPhaseOnly,
-        bothPhases = TwoPTwoCTraits::bothPhases,
-
-        // Grid and world dimension
-        dim          = DomainTraits::dim,
-        dimWorld     = DomainTraits::dimWorld,
-
-        // Choice of primary variables
-        pWsN           = TwoPTwoCTraits::pWsN,
-        pNsW            = TwoPTwoCTraits::pNsW
-    };
-
-    // copy some types from the traits for convenience
-    typedef typename DomainTraits::Scalar                     Scalar;
-    typedef typename DomainTraits::Element                    Element;
-    typedef typename DomainTraits::ElementIterator            ElementIterator;
-    typedef typename DomainTraits::ReferenceElement           ReferenceElement;
-    typedef typename DomainTraits::Vertex                     Vertex;
-    typedef typename DomainTraits::VertexIterator             VertexIterator;
-    typedef typename DomainTraits::IntersectionIterator       IntersectionIterator;
-    typedef typename DomainTraits::LocalPosition              LocalPosition;
-    typedef typename DomainTraits::GlobalPosition             GlobalPosition;
-
-    typedef typename BoxTraits::FVElementGeometry             FVElementGeometry;
-    typedef typename BoxTraits::SpatialFunction               SpatialFunction;
-    typedef typename BoxTraits::SolutionVector                SolutionVector;
-    typedef typename BoxTraits::BoundaryTypeVector            BoundaryTypeVector;
 
     typedef Dune::VtkMultiWriter<typename Grid::LeafGridView> VtkMultiWriter;
 
     enum Episode {}; // the type of an episode of the simulation
     typedef Dune::TimeManager<Episode>                  TimeManager;
 
-    typedef typename Model::NewtonMethod                NewtonMethod;
-    typedef TwoPTwoCNewtonController<NewtonMethod>      NewtonController;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonMethod))     NewtonMethod;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonController)) NewtonController;
 
 public:
     NewInjectionProblem(Grid *grid,
@@ -235,13 +245,6 @@ public:
         height_ = outerUpperRight_[1] - outerLowerLeft_[1];
         width_  = outerUpperRight_[0] - outerLowerLeft_[0];
         eps_    = 1e-8*width_;
-
-        // for defining e.g. a lense
-        innerLowerLeft_[0] = 0.0;
-        innerLowerLeft_[1] = 0.0;
-
-        innerUpperRight_[0] = 0.0;
-        innerUpperRight_[1] = 0.5;
 
         depthBOR_ = 800.0;
 
@@ -383,7 +386,7 @@ public:
     /////////////////////////////
     // DIRICHLET boundaries
     /////////////////////////////
-    void dirichlet(SolutionVector             &values,
+    void dirichlet(PrimaryVarVector           &values,
                    const Element              &element,
                    const FVElementGeometry    &fvElemGeom,
                    const IntersectionIterator &isIt,
@@ -401,7 +404,7 @@ public:
     /////////////////////////////
     // NEUMANN boundaries
     /////////////////////////////
-    void neumann(SolutionVector             &values,
+    void neumann(PrimaryVarVector           &values,
                  const Element              &element,
                  const FVElementGeometry    &fvElemGeom,
                  const IntersectionIterator &isIt,
@@ -423,7 +426,7 @@ public:
     /////////////////////////////
     // sources and sinks
     /////////////////////////////
-    void source(SolutionVector          &values,
+    void source(PrimaryVarVector        &values,
                 const Element           &element,
                 const FVElementGeometry &fvElemGeom,
                 int                      scvIdx) const
@@ -436,7 +439,7 @@ public:
     /////////////////////////////
     // INITIAL values
     /////////////////////////////
-    void initial(SolutionVector          &values,
+    void initial(PrimaryVarVector        &values,
                  const Element           &element,
                  const FVElementGeometry &fvElemGeom,
                  int                      scvIdx) const
@@ -448,25 +451,6 @@ public:
         */
         initial_(values, globalPos);
     }
-
-    Scalar porosity(const Element &element, int localIdx) const
-    {
-        // TODO/HACK: porosity should be defined on the verts
-        // as it is required on the verts!
-        const LocalPosition &local =
-            DomainTraits::referenceElement(element.type()).position(localIdx, dim);
-        const GlobalPosition &globalPos = element.geometry().corner(localIdx);
-        return soil().porosity(globalPos, *(ParentType::elementBegin()), local);
-    };
-
-    Scalar pC(Scalar satW, int globalIdx, const GlobalPosition &globalPos)
-    {
-        // TODO/HACK: porosity should be defined on the verts
-        // as it is required on the verts!
-        const LocalPosition &local =
-            DomainTraits::referenceElement(ParentType::elementBegin()->type()).position(0, dim);
-        return materialLaw().pC(satW, globalPos, *(ParentType::elementBegin()), local);
-    };
 
 
     int initialPhaseState(const Vertex       &vert,
@@ -504,27 +488,26 @@ public:
         return true;
     };
 
+    Model &model()
+    {
+        return model_;
+    }
+
+    const Model &model() const
+    {
+        return model_;
+    }
+
 
 private:
     // the internal method for the initial condition
-    void initial_(SolutionVector         &values,
+    void initial_(PrimaryVarVector       &values,
                   const GlobalPosition   &globalPos) const
     {
         Scalar densityW_ = 1000.0;
 
         values[pressureIdx] = 1e5 - densityW_*gravity_[1]*(depthBOR_ - globalPos[1]);
-        values[switchIdx] = 1e-8;
-
-        //                std::cout << "element " << ParentType::elementIdx(element) << " position of vert " << globalVertexIdx << ": " << globalPos << " -> " << values << "\n";
-
-        //        if ((globalPos[0] > 60.0 - eps_) && (globalPos[1] < 10 && globalPos[1] > 5))
-        //            values[switchIdx] = 0.05;
-
-        //            if (globalPos[1] >= innerLowerLeft_[1] && globalPos[1] <= innerUpperRight_[1]
-        //             && globalPos[0] >= innerLowerLeft_[0])
-        //                values[switchIdx] = 0.2;
-        //            else
-        //                values[switchIdx] = 1e-6;
+        values[switchIdx] = 0;
     }
 
     // write the fields current solution into an VTK output file.
@@ -541,8 +524,6 @@ private:
 
     GlobalPosition outerLowerLeft_;
     GlobalPosition outerUpperRight_;
-    GlobalPosition innerLowerLeft_;
-    GlobalPosition innerUpperRight_;
     Scalar width_;
     Scalar height_;
     Scalar depthBOR_;

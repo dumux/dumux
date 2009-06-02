@@ -1,3 +1,18 @@
+/*****************************************************************************
+ *   Copyright (C) 2009 by Onur Dogan                                        *
+ *   Copyright (C) 2009 by Andreas Lauser                                    *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
+ *                                                                           *
+ *   This program is free software; you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by    *
+ *   the Free Software Foundation; either version 2 of the License, or       *
+ *   (at your option) any later version, as long as this copyright notice    *
+ *   is included in its original form.                                       *
+ *                                                                           *
+ *   This program is distributed WITHOUT ANY WARRANTY.                       *
+ *****************************************************************************/
 #ifndef DUNE_NEW_1PPROBLEM_HH
 #define DUNE_NEW_1PPROBLEM_HH
 
@@ -8,7 +23,13 @@
 #include<iostream>
 #include<iomanip>
 
-#include<dune/grid/common/grid.hh>
+#include <dune/grid/alugrid.hh>
+#include <dune/grid/uggrid.hh>
+#include <dune/grid/yaspgrid.hh>
+
+#include <dune/grid/io/file/dgfparser/dgfalu.hh>
+#include <dune/grid/io/file/dgfparser/dgfug.hh>
+#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 #include<dumux/material/property_baseclasses.hh>
 #include<dumux/material/relperm_pc_law.hh>
@@ -24,171 +45,84 @@
 
 #include<dumux/new_models/1p/1pboxmodel.hh>
 
-
 #include<dumux/nonlinear/new_newtonmethod.hh>
 #include<dumux/nonlinear/new_newtoncontroller.hh>
 
 #include <dumux/auxiliary/timemanager.hh>
 #include <dumux/auxiliary/basicdomain.hh>
 
+#include "1psoil.hh"
 
 /**
- * @file
- * @brief  Definition of a problem, where air is injected under a low permeable layer
- * @author Bernd Flemisch, Klaus Mosthaf
+ * \todo please doc me!
  */
-
 namespace Dune
 {
-//////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////--SOIL--//////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////
+template <class TypeTag>
+class NewOnePProblem;
 
-/** \todo Please doc me! */
-
-template<class Grid, class ScalarT>
-class OnePSoil: public Matrix2p<Grid,ScalarT>
+namespace Properties
 {
-public:
-    typedef typename Grid::Traits::template Codim<0>::Entity Element;
-    typedef ScalarT Scalar;
-    typedef typename Grid::ctype CoordScalar;
-    enum {dim=Grid::dimension, dimWorld=Grid::dimensionworld};
+NEW_TYPE_TAG(OnePProblem, INHERITS_FROM(BoxOneP));
 
-    typedef Dune::FieldVector<CoordScalar,dim>      LocalPosition;
-    typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
-
-    OnePSoil():Matrix2p<Grid,Scalar>()
-    {
-        Kout_ = 0.;
-        for(int i = 0; i < dim; i++)
-            Kout_[i][i] = 5e-10;
-    }
-
-    ~OnePSoil()
-    {}
-
-    const FieldMatrix<CoordScalar,dim,dim> &K (const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
-    {
-        return Kout_;
-    }
-
-    double porosity(const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
-    {
-        return 0.4;
-    }
-
-    double Sr_w(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double T) const
-    {
-        return 0.05;
-    }
-
-    double Sr_n(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double T) const
-    {
-        return 0.0;
-    }
-
-    /* ATTENTION: define heat capacity per cubic meter! Be sure, that it corresponds to porosity!
-     * Best thing will be to define heatCap = (specific heatCapacity of material) * density * porosity*/
-    double heatCap(const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
-    {
-        return     790 /* spec. heat cap. of granite */
-            * 2700 /* density of granite */
-            * porosity(x, e, xi);
-    }
-
-    double heatCond(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double sat) const
-    {
-        static const double lWater = 0.6;
-        static const double lGranite = 2.8;
-        double poro = porosity(x, e, xi);
-        double lsat = pow(lGranite, (1-poro)) * pow(lWater, poro);
-        double ldry = pow(lGranite, (1-poro));
-        return ldry + sqrt(sat) * (ldry - lsat);
-    }
-
-    std::vector<double> paramRelPerm(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double T) const
-    {
-        // example for Brooks-Corey parameters
-        std::vector<double> param(2);
-        param[0] = 0; // pCMin
-        param[1] = 1e5; // pCMax
-
-        return param;
-    }
-
-    typename Matrix2p<Grid,Scalar>::modelFlag relPermFlag(const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
-    {
-        return Matrix2p<Grid,Scalar>::linear;
-    }
-
-private:
-    FieldMatrix<Scalar,dim,dim> Kout_;
+SET_PROP(OnePProblem, Grid)
+{
+    typedef Dune::UGGrid<3> type;
+//    typedef Dune::ALUCubeGrid<3,3> type;
 };
 
-//! class that defines the parameters of an air injection under a low permeable layer
-/*! Problem definition of an air injection under a low permeable layer. Air enters the domain
- * at the right boundary and migrates upwards.
- * Problem was set up using the rect2d.dgf grid.
- *
- *    Template parameters are:
- *
- *    - ScalarT  Floating point type used for scalars
+SET_TYPE_PROP(OnePProblem, Problem, Dune::NewOnePProblem<TTAG(OnePProblem)>);
+}
+
+
+/*!
+ * \todo Please doc me!
  */
-template<class GridT, class ScalarT>
-class NewOnePProblem : public BasicDomain<GridT,
-                                          ScalarT>
+template <class TypeTag = TTAG(OnePProblem) >
+class NewOnePProblem : public BasicDomain<typename GET_PROP_TYPE(TypeTag, PTAG(Grid)),
+                                          typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) >
 {
-    typedef GridT                           Grid;
-    typedef BasicDomain<Grid, ScalarT>      ParentType;
-    typedef NewOnePProblem<GridT, ScalarT>  ThisType;
-    typedef OnePBoxModel<ThisType>          Model;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))     Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView))   GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model))      Model;
+    typedef typename GridView::Grid                           Grid;
 
-    typedef Dune::Air                            Fluid;
-    typedef Dune::OnePSoil<Grid, ScalarT>          Soil;
+    typedef BasicDomain<Grid, Scalar>    ParentType;
+    typedef NewOnePProblem<TypeTag>      ThisType;
 
-public:
-    // the domain traits of the domain
-    typedef typename ParentType::DomainTraits   DomainTraits;
-    // the traits of the BOX scheme
-    typedef typename Model::BoxTraits           BoxTraits;
-    // the traits of the 1 phase model
-    typedef typename Model::OnePTraits      OnePTraits;
-
-private:
-    // some constants from the traits for convenience
+    // copy some indices for convenience
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePIndices)) Indices;
     enum {
-        numEq       = BoxTraits::numEq,
-        pressureIdx = OnePTraits::pressureIdx,
+        numEq       = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
+        pressureIdx = Indices::pressureIdx,
 
         // Grid and world dimension
-        dim      = DomainTraits::dim,
-        dimWorld = DomainTraits::dimWorld
+        dim         = GridView::dimension,
+        dimWorld    = GridView::dimensionworld,
     };
 
-    // copy some types from the traits for convenience
-    typedef typename DomainTraits::Scalar                     Scalar;
-    typedef typename DomainTraits::Element                    Element;
-    typedef typename DomainTraits::ElementIterator            ElementIterator;
-    typedef typename DomainTraits::ReferenceElement           ReferenceElement;
-    typedef typename DomainTraits::Vertex                     Vertex;
-    typedef typename DomainTraits::VertexIterator             VertexIterator;
-    typedef typename DomainTraits::IntersectionIterator       IntersectionIterator;
-    typedef typename DomainTraits::LocalPosition              LocalPosition;
-    typedef typename DomainTraits::GlobalPosition             GlobalPosition;
+    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
+    typedef typename SolutionTypes::PrimaryVarVector        PrimaryVarVector;
+    typedef typename SolutionTypes::BoundaryTypeVector      BoundaryTypeVector;
 
-    typedef typename BoxTraits::FVElementGeometry             FVElementGeometry;
-    typedef typename BoxTraits::SpatialFunction               SpatialFunction;
-    typedef typename BoxTraits::SolutionVector                SolutionVector;
-    typedef typename BoxTraits::BoundaryTypeVector            BoundaryTypeVector;
+    typedef typename GridView::template Codim<0>::Entity    Element;
+    typedef typename GridView::template Codim<dim>::Entity  Vertex;
+    typedef typename GridView::IntersectionIterator         IntersectionIterator;
+  
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
 
-    typedef Dune::VtkMultiWriter<typename Grid::LeafGridView> VtkMultiWriter;
+    typedef Dune::FieldVector<Scalar, dim>       LocalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
 
     enum Episode {}; // the type of an episode of the simulation
-    typedef Dune::TimeManager<Episode>                  TimeManager;
+    typedef Dune::TimeManager<Episode>           TimeManager;
+    typedef Dune::VtkMultiWriter<GridView>       VtkMultiWriter;
 
-    typedef typename Model::NewtonMethod                NewtonMethod;
-    typedef Dune::NewtonController<NewtonMethod>        NewtonController;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonMethod))      NewtonMethod;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonController))  NewtonController;
+
+    typedef Dune::Air                     Fluid;
+    typedef Dune::OnePSoil<Grid, Scalar>  Soil;
 
 public:
     NewOnePProblem(Grid *grid,
@@ -247,16 +181,13 @@ public:
 
         // write the current result to disk
         writeCurrentResult_();
-
-        // update the domain with the current solution
-        //                updateDomain_();
     };
     ///////////////////////////////////
     // End of simulation control stuff
     ///////////////////////////////////
 
     ///////////////////////////////////
-    // Strings pulled by the TwoPTwoCBoxModel during the course of
+    // Strings pulled by the OnePBoxModel during the course of
     // the simulation (-> boundary conditions, initial conditions,
     // etc)
     ///////////////////////////////////
@@ -268,6 +199,15 @@ public:
     void setTimeStepSize(Scalar dt)
     { return timeManager_.setStepSize(dt); }
 
+    Model &model()
+    {
+        return model_;
+    }
+
+    const Model &model() const
+    {
+        return model_;
+    }
 
     //! properties of the fluid
     const Fluid &fluid() const
@@ -296,13 +236,13 @@ public:
     {
         values = Dune::BoundaryConditions::neumann;
         switch (isIt->boundaryId()) {
-            /*                case 1:
-                              case 2:
-                              case 3:
-                              case 4:
-                              values = Dune::BoundaryConditions::neumann;
-                              break;
-            */
+        case 1:
+        case 2:
+        case 3:
+        case 4:
+            values = Dune::BoundaryConditions::neumann;
+            break;
+
         case 5:
         case 6:
             values = Dune::BoundaryConditions::dirichlet;
@@ -313,7 +253,7 @@ public:
     /////////////////////////////
     // DIRICHLET boundaries
     /////////////////////////////
-    void dirichlet(SolutionVector             &values,
+    void dirichlet(PrimaryVarVector           &values,
                    const Element              &element,
                    const FVElementGeometry    &fvElemGeom,
                    const IntersectionIterator &isIt,
@@ -332,7 +272,7 @@ public:
     /////////////////////////////
     // NEUMANN boundaries
     /////////////////////////////
-    void neumann(SolutionVector             &values,
+    void neumann(PrimaryVarVector           &values,
                  const Element              &element,
                  const FVElementGeometry    &fvElemGeom,
                  const IntersectionIterator &isIt,
@@ -347,9 +287,11 @@ public:
         case 4:
             values[pressureIdx] = 0;
             break;
-            /*                case 5:
-                              values[pressureIdx] = -1.0;
-                              break;
+
+            /*
+              case 5:
+              values[pressureIdx] = -1.0;
+              break;
             */
         }
     }
@@ -357,7 +299,7 @@ public:
     /////////////////////////////
     // sources and sinks
     /////////////////////////////
-    void source(SolutionVector          &values,
+    void source(PrimaryVarVector        &values,
                 const Element           &element,
                 const FVElementGeometry &fvElemGeom,
                 int                      scvIdx) const
@@ -370,7 +312,7 @@ public:
     /////////////////////////////
     // INITIAL values
     /////////////////////////////
-    void initial(SolutionVector         &values,
+    void initial(PrimaryVarVector        &values,
                  const Element           &element,
                  const FVElementGeometry &fvElemGeom,
                  int                      scvIdx) const
@@ -378,20 +320,9 @@ public:
         values[pressureIdx] = 1e+5;
     }
 
-
     Scalar temperature() const
     {
         return 283.15; // 10°C
-    };
-
-    Scalar porosity(const Element &element, int localIdx) const
-    {
-        // TODO/HACK: porosity should be defined on the verts
-        // as it is required on the verts!
-        const LocalPosition &local =
-            DomainTraits::referenceElement(element.type()).position(localIdx, dim);
-        const GlobalPosition &globalPos = element.geometry().corner(localIdx);
-        return soil().porosity(globalPos, *(ParentType::elementBegin()), local);
     };
 
     const GlobalPosition &gravity () const
@@ -417,7 +348,6 @@ private:
 
         resultWriter_.endTimestep();
     }
-
 
     GlobalPosition  gravity_;
 

@@ -1,3 +1,18 @@
+/*****************************************************************************
+ *   Copyright (C) 2009 by Onur Dogan                                        *
+ *   Copyright (C) 2009 by Andreas Lauser                                    *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
+ *                                                                           *
+ *   This program is free software; you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by    *
+ *   the Free Software Foundation; either version 2 of the License, or       *
+ *   (at your option) any later version, as long as this copyright notice    *
+ *   is included in its original form.                                       *
+ *                                                                           *
+ *   This program is distributed WITHOUT ANY WARRANTY.                       *
+ *****************************************************************************/
 #ifndef DUNE_NEW_RICHARDSPROBLEM_HH
 #define DUNE_NEW_RICHARDSPROBLEM_HH
 
@@ -8,29 +23,25 @@
 #include<iostream>
 #include<iomanip>
 
-#include<dune/grid/common/grid.hh>
+#include <dune/grid/alugrid.hh>
+#include <dune/grid/uggrid.hh>
+#include <dune/grid/yaspgrid.hh>
 
-#include<dumux/material/property_baseclasses.hh>
-#include<dumux/material/relperm_pc_law.hh>
-
-#include "dumux/material/phaseproperties/phaseproperties2p.hh"
-#include <dumux/material/matrixproperties.hh>
-#include <dumux/material/twophaserelations.hh>
-
-#include <dumux/io/vtkmultiwriter.hh>
-#include <dumux/auxiliary/timemanager.hh>
+#include <dune/grid/io/file/dgfparser/dgfalu.hh>
+#include <dune/grid/io/file/dgfparser/dgfug.hh>
+#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 #include <dune/common/timer.hh>
 
+#include <dumux/material/phaseproperties/phaseproperties2p.hh>
+
 #include<dumux/new_models/richards/richardsboxmodel.hh>
 
-
-#include<dumux/nonlinear/new_newtonmethod.hh>
-#include<dumux/nonlinear/new_newtoncontroller.hh>
-
+#include <dumux/io/vtkmultiwriter.hh>
 #include <dumux/auxiliary/timemanager.hh>
 #include <dumux/auxiliary/basicdomain.hh>
 
+#include "richardssoil.hh"
 
 /**
  * @file
@@ -40,157 +51,73 @@
 
 namespace Dune
 {
-//////////////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////--SOIL--//////////////////////////////////////////////
-//////////////////////////////////////////////////////////////////////////////////////////////
+template <class TypeTag>
+class NewRichardsProblem;
 
-/** \todo Please doc me! */
-
-template<class Grid, class ScalarT>
-class RichardsSoil: public Matrix2p<Grid,ScalarT>
+namespace Properties
 {
-public:
-    typedef typename Grid::Traits::template Codim<0>::Entity Element;
-    typedef ScalarT Scalar;
-    typedef typename Grid::ctype CoordScalar;
-    enum {dim=Grid::dimension, dimWorld=Grid::dimensionworld};
+NEW_TYPE_TAG(RichardsProblem, INHERITS_FROM(BoxRichards));
 
-    typedef Dune::FieldVector<CoordScalar,dim>      LocalPosition;
-    typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
-
-    RichardsSoil():Matrix2p<Grid,Scalar>()
-    {
-        Kout_ = 0.;
-        for(int i = 0; i < dim; i++)
-            Kout_[i][i] = 5e-10;
-    }
-
-    ~RichardsSoil()
-    {}
-
-    const FieldMatrix<CoordScalar,dim,dim> &K (const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
-    {
-        return Kout_;
-    }
-
-    double porosity(const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
-    {
-        return 0.4;
-    }
-
-    double Sr_w(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double T) const
-    {
-        return 0.05;
-    }
-
-    double Sr_n(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double T) const
-    {
-        return 0.0;
-    }
-
-    /* ATTENTION: define heat capacity per cubic meter! Be sure, that it corresponds to porosity!
-     * Best thing will be to define heatCap = (specific heatCapacity of material) * density * porosity*/
-    double heatCap(const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
-    {
-        return     790 /* spec. heat cap. of granite */
-            * 2700 /* density of granite */
-            * porosity(x, e, xi);
-    }
-
-    double heatCond(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double sat) const
-    {
-        static const double lWater = 0.6;
-        static const double lGranite = 2.8;
-        double poro = porosity(x, e, xi);
-        double lsat = pow(lGranite, (1-poro)) * pow(lWater, poro);
-        double ldry = pow(lGranite, (1-poro));
-        return ldry + sqrt(sat) * (ldry - lsat);
-    }
-
-    std::vector<double> paramRelPerm(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double T) const
-    {
-        // example for Brooks-Corey parameters
-        std::vector<double> param(2);
-        param[0] = 0; // pCMin
-        param[1] = 1e5; // pCMax
-
-        return param;
-    }
-
-    typename Matrix2p<Grid,Scalar>::modelFlag relPermFlag(const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
-    {
-        return Matrix2p<Grid,Scalar>::linear;
-    }
-
-private:
-    FieldMatrix<Scalar,dim,dim> Kout_;
+SET_PROP(RichardsProblem, Grid)
+{
+//    typedef Dune::UGGrid<3> type;
+    typedef Dune::ALUCubeGrid<3,3> type;
 };
 
-//! class that defines the parameters of an air injection under a low permeable layer
-/*! Problem definition of an air injection under a low permeable layer. Air enters the domain
- * at the right boundary and migrates upwards.
- * Problem was set up using the rect2d.dgf grid.
- *
- *    Template parameters are:
- *
- *    - ScalarT  Floating point type used for scalars
+SET_TYPE_PROP(RichardsProblem, Problem, Dune::NewRichardsProblem<TTAG(RichardsProblem)>);
+}
+
+
+/*!
+ * \todo Please doc me!
  */
-template<class GridT, class ScalarT>
-class NewRichardsProblem : public BasicDomain<GridT,
-                                              ScalarT>
+template <class TypeTag = TTAG(RichardsProblem) >
+class NewRichardsProblem : public BasicDomain<typename GET_PROP_TYPE(TypeTag, PTAG(Grid)),
+                                              typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) >
 {
-    typedef GridT                               Grid;
-    typedef BasicDomain<Grid, ScalarT>          ParentType;
-    typedef NewRichardsProblem<GridT, ScalarT>  ThisType;
-    typedef RichardsBoxModel<ThisType>          Model;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))     Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView))   GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model))      Model;
+    typedef typename GridView::Grid                           Grid;
+
+    typedef BasicDomain<Grid, Scalar>    ParentType;
+    typedef NewRichardsProblem<TypeTag>      ThisType;
+
+    // copy some indices for convenience
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(RichardsIndices)) Indices;
+    enum {
+        numEq       = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
+        pWIdx       = Indices::pWIdx,
+
+        // Grid and world dimension
+        dim         = GridView::dimension,
+        dimWorld    = GridView::dimensionworld,
+    };
+
+    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
+    typedef typename SolutionTypes::PrimaryVarVector        PrimaryVarVector;
+    typedef typename SolutionTypes::BoundaryTypeVector      BoundaryTypeVector;
+
+    typedef typename GridView::template Codim<0>::Entity    Element;
+    typedef typename GridView::template Codim<dim>::Entity  Vertex;
+    typedef typename GridView::IntersectionIterator         IntersectionIterator;
+  
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
+
+    typedef Dune::FieldVector<Scalar, dim>       LocalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
+
+    enum Episode {}; // the type of an episode of the simulation
+    typedef Dune::TimeManager<Episode>           TimeManager;
+    typedef Dune::VtkMultiWriter<GridView>       VtkMultiWriter;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonMethod))      NewtonMethod;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonController))  NewtonController;
 
     typedef Dune::Water                            WettingPhase;
     typedef Dune::DNAPL                            NonwettingPhase;
-    typedef Dune::RichardsSoil<Grid, ScalarT>      Soil;
-    typedef Dune::TwoPhaseRelations<Grid, ScalarT> MaterialLaw;
-
-public:
-    // the domain traits of the domain
-    typedef typename ParentType::DomainTraits   DomainTraits;
-    // the traits of the BOX scheme
-    typedef typename Model::BoxTraits           BoxTraits;
-    // the traits of the richards model
-    typedef typename Model::RichardsTraits      RichardsTraits;
-
-private:
-    // some constants from the traits for convenience
-    enum {
-        numEq     = BoxTraits::numEq,
-        pWIdx     = RichardsTraits::pWIdx,
-
-        // Grid and world dimension
-        dim      = DomainTraits::dim,
-        dimWorld = DomainTraits::dimWorld
-    };
-
-    // copy some types from the traits for convenience
-    typedef typename DomainTraits::Scalar                     Scalar;
-    typedef typename DomainTraits::Element                    Element;
-    typedef typename DomainTraits::ElementIterator            ElementIterator;
-    typedef typename DomainTraits::ReferenceElement           ReferenceElement;
-    typedef typename DomainTraits::Vertex                     Vertex;
-    typedef typename DomainTraits::VertexIterator             VertexIterator;
-    typedef typename DomainTraits::IntersectionIterator       IntersectionIterator;
-    typedef typename DomainTraits::LocalPosition              LocalPosition;
-    typedef typename DomainTraits::GlobalPosition             GlobalPosition;
-
-    typedef typename BoxTraits::FVElementGeometry             FVElementGeometry;
-    typedef typename BoxTraits::SpatialFunction               SpatialFunction;
-    typedef typename BoxTraits::SolutionVector                SolutionVector;
-    typedef typename BoxTraits::BoundaryTypeVector            BoundaryTypeVector;
-
-    typedef Dune::VtkMultiWriter<typename Grid::LeafGridView> VtkMultiWriter;
-
-    enum Episode {}; // the type of an episode of the simulation
-    typedef Dune::TimeManager<Episode>                  TimeManager;
-
-    typedef typename Model::NewtonMethod                NewtonMethod;
-    typedef Dune::NewtonController<NewtonMethod>        NewtonController;
+    typedef Dune::RichardsSoil<Grid, Scalar>       Soil;
+    typedef Dune::TwoPhaseRelations<Grid, Scalar>  MaterialLaw;
 
 public:
     NewRichardsProblem(Grid *grid,
@@ -298,6 +225,16 @@ public:
     Soil &soil()
     {  return soil_; }
 
+    Model &model()
+    {
+        return model_;
+    }
+
+    const Model &model() const
+    {
+        return model_;
+    }
+
     //! object for definition of material law
     /*! object for definition of material law (e.g. Brooks-Corey, Van Genuchten, ...)
       \return    material law
@@ -334,7 +271,7 @@ public:
     /////////////////////////////
     // DIRICHLET boundaries
     /////////////////////////////
-    void dirichlet(SolutionVector             &values,
+    void dirichlet(PrimaryVarVector           &values,
                    const Element              &element,
                    const FVElementGeometry    &fvElemGeom,
                    const IntersectionIterator &isIt,
@@ -354,7 +291,7 @@ public:
     /////////////////////////////
     // NEUMANN boundaries
     /////////////////////////////
-    void neumann(SolutionVector             &values,
+    void neumann(PrimaryVarVector           &values,
                  const Element              &element,
                  const FVElementGeometry    &fvElemGeom,
                  const IntersectionIterator &isIt,
@@ -379,7 +316,7 @@ public:
     /////////////////////////////
     // sources and sinks
     /////////////////////////////
-    void source(SolutionVector          &values,
+    void source(PrimaryVarVector        &values,
                 const Element           &element,
                 const FVElementGeometry &fvElemGeom,
                 int                      scvIdx) const
@@ -392,7 +329,7 @@ public:
     /////////////////////////////
     // INITIAL values
     /////////////////////////////
-    void initial(SolutionVector         &values,
+    void initial(PrimaryVarVector        &values,
                  const Element           &element,
                  const FVElementGeometry &fvElemGeom,
                  int                      scvIdx) const
@@ -410,26 +347,6 @@ public:
     {
         return 1.0e+5; // reference non-wetting phase pressure [Pa] used for viscosity and density calculations
     };
-
-    Scalar porosity(const Element &element, int localIdx) const
-    {
-        // TODO/HACK: porosity should be defined on the verts
-        // as it is required on the verts!
-        const LocalPosition &local =
-            DomainTraits::referenceElement(element.type()).position(localIdx, dim);
-        const GlobalPosition &globalPos = element.geometry().corner(localIdx);
-        return soil().porosity(globalPos, *(ParentType::elementBegin()), local);
-    };
-
-    Scalar pC(Scalar satW, int globalIdx, const GlobalPosition &globalPos)
-    {
-        // TODO/HACK: porosity should be defined on the verticess
-        // as it is required on the vertices!
-        const LocalPosition &local =
-            DomainTraits::referenceElement(ParentType::elementBegin()->type()).position(0, dim);
-        return materialLaw().pC(satW, globalPos, *(ParentType::elementBegin()), local);
-    };
-
 
     const GlobalPosition &gravity () const
     {

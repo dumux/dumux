@@ -63,7 +63,7 @@ int main(int argc, char** argv)
         timer.reset();
         //Dune::FEDiffusion<GridType, NumberType> diffusion(grid, problem);
         //Dune::FVDiffusion<GridType, NumberType, VC> diffusion(grid, problem);
-        Dune::FVNonWettingPhaseVelocity2P<GridView, NumberType, VC> diffusion(gridView, problem, "pw");
+        Dune::FVWettingPhaseVelocity2P<GridView, NumberType, VC> diffusion(gridView, problem, "pw","Sw");
         //Dune::MimeticDiffusion<GridType, NumberType, VC> diffusion(grid, problem, grid.maxLevel());
 
 

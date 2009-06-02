@@ -1,11 +1,11 @@
 /*****************************************************************************
- *   Copyright (C) 2008,2009 by Melanie Darcis                               *
- *                              Klaus Mosthaf,                               *
- *                              Andreas Lauser,                              *
- *                              Bernd Flemisch                               *
+ *   Copyright (C) 2008-2009 by Melanie Darcis                               *
+ *   Copyright (C) 2008-2009 by Klaus Mosthaf                                *
+ *   Copyright (C) 2008-2009 by Andreas Lauser                               *
+ *   Copyright (C) 2008-2009 by Bernd Flemisch                               *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
- *   email: melanie.darcis _at_ iws.uni-stuttgart.de                         *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software; you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -40,30 +40,36 @@ namespace Dune
  * This means pressure and concentration gradients, phase densities at
  * the intergration point, etc.
  */
-template <class TwoPTwoCNITraits, 
-          class ProblemT,
-          class VertexData>
-class TwoPTwoCNIFluxData : public TwoPTwoCFluxData<TwoPTwoCNITraits, ProblemT, VertexData>
+template <class TypeTag>
+class TwoPTwoCNIFluxData : public TwoPTwoCFluxData<TypeTag>
 {
-    typedef typename ProblemT::DomainTraits::Scalar  Scalar;
-    typedef typename ProblemT::DomainTraits::Grid    Grid;
-    typedef ProblemT                                 Problem;
-    typedef typename Grid::template Codim<0>::Entity Element;
-    typedef std::vector<VertexData>                  VertexDataArray;
+    typedef TwoPTwoCFluxData<TypeTag>                       ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))   Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
-    static const int dim = Grid::dimensionworld;
-    static const int localDim = Grid::dimension;
-    typedef Dune::FieldVector<Scalar, dim>                   GlobalPosition;
-    typedef Dune::FieldVector<Scalar, localDim>              LocalPosition;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem))    Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexData)) VertexData;
 
-    typedef typename Dune::FVElementGeometry<Grid>           FVElementGeometry;
-    typedef typename FVElementGeometry::SubControlVolume     SCV;
-    typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
+    typedef typename GridView::template Codim<0>::Entity Element;
+    typedef std::vector<VertexData>                      VertexDataArray;
+    
+    enum {
+        dim           = GridView::dimension,
+        dimWorld      = GridView::dimensionworld,
 
-    typedef TwoPTwoCFluxData<TwoPTwoCNITraits, Problem, VertexData> ParentType;
+        numPhases     = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
+    };
+    
+    typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dim>       LocalPosition;
 
-    typedef TwoPTwoCNITraits Tr;
-    typedef Dune::FieldVector<Scalar, Tr::numPhases> PhasesVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
+    typedef typename FVElementGeometry::SubControlVolume             SCV;
+    typedef typename FVElementGeometry::SubControlVolumeFace         SCVFace;
+
+    typedef Dune::FieldVector<Scalar, numPhases>      PhasesVector;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
 
 public:
     TwoPTwoCNIFluxData(const Problem &problem,

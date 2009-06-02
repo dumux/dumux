@@ -175,7 +175,7 @@ public:
                     FieldVector<Scalar,dimWorld> gravityTerm(this->gravity);
                     for (int i=0;i<dim;i++)
                     {
-                        gravityTerm[i] *= permeability[i];
+                        gravityTerm[i] *= permeability[i]*unitOuterNormal[i];
                     }
 
                     if (this->pressureType == pw)
@@ -259,7 +259,7 @@ public:
                         FieldVector<Scalar,dimWorld> gravityTerm(this->gravity);
                         for (int i=0;i<dim;i++)
                         {
-                            gravityTerm[i] *= normalPermeabilityI[i];
+                            gravityTerm[i] *= normalPermeabilityI[i]*unitOuterNormal[i];
                         }
 
                         if (this->pressureType == pw)

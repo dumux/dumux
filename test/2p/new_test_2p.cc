@@ -1,3 +1,19 @@
+/*****************************************************************************
+ *   Copyright (C) 2007-2008 by Klaus Mosthaf                                *
+ *   Copyright (C) 2007-2008 by Bernd Flemisch                               *
+ *   Copyright (C) 2008-2009 by Andreas Lauser                               *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
+ *                                                                           *
+ *   This program is free software; you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by    *
+ *   the Free Software Foundation; either version 2 of the License, or       *
+ *   (at your option) any later version, as long as this copyright notice    *
+ *   is included in its original form.                                       *
+ *                                                                           *
+ *   This program is distributed WITHOUT ANY WARRANTY.                       *
+ *****************************************************************************/
 #include "config.h"
 
 #include "new_lensproblem.hh"
@@ -21,19 +37,13 @@ void usage(const char *progname)
 int main(int argc, char** argv)
 {
     try {
-
-        // Set the type for scalar values (should be one of float, double
-        // or long double)
-        const int dim = 2;
-        typedef double                                Scalar;
-#define USE_UG 0
-#if USE_UG
-        typedef Dune::UGGrid<dim>                     Grid;
-#else
-        typedef Dune::YaspGrid<dim>                   Grid;
-#endif
-        typedef Dune::NewLensProblem<Grid, Scalar>    Problem;
-        typedef Problem::DomainTraits::GlobalPosition GlobalPosition;
+        typedef TTAG(LensProblem) TypeTag;
+        typedef GET_PROP_TYPE(TypeTag, PTAG(Scalar))  Scalar;
+        typedef GET_PROP_TYPE(TypeTag, PTAG(Grid))    Grid;
+        typedef GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
+        typedef Dune::FieldVector<Scalar, Grid::dimensionworld> GlobalPosition;
+        
+        static const int dim = Grid::dimension;
 
         // initialize MPI, finalize is done automatically on exit
         Dune::MPIHelper::instance(argc, argv);
@@ -42,6 +52,7 @@ int main(int argc, char** argv)
         if (argc < 3)
             usage(argv[0]);
 
+        // deal with the restart stuff
         int argPos = 1;
         bool restart = false;
         double restartTime = 0;
@@ -59,14 +70,13 @@ int main(int argc, char** argv)
         double tEnd, dt;
         std::istringstream(argv[argPos++]) >> tEnd;
         std::istringstream(argv[argPos++]) >> dt;
-        //        typedef Dune::UGGrid<dim>                     Grid;
 
+        // create the grid
         GlobalPosition lowerLeft(0.0);
         GlobalPosition upperRight;
+        Dune::FieldVector<int,dim> res; // cell resolution
         upperRight[0] = 6.0;
         upperRight[1] = 4.0;
-
-        Dune::FieldVector<int,dim> res; // cell resolution
         res[0]        = 24;
         res[1]        = 16;
 
@@ -89,10 +99,10 @@ int main(int argc, char** argv)
         for (int i=0; i<res[0]; i++) {
             for (int j=0; j<res[1]; j++) {
                 std::vector<unsigned int> v(4);
-                v[0] = i*(res[0]+1) + j;
-                v[1] = i*(res[0]+1) + j+1;
-                v[2] = (i+1)*(res[0]+1) + j;
-                v[3] = (i+1)*(res[0]+1) + j+1;
+                v[0] = i*(res[1]+1) + j;
+                v[1] = i*(res[1]+1) + j+1;
+                v[2] = (i+1)*(res[1]+1) + j;
+                v[3] = (i+1)*(res[1]+1) + j+1;
                 factory.insertElement(Dune::GeometryType(Dune::GeometryType::cube,2), v);
             }
         }

@@ -7,6 +7,7 @@ SUBDIRS = . \
 	  2p2cni \
 	  diffusion \
 	  fractionalflow \
+	  properties \
 	  richards \
 	  transport \
 	  tutorial

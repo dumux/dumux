@@ -2,7 +2,7 @@
  *   Copyright (C) 2008 by Klaus Mosthaf, Andreas Lauser, Bernd Flemisch     *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
- *   email: and _at_ poware.org                                              *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software; you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -15,125 +15,47 @@
 #ifndef DUMUX_NEW_2P2C_BOX_MODEL_HH
 #define DUMUX_NEW_2P2C_BOX_MODEL_HH
 
-#include <dumux/new_models/2p2c/2p2cboxjacobianbase.hh>
+#include <dumux/new_models/2p2c/2p2cboxjacobian.hh>
 
 namespace Dune
 {
-
-/*!
- * \brief The local jacobian operator for the isothermal two-phase,
- *        two-component model.
- *
- * This is basically just a wrapper for TwoPTwoCBoxJacobianBase so
- * that it can be instantiated.
- */
-template<class ProblemT,
-         class BoxTraitsT,
-         class TwoPTwoCTraitsT>
-class TwoPTwoCBoxJacobian : public TwoPTwoCBoxJacobianBase<ProblemT,
-                                                           BoxTraitsT,
-                                                           TwoPTwoCTraitsT,
-                                                           TwoPTwoCElementData<TwoPTwoCTraitsT,
-                                                                               ProblemT>,
-                                                           TwoPTwoCVertexData<TwoPTwoCTraitsT,
-                                                                              ProblemT>,
-                                                           TwoPTwoCFluxData<TwoPTwoCTraitsT,
-                                                                            ProblemT,
-                                                                            TwoPTwoCVertexData<TwoPTwoCTraitsT,
-                                                                                               ProblemT> >,
-                                                           
-                                                           TwoPTwoCBoxJacobian<ProblemT,
-                                                                               BoxTraitsT,
-                                                                               TwoPTwoCTraitsT> >
-{
-    typedef TwoPTwoCBoxJacobian<ProblemT,
-                                BoxTraitsT,
-                                TwoPTwoCTraitsT>  ThisType;
-
-    typedef TwoPTwoCElementData<TwoPTwoCTraitsT,
-                                ProblemT>         ElementData;
-    typedef TwoPTwoCVertexData<TwoPTwoCTraitsT,
-                               ProblemT>          VertexData;
-    typedef TwoPTwoCFluxData<TwoPTwoCTraitsT,
-                             ProblemT,
-                             VertexData >          FluxData;
-    typedef TwoPTwoCBoxJacobianBase<ProblemT,
-                                    BoxTraitsT,
-                                    TwoPTwoCTraitsT,
-                                    ElementData,
-                                    VertexData,
-                                    FluxData,
-                                    ThisType>     ParentType;
-public:
-    TwoPTwoCBoxJacobian(ProblemT &problem)
-        : ParentType(problem)
-    {
-    };
-};
-
 /**
  * \brief Isothermal two-phase two-component model.
  *
  * This implements an isothermal two phase two component
- * model. Depending on which traits are used the primary variables are
- * either $p_w$ and $S_n;X$ or $p_n$ or $S_w;X$. By default they are
- * $p_w$ and $S_n$
+ * model. 
+ *
+ * Depending on the value of the "Formulation" property, the primary
+ * variables are either $p_w$ and $S_n;X$ or $p_n$ or $S_w;X$. By
+ * default they are $p_w$ and $S_n$
  */
-template<class ProblemT,
-         class TwoPTwoCTraitsT = TwoPTwoCPwSnTraits<typename ProblemT::DomainTraits::Scalar> >
-class TwoPTwoCBoxModel
-    : public BoxScheme<TwoPTwoCBoxModel<ProblemT, TwoPTwoCTraitsT>, // Implementation of the box scheme
-
-                       // The traits for the BOX method
-                       P1BoxTraits<typename ProblemT::DomainTraits::Scalar,
-                                   typename ProblemT::DomainTraits::Grid,
-                                   TwoPTwoCTraitsT::numEq>,
-
-                       // The actual problem we would like to solve
-                       ProblemT,
-                       // The local jacobian operator
-                       TwoPTwoCBoxJacobian<ProblemT,
-                                           P1BoxTraits<typename ProblemT::DomainTraits::Scalar,
-                                                       typename ProblemT::DomainTraits::Grid,
-                                                       TwoPTwoCTraitsT::numEq>,
-                                           TwoPTwoCTraitsT > >
+template<class TypeTag, class Implementation >
+class TwoPTwoCBoxModelBase
+    : public BoxScheme<TypeTag,
+                       // Implementation of the box scheme
+                       Implementation >
 {
-    typedef typename ProblemT::DomainTraits::Grid       Grid;
-    typedef typename ProblemT::DomainTraits::Scalar     Scalar;
-    typedef TwoPTwoCBoxModel<ProblemT,TwoPTwoCTraitsT>  ThisType;
+    typedef TwoPTwoCBoxModelBase<TypeTag, Implementation>         ThisType;
+    typedef BoxScheme<TypeTag, Implementation>                    ParentType;
 
-public:
-    typedef TwoPTwoCTraitsT                                  TwoPTwoCTraits;
-    typedef P1BoxTraits<Scalar, Grid, TwoPTwoCTraits::numEq> BoxTraits;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))        Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem))       Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView))      GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(LocalJacobian)) LocalJacobian;
 
-private:
-    typedef TwoPTwoCBoxJacobian<ProblemT, BoxTraits, TwoPTwoCTraits>  TwoPTwoCLocalJacobian;
-    typedef BoxScheme<ThisType,
-                      BoxTraits,
-                      ProblemT,
-                      TwoPTwoCLocalJacobian>        ParentType;
-
-    typedef typename ProblemT::DomainTraits              DomTraits;
-    typedef typename DomTraits::Element                  Element;
-    typedef typename DomTraits::Vertex                   Vertex;
-    typedef typename DomTraits::ElementIterator          ElementIterator;
-    typedef typename DomTraits::LocalPosition            LocalPosition;
-    typedef typename DomTraits::GlobalPosition           GlobalPosition;
 
     enum {
-        dim              = DomTraits::dim,
-        dimWorld         = DomTraits::dimWorld
+        dim = GridView::dimension
     };
+    typedef typename GridView::template Codim<0>::Entity     Element;
+    typedef typename GridView::template Codim<dim>::Entity   Vertex;
 
 public:
-    typedef NewNewtonMethod<ThisType> NewtonMethod;
-
-    TwoPTwoCBoxModel(ProblemT &prob)
+    TwoPTwoCBoxModelBase(Problem &prob)
         : ParentType(prob, twoPTwoCLocalJacobian_),
           twoPTwoCLocalJacobian_(prob)
     {
     }
-
 
     /*!
      * \brief Called by the update() method if applying the newton
@@ -145,8 +67,8 @@ public:
 
         twoPTwoCLocalJacobian_.setSwitched(false);
         twoPTwoCLocalJacobian_.resetPhaseState();
-        twoPTwoCLocalJacobian_.updateStaticData(this->currentSolution(),
-                                                this->previousSolution());
+        twoPTwoCLocalJacobian_.updateStaticData(this->curSolFunction(),
+                                                this->prevSolFunction());
     };
 
     /*!
@@ -167,16 +89,7 @@ public:
     template <class MultiWriter>
     void addVtkFields(MultiWriter &writer)
     {
-        twoPTwoCLocalJacobian_.addVtkFields(writer, this->currentSolution());
-    }
-
-    /*!
-     * \brief Calculate the masses in the system for
-     *        the current timestep.
-     */
-    void calculateMass(Dune::FieldVector<Scalar, 4> &mass)
-    {
-        twoPTwoCLocalJacobian_.calculateMass(this->currentSolution(), mass);
+        twoPTwoCLocalJacobian_.addVtkFields(writer, this->curSolFunction());
     }
 
     /*!
@@ -214,8 +127,26 @@ public:
 
 private:
     // calculates the jacobian matrix at a given position
-    TwoPTwoCLocalJacobian  twoPTwoCLocalJacobian_;
+    LocalJacobian twoPTwoCLocalJacobian_;
 };
+
+template<class TypeTag >
+class TwoPTwoCBoxModel
+    : public TwoPTwoCBoxModelBase<TypeTag, TwoPTwoCBoxModel<TypeTag> >
+{
+public:
+    typedef TwoPTwoCBoxModel<TypeTag>                           ThisType;
+    typedef TwoPTwoCBoxModelBase<TypeTag, ThisType>             ParentType;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem))      Problem;
+
+public:
+    TwoPTwoCBoxModel(Problem &prob)
+        : ParentType(prob)
+    {
+    }
+};
+
 }
 
 #endif

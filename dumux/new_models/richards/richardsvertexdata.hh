@@ -1,8 +1,10 @@
+//$Id:$
 /*****************************************************************************
- *   Copyright (C) 2008 by Onur Dogan, Andreas Lauser, Bernd Flemisch                    *
+ *   Copyright (C) 2009 by Onur Dogan                                        *
+ *   Copyright (C) 2009 by Andreas Lauser                                    *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
- *   email: and _at_ poware.org                                              *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software; you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -12,54 +14,72 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
-#ifndef DUMUX_VERTEX_DATA_HH
-#define DUMUX_VERTEX_DATA_HH
+/*!
+ * \file
+ *
+ * \brief Quantities required by the isothermal richards box model
+ *        defined on a vertex.
+ */
+#ifndef DUMUX_RICHARDS_VERTEX_DATA_HH
+#define DUMUX_RICHARDS_VERTEX_DATA_HH
 
-#include <dune/common/fvector.hh>
+#include <dumux/new_models/tags.hh>
+
+#include "richardsproperties.hh"
 
 namespace Dune
 {
+
 /*!
- * \brief Data which is attached to each vertex of an
- *        element. These quantities are coincidental with the
- *        averaged quantities inside a FV box.
+ * \brief Data which is attached to each vertex of the and can be
+ *        shared between multiple calculations and should thus be
+ *        cached in order to increase efficency.
  */
-template <class RichardsTraits,
-          class Problem>
+template <class TypeTag>
 class RichardsVertexData
 {
-    typedef RichardsTraits Tr;
-    typedef typename Problem::DomainTraits::Scalar Scalar;
-    typedef typename Problem::DomainTraits::Grid Grid;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))   Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
-    typedef typename Grid::template Codim<0>::Entity Element;
+    typedef typename GridView::template Codim<0>::Entity Element;
+    
+    enum {
+        dim           = GridView::dimension,
+        dimWorld      = GridView::dimensionworld,
+    };
+    
+    typedef typename GET_PROP(TypeTag, PTAG(ReferenceElements)) RefElemProp;
+    typedef typename RefElemProp::Container                     ReferenceElements;
 
-    typedef Dune::FieldVector<Scalar, Tr::numEq>      SolutionVector;
-    typedef Dune::FieldVector<Scalar, Tr::numPhases>  PhasesVector;
+    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))     SolutionTypes;
+    typedef typename SolutionTypes::PrimaryVarVector            PrimaryVarVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(RichardsIndices))  Indices;
 
-    typedef Dune::FieldVector<Scalar, Grid::dimensionworld>  GlobalPosition;
-    typedef Dune::FieldVector<Scalar, Grid::dimension>       LocalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dim>       LocalPosition;
 
 public:
     /*!
      * \brief Update all quantities for a given control volume.
      */
     template <class JacobianImp>
-    void update(const SolutionVector   &sol,
+    void update(const PrimaryVarVector &sol,
                 const Element          &element,
                 int                     vertIdx,
                 bool                    isOldSol,
-                JacobianImp            &jac)
+                JacobianImp            &jac) 
     {
+        typedef Indices I;
+        
         // coordinates of the vertex
         const GlobalPosition &global = element.geometry().corner(vertIdx);
         const LocalPosition   &local =
-            Problem::DomainTraits::referenceElement(element.type()).position(vertIdx,
-                                                                             Grid::dimension);
+            ReferenceElements::general(element.type()).position(vertIdx,
+                                                                GridView::dimension);
 
         /* pc = -pw || pc = 0 for computing Sw */
 
-        pW = sol[Tr::pWIdx];
+        pW = sol[I::pWIdx];
         if (pW >= 0)
             pC = 0.0;
         else
@@ -70,9 +90,9 @@ public:
                                                   element,
                                                   local);
         Sw = jac.problem().materialLaw().saturationW(pC,
-                                                      global,
-                                                      element,
-                                                      local);
+                                                     global,
+                                                     element,
+                                                     local);
         mobilityW = jac.problem().materialLaw().mobW(Sw,
                                                      global,
                                                      element,
@@ -80,7 +100,7 @@ public:
                                                      jac.problem().temperature(),
                                                      pW + jac.problem().pNreference());
         densityW = jac.problem().wettingPhase().density(jac.problem().temperature(),
-                                                                    pW + jac.problem().pNreference());
+                                                        pW + jac.problem().pNreference());
         porosity = jac.problem().soil().porosity(global,
                                                  element,
                                                  local);
@@ -92,7 +112,7 @@ public:
     Scalar dSwdpC;
 
     Scalar densityW;
-    Scalar mobilityW;  //FieldVector with the number of phases
+    Scalar mobilityW;
     Scalar porosity;
 };
 

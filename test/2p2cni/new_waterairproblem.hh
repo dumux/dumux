@@ -5,34 +5,20 @@
 #include "config.h"
 #endif
 
-#include<iostream>
-#include<iomanip>
+#include <dune/grid/uggrid.hh>
+#include <dune/grid/io/file/dgfparser/dgfug.hh>
 
-#include<dune/grid/common/grid.hh>
-
-#include<dumux/material/property_baseclasses.hh>
-#include<dumux/material/relperm_pc_law.hh>
-
-#include <dumux/material/phaseproperties/phaseproperties_waterair.hh>
+//#include <dumux/material/property_baseclasses.hh>
 #include <dumux/material/matrixproperties.hh>
 #include <dumux/material/twophaserelations.hh>
-
 #include <dumux/material/multicomponentrelations.hh>
 
+#include <dumux/material/phaseproperties/phaseproperties2p.hh>
+
 #include <dumux/io/vtkmultiwriter.hh>
-#include <dumux/auxiliary/timemanager.hh>
+#include <dumux/io/restart.hh>
 
-#include <dune/common/timer.hh>
-#include <dune/grid/common/gridinfo.hh>
-#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
-#include <dune/grid/yaspgrid.hh>
-#include <dune/istl/io.hh>
-
-#include<dumux/new_models/2p2cni/2p2cniboxmodel.hh>
-#include<dumux/new_models/2p2cni/2p2cninewtoncontroller.hh>
-
-
-#include<dumux/nonlinear/new_newtonmethod.hh>
+#include <dumux/new_models/2p2cni/2p2cniboxmodel.hh>
 
 #include <dumux/auxiliary/timemanager.hh>
 #include <dumux/auxiliary/basicdomain.hh>
@@ -47,6 +33,31 @@
 
 namespace Dune
 {
+template <class TypeTag>
+class NewWaterAirProblem;
+
+namespace Properties
+{
+NEW_TYPE_TAG(WaterAirProblem, 
+#if ISOTHERMAL
+             INHERITS_FROM(BoxTwoPTwoC));
+#else
+             INHERITS_FROM(BoxTwoPTwoCNI));
+#endif
+
+
+SET_PROP(WaterAirProblem, Grid)
+{
+    typedef Dune::UGGrid<2> type;
+};
+
+SET_PROP(WaterAirProblem, Problem)
+{
+    typedef Dune::NewWaterAirProblem<TTAG(WaterAirProblem)> type;
+};
+}
+
+
 //! class that defines the parameters of an air waterair under a low permeable layer
 /*! Problem definition of an air injection under a low permeable layer. Air enters the domain
  * at the right boundary and migrates upwards.
@@ -56,85 +67,66 @@ namespace Dune
  *
  *    - ScalarT  Floating point type used for scalars
  */
-template<class ScalarT>
-class NewWaterAirProblem : public BasicDomain<Dune::YaspGrid<2>,
-                                              ScalarT>
+template <class TypeTag = TTAG(WaterAirProblem) >
+class NewWaterAirProblem : public BasicDomain<typename GET_PROP_TYPE(TypeTag, PTAG(Grid)),
+                                              typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) >
 {
-    typedef Dune::YaspGrid<2>              Grid;
-    typedef BasicDomain<Grid, ScalarT>     ParentType;
-    typedef NewWaterAirProblem<ScalarT>    ThisType;
-#if !ISOTHERMAL
-    typedef TwoPTwoCNIBoxModel<ThisType>   Model;
-#else
-    typedef TwoPTwoCBoxModel<ThisType>   Model;
-#endif
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))     Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView))   GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model))      Model;
+    typedef typename GridView::Grid                           Grid;
 
-    typedef Dune::GridPtr<Grid>                    GridPointer;
+    typedef BasicDomain<Grid, Scalar>    ParentType;
+    typedef NewWaterAirProblem<TypeTag>  ThisType;
 
-    typedef Dune::Liq_WaterAir                     WettingPhase;
-    typedef Dune::Gas_WaterAir                     NonwettingPhase;
-    typedef Dune::HomogeneousSoil<Grid, ScalarT>   Soil;
-    typedef Dune::TwoPhaseRelations<Grid, ScalarT> MaterialLaw;
-    typedef Dune::CWaterAir                        Multicomp;
-
-public:
-    // the domain traits of the domain
-    typedef typename ParentType::DomainTraits   DomainTraits;
-    // the traits of the BOX scheme
-    typedef typename Model::BoxTraits           BoxTraits;
-    // the traits of the Pw-Sn model
-#if !ISOTHERMAL
-    typedef typename Model::TwoPTwoCNITraits    TwoPTwoCNITraits;
-#else
-    typedef typename Model::TwoPTwoCTraits      TwoPTwoCNITraits;
-#endif
-
-private:
-    // some constants from the traits for convenience
+    // copy some indices for convenience
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
     enum {
-        numEq          = BoxTraits::numEq,
-        pressureIdx    = TwoPTwoCNITraits::pressureIdx,
-        switchIdx      = TwoPTwoCNITraits::switchIdx,
+        numEq       = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
+
+        pressureIdx = Indices::pressureIdx,
+        switchIdx   = Indices::switchIdx,
 #if !ISOTHERMAL
-        temperatureIdx = TwoPTwoCNITraits::temperatureIdx,
+        temperatureIdx = Indices::temperatureIdx,
 #endif
 
         // Phase State
-        WPhaseOnly = TwoPTwoCNITraits::wPhaseOnly,
-        NPhaseOnly = TwoPTwoCNITraits::nPhaseOnly,
-        BothPhases = TwoPTwoCNITraits::bothPhases,
+        wPhaseOnly  = Indices::wPhaseOnly,
+        nPhaseOnly  = Indices::nPhaseOnly,
+        bothPhases  = Indices::bothPhases,
 
         // Grid and world dimension
-        dim  = DomainTraits::dim,
-        dimWorld = DomainTraits::dimWorld,
-
-        pWsN        = 0,
-        pNsW        = 1
+        dim         = GridView::dimension,
+        dimWorld    = GridView::dimensionworld,
     };
 
-    // copy some types from the traits for convenience
-    typedef typename DomainTraits::Scalar                     Scalar;
-    typedef typename DomainTraits::Element                    Element;
-    typedef typename DomainTraits::ElementIterator            ElementIterator;
-    typedef typename DomainTraits::ReferenceElement           ReferenceElement;
-    typedef typename DomainTraits::Vertex                     Vertex;
-    typedef typename DomainTraits::VertexIterator             VertexIterator;
-    typedef typename DomainTraits::IntersectionIterator       IntersectionIterator;
-    typedef typename DomainTraits::LocalPosition              LocalPosition;
-    typedef typename DomainTraits::GlobalPosition             GlobalPosition;
+    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
+    typedef typename SolutionTypes::PrimaryVarVector        PrimaryVarVector;
+    typedef typename SolutionTypes::BoundaryTypeVector      BoundaryTypeVector;
 
-    typedef typename BoxTraits::FVElementGeometry             FVElementGeometry;
-    typedef typename BoxTraits::SpatialFunction               SpatialFunction;
-    typedef typename BoxTraits::SolutionVector                SolutionVector;
-    typedef typename BoxTraits::BoundaryTypeVector            BoundaryTypeVector;
+    typedef typename GridView::template Codim<0>::Entity        Element;
+    typedef typename GridView::template Codim<dim>::Entity      Vertex;
+    typedef typename GridView::IntersectionIterator             IntersectionIterator;
+  
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
+
+    typedef Dune::FieldVector<Scalar, dim>       LocalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
+   
+
+    typedef Dune::Liq_WaterAir                     WettingPhase;
+    typedef Dune::Gas_WaterAir                     NonwettingPhase;
+    typedef Dune::HomogeneousSoil<Grid, Scalar>    Soil;
+    typedef Dune::TwoPhaseRelations<Grid, Scalar>  MaterialLaw;
+    typedef Dune::CWaterAir                        Multicomp;
 
     typedef Dune::VtkMultiWriter<typename Grid::LeafGridView> VtkMultiWriter;
 
     enum Episode {}; // the type of an episode of the simulation
     typedef Dune::TimeManager<Episode>                  TimeManager;
 
-    typedef typename Model::NewtonMethod                NewtonMethod;
-    typedef TwoPTwoCNINewtonController<NewtonMethod>    NewtonController;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonMethod))     NewtonMethod;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonController)) NewtonController;
 
 public:
     NewWaterAirProblem(Grid *grid,
@@ -151,15 +143,13 @@ public:
         timeManager_.setStepSize(dtInitial);
 
         // specify the grid dimensions
-        eps_    = 1e-8;
+        width_ = 60; // [m]
+        height_ = 40; // [m]
 
         depthBOR_ = 1000.0;
 
-        gravity_[0] = 0;
-        gravity_[1] = -9.81;
-
-        // choose primary variables
-        formulation_ = pWsN;
+        gravity_ = 0;
+        gravity_[dim-1] = -9.81;
     }
 
     ///////////////////////////////////
@@ -297,7 +287,7 @@ public:
     /////////////////////////////
     // DIRICHLET boundaries
     /////////////////////////////
-    void dirichlet(SolutionVector             &values,
+    void dirichlet(PrimaryVarVector           &values,
                    const Element              &element,
                    const FVElementGeometry    &fvElemGeom,
                    const IntersectionIterator &isIt,
@@ -315,7 +305,7 @@ public:
     /////////////////////////////
     // NEUMANN boundaries
     /////////////////////////////
-    void neumann(SolutionVector             &values,
+    void neumann(PrimaryVarVector           &values,
                  const Element              &element,
                  const FVElementGeometry    &fvElemGeom,
                  const IntersectionIterator &isIt,
@@ -330,16 +320,17 @@ public:
         values = 0;
 
         // negative values for injection
-        if (globalPos[1] > 1.0 && globalPos[1] < 5.0)
+        if (globalPos[0] > width_ - eps_ &&
+            globalPos[1] < 5.0 && globalPos[1] < 15.0)
         {
-            values[switchIdx] = -1e-5;
+            values[switchIdx] = -1e-3;
         }
     }
 
     /////////////////////////////
     // sources and sinks
     /////////////////////////////
-    void source(SolutionVector          &values,
+    void source(PrimaryVarVector        &values,
                 const Element           &element,
                 const FVElementGeometry &fvElemGeom,
                 int                      scvIdx) const
@@ -352,7 +343,7 @@ public:
     /////////////////////////////
     // INITIAL values
     /////////////////////////////
-    void initial(SolutionVector          &values,
+    void initial(PrimaryVarVector        &values,
                  const Element           &element,
                  const FVElementGeometry &fvElemGeom,
                  int                      scvIdx) const
@@ -369,7 +360,7 @@ public:
 private:
     // internal method for the initial condition (reused for the
     // dirichlet conditions!)
-    void initial_(SolutionVector       &values,
+    void initial_(PrimaryVarVector     &values,
                   const GlobalPosition &globalPos) const
     {
         Scalar densityW = 1000.0;
@@ -381,33 +372,19 @@ private:
     }
 
 public:
-    Scalar porosity(const Element &element, int localIdx) const
-    {
-        // TODO/HACK: porosity should be defined on the verts
-        // as it is required on the verts!
-        const LocalPosition &local =
-            DomainTraits::referenceElement(element.type()).position(localIdx, dim);
-        const GlobalPosition &globalPos = element.geometry().corner(localIdx);
-        return soil().porosity(globalPos, *(ParentType::elementBegin()), local);
-    };
-
-    Scalar pC(Scalar satW, int globalIdx, const GlobalPosition &globalPos)
-    {
-        // TODO/HACK: porosity should be defined on the verts
-        // as it is required on the verts!
-        const LocalPosition &local =
-            DomainTraits::referenceElement(ParentType::elementBegin()->type()).position(0, dim);
-        return materialLaw().pC(satW, globalPos, *(ParentType::elementBegin()), local);
-    };
-
-
-    int initialPhaseState(const Vertex       &vert,
-                          int              &globalIdx,
+    int initialPhaseState(const Vertex         &vert,
+                          int                  &globalIdx,
                           const GlobalPosition &globalPos) const
     {
-        return WPhaseOnly;
+        return wPhaseOnly;
     }
 
+#if ISOTHERMAL
+    Scalar temperature() const 
+    { 
+        return 303.0;
+    }
+#endif
 
     const GlobalPosition &gravity () const
     {
@@ -425,9 +402,14 @@ public:
         return true;
     };
 
-    int formulation () const
+    Model &model()
     {
-        return formulation_;
+        return model_;
+    }
+
+    const Model &model() const
+    {
+        return model_;
     }
 
 private:
@@ -446,8 +428,7 @@ private:
     Scalar width_;
     Scalar height_;
     Scalar depthBOR_;
-    Scalar eps_;
-    int formulation_;
+    static const Scalar eps_ = 1e-8;
     GlobalPosition  gravity_;
 
     // fluids and material properties

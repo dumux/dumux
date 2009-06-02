@@ -1,28 +1,30 @@
 #include "config.h"
 
-#include <dune/grid/sgrid.hh>
 #include "new_waterairproblem.hh"
 
 #include <dune/common/exceptions.hh>
+#include <dune/grid/common/gridinfo.hh>
+
+#include <dune/common/mpihelper.hh>
 
 #include <iostream>
+#include <boost/format.hpp>
 
 int main(int argc, char** argv)
 {
     try {
-        // Set the type for scalar values (should be one of float, double
-        // or long double)
-        typedef double                            Scalar;
-        typedef Dune::NewWaterAirProblem<Scalar>  Problem;
-        typedef Problem::DomainTraits::Grid       Grid;
-        typedef Dune::GridPtr<Grid>               GridPointer;
+         typedef GET_PROP_TYPE(TTAG(WaterAirProblem), PTAG(Scalar))  Scalar;
+        typedef GET_PROP_TYPE(TTAG(WaterAirProblem), PTAG(Grid))    Grid;
+        typedef GET_PROP_TYPE(TTAG(WaterAirProblem), PTAG(Problem)) Problem;
+        typedef Dune::FieldVector<Scalar, Grid::dimensionworld> GlobalPosition;
+        typedef Dune::GridPtr<Grid>                             GridPointer;
 
         // initialize MPI, finalize is done automatically on exit
         Dune::MPIHelper::instance(argc, argv);
 
         // parse the command line arguments for the program
         if (argc != 4) {
-            std::cout << boost::format("usage: %s gridFile.dgf tEnd dt\n")%argv[0];
+            std::cout << boost::format("usage: %s grid tEnd dt\n")%argv[0];
             return 1;
         }
         double tEnd, dt;
@@ -30,14 +32,18 @@ int main(int argc, char** argv)
         std::istringstream(argv[2]) >> tEnd;
         std::istringstream(argv[3]) >> dt;
 
-        // load the grid from file
+        // create grid
+
+        // -> load the grid from file
         GridPointer gridPtr =  GridPointer(dgfFileName);
         Dune::gridinfo(*gridPtr);
+
 
         // instantiate and run the concrete problem
         Problem problem(&(*gridPtr), dt, tEnd);
         if (!problem.simulate())
             return 2;
+
         return 0;
     }
     catch (Dune::Exception &e) {

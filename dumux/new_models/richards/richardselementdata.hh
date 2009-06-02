@@ -1,8 +1,10 @@
+//$Id:$
 /*****************************************************************************
- *   Copyright (C) 2008 by Klaus Mosthaf, Andreas Lauser, Bernd Flemisch     *
+ *   Copyright (C) 2009 by Onur Dogan                                        *
+ *   Copyright (C) 2009 by Andreas Lauser                                    *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
- *   email: and _at_ poware.org                                              *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software; you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -12,27 +14,32 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
-
-#ifndef DUMUX_2P2CNITRAITS_HH
-#define DUMUX_2P2CNITRAITS_HH
-
-#include <dumux/new_models/2p2c/2p2ctraits.hh>
+/*!
+ * \file 
+ *
+ * \brief Contains the quantities which are are constant within a
+ *        finite element in the richards model.
+ *
+ * For the plain richards model everything is given on the finite
+ * volumes, so this class is empty.
+ */
+#ifndef DUMUX_RICHARDS_ELEMENT_DATA_HH
+#define DUMUX_RICHARDS_ELEMENT_DATA_HH
 
 namespace Dune
 {
 /*!
- * \brief Traits for the non-isothermal 2-phase 2-component model
+ * \brief This template class contains the quantities which are are
+ *        constant within a finite element in the richards model.
+ *
+ * For the plain richards model everything is given on the finite
+ * volumes, so this class is empty.
  */
-template <class Scalar,
-          class BaseTraits = TwoPTwoCPwSnTraits<Scalar> >
-class TwoPTwoCNITraits : public BaseTraits
+template <class TypeTag>
+class RichardsElementData
 {
-public:
-    static const int numEq = 3;  //!< Override the mumber of primary variables: We also have temperature
-    // Primary variable indices
-    static const int temperatureIdx = 2; //! The index for temperature in solution vectors.
 };
 
-}
+} // end namepace
 
 #endif

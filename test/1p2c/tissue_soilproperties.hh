@@ -1,14 +1,34 @@
-/// $Id$
-#ifndef TISSUE_SOILPROPERTIES
-#define TISSUE_SOILPROPERTIES
+// $Id$
+/*****************************************************************************
+ *   Copyright (C) 2009 by Karin Erbertseder                                 *
+ *   Copyright (C) 2009 by Andreas Lauser                                    *
+ *   Copyright (C) 2008 by Bernd Flemisch                                    *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
+ *                                                                           *
+ *   This program is free software; you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by    *
+ *   the Free Software Foundation; either version 2 of the License, or       *
+ *   (at your option) any later version, as long as this copyright notice    *
+ *   is included in its original form.                                       *
+ *                                                                           *
+ *   This program is distributed WITHOUT ANY WARRANTY.                       *
+ *****************************************************************************/
+#ifndef DUNE_TISSUE_SOILPROPERTIES_HH
+#define DUNE_TISSUE_SOILPROPERTIES_HH
 
 #include <dumux/material/property_baseclasses.hh>
 
 namespace Dune
 {
 
-/** definition of the properties of the human tissue */
-
+/** 
+ * \brief Definition of the properties of the human tissue 
+ *
+ * \todo do not derive from Matrix2p, since this is the base class for
+ *       two-phase models
+ */
 template<class Grid, class Scalar>
 class TissueSoil: public Matrix2p<Grid, Scalar>
 {
@@ -74,4 +94,5 @@ private:
 };
 
 } // end namespace
+
 #endif

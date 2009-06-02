@@ -36,13 +36,13 @@ typedef    typename GridView::Traits::template Codim<0>::Entity Element;
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
 public:
-    FVWettingPhaseVelocity2P(GridView& gridView, Problem& problem, std::string pressureType)
-    : FVPressure2P<GridView,Scalar,VC, Problem>(gridView, problem, pressureType)
+    FVWettingPhaseVelocity2P(GridView& gridView, Problem& problem, std::string pressureType, std::string satType)
+    : FVPressure2P<GridView,Scalar,VC, Problem>(gridView, problem, pressureType, satType)
     {}
 
-    FVWettingPhaseVelocity2P(GridView& gridView, Problem& problem, std::string pressureType, std::string solverName,
+    FVWettingPhaseVelocity2P(GridView& gridView, Problem& problem, std::string pressureType, std::string satType, std::string solverName,
             std::string preconditionerName)
-    : FVPressure2P<GridView,Scalar,VC, Problem>(gridView, problem, pressureType, solverName, preconditionerName)
+    : FVPressure2P<GridView,Scalar,VC, Problem>(gridView, problem, pressureType, satType, solverName, preconditionerName)
     {}
 
     void calculateVelocity(const Scalar t=0) const
@@ -172,10 +172,12 @@ public:
 
                     FieldVector<Scalar,dimWorld> velocity(permeability);
                     FieldVector<Scalar,dimWorld> gravityTerm(this->gravity);
-                    for (int i=0;i<dim;i++)
+
+                    for (int i = 0;i<dim;i++)
                     {
-                        gravityTerm[i] *= permeability[i];
+                        gravityTerm[i] *= permeability[i]*unitOuterNormal[i];
                     }
+
 
                     if (this->pressureType == pw)
                     {
@@ -258,7 +260,7 @@ public:
                         FieldVector<Scalar,dimWorld> gravityTerm(this->gravity);
                         for (int i=0;i<dim;i++)
                         {
-                            gravityTerm[i] *= normalPermeabilityI[i];
+                            gravityTerm[i] *= normalPermeabilityI[i]*unitOuterNormal[i];
                         }
 
                         if (this->pressureType == pw)
@@ -295,7 +297,7 @@ public:
                             }
                             else
                             {
-                                DUNE_THROW(NotImplemented, "v_w can not be determined from v_t if both phases are present!");
+                                DUNE_THROW(NotImplemented, "v_w can not be determined from v_t at a neumann boundary if both phases are present!");
                             }
                         }
                         else
@@ -307,6 +309,7 @@ public:
                 }
             }// end all intersections
         }// end grid traversal
+//        printvector(std::cout, this->diffProblem.variables().velocity(), "velocity", "row", 4, 1, 3);
 
         return;
     }

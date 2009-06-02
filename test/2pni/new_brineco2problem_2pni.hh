@@ -13,83 +13,102 @@
 #include <dumux/io/restart.hh>
 
 #include <dumux/new_models/2pni/2pniboxmodel.hh>
-#include <dune/grid/common/gridinfo.hh>
-#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
+
 #include <dune/grid/yaspgrid.hh>
-#include <dumux/nonlinear/new_newtonmethod.hh>
-#include <dumux/nonlinear/new_newtoncontroller.hh>
-#include<dumux/new_models/2pni/2pninewtoncontroller.hh>
+#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
+
+#include<dune/grid/uggrid.hh>
+#include<dune/grid/io/file/dgfparser/dgfug.hh>
 
 #include <dumux/auxiliary/timemanager.hh>
 #include <dumux/auxiliary/basicdomain.hh>
 
+#define USE_UG 1
+
 namespace Dune
 {
+
+template <class TypeTag>
+class NewBrineCO2Problem2pni;
+
+namespace Properties
+{
+NEW_TYPE_TAG(BrineCO2Problem2PNI, INHERITS_FROM(BoxTwoPNI));
+
+
+SET_PROP(BrineCO2Problem2PNI, Grid)
+{
+#if USE_UG
+    typedef Dune::UGGrid<2> type;
+#else // USE_UG
+    typedef Dune::YaspGrid<2> type;
+#endif
+};
+
+SET_PROP(BrineCO2Problem2PNI, Problem)
+{
+    typedef Dune::NewBrineCO2Problem2pni<TTAG(BrineCO2Problem2PNI)> type;
+};
+}
+
 /*!
  * \todo Please doc me!
  */
-template<class ScalarT>
-class NewBrineCO2Problem2pni : public BasicDomain<Dune::YaspGrid<2>, ScalarT>
+template <class TypeTag = TTAG(BrineCO2Problem2PNI) >
+class NewBrineCO2Problem2pni : public BasicDomain<typename GET_PROP_TYPE(TypeTag, PTAG(Grid)),
+                                                  typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) >
 {
-    typedef Dune::YaspGrid<2>              Grid;
-    typedef BasicDomain<Grid, ScalarT>     ParentType;
-    typedef NewBrineCO2Problem2pni<ScalarT>  ThisType;
-    typedef TwoPNIBoxModel<ThisType>         Model;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))     Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView))   GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model))      Model;
+    typedef typename GridView::Grid                           Grid;
 
-    typedef Dune::Liq_BrineCO2                     WettingPhase;
-    typedef Dune::Gas_BrineCO2                     NonwettingPhase;
-    typedef Dune::HomogeneousSoil<Grid, ScalarT>  Soil;
-    typedef Dune::TwoPhaseRelations<Grid, ScalarT> MaterialLaw;
+    typedef BasicDomain<Grid, Scalar>            ParentType;
+    typedef NewBrineCO2Problem2pni<TypeTag>      ThisType;
 
-public:
-    // the domain traits of the domain
-    typedef typename ParentType::DomainTraits   DomainTraits;
-    // the traits of the BOX scheme
-    typedef typename Model::BoxTraits           BoxTraits;
-    // the traits of the Pw-Sn model
-    typedef typename Model::TwoPNITraits          TwoPNITraits;
-
-private:
-    // some constants from the traits for convenience
+    // copy some indices for convenience
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
     enum {
-        numEq       = BoxTraits::numEq,
-        pressureIdx = TwoPNITraits::pressureIdx,
-        saturationIdx   = TwoPNITraits::saturationIdx,
-        temperatureIdx = TwoPNITraits::temperatureIdx,
+        numEq       = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
+        pressureIdx   = Indices::pressureIdx,
+        saturationIdx = Indices::saturationIdx,
+        temperatureIdx = Indices::temperatureIdx,
 
         // Grid and world dimension
-        dim         = DomainTraits::dim,
-        dimWorld    = DomainTraits::dimWorld,
+        dim         = GridView::dimension,
+        dimWorld    = GridView::dimensionworld,
     };
 
-    // copy some types from the traits for convenience
-    typedef typename DomainTraits::Scalar                     Scalar;
-    typedef typename DomainTraits::Element                    Element;
-    typedef typename DomainTraits::ElementIterator            ElementIterator;
-    typedef typename DomainTraits::ReferenceElement           ReferenceElement;
-    typedef typename DomainTraits::Vertex                     Vertex;
-    typedef typename DomainTraits::VertexIterator             VertexIterator;
-    typedef typename DomainTraits::IntersectionIterator       IntersectionIterator;
-    typedef typename DomainTraits::LocalPosition              LocalPosition;
-    typedef typename DomainTraits::GlobalPosition             GlobalPosition;
+    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
+    typedef typename SolutionTypes::PrimaryVarVector        PrimaryVarVector;
+    typedef typename SolutionTypes::BoundaryTypeVector      BoundaryTypeVector;
 
-    typedef typename BoxTraits::FVElementGeometry             FVElementGeometry;
-    typedef typename BoxTraits::SpatialFunction               SpatialFunction;
-    typedef typename BoxTraits::SolutionVector                SolutionVector;
-    typedef typename BoxTraits::BoundaryTypeVector            BoundaryTypeVector;
+    typedef typename GridView::template Codim<0>::Entity        Element;
+    typedef typename GridView::template Codim<dim>::Entity      Vertex;
+    typedef typename GridView::IntersectionIterator             IntersectionIterator;
+  
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
+
+    typedef Dune::FieldVector<Scalar, dim>       LocalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
 
     typedef Dune::VtkMultiWriter<typename Grid::LeafGridView> VtkMultiWriter;
 
     enum Episode {}; // the type of an episode of the simulation
     typedef Dune::TimeManager<Episode>                  TimeManager;
 
-    typedef typename Model::NewtonMethod                NewtonMethod;
-    typedef Dune::TwoPNINewtonController<NewtonMethod>        NewtonController;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonMethod))      NewtonMethod;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonController))  NewtonController;
 
+    typedef Dune::Liq_BrineCO2                     WettingPhase;
+    typedef Dune::Gas_BrineCO2                     NonwettingPhase;
+    typedef Dune::HomogeneousSoil<Grid, Scalar>    Soil;
+    typedef Dune::TwoPhaseRelations<Grid, Scalar>  MaterialLaw;
+    
 public:
     NewBrineCO2Problem2pni(Grid *grid,
-                   Scalar dtInitial,
-                   Scalar tEnd)
+                           Scalar dtInitial,
+                           Scalar tEnd)
         : ParentType(grid),
           materialLaw_(soil_, wPhase_, nPhase_),
           timeManager_(tEnd,
@@ -238,7 +257,7 @@ public:
     /////////////////////////////
     // DIRICHLET boundaries
     /////////////////////////////
-    void dirichlet(SolutionVector             &values,
+    void dirichlet(PrimaryVarVector           &values,
                    const Element              &element,
                    const FVElementGeometry    &fvElemGeom,
                    const IntersectionIterator &isIt,
@@ -256,7 +275,7 @@ public:
     /////////////////////////////
     // NEUMANN boundaries
     /////////////////////////////
-    void neumann(SolutionVector             &values,
+    void neumann(PrimaryVarVector           &values,
                  const Element              &element,
                  const FVElementGeometry    &fvElemGeom,
                  const IntersectionIterator &isIt,
@@ -275,7 +294,7 @@ public:
     /////////////////////////////
     // sources and sinks
     /////////////////////////////
-    void source(SolutionVector &values,
+    void source(PrimaryVarVector &values,
                 const Element &element,
                 const FVElementGeometry &,
                 int subControlVolumeIdx) const
@@ -288,7 +307,7 @@ public:
     /////////////////////////////
     // INITIAL values
     /////////////////////////////
-    void initial(SolutionVector         &values,
+    void initial(PrimaryVarVector        &values,
                  const Element           &element,
                  const FVElementGeometry &fvElemGeom,
                  int                      scvIdx) const
@@ -305,7 +324,7 @@ public:
 private:
     // internal method for the initial condition (reused for the
     // dirichlet conditions!)
-    void initial_(SolutionVector       &values,
+    void initial_(PrimaryVarVector     &values,
                   const GlobalPosition &globalPos) const
     {
            Scalar densityB = 1037.24;
@@ -316,6 +335,8 @@ private:
             values[saturationIdx] = 0.0;
             values[temperatureIdx] = TRef + (depthBOR_ - globalPos[dim - 1]) * 0.03;
     }
+
+public:
     const Model &model() const
     {
         return model_;
@@ -323,10 +344,10 @@ private:
 
     void serialize()
     {
-        typedef Dune::Restart<Grid> Restarter;
+        typedef Dune::Restart<GridView> Restarter;
 
         Restarter res;
-        res.serializeBegin(this->grid(),
+        res.serializeBegin(this->gridView(),
                            "new2pni",
                            timeManager_.time());
 
@@ -339,10 +360,10 @@ private:
 
     void deserialize(double t)
     {
-        typedef Dune::Restart<Grid> Restarter;
+        typedef Dune::Restart<GridView> Restarter;
 
         Restarter res;
-        res.deserializeBegin(this->grid(), "new2pni", t);
+        res.deserializeBegin(this->gridView(), "new2pni", t);
 
         timeManager_.deserialize(res);
         resultWriter_.deserialize(res);

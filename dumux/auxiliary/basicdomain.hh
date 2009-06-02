@@ -2,7 +2,7 @@
  *   Copyright (C) 2008 by Bernd Flemisch, Andreas Lauser                    *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
- *   email: and _at_ poware.org                                              *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software; you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -18,6 +18,8 @@
  */
 #ifndef DUMUX_BASIC_DOMAIN_HH
 #define DUMUX_BASIC_DOMAIN_HH
+
+#include <dune/common/exceptions.hh>
 
 #include <dune/common/fvector.hh>
 #include <dune/common/fmatrix.hh>
@@ -76,20 +78,6 @@ public:
         ::template Partition<All_Partition>
         ::LeafIterator                                 VertexIterator;
 
-        // TODO: Dune::ReferenceElement uses virtual functions in
-        //       order to support arbitary element types. It would be
-        //       better to use ReferenceCubeContainer,
-        //       ReferenceSimplexContainer,
-        //       ReferencePrismContainer or
-        //       ReferencePyramidContainer if the Grid only uses
-        //       one element type. We need to investigate how to do
-        //       this, but we probably need to beef up
-        //       Dune::Capabilities a bit and use specialization
-        //       for the DomainTraits...
-        typedef Dune::ReferenceElementContainer<CoordScalar, dim>         ReferenceElementContainer;
-        typedef typename ReferenceElementContainer::value_type            ReferenceElement;
-        static const ReferenceElementContainer &referenceElement;
-
         typedef typename Grid::template Codim<0>::LeafIntersectionIterator IntersectionIterator;
 
         // grid-space vector and matrix types
@@ -106,7 +94,8 @@ private:
     typedef typename DomainTraits::VertexIterator        VertexIterator;
     typedef typename DomainTraits::LocalPosition         LocalPosition;
     typedef typename DomainTraits::GlobalPosition        GlobalPosition;
-    typedef typename DomainTraits::ReferenceElement      ReferenceElement;
+
+    typedef typename Grid::LeafGridView                  GridView;
 
     enum {
         dim = DomainTraits::dim,
@@ -133,7 +122,6 @@ private:
     template<int dim>
     struct VertexLayout_
     { bool contains (Dune::GeometryType gt) { return gt.dim() == 0; } };
-    typedef typename Grid::LeafGridView GridView;
     typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView, VertexLayout_> VertexMap;
 
 public:
@@ -170,6 +158,12 @@ public:
      */
     const Grid &grid() const
     { return *grid_; }
+
+    /*!
+     * \brief Returns the current grid view.
+     */
+    const GridView gridView() const
+    { return grid_->leafView(); }
 
     /*!
      * \brief Returns the current grid's number of elements.
@@ -327,15 +321,6 @@ private:
     VertexMap *vertMap_;
 };
 
-
-// this is butt-ugly, but the only way I could come up with to
-// initialize a static const member of a class
-template<class Grid, class ScalarT>
-const typename BasicDomain<Grid, ScalarT>::DomainTraits::ReferenceElementContainer &
-BasicDomain<Grid, ScalarT>::DomainTraits::referenceElement
-=  Dune::ReferenceElements<typename Grid::ctype,
-                           Grid::dimension>::general;
-
-}
+} // namespace Dune
 
 #endif

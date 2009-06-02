@@ -48,7 +48,7 @@ FIND_PACKAGE(ALUGrid)
 INCLUDE (CheckIncludeFileCXX)
 CHECK_INCLUDE_FILE_CXX("malloc.h" HAVE_MALLOC_H)
 CHECK_INCLUDE_FILE_CXX("valgrind/memcheck.h" HAVE_VALGRIND)
-#CHECK_INCLUDE_FILE_CXX("tr1/array" HAVE_TR1_ARRAY)
+CHECK_INCLUDE_FILE_CXX("tr1/array" HAVE_TR1_ARRAY)
 ##############
 
 
@@ -82,11 +82,11 @@ set(DumuxIncludeDirectories
 
 ##############
 # set appropriate compiler flags for debug/release compilation modes
-set( CMAKE_CXX_FLAGS_DEBUG "-g -Wall -fno-inline-functions" )
-set( CMAKE_C_FLAGS_DEBUG "-g -Wall -fno-inline-functions" )
+set( CMAKE_CXX_FLAGS_DEBUG "-std=c++0x -g -Wall -fno-inline-functions" )
+set( CMAKE_C_FLAGS_DEBUG "-std=c++0x -g -Wall -fno-inline-functions" )
 
-set( CMAKE_CXX_FLAGS_RELEASE "-O3 -Wall -funroll-loops -finline-functions" )
-set( CMAKE_C_FLAGS_RELEASE "-O3 -Wall -funroll-loops -finline-functions" )
+set( CMAKE_CXX_FLAGS_RELEASE "-std=c++0x -O3 -Wall -funroll-loops -finline-functions" )
+set( CMAKE_C_FLAGS_RELEASE "-std=c++0x -O3 -Wall -funroll-loops -finline-functions" )
 
 if(CMAKE_BUILD_TYPE STREQUAL "debug")
   # debug mode

@@ -4,10 +4,11 @@
  *   Department Simulation of Large Systems                                  *
  *   University of Stuttgart, Germany                                        *
  *                                                                           *
- *   Copyright (C) 2008 by Andreas Lauser, Bernd Flemisch                    *
+ *   Copyright (C) 2008-2009 by Andreas Lauser                               *
+ *   Copyright (C) 2007-2009 by Bernd Flemisch                               *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
- *   email: and _at_ poware.org                                              *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software; you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -28,8 +29,11 @@
 #include <dune/disc/operators/localstiffness.hh>
 
 #include <dumux/fvgeometry/fvelementgeometry.hh>
+#include <dune/grid/common/genericreferenceelements.hh>
 
 #include <boost/format.hpp>
+
+#include "boxproperties.hh"
 
 #ifdef HAVE_VALGRIND
 #include <valgrind/memcheck.h>
@@ -75,92 +79,72 @@ namespace Dune
   - Problem        The specification of the problem (grid, boundary conditions, ...)
   - JacobianImp    The Box model specific part of the Jacobian
 */
-template<class Problem, 
-         class BoxTraitsT, 
-         class JacobianImp,
-         class VertexData>
-class BoxJacobian : public Dune::LocalStiffness<typename Problem::DomainTraits::Grid::LeafGridView,
-                                                typename Problem::DomainTraits::Scalar,
-                                                BoxTraitsT::numEq>
-
+template<class TypeTag, class Implementation>
+class BoxJacobian : public Dune::LocalStiffness<typename GET_PROP_TYPE(TypeTag, PTAG(GridView)),
+                                                typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)),
+                                                GET_PROP_VALUE(TypeTag, PTAG(NumEq)) >
 {
 private:
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem))  Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+
+
     typedef typename Problem::DomainTraits DomainTraits;
-    typedef BoxTraitsT                     BoxTraits;
 
+    typedef BoxJacobian<TypeTag, Implementation> ThisType;
     enum {
-        numEq = BoxTraits::numEq,
+        numEq     = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
 
-        dim     = DomainTraits::dim,
-        dimWorld    = DomainTraits::dimWorld
+        dim       = GridView::dimension,
+        dimWorld  = GridView::dimensionworld
     };
-    typedef BoxJacobian ThisType;
 
-    typedef typename Problem::DomainTraits::Grid::LeafGridView    LeafGridView;
-    typedef typename DomainTraits::Grid                           Grid;
-    typedef typename DomainTraits::Scalar                         Scalar;
-    typedef typename DomainTraits::CoordScalar                    CoordScalar;
-    typedef typename DomainTraits::LocalPosition                  LocalPosition;
-    typedef typename DomainTraits::GlobalPosition                 GlobalPosition;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    typedef typename GridView::Grid::ctype                CoordScalar;
 
-    typedef typename LeafGridView::template Codim<0>::Entity      Element;
-    typedef typename Element::EntityPointer                       ElementPointer;
-    typedef typename DomainTraits::ReferenceElement               ReferenceElement;
-    typedef typename DomainTraits::IntersectionIterator           IntersectionIterator;
+    typedef Dune::FieldVector<Scalar, dim>       LocalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
 
-    typedef typename Element::Geometry                     Geometry;
+    typedef typename GridView::template Codim<0>::Entity               Element;
+    typedef typename Element::EntityPointer                            ElementPointer;
+    
+    typedef typename GET_PROP(TypeTag, PTAG(ReferenceElements)) RefElemProp;
+    typedef typename RefElemProp::Container                     ReferenceElements;
+    typedef typename RefElemProp::ReferenceElement              ReferenceElement;
 
-    typedef typename BoxTraits::SpatialFunction            SpatialFunction;
-    typedef typename BoxTraits::SolutionVector             SolutionVector;
-    typedef typename BoxTraits::BoundaryTypeVector         BoundaryTypeVector;
-    typedef typename BoxTraits::FVElementGeometry          FVElementGeometry;
-    typedef typename BoxTraits::LocalFunction              LocalFunction;
+    typedef typename GridView::IntersectionIterator                    IntersectionIterator;
+    typedef typename Element::Geometry                                 Geometry;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry))   FVElementGeometry;
+    
+    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
+    typedef typename SolutionTypes::SolutionFunction        SolutionFunction;
+    typedef typename SolutionTypes::SolutionMapper          SolutionMapper;
+    typedef typename SolutionTypes::Solution                Solution;
+    typedef typename SolutionTypes::SolutionOnElement       SolutionOnElement;
+    typedef typename SolutionTypes::PrimaryVarVector        PrimaryVarVector;
+    typedef typename SolutionTypes::BoundaryTypeVector      BoundaryTypeVector;
+    typedef typename SolutionTypes::ShapeFunctions          ShapeFunctions;
+    typedef typename SolutionTypes::ShapeFunctionSet        ShapeFunctionSet;
+    typedef typename SolutionTypes::JacobianAssembler       JacobianAssembler;
 
-    typedef typename BoxTraits::ShapeFunctionSetContainer  ShapeFunctionSetContainer;
-    typedef typename ShapeFunctionSetContainer::value_type ShapeFunctionSet;
 
-    typedef typename std::vector<VertexData> VertexDataArray;
+    typedef typename GET_PROP(TypeTag, PTAG(VertexData))::type VertexData;
+    typedef typename std::vector<VertexData>                   VertexDataArray;
 
 public:
     BoxJacobian(Problem &problem)
         : problem_(problem),
-          curElementPtr_(problem.elementEnd()),
-          
-          curElemDat_(BoxTraits::ShapeFunctionSetContainer::maxsize),
-          prevElemDat_(BoxTraits::ShapeFunctionSetContainer::maxsize),
-
-          curSolution_(NULL),
-          oldSolution_(NULL)
+          gridView_(problem.gridView()),
+          curElementPtr_(* gridView_.template begin<0>())
     {
-    }
-
-    /*!
-     * \brief Set the global solution of the current time step.
-     */
-    void setCurSolution(SpatialFunction *uCur)
-    {
-        curSolution_ = uCur;
-    }
-
-    /*!
-     * \brief Set the global solution of the previous time step.
-     *
-     * This is required for implicit Euler time integration.
-     *
-     * TODO: If we would use a different time integration scheme
-     *       we might need more old solutions, so it would be nice
-     *       to have a non-hacky way to accomplish this.
-     */
-    void setOldSolution(SpatialFunction *uOld)
-    {
-        oldSolution_ = uOld;
     }
 
     /*!
      * \brief Assemble the linear system of equations for the
      *        verts of a element, given a local solution 'localU'.
      */
-    void assemble(const Element &element, const LocalFunction& localU, int orderOfShapeFns = 1)
+    void assemble(const Element &element, const SolutionOnElement& localU, int orderOfShapeFns = 1)
     {
         // set the current grid element
         asImp_().setCurrentElement(element);
@@ -168,10 +152,10 @@ public:
 #if HAVE_VALGRIND
         for (size_t i = 0; i < localU.size(); ++i)
             VALGRIND_CHECK_MEM_IS_DEFINED(&localU[i],
-                                          sizeof(SolutionVector));
+                                          sizeof(PrimaryVarVector));
 #endif // HAVE_VALGRIND
 
-        LocalFunction mutableLocalU(localU);
+        SolutionOnElement mutableLocalU(localU);
         assemble_(element, mutableLocalU, orderOfShapeFns);
     }
 
@@ -185,11 +169,11 @@ public:
         asImp_().setCurrentElement(element);
 
         int numVertices = curElementGeom_.numVertices;
-        LocalFunction localU(numVertices);
-        restrictToElement(localU, *curSolution_);
+        SolutionOnElement localU(numVertices);
+        restrictToElement(localU, problem_.model().curSolFunction());
         assemble_(element, localU, orderOfShapeFns);
     }
-    
+  
     /*!
      * \brief Express the boundary conditions for a element in terms
      *        of a linear equation system.
@@ -222,7 +206,7 @@ public:
     void applyBoundaryCondition_()
     {
         Dune::GeometryType      geoType = curElement_().geometry().type();
-        const ReferenceElement &refElem = DomainTraits::referenceElement(geoType);
+        const ReferenceElement &refElem = ReferenceElements::general(geoType);
 
         // evaluate boundary conditions for all intersections of
         // the current element
@@ -266,7 +250,7 @@ public:
                                  int boundaryFaceIdx)
     {
         // temporary vector to store the neumann boundaries
-        SolutionVector values(0.0);
+        PrimaryVarVector values(0.0);
         bool wasEvaluated = false;
 
         // loop over all primary variables to deal with mixed
@@ -315,7 +299,7 @@ public:
      * \brief Compute the local residual, i.e. the right hand side
      *        of an equation we would like to have zero.
      */
-    void evalLocalResidual(LocalFunction &residual,
+    void evalLocalResidual(SolutionOnElement &residual,
                            bool withBoundary = true)
     {
         // reset residual
@@ -326,7 +310,7 @@ public:
         // evaluate the local rate
         for (int i=0; i < curElementGeom_.numVertices; i++)
         {
-            SolutionVector massContrib(0), tmp(0);
+            PrimaryVarVector massContrib(0), tmp(0);
 
             // mass balance within the element. this is the
             // $\frac{m}{\partial t}$ term if using implicit
@@ -342,12 +326,12 @@ public:
             residual[i] += massContrib;
 
             // subtract the source term from the local rate
-            SolutionVector source;
+            PrimaryVarVector source;
             this->asImp_().computeSource(source, i);
             source *= curElementGeom_.subContVol[i].volume;
             residual[i] -= source;
             VALGRIND_CHECK_MEM_IS_DEFINED(&residual[i],
-                                          sizeof(SolutionVector));
+                                          sizeof(PrimaryVarVector));
         }
 
         // calculate the mass flux over the faces and subtract
@@ -357,10 +341,10 @@ public:
             int i = curElementGeom_.subContVolFace[k].i;
             int j = curElementGeom_.subContVolFace[k].j;
 
-            SolutionVector flux;
-            VALGRIND_MAKE_MEM_UNDEFINED(&flux, sizeof(SolutionVector));
+            PrimaryVarVector flux;
+            VALGRIND_MAKE_MEM_UNDEFINED(&flux, sizeof(PrimaryVarVector));
             this->asImp_().computeFlux(flux, k);
-            VALGRIND_CHECK_MEM_IS_DEFINED(&flux, sizeof(SolutionVector));
+            VALGRIND_CHECK_MEM_IS_DEFINED(&flux, sizeof(PrimaryVarVector));
 
             // subtract fluxes from the local mass rates of
             // the respective sub control volume adjacent to
@@ -379,7 +363,7 @@ public:
 #if HAVE_VALGRIND
         for (int i=0; i < curElementGeom_.numVertices; i++)
             VALGRIND_CHECK_MEM_IS_DEFINED(&residual[i],
-                                          sizeof(SolutionVector));
+                                          sizeof(PrimaryVarVector));
 #endif // HAVE_VALGRIND
     }
 
@@ -405,12 +389,13 @@ public:
      * \brief Restrict the global function 'globalFn' to the vertices
      *        of the current element, save the result to 'dest'.
      */
-    void restrictToElement(LocalFunction &dest,
-                           const SpatialFunction &globalFn) const
+    void restrictToElement(SolutionOnElement &dest,
+                           const SolutionFunction &globalFn) const
     {
         // we assert that the i-th shape function is
         // associated to the i-th vert of the element.
         int n = curElement_().template count<dim>();
+        dest.resize(n);
         for (int i = 0; i < n; i++) {
             dest[i] = (*globalFn)[problem_.vertexIdx(curElement_(), i)];
         }
@@ -434,18 +419,20 @@ public:
      * This method should be overwritten by the child class if
      * necessary.
      */
-    void updateStaticData(SpatialFunction &curSol, SpatialFunction &oldSol)
+    void updateStaticData(SolutionFunction &curSol, SolutionFunction &oldSol)
     { };
 
     /*!
      * \brief Update the model specific vertex data of a whole
      *        element.
      */
-    void updateElementData_(VertexDataArray &dest, const LocalFunction &sol, bool isOldSol)
+    void updateElementData_(VertexDataArray &dest, const SolutionOnElement &sol, bool isOldSol)
     {
+        dest.resize(sol.size());
+
 #ifdef ENABLE_VALGRIND
-        for (int i = 0; i < elemDat.size(); ++i)
-            VALGRIND_MAKE_MEM_UNDEFINED(&elemDat[i], 
+        for (int i = 0; i < dest.size(); ++i)
+            VALGRIND_MAKE_MEM_UNDEFINED(&dest[i], 
                                         sizeof(VertexData));
 #endif // ENABLE_VALGRIND
 
@@ -462,7 +449,7 @@ public:
 
     /*!
      * \brief This returns the finite volume geometric information of the current
-     *        element. <b>Use this method with great care!</br>
+     *        element. <b>Use this method with great care!</b>
      */
     const FVElementGeometry &curFvElementGeometry() const
     { return curElementGeom_; }
@@ -470,16 +457,18 @@ public:
     /*!
      * \brief Set current local solution
      */
-    void setCurrentSolution(const LocalFunction &sol)
+    void setCurrentSolution(const SolutionOnElement &sol)
     {
+        curElemDat_.resize(sol.size());
         asImp_().updateElementData_(curElemDat_, sol, false);
     }
 
     /*!
      * \brief Set local solution of the last time step
      */
-    void setPreviousSolution(const LocalFunction &sol)
+    void setPreviousSolution(const SolutionOnElement &sol)
     {
+        prevElemDat_.resize(sol.size());
         asImp_().updateElementData_(prevElemDat_, sol, true);
     }
 
@@ -492,7 +481,7 @@ public:
      * needs to be recalculated. (Updating the element cache is very
      * expensive since material laws need to be evaluated.)
      */
-    void deflectCurrentSolution(LocalFunction &curSol, 
+    void deflectCurrentSolution(SolutionOnElement &curSol, 
                                 int vertIdx,
                                 int eqIdx,
                                 Scalar value)
@@ -508,11 +497,11 @@ public:
         VALGRIND_MAKE_MEM_UNDEFINED(&curElemDat_[vertIdx], 
                                     sizeof(VertexData));
 
-        curElemDat_[vertIdx].template update<JacobianImp>(curSol[vertIdx], 
-                                                          this->curElement_(),
-                                                          vertIdx, 
-                                                          false,
-                                                          asImp_());
+        curElemDat_[vertIdx].template update<Implementation>(curSol[vertIdx], 
+                                                             this->curElement_(),
+                                                             vertIdx, 
+                                                             false,
+                                                             asImp_());
         VALGRIND_CHECK_MEM_IS_DEFINED(&curElemDat_[vertIdx], 
                                       sizeof(VertexData));
     }
@@ -524,7 +513,7 @@ public:
      * This only works if deflectSolution was only called with
      * (vert, component) as arguments.
      */
-    void restoreCurrentSolution(LocalFunction &curSol, 
+    void restoreCurrentSolution(SolutionOnElement &curSol, 
                                 int vertIdx, 
                                 int eqIdx,
                                 Scalar origValue)
@@ -552,6 +541,9 @@ protected:
     // The problem we would like to solve
     Problem &problem_;
 
+    // The grid view we are dealing with
+    const GridView gridView_;
+
     ElementPointer    curElementPtr_;
     FVElementGeometry curElementGeom_;
 
@@ -562,15 +554,11 @@ protected:
     // temporary variable to store the variable vertex data
     VertexData   curVertexDataStash_;
 
-    // global solution of the current and of the last timestep
-    const SpatialFunction *curSolution_;
-    const SpatialFunction *oldSolution_;
-
 private:
     void updateBoundaryTypes_()
     {
         Dune::GeometryType      geoType = curElement_().geometry().type();
-        const ReferenceElement &refElem = DomainTraits::referenceElement(geoType);
+        const ReferenceElement &refElem = ReferenceElements::general(geoType);
 
         int numVerts = curElement_().template count<dim>();
         for (int i = 0; i < numVerts; ++i)
@@ -628,7 +616,7 @@ private:
         }
     };
 
-    void assemble_(const Element &element, LocalFunction& localU, int orderOfShapeFns = 1)
+    void assemble_(const Element &element, SolutionOnElement& localU, int orderOfShapeFns = 1)
     {
         // set the current grid element
         asImp_().setCurrentElement(element);
@@ -639,16 +627,16 @@ private:
         int numVertices = curElementGeom_.numVertices;
 
         // restrict the previous global solution to the current element
-        LocalFunction localOldU(numVertices);
-        restrictToElement(localOldU, *oldSolution_);
+        SolutionOnElement localOldU(numVertices);
+        restrictToElement(localOldU, problem_.model().prevSolFunction());
 
         this->asImp_().setCurrentSolution(localU);
         this->asImp_().setPreviousSolution(localOldU);
 
         // approximate the local stiffness matrix numerically
         // TODO: do this analytically if possible
-        LocalFunction residUPlusEps(numVertices);
-        LocalFunction residUMinusEps(numVertices);
+        SolutionOnElement residUPlusEps(numVertices);
+        SolutionOnElement residUMinusEps(numVertices);
         for (int j = 0; j < numVertices; j++)
         {
             for (int eqIdx = 0; eqIdx < numEq; eqIdx++)
@@ -682,7 +670,7 @@ private:
         }
 
         // calculate the right hand side
-        LocalFunction residU(numVertices);
+        SolutionOnElement residU(numVertices);
         evalLocalResidual(residU, true); // include boundary conditions for the residual
 
         for (int i=0; i < numVertices; i++) {
@@ -699,11 +687,11 @@ private:
 
     void updateLocalStiffness_(int j,
                                int varJIdx,
-                               const LocalFunction &stiffness)
+                               const SolutionOnElement &stiffness)
     {
         for (int i = 0; i < curElementGeom_.numVertices; i++) {
             for (int varIIdx = 0; varIIdx < numEq; varIIdx++) {
-                // A[i][j][varIIdx][eqIdx] is the
+                // A[i][j][varIIdx][varJIdx] is the
                 // approximate rate of change of the
                 // unknown 'varIIdx' at vertex 'i' if the
                 // unknown 'varJIdx' at vertex 'j' is
@@ -724,11 +712,11 @@ private:
         }
     };
 
-    JacobianImp &asImp_()
-    { return *static_cast<JacobianImp*>(this); }
+    Implementation &asImp_()
+    { return *static_cast<Implementation*>(this); }
 
-    const JacobianImp &asImp_() const
-    { return *static_cast<const JacobianImp*>(this); }
+    const Implementation &asImp_() const
+    { return *static_cast<const Implementation*>(this); }
 };
 }
 

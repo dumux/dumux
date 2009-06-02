@@ -1,5 +1,5 @@
 # tests where program to build and program to run are equal
-NORMALTESTS = test_transport test_boxtransport test_chtransport test_chtransport1D test_implicitfvtransport
+NORMALTESTS = test_transport test_chtransport test_chtransport1D
 
 # list of tests to run
 #TESTS = $(NORMALTESTS)
@@ -13,9 +13,7 @@ test_transportdir = $(includedir)/dune/dumux/test/transport
 test_transport_HEADERS = simplerproblem.hh
 test_transport_SOURCES = test_transport.cc
 
-test_boxtransport_SOURCES = test_boxtransport.cc
 test_chtransport_SOURCES = test_chtransport.cc 
 test_chtransport1D_SOURCES = test_chtransport1D.cc 
-test_implicitfvtransport_SOURCES = test_implicitfvtransport.cc
 
 include $(top_srcdir)/am/global-rules

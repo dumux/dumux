@@ -67,7 +67,7 @@ public:
 
     void initialTransport();
 
-    Scalar evaluateTimeStepWettingFlux(Scalar timestepFactorIn, Scalar timestepFactorOutW ,Scalar timestepFactorOutNW, Scalar& residualSatW, Scalar& residualSatNW, int globalIdxI);
+    Scalar evaluateTimeStepWettingFlux(Scalar timestepFactorIn, Scalar timestepFactorOutW ,Scalar& residualSatW, Scalar& residualSatNW, int globalIdxI);
 
     Scalar evaluateTimeStepTotalFlux(Scalar timestepFactorIn,Scalar timestepFactorOut, Scalar diffFactorIn, Scalar diffFactorOut, Scalar& residualSatW, Scalar& residualSatNW);
 
@@ -147,7 +147,6 @@ int FVSaturationWetting2P<GridView, Scalar, VC, Problem>::update(const Scalar t,
         Scalar timestepFactorIn = 0;
         Scalar timestepFactorOut = 0;
         Scalar timestepFactorOutW = 0;
-        Scalar timestepFactorOutNW = 0;
         Scalar diffFactorIn = 0;
         Scalar diffFactorOut = 0;
 
@@ -173,6 +172,12 @@ int FVSaturationWetting2P<GridView, Scalar, VC, Problem>::update(const Scalar t,
             localPosFace = Dune::ReferenceElements<Scalar,dim>::general(faceGT).position(indexInInside,1);
 
             Dune::FieldVector<Scalar,dimWorld> unitOuterNormal = isIt->unitOuterNormal(faceLocal);
+
+            Dune::FieldVector<Scalar,dimWorld> unitOuterNormalAbs(unitOuterNormal);
+            for (int i=0;i<dim;i++)
+            {
+                unitOuterNormalAbs[i] *= unitOuterNormal[i];
+            }
 
             Scalar faceArea = isIt->geometry().volume();
 
@@ -246,7 +251,7 @@ int FVSaturationWetting2P<GridView, Scalar, VC, Problem>::update(const Scalar t,
                     // compute distance between cell centers
                     Scalar dist = distVec.two_norm();
 
-                    // calculate the saturation gradient
+                    // calculate the capillary gradient
                     Dune::FieldVector<Scalar,dimWorld> pcGradient = distVec;
                     pcGradient *= (pcJ - pcI)/(dist*dist);
 
@@ -274,15 +279,6 @@ int FVSaturationWetting2P<GridView, Scalar, VC, Problem>::update(const Scalar t,
                     {
                         timestepFactorOutW += factor;
                     }
-                    if (potentialNW >= 0)
-                    {
-                        Scalar factorNW = fabs(factor/potentialW)*potentialNW;
-                        if (isnan(factorNW))
-                        {
-                            factorNW = 0;
-                        }
-                        timestepFactorOutNW += factorNW;
-                    }
                     if (potentialW < 0)
                     {
                         Scalar krSum = this->transProblem.variables().mobilityWetting()[globalIdxJ]*viscosityW+ this->transProblem.variables().mobilityNonWetting()[globalIdxJ]*viscosityNW;
@@ -290,10 +286,10 @@ int FVSaturationWetting2P<GridView, Scalar, VC, Problem>::update(const Scalar t,
                     }
                     if (potentialNW < 0)
                     {
-                        Scalar factorNW = fabs(factor/potentialW)*potentialNW;
-                        if (isnan(factorNW))
+                        Scalar factorNW = 0;
+                        if (potentialNW < potentialW)
                         {
-                            factorNW = 0;
+                            factorNW = fabs(factor/potentialW)*potentialNW;
                         }
                         Scalar krSum = this->transProblem.variables().mobilityWetting()[globalIdxJ]*viscosityW+ this->transProblem.variables().mobilityNonWetting()[globalIdxJ]*viscosityNW;
                         timestepFactorIn -= factorNW / krSum;
@@ -366,7 +362,7 @@ int FVSaturationWetting2P<GridView, Scalar, VC, Problem>::update(const Scalar t,
                         // compute distance between cell centers
                         Scalar dist = distVec.two_norm();
 
-                        // calculate the saturation gradient
+                        // calculate the capillary gradient
                         Dune::FieldVector<Scalar,dimWorld> pcGradient = distVec;
                         pcGradient *= (pcBound - pcI)/(dist*dist);
 
@@ -394,15 +390,6 @@ int FVSaturationWetting2P<GridView, Scalar, VC, Problem>::update(const Scalar t,
                         {
                             timestepFactorOutW += factor;
                         }
-                        if (potentialNW> 0)
-                        {
-                            Scalar factorNW = fabs(factor/potentialW)*potentialNW;
-                            if (isnan(factorNW))
-                            {
-                                factorNW = 0;
-                            }
-                            timestepFactorOutNW += factorNW;
-                        }
                         if (potentialW < 0)
                         {
                             Scalar krSum = this->transProblem.materialLaw().mobW(satBound,globalPosFace, *eIt, localPosFace)*viscosityW + this->transProblem.materialLaw().mobN((1-satBound),globalPosFace, *eIt, localPosFace)*viscosityNW;
@@ -410,11 +397,12 @@ int FVSaturationWetting2P<GridView, Scalar, VC, Problem>::update(const Scalar t,
                         }
                         if (potentialNW < 0)
                         {
-                            Scalar factorNW = fabs(factor/potentialW)*potentialNW;
-                            if (isnan(factorNW))
+                            Scalar factorNW = 0;
+                            if (potentialNW < potentialW)
                             {
-                                factorNW = 0;
+                                factorNW = fabs(factor/potentialW)*potentialNW;
                             }
+
                             Scalar krSum = this->transProblem.materialLaw().mobW(satBound,globalPosFace, *eIt, localPosFace)*viscosityW + this->transProblem.materialLaw().mobN((1-satBound),globalPosFace, *eIt, localPosFace)*viscosityNW;
                             timestepFactorIn -= factorNW / krSum;
                         }
@@ -432,7 +420,7 @@ int FVSaturationWetting2P<GridView, Scalar, VC, Problem>::update(const Scalar t,
         // end all intersections
         if (velocityType_ == vw)
         {
-            dt = std::min(dt, evaluateTimeStepWettingFlux(timestepFactorIn, timestepFactorOutW , timestepFactorOutNW, residualSatW, residualSatNW, globalIdxI));
+            dt = std::min(dt, evaluateTimeStepWettingFlux(timestepFactorIn, timestepFactorOutW , residualSatW, residualSatNW, globalIdxI));
         }
         if (velocityType_ == vt)
         {
@@ -499,21 +487,16 @@ Scalar FVSaturationWetting2P<GridView, Scalar, VC, Problem>::evaluateTimeStepTot
     return sumFactor;
 }
 template<class GridView, class Scalar, class VC, class Problem>
-Scalar FVSaturationWetting2P<GridView, Scalar, VC, Problem>::evaluateTimeStepWettingFlux(Scalar timestepFactorIn,Scalar timestepFactorOutW ,Scalar timestepFactorOutNW, Scalar& residualSatW, Scalar& residualSatNW, int globalIdxI)
+Scalar FVSaturationWetting2P<GridView, Scalar, VC, Problem>::evaluateTimeStepWettingFlux(Scalar timestepFactorIn,Scalar timestepFactorOutW , Scalar& residualSatW, Scalar& residualSatNW, int globalIdxI)
 {
     // compute dt restriction
     Scalar volumeCorrectionFactorIn = (1-residualSatW - residualSatNW);
     Scalar volumeCorrectionFactorOutW = (this->transProblem.variables().saturation()[globalIdxI]-residualSatW);
-    Scalar volumeCorrectionFactorOutNW = (1-this->transProblem.variables().saturation()[globalIdxI] - residualSatNW);
 
     //make sure correction is in the right range. If not: force dt to be not min-dt!
     if (volumeCorrectionFactorOutW <= 0)
     {
         volumeCorrectionFactorOutW = 1e100;
-    }
-    if (volumeCorrectionFactorOutNW <= 0)
-    {
-        volumeCorrectionFactorOutNW = 1e100;
     }
 
     //make sure correction is in the right range. If not: force dt to be not min-dt!
@@ -525,17 +508,11 @@ Scalar FVSaturationWetting2P<GridView, Scalar, VC, Problem>::evaluateTimeStepWet
     {
         timestepFactorOutW = 1e-100;
     }
-    if (timestepFactorOutNW <= 0)
-    {
-        timestepFactorOutNW = 1e-100;
-    }
 
     timestepFactorIn = volumeCorrectionFactorIn/timestepFactorIn;
     timestepFactorOutW = volumeCorrectionFactorOutW/timestepFactorOutW;
-    timestepFactorOutNW = volumeCorrectionFactorOutNW/timestepFactorOutNW;
 
-    Scalar timestepFactor = std::min(timestepFactorOutW,timestepFactorOutNW);
-    timestepFactor = std::min(timestepFactor, timestepFactorIn);
+    Scalar timestepFactor = std::min(timestepFactorIn,timestepFactorOutW);
 
     return timestepFactor;
 }

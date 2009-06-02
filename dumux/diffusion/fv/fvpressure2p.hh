@@ -55,7 +55,7 @@ template<class GridView, class Scalar, class VC,
     };
     enum
     {
-        pw = 0, pn = 1, pglobal = 2
+        pw = 0, pn = 1, pglobal = 2, Sw = 0, Sn = 1
     };
 
 typedef    typename GridView::Traits::template Codim<0>::Entity Element;
@@ -81,10 +81,13 @@ public:
 
     void pressure(bool first = true, const Scalar t=0)
     {
-        initializeMaterialLaws();
+        if (first)
+        {
+            initializeMaterialLaws();
+        }
         assemble(first, t);
         solve();
-        if (first = true)
+        if (first)
         {
             assemble(false, t);
             solve();
@@ -97,33 +100,43 @@ public:
     //constitutive functions are initialized and stored in the variables object
     void initializeMaterialLaws();
 
-    FVPressure2P(GridView& gridView, Problem& problem, std::string pressType) :
+    FVPressure2P(GridView& gridView, Problem& problem, std::string pressType, std::string satType) :
     Diffusion<GridView, Scalar, VC, Problem>(gridView, problem),
     A_(problem.variables().gridSizeDiffusion(), problem.variables().gridSizeDiffusion(),
             (2*dim+1) * problem.variables().gridSizeDiffusion(), BCRSMatrix<MB>::random),
     f_(problem.variables().gridSizeDiffusion()), solverName_("BiCGSTAB"),
     preconditionerName_("SeqILU0"), gravity(problem.gravity()),
-    pressureType((pressType == "pw") ? 0 : ((pressType == "pn") ? 1 : ((pressType == "pglobal") ? 2 : 999)))
+    pressureType((pressType == "pw") ? 0 : ((pressType == "pn") ? 1 : ((pressType == "pglobal") ? 2 : 999))),
+    saturationType((satType == "Sw") ? 0 : ((satType == "Sn") ? 1 : 999))
     {
         if (pressureType == 999)
         {
             DUNE_THROW(NotImplemented, "Pressure type not supported!");
         }
+        if (saturationType == 999)
+        {
+            DUNE_THROW(NotImplemented, "Saturation type not supported!");
+        }
         initializeMatrix();
     }
 
-    FVPressure2P(GridView& gridView, Problem& problem, std::string pressType, std::string solverName,
+    FVPressure2P(GridView& gridView, Problem& problem, std::string pressType, std::string satType, std::string solverName,
             std::string preconditionerName) :
     Diffusion<GridView, Scalar, VC, Problem>(gridView, problem),
     A_(problem.variables().gridSizeDiffusion(), problem.variables().gridSizeDiffusion(),
             (2*dim+1)*problem.variables().gridSizeDiffusion(), BCRSMatrix<MB>::random),
     f_(problem.variables().gridSizeDiffusion()), solverName_(solverName),
     preconditionerName_(preconditionerName), gravity(problem.gravity()),
-    pressureType((pressType == "pw") ? 0 : ((pressType == "pn") ? 1 : ((pressType == "pglobal") ? 2 : 999)))
+    pressureType((pressType == "pw") ? 0 : ((pressType == "pn") ? 1 : ((pressType == "pglobal") ? 2 : 999))),
+    saturationType((satType == "Sw") ? 0 : ((satType == "Sn") ? 1 : 999))
     {
         if (pressureType == 999)
         {
             DUNE_THROW(NotImplemented, "Pressure type not supported!");
+        }
+        if (saturationType == 999)
+        {
+            DUNE_THROW(NotImplemented, "Saturation type not supported!");
         }
         initializeMatrix();
     }
@@ -136,6 +149,7 @@ private:
 protected:
     const FieldVector<Scalar,dimWorld>& gravity; // [m/s^2]
     const int pressureType;
+    const int saturationType;
 };
 
 template<class GridView, class Scalar, class VC, class Problem> void FVPressure2P<GridView, Scalar, VC, Problem>::initializeMatrix()
@@ -358,11 +372,11 @@ template<class GridView, class Scalar, class VC, class Problem> void FVPressure2
                     if (pressureType == pw)
                     {
                         potentialW = (unitOuterNormal * distVec) * (this->diffProblem.variables().pressure()[globalIdxI] - this->diffProblem.variables().pressure()[globalIdxJ]) / (dist * dist);
-                        potentialNW = (unitOuterNormal * distVec) * (this->diffProblem.variables().pressure()[globalIdxI]+ pcI - this->diffProblem.variables().pressure()[globalIdxJ]-pcJ) / (dist * dist);
+                        potentialNW = (unitOuterNormal * distVec) * (this->diffProblem.variables().pressure()[globalIdxI] - this->diffProblem.variables().pressure()[globalIdxJ]+ pcI - pcJ) / (dist * dist);
                     }
                     if (pressureType == pn)
                     {
-                        potentialW = (unitOuterNormal * distVec) * (this->diffProblem.variables().pressure()[globalIdxI] - pcI - this->diffProblem.variables().pressure()[globalIdxJ] + pcJ) / (dist * dist);
+                        potentialW = (unitOuterNormal * distVec) * (this->diffProblem.variables().pressure()[globalIdxI] - this->diffProblem.variables().pressure()[globalIdxJ] - pcI + pcJ) / (dist * dist);
                         potentialNW = (unitOuterNormal * distVec) * (this->diffProblem.variables().pressure()[globalIdxI] - this->diffProblem.variables().pressure()[globalIdxJ]) / (dist * dist);
                     }
                     if (pressureType == pglobal)
@@ -452,7 +466,15 @@ template<class GridView, class Scalar, class VC, class Problem> void FVPressure2
                     }
 
                     Scalar pressBound = this->diffProblem.dirichletPress(globalPosFace, *eIt, localPosFace);
-                    Scalar pcBound = this->diffProblem.materialLaw().pC(satBound, globalPosFace, *eIt, localPosFace);
+                    Scalar pcBound = 0;
+                    if (saturationType == Sw)
+                    {
+                        pcBound = this->diffProblem.materialLaw().pC(satBound, globalPosFace, *eIt, localPosFace);
+                    }
+                    if (saturationType == Sn)
+                    {
+                        pcBound = this->diffProblem.materialLaw().pC(1-satBound, globalPosFace, *eIt, localPosFace);
+                    }
                     Scalar pcI = this->diffProblem.variables().capillaryPressure()[globalIdxI];
 
                     if (first)
@@ -517,7 +539,14 @@ template<class GridView, class Scalar, class VC, class Problem> void FVPressure2
                         }
                         else
                         {
-                            lambdaW = this->diffProblem.materialLaw().mobW(satBound,globalPosFace, *eIt, localPosFace);
+                            if (saturationType == Sw)
+                            {
+                                lambdaW = this->diffProblem.materialLaw().mobW(satBound,globalPosFace, *eIt, localPosFace);
+                            }
+                            if (saturationType == Sn)
+                            {
+                                lambdaW = this->diffProblem.materialLaw().mobW(1-satBound,globalPosFace, *eIt, localPosFace);
+                            }
                         }
                         if (potentialNW >= 0.)
                         {
@@ -525,7 +554,14 @@ template<class GridView, class Scalar, class VC, class Problem> void FVPressure2
                         }
                         else
                         {
-                            lambdaNW = this->diffProblem.materialLaw().mobN((1-satBound),globalPosFace, *eIt, localPosFace);
+                            if (saturationType == Sw)
+                            {
+                                lambdaNW = this->diffProblem.materialLaw().mobW(1-satBound,globalPosFace, *eIt, localPosFace);
+                            }
+                            if (saturationType == Sn)
+                            {
+                                lambdaNW = this->diffProblem.materialLaw().mobW(satBound,globalPosFace, *eIt, localPosFace);
+                            }
                         }
 
                         Scalar entry = (lambdaW + lambdaNW) * fabs(faceVol * (normalPermeabilityI * distVec) / (dist * dist));
@@ -604,9 +640,9 @@ template<class GridView, class Scalar, class VC, class Problem> void FVPressure2
     else
     DUNE_THROW(NotImplemented, "FVPressure2P :: solve : preconditioner "
             << preconditionerName_ << ".");
-//                printmatrix(std::cout, A_, "global stiffness matrix", "row", 11, 3);
-//                printvector(std::cout, f_, "right hand side", "row", 200, 1, 3);
-//                printvector(std::cout, (this->diffProblem.variables().pressure()), "pressure", "row", 200, 1, 3);
+    //                printmatrix(std::cout, A_, "global stiffness matrix", "row", 11, 3);
+    //                printvector(std::cout, f_, "right hand side", "row", 200, 1, 3);
+    //                    printvector(std::cout, (this->diffProblem.variables().pressure()), "pressure", "row", 200, 1, 3);
     return;
 }
 //constitutive functions are updated once if new saturations are calculated and stored in the variables object
@@ -630,12 +666,26 @@ template<class GridView, class Scalar, class VC, class Problem> void FVPressure2
 
         Scalar sat = this->diffProblem.variables().saturation()[globalIdx];
 
-        std::vector<Scalar> mobilities = this->diffProblem.materialLaw().mob(sat, globalPos, *eIt, localPos);
+        std::vector<Scalar> mobilities(2,0.0);
+
+        if (saturationType == Sw)
+        {
+            mobilities = this->diffProblem.materialLaw().mob(sat, globalPos, *eIt, localPos);
+            this->diffProblem.variables().capillaryPressure()[globalIdx]= this->diffProblem.materialLaw().pC(sat, globalPos, *eIt, localPos);
+        }
+        else if (saturationType == Sn)
+        {
+            mobilities = this->diffProblem.materialLaw().mob(1-sat, globalPos, *eIt, localPos);
+            this->diffProblem.variables().capillaryPressure()[globalIdx]= this->diffProblem.materialLaw().pC(1-sat, globalPos, *eIt, localPos);
+        }
+        else
+        {
+            DUNE_THROW(RangeError, "materialLaws not initialized!");
+        }
 
         // initialize mobilities
         this->diffProblem.variables().mobilityWetting()[globalIdx]= mobilities[0];
         this->diffProblem.variables().mobilityNonWetting()[globalIdx]= mobilities[1];
-        this->diffProblem.variables().capillaryPressure()[globalIdx]= this->diffProblem.materialLaw().pC(sat, globalPos, *eIt, localPos);
         this->diffProblem.variables().fracFlowFuncWetting()[globalIdx]= mobilities[0]/(mobilities[0]+mobilities[1]);
         this->diffProblem.variables().fracFlowFuncNonWetting()[globalIdx]= mobilities[1]/(mobilities[0]+mobilities[1]);
     }

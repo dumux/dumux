@@ -1,11 +1,10 @@
 //$Id$
 /*****************************************************************************
- *   Copyright (C) 2008,2009 by Klaus Mosthaf,                               *
- *                              Andreas Lauser,                              *
- *                              Bernd Flemisch                               *
+ *   Copyright (C) 2008 by Bernd Flemisch                                    *
+ *   Copyright (C) 2008-2009 by Andreas Lauser                               *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
- *   email: klaus.mosthaf _at_ iws.uni-stuttgart.de                          *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software; you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -19,10 +18,10 @@
  * \file
  *
  * \brief This file contains the data which is required to calculate
- *        all fluxes of components over a face of a finite volume.
+ *        all fluxes of fluid phases over a face of a finite volume.
  *
- * This means pressure and temperature gradients, phase
- * densities at the intergration point, etc.
+ * This means pressure and temperature gradients, phase densities at
+ * the integration point, etc.
  */
 #ifndef DUMUX_2P_FLUX_DATA_HH
 #define DUMUX_2P_FLUX_DATA_HH
@@ -34,36 +33,40 @@ namespace Dune
 
 /*!
  * \brief This template class contains the data which is required to
- *        calculate all fluxes of components over a face of a finite
- *        volume for the two-phase, two-component model.
+ *        calculate the fluxes of the fluid phases over a face of a
+ *        finite volume for the two-phase model.
  *
  * This means pressure and concentration gradients, phase densities at
  * the intergration point, etc.
  */
-template <class TwoPTraits,
-          class ProblemT,
-          class VertexData>
+template <class TypeTag>
 class TwoPFluxData
 {
-    typedef typename ProblemT::DomainTraits::Scalar  Scalar;
-    typedef typename ProblemT::DomainTraits::Grid    Grid;
-    typedef ProblemT                                 Problem;
-    typedef typename Grid::template Codim<0>::Entity Element;
-    typedef std::vector<VertexData>                  VertexDataArray;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))   Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem))    Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexData)) VertexData;
 
-    static const int dim = Grid::dimensionworld;
-    static const int localDim = Grid::dimension;
-    typedef Dune::FieldVector<Scalar, dim>                   GlobalPosition;
-    typedef Dune::FieldVector<Scalar, localDim>              LocalPosition;
+    typedef typename GridView::template Codim<0>::Entity Element;
+    typedef std::vector<VertexData>                      VertexDataArray;
 
-    typedef typename Dune::FVElementGeometry<Grid>           FVElementGeometry;
-    typedef typename FVElementGeometry::SubControlVolume     SCV;
-    typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
+    enum {
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld,
+        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases))
+    };
 
-    static const int numPhases = TwoPTraits::numPhases;
+    typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dim>       LocalPosition;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
+    typedef typename FVElementGeometry::SubControlVolume             SCV;
+    typedef typename FVElementGeometry::SubControlVolumeFace         SCVFace;
+
     typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
 
-    typedef TwoPTraits Tr;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
 
 public:
     TwoPFluxData(const Problem &problem,

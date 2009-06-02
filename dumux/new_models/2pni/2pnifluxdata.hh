@@ -1,12 +1,18 @@
 //$Id$
 /*****************************************************************************
+ *   Copyright (C) 2008-2009 by Melanie Darcis                               *
+ *   Copyright (C) 2008-2009 by Andreas Lauser                               *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
+
  *   Copyright (C) 2008,2009 by Melanie Darcis                               *
  *                              Klaus Mosthaf,                               *
  *                              Andreas Lauser,                              *
  *                              Bernd Flemisch                               *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
- *   email: melanie.darcis _at_ iws.uni-stuttgart.de                         *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software; you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -20,10 +26,10 @@
  * \file
  *
  * \brief This file contains the data which is required to calculate
- *        all fluxes of components over a face of a finite volume.
+ *        the fluxes of all phases over a face of a finite volume.
  *
- * This means pressure, concentration and temperature gradients, phase
- * densities at the intergration point, etc.
+ * This means pressure and temperature gradients, phase densities at
+ * the integration point, etc.
  */
 #ifndef DUMUX_2PNI_FLUX_DATA_HH
 #define DUMUX_2PNI_FLUX_DATA_HH
@@ -35,43 +41,49 @@ namespace Dune
 
 /*!
  * \brief This template class contains the data which is required to
- *        calculate all fluxes of components over a face of a finite
- *        volume for the two-phase, two-component model.
+ *        calculate all fluxes of all phases over a face of a finite
+ *        volume for the non-isothermal two-phase model.
  *
- * This means pressure and concentration gradients, phase densities at
- * the intergration point, etc.
+ * This means pressure and temperature gradients, phase densities at
+ * the integration point, etc.
  */
-template <class TwoPNITraits,
-          class ProblemT,
-          class VertexData>
-class TwoPNIFluxData : public TwoPFluxData<TwoPNITraits, ProblemT, VertexData>
+template <class TypeTag>
+class TwoPNIFluxData : public TwoPFluxData<TypeTag>
 {
-    typedef typename ProblemT::DomainTraits::Scalar  Scalar;
-    typedef typename ProblemT::DomainTraits::Grid    Grid;
-    typedef ProblemT                                 Problem;
-    typedef typename Grid::template Codim<0>::Entity Element;
-    typedef std::vector<VertexData>                  VertexDataArray;
+    typedef TwoPFluxData<TypeTag>                       ParentType;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))   Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
-    static const int dim = Grid::dimensionworld;
-    static const int localDim = Grid::dimension;
-    typedef Dune::FieldVector<Scalar, dim>                   GlobalPosition;
-    typedef Dune::FieldVector<Scalar, localDim>              LocalPosition;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem))    Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexData)) VertexData;
 
-    typedef typename Dune::FVElementGeometry<Grid>           FVElementGeometry;
-    typedef typename FVElementGeometry::SubControlVolume     SCV;
-    typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
+    typedef typename GridView::template Codim<0>::Entity Element;
+    typedef std::vector<VertexData>                      VertexDataArray;
+    
+    enum {
+        dim           = GridView::dimension,
+        dimWorld      = GridView::dimensionworld,
 
-    typedef TwoPFluxData<TwoPNITraits, Problem, VertexData> ParentType;
+        numPhases     = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
+    };
+    
+    typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dim>       LocalPosition;
 
-    typedef TwoPNITraits Tr;
-    typedef Dune::FieldVector<Scalar, Tr::numPhases> PhasesVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
+    typedef typename FVElementGeometry::SubControlVolume             SCV;
+    typedef typename FVElementGeometry::SubControlVolumeFace         SCVFace;
+
+    typedef Dune::FieldVector<Scalar, numPhases>      PhasesVector;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPIndices)) Indices;
 
 public:
     TwoPNIFluxData(const Problem &problem,
-                       const Element &element,
-                       const FVElementGeometry &elemGeom,
-                       int faceIdx,
-                       const VertexDataArray &elemDat)
+                   const Element &element,
+                   const FVElementGeometry &elemGeom,
+                   int faceIdx,
+                   const VertexDataArray &elemDat)
         : ParentType(problem, element, elemGeom, faceIdx, elemDat)
     {
         temperatureGrad = 0;

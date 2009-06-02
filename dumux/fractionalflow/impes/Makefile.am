@@ -1,4 +1,4 @@
 impesdir = $(includedir)/dune/dumux/fractionalflow/impes
-impes_HEADERS = $(shell ls -1 *.hh) 
+impes_HEADERS = *.hh
 
 include $(top_srcdir)/am/global-rules

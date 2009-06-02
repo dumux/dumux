@@ -1,10 +1,10 @@
 /*****************************************************************************
- *   Copyright (C) 2008,2009 by Klaus Mosthaf,                               *
- *                              Andreas Lauser,                              *
- *                              Bernd Flemisch                               *
+ *   Copyright (C) 2008-2009 by Klaus Mosthaf                                *
+ *   Copyright (C) 2008-2009 by Andreas Lauser                               *
+ *   Copyright (C) 2008 by Bernd Flemisch                                    *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
- *   email: klaus.mosthaf _at_ iws.uni-stuttgart.de                          *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software; you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -39,30 +39,34 @@ namespace Dune
  * This means pressure and concentration gradients, phase densities at
  * the intergration point, etc.
  */
-template <class TwoPTwoCTraits,
-          class ProblemT,
-          class VertexData>
+template <class TypeTag>
 class TwoPTwoCFluxData
 {
-    typedef typename ProblemT::DomainTraits::Scalar  Scalar;
-    typedef typename ProblemT::DomainTraits::Grid    Grid;
-    typedef ProblemT                                 Problem;
-    typedef typename Grid::template Codim<0>::Entity Element;
-    typedef std::vector<VertexData>                  VertexDataArray;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))   Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
+    
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem))    Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexData)) VertexData;
 
-    static const int dim = Grid::dimensionworld;
-    static const int localDim = Grid::dimension;
-    typedef Dune::FieldVector<Scalar, dim>                   GlobalPosition;
-    typedef Dune::FieldVector<Scalar, localDim>              LocalPosition;
+    typedef typename GridView::template Codim<0>::Entity Element;
+    typedef std::vector<VertexData>                      VertexDataArray;
 
-    typedef typename Dune::FVElementGeometry<Grid>           FVElementGeometry;
-    typedef typename FVElementGeometry::SubControlVolume     SCV;
-    typedef typename FVElementGeometry::SubControlVolumeFace SCVFace;
+    enum {
+        dim = GridView::dimension,
+        dimWorld = GridView::dimensionworld,
+        numPhases = GET_PROP_VALUE(TypeTag, PTAG(NumPhases))
+    };
 
-    static const int numPhases = TwoPTwoCTraits::numPhases;
+    typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
+    typedef Dune::FieldVector<Scalar, dim>       LocalPosition;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
+    typedef typename FVElementGeometry::SubControlVolume             SCV;
+    typedef typename FVElementGeometry::SubControlVolumeFace         SCVFace;
+
     typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
 
-    typedef TwoPTwoCTraits Tr;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
 
 public:
     TwoPTwoCFluxData(const Problem &problem,
@@ -96,6 +100,8 @@ private:
                              const Element &element,
                              const VertexDataArray &elemDat)
     {
+        typedef Indices I;
+
         // calculate gradients
         GlobalPosition tmp(0.0);
         for (int idx = 0;
@@ -123,14 +129,14 @@ private:
             // the concentration gradient of the non-wetting
             // component in the wetting phase
             tmp = feGrad;
-            tmp *= elemDat[idx].massfrac[Tr::nComp][Tr::wPhase];
-            concentrationGrad[Tr::wPhase] += tmp;
+            tmp *= elemDat[idx].massfrac[I::nComp][I::wPhase];
+            concentrationGrad[I::wPhase] += tmp;
 
             // the concentration gradient of the wetting component
             // in the non-wetting phase
             tmp = feGrad;
-            tmp *= elemDat[idx].massfrac[Tr::wComp][Tr::nPhase];
-            concentrationGrad[Tr::nPhase] += tmp;
+            tmp *= elemDat[idx].massfrac[I::wComp][I::nPhase];
+            concentrationGrad[I::nPhase] += tmp;
         }
 
         // correct the pressure gradients by the hydrostatic

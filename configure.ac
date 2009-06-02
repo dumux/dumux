@@ -97,7 +97,9 @@ AC_CONFIG_FILES([Makefile
     dumux/material/phaseproperties/Makefile 
     dumux/nonlinear/Makefile 
     dumux/onedinndgrid/Makefile 
+    dumux/operators/Makefile 
     dumux/pardiso/Makefile 
+    dumux/timedisc/Makefile
     dumux/transport/Makefile 
     dumux/transport/fv/Makefile 
     dumux/transport/problems/Makefile 
@@ -109,11 +111,10 @@ AC_CONFIG_FILES([Makefile
     test/2p2cni/Makefile
     test/diffusion/Makefile
     test/fractionalflow/Makefile
+    test/properties/Makefile
     test/richards/Makefile  
     test/transport/Makefile
     test/tutorial/Makefile
-    appl/shallowwater/bump/Makefile  
-    appl/shallowwater/pulse/Makefile  
     m4/Makefile
     dune-mux.pc])
 

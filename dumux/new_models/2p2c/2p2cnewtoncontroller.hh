@@ -2,7 +2,7 @@
  *   Copyright (C) 2008 by Bernd Flemisch, Andreas Lauser                    *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
- *   email: and _at_ poware.org                                              *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software; you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -33,21 +33,22 @@ namespace Dune {
  * which allows the newton method to abort quicker if the solution is
  * way out of bounds.
  */
-template <class NewtonMethod>
+template <class NewtonMethod, class TypeTag>
 class TwoPTwoCNewtonController
-    : public NewtonControllerBase<NewtonMethod, TwoPTwoCNewtonController<NewtonMethod> >
+    : public NewtonControllerBase<NewtonMethod, TwoPTwoCNewtonController<NewtonMethod, TypeTag> >
 {
     typedef typename NewtonMethod::Model Model;
-    typedef typename Model::TwoPTwoCTraits TwoPTwoCTraits;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
 
     enum {
-        pressureIdx = TwoPTwoCTraits::pressureIdx,
-        switchIdx   = TwoPTwoCTraits::switchIdx
+        pressureIdx = Indices::pressureIdx,
+        switchIdx   = Indices::switchIdx
     };
 
 public:
-    typedef TwoPTwoCNewtonController<NewtonMethod>        ThisType;
-    typedef NewtonControllerBase<NewtonMethod, ThisType>  ParentType;
+    typedef TwoPTwoCNewtonController<NewtonMethod, TypeTag>  ThisType;
+    typedef NewtonControllerBase<NewtonMethod, ThisType>     ParentType;
 
     typedef typename ParentType::Scalar            Scalar;
     typedef typename ParentType::Function          Function;
@@ -129,7 +130,7 @@ protected:
         // we accept solutions up to 1 percent bigger than 1
         // or smaller than 0 as being physical for numerical
         // reasons...
-        Scalar phys = 1.0001 - maxSwitchVarDelta*100 - maxPwDelta/1e5;
+        Scalar phys = 1.01 - maxSwitchVarDelta*100 - maxPwDelta/1e5;
 
         return std::min(1.0, phys);
     }

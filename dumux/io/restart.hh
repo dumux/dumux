@@ -4,7 +4,7 @@
  *   Copyright (C) 2008 by Andreas Lauser                                    *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
- *   email: and _at_ poware.org                                              *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software; you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -39,20 +39,20 @@ namespace Dune {
 /*!
  * \brief Load or save a state of a model to/from the harddisk.
  */
-template <class Grid>
+template <class GridView>
 class Restart {
     //! \brief Create a magic cookie for restart files, so that it is
     //!        unlikely to load a restart file for an incorrectly.
-    static const std::string magicRestartCookie_(const Grid &grid)
+    static const std::string magicRestartCookie_(const GridView &gridView)
     {
-        const std::string gridName = grid.name();
-        const int dim = Grid::dimension;
+        const std::string gridName = gridView.grid().name();
+        const int dim = GridView::dimension;
 
-        int numVertices = grid.template size(dim);
-        int numElements = grid.template size(0);
-        int numEdges = grid.template size(dim-1);
-        int numCPUs = grid.comm().size();
-        int rank = grid.comm().rank();
+        int numVertices = gridView.template size(dim);
+        int numElements = gridView.template size(0);
+        int numEdges = gridView.template size(dim-1);
+        int numCPUs = gridView.comm().size();
+        int rank = gridView.comm().rank();
 
         return
             (boost::format("DuMux restart file: "
@@ -71,11 +71,11 @@ class Restart {
     }
 
     //! \brief Return the restart file name.
-    static const std::string restartFileName_(const Grid &grid,
+    static const std::string restartFileName_(const GridView &gridView,
                                               const std::string &simName,
                                               double t)
     {
-        int rank = grid.comm().rank();
+        int rank = gridView.comm().rank();
         return (boost::format("%s_time=%3.1d_rank=%05d.drs")
                 %simName
                 %t
@@ -87,12 +87,12 @@ public:
     /*!
      * \brief Write the current state of the model to disk.
      */
-    void serializeBegin(const Grid &grid,
+    void serializeBegin(const GridView &gridView,
                         const std::string &simName,
                         double t)
     {
-        const std::string magicCookie = magicRestartCookie_(grid);
-        const std::string fileName = restartFileName_(grid, simName, t);
+        const std::string magicCookie = magicRestartCookie_(gridView);
+        const std::string fileName = restartFileName_(gridView, simName, t);
 
         // open output file and write magic cookie
         outStream_.open(fileName.c_str());
@@ -118,22 +118,22 @@ public:
     }
 
     /*!
-     * \brief Serialize all leaf entities of a codim in a grid.
+     * \brief Serialize all leaf entities of a codim in a gridView.
      *
      * The actual work is done by Serializer::serialize(Entity)
      */
     template <int codim, class Serializer>
     void serializeEntities(Serializer &serializer,
-                           const Grid &grid)
+                           const GridView &gridView)
     {
         std::string cookie = (boost::format("Entities: Codim %d")%codim).str();
         serializeSection(cookie);
 
         // write element data
-        typedef typename Grid::template Codim<codim>::LeafIterator Iterator;
+        typedef typename GridView::template Codim<codim>::Iterator Iterator;
 
-        Iterator it = grid.template leafbegin<codim>();
-        const Iterator &endIt = grid.template leafend<codim>();
+        Iterator it = gridView.template begin<codim>();
+        const Iterator &endIt = gridView.template end<codim>();
         for (; it != endIt; ++it) {
             serializer.serializeEntity(outStream_, *it);
             outStream_ << "\n";
@@ -153,7 +153,7 @@ public:
      * \brief Start reading a restart file at a certain simulated
      *        time.
      */
-    void deserializeBegin(const Grid &grid,
+    void deserializeBegin(const GridView &grid,
                           const std::string &simName,
                           double t)
     {
@@ -214,7 +214,7 @@ public:
      */
     template <int codim, class Deserializer>
     void deserializeEntities(Deserializer &deserializer,
-                             const Grid &grid)
+                             const GridView &gridView)
     {
         std::string cookie = (boost::format("Entities: Codim %d")%codim).str();
         deserializeSection(cookie);
@@ -222,9 +222,9 @@ public:
         std::string curLine;
 
         // read entity data
-        typedef typename Grid::template Codim<codim>::LeafIterator Iterator;
-        Iterator it = grid.template leafbegin<codim>();
-        const Iterator &endIt = grid.template leafend<codim>();
+        typedef typename GridView::template Codim<codim>::Iterator Iterator;
+        Iterator it = gridView.template begin<codim>();
+        const Iterator &endIt = gridView.template end<codim>();
         for (; it != endIt; ++it) {
             if (!inStream_.good()) {
                 DUNE_THROW(IOError,

@@ -4,7 +4,7 @@
  *   Copyright (C) 2008 by Andreas Lauser, Bernd Flemisch, Melanie Darcis                   *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
- *   email: and _at_ poware.org                                              *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
  *   This program is free software; you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
@@ -18,7 +18,6 @@
 #define DUMUX_NEW_ELASTIC_BOX_MODEL_HH
 
 #include <dumux/new_models/boxscheme/boxscheme.hh>
-#include <dumux/new_models/boxscheme/p1boxtraits.hh>
 #include "elastictraits.hh"
 
 #include <dumux/auxiliary/apis.hh>

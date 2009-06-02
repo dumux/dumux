@@ -10,7 +10,7 @@ CONFIGURE_FLAGS=" CXXFLAGS=\"-Wall -g\" \
   --enable-debug \
   --enable-doxygen \
   --with-grid-dim=2 \
-  --with-alugrid=$MODDIR/ALUGrid-1.13 \
+  --with-alugrid=$MODDIR/ALUGrid-1.14 \
   --with-ug=$MODDIR/ug \
   --with-blas='-lpthread -L$MODDIR/GotoBLAS -lgoto -llapack -lg2c' \
   --with-pardiso='-L$MODDIR/pardiso/lib -lpardiso_GNU_AMD64' \

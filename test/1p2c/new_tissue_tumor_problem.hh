@@ -1,104 +1,125 @@
 // $Id$
-
+/*****************************************************************************
+ *   Copyright (C) 2009 by Karin Erbertseder                                 *
+ *   Copyright (C) 2009 by Andreas Lauser                                    *
+ *   Copyright (C) 2008 by Bernd Flemisch                                    *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
+ *                                                                           *
+ *   This program is free software; you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by    *
+ *   the Free Software Foundation; either version 2 of the License, or       *
+ *   (at your option) any later version, as long as this copyright notice    *
+ *   is included in its original form.                                       *
+ *                                                                           *
+ *   This program is distributed WITHOUT ANY WARRANTY.                       *
+ *****************************************************************************/
 #ifndef DUNE_NEW_TISSUE_TUMOR_PROBLEM_HH
 #define DUNE_NEW_TISSUE_TUMOR_PROBLEM_HH
 
-
+#ifdef HAVE_CONFIG_H
+#include "config.h"
+#endif
 
 #include<iostream>
 #include<iomanip>
 
-#include<dune/grid/common/grid.hh>
+//#include <dune/grid/io/file/dgfparser/dgfalu.hh>
+#include <dune/grid/io/file/dgfparser/dgfug.hh>
+#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
-#include<dumux/material/property_baseclasses.hh>
-#include <dumux/material/phaseproperties/phaseproperties1p.hh>
-#include "tissue_soilproperties.hh"
+//#include <dune/grid/alugrid.hh>
+#include <dune/grid/uggrid.hh>
+#include <dune/grid/yaspgrid.hh>
 
 #include <dumux/io/vtkmultiwriter.hh>
 #include <dumux/auxiliary/timemanager.hh>
 
 #include <dune/common/timer.hh>
-#include <dune/grid/common/gridinfo.hh>
-#include <dune/grid/uggrid.hh>
-#include <dune/grid/sgrid.hh>
-#include <dune/istl/io.hh>
-
-#include<dumux/new_models/1p2c/1p2cboxmodel.hh>
-#include<dumux/new_models/1p2c/1p2cnewtoncontroller.hh>
 
 #include<dumux/nonlinear/new_newtonmethod.hh>
+#include<dumux/nonlinear/new_newtoncontroller.hh>
 
 #include <dumux/auxiliary/timemanager.hh>
 #include <dumux/auxiliary/basicdomain.hh>
 
+#include <dumux/material/phaseproperties/phaseproperties1p.hh>
+#include <dumux/new_models/1p2c/1p2cboxmodel.hh>
+#include "tissue_soilproperties.hh"
 
 /**
  * @file
  * @brief  Definition of a problem, where the distribution of a therapeutic agent
  * within pulmonary tissue is described
- * @author Bernd Flemisch, Karin erbertseder
+ * @author Karin Erbertseder, Bernd Flemisch
  */
 namespace Dune
 {
+template <class TypeTag>
+class NewTissueTumorProblem;
 
-template<class GridT, class ScalarT>
-class NewTissueTumorProblem : public BasicDomain<GridT,
-                                               ScalarT>
+namespace Properties
 {
-    typedef GridT                               Grid;
-    typedef BasicDomain<Grid, ScalarT>          ParentType;
-    typedef NewTissueTumorProblem<GridT, ScalarT> ThisType;
-    typedef OnePTwoCBoxModel<ThisType>          Model;
+NEW_TYPE_TAG(TissueTumorProblem, INHERITS_FROM(BoxOnePTwoC));
 
-    typedef Dune::InterstitialFluid             Phase;
-    typedef Dune::TissueSoil<Grid, ScalarT>     Soil;
+SET_PROP(TissueTumorProblem, Grid)
+{
+    typedef Dune::UGGrid<2> type;
+    //typedef Dune::YaspGrid<2> type;
+};
 
+SET_TYPE_PROP(TissueTumorProblem, Problem, Dune::NewTissueTumorProblem<TTAG(TissueTumorProblem)>);
+}
 
-public:
-    // the domain traits of the domain
-    typedef typename ParentType::DomainTraits   DomainTraits;
-    // the traits of the BOX scheme
-    typedef typename Model::BoxTraits           BoxTraits;
-    // the traits of the model
-    typedef typename Model::OnePTwoCTraits      OnePTwoCTraits;
+template <class TypeTag = TTAG(TissueTumorProblem) >
+class NewTissueTumorProblem : public BasicDomain<typename GET_PROP_TYPE(TypeTag, PTAG(Grid)),
+                                                 typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) >
+{
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))     Scalar;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView))   GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model))      Model;
+    typedef typename GridView::Grid                           Grid;
 
-private:
-    // some constants from the traits for convenience
+    typedef BasicDomain<Grid, Scalar>    ParentType;
+    typedef NewTissueTumorProblem<TypeTag>      ThisType;
+
+    // copy some indices for convenience
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePTwoCIndices)) Indices;
     enum {
-        numEq       = BoxTraits::numEq,
+        numEq       = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
+
+        // indices of the primary variables
+        konti      		 = Indices::konti,
+        transport        = Indices::transport,
 
         // Grid and world dimension
-        dim          = DomainTraits::dim,
-        dimWorld     = DomainTraits::dimWorld,
-
-        // Choice of primary variables
-        konti      		 = OnePTwoCTraits::konti,
-        transport        = OnePTwoCTraits::transport
+        dim         = GridView::dimension,
+        dimWorld    = GridView::dimensionworld,
     };
 
-    // copy some types from the traits for convenience
-    typedef typename DomainTraits::Scalar                     Scalar;
-    typedef typename DomainTraits::Element                    Element;
-    typedef typename DomainTraits::ElementIterator            ElementIterator;
-    typedef typename DomainTraits::ReferenceElement           ReferenceElement;
-    typedef typename DomainTraits::Vertex                     Vertex;
-    typedef typename DomainTraits::VertexIterator             VertexIterator;
-    typedef typename DomainTraits::IntersectionIterator       IntersectionIterator;
-    typedef typename DomainTraits::LocalPosition              LocalPosition;
-    typedef typename DomainTraits::GlobalPosition             GlobalPosition;
+    typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
+    typedef typename SolutionTypes::PrimaryVarVector        PrimaryVarVector;
+    typedef typename SolutionTypes::BoundaryTypeVector      BoundaryTypeVector;
 
-    typedef typename BoxTraits::FVElementGeometry             FVElementGeometry;
-    typedef typename BoxTraits::SpatialFunction               SpatialFunction;
-    typedef typename BoxTraits::SolutionVector                SolutionVector;
-    typedef typename BoxTraits::BoundaryTypeVector            BoundaryTypeVector;
+    typedef typename GridView::template Codim<0>::Entity    Element;
+    typedef typename GridView::template Codim<dim>::Entity  Vertex;
+    typedef typename GridView::IntersectionIterator         IntersectionIterator;
+  
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
 
-    typedef Dune::VtkMultiWriter<typename Grid::LeafGridView> VtkMultiWriter;
+    typedef Dune::FieldVector<Scalar, dim>       LocalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
 
     enum Episode {}; // the type of an episode of the simulation
-    typedef Dune::TimeManager<Episode>                  TimeManager;
+    typedef Dune::TimeManager<Episode>           TimeManager;
+    typedef Dune::VtkMultiWriter<GridView>       VtkMultiWriter;
 
-    typedef typename Model::NewtonMethod                NewtonMethod;
-    typedef OnePTwoCNewtonController<NewtonMethod>      NewtonController;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonMethod))      NewtonMethod;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonController))  NewtonController;
+
+    typedef Dune::InterstitialFluid        Fluid;
+    typedef Dune::TissueSoil<Grid, Scalar> Soil;
 
 public:
     NewTissueTumorProblem(Grid *grid,
@@ -129,6 +150,8 @@ public:
         //innerUpperRight_[0] = 0.0;
         //innerUpperRight_[1] = 0.5;
 
+        gravity_ = 0;
+        //gravity_[dim - 1] = -9.81;
     }
 
     ///////////////////////////////////
@@ -150,13 +173,6 @@ public:
     /*!
      * \brief Called by the TimeManager in order to get a time
      *        integration on the model.
-     *
-     * \note timeStepSize and nextStepSize are references and may
-     *       be modified by the TimeIntegration. On exit of this
-     *       function 'timeStepSize' must contain the step size
-     *       actually used by the time integration for the current
-     *       steo, and 'nextStepSize' must contain the suggested
-     *       step size for the next time step.
      */
     void timeIntegration(Scalar &stepSize, Scalar &nextStepSize)
     {
@@ -190,14 +206,21 @@ public:
     void setTimeStepSize(Scalar dt)
     { return timeManager_.setStepSize(dt); }
 
+    Model &model()
+    {
+        return model_;
+    }
 
-
+    const Model &model() const
+    {
+        return model_;
+    }
 
     //! properties of the liquid phase
     /*! properties of the liquid phase
     */
-    const Phase &phase() const
-    { return phase_; }
+    const Fluid &fluid() const
+    { return fluid_; }
 
 
     //! properties of the soil
@@ -214,10 +237,6 @@ public:
     Soil &soil()
     {  return soil_; }
 
-
-
-
-
     void boundaryTypes(BoundaryTypeVector         &values,
                        const Element              &element,
                        const FVElementGeometry    &fvElemGeom,
@@ -227,8 +246,6 @@ public:
     {
         const GlobalPosition &globalPos
             = element.geometry().corner(scvIdx);
-        //                const LocalPosition &localPos
-        //                    = DomainTraits::referenceElement(element.geometry().type()).position(dim,scvIdx);
 
         if (globalPos[0] > 22 - eps_)
             values = BoundaryConditions::dirichlet;
@@ -239,7 +256,7 @@ public:
     /////////////////////////////
     // DIRICHLET boundaries
     /////////////////////////////
-    void dirichlet(SolutionVector             &values,
+    void dirichlet(PrimaryVarVector           &values,
                    const Element              &element,
                    const FVElementGeometry    &fvElemGeom,
                    const IntersectionIterator &isIt,
@@ -248,8 +265,6 @@ public:
     {
         const GlobalPosition &globalPos
             = element.geometry().corner(scvIdx);
-        //                const LocalPosition &localPos
-        //                    = DomainTraits::referenceElement(element.geometry().type()).position(dim,scvIdx);
 
         initial_(values, globalPos);
     }
@@ -257,7 +272,7 @@ public:
     /////////////////////////////
     // NEUMANN boundaries
     /////////////////////////////
-    void neumann(SolutionVector             &values,
+    void neumann(PrimaryVarVector           &values,
                  const Element              &element,
                  const FVElementGeometry    &fvElemGeom,
                  const IntersectionIterator &isIt,
@@ -266,8 +281,6 @@ public:
     {
         const GlobalPosition &globalPos
             = element.geometry().corner(scvIdx);
-        //                const LocalPosition &localPos
-        //                    = DomainTraits::referenceElement(element.geometry().type()).position(dim,scvIdx);
         values = 0;
 
         //Scalar lambda = (globalPos[1])/height_;
@@ -280,7 +293,7 @@ public:
     /////////////////////////////
     // sources and sinks
     /////////////////////////////
-    void source(SolutionVector          &values,
+    void source(PrimaryVarVector        &values,
                 const Element           &element,
                 const FVElementGeometry &fvElemGeom,
                 int                      scvIdx) const
@@ -299,19 +312,26 @@ public:
     /////////////////////////////
     // INITIAL values
     /////////////////////////////
-    void initial(SolutionVector          &values,
+    void initial(PrimaryVarVector        &values,
                  const Element           &element,
                  const FVElementGeometry &fvElemGeom,
                  int                      scvIdx) const
     {
         const GlobalPosition &globalPos
             = element.geometry().corner(scvIdx);
-        /*                const LocalPosition &localPos
-                          = DomainTraits::referenceElement(element.geometry().type()).position(dim,scvIdx);
-        */
+
         initial_(values, globalPos);
     }
 
+    Scalar temperature() const
+    {
+        return 273.15 + 36.0; // 36°C
+    };
+
+    const GlobalPosition &gravity () const
+    {
+        return gravity_;
+    }
 
     bool simulate()
     {
@@ -322,7 +342,7 @@ public:
 
 private:
     // the internal method for the initial condition
-    void initial_(SolutionVector         &values,
+    void initial_(PrimaryVarVector       &values,
                   const GlobalPosition   &globalPos) const
     {
 
@@ -342,7 +362,6 @@ private:
         resultWriter_.endTimestep();
     }
 
-
     GlobalPosition outerLowerLeft_;
     GlobalPosition outerUpperRight_;
     GlobalPosition innerLowerLeft_;
@@ -350,10 +369,11 @@ private:
     Scalar width_;
     Scalar height_;
     Scalar eps_;
-
+    
+    GlobalPosition  gravity_;
 
     // fluids and material properties
-    Phase		    phase_;
+    Fluid		    fluid_;
     Soil            soil_;
 
     TimeManager     timeManager_;

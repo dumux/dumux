@@ -16,6 +16,6 @@ test_decoupled2p2c_SOURCES = test_decoupled2p2c.cc
 
 test_multiphysics2p2c_SOURCES = test_multiphysics2p2c.cc
 
-AM_LDFLAGS = @AM_LDFLAGS@ $(LOCAL_LIBS)
+#AM_LDFLAGS = @AM_LDFLAGS@ $(LOCAL_LIBS)
 
 include $(top_srcdir)/am/global-rules
