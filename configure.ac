@@ -87,7 +87,6 @@ AC_CONFIG_FILES([Makefile
     dumux/diffusion/fv/Makefile 
     dumux/diffusion/fe/Makefile 
     dumux/diffusion/mimetic/Makefile 
-    dumux/diffusion/mpfa/Makefile
     dumux/diffusion/problems/Makefile 
     dumux/fractionalflow/impes/Makefile 
     dumux/fractionalflow/Makefile 

@@ -1,6 +1,4 @@
 fvdir = $(includedir)/dune/dumux/transport/fv
-fv_HEADERS = capillarydiffusion.hh decoupled2p2c.hh diffusivepart.hh efendiev_dispersion.hh \
-	fvsplittedtransport.hh fvtransport.hh \
-	numericalflux.hh
+fv_HEADERS =  $(shell ls -1 *.hh)
 
 include $(top_srcdir)/am/global-rules
