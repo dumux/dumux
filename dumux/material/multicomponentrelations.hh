@@ -3,7 +3,6 @@
 #ifndef DUNE_MULTICOMPONENTRELATIONS_HH
 #define DUNE_MULTICOMPONENTRELATIONS_HH
 
-#include <dumux/material/solubilityco2.hh>
 #include <dumux/material/phaseproperties/phaseproperties_waterair.hh>
 
 /**
@@ -254,108 +253,6 @@ public:
 
     Liquid_GL& wettingPhase; //!< contains properties of the wetting phase
     Gas_GL& nonwettingPhase; //!< contains properties of the nonwetting phase
-
-
-};
-
-/** \todo Please doc me! */
-
-class CBrineCO2 : public MultiComp
-{
-    SolubilityCO2 solco2;
-
-public:
-    /*! \brief equation for calculating the mass fraction in the nonwetting phase
-     *    \param pressureN non-wetting phase pressure \f$ \left[ Pa \right] \f$
-     *  \param temperature temperature \f$ \left[ K \right] \f$
-     *  \return mass fraction \f$ \left[ kg/kg \right] \f$
-     */
-    double xWN (const double pressureN, const double temperature=283.15)
-    {
-        double result=0.001;
-
-        return(result);
-    }
-
-
-    /*! \brief equation for calculating the mass fraction in the wetting phase
-     *    \param pressureN non-wetting phase pressure \f$ \left[ Pa \right] \f$
-     *  \param temperature temperature \f$ \left[ K \right] \f$
-     *  \return mass fraction \f$ \left[ kg/kg \right] \f$
-     */
-    double xAW (const double pressureN, const double temperature=283.15)
-    {
-        double result;
-        double X_NaCl = 0.1;
-
-        result = solco2.SolCO2inWater(temperature, pressureN, X_NaCl);
-        return result;
-    }
-    /*! \brief solubility of a component (air) in the wetting phase
-     *    \param pressureN non-wetting phase pressure \f$ \left[ Pa \right] \f$
-     *  \param temperature temperature [K]
-     *  \param X_NaCl mass fraction of salt dissolved in the wetting phase
-     *  \return mass fraction of gas in the wetting phase \f$ \left[ kg/kg \right] \f$
-     */
-
-    double xWNmolar (const double pressureN, double temperature=283.15)
-    {
-        return 0;
-    }
-    /*! \brief solubility of a component (air) in the wetting phase
-     *    \param pressureN non-wetting phase pressure \f$ \left[ Pa \right] \f$
-     *  \param temperature temperature [K]
-     *  \return the mass fraction of water in the non-wetting phase \f$ \left[ mol/mol \right] \f$
-     */
-    double xAWmolar (const double pressureN, double temperature=283.15)
-    {
-        return 0;
-    }
-    /** @brief Henry coefficient
-     * \param pressureN non-wetting phase pressure \f$ \left[ Pa \right] \f$
-     * @param temperature Temperature \f$ \left[ K \right] \f$
-     * @return Henry coefficient \f$ \left[ 1/Pa \right] \f$
-     */
-    double henry (double temperature=283.15) const
-    {
-        return 0;
-    }
-    /*! \brief Antoine equation for calculating the vapor pressure
-     *  \param temperature temperature [K]
-     *  \return vapor pressure [Pa]
-     */
-    double vaporPressure (double temperature=283.15) const
-    {
-        return 0;
-    }
-    /*! \brief converts mole fractions into mass fractions
-     *  \param massfrac mole fraction [mol/mol]
-     *  \param phase phase for which a conversion is to be done [-]
-     *  \return mass fraction [kg/kg]
-     */
-    double convertMoleToMassFraction(double massfrac, int phase) const
-    {
-        return 0;
-    }
-
-    /*! \brief converts mass fractions into mole fractions
-     *  \param massfrac mass fraction [kg/kg]
-     *  \param phase phase for which a conversion is to be done [-]
-     *  \return mole fraction [mol/mol]
-     */
-    double convertMassToMoleFraction(double massfrac, int phase) const
-    {
-        return 0;
-    }
-
-
-
-    CBrineCO2(Liquid_GL& wP = *(new Liq_WaterAir),
-              Gas_GL& nwP = *(new Gas_WaterAir))
-        : MultiComp(wP, nwP)
-    {     }
-
-
 };
 
 }
