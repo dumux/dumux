@@ -130,6 +130,12 @@ private:
     LocalJacobian twoPTwoCLocalJacobian_;
 };
 
+/**
+ * \brief Isothermal two-phase two-component model.
+ *
+ * This implements an isothermal two phase two component
+ * model. This class is just a simple wrapper for \ref TwoPTwoCBoxModelBase .
+ */
 template<class TypeTag >
 class TwoPTwoCBoxModel
     : public TwoPTwoCBoxModelBase<TypeTag, TwoPTwoCBoxModel<TypeTag> >

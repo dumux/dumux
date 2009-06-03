@@ -232,7 +232,7 @@ public:
                     if (bcTypePress == BoundaryConditions::dirichlet)
                     {
                         Scalar pressBound = this->diffProblem.dirichletPress(globalPosFace, *eIt, localPosFace);
-                        Scalar pcBound = this->diffProblem.materialLaw().pC(satBound, globalPosFace, *eIt, localPosFace);
+                        Scalar pcBound = this->diffProblem.materialLaw().pC(1-satBound, globalPosFace, *eIt, localPosFace);
 
                         //get potential gradients
                         Scalar potentialW = this->diffProblem.variables().potentialWetting()[globalIdxI][indexInInside];
@@ -244,7 +244,7 @@ public:
                         }
                         else
                         {
-                            lambdaW = this->diffProblem.materialLaw().mobW(satBound,globalPosFace, *eIt, localPosFace);
+                            lambdaW = this->diffProblem.materialLaw().mobW(1-satBound,globalPosFace, *eIt, localPosFace);
                         }
                         if (potentialNW >= 0.)
                         {
@@ -252,7 +252,7 @@ public:
                         }
                         else
                         {
-                            lambdaNW = this->diffProblem.materialLaw().mobN((1-satBound),globalPosFace, *eIt, localPosFace);
+                            lambdaNW = this->diffProblem.materialLaw().mobN((satBound),globalPosFace, *eIt, localPosFace);
                         }
 
                         FieldVector<Scalar,dimWorld> velocity(normalPermeabilityI);

@@ -6,16 +6,16 @@
 namespace Dune
 {
 
-template<class Grid, class Scalar> class ShallowSourceTerms
+template<class GridView, class Scalar> class ShallowSourceTerms
 {
 public:
 
     enum
-    {   dim=Grid::dimension};
+    {   dim=GridView::dimension};
     enum
-    {   dimWorld = Grid::dimensionworld};
+    {   dimWorld = GridView::dimensionworld};
     typedef Dune::FieldVector<Scalar, dim> VelType;
-    typedef typename Grid::Traits::template Codim<0>::Entity Entity;
+    typedef typename GridView::Traits::template Codim<0>::Entity Entity;
 
     virtual VelType operator()(Scalar waterLevelI, Scalar waterLevelJ, VelType nVec,
             Scalar gravity, Scalar bottomElevationI, Scalar bottomElevationJ)

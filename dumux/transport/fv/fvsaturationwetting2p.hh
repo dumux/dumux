@@ -277,22 +277,41 @@ int FVSaturationWetting2P<GridView, Scalar, VC, Problem>::update(const Scalar t,
                 {
                     if (potentialW >= 0)
                     {
-                        timestepFactorOutW += factor;
+                        timestepFactorOut+= factor;
+
+                        if (potentialNW < 0)
+                        {
+                            Scalar lambdaW = this->transProblem.variables().mobilityWetting()[globalIdxI];
+                            Scalar lambdaNW = this->transProblem.variables().mobilityNonWetting()[globalIdxJ];
+                            Scalar krSum = lambdaW * viscosityW + lambdaNW * viscosityNW;
+
+                            //                            std::cout<<(factor/(lambdaNW*potentialNW)*lambdaW*potentialW)<<std::endl;
+                            timestepFactorIn -= factor/(lambdaW*potentialW*krSum*viscosityRatio)*lambdaNW*potentialNW;
+                        }
+
                     }
                     if (potentialW < 0)
                     {
-                        Scalar krSum = this->transProblem.variables().mobilityWetting()[globalIdxJ]*viscosityW+ this->transProblem.variables().mobilityNonWetting()[globalIdxJ]*viscosityNW;
-                        timestepFactorIn -= factor/krSum;
-                    }
-                    if (potentialNW < 0)
-                    {
-                        Scalar factorNW = 0;
-                        if (potentialNW < potentialW)
+                        Scalar lambdaNW = 0;
+                        Scalar lambdaW = this->transProblem.variables().mobilityWetting()[globalIdxJ];
+                        Scalar krSum = 1;
+                        if (potentialNW >= 0)
                         {
-                            factorNW = fabs(factor/potentialW)*potentialNW;
+                            lambdaNW = this->transProblem.variables().mobilityNonWetting()[globalIdxI];
+                            krSum = lambdaW * viscosityW + lambdaNW * viscosityNW;
                         }
-                        Scalar krSum = this->transProblem.variables().mobilityWetting()[globalIdxJ]*viscosityW+ this->transProblem.variables().mobilityNonWetting()[globalIdxJ]*viscosityNW;
-                        timestepFactorIn -= factorNW / krSum;
+                        if (potentialNW < 0)
+                        {
+                            lambdaNW = this->transProblem.variables().mobilityNonWetting()[globalIdxJ];
+                            krSum = lambdaW * viscosityW + lambdaNW * viscosityNW;
+                            timestepFactorIn -= factor/(lambdaW*potentialW*krSum*viscosityRatio)*lambdaNW*potentialNW;
+                        }
+
+                        timestepFactorIn -= factor/(krSum*viscosityRatio);
+                    }
+                    if (isnan(timestepFactorIn) || isinf(timestepFactorIn))
+                    {
+                        timestepFactorIn = 1e-100;
                     }
                 }
             }
@@ -386,25 +405,43 @@ int FVSaturationWetting2P<GridView, Scalar, VC, Problem>::update(const Scalar t,
                     //for time step criterion
                     if (velocityType_ == vw)
                     {
-                        if (potentialW> 0)
+                        if (potentialW >= 0)
                         {
-                            timestepFactorOutW += factor;
+                            timestepFactorOut+= factor;
+
+                            if (potentialNW < 0)
+                            {
+                                Scalar lambdaW = this->transProblem.variables().mobilityWetting()[globalIdxI];
+                                Scalar lambdaNW = this->transProblem.materialLaw().mobN(1-satBound,globalPosFace, *eIt, localPosFace);
+                                Scalar krSum = lambdaW * viscosityW + lambdaNW * viscosityNW;
+
+                                timestepFactorIn -= factor/(lambdaW*potentialW*krSum*viscosityRatio)*lambdaNW*potentialNW;
+                            }
+
                         }
                         if (potentialW < 0)
                         {
-                            Scalar krSum = this->transProblem.materialLaw().mobW(satBound,globalPosFace, *eIt, localPosFace)*viscosityW + this->transProblem.materialLaw().mobN((1-satBound),globalPosFace, *eIt, localPosFace)*viscosityNW;
-                            timestepFactorIn -= factor/krSum;
-                        }
-                        if (potentialNW < 0)
-                        {
-                            Scalar factorNW = 0;
-                            if (potentialNW < potentialW)
+                            Scalar lambdaNW = 0;
+                            Scalar lambdaW = this->transProblem.materialLaw().mobW(satBound,globalPosFace, *eIt, localPosFace);
+                            Scalar krSum = 1;
+                            if (potentialNW >= 0)
                             {
-                                factorNW = fabs(factor/potentialW)*potentialNW;
+                                lambdaNW = this->transProblem.variables().mobilityNonWetting()[globalIdxI];
+                                krSum = lambdaW * viscosityW + lambdaNW * viscosityNW;
+                            }
+                            if (potentialNW < 0)
+                            {
+                                lambdaNW = this->transProblem.materialLaw().mobW(1-satBound, globalPosFace, *eIt, localPosFace);
+                                krSum = lambdaW * viscosityW + lambdaNW * viscosityNW;
+
+                                timestepFactorIn -= factor/(lambdaW*potentialW*krSum*viscosityRatio)*lambdaNW*potentialNW;
                             }
 
-                            Scalar krSum = this->transProblem.materialLaw().mobW(satBound,globalPosFace, *eIt, localPosFace)*viscosityW + this->transProblem.materialLaw().mobN((1-satBound),globalPosFace, *eIt, localPosFace)*viscosityNW;
-                            timestepFactorIn -= factorNW / krSum;
+                            timestepFactorIn -= factor/(krSum*viscosityRatio);
+                        }
+                        if (isnan(timestepFactorIn) || isinf(timestepFactorIn))
+                        {
+                            timestepFactorIn = 1e-100;
                         }
                     }
                 }

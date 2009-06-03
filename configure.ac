@@ -115,6 +115,13 @@ AC_CONFIG_FILES([Makefile
     test/richards/Makefile  
     test/transport/Makefile
     test/tutorial/Makefile
+    appl/benchmarkproblems/Makefile
+    appl/benchmarkproblems/decoupled/Makefile
+    appl/benchmarkproblems/decoupled/2p/Makefile
+    appl/benchmarkproblems/decoupled/2p/buckleyleverett/Makefile
+    appl/benchmarkproblems/decoupled/2p/convectiondiffusion/Makefile
+    appl/benchmarkproblems/decoupled/2p/mcwhorter/Makefile
+    appl/shallowwater/rut/Makefile  
     m4/Makefile
     dune-mux.pc])
 

@@ -1,5 +1,20 @@
 //$Id$
 
+/*****************************************************************************
+* Copyright (C) 2009 by Jochen Fritz                                         *
+* Institute of Hydraulic Engineering                                         *
+* University of Stuttgart, Germany                                           *
+* email: <givenname>.<name>@iws.uni-stuttgart.de                             *
+*                                                                            *
+* This program is free software; you can redistribute it and/or modify       *
+* it under the terms of the GNU General Public License as published by       *
+* the Free Software Foundation; either version 2 of the License, or          *
+* (at your option) any later version, as long as this copyright notice       *
+* is included in its original form.                                          *
+*                                                                            *
+* This program is distributed WITHOUT ANY WARRANTY.                          *
+*****************************************************************************/
+
 #ifndef DECOUPLED2P2CNI_HH
 #define DECOUPLED2P2CNI_HH
 
@@ -139,7 +154,7 @@ public:
     int concentrationUpdate(const RT t, RT& dt, RepresentationType& updateVec);
 
     // must be called at end of the timestep
-    void postupdate(double t, double dt);
+    void postProcessUpdate(double t, double dt);
 
     // graphical output
     void vtkout(const char* name, int k)
@@ -180,7 +195,6 @@ private:
     G& grid;
     int level_;
     const IS& indexset;
-    EM elementmapper;
     double timestep;
 
     // variables for transport equation:
@@ -220,13 +234,13 @@ public:
                     const NumericalFlux<RT>& numFl = *(new Upwind<RT>),
                     const std::string solverName = "BiCGSTAB",
                     const std::string preconditionerName = "SeqILU0" )
-        :    grid(g), level_(lev), indexset(g.levelView(lev).indexSet()), elementmapper( g.levelView(lev).indexSet()),
+        :    grid(g), level_(lev), indexset(g.levelView(lev).indexSet()),
              problem(prob), reconstruct(rec), numFlux(numFl), diffusivePart(diffPart), alphamax(amax),
              A(g.size(lev, 0),g.size(lev, 0), (2*dim+1)*g.size(lev, 0), BCRSMatrix<MB>::random), f(g.size(lev, 0)),
              solverName_(solverName), preconditionerName_(preconditionerName)
     {
         problem.variables.volErr = 0;
-        upd.resize(3*elementmapper.size());
+        upd.resize(3*indexset.size(0));
     };
 
 }; //end class declaration
@@ -247,7 +261,7 @@ void Decoupled2p2cni<G, RT>::initializeMatrix()
     for (Iterator it = grid.template lbegin<0>(level_); it != eendit; ++it)
     {
         // cell index
-        int indexi = elementmapper.map(*it);
+        int indexi = indexset.index(*it);
 
         // initialize row size
         int rowSize = 1;
@@ -264,7 +278,7 @@ void Decoupled2p2cni<G, RT>::initializeMatrix()
     for (Iterator it = grid.template lbegin<0>(level_); it != eendit; ++it)
     {
         // cell index
-        int indexi = elementmapper.map(*it);
+        int indexi = indexset.index(*it);
 
         // add diagonal index
         A.addindex(indexi, indexi);
@@ -276,7 +290,7 @@ void Decoupled2p2cni<G, RT>::initializeMatrix()
             {
                 // access neighbor
                 EntityPointer outside = is.outside();
-                int indexj = elementmapper.map(*outside);
+                int indexj = indexset.index(*outside);
 
                 // add off diagonal index
                 A.addindex(indexi, indexj);
@@ -317,7 +331,7 @@ void Decoupled2p2cni<G, RT>::assemble(bool first, const RT t=0)
             *ReferenceElements<ct,dim>::general(gt).volume(); // cell volume
 
         // cell index
-        int indexi = elementmapper.map(*it);
+        int indexi = indexset.index(*it);
 
         // get absolute permeability
         FieldMatrix<ct,dim,dim> Ki(this->problem.soil.K(global,*it,local));
@@ -381,8 +395,8 @@ void Decoupled2p2cni<G, RT>::assemble(bool first, const RT t=0)
 
             // mass of components inside the cell
             double m1 = problem.variables.totalConcentration[indexi]*volume;
-            double m2 = problem.variables.totalConcentration[indexi+elementmapper.size()]*volume;
-            double h = problem.variables.totalConcentration[indexi+2 * elementmapper.size()] /*+ p * poro * (1 - problem.variables.saturation[indexi])*/;
+            double m2 = problem.variables.totalConcentration[indexi+indexset.size(0)]*volume;
+            double h = problem.variables.totalConcentration[indexi+2 * indexset.size(0)] /*+ p * poro * (1 - problem.variables.saturation[indexi])*/;
             // mass fraction of wetting phase
             double nuw1 = sati / Vw / (sati/Vw + (1-sati)/Vg);
             // actual fluid volume
@@ -390,7 +404,7 @@ void Decoupled2p2cni<G, RT>::assemble(bool first, const RT t=0)
 
             // increments for numerical derivatives
             double inc1 = (fabs(upd[indexi][0])*poro > 1e-8 /Vw) ?  upd[indexi][0]*poro : 1e-8/Vw;
-            double inc2 =(fabs(upd[indexi+elementmapper.size()][0])*poro > 1e-8 / Vg) ?  upd[indexi+elementmapper.size()][0]*poro : 1e-8 / Vg;
+            double inc2 =(fabs(upd[indexi+indexset.size(0)][0])*poro > 1e-8 / Vg) ?  upd[indexi+indexset.size(0)][0]*poro : 1e-8 / Vg;
             inc1 *= volume;
             inc2 *= volume;
             if (m1 + inc1 < 0 || m1 + inc1 > poro * volume / Vw) inc1 = 1e-8 / Vw  * volume;
@@ -426,7 +440,7 @@ void Decoupled2p2cni<G, RT>::assemble(bool first, const RT t=0)
             T_ = T_I +1;
             double inch = problem.liquidPhase.intEnergy(T_I, p, 1. - problem.variables.wet_X1[indexi]) * poro * problem.variables.saturation[indexi] * problem.liquidPhase.density(T_I + 1, p, 1. - problem.variables.wet_X1[indexi])
                 + problem.gasPhase.intEnergy(T_I + 1, p, problem.variables.nonwet_X1[indexi]) * poro * (1 - problem.variables.saturation[indexi]) * problem.gasPhase.density(T_I + 1, p, problem.variables.nonwet_X1[indexi])
-                + problem.soil.heatCap(global, *it, local) * (T_I - 273.15) - problem.variables.totalConcentration[indexi+2 * elementmapper.size()] - h;
+                + problem.soil.heatCap(global, *it, local) * (T_I - 273.15) - problem.variables.totalConcentration[indexi+2 * indexset.size(0)] - h;
             flashCalculation(Z1, p, T_, nuw, dummy1, dummy2);
             dV_dh = ((m1+m2) * (nuw * Vw + (1-nuw) * Vg) - volalt)/ inch;
 
@@ -466,7 +480,7 @@ void Decoupled2p2cni<G, RT>::assemble(bool first, const RT t=0)
             {
                 // acces neighbor
                 EntityPointer outside = is.outside();
-                int indexj = elementmapper.map(*outside);
+                int indexj = indexset.index(*outside);
 
                 // some geometry infos of the neighbor
                 GeometryType nbgt = outside->geometry().type();
@@ -745,7 +759,7 @@ void Decoupled2p2cni<G, RT>::totalVelocity(const RT t=0)
         FieldVector<ct,dimworld> global = it->geometry().global(local);  // cell center in global coordinates
 
         // cell index
-        int indexi = elementmapper.map(*it);
+        int indexi = indexset.index(*it);
 
         // get pressure  in element
         double pressi = this->problem.variables.pressure[indexi];
@@ -794,7 +808,7 @@ void Decoupled2p2cni<G, RT>::totalVelocity(const RT t=0)
             {
                 // access neighbor
                 EntityPointer outside = is.outside();
-                int indexj = elementmapper.map(*outside);
+                int indexj = indexset.index(*outside);
 
                 // get neighbor pressure and permeability
                 double pressj = this->problem.variables.pressure[indexj];
@@ -904,7 +918,7 @@ void Decoupled2p2cni<G,RT>::initialguess()
     Iterator eendit = grid.template lend<0>(level_);
     for (Iterator it = grid.template lbegin<0>(level_); it != eendit; ++it)
     {
-        int indexi = elementmapper.map(*it);
+        int indexi = indexset.index(*it);
 
         // get geometry information of cell
         GeometryType gt = it->geometry().type();
@@ -949,7 +963,7 @@ void Decoupled2p2cni<G,RT>::transportInitial()
     Iterator eendit = grid.template lend<0>(level_);
     for (Iterator it = grid.template lbegin<0>(level_); it != eendit; ++it)
     {
-        int indexi = elementmapper.map(*it);
+        int indexi = indexset.index(*it);
 
         // get geometry information of cell
         GeometryType gt = it->geometry().type();
@@ -986,7 +1000,7 @@ void Decoupled2p2cni<G,RT>::transportInitial()
 
         // initialize cell concentration
         problem.variables.totalConcentration[indexi] = C1_0;
-        problem.variables.totalConcentration[indexi + elementmapper.size()] = C2_0;
+        problem.variables.totalConcentration[indexi + indexset.size(0)] = C2_0;
         problem.variables.saturation[indexi][0] = sat_0;
         problem.variables.density_wet[indexi] = rho_w;
         problem.variables.density_nonwet[indexi] = rho_n;
@@ -994,7 +1008,7 @@ void Decoupled2p2cni<G,RT>::transportInitial()
         // initialize phase enthalpies
         problem.variables.enthalpy_l[indexi][0] = problem.liquidPhase.enthalpy(T_0, p_0, 1. - problem.variables.wet_X1[indexi]);
         problem.variables.enthalpy_g[indexi][0] = problem.gasPhase.enthalpy(T_0, p_0, problem.variables.nonwet_X1[indexi]);
-        problem.variables.totalConcentration[indexi + 2*elementmapper.size()] =
+        problem.variables.totalConcentration[indexi + 2*indexset.size(0)] =
             problem.liquidPhase.intEnergy(T_0, p_0, 1. - problem.variables.wet_X1[indexi]) * poro * sat_0 * rho_w
             + problem.gasPhase.intEnergy(T_0, p_0, problem.variables.nonwet_X1[indexi]) * poro * (1 - sat_0) * rho_n
             + problem.soil.heatCap(global, *it, local) * (T_0 - 273.15);
@@ -1027,7 +1041,7 @@ int Decoupled2p2cni<G,RT>::concentrationUpdate(const RT t, RT& dt, Representatio
         double volume = it->geometry().integrationElement(local) * ReferenceElements<ct,dim>::general(gt).volume(); // cell volume, assume linear map here
 
         // cell index
-        int indexi = elementmapper.map(*it);
+        int indexi = indexset.index(*it);
 
         // get saturation and concentration value at cell center
         double satI = problem.variables.saturation[indexi];
@@ -1086,7 +1100,7 @@ int Decoupled2p2cni<G,RT>::concentrationUpdate(const RT t, RT& dt, Representatio
             {
                 // access neighbor
                 EntityPointer outside = is.outside();
-                int indexj = elementmapper.map(*outside);
+                int indexj = indexset.index(*outside);
 
                 // neighbor geometry informations
                 GeometryType nbgt = outside->geometry().type();
@@ -1255,8 +1269,8 @@ int Decoupled2p2cni<G,RT>::concentrationUpdate(const RT t, RT& dt, Representatio
 
             // add to update vector
             updateVec[indexi] += factorC1;
-            updateVec[elementmapper.size() + indexi] += factorC2;
-            updateVec[2*elementmapper.size() + indexi] += factorH;
+            updateVec[indexset.size(0) + indexi] += factorC2;
+            updateVec[2*indexset.size(0) + indexi] += factorH;
 
             // for time step calculation
             if (factor>=0)
@@ -1270,8 +1284,8 @@ int Decoupled2p2cni<G,RT>::concentrationUpdate(const RT t, RT& dt, Representatio
 
         // get source term
         updateVec[indexi] += problem.q(global, *it, local)[0];
-        updateVec[indexi + elementmapper.size()] += problem.q(global, *it, local)[1];
-        updateVec[indexi + 2*elementmapper.size()] += problem.qh(global, *it, local);
+        updateVec[indexi + indexset.size(0)] += problem.q(global, *it, local)[1];
+        updateVec[indexi + 2*indexset.size(0)] += problem.qh(global, *it, local);
 
         sumfactor = std::max(sumfactor,sumfactor2) / poro;
         sumDiff = std::max(sumDiff,sumDiff2);
@@ -1476,14 +1490,14 @@ void Decoupled2p2cni<G,RT>::satFlash(double sat, double p, double temp, double p
 
 //! Carries out flash calculation and evaluates volumetric error in each cell.
 template<class G, class RT>
-void Decoupled2p2cni<G,RT>::postupdate(double t, double dt)
+void Decoupled2p2cni<G,RT>::postProcessUpdate(double t, double dt)
 {
-    int size = elementmapper.size();
+    int size = indexset.size(0);
     // iterate through leaf grid an evaluate c0 at cell center
     Iterator eendit = grid.template lend<0>(level_);
     for (Iterator it = grid.template lbegin<0>(level_); it != eendit; ++it)
     {
-        int indexi = elementmapper.map(*it);
+        int indexi = indexset.index(*it);
         // get cell geometry informations
         GeometryType gt = it->geometry().type(); //geometry type
         const FieldVector<ct,dim>& local = ReferenceElements<ct,dim>::general(gt).position(0,0); // cell center in reference element

@@ -239,14 +239,12 @@ template<class GridView, class Scalar, class VC, class Problem> void FVPressure2
         // get absolute permeability
         FieldMatrix permeabilityI(this->diffProblem.soil().K(globalPos, *eIt, localPos));
 
-        //compute total mobility
-        Scalar lambdaI, fractionalWI, fractionalNWI;
-
         // get mobilities and fractional flow factors
-        lambdaI = this->diffProblem.variables().mobilityWetting()[globalIdxI] + this->diffProblem.variables().mobilityNonWetting()[globalIdxI];
-        fractionalWI = this->diffProblem.variables().fracFlowFuncWetting()[globalIdxI];
-        fractionalNWI = this->diffProblem.variables().fracFlowFuncNonWetting()[globalIdxI];
-
+        Scalar lambdaWI = this->diffProblem.variables().mobilityWetting()[globalIdxI];
+        Scalar lambdaNWI = this->diffProblem.variables().mobilityNonWetting()[globalIdxI];
+        Scalar lambdaI = lambdaWI+ lambdaNWI;
+        Scalar fractionalWI = this->diffProblem.variables().fracFlowFuncWetting()[globalIdxI];
+        Scalar fractionalNWI = this->diffProblem.variables().fracFlowFuncNonWetting()[globalIdxI];
         Scalar pcI = this->diffProblem.variables().capillaryPressure()[globalIdxI];
 
         IntersectionIterator
@@ -325,13 +323,12 @@ template<class GridView, class Scalar, class VC, class Problem> void FVPressure2
                 // Build vectorized averaged permeability
                 FieldVector<Scalar,dim> permeability = (meanTangentialPermeability += (meanNormalPermeabilityVector *= meanNormalPermeability));
 
-                //compute total mobility
-                Scalar lambdaJ, fractionalWJ, fractionalNWJ;
-
                 // get mobilities and fractional flow factors
-                lambdaJ = this->diffProblem.variables().mobilityWetting()[globalIdxJ] + this->diffProblem.variables().mobilityNonWetting()[globalIdxJ];
-                fractionalWJ = this->diffProblem.variables().fracFlowFuncWetting()[globalIdxJ];
-                fractionalNWJ = this->diffProblem.variables().fracFlowFuncNonWetting()[globalIdxJ];
+                Scalar lambdaWJ = this->diffProblem.variables().mobilityWetting()[globalIdxJ];
+                Scalar lambdaNWJ = this->diffProblem.variables().mobilityNonWetting()[globalIdxJ];
+                Scalar lambdaJ = lambdaWJ + lambdaNWJ;
+                Scalar fractionalWJ = this->diffProblem.variables().fracFlowFuncWetting()[globalIdxJ];
+                Scalar fractionalNWJ = this->diffProblem.variables().fracFlowFuncNonWetting()[globalIdxJ];
 
                 Scalar pcJ = this->diffProblem.variables().capillaryPressure()[globalIdxJ];
 
@@ -350,18 +347,16 @@ template<class GridView, class Scalar, class VC, class Problem> void FVPressure2
                         // calculate capillary pressure gradient
                         FieldVector<Scalar,dim> pCGradient = distVec;
                         pCGradient *= (pcI-pcJ)/(dist*dist);
-                        Scalar lambdaNW = 0.5*(this->diffProblem.variables().mobilityNonWetting()[globalIdxI]+this->diffProblem.variables().mobilityNonWetting()[globalIdxJ]);
 
-                        f_[globalIdxI] -= lambdaNW*faceVol*(permeability*pCGradient);
+                        f_[globalIdxI] -= 0.5 * (lambdaNWI + lambdaNWJ) *faceVol*(permeability*pCGradient);
                     }
                     if (pressureType == pn)
                     {
                         // calculate capillary pressure gradient
                         FieldVector<Scalar,dim> pCGradient = distVec;
                         pCGradient *= (pcI-pcJ)/(dist*dist);
-                        Scalar lambdaW = 0.5*(this->diffProblem.variables().mobilityWetting()[globalIdxI]+this->diffProblem.variables().mobilityWetting()[globalIdxJ]);
 
-                        f_[globalIdxI] += lambdaW*faceVol*(permeability*pCGradient);
+                        f_[globalIdxI] += 0.5* (lambdaWI + lambdaWJ) *faceVol*(permeability*pCGradient);
                     }
                 }
                 else
@@ -391,24 +386,9 @@ template<class GridView, class Scalar, class VC, class Problem> void FVPressure2
                     this->diffProblem.variables().potentialWetting()[globalIdxI][indexInInside] = potentialW;
                     this->diffProblem.variables().potentialNonWetting()[globalIdxI][indexInInside] = potentialNW;
 
-                    Scalar lambdaW, lambdaNW;
-
-                    if (potentialW >= 0.)
-                    {
-                        lambdaW = this->diffProblem.variables().mobilityWetting()[globalIdxI];
-                    }
-                    else
-                    {
-                        lambdaW = this->diffProblem.variables().mobilityWetting()[globalIdxJ];
-                    }
-                    if (potentialNW >= 0.)
-                    {
-                        lambdaNW = this->diffProblem.variables().mobilityNonWetting()[globalIdxI];
-                    }
-                    else
-                    {
-                        lambdaNW = this->diffProblem.variables().mobilityNonWetting()[globalIdxJ];
-                    }
+                    //do the upwinding of the mobility depending on the phase potentials
+                    Scalar lambdaW = (potentialW >= 0.) ? lambdaWI : lambdaWJ;
+                    Scalar lambdaNW = (potentialNW >= 0.) ? lambdaNWI : lambdaNWJ;
 
                     entry = (lambdaW + lambdaNW) * fabs(faceVol * (permeability * distVec) / (dist * dist));
                     Scalar rightEntry = (densityW * lambdaW + densityNW * lambdaNW) * faceVol * (permeability * gravity);
@@ -419,7 +399,7 @@ template<class GridView, class Scalar, class VC, class Problem> void FVPressure2
                         FieldVector<Scalar,dim> pCGradient = distVec;
                         pCGradient *= (pcI-pcJ)/(dist*dist);
 
-                        rightEntry += (lambdaW + lambdaNW) * 0.5 * (fractionalNWI + fractionalNWJ)*faceVol*(permeability*pCGradient);
+                        rightEntry += 0.5 * (lambdaNWI + lambdaNWJ)*faceVol*(permeability*pCGradient);
                     }
                     if (pressureType == pn)
                     {
@@ -427,7 +407,7 @@ template<class GridView, class Scalar, class VC, class Problem> void FVPressure2
                         FieldVector<Scalar,dim> pCGradient = distVec;
                         pCGradient *= (pcI-pcJ)/(dist*dist);
 
-                        rightEntry -= (lambdaW + lambdaNW) * 0.5*(fractionalWI + fractionalWJ) *faceVol*(permeability*pCGradient);
+                        rightEntry -= 0.5*(lambdaWI + lambdaWJ) *faceVol*(permeability*pCGradient);
                     }
 
                     f_[globalIdxI] -= rightEntry;
@@ -467,13 +447,22 @@ template<class GridView, class Scalar, class VC, class Problem> void FVPressure2
 
                     Scalar pressBound = this->diffProblem.dirichletPress(globalPosFace, *eIt, localPosFace);
                     Scalar pcBound = 0;
+                    Scalar lambdaWBound = 0;
+                    Scalar lambdaNWBound = 0;
+
                     if (saturationType == Sw)
                     {
                         pcBound = this->diffProblem.materialLaw().pC(satBound, globalPosFace, *eIt, localPosFace);
+                        std::vector<Scalar> mobilityBound = this->diffProblem.materialLaw().mob(satBound,globalPosFace, *eIt, localPosFace);
+                        lambdaWBound = mobilityBound[0];
+                        lambdaNWBound = mobilityBound[1];
                     }
                     if (saturationType == Sn)
                     {
                         pcBound = this->diffProblem.materialLaw().pC(1-satBound, globalPosFace, *eIt, localPosFace);
+                        std::vector<Scalar> mobilityBound = this->diffProblem.materialLaw().mob(1-satBound,globalPosFace, *eIt, localPosFace);
+                        lambdaWBound = mobilityBound[0];
+                        lambdaNWBound = mobilityBound[1];
                     }
                     Scalar pcI = this->diffProblem.variables().capillaryPressure()[globalIdxI];
 
@@ -489,18 +478,16 @@ template<class GridView, class Scalar, class VC, class Problem> void FVPressure2
                             // calculate capillary pressure gradient
                             FieldVector<Scalar,dim> pCGradient = distVec;
                             pCGradient *= (pcI-pcBound)/(dist*dist);
-                            Scalar lambdaNW = this->diffProblem.variables().mobilityNonWetting()[globalIdxI];
 
-                            f_[globalIdxI] -= lambdaNW*faceVol*(normalPermeabilityI*pCGradient);
+                            f_[globalIdxI] -= 0.5*(lambdaNWI + lambdaNWBound) *faceVol*(normalPermeabilityI*pCGradient);
                         }
                         if (pressureType == pn)
                         {
                             // calculate capillary pressure gradient
                             FieldVector<Scalar,dim> pCGradient = distVec;
                             pCGradient *= (pcI-pcBound)/(dist*dist);
-                            Scalar lambdaW = this->diffProblem.variables().mobilityWetting()[globalIdxI];
 
-                            f_[globalIdxI] += lambdaW*faceVol*(normalPermeabilityI*pCGradient);
+                            f_[globalIdxI] += 0.5*(lambdaWI + lambdaWBound)*faceVol*(normalPermeabilityI*pCGradient);
                         }
                     }
                     else
@@ -531,38 +518,9 @@ template<class GridView, class Scalar, class VC, class Problem> void FVPressure2
                         this->diffProblem.variables().potentialWetting()[globalIdxI][indexInInside] = potentialW;
                         this->diffProblem.variables().potentialNonWetting()[globalIdxI][indexInInside] = potentialNW;
 
-                        Scalar lambdaW, lambdaNW;
-
-                        if (potentialW >= 0.)
-                        {
-                            lambdaW = this->diffProblem.variables().mobilityWetting()[globalIdxI];
-                        }
-                        else
-                        {
-                            if (saturationType == Sw)
-                            {
-                                lambdaW = this->diffProblem.materialLaw().mobW(satBound,globalPosFace, *eIt, localPosFace);
-                            }
-                            if (saturationType == Sn)
-                            {
-                                lambdaW = this->diffProblem.materialLaw().mobW(1-satBound,globalPosFace, *eIt, localPosFace);
-                            }
-                        }
-                        if (potentialNW >= 0.)
-                        {
-                            lambdaNW = this->diffProblem.variables().mobilityNonWetting()[globalIdxI];
-                        }
-                        else
-                        {
-                            if (saturationType == Sw)
-                            {
-                                lambdaNW = this->diffProblem.materialLaw().mobW(1-satBound,globalPosFace, *eIt, localPosFace);
-                            }
-                            if (saturationType == Sn)
-                            {
-                                lambdaNW = this->diffProblem.materialLaw().mobW(satBound,globalPosFace, *eIt, localPosFace);
-                            }
-                        }
+                        //do the upwinding of the mobility depending on the phase potentials
+                        Scalar lambdaW = (potentialW >= 0.) ? lambdaWI : lambdaWBound;
+                        Scalar lambdaNW = (potentialNW >= 0.) ? lambdaNWI : lambdaNWBound;
 
                         Scalar entry = (lambdaW + lambdaNW) * fabs(faceVol * (normalPermeabilityI * distVec) / (dist * dist));
                         Scalar rightEntry = (densityW * lambdaW + densityNW *lambdaNW) * faceVol * (normalPermeabilityI * gravity);
@@ -573,7 +531,7 @@ template<class GridView, class Scalar, class VC, class Problem> void FVPressure2
                             FieldVector<Scalar,dim> pCGradient = distVec;
                             pCGradient *= (pcI - pcBound)/(dist*dist);
 
-                            rightEntry += lambdaNW * faceVol*(normalPermeabilityI*pCGradient);
+                            rightEntry += 0.5 * (lambdaNWI + lambdaNWBound) * faceVol*(normalPermeabilityI*pCGradient);
                         }
                         if (pressureType == pn)
                         {
@@ -581,7 +539,7 @@ template<class GridView, class Scalar, class VC, class Problem> void FVPressure2
                             FieldVector<Scalar,dim> pCGradient = distVec;
                             pCGradient *= (pcI - pcBound)/(dist*dist);
 
-                            rightEntry -= lambdaW *faceVol*(normalPermeabilityI*pCGradient);
+                            rightEntry -= 0.5 * (lambdaWI + lambdaWBound) *faceVol*(normalPermeabilityI*pCGradient);
 
                         }
 

@@ -62,12 +62,13 @@ public:
         // get geometry type of face
         GeometryType faceGT = isIt->geometryInInside().type();
 
-        // center in face's reference element
-        const Dune::FieldVector<Scalar,dim-1>& faceLocal = ReferenceElements<Scalar,dim-1>::general(faceGT).position(0,0);
-
         //get lambda_bar = lambda_n*f_w
-        Scalar mobBarI=problem_.variables().mobilityWetting()[globalIdxI]*problem_.variables().fracFlowFuncNonWetting()[globalIdxI];
-        Scalar mobBarJ;
+        Scalar mobBarI, mobBarJ;
+
+	if (preComput_)
+            mobBarI=problem_.variables().mobilityWetting()[globalIdxI]*problem_.variables().fracFlowFuncNonWetting()[globalIdxI];
+	else
+	    mobBarI=problem_.materialLaw().mobN(1-satI,globalPos,element,localPos)*problem_.materialLaw().fractionalW(satI,globalPos,element,localPos);
 
         if (isIt->neighbor())
         {
@@ -88,7 +89,10 @@ public:
             permeability *= 0.5;
 
             //get lambda_bar = lambda_n*f_w
-            mobBarJ=problem_.variables().mobilityWetting()[globalIdxJ]*problem_.variables().fracFlowFuncNonWetting()[globalIdxJ];
+	    if(preComput_)
+        	mobBarJ=problem_.variables().mobilityWetting()[globalIdxJ]*problem_.variables().fracFlowFuncNonWetting()[globalIdxJ];
+	    else
+        	mobBarJ=problem_.materialLaw().mobN(1-satJ, globalPosNeighbor, *neighborPointer, localPosNeighbor)*problem_.materialLaw().fractionalW(satJ, globalPosNeighbor, *neighborPointer, localPosNeighbor);
         }
         else
         {
@@ -109,13 +113,14 @@ public:
         return result;
     }
 
-    CapillaryDiffusion (Problem& problem, Matrix2p<Grid, Scalar>& soil)
-    : problem_(problem), soil_(soil), eps_(0.05)
+    CapillaryDiffusion (Problem& problem, Matrix2p<Grid, Scalar>& soil, const bool preComput = true)
+    : problem_(problem), soil_(soil), preComput_(preComput), eps_(0.05)
     {}
 
 private:
     Problem& problem_;
     Matrix2p<Grid, Scalar>& soil_;
+    const bool preComput_;
     Scalar eps_;
 };
 }

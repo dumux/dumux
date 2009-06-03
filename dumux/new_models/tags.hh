@@ -58,11 +58,6 @@ NEW_TYPE_TAG(BoxTwoPTwoC, INHERITS_FROM(BoxScheme));
 //! The type tag for the non-isothermal two-phase, two-component problems
 NEW_TYPE_TAG(BoxTwoPTwoCNI, INHERITS_FROM(BoxTwoPTwoC));
 
-//! The type tag for problems discretized using the isothermal
-//! richards model
-NEW_TYPE_TAG(BoxTwoContinua, INHERITS_FROM(BoxScheme));
-
-
 //////////////////////////////////////////////////////////////////
 // Property tags
 //////////////////////////////////////////////////////////////////
@@ -109,7 +104,6 @@ NEW_PROP_TAG(TwoPIndices); //!< Enumerations for the 2p models
 NEW_PROP_TAG(TwoPNIIndices); //!< Enumerations for the non-isothermal 2p models
 NEW_PROP_TAG(TwoPTwoCIndices); //!< Enumerations for the 2p2c models
 NEW_PROP_TAG(TwoPTwoCNIIndices); //!< Enumerations for the 2p2cni models
-NEW_PROP_TAG(TwoContinuaIndices); //!< Enumerations for the double-continuum model
 
 //////////////////////////////////////////////////////////////////
 // Some defaults for very fundamental properties

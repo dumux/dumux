@@ -60,9 +60,9 @@ struct TwoContinuaIndices
     // equation indices inside a continuum
     static const int konti = 0;
     static const int transport = 1;
-    
+
     // indices of the continua
-    static const int bloodCont = 0;	 //!< index of the blood continuum 
+    static const int bloodCont = 0;	 //!< index of the blood continuum
     static const int tissueCont = 1; //!< index of the tissue continuum
 };
 
@@ -72,18 +72,18 @@ struct TwoContinuaIndices
 namespace Properties
 {
 SET_INT_PROP(BoxTwoContinua, NumEq,         4); //!< set the number of equations to 2
-SET_INT_PROP(BoxTwoContinua, NumContinua,   2); //!< The number of phases in the double continuum model is 1
+SET_INT_PROP(BoxTwoContinua, NumContinua,   2); //!< The number of continua is 2
 SET_INT_PROP(BoxTwoContinua, NumPhases,     1); //!< The number of phases in the double continuum model is 1
 SET_INT_PROP(BoxTwoContinua, NumComponents, 2); //!< The number of components in the double continuum model is 2
 
 //! Set the default formulation to pWsN
-SET_INT_PROP(BoxTwoContinua, 
+SET_INT_PROP(BoxTwoContinua,
              Formulation,
              GET_PROP_TYPE(TypeTag,
                            PTAG(TwoContinuaIndices))::pWsN);
 
 //! Use the double continuum local jacobian operator for the double continuum model
-SET_TYPE_PROP(BoxTwoContinua, 
+SET_TYPE_PROP(BoxTwoContinua,
               LocalJacobian,
               TwoContinuaBoxJacobian<TypeTag>);
 

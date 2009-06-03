@@ -44,7 +44,7 @@ class TwoContinuaFluxData
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))   Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    
+
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem))    Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexData)) VertexData;
 
@@ -83,7 +83,7 @@ public:
         outsideSCV = &fvElemGeom.subContVol[j];
 
         for (int cont = 0; cont < numContinua; ++cont) {
-            densityAtIP[cont] = 0;
+            //densityAtIP[cont] = 0;
             viscosityAtIP[cont] = 0;
             pressureGrad[cont] = Scalar(0);
         }
@@ -117,24 +117,19 @@ private:
                 tmp = feGrad;
                 tmp *= elemDat[idx].molefraction[cont];
                 concentrationGrad[cont] += tmp;
-                
-                // fluid density
-                densityAtIP[cont] +=
-                    elemDat[idx].density[cont]*face->shapeValue[idx];
 
-                // fluid viscosity
-                viscosityAtIP[cont] +=
-                    elemDat[idx].viscosity[cont]*face->shapeValue[idx];
-            }
+                // phase viscosity
+                viscosityAtIP[cont] += elemDat[idx].viscosity[cont]*face->shapeValue[idx];
+                }
         }
 
-        for (int cont = 0; cont < numContinua; ++cont) {
+//        for (int cont = 0; cont < numContinua; ++cont) {
             // correct the pressure by the hydrostatic pressure due to
             // gravity
-            tmp = problem.gravity();
-            tmp *= densityAtIP[cont];
-            pressureGrad[cont] -= tmp;
-        }
+//            tmp = problem.gravity();
+//            tmp *= densityAtIP[cont];
+//           pressureGrad[cont] -= tmp;
+//        }
     }
 
     void calculateVelocities_(const Problem &problem,
@@ -144,7 +139,7 @@ private:
         // calculate the permeability tensor. TODO: this should be
         // more flexible
         typedef Dune::FieldMatrix<Scalar, dim, dim> Tensor;
-        
+
         Tensor K;
         GlobalPosition vDarcy;
         for (int cont = 0; cont < numContinua; ++cont) {
@@ -169,7 +164,7 @@ private:
             else
                 continue;
             Dune::harmonicMeanMatrix(K, *Ki, *Kj);
-            
+
             // temporary vector for the Darcy velocity
             K.mv(pressureGrad[cont], vDarcy);  // vDarcy = K * grad p
             vDarcyNormal[cont] = vDarcy*face->normal;
@@ -212,14 +207,14 @@ public:
     Scalar vDarcyNormal[numContinua];
 
     //! densities of the fluid at the integration point
-    Scalar densityAtIP[numContinua];
+    //Scalar densityAtIP[numContinua];
 
     //! viscosity of the fluid at the integration point
     Scalar viscosityAtIP[numContinua];
 
     //! the effective diffusion coefficent in the porous medium
     Scalar diffCoeffPM[numContinua];
-    
+
     //! local index of the upwind vertex for each phase
     int upstreamIdx[numContinua];
     //! local index of the downwind vertex for each phase

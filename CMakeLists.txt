@@ -182,5 +182,4 @@ add_definitions(-DHAVE_CONFIG_H)
 add_subdirectory("dumux")
 
 add_subdirectory("test")
-add_subdirectory("benchmarkproblems")
 ##############

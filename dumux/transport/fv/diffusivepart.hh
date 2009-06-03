@@ -24,7 +24,7 @@ private:
     typedef Dune::FieldVector<Scalar, dim> FieldVector;
 
 public:
-    virtual FieldVector operator() (const Element& element, const int numberInSelf, Scalar satI, Scalar satJ, const FieldVector& satGradient) const
+    virtual FieldVector operator() (const Element& element, const int numberInSelf, Scalar satI, Scalar satJ, const FieldVector& pcGradient) const
     {
         FieldVector trivial(0);
         return trivial;

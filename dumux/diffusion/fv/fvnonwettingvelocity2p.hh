@@ -36,13 +36,13 @@ typedef    typename GridView::Traits::template Codim<0>::Entity Element;
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
 public:
-    FVNonWettingPhaseVelocity2P(GridView& gridView, Problem& problem, std::string pressureType)
-    : FVPressure2P<GridView,Scalar,VC, Problem>(gridView, problem, pressureType)
+    FVNonWettingPhaseVelocity2P(GridView& gridView, Problem& problem, std::string pressureType, std::string satType = "Sw")
+    : FVPressure2P<GridView,Scalar,VC, Problem>(gridView, problem, pressureType, satType)
     {}
 
-    FVNonWettingPhaseVelocity2P(GridView& gridView, Problem& problem, std::string pressureType, std::string solverName,
+    FVNonWettingPhaseVelocity2P(GridView& gridView, Problem& problem, std::string pressureType, std::string satType, std::string solverName,
             std::string preconditionerName)
-    : FVPressure2P<GridView,Scalar,VC, Problem>(gridView, problem, pressureType, solverName, preconditionerName)
+    : FVPressure2P<GridView,Scalar,VC, Problem>(gridView, problem, pressureType, satType, solverName, preconditionerName)
     {}
 
     void calculateVelocity(const Scalar t=0) const
@@ -69,6 +69,7 @@ public:
 
             Scalar pressI = this->diffProblem.variables().pressure()[globalIdxI];
             Scalar pcI = this->diffProblem.variables().capillaryPressure()[globalIdxI];
+            Scalar lambdaNWI = this->diffProblem.variables().mobilityNonWetting()[globalIdxI];
 
             // run through all intersections with neighbors and boundary
             IntersectionIterator
@@ -146,30 +147,13 @@ public:
 
                     Scalar pressJ = this->diffProblem.variables().pressure()[globalIdxJ];
                     Scalar pcJ = this->diffProblem.variables().capillaryPressure()[globalIdxJ];
+                    Scalar lambdaNWJ = this->diffProblem.variables().mobilityNonWetting()[globalIdxJ];
 
                     //determine upwind direction
-                    Scalar potentialW = this->diffProblem.variables().potentialWetting()[globalIdxI][indexInInside];
                     Scalar potentialNW = this->diffProblem.variables().potentialNonWetting()[globalIdxI][indexInInside];
 
-                    Scalar lambdaW, lambdaNW;
-
-                    if (potentialW >= 0.)
-                    {
-                        lambdaW = this->diffProblem.variables().mobilityWetting()[globalIdxI];
-                    }
-                    else
-                    {
-                        lambdaW = this->diffProblem.variables().mobilityWetting()[globalIdxJ];
-                    }
-
-                    if (potentialNW >= 0.)
-                    {
-                        lambdaNW = this->diffProblem.variables().mobilityNonWetting()[globalIdxI];
-                    }
-                    else
-                    {
-                        lambdaNW = this->diffProblem.variables().mobilityNonWetting()[globalIdxJ];
-                    }
+                    //do the upwinding of the mobility depending on the phase potentials
+                    Scalar lambdaNW = (potentialNW >= 0.) ? lambdaNWI : lambdaNWJ;
 
                     FieldVector<Scalar,dimWorld> velocity(permeability);
                     FieldVector<Scalar,dimWorld> gravityTerm(this->gravity);
@@ -180,13 +164,13 @@ public:
 
                     if (this->pressureType == pw)
                     {
-                        velocity *= lambdaW * (pressI - pressJ + pcI - pcJ) / dist;
-                        velocity += (gravityTerm *= (lambdaW * densityNW));
+                        velocity *= lambdaNW * (pressI - pressJ)/dist + 0.5 * (lambdaNWI + lambdaNWJ) * (pcI - pcJ) / dist;
+                        velocity += (gravityTerm *= (lambdaNW * densityNW));
                     }
                     if (this->pressureType == pn)
                     {
-                        velocity *= lambdaW * (pressI - pressJ) / dist;
-                        velocity += (gravityTerm *= (lambdaW * densityNW));
+                        velocity *= lambdaNW * (pressI - pressJ) / dist;
+                        velocity += (gravityTerm *= (lambdaNW * densityNW));
                     }
                     if (this->pressureType == pglobal)
                     {
@@ -215,12 +199,10 @@ public:
                     // compute distance between cell centers
                     Scalar dist = distVec.two_norm();
 
-                    Scalar lambdaW = 0, lambdaNW = 0;
-                    Scalar satBound = 0;
-
                     Scalar residualSatW = this->diffProblem.soil().Sr_w(globalPos, *eIt, localPos);
                     Scalar residualSatNW = this->diffProblem.soil().Sr_n(globalPos, *eIt, localPos);
 
+                    Scalar satBound = 0;
                     if (bcTypeSat == BoundaryConditions::dirichlet)
                     {
                         satBound = this->diffProblem.dirichletSat(globalPosFace, *eIt, localPosFace);
@@ -233,27 +215,14 @@ public:
                     if (bcTypePress == BoundaryConditions::dirichlet)
                     {
                         Scalar pressBound = this->diffProblem.dirichletPress(globalPosFace, *eIt, localPosFace);
-                        Scalar pcBound = this->diffProblem.materialLaw().pC(satBound, globalPosFace, *eIt, localPosFace);
+                        Scalar pcBound = this->diffProblem.materialLaw().pC(1-satBound, globalPosFace, *eIt, localPosFace);
 
-                        Scalar potentialW = this->diffProblem.variables().potentialWetting()[globalIdxI][indexInInside];
+                        Scalar lambdaNWBound = this->diffProblem.materialLaw().mobN(satBound,globalPosFace, *eIt, localPosFace);
+
                         Scalar potentialNW = this->diffProblem.variables().potentialNonWetting()[globalIdxI][indexInInside];
 
-                        if (potentialW >= 0.)
-                        {
-                            lambdaW = this->diffProblem.variables().mobilityWetting()[globalIdxI];
-                        }
-                        else
-                        {
-                            lambdaW = this->diffProblem.materialLaw().mobW(satBound,globalPosFace, *eIt, localPosFace);
-                        }
-                        if (potentialNW >= 0.)
-                        {
-                            lambdaNW = this->diffProblem.variables().mobilityNonWetting()[globalIdxI];
-                        }
-                        else
-                        {
-                            lambdaNW = this->diffProblem.materialLaw().mobN((1-satBound),globalPosFace, *eIt, localPosFace);
-                        }
+                        //do the upwinding of the mobility depending on the phase potentials
+                        Scalar lambdaNW = (potentialNW >= 0.) ? lambdaNWI : lambdaNWBound;
 
                         FieldVector<Scalar,dimWorld> velocity(normalPermeabilityI);
                         FieldVector<Scalar,dimWorld> gravityTerm(this->gravity);
@@ -264,13 +233,13 @@ public:
 
                         if (this->pressureType == pw)
                         {
-                            velocity *= lambdaW * (pressI - pressBound + pcI - pcBound) / dist;
-                            velocity += (gravityTerm *= (lambdaW * densityNW));
+                            velocity *= lambdaNW * (pressI - pressBound)/dist + 0.5 * (lambdaNWI + lambdaNWBound) * (pcI - pcBound) / dist;
+                            velocity += (gravityTerm *= (lambdaNW * densityNW));
                         }
                         if (this->pressureType == pn)
                         {
-                            velocity *= lambdaW * (pressI - pressBound) / dist;
-                            velocity += (gravityTerm *= (lambdaW * densityNW));
+                            velocity *= lambdaNW * (pressI - pressBound) / dist;
+                            velocity += (gravityTerm *= (lambdaNW * densityNW));
                         }
                         if (this->pressureType == pglobal)
                         {
@@ -308,7 +277,7 @@ public:
                 }
             }// end all intersections
         }// end grid traversal
-
+//                printvector(std::cout, this->diffProblem.variables().velocity(), "velocity", "row", 4, 1, 3);
         return;
     }
 };

@@ -1,4 +1,4 @@
-fvdiffusiondir = $(includedir)/dune/dumux/diffusion/fv
-fvdiffusion_HEADERS = *.hh
+fvdir = $(includedir)/dune/dumux/diffusion/fv
+fv_HEADERS = *.hh
 
 include $(top_srcdir)/am/global-rules
