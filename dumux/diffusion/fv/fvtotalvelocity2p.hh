@@ -28,7 +28,7 @@ typedef    typename GridView::Traits::template Codim<0>::Entity Element;
     {   dimWorld = GridView::dimensionworld};
     enum
     {
-        pw = 0, pn = 1, pglobal = 2
+        pw = 0, pn = 1, pglobal = 2, Sw = 0, Sn = 1
     };
 
     typedef Dune::FieldVector<Scalar,dim> LocalPosition;
@@ -70,6 +70,8 @@ public:
 
             Scalar pressI = this->diffProblem.variables().pressure()[globalIdxI];
             Scalar pcI = this->diffProblem.variables().capillaryPressure()[globalIdxI];
+            Scalar lambdaWI = this->diffProblem.variables().mobilityWetting()[globalIdxI];
+            Scalar lambdaNWI = this->diffProblem.variables().mobilityNonWetting()[globalIdxI];
 
             // run through all intersections with neighbors and boundary
             IntersectionIterator
@@ -147,30 +149,16 @@ public:
 
                     Scalar pressJ = this->diffProblem.variables().pressure()[globalIdxJ];
                     Scalar pcJ = this->diffProblem.variables().capillaryPressure()[globalIdxJ];
+                    Scalar lambdaWJ = this->diffProblem.variables().mobilityWetting()[globalIdxJ];
+                    Scalar lambdaNWJ = this->diffProblem.variables().mobilityNonWetting()[globalIdxJ];
 
                     //determine upwind direction
                     Scalar potentialW = this->diffProblem.variables().potentialWetting()[globalIdxI][indexInInside];
                     Scalar potentialNW = this->diffProblem.variables().potentialNonWetting()[globalIdxI][indexInInside];
 
-                    Scalar lambdaW, lambdaNW;
-
-                    if (potentialW >= 0.)
-                    {
-                        lambdaW = this->diffProblem.variables().mobilityWetting()[globalIdxI];
-                    }
-                    else
-                    {
-                        lambdaW = this->diffProblem.variables().mobilityWetting()[globalIdxJ];
-                    }
-
-                    if (potentialNW >= 0.)
-                    {
-                        lambdaNW = this->diffProblem.variables().mobilityNonWetting()[globalIdxI];
-                    }
-                    else
-                    {
-                        lambdaNW = this->diffProblem.variables().mobilityNonWetting()[globalIdxJ];
-                    }
+                    //do the upwinding of the mobility depending on the phase potentials
+                    Scalar lambdaW = (potentialW >= 0.) ? lambdaWI : lambdaWJ;
+                    Scalar lambdaNW = (potentialNW >= 0.) ? lambdaNWI : lambdaNWJ;
 
                     FieldVector<Scalar,dimWorld> velocity(permeability);
                     FieldVector<Scalar,dimWorld> gravityTerm(this->gravity);
@@ -181,12 +169,12 @@ public:
 
                     if (this->pressureType == pw)
                     {
-                        velocity *= ((lambdaW + lambdaNW)* (pressI - pressJ ) + lambdaNW * (pcI - pcJ))/ dist;
+                        velocity *= ((lambdaW + lambdaNW)* (pressI - pressJ ) + 0.5*(lambdaNWI + lambdaNWJ) * (pcI - pcJ))/ dist;
                         velocity += (gravityTerm *= (lambdaW * densityW + lambdaNW * densityNW));
                     }
                     if (this->pressureType == pn)
                     {
-                        velocity *= ((lambdaW + lambdaNW)* (pressI - pressJ ) - lambdaW * (pcI - pcJ))/ dist;
+                        velocity *= ((lambdaW + lambdaNW)* (pressI - pressJ ) - 0.5 * (lambdaWI + lambdaWJ) * (pcI - pcJ))/ dist;
                         velocity += (gravityTerm *= (lambdaW * densityW + lambdaNW * densityNW));
                     }
                     if (this->pressureType == pglobal)
@@ -217,9 +205,8 @@ public:
                     // compute distance between cell centers
                     Scalar dist = distVec.two_norm();
 
-                    Scalar lambdaW = 0, lambdaNW = 0;
-                    Scalar satBound = 0;
 
+                    Scalar satBound = 0;
                     if (bcTypeSat == BoundaryConditions::dirichlet)
                     {
                         satBound = this->diffProblem.dirichletSat(globalPosFace, *eIt, localPosFace);
@@ -232,28 +219,31 @@ public:
                     if (bcTypePress == BoundaryConditions::dirichlet)
                     {
                         Scalar pressBound = this->diffProblem.dirichletPress(globalPosFace, *eIt, localPosFace);
-                        Scalar pcBound = this->diffProblem.materialLaw().pC(1-satBound, globalPosFace, *eIt, localPosFace);
+                        Scalar pcBound = 0;
+                        Scalar lambdaWBound = 0;
+                        Scalar lambdaNWBound = 0;
+                        if (this->saturationType == Sw)
+                        {
+                            pcBound = this->diffProblem.materialLaw().pC(satBound, globalPosFace, *eIt, localPosFace);
+                            std::vector<Scalar> mobilityBound = this->diffProblem.materialLaw().mob(satBound,globalPosFace, *eIt, localPosFace);
+                            lambdaWBound = mobilityBound[0];
+                            lambdaNWBound = mobilityBound[1];
+                        }
+                        if (this->saturationType == Sn)
+                        {
+                            pcBound = this->diffProblem.materialLaw().pC(1-satBound, globalPosFace, *eIt, localPosFace);
+                            std::vector<Scalar> mobilityBound = this->diffProblem.materialLaw().mob(1-satBound,globalPosFace, *eIt, localPosFace);
+                            lambdaWBound = mobilityBound[0];
+                            lambdaNWBound = mobilityBound[1];
+                        }
 
                         //get potential gradients
                         Scalar potentialW = this->diffProblem.variables().potentialWetting()[globalIdxI][indexInInside];
                         Scalar potentialNW = this->diffProblem.variables().potentialNonWetting()[globalIdxI][indexInInside];
 
-                        if (potentialW >= 0.)
-                        {
-                            lambdaW = this->diffProblem.variables().mobilityWetting()[globalIdxI];
-                        }
-                        else
-                        {
-                            lambdaW = this->diffProblem.materialLaw().mobW(1-satBound,globalPosFace, *eIt, localPosFace);
-                        }
-                        if (potentialNW >= 0.)
-                        {
-                            lambdaNW = this->diffProblem.variables().mobilityNonWetting()[globalIdxI];
-                        }
-                        else
-                        {
-                            lambdaNW = this->diffProblem.materialLaw().mobN((satBound),globalPosFace, *eIt, localPosFace);
-                        }
+                        //do the upwinding of the mobility depending on the phase potentials
+                        Scalar lambdaW = (potentialW >= 0.) ? lambdaWI : lambdaWBound;
+                        Scalar lambdaNW = (potentialNW >= 0.) ? lambdaNWI : lambdaNWBound;
 
                         FieldVector<Scalar,dimWorld> velocity(normalPermeabilityI);
                         FieldVector<Scalar,dimWorld> gravityTerm(this->gravity);
@@ -263,12 +253,12 @@ public:
                         }
                         if (this->pressureType == pw)
                         {
-                            velocity *= ((lambdaW + lambdaNW)* (pressI - pressBound ) + lambdaNW * (pcI - pcBound))/ dist;
+                            velocity *= ((lambdaW + lambdaNW)* (pressI - pressBound ) + 0.5 * (lambdaNWI + lambdaNWBound) * (pcI - pcBound))/ dist;
                             velocity += (gravityTerm *= (lambdaW * densityW + lambdaNW * densityNW));
                         }
                         if (this->pressureType == pn)
                         {
-                            velocity *= ((lambdaW + lambdaNW)* (pressI - pressBound ) - lambdaW * (pcI - pcBound))/ dist;
+                            velocity *= ((lambdaW + lambdaNW)* (pressI - pressBound ) - 0.5 * (lambdaWI + lambdaWBound) * (pcI - pcBound))/ dist;
                             velocity += (gravityTerm *= (lambdaW * densityW + lambdaNW * densityNW));
                         }
                         if (this->pressureType == pglobal)
