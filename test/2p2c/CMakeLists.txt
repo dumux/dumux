@@ -4,14 +4,6 @@ add_definitions(-DYASPGRID -DENABLE_ALBERTA -DENABLE_ALUGRID -DENABLE_UG)
 ADD_EXECUTABLE("test_2p2c" test_2p2c.cc)
 TARGET_LINK_LIBRARIES("test_2p2c" ${DumuxLinkLibraries})
 
-# build target for the twophase-twocomponent test problem
-ADD_EXECUTABLE("new_test_2p2c" new_test_2p2c.cc)
-TARGET_LINK_LIBRARIES("new_test_2p2c" ${DumuxLinkLibraries})
-
-# build target for the twophase-twocomponent test problem
-ADD_EXECUTABLE("new_test_blob" new_test_blob.cc)
-TARGET_LINK_LIBRARIES("new_test_blob" ${DumuxLinkLibraries})
-
 # add required libraries and includes to the build flags 
 LINK_DIRECTORIES(${DumuxLinkDirectories})
 INCLUDE_DIRECTORIES(${DumuxIncludeDirectories})

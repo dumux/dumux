@@ -13,8 +13,8 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
-#ifndef DUNE_NEW_RICHARDS_SOIL_HH
-#define DUNE_NEW_RICHARDS_SOIL_HH
+#ifndef DUNE_RICHARDS_SOIL_HH
+#define DUNE_RICHARDS_SOIL_HH
 
 #include <dumux/material/property_baseclasses.hh>
 #include <dumux/material/relperm_pc_law.hh>

@@ -1,5 +1,5 @@
-ADD_EXECUTABLE("new_test_2pni" new_test_2pni.cc)
-TARGET_LINK_LIBRARIES("new_test_2pni" ${DumuxLinkLibraries})
+ADD_EXECUTABLE("test_2pni" test_2pni.cc)
+TARGET_LINK_LIBRARIES("test_2pni" ${DumuxLinkLibraries})
 
 # add required libraries and includes to the build flags 
 LINK_DIRECTORIES(${DumuxLinkDirectories})

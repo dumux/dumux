@@ -1,7 +1,7 @@
-bin_PROGRAMS = new_test_2pni
+bin_PROGRAMS = test_2pni
 
-new_test_2pni_SOURCES = new_test_2pni.cc
-new_test_2pni_CXXFLAGS = $(MPI_CPPFLAGS) 
-new_test_2pni_LDADD = $(MPI_LDFLAGS) 
+test_2pni_SOURCES = test_2pni.cc
+test_2pni_CXXFLAGS = $(MPI_CPPFLAGS) 
+test_2pni_LDADD = $(MPI_LDFLAGS) 
 
 include $(top_srcdir)/am/global-rules

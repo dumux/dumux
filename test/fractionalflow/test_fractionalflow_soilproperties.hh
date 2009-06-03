@@ -27,7 +27,7 @@ public:
     }
     virtual double porosity(const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos) const
     {
-        return 0.3;
+        return 0.2;
     }
 
     virtual double Sr_w(const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos, const double T = 283.15) const
@@ -62,9 +62,6 @@ public:
 
     virtual modelFlag relPermFlag(const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos) const
     {
-        //        if (x[0]<=300)
-        //            return 1;
-        //        else
         return Matrix2p<Grid, Scalar>::brooks_corey;
     }
 
@@ -73,7 +70,7 @@ public:
     {
         for(int i = 0; i < dim; i++)
         {
-            constPermeability[i][i] = 1e-10;
+            constPermeability[i][i] = 1e-7;
         }
     }
 

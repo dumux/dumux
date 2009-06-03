@@ -27,8 +27,8 @@ while True:
         # print the next paragraph
         while True:
             curLine = sys.stdin.readline().strip()
-            match = re.search("\\\\[a-z]*section|\\\\begin\\{", curLine)
-            if match:
+            match = re.search("(\\\\[a-z]*section|\\\\begin\\{Compact)", curLine)
+            if match is not None:
                 print curLine[:match.start()]
                 sys.exit(0)
             print curLine

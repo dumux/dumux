@@ -29,7 +29,7 @@ namespace Dune
 /** \todo Please doc me! */
 
 template<class Grid, class ScalarT>
-class OnePSoil: public Matrix2p<Grid,ScalarT>
+class OnePSoil
 {
 public:
     typedef typename Grid::Traits::template Codim<0>::Entity Element;
@@ -40,11 +40,11 @@ public:
     typedef Dune::FieldVector<CoordScalar,dim>      LocalPosition;
     typedef Dune::FieldVector<CoordScalar,dimWorld> GlobalPosition;
 
-    OnePSoil():Matrix2p<Grid,Scalar>()
+    OnePSoil()
     {
         Kout_ = 0.;
         for(int i = 0; i < dim; i++)
-            Kout_[i][i] = 5e-10;
+            Kout_[i][i] = 1.0e-14;
     }
 
     ~OnePSoil()
@@ -58,50 +58,6 @@ public:
     double porosity(const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
     {
         return 0.4;
-    }
-
-    double Sr_w(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double T) const
-    {
-        return 0.05;
-    }
-
-    double Sr_n(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double T) const
-    {
-        return 0.0;
-    }
-
-    /* ATTENTION: define heat capacity per cubic meter! Be sure, that it corresponds to porosity!
-     * Best thing will be to define heatCap = (specific heatCapacity of material) * density * porosity*/
-    double heatCap(const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
-    {
-        return     790 /* spec. heat cap. of granite */
-            * 2700 /* density of granite */
-            * porosity(x, e, xi);
-    }
-
-    double heatCond(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double sat) const
-    {
-        static const double lWater = 0.6;
-        static const double lGranite = 2.8;
-        double poro = porosity(x, e, xi);
-        double lsat = pow(lGranite, (1-poro)) * pow(lWater, poro);
-        double ldry = pow(lGranite, (1-poro));
-        return ldry + sqrt(sat) * (ldry - lsat);
-    }
-
-    std::vector<double> paramRelPerm(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double T) const
-    {
-        // example for Brooks-Corey parameters
-        std::vector<double> param(2);
-        param[0] = 0; // pCMin
-        param[1] = 1e5; // pCMax
-
-        return param;
-    }
-
-    typename Matrix2p<Grid,Scalar>::modelFlag relPermFlag(const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
-    {
-        return Matrix2p<Grid,Scalar>::linear;
     }
 
 private:

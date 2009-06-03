@@ -58,22 +58,29 @@ public:
     Scalar dirichletSat(const GlobalPosition& globalPos, const Element& element,
                         const LocalPosition& localPos) const {
         if (globalPos[0] < eps_)
-            return 0;
+            return 1;
         // all other boundaries
-        return 1;
+        return 0;
     }
 
     Scalar neumannPress(const GlobalPosition& globalPos, const Element& element,
                         const LocalPosition& localPos) const {
         if (globalPos[0] > Right_ - eps_)
-            return 0;
+            return 3e-7;
+        return 0;
+    }
+
+    Scalar neumannSat(const GlobalPosition& globalPos, const Element& element,
+                        const LocalPosition& localPos, Scalar factor) const {
+        if (globalPos[0] > Right_ - eps_)
+            return factor;
         return 0;
     }
 
     Scalar initSat (const GlobalPosition& globalPos, const Element& element,
                     const LocalPosition& localPos) const
     {
-            return 1.0;
+            return 0.0;
     }
 
 private:

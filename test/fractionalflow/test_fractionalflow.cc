@@ -33,16 +33,16 @@ int main(int argc, char** argv)
         typedef GridType::LevelGridView GridView;
         typedef Dune::FieldVector<GridType::ctype,dim> FieldVector;
 
-        Dune::FieldVector<int,dim> N(4); N[0] = 26;
+        Dune::FieldVector<int,dim> N(4); N[0] = 30;
         FieldVector L(0);
-        FieldVector H(1); H[0] = 2.6;
+        FieldVector H(60); H[0] = 300;
         GridType grid(N,L,H);
 
         grid.globalRefine(0);
         GridView gridView(grid.levelView(0));
 
-        Dune::Water wetmat(1000, 1e-3);
-        Dune::Oil nonwetmat(1000, 1e-3);
+        Dune::Water wetmat;
+        Dune::Oil nonwetmat;
 
         Dune::FractionalFlowTestSoil<GridType, NumberType> soil;
 
@@ -72,10 +72,10 @@ int main(int argc, char** argv)
         IMPESType impes(diffusion, transport, iterFlag, nIter, maxDefect);
 
         double tStart = 0;
-        double tEnd = 1e4;
+        double tEnd = 5e5;
         const char* fileName = "test_fractionalflow";
-        int modulo = 10;
-        double cFLFactor = 0.8;
+        int modulo = 20;
+        double cFLFactor = 0.3;
         Dune::TimeLoop<GridType, IMPESType > timeloop(tStart, tEnd, fileName, modulo, cFLFactor);
 
         Dune::Timer timer;
