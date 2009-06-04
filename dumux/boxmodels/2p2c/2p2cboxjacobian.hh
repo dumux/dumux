@@ -25,9 +25,6 @@
 
 namespace Dune
 {
-///////////////////////////////////////////////////////////////////////////
-// TwoPTwoCBoxJacobian (evaluate the local jacobian for the newton method.)
-///////////////////////////////////////////////////////////////////////////
 /*!
  * \brief 2P-2C specific details needed to approximately calculate
  *        the local jacobian in the BOX scheme.
@@ -740,8 +737,8 @@ protected:
  * \brief The local jacobian operator for the isothermal two-phase,
  *        two-component model.
  *
- * This is basically just a wrapper for TwoPTwoCBoxJacobianBase so
- * that it can be instantiated.
+ * This is basically just a wrapper for \ref TwoPTwoCBoxJacobianBase
+ * so that it can be instantiated.
  */
 template<class TypeTag>
 class TwoPTwoCBoxJacobian : public TwoPTwoCBoxJacobianBase<TypeTag,

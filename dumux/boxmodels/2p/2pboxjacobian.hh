@@ -24,11 +24,11 @@
 
 #include <dumux/boxmodels/boxscheme/boxscheme.hh>
 
-#include <dumux/boxmodels/2p/2pproperties.hh>
+#include "2pproperties.hh"
 
-#include <dumux/boxmodels/2p/2pvertexdata.hh>
-#include <dumux/boxmodels/2p/2pelementdata.hh>
-#include <dumux/boxmodels/2p/2pfluxdata.hh>
+#include "2pvertexdata.hh"
+#include "2pelementdata.hh"
+#include "2pfluxdata.hh"
 
 #include <dune/common/collectivecommunication.hh>
 #include <vector>
@@ -36,12 +36,13 @@
 
 namespace Dune
 {
-///////////////////////////////////////////////////////////////////////////
-// TwoPBoxJacobian (evaluate the local jacobian for the newton method.)
-///////////////////////////////////////////////////////////////////////////
 /*!
- * \brief Calculate the local Jacobian for the two phase model in the
- *        BOX scheme.
+ * \ingroup TwoPBoxModel
+ * \brief Element-wise calculation of the Jacobian matrix for problems
+ *        using the two-phase box model.
+ *
+ * This class is also used for the non-isothermal model, which means
+ * that it uses static polymorphism.
  */
 template<class TypeTag, class Implementation>
 class TwoPBoxJacobianBase : public BoxJacobian<TypeTag, Implementation>
@@ -100,7 +101,7 @@ public:
 
     /*!
      * \brief Evaluate the amount all conservation quantites
-     *        (e.g. phase mass) within a finite volume.
+     *        (e.g. phase mass) within a finite sub-control volume.
      */
     void computeStorage(PrimaryVarVector &result, int scvIdx, bool usePrevSol) const
     {
@@ -126,7 +127,7 @@ public:
     }
 
     /*!
-     * \brief Evaluates the mass flux over a face of a subcontrol
+     * \brief Evaluates the mass flux over a face of a sub-control
      *        volume.
      */
     void computeFlux(PrimaryVarVector &flux, int faceId) const
@@ -143,7 +144,10 @@ public:
 
     /*!
      * \brief Evaluates the advective mass flux of all components over
-     *        a face of a subcontrol volume.
+     *        a face of a subcontrol volume. 
+     *
+     * This method is called by compute flux and is mainly there for
+     * derived models to ease adding equations selectively.
      */
     void computeAdvectiveFlux(PrimaryVarVector &flux,
                               const FluxData &vars) const
@@ -174,9 +178,10 @@ public:
     /*!
      * \brief Adds the diffusive flux to the flux vector over
      *        the face of a sub-control volume.
-     *        Is not needed in two phase model but needs to
-     *        be used in the non-isothermal two-phase model
-     *        to calculate diffusive heat fluxes
+     
+     * It doesn't do anything in two-phase model but is used by the
+     * non-isothermal two-phase models to calculate diffusive heat
+     * fluxes
      */
     void computeDiffusiveFlux(PrimaryVarVector &flux,
                               const FluxData &fluxData) const
@@ -185,12 +190,12 @@ public:
         //flux += 0.0;
     }
 
-
     /*!
      * \brief Calculate the source term of the equation
      */
     void computeSource(PrimaryVarVector &q, int localVertexIdx)
     {
+        // retrieve the source term intrinsic to the problem
         this->problem_.source(q,
                               this->curElement_(),
                               this->curElementGeom_,
@@ -239,9 +244,8 @@ public:
             this->updateElementData_(elemDat, tmpSol, false);
             // get geometry type
 
-            int numLocalVerts = elementIt->template count<dim>();
-            tmpSol.resize(numLocalVerts);
             // Loop over element vertices
+            int numLocalVerts = elementIt->template count<dim>();
             for (int i = 0; i < numLocalVerts; ++i)
             {
                 int globalIdx = this->problem_.vertexIdx(*elementIt, i);
@@ -289,8 +293,9 @@ public:
     }
 
     /*!
-     * \brief Add the mass fraction of air in water to VTK output of
-     *        the current timestep.
+     * \brief Append all quantities of interest which can be derived
+     *        from the solution of the current time step to the VTK
+     *        writer.
      */
     template <class MultiWriter>
     void addVtkFields(MultiWriter &writer, const SolutionFunction &globalSol)
@@ -336,7 +341,8 @@ public:
         writer.addVertexData(Sn, "SN");
         writer.addVertexData(Te, "Te");
     }
-    protected:
+
+protected:
     Implementation *asImp_()
     { return static_cast<Implementation *>(this); }
     const Implementation *asImp_() const

@@ -2,7 +2,7 @@
 # general stuff
 cmake_minimum_required(VERSION 2.6)
 set(ProjectName            "DuMuX")
-set(ProjectVersion         "0.0.1")
+set(ProjectVersion         "1.0")
 set(ProjectMaintainer      "Bernd Flemisch")
 set(ProjectMaintainerEmail "Bernd.Flemisch_at_iws dot uni-stuttgart dot de")
 project(${ProjectName} CXX)
@@ -57,7 +57,7 @@ CHECK_INCLUDE_FILE_CXX("tr1/array" HAVE_TR1_ARRAY)
 
 # -> for TARGET_LINK_LIBRARIES
 set(DumuxLinkLibraries 
-    "dumux" # the DUMUX library. CMake replaces this by the proper file location
+#    "dumux" # the DUMUX library. CMake replaces this by the proper file location
     ${DUNE_grid_LIBRARIES}
     ${DUNE_disc_LIBRARIES}
     ${DUNE_common_LIBRARIES}
@@ -179,7 +179,5 @@ add_definitions(-DHAVE_CONFIG_H)
 ##############
 # tell cmake that we've got a few subdirectories. (that's the
 # directories where the actual programs are)
-add_subdirectory("dumux")
-
 add_subdirectory("test")
 ##############

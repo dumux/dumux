@@ -44,8 +44,21 @@
 namespace Dune
 {
 
+/*!
+ * \defgroup BoxScheme   Box-Scheme
+ */
+/*!
+ * \ingroup BoxScheme
+ * \defgroup BoxProblems Box-Problems
+ */
+/*!
+ * \ingroup BoxScheme
+ * \defgroup BoxModels   Box-Models
+ */
+
 
 /*!
+ * \ingroup BoxScheme
  * \brief The base class for the BOX hybrid finite element/finite volume discretization scheme
  */
 template<class TypeTag, class Implementation>

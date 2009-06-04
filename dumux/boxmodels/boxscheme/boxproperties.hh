@@ -39,6 +39,11 @@ namespace Dune
 {
 namespace Properties
 {
+/*!
+ * \addtogroup BoxScheme
+ */
+// \{
+ 
 //! Set the default for the FVElementGeometry
 SET_PROP(BoxScheme, FVElementGeometry)
 {
@@ -128,6 +133,8 @@ public:
      */
     typedef Dune::P1OperatorAssembler<Grid, Scalar, GridView, GridView, numEq>  JacobianAssembler;
 };
+
+// \}
 
 }
 }

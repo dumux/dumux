@@ -27,6 +27,11 @@
 
 namespace Dune
 {
+/*!
+ * \addtogroup TwoPBoxModel
+ */
+// \{
+
 ////////////////////////////////
 // forward declarations
 ////////////////////////////////
@@ -75,11 +80,17 @@ struct TwoPIndices
     };
 };
 
+// \}
+
 ////////////////////////////////
 // properties
 ////////////////////////////////
 namespace Properties
 {
+/*!
+ * \addtogroup TwoPBoxModel
+ */
+// \{
 SET_INT_PROP(BoxTwoP, NumEq,         2); //!< set the number of equations to 2
 SET_INT_PROP(BoxTwoP, NumPhases,     2); //!< The number of phases in the 2p model is 2
 
@@ -117,6 +128,8 @@ SET_SCALAR_PROP(BoxTwoP,
 
 //! The indices required by the isothermal 2p model
 SET_TYPE_PROP(BoxTwoP, TwoPIndices, TwoPIndices<0>);
+
+// \}
 }
 
 }

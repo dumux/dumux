@@ -48,7 +48,9 @@ int main(int argc, char** argv)
         // initialize MPI, finalize is done automatically on exit
         Dune::MPIHelper::instance(argc, argv);
 
+        ////////////////////////////////////////////////////////////
         // parse the command line arguments
+        ////////////////////////////////////////////////////////////
         if (argc < 3)
             usage(argv[0]);
 
@@ -67,11 +69,14 @@ int main(int argc, char** argv)
             usage(argv[0]);
         }
 
+        // read the initial time step and the end time
         double tEnd, dt;
         std::istringstream(argv[argPos++]) >> tEnd;
         std::istringstream(argv[argPos++]) >> dt;
 
+        ////////////////////////////////////////////////////////////
         // create the grid
+        ////////////////////////////////////////////////////////////
         GlobalPosition lowerLeft(0.0);
         GlobalPosition upperRight;
         Dune::FieldVector<int,dim> res; // cell resolution
@@ -81,11 +86,7 @@ int main(int argc, char** argv)
         res[1]        = 16;
 
 #if USE_UG
-        ////////////////////////////////////////////////////////////
-        // Make a uniform grid
-        ////////////////////////////////////////////////////////////
         Grid grid;
-
         Dune::GridFactory<Grid> factory(&grid);
         for (int i=0; i<=res[0]; i++) {
             for (int j=0; j<=res[1]; j++) {
@@ -109,6 +110,7 @@ int main(int argc, char** argv)
 
         factory.createGrid();
 #else
+        // Yasp grid
         Grid grid(
 #ifdef HAVE_MPI
                   Dune::MPIHelper::getCommunicator(),
@@ -122,6 +124,8 @@ int main(int argc, char** argv)
         ////////////////////////////////////////////////////////////
         // instantiate and run the concrete problem
         ////////////////////////////////////////////////////////////
+
+        // specify dimensions of the low-permeable lens
         GlobalPosition lowerLeftLens, upperRightLens;
         lowerLeftLens[0] = 1.0;
         lowerLeftLens[1] = 2.0;
@@ -136,6 +140,7 @@ int main(int argc, char** argv)
         if (restart)
             problem.deserialize(restartTime);
 
+        // run the simulation
         if (!problem.simulate())
             return 2;
 

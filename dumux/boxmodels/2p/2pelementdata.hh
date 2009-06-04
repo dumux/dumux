@@ -28,6 +28,7 @@
 namespace Dune
 {
 /*!
+ * \ingroup TwoPBoxModel
  * \brief This template class contains the quantities which are are
  *        constant within a finite element in the two-phase model.
  *

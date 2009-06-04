@@ -29,6 +29,7 @@ namespace Dune
 {
 
 /*!
+ * \ingroup TwoPBoxModel
  * \brief Contains the quantities which are are constant within a
  *        finite volume in the two-phase model.
  */

@@ -18,10 +18,9 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
-/**
- * @file
- * @brief  compute local jacobian matrix for conforming finite elements for diffusion equation
- * @author Peter Bastian
+/*!
+ * \file
+ * \brief Caculates the jacobian of models based on the box scheme element-wise.
  */
 #ifndef DUMUX_BOX_JACOBIAN_HH
 #define DUMUX_BOX_JACOBIAN_HH
@@ -43,42 +42,15 @@
 #endif // HAVE_VALGRIND
 
 
-/**
- * @file
- * @brief  compute local jacobian matrix for conforming finite elements for diffusion equation
- * @author Peter Bastian
- */
-
 namespace Dune
 {
-/** @addtogroup DISC_Disc
+/*!
+ * \ingroup BoxScheme
+ * \brief Element-wise caculation of the jacobian matrix for models
+ *        based on the box scheme .
  *
- * @{
+ * \todo Please doc me more!
  */
-/**
- * @brief compute local jacobian matrix for conforming finite elements for diffusion equation
- *
- */
-
-
-//! A class for computing local jacobian matrices
-/*! A class for computing local jacobian matrix for the
-  diffusion equation
-
-  div j = q; j = -K grad u; in Omega
-
-  u = g on Gamma1; j*n = J on Gamma2.
-
-  Uses conforming finite elements with the Lagrange shape functions.
-  It should work for all dimensions and element types.
-  All the numbering is with respect to the reference element and the
-  Lagrange shape functions
-
-  Template parameters are:
-
-  - Problem        The specification of the problem (grid, boundary conditions, ...)
-  - JacobianImp    The Box model specific part of the Jacobian
-*/
 template<class TypeTag, class Implementation>
 class BoxJacobian : public Dune::LocalStiffness<typename GET_PROP_TYPE(TypeTag, PTAG(GridView)),
                                                 typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)),

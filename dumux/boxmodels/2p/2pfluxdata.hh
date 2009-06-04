@@ -32,6 +32,7 @@ namespace Dune
 {
 
 /*!
+ * \ingroup TwoPBoxModel
  * \brief This template class contains the data which is required to
  *        calculate the fluxes of the fluid phases over a face of a
  *        finite volume for the two-phase model.

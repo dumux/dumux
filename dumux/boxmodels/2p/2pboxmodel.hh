@@ -5,7 +5,8 @@
  *   Department Simulation of Large Systems                                  *
  *   University of Stuttgart, Germany                                        *
  *                                                                           *
- *   Copyright (C) 2008 by Andreas Lauser, Bernd Flemisch                    *
+ *   Copyright (C) 2008-2009 by Andreas Lauser                               *
+ *   Copyright (C) 2007-2007 by Bernd Flemisch                               *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
@@ -21,15 +22,55 @@
 #ifndef DUMUX_TWOP_BOX_MODEL_HH
 #define DUMUX_TWOP_BOX_MODEL_HH
 
-#include <dumux/boxmodels/2p/2pboxjacobian.hh>
+#include "2pboxjacobian.hh"
 
 namespace Dune
 {
+
 /*!
+ * \ingroup BoxProblems
+ * \defgroup TwoPBoxProblems Two-phase box problems
+ */
+
+/*!
+ * \ingroup BoxModels
+ * \defgroup TwoPBoxModel Two-phase box model
+ */
+
+/*!
+ * \ingroup TwoPBoxModel
  * \brief Adaption of the BOX scheme to the twophase flow model.
  *
- * You can pick the formulation by setting the "Formulation"
- * property. The default is pW-Sn.
+ * This model implements two-phase flow of two completely immiscible fluids
+ * \f$\alpha \in \{ w, n \}\f$ using a standard multiphase Darcy
+ * approach as the equation for the conservation of momentum: 
+ \f[
+ \vec{v_\alpha} = - \frac{k_{r\alpha}}{\mu_\alpha} K 
+ \left(\grad p_\alpha - \varrho_{\alpha} \boldsymbol{g} \right)
+ \f]
+ * 
+ * By inserting this into the equation for the conservation of the
+ * phase mass, one gets
+ \f[
+ \phi \frac{\partial \varrho_\alpha S_\alpha}{\partial t} 
+ - 
+ \Div \left\{
+ \varrho_\alpha \frac{k_{r\alpha}}{\mu_\alpha} K \left(\grad p_\alpha - \varrho_{\alpha} \boldsymbol{g} \right)
+ \right\} = q_\alpha \;,
+ \f]
+ * which is discretized by this model using the fully-coupled vertex
+ * centered finite volume (box) scheme as spatial and
+ * the implicit Euler method as time discretization.
+ *
+ * By using constitutive relations for the capillary pressure \f$p_c =
+ * p_n - p_w\f$ and relative permability \f$k_{r\alpha}\f$ and taking
+ * advantage of the fact that \f$S_w + S_n = 1\f$, the number of
+ * unknowns can be reduced to two. Currently the model supports
+ * chosing either \f$p_w\f$ and \f$S_n\f$ or \f$p_n\f$ and \f$S_w\f$
+ * as primary variables. The formulation which ought to be used can be
+ * specified by setting the <tt>Formulation</tt> property to either
+ * either <tt>TwoPIndices::pWsN</tt> or <tt>TwoPIndices::pNsW</tt>. By
+ * default, the model uses \f$p_w\f$ and \f$S_n\f$.
  */
 template<class TypeTag >
 class TwoPBoxModel : public BoxScheme<TypeTag,  TwoPBoxModel<TypeTag> >
@@ -49,8 +90,9 @@ public:
     }
 
     /*!
-     * \brief Add the mass fraction of air in water to VTK output of
-     *        the current timestep.
+     * \brief Append all quantities of interest which can be derived
+     *        from the solution of the current time step to the VTK
+     *        writer.
      */
     template <class MultiWriter>
     void addVtkFields(MultiWriter &writer)
@@ -59,8 +101,8 @@ public:
     }
 
     /*!
-     * \brief Calculate the masses in the system for
-     *        the current timestep.
+     * \brief Calculate the phase masses in the system for the current
+     *        timestep.
      */
     void calculateMass(Dune::FieldVector<Scalar, 2> &mass)
     {
@@ -68,9 +110,8 @@ public:
     }
 
 
-
 private:
-    // calculates the jacobian matrix at a given position
+    // calulated the jacobian matrix of element-wise
     LocalJacobian  twoPLocalJacobian_;
 };
 }

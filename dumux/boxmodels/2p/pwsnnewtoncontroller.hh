@@ -28,6 +28,7 @@
 
 namespace Dune {
 /*!
+ * \ingroup TwoPBoxModel
  * \brief A Pw-Sn specific controller for the newton solver.
  *
  * This controller 'knows' what a 'physically meaningful' solution is
