@@ -114,7 +114,7 @@ public:
     }
 
     CapillaryDiffusion (Problem& problem, Matrix2p<Grid, Scalar>& soil, const bool preComput = true)
-    : problem_(problem), soil_(soil), preComput_(preComput), eps_(0.05)
+    : problem_(problem), soil_(soil), preComput_(preComput), eps_(0.5)
     {}
 
 private:

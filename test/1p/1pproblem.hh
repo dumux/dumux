@@ -54,10 +54,23 @@
 #include "1psoil.hh"
 
 /**
- * \todo please doc me!
+ * @file
+ * @brief  Base class for defining an instance of a single phase isothermal problem
+ * @author Onur Dogan, Andreas Lauser
  */
 namespace Dune
 {
+//! base class that defines the parameters of the single phase flow equation
+/*!
+ * The domain is box shaped. All sides are closed (Neumann 0 boundary) except the top and bottom boundaries,
+ * where air is flowing from bottom to top.
+ *
+ * To run the simulation execute the following line in shell:
+ * ./test_1p ./grids/1p_2d.dgf 4000000 1
+ * where start simulation time = 1 second, end simulation time = 4000000 seconds
+ * The same file can be also used for 3d simulation but you need to change line
+ * "typedef Dune::UGGrid<2> type;" with "typedef Dune::UGGrid<3> type;" and use 1p_3d.dgf grid
+ */
 template <class TypeTag>
 class OnePProblem;
 

@@ -3,8 +3,8 @@
 #ifndef DUNE_GRAVITYPART_HH
 #define DUNE_GRAVITYPART_HH
 
-#include "dumux/transport/fv/diffusivepart.hh"
-#include "dumux/diffusion/diffusionproblem.hh"
+#include "dumux/transport/fv/convectivepart.hh"
+#include "dumux/transport/transportproblem.hh"
 
 //! \ingroup transport
 //! \defgroup diffPart Diffusive transport
@@ -18,103 +18,135 @@ namespace Dune
 /*!\ingroup diffPart
  * @brief  Base class for defining the diffusive part of an advection-diffusion equation
  */
-template<class G, class RT, class VC>
-class GravityPart : public DiffusivePart<G,RT>
+template<class GridView, class Scalar, class VC,
+        class Problem = TransportProblem<GridView, Scalar, VC> >
+class GravityPart: public ConvectivePart<GridView, Scalar>
 {
-    enum{dim = G::dimension};
-    typedef typename G::Traits::template Codim<0>::Entity Entity;
-    typedef typename G::template Codim<0>::EntityPointer EntityPointer;
-    typedef typename G::LevelGridView::IntersectionIterator IntersectionIterator;
-    typedef Dune::FieldVector<RT, dim> FieldVector;
-    typedef BlockVector< Dune::FieldVector<RT,1> > SatType;
+    enum
+    {
+        dim = GridView::dimension, dimWorld = GridView::dimensionworld
+    };
+typedef    typename GridView::Grid Grid;
+    typedef typename GridView::Traits::template Codim<0>::Entity Element;
+    typedef typename GridView::template Codim<0>::EntityPointer ElementPointer;
+    typedef typename GridView::IntersectionIterator IntersectionIterator;
+    typedef Dune::FieldVector<Scalar, dim> FieldVector;
+    typedef Dune::FieldVector<Scalar, dim> LocalPosition;
+    typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
+    typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
 public:
-    virtual FieldVector operator() (const Entity& entity, const int numberInSelf,
-                                    const RT satIntersection, const FieldVector& satGradient, const RT time,
-                                    const RT satI, const RT satJ) const
+    virtual FieldVector operator() (const Element& element, const Scalar satI, const Scalar satJ, const int indexInInside) const
     {
         // cell geometry type
-        GeometryType gt = entity.geometry().type();
+        GeometryType gt = element.geometry().type();
 
         // cell center in reference element
-        const FieldVector& local = ReferenceElements<RT,dim>::general(gt).position(0,0);
+        const LocalPosition& localPos = ReferenceElements<Scalar,dim>::general(gt).position(0,0);
 
         // get global coordinate of cell center
-        FieldVector global = entity.geometry().global(local);
+        const GlobalPosition& globalPos = element.geometry().global(localPos);
 
         // get absolute permeability of cell
-        FieldMatrix<RT,dim,dim> K(problem.K(global,entity,local));
+        FieldMatrix permeability(soil_.K(globalPos,element,localPos));
 
-        IntersectionIterator endis = entity.ilevelend();
-        IntersectionIterator is = entity.ilevelbegin();
-        for (; is != endis; ++is)
+        IntersectionIterator isItEnd = element.ilevelend();
+        IntersectionIterator isIt = element.ilevelbegin();
+        for (; isIt != isItEnd; ++isIt)
         {
-            if(is->indexInInside() == numberInSelf)
-                break;
+            if(isIt->indexInInside() == indexInInside)
+            break;
         }
+        int globalIdxI = problem_.variables().indexTransport(element);
 
         // get geometry type of face
-        GeometryType gtf = is->geometryInInside().type();
+        GeometryType faceGT = isIt->geometryInInside().type();
 
-        // center in face's reference element
-        const Dune::FieldVector<RT,dim-1>& facelocal = ReferenceElements<RT,dim-1>::general(gtf).position(0,0);
-
-        FieldVector unitOuterNormal = is->unitOuterNormal(facelocal);
-        //std::cout<<"unitOuterNormaldiff"<<unitOuterNormal<<std::endl;
-
-        FieldVector nbglobal(-1e100);
-        if (is->neighbor()) {
-            // access neighbor
-            EntityPointer outside = is->outside();
-
-            // compute factor in neighbor
-            GeometryType nbgt = outside->geometry().type();
-            const FieldVector& nblocal = ReferenceElements<RT,dim>::general(nbgt).position(0,0);
-
-            // neighbor cell center in global coordinates
-            nbglobal = outside->geometry().global(nblocal);
-
-            // take arithmetic average of absolute permeability
-            K += problem.K(nbglobal, *outside, nblocal);
-            K *= 0.5;
-        }
-
-        // set result to (rho_w - rho_n)*g
-        FieldVector helpresult = gravity;
-
-        // set result to K*(rho_w - rho_n)*g
-        FieldVector result(0);
-        K.umv(helpresult, result);
+        Scalar potentialW = problem_.variables().potentialWetting()[globalIdxI][indexInInside];
+        Scalar potentialNW = problem_.variables().potentialNonWetting()[globalIdxI][indexInInside];
 
         //get lambda_bar = lambda_n*f_w
-        double mobbarI=constRel.mobN(1-satI)*constRel.fractionalW(satI);
-        double mobbarJ=constRel.mobN(1-satJ)*constRel.fractionalW(satJ);
+        Scalar lambdaWI = 0;
+        Scalar lambdaNWI = 0;
+        Scalar lambdaWJ = 0;
+        Scalar lambdaNWJ = 0;
 
-        // set result to f_w*lambda_n*K*(rho_w - rho_n)*g
-        //result *= (mobbarI+mobbarJ)*0.5;
-        if (global[dim-1] > nbglobal[dim-1])
-            result *= mobbarI;
+        if (preComput_)
+        {
+            lambdaWI=problem_.variables().mobilityWetting()[globalIdxI];
+            lambdaNWI=problem_.variables().mobilityNonWetting()[globalIdxI];
+        }
         else
-            result *= mobbarJ;
+        {
+            std::vector<Scalar> mobilities = problem_.materialLaw().mob(satI,globalPos,element,localPos);
+            lambdaWI = mobilities[0];
+            lambdaNWI = mobilities[1];
+        }
+
+        if (isIt->neighbor())
+        {
+            // access neighbor
+            ElementPointer neighborPointer = isIt->outside();
+
+            int globalIdxJ = problem_.variables().indexTransport(*neighborPointer);
+
+            // compute factor in neighbor
+            GeometryType neighborGT = neighborPointer->geometry().type();
+            const LocalPosition& localPosNeighbor = ReferenceElements<Scalar,dim>::general(neighborGT).position(0,0);
+
+            // neighbor cell center in global coordinates
+            const GlobalPosition& globalPosNeighbor = neighborPointer->geometry().global(localPosNeighbor);
+
+            // take arithmetic average of absolute permeability
+            permeability += soil_.K(globalPosNeighbor, *neighborPointer, localPosNeighbor);
+            permeability *= 0.5;
+
+            //get lambda_bar = lambda_n*f_w
+            if (preComput_)
+            {
+                lambdaWJ=problem_.variables().mobilityWetting()[globalIdxJ];
+                lambdaNWJ=problem_.variables().mobilityNonWetting()[globalIdxJ];
+            }
+            else
+            {
+                std::vector<Scalar> mobilities = problem_.materialLaw().mob(satJ,globalPos,element,localPos);
+                lambdaWJ = mobilities[0];
+                lambdaNWJ = mobilities[1];
+            }
+        }
+        else
+        {
+            std::vector<Scalar> mobilities = problem_.materialLaw().mob(satJ,globalPos,element,localPos);
+            lambdaWJ = mobilities[0];
+            lambdaNWJ = mobilities[1];
+        }
+
+        // set result to K*grad(pc)
+        FieldVector result(0);
+        permeability.umv(gravity_, result);
+
+        Scalar lambdaW = (potentialW >= 0) ? lambdaWI : lambdaWJ;
+        Scalar lambdaNW = (potentialNW >= 0) ? lambdaNWI : lambdaNWJ;
+
+        // set result to f_w*lambda_n*K*grad(pc)
+        result *= lambdaW*lambdaNW/(lambdaW+lambdaNW);
 
         return result;
     }
 
-    GravityPart (DeprecatedDiffusionProblem<G, RT, VC>& prob)
-        : problem(prob), constRel(problem.materialLaw), wettingPhase(constRel.wettingPhase),
-          nonwettingPhase(constRel.nonwettingPhase)
+    GravityPart (Problem& problem, Matrix2p<Grid, Scalar>& soil, const bool preComput = true)
+    : problem_(problem), soil_(soil), preComput_(preComput)
     {
-        double rhoDiff = wettingPhase.density() - nonwettingPhase.density();
-        gravity = problem.gravity();
-        gravity *= -rhoDiff;
+        double rhoDiff = problem.wettingPhase().density() - problem.nonWettingPhase().density();
+        gravity_ = problem.gravity();
+        gravity_ *= rhoDiff;
     }
 
 private:
-    DeprecatedDiffusionProblem<G, RT, VC>& problem;
-    DeprecatedTwoPhaseRelations& constRel;
-    const Medium& wettingPhase;
-    const Medium& nonwettingPhase;
-    FieldVector gravity;
+    Problem& problem_;
+    Matrix2p<Grid, Scalar>& soil_;
+    const bool preComput_;
+    FieldVector gravity_;
 };
 }
 

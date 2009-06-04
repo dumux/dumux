@@ -41,7 +41,7 @@ public:
     {
         Kout_ = 0.;
         for(int i = 0; i < dim; i++)
-            Kout_[i][i] = 5e-10;
+            Kout_[i][i] = 1e-11;
     }
 
     ~RichardsSoil()
@@ -91,7 +91,7 @@ public:
         // example for Brooks-Corey parameters
         std::vector<double> param(2);
         param[0] = 0; // pCMin
-        param[1] = 1e5; // pCMax
+        param[1] = 5.0e+4; // pCMax
 
         return param;
     }

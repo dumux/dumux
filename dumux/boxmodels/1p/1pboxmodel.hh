@@ -23,8 +23,13 @@
 namespace Dune
 {
 /*!
- * \brief Adaption of the BOX scheme to the single phase isothermal
- *        flow model.
+ * \brief Adaption of the BOX scheme to the single phase isothermal flow model.
+ *
+ * Single phase isothermal flow model is implemented for compressible flow.
+ * \f{align*}
+ * \phi \frac{\partial \varrho}{\partial t} + \vec{\nabla} \cdot (- \varrho \frac{\bar{\bar{K}}}{\mu} ( \nabla p -\varrho \vec{g})) = q
+ * \f}
+ * However, the model can also be used for incompressible single pahse flow modeling, when in problem file a fluid with constant density is chosen.
  */
 template<class TypeTag >
 class OnePBoxModel : public BoxScheme<TypeTag,  OnePBoxModel<TypeTag> >
@@ -48,7 +53,7 @@ public:
      *        solution to an ouput writer.
      */
     template <class MultiWriter>
-    void addVtkFields(MultiWriter &writer) 
+    void addVtkFields(MultiWriter &writer)
     {
         onePLocalJacobian_.addVtkFields(writer, this->curSolFunction());
     }

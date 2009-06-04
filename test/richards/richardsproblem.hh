@@ -45,12 +45,23 @@
 
 /**
  * @file
- * @brief  Definition of a problem, where air is injected under a low permeable layer
- * @author Bernd Flemisch, Klaus Mosthaf
+ * @brief  Base class for defining an instance of a Richard`s problem, where water is inflitrating into an initially unsaturated zone.
+ * @author Onur Dogan, Andreas Lauser
  */
 
 namespace Dune
 {
+//! base class that defines the parameters of the Richard`s equation
+/*! An interface for defining parameters of the Richard`s equation:
+ * The domain is box shaped. All sides are closed (Neumann 0 boundary) except the top boundary,
+ * where water is inflitrating into an initially unsaturated zone. Linear capillary pressure-saturation relationship is used.
+ *
+ * To run the simulation execute the following line in shell:
+ * ./new_test_richards ./grids/richards_2d.dgf 400000 1
+ * where start simulation time = 1 second, end simulation time = 400000 seconds
+ * The same file can be also used for 3d simulation but you need to change line
+ * "typedef Dune::UGGrid<2> type;" with "typedef Dune::UGGrid<3> type;" and use richards_3d.dgf grid
+ */
 template <class TypeTag>
 class RichardsProblem;
 
@@ -60,17 +71,13 @@ NEW_TYPE_TAG(RichardsProblem, INHERITS_FROM(BoxRichards));
 
 SET_PROP(RichardsProblem, Grid)
 {
-//    typedef Dune::UGGrid<3> type;
-    typedef Dune::ALUCubeGrid<3,3> type;
+    typedef Dune::UGGrid<2> type;
+//    typedef Dune::ALUCubeGrid<3,3> type;
 };
 
 SET_TYPE_PROP(RichardsProblem, Problem, Dune::RichardsProblem<TTAG(RichardsProblem)>);
 }
 
-
-/*!
- * \todo Please doc me!
- */
 template <class TypeTag = TTAG(RichardsProblem) >
 class RichardsProblem : public BasicDomain<typename GET_PROP_TYPE(TypeTag, PTAG(Grid)),
                                               typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) >
@@ -101,7 +108,7 @@ class RichardsProblem : public BasicDomain<typename GET_PROP_TYPE(TypeTag, PTAG(
     typedef typename GridView::template Codim<0>::Entity    Element;
     typedef typename GridView::template Codim<dim>::Entity  Vertex;
     typedef typename GridView::IntersectionIterator         IntersectionIterator;
-  
+
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
 
     typedef Dune::FieldVector<Scalar, dim>       LocalPosition;
@@ -252,20 +259,14 @@ public:
                        int                         scvIdx,
                        int                         boundaryFaceIdx) const
     {
-        values = Dune::BoundaryConditions::neumann;
-        switch (isIt->boundaryId()) {
-            /*                case 1:
-                              case 2:
-                              case 3:
-                              case 4:
-                              values = Dune::BoundaryConditions::neumann;
-                              break;
-            */
-        case 5:
-        case 6:
-            values = Dune::BoundaryConditions::dirichlet;
-            break;
-        }
+    	double eps = 1.0e-3;
+        const GlobalPosition &globalPos
+            = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
+
+        if (globalPos[dim-1] > 20 - eps)
+            values = BoundaryConditions::dirichlet;
+        else
+            values = BoundaryConditions::neumann;
     }
 
     /////////////////////////////
@@ -278,14 +279,14 @@ public:
                    int                         scvIdx,
                    int                         boundaryFaceIdx) const
     {
-        values[pWIdx] = -1e5;
+    	double eps = 1.0e-3;
+    	const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
 
-        switch (isIt->boundaryId()) {
-        case 5:
-            //            values[pWIdx] = 1.0e+5 - densityW_*gravity_[2]*(height_-x[2]);
-            values[pWIdx] = -1e+4; //- densityW_*gravity_[2]*(height_-x[2]); //-1.0e+6 - densityW_*gravity_[2]*(height_-x[2]);
-            break;
-        }
+         if (globalPos[dim-1] > 20 -eps)
+         {
+        	values[pWIdx] = 1.0e+5*0.99;
+         }
+
     }
 
     /////////////////////////////
@@ -298,19 +299,8 @@ public:
                  int                         scvIdx,
                  int                         boundaryFaceIdx) const
     {
-        values = 0;
-        switch (isIt->boundaryId()) {
-        case 1:
-        case 2:
-        case 3:
-        case 4:
-            values[pWIdx] = 0;
-            break;
-            /*                case 5:
-                              values[pWIdx] = -1.0;
-                              break;
-            */
-        }
+//      const GlobalPosition &globalPos = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
+    	values[pWIdx] = 0;
     }
 
     /////////////////////////////
@@ -334,7 +324,8 @@ public:
                  const FVElementGeometry &fvElemGeom,
                  int                      scvIdx) const
     {
-        values[pWIdx] = -1e+5;// - densityW_*gravity_[2]*(height_-x[2]);
+//        const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
+        values[pWIdx] = 1.0e+5 - 5.0e+4;
     }
 
 
