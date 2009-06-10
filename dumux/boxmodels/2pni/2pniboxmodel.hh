@@ -28,7 +28,8 @@
 #define DUMUX_NEW_2PNI_BOX_MODEL_HH
 
 #include <dumux/boxmodels/2p/2pboxmodel.hh>
-#include <dumux/boxmodels/2pni/2pniboxjacobian.hh>
+#include "2pniboxjacobian.hh"
+#include "2pniboxproblem.hh"
 
 namespace Dune {
 
@@ -52,9 +53,9 @@ namespace Dune {
  * be described as follows:
  * \f{eqnarray*}
  && \phi \frac{\partial (\sum_\alpha \varrho_\alpha S_\alpha )}{\partial t}
- - \sum_\alpha \Div \left\{ \varrho_\alpha
+ - \sum_\alpha \text{div} \left\{ \varrho_\alpha
  \frac{k_{r\alpha}}{\mu_\alpha} \mbox{\bf K}
- (\grad p_\alpha - \varrho_{\alpha} \mbox{\bf g}) \right\}
+ (\text{grad} p_\alpha - \varrho_{\alpha} \mbox{\bf g}) \right\}
  - \sum_\alpha q_\alpha^\kappa = \quad 0 \qquad \alpha \in \{w, n\}
  * 	\f}
  * For the energy balance local thermal equilibrium is assumed which results in one
@@ -62,10 +63,10 @@ namespace Dune {
  * \f{eqnarray*}
  && \phi \frac{\partial \left( \sum_\alpha \varrho_\alpha u_\alpha S_\alpha \right)}{\partial t}
  + \left( 1 - \phi \right) \frac{\partial (\varrho_s c_s T)}{\partial t}
- - \sum_\alpha \Div \left\{ \varrho_\alpha h_\alpha
- \frac{k_{r\alpha}}{\mu_\alpha} \mathbf{K} \left( \grad \: p_\alpha
+ - \sum_\alpha \text{div} \left\{ \varrho_\alpha h_\alpha
+ \frac{k_{r\alpha}}{\mu_\alpha} \mathbf{K} \left( \text{grad} \: p_\alpha
  - \varrho_\alpha \mathbf{g} \right) \right\} \\
-	&-& \Div \left( \lambda_{pm} \grad \: T \right)
+	&-& \text{div} \left( \lambda_{pm} \text{grad} \: T \right)
  - q^h \qquad = \quad 0 \qquad \alpha \in \{w, n\}
  \f}
  *

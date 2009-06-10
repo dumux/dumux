@@ -1,3 +1,4 @@
+//$Id$
 /*****************************************************************************
  *   Copyright (C) 2008 by Klaus Mosthaf, Andreas Lauser, Bernd Flemisch     *
  *   Institute of Hydraulic Engineering                                      *
@@ -12,6 +13,12 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief Defines the properties required for the non-isothermal two-phase,
+ * two-component BOX model.
+ */
 #ifndef DUMUX_2P2CNIPROPERTIES_HH
 #define DUMUX_2P2CNIPROPERTIES_HH
 
@@ -23,6 +30,10 @@
 
 namespace Dune
 {
+/*!
+ * \addtogroup TwoPTwoCNIBoxModel
+ */
+// \{
 ////////////////////////////////
 // forward declarations
 ////////////////////////////////
@@ -44,8 +55,8 @@ class TwoPTwoCNIFluxData;
 /*!
  * \brief Enumerations for the non-isothermal 2-phase 2-component model
  */
-template <int PVOffset = 0>
-class TwoPTwoCNIIndices : public TwoPTwoCIndices<PVOffset>
+template <int formulation, int PVOffset>
+class TwoPTwoCNIIndices : public TwoPTwoCIndices<formulation, PVOffset>
 {
 public:
     static const int temperatureIdx = PVOffset + 2; //! The index for temperature in solution vectors.
@@ -60,7 +71,7 @@ namespace Properties
 SET_INT_PROP(BoxTwoPTwoCNI, NumEq,         3); //!< set the number of equations to 3
 
 //! Use the 2p2cni local jacobian operator for the 2p2cni model
-SET_TYPE_PROP(BoxTwoPTwoCNI, 
+SET_TYPE_PROP(BoxTwoPTwoCNI,
               LocalJacobian,
               TwoPTwoCNIBoxJacobian<TypeTag>);
 
@@ -77,8 +88,14 @@ SET_TYPE_PROP(BoxTwoPTwoCNI, ElementData, TwoPTwoCNIElementData<TypeTag>);
 SET_TYPE_PROP(BoxTwoPTwoCNI, FluxData, TwoPTwoCNIFluxData<TypeTag>);
 
 //! The indices required by the non-isothermal 2p2c model
-SET_TYPE_PROP(BoxTwoPTwoCNI, TwoPTwoCIndices,   TwoPTwoCNIIndices<0>);
-SET_TYPE_PROP(BoxTwoPTwoCNI, TwoPTwoCNIIndices, TwoPTwoCNIIndices<0>);
+SET_PROP(BoxTwoPTwoCNI, TwoPTwoCIndices)
+{
+    typedef TwoPTwoCNIIndices<TwoPTwoCCommonIndices::pWsN, 0> type;
+};
+SET_PROP(BoxTwoPTwoCNI, TwoPTwoCNIIndices)
+{
+    typedef TwoPTwoCNIIndices<TwoPTwoCCommonIndices::pWsN, 0> type;
+};
 
 }
 

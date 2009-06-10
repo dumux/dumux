@@ -114,7 +114,8 @@ AC_CONFIG_FILES([Makefile
     test/properties/Makefile
     test/richards/Makefile  
     test/transport/Makefile
-    test/tutorial/Makefile
+    tutorial/Makefile
+    dumux/material/fluids/Makefile 
     m4/Makefile
     dune-mux.pc])
 

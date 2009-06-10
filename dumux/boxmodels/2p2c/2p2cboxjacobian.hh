@@ -46,7 +46,6 @@ protected:
 
     typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
     typedef typename SolutionTypes::SolutionFunction        SolutionFunction;
-    typedef typename SolutionTypes::SolutionMapper          SolutionMapper;
     typedef typename SolutionTypes::Solution                Solution;
     typedef typename SolutionTypes::SolutionOnElement       SolutionOnElement;
     typedef typename SolutionTypes::PrimaryVarVector        PrimaryVarVector;
@@ -264,11 +263,11 @@ public:
     {
         setSwitched(false);
 
-        VertexIterator it = this->problem_.vertexBegin();
-        VertexIterator endit = this->problem_.vertexEnd();
+        VertexIterator it = this->gridView_.template begin<dim>();
+        const VertexIterator &endit = this->gridView_.template end<dim>();
         for (; it != endit; ++it)
         {
-            int globalIdx = this->problem_.vertexIdx(*it);
+            int globalIdx = this->problem_.model().dofEntityMapper().map(*it);
             const GlobalPosition &globalPos = it->geometry().corner(0);
 
             // initialize phase state
@@ -288,10 +287,11 @@ public:
     {
         bool wasSwitched = false;
 
-        VertexIterator it = this->problem_.vertexBegin();
-        for (; it != this->problem_.vertexEnd(); ++it)
+        VertexIterator it = this->gridView_.template begin<dim>();
+        const VertexIterator &endit = this->gridView_.template end<dim>();
+        for (; it != endit; ++it)
         {
-            int globalIdx = this->problem_.vertexIdx(*it);
+            int globalIdx = this->problem_.model().dofEntityMapper().map(*it);
             const GlobalPosition &global = it->geometry().corner(0);
 
             wasSwitched = primaryVarSwitch_(curGlobalSol,
@@ -313,7 +313,7 @@ public:
      */
     void updateOldPhaseState()
     {
-        int numVertices = this->problem_.numVertices();
+        int numVertices = this->gridView_.size(dim);
         for (int i = 0; i < numVertices; ++i) {
             staticVertexDat_[i].oldPhaseState = staticVertexDat_[i].phaseState;
             staticVertexDat_[i].wasSwitched = false;
@@ -338,7 +338,7 @@ public:
      */
     void resetPhaseState()
     {
-        int numVertices = this->problem_.numVertices();
+        int numVertices = this->gridView_.size(dim);
         for (int i = 0; i < numVertices; ++i)
             staticVertexDat_[i].phaseState = staticVertexDat_[i].oldPhaseState;
     }
@@ -467,8 +467,8 @@ public:
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
 
         // create the required scalar fields
-        unsigned numVertices = this->problem_.numVertices();
-        unsigned numElements = this->problem_.numElements();
+        unsigned numVertices = this->gridView_.size(dim);
+        unsigned numElements = this->gridView_.size(0);
         ScalarField *pW =           writer.template createField<Scalar, 1>(numVertices);
         ScalarField *pN =           writer.template createField<Scalar, 1>(numVertices);
         ScalarField *pC =           writer.template createField<Scalar, 1>(numVertices);
@@ -491,8 +491,8 @@ public:
         SolutionOnElement tmpSol;
         VertexDataArray   elemDat;
 
-        ElementIterator elementIt = this->problem_.elementBegin();
-        ElementIterator endit = this->problem_.elementEnd();
+        ElementIterator elementIt = this->gridView_.template begin<0>();
+        ElementIterator endit = this->gridView_.template end<0>();
 
         for (; elementIt != endit; ++elementIt)
         {
@@ -505,7 +505,7 @@ public:
 
             for (int i = 0; i < numLocalVerts; ++i)
             {
-                int globalIdx = this->problem_.vertexIdx(*elementIt, i);
+                int globalIdx = this->problem_.model().dofEntityMapper().map(*elementIt, i, dim);
 
                 (*pW)[globalIdx] = elemDat[i].pressure[wPhase];
                 (*pN)[globalIdx] = elemDat[i].pressure[nPhase];
@@ -533,7 +533,7 @@ public:
             {
                 elementVelocity[phase] = 0;
 
-                int elementIdx = this->problem_.elementIdx(*elementIt);
+                int elementIdx = this->problem_.model().elementMapper().map(*elementIt);
                 for (int faceIdx = 0; faceIdx< this->curElementGeom_.numEdges; faceIdx++)
                 {
                     velocity[phase] = 0;
@@ -580,7 +580,7 @@ public:
     void deserializeEntity(std::istream &inStream,
                            const Vertex &vert)
     {
-        int vertIdx = this->problem_.vertexIdx(vert);
+        int vertIdx = this->problem_.model().dofEntityMapper().map(vert);
 
         // read phase state
         if (!inStream.good()) {
@@ -601,7 +601,7 @@ public:
     void serializeEntity(std::ostream &outStream,
                          const Vertex &vert)
     {
-        int vertIdx = this->problem_.vertexIdx(vert);
+        int vertIdx = this->problem_.model().dofEntityMapper().map(vert);
 
         if (!outStream.good()) {
             DUNE_THROW(IOError,
@@ -639,7 +639,7 @@ protected:
         vertexData.updateSaturations((*globalSol)[globalIdx], phaseState);
         Scalar pC = this->problem_.materialLaw().pC(vertexData.saturation[wPhase],
                                                     globalPos,
-                                                    * (this->problem_.elementBegin()), // HACK
+                                                    * (this->gridView_.template begin<0>()), // HACK
                                                     localPos,
                                                     temperature);
         vertexData.updatePressures((*globalSol)[globalIdx], pC);

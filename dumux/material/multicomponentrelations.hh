@@ -3,11 +3,11 @@
 #ifndef DUNE_MULTICOMPONENTRELATIONS_HH
 #define DUNE_MULTICOMPONENTRELATIONS_HH
 
-#include <dumux/material/phaseproperties/phaseproperties_waterair.hh>
+#include <dumux/material/fluids/water_air.hh>
 
 /**
  * \ingroup material
- * \defgroup properties
+ * \defgroup properties Material Properties
  * \author Klaus Mosthaf
  */
 
@@ -26,14 +26,14 @@ public:
      *  \param temperature temperature
      *  \return the mass fraction of water in the non-wetting phase \f$ \left[ kg/kg \right] \f$
      */
-    virtual double xWN (const double pressureN, double temperature=283.15) = 0;
+    virtual double xWN (const double pressureN, double temperature=283.15) const = 0;
 
     /*! \brief solubility of a component (air) in the wetting phase
      *  \param pressureN non-wetting phase pressure \f$ \left[ Pa \right] \f$
      *  \param temperature temperature [K]
      *  \return mass fraction of gas in the wetting phase \f$ \left[ kg/kg \right] \f$
      */
-    virtual double xAW (const double pressureN, double temperature=283.15) = 0;
+    virtual double xAW (const double pressureN, double temperature=283.15) const = 0;
 
     /*! \brief solubility of a component (air) in the wetting phase
      *  \param pressureN non-wetting phase pressure \f$ \left[ Pa \right] \f$
@@ -42,14 +42,14 @@ public:
      *  \return mass fraction of gas in the wetting phase \f$ \left[ kg/kg \right] \f$
      */
 
-    virtual double xWNmolar (const double pressureN, double temperature=283.15) = 0;
+    virtual double xWNmolar (const double pressureN, double temperature=283.15) const = 0;
 
     /*! \brief solubility of a component (air) in the wetting phase
      *  \param pressureN non-wetting phase pressure \f$ \left[ Pa \right] \f$
      *  \param temperature temperature [K]
      *  \return the mass fraction of water in the non-wetting phase \f$ \left[ mol/mol \right] \f$
      */
-    virtual double xAWmolar (const double pressureN, double temperature=283.15) = 0;
+    virtual double xAWmolar (const double pressureN, double temperature=283.15) const = 0;
 
     /** @brief Henry coefficient
      * \param pressureN non-wetting phase pressure \f$ \left[ Pa \right] \f$
@@ -98,7 +98,7 @@ public:
      *  \param temperature temperature \f$ \left[ K \right] \f$
      *  \return mass fraction \f$ \left[ kg/kg \right] \f$
      */
-    double xWN (const double pressureN, const double temperature=283.15)
+    double xWN (const double pressureN, const double temperature=283.15) const
     {
         double pWSat;
         double result;
@@ -117,7 +117,7 @@ public:
      *  \param temperature temperature \f$ \left[ K \right] \f$
      *  \return mass fraction \f$ \left[ kg/kg \right] \f$
      */
-    double xAW (const double pressureN, const double temperature=283.15)
+    double xAW (const double pressureN, const double temperature=283.15) const
     {
         double pan;
         double result;
@@ -136,7 +136,7 @@ public:
      *  \param temperature temperature \f$ \left[ K \right] \f$
      *  \return mole fraction \f$ \left[ mol/mol \right] \f$
      */
-    double xWNmolar (const double pressureN, const double temperature=283.15)
+    double xWNmolar (const double pressureN, const double temperature=283.15) const
     {
         double pWSat;
         double result;
@@ -152,7 +152,7 @@ public:
      *  \param temperature temperature \f$ \left[ K \right] \f$
      *  \return mole fraction \f$ \left[ mol/mol \right] \f$
      */
-    double xAWmolar (const double pressureN, const double temperature=283.15)
+    double xAWmolar (const double pressureN, const double temperature=283.15) const
     {
         double pan;
         double result;

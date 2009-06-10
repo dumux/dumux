@@ -3,7 +3,7 @@
 #ifndef DUNE_NEWTONMETHOD_DEPRECATED_HH
 #define DUNE_NEWTONMETHOD_DEPRECATED_HH
 
-#ifdef DUNE_NEWTONMETHOD4_HH
+#ifdef DUNE_NEWTONMETHOD_HH
 # error "Never use the old and the new newton method in one program!"
 #endif
 

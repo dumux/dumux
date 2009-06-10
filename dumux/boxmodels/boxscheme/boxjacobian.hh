@@ -61,9 +61,6 @@ private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem))  Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
-
-    typedef typename Problem::DomainTraits DomainTraits;
-
     typedef BoxJacobian<TypeTag, Implementation> ThisType;
     enum {
         numEq     = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
@@ -91,7 +88,7 @@ private:
     
     typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
     typedef typename SolutionTypes::SolutionFunction        SolutionFunction;
-    typedef typename SolutionTypes::SolutionMapper          SolutionMapper;
+    typedef typename SolutionTypes::DofEntityMapper         DofEntityMapper;
     typedef typename SolutionTypes::Solution                Solution;
     typedef typename SolutionTypes::SolutionOnElement       SolutionOnElement;
     typedef typename SolutionTypes::PrimaryVarVector        PrimaryVarVector;
@@ -364,12 +361,13 @@ public:
     void restrictToElement(SolutionOnElement &dest,
                            const SolutionFunction &globalFn) const
     {
+        const DofEntityMapper &dofMapper = this->problem_.model().dofEntityMapper();
         // we assert that the i-th shape function is
         // associated to the i-th vert of the element.
         int n = curElement_().template count<dim>();
         dest.resize(n);
         for (int i = 0; i < n; i++) {
-            dest[i] = (*globalFn)[problem_.vertexIdx(curElement_(), i)];
+            dest[i] = (*globalFn)[dofMapper.map(curElement_(), i, dim)];
         }
     }
 

@@ -58,7 +58,7 @@ class RichardsBoxJacobian : public BoxJacobian<TypeTag, RichardsBoxJacobian<Type
         dim        = GridView::dimension,
         dimWorld   = GridView::dimensionworld,
 
-        pWIdx      = Indices::pWIdx,
+        pW         = Indices::pW,
     };
 
 
@@ -95,7 +95,7 @@ public:
         const VertexData  &vertDat = elemDat[scvIdx];
 
         // partial time derivative of the wetting phase mass
-        result[pWIdx] =
+        result[pW] =
             vertDat.densityW
             * vertDat.porosity
             * this->prevElemDat_[scvIdx].dSwdpC // TODO: use derivative for the current solution
@@ -119,7 +119,7 @@ public:
         const VertexData &up = this->curElemDat_[vars.upstreamIdx];
         const VertexData &dn = this->curElemDat_[vars.downstreamIdx];
 
-        flux[pWIdx] =
+        flux[pW] =
             vars.vDarcyNormal*
             (  mobilityUpwindAlpha*
                (  up.densityW *
@@ -159,7 +159,7 @@ public:
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
 
         // create the required scalar fields
-        unsigned numVertices = this->problem_.numVertices();
+        unsigned numVertices = this->gridView_.size(dim);
         ScalarField *Sw =           writer.template createField<Scalar, 1>(numVertices);
         ScalarField *Sn =           writer.template createField<Scalar, 1>(numVertices);
         ScalarField *pC =           writer.template createField<Scalar, 1>(numVertices);
@@ -169,8 +169,8 @@ public:
         ScalarField *mobW =         writer.template createField<Scalar, 1>(numVertices);
 
         SolutionOnElement tmpSol;
-        ElementIterator elementIt = this->problem_.elementBegin();
-        ElementIterator endit = this->problem_.elementEnd();
+        ElementIterator elementIt = this->gridView_.template begin<0>();
+        const ElementIterator &endit = this->gridView_.template end<0>();
         for (; elementIt != endit; ++elementIt)
         {
             int numLocalVerts = elementIt->template count<dim>();
@@ -182,7 +182,7 @@ public:
 
             for (int i = 0; i < numLocalVerts; ++i)
             {
-                int globalIdx = this->problem_.vertexIdx(*elementIt, i);
+                int globalIdx = this->problem_.model().vertexMapper().map(*elementIt, i, dim);
 
                 (*Sw)[globalIdx] = this->curElemDat_[i].Sw;
                 (*Sn)[globalIdx] = 1.0 - this->curElemDat_[i].Sw;

@@ -78,7 +78,7 @@ public:
 
         /* pc = pNreference - pw || pc = 0 for computing Sw */
         pNreference = jac.problem().pNreference();
-        pW = sol[I::pWIdx];
+        pW = sol[I::pW];
         if (pW >= pNreference)
             pC = 0.0;
         else

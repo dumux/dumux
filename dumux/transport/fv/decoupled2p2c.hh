@@ -38,11 +38,18 @@
 #include <dune/istl/preconditioners.hh>
 
 // dumux environment
-#include "dumux/transport/transportproblem2p2c.hh"
+#include "dumux/transport/decoupled2p2cproblem.hh"
 #include "dumux/pardiso/pardiso.hh"
 
-// author: Jochen Fritz
-// last change: 02.03.09
+/**
+ *  \ingroup fracflow
+ *  \defgroup decoupled2p2c Decoupled two-phase two-component model
+ */
+
+ /**  \ingroup fracflow
+ *  \defgroup decoupled2p2cproblems Decoupled two-phase two-component problems
+ *
+ */
 
 namespace Dune
 {
@@ -52,17 +59,23 @@ namespace Dune
  *     CLASS DECLARATION                              *
  *                                                    *
  *####################################################*/
-
-//! Implementation of a decoupled formulation of a compressible two phase two component flow process in porous media
-/**
- *  This implementation is written for a liquid-gas system. For the physical description of gas and liquid derivations of the
- *  classes Gas_GL and Liquid_GL have to be provided.
+/*!
+ *  \ingroup decoupled2p2c
+ *
+ *  \brief Implementation of a decoupled formulation of a compressible two phase two component flow process in porous media
+ *
+ *  This implementation is written for a gas-liquid system with two components. An IMPES-like method is used for the sequential solution of the problem.
+ *  Capillary forces and diffusion are neglected. Isothermal conditions and local thermodynamic equilibrium are assumed.
+ *  Gravity is included.
+ *  For the physical description of gas and liquid derivations of the classes Gas_GL and Liquid_GL have to be provided.
  *  The template parameters are the used grid class and the desired number type (usually double)
- *  The pressure equation is given as \f$ -\frac{\partial V}{\partial p}\frac{\partial p}{\partial t}+\sum_{\kappa}\frac{\partial V}{\partial m^{\kappa}}\nabla\cdot\left(\sum_{\alpha}C_{\alpha}^{\kappa}\mathbf{v}_{\alpha}\right)=\sum_{\kappa}\frac{\partial V}{\partial m^{\kappa}}q^{\kappa}\f$
- *  See paper SPE 99619 for derivation.
- *  The transport equation is \f$ \frac{\partial C^\kappa}{\partial t} = - \nabla \cdot \sum{C_\alpha^\kappa f_\alpha {\bf v}} + q^\kappa \f$
+ *  The pressure equation is given as
+ *  \f[ -\frac{\partial V}{\partial p}\frac{\partial p}{\partial t}+\sum_{\kappa}\frac{\partial V}{\partial C^{\kappa}}\nabla\cdot\left(\sum_{\alpha} {\bf v_\alpha} \varrho_\alpha X_\alpha^\kappa \right)=\sum_{\kappa}\frac{\partial V}{\partial m^{\kappa}}q^{\kappa}\f]
+ *  See paper SPE 99619 or "Analysis of a Compositional Model for Fluid Flow in Porous Media" by Chen, Qin and Ewing for derivation.
+ *  The transport equation is
+ *  \f[ \frac{\partial C^\kappa}{\partial t} = - \nabla \cdot \sum{{\bf v_\alpha} \varrho_\alpha X_\alpha^\kappa} + q^\kappa \f]
  */
-template<class Grid, class Scalar>
+template<class GridView, class Scalar>
 class Decoupled2p2c
 {
     template<int dim>
@@ -74,18 +87,17 @@ class Decoupled2p2c
         }
     };
 
-    enum{dim = Grid::dimension};
-    enum{dimworld = Grid::dimensionworld};
+    enum{dim = GridView::dimension};
+    enum{dimworld = GridView::dimensionworld};
 
     // typedefs to abbreviate several dune classes...
-    typedef typename Grid::LevelGridView GV;
-    typedef typename GV::IndexSet IS;
-    typedef typename GV::template Codim<0>::Iterator ElementIterator;
-    typedef typename Grid::template Codim<0>::EntityPointer EntityPointer;
-    typedef typename Grid::LevelGridView::IntersectionIterator IntersectionIterator;
+    typedef typename GridView::IndexSet IS;
+    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
+    typedef typename GridView::template Codim<0>::EntityPointer EntityPointer;
+    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
     // the number type used in the grid class
-    typedef typename Grid::ctype ct;
+    typedef typename GridView::Grid::ctype ct;
 
     // the class used for the stiffness matrix
     typedef FieldMatrix<double,1,1> MB;
@@ -96,7 +108,7 @@ public:
     // vector type in which all cell specific variables are stored
     typedef BlockVector< FieldVector<Scalar,1> > RepresentationType;
 
-    //! initializes the model and computes initial state
+    //! uses initial conditions from the problem definition to computes initial state
     void initial()
     {
         // dinfo is a debug stream
@@ -139,23 +151,25 @@ public:
         dinfo << "timestep restricting cell: " << which << std::endl;
     }
 
-    //! grid level on which the simulation works
-    int level()
-    {
-        return level_;
-    }
-
     //! gives acces to the totalConcentration vector
+    /**
+     *   This is meant as interface to the timestepping scheme.
+     */
     RepresentationType& operator*()
     {
         return problem.variables.totalConcentration;
     }
 
     //! Post processing step must be called at the end of every timestep
+    /**
+     * \param t time level at the end of timestep
+     * \param dt the timestep size
+     */
     void postProcessUpdate(double t, double dt);
 
     // graphical output
     /**
+     * writes a vtk file to <name>-<k>.vtk
      * @param name file name of output
      * @param k number of output file
      */
@@ -167,8 +181,8 @@ public:
     }
 
     //! access to grid object
-    const Grid& grid() const
-    { return grid_; }
+    const typename GridView::Grid& grid() const
+    { return gridview_.grid(); }
 
 private:
     //********************************
@@ -204,14 +218,13 @@ private:
     //********************************
     // private variables declarations
     //********************************
-    Grid& grid_;
-    int level_;
+    GridView& gridview_;
     const IS& indexset;
     double timestep;
     FieldVector<ct,dimworld> gravity; // [m/s^2]
 
     // variables for transport equation:
-    TransportProblem2p2c<Grid, Scalar>& problem;
+    DecoupledProblem2p2c<GridView, Scalar>& problem;
     RepresentationType upd;
 
     // variables for pressure equation:
@@ -223,20 +236,18 @@ private:
 public:
     //! constructor
     /**
-     * @param Grid a dune grid object
-     * @param prob a problem derived from TransportProblem2p2c example see dumux/transport/problems/testproblem_2p2c.hh
-     * @param lev the grid level on which the simulation is supposed to work
+     * @param gridview a DUNE GridView object
+     * @param prob a problem derived from DecoupledProblem2p2c
      * @param solverName choose from "CG", "BiCGSTAB" or "Loop"
      * @param preconditionerName CG and BiCGSTAB solvers work with "SeqILU0", Loop solver works with "SeqPardiso"
      */
     Decoupled2p2c(
-                  Grid& g,
-                  TransportProblem2p2c<Grid, Scalar>& prob,
-                  int lev = 0,
+                  GridView& gv,
+                  DecoupledProblem2p2c<GridView, Scalar>& prob,
                   const std::string solverName = "BiCGSTAB",
                   const std::string preconditionerName = "SeqILU0" )
-        :    grid_(g), level_(lev), indexset(g.levelView(lev).indexSet()), gravity(prob.gravity()), problem(prob),
-             A(g.size(lev, 0),g.size(lev, 0), (2*dim+1)*g.size(lev, 0), BCRSMatrix<MB>::random), f(g.size(lev, 0)),
+        :    gridview_(gv), indexset(gv.indexSet()), gravity(prob.gravity()), problem(prob),
+             A(gv.size(0),gv.size(0), (2*dim+1)*gv.size(0), BCRSMatrix<MB>::random), f(gv.size(0)),
              solverName_(solverName), preconditionerName_(preconditionerName)
     {
         problem.variables.volErr = 0;
@@ -253,12 +264,12 @@ public:
  *                                                    *
  *####################################################*/
 
-template<class Grid, class Scalar>
-void Decoupled2p2c<Grid, Scalar>::initializeMatrix()
+template<class GridView, class Scalar>
+void Decoupled2p2c<GridView, Scalar>::initializeMatrix()
 {
     // determine matrix row sizes
-    ElementIterator eItEnd = grid_.template lend<0>(level_);
-    for (ElementIterator eIt = grid_.template lbegin<0>(level_); eIt != eItEnd; ++eIt)
+    ElementIterator eItEnd = gridview_.template end<0>();
+    for (ElementIterator eIt = gridview_.template begin<0>(); eIt != eItEnd; ++eIt)
     {
         // cell index
         int globalIdxi = indexset.index(*eIt);
@@ -275,7 +286,7 @@ void Decoupled2p2c<Grid, Scalar>::initializeMatrix()
     A.endrowsizes();
 
     // determine position of matrix entries
-    for (ElementIterator eIt = grid_.template lbegin<0>(level_); eIt != eItEnd; ++eIt)
+    for (ElementIterator eIt = gridview_.template begin<0>(); eIt != eItEnd; ++eIt)
     {
         // cell index
         int globalIdxi = indexset.index(*eIt);
@@ -304,14 +315,14 @@ void Decoupled2p2c<Grid, Scalar>::initializeMatrix()
 
 /** for first == true, this function assembles the matrix and right hand side for
  * the solution of the pressure field in the same way as in the class FVDiffusion.
- * for first == false, the approach is changed to \f$ \[-\frac{\partial V}{\partial p}
+ * for first == false, the approach is changed to \f[-\frac{\partial V}{\partial p}
  * \frac{\partial p}{\partial t}+\sum_{\kappa}\frac{\partial V}{\partial m^{\kappa}}\nabla\cdot
  * \left(\sum_{\alpha}C_{\alpha}^{\kappa}\mathbf{v}_{\alpha}\right)
- * =\sum_{\kappa}\frac{\partial V}{\partial m^{\kappa}}q^{\kappa}\] \f$. See Paper SPE 99619.
+ * =\sum_{\kappa}\frac{\partial V}{\partial m^{\kappa}}q^{\kappa} \f]. See Paper SPE 99619.
  * This is done to account for the volume effects which appear when gas and liquid are dissolved iin each other.
  */
-template<class Grid, class Scalar>
-void Decoupled2p2c<Grid, Scalar>::assemble(bool first, const Scalar t=0)
+template<class GridView, class Scalar>
+void Decoupled2p2c<GridView, Scalar>::assemble(bool first, const Scalar t=0)
 {
     // initialization: set matrix A to zero
     A = 0;
@@ -327,8 +338,8 @@ void Decoupled2p2c<Grid, Scalar>::assemble(bool first, const Scalar t=0)
     }
 
     // iterate over all cells
-    ElementIterator eItEnd = grid_.template lend<0>(level_);
-    for (ElementIterator eIt = grid_.template lbegin<0>(level_); eIt != eItEnd; ++eIt)
+    ElementIterator eItEnd = gridview_.template end<0>();
+    for (ElementIterator eIt = gridview_.template begin<0>(); eIt != eItEnd; ++eIt)
     {
         // get geometry infos about the cell...
         GeometryType gt = eIt->geometry().type(); // cell geometry type
@@ -667,8 +678,8 @@ void Decoupled2p2c<Grid, Scalar>::assemble(bool first, const Scalar t=0)
 } // end function assemble
 
 
-template<class Grid, class Scalar>
-void Decoupled2p2c<Grid, Scalar>::solve()
+template<class GridView, class Scalar>
+void Decoupled2p2c<GridView, Scalar>::solve()
 {
     // the class used for the right hand side vector
     typedef FieldVector<double, 1> VB;
@@ -714,12 +725,12 @@ void Decoupled2p2c<Grid, Scalar>::solve()
  *                                                    *
  *####################################################*/
 
-template<class Grid, class Scalar>
-void Decoupled2p2c<Grid,Scalar>::initialguess()
+template<class GridView, class Scalar>
+void Decoupled2p2c<GridView,Scalar>::initialguess()
 {
     // iterate through leaf grid an evaluate c0 at cell center
-    ElementIterator eItEnd = grid_.template lend<0>(level_);
-    for (ElementIterator eIt = grid_.template lbegin<0>(level_); eIt != eItEnd; ++eIt)
+    ElementIterator eItEnd = gridview_.template end<0>();
+    for (ElementIterator eIt = gridview_.template begin<0>(); eIt != eItEnd; ++eIt)
     {
         int globalIdxi = indexset.index(*eIt);
 
@@ -771,12 +782,12 @@ void Decoupled2p2c<Grid,Scalar>::initialguess()
 
 
 
-template<class Grid, class Scalar>
-void Decoupled2p2c<Grid,Scalar>::transportInitial()
+template<class GridView, class Scalar>
+void Decoupled2p2c<GridView,Scalar>::transportInitial()
 {
     // iterate through leaf grid an evaluate c0 at cell center
-    ElementIterator eItEnd = grid_.template lend<0>(level_);
-    for (ElementIterator eIt = grid_.template lbegin<0>(level_); eIt != eItEnd; ++eIt)
+    ElementIterator eItEnd = gridview_.template end<0>();
+    for (ElementIterator eIt = gridview_.template begin<0>(); eIt != eItEnd; ++eIt)
     {
         int globalIdxi = indexset.index(*eIt);
 
@@ -828,8 +839,8 @@ void Decoupled2p2c<Grid,Scalar>::transportInitial()
 } //end function transportInitial
 
 
-template<class Grid, class Scalar>
-int Decoupled2p2c<Grid,Scalar>::concentrationUpdate(const Scalar t, Scalar& dt, RepresentationType& updateVec)
+template<class GridView, class Scalar>
+int Decoupled2p2c<GridView,Scalar>::concentrationUpdate(const Scalar t, Scalar& dt, RepresentationType& updateVec)
 {
     // initialize timestep dt very large
     dt = 1E100;
@@ -840,8 +851,8 @@ int Decoupled2p2c<Grid,Scalar>::concentrationUpdate(const Scalar t, Scalar& dt, 
     int which;
 
     // compute update vector
-    ElementIterator eItEnd = grid_.template lend<0>(level_);
-    for (ElementIterator eIt = grid_.template lbegin<0>(level_); eIt != eItEnd; ++eIt)
+    ElementIterator eItEnd = gridview_.template end<0>();
+    for (ElementIterator eIt = gridview_.template begin<0>(); eIt != eItEnd; ++eIt)
     {
         // get cell geometry informations
         GeometryType gt = eIt->geometry().type(); //geometry type
@@ -1110,8 +1121,8 @@ int Decoupled2p2c<Grid,Scalar>::concentrationUpdate(const Scalar t, Scalar& dt, 
     return which;
 } // end function "update"
 
-template<class Grid, class Scalar>
-void Decoupled2p2c<Grid,Scalar>::flashCalculation(double Z1, double p, double temp, double poro, double& sat, double& C1, double& C2, double& Xw1, double& Xn1)
+template<class GridView, class Scalar>
+void Decoupled2p2c<GridView,Scalar>::flashCalculation(double Z1, double p, double temp, double poro, double& sat, double& C1, double& C2, double& Xw1, double& Xn1)
 {
     double K1 = problem.liquidPhase.p_vap(temp) / p;
     double K2 = 1. / (p * problem.liquidPhase.henry(temp));
@@ -1151,8 +1162,8 @@ void Decoupled2p2c<Grid,Scalar>::flashCalculation(double Z1, double p, double te
 
 } // end function flashCalculation
 
-template<class Grid, class Scalar>
-void Decoupled2p2c<Grid,Scalar>::satFlash(double sat, double p, double temp, double poro, double& C1, double& C2, double& Xw1, double& Xn1)
+template<class GridView, class Scalar>
+void Decoupled2p2c<GridView,Scalar>::satFlash(double sat, double p, double temp, double poro, double& C1, double& C2, double& Xw1, double& Xn1)
 {
     if (sat <= 0 || sat >= 1)
         DUNE_THROW(RangeError,
@@ -1175,13 +1186,13 @@ void Decoupled2p2c<Grid,Scalar>::satFlash(double sat, double p, double temp, dou
     C2  = poro* (sat * (1. - Xw1) * rho_w + (1-sat) * (1. - Xn1) * rho_n);
 }
 
-template<class Grid, class Scalar>
-void Decoupled2p2c<Grid,Scalar>::postProcessUpdate(double t, double dt)
+template<class GridView, class Scalar>
+void Decoupled2p2c<GridView,Scalar>::postProcessUpdate(double t, double dt)
 {
     int size = indexset.size(0);
     // iterate through leaf grid an evaluate c0 at cell center
-    ElementIterator eItEnd = grid_.template lend<0>(level_);
-    for (ElementIterator eIt = grid_.template lbegin<0>(level_); eIt != eItEnd; ++eIt)
+    ElementIterator eItEnd = gridview_.template end<0>();
+    for (ElementIterator eIt = gridview_.template begin<0>(); eIt != eItEnd; ++eIt)
     {
         int globalIdxi = indexset.index(*eIt);
         // get cell geometry informations
@@ -1221,8 +1232,8 @@ void Decoupled2p2c<Grid,Scalar>::postProcessUpdate(double t, double dt)
 }
 
 // harmonic mean of the permeability computed directly
-template<class Grid, class Scalar>
-typename Decoupled2p2c<Grid,Scalar>::FMatrix Decoupled2p2c<Grid,Scalar>::harmonicMeanK (FMatrix& Ki, const FMatrix& Kj) const
+template<class GridView, class Scalar>
+typename Decoupled2p2c<GridView,Scalar>::FMatrix Decoupled2p2c<GridView,Scalar>::harmonicMeanK (FMatrix& Ki, const FMatrix& Kj) const
 {
     double eps = 1e-20;
 
@@ -1238,8 +1249,8 @@ typename Decoupled2p2c<Grid,Scalar>::FMatrix Decoupled2p2c<Grid,Scalar>::harmoni
 }
 
 
-template<class Grid, class Scalar>
-void Decoupled2p2c<Grid,Scalar>::volumeDerivatives(FieldVector<ct,dim> globalPos, EntityPointer ep, FieldVector<ct,dim> localPos, double T, double& dV_dm1, double& dV_dm2, double& dV_dp)
+template<class GridView, class Scalar>
+void Decoupled2p2c<GridView,Scalar>::volumeDerivatives(FieldVector<ct,dim> globalPos, EntityPointer ep, FieldVector<ct,dim> localPos, double T, double& dV_dm1, double& dV_dm2, double& dV_dp)
 {
     int globalIdxi = indexset.index(*ep);
 

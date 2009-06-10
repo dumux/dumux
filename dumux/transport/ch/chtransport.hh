@@ -218,8 +218,16 @@ int ChTransport<GridView,Scalar,VC, Problem>::solveRP(Scalar& mch, std::list<ChN
     double fsh = linearFlux(sh, globalPos, eIt, localPos);
 
     //construction of a list with all nodes between the low and high value
-    int il = std::floor(K*sat[low]) + 1;
-    int ih = std::ceil(K*sat[high]) - 1;
+    int il=0,ih=0;
+    
+    double eps = 1e-5;	
+    for(int i=1;i<K;++i)
+    {
+      if(i-K*sat[low]>eps && il==0)
+	il=i;
+      if(K*sat[high]-i>eps)
+	ih=i;
+    }
    
     //if there are no nodes the solution is a shock front
     if(il==0 || il> ih)
@@ -974,12 +982,12 @@ int ChTransport<GridView,Scalar,VC, Problem>::approxSol(RepresentationType& upda
 }
 
 template<class GridView, class Scalar, class VC, class Problem>
-int ChTransport<GridView,Scalar,VC, Problem>::update(const Scalar t, Scalar& dt, RepresentationType& updateVec, Scalar& cFLFac = 1, bool impes = false)
+int ChTransport<GridView,Scalar,VC, Problem>::update(const Scalar t, Scalar& dt, RepresentationType& updateVec, Scalar& cFLFac = 1, bool impes = true)
 {
-//    if (!impes)
-//    {
-//        updateMaterialLaws();
-//    }
+    if (!impes)
+    {
+        updateMaterialLaws();
+    }
 
     // the timestep is given by parameter 'dt'
     //if the problem allow it, use only one timestep!!!
@@ -1103,6 +1111,7 @@ void ChTransport<GridView, Scalar, VC, Problem>::initialTransport()
     return;
 }
 
+// this part is used for pressure calculation
 template<class GridView, class Scalar, class VC, class Problem>
 void ChTransport<GridView, Scalar, VC, Problem>::updateMaterialLaws()
 {

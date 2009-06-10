@@ -37,8 +37,12 @@
 
 namespace Dune
 {
-//! Base class for the definition of 2p2c problems
-/** This base class defines all boundary and initial functions which are needed
+/**
+ * \ingroup decoupled2p2cproblems
+ *
+ * \brief Base class for the definition of 2p2c problems
+ *
+ * This base class defines all boundary and initial functions which are needed
  * for a decoupled 2p2c computation.
  */
 template<class GridView, class Scalar>
@@ -48,7 +52,7 @@ class DecoupledProblem2p2c
     typedef typename GridView::Traits::template Codim<0>::Entity Entity;
 
 public:
-    //! Type of concentration boundary condition.
+    //! Type of transport boundary condition.
     /**    either the concentration or the saturation have to be defined
      * on boundaries with dirichlet pressure BCs.
      * @param globalPos global coordinates
@@ -58,7 +62,7 @@ public:
     virtual BoundaryConditions2p2c::Flags bc_type (const FieldVector<Scalar,dim>& globalPos, const Entity& element,
                                                    const FieldVector<Scalar,dim>& localPos) const = 0;
 
-    //! Type of concentration initisl condition.
+    //! Type of transport initial condition.
     /**    either the concentration or the saturation have to be defined
      * as initial condition.
      * @param globalPos global coordinates
@@ -77,19 +81,8 @@ public:
     virtual BoundaryConditions::Flags press_bc_type (const FieldVector<Scalar,dim>& globalPos, const Entity& element,
                                                      const FieldVector<Scalar,dim>& localPos) const = 0;
 
-    //! Permeability tensor \f$ [m^2] \f$
-    /**
-     * @param globalPos global coordinates
-     * @param element reference to the cell for which the function is to be evaluated
-     * @param localPos local coordinates inside element
-     */
-    //    virtual const FieldMatrix<DT,n,n>& K (const FieldVector<DT,n>& globalPos, const Entity& element, const FieldVector<DT,n>& localPos) const
-    //    {
-    //        return soil.K(globalPos, element, localPos);
-    //    }
-
-    //! Feed concentration boundary condition
-    /** Feed concentration is the (global) mass fraction of component 1 in the mixture
+    //! Feed mass fraction boundary condition (dimensionless)
+    /** Feed concentration is the (global) mass fraction (dimensionless) of component 1 in the mixture
      * @param globalPos global coordinates
      * @param element reference to the cell for which the function is to be evaluated
      * @param localPos local coordinates inside element
@@ -97,7 +90,7 @@ public:
     virtual Scalar dirichletConcentration (const FieldVector<Scalar,dim>& globalPos, const Entity& element,
                                            const FieldVector<Scalar,dim>& localPos) const = 0;
 
-    //! Saturation boundary condition
+    //! Saturation boundary condition (dimensionless)
     /** @param globalPos global coordinates
      * @param element reference to the cell for which the function is to be evaluated
      * @param localPos local coordinates inside element
@@ -105,7 +98,7 @@ public:
     virtual Scalar dirichletSat (const FieldVector<Scalar,dim>& globalPos, const Entity& element,
                                  const FieldVector<Scalar,dim>& localPos) const = 0;
 
-    //! Pressure (dirichlet) boundary condition
+    //! Pressure (dirichlet) boundary condition \f$ [Pa] \f$
     /** @param globalPos global coordinates
      * @param element reference to the cell for which the function is to be evaluated
      * @param localPos local coordinates inside element
@@ -113,16 +106,18 @@ public:
     virtual Scalar dirichlet (const FieldVector<Scalar,dim>& globalPos, const Entity& element,
                               const FieldVector<Scalar,dim>& localPos) const = 0;
 
-    //! Flux (neumann) boundary condition
-    /** @param globalPos global coordinates
+    //! Flux (neumann) boundary condition \f$ [\frac{kg}{m^2 \cdot s}] \f$
+    /** Returns a vector with one entry for each component. The flux is expressed in \f$ [\frac{kg}{m^2 \cdot s}] \f$
+     * @param globalPos global coordinates
      * @param element reference to the cell for which the function is to be evaluated
      * @param localPos local coordinates inside element
      */
     virtual FieldVector<Scalar,2> neumann (const FieldVector<Scalar,dim>& globalPos, const Entity& element,
                                            const FieldVector<Scalar,dim>& localPos) const = 0;
 
-    //! Source of components
-    /** Describes the source of the components per unit area
+    //! Source of components \f$ [\frac{kg}{m^3 \cdot s}] \f$
+    /** Returns a vector with one entry for each component.
+     * Describes the source of the components per unit area in \f$ [\frac{kg}{m^3 \cdot s}] \f$
      * @param globalPos global coordinates
      * @param element reference to the cell for which the function is to be evaluated
      * @param localPos local coordinates inside element
@@ -130,7 +125,7 @@ public:
     virtual FieldVector<Scalar,2> source (const FieldVector<Scalar,dim>& globalPos, const Entity& element,
                                           const FieldVector<Scalar,dim>& localPos) const = 0;
 
-    //! Saturation initial condition
+    //! Saturation initial condition (dimensionless)
     /** @param globalPos global coordinates
      * @param element reference to the cell for which the function is to be evaluated
      * @param localPos local coordinates inside element
@@ -138,7 +133,7 @@ public:
     virtual Scalar initSat (const FieldVector<Scalar,dim>& globalPos, const Entity& element,
                             const FieldVector<Scalar,dim>& localPos) const = 0;
 
-    //! Feed concentration initial condition
+    //! Feed mass fraction initial condition (dimensionless)
     /** @param globalPos global coordinates
      * @param element reference to the cell for which the function is to be evaluated
      * @param localPos local coordinates inside element
@@ -146,20 +141,24 @@ public:
     virtual Scalar initConcentration (const FieldVector<Scalar,dim>& globalPos, const Entity& element,
                                       const FieldVector<Scalar,dim>& localPos) const = 0;
 
-    //! gravity vector
+    //! gravity vector \f$ [\frac{m}{s^2}] \f$
     virtual const FieldVector<Scalar,dim> gravity()
     {
         FieldVector<Scalar,dim> gravity_(0.);
         return gravity_;
     }
 
-    //! Temperature
+    //! Temperature \f$ [K] \f$
     virtual Scalar temp(const FieldVector<Scalar,dim>& globalPos, const Entity& element,
                                       const FieldVector<Scalar,dim>& localPos) = 0;
 
     //! Constructor
     /**
-     *
+     * \param var a VariableClass2p2c object
+     * \param liq class defining the properties of the liquid phase
+     * \param gas class defining the properties of the gaseous phase
+     * \param s the soil properties
+     * \param law the relative permeability and capillary pressure definintions
      */
     DecoupledProblem2p2c(Dune::VariableClass2p2c<GridView, Scalar>& var, Liquid_GL& liq, Gas_GL& gas, Matrix2p<typename GridView::Grid, Scalar>& s,
                          TwoPhaseRelations<typename GridView::Grid, Scalar>& law = *(new TwoPhaseRelations<typename GridView::Grid,Scalar>),const bool cap = false)

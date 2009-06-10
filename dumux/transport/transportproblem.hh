@@ -1,5 +1,19 @@
 // $Id$
-
+/*****************************************************************************
+ *   Copyright (C) 2007-2009 by Bernd Flemisch                               *
+ *   Copyright (C) 2008-2009 by Markus Wolff                                 *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
+ *                                                                           *
+ *   This program is free software; you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by    *
+ *   the Free Software Foundation; either version 2 of the License, or       *
+ *   (at your option) any later version, as long as this copyright notice    *
+ *   is included in its original form.                                       *
+ *                                                                           *
+ *   This program is distributed WITHOUT ANY WARRANTY.                       *
+ *****************************************************************************/
 #ifndef DUNE_TRANSPORTPROBLEM_HH
 #define DUNE_TRANSPORTPROBLEM_HH
 
@@ -18,27 +32,25 @@
 /**
  * @file
  * @brief  Base class for defining an instance of the transport problem
- * @author Bernd Flemisch
+ * @author Bernd Flemisch, Markus Wolff
  */
 
 namespace Dune
 {
-/**  \ingroup transport
- *   \defgroup transportProblems Problems
- */
-//! \ingroup transportProblems
+//! \ingroup transport
 /**  @brief  base class that defines the parameters of a transport equation
- *   An interface for defining parameters for the scalar transport equation
- *  \f$S_t - \text{div}\, (f_\text{w}(S) \boldsymbol{v}_\text{total}) = 0\f$,
- * \f$S = g\f$ on \f$\Gamma_1\f$, and \f$S(t = 0) = S_0\f$. Here,
- * \f$S\f$ denotes the wetting phase saturation,
- * \f$\boldsymbol{v}_\text{total}\f$ the total velocity,
- * and \f$f_\text{w}\f$ the wetting phase fractional flow function.
+ *
+ *   An interface for defining parameters for the scalar transport equation of the form
+ *  \f[
+ *    \frac{\partial S}{\partial t} + \text{div}\, \boldsymbol{v_\alpha} = 0,
+ *  \f]
+ *  where \f$S\f$ denotes a phase saturation and \f$\boldsymbol{v_\alpha}\f$ is a phase velocity.
  *
  *    Template parameters are:
  *
- *    - Grid  a DUNE grid type
- *    - RT    type used for return values
+ *  - GridView      a DUNE gridview type
+ *  - Scalar        type used for scalar quantities
+ *  - VC            type of a class containing different variables of the model
  */
 template<class GridView, class Scalar, class VC>
 class TransportProblem
@@ -57,7 +69,9 @@ typedef    typename GridView::Traits::template Codim<0>::Entity Element;
 public:
     //! return type of boundary condition at the given global coordinate
     /*! return type of boundary condition at the given global coordinate
-     @param[in]  globalPos    position in global coordinates
+     @param  globalPos    position in global coordinates
+     @param  element      entity of codim 0
+     @param  localPos     position in reference element of element
      \return     boundary condition type given by enum in this class
      */
     virtual BoundaryConditions::Flags bctypeSat (const GlobalPosition& globalPos, const Element& element,
@@ -65,39 +79,43 @@ public:
 
     //! evaluate Dirichlet boundary condition at given position
     /*! evaluate Dirichlet boundary condition at given position
-     @param[in]  globalPos    position in global coordinates
-     \return     boundary condition value
+     @param  globalPos    position in global coordinates
+     @param  element      entity of codim 0
+     @param  localPos     position in reference element of element
+     \return     boundary condition value of a dirichlet saturation boundary condition
      */
     virtual Scalar dirichletSat (const GlobalPosition& globalPos, const Element& element,
             const LocalPosition& localPos) const = 0;
 
     //! evaluate Neumann boundary condition at given position
     /*! evaluate Neumann boundary condition at given position
-     @param[in]  globalPos    position in global coordinates
-     \return     boundary condition value
+     @param  globalPos    position in global coordinates
+     @param  element      entity of codim 0
+     @param  localPos     position in reference element of element
+     \return     boundary condition value of a neumann saturation boundary condition.
      */
     virtual Scalar neumannSat (const GlobalPosition& globalPos, const Element& element,
             const LocalPosition& localPos, Scalar helpFactor) const = 0;
 
     //! evaluate initial condition at given position
     /*! evaluate initial boundary condition at given position
-     @param[in]  globalPos    position in global coordinates
-     \return    initial condition value
+     @param  globalPos    position in global coordinates
+     @param  element      entity of codim 0
+     @param  localPos     position in reference element of element
+     \return    initial saturation distribution.
      */
     virtual Scalar initSat (const GlobalPosition& globalPos, const Element& element,
             const LocalPosition& localPos) const = 0;
 
+    //! gravity constant
+    /*! gravity constant
+     \return    gravity vector
+     */
     virtual const FieldVector<Scalar,dim>& gravity()
     {
         return gravity_;
     }
 
-    //! evaluate velocity
-    /*! Evaluate the velocity at the element faces
-     @param[in]  element              entity of codim 0
-     @param[in]  numberInSelf   local index of element face
-     @param[out] vTotal         velocity vector to be filled
-     */
 
     //! properties of the soil
     /*! properties of the soil
@@ -116,24 +134,41 @@ public:
     {
         return materialLaw_;
     }
+
+    //! object containing different variables
+    /*! object containing different variables like the primary pressure and saturation, material laws,...
+     \return    variables object
+     */
     virtual VC& variables ()
     {
         return variables_;
     }
+
+    //! object containing the wetting phase parameters
+    /*! object containing the wetting phase parameters (density, viscosity, ...)
+     \return    wetting phase
+     */
     virtual Fluid& wettingPhase () const
     {
         return wettingPhase_;
     }
+
+    //! object containing the non-wetting phase parameters
+    /*! object containing the non-wetting phase parameters (density, viscosity, ...)
+     \return    non-wetting phase
+     */
     virtual Fluid& nonWettingPhase () const
     {
         return nonWettingPhase_;
     }
 
     //! constructor
-    /** @param law implementation of material laws. Class TwoPhaseRelations or derived.
-     *  @param cap flag for including capillary forces.
+    /** @param variables object of class VariableClass.
+     *  @param wettingPhase implementation of a wetting phase.
+     *  @param nonWettingPhase implementation of a non-wetting phase.
+     *  @param soil implementation of the solid matrix
+     *  @param materialLaw implementation of Material laws. Class TwoPhaseRelations or derived.
      */
-
     TransportProblem(VC& variables,Fluid& wettingPhase, Fluid& nonWettingPhase, Matrix2p<Grid, Scalar>& soil, TwoPhaseRelations<Grid, Scalar>& materialLaw = *(new TwoPhaseRelations<Grid,Scalar>))
     : variables_(variables), wettingPhase_(wettingPhase), nonWettingPhase_(nonWettingPhase), soil_(soil), materialLaw_(materialLaw),gravity_(0)
     {}
@@ -143,12 +178,12 @@ public:
     {}
 
 private:
-    VC& variables_;
-    Fluid& wettingPhase_;
-    Fluid& nonWettingPhase_;
-    Matrix2p<Grid, Scalar>& soil_;
-    TwoPhaseRelations<Grid,Scalar>& materialLaw_;
-    FieldVector<Scalar,dimWorld> gravity_;
+    VC& variables_;//object of type Dune::VariableClass
+    Fluid& wettingPhase_;//object of type Dune::TwoPhaseRelations or derived
+    Fluid& nonWettingPhase_; //object derived from Dune::Fluid
+    Matrix2p<Grid, Scalar>& soil_; //object derived from Dune::Fluid
+    TwoPhaseRelations<Grid,Scalar>& materialLaw_; //object derived from Dune::Matrix2p
+    FieldVector<Scalar,dimWorld> gravity_;//vector including the gravity constant
 };
 
 }

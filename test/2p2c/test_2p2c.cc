@@ -38,7 +38,7 @@ int main(int argc, char** argv)
 
         // parse the command line arguments for the program
         if (argc != 4) {
-            std::cout << boost::format("usage: %s grid tEnd dt\n")%argv[0];
+            std::cout << boost::format("usage: %s gridFile.dgf tEnd dt\n")%argv[0];
             return 1;
         }
         double tEnd, dt;
@@ -54,8 +54,8 @@ int main(int argc, char** argv)
 
 
         // instantiate and run the concrete problem
-        Problem problem(&(*gridPtr), dt, tEnd);
-        if (!problem.simulate())
+        Problem problem(gridPtr->leafView());
+        if (!problem.simulate(dt, tEnd))
             return 2;
 
         return 0;

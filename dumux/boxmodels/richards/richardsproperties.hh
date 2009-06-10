@@ -51,7 +51,8 @@ class RichardsFluxData;
  */
 struct RichardsIndices
 {
-    static const int pWIdx = 0;
+    //! index of the wetting phase pressure
+    static const int pW = 0;
 };
 
 ///////////////////////////////////////////////////////////////////////////

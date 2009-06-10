@@ -43,17 +43,11 @@ template <class TypeTag>
 class TwoPTwoCFluxData;
 
 /*!
- * \brief The indices for the isothermal TwoPTwoC model.
- *
- * \tparam PVOffset    The first index in a primary variable vector.
+ * \brief The formulation independent indices for the 2p2c model which
+ *        do not depend on an offset in the primary variable vector.
  */
-template <int PVOffset = 0>
-struct TwoPTwoCIndices
+struct TwoPTwoCCommonIndices
 {
-    // Primary variable indices
-    static const int pressureIdx = PVOffset + 0; //!< Index for wetting/non-wetting phase pressure (depending on formulation) in a solution vector
-    static const int switchIdx   = PVOffset + 1; //!< Index of the either the saturation or the mass fraction of the non-wetting/wetting phase
-
     // Phase state (-> 'pseudo' primary variable)
     static const int nPhaseOnly = 0; //!< Only the non-wetting phase is present
     static const int wPhaseOnly = 1; //!< Only the wetting phase is present
@@ -70,7 +64,24 @@ struct TwoPTwoCIndices
     // Component indices
     static const int wComp = 0; //!< Index of the wetting component in a component vector
     static const int nComp = 1; //!< Index of the non-wetting component in a compent vector
-    
+};
+
+/*!
+ * \brief The indices for the isothermal TwoPTwoC model.
+ *
+ * \tparam PVOffset    The first index in a primary variable vector.
+ */
+template <int formulation = TwoPTwoCCommonIndices::pWsN, int PVOffset = 0>
+struct TwoPTwoCIndices
+    : public TwoPTwoCCommonIndices
+{
+    // Primary variable indices
+    static const int pressureIdx = PVOffset + 0; //!< Index for wetting/non-wetting phase pressure (depending on formulation) in a solution vector
+    static const int switchIdx   = PVOffset + 1; //!< Index of the either the saturation or the mass fraction of the non-wetting/wetting phase
+
+    static const int pW = pressureIdx; //!< Index for wetting/non-wetting phase pressure (depending on formulation) in a solution vector
+    static const int sNorX = switchIdx; //!< Index of the either the saturation or the mass fraction of the non-wetting/wetting phase
+  
     /*!
      * \brief Map a component index to a mass index.
      *
@@ -78,6 +89,31 @@ struct TwoPTwoCIndices
      * vector of primary variables in the storage or flux terms.)
      */
     static int comp2Mass(int compIdx) { return PVOffset + compIdx; }
+};
+
+/*!
+ * \brief The indices for the isothermal TwoPTwoC model.
+ *
+ * \tparam PVOffset    The first index in a primary variable vector.
+ */
+template <int PVOffset>
+struct TwoPTwoCIndices<TwoPTwoCCommonIndices::pNsW, PVOffset> 
+    : public TwoPTwoCCommonIndices
+{
+    // Primary variable indices
+    static const int pressureIdx = PVOffset + 0; //!< Index for wetting/non-wetting phase pressure (depending on formulation) in a solution vector
+    static const int switchIdx   = PVOffset + 1; //!< Index of the either the saturation or the mass fraction of the non-wetting/wetting phase
+
+    static const int pN = pressureIdx; //!< Index for wetting/non-wetting phase pressure (depending on formulation) in a solution vector
+    static const int sWorX = switchIdx; //!< Index of the either the saturation or the mass fraction of the non-wetting/wetting phase
+  
+    /*!
+     * \brief Map a component index to a mass index.
+     *
+     * (The mass index is the index of a component in the result
+     * vector of primary variables in the storage or flux terms.)
+     */
+    static int comp2Mass(int compIdx) { return PVOffset + 1 - compIdx; }
 };
 
 ////////////////////////////////
@@ -93,8 +129,7 @@ SET_INT_PROP(BoxTwoPTwoC, NumComponents, 2); //!< The number of components in th
 //! Set the default formulation to pWsN
 SET_INT_PROP(BoxTwoPTwoC, 
              Formulation,
-             GET_PROP_TYPE(TypeTag,
-                           PTAG(TwoPTwoCIndices))::pWsN);
+             TwoPTwoCCommonIndices::pWsN);
 
 //! Use the 2p2c local jacobian operator for the 2p2c model
 SET_TYPE_PROP(BoxTwoPTwoC, 
@@ -132,7 +167,12 @@ SET_SCALAR_PROP(BoxTwoPTwoC,
                 GET_PROP_VALUE(TypeTag, PTAG(UpwindAlpha)));
 
 //! The indices required by the isothermal 2p2c model
-SET_TYPE_PROP(BoxTwoPTwoC, TwoPTwoCIndices, TwoPTwoCIndices<0>);
+SET_PROP(BoxTwoPTwoC, 
+         TwoPTwoCIndices)
+{
+    typedef TwoPTwoCIndices<GET_PROP_VALUE(TypeTag, PTAG(Formulation)), 0> type;
+};
+
 }
 
 }

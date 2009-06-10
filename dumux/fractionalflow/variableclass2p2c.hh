@@ -18,22 +18,30 @@
 #ifndef DUNE_VARIABLECLASS2P2C_HH
 #define DUNE_VARIABLECLASS2P2C_HH
 
-/**
- * @file
- * @author Jochen Fritz
- */
-
 namespace Dune {
 
-//! class including the variables needed for decoupled 2p2c computations.
+/** \ingroup decoupled2p2c
+ *  \brief container for the variables needed for decoupled 2p2c computations.
+ *
+ *  All required variables for compositional two-phase computations are provided and
+ *  can be accessed via this class.
+ *  Template arguments: GridView is a View of one of the Dune Grid implementations.
+ *  Scalar is the desired type to represent Scalar values.
+ *
+ */
 template<class GridView, class Scalar> class VariableClass2p2c
 {
-public:
+private:
     enum {n=GridView::dimension};
     typedef typename GridView::Grid::ctype ct;
     typedef Dune::BlockVector< Dune::FieldVector<Scalar,1> > ScalarType;
     typedef typename GridView::template Codim<0>::Entity Entity;
 
+
+    const typename GridView::IndexSet& indexset;
+    GridView& gridview;
+
+public:
     ScalarType saturation;
     ScalarType pressure;
     ScalarType totalConcentration;
@@ -50,13 +58,14 @@ public:
         }
     };
 
-    const typename GridView::IndexSet& indexset;
-    GridView& gridview;
-
 private:
     int size;
 public:
 
+    //! Constructor
+    /**
+     * \param gv an object of template argument GridView
+     */
     VariableClass2p2c(GridView& gv) :
         gridview(gv), indexset(gv.indexSet()), size(gv.size(0))
     {
@@ -74,22 +83,26 @@ public:
         volErr = 0;
     }
 
+    //! returns a reference to the saturation vector
     ScalarType& sat() const
     {
         return saturation;
     }
 
+    //! returns a reference to the pressure vector
     ScalarType& press() const
     {
         return pressure;
     }
 
+    //! returns a reference to the saturation at a distinct location
     const Dune::FieldVector<Scalar,1>& sat(const Dune::FieldVector<ct,n>& x, const Entity& e,
                                        const Dune::FieldVector<ct,n>& xi) const
     {
         return saturation[indexset.index(e)];;
     }
 
+    //! returns a reference to the pressure at a distinct location
     const Dune::FieldVector<Scalar,1>& press(const Dune::FieldVector<ct,n>& x, const Entity& e,
                                          const Dune::FieldVector<ct,n>& xi) const
     {
@@ -129,6 +142,12 @@ public:
         return;
     }
 
+    /*! @brief writes only the pressure to a VTK File
+     *
+     *  The file name is "<name>-<k>.vtu" where k is an integer number.
+     *  @param name specifies the name of the VTK file
+     *  @param k specifies a number
+     */
     void vtkoutpressure(const char* name, int k) const {
         VTKWriter<GridView> vtkwriter(gridview);
         char fname[128];

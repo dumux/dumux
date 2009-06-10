@@ -1,7 +1,8 @@
+//$Id$
 /*****************************************************************************
- *   Copyright (C) 2008-2009 by Melanie Darcis                               *
- *   Copyright (C) 2008-2009 by Klaus Mosthaf                                *
  *   Copyright (C) 2008-2009 by Andreas Lauser                               *
+ *   Copyright (C) 2008-2009 by Klaus Mosthaf                                *
+ *   Copyright (C) 2008-2009 by Melanie Darcis 								 *
  *   Copyright (C) 2008-2009 by Bernd Flemisch                               *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
@@ -15,9 +16,9 @@
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
 /*!
- * \file 
+ * \file
  *
- * \brief Contains the quantities which are are constant within a
+ * \brief Contains the quantities which are constant within a
  *        finite volume in the non-isothermal two-phase, two-component
  *        model.
  */
@@ -30,6 +31,7 @@ namespace Dune
 {
 
 /*!
+ * \ingroup TwoPTwoCNIBoxModel
  * \brief Contains the quantities which are are constant within a
  *        finite volume in the non-isothermal two-phase, two-component
  *        model.
@@ -43,14 +45,14 @@ class TwoPTwoCNIVertexData : public TwoPTwoCVertexData<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
     typedef typename GridView::template Codim<0>::Entity Element;
-    
+
     enum {
         dim           = GridView::dimension,
         dimWorld      = GridView::dimensionworld,
 
         numPhases     = GET_PROP_VALUE(TypeTag, PTAG(NumPhases))
     };
-    
+
     typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))                SolutionTypes;
     typedef typename GET_PROP(TypeTag, PTAG(ReferenceElements))::Container ReferenceElements;
 
@@ -71,7 +73,7 @@ public:
                 const Element          &element,
                 int                     vertIdx,
                 bool                    isOldSol,
-                JacobianImp            &jac) 
+                JacobianImp            &jac)
     {
         typedef Indices I;
 
@@ -90,12 +92,12 @@ public:
             element.geometry().corner(vertIdx);
 
         temperature = sol[I::temperatureIdx];
-        
-        heatCond = jac.problem().soil().heatCond(global, 
+
+        heatCond = jac.problem().soil().heatCond(global,
                                                  element,
                                                  local,
                                                  this->saturation[I::wPhase]);
-        
+
         enthalpy[I::wPhase] = jac.problem().wettingPhase().enthalpy(temperature,
                                                                     this->pressure[I::wPhase],
                                                                     this->massfrac[I::nComp][I::wPhase]);

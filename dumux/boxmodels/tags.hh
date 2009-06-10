@@ -105,6 +105,13 @@ NEW_PROP_TAG(TwoPNIIndices); //!< Enumerations for the non-isothermal 2p models
 NEW_PROP_TAG(TwoPTwoCIndices); //!< Enumerations for the 2p2c models
 NEW_PROP_TAG(TwoPTwoCNIIndices); //!< Enumerations for the 2p2cni models
 
+NEW_PROP_TAG(Soil); //! The type of the soil properties object
+NEW_PROP_TAG(Fluid); //! The fluid for the single-phase models
+NEW_PROP_TAG(WettingPhase); //! The wetting phase for two-phase models
+NEW_PROP_TAG(NonwettingPhase); //! The non-wetting phase for two-phase models
+NEW_PROP_TAG(MultiComp); //! Type of the multi-component relations
+NEW_PROP_TAG(EnableGravity); //! Returns whether gravity is considered in the problem
+
 //////////////////////////////////////////////////////////////////
 // Some defaults for very fundamental properties
 //////////////////////////////////////////////////////////////////

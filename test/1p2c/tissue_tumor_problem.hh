@@ -15,44 +15,27 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/**
+ * \file
+ * \brief  Definition of a problem, where the distribution of a therapeutic agent
+ * within pulmonary tissue is described
+ * \author Karin Erbertseder, Bernd Flemisch
+ */
 #ifndef DUNE_TISSUE_TUMOR_PROBLEM_HH
 #define DUNE_TISSUE_TUMOR_PROBLEM_HH
-
-#ifdef HAVE_CONFIG_H
-#include "config.h"
-#endif
-
-#include<iostream>
-#include<iomanip>
 
 //#include <dune/grid/io/file/dgfparser/dgfalu.hh>
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
-//#include <dune/grid/alugrid.hh>
-#include <dune/grid/uggrid.hh>
-#include <dune/grid/yaspgrid.hh>
-
-#include <dumux/io/vtkmultiwriter.hh>
-#include <dumux/auxiliary/timemanager.hh>
-
-#include <dune/common/timer.hh>
-
-#include <dumux/auxiliary/timemanager.hh>
-#include <dumux/auxiliary/basicdomain.hh>
-
-#include <dumux/material/phaseproperties/phaseproperties1p.hh>
+#include <dumux/material/fluids/interstitialfluid_trail.hh>
 #include <dumux/boxmodels/1p2c/1p2cboxmodel.hh>
+
 #include "tissue_soilproperties.hh"
 
-/**
- * @file
- * @brief  Definition of a problem, where the distribution of a therapeutic agent
- * within pulmonary tissue is described
- * @author Karin Erbertseder, Bernd Flemisch
- */
 namespace Dune
 {
+
 template <class TypeTag>
 class TissueTumorProblem;
 
@@ -60,180 +43,114 @@ namespace Properties
 {
 NEW_TYPE_TAG(TissueTumorProblem, INHERITS_FROM(BoxOnePTwoC));
 
-SET_PROP(TissueTumorProblem, Grid)
+// Set the grid type
+SET_TYPE_PROP(TissueTumorProblem, Grid, Dune::UGGrid<2>);
+
+// Set the problem property
+SET_PROP(TissueTumorProblem, Problem)
 {
-    typedef Dune::UGGrid<2> type;
-    //typedef Dune::YaspGrid<2> type;
+    typedef Dune::TissueTumorProblem<TTAG(TissueTumorProblem)> type;
 };
 
-SET_TYPE_PROP(TissueTumorProblem, Problem, Dune::TissueTumorProblem<TTAG(TissueTumorProblem)>);
+// Set the wetting phase
+SET_TYPE_PROP(TissueTumorProblem, Fluid, Dune::InterstitialFluid_Trail);
+
+// Set the soil properties
+SET_PROP(TissueTumorProblem, Soil)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+    
+public:
+    typedef Dune::TissueSoil<Grid, Scalar> type;
+};
+
+// Disable gravity
+SET_BOOL_PROP(TissueTumorProblem, EnableGravity, false);
 }
 
-template <class TypeTag = TTAG(TissueTumorProblem) >
-class TissueTumorProblem : public BasicDomain<typename GET_PROP_TYPE(TypeTag, PTAG(Grid)),
-                                                 typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) >
-{
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))     Scalar;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView))   GridView;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Model))      Model;
-    typedef typename GridView::Grid                           Grid;
 
-    typedef BasicDomain<Grid, Scalar>    ParentType;
-    typedef TissueTumorProblem<TypeTag>      ThisType;
+/**
+ * \brief  Definition of a problem, where the distribution of a therapeutic agent
+ *         within pulmonary tissue is described
+ * \author Karin Erbertseder, Bernd Flemisch
+ * \todo please doc me more: typical simtime, time step, domain+boundary description
+ */
+template <class TypeTag = TTAG(TissueTumorProblem) >
+class TissueTumorProblem : public OnePTwoCBoxProblem<TypeTag, TissueTumorProblem<TypeTag> >
+{
+    typedef TissueTumorProblem<TypeTag>           ThisType;
+    typedef OnePTwoCBoxProblem<TypeTag, ThisType> ParentType;
+
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView))   GridView;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))     Scalar;
 
     // copy some indices for convenience
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePTwoCIndices)) Indices;
     enum {
-        numEq       = GET_PROP_VALUE(TypeTag, PTAG(NumEq)),
+        // Grid and world dimension
+        dim         = GridView::dimension,
+        dimWorld    = GridView::dimensionworld,
 
         // indices of the primary variables
         konti      		 = Indices::konti,
         transport        = Indices::transport,
-
-        // Grid and world dimension
-        dim         = GridView::dimension,
-        dimWorld    = GridView::dimensionworld,
     };
 
     typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
     typedef typename SolutionTypes::PrimaryVarVector        PrimaryVarVector;
     typedef typename SolutionTypes::BoundaryTypeVector      BoundaryTypeVector;
 
-    typedef typename GridView::template Codim<0>::Entity    Element;
-    typedef typename GridView::template Codim<dim>::Entity  Vertex;
-    typedef typename GridView::IntersectionIterator         IntersectionIterator;
+    typedef typename GridView::template Codim<0>::Entity        Element;
+    typedef typename GridView::template Codim<dim>::Entity      Vertex;
+    typedef typename GridView::IntersectionIterator             IntersectionIterator;
   
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
 
     typedef Dune::FieldVector<Scalar, dim>       LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
 
-    enum Episode {}; // the type of an episode of the simulation
-    typedef Dune::TimeManager<Episode>           TimeManager;
-    typedef Dune::VtkMultiWriter<GridView>       VtkMultiWriter;
-
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonMethod))      NewtonMethod;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonController))  NewtonController;
-
-    typedef Dune::InterstitialFluid        Fluid;
-    typedef Dune::TissueSoil<Grid, Scalar> Soil;
-
 public:
-    TissueTumorProblem(Grid *grid,
-                        Scalar dtInitial,
-                        Scalar tEnd)
-        : ParentType(grid),
-          timeManager_(tEnd, this->grid().comm().rank() == 0),
-          model_(*this),
-          newtonMethod_(model_),
-          resultWriter_("new1p2c")
+    TissueTumorProblem(const GridView &gridView)
+        : ParentType(gridView)
     {
-        timeManager_.setStepSize(dtInitial);
-
-        // specify the grid dimensions
-        //outerLowerLeft_[0] = 0;
-        //outerLowerLeft_[1] = 0;
-        //outerUpperRight_[0] = 50.0;
-        //outerUpperRight_[1] = 40.0;
-
-        //height_ = outerUpperRight_[1] - outerLowerLeft_[1];
-        //width_  = outerUpperRight_[0] - outerLowerLeft_[0];
-        eps_    = 1e-8;
-
-        // for defining e.g. a lense
-        //innerLowerLeft_[0] = 0.0;
-        //innerLowerLeft_[1] = 0.0;
-
-        //innerUpperRight_[0] = 0.0;
-        //innerUpperRight_[1] = 0.5;
-
-        gravity_ = 0;
-        //gravity_[dim - 1] = -9.81;
-    }
-
-    ///////////////////////////////////
-    // Strings pulled by the TimeManager during the course of the
-    // simulation
-    ///////////////////////////////////
-
-    //! called by the time manager in order to create the initial
-    //! solution
-    void init()
-    {
-        // set the initial condition
-        model_.initial();
-
-        // write the inital solution to disk
-        writeCurrentResult_();
     }
 
     /*!
-     * \brief Called by the TimeManager in order to get a time
-     *        integration on the model.
+     * \name Problem parameters
      */
-    void timeIntegration(Scalar &stepSize, Scalar &nextStepSize)
-    {
-        model_.update(stepSize, nextStepSize, newtonMethod_, newtonCtl_);
-    }
+    // \{
 
-    //! called by the TimeManager whenever a solution for a
-    //! timestep has been computed
-    void timestepDone()
-    {
-        if (this->grid().comm().rank() == 0)
-            std::cout << "Writing result file for current time step\n";
+    /*!
+     * \brief The problem name.
+     *
+     * This is used as a prefix for files generated by the simulation.
+     */
+    const char *name() const
+    { return "tissue"; }
 
-        // write the current result to disk
-        writeCurrentResult_();
+    /*!
+     * \brief Returns the temperature within the domain.
+     *
+     * This problem assumes a temperature of 36 degrees Celsius.
+     */
+    Scalar temperature() const
+    {
+        return 273.15 + 36; // in [K]
     };
-    ///////////////////////////////////
-    // End of simulation control stuff
-    ///////////////////////////////////
+    
+    // \}
 
-    ///////////////////////////////////
-    // Strings pulled by the OnePTwoCBoxModel during the course of
-    // the simulation (-> boundary conditions, initial conditions,
-    // etc)
-    ///////////////////////////////////
-    //! Returns the current time step size in seconds
-    Scalar timeStepSize() const
-    { return timeManager_.stepSize(); }
+    /*!
+     * \name Boundary conditions
+     */
+    // \{
 
-    //! Set the time step size in seconds.
-    void setTimeStepSize(Scalar dt)
-    { return timeManager_.setStepSize(dt); }
-
-    Model &model()
-    {
-        return model_;
-    }
-
-    const Model &model() const
-    {
-        return model_;
-    }
-
-    //! properties of the liquid phase
-    /*! properties of the liquid phase
-    */
-    const Fluid &fluid() const
-    { return fluid_; }
-
-
-    //! properties of the soil
-    /*! properties of the soil
-      \return    soil
-    */
-    const Soil &soil() const
-    {  return soil_; }
-
-    //! properties of the soil
-    /*! properties of the soil
-      \return    soil
-    */
-    Soil &soil()
-    {  return soil_; }
-
+    /*! 
+     * \brief Specifies which kind of boundary condition should be
+     *        used for which equation on a given boundary segment.
+     */
     void boundaryTypes(BoundaryTypeVector         &values,
                        const Element              &element,
                        const FVElementGeometry    &fvElemGeom,
@@ -250,9 +167,12 @@ public:
             values = BoundaryConditions::neumann;
     }
 
-    /////////////////////////////
-    // DIRICHLET boundaries
-    /////////////////////////////
+    /*! 
+     * \brief Evaluate the boundary conditions for a dirichlet
+     *        boundary segment.
+     *
+     * For this method, the \a values parameter stores primary variables.
+     */
     void dirichlet(PrimaryVarVector           &values,
                    const Element              &element,
                    const FVElementGeometry    &fvElemGeom,
@@ -266,9 +186,14 @@ public:
         initial_(values, globalPos);
     }
 
-    /////////////////////////////
-    // NEUMANN boundaries
-    /////////////////////////////
+    /*! 
+     * \brief Evaluate the boundary conditions for a neumann
+     *        boundary segment.
+     *
+     * For this method, the \a values parameter stores the mass flux
+     * in normal direction of each component. Negative values mean
+     * influx.
+     */
     void neumann(PrimaryVarVector           &values,
                  const Element              &element,
                  const FVElementGeometry    &fvElemGeom,
@@ -287,9 +212,22 @@ public:
         }
     }
 
-    /////////////////////////////
-    // sources and sinks
-    /////////////////////////////
+    // \}
+
+    /*!
+     * \name Volume terms
+     */
+    // \{
+
+    /*! 
+     * \brief Evaluate the source term for all phases within a given
+     *        sub-control-volume.
+     *
+     * For this method, the \a values parameter stores the rate mass
+     * of a component is generated or annihilate per volume
+     * unit. Positive values mean that mass is created, negative ones
+     * mean that it vanishes.
+     */
     void source(PrimaryVarVector        &values,
                 const Element           &element,
                 const FVElementGeometry &fvElemGeom,
@@ -304,11 +242,12 @@ public:
         	values[0]= 1.5e-6;
     }
 
-    //////////////////////////////
-
-    /////////////////////////////
-    // INITIAL values
-    /////////////////////////////
+    /*! 
+     * \brief Evaluate the initial value for a control volume.
+     *
+     * For this method, the \a values parameter stores primary
+     * variables.
+     */
     void initial(PrimaryVarVector        &values,
                  const Element           &element,
                  const FVElementGeometry &fvElemGeom,
@@ -320,22 +259,7 @@ public:
         initial_(values, globalPos);
     }
 
-    Scalar temperature() const
-    {
-        return 273.15 + 36.0; // 36°C
-    };
-
-    const GlobalPosition &gravity () const
-    {
-        return gravity_;
-    }
-
-    bool simulate()
-    {
-        timeManager_.runSimulation(*this);
-        return true;
-    };
-
+    // \}
 
 private:
     // the internal method for the initial condition
@@ -346,41 +270,9 @@ private:
         values[konti] = -1067;  			//initial condition for the pressure
         values[transport] = 0;   	//initial condition for the molefraction
 
-     }
-
-    // write the fields current solution into an VTK output file.
-    void writeCurrentResult_()
-    {
-        resultWriter_.beginTimestep(timeManager_.time(),
-                                    ParentType::grid().leafView());
-
-        model_.addVtkFields(resultWriter_);
-
-        resultWriter_.endTimestep();
     }
 
-    GlobalPosition outerLowerLeft_;
-    GlobalPosition outerUpperRight_;
-    GlobalPosition innerLowerLeft_;
-    GlobalPosition innerUpperRight_;
-    Scalar width_;
-    Scalar height_;
-    Scalar eps_;
-    
-    GlobalPosition  gravity_;
-
-    // fluids and material properties
-    Fluid		    fluid_;
-    Soil            soil_;
-
-    TimeManager     timeManager_;
-
-    Model            model_;
-    NewtonMethod     newtonMethod_;
-    NewtonController newtonCtl_;
-
-    VtkMultiWriter  resultWriter_;
-
+    static const Scalar eps_ = 1e-6;
 }; //end namespace
 }
 #endif

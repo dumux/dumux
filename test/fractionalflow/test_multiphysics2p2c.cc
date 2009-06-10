@@ -12,7 +12,7 @@
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/timedisc/expliciteulerstep.hh"
 // material properties:
-#include "dumux/material/phaseproperties/phaseproperties_waterair.hh"
+#include "dumux/material/fluids/water_air.hh"
 #include <dumux/material/matrixproperties.hh>
 #include <dumux/material/twophaserelations.hh>
 // problem definition and model:
@@ -33,11 +33,13 @@ int main(int argc, char** argv)
 //    // create a grid object
     typedef double NumberType;
     typedef Dune::SGrid<dim,dim> GridType;
+    typedef GridType::LevelGridView GridView;
     typedef Dune::FieldVector<GridType::ctype,dim> FieldVector;
     Dune::FieldVector<int,dim> N(10);
     FieldVector L(0);
     FieldVector H(10);
     GridType grid(N,L,H);
+    GridView gridview(grid.levelView(0));
 
     double tStart = 0;
     double tEnd = 3e4;
@@ -50,13 +52,13 @@ int main(int argc, char** argv)
 
     Dune::TwoPhaseRelations<GridType, NumberType> materialLaw(soil, wetmat, nonwetmat);
 
-    Dune::VariableClass2p2c<GridType,NumberType> var(grid);
+    Dune::VariableClass2p2c<GridView,NumberType> var(gridview);
 
-    typedef Dune::Testproblem_2p2c<GridType, NumberType> TransProb;
-    TransProb problem(grid, var, wetmat, nonwetmat, soil, grid.maxLevel(), materialLaw, false);
+    typedef Dune::Testproblem_2p2c<GridView, NumberType> TransProb;
+    TransProb problem(gridview, var, wetmat, nonwetmat, soil, grid.maxLevel(), materialLaw, false);
 
-    typedef Dune::Multiphysics2p2c<GridType, NumberType> ModelType;
-    ModelType model(grid, problem, grid.maxLevel());
+    typedef Dune::Multiphysics2p2c<GridView, NumberType> ModelType;
+    ModelType model(gridview, problem);
 
     Dune::ExplicitEulerStep<GridType, ModelType> timestep;
     Dune::TimeLoop<GridType, ModelType > timeloop(tStart, tEnd, "mp", modulo, cFLFactor, 1e100, 1e100, timestep);

@@ -96,10 +96,7 @@ public:
         return param;
     }
 
-    LensSoil(const FieldVector<DT,dim>& outerLowerLeft = 0., const FieldVector<DT,dim>& outerUpperRight = 0,
-             const FieldVector<DT,dim>& innerLowerLeft = 0., const FieldVector<DT,dim>& innerUpperRight = 0)
-        : Matrix2p<Grid,Scalar>(),    outerLowerLeft_(outerLowerLeft), outerUpperRight_(outerUpperRight),
-          innerLowerLeft_(innerLowerLeft), innerUpperRight_(innerUpperRight)
+    LensSoil() : Matrix2p<Grid,Scalar>()
     {
         Kin_ = Kout_ = 0;
         for(int i = 0; i < dim; i++)
@@ -112,11 +109,17 @@ public:
     ~LensSoil()
     {}
 
+    //! Set the bounding box of the fine-sand lens
+    void setLensCoords(const FieldVector<DT,dim>& innerLowerLeft,
+                       const FieldVector<DT,dim>& innerUpperRight)
+    {
+        innerLowerLeft_ = innerLowerLeft;
+        innerUpperRight_ = innerUpperRight;
+    }
+
 private:
     FieldMatrix<DT,dim,dim> Kin_;
     FieldMatrix<DT,dim,dim> Kout_;
-    FieldVector<DT,dim> outerLowerLeft_;
-    FieldVector<DT,dim> outerUpperRight_;
     FieldVector<DT,dim> innerLowerLeft_;
     FieldVector<DT,dim> innerUpperRight_;
 };

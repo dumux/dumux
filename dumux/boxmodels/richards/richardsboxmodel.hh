@@ -24,6 +24,7 @@
 #include <dumux/boxmodels/boxscheme/boxscheme.hh>
 
 #include "richardsboxjacobian.hh"
+#include "richardsboxproblem.hh"
 
 namespace Dune
 {
@@ -61,7 +62,7 @@ namespace Dune
 template<class TypeTag >
 class RichardsBoxModel : public BoxScheme<TypeTag,  RichardsBoxModel<TypeTag> >
 {
-    typedef RichardsBoxModel<TypeTag>          ThisType;
+    typedef RichardsBoxModel<TypeTag>      ThisType;
     typedef BoxScheme<TypeTag, ThisType>   ParentType;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem))        Problem;

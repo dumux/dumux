@@ -1,6 +1,8 @@
+//$Id$
 /*****************************************************************************
- *   Copyright (C) 2008-2009 by Melanie Darcis                               *
  *   Copyright (C) 2008-2009 by Andreas Lauser                               *
+ *   Copyright (C) 2008-2009 by Melanie Darcis                               *
+ *   Copyright (C) 2008-2009 by Klaus Mosthaf                                *
  *   Copyright (C) 2008 by Bernd Flemisch                                    *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
@@ -14,6 +16,13 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief Element-wise calculation of the Jacobian matrix for problems
+ *        using the non-isothermal two-phase two-component box model.
+ *
+ */
 #ifndef DUMUX_NEW_2P2CNI_BOX_JACOBIAN_HH
 #define DUMUX_NEW_2P2CNI_BOX_JACOBIAN_HH
 
@@ -27,13 +36,13 @@
 
 namespace Dune
 {
-
-/** 
- * \brief The local jacobian operator for the non-isothermal
- *        two-phase, two-component model.
+/*!
+ * \ingroup TwoPTwoCNIBoxModel
+ * \brief Element-wise calculation of the Jacobian matrix for problems
+ *        using the two-phase two-component box model.
  */
 template<class TypeTag>
-class TwoPTwoCNIBoxJacobian 
+class TwoPTwoCNIBoxJacobian
     : public TwoPTwoCBoxJacobianBase<TypeTag, TwoPTwoCNIBoxJacobian<TypeTag> >
 {
     typedef TwoPTwoCNIBoxJacobian<TypeTag>               ThisType;
@@ -95,6 +104,7 @@ public:
         const VertexDataArray &elemDat = usePrevSol ? this->prevElemDat_  : this->curElemDat_;
         const VertexData  &vertDat = elemDat[scvIdx];
 
+        // compute the energy storage
         result[temperatureIdx] =
             vertDat.porosity*(vertDat.density[wPhase] *
                               vertDat.intEnergy[wPhase] *
@@ -111,8 +121,11 @@ public:
     }
 
     /*!
-     * \brief Sets the temperature term of the flux vector to the
-     *        heat flux due to advection of the fluids.
+     * \brief Evaluates the advective mass flux and the heat flux
+     * over a face of a subcontrol volume and writes the result in
+     * the flux vector.
+     *
+     * This method is called by compute flux (base class)
      */
     void computeAdvectiveFlux(PrimaryVarVector &flux,
                               const FluxData &fluxData) const
@@ -158,7 +171,7 @@ public:
     // internal method!
     template <class PrimaryVarVector>
     Scalar temperature(const PrimaryVarVector &sol)
-    { 
+    {
         return sol[temperatureIdx];
     }
 };

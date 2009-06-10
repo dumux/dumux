@@ -23,6 +23,7 @@
 #define DUMUX_TWOP_BOX_MODEL_HH
 
 #include "2pboxjacobian.hh"
+#include "2pboxproblem.hh"
 
 namespace Dune
 {
@@ -46,7 +47,7 @@ namespace Dune
  * approach as the equation for the conservation of momentum: 
  \f[
  v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} K 
- \left(\grad p_\alpha - \varrho_{\alpha} \boldsymbol{g} \right)
+ \left(\text{grad} p_\alpha - \varrho_{\alpha} \boldsymbol{g} \right)
  \f]
  * 
  * By inserting this into the equation for the conservation of the
@@ -54,8 +55,8 @@ namespace Dune
  \f[
  \phi \frac{\partial \varrho_\alpha S_\alpha}{\partial t} 
  - 
- \Div \left\{
- \varrho_\alpha \frac{k_{r\alpha}}{\mu_\alpha} K \left(\grad p_\alpha - \varrho_{\alpha} \boldsymbol{g} \right)
+ \text{div} \left\{
+ \varrho_\alpha \frac{k_{r\alpha}}{\mu_\alpha} K \left(\text{grad} p_\alpha - \varrho_{\alpha} \boldsymbol{g} \right)
  \right\} = q_\alpha \;,
  \f]
  * which is discretized by this model using the fully-coupled vertex
@@ -69,7 +70,7 @@ namespace Dune
  * chosing either \f$p_w\f$ and \f$S_n\f$ or \f$p_n\f$ and \f$S_w\f$
  * as primary variables. The formulation which ought to be used can be
  * specified by setting the <tt>Formulation</tt> property to either
- * either <tt>TwoPIndices::pWsN</tt> or <tt>TwoPIndices::pNsW</tt>. By
+ * either <tt>TwoPCommonIndices::pWsN</tt> or <tt>TwoPCommonIndices::pNsW</tt>. By
  * default, the model uses \f$p_w\f$ and \f$S_n\f$.
  */
 template<class TypeTag >

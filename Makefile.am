@@ -4,7 +4,7 @@
 EXTRA_DIST=dune.module
 
 #SUBDIRS = doc dumux m4 lib test benchmarkproblems
-SUBDIRS = doc dumux m4 test
+SUBDIRS = doc dumux m4 test tutorial
 
 #pkgconfigdir = $(libdir)/pkgconfig
 #pkgconfig_DATA = dune-mux.pc

@@ -62,8 +62,9 @@ class TwoPTwoCVertexData
     typedef typename RefElemProp::Container                     ReferenceElements;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(TwoPTwoCIndices)) Indices;
-    typedef typename SolutionTypes::PrimaryVarVector  PrimaryVarVector;
-    typedef Dune::FieldVector<Scalar, numPhases>      PhasesVector;
+    typedef typename SolutionTypes::PrimaryVarVector               PrimaryVarVector;
+    typedef Dune::FieldVector<Scalar, numPhases>                   PhasesVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MultiComp))       MultiComp;
 
     typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
     typedef Dune::FieldVector<Scalar, dim>       LocalPosition;
@@ -85,7 +86,7 @@ public:
         const LocalPosition   &local =
             ReferenceElements::general(element.type()).position(vertIdx,
                                                                 dim);
-        int globalVertIdx = jac.problem().vertexIdx(element, vertIdx);
+        int globalVertIdx = jac.problem().model().dofEntityMapper().map(element, vertIdx, dim);
         int phaseState = jac.phaseState(globalVertIdx, isOldSol);
         Scalar temperature = jac.temperature(sol);
 
@@ -201,7 +202,7 @@ public:
      * Requires up to date pressures and saturations.
      */
     void updateMassFracs(const PrimaryVarVector &sol,
-                         MultiComp &multicomp,
+                         const MultiComp &multicomp,
                          int phaseState,
                          Scalar temperature)
     {

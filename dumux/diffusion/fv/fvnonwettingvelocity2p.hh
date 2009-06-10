@@ -1,14 +1,51 @@
 // $Id$
-
+/*****************************************************************************
+ *   Copyright (C) 2009 by Markus Wolff                                      *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
+ *                                                                           *
+ *   This program is free software; you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by    *
+ *   the Free Software Foundation; either version 2 of the License, or       *
+ *   (at your option) any later version, as long as this copyright notice    *
+ *   is included in its original form.                                       *
+ *                                                                           *
+ *   This program is distributed WITHOUT ANY WARRANTY.                       *
+ *****************************************************************************/
 #ifndef DUNE_FVNONWETTINGVELOCITY2P_HH
 #define DUNE_FVNONWETTINGVELOCITY2P_HH
+
+/**
+ * @file
+ * @brief  Finite Volume Diffusion Model
+ * @author Markus Wolff
+ */
 
 #include "dumux/diffusion/fv/fvpressure2p.hh"
 #include "dumux/diffusion/diffusionproblem.hh"
 
 namespace Dune
 {
-/** \todo Please doc me! */
+//! \ingroup diffusion
+//! Finite Volume Diffusion Model
+/*! Calculates non-wetting phase velocities from a known pressure field in context of a Finite Volume implementation for the evaluation
+ * of equations of the form
+ * \f[\text{div}\, \boldsymbol{v}_{total} = q.\f]
+ * The wetting or the non-wetting phase pressure has to be given as piecewise constant cell values.
+ * The velocity is calculated following  Darcy's law as
+ * \f[\boldsymbol{v}_n = \lambda_n \boldsymbol{K} \left(\text{grad}\, p_n + \rho_n g  \text{grad}\, z\right),\f]
+ * where, \f$p_n\f$ denotes the wetting phase pressure, \f$\boldsymbol{K}\f$ the absolute permeability, \f$\lambda_n\f$ the non-wetting phase mobility, \f$\rho_n\f$ the non-wetting phase density and \f$g\f$ the gravity constant.
+ * As in the two-phase pressure equation a total flux depending on a total velocity is considered one has to be careful at neumann flux boundaries. Here, a phase velocity is only uniquely defined, if
+ * the saturation is at the maximum (\f$1-S_{rw}\f$, \f$\boldsymbol{v}_{total} = \boldsymbol{v}_n\f$) or at the minimum (\f$ S_{rn} \f$, \f$\boldsymbol{v}_n = 0\f$)
+ *
+ * Template parameters are:
+ *
+ - GridView      a DUNE gridview type
+ - Scalar        type used for scalar quantities
+ - VC            type of a class containing different variables of the model
+ - Problem       class defining the physical problem
+ */
 
 template<class GridView, class Scalar, class VC,
         class Problem = DiffusionProblem<GridView, Scalar, VC> > class FVNonWettingPhaseVelocity2P: public FVPressure2P<
@@ -36,15 +73,40 @@ typedef    typename GridView::Traits::template Codim<0>::Entity Element;
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
 public:
+    //! Constructs a FVNonWettingPhaseVelocity2P object
+    /**
+     * \param gridView gridView object of type GridView
+     * \param problem a problem class object
+     * \param pressType a string giving the type of pressure used (could be: pw, pn, pglobal)
+     * \param satType a string giving the type of saturation used (could be: Sw, Sn)
+     */
     FVNonWettingPhaseVelocity2P(GridView& gridView, Problem& problem, std::string pressureType, std::string satType = "Sw")
     : FVPressure2P<GridView,Scalar,VC, Problem>(gridView, problem, pressureType, satType)
     {}
-
+    //! Constructs a FVNonWettingPhaseVelocity2P object
+    /**
+     * \param gridView gridView object of type GridView
+     * \param problem a problem class object
+     * \param pressType a string giving the type of pressure used (could be: pw, pn, pglobal)
+     * \param satType a string giving the type of saturation used (could be: Sw, Sn)
+     * \param solverName a string giving the type of solver used (could be: CG, BiCGSTAB, Loop)
+     * \param preconditionerName a string giving the type of the matrix preconditioner used (could be: SeqILU0, SeqPardiso)
+     */
     FVNonWettingPhaseVelocity2P(GridView& gridView, Problem& problem, std::string pressureType, std::string satType, std::string solverName,
             std::string preconditionerName)
     : FVPressure2P<GridView,Scalar,VC, Problem>(gridView, problem, pressureType, satType, solverName, preconditionerName)
     {}
 
+    //! Calculate the velocity.
+    /*!
+     *  \param t time
+     *
+     *
+     *  Given the piecewise constant pressure \f$p\f$,
+     *  this method calculates the velocity
+     *  The method is needed in the IMPES (Implicit Pressure Explicit Saturation) algorithm which is used for a fractional flow formulation
+     *  to provide the velocity field required for the solution of the saturation equation.
+     */
     void calculateVelocity(const Scalar t=0) const
     {
         // phase densities
@@ -155,6 +217,7 @@ public:
                     //do the upwinding of the mobility depending on the phase potentials
                     Scalar lambdaNW = (potentialNW >= 0.) ? lambdaNWI : lambdaNWJ;
 
+                    //calculate the gravity term
                     FieldVector<Scalar,dimWorld> velocity(permeability);
                     FieldVector<Scalar,dimWorld> gravityTerm(this->gravity);
                     for (int i=0;i<dim;i++)
@@ -162,6 +225,7 @@ public:
                         gravityTerm[i] *= permeability[i]*unitOuterNormal[i];
                     }
 
+                    //calculate velocity depending on the pressure used -> use pc = pn - pw
                     if (this->pressureType == pw)
                     {
                         velocity *= lambdaNW * (pressI - pressJ)/dist + 0.5 * (lambdaNWI + lambdaNWJ) * (pcI - pcJ) / dist;
@@ -224,6 +288,7 @@ public:
                         //do the upwinding of the mobility depending on the phase potentials
                         Scalar lambdaNW = (potentialNW >= 0.) ? lambdaNWI : lambdaNWBound;
 
+                        //calculate the gravity term
                         FieldVector<Scalar,dimWorld> velocity(normalPermeabilityI);
                         FieldVector<Scalar,dimWorld> gravityTerm(this->gravity);
                         for (int i=0;i<dim;i++)
@@ -231,6 +296,7 @@ public:
                             gravityTerm[i] *= normalPermeabilityI[i]*unitOuterNormal[i];
                         }
 
+                        //calculate velocity depending on the pressure used -> use pc = pn - pw
                         if (this->pressureType == pw)
                         {
                             velocity *= lambdaNW * (pressI - pressBound)/dist + 0.5 * (lambdaNWI + lambdaNWBound) * (pcI - pcBound) / dist;

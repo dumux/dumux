@@ -89,8 +89,7 @@ static const double n[35] = {
 class ConstrelWater
 {
 public:
-
-    double mass_density_water_IAPWS (double temperature, double pw) const
+    static double mass_density_water_IAPWS (double temperature, double pw)
     {
         double gam_pi;
         double pi, p_star;
@@ -125,7 +124,7 @@ public:
         return(rho);  /* unit: [kg/m^3] */
     }
 
-    double gamma_pi(double pi, double temperature) const
+    static double gamma_pi(double pi, double temperature)
     {
         int i;
         double T_star;
@@ -164,7 +163,7 @@ public:
     /************************************************************************/
 
 
-    double enthalpy_water (double temperature, double pw) const
+    static double enthalpy_water (double temperature, double pw)
     {
         double tau;
         const double T_star = 1386;    /* [K] */
@@ -190,7 +189,7 @@ public:
     }
 
 
-    double gamma_tau (double tau, double pw) const
+    static double gamma_tau (double tau, double pw)
     {
         const double p_star = 1.653E7;  /* [Pa] */
 
@@ -230,7 +229,7 @@ public:
     /*                                                                        */
     /**************************************************************************/
 
-    double mass_density_water_Batzle (double temperature, double pw) const
+    static double mass_density_water_Batzle (double temperature, double pw)
     {
         double tempC, pMPa, rhow;
 
@@ -256,7 +255,7 @@ public:
     /*                                                                         */
     /***************************************************************************/
 
-    double viscosity_water (double temperature, double pw) const
+    static double viscosity_water (double temperature, double pw)
     {
         double visco;
         double mu, mu0, mu1, mu_star;
@@ -340,7 +339,7 @@ public:
     /*                                                                  */
     /********************************************************************/
 
-    double mass_density_waterCO2 (double temperature, double pw, double x_CO2_w) const
+    static double mass_density_waterCO2 (double temperature, double pw, double x_CO2_w)
     {
         /* x_CO2_w : mole fraction of CO2 in water phase */
 
@@ -370,7 +369,7 @@ public:
 
     /*********************************************************************/
     /* CITATION??????????????????????????????????*************************/
-    double lambda_w (double temperature) const
+    static double lambda_w (double temperature)
     {
         static double l[11], t[11];
         double downT, downl, upT, upl, lambda;
@@ -416,7 +415,7 @@ public:
     /*********************************************************************/
 
 
-    double lambda_pm (double temperature, double p, double Sw, double phi) const
+    static double lambda_pm (double temperature, double p, double Sw, double phi)
     {
         double Sg, l_s, l_w, l_g, l_pm, l_dry, l_sat, llow, lhigh;
         ConstrelCO2 co2;
@@ -451,7 +450,7 @@ public:
 
 
     //! enthalpy of steam according to IAPWS 97, with T=383.15 K as reference temperature
-    double sp_enthalpy_IAPWS2(double temperature, double pg) const
+    static double sp_enthalpy_IAPWS2(double temperature, double pg)
     {
         static const double J0[10]={0.,0.,1.,-5.,-4.,-3.,-2.,-1.,2.,3.};
         static const double n0[10]={0.,-0.96927686500217E1, 0.10086655968018E2, -0.56087911283020E-2,

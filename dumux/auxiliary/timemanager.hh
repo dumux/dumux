@@ -27,6 +27,7 @@
 namespace Dune
 {
 /*!
+ * \addtogroup SimControl Simulation Supervision
  * \brief Simplify the handling of time dependent problems.
  *
  * This class manages a sequence of "episodes" which determine the
@@ -41,6 +42,9 @@ namespace Dune
  * behaves in a specific way. It is characerized by the
  * (simulated) time it starts, its length, an identifier, and a
  * consecutive index starting at 0.
+ *
+ * \todo Change the time manager to the property system (?) 
+ * \todo Remove the episode identifier stuff
  */
 template <class EpisodeIdentiferT>
 class TimeManager
@@ -73,7 +77,7 @@ public:
     }
 
     /*!
-     *  \defgroup time Simulated time and time step management
+     *  \name Simulated time and time step management
      * @{
      */
 
@@ -108,6 +112,12 @@ public:
      */
     double endTime() const
     { return endTime_; }
+
+    /*!
+     * \brief Set the time of simulated seconds at which the simulation runs.
+     */
+    void setEndTime(double val) 
+    { endTime_ = val; }
 
     /*!
      * \brief Set the suggested time step size to a fixed value.
@@ -160,13 +170,13 @@ public:
     { return finished_ || time() >= endTime(); }
 
 
-    /*!
+    /*
      * @}
      */
 
 
     /*!
-     * \defgroup episode Episode management
+     * \name episode Episode management
      * @{
      */
 
@@ -255,7 +265,7 @@ public:
     bool episodeIsOver() const
     { return time() >= episodeStartTime_ + (1-1e-6)*episodeLength(); }
 
-    /*!
+    /*
      * @}
      */
 
@@ -268,8 +278,6 @@ public:
     template <class Problem>
     void runSimulation(Problem &problem)
     {
-        typedef typename Problem::DomainTraits::Scalar  Scalar;
-
         if (verbose_)
             std::cout <<
                 "Welcome aboard DuMuX airlines. Please fasten your seatbelts! Emergency exits are near the time integration.\n";
@@ -282,8 +290,8 @@ public:
         problem.init();
 
         // do the time steps
-        Scalar curStepSize = 0;
-        Scalar nextStepSize = 0;
+        double curStepSize = 0;
+        double nextStepSize = 0;
         while (!finished())
         {
             // execute the time integration (i.e. Runge-Kutta
@@ -319,6 +327,10 @@ public:
     }
 
     /*!
+     * \name Saving/restoring the object state
+     * @{
+     */
+    /*!
      * \brief Write the time manager's state to a restart file.
      */
     template <class Restarter>
@@ -349,6 +361,9 @@ public:
         wasRestarted_ = true;
     };
 
+    /*
+     * @}
+     */
 private:
     int              episodeIndex_;
     double           episodeStartTime_;

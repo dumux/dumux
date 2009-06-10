@@ -1,4 +1,4 @@
-SUBDIRS = constrel phaseproperties
+SUBDIRS = constrel fluids
 
 materialdir = $(includedir)/dune/dumux/material
 material_HEADERS = matrixproperties.hh \

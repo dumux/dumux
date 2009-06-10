@@ -33,7 +33,7 @@ void usage(const char *progname)
 int main(int argc, char** argv)
 {
     try {
-        typedef TTAG(RichardsProblem)                 TypeTag;
+        typedef TTAG(RichardsTestProblem)             TypeTag;
         typedef GET_PROP_TYPE(TypeTag, PTAG(Scalar))  Scalar;
         typedef GET_PROP_TYPE(TypeTag, PTAG(Grid))    Grid;
         typedef GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
@@ -74,8 +74,8 @@ int main(int argc, char** argv)
         Dune::gridinfo(*gridPtr);
         
         // instantiate and run the concrete problem
-        Problem problem(&(*gridPtr), dt, tEnd);
-        if (!problem.simulate())
+        Problem problem(gridPtr->leafView());
+        if (!problem.simulate(dt, tEnd))
             return 2;
 
         return 0;

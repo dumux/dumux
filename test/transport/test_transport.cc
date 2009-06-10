@@ -4,7 +4,7 @@
 #include <dune/grid/sgrid.hh> // load sgrid definition
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/io.hh>
-#include "dumux/material/phaseproperties/phaseproperties2p.hh"
+#include "dumux/material/fluids/uniform.hh"
 #include "dumux/transport/fv/fvsaturationwetting2p.hh"
 #include "dumux/transport/problems/simpleproblem.hh"
 #include "dumux/transport/problems/simplenonlinearproblem.hh"

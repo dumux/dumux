@@ -19,8 +19,9 @@
 
 #include <dumux/boxmodels/2p2c/2p2cboxmodel.hh>
 
-#include <dumux/boxmodels/2p2cni/2p2cniboxjacobian.hh>
-#include <dumux/boxmodels/2p2cni/2p2cniproperties.hh>
+#include "2p2cniboxjacobian.hh"
+#include "2p2cniproperties.hh"
+#include "2p2cniboxproblem.hh"
 
 namespace Dune
 {

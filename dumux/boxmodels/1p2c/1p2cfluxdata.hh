@@ -129,9 +129,11 @@ private:
 
         // correct the pressure by the hydrostatic pressure due to
         // gravity
-        tmp = problem.gravity();
-        tmp *= densityAtIP;
-        pressureGrad -= tmp;
+        if (GET_PROP_VALUE(TypeTag, PTAG(EnableGravity))) {
+            tmp = problem.gravity();
+            tmp *= densityAtIP;
+            pressureGrad -= tmp;
+        }
     }
 
     void calculateVelocities_(const Problem &problem,

@@ -12,7 +12,7 @@
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
-#include "dumux/material/phaseproperties/phaseproperties2p.hh"
+#include <dumux/material/fluids/uniform.hh>
 #include <dumux/material/matrixproperties.hh>
 //
 #include "dumux/diffusion/fv/fvwettingvelocity2p.hh"

@@ -40,8 +40,8 @@ int main(int argc, char** argv)
 
 
         // instantiate and run the concrete problem
-        Problem problem(&(*gridPtr), dt, tEnd);
-        if (!problem.simulate())
+        Problem problem(gridPtr->leafView());
+        if (!problem.simulate(dt, tEnd))
             return 2;
 
         return 0;

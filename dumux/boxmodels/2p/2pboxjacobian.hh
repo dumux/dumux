@@ -80,6 +80,7 @@ protected:
     typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes)) SolutionTypes;
     typedef typename SolutionTypes::PrimaryVarVector        PrimaryVarVector;
     typedef typename SolutionTypes::SolutionFunction        SolutionFunction;
+    typedef typename SolutionTypes::DofEntityMapper         DofEntityMapper;
     typedef typename SolutionTypes::SolutionOnElement       SolutionOnElement;
 
     typedef Dune::FieldVector<Scalar, numPhases> PhasesVector;
@@ -303,17 +304,18 @@ public:
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
 
         // create the required scalar fields
-        unsigned numVertices = this->problem_.numVertices();
-        ScalarField *pW =           writer.template createField<Scalar, 1>(numVertices);
-        ScalarField *pN =           writer.template createField<Scalar, 1>(numVertices);
-        ScalarField *pC =           writer.template createField<Scalar, 1>(numVertices);
-        ScalarField *Sw =           writer.template createField<Scalar, 1>(numVertices);
-        ScalarField *Sn =           writer.template createField<Scalar, 1>(numVertices);
-        ScalarField *Te =           writer.template createField<Scalar, 1>(numVertices);
+        unsigned numVertices = this->problem_.gridView().size(dim);
+        ScalarField *pW = writer.template createField<Scalar, 1>(numVertices);
+        ScalarField *pN = writer.template createField<Scalar, 1>(numVertices);
+        ScalarField *pC = writer.template createField<Scalar, 1>(numVertices);
+        ScalarField *Sw = writer.template createField<Scalar, 1>(numVertices);
+        ScalarField *Sn = writer.template createField<Scalar, 1>(numVertices);
+        ScalarField *Te = writer.template createField<Scalar, 1>(numVertices);
 
+        const DofEntityMapper &dofMapper = this->problem_.model().dofEntityMapper();
         SolutionOnElement tmpSol;
-        ElementIterator elementIt = this->problem_.elementBegin();
-        ElementIterator endit = this->problem_.elementEnd();
+        ElementIterator elementIt = this->problem_.gridView().template begin<0>();
+        ElementIterator endit = this->problem_.gridView().template end<0>();
         for (; elementIt != endit; ++elementIt)
         {
             setCurrentElement(*elementIt);
@@ -323,8 +325,10 @@ public:
             int numVerts = elementIt->template count<dim>();
             for (int i = 0; i < numVerts; ++i)
             {
-                int globalIdx = this->problem_.vertexIdx(*elementIt, i);
-
+                int globalIdx = dofMapper.map(*elementIt, 
+                                              i,
+                                              dim);
+                
                 (*pW)[globalIdx] = this->curElemDat_[i].pressure[wPhase];
                 (*pN)[globalIdx] = this->curElemDat_[i].pressure[nPhase];
                 (*pC)[globalIdx] = this->curElemDat_[i].pC;

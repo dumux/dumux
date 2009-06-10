@@ -8,7 +8,8 @@
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
 #include "test_fractionalflow_soilproperties.hh"
-#include "dumux/material/phaseproperties/phaseproperties2p.hh"
+#include <dumux/material/fluids/water.hh>
+#include <dumux/material/fluids/oil.hh>
 #include <dumux/material/twophaserelations.hh>
 #include "test_fractionalflow_testproblem.hh"
 #include "dumux/timedisc/timeloop.hh"

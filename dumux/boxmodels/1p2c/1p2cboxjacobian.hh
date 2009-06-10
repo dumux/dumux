@@ -175,8 +175,7 @@ public:
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
         
         // create the required scalar fields
-        unsigned numVertices = this->problem_.numVertices();
-        //unsigned numElements = this->problem_.numElements();
+        unsigned numVertices = this->gridView_.size(dim);
 
         ScalarField *pressure = writer.template createField<Scalar, 1>(numVertices);
         ScalarField *molefraction = writer.template createField<Scalar, 1>(numVertices);
@@ -184,8 +183,8 @@ public:
         SolutionOnElement tmpSol;
         VertexDataArray   elemDat;
 
-        ElementIterator elementIt = this->problem_.elementBegin();
-        ElementIterator endit = this->problem_.elementEnd();
+        ElementIterator elementIt = this->gridView_.template begin<0>();
+        const ElementIterator &endit = this->gridView_.template end<0>();
         for (; elementIt != endit; ++elementIt)
         {
             int numLocalVerts = elementIt->template count<dim>();
@@ -197,7 +196,7 @@ public:
             
             for (int i = 0; i < numLocalVerts; ++i)
             {
-                int globalIdx = this->problem_.vertexIdx(*elementIt, i);
+                int globalIdx = this->problem_.model().vertexMapper().map(*elementIt, i, dim);
                 
                 (*pressure)[globalIdx] = elemDat[i].pressure;
                 (*molefraction)[globalIdx] = elemDat[i].molefraction;

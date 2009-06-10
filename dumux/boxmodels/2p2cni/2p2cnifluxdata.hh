@@ -1,7 +1,8 @@
+//$Id$
 /*****************************************************************************
+ *   Copyright (C) 2008-2009 by Andreas Lauser                               *
  *   Copyright (C) 2008-2009 by Melanie Darcis                               *
  *   Copyright (C) 2008-2009 by Klaus Mosthaf                                *
- *   Copyright (C) 2008-2009 by Andreas Lauser                               *
  *   Copyright (C) 2008-2009 by Bernd Flemisch                               *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
@@ -16,13 +17,13 @@
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
 /*!
- * \file 
+ * \file
  *
  * \brief This file contains the data which is required to calculate
- *        all fluxes of components over a face of a finite volume.
+ *        all fluxes (mass of components and energy) over a face of a finite volume.
  *
  * This means pressure, concentration and temperature gradients, phase
- * densities at the intergration point, etc.
+ * densities at the integration point, etc.
  */
 #ifndef DUMUX_2P2CNI_FLUX_DATA_HH
 #define DUMUX_2P2CNI_FLUX_DATA_HH
@@ -33,12 +34,13 @@ namespace Dune
 {
 
 /*!
+ * \ingroup TwoPNIBoxModel
  * \brief This template class contains the data which is required to
- *        calculate all fluxes of components over a face of a finite
- *        volume for the two-phase, two-component model.
+ *        calculate all fluxes (mass of components and energy) over a face of a finite
+ *        volume for the non-isothermal two-phase, two-component model.
  *
  * This means pressure and concentration gradients, phase densities at
- * the intergration point, etc.
+ * the integration point, etc.
  */
 template <class TypeTag>
 class TwoPTwoCNIFluxData : public TwoPTwoCFluxData<TypeTag>
@@ -52,14 +54,14 @@ class TwoPTwoCNIFluxData : public TwoPTwoCFluxData<TypeTag>
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef std::vector<VertexData>                      VertexDataArray;
-    
+
     enum {
         dim           = GridView::dimension,
         dimWorld      = GridView::dimensionworld,
 
         numPhases     = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
     };
-    
+
     typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
     typedef Dune::FieldVector<Scalar, dim>       LocalPosition;
 
@@ -81,24 +83,24 @@ public:
     {
         temperatureGrad = 0;
 
-        // Harmonic mean of the heat conducitivities of the
+        // Harmonic mean of the heat conductivities of the
         // sub control volumes adjacent to the face
         heatCondAtIp = harmonicMean(elemDat[this->face->i].heatCond,
                                     elemDat[this->face->j].heatCond);
-        
+
         // calculate temperature gradient
         GlobalPosition tmp(0.0);
-        for (int idx = 0; idx < this->fvElemGeom.numVertices; idx++) 
+        for (int idx = 0; idx < this->fvElemGeom.numVertices; idx++)
         {
             tmp = this->face->grad[idx];
             tmp *= elemDat[idx].temperature;
             temperatureGrad += tmp;
         }
     }
-      
+
     //! temperature gradient
     GlobalPosition temperatureGrad;
-    
+
     //! heat conductivity at integration point
     Scalar heatCondAtIp;
 };

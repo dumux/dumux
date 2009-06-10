@@ -41,6 +41,9 @@ class TwoPBoxModel;
 template<class TypeTag>
 class TwoPBoxJacobian;
 
+template <class TypeTag, class Implementation>
+class TwoPBoxProblem;
+
 template <class TypeTag>
 class TwoPVertexData;
 
@@ -51,32 +54,75 @@ template <class TypeTag>
 class TwoPFluxData;
 
 /*!
- * \brief The indices for the isothermal two-phase model.
+ * \brief The common indices for the isothermal two-phase model.
+ */
+struct TwoPCommonIndices
+{   
+    // Formulations
+    static const int pWsN = 0; //!< Pw and Sn as primary variables
+    static const int pNsW = 1; //!< Pn and Sw as primary variables
+    
+    // Phase indices
+    static const int wPhase = 0; //!< Index of the wetting phase in a phase vector
+    static const int nPhase = 1; //!< Index of the non-wetting phase in a phase vector
+};
+    
+/*!
+ * \brief The indices for the \f$p_w-S_n\f$ formulation of the
+ *        isothermal two-phase model.
  *
  * \tparam PVOffset    The first index in a primary variable vector.
  */
-template <int PVOffset = 0>
-struct TwoPIndices
+template <int formulation = TwoPCommonIndices::pWsN, int PVOffset = 0>
+struct TwoPIndices : public TwoPCommonIndices
 {
     // Primary variable indices
     static const int pressureIdx   = PVOffset + 0; //!< Index for wetting/non-wetting phase pressure (depending on formulation) in a solution vector
     static const int saturationIdx = PVOffset + 1; //!< Index of the saturation of the non-wetting/wetting phase
-   
-    // Formulations
-    static const int pWsN = 0; //!< Pw and Sn as primary variables
-    static const int pNsW = 1; //!< Pn and Sw as primary variables
 
-    // Phase indices
-    static const int wPhase = 0; //!< Index of the wetting phase in a phase vector
-    static const int nPhase = 1; //!< Index of the non-wetting phase in a phase vector
+    // indices of the primary variables
+    static const int pW = PVOffset + 0; //!< Pressure index of the wetting phase
+    static const int sN = PVOffset + 1; //!< Saturation index of the wetting phase
 
     /*!
      * \brief Convert a index in a phase vector to an index in a
      *        vector of primary variables.
+     *
+     * \todo Come up with a better name for this method!
      */
     static int phase2Mass(int phaseIdx)
     {
         return PVOffset + phaseIdx;
+    };
+};
+
+/*!
+ * \brief The indices for the \f$p_w-S_n\f$ formulation of the
+ *        isothermal two-phase model.
+ *
+ * \tparam PVOffset    The first index in a primary variable vector.
+ */
+template <int PVOffset>
+struct TwoPIndices<TwoPCommonIndices::pNsW, PVOffset>
+    : public TwoPCommonIndices
+{
+    // Primary variable indices
+    static const int pressureIdx   = PVOffset + 0; //!< Index for wetting/non-wetting phase pressure (depending on formulation) in a solution vector
+    static const int saturationIdx = PVOffset + 1; //!< Index of the saturation of the non-wetting/wetting phase
+
+    // indices of the primary variables
+    static const int pN = PVOffset + 0; //!< Pressure index of the wetting phase
+    static const int sW = PVOffset + 1; //!< Saturation index of the wetting phase
+
+    /*!
+     * \brief Convert a index in a phase vector to an index in a
+     *        vector of primary variables.
+     *
+     * \todo Come up with a better name for this method!
+     */
+    static int phase2Mass(int phaseIdx)
+    {
+        return PVOffset + 1 - phaseIdx;
     };
 };
 
@@ -97,8 +143,7 @@ SET_INT_PROP(BoxTwoP, NumPhases,     2); //!< The number of phases in the 2p mod
 //! Set the default formulation to pWsN
 SET_INT_PROP(BoxTwoP, 
              Formulation,
-             GET_PROP_TYPE(TypeTag,
-                           PTAG(TwoPIndices))::pWsN);
+             TwoPCommonIndices::pWsN);
 
 //! Use the 2p local jacobian operator for the 2p model
 SET_TYPE_PROP(BoxTwoP, 
@@ -127,7 +172,10 @@ SET_SCALAR_PROP(BoxTwoP,
                 GET_PROP_VALUE(TypeTag, PTAG(UpwindAlpha)));
 
 //! The indices required by the isothermal 2p model
-SET_TYPE_PROP(BoxTwoP, TwoPIndices, TwoPIndices<0>);
+SET_PROP(BoxTwoP, TwoPIndices)
+{
+    typedef TwoPIndices<GET_PROP_VALUE(TypeTag, PTAG(Formulation)), 0> type;
+};
 
 // \}
 }

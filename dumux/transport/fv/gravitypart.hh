@@ -1,22 +1,50 @@
 // $Id: capillarydiffusion.hh 899 2008-12-08 19:02:34Z lauser $
-
+/*****************************************************************************
+ *   Copyright (C) 2007-2009 by Bernd Flemisch                               *
+ *   Copyright (C) 2008-2009 by Markus Wolff                                 *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
+ *                                                                           *
+ *   This program is free software; you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by    *
+ *   the Free Software Foundation; either version 2 of the License, or       *
+ *   (at your option) any later version, as long as this copyright notice    *
+ *   is included in its original form.                                       *
+ *                                                                           *
+ *   This program is distributed WITHOUT ANY WARRANTY.                       *
+ *****************************************************************************/
 #ifndef DUNE_GRAVITYPART_HH
 #define DUNE_GRAVITYPART_HH
 
 #include "dumux/transport/fv/convectivepart.hh"
 #include "dumux/transport/transportproblem.hh"
 
-//! \ingroup transport
-//! \defgroup diffPart Diffusive transport
 /**
  * @file
- * @brief  Base class for defining the diffusive part of an advection-diffusion equation
- * @author Bernd Flemisch, last changed by Markus Wolff
+ * @brief  Class for defining the gravity term of a saturation equation
+ * @author Markus Wolff
  */
+
 namespace Dune
 {
-/*!\ingroup diffPart
- * @brief  Base class for defining the diffusive part of an advection-diffusion equation
+/*!\ingroup convPart
+ * @brief  Class for defining the gravity term of a saturation equation
+ *
+ * Defines the gravity term of the form
+ * \f[
+ *  \bar \lambda \boldsymbol{K} \, (\rho_n - \rho_w) \, g \, \text{grad} \, z,
+ * \f]
+ *
+ * where \f$\bar \lambda = \lambda_w f_n = \lambda_n f_w\f$ and \f$\lambda\f$ is a phase mobility and \f$f\f$ a phase fractional flow function,
+ * \f$ \boldsymbol{K} \f$ is the intrinsic permeability, \f$\rho\f$ is a phase density and  \f$g\f$ is the gravity constant.
+
+ * Template parameters are:
+
+ - GridView      a DUNE gridview type
+ - Scalar        type used for scalar quantities
+ - VC            type of a class containing different variables of the model
+ - Problem       class defining the physical problem
  */
 template<class GridView, class Scalar, class VC,
         class Problem = TransportProblem<GridView, Scalar, VC> >
@@ -36,6 +64,14 @@ typedef    typename GridView::Grid Grid;
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
 public:
+    //! Returns the gravity term
+    /*! Returns convective term for current element face
+     *  @param[in] element        entity of codim 0
+     *  @param[in] satI           saturation of current element
+     *  @param[in] satJ           saturation of neighbor element
+     *  @param[in] indexInInside  face index in reference element
+     *  \return     gravity term of a saturation equation
+     */
     virtual FieldVector operator() (const Element& element, const Scalar satI, const Scalar satJ, const int indexInInside) const
     {
         // cell geometry type
@@ -133,7 +169,11 @@ public:
 
         return result;
     }
-
+    /*! @brief Constructs a GravityPart object
+     *  @param problem an object of class Dune::TransportProblem or derived
+     *  @param soil implementation of the solid matrix
+     *  @param preComput if preCompute = true previous calculated mobilities are taken, if preCompute = false new mobilities will be computed (for implicit Scheme)
+     */
     GravityPart (Problem& problem, Matrix2p<Grid, Scalar>& soil, const bool preComput = true)
     : problem_(problem), soil_(soil), preComput_(preComput)
     {
@@ -143,10 +183,10 @@ public:
     }
 
 private:
-    Problem& problem_;
-    Matrix2p<Grid, Scalar>& soil_;
-    const bool preComput_;
-    FieldVector gravity_;
+    Problem& problem_;//problem data
+    Matrix2p<Grid, Scalar>& soil_;//object derived from Dune::Matrix2p
+    const bool preComput_;//if preCompute = true the mobilities are taken from the variable object, if preCompute = false new mobilities will be taken (for implicit Scheme)
+    FieldVector gravity_;//gravity vector
 };
 }
 

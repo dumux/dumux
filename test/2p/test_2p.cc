@@ -131,17 +131,14 @@ int main(int argc, char** argv)
         lowerLeftLens[1] = 2.0;
         upperRightLens[0] = 4.0;
         upperRightLens[1] = 3.0;
-        Problem problem(&grid,
-                        lowerLeft, upperRight, 
-                        lowerLeftLens, upperRightLens, 
-                        dt, tEnd);
+        Problem problem(grid.leafView(), lowerLeftLens, upperRightLens);
 
         // load restart file if necessarry
         if (restart)
             problem.deserialize(restartTime);
 
         // run the simulation
-        if (!problem.simulate())
+        if (!problem.simulate(dt, tEnd))
             return 2;
 
         return 0;

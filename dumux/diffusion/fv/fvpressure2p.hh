@@ -1,5 +1,20 @@
 // $Id$
-
+/*****************************************************************************
+ *   Copyright (C) 2007-2009 by Bernd Flemisch                               *
+ *   Copyright (C) 2007-2009 by Jochen Fritz                                 *
+ *   Copyright (C) 2008-2009 by Markus Wolff                                 *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
+ *                                                                           *
+ *   This program is free software; you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by    *
+ *   the Free Software Foundation; either version 2 of the License, or       *
+ *   (at your option) any later version, as long as this copyright notice    *
+ *   is included in its original form.                                       *
+ *                                                                           *
+ *   This program is distributed WITHOUT ANY WARRANTY.                       *
+ *****************************************************************************/
 #ifndef DUNE_FVPRESSURE2P_HH
 #define DUNE_FVPRESSURE2P_HH
 
@@ -29,17 +44,24 @@ namespace Dune
 //! Finite Volume Diffusion Model
 /*! Provides a Finite Volume implementation for the evaluation
  * of equations of the form
- * \f$ - \text{div}\, (\lambda K \text{grad}\, p_w + f_n \text{grad}\, p_c + \sum f_\alpha \rho_\alpha g  \text{grad}\, z) = q, \f$,
- * \f$p = p_D\f$ on \f$\Gamma_1\f$, and
- * \f$ \lambda K \text{grad}\, p_w + f_n \text{grad}\, p_c + \sum f_\alpha \rho_\alpha g  \text{grad}\, z \cdot \mathbf{n} = q_N\f$
- * on \f$\Gamma_2\f$. Here,
- * \f$p_w\f$ denotes the wetting phase pressure, \f$K\f$ the absolute permeability,
- * and \f$\lambda\f$ the total mobility, possibly depending on the
- * saturation, \f$q\f$ the source term.
- Template parameters are:
-
- - Grid         a DUNE grid type
- - Scalar        type used for return values
+ * \f[\text{div}\, \boldsymbol{v}_{total} = q.\f]
+ * The definition of the total velocity \f$\boldsymbol{v}_total\f$ depends on the kind of pressure chosen. This could be a wetting (w) phase pressure leading to
+ * \f[ - \text{div}\,  \left[\lambda \boldsymbol{K} \left(\text{grad}\, p_w + f_n \text{grad}\, p_c + \sum f_\alpha \rho_\alpha g  \text{grad}\, z\right)\right] = q, \f]
+ * a non-wetting (n) phase pressure yielding
+ * \f[ - \text{div}\,  \left[\lambda \boldsymbol{K}  \left(\text{grad}\, p_n - f_w \text{grad}\, p_c + \sum f_\alpha \rho_\alpha g  \text{grad}\, z\right)\right] = q, \f]
+ * or a global pressure leading to
+ * \f[ - \text{div}\, \left[\lambda \boldsymbol{K} \left(\text{grad}\, p_{global} + \sum f_\alpha \rho_\alpha g  \text{grad}\, z\right)\right] = q.\f]
+ *  Here, \f$p\f$ denotes a pressure, \f$\boldsymbol{K}\f$ the absolute permeability, \f$\lambda\f$ the total mobility, possibly depending on the
+ * saturation,\f$f\f$ the fractional flow function of a phase, \f$\rho\f$ a phase density, \f$g\f$ the gravity constant and \f$q\f$ the source term.
+ * For all cases, \f$p = p_D\f$ on \f$\Gamma_{Neumann}\f$, and \f$\boldsymbol{v}_{total}  = q_N\f$
+ * on \f$\Gamma_{Dirichlet}\f$.
+ *
+ * Template parameters are:
+ *
+ - GridView      a DUNE gridview type
+ - Scalar        type used for scalar quantities
+ - VC            type of a class containing different variables of the model
+ - Problem       class defining the physical problem
  */
 template<class GridView, class Scalar, class VC,
         class Problem = DiffusionProblem<GridView, Scalar, VC> > class FVPressure2P: public Diffusion<
@@ -73,12 +95,27 @@ typedef    typename GridView::Traits::template Codim<0>::Entity Element;
     typedef BCRSMatrix<MB> MatrixType;
     typedef BlockVector<FieldVector<Scalar, 1> > Vector;
 
-public:
+    //initializes the matrix to store the system of equations
+    void initializeMatrix();
 
+    //constitutive functions are initialized and stored in the variables object
+    void initializeMaterialLaws();
+
+    //function which assembles the system of equations to be solved
     void assemble(bool first, const Scalar t);
 
+    //solves the system of equations to get the spatial distribution of the pressure
     void solve();
 
+public:
+    //! Calculate the pressure.
+    /*!
+     *  \param t time
+     *
+     *  Calculates the pressure \f$p\f$ as solution of the boundary value problem
+     *  \f[  \text{div}\, \boldsymbol{v} = q, \f]
+     *  subject to appropriate boundary conditions.
+     */
     void pressure(bool first = true, const Scalar t=0)
     {
         if (first)
@@ -95,11 +132,13 @@ public:
         return;
     }
 
-    void initializeMatrix();
-
-    //constitutive functions are initialized and stored in the variables object
-    void initializeMaterialLaws();
-
+    //! Constructs a FVPressure2P object
+    /**
+     * \param gridView gridView object of type GridView
+     * \param problem a problem class object
+     * \param pressType a string giving the type of pressure used (could be: pw, pn, pglobal)
+     * \param satType a string giving the type of saturation used (could be: Sw, Sn)
+     */
     FVPressure2P(GridView& gridView, Problem& problem, std::string pressType, std::string satType) :
     Diffusion<GridView, Scalar, VC, Problem>(gridView, problem),
     A_(problem.variables().gridSizeDiffusion(), problem.variables().gridSizeDiffusion(),
@@ -120,6 +159,15 @@ public:
         initializeMatrix();
     }
 
+    //! Constructs a FVPressure2P object
+    /**
+     * \param gridView gridView object of type GridView
+     * \param problem a problem class object
+     * \param pressType a string giving the type of pressure used (could be: pw, pn, pglobal)
+     * \param satType a string giving the type of saturation used (could be: Sw, Sn)
+     * \param solverName a string giving the type of solver used (could be: CG, BiCGSTAB, Loop)
+     * \param preconditionerName a string giving the type of the matrix preconditioner used (could be: SeqILU0, SeqPardiso)
+     */
     FVPressure2P(GridView& gridView, Problem& problem, std::string pressType, std::string satType, std::string solverName,
             std::string preconditionerName) :
     Diffusion<GridView, Scalar, VC, Problem>(gridView, problem),
@@ -147,11 +195,12 @@ private:
     std::string solverName_;
     std::string preconditionerName_;
 protected:
-    const FieldVector<Scalar,dimWorld>& gravity; // [m/s^2]
-    const int pressureType;
-    const int saturationType;
+    const FieldVector<Scalar,dimWorld>& gravity; //!< vector including the gravity constant
+    const int pressureType; //!< gives kind of pressure used (\f$ 0 = p_w\f$, \f$ 1 = p_n\f$, \f$ 2 = p_{global}\f$)
+    const int saturationType; //!< gives kind of saturation used (\f$ 0 = S_w\f$, \f$ 1 = S_n\f$)
 };
 
+//initializes the matrix to store the system of equations
 template<class GridView, class Scalar, class VC, class Problem> void FVPressure2P<GridView, Scalar, VC, Problem>::initializeMatrix()
 {
     // determine matrix row sizes
@@ -206,6 +255,7 @@ template<class GridView, class Scalar, class VC, class Problem> void FVPressure2
     return;
 }
 
+//function which assembles the system of equations to be solved
 template<class GridView, class Scalar, class VC, class Problem> void FVPressure2P<GridView, Scalar, VC, Problem>::assemble(bool first, const Scalar t=0)
 {
     // initialization: set matrix A_ to zero
@@ -334,12 +384,17 @@ template<class GridView, class Scalar, class VC, class Problem> void FVPressure2
 
                 // update diagonal entry
                 Scalar entry;
+                //if we are at the very first iteration a guess of the pressure field has to be calculated to to get phase potentials for the following calculation steps
                 if (first)
                 {
+                    //use central weights at the very first iteration
                     Scalar lambda = (lambdaI + lambdaJ) / 2;
-                    entry = fabs(lambda*faceVol*(permeability*distVec)/(dist*dist));
-                    Scalar factor = (fractionalWI + fractionalWJ) * (densityW) / 2 + (fractionalNWI + fractionalNWJ) * (densityNW) / 2;
 
+                    //calculate current matrix entry
+                    entry = fabs(lambda*faceVol*(permeability*distVec)/(dist*dist));
+
+                    //calculate right hand side
+                    Scalar factor = (fractionalWI + fractionalWJ) * (densityW) / 2 + (fractionalNWI + fractionalNWJ) * (densityNW) / 2;
                     f_[globalIdxI] -= factor * lambda * faceVol * (permeability * gravity);
 
                     if (pressureType == pw)
@@ -348,6 +403,7 @@ template<class GridView, class Scalar, class VC, class Problem> void FVPressure2
                         FieldVector<Scalar,dim> pCGradient = distVec;
                         pCGradient *= (pcI-pcJ)/(dist*dist);
 
+                        //add capillary pressure term to right hand side
                         f_[globalIdxI] -= 0.5 * (lambdaNWI + lambdaNWJ) *faceVol*(permeability*pCGradient);
                     }
                     if (pressureType == pn)
@@ -356,11 +412,14 @@ template<class GridView, class Scalar, class VC, class Problem> void FVPressure2
                         FieldVector<Scalar,dim> pCGradient = distVec;
                         pCGradient *= (pcI-pcJ)/(dist*dist);
 
+                        //add capillary pressure term to right hand side
                         f_[globalIdxI] += 0.5* (lambdaWI + lambdaWJ) *faceVol*(permeability*pCGradient);
                     }
                 }
+                //if a pressure field is knwon from previous calculations phase potentials can be calculated to determine upwind directions
                 else
                 {
+                    //calculate potential gradients
                     Scalar potentialW = 0;
                     Scalar potentialNW = 0;
 
@@ -383,6 +442,7 @@ template<class GridView, class Scalar, class VC, class Problem> void FVPressure2
                     potentialW += densityW * (unitOuterNormal * gravity);
                     potentialNW += densityNW * (unitOuterNormal * gravity);
 
+                    //store potentials for further calculations (velocity, saturation, ...)
                     this->diffProblem.variables().potentialWetting()[globalIdxI][indexInInside] = potentialW;
                     this->diffProblem.variables().potentialNonWetting()[globalIdxI][indexInInside] = potentialNW;
 
@@ -390,7 +450,10 @@ template<class GridView, class Scalar, class VC, class Problem> void FVPressure2
                     Scalar lambdaW = (potentialW >= 0.) ? lambdaWI : lambdaWJ;
                     Scalar lambdaNW = (potentialNW >= 0.) ? lambdaNWI : lambdaNWJ;
 
+                    //calculate current matrix entry
                     entry = (lambdaW + lambdaNW) * fabs(faceVol * (permeability * distVec) / (dist * dist));
+
+                    //calculate right hand side
                     Scalar rightEntry = (densityW * lambdaW + densityNW * lambdaNW) * faceVol * (permeability * gravity);
 
                     if (pressureType == pw)
@@ -399,6 +462,7 @@ template<class GridView, class Scalar, class VC, class Problem> void FVPressure2
                         FieldVector<Scalar,dim> pCGradient = distVec;
                         pCGradient *= (pcI-pcJ)/(dist*dist);
 
+                        //add capillary pressure term to right hand side
                         rightEntry += 0.5 * (lambdaNWI + lambdaNWJ)*faceVol*(permeability*pCGradient);
                     }
                     if (pressureType == pn)
@@ -407,9 +471,11 @@ template<class GridView, class Scalar, class VC, class Problem> void FVPressure2
                         FieldVector<Scalar,dim> pCGradient = distVec;
                         pCGradient *= (pcI-pcJ)/(dist*dist);
 
+                        //add capillary pressure term to right hand side
                         rightEntry -= 0.5*(lambdaWI + lambdaWJ) *faceVol*(permeability*pCGradient);
                     }
 
+                    //set right hand side
                     f_[globalIdxI] -= rightEntry;
                 }
                 // set diagonal entry
@@ -420,7 +486,6 @@ template<class GridView, class Scalar, class VC, class Problem> void FVPressure2
             }
 
             // boundary face
-
             else
             {
                 // center of face in global coordinates
@@ -435,6 +500,7 @@ template<class GridView, class Scalar, class VC, class Problem> void FVPressure2
                     FieldVector<Scalar,dimWorld> distVec(globalPosFace-globalPos);
                     Scalar dist = distVec.two_norm();
 
+                    //determine saturation at the boundary -> if no saturation is known directly at the boundary use the cell saturation
                     Scalar satBound;
                     if (bcTypeSat == BoundaryConditions::dirichlet)
                     {
@@ -445,11 +511,13 @@ template<class GridView, class Scalar, class VC, class Problem> void FVPressure2
                         satBound = this->diffProblem.variables().saturation()[globalIdxI];
                     }
 
+                    //get dirichlet pressure boundary condition
                     Scalar pressBound = this->diffProblem.dirichletPress(globalPosFace, *eIt, localPosFace);
                     Scalar pcBound = 0;
                     Scalar lambdaWBound = 0;
                     Scalar lambdaNWBound = 0;
 
+                    //calculate consitutive relations depending on the kind of saturation used
                     if (saturationType == Sw)
                     {
                         pcBound = this->diffProblem.materialLaw().pC(satBound, globalPosFace, *eIt, localPosFace);
@@ -466,10 +534,14 @@ template<class GridView, class Scalar, class VC, class Problem> void FVPressure2
                     }
                     Scalar pcI = this->diffProblem.variables().capillaryPressure()[globalIdxI];
 
+                    //if we are at the very first iteration a guess of the pressure field has to be calculated to to get phase potentials for the following calculation steps
                     if (first)
                     {
                         Scalar lambda = lambdaI;
+                        //calculate current matrix entry
                         A_[globalIdxI][globalIdxI] += lambda * faceVol * (normalPermeabilityI * distVec) / (dist * dist);
+
+                        //add dirichlet condition and gravity term to right hand side
                         f_[globalIdxI] += lambda * faceVol * pressBound * fabs((normalPermeabilityI * distVec) / (dist * dist));
                         f_[globalIdxI] -= (fractionalWI * densityW + fractionalNWI * densityNW) * lambda*faceVol*(normalPermeabilityI*gravity);
 
@@ -479,6 +551,7 @@ template<class GridView, class Scalar, class VC, class Problem> void FVPressure2
                             FieldVector<Scalar,dim> pCGradient = distVec;
                             pCGradient *= (pcI-pcBound)/(dist*dist);
 
+                            //add capillary pressure term to right hand side
                             f_[globalIdxI] -= 0.5*(lambdaNWI + lambdaNWBound) *faceVol*(normalPermeabilityI*pCGradient);
                         }
                         if (pressureType == pn)
@@ -487,15 +560,17 @@ template<class GridView, class Scalar, class VC, class Problem> void FVPressure2
                             FieldVector<Scalar,dim> pCGradient = distVec;
                             pCGradient *= (pcI-pcBound)/(dist*dist);
 
+                            //add capillary pressure term to right hand side
                             f_[globalIdxI] += 0.5*(lambdaWI + lambdaWBound)*faceVol*(normalPermeabilityI*pCGradient);
                         }
                     }
+                    //if a pressure field is knwon from previous calculations phase potentials can be calculated to determine upwind directions
                     else
                     {
                         Scalar potentialW = 0;
                         Scalar potentialNW = 0;
 
-                        // potential gradient
+                        //calculate potential gradient
                         if (pressureType == pw)
                         {
                             potentialW = (unitOuterNormal * distVec) * (this->diffProblem.variables().pressure()[globalIdxI] - pressBound) / (dist * dist);
@@ -515,6 +590,7 @@ template<class GridView, class Scalar, class VC, class Problem> void FVPressure2
                         potentialW += densityW * (unitOuterNormal * gravity);
                         potentialNW += densityNW * (unitOuterNormal * gravity);
 
+                        //store potential gradients for further calculations
                         this->diffProblem.variables().potentialWetting()[globalIdxI][indexInInside] = potentialW;
                         this->diffProblem.variables().potentialNonWetting()[globalIdxI][indexInInside] = potentialNW;
 
@@ -522,7 +598,10 @@ template<class GridView, class Scalar, class VC, class Problem> void FVPressure2
                         Scalar lambdaW = (potentialW >= 0.) ? lambdaWI : lambdaWBound;
                         Scalar lambdaNW = (potentialNW >= 0.) ? lambdaNWI : lambdaNWBound;
 
+                        //calculate current matrix entry
                         Scalar entry = (lambdaW + lambdaNW) * fabs(faceVol * (normalPermeabilityI * distVec) / (dist * dist));
+
+                        //calculate right hand side
                         Scalar rightEntry = (densityW * lambdaW + densityNW *lambdaNW) * faceVol * (normalPermeabilityI * gravity);
 
                         if (pressureType == pw)
@@ -531,6 +610,7 @@ template<class GridView, class Scalar, class VC, class Problem> void FVPressure2
                             FieldVector<Scalar,dim> pCGradient = distVec;
                             pCGradient *= (pcI - pcBound)/(dist*dist);
 
+                            //add capillary pressure term to right hand side
                             rightEntry += 0.5 * (lambdaNWI + lambdaNWBound) * faceVol*(normalPermeabilityI*pCGradient);
                         }
                         if (pressureType == pn)
@@ -539,6 +619,7 @@ template<class GridView, class Scalar, class VC, class Problem> void FVPressure2
                             FieldVector<Scalar,dim> pCGradient = distVec;
                             pCGradient *= (pcI - pcBound)/(dist*dist);
 
+                            //add capillary pressure term to right hand side
                             rightEntry -= 0.5 * (lambdaWI + lambdaWBound) *faceVol*(normalPermeabilityI*pCGradient);
 
                         }
@@ -549,10 +630,16 @@ template<class GridView, class Scalar, class VC, class Problem> void FVPressure2
                         f_[globalIdxI] -= rightEntry;
                     }
                 }
+                //set neumann boundary condition
                 else
                 {
                     Scalar J = this->diffProblem.neumannPress(globalPosFace, *eIt, localPosFace);
                     f_[globalIdxI] -= faceVol*J;
+
+                    //Assumes that the phases flow in the same direction at the neumann boundary, which is the direction of the total flux!!!
+                    //needed to determine the upwind direction in the saturation equation
+                    this->diffProblem.variables().potentialWetting()[globalIdxI][indexInInside] = J;
+                    this->diffProblem.variables().potentialNonWetting()[globalIdxI][indexInInside] = J;
                 }
             }
         }
@@ -561,6 +648,7 @@ template<class GridView, class Scalar, class VC, class Problem> void FVPressure2
     return;
 }
 
+//solves the system of equations to get the spatial distribution of the pressure
 template<class GridView, class Scalar, class VC, class Problem> void FVPressure2P<GridView, Scalar, VC, Problem>::solve()
 {
     MatrixAdapter<MatrixType,Vector,Vector> op(A_);

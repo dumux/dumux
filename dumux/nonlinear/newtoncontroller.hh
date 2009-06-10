@@ -54,15 +54,14 @@ template <class NewtonMethod,
 class NewtonControllerBase
 {
     typedef typename NewtonMethod::Model  Model;
-    typedef typename Model::DomainTraits  DomainTraits;
-    typedef typename Model::NewtonTraits  ModelNewtonTraits;
+    typedef typename Model::NewtonTraits  NewtonTraits;
 
 public:
-    typedef typename DomainTraits::Scalar  Scalar;
-    typedef typename DomainTraits::Grid    Grid;
+    typedef typename NewtonTraits::Scalar  Scalar;
+    typedef typename NewtonTraits::Grid    Grid;
 
-    typedef typename ModelNewtonTraits::Function              Function;
-    typedef typename ModelNewtonTraits::JacobianAssembler     JacobianAssembler;
+    typedef typename NewtonTraits::Function              Function;
+    typedef typename NewtonTraits::JacobianAssembler     JacobianAssembler;
     typedef typename JacobianAssembler::RepresentationType    JacAsmRep;
 
     NewtonControllerBase(Scalar tolerance, // maximum tolerated deflection between two iterations

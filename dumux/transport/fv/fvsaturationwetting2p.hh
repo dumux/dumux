@@ -1,5 +1,18 @@
 // $Id$
-
+/*****************************************************************************
+ *   Copyright (C) 2009 by Markus Wolff                                      *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
+ *                                                                           *
+ *   This program is free software; you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by    *
+ *   the Free Software Foundation; either version 2 of the License, or       *
+ *   (at your option) any later version, as long as this copyright notice    *
+ *   is included in its original form.                                       *
+ *                                                                           *
+ *   This program is distributed WITHOUT ANY WARRANTY.                       *
+ *****************************************************************************/
 #ifndef DUNE_FVSATURATIONWETTING2P_HH
 #define DUNE_FVSATURATIONWETTING2P_HH
 
@@ -11,17 +24,38 @@
 #include "dumux/transport/transport.hh"
 #include "dumux/transport/fv/numericalflux.hh"
 #include "dumux/transport/fv/diffusivepart.hh"
+#include "dumux/transport/fv/convectivepart.hh"
 
 /**
  * @file
- * @brief  Finite Volume Diffusion Model
- * @author Markus Wolff, Jochen Fritz
+ * @brief  Finite Volume discretization of the wetting phase saturation equation
+ * @author Markus Wolff
  */
 
 namespace Dune
 {
 //! \ingroup transport
-//! The finite volume model for the solution of the transport equation
+//! The finite volume model for the solution of the wetting phase saturation equation
+/*! Provides a Finite Volume implementation for the evaluation
+ *  of equations of the form
+ *  \f[
+ *    \frac{\partial S_w}{\partial t} + \text{div}\, \boldsymbol{v_w} = 0,
+ *  \f]
+ *  where \f$\boldsymbol{v}_w = \lambda_w \boldsymbol{K} \left(\text{grad}\, p_w + \rho_w g  \text{grad}\, z\right)\f$,
+ *  \f$p_w\f$ denotes the wetting phase pressure, \f$\boldsymbol{K}\f$ the absolute permeability, \f$\lambda_w\f$ the wetting phase mobility,
+ *  \f$\rho_w\f$ the wetting phase density and \f$g\f$ the gravity constant and \f$S_w\f$ the wetting phase saturation.
+ *  or where \f$\boldsymbol{v}_w = f_w \boldsymbol{v_{total}} + f_w \lambda_n \boldsymbol{K} \text{grad}\, p_c, \f$,
+ *  \f$f_w\f$ is the wetting phase fractional flow function, \f$\lambda_n\f$ is the non-wetting phase mobility, \f$\boldsymbol{K}\f$ the absolute permeability,
+ *  \f$p_c\f$ the capillary pressure and \f$S_w\f$ the wetting phase saturation.
+
+ Template parameters are:
+
+ - GridView      a DUNE gridview type
+ - Scalar        type used for scalar quantities
+ - VC            type of a class containing different variables of the model
+ - Problem       class defining the physical problem
+
+*/
 template<class GridView, class Scalar, class VC,
         class Problem = TransportProblem<GridView, Scalar, VC> >
 class FVSaturationWetting2P: public Transport<GridView, Scalar, VC, Problem>
@@ -50,42 +84,65 @@ typedef    typename VC::ScalarVectorType PressType;
     typedef Dune::FieldVector<Scalar,dim> LocalPosition;
     typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
 
+    //function to calculate the time step if a non-wetting phase velocity is used
+    Scalar evaluateTimeStepWettingFlux(Scalar timestepFactorIn, Scalar timestepFactorOutW ,Scalar& residualSatW, Scalar& residualSatNW, int globalIdxI);
+
+    //function to calculate the time step if a total velocity is used
+    Scalar evaluateTimeStepTotalFlux(Scalar timestepFactorIn,Scalar timestepFactorOut, Scalar diffFactorIn, Scalar diffFactorOut, Scalar& residualSatW, Scalar& residualSatNW);
+
+
 public:
-    typedef typename VC::ScalarVectorType RepresentationType;
+    typedef typename VC::ScalarVectorType RepresentationType;//!< Data type for a Vector of Scalars
+
+    //! Calculate the update vector.
     /*!
-     *  \param t time
-     *  \param dt time step size to estimate
-     *  \param update vector to be filled with the update
+     *  \param[in]  t         time
+     *  \param[in] dt         time step size
+     *  \param[in] updateVec  vector for the update values
+     *  \param[in] CLFFac     security factor for the time step criterion (0 < CLFFac <= 1)
+     *  \param[in] impes      variable is true if an impes algorithm is used and false if the transport part is solved independently
      *
-     *  This method calculates the update vector, i.e., the FV discretization
-     *  of \f$\text{div}\, \boldsymbol{v}_w\f$.
+     *  This method calculates the update vector \f$ u \f$ of the discretized equation
+     *  \f[
+     *   S_{w_{new}} = S_{w_{old}} - u,
+     *  \f]
+     *  where \f$ u = \sum_{element faces} \boldsymbol{v}_w * \boldsymbol{n} * A_{element face}\f$, \f$\boldsymbol{n}\f$ is the face normal and \f$A_{element face}\f$ is the face area.
      *
      *  Additionally to the \a update vector, the recommended time step size \a dt is calculated
      *  employing a CFL condition.
      */
     int update(const Scalar t, Scalar& dt, RepresentationType& updateVec, Scalar& cFLFac, bool impes);
 
+    //! Sets the initial solution \f$S_0\f$.
     void initialTransport();
 
-    Scalar evaluateTimeStepWettingFlux(Scalar timestepFactorIn, Scalar timestepFactorOutW ,Scalar& residualSatW, Scalar& residualSatNW, int globalIdxI);
-
-    Scalar evaluateTimeStepTotalFlux(Scalar timestepFactorIn,Scalar timestepFactorOut, Scalar diffFactorIn, Scalar diffFactorOut, Scalar& residualSatW, Scalar& residualSatNW);
-
+    //! Update the values of the material laws and constitutive relations.
+    /*!
+     *  Constitutive relations like capillary pressure-saturation relationships, mobility-saturation relationships... are updated and stored in the variable class
+     *  of type Dune::VariableClass2P. The update has to be done when new saturation are available.
+     */
     void updateMaterialLaws();
 
+    //! Write data files
+    /*!
+     *  \param name file name
+     *  \param k format parameter
+     */
     virtual void vtkout(const char* name, int k) const
     {
         this->transProblem.variables().vtkout(name, k);
         return;
     }
 
-    /*! @brief constructor
-     *
-     * @param grid a DUNE grid object
-     * @param problem an object of class TransportProblem or derived, or a different problem Type
+    //! Constructs a FVSaturationWetting2P object
+    /**
+     * \param gridView gridView object of type GridView
+     * \param problem a problem class object
+     * \param velocityType a string giving the type of velocity used (could be: vw, vt)
+     * \param diffPart a object of class Dune::DiffusivePart or derived from Dune::DiffusivePart (only used with vt)
      */
-    FVSaturationWetting2P(GridView& gridView, Problem& problem, std::string velocityType, DiffusivePart<GridView,Scalar>& diffPart = *(new DiffusivePart<GridView, Scalar>))
-    :Transport<GridView, Scalar, VC, Problem>(gridView, problem), diffusivePart_(diffPart),
+    FVSaturationWetting2P(GridView& gridView, Problem& problem, std::string velocityType, DiffusivePart<GridView,Scalar>& diffPart = *(new DiffusivePart<GridView, Scalar>), ConvectivePart<GridView,Scalar>& gravityPart = *(new ConvectivePart<GridView, Scalar>))
+    :Transport<GridView, Scalar, VC, Problem>(gridView, problem), diffusivePart_(diffPart), gravityPart_(gravityPart),
     velocityType_((velocityType == "vw") ? 0 : ((velocityType == "vt") ? 1 : 999))
     {
         if (velocityType_ == 999)
@@ -95,6 +152,7 @@ public:
     }
 private:
     const DiffusivePart<GridView, Scalar>& diffusivePart_;
+    const ConvectivePart<GridView, Scalar>& gravityPart_;
     const int velocityType_;
 };
 
@@ -204,15 +262,18 @@ int FVSaturationWetting2P<GridView, Scalar, VC, Problem>::update(const Scalar t,
                 // distance vector between barycenters
                 Dune::FieldVector<Scalar,dimWorld> distVec = globalPosNeighbor - globalPos;
 
+                //get phase potentials
                 Scalar potentialW = this->transProblem.variables().potentialWetting()[globalIdxI][indexInInside];
                 Scalar potentialNW = this->transProblem.variables().potentialNonWetting()[globalIdxI][indexInInside];
 
+                //get velocity*normalvector*facearea/(volume*porosity)
                 factor = (this->transProblem.variables().velocity()[globalIdxI][indexInInside] * unitOuterNormal) * faceArea / (volume*porosity);
 
                 if (velocityType_ == vt)
                 {
                     Scalar lambdaW, lambdaNW;
 
+                    //upwinding of lambda dependend on the phase potential gradients
                     if (potentialW >= 0.)
                     {
                         lambdaW = this->transProblem.variables().mobilityWetting()[globalIdxI];
@@ -231,6 +292,13 @@ int FVSaturationWetting2P<GridView, Scalar, VC, Problem>::update(const Scalar t,
                         lambdaNW = this->transProblem.variables().mobilityNonWetting()[globalIdxJ];
                     }
 
+                    Scalar satI = this->transProblem.variables().saturation()[globalIdxI];
+                    Scalar satJ = this->transProblem.variables().saturation()[globalIdxJ];
+
+                    Scalar gravityPart = gravityPart_(*eIt, indexInInside, satI, satJ)*unitOuterNormal * faceArea / (volume*porosity);
+
+                    factor += gravityPart;
+
                     //for time step criterion
                     Scalar krSum = lambdaW * viscosityW + lambdaNW * viscosityNW;
                     if (factor >= 0)
@@ -242,9 +310,6 @@ int FVSaturationWetting2P<GridView, Scalar, VC, Problem>::update(const Scalar t,
                         timestepFactorIn -= factor/(krSum*viscosityRatio);
                     }
 
-                    Scalar satI = this->transProblem.variables().saturation()[globalIdxI];
-                    Scalar satJ = this->transProblem.variables().saturation()[globalIdxJ];
-
                     Scalar pcI = this->transProblem.variables().capillaryPressure()[globalIdxI];
                     Scalar pcJ = this->transProblem.variables().capillaryPressure()[globalIdxJ];
 
@@ -255,9 +320,10 @@ int FVSaturationWetting2P<GridView, Scalar, VC, Problem>::update(const Scalar t,
                     Dune::FieldVector<Scalar,dimWorld> pcGradient = distVec;
                     pcGradient *= (pcJ - pcI)/(dist*dist);
 
-                    // get the diffusive part
+                    // get the diffusive part -> give 1-sat because sat = S_n and lambda = lambda(S_w) and pc = pc(S_w)
                     Scalar diffPart = diffusivePart_(*eIt, indexInInside, satI, satJ, pcGradient)*unitOuterNormal * faceArea / (volume*porosity);
 
+                    //for time step criterion
                     if (diffPart >= 0)
                     {
                         diffFactorOut += diffPart/(krSum*viscosityRatio);
@@ -272,7 +338,7 @@ int FVSaturationWetting2P<GridView, Scalar, VC, Problem>::update(const Scalar t,
                     factor += diffPart;
                 }
 
-                //for time step criterion
+                //for time step criterion if the wetting phase velocity is used
                 if (velocityType_ == vw)
                 {
                     if (potentialW >= 0)
@@ -285,7 +351,7 @@ int FVSaturationWetting2P<GridView, Scalar, VC, Problem>::update(const Scalar t,
                             Scalar lambdaNW = this->transProblem.variables().mobilityNonWetting()[globalIdxJ];
                             Scalar krSum = lambdaW * viscosityW + lambdaNW * viscosityNW;
 
-                            //                            std::cout<<(factor/(lambdaNW*potentialNW)*lambdaW*potentialW)<<std::endl;
+                            //get guess of wetting flux by weighting of the non-wetting flux with the potential gradients
                             timestepFactorIn -= factor/(lambdaW*potentialW*krSum*viscosityRatio)*lambdaNW*potentialNW;
                         }
 
@@ -304,6 +370,8 @@ int FVSaturationWetting2P<GridView, Scalar, VC, Problem>::update(const Scalar t,
                         {
                             lambdaNW = this->transProblem.variables().mobilityNonWetting()[globalIdxJ];
                             krSum = lambdaW * viscosityW + lambdaNW * viscosityNW;
+
+                            //get guess of wetting flux by weighting of the non-wetting flux with the potential gradients
                             timestepFactorIn -= factor/(lambdaW*potentialW*krSum*viscosityRatio)*lambdaNW*potentialNW;
                         }
 
@@ -335,15 +403,18 @@ int FVSaturationWetting2P<GridView, Scalar, VC, Problem>::update(const Scalar t,
 
                     Scalar satBound = this->transProblem.dirichletSat(globalPosFace, *eIt, localPosFace);
 
+                    //get phase potentials
                     Scalar potentialW = this->transProblem.variables().potentialWetting()[globalIdxI][indexInInside];
                     Scalar potentialNW = this->transProblem.variables().potentialNonWetting()[globalIdxI][indexInInside];
 
+                    //get velocity*normalvector*facearea/(volume*porosity)
                     factor = (this->transProblem.variables().velocity()[globalIdxI][indexInInside] * unitOuterNormal) * faceArea / (volume*porosity);
 
                     if (velocityType_ == vt)
                     {
                         Scalar lambdaW, lambdaNW;
 
+                        //upwinding of lambda dependend on the phase potential gradients
                         if (potentialW >= 0.)
                         {
                             lambdaW = this->transProblem.variables().mobilityWetting()[globalIdxI];
@@ -362,6 +433,12 @@ int FVSaturationWetting2P<GridView, Scalar, VC, Problem>::update(const Scalar t,
                             lambdaNW = this->transProblem.materialLaw().mobN((1-satBound),globalPosFace, *eIt, localPosFace);
                         }
 
+                        Scalar satI = this->transProblem.variables().saturation()[globalIdxI];
+
+                        Scalar gravityPart = gravityPart_(*eIt, indexInInside, satI, satBound)* unitOuterNormal * faceArea / (volume*porosity);
+
+                        factor += gravityPart;
+
                         //for time step criterion
                         Scalar krSum = lambdaW * viscosityW + lambdaNW * viscosityNW;
                         if (factor >= 0)
@@ -372,8 +449,6 @@ int FVSaturationWetting2P<GridView, Scalar, VC, Problem>::update(const Scalar t,
                         {
                             timestepFactorIn -= factor/(krSum*viscosityRatio);
                         }
-
-                        Scalar satI = this->transProblem.variables().saturation()[globalIdxI];
 
                         Scalar pcI = this->transProblem.variables().capillaryPressure()[globalIdxI];
                         Scalar pcBound = this->transProblem.materialLaw().pC(satBound,globalPosFace, *eIt, localPosFace);
@@ -388,6 +463,7 @@ int FVSaturationWetting2P<GridView, Scalar, VC, Problem>::update(const Scalar t,
                         // get the diffusive part
                         Scalar diffPart = diffusivePart_(*eIt, indexInInside, satI, satBound, pcGradient)* unitOuterNormal * faceArea / (volume*porosity);
 
+                        //for time step criterion
                         if (diffPart >= 0)
                         {
                             diffFactorOut += diffPart/(krSum*viscosityRatio);
@@ -402,7 +478,7 @@ int FVSaturationWetting2P<GridView, Scalar, VC, Problem>::update(const Scalar t,
                         factor += diffPart;
                     }
 
-                    //for time step criterion
+                    //for time step criterion if the wetting phase velocity is used
                     if (velocityType_ == vw)
                     {
                         if (potentialW >= 0)
@@ -415,6 +491,7 @@ int FVSaturationWetting2P<GridView, Scalar, VC, Problem>::update(const Scalar t,
                                 Scalar lambdaNW = this->transProblem.materialLaw().mobN(1-satBound,globalPosFace, *eIt, localPosFace);
                                 Scalar krSum = lambdaW * viscosityW + lambdaNW * viscosityNW;
 
+                                //get guess of wetting flux by weighting of the non-wetting flux with the potential gradients
                                 timestepFactorIn -= factor/(lambdaW*potentialW*krSum*viscosityRatio)*lambdaNW*potentialNW;
                             }
 
@@ -434,6 +511,7 @@ int FVSaturationWetting2P<GridView, Scalar, VC, Problem>::update(const Scalar t,
                                 lambdaNW = this->transProblem.materialLaw().mobW(1-satBound, globalPosFace, *eIt, localPosFace);
                                 krSum = lambdaW * viscosityW + lambdaNW * viscosityNW;
 
+                                //get guess of wetting flux by weighting of the non-wetting flux with the potential gradients
                                 timestepFactorIn -= factor/(lambdaW*potentialW*krSum*viscosityRatio)*lambdaNW*potentialNW;
                             }
 
@@ -455,6 +533,8 @@ int FVSaturationWetting2P<GridView, Scalar, VC, Problem>::update(const Scalar t,
             updateVec[globalIdxI] -= factor;
         }
         // end all intersections
+
+        //calculate time step
         if (velocityType_ == vw)
         {
             dt = std::min(dt, evaluateTimeStepWettingFlux(timestepFactorIn, timestepFactorOutW , residualSatW, residualSatNW, globalIdxI));
@@ -495,8 +575,10 @@ void FVSaturationWetting2P<GridView, Scalar, VC, Problem>::initialTransport()
 template<class GridView, class Scalar, class VC, class Problem>
 Scalar FVSaturationWetting2P<GridView, Scalar, VC, Problem>::evaluateTimeStepTotalFlux(Scalar timestepFactorIn,Scalar timestepFactorOut, Scalar diffFactorIn, Scalar diffFactorOut, Scalar& residualSatW, Scalar& residualSatNW)
 {
+    // compute volume correction
     Scalar volumeCorrectionFactor = (1 - residualSatW -residualSatNW);
 
+    //make sure correction is in the right range. If not: force dt to be not min-dt!
     if (timestepFactorIn <= 0)
     {
         timestepFactorIn = 1e-100;
@@ -508,6 +590,7 @@ Scalar FVSaturationWetting2P<GridView, Scalar, VC, Problem>::evaluateTimeStepTot
 
     Scalar sumFactor = std::min(volumeCorrectionFactor/timestepFactorIn, volumeCorrectionFactor/timestepFactorOut);
 
+    //make sure that diffFactor > 0
     if (diffFactorIn <= 0)
     {
         diffFactorIn = 1e-100;
@@ -519,6 +602,7 @@ Scalar FVSaturationWetting2P<GridView, Scalar, VC, Problem>::evaluateTimeStepTot
 
     Scalar minDiff = std::min(volumeCorrectionFactor/diffFactorIn,volumeCorrectionFactor/diffFactorOut);
 
+    //determine time step
     sumFactor = std::min(sumFactor, 0.1*minDiff);
 
     return sumFactor;
@@ -546,9 +630,11 @@ Scalar FVSaturationWetting2P<GridView, Scalar, VC, Problem>::evaluateTimeStepWet
         timestepFactorOutW = 1e-100;
     }
 
+    //correct volume
     timestepFactorIn = volumeCorrectionFactorIn/timestepFactorIn;
     timestepFactorOutW = volumeCorrectionFactorOutW/timestepFactorOutW;
 
+    //determine timestep
     Scalar timestepFactor = std::min(timestepFactorIn,timestepFactorOutW);
 
     return timestepFactor;

@@ -5,7 +5,7 @@
 //#include <dumux/material/property_baseclasses.hh>
 #include <dumux/material/matrixproperties.hh>
 #include <dumux/material/twophaserelations.hh>
-#include <dumux/material/phaseproperties/phaseproperties_brineco2.hh>
+#include <dumux/material/fluids/brine_co2.hh>
 
 
 #include <dumux/auxiliary/timemanager.hh>

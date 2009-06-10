@@ -1,22 +1,48 @@
 // $Id$
-
+/*****************************************************************************
+ *   Copyright (C) 2007-2009 by Bernd Flemisch                               *
+ *   Copyright (C) 2008-2009 by Markus Wolff                                 *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
+ *                                                                           *
+ *   This program is free software; you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by    *
+ *   the Free Software Foundation; either version 2 of the License, or       *
+ *   (at your option) any later version, as long as this copyright notice    *
+ *   is included in its original form.                                       *
+ *                                                                           *
+ *   This program is distributed WITHOUT ANY WARRANTY.                       *
+ *****************************************************************************/
 #ifndef DUNE_CAPILLARYDIFFUSION_HH
 #define DUNE_CAPILLARYDIFFUSION_HH
 
 #include "dumux/transport/fv/diffusivepart.hh"
 #include "dumux/transport/transportproblem.hh"
 
-//! \ingroup transport
-//! \defgroup diffPart Diffusive transport
 /**
  * @file
- * @brief  Base class for defining the diffusive part of an advection-diffusion equation
+ * @brief  Class for defining the diffusive capillary pressure term of a saturation equation
  * @author Bernd Flemisch, Markus Wolff
  */
 namespace Dune
 {
 /*!\ingroup diffPart
- * @brief  Base class for defining the diffusive part of an advection-diffusion equation
+ * @brief  Class for defining the diffusive capillary pressure term of a saturation equation
+ *
+ * Defines the diffusive capillary pressure term of the form
+ * \f[
+ *  \bar \lambda \boldsymbol{K} \text{grad} \, p_c,
+ * \f]
+ * where \f$\bar \lambda = \lambda_w f_n = \lambda_n f_w\f$ and \f$\lambda\f$ is a phase mobility and \f$f\f$ a phase fractional flow function,
+ * \f$\boldsymbol{K}\f$ is the intrinsic permeability and \f$p_c = p_c(S_w) \f$ the capillary pressure.
+ *
+ * Template parameters are:
+
+ - GridView      a DUNE gridview type
+ - Scalar        type used for scalar quantities
+ - VC            type of a class containing different variables of the model
+ - Problem       class defining the physical problem
  */
 template<class GridView, class Scalar, class VC,
         class Problem = TransportProblem<GridView, Scalar, VC> >
@@ -36,6 +62,15 @@ typedef    typename GridView::Grid Grid;
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
 public:
+    //! Returns capillary diffusion term
+    /*! Returns capillary diffusion term for current element face
+     *  @param[in] element        entity of codim 0
+     *  @param[in] indexInInside  face index in reference element
+     *  @param[in] satI           saturation of current element
+     *  @param[in] satJ           saturation of neighbor element
+     *  @param[in] pcGradient     gradient of capillary pressure between element I and J
+     *  \return     capillary pressure term of the saturation equation
+     */
     virtual FieldVector operator() (const Element& element, const int indexInInside, Scalar satI, Scalar satJ, const FieldVector& pcGradient) const
     {
         // cell geometry type
@@ -113,15 +148,20 @@ public:
         return result;
     }
 
+    /*! @brief Constructs a CapillaryDiffusion object
+     *  @param problem an object of class Dune::TransportProblem or derived
+     *  @param soil implementation of the solid matrix
+     *  @param preComput if preCompute = true previous calculated mobilities are taken, if preCompute = false new mobilities will be computed (for implicit Scheme)
+     */
     CapillaryDiffusion (Problem& problem, Matrix2p<Grid, Scalar>& soil, const bool preComput = true)
     : problem_(problem), soil_(soil), preComput_(preComput), eps_(0.5)
     {}
 
 private:
-    Problem& problem_;
-    Matrix2p<Grid, Scalar>& soil_;
-    const bool preComput_;
-    Scalar eps_;
+    Problem& problem_;//problem data
+    Matrix2p<Grid, Scalar>& soil_;//object derived from Dune::Matrix2p
+    const bool preComput_;//if preCompute = true the mobilities are taken from the variable object, if preCompute = false new mobilities will be taken (for implicit Scheme)
+    Scalar eps_;//weighting factor for averaging of the mobilities -> default is central weight
 };
 }
 

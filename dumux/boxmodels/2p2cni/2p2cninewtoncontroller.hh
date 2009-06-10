@@ -1,3 +1,4 @@
+//$Id$
 /*****************************************************************************
  *   Copyright (C) 2008 by Bernd Flemisch, Andreas Lauser                    *
  *   Institute of Hydraulic Engineering                                      *
@@ -14,7 +15,7 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief A 2p2c specific controller for the newton solver.
+ * \brief A 2p2cni specific controller for the newton solver.
  *
  * This controller 'knows' what a 'physically meaningful' solution is
  * which allows the newton method to abort quicker if the solution is
@@ -27,7 +28,8 @@
 
 namespace Dune {
 /*!
- * \brief A 2p2c specific controller for the newton solver.
+ * \ingroup TwoPTwoCNIBoxModel
+ * \brief A 2p2cni specific controller for the newton solver.
  *
  * This controller 'knows' what a 'physically meaningful' solution is
  * which allows the newton method to abort quicker if the solution is
@@ -64,18 +66,11 @@ public:
     //! iterations required or on the variable switch
     Scalar suggestTimeStepSize(Scalar oldTimeStep) const
     {
-        /*
-          #warning "HACK: remove this:"
-          return std::min(1e6,
-          ParentType::suggestTimeStepSize(oldTimeStep));
-          // end hack
-          */
-
         // use function of the newtoncontroller
         return ParentType::suggestTimeStepSize(oldTimeStep);
     }
 
-    //! Returns true iff another iteration should be done.
+    //! Returns true if another iteration should be done.
     bool newtonProceed(Function &u)
     {
         return ParentType::newtonProceed(u);
@@ -96,18 +91,16 @@ public:
         return baseProceed;
     }
 
-    /** \todo Please doc me! */
-
 protected:
     friend class NewtonControllerBase<NewtonMethod, ThisType>;
-    //! called by the base class the get an indication of how physical
+    //! called by the base class to get an indication of how physical
     //! an iterative solution is 1 means "completely physical", 0 means
     //! "completely unphysical"
     Scalar physicalness_(Function &u)
     {
         return 1.0;
 
-        const Scalar switchVarNormFactor = 1e-1; // standarization value
+        const Scalar switchVarNormFactor = 1e-1; // standardisation value
 
         // the maximum distance of a Sn value to a physically
         // meaningful value.

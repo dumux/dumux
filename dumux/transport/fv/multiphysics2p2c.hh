@@ -41,11 +41,8 @@
 // dumux enviroment:
 #include "dumux/transport/fv/numericalflux.hh"
 #include "dumux/transport/fv/diffusivepart.hh"
-#include "dumux/transport/transportproblem2p2c.hh"
+#include "dumux/transport/decoupled2p2cproblem.hh"
 #include "dumux/pardiso/pardiso.hh"
-
-//! @author: Jochen Fritz
-// last change: 09.03.2009
 
 namespace Dune
 {
@@ -56,14 +53,18 @@ namespace Dune
  *                                                    *
  *####################################################*/
 
-//! Multiphysics model for two-phase two-component model and single-phase transport model
-/**
- * This class implements a compressible two-phase two-component model just as in class Decoupled2p2c connected with
- * an incompressible one-phase transport model.
- * The 2p2c model is applied everywhere, where two phases are present,the 1p transport model everywhere else. The choice
- * of the corresponding subdomains is done automatically.
+
+/** \ingroup MultiMulti
+ *
+ * \brief Multiphysics model for two-phase two-component and single-phase transport model
+ *
+ * This class implements a model with the same assumptions as in Decoupled2p2c. Furthermore,
+ * the wetting phase is assumed to be incompressible. The model domain is automatically divided
+ * in a single-phase and a two-phase domain. The full 2p2c model is only evaluated within the
+ * two-phase subdomain, whereas a single-phase transport model is computed in the rest of the
+ * domain. The functionality is the same as for Decoupled2p2c.
  */
-template<class Grid, class Scalar>
+template<class GridView, class Scalar>
 class Multiphysics2p2c
 {
     template<int dim>
@@ -75,16 +76,15 @@ class Multiphysics2p2c
         }
     };
 
-    enum{dim = Grid::dimension};
-    enum{dimworld = Grid::dimensionworld};
+    enum{dim = GridView::dimension};
+    enum{dimworld = GridView::dimensionworld};
 
     // grid typedefs
-    typedef typename Grid::LevelGridView GV;
-    typedef typename GV::IndexSet IS;
-    typedef typename GV::template Codim<0>::Iterator ElementIterator;
-    typedef typename Grid::template Codim<0>::EntityPointer EntityPointer;
-    typedef typename Grid::LevelGridView::IntersectionIterator IntersectionIterator;
-    typedef typename Grid::ctype ct;
+    typedef typename GridView::IndexSet IS;
+    typedef typename GridView::template Codim<0>::Iterator ElementIterator;
+    typedef typename GridView::template Codim<0>::EntityPointer EntityPointer;
+    typedef typename GridView::IntersectionIterator IntersectionIterator;
+    typedef typename GridView::Grid::ctype ct;
 
     // data typedefs
     typedef FieldMatrix<double,1,1> MB;
@@ -94,7 +94,7 @@ class Multiphysics2p2c
 public:
     typedef BlockVector< FieldVector<Scalar,1> > RepresentationType;
 
-    //! initializes the model and computes initial state
+    //! uses initial conditions from the problem definition to computes initial state
     void initial()
     {
         dinfo << "initialization of the model's variables ..."<<std::endl;
@@ -138,25 +138,24 @@ public:
     }
 
     //! Post processing step must be called at the end of every timestep
+    /**
+     * \param t time level at the end of timestep
+     * \param dt the timestep size
+     */
     void postProcessUpdate(double t, double dt);
 
-    //! grid level on which the simulation works
-    int level()
-    {
-        return level_;
-    }
-
     //! gives acces to the totalConcentration vector
+    /**
+     *   This is meant as interface to the timestepping scheme.
+     */
     RepresentationType& operator*()
     {
         return problem.variables.totalConcentration;
     }
 
-    // pressure equation functions:
-    void initializeMatrix();
-
     // graphical output
     /**
+     * writes a vtk file to <name>-<k>.vtk
      * @param name file name of output
      * @param k number of output file
      */
@@ -177,7 +176,7 @@ public:
                 C1[i] = problem.variables.totalConcentration[i];
         }
 
-        Dune::VTKWriter<GV> vtkwriter(grid_.levelView(0));
+        Dune::VTKWriter<GridView> vtkwriter(gridview_);
         vtkwriter.addCellData(problem.variables.saturation, "saturation [-]");
         vtkwriter.addCellData(problem.variables.pressure, "pressure[Pa]");
         vtkwriter.addCellData(C1, "total concentration 1 [kg/m^3]");
@@ -196,15 +195,17 @@ public:
     }
 
     //! access to grid object
-    const Grid& grid() const
+    const typename GridView::Grid& grid() const
     {
-        return grid_;
+        return gridview_.grid();
     }
 
 private:
     //********************************
     // private function declarations
     //********************************
+    void initializeMatrix();
+
     void initialguess();
 
     void transportInitial();
@@ -235,8 +236,7 @@ private:
     //********************************
 
     // common variables
-    Grid& grid_;
-    int level_;
+    GridView& gridview_;
     const IS& indexset;
     double timestep;
     const FieldVector<Scalar,dim> gravity;
@@ -245,7 +245,7 @@ private:
     BlockVector<FieldVector<bool,1> > subdomain;
 
     // variables for transport equation:
-    TransportProblem2p2c<Grid, Scalar>& problem;
+    DecoupledProblem2p2c<GridView, Scalar>& problem;
     RepresentationType upd;
 
     // variables for pressure equation:
@@ -257,13 +257,12 @@ private:
 public:
     // constructor
     Multiphysics2p2c(
-                     Grid& g,
-                     TransportProblem2p2c<Grid, Scalar>& prob,
-                     int lev = 0,
+                     GridView& gv,
+                     DecoupledProblem2p2c<GridView, Scalar>& prob,
                      const std::string solverName = "BiCGSTAB",
                      const std::string preconditionerName = "SeqILU0" )
-        :grid_(g), level_(lev), indexset(g.levelView(lev).indexSet()), gravity(prob.gravity()), problem(prob),
-         A(g.size(lev, 0),g.size(lev, 0), (2*dim+1)*g.size(lev, 0), BCRSMatrix<MB>::random), f(g.size(lev, 0)),
+        :gridview_(gv), indexset(gv.indexSet()), gravity(prob.gravity()), problem(prob),
+         A(gv.size(0),gv.size(0), (2*dim+1)*gv.size(0), BCRSMatrix<MB>::random), f(gv.size(0)),
          solverName_(solverName), preconditionerName_(preconditionerName)
     {
         problem.variables.volErr = 0;
@@ -282,12 +281,12 @@ public:
  *                                                    *
  *####################################################*/
 
-template<class Grid, class Scalar>
-void Multiphysics2p2c<Grid, Scalar>::initializeMatrix()
+template<class GridView, class Scalar>
+void Multiphysics2p2c<GridView, Scalar>::initializeMatrix()
 {
     // determine matrix row sizes
-    ElementIterator eItEnd = grid_.template lend<0>(level_);
-    for (ElementIterator eIt = grid_.template lbegin<0>(level_); eIt != eItEnd; ++eIt)
+    ElementIterator eItEnd = gridview_.template end<0>();
+    for (ElementIterator eIt = gridview_.template begin<0>(); eIt != eItEnd; ++eIt)
     {
         // cell index
         int globalIdxi = indexset.index(*eIt);
@@ -304,7 +303,7 @@ void Multiphysics2p2c<Grid, Scalar>::initializeMatrix()
     A.endrowsizes();
 
     // determine position of matrix entries
-    for (ElementIterator eIt = grid_.template lbegin<0>(level_); eIt != eItEnd; ++eIt)
+    for (ElementIterator eIt = gridview_.template begin<0>(); eIt != eItEnd; ++eIt)
     {
         // cell index
         int globalIdxi = indexset.index(*eIt);
@@ -339,8 +338,8 @@ void Multiphysics2p2c<Grid, Scalar>::initializeMatrix()
  * =\sum_{\kappa}\frac{\partial V}{\partial m^{\kappa}}q^{\kappa}\] \f$. See Paper SPE 99619.
  * This is done to account for the volume effects which appear when gas and liquid are dissolved iin each other.
  */
-template<class Grid, class Scalar>
-void Multiphysics2p2c<Grid, Scalar>::assemble(bool first, const Scalar t=0)
+template<class GridView, class Scalar>
+void Multiphysics2p2c<GridView, Scalar>::assemble(bool first, const Scalar t=0)
 {
     // initialization: set matrix A to zero
     A = 0;
@@ -356,8 +355,8 @@ void Multiphysics2p2c<Grid, Scalar>::assemble(bool first, const Scalar t=0)
     }
 
     // iterate over all cells in the grid
-    ElementIterator eItEnd = grid_.template lend<0>(level_);
-    ElementIterator eIt = grid_.template lbegin<0>(level_);
+    ElementIterator eItEnd = gridview_.template end<0>();
+    ElementIterator eIt = gridview_.template begin<0>();
     for (; eIt != eItEnd; ++eIt)
     {
         // get geometry infos about the cell...
@@ -786,8 +785,8 @@ void Multiphysics2p2c<Grid, Scalar>::assemble(bool first, const Scalar t=0)
 } // end function assemble
 
 
-template<class Grid, class Scalar>
-void Multiphysics2p2c<Grid, Scalar>::solve()
+template<class GridView, class Scalar>
+void Multiphysics2p2c<GridView, Scalar>::solve()
 {
     typedef FieldVector<double, 1> VB;
     typedef BlockVector<VB> Vector;
@@ -831,12 +830,12 @@ void Multiphysics2p2c<Grid, Scalar>::solve()
  *                                                    *
  *####################################################*/
 
-template<class Grid, class Scalar>
-void Multiphysics2p2c<Grid,Scalar>::initialguess()
+template<class GridView, class Scalar>
+void Multiphysics2p2c<GridView,Scalar>::initialguess()
 {
     // iterate through leaf grid an evaluate c0 at cell center
-    ElementIterator eItEnd = grid_.template lend<0>(level_);
-    for (ElementIterator eIt = grid_.template lbegin<0>(level_); eIt != eItEnd; ++eIt)
+    ElementIterator eItEnd = gridview_.template end<0>();
+    for (ElementIterator eIt = gridview_.template begin<0>(); eIt != eItEnd; ++eIt)
     {
         int globalIdx = indexset.index(*eIt);
 
@@ -885,12 +884,12 @@ void Multiphysics2p2c<Grid,Scalar>::initialguess()
 }//end function initialguess
 
 
-template<class Grid, class Scalar>
-void Multiphysics2p2c<Grid,Scalar>::transportInitial()
+template<class GridView, class Scalar>
+void Multiphysics2p2c<GridView,Scalar>::transportInitial()
 {
     // iterate through grid an evaluate c0 at cell center
-    ElementIterator eItEnd = grid_.template lend<0>(level_);
-    for (ElementIterator eIt = grid_.template lbegin<0>(level_); eIt != eItEnd; ++eIt)
+    ElementIterator eItEnd = gridview_.template end<0>();
+    for (ElementIterator eIt = gridview_.template begin<0>(); eIt != eItEnd; ++eIt)
     {
         int globalIdx = indexset.index(*eIt);
 
@@ -936,8 +935,8 @@ void Multiphysics2p2c<Grid,Scalar>::transportInitial()
     return;
 } //end function transportInitial
 
-template<class Grid, class Scalar>
-int Multiphysics2p2c<Grid,Scalar>::concentrationUpdate(const Scalar t, Scalar& dt, RepresentationType& updateVec)
+template<class GridView, class Scalar>
+int Multiphysics2p2c<GridView,Scalar>::concentrationUpdate(const Scalar t, Scalar& dt, RepresentationType& updateVec)
 {
     // initialize timestep dt very large
     dt = 1E100;
@@ -948,8 +947,8 @@ int Multiphysics2p2c<Grid,Scalar>::concentrationUpdate(const Scalar t, Scalar& d
     int which;
 
     // compute update vector
-    ElementIterator eItEnd = grid_.template lend<0>(level_);
-    for (ElementIterator eIt = grid_.template lbegin<0>(level_); eIt != eItEnd; ++eIt)
+    ElementIterator eItEnd = gridview_.template end<0>();
+    for (ElementIterator eIt = gridview_.template begin<0>(); eIt != eItEnd; ++eIt)
     {
         // get cell geometry informations
         GeometryType gt = eIt->geometry().type(); //geometry type
@@ -1216,8 +1215,8 @@ int Multiphysics2p2c<Grid,Scalar>::concentrationUpdate(const Scalar t, Scalar& d
     return which;
 } // end function "concentrationUpdate"
 
-template<class Grid, class Scalar>
-void Multiphysics2p2c<Grid,Scalar>::flashCalculation(double Z1, double p, double temp, double poro, double& sat, double& C1, double& C2, double& Xw1, double& Xn1)
+template<class GridView, class Scalar>
+void Multiphysics2p2c<GridView,Scalar>::flashCalculation(double Z1, double p, double temp, double poro, double& sat, double& C1, double& C2, double& Xw1, double& Xn1)
 {
     double K1 = problem.liquidPhase.p_vap(temp) / p;
     double K2 = 1. / (p * problem.liquidPhase.henry(temp));
@@ -1257,8 +1256,8 @@ void Multiphysics2p2c<Grid,Scalar>::flashCalculation(double Z1, double p, double
 
 } // end function flashCalculation
 
-template<class Grid, class Scalar>
-void Multiphysics2p2c<Grid,Scalar>::satFlash(double sat, double p, double temp, double poro, double& C1, double& C2, double& Xw1, double& Xn1)
+template<class GridView, class Scalar>
+void Multiphysics2p2c<GridView,Scalar>::satFlash(double sat, double p, double temp, double poro, double& C1, double& C2, double& Xw1, double& Xn1)
 {
     if (sat <= 0 || sat >= 1)
         DUNE_THROW(RangeError,
@@ -1281,8 +1280,8 @@ void Multiphysics2p2c<Grid,Scalar>::satFlash(double sat, double p, double temp, 
     C2  = poro* (sat * (1. - Xw1) * rho_w + (1-sat) * (1. - Xn1) * rho_n);
 }
 
-template<class Grid, class Scalar>
-void Multiphysics2p2c<Grid,Scalar>::volumeDerivatives(FieldVector<ct,dim> globalPos, EntityPointer ep, FieldVector<ct,dim> localPos, double T, double& dV_dm1, double& dV_dm2, double& dV_dp)
+template<class GridView, class Scalar>
+void Multiphysics2p2c<GridView,Scalar>::volumeDerivatives(FieldVector<ct,dim> globalPos, EntityPointer ep, FieldVector<ct,dim> localPos, double T, double& dV_dm1, double& dV_dm2, double& dV_dp)
 {
     int globalIdxi = indexset.index(*ep);
 
@@ -1334,8 +1333,8 @@ void Multiphysics2p2c<Grid,Scalar>::volumeDerivatives(FieldVector<ct,dim> global
     dV_dp = ((m1+m2) * (nuw1 * Vw_ + (1-nuw1) * Vg_) - volalt) /incp;
 }
 
-template<class Grid, class Scalar>
-void Multiphysics2p2c<Grid,Scalar>::postProcessUpdate(double t, double dt)
+template<class GridView, class Scalar>
+void Multiphysics2p2c<GridView,Scalar>::postProcessUpdate(double t, double dt)
 {
     problem.variables.volErr = 0.;
     int size = indexset.size(0);
@@ -1345,8 +1344,8 @@ void Multiphysics2p2c<Grid,Scalar>::postProcessUpdate(double t, double dt)
     double viscosityL, viscosityG;
 
     // iterate through leaf grid an evaluate c0 at cell center
-    ElementIterator eItEnd = grid_.template lend<0>(level_);
-    for (ElementIterator eIt = grid_.template lbegin<0>(level_); eIt != eItEnd; ++eIt)
+    ElementIterator eItEnd = gridview_.template end<0>();
+    for (ElementIterator eIt = gridview_.template begin<0>(); eIt != eItEnd; ++eIt)
     {
         int globalIdxi = indexset.index(*eIt);
         // get cell geometry informations
@@ -1447,8 +1446,8 @@ void Multiphysics2p2c<Grid,Scalar>::postProcessUpdate(double t, double dt)
 
 
 // harmonic mean of the permeability computed directly
-template<class Grid, class Scalar>
-typename Multiphysics2p2c<Grid,Scalar>::FMatrix Multiphysics2p2c<Grid,Scalar>::harmonicMeanK (FMatrix& Ki, const FMatrix& Kj) const
+template<class GridView, class Scalar>
+typename Multiphysics2p2c<GridView,Scalar>::FMatrix Multiphysics2p2c<GridView,Scalar>::harmonicMeanK (FMatrix& Ki, const FMatrix& Kj) const
 {
     double eps = 1e-20;
 

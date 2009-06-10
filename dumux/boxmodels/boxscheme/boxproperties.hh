@@ -94,9 +94,10 @@ public:
     typedef Dune::P1Function<GridView, Scalar, GridView, numEq>       SolutionFunction;
 
     /*!
-     * \brief The type which maps an entity to an index in the solution.
+     * \brief The type which maps an entity with an attached degree of
+     *        freedom to an index in the solution.
      */
-    typedef typename SolutionFunction::VM                              SolutionMapper;
+    typedef typename SolutionFunction::VM                              DofEntityMapper;
 
     /*!
      * \brief The type of a solution at a fixed time. 

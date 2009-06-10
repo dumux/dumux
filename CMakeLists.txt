@@ -180,4 +180,5 @@ add_definitions(-DHAVE_CONFIG_H)
 # tell cmake that we've got a few subdirectories. (that's the
 # directories where the actual programs are)
 add_subdirectory("test")
+add_subdirectory("tutorial")
 ##############

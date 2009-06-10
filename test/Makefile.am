@@ -9,8 +9,6 @@ SUBDIRS = . \
 	  fractionalflow \
 	  properties \
 	  richards \
-	  transport \
-	  tutorial
 
 include $(top_srcdir)/am/global-rules
 

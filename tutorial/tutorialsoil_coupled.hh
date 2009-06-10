@@ -1,5 +1,20 @@
-#ifndef TUTORIAL_SOILPROPERTIES
-#define TUTORIAL_SOILPROPERTIES
+// $Id$
+/*****************************************************************************
+ *   Copyright (C) 2008-2009 by Melanie Darcis                               *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
+ *                                                                           *
+ *   This program is free software; you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by    *
+ *   the Free Software Foundation; either version 2 of the License, or       *
+ *   (at your option) any later version, as long as this copyright notice    *
+ *   is included in its original form.                                       *
+ *                                                                           *
+ *   This program is distributed WITHOUT ANY WARRANTY.                       *
+ *****************************************************************************/
+#ifndef TUTORIALSOIL_COUPLED_HH
+#define TUTORIALSOIL_COUPLED_HH
 
 #include <dumux/material/matrixproperties.hh>
 
@@ -20,7 +35,7 @@ public:
     // function returning the intrinsic permeability tensor K
     // depending on the position within the domain
     const FieldMatrix<DT,n,n> &K (const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-coupled:permeability}@*/
-                                  const FieldVector<DT,n>& xi)
+                                  const FieldVector<DT,n>& xi) const
     {
         return K_;
     }

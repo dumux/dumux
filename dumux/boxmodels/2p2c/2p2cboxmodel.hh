@@ -15,20 +15,71 @@
 #ifndef DUMUX_NEW_2P2C_BOX_MODEL_HH
 #define DUMUX_NEW_2P2C_BOX_MODEL_HH
 
-#include <dumux/boxmodels/2p2c/2p2cboxjacobian.hh>
+#include "2p2cboxjacobian.hh"
+#include "2p2cboxproblem.hh"
 
 namespace Dune
 {
-/**
- * \brief Isothermal two-phase two-component model.
- *
- * This implements an isothermal two phase two component
- * model. 
- *
- * Depending on the value of the "Formulation" property, the primary
- * variables are either $p_w$ and $S_n;X$ or $p_n$ or $S_w;X$. By
- * default they are $p_w$ and $S_n$
+/*!
+ * \ingroup BoxProblems
+ * \defgroup TwoPTwoCBoxProblems Two-phase two-component box problems
  */
+
+/*!
+ * \ingroup BoxModels
+ * \defgroup TwoPTwoCBoxModel Two-phase two-component box model
+ */
+
+/*!
+ * \ingroup TwoPTwoCBoxModel
+ * \brief Adaption of the BOX scheme to the two-phase two-component flow model.
+ *
+ * This model implements two-phase two-component flow of two compressible and
+ * completely immiscible fluids \f$\alpha \in \{ w, n \}\f$ composed of the two components
+ * \f$\kappa \in \{ w, a \}\f$. The standard multiphase Darcy
+ * approach is used as the equation for the conservation of momentum:
+ * \f[
+     v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} K
+     \left(\text{grad} p_\alpha - \varrho_{\alpha} \boldsymbol{g} \right)
+ * \f]
+ *
+ * By inserting this into the equations for the conservation of the
+ * components, one gets one transport equation for each component
+ * \f{eqnarray*}
+    &&  \phi \frac{\partial (\sum_\alpha \varrho_\alpha X_\alpha^\kappa S_\alpha )}
+	{\partial t}
+	- \sum_\alpha \nabla \cdot \left\{ \varrho_\alpha X_\alpha^\kappa
+	\frac{k_{r\alpha}}{\mu_\alpha} \mbox{\bf K}
+    ({\bf \nabla} p_\alpha - \varrho_{\alpha} \mbox{\bf g}) \right\}
+	\nonumber \\ \nonumber \\
+    &-& \sum_\alpha \nabla \cdot \left\{{\bf D_{pm}^\kappa} \varrho_{\alpha} {\bf \nabla} X^\kappa_{\alpha} \right\}
+    - \sum_\alpha q_\alpha^\kappa = \quad 0 \qquad \kappa \in \{w, a\} \, ,
+	\alpha \in \{w, g\}
+ * \f}
+ *
+ * This is discretized in the model using the fully-coupled vertex
+ * centered finite volume (box) scheme as spatial and
+ * the implicit Euler method as temporal discretization.
+ *
+ * By using constitutive relations for the capillary pressure \f$p_c =
+ * p_n - p_w\f$ and relative permeability \f$k_{r\alpha}\f$ and taking
+ * advantage of the fact that \f$S_w + S_n = 1\f$ and \f$X^\kappa_w + X^\kappa_n = 1\f$, the number of
+ * unknowns can be reduced to two.
+ * The used primary variables are, like in the two-phase model, either \f$p_w\f$ and \f$S_n\f$
+ * or \f$p_n\f$ and \f$S_w\f$. The formulation which ought to be used can be
+ * specified by setting the <tt>Formulation</tt> property to either
+ * either <tt>TwoPTwoIndices::pWsN</tt> or <tt>TwoPTwoCIndices::pNsW</tt>. By
+ * default, the model uses \f$p_w\f$ and \f$S_n\f$.
+ * Moreover, the second primary variable depends on the phase state, since a
+ * primary variable switch is included. The phase state is stored for all nodes
+ * of the system. Following cases can be distinguished:
+ * \begin{enumerate}
+ *  \item both phases are present: The saturation is used (either\f$S_n\f$ or \f$S_w\f$, dependent on the chosen formulation)
+ *  \item only wetting phase is present: The mass fraction of air in the wetting phase \f$X^a_w\f$ is used
+ *  \item only non-wetting phase is present: The mass fraction of water in the non-wetting phase, \f$X^w_n\f$, is used
+ *  The following table summarizes the choice of the second primary variable and the respective switch criteria:
+ */
+
 template<class TypeTag, class Implementation >
 class TwoPTwoCBoxModelBase
     : public BoxScheme<TypeTag,
@@ -107,7 +158,7 @@ public:
     {
         // write primary variables
         ParentType::serializeEntity(outStream, vert);
-        
+
         twoPTwoCLocalJacobian_.serializeEntity(outStream, vert);
     };
 
