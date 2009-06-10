@@ -45,7 +45,7 @@ namespace Dune
  * \f$\alpha \in \{ w, n \}\f$ using a standard multiphase Darcy
  * approach as the equation for the conservation of momentum: 
  \f[
- \vec{v_\alpha} = - \frac{k_{r\alpha}}{\mu_\alpha} K 
+ v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} K 
  \left(\grad p_\alpha - \varrho_{\alpha} \boldsymbol{g} \right)
  \f]
  * 

@@ -74,6 +74,11 @@ public:
         return;
     }
 
+    virtual Problem& problem()
+    {
+        return diffProblem;
+    }
+
 
     //! always define virtual destructor in abstract base class
     virtual ~Diffusion()

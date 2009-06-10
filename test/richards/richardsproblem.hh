@@ -43,17 +43,13 @@
 
 #include "richardssoil.hh"
 
-/**
- * @file
- * @brief  Base class for defining an instance of a Richard`s problem, where water is inflitrating into an initially unsaturated zone.
- * @author Onur Dogan, Andreas Lauser
- */
-
 namespace Dune
 {
-//! base class that defines the parameters of the Richard`s equation
-/*! An interface for defining parameters of the Richard`s equation:
- * The domain is box shaped. All sides are closed (Neumann 0 boundary) except the top boundary,
+/*!
+ * \ingroup RichardsBoxProblems
+ * \brief  Base class for defining an instance of a Richard`s problem, where water is inflitrating into an initially unsaturated zone.
+ *
+ * The domain is box shaped. All sides are closed (Neumann 0 boundary) except the top boundary(Dirichlet),
  * where water is inflitrating into an initially unsaturated zone. Linear capillary pressure-saturation relationship is used.
  *
  * To run the simulation execute the following line in shell:

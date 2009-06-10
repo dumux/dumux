@@ -58,12 +58,13 @@ private:
     PotType potentialNonWetting_;
 
     bool multiscale_;
+    const int codim_;
 public:
 
     VariableClass(GridView& gridViewDiff, GridView& gridViewTrans, Scalar& initialSat = *(new Scalar(0)), Dune::FieldVector<Scalar, dim>& initialVel = *(new Dune::FieldVector<Scalar, dim> (0)))
     : gridViewDiffusion_(gridViewDiff), gridViewTransport_(gridViewTrans),
     indexSetDiffusion_(gridViewDiff.indexSet()),indexSetTransport_(gridViewTrans.indexSet()),
-    gridSizeDiffusion_(indexSetDiffusion_.size(0)),gridSizeTransport_(indexSetTransport_.size(0)), multiscale_(true)
+    gridSizeDiffusion_(indexSetDiffusion_.size(0)),gridSizeTransport_(indexSetTransport_.size(0)), multiscale_(true), codim_(0)
     {
         //resize to grid size
         pressure_.resize(gridSizeDiffusion_);
@@ -91,7 +92,36 @@ public:
     VariableClass(GridView& gridView, Scalar& initialSat = *(new Scalar(0)), Dune::FieldVector<Scalar, dim>& initialVel = *(new Dune::FieldVector<Scalar, dim> (0)))
     : gridViewDiffusion_(gridView), gridViewTransport_(gridView),
     indexSetDiffusion_(gridView.indexSet()),indexSetTransport_(gridView.indexSet()),
-    gridSizeDiffusion_(indexSetDiffusion_.size(0)),gridSizeTransport_(indexSetTransport_.size(0)), multiscale_(false)
+    gridSizeDiffusion_(indexSetDiffusion_.size(0)),gridSizeTransport_(indexSetTransport_.size(0)), multiscale_(false), codim_(0)
+    {
+        //resize to grid size
+        pressure_.resize(gridSizeDiffusion_);
+        velocity_.resize(gridSizeDiffusion_);
+        potentialWetting_.resize(gridSizeDiffusion_);
+        potentialNonWetting_.resize(gridSizeDiffusion_);
+        saturation_.resize(gridSizeTransport_);
+        mobilityWetting_.resize(gridSizeTransport_);//lambda is dependent on saturation! ->choose same size
+        mobilityNonWetting_.resize(gridSizeTransport_);
+        fracFlowFuncWetting_.resize(gridSizeTransport_);
+        fracFlowFuncNonWetting_.resize(gridSizeTransport_);
+        capillaryPressure_.resize(gridSizeTransport_);
+
+        //initialise variables
+        pressure_ = 0;
+        velocity_ = initialVel;
+        saturation_ = initialSat;
+        mobilityWetting_ = 0;
+        mobilityNonWetting_ = 0;
+        fracFlowFuncWetting_ = 0;
+        fracFlowFuncNonWetting_ = 0;
+        capillaryPressure_ = 0;
+        initializePotentials(initialVel);
+    }
+
+    VariableClass(GridView& gridView, int codim, Scalar& initialSat = *(new Scalar(0)), Dune::FieldVector<Scalar, dim>& initialVel = *(new Dune::FieldVector<Scalar, dim> (0)))
+    : gridViewDiffusion_(gridView), gridViewTransport_(gridView),
+    indexSetDiffusion_(gridView.indexSet()),indexSetTransport_(gridView.indexSet()),
+    gridSizeDiffusion_(indexSetDiffusion_.size(codim)),gridSizeTransport_(indexSetTransport_.size(codim)), multiscale_(false), codim_(codim)
     {
         //resize to grid size
         pressure_.resize(gridSizeDiffusion_);
@@ -260,6 +290,8 @@ public:
 
     void vtkoutMultiLevel(const char* name, int k) const
     {
+        if (codim_ == 0)
+        {
         if (multiscale_)
         {
             Dune::VTKWriter<GridView> vtkwriterpressure(gridViewDiffusion_);
@@ -281,6 +313,32 @@ public:
             vtkwriter.addCellData(saturation_, "saturation");
             vtkwriter.addCellData(pressure_, "pressure");
             vtkwriter.write(fname, VTKOptions::ascii);
+        }
+        }
+        if (codim_ == dim)
+        {
+        if (multiscale_)
+        {
+            Dune::VTKWriter<GridView> vtkwriterpressure(gridViewDiffusion_);
+            char fname[128];
+            sprintf(fname, "%s-press%05d", name, k);
+            vtkwriterpressure.addVertexData(pressure_, "pressure");
+            vtkwriterpressure.write(fname, Dune::VTKOptions::ascii);
+
+            Dune::VTKWriter<GridView> vtkwritersaturation(gridViewTransport_);
+            sprintf(fname, "%s-%05d", name, k);
+            vtkwritersaturation.addVertexData(saturation_, "saturation");
+            vtkwritersaturation.write(fname, VTKOptions::ascii);
+        }
+        else
+        {
+            VTKWriter<GridView> vtkwriter(gridViewDiffusion_);
+            char fname[128];
+            sprintf(fname, "%s-%05d", name, k);
+            vtkwriter.addVertexData(saturation_, "saturation");
+            vtkwriter.addVertexData(pressure_, "pressure");
+            vtkwriter.write(fname, VTKOptions::ascii);
+        }
         }
 
         return;

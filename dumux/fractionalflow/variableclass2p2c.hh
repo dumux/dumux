@@ -26,13 +26,13 @@
 namespace Dune {
 
 //! class including the variables needed for decoupled 2p2c computations.
-template<class G, class RT> class VariableClass2p2c
+template<class GridView, class Scalar> class VariableClass2p2c
 {
 public:
-    enum {n=G::dimension};
-    typedef typename G::ctype DT;
-    typedef Dune::BlockVector< Dune::FieldVector<RT,1> > ScalarType;
-    typedef typename G::Traits::template Codim<0>::Entity Entity;
+    enum {n=GridView::dimension};
+    typedef typename GridView::Grid::ctype ct;
+    typedef Dune::BlockVector< Dune::FieldVector<Scalar,1> > ScalarType;
+    typedef typename GridView::template Codim<0>::Entity Entity;
 
     ScalarType saturation;
     ScalarType pressure;
@@ -50,18 +50,15 @@ public:
         }
     };
 
-    typedef typename G::LevelGridView::IndexSet IS;
-    typedef typename G::LevelGridView GV;
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GV,ElementLayout>    ElementMapper;
-    G& grid;
-    ElementMapper mapper;
+    const typename GridView::IndexSet& indexset;
+    GridView& gridview;
 
 private:
     int size;
 public:
 
-    VariableClass2p2c(G& g, int lev = 0) :
-        grid(g), mapper( g.levelView(lev)), size(mapper.size())
+    VariableClass2p2c(GridView& gv) :
+        gridview(gv), indexset(gv.indexSet()), size(gv.size(0))
     {
         saturation.resize(size);
         pressure.resize(size);
@@ -87,16 +84,16 @@ public:
         return pressure;
     }
 
-    const Dune::FieldVector<RT,1>& sat(const Dune::FieldVector<DT,n>& x, const Entity& e,
-                                       const Dune::FieldVector<DT,n>& xi) const
+    const Dune::FieldVector<Scalar,1>& sat(const Dune::FieldVector<ct,n>& x, const Entity& e,
+                                       const Dune::FieldVector<ct,n>& xi) const
     {
-        return saturation[mapper.map(e)];;
+        return saturation[indexset.index(e)];;
     }
 
-    const Dune::FieldVector<RT,1>& press(const Dune::FieldVector<DT,n>& x, const Entity& e,
-                                         const Dune::FieldVector<DT,n>& xi) const
+    const Dune::FieldVector<Scalar,1>& press(const Dune::FieldVector<ct,n>& x, const Entity& e,
+                                         const Dune::FieldVector<ct,n>& xi) const
     {
-        return pressure[mapper.map(e)];
+        return pressure[indexset.index(e)];
     }
 
     /*! @brief writes all variables to a VTK File
@@ -114,7 +111,7 @@ public:
             C1[i] = totalConcentration[i];
             C2[i] = totalConcentration[i + size];
         }
-        VTKWriter<typename G::LevelGridView> vtkwriter(grid.levelView(0));
+        VTKWriter<GridView> vtkwriter(gridview);
         char fname[128];
         sprintf(fname, "%s-%05d", name, k);
         vtkwriter.addCellData(saturation, "saturation [-]");
@@ -133,7 +130,7 @@ public:
     }
 
     void vtkoutpressure(const char* name, int k) const {
-        VTKWriter<typename G::LeafGridView> vtkwriter(grid.leafView());
+        VTKWriter<GridView> vtkwriter(gridview);
         char fname[128];
         sprintf(fname, "%s-press%05d", name, k);
         vtkwriter.addCellData(pressure, "total pressure p~");

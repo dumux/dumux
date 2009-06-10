@@ -1,6 +1,6 @@
 //$Id$
 /*****************************************************************************
- *   Copyright (C) 2008 by Bernd Flemisch                                    *
+ *   Copyright (C) 2008-2009 by Onur Dogan                                   *
  *   Copyright (C) 2008-2009 by Andreas Lauser                               *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
@@ -18,7 +18,7 @@
  * \file
  *
  * \brief This file contains the data which is required to calculate
- *        the flux of fluid over a face of a finite volume.
+ *        the flux of the fluid over a face of a finite volume.
  */
 #ifndef DUMUX_1P_FLUX_DATA_HH
 #define DUMUX_1P_FLUX_DATA_HH
@@ -29,15 +29,17 @@ namespace Dune
 {
 
 /*!
+ * \ingroup OnePBoxModel
  * \brief This template class contains the data which is required to
- *        calculate the flux of fluid over a face of a finite volume.
+ *        calculate the flux of the fluid over a face of a
+ *        finite volume for the one-phase model.
  */
 template <class TypeTag>
 class OnePFluxData
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))   Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    
+
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem))    Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexData)) VertexData;
 
@@ -162,7 +164,7 @@ public:
     // darcy velocity in direction of the face normal
     Scalar vDarcyNormal;
 
-    // local index of the upwind vertex 
+    // local index of the upwind vertex
     int upstreamIdx;
     // local index of the downwind vertex
     int downstreamIdx;

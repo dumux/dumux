@@ -19,7 +19,10 @@
 namespace Dune
 {
 
-/** \todo Please doc me! */
+/**
+ * Defines soil properties for single phase flow problem
+ *
+ */
 
 
 //////////////////////////////////////////////////////////////////////////////////////////////

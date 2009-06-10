@@ -43,10 +43,10 @@ public:
     {
         Scalar t = 0;
         //initial saturations
-        this->initialTransport();
+        this->transport.initialTransport();
         //call function with true to get a first initialisation of the pressure field
-        this->pressure(true,t);
-        this->calculateVelocity(t);
+        this->diffusion.pressure(true,t);
+        this->diffusion.calculateVelocity(t);
 
         return;
     }
@@ -55,11 +55,11 @@ public:
     virtual int update(const Scalar t, Scalar& dt, RepresentationType& updateVec,
             Scalar cFLFactor = 1)
     {
-        PressType pressOldIter(this->transProblem.variables().pressure());
-        PressType pressHelp(this->transProblem.variables().gridSizeDiffusion());
-        int satSize = this->transProblem.variables().gridSizeTransport();
-        RepresentationType saturation(this->transProblem.variables().saturation());
-        RepresentationType satOldIter(this->transProblem.variables().saturation());
+        PressType pressOldIter(this->transport.problem().variables().pressure());
+        PressType pressHelp(this->transport.problem().variables().gridSizeDiffusion());
+        int satSize = this->transport.problem().variables().gridSizeTransport();
+        RepresentationType saturation(this->transport.problem().variables().saturation());
+        RepresentationType satOldIter(this->transport.problem().variables().saturation());
         RepresentationType satHelp(satSize);
         RepresentationType satDiff(satSize);
         RepresentationType updateOldIter(satSize);
@@ -67,7 +67,7 @@ public:
         RepresentationType updateDiff(satSize);
 
         //update constitutive functions
-        Transport::updateMaterialLaws();
+        this->transport.updateMaterialLaws();
 
         bool converg = false;
         int iter = 0;
@@ -79,22 +79,22 @@ public:
             iterTot++;
 
             // update pressure: give false as the pressure field is already initialised
-            this->pressure(false , t);
-            this->calculateVelocity(t);
+            this->diffusion.pressure(false , t);
+            this->diffusion.calculateVelocity(t);
 
             //calculate saturation defect
-            Transport::update(t, dt, updateVec,cFLFactor, true);
+            this->transport.update(t, dt, updateVec,cFLFactor, true);
 
             if (iterFlag)
             { // only needed if iteration has to be done
-                this->transProblem.variables().pressure() *= omega;
+                this->transport.problem().variables().pressure() *= omega;
                 pressHelp = pressOldIter;
                 pressHelp *= (1-omega);
-                this->transProblem.variables().pressure() += pressHelp;
-                pressOldIter = this->transProblem.variables().pressure();
+                this->transport.problem().variables().pressure() += pressHelp;
+                pressOldIter = this->transport.problem().variables().pressure();
 
                 updateHelp = updateVec;
-                saturation = this->transProblem.variables().saturation();
+                saturation = this->transport.problem().variables().saturation();
                 saturation += (updateHelp *= (dt*cFLFactor));
                 saturation *= omega;
                 satHelp = satOldIter;
@@ -139,7 +139,7 @@ public:
 
     virtual void vtkout(const char* name, int k) const
     {
-        this->transProblem.variables().vtkout(name, k);
+        this->transport.problem().variables().vtkout(name, k);
         return;
     }
 

@@ -13,9 +13,9 @@
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
 /*!
- * \file 
+ * \file
  *
- * \brief Contains the properties for the single-phase BOX model.
+ * \brief Contains the properties for the Richards BOX model.
  */
 #ifndef DUMUX_RICHARDS_PROPERTIES_DATA_HH
 #define DUMUX_RICHARDS_PROPERTIES_DATA_HH
@@ -24,6 +24,10 @@
 
 namespace Dune
 {
+/*!
+ * \addtogroup RichardsBoxModel
+ */
+// \{
 ////////////////////////////////
 // forward declarations
 ////////////////////////////////
@@ -58,7 +62,7 @@ SET_INT_PROP(BoxRichards, NumEq, 1);
 SET_INT_PROP(BoxRichards, NumPhases, 2);
 
 //! Use the 2p local jacobian operator for the 2p model
-SET_TYPE_PROP(BoxRichards, 
+SET_TYPE_PROP(BoxRichards,
               LocalJacobian,
               RichardsBoxJacobian<TypeTag>);
 
@@ -79,13 +83,14 @@ SET_SCALAR_PROP(BoxRichards, UpwindAlpha, 1.0);
 
 //! the upwind factor for the mobility. uses the value of UpwindAlpha
 //! if the property is not overwritten elsewhere
-SET_SCALAR_PROP(BoxRichards, 
-                MobilityUpwindAlpha, 
+SET_SCALAR_PROP(BoxRichards,
+                MobilityUpwindAlpha,
                 GET_PROP_VALUE(TypeTag, PTAG(UpwindAlpha)));
 
 //! The indices required by the isothermal single-phase model
 SET_TYPE_PROP(BoxRichards, RichardsIndices, Dune::RichardsIndices);
 
+// \}
 };
 
 } // end namepace

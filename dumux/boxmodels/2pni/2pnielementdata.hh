@@ -1,3 +1,4 @@
+//$Id$
 /*****************************************************************************
  *   Copyright (C) 2009 by Andreas Lauser                                    *
  *   Institute of Hydraulic Engineering                                      *
@@ -13,9 +14,9 @@
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
 /*!
- * \file 
+ * \file
  *
- * \brief This template class contains the quantities which are are
+ * \brief This template class contains the quantities which are
  *        constant within a finite element in the non-isothermal
  *        two-phase model.
  */
@@ -26,11 +27,13 @@
 
 namespace Dune
 {
-
 /*!
- * \brief This template class contains the quantities which are are
- *        constant within a finite element in the non-isothermal
- *        two-phase model.
+ * \ingroup TwoPNIBoxModel
+ * \brief This template class contains the quantities which are
+ *        constant within a finite element in the non-isothermal two-phase model.
+ *
+ * For the plain non-isothermal two-phase model everything is given on the finite
+ * volumes, so this class is empty.
  */
 template <class TypeTag>
 class TwoPNIElementData : public TwoPElementData<TypeTag>

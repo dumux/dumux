@@ -1,5 +1,7 @@
+//$Id:$
 /*****************************************************************************
- *   Copyright (C) 2009 by Andreas Lauser                                    *
+ *   Copyright (C) 2008-2009 by Andreas Lauser                               *
+ *   Copyright (C) 2008 by Bernd Flemisch                                    *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
@@ -13,9 +15,9 @@
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
 /*!
- * \file 
+ * \file
  *
- * \brief Contains the properties for the single-phase BOX model.
+ * \brief Defines the properties required for the onephase BOX model.
  */
 #ifndef DUMUX_1P_PROPERTIES_DATA_HH
 #define DUMUX_1P_PROPERTIES_DATA_HH
@@ -24,6 +26,10 @@
 
 namespace Dune
 {
+/*!
+ * \addtogroup OnePBoxModel
+ */
+// \{
 ////////////////////////////////
 // forward declarations
 ////////////////////////////////
@@ -58,7 +64,7 @@ SET_INT_PROP(BoxOneP, NumEq, 1);
 SET_INT_PROP(BoxOneP, NumPhases, 1);
 
 //! Use the 2p local jacobian operator for the 2p model
-SET_TYPE_PROP(BoxOneP, 
+SET_TYPE_PROP(BoxOneP,
               LocalJacobian,
               OnePBoxJacobian<TypeTag>);
 
@@ -79,13 +85,15 @@ SET_SCALAR_PROP(BoxOneP, UpwindAlpha, 1.0);
 
 //! the upwind factor for the mobility. uses the value of UpwindAlpha
 //! if the property is not overwritten elsewhere
-SET_SCALAR_PROP(BoxOneP, 
-                MobilityUpwindAlpha, 
+SET_SCALAR_PROP(BoxOneP,
+                MobilityUpwindAlpha,
                 GET_PROP_VALUE(TypeTag, PTAG(UpwindAlpha)));
 
 //! The indices required by the isothermal single-phase model
 SET_TYPE_PROP(BoxOneP, OnePIndices, OnePIndices);
 
+
+// \}
 };
 
 } // end namepace

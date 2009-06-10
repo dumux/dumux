@@ -26,7 +26,7 @@
  * \file
  *
  * \brief This file contains the data which is required to calculate
- *        the fluxes of all phases over a face of a finite volume.
+ *        all fluxes (mass and energy) of all phases over a face of a finite volume.
  *
  * This means pressure and temperature gradients, phase densities at
  * the integration point, etc.
@@ -40,11 +40,12 @@ namespace Dune
 {
 
 /*!
+ * \ingroup TwoPNIBoxModel
  * \brief This template class contains the data which is required to
- *        calculate all fluxes of all phases over a face of a finite
- *        volume for the non-isothermal two-phase model.
+ *        calculate all fluxes (mass and energy) of all phases over a
+ *        face of a finite volume for the non-isothermal two-phase model.
  *
- * This means pressure and temperature gradients, phase densities at
+ * This means pressure and concentration gradients, phase densities at
  * the integration point, etc.
  */
 template <class TypeTag>
@@ -59,14 +60,14 @@ class TwoPNIFluxData : public TwoPFluxData<TypeTag>
 
     typedef typename GridView::template Codim<0>::Entity Element;
     typedef std::vector<VertexData>                      VertexDataArray;
-    
+
     enum {
         dim           = GridView::dimension,
         dimWorld      = GridView::dimensionworld,
 
         numPhases     = GET_PROP_VALUE(TypeTag, PTAG(NumPhases)),
     };
-    
+
     typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
     typedef Dune::FieldVector<Scalar, dim>       LocalPosition;
 
@@ -88,7 +89,7 @@ public:
     {
         temperatureGrad = 0;
 
-        // Harmonic mean of the heat conducitivities of the
+        // Harmonic mean of the heat conductivities of the
         // sub control volumes adjacent to the face
         heatCondAtIp = harmonicMean(elemDat[this->face->i].heatCond,
                                     elemDat[this->face->j].heatCond);

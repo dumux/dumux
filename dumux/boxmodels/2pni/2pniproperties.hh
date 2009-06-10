@@ -15,6 +15,11 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief Defines the properties required for the non-isotherm two-phase BOX model.
+ */
 
 #ifndef DUMUX_2PNI_PROPERTIES_HH
 #define DUMUX_2PNI_PROPERTIES_HH
@@ -27,6 +32,11 @@
 
 namespace Dune
 {
+/*!
+ * \addtogroup TwoPNIBoxModel
+ */
+// \{
+
 ////////////////////////////////
 // forward declarations
 ////////////////////////////////
@@ -46,7 +56,7 @@ template <class TypeTag>
 class TwoPNIFluxData;
 
 /*!
- * \brief Enumerations for the non-isothermal 2-phase model
+ * \brief Enumerations for the non-isothermal two-phase model
  */
 template <int PVOffset = 0>
 class TwoPNIIndices : public TwoPIndices<PVOffset>
@@ -63,8 +73,8 @@ namespace Properties
 {
 SET_INT_PROP(BoxTwoPNI, NumEq,         3); //!< set the number of equations to 3
 
-//! Use the 2p2cni local jacobian operator for the 2p2cni model
-SET_TYPE_PROP(BoxTwoPNI, 
+//! Use the 2pni local jacobian operator for the 2pni model
+SET_TYPE_PROP(BoxTwoPNI,
               LocalJacobian,
               TwoPNIBoxJacobian<TypeTag>);
 
@@ -80,7 +90,7 @@ SET_TYPE_PROP(BoxTwoPNI, ElementData, TwoPNIElementData<TypeTag>);
 //! the FluxData property
 SET_TYPE_PROP(BoxTwoPNI, FluxData, TwoPNIFluxData<TypeTag>);
 
-//! The indices required by the non-isothermal 2p2c model
+//! The indices required by the non-isothermal two-phase model
 SET_TYPE_PROP(BoxTwoPNI, TwoPIndices,   TwoPNIIndices<0>);
 SET_TYPE_PROP(BoxTwoPNI, TwoPNIIndices, TwoPNIIndices<0>);
 

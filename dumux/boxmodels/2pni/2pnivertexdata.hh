@@ -28,7 +28,8 @@ namespace Dune
 {
 
 /*!
- * \brief Contains the quantities which are are constant within a
+ * \ingroup TwoPNIBoxModel
+ * \brief Contains the quantities which are constant within a
  *        finite volume in the non-isothermal two-phase model.
  */
 template <class TypeTag>
@@ -40,14 +41,14 @@ class TwoPNIVertexData : public TwoPVertexData<TypeTag>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
     typedef typename GridView::template Codim<0>::Entity Element;
-    
+
     enum {
         dim           = GridView::dimension,
         dimWorld      = GridView::dimensionworld,
 
         numPhases     = GET_PROP_VALUE(TypeTag, PTAG(NumPhases))
     };
-    
+
     typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))     SolutionTypes;
     typedef typename GET_PROP(TypeTag, PTAG(ReferenceElements)) RefElemProp;
     typedef typename RefElemProp::Container                     ReferenceElements;
@@ -69,7 +70,7 @@ public:
                 const Element          &element,
                 int                     vertIdx,
                 bool                    isOldSol,
-                JacobianImp            &jac) 
+                JacobianImp            &jac)
     {
         typedef Indices I;
 

@@ -13,7 +13,7 @@
  */
 
 /**
- * \defgroup fracflow Fractional Flow Formulation
+ * \defgroup fracflow decoupled and fractional flow
  */
 
 namespace Dune
@@ -32,24 +32,24 @@ namespace Dune
  */
 
 template<class GridView, class Diffusion, class Transport, class VC>
-class FractionalFlow  : public Transport, public Diffusion {
+class FractionalFlow
+{
 public:
-    typedef typename VC::ScalarVectorType RepresentationType;
+typedef    typename VC::ScalarVectorType RepresentationType;
     typedef typename Diffusion::ScalarType Scalar;
-
 
     virtual void initial() = 0;
 
     //! return const reference to saturation vector
     const RepresentationType& operator* () const
     {
-        return this->transProblem.variables().saturation();
+        return transport.problem().variables().saturation();
     }
 
     //! return reference to saturation vector
     RepresentationType& operator* ()
     {
-        return this->transProblem.variables().saturation();
+        return transport.problem().variables().saturation();
     }
 
     //! \brief Calculate the update vector.
@@ -71,15 +71,17 @@ public:
 
     virtual void vtkout (const char* name, int k) const = 0;
 
-
     //! Construct a FractionalFlow object.
-    FractionalFlow (Diffusion& diffusion, Transport& transport)
-        : Transport(transport), Diffusion(diffusion)
+    FractionalFlow (Diffusion& diff, Transport& trans)
+    : diffusion(diff), transport(trans)
     {}
 
     //! always define virtual destructor in abstract base class
-    virtual ~FractionalFlow () {}
-
+    virtual ~FractionalFlow ()
+    {}
+protected:
+    Diffusion& diffusion;
+    Transport& transport;
 };
 }
 #endif

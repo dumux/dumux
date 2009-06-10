@@ -15,7 +15,7 @@
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
 /*!
- * \file 
+ * \file
  *
  * \brief Contains the quantities which are are constant within a
  *        finite element in the richards model.
@@ -29,6 +29,7 @@
 namespace Dune
 {
 /*!
+ * \ingroup RichardsBoxModel
  * \brief This template class contains the quantities which are are
  *        constant within a finite element in the richards model.
  *

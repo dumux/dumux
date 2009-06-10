@@ -29,10 +29,12 @@
 namespace Dune
 {
 /**\ingroup properties
- * @brief Base class for matrix properties in case of two fluid phases
+ * @brief Base class for matrix properties in case of two fluid phases \\
  * phases are denoted by
- * w for wetting phase
- * n for non-wetting phase
+ * - w for wetting phase
+ * - n for non-wetting phase
+ * All properties of the porous medium and all quantities describing the interaction
+ * between porous medium and fluid phases are provided by the classes derived from this.
  */
 template<class Grid, class ScalarT>
 class Matrix2p
@@ -215,6 +217,8 @@ public:
 
 /**ingroup properties
  * @brief baseclass for fluid phases.
+ *
+ * Basic fluid properties for single- and multi-phase immiscible flow.
  */
 class Fluid
 {
@@ -286,6 +290,7 @@ public:
 
 /**\ingroup properties
  * @brief Base class for liquid phase of a binary gas liquid mixture
+ *
  * Base class for a liquid phase made up of two components, where one
  * is a solved gas.
  * The components are denoted by
@@ -410,6 +415,7 @@ protected:
 
 /**\ingroup properties
  * @brief Base class for the liquid phase of a gas liquid mixture
+ *
  * Base class for a liquid phase made up of two sorts of components:
  * The liquid components, denoted by "w" and the dissolved
  * gaseous components, denoted by "a"
@@ -521,6 +527,7 @@ private:
 
 /**\ingroup properties
  * @brief Base class for the gas phase of a binary gas liquid mixture
+ *
  * Base class for a gaseous phase made up of two components, where one
  * is a vaporized liquid.
  * The components are denoted by
@@ -639,6 +646,7 @@ protected:
 
 /**\ingroup properties
  * @brief Base class for the gaseous phase of a gas liquid mixture
+ *
  * Base class for a gaseous phase made up of two sorts of components:
  * The gaseous components, denoted by "a" and the
  * dissolved liquid components, denoted by "w"

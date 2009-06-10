@@ -31,7 +31,7 @@
 namespace Dune
 {
 /*!\ingroup 2pRel
- * \brief Provides all relative permeability and capillary pressure relationships
+ * \brief Provides all relative permeability and capillary pressure relationships.
  *
  *  Depending on the saturation \f$S_\text{w}\f$ and the viscosities \f$\mu_\text{w}\f$,\f$\mu_\text{n}\f$,
  *  the phase mobilities \f$\lambda_\text{w}\f$, \f$\lambda_\text{n}\f$,
@@ -39,7 +39,7 @@ namespace Dune
  *  \f$\text{d}p_\text{c}/\text{d}S_\text{e}\f$ can be calculated.
  *  Linear, Brooks-Corey, Van Genuchten or auxiliary Laws are chosen automaticaly due to flags which are
  *  specified in the member soil (class Matrix2p).
- *  Linear, Brooks-Corey and Van Genuchten Laws as derivated classes of RelPerm_pc are already members
+ *  Linear, Brooks-Corey and Van Genuchten Laws as derived classes of RelPerm_pc are already members
  *  of the class. Auxiliary relative permeability / capillary pressure saturation relationships can be
  *  added as constructor arguments.
  */
@@ -495,6 +495,11 @@ public:
         }
     }
 
+    /*! \brief relative permeabilities returned as vectors
+       *
+       *  \param saturationW the saturation of the wetting phase
+       *  \return the relative permeabilities as vector in order wetting, nonwetting
+       */
     virtual std::vector<double> kr (const double saturationW, const FieldVector<DT,n>& x, const Entity& e, const FieldVector<DT,n>& xi, double T=283.15) const
     {
         switch (soil.relPermFlag(x, e, xi))

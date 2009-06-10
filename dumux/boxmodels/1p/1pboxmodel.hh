@@ -1,4 +1,10 @@
+//$Id:$
 /*****************************************************************************
+ *   Copyright (C) 2007 by Peter Bastian                                     *
+ *   Institute of Parallel and Distributed System                            *
+ *   Department Simulation of Large Systems                                  *
+ *   University of Stuttgart, Germany                                        *
+ *                                                                           *
  *   Copyright (C) 2009 by Andreas Lauser                                    *
  *   Copyright (C) 2009 by Onur Dogan                                        *
  *   Institute of Hydraulic Engineering                                      *
@@ -23,12 +29,26 @@
 namespace Dune
 {
 /*!
+ * \ingroup BoxProblems
+ * \defgroup OnePBoxProblems One-phase box problems
+ */
+
+/*!
+ * \ingroup BoxModels
+ * \defgroup OnePBoxModel One-phase box model
+ */
+
+/*!
+ * \ingroup OnePBoxModel
  * \brief Adaption of the BOX scheme to the single phase isothermal flow model.
  *
  * Single phase isothermal flow model is implemented for compressible flow.
  * \f{align*}
  * \phi \frac{\partial \varrho}{\partial t} + \vec{\nabla} \cdot (- \varrho \frac{\bar{\bar{K}}}{\mu} ( \nabla p -\varrho \vec{g})) = q
  * \f}
+ * which is discretized by this model using vertex
+ * centered finite volume (box) scheme as spatial and
+ * the implicit Euler method as time discretization.
  * However, the model can also be used for incompressible single pahse flow modeling, when in problem file a fluid with constant density is chosen.
  */
 template<class TypeTag >

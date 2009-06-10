@@ -17,8 +17,7 @@
 /*!
  * \file
  *
- * \brief Quantities required by the isothermal richards box model
- *        defined on a vertex.
+ * \brief Quantities required by the richards box model defined on a vertex.
  */
 #ifndef DUMUX_RICHARDS_VERTEX_DATA_HH
 #define DUMUX_RICHARDS_VERTEX_DATA_HH
@@ -31,9 +30,9 @@ namespace Dune
 {
 
 /*!
- * \brief Data which is attached to each vertex of the and can be
- *        shared between multiple calculations and should thus be
- *        cached in order to increase efficency.
+ * \ingroup RichardsBoxModel
+ * \brief Contains the quantities which are are constant within a
+ *        finite volume in the Richards model.
  */
 template <class TypeTag>
 class RichardsVertexData

@@ -8,12 +8,13 @@ namespace Dune
 
 /** \todo Please doc me! */
 
-template<class Grid, class Scalar, class VC> class TutorialProblemDecoupled /*@\label{tutorial-decoupled:tutorialproblem}@*/
-    : public FractionalFlowProblem<Grid, Scalar, VC>
+template<class GridView, class Scalar, class VC> class TutorialProblemDecoupled /*@\label{tutorial-decoupled:tutorialproblem}@*/
+    : public FractionalFlowProblem<GridView, Scalar, VC>
 {
     enum
-        {dim=Grid::dimension, dimWorld = Grid::dimensionworld};
-    typedef typename Grid::Traits::template Codim<0>::Entity Element;
+        {dim=GridView::dimension, dimWorld = GridView::dimensionworld};
+    typedef typename GridView::Grid Grid;
+    typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef Dune::FieldVector<Scalar,dim> LocalPosition;
     typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
 
@@ -21,7 +22,7 @@ public:
     TutorialProblemDecoupled(VC& variables, Fluid& wettingphase, Fluid& nonwettingphase, Matrix2p<Grid, Scalar>& soil,
                              TwoPhaseRelations<Grid, Scalar>& materialLaw = *(new TwoPhaseRelations<Grid,Scalar>),
                              const FieldVector<Scalar,dim> Left = 0, const FieldVector<Scalar,dim> Right = 0)
-        : FractionalFlowProblem<Grid, Scalar, VC>(variables, wettingphase, nonwettingphase, soil, materialLaw),
+        : FractionalFlowProblem<GridView, Scalar, VC>(variables, wettingphase, nonwettingphase, soil, materialLaw),
           Left_(Left[0]), Right_(Right[0]), eps_(1e-8)
     {}
 

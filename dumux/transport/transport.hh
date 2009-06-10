@@ -80,6 +80,11 @@ public:
         return;
     }
 
+    virtual Problem& problem()
+    {
+        return transProblem;
+    }
+
     virtual void vtkout(const char* name, int k)const = 0;
 
     //! always define virtual destructor in abstract base class

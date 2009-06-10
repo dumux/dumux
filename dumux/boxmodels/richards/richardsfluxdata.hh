@@ -29,6 +29,7 @@ namespace Dune
 {
 
 /*!
+ * \ingroup RichardsBoxModel
  * \brief This template class contains the data which is required to
  *        calculate the flux of fluid over a face of a finite volume.
  */
@@ -37,7 +38,7 @@ class RichardsFluxData
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))   Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    
+
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem))    Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexData)) VertexData;
 
@@ -156,7 +157,7 @@ public:
     // darcy velocity in direction of the face normal
     Scalar vDarcyNormal;
 
-    // local index of the upwind vertex 
+    // local index of the upwind vertex
     int upstreamIdx;
     // local index of the downwind vertex
     int downstreamIdx;

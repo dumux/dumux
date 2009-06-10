@@ -16,9 +16,9 @@
 #include <dumux/material/matrixproperties.hh>
 //
 #include "dumux/diffusion/fv/fvwettingvelocity2p.hh"
-//#include "dumux/diffusion/fe/fediffusion.hh"
+#include "dumux/diffusion/fe/fepressure2p.hh"
 //
-//#include "dumux/diffusion/mimetic/mimeticdiffusion.hh"
+#include "dumux/diffusion/mimetic/mimeticpressure2p.hh"
 //
 #include "dumux/diffusion/problems/uniformproblem.hh"
 #include "dumux/fractionalflow/variableclass2p.hh"
@@ -55,16 +55,17 @@ int main(int argc, char** argv)
 
         double initsat = 0.8;
 
-        VC variables(gridView,initsat);
+//        VC variables(gridView,initsat);
+        //for fe discretisation -> pressure on the nodes!
+        VC variables(gridView, dim, initsat);
 
-        Dune::UniformProblem<GridView, NumberType, VC> problem(variables, mat, mat, soil, materialLaw);
+        Dune::UniformProblem<GridView, NumberType, VC> problem(variables, mat, mat, soil, materialLaw, R);
 
         Dune::Timer timer;
         timer.reset();
-        //Dune::FEDiffusion<GridType, NumberType> diffusion(grid, problem);
-        //Dune::FVDiffusion<GridType, NumberType, VC> diffusion(grid, problem);
-        Dune::FVWettingPhaseVelocity2P<GridView, NumberType, VC> diffusion(gridView, problem, "pw","Sw");
-        //Dune::MimeticDiffusion<GridType, NumberType, VC> diffusion(grid, problem, grid.maxLevel());
+        Dune::FEPressure2P<GridView, NumberType, VC> diffusion(gridView, problem);
+//        Dune::FVWettingPhaseVelocity2P<GridView, NumberType, VC> diffusion(gridView, problem, "pw","Sw");
+//        Dune::MimeticPressure2P<GridView, NumberType, VC> diffusion(gridView, problem);
 
 
         diffusion.pressure();
@@ -84,17 +85,4 @@ int main(int argc, char** argv)
         std::cerr << "Unknown exception thrown!" << std::endl;
     }
 }
-//#else
-//
-//int main (int argc , char **argv) try
-//{
-//  std::cout << "Please install the UG library." << std::endl;
-//
-//  return 1;
-//}
-//catch (...)
-//{
-//    std::cerr << "Generic exception!" << std::endl;
-//    return 2;
-//}
-//#endif
+

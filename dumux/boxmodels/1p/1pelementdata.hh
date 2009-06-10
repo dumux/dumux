@@ -1,5 +1,5 @@
 /*****************************************************************************
- *   Copyright (C) 2008 by Bernd Flemisch                                    *
+ *   Copyright (C) 2008-2009 by Onur Dogan                                   *
  *   Copyright (C) 2008-2009 by Andreas Lauser                               *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
@@ -14,12 +14,12 @@
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
 /*!
- * \file 
+ * \file
  *
  * \brief Contains the quantities which are are constant within a
- *        finite element in the single-phase model.
+ *        finite element in the one-phase model.
  *
- * For the plain single-phase model everything is given on the finite
+ * For the plain one-phase model everything is given on the finite
  * volumes, so this class is empty.
  */
 #ifndef DUMUX_1P_ELEMENT_DATA_HH
@@ -28,6 +28,7 @@
 namespace Dune
 {
 /*!
+ * \ingroup OnePBoxModel
  * \brief This template class contains the quantities which are are
  *        constant within a finite element in the singe-phase model.
  *

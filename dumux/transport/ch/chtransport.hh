@@ -218,16 +218,9 @@ int ChTransport<GridView,Scalar,VC, Problem>::solveRP(Scalar& mch, std::list<ChN
     double fsh = linearFlux(sh, globalPos, eIt, localPos);
 
     //construction of a list with all nodes between the low and high value
-    int il=0,ih=0;
-
-    for(int i=1;i<K;++i)
-    {
-        if(i-K*sat[low]>0 && il==0)
-        il=i;
-        if(K*sat[high]-i>0)
-        ih=i;
-    }
-
+    int il = std::floor(K*sat[low]) + 1;
+    int ih = std::ceil(K*sat[high]) - 1;
+   
     //if there are no nodes the solution is a shock front
     if(il==0 || il> ih)
     return 0;

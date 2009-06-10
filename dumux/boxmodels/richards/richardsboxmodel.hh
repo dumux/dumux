@@ -1,4 +1,9 @@
 /*****************************************************************************
+ *   Copyright (C) 2007 by Peter Bastian                                     *
+ *   Institute of Parallel and Distributed System                            *
+ *   Department Simulation of Large Systems                                  *
+ *   University of Stuttgart, Germany                                        *
+ *                                                                           *
  *   Copyright (C) 2009 by Andreas Lauser                                    *
  *   Copyright (C) 2009 by Onur Dogan                                        *
  *   Institute of Hydraulic Engineering                                      *
@@ -23,6 +28,17 @@
 namespace Dune
 {
 /*!
+ * \ingroup BoxProblems
+ * \defgroup RichardsBoxProblems Richards box problems
+ */
+
+/*!
+ * \ingroup BoxModels
+ * \defgroup RichardsBoxModel Richards box model
+ */
+
+/*!
+ * \ingroup RichardsBoxModel
  * \brief Adaption of the BOX scheme to the isothermal Richards model.
  *
  *

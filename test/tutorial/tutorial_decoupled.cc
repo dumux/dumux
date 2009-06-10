@@ -5,14 +5,13 @@
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
-#include "dumux/fractionalflow/variableclass.hh"
+#include "dumux/fractionalflow/variableclass2p.hh"
 #include "dumux/material/phaseproperties/phaseproperties2p.hh"
 #include "tutorial_soilproperties_decoupled.hh"
 #include "dumux/material/twophaserelations.hh"
 #include "tutorialproblem_decoupled.hh"
-#include "dumux/diffusion/fv/fvdiffusion.hh"
-#include "dumux/diffusion/fv/fvdiffusionvelocity.hh"
-#include "dumux/transport/fv/fvtransport.hh"
+#include "dumux/diffusion/fv/fvtotalvelocity2p.hh"
+#include "dumux/transport/fv/fvsaturationwetting2p.hh"
 #include "dumux/fractionalflow/impes/impes.hh"
 #include "dumux/timedisc/timeloop.hh" /*@\label{tutorial-decoupled:include-end}@*/
 
@@ -26,11 +25,14 @@ int main(int argc, char** argv)
         // create a grid object
         typedef double NumberType; /*@\label{tutorial-decoupled:grid-begin}@*/
         typedef Dune::SGrid<dim,dim> GridType;
+        typedef GridType::LevelGridView GridView;
         typedef Dune::FieldVector<GridType::ctype,dim> FieldVector;
         Dune::FieldVector<int,dim> N(10); N[0] = 30;
         FieldVector L(0);
         FieldVector H(300); H[0] = 600;
-        GridType grid(N,L,H); /*@\label{tutorial-decoupled:grid-end}@*/
+        GridType grid(N,L,H);
+        GridView gridView(grid.levelView(0));/*@\label{tutorial-decoupled:grid-end}@*/
+
 
         // define fluid and solid properties and constitutive relationships
         Dune::Water wettingfluid; /*@\label{tutorial-decoupled:water}@*/
@@ -39,20 +41,20 @@ int main(int argc, char** argv)
         Dune::TwoPhaseRelations<GridType, NumberType> materialLaw(soil, wettingfluid, nonwettingfluid);/*@\label{tutorial-decoupled:twophaserelations}@*/
 
         // create object containing the variables
-        typedef Dune::VariableClass<GridType, NumberType> VariableType;
-        VariableType variables(grid);
+        typedef Dune::VariableClass<GridView, NumberType> VariableType;
+        VariableType variables(gridView);
 
         // create object including the problem definition
-        typedef Dune::TutorialProblemDecoupled<GridType, NumberType, VariableType> Problem;
+        typedef Dune::TutorialProblemDecoupled<GridView, NumberType, VariableType> Problem;
         Problem problem(variables, wettingfluid, nonwettingfluid, soil, materialLaw,L, H); /*@\label{tutorial-decoupled:problem}@*/
 
         // create object including the discretisation of the pressure equation
-        typedef Dune::FVDiffusionVelocity<GridType, NumberType, VariableType, Problem> DiffusionType;
-        DiffusionType diffusion(grid, problem); /*@\label{tutorial-decoupled:diffusion}@*/
+        typedef Dune::FVTotalVelocity2P<GridView, NumberType, VariableType, Problem> DiffusionType;
+        DiffusionType diffusion(gridView, problem, "pw"); /*@\label{tutorial-decoupled:diffusion}@*/
 
         // create object including the space discretisation of the saturation equation
-        typedef Dune::FVTransport<GridType, NumberType, VariableType, Problem> TransportType;
-        TransportType transport(grid, problem); /*@\label{tutorial-decoupled:transport}@*/
+        typedef Dune::FVSaturationWetting2P<GridView, NumberType, VariableType, Problem> TransportType;
+        TransportType transport(gridView, problem, "vt"); /*@\label{tutorial-decoupled:transport}@*/
 
         // some parameters used in the IMPES-object
         int iterFlag = 2;
@@ -60,7 +62,7 @@ int main(int argc, char** argv)
         double maxDefect = 1e-5;
 
         // create object including the IMPES (IMplicit Pressure Explicit Saturation) algorithm
-        typedef Dune::IMPES<GridType, DiffusionType, TransportType, VariableType> IMPESType;
+        typedef Dune::IMPES<GridView, DiffusionType, TransportType, VariableType> IMPESType;
         IMPESType impes(diffusion, transport, iterFlag, nIter, maxDefect); /*@\label{tutorial-decoupled:impes}@*/
 
         // some parameters needed for the TimeLoop-object
@@ -68,7 +70,7 @@ int main(int argc, char** argv)
         double tEnd = 1e8; // stop simulation at t = tEnd
         const char* fileName = "tutorial_decoupled"; // name of the output files
         int modulo = 1; // define time step interval in which output files are generated
-        double cFLFactor = 1; // security factor for the Courant-Friedrichs-Lewy-Criterion
+        double cFLFactor = 0.9; // security factor for the Courant-Friedrichs-Lewy-Criterion
 
         // create TimeLoop-object
         Dune::TimeLoop<GridType, IMPESType > timeloop(tStart, tEnd, fileName, modulo, cFLFactor); /*@\label{tutorial-decoupled:timeloop}@*/

@@ -3,15 +3,15 @@
 #ifndef TESTPROBLEM_2P2C_HH
 #define TESTPROBLEM_2P2C_HH
 
-#include "dumux/transport/transportproblem2p2c.hh"
+#include "dumux/transport/decoupled2p2cproblem.hh"
 
 namespace Dune
 {
 
 //! Example problem class for decoupled 2p2c simulations
-template<class Grid, class Scalar>
+template<class GridView, class Scalar>
 class Testproblem_2p2c
-    : public TransportProblem2p2c<Grid, Scalar>
+    : public DecoupledProblem2p2c<GridView, Scalar>
 {
     template<int dim>
     struct ElementLayout
@@ -22,8 +22,8 @@ class Testproblem_2p2c
         }
     };
 
-    enum {dim=Grid::dimension};
-    typedef typename Grid::Traits::template Codim<0>::Entity Entity;
+    enum {dim=GridView::dimension};
+    typedef typename GridView::Traits::template Codim<0>::Entity Entity;
 
 public:
 
@@ -110,14 +110,14 @@ public:
         return 1;
     }
 
-    Testproblem_2p2c(Grid& g, Dune::VariableClass2p2c<Grid, Scalar>& var, Liquid_GL& liq, Gas_GL& gas, Matrix2p<Grid, Scalar>& s,
-                     int level, TwoPhaseRelations<Grid, Scalar>& law = *(new TwoPhaseRelations<Grid, Scalar>),const bool cap = false)
-        : TransportProblem2p2c<Grid, Scalar>(var, liq, gas, s, law, cap), grid(g)
+    Testproblem_2p2c(GridView& gv, Dune::VariableClass2p2c<GridView, Scalar>& var, Liquid_GL& liq, Gas_GL& gas, Matrix2p<typename GridView::Grid, Scalar>& s,
+                     int level, TwoPhaseRelations<typename GridView::Grid, Scalar>& law = *(new TwoPhaseRelations<typename GridView::Grid, Scalar>),const bool cap = false)
+        : DecoupledProblem2p2c<GridView, Scalar>(var, liq, gas, s, law, cap), gridview(gv)
     {
     }
 
 private:
-    Grid& grid;
+    GridView& gridview;
 };
 
 }

@@ -1,3 +1,4 @@
+//$Id$
 /*****************************************************************************
  *   Copyright (C) 2008-2009 by Melanie Darcis                               *
  *   Copyright (C) 2008-2009 by Andreas Lauser                               *
@@ -14,6 +15,13 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
+/*!
+ * \file
+ *
+ * \brief Element-wise calculation of the Jacobian matrix for problems
+ *        using the non-isothermal two-phase box model.
+ *
+ */
 #ifndef DUMUX_NEW_2PNI_BOX_JACOBIAN_HH
 #define DUMUX_NEW_2PNI_BOX_JACOBIAN_HH
 
@@ -27,12 +35,16 @@
 
 namespace Dune
 {
-/** 
- * \brief The local jacobian operator for the non-isothermal
- *        two-phase model.
+/*!
+ * \ingroup TwoPNIBoxModel
+ * \brief Element-wise calculation of the Jacobian matrix for problems
+ *        using the non-isothermal two-phase box model.
+ *
+ *        This class inherits from the two-phase model.
  */
+
 template<class TypeTag>
-class TwoPNIBoxJacobian 
+class TwoPNIBoxJacobian
     : public TwoPBoxJacobianBase<TypeTag, TwoPNIBoxJacobian<TypeTag> >
 {
     typedef TwoPNIBoxJacobian<TypeTag>               ThisType;
@@ -94,6 +106,7 @@ public:
         const VertexDataArray &elemDat = usePrevSol ? this->prevElemDat_  : this->curElemDat_;
         const VertexData  &vertDat = elemDat[scvIdx];
 
+        // compute the energy storage
         result[temperatureIdx] =
             vertDat.porosity*(vertDat.density[wPhase] *
                               vertDat.intEnergy[wPhase] *
@@ -110,8 +123,11 @@ public:
     }
 
     /*!
-     * \brief Sets the temperature term of the flux vector to the
-     *        heat flux due to advection of the fluids.
+     * \brief Evaluates the advective mass flux and the heat flux
+     * over a face of a subcontrol volume and writes the result in
+     * the flux vector.
+     *
+     * This method is called by compute flux (base class)
      */
     void computeAdvectiveFlux(PrimaryVarVector &flux,
                               const FluxData &fluxData) const

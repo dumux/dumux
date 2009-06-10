@@ -19,7 +19,7 @@
 #include <dune/disc/shapefunctions/lagrangeshapefunctions.hh>
 #include <dune/disc/operators/boundaryconditions.hh>
 #include <dune/disc/operators/localstiffness.hh>
-#include "dumux/fractionalflow/variableclass.hh"
+#include "dumux/fractionalflow/variableclass2p.hh"
 #include "dumux/fractionalflow/fractionalflowproblem.hh"
 #include "dumux/diffusion/diffusionproblem.hh"
 
@@ -169,7 +169,7 @@ private:
         int p=2;
         if (gt.isSimplex()) p=1;
         if (k>1) p=2*(k-1);
-        int elemId = elementmapper.map(e);
+//        int elemId = elementmapper.map(e);
         for (size_t g=0; g<Dune::QuadratureRules<DT,n>::rule(gt,p).size(); ++g) // run through all quadrature points
         {
             const Dune::FieldVector<DT,n>&
@@ -177,15 +177,15 @@ private:
             Dune::FieldVector<DT,n> global = e.geometry().global(local);     // ip in global coordinates
             const Dune::FieldMatrix<DT,n,n>
                 jac = e.geometry().jacobianInverseTransposed(local);           // eval jacobian inverse
-            Dune::FieldMatrix<DT,n,n> K = problem.K(global,e,local);   // eval diffusion tensor
-            K *= problem.materialLaw_.mobTotal(
-                    problem.variables.sat(global,e,local), 
-                    global, 
-                    e, 
+            Dune::FieldMatrix<DT,n,n> K = problem.soil().K(global,e,local);   // eval diffusion tensor
+            K *= problem.materialLaw().mobTotal(
+                    problem.variables().satElement(global,e,local),
+                    global,
+                    e,
                     local);
             double weight = Dune::QuadratureRules<DT,n>::rule(gt,p)[g].weight();// weight of quadrature point
             DT detjac = e.geometry().integrationElement(local);              // determinant of jacobian
-            RT q = problem.source(global,e,local);                                // source term
+            RT q = problem.sourcePress(global,e,local);                                // source term
             RT factor = weight*detjac;
 
             // evaluate gradients at Gauss points
@@ -260,7 +260,7 @@ private:
                     const Dune::FieldVector<DT,n-1>& facelocal = Dune::QuadratureRules<DT,n-1>::rule(gtface,p)[g].position();
                     FieldVector<DT,n> local = it->geometryInInside().global(facelocal);
                     FieldVector<DT,n> global = it->geometry().global(facelocal);
-                    bctypeface = problem.bctype(global,e,local); // eval bctype
+                    bctypeface = problem.bctypePress(global,e,local); // eval bctype
 
 
                     if (bctypeface!=BoundaryConditions::neumann) break;

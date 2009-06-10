@@ -1,6 +1,6 @@
 //$Id:$
 /*****************************************************************************
- *   Copyright (C) 2008 by Bernd Flemisch                                    *
+ *   Copyright (C) 2008 by Onur Dogan                                        *
  *   Copyright (C) 2008-2009 by Andreas Lauser                               *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
@@ -30,9 +30,9 @@ namespace Dune
 {
 
 /*!
- * \brief Data which is attached to each vertex of the and can be
- *        shared between multiple calculations and should thus be
- *        cached in order to increase efficency.
+ * \ingroup TwoPBoxModel
+ * \brief Contains the quantities which are are constant within a
+ *        finite volume in the one-phase model.
  */
 template <class TypeTag>
 class OnePVertexData
@@ -41,12 +41,12 @@ class OnePVertexData
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
 
     typedef typename GridView::template Codim<0>::Entity Element;
-    
+
     enum {
         dim           = GridView::dimension,
         dimWorld      = GridView::dimensionworld,
     };
-    
+
     typedef typename GET_PROP(TypeTag, PTAG(ReferenceElements)) RefElemProp;
     typedef typename RefElemProp::Container                     ReferenceElements;
 
@@ -66,7 +66,7 @@ public:
                 const Element          &element,
                 int                     vertIdx,
                 bool                    isOldSol,
-                JacobianImp            &jac) 
+                JacobianImp            &jac)
     {
         typedef Indices I;
         const GlobalPosition &global = element.geometry().corner(vertIdx);

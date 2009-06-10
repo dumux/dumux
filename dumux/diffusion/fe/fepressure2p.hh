@@ -1,7 +1,7 @@
 // $Id$
 
-#ifndef DUNE_FEDIFFUSION_HH
-#define DUNE_FEDIFFUSION_HH
+#ifndef DUNE_FEPRESSURE2P_HH
+#define DUNE_FEPRESSURE2P_HH
 
 #include <dune/common/helpertemplates.hh>
 #include <dune/common/typetraits.hh>
@@ -14,8 +14,6 @@
 #include "dumux/diffusion/diffusion.hh"
 #include "dune/disc/operators/p1operator.hh"
 #include "dumux/diffusion/fe/p1groundwater.hh"
-#include "dumux/transport/problems/simpleproblem.hh"
-//#include "dumux/diffusion/problems/uniformproblem.hh"
 //#include "mgpreconditioner.hh"
 
 /**
@@ -40,79 +38,82 @@ namespace Dune
  Template parameters are:
 
  - Grid      a DUNE grid type
- - RT        type used for return values
-*/
-template<class G, class RT, class VC, class Problem = FractionalFlowProblem<G, RT, VC>, class LocalStiffnessType = GroundwaterEquationLocalStiffness<G,RT,Problem> >
-class FEDiffusion
-    : public Diffusion< G, RT, VC, Problem >
+ - Scalar        type used for return values
+ */
+template<class GridView, class Scalar, class VC,
+        class Problem = DiffusionProblem<GridView, Scalar, VC> ,
+        class LocalStiffnessType = GroundwaterEquationLocalStiffness<
+                typename GridView::Grid, Scalar, Problem> >
+class FEPressure2P: public Diffusion<GridView, Scalar, VC, Problem>
 {
     template<int dim>
     struct ElementLayout
     {
-        bool contains (GeometryType gt)
+        bool contains(GeometryType gt)
         {
             return gt.dim() == dim;
         }
     };
-
-    typedef LevelP1Function<G,RT,1> PressP1Type;
-    typedef LevelP1OperatorAssembler<G,RT,1> LevelOperatorAssembler;
+typedef    typename GridView::Grid Grid;
+    typedef LevelP1Function<Grid,Scalar,1> PressP1Type;
+    typedef LevelP1OperatorAssembler<Grid,Scalar,1> LevelOperatorAssembler;
 
 public:
-    typedef BlockVector< FieldVector<FieldVector<RT, G::dimension>, 2*G::dimension> > VelType;
-    typedef BlockVector< FieldVector<RT,1> > RepresentationType;
+    typedef BlockVector< FieldVector<FieldVector<Scalar, GridView::dimension>, 2*GridView::dimension> > VelType;
+    typedef BlockVector< FieldVector<Scalar,1> > RepresentationType;
 
-    void assemble(const RT t=0)
+    void assemble(const Scalar t=0)
     {
-        LocalStiffnessType lstiff(this->diffProblem, false, this->grid, this->level());
+        LocalStiffnessType lstiff(this->diffProblem, false, this->gridView.grid(), level_);
         A.assemble(lstiff, pressP1, f);
         return;
     }
 
     void solve()
     {
-        typedef typename LevelP1Function<G,RT>::RepresentationType VectorType;
-        typedef typename LevelP1OperatorAssembler<G,RT,1>::RepresentationType MatrixType;
+        typedef typename LevelP1Function<Grid,Scalar>::RepresentationType VectorType;
+        typedef typename LevelP1OperatorAssembler<Grid,Scalar,1>::RepresentationType MatrixType;
         typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator;
 
-        Operator op(*A);  // make operator out of matrix
+        Operator op(*A); // make operator out of matrix
         double red=1E-10;
         SeqILU0<MatrixType,VectorType,VectorType> ilu0(*A,1.0);// a precondtioner
-        CGSolver<VectorType> solver(op,ilu0,red,10000,1);         // an inverse operator
+        CGSolver<VectorType> solver(op,ilu0,red,10000,1); // an inverse operator
         InverseOperatorResult r;
         solver.apply(*pressP1, *f, r);
         //this->press = *pressP1;
-        this->diffProblem.variables.pressure = *pressP1;
+        this->diffProblem.variables().pressure() = *pressP1;
+        printvector(std::cout, *pressP1, "pressure", "row", 200, 1, 3);
 
         return;
     }
 
-    void pressure(const RT t=0)
+    void pressure(const Scalar t=0)
     {
         assemble(t);
         solve();
         return;
     }
 
-    void totalVelocity(VelType& velocity, const RT t=0) const;
+    void calculateVelocity(const Scalar t) const;
 
     void vtkout (const char* name, int k) const
     {
-        VTKWriter<typename G::LevelGridView>
-            vtkwriter(this->grid.levelView(this->level()));
-        char fname[128];
-        sprintf(fname,"%s-%05d",name,k);
-        vtkwriter.addVertexData(*pressP1,"total pressure p~");
-        vtkwriter.write(fname, VTKOptions::ascii);
+        this->diffProblem.variables().vtkout(name, k);
     }
 
-    FEDiffusion(G& g, Problem& prob)
-        : Diffusion<G, RT, VC, Problem>(g, prob),
-          pressP1(g, this->level()), f(g, this->level()), A(g, this->level())
+    FEPressure2P(GridView& gridView, Problem& problem, int level = -1)
+    : Diffusion<GridView, Scalar, VC, Problem>(gridView, problem),
+    level_((level >= 0) ? level : gridView.grid().maxLevel()),
+    pressP1(gridView.grid(), level_), f(gridView.grid(), level_), A(gridView.grid(), level_)
     {
         *pressP1 = 0;
     }
 
+
+private:
+    int level_;
+public:
     PressP1Type pressP1;
     PressP1Type f;
     LevelOperatorAssembler A;

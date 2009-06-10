@@ -1,4 +1,9 @@
 /*****************************************************************************
+ *   Copyright (C) 2007 by Peter Bastian                                     *
+ *   Institute of Parallel and Distributed System                            *
+ *   Department Simulation of Large Systems                                  *
+ *   University of Stuttgart, Germany                                        *
+ *                                                                           *
  *   Copyright (C) 2009 by Andreas Lauser                                    *
  *   Copyright (C) 2009 by Onur Dogan                                        *
  *   Institute of Hydraulic Engineering                                      *
@@ -25,7 +30,9 @@
 namespace Dune
 {
 /*!
- * \brief Local jacobian operator for the single-phase isothermal model
+ * \ingroup OnePBoxModel
+ * \brief Element-wise calculation of the Jacobian matrix for problems
+ *        using the one-phase box model.
  */
 template<class TypeTag>
 class OnePBoxJacobian : public BoxJacobian<TypeTag, OnePBoxJacobian<TypeTag> >
@@ -86,7 +93,7 @@ public:
         // using the implicit euler method.
         const VertexDataArray &elemDat = usePrevSol ? this->prevElemDat_  : this->curElemDat_;
         const VertexData  &vertDat = elemDat[scvIdx];
-        
+
         // partial time derivative of the wetting phase mass
         result[pressureIdx] =  vertDat.density * vertDat.porosity;
     }
@@ -103,7 +110,7 @@ public:
                       this->curElementGeom_,
                       faceId,
                       this->curElemDat_);
-        
+
         flux[pressureIdx] = vars.densityAtIP * vars.vDarcyNormal / vars.viscosityAtIP;
     }
 

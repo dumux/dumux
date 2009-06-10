@@ -27,8 +27,8 @@ typedef    typename GridView::Traits::template Codim<0>::Entity Element;
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
 public:
-    UniformProblem(VC& variables,Fluid& wettingPhase, Fluid& nonwettingPhase, Matrix2p<Grid, Scalar>& soil, TwoPhaseRelations<Grid, Scalar>& materialLaw = *(new TwoPhaseRelations<Grid,Scalar>))
-    : DiffusionProblem<GridView,Scalar,VC>(variables, wettingPhase, nonwettingPhase, soil, materialLaw)
+    UniformProblem(VC& variables,Fluid& wettingPhase, Fluid& nonwettingPhase, Matrix2p<Grid, Scalar>& soil, TwoPhaseRelations<Grid, Scalar>& materialLaw = *(new TwoPhaseRelations<Grid,Scalar>), FieldVector<Scalar, dim> upperRight = *(new FieldVector<Scalar, dim>(1)))
+    : DiffusionProblem<GridView,Scalar,VC>(variables, wettingPhase, nonwettingPhase, soil, materialLaw), upperRight_(upperRight)
     {}
 
     UniformProblem()
@@ -44,7 +44,7 @@ public:
     typename Dune::BoundaryConditions::Flags bctypePress (const GlobalPosition& globalPos, const Element& element,
             const LocalPosition& localPos) const
     {
-        if (globalPos[0]> 1-1E-6 || globalPos[0] < 1e-6)
+        if (globalPos[0] > upperRight_[0] - 1e-6 || globalPos[0] < 1e-6)
         return Dune::BoundaryConditions::dirichlet;
         // all other boundaries
         return Dune::BoundaryConditions::neumann;
@@ -70,6 +70,8 @@ public:
     {
         return 0;
     }
+private:
+    FieldVector<Scalar, dim> upperRight_;
 };
 }
 

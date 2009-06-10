@@ -53,16 +53,13 @@
 
 #include "1psoil.hh"
 
-/**
- * @file
- * @brief  Base class for defining an instance of a single phase isothermal problem
- * @author Onur Dogan, Andreas Lauser
- */
 namespace Dune
 {
-//! base class that defines the parameters of the single phase flow equation
 /*!
- * The domain is box shaped. All sides are closed (Neumann 0 boundary) except the top and bottom boundaries,
+ * \ingroup OnePBoxProblems
+ * \brief Air flow in porous media
+ *
+ * The domain is box shaped. All sides are closed (Neumann 0 boundary) except the top and bottom boundaries (Dirichlet),
  * where air is flowing from bottom to top.
  *
  * To run the simulation execute the following line in shell:
