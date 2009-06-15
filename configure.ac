@@ -79,32 +79,45 @@ LIBS="$DUNE_LIBS $ALL_PKG_LIBS $PARDISO_LIBS"
 
 AC_CONFIG_FILES([Makefile
     doc/Makefile 
-    test/Makefile
     doc/doxygen/Makefile 
     doc/handbook/Makefile
-    dumux/Makefile 
+    dumux/Makefile
+    dumux/auxiliary/Makefile 
+    dumux/boxmodels/Makefile 
+    dumux/boxmodels/1p/Makefile
+    dumux/boxmodels/1p2c/Makefile
+    dumux/boxmodels/2p/Makefile
+    dumux/boxmodels/2p2c/Makefile
+    dumux/boxmodels/2p2cni/Makefile
+    dumux/boxmodels/2pni/Makefile
+    dumux/boxmodels/boxscheme/Makefile
+    dumux/boxmodels/richards/Makefile 
     dumux/diffusion/Makefile 
-    dumux/diffusion/fv/Makefile 
     dumux/diffusion/fe/Makefile 
+    dumux/diffusion/fv/Makefile 
     dumux/diffusion/mimetic/Makefile 
+    dumux/diffusion/mpfa/Makefile
     dumux/diffusion/problems/Makefile 
-    dumux/fractionalflow/impes/Makefile 
     dumux/fractionalflow/Makefile 
+    dumux/fractionalflow/impes/Makefile 
+    dumux/functions/Makefile
     dumux/fvgeometry/Makefile 
     dumux/io/Makefile 
     dumux/material/Makefile 
     dumux/material/constrel/Makefile 
-    dumux/material/fluids/Makefile 
+    dumux/material/fluids/Makefile
+    dumux/material/phaseproperties/Makefile 
     dumux/nonlinear/Makefile 
-    dumux/onedinndgrid/Makefile 
     dumux/operators/Makefile 
     dumux/pardiso/Makefile 
     dumux/shapefunctions/Makefile 
     dumux/shapefunctions/cr/Makefile 
     dumux/timedisc/Makefile
     dumux/transport/Makefile 
+    dumux/transport/ch/Makefile
     dumux/transport/fv/Makefile 
     dumux/transport/problems/Makefile 
+    test/Makefile 
     test/1p/Makefile 
     test/2p/Makefile 
     test/2pni/Makefile

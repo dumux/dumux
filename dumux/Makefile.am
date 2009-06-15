@@ -1,18 +1,23 @@
-SUBDIRS = diffusion \
+SUBDIRS = auxiliary \
+        boxmodels \
+        diffusion \
 	fractionalflow \
+        functions \
 	fvgeometry \
 	io \
 	material \
 	nonlinear \
-	onedinndgrid \
+        operators \
 	pardiso \
 	shapefunctions \
+        timedisc \
 	transport \
 	.
 
 # the standard debug streams are put into the libdune
 noinst_LTLIBRARIES = libdumux.la
-SUBLIBS = shapefunctions/libshapefunctions.la onedinndgrid/libonedinndgrid.la
+
+SUBLIBS = shapefunctions/libshapefunctions.la 
 
 libdumux_la_SOURCES =
 libdumux_la_LIBADD = $(SUBLIBS)

@@ -8,7 +8,8 @@ SUBDIRS = . \
 	  diffusion \
 	  fractionalflow \
 	  properties \
-	  richards
+	  richards \
+          transport 
 
 include $(top_srcdir)/am/global-rules
 
