@@ -1,10 +1,5 @@
 //$Id:$
 /*****************************************************************************
- *   Copyright (C) 2007 by Peter Bastian                                     *
- *   Institute of Parallel and Distributed System                            *
- *   Department Simulation of Large Systems                                  *
- *   University of Stuttgart, Germany                                        *
- *                                                                           *
  *   Copyright (C) 2009 by Andreas Lauser                                    *
  *   Copyright (C) 2009 by Onur Dogan                                        *
  *   Institute of Hydraulic Engineering                                      *
@@ -25,6 +20,7 @@
 #include <dumux/boxmodels/boxscheme/boxscheme.hh>
 
 #include "1pboxjacobian.hh"
+#include "1pboxproblem.hh"
 
 namespace Dune
 {

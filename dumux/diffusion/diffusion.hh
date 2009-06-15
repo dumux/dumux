@@ -46,7 +46,6 @@ namespace Dune
  - Scalar        type used for scalar quantities
  - VC            type of a class containing different variables of the model
  - Problem       class defining the physical problem
-
 */
 template<class GridView, class Scalar, class VC, class Problem = DiffusionProblem<GridView, Scalar, VC> >
 class Diffusion

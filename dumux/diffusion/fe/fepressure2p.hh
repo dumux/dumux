@@ -20,14 +20,13 @@
 #include <dune/common/typetraits.hh>
 #include <dune/grid/common/mcmgmapper.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
-
 #include <dune/istl/operators.hh>
 #include <dune/istl/solvers.hh>
 #include <dune/istl/preconditioners.hh>
+#include <dune/disc/operators/p1operator.hh>
+
 #include "dumux/diffusion/diffusion.hh"
-#include "dune/disc/operators/p1operator.hh"
 #include "dumux/diffusion/fe/p1groundwater.hh"
-//#include "mgpreconditioner.hh"
 
 /**
  * @file
@@ -53,11 +52,8 @@ namespace Dune
  - Grid      a DUNE grid type
  - Scalar        type used for return values
  */
-template<class GridView, class Scalar, class VC,
-        class Problem = DiffusionProblem<GridView, Scalar, VC> ,
-        class LocalStiffnessType = GroundwaterEquationLocalStiffness<
-                typename GridView::Grid, Scalar, Problem> >
-class FEPressure2P: public Diffusion<GridView, Scalar, VC, Problem>
+template<class GridView, class Scalar, class VC, class Problem, class LocalStiffnessType, class Communication>
+class FEPressure2PBase: public Diffusion<GridView, Scalar, VC, Problem>
 {
     template<int dim>
     struct ElementLayout
@@ -67,9 +63,9 @@ class FEPressure2P: public Diffusion<GridView, Scalar, VC, Problem>
             return gt.dim() == dim;
         }
     };
-typedef    typename GridView::Grid Grid;
-    typedef LevelP1Function<Grid,Scalar,1> PressP1Type;
-    typedef LevelP1OperatorAssembler<Grid,Scalar,1> LevelOperatorAssembler;
+    typedef P1Function<GridView,Scalar,Communication,1> PressP1Type;
+    typedef typename GridView::Grid Grid;
+    typedef P1OperatorAssembler<Grid,Scalar,GridView,Communication,1> OperatorAssembler;
 
 public:
     typedef BlockVector< FieldVector<FieldVector<Scalar, GridView::dimension>, 2*GridView::dimension> > VelType;
@@ -77,15 +73,15 @@ public:
 
     void assemble(const Scalar t=0)
     {
-        LocalStiffnessType lstiff(this->diffProblem, false, this->gridView.grid(), level_);
+        LocalStiffnessType lstiff(this->diffProblem, false, this->gridView);
         A.assemble(lstiff, pressP1, f);
         return;
     }
 
     void solve()
     {
-        typedef typename LevelP1Function<Grid,Scalar>::RepresentationType VectorType;
-        typedef typename LevelP1OperatorAssembler<Grid,Scalar,1>::RepresentationType MatrixType;
+        typedef typename PressP1Type::RepresentationType VectorType;
+        typedef typename OperatorAssembler::RepresentationType MatrixType;
         typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator;
 
         Operator op(*A); // make operator out of matrix
@@ -94,7 +90,6 @@ public:
         CGSolver<VectorType> solver(op,ilu0,red,10000,1); // an inverse operator
         InverseOperatorResult r;
         solver.apply(*pressP1, *f, r);
-        //this->press = *pressP1;
         this->diffProblem.variables().pressure() = *pressP1;
         printvector(std::cout, *pressP1, "pressure", "row", 200, 1, 3);
 
@@ -115,10 +110,10 @@ public:
         this->diffProblem.variables().vtkout(name, k);
     }
 
-    FEPressure2P(GridView& gridView, Problem& problem, int level = -1)
+    FEPressure2PBase(GridView& gridView, Problem& problem, Communication& comm, int level = -1)
     : Diffusion<GridView, Scalar, VC, Problem>(gridView, problem),
     level_((level >= 0) ? level : gridView.grid().maxLevel()),
-    pressP1(gridView.grid(), level_), f(gridView.grid(), level_), A(gridView.grid(), level_)
+    pressP1(gridView, comm), f(gridView, comm), A(gridView.grid(), gridView, comm)
     {
         *pressP1 = 0;
     }
@@ -129,10 +124,56 @@ private:
 public:
     PressP1Type pressP1;
     PressP1Type f;
-    LevelOperatorAssembler A;
+    OperatorAssembler A;
 };
+
+template<class GridView, class Scalar, class VC,
+        class Problem = DiffusionProblem<GridView, Scalar, VC> ,
+        class LocalStiffnessType = GroundwaterEquationLocalStiffness<GridView, Scalar, Problem> >
+class FEPressure2P: public FEPressure2PBase<GridView, Scalar, VC, Problem, LocalStiffnessType, LevelCommunicate<typename GridView::Grid>  >
+{
+public:
+    FEPressure2P(GridView& gridView, Problem& problem, int level = -1)
+    : FEPressure2PBase<GridView, Scalar, VC, Problem, LocalStiffnessType, LevelCommunicate<typename GridView::Grid> >(
+            gridView,
+            problem,
+            *(new LevelCommunicate<typename GridView::Grid>(gridView.grid(), level)),
+            level)
+    {}
+};
+
+template<class GridView, class Scalar, class VC,
+        class Problem = DiffusionProblem<GridView, Scalar, VC> ,
+        class LocalStiffnessType = GroundwaterEquationLocalStiffness<GridView, Scalar, Problem> >
+class LevelFEPressure2P: public FEPressure2PBase<GridView, Scalar, VC, Problem, LocalStiffnessType, LevelCommunicate<typename GridView::Grid>  >
+{
+public:
+    LevelFEPressure2P(GridView& gridView, Problem& problem, int level = -1)
+    : FEPressure2PBase<GridView, Scalar, VC, Problem, LocalStiffnessType, LevelCommunicate<typename GridView::Grid> >(
+            gridView,
+            problem,
+            *(new LevelCommunicate<typename GridView::Grid>(gridView.grid(), level)),
+            level)
+    {}
+};
+
+template<class GridView, class Scalar, class VC,
+        class Problem = DiffusionProblem<GridView, Scalar, VC> ,
+        class LocalStiffnessType = GroundwaterEquationLocalStiffness<GridView, Scalar, Problem> >
+class LeafFEPressure2P: public FEPressure2PBase<GridView, Scalar, VC, Problem, LocalStiffnessType, LeafCommunicate<typename GridView::Grid>  >
+{
+public:
+    LeafFEPressure2P(GridView& gridView, Problem& problem)
+    : FEPressure2PBase<GridView, Scalar, VC, Problem, LocalStiffnessType, LeafCommunicate<typename GridView::Grid> >(
+            gridView,
+            problem,
+            *(new LeafCommunicate<typename GridView::Grid>(gridView.grid())))
+    {}
+};
+
+
 }
 
-#include "fediffusionvelocity.hh"
+#include "fetotalvelocity2p.hh"
 
 #endif

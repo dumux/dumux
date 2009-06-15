@@ -22,14 +22,13 @@
 
 /**
  * @file
- * @brief  Base class for defining an instance of a numerical two phase flow model
+ * @brief  Base class for defining an instance of a numerical multi-phase flow model
  * @author Bernd Flemisch, Markus Wolff
  */
 
 /**
  * \defgroup fracflow Decoupled and Fractional Flow
  */
-
 /*!
  * \ingroup fracflow
  * \defgroup impes IMPES (IMplicit Pressure Explicit Saturation)
@@ -40,25 +39,25 @@ namespace Dune
 /*!
  * \ingroup impes
  * \ingroup fracflow
- * \brief Standard two phase model.
+ * \brief Base class for fractional flow formulation of multi-phase flow.
+ * An interface to combine a diffusive model solving a pressure equation with a transport model solving a saturation equation
+ * in the fractional flow context.
  *
- * This class implements the standard two phase model
- * for the pressure \f$p\f$ and the
- * wetting phase saturation \f$S\f$, namely,
- * \f{align*}
- * - \text{div}\, (\lambda (S) K \text{grad}\, p ) &= 0, \\
- * S_t - \text{div}\, (f_\text{w}(S) \boldsymbol{v}_t(p, S)) &= 0,
- * \f}
- * supplemented by appropriate initial and boundary conditions.
- */
+ Template parameters are:
 
+ - GridView      a DUNE gridview type
+ - Diffusion     class defining the diffusion model
+ - Transport     class defining the transport model
+ - VC            type of a class containing different variables of the model
+ */
 template<class GridView, class Diffusion, class Transport, class VC>
 class FractionalFlow
 {
+typedef    typename Diffusion::ScalarType Scalar;
 public:
-typedef    typename VC::ScalarVectorType RepresentationType;
-    typedef typename Diffusion::ScalarType Scalar;
+    typedef typename VC::ScalarVectorType RepresentationType;//!< Data type for a Vector of Scalars
 
+    //! Set initial solution and initialize parameters
     virtual void initial() = 0;
 
     //! return const reference to saturation vector
@@ -73,26 +72,42 @@ typedef    typename VC::ScalarVectorType RepresentationType;
         return transport.problem().variables().saturation();
     }
 
-    //! \brief Calculate the update vector.
+    //! Calculate the update.
     /*!
-     *  \param[in]  t         time
-     *  \param[out] dt        time step size
-     *  \param[out] updateVec vector for hte update values
+     *  \param  t         time
+     *  \param dt         time step size
+     *  \param updateVec  vector for the update values
+     *  \param CLFFac     security factor for the time step criterion (0 < CLFFac <= 1)
      *
-     *  Calculate the update vector, i.e., the discretization
-     *  of \f$\text{div}\, (f_\text{w}(S) \boldsymbol{v}_t)\f$.
+     *  Calculates the update. Called from Dune::Timeloop.
      */
-
     virtual int update(const Scalar t, Scalar& dt, RepresentationType& updateVec, Scalar cFLFactor = 1) = 0;
 
+    //! Start a post-processing procedure at the end of a timestep.
+    /*!
+     *  \param t time
+     *  \param dt time step
+     *
+     *  If an explicit \textit{Euler} time discretization is used this function will be called
+     *  at the end of each time step.
+     */
     virtual void postProcessUpdate(Scalar t, Scalar dt)
     {
         return;
     }
 
+    //! \brief Write data files
+    /*!
+     *  \param name file name
+     *  \param k format parameter
+     */
     virtual void vtkout (const char* name, int k) const = 0;
 
-    //! Construct a FractionalFlow object.
+    //! Constructs a FractionalFlow object
+    /**
+     * \param diff an object of type Diffusion
+     * \param trans an object of type Transport
+     */
     FractionalFlow (Diffusion& diff, Transport& trans)
     : diffusion(diff), transport(trans)
     {}
@@ -101,8 +116,8 @@ typedef    typename VC::ScalarVectorType RepresentationType;
     virtual ~FractionalFlow ()
     {}
 protected:
-    Diffusion& diffusion;
-    Transport& transport;
+    Diffusion& diffusion;//!< object of type Diffusion including the diffusion model
+    Transport& transport;//!< object of type Transport indluding the transport model
 };
 }
 #endif

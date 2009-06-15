@@ -97,8 +97,6 @@ public:
 
     /*! 
      * \brief Fluid properties of the non-wetting phase.
-     *
-     * For the lens problem, the non-wetting phase is \ref Dune::DNAPL .
      */
     const NonwettingPhase &nonwettingPhase() const
     { return nPhase_; }
@@ -114,8 +112,6 @@ public:
 
     /*! 
      * \brief Returns the soil properties object.
-     *
-     * The lens problem uses \ref Dune::LensSoil .
      */
     Soil &soil()
     { return soil_; }
@@ -130,9 +126,6 @@ public:
      * \brief Returns the material laws, i.e. capillary pressure -
      *        saturation and relative permeability-saturation
      *        relations.
-     *
-     * The lens problem uses the standard \ref Dune::TwoPhaseRelations
-     * with Van-Genuchten capillary pressure.
      */
     MaterialLaw &materialLaw ()
     { return materialLaw_; }

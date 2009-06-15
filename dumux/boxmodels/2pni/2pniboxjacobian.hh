@@ -39,8 +39,6 @@ namespace Dune
  * \ingroup TwoPNIBoxModel
  * \brief Element-wise calculation of the Jacobian matrix for problems
  *        using the non-isothermal two-phase box model.
- *
- *        This class inherits from the two-phase model.
  */
 
 template<class TypeTag>

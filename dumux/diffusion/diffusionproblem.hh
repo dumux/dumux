@@ -34,19 +34,14 @@
  * @brief  Base class for defining an instance of the diffusion problem
  * @author Bernd Flemisch, Markus Wolff
  */
-/**
- * \ingroup diffusion
- * \defgroup diffusionProblems Problems
- */
 
 namespace Dune
 {
-/*! \ingroup diffusionProblems
- * \ingroup diffusion
+/*! \ingroup diffusion
  * @brief base class that defines the parameters of a diffusion equation
  *
  * An interface for defining parameters for the stationary diffusion equation
- *  \f$\text{div}\, \boldsymbol{v} = q\f$,
+ *  \f[\text{div}\, \boldsymbol{v} = q\f],
  *  where, the velocity \f$\boldsymbol{v} \sim \boldsymbol{K} \nabla p \f$,
  *  \f$p\f$ is a pressure and q a source/sink term
  *
@@ -204,7 +199,7 @@ public:
     gravity_(0)
     {}
 
-    //! constructor
+    //! Constructs an object of type DiffusionProblem
     /** @param variables object of class VariableClass.
      *  @param materialLaw implementation of Material laws. Class TwoPhaseRelations or derived.
      */

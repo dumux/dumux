@@ -1,3 +1,19 @@
+//$Id$
+/*****************************************************************************
+ *   Copyright (C) 2009 by Klaus Mosthaf                                     *
+ *   Copyright (C) 2009 by Andreas Lauser                                    *
+ *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
+ *                                                                           *
+ *   This program is free software; you can redistribute it and/or modify    *
+ *   it under the terms of the GNU General Public License as published by    *
+ *   the Free Software Foundation; either version 2 of the License, or       *
+ *   (at your option) any later version, as long as this copyright notice    *
+ *   is included in its original form.                                       *
+ *                                                                           *
+ *   This program is distributed WITHOUT ANY WARRANTY.                       *
+ *****************************************************************************/
 #ifndef DUNE_WATERAIRPROBLEM_HH
 #define DUNE_WATERAIRPROBLEM_HH
 
@@ -15,10 +31,9 @@
 
 #define ISOTHERMAL 0
 
-/**
- * @file
- * @brief  Definition of a problem, where air is injected under a low permeable layer
- * @author Bernd Flemisch, Klaus Mosthaf
+/*!
+ * \ingroup BoxProblems
+ * \brief TwoPTwoCNIBoxProblems Non-isothermal two-phase two-component box problems
  */
 
 namespace Dune
@@ -54,7 +69,7 @@ SET_PROP(WaterAirProblem, Soil)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    
+
 public:
     typedef Dune::HomogeneousSoil<Grid, Scalar> type;
 };
@@ -64,14 +79,33 @@ SET_BOOL_PROP(WaterAirProblem, EnableGravity, true);
 }
 
 
-//! class that defines the parameters of an air waterair under a low permeable layer
-/*! Problem definition of an air injection under a low permeable layer. Air enters the domain
- * at the right boundary and migrates upwards.
- * Problem was set up using the rect2d.dgf grid.
+/*!
+ * \ingroup TwoPTwoCNIBoxProblems
+ * \brief Nonisothermal gas injection problem where a gas (e.g. $\f air \f$) is injected into a fully
+ *        water saturated medium. During buoyancy driven upward migration the gas
+ *        passes a high temperature area produced by a heat source.
  *
- *    Template parameters are:
+ * The domain is sized 40 m times 40 m. The rectangular heat source starts at (20 m, 5 m)
+ * and ends at (30 m, 35 m)
  *
- *    - ScalarT  Floating point type used for scalars
+ * For the mass conservation equation neumann boundary conditions are used on
+ * the top and on the bottom of the domain, while dirichlet conditions
+ * apply on the left and the right boundary.
+ * For the energy conservation equation dirichlet boundary conditions are applied
+ * on all boundaries.
+ *
+ * Gas is injected at the bottom boundary from 15 m to 25 m at a rate of
+ * 0.001 kg/(s m), the remaining neumann boundaries are no-flow
+ * boundaries.
+ *
+ * At the dirichlet boundaries a hydrostatic pressure, a gas saturation of zero and
+ * a geothermal temperature gradient of 0.03 K/m are applied.
+ *
+ * This problem uses the \ref TwoPTwoCNIBoxModel.
+ *
+ * This problem should typically simulated until \f$t_{\text{end}} =
+ * 300\,000\;s\f$ is reached. A good choice for the initial time step size
+ * is \f$t_{\text{inital}} = 1\,000\;s\f$
  */
 template <class TypeTag = TTAG(WaterAirProblem) >
 class WaterAirProblem : public TwoPTwoCNIBoxProblem<TypeTag, WaterAirProblem<TypeTag> >
@@ -112,12 +146,12 @@ class WaterAirProblem : public TwoPTwoCNIBoxProblem<TypeTag, WaterAirProblem<Typ
     typedef typename GridView::template Codim<0>::Entity        Element;
     typedef typename GridView::template Codim<dim>::Entity      Vertex;
     typedef typename GridView::IntersectionIterator             IntersectionIterator;
-  
+
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
 
     typedef Dune::FieldVector<Scalar, dim>       LocalPosition;
     typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
-    
+
 public:
     WaterAirProblem(const GridView &gridView)
         : ParentType(gridView)
@@ -145,7 +179,7 @@ public:
      */
     Scalar temperature() const
     {
-        return 273.15 + 30; // -> 30°C
+        return 273.15 + 10; // -> 10°C
     };
 #endif
 
@@ -156,7 +190,7 @@ public:
      */
     // \{
 
-    /*! 
+    /*!
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
      */
@@ -167,20 +201,19 @@ public:
                        int                         scvIdx,
                        int                         boundaryFaceIdx) const
     {
-        const GlobalPosition &globalPos
-            = element.geometry().corner(scvIdx);
-        
-        if(globalPos[0] < eps_)
+        const GlobalPosition &globalPos  = element.geometry().corner(scvIdx);
+
+        if(globalPos[0] > 40 - eps_ || globalPos[0] < eps_)
             values = BoundaryConditions::dirichlet;
         else
             values = BoundaryConditions::neumann;
-        
+
 #if !ISOTHERMAL
         values[temperatureIdx] = BoundaryConditions::dirichlet;
 #endif
     }
 
-    /*! 
+    /*!
      * \brief Evaluate the boundary conditions for a dirichlet
      *        boundary segment.
      *
@@ -201,7 +234,7 @@ public:
         initial_(values, globalPos);
     }
 
-    /*! 
+    /*!
      * \brief Evaluate the boundary conditions for a neumann
      *        boundary segment.
      *
@@ -216,15 +249,12 @@ public:
                  int                         scvIdx,
                  int                         boundaryFaceIdx) const
     {
-        const GlobalPosition &globalPos
-            = element.geometry().corner(scvIdx);
-
+        const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
         values = 0;
 
         // negative values for injection
-        Scalar width = this->bboxMax()[0] - this->bboxMin()[0];
-        if (globalPos[0] > width - eps_ &&
-            globalPos[1] < 5.0 && globalPos[1] < 15.0)
+        if (globalPos[0] > 15 && globalPos[0] < 25 &&
+            globalPos[1] < eps_)
         {
             values[switchIdx] = -1e-3;
         }
@@ -237,7 +267,7 @@ public:
      */
     // \{
 
-    /*! 
+    /*!
      * \brief Evaluate the source term for all phases within a given
      *        sub-control-volume.
      *
@@ -251,10 +281,14 @@ public:
                 const FVElementGeometry &fvElemGeom,
                 int                      scvIdx) const
     {
-        values = Scalar(0.0);
+	       const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
+	       values = Scalar(0.0);
+	       if (globalPos[0] > 20 && globalPos[0] < 30 && globalPos[1] > 5 && globalPos[1] < 35)
+	    	   values[temperatureIdx] = 100.;
+
     }
 
-    /*! 
+    /*!
      * \brief Evaluate the initial value for a control volume.
      *
      * For this method, the \a values parameter stores primary
@@ -265,13 +299,17 @@ public:
                  const FVElementGeometry &fvElemGeom,
                  int                      scvIdx) const
     {
-        const GlobalPosition &globalPos
-            = element.geometry().corner(scvIdx);
+	       const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
 
         initial_(values, globalPos);
+
+#if !ISOTHERMAL
+ 	       if (globalPos[0] > 20 && globalPos[0] < 30 && globalPos[1] < 30)
+	    	   values[temperatureIdx] = 380;
+#endif
     }
-    
-    /*! 
+
+    /*!
      * \brief Return the initial phase state inside a control volume.
      */
     int initialPhaseState(const Vertex         &vert,
@@ -280,8 +318,6 @@ public:
     {
         return wPhaseOnly;
     }
-
-    // \}
 
 private:
     // internal method for the initial condition (reused for the

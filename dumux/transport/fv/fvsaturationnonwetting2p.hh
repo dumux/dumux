@@ -42,8 +42,9 @@ namespace Dune
  *  \f]
  *  where \f$\boldsymbol{v}_n = \lambda_n \boldsymbol{K} \left(\text{grad}\, p_n + \rho_n g  \text{grad}\, z\right)\f$,
  *  where \f$p_n\f$ denotes the wetting phase pressure, \f$\boldsymbol{K}\f$ the absolute permeability, \f$\lambda_n\f$ the non-wetting phase mobility,
- *  \f$\rho_n\f$ the non-wetting phase density and \f$g\f$ the gravity constant and \f$S_n\f$ the non-wetting phase saturation.
- *  or where \f$\boldsymbol{v}_n = f_n \boldsymbol{v_{total}} - f_n \lambda_w \boldsymbol{K} \text{grad}\, p_c, \f$,
+ *  \f$\rho_n\f$ the non-wetting phase density and \f$g\f$ the gravity constant and \f$S_n\f$ the non-wetting phase saturation,
+ *
+ *  or where \f$\boldsymbol{v}_n = f_n \boldsymbol{v_{total}} - f_n \lambda_w \boldsymbol{K} \text{grad}\, p_c \f$,
  *  \f$f_n\f$ is the non-wetting phase fractional flow function, \f$\lambda_w\f$ is the wetting phase mobility, \f$\boldsymbol{K}\f$ the absolute permeability,
  *  \f$p_c\f$ the capillary pressure and \f$S_n\f$ the wetting phase saturation.
  *
@@ -56,7 +57,7 @@ namespace Dune
  - VC            type of a class containing different variables of the model
  - Problem       class defining the physical problem
 
-*/
+ */
 template<class GridView, class Scalar, class VC,
         class Problem = TransportProblem<GridView, Scalar, VC> >
 class FVSaturationNonWetting2P: public Transport<GridView, Scalar, VC, Problem>
@@ -91,7 +92,6 @@ typedef    typename VC::ScalarVectorType PressType;
     //function to calculate the time step if a total velocity is used
     Scalar evaluateTimeStepTotalFlux(Scalar timestepFactorIn,Scalar timestepFactorOut, Scalar diffFactorIn, Scalar diffFactorOut, Scalar& residualSatW, Scalar& residualSatNW);
 
-
 public:
     typedef typename VC::ScalarVectorType RepresentationType;//!< Data type for a Vector of Scalars
 
@@ -122,7 +122,7 @@ public:
      *  Constitutive relations like capillary pressure-saturation relationships, mobility-saturation relationships... are updated and stored in the variable class
      *  of type Dune::VariableClass2P. The update has to be done when new saturation are available.
      */
-    void updateMaterialLaws();
+    void updateMaterialLaws(RepresentationType& saturation, bool iterate);
 
     //! Write data files
     /*!
@@ -628,7 +628,7 @@ Scalar FVSaturationNonWetting2P<GridView, Scalar, VC, Problem>::evaluateTimeStep
 
     return timestepFactor;
 }
-template<class GridView, class Scalar, class VC, class Problem> void FVSaturationNonWetting2P<GridView, Scalar, VC, Problem>::updateMaterialLaws()
+template<class GridView, class Scalar, class VC, class Problem> void FVSaturationNonWetting2P<GridView, Scalar, VC, Problem>::updateMaterialLaws(RepresentationType& saturation = *(new RepresentationType(0)), bool iterate=false)
 {
     // iterate through leaf grid an evaluate c0 at cell center
     ElementIterator eItEnd = this->gridView.template end<0>();
@@ -646,7 +646,15 @@ template<class GridView, class Scalar, class VC, class Problem> void FVSaturatio
 
         int globalIdx = this->transProblem.variables().indexDiffusion(*eIt);
 
-        Scalar sat = this->transProblem.variables().saturation()[globalIdx];
+        Scalar sat = 0;
+        if (!iterate)
+        {
+            sat = this->transProblem.variables().saturation()[globalIdx];
+        }
+        else
+        {
+            sat = saturation[globalIdx];
+        }
 
         std::vector<Scalar> mobilities = this->transProblem.materialLaw().mob(1-sat, globalPos, *eIt, localPos);
 

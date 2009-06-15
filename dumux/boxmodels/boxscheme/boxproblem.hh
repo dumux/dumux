@@ -238,8 +238,6 @@ public:
                         
     /*! 
      * \brief Returns numerical model used for the problem.
-     *
-     * The lens problem uses \ref Dune::TwoPBoxModel .
      */
     Model &model()
     { return model_; }
@@ -267,10 +265,10 @@ public:
      * \brief This method writes the complete state of the problem
      *        to the harddisk.
      *
-     * The file will start with the prefix <tt>lens</lens>, contains
-     * the current time of the simulation clock in it's name and has
-     * the prefix <tt>.drs</tt>. (DuMuX Restart File.) See \ref
-     * Dune::Restart for details.
+     * The file will start with the prefix returned by the \ref name()
+     * method, has the current time of the simulation clock in it's
+     * name and uses the extension <tt>.drs</tt>. (Dumux ReStart
+     * file.)  See \ref Dune::Restart for details.
      */
     void serialize()
     {

@@ -110,7 +110,7 @@ public:
      *  Constitutive relations like capillary pressure-saturation relationships, mobility-saturation relationships... are updated and stored in the variable class
      *  of type Dune::VariableClass2P. The update has to be done when new saturation are available.
      */
-    virtual void updateMaterialLaws()
+    virtual void updateMaterialLaws(RepresentationType& saturation, bool iterate)
     {
         return;
     }

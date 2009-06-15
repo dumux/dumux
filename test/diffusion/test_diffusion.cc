@@ -63,7 +63,7 @@ int main(int argc, char** argv)
 
         Dune::Timer timer;
         timer.reset();
-        Dune::FEPressure2P<GridView, NumberType, VC> diffusion(gridView, problem);
+        Dune::LeafFEPressure2P<GridView, NumberType, VC> diffusion(gridView, problem);
 //        Dune::FVWettingPhaseVelocity2P<GridView, NumberType, VC> diffusion(gridView, problem, "pw","Sw");
 //        Dune::MimeticPressure2P<GridView, NumberType, VC> diffusion(gridView, problem);
 

@@ -93,8 +93,6 @@ public:
 
     /*! 
      * \brief Returns the soil properties object.
-     *
-     * The lens problem uses \ref Dune::LensSoil .
      */
     Soil &soil()
     { return soil_; }

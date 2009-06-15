@@ -31,9 +31,17 @@ namespace Dune
 /**
  * \ingroup impes
  * @brief IMplicit Pressure Explicit Saturation (IMPES) scheme for the solution of
- * coupled diffusion/transport problems
- */
+ * weakly coupled diffusion/transport problems.
+ * First a pressure equation is solved implicitly to obtain a velocity field, then a saturation equation is solved
+ * explicitly to get a new saturation distribution.
+ *
+ *  Template parameters are:
 
+ - GridView      a DUNE gridview type
+ - Diffusion     class defining the diffusion model
+ - Transport     class defining the transport model
+ - VC            type of a class containing different variables of the model
+*/
 template<class GridView, class Diffusion, class Transport, class VC> class IMPES: public FractionalFlow<
         GridView, Diffusion, Transport, VC>
 {
@@ -51,8 +59,9 @@ typedef    typename GridView::Grid Grid;
     typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;
 
 public:
-    typedef typename Transport::RepresentationType RepresentationType;
+    typedef typename Transport::RepresentationType RepresentationType;//!< Data type for a Vector of Scalars
 
+    //! Set initial solution and initialize parameters
     virtual void initial()
     {
         Scalar t = 0;
@@ -65,12 +74,19 @@ public:
         return;
     }
 
-    //calculate saturation defect
+    //! Calculate the update.
+    /*!
+     *  \param  t         time
+     *  \param dt         time step size
+     *  \param updateVec  vector for the update values
+     *  \param CLFFac     security factor for the time step criterion (0 < CLFFac <= 1)
+     *
+     *  Calculates the new pressure and velocity and determines the time step size and the saturation update for the explicit time step
+     *  Called from Dune::Timestep.
+     */
     virtual int update(const Scalar t, Scalar& dt, RepresentationType& updateVec,
             Scalar cFLFactor = 1)
     {
-        PressType pressOldIter(this->transport.problem().variables().pressure());
-        PressType pressHelp(this->transport.problem().variables().gridSizeDiffusion());
         int satSize = this->transport.problem().variables().gridSizeTransport();
         RepresentationType saturation(this->transport.problem().variables().saturation());
         RepresentationType satOldIter(this->transport.problem().variables().saturation());
@@ -94,6 +110,8 @@ public:
 
             // update pressure: give false as the pressure field is already initialised
             this->diffusion.pressure(false , t);
+
+            //calculate velocities
             this->diffusion.calculateVelocity(t);
 
             //calculate saturation defect
@@ -101,12 +119,6 @@ public:
 
             if (iterFlag)
             { // only needed if iteration has to be done
-                this->transport.problem().variables().pressure() *= omega;
-                pressHelp = pressOldIter;
-                pressHelp *= (1-omega);
-                this->transport.problem().variables().pressure() += pressHelp;
-                pressOldIter = this->transport.problem().variables().pressure();
-
                 updateHelp = updateVec;
                 saturation = this->transport.problem().variables().saturation();
                 saturation += (updateHelp *= (dt*cFLFactor));
@@ -118,29 +130,31 @@ public:
                 updateDiff -= updateOldIter;
                 satOldIter = saturation;
                 updateOldIter = updateVec;
+                this->transport.updateMaterialLaws(saturation, true);
             }
             // break criteria for iteration loop
             if (iterFlag == 2 && dt * updateDiff.two_norm() / saturation.two_norm() <= maxDefect )
             {
                 converg = true;
             }
-            else if (iterFlag == 2 && (saturation.infinity_norm() > 1 || saturation.two_norm()> 1))
-            {
-                converg = false;
-            }
-            else if (iterFlag == 2 && iter> nIter )
-            {
-                std::cout << "Nonlinear loop in IMPES.update exceeded nIter = "
-                << nIter << " iterations."<< std::endl;
-                return 1;
-            }
-            else if (iterFlag == 1 && iter> nIter )
+            else if (iterFlag == 1 && iter > nIter )
             {
                 converg = true;
             }
             else if (iterFlag==0)
             {
                 converg = true;
+            }
+            if (iterFlag == 2 && saturation.infinity_norm() > (1+maxDefect))
+            {
+                converg = false;
+            }
+            if (!converg && iter > nIter )
+            {
+                std::cout << "Nonlinear loop in IMPES.update exceeded nIter = "
+                << nIter << " iterations."<< std::endl;
+                std::cout<<saturation.infinity_norm()<<std::endl;
+                return 1;
             }
         }
         // outputs
@@ -151,13 +165,26 @@ public:
         return 0;
     }
 
+    //! \brief Write data files
+    /*!
+     *  \param name file name
+     *  \param k format parameter
+     */
     virtual void vtkout(const char* name, int k) const
     {
         this->transport.problem().variables().vtkout(name, k);
         return;
     }
 
-    //! Construct an IMPES object.
+    //! Constructs an IMPES object
+    /**
+     * \param diffusion an object of type Diffusion
+     * \param transport an object of type Transport
+     * \param flag iteration flag (0 -> no iterations, 1 -> iterate until max number of iterations is reached, 2 -> iterate until converged or max number of iterations is reached)
+     * \param nIt maximum number of iterations
+     * \param maxDef maximum defect for convergence criterion
+     * \param om under relaxation factor (om <= 1)
+     */
     IMPES(Diffusion& diffusion, Transport& transport, int flag = 0, int nIt = 2,
             Scalar maxDef = 1e-5, Scalar om = 1) :
     FractionalFlow(diffusion, transport),
@@ -166,10 +193,10 @@ public:
     }
 
 protected:
-    const int iterFlag;
-    const int nIter;
-    const Scalar maxDefect;
-    const Scalar omega;
+    const int iterFlag;//!<iteration flag
+    const int nIter;//!<maximum number of iterations
+    const Scalar maxDefect;//!maximum defect for convergence criterion
+    const Scalar omega;//!under relaxation factor
 };
 }
 #endif

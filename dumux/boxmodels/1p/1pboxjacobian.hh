@@ -143,12 +143,12 @@ public:
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
 
         // create the required scalar fields
-        unsigned numVertices = this->problem_.numVertices();
+        unsigned numVertices = this->gridView_.size(dim);
         ScalarField *p = writer.template createField<Scalar, 1>(numVertices);
 
         SolutionOnElement tmpSol;
-        ElementIterator elementIt = this->problem_.elementBegin();
-        ElementIterator endit = this->problem_.elementEnd();
+        ElementIterator elementIt = this->gridView_.template begin<0>();
+        const ElementIterator &endit = this->gridView_.template end<0>();;
         for (; elementIt != endit; ++elementIt)
         {
             setCurrentElement(*elementIt);
@@ -158,7 +158,7 @@ public:
             int numVerts = elementIt->template count<dim>();
             for (int i = 0; i < numVerts; ++i)
             {
-                int globalIdx = this->problem_.vertexIdx(*elementIt, i);
+                int globalIdx = this->problem_.model().vertexMapper().map(*elementIt, i, dim);
                 (*p)[globalIdx] = this->curElemDat_[i].pressure;
             };
         }

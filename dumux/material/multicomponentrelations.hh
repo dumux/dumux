@@ -58,20 +58,29 @@ public:
      */
     virtual double henry (double temperature=283.15) const = 0;
 
-    /*! \brief Antoine equation for calculating the vapor pressure
+    /*! \brief Antoine equation for calculating the saturation vapor pressure
      *  \param temperature temperature [K]
-     *  \return vapor pressure [Pa]
+     *  \return saturation vapor pressure [Pa]
      */
     virtual double vaporPressure (double temperature=283.15) const = 0;
 
-    /*! \brief converts mole fractions into mass fractions
-     *  \param massfrac mole fraction [mol/mol]
+    /** @brief calculates vapor pressure lowered due to capillary pressure
+     *  @param psat saturation vapor pressure \f$ \left[ Pa \right] \f$
+     *  @param pc capillary pressure \f$ \left[ Pa \right] \f$
+     *  @param temperature temperature \f$ \left[ K \right] \f$
+     *  @param density density \f$ \left[ kg/m^3 \right] \f$
+     *  @return lowered vapor pressure \f$ \left[ Pa \right] \f$
+     */
+    virtual double kelvinEquation(double psat, double pc, double temperature, double density) const = 0;
+
+    /*! \brief converts mole fractions of the minor component of a phase into mass fractions
+     *  \param molefrac mole fraction [mol/mol]
      *  \param phase phase for which a conversion is to be done [-]
      *  \return mass fraction [kg/kg]
      */
-    virtual double convertMoleToMassFraction(double massfrac, int phase) const = 0;
+    virtual double convertMoleToMassFraction(double molefrac, int phase) const = 0;
 
-    /*! \brief converts mass fractions into mole fractions
+    /*! \brief converts mass fractions of the minor component of a phase into mole fractions
      *  \param massfrac mass fraction [kg/kg]
      *  \param phase phase for which a conversion is to be done [-]
      *  \return mole fraction [mol/mol]
@@ -88,13 +97,14 @@ public:
 
 };
 
-/** \todo Please doc me! */
-
+/*!
+ * \brief class for the computation of multicomponent relations in water - air systems.
+ */
 class CWaterAir : public MultiComp
 {
 public:
-    /*! \brief equation for calculating the mass fraction in the nonwetting phase
-     *    \param pressureN non-wetting phase pressure \f$ \left[ Pa \right] \f$
+    /*! \brief equation for calculating the mass fraction of water in gas phase (air)
+     *  \param pressureN air pressure \f$ \left[ Pa \right] \f$
      *  \param temperature temperature \f$ \left[ K \right] \f$
      *  \return mass fraction \f$ \left[ kg/kg \right] \f$
      */
@@ -112,8 +122,8 @@ public:
     }
 
 
-    /*! \brief equation for calculating the mass fraction in the wetting phase
-     *    \param pressureN non-wetting phase pressure \f$ \left[ Pa \right] \f$
+    /*! \brief equation for calculating the mass fraction of air in the water phase
+     *  \param pressureN air pressure \f$ \left[ Pa \right] \f$
      *  \param temperature temperature \f$ \left[ K \right] \f$
      *  \return mass fraction \f$ \left[ kg/kg \right] \f$
      */
@@ -131,7 +141,7 @@ public:
         return(result);
     }
 
-    /*! \brief equation for calculating the mole fraction in the nonwetting phase
+    /*! \brief equation for calculating the mole fraction of water in gas phase (air)
      *    \param pressureN non-wetting phase pressure \f$ \left[ Pa \right] \f$
      *  \param temperature temperature \f$ \left[ K \right] \f$
      *  \return mole fraction \f$ \left[ mol/mol \right] \f$
@@ -147,7 +157,7 @@ public:
         return(result);
     }
 
-    /*! \brief equation for calculating the mole fraction in the wetting phase
+    /*! \brief equation for calculating the mole fraction air in the water phase
      *    \param pressureN non-wetting phase pressure \f$ \left[ Pa \right] \f$
      *  \param temperature temperature \f$ \left[ K \right] \f$
      *  \return mole fraction \f$ \left[ mol/mol \right] \f$
@@ -167,7 +177,7 @@ public:
 
     /*! \brief equation for calculating the inverse Henry coefficient
      *  \param temperature temperature \f$ \left[ K \right] \f$
-     *  \return Henry Coefficient \f$ \left[ 1/Pa \right] \f$
+     *  \return inverse Henry Coefficient \f$ \left[ 1/Pa \right] \f$
      */
     double henry(double temperature=283.15) const
     {
@@ -177,7 +187,7 @@ public:
         return (result); // [1/Pa]
     }
 
-    /** @brief calculates vapor pressure
+    /** @brief calculates vapor pressure using the Antoine equation
      *  @param temperature temperature \f$ \left[ K \right] \f$
      *  @return vapor pressure \f$ \left[ Pa \right] \f$
      */
@@ -188,7 +198,8 @@ public:
         const double constC = 233.426;
 
         double celsius;
-        double exponent, psat;
+        double exponent;
+        double psat;
 
         celsius = temperature - 273.15;
 
@@ -200,7 +211,31 @@ public:
         return(psat);
     }
 
-    /** @brief converts mole fractions into mass fractions
+    /** @brief calculates vapor pressure lowered due to capillary pressure
+     *  @param psat saturation vapor pressure \f$ \left[ Pa \right] \f$
+     *  @param pc capillary pressure \f$ \left[ Pa \right] \f$
+     *  @param temperature temperature \f$ \left[ K \right] \f$
+     *  @param density density \f$ \left[ kg/m^3 \right] \f$
+     *  @return lowered vapor pressure \f$ \left[ Pa \right] \f$
+     */
+    double kelvinEquation(double psat, double pc, double temperature, double density) const
+    {
+	// Committee on Data for Science and Technology:
+	const double RU = 8.314472;   // univ. gas constant [J/(mol K)]
+        double psatlow;
+        double exponent;
+
+        exponent = -pc/(density*RU*temperature);
+        psatlow = psat*pow( 10, exponent); //1mbar = 100Pa
+
+        return(psatlow);
+    }
+
+
+    /** @brief converts mole fractions into mass fractions of the minor component of the chosen phase
+     *  \param molefrac mole fraction [mol/mol]
+     *  \param phase phase for which a conversion is to be done [-]
+     *  \return mass fraction [kg/kg]
      */
     double convertMoleToMassFraction(double molefrac, int phase) const
     {
@@ -223,7 +258,10 @@ public:
         return (result);
     }
 
-    /** @brief converts mass fractions into mole fractions
+    /** @brief converts mass fractions of the minor component of the chosen phase into mole fractions
+     *  \param massfrac mass fraction [kg/kg]
+     *  \param phase phase for which a conversion is to be done [-]
+     *  \return mole fraction [mol/mol]
      */
     double convertMassToMoleFraction(double massfrac, int phase) const
     {
@@ -253,6 +291,8 @@ public:
 
     Liquid_GL& wettingPhase; //!< contains properties of the wetting phase
     Gas_GL& nonwettingPhase; //!< contains properties of the nonwetting phase
+
+
 };
 
 }

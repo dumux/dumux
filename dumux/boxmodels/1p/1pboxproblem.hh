@@ -14,10 +14,12 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief Base class for all problems which use the box scheme
+ *
+ * \brief Base class for all problems which use the single-phase box
+ *        model
  */
-#ifndef DUMUX_RICHARDS_BOX_PROBLEM_HH
-#define DUMUX_RICHARDS_BOX_PROBLEM_HH
+#ifndef DUMUX_1P_BOX_PROBLEM_HH
+#define DUMUX_1P_BOX_PROBLEM_HH
 
 #include <dumux/boxmodels/tags.hh>
 #include <dumux/boxmodels/boxscheme/boxproblem.hh>
@@ -27,13 +29,13 @@
 namespace Dune
 {
 /*!
- * \ingroup RichardsProblems
- * \brief  Base class for all problems which use the two-phase box model
+ * \ingroup OnePProblems
+ * \brief  Base class for all problems which use the single-phase box model
  *
  * \todo Please doc me more!
  */
 template<class TypeTag, class Implementation>
-class RichardsBoxProblem : public BoxProblem<TypeTag, Implementation>
+class OnePBoxProblem : public BoxProblem<TypeTag, Implementation>
 {
     typedef BoxProblem<TypeTag, Implementation> ParentType;
 
@@ -42,10 +44,8 @@ class RichardsBoxProblem : public BoxProblem<TypeTag, Implementation>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))   Scalar;
 
     // material properties
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(WettingPhase))    WettingPhase;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NonwettingPhase)) NonwettingPhase;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Soil))            Soil;
-    typedef Dune::TwoPhaseRelations<Grid, Scalar>                  MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Fluid))    Fluid;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Soil))     Soil;
 
     enum {
         dim = Grid::dimension,
@@ -55,12 +55,10 @@ class RichardsBoxProblem : public BoxProblem<TypeTag, Implementation>
     typedef Dune::FieldVector<Scalar, dimWorld>      GlobalPosition;
 
 public:
-    RichardsBoxProblem(const GridView &gridView)
+    OnePBoxProblem(const GridView &gridView)
         : ParentType(gridView),
-          gravity_(0),
-          materialLaw_(soil_, wPhase_, nPhase_)
+          gravity_(0)
     {
-        gravity_ = 0;
         if (GET_PROP_VALUE(TypeTag, PTAG(EnableGravity)))
             gravity_[dim - 1] = - 9.81;
     }
@@ -79,14 +77,6 @@ public:
     { return asImp_()->temperature(); };
 
     /*!
-     * \brief Returns the reference pressure of the non-wetting phase within the domain.
-     *
-     * This method MUST be overwritten by the actual problem.
-     */
-    Scalar pNreference() const
-    { return asImp_()->pNreference(); };
-
-    /*!
      * \brief Returns the acceleration due to gravity.
      *
      * If the <tt>EnableGravity</tt> property is true, this means
@@ -98,14 +88,8 @@ public:
     /*! 
      * \brief Fluid properties of the wetting phase.
      */
-    const WettingPhase &wettingPhase() const
-    { return wPhase_; }
-
-    /*! 
-     * \brief Fluid properties of the non-wetting phase.
-     */
-    const NonwettingPhase &nonwettingPhase() const
-    { return nPhase_; }
+    const Fluid &fluid() const
+    { return fluid_; }
 
     /*! 
      * \brief Returns the soil properties object.
@@ -118,14 +102,6 @@ public:
      */
     const Soil &soil() const
     { return soil_; }
-
-    /*! 
-     * \brief Returns the material laws, i.e. capillary pressure -
-     *        saturation and relative permeability-saturation
-     *        relations.
-     */
-    MaterialLaw &materialLaw ()
-    { return materialLaw_; }
     
     // \}
 
@@ -138,13 +114,11 @@ private:
     const Implementation *asImp_() const 
     { return static_cast<const Implementation *>(this); }
 
-    GlobalPosition  gravity_;
-
     // fluids and material properties
-    WettingPhase    wPhase_;
-    NonwettingPhase nPhase_;
+    Fluid           fluid_;
     Soil            soil_;
-    MaterialLaw     materialLaw_;
+
+    GlobalPosition  gravity_;
 };
 
 }

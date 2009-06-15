@@ -58,11 +58,11 @@ namespace Dune
   Template parameters are:
 
   - Grid  a DUNE grid type
-  - RT    type used for return values
+  - Scalar    type used for return values
 */
-template<class G, class RT, class Problem = FractionalFlowProblem<G, RT, VariableClass<G,RT> > >
+template<class GridView, class Scalar, class Problem = FractionalFlowProblem<GridView, Scalar, VariableClass<GridView,Scalar> > >
 class GroundwaterEquationLocalStiffness
-    : public LinearLocalStiffness<typename G::LevelGridView,RT,1>
+    : public LinearLocalStiffness<GridView,Scalar,1>
 {
     template<int dim>
     struct ElementLayout
@@ -74,27 +74,25 @@ class GroundwaterEquationLocalStiffness
     };
 
     // grid types
-    typedef typename G::LevelGridView GV;
-    typedef typename G::ctype DT;
-    typedef typename G::Traits::template Codim<0>::Entity Entity;
-    typedef typename G::Traits::LevelIndexSet IS;
-    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GV,ElementLayout> EM;
-    typedef Dune::VariableClass<G, RT> VC;
+    typedef typename GridView::Traits::template Codim<0>::Entity Element;
+    typedef Dune::MultipleCodimMultipleGeomTypeMapper<GridView,ElementLayout> EM;
+    typedef Dune::VariableClass<GridView, Scalar> VC;
+    typedef typename GridView::IntersectionIterator IntersectionIterator;
 
 public:
     // define the number of components of your system, this is used outside
     // to allocate the correct size of (dense) blocks with a FieldMatrix
-    enum {n=G::dimension};
-    enum {m=1};
-    enum {SIZE=LagrangeShapeFunctionSetContainer<DT,RT,n>::maxsize};
+    enum {dim=GridView::dimension};
+    enum {numEq=1};
+    enum {SIZE=LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::maxsize};
 
     //! Constructor
     GroundwaterEquationLocalStiffness (Problem& params,
-                                       bool levelBoundaryAsDirichlet_, const G& grid,
+                                       bool levelBoundaryAsDirichlet_, const GridView& gridView,
                                        int level = 0,
                                        bool procBoundaryAsDirichlet_=true)
         : problem(params),levelBoundaryAsDirichlet(levelBoundaryAsDirichlet_),
-          procBoundaryAsDirichlet(procBoundaryAsDirichlet_), elementmapper(grid.levelView(level))
+          procBoundaryAsDirichlet(procBoundaryAsDirichlet_), elementmapper(gridView), gridView_(gridView)
     {}
 
 
@@ -105,15 +103,15 @@ public:
       - The boundary conditions have been evaluated and are accessible with the bc() method
       - The right hand side has been assembled. It contains either the value of the essential boundary
       condition or the assembled source term and neumann boundary condition. It is accessible via the rhs() method.
-      @param[in]  e    a codim 0 entity reference
+      @param[in]  element    a codim 0 entity reference
       @param[in]  k    order of Lagrange basis
     */
-    void assemble (const Entity& e, int k=1)
+    void assemble (const Element& element, int k=1)
     {
         // extract some important parameters
-        Dune::GeometryType gt = e.geometry().type();
-        const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::value_type&
-            sfs=Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt,k);
+        Dune::GeometryType gt = element.geometry().type();
+        const typename Dune::LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::value_type&
+            sfs=Dune::LagrangeShapeFunctions<Scalar,Scalar,dim>::general(gt,k);
         setcurrentsize(sfs.size());
 
         // clear assemble data
@@ -125,8 +123,8 @@ public:
                 this->A[i][j] = 0;
         }
 
-        assembleV(e,k);
-        assembleBC(e,k);
+        assembleV(element,k);
+        assembleBC(element,k);
     }
 
     //! assemble only boundary conditions for given element
@@ -134,15 +132,15 @@ public:
       - The boundary conditions have been evaluated and are accessible with the bc() method
       - The right hand side contains either the value of the essential boundary
       condition or the assembled neumann boundary condition. It is accessible via the rhs() method.
-      @param[in]  e    a codim 0 entity reference
+      @param[in]  element    a codim 0 entity reference
       @param[in]  k    order of Lagrange basis
     */
-    void assembleBoundaryCondition (const Entity& e, int k=1)
+    void assembleBoundaryCondition (const Element& element, int k=1)
     {
         // extract some important parameters
-        Dune::GeometryType gt = e.geometry().type();
-        const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::value_type&
-            sfs=Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt,k);
+        Dune::GeometryType gt = element.geometry().type();
+        const typename Dune::LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::value_type&
+            sfs=Dune::LagrangeShapeFunctions<Scalar,Scalar,dim>::general(gt,k);
         setcurrentsize(sfs.size());
 
         // clear assemble data
@@ -152,47 +150,47 @@ public:
             this->bctype[i][0] = BoundaryConditions::neumann;
         }
 
-        this->assembleBC(e,k);
+        this->assembleBC(element,k);
     }
 
 private:
 
-    void assembleV (const Entity& e, int k=1)
+    void assembleV (const Element& element, int k=1)
     {
         // extract some important parameters
-        Dune::GeometryType gt = e.geometry().type();
-        const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::value_type&
-            sfs=Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt,k);
+        Dune::GeometryType gt = element.geometry().type();
+        const typename Dune::LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::value_type&
+            sfs=Dune::LagrangeShapeFunctions<Scalar,Scalar,dim>::general(gt,k);
         setcurrentsize(sfs.size());
 
         // Loop over all quadrature points and assemble matrix and right hand side
         int p=2;
         if (gt.isSimplex()) p=1;
         if (k>1) p=2*(k-1);
-//        int elemId = elementmapper.map(e);
-        for (size_t g=0; g<Dune::QuadratureRules<DT,n>::rule(gt,p).size(); ++g) // run through all quadrature points
+//        int elemId = elementmapper.map(element);
+        for (size_t g=0; g<Dune::QuadratureRules<Scalar,dim>::rule(gt,p).size(); ++g) // run through all quadrature points
         {
-            const Dune::FieldVector<DT,n>&
-                local = Dune::QuadratureRules<DT,n>::rule(gt,p)[g].position(); // pos of integration point
-            Dune::FieldVector<DT,n> global = e.geometry().global(local);     // ip in global coordinates
-            const Dune::FieldMatrix<DT,n,n>
-                jac = e.geometry().jacobianInverseTransposed(local);           // eval jacobian inverse
-            Dune::FieldMatrix<DT,n,n> K = problem.soil().K(global,e,local);   // eval diffusion tensor
+            const Dune::FieldVector<Scalar,dim>&
+                local = Dune::QuadratureRules<Scalar,dim>::rule(gt,p)[g].position(); // pos of integration point
+            Dune::FieldVector<Scalar,dim> global = element.geometry().global(local);     // ip in global coordinates
+            const Dune::FieldMatrix<Scalar,dim,dim>
+                jac = element.geometry().jacobianInverseTransposed(local);           // eval jacobian inverse
+            Dune::FieldMatrix<Scalar,dim,dim> K = problem.soil().K(global,element,local);   // eval diffusion tensor
             K *= problem.materialLaw().mobTotal(
-                    problem.variables().satElement(global,e,local),
+                    problem.variables().satElement(element),
                     global,
-                    e,
+                    element,
                     local);
-            double weight = Dune::QuadratureRules<DT,n>::rule(gt,p)[g].weight();// weight of quadrature point
-            DT detjac = e.geometry().integrationElement(local);              // determinant of jacobian
-            RT q = problem.sourcePress(global,e,local);                                // source term
-            RT factor = weight*detjac;
+            double weight = Dune::QuadratureRules<Scalar,dim>::rule(gt,p)[g].weight();// weight of quadrature point
+            Scalar detjac = element.geometry().integrationElement(local);              // determinant of jacobian
+            Scalar q = problem.sourcePress(global,element,local);                                // source term
+            Scalar factor = weight*detjac;
 
             // evaluate gradients at Gauss points
-            Dune::FieldVector<DT,n> grad[SIZE], temp, gv;
+            Dune::FieldVector<Scalar,dim> grad[SIZE], temp, gv;
             for (int i=0; i<sfs.size(); i++)
             {
-                for (int l=0; l<n; l++)
+                for (int l=0; l<dim; l++)
                     temp[l] = sfs[i].evaluateDerivative(0,l,local);
                 grad[i] = 0;
                 jac.umv(temp,grad[i]); // transform gradient to global ooordinates
@@ -208,7 +206,7 @@ private:
                 this->A[i][i] += (grad[i]*gv)*factor;
                 for (int j=0; j<i; j++)
                 {
-                    RT t = (grad[j]*gv)*factor;
+                    Scalar t = (grad[j]*gv)*factor;
                     this->A[i][j] += t;
                     this->A[j][i] += t;
                 }
@@ -217,12 +215,12 @@ private:
     }
 
 
-    void assembleBC (const Entity& e, int k=1)
+    void assembleBC (const Element& element, int k=1)
     {
         // extract some important parameters
-        Dune::GeometryType gt = e.geometry().type();
-        const typename Dune::LagrangeShapeFunctionSetContainer<DT,RT,n>::value_type&
-            sfs=Dune::LagrangeShapeFunctions<DT,RT,n>::general(gt,k);
+        Dune::GeometryType gt = element.geometry().type();
+        const typename Dune::LagrangeShapeFunctionSetContainer<Scalar,Scalar,dim>::value_type&
+            sfs=Dune::LagrangeShapeFunctions<Scalar,Scalar,dim>::general(gt,k);
         setcurrentsize(sfs.size());
 
         // determine quadrature order
@@ -231,18 +229,14 @@ private:
         if (k>1) p=2*(k-1);
 
         // evaluate boundary conditions via intersection iterator
-        typedef typename G::LeafGridView::IntersectionIterator
-            IntersectionIterator;
-
-        IntersectionIterator endit = e.ileafend();
-        for (IntersectionIterator it = e.ileafbegin();
-             it!=endit; ++it)
+        IntersectionIterator endit = gridView_.template iend(element);
+        for (IntersectionIterator it = gridView_.template ibegin(element); it!=endit; ++it)
         {
             // if we have a neighbor then we assume there is no boundary (forget interior boundaries)
             // in level assemble treat non-level neighbors as boundary
             if (it->neighbor())
             {
-                if (levelBoundaryAsDirichlet && it->outside()->level()==e.level())
+                if (levelBoundaryAsDirichlet && it->outside()->level()==element.level())
                     continue;
                 if (!levelBoundaryAsDirichlet)
                     continue;
@@ -255,19 +249,19 @@ private:
             if (it->boundary())
             {
                 Dune::GeometryType gtface = it->geometryInInside().type();
-                for (size_t g=0; g<Dune::QuadratureRules<DT,n-1>::rule(gtface,p).size(); ++g)
+                for (size_t g=0; g<Dune::QuadratureRules<Scalar,dim-1>::rule(gtface,p).size(); ++g)
                 {
-                    const Dune::FieldVector<DT,n-1>& facelocal = Dune::QuadratureRules<DT,n-1>::rule(gtface,p)[g].position();
-                    FieldVector<DT,n> local = it->geometryInInside().global(facelocal);
-                    FieldVector<DT,n> global = it->geometry().global(facelocal);
-                    bctypeface = problem.bctypePress(global,e,local); // eval bctype
+                    const Dune::FieldVector<Scalar,dim-1>& facelocal = Dune::QuadratureRules<Scalar,dim-1>::rule(gtface,p)[g].position();
+                    FieldVector<Scalar,dim> local = it->geometryInInside().global(facelocal);
+                    FieldVector<Scalar,dim> global = it->geometry().global(facelocal);
+                    bctypeface = problem.bctypePress(global,element,local); // eval bctype
 
 
                     if (bctypeface!=BoundaryConditions::neumann) break;
 
-                    RT J = problem.neumannPress(global,e,local);
-                    double weightface = Dune::QuadratureRules<DT,n-1>::rule(gtface,p)[g].weight();
-                    DT detjacface = it->geometry().integrationElement(facelocal);
+                    Scalar J = problem.neumannPress(global,element,local);
+                    double weightface = Dune::QuadratureRules<Scalar,dim-1>::rule(gtface,p)[g].weight();
+                    Scalar detjacface = it->geometry().integrationElement(facelocal);
                     for (int i=0; i<sfs.size(); i++) // loop over test function number
                         if (this->bctype[i][0]==BoundaryConditions::neumann)
                         {
@@ -279,7 +273,7 @@ private:
 
             // If we are here, then it is
             // (i)   an exterior boundary face with Dirichlet condition, or
-            // (ii)  a processor boundary (i.e. neither boundary() nor neighbor() was true), or
+            // (ii)  a processor boundary (i.element. neither boundary() nor neighbor() was true), or
             // (iii) a level boundary in case of level-wise assemble
             // How processor boundaries are handled depends on the processor boundary mode
             if (bctypeface==BoundaryConditions::process && procBoundaryAsDirichlet==false
@@ -301,16 +295,16 @@ private:
                                 this->b[i] = 0;
                             if (bctypeface==BoundaryConditions::dirichlet)
                             {
-                                Dune::FieldVector<DT,n> global = e.geometry().global(sfs[i].position());
-                                this->b[i] = problem.dirichletPress(global,e,sfs[i].position());
+                                Dune::FieldVector<Scalar,dim> global = element.geometry().global(sfs[i].position());
+                                this->b[i] = problem.dirichletPress(global,element,sfs[i].position());
                             }
                         }
                     }
                     continue;
                 }
                 // handle subentities of this face
-                for (int j=0; j<ReferenceElements<DT,n>::general(gt).size(it->indexInInside(),1,sfs[i].codim()); j++)
-                    if (sfs[i].entity()==ReferenceElements<DT,n>::general(gt).subEntity(it->indexInInside(),1,j,sfs[i].codim()))
+                for (int j=0; j<ReferenceElements<Scalar,dim>::general(gt).size(it->indexInInside(),1,sfs[i].codim()); j++)
+                    if (sfs[i].entity()==ReferenceElements<Scalar,dim>::general(gt).subEntity(it->indexInInside(),1,j,sfs[i].codim()))
                     {
                         if (this->bctype[i][0]<bctypeface)
                         {
@@ -319,8 +313,8 @@ private:
                                 this->b[i] = 0;
                             if (bctypeface==BoundaryConditions::dirichlet)
                             {
-                                Dune::FieldVector<DT,n> global = e.geometry().global(sfs[i].position());
-                                this->b[i] = problem.dirichletPress(global,e,sfs[i].position());
+                                Dune::FieldVector<Scalar,dim> global = element.geometry().global(sfs[i].position());
+                                this->b[i] = problem.dirichletPress(global,element,sfs[i].position());
                             }
                         }
                     }
@@ -333,6 +327,7 @@ private:
     bool levelBoundaryAsDirichlet;
     bool procBoundaryAsDirichlet;
     EM elementmapper;
+    const GridView& gridView_;
 };
 
 /** @} */

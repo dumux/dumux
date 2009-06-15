@@ -1,5 +1,5 @@
-#ifndef DUNE_FEDIFFUSION_HH
-#define DUNE_FEDIFFUSION_HH
+#ifndef DUNE_FETOTALVELOCITY2P_HH
+#define DUNE_FETOTALVELOCITY2P_HH
 /*****************************************************************************
  *   Copyright (C) 2008-2009 by Markus Wolff                                 *
  *   Institute of Hydraulic Engineering                                      *
@@ -17,8 +17,8 @@
 namespace Dune
 {
 
-template<class GridView, class Scalar, class VC, class Problem, class LocalStiffnessType>
-void FEPressure2P<GridView, Scalar, VC, Problem, LocalStiffnessType>::calculateVelocity(const Scalar t=0) const
+template<class GridView, class Scalar, class VC, class Problem, class LocalStiffnessType, class Communication>
+void FEPressure2PBase<GridView, Scalar, VC, Problem, LocalStiffnessType, Communication>::calculateVelocity(const Scalar t=0) const
 {
     DUNE_THROW(Dune::NotImplemented, "velocities only implemented for finite volume and mimetic finite differences discretisations");
     return;

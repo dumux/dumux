@@ -19,11 +19,10 @@
 
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
 
-#include <dumux/material/fluids/brine_co2.hh>
+#include <dumux/material/matrixproperties.hh>
+#include <dumux/material/fluids/air.hh>
+#include <dumux/material/fluids/water.hh>
 #include <dumux/boxmodels/2pni/2pniboxmodel.hh>
-
-#include "injectionsoil2pni.hh"
-
 
 namespace Dune {
 
@@ -44,10 +43,10 @@ SET_PROP(InjectionProblem2PNI, Problem)
 };
 
 // Set the wetting phase
-SET_TYPE_PROP(InjectionProblem2PNI, WettingPhase, Dune::Liq_BrineCO2);
+SET_TYPE_PROP(InjectionProblem2PNI, WettingPhase, Dune::Water);
 
 // Set the non-wetting phase
-SET_TYPE_PROP(InjectionProblem2PNI, NonwettingPhase, Dune::Gas_BrineCO2);
+SET_TYPE_PROP(InjectionProblem2PNI, NonwettingPhase, Dune::Air);
 
 // Set the soil properties
 SET_PROP(InjectionProblem2PNI, Soil)
@@ -55,9 +54,9 @@ SET_PROP(InjectionProblem2PNI, Soil)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    
+
 public:
-    typedef Dune::InjectionSoil<Grid, Scalar> type;
+    typedef Dune::HomogeneousSoil<Grid, Scalar> type;
 };
 
 // Enable gravity
@@ -66,31 +65,31 @@ SET_BOOL_PROP(InjectionProblem2PNI, EnableGravity, true);
 
 /*!
  * \ingroup TwoPNIBoxProblems
- * \brief Gas injection problem where a gas (e.g. \f$ CO_2 \f$ is injected into a fully
- *        water saturated medium.
+ * \brief Nonisothermal gas injection problem where a gas (e.g. $\f air \f$) is injected into a fully
+ *        water saturated medium. During buoyancy driven upward migration the gas
+ *        passes a high temperature area produced by a heat source.
  *
- * The domain is sized 100m times 50m and features a rectangular lens
- * with low permeablility which spans from (0 m , 30 m) to (50 m, 35 m)
- * and is surrounded by a medium with higher permability.
+ * The domain is sized 40 m times 40 m. The rectangular heat source starts at (20 m, 5 m)
+ * and ends at (30 m, 35 m)
  *
  * For the mass conservation equation neumann boundary conditions are used on
- * the left, the top and the bottom of the domain, while dirichlet conditions
- * apply on the right boundary.
+ * the top and on the bottom of the domain, while dirichlet conditions
+ * apply on the left and the right boundary.
  * For the energy conservation equation dirichlet boundary conditions are applied
  * on all boundaries.
  *
- * Gas is injected at the left boundary from 0 m to 20 m at a rate of
- * 0.04 kg/(s m), the remaining neumann boundaries are no-flow
+ * Gas is injected at the bottom boundary from 15 m to 25 m at a rate of
+ * 0.001 kg/(s m), the remaining neumann boundaries are no-flow
  * boundaries.
  *
  * At the dirichlet boundaries a hydrostatic pressure, a gas saturation of zero and
- * a geothermal temperature are applied.
+ * a geothermal temperature gradient of 0.03 K/m are applied.
  *
  * This problem uses the \ref TwoPNIBoxModel.
  *
- * This problem should typically simulated until \f$ t_{\text{end}} =
- * 50\,000\;s \f$ is reached. A good choice for the initial time step
- * size is \f$ t_{\text{inital}} = 1\,000\;s \f$
+ * This problem should typically simulated until \f$t_{\text{end}} =
+ * 300\,000\;s\f$ is reached. A good choice for the initial time step size
+ * is \f$t_{\text{inital}} = 1\,000\;s\f$
  */
 template<class TypeTag = TTAG( InjectionProblem2PNI)>
 class InjectionProblem2PNI
@@ -128,14 +127,10 @@ class InjectionProblem2PNI
 	typedef Dune::FieldVector<Scalar, dimWorld> GlobalPosition;
 
 public:
-	InjectionProblem2PNI(const GridView &grid,
-                         const GlobalPosition &lensLowerLeft,
-                         const GlobalPosition &lensUpperRight)
+	InjectionProblem2PNI(const GridView &grid)
         : ParentType(grid)
 	{
-        this->soil().setLensCoords(lensLowerLeft, lensUpperRight);
 	}
-
     /*!
      * \name Problem parameters
      */
@@ -169,12 +164,14 @@ public:
 	{
 		const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
 
-		values = BoundaryConditions::neumann;
-
-		if (onRightBoundary_(globalPos))
+        if(globalPos[0] > 40 - eps_ || globalPos[0] < eps_)
             values = BoundaryConditions::dirichlet;
+        else
+            values = BoundaryConditions::neumann;
 
-		values[temperatureIdx] = BoundaryConditions::dirichlet;
+#if !ISOTHERMAL
+        values[temperatureIdx] = BoundaryConditions::dirichlet;
+#endif
 	}
 
 	/*!
@@ -192,13 +189,12 @@ public:
 	{
 		const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
 
-		Scalar densityB = 1046;
-		Scalar pRef = 101300.;
-		Scalar TRef = 283.15;
-
-		values[pressureIdx] = pRef - (depthBOR_ - globalPos[dim - 1]) * densityB*this->gravity()[dim-1];
-		values[saturationIdx] = 0.0;
-		values[temperatureIdx] = TRef + (depthBOR_ - globalPos[dim - 1]) * 0.03;
+	         Scalar densityW = 1000.0;
+	         values[pressureIdx] = 1e5 + (depthBOR_ - globalPos[1])*densityW*9.81;
+	         values[saturationIdx] = 0.0;
+	 #if !ISOTHERMAL
+	         values[temperatureIdx] = 283.0 + (depthBOR_ - globalPos[1])*0.03;
+	 #endif
 	}
 
 	/*!
@@ -215,12 +211,15 @@ public:
                  int scvIdx,
                  int boundaryFaceIdx) const
 	{
-		const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
-
-		values = 0;
-		// negative values for injection
-		if (onInlet_(globalPos))
-            values[Indices::phase2Mass(Indices::nPhase)] = -0.0004; // kg / (m * s)
+        const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
+        
+        values = 0;
+        // negative values for injection
+        if (globalPos[0] > 15 && globalPos[0] < 25 &&
+            globalPos[1] < eps_)
+        {
+            values[saturationIdx] = -1e-3;
+        }
 	}
 
 	// \}
@@ -243,7 +242,10 @@ public:
 			const FVElementGeometry &,
 			int subControlVolumeIdx) const
 	{
-		values = Scalar(0.0);
+	       const GlobalPosition &globalPos = element.geometry().corner(subControlVolumeIdx);
+	       values = Scalar(0.0);
+	       if (globalPos[0] > 20 && globalPos[0] < 30 && globalPos[1] > 5 && globalPos[1] < 35)
+	    	  values[temperatureIdx] = 100.;
 	}
 
 	/*!
@@ -259,36 +261,21 @@ public:
 	{
 		const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
 
-		Scalar densityB = 1046;
-		Scalar pRef = 101300.;
-		Scalar TRef = 283.15;
-
-		values[pressureIdx] = pRef - (depthBOR_ - globalPos[dim-1]) * densityB*this->gravity()[dim-1];
-		values[saturationIdx] = 0.0;
-		values[temperatureIdx] = TRef + (depthBOR_ - globalPos[dim-1]) * 0.03;
+	         Scalar densityW = 1000.0;
+	         values[pressureIdx] = 1e5 + (depthBOR_ - globalPos[1])*densityW*9.81;
+	         values[saturationIdx] = 0.0;
+	 #if !ISOTHERMAL
+	         values[temperatureIdx] = 283.0 + (depthBOR_ - globalPos[1])*0.03;
+		     if (globalPos[0] > 20 && globalPos[0] < 30 && globalPos[1] > 5 && globalPos[1] < 35)
+		    	values[temperatureIdx] = 380;
+	 #endif
 	}
 	// \}
 
 private:
-	bool onLeftBoundary_(const GlobalPosition &globalPos) const
-	{
-		return globalPos[0] < this->bboxMin()[0] + eps_;
-	}
-
-	bool onRightBoundary_(const GlobalPosition &globalPos) const
-	{
-		return globalPos[0] > this->bboxMax()[0] - eps_;
-	}
-
-	bool onInlet_(const GlobalPosition &globalPos) const
-	{
-		Scalar height = this->bboxMax()[1] - this->bboxMin()[1];
-		Scalar lambda = globalPos[1]/height;
-		return onLeftBoundary_(globalPos) && 0.0 < lambda && lambda < 1.0/5.0;
-	}
 
 	static const Scalar eps_ = 1e-6;
-	static const Scalar depthBOR_ = 2500.0;
+	static const Scalar depthBOR_ = 1000.0;
 };
 } //end namespace
 

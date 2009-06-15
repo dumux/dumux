@@ -162,7 +162,7 @@ public:
         return nonWettingPhase_;
     }
 
-    //! constructor
+    //! Constructs an object of type TransportProblem
     /** @param variables object of class VariableClass.
      *  @param wettingPhase implementation of a wetting phase.
      *  @param nonWettingPhase implementation of a non-wetting phase.
@@ -179,10 +179,10 @@ public:
 
 private:
     VC& variables_;//object of type Dune::VariableClass
-    Fluid& wettingPhase_;//object of type Dune::TwoPhaseRelations or derived
+    Fluid& wettingPhase_;//object derived from Dune::Fluid
     Fluid& nonWettingPhase_; //object derived from Dune::Fluid
-    Matrix2p<Grid, Scalar>& soil_; //object derived from Dune::Fluid
-    TwoPhaseRelations<Grid,Scalar>& materialLaw_; //object derived from Dune::Matrix2p
+    Matrix2p<Grid, Scalar>& soil_; //object derived from Dune::Matrix2p
+    TwoPhaseRelations<Grid,Scalar>& materialLaw_;//object of type Dune::TwoPhaseRelations or derived
     FieldVector<Scalar,dimWorld> gravity_;//vector including the gravity constant
 };
 

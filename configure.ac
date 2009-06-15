@@ -94,7 +94,7 @@ AC_CONFIG_FILES([Makefile
     dumux/io/Makefile 
     dumux/material/Makefile 
     dumux/material/constrel/Makefile 
-    dumux/material/phaseproperties/Makefile 
+    dumux/material/fluids/Makefile 
     dumux/nonlinear/Makefile 
     dumux/onedinndgrid/Makefile 
     dumux/operators/Makefile 
@@ -115,7 +115,6 @@ AC_CONFIG_FILES([Makefile
     test/richards/Makefile  
     test/transport/Makefile
     tutorial/Makefile
-    dumux/material/fluids/Makefile 
     m4/Makefile
     dune-mux.pc])
 
