@@ -8,7 +8,7 @@
 #include <dumux/material/constrel/constrelair.hh>
 /**
  * \ingroup material
- * \defgroup properties Fluid and Soil properties
+ * \addtogroup properties
  */
 
 /** \ingroup properties

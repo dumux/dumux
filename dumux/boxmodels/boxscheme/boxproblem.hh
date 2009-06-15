@@ -90,7 +90,7 @@ public:
      * \brief Start the simulation procedure. 
      *
      * This method is usually called by the main() function and simply
-     * uses \ref Dune::TimeManager::runSimulation() to do the actual
+     * uses Dune::TimeManager::runSimulation() to do the actual
      * work.
      */
     bool simulate(Scalar dtInitial, Scalar tEnd)
@@ -104,7 +104,7 @@ public:
 
 
     /*!
-     * \brief Called by the \ref Dune::TimeManager in order to
+     * \brief Called by the Dune::TimeManager in order to
      *        initialize the problem.
      */
     void init()
@@ -117,7 +117,7 @@ public:
     }
 
     /*!
-     * \brief Called by \ref Dune::TimeManager in order to do a time
+     * \brief Called by Dune::TimeManager in order to do a time
      *        integration on the model.
      *
      * \note \a timeStepSize and \a nextStepSize are references and may
@@ -136,7 +136,7 @@ public:
     }
 
     /*!
-     * \brief Called by \ref Dune::TimeManager whenever a solution for a
+     * \brief Called by Dune::TimeManager whenever a solution for a
      *        timestep has been computed and the simulation time has
      *        been updated.
      *
@@ -225,7 +225,7 @@ public:
     { return bboxMax_; }
 
     /*! 
-     * \brief Returns \ref TimeManager object used by the simulation
+     * \brief Returns TimeManager object used by the simulation
      */
     TimeManager &timeManager()
     { return timeManager_; }
@@ -265,10 +265,10 @@ public:
      * \brief This method writes the complete state of the problem
      *        to the harddisk.
      *
-     * The file will start with the prefix returned by the \ref name()
+     * The file will start with the prefix returned by the name()
      * method, has the current time of the simulation clock in it's
      * name and uses the extension <tt>.drs</tt>. (Dumux ReStart
-     * file.)  See \ref Dune::Restart for details.
+     * file.)  See Dune::Restart for details.
      */
     void serialize()
     {
@@ -290,7 +290,7 @@ public:
      * \brief This method restores the complete state of the problem
      *        from disk.
      *
-     * It is the inverse of the \ref serialize() method.
+     * It is the inverse of the serialize() method.
      */
     void deserialize(double t)
     {

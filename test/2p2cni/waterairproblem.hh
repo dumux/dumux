@@ -81,7 +81,7 @@ SET_BOOL_PROP(WaterAirProblem, EnableGravity, true);
 
 /*!
  * \ingroup TwoPTwoCNIBoxProblems
- * \brief Nonisothermal gas injection problem where a gas (e.g. $\f air \f$) is injected into a fully
+ * \brief Nonisothermal gas injection problem where a gas (e.g. \f$ air \f$) is injected into a fully
  *        water saturated medium. During buoyancy driven upward migration the gas
  *        passes a high temperature area produced by a heat source.
  *

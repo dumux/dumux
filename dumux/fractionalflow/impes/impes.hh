@@ -49,11 +49,11 @@ template<class GridView, class Diffusion, class Transport, class VC> class IMPES
     {
         dim = GridView::dimension, dimWorld = GridView::dimensionworld
     };
-typedef    typename GridView::Grid Grid;
+    typedef typename GridView::Grid Grid;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
     typedef Dune::FractionalFlow<GridView, Diffusion, Transport, VC> FractionalFlow;
     typedef typename FractionalFlow::RepresentationType PressType;
-    typedef typename FractionalFlow::Scalar Scalar;
+    typedef typename Diffusion::ScalarType Scalar;
 
     typedef Dune::FieldVector<Scalar,dim> LocalPosition;
     typedef Dune::FieldVector<Scalar,dimWorld> GlobalPosition;

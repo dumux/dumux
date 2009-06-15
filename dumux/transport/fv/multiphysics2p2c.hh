@@ -155,7 +155,7 @@ public:
 
     // graphical output
     /**
-     * writes a vtk file to <name>-<k>.vtk
+     * writes a vtk file to &lt;name&gt;-&lt;k&gt;.vtk
      * @param name file name of output
      * @param k number of output file
      */
@@ -330,13 +330,17 @@ void Multiphysics2p2c<GridView, Scalar>::initializeMatrix()
 } // end function initialize matrix
 
 
-/** for first == true, this function assembles the matrix and right hand side for
- * the solution of the pressure field in the same way as in the class FVDiffusion.
- * for first == false, the approach is changed to \f$ \[-\frac{\partial V}{\partial p}
- * \frac{\partial p}{\partial t}+\sum_{\kappa}\frac{\partial V}{\partial m^{\kappa}}\nabla\cdot
+/** for first == true, this function assembles the matrix and right
+ * hand side for the solution of the pressure field in the same way as
+ * in the class FVDiffusion.  for first == false, the approach is
+ * changed to \f[ -\frac{\partial V}{\partial p} \frac{\partial
+ * p}{\partial t}+\sum_{\kappa}\frac{\partial V}{\partial
+ * m^{\kappa}}\nabla\cdot
  * \left(\sum_{\alpha}C_{\alpha}^{\kappa}\mathbf{v}_{\alpha}\right)
- * =\sum_{\kappa}\frac{\partial V}{\partial m^{\kappa}}q^{\kappa}\] \f$. See Paper SPE 99619.
- * This is done to account for the volume effects which appear when gas and liquid are dissolved iin each other.
+ * =\sum_{\kappa}\frac{\partial V}{\partial m^{\kappa}}q^{\kappa}\]
+ * \f]. See Paper SPE 99619.  This is done to account for the volume
+ * effects which appear when gas and liquid are dissolved iin each
+ * other.
  */
 template<class GridView, class Scalar>
 void Multiphysics2p2c<GridView, Scalar>::assemble(bool first, const Scalar t=0)

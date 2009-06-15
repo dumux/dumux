@@ -55,7 +55,7 @@ namespace Dune
     &-& \sum_\alpha \nabla \cdot \left\{{\bf D_{pm}^\kappa} \varrho_{\alpha} {\bf \nabla} X^\kappa_{\alpha} \right\}
     - \sum_\alpha q_\alpha^\kappa = \quad 0 \qquad \kappa \in \{w, a\} \, ,
 	\alpha \in \{w, g\}
- * \f}
+    \f}
  *
  * This is discretized in the model using the fully-coupled vertex
  * centered finite volume (box) scheme as spatial and
@@ -73,10 +73,11 @@ namespace Dune
  * Moreover, the second primary variable depends on the phase state, since a
  * primary variable switch is included. The phase state is stored for all nodes
  * of the system. Following cases can be distinguished:
- * \begin{enumerate}
- *  \item both phases are present: The saturation is used (either\f$S_n\f$ or \f$S_w\f$, dependent on the chosen formulation)
- *  \item only wetting phase is present: The mass fraction of air in the wetting phase \f$X^a_w\f$ is used
- *  \item only non-wetting phase is present: The mass fraction of water in the non-wetting phase, \f$X^w_n\f$, is used
+ * <ul>
+ *  <li> both phases are present: The saturation is used (either\f$S_n\f$ or \f$S_w\f$, dependent on the chosen formulation)</li>
+ *  <li> only wetting phase is present: The mass fraction of air in the wetting phase \f$X^a_w\f$ is used</li>
+ *  <li> only non-wetting phase is present: The mass fraction of water in the non-wetting phase, \f$X^w_n\f$, is used</li>
+ * </ul>
  *  The following table summarizes the choice of the second primary variable and the respective switch criteria:
  */
 

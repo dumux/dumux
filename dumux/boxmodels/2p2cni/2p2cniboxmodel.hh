@@ -88,11 +88,18 @@ namespace Dune {
  * variable represents a mass fraction. The correct assignment of the second
  * primary variable is performed by a phase state dependent primary variable switch. The
  * The phase state is stored for all nodes of the system. Following cases can be distinguished:
- * \begin{enumerate}
- *  \item both phases are present: The saturation is used (either\f$S_n\f$ or \f$S_w\f$, dependent on the chosen formulation)
- *  \item only wetting phase is present: The mass fraction of air in the wetting phase \f$X^a_w\f$ is used
- *  \item only non-wetting phase is present: The mass fraction of water in the non-wetting phase, \f$X^w_n\f$, is used
-  */
+ * <ul>
+ *  <li>
+ *    both phases are present: The saturation is used (either\f$S_n\f$ or \f$S_w\f$, dependent on the chosen formulation)
+ *  </li>
+ *  <li>
+ *    only wetting phase is present: The mass fraction of air in the wetting phase \f$X^a_w\f$ is used
+ *  </li>
+ *  <li>
+ *    only non-wetting phase is present: The mass fraction of water in the non-wetting phase, \f$X^w_n\f$, is used
+ *  </li>
+ * </ul>
+ */
 template<class TypeTag>
 class TwoPTwoCNIBoxModel
     : public TwoPTwoCBoxModelBase<TypeTag, TwoPTwoCNIBoxModel<TypeTag> >

@@ -77,7 +77,7 @@ public:
     /**
      * \param gridView gridView object of type GridView
      * \param problem a problem class object
-     * \param pressType a string giving the type of pressure used (could be: pw, pn, pglobal)
+     * \param pressureType a string giving the type of pressure used (could be: pw, pn, pglobal)
      * \param satType a string giving the type of saturation used (could be: Sw, Sn)
      */
     FVNonWettingPhaseVelocity2P(GridView& gridView, Problem& problem, std::string pressureType, std::string satType = "Sw")
@@ -87,7 +87,7 @@ public:
     /**
      * \param gridView gridView object of type GridView
      * \param problem a problem class object
-     * \param pressType a string giving the type of pressure used (could be: pw, pn, pglobal)
+     * \param pressureType a string giving the type of pressure used (could be: pw, pn, pglobal)
      * \param satType a string giving the type of saturation used (could be: Sw, Sn)
      * \param solverName a string giving the type of solver used (could be: CG, BiCGSTAB, Loop)
      * \param preconditionerName a string giving the type of the matrix preconditioner used (could be: SeqILU0, SeqPardiso)

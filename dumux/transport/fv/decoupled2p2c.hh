@@ -62,16 +62,32 @@ namespace Dune
 /*!
  *  \ingroup decoupled2p2c
  *
- *  \brief Implementation of a decoupled formulation of a compressible two phase two component flow process in porous media
+ *  \brief Implementation of a decoupled formulation of a compressible
+ *         two phase two component flow process in porous media
  *
- *  This implementation is written for a gas-liquid system with two components. An IMPES-like method is used for the sequential solution of the problem.
- *  Capillary forces and diffusion are neglected. Isothermal conditions and local thermodynamic equilibrium are assumed.
- *  Gravity is included.
- *  For the physical description of gas and liquid derivations of the classes Gas_GL and Liquid_GL have to be provided.
- *  The template parameters are the used grid class and the desired number type (usually double)
- *  The pressure equation is given as
- *  \f[ -\frac{\partial V}{\partial p}\frac{\partial p}{\partial t}+\sum_{\kappa}\frac{\partial V}{\partial C^{\kappa}}\nabla\cdot\left(\sum_{\alpha} {\bf v_\alpha} \varrho_\alpha X_\alpha^\kappa \right)=\sum_{\kappa}\frac{\partial V}{\partial m^{\kappa}}q^{\kappa}\f]
- *  See paper SPE 99619 or "Analysis of a Compositional Model for Fluid Flow in Porous Media" by Chen, Qin and Ewing for derivation.
+ *  This implementation is written for a gas-liquid system with two
+ *  components. An IMPES-like method is used for the sequential
+ *  solution of the problem.  Capillary forces and diffusion are
+ *  neglected. Isothermal conditions and local thermodynamic
+ *  equilibrium are assumed.  Gravity is included.
+ *
+ *  For the physical description of gas and liquid derivations of the
+ *  classes Gas_GL and Liquid_GL have to be provided.  The template
+ *  parameters are the used grid class and the desired number type
+ *  (usually double) The pressure equation is given as
+ *  \f[
+ -\frac{\partial V}{\partial p} \frac{\partial p}{\partial t} +
+   \sum_{\kappa} \frac{\partial V}{\partial C^{\kappa}}\nabla \cdot 
+   \left(\sum_{\alpha} 
+   {\bf v_\alpha} \varrho_\alpha X_\alpha^\kappa 
+   \right)
+   =
+   \sum_{\kappa}\frac{\partial V}{\partial m^{\kappa}}q^{\kappa}
+   \f]
+ *  
+ * See paper SPE 99619 or "Analysis of a Compositional Model for Fluid
+ * Flow in Porous Media" by Chen, Qin and Ewing for derivation.
+ *
  *  The transport equation is
  *  \f[ \frac{\partial C^\kappa}{\partial t} = - \nabla \cdot \sum{{\bf v_\alpha} \varrho_\alpha X_\alpha^\kappa} + q^\kappa \f]
  */

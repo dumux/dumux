@@ -88,7 +88,7 @@ public:
      *  \param t time
      *  \param dt time step
      *
-     *  If an explicit \textit{Euler} time discretization is used this function will be called
+     *  If an explicit <it>Euler</it> time discretization is used this function will be called
      *  at the end of each time step.
      */
     virtual void postProcessUpdate(Scalar t, Scalar dt)

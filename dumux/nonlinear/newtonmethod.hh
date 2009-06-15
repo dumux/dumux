@@ -17,7 +17,7 @@
  *
  * \brief The algorithmic part of the multi dimensional newton method.
  *
- * In order to use the method you need a \ref NewtonController.
+ * In order to use the method you need a NewtonController.
  */
 #ifndef DUNE_NEWTONMETHOD_HH
 #define DUNE_NEWTONMETHOD_HH
@@ -133,7 +133,7 @@ private:
 /*!
  * \brief The algorithmic part of the multi dimensional newton method.
  *
- * In order to use the method you need a \ref NewtonController.
+ * In order to use the method you need a NewtonController.
  */
 template<class ModelT, bool useLineSearch=true>
 class NewtonMethod
