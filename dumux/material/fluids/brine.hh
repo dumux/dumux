@@ -44,10 +44,7 @@ public:
         if (constDensity_)
             return constDensity_;
         else {
-            double S, x_CO2_w;
-            x_CO2_w = 0.0;
-            S = Salinity();
-            return constRelBrine.mass_density_brine_CO2(T,p,S,x_CO2_w);
+            DUNE_THROW(NotImplemented, "Non-constant mass density of Brine");
         }
     }
     double enthalpy (double T=283.15, double p=1e5, double X = 1) const

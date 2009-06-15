@@ -3,9 +3,6 @@
 #define DUNE_PUREFLUIDS_HH
 
 #include <dumux/material/property_baseclasses.hh>
-#include <dumux/material/constrel/constrelco2.hh>
-#include <dumux/material/constrel/constrelwater.hh>
-#include <dumux/material/constrel/constrelbrine.hh>
 #include <dumux/material/constrel/constrelair.hh>
 
 #include <dune/common/exceptions.hh>
@@ -15,12 +12,12 @@ namespace Dune
 /** \ingroup properties
  * @brief Fluid properties of methane
  *
- * \todo this class uses the constant relations of water too much! it
- *       is definitely wrong!
+ * \todo this class uses the constant relations of air quite a lot! 
+ *       is it wrong?
  */
 class Methane : public Fluid
 {
-    ConstrelWater constRelWater;
+    ConstrelAir constRelAir;
 
 public:
     Methane(double constDensity = 0,
@@ -33,7 +30,7 @@ public:
         if (constViscosity_)
             return constViscosity_;
         else
-            return constRelWater.viscosity_water(T,p); //[kg/(ms)]
+            return constRelAir.viscosity_air(T,p); //[kg/(ms)]
     }
 
     double density (double T=283.15, double p=1e5, double X=1.0) const
@@ -57,7 +54,8 @@ public:
         if (constEnthalpy_)
             return constEnthalpy_;
         else {
-            return constRelWater.enthalpy_water(T,p);
+            // \todo 
+            DUNE_THROW(NotImplemented, "Enthalpy of air");
         }
     }
     double intEnergy( double T=283.15, double p=1e5, double X = 1) const

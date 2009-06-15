@@ -231,18 +231,6 @@ public:
      */
     virtual double viscosity (double T = 283.15, double p = 1e5, double X = 0.) const = 0;
 
-    //! dynamic viscosity in [kg / (m*s)]
-    /** by specification of the phase density, the internal density calculation can be avoided
-     *  @param p pressure [Pa]
-     *  @param T temperature [K]
-     *  @param rho Phase density [kg / m^3]
-     *  @param X mass fraction of dissolved component
-     */
-    virtual double viscosityCO2(double T, double p, double rho, double X = 0.) const // [kg / (m*s)]
-    {
-        return 0;
-    }
-
     /** @brief density
      * @param T Temperature \f$ \left[ K \right] \f$
      * @param p Pressure \f$ \left[ Pa \right] \f$
@@ -545,16 +533,6 @@ public:
      */
     virtual double viscosity (double T, double p, double X = 0.) const = 0;
 
-    /** @brief dynamic viscosity in [kg / (m*s)] (by specification of the phase density, the internal density calculation can be avoided)
-     *  @param p pressure [Pa]
-     *  @param T temperature [K]
-     *  @param rho Phase density [kg / m^3]
-     *  @param X mass fraction of dissolved component
-     */
-    virtual double viscosityCO2(double T, double p, double rho, double X = 0.) const // [kg / (m*s)]
-    {
-        return 0;
-    }
     /** @brief density
      * @param T Temperature \f$ \left[ K \right] \f$
      * @param p Pressure \f$ \left[ Pa \right] \f$

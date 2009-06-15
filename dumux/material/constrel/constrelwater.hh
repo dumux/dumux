@@ -3,7 +3,7 @@
 #ifndef DUNE_CONSTRELWATER_HH
 #define DUNE_CONSTRELWATER_HH
 
-#include "constrelco2.hh"
+#include <dumux/exceptions.hh>
 
 namespace Dune {
 
@@ -332,41 +332,6 @@ public:
         return visco;
     }
 
-    /********************************************************************/
-    /*                                                                  */
-    /* Density of water depending on the amount of dissolved CO2        */
-    /* Garcia (2001)                                                    */
-    /*                                                                  */
-    /********************************************************************/
-
-    static double mass_density_waterCO2 (double temperature, double pw, double x_CO2_w)
-    {
-        /* x_CO2_w : mole fraction of CO2 in water phase */
-
-        double rho_pure, rho_inv, rho;
-        double xww;
-        double tempC, M_CO2, M_H2O, M_T, V_phi;
-
-        M_CO2 = 0.044;
-        M_H2O = 0.018;
-
-        tempC = temperature - 273.15;        /* tempC : temperature in °C */
-
-        rho_pure = mass_density_water_Batzle (temperature, pw);
-
-        xww = 1.0 - x_CO2_w;
-
-        M_T = M_H2O * xww + M_CO2 * x_CO2_w;
-
-        V_phi = (37.51 - 9.585E-2*tempC + 8.74E-4*pow(tempC,2) - 5.044E-7*pow(tempC,3)) / 1.0E6;
-
-        rho_inv = x_CO2_w * V_phi/M_T + M_H2O * xww / (rho_pure * M_T);
-
-        rho = 1/rho_inv;
-
-        return(rho);
-    }
-
     /*********************************************************************/
     /* CITATION??????????????????????????????????*************************/
     static double lambda_w (double temperature)
@@ -413,40 +378,6 @@ public:
         return(lambda);
     }
     /*********************************************************************/
-
-
-    static double lambda_pm (double temperature, double p, double Sw, double phi)
-    {
-        double Sg, l_s, l_w, l_g, l_pm, l_dry, l_sat, llow, lhigh;
-        ConstrelCO2 co2;
-
-        Sg = 1 - Sw;
-        l_s = 4.5; /*W/mK*/
-
-        l_w = lambda_w(temperature);
-        l_g = co2.lambda(temperature, p);
-        l_pm = l_s*(1- phi) + l_w*Sw*phi + l_g* Sg*phi;
-
-        /*wet*/
-        /*Hashin-Shtrikman bounds for water and solid*/ /*Hartmann et al 2004*/
-        /*HS-*/    llow = l_w + ( (1-phi) / (  ( 1/(l_s-l_w) )+(phi/(3*l_w))  ) );
-        /*HS+*/    lhigh = l_s + ( phi / (  ( 1/(l_w-l_s) )+(phi/(3*l_s))  ) );
-
-        l_sat = 2 / ( 1/llow + 1/lhigh); /*harmonic averaging of the two
-                                           bounds*/
-
-        /*dry*/
-        /*Hashin-Shtrikman bounds for gas and solid*/
-        /*HS-*/    llow = l_g + ( (1-phi) / (  ( 1/(l_s-l_g) )+(phi/(3*l_g))  ) );
-        /*HS+*/    lhigh = l_s + ( phi / (  ( 1/(l_g-l_s) )+(phi/(3*l_s))  ) );
-
-        l_dry = 2 / ( 1/llow + 1/lhigh); /*harmonic averaging of the two
-                                           bounds*/
-
-        l_pm = l_dry + sqrt(Sw)*(l_sat - l_dry); /*Somerton*/
-
-        return(l_pm);
-    }
 
 
     //! enthalpy of steam according to IAPWS 97, with T=383.15 K as reference temperature
