@@ -1,4 +1,4 @@
-SUBDIRS = fv problems
+SUBDIRS = ch fv problems
 
 transportdir = $(includedir)/dune/dumux/transport
 transport_HEADERS = *.hh

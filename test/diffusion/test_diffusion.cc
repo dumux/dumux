@@ -16,7 +16,7 @@
 #include <dumux/material/matrixproperties.hh>
 //
 #include "dumux/diffusion/fv/fvwettingvelocity2p.hh"
-#include "dumux/diffusion/fe/fepressure2p.hh"
+//#include "dumux/diffusion/fe/fepressure2p.hh"
 //
 #include "dumux/diffusion/mimetic/mimeticpressure2p.hh"
 //
@@ -63,8 +63,8 @@ int main(int argc, char** argv)
 
         Dune::Timer timer;
         timer.reset();
-        Dune::LeafFEPressure2P<GridView, NumberType, VC> diffusion(gridView, problem);
-//        Dune::FVWettingPhaseVelocity2P<GridView, NumberType, VC> diffusion(gridView, problem, "pw","Sw");
+//        Dune::LeafFEPressure2P<GridView, NumberType, VC> diffusion(gridView, problem);
+        Dune::FVWettingPhaseVelocity2P<GridView, NumberType, VC> diffusion(gridView, problem, "pw","Sw");
 //        Dune::MimeticPressure2P<GridView, NumberType, VC> diffusion(gridView, problem);
 
 

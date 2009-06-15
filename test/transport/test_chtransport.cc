@@ -10,8 +10,7 @@
 #include "dumux/material/fluids/uniform.hh"
 #include "dumux/transport/ch/chtransport.hh"
 #include "dumux/transport/ch/fractionalw.hh"
-#include "dumux/transport/problems/simpleproblem.hh"
-#include "dumux/transport/problems/simplenonlinearproblem.hh"
+#include "simplenonlinearproblem.hh"
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/fractionalflow/variableclass2p.hh"
 
