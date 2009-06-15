@@ -106,7 +106,6 @@ AC_CONFIG_FILES([Makefile
     dumux/material/Makefile 
     dumux/material/constrel/Makefile 
     dumux/material/fluids/Makefile
-    dumux/material/phaseproperties/Makefile 
     dumux/nonlinear/Makefile 
     dumux/operators/Makefile 
     dumux/pardiso/Makefile 
