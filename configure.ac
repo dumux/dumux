@@ -99,6 +99,8 @@ AC_CONFIG_FILES([Makefile
     dumux/onedinndgrid/Makefile 
     dumux/operators/Makefile 
     dumux/pardiso/Makefile 
+    dumux/shapefunctions/Makefile 
+    dumux/shapefunctions/cr/Makefile 
     dumux/timedisc/Makefile
     dumux/transport/Makefile 
     dumux/transport/fv/Makefile 

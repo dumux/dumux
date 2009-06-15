@@ -19,7 +19,6 @@
 #include<dune/disc/operators/boundaryconditions.hh>
 #include<dune/disc/groundwater/groundwater.hh>
 #include"dumux/shapefunctions/CRshapefunctions.hh"
-#include"dumux/operators/localstiffnessext.hh"
 
 /**
  * @file
@@ -58,9 +57,9 @@ namespace Dune
  */
 template<class GridView, class Scalar, class VC,
         class Problem>
-class MimeticGroundwaterEquationLocalStiffness: public LocalStiffnessExt<
-        MimeticGroundwaterEquationLocalStiffness<GridView, Scalar, VC, Problem> ,
-        typename GridView::Grid, Scalar, 1>
+class MimeticGroundwaterEquationLocalStiffness
+    :
+        public LocalStiffness<GridView, Scalar, 1>
 {
     // grid types
     enum

@@ -6,12 +6,13 @@ SUBDIRS = diffusion \
 	nonlinear \
 	onedinndgrid \
 	pardiso \
+	shapefunctions \
 	transport \
 	.
 
 # the standard debug streams are put into the libdune
 noinst_LTLIBRARIES = libdumux.la
-SUBLIBS = onedinndgrid/libonedinndgrid.la
+SUBLIBS = shapefunctions/libshapefunctions.la onedinndgrid/libonedinndgrid.la
 
 libdumux_la_SOURCES =
 libdumux_la_LIBADD = $(SUBLIBS)
