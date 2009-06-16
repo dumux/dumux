@@ -21,8 +21,6 @@
 #define DUMUX_BOX_SCHEME_HH
 
 #include <dumux/boxmodels/boxscheme/boxjacobian.hh>
-#include <dumux/auxiliary/basicdomain.hh>
-#include <dumux/nonlinear/newtonmethod.hh>
 
 #include <dune/istl/operators.hh>
 #include <dune/disc/operators/p1operator.hh>
