@@ -6,7 +6,6 @@ EXTRA_DIST=dune.module \
 	   optim.opts \
 	   CONTRIBUTORS \
 	   INSTALL \
-	   INSTALL.cmake \
 	   LICENSE \
 	   README
 

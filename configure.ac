@@ -110,7 +110,6 @@ AC_CONFIG_FILES([Makefile
     dumux/material/constrel/Makefile 
     dumux/material/fluids/Makefile
     dumux/nonlinear/Makefile 
-    dumux/onedinndgrid/Makefile 
     dumux/operators/Makefile 
     dumux/pardiso/Makefile 
     dumux/shapefunctions/Makefile 

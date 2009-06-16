@@ -8,7 +8,6 @@ SUBDIRS = auxiliary \
 	io \
 	material \
 	nonlinear \
-	onedinndgrid \
 	operators \
 	pardiso \
 	shapefunctions \
@@ -18,7 +17,7 @@ SUBDIRS = auxiliary \
 
 # the standard debug streams are put into the libdune
 noinst_LTLIBRARIES = libdumux.la
-SUBLIBS = shapefunctions/libshapefunctions.la onedinndgrid/libonedinndgrid.la
+SUBLIBS = shapefunctions/libshapefunctions.la
 
 libdumux_la_SOURCES =
 libdumux_la_LIBADD = $(SUBLIBS)
