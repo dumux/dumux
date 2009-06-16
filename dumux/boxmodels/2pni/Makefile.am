@@ -1,4 +1,4 @@
-2pnidir = $(includedir)/dune/dumux/boxmodels/2pni
+2pnidir = $(includedir)/dumux/boxmodels/2pni
 2pni_HEADERS = 2pniboxjacobian.hh  \
              2pniboxmodel.hh  \
              2pniboxproblem.hh  \

@@ -1,7 +1,14 @@
 # $Id: duneproject 4887 2007-04-02 10:06:45Z christi $
 
 # we need the module file to be able to build via dunecontrol
-EXTRA_DIST=dune.module
+EXTRA_DIST=dune.module \
+	   debug.opts \
+	   optim.opts \
+	   CONTRIBUTORS \
+	   INSTALL \
+	   INSTALL.cmake \
+	   LICENSE \
+	   README
 
 #SUBDIRS = doc dumux m4 lib test benchmarkproblems
 SUBDIRS = doc dumux m4 test tutorial

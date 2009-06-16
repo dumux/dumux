@@ -1,6 +1,6 @@
 SUBDIRS = ch fv problems
 
-transportdir = $(includedir)/dune/dumux/transport
+transportdir = $(includedir)/dumux/transport
 transport_HEADERS = *.hh
 
 include $(top_srcdir)/am/global-rules

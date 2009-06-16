@@ -1,4 +1,4 @@
-richardsdir = $(includedir)/dune/dumux/boxmodels/richards
+richardsdir = $(includedir)/dumux/boxmodels/richards
 richards_HEADERS = richardsboxjacobian.hh  \
              richardsboxmodel.hh  \
              richardsboxproblem.hh  \

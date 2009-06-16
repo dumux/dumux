@@ -1,4 +1,4 @@
-pardisodir = $(includedir)/dune/dumux/pardiso
+pardisodir = $(includedir)/dumux/pardiso
 pardiso_HEADERS = identity.hh pardiso.hh
 
 include $(top_srcdir)/am/global-rules

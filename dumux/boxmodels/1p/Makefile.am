@@ -1,4 +1,4 @@
-1pdir = $(includedir)/dune/dumux/boxmodels/1p
+1pdir = $(includedir)/dumux/boxmodels/1p
 1p_HEADERS = 1pboxjacobian.hh  \
              1pboxmodel.hh  \
              1pboxproblem.hh  \

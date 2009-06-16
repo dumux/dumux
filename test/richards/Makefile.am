@@ -1,7 +1,8 @@
 bin_PROGRAMS = test_richards
+noinst_HEADERS = *.hh
+dist_noinst_DATA = *.cc
+EXTRA_DIST = grids/*.dgf
 
 test_richards_SOURCES = test_richards.cc richardsproblem.hh richardssoil.hh
-test_richards_CXXFLAGS = $(MPI_CPPFLAGS) 
-test_richards_LDADD = $(MPI_LDFLAGS) 
 
 include $(top_srcdir)/am/global-rules

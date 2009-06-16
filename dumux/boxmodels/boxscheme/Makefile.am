@@ -1,4 +1,4 @@
-boxschemedir = $(includedir)/dune/dumux/boxmodels/boxscheme
+boxschemedir = $(includedir)/dumux/boxmodels/boxscheme
 boxscheme_HEADERS = boxjacobian.hh  \
              boxproblem.hh  \
              boxproperties.hh  \

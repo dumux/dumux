@@ -2,7 +2,7 @@
 # Process this file with autoconf to produce a configure script.
 AC_PREREQ(2.50)
 DUNE_AC_INIT # gets module version from dune.module file
-AM_INIT_AUTOMAKE
+AM_INIT_AUTOMAKE([tar-pax])
 AC_CONFIG_SRCDIR([test/diffusion/test_diffusion.cc])
 AM_CONFIG_HEADER([config.h])
 #AC_SUBST([LOCAL_LIBS], '$(top_srcdir)/lib/libdunemux.la')
@@ -24,6 +24,9 @@ AM_CONDITIONAL([CONVERT], [test "x$CONVERT" != xfalse])
 # this module depends on dune-common dune-grid dune-istl dune-disc dune-subgrid
 # this implies checking for [dune-common], [dune-grid], [dune-istl], [dune-disc], [dune-subgrid]
 DUNE_CHECK_ALL
+
+# the Boost c++ template libraries
+AX_BOOST_BASE([1.36.0])
 
 AC_DEFUN([SET_PARDISO], [
 AC_PREREQ(2.50)
@@ -73,8 +76,8 @@ fi
 SET_PARDISO
 
 # implicitly set the Dune-flags everywhere
-AC_SUBST(AM_CPPFLAGS, $ALL_PKG_CPPFLAGS)
-AC_SUBST(AM_LDFLAGS, $ALL_PKG_LDFLAGS)
+AC_SUBST(AM_CPPFLAGS, "$ALL_PKG_CPPFLAGS $MPI_CPPFLAGS" )
+AC_SUBST(AM_LDFLAGS, "$ALL_PKG_LDFLAGS $MPI_LDFLAGS" )
 LIBS="$DUNE_LIBS $ALL_PKG_LIBS $PARDISO_LIBS"
 
 AC_CONFIG_FILES([Makefile
@@ -107,6 +110,7 @@ AC_CONFIG_FILES([Makefile
     dumux/material/constrel/Makefile 
     dumux/material/fluids/Makefile
     dumux/nonlinear/Makefile 
+    dumux/onedinndgrid/Makefile 
     dumux/operators/Makefile 
     dumux/pardiso/Makefile 
     dumux/shapefunctions/Makefile 

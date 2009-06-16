@@ -1,4 +1,4 @@
-phasepropertiesdir = $(includedir)/dune/dumux/material/phaseproperties
+phasepropertiesdir = $(includedir)/dumux/material/phaseproperties
 phaseproperties_HEADERS = air.hh \
 	brine.hh \
 	dnapl.hh \

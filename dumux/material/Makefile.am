@@ -1,6 +1,6 @@
 SUBDIRS = constrel fluids
 
-materialdir = $(includedir)/dune/dumux/material
+materialdir = $(includedir)/dumux/material
 material_HEADERS = matrixproperties.hh \
 	multicomponentrelations.hh \
 	property_baseclasses.hh \
