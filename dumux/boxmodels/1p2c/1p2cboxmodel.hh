@@ -42,20 +42,20 @@ namespace Dune
  * approach (neglect of the gravitation) as the equation for the conservation of momentum:
  \f[
  v_{D} = - \frac{K}{\mu}
- \left(\text{grad} p  \right)
+ \left(\text{grad} p - \varrho g  \right)
  \f]
  *
  * By inserting this into the continuity equation, one gets
  \f[
  - \text{div} \left\{
-  \frac{K}{\mu}  \left(\text{grad} p \right)
+   \varrho \frac{K}{\mu}  \left(\text{grad} p - \varrho g \right)
  \right\} = q \;,
  \f]
  *
  * The transport of the components is described by the following equation:
  \f[
- \Phi \frac{ \partial x}{\partial t} - \text{div} \left( \frac{K x}{\mu} \text{grad} p
-  + \tau \Phi D \text{grad} x \right) = q.
+ \Phi \varrho \frac{ \partial x}{\partial t} - \text{div} \left( \varrho \frac{K x}{\mu} \left( \text{grad} p -
+ \varrho g \right)  + \varrho \tau \Phi D \text{grad} x \right) = q.
  \f]
  *
  * All equations are discretized by this model using the fully-coupled vertex

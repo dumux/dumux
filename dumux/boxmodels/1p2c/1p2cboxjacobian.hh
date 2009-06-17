@@ -106,7 +106,7 @@ public:
         result[konti] = 0;
 
         // storage term of the transport equation
-        result[transport] = vertDat.porosity * vertDat.molefraction;
+        result[transport] = vertDat.density * vertDat.porosity * vertDat.molefraction;
     }
 
     /*!
@@ -130,17 +130,17 @@ public:
         flux[konti] = vars.vDarcyNormal / vars.viscosityAtIP;
 
         // advective flux
-        flux[transport] += 
+        flux[transport] +=
             vars.vDarcyNormal *
             (  upwindAlpha*
-               (  up.molefraction/up.viscosity )
+               (  up.density * up.molefraction/up.viscosity )
                +
                (1 - upwindAlpha)*
-               (  dn.molefraction/dn.viscosity ) );
-        
+               (  dn.density * dn.molefraction/dn.viscosity ) );
+
         // diffusive flux
-        flux[transport] += 
-            vars.diffCoeffPM* 
+        flux[transport] +=
+            vars.diffCoeffPM*
             (vars.concentrationGrad*vars.face->normal);
     }
 
@@ -173,7 +173,7 @@ public:
     void addVtkFields(MultiWriter &writer, const SolutionFunction &globalSol)
     {
         typedef Dune::BlockVector<Dune::FieldVector<Scalar, 1> > ScalarField;
-        
+
         // create the required scalar fields
         unsigned numVertices = this->gridView_.size(dim);
 
@@ -189,18 +189,18 @@ public:
         {
             int numLocalVerts = elementIt->template count<dim>();
             tmpSol.resize(numLocalVerts);
-            
+
             setCurrentElement(*elementIt);
             this->restrictToElement(tmpSol, globalSol);
             updateElementData_(elemDat, tmpSol, false);
-            
+
             for (int i = 0; i < numLocalVerts; ++i)
             {
                 int globalIdx = this->problem_.model().vertexMapper().map(*elementIt, i, dim);
-                
+
                 (*pressure)[globalIdx] = elemDat[i].pressure;
                 (*molefraction)[globalIdx] = elemDat[i].molefraction;
-                
+
             };
         }
 

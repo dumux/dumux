@@ -44,7 +44,7 @@ class OnePTwoCFluxData
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))   Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    
+
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem))    Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexData)) VertexData;
 
@@ -117,7 +117,7 @@ private:
             tmp = feGrad;
             tmp *= elemDat[idx].molefraction;
             concentrationGrad += tmp;
-            
+
             // phase density
             densityAtIP +=
                 elemDat[idx].density*face->shapeValue[idx];
@@ -173,8 +173,8 @@ private:
 
         // Diffusion coefficient in the porous medium
         diffCoeffPM
-            = 1./2*(vDat_j.porosity * vDat_i.tortuosity * vDat_i.diffCoeff +
-                    vDat_j.porosity * vDat_j.tortuosity * vDat_j.diffCoeff);
+            = 1./2*(vDat_i.density * vDat_i.porosity * vDat_i.tortuosity * vDat_i.diffCoeff +
+                    vDat_j.density * vDat_j.porosity * vDat_j.tortuosity * vDat_j.diffCoeff);
     }
 
 public:
@@ -192,11 +192,11 @@ public:
     Scalar densityAtIP;
 
     //! viscosity of the fluid at the integration point
-    Scalar viscosityAtIP;  
+    Scalar viscosityAtIP;
 
     //! the effective diffusion coefficent in the porous medium
     Scalar diffCoeffPM;
-    
+
     //! darcy velocity in direction of the face normal
     Scalar vDarcyNormal;
 
