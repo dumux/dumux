@@ -19,8 +19,6 @@
 #include "lensproblem.hh"
 
 #include <dune/grid/common/gridinfo.hh>
-#include <dune/grid/uggrid.hh>
-#include <dune/grid/yaspgrid.hh>
 
 #include <dune/common/exceptions.hh>
 #include <dune/common/mpihelper.hh>
@@ -28,6 +26,86 @@
 #include <iostream>
 #include <boost/format.hpp>
 
+////////////////////////
+// helper class for grid instantiation 
+////////////////////////
+template <class Grid, class Scalar>
+class CreateGrid
+{
+};
+
+#if ENABLE_UG
+template <class Scalar>
+class CreateGrid<Dune::UGGrid<2>, Scalar>
+{
+public:
+    static Dune::UGGrid<2> *create(const Dune::FieldVector<Scalar, 2> &upperRight,
+                                   const Dune::FieldVector<int, 2> &cellRes)
+    { 
+        Dune::UGGrid<2> *grid = new Dune::UGGrid<2>;
+        Dune::GridFactory<Dune::UGGrid<2> > factory(grid);
+        for (int i=0; i<=cellRes[0]; i++) {
+            for (int j=0; j<=cellRes[1]; j++) {
+                Dune::FieldVector<double,2> pos;
+                pos[0] = upperRight[0]*double(i)/cellRes[0];
+                pos[1] = upperRight[1]*double(j)/cellRes[1];
+                factory.insertVertex(pos);
+            }
+        }
+
+        for (int i=0; i<cellRes[0]; i++) {
+            for (int j=0; j<cellRes[1]; j++) {
+                std::vector<unsigned int> v(4);
+                v[0] = i*(cellRes[1]+1) + j;
+                v[1] = i*(cellRes[1]+1) + j+1;
+                v[2] = (i+1)*(cellRes[1]+1) + j;
+                v[3] = (i+1)*(cellRes[1]+1) + j+1;
+                factory.insertElement(Dune::GeometryType(Dune::GeometryType::cube,2), v);
+            }
+        }
+
+        factory.createGrid();
+        grid->loadBalance();
+        return grid;
+    }
+};
+#endif
+
+template <class Scalar>
+class CreateGrid<Dune::YaspGrid<2>, Scalar>
+{
+public:
+    static Dune::YaspGrid<2> *create(const Dune::FieldVector<Scalar, 2> &upperRight,
+                                     const Dune::FieldVector<int, 2> &cellRes)
+    { 
+        return new Dune::YaspGrid<2>(
+#ifdef HAVE_MPI
+            Dune::MPIHelper::getCommunicator(),
+#endif
+            upperRight, // upper right
+            cellRes, // number of cells
+            Dune::FieldVector<bool,2>(false), // periodic
+            1); // overlap
+    };
+};
+
+template <class Scalar>
+class CreateGrid<Dune::SGrid<2, 2>, Scalar>
+{
+public:
+    static Dune::SGrid<2, 2> *create(const Dune::FieldVector<Scalar, 2> &upperRight,
+                                     const Dune::FieldVector<int, 2> &cellRes)
+    { 
+        return new Dune::SGrid<2,2>(cellRes, // number of cells
+                                    Dune::FieldVector<Scalar, 2>(0.0), // lower left
+                                    upperRight); // upper right
+            
+    };
+};
+
+////////////////////////
+// the main function
+////////////////////////
 void usage(const char *progname)
 {
     std::cout << boost::format("usage: %s [--restart restartTime] tEnd dt\n")%progname;
@@ -85,42 +163,8 @@ int main(int argc, char** argv)
         res[0]        = 24;
         res[1]        = 16;
 
-#if USE_UG
-        Grid grid;
-        Dune::GridFactory<Grid> factory(&grid);
-        for (int i=0; i<=res[0]; i++) {
-            for (int j=0; j<=res[1]; j++) {
-                Dune::FieldVector<double,2> pos;
-                pos[0] = upperRight[0]*double(i)/res[0];
-                pos[1] = upperRight[1]*double(j)/res[1];
-                factory.insertVertex(pos);
-            }
-        }
-
-        for (int i=0; i<res[0]; i++) {
-            for (int j=0; j<res[1]; j++) {
-                std::vector<unsigned int> v(4);
-                v[0] = i*(res[1]+1) + j;
-                v[1] = i*(res[1]+1) + j+1;
-                v[2] = (i+1)*(res[1]+1) + j;
-                v[3] = (i+1)*(res[1]+1) + j+1;
-                factory.insertElement(Dune::GeometryType(Dune::GeometryType::cube,2), v);
-            }
-        }
-
-        factory.createGrid();
-#else
-        // Yasp grid
-        Grid grid(
-#ifdef HAVE_MPI
-                  Dune::MPIHelper::getCommunicator(),
-#endif
-                  upperRight, // upper right
-                  res, // number of cells
-                  Dune::FieldVector<bool,dim>(false), // periodic
-                  2); // overlap
-#endif
-
+        std::auto_ptr<Grid> grid(CreateGrid<Grid, Scalar>::create(upperRight, res));
+        
         ////////////////////////////////////////////////////////////
         // instantiate and run the concrete problem
         ////////////////////////////////////////////////////////////
@@ -131,7 +175,7 @@ int main(int argc, char** argv)
         lowerLeftLens[1] = 2.0;
         upperRightLens[0] = 4.0;
         upperRightLens[1] = 3.0;
-        Problem problem(grid.leafView(), lowerLeftLens, upperRightLens);
+        Problem problem(grid->leafView(), lowerLeftLens, upperRightLens);
 
         // load restart file if necessarry
         if (restart)
@@ -140,7 +184,7 @@ int main(int argc, char** argv)
         // run the simulation
         if (!problem.simulate(dt, tEnd))
             return 2;
-
+        
         return 0;
     }
     catch (Dune::Exception &e) {

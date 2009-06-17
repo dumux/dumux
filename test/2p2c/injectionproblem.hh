@@ -21,8 +21,9 @@
 #ifndef DUNE_INJECTIONPROBLEM_HH
 #define DUNE_INJECTIONPROBLEM_HH
 
-#include <dune/grid/uggrid.hh>
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
+#include <dune/grid/io/file/dgfparser/dgfs.hh>
+#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 #include <dumux/material/fluids/water_air.hh>
 
@@ -44,7 +45,15 @@ namespace Properties
 NEW_TYPE_TAG(InjectionProblem, INHERITS_FROM(BoxTwoPTwoC));
 
 // Set the grid type
-SET_TYPE_PROP(InjectionProblem, Grid, Dune::UGGrid<2>);
+SET_PROP(InjectionProblem, Grid)
+{
+#if ENABLE_UG
+    typedef Dune::UGGrid<2> type;
+#else
+    typedef Dune::SGrid<2, 2> type;
+    //typedef Dune::YaspGrid<2> type;
+#endif
+};
 
 // Set the problem property
 SET_PROP(InjectionProblem, Problem)

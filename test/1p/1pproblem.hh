@@ -21,6 +21,8 @@
 #endif
 
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
+#include <dune/grid/io/file/dgfparser/dgfs.hh>
+#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 #include <dumux/material/fluids/air.hh>
 #include <dumux/boxmodels/1p/1pboxmodel.hh>
@@ -37,7 +39,13 @@ namespace Properties
 NEW_TYPE_TAG(OnePTestProblem, INHERITS_FROM(BoxOneP));
 
 // Set the grid type
+#if ENABLE_UG
 SET_TYPE_PROP(OnePTestProblem, Grid, Dune::UGGrid<2>);
+#else
+SET_PROP(OnePTestProblem, Grid) { typedef Dune::SGrid<2, 2> type; };
+//SET_TYPE_PROP(OnePTestProblem, Grid, Dune::YaspGrid<2>);
+#endif
+
 
 // Set the problem property
 SET_PROP(OnePTestProblem, Problem)
@@ -72,11 +80,11 @@ SET_BOOL_PROP(OnePTestProblem, EnableGravity, true);
  * flowing from bottom to top.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_1p ./grids/1p_2d.dgf 4000000 1</tt>
- * where start simulation time = 1 second, end simulation time = 4000000 seconds
+ * <tt>./test_1p ./grids/1p_2d.dgf 10 0.01</tt>
+ * where start simulation time = 0.01 second, end simulation time = 10 seconds
  * The same file can be also used for 3d simulation but you need to change line
- * <tt>typedef Dune::UGGrid<2> type;</tt> to 
- * <tt>typedef Dune::UGGrid<3> type;</tt> and use <tt>1p_3d.dgf</tt> grid.
+ * <tt>typedef Dune::SGrid<2,2> type;</tt> to 
+ * <tt>typedef Dune::SGrid<3,3> type;</tt> and use <tt>1p_3d.dgf</tt> grid.
  */
 template <class TypeTag = TTAG(OnePTestProblem) >
 class OnePTestProblem : public OnePBoxProblem<TypeTag, OnePTestProblem<TypeTag> >
@@ -162,7 +170,7 @@ public:
         const GlobalPosition &globalPos
             = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
 
-        if (globalPos[dim-1] < eps || globalPos[dim-1] > 20 - eps)
+        if (globalPos[dim-1] < eps || globalPos[dim-1] > 1.0 - eps)
             values = BoundaryConditions::dirichlet;
         else
             values = BoundaryConditions::neumann;
@@ -187,7 +195,7 @@ public:
         if (globalPos[dim-1] < eps) {
             values[pressureIdx] = 2.0e+5;
         }
-        else if (globalPos[dim-1] > 20 -eps) {
+        else if (globalPos[dim-1] > 1.0 -eps) {
         	values[pressureIdx] = 1.0e+5;
         }
     }

@@ -17,6 +17,8 @@
 #define DUNE_RICHARDSPROBLEM_HH
 
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
+#include <dune/grid/io/file/dgfparser/dgfs.hh>
+#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 #include <dumux/material/fluids/water.hh>
 #include <dumux/material/fluids/air.hh>
@@ -39,10 +41,13 @@ namespace Properties
 NEW_TYPE_TAG(RichardsTestProblem, INHERITS_FROM(BoxRichards));
 
 // Set the grid type
-SET_PROP(RichardsTestProblem, Grid)
-{
-    typedef Dune::UGGrid<2> type;
-};
+// Set the grid type
+#if ENABLE_UG
+SET_TYPE_PROP(RichardsTestProblem, Grid, Dune::UGGrid<2>);
+#else
+SET_PROP(RichardsTestProblem, Grid) { typedef Dune::SGrid<2, 2> type; };
+//SET_TYPE_PROP(RichardsTestProblem, Grid, Dune::YaspGrid<2>);
+#endif
 
 // Set the problem property
 SET_PROP(RichardsTestProblem, Problem)
@@ -79,8 +84,8 @@ SET_BOOL_PROP(RichardsTestProblem, EnableGravity, true);
  * where water is inflitrating into an initially unsaturated zone. Linear capillary pressure-saturation relationship is used.
  *
  * To run the simulation execute the following line in shell:
- * ./new_test_richards ./grids/richards_2d.dgf 400000 1
- * where start simulation time = 1 second, end simulation time = 400000 seconds
+ * ./new_test_richards ./grids/richards_2d.dgf 10000 1
+ * where start simulation time = 1 second, end simulation time = 10000 seconds
  * The same file can be also used for 3d simulation but you need to change line
  * "typedef Dune::UGGrid<2> type;" with "typedef Dune::UGGrid<3> type;" and use richards_3d.dgf grid
  */

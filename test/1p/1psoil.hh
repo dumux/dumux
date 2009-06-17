@@ -47,7 +47,7 @@ public:
     {
         Kout_ = 0.;
         for(int i = 0; i < dim; i++)
-            Kout_[i][i] = 1.0e-14;
+            Kout_[i][i] = 1.0e-10;
     }
 
     ~OnePSoil()

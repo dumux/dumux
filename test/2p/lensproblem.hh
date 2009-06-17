@@ -17,13 +17,12 @@
 #ifndef DUNE_LENSPROBLEM_HH
 #define DUNE_LENSPROBLEM_HH
 
-#define USE_UG 1
-
-#if USE_UG
-#include <dune/grid/io/file/dgfparser/dgfug.hh>
-#else
-#include <dune/grid/yaspgrid.hh>
+#if ENABLE_UG
+#include <dune/grid/uggrid.hh>
 #endif
+
+#include <dune/grid/yaspgrid.hh>
+#include <dune/grid/sgrid.hh>
 
 #include <dumux/material/fluids/water.hh>
 #include <dumux/material/fluids/dnapl.hh>
@@ -48,10 +47,11 @@ NEW_TYPE_TAG(LensProblem, INHERITS_FROM(BoxTwoP));
 // Set the grid type
 SET_PROP(LensProblem, Grid)
 {
-#if USE_UG
+#if ENABLE_UG
     typedef Dune::UGGrid<2> type;
-#else // USE_UG
-    typedef Dune::YaspGrid<2> type;
+#else
+    //typedef Dune::YaspGrid<2> type;
+    typedef Dune::SGrid<2, 2> type;
 #endif
 };
 

@@ -5,7 +5,6 @@
 
 #include <dumux/material/property_baseclasses.hh>
 
-#include <dumux/material/constrel/constrelwater.hh>
 #include <dune/common/exceptions.hh>
 
 namespace Dune
@@ -31,25 +30,19 @@ public:
     double density (double T, double p, double X = 0.) const
     {
         // TODO: correct?
-        return 1025.0; // in [kg / m^3]
+        return 1; // in [kg / m^3]
     }
 
 
     double enthalpy (double T, double p, double Xa = 0.) const
     {
-        // TODO: correct enough?
-        return ConstrelWater::enthalpy_water(T,p);
+        return 0;
     }
 
 
     double intEnergy(double T, double p, double Xa = 0.) const
     {
-        double u;
-        double rho_mass = density(T,p);
-        double h = enthalpy(T,p);
-
-        u = h - (p / rho_mass);
-        return u;
+        return 0;
     }
 
 

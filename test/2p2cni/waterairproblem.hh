@@ -22,6 +22,8 @@
 #endif
 
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
+#include <dune/grid/io/file/dgfparser/dgfs.hh>
+#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 #include <dumux/material/multicomponentrelations.hh>
 #include <dumux/material/matrixproperties.hh>
@@ -46,7 +48,15 @@ namespace Properties
 NEW_TYPE_TAG(WaterAirProblem, INHERITS_FROM(BoxTwoPTwoCNI));
 
 // Set the grid type
-SET_TYPE_PROP(WaterAirProblem, Grid, Dune::UGGrid<2>);
+SET_PROP(WaterAirProblem, Grid)
+{
+#if ENABLE_UG
+    typedef Dune::UGGrid<2> type;
+#else
+    typedef Dune::SGrid<2, 2> type;
+    //typedef Dune::YaspGrid<2> type;
+#endif
+};
 
 // Set the problem property
 SET_PROP(WaterAirProblem, Problem)

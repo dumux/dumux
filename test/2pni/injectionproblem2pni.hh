@@ -18,6 +18,8 @@
 #define DUNE_INJECTIONPROBLEM2PNI_HH
 
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
+#include <dune/grid/io/file/dgfparser/dgfs.hh>
+#include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
 #include <dumux/material/matrixproperties.hh>
 #include <dumux/material/fluids/air.hh>
@@ -34,7 +36,15 @@ namespace Properties
 NEW_TYPE_TAG(InjectionProblem2PNI, INHERITS_FROM(BoxTwoPNI));
 
 // Set the grid type
-SET_TYPE_PROP(InjectionProblem2PNI, Grid, Dune::UGGrid<2>);
+SET_PROP(InjectionProblem2PNI, Grid)
+{
+#if ENABLE_UG
+    typedef Dune::UGGrid<2> type;
+#else
+    typedef Dune::SGrid<2, 2> type;
+    //typedef Dune::YaspGrid<2> type;
+#endif
+};
 
 // Set the problem property
 SET_PROP(InjectionProblem2PNI, Problem)
