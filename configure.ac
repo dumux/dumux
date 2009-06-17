@@ -26,7 +26,7 @@ AM_CONDITIONAL([CONVERT], [test "x$CONVERT" != xfalse])
 DUNE_CHECK_ALL
 
 # the Boost c++ template libraries
-AX_BOOST_BASE([1.36.0])
+AX_BOOST_BASE([1.33.1])
 
 AC_DEFUN([SET_PARDISO], [
 AC_PREREQ(2.50)
