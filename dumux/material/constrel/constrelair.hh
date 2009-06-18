@@ -235,8 +235,8 @@ public:
         r = eta_xi/xi;         /* [1.E-6 P] */
         r = r/1.E7;            /* [Pa s] */
 
-//      if(isnan(r)){
-//          sprintf(buf,"isnan visco_w_vap \n");
+//      if(std::isnan(r)){
+//          sprintf(buf,"std::isnan visco_w_vap \n");
 //          r = 0.0;
 //      }
 
@@ -359,8 +359,8 @@ public:
     h=2500514.22+188815.35*x-24027.4*pow(x,2)+29367.67*pow(x,3)-25873.63*pow(x,4)
                              +7886.38*pow(x,5)-982.6*pow(x,6);
 
-//      if(isnan(h)){
-//          sprintf(buf,"isnan hsat \n");
+//      if(std::isnan(h)){
+//          sprintf(buf,"std::isnan hsat \n");
 //      h = 0.0;
 //      }
 
@@ -556,8 +556,8 @@ public:
     U=H-p_gw*v;         /* specific internal energy */
 
 
-//      if(isnan(H)){
-//          sprintf(buf,"isnan hsteam \n");
+//      if(std::isnan(H)){
+//          sprintf(buf,"std::isnan hsteam \n");
 //      H = 0.0;
 //      }
 
@@ -687,8 +687,8 @@ public:
       {
         h=hsat(temperature);
 
-//      if(isnan(h)){
-//          sprintf(buf,"isnan enth_gw \n");
+//      if(std::isnan(h)){
+//          sprintf(buf,"std::isnan enth_gw \n");
 //      h = 0.0;
 //      }
 
@@ -770,8 +770,8 @@ public:
       {
         h=hsteam(p_gw,temperature);
 
-//      if(isnan(h)){
-//          sprintf(buf,"isnan enth_gw \n");
+//      if(std::isnan(h)){
+//          sprintf(buf,"std::isnan enth_gw \n");
 //      h = 0.0;
 //      }
 
@@ -880,8 +880,8 @@ public:
        h_g = omega_ag*h_ga+omega_gw*h_gw; //
 
 //      /**   **/
-//      if(isnan(h_g)){
-//          sprintf(buf,"isnan sp_enthalpy_g \n");
+//      if(std::isnan(h_g)){
+//          sprintf(buf,"std::isnan sp_enthalpy_g \n");
 //      h_g = 0.0;
 //      }
        return(h_g);

@@ -377,7 +377,7 @@ int FVSaturationWetting2P<GridView, Scalar, VC, Problem>::update(const Scalar t,
 
                         timestepFactorIn -= factor/(krSum*viscosityRatio);
                     }
-                    if (isnan(timestepFactorIn) || isinf(timestepFactorIn))
+                    if (std::isnan(timestepFactorIn) || std::isinf(timestepFactorIn))
                     {
                         timestepFactorIn = 1e-100;
                     }
@@ -517,7 +517,7 @@ int FVSaturationWetting2P<GridView, Scalar, VC, Problem>::update(const Scalar t,
 
                             timestepFactorIn -= factor/(krSum*viscosityRatio);
                         }
-                        if (isnan(timestepFactorIn) || isinf(timestepFactorIn))
+                        if (std::isnan(timestepFactorIn) || std::isinf(timestepFactorIn))
                         {
                             timestepFactorIn = 1e-100;
                         }

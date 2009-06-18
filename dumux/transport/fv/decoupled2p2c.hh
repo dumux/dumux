@@ -989,8 +989,8 @@ int Decoupled2p2c<GridView,Scalar>::concentrationUpdate(const Scalar t, Scalar& 
                 factor[0] = velocityJIw + velocityJIn;
                 double foutw = velocityIJw / (satI - problem.soil.Sr_w(globalPos, *eIt, localPos, Ti));
                 double foutn = velocityIJn / (1 - satI - problem.soil.Sr_n(globalPos, *eIt, localPos, Ti));
-                if (isnan(foutw) || isinf(foutw) || foutw < 0) foutw = 0;
-                if (isnan(foutn) || isinf(foutn) || foutn < 0) foutn = 0;
+                if (std::isnan(foutw) || std::isinf(foutw) || foutw < 0) foutw = 0;
+                if (std::isnan(foutn) || std::isinf(foutn) || foutn < 0) foutn = 0;
                 factor[1] = foutw + foutn;
 
                 factorC1 =
@@ -1079,8 +1079,8 @@ int Decoupled2p2c<GridView,Scalar>::concentrationUpdate(const Scalar t, Scalar& 
                     factor[0] = velocityJIw + velocityJIn;
                     double foutw = velocityIJw / (satI - problem.soil.Sr_w(globalPos, *eIt, localPos, Ti));
                     double foutn = velocityIJn / (1 - satI - problem.soil.Sr_n(globalPos, *eIt, localPos, Ti));
-                    if (isnan(foutw) || isinf(foutw) || foutw < 0) foutw = 0;
-                    if (isnan(foutn) || isinf(foutn) || foutn < 0) foutn = 0;
+                    if (std::isnan(foutw) || std::isinf(foutw) || foutw < 0) foutw = 0;
+                    if (std::isnan(foutn) || std::isinf(foutn) || foutn < 0) foutn = 0;
                     factor[1] = foutw + foutn;
 
                     factorC1 =
