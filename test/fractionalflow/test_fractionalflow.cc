@@ -3,7 +3,7 @@
 #include "config.h"
 #include <iostream>
 #include <iomanip>
-#include <dune/grid/sgrid.hh> // load sgrid definition
+#include <dune/grid/sgrid.hh>
 #include <dune/grid/io/file/vtk/vtkwriter.hh>
 #include <dune/istl/io.hh>
 #include <dune/common/timer.hh>
@@ -28,13 +28,24 @@ int main(int argc, char** argv)
         // define the problem dimensions
         const int dim=2;
 
-        // create a grid object
+        if (argc != 2) {
+            std::cout << "\nUsage: test_fractionalflow entryPressure\n" << std::endl;
+            std::cout << "- entryPressure: the capillary entry pressure >= 0." << std::endl;
+            std::cout << "  If 0, no capillary effects are taken into account.\n" << std::endl;
+            return (1);
+        }
+
+        double entryPressure = 0;
+        std::string arg1(argv[1]);
+        std::istringstream is1(arg1);
+        is1 >> entryPressure;
+
         typedef double Scalar;
         typedef Dune::SGrid<dim,dim> Grid;
         typedef Grid::LevelGridView GridView;
         typedef Dune::FieldVector<Grid::ctype,dim> FieldVector;
 
-        Dune::FieldVector<int,dim> N(4); N[0] = 30;
+        Dune::FieldVector<int,dim> N(1); N[0] = 64;
         FieldVector L(0);
         FieldVector H(60); H[0] = 300;
         Grid grid(N,L,H);
@@ -45,7 +56,7 @@ int main(int argc, char** argv)
         Dune::Water wetmat;
         Dune::Oil nonwetmat;
 
-        Dune::FractionalFlowTestSoil<Grid, Scalar> soil;
+        Dune::FractionalFlowTestSoil<Grid, Scalar> soil(entryPressure);
 
         Dune::TwoPhaseRelations<Grid, Scalar> materialLaw(soil, wetmat, nonwetmat);
 
@@ -55,7 +66,6 @@ int main(int argc, char** argv)
 
         typedef Dune::FractionalFlowTestProblem<GridView, Scalar, VariableType> Problem;
         Problem problem(variables, wetmat, nonwetmat, soil, materialLaw,L, H);
-        //    soil.permeability.vtkout("permeability", grid);
 
         typedef Dune::FVTotalVelocity2P<GridView, Scalar, VariableType, Problem> DiffusionType;
         DiffusionType diffusion(gridView, problem, "pglobal");
@@ -64,25 +74,21 @@ int main(int argc, char** argv)
 
         typedef Dune::FVSaturationWetting2P<GridView, Scalar, VariableType, Problem> TransportType;
         TransportType transport(gridView, problem, "vt", capillaryDiffusion);
-//        TransportType transport(gridView, problem, "vt");
 
-        int iterFlag = 2;
+        int iterFlag = 0;
         int nIter = 30;
         double maxDefect = 1e-5;
         typedef Dune::IMPES<GridView, DiffusionType, TransportType, VariableType> IMPESType;
         IMPESType impes(diffusion, transport, iterFlag, nIter, maxDefect);
 
         double tStart = 0;
-        double tEnd = 5e5;
+        double tEnd = 5e7;
         const char* fileName = "test_fractionalflow";
-        int modulo = 20;
-        double cFLFactor = 0.3;
+        int modulo = 500;
+        double cFLFactor = 0.5;
         Dune::TimeLoop<Grid, IMPESType > timeloop(tStart, tEnd, fileName, modulo, cFLFactor);
 
-        Dune::Timer timer;
-        timer.reset();
         timeloop.execute(impes);
-        //    std::cout << "timeloop.execute took " << timer.elapsed() << " seconds" << std::endl;
 
         return 0;
     }

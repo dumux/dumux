@@ -23,7 +23,7 @@ public:
 
     virtual const FieldMatrix &K (const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos) const
     {
-        return constPermeability;
+        return constPermeability_;
     }
     virtual double porosity(const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos) const
     {
@@ -43,21 +43,7 @@ public:
 
     virtual std::vector<double> paramRelPerm(const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos, const double T = 283.15) const
     {
-
-        std::vector<double> param(2);
-//        if (globalPos[0]<=300)
-//        {
-            //linear parameters
-//            param[0] = 0.;
-//            param[1] = 100.;
-//        }
-//        else
-//        {
-            //Brooks-Corey parameters
-            param[0] = 2; // lambda
-            param[1] = 5000.; // entry-pressure
-//        }
-        return param;
+        return brooksCoreyParameters_;
     }
 
     virtual modelFlag relPermFlag(const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos) const
@@ -65,17 +51,23 @@ public:
         return Matrix2p<Grid, Scalar>::brooks_corey;
     }
 
-    FractionalFlowTestSoil()
-        :Matrix2p<Grid,Scalar>(),constPermeability(0)//,permeability(g, name, create)
+    FractionalFlowTestSoil(Scalar entryPressure = 0)
+    : Matrix2p<Grid,Scalar>(),constPermeability_(0), entryPressure_(entryPressure),
+    brooksCoreyParameters_(2)
     {
         for(int i = 0; i < dim; i++)
         {
-            constPermeability[i][i] = 1e-7;
+            constPermeability_[i][i] = 1e-7;
         }
+
+        brooksCoreyParameters_[0] = 2.0; // lambda
+        brooksCoreyParameters_[1] = entryPressure_;
     }
 
 private:
-    FieldMatrix constPermeability;
+    FieldMatrix constPermeability_;
+    Scalar entryPressure_;
+    std::vector<double> brooksCoreyParameters_;
 
 public:
 
