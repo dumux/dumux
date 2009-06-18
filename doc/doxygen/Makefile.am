@@ -9,7 +9,7 @@ doxygendir = $(datadir)/doc/dune-grid/doxygen
 doxygen_DATA = $(WHAT)
 
 #we need this in the distribution
-EXTRA_DIST = $(WHAT) $(DOXYGENDISTFILES)
+EXTRA_DIST = $(WHAT) $(DOXYGENDISTFILES) Doxyfile
 
 all: $(WHAT) $(DOXYGENFILES)
 
