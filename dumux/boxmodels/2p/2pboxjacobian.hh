@@ -1,4 +1,4 @@
-//$Id$
+// $Id:$
 /*****************************************************************************
  *   Copyright (C) 2007 by Peter Bastian                                     *
  *   Institute of Parallel and Distributed System                            *

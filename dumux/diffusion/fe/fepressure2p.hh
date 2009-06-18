@@ -1,4 +1,4 @@
-// $Id$
+// $Id:$
 /*****************************************************************************
  *   Copyright (C) 2008-2009 by Markus Wolff                                 *
  *   Institute of Hydraulic Engineering                                      *
@@ -27,6 +27,7 @@
 
 #include "dumux/diffusion/diffusion.hh"
 #include "dumux/diffusion/fe/p1groundwater.hh"
+#include "dumux/pardiso/pardiso.hh"
 
 /**
  * @file
@@ -207,11 +208,12 @@ template<class GridView, class Scalar, class VC,
 class LeafFEPressure2P: public FEPressure2PBase<GridView, Scalar, VC, Problem, LocalStiffnessType, LeafCommunicate<typename GridView::Grid>  >
 {
 public:
-    LeafFEPressure2P(GridView& gridView, Problem& problem)
+    LeafFEPressure2P(GridView& gridView, Problem& problem, std::string solver = "CG", std::string preconditioner = "SeqILU0")
     : FEPressure2PBase<GridView, Scalar, VC, Problem, LocalStiffnessType, LeafCommunicate<typename GridView::Grid> >(
             gridView,
             problem,
-            *(new LeafCommunicate<typename GridView::Grid>(gridView.grid())))
+            *(new LeafCommunicate<typename GridView::Grid>(gridView.grid())), -1,
+            solver, preconditioner)
     {}
 };
 

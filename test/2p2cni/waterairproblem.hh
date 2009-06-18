@@ -1,4 +1,4 @@
-//$Id$
+// $Id:$
 /*****************************************************************************
  *   Copyright (C) 2009 by Klaus Mosthaf                                     *
  *   Copyright (C) 2009 by Andreas Lauser                                    *

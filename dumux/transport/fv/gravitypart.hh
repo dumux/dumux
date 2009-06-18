@@ -1,4 +1,4 @@
-// $Id: capillarydiffusion.hh 899 2008-12-08 19:02:34Z lauser $
+// $Id:$
 /*****************************************************************************
  *   Copyright (C) 2007-2009 by Bernd Flemisch                               *
  *   Copyright (C) 2008-2009 by Markus Wolff                                 *
