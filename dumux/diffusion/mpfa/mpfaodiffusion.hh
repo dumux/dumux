@@ -1,4 +1,4 @@
-// $Id: mpfaodiffusion.hh 1876 2009-05-27 15:49:07Z yufei $
+// $Id: mpfaodiffusion.hh 2143 2009-06-17 18:21:10Z bernd $
 
 #ifndef DUNE_MPFAODIFFUSION_HH
 #define DUNE_MPFAODIFFUSION_HH
@@ -1912,38 +1912,40 @@ private:
   template<class GridView, class Scalar, class VC, class Problem>
   void MPFAODiffusion<GridView, Scalar, VC, Problem>::solve()
   {
-	Dune::MatrixAdapter<MatrixType,Vector,Vector> op(M);        // make linear operator from M
-        Dune::InverseOperatorResult r;
+	  std::cout << "MPFAODiffusion: solve for pressure" << std::endl;
 
-	if (preconditionerName_ == "SeqILU0") {
-                // preconditioner object
-		SeqILU0<MatrixType,Vector,Vector> preconditioner(M, 1.0);
-		if (solverName_ == "CG") {
-                        // an inverse operator
-			CGSolver<Vector> solver(op, preconditioner, 1E-14, 1000, 1);
-			solver.apply(this->diffProblem.variables().pressure(), f, r);
-		} else if (solverName_ == "BiCGSTAB") {
-			BiCGSTABSolver<Vector> solver(op, preconditioner, 1E-14, 1000, 1);
-			solver.apply(this->diffProblem.variables().pressure(), f, r);
-		} else
-			DUNE_THROW(NotImplemented, "MPFAODiffusion :: solve : combination "
-					<< preconditionerName_<< " and "<< solverName_ << ".");
-	} else if (preconditionerName_ == "SeqPardiso") {
-		SeqPardiso<MatrixType,Vector,Vector> preconditioner(M);
-		if (solverName_ == "Loop") {
-			LoopSolver<Vector> solver(op, preconditioner, 1E-14, 1000, 1);
-			solver.apply(this->diffProblem.variables().pressure(), f, r);
-		}else if (solverName_ == "BiCGSTAB") {
-			BiCGSTABSolver<Vector> solver(op, preconditioner, 1E-14, 1000, 1);
-			solver.apply(this->diffProblem.variables().pressure(), f, r);
-		} else
-			DUNE_THROW(NotImplemented, "MPFAODiffusion :: solve : combination "
-					<< preconditionerName_<< " and "<< solverName_ << ".");
-	} else
-		DUNE_THROW(NotImplemented, "MPFAODiffusion :: solve : preconditioner "
-				<< preconditionerName_ << ".");
+	  Dune::MatrixAdapter<MatrixType,Vector,Vector> op(M);        // make linear operator from M
+	  Dune::InverseOperatorResult r;
 
-	return;
+	  if (preconditionerName_ == "SeqILU0") {
+		  // preconditioner object
+		  SeqILU0<MatrixType,Vector,Vector> preconditioner(M, 1.0);
+		  if (solverName_ == "CG") {
+			  // an inverse operator
+			  CGSolver<Vector> solver(op, preconditioner, 1E-14, 1000, 1);
+			  solver.apply(this->diffProblem.variables().pressure(), f, r);
+		  } else if (solverName_ == "BiCGSTAB") {
+			  BiCGSTABSolver<Vector> solver(op, preconditioner, 1E-14, 1000, 1);
+			  solver.apply(this->diffProblem.variables().pressure(), f, r);
+		  } else
+			  DUNE_THROW(NotImplemented, "MPFAODiffusion :: solve : combination "
+					  << preconditionerName_<< " and "<< solverName_ << ".");
+	  } else if (preconditionerName_ == "SeqPardiso") {
+		  SeqPardiso<MatrixType,Vector,Vector> preconditioner(M);
+		  if (solverName_ == "Loop") {
+			  LoopSolver<Vector> solver(op, preconditioner, 1E-14, 1000, 1);
+			  solver.apply(this->diffProblem.variables().pressure(), f, r);
+		  }else if (solverName_ == "BiCGSTAB") {
+			  BiCGSTABSolver<Vector> solver(op, preconditioner, 1E-14, 1000, 1);
+			  solver.apply(this->diffProblem.variables().pressure(), f, r);
+		  } else
+			  DUNE_THROW(NotImplemented, "MPFAODiffusion :: solve : combination "
+					  << preconditionerName_<< " and "<< solverName_ << ".");
+	  } else
+		  DUNE_THROW(NotImplemented, "MPFAODiffusion :: solve : preconditioner "
+				  << preconditionerName_ << ".");
+
+	  return;
   }
 } // end of Dune namespace
 #endif

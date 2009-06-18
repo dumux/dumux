@@ -380,9 +380,6 @@ void Multiphysics2p2c<GridView, Scalar>::assemble(bool first, const Scalar t=0)
         // get absolute permeability
         FieldMatrix<ct,dim,dim> Ki(this->problem.soil.K(globalPos,*eIt,localPos));
 
-        // get porosity
-        double poroI = problem.soil.porosity(globalPos, *eIt, localPos);
-
         // get the cell's saturation
         double satI = problem.variables.saturation[globalIdxi];
 
@@ -396,7 +393,9 @@ void Multiphysics2p2c<GridView, Scalar>::assemble(bool first, const Scalar t=0)
         double Vg = 1. / problem.variables.density_nonwet[globalIdxi];
         double Vw = 1. / problem.variables.density_wet[globalIdxi];
 
-        double lambdaI, fw_I, fn_I;
+        double lambdaI = 0;
+        double fw_I = 0;
+        double fn_I = 0;
 
         if (first)
         {
@@ -948,7 +947,7 @@ int Multiphysics2p2c<GridView,Scalar>::concentrationUpdate(const Scalar t, Scala
     // set update vector to zero
     updateVec = 0;
 
-    int which;
+    int which = -1; // dummy initialization
 
     // compute update vector
     ElementIterator eItEnd = gridview_.template end<0>();

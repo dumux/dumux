@@ -37,9 +37,9 @@ private:
     typedef Dune::BlockVector< Dune::FieldVector<Scalar,1> > ScalarType;
     typedef typename GridView::template Codim<0>::Entity Entity;
 
-
-    const typename GridView::IndexSet& indexset;
     GridView& gridview;
+    const typename GridView::IndexSet& indexset;
+    int size;
 
 public:
     ScalarType saturation;
@@ -57,10 +57,6 @@ public:
             return gt.dim() == dim;
         }
     };
-
-private:
-    int size;
-public:
 
     //! Constructor
     /**

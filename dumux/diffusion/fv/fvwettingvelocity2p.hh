@@ -1,4 +1,4 @@
-// $Id$
+// $Id: fvwettingvelocity2p.hh 2143 2009-06-17 18:21:10Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2009 by Markus Wolff                                      *
  *   Institute of Hydraulic Engineering                                      *
@@ -47,12 +47,10 @@ namespace Dune
  - VC            type of a class containing different variables of the model
  - Problem       class defining the physical problem
  */
-template<class GridView, class Scalar, class VC,
-        class Problem = DiffusionProblem<GridView, Scalar, VC> > class FVWettingPhaseVelocity2P: public FVPressure2P<
-        GridView, Scalar, VC, Problem>
+template<class GridView, class Scalar, class VC, class Problem = DiffusionProblem<GridView, Scalar, VC> >
+class FVWettingPhaseVelocity2P: public FVPressure2P<GridView, Scalar, VC, Problem>
 {
-
-typedef    typename GridView::Traits::template Codim<0>::Entity Element;
+	typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef typename GridView::Grid Grid;
     typedef typename GridView::IndexSet IndexSet;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;

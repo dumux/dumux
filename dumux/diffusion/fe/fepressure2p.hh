@@ -80,18 +80,52 @@ public:
 
     void solve()
     {
-        typedef typename PressP1Type::RepresentationType VectorType;
-        typedef typename OperatorAssembler::RepresentationType MatrixType;
-        typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator;
+    	std::cout << "FEPressure2P: solve for pressure" << std::endl;
 
-        Operator op(*A); // make operator out of matrix
-        double red=1E-10;
-        SeqILU0<MatrixType,VectorType,VectorType> ilu0(*A,1.0);// a precondtioner
-        CGSolver<VectorType> solver(op,ilu0,red,10000,1); // an inverse operator
-        InverseOperatorResult r;
-        solver.apply(*pressP1, *f, r);
+        typedef typename PressP1Type::RepresentationType Vector;
+        typedef typename OperatorAssembler::RepresentationType Matrix;
+        typedef MatrixAdapter<Matrix,Vector,Vector> Operator;
+
+        Operator op(*A);
+        double reduction = 1E-12;
+        int maxIt = 10000;
+        int verboseLevel = 1;
+        InverseOperatorResult result;
+
+        if (preconditionerName_ == "SeqILU0")
+        {
+        	SeqILU0<Matrix,Vector,Vector> preconditioner(*A, 1.0);
+        	if (solverName_ == "CG")
+        	{
+        		CGSolver<Vector> solver(op, preconditioner, reduction, maxIt, verboseLevel);
+        		solver.apply(*pressP1, *f, result);
+        	}
+        	else if (solverName_ == "BiCGSTAB")
+        	{
+        		BiCGSTABSolver<Vector> solver(op, preconditioner, reduction, maxIt, verboseLevel);
+        		solver.apply(*pressP1, *f, result);
+        	}
+        	else
+        		DUNE_THROW(NotImplemented, "FEPressure2P :: solve : combination "
+        				<< preconditionerName_<< " and "<< solverName_ << ".");
+        }
+        else if (preconditionerName_ == "SeqPardiso")
+        {
+        	SeqPardiso<Matrix,Vector,Vector> preconditioner(*A);
+        	if (solverName_ == "Loop")
+        	{
+        		LoopSolver<Vector> solver(op, preconditioner, reduction, maxIt, verboseLevel);
+        		solver.apply(*pressP1, *f, result);
+        	}
+        	else
+        		DUNE_THROW(NotImplemented, "FEPressure2P :: solve : combination "
+        				<< preconditionerName_<< " and "<< solverName_ << ".");
+        }
+        else
+        	DUNE_THROW(NotImplemented, "FEPressure2P :: solve : preconditioner "
+        			<< preconditionerName_ << ".");
+
         this->diffProblem.variables().pressure() = *pressP1;
-        printvector(std::cout, *pressP1, "pressure", "row", 200, 1, 3);
 
         return;
     }
@@ -110,10 +144,12 @@ public:
         this->diffProblem.variables().vtkout(name, k);
     }
 
-    FEPressure2PBase(GridView& gridView, Problem& problem, Communication& comm, int level = -1)
+    FEPressure2PBase(GridView& gridView, Problem& problem, Communication& comm, int level,
+				std::string solver, std::string preconditioner)
     : Diffusion<GridView, Scalar, VC, Problem>(gridView, problem),
     level_((level >= 0) ? level : gridView.grid().maxLevel()),
-    pressP1(gridView, comm), f(gridView, comm), A(gridView.grid(), gridView, comm)
+    pressP1(gridView, comm), f(gridView, comm), A(gridView.grid(), gridView, comm),
+    solverName_(solver), preconditionerName_(preconditioner)
     {
         *pressP1 = 0;
     }
@@ -125,6 +161,8 @@ public:
     PressP1Type pressP1;
     PressP1Type f;
     OperatorAssembler A;
+    std::string solverName_;
+    std::string preconditionerName_;
 };
 
 template<class GridView, class Scalar, class VC,
@@ -133,12 +171,18 @@ template<class GridView, class Scalar, class VC,
 class FEPressure2P: public FEPressure2PBase<GridView, Scalar, VC, Problem, LocalStiffnessType, LevelCommunicate<typename GridView::Grid>  >
 {
 public:
-    FEPressure2P(GridView& gridView, Problem& problem, int level = -1)
+    FEPressure2P(GridView& gridView, Problem& problem, int level = -1, std::string solver = "CG", std::string preconditioner = "SeqILU0")
     : FEPressure2PBase<GridView, Scalar, VC, Problem, LocalStiffnessType, LevelCommunicate<typename GridView::Grid> >(
-            gridView,
-            problem,
+            gridView, problem,
             *(new LevelCommunicate<typename GridView::Grid>(gridView.grid(), level)),
-            level)
+            level, solver, preconditioner)
+    {}
+
+    FEPressure2P(GridView& gridView, Problem& problem, std::string solver, std::string preconditioner)
+    : FEPressure2PBase<GridView, Scalar, VC, Problem, LocalStiffnessType, LevelCommunicate<typename GridView::Grid> >(
+            gridView, problem,
+            *(new LevelCommunicate<typename GridView::Grid>(gridView.grid(), gridView.grid().maxLevel())),
+            gridView.grid().maxLevel(), solver, preconditioner)
     {}
 };
 

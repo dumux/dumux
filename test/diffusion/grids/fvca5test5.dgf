@@ -1,0 +1,20 @@
+DGF
+Interval
+0 0   % first corner 
+1 1   % second corner
+4 4   % 1 cells in x and 1 in y direction
+# 
+
+GridParameter
+% set closure to none for UGGrid 
+closure none
+% generate copies in UGGrid
+copies no
+% set heap size for UGGrid
+heapsize 1000
+#
+
+BOUNDARYDOMAIN
+default 1    % all boundaries have id 1
+#BOUNDARYDOMAIN
+# unitcube.dgf 

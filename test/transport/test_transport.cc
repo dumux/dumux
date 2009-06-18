@@ -28,45 +28,45 @@ int main(int argc, char** argv)
         //    double alphaMax = 0.8;
 
         // create a grid object
-        typedef double NumberType;
-        typedef Dune::SGrid<dim,dim> GridType;
-        typedef GridType::LeafGridView GridView;
-        typedef Dune::FieldVector<GridType::ctype,dim> FieldVector;
+        typedef double Scalar;
+        typedef Dune::SGrid<dim,dim> Grid;
+        typedef Grid::LeafGridView GridView;
+        typedef Dune::FieldVector<Grid::ctype,dim> FieldVector;
         Dune::FieldVector<int,dim> N(1); N[0] = 64;
         FieldVector L(0);
         FieldVector H(300); H[0] = 600;
-        GridType grid(N,L,H);
+        Grid grid(N,L,H);
 
 
 //        std::stringstream dgfFileName;
-//        dgfFileName << "grids/unitcube" << GridType :: dimension << ".dgf";
+//        dgfFileName << "grids/unitcube" << Grid :: dimension << ".dgf";
 
         grid.globalRefine(0);
         GridView gridView(grid.leafView());
 
         Dune::Uniform mat(0.2);
-        //Dune::HomogeneousLinearSoil<GridType, NumberType> soil;
-        Dune::HomogeneousNonlinearSoil<GridType, NumberType> soil;
-        Dune::TwoPhaseRelations<GridType, NumberType> materialLaw(soil, mat, mat);
+        //Dune::HomogeneousLinearSoil<Grid, Scalar> soil;
+        Dune::HomogeneousNonlinearSoil<Grid, Scalar> soil;
+        Dune::TwoPhaseRelations<Grid, Scalar> materialLaw(soil, mat, mat);
 
-        typedef Dune::VariableClass<GridView, NumberType> VC;
+        typedef Dune::VariableClass<GridView, Scalar> VariableClass;
 
         double initsat=0;
         Dune::FieldVector<double,dim>vel(0);
         vel[0] = 1.0/6.0*1e-6;
 
-        VC variables(gridView,initsat, vel);
+        VariableClass variables(gridView,initsat, vel);
 
-        //Dune::SimpleProblem<GridType, NumberType, VC> problem(variables, mat, mat , soil, materialLaw,L,H);
-        Dune::SimpleNonlinearProblem<GridView, NumberType, VC> problem(variables, mat, mat , soil, materialLaw,L,H);
+        //Dune::SimpleProblem<Grid, Scalar, VariableClass> problem(variables, mat, mat , soil, materialLaw,L,H);
+        Dune::SimpleNonlinearProblem<GridView, Scalar, VariableClass> problem(variables, mat, mat , soil, materialLaw,L,H);
 
-        typedef Dune::TransportProblem<GridView, NumberType, VC> TransportProblem;
-        typedef Dune::FVSaturationWetting2P<GridView, NumberType, VC, TransportProblem> Transport;
+        typedef Dune::TransportProblem<GridView, Scalar, VariableClass> TransportProblem;
+        typedef Dune::FVSaturationWetting2P<GridView, Scalar, VariableClass, TransportProblem> Transport;
 
         Transport transport(gridView, problem, "vt");
 
 
-        Dune::TimeLoop<GridType, Transport > timeloop(tStart, tEnd, "timeloop", modulo, cFLFactor, maxDT, maxDT);
+        Dune::TimeLoop<Grid, Transport > timeloop(tStart, tEnd, "timeloop", modulo, cFLFactor, maxDT, maxDT);
 
         timeloop.execute(transport);
 

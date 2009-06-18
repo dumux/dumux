@@ -1,4 +1,4 @@
-// $Id$
+// $Id: mimeticpressure2p.hh 2143 2009-06-17 18:21:10Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2007-2009 by Bernd Flemisch                               *                            *
  *   Institute of Hydraulic Engineering                                      *
@@ -51,13 +51,8 @@ namespace Dune
  - Grid      a DUNE grid type
  - RT        type used for return values
  */
-template<
-        class GridView,
-        class Scalar,
-        class VC,
-        class Problem = DiffusionProblem<GridView, Scalar, VC> ,
-        class LocalStiffnessType = Dune::MimeticGroundwaterEquationLocalStiffness<GridView,Scalar,VC, Problem> >
-class MimeticPressure2P: public Diffusion<GridView, Scalar, VC, Problem>
+template<class GridView, class Scalar, class VC, class Problem, class LocalStiffnessType, class Communication>
+class MimeticPressure2PBase: public Diffusion<GridView, Scalar, VC, Problem>
 {
     enum
     {
@@ -65,12 +60,12 @@ class MimeticPressure2P: public Diffusion<GridView, Scalar, VC, Problem>
     };
     enum
     {
-        Sw = 0, Sn = 1
+        Sw = 0, Sn = 1, other = 999
     };
 typedef    typename GridView::Grid Grid;
-    typedef Dune::LevelCRFunction<Grid,Scalar,1> TraceType;
-    typedef Dune::LevelP0Function<Grid,Scalar,2*GridView::dimension> NormalVelType;
-    typedef Dune::MimeticOperatorAssembler<Grid,Scalar,1> LevelOperatorAssembler;
+    typedef CRFunction<Grid,Scalar,GridView,Communication,1> TraceType;
+    typedef P0Function<GridView,Scalar,2*GridView::dimension> NormalVelType;
+    typedef MimeticOperatorAssembler<Grid,Scalar,GridView,Communication,1> OperatorAssembler;
     typedef typename GridView::template Codim<0>::Iterator ElementIterator;
 
     typedef Dune::FieldVector<Scalar,dim> LocalPosition;
@@ -113,7 +108,7 @@ public:
 
     void calculateVelocity(const Scalar t, double lev) const
     {
-        DUNE_THROW(Dune::NotImplemented, "upscaled velocities only implemented in FVDiffusion");
+        DUNE_THROW(Dune::NotImplemented, "upscaled velocities only implemented in MimeticDiffusion");
     }
 
     //constitutive functions are initialized and stored in the variables object
@@ -124,14 +119,18 @@ public:
         this->diffProblem().variables().vtkout(name, k);
     }
 
-    MimeticPressure2P(GridView& gridView, Problem& prob, std::string satType = "Sw", int level = -1, bool calcPressure = true)
+    MimeticPressure2PBase(GridView& gridView, Problem& prob, Communication& comm,
+    		std::string satType, int level, bool calcPressure, std::string solver, std::string preconditioner)
     : Diffusion<GridView, Scalar, VC, Problem>(gridView, prob),
-    saturationType((satType == "Sw") ? 0 : ((satType == "Sn") ? 1 : 999)),
-    level_((level >= 0) ? level : gridView.grid().maxLevel()), pressTrace(gridView.grid(), level_), normalVelocity(gridView.grid(), level_), f(gridView.grid(), level_), A(gridView.grid(), level_)
+    saturationType((satType == "Sw") ? Sw : ((satType == "Sn") ? Sn : other)),
+    level_((level >= 0) ? level : gridView.grid().maxLevel()),
+    pressTrace(gridView.grid(), gridView, comm), normalVelocity(gridView),
+    f(gridView.grid(), gridView, comm), A(gridView.grid(), gridView, comm),
+    solverName_(solver), preconditionerName_(preconditioner)
     {
         *pressTrace = 0;
         *f = 0;
-        if (saturationType == 999)
+        if (saturationType == other)
         {
             DUNE_THROW(NotImplemented, "Saturation type not supported!");
         }
@@ -145,31 +144,64 @@ public:
     TraceType pressTrace; //!< vector of pressure traces
     NormalVelType normalVelocity;
     TraceType f;
-    LevelOperatorAssembler A;
-
+    OperatorAssembler A;
+    std::string solverName_;
+    std::string preconditionerName_;
 };
-template<class GridView, class Scalar, class VC, class Problem, class LocalStiffnessType> void MimeticPressure2P<GridView, Scalar, VC, Problem,LocalStiffnessType>::solve()
-{
-    typedef typename LevelCRFunction<Grid,Scalar>::RepresentationType VectorType;
-    typedef typename LevelCROperatorAssembler<Grid,Scalar,1>::RepresentationType MatrixType;
-    typedef MatrixAdapter<MatrixType,VectorType,VectorType> Operator;
 
-    //printmatrix(std::cout, *A, "global stiffness matrix", "row", 11, 3);
-    //printvector(std::cout, *f, "right hand side", "row", 200, 1, 5);
-    Operator op(*A); // make operator out of matrix
-    double red=1E-12;
-    SeqILU0<MatrixType,VectorType,VectorType> ilu0(*A,1.0);// a precondtioner
-    //SeqJac<MatrixType,VectorType,VectorType> ilu0(*A,1,0.9);// a precondtioner
-    //SeqPardiso<MatrixType,VectorType,VectorType> ilu0(*A);// a precondtioner
-    BiCGSTABSolver<VectorType> solver(op,ilu0,red,10000,1); // an inverse operator
-    //CGSolver<VectorType> solver(op,ilu0,red,10000,1);         // an inverse operator
-    InverseOperatorResult r;
-    solver.apply(*pressTrace, *f, r);
-    //printvector(std::cout, *pressTrace, "solution", "row", 200, 1, 5);
+template<class GridView, class Scalar, class VC, class Problem, class LocalStiffnessType, class Communication>
+void MimeticPressure2PBase<GridView, Scalar, VC, Problem,LocalStiffnessType,Communication>::solve()
+{
+	std::cout << "MimeticPressure2P: solve for pressure" << std::endl;
+
+    typedef typename CRFunction<Grid,Scalar,GridView,Communication,1>::RepresentationType Vector;
+    typedef typename CROperatorAssembler<Grid,Scalar,GridView,Communication,1>::RepresentationType Matrix;
+    typedef MatrixAdapter<Matrix,Vector,Vector> Operator;
+
+    Operator op(*A);
+    double reduction = 1E-12;
+    int maxIt = 10000;
+    int verboseLevel = 1;
+    InverseOperatorResult result;
+
+    if (preconditionerName_ == "SeqILU0")
+    {
+    	SeqILU0<Matrix,Vector,Vector> preconditioner(*A, 1.0);
+    	if (solverName_ == "CG")
+    	{
+    		CGSolver<Vector> solver(op, preconditioner, reduction, maxIt, verboseLevel);
+    		solver.apply(*pressTrace, *f, result);
+    	}
+    	else if (solverName_ == "BiCGSTAB")
+    	{
+    		BiCGSTABSolver<Vector> solver(op, preconditioner, reduction, maxIt, verboseLevel);
+    		solver.apply(*pressTrace, *f, result);
+    	}
+    	else
+    		DUNE_THROW(NotImplemented, "MimeticPressure2P :: solve : combination "
+    				<< preconditionerName_<< " and "<< solverName_ << ".");
+    }
+    else if (preconditionerName_ == "SeqPardiso")
+    {
+    	SeqPardiso<Matrix,Vector,Vector> preconditioner(*A);
+    	if (solverName_ == "Loop")
+    	{
+    		LoopSolver<Vector> solver(op, preconditioner, reduction, maxIt, verboseLevel);
+    		solver.apply(*pressTrace, *f, result);
+    	}
+    	else
+    		DUNE_THROW(NotImplemented, "MimeticPressure2P :: solve : combination "
+    				<< preconditionerName_<< " and "<< solverName_ << ".");
+    }
+    else
+    	DUNE_THROW(NotImplemented, "MimeticPressure2P :: solve : preconditioner "
+    			<< preconditionerName_ << ".");
+
     return;
 }
 
-template<class GridView, class Scalar, class VC, class Problem, class LocalStiffnessType> void MimeticPressure2P<GridView, Scalar, VC, Problem,LocalStiffnessType>::calculateVelocity(const Scalar t=0) const
+template<class GridView, class Scalar, class VC, class Problem, class LocalStiffnessType, class Communication>
+void MimeticPressure2PBase<GridView, Scalar, VC, Problem,LocalStiffnessType,Communication>::calculateVelocity(const Scalar t=0) const
 {
     // ASSUMES axiparallel grids in 2D
     for (int i = 0; i < this->gridView.size(0); i++)
@@ -186,7 +218,8 @@ template<class GridView, class Scalar, class VC, class Problem, class LocalStiff
     return;
 }
 
-template<class GridView, class Scalar, class VC, class Problem, class LocalStiffnessType> void MimeticPressure2P<GridView, Scalar, VC, Problem,LocalStiffnessType>::initializeMaterialLaws()
+template<class GridView, class Scalar, class VC, class Problem, class LocalStiffnessType, class Communication>
+void MimeticPressure2PBase<GridView, Scalar, VC, Problem,LocalStiffnessType,Communication>::initializeMaterialLaws()
 {
     // iterate through leaf grid an evaluate c0 at cell center
     ElementIterator eItEnd = this->gridView.template end<0>();
@@ -231,5 +264,71 @@ template<class GridView, class Scalar, class VC, class Problem, class LocalStiff
     }
     return;
 }
+
+template<
+        class GridView,
+        class Scalar,
+        class VC,
+        class Problem = DiffusionProblem<GridView, Scalar, VC> ,
+        class LocalStiffnessType = Dune::MimeticGroundwaterEquationLocalStiffness<GridView,Scalar,VC, Problem> >
+class MimeticPressure2P: public MimeticPressure2PBase<GridView, Scalar, VC, Problem, LocalStiffnessType, LevelCommunicate<typename GridView::Grid> >
+{
+public:
+    MimeticPressure2P(GridView& gridView, Problem& problem, std::string satType = "Sw",
+    		int level = -1, bool calcPressure = true, std::string solver = "CG", std::string preconditioner = "SeqILU0")
+    : MimeticPressure2PBase<GridView, Scalar, VC, Problem, LocalStiffnessType, LevelCommunicate<typename GridView::Grid> >(
+            gridView, problem,
+            *(new LevelCommunicate<typename GridView::Grid>(gridView.grid(), level)),
+            satType, level, calcPressure, solver, preconditioner)
+    {}
+
+    MimeticPressure2P(GridView& gridView, Problem& problem, std::string solver, std::string preconditioner)
+    : MimeticPressure2PBase<GridView, Scalar, VC, Problem, LocalStiffnessType, LevelCommunicate<typename GridView::Grid> >(
+            gridView, problem,
+            *(new LevelCommunicate<typename GridView::Grid>(gridView.grid(), gridView.grid().maxLevel())),
+            "Sw", gridView.grid().maxLevel(), true, solver, preconditioner)
+    {}
+};
+
+template<
+        class GridView,
+        class Scalar,
+        class VC,
+        class Problem = DiffusionProblem<GridView, Scalar, VC> ,
+        class LocalStiffnessType = Dune::MimeticGroundwaterEquationLocalStiffness<GridView,Scalar,VC, Problem> >
+class LevelMimeticPressure2P: public MimeticPressure2PBase<GridView, Scalar, VC, Problem, LocalStiffnessType, LevelCommunicate<typename GridView::Grid> >
+{
+public:
+    LevelMimeticPressure2P(GridView& gridView, Problem& problem, std::string satType = "Sw", int level = -1, bool calcPressure = true)
+    : MimeticPressure2PBase<GridView, Scalar, VC, Problem, LocalStiffnessType, LevelCommunicate<typename GridView::Grid> >(
+            gridView,
+            problem,
+            *(new LevelCommunicate<typename GridView::Grid>(gridView.grid(), level)),
+            satType,
+            level,
+            calcPressure)
+    {}
+};
+
+template<
+        class GridView,
+        class Scalar,
+        class VC,
+        class Problem = DiffusionProblem<GridView, Scalar, VC> ,
+        class LocalStiffnessType = Dune::MimeticGroundwaterEquationLocalStiffness<GridView,Scalar,VC, Problem> >
+class LeafMimeticPressure2P: public MimeticPressure2PBase<GridView, Scalar, VC, Problem, LocalStiffnessType, LeafCommunicate<typename GridView::Grid> >
+{
+public:
+    LeafMimeticPressure2P(GridView& gridView, Problem& problem, std::string satType = "Sw", int level = -1, bool calcPressure = true)
+    : MimeticPressure2PBase<GridView, Scalar, VC, Problem, LocalStiffnessType, LeafCommunicate<typename GridView::Grid> >(
+            gridView,
+            problem,
+            *(new LeafCommunicate<typename GridView::Grid>(gridView.grid())),
+            satType,
+            level,
+            calcPressure)
+    {}
+};
+
 }
 #endif

@@ -77,14 +77,14 @@ namespace Dune
  *  (usually double) The pressure equation is given as
  *  \f[
  -\frac{\partial V}{\partial p} \frac{\partial p}{\partial t} +
-   \sum_{\kappa} \frac{\partial V}{\partial C^{\kappa}}\nabla \cdot 
-   \left(\sum_{\alpha} 
-   {\bf v_\alpha} \varrho_\alpha X_\alpha^\kappa 
+   \sum_{\kappa} \frac{\partial V}{\partial C^{\kappa}}\nabla \cdot
+   \left(\sum_{\alpha}
+   {\bf v_\alpha} \varrho_\alpha X_\alpha^\kappa
    \right)
    =
    \sum_{\kappa}\frac{\partial V}{\partial m^{\kappa}}q^{\kappa}
    \f]
- *  
+ *
  * See paper SPE 99619 or "Analysis of a Compositional Model for Fluid
  * Flow in Porous Media" by Chen, Qin and Ewing for derivation.
  *
@@ -374,11 +374,10 @@ void Decoupled2p2c<GridView, Scalar>::assemble(bool first, const Scalar t=0)
         // get temperature
         double Ti = problem.temp(globalPos, *eIt, localPos);
 
-        // get the cell's saturation
-        double sati = problem.variables.saturation[globalIdxi];
-
         // total mobility and fractional flow factors
-        double lambdaI, fw_I, fn_I;
+        double lambdaI = 0;
+        double fw_I = 0;
+        double fn_I = 0;
 
         // derivatives of the fluid volume with respect to mass of compnents and pressure
         double dV_dm1 = 0;
@@ -418,15 +417,15 @@ void Decoupled2p2c<GridView, Scalar>::assemble(bool first, const Scalar t=0)
              isIt!=isItEnd; ++isIt)
         {
             // some geometry informations of the face
-            GeometryType gtf = isIt->intersectionSelfLocal().type(); // get geometry type of face
+            GeometryType gtf = isIt->geometryInInside().type(); // get geometry type of face
             const FieldVector<ct,dim-1>&
                 faceLocalPos = ReferenceElements<ct,dim-1>::general(gtf).position(0,0); // center in face's reference element
             const FieldVector<ct,dim>&
-                facelocalDim = ReferenceElements<ct,dim>::general(gtf).position(isIt->numberInSelf(),1); // center of face inside volume reference element
+                facelocalDim = ReferenceElements<ct,dim>::general(gtf).position(isIt->indexInInside(),1); // center of face inside volume reference element
             FieldVector<ct,dimworld> unitOuterNormal = isIt->unitOuterNormal(faceLocalPos);// get normal vector
             FieldVector<ct,dimworld> integrationOuterNormal = isIt->integrationOuterNormal(faceLocalPos);
             integrationOuterNormal *= ReferenceElements<ct,dim-1>::general(gtf).volume(); //normal vector scaled with volume
-            double faceVol = isIt->intersectionGlobal().volume(); // get face volume
+            double faceVol = isIt->geometry().volume(); // get face volume
 
             // handle interior face
             if (isIt->neighbor())
@@ -462,8 +461,9 @@ void Decoupled2p2c<GridView, Scalar>::assemble(bool first, const Scalar t=0)
                 K_.umv(unitOuterNormal,K);
 
                 //compute mobilities
-                double fw_J, fn_J, lambdaJ;
-                double satj = problem.variables.saturation[globalIdxj];
+                double fw_J = 0;
+                double fn_J = 0;
+                double lambdaJ = 0;
 
                 if (first)
                 {
@@ -549,7 +549,7 @@ void Decoupled2p2c<GridView, Scalar>::assemble(bool first, const Scalar t=0)
 
                 // center of face in global coordinates
                 FieldVector<ct,dimworld>
-                    faceGlobalPos = isIt->intersectionGlobal().global(faceLocalPos);
+                    faceGlobalPos = isIt->geometry().global(faceLocalPos);
 
                 //get boundary condition for boundary face center
                 BoundaryConditions::Flags bctype = problem.press_bc_type(faceGlobalPos, *eIt, facelocalDim);
@@ -816,8 +816,11 @@ void Decoupled2p2c<GridView,Scalar>::transportInitial()
         double T = problem.temp(globalPos, *eIt, localPos);
 
         // initial conditions
-        double sat_0, C1_0, C2_0;
-        double rho_w, rho_n;
+        double sat_0 = 0;
+        double C1_0 = 0;
+        double C2_0 = 0;
+        double rho_w = 0;
+        double rho_n = 0;
         Dune::BoundaryConditions2p2c::Flags ictype = problem.initcond_type(globalPos, *eIt, localPos);            // get type of initial condition
 
         if (ictype == Dune::BoundaryConditions2p2c::saturation)  // saturation initial condition
@@ -864,7 +867,7 @@ int Decoupled2p2c<GridView,Scalar>::concentrationUpdate(const Scalar t, Scalar& 
     // set update vector to zero
     updateVec = 0;
 
-    int which;
+    int which = -1;
 
     // compute update vector
     ElementIterator eItEnd = gridview_.template end<0>();
@@ -904,10 +907,10 @@ int Decoupled2p2c<GridView,Scalar>::concentrationUpdate(const Scalar t, Scalar& 
         for (IntersectionIterator isIt = eIt->ilevelbegin(); isIt!=isItEnd; ++isIt)
         {
             // get geometry informations of face
-            GeometryType gtf = isIt->intersectionSelfLocal().type(); //geometry type
+            GeometryType gtf = isIt->geometryInInside().type(); //geometry type
             const FieldVector<ct,dim-1>& faceLocalPos = ReferenceElements<ct,dim-1>::general(gtf).position(0,0); // center in face's reference element
-            const FieldVector<ct,dim>& facelocalDim = ReferenceElements<ct,dim>::general(gtf).position(isIt->numberInSelf(),1); // center of face inside volume reference element
-            double faceVol = isIt->intersectionGlobal().volume(); // get face volume
+            const FieldVector<ct,dim>& facelocalDim = ReferenceElements<ct,dim>::general(gtf).position(isIt->indexInInside(),1); // center of face inside volume reference element
+            double faceVol = isIt->geometry().volume(); // get face volume
             FieldVector<ct,dimworld> unitOuterNormal = isIt->unitOuterNormal(faceLocalPos);
 
             // get normal vector scaled with volume of face
@@ -1005,7 +1008,7 @@ int Decoupled2p2c<GridView,Scalar>::concentrationUpdate(const Scalar t, Scalar& 
             else // handle boundary face
             {
                 // face center in globel coordinates
-                FieldVector<ct,dim> faceGlobalPos = isIt->intersectionGlobal().global(faceLocalPos);
+                FieldVector<ct,dim> faceGlobalPos = isIt->geometry().global(faceLocalPos);
 
                 // distance vector between cell and face center
                 FieldVector<ct,dimworld> distVec = faceGlobalPos - globalPos;

@@ -1,4 +1,4 @@
-// $Id$
+// $Id: fvpressure2p.hh 2143 2009-06-17 18:21:10Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2007-2009 by Bernd Flemisch                               *
  *   Copyright (C) 2007-2009 by Jochen Fritz                                 *
@@ -77,7 +77,7 @@ template<class GridView, class Scalar, class VC,
     };
     enum
     {
-        pw = 0, pn = 1, pglobal = 2, Sw = 0, Sn = 1
+        pw = 0, pn = 1, pglobal = 2, Sw = 0, Sn = 1, other = 999
     };
 
 typedef    typename GridView::Traits::template Codim<0>::Entity Element;
@@ -92,7 +92,7 @@ typedef    typename GridView::Traits::template Codim<0>::Entity Element;
     typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
     typedef Dune::FieldMatrix<Scalar, 1, 1> MB;
-    typedef BCRSMatrix<MB> MatrixType;
+    typedef BCRSMatrix<MB> Matrix;
     typedef BlockVector<FieldVector<Scalar, 1> > Vector;
 
     //initializes the matrix to store the system of equations
@@ -116,7 +116,7 @@ public:
      *  \f[  \text{div}\, \boldsymbol{v} = q, \f]
      *  subject to appropriate boundary conditions.
      */
-    void pressure(bool first = true, const Scalar t=0)
+    void pressure(bool first = true, const Scalar t=0, bool solveTwice = true)
     {
         if (first)
         {
@@ -124,7 +124,7 @@ public:
         }
         assemble(first, t);
         solve();
-        if (first)
+        if (first && solveTwice)
         {
             assemble(false, t);
             solve();
@@ -145,14 +145,14 @@ public:
             (2*dim+1) * problem.variables().gridSizeDiffusion(), BCRSMatrix<MB>::random),
     f_(problem.variables().gridSizeDiffusion()), solverName_("BiCGSTAB"),
     preconditionerName_("SeqILU0"), gravity(problem.gravity()),
-    pressureType((pressType == "pw") ? 0 : ((pressType == "pn") ? 1 : ((pressType == "pglobal") ? 2 : 999))),
-    saturationType((satType == "Sw") ? 0 : ((satType == "Sn") ? 1 : 999))
+    pressureType((pressType == "pw") ? pw : ((pressType == "pn") ? pn : ((pressType == "pglobal") ? pglobal : other))),
+    saturationType((satType == "Sw") ? Sw : ((satType == "Sn") ? Sn : other))
     {
-        if (pressureType == 999)
+        if (pressureType == other)
         {
             DUNE_THROW(NotImplemented, "Pressure type not supported!");
         }
-        if (saturationType == 999)
+        if (saturationType == other)
         {
             DUNE_THROW(NotImplemented, "Saturation type not supported!");
         }
@@ -169,28 +169,28 @@ public:
      * \param preconditionerName a string giving the type of the matrix preconditioner used (could be: SeqILU0, SeqPardiso)
      */
     FVPressure2P(GridView& gridView, Problem& problem, std::string pressType, std::string satType, std::string solverName,
-            std::string preconditionerName) :
-    Diffusion<GridView, Scalar, VC, Problem>(gridView, problem),
+            std::string preconditionerName)
+    : Diffusion<GridView, Scalar, VC, Problem>(gridView, problem),
     A_(problem.variables().gridSizeDiffusion(), problem.variables().gridSizeDiffusion(),
-            (2*dim+1)*problem.variables().gridSizeDiffusion(), BCRSMatrix<MB>::random),
+    		(2*dim+1) * problem.variables().gridSizeDiffusion(), BCRSMatrix<MB>::random),
     f_(problem.variables().gridSizeDiffusion()), solverName_(solverName),
     preconditionerName_(preconditionerName), gravity(problem.gravity()),
-    pressureType((pressType == "pw") ? 0 : ((pressType == "pn") ? 1 : ((pressType == "pglobal") ? 2 : 999))),
-    saturationType((satType == "Sw") ? 0 : ((satType == "Sn") ? 1 : 999))
+    pressureType((pressType == "pw") ? pw : ((pressType == "pn") ? pn : ((pressType == "pglobal") ? pglobal : other))),
+    saturationType((satType == "Sw") ? Sw : ((satType == "Sn") ? Sn : other))
     {
-        if (pressureType == 999)
-        {
-            DUNE_THROW(NotImplemented, "Pressure type not supported!");
-        }
-        if (saturationType == 999)
-        {
-            DUNE_THROW(NotImplemented, "Saturation type not supported!");
-        }
-        initializeMatrix();
+    	if (pressureType == other)
+    	{
+    		DUNE_THROW(NotImplemented, "Pressure type not supported!");
+    	}
+    	if (saturationType == other)
+    	{
+    		DUNE_THROW(NotImplemented, "Saturation type not supported!");
+    	}
+    	initializeMatrix();
     }
 
 private:
-    MatrixType A_;
+    Matrix A_;
     BlockVector< FieldVector<Scalar,1> > f_;
     std::string solverName_;
     std::string preconditionerName_;
@@ -201,7 +201,8 @@ protected:
 };
 
 //initializes the matrix to store the system of equations
-template<class GridView, class Scalar, class VC, class Problem> void FVPressure2P<GridView, Scalar, VC, Problem>::initializeMatrix()
+template<class GridView, class Scalar, class VC, class Problem>
+void FVPressure2P<GridView, Scalar, VC, Problem>::initializeMatrix()
 {
     // determine matrix row sizes
     ElementIterator eItEnd = this->gridView.template end<0>();
@@ -256,7 +257,8 @@ template<class GridView, class Scalar, class VC, class Problem> void FVPressure2
 }
 
 //function which assembles the system of equations to be solved
-template<class GridView, class Scalar, class VC, class Problem> void FVPressure2P<GridView, Scalar, VC, Problem>::assemble(bool first, const Scalar t=0)
+template<class GridView, class Scalar, class VC, class Problem>
+void FVPressure2P<GridView, Scalar, VC, Problem>::assemble(bool first, const Scalar t=0)
 {
     // initialization: set matrix A_ to zero
     A_ = 0;
@@ -649,50 +651,56 @@ template<class GridView, class Scalar, class VC, class Problem> void FVPressure2
 }
 
 //solves the system of equations to get the spatial distribution of the pressure
-template<class GridView, class Scalar, class VC, class Problem> void FVPressure2P<GridView, Scalar, VC, Problem>::solve()
+template<class GridView, class Scalar, class VC, class Problem>
+void FVPressure2P<GridView, Scalar, VC, Problem>::solve()
 {
-    MatrixAdapter<MatrixType,Vector,Vector> op(A_);
+	std::cout << "FVPressure2P: solve for pressure" << std::endl;
+
+    MatrixAdapter<Matrix,Vector,Vector> op(A_);
     InverseOperatorResult r;
+    double reduction = 1E-12;
+    int maxIt = 10000;
+    int verboseLevel = 1;
+    InverseOperatorResult result;
 
     if (preconditionerName_ == "SeqILU0")
     {
-        SeqILU0<MatrixType,Vector,Vector> preconditioner(A_, 1.0);
-        if (solverName_ == "CG")
-        {
-            CGSolver<Vector> solver(op, preconditioner, 1E-14, 10000, 0);
-            solver.apply((this->diffProblem.variables().pressure()), f_, r);
-        }
-        else if (solverName_ == "BiCGSTAB")
-        {
-            BiCGSTABSolver<Vector> solver(op, preconditioner, 1E-14, 10000, 0);
-            solver.apply((this->diffProblem.variables().pressure()), f_, r);
-        }
-        else
-        DUNE_THROW(NotImplemented, "FVPressure2P :: solve : combination "
-                << preconditionerName_<< " and "<< solverName_ << ".");
+    	SeqILU0<Matrix,Vector,Vector> preconditioner(A_, 1.0);
+    	if (solverName_ == "CG")
+    	{
+    		CGSolver<Vector> solver(op, preconditioner, reduction, maxIt, verboseLevel);
+    		solver.apply(this->diffProblem.variables().pressure(), f_, result);
+    	}
+    	else if (solverName_ == "BiCGSTAB")
+    	{
+    		BiCGSTABSolver<Vector> solver(op, preconditioner, reduction, maxIt, verboseLevel);
+    		solver.apply(this->diffProblem.variables().pressure(), f_, result);
+    	}
+    	else
+    		DUNE_THROW(NotImplemented, "FVPressure2P :: solve : combination "
+    				<< preconditionerName_<< " and "<< solverName_ << ".");
     }
     else if (preconditionerName_ == "SeqPardiso")
     {
-        SeqPardiso<MatrixType,Vector,Vector> preconditioner(A_);
-        if (solverName_ == "Loop")
-        {
-            LoopSolver<Vector> solver(op, preconditioner, 1E-14, 10000, 0);
-            solver.apply(this->diffProblem.variables().pressure(), f_, r);
-        }
-        else
-        DUNE_THROW(NotImplemented, "FVPressure2P :: solve : combination "
-                << preconditionerName_<< " and "<< solverName_ << ".");
+    	SeqPardiso<Matrix,Vector,Vector> preconditioner(A_);
+    	if (solverName_ == "Loop")
+    	{
+    		LoopSolver<Vector> solver(op, preconditioner, reduction, maxIt, verboseLevel);
+    		solver.apply(this->diffProblem.variables().pressure(), f_, result);
+    	}
+    	else
+    		DUNE_THROW(NotImplemented, "FVPressure2P :: solve : combination "
+    				<< preconditionerName_<< " and "<< solverName_ << ".");
     }
     else
-    DUNE_THROW(NotImplemented, "FVPressure2P :: solve : preconditioner "
-            << preconditionerName_ << ".");
-    //                printmatrix(std::cout, A_, "global stiffness matrix", "row", 11, 3);
-    //                printvector(std::cout, f_, "right hand side", "row", 200, 1, 3);
-    //                    printvector(std::cout, (this->diffProblem.variables().pressure()), "pressure", "row", 200, 1, 3);
+    	DUNE_THROW(NotImplemented, "FVPressure2P :: solve : preconditioner "
+    			<< preconditionerName_ << ".");
+
     return;
 }
 //constitutive functions are updated once if new saturations are calculated and stored in the variables object
-template<class GridView, class Scalar, class VC, class Problem> void FVPressure2P<GridView, Scalar, VC, Problem>::initializeMaterialLaws()
+template<class GridView, class Scalar, class VC, class Problem>
+void FVPressure2P<GridView, Scalar, VC, Problem>::initializeMaterialLaws()
 {
     // iterate through leaf grid an evaluate c0 at cell center
     ElementIterator eItEnd = this->gridView.template end<0>();

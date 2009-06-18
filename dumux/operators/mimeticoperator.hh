@@ -1,4 +1,4 @@
-// $Id$
+// $Id: mimeticoperator.hh 2143 2009-06-17 18:21:10Z bernd $
 
 #ifndef DUNE_MIMETICOPERATOR_HH
 #define DUNE_MIMETICOPERATOR_HH
@@ -37,12 +37,12 @@ namespace Dune
 
   The template parameters are:
 
-  - G    A grid type
-  - RT   The field type used in the elements of the stiffness matrix
-  - m    number of degrees of freedom per node (system size)
+  - Grid    A grid type
+  - Scalar   The field type used in the elements of the stiffness matrix
+  - numEq    number of degrees of freedom per node (system size)
 */
-template<class G, class RT, int m=1>
-class MimeticOperatorAssembler : public LevelCROperatorAssembler<G, RT, m>
+template<class Grid, class Scalar, class GridView, class Communication, int numEq>
+class MimeticOperatorAssembler : public CROperatorAssembler<Grid, Scalar, GridView, Communication, numEq>
 {
     template<int dim>
     struct ElementLayout
@@ -53,39 +53,35 @@ class MimeticOperatorAssembler : public LevelCROperatorAssembler<G, RT, m>
         }
     };
 
-    enum {n=G::dimension};
-    typedef typename G::ctype DT;
-    typedef typename G::LevelGridView GV;
-    typedef typename GV::IndexSet IS;
-    typedef LevelCommunicate<G> LC;
-    typedef LevelP0Function<G,RT,2*n> VType;
-    typedef BlockVector< FieldVector<RT,1> > PType;
-    typedef typename GV::template Codim<0>::Iterator Iterator;
-    typedef MultipleCodimMultipleGeomTypeMapper<GV,ElementLayout> EM;
+    enum {dim=GridView::dimension};
+    typedef P0Function<GridView,Scalar,2*dim> VType;
+    typedef BlockVector< FieldVector<Scalar,1> > PType;
+    typedef typename GridView::template Codim<0>::Iterator Iterator;
+    typedef MultipleCodimMultipleGeomTypeMapper<GridView,ElementLayout> ElementMapper;
 
 public:
 
-    MimeticOperatorAssembler (const G& grid, int level)
-        : LevelCROperatorAssembler<G, RT, m>(grid, level), elementmapper(grid.levelView(level))
+    MimeticOperatorAssembler (const Grid& grid, const GridView& gridView, Communication lcomm)
+    : CROperatorAssembler<Grid, Scalar, GridView, Communication, numEq>(grid, gridView, lcomm), elementMapper(gridView)
     {}
 
-    template<class I>
-    void calculatePressure (LocalStiffness<GV,RT,m>& loc, CRFunction<G,RT,GV,LC,m>& u,
+    template<class LocalStiffness>
+    void calculatePressure (LocalStiffness& loc, CRFunction<Grid,Scalar,GridView,Communication,numEq>& u,
                             VType& velocity, PType& pressure)
     {
         // run over all level elements
-        Iterator eendit = this->grid.template lend<0>(0);
-        for (Iterator it = this->grid.template lbegin<0>(0); it!=eendit; ++it)
+        Iterator eendit = this->gridview.template end<0>();
+        for (Iterator it = this->gridview.template begin<0>(); it!=eendit; ++it)
         {
             // get access to shape functions for CR elements
             Dune::GeometryType gt = it->geometry().type();
-            const typename Dune::CRShapeFunctionSetContainer<DT,RT,n>::value_type&
-                sfs = Dune::CRShapeFunctions<DT,RT,n>::general(gt,1);
+            const typename Dune::CRShapeFunctionSetContainer<Scalar,Scalar,dim>::value_type&
+                sfs = Dune::CRShapeFunctions<Scalar,Scalar,dim>::general(gt,1);
 
-            int elemId = elementmapper.map(*it);
+            int elemId = elementMapper.map(*it);
 
             // get local to global id map and pressure traces
-            Dune::FieldVector<DT,2*n> pressTrace(0);
+            Dune::FieldVector<Scalar,2*dim> pressTrace(0);
             for (int k = 0; k < sfs.size(); k++)
             {
                 pressTrace[k] = (*u)[this->facemapper.map(*it, k, 1)];
@@ -94,20 +90,20 @@ public:
             // The notation is borrowed from Aarnes/Krogstadt/Lie 2006, Section 3.4.
             // The matrix W developed here corresponds to one element-associated
             // block of the matrix B^{-1} there.
-            Dune::FieldVector<DT,2*n> faceVol(0);
-            Dune::FieldMatrix<DT,2*n,2*n> W(0);
-            Dune::FieldVector<DT,2*n> c(0);
-            Dune::FieldMatrix<DT,2*n,2*n> Pi(0);
-            Dune::FieldVector<RT,2*n> F(0);
-            RT dinv = 0;
-            RT qmean = 0;
+            Dune::FieldVector<Scalar,2*dim> faceVol(0);
+            Dune::FieldMatrix<Scalar,2*dim,2*dim> W(0);
+            Dune::FieldVector<Scalar,2*dim> c(0);
+            Dune::FieldMatrix<Scalar,2*dim,2*dim> Pi(0);
+            Dune::FieldVector<Scalar,2*dim> F(0);
+            Scalar dinv = 0;
+            Scalar qmean = 0;
             loc.assembleElementMatrices(*it, faceVol, W, c, Pi, dinv, F, qmean);
 
             pressure[elemId] = dinv*(qmean + (F*pressTrace));
 
-            Dune::FieldVector<RT,2*n> v(0);
-            for (int i = 0; i < 2*n; i++)
-                for (int j = 0; j < 2*n; j++)
+            Dune::FieldVector<Scalar,2*dim> v(0);
+            for (int i = 0; i < 2*dim; i++)
+                for (int j = 0; j < 2*dim; j++)
                     v[i] += W[i][j]*faceVol[j]*(pressure[elemId] - pressTrace[j]);
 
             (*velocity)[elemId] = v;
@@ -115,7 +111,7 @@ public:
     }
 
 private:
-    EM elementmapper;
+    ElementMapper elementMapper;
 };
 }
 #endif

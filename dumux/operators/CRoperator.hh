@@ -1,6 +1,6 @@
-// $Id$
+// $Id: CRoperator.hh 2143 2009-06-17 18:21:10Z bernd $
 
-// $Id$
+// $Id: CRoperator.hh 2143 2009-06-17 18:21:10Z bernd $
 
 #ifndef DUNE_CROPERATOR_HH
 #define DUNE_CROPERATOR_HH
@@ -150,8 +150,8 @@ public:
 
         // LOOP 1 : Compute row sizes
         watch.reset();
-        Iterator eendit = grid.template lend<0>(0);
-        for (Iterator it = grid.template lbegin<0>(0); it != eendit; ++it)
+        Iterator eendit = gridview.template end<0>();
+        for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
         {
             Dune::GeometryType gt = it->geometry().type();
             const typename Dune::ReferenceElementContainer<DT,n>::value_type&
@@ -188,7 +188,7 @@ public:
 
         // LOOP 2 : insert the nonzeros
         watch.reset();
-        for (Iterator it = grid.template lbegin<0>(0); it!=eendit; ++it)
+        for (Iterator it = gridview.template begin<0>(); it!=eendit; ++it)
         {
             Dune::GeometryType gt = it->geometry().type();
             const typename Dune::ReferenceElementContainer<DT,n>::value_type&
@@ -301,7 +301,7 @@ public:
       Dirichlet value at the \f$i\f$th node.
 
     */
-    void assemble (LocalStiffness<typename G::LeafGridView,RT,m>& loc,
+    void assemble (LocalStiffness<GV,RT,m>& loc,
                    CRFunction<G,RT,GV,LC,m>& u,
                    CRFunction<G,RT,GV,LC,m>& f)
     {
@@ -323,8 +323,8 @@ public:
         int local2Global[Dune::CRShapeFunctionSetContainer<DT,RT,n>::maxsize];
 
         // run over all leaf elements
-        Iterator eendit = this->grid.template lend<0>(0);
-        for (Iterator it = this->grid.template lbegin<0>(0); it!=eendit; ++it)
+        Iterator eendit = this->gridview.template end<0>();
+        for (Iterator it = this->gridview.template begin<0>(); it!=eendit; ++it)
         {
             // get access to shape functions for CR elements
             Dune::GeometryType gt = it->geometry().type();
@@ -425,8 +425,8 @@ public:
     {
         // run over all leaf elements
         int extra=0;
-        Iterator eendit = this->grid.template lend<0>(0);
-        for (Iterator it = this->grid.template lbegin<0>(0); it!=eendit; ++it)
+        Iterator eendit = this->gridview.template end<0>();
+        for (Iterator it = this->gridview.template begin<0>(); it!=eendit; ++it)
         {
             // get access to shape functions for CR elements
             Dune::GeometryType gt = it->geometry().type();

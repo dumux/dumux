@@ -159,18 +159,25 @@ public:
      */
     virtual Fluid& nonWettingPhase () const
     {
-        return nonWettingPhase_;
+        return nonwettingPhase_;
     }
 
     //! Constructs an object of type TransportProblem
     /** @param variables object of class VariableClass.
      *  @param wettingPhase implementation of a wetting phase.
-     *  @param nonWettingPhase implementation of a non-wetting phase.
+     *  @param nonwettingPhase implementation of a non-wetting phase.
      *  @param soil implementation of the solid matrix
      *  @param materialLaw implementation of Material laws. Class TwoPhaseRelations or derived.
      */
-    TransportProblem(VC& variables,Fluid& wettingPhase, Fluid& nonWettingPhase, Matrix2p<Grid, Scalar>& soil, TwoPhaseRelations<Grid, Scalar>& materialLaw = *(new TwoPhaseRelations<Grid,Scalar>))
-    : variables_(variables), wettingPhase_(wettingPhase), nonWettingPhase_(nonWettingPhase), soil_(soil), materialLaw_(materialLaw),gravity_(0)
+    TransportProblem(VC& variables,Fluid& wettingPhase, Fluid& nonwettingPhase,
+    		Matrix2p<Grid, Scalar>& soil, TwoPhaseRelations<Grid, Scalar>& materialLaw)
+    : variables_(variables), wettingPhase_(wettingPhase),
+    nonwettingPhase_(nonwettingPhase), soil_(soil), materialLaw_(materialLaw), gravity_(0)
+    {}
+
+    TransportProblem(VC& variables, TwoPhaseRelations<Grid, Scalar>& materialLaw)
+    : variables_(variables), wettingPhase_(materialLaw.wettingPhase),
+    nonwettingPhase_(materialLaw.nonwettingPhase), soil_(materialLaw.soil), materialLaw_(materialLaw), gravity_(0)
     {}
 
     //! always define virtual destructor in abstract base class
@@ -180,7 +187,7 @@ public:
 private:
     VC& variables_;//object of type Dune::VariableClass
     Fluid& wettingPhase_;//object derived from Dune::Fluid
-    Fluid& nonWettingPhase_; //object derived from Dune::Fluid
+    Fluid& nonwettingPhase_; //object derived from Dune::Fluid
     Matrix2p<Grid, Scalar>& soil_; //object derived from Dune::Matrix2p
     TwoPhaseRelations<Grid,Scalar>& materialLaw_;//object of type Dune::TwoPhaseRelations or derived
     FieldVector<Scalar,dimWorld> gravity_;//vector including the gravity constant

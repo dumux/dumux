@@ -1,4 +1,4 @@
-// $Id$
+// $Id: cubeshapefunctions.hh 2143 2009-06-17 18:21:10Z bernd $
 
 #ifndef DUNE_CRCUBESHAPEFUNCTIONS_HH
 #define DUNE_CRCUBESHAPEFUNCTIONS_HH
@@ -201,7 +201,7 @@ public:
 
 private:
     int number;
-    ResultType a[2*dim]; // store coefficients for this shape function
+    ResultType a[6]; // store coefficients for this shape function
     FieldVector<CoordType,d> pos;
 };
 

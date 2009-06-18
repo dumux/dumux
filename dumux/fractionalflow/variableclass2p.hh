@@ -1,4 +1,4 @@
-// $Id$
+// $Id: variableclass2p.hh 2143 2009-06-17 18:21:10Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2009 by Markus Wolff                                      *
  *   Institute of Hydraulic Engineering                                      *
@@ -129,7 +129,7 @@ public:
      *  @param initialSat initial value for the saturation (only necessary if only diffusion part is solved)
      *  @param initialVel initial value for the velocity (only necessary if only transport part is solved)
      */
-    VariableClass(GridView& gridView, Scalar& initialSat = *(new Scalar(0)), Dune::FieldVector<Scalar, dim>& initialVel = *(new Dune::FieldVector<Scalar, dim> (0)))
+    VariableClass(GridView& gridView, Scalar& initialSat = *(new Scalar(1)), Dune::FieldVector<Scalar, dim>& initialVel = *(new Dune::FieldVector<Scalar, dim> (0)))
     : gridViewDiffusion_(gridView), gridViewTransport_(gridView),
     indexSetDiffusion_(gridView.indexSet()),indexSetTransport_(gridView.indexSet()),
     gridSizeDiffusion_(indexSetDiffusion_.size(0)),gridSizeTransport_(indexSetTransport_.size(0)), multiscale_(false), codim_(0)
@@ -165,7 +165,7 @@ public:
      *  @param initialSat initial value for the saturation (only necessary if only diffusion part is solved)
      *  @param initialVel initial value for the velocity (only necessary if only transport part is solved)
      */
-    VariableClass(GridView& gridView, int codim, Scalar& initialSat = *(new Scalar(0)), Dune::FieldVector<Scalar, dim>& initialVel = *(new Dune::FieldVector<Scalar, dim> (0)))
+    VariableClass(GridView& gridView, int codim, Scalar& initialSat = *(new Scalar(1)), Dune::FieldVector<Scalar, dim>& initialVel = *(new Dune::FieldVector<Scalar, dim> (0)))
     : gridViewDiffusion_(gridView), gridViewTransport_(gridView),
     indexSetDiffusion_(gridView.indexSet()),indexSetTransport_(gridView.indexSet()),
     gridSizeDiffusion_(indexSetDiffusion_.size(codim)),gridSizeTransport_(indexSetTransport_.size(codim)), multiscale_(false), codim_(codim)
@@ -412,8 +412,8 @@ public:
                 VTKWriter<GridView> vtkwriter(gridViewDiffusion_);
                 char fname[128];
                 sprintf(fname, "%s-%05d", name, k);
-                vtkwriter.addCellData(saturation_, "saturation");
                 vtkwriter.addCellData(pressure_, "pressure");
+                vtkwriter.addCellData(saturation_, "saturation");
                 vtkwriter.write(fname, VTKOptions::ascii);
             }
         }
@@ -437,8 +437,8 @@ public:
                 VTKWriter<GridView> vtkwriter(gridViewDiffusion_);
                 char fname[128];
                 sprintf(fname, "%s-%05d", name, k);
-                vtkwriter.addVertexData(saturation_, "saturation");
                 vtkwriter.addVertexData(pressure_, "pressure");
+                vtkwriter.addVertexData(saturation_, "saturation");
                 vtkwriter.write(fname, VTKOptions::ascii);
             }
         }

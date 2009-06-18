@@ -32,15 +32,15 @@ int main(int argc, char** argv)
     const int dim=3;
 
     // create a grid object
-    typedef double NumberType;
+    typedef double Scalar;
 
-    typedef Dune::SGrid<dim,dim> GridType;
-    typedef GridType::LeafGridView GridView;
-    typedef Dune::FieldVector<GridType::ctype,dim> FieldVector;
+    typedef Dune::SGrid<dim,dim> Grid;
+    typedef Grid::LeafGridView GridView;
+    typedef Dune::FieldVector<Grid::ctype,dim> FieldVector;
     Dune::FieldVector<int,dim> N(10);
     FieldVector L(0);
     FieldVector H(10);
-    GridType grid(N,L,H);
+    Grid grid(N,L,H);
     GridView gridview(grid.leafView());
 
     double tStart = 0;
@@ -51,20 +51,20 @@ int main(int argc, char** argv)
     Dune::Liq_WaterAir wetmat;
     Dune::Gas_WaterAir nonwetmat;
 
-    Dune::HomogeneousSoil<GridType, NumberType> soil;
+    Dune::HomogeneousSoil<Grid, Scalar> soil;
 
-    Dune::TwoPhaseRelations<GridType, NumberType> materialLaw(soil, wetmat, nonwetmat);
+    Dune::TwoPhaseRelations<Grid, Scalar> materialLaw(soil, wetmat, nonwetmat);
 
-    Dune::VariableClass2p2c<GridView,NumberType> var(gridview);
+    Dune::VariableClass2p2c<GridView,Scalar> var(gridview);
 
-    typedef Dune::Testproblem_2p2c<GridView, NumberType> TransProb;
+    typedef Dune::Testproblem_2p2c<GridView, Scalar> TransProb;
     TransProb problem(gridview, var, wetmat, nonwetmat, soil, grid.maxLevel(), materialLaw, false);
 
-    typedef Dune::Decoupled2p2c<GridView, NumberType> ModelType;
+    typedef Dune::Decoupled2p2c<GridView, Scalar> ModelType;
     ModelType model(gridview, problem);
 
-    Dune::ExplicitEulerStep<GridType, ModelType> timestep;
-    Dune::TimeLoop<GridType, ModelType > timeloop(tStart, tEnd, "2p2c", modulo, cFLFactor, 1e100, 1e100, timestep);
+    Dune::ExplicitEulerStep<Grid, ModelType> timestep;
+    Dune::TimeLoop<Grid, ModelType > timeloop(tStart, tEnd, "2p2c", modulo, cFLFactor, 1e100, 1e100, timestep);
 
     Dune::Timer timer;
     timer.reset();

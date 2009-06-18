@@ -1,5 +1,3 @@
-// $Id$
-
 #include "config.h"
 #include <iostream>
 #include <iomanip>
@@ -8,12 +6,12 @@
 #include <dune/istl/io.hh>
 
 #include "dumux/material/fluids/uniform.hh"
-#include "dumux/transport/ch/chtransport.hh"
-#include "dumux/transport/ch/fractionalw.hh"
+#include "dumux/transport/fv/fvsaturationwetting2p.hh"
 #include "dumux/timedisc/timeloop.hh"
 #include "dumux/fractionalflow/variableclass2p.hh"
 
 #include "simplenonlinearproblem.hh"
+
 
 int main(int argc, char** argv)
 {
@@ -24,12 +22,11 @@ int main(int argc, char** argv)
 		// time loop parameters
 		const double tStart = 0;
 		const double tEnd = 1.5e9;
-		double dt = tEnd;
-		double firstDt = dt;
-		double maxDt = dt;
-		int modulo = 1;
-		double slLengthFactor = 10;
+		const double cFLFactor = 0.5;
+		double maxDT = 1e100;
+		int modulo = 10;
 
+		// create a grid object
 		typedef double Scalar;
 		typedef Dune::SGrid<dim,dim> Grid;
 		typedef Grid::LeafGridView GridView;
@@ -51,13 +48,11 @@ int main(int argc, char** argv)
 		VariableClass variables(gridView, initsat, velocity);
 
 		Dune::SimpleNonlinearProblem<GridView, Scalar, VariableClass> problem(variables, materialLaw, L, H);
-		Dune::FractionalW<GridView, Scalar, VariableClass> fractionalW(problem);
 
-		typedef Dune::ChTransport<GridView, Scalar, VariableClass> Transport;
-		Transport transport(gridView, problem, fractionalW, slLengthFactor);
+		typedef Dune::FVSaturationWetting2P<GridView, Scalar, VariableClass> Transport;
+		Transport transport(gridView, problem, "vt");
 
-		Dune::RungeKuttaStep<Grid, Transport> timeStep(1);
-		Dune::TimeLoop<Grid, Transport > timeloop(tStart, tEnd, dt, "chtransport", modulo, maxDt, firstDt, timeStep);
+		Dune::TimeLoop<Grid, Transport > timeloop(tStart, tEnd, "timeloop", modulo, cFLFactor, maxDT, maxDT);
 
 		timeloop.execute(transport);
 

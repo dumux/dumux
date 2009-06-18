@@ -55,8 +55,7 @@ namespace Dune
  - Grid  a DUNE grid type
  - RT    type used for return values
  */
-template<class GridView, class Scalar, class VC,
-        class Problem>
+template<class GridView, class Scalar, class VC, class Problem>
 class MimeticGroundwaterEquationLocalStiffness
     :
         public LocalStiffness<GridView, Scalar, 1>
@@ -66,9 +65,8 @@ class MimeticGroundwaterEquationLocalStiffness
     {
         dim = GridView::dimension
     };
-typedef    typename GridView::Grid Grid;
+    typedef typename GridView::Grid Grid;
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
-    typedef Dune::LevelP0Function<Grid,Scalar,(int)(0.5*dim*(dim+1))> KType;
 
 public:
     // define the number of components of your system, this is used outside
@@ -83,7 +81,7 @@ public:
             bool levelBoundaryAsDirichlet, const GridView& gridView,
             bool procBoundaryAsDirichlet=true)
     : problem_(problem),levelBoundaryAsDirichlet_(levelBoundaryAsDirichlet),
-    procBoundaryAsDirichlet_(procBoundaryAsDirichlet)
+    procBoundaryAsDirichlet_(procBoundaryAsDirichlet), gridView_(gridView)
     {}
 
     //! assemble local stiffness matrix for given element and order
@@ -187,8 +185,8 @@ public:
 
         typedef typename GridView::IntersectionIterator IntersectionIterator;
 
-        IntersectionIterator endit = element.ileafend();
-        for (IntersectionIterator it = element.ileafbegin(); it!=endit; ++it)
+        IntersectionIterator endit = gridView_.template iend(element);
+        for (IntersectionIterator it = gridView_.template ibegin(element); it!=endit; ++it)
         {
             // get geometry type of face
             Dune::GeometryType gtf = it->geometryInInside().type();
@@ -280,7 +278,7 @@ public:
         Scalar traceK = K[0][0];
         for (int i = 1; i < dim; i++)
         traceK += K[i][i];
-        D *= traceK/volume;
+        D *= 2.0*traceK/volume;
         //      std::cout << "u~D =\dim" << D;
 
         // (3) Build the matrix W = Minv
@@ -410,13 +408,11 @@ private:
         int p=0;
 
         // evaluate boundary conditions via intersection iterator
-        typedef typename GridView::IntersectionIterator
-        IntersectionIterator;
+        typedef typename GridView::IntersectionIterator IntersectionIterator;
 
         //std::cout << "new element." << std::endl;
-        IntersectionIterator endit = element.ileafend();
-        for (IntersectionIterator it = element.ileafbegin();
-                it!=endit; ++it)
+        IntersectionIterator endit = gridView_.template iend(element);
+        for (IntersectionIterator it = gridView_.template ibegin(element); it!=endit; ++it)
         {
             //std::cout << "\tnew intersection iterator." << std::endl;
 
@@ -526,6 +522,7 @@ private:
     Problem& problem_;
     bool levelBoundaryAsDirichlet_;
     bool procBoundaryAsDirichlet_;
+    const GridView& gridView_;
 };
 
 /** @} */

@@ -185,8 +185,7 @@ public:
                        int                         scvIdx,
                        int                         boundaryFaceIdx) const
     {
-        const GlobalPosition &globalPos
-            = element.geometry().corner(scvIdx);
+        //const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
 
         //if (globalPos[0] > 22 - eps_)
             values = BoundaryConditions::dirichlet;

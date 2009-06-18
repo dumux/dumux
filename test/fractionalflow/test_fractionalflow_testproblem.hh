@@ -7,8 +7,8 @@
 namespace Dune {
 //! \ingroup diffusionProblems
 //! example class for diffusion problems
-template<class GridView, class Scalar, class VC> class FractionalFlowTestProblem :
-        public FractionalFlowProblem<GridView,Scalar,VC> {
+template<class GridView, class Scalar, class VariableClass> class FractionalFlowTestProblem :
+        public FractionalFlowProblem<GridView,Scalar,VariableClass> {
 
     enum {dim=GridView::dimension, dimWorld=GridView::dimensionworld};
     typedef typename GridView::Grid Grid;
@@ -17,9 +17,9 @@ template<class GridView, class Scalar, class VC> class FractionalFlowTestProblem
     typedef Dune::FieldVector<Scalar, dim> LocalPosition;
 
 public:
-    FractionalFlowTestProblem(VC& variables, Fluid& wettingPhase, Fluid& nonWettingPhase, Matrix2p<Grid, Scalar>& soil, TwoPhaseRelations<Grid, Scalar>& materialLaw = *(new TwoPhaseRelations<Grid,Scalar>), const GlobalPosition LowerLeft = 0,
+    FractionalFlowTestProblem(VariableClass& variables, Fluid& wettingPhase, Fluid& nonWettingPhase, Matrix2p<Grid, Scalar>& soil, TwoPhaseRelations<Grid, Scalar>& materialLaw = *(new TwoPhaseRelations<Grid,Scalar>), const GlobalPosition LowerLeft = 0,
                 const GlobalPosition UpperRight = 0) :
-        FractionalFlowProblem<GridView, Scalar, VC>(variables, wettingPhase, nonWettingPhase, soil, materialLaw), Left_(LowerLeft[0]),
+        FractionalFlowProblem<GridView, Scalar, VariableClass>(variables, wettingPhase, nonWettingPhase, soil, materialLaw), Left_(LowerLeft[0]),
         Right_(UpperRight[0]), eps_(1e-8)
     {}
 

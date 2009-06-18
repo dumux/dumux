@@ -24,37 +24,37 @@ int main(int argc, char** argv)
         const int dim=2; /*@\label{tutorial-decoupled:dim}@*/
 
         // create a grid object
-        typedef double NumberType; /*@\label{tutorial-decoupled:grid-begin}@*/
-        typedef Dune::SGrid<dim,dim> GridType;
-        typedef GridType::LevelGridView GridView;
-        typedef Dune::FieldVector<GridType::ctype,dim> FieldVector;
+        typedef double Scalar; /*@\label{tutorial-decoupled:grid-begin}@*/
+        typedef Dune::SGrid<dim,dim> Grid;
+        typedef Grid::LevelGridView GridView;
+        typedef Dune::FieldVector<Grid::ctype,dim> FieldVector;
         Dune::FieldVector<int,dim> N(10); N[0] = 30;
         FieldVector L(0);
         FieldVector H(300); H[0] = 600;
-        GridType grid(N,L,H);
+        Grid grid(N,L,H);
         GridView gridView(grid.levelView(0));/*@\label{tutorial-decoupled:grid-end}@*/
 
 
         // define fluid and solid properties and constitutive relationships
         Dune::Water wettingfluid; /*@\label{tutorial-decoupled:water}@*/
         Dune::Oil nonwettingfluid; /*@\label{tutorial-decoupled:oil}@*/
-        Dune::TutorialSoil<GridType, NumberType> soil; /*@\label{tutorial-decoupled:soil}@*/
-        Dune::TwoPhaseRelations<GridType, NumberType> materialLaw(soil, wettingfluid, nonwettingfluid);/*@\label{tutorial-decoupled:twophaserelations}@*/
+        Dune::TutorialSoil<Grid, Scalar> soil; /*@\label{tutorial-decoupled:soil}@*/
+        Dune::TwoPhaseRelations<Grid, Scalar> materialLaw(soil, wettingfluid, nonwettingfluid);/*@\label{tutorial-decoupled:twophaserelations}@*/
 
         // create object containing the variables
-        typedef Dune::VariableClass<GridView, NumberType> VariableType;
+        typedef Dune::VariableClass<GridView, Scalar> VariableType;
         VariableType variables(gridView);
 
         // create object including the problem definition
-        typedef Dune::TutorialProblemDecoupled<GridView, NumberType, VariableType> Problem;
+        typedef Dune::TutorialProblemDecoupled<GridView, Scalar, VariableType> Problem;
         Problem problem(variables, wettingfluid, nonwettingfluid, soil, materialLaw,L, H); /*@\label{tutorial-decoupled:problem}@*/
 
         // create object including the discretisation of the pressure equation
-        typedef Dune::FVTotalVelocity2P<GridView, NumberType, VariableType, Problem> DiffusionType;
+        typedef Dune::FVTotalVelocity2P<GridView, Scalar, VariableType, Problem> DiffusionType;
         DiffusionType diffusion(gridView, problem, "pw"); /*@\label{tutorial-decoupled:diffusion}@*/
 
         // create object including the space discretisation of the saturation equation
-        typedef Dune::FVSaturationWetting2P<GridView, NumberType, VariableType, Problem> TransportType;
+        typedef Dune::FVSaturationWetting2P<GridView, Scalar, VariableType, Problem> TransportType;
         TransportType transport(gridView, problem, "vt"); /*@\label{tutorial-decoupled:transport}@*/
 
         // some parameters used in the IMPES-object
@@ -74,7 +74,7 @@ int main(int argc, char** argv)
         double cFLFactor = 0.9; // security factor for the Courant-Friedrichs-Lewy-Criterion
 
         // create TimeLoop-object
-        Dune::TimeLoop<GridType, IMPESType > timeloop(tStart, tEnd, fileName, modulo, cFLFactor); /*@\label{tutorial-decoupled:timeloop}@*/
+        Dune::TimeLoop<Grid, IMPESType > timeloop(tStart, tEnd, fileName, modulo, cFLFactor); /*@\label{tutorial-decoupled:timeloop}@*/
 
         Dune::Timer timer;
         timer.reset();
