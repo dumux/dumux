@@ -154,7 +154,7 @@ public:
     virtual Scalar initConcentration (const FieldVector<ct,dim>& x, const Entity& e,
                      const FieldVector<ct,dim>& xi) const = 0;
 
-    //! Temperature initial condition \f$ \left[ K \right \f$
+    //! Temperature initial condition \f$ \left[ K \right] \f$
     /** @param x global coordinates
      * @param e reference to the cell for which the function is to be evaluated
      * @param xi local coordinates inside e
