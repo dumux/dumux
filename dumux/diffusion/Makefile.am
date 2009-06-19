@@ -1,4 +1,4 @@
-SUBDIRS = fe fv mimetic mpfa problems
+SUBDIRS = fe fv mimetic mpfa 
 
 diffusiondir = $(includedir)/dumux/diffusion
 diffusion_HEADERS = diffusion.hh diffusionproblem.hh

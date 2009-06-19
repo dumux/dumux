@@ -1,6 +1,6 @@
-// $Id:$
+// $Id$
 /*****************************************************************************
- *   Copyright (C) <YEARS> by <ADD_AUTHOR_HERE>                              *
+ *   Copyright (C) 2008-2009 by Jochen Fritz                                 *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
@@ -29,9 +29,10 @@
 #include "dumux/material/fluids/water_air.hh"
 #include <dumux/material/matrixproperties.hh>
 #include <dumux/material/twophaserelations.hh>
-// problem definition and model:
-#include "dumux/transport/problems/testproblem_2p2c.hh"
+// model:
 #include "dumux/transport/fv/decoupled2p2c.hh"
+// problem definition:
+#include "testproblem_2p2c.hh"
 
 
 /*********************************************
