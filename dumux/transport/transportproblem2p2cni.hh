@@ -1,5 +1,4 @@
 // $Id:$
-
 /*****************************************************************************
 * Copyright (C) 2009 by Jochen Fritz                                         *
 * Institute of Hydraulic Engineering                                         *
