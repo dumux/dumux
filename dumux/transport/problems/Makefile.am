@@ -1,7 +1,6 @@
 problemsdir = $(includedir)/dumux/transport/problems
 problems_HEADERS = buckleyleverettproblem.hh \
 	initialballproblem.hh \
-	simplenonlinearproblem.hh \
 	simpleparabolicproblem.hh \
 	simpleproblem.hh \
 	testproblem_2p2c.hh

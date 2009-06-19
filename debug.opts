@@ -8,7 +8,8 @@
 CONFIGURE_FLAGS=" CXXFLAGS=\"-Wall -g\" \
   --enable-dunedevel \
   --enable-debug \
-  --enable-parallel"
+  --enable-parallel \
+  --disable-mpiruntest"
 
 # common options:
 # --disable-documentation

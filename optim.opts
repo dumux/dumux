@@ -6,7 +6,9 @@
 
 # configure flags 
 CONFIGURE_FLAGS=" CXXFLAGS=\"-O3 -Wall -DNDEBUG -funroll-loops -finline-functions \" \
-  --enable-parallel"
+  --enable-parallel \
+  --disable-mpiruntest"
+
 
 # common options:
 # --disable-documentation

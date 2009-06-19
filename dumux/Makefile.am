@@ -4,7 +4,6 @@ SUBDIRS = auxiliary \
 	fractionalflow \
         functions \
 	fvgeometry \
-	functions \
 	io \
 	material \
 	nonlinear \
