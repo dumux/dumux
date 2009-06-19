@@ -1,6 +1,6 @@
 // $Id: constrelwater.hh 2160 2009-06-18 17:06:44Z lauser $
 /*****************************************************************************
- *   Copyright (C) <YEARS> by <ADD_AUTHOR_HERE>                              *
+ *   Copyright (C) 2007-2009 by Jochen Fritz, Markus Wolff                   *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *

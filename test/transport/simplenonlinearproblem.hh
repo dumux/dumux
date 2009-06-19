@@ -1,6 +1,6 @@
 // $Id$
 /*****************************************************************************
- *   Copyright (C) <YEARS> by <ADD_AUTHOR_HERE>                              *
+ *   Copyright (C) 2008-2009 by Markus Wolff, Yufei Cao                      *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *

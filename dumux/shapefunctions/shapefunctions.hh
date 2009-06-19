@@ -1,9 +1,9 @@
-// $Id:$
+// $Id$
 /*****************************************************************************
- *   Copyright (C) <YEARS> by <ADD_AUTHOR_HERE>                              *
- *   Institute of Hydraulic Engineering                                      *
- *   University of Stuttgart, Germany                                        *
- *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
+ *   Copyright (C) 2007 by Peter Bastian                                     *
+ *   Interdisciplinary Center for Scientific Computing                       *
+ *   University of Heidelberg, Germany                                       *
+ *   email: <givenname>.<name>@iwr.uni-heidelberg.de                         *
  *                                                                           *
  *   This program is free software; you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *

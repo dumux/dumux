@@ -1,6 +1,6 @@
-// $Id:$
+// $Id$
 /*****************************************************************************
- *   Copyright (C) <YEARS> by <ADD_AUTHOR_HERE>                              *
+ *   Copyright (C) 2007-2009 by Bernd Flemisch, Jochen Fritz                 *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
@@ -462,20 +462,20 @@ template<class Grid>
 	 *  Otherwise, a traversal over the cells is done, and \a permFunc should return the
 	 *  permeability at the cell center.
 	 */
-        // create = 
-        //       true  --> a permeability field has to be generated 
+        // create =
+        //       true  --> a permeability field has to be generated
         //       false --> an already existing permeability field is used
-        // name = 
+        // name =
         //       is used either for an existing or as filename for a permeability field file to be generated
         // xFlag =
-        //       new flag, which tells if the random seed is picked manually (false) 
+        //       new flag, which tells if the random seed is picked manually (false)
         //       or automatically from a constant file
-        // seedId = 
+        // seedId =
         //       tells which random seed should be picked from file or by c++ random generator (zzType)
-        //       ID-Range:  1 <= seedId <= 1000 
+        //       ID-Range:  1 <= seedId <= 1000
 
-	MonCarRandomPermeability(const Grid& g, int runId, const char* name = "permeab.dat", 
-                                  const bool create = true, const bool zzAuto = true) 
+	MonCarRandomPermeability(const Grid& g, int runId, const char* name = "permeab.dat",
+                                  const bool create = true, const bool zzAuto = true)
 	: grid(g), perm(g), permloc(0), createNew(create),
 	  fileName(name), elementmapper(g, g.leafIndexSet()), xFlag(zzAuto), seedId(runId)
 	{
@@ -496,7 +496,7 @@ template<class Grid>
             std::cout << "Flag: Kf_store =  " << foldFlag << "   Program accesses KFIELD-Folder" << std::endl;
             std::cout << std::endl;
 
-     // *** search for simset location independent if existing or creating K-file 
+     // *** search for simset location independent if existing or creating K-file
 	    char* pwd(getenv("PWD"));
 	    char startCommand[220];
 	    strcpy(startCommand, "find ");
@@ -521,13 +521,13 @@ template<class Grid>
 	      simsetloc.close();
 	      strcat(startCommand, "../");
 	    }
-                    
+
      // *** First FLAG "createNew" - choose if SIMSET should be started
          // if it is true, the coordinates are taken from the current DuMuX-run
          // If it is .no. - then it takes the existing coordinates in SIMKOR
 	    if (createNew) // by  constructor
 	    {  // *** a new random permeability field is generated!
-	         // SIMSET creates random permeabilities for given coordinates, 
+	         // SIMSET creates random permeabilities for given coordinates,
                  // so the coordinates of the center of gravity of each element
 		 // are written to a file 'SIMKOR'
 		 // open output stream for simset output file name
@@ -536,7 +536,7 @@ template<class Grid>
 		 strcat(namefileName, "/SIMNAM");
 		 std::ofstream namefile(namefileName); //opens SIMNAM-File
 		 // Choose simset output filename
-		 namefile << fileName << std::endl; //writes the fileName (=permeab.dat) 
+		 namefile << fileName << std::endl; //writes the fileName (=permeab.dat)
                                                     // to the File: namefile(=SIMNAM)
 		 namefile.close();
 		 // open output stream for simset input file
@@ -546,13 +546,13 @@ template<class Grid>
 		 std::ofstream outfile(outfileName); //opens the file SIMKOR
           // *** Input of grid-pts from the Dune-Code
 		 for (Iterator it = gridview.template begin<0>(); it != eendit; ++it)
-		 { //*** writes the coordinates to SIMKOR-File 
+		 { //*** writes the coordinates to SIMKOR-File
                      Dune::GeometryType gt = it->geometry().type();
 		     const Dune::FieldVector<Scalar,n>&
 		     local = Dune::ReferenceElements<Scalar,n>::general(gt).position(0,0);
 		     // get global coordinate of cell center
 		     Dune::FieldVector<Scalar,n> global = it->geometry().global(local);
-                  // outfile = SIMKOR, the coordinates are getting written in the file 
+                  // outfile = SIMKOR, the coordinates are getting written in the file
                   // from the Dune code
 		     outfile << global[0] << "\t" << global[1] << std::endl;
 		 }
@@ -562,7 +562,7 @@ template<class Grid>
 
          // *** 2nd FLAG "xFlag" - how to run simset - automatically or manually?
          // ******** GENERATE PERMEABILITY FIELD: A) automatically OR B) manually
-                 if (xFlag) 
+                 if (xFlag)
                  { //**** the Random Seed is picked automatically depending on seedId
                      std::cout << "*** Random seed is picked automatically ***" << std::endl;
                   // weise systemCommand die flag zu
@@ -585,9 +585,9 @@ template<class Grid>
                         std::ifstream fin(strZZ);
                         char line[221];
                         int i=1;
-                        if (fin.good()) 
+                        if (fin.good())
                         { // *** if file exists, go to first line and read numbers
-                             fin.seekg(0L, std::ios::beg); // Jump to the beginning of the file 
+                             fin.seekg(0L, std::ios::beg); // Jump to the beginning of the file
                              while (! fin.eof())
                              { // *** reads the numbers and stores the specific number, if SeedId = line
                                   fin.getline(line, 220);
@@ -615,7 +615,7 @@ template<class Grid>
                         int range = max - min + 1;
                         srand(seed);
                         xFloat=double((rand()/100%range + min))/100; //creates nachkommastellen
-                        argum = (rand()/100%rangeI + min) + xFloat;  // creates random number 
+                        argum = (rand()/100%rangeI + min) + xFloat;  // creates random number
                      // within rangeI -- Typecasting to double
                         std::cout << "-> Time seed = " << seed << std::endl << "-> Random number => Seed f. Simset " << argum << std::endl;
                      } //end zzType false
@@ -634,7 +634,7 @@ template<class Grid>
                  }// end zzAuto - xFlag
           // ***************************************************************
           // *** simset is started as usually and random seed is set manually
-                 else 
+                 else
                  { // **** the Random Seed is picked manually
 		      std::cout << "*** Simset is started manually ***" << std::endl;
                       strcat(systemCommand, "; ./simset; cd $OLDPWD");
@@ -696,7 +696,7 @@ template<class Grid>
                       strcat(strSysCom, kfDirectory);
                       strcat(strSysCom, str3);
                       system(strSysCom);
-                            
+
                  }// end foldFlag
             } //end of createNew
 
@@ -736,7 +736,7 @@ template<class Grid>
                     (*perm)[indexi] = pow(10.0, permi); //permi wird delogharithmiert & übergeben
                 }
                 infile.close();
-            } // end - to do later Monte Carlo Runs 
+            } // end - to do later Monte Carlo Runs
             else
             { // *** reads the K-values directly from permeab.dat
                 std::cout << "*** Permeability is read directly from filename ***" << std::endl;
