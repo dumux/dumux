@@ -22,7 +22,7 @@ public:
     typedef typename Matrix2p<Grid, Scalar>::modelFlag ModelFlag;
     typedef FieldVector<Scalar, dimWorld> GlobalPosition;
     typedef FieldVector<Scalar, dim> LocalPosition;
-    typedef FieldMatrix<Scalar,dim,dim> FieldMatrix;
+    typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
     virtual const FieldMatrix &K (const GlobalPosition& globalPos, const Element& element, const LocalPosition& localPos) const
     {
@@ -89,7 +89,7 @@ protected:
     typedef typename GridView::Traits::template Codim<0>::Entity Element;
     typedef FieldVector<Scalar,dim> LocalPosition;
     typedef FieldVector<Scalar,dimWorld> GlobalPosition;
-    typedef FieldMatrix<Scalar,dim,dim> FieldMatrix;
+    typedef Dune::FieldMatrix<Scalar,dim,dim> FieldMatrix;
 
 public:
     FVariableClassA5Test5Problem(VariableClass& variables, Matrix2p<Grid, Scalar>& soil, const double delta)
