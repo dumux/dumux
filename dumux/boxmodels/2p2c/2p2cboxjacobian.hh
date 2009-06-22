@@ -27,10 +27,11 @@
 namespace Dune
 {
 /*!
+ * \ingroup TwoPTwoCBoxModel
  * \brief 2P-2C specific details needed to approximately calculate
  *        the local jacobian in the BOX scheme.
  *
- * This class is used to fill the gaps in BoxJacobian for the 2P-2C twophase flow.
+ * This class is used to fill the gaps in BoxJacobian for the 2P-2C flow.
  */
 template<class TypeTag, class Implementation>
 class TwoPTwoCBoxJacobianBase : public BoxJacobian<TypeTag, Implementation>
@@ -89,7 +90,7 @@ protected:
     typedef typename GridView::IntersectionIterator             IntersectionIterator;
     typedef typename GridView::template Codim<dim>::Entity      Vertex;
     typedef typename GridView::template Codim<dim>::Iterator    VertexIterator;
-    
+
     typedef typename GridView::CollectiveCommunication          CollectiveCommunication;
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexData))   VertexData;
@@ -112,7 +113,7 @@ protected:
     struct StaticVertexData {
         int  phaseState;
         bool wasSwitched;
-        
+
         int oldPhaseState;
     };
 
@@ -176,7 +177,7 @@ public:
      * \brief Evaluates the advective mass flux of all components over
      *        a face of a subcontrol volume.
      */
-    void computeAdvectiveFlux(PrimaryVarVector &flux, 
+    void computeAdvectiveFlux(PrimaryVarVector &flux,
                               const FluxData &vars) const
     {
         ////////
@@ -194,15 +195,15 @@ public:
                 if (mobilityUpwindAlpha > 0.0)
                     // upstream vertex
                     flux[Indices::comp2Mass(compIdx)] +=
-                        vars.vDarcyNormal[phaseIdx] * 
-                        mobilityUpwindAlpha* 
+                        vars.vDarcyNormal[phaseIdx] *
+                        mobilityUpwindAlpha*
                         (  up.density[phaseIdx] *
                            up.mobility[phaseIdx] *
                            up.massfrac[compIdx][phaseIdx]);
                 if (mobilityUpwindAlpha < 1.0)
                     // downstream vertex
                     flux[Indices::comp2Mass(compIdx)] +=
-                        vars.vDarcyNormal[phaseIdx] * 
+                        vars.vDarcyNormal[phaseIdx] *
                         (1 - mobilityUpwindAlpha)*
                         (  dn.density[phaseIdx] *
                            dn.mobility[phaseIdx] *
@@ -677,7 +678,7 @@ protected:
             Scalar xAWmax = this->problem_.multicomp().xAW(vertexData.pressure[wPhase], temperature);
             if (vertexData.massfrac[nComp][wPhase] > xAWmax)
                 wouldSwitch = true;
-            if (staticVertexDat_[globalIdx].wasSwitched) 
+            if (staticVertexDat_[globalIdx].wasSwitched)
                 xAWmax *= (1.0 + 1e-2);
 
             if (vertexData.massfrac[nComp][wPhase] > xAWmax)
@@ -701,7 +702,7 @@ protected:
                 wouldSwitch = true;
                 // non-wetting phase disappears
                 std::cout << "Non-wetting phase disappears at vertex " << globalIdx
-                          << ", coordinates: " << globalPos 
+                          << ", coordinates: " << globalPos
                           << ", Sn: " << vertexData.saturation[nPhase]
                           << std::endl;
                 newPhaseState = wPhaseOnly;
@@ -723,7 +724,7 @@ protected:
 
         staticVertexDat_[globalIdx].phaseState = newPhaseState;
         staticVertexDat_[globalIdx].wasSwitched = wouldSwitch;
-        
+
         return phaseState != newPhaseState;
     }
 

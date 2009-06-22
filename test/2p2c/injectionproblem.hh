@@ -2,6 +2,7 @@
 /*****************************************************************************
  *   Copyright (C) 2008-2009 by Klaus Mosthaf                                *
  *   Copyright (C) 2008-2009 by Andreas Lauser                               *
+ *   Copyright (C) 2008-2009 by Bernd Flemisch                               *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
@@ -16,8 +17,9 @@
  *****************************************************************************/
 /**
  * @file
+ * \ingroup TwoPTwoCBoxProblems
  * @brief  Definition of a problem, where air is injected under a low permeable layer
- * @author Bernd Flemisch, Klaus Mosthaf
+ * @author Klaus Mosthaf, Andreas Lauser, Bernd Flemisch
  */
 #ifndef DUNE_INJECTIONPROBLEM_HH
 #define DUNE_INJECTIONPROBLEM_HH
@@ -77,7 +79,7 @@ SET_PROP(InjectionProblem, Soil)
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-    
+
 public:
     typedef Dune::InjectionSoil<Grid, Scalar> type;
 };
@@ -87,11 +89,18 @@ SET_BOOL_PROP(InjectionProblem, EnableGravity, true);
 }
 
 
-/*! 
- * \brief Problem where air is injected under a low permeable layer.
+/*!
+ * \ingroup TwoPBoxProblems
+ * \brief Problem where air is injected under a low permeable layer in a depth of 800m.
  *
- * Air enters the domain at the right boundary and migrates upwards.
- * Problem was set up using the rect2d.dgf grid.
+ * The domain is sized 60m times 40m and consists of two layers, a moderately
+ * permeable soil (\f$ K=10e-12\f$) for \f$ y>22m\f$ and one with a lower permeablility (\f$ K=10e-13\f$)
+ * in the rest of the domain.
+ *
+ * Air enters a water-filled aquifer, which is situated 800m below sea level, at the right boundary
+ * (\f$ 5m<y<15m\f$) and migrates upwards due to buoyancy. It accumulates and
+ * partially enters the lower permeable aquitard.
+ * This problem uses the \ref TwoPTwoCBoxModel.
  */
 template <class TypeTag = TTAG(InjectionProblem) >
 class InjectionProblem : public TwoPTwoCBoxProblem<TypeTag, InjectionProblem<TypeTag> >
@@ -117,7 +126,7 @@ class InjectionProblem : public TwoPTwoCBoxProblem<TypeTag, InjectionProblem<Typ
     typedef typename GridView::template Codim<0>::Entity        Element;
     typedef typename GridView::template Codim<dim>::Entity      Vertex;
     typedef typename GridView::IntersectionIterator             IntersectionIterator;
-  
+
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
 
     typedef Dune::FieldVector<Scalar, dim>       LocalPosition;
@@ -151,7 +160,7 @@ public:
     {
         return 283.15; // -> 10°C
     };
-    
+
     // \}
 
     /*!
@@ -159,7 +168,7 @@ public:
      */
     // \{
 
-    /*! 
+    /*!
      * \brief Specifies which kind of boundary condition should be
      *        used for which equation on a given boundary segment.
      */
@@ -178,7 +187,7 @@ public:
             values = BoundaryConditions::neumann;
     }
 
-    /*! 
+    /*!
      * \brief Evaluate the boundary conditions for a dirichlet
      *        boundary segment.
      *
@@ -196,7 +205,7 @@ public:
         initial_(values, globalPos);
     }
 
-    /*! 
+    /*!
      * \brief Evaluate the boundary conditions for a neumann
      *        boundary segment.
      *
@@ -226,7 +235,7 @@ public:
      */
     // \{
 
-    /*! 
+    /*!
      * \brief Evaluate the source term for all phases within a given
      *        sub-control-volume.
      *
@@ -243,7 +252,7 @@ public:
         values = Scalar(0.0);
     }
 
-    /*! 
+    /*!
      * \brief Evaluate the initial value for a control volume.
      *
      * For this method, the \a values parameter stores primary
@@ -259,7 +268,7 @@ public:
         initial_(values, globalPos);
     }
 
-    /*! 
+    /*!
      * \brief Return the initial phase state inside a control volume.
      */
     int initialPhaseState(const Vertex       &vert,

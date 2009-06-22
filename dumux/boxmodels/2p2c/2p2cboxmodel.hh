@@ -36,7 +36,7 @@ namespace Dune
  * \brief Adaption of the BOX scheme to the two-phase two-component flow model.
  *
  * This model implements two-phase two-component flow of two compressible and
- * completely immiscible fluids \f$\alpha \in \{ w, n \}\f$ composed of the two components
+ * partially miscible fluids \f$\alpha \in \{ w, n \}\f$ composed of the two components
  * \f$\kappa \in \{ w, a \}\f$. The standard multiphase Darcy
  * approach is used as the equation for the conservation of momentum:
  * \f[
@@ -69,17 +69,19 @@ namespace Dune
  * The used primary variables are, like in the two-phase model, either \f$p_w\f$ and \f$S_n\f$
  * or \f$p_n\f$ and \f$S_w\f$. The formulation which ought to be used can be
  * specified by setting the <tt>Formulation</tt> property to either
- * either <tt>TwoPTwoIndices::pWsN</tt> or <tt>TwoPTwoCIndices::pNsW</tt>. By
+ * TwoPTwoCIndices::pWsN or TwoPTwoCIndices::pNsW. By
  * default, the model uses \f$p_w\f$ and \f$S_n\f$.
  * Moreover, the second primary variable depends on the phase state, since a
  * primary variable switch is included. The phase state is stored for all nodes
  * of the system. Following cases can be distinguished:
  * <ul>
- *  <li> both phases are present: The saturation is used (either\f$S_n\f$ or \f$S_w\f$, dependent on the chosen formulation)</li>
- *  <li> only wetting phase is present: The mass fraction of air in the wetting phase \f$X^a_w\f$ is used</li>
- *  <li> only non-wetting phase is present: The mass fraction of water in the non-wetting phase, \f$X^w_n\f$, is used</li>
+ *  <li> Both phases are present: The saturation is used (either \f$S_n\f$ or \f$S_w\f$, dependent on the chosen <tt>Formulation</tt>),
+ *  	as long as \f$ 0 < S_\alpha < 1\f$</li>.
+ *  <li> Only wetting phase is present: The mass fraction of, e.g., air in the wetting phase \f$X^a_w\f$ is used,
+ *  	as long as the maximum mass fraction is not exceeded (\f$X^a_w<X^a_{w,max}\f$)</li>
+ *  <li> Only non-wetting phase is present: The mass fraction of, e.g., water in the non-wetting phase, \f$X^w_n\f$, is used,
+ *  	as long as the maximum mass fraction is not exceeded (\f$X^w_n<X^w_{n,max}\f$)</li>
  * </ul>
- *  The following table summarizes the choice of the second primary variable and the respective switch criteria:
  */
 
 template<class TypeTag, class Implementation >
@@ -136,8 +138,9 @@ public:
     }
 
     /*!
-     * \brief Add the mass fraction of air in water to VTK output of
-     *        the current timestep.
+     * \brief Append all quantities of interest which can be derived
+     *        from the solution of the current time step to the VTK
+     *        writer.
      */
     template <class MultiWriter>
     void addVtkFields(MultiWriter &writer)

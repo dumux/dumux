@@ -90,13 +90,13 @@ public:
     const GlobalPosition &gravity() const
     { return gravity_; }
 
-    /*! 
+    /*!
      * \brief Fluid properties of the wetting phase.
      */
     const WettingPhase &wettingPhase() const
     { return wPhase_; }
 
-    /*! 
+    /*!
      * \brief Fluid properties of the non-wetting phase.
      */
     const NonwettingPhase &nonwettingPhase() const
@@ -105,41 +105,41 @@ public:
     /*!
      * \brief Returns the multi-component relations object.
      *
-     * This specfies how a mixture of multiple components behaves
+     * This specifies how a mixture of multiple components behaves
      * locally.
      */
     const MultiComp &multicomp() const
     { return multiComp_; }
 
-    /*! 
+    /*!
      * \brief Returns the soil properties object.
      */
     Soil &soil()
     { return soil_; }
 
-    /*! 
+    /*!
      * \copydoc soil()
      */
     const Soil &soil() const
     { return soil_; }
 
-    /*! 
+    /*!
      * \brief Returns the material laws, i.e. capillary pressure -
      *        saturation and relative permeability-saturation
      *        relations.
      */
     MaterialLaw &materialLaw ()
     { return materialLaw_; }
-    
+
     // \}
 
 private:
     //! Returns the implementation of the problem (i.e. static polymorphism)
     Implementation *asImp_()
     { return static_cast<Implementation *>(this); }
-    
+
     //! \copydoc asImp_()
-    const Implementation *asImp_() const 
+    const Implementation *asImp_() const
     { return static_cast<const Implementation *>(this); }
 
     GlobalPosition  gravity_;

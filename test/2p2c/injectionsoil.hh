@@ -23,8 +23,10 @@
 namespace Dune
 {
 
-/** \todo Please doc me! */
-
+/**
+ * \brief Definition of the soil properties for the injection problem
+ *
+ */
 template<class Grid, class ScalarT>
 class InjectionSoil: public Matrix2p<Grid,ScalarT>
 {
@@ -50,6 +52,9 @@ public:
     ~InjectionSoil()
     {}
 
+    /*!
+     * \brief Define the intrinsic permeability \f$[m^2]\f$ of the soil
+     */
     const FieldMatrix<CoordScalar,dim,dim> &K (const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
     {
         if (x[1] < layerBottom_)
@@ -58,30 +63,39 @@ public:
             return lowK_;
     }
 
+    /*!
+     * \brief Define the porosity \f$[-]\f$ of the soil
+     */
     double porosity(const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
     {
         return 0.3;
     }
 
+    /*!
+     * \brief Define the residual saturation of the wetting phase
+     */
     double Sr_w(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double T) const
     {
         return 0.2;
     }
 
+    /*!
+     * \brief Define the residual saturation of the non-wetting phase
+     */
     double Sr_n(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double T) const
     {
         return 0.0;
     }
 
-    /* ATTENTION: define heat capacity per cubic meter! Be sure, that it corresponds to porosity!
-     * Best thing will be to define heatCap = (specific heatCapacity of material) * density * porosity*/
+    // not used in 2p2c model
     double heatCap(const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
     {
         return     790 /* spec. heat cap. of granite */
             * 2700 /* density of granite */
-            * porosity(x, e, xi);
+            * (1 - porosity(x, e, xi));
     }
 
+    // not used in 2p2c model
     double heatCond(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double sat) const
     {
         static const double lWater = 0.6;
@@ -92,6 +106,9 @@ public:
         return ldry + sqrt(sat) * (ldry - lsat);
     }
 
+    /*!
+     * \brief Define the parameters for kr-S and Pc-S relations
+     */
     std::vector<double> paramRelPerm(const GlobalPosition &x, const Element& e, const LocalPosition &xi, const double T) const
     {
         // example for Brooks-Corey parameters
@@ -102,6 +119,9 @@ public:
         return param;
     }
 
+    /*!
+     * \brief Choose the kr-S and Pc-S relations
+     */
     typename Matrix2p<Grid,Scalar>::modelFlag relPermFlag(const GlobalPosition &x, const Element& e, const LocalPosition &xi) const
     {
         return Matrix2p<Grid,Scalar>::brooks_corey;

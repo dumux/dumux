@@ -1,4 +1,4 @@
-// $Id:$
+// $Id$
 /*****************************************************************************
  *   Copyright (C) 2008-2009 by Markus Wolff                                 *
  *   Institute of Hydraulic Engineering                                      *
@@ -81,6 +81,8 @@ public:
 
     void solve()
     {
+        //printmatrix(std::cout, *A, "global stiffness matrix", "row", 11, 4);
+
     	std::cout << "FEPressure2P: solve for pressure" << std::endl;
 
         typedef typename PressP1Type::RepresentationType Vector;

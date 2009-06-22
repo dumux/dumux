@@ -18,11 +18,12 @@
 /*!
  * \file
  *
+ * \ingroup TwoPTwoCBoxModel
  * \brief This file contains the data which is required to calculate
  *        all fluxes of components over a face of a finite volume.
  *
  * This means pressure, concentration and temperature gradients, phase
- * densities at the intergration point, etc.
+ * densities, etc. at the integration points of the control volume
  */
 #ifndef DUMUX_2P2C_FLUX_DATA_HH
 #define DUMUX_2P2C_FLUX_DATA_HH
@@ -45,7 +46,7 @@ class TwoPTwoCFluxData
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))   Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
-    
+
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem))    Problem;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(VertexData)) VertexData;
 

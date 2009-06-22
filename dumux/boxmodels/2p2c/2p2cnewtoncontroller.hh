@@ -28,6 +28,7 @@
 
 namespace Dune {
 /*!
+ * \ingroup TwoPTwoCBoxModel
  * \brief A 2p2c specific controller for the newton solver.
  *
  * This controller 'knows' what a 'physically meaningful' solution is
