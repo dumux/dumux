@@ -82,21 +82,20 @@ namespace Dune {
  * If both phases are present the primary variables are, like in the nonisothermal two-phase model, either \f$p_w\f$, \f$S_n\f$ and
  * temperature or \f$p_n\f$, \f$S_w\f$ and temperature. The formulation which ought to be used can be
  * specified by setting the <tt>Formulation</tt> property to either
- * either <tt>TwoPTwoIndices::pWsN</tt> or <tt>TwoPTwoCIndices::pNsW</tt>. By
+ * <tt>TwoPTwoIndices::pWsN</tt> or <tt>TwoPTwoCIndices::pNsW</tt>. By
  * default, the model uses \f$p_w\f$ and \f$S_n\f$.
  * In case that only one phase (nonwetting or wetting phase) is present the second primary
  * variable represents a mass fraction. The correct assignment of the second
- * primary variable is performed by a phase state dependent primary variable switch. The
- * The phase state is stored for all nodes of the system. Following cases can be distinguished:
+ * primary variable is performed by a phase state dependent primary variable switch. The phase state is stored for all nodes of the system. The following cases can be distinguished:
  * <ul>
  *  <li>
- *    both phases are present: The saturation is used (either\f$S_n\f$ or \f$S_w\f$, dependent on the chosen formulation)
+ *    Both phases are present: The saturation is used (either\f$S_n\f$ or \f$S_w\f$, dependent on the chosen formulation).
  *  </li>
  *  <li>
- *    only wetting phase is present: The mass fraction of air in the wetting phase \f$X^a_w\f$ is used
+ *    Only wetting phase is present: The mass fraction of air in the wetting phase \f$X^a_w\f$ is used.
  *  </li>
  *  <li>
- *    only non-wetting phase is present: The mass fraction of water in the non-wetting phase, \f$X^w_n\f$, is used
+ *    Only non-wetting phase is present: The mass fraction of water in the non-wetting phase, \f$X^w_n\f$, is used.
  *  </li>
  * </ul>
  */

@@ -91,7 +91,7 @@ SET_BOOL_PROP(WaterAirProblem, EnableGravity, true);
 
 /*!
  * \ingroup TwoPTwoCNIBoxProblems
- * \brief Nonisothermal gas injection problem where a gas (e.g. \f$ air \f$) is injected into a fully
+ * \brief Nonisothermal gas injection problem where a gas (e.g. air) is injected into a fully
  *        water saturated medium. During buoyancy driven upward migration the gas
  *        passes a high temperature area produced by a heat source.
  *
@@ -113,10 +113,9 @@ SET_BOOL_PROP(WaterAirProblem, EnableGravity, true);
  *
  * This problem uses the \ref TwoPTwoCNIBoxModel.
  *
- * This problem should typically simulated until \f$t_{\text{end}} =
- * 300\,000\;s\f$ is reached. A good choice for the initial time step size
- * is \f$t_{\text{inital}} = 1\,000\;s\f$
- */
+ * This problem should typically be simulated for 300000 s.
+ * A good choice for the initial time step size is 1000 s.
+ *  */
 template <class TypeTag = TTAG(WaterAirProblem) >
 class WaterAirProblem : public TwoPTwoCNIBoxProblem<TypeTag, WaterAirProblem<TypeTag> >
 {

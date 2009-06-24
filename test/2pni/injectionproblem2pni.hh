@@ -97,13 +97,12 @@ SET_BOOL_PROP(InjectionProblem2PNI, EnableGravity, true);
  *
  * This problem uses the \ref TwoPNIBoxModel.
  *
- * This problem should typically simulated until \f$t_{\text{end}} =
- * 300\,000\;s\f$ is reached. A good choice for the initial time step size
- * is \f$t_{\text{inital}} = 1\,000\;s\f$
+ * This problem should typically be simulated for 300000 s is reached.
+ * A good choice for the initial time step size is 1000 s.
  */
 template<class TypeTag = TTAG( InjectionProblem2PNI)>
 class InjectionProblem2PNI
-  : public TwoPNIBoxProblem<TypeTag, 
+  : public TwoPNIBoxProblem<TypeTag,
                             InjectionProblem2PNI<TypeTag> >
 {
     typedef InjectionProblem2PNI<TypeTag>                     ThisType;
@@ -153,7 +152,7 @@ public:
      */
     const char *name() const
     { return "injection2pni"; }
-    
+
     // \}
 
 	/*!
@@ -222,7 +221,7 @@ public:
                  int boundaryFaceIdx) const
 	{
         const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
-        
+
         values = 0;
         // negative values for injection
         if (globalPos[0] > 15 && globalPos[0] < 25 &&

@@ -1,4 +1,4 @@
-// $Id:$
+// $Id$
 /*****************************************************************************
  *   Copyright (C) 2009 by Karin Erbertseder                                 *
  *   Copyright (C) 2009 by Andreas Lauser                                    *
@@ -141,7 +141,7 @@ public:
 
         // diffusive flux
         flux[transport] +=
-            vars.diffCoeffPM*
+            vars.densityAtIP * vars.diffCoeffPM *
             (vars.concentrationGrad*vars.face->normal);
     }
 
