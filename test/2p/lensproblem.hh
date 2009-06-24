@@ -18,7 +18,7 @@
 #ifndef DUNE_LENSPROBLEM_HH
 #define DUNE_LENSPROBLEM_HH
 
-#if ENABLE_UG
+#if HAVE_UG
 #include <dune/grid/uggrid.hh>
 #endif
 
@@ -48,7 +48,7 @@ NEW_TYPE_TAG(LensProblem, INHERITS_FROM(BoxTwoP));
 // Set the grid type
 SET_PROP(LensProblem, Grid)
 {
-#if ENABLE_UG
+#if HAVE_UG
     typedef Dune::UGGrid<2> type;
 #else
     //typedef Dune::YaspGrid<2> type;

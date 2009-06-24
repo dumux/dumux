@@ -50,7 +50,7 @@ NEW_TYPE_TAG(InjectionProblem, INHERITS_FROM(BoxTwoPTwoC));
 // Set the grid type
 SET_PROP(InjectionProblem, Grid)
 {
-#if ENABLE_UG
+#if HAVE_UG
     typedef Dune::UGGrid<2> type;
 #else
     typedef Dune::SGrid<2, 2> type;

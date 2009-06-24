@@ -1,7 +1,9 @@
 // $Id:$
 /*****************************************************************************
- *   Copyright (C) <YEARS> by <ADD_AUTHOR_HERE>                              *
- *   Institute of Hydraulic Engineering                                      *
+ *   Copyright (C) 2009 by Annika Fuchs                                      *
+ *                                                                           *
+ *   Copyright (C) 2009 by Yufei Cao                                         *
+ *   Institute of Applied Analysis and Numerical Simulation                  *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
@@ -13,7 +15,6 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
-
 #ifndef DUNE_CHTRANSPORT_HH
 #define DUNE_CHTRANSPORT_HH
 

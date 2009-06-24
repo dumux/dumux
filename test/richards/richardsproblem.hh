@@ -43,7 +43,7 @@ NEW_TYPE_TAG(RichardsTestProblem, INHERITS_FROM(BoxRichards));
 
 // Set the grid type
 // Set the grid type
-#if ENABLE_UG
+#if HAVE_UG
 SET_TYPE_PROP(RichardsTestProblem, Grid, Dune::UGGrid<2>);
 #else
 SET_PROP(RichardsTestProblem, Grid) { typedef Dune::SGrid<2, 2> type; };

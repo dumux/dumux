@@ -35,7 +35,7 @@ class CreateGrid
 {
 };
 
-#if ENABLE_UG
+#if HAVE_UG
 template <class Scalar>
 class CreateGrid<Dune::UGGrid<2>, Scalar>
 {

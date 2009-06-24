@@ -13,7 +13,6 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
-
 #ifndef DUNE_SHAPEFUNCTIONS_HH
 #define DUNE_SHAPEFUNCTIONS_HH
 

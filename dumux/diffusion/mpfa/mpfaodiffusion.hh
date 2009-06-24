@@ -1,7 +1,7 @@
 // $Id$
 /*****************************************************************************
  *   Copyright (C) 2007-2009 by Yufei Cao                                    *
- *   Institute of Hydraulic Engineering                                      *
+ *   Institute of Applied Analysis and Numerical Simulation                  *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
@@ -13,7 +13,6 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
-
 #ifndef DUNE_MPFAODIFFUSION_HH
 #define DUNE_MPFAODIFFUSION_HH
 

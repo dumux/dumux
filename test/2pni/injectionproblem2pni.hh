@@ -38,7 +38,7 @@ NEW_TYPE_TAG(InjectionProblem2PNI, INHERITS_FROM(BoxTwoPNI));
 // Set the grid type
 SET_PROP(InjectionProblem2PNI, Grid)
 {
-#if ENABLE_UG
+#if HAVE_UG
     typedef Dune::UGGrid<2> type;
 #else
     typedef Dune::SGrid<2, 2> type;
@@ -97,8 +97,8 @@ SET_BOOL_PROP(InjectionProblem2PNI, EnableGravity, true);
  *
  * This problem uses the \ref TwoPNIBoxModel.
  *
- * This problem should typically be simulated for 300000 s is reached.
- * A good choice for the initial time step size is 1000 s.
+ * This problem should typically be simulated for 300000 seconds.
+ * A good choice for the initial time step size is 1000 seconds.
  */
 template<class TypeTag = TTAG( InjectionProblem2PNI)>
 class InjectionProblem2PNI

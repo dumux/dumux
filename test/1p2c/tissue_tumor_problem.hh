@@ -46,7 +46,7 @@ NEW_TYPE_TAG(TissueTumorProblem, INHERITS_FROM(BoxOnePTwoC));
 // Set the grid type
 SET_PROP(TissueTumorProblem, Grid)
 {
-#if ENABLE_UG
+#if HAVE_UG
     typedef Dune::UGGrid<2> type;
 #else
     typedef Dune::SGrid<2, 2> type;

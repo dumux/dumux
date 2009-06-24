@@ -50,7 +50,7 @@ NEW_TYPE_TAG(WaterAirProblem, INHERITS_FROM(BoxTwoPTwoCNI));
 // Set the grid type
 SET_PROP(WaterAirProblem, Grid)
 {
-#if ENABLE_UG
+#if HAVE_UG
     typedef Dune::UGGrid<2> type;
 #else
     typedef Dune::SGrid<2, 2> type;

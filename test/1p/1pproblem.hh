@@ -40,7 +40,7 @@ namespace Properties
 NEW_TYPE_TAG(OnePTestProblem, INHERITS_FROM(BoxOneP));
 
 // Set the grid type
-#if ENABLE_UG
+#if HAVE_UG
 SET_TYPE_PROP(OnePTestProblem, Grid, Dune::UGGrid<2>);
 #else
 SET_PROP(OnePTestProblem, Grid) { typedef Dune::SGrid<2, 2> type; };

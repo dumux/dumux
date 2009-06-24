@@ -1,7 +1,9 @@
 // $Id$
 /*****************************************************************************
- *   Copyright (C) 2008-2009 by Annika Fuchs, Yufei Cao                      *
- *   Institute of Hydraulic Engineering                                      *
+ *   Copyright (C) 2009 by Annika Fuchs                                      *
+ *                                                                           *
+ *   Copyright (C) 2009 by Yufei Cao                                         *
+ *   Institute of Applied Analysis and Numerical Simulation                  *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *

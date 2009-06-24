@@ -1,7 +1,12 @@
 // $Id$
 /*****************************************************************************
- *   Copyright (C) 2008-2009 by Markus Wolff, Yufei Cao                      *
+ *   Copyright (C) 2008-2009 by Markus Wolff                                 *
  *   Institute of Hydraulic Engineering                                      *
+ *   University of Stuttgart, Germany                                        *
+ *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
+ *                                                                           *
+ *   Copyright (C) 2009 by Yufei Cao                                         *
+ *   Institute of Applied Analysis and Numerical Simulation                  *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
  *                                                                           *
@@ -13,12 +18,12 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
-
 #ifndef DUNE_SIMPLENONLINEARPROBLEM_HH
 #define DUNE_SIMPLENONLINEARPROBLEM_HH
 
+#include <dumux/transport/transportproblem.hh>
+
 #include <dumux/material/matrixproperties.hh>
-#include "dumux/transport/transportproblem.hh"
 #include <dumux/material/property_baseclasses.hh>
 
 namespace Dune
