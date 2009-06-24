@@ -1,6 +1,6 @@
 SUBDIRS = doxygen handbook
 
-EXTRA_DIST=logo/dumux_logo.eps logo/dumux_logo*.png logo/dumux_logo.svg
+EXTRA_DIST=logo/dumux_logo*.eps logo/dumux_logo*.png logo/dumux_logo.svg
 
 # setting like in dune-web
 BASEDIR=..
