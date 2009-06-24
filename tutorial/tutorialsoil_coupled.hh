@@ -21,27 +21,26 @@
 namespace Dune
 {
 
-template<class G, class RT>
-class TutorialSoil: public HomogeneousSoil<G, RT> /*@\label{tutorial-coupled:tutorialsoil}@*/
+template<class Grid, class Scalar>
+class TutorialSoil: public HomogeneousSoil<Grid, Scalar> /*@\label{tutorial-coupled:tutorialsoil}@*/
 {
 public:
-    typedef    typename G::Traits::template Codim<0>::Entity Entity;
-    typedef typename G::ctype DT;
+    typedef    typename Grid::Traits::template Codim<0>::Entity Element;
 
-    enum{n=G::dimension};
+    enum{dim=Grid::dimension};
 
     // method returning the intrinsic permeability tensor K depending
     // on the position within the domain
-    const FieldMatrix<DT,n,n> &K (const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-coupled:permeability}@*/
-                                  const FieldVector<DT,n>& xi) const
+    const FieldMatrix<Scalar,dim,dim> &K (const FieldVector<Scalar,dim>& globalPos, const Element& element, /*@\label{tutorial-coupled:permeability}@*/
+                                  const FieldVector<Scalar,dim>& localPos) const
     {
         return K_;
     }
 
     // method returning the porosity of the porous matrix depending on
     // the position within the domain
-    double porosity(const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-coupled:porosity}@*/
-                    const FieldVector<DT,n>& xi) const
+    double porosity(const FieldVector<Scalar,dim>& globalPos, const Element& element, /*@\label{tutorial-coupled:porosity}@*/
+                    const FieldVector<Scalar,dim>& localPos) const
     {
         return 0.2;
     }
@@ -49,8 +48,8 @@ public:
     // method returning the residual saturation of the wetting fluid
     // depending on the position within the domain and on the
     // temperature
-    double Sr_w(const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-coupled:srw}@*/
-                const FieldVector<DT,n>& xi, const double T = 283.15) const
+    double Sr_w(const FieldVector<Scalar,dim>& globalPos, const Element& element, /*@\label{tutorial-coupled:srw}@*/
+                const FieldVector<Scalar,dim>& localPos, const double T = 283.15) const
     {
         return 0;
     }
@@ -58,8 +57,8 @@ public:
     // method returning the residual saturation of the non-wetting
     // fluid depending on the position within the domain and on the
     // temperature
-    double Sr_n(const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-coupled:srn}@*/
-                const FieldVector<DT,n>& xi, const double T = 283.15) const
+    double Sr_n(const FieldVector<Scalar,dim>& globalPos, const Element& element, /*@\label{tutorial-coupled:srn}@*/
+                const FieldVector<Scalar,dim>& localPos, const double T = 283.15) const
     {
         return 0;
     }
@@ -67,8 +66,8 @@ public:
     // method returning the parameters of the capillary pressure and
     // the relative permeability functionms depending on the position
     // within the domain and on the temperature
-    std::vector<double> paramRelPerm(const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-coupled:parameters}@*/
-                                     const FieldVector<DT,n>& xi, const double T = 283.15) const
+    std::vector<double> paramRelPerm(const FieldVector<Scalar,dim>& globalPos, const Element& element, /*@\label{tutorial-coupled:parameters}@*/
+                                     const FieldVector<Scalar,dim>& localPos, const double T = 283.15) const
     {
         std::vector<double> param(2);
 
@@ -86,21 +85,21 @@ public:
     // method returning the kind of relation used for the calculation
     // of the capillary pressure and the relative permeabilities
     // depending on the position within the domain
-    typename Matrix2p<G,RT>::modelFlag relPermFlag(const FieldVector<DT,n>& x, const Entity& e, /*@\label{tutorial-coupled:flags}@*/
-                                                   const FieldVector<DT,n>& xi) const
+    typename Matrix2p<Grid,Scalar>::modelFlag relPermFlag(const FieldVector<Scalar,dim>& globalPos, const Element& element, /*@\label{tutorial-coupled:flags}@*/
+                                                   const FieldVector<Scalar,dim>& localPos) const
     {
-        return Matrix2p<G,RT>::linear; //flag types defined in
+        return Matrix2p<Grid,Scalar>::linear; //flag types defined in
     }                                   //dumux/material/property_baseclasses.hh
 
     TutorialSoil()
-        :HomogeneousSoil<G,RT>(), K_(0)
+        :HomogeneousSoil<Grid,Scalar>(), K_(0)
     {
-        for(int i = 0; i < n; i++)
+        for(int i = 0; i < dim; i++)
             K_[i][i] = 1e-7;
     }
 
 private:
-    FieldMatrix<DT,n,n> K_;
+    FieldMatrix<Scalar,dim,dim> K_;
 };
 } // end namespace
 #endif

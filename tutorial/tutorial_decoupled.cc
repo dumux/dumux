@@ -57,20 +57,20 @@ int main(int argc, char** argv)
         Dune::TwoPhaseRelations<Grid, Scalar> materialLaw(soil, wettingfluid, nonwettingfluid);/*@\label{tutorial-decoupled:twophaserelations}@*/
 
         // create object containing the variables
-        typedef Dune::VariableClass<GridView, Scalar> VariableType;
-        VariableType variables(gridView);
+        typedef Dune::VariableClass<GridView, Scalar> VariableClass;
+        VariableClass variables(gridView);
 
         // create object including the problem definition
-        typedef Dune::TutorialProblemDecoupled<GridView, Scalar, VariableType> Problem;
+        typedef Dune::TutorialProblemDecoupled<GridView, Scalar, VariableClass> Problem;
         Problem problem(variables, wettingfluid, nonwettingfluid, soil, materialLaw,L, H); /*@\label{tutorial-decoupled:problem}@*/
 
         // create object including the discretisation of the pressure equation
-        typedef Dune::FVTotalVelocity2P<GridView, Scalar, VariableType, Problem> DiffusionType;
-        DiffusionType diffusion(gridView, problem, "pw"); /*@\label{tutorial-decoupled:diffusion}@*/
+        typedef Dune::FVTotalVelocity2P<GridView, Scalar, VariableClass, Problem> Diffusion;
+        Diffusion diffusion(gridView, problem, "pw"); /*@\label{tutorial-decoupled:diffusion}@*/
 
         // create object including the space discretisation of the saturation equation
-        typedef Dune::FVSaturationWetting2P<GridView, Scalar, VariableType, Problem> TransportType;
-        TransportType transport(gridView, problem, "vt"); /*@\label{tutorial-decoupled:transport}@*/
+        typedef Dune::FVSaturationWetting2P<GridView, Scalar, VariableClass, Problem> Transport;
+        Transport transport(gridView, problem, "vt"); /*@\label{tutorial-decoupled:transport}@*/
 
         // some parameters used in the IMPES-object
         int iterFlag = 2;
@@ -78,18 +78,18 @@ int main(int argc, char** argv)
         double maxDefect = 1e-5;
 
         // create object including the IMPES (IMplicit Pressure Explicit Saturation) algorithm
-        typedef Dune::IMPES<GridView, DiffusionType, TransportType, VariableType> IMPESType;
-        IMPESType impes(diffusion, transport, iterFlag, nIter, maxDefect); /*@\label{tutorial-decoupled:impes}@*/
+        typedef Dune::IMPES<GridView, Diffusion, Transport, VariableClass> IMPES;
+        IMPES impes(diffusion, transport, iterFlag, nIter, maxDefect); /*@\label{tutorial-decoupled:impes}@*/
 
         // some parameters needed for the TimeLoop-object
         double tStart = 0; // start simulation at t = tStart
-        double tEnd = 7e5; // stop simulation at t = tEnd
+        double tEnd = 1e8; // stop simulation at t = tEnd
         const char* fileName = "tutorial_decoupled"; // name of the output files
-        int modulo = 25; // define time step interval in which output files are generated
+        int modulo = 1; // define time step interval in which output files are generated
         double cFLFactor = 0.9; // security factor for the Courant-Friedrichs-Lewy-Criterion
 
         // create TimeLoop-object
-        Dune::TimeLoop<Grid, IMPESType > timeloop(tStart, tEnd, fileName, modulo, cFLFactor); /*@\label{tutorial-decoupled:timeloop}@*/
+        Dune::TimeLoop<Grid, IMPES> timeloop(tStart, tEnd, fileName, modulo, cFLFactor); /*@\label{tutorial-decoupled:timeloop}@*/
 
         Dune::Timer timer;
         timer.reset();
