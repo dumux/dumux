@@ -1,9 +1,8 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <!-- Created with Inkscape (http://www.inkscape.org/) -->
 <svg
-   xmlns:ns="http://creativecommons.org/ns#"
    xmlns:dc="http://purl.org/dc/elements/1.1/"
-   xmlns:cc="http://web.resource.org/cc/"
+   xmlns:cc="http://creativecommons.org/ns#"
    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
    xmlns:svg="http://www.w3.org/2000/svg"
    xmlns="http://www.w3.org/2000/svg"
@@ -12,7 +11,7 @@
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    id="svg2"
    sodipodi:version="0.32"
-   inkscape:version="0.45.1"
+   inkscape:version="0.46"
    width="3395.9395"
    height="827.63873"
    version="1.0"
@@ -22,12 +21,12 @@
   <metadata
      id="metadata7">
     <rdf:RDF>
-      <ns:Work
+      <cc:Work
          rdf:about="">
         <dc:format>image/svg+xml</dc:format>
         <dc:type
            rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
-      </ns:Work>
+      </cc:Work>
       <cc:Work
          rdf:about="">
         <dc:format>image/svg+xml</dc:format>
@@ -38,6 +37,25 @@
   </metadata>
   <defs
      id="defs5">
+    <linearGradient
+       id="linearGradient2411">
+      <stop
+         style="stop-color:#0c73cf;stop-opacity:1;"
+         offset="0"
+         id="stop2413" />
+      <stop
+         id="stop2415"
+         offset="0.42408466"
+         style="stop-color:#0c73cf;stop-opacity:1;" />
+      <stop
+         style="stop-color:#e19417;stop-opacity:1;"
+         offset="0.47644299"
+         id="stop2417" />
+      <stop
+         style="stop-color:#e19417;stop-opacity:1;"
+         offset="1"
+         id="stop2419" />
+    </linearGradient>
     <linearGradient
        id="linearGradient3296">
       <stop
@@ -111,7 +129,7 @@
     </filter>
     <linearGradient
        inkscape:collect="always"
-       xlink:href="#linearGradient3296"
+       xlink:href="#linearGradient2411"
        id="linearGradient3850"
        gradientUnits="userSpaceOnUse"
        gradientTransform="translate(4.3092067,-34.473654)"
@@ -122,7 +140,7 @@
   </defs>
   <sodipodi:namedview
      inkscape:window-height="963"
-     inkscape:window-width="1280"
+     inkscape:window-width="1890"
      inkscape:pageshadow="2"
      inkscape:pageopacity="1"
      guidetolerance="10.0"
@@ -134,10 +152,10 @@
      id="base"
      showgrid="false"
      inkscape:zoom="0.3281842"
-     inkscape:cx="1718.9788"
-     inkscape:cy="778.0424"
+     inkscape:cx="1191.6877"
+     inkscape:cy="771.63487"
      inkscape:window-x="0"
-     inkscape:window-y="0"
+     inkscape:window-y="207"
      inkscape:current-layer="svg2"
      showborder="true"
      showguides="true"
