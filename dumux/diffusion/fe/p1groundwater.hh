@@ -1,6 +1,11 @@
 // $Id$
 /*****************************************************************************
- *   Copyright (C) 2007-2009 by Peter Bastian, Bernd Flemisch                *
+ *   Copyright (C) 2007 by Peter Bastian                                     *
+ *   Interdisciplinary Center for Scientific Computing                       *
+ *   University of Heidelberg, Germany                                       *
+ *   email: <givenname>.<name>@iwr.uni-heidelberg.de                         *
+ *                                                                           *
+ *   Copyright (C) 2008-2009 by Bernd Flemisch                               *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
@@ -228,7 +233,7 @@ private:
     }
 
     template <int dim, int codim, class IntersectionIterator, class GeometryType>
-    int oldNumber(const IntersectionIterator& isIt, const GeometryType& geomType)
+    int oldNumberInSelf(const IntersectionIterator& isIt, const GeometryType& geomType)
     {
     	typedef GenericGeometry::MapNumberingProvider<dim> Numbering;
         const unsigned int tid = GenericGeometry::topologyId(geomType);
@@ -307,8 +312,7 @@ private:
                 if (sfs[i].codim()==0) continue; // skip interior dof
                 if (sfs[i].codim()==1) // handle face dofs
                 {
-                    if (sfs[i].entity() == oldNumber<dim, 1>(it, element.geometry().type()))
-//                  if (sfs[i].entity()==it->numberInSelf())
+                    if (sfs[i].entity() == oldNumberInSelf<dim, 1>(it, element.geometry().type()))
                     {
                         if (this->bctype[i][0]<bctypeface)
                         {
@@ -325,10 +329,8 @@ private:
                     continue;
                 }
                 // handle subentities of this face
-                for (int j=0; j<ReferenceElements<Scalar,dim>::general(gt).size(oldNumber<dim, 1>(it, element.geometry().type()),1,sfs[i].codim()); j++)
-//              for (int j=0; j<ReferenceElements<Scalar,dim>::general(gt).size(it->numberInSelf(),1,sfs[i].codim()); j++)
-                    if (sfs[i].entity()==ReferenceElements<Scalar,dim>::general(gt).subEntity(oldNumber<dim, 1>(it, element.geometry().type()),1,j,sfs[i].codim()))
-//                  if (sfs[i].entity()==ReferenceElements<Scalar,dim>::general(gt).subEntity(it->numberInSelf(),1,j,sfs[i].codim()))
+                for (int j=0; j<ReferenceElements<Scalar,dim>::general(gt).size(oldNumberInSelf<dim, 1>(it, element.geometry().type()),1,sfs[i].codim()); j++)
+                    if (sfs[i].entity()==ReferenceElements<Scalar,dim>::general(gt).subEntity(oldNumberInSelf<dim, 1>(it, element.geometry().type()),1,j,sfs[i].codim()))
                     {
                         if (this->bctype[i][0]<bctypeface)
                         {
