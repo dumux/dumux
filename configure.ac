@@ -100,7 +100,6 @@ AC_CONFIG_FILES([Makefile
     dumux/diffusion/fv/Makefile 
     dumux/diffusion/mimetic/Makefile 
     dumux/diffusion/mpfa/Makefile
-    dumux/diffusion/problems/Makefile 
     dumux/fractionalflow/Makefile 
     dumux/fractionalflow/impes/Makefile 
     dumux/functions/Makefile
@@ -118,7 +117,6 @@ AC_CONFIG_FILES([Makefile
     dumux/transport/Makefile 
     dumux/transport/ch/Makefile
     dumux/transport/fv/Makefile 
-    dumux/transport/problems/Makefile 
     test/Makefile 
     test/1p/Makefile 
     test/2p/Makefile 
