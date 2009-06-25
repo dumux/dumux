@@ -1,6 +1,8 @@
 # tests where program to build and program to run are equal
 NORMALTESTS = tutorial_decoupled tutorial_coupled
 
+EXTRA_DIST=results/*/*/*.vtu
+
 # list of tests to run
 #TESTS = $(NORMALTESTS)
 
