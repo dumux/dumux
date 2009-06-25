@@ -1,6 +1,5 @@
-bin_PROGRAMS = test_fvtransport test_chtransport 
+bin_PROGRAMS = test_fvtransport  
 
-test_fvtransport_SOURCES = test_fvtransport.cc simplenonlinearproblem.hh 
-test_chtransport_SOURCES = test_chtransport.cc 
+test_fvtransport_SOURCES = test_fvtransport.cc simplenonlinearproblem.hh  
 
 include $(top_srcdir)/am/global-rules

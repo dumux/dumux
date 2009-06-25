@@ -115,7 +115,6 @@ AC_CONFIG_FILES([Makefile
     dumux/shapefunctions/cr/Makefile 
     dumux/timedisc/Makefile
     dumux/transport/Makefile 
-    dumux/transport/ch/Makefile
     dumux/transport/fv/Makefile 
     test/Makefile 
     test/1p/Makefile 
