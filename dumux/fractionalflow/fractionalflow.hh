@@ -1,4 +1,4 @@
-// $Id:$
+// $Id$
 /*****************************************************************************
  *   Copyright (C) 2007-2009 by Bernd Flemisch                               *
  *   Copyright (C) 2008-2009 by Markus Wolff                                 *
@@ -40,8 +40,10 @@ namespace Dune
  * \ingroup impes
  * \ingroup fracflow
  * \brief Base class for fractional flow formulation of multi-phase flow.
- * An interface to combine a diffusive model solving a pressure equation with a transport model solving a saturation equation
- * in the fractional flow context.
+ *
+ * An interface to combine a diffusive model solving a pressure equation
+ * with a transport model solving a saturation equation in the fractional
+ * flow context.
  *
  Template parameters are:
 
