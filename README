@@ -18,8 +18,9 @@ There are two ways to install DuMuX: The first is to use the DUNE's
 build system, the other is to use CMake. If you just want to evaluate
 DuMuX, we recommend to compile DuMuX the DUNE way as outlined in the
 INSTALL file. On the other hand, if you would like to develop with
-DuMuX, using the CMake based build system has quite a few
-advantages. In this case, follow the instructions from INSTALL.cmake .
+DuMuX, using the CMake based build system has advantages like much
+faster configure runs and out-of-tree builds. In this case, follow the
+instructions from INSTALL.cmake .
 
 LICENSE
 =======
