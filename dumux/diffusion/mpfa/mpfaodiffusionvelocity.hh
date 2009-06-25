@@ -3,7 +3,7 @@
  *   Copyright (C) 2007-2009 by Yufei Cao                                    *
  *   Institute of Applied Analysis and Numerical Simulation                  *
  *   University of Stuttgart, Germany                                        *
- *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
+ *   email: <givenname>.<name>@mathematik.uni-stuttgart.de                   *
  *                                                                           *
  *   This program is free software; you can redistribute it and/or modify    *
  *   it under the terms of the GNU General Public License as published by    *
