@@ -146,7 +146,7 @@ public:
      */
     void timestepDone()
     {
-        writeCurrentResult_();
+        asImp_()->writeCurrentResult_();
         wasRestarted_ = false;
     };
 
