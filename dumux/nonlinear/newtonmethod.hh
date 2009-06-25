@@ -154,9 +154,8 @@ public:
 
 public:
     NewtonMethod(Model &model)
-#warning "we should use model.gridView().overlapSize()"
-        : uOld(model.gridView(), model.gridView(), model.gridView().grid().overlapSize(0) == 0),
-          f(model.gridView(), model.gridView(), model.gridView().grid().overlapSize(0) == 0)
+        : uOld(model.gridView(), model.gridView(), model.gridView().overlapSize(0) == 0),
+          f(model.gridView(), model.gridView(), model.gridView().overlapSize(0) == 0)
     {
         deflectionTwoNorm_ = 1e100;
         residual_ = NULL;

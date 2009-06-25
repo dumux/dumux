@@ -157,10 +157,9 @@ public:
         wasRestarted_ = false;
 
         // check grid partitioning if we are parallel
-#warning "use gridView.overlapSize() instead once available!"
         assert((prob.gridView().comm().size() == 1) ||
-               (prob.gridView().grid().overlapSize(0) > 0) ||
-               (prob.gridView().grid().ghostSize(0) > 0));
+               (prob.gridView().overlapSize(0) > 0) ||
+               (prob.gridView().ghostSize(0) > 0));
     }
 
     /*!
@@ -471,7 +470,7 @@ public:
 protected:
     //! returns true iff the grid has an overlap
     bool hasOverlap_()
-    { return gridView_.grid().overlapSize(0) > 0; };
+    { return gridView_.overlapSize(0) > 0; };
 
     void applyInitialSolution_(SolutionFunction &u)
     {
