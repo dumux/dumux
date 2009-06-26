@@ -1,5 +1,6 @@
 bin_PROGRAMS = test_diffusion
 
+EXTRA_DIST=grids/*.dgf
 gridsdir=$(datadir)/dumux/grids
 grids_DATA=grids/*.dgf
 

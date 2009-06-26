@@ -1,6 +1,7 @@
 bin_PROGRAMS = test_2p2c
 noinst_HEADERS = *.hh
 
+EXTRA_DIST=grids/*.dgf
 gridsdir=$(datadir)/dumux/grids
 grids_DATA=grids/*.dgf
 
