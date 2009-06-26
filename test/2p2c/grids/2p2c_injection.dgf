@@ -4,8 +4,6 @@ Interval
 60 40   % second corner
 24 16   % 24 cells in x and 16 in y direction
 #
-Simplex
-#
 GridParameter
 overlap 0 
 periodic 

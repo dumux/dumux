@@ -55,8 +55,8 @@ namespace Dune
 template<class GridView, class Diffusion, class Transport, class VC>
 class FractionalFlow
 {
-typedef    typename Diffusion::ScalarType Scalar;
 public:
+    typedef typename Diffusion::ScalarType Scalar;
     typedef typename VC::ScalarVectorType RepresentationType;//!< Data type for a Vector of Scalars
 
     //! Set initial solution and initialize parameters
