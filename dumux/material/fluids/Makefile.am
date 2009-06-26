@@ -1,5 +1,5 @@
-phasepropertiesdir = $(includedir)/dumux/material/phaseproperties
-phaseproperties_HEADERS = air.hh \
+fluidsdir = $(includedir)/dumux/material/fluids
+fluids_HEADERS = air.hh \
 	dnapl.hh \
 	oil.hh \
 	uniform.hh \

@@ -1,5 +1,7 @@
 bin_PROGRAMS = test_diffusion
-EXTRA_DIST = grids/*.dgf
+
+gridsdir=$(datadir)/dumux/grids
+grids_DATA=grids/*.dgf
 
 test_diffusion_SOURCES = test_diffusion.cc fvca5test5problem.hh benchmarkresult.hh
 

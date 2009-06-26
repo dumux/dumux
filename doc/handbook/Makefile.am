@@ -28,12 +28,8 @@ endif
 BASEDIR=../..
 CURDIR=doc/handbook
 
-docdir=$(datadir)/doc/handbook
-
-if BUILD_DOCS
+docdir=$(datadir)/doc/dumux/handbook
 doc_DATA = dumux-handbook.pdf
-EXTRAINSTALL = dumux-handbook.pdf grid-howto*.html *.png *.css
-endif
 
 CLEANFILES = *.aux *.bbl *.blg *.log *.out *.toc *.dvi *.pdf *.ps
 CLEANFILES += *.4ct *.4tc *.css *.idv *.idx *.lg *.tid *.tmp *.tms *.xref

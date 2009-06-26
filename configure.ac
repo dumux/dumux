@@ -116,6 +116,7 @@ AC_CONFIG_FILES([Makefile
     dumux/timedisc/Makefile
     dumux/transport/Makefile 
     dumux/transport/fv/Makefile 
+    lib/Makefile 
     test/Makefile 
     test/1p/Makefile 
     test/2p/Makefile 
