@@ -1,5 +1,7 @@
 # $id: $
 
+if BUILD_HANDBOOK
+
 #EPS_FILES = EPS/tutorial-problemconfiguration.eps 
 
 DOCSOURCE = dumux-handbook.tex intro.tex navigation.html css.html
@@ -28,10 +30,10 @@ endif
 BASEDIR=../..
 CURDIR=doc/handbook
 
-docdir=$(datadir)/doc/dumux/handbook
-doc_DATA = dumux-handbook.pdf
+handbookdir=$(docdir)/handbook
+handbook_DATA = dumux-handbook.pdf
 
-CLEANFILES = *.aux *.bbl *.blg *.log *.out *.toc *.dvi *.pdf *.ps
+CLEANFILES = *.aux *.bbl *.blg *.log *.out *.toc *.dvi *.ps
 CLEANFILES += *.4ct *.4tc *.css *.idv *.idx *.lg *.tid *.tmp *.tms *.xref
 CLEANFILES += dumux-handbook*.html dumux-handbook*.png 
 CLEANFILES += $(DOCS)
@@ -76,3 +78,4 @@ EXTRA_TEXINPUTS=$(top_srcdir)
 include $(top_srcdir)/am/global-rules
 include $(top_srcdir)/am/latex
 
+endif
