@@ -73,7 +73,7 @@ int main(int argc, char** argv)
         Transport transport(gridView, problem, "vt"); /*@\label{tutorial-decoupled:transport}@*/
 
         // some parameters used in the IMPES-object
-        int iterFlag = 2;
+        int iterFlag = 0;
         int nIter = 30;
         double maxDefect = 1e-5;
 
