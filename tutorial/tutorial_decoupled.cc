@@ -45,7 +45,7 @@ int main(int argc, char** argv)
         typedef Dune::FieldVector<Grid::ctype,dim> FieldVector;
         Dune::FieldVector<int,dim> N(10); N[0] = 30;
         FieldVector L(0);
-        FieldVector H(300); H[0] = 600;
+        FieldVector H(60); H[0] = 300;
         Grid grid(N,L,H);
         GridView gridView(grid.levelView(0));/*@\label{tutorial-decoupled:grid-end}@*/
 
@@ -66,7 +66,7 @@ int main(int argc, char** argv)
 
         // create object including the discretisation of the pressure equation
         typedef Dune::FVTotalVelocity2P<GridView, Scalar, VariableClass, Problem> Diffusion;
-        Diffusion diffusion(gridView, problem, "pw"); /*@\label{tutorial-decoupled:diffusion}@*/
+        Diffusion diffusion(gridView, problem, "pw","Sw"); /*@\label{tutorial-decoupled:diffusion}@*/
 
         // create object including the space discretisation of the saturation equation
         typedef Dune::FVSaturationWetting2P<GridView, Scalar, VariableClass, Problem> Transport;
@@ -74,7 +74,7 @@ int main(int argc, char** argv)
 
         // some parameters used in the IMPES-object
         int iterFlag = 0;
-        int nIter = 30;
+        int nIter = 2;
         double maxDefect = 1e-5;
 
         // create object including the IMPES (IMplicit Pressure Explicit Saturation) algorithm
@@ -83,10 +83,10 @@ int main(int argc, char** argv)
 
         // some parameters needed for the TimeLoop-object
         double tStart = 0; // start simulation at t = tStart
-        double tEnd = 1e8; // stop simulation at t = tEnd
+        double tEnd = 4e7; // stop simulation at t = tEnd
         const char* fileName = "tutorial_decoupled"; // name of the output files
         int modulo = 1; // define time step interval in which output files are generated
-        double cFLFactor = 0.9; // security factor for the Courant-Friedrichs-Lewy-Criterion
+        double cFLFactor = 0.99; // security factor for the Courant-Friedrichs-Lewy-Criterion
 
         // create TimeLoop-object
         Dune::TimeLoop<Grid, IMPES> timeloop(tStart, tEnd, fileName, modulo, cFLFactor); /*@\label{tutorial-decoupled:timeloop}@*/

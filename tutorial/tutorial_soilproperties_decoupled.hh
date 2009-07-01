@@ -16,7 +16,7 @@
 #ifndef TUTORIAL_SOILPROPERTIES
 #define TUTORIAL_SOILPROPERTIES
 
-#include <dumux/material/matrixproperties.hh>
+#include <dumux/material/property_baseclasses.hh>
 
 namespace Dune
 {
@@ -24,7 +24,7 @@ namespace Dune
 /** \todo Please doc me! */
 
 template<class Grid, class Scalar>
-class TutorialSoil: public HomogeneousSoil<Grid, Scalar> /*@\label{tutorial-decoupled:tutorialsoil}@*/
+class TutorialSoil: public Matrix2p<Grid, Scalar> /*@\label{tutorial-decoupled:tutorialsoil}@*/
 {
 public:
     typedef    typename Grid::Traits::template Codim<0>::Entity Element;
@@ -37,7 +37,7 @@ public:
     // function returning the intrinsic permeability tensor K
     // depending on the position within the domain
     const FieldMatrix &K(const GlobalPosition& globalPos, const Element& element, /*@\label{tutorial-decoupled:permeability}@*/
-                         const LocalPosition& localPos)
+                         const LocalPosition& localPos) const
     {
         return K_;
     }
@@ -55,7 +55,7 @@ public:
     double Sr_w(const GlobalPosition& globalPos, const Element& element, /*@\label{tutorial-decoupled:srw}@*/
                 const LocalPosition& localPos, const double T = 283.15) const
     {
-        return 0;
+        return 0.0;
     }
 
     // function returning the residual saturation of the non-wetting fluid
@@ -63,7 +63,7 @@ public:
     double Sr_n(const GlobalPosition& globalPos, const Element& element, /*@\label{tutorial-decoupled:srn}@*/
                 const LocalPosition& localPos, const double T = 283.15) const
     {
-        return 0;
+        return 0.0;
     }
 
     // function returning the parameters of the capillary pressure
@@ -94,7 +94,7 @@ public:
     }                                   //dumux/material/property_baseclasses.hh
 
     TutorialSoil()
-        :HomogeneousSoil<Grid,Scalar>(),K_(0)
+        :Matrix2p<Grid,Scalar>(),K_(0)
     {
         for(int i = 0; i < dim; i++)
             K_[i][i] = 1e-7;
