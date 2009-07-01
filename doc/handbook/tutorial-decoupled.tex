@@ -87,7 +87,7 @@ Soil properties which can be defined in \Dumux are the \textit{intrinsic permeab
 
 The base class \texttt{Dune::Matrix2p} for the definition of the soil parameters can be found in the file \texttt{property\_baseclasses.hh} in the directory \texttt{/dumux/material}. Derived from this base class, there exist two standard soil type classes named \texttt{HomogeneousSoil} and \texttt{HeterogeneousSoil}. Both can be found in the file \texttt{matrixproperties.hh} in the \texttt{/material} folder. If one wants to use a soil that differs from this standard soil types, new soil classes can be derived either from the base class (\texttt{Dune::Matrix2p}) or from the two standard soil classes (\texttt{Dune::HomogeneousSoil} and \texttt{Dune::HeterogeneousSoil}).
 
-For this tutorial problem a new soil class named \texttt{TutorialSoil} is derived from \texttt{Dune::HomogeneousSoil} (listing \ref{tutorial-deoucpled:soilpropertiesfile}, line \ref{tutorial-decoupled:tutorialsoil}), which can be found in the file \texttt{tutorial\_soilproperties\_decoupled.hh} in the directory \texttt{/tutorial}.
+For this tutorial problem a new soil class named \texttt{TutorialSoil} is derived from \texttt{Dune::Matrix2p} (listing \ref{tutorial-deoucpled:soilpropertiesfile}, line \ref{tutorial-decoupled:tutorialsoil}), which can be found in the file \texttt{tutorial\_soilproperties\_decoupled.hh} in the directory \texttt{/tutorial}.
 
 Listing \ref{tutorial-deoucpled:soilpropertiesfile} shows the file \texttt{tutorial\_soilproperties\_decoupled.hh}.
 
