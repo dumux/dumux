@@ -20,6 +20,8 @@ AC_CHECK_PROGS([T4HT], [t4ht], [true])
 AM_CONDITIONAL([TEX4HT], [test "x$TEX4HT" != xtrue])
 AC_CHECK_PROGS([CONVERT], [convert], [false])
 AM_CONDITIONAL([CONVERT], [test "x$CONVERT" != xfalse])
+AM_CONDITIONAL([BUILD_HANDBOOK], [test -a "stamp-vc"])
+
 # we need no more than the standard DE-stuff
 # this module depends on dune-common dune-grid dune-istl dune-disc dune-subgrid
 # this implies checking for [dune-common], [dune-grid], [dune-istl], [dune-disc], [dune-subgrid]
