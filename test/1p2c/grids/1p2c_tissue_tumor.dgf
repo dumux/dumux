@@ -2,7 +2,7 @@ DGF
 Interval
 0 0   % first corner 
 22 22   % second corner
-220 220  % x-Achse wird 44x unterteilt und y-Achse
+50 50  % cells in X and Y direction
 # 
 
 BOUNDARYDOMAIN
