@@ -1,4 +1,4 @@
-low// $Id$
+// $Id$
 /*****************************************************************************
  *   Copyright (C) 2007-2009 by Jochen Fritz, Andreas Lauser, Markus Wolff   *
  *   Institute of Hydraulic Engineering                                      *
@@ -13,8 +13,8 @@ low// $Id$
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
-#ifndef DUNE_FLUID_LOW_VISCOSITY_OIL_HH
-#define DUNE_FLUID_LOW_VISCOSITY_OIL_HH
+#ifndef DUNE_LOW_VISCOSITY_OIL_HH
+#define DUNE_LOW_VISCOSITY_OIL_HH
 
 #include <dumux/material/property_baseclasses.hh>
 
@@ -23,7 +23,7 @@ low// $Id$
 namespace Dune
 {
 /*!
- * \brief LNAPL with a low viscosity.
+ * \brief LNAPL with a viscosity slightly higher than water.
  */
 class LowViscosityOil : public Fluid
 {
@@ -38,20 +38,11 @@ public:
 
     double density ( double T=283.15, double p=1e5, double X=1.0) const
     {
-        if (constDensity_)
-            return constDensity_;
-        else
-            return 890.0; // [kg/m^3]
+        return 890.0; // [kg/m^3]
     }
     double enthalpy (double T=283.15, double p=1e5, double X = 1) const
     {
-        if (constEnthalpy_)
-            return constEnthalpy_;
-        else {
-            //            return constRelOil.enthalpy(T,p,X);
-            // TODO
-            DUNE_THROW(Dune::NotImplemented, "Non-constant enthalpy of oil");
-        }
+        DUNE_THROW(Dune::NotImplemented, "Non-constant enthalpy of oil");
     }
 
     double intEnergy( double T=283.15, double p=1e5, double X = 1) const
@@ -63,11 +54,6 @@ public:
         u = h - (p / rho_mass);
         return u;
     }
-
-private:
-    double constDensity_;
-    double constViscosity_;
-    double constEnthalpy_;
 };
 }
 

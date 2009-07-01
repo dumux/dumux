@@ -37,7 +37,7 @@ public:
         if (constViscosity_)
             return constViscosity_;
         else
-            return 800e-3;//[kg/(ms)]
+            return 8e-3;//[kg/(ms)]
     }
 
     double density ( double T=283.15, double p=1e5, double X=1.0) const

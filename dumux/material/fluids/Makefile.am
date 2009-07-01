@@ -1,6 +1,7 @@
 fluidsdir = $(includedir)/dumux/material/fluids
 fluids_HEADERS = air.hh \
 	dnapl.hh \
+	lowviscosityoil.hh \
 	oil.hh \
 	uniform.hh \
 	water.hh \
