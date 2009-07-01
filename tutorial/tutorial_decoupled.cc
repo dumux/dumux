@@ -22,7 +22,7 @@
 #include <dune/common/timer.hh>
 #include "dumux/fractionalflow/variableclass2p.hh"
 #include "dumux/material/fluids/water.hh"
-#include "dumux/material/fluids/oil.hh"
+#include "dumux/material/fluids/lowviscosityoil.hh"
 #include "tutorial_soilproperties_decoupled.hh"
 #include "dumux/material/twophaserelations.hh"
 #include "tutorialproblem_decoupled.hh"
@@ -52,7 +52,7 @@ int main(int argc, char** argv)
 
         // define fluid and solid properties and constitutive relationships
         Dune::Water wettingfluid; /*@\label{tutorial-decoupled:water}@*/
-        Dune::Oil nonwettingfluid; /*@\label{tutorial-decoupled:oil}@*/
+        Dune::LowViscosityOil nonwettingfluid; /*@\label{tutorial-decoupled:oil}@*/
         Dune::TutorialSoil<Grid, Scalar> soil; /*@\label{tutorial-decoupled:soil}@*/
         Dune::TwoPhaseRelations<Grid, Scalar> materialLaw(soil, wettingfluid, nonwettingfluid);/*@\label{tutorial-decoupled:twophaserelations}@*/
 
