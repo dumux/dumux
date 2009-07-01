@@ -16,13 +16,13 @@
 #ifndef TUTORIALSOIL_COUPLED_HH
 #define TUTORIALSOIL_COUPLED_HH
 
-#include <dumux/material/matrixproperties.hh>
+#include <dumux/material/property_baseclasses.hh>
 
 namespace Dune
 {
 
 template<class Grid, class Scalar>
-class TutorialSoil: public HomogeneousSoil<Grid, Scalar> /*@\label{tutorial-coupled:tutorialsoil}@*/
+class TutorialSoil: public Matrix2p<Grid, Scalar> /*@\label{tutorial-coupled:tutorialsoil}@*/
 {
 public:
     typedef    typename Grid::Traits::template Codim<0>::Entity Element;
@@ -32,7 +32,7 @@ public:
     // method returning the intrinsic permeability tensor K depending
     // on the position within the domain
     const FieldMatrix<Scalar,dim,dim> &K (const FieldVector<Scalar,dim>& globalPos, const Element& element, /*@\label{tutorial-coupled:permeability}@*/
-                                  const FieldVector<Scalar,dim>& localPos) const
+                                          const FieldVector<Scalar,dim>& localPos) const
     {
         return K_;
     }
@@ -92,7 +92,7 @@ public:
     }                                   //dumux/material/property_baseclasses.hh
 
     TutorialSoil()
-        :HomogeneousSoil<Grid,Scalar>(), K_(0)
+        : Matrix2p<Grid,Scalar>(), K_(0)
     {
         for(int i = 0; i < dim; i++)
             K_[i][i] = 1e-7;

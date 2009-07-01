@@ -59,8 +59,8 @@ SET_PROP(TutorialProblemCoupled, Grid) /*@\label{tutorial-coupled:set-grid}@*/
         Dune::FieldVector<int, 2> cellRes;
         Dune::FieldVector<ctype, 2> lowerLeft(0.0);
         Dune::FieldVector<ctype, 2> upperRight;
-        cellRes[0] = 45;
-        cellRes[1] = 15;
+        cellRes[0] = 30;
+        cellRes[1] = 10;
         upperRight[0] = 300;
         upperRight[1] = 60;
         return new Dune::SGrid<2,2>(cellRes,
@@ -155,7 +155,7 @@ public:
                    int                         scvIdx,
                    int                         boundaryFaceIdx) const
     {
-        values[Indices::pW] = 1.0e6; // 1 MPa = 10 bar
+        values[Indices::pW] = 200.0e3; // 200 kPa = 2 bar
         values[Indices::sN] = 0.0; // 0 % oil saturation on left boundary
     }
 
@@ -192,7 +192,7 @@ public:
                  const FVElementGeometry &fvElemGeom,
                  int                      scvIdx) const
     {
-        values[Indices::pW] = 1.0e6; // 1MPa = 10 bar
+        values[Indices::pW] = 200.0e3; // 200 kPa = 2 bar
         values[Indices::sN] = 1.0;
     }
 
