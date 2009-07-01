@@ -1,4 +1,4 @@
-// $Id:$
+// $Id$
 /*****************************************************************************
  *   Copyright (C) 2009 by Karin Erbertseder                                 *
  *   Copyright (C) 2009 by Andreas Lauser                                    *
@@ -40,7 +40,7 @@ namespace Dune
  *
  * This model implements an one-phase flow of an incompressible fluid, that consists of two components,
  * using a standard Darcy
- * approach (neglect of the gravitation) as the equation for the conservation of momentum:
+ * approach (neglecting gravitation) as the equation for the conservation of momentum:
  \f[
  v_{D} = - \frac{K}{\mu}
  \left(\text{grad} p - \varrho g  \right)
@@ -59,11 +59,11 @@ namespace Dune
  \varrho g \right)  + \varrho \tau \Phi D \text{grad} x \right) = q.
  \f]
  *
- * All equations are discretized by this model using the fully-coupled vertex
+ * All equations are discretized using a fully-coupled vertex
  * centered finite volume (box) scheme as spatial and
  * the implicit Euler method as time discretization.
  *
- * The primary variables are the pressure p and the mole fraction of dissolved component x.
+ * The primary variables are the pressure \f$p\f$ and the mole fraction of dissolved component \f$x\f$.
  */
 
 template<class TypeTag >

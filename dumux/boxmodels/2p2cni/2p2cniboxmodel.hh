@@ -59,7 +59,7 @@ namespace Dune {
 	- \sum_\alpha q_\alpha^\kappa = \quad 0 \qquad \kappa \in \{w, a\} \, ,
 	\alpha \in \{w, n\}
  * 	\f}
- * For the energy balance local thermal equilibrium is assumed which results in one
+ * For the energy balance, local thermal equilibrium is assumed which results in one
  * energy conservation equation for the porous solid matrix and the fluids:
  * \f{eqnarray*}
 	&& \phi \frac{\partial \left( \sum_\alpha \varrho_\alpha u_\alpha S_\alpha \right)}{\partial t}
@@ -71,7 +71,7 @@ namespace Dune {
 	- q^h \qquad = \quad 0 \qquad \alpha \in \{w, n\}
 \f}
  *
- * This is discretized in the model using the fully-coupled vertex
+ * This is discretized using a fully-coupled vertex
  * centered finite volume (box) scheme as spatial and
  * the implicit Euler method as temporal discretization.
  *

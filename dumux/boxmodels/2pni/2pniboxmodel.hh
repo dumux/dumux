@@ -49,7 +49,7 @@ namespace Dune {
  *
  * This model implements a non-isothermal two-phase flow of two completely immiscible fluids
  * \f$\alpha \in \{ w, n \}\f$.
- * Using the standard multiphase Darcy approach the mass conservation equations for both phases can
+ * Using the standard multiphase Darcy approach, the mass conservation equations for both phases can
  * be described as follows:
  * \f{eqnarray*}
  && \phi \frac{\partial (\sum_\alpha \varrho_\alpha S_\alpha )}{\partial t}
@@ -58,7 +58,7 @@ namespace Dune {
  (\text{grad} p_\alpha - \varrho_{\alpha} \mbox{\bf g}) \right\}
  - \sum_\alpha q_\alpha^\kappa = \quad 0 \qquad \alpha \in \{w, n\}
  * 	\f}
- * For the energy balance local thermal equilibrium is assumed which results in one
+ * For the energy balance, local thermal equilibrium is assumed which results in one
  * energy conservation equation for the porous solid matrix and the fluids:
  * \f{eqnarray*}
  && \phi \frac{\partial \left( \sum_\alpha \varrho_\alpha u_\alpha S_\alpha \right)}{\partial t}
@@ -67,10 +67,10 @@ namespace Dune {
  \frac{k_{r\alpha}}{\mu_\alpha} \mathbf{K} \left( \text{grad} \: p_\alpha
  - \varrho_\alpha \mathbf{g} \right) \right\} \\
 	&-& \text{div} \left( \lambda_{pm} \text{grad} \: T \right)
- - q^h \qquad = \quad 0 \qquad \alpha \in \{w, n\}
+ - q^h \qquad = \quad 0, \qquad \alpha \in \{w, n\}.
  \f}
  *
- * the equations are discretized by this model using the fully-coupled vertex
+ * The equations are discretized using a fully-coupled vertex
  * centered finite volume (box) scheme as spatial and the implicit Euler method
  * as time discretization.
  *

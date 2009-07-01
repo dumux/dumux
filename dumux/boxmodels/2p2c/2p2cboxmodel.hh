@@ -58,7 +58,7 @@ namespace Dune
 	\alpha \in \{w, g\}
     \f}
  *
- * This is discretized in the model using the fully-coupled vertex
+ * This is discretized using a fully-coupled vertex
  * centered finite volume (box) scheme as spatial and
  * the implicit Euler method as temporal discretization.
  *

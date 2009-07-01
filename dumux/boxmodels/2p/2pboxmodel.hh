@@ -59,7 +59,7 @@ namespace Dune
  \varrho_\alpha \frac{k_{r\alpha}}{\mu_\alpha} K \left(\text{grad} p_\alpha - \varrho_{\alpha} \boldsymbol{g} \right)
  \right\} = q_\alpha \;,
  \f]
- * which is discretized by this model using the fully-coupled vertex
+ * discretized by a fully-coupled vertex
  * centered finite volume (box) scheme as spatial and
  * the implicit Euler method as time discretization.
  *

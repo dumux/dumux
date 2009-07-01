@@ -48,10 +48,7 @@ namespace Dune
  * In comparison to a fully coupled model, different discretization methods can be applied to the different equations.
  * So far, the pressure equation is discretized using a cell centered finite volume scheme (optionally with multi point flux approximation),
  * a mimetic finite difference scheme or a finite element scheme. The saturation equation is discretized using a cell centered finite volume scheme.
- * Default time discretization scheme is an explicit \textit{Euler} scheme.
- *
- * First a pressure equation is solved implicitly to obtain a velocity field, then a saturation equation is solved
- * explicitly to get a new saturation distribution.
+ * Default time discretization scheme is an explicit Euler scheme.
 */
 template<class GridView, class Diffusion, class Transport, class VC> class IMPES: public FractionalFlow<
         GridView, Diffusion, Transport, VC>
