@@ -337,7 +337,7 @@ void Multiphysics2p2c<GridView, Scalar>::initializeMatrix()
  * p}{\partial t}+\sum_{\kappa}\frac{\partial V}{\partial
  * m^{\kappa}}\nabla\cdot
  * \left(\sum_{\alpha}C_{\alpha}^{\kappa}\mathbf{v}_{\alpha}\right)
- * =\sum_{\kappa}\frac{\partial V}{\partial m^{\kappa}}q^{\kappa}\]
+ * =\sum_{\kappa}\frac{\partial V}{\partial m^{\kappa}}q^{\kappa}
  * \f]. See Paper SPE 99619.  This is done to account for the volume
  * effects which appear when gas and liquid are dissolved iin each
  * other.
