@@ -93,10 +93,10 @@ SET_BOOL_PROP(WaterAirProblem, EnableGravity, true);
  * \ingroup TwoPTwoCNIBoxProblems
  * \brief Nonisothermal gas injection problem where a gas (e.g. air) is injected into a fully
  *        water saturated medium. During buoyancy driven upward migration the gas
- *        passes a high temperature area produced by a heat source.
+ *        passes a high temperature area.
  *
- * The domain is sized 40 m times 40 m. The rectangular heat source starts at (20 m, 5 m)
- * and ends at (30 m, 35 m)
+ * The domain is sized 40 m times 40 m. The rectangular area with the increased temperature (380 K)
+ * starts at (20 m, 5 m) and ends at (30 m, 35 m).
  *
  * For the mass conservation equation neumann boundary conditions are used on
  * the top and on the bottom of the domain, while dirichlet conditions
@@ -292,9 +292,6 @@ public:
     {
 	       const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
 	       values = Scalar(0.0);
-	       if (globalPos[0] > 20 && globalPos[0] < 30 && globalPos[1] > 5 && globalPos[1] < 35)
-	    	   values[temperatureIdx] = 100.;
-
     }
 
     /*!

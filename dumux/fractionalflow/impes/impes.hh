@@ -1,4 +1,4 @@
-// $Id:$
+// $Id$
 /*****************************************************************************
  *   Copyright (C) 2007-2009 by Bernd Flemisch                               *
  *   Copyright (C) 2008-2009 by Markus Wolff                                 *
@@ -30,17 +30,28 @@ namespace Dune
 {
 /**
  * \ingroup impes
- * @brief IMplicit Pressure Explicit Saturation (IMPES) scheme for the solution of
- * weakly coupled diffusion/transport problems.
+ * \brief IMplicit Pressure Explicit Saturation (IMPES) scheme for the solution of weakly coupled diffusion/transport problems.
+ *
+ * The model implements the decoupled equations of two-phase flow of two completely immiscible fluids.
+ * These equations can be derived from the two-phase flow equations shown for the two-phase box model (TwoPBoxModel).
+ * The first equation to solve is a pressure equation of elliptic character. The second one is a saturation equation,
+ * which can be hyperbolic or parabolic.
+ *
+ * This model allows different combinations of primary variables, which can be \f$p_w\f$-\f$S_w\f$, \f$p_w\f$-\f$S_n\f$, \f$p_n\f$-\f$S_w\f$, \f$p_n\f$-\f$S_n\f$,
+ * or \f$p\f$-\f$S_w\f$ and \f$p\f$-\f$S_n\f$, where \f$p\f$ is no phase pressure but a global pressure.
+ *
+ * As the equations are only weakly coupled they do not have to be solved simultaneously
+ * but can be solved sequentially. First the pressure equation is solved implicitly,
+ * second the saturation equation can be solved explicitly. This solution procedure is called IMPES algorithm
+ * (IMplicit Pressure Explicit Saturation).
+ *
+ * In comparison to a fully coupled model, different discretization methods can be applied to the different equations.
+ * So far, the pressure equation is discretized using a cell centered finite volume scheme (optionally with multi point flux approximation),
+ * a mimetic finite difference scheme or a finite element scheme. The saturation equation is discretized using a cell centered finite volume scheme.
+ * Default time discretization scheme is an explicit \textit{Euler} scheme.
+ *
  * First a pressure equation is solved implicitly to obtain a velocity field, then a saturation equation is solved
  * explicitly to get a new saturation distribution.
- *
- *  Template parameters are:
-
- - GridView      a DUNE gridview type
- - Diffusion     class defining the diffusion model
- - Transport     class defining the transport model
- - VC            type of a class containing different variables of the model
 */
 template<class GridView, class Diffusion, class Transport, class VC> class IMPES: public FractionalFlow<
         GridView, Diffusion, Transport, VC>

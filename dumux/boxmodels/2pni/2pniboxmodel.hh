@@ -74,7 +74,7 @@ namespace Dune {
  * centered finite volume (box) scheme as spatial and the implicit Euler method
  * as time discretization.
  *
- * Currently the model supports chosing either \f$p_w\f$, \f$S_n\f$ and \f$T\f$ or \f$p_n\f$,
+ * Currently the model supports choosing either \f$p_w\f$, \f$S_n\f$ and \f$T\f$ or \f$p_n\f$,
  * \f$S_w\f$ and \f$T\f$ as primary variables. The formulation which ought to be used can be
  * specified by setting the <tt>Formulation</tt> property to either <tt>TwoPNIIndices::pWsN</tt> or <tt>TwoPIndices::pNsW</tt>. By
  * default, the model uses \f$p_w\f$, \f$S_n\f$ and \f$T\f$.

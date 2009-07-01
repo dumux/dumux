@@ -34,7 +34,7 @@ namespace Dune
 {
 
 /*!
- * \ingroup TwoPNIBoxModel
+ * \ingroup TwoPTwoCNIBoxModel
  * \brief This template class contains the data which is required to
  *        calculate all fluxes (mass of components and energy) over a face of a finite
  *        volume for the non-isothermal two-phase, two-component model.

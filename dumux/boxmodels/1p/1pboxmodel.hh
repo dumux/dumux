@@ -45,7 +45,7 @@ namespace Dune
  * which is discretized by this model using vertex
  * centered finite volume (box) scheme as spatial and
  * the implicit Euler method as time discretization.
- * However, the model can also be used for incompressible single pahse flow modeling, when in problem file a fluid with constant density is chosen.
+ * However, the model can also be used for incompressible single phase flow modeling, when in problem file a fluid with constant density is chosen.
  */
 template<class TypeTag >
 class OnePBoxModel : public BoxScheme<TypeTag,  OnePBoxModel<TypeTag> >

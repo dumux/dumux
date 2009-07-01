@@ -44,17 +44,17 @@ namespace Dune
  *
  * This model implements two-phase flow of two completely immiscible fluids
  * \f$\alpha \in \{ w, n \}\f$ using a standard multiphase Darcy
- * approach as the equation for the conservation of momentum: 
+ * approach as the equation for the conservation of momentum:
  \f[
- v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} K 
+ v_\alpha = - \frac{k_{r\alpha}}{\mu_\alpha} K
  \left(\text{grad} p_\alpha - \varrho_{\alpha} \boldsymbol{g} \right)
  \f]
- * 
+ *
  * By inserting this into the equation for the conservation of the
  * phase mass, one gets
  \f[
- \phi \frac{\partial \varrho_\alpha S_\alpha}{\partial t} 
- - 
+ \phi \frac{\partial \varrho_\alpha S_\alpha}{\partial t}
+ -
  \text{div} \left\{
  \varrho_\alpha \frac{k_{r\alpha}}{\mu_\alpha} K \left(\text{grad} p_\alpha - \varrho_{\alpha} \boldsymbol{g} \right)
  \right\} = q_\alpha \;,
@@ -67,10 +67,10 @@ namespace Dune
  * p_n - p_w\f$ and relative permability \f$k_{r\alpha}\f$ and taking
  * advantage of the fact that \f$S_w + S_n = 1\f$, the number of
  * unknowns can be reduced to two. Currently the model supports
- * chosing either \f$p_w\f$ and \f$S_n\f$ or \f$p_n\f$ and \f$S_w\f$
+ * choosing either \f$p_w\f$ and \f$S_n\f$ or \f$p_n\f$ and \f$S_w\f$
  * as primary variables. The formulation which ought to be used can be
  * specified by setting the <tt>Formulation</tt> property to either
- * either <tt>TwoPCommonIndices::pWsN</tt> or <tt>TwoPCommonIndices::pNsW</tt>. By
+ * <tt>TwoPCommonIndices::pWsN</tt> or <tt>TwoPCommonIndices::pNsW</tt>. By
  * default, the model uses \f$p_w\f$ and \f$S_n\f$.
  */
 template<class TypeTag >
