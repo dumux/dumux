@@ -2,7 +2,7 @@
 ##############################
 
 #Name of the module
-Module: dune-mux
+Module: dumux
 Version: 1.0-rc2
 Maintainer: "Bernd Flemisch <bernd.flemisch@iws.uni-stuttgart.de>"
 #depending on 
