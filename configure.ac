@@ -133,7 +133,7 @@ AC_CONFIG_FILES([Makefile
     test/transport/Makefile
     tutorial/Makefile
     m4/Makefile
-    dune-mux.pc])
+    dumux.pc])
 
 AC_OUTPUT
 # finally print the summary information

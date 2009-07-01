@@ -13,7 +13,7 @@ EXTRA_DIST=dune.module \
 SUBDIRS = doc dumux lib m4 test tutorial
 
 #pkgconfigdir = $(libdir)/pkgconfig
-#pkgconfig_DATA = dune-mux.pc
+#pkgconfig_DATA = dumux.pc
 
 # don't follow the full GNU-standard
 # we need automake 1.5

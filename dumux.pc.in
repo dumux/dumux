@@ -8,8 +8,8 @@ DEPENDENCIES=@REQUIRES@
 
 Name: @PACKAGE_NAME@
 Version: @VERSION@
-Description: dune-mux module
-URL: http://dune-project.org/
+Description: dumux module
+URL: http://www.dumux.uni-stuttgart.de/
 Requires: dune-common dune-grid dune-istl dune-disc dune-subgrid
 Libs: -L
 Cflags: -I

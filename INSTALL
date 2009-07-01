@@ -28,14 +28,15 @@ to install it first [4].
 Next, you need to decide whether you want to compile in debug or in
 optimized mode and adapt the option file for the DUNE build system to
 the path where you installed UG. The files are located in
-dune-mux/optim.opts and dune-mux/debug.opts respectively. Next,
-compile everything using
+$DUMUX_ROOT/optim.opts and $DUMUX_ROOT/debug.opts
+respectively. ($DUMUX_ROOT is the directory where the unpacked files
+of the DuMuX distribution are located.) Next, compile everything using
 
-  ./dune-common/bin/dunecontrol --opts=dune-mux/optim.opts --module=dune-mux all
+  ./dune-common/bin/dunecontrol --opts=$(DUMUX_ROOT)/optim.opts --module=dumux all
 
 Finally, install DUNE and DuMuX headers to your system using
 
-  ./dune-common/bin/dunecontrol --module=dune-mux make install
+  ./dune-common/bin/dunecontrol --module=dumux make install
 
 A more comprehensive introduction to the DUNE build system can be
 found in [2].
