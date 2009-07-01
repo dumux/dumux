@@ -80,7 +80,7 @@ public:
     Scalar dirichletPress(const GlobalPosition& globalPos, const Element& e, /*@\label{tutorial-decoupled:gpress}@*/
                           const LocalPosition& localPos) const
     {
-        return 2e5;
+        return 1e6;
     }
 
     // function returning the Dirichlet boundary condition for the solution
