@@ -4,8 +4,8 @@
              2pboxproblem.hh  \
              2pelementdata.hh  \
              2pfluxdata.hh  \
+             2pnewtoncontroller.hh \
              2pproperties.hh  \
-             2pvertexdata.hh \
-             pwsnnewtoncontroller.hh 
+             2pvertexdata.hh
 
 include $(top_srcdir)/am/global-rules
