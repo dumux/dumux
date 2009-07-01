@@ -41,6 +41,9 @@ class TwoPBoxModel;
 template<class TypeTag>
 class TwoPBoxJacobian;
 
+template<class NewtonMethod>
+class TwoPNewtonController;
+
 template <class TypeTag, class Implementation>
 class TwoPBoxProblem;
 
@@ -152,6 +155,16 @@ SET_TYPE_PROP(BoxTwoP,
 
 //! the Model property
 SET_TYPE_PROP(BoxTwoP, Model, TwoPBoxModel<TypeTag>);
+
+//! the default newton controller for two-phase problems
+SET_PROP(BoxTwoP, NewtonController)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NewtonMethod)) NewtonMethod;
+
+public:
+    typedef TwoPNewtonController<NewtonMethod> type;
+};
 
 //! the VertexData property
 SET_TYPE_PROP(BoxTwoP, VertexData, TwoPVertexData<TypeTag>);

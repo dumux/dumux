@@ -1,6 +1,6 @@
 // $Id$
 /*****************************************************************************
- *   Copyright (C) 2008 by Bernd Flemisch, Andreas Lauser                    *
+ *   Copyright (C) 2008-2009 by Andreas Lauser                               *
  *   Institute of Hydraulic Engineering                                      *
  *   University of Stuttgart, Germany                                        *
  *   email: <givenname>.<name>@iws.uni-stuttgart.de                          *
@@ -15,45 +15,43 @@
  *****************************************************************************/
 /*!
  * \file
- * \brief A Pw-Sn specific controller for the newton solver.
+ * \brief A newton controller for two-phase problems.
  *
  * This controller 'knows' what a 'physically meaningful' solution is
  * which allows the newton method to abort quicker if the solution is
  * way out of bounds.
  */
-#ifndef DUMUX_PW_SN_NEWTON_CONTROLLER_HH
-#define DUMUX_PW_SN_NEWTON_CONTROLLER_HH
+#ifndef DUMUX_2P_NEWTON_CONTROLLER_HH
+#define DUMUX_2P_NEWTON_CONTROLLER_HH
 
 #include <dumux/nonlinear/newtoncontroller.hh>
 
 namespace Dune {
 /*!
  * \ingroup TwoPBoxModel
- * \brief A Pw-Sn specific controller for the newton solver.
+ * \brief A newton controller for two-phase problems.
  *
  * This controller 'knows' what a 'physically meaningful' solution is
  * which allows the newton method to abort quicker if the solution is
  * way out of bounds.
  */
 template <class NewtonMethod>
-class PwSnNewtonController
-    : public NewtonControllerBase<NewtonMethod, PwSnNewtonController<NewtonMethod> >
+class TwoPNewtonController
+    : public NewtonControllerBase<NewtonMethod, TwoPNewtonController<NewtonMethod> >
 {
 public:
-    typedef PwSnNewtonController<NewtonMethod>            ThisType;
+    typedef TwoPNewtonController<NewtonMethod>            ThisType;
     typedef NewtonControllerBase<NewtonMethod, ThisType>  ParentType;
 
     typedef typename ParentType::Scalar            Scalar;
     typedef typename ParentType::Function          Function;
     typedef typename ParentType::JacobianAssembler JacobianAssembler;
 
-    PwSnNewtonController(Scalar tolerance = 1e-5,
+    TwoPNewtonController(Scalar tolerance = 1e-5,
                          int targetSteps = 8,
                          int maxSteps = 12)
         : ParentType(tolerance, targetSteps, maxSteps)
     {};
-
-    /** \todo Please doc me! */
 
 protected:
     friend class NewtonControllerBase<NewtonMethod, ThisType>;
@@ -62,32 +60,34 @@ protected:
     //! "completely unphysical"
     Scalar physicalness_(Function &u)
     {
-        return 1.0;
-        const Scalar SnNormFactor = 2.5;
+        const Scalar satNormFactor = 2.5;
 
-        // the maximum distance of a Sn value to a physically
+        // the maximum distance of a saturation value to a physically
         // meaningful value.
-        Scalar maxSnDelta = 0;
-        Scalar Sn;
-        //                Scalar pW;
+        Scalar maxSatDelta = 0;
+        Scalar sat;
+        //                Scalar pressure;
 
         for (int idx = 0; idx < (int) (*u).size(); idx++)  {
-            //                    pW = (*u)[idx][0];
-            Sn = (*u)[idx][1];
+            // TODO: Don't expect the saturation at the second
+            // position in the primary var vector
+            // pressure = (*u)[idx][0];
+            sat = (*u)[idx][1];
 
-            if (Sn < 0) {
-                maxSnDelta = std::max(maxSnDelta, std::abs(Sn));
+            if (sat < 0) {
+                maxSatDelta = std::max(maxSatDelta, std::abs(sat));
             }
-            else if (Sn > 1) {
-                maxSnDelta = std::max(maxSnDelta, std::abs(Sn - 1));
+            else if (sat > 1) {
+                maxSatDelta = std::max(maxSatDelta, std::abs(sat - 1));
             }
-            // (so far we ignore the wetting phase pressure)
+
+            // (so far we ignore the phase pressure)
         }
 
         // we accept solutions up to 0.2 percent bigger than 1
         // or smaller than 0 as being physical for numerical
         // reasons...
-        Scalar phys = 1.002 - maxSnDelta/SnNormFactor;
+        Scalar phys = 1.002 - maxSatDelta/satNormFactor;
 
         // we never return exactly zero, since we want to
         // allow solutions which are "very close" to a

@@ -23,6 +23,7 @@
 #define DUMUX_TWOP_BOX_MODEL_HH
 
 #include "2pboxjacobian.hh"
+#include "2pnewtoncontroller.hh"
 #include "2pboxproblem.hh"
 
 namespace Dune
