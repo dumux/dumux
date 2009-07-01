@@ -54,27 +54,27 @@ int main(int argc, char** argv)
         std::string preconditioner = "SeqILU0";
 #endif
 
-        if (argc < 2 || argc > 3) {
-            std::cout << "\nUsage: test_diffusion refinementsteps [delta]\n" << std::endl;
+        if (argc < 3 || argc > 4) {
+            std::cout << "\nUsage: test_diffusion gridfile refinementsteps [delta]\n" << std::endl;
+            std::cout << "- gridfile: DGF file to use, usually 'diffusion_fvca5test5.dgf'." << std::endl;
             std::cout << "- refinementsteps: number of uniform refinements of the initial grid." << std::endl;
-            std::cout << "   The initial grid is grids/fvca5test5.dgf.\n" << std::endl;
             std::cout << "- delta: parameter in (0, 1] for the permeability tensor K." << std::endl;
             std::cout << "   Default is 1e-3. K becomes singular for delta = 0, and unity for delta = 1.\n" << std::endl;
             return (1);
         }
         std::stringstream dgfFileName;
-        dgfFileName << "./grids/fvca5test5.dgf";
+        dgfFileName << argv[1];
         Dune::GridPtr<Grid> gridPtr( dgfFileName.str() );
         Grid& grid = *gridPtr;
 
         int refinementSteps;
-        std::string arg2(argv[1]);
+        std::string arg2(argv[2]);
         std::istringstream is2(arg2);
         is2 >> refinementSteps;
 
         double delta = 1e-3;
         if (argc > 2) {
-            std::string arg3(argv[2]);
+            std::string arg3(argv[3]);
             std::istringstream is3(arg3);
             is3 >> delta;
         }
