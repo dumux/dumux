@@ -1,5 +1,4 @@
 // $Id$
-
 /*****************************************************************************
  *   Copyright (C) 2008 by Andreas Lauser                                    *
  *   Institute of Hydraulic Engineering                                      *
@@ -170,7 +169,8 @@ public:
 
         // make sure that we don't open an empty file
         inStream_.seekg(0, std::ios::end);
-        if (inStream_.tellg() == 0) {
+        int pos = inStream_.tellg();
+        if (pos == 0) {
             DUNE_THROW(IOError,
                        "Restart file '"
                        << fileName
