@@ -1,0 +1,10 @@
+################################
+# Dune module information file #
+################################
+
+#Name of the module
+Module: dumux
+Version: 1.1
+Maintainer: bernd@iws.uni-stuttgart.de
+#depending on 
+Depends: dune-pdelab
