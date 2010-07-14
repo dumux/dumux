@@ -69,9 +69,9 @@ fi
 SET_PARDISO
 
 # implicitly set the Dune-flags everywhere
-AC_SUBST(AM_CPPFLAGS, $DUNE_CPPFLAGS)
-AC_SUBST(AM_LDFLAGS, $DUNE_LDFLAGS)
-LIBS="$DUNE_LIBS"
+AC_SUBST(AM_CPPFLAGS, "$ALL_PKG_CPPFLAGS" )
+AC_SUBST(AM_LDFLAGS, "$ALL_PKG_LDFLAGS" )
+LIBS="$DUNE_LIBS $ALL_PKG_LIBS $PARDISO_LIBS"
 
 AC_CONFIG_FILES([dumux.pc
     Makefile
@@ -85,7 +85,6 @@ AC_CONFIG_FILES([dumux.pc
     dumux/boxmodels/2p/Makefile 
     dumux/boxmodels/2p2c/Makefile 
     dumux/boxmodels/2p2cni/Makefile 
-    dumux/boxmodels/2pNc/Makefile 
     dumux/boxmodels/2pni/Makefile 
     dumux/boxmodels/boxscheme/Makefile 
     dumux/boxmodels/pdelab/Makefile 
@@ -101,6 +100,7 @@ AC_CONFIG_FILES([dumux.pc
     dumux/decoupled/2p/transport/Makefile 
     dumux/decoupled/2p/transport/fv/Makefile 
     dumux/decoupled/common/Makefile 
+    dumux/io/Makefile
     dumux/material/Makefile 
     dumux/material/binarycoefficients/Makefile 
     dumux/material/components/Makefile 
@@ -108,7 +108,6 @@ AC_CONFIG_FILES([dumux.pc
     dumux/material/fluidsystems/Makefile 
     dumux/material/spatialparameters/Makefile 
     dumux/nonlinear/Makefile 
-    lib/Makefile 
     m4/Makefile
     test/Makefile
     test/boxmodels/Makefile 
@@ -118,7 +117,6 @@ AC_CONFIG_FILES([dumux.pc
     test/boxmodels/1p2c/Makefile 
     test/boxmodels/2p2c/Makefile
     test/boxmodels/2p2cni/Makefile
-    test/boxmodels/2pNc/Makefile
     test/boxmodels/richards/Makefile  
     test/common/Makefile
     test/common/pardiso/Makefile

@@ -1,4 +1,4 @@
-SUBDIRS = boxmodels common decoupled freeflow io misc modelcoupling multiscale onedinndgrid pardiso .
+SUBDIRS = boxmodels common decoupled
 
 include $(top_srcdir)/am/global-rules
 

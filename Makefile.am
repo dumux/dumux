@@ -3,7 +3,7 @@
 # we need the module file to be able to build via dunecontrol
 EXTRA_DIST=dune.module
 
-SUBDIRS = src m4 dune doc
+SUBDIRS = doc dumux m4 test tutorial
 
 if BUILD_DOCS
 # TODO: set up documentation tree automatically

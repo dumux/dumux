@@ -1,7 +1,5 @@
-SUBDIRS = . \
-	  2p \
-          2p2c \
-          2p2cni 
+SUBDIRS = 1p \
+	  2p  
 	  
 include $(top_srcdir)/am/global-rules
 

@@ -1,12 +1,6 @@
 # tests where program to build and program to run are equal
-NORMALTESTS = test_properties
+bin_PROGRAMS = test_propertysystem
 
-# list of tests to run
-#TESTS = $(NORMALTESTS)
-
-# programs just to build when "make check" is used
-check_PROGRAMS = $(NORMALTESTS)
-
-test_properties_SOURCES = test_properties.cc 
+test_propertysystem_SOURCES = test_propertysystem.cc 
 
 include $(top_srcdir)/am/global-rules
