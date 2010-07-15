@@ -1,4 +1,4 @@
-// $Id: richardsproperties.hh 3357 2010-03-25 13:02:05Z lauser $
+// $Id: richardsproperties.hh 3840 2010-07-15 10:14:15Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2009 by Andreas Lauser                                    *
  *   Institute of Hydraulic Engineering                                      *
@@ -73,9 +73,10 @@ NEW_TYPE_TAG(BoxRichards, INHERITS_FROM(BoxScheme));
 
 NEW_PROP_TAG(NumPhases);   //!< Number of fluid phases in the system
 NEW_PROP_TAG(RichardsIndices); //!< Enumerations for the richards models
-NEW_PROP_TAG(Soil); //!< The type of the soil properties object
-NEW_PROP_TAG(WettingPhase); //!< The wetting phase for two-phase models
-NEW_PROP_TAG(NonwettingPhase); //!< The non-wetting phase for two-phase models
+NEW_PROP_TAG(SpatialParameters); //!< The type of the soil properties object
+NEW_PROP_TAG(MaterialLaw);   //!< The material law which ought to be used (extracted from the soil)
+NEW_PROP_TAG(MaterialLawParams); //!< The context material law (extracted from the soil)
+NEW_PROP_TAG(WettingPhase); //!< The wetting phase for the richards model
 NEW_PROP_TAG(EnableGravity); //!< Returns whether gravity is considered in the problem
 NEW_PROP_TAG(MobilityUpwindAlpha); //!< The value of the upwind parameter for the mobility
 
@@ -109,6 +110,32 @@ SET_SCALAR_PROP(BoxRichards,
 
 //! The indices required by the isothermal single-phase model
 SET_TYPE_PROP(BoxRichards, RichardsIndices, Dumux::RichardsIndices);
+
+/*!
+ * \brief Set the property for the material law by retrieving it from
+ *        the spatial parameters.
+ */
+SET_PROP(BoxRichards, MaterialLaw)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters))  SpatialParameters;
+
+public:
+    typedef typename SpatialParameters::MaterialLaw type;
+};
+
+/*!
+ * \brief Set the property for the material parameters by extracting
+ *        it from the material law.
+ */
+SET_PROP(BoxRichards, MaterialLawParams)
+{
+private:
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw))  MaterialLaw;
+
+public:
+    typedef typename MaterialLaw::Params type;
+};
 
 // \}
 };

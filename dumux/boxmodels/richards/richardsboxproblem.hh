@@ -1,4 +1,4 @@
-// $Id: richardsboxproblem.hh 3783 2010-06-24 11:33:53Z bernd $
+// $Id: richardsboxproblem.hh 3840 2010-07-15 10:14:15Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2009 by Andreas Lauser                                    *
  *   Institute of Hydraulic Engineering                                      *
@@ -21,8 +21,6 @@
 #define DUMUX_RICHARDS_BOX_PROBLEM_HH
 
 #include <dumux/boxmodels/boxscheme/boxproblem.hh>
-#include <dumux/old_material/twophaserelations.hh>
-
 
 namespace Dumux
 {
@@ -42,10 +40,7 @@ class RichardsBoxProblem : public BoxProblem<TypeTag, Implementation>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))   Scalar;
 
     // material properties
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(WettingPhase))    WettingPhase;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(NonwettingPhase)) NonwettingPhase;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Soil))            Soil;
-    typedef Dumux::TwoPhaseRelations<Grid, Scalar>                  MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
 
     enum {
         dim = Grid::dimension,
@@ -57,8 +52,7 @@ class RichardsBoxProblem : public BoxProblem<TypeTag, Implementation>
 public:
     RichardsBoxProblem(const GridView &gridView)
         : ParentType(gridView),
-          gravity_(0),
-          materialLaw_(soil_, wPhase_, nPhase_)
+          gravity_(0), spatialParams_(gridView)
     {
         gravity_ = 0;
         if (GET_PROP_VALUE(TypeTag, PTAG(EnableGravity)))
@@ -96,42 +90,16 @@ public:
     { return gravity_; }
 
     /*!
-     * \brief Fluid properties of the wetting phase.
+     * \brief Returns the spatial parameters object.
      */
-    const WettingPhase &wettingPhase() const
-    { return wPhase_; }
+    SpatialParameters &spatialParameters()
+    { return spatialParams_; }
 
     /*!
-     * \brief Fluid properties of the non-wetting phase.
+     * \copydoc spatialParameters()
      */
-    const NonwettingPhase &nonwettingPhase() const
-    { return nPhase_; }
-
-    /*!
-     * \brief Returns the soil properties object.
-     */
-    Soil &soil()
-    { return soil_; }
-
-    /*!
-     * \copydoc soil()
-     */
-    const Soil &soil() const
-    { return soil_; }
-
-    /*!
-     * \brief Returns the material laws, i.e. capillary pressure -
-     *        saturation and relative permeability-saturation
-     *        relations.
-     */
-    MaterialLaw &materialLaw ()
-    { return materialLaw_; }
-
-    /*!
-     * \copydoc materialLaw()
-     */
-    const MaterialLaw &materialLaw() const
-    { return materialLaw_; }
+    const SpatialParameters &spatialParameters() const
+    { return spatialParams_; }
 
     // \}
 
@@ -146,11 +114,8 @@ private:
 
     GlobalPosition  gravity_;
 
-    // fluids and material properties
-    WettingPhase    wPhase_;
-    NonwettingPhase nPhase_;
-    Soil            soil_;
-    MaterialLaw     materialLaw_;
+    // material properties
+    SpatialParameters spatialParams_;
 };
 
 }

@@ -1,4 +1,4 @@
-// $Id: richardsfluxdata.hh 3357 2010-03-25 13:02:05Z lauser $
+// $Id: richardsfluxdata.hh 3840 2010-07-15 10:14:15Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2009 by Onur Dogan                                        *
  *   Copyright (C) 2009 by Andreas Lauser                                    *
@@ -122,13 +122,13 @@ private:
         // more flexible
         typedef Dune::FieldMatrix<Scalar, dim, dim> Tensor;
         Tensor K;
-        const Tensor &Ki = problem.soil().K(insideSCV->global,
-                                            element,
-                                            insideSCV->local);
-        const Tensor &Kj = problem.soil().K(outsideSCV->global,
-                                            element,
-                                            outsideSCV->local);
-        Dumux::harmonicMeanMatrix(K, Ki, Kj);
+        problem.spatialParameters().meanK(K,
+                problem.spatialParameters().intrinsicPermeability(element,
+                                                   fvElemGeom,
+                                                   face->i),
+                problem.spatialParameters().intrinsicPermeability(element,
+                                                    fvElemGeom,
+                                                    face->j));
 
         // temporary vector for the Darcy velocity
         GlobalPosition vDarcy;

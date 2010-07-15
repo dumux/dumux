@@ -1,4 +1,4 @@
-// $Id: richardsproblem.hh 3783 2010-06-24 11:33:53Z bernd $
+// $Id: richardsproblem.hh 3840 2010-07-15 10:14:15Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2009 by Onur Dogan                                        *
  *   Copyright (C) 2009 by Andreas Lauser                                    *
@@ -21,12 +21,11 @@
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
-#include <dumux/old_material/fluids/water.hh>
-#include <dumux/old_material/fluids/air.hh>
-
 #include <dumux/boxmodels/richards/richardsboxmodel.hh>
+#include <dumux/material/components/simpleh2o.hh>
+#include <dumux/material/fluidsystems/liquidphase.hh>
 
-#include "richardssoil.hh"
+#include "richardsspatialparameters.hh"
 
 namespace Dumux
 {
@@ -70,20 +69,18 @@ SET_PROP(RichardsTestProblem, Problem)
 };
 
 // Set the wetting phase
-SET_TYPE_PROP(RichardsTestProblem, WettingPhase, Dumux::Water);
-
-// Set the non-wetting phase
-SET_TYPE_PROP(RichardsTestProblem, NonwettingPhase, Dumux::Air);
-
-// Set the soil properties
-SET_PROP(RichardsTestProblem, Soil)
+SET_PROP(RichardsTestProblem, WettingPhase)
 {
 private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
-
 public:
-    typedef Dumux::RichardsSoil<Grid, Scalar> type;
+    typedef Dumux::LiquidPhase<Scalar, Dumux::SimpleH2O<Scalar> > type;
+};
+
+// Set the soil properties
+SET_PROP(RichardsTestProblem, SpatialParameters)
+{
+    typedef Dumux::RichardsSpatialParameters<TypeTag> type;
 };
 
 // Enable gravity

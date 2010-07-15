@@ -1,4 +1,4 @@
-// $Id: richardsvertexdata.hh 3784 2010-06-24 13:43:57Z bernd $
+// $Id: richardsvertexdata.hh 3840 2010-07-15 10:14:15Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2009 by Onur Dogan                                        *
  *   Copyright (C) 2009 by Andreas Lauser                                    *
@@ -53,6 +53,9 @@ class RichardsVertexData
     typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))     SolutionTypes;
     typedef typename SolutionTypes::PrimaryVarVector            PrimaryVarVector;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(RichardsIndices))  Indices;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(WettingPhase))        WettingPhase;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLaw))        MaterialLaw;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(MaterialLawParams))  MaterialLawParams;
 
     typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
     typedef Dune::FieldVector<Scalar, dim>       LocalPosition;
@@ -68,43 +71,29 @@ public:
                 const Problem           &problem,
                 bool                     isOldSol)
     {
-        typedef Indices I;
-
-        // coordinates of the vertex
-        const GlobalPosition &global = element.geometry().corner(vertIdx);
-        const LocalPosition   &local =
-            ReferenceElements::general(element.type()).position(vertIdx,
-                                                                GridView::dimension);
+        // material law parameters
+        const MaterialLawParams &materialParams =
+            problem.spatialParameters().materialLawParams(element, elemGeom, vertIdx);
 
         /* pc = pNreference - pw || pc = 0 for computing Sw */
         pNreference = problem.pNreference();
-        pW = sol[I::pW];
+        pW = sol[Indices::pW];
         if (pW >= pNreference)
             pC = 0.0;
         else
             pC = pNreference-pW;
 
-        dSwdpC = problem.materialLaw().dSdP(pC,
-                                            global,
-                                            element,
-                                            local);
-        Sw = problem.materialLaw().saturationW(pC,
-                                               global,
-                                               element,
-                                               local);
+        dSwdpC = MaterialLaw::dSw_dpC(materialParams, pC);
+
+        Sw = MaterialLaw::Sw(materialParams, pC);
 
         temperature = problem.temperature(element, elemGeom, vertIdx);
-        mobilityW = problem.materialLaw().mobW(Sw,
-                                               global,
-                                               element,
-                                               local,
-                                               temperature,
-                                               pW);
-        densityW = problem.wettingPhase().density(temperature,
-                                                  pW);
-        porosity = problem.soil().porosity(global,
-                                           element,
-                                           local);
+
+        mobilityW = MaterialLaw::krw(materialParams, Sw)/WettingPhase::viscosity(temperature, pW);
+
+        densityW = WettingPhase::density(temperature, pW);
+
+        porosity = problem.spatialParameters().porosity(element, elemGeom, vertIdx);
     }
 
     Scalar pNreference;

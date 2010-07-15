@@ -1,4 +1,4 @@
-// $Id: 2pniboxjacobian.hh 3796 2010-06-25 16:13:09Z melanie $
+// $Id: 2pniboxjacobian.hh 3840 2010-07-15 10:14:15Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2008-2009 by Melanie Darcis                               *
  *   Copyright (C) 2008-2009 by Andreas Lauser                               *
@@ -113,8 +113,8 @@ public:
                                 +
                                 vertDat.density(nPhaseIdx) *
                                 vertDat.internalEnergy(nPhaseIdx) *
-                                vertDat.saturation(nPhaseIdx));
-        vertDat.temperature()*vertDat.heatCapacity();
+                                vertDat.saturation(nPhaseIdx))
+          + vertDat.temperature()*vertDat.heatCapacity();
     }
 
     /*!
