@@ -1,4 +1,3 @@
-// $Id: richardsproblem.hh 3840 2010-07-15 10:14:15Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2009 by Onur Dogan                                        *
  *   Copyright (C) 2009 by Andreas Lauser                                    *
@@ -14,8 +13,8 @@
  *                                                                           *
  *   This program is distributed WITHOUT ANY WARRANTY.                       *
  *****************************************************************************/
-#ifndef DUMUX_RICHARDSPROBLEM_HH
-#define DUMUX_RICHARDSPROBLEM_HH
+#ifndef DUMUX_RICHARDSLENSPROBLEM_HH
+#define DUMUX_RICHARDSLENSPROBLEM_HH
 
 #include <dune/grid/io/file/dgfparser/dgfug.hh>
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
@@ -25,32 +24,32 @@
 #include <dumux/material/components/simpleh2o.hh>
 #include <dumux/material/fluidsystems/liquidphase.hh>
 
-#include "richardsspatialparameters.hh"
+#include "richardslensspatialparameters.hh"
 
 namespace Dumux
 {
 
 template <class TypeTag>
-class RichardsTestProblem;
+class RichardsLensProblem;
 
 //////////
 // Specify the properties for the lens problem
 //////////
 namespace Properties
 {
-NEW_TYPE_TAG(RichardsTestProblem, INHERITS_FROM(BoxRichards));
+NEW_TYPE_TAG(RichardsLensProblem, INHERITS_FROM(BoxRichards));
 
 // Set the grid type
 // Set the grid type
 #if HAVE_UG
-SET_TYPE_PROP(RichardsTestProblem, Grid, Dune::UGGrid<2>);
+SET_TYPE_PROP(RichardsLensProblem, Grid, Dune::UGGrid<2>);
 #else
-SET_PROP(RichardsTestProblem, Grid) { typedef Dune::SGrid<2, 2> type; };
-//SET_TYPE_PROP(RichardsTestProblem, Grid, Dune::YaspGrid<2>);
+SET_PROP(RichardsLensProblem, Grid) { typedef Dune::SGrid<2, 2> type; };
+//SET_TYPE_PROP(RichardsLensProblem, Grid, Dune::YaspGrid<2>);
 #endif
 
 #ifdef HAVE_DUNE_PDELAB
-SET_PROP(RichardsTestProblem, LocalFEMSpace)
+SET_PROP(RichardsLensProblem, LocalFEMSpace)
 {
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
@@ -63,13 +62,13 @@ public:
 #endif
 
 // Set the problem property
-SET_PROP(RichardsTestProblem, Problem)
+SET_PROP(RichardsLensProblem, Problem)
 {
-    typedef Dumux::RichardsTestProblem<TTAG(RichardsTestProblem)> type;
+    typedef Dumux::RichardsLensProblem<TTAG(RichardsLensProblem)> type;
 };
 
 // Set the wetting phase
-SET_PROP(RichardsTestProblem, WettingPhase)
+SET_PROP(RichardsLensProblem, WettingPhase)
 {
 private:
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
@@ -78,35 +77,33 @@ public:
 };
 
 // Set the soil properties
-SET_PROP(RichardsTestProblem, SpatialParameters)
+SET_PROP(RichardsLensProblem, SpatialParameters)
 {
-    typedef Dumux::RichardsSpatialParameters<TypeTag> type;
+    typedef Dumux::RichardsLensSpatialParameters<TypeTag> type;
 };
 
 // Enable gravity
-SET_BOOL_PROP(RichardsTestProblem, EnableGravity, true);
+SET_BOOL_PROP(RichardsLensProblem, EnableGravity, true);
 }
 
 /*!
  * \ingroup RichardsBoxProblems
  * \brief  Base class for defining an instance of a Richard`s problem, where water is infiltrating into an initially unsaturated zone.
  *
- * The domain is box shaped. All sides are closed (Neumann 0 boundary) except the top boundary(Dirichlet),
+ * The domain is box shaped. Left and right boundaries are Dirichlet boundaries with fixed water pressure (fixed Saturation Sw = 0),
+ * bottom boundary is closed (Neumann 0 boundary), the top boundary (Neumann 0 boundary) is also closed except for infiltration section,
  * where water is infiltrating into an initially unsaturated zone. Linear capillary pressure-saturation relationship is used.
  *
  * To run the simulation execute the following line in shell:
- * <tt>./test_richards ./grids/richards_2d.dgf 10000 1</tt>
+ * <tt>./lens_richards ./grids/lens_richards_2d.dgf 10000 1</tt>
  *
- * where start simulation time = 1 second, end simulation time = 10000 seconds.
- *
- * The same file can be also used for 3d simulation but you need to change line
- * "typedef Dune::UGGrid<2> type;" with "typedef Dune::UGGrid<3> type;" and use richards_3d.dgf grid
+ * where start simulation time = 1 second, end simulation time = 10000 seconds
  */
-template <class TypeTag = TTAG(RichardsTestProblem) >
-class RichardsTestProblem : public RichardsBoxProblem<TypeTag,
-                                                      RichardsTestProblem<TypeTag> >
+template <class TypeTag = TTAG(RichardsLensProblem) >
+class RichardsLensProblem : public RichardsBoxProblem<TypeTag,
+                                                      RichardsLensProblem<TypeTag> >
 {
-    typedef RichardsTestProblem<TypeTag>   ThisType;
+    typedef RichardsLensProblem<TypeTag>   ThisType;
     typedef RichardsBoxProblem<TypeTag, ThisType> ParentType;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView))   GridView;
 
@@ -137,9 +134,14 @@ class RichardsTestProblem : public RichardsBoxProblem<TypeTag,
     typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
 
 public:
-    RichardsTestProblem(const GridView &gridView)
+    RichardsLensProblem(const GridView &gridView,
+                        const GlobalPosition &lensLowerLeft,
+                        const GlobalPosition &lensUpperRight)
         : ParentType(gridView)
     {
+        lensLowerLeft_=lensLowerLeft;
+        lensUpperRight_=lensUpperRight;
+        this->spatialParameters().setLensCoords(lensLowerLeft_, lensUpperRight_);
     }
 
     /*!
@@ -153,7 +155,7 @@ public:
      * This is used as a prefix for files generated by the simulation.
      */
     const char *name() const
-    { return "richardstest"; }
+    { return "richardslens"; }
 
     /*!
      * \brief Returns the temperature within the domain.
@@ -161,7 +163,7 @@ public:
      * This problem assumes a temperature of 10 degrees Celsius.
      */
     Scalar temperature(const Element           &element,
-                       const FVElementGeometry &elemGeom,
+                       const FVElementGeometry &fvElemGeom,
                        int                      scvIdx) const
     {
         return 283.15; // -> 10°C
@@ -196,12 +198,11 @@ public:
                        int                         boundaryFaceIdx) const
     {
         const GlobalPosition &globalPos
-            = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
+            = element.geometry().corner(scvIdx);
 
-        if (globalPos[dim-1] > this->bboxMax()[dim-1] - eps)
-            // dirichlet on the lower boundary
+        if (onLeftBoundary_(globalPos) || onRightBoundary_(globalPos)) 
             values.setAllDirichlet();
-        else
+        else 
             values.setAllNeumann();
     }
 
@@ -218,12 +219,21 @@ public:
                    int                         scvIdx,
                    int                         boundaryFaceIdx) const
     {
-        const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
+        const GlobalPosition &globalPos
+            = element.geometry().corner(scvIdx);
 
-        if (globalPos[dim-1] > this->bboxMax()[dim-1] - eps)
-            values[pW] = 1.0e+5*0.99;
+        if (onLeftBoundary_(globalPos))
+        {
+            // unsaturated
+            values[pW] = 1.0e+5 - 2.5e+4;
+        }
+        else if (onRightBoundary_(globalPos))
+        {
+            // unsaturated
+            values[pW] = 1.0e+5 - 2.5e+4;
+        }
         else
-            values[pW] = 0.0;
+            values = 0.0;
     }
 
     /*!
@@ -240,8 +250,13 @@ public:
                  int                         scvIdx,
                  int                         boundaryFaceIdx) const
     {
-        // const GlobalPosition &globalPos = fvElemGeom.boundaryFace[boundaryFaceIdx].ipGlobal;
-        values[pW] = 0;
+        const GlobalPosition &globalPos
+            = element.geometry().corner(scvIdx);
+
+        values[pW] = 0.0;
+        if (onInlet_(globalPos)) {
+            values[pW] = -0.04; // kg / (m * s)
+        }
     }
 
     /*!
@@ -277,13 +292,51 @@ public:
                  const FVElementGeometry &fvElemGeom,
                  int                      scvIdx) const
     {
-        // const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
-        values[pW] = 1.0e+5 - 5.0e+4;
+        const GlobalPosition &globalPos = element.geometry().corner(scvIdx);
+
+        if ((globalPos[0] > lensLowerLeft_[0] && globalPos[0] < lensUpperRight_[0])
+            && (globalPos[1] > lensLowerLeft_[1] && globalPos[1] < lensUpperRight_[1]))
+        {
+            values[pW] = 1.0e+5 - 5.0e+4; // kg / (m * s)
+        }
+        else
+        {
+            values[pW] = 1.0e+5 - 2.5e+4;
+        }
+
     }
-    // \}
 
 private:
-    static const Scalar eps = 1e-6;
+    bool onLeftBoundary_(const GlobalPosition &globalPos) const
+    {
+        return globalPos[0] < this->bboxMin()[0] + eps_;
+    }
+
+    bool onRightBoundary_(const GlobalPosition &globalPos) const
+    {
+        return globalPos[0] > this->bboxMax()[0] - eps_;
+    }
+
+    bool onLowerBoundary_(const GlobalPosition &globalPos) const
+    {
+        return globalPos[1] < this->bboxMin()[1] + eps_;
+    }
+
+    bool onUpperBoundary_(const GlobalPosition &globalPos) const
+    {
+        return globalPos[1] > this->bboxMax()[1] - eps_;
+    }
+
+    bool onInlet_(const GlobalPosition &globalPos) const
+    {
+        Scalar width = this->bboxMax()[0] - this->bboxMin()[0];
+        Scalar lambda = (this->bboxMax()[0] - globalPos[0])/width;
+        return onUpperBoundary_(globalPos) && 0.5 < lambda  && lambda < 2.0/3.0;
+    }
+
+    static const Scalar eps_ = 3e-6;
+    GlobalPosition lensLowerLeft_;
+    GlobalPosition lensUpperRight_;
 };
 } //end namespace
 

@@ -1,4 +1,3 @@
-// $Id: test_richards.cc 3780 2010-06-24 07:39:50Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2009 by Onur Dogan                                        *
  *   Copyright (C) 2009 by Andreas Lauser                                    *
@@ -16,7 +15,7 @@
  *****************************************************************************/
 #include "config.h"
 
-#include "richardsproblem.hh"
+#include "richardslensproblem.hh"
 #include <dune/common/exceptions.hh>
 #include <dune/grid/common/gridinfo.hh>
 
@@ -34,7 +33,7 @@ void usage(const char *progname)
 int main(int argc, char** argv)
 {
     try {
-        typedef TTAG(RichardsTestProblem)             TypeTag;
+        typedef TTAG(RichardsLensProblem)             TypeTag;
         typedef GET_PROP_TYPE(TypeTag, PTAG(Scalar))  Scalar;
         typedef GET_PROP_TYPE(TypeTag, PTAG(Grid))    Grid;
         typedef GET_PROP_TYPE(TypeTag, PTAG(Problem)) Problem;
@@ -73,10 +72,17 @@ int main(int argc, char** argv)
         // -> load the grid from file
         GridPointer gridPtr =  GridPointer(dgfFileName);
         (*gridPtr).loadBalance();
-        Dune::gridinfo(*gridPtr);
+       Dune::gridinfo(*gridPtr);
 
+
+        // specify dimensions of the low-permeable lens
+        GlobalPosition lowerLeftLens, upperRightLens;
+        lowerLeftLens[0] = 1.0;
+        lowerLeftLens[1] = 2.0;
+        upperRightLens[0] = 4.0;
+        upperRightLens[1] = 3.0;
         // instantiate and run the concrete problem
-        Problem problem(gridPtr->leafView());
+        Problem problem(gridPtr->leafView(), lowerLeftLens, upperRightLens);
         if (!problem.simulate(dt, tEnd))
             return 2;
 
