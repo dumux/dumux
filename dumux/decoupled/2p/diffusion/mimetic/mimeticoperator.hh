@@ -1,4 +1,4 @@
-// $Id: mimeticoperator.hh 3777 2010-06-24 06:46:46Z bernd $
+// $Id: mimeticoperator.hh 3834 2010-07-14 12:50:32Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2007-2009 by Bernd Flemisch                               *
  *   Institute of Hydraulic Engineering                                      *

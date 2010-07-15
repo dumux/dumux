@@ -1,4 +1,4 @@
-// $Id: tissue_tumor_problem.hh 3784 2010-06-24 13:43:57Z bernd $
+// $Id: tissue_tumor_problem.hh 3838 2010-07-15 08:31:53Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2009 by Karin Erbertseder                                 *
  *   Copyright (C) 2009 by Andreas Lauser                                    *
@@ -28,10 +28,10 @@
 #include <dune/grid/io/file/dgfparser/dgfs.hh>
 #include <dune/grid/io/file/dgfparser/dgfyasp.hh>
 
-#include <dumux/old_material/fluids/interstitialfluid_trail.hh>
+#include <dumux/material/fluidsystems/isfluid_trail_system.hh>
 #include <dumux/boxmodels/1p2c/1p2cboxmodel.hh>
 
-#include "tissue_soilproperties.hh"
+#include "tissue_tumor_spatialparameters.hh"
 
 namespace Dumux
 {
@@ -74,19 +74,17 @@ SET_PROP(TissueTumorProblem, Problem)
     typedef Dumux::TissueTumorProblem<TTAG(TissueTumorProblem)> type;
 };
 
-// Set the wetting phase
-SET_TYPE_PROP(TissueTumorProblem, Fluid, Dumux::InterstitialFluid_Trail);
+// Set fluid configuration
+SET_PROP(TissueTumorProblem, FluidSystem)
+{
+    typedef Dumux::ISFluid_Trail_System<TypeTag> type;
+};
 
 // Set the soil properties
-SET_PROP(TissueTumorProblem, Soil)
-{
-private:
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Grid)) Grid;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar)) Scalar;
+SET_TYPE_PROP(TissueTumorProblem,
+              SpatialParameters,
+              Dumux::TissueTumorSpatialParameters<TypeTag>);
 
-public:
-    typedef Dumux::TissueSoil<Grid, Scalar> type;
-};
 
 // Disable gravity
 SET_BOOL_PROP(TissueTumorProblem, EnableGravity, false);

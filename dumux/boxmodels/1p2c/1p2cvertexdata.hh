@@ -1,4 +1,4 @@
-// $Id: 1p2cvertexdata.hh 3784 2010-06-24 13:43:57Z bernd $
+// $Id: 1p2cvertexdata.hh 3838 2010-07-15 08:31:53Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2009 by Karin Erbertseder                                 *
  *   Copyright (C) 2009 by Andreas Lauser                                    *
@@ -24,7 +24,7 @@
 #ifndef DUMUX_1P2C_VERTEX_DATA_HH
 #define DUMUX_1P2C_VERTEX_DATA_HH
 
-#include "1p2cproperties.hh"
+#include "1p2cfluidstate.hh"
 
 namespace Dumux
 {
@@ -39,6 +39,8 @@ class OnePTwoCVertexData
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))   Scalar;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(GridView)) GridView;
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Problem))  Problem;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePTwoCIndices)) Indices;
+    typedef OnePTwoCFluidState<TypeTag> FluidState;
 
     typedef typename GridView::template Codim<0>::Entity Element;
 
@@ -49,6 +51,9 @@ class OnePTwoCVertexData
 
         dim           = GridView::dimension,
         dimWorld      = GridView::dimensionworld,
+
+        konti = Indices::konti,
+        transport = Indices::transport
     };
 
     typedef typename GET_PROP(TypeTag, PTAG(SolutionTypes))     SolutionTypes;
@@ -57,9 +62,8 @@ class OnePTwoCVertexData
 
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(FVElementGeometry)) FVElementGeometry;
 
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(OnePTwoCIndices)) Indices;
     typedef typename SolutionTypes::PrimaryVarVector  PrimaryVarVector;
-    typedef Dune::FieldVector<Scalar, numPhases>      PhasesVector;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(FluidSystem)) FluidSystem;
 
     typedef Dune::FieldVector<Scalar, dimWorld>  GlobalPosition;
     typedef Dune::FieldVector<Scalar, dim>       LocalPosition;
@@ -75,25 +79,19 @@ public:
                 const Problem           &problem,
                 bool                     isOldSol)
     {
-        typedef Indices I;
+        porosity = problem.spatialParameters().porosity(element, elemGeom, vertIdx);
+        tortuosity = problem.spatialParameters().tortuosity(element, elemGeom, vertIdx);
+        dispersivity = problem.spatialParameters().dispersivity(element, elemGeom, vertIdx);
 
-        // coordinates of the vertex
-        const GlobalPosition &global = element.geometry().corner(vertIdx);
-        const LocalPosition   &local =
-            ReferenceElements::general(element.type()).position(vertIdx,
-                                                                dim);
+        Scalar temperature = problem.temperature(element, elemGeom, vertIdx);
+        fluidState_.update(sol, temperature);
+        pressure = fluidState_.phasePressure(konti);
+        molefraction = fluidState_.moleFrac(konti, transport);
 
-        Scalar T = problem.temperature(element, elemGeom, vertIdx);
-
-        pressure = sol[I::konti];
-        molefraction = sol[I::transport];
-        porosity = problem.soil().porosity(global,element,local);
-        density = problem.fluid().density(T, pressure);
-        diffCoeff = problem.fluid().diffCoeff(T, pressure);
-        viscosity = problem.fluid().viscosity(T, pressure);
-        tortuosity = problem.soil().tortuosity(global,element,local);
-        dispersivity = problem.soil().dispersivity(global,element,local);
-        molarDensity = problem.fluid().molarDensity(T, pressure);
+        density = FluidSystem::phaseDensity(konti, temperature, pressure, fluidState_);
+        molarDensity = FluidSystem::molarDensity(konti, temperature, pressure, fluidState_);
+        viscosity = FluidSystem::phaseViscosity(konti, temperature, pressure, fluidState_);
+        diffCoeff = FluidSystem::diffCoeff(konti, transport, konti, temperature, pressure, fluidState_);
     }
 
     Scalar porosity;
@@ -105,6 +103,8 @@ public:
     Scalar molefraction;
     Scalar pressure;
     Scalar molarDensity;
+    FluidState fluidState_;
+
 };
 
 }

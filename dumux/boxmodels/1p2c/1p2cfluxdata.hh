@@ -1,4 +1,4 @@
-// $Id: 1p2cfluxdata.hh 3357 2010-03-25 13:02:05Z lauser $
+// $Id: 1p2cfluxdata.hh 3838 2010-07-15 08:31:53Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2009 by Karin Erbertseder                                 *
  *   Copyright (C) 2009 by Andreas Lauser                                    *
@@ -104,7 +104,7 @@ private:
                              const VertexDataArray &elemDat)
     {
         GlobalPosition tmp;
-        if (!problem.soil().useTwoPointGradient(element, face->i, face->j)) {
+        if (!problem.spatialParameters().useTwoPointGradient(element, face->i, face->j)) {
             // use finite-element gradients
             tmp = 0.0;
             for (int idx = 0;
@@ -168,17 +168,14 @@ private:
                               const Element &element,
                               const VertexDataArray &elemDat)
     {
-        // calculate the permeability tensor. TODO: this should be
-        // more flexible
-        typedef Dune::FieldMatrix<Scalar, dim, dim> Tensor;
-        const Tensor &Ki = problem.soil().K(insideSCV->global,
-                                            element,
-                                            insideSCV->local);
-        const Tensor &Kj = problem.soil().K(outsideSCV->global,
-                                            element,
-                                            outsideSCV->local);
         Tensor K;
-        Dumux::harmonicMeanMatrix(K, Ki, Kj);
+        problem.spatialParameters().meanK(K,
+                            problem.spatialParameters().intrinsicPermeability(element,
+                                                                fvElemGeom,
+                                                                face->i),
+                            problem.spatialParameters().intrinsicPermeability(element,
+                                                                fvElemGeom,
+                                                                face->j));
 
         // vector for the Darcy velocity
         K.mv(pressureGrad, vDarcy);  // vDarcy = K * grad p

@@ -1,4 +1,4 @@
-// $Id: mimeticgroundwater.hh 3732 2010-06-11 13:27:20Z bernd $
+// $Id: mimeticgroundwater.hh 3834 2010-07-14 12:50:32Z bernd $
 /*****************************************************************************
 *   Copyright (C) 2008-2009 by Bernd Flemisch                               *
 *   Institute of Hydraulic Engineering                                      *

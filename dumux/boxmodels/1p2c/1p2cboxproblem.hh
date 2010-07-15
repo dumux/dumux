@@ -1,4 +1,4 @@
-// $Id: 1p2cboxproblem.hh 3783 2010-06-24 11:33:53Z bernd $
+// $Id: 1p2cboxproblem.hh 3838 2010-07-15 08:31:53Z bernd $
 /*****************************************************************************
  *   Copyright (C) 2009 by Andreas Lauser                                    *
  *   Institute of Hydraulic Engineering                                      *
@@ -23,7 +23,6 @@
 #define DUMUX_1P2C_BOX_PROBLEM_HH
 
 #include <dumux/boxmodels/boxscheme/boxproblem.hh>
-#include <dumux/old_material/twophaserelations.hh>
 
 namespace Dumux
 {
@@ -43,8 +42,7 @@ class OnePTwoCBoxProblem : public BoxProblem<TypeTag, Implementation>
     typedef typename GET_PROP_TYPE(TypeTag, PTAG(Scalar))   Scalar;
 
     // material properties
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Fluid))    Fluid;
-    typedef typename GET_PROP_TYPE(TypeTag, PTAG(Soil))     Soil;
+    typedef typename GET_PROP_TYPE(TypeTag, PTAG(SpatialParameters)) SpatialParameters;
 
     enum {
         dim = Grid::dimension,
@@ -56,7 +54,8 @@ class OnePTwoCBoxProblem : public BoxProblem<TypeTag, Implementation>
 public:
     OnePTwoCBoxProblem(const GridView &gridView)
         : ParentType(gridView),
-          gravity_(0)
+          gravity_(0),
+          spatialParams_(gridView)
     {
         if (GET_PROP_VALUE(TypeTag, PTAG(EnableGravity)))
             gravity_[dim-1]  = -9.81;
@@ -85,22 +84,16 @@ public:
     { return gravity_; }
 
     /*!
-     * \brief Fluid properties of the wetting phase.
-     */
-    const Fluid &fluid() const
-    { return fluid_; }
-
-    /*!
      * \brief Returns the soil properties object.
      */
-    Soil &soil()
-    { return soil_; }
+    SpatialParameters &spatialParameters()
+    { return spatialParams_; }
 
     /*!
      * \copydoc soil()
      */
-    const Soil &soil() const
-    { return soil_; }
+    const SpatialParameters &spatialParameters() const
+    { return spatialParams_; }
 
     // \}
 
@@ -113,11 +106,10 @@ private:
     const Implementation *asImp_() const
     { return static_cast<const Implementation *>(this); }
 
-    // fluids and material properties
-    Fluid           fluid_;
-    Soil            soil_;
-
     GlobalPosition  gravity_;
+
+    // soil properties
+    SpatialParameters spatialParams_;
 };
 
 }
