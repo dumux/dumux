@@ -1,5 +1,5 @@
 
-SUBDIRS = doxygen
+SUBDIRS = doxygen handbook
 CURDIR = doc
 BASEDIR = ..
 

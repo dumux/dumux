@@ -6,6 +6,14 @@ AM_INIT_AUTOMAKE
 AC_CONFIG_SRCDIR([test/decoupled/1p/test_diffusion.cc])
 AM_CONFIG_HEADER([config.h])
 
+AC_CHECK_PROGS([TEX4HT], [tex4ht], [true])
+AC_CHECK_PROGS([MK4HT], [mk4ht], [true])
+AC_CHECK_PROGS([T4HT], [t4ht], [true])
+AM_CONDITIONAL([TEX4HT], [test "x$TEX4HT" != xtrue])
+AC_CHECK_PROGS([CONVERT], [convert], [false])
+AM_CONDITIONAL([CONVERT], [test "x$CONVERT" != xfalse])
+AM_CONDITIONAL([BUILD_HANDBOOK], [test -a "stamp-vc"])
+
 AC_CHECK_HEADER([valgrind/memcheck.h], 
                 [HAVE_VALGRIND_H="1"],
                 AC_MSG_WARN([valgrind/memcheck.h not found]))
