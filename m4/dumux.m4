@@ -13,5 +13,5 @@ AC_DEFUN([DUMUX_CHECKS])
 # not by dumux itself
 AC_DEFUN([DUMUX_CHECK_MODULE],
 [
-  DUNE_CHECK_MODULES([dumux],[dumux/dumux.hh])
+  DUNE_CHECK_MODULES([dumux],[dumux/common/exceptions.hh])
 ])
