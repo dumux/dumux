@@ -25,6 +25,7 @@ fi
 # this module depends on dune-pdelab
 # this implies checking for [dune-common], [dune-grid], [dune-localfunctions], [dune-istl], [dune-pdelab]
 DUNE_CHECK_ALL
+DUMUX_CHECKS
 
 # the Boost c++ template libraries
 AX_BOOST_BASE([1.33.1])
