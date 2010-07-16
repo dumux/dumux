@@ -1,4 +1,4 @@
-bin_PROGRAMS = test_spline
+check_PROGRAMS = test_spline
 
 test_spline_SOURCES = test_spline.cc
 

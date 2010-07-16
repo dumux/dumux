@@ -1,5 +1,5 @@
 # tests where program to build and program to run are equal
-bin_PROGRAMS = test_pardiso
+check_PROGRAMS = test_pardiso
 
 test_pardiso_SOURCES = test_pardiso.cc
 

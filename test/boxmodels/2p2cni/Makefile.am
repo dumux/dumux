@@ -1,4 +1,4 @@
-bin_PROGRAMS = test_2p2cni
+check_PROGRAMS = test_2p2cni
 
 test_2p2cni_SOURCES = test_2p2cni.cc
 

@@ -1,4 +1,4 @@
-bin_PROGRAMS = test_richards
+check_PROGRAMS = test_richards
 
 test_richards_SOURCES = test_richards.cc 
 

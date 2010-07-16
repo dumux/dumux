@@ -1,4 +1,4 @@
-bin_PROGRAMS = test_2p
+check_PROGRAMS = test_2p
 
 test_2p_SOURCES = test_2p.cc
 
