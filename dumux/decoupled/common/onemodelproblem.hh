@@ -238,8 +238,8 @@ public:
     bool shouldWriteRestartFile() const
     {
         return !restarted() &&
-            timeManager().stepNum() > 0 &&
-            (timeManager().stepNum() % 5 == 0);
+            timeManager().timeStepNum() > 0 &&
+            (timeManager().timeStepNum() % 5 == 0);
     }
 
     /*!
