@@ -2907,8 +2907,8 @@ void FVMPFAOVelocities2P<TypeTag>::calculateVelocity()
         } // end boundaries
 
     } // end vertex iterator
-//        printvector(std::cout, this->problem().variables().velocity(), "velocity", "row", 4, 1, 3);
-    //    printvector(std::cout, this->problem().variables().velocitySecondPhase(), "velocity second phase", "row", 4, 1, 3);
+        printvector(std::cout, this->problem().variables().velocity(), "velocity", "row", 4, 1, 3);
+        printvector(std::cout, this->problem().variables().velocitySecondPhase(), "velocity second phase", "row", 4, 1, 3);
     return;
 } // end method calcTotalVelocity
 

@@ -161,7 +161,7 @@ public:
         {
             neumannBC_.resize(2 * dim, std::vector<Scalar>(2, 0.0));
         }
-        neumannBC_[subVolumeFaceIdx].swap(condition);
+        neumannBC_[subVolumeFaceIdx] = condition;
     }
 
     void setDirichletSat(Scalar condition, int subVolumeFaceIdx)
