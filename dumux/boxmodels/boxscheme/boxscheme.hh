@@ -484,9 +484,9 @@ protected:
         // first set the whole domain to zero. This is
         // necessary in order to also get a meaningful value
         // for ghost nodes (if we are running in parallel)
-        if (gridView_.comm().size() > 1) {
-            u = Scalar(0.0);
-        }
+//        if (gridView_.comm().size() > 1) {
+//            u = Scalar(0.0);
+//        }
 
         // iterate through leaf grid and evaluate initial
         // condition at the center of each sub control volume

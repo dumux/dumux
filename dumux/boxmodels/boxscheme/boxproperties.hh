@@ -205,6 +205,7 @@ SET_PROP(BoxScheme, SolutionTypes)
 
     typedef typename GET_PROP(TypeTag, PTAG(PDELabTypes)) PDELabTypes;
     typedef typename PDELabTypes::GridFunctionSpace GridFunctionSpace;
+    typedef typename PDELabTypes::GridOperatorSpace GridOperatorSpace;
 
 public:
     /*!
@@ -230,6 +231,8 @@ public:
      * a primary variable vector at each degree of freedom.
      */
     typedef typename GridFunctionSpace::template VectorContainer<Scalar>::Type SolutionVector;
+    typedef typename GridOperatorSpace::template MatrixContainer<Scalar>::Type Matrix;
+
     /*!
      * \brief A vector of primary variables.
      */
